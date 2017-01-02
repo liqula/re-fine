@@ -1,0 +1,34 @@
+name:        refine-prelude
+version:     0.0.1
+description: Please see README.md
+license:     AGPL
+copyright:   2017-2022 zerobuzz UG (haftungsbeschränkt)
+author: >
+  Andor Penzes <andorp@posteo.net>,
+  Matthias Fischmann <mf@zerobuzz.net>,
+  Nicole Rauch <info@nicole-rauch.de>
+maintainer:  mf@zerobuzz.net
+
+data-files:
+  - README.md
+  - docs/*
+
+ghc-options: -Wall -Werror -with-rtsopts=-T
+
+dependencies:
+  - aeson
+  - base
+  - basic-sop
+  - containers
+  - deepseq
+  - generics-sop
+  - http-api-data
+  - json-sop
+  - lens
+  - natural-transformation
+  - servant
+  - string-conversions
+  - time
+
+library:
+  source-dirs: src
