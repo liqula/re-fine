@@ -1,2 +1,2 @@
 job1:
-  script: "for package in refine-prelude; do cd $package && stack setup && stack test --fast && cd -; done"
+  script: "for package in refine-*; do cd $package && stack setup && stack test --fast -j8 && cd -; done"
