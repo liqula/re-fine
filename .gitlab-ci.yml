@@ -1,3 +1,2 @@
 job1:
-  script: "echo 'ci is working!'"
-
+  script: "for package in refine-prelude && do cd $package && stack test --fast && done"
