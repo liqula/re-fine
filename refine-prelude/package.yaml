@@ -32,3 +32,16 @@ dependencies:
 
 library:
   source-dirs: src
+
+tests:
+  spec:
+    main: Spec.hs
+    source-dirs:
+      - test
+    dependencies:
+      - refine-prelude
+      - base
+      - hspec
+      - QuickCheck
+      - hspec-core
+      - quickcheck-instances
