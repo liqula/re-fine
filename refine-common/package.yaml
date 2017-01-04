@@ -1,0 +1,59 @@
+name:                refine-common
+version:             0.0.0.0
+synopsis:            'Refine common parts for frontend and backend'
+description:         Please see README.md
+homepage:            https://github.com/fisx/refine
+license:             AGPL
+license-file:        LICENSE
+author:
+  - Andor Penzes <andor.penzes@gmail.com>
+  - Matthias Fischmann <mf@zerobuzz.net>
+  - Nicole Rauch <info@nicole-rauch.de>
+maintainer:          mf@zerobuzz.net
+copyright:           2017-2022 zerobuzz.net
+category:            Web
+
+default-extensions:
+  - DataKinds
+  - DeriveGeneric
+  - ExplicitForAll
+  - OverloadedStrings
+  - RankNTypes
+  - ScopedTypeVariables
+  - TemplateHaskell
+  - TypeFamilies
+  - TypeOperators
+
+ghc-options:
+  - -Wall
+  - -Werror
+  - -with-rtsopts=-T
+
+dependencies:
+  - aeson
+  - base
+  - basic-sop
+  - deepseq
+  - generics-sop
+  - http-api-data
+  - json-sop
+  - lens
+  - servant
+  - string-conversions
+  - time
+  - natural-transformation
+
+library:
+  source-dirs:
+    - src
+
+tests:
+  spec:
+    main: Spec.hs
+    source-dirs:
+      - test
+      - src
+    dependencies:
+      - hspec
+      - hspec-core
+      - hspec-discover

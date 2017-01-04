@@ -1,0 +1,52 @@
+name:                refine-frontend
+version:             0.0.0.0
+synopsis:            'Refine frontend'
+description:         Please see README.md
+homepage:            https://github.com/fisx/refine
+license:             AGPL
+license-file:        LICENSE
+author:
+  - Andor Penzes <andor.penzes@gmail.com>
+  - Matthias Fischmann <mf@zerobuzz.net>
+  - Nicole Rauch <info@nicole-rauch.de>
+maintainer:          mf@zerobuzz.net
+copyright:           2016-2021 zerobuzz.net
+category:            Web
+
+default-extensions:
+  - DataKinds
+  - DeriveAnyClass
+  - DeriveGeneric
+  - ExplicitForAll
+  - OverloadedStrings
+  - RankNTypes
+  - ScopedTypeVariables
+  - TemplateHaskell
+  - TypeFamilies
+  - TypeOperators
+
+ghc-options:
+  - -Wall
+  - -WError
+  - -with-rtsopts=-T
+
+dependencies:
+  - base
+  - react-flux
+  - react-flux-servant
+  - refine-common
+  - deepseq
+  - basic-sop
+  - json-sop
+
+library:
+  source-dirs:
+    - src
+
+executables:
+  refine-frontend:
+    main: Main.hs
+    source-dirs:
+      - src
+      - app
+

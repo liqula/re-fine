@@ -1,0 +1,17 @@
+resolver: lts-7.14
+
+packages:
+- '.'
+- '../refine-common'
+- location:
+    git: https://github.com/andorp/lentil.git
+    commit: b97e659429d7ae10acf3ae1153170405f8cd9016
+
+extra-deps:
+- basic-sop-0.2.0.0
+- json-sop-0.2.0.1
+- lens-sop-0.2.0.1
+
+flags: {}
+
+extra-package-dbs: []

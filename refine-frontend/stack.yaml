@@ -1,0 +1,26 @@
+resolver: lts-7.14
+compiler: ghcjs-0.2.1.9007001_ghc-8.0.1
+compiler-check: match-exact
+
+extra-deps:
+  - aeson-extra-0.4.0.0
+  - basic-sop-0.2.0.0
+  - react-flux-1.2.3
+  - react-flux-servant-0.1.1
+  - recursion-schemes-5.0.1
+  - refine-common-0.0.0.0
+  - string-0.4.0
+  - json-sop-0.2.0.1
+  - lens-sop-0.2.0.1
+
+packages:
+  - location: '.'
+  - location: '../refine-common'
+    extra-deps: true
+
+setup-info:
+  ghcjs:
+    source:
+      ghcjs-0.2.1.9007001_ghc-8.0.1:
+        url: http://tolysz.org/ghcjs/ghc-8.0-2016-09-26-lts-7.1-9007001-mem.tar.gz
+        sha1: e640724883238593e2d2f7f03991cb413ec0347b

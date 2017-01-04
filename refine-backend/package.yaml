@@ -1,0 +1,62 @@
+name:                refine-backend
+version:             0.0.0.0
+synopsis:            'Refine backend'
+description:         Please see README.md
+homepage:            https://github.com/fisx/refine
+license:             AGPL
+license-file:        LICENSE
+author:
+  - Andor Penzes <andor.penzes@gmail.com>
+  - Matthias Fischmann <mf@zerobuzz.net>
+  - Nicole Rauch <info@nicole-rauch.de>
+maintainer:          mf@zerobuzz.net
+copyright:           2017-2022 zerobuzz.net
+category:            Web
+
+default-extensions:
+  - DataKinds
+  - DeriveFunctor
+  - DeriveGeneric
+  - ExplicitForAll
+  - GeneralizedNewtypeDeriving
+  - OverloadedStrings
+  - RankNTypes
+  - ScopedTypeVariables
+  - TemplateHaskell
+  - TypeFamilies
+  - TypeOperators
+
+ghc-options:
+  - -Wall
+  - -Werror
+  - -with-rtsopts=-T
+
+dependencies:
+  - base
+  - lentil
+  - natural-transformation
+  - refine-common
+  - servant
+  - servant-server
+
+library:
+  source-dirs:
+    - src
+
+executables:
+  refine-backend:
+    main: Main.hs
+    source-dirs:
+      - src
+      - app
+
+tests:
+  spec:
+    main: Spec.hs
+    source-dirs:
+      - test
+      - src
+    dependencies:
+      - hspec
+      - hspec-core
+      - hspec-discover
