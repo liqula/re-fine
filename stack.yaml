@@ -44,7 +44,12 @@ packages:
     commit: b97e659429d7ae10acf3ae1153170405f8cd9016
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
-extra-deps: []
+extra-deps:
+- basic-sop-0.2.0.0
+- json-sop-0.2.0.1
+- lens-sop-0.2.0.1
+- react-flux-1.2.3
+- react-flux-servant-0.1.1
 
 # Override default flag values for local packages and extra-deps
 flags: {}

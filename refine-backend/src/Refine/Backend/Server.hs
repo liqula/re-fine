@@ -1,7 +1,7 @@
 module Refine.Backend.Server where
 
-import Refine.Api.Rest
 import Refine.Backend.App
+import Refine.Common.Rest
 import Servant
 
 

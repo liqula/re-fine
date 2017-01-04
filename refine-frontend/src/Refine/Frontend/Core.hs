@@ -1,10 +1,10 @@
 module Refine.Frontend.Core where
 
-import Refine.Api.Rest
-import Refine.Common.Prelude
-import Refine.Common.VDoc
 import React.Flux
 import React.Flux.Addons.Servant
+import Refine.Common.Prelude
+import Refine.Common.Rest
+import Refine.Common.VDoc
 
 import Control.DeepSeq
 import Data.Proxy
