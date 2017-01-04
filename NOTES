@@ -1,0 +1,66 @@
+
+
+# Persistence
+
+SQL based persistence layer
+
+* First SQlite
+* Than PostgreSQL
+
+# Darcs
+
+Darcs should be used in its dedicated directory
+
+# Lenses
+
+Use lens abstraction on data types and database
+
+* https://www.well-typed.com/blog/2014/04/pointwise-lenses
+* In 2015 Edward Kmett had a presentation on monads / lenses
+   	 I think lens like databases could be created
+     - https://www.youtube.com/watch?v=cB8DapKQz-I
+       ZuriHac 2015 - Discrimination is Wrong: Improving Productivity
+* http://www.haskellforall.com/2013/05/program-imperatively-using-haskell.html
+
+
+# Entities vs values
+
+## First approach
+Having a flat hiearchy and a different type for the entity.
+
+data EntityRef a
+	= Loaded a
+	| Referenced a
+
+data ComplexData1 c = ComplexData1
+	{ name     :: String
+	, refCD2'' :: ComplexData2
+	}
+
+data ComplexData2 = ComplexData2 { ... }
+
+data EntityState = Clean | Dirty
+data Entity a = Entity
+	{ eKey   :: Key a
+	, eValue :: IORef a
+	, eState :: IORef (EntityState, TimeStamp)
+	, eModifyEntity :: a -> a -> IO ()
+	, eCommit :: DB ()
+	}
+
+-- Loads the entity
+loadEntity   :: Key a -> DB (Entity a)
+readComplexData :: DB (Entity ComplexData)
+
+The drawback here is to have a flat data hiearchy
+
+## Second approach
+The domain and the persistent are not far from each other.
+All the domain values has Keys and MetaInfos, nesting is
+possible, but at the end all the data are stored in different
+tables, and reffered via foreign keys and assembled in chunks.
+
+If we consider categorical lenses introduced in the well-typed
+blog article, navigation between the tables can be done automatically
+via foreign keys, but the storage stays rational.
+

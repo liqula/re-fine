@@ -1,2 +1,4 @@
 *~
-refine-prelude/refine-prelude.cabal
+*.cabal
+.stack-work
+*/.stack-work
