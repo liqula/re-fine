@@ -12,6 +12,7 @@ import Generics.SOP        as SOP
 import Generics.SOP.JSON   as SOP
 import Generics.SOP.NFData as SOP
 import GHC.Generics        as GHC
+import Text.Read
 import Web.HttpApiData
 
 
@@ -63,3 +64,6 @@ instance FromJSON (ID a) where parseJSON = gparseJSONDef
 
 instance ToHttpApiData (ID a) where
   toUrlPiece (ID x) = cs $ show x
+
+instance FromHttpApiData (ID a) where
+  parseUrlPiece = either (Left . cs) (Right . ID) . readEither @Int64 . cs

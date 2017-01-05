@@ -21,6 +21,7 @@ default-extensions:
   - RankNTypes
   - ScopedTypeVariables
   - TemplateHaskell
+  - TypeApplications
   - TypeFamilies
   - TypeOperators
 
@@ -54,3 +55,6 @@ tests:
       - hspec
       - hspec-core
       - hspec-discover
+      - QuickCheck
+    ghc-options:
+      - -fno-warn-orphans

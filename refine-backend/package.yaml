@@ -23,6 +23,7 @@ default-extensions:
   - RankNTypes
   - ScopedTypeVariables
   - TemplateHaskell
+  - TypeApplications
   - TypeFamilies
   - TypeOperators
 
@@ -36,6 +37,8 @@ dependencies:
   - refine-common
   - servant
   - servant-server
+  - string-conversions
+  - warp
 
 library:
   source-dirs:

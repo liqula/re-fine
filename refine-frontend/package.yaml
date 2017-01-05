@@ -15,13 +15,13 @@ category:            Web
 
 default-extensions:
   - DataKinds
-  - DeriveAnyClass
   - DeriveGeneric
   - ExplicitForAll
   - OverloadedStrings
   - RankNTypes
   - ScopedTypeVariables
   - TemplateHaskell
+  - TypeApplications
   - TypeFamilies
   - TypeOperators
 
