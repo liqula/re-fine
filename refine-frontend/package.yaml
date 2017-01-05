@@ -27,7 +27,7 @@ default-extensions:
 
 ghc-options:
   - -Wall
-  - -WError
+  - -Werror
   - -with-rtsopts=-T
 
 dependencies:
@@ -49,4 +49,5 @@ executables:
     source-dirs:
       - src
       - app
-
+      - hspec
+      - hspec-discover

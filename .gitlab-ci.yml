@@ -1,6 +1,3 @@
 job1:
   script:
-    - "cd refine-common && stack setup && stack test --fast -j8 && cd .."
-    - "cd refine-backend && stack setup && stack test --fast -j8 && cd .."
-    - "cd refine-frontend && stack setup && stack test --fast -j8 && cd .."
-    - "cd refine-prelude && stack setup && stack test --fast -j8 && cd .."
+    - "./test-all.hs"

@@ -39,9 +39,10 @@ tests:
     source-dirs:
       - test
     dependencies:
-      - refine-prelude
       - base
       - hspec
-      - QuickCheck
       - hspec-core
+      - hspec-discover
+      - QuickCheck
       - quickcheck-instances
+      - refine-prelude
