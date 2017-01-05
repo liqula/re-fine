@@ -14,7 +14,7 @@ import GHC.Generics
 
 data RequestStatus = NoPendingRequest | PendingRequest | PreviousRequestHadError String
 
-data UserStore = UserStore
+newtype UserStore = UserStore
   { reqStatus :: RequestStatus
   }
 
@@ -36,7 +36,7 @@ instance StoreData UserStore where
   transform (GotVDoc _ (Left (_errCode, err))) us = do
     return $ us {reqStatus = PreviousRequestHadError err}
 
-  transform (GotVDoc _ (Right vdoc)) us = do
+  transform (GotVDoc _ (Right _vdoc)) us = do
     return $ us {reqStatus = NoPendingRequest}
 
 userStore :: ReactStore UserStore

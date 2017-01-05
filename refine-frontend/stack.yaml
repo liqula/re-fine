@@ -16,7 +16,6 @@ extra-deps:
 packages:
   - location: '.'
   - location: '../refine-common'
-    extra-deps: true
 
 setup-info:
   ghcjs:

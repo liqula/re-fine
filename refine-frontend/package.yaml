@@ -49,5 +49,17 @@ executables:
     source-dirs:
       - src
       - app
+    dependencies:
       - hspec
+      - hspec-discover
+
+tests:
+  spec:
+    main: Spec.hs
+    source-dirs:
+      - test
+      - src
+    dependencies:
+      - hspec
+      - hspec-core
       - hspec-discover
