@@ -27,6 +27,8 @@ packages = ["refine-prelude", "refine-common", "refine-backend", "refine-fronten
 
 main :: IO ()
 main = do
+  ExitSuccess <- system "echo stack version: && stack --version"
+  ExitSuccess <- system "stack --resolver lts-6.27 install hlint"
   (\fp -> setupPkg fp >> testPkg fp) `mapM_` packages
 
 setupPkg :: FilePath -> IO ()
@@ -39,4 +41,7 @@ testPkg :: FilePath -> IO ()
 testPkg target = withCurrentDirectory target $ do
   putStrLn $ "\n\n>>> " <> target <> " [test]\n\n"
   ExitSuccess <- system $ "stack test --fast " <> show target
+  ExitSuccess <- system $ "stack exec -- hlint --hint=../refine-prelude/HLint.hs ./src ./test"
+    -- FIXME: run ./app by hlint as well if available.
+    -- FUTUREWORK: use --refactor to apply suggestions to working copy (requires apply-refact package).
   pure ()
