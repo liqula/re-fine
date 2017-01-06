@@ -32,6 +32,7 @@ ghc-options: -Wall -Werror
 
 dependencies:
   - base
+  - darcs
   - lentil
   - monad-logger
   - mtl
