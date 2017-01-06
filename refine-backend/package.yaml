@@ -26,10 +26,7 @@ default-extensions:
   - TypeFamilies
   - TypeOperators
 
-ghc-options:
-  - -Wall
-  - -Werror
-  - -with-rtsopts=-T
+ghc-options: -Wall -Werror
 
 dependencies:
   - base

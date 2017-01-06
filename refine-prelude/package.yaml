@@ -1,5 +1,5 @@
 name:        refine-prelude
-version:     0.0.1
+version:     0.0.0.0
 description: Please see README.md
 license:     AGPL
 copyright:   2017-2022 zerobuzz UG (haftungsbeschränkt)
@@ -13,7 +13,7 @@ data-files:
   - README.md
   - docs/*
 
-ghc-options: -Wall -Werror -with-rtsopts=-T
+ghc-options: -Wall -Werror
 
 dependencies:
   - aeson
@@ -39,9 +39,10 @@ tests:
     source-dirs:
       - test
     dependencies:
-      - refine-prelude
       - base
       - hspec
-      - QuickCheck
       - hspec-core
+      - hspec-discover
+      - QuickCheck
       - quickcheck-instances
+      - refine-prelude

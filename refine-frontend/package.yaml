@@ -10,7 +10,7 @@ author:
   - Matthias Fischmann <mf@zerobuzz.net>
   - Nicole Rauch <info@nicole-rauch.de>
 maintainer:          mf@zerobuzz.net
-copyright:           2016-2021 zerobuzz.net
+copyright:           2017-2022 zerobuzz.net
 category:            Web
 
 default-extensions:
@@ -25,10 +25,7 @@ default-extensions:
   - TypeFamilies
   - TypeOperators
 
-ghc-options:
-  - -Wall
-  - -WError
-  - -with-rtsopts=-T
+ghc-options: -Wall -Werror
 
 dependencies:
   - base
@@ -49,4 +46,17 @@ executables:
     source-dirs:
       - src
       - app
+    dependencies:
+      - hspec
+      - hspec-discover
 
+tests:
+  spec:
+    main: Spec.hs
+    source-dirs:
+      - test
+      - src
+    dependencies:
+      - hspec
+      - hspec-core
+      - hspec-discover
