@@ -18,6 +18,7 @@ default-extensions:
   - DeriveFunctor
   - DeriveGeneric
   - ExplicitForAll
+  - GADTs
   - GeneralizedNewtypeDeriving
   - OverloadedStrings
   - RankNTypes
@@ -32,12 +33,18 @@ ghc-options: -Wall -Werror
 dependencies:
   - base
   - lentil
+  - monad-logger
   - mtl
   - natural-transformation
+  - persistent
+  - persistent-sqlite
+  - persistent-template
   - refine-common
+  - resourcet
   - servant
   - servant-server
   - string-conversions
+  - text
   - warp
 
 library:

@@ -17,6 +17,7 @@ default-extensions:
   - DataKinds
   - DeriveGeneric
   - ExplicitForAll
+  - GADTs
   - OverloadedStrings
   - RankNTypes
   - ScopedTypeVariables
