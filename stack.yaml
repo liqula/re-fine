@@ -15,6 +15,8 @@ extra-deps:
 - lens-sop-0.2.0.1
 - react-flux-1.2.3
 - react-flux-servant-0.1.1
+- hlint-1.9.39
+- haskell-src-exts-1.19.1
 
 flags: {}
 

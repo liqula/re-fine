@@ -29,9 +29,10 @@ packages = ["refine-prelude", "refine-common", "refine-backend", "refine-fronten
 main :: IO ()
 main = do
   ExitSuccess <- system "echo stack version: && stack --version"
-  ExitSuccess <- system "stack --resolver lts-7.14 setup && stack --resolver lts-7.14 install hlint"
-  ExitSuccess <- system $ "stack setup && for i in " <> intercalate " " packages <> "; do stack test --fast $i; done"
-  pure ()
+  ExitSuccess <- system "stack setup"
+  ExitSuccess <- system $ "for i in " <> intercalate " " packages <> "; do stack test --fast $i; done"
+  ExitSuccess <- system "stack install hlint"
+  hlintPkg `mapM_` packages
 
 setupPkg :: FilePath -> IO ()
 setupPkg target = withCurrentDirectory target $ do
