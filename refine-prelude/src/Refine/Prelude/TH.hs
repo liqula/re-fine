@@ -13,7 +13,7 @@ import Refine.Prelude.Generic
 
 
 makeSOPGeneric :: Name -> Q [Dec]
-makeSOPGeneric t = pure $
+makeSOPGeneric t = pure
   [ InstanceD Nothing [] (AppT (ConT (''SOP.Generic)) (ConT t)) []
   , InstanceD Nothing [] (AppT (ConT (''SOP.HasDatatypeInfo)) (ConT t)) []
   ]
@@ -24,7 +24,7 @@ makeJSON t = do
   (VarE gtoJSONDefN)    <- [|gtoJSONDef|]
   (VarE parseJSONN)     <- [|parseJSON|]
   (VarE gparseJSONDefN) <- [|gparseJSONDef|]
-  pure $
+  pure
     [ InstanceD Nothing [] (AppT (ConT (''ToJSON)) (ConT t))
         [ FunD toJSONN [ Clause [] (NormalB (VarE gtoJSONDefN)) []] ]
     , InstanceD Nothing [] (AppT (ConT (''FromJSON)) (ConT t))
@@ -35,7 +35,7 @@ makeNFData :: Name -> Q [Dec]
 makeNFData t = do
   (VarE rnfN)  <- [|rnf|]
   (VarE grnfN) <- [|grnf|]
-  pure $
+  pure
     [ InstanceD Nothing [] (AppT (ConT (''NFData)) (ConT t))
         [ FunD rnfN [ Clause [] (NormalB (VarE grnfN)) []] ]
     ]

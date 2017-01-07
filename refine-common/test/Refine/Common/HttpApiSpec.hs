@@ -23,11 +23,11 @@ h = HttpApiGen (==) arbitrary shrink
 fromAndToHttpApiDataAreInverses :: HttpApiGen d -> Spec
 fromAndToHttpApiDataAreInverses (HttpApiGen eq g s) =
     it (show $ typeOf g) . property . forAllShrink g s $ \httpApiData ->
-        (either (error . cs) (eq httpApiData)) . parseUrlPiece $ toUrlPiece httpApiData
+        either (error . cs) (eq httpApiData) . parseUrlPiece $ toUrlPiece httpApiData
 
 spec :: Spec
 spec = do
-  describe "FromHttpApiData and ToHttpApiData are inverses" $
+  describe "FromHttpApiData and ToHttpApiData are inverses" .
     mapM_ fromAndToHttpApiDataAreInverses $
       [ h :: HttpApiGen (ID ())
       ]
