@@ -19,7 +19,7 @@ import Network.Wai.Handler.Warp as Warp
 startBackend :: IO ()
 startBackend = do
 
-  runDb <- createDBRunner
+  runDb <- createDBRunner $ DBOnDisk "refine.db" -- DBInMemory
 
   Warp.runSettings Warp.defaultSettings
     $ Servant.serve (Proxy :: Proxy RefineAPI) (serverT runDb refineApi)
@@ -61,7 +61,7 @@ listVDocInfos :: ServerT ListVDocInfos (App db)
 listVDocInfos = undefined
 
 getVDoc :: ServerT GetVDoc (App db)
-getVDoc _ = return VDoc
+getVDoc _ = return $ VDoc "title" "desc"
 
 addVDoc :: ServerT AddVDoc (App db)
 addVDoc = undefined

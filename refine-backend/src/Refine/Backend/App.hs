@@ -6,7 +6,7 @@ import Control.Natural
 import Control.Monad.Reader
 
 import Refine.Backend.Database
-import Refine.Backend.Repository
+import Refine.Backend.Repository()
 
 
 

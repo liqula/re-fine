@@ -21,7 +21,10 @@ data Document = Document
 data ProtoVDoc = ProtoVDoc
   deriving (Eq, Ord, Show, Read, Generic)
 
-data VDoc = VDoc
+data VDoc = VDoc {
+    _vdocTitle       :: ST
+  , _vdocDescription :: ST
+  }
   deriving (Eq, Ord, Show, Read, Generic)
 
 newtype VDocTitle = VDocTitle { unVDocTitle :: ST }

@@ -1,35 +1,32 @@
-module Refine.Backend.Database where
+module Refine.Backend.Database
+  ( module Refine.Backend.Database.Core
+  , module Refine.Backend.Database.Entity
+  , createDBRunner
+  ) where
 
 import Control.Exception
-import Control.Natural
 import Control.Monad.Except
-import Control.Monad.Logger
-import Control.Monad.Reader
-import Control.Monad.Trans.Resource
-
+import Control.Natural
+import Data.String.Conversions (cs)
 import Database.Persist.Sqlite
 
+import Refine.Backend.Database.Core
+import Refine.Backend.Database.Schema()
+import Refine.Backend.Database.Entity
 
 
--- TODO: Add ExceptT DBError too
-newtype DB a = DB { unDB :: ReaderT SqlBackend (NoLoggingT (ResourceT IO)) a }
-  deriving
-    ( Functor
-    , Applicative
-    , Monad
-    )
 
-data DBError
-  = DBError String
-  | DBException SomeException
+createDBRunner :: DBConfig -> IO (DB :~> ExceptT DBError IO)
+createDBRunner cfg = do
 
-createDBRunner :: IO (DB :~> ExceptT DBError IO)
-createDBRunner = do
+  let sqliteDb = case cfg of
+        DBInMemory  -> ":memory:"
+        DBOnDisk fp -> fp
 
-  let runQuery q = wrapErrors $ runSqlite ":memory:" q
+  let runQuery = wrapErrors . runSqlite (cs sqliteDb) . runExceptT
 
   pure $ Nat (runQuery . unDB)
   where
-    wrapErrors :: IO a -> ExceptT DBError IO a
+    wrapErrors :: IO (Either DBError a) -> ExceptT DBError IO a
     wrapErrors =
-      lift . try >=> either (throwError . DBException) pure
+      lift . try >=> either (throwError . DBException) (either throwError pure)

@@ -3,7 +3,7 @@ module Refine.Backend.Repository where
 import Control.Monad.Except
 import Control.Natural
 
-import Refine.Backend.Repository.Darcs
+import Refine.Backend.Repository.Darcs()
 
 
 
