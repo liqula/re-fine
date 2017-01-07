@@ -14,8 +14,9 @@ extra-deps:
   - lens-sop-0.2.0.1
 
 packages:
-  - location: '.'
-  - location: '../refine-common'
+  - '.'
+  - '../refine-common'
+  - '../refine-prelude'
 
 setup-info:
   ghcjs:

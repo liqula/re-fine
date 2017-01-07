@@ -44,11 +44,8 @@ module Refine.Prelude
   , commonPrefix
   ) where
 
-import           Control.DeepSeq
 import           Control.Lens
 import           Control.Monad (foldM)
-import           Data.Aeson
-import           Data.Aeson.Types (Parser)
 import           Data.Char (isSpace)
 import           Data.Function (on)
 import           Data.List (replicate, sortBy)
@@ -57,19 +54,10 @@ import           Data.Ord
 import qualified Data.Set as Set
 import           Data.Time
 import           Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
-import qualified Generics.SOP        as SOP
-import qualified Generics.SOP.JSON   as SOP
-import qualified Generics.SOP.NFData as SOP
 import qualified GHC.Generics as GHC
 
-
--- * generic json
-
-gtoJSONDef :: forall a. (SOP.Generic a, SOP.HasDatatypeInfo a, SOP.All2 ToJSON (SOP.Code a)) =>  a -> Value
-gtoJSONDef = SOP.gtoJSON SOP.defaultJsonOptions
-
-gparseJSONDef :: forall a. (SOP.Generic a, SOP.HasDatatypeInfo a, SOP.All2 FromJSON (SOP.Code a)) => Value -> Parser a
-gparseJSONDef = SOP.gparseJSON SOP.defaultJsonOptions
+import Refine.Prelude.Generic
+import Refine.Prelude.TH
 
 
 -- * time
@@ -77,16 +65,7 @@ gparseJSONDef = SOP.gparseJSON SOP.defaultJsonOptions
 newtype Timestamp = Timestamp { _unTimestamp :: UTCTime }
   deriving (Eq, Ord, GHC.Generic)
 
-makeLenses ''Timestamp
-makePrisms ''Timestamp
-
-instance SOP.Generic Timestamp
-instance SOP.HasDatatypeInfo Timestamp
-
-instance NFData Timestamp where rnf = SOP.grnf
-
-instance ToJSON Timestamp where toJSON = gtoJSONDef
-instance FromJSON Timestamp where parseJSON = gparseJSONDef
+makeRefineType ''Timestamp
 
 timestampToEpoch :: Timestamp -> Integer
 timestampToEpoch = round . utcTimeToPOSIXSeconds . _unTimestamp
@@ -121,17 +100,7 @@ data Timespan =
   | TimespanDays  Integer
   deriving (Eq, Ord, Show, Read, GHC.Generic)
 
-makeLenses ''Timespan
-makePrisms ''Timespan
-
-instance SOP.Generic Timespan
-instance SOP.HasDatatypeInfo Timespan
-
-instance NFData Timespan where rnf = SOP.grnf
-
-instance ToJSON Timespan where toJSON = gtoJSONDef
-instance FromJSON Timespan where parseJSON = gparseJSONDef
-
+makeRefineType ''Timespan
 
 showTimespan :: Timespan -> String
 showTimespan (TimespanUs    i) = show i <> "us"

@@ -1,15 +1,8 @@
 module Refine.Common.Chunk where
 
-import Control.DeepSeq
-import Control.Lens
-import Data.Aeson
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
-
-import qualified Generics.SOP        as SOP
-import qualified Generics.SOP.NFData as SOP
-
-import Refine.Common.Prelude
+import Refine.Prelude.TH
 
 
 
@@ -37,38 +30,8 @@ data ChunkRange = ChunkRange
 newtype DataUID = DataUID { unDataUID :: Int }
   deriving (Eq, Ord, Show, Read, Generic)
 
--- * lens
+-- * refine types
 
-makeLenses ''ChunkPoint
-makeLenses ''ChunkRange
-makeLenses ''DataUID
-
-makePrisms ''ChunkPoint
-makePrisms ''ChunkRange
-makePrisms ''DataUID
-
--- * SOP
-
-instance SOP.Generic ChunkPoint
-instance SOP.Generic ChunkRange
-instance SOP.Generic DataUID
-
-instance SOP.HasDatatypeInfo ChunkPoint
-instance SOP.HasDatatypeInfo ChunkRange
-instance SOP.HasDatatypeInfo DataUID
-
--- * NFData
-
-instance NFData ChunkPoint where rnf = SOP.grnf
-instance NFData ChunkRange where rnf = SOP.grnf
-instance NFData DataUID where rnf = SOP.grnf
-
--- * JSON
-
-instance ToJSON ChunkPoint where toJSON = gtoJSONDef
-instance ToJSON ChunkRange where toJSON = gtoJSONDef
-instance ToJSON DataUID where toJSON = gtoJSONDef
-
-instance FromJSON ChunkPoint where parseJSON = gparseJSONDef
-instance FromJSON ChunkRange where parseJSON = gparseJSONDef
-instance FromJSON DataUID where parseJSON = gparseJSONDef
+makeRefineType ''ChunkPoint
+makeRefineType ''ChunkRange
+makeRefineType ''DataUID

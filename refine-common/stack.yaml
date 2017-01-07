@@ -2,6 +2,7 @@ resolver: lts-7.14
 
 packages:
 - '.'
+- '../refine-prelude'
 
 extra-deps:
 - basic-sop-0.2.0.0

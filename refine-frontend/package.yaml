@@ -33,6 +33,7 @@ dependencies:
   - react-flux
   - react-flux-servant
   - refine-common
+  - refine-prelude
   - deepseq
   - basic-sop
   - json-sop

@@ -37,10 +37,11 @@ dependencies:
   - http-api-data
   - json-sop
   - lens
+  - natural-transformation
+  - refine-prelude
   - servant
   - string-conversions
   - time
-  - natural-transformation
 
 library:
   source-dirs:
