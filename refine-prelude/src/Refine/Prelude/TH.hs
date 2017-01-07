@@ -2,11 +2,11 @@
 module Refine.Prelude.TH where
 
 import Control.Lens (makeLenses, makePrisms)
-import Control.DeepSeq
+import Control.DeepSeq (NFData(..))
+import Data.Aeson (FromJSON(..), ToJSON(..))
 import Language.Haskell.TH
-import Generics.SOP        as SOP
-import Generics.SOP.JSON   as SOP
-import Generics.SOP.NFData
+import Generics.SOP
+import Generics.SOP.NFData (grnf)
 
 import Refine.Prelude.Generic
 
@@ -14,16 +14,16 @@ import Refine.Prelude.Generic
 
 makeSOPGeneric :: Name -> Q [Dec]
 makeSOPGeneric t = pure
-  [ InstanceD Nothing [] (AppT (ConT (''SOP.Generic)) (ConT t)) []
-  , InstanceD Nothing [] (AppT (ConT (''SOP.HasDatatypeInfo)) (ConT t)) []
+  [ InstanceD Nothing [] (AppT (ConT (''Generic)) (ConT t)) []
+  , InstanceD Nothing [] (AppT (ConT (''HasDatatypeInfo)) (ConT t)) []
   ]
 
 makeJSON :: Name -> Q [Dec]
 makeJSON t = do
-  (VarE toJSONN)        <- [|toJSON|]
-  (VarE gtoJSONDefN)    <- [|gtoJSONDef|]
-  (VarE parseJSONN)     <- [|parseJSON|]
-  (VarE gparseJSONDefN) <- [|gparseJSONDef|]
+  (VarE toJSONN)        <- [|Data.Aeson.toJSON|]
+  (VarE gtoJSONDefN)    <- [|Refine.Prelude.Generic.gtoJSONDef|]
+  (VarE parseJSONN)     <- [|Data.Aeson.parseJSON|]
+  (VarE gparseJSONDefN) <- [|Refine.Prelude.Generic.gparseJSONDef|]
   pure
     [ InstanceD Nothing [] (AppT (ConT (''ToJSON)) (ConT t))
         [ FunD toJSONN [ Clause [] (NormalB (VarE gtoJSONDefN)) []] ]
@@ -33,8 +33,8 @@ makeJSON t = do
 
 makeNFData :: Name -> Q [Dec]
 makeNFData t = do
-  (VarE rnfN)  <- [|rnf|]
-  (VarE grnfN) <- [|grnf|]
+  (VarE rnfN)  <- [|Control.DeepSeq.rnf|]
+  (VarE grnfN) <- [|Generics.SOP.NFData.grnf|]
   pure
     [ InstanceD Nothing [] (AppT (ConT (''NFData)) (ConT t))
         [ FunD rnfN [ Clause [] (NormalB (VarE grnfN)) []] ]

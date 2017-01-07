@@ -33,6 +33,7 @@ dependencies:
   - base
   - basic-sop
   - deepseq
+  - elim
   - generics-sop
   - http-api-data
   - json-sop

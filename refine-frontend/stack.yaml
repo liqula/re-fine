@@ -17,6 +17,9 @@ packages:
   - '.'
   - '../refine-common'
   - '../refine-prelude'
+  - location:
+      git: https://github.com/andorp/elim.git
+      commit: 558fc65a4033577092214c5e2defd47805678b97
 
 setup-info:
   ghcjs:

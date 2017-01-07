@@ -1,7 +1,11 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE QuasiQuotes           #-}
+
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+
 module Refine.Backend.Database.Schema where
 
+import Control.Elim
 import Data.Text
 import Database.Persist.TH
 
@@ -58,5 +62,17 @@ PV
     patch       PatchId
     vote        VoteId
     UniPV patch vote
-
 |]
+
+makeElim ''VDoc
+makeElim ''Patch
+makeElim ''Repository
+makeElim ''Comment
+makeElim ''Note
+makeElim ''Vote
+
+makeElim ''VR
+makeElim ''VP
+makeElim ''PC
+makeElim ''PN
+makeElim ''PV

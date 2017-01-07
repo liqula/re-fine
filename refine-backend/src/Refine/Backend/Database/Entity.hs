@@ -25,11 +25,11 @@ vdocEntity :: Entity DB ID VDoc VDoc
 vdocEntity = Entity loadVDoc updateVDoc
 
 loadVDoc :: ID VDoc -> DB VDoc
-loadVDoc vid = do
-  mvdoc <- liftDB . P.get $ idToKey vid
-  case mvdoc of
-    Nothing -> notFound $ unwords ["VDoc", show vid, " is not found"]
-    Just (S.VDoc t d) -> pure $ VDoc t d
+loadVDoc vid =
+  (liftDB . P.get $ idToKey vid) >>=
+    (maybe
+      (notFound $ unwords ["VDoc", show vid, " is not found"])
+      (pure . S.vDocElim VDoc))
 
 updateVDoc :: ID VDoc -> VDoc -> DB ()
 updateVDoc _vid _vdoc = pure ()
