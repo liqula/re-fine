@@ -54,9 +54,9 @@ vdocEntity = L.Entity loadVDoc updateVDoc
 loadVDoc :: ID VDoc -> DB VDoc
 loadVDoc vid =
   (liftDB . get $ S.idToKey vid) >>=
-    (maybe
+    maybe
       (idNotFound vid)
-      (pure . S.vDocElim toVDoc))
+      (pure . S.vDocElim toVDoc)
   where
     toVDoc t d r h = VDoc vid t d (S.keyToId r) (S.keyToId h)
 
@@ -77,9 +77,9 @@ patchEntity = L.Entity loadPatch updatePatch
 loadPatch :: ID Patch -> DB Patch
 loadPatch pid =
   (liftDB . get $ S.idToKey pid) >>=
-    (maybe
+    maybe
       (idNotFound pid)
-      (pure . S.commitElim (Patch pid)))
+      (pure . S.commitElim (Patch pid))
 
 patchToRecord :: Patch -> DB S.Commit
 patchToRecord (Patch _id d h) = pure (S.Commit d h)
@@ -99,7 +99,7 @@ createPatch vr c = do
   let desc = "" -- TODO
   key <- liftDB $ do
     k <- insert $ S.Commit desc (c ^. Repo.commitHash)
-    void $ insert $ S.RC (vr ^. vdocRepositoryId . to S.idToKey) k
+    void . insert $ S.RC (vr ^. vdocRepositoryId . to S.idToKey) k
     pure k
   pure $ Patch (S.keyToId key) desc (c ^. Repo.commitHash)
 

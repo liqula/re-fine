@@ -33,7 +33,7 @@ data Repository = Repository
   , _repoId   :: RepoID
   }
 
-data Commit = Commit
+newtype Commit = Commit
   { _commitHash :: CommitHash
   }
 

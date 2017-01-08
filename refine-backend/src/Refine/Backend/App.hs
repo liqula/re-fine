@@ -13,4 +13,4 @@ import Refine.Backend.App.VDoc
 
 
 runApp :: RunDB db -> RunDocRepo -> App db :~> ExceptT AppError IO
-runApp runDB runDocRepo = Nat $ (`runReaderT` (AppContext runDB runDocRepo)) . unApp
+runApp runDB runDocRepo = Nat $ (`runReaderT` AppContext runDB runDocRepo) . unApp
