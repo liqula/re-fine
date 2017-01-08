@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE QuasiQuotes           #-}
 
@@ -7,7 +8,10 @@ module Refine.Backend.Database.Schema where
 
 import Control.Elim
 import Data.Text
+import Database.Persist
+import Database.Persist.Sql
 import Database.Persist.TH
+import Refine.Common.Prelude
 
 
 
@@ -63,6 +67,17 @@ PV
     vote        VoteId
     UniPV patch vote
 |]
+
+-- * helpers
+
+type family EntityRep c = b | b -> c
+
+
+idToKey :: (ToBackendKey SqlBackend (EntityRep a))
+        => ID a -> Key (EntityRep a)
+idToKey (ID vid) = toSqlKey vid
+
+-- * eliminators
 
 makeElim ''VDoc
 makeElim ''Patch
