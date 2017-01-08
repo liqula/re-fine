@@ -1,22 +1,23 @@
-module Refine.Backend.Repository where
+module Refine.Backend.Repository
+  ( module Refine.Backend.Repository.Core
+  , module Refine.Backend.Repository.Darcs
+  , createRunRepo
+  ) where
 
+import Control.Exception
 import Control.Monad.Except
 import Control.Natural
 
-import Refine.Backend.Repository.Darcs()
+import Refine.Backend.Repository.Core
+import Refine.Backend.Repository.Darcs
 
 
+createRunRepo :: IO (Repo :~> ExceptT RepoError IO)
+createRunRepo = do
 
-data RepoError = RepoError String
-
-newtype Repo a = Repo { unRepo :: ExceptT RepoError IO a }
-  deriving
-    ( Functor
-    , Applicative
-    , Monad
-    , MonadError RepoError
-    )
-
-createRepo :: IO (Repo :~> ExceptT RepoError IO)
-createRepo = do
-  pure $ Nat unRepo
+  pure $ Nat (wrapErrors . runExceptT. unRepo)
+  where
+    wrapErrors :: IO (Either RepoError a) -> ExceptT RepoError IO a
+    wrapErrors m = do
+      r <- liftIO (try m)
+      either (throwError . RepoException) (either throwError pure) r

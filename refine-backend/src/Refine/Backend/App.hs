@@ -1,36 +1,16 @@
-module Refine.Backend.App where
+module Refine.Backend.App
+  ( module Refine.Backend.App.Core
+  , module Refine.Backend.App.VDoc
+  , runApp
+  ) where
 
 import Control.Monad.Except
-
-import Control.Natural
 import Control.Monad.Reader
+import Control.Natural
 
-import Refine.Backend.Database
-import Refine.Backend.Repository()
+import Refine.Backend.App.Core
+import Refine.Backend.App.VDoc
 
 
-
-type RunDB db = db :~> ExceptT DBError IO
-
--- | Application monad handles
--- * database connection
--- TODO:
--- * user authorization
--- * user authentication
--- * event logging
-newtype App db a = App { unApp :: ReaderT (RunDB db) (ExceptT AppError IO) a }
-  deriving
-    ( Functor
-    , Applicative
-    , Monad
-    , MonadReader (RunDB db)
-    , MonadError AppError
-    )
-
-data AppError = AppError String
-
-runApp :: RunDB db -> App db :~> ExceptT AppError IO
-runApp runDB = Nat $ (`runReaderT` runDB) . unApp
-
-appIO :: IO a -> App db a
-appIO = App . liftIO
+runApp :: RunDB db -> RunDocRepo -> App db :~> ExceptT AppError IO
+runApp runDB runDocRepo = Nat $ (`runReaderT` (AppContext runDB runDocRepo)) . unApp

@@ -4,6 +4,7 @@ import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 
 import Refine.Common.Prelude
+import Refine.Common.Patch
 import Refine.Prelude.TH
 
 
@@ -14,11 +15,26 @@ data Document = Document
   deriving (Eq, Ord, Show, Read, Generic)
 
 data ProtoVDoc = ProtoVDoc
+  { _protoVDocTitle :: ST
+  , _protoVDocDesc  :: ST
+  }
   deriving (Eq, Ord, Show, Read, Generic)
 
-data VDoc = VDoc {
-    _vdocTitle       :: ST
-  , _vdocDescription :: ST
+type RepoId = ST
+
+data VDocRepository = VDocRepository
+  { _vdocRepositoryId    :: ID VDocRepository
+  , _vdocRepositoryName  :: ST
+  , _vdocDarcsRepository :: RepoId
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
+
+data VDoc = VDoc
+  { _vdocId           :: ID VDoc
+  , _vdocTitle        :: ST
+  , _vdocDescription  :: ST
+  , _vdocRepository   :: ID VDocRepository
+  , _vdocHeadPatch    :: ID Patch
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -39,6 +55,7 @@ type instance Proto VDoc = ProtoVDoc
 makeRefineType ''ConflictResolution
 makeRefineType ''Document
 makeRefineType ''ProtoVDoc
+makeRefineType ''VDocRepository
 makeRefineType ''VDoc
 makeRefineType ''VDocTitle
 makeRefineType ''VDocAbstract

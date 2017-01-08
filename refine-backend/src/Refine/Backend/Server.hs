@@ -3,14 +3,16 @@ module Refine.Backend.Server where
 import Prelude hiding ((.), id)
 import Control.Category
 
+import Control.Natural (($$))
 import Control.Monad.Except
 import Data.String.Conversions (cs)
 
 import Refine.Backend.App
+import Refine.Backend.App.MigrateDB
 import Refine.Backend.Database
 import Refine.Backend.Natural
+import Refine.Backend.Repository
 import Refine.Common.Rest
-import Refine.Common.Types
 import Servant
 
 import Network.Wai.Handler.Warp as Warp
@@ -19,24 +21,32 @@ import Network.Wai.Handler.Warp as Warp
 startBackend :: IO ()
 startBackend = do
 
-  runDb <- createDBRunner $ DBOnDisk "refine.db" -- DBInMemory
+  runDb      <- createDBRunner $ DBOnDisk "refine.db"
+  runDocRepo <- createRunRepo
+
+  void $ (natThrowError . runApp runDb runDocRepo) $$ do
+    migrateDB
 
   Warp.runSettings Warp.defaultSettings
-    $ Servant.serve (Proxy :: Proxy RefineAPI) (serverT runDb refineApi)
+    . Servant.serve (Proxy :: Proxy RefineAPI)
+    $ serverT runDb runDocRepo refineApi
 
 
-serverT :: RunDB m -> ServerT RefineAPI (App m) -> Server RefineAPI
-serverT runDb = enter (toServantError . cnToSn (runApp runDb))
+serverT :: RunDB m -> RunDocRepo -> ServerT RefineAPI (App m) -> Server RefineAPI
+serverT b r = enter (toServantError . cnToSn (runApp b r))
 
 
 toServantError :: (Monad m) => ExceptT AppError m :~> ExceptT ServantErr m
 toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError) pure)
   where
+    -- FIXME: Render JSON from the errors
     fromAppError :: AppError -> ServantErr
-    fromAppError (AppError msg) = err500 { errBody = cs msg }
+    fromAppError (AppError        msg)      = err500 { errBody = cs msg }
+    fromAppError (AppDBError      dbError)  = err500 { errBody = cs $ show dbError }
+    fromAppError (AppDocRepoError docError) = err500 { errBody = cs $ show docError }
 
 
-refineApi :: ServerT RefineAPI (App db)
+refineApi :: ServerT RefineAPI (App DB)
 refineApi =
         listVDocInfos
   :<|>  getVDoc
@@ -57,56 +67,50 @@ refineApi =
   :<|>  setVote
   :<|>  rmVote
 
-listVDocInfos :: ServerT ListVDocInfos (App db)
+listVDocInfos :: ServerT ListVDocInfos (App DB)
 listVDocInfos = undefined
 
-getVDoc :: ServerT GetVDoc (App db)
-getVDoc _ = return $ VDoc "title" "desc"
-
-addVDoc :: ServerT AddVDoc (App db)
-addVDoc = undefined
-
-putTitle :: ServerT PutTitle (App db)
+putTitle :: ServerT PutTitle (App DB)
 putTitle = undefined
 
-putAbstract :: ServerT PutAbstract (App db)
+putAbstract :: ServerT PutAbstract (App DB)
 putAbstract = undefined
 
-noteVisibility :: ServerT NoteVisibility (App db)
+noteVisibility :: ServerT NoteVisibility (App DB)
 noteVisibility = undefined
 
-rmVDoc :: ServerT RmVDoc (App db)
+rmVDoc :: ServerT RmVDoc (App DB)
 rmVDoc = undefined
 
-getVersion :: ServerT GetVersion (App db)
+getVersion :: ServerT GetVersion (App DB)
 getVersion = undefined
 
-addPatch :: ServerT AddPatch (App db)
+addPatch :: ServerT AddPatch (App DB)
 addPatch = undefined
 
-rmPatch :: ServerT RmPatch (App db)
+rmPatch :: ServerT RmPatch (App DB)
 rmPatch = undefined
 
-mergePatch :: ServerT MergePatch (App db)
+mergePatch :: ServerT MergePatch (App DB)
 mergePatch = undefined
 
-rebasePatch :: ServerT RebasePatch (App db)
+rebasePatch :: ServerT RebasePatch (App DB)
 rebasePatch = undefined
 
-addComment :: ServerT AddComment (App db)
+addComment :: ServerT AddComment (App DB)
 addComment = undefined
 
-rmComment :: ServerT RmComment (App db)
+rmComment :: ServerT RmComment (App DB)
 rmComment = undefined
 
-addNote :: ServerT AddNote (App db)
+addNote :: ServerT AddNote (App DB)
 addNote = undefined
 
-rmNote :: ServerT RmNote (App db)
+rmNote :: ServerT RmNote (App DB)
 rmNote = undefined
 
-setVote :: ServerT SetVote (App db)
+setVote :: ServerT SetVote (App DB)
 setVote = undefined
 
-rmVote :: ServerT RmVote (App db)
+rmVote :: ServerT RmVote (App DB)
 rmVote = undefined

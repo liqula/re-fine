@@ -27,6 +27,7 @@ data DBError
   = DBError String
   | DBNotFound String
   | DBException SomeException
+  deriving (Show)
 
 notFound :: String -> DB a
 notFound = DB . throwError . DBNotFound

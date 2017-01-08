@@ -15,20 +15,23 @@ import Refine.Common.Prelude
 
 
 
-share [mkPersist sqlSettings, mkMigrate "refineMigrate"] [persistLowerCase|
+share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
 User
     name        Text
 
 VDoc
     title       Text
     description Text
+    repository  RepositoryId
+    headId      CommitId
 
-Patch
+Commit
     description Text
     commitHash  Text
 
 Repository
-    hash        Text
+    name        Text
+    repoId      Text
 
 Comment
     text        Text
@@ -46,26 +49,27 @@ Vote
 VR
     vdoc        VDocId
     repository  RepositoryId
+    UniVR vdoc repository
 
-VP
-    vdoc        VDocId
-    patch       PatchId
-    UniqVP vdoc patch
+RC
+    repository  RepositoryId
+    commit      CommitId
+    UniVC repository commit
 
-PC
-    patch       PatchId
+CC
+    commit      CommitId
     comment     CommentId
-    UniPC patch comment
+    UniCC commit comment
 
-PN
-    patch       PatchId
+CN
+    commit      CommitId
     note        NoteId
-    UniPN patch note
+    UniCN commit note
 
-PV
-    patch       PatchId
+CV
+    commit      CommitId
     vote        VoteId
-    UniPV patch vote
+    UniPV commit vote
 |]
 
 -- * helpers
@@ -75,19 +79,23 @@ type family EntityRep c = b | b -> c
 
 idToKey :: (ToBackendKey SqlBackend (EntityRep a))
         => ID a -> Key (EntityRep a)
-idToKey (ID vid) = toSqlKey vid
+idToKey = toSqlKey . _unID
+
+keyToId :: (ToBackendKey SqlBackend (EntityRep a))
+        => Key (EntityRep a) -> ID a
+keyToId = ID . fromSqlKey
 
 -- * eliminators
 
 makeElim ''VDoc
-makeElim ''Patch
+makeElim ''Commit
 makeElim ''Repository
 makeElim ''Comment
 makeElim ''Note
 makeElim ''Vote
 
 makeElim ''VR
-makeElim ''VP
-makeElim ''PC
-makeElim ''PN
-makeElim ''PV
+makeElim ''RC
+makeElim ''CC
+makeElim ''CN
+makeElim ''CV
