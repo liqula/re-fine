@@ -9,6 +9,6 @@ create :: DocRepo Repository
 create = do
   pure $ Repository "repo" "repo-1"
 
-commit :: Repository -> Document -> DocRepo Commit
+commit :: Repository -> Version -> DocRepo Commit
 commit _r _d = pure $ Commit "ffffff"
 

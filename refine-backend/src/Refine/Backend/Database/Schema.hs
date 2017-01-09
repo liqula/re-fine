@@ -23,7 +23,6 @@ VDoc
     title       Text
     description Text
     repository  RepositoryId
-    headId      CommitId
 
 Commit
     description Text
@@ -32,6 +31,7 @@ Commit
 Repository
     name        Text
     repoId      Text
+    headId      CommitId
 
 Comment
     text        Text
@@ -45,6 +45,8 @@ Note
 Vote
     value       Text
     voter       UserId
+
+-- Connection tables
 
 VR
     vdoc        VDocId
@@ -71,6 +73,7 @@ CV
     vote        VoteId
     UniPV commit vote
 |]
+
 
 -- * helpers
 

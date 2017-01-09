@@ -41,7 +41,7 @@ toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError)
   where
     -- FIXME: Render JSON from the errors
     fromAppError :: AppError -> ServantErr
-    fromAppError (AppError        msg)      = err500 { errBody = cs msg }
+    fromAppError (AppUnknownError msg)      = err500 { errBody = cs msg }
     fromAppError (AppDBError      dbError)  = err500 { errBody = cs $ show dbError }
     fromAppError (AppDocRepoError docError) = err500 { errBody = cs $ show docError }
 

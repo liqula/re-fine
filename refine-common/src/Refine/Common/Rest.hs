@@ -65,7 +65,7 @@ type RmVDoc
 
 type GetVersion
   = "r" :> "patch" :> Capture "patchkey" (ID Patch)  -- TODO: consistency (like above).
-    :> Get '[JSON] Document
+    :> Get '[JSON] Version
 
 type AddPatch
   = "r" :> "patch" :> Capture "patchkey" (ID Patch)

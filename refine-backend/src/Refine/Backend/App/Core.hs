@@ -37,7 +37,7 @@ newtype App db a = App { unApp :: ReaderT (AppContext db) (ExceptT AppError IO) 
     )
 
 data AppError
-  = AppError String
+  = AppUnknownError String
   | AppDBError DBError
   | AppDocRepoError DocRepoError
   deriving (Show)

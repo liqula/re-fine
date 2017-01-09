@@ -9,7 +9,7 @@ import Data.String.Conversions (ST)
 
 
 data DocRepoError
-  = DocRepoError String
+  = DocRepoUnknownError String
   | DocRepoException SomeException
   deriving (Show)
 

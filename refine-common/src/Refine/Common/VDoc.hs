@@ -11,12 +11,10 @@ import Refine.Prelude.TH
 data ConflictResolution = ConflictResolution
   deriving (Eq, Ord, Show, Read, Generic)
 
-data Document = Document
-  deriving (Eq, Ord, Show, Read, Generic)
-
 data ProtoVDoc = ProtoVDoc
-  { _protoVDocTitle :: ST
-  , _protoVDocDesc  :: ST
+  { _protoVDocTitle   :: ST
+  , _protoVDocDesc    :: ST
+  , _protoVDocVersion :: Version
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -26,6 +24,7 @@ data VDocRepository = VDocRepository
   { _vdocRepositoryId    :: ID VDocRepository
   , _vdocRepositoryName  :: ST
   , _vdocDarcsRepository :: RepoId
+  , _vdocHeadPatch       :: ID Patch
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -34,7 +33,6 @@ data VDoc = VDoc
   , _vdocTitle        :: ST
   , _vdocDescription  :: ST
   , _vdocRepository   :: ID VDocRepository
-  , _vdocHeadPatch    :: ID Patch
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -47,16 +45,20 @@ newtype VDocAbstract = VDocAbstract { unVDocAbstract :: ST }
 data VDocInfo = VDocInfo
   deriving (Eq, Ord, Show, Read, Generic)
 
+-- | Represents a version of a document under version control
+data Version = Version
+  deriving (Eq, Ord, Show, Read, Generic)
+
 
 -- * prototypes
 
 type instance Proto VDoc = ProtoVDoc
 
 makeRefineType ''ConflictResolution
-makeRefineType ''Document
 makeRefineType ''ProtoVDoc
-makeRefineType ''VDocRepository
 makeRefineType ''VDoc
-makeRefineType ''VDocTitle
 makeRefineType ''VDocAbstract
 makeRefineType ''VDocInfo
+makeRefineType ''VDocRepository
+makeRefineType ''VDocTitle
+makeRefineType ''Version

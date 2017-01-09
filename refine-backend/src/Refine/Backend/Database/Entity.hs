@@ -58,11 +58,11 @@ loadVDoc vid =
       (idNotFound vid)
       (pure . S.vDocElim toVDoc)
   where
-    toVDoc t d r h = VDoc vid t d (S.keyToId r) (S.keyToId h)
+    toVDoc t d r = VDoc vid t d (S.keyToId r)
 
 -- NOTES: How to handle associations? What to update, what to keep?
 vDocToRecord :: VDoc -> DB S.VDoc
-vDocToRecord (VDoc _i t d r h) = pure (S.VDoc t d (S.idToKey r) (S.idToKey h))
+vDocToRecord (VDoc _i t d r) = pure (S.VDoc t d (S.idToKey r))
 
 updateVDoc :: ID VDoc -> VDoc -> DB ()
 updateVDoc vid vdoc = do
@@ -89,30 +89,28 @@ updatePatch pid patch = do
   record <- patchToRecord patch
   liftDB $ replace (S.idToKey pid) record
 
-createRepo :: DocRepo.Repository -> DB VDocRepository
-createRepo (DocRepo.Repository name repoId) = do
-  key <- liftDB . insert $ S.Repository name repoId
-  pure $ VDocRepository (S.keyToId key) name repoId
-
-createPatch :: VDocRepository -> DocRepo.Commit -> DB Patch
-createPatch vr c = do
-  let desc = "" -- TODO
+createRepo :: DocRepo.Repository -> ID Patch -> DB VDocRepository
+createRepo (DocRepo.Repository name repoId) pid = do
   key <- liftDB $ do
-    k <- insert $ S.Commit desc (c ^. DocRepo.commitHash)
-    void . insert $ S.RC (vr ^. vdocRepositoryId . to S.idToKey) k
-    pure k
+    key <- insert $ S.Repository name repoId (S.idToKey pid)
+    void . insert $ S.RC key (S.idToKey pid)
+    pure key
+  pure $ VDocRepository (S.keyToId key) name repoId pid
+
+createPatch :: DocRepo.Commit -> DB Patch
+createPatch c = do
+  let desc = "" -- TODO
+  key <- liftDB . insert $ S.Commit desc (c ^. DocRepo.commitHash)
   pure $ Patch (S.keyToId key) desc (c ^. DocRepo.commitHash)
 
-createVDoc :: Proto VDoc -> VDocRepository -> Patch -> DB VDoc
-createVDoc pv vr p = do
+createVDoc :: Proto VDoc -> VDocRepository -> DB VDoc
+createVDoc pv vr = do
   key <- liftDB . insert $ S.VDoc
             (pv ^. protoVDocTitle)
             (pv ^. protoVDocDesc)
             (vr ^. vdocRepositoryId . to S.idToKey)
-            (p ^. patchId . to S.idToKey)
   pure $ VDoc
     (S.keyToId key)
     (pv ^. protoVDocTitle)
     (pv ^. protoVDocDesc)
     (vr ^. vdocRepositoryId)
-    (p ^. patchId)
