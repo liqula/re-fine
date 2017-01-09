@@ -5,7 +5,7 @@ import Refine.Common.VDoc
 import Refine.Backend.App.Core
 import Refine.Backend.Database (DB)
 import Refine.Backend.Database.Entity
-import qualified Refine.Backend.Repository as Repo
+import qualified Refine.Backend.DocRepo as DocRepo
 
 
 
@@ -14,8 +14,8 @@ addVDoc pv = do
   appLog "addVDoc"
   let value = undefined
   (dr, dp) <- docRepo $ do
-    dr <- Repo.create
-    dp <- Repo.commit dr value
+    dr <- DocRepo.create
+    dp <- DocRepo.commit dr value
     pure (dr, dp)
   db $ do
     r <- createRepo dr

@@ -7,12 +7,12 @@ import Control.Natural
 import Control.Monad.Reader
 
 import Refine.Backend.Database
-import Refine.Backend.Repository
+import Refine.Backend.DocRepo
 
 
 
-type RunDB db   = db   :~> ExceptT DBError   IO
-type RunDocRepo = Repo :~> ExceptT RepoError IO
+type RunDB db   = db      :~> ExceptT DBError      IO
+type RunDocRepo = DocRepo :~> ExceptT DocRepoError IO
 
 data AppContext db = AppContext
   { _appRunDB      :: RunDB db
@@ -39,7 +39,7 @@ newtype App db a = App { unApp :: ReaderT (AppContext db) (ExceptT AppError IO) 
 data AppError
   = AppError String
   | AppDBError DBError
-  | AppDocRepoError RepoError
+  | AppDocRepoError DocRepoError
   deriving (Show)
 
 appIO :: IO a -> App db a
@@ -51,7 +51,7 @@ db m = App $ do
   r <- liftIO (runExceptT (runDB m))
   either (throwError . AppDBError) pure r
 
-docRepo :: Repo a -> App db a
+docRepo :: DocRepo a -> App db a
 docRepo m = App $ do
   (Nat runDocRepo) <- view appRunDocRepo
   r <- liftIO (runExceptT (runDocRepo m))

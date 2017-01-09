@@ -9,7 +9,7 @@ import Lentil.Types as L
 
 import Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
-import qualified Refine.Backend.Repository.Core as Repo
+import qualified Refine.Backend.DocRepo.Core as DocRepo
 import Refine.Common.Types
 
 import Database.Persist
@@ -89,19 +89,19 @@ updatePatch pid patch = do
   record <- patchToRecord patch
   liftDB $ replace (S.idToKey pid) record
 
-createRepo :: Repo.Repository -> DB VDocRepository
-createRepo (Repo.Repository name repoId) = do
+createRepo :: DocRepo.Repository -> DB VDocRepository
+createRepo (DocRepo.Repository name repoId) = do
   key <- liftDB . insert $ S.Repository name repoId
   pure $ VDocRepository (S.keyToId key) name repoId
 
-createPatch :: VDocRepository -> Repo.Commit -> DB Patch
+createPatch :: VDocRepository -> DocRepo.Commit -> DB Patch
 createPatch vr c = do
   let desc = "" -- TODO
   key <- liftDB $ do
-    k <- insert $ S.Commit desc (c ^. Repo.commitHash)
+    k <- insert $ S.Commit desc (c ^. DocRepo.commitHash)
     void . insert $ S.RC (vr ^. vdocRepositoryId . to S.idToKey) k
     pure k
-  pure $ Patch (S.keyToId key) desc (c ^. Repo.commitHash)
+  pure $ Patch (S.keyToId key) desc (c ^. DocRepo.commitHash)
 
 createVDoc :: Proto VDoc -> VDocRepository -> Patch -> DB VDoc
 createVDoc pv vr p = do

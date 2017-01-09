@@ -1,4 +1,4 @@
-module Refine.Backend.Repository.Core where
+module Refine.Backend.DocRepo.Core where
 
 import Control.Lens (makeLenses)
 import Control.Exception (SomeException)
@@ -8,22 +8,21 @@ import Data.String.Conversions (ST)
 
 
 
-data RepoError
-  = RepoError String
-  | RepoException SomeException
+data DocRepoError
+  = DocRepoError String
+  | DocRepoException SomeException
   deriving (Show)
 
--- TODO: Rename to DocRepo
-newtype Repo a = Repo { unRepo :: ExceptT RepoError IO a }
+newtype DocRepo a = DocRepo { unDocRepo :: ExceptT DocRepoError IO a }
   deriving
     ( Functor
     , Applicative
     , Monad
-    , MonadError RepoError
+    , MonadError DocRepoError
     )
 
-repoIO :: IO a -> Repo a
-repoIO = Repo . liftIO
+docRepoIO :: IO a -> DocRepo a
+docRepoIO = DocRepo . liftIO
 
 type RepoID     = ST
 type CommitHash = ST

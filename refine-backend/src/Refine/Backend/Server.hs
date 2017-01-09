@@ -11,7 +11,7 @@ import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
 import Refine.Backend.Database
 import Refine.Backend.Natural
-import Refine.Backend.Repository
+import Refine.Backend.DocRepo
 import Refine.Common.Rest
 import Servant
 
