@@ -21,6 +21,7 @@ default-extensions:
   - OverloadedStrings
   - RankNTypes
   - ScopedTypeVariables
+  - StandaloneDeriving
   - TemplateHaskell
   - TypeApplications
   - TypeFamilies

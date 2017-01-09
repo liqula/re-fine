@@ -107,10 +107,10 @@ createVDoc :: Proto VDoc -> VDocRepository -> DB VDoc
 createVDoc pv vr = do
   key <- liftDB . insert $ S.VDoc
             (pv ^. protoVDocTitle)
-            (pv ^. protoVDocDesc)
+            (pv ^. protoVDocDescription)
             (vr ^. vdocRepositoryId . to S.idToKey)
   pure $ VDoc
     (S.keyToId key)
     (pv ^. protoVDocTitle)
-    (pv ^. protoVDocDesc)
+    (pv ^. protoVDocDescription)
     (vr ^. vdocRepositoryId)

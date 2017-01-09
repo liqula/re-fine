@@ -10,6 +10,7 @@ import Data.String.Conversions (cs)
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
 import Refine.Backend.Database
+import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.DocRepo
 import Refine.Common.Rest
@@ -23,17 +24,18 @@ startBackend = do
 
   runDb      <- createDBRunner $ DBOnDisk "refine.db"
   runDocRepo <- createRunRepo
+  let logger = Logger putStrLn
 
-  void $ (natThrowError . runApp runDb runDocRepo) $$ do
+  void $ (natThrowError . runApp runDb runDocRepo logger) $$ do
     migrateDB
 
   Warp.runSettings Warp.defaultSettings
     . Servant.serve (Proxy :: Proxy RefineAPI)
-    $ serverT runDb runDocRepo refineApi
+    $ serverT runDb runDocRepo logger refineApi
 
 
-serverT :: RunDB m -> RunDocRepo -> ServerT RefineAPI (App m) -> Server RefineAPI
-serverT b r = enter (toServantError . cnToSn (runApp b r))
+serverT :: RunDB m -> RunDocRepo -> Logger -> ServerT RefineAPI (App m) -> Server RefineAPI
+serverT b r l = enter (toServantError . cnToSn (runApp b r l))
 
 
 toServantError :: (Monad m) => ExceptT AppError m :~> ExceptT ServantErr m

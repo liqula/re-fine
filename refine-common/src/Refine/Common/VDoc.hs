@@ -12,9 +12,9 @@ data ConflictResolution = ConflictResolution
   deriving (Eq, Ord, Show, Read, Generic)
 
 data ProtoVDoc = ProtoVDoc
-  { _protoVDocTitle   :: ST
-  , _protoVDocDesc    :: ST
-  , _protoVDocVersion :: Version
+  { _protoVDocTitle       :: ST
+  , _protoVDocDescription :: ST
+  , _protoVDocVersion     :: Version
   }
   deriving (Eq, Ord, Show, Read, Generic)
 

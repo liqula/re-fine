@@ -8,6 +8,7 @@ import Control.Monad.Reader
 
 import Refine.Backend.Database
 import Refine.Backend.DocRepo
+import Refine.Backend.Logger
 
 
 
@@ -17,6 +18,7 @@ type RunDocRepo = DocRepo :~> ExceptT DocRepoError IO
 data AppContext db = AppContext
   { _appRunDB      :: RunDB db
   , _appRunDocRepo :: RunDocRepo
+  , _appLogger     :: Logger
   }
 
 makeLenses ''AppContext
@@ -57,6 +59,7 @@ docRepo m = App $ do
   r <- liftIO (runExceptT (runDocRepo m))
   either (throwError . AppDocRepoError) pure r
 
--- FIXME: More delicate logging
 appLog :: String -> App db ()
-appLog = appIO . putStrLn
+appLog msg = App $ do
+  logger <- view appLogger
+  liftIO $ unLogger logger msg

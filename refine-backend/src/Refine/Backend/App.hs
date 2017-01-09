@@ -10,7 +10,9 @@ import Control.Natural
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.VDoc
+import Refine.Backend.Logger
 
 
-runApp :: RunDB db -> RunDocRepo -> App db :~> ExceptT AppError IO
-runApp runDB runDocRepo = Nat $ (`runReaderT` AppContext runDB runDocRepo) . unApp
+runApp :: RunDB db -> RunDocRepo -> Logger -> App db :~> ExceptT AppError IO
+runApp runDB runDocRepo logger =
+  Nat $ (`runReaderT` AppContext runDB runDocRepo logger) . unApp

@@ -23,6 +23,7 @@ default-extensions:
   - OverloadedStrings
   - RankNTypes
   - ScopedTypeVariables
+  - StandaloneDeriving
   - TemplateHaskell
   - TypeApplications
   - TypeFamilies
@@ -69,6 +70,9 @@ tests:
       - test
       - src
     dependencies:
+      - containers
+      - directory
       - hspec
       - hspec-core
       - hspec-discover
+      - QuickCheck
