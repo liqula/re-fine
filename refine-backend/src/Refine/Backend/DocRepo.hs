@@ -13,7 +13,7 @@ import Refine.Backend.DocRepo.Darcs
 
 
 createRunRepo :: IO (DocRepo :~> ExceptT DocRepoError IO)
-createRunRepo = pure $ Nat (wrapErrors . runExceptT. unDocRepo)
+createRunRepo = pure $ Nat (wrapErrors . runExceptT . unDocRepo)
   where
     wrapErrors :: IO (Either DocRepoError a) -> ExceptT DocRepoError IO a
     wrapErrors m = do
