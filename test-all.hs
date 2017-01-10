@@ -42,7 +42,7 @@ setupPkg target = withCurrentDirectory target $ do
 
 hlintPkg :: FilePath -> IO ()
 hlintPkg target = do
-  ExitSuccess <- system $ "stack exec -- ~/.local/bin/hlint --hint=./refine-prelude/HLint.hs ./" <> target <> "/src ./" <> target <> "/test"
+  ExitSuccess <- system $ "stack exec -- ~/.local/bin/hlint -XTypeApplications --hint=./refine-prelude/HLint.hs ./" <> target <> "/src ./" <> target <> "/test"
     -- FIXME: run ./app by hlint as well if available.
     -- FUTUREWORK: use --refactor to apply suggestions to working copy (requires apply-refact package).
   pure ()
