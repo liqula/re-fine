@@ -3,8 +3,8 @@ module Refine.Common.Types.Note where
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 
-import Refine.Common.Chunk
-import Refine.Common.Prelude
+import Refine.Common.Types.Chunk
+import Refine.Common.Types.Prelude
 import Refine.Prelude.TH
 
 

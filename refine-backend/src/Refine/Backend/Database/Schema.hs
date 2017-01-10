@@ -11,27 +11,27 @@ import Data.Text
 import Database.Persist
 import Database.Persist.Sql
 import Database.Persist.TH
-import Refine.Common.Prelude
 
+import Refine.Common.Types.Prelude
 
 
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
 User
-    name        Text
+    name         Text
 
 VDoc
-    title       Text
-    description Text
-    repository  RepositoryId
+    title        Text  -- TODO: use Title here
+    desc         Text  -- TODO: use Abstract here
+    repo         RepoId
 
-Commit
-    description Text
-    commitHash  Text
+Patch
+    desc        Text
+    patchHandle Text  -- TODO: use PatchHandle here.
 
-Repository
+Repo
     name        Text
-    repoId      Text
-    headId      CommitId
+    repoHandle  Text  -- TODO: use RepoHandle here.
+    headId      PatchId
 
 Comment
     text        Text
@@ -50,26 +50,26 @@ Vote
 
 VR
     vdoc        VDocId
-    repository  RepositoryId
+    repository  RepoId
     UniVR vdoc repository
 
 RC
-    repository  RepositoryId
-    commit      CommitId
+    repository  RepoId
+    commit      PatchId
     UniVC repository commit
 
 CC
-    commit      CommitId
+    commit      PatchId
     comment     CommentId
     UniCC commit comment
 
 CN
-    commit      CommitId
+    commit      PatchId
     note        NoteId
     UniCN commit note
 
 CV
-    commit      CommitId
+    commit      PatchId
     vote        VoteId
     UniPV commit vote
 |]
@@ -91,8 +91,8 @@ keyToId = ID . fromSqlKey
 -- * eliminators
 
 makeElim ''VDoc
-makeElim ''Commit
-makeElim ''Repository
+makeElim ''Patch
+makeElim ''Repo
 makeElim ''Comment
 makeElim ''Note
 makeElim ''Vote

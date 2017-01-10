@@ -15,14 +15,14 @@ import System.Directory (withCurrentDirectory, removeFile)
 import System.FilePath ((</>))
 import System.IO.Temp (withSystemTempDirectory)
 
-import Refine.Backend.App
+import Refine.Backend.App as App
 import Refine.Backend.App.MigrateDB
 import Refine.Backend.Database
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Natural
-import Refine.Common.Prelude
-import Refine.Common.VDoc
+import Refine.Common.Types.Prelude
+import Refine.Common.Types.VDoc
 
 import Test.Hspec
 import Test.QuickCheck
@@ -87,20 +87,20 @@ runProgram = foldl (>>) (pure ()) . map runCmd
 
 runCmd :: Cmd -> StateT VDocs (PropertyM (App DB)) ()
 runCmd (AddVDoc pv) = do
-  vdoc   <- lift . run $ addVDoc pv
+  vdoc   <- lift . run $ App.createVDoc pv
   lastId <- gets $ view vdocLast
   vdocMap  %= Map.insert lastId (vdoc ^. vdocId)
   vdocLast %= (+1)
   lift . assert $
-    (vdoc ^. vdocTitle       == pv ^. protoVDocTitle) &&
-    (vdoc ^. vdocDescription == pv ^. protoVDocDescription)
+    (vdoc ^. vdocTitle    == pv ^. protoVDocTitle) &&
+    (vdoc ^. vdocAbstract == pv ^. protoVDocAbstract)
 
 runCmd (GetVDoc v pv) = do
   Just vid <- gets . view $ vdocMap . at v
   vdoc <- lift . run $ getVDoc vid
   lift . assert $
-    (vdoc ^. vdocTitle       == pv ^. protoVDocTitle) &&
-    (vdoc ^. vdocDescription == pv ^. protoVDocDescription)
+    (vdoc ^. vdocTitle    == pv ^. protoVDocTitle) &&
+    (vdoc ^. vdocAbstract == pv ^. protoVDocAbstract)
 
 
 -- * generators
@@ -108,14 +108,14 @@ runCmd (GetVDoc v pv) = do
 word :: (ConvertibleStrings String s) => Gen s
 word = cs <$> listOf (elements ['a' .. 'z'])
 
-version :: Gen Version
-version = pure Version
+version :: Gen VDocVersion
+version = pure $ VDocVersion ""
 
 protoVDoc :: Gen (Proto VDoc)
 protoVDoc =
   ProtoVDoc
-    <$> word
-    <*> (mconcat <$> listOf word)
+    <$> (Title <$> word)
+    <*> (Abstract . mconcat <$> listOf word)
     <*> version
 
 sampleProgram :: Gen [Cmd]

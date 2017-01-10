@@ -1,5 +1,6 @@
 module Refine.Backend.DocRepo.Core where
 
+import GHC.Generics (Generic)
 import Control.Lens (makeLenses)
 import Control.Exception (SomeException)
 import Control.Monad.Except
@@ -24,17 +25,13 @@ newtype DocRepo a = DocRepo { unDocRepo :: ExceptT DocRepoError IO a }
 docRepoIO :: IO a -> DocRepo a
 docRepoIO = DocRepo . liftIO
 
-type RepoID  = ST
-type PatchID = ST
 
-data Repository = Repository
-  { _repoName :: ST
-  , _repoId   :: RepoID
-  }
+newtype RepoHandle = RepoHandle { _unRepoHandle :: ST }
+  deriving (Eq, Ord, Show, Read, Generic)
 
-newtype Patch = Patch
-  { _patchID :: PatchID
-  }
+newtype PatchHandle = PatchHandle { _unPatchHandle :: ST }
+  deriving (Eq, Ord, Show, Read, Generic)
 
-makeLenses ''Repository
-makeLenses ''Patch
+
+makeLenses ''RepoHandle
+makeLenses ''PatchHandle

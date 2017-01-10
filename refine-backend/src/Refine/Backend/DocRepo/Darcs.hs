@@ -2,17 +2,17 @@ module Refine.Backend.DocRepo.Darcs where
 
 import Darcs.Patch()
 import Refine.Backend.DocRepo.Core
-import Refine.Common.VDoc
+import Refine.Common.Types.VDoc
 
 
-createRepo :: DocRepo Repository
-createRepo = pure $ Repository "repo" "repo-1"
+createRepo :: DocRepo RepoHandle
+createRepo = undefined
 
-createPatch :: Repository -> PatchID -> Version -> DocRepo Patch
-createPatch _repo _base _vers = pure $ Patch "ffffff"
+createPatch :: RepoHandle -> PatchHandle -> VDocVersion -> DocRepo PatchHandle
+createPatch _repo _base _vers = undefined
 
-createInitialPatch :: Repository -> Version -> DocRepo Patch
-createInitialPatch _repo _vers = pure $ Patch "ffffff"
+createInitialPatch :: RepoHandle -> VDocVersion -> DocRepo PatchHandle
+createInitialPatch _repo _vers = undefined
 
-getVersion :: RepoID -> PatchID -> DocRepo Version
+getVersion :: RepoHandle -> PatchHandle -> DocRepo VDocVersion
 getVersion = undefined

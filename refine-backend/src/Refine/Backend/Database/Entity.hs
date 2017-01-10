@@ -1,9 +1,11 @@
 {-# LANGUAGE FlexibleContexts #-}
+
 module Refine.Backend.Database.Entity where
 
 import Control.Lens ((^.), to)
 import Control.Monad (void)
 import Database.Persist
+import Data.String.Conversions (ST)
 import Data.Typeable
 import Lentil.Core (entityLens)
 import Lentil.Types as L
@@ -15,9 +17,9 @@ import Refine.Common.Types
 
 
 -- FIXME: Generate this as the part of the lentil library.
-type instance S.EntityRep VDoc           = S.VDoc
-type instance S.EntityRep Patch          = S.Commit
-type instance S.EntityRep VDocRepository = S.Repository
+type instance S.EntityRep VDoc     = S.VDoc
+type instance S.EntityRep Patch    = S.Patch
+type instance S.EntityRep VDocRepo = S.Repo
 
 {-
 Reading the domain structured datatypes is not a problem,
@@ -57,11 +59,12 @@ loadVDoc vid =
       (idNotFound vid)
       (pure . S.vDocElim toVDoc)
   where
-    toVDoc t d r = VDoc vid t d (S.keyToId r)
+    toVDoc :: ST -> ST -> Key S.Repo -> VDoc
+    toVDoc title abs repoid = VDoc vid (Title title) (Abstract abs) (S.keyToId repoid)
 
 -- NOTES: How to handle associations? What to update, what to keep?
 vDocToRecord :: VDoc -> DB S.VDoc
-vDocToRecord (VDoc _i t d r) = pure (S.VDoc t d (S.idToKey r))
+vDocToRecord (VDoc _i t a r) = pure (S.VDoc (t ^. unTitle :: ST) (a ^. unAbstract) (S.idToKey r))
 
 updateVDoc :: ID VDoc -> VDoc -> DB ()
 updateVDoc vid vdoc = do
@@ -69,47 +72,38 @@ updateVDoc vid vdoc = do
   liftDB $ replace (S.idToKey vid) record
 
 
-patchEntity :: L.Entity DB ID Patch Patch
-patchEntity = L.Entity loadPatch updatePatch
-
--- TODO: Rename patch to commit
 loadPatch :: ID Patch -> DB Patch
 loadPatch pid =
   (liftDB . get $ S.idToKey pid) >>=
     maybe
       (idNotFound pid)
-      (pure . S.commitElim (Patch pid))
+      (pure . S.patchElim toPatch)
+  where
+    toPatch :: ST -> ST -> Patch
+    toPatch desc _handle = Patch pid desc
 
-patchToRecord :: Patch -> DB S.Commit
-patchToRecord (Patch _id d h) = pure (S.Commit d h)
-
-updatePatch :: ID Patch -> Patch -> DB ()
-updatePatch pid patch = do
-  record <- patchToRecord patch
-  liftDB $ replace (S.idToKey pid) record
-
-createRepo :: DocRepo.Repository -> ID Patch -> DB VDocRepository
-createRepo (DocRepo.Repository name repoId) pid = do
+createRepo :: DocRepo.RepoHandle -> ID Patch -> DB VDocRepo
+createRepo repoh pid = do
   key <- liftDB $ do
-    key <- insert $ S.Repository name repoId (S.idToKey pid)
+    key <- insert $ S.Repo ("title" {- TODO -}) (repoh ^. DocRepo.unRepoHandle) (S.idToKey pid)
     void . insert $ S.RC key (S.idToKey pid)
     pure key
-  pure $ VDocRepository (S.keyToId key) name repoId pid
+  pure $ VDocRepo (S.keyToId key) pid
 
-createPatch :: DocRepo.Patch -> DB Patch
-createPatch c = do
+createPatch :: DocRepo.PatchHandle -> DB Patch
+createPatch p = do
   let desc = "" -- TODO
-  key <- liftDB . insert $ S.Commit desc (c ^. DocRepo.patchID)
-  pure $ Patch (S.keyToId key) desc (c ^. DocRepo.patchID)
+  key <- liftDB . insert $ S.Patch desc (p ^. DocRepo.unPatchHandle)
+  pure $ Patch (S.keyToId key) desc
 
-createVDoc :: Proto VDoc -> VDocRepository -> DB VDoc
+createVDoc :: Proto VDoc -> VDocRepo -> DB VDoc
 createVDoc pv vr = do
   key <- liftDB . insert $ S.VDoc
-            (pv ^. protoVDocTitle)
-            (pv ^. protoVDocDescription)
-            (vr ^. vdocRepositoryId . to S.idToKey)
+            (pv ^. protoVDocTitle . unTitle)
+            (pv ^. protoVDocAbstract . unAbstract)
+            (vr ^. vdocRepoID . to S.idToKey)
   pure $ VDoc
     (S.keyToId key)
     (pv ^. protoVDocTitle)
-    (pv ^. protoVDocDescription)
-    (vr ^. vdocRepositoryId)
+    (pv ^. protoVDocAbstract)
+    (vr ^. vdocRepoID)
