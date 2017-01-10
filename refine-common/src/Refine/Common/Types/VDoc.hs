@@ -1,4 +1,4 @@
-module Refine.Common.VDoc where
+module Refine.Common.Types.VDoc where
 
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)

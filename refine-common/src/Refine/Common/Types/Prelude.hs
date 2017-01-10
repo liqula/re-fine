@@ -1,5 +1,4 @@
-
-module Refine.Common.Prelude where
+module Refine.Common.Types.ID where
 
 import Control.DeepSeq
 import Control.Lens

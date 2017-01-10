@@ -1,4 +1,4 @@
-module Refine.Common.Vote where
+module Refine.Common.Types.Vote where
 
 import GHC.Generics (Generic)
 

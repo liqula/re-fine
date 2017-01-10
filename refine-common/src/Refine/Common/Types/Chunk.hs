@@ -1,4 +1,4 @@
-module Refine.Common.Chunk where
+module Refine.Common.Types.Chunk where
 
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)

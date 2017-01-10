@@ -1,4 +1,4 @@
-module Refine.Common.Patch where
+module Refine.Common.Types.Patch where
 
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)

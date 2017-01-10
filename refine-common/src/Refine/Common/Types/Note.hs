@@ -1,4 +1,4 @@
-module Refine.Common.Note where
+module Refine.Common.Types.Note where
 
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
