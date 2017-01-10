@@ -26,3 +26,7 @@ getVDoc :: ID VDoc -> App DB VDoc
 getVDoc i = do
   appLog "getVDoc"
   db $ loadVDoc i
+
+getVersion :: ID Patch -> App DB VDocVersion
+getVersion _ = do
+  pure $ VDocVersion "Refine.Backend.App.VDoc.getVersion"

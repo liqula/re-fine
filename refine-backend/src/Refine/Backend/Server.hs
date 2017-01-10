@@ -9,10 +9,10 @@ import Data.String.Conversions (cs)
 
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
-import Refine.Backend.Database
+import Refine.Backend.Database (DB, DBConfig(..), createDBRunner)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
-import Refine.Backend.DocRepo
+import Refine.Backend.DocRepo (createRunRepo)
 import Refine.Common.Rest
 import Servant
 
@@ -50,9 +50,8 @@ toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError)
 
 refineApi :: ServerT RefineAPI (App DB)
 refineApi =
-        listVDocInfos
-  :<|>  getVDoc
-  :<|>  addVDoc
+        getVDoc
+  :<|>  createVDoc
   :<|>  putTitle
   :<|>  putAbstract
   :<|>  noteVisibility
@@ -69,9 +68,6 @@ refineApi =
   :<|>  setVote
   :<|>  rmVote
 
-listVDocInfos :: ServerT ListVDocInfos (App DB)
-listVDocInfos = undefined
-
 putTitle :: ServerT PutTitle (App DB)
 putTitle = undefined
 
@@ -83,9 +79,6 @@ noteVisibility = undefined
 
 rmVDoc :: ServerT RmVDoc (App DB)
 rmVDoc = undefined
-
-getVersion :: ServerT GetVersion (App DB)
-getVersion = undefined
 
 addPatch :: ServerT AddPatch (App DB)
 addPatch = undefined

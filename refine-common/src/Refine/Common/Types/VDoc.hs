@@ -43,18 +43,25 @@ data Patch = Patch
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
+data ProtoPatch = ProtoPatch
+  deriving (Eq, Ord, Show, Read, Generic)
+
 data ConflictResolution = ConflictResolution
   deriving (Eq, Ord, Show, Read, Generic)
 
 
 -- * protos, instances
 
-type instance Proto VDoc = ProtoVDoc
+type instance Proto VDoc  = ProtoVDoc
+type instance Proto Patch = ProtoPatch
+
+-- * refine types
 
 makeRefineType ''VDoc
 makeRefineType ''ProtoVDoc
 makeRefineType ''VDocRepo
 makeRefineType ''Patch
+makeRefineType ''ProtoPatch
 makeRefineType ''ConflictResolution
 makeRefineType ''Title
 makeRefineType ''Abstract

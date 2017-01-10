@@ -6,8 +6,7 @@ import Refine.Common.Types
 
 
 type RefineAPI =
-        ListVDocInfos
-  :<|>  GetVDoc
+        GetVDoc
   :<|>  AddVDoc
   :<|>  PutTitle
   :<|>  PutAbstract
@@ -26,10 +25,6 @@ type RefineAPI =
   :<|>  RmVote
 
 
-type ListVDocInfos
-  = "r" :> "vdoc"
-    :> Get '[JSON] [VDocInfo]
-
 type GetVDoc
   = "r" :> "vdoc" :> Capture "vdockey" (ID VDoc)  -- TODO: consistency: "vdockey" vs. "vdocid".
     :> Get '[JSON] VDoc
@@ -42,11 +37,11 @@ type AddVDoc
 
 type PutTitle
   = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc) :> "title"
-    :> ReqBody '[JSON] VDocTitle :> Put '[JSON] ()
+    :> ReqBody '[JSON] Title :> Put '[JSON] ()
 
 type PutAbstract
   = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc) :> "abstract"
-    :> ReqBody '[JSON] VDocAbstract :> Put '[JSON] ()
+    :> ReqBody '[JSON] Abstract :> Put '[JSON] ()
 
 -- TODO: use Put for changing a value, Post for creating a new value, Delete for removing a value.
 -- this one is Put.
@@ -65,11 +60,11 @@ type RmVDoc
 
 type GetVersion
   = "r" :> "patch" :> Capture "patchkey" (ID Patch)  -- TODO: consistency (like above).
-    :> Get '[JSON] Version
+    :> Get '[JSON] VDocVersion
 
 type AddPatch
   = "r" :> "patch" :> Capture "patchkey" (ID Patch)
-    :> ReqBody '[JSON] PatchFromClient :> Post '[JSON] Patch
+    :> ReqBody '[JSON] (Proto Patch) :> Post '[JSON] Patch
 
 type RmPatch
   = "r" :> "patch" :> Capture "patchkey" (ID Patch)
