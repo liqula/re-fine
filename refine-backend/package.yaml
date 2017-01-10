@@ -13,26 +13,6 @@ maintainer:          mf@zerobuzz.net
 copyright:           2017-2022 zerobuzz.net
 category:            Web
 
-default-extensions:
-  # minimal list of un-controversial language extensions.  open to debate.
-  # NOTE: do not add OverloadedStrings here, it breaks sensei.  add it in the modules where it's needed.
-  - DataKinds
-  - DeriveFunctor
-  - DeriveGeneric
-  - ExplicitForAll
-  - FlexibleContexts
-  - FlexibleInstances
-  - GADTs
-  - GeneralizedNewtypeDeriving
-  - RankNTypes
-  - ScopedTypeVariables
-  - StandaloneDeriving
-  - TemplateHaskell
-  - TypeApplications
-  - TypeFamilies
-  - TypeFamilyDependencies
-  - TypeOperators
-
 ghc-options: -Wall -Werror
 
 dependencies:

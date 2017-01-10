@@ -13,19 +13,6 @@ maintainer:          mf@zerobuzz.net
 copyright:           2017-2022 zerobuzz.net
 category:            Web
 
-default-extensions:
-  - DataKinds
-  - DeriveGeneric
-  - ExplicitForAll
-  - GADTs
-  - RankNTypes
-  - ScopedTypeVariables
-  - StandaloneDeriving
-  - TemplateHaskell
-  - TypeApplications
-  - TypeFamilies
-  - TypeOperators
-
 ghc-options: -Wall -Werror
 
 dependencies:

@@ -1,4 +1,4 @@
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GADTs                      #-}
 module Refine.Common.HttpApiSpec where
 
 import Refine.Common.Types.Arbitrary()

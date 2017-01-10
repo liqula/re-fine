@@ -15,19 +15,6 @@ data-files:
 
 ghc-options: -Wall -Werror
 
-default-extensions:
-  - DataKinds
-  - DeriveGeneric
-  - ExplicitForAll
-  - GADTs
-  - RankNTypes
-  - ScopedTypeVariables
-  - StandaloneDeriving
-  - TemplateHaskell
-  - TypeApplications
-  - TypeFamilies
-  - TypeOperators
-
 dependencies:
   - aeson
   - base
