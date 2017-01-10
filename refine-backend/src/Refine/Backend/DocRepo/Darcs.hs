@@ -5,10 +5,11 @@ import Refine.Backend.DocRepo.Core
 import Refine.Common.VDoc
 
 
-create :: DocRepo Repository
-create = do
-  pure $ Repository "repo" "repo-1"
+createRepo :: DocRepo Repository
+createRepo = pure $ Repository "repo" "repo-1"
 
-commit :: Repository -> Version -> DocRepo Commit
-commit _r _d = pure $ Commit "ffffff"
+createPatch :: Repository -> PatchID -> Version -> DocRepo Patch
+createPatch _repo _base _vers = pure $ Patch "ffffff"
 
+getVersion :: RepoID -> PatchID -> DocRepo Version
+getVersion = undefined

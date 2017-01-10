@@ -97,11 +97,11 @@ createRepo (DocRepo.Repository name repoId) pid = do
     pure key
   pure $ VDocRepository (S.keyToId key) name repoId pid
 
-createPatch :: DocRepo.Commit -> DB Patch
+createPatch :: DocRepo.Patch -> DB Patch
 createPatch c = do
   let desc = "" -- TODO
-  key <- liftDB . insert $ S.Commit desc (c ^. DocRepo.commitHash)
-  pure $ Patch (S.keyToId key) desc (c ^. DocRepo.commitHash)
+  key <- liftDB . insert $ S.Commit desc (c ^. DocRepo.patchID)
+  pure $ Patch (S.keyToId key) desc (c ^. DocRepo.patchID)
 
 createVDoc :: Proto VDoc -> VDocRepository -> DB VDoc
 createVDoc pv vr = do

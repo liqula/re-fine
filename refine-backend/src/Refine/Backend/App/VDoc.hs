@@ -15,8 +15,8 @@ addVDoc :: Proto VDoc -> App DB VDoc
 addVDoc pv = do
   appLog "addVDoc"
   (dr, dp) <- docRepo $ do
-    dr <- DocRepo.create
-    dp <- DocRepo.commit dr (pv ^. protoVDocVersion)
+    dr <- DocRepo.createRepo
+    dp <- DocRepo.createPatch dr (error "where do i get the parent patch id here?") (pv ^. protoVDocVersion)
     pure (dr, dp)
   db $ do
     p <- createPatch dp

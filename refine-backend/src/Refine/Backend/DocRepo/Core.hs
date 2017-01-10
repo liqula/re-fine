@@ -24,17 +24,17 @@ newtype DocRepo a = DocRepo { unDocRepo :: ExceptT DocRepoError IO a }
 docRepoIO :: IO a -> DocRepo a
 docRepoIO = DocRepo . liftIO
 
-type RepoID     = ST
-type CommitHash = ST
+type RepoID  = ST
+type PatchID = ST
 
 data Repository = Repository
   { _repoName :: ST
   , _repoId   :: RepoID
   }
 
-newtype Commit = Commit
-  { _commitHash :: CommitHash
+newtype Patch = Patch
+  { _patchID :: PatchID
   }
 
 makeLenses ''Repository
-makeLenses ''Commit
+makeLenses ''Patch
