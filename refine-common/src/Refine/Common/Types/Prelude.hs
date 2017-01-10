@@ -37,4 +37,4 @@ instance ToHttpApiData (ID a) where
   toUrlPiece (ID x) = cs $ show x
 
 instance FromHttpApiData (ID a) where
-  parseUrlPiece = either (Left . cs) (Right . ID) . readEither . cs
+  parseUrlPiece = either (Left . cs) (Right . ID) . readEither @Int64 . cs

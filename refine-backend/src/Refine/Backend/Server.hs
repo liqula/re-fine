@@ -24,7 +24,7 @@ startBackend :: IO ()
 startBackend = do
 
   runDb      <- createDBRunner $ DBOnDisk "refine.db"
-  runDocRepo <- createRunRepo
+  runDocRepo <- createRunRepo "."
   let logger = Logger putStrLn
       app    = runApp runDb runDocRepo logger
 

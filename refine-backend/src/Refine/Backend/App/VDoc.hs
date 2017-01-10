@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Refine.Backend.App.VDoc where
 
 import Control.Lens ((^.))

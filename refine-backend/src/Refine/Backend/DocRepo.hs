@@ -6,14 +6,16 @@ module Refine.Backend.DocRepo
 
 import Control.Exception
 import Control.Monad.Except
+import Control.Monad.Reader (runReaderT)
 import Control.Natural
 
 import Refine.Backend.DocRepo.Core
 import Refine.Backend.DocRepo.Darcs
 
 
-createRunRepo :: IO (DocRepo :~> ExceptT DocRepoError IO)
-createRunRepo = pure $ Nat (wrapErrors . runExceptT . unDocRepo)
+createRunRepo :: FilePath -> IO (DocRepo :~> ExceptT DocRepoError IO)
+createRunRepo repoDir = pure $
+  Nat (wrapErrors . flip runReaderT (DocRepoCtx repoDir) . runExceptT . unDocRepo)
   where
     wrapErrors :: IO (Either DocRepoError a) -> ExceptT DocRepoError IO a
     wrapErrors m = do

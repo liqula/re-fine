@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Refine.Backend.AppSpec where
 
@@ -11,7 +11,12 @@ import           Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Monoid (mconcat)
 import Data.String.Conversions (ConvertibleStrings, cs)
-import System.Directory (withCurrentDirectory, removeFile)
+import System.Directory
+  ( createDirectory
+  , removeDirectoryRecursive
+  , removeFile
+  , withCurrentDirectory
+  )
 import System.IO.Temp (withSystemTempDirectory)
 
 import Refine.Backend.App as App
@@ -59,21 +64,24 @@ withTempCurrentDirectory action = withSystemTempDirectory "" (`withCurrentDirect
 
 provideAppRunner :: ActionWith (App DB Property -> IO Property) -> IO ()
 provideAppRunner action = withTempCurrentDirectory $ do
-  (runner, testDb) <- createAppRunner
+  (runner, testDb, testRepo) <- createAppRunner
   action runner
   removeFile testDb
+  removeDirectoryRecursive testRepo
 
-createAppRunner :: forall a . IO (App DB a -> IO a, String)
+createAppRunner :: forall a . IO (App DB a -> IO a, String, String)
 createAppRunner = do
-  let testDb = "test.db"
+  let testDb   = "test.db"
+      testRepo = "repo"
+  createDirectory testRepo
   runDb      <- createDBRunner $ DBOnDisk testDb
-  runDocRepo <- createRunRepo
+  runDocRepo <- createRunRepo testRepo
   let logger = Logger . const $ pure ()
       runner :: forall b . App DB b -> IO b
       runner m = (natThrowError . runApp runDb runDocRepo logger) $$ m
 
   void $ runner migrateDB
-  pure (runner, testDb)
+  pure (runner, testDb, testRepo)
 
 monadicApp :: (App DB Property -> IO Property) -> App DB Property -> Property
 monadicApp p = ioProperty . p

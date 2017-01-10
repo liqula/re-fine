@@ -14,13 +14,16 @@ copyright:           2017-2022 zerobuzz.net
 category:            Web
 
 default-extensions:
+  # minimal list of un-controversial language extensions.  open to debate.
+  # NOTE: do not add OverloadedStrings here, it breaks sensei.  add it in the modules where it's needed.
   - DataKinds
   - DeriveFunctor
   - DeriveGeneric
   - ExplicitForAll
+  - FlexibleContexts
+  - FlexibleInstances
   - GADTs
   - GeneralizedNewtypeDeriving
-  - OverloadedStrings
   - RankNTypes
   - ScopedTypeVariables
   - StandaloneDeriving
@@ -35,7 +38,9 @@ ghc-options: -Wall -Werror
 dependencies:
   - base
   - darcs
+  - directory
   - elim
+  - filepath
   - lens
   - lentil
   - monad-logger
@@ -44,12 +49,14 @@ dependencies:
   - persistent
   - persistent-sqlite
   - persistent-template
+  - random
   - refine-common
   - resourcet
   - servant
   - servant-server
   - string-conversions
   - text
+  - uuid
   - warp
 
 library:
