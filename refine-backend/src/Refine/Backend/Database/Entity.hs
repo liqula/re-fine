@@ -3,6 +3,7 @@ module Refine.Backend.Database.Entity where
 
 import Control.Lens ((^.), to)
 import Control.Monad (void)
+import Database.Persist
 import Data.Typeable
 import Lentil.Core (entityLens)
 import Lentil.Types as L
@@ -11,8 +12,6 @@ import Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
 import qualified Refine.Backend.DocRepo.Core as DocRepo
 import Refine.Common.Types
-
-import Database.Persist
 
 
 -- FIXME: Generate this as the part of the lentil library.
