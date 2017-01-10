@@ -82,3 +82,32 @@ import qualified Data.Text.Lazy as LT
 ### code layout
 
 1. two empty lines before section heading (`-- *`).
+
+
+### tests
+
+Tests are written using hspec, hspec-discover.  Every package has its
+on suite that can be run with `stack test`.  Globally in the git repo,
+`test-all.hs` runs additional tests (hlint, coverage, ...)
+
+Some example test cases and properties:
+
+```haskell
+  -- unit test
+  it "number is the same" $ do
+    3 `shouldBe` (4 :: Int)
+
+  -- qc property
+  it "number is the same" . property $
+    \(int :: Int) -> int + 1 `shouldBe` int
+
+  -- monadic qc property (import Test.QuickCheck.Monadic)
+  it "number is the same" . property $
+    \(int :: Int) -> monadicIO . run $ do
+      result <- pure int  -- effectful computation that takes and Int and yields an Int.
+      result `shouldBe` 3
+```
+
+RATIONALE: quickcheck's `(===)` does work instead of `shouldBe` (and
+possibly sometimes even `(==)`?), but the reports on failing test
+cases are best for `shouldBe`.
