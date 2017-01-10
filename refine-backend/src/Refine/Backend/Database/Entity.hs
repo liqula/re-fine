@@ -85,7 +85,7 @@ loadPatch pid =
 createRepo :: DocRepo.RepoHandle -> ID Patch -> DB VDocRepo
 createRepo repoh pid = do
   key <- liftDB $ do
-    key <- insert $ S.Repo ("title" {- TODO -}) repoh (S.idToKey pid)
+    key <- insert $ S.Repo "title" {- TODO -} repoh (S.idToKey pid)
     void . insert $ S.RC key (S.idToKey pid)
     pure key
   pure $ VDocRepo (S.keyToId key) pid

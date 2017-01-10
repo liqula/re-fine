@@ -12,7 +12,6 @@ import qualified Data.Map as Map
 import Data.Monoid (mconcat)
 import Data.String.Conversions (ConvertibleStrings, cs)
 import System.Directory (withCurrentDirectory, removeFile)
-import System.FilePath ((</>))
 import System.IO.Temp (withSystemTempDirectory)
 
 import Refine.Backend.App as App

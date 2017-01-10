@@ -2,7 +2,7 @@ module Refine.Common.Types.Arbitrary where
 
 import Test.QuickCheck
 
-import Refine.Common.Prelude
+import Refine.Common.Types.Prelude
 
 
 

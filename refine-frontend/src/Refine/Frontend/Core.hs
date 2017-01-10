@@ -2,9 +2,9 @@ module Refine.Frontend.Core where
 
 import React.Flux
 import React.Flux.Addons.Servant
-import Refine.Common.Prelude
 import Refine.Common.Rest
-import Refine.Common.VDoc
+import Refine.Common.Types.Prelude
+import Refine.Common.Types.VDoc
 import Refine.Prelude.TH
 
 import Data.Proxy

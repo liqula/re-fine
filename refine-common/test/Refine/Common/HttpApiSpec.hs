@@ -8,7 +8,7 @@ import Test.QuickCheck
 import Data.Typeable
 
 import Data.String.Conversions (cs)
-import Refine.Common.Prelude
+import Refine.Common.Types.Prelude
 import Web.HttpApiData
 
 
