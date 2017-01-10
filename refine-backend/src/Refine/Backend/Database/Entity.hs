@@ -59,12 +59,12 @@ loadVDoc vid =
       (idNotFound vid)
       (pure . S.vDocElim toVDoc)
   where
-    toVDoc :: ST -> ST -> Key S.Repo -> VDoc
-    toVDoc title abs repoid = VDoc vid (Title title) (Abstract abs) (S.keyToId repoid)
+    toVDoc :: Title -> Abstract -> Key S.Repo -> VDoc
+    toVDoc title abstract repoid = VDoc vid title abstract (S.keyToId repoid)
 
 -- NOTES: How to handle associations? What to update, what to keep?
 vDocToRecord :: VDoc -> DB S.VDoc
-vDocToRecord (VDoc _i t a r) = pure (S.VDoc (t ^. unTitle :: ST) (a ^. unAbstract) (S.idToKey r))
+vDocToRecord (VDoc _i t a r) = pure (S.VDoc t a (S.idToKey r))
 
 updateVDoc :: ID VDoc -> VDoc -> DB ()
 updateVDoc vid vdoc = do
@@ -79,13 +79,13 @@ loadPatch pid =
       (idNotFound pid)
       (pure . S.patchElim toPatch)
   where
-    toPatch :: ST -> ST -> Patch
+    toPatch :: ST -> DocRepo.PatchHandle -> Patch
     toPatch desc _handle = Patch pid desc
 
 createRepo :: DocRepo.RepoHandle -> ID Patch -> DB VDocRepo
 createRepo repoh pid = do
   key <- liftDB $ do
-    key <- insert $ S.Repo ("title" {- TODO -}) (repoh ^. DocRepo.unRepoHandle) (S.idToKey pid)
+    key <- insert $ S.Repo ("title" {- TODO -}) repoh (S.idToKey pid)
     void . insert $ S.RC key (S.idToKey pid)
     pure key
   pure $ VDocRepo (S.keyToId key) pid
@@ -93,14 +93,14 @@ createRepo repoh pid = do
 createPatch :: DocRepo.PatchHandle -> DB Patch
 createPatch p = do
   let desc = "" -- TODO
-  key <- liftDB . insert $ S.Patch desc (p ^. DocRepo.unPatchHandle)
+  key <- liftDB . insert $ S.Patch desc p
   pure $ Patch (S.keyToId key) desc
 
 createVDoc :: Proto VDoc -> VDocRepo -> DB VDoc
 createVDoc pv vr = do
   key <- liftDB . insert $ S.VDoc
-            (pv ^. protoVDocTitle . unTitle)
-            (pv ^. protoVDocAbstract . unAbstract)
+            (pv ^. protoVDocTitle)
+            (pv ^. protoVDocAbstract)
             (vr ^. vdocRepoID . to S.idToKey)
   pure $ VDoc
     (S.keyToId key)

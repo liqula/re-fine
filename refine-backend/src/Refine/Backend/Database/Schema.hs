@@ -13,24 +13,27 @@ import Database.Persist.Sql
 import Database.Persist.TH
 
 import Refine.Common.Types.Prelude
+import Refine.Common.Types.VDoc (Abstract, Title)
+import Refine.Backend.Database.Field()
+import Refine.Backend.DocRepo.Core(PatchHandle, RepoHandle)
 
 
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
 User
-    name         Text
+    name        Text
 
 VDoc
-    title        Text  -- TODO: use Title here
-    desc         Text  -- TODO: use Abstract here
-    repo         RepoId
+    title       Title
+    desc        Abstract
+    repo        RepoId
 
 Patch
     desc        Text
-    patchHandle Text  -- TODO: use PatchHandle here.
+    patchHandle PatchHandle
 
 Repo
     name        Text
-    repoHandle  Text  -- TODO: use RepoHandle here.
+    repoHandle  RepoHandle
     headId      PatchId
 
 Comment
