@@ -37,6 +37,48 @@ nobody objects, it's a new rule!
    highest priority.
 
 
+### language extensions
+
+`default-extensions:` because tooling (hlint, sensei, ...) does not
+reliably honor default-extentions listed in the cabal files, we do not
+use this feature, but instead list all language extensions in the
+Haskell modules.  The
+
+Copy the following list to a new module from here and edit at your
+liking.
+
+```haskell
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE ExplicitForAll             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ViewPatterns               #-}
+```
+
+The following shell line can be used to re-align all files (poorly
+tested -- commit your other changes first!):
+
+```shell
+find . -name '*.hs' -exec perl -i -ne 'if (/^({-# LANGUAGE )(\S+)( #-})$/) { printf("$1%26.26s$3\n", $2."                          "); } else { print }' {} \;
+```
+
+
 ### module imports
 
 1. Qualified imports are never explicit.
