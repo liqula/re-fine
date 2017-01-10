@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+
 module Refine.Backend.AppSpec where
 
 import Prelude hiding ((.))
@@ -10,7 +11,9 @@ import           Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Monoid (mconcat)
 import Data.String.Conversions (ConvertibleStrings, cs)
-import System.Directory (removeFile)
+import System.Directory (withCurrentDirectory, removeFile)
+import System.FilePath ((</>))
+import System.IO.Temp (withSystemTempDirectory)
 
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
@@ -45,13 +48,21 @@ makeLenses ''VDocs
 
 spec :: Spec
 spec = do
-
-  describe "VDoc" . beforeAll createAppRunner . afterAll removeTestDB $ do
-    it "Random program" $ \(runner, _) -> forAll sampleProgram $ \program ->
+  describe "VDoc" . around provideAppRunner $ do
+    it "Random program" $ \runner -> forAll sampleProgram $ \program ->
       monadic (monadicApp runner) (runProgram program `evalStateT` initVDocs)
 
 
 -- * Helpers
+
+withTempCurrentDirectory :: IO a -> IO a
+withTempCurrentDirectory action = withSystemTempDirectory "" (`withCurrentDirectory` action)
+
+provideAppRunner :: ActionWith (App DB Property -> IO Property) -> IO ()
+provideAppRunner action = withTempCurrentDirectory $ do
+  (runner, testDb) <- createAppRunner
+  action runner
+  removeFile testDb
 
 createAppRunner :: forall a . IO (App DB a -> IO a, String)
 createAppRunner = do
@@ -64,9 +75,6 @@ createAppRunner = do
 
   void $ runner migrateDB
   pure (runner, testDb)
-
-removeTestDB :: forall a . (App DB a -> IO a, String) -> IO ()
-removeTestDB (_, testDb) = removeFile testDb
 
 monadicApp :: (App DB Property -> IO Property) -> App DB Property -> Property
 monadicApp p = ioProperty . p

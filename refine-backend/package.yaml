@@ -76,3 +76,4 @@ tests:
       - hspec-core
       - hspec-discover
       - QuickCheck
+      - temporary
