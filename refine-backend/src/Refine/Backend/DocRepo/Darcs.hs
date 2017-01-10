@@ -8,7 +8,7 @@ import Refine.Common.VDoc
 createRepo :: DocRepo Repository
 createRepo = pure $ Repository "repo" "repo-1"
 
-createPatch :: Repository -> PatchID -> Version -> DocRepo Patch
+createPatch :: Repository -> Maybe PatchID -> Version -> DocRepo Patch
 createPatch _repo _base _vers = pure $ Patch "ffffff"
 
 getVersion :: RepoID -> PatchID -> DocRepo Version
