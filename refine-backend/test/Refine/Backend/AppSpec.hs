@@ -84,24 +84,24 @@ withTempCurrentDirectory action = withSystemTempDirectory "" (`withCurrentDirect
 
 provideAppRunner :: ActionWith (App DB Property -> IO Property) -> IO ()
 provideAppRunner action = withTempCurrentDirectory $ do
-  (runner, testDb, testRepo) <- createAppRunner
+  (runner, testDb, reposRoot) <- createAppRunner
   action runner
   removeFile testDb
-  removeDirectoryRecursive testRepo
+  removeDirectoryRecursive reposRoot
 
 createAppRunner :: forall a . IO (App DB a -> IO a, String, String)
 createAppRunner = do
-  let testDb   = "test.db"
-      testRepo = "repo"
-  createDirectory testRepo
+  let testDb    = "test.db"
+      reposRoot = "repos"
+  createDirectory reposRoot
   runDb      <- createDBRunner $ DBOnDisk testDb
-  runDocRepo <- createRunRepo testRepo
+  runDocRepo <- createRunRepo reposRoot
   let logger = Logger . const $ pure ()
       runner :: forall b . App DB b -> IO b
       runner m = (natThrowError . runApp runDb runDocRepo logger) $$ m
 
   void $ runner migrateDB
-  pure (runner, testDb, testRepo)
+  pure (runner, testDb, reposRoot)
 
 monadicApp :: (App DB Property -> IO Property) -> App DB Property -> Property
 monadicApp p = ioProperty . p
