@@ -18,15 +18,18 @@ newtype ID a = ID { _unID :: Int64 }
 
 type family Proto a :: *
 
+
 -- * lens
 
 makeLenses ''ID
 makePrisms ''ID
+
 instance SOP.Generic (ID a)
 instance SOP.HasDatatypeInfo (ID a)
 instance NFData (ID a) where rnf = SOP.grnf
 instance ToJSON (ID a) where toJSON = gtoJSONDef
 instance FromJSON (ID a) where parseJSON = gparseJSONDef
+
 
 -- * HttpApiData
 
