@@ -4,6 +4,7 @@ import Prelude hiding ((.), id)
 import Control.Category
 
 import Control.Natural (($$))
+import qualified Control.Natural as CN
 import Control.Monad.Except
 import Data.String.Conversions (cs)
 
@@ -25,17 +26,18 @@ startBackend = do
   runDb      <- createDBRunner $ DBOnDisk "refine.db"
   runDocRepo <- createRunRepo
   let logger = Logger putStrLn
+      app    = runApp runDb runDocRepo logger
 
-  void $ (natThrowError . runApp runDb runDocRepo logger) $$ do
+  void $ (natThrowError . app) $$ do
     migrateDB
 
   Warp.runSettings Warp.defaultSettings
     . Servant.serve (Proxy :: Proxy RefineAPI)
-    $ serverT runDb runDocRepo logger refineApi
+    $ serverT app refineApi
 
 
-serverT :: RunDB m -> RunDocRepo -> Logger -> ServerT RefineAPI (App m) -> Server RefineAPI
-serverT b r l = enter (toServantError . cnToSn (runApp b r l))
+serverT :: (App db CN.:~> ExceptT AppError IO) -> ServerT RefineAPI (App db) -> Server RefineAPI
+serverT app = enter (toServantError . cnToSn app)
 
 
 toServantError :: (Monad m) => ExceptT AppError m :~> ExceptT ServantErr m
