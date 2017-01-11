@@ -37,6 +37,48 @@ nobody objects, it's a new rule!
    highest priority.
 
 
+### language extensions
+
+`default-extensions:` because tooling (hlint, sensei, ...) does not
+reliably honor default-extensions listed in the cabal files, we do not
+use this feature, but instead list all language extensions in the
+Haskell modules.  The
+
+Copy the following list to a new module from here and edit to your
+liking.
+
+```haskell
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE ExplicitForAll             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ViewPatterns               #-}
+```
+
+The following shell line can be used to re-align all files (poorly
+tested -- commit your other changes first!):
+
+```shell
+find . -name '*.hs' -exec perl -i -ne 'if (/^({-# LANGUAGE )(\S+)( #-})$/) { printf("$1%26.26s$3\n", $2."                          "); } else { print }' {} \;
+```
+
+
 ### module imports
 
 1. Qualified imports are never explicit.
@@ -82,3 +124,32 @@ import qualified Data.Text.Lazy as LT
 ### code layout
 
 1. two empty lines before section heading (`-- *`).
+
+
+### tests
+
+Tests are written using hspec, hspec-discover.  Every package has its
+on suite that can be run with `stack test`.  Globally in the git repo,
+`test-all.hs` runs additional tests (hlint, coverage, ...)
+
+Some example test cases and properties:
+
+```haskell
+  -- unit test
+  it "number is the same" $ do
+    3 `shouldBe` (4 :: Int)
+
+  -- qc property
+  it "number is the same" . property $
+    \(int :: Int) -> int + 1 `shouldBe` int
+
+  -- monadic qc property (import Test.QuickCheck.Monadic)
+  it "number is the same" . property $
+    \(int :: Int) -> monadicIO . run $ do
+      result <- pure int  -- effectful computation that takes an Int and yields an Int.
+      result `shouldBe` 3
+```
+
+RATIONALE: quickcheck's `(===)` does work instead of `shouldBe` (and
+possibly sometimes even `(==)`?), but the reports on failing test
+cases are best for `shouldBe`.
