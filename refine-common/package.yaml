@@ -13,17 +13,6 @@ maintainer:          mf@zerobuzz.net
 copyright:           2017-2022 zerobuzz.net
 category:            Web
 
-default-extensions:
-  - DataKinds
-  - DeriveGeneric
-  - ExplicitForAll
-  - OverloadedStrings
-  - RankNTypes
-  - ScopedTypeVariables
-  - TemplateHaskell
-  - TypeFamilies
-  - TypeOperators
-
 ghc-options: -Wall -Werror
 
 dependencies:
@@ -31,14 +20,16 @@ dependencies:
   - base
   - basic-sop
   - deepseq
+  - elim
   - generics-sop
   - http-api-data
   - json-sop
   - lens
+  - natural-transformation
+  - refine-prelude
   - servant
   - string-conversions
   - time
-  - natural-transformation
 
 library:
   source-dirs:
@@ -54,3 +45,6 @@ tests:
       - hspec
       - hspec-core
       - hspec-discover
+      - QuickCheck
+    ghc-options:
+      - -fno-warn-orphans

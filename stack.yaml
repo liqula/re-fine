@@ -7,7 +7,12 @@ packages:
 - refine-frontend
 - location:
     git: https://github.com/andorp/lentil.git
-    commit: b97e659429d7ae10acf3ae1153170405f8cd9016
+    commit: 61a1c8421388c525ff4d98b59b3cf3b4ca5f5ad2
+  extra-dep: true
+- location:
+    git: https://github.com/andorp/elim.git
+    commit: 558fc65a4033577092214c5e2defd47805678b97
+  extra-dep: true
 
 extra-deps:
 - basic-sop-0.2.0.0
@@ -15,6 +20,8 @@ extra-deps:
 - lens-sop-0.2.0.1
 - react-flux-1.2.3
 - react-flux-servant-0.1.1
+- hlint-1.9.39
+- haskell-src-exts-1.19.1
 
 flags: {}
 

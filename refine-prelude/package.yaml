@@ -29,6 +29,7 @@ dependencies:
   - servant
   - string-conversions
   - time
+  - template-haskell
 
 library:
   source-dirs: src

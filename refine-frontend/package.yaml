@@ -13,18 +13,6 @@ maintainer:          mf@zerobuzz.net
 copyright:           2017-2022 zerobuzz.net
 category:            Web
 
-default-extensions:
-  - DataKinds
-  - DeriveAnyClass
-  - DeriveGeneric
-  - ExplicitForAll
-  - OverloadedStrings
-  - RankNTypes
-  - ScopedTypeVariables
-  - TemplateHaskell
-  - TypeFamilies
-  - TypeOperators
-
 ghc-options: -Wall -Werror
 
 dependencies:
@@ -32,6 +20,7 @@ dependencies:
   - react-flux
   - react-flux-servant
   - refine-common
+  - refine-prelude
   - deepseq
   - basic-sop
   - json-sop

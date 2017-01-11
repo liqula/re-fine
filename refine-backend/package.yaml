@@ -13,29 +13,31 @@ maintainer:          mf@zerobuzz.net
 copyright:           2017-2022 zerobuzz.net
 category:            Web
 
-default-extensions:
-  - DataKinds
-  - DeriveFunctor
-  - DeriveGeneric
-  - ExplicitForAll
-  - GeneralizedNewtypeDeriving
-  - OverloadedStrings
-  - RankNTypes
-  - ScopedTypeVariables
-  - TemplateHaskell
-  - TypeFamilies
-  - TypeOperators
-
 ghc-options: -Wall -Werror
 
 dependencies:
   - base
+  - darcs
+  - directory
+  - elim
+  - filepath
+  - lens
   - lentil
+  - monad-logger
   - mtl
   - natural-transformation
+  - persistent
+  - persistent-sqlite
+  - persistent-template
+  - random
   - refine-common
+  - resourcet
   - servant
   - servant-server
+  - string-conversions
+  - text
+  - uuid
+  - warp
 
 library:
   source-dirs:
@@ -55,6 +57,10 @@ tests:
       - test
       - src
     dependencies:
+      - containers
+      - directory
       - hspec
       - hspec-core
       - hspec-discover
+      - QuickCheck
+      - temporary

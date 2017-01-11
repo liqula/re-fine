@@ -7,9 +7,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
@@ -20,21 +18,19 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Backend.App
-  ( module Refine.Backend.App.Core
-  , module Refine.Backend.App.VDoc
-  , runApp
-  ) where
+module Refine.Prelude.Generic where
 
-import Control.Monad.Except
-import Control.Monad.Reader
-import Control.Natural
+import           Data.Aeson
+import           Data.Aeson.Types (Parser)
 
-import Refine.Backend.App.Core
-import Refine.Backend.App.VDoc
-import Refine.Backend.Logger
+import qualified Generics.SOP        as SOP
+import qualified Generics.SOP.JSON   as SOP
 
 
-runApp :: RunDB db -> RunDocRepo -> Logger -> App db :~> ExceptT AppError IO
-runApp runDB runDocRepo logger =
-  Nat $ (`runReaderT` AppContext runDB runDocRepo logger) . unApp
+-- * generic json
+
+gtoJSONDef :: forall a . (SOP.Generic a, SOP.HasDatatypeInfo a, SOP.All2 ToJSON (SOP.Code a)) =>  a -> Value
+gtoJSONDef = SOP.gtoJSON SOP.defaultJsonOptions
+
+gparseJSONDef :: forall a. (SOP.Generic a, SOP.HasDatatypeInfo a, SOP.All2 FromJSON (SOP.Code a)) => Value -> Parser a
+gparseJSONDef = SOP.gparseJSON SOP.defaultJsonOptions

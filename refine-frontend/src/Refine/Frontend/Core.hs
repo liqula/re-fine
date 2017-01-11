@@ -1,12 +1,34 @@
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE ExplicitForAll             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ViewPatterns               #-}
+
 module Refine.Frontend.Core where
 
 import React.Flux
 import React.Flux.Addons.Servant
-import Refine.Common.Prelude
 import Refine.Common.Rest
-import Refine.Common.VDoc
+import Refine.Common.Types.Prelude
+import Refine.Common.Types.VDoc
+import Refine.Prelude.TH
 
-import Control.DeepSeq
 import Data.Proxy
 import GHC.Generics
 
@@ -20,7 +42,7 @@ newtype UserStore = UserStore
 
 data UserStoreAction = AskVDoc (ID VDoc)
                      | GotVDoc (ID VDoc) (Either (Int, String) VDoc)
-  deriving (Show, Generic, NFData)
+  deriving (Show, Generic)
 
 cfg :: ApiRequestConfig RefineAPI
 cfg = ApiRequestConfig "127.0.0.1" NoTimeout
@@ -41,3 +63,7 @@ instance StoreData UserStore where
 
 userStore :: ReactStore UserStore
 userStore = mkStore $ UserStore NoPendingRequest
+
+-- * refine type
+
+makeRefineType ''UserStoreAction

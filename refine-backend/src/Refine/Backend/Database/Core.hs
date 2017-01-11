@@ -20,21 +20,39 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Backend.App
-  ( module Refine.Backend.App.Core
-  , module Refine.Backend.App.VDoc
-  , runApp
-  ) where
+module Refine.Backend.Database.Core where
 
+import Control.Exception
 import Control.Monad.Except
+import Control.Monad.Logger
 import Control.Monad.Reader
-import Control.Natural
-
-import Refine.Backend.App.Core
-import Refine.Backend.App.VDoc
-import Refine.Backend.Logger
+import Control.Monad.Trans.Resource
+import Database.Persist.Sql
 
 
-runApp :: RunDB db -> RunDocRepo -> Logger -> App db :~> ExceptT AppError IO
-runApp runDB runDocRepo logger =
-  Nat $ (`runReaderT` AppContext runDB runDocRepo logger) . unApp
+
+data DBConfig
+  = DBInMemory
+  | DBOnDisk FilePath
+
+type SQLM = ReaderT SqlBackend (NoLoggingT (ResourceT IO))
+
+newtype DB a = DB { unDB :: ExceptT DBError SQLM a }
+  deriving
+    ( Functor
+    , Applicative
+    , Monad
+    , MonadError DBError
+    )
+
+data DBError
+  = DBUnknownError String
+  | DBNotFound String
+  | DBException SomeException
+  deriving (Show)
+
+notFound :: String -> DB a
+notFound = DB . throwError . DBNotFound
+
+liftDB :: SQLM a -> DB a
+liftDB = DB . lift

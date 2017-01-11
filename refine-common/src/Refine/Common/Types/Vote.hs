@@ -7,9 +7,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
@@ -20,21 +18,28 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Backend.App
-  ( module Refine.Backend.App.Core
-  , module Refine.Backend.App.VDoc
-  , runApp
-  ) where
+module Refine.Common.Types.Vote where
 
-import Control.Monad.Except
-import Control.Monad.Reader
-import Control.Natural
+import GHC.Generics (Generic)
 
-import Refine.Backend.App.Core
-import Refine.Backend.App.VDoc
-import Refine.Backend.Logger
+import Refine.Common.Types.Prelude
+import Refine.Prelude.TH
 
 
-runApp :: RunDB db -> RunDocRepo -> Logger -> App db :~> ExceptT AppError IO
-runApp runDB runDocRepo logger =
-  Nat $ (`runReaderT` AppContext runDB runDocRepo logger) . unApp
+
+data ProtoVote = ProtoVote
+  deriving (Eq, Ord, Show, Read, Generic)
+
+data Vote = Vote
+  deriving (Eq, Ord, Show, Read, Generic)
+
+data VoteValue = VoteValue
+  deriving (Eq, Ord, Show, Read, Generic)
+
+-- * prototype
+
+type instance Proto Vote = ProtoVote
+
+makeRefineType ''ProtoVote
+makeRefineType ''Vote
+makeRefineType ''VoteValue

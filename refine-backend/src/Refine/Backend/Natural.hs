@@ -7,9 +7,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
@@ -20,21 +18,18 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Backend.App
-  ( module Refine.Backend.App.Core
-  , module Refine.Backend.App.VDoc
-  , runApp
-  ) where
+module Refine.Backend.Natural where
 
-import Control.Monad.Except
-import Control.Monad.Reader
-import Control.Natural
+import Control.Monad.Except (ExceptT, runExceptT)
+import Data.Either (either)
 
-import Refine.Backend.App.Core
-import Refine.Backend.App.VDoc
-import Refine.Backend.Logger
+import qualified Control.Natural     as CN
+import qualified Servant.Utils.Enter as SN
 
 
-runApp :: RunDB db -> RunDocRepo -> Logger -> App db :~> ExceptT AppError IO
-runApp runDB runDocRepo logger =
-  Nat $ (`runReaderT` AppContext runDB runDocRepo logger) . unApp
+
+cnToSn :: (a CN.:~> b) -> (a SN.:~> b)
+cnToSn (CN.Nat n) = SN.Nat n
+
+natThrowError :: (Functor m, Show e) => ExceptT e m CN.:~> m
+natThrowError = CN.Nat (fmap (either (error . show) id) . runExceptT)

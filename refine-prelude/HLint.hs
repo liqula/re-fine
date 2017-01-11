@@ -11,6 +11,8 @@ ignore "Use const"
 ignore "Use fmap"
 ignore "Use list literal"
 ignore "Use record patterns"
+ignore "Unused LANGUAGE pragma"  -- tried to that with `{-# ANN module ... #-}`, but then ghc-8.0.1
+                                 -- couldn't find the module keyword any more.
 
 warn = listToMaybe (filter f xs) ==> find f xs
 warn = isJust $ find f xs ==> any f xs

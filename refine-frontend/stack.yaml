@@ -14,8 +14,13 @@ extra-deps:
   - lens-sop-0.2.0.1
 
 packages:
-  - location: '.'
-  - location: '../refine-common'
+  - '.'
+  - '../refine-common'
+  - '../refine-prelude'
+  - location:
+      git: https://github.com/andorp/elim.git
+      commit: 558fc65a4033577092214c5e2defd47805678b97
+    extra-dep: true
 
 setup-info:
   ghcjs:
