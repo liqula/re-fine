@@ -1,4 +1,4 @@
-resolver: lts-7.14
+resolver: lts-7.1
 compiler: ghcjs-0.2.1.9007001_ghc-8.0.1
 compiler-check: match-exact
 
