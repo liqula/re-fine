@@ -40,11 +40,11 @@ nobody objects, it's a new rule!
 ### language extensions
 
 `default-extensions:` because tooling (hlint, sensei, ...) does not
-reliably honor default-extentions listed in the cabal files, we do not
+reliably honor default-extensions listed in the cabal files, we do not
 use this feature, but instead list all language extensions in the
 Haskell modules.  The
 
-Copy the following list to a new module from here and edit at your
+Copy the following list to a new module from here and edit to your
 liking.
 
 ```haskell
@@ -146,7 +146,7 @@ Some example test cases and properties:
   -- monadic qc property (import Test.QuickCheck.Monadic)
   it "number is the same" . property $
     \(int :: Int) -> monadicIO . run $ do
-      result <- pure int  -- effectful computation that takes and Int and yields an Int.
+      result <- pure int  -- effectful computation that takes an Int and yields an Int.
       result `shouldBe` 3
 ```
 
