@@ -49,5 +49,4 @@ tests:
       - hspec-core
       - hspec-discover
       - QuickCheck
-    ghc-options:
-      - -fno-warn-orphans
+      - quickcheck-instances
