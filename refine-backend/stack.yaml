@@ -19,9 +19,10 @@ packages:
 
 extra-deps:
 - basic-sop-0.2.0.0
+- functor-infix-0.0.4
+- html-parse-0.2.0.0
 - json-sop-0.2.0.1
 - lens-sop-0.2.0.1
-- html-parse-0.2.0.0
 
 flags: {}
 

@@ -22,16 +22,18 @@ dependencies:
   - containers
   - deepseq
   - elim
+  - functor-infix
   - generics-sop
+  - html-parse
   - http-api-data
   - json-sop
   - lens
+  - mtl
   - natural-transformation
   - refine-prelude
   - servant
   - string-conversions
   - text
-  - html-parse
   - time
 
 library:

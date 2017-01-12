@@ -57,9 +57,7 @@ newtype Abstract = Abstract { _unAbstract :: ST }
 
 data HTMLState = HTMLRaw | HTMLCanonical | HTMLWithMarks
 
--- TODO: `newtype VDocVersion = VDocVersion { _unVDocVersion :: Forest Token }` would be better than
--- with `ST`.
-
+-- | TODO: `newtype VDocVersion = VDocVersion { _unVDocVersion :: Forest Token }` would be better.
 newtype VDocVersion (state :: HTMLState) = VDocVersion { _unVDocVersion :: ST }
   deriving (Eq, Ord, Show, Read, Generic)
 

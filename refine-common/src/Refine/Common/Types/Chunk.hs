@@ -20,6 +20,8 @@
 
 module Refine.Common.Types.Chunk where
 
+import Control.Lens
+import Data.Functor.Infix ((<$$>))
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 import Refine.Prelude.TH
@@ -48,7 +50,14 @@ data ChunkRange = ChunkRange
   deriving (Eq, Ord, Show, Read, Generic)
 
 newtype DataUID = DataUID { unDataUID :: Int }
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Ord, Generic)
+
+instance Show DataUID where
+  showsPrec n (DataUID i) = showsPrec n i
+
+instance Read DataUID where
+  readsPrec n = (_1 %~ DataUID) <$$> readsPrec n
+
 
 -- * refine types
 
