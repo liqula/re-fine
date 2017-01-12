@@ -19,6 +19,7 @@ dependencies:
   - aeson
   - base
   - basic-sop
+  - containers
   - deepseq
   - elim
   - generics-sop
@@ -29,6 +30,8 @@ dependencies:
   - refine-prelude
   - servant
   - string-conversions
+  - text
+  - html-parse
   - time
 
 library:
