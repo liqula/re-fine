@@ -22,13 +22,14 @@
 
 module Refine.Backend.Server where
 
-import Prelude hiding ((.), id)
-import Control.Category
-
-import Control.Natural (($$))
+import           Control.Category
+import           Control.Monad.Except
 import qualified Control.Natural as CN
-import Control.Monad.Except
-import Data.String.Conversions (cs)
+import           Control.Natural (($$))
+import           Data.String.Conversions (cs)
+import           Network.Wai.Handler.Warp as Warp
+import           Prelude hiding ((.), id)
+import           Servant hiding (Patch)
 
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
@@ -37,14 +38,11 @@ import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.DocRepo (createRunRepo)
 import Refine.Common.Rest
-import Servant
-
-import Network.Wai.Handler.Warp as Warp
+import Refine.Common.Types
 
 
 startBackend :: IO ()
 startBackend = do
-
   runDb      <- createDBRunner $ DBOnDisk "refine.db"
   runDocRepo <- createRunRepo "."
   let logger = Logger putStrLn
@@ -74,62 +72,87 @@ toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError)
 
 refineApi :: ServerT RefineAPI (App DB)
 refineApi =
-        getVDoc
-  :<|>  createVDoc
-  :<|>  putTitle
-  :<|>  putAbstract
-  :<|>  noteVisibility
-  :<|>  rmVDoc
-  :<|>  getVersion
-  :<|>  addPatch
-  :<|>  rmPatch
-  :<|>  mergePatch
-  :<|>  rebasePatch
-  :<|>  addComment
-  :<|>  rmComment
-  :<|>  addNote
-  :<|>  rmNote
-  :<|>  setVote
-  :<|>  rmVote
+       sGetVDocs
+  :<|> sGetVDoc
+  :<|> sPostVDoc
+  :<|> sPutTitle
+  :<|> sPutAbstract
+  :<|> sDeleteVDoc
+  :<|> sPostComment
+  :<|> sDeleteComment
+  :<|> sPostNote
+  :<|> sDeleteNote
+  :<|> sPutNoteVisibility
+  :<|> sGetVersion
+  :<|> sPostPatch
+  :<|> sDeletePatch
+  :<|> sMergePatch
+  :<|> sRebasePatch
+  :<|> sPutVote
+  :<|> sDeleteVote
 
-putTitle :: ServerT PutTitle (App DB)
-putTitle = undefined
 
-putAbstract :: ServerT PutAbstract (App DB)
-putAbstract = undefined
+-- * vdocs
 
-noteVisibility :: ServerT NoteVisibility (App DB)
-noteVisibility = undefined
+sGetVDocs :: App DB [ID VDoc]
+sGetVDocs = undefined
 
-rmVDoc :: ServerT RmVDoc (App DB)
-rmVDoc = undefined
+sGetVDoc :: ID VDoc -> App DB VDoc
+sGetVDoc = undefined
 
-addPatch :: ServerT AddPatch (App DB)
-addPatch = undefined
+sPostVDoc :: Proto VDoc -> App DB (ID VDoc)
+sPostVDoc = undefined
 
-rmPatch :: ServerT RmPatch (App DB)
-rmPatch = undefined
+sPutTitle :: ID VDoc -> Title -> App DB ()
+sPutTitle = undefined
 
-mergePatch :: ServerT MergePatch (App DB)
-mergePatch = undefined
+sPutAbstract :: ID VDoc -> Abstract -> App DB ()
+sPutAbstract = undefined
 
-rebasePatch :: ServerT RebasePatch (App DB)
-rebasePatch = undefined
+sDeleteVDoc :: ID VDoc -> App DB VDoc
+sDeleteVDoc = undefined
 
-addComment :: ServerT AddComment (App DB)
-addComment = undefined
 
-rmComment :: ServerT RmComment (App DB)
-rmComment = undefined
+-- * left ui column (coments, notes, ...)
 
-addNote :: ServerT AddNote (App DB)
-addNote = undefined
+sPostComment :: ID Patch -> Proto Comment -> App DB (ID Comment)
+sPostComment = undefined
 
-rmNote :: ServerT RmNote (App DB)
-rmNote = undefined
+sDeleteComment :: ID Comment -> App DB Comment
+sDeleteComment = undefined
 
-setVote :: ServerT SetVote (App DB)
-setVote = undefined
+sPostNote :: ID Patch -> Proto Note -> App DB (ID Note)
+sPostNote = undefined
 
-rmVote :: ServerT RmVote (App DB)
-rmVote = undefined
+sDeleteNote :: ID Note -> App DB Note
+sDeleteNote = undefined
+
+sPutNoteVisibility :: ID Note -> Maybe Bool -> App DB ()
+sPutNoteVisibility = undefined
+
+
+-- * right ui column (patches)
+
+sGetVersion :: ID Patch -> App DB (VDocVersion 'HTMLWithMarks)
+sGetVersion = undefined
+
+sPostPatch :: ID Patch -> Proto Patch -> App DB (ID Patch)
+sPostPatch = undefined
+
+sDeletePatch :: ID Patch -> App DB Patch
+sDeletePatch = undefined
+
+sMergePatch :: ID Patch -> App DB (ID Patch)
+sMergePatch = undefined
+
+sRebasePatch :: ConflictResolution -> App DB (ID Patch)
+sRebasePatch = undefined
+
+
+-- * votes
+
+sPutVote :: ID Patch -> Proto Vote -> App DB (ID Vote)
+sPutVote = undefined
+
+sDeleteVote :: ID Vote -> App DB Vote
+sDeleteVote = undefined
