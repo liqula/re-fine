@@ -23,6 +23,7 @@ module Refine.Common.Types.VDoc where
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 
+import Refine.Common.Orphans ()
 import Refine.Common.Types.Prelude
 import Refine.Prelude.TH
 
@@ -47,6 +48,13 @@ newtype Title = Title { _unTitle :: ST }
 
 newtype Abstract = Abstract { _unAbstract :: ST }
   deriving (Eq, Ord, Show, Read, Generic)
+
+-- TODO: this change would be nice, but it breaks makeRefineType:
+-- >> data HTMLState = HTMLRaw | HTMLCanonical | HTMLWithMarks
+-- >> newtype VDocVersion (state :: HTMLState) = ...
+
+-- TODO: `newtype VDocVersion = VDocVersion { _unVDocVersion :: Forest Token }` would be better than
+-- with `ST`.
 
 newtype VDocVersion = VDocVersion { _unVDocVersion :: ST }
   deriving (Eq, Ord, Show, Read, Generic)
