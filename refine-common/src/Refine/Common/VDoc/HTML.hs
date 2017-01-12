@@ -7,6 +7,9 @@
 {-# LANGUAGE TupleSections       #-}
 {-# LANGUAGE ViewPatterns        #-}
 
+-- | Code for handling `VDocVersions` with HTML content.
+--
+-- TODO: think of a better module name / place?
 module Refine.Common.VDoc.HTML where
 
 import           Data.Char (isSpace)
