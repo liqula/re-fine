@@ -134,7 +134,9 @@ runCmd (GetVDoc v pv) = do
 word :: (ConvertibleStrings String s) => Gen s
 word = cs <$> listOf (elements ['a' .. 'z'])
 
-version :: Gen VDocVersion
+-- TODO: the pattern here is 'arbitrary<type> :: Gen <type>' should be defined in
+-- tests/Arbitrary.hs.  also, we need to make a package refine-test
+version :: Gen (VDocVersion 'HTMLCanonical)
 version = pure $ VDocVersion ""
 
 protoVDoc :: Gen (Proto VDoc)

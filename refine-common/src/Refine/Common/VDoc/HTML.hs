@@ -15,6 +15,7 @@
 module Refine.Common.VDoc.HTML
   ( VDocHTMLError(..)
   , canonicalizeVDocVersion
+  , decanonicalizeVDocVersion
   , canonicalizeWhitespace
   , setElemUIDs
   , wrapInTopLevelTags
@@ -55,6 +56,10 @@ canonicalizeVDocVersion = fmap (VDocVersion . cs . renderTokens) . canonicalize 
       = wrapInTopLevelTags
       . setElemUIDs
       . fmap (onText canonicalizeWhitespace) . canonicalizeTokens
+
+-- | De-canonicalizing is always safe, since every canonicalized 'VDocVersion' is also a raw one.
+decanonicalizeVDocVersion :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLRaw
+decanonicalizeVDocVersion (VDocVersion s) = VDocVersion s
 
 onText :: (ST -> ST) -> Token -> Token
 onText f (ContentText s) = ContentText $ f s
