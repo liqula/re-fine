@@ -27,32 +27,33 @@ import Refine.Common.Types
 import Refine.Prelude.TH
 
 
+-- | The 'S' prefix in the handlers stands for "server" (see 'refineApi' for an explanation).
 type RefineAPI =
-       ListVDocs
-  :<|> GetVDoc
-  :<|> CreateVDoc
-  :<|> AddComment
-  :<|> AddPatch
+       SListVDocs
+  :<|> SGetVDoc
+  :<|> SCreateVDoc
+  :<|> SAddComment
+  :<|> SAddPatch
 
 
-type ListVDocs
+type SListVDocs
   = "r" :> "vdocs"
     :> Get '[JSON] [ID VDoc]
 
-type GetVDoc
+type SGetVDoc
   = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc)
     :> Get '[JSON] HeavyVDoc
 
-type CreateVDoc
-  = "r" :> "vdoc" :> ReqBody '[JSON] (Proto VDoc)
+type SCreateVDoc
+  = "r" :> "vdoc" :> ReqBody '[JSON] (Create VDoc)
     :> Post '[JSON] HeavyVDoc
 
-type AddComment
-  = "r" :> "comment" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Proto Comment)
+type SAddComment
+  = "r" :> "comment" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Comment)
     :> Post '[JSON] Comment
 
-type AddPatch
-  = "r" :> "patch" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Proto Patch)
+type SAddPatch
+  = "r" :> "patch" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Patch)
     :> Post '[JSON] Patch
 
 

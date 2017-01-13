@@ -53,8 +53,8 @@ import Refine.Common.Types.VDoc
 
 
 data Cmd where
-  AddVDoc :: Proto VDoc        -> Cmd
-  GetVDoc :: Int -> Proto VDoc -> Cmd
+  AddVDoc :: Create VDoc        -> Cmd
+  GetVDoc :: Int -> Create VDoc -> Cmd
 
 deriving instance Show Cmd
 
@@ -139,9 +139,9 @@ word = cs <$> listOf (elements ['a' .. 'z'])
 version :: Gen (VDocVersion 'HTMLRaw)
 version = pure $ VDocVersion ""
 
-protoVDoc :: Gen (Proto VDoc)
+protoVDoc :: Gen (Create VDoc)
 protoVDoc =
-  ProtoVDoc
+  CreateVDoc
     <$> (Title <$> word)
     <*> (Abstract . mconcat <$> listOf word)
     <*> version

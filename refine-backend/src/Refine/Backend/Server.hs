@@ -93,11 +93,11 @@ sListVDocs = undefined
 sGetVDoc :: ID VDoc -> App DB HeavyVDoc
 sGetVDoc = undefined
 
-sCreateVDoc :: Proto VDoc -> App DB HeavyVDoc
+sCreateVDoc :: Create VDoc -> App DB HeavyVDoc
 sCreateVDoc = undefined
 
-sAddComment :: ID Patch -> Proto Comment -> App DB Comment
+sAddComment :: ID Patch -> Create Comment -> App DB Comment
 sAddComment = undefined
 
-sAddPatch :: ID Patch -> Proto Patch -> App DB Patch
+sAddPatch :: ID Patch -> Create Patch -> App DB Patch
 sAddPatch = undefined

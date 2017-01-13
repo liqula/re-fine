@@ -32,7 +32,7 @@ import           Refine.Common.Types.Prelude
 import           Refine.Common.Types.VDoc
 
 
-createVDoc :: Proto VDoc -> App DB VDoc
+createVDoc :: Create VDoc -> App DB VDoc
 createVDoc pv = do
   appLog "createVDoc"
   (dr, dp) <- docRepo $ do

@@ -121,7 +121,7 @@ createPatch p = do
       cr = ChunkRange pid Nothing Nothing  -- TODO
   pure $ Patch pid desc cr
 
-createVDoc :: Proto VDoc -> VDocRepo -> DB VDoc
+createVDoc :: Create VDoc -> VDocRepo -> DB VDoc
 createVDoc pv vr = do
   key <- liftDB . insert $ S.VDoc
             (pv ^. protoVDocTitle)
