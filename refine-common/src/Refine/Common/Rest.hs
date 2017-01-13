@@ -48,23 +48,36 @@ type RefineAPI =
 
 -- * vdocs
 
-type GetVDocs
-  = "r" :> "vdoc"
+type ListVDocs
+  = "r" :> "vdocs"
     :> Get '[JSON] [ID VDoc]
 
 type GetVDoc
   = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc)
-    :> Get '[JSON] VDoc
+    :> Get '[JSON] AugmentedVDoc
 
-type PostVDoc
+type CreateVDoc
   = "r" :> "vdoc" :> ReqBody '[JSON] (Proto VDoc)
-    :> Post '[JSON] (ID VDoc)
+    :> Post '[JSON] AugmentedVDoc
 
-type PutTitle
+type AddComment
+  = "r" :> "comment" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Proto Comment)
+    :> Post '[JSON] Comment
+
+type AddPatch
+  = "r" :> "patch" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Proto Patch)
+    :> Post '[JSON] Patch
+
+
+---------------------------------------------------------------------------
+-- For now, the frontend needs the REST calls above, and not the ones below
+---------------------------------------------------------------------------
+
+type ChangeTitle
   = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc) :> "title" :> ReqBody '[JSON] Title
     :> Put '[JSON] ()
 
-type PutAbstract
+type ChangeAbstract
   = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc) :> "abstract" :> ReqBody '[JSON] Abstract
     :> Put '[JSON] ()
 
@@ -75,15 +88,11 @@ type DeleteVDoc
 
 -- * left ui column (coments, notes, ...)
 
-type PostComment
-  = "r" :> "patch" :> Capture "patchid" (ID Patch) :> "comment" :> ReqBody '[JSON] (Proto Comment)
-    :> Post '[JSON] (ID Comment)
-
 type DeleteComment
   = "r" :> "comment" :> Capture "commentid" (ID Comment)
     :> Delete '[JSON] Comment
 
-type PostNote
+type AddNote
   = "r" :> "patch" :> Capture "patchid" (ID Patch) :> "note" :> ReqBody '[JSON] (Proto Note)
     :> Post '[JSON] (ID Note)
 
@@ -91,20 +100,16 @@ type DeleteNote
   = "r" :> "note" :> Capture "noteid" (ID Note)
     :> Delete '[JSON] Note
 
-type PutNoteVisibility
+type ChangeNoteVisibility
   = "r" :> "note" :> Capture "noteid" (ID Note) :> QueryParam "visibility" Bool
     :> Put '[JSON] ()
 
 
 -- * right ui column (patches)
 
-type GetVersion
+type GetVersion                                       -- that one is not related to patches?!
   = "r" :> "patch" :> Capture "patchid" (ID Patch)
     :> Get '[JSON] (VDocVersion 'HTMLWithMarks)
-
-type PostPatch
-  = "r" :> "patch" :> Capture "patchid" (ID Patch) :> ReqBody '[JSON] (Proto Patch)
-    :> Post '[JSON] (ID Patch)
 
 type DeletePatch
   = "r" :> "patch" :> Capture "patchid" (ID Patch)
@@ -121,7 +126,7 @@ type RebasePatch
 
 -- * votes
 
-type PutVote
+type AddVote
   = "r" :> "vote" :> Capture "patchid" (ID Patch)
     :> ReqBody '[JSON] (Proto Vote) :> Put '[JSON] (ID Vote)
 

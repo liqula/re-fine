@@ -44,6 +44,7 @@ data Note = Note
 data NoteKind = Question | Remark
   deriving (Eq, Ord, Show, Read, Generic)
 
+-- suggestion: Rename this to CommentRequest? (and the others as well ofc)
 data ProtoComment = ProtoComment
   deriving (Eq, Ord, Show, Read, Generic)
 
