@@ -21,110 +21,55 @@
 module Refine.Common.Rest where
 
 import Servant.API hiding (Patch)
+import GHC.Generics (Generic)
 
 import Refine.Common.Types
+import Refine.Prelude.TH
 
 
+-- | The 'S' prefix in the handlers stands for "server" (see 'refineApi' for an explanation).
 type RefineAPI =
-       GetVDocs
-  :<|> GetVDoc
-  :<|> PostVDoc
-  :<|> PutTitle
-  :<|> PutAbstract
-  :<|> DeleteVDoc
-  :<|> PostComment
-  :<|> DeleteComment
-  :<|> PostNote
-  :<|> DeleteNote
-  :<|> PutNoteVisibility
-  :<|> GetVersion
-  :<|> PostPatch
-  :<|> DeletePatch
-  :<|> MergePatch
-  :<|> RebasePatch
-  :<|> PutVote
-  :<|> DeleteVote
+       SListVDocs
+  :<|> SGetVDoc
+  :<|> SCreateVDoc
+  :<|> SAddComment
+  :<|> SAddPatch
 
 
--- * vdocs
-
-type GetVDocs
-  = "r" :> "vdoc"
+type SListVDocs
+  = "r" :> "vdocs"
     :> Get '[JSON] [ID VDoc]
 
-type GetVDoc
+type SGetVDoc
   = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc)
-    :> Get '[JSON] VDoc
+    :> Get '[JSON] HeavyVDoc
 
-type PostVDoc
-  = "r" :> "vdoc" :> ReqBody '[JSON] (Proto VDoc)
-    :> Post '[JSON] (ID VDoc)
+type SCreateVDoc
+  = "r" :> "vdoc" :> ReqBody '[JSON] (Create VDoc)
+    :> Post '[JSON] HeavyVDoc
 
-type PutTitle
-  = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc) :> "title" :> ReqBody '[JSON] Title
-    :> Put '[JSON] ()
+type SAddComment
+  = "r" :> "comment" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Comment)
+    :> Post '[JSON] Comment
 
-type PutAbstract
-  = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc) :> "abstract" :> ReqBody '[JSON] Abstract
-    :> Put '[JSON] ()
-
-type DeleteVDoc
-  = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc)
-    :> Delete '[JSON] VDoc
+type SAddPatch
+  = "r" :> "patch" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Patch)
+    :> Post '[JSON] Patch
 
 
--- * left ui column (coments, notes, ...)
+-- | Packaged vdoc ready for use by client.
+--
+-- TODO: this should go to the module where the application logic using / producing it is
+-- implemented. until that implementation exists, it is kept here where it is used.  (also, we're
+-- still looking for a name.  canidates are 'AugmentedVDoc', 'VDocWithContext', 'RichVDoc',
+-- 'PackagedVDoc', ...?)
+data HeavyVDoc = HeavyVDoc
+  { _heavyVDoc         :: VDoc
+  , _heavyVDocVersion  :: VDocVersion 'HTMLWithMarks
+  , _heavyVDocPatches  :: [Patch]
+  , _heavyVDocComments :: [Comment]
+  , _heavyVDocNotes    :: [Note]
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
 
-type PostComment
-  = "r" :> "patch" :> Capture "patchid" (ID Patch) :> "comment" :> ReqBody '[JSON] (Proto Comment)
-    :> Post '[JSON] (ID Comment)
-
-type DeleteComment
-  = "r" :> "comment" :> Capture "commentid" (ID Comment)
-    :> Delete '[JSON] Comment
-
-type PostNote
-  = "r" :> "patch" :> Capture "patchid" (ID Patch) :> "note" :> ReqBody '[JSON] (Proto Note)
-    :> Post '[JSON] (ID Note)
-
-type DeleteNote
-  = "r" :> "note" :> Capture "noteid" (ID Note)
-    :> Delete '[JSON] Note
-
-type PutNoteVisibility
-  = "r" :> "note" :> Capture "noteid" (ID Note) :> QueryParam "visibility" Bool
-    :> Put '[JSON] ()
-
-
--- * right ui column (patches)
-
-type GetVersion
-  = "r" :> "patch" :> Capture "patchid" (ID Patch)
-    :> Get '[JSON] (VDocVersion 'HTMLWithMarks)
-
-type PostPatch
-  = "r" :> "patch" :> Capture "patchid" (ID Patch) :> ReqBody '[JSON] (Proto Patch)
-    :> Post '[JSON] (ID Patch)
-
-type DeletePatch
-  = "r" :> "patch" :> Capture "patchid" (ID Patch)
-    :> Delete '[JSON] Patch
-
-type MergePatch
-  = "r" :> "patch" :> Capture "patchid" (ID Patch) :> "merge"
-    :> Post '[JSON] (ID Patch)
-
-type RebasePatch
-  = "r" :> "patch" :> "rebase" :> ReqBody '[JSON] ConflictResolution
-    :> Post '[JSON] (ID Patch)
-
-
--- * votes
-
-type PutVote
-  = "r" :> "vote" :> Capture "patchid" (ID Patch)
-    :> ReqBody '[JSON] (Proto Vote) :> Put '[JSON] (ID Vote)
-
-type DeleteVote
-  = "r" :> "vote" :> Capture "voteid" (ID Vote)
-    :> Delete '[JSON] Vote
+makeRefineType ''HeavyVDoc

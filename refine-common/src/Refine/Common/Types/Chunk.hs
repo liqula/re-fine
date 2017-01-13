@@ -44,7 +44,7 @@ data ChunkRange owner = ChunkRange
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
-data ProtoChunkRange = ProtoChunkRange
+data CreateChunkRange = CreateChunkRange
   { _protoChunkRangeBegin :: Maybe ChunkPoint
   , _protoChunkRangeEnd   :: Maybe ChunkPoint
   }
@@ -81,8 +81,8 @@ instance ToJSON   (ChunkRange owner) where toJSON    = gtoJSONDef  -- TODO: enco
 instance FromJSON (ChunkRange owner) where parseJSON = gparseJSONDef
 instance NFData   (ChunkRange owner) where rnf       = SOP.grnf
 
-type instance Proto (ChunkRange owner) = ProtoChunkRange
+type instance Create (ChunkRange owner) = CreateChunkRange
 
-makeRefineType ''ProtoChunkRange
+makeRefineType ''CreateChunkRange
 makeRefineType ''ChunkPoint
 makeRefineType ''DataUID

@@ -59,6 +59,7 @@ makeNFData t = do
     ]
 
 -- FIXME: Support parametric types
+-- FIXME: rename to makeRefineInstances
 makeRefineType :: Name -> Q [Dec]
 makeRefineType t = do
   l <- makeLenses t

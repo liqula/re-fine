@@ -36,7 +36,7 @@ import Web.HttpApiData
 newtype ID a = ID { _unID :: Int64 }
   deriving (Eq, Ord, Show, Read, GHC.Generic)
 
-type family Proto a :: *
+type family Create a :: *
 
 
 -- * lens

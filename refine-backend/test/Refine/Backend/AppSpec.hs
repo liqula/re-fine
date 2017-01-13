@@ -53,8 +53,8 @@ import Refine.Common.Types.VDoc
 
 
 data Cmd where
-  AddVDoc :: Proto VDoc        -> Cmd
-  GetVDoc :: Int -> Proto VDoc -> Cmd
+  AddVDoc :: Create VDoc        -> Cmd
+  GetVDoc :: Int -> Create VDoc -> Cmd
 
 deriving instance Show Cmd
 
@@ -136,12 +136,12 @@ word = cs <$> listOf (elements ['a' .. 'z'])
 
 -- TODO: the pattern here is 'arbitrary<type> :: Gen <type>' should be defined in
 -- tests/Arbitrary.hs.  also, we need to make a package refine-test
-version :: Gen (VDocVersion 'HTMLCanonical)
+version :: Gen (VDocVersion 'HTMLRaw)
 version = pure $ VDocVersion ""
 
-protoVDoc :: Gen (Proto VDoc)
+protoVDoc :: Gen (Create VDoc)
 protoVDoc =
-  ProtoVDoc
+  CreateVDoc
     <$> (Title <$> word)
     <*> (Abstract . mconcat <$> listOf word)
     <*> version

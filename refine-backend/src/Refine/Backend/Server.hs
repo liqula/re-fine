@@ -78,87 +78,26 @@ toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError)
 -- (probably) only used internally in this module.
 refineApi :: ServerT RefineAPI (App DB)
 refineApi =
-       sGetVDocs
+       sListVDocs
   :<|> sGetVDoc
-  :<|> sPostVDoc
-  :<|> sPutTitle
-  :<|> sPutAbstract
-  :<|> sDeleteVDoc
-  :<|> sPostComment
-  :<|> sDeleteComment
-  :<|> sPostNote
-  :<|> sDeleteNote
-  :<|> sPutNoteVisibility
-  :<|> sGetVersion
-  :<|> sPostPatch
-  :<|> sDeletePatch
-  :<|> sMergePatch
-  :<|> sRebasePatch
-  :<|> sPutVote
-  :<|> sDeleteVote
+  :<|> sCreateVDoc
+  :<|> sAddComment
+  :<|> sAddPatch
 
 
 -- * vdocs
 
-sGetVDocs :: App DB [ID VDoc]
-sGetVDocs = undefined
+sListVDocs :: App DB [ID VDoc]
+sListVDocs = undefined
 
-sGetVDoc :: ID VDoc -> App DB VDoc
+sGetVDoc :: ID VDoc -> App DB HeavyVDoc
 sGetVDoc = undefined
 
-sPostVDoc :: Proto VDoc -> App DB (ID VDoc)
-sPostVDoc = undefined
+sCreateVDoc :: Create VDoc -> App DB HeavyVDoc
+sCreateVDoc = undefined
 
-sPutTitle :: ID VDoc -> Title -> App DB ()
-sPutTitle = undefined
+sAddComment :: ID Patch -> Create Comment -> App DB Comment
+sAddComment = undefined
 
-sPutAbstract :: ID VDoc -> Abstract -> App DB ()
-sPutAbstract = undefined
-
-sDeleteVDoc :: ID VDoc -> App DB VDoc
-sDeleteVDoc = undefined
-
-
--- * left ui column (coments, notes, ...)
-
-sPostComment :: ID Patch -> Proto Comment -> App DB (ID Comment)
-sPostComment = undefined
-
-sDeleteComment :: ID Comment -> App DB Comment
-sDeleteComment = undefined
-
-sPostNote :: ID Patch -> Proto Note -> App DB (ID Note)
-sPostNote = undefined
-
-sDeleteNote :: ID Note -> App DB Note
-sDeleteNote = undefined
-
-sPutNoteVisibility :: ID Note -> Maybe Bool -> App DB ()
-sPutNoteVisibility = undefined
-
-
--- * right ui column (patches)
-
-sGetVersion :: ID Patch -> App DB (VDocVersion 'HTMLWithMarks)
-sGetVersion = undefined
-
-sPostPatch :: ID Patch -> Proto Patch -> App DB (ID Patch)
-sPostPatch = undefined
-
-sDeletePatch :: ID Patch -> App DB Patch
-sDeletePatch = undefined
-
-sMergePatch :: ID Patch -> App DB (ID Patch)
-sMergePatch = undefined
-
-sRebasePatch :: ConflictResolution -> App DB (ID Patch)
-sRebasePatch = undefined
-
-
--- * votes
-
-sPutVote :: ID Patch -> Proto Vote -> App DB (ID Vote)
-sPutVote = undefined
-
-sDeleteVote :: ID Vote -> App DB Vote
-sDeleteVote = undefined
+sAddPatch :: ID Patch -> Create Patch -> App DB Patch
+sAddPatch = undefined

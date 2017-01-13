@@ -26,7 +26,7 @@ import Refine.Common.Types.Prelude
 import Refine.Prelude.TH
 
 
-data ProtoVote = ProtoVote
+data CreateVote = CreateVote
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Vote = Vote
@@ -38,8 +38,8 @@ data VoteValue = VoteValue
 
 -- * prototype
 
-type instance Proto Vote = ProtoVote
+type instance Create Vote = CreateVote
 
-makeRefineType ''ProtoVote
+makeRefineType ''CreateVote
 makeRefineType ''Vote
 makeRefineType ''VoteValue

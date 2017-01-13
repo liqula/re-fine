@@ -22,15 +22,15 @@
 
 module Refine.Frontend.Core where
 
+import Data.Proxy
+import GHC.Generics
 import React.Flux
 import React.Flux.Addons.Servant
+
 import Refine.Common.Rest
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc
 import Refine.Prelude.TH
-
-import Data.Proxy
-import GHC.Generics
 
 
 
@@ -41,7 +41,7 @@ newtype UserStore = UserStore
   }
 
 data UserStoreAction = AskVDoc (ID VDoc)
-                     | GotVDoc (ID VDoc) (Either (Int, String) VDoc)
+                     | GotVDoc (ID VDoc) (Either (Int, String) HeavyVDoc)
   deriving (Show, Generic)
 
 cfg :: ApiRequestConfig RefineAPI
@@ -51,7 +51,7 @@ instance StoreData UserStore where
   type StoreAction UserStore = UserStoreAction
 
   transform (AskVDoc uid) us = do
-    request cfg (Proxy :: Proxy GetVDoc) uid $
+    request cfg (Proxy :: Proxy SGetVDoc) uid $
       \r -> return [SomeStoreAction userStore $ GotVDoc uid r]
     return $ us {reqStatus = PendingRequest}
 

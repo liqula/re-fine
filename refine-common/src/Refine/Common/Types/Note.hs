@@ -44,17 +44,17 @@ data Note = Note
 data NoteKind = Question | Remark
   deriving (Eq, Ord, Show, Read, Generic)
 
-data ProtoComment = ProtoComment
+data CreateComment = CreateComment
   deriving (Eq, Ord, Show, Read, Generic)
 
-data ProtoNote = ProtoNote
+data CreateNote = CreateNote
   deriving (Eq, Ord, Show, Read, Generic)
 
 
 -- * prototype
 
-type instance Proto Comment = ProtoComment
-type instance Proto Note    = ProtoNote
+type instance Create Comment = CreateComment
+type instance Create Note    = CreateNote
 
 
 -- * refine types
@@ -62,5 +62,5 @@ type instance Proto Note    = ProtoNote
 makeRefineType ''Comment
 makeRefineType ''Note
 makeRefineType ''NoteKind
-makeRefineType ''ProtoComment
-makeRefineType ''ProtoNote
+makeRefineType ''CreateComment
+makeRefineType ''CreateNote
