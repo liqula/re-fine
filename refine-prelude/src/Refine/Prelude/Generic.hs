@@ -29,7 +29,7 @@ import qualified Generics.SOP.JSON   as SOP
 
 -- * generic json
 
-gtoJSONDef :: forall a . (SOP.Generic a, SOP.HasDatatypeInfo a, SOP.All2 ToJSON (SOP.Code a)) =>  a -> Value
+gtoJSONDef :: forall a . (SOP.Generic a, SOP.HasDatatypeInfo a, SOP.All2 ToJSON (SOP.Code a)) => a -> Value
 gtoJSONDef = SOP.gtoJSON SOP.defaultJsonOptions
 
 gparseJSONDef :: forall a. (SOP.Generic a, SOP.HasDatatypeInfo a, SOP.All2 FromJSON (SOP.Code a)) => Value -> Parser a

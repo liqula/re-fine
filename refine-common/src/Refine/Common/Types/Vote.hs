@@ -26,7 +26,6 @@ import Refine.Common.Types.Prelude
 import Refine.Prelude.TH
 
 
-
 data ProtoVote = ProtoVote
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -35,6 +34,7 @@ data Vote = Vote
 
 data VoteValue = VoteValue
   deriving (Eq, Ord, Show, Read, Generic)
+
 
 -- * prototype
 

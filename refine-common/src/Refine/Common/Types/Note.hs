@@ -50,10 +50,12 @@ data ProtoComment = ProtoComment
 data ProtoNote = ProtoNote
   deriving (Eq, Ord, Show, Read, Generic)
 
+
 -- * prototype
 
 type instance Proto Comment = ProtoComment
 type instance Proto Note    = ProtoNote
+
 
 -- * refine types
 

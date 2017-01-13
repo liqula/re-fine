@@ -30,7 +30,6 @@ import Generics.SOP.NFData (grnf)
 import Refine.Prelude.Generic
 
 
-
 makeSOPGeneric :: Name -> Q [Dec]
 makeSOPGeneric t = pure
   [ InstanceD Nothing [] (AppT (ConT (''Generic)) (ConT t)) []
