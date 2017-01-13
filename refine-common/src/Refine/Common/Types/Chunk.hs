@@ -20,32 +20,42 @@
 
 module Refine.Common.Types.Chunk where
 
-import Control.Lens
-import Data.Functor.Infix ((<$$>))
-import Data.String.Conversions (ST)
-import GHC.Generics (Generic)
-import Refine.Prelude.TH
+import           Data.Functor.Infix ((<$$>))
+import           Control.DeepSeq
+import           Control.Lens (makeLenses, makePrisms, _1, (%~))
+import           Data.Aeson
+import qualified Generics.SOP        as SOP
+import qualified Generics.SOP.NFData as SOP
+import           GHC.Generics (Generic)
+
+import Refine.Common.Types.Prelude
+import Refine.Prelude.Generic
+import Refine.Prelude.TH (makeRefineType)
 
 
-
-data ChunkPoint = ChunkPoint
-  { _chunkPointNode :: Maybe DataUID
-  , _chunkPointOffset :: Int
+-- | Location of a 'Patch', 'Comment', ... in a 'VDocVersion'.  'Patch' etc. are called the *owner*
+-- of the 'ChunkRange'.  If the begin point (resp. end point) is 'Nothing', the 'ChunkRange' starts
+-- at the beginning (resp. end) of the 'VDocVersion'.  When the owner is created, it must be
+-- 'assert'ed that @0 <= begin < end < length of 'VDocVersion'@.
+data ChunkRange owner = ChunkRange
+  { _chunkRangeLabel :: ID owner
+  , _chunkRangeBegin :: Maybe ChunkPoint
+  , _chunkRangeEnd   :: Maybe ChunkPoint
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
--- | Location of a 'Patch', 'Comment', ... in the HTML tree of a 'VDocVersion'.  'Patch' etc. are
--- called the *owner* of the 'ChunkRange'.
---
--- ASSUMPTION: @0 <= begin < end < length of 'VDocVersion'@.
---
--- The 'ChunkRange' consists of a label and a beginning and end point.  Label is the @AUID@ of the
--- owner (or some representation thereof); beginning and end points correspond to a range object
--- provided by the browser.
-data ChunkRange = ChunkRange
-  { _chunkRangeLabel :: ST
-  , _chunkRangeBegin :: ChunkPoint
-  , _chunkRangeEnd   :: ChunkPoint
+data ProtoChunkRange = ProtoChunkRange
+  { _protoChunkRangeBegin :: Maybe ChunkPoint
+  , _protoChunkRangeEnd   :: Maybe ChunkPoint
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
+
+-- | A point in a 'VDocVersion' in state 'HTMLCanonical' or 'HTMLWithMarks' (either begin or end) as
+-- returned by `window.getSelection()` in javascript.  The 'DataUID' points to a node of the form
+-- @Node _ [ContentText _]@.  Begin and end points form a 'ChunkRange'.
+data ChunkPoint = ChunkPoint
+  { _chunkPointNode :: DataUID
+  , _chunkPointOffset :: Int
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -59,8 +69,20 @@ instance Read DataUID where
   readsPrec n = (_1 %~ DataUID) <$$> readsPrec n
 
 
--- * refine types
+-- * instances
 
+makeLenses ''ChunkRange
+makePrisms ''ChunkRange
+
+-- FIXME: use 'makeRefineType' once that can handle parametric types.
+instance SOP.Generic (ChunkRange owner)
+instance SOP.HasDatatypeInfo (ChunkRange owner)
+instance ToJSON   (ChunkRange owner) where toJSON    = gtoJSONDef  -- TODO: encode owner in json object?
+instance FromJSON (ChunkRange owner) where parseJSON = gparseJSONDef
+instance NFData   (ChunkRange owner) where rnf       = SOP.grnf
+
+type instance Proto (ChunkRange owner) = ProtoChunkRange
+
+makeRefineType ''ProtoChunkRange
 makeRefineType ''ChunkPoint
-makeRefineType ''ChunkRange
 makeRefineType ''DataUID

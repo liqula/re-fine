@@ -99,8 +99,11 @@ loadPatch pid =
       (idNotFound pid)
       (pure . S.patchElim toPatch)
   where
+    cr :: ChunkRange Patch
+    cr = ChunkRange pid Nothing Nothing  -- TODO
+
     toPatch :: ST -> DocRepo.PatchHandle -> Patch
-    toPatch desc _handle = Patch pid desc
+    toPatch desc _handle = Patch pid desc cr
 
 createRepo :: DocRepo.RepoHandle -> ID Patch -> DB VDocRepo
 createRepo repoh pid = do
@@ -114,7 +117,9 @@ createPatch :: DocRepo.PatchHandle -> DB Patch
 createPatch p = do
   let desc = "" -- TODO
   key <- liftDB . insert $ S.Patch desc p
-  pure $ Patch (S.keyToId key) desc
+  let pid = S.keyToId key
+      cr = ChunkRange pid Nothing Nothing  -- TODO
+  pure $ Patch pid desc cr
 
 createVDoc :: Proto VDoc -> VDocRepo -> DB VDoc
 createVDoc pv vr = do

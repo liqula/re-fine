@@ -30,6 +30,7 @@ import qualified Generics.SOP.NFData as SOP
 import           Refine.Prelude
 
 import Refine.Common.Orphans ()
+import Refine.Common.Types.Chunk
 import Refine.Common.Types.Prelude
 import Refine.Prelude.TH
 
@@ -68,8 +69,9 @@ data VDocRepo = VDocRepo
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Patch = Patch
-  { _patchId   :: ID Patch
-  , _patchDesc :: ST
+  { _patchId    :: ID Patch
+  , _patchDesc  :: ST
+  , _patchRange :: ChunkRange Patch
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
