@@ -21,32 +21,19 @@
 module Refine.Common.Rest where
 
 import Servant.API hiding (Patch)
+import GHC.Generics (Generic)
 
 import Refine.Common.Types
+import Refine.Prelude.TH
 
 
 type RefineAPI =
-       GetVDocs
+       ListVDocs
   :<|> GetVDoc
-  :<|> PostVDoc
-  :<|> PutTitle
-  :<|> PutAbstract
-  :<|> DeleteVDoc
-  :<|> PostComment
-  :<|> DeleteComment
-  :<|> PostNote
-  :<|> DeleteNote
-  :<|> PutNoteVisibility
-  :<|> GetVersion
-  :<|> PostPatch
-  :<|> DeletePatch
-  :<|> MergePatch
-  :<|> RebasePatch
-  :<|> PutVote
-  :<|> DeleteVote
+  :<|> CreateVDoc
+  :<|> AddComment
+  :<|> AddPatch
 
-
--- * vdocs
 
 type ListVDocs
   = "r" :> "vdocs"
@@ -54,11 +41,11 @@ type ListVDocs
 
 type GetVDoc
   = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc)
-    :> Get '[JSON] AugmentedVDoc
+    :> Get '[JSON] HeavyVDoc
 
 type CreateVDoc
   = "r" :> "vdoc" :> ReqBody '[JSON] (Proto VDoc)
-    :> Post '[JSON] AugmentedVDoc
+    :> Post '[JSON] HeavyVDoc
 
 type AddComment
   = "r" :> "comment" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Proto Comment)
@@ -69,67 +56,19 @@ type AddPatch
     :> Post '[JSON] Patch
 
 
----------------------------------------------------------------------------
--- For now, the frontend needs the REST calls above, and not the ones below
----------------------------------------------------------------------------
+-- | Packaged vdoc ready for use by client.
+--
+-- TODO: this should go to the module where the application logic using / producing it is
+-- implemented. until that implementation exists, it is kept here where it is used.  (also, we're
+-- still looking for a name.  canidates are 'AugmentedVDoc', 'VDocWithContext', 'RichVDoc',
+-- 'PackagedVDoc', ...?)
+data HeavyVDoc = HeavyVDoc
+  { _heavyVDoc         :: VDoc
+  , _heavyVDocVersion  :: VDocVersion 'HTMLWithMarks
+  , _heavyVDocPatches  :: [Patch]
+  , _heavyVDocComments :: [Comment]
+  , _heavyVDocNotes    :: [Note]
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
 
-type ChangeTitle
-  = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc) :> "title" :> ReqBody '[JSON] Title
-    :> Put '[JSON] ()
-
-type ChangeAbstract
-  = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc) :> "abstract" :> ReqBody '[JSON] Abstract
-    :> Put '[JSON] ()
-
-type DeleteVDoc
-  = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc)
-    :> Delete '[JSON] VDoc
-
-
--- * left ui column (coments, notes, ...)
-
-type DeleteComment
-  = "r" :> "comment" :> Capture "commentid" (ID Comment)
-    :> Delete '[JSON] Comment
-
-type AddNote
-  = "r" :> "patch" :> Capture "patchid" (ID Patch) :> "note" :> ReqBody '[JSON] (Proto Note)
-    :> Post '[JSON] (ID Note)
-
-type DeleteNote
-  = "r" :> "note" :> Capture "noteid" (ID Note)
-    :> Delete '[JSON] Note
-
-type ChangeNoteVisibility
-  = "r" :> "note" :> Capture "noteid" (ID Note) :> QueryParam "visibility" Bool
-    :> Put '[JSON] ()
-
-
--- * right ui column (patches)
-
-type GetVersion                                       -- that one is not related to patches?!
-  = "r" :> "patch" :> Capture "patchid" (ID Patch)
-    :> Get '[JSON] (VDocVersion 'HTMLWithMarks)
-
-type DeletePatch
-  = "r" :> "patch" :> Capture "patchid" (ID Patch)
-    :> Delete '[JSON] Patch
-
-type MergePatch
-  = "r" :> "patch" :> Capture "patchid" (ID Patch) :> "merge"
-    :> Post '[JSON] (ID Patch)
-
-type RebasePatch
-  = "r" :> "patch" :> "rebase" :> ReqBody '[JSON] ConflictResolution
-    :> Post '[JSON] (ID Patch)
-
-
--- * votes
-
-type AddVote
-  = "r" :> "vote" :> Capture "patchid" (ID Patch)
-    :> ReqBody '[JSON] (Proto Vote) :> Put '[JSON] (ID Vote)
-
-type DeleteVote
-  = "r" :> "vote" :> Capture "voteid" (ID Vote)
-    :> Delete '[JSON] Vote
+makeRefineType ''HeavyVDoc

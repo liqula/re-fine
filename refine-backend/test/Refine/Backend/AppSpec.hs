@@ -136,7 +136,7 @@ word = cs <$> listOf (elements ['a' .. 'z'])
 
 -- TODO: the pattern here is 'arbitrary<type> :: Gen <type>' should be defined in
 -- tests/Arbitrary.hs.  also, we need to make a package refine-test
-version :: Gen (VDocVersion 'HTMLCanonical)
+version :: Gen (VDocVersion 'HTMLRaw)
 version = pure $ VDocVersion ""
 
 protoVDoc :: Gen (Proto VDoc)

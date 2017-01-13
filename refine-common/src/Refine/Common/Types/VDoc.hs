@@ -34,14 +34,6 @@ import Refine.Common.Types.Chunk
 import Refine.Common.Types.Prelude
 import Refine.Prelude.TH
 
-data AugmentedVDoc = AugmentedVDoc
-  { _vdoc        :: VDoc        -- this one should not contain the VDocVersion
-  , _headVersion :: VDocVersion
-  , _patches     :: [Patch]
-  , _comments    :: [Comment]
-  , _notes       :: [Note]
-  }
-
 
 data VDoc = VDoc
   { _vdocId       :: ID VDoc
@@ -56,7 +48,7 @@ data VDoc = VDoc
 data ProtoVDoc = ProtoVDoc
   { _protoVDocTitle       :: Title
   , _protoVDocAbstract    :: Abstract
-  , _protoVDocInitVersion :: VDocVersion 'HTMLCanonical -- TODO canonical HTML can never come from the frontend! This should be HTMLRaw
+  , _protoVDocInitVersion :: VDocVersion 'HTMLRaw
   }
   deriving (Eq, Ord, Show, Read, Generic)
 

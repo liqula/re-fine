@@ -22,7 +22,7 @@
 
 module Refine.Backend.App.VDoc where
 
-import Control.Lens ((^.), to)
+import Control.Lens ((^.))
 
 import           Refine.Backend.App.Core
 import           Refine.Backend.Database (DB)
@@ -30,7 +30,6 @@ import           Refine.Backend.Database.Entity as DB
 import qualified Refine.Backend.DocRepo as DocRepo
 import           Refine.Common.Types.Prelude
 import           Refine.Common.Types.VDoc
-import           Refine.Common.VDoc.HTML
 
 
 createVDoc :: Proto VDoc -> App DB VDoc
@@ -38,7 +37,7 @@ createVDoc pv = do
   appLog "createVDoc"
   (dr, dp) <- docRepo $ do
     dr <- DocRepo.createRepo
-    dp <- DocRepo.createInitialPatch dr (pv ^. protoVDocInitVersion . to decanonicalizeVDocVersion)
+    dp <- DocRepo.createInitialPatch dr (pv ^. protoVDocInitVersion)
     pure (dr, dp)
   db $ do
     p <- createPatch dp
