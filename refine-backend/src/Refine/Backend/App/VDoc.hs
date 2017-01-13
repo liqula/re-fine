@@ -38,7 +38,7 @@ createVDoc pv = do
   appLog "createVDoc"
   (dr, dp) <- docRepo $ do
     dr <- DocRepo.createRepo
-    dp <- DocRepo.createInitialPatch dr (decanonicalizeVDocVersion $ pv ^. protoVDocInitVersion)
+    dp <- DocRepo.createInitialPatch dr (pv ^. protoVDocInitVersion . to decanonicalizeVDocVersion)
     pure (dr, dp)
   db $ do
     p <- createPatch dp

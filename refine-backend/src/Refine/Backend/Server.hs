@@ -20,7 +20,10 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Backend.Server where
+module Refine.Backend.Server
+  ( startBackend
+  , refineApi
+  ) where
 
 import           Control.Category
 import           Control.Monad.Except
@@ -70,6 +73,9 @@ toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError)
     fromAppError (AppDocRepoError docError) = err500 { errBody = cs $ show docError }
 
 
+-- | The 's' prefix in the handlers stands for "server", and is used to dismabiguate between the code in
+-- 'App' vs. the code in 'ServerT'.  This is slightly less noisy than qualified imports, and it's
+-- (probably) only used internally in this module.
 refineApi :: ServerT RefineAPI (App DB)
 refineApi =
        sGetVDocs
