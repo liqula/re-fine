@@ -22,7 +22,7 @@
 
 module Refine.Backend.App.VDoc where
 
-import Control.Lens ((^.))
+import Control.Lens ((^.), to)
 
 import           Refine.Backend.App.Core
 import           Refine.Backend.Database (DB)
