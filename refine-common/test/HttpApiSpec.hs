@@ -1,16 +1,15 @@
-{-# LANGUAGE GADTs                      #-}
-module Refine.Common.HttpApiSpec where
+{-# LANGUAGE GADTs                     #-}
 
-import Refine.Common.Types.Arbitrary()
-import Test.Hspec
-import Test.QuickCheck
-
-import Data.Typeable
+module HttpApiSpec where
 
 import Data.String.Conversions (cs)
-import Refine.Common.Types.Prelude
+import Data.Typeable (Typeable, typeOf)
+import Test.Hspec
+import Test.QuickCheck
 import Web.HttpApiData
 
+import Arbitrary ()
+import Refine.Common.Types.Prelude
 
 
 data HttpApiGen d where

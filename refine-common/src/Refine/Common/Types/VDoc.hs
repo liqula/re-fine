@@ -20,9 +20,17 @@
 
 module Refine.Common.Types.VDoc where
 
-import Data.String.Conversions (ST)
-import GHC.Generics (Generic)
+import           Control.Lens (makeLenses, makePrisms)
+import           Data.String.Conversions (ST)
+import           GHC.Generics (Generic)
+import           Control.DeepSeq
+import qualified Generics.SOP        as SOP
+import qualified Generics.SOP.JSON   as SOP
+import qualified Generics.SOP.NFData as SOP
+import           Refine.Prelude
 
+import Refine.Common.Orphans ()
+import Refine.Common.Types.Chunk
 import Refine.Common.Types.Prelude
 import Refine.Prelude.TH
 
@@ -38,7 +46,7 @@ data VDoc = VDoc
 data ProtoVDoc = ProtoVDoc
   { _protoVDocTitle       :: Title
   , _protoVDocAbstract    :: Abstract
-  , _protoVDocInitVersion :: VDocVersion
+  , _protoVDocInitVersion :: VDocVersion 'HTMLCanonical
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -48,7 +56,10 @@ newtype Title = Title { _unTitle :: ST }
 newtype Abstract = Abstract { _unAbstract :: ST }
   deriving (Eq, Ord, Show, Read, Generic)
 
-newtype VDocVersion = VDocVersion { _unVDocVersion :: ST }
+data HTMLState = HTMLRaw | HTMLCanonical | HTMLWithMarks
+
+-- | TODO: `newtype VDocVersion = VDocVersion { _unVDocVersion :: Forest Token }` would be better.
+newtype VDocVersion (state :: HTMLState) = VDocVersion { _unVDocVersion :: ST }
   deriving (Eq, Ord, Show, Read, Generic)
 
 data VDocRepo = VDocRepo
@@ -58,8 +69,9 @@ data VDocRepo = VDocRepo
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Patch = Patch
-  { _patchId   :: ID Patch
-  , _patchDesc :: ST
+  { _patchId    :: ID Patch
+  , _patchDesc  :: ST
+  , _patchRange :: ChunkRange Patch
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -85,4 +97,13 @@ makeRefineType ''ProtoPatch
 makeRefineType ''ConflictResolution
 makeRefineType ''Title
 makeRefineType ''Abstract
-makeRefineType ''VDocVersion
+
+-- ('makeRefineType' doesn't support parametric types.)
+instance SOP.Generic (VDocVersion a)
+instance SOP.HasDatatypeInfo (VDocVersion a)
+instance NFData (VDocVersion a) where rnf = SOP.grnf
+instance SOP.ToJSON (VDocVersion a) where toJSON = gtoJSONDef
+instance SOP.FromJSON (VDocVersion a) where parseJSON = gparseJSONDef
+-- TODO: aeson-encode phantom type in json for cross-network type safety
+makeLenses ''VDocVersion
+makePrisms ''VDocVersion

@@ -28,12 +28,13 @@ import Refine.Common.Types.Prelude
 import Refine.Prelude.TH
 
 
+-- | TODO: re-think the types in this module before proceeding with the implementation.
 
 data Comment = Comment
   { _commentID     :: ID Comment
   , _commentText   :: ST
   , _commentPublic :: Bool
-  , _commentRange  :: Maybe ChunkRange
+  , _commentRange  :: ChunkRange Comment
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -49,10 +50,12 @@ data ProtoComment = ProtoComment
 data ProtoNote = ProtoNote
   deriving (Eq, Ord, Show, Read, Generic)
 
+
 -- * prototype
 
 type instance Proto Comment = ProtoComment
 type instance Proto Note    = ProtoNote
+
 
 -- * refine types
 

@@ -22,22 +22,25 @@
 
 module Refine.Backend.AppSpec where
 
-import Prelude hiding ((.))
-import Control.Category ((.))
-import Control.Lens ((^.), (%=), at, makeLenses, view)
-import Control.Monad.State
-import Control.Natural (($$))
-import           Data.Map (Map)
+import           Control.Category ((.))
+import           Control.Lens ((^.), (%=), at, makeLenses, view)
+import           Control.Monad.State
+import           Control.Natural (($$))
 import qualified Data.Map as Map
-import Data.Monoid (mconcat)
-import Data.String.Conversions (ConvertibleStrings, cs)
-import System.Directory
-  ( createDirectory
-  , removeDirectoryRecursive
-  , removeFile
-  , withCurrentDirectory
-  )
-import System.IO.Temp (withSystemTempDirectory)
+import           Data.Map (Map)
+import           Data.Monoid (mconcat)
+import           Data.String.Conversions (ConvertibleStrings, cs)
+import           Prelude hiding ((.))
+import           System.IO.Temp (withSystemTempDirectory)
+import           System.Directory
+                    ( createDirectory
+                    , removeDirectoryRecursive
+                    , removeFile
+                    , withCurrentDirectory
+                    )
+import           Test.Hspec
+import           Test.QuickCheck
+import           Test.QuickCheck.Monadic
 
 import Refine.Backend.App as App
 import Refine.Backend.App.MigrateDB
@@ -47,10 +50,6 @@ import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc
-
-import Test.Hspec
-import Test.QuickCheck
-import Test.QuickCheck.Monadic
 
 
 data Cmd where
@@ -135,7 +134,9 @@ runCmd (GetVDoc v pv) = do
 word :: (ConvertibleStrings String s) => Gen s
 word = cs <$> listOf (elements ['a' .. 'z'])
 
-version :: Gen VDocVersion
+-- TODO: the pattern here is 'arbitrary<type> :: Gen <type>' should be defined in
+-- tests/Arbitrary.hs.  also, we need to make a package refine-test
+version :: Gen (VDocVersion 'HTMLCanonical)
 version = pure $ VDocVersion ""
 
 protoVDoc :: Gen (Proto VDoc)

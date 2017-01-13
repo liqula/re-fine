@@ -19,16 +19,21 @@ dependencies:
   - aeson
   - base
   - basic-sop
+  - containers
   - deepseq
   - elim
+  - functor-infix
   - generics-sop
+  - html-parse
   - http-api-data
   - json-sop
   - lens
+  - mtl
   - natural-transformation
   - refine-prelude
   - servant
   - string-conversions
+  - text
   - time
 
 library:
@@ -46,5 +51,4 @@ tests:
       - hspec-core
       - hspec-discover
       - QuickCheck
-    ghc-options:
-      - -fno-warn-orphans
+      - quickcheck-instances

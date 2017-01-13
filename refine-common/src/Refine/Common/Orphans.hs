@@ -18,28 +18,12 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Common.Types.Vote where
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
-import GHC.Generics (Generic)
+module Refine.Common.Orphans where
 
-import Refine.Common.Types.Prelude
-import Refine.Prelude.TH
-
-
-data ProtoVote = ProtoVote
-  deriving (Eq, Ord, Show, Read, Generic)
-
-data Vote = Vote
-  deriving (Eq, Ord, Show, Read, Generic)
-
-data VoteValue = VoteValue
-  deriving (Eq, Ord, Show, Read, Generic)
+import Data.Tree (Tree(..))
 
 
--- * prototype
-
-type instance Proto Vote = ProtoVote
-
-makeRefineType ''ProtoVote
-makeRefineType ''Vote
-makeRefineType ''VoteValue
+instance Ord a => Ord (Tree a) where
+  compare (Node x xs) (Node x' xs') = compare (x, xs) (x', xs')
