@@ -5,14 +5,15 @@ compiler-check: match-exact
 extra-deps:
   - aeson-extra-0.4.0.0
   - basic-sop-0.2.0.0
+  - functor-infix-0.0.4
+  - html-parse-0.2.0.0
+  - json-sop-0.2.0.1
+  - lens-sop-0.2.0.1
   - react-flux-1.2.3
   - react-flux-servant-0.1.1
   - recursion-schemes-5.0.1
   - refine-common-0.0.0.0
   - string-0.4.0
-  - json-sop-0.2.0.1
-  - lens-sop-0.2.0.1
-  - html-parse-0.2.0.0
 
 packages:
 - '.'
