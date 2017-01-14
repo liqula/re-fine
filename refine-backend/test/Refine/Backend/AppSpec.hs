@@ -115,7 +115,7 @@ runCmd :: Cmd -> StateT VDocs (PropertyM (App DB)) ()
 runCmd (AddVDoc pv) = do
   vdoc   <- lift . run $ App.createVDoc pv
   lastId <- gets $ view vdocLast
-  vdocMap  %= Map.insert lastId (vdoc ^. vdocId)
+  vdocMap  %= Map.insert lastId (vdoc ^. vdocID)
   vdocLast %= (+1)
   lift . assert $
     (vdoc ^. vdocTitle    == pv ^. protoVDocTitle) &&

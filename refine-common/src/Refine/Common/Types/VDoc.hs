@@ -36,7 +36,7 @@ import Refine.Prelude.TH
 
 
 data VDoc = VDoc
-  { _vdocId       :: ID VDoc
+  { _vdocID       :: ID VDoc
   , _vdocTitle    :: Title
   , _vdocAbstract :: Abstract
   , _vdocRepo     :: ID VDocRepo

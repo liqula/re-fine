@@ -113,14 +113,14 @@ spec = around createTestSession $ do
   describe "sGetVDoc" $ do
     it "retrieves a vdoc" $ \sess -> do
       vdoc <- runDB sess $ App.createVDoc sampleCreateVDoc
-      let vid :: ST = vdoc ^. vdocId . to toUrlPiece
+      let vid :: ST = vdoc ^. vdocID . to toUrlPiece
       resp <- runWai sess $ get ("/r/vdoc/" <> cs vid)
       respCode resp `shouldBe` 200
 
   describe "sCreateVDoc" $ do
     it "stores a vdoc in the db" $ \sess -> do
       fe :: HeavyVDoc <- runWaiBody sess $ post "/r/vdoc" (encode sampleCreateVDoc)
-      be :: HeavyVDoc <- runDB      sess $ getHeavyVDoc (fe ^. heavyVDoc . vdocId)
+      be :: HeavyVDoc <- runDB      sess $ getHeavyVDoc (fe ^. heavyVDoc . vdocID)
       fe `shouldBe` be
 
   describe "sAddComment" $ do
