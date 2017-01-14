@@ -1,3 +1,25 @@
 build:
   script:
     - "./test-all.hs"
+
+    # what we want:
+    #
+    # - single script that can be run by any user who just cloned this,
+    #   or by the ci, or by the developer before pushing something.  or
+    #   by some other ci with a different config language.  => move this
+    #   stuff to ./test-all.hs or ./test-all.sh
+    #
+    # - no installs globally to the user.  => install locally and add
+    #   `stack path --something` to the patch.
+    #
+    # - caching.  especially the ci shouldn't have to run the same
+    #   shit over and over again.  for developers / users this is
+    #   probably less important.  => steered by command-line flag,
+    #   create directory ~/.refine-cache/<resolver> and link
+    #   .stack-work and *especially* the executable path to that.
+    #
+    # - no global stack.yaml (it's confusing enough to have them in
+    #   every package, but that's unlikely to be avoidable.  unless we
+    #   can clone the global one into all packages.  anyway we don't
+    #   want to keep track of all weird dependencies in five yaml
+    #   files redundantly.  doesn't seem to work very well.)  => ??
