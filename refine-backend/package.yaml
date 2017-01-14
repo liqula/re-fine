@@ -57,10 +57,15 @@ tests:
       - test
       - src
     dependencies:
+      - aeson
       - containers
       - directory
       - hspec
       - hspec-core
       - hspec-discover
+      - hspec-wai
+      - http-types
       - QuickCheck
       - temporary
+      - transformers
+      - wai-extra
