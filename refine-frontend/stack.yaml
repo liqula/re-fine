@@ -14,11 +14,17 @@ extra-deps:
   - recursion-schemes-5.0.1
   - refine-common-0.0.0.0
   - string-0.4.0
+  - json-sop-0.2.0.1
+  - lens-sop-0.2.0.1
+  - html-parse-0.2.0.0
+  - functor-infix-0.0.4
 
 packages:
 - '.'
-- '../refine-common'
-- '../refine-prelude'
+- location: '../refine-common'
+  extra-dep: true
+- location: '../refine-prelude'
+  extra-dep: true
 - location:
     git: https://github.com/andorp/elim.git
     commit: 558fc65a4033577092214c5e2defd47805678b97
