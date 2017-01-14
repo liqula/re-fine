@@ -22,6 +22,7 @@
 
 module Refine.Backend.Server
   ( startBackend
+  , Backend(..), mkBackend
   , refineApi
   ) where
 
@@ -46,17 +47,26 @@ import Refine.Common.Types
 
 startBackend :: IO ()
 startBackend = do
+  Warp.runSettings Warp.defaultSettings . backendServer =<< mkBackend True
+
+data Backend = Backend
+    { backendServer :: Application
+    , backendMonad  :: App DB CN.:~> ExceptT AppError IO
+    }
+
+mkBackend :: Bool -> IO Backend
+mkBackend migrate = do
   runDb      <- createDBRunner $ DBOnDisk "refine.db"
   runDocRepo <- createRunRepo "."
   let logger = Logger putStrLn
       app    = runApp runDb runDocRepo logger
+      srv    = Servant.serve (Proxy :: Proxy RefineAPI) $ serverT app refineApi
 
-  void $ (natThrowError . app) $$ do
-    migrateDB
+  when migrate $ do
+    void $ (natThrowError . app) $$ do
+      migrateDB
 
-  Warp.runSettings Warp.defaultSettings
-    . Servant.serve (Proxy :: Proxy RefineAPI)
-    $ serverT app refineApi
+  pure $ Backend srv app
 
 
 serverT :: (App db CN.:~> ExceptT AppError IO) -> ServerT RefineAPI (App db) -> Server RefineAPI
