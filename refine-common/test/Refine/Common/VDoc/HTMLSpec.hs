@@ -83,7 +83,7 @@ spec = do
 
     it "data-uid are unique" . property $ do
       \tokens -> let vs :: [ST] = mconcat $ collectDataUID <$> setElemUIDs tokens
-                 in vs `shouldBe` nub vs
+                 in vs `shouldBe` []  -- nub vs
 
     it "everything but data-uid attributes remains unchanged" . property $ do
       \tokens -> (withoutDataUID <$> tokens) `shouldBe` (withoutDataUID <$> setElemUIDs tokens)
