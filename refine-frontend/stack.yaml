@@ -2,23 +2,6 @@ resolver: lts-7.1
 compiler: ghcjs-0.2.1.9007001_ghc-8.0.1
 compiler-check: match-exact
 
-extra-deps:
-  - aeson-extra-0.4.0.0
-  - basic-sop-0.2.0.0
-  - functor-infix-0.0.4
-  - html-parse-0.2.0.0
-  - json-sop-0.2.0.1
-  - lens-sop-0.2.0.1
-  - react-flux-1.2.3
-  - react-flux-servant-0.1.1
-  - recursion-schemes-5.0.1
-  - refine-common-0.0.0.0
-  - string-0.4.0
-  - json-sop-0.2.0.1
-  - lens-sop-0.2.0.1
-  - html-parse-0.2.0.0
-  - functor-infix-0.0.4
-
 packages:
 - '.'
 - location: '../refine-common'
@@ -33,6 +16,19 @@ packages:
     git: https://github.com/bgamari/html-parse.git
     commit: ebdd5fa3fa5a0d3c22602bec15059e821ad10ec4
   extra-dep: true
+
+extra-deps:
+- aeson-extra-0.4.0.0
+- basic-sop-0.2.0.0
+- functor-infix-0.0.4
+- html-parse-0.2.0.0
+- json-sop-0.2.0.1
+- lens-sop-0.2.0.1
+- react-flux-1.2.3
+- react-flux-servant-0.1.1
+- recursion-schemes-5.0.1
+- refine-common-0.0.0.0
+- string-0.4.0
 
 setup-info:
   ghcjs:
