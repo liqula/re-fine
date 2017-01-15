@@ -1,5 +1,6 @@
 {-# OPTIONS_GHC -Wall -Werror #-}
 
+import Control.Monad
 import Data.Monoid
 import Development.Shake
 
@@ -19,6 +20,8 @@ refinePrelude  = "refine-prelude"
 stackBuild :: FilePath -> Action ()
 stackBuild project = do
   command_ [Cwd project] "stack" ["test", "--fast", project]
+  -- (NOTE: be careful playing with the above command line.  we have observed that naming the
+  -- project explicitly here is necessary for success, but didn't investigate.)
 
 hlintProject :: FilePath -> Action ()
 hlintProject project = do
@@ -32,15 +35,17 @@ hlintProject project = do
 
 -- * commands
 
-buildBackend, buildCommon, buildFrontend, buildPrelude, hlint, setup, clean :: String
+setup, buildPrelude, buildCommon, buildBackend, buildFrontend, buildAll, clean, distClean, hlint :: String
 
-buildBackend  = "build-backend"
-buildCommon   = "build-common"
-buildFrontend = "build-frontend"
-buildPrelude  = "build-prelude"
-hlint         = "hlint"
 setup         = "setup"
+buildPrelude  = "build-prelude"
+buildCommon   = "build-common"
+buildBackend  = "build-backend"
+buildFrontend = "build-frontend"
+buildAll      = "build-all"
 clean         = "clean"
+distClean     = "dist-clean"
+hlint         = "hlint"
 
 
 -- * main
@@ -49,24 +54,9 @@ main :: IO ()
 main = shakeArgs shakeOptions { shakeFiles = ".build", shakeVerbosity = Loud } $ do
 
   want
-    [ buildPrelude
-    , buildCommon
-    , buildBackend
-    , buildFrontend
+    [ buildAll
     , hlint
     ]
-
-  phony buildPrelude $ do
-    stackBuild refinePrelude
-
-  phony buildBackend $ do
-    stackBuild refineBackend
-
-  phony buildCommon $ do
-    stackBuild refineCommon
-
-  phony buildFrontend $ do
-    stackBuild refineFrontend
 
   phony setup $ do
     let resolver = "nightly-2017-01-10"  -- (we need at least hlint v1.9.39, which is not in lts-7.15.)
@@ -75,11 +65,35 @@ main = shakeArgs shakeOptions { shakeFiles = ".build", shakeVerbosity = Loud } $
     command_ [] "stack" ["install", "hspec-discover", "--resolver", resolver]
     command_ [] "stack" ["exec", "--", "which", "hspec-discover"]
 
+  phony buildPrelude $ do
+    stackBuild refinePrelude
+
+  phony buildCommon $ do
+    stackBuild refineCommon
+
+  phony buildBackend $ do
+    stackBuild refineBackend
+
+  phony buildFrontend $ do
+    stackBuild refineFrontend
+
+  phony buildAll $ do
+    -- for building everything, we only need to go to backend and frontend.  prelude and common are
+    -- compiled in both (two different compilers), and tested (as non-extra deps in stack.yaml) in
+    -- backend.
+    --
+    -- (FUTUREWORK: there is no need to force sequential firing of these two targets.  we just need
+    -- to figure out how to express that in shake.)
+    stackBuild refineBackend
+    stackBuild refineFrontend
+
   phony clean $ do
-    command_ [Cwd refinePrelude]  "rm" ["-rf", ".stack-work"]
-    command_ [Cwd refineCommon]   "rm" ["-rf", ".stack-work"]
-    command_ [Cwd refineBackend]  "rm" ["-rf", ".stack-work"]
-    command_ [Cwd refineFrontend] "rm" ["-rf", ".stack-work"]
+    forM_ [refinePrelude, refineCommon, refineBackend, refineFrontend] $ \pkg -> do
+        command_ [Cwd pkg] "stack" ["clean"]
+
+  phony distClean $ do
+    forM_ [refinePrelude, refineCommon, refineBackend, refineFrontend] $ \pkg -> do
+        command_ [Cwd pkg] "rm" ["-rf", ".stack-work"]
 
   phony hlint $ do
     hlintProject refinePrelude
