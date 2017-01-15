@@ -89,12 +89,10 @@ spec = do
       \tokens -> (withoutDataUID <$> tokens) `shouldBe` (withoutDataUID <$> setElemUIDs tokens)
 
   describe "wrapInTopLevelTags" $ do
-    it "itempotent" . property . forAll arbitraryTokenForest $
-      \forest -> let gotwice, goonce :: [Token] -> Either VDocHTMLError [Token]
+    it "itempotent" . property . forAll arbitraryCanonicalTokenStream $
+      \stream -> let gotwice, goonce :: [Token] -> Either VDocHTMLError [Token]
                      gotwice          = wrapInTopLevelTags >=> wrapInTopLevelTags
                      goonce           = wrapInTopLevelTags
-
-                     stream = canonicalizeTokens $ tokensFromForest forest
                  in gotwice stream `shouldBe` goonce stream
 
     it "clothes naked texts in span" $ do
