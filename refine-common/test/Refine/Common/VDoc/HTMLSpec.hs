@@ -20,8 +20,6 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-{-# OPTIONS_GHC -w #-}
-
 module Refine.Common.VDoc.HTMLSpec where
 
 import           Control.Exception (evaluate)
