@@ -19,9 +19,7 @@ refinePrelude  = "refine-prelude"
 
 stackBuild :: FilePath -> Action ()
 stackBuild project = do
-  command_ [Cwd project] "stack" ["test", "--fast", project]
-  -- (NOTE: be careful playing with the above command line.  we have observed that naming the
-  -- project explicitly here is necessary for success, but didn't investigate.)
+  command_ [Cwd project] "stack" ["test", "--fast"]
 
 hlintProject :: FilePath -> Action ()
 hlintProject project = do
