@@ -1,3 +1,5 @@
+{-# OPTIONS_GHC -Wall -Werror #-}
+
 import Development.Shake
 
 import Data.Monoid
@@ -5,7 +7,7 @@ import Data.Monoid
 
 -- * project dirs
 
-refineBackend, refineCommon, refineFrontend :: FilePath
+refineBackend, refineCommon, refineFrontend, refinePrelude :: FilePath
 
 refineBackend  = "refine-backend"
 refineCommon   = "refine-common"
