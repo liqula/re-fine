@@ -5,11 +5,12 @@
 # advanced users.
 #
 # NOTE: currently, the 'setup' rule installs specific versions of
-# hlint and hspec-discover under ~/.local/bin/, which has to be in
-# your $PATH.  if you don't want this, you should edit Build.hs before
+# hlint and hspec-discover under ~/.local/bin/, which is added to the
+# $PATH here.  if you don't want this, you should edit Build.hs before
 # you run it.
 
 set -e
+export PATH=$HOME/.local/bin:$PATH
 
 stack install --resolver lts-7.15 shake
 ./build.sh setup
