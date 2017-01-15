@@ -1,5 +1,5 @@
 #!/bin/sh
 
-stack install shake
+stack install --resolver lts-7.15 shake
 ./build.sh setup
 ./build.sh
