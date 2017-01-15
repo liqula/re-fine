@@ -26,8 +26,9 @@ import           Control.Exception (evaluate, throwIO, ErrorCall(..))
 import           Control.Monad ((>=>))
 import           Data.Char (isSpace)
 import           Data.List (nub)
-import           Data.String.Conversions (ST, cs)
+import           Data.String.Conversions (ST, cs, (<>))
 import qualified Data.Text as ST
+import           Data.Tree
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
@@ -129,3 +130,58 @@ spec = do
           bad = insertMarks [] $ VDocVersion "<wef>q"  -- (data-uid attr. missing in tag)
 
       eval bad `shouldThrow` anyException
+
+  describe "resolvePreTokens" $ do
+    let runPreTokenForest :: Forest PreToken -> [Token]
+        runPreTokenForest = tokensFromForest . fmap (fmap runPreToken)
+
+    context "w/o PreMarks" $ do
+      it "inverts enablePreTokens" . property . forAll arbitraryCanonicalTokenForest $ do
+        \(forest :: Forest Token) -> do
+          let go   :: [Token] = runPreTokenForest $ enablePreTokens forest
+              stay :: [Token] = tokensFromForest forest
+          go `shouldBe` stay
+
+    context "with consistent PreMarks" $ do
+      it "removes empty selections" $ do
+        resolvePreTokens [PreMarkOpen "2", PreMarkClose "2"]
+          `shouldBe` Right []
+
+      it "keeps selections that have only tags in them, but no text" $ do
+        -- (not sure this is what we want, but it's what we currently do!)
+        resolvePreTokens [PreMarkOpen "2", PreMarkOpen "8", PreMarkClose "8", PreMarkClose "2"]
+          `shouldBe` Right [TagOpen "mark" [Attr "data-chunk-id" "2"], TagClose "mark"]
+
+      it "renders marks as tags" $ do
+        resolvePreTokens [PreMarkOpen "2", PreToken $ ContentText "wef", PreMarkClose "2"]
+          `shouldBe` Right [TagOpen "mark" [Attr "data-chunk-id" "2"], ContentText "wef", TagClose "mark"]
+        resolvePreTokens [ PreMarkOpen "2"
+                         , PreToken $ ContentText "wef"
+                         , PreMarkOpen "8"
+                         , PreToken $ ContentText "puh"
+                         , PreMarkClose "8"
+                         , PreMarkClose "2"
+                         ]
+          `shouldBe`
+               Right [ TagOpen "mark" [Attr "data-chunk-id" "2"]
+                     , ContentText "wef"
+                     , TagOpen "mark" [Attr "data-chunk-id" "8"]
+                     , ContentText "puh"
+                     , TagClose "mark"
+                     , TagClose "mark"
+                     ]
+
+    context "with *in*consistent PreMarks" $ do
+      it "fails" $ do
+        let bad1 = [ PreMarkOpen "2"
+                   ]
+            bad2 = [ PreMarkOpen "2"
+                   , PreMarkOpen "8"
+                   , PreMarkClose "2"
+                   , PreMarkClose "8"
+                   ]
+
+        resolvePreTokens bad1
+          `shouldBe` Left ("resolvePreTokens: open without close: " <> show ([PreMarkOpen "2"], bad1))
+        resolvePreTokens bad2
+          `shouldBe` Left ("resolvePreTokens: close without open: " <> show ([PreMarkClose "8"], bad2))

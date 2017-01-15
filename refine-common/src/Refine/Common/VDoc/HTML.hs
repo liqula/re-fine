@@ -32,20 +32,25 @@ module Refine.Common.VDoc.HTML
   , setElemUIDs
   , wrapInTopLevelTags
   , insertMarks
+
+  -- * internal (exported for testing)
+  , PreToken(..), enablePreTokens, resolvePreTokens, runPreToken
   ) where
 
 import           Control.Exception (assert)
 import           Control.Monad.Error.Class (MonadError, throwError)
 import           Data.Char (isSpace)
+import           Data.Functor.Infix ((<$$>))
 import           Data.List as List (foldl')
 import           Data.Set as Set hiding (foldl')
 import           Data.String.Conversions (ST, (<>), cs)
 import qualified Data.Text as ST
-import           Data.Tree (Tree(..))
+import           Data.Tree (Forest, Tree(..))
 import           Text.HTML.Parser (Token(..), Attr(..), parseTokens, canonicalizeTokens, renderTokens)
 import           Text.HTML.Tree (ParseTokenForestError, tokensToForest, tokensFromForest)
 
 import Refine.Common.Types
+import Refine.Prelude
 
 
 newtype VDocHTMLError =
@@ -132,6 +137,100 @@ insertMarks crs (VDocVersion (parseTokens -> ts))
   . fmap (VDocVersion . cs . renderTokens)  -- TODO: do we still want '\n' between tokens for darcs?
   . insertMarksTs crs
   $ ts
+
+
+-- | this type is introduced because we keep open and close marks separately in the tree at some
+-- point.  in order to keep track of which close mark belongs to which open mark, we cannot rely on
+-- their order (which still needs to be de-overlapped), so need close marks of the form
+-- @PreMarkClose "data-chunk-id-value"@.
+data PreToken = PreToken Token | PreMarkOpen ST | PreMarkClose ST
+  deriving (Eq, Show)
+
+runPreToken :: PreToken -> Token
+runPreToken (PreToken t)     = t
+runPreToken (PreMarkOpen l)  = TagOpen "mark" [Attr "data-chunk-id" l]
+runPreToken (PreMarkClose _) = TagClose "mark"
+
+isOpen :: PreToken -> Bool
+isOpen (PreMarkOpen _)          = True
+isOpen (PreToken (TagOpen _ _)) = True
+isOpen _                        = False
+
+isClose :: PreToken -> Bool
+isClose (PreMarkClose _)        = True
+isClose (PreToken (TagClose _)) = True
+isClose _                       = False
+
+isMatchingOpenClose :: PreToken -> PreToken -> Bool
+isMatchingOpenClose (PreMarkOpen l)          (PreMarkClose l')        | l == l' = True
+isMatchingOpenClose (PreToken (TagOpen n _)) (PreToken (TagClose n')) | n == n' = True
+isMatchingOpenClose _                        _                                  = False
+
+closeFromOpen :: PreToken -> PreToken
+closeFromOpen (PreMarkOpen l)           = PreMarkClose l
+closeFromOpen (PreToken (TagOpen el _)) = PreToken (TagClose el)
+closeFromOpen _                         = error "closeFromOpen: internal error."
+
+
+enablePreTokens :: Forest Token -> Forest PreToken
+enablePreTokens ys = f <$> ys
+  where f (Node x xs) = Node (PreToken x) (f <$> xs)
+
+
+data ResolvePreTokensStack =
+    ResolvePreTokensStack
+      { _rptsOpen    :: [PreToken]
+      , _rptsReopen  :: [PreToken]
+      , _rptsWritten :: [PreToken]
+      , _rptsReading :: [PreToken]
+      }
+  deriving (Eq, Show)
+
+-- | If there are any pre-marks left, open and close them as often as needed to resolve overlaps.
+-- Crashes if the opening and closing premarks do not match up.
+resolvePreTokens :: forall m . MonadError String m => [PreToken] -> m [Token]
+resolvePreTokens ts_ = runPreToken <$$> (filterEmptyChunks <$> go)
+  where
+    go :: m [PreToken]
+    go = either throwError pure
+       . recursion f
+       $ ResolvePreTokensStack [] [] [] ts_
+
+    f :: ResolvePreTokensStack -> Recursion ResolvePreTokensStack String [PreToken]
+    f (ResolvePreTokensStack [] [] written []) = Halt $ reverse written
+
+    -- (a) handle closing tags
+    f (ResolvePreTokensStack (opening : openings') reopenings written ts@(t : ts'))
+        | isClose t && isMatchingOpenClose opening t
+            = Run $ ResolvePreTokensStack openings' reopenings (t : written) ts'
+        | isClose t
+            = Run $ ResolvePreTokensStack openings' (opening : reopenings) (closeFromOpen opening : written) ts
+
+    f (ResolvePreTokensStack [] _ _ ts@(t : _))
+        | isClose t
+            = Fail $ "resolvePreTokens: close without open: " <> show (ts, ts_)
+
+    -- (b) handle opening tags
+    f (ResolvePreTokensStack openings reopenings written (t : ts'))
+        | isOpen t
+            = Run $ ResolvePreTokensStack (t : openings) reopenings (t : written) ts'
+
+    -- (c) *after* having handled closing tags, re-open tags artificially closed in (a)
+    f (ResolvePreTokensStack openings reopenings@(_:_) written ts)
+            = Run $ ResolvePreTokensStack openings [] written (reverse reopenings <> ts)
+
+    -- (d) simply run and output any other tags
+    f (ResolvePreTokensStack openings [] written (t : ts'))
+            = Run $ ResolvePreTokensStack openings [] (t : written) ts'
+
+    f (ResolvePreTokensStack openings@(_:_) [] _ [])
+            = Fail $ "resolvePreTokens: open without close: " <> show (openings, ts_)
+
+filterEmptyChunks :: [PreToken] -> [PreToken]
+filterEmptyChunks (PreMarkOpen _ : PreMarkClose _ : xs) = filterEmptyChunks xs
+filterEmptyChunks (x : xs)                              = x : filterEmptyChunks xs
+filterEmptyChunks []                                    = []
+
 
 insertMarksTs :: MonadError VDocHTMLError m
             => [ChunkRange a] -> [Token] -> m [Token]
