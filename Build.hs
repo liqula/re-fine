@@ -68,11 +68,12 @@ main = shakeArgs shakeOptions { shakeFiles = ".build", shakeVerbosity = Loud } $
   phony buildFrontend $ do
     stackBuild refineFrontend
 
-  phony setup $ do  -- TODO: instead of phony, make this a pre-requisite of the all other targets.
-    let resolver = "nightly-2017-01-10"
+  phony setup $ do
+    let resolver = "nightly-2017-01-10"  -- (we need at least hlint v1.9.39, which is not in lts-7.15.)
     command_ [] "stack" ["install", "hlint", "--resolver", resolver]
     command_ [] "stack" ["exec", "--", "hlint", "--version"]
     command_ [] "stack" ["install", "hspec-discover", "--resolver", resolver]
+    command_ [] "stack" ["exec", "--", "which", "hspec-discover"]
 
   phony clean $ do
     command_ [Cwd refinePrelude]  "rm" ["-rf", ".stack-work"]
