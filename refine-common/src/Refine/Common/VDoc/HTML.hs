@@ -1,13 +1,25 @@
-{-# LANGUAGE BangPatterns        #-}
-{-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE FlexibleContexts    #-}
-{-# LANGUAGE GADTs               #-}
-{-# LANGUAGE LambdaCase          #-}
-{-# LANGUAGE OverloadedStrings   #-}
-{-# LANGUAGE RankNTypes          #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections       #-}
-{-# LANGUAGE ViewPatterns        #-}
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE ExplicitForAll             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ViewPatterns               #-}
 
 -- | Code for handling `VDocVersions` with HTML content.
 --
@@ -19,6 +31,7 @@ module Refine.Common.VDoc.HTML
   , canonicalizeWhitespace
   , setElemUIDs
   , wrapInTopLevelTags
+  , insertMarks
   ) where
 
 import           Control.Exception (assert)
@@ -108,3 +121,18 @@ wrapInTopLevelTags ts = assert (ts == canonicalizeTokens ts)
     fill :: Tree Token -> Tree Token
     fill n@(Node (ContentText _) _) = Node defaultTag [n]
     fill n                          = n
+
+
+-- | Render 'VDocVersion' as needed in the browser.  More specifically: Insert @mark@ html elements
+-- for all chunks of all patches, comments, notes, etc.
+insertMarks :: MonadError VDocHTMLError m
+            => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> m (VDocVersion 'HTMLWithMarks)
+insertMarks crs (VDocVersion (parseTokens -> ts))
+  = assert (ts == canonicalizeTokens ts)
+  . fmap (VDocVersion . cs . renderTokens)  -- TODO: do we still want '\n' between tokens for darcs?
+  . insertMarksTs crs
+  $ ts
+
+insertMarksTs :: MonadError VDocHTMLError m
+            => [ChunkRange a] -> [Token] -> m [Token]
+insertMarksTs = undefined

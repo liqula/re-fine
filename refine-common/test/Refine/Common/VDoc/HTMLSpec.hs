@@ -22,7 +22,7 @@
 
 module Refine.Common.VDoc.HTMLSpec where
 
-import           Control.Exception (evaluate)
+import           Control.Exception (evaluate, throwIO, ErrorCall(..))
 import           Control.Monad ((>=>))
 import           Data.Char (isSpace)
 import           Data.List (nub)
@@ -35,6 +35,7 @@ import           Text.HTML.Parser
 import           Text.HTML.Tree
 
 import Arbitrary
+import Refine.Common.Types
 import Refine.Common.VDoc.HTML
 
 
@@ -107,3 +108,24 @@ spec = do
       let bad :: Either VDocHTMLError [Token]
           bad = wrapInTopLevelTags [ContentText "wef", ContentChar 'q']
       evaluate bad `shouldThrow` anyException
+
+  describe "insertMarks" $ do
+    it "does not change version if chunk list is empty." . property . forAll arbitraryCanonicalVDocVersion $ do
+      \vers -> do
+        pending
+        _unVDocVersion <$> insertMarks [] vers `shouldBe` Right (_unVDocVersion vers)
+
+    it "generates valid output on arbitrary valid chunkranges." $ do
+      pending
+
+    it "marks are inserted under the correct parent node." $ do
+      pending
+
+    it "crashes (internal error) if input is not canonicalized" $ do
+      let eval :: Show e => Either e a -> IO a
+          eval = either (throwIO . ErrorCall . show) pure
+
+          bad :: Either VDocHTMLError (VDocVersion 'HTMLWithMarks)
+          bad = insertMarks [] $ VDocVersion "<wef>q"  -- (data-uid attr. missing in tag)
+
+      eval bad `shouldThrow` anyException
