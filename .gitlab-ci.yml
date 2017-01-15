@@ -1,6 +1,6 @@
 build:
   script:
-    - "./test-all.hs"
+    - "./test-all.sh"
 
     # what we want:
     #
