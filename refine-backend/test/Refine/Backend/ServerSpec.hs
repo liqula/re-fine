@@ -38,7 +38,7 @@ import           Web.HttpApiData (toUrlPiece)
 
 import Refine.Backend.App as App
 import Refine.Backend.AppSpec (withTempCurrentDirectory)
-import Refine.Backend.Database
+import Refine.Backend.Database (DB)
 import Refine.Backend.Server
 import Refine.Common.Rest
 import Refine.Common.Types
@@ -70,7 +70,7 @@ crashOnLeft action = either (throwIO . ErrorCall . show) pure =<< action
 
 createTestSession :: ActionWith Backend -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
-  void $ action =<< mkBackend False
+  void $ action =<< mkBackend (defaultBackendConfig {backendShouldLog = False})
 
 
 -- * test helpers
