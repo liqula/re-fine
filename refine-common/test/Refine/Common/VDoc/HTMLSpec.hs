@@ -110,6 +110,53 @@ spec = do
           bad = wrapInTopLevelTags [ContentText "wef", ContentChar 'q']
       evaluate bad `shouldThrow` anyException
 
+  describe "trickledownUIInfo" $ do
+    it "1" $ do
+      let ts  = [ TagOpen "div" [Attr "data-uid" "3"]
+                , TagOpen "div" []
+                , TagClose "div"
+                , TagClose "div"
+                ]
+          ts' = [ TagOpen "div" [Attr "data-uid" "3"]
+                , TagOpen "div" [Attr "data-uid" "3"]
+                , TagClose "div"
+                , TagClose "div"
+                ]
+      trickledownUIInfo <$> tokensToForest ts `shouldBe` tokensToForest ts'
+
+    it "2" $ do
+      let ts  = [ TagOpen "div" [Attr "data-uid" "3"]
+                , ContentText "wefwef"
+                , TagOpen "div" []
+                , TagClose "div"
+                , TagClose "div"
+                ]
+          ts' = [ TagOpen "div" [Attr "data-uid" "3"]
+                , ContentText "wefwef"
+                , TagOpen "div" [Attr "data-uid" "3", Attr "data-offset" "6"]
+                , TagClose "div"
+                , TagClose "div"
+                ]
+      trickledownUIInfo <$> tokensToForest ts `shouldBe` tokensToForest ts'
+
+    it "3" $ do
+      let ts  = [ TagOpen "div" [Attr "data-uid" "3"]
+                , ContentText "whoophwhooph"
+                , TagOpen "div" []
+                , ContentText "wefwef"
+                , TagClose "div"
+                , TagOpen "div" []
+                , TagClose "div"
+                , TagClose "div"
+                ]
+          ts' = [ TagOpen "div" [Attr "data-uid" "3"]
+                , ContentText "wefwef"
+                , TagOpen "div" [Attr "data-uid" "3", Attr "data-offset" "18"]
+                , TagClose "div"
+                , TagClose "div"
+                ]
+      trickledownUIInfo <$> tokensToForest ts `shouldBe` tokensToForest ts'
+
   describe "insertMarks" $ do
     it "does not change version if chunk list is empty." . property . forAll arbitraryCanonicalVDocVersion $ do
       \vers -> do

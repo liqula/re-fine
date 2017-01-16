@@ -32,6 +32,7 @@ module Refine.Common.VDoc.HTML
   , canonicalizeWhitespace
   , setElemUIDs
   , wrapInTopLevelTags
+  , trickledownUIInfo
   , insertMarks
 
   -- * internal (exported for testing)
@@ -133,6 +134,10 @@ wrapInTopLevelTags ts = assert (ts == canonicalizeTokens ts)
     fill :: Tree Token -> Tree Token
     fill n@(Node (ContentText _) _) = Node defaultTag [n]
     fill n                          = n
+
+
+trickledownUIInfo :: Forest Token -> Forest Token
+trickledownUIInfo = undefined
 
 
 -- | Render 'VDocVersion' as needed in the browser.  More specifically: Insert @mark@ html elements
