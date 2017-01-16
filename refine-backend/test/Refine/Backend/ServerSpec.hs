@@ -58,7 +58,7 @@ runWaiBody' :: FromJSON a => Backend -> Wai.WaiSession SResponse -> IO (Either S
 runWaiBody' sess m = do
   resp <- Wai.withApplication (backendServer sess) m
   pure $ case eitherDecode $ simpleBody resp of
-    Left err -> Left $ unwords [show err, cs (simpleBody resp)]
+    Left err -> Left $ show err <> cs (simpleBody resp)
     Right x  -> Right x
 
 -- | Call 'runDB'' and crash on 'Left'.
