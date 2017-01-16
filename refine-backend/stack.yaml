@@ -25,6 +25,7 @@ extra-deps:
 - html-parse-0.2.0.0
 - json-sop-0.2.0.1
 - lens-sop-0.2.0.1
+- users-persistent-0.5.0.0
 
 flags: {}
 

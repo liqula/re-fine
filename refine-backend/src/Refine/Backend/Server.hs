@@ -65,7 +65,7 @@ defaultBackendConfig = BackendConfig True True
 
 mkBackend :: BackendConfig -> IO Backend
 mkBackend cfg = do
-  runDb      <- createDBRunner $ DBOnDisk "refine.db"
+  (runDb, _runUserDb) <- createDBRunner $ DBOnDisk "refine.db"
   runDocRepo <- createRunRepo "."
   let logger = Logger $ if backendShouldLog cfg then putStrLn else const $ pure ()
       app    = runApp runDb runDocRepo logger

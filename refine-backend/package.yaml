@@ -40,6 +40,8 @@ dependencies:
   - servant-server
   - string-conversions
   - text
+  - users
+  - users-persistent
   - uuid
   - warp
 
