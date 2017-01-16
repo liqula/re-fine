@@ -27,12 +27,12 @@ import           Control.Lens ((^.), to)
 import           Control.Monad.Trans.Except (runExceptT)
 import           Control.Monad (void)
 import           Control.Natural (run)
-import           Data.Aeson (FromJSON, decode, eitherDecode, encode)
-import           Data.String.Conversions (ST, cs, (<>))
+import           Data.Aeson (FromJSON, ToJSON, decode, eitherDecode, encode)
+import           Data.String.Conversions (SBS, ST, cs, (<>))
 import           Network.HTTP.Types.Status (Status(statusCode))
 import           Network.Wai.Test (SResponse(..))
 import           Test.Hspec (Spec, ActionWith, around, describe, it, shouldBe, pending)
-import           Test.Hspec.Wai (get, post)
+import           Test.Hspec.Wai (get, request)
 import qualified Test.Hspec.Wai.Internal as Wai
 import           Web.HttpApiData (toUrlPiece)
 
@@ -55,7 +55,11 @@ runWaiBody sess = crashOnLeft . runWaiBody' sess
 
 -- | Run a rest call and parse the body.
 runWaiBody' :: FromJSON a => Backend -> Wai.WaiSession SResponse -> IO (Either String a)
-runWaiBody' sess = fmap (eitherDecode . simpleBody) . Wai.withApplication (backendServer sess)
+runWaiBody' sess m = do
+  resp <- Wai.withApplication (backendServer sess) m
+  pure $ case eitherDecode $ simpleBody resp of
+    Left err -> Left $ unwords [show err, cs (simpleBody resp)]
+    Right x  -> Right x
 
 -- | Call 'runDB'' and crash on 'Left'.
 runDB :: Backend -> App DB a -> IO a
@@ -85,6 +89,9 @@ sampleCreateVDoc = CreateVDoc
 
 respCode :: SResponse -> Int
 respCode = statusCode . simpleStatus
+
+postJSON :: (ToJSON a) => SBS -> a -> Wai.WaiSession SResponse
+postJSON path json = request "POST" path [("Content-Type", "application/json")] (encode json)
 
 
 -- * test cases
@@ -119,7 +126,7 @@ spec = around createTestSession $ do
 
   describe "sCreateVDoc" $ do
     it "stores a vdoc in the db" $ \sess -> do
-      fe :: HeavyVDoc <- runWaiBody sess $ post "/r/vdoc" (encode sampleCreateVDoc)
+      fe :: HeavyVDoc <- runWaiBody sess $ postJSON "/r/vdoc" sampleCreateVDoc
       be :: HeavyVDoc <- runDB      sess $ getHeavyVDoc (fe ^. heavyVDoc . vdocID)
       fe `shouldBe` be
 
