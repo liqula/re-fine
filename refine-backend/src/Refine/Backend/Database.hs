@@ -20,9 +20,11 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Refine.Backend.Database
-  ( module Refine.Backend.Database.Core
-  , module Refine.Backend.Database.Entity
+  ( module Refine.Backend.Database.Class
+  , module Refine.Backend.Database.Core
   , createDBRunner
   ) where
 
@@ -32,9 +34,10 @@ import Control.Natural
 import Data.String.Conversions (cs)
 import Database.Persist.Sqlite
 
+import Refine.Backend.Database.Class
 import Refine.Backend.Database.Core
 import Refine.Backend.Database.Schema()
-import Refine.Backend.Database.Entity
+import Refine.Backend.Database.Entity as Entity
 
 
 
@@ -52,3 +55,29 @@ createDBRunner cfg = do
     wrapErrors :: IO (Either DBError a) -> ExceptT DBError IO a
     wrapErrors =
       lift . try >=> either (throwError . DBException) (either throwError pure)
+
+instance Database DB where
+  -- * VDoc
+  listVDocs      = Entity.listVDocs
+  createVDoc     = Entity.createVDoc
+  getVDoc        = Entity.getVDoc
+  vdocRepo       = Entity.vdocRepo
+
+  -- * Repo
+  createRepo     = Entity.createRepo
+  getRepo        = Entity.getRepo
+  getRepoHandle  = Entity.getRepoHandle
+  repoPatches    = Entity.repoPatches
+
+  -- * Patch
+  createPatch    = Entity.createPatch
+  getPatch       = Entity.getPatch
+  getPatchHandle = Entity.getPatchHandle
+  patchComments  = Entity.patchComments
+  patchNotes     = Entity.patchNotes
+
+  -- * Comment
+  getComment     = Entity.getComment
+
+  -- * Note
+  getNote        = Entity.getNote

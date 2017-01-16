@@ -1,12 +1,17 @@
+{-# LANGUAGE TypeApplications     #-}
+
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Backend.Database.Field where
 
+import Control.Monad ((<=<))
 import Data.Proxy
-import Data.String.Conversions (ST)
+import Data.String.Conversions (ST, cs)
 import Database.Persist
 import Database.Persist.Sql
+import Text.Read (readEither)
 
+import Refine.Common.Types.Note (NoteKind)
 import Refine.Common.Types.VDoc
 import Refine.Backend.DocRepo.Core
 
@@ -46,6 +51,15 @@ instance PersistField PatchHandle where
   fromPersistValue               = fmap PatchHandle . fromPersistValue
 
 instance PersistFieldSql PatchHandle where
+  -- CAUTION: This should be generated, to represent the actual inner type
+  -- of the title
+  sqlType _ = sqlType (Proxy :: Proxy ST)
+
+instance PersistField NoteKind where
+  toPersistValue noteKind = toPersistValue @ST . cs $ show noteKind
+  fromPersistValue        = (either (Left . cs) Right . readEither . cs) <=< fromPersistValue @ST
+
+instance PersistFieldSql NoteKind where
   -- CAUTION: This should be generated, to represent the actual inner type
   -- of the title
   sqlType _ = sqlType (Proxy :: Proxy ST)

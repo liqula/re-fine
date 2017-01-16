@@ -48,11 +48,15 @@ newtype DB a = DB { unDB :: ExceptT DBError SQLM a }
 data DBError
   = DBUnknownError String
   | DBNotFound String
+  | DBNotUnique String
   | DBException SomeException
   deriving (Show)
 
 notFound :: String -> DB a
 notFound = DB . throwError . DBNotFound
+
+notUnique :: String -> DB a
+notUnique = DB . throwError . DBNotUnique
 
 liftDB :: SQLM a -> DB a
 liftDB = DB . lift

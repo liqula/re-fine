@@ -31,6 +31,7 @@ import Database.Persist.Sql
 import Database.Persist.TH
 
 import Refine.Common.Types.Prelude
+import Refine.Common.Types.Note (NoteKind)
 import Refine.Common.Types.VDoc (Abstract, Title)
 import Refine.Backend.Database.Field()
 import Refine.Backend.DocRepo.Core(PatchHandle, RepoHandle)
@@ -61,7 +62,7 @@ Comment
 
 Note
     text        Text
-    kind        Text
+    kind        NoteKind
 
 Vote
     value       Text
@@ -73,26 +74,28 @@ VR
     vdoc        VDocId
     repository  RepoId
     UniVR vdoc repository
+    UniVRV vdoc
+    UniVRR repository
 
-RC
+RP
     repository  RepoId
-    commit      PatchId
-    UniVC repository commit
+    patch       PatchId
+    UniRP repository patch
 
-CC
-    commit      PatchId
+PC
+    patch       PatchId
     comment     CommentId
-    UniCC commit comment
+    UniPC patch comment
 
-CN
-    commit      PatchId
+PN
+    patch       PatchId
     note        NoteId
-    UniCN commit note
+    UniPN patch note
 
-CV
-    commit      PatchId
+PV
+    patch       PatchId
     vote        VoteId
-    UniPV commit vote
+    UniPV patch vote
 |]
 
 
@@ -119,7 +122,7 @@ makeElim ''Note
 makeElim ''Vote
 
 makeElim ''VR
-makeElim ''RC
-makeElim ''CC
-makeElim ''CN
-makeElim ''CV
+makeElim ''RP
+makeElim ''PC
+makeElim ''PN
+makeElim ''PV

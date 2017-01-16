@@ -21,6 +21,7 @@ dependencies:
   - directory
   - elim
   - filepath
+  - functor-infix
   - lens
   - lentil
   - monad-logger
@@ -30,6 +31,7 @@ dependencies:
   - persistent-sqlite
   - persistent-template
   - random
+  - refine-prelude
   - refine-common
   - resourcet
   - servant
@@ -64,6 +66,7 @@ tests:
       - hspec-core
       - hspec-discover
       - hspec-wai
+      - http-api-data
       - http-types
       - QuickCheck
       - temporary

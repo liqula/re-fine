@@ -24,9 +24,11 @@ module Refine.Backend.Database.Entity where
 
 import Control.Lens ((^.), to)
 import Control.Monad (void)
-import Database.Persist
+import Data.Functor.Infix ((<$$>))
 import Data.String.Conversions (ST)
 import Data.Typeable
+import Database.Persist
+import Database.Persist.Sql (SqlBackend)
 import Lentil.Core (entityLens)
 import Lentil.Types as L
 
@@ -40,6 +42,8 @@ import Refine.Common.Types
 type instance S.EntityRep VDoc     = S.VDoc
 type instance S.EntityRep Patch    = S.Patch
 type instance S.EntityRep VDocRepo = S.Repo
+type instance S.EntityRep Note     = S.Note
+type instance S.EntityRep Comment  = S.Comment
 
 {-
 Reading the domain structured datatypes is not a problem,
@@ -66,18 +70,26 @@ https://hackage.haskell.org/package/gdiff
 idNotFound :: (Typeable d) => ID d -> DB a
 idNotFound i = notFound $ unwords [show $ typeOf i, show i, "is not found."]
 
+-- FIXME: Better error messages
+unique :: [a] -> DB a
+unique [x] = pure x
+unique []  = notFound "Unique value is not found"
+unique _   = notUnique "Value is not unique"
+
+getEntity :: (ToBackendKey SqlBackend (S.EntityRep e), Typeable e)
+          => ID e -> DB (S.EntityRep e)
+getEntity eid = do
+  e <- liftDB . get $ S.idToKey eid
+  maybe (idNotFound eid) pure e
+
 vdocDBLens :: EntityLens' DB (ID VDoc) VDoc
 vdocDBLens = entityLens vdocEntity
 
 vdocEntity :: L.Entity DB ID VDoc VDoc
-vdocEntity = L.Entity loadVDoc updateVDoc
+vdocEntity = L.Entity getVDoc updateVDoc
 
-loadVDoc :: ID VDoc -> DB VDoc
-loadVDoc vid =
-  (liftDB . get $ S.idToKey vid) >>=
-    maybe
-      (idNotFound vid)
-      (pure . S.vDocElim toVDoc)
+getVDoc :: ID VDoc -> DB VDoc
+getVDoc vid = S.vDocElim toVDoc <$> getEntity vid
   where
     toVDoc :: Title -> Abstract -> Key S.Repo -> VDoc
     toVDoc title abstract repoid = VDoc vid title abstract (S.keyToId repoid)
@@ -91,25 +103,14 @@ updateVDoc vid vdoc = do
   record <- vDocToRecord vdoc
   liftDB $ replace (S.idToKey vid) record
 
-
-loadPatch :: ID Patch -> DB Patch
-loadPatch pid =
-  (liftDB . get $ S.idToKey pid) >>=
-    maybe
-      (idNotFound pid)
-      (pure . S.patchElim toPatch)
-  where
-    cr :: ChunkRange Patch
-    cr = ChunkRange pid Nothing Nothing  -- TODO
-
-    toPatch :: ST -> DocRepo.PatchHandle -> Patch
-    toPatch desc _handle = Patch pid desc cr
+listVDocs :: DB [ID VDoc]
+listVDocs = liftDB $ S.keyToId <$$> selectKeysList [] []
 
 createRepo :: DocRepo.RepoHandle -> ID Patch -> DB VDocRepo
 createRepo repoh pid = do
   key <- liftDB $ do
     key <- insert $ S.Repo "title" {- TODO -} repoh (S.idToKey pid)
-    void . insert $ S.RC key (S.idToKey pid)
+    void . insert $ S.RP key (S.idToKey pid)
     pure key
   pure $ VDocRepo (S.keyToId key) pid
 
@@ -121,14 +122,71 @@ createPatch p = do
       cr = ChunkRange pid Nothing Nothing  -- TODO
   pure $ Patch pid desc cr
 
+getPatch :: ID Patch -> DB Patch
+getPatch pid = S.patchElim toPatch <$> getEntity pid
+  where
+    cr :: ChunkRange Patch
+    cr = ChunkRange pid Nothing Nothing  -- TODO
+
+    toPatch :: ST -> DocRepo.PatchHandle -> Patch
+    toPatch desc _handle = Patch pid desc cr
+
+getPatchHandle :: ID Patch -> DB DocRepo.PatchHandle
+getPatchHandle pid = S.patchElim toPatchHandle <$> getEntity pid
+  where
+    toPatchHandle :: ST -> DocRepo.PatchHandle -> DocRepo.PatchHandle
+    toPatchHandle _desc handle = handle
+
+patchNotes :: ID Patch -> DB [ID Note]
+patchNotes pid = liftDB $
+  S.keyToId . S.pNNote . entityVal <$$> selectList [S.PNPatch ==. S.idToKey pid] []
+
+patchComments :: ID Patch -> DB [ID Comment]
+patchComments pid = liftDB $
+  S.keyToId . S.pCComment . entityVal <$$> selectList [S.PCPatch ==. S.idToKey pid] []
+
 createVDoc :: Create VDoc -> VDocRepo -> DB VDoc
 createVDoc pv vr = do
   key <- liftDB . insert $ S.VDoc
             (pv ^. protoVDocTitle)
             (pv ^. protoVDocAbstract)
             (vr ^. vdocRepoID . to S.idToKey)
+  void . liftDB . insert $ S.VR key (vr ^. vdocRepoID . to S.idToKey)
   pure $ VDoc
     (S.keyToId key)
     (pv ^. protoVDocTitle)
     (pv ^. protoVDocAbstract)
     (vr ^. vdocRepoID)
+
+vdocRepo :: ID VDoc -> DB (ID VDocRepo)
+vdocRepo vid = do
+  vs <- liftDB $ S.keyToId . S.vRRepository . entityVal <$$> selectList [S.VRVdoc ==. S.idToKey vid] []
+  unique vs
+
+getRepo :: ID VDocRepo -> DB VDocRepo
+getRepo vid = S.repoElim toVDocRepo <$> getEntity vid
+  where
+    toVDocRepo :: ST -> DocRepo.RepoHandle -> Key S.Patch -> VDocRepo
+    toVDocRepo _desc _repoHandle pid = VDocRepo vid (S.keyToId pid)
+
+getRepoHandle :: ID VDocRepo -> DB DocRepo.RepoHandle
+getRepoHandle vid = S.repoElim toRepoHandle <$> getEntity vid
+  where
+    toRepoHandle :: ST -> DocRepo.RepoHandle -> Key S.Patch -> DocRepo.RepoHandle
+    toRepoHandle _desc repoHandle _pid = repoHandle
+
+repoPatches :: ID VDocRepo -> DB [ID Patch]
+repoPatches vid = liftDB $
+  S.keyToId . S.rPPatch . entityVal <$$> selectList [S.RPRepository ==. S.idToKey vid] []
+
+getComment :: ID Comment -> DB Comment
+getComment cid = S.commentElim toComment <$> getEntity cid
+  where
+    cr :: ChunkRange Comment
+    cr = ChunkRange cid Nothing Nothing  -- TODO
+
+    toComment :: ST -> Bool -> Maybe (Key S.Comment) -> Comment
+    toComment desc public _parent = Comment cid desc public cr
+
+getNote :: ID Note -> DB Note
+getNote nid = S.noteElim (Note nid) <$> getEntity nid

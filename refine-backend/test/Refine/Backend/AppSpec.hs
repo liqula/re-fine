@@ -123,7 +123,7 @@ runCmd (AddVDoc pv) = do
 
 runCmd (GetVDoc v pv) = do
   Just vid <- gets . view $ vdocMap . at v
-  vdoc <- lift . run $ getVDoc vid
+  vdoc <- lift . run $ App.getVDoc vid
   lift . assert $
     (vdoc ^. vdocTitle    == pv ^. protoVDocTitle) &&
     (vdoc ^. vdocAbstract == pv ^. protoVDocAbstract)

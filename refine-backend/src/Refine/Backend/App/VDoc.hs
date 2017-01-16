@@ -22,19 +22,22 @@
 
 module Refine.Backend.App.VDoc where
 
-import Control.Lens ((^.))
+import Control.Lens ((^.), view)
+import Control.Monad ((<=<), join, mapM)
 
 import           Refine.Backend.App.Core
 import           Refine.Backend.Database (DB)
-import           Refine.Backend.Database.Entity as DB
+import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
-import           Refine.Common.Rest (HeavyVDoc)
+import           Refine.Common.Rest (HeavyVDoc(..))
 import           Refine.Common.Types.Prelude
 import           Refine.Common.Types.VDoc
 
 
 listVDocs :: App DB [ID VDoc]
-listVDocs = undefined
+listVDocs = do
+  appLog "listVDocs"
+  db DB.listVDocs
 
 createVDoc :: Create VDoc -> App DB VDoc
 createVDoc pv = do
@@ -44,14 +47,14 @@ createVDoc pv = do
     dp <- DocRepo.createInitialPatch dr (pv ^. protoVDocInitVersion)
     pure (dr, dp)
   db $ do
-    p <- createPatch dp
-    r <- createRepo dr (p ^. patchId)
+    p <- DB.createPatch dp
+    r <- DB.createRepo dr (p ^. patchId)
     DB.createVDoc pv r
 
 getVDoc :: ID VDoc -> App DB VDoc
 getVDoc i = do
   appLog "getVDoc"
-  db $ loadVDoc i
+  db $ DB.getVDoc i
 
 getHeavyVDoc :: ID VDoc -> App DB HeavyVDoc
 getHeavyVDoc = undefined
