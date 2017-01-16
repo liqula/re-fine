@@ -18,6 +18,7 @@ import           Text.HTML.Parser as HTML
 import           Text.HTML.Tree as HTML
 
 import Refine.Common.Types
+import Refine.Common.VDoc.HTML
 
 
 instance Arbitrary (ID a) where
@@ -90,15 +91,17 @@ maxListOf n g = take n <$> listOf g
 
 arbitraryCanonicalVDocVersion :: Gen (VDocVersion 'HTMLCanonical)
 arbitraryCanonicalVDocVersion =
-  VDocVersion . cs . renderTokens . tokensFromForest <$> arbitraryCanonicalTokenForest
+  (\(Right v) -> v) .
+  canonicalizeVDocVersion .
+  VDocVersion . cs . renderTokens . tokensFromForest <$> arbitraryTokenForest
 
 arbitraryCanonicalTokenForest :: Gen (Forest Token)
 arbitraryCanonicalTokenForest =
-  (\(Right stream) -> stream) . tokensToForest <$> arbitraryCanonicalTokenStream
+  (\(Right v) -> v) . tokensToForest <$> arbitraryCanonicalTokenStream
 
 arbitraryCanonicalTokenStream :: Gen [Token]
 arbitraryCanonicalTokenStream =
-  canonicalizeTokens . tokensFromForest <$> arbitraryTokenForest
+  parseTokens . _unVDocVersion <$> arbitraryCanonicalVDocVersion
 
 arbitraryTokenForest :: Gen (Forest Token)
 arbitraryTokenForest = listOf arbitraryTokenTree
