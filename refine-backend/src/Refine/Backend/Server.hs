@@ -97,23 +97,14 @@ toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError)
 -- (probably) only used internally in this module.
 refineApi :: ServerT RefineAPI (App DB)
 refineApi =
-       sListVDocs
-  :<|> sGetVDoc
-  :<|> sCreateVDoc
+       Refine.Backend.App.listVDocs
+  :<|> Refine.Backend.App.getHeavyVDoc
+  :<|> Refine.Backend.App.createHeavyVDoc
   :<|> sAddComment
   :<|> sAddPatch
 
 
 -- * vdocs
-
-sListVDocs :: App DB [ID VDoc]
-sListVDocs = undefined
-
-sGetVDoc :: ID VDoc -> App DB HeavyVDoc
-sGetVDoc = undefined
-
-sCreateVDoc :: Create VDoc -> App DB HeavyVDoc
-sCreateVDoc = undefined
 
 sAddComment :: ID Patch -> Create Comment -> App DB Comment
 sAddComment = undefined

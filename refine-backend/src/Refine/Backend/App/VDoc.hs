@@ -32,12 +32,16 @@ import qualified Refine.Backend.DocRepo as DocRepo
 import           Refine.Common.Rest (HeavyVDoc(..))
 import           Refine.Common.Types.Prelude
 import           Refine.Common.Types.VDoc
+import           Refine.Prelude ((<@>))
 
 
 listVDocs :: App DB [ID VDoc]
 listVDocs = do
   appLog "listVDocs"
   db DB.listVDocs
+
+createHeavyVDoc :: Create VDoc -> App DB HeavyVDoc
+createHeavyVDoc = (getHeavyVDoc . view vdocID) <=< createVDoc
 
 createVDoc :: Create VDoc -> App DB VDoc
 createVDoc pv = do
@@ -57,7 +61,28 @@ getVDoc i = do
   db $ DB.getVDoc i
 
 getHeavyVDoc :: ID VDoc -> App DB HeavyVDoc
-getHeavyVDoc = undefined
+getHeavyVDoc vid = do
+  appLog "getHeavyVDoc"
+  join . db $ do
+    vdoc     <- DB.getVDoc vid
+    rid      <- DB.vdocRepo vid
+    rhandle  <- DB.getRepoHandle rid
+    headid   <- view vdocHeadPatch <$> DB.getRepo rid
+    hhandle  <- DB.getPatchHandle headid
+    pids     <- DB.repoPatches rid
+    patches  <- mapM DB.getPatch pids
+    comments <- mapM DB.getComment . mconcat =<< mapM DB.patchComments pids
+    notes    <- mapM DB.getNote    . mconcat =<< mapM DB.patchNotes    pids
+    pure $ do
+      HeavyVDoc vdoc
+        <$> (renderVDocHtml <$> docRepo (DocRepo.getVersion rhandle hhandle))
+        <@> patches
+        <@> comments
+        <@> notes
+
+-- TODO: Implement it, and not just relabel the content.
+renderVDocHtml :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
+renderVDocHtml (VDocVersion v) = VDocVersion v
 
 getVersion :: ID Patch -> App DB (VDocVersion 'HTMLWithMarks)
 getVersion _ = do
