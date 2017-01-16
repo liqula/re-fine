@@ -39,6 +39,10 @@ data Comment = Comment
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Note = Note
+  { _noteID   :: ID Note
+  , _noteText :: ST
+  , _noteKind :: NoteKind
+  }
   deriving (Eq, Ord, Show, Read, Generic)
 
 data NoteKind = Question | Remark

@@ -22,6 +22,8 @@
 
 module Refine.Backend.Server
   ( startBackend
+  , BackendConfig(..), defaultBackendConfig
+  , Backend(..), mkBackend
   , refineApi
   ) where
 
@@ -46,17 +48,34 @@ import Refine.Common.Types
 
 startBackend :: IO ()
 startBackend = do
+  Warp.runSettings Warp.defaultSettings . backendServer =<< mkBackend defaultBackendConfig
+
+data Backend = Backend
+  { backendServer :: Application
+  , backendMonad  :: App DB CN.:~> ExceptT AppError IO
+  }
+
+data BackendConfig = BackendConfig
+  { backendShouldMigrate :: Bool
+  , backendShouldLog     :: Bool
+  }
+
+defaultBackendConfig :: BackendConfig
+defaultBackendConfig = BackendConfig True True
+
+mkBackend :: BackendConfig -> IO Backend
+mkBackend cfg = do
   runDb      <- createDBRunner $ DBOnDisk "refine.db"
   runDocRepo <- createRunRepo "."
-  let logger = Logger putStrLn
+  let logger = Logger $ if backendShouldLog cfg then putStrLn else const $ pure ()
       app    = runApp runDb runDocRepo logger
+      srv    = Servant.serve (Proxy :: Proxy RefineAPI) $ serverT app refineApi
 
-  void $ (natThrowError . app) $$ do
-    migrateDB
+  when (backendShouldMigrate cfg) $ do
+    void $ (natThrowError . app) $$ do
+      migrateDB
 
-  Warp.runSettings Warp.defaultSettings
-    . Servant.serve (Proxy :: Proxy RefineAPI)
-    $ serverT app refineApi
+  pure $ Backend srv app
 
 
 serverT :: (App db CN.:~> ExceptT AppError IO) -> ServerT RefineAPI (App db) -> Server RefineAPI
@@ -78,23 +97,14 @@ toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError)
 -- (probably) only used internally in this module.
 refineApi :: ServerT RefineAPI (App DB)
 refineApi =
-       sListVDocs
-  :<|> sGetVDoc
-  :<|> sCreateVDoc
+       Refine.Backend.App.listVDocs
+  :<|> Refine.Backend.App.getHeavyVDoc
+  :<|> Refine.Backend.App.createHeavyVDoc
   :<|> sAddComment
   :<|> sAddPatch
 
 
 -- * vdocs
-
-sListVDocs :: App DB [ID VDoc]
-sListVDocs = undefined
-
-sGetVDoc :: ID VDoc -> App DB HeavyVDoc
-sGetVDoc = undefined
-
-sCreateVDoc :: Create VDoc -> App DB HeavyVDoc
-sCreateVDoc = undefined
 
 sAddComment :: ID Patch -> Create Comment -> App DB Comment
 sAddComment = undefined

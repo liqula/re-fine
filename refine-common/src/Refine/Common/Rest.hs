@@ -63,6 +63,9 @@ type SAddPatch
 -- implemented. until that implementation exists, it is kept here where it is used.  (also, we're
 -- still looking for a name.  canidates are 'AugmentedVDoc', 'VDocWithContext', 'RichVDoc',
 -- 'PackagedVDoc', ...?)
+--
+-- TODO: Rename it to CompositeVDoc
+-- As it uses composite information around the VDoc
 data HeavyVDoc = HeavyVDoc
   { _heavyVDoc         :: VDoc
   , _heavyVDocVersion  :: VDocVersion 'HTMLWithMarks
