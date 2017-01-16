@@ -70,7 +70,7 @@ getHeavyVDoc vid = do
     rhandle  <- DB.getRepoHandle rid
     headid   <- view vdocHeadPatch <$> DB.getRepo rid
     hhandle  <- DB.getPatchHandle headid
-    pids     <- DB.repoPatches rid
+    pids     <- DB.getPatchIDs rid
     patches  <- mapM DB.getPatch pids                                        -- TODO: only child patches to head!
     comments <- mapM DB.getComment . mconcat =<< mapM DB.patchComments pids  -- TODO only comments applicable to head!
     notes    <- mapM DB.getNote    . mconcat =<< mapM DB.patchNotes    pids  -- TODO only notes applicable to head!

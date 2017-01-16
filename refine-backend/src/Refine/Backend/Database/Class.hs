@@ -18,7 +18,7 @@ class Database db where
   createRepo     :: DocRepo.RepoHandle -> ID Patch -> db VDocRepo
   getRepo        :: ID VDocRepo -> db VDocRepo
   getRepoHandle  :: ID VDocRepo -> db DocRepo.RepoHandle
-  repoPatches    :: ID VDocRepo -> db [ID Patch]
+  getPatchIDs    :: ID VDocRepo -> db [ID Patch]
 
   -- * Patch
   createPatch    :: DocRepo.PatchHandle -> db Patch

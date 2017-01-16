@@ -175,8 +175,8 @@ getRepoHandle vid = S.repoElim toRepoHandle <$> getEntity vid
     toRepoHandle :: ST -> DocRepo.RepoHandle -> Key S.Patch -> DocRepo.RepoHandle
     toRepoHandle _desc repoHandle _pid = repoHandle
 
-repoPatches :: ID VDocRepo -> DB [ID Patch]
-repoPatches vid = liftDB $
+getPatchIDs :: ID VDocRepo -> DB [ID Patch]
+getPatchIDs vid = liftDB $
   S.keyToId . S.rPPatch . entityVal <$$> selectList [S.RPRepository ==. S.idToKey vid] []
 
 getComment :: ID Comment -> DB Comment

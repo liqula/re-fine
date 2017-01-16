@@ -67,7 +67,7 @@ instance Database DB where
   createRepo     = Entity.createRepo
   getRepo        = Entity.getRepo
   getRepoHandle  = Entity.getRepoHandle
-  repoPatches    = Entity.repoPatches
+  getPatchIDs    = Entity.getPatchIDs
 
   -- * Patch
   createPatch    = Entity.createPatch
