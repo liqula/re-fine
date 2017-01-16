@@ -32,6 +32,7 @@ import qualified Refine.Backend.DocRepo as DocRepo
 import           Refine.Common.Rest (HeavyVDoc(..))
 import           Refine.Common.Types.Prelude
 import           Refine.Common.Types.VDoc
+import           Refine.Common.Types.Chunk
 import           Refine.Prelude ((<@>))
 
 
@@ -70,19 +71,31 @@ getHeavyVDoc vid = do
     headid   <- view vdocHeadPatch <$> DB.getRepo rid
     hhandle  <- DB.getPatchHandle headid
     pids     <- DB.repoPatches rid
-    patches  <- mapM DB.getPatch pids
-    comments <- mapM DB.getComment . mconcat =<< mapM DB.patchComments pids
-    notes    <- mapM DB.getNote    . mconcat =<< mapM DB.patchNotes    pids
+    patches  <- mapM DB.getPatch pids                                        -- TODO: only child patches to head!
+    comments <- mapM DB.getComment . mconcat =<< mapM DB.patchComments pids  -- TODO only comments applicable to head!
+    notes    <- mapM DB.getNote    . mconcat =<< mapM DB.patchNotes    pids  -- TODO only notes applicable to head!
+
+    let chunkranges = undefined
+          -- (view patchRange <$> patches) <>
+          -- (view commentRange <$> comments) <>
+          -- (view noteRange <$> notes)
+
+        -- TODO: this list of chunk ranges is needed for renderVDocHtml to work, but it's tricky:
+        -- ChunkRange takes an type parameter that identifies what it belongs to.  we need to
+        -- somehow bind the chunk range owner differently to be able to put all those different
+        -- chunk ranges into one list.  i think we should try @data ChunkRange = { ..  label ::
+        -- forall a . ID a .. }@.
+
     pure $ do
       HeavyVDoc vdoc
-        <$> (renderVDocHtml <$> docRepo (DocRepo.getVersion rhandle hhandle))
+        <$> (renderVDocHtml chunkranges <$> docRepo (DocRepo.getVersion rhandle hhandle))
         <@> patches
         <@> comments
         <@> notes
 
--- TODO: Implement it, and not just relabel the content.
-renderVDocHtml :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
-renderVDocHtml (VDocVersion v) = VDocVersion v
+-- TODO: implement this using 'Refine.Common.VDoc.HTML.Splice.insertMarks' from MR!12.
+renderVDocHtml :: [ChunkRange a] -> VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
+renderVDocHtml _ (VDocVersion v) = VDocVersion v
 
 getVersion :: ID Patch -> App DB (VDocVersion 'HTMLWithMarks)
 getVersion _ = do
