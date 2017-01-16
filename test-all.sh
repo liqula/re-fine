@@ -15,8 +15,6 @@ export PATH=$HOME/.local/bin:$PATH
 function assert_os_package() {
     if [ "`uname`" == "Linux" ]; then
        dpkg -l | grep -q $1 || ( echo "please install $1"; exit 1 )
-    else
-       echo "non-linux build system, please manually make sure the following is installed: $1"
     fi
 }
 
