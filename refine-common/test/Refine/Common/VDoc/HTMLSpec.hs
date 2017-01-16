@@ -43,7 +43,7 @@ import Refine.Common.VDoc.HTML
 spec :: Spec
 spec = do
   describe "canonicalizeWhitespace" $ do
-    it "itempotent" . property $
+    it "idempotent" . property $
       \s -> canonicalizeWhitespace (canonicalizeWhitespace s) `shouldBe` canonicalizeWhitespace s
 
     it "all whitespace is newline" . property $
@@ -72,7 +72,7 @@ spec = do
             f _                   = True
         withoutDataUID t = t
 
-    it "itempotent" . property $
+    it "idempotent" . property $
       \s -> setElemUIDs (setElemUIDs s) `shouldBe` setElemUIDs s
 
     it "existing values are overwritten with integers, starting with 1" $ do
@@ -91,7 +91,7 @@ spec = do
       \tokens -> (withoutDataUID <$> tokens) `shouldBe` (withoutDataUID <$> setElemUIDs tokens)
 
   describe "wrapInTopLevelTags" $ do
-    it "itempotent" . property . forAll arbitraryCanonicalTokenStream $
+    it "idempotent" . property . forAll arbitraryCanonicalTokenStream $
       \stream -> let gotwice, goonce :: [Token] -> Either VDocHTMLError [Token]
                      gotwice          = wrapInTopLevelTags >=> wrapInTopLevelTags
                      goonce           = wrapInTopLevelTags
@@ -111,48 +111,64 @@ spec = do
       evaluate bad `shouldThrow` anyException
 
   describe "trickledownUIInfo" $ do
-    it "1" $ do
+    it "trickles down data-uid, offset" $ do
       let ts  = [ TagOpen "div" [Attr "data-uid" "3"]
                 , TagOpen "div" []
                 , TagClose "div"
                 , TagClose "div"
                 ]
-          ts' = [ TagOpen "div" [Attr "data-uid" "3"]
-                , TagOpen "div" [Attr "data-uid" "3"]
+          ts' = [ TagOpen "div" [Attr "data-uid" "3", Attr "data-offset" "0"]
+                , TagOpen "div" [Attr "data-uid" "3", Attr "data-offset" "0"]
                 , TagClose "div"
                 , TagClose "div"
                 ]
       trickledownUIInfo <$> tokensToForest ts `shouldBe` tokensToForest ts'
 
-    it "2" $ do
+    it "does not overwrite data-uid" $ do
       let ts  = [ TagOpen "div" [Attr "data-uid" "3"]
-                , ContentText "wefwef"
-                , TagOpen "div" []
+                , TagOpen "div" [Attr "data-uid" "9"]
                 , TagClose "div"
                 , TagClose "div"
                 ]
-          ts' = [ TagOpen "div" [Attr "data-uid" "3"]
-                , ContentText "wefwef"
-                , TagOpen "div" [Attr "data-uid" "3", Attr "data-offset" "6"]
+          ts' = [ TagOpen "div" [Attr "data-uid" "3", Attr "data-offset" "0"]
+                , TagOpen "div" [Attr "data-uid" "9", Attr "data-offset" "0"]
                 , TagClose "div"
                 , TagClose "div"
                 ]
       trickledownUIInfo <$> tokensToForest ts `shouldBe` tokensToForest ts'
 
-    it "3" $ do
+    it "calculates offset correctly (flat sibling text nodes)" $ do
       let ts  = [ TagOpen "div" [Attr "data-uid" "3"]
-                , ContentText "whoophwhooph"
+                , ContentText "ab"
                 , TagOpen "div" []
-                , ContentText "wefwef"
+                , TagClose "div"
+                , TagClose "div"
+                ]
+          ts' = [ TagOpen "div" [Attr "data-uid" "3", Attr "data-offset" "0"]
+                , ContentText "ab"
+                , TagOpen "div" [Attr "data-uid" "3", Attr "data-offset" (cs . show . length $ ("ab" :: String))]
+                , TagClose "div"
+                , TagClose "div"
+                ]
+      trickledownUIInfo <$> tokensToForest ts `shouldBe` tokensToForest ts'
+
+    it "calculates offset correctly (sibling trees)" $ do
+      let ts  = [ TagOpen "div" [Attr "data-uid" "3"]
+                , ContentText "abc"
+                , TagOpen "div" []
+                , ContentText "ab"
                 , TagClose "div"
                 , TagOpen "div" []
                 , TagClose "div"
                 , TagClose "div"
                 ]
           ts' = [ TagOpen "div" [Attr "data-uid" "3"]
-                , ContentText "wefwef"
-                , TagOpen "div" [Attr "data-uid" "3", Attr "data-offset" "18"]
+                , ContentText "abc"
+                , TagOpen "div" []
+                , ContentText "ab"
                 , TagClose "div"
+                , TagOpen "div" [Attr "data-uid" "3", Attr "data-offset" (cs . show . length $ ("abc" <> "ab" :: String))]
+                , TagClose "pdiv"
                 , TagClose "div"
                 ]
       trickledownUIInfo <$> tokensToForest ts `shouldBe` tokensToForest ts'
@@ -168,7 +184,7 @@ spec = do
     it "marks are inserted under the correct parent node." $ do
       pending
 
-    it "crashes (internal error) if input is not canonicalized" $ do
+    it "crashes (assertion failed) if input is not canonicalized" $ do
       let eval :: Show e => Either e a -> IO a
           eval = either (throwIO . ErrorCall . show) pure
 
