@@ -110,6 +110,21 @@ spec = do
           bad = wrapInTopLevelTags [ContentText "wef", ContentChar 'q']
       evaluate bad `shouldThrow` anyException
 
+  describe "canonicalizeAttrs" $ do
+    it "takes the first of may values for one key." $ do
+      canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "x" "4"])
+        `shouldBe` TagOpen "wef" [Attr "x" "3"]
+      canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "x" "1"])
+        `shouldBe` TagOpen "wef" [Attr "x" "3"]
+
+    it "sorts attrs alphabetially." $ do
+      canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "q" "0", Attr "x" "1"])
+        `shouldBe` TagOpen "wef" [Attr "q" "0", Attr "x" "3"]
+      canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "q" "9"])
+        `shouldBe` TagOpen "wef" [Attr "q" "9", Attr "x" "3"]
+      canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "z" "0"])
+        `shouldBe` TagOpen "wef" [Attr "x" "3", Attr "z" "0"]
+
   describe "trickledownUIInfo" $ do
     it "trickles down data-uid, offset" $ do
       let ts  = [ TagOpen "div" [Attr "data-uid" "3"]

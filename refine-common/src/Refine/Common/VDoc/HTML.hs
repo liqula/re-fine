@@ -30,6 +30,7 @@ module Refine.Common.VDoc.HTML
   , canonicalizeVDocVersion
   , decanonicalizeVDocVersion
   , canonicalizeWhitespace
+  , canonicalizeAttrsForest, canonicalizeAttrsTree, canonicalizeAttrsStream, canonicalizeAttrs
   , setElemUIDs
   , wrapInTopLevelTags
   , trickledownUIInfo
@@ -44,8 +45,9 @@ import           Control.Lens (Traversal', (&), (^.), (%~))
 import           Control.Monad.Error.Class (MonadError, throwError)
 import           Control.Monad (foldM)
 import           Data.Char (isSpace)
+import           Data.Function (on)
 import           Data.Functor.Infix ((<$$>))
-import           Data.List as List (foldl')
+import           Data.List as List (foldl', sort, nubBy)
 import           Data.Maybe (catMaybes, listToMaybe)
 import           Data.Set as Set hiding (foldl')
 import           Data.String.Conversions (ST, (<>), cs)
@@ -98,6 +100,25 @@ canonicalizeWhitespace t = leading t <> ST.intercalate "\n" (ST.words t) <> trai
   where
     leading s = if ST.all isSpace (ST.take 1 s) then "\n" else ""
     trailing = leading . ST.reverse
+
+
+-- | Call 'canonicalizeAttrs' on a token 'Forest'.
+canonicalizeAttrsForest :: Forest Token -> Forest Token
+canonicalizeAttrsForest = fmap canonicalizeAttrsTree
+
+-- | Call 'canonicalizeAttrs' on a token 'Tree'.
+canonicalizeAttrsTree :: Tree Token -> Tree Token
+canonicalizeAttrsTree (Node x xs) = Node (canonicalizeAttrs x) (canonicalizeAttrsForest xs)
+
+-- | Call 'canonicalizeAttrs' on a token list.
+canonicalizeAttrsStream :: [Token] -> [Token]
+canonicalizeAttrsStream = fmap canonicalizeAttrs
+
+-- | If one attribute key occurs several times, use the first occurrance and drop the rest.  Sort
+-- the resulting list.
+canonicalizeAttrs :: Token -> Token
+canonicalizeAttrs (TagOpen n xs) = TagOpen n (sort $ nubBy ((==) `on` (\(Attr k _) -> k)) xs)
+canonicalizeAttrs t = t
 
 
 -- | Remove all existing @data-uid@ attributes and add new attributes with fresh unique values to
