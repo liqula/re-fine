@@ -113,7 +113,6 @@ spec = do
   describe "insertMarks" $ do
     it "does not change version if chunk list is empty." . property . forAll arbitraryCanonicalVDocVersion $ do
       \vers -> do
-        pending
         _unVDocVersion <$> insertMarks [] vers `shouldBe` Right (_unVDocVersion vers)
 
     it "generates valid output on arbitrary valid chunkranges." $ do

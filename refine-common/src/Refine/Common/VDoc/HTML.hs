@@ -51,7 +51,7 @@ import           Data.String.Conversions (ST, (<>), cs)
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
 import           Text.HTML.Parser (Token(..), Attr(..), parseTokens, canonicalizeTokens, renderTokens)
-import           Text.HTML.Tree (ParseTokenForestError, tokensToForest, tokensFromForest)
+import           Text.HTML.Tree (ParseTokenForestError, tokensToForest, tokensFromForest, nonClosing)
 import           Text.Read (readMaybe)
 import           Web.HttpApiData (toUrlPiece)
 
@@ -140,7 +140,7 @@ wrapInTopLevelTags ts = assert (ts == canonicalizeTokens ts)
 insertMarks :: MonadError VDocHTMLError m
             => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> m (VDocVersion 'HTMLWithMarks)
 insertMarks crs (VDocVersion (parseTokens -> ts))
-  = assert (ts == canonicalizeTokens ts)
+  = assert (ts == canonicalizeTokens ts)  -- TODO: this occasionally fails.
   . fmap (VDocVersion . cs . renderTokens)  -- TODO: do we still want '\n' between tokens for darcs?
   . insertMarksTs crs
   $ ts
@@ -160,7 +160,7 @@ runPreToken (PreMarkClose _) = TagClose "mark"
 
 isOpen :: PreToken -> Bool
 isOpen (PreMarkOpen _)          = True
-isOpen (PreToken (TagOpen _ _)) = True
+isOpen (PreToken (TagOpen n _)) = n `notElem` nonClosing
 isOpen _                        = False
 
 isClose :: PreToken -> Bool
@@ -408,7 +408,7 @@ splitAtOffset offset ts_ = assert (offset >= 0)
 
     isFlatToken :: PreToken -> Bool
     isFlatToken = \case
-      (PreToken (TagOpen _ _)) -> False
+      (PreToken (TagOpen n _)) -> n `notElem` nonClosing
       (PreToken (TagClose _))  -> False
       (PreMarkOpen _)          -> True  -- (this *has* to be "flat" for insertPreToken -> work.)
       (PreMarkClose _)         -> True  -- (this *has* to be "flat" for insertPreToken -> work.)
