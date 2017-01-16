@@ -44,7 +44,7 @@ validOpen :: Gen Token
 validOpen = TagOpen <$> validXmlTagName <*> arbitrary
 
 validClose :: Gen Token
-validClose = TagClose <$> validXmlTagName
+validClose = TagClose <$> validClosingXmlTagName
 
 validFlat :: Gen Token
 validFlat = oneof
@@ -69,6 +69,11 @@ validXmlTagName = do
     initchar  <- elements $ ['a'..'z'] <> ['A'..'Z']
     thenchars <- sized (`maxListOf` elements (['\x20'..'\x7E'] \\ "\x09\x0a\x0c /<>"))
     pure . T.pack $ initchar : thenchars
+
+validClosingXmlTagName :: Gen T.Text
+validClosingXmlTagName = do
+    n <- validXmlTagName
+    pure $ if n `elem` nonClosing then n <> "phoo" else n
 
 validXmlAttrName :: Gen T.Text
 validXmlAttrName = do
@@ -117,7 +122,4 @@ validNonClosingOpen :: Gen Token
 validNonClosingOpen = TagOpen <$> elements nonClosing <*> arbitrary
 
 validClosingOpen :: Gen Token
-validClosingOpen = do
-    n <- validXmlTagName
-    let n' = if n `elem` nonClosing then "_" else n
-    TagOpen n' <$> arbitrary
+validClosingOpen = TagOpen <$> validClosingXmlTagName <*> arbitrary

@@ -140,7 +140,7 @@ wrapInTopLevelTags ts = assert (ts == canonicalizeTokens ts)
 insertMarks :: MonadError VDocHTMLError m
             => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> m (VDocVersion 'HTMLWithMarks)
 insertMarks crs (VDocVersion (parseTokens -> ts))
-  = assert (ts == canonicalizeTokens ts)  -- TODO: this occasionally fails.
+  = assert (ts == canonicalizeTokens ts)
   . fmap (VDocVersion . cs . renderTokens)  -- TODO: do we still want '\n' between tokens for darcs?
   . insertMarksTs crs
   $ ts
