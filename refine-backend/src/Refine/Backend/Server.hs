@@ -98,8 +98,8 @@ toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError)
 refineApi :: ServerT RefineAPI (App DB)
 refineApi =
        Refine.Backend.App.listVDocs
-  :<|> Refine.Backend.App.getHeavyVDoc
-  :<|> Refine.Backend.App.createHeavyVDoc
+  :<|> Refine.Backend.App.getCompositeVDoc
+  :<|> Refine.Backend.App.createCompositeVDoc
   :<|> sAddComment
   :<|> sAddPatch
 
