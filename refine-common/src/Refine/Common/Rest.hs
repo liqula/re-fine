@@ -78,11 +78,11 @@ type SAddPatch
 -- - if we try to consider comments, patches, ... on other versions than head, we are in trouble.
 --
 data CompositeVDoc = CompositeVDoc
-  { _heavyVDoc         :: VDoc
-  , _heavyVDocVersion  :: VDocVersion 'HTMLWithMarks
-  , _heavyVDocPatches  :: [Patch]
-  , _heavyVDocComments :: [Comment]
-  , _heavyVDocNotes    :: [Note]
+  { _compositeVDoc         :: VDoc
+  , _compositeVDocVersion  :: VDocVersion 'HTMLWithMarks
+  , _compositeVDocPatches  :: [Patch]
+  , _compositeVDocComments :: [Comment]
+  , _compositeVDocNotes    :: [Note]
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
