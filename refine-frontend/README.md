@@ -6,6 +6,7 @@ This application is based on react-flux.
 
 ### For the first time
 
+1. Install Node.js >= 6.x.x
 1. cd refine-frontend
 1. npm install
 
@@ -22,8 +23,10 @@ This application is based on react-flux.
 
 1. If any dependencies in package.json were changed: npm install
 1. npm start
-1. Wait until `webpack: bundle is now VALID.` appears
+1. Wait until you see something like "Listening at localhost:9090 proxying to http://localhost:8080"
 1. Point your browser at http://localhost:9090
+1. Wait until `webpack: bundle is now VALID.` appears (in the shell in which you ran "npm start")
+1. Now you can see the application in the browser
 
 The browser window will be refreshed whenever the local JavaScript changes.
 
