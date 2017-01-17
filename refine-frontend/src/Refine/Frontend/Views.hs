@@ -6,30 +6,29 @@ module Refine.Frontend.Views
   ) where
 
 import           Control.Lens ((^.))
-import           React.Flux
+import qualified Data.Map.Strict as M
 import           Data.Monoid ((<>))
+import           Data.String.Conversions
 import           Data.String (fromString)
 import qualified Data.Tree as DT
-import           Data.String.Conversions
-import qualified Data.Map.Strict as M
+import           React.Flux
 import qualified Text.HTML.Parser as HTMLP
 import           Text.HTML.Tree as HTMLT
 
-import           Refine.Common.VDoc.HTML.Enhance (addUIInfoToForest)
 import           Refine.Common.Rest
 import           Refine.Common.Types
-
-import qualified Refine.Frontend.Store as RS
-import           Refine.Frontend.Types as RS
-import           Refine.Frontend.Loader.Component (vdocLoader_)
-import           Refine.Frontend.UtilityWidgets
+import           Refine.Common.VDoc.HTML.Enhance (addUIInfoToForest)
 import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(..), editToolbar_
                                          , editToolbarExtension_, menuButton_, headerSizeCapture_
                                          )
+import           Refine.Frontend.Loader.Component (vdocLoader_)
+import           Refine.Frontend.Overlay
 import           Refine.Frontend.StickyViews (sticky_, stickyContainer_)
-import           Refine.Frontend.WindowSize (windowSize_, WindowSizeProps(..))
+import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
-
+import           Refine.Frontend.Types as RS
+import           Refine.Frontend.UtilityWidgets
+import           Refine.Frontend.WindowSize (windowSize_, WindowSizeProps(..))
 
 
 -- | The controller view and also the top level of the Refine app.  This controller view registers
@@ -166,27 +165,6 @@ leftAside = defineView "LeftAside" $ \(markPositions, currentSelection, headerHe
 
 leftAside_ :: RS.MarkPositions -> (Maybe RS.Range, Maybe RS.DeviceOffset) -> Int -> ReactElementM eventHandler ()
 leftAside_ markPositions currentSelection headerHeight = view leftAside (markPositions, currentSelection, headerHeight) mempty
-
-
-quickCreate :: ReactView (String, (Maybe RS.Range, Maybe RS.DeviceOffset), Int)
-quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, headerHeight) ->
-    case currentSelection of
-    -- TODO unify CSS class names with those used in iconButton_ !!
-        (Just range, Just _deviceOffset) ->
-          let topOfSelection = RS._top range + RS._scrollOffset range - headerHeight - 80 -- offset from menu bar
-              idealCenter = (RS._bottom range - RS._top range) `div` 2 - 22
-              usefulCenter = idealCenter -- if abs (deviceOffset - idealCenter) > 200 then deviceOffset else idealCenter
-              offset = topOfSelection + usefulCenter
-          in positionedIconButton_ (IconButtonProps ("o-add-" <> createType) "" (fromString createType) True ("icon-New_Comment", "bright") "" XXL) offset
-        (_, _) -> div_ ""
---    // quickCreate annotation ui events
---    ann.addEventListener('mousedown', quickCreateOverlay);
---    Hammer.on(ann, 'tap', quickCreateOverlay);
-
-
--- "annotation", "modification"
-quickCreate_ :: String -> (Maybe RS.Range, Maybe RS.DeviceOffset) -> Int -> ReactElementM eventHandler ()
-quickCreate_ createType currentSelection headerHeight = view quickCreate (createType, currentSelection, headerHeight) mempty
 
 
 rightAside :: ReactView RS.MarkPositions
