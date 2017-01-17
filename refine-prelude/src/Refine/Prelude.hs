@@ -42,6 +42,7 @@ module Refine.Prelude
   , countEq
   , iterateM
   , commonPrefix
+  , Recursion(..), recursion
   ) where
 
 import           Control.Lens
@@ -137,9 +138,6 @@ fromNow :: Timestamp -> Iso' Timestamp Timespan
 fromNow now = iso (`diffTimestamps` now) (`addTimespan` now)
 
 
-
-
-
 -- * misc
 
 justIf :: a -> Bool -> Maybe a
@@ -196,3 +194,14 @@ commonPrefix = go []
     go !ps as'@(a : as) bs'@(b : bs)
       | a == b = go (a:ps) as bs
       | otherwise = (reverse ps, as', bs')
+
+data Recursion a b c = Run a | Halt c | Fail b
+  deriving (Eq, Show)
+
+recursion :: (a -> Recursion a b c) -> a -> Either b c
+recursion f = go
+      where
+        go z = case f z of
+            Run  y -> go y
+            Fail e -> Left e
+            Halt r -> Right r

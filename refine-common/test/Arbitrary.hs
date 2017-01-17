@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds         #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -6,16 +7,18 @@ module Arbitrary where
 
 import           Data.List ((\\))
 import           Data.Monoid
+import           Data.String.Conversions (cs)
 import           Data.Tree
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
 import qualified Data.Text.Lazy.Builder as B
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
-import           Text.HTML.Parser
-import           Text.HTML.Tree
+import           Text.HTML.Parser as HTML
+import           Text.HTML.Tree as HTML
 
-import Refine.Common.Types.Prelude
+import Refine.Common.Types
+import Refine.Common.VDoc.HTML
 
 
 instance Arbitrary (ID a) where
@@ -30,7 +33,7 @@ instance Arbitrary Token where
   shrink (TagClose _)        = []
   shrink (ContentText _)     = []
   shrink (ContentChar _)     = []
-  shrink (Comment b)         = Comment . B.fromText <$> (shrink . TL.toStrict . B.toLazyText $ b)
+  shrink (HTML.Comment b)    = HTML.Comment . B.fromText <$> (shrink . TL.toStrict . B.toLazyText $ b)
   shrink (Doctype t)         = Doctype <$> shrink t
 
 instance Arbitrary Attr where
@@ -41,14 +44,14 @@ validOpen :: Gen Token
 validOpen = TagOpen <$> validXmlTagName <*> arbitrary
 
 validClose :: Gen Token
-validClose = TagClose <$> validXmlTagName
+validClose = TagClose <$> validClosingXmlTagName
 
 validFlat :: Gen Token
 validFlat = oneof
     [ TagSelfClose <$> validXmlTagName <*> arbitrary
     , ContentChar <$> validXmlChar
     , ContentText <$> validXmlText
-    , Comment . B.fromText <$> validXmlCommentText
+    , HTML.Comment . B.fromText <$> validXmlCommentText
     , Doctype <$> validXmlText
     ]
 
@@ -66,6 +69,11 @@ validXmlTagName = do
     initchar  <- elements $ ['a'..'z'] <> ['A'..'Z']
     thenchars <- sized (`maxListOf` elements (['\x20'..'\x7E'] \\ "\x09\x0a\x0c /<>"))
     pure . T.pack $ initchar : thenchars
+
+validClosingXmlTagName :: Gen T.Text
+validClosingXmlTagName = do
+    n <- validXmlTagName
+    pure $ if n `elem` nonClosing then n <> "phoo" else n
 
 validXmlAttrName :: Gen T.Text
 validXmlAttrName = do
@@ -86,6 +94,20 @@ validXmlCommentText = do
 maxListOf :: Int -> Gen a -> Gen [a]
 maxListOf n g = take n <$> listOf g
 
+arbitraryCanonicalVDocVersion :: Gen (VDocVersion 'HTMLCanonical)
+arbitraryCanonicalVDocVersion =
+  (\(Right v) -> v) .
+  canonicalizeVDocVersion .
+  VDocVersion . cs . renderTokens . tokensFromForest <$> arbitraryTokenForest
+
+arbitraryCanonicalTokenForest :: Gen (Forest Token)
+arbitraryCanonicalTokenForest =
+  (\(Right v) -> v) . tokensToForest <$> arbitraryCanonicalTokenStream
+
+arbitraryCanonicalTokenStream :: Gen [Token]
+arbitraryCanonicalTokenStream =
+  parseTokens . _unVDocVersion <$> arbitraryCanonicalVDocVersion
+
 arbitraryTokenForest :: Gen (Forest Token)
 arbitraryTokenForest = listOf arbitraryTokenTree
 
@@ -100,7 +122,4 @@ validNonClosingOpen :: Gen Token
 validNonClosingOpen = TagOpen <$> elements nonClosing <*> arbitrary
 
 validClosingOpen :: Gen Token
-validClosingOpen = do
-    n <- validXmlTagName
-    let n' = if n `elem` nonClosing then "_" else n
-    TagOpen n' <$> arbitrary
+validClosingOpen = TagOpen <$> validClosingXmlTagName <*> arbitrary
