@@ -55,7 +55,7 @@ import Refine.Prelude
 -- for all chunks of all patches, comments, notes, etc.
 insertMarks :: MonadError VDocHTMLError m
             => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> m (VDocVersion 'HTMLWithMarks)
-insertMarks crs (VDocVersion (parseTokens -> ts))
+insertMarks crs (VDocVersion (parseTokens -> (ts :: [Token])))
   = assert (ts == canonicalizeTokens ts)
   . fmap (VDocVersion . cs . renderTokens)  -- TODO: do we still want '\n' between tokens for darcs?
   . insertMarksTs crs

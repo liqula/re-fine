@@ -106,6 +106,7 @@ setElemUIDs = fill mempty . fmap clear
         totalMaximum s = if Set.null s then DataUID 1 else nextDataUID (Set.findMax s)
         nextDataUID (DataUID n) = DataUID (n + 1)
 
+
 wrapInTopLevelTags :: MonadError VDocHTMLError m => [Token] -> m [Token]
 wrapInTopLevelTags ts = assert (ts == canonicalizeTokens ts)
                       $ tokensFromForest . fmap fill <$> tokensToForest' ts
@@ -124,7 +125,10 @@ wrapInTopLevelTags ts = assert (ts == canonicalizeTokens ts)
 -- lenghts.)
 --
 -- This function should probably be called on (the forest contained in) @VDocVersion
--- 'HTMLWithMarks@.
+-- 'HTMLWithMarks@, and probably only in the frontend.
+--
+-- TODO: it's probably better to write two functions for data-uid, data-offset and compose them.
+-- also, there are probably much simpler algorithms to do this.  we probably don't need State.
 trickledownUIInfo :: Forest Token -> Forest Token
 trickledownUIInfo forest = assert (tokensFromForest forest == canonicalizeTokens (tokensFromForest forest))
                          . assert (Right (tokensFromForest forest) == wrapInTopLevelTags (tokensFromForest forest))

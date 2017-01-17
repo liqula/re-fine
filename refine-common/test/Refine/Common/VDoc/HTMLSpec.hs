@@ -92,6 +92,7 @@ spec = do
     it "everything but data-uid attributes remains unchanged" . property $ do
       \tokens -> (withoutDataUID <$> tokens) `shouldBe` (withoutDataUID <$> setElemUIDs tokens)
 
+
   describe "wrapInTopLevelTags" $ do
     it "idempotent" . property . forAll arbitraryCanonicalTokenStream $
       \stream -> let gotwice, goonce :: [Token] -> Either VDocHTMLError [Token]
@@ -99,7 +100,7 @@ spec = do
                      goonce           = wrapInTopLevelTags
                  in gotwice stream `shouldBe` goonce stream
 
-    it "clothes naked texts in span" $ do
+    it "wraps naked texts in span" $ do
       wrapInTopLevelTags [ContentText "unwrapped"] `shouldBe`
         Right [TagOpen "span" [], ContentText "unwrapped", TagClose "span"]
 
@@ -112,20 +113,25 @@ spec = do
           bad = wrapInTopLevelTags [ContentText "wef", ContentChar 'q']
       evaluate bad `shouldThrow` anyException
 
+
   describe "canonicalizeAttrs" $ do
-    it "takes the first of may values for one key." $ do
+    it "takes the first of many values for one key." $ do
       canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "x" "4"])
         `shouldBe` TagOpen "wef" [Attr "x" "3"]
+
       canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "x" "1"])
         `shouldBe` TagOpen "wef" [Attr "x" "3"]
 
     it "sorts attrs alphabetially." $ do
       canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "q" "0", Attr "x" "1"])
         `shouldBe` TagOpen "wef" [Attr "q" "0", Attr "x" "3"]
+
       canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "q" "9"])
         `shouldBe` TagOpen "wef" [Attr "q" "9", Attr "x" "3"]
+
       canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "z" "0"])
         `shouldBe` TagOpen "wef" [Attr "x" "3", Attr "z" "0"]
+
 
   describe "trickledownUIInfo" $ do
     it "trickles down data-uid, offset" $ do
@@ -194,6 +200,7 @@ spec = do
       (canonicalizeAttrsForest . trickledownUIInfo <$> tokensToForest ts) `shouldBe`
         (canonicalizeAttrsForest <$> tokensToForest ts')
 
+
   describe "insertMarks" $ do
     it "does not change version if chunk list is empty." . property . forAll arbitraryCanonicalVDocVersion $ do
       \vers -> do
@@ -213,6 +220,7 @@ spec = do
           bad = insertMarks [] $ VDocVersion "<wef>q"  -- (data-uid attr. missing in tag)
 
       eval bad `shouldThrow` anyException
+
 
   describe "resolvePreTokens" $ do
     let runPreTokenForest :: Forest PreToken -> [Token]
