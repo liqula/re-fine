@@ -33,11 +33,12 @@ import Refine.Prelude.TH
 -- | The 'ChunkRange' here is coming from the user.  It refers to the selection (javascript
 -- `window.getSelection()`) that the user made before entering the comment.  'Nothing' means comment
 -- refers to the entire document.
+-- TODO: Use Maybe
 data Comment = Comment
   { _commentID     :: ID Comment
   , _commentText   :: ST
   , _commentPublic :: Bool
-  , _commentRange  :: Maybe (ChunkRange Comment)
+  , _commentRange  :: ChunkRange Comment
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
