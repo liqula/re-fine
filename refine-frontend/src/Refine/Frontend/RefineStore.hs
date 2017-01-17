@@ -8,9 +8,9 @@ module Refine.Frontend.RefineStore where
 
 import qualified Data.Aeson as AE
 import           Control.DeepSeq
-import           Data.Maybe (fromJust)
+-- import           Data.Maybe (fromJust)
 import           Data.Monoid ((<>))
-import           Data.Text (Text, replace)
+import           Data.Text (Text)
 import           Data.Typeable (Typeable)
 import qualified Data.Map.Strict as M
 import           GHC.Generics (Generic)
@@ -19,7 +19,8 @@ import           Data.Aeson (ToJSON, encode, toJSON, Value, (.=), object)
 import           Data.String.Conversions
 import           Data.JSString (JSString, pack, unpack)
 
-import Refine.Common.VDoc
+import Refine.Common.Types
+import Refine.Common.Rest
 import Refine.Frontend.RefineApi
 
 
@@ -44,8 +45,8 @@ toSize sz
 type DeviceOffset = Int
 
 data RefineState = RefineState
-  { _vdoc :: Maybe VDoc
-  , _vdocList :: Maybe [VDocListItem]
+  { _vdoc :: Maybe CompositeVDoc
+  , _vdocList :: Maybe [ID VDoc]
   , _headerHeight :: Int
   , _markPositions :: MarkPositions
   , _windowSize :: WindowSize
@@ -53,9 +54,9 @@ data RefineState = RefineState
   } deriving (Show, Typeable, Generic, NFData, ToJSON)
 
 data RefineAction = LoadDocumentList
-                  | LoadedDocumentList [VDocListItem]
-                  | LoadDocument (AUID VDoc)
-                  | OpenDocument VDoc
+                  | LoadedDocumentList [ID VDoc]
+                  | LoadDocument (ID VDoc)
+                  | OpenDocument CompositeVDoc
                   | AddDemoDocument
                   | AddHeaderHeight Int
                   | AddMarkPosition String Int
@@ -95,12 +96,12 @@ instance StoreData RefineState where
         return newState
 
 
-vdocUpdate :: RefineAction -> Maybe VDoc -> Maybe VDoc
+vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate action state = case action of
     OpenDocument openedVDoc -> Just openedVDoc
     _ -> state
 
-vdocListUpdate :: RefineAction -> Maybe [VDocListItem] -> Maybe [VDocListItem]
+vdocListUpdate :: RefineAction -> Maybe [ID VDoc] -> Maybe [ID VDoc]
 vdocListUpdate action state = case action of
     LoadedDocumentList list -> Just list
     _ -> state
@@ -129,7 +130,7 @@ currentSelectionUpdate action state = case action of
 
 
 emitBackendCallsFor :: RefineAction -> RefineState -> IO ()
-emitBackendCallsFor action state = case action of
+emitBackendCallsFor action _state = case action of
     LoadDocumentList -> do
         listVDocs $ \case
             (Left(_, msg)) -> handleError msg
@@ -138,6 +139,7 @@ emitBackendCallsFor action state = case action of
         getVDoc auid $ \case
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
+{- TODO currently we do not have access to a demo document
     AddDemoDocument -> do
         let vdoc = ProtoVDoc sampleTitle sampleDescription . VDocVersion . cs .
                        replace "\\" "" .
@@ -146,6 +148,8 @@ emitBackendCallsFor action state = case action of
         addVDoc vdoc $ \case
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
+-}
+{- TODO submitting a patch does not work yet
     SubmitPatch -> do
         let vdocId = _metaKey . _vdocMeta . fromJust $ _vdoc state
         let patchId = _vdocHead . fromJust $ _vdoc state
@@ -160,6 +164,7 @@ emitBackendCallsFor action state = case action of
                                 addPatch patchKey patchFromClient $ \case
                                     (Left(_, msg)) -> handleError msg
                                     (Right _patch) -> return []
+-}
     _ -> return ()
 
 

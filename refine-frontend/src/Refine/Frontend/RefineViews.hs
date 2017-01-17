@@ -16,14 +16,15 @@ import qualified Text.HTML.Parser as HTMLP
 import           Text.HTML.Tree as HTMLT
 
 import qualified Refine.Frontend.RefineStore as RS
-import           Loader.Component (vdocLoader_)
+import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.UtilityWidgets
 import           Refine.Frontend.Heading (documentHeader_, DocumentHeaderProps(..), editToolbar_, editToolbarExtension_, menuButton_, headerSizeCapture_)
 import           Refine.Frontend.StickyViews (sticky_, stickyContainer_)
 import           Refine.Frontend.WindowSize (windowSize_, WindowSizeProps(..))
 import           Refine.Frontend.Style
 
-import           Refine.Common.VDoc
+import           Refine.Common.Types
+import           Refine.Common.Rest
 
 
 -- | The controller view and also the top level of the Refine app.  This controller view registers
@@ -40,7 +41,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \(RS.RefineState m
                     div_ ["className" $= "c-mainmenu__bg"] "" -- "role" $= "navigation"
                     --header_ ["role" $= "banner"] $ do
                     menuButton_
-                    documentHeader_ (DocumentHeaderProps (_vdocTitle vdoc))
+                    documentHeader_ . DocumentHeaderProps . _vdocTitle $ _compositeVDoc vdoc
                     div_ ["className" $= "c-fulltoolbar"] $ do
                         sticky_ [] $ do
                             editToolbar_
@@ -50,7 +51,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \(RS.RefineState m
                     div_ ["className" $= "grid-wrapper"] $ do
                         div_ ["className" $= "row row-align-center row-align-top"] $ do
                             leftAside_ markPositions currentSelection headerHeight
-                            toArticle . HTMLT.tokensToForest . HTMLP.parseTokens . cs . unVDocVersion $ _vdocHeadVersion vdoc
+                            toArticle . HTMLT.tokensToForest . HTMLP.parseTokens . cs . _unVDocVersion $ _compositeVDocVersion vdoc
                             rightAside_ markPositions
 
 

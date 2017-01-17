@@ -3,7 +3,7 @@
 module Refine.Frontend.UtilityWidgets where
 
 import           Data.Char (toLower)
-import           Data.Maybe (fromJust)
+import           Data.Maybe (fromJust, isNothing)
 import           Data.Monoid ((<>))
 import           Data.String (fromString)
 import           GHCJS.Types (JSString)

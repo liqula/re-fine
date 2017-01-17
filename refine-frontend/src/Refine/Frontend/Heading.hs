@@ -9,6 +9,8 @@ import           Data.String.Conversions
 import           React.Flux
 import           React.Flux.Lifecycle
 
+import           Refine.Common.Types
+
 import           Refine.Frontend.UtilityWidgets
 import qualified Refine.Frontend.RefineStore as RS
 
@@ -30,7 +32,7 @@ menuButton_ :: ReactElementM eventHandler ()
 menuButton_ = view menuButton () mempty
 
 data DocumentHeaderProps = DocumentHeaderProps
-  { _headerTitle :: ST
+  { _headerTitle :: Title
   }
 
 documentHeader :: ReactView DocumentHeaderProps
@@ -39,7 +41,7 @@ documentHeader = defineView "DocumentHeader" $ \props ->
             div_ ["className" $= "grid-wrapper"] $ do
                 div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
 
-                    h1_ . elemText . cs $ _headerTitle props
+                    h1_ . elemText . cs . _unTitle $ _headerTitle props
                     div_ ["className" $= "c-vdoc-header__description"] $ do
                         p_ "Auch gibt es niemanden, der den Schmerz an sich liebt, sucht oder wünscht, nur, weil er Schmerz ist, es sei denn, es kommt zu zufälligen Umständen, in denen Mühen und Schmerz ihm große Freude bereiten können. Um ein triviales Beispiel zu nehmen, wer von uns unterzieht sich je anstrengender körperlicher Betätigung, außer um Vorteile daraus zu ziehen? Aber wer hat irgend ein Recht, einen Menschen zu tadeln, der die Entscheidung trifft, eine Freude zu genießen, die keine unangenehmen Folgen hat, oder einen, der Schmerz vermeidet, welcher keine daraus resultierende Freude nach sich zieht!"
                         p_ "Weit hinten, hinter den Wortbergen, fern der Länder Vokalien und Konsonantien leben die Blindtexte. Abgeschieden wohnen sie in Buchstabhausen an der Küste des Semantik, eines großen Sprachozeans. Ein kleines Bächlein namens Duden fließt durch ihren Ort und versorgt sie mit den nötigen Regelialien. Es ist ein paradiesmatisches Land, in dem einem gebratene Satzteile in den Mund fliegen. Nicht einmal von der allmächtigen Interpunktion werden die Blindtexte beherrscht – ein geradezu unorthographisches Leben. Eines Tages aber beschloß eine kleine Zeile Blindtext, ihr Name war Lorem Ipsum, hinaus zu gehen in die weite Grammatik. Der große Oxmox riet ihr davon ab, da es dort wimmele von bösen Kommata, wilden Fragezeichen und hinterhältigen Semikoli, doch das Blindtextchen ließ sich nicht beirren. Es packte seine sieben Versalien, schob sich sein Initial in den Gürtel und machte sich auf den Weg."
