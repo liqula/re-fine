@@ -1,0 +1,43 @@
+//------------------------------------
+//    quickCreate icons
+//------------------------------------
+
+.#{$namespace}add-annotation,
+%#{$namespace}add-annotation,
+.#{$namespace}add-modification,
+%#{$namespace}add-modification {
+
+    background-color: $default-icon-bg;
+    border-radius: $icon-width * 1.5;
+    height: $icon-width * 1.5;
+    position: absolute;
+    transition: none;
+    width: $icon-width * 1.5;
+
+    &__icon {
+
+        margin-left: rem(3);
+        margin-top: rem(-14);
+
+        pointer-events: none;
+        position: absolute;
+
+        &--active {
+            background-color: $icon-rollover;
+        }
+    }
+}
+
+@include gridle_state(tablet desktop) {
+
+    .#{$namespace}add-annotation,
+    %#{$namespace}add-annotation {
+        right: 5%;
+    }
+
+    .#{$namespace}add-modification,
+    %#{$namespace}add-modification {
+        left: 2%;
+    }
+
+}

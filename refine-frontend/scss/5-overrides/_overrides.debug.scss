@@ -1,0 +1,17 @@
+
+// layout indicator
+
+.layout-indicator {
+    background-color: $signal-orange;
+    height: 20px;
+    position: fixed;
+    text-align: center;
+    top: 0;
+    width: 130px;
+    z-index: $always-on-top + 100;
+
+    @include gridle_state(tablet desktop ) {
+        right: 0;
+    }
+
+}

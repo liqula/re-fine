@@ -1,0 +1,53 @@
+//------------------------------------
+// COLOR SCHEMES for types of annotations & modifications
+//------------------------------------
+
+.#{$namespace}snippet--edit,
+%#{$namespace}snippet--edit {
+    background-color: $vdoc-edit;
+
+    .#{$namespace}snippet__icon-bg,
+    %#{$namespace}snippet__icon-bg {
+        background-color: $vdoc-edit;
+    }
+}
+
+.#{$namespace}snippet--note,
+%#{$namespace}snippet--note {
+    background-color: $vdoc-note;
+
+    .#{$namespace}snippet__icon-bg,
+    %#{$namespace}snippet__icon-bg {
+        background-color: $vdoc-note;
+    }
+}
+
+.#{$namespace}snippet--comment,
+%#{$namespace}snippet--comment {
+    background-color: $vdoc-comment;
+
+    .#{$namespace}snippet__icon-bg,
+    %#{$namespace}snippet__icon-bg {
+        background-color: $vdoc-comment;
+    }
+}
+
+.#{$namespace}snippet--discussion,
+%#{$namespace}snippet--discussion {
+    background-color: $vdoc-discussion;
+
+    .#{$namespace}snippet__icon-bg,
+    %#{$namespace}snippet__icon-bg {
+        background-color: $vdoc-discussion;
+    }
+}
+
+.#{$namespace}snippet--question,
+%#{$namespace}snippet--question {
+    background-color: $vdoc-question;
+
+    .#{$namespace}snippet__icon-bg,
+    %#{$namespace}snippet__icon-bg {
+        background-color: $vdoc-question;
+    }
+}

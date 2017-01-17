@@ -1,0 +1,170 @@
+$module: #{$namespace}vdoc-toolbar;
+$btn-active-indicator-size: 35px;
+$btn-active-indicator-size-mobile: 35px;
+
+
+.#{$module},
+%#{$module} {
+
+    background-color: $vdoc-toolbar-bg;
+    height: $mainmenu-height-mobile;
+    overflow: hidden;
+    position: relative;
+    top: 0;
+    //z-index: $vdoc-toolbar-index;
+
+    &__content {
+        @include center-content-vertical();
+    }
+
+    &--fixed {
+        margin-top: $mainmenu-height-mobile;
+        position: fixed;
+        width: 100%;
+    }
+
+    &__button-label {
+        @include hide();
+    }
+
+    &__btn-index {
+        padding-left: 0;
+    }
+
+    &__btn-read-mode {
+
+        position: relative;
+
+        .c-vdoc-toolbar__icon {
+
+            &::before {
+                background-color: $default-icon-bg;
+                border-radius: $btn-active-indicator-size-mobile;
+                content: ' ';
+                display: inline-block;
+                height: $btn-active-indicator-size-mobile;
+                transform: translateX(-50%);
+                position: absolute;
+                top: 0;
+                width: $btn-active-indicator-size-mobile;
+                z-index: -1;
+            }
+
+            *::before,
+            > span::before {
+                font-size: rem(20) !important; // temporary fix for wrong icon size in icon font
+            }
+
+        }
+    }
+
+    &__all-annotations,
+    &__all-modifications {
+        @include center-content-horizontal();
+        margin-right: $global-padding * 3;
+    }
+
+    &__separator {
+
+        height: 75%;
+
+        &::before {
+            border-left: 2px solid $white;
+            content: ' ';
+            display: inline-block;
+            height: 100%;
+            margin-left: $global-padding * 2;
+            padding-left: $global-padding * 2;
+        }
+    }
+
+    &--align-right {
+        margin-left: auto;
+        z-index: $toolbar-icons-index;
+    }
+
+    button {
+        display: inline-block;
+        height: 75%;
+    }
+
+    > .grid-wrapper {
+        > div {
+            padding-top: 0;
+        }
+    }
+
+    > *,
+    > * > *,
+    > * > * > * {
+        height: inherit;
+    }
+}
+
+
+@include gridle_state(tablet desktop) {
+
+    .#{$module},
+    %#{$module} {
+        height: $mainmenu-height;
+
+        > .grid-wrapper {
+            > div {
+                padding-top: rem(2);
+            }
+        }
+
+        &__separator {
+
+            &::before {
+                margin-left: $global-padding * 4;
+                padding-left: $global-padding * 4;
+            }
+        }
+
+        &__btn-read-mode {
+            .c-vdoc-toolbar__icon {
+
+                &::before {
+                    top: rem(10);
+                }
+            }
+        }
+    }
+
+    .#{$module}--fixed,
+    %#{$module}--fixed {
+        margin-top: 0;
+    }
+}
+
+
+@include gridle_state(desktop) {
+
+    .#{$module},
+    %#{$module} {
+
+        &__button-label {
+            @include block();
+            font-size: rem(12);
+            margin-top: $global-padding;
+        }
+
+        &__btn-read-mode {
+            .c-vdoc-toolbar__icon {
+
+                &::before {
+                    top: rem(3);
+                }
+            }
+        }
+    }
+}
+
+@include gridle_state(desktop-large) {
+    .#{$module}--fixed,
+    %#{$module}--fixed {
+        @include gridle_row_full();
+        left: 0;
+    }
+}

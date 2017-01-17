@@ -1,0 +1,154 @@
+//------------------------------------
+//    #MAIN MENU CONTENT
+//------------------------------------
+
+$module: #{$namespace}mainmenu-content;
+
+$mainmenu-content-header-height: $mainmenu-height;
+$mainmenu-content-padding-top: $global-padding * 5;
+$mainmenu-content-icon-bg-size: 40px;
+$mainmenu-content-button-width: 90px;
+$mainmenu-content-button-height: 60px;
+
+
+.#{$module},
+%#{$module} {
+
+    background-color: $mainmenu-bg;
+    left: 0;
+    min-height: 100vh;
+    position: absolute;
+    top: 0;
+    width: 100vw;
+    z-index: $always-on-top;
+
+    &__header {
+        min-height: $mainmenu-content-header-height;
+        position: relative;
+    }
+
+    &__main {
+
+        background-color: $mainmenu-content-bg;
+        border-radius: rem(8);
+        margin-bottom: $global-padding * 2;
+        min-height: 50vh;
+        padding: $global-padding * 4;
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-weight: normal;
+        }
+    }
+
+    &__section-button {
+        background-color: $mainmenu-content-bg;
+        border-radius: $mainmenu-content-icon-bg-size;
+        display: inline-block;
+        height: $mainmenu-content-icon-bg-size;
+        margin-right: rem(10);
+        margin-top: $mainmenu-content-padding-top;
+        width: $mainmenu-content-icon-bg-size;
+    }
+
+    &__section-button--active {
+        background-color: $icon-bg-active;
+    }
+
+    &__headline,
+    &__headline + &__separator {
+        margin-top: 0;
+    }
+
+    &__separator {
+        border-top: 1px solid $mainmenu-bg;
+        clear: both;
+        margin-top: $global-padding * 2;
+        padding-top: rem(3);
+        width: 100%;
+    }
+
+    &__btn-close {
+
+        padding-right: 0;
+        position: absolute;
+        right: 0;
+        top: $mainmenu-content-padding-top;
+
+        ::before,
+        span::before {
+            color: $white;
+        }
+    }
+
+    &__button {
+        height: $mainmenu-content-button-height;
+        padding: 0;
+        width: $mainmenu-content-button-width;
+    }
+
+    &__row {
+        margin-bottom: $global-padding * 6;
+        margin-top: $global-padding * 4;
+        overflow-x: hidden;
+    }
+
+    &__button-label {
+        font-size: rem(12);
+        margin-top: rem(5);
+    }
+
+    &__section {
+        display: none;
+        position: relative;
+    }
+
+    &__section--active {
+        display: block;
+    }
+
+    &__meta-username {
+        float: right;
+    }
+
+}
+
+
+@include gridle_state(desktop) {
+
+    .#{$module},
+    %#{$module} {
+
+        &__header {
+            position: static;
+        }
+
+        &__btn-close {
+            left: $global-padding * 3;
+            right: auto;
+        }
+
+        &__meta {
+            position: absolute;
+            right: $global-padding;
+            top: rem(-5);
+            width: 50%;
+        }
+
+        &__meta-username {
+            clear: both;
+            margin-right: $global-padding * 2;
+            position: absolute;
+            right: rem(30);
+        }
+
+        &__meta-useravatar {
+            position: absolute;
+            right: 0;
+        }
+    }
+}

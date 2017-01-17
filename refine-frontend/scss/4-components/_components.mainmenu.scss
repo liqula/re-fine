@@ -1,0 +1,112 @@
+//------------------------------------
+//    #MAIN MENU
+//------------------------------------
+
+$module: #{$namespace}mainmenu;
+
+.#{$module},
+%#{$module} {
+
+    @include center-content-vertical() ;
+
+    color: $mainmenu-mainbutton-color;
+    height: $mainmenu-height-mobile;
+    justify-content: flex-end;
+    padding: 0 1%;
+    pointer-events: none;
+    position: fixed;
+    top: 0;
+    width: 100vw;
+    z-index: $mainmenu-button-index;
+    //z-index: $always-on-top;
+
+    &__bg {
+        background-color: $mainmenu-bg;
+        height: $mainmenu-height-mobile;
+        position: fixed;
+        top: 0;
+        width: 100vw;
+        z-index: $mainmenu-bg2-index;
+    }
+
+    &__menu-button {
+        background: none;
+        margin-right: 7px;
+        padding-bottom: 7px;
+        pointer-events: all;
+    }
+
+    &__menu-button-label {
+
+        color: $mainmenu-mainbutton-color;
+        display: none;
+    }
+
+    &__icon-bar {
+        background-color: $mainmenu-mainbutton-color;
+        border-radius: 1.5px;
+        color: inherit;
+        display: block;
+        height: 3px;
+        margin-top: 7px;
+        width: 30px;
+        z-index: $always-on-top;
+    }
+
+}
+
+@include gridle_state(tablet desktop) {
+
+    .#{$module},
+    %#{$module} {
+        height: $mainmenu-height;
+        justify-content: flex-start;
+
+        &__bg {
+            height: $mainmenu-height;
+        }
+
+        &__menu-button-label {
+
+            color: $mainmenu-mainbutton-color;
+            display: inline;
+            font-size: rem(16);
+            font-weight: bold;
+        }
+
+    }
+
+    .#{$module}--toolbar-combined,
+    %#{$module}--toolbar-combined {
+
+        color: $mainmenu-mainbutton-combined-color;
+
+        .#{$module}__icon-bar,
+        %#{$module}__icon-bar {
+            background-color: $mainmenu-mainbutton-combined-color;
+        }
+
+
+    }
+
+}
+
+
+@include gridle_state(desktop) {
+
+    .#{$module},
+    %#{$module} {
+
+        &__menu-button-label {
+            color: red; // $mainmenu-mainbutton-color;
+            font-size: rem(20);
+        }
+
+        &__icon-bar {
+            color: inherit;
+            height: 3px;
+            margin-top: 10px;
+            width: 45px;
+        }
+    }
+}

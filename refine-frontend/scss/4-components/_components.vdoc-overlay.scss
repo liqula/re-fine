@@ -1,0 +1,214 @@
+//------------------------------------
+//    overlays
+//------------------------------------
+
+$module: #{$namespace}vdoc-overlay;
+
+.#{$module},
+%#{$module} {
+
+    background-color: $overlay-backdrop;
+    height: 100%;
+    opacity: 0;
+    position: absolute;
+    transition-duration: .3s;
+    transition-property: opacity, visibility;
+    visibility: hidden;
+    width: 99%;
+
+    &__inner {
+        position: relative;
+    }
+
+    &__buttonClose {
+        cursor: pointer;
+        position: absolute;
+        right: $global-padding * 2;
+        top: $global-padding;
+    }
+
+    &-content {
+        background-color: $vdoc-comment;
+        display: none;
+        min-height: 200px;
+        padding: $global-padding * 3 $global-padding * 2 $global-padding * 2;
+
+        button {
+            transition: none;
+        }
+    }
+
+    &-content__copy {
+        @include font-sansserif();
+        font-size: rem(15);
+    }
+
+    &-content__icon {
+
+        left: $global-padding * 2;
+        position: absolute;
+        top: $global-padding;
+
+    }
+
+    &-meta {
+        @include font-sansserif();
+        @include center-content-vertical();
+        color: $overlay-meta;
+        font-size: rem(12);
+        font-weight: bold;
+        margin-top: $global-padding * 2;
+    }
+
+    &-meta__date {
+        @include font-sansserif();
+        color: $overlay-meta;
+        display: block;
+    }
+
+    &-meta__user {
+        @include font-sansserif();
+        color: $overlay-meta;
+        display: block;
+        margin-left: $global-padding;
+    }
+
+    &-meta__icon {
+        margin-left: ($icon-width / 1.1) / 4;
+        margin-top: ($icon-width / 1.1) / 4;
+    }
+
+    &-meta__user-avatar {
+        background-color: $fallback-avatar-bg;
+        border-radius: $icon-width / 1.1;
+        display: inline-block;
+        height: $icon-width / 1.1;
+        width: $icon-width / 1.1;
+    }
+
+    &-content__step-indicator {
+
+        align-items: flex-start;
+        background-color: inherit;
+        display: flex;
+        flex-flow: column nowrap;
+        justify-content: flex-start;
+        margin-top: $global-padding * 4;
+    }
+
+    &-content__category-icon {
+        float: left;
+    }
+
+    &-content__category,
+    &-content__submit {
+        display: inline-block;
+
+        > * {
+            display: inline-block;
+            margin-left: 0;
+            margin-right: $global-padding * 2;
+        }
+    }
+}
+
+
+.#{$module}-votes,
+%#{$module}-votes {
+
+    margin-top: rem(10);
+
+    button:first-of-type {
+        padding-left: 0;
+    }
+
+    button:not(:last-of-type) {
+        padding-right: 0;
+    }
+}
+
+
+@include gridle_state(tablet desktop) {
+
+    .#{$module},
+    %#{$module} {
+
+        &__buttonClose {
+            top: $global-padding * 2;
+        }
+
+        &-content {
+            padding: $global-padding * 2 $global-padding * 8 $global-padding * 2 $overlay-left-padding;
+        }
+
+        &-content__title {
+            display: inline-block;
+            left: $global-padding * 12;
+            margin-top: 0;
+            position: absolute;
+            top: $global-padding * 2;
+            width: 70%;
+        }
+
+        &-content__copy {
+            margin-top: $global-padding * 8;
+        }
+
+        &-meta__date {
+            &::before {
+                content: '\A0 \B7 \A0';
+            }
+        }
+
+        &-content__icon {
+            left: $overlay-left-padding;
+            top: $global-padding * 2;
+        }
+
+        &-meta {
+            margin-top: $global-padding * 2;
+        }
+
+        &-content__step-indicator,
+        &-content__annotation-type {
+
+            @include center-content-vertical();
+        }
+    }
+
+    .#{$module}-votes,
+    %#{$module}-votes {
+        float: right;
+        margin-top: -29px;
+    }
+
+}
+
+
+//------------------------------------
+//    color overrides
+//------------------------------------
+
+.#{$module},
+%#{$module} {
+
+    &-content--comment,
+    &-content--add-comment {
+        background-color: $vdoc-comment;
+    }
+
+    &-content--question,
+    &-content--add-question {
+        background-color: $vdoc-question;
+    }
+
+    &-content--discussion,
+    &-content--add-discussion {
+        background-color: $vdoc-discussion;
+    }
+
+    &-content--edit,
+    &-content--add-modification {
+        background-color: $vdoc-edit;
+    }
+}

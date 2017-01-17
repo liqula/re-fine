@@ -1,0 +1,31 @@
+$namespace: 'c-';
+
+// z-index
+$mainmenu-bg-index: 9999;
+$vdoc-toolbar-index: 10100;
+$always-on-top: 10200;
+
+$mainmenu-button-index: 5000;
+$toolbar-index: 4000;
+$mainmenu-bg2-index: 3000;
+$menucontents-index: 2000;
+$fullheader-index: 1000;
+
+//   --- mainmenu-button ---
+//                                --- vdoc-toolbar ---
+//   --- mainmenu-bg ---
+//           --- menu-contents ---
+// ------------------ fullheader --------------------------
+
+// in substack on top of vdoc-toolbar:
+$toolbar-icons-index: 1000;
+
+
+// overlay
+$overlay-left-padding: $global-padding * 4;
+
+// toolbar
+$vdoc-toolbar-extension-height: 45px;
+$vdoc-toolbar-extension-pointer-size: 25px;
+
+$editor-min-height: rem(180);
