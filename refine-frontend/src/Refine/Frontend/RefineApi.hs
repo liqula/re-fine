@@ -1,4 +1,3 @@
-{-# LANGUAGE TypeApplications     #-}
 {-# LANGUAGE ConstraintKinds      #-}
 {-# LANGUAGE DataKinds            #-}
 {-# LANGUAGE DeriveAnyClass       #-}

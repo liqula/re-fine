@@ -31,7 +31,7 @@ menuButton = defineView "MenuButton" $ \() ->
 menuButton_ :: ReactElementM eventHandler ()
 menuButton_ = view menuButton () mempty
 
-data DocumentHeaderProps = DocumentHeaderProps
+newtype DocumentHeaderProps = DocumentHeaderProps
   { _headerTitle :: Title
   }
 

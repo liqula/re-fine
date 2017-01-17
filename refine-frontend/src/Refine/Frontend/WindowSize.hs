@@ -15,7 +15,7 @@ import           GHCJS.Types (JSString)
 import qualified Refine.Frontend.RefineStore as RS
 
 
-data WindowSizeProps = WindowSizeProps
+newtype WindowSizeProps = WindowSizeProps
     { _currentSize :: RS.WindowSize
     }
 
