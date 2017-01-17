@@ -30,11 +30,14 @@ import Refine.Prelude.TH
 
 -- | TODO: re-think the types in this module before proceeding with the implementation.
 
+-- | The 'ChunkRange' here is coming from the user.  It refers to the selection (javascript
+-- `window.getSelection()`) that the user made before entering the comment.  'Nothing' means comment
+-- refers to the entire document.
 data Comment = Comment
   { _commentID     :: ID Comment
   , _commentText   :: ST
   , _commentPublic :: Bool
-  , _commentRange  :: ChunkRange Comment
+  , _commentRange  :: Maybe (ChunkRange Comment)
   }
   deriving (Eq, Ord, Show, Read, Generic)
 

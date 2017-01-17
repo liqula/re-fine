@@ -80,6 +80,26 @@ getHeavyVDoc vid = do
           -- (view commentRange <$> comments) <>
           -- (view noteRange <$> notes)
 
+        -- for now, just do comments, and leave everything else for later.
+
+
+
+{-  add this to HeavyVDoc haddocks.
+
+- morally we have three phases in working on a document: (1) add comments and patches, (2) merge a
+  bunch of patches and (3) create a new version.
+
+- what follows from this:
+    - there are no patches on patches that we need to display
+    - it's ok to only display patches on head, not on any other version
+    - same for comments: comments collect on head, then then are discarded in (2), (3).
+
+- if we try to consider comments, patches, ... on other versions than head, we are in trouble.
+
+-}
+
+
+
         -- TODO: this list of chunk ranges is needed for renderVDocHtml to work, but it's tricky:
         -- ChunkRange takes an type parameter that identifies what it belongs to.  we need to
         -- somehow bind the chunk range owner differently to be able to put all those different
@@ -96,6 +116,7 @@ getHeavyVDoc vid = do
 -- TODO: implement this using 'Refine.Common.VDoc.HTML.Splice.insertMarks' from MR!12.
 renderVDocHtml :: [ChunkRange a] -> VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
 renderVDocHtml _ (VDocVersion v) = VDocVersion v
+
 
 getVersion :: ID Patch -> App DB (VDocVersion 'HTMLWithMarks)
 getVersion _ = do
