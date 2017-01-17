@@ -14,24 +14,15 @@ import Test.QuickCheck.Instances ()
 
 import           React.Flux (transform)
 
-import Refine.Common.VDoc
+import Refine.Common.Types
 import Refine.Frontend.RefineStore
 
-instance Arbitrary (AUID VDoc) where
-    arbitrary = AUID <$> arbitrary
-
-instance Arbitrary VDocListItem where
-    arbitrary = do
-        a <- arbitrary
-        b <- arbitrary
-        pure VDocListItem
-                    { _vdliVDoc = a
-                    , _vdliVDocTitle = b
-                    }
+instance Arbitrary (ID VDoc) where
+    arbitrary = ID <$> arbitrary
 
 
 emptyState :: RefineState
-emptyState = RefineState Nothing Nothing 0 (MarkPositions M.empty) Desktop
+emptyState = RefineState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing)
 
 spec :: Spec
 spec = do
