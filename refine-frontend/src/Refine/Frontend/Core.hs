@@ -41,7 +41,7 @@ newtype UserStore = UserStore
   }
 
 data UserStoreAction = AskVDoc (ID VDoc)
-                     | GotVDoc (ID VDoc) (Either (Int, String) HeavyVDoc)
+                     | GotVDoc (ID VDoc) (Either (Int, String) CompositeVDoc)
   deriving (Show, Generic)
 
 cfg :: ApiRequestConfig RefineAPI

@@ -126,8 +126,8 @@ spec = around createTestSession $ do
 
   describe "sCreateVDoc" $ do
     it "stores a vdoc in the db" $ \sess -> do
-      fe :: HeavyVDoc <- runWaiBody sess $ postJSON "/r/vdoc" sampleCreateVDoc
-      be :: HeavyVDoc <- runDB      sess $ getHeavyVDoc (fe ^. heavyVDoc . vdocID)
+      fe :: CompositeVDoc <- runWaiBody sess $ postJSON "/r/vdoc" sampleCreateVDoc
+      be :: CompositeVDoc <- runDB      sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       fe `shouldBe` be
 
   describe "sAddComment" $ do
