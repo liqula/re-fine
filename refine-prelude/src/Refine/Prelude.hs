@@ -5,6 +5,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
 {-# LANGUAGE ViewPatterns        #-}
+{-# LANGUAGE EmptyDataDecls      #-}
 
 {-# OPTIONS_GHC -Wall -Werror #-}
 
@@ -13,6 +14,9 @@ module Refine.Prelude
     gtoJSONDef
   , gparseJSONDef
 
+    -- * void
+  , Void
+  , ClearTP(..)
     -- * time
   , Timestamp(..), unTimestamp
   , timestampToEpoch
@@ -60,6 +64,17 @@ import qualified GHC.Generics as GHC
 import Refine.Prelude.Generic
 import Refine.Prelude.TH
 
+
+-- * void
+
+data Void
+
+-- | Clear Type Param
+--
+-- After clearing the type parameters we could unify information
+-- from different sources.
+class ClearTP t where
+  clearTP :: t a -> t Void
 
 -- * time
 
