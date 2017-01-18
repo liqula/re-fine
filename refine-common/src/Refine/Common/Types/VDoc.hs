@@ -71,7 +71,7 @@ data VDocRepo = VDocRepo
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Patch = Patch
-  { _patchId    :: ID Patch
+  { _patchID    :: ID Patch
   , _patchDesc  :: ST
   , _patchRange :: ChunkRange Patch
   }
@@ -88,6 +88,7 @@ data ConflictResolution = ConflictResolution
 
 type instance Create VDoc  = CreateVDoc
 type instance Create Patch = CreatePatch
+
 
 -- * refine types
 

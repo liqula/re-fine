@@ -53,7 +53,7 @@ createVDoc pv = do
     pure (dr, dp)
   db $ do
     p <- DB.createPatch dp
-    r <- DB.createRepo dr (p ^. patchId)
+    r <- DB.createRepo dr (p ^. patchID)
     DB.createVDoc pv r
 
 getVDoc :: ID VDoc -> App DB VDoc
