@@ -97,7 +97,7 @@ postJSON path json = request "POST" path [("Content-Type", "application/json")] 
 -- * test cases
 
 spec :: Spec
-spec = around createTestSession $ do
+spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (needs some work)
 
   describe "sListVDocs" $ do
     it "returns a vdocs list with HTTP status 200" $ \sess -> do

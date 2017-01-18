@@ -70,7 +70,7 @@ makeLenses ''VDocs
 
 
 spec :: Spec
-spec = do
+spec = parallel $ do
   describe "VDoc" . around provideAppRunner $ do
     it "Random program" $ \runner -> forAll sampleProgram $ \program ->
       monadic (monadicApp runner) (runProgram program `evalStateT` initVDocs)
