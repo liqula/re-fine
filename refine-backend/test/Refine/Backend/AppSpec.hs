@@ -112,21 +112,21 @@ runProgram :: [Cmd] -> StateT VDocs (PropertyM (App DB)) ()
 runProgram = foldl (>>) (pure ()) . map runCmd
 
 runCmd :: Cmd -> StateT VDocs (PropertyM (App DB)) ()
-runCmd (AddVDoc pv) = do
-  vdoc   <- lift . run $ App.createVDoc pv
+runCmd (AddVDoc cv) = do
+  vdoc   <- lift . run $ App.createVDoc cv
   lastId <- gets $ view vdocLast
   vdocMap  %= Map.insert lastId (vdoc ^. vdocID)
   vdocLast %= (+1)
   lift . assert $
-    (vdoc ^. vdocTitle    == pv ^. protoVDocTitle) &&
-    (vdoc ^. vdocAbstract == pv ^. protoVDocAbstract)
+    (vdoc ^. vdocTitle    == cv ^. createVDocTitle) &&
+    (vdoc ^. vdocAbstract == cv ^. createVDocAbstract)
 
-runCmd (GetVDoc v pv) = do
+runCmd (GetVDoc v cv) = do
   Just vid <- gets . view $ vdocMap . at v
   vdoc <- lift . run $ App.getVDoc vid
   lift . assert $
-    (vdoc ^. vdocTitle    == pv ^. protoVDocTitle) &&
-    (vdoc ^. vdocAbstract == pv ^. protoVDocAbstract)
+    (vdoc ^. vdocTitle    == cv ^. createVDocTitle) &&
+    (vdoc ^. vdocAbstract == cv ^. createVDocAbstract)
 
 
 -- * generators

@@ -59,7 +59,7 @@ data CreateNote = CreateNote
   deriving (Eq, Ord, Show, Read, Generic)
 
 
--- * prototype
+-- * create types
 
 type instance Create Comment = CreateComment
 type instance Create Note    = CreateNote

@@ -46,8 +46,8 @@ data ChunkRange owner = ChunkRange
   deriving (Eq, Ord, Show, Read, Generic)
 
 data CreateChunkRange = CreateChunkRange
-  { _protoChunkRangeBegin :: Maybe ChunkPoint
-  , _protoChunkRangeEnd   :: Maybe ChunkPoint
+  { _createChunkRangeBegin :: Maybe ChunkPoint
+  , _createChunkRangeEnd   :: Maybe ChunkPoint
   }
   deriving (Eq, Ord, Show, Read, Generic)
 

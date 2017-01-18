@@ -88,11 +88,21 @@ vdocDBLens = entityLens vdocEntity
 vdocEntity :: L.Entity DB ID VDoc VDoc
 vdocEntity = L.Entity getVDoc updateVDoc
 
+toVDoc :: ID VDoc -> Title -> Abstract -> Key S.Repo -> VDoc
+toVDoc vid title abstract repoid = VDoc vid title abstract (S.keyToId repoid)
+
+createVDoc :: Create VDoc -> VDocRepo -> DB VDoc
+createVDoc pv vr = liftDB $ do
+  let svdoc = S.VDoc
+        (pv ^. createVDocTitle)
+        (pv ^. createVDocAbstract)
+        (vr ^. vdocRepoID . to S.idToKey)
+  key <- insert svdoc
+  void . insert $ S.VR key (vr ^. vdocRepoID . to S.idToKey)
+  pure $ S.vDocElim (toVDoc (S.keyToId key)) svdoc
+
 getVDoc :: ID VDoc -> DB VDoc
-getVDoc vid = S.vDocElim toVDoc <$> getEntity vid
-  where
-    toVDoc :: Title -> Abstract -> Key S.Repo -> VDoc
-    toVDoc title abstract repoid = VDoc vid title abstract (S.keyToId repoid)
+getVDoc vid = S.vDocElim (toVDoc vid) <$> getEntity vid
 
 -- NOTES: How to handle associations? What to update, what to keep?
 vDocToRecord :: VDoc -> DB S.VDoc
@@ -144,19 +154,6 @@ patchNotes pid = liftDB $
 patchComments :: ID Patch -> DB [ID Comment]
 patchComments pid = liftDB $
   S.keyToId . S.pCComment . entityVal <$$> selectList [S.PCPatch ==. S.idToKey pid] []
-
-createVDoc :: Create VDoc -> VDocRepo -> DB VDoc
-createVDoc pv vr = do
-  key <- liftDB . insert $ S.VDoc
-            (pv ^. protoVDocTitle)
-            (pv ^. protoVDocAbstract)
-            (vr ^. vdocRepoID . to S.idToKey)
-  void . liftDB . insert $ S.VR key (vr ^. vdocRepoID . to S.idToKey)
-  pure $ VDoc
-    (S.keyToId key)
-    (pv ^. protoVDocTitle)
-    (pv ^. protoVDocAbstract)
-    (vr ^. vdocRepoID)
 
 vdocRepo :: ID VDoc -> DB (ID VDocRepo)
 vdocRepo vid = do

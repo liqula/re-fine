@@ -36,7 +36,7 @@ data VoteValue = VoteValue
   deriving (Eq, Ord, Show, Read, Generic)
 
 
--- * prototype
+-- * create types
 
 type instance Create Vote = CreateVote
 
