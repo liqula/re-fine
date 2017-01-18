@@ -113,9 +113,10 @@ spec = around createTestSession $ do
       bef <- runWai sess $ get "/r/vdocs"
       _   <- runDB  sess $ App.createVDoc sampleCreateVDoc
       aft <- runWai sess $ get "/r/vdocs"
-      let check :: SResponse -> Maybe Int
-          check resp = length <$> (decode (simpleBody resp) :: Maybe [ID VDoc])
-      check aft `shouldBe` (+1) <$> check bef
+      let check :: SResponse -> Int
+          check resp = either (\msg -> error $ unwords [show msg, cs $ simpleBody resp]) length
+                       $ eitherDecode @[VDoc] (simpleBody resp)
+      check aft `shouldBe` (check bef + 1)
 
   describe "sGetVDoc" $ do
     it "retrieves a vdoc" $ \sess -> do
