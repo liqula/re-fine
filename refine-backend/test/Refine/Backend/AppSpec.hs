@@ -136,19 +136,19 @@ word = cs <$> listOf (elements ['a' .. 'z'])
 
 -- TODO: the pattern here is 'arbitrary<type> :: Gen <type>' should be defined in
 -- tests/Arbitrary.hs.  also, we need to make a package refine-test
-version :: Gen (VDocVersion 'HTMLRaw)
-version = pure $ VDocVersion ""
+arbitraryVersion :: Gen (VDocVersion 'HTMLRaw)
+arbitraryVersion = pure $ VDocVersion ""
 
-protoVDoc :: Gen (Create VDoc)
-protoVDoc =
+arbitraryCreateVDoc :: Gen (Create VDoc)
+arbitraryCreateVDoc =
   CreateVDoc
     <$> (Title <$> word)
     <*> (Abstract . mconcat <$> listOf word)
-    <*> version
+    <*> arbitraryVersion
 
 sampleProgram :: Gen [Cmd]
 sampleProgram = do
   n <- min 0 <$> arbitrary
   fmap concat . forM [0 .. n] $ \i -> do
-    v <- protoVDoc
+    v <- arbitraryCreateVDoc
     pure [AddVDoc v, GetVDoc i v]
