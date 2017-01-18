@@ -38,7 +38,7 @@ import           Servant hiding (Patch)
 
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
-import Refine.Backend.Database (DB, DBConfig(..), createDBRunner)
+import Refine.Backend.Database (DB, DBConfig(..), DBKind(..), createDBRunner)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.DocRepo (createRunRepo)
@@ -63,12 +63,18 @@ data BackendConfig = BackendConfig
 defaultBackendConfig :: BackendConfig
 defaultBackendConfig = BackendConfig True True
 
+defaultDBConfig :: DBConfig
+defaultDBConfig = DBConfig
+  { _dbConfigDBKind   = DBOnDisk "refine.db"
+  , _dbConfigPoolSize = 5
+  }
+
 mkBackend :: BackendConfig -> IO Backend
 mkBackend cfg = do
-  (runDb, _runUserDb) <- createDBRunner $ DBOnDisk "refine.db"
+  (runDb, userHandler) <- createDBRunner defaultDBConfig
   runDocRepo <- createRunRepo "."
   let logger = Logger $ if backendShouldLog cfg then putStrLn else const $ pure ()
-      app    = runApp runDb runDocRepo logger
+      app    = runApp runDb runDocRepo logger userHandler
       srv    = Servant.serve (Proxy :: Proxy RefineAPI) $ serverT app refineApi
 
   when (backendShouldMigrate cfg) $ do
@@ -91,6 +97,8 @@ toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError)
     fromAppError (AppVDocError    vdocError) = err500 { errBody = cs $ show vdocError }
     fromAppError (AppDBError      dbError)   = err500 { errBody = cs $ show dbError }
     fromAppError (AppDocRepoError docError)  = err500 { errBody = cs $ show docError }
+    fromAppError (AppUserNotFound user)      = err500 { errBody = cs $ unwords ["User not found", cs user] }
+    fromAppError AppUserHasNoSession         = err500 { errBody = "There is no session info where it should be." }
 
 
 -- | The 's' prefix in the handlers stands for "server", and is used to dismabiguate between the code in

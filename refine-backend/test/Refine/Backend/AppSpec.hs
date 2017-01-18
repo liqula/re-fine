@@ -93,11 +93,11 @@ createAppRunner = do
   let testDb    = "test.db"
       reposRoot = "repos"
   createDirectory reposRoot
-  runDb      <- createDBRunner $ DBOnDisk testDb
+  (runDb, userHandler) <- createDBRunner $ DBConfig 5 (DBOnDisk testDb)
   runDocRepo <- createRunRepo reposRoot
   let logger = Logger . const $ pure ()
       runner :: forall b . App DB b -> IO b
-      runner m = (natThrowError . runApp runDb runDocRepo logger) $$ m
+      runner m = (natThrowError . runApp runDb runDocRepo logger userHandler) $$ m
 
   void $ runner migrateDB
   pure (runner, testDb, reposRoot)

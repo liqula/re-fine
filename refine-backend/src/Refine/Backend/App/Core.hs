@@ -24,13 +24,16 @@ module Refine.Backend.App.Core where
 
 import Control.Lens (makeLenses, view)
 import Control.Monad.Except
-
-import Control.Natural
 import Control.Monad.Reader
+import Control.Monad.State
+import Control.Natural
+import Data.String.Conversions (ST)
+import Web.Users.Types (SessionId)
 
 import Refine.Backend.Database
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
+import Refine.Backend.User
 import Refine.Common.VDoc.HTML (VDocHTMLError)
 
 
@@ -42,9 +45,19 @@ data AppContext db = AppContext
   { _appRunDB      :: RunDB db
   , _appRunDocRepo :: RunDocRepo
   , _appLogger     :: Logger
+  , _appUserHandle :: UserHandle
   }
 
+newtype UserSession = UserSession { _unUserSession :: SessionId }
+
+-- | The state of the application depends on the user state.
+data AppUserState
+  = ActiveUser UserSession
+  | NonActiveUser
+
 makeLenses ''AppContext
+makeLenses ''AppUserState
+makeLenses ''UserSession
 
 -- | Application monad handles
 -- * database connection
@@ -53,13 +66,14 @@ makeLenses ''AppContext
 -- * user authentication (login)
 -- * user authorization (groups)
 -- * use one db connection in one run.
-newtype App db a = App { unApp :: ReaderT (AppContext db) (ExceptT AppError IO) a }
+newtype App db a = App { unApp :: StateT AppUserState (ReaderT (AppContext db) (ExceptT AppError IO)) a }
   deriving
     ( Functor
     , Applicative
     , Monad
     , MonadReader (AppContext db)
     , MonadError AppError
+    , MonadState AppUserState
     )
 
 data AppError
@@ -67,6 +81,8 @@ data AppError
   | AppVDocError VDocHTMLError
   | AppDBError DBError
   | AppDocRepoError DocRepoError
+  | AppUserNotFound ST
+  | AppUserHasNoSession
   deriving (Show)
 
 appIO :: IO a -> App db a

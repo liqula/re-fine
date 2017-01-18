@@ -29,6 +29,7 @@ module Refine.Backend.Database
   ) where
 
 import Control.Exception
+import Control.Lens ((^.))
 import Control.Monad.Except
 import Control.Monad.Logger
 import Control.Natural
@@ -45,11 +46,11 @@ import Refine.Backend.Database.Entity as Entity
 createDBRunner :: DBConfig -> IO (DB :~> ExceptT DBError IO, UserDB.Persistent)
 createDBRunner cfg = do
 
-  let sqliteDb = case cfg of
+  let sqliteDb = case cfg ^. dbConfigDBKind of
         DBInMemory  -> ":memory:"
         DBOnDisk fp -> fp
 
-  pool <- runNoLoggingT $ createSqlitePool (cs sqliteDb) 5
+  pool <- runNoLoggingT $ createSqlitePool (cs sqliteDb) (cfg ^. dbConfigPoolSize)
 
   pure ( Nat (wrapErrors . (`runSqlPool` pool) . runExceptT . unDB)
        , Persistent (`runSqlPool` pool)
