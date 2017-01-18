@@ -41,8 +41,8 @@ listVDocs = do
   appLog "listVDocs"
   db DB.listVDocs
 
-createCompositeVDoc :: Create VDoc -> App DB CompositeVDoc
-createCompositeVDoc = (getCompositeVDoc . view vdocID) <=< createVDoc
+createVDocGetComposite :: Create VDoc -> App DB CompositeVDoc
+createVDocGetComposite = (getCompositeVDoc . view vdocID) <=< createVDoc
 
 createVDoc :: Create VDoc -> App DB VDoc
 createVDoc pv = do

@@ -99,7 +99,7 @@ refineApi :: ServerT RefineAPI (App DB)
 refineApi =
        Refine.Backend.App.listVDocs
   :<|> Refine.Backend.App.getCompositeVDoc
-  :<|> Refine.Backend.App.createCompositeVDoc
+  :<|> Refine.Backend.App.createVDocGetComposite
   :<|> sAddComment
   :<|> sAddPatch
 
