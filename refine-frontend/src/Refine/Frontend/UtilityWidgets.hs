@@ -59,15 +59,16 @@ icon_ iconClass = view icon iconClass mempty
 
 
 iconButtonWithAlignment :: ReactView IconButtonWithAlignmentProps
-iconButtonWithAlignment = defineStatefulView "IconButtonWithAlignment" False $ \mouseIsOver props ->
-    button_ (["data-content-type" $= (props ^. iconButtonProps . contentType)
-           , "className" $= fromString (concat [ props ^. iconButtonProps . blockName, "__button "
-                                               , props ^. iconButtonProps . blockName
-                                               , if props ^. iconButtonProps . elementName == ""
+iconButtonWithAlignment = defineStatefulView "IconButtonWithAlignment" False $ \mouseIsOver props -> do
+    let bprops = props ^. iconButtonProps
+    button_ (["data-content-type" $= (bprops ^. contentType)
+           , "className" $= fromString (concat [ bprops ^. blockName, "__button "
+                                               , bprops ^. blockName
+                                               , if bprops ^. elementName == ""
                                                      then ""
                                                      else "__"
-                                               , props ^. iconButtonProps . elementName
-                                               , alignmentClass (props ^. iconButtonProps . blockName)
+                                               , bprops ^. elementName
+                                               , alignmentClass (bprops ^. blockName)
                                                                 (props ^. rightAligned)
                                                ])
            , onMouseEnter $ \_ _ _ -> ([], Just True)
@@ -75,17 +76,17 @@ iconButtonWithAlignment = defineStatefulView "IconButtonWithAlignment" False $ \
            ] <> case props ^. position of
                    Nothing  -> []
                    Just pos -> ["style" @= [Style "top" pos]]) $ do
-        div_ ["className" $= fromString ((props ^. iconButtonProps . blockName) <> "__icon")] $ do
+        div_ ["className" $= fromString ((bprops ^. blockName) <> "__icon")] $ do
             let -- TODO: these could do with better names
-                a = if props ^. iconButtonProps . iconHighlight then "o-icon-highlight " else ""
-                b = props ^. iconButtonProps . iconDesc . _1
-                c = "_" <> if mouseIsOver && (props ^. iconButtonProps . iconHighlight)
+                a = if bprops ^. iconHighlight then "o-icon-highlight " else ""
+                b = bprops ^. iconDesc . _1
+                c = "_" <> if mouseIsOver && (bprops ^. iconHighlight)
                              then "RO"
-                             else props ^. iconButtonProps . iconDesc . _2
-                d = " " <> "iconsize-" <> map toLower (show (props ^. iconButtonProps . size))
+                             else bprops ^. iconDesc . _2
+                d = " " <> "iconsize-" <> map toLower (show (bprops ^. size))
             icon_ $ fromString (a <> b <> c <> d)
-        span_ ["className" $= fromString (props ^. iconButtonProps . blockName <> "__button-label")] $
-            elemJSString (props ^. iconButtonProps . label)
+        span_ ["className" $= fromString (bprops ^. blockName <> "__button-label")] $
+            elemJSString (bprops ^. label)
     where
       alignmentClass blockName_ rightAligned_ = if rightAligned_ then " " <> blockName_ <> "--align-right" else ""
 
