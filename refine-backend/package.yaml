@@ -16,6 +16,7 @@ category:            Web
 ghc-options: -j -Wall -Werror
 
 dependencies:
+  - aeson
   - base
   - darcs
   - directory

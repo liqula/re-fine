@@ -58,26 +58,29 @@ createDBRunner cfg = do
 
 instance Database DB where
   -- * VDoc
-  listVDocs      = Entity.listVDocs
-  createVDoc     = Entity.createVDoc
-  getVDoc        = Entity.getVDoc
-  vdocRepo       = Entity.vdocRepo
+  listVDocs          = Entity.listVDocs
+  createVDoc         = Entity.createVDoc
+  getVDoc            = Entity.getVDoc
+  vdocRepo           = Entity.vdocRepo
 
   -- * Repo
-  createRepo     = Entity.createRepo
-  getRepo        = Entity.getRepo
-  getRepoHandle  = Entity.getRepoHandle
-  getPatchIDs    = Entity.getPatchIDs
+  createRepo         = Entity.createRepo
+  getRepo            = Entity.getRepo
+  getRepoFromHandle  = Entity.getRepoFromHandle
+  getRepoHandle      = Entity.getRepoHandle
+  getPatchIDs        = Entity.getPatchIDs
 
   -- * Patch
-  createPatch    = Entity.createPatch
-  getPatch       = Entity.getPatch
-  getPatchHandle = Entity.getPatchHandle
-  patchComments  = Entity.patchComments
-  patchNotes     = Entity.patchNotes
+  createPatch        = Entity.createPatch
+  getPatch           = Entity.getPatch
+  getPatchFromHandle = Entity.getPatchFromHandle
+  getPatchHandle     = Entity.getPatchHandle
+  patchComments      = Entity.patchComments
+  patchNotes         = Entity.patchNotes
 
   -- * Comment
-  getComment     = Entity.getComment
+  createComment      = Entity.createComment
+  getComment         = Entity.getComment
 
   -- * Note
-  getNote        = Entity.getNote
+  getNote            = Entity.getNote

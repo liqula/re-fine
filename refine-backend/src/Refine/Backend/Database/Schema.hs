@@ -30,6 +30,7 @@ import Database.Persist
 import Database.Persist.Sql
 import Database.Persist.TH
 
+import Refine.Common.Types.Chunk
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.Note (NoteKind)
 import Refine.Common.Types.VDoc (Abstract, Title)
@@ -58,11 +59,13 @@ Repo
 Comment
     text        Text
     public      Bool
+    range       CreateChunkRange
     parent      CommentId Maybe
 
 Note
     text        Text
     kind        NoteKind
+    range       CreateChunkRange
 
 Vote
     value       Text

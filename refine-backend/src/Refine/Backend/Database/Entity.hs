@@ -147,6 +147,16 @@ getPatchHandle pid = S.patchElim toPatchHandle <$> getEntity pid
     toPatchHandle :: ST -> DocRepo.PatchHandle -> DocRepo.PatchHandle
     toPatchHandle _desc handle = handle
 
+getPatchFromHandle :: DocRepo.PatchHandle -> DB Patch
+getPatchFromHandle hndl = do
+  ps <- liftDB $ selectList [S.PatchPatchHandle ==. hndl] []
+  p <- unique ps
+  let pid = S.keyToId $ entityKey p
+      cr = ChunkRange pid Nothing Nothing  -- TODO
+      toPatch desc _hdnl = Patch (S.keyToId $ entityKey p) desc cr
+
+  pure $ S.patchElim toPatch (entityVal p)
+
 patchNotes :: ID Patch -> DB [ID Note]
 patchNotes pid = liftDB $
   S.keyToId . S.pNNote . entityVal <$$> selectList [S.PNPatch ==. S.idToKey pid] []
@@ -166,6 +176,14 @@ getRepo vid = S.repoElim toVDocRepo <$> getEntity vid
     toVDocRepo :: ST -> DocRepo.RepoHandle -> Key S.Patch -> VDocRepo
     toVDocRepo _desc _repoHandle pid = VDocRepo vid (S.keyToId pid)
 
+getRepoFromHandle :: DocRepo.RepoHandle -> DB VDocRepo
+getRepoFromHandle hndl = do
+  rs <- liftDB $ selectList [S.RepoRepoHandle ==. hndl] []
+  r <- unique rs
+  let rid = S.keyToId $ entityKey r
+      toRepo _desc _hdnl repohead = VDocRepo rid (S.keyToId repohead)
+  pure $ S.repoElim toRepo (entityVal r)
+
 getRepoHandle :: ID VDocRepo -> DB DocRepo.RepoHandle
 getRepoHandle vid = S.repoElim toRepoHandle <$> getEntity vid
   where
@@ -176,14 +194,28 @@ getPatchIDs :: ID VDocRepo -> DB [ID Patch]
 getPatchIDs vid = liftDB $
   S.keyToId . S.rPPatch . entityVal <$$> selectList [S.RPRepository ==. S.idToKey vid] []
 
-getComment :: ID Comment -> DB Comment
-getComment cid = S.commentElim toComment <$> getEntity cid
-  where
-    cr :: ChunkRange Comment
-    cr = ChunkRange cid Nothing Nothing  -- TODO
+toChunkRange :: CreateChunkRange -> ID a -> ChunkRange a
+toChunkRange r i = ChunkRange i (r ^. createChunkRangeBegin) (r ^. createChunkRangeEnd)
 
-    toComment :: ST -> Bool -> Maybe (Key S.Comment) -> Comment
-    toComment desc public _parent = Comment cid desc public cr
+toComment :: ID Comment -> ST -> Bool -> CreateChunkRange -> Maybe (Key S.Comment) -> Comment
+toComment cid desc public range _parent = Comment cid desc public (toChunkRange range cid)
+
+createComment :: ID Patch -> Create Comment -> DB Comment
+createComment pid comment = liftDB $ do
+  let scomment = S.Comment
+        (comment ^. createCommentText)
+        (comment ^. createCommentPublic)
+        (comment ^. createCommentRange)
+        Nothing
+  key <- insert scomment
+  void . insert $ S.PC (S.idToKey pid) key
+  pure $ S.commentElim (toComment (S.keyToId key)) scomment
+
+getComment :: ID Comment -> DB Comment
+getComment cid = S.commentElim (toComment cid) <$> getEntity cid
 
 getNote :: ID Note -> DB Note
-getNote nid = S.noteElim (Note nid) <$> getEntity nid
+getNote nid = S.noteElim toNote <$> getEntity nid
+  where
+    toNote :: ST -> NoteKind -> CreateChunkRange -> Note
+    toNote desc kind range = Note nid desc kind (toChunkRange range nid)
