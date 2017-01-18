@@ -59,14 +59,6 @@ type SAddPatch
 
 -- | Packaged vdoc ready for use by client.
 --
--- TODO: this should go to the module where the application logic using / producing it is
--- implemented. until that implementation exists, it is kept here where it is used.  (also, we're
--- still looking for a name.  canidates are 'AugmentedVDoc', 'VDocWithContext', 'RichVDoc',
--- 'PackagedVDoc', ...?)
---
--- TODO: Rename it to CompositeVDoc
--- As it uses composite information around the VDoc
---
 -- - morally we have three phases in working on a document: (1) add comments and patches, (2) merge a
 --   bunch of patches and (3) create a new version.
 --
@@ -76,7 +68,6 @@ type SAddPatch
 --     - same for comments: comments collect on head, then then are discarded in (2), (3).
 --
 -- - if we try to consider comments, patches, ... on other versions than head, we are in trouble.
---
 data CompositeVDoc = CompositeVDoc
   { _compositeVDoc         :: VDoc
   , _compositeVDocVersion  :: VDocVersion 'HTMLWithMarks
