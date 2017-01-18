@@ -36,10 +36,10 @@ import           Refine.Common.Types.Chunk
 import           Refine.Prelude ((<@>))
 
 
-listVDocs :: App DB [ID VDoc]
+listVDocs :: App DB [VDoc]
 listVDocs = do
   appLog "listVDocs"
-  db DB.listVDocs
+  db $ mapM DB.getVDoc =<< DB.listVDocs
 
 createCompositeVDoc :: Create VDoc -> App DB CompositeVDoc
 createCompositeVDoc = (getCompositeVDoc . view vdocID) <=< createVDoc

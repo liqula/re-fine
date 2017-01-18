@@ -106,7 +106,7 @@ spec = around createTestSession $ do
 
     it "yields the same vdocs list as the db" $ \sess -> do
       vdocsRest :: SResponse <- runWai sess $ get "/r/vdocs"
-      vdocsDB   :: [ID VDoc] <- runDB  sess   listVDocs
+      vdocsDB   :: [VDoc]    <- runDB  sess   listVDocs
       decode (simpleBody vdocsRest) `shouldBe` Just vdocsDB
 
     it "if a vdoc is created, it shows in the output" $ \sess -> do
