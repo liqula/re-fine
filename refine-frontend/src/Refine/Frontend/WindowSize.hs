@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Refine.Frontend.WindowSize where
 
 import           Control.Concurrent (forkIO)
@@ -20,17 +22,16 @@ newtype WindowSizeProps = WindowSizeProps
 windowSize :: ReactView WindowSizeProps
 windowSize = defineLifecycleView "WindowSize" () lifecycleConfig
    { lRender = \_state (WindowSizeProps size) ->
-         -- why oh why do I need a conversion here?
          -- TODO debug output; remove in production
-         span_ [fromString "className" $= fromString "layout-indicator"] . elemString $ "layout: " <> show size
+         span_ ["className" $= "layout-indicator"] . elemString $ "layout: " <> show size
    , lComponentDidMount = Just $ \_ _ _ -> do
-           consoleLog $ fromString "Component did mount"
+           consoleLog "Component did mount"
            cb <- asyncCallback setWindowSize
-           js_windowAddEventListener (fromString "resize") cb
+           js_windowAddEventListener "resize" cb
            setWindowSize
    , lComponentWillUnmount = Just $ \_ _ -> do
            cb <- asyncCallback setWindowSize
-           js_windowRemoveEventListener (fromString "resize") cb
+           js_windowRemoveEventListener "resize" cb
    }
 
 windowSize_ :: WindowSizeProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
