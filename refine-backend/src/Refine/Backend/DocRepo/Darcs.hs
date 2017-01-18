@@ -65,3 +65,7 @@ getVersion repo vers = do
     let repoDir   = repoRoot </> (repo ^. unRepoHandle . to cs)
         patchFile = repoDir </> (vers ^. unPatchHandle . to cs)
     VDocVersion <$> ST.readFile patchFile
+
+-- TODO: Implement
+getApplicablePatches :: RepoHandle -> PatchHandle -> DocRepo [PatchHandle]
+getApplicablePatches _repo _vers = pure []
