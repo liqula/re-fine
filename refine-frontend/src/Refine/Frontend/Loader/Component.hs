@@ -8,6 +8,7 @@ import           Data.String (fromString)
 import           React.Flux
 import           Refine.Common.Types
 import qualified Refine.Frontend.RefineStore as RS
+import qualified Refine.Frontend.Types as RS
 
 
 vdocLoader :: ReactView (Maybe [ID VDoc])

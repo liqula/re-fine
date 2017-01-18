@@ -13,6 +13,7 @@ import           Refine.Common.Types
 
 import           Refine.Frontend.UtilityWidgets
 import qualified Refine.Frontend.RefineStore as RS
+import qualified Refine.Frontend.Types as RS
 
 
 menuButton :: ReactView ()

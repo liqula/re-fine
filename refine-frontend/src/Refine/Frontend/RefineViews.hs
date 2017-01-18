@@ -5,6 +5,7 @@ module Refine.Frontend.RefineViews
   ( refineApp
   ) where
 
+import           Control.Lens ((^.))
 import           React.Flux
 import           Data.Monoid ((<>))
 import           Data.String (fromString)
@@ -15,6 +16,7 @@ import qualified Text.HTML.Parser as HTMLP
 import           Text.HTML.Tree as HTMLT
 
 import qualified Refine.Frontend.RefineStore as RS
+import           Refine.Frontend.Types as RS
 import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.UtilityWidgets
 import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(..), editToolbar_
@@ -31,18 +33,18 @@ import           Refine.Common.Rest
 -- | The controller view and also the top level of the Refine app.  This controller view registers
 -- with the store and will be re-rendered whenever the store changes.
 refineApp :: ReactView ()
-refineApp = defineControllerView "RefineApp" RS.refineStore $ \(RS.RefineState maybeVdoc maybeVdocList headerHeight markPositions windowSize currentSelection) () ->
-    case maybeVdoc of
-        Nothing -> vdocLoader_ maybeVdocList
+refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
+    case rs ^. rsVDoc of
+        Nothing -> vdocLoader_ (rs ^. rsVDocList)
         Just vdoc -> div_ $ do
-            windowSize_ (WindowSizeProps windowSize) mempty
+            windowSize_ (WindowSizeProps (rs ^. rsWindowSize)) mempty
             stickyContainer_ [] $ do
                 headerSizeCapture_ $ do
                     -- the following need to be siblings because of the z-index handling
                     div_ ["className" $= "c-mainmenu__bg"] "" -- "role" $= "navigation"
                     --header_ ["role" $= "banner"] $ do
                     menuButton_
-                    documentHeader_ . DocumentHeaderProps . _vdocTitle $ _compositeVDoc vdoc
+                    documentHeader_ . DocumentHeaderProps $ vdoc ^. compositeVDoc . vdocTitle
                     div_ ["className" $= "c-fulltoolbar"] $ do
                         sticky_ [] $ do
                             editToolbar_
@@ -51,9 +53,9 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \(RS.RefineState m
                 main_ ["role" $= "main"] $ do
                     div_ ["className" $= "grid-wrapper"] $ do
                         div_ ["className" $= "row row-align-center row-align-top"] $ do
-                            leftAside_ markPositions currentSelection headerHeight
+                            leftAside_ (rs ^. rsMarkPositions) (rs ^. rsCurrentSelection) (rs ^. rsHeaderHeight)
                             toArticle . HTMLT.tokensToForest . HTMLP.parseTokens . cs . _unVDocVersion $ _compositeVDocVersion vdoc
-                            rightAside_ markPositions
+                            rightAside_ (rs ^. rsMarkPositions)
 
 
 toArticle :: Either ParseTokenForestError (DT.Forest HTMLP.Token) -> ReactElementM [SomeStoreAction] ()
@@ -75,8 +77,8 @@ toHTML (DT.Node (HTMLP.ContentText content) []) = elemText content
 toHTML (DT.Node (HTMLP.ContentChar content) []) = elemText $ cs [content]
 -- a comment - do we want to support them, given our HTML editor provides no means of entering them?
 toHTML (DT.Node (HTMLP.Comment _) _) = mempty -- ignore comments
-toHTML (DT.Node (HTMLP.TagOpen label attrs) subForest) =
-    React.Flux.term (fromString (cs label)) (toProps attrs) $ toHTML `mapM_` subForest
+toHTML (DT.Node (HTMLP.TagOpen lbl attrs) subForest) =
+    React.Flux.term (fromString (cs lbl)) (toProps attrs) $ toHTML `mapM_` subForest
 
 -- the above cases cover all possibilities in the demo article, but we leave this here for discovery:
 toHTML (DT.Node rootLabel []) = p_ (elemString ("root_label_wo_children " <> show rootLabel))

@@ -11,6 +11,7 @@ import           GHCJS.Foreign.Callback (Callback, asyncCallback)
 import           GHCJS.Types (JSString)
 
 import qualified Refine.Frontend.RefineStore as RS
+import qualified Refine.Frontend.Types as RS
 
 
 newtype WindowSizeProps = WindowSizeProps

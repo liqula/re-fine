@@ -24,6 +24,7 @@ dependencies:
   - ghcjs-base
   - html-parse
   - json-sop
+  - lens
   - QuickCheck
   - quickcheck-instances
   - react-flux

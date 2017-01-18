@@ -11,6 +11,7 @@ import           React.Flux
 import           React.Flux.Lifecycle
 
 import qualified Refine.Frontend.RefineStore as RS
+import qualified Refine.Frontend.Types as RS
 
 
 data MarkProps = MarkProps

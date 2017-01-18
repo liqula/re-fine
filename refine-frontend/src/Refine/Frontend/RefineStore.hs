@@ -1,69 +1,34 @@
-{-# LANGUAGE TypeFamilies      #-}
-{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE DeriveAnyClass    #-}
+{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TypeFamilies      #-}
+
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.RefineStore where
 
+import           Control.Lens ((&), (%~), (.~))
 import qualified Data.Aeson as AE
-import           Control.DeepSeq
 import           Data.Monoid ((<>))
-import           Data.Text (Text)
-import           Data.Typeable (Typeable)
 import qualified Data.Map.Strict as M
-import           GHC.Generics (Generic)
 import           React.Flux
-import           Data.Aeson (ToJSON, encode, toJSON, Value, (.=), object)
+import           Data.Aeson (ToJSON, encode)
 import           Data.String.Conversions
 import           Data.JSString (JSString, pack, unpack)
 
 import Refine.Common.Types
 import Refine.Common.Rest
 import Refine.Frontend.RefineApi
+import Refine.Frontend.Types
 
-
-newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map String Int }
-  deriving (Eq, Show, Typeable, Generic, NFData)
-
-mapToValue :: (ToJSON k, ToJSON v) => M.Map k v -> Value
-mapToValue = object . fmap (\(k,v) -> (cs . encode) k .= v) . M.toList
-
-instance ToJSON MarkPositions where
-  toJSON = toJSON . mapToValue . _unMarkPositions
-
-data WindowSize = Desktop | Tablet | Mobile
-  deriving (Show, Typeable, Generic, NFData, ToJSON)
 
 toSize :: Int -> WindowSize
 toSize sz
   | sz <= 480  = Mobile
   | sz <= 1024 = Tablet
   | otherwise  = Desktop
-
-type DeviceOffset = Int
-
-data RefineState = RefineState
-  { _vdoc :: Maybe CompositeVDoc
-  , _vdocList :: Maybe [ID VDoc]
-  , _headerHeight :: Int
-  , _markPositions :: MarkPositions
-  , _windowSize :: WindowSize
-  , _currentSelection :: (Maybe Range, Maybe DeviceOffset)
-  } deriving (Show, Typeable, Generic, NFData, ToJSON)
-
-data RefineAction = LoadDocumentList
-                  | LoadedDocumentList [ID VDoc]
-                  | LoadDocument (ID VDoc)
-                  | OpenDocument CompositeVDoc
-                  | AddDemoDocument
-                  | AddHeaderHeight Int
-                  | AddMarkPosition String Int
-                  | SetWindowSize WindowSize
-                  | SetSelection DeviceOffset
-                  | SubmitPatch
-                  | SaveSelect Text Text
-  deriving (Show, Typeable, Generic, NFData)
 
 instance StoreData RefineState where
     type StoreAction RefineState = RefineAction
@@ -79,17 +44,16 @@ instance StoreData RefineState where
                 hasRange <- js_hasRange
                 range <- if hasRange then getRange else return Nothing
                 return (range, Just deviceOffset)
-            _ -> return $ _currentSelection state
+            _ -> return $ _rsCurrentSelection state
 
 
-        let newState = RefineState
-                          { _vdoc = vdocUpdate action (_vdoc state)
-                          , _vdocList = vdocListUpdate action (_vdocList state)
-                          , _headerHeight = headerHeightUpdate action $ _headerHeight state
-                          , _markPositions = markPositionsUpdate action $ _markPositions state
-                          , _windowSize = windowSizeUpdate action $ _windowSize state
-                          , _currentSelection = currentSelectionUpdate action selectedRangeOrState    -- TODO can this be improved?
-                          }
+        let newState = state
+              & rsVDoc             %~ vdocUpdate action
+              & rsVDocList         %~ vdocListUpdate action
+              & rsHeaderHeight     %~ headerHeightUpdate action
+              & rsMarkPositions    %~ markPositionsUpdate action
+              & rsWindowSize       %~ windowSizeUpdate action
+              & rsCurrentSelection .~ currentSelectionUpdate action selectedRangeOrState    -- TODO can this be improved?
 
         consoleLog "New state: " newState
         return newState
@@ -190,28 +154,6 @@ foreign import javascript unsafe
     \&& !(!window.getSelection().getRangeAt(0)) \
     \&& !window.getSelection().getRangeAt(0).collapsed"
     js_hasRange :: IO Bool
-
-data Range = Range
-    { _startUid :: Maybe Int
-    , _startOffset :: Int -- TODO make this a Maybe
-    , _endUid :: Maybe Int
-    , _endOffset :: Int -- TODO make this a Maybe
-    , _top :: Int
-    , _bottom :: Int
-    , _scrollOffset :: Int
-    }
-    deriving (Show, Generic, NFData, ToJSON)
-
-instance AE.FromJSON Range where
-    parseJSON (AE.Object v) = Range <$>
-                             v AE..:? "ns" <*>
-                             v AE..: "os" <*>
-                             v AE..:? "ne" <*>
-                             v AE..: "oe" <*>
-                             v AE..: "top" <*>
-                             v AE..: "bottom" <*>
-                             v AE..: "scrollOffset"
-    parseJSON _          = error "not an object... what can we do?" -- TODO empty
 
 getRange :: IO (Maybe Range)
 getRange = (AE.decode . cs . unpack) <$> js_getRange
