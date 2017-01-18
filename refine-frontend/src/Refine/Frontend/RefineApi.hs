@@ -26,9 +26,6 @@ cfg :: ApiRequestConfig RefineAPI
 cfg = ApiRequestConfig "" NoTimeout
 
 
--- TODO: perhaps we can probably extend @RestAPIEndPoint@ with a class method that is defined in
--- terms of 'request'.
-
 -- | obtain a list of all vdocs stored in the backend with auid, title.
 listVDocs :: HandleResponse [ID VDoc] -> IO ()
 listVDocs = request cfg (Proxy :: Proxy SListVDocs)
