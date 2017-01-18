@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Refine.Frontend.RefineViews
+module Refine.Frontend.Views
   ( refineApp
   ) where
 
@@ -15,7 +15,7 @@ import qualified Data.Map.Strict as M
 import qualified Text.HTML.Parser as HTMLP
 import           Text.HTML.Tree as HTMLT
 
-import qualified Refine.Frontend.RefineStore as RS
+import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Types as RS
 import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.UtilityWidgets

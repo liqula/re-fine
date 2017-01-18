@@ -59,6 +59,7 @@ instance AE.FromJSON Range where
                              v AE..: "scrollOffset"
     parseJSON _          = error "not an object... what can we do?" -- TODO empty
 
+-- TODO: rename this to 'RefineStore', or to 'Store'?
 data RefineState = RefineState
   { _rsVDoc             :: Maybe CompositeVDoc
   , _rsVDocList         :: Maybe [ID VDoc]

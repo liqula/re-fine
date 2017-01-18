@@ -7,7 +7,7 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Refine.Frontend.RefineStore where
+module Refine.Frontend.Store where
 
 import           Control.Lens ((&), (%~), (.~))
 import qualified Data.Aeson as AE
@@ -20,7 +20,7 @@ import           Data.JSString (JSString, pack, unpack)
 
 import Refine.Common.Types
 import Refine.Common.Rest
-import Refine.Frontend.RefineApi
+import Refine.Frontend.Rest
 import Refine.Frontend.Types
 
 

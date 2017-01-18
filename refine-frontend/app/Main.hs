@@ -2,7 +2,7 @@ module Main where
 
 import qualified React.Flux  as F
 import React.Flux.Ajax (initAjax)
-import qualified Refine.Frontend.RefineViews as RF
+import qualified Refine.Frontend.Views as RF
 
 -- the first argument of reactRender is the id of the DOM element in index.html that the app will be rendered into
 main :: IO ()

@@ -4,7 +4,7 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Refine.Frontend.RefineStoreSpec where
+module Refine.Frontend.StoreSpec where
 
 import Control.Lens ((^.))
 import qualified Data.Map.Strict as M
@@ -17,7 +17,7 @@ import           React.Flux (transform)
 
 import Refine.Common.Types
 import Refine.Frontend.Types
-import Refine.Frontend.RefineStore ()
+import Refine.Frontend.Store ()
 
 
 instance Arbitrary (ID VDoc) where

@@ -14,7 +14,7 @@
 
 {-# OPTIONS_GHC -Werror -Wall #-}
 
-module Refine.Frontend.RefineApi where
+module Refine.Frontend.Rest where
 
 import           Data.Proxy
 import           React.Flux.Addons.Servant

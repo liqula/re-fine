@@ -10,7 +10,7 @@ import           GHCJS.Types (JSString, JSVal)
 import           React.Flux
 import           React.Flux.Lifecycle
 
-import qualified Refine.Frontend.RefineStore as RS
+import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
 
 
