@@ -10,6 +10,7 @@
 # you run it.
 
 set -e
+cd `dirname $0`
 export PATH=$HOME/.local/bin:$PATH
 
 function assert_os_package() {
