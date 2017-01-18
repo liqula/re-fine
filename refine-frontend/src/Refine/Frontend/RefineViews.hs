@@ -8,7 +8,6 @@ module Refine.Frontend.RefineViews
 import           React.Flux
 import           Data.Monoid ((<>))
 import           Data.String (fromString)
---import           Data.JSString (JSString)
 import qualified Data.Tree as DT
 import           Data.String.Conversions
 import qualified Data.Map.Strict as M

@@ -8,7 +8,6 @@ module Refine.Frontend.RefineStore where
 
 import qualified Data.Aeson as AE
 import           Control.DeepSeq
--- import           Data.Maybe (fromJust)
 import           Data.Monoid ((<>))
 import           Data.Text (Text)
 import           Data.Typeable (Typeable)

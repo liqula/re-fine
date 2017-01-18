@@ -5,8 +5,6 @@ module Refine.Frontend.WindowSize where
 import           Control.Concurrent (forkIO)
 import           Control.Monad (forM_)
 import           Data.Monoid ((<>))
-import           Data.String (fromString)
---import           Data.String.Conversions
 import           React.Flux
 import           React.Flux.Lifecycle
 import           GHCJS.Foreign.Callback (Callback, asyncCallback)
