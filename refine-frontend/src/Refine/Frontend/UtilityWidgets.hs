@@ -5,7 +5,6 @@ module Refine.Frontend.UtilityWidgets where
 
 import           Control.Lens (makeLenses, (^.), _1, _2)
 import           Data.Char (toLower)
-import           Data.Maybe (fromJust, isNothing)
 import           Data.Monoid ((<>))
 import           Data.String (fromString)
 import           GHCJS.Types (JSString)
@@ -73,14 +72,22 @@ iconButtonWithAlignment = defineStatefulView "IconButtonWithAlignment" False $ \
                                                ])
            , onMouseEnter $ \_ _ _ -> ([], Just True)
            , onMouseLeave $ \_ _ _ -> ([], Just False)
-           ] <> if isNothing (props ^. position) then [] else ["style" @= [Style "top" (fromJust (props ^. position))]]) $ do  -- TODO: see next commit.
+           ] <> case props ^. position of
+                   Nothing  -> []
+                   Just pos -> ["style" @= [Style "top" pos]]) $ do
         div_ ["className" $= fromString ((props ^. iconButtonProps . blockName) <> "__icon")] $ do
-            icon_ $ fromString ((if props ^. iconButtonProps . iconHighlight then "o-icon-highlight " else "") <>
-                    (props ^. iconButtonProps . iconDesc . _1) <> "_" <> (if mouseIsOver && (props ^. iconButtonProps . iconHighlight)
-                                                                        then "RO" else props ^. iconButtonProps . iconDesc . _2) <>
-                    " " <> "iconsize-" <> map toLower (show (props ^. iconButtonProps . size)))
-        span_ ["className" $= fromString (props ^. iconButtonProps . blockName <> "__button-label")] $ elemJSString (props ^. iconButtonProps . label)
-    where alignmentClass blockName' rightAligned' = if rightAligned' then " " <> blockName' <> "--align-right" else ""
+            let -- TODO: these could do with better names
+                a = if props ^. iconButtonProps . iconHighlight then "o-icon-highlight " else ""
+                b = props ^. iconButtonProps . iconDesc . _1
+                c = "_" <> if mouseIsOver && (props ^. iconButtonProps . iconHighlight)
+                             then "RO"
+                             else props ^. iconButtonProps . iconDesc . _2
+                d = " " <> "iconsize-" <> map toLower (show (props ^. iconButtonProps . size))
+            icon_ $ fromString (a <> b <> c <> d)
+        span_ ["className" $= fromString (props ^. iconButtonProps . blockName <> "__button-label")] $
+            elemJSString (props ^. iconButtonProps . label)
+    where
+      alignmentClass blockName_ rightAligned_ = if rightAligned_ then " " <> blockName_ <> "--align-right" else ""
 
 iconButtonWithAlignment_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
 iconButtonWithAlignment_ props = view iconButtonWithAlignment props mempty
