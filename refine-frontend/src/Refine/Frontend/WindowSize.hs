@@ -1,7 +1,5 @@
 module Refine.Frontend.WindowSize where
 
-
-
 import           Control.Concurrent (forkIO)
 import           Control.Monad (forM_)
 import           Data.Monoid ((<>))

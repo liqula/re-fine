@@ -34,13 +34,13 @@ instance ToJSON MarkPositions where
   toJSON = toJSON . mapToValue . _unMarkPositions
 
 data WindowSize = Desktop | Tablet | Mobile
-    deriving (Show, Typeable, Generic, NFData, ToJSON)
+  deriving (Show, Typeable, Generic, NFData, ToJSON)
 
 toSize :: Int -> WindowSize
 toSize sz
-      | sz <= 480  = Mobile
-      | sz <= 1024 = Tablet
-      | otherwise  = Desktop
+  | sz <= 480  = Mobile
+  | sz <= 1024 = Tablet
+  | otherwise  = Desktop
 
 type DeviceOffset = Int
 
@@ -139,6 +139,7 @@ emitBackendCallsFor action _state = case action of
         getVDoc auid $ \case
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
+
 {- TODO currently we do not have access to a demo document
     AddDemoDocument -> do
         let vdoc = ProtoVDoc sampleTitle sampleDescription . VDocVersion . cs .
@@ -149,6 +150,7 @@ emitBackendCallsFor action _state = case action of
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
 -}
+
 {- TODO submitting a patch does not work yet
     SubmitPatch -> do
         let vdocId = _metaKey . _vdocMeta . fromJust $ _vdoc state
@@ -166,8 +168,6 @@ emitBackendCallsFor action _state = case action of
                                     (Right _patch) -> return []
 -}
     _ -> return ()
-
-
 
 
 handleError :: String -> IO [SomeStoreAction]

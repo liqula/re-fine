@@ -17,6 +17,7 @@ import           React.Flux (transform)
 import Refine.Common.Types
 import Refine.Frontend.RefineStore
 
+
 instance Arbitrary (ID VDoc) where
     arbitrary = ID <$> arbitrary
 

@@ -64,6 +64,7 @@ instance StoreData UserStore where
 userStore :: ReactStore UserStore
 userStore = mkStore $ UserStore NoPendingRequest
 
+
 -- * refine type
 
 makeRefineType ''UserStoreAction

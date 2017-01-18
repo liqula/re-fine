@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Refine.Frontend.StickyViews (
-    sticky_
+module Refine.Frontend.StickyViews
+  ( sticky_
   , stickyContainer_
   ) where
 
@@ -13,4 +13,3 @@ sticky_ = foreign_ "Sticky"
 
 stickyContainer_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 stickyContainer_ = foreign_ "StickyContainer"
-

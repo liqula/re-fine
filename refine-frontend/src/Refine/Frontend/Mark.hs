@@ -21,7 +21,10 @@ data MarkProps = MarkProps
 rfMark :: ReactView MarkProps
 rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
    { lRender = \_state props ->
-         mark_ ["data-hunk-id" $= fromString (_dataHunkId props), "className" $= fromString ("o-mark o-mark--" <> _dataContentType props)] childrenPassedToView
+         mark_ [ "data-hunk-id" $= fromString (_dataHunkId props)
+               , "className" $= fromString ("o-mark o-mark--" <> _dataContentType props)
+               ] childrenPassedToView
+
    , lComponentDidMount = Just $ \propsandstate ldom _ -> do
              consoleLog "Component did mount"
              this <- lThis ldom
@@ -31,6 +34,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
                  let actions = RS.dispatch $ RS.AddMarkPosition (_dataHunkId props) top
                  forM_ actions executeAction
              return ()
+
    , lComponentDidUpdate = Just $ \_ ldom _ _ _ -> do
              consoleLog "Component did update"
              this <- lThis ldom

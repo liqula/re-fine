@@ -1,8 +1,8 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Refine.Frontend.RefineViews (
-    refineApp
+module Refine.Frontend.RefineViews
+  ( refineApp
   ) where
 
 import           React.Flux
@@ -18,7 +18,9 @@ import           Text.HTML.Tree as HTMLT
 import qualified Refine.Frontend.RefineStore as RS
 import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.UtilityWidgets
-import           Refine.Frontend.Heading (documentHeader_, DocumentHeaderProps(..), editToolbar_, editToolbarExtension_, menuButton_, headerSizeCapture_)
+import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(..), editToolbar_
+                                         , editToolbarExtension_, menuButton_, headerSizeCapture_
+                                         )
 import           Refine.Frontend.StickyViews (sticky_, stickyContainer_)
 import           Refine.Frontend.WindowSize (windowSize_, WindowSizeProps(..))
 import           Refine.Frontend.Style
@@ -58,11 +60,11 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \(RS.RefineState m
 toArticle :: Either ParseTokenForestError (DT.Forest HTMLP.Token) -> ReactElementM [SomeStoreAction] ()
 toArticle (Left err) = p_ (elemString (show err))
 toArticle (Right forest) = article_
-                 [ "id" $= "vdocValue"
-                 , "className" $= "gr-20 gr-14@desktop c-article-content"
-                 , onMouseUp $ \_ me -> RS.dispatch . RS.SetSelection $ mouseClientY me
-                 , onTouchEnd $ \_ te -> RS.dispatch . RS.SetSelection . touchScreenY . head $ touches te
-                 ] (mconcat $ map toHTML forest)
+  [ "id" $= "vdocValue"
+  , "className" $= "gr-20 gr-14@desktop c-article-content"
+  , onMouseUp $ \_ me -> RS.dispatch . RS.SetSelection $ mouseClientY me
+  , onTouchEnd $ \_ te -> RS.dispatch . RS.SetSelection . touchScreenY . head $ touches te
+  ] (mconcat $ map toHTML forest)
 
 
 toHTML :: DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()

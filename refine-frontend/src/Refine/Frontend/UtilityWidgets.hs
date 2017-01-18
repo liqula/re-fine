@@ -14,16 +14,17 @@ import           Refine.Frontend.Style
 icon :: ReactView JSString
 icon = defineView "Icon" $ \iconClass ->
   div_ ["className" $= iconClass] $ do
-      span_ ["className" $= "path1"] ""
-      span_ ["className" $= "path2"] ""
-      span_ ["className" $= "path3"] ""
-      span_ ["className" $= "path4"] ""
-      span_ ["className" $= "path5"] ""
-      span_ ["className" $= "path6"] ""
-      span_ ["className" $= "path7"] ""
-      span_ ["className" $= "path8"] ""
+    span_ ["className" $= "path1"] ""
+    span_ ["className" $= "path2"] ""
+    span_ ["className" $= "path3"] ""
+    span_ ["className" $= "path4"] ""
+    span_ ["className" $= "path5"] ""
+    span_ ["className" $= "path6"] ""
+    span_ ["className" $= "path7"] ""
+    span_ ["className" $= "path8"] ""
 
-data IconSize = S
+data IconSize
+    = S
     | M
     | L
     | XL
