@@ -24,12 +24,23 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, h
 
 
 quickCreateOffset :: RS.Range -> Int -> Int -> Int
-quickCreateOffset range _deviceOffset headerHeight =
-    let topOfSelection = RS._top range + RS._scrollOffset range - headerHeight - 80 -- offset from menu bar
-        idealCenter = (RS._bottom range - RS._top range) `div` 2 - 22
-        usefulCenter = idealCenter -- if abs (deviceOffset - idealCenter) > 200 then deviceOffset else idealCenter
-    in topOfSelection + usefulCenter
+quickCreateOffset range deviceOffset headerHeight =
+    quickCreateSelectionTop range headerHeight +
+    quickCreateSelectionPos range deviceOffset
 
+
+-- | This is the offset from the bottom of the toolbar.
+quickCreateSelectionTop :: RS.Range -> Int -> Int
+quickCreateSelectionTop range headerHeight = RS._top range + RS._scrollOffset range - headerHeight - 80
+
+quickCreateSelectionPos :: RS.Range -> Int -> Int
+quickCreateSelectionPos range deviceOffset =
+    let selectionHeight = RS._bottom range - RS._top range
+        idealCenter = selectionHeight `div` 2 - 22
+        useIdealCenter = selectionHeight <= 200
+        closerToTop = abs (deviceOffset - RS._top range) < idealCenter
+        edgePosition = if closerToTop then 0 else selectionHeight - 44
+    in if useIdealCenter then idealCenter else edgePosition
 
 -- "annotation", "modification"
 quickCreate_ :: String -> (Maybe RS.Range, Maybe RS.DeviceOffset) -> Int -> ReactElementM eventHandler ()
