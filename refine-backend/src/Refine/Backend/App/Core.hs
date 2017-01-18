@@ -50,8 +50,8 @@ makeLenses ''AppContext
 -- * database connection
 -- * event logging
 -- TODO:
--- * user authorization
--- * user authentication
+-- * user authentication (login)
+-- * user authorization (groups)
 -- * use one db connection in one run.
 newtype App db a = App { unApp :: ReaderT (AppContext db) (ExceptT AppError IO) a }
   deriving
