@@ -28,8 +28,8 @@ dependencies:
   - natural-transformation
   - servant
   - string-conversions
-  - time
   - template-haskell
+  - time
 
 library:
   source-dirs: src
