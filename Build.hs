@@ -5,6 +5,16 @@ import Data.Monoid
 import Development.Shake
 
 
+refineOptions :: ShakeOptions
+refineOptions = shakeOptions
+  { shakeFiles = ".build"
+  , shakeVerbosity = Loud
+  , shakeThreads = 1  -- set to 0 to use as many threads as you have cores.
+                      -- FIXME: parallel rule execution messes up stdout.  has anybody fixed that
+                      -- for shake?  do it like in stack?
+  }
+
+
 -- * package dirs
 
 refineBackend, refineCommon, refineFrontend, refinePrelude :: FilePath
@@ -35,8 +45,7 @@ hlintPackage package = do
 -- * main
 
 main :: IO ()
-main = shakeArgs shakeOptions { shakeFiles = ".build", shakeVerbosity = Loud } $ do
-
+main = shakeArgs refineOptions $ do
   want
     [ "build-all"
     , "hlint"

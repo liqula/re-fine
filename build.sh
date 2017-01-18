@@ -1,3 +1,3 @@
 #!/bin/sh
 mkdir -p .shake
-stack exec -- ghc --make Build.hs -rtsopts -with-rtsopts=-I0 -outputdir=.shake -o .shake/build && .shake/build "$@"
+stack exec -- ghc -j --make Build.hs -threaded -rtsopts -with-rtsopts="-N" -outputdir=.shake -o .shake/build && .shake/build +RTS -N -RTS "$@"
