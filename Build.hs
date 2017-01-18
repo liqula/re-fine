@@ -5,7 +5,7 @@ import Data.Monoid
 import Development.Shake
 
 
--- * project dirs
+-- * package dirs
 
 refineBackend, refineCommon, refineFrontend, refinePrelude :: FilePath
 
@@ -18,17 +18,17 @@ refinePrelude  = "refine-prelude"
 -- * actions
 
 stackBuild :: FilePath -> Action ()
-stackBuild project = do
-  command_ [Cwd project] "stack" ["setup"]
-  command_ [Cwd project] "stack" ["test", "--fast"]
+stackBuild package = do
+  command_ [Cwd package] "stack" ["setup"]
+  command_ [Cwd package] "stack" ["test", "--fast"]
 
-hlintProject :: FilePath -> Action ()
-hlintProject project = do
+hlintPackage :: FilePath -> Action ()
+hlintPackage package = do
   command_ [] "stack"
     [ "exec", "--", "hlint"
     , "--hint=./refine-prelude/HLint.hs"
-    , "./" <> project <> "/src"
-    , "./" <> project <> "/test"
+    , "./" <> package <> "/src"
+    , "./" <> package <> "/test"
     ]
 
 
@@ -80,7 +80,7 @@ main = shakeArgs shakeOptions { shakeFiles = ".build", shakeVerbosity = Loud } $
         command_ [Cwd pkg] "rm" ["-rf", ".stack-work"]
 
   phony "hlint" $ do
-    hlintProject refinePrelude
-    hlintProject refineCommon
-    hlintProject refineBackend
-    hlintProject refineFrontend
+    hlintPackage refinePrelude
+    hlintPackage refineCommon
+    hlintPackage refineBackend
+    hlintPackage refineFrontend
