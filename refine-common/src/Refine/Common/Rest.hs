@@ -38,7 +38,7 @@ type RefineAPI =
 
 type SListVDocs
   = "r" :> "vdocs"
-    :> Get '[JSON] [ID VDoc]
+    :> Get '[JSON] [VDoc]
 
 type SGetVDoc
   = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc)

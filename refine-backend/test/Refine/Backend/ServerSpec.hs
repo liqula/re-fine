@@ -106,16 +106,17 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
     it "yields the same vdocs list as the db" $ \sess -> do
       vdocsRest :: SResponse <- runWai sess $ get "/r/vdocs"
-      vdocsDB   :: [ID VDoc] <- runDB  sess   listVDocs
+      vdocsDB   :: [VDoc]    <- runDB  sess   listVDocs
       decode (simpleBody vdocsRest) `shouldBe` Just vdocsDB
 
     it "if a vdoc is created, it shows in the output" $ \sess -> do
       bef <- runWai sess $ get "/r/vdocs"
       _   <- runDB  sess $ App.createVDoc sampleCreateVDoc
       aft <- runWai sess $ get "/r/vdocs"
-      let check :: SResponse -> Maybe Int
-          check resp = length <$> (decode (simpleBody resp) :: Maybe [ID VDoc])
-      check aft `shouldBe` (+1) <$> check bef
+      let check :: SResponse -> Int
+          check resp = either (\msg -> error $ unwords [show msg, cs $ simpleBody resp]) length
+                       $ eitherDecode @[VDoc] (simpleBody resp)
+      check aft `shouldBe` (check bef + 1)
 
   describe "sGetVDoc" $ do
     it "retrieves a vdoc" $ \sess -> do
