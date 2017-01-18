@@ -23,7 +23,7 @@ instance Arbitrary Timespan where
 
 
 spec :: Spec
-spec = do
+spec = parallel $ do
   describe "time" $ do
     describe "Timestamp" $ do
         it "read and show are inverses" . property $

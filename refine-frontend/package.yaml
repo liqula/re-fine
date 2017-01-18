@@ -13,7 +13,7 @@ maintainer:          mf@zerobuzz.net
 copyright:           2017-2022 zerobuzz.net
 category:            Web
 
-ghc-options: -Wall -Werror
+ghc-options: -j -Wall -Werror
 
 dependencies:
   - base
@@ -45,6 +45,7 @@ tests:
     source-dirs:
       - test
       - src
+    ghc-options: -threaded -rtsopts -with-rtsopts=-N
     dependencies:
       - hspec
       - hspec-core

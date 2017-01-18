@@ -5,6 +5,16 @@ import Data.Monoid
 import Development.Shake
 
 
+refineOptions :: ShakeOptions
+refineOptions = shakeOptions
+  { shakeFiles = ".build"
+  , shakeVerbosity = Loud
+  , shakeThreads = 1  -- set to 0 to use as many threads as you have cores.
+                      -- FIXME: parallel rule execution messes up stdout.  has anybody fixed that
+                      -- for shake?  do it like in stack?
+  }
+
+
 -- * package dirs
 
 refineBackend, refineCommon, refineFrontend, refinePrelude :: FilePath
@@ -35,11 +45,10 @@ hlintPackage package = do
 -- * main
 
 main :: IO ()
-main = shakeArgs shakeOptions { shakeFiles = ".build", shakeVerbosity = Loud } $ do
-
+main = shakeArgs refineOptions $ do
   want
     [ "build-all"
-    , "hlint"
+    , "hlint-all"
     ]
 
   phony "setup" $ do
@@ -65,11 +74,7 @@ main = shakeArgs shakeOptions { shakeFiles = ".build", shakeVerbosity = Loud } $
     -- for building everything, we only need to go to backend and frontend.  prelude and common are
     -- compiled in both (two different compilers), and tested (as non-extra deps in stack.yaml) in
     -- backend.
-    --
-    -- (FUTUREWORK: there is no need to force sequential firing of these two targets.  we just need
-    -- to figure out how to express that in shake.)
-    stackBuild refineBackend
-    stackBuild refineFrontend
+    need ["build-backend", "build-frontend"]
 
   phony "clean" $ do
     forM_ [refinePrelude, refineCommon, refineBackend, refineFrontend] $ \pkg -> do
@@ -79,8 +84,17 @@ main = shakeArgs shakeOptions { shakeFiles = ".build", shakeVerbosity = Loud } $
     forM_ [refinePrelude, refineCommon, refineBackend, refineFrontend] $ \pkg -> do
         command_ [Cwd pkg] "rm" ["-rf", ".stack-work"]
 
-  phony "hlint" $ do
+  phony "hlint-prelude" $ do
     hlintPackage refinePrelude
+
+  phony "hlint-common" $ do
     hlintPackage refineCommon
+
+  phony "hlint-backend" $ do
     hlintPackage refineBackend
+
+  phony "hlint-frontend" $ do
     hlintPackage refineFrontend
+
+  phony "hlint-all" $ do
+    need ["hlint-prelude", "hlint-common", "hlint-backend", "hlint-frontend"]

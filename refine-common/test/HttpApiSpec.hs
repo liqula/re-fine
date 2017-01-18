@@ -25,7 +25,7 @@ fromAndToHttpApiDataAreInverses (HttpApiGen eq g s) =
         either (error . cs) (eq httpApiData) . parseUrlPiece $ toUrlPiece httpApiData
 
 spec :: Spec
-spec = do
+spec = parallel $ do
   describe "FromHttpApiData and ToHttpApiData are inverses" .
     mapM_ fromAndToHttpApiDataAreInverses $
       [ h :: HttpApiGen (ID ())

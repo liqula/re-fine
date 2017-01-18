@@ -43,7 +43,7 @@ import Refine.Common.VDoc.HTML.Splice
 
 
 spec :: Spec
-spec = do
+spec = parallel $ do
   describe "canonicalizeWhitespace" $ do
     it "idempotent" . property $
       \s -> canonicalizeWhitespace (canonicalizeWhitespace s) `shouldBe` canonicalizeWhitespace s
@@ -109,6 +109,7 @@ spec = do
         Left (VDocHTMLErrorBadTree (ParseTokenForestErrorBracketMismatch (PStack [] [(TagOpen "unclosed" [],[])]) Nothing))
 
     it "crashes (internal error) if input is not canonicalized" $ do
+      pendingWith "#16"
       let bad :: Either VDocHTMLError [Token]
           bad = wrapInTopLevelTags [ContentText "wef", ContentChar 'q']
       evaluate bad `shouldThrow` anyException

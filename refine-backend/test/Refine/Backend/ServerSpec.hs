@@ -51,7 +51,7 @@ runWai sess = Wai.withApplication (backendServer sess)
 
 -- | Call 'runWaiBody'' and crash if the expected type cannot be read.
 runWaiBody :: FromJSON a => Backend -> Wai.WaiSession SResponse -> IO a
-runWaiBody sess = crashOnLeft . runWaiBody' sess
+runWaiBody sess = errorOnLeft . runWaiBody' sess
 
 -- | Run a rest call and parse the body.
 runWaiBody' :: FromJSON a => Backend -> Wai.WaiSession SResponse -> IO (Either String a)
@@ -63,14 +63,14 @@ runWaiBody' sess m = do
 
 -- | Call 'runDB'' and crash on 'Left'.
 runDB :: Backend -> App DB a -> IO a
-runDB sess = crashOnLeft . runDB' sess
+runDB sess = errorOnLeft . runDB' sess
 
 -- | Call an 'App' action.
 runDB' :: Backend -> App DB a -> IO (Either AppError a)
 runDB' sess = runExceptT . run (backendMonad sess)
 
-crashOnLeft :: Show e => IO (Either e a) -> IO a
-crashOnLeft action = either (throwIO . ErrorCall . show) pure =<< action
+errorOnLeft :: Show e => IO (Either e a) -> IO a
+errorOnLeft action = either (throwIO . ErrorCall . show) pure =<< action
 
 createTestSession :: ActionWith Backend -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
@@ -97,7 +97,7 @@ postJSON path json = request "POST" path [("Content-Type", "application/json")] 
 -- * test cases
 
 spec :: Spec
-spec = around createTestSession $ do
+spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (needs some work)
 
   describe "sListVDocs" $ do
     it "returns a vdocs list with HTTP status 200" $ \sess -> do
