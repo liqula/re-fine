@@ -64,9 +64,7 @@ iconButtonWithAlignment = defineStatefulView "IconButtonWithAlignment" False $ \
     button_ (["data-content-type" $= (bprops ^. contentType)
            , "className" $= fromString (concat [ bprops ^. blockName, "__button "
                                                , bprops ^. blockName
-                                               , if bprops ^. elementName == ""
-                                                     then ""
-                                                     else "__"
+                                               , if bprops ^. elementName == "" then "" else "__"
                                                , bprops ^. elementName
                                                , alignmentClass (bprops ^. blockName)
                                                                 (props ^. rightAligned)
