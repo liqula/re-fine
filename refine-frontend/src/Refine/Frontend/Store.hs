@@ -9,7 +9,7 @@
 
 module Refine.Frontend.Store where
 
-import           Control.Lens ((&), (%~), (.~))
+import           Control.Lens ((&), (^.), (%~), (.~))
 import qualified Data.Aeson as AE
 import           Data.Monoid ((<>))
 import qualified Data.Map.Strict as M
@@ -97,7 +97,7 @@ emitBackendCallsFor action _state = case action of
     LoadDocumentList -> do
         listVDocs $ \case
             (Left(_, msg)) -> handleError msg
-            (Right loadedVDocs) -> return . dispatch $ LoadedDocumentList loadedVDocs
+            (Right loadedVDocs) -> return . dispatch $ LoadedDocumentList ((^. vdocID) <$> loadedVDocs)
     LoadDocument auid -> do
         getVDoc auid $ \case
             (Left(_, msg)) -> handleError msg
