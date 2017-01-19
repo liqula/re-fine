@@ -12,9 +12,9 @@ import Database.Persist
 import Database.Persist.Sql
 import Text.Read (readEither)
 
-import Refine.Common.Types.Chunk
 import Refine.Common.Types.Note (NoteKind)
 import Refine.Common.Types.VDoc
+import Refine.Backend.Database.Types
 import Refine.Backend.DocRepo.Core
 
 
@@ -66,9 +66,9 @@ instance PersistFieldSql NoteKind where
   -- of the title
   sqlType _ = sqlType (Proxy :: Proxy ST)
 
-instance PersistField CreateChunkRange where
+instance PersistField DBChunkRange where
   toPersistValue range = toPersistValue . cs @LBS @ST $ encode range
   fromPersistValue = (either (Left . cs) Right . eitherDecode .  cs) <=< fromPersistValue @ST
 
-instance PersistFieldSql CreateChunkRange where
+instance PersistFieldSql DBChunkRange where
   sqlType _ = sqlType (Proxy :: Proxy ST)

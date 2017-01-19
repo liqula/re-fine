@@ -32,10 +32,11 @@ import Database.Persist.Sql (SqlBackend)
 import Lentil.Core (entityLens)
 import Lentil.Types as L
 
-import Refine.Backend.Database.Core
+import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
+import           Refine.Backend.Database.Types
 import qualified Refine.Backend.DocRepo.Core as DocRepo
-import Refine.Common.Types
+import           Refine.Common.Types
 
 
 -- FIXME: Generate this as the part of the lentil library.
@@ -194,10 +195,10 @@ getPatchIDs :: ID VDocRepo -> DB [ID Patch]
 getPatchIDs vid = liftDB $
   S.keyToId . S.rPPatch . entityVal <$$> selectList [S.RPRepository ==. S.idToKey vid] []
 
-toChunkRange :: CreateChunkRange -> ID a -> ChunkRange a
-toChunkRange r i = ChunkRange i (r ^. createChunkRangeBegin) (r ^. createChunkRangeEnd)
+toChunkRange :: DBChunkRange -> ID a -> ChunkRange a
+toChunkRange r i = ChunkRange i (r ^. dbChunkRangeBegin) (r ^. dbChunkRangeEnd)
 
-toComment :: ID Comment -> ST -> Bool -> CreateChunkRange -> Maybe (Key S.Comment) -> Comment
+toComment :: ID Comment -> ST -> Bool -> DBChunkRange -> Maybe (Key S.Comment) -> Comment
 toComment cid desc public range _parent = Comment cid desc public (toChunkRange range cid)
 
 createComment :: ID Patch -> Create Comment -> DB Comment
@@ -205,11 +206,14 @@ createComment pid comment = liftDB $ do
   let scomment = S.Comment
         (comment ^. createCommentText)
         (comment ^. createCommentPublic)
-        (comment ^. createCommentRange)
+        (comment ^. createCommentRange . to mkDBChunkRange)
         Nothing
   key <- insert scomment
   void . insert $ S.PC (S.idToKey pid) key
   pure $ S.commentElim (toComment (S.keyToId key)) scomment
+  where
+    mkDBChunkRange :: CreateChunkRange -> DBChunkRange
+    mkDBChunkRange cr = DBChunkRange (cr ^. createChunkRangeBegin) (cr ^. createChunkRangeEnd)
 
 getComment :: ID Comment -> DB Comment
 getComment cid = S.commentElim (toComment cid) <$> getEntity cid
@@ -217,5 +221,5 @@ getComment cid = S.commentElim (toComment cid) <$> getEntity cid
 getNote :: ID Note -> DB Note
 getNote nid = S.noteElim toNote <$> getEntity nid
   where
-    toNote :: ST -> NoteKind -> CreateChunkRange -> Note
+    toNote :: ST -> NoteKind -> DBChunkRange -> Note
     toNote desc kind range = Note nid desc kind (toChunkRange range nid)
