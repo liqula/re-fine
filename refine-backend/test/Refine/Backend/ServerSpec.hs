@@ -23,12 +23,12 @@
 module Refine.Backend.ServerSpec where
 
 import           Control.Exception (throwIO, ErrorCall(ErrorCall))
-import           Control.Lens ((^.), to)
+import           Control.Lens ((^.))
 import           Control.Monad.Trans.Except (runExceptT)
 import           Control.Monad (void)
 import           Control.Natural (run)
 import           Data.Aeson (FromJSON, ToJSON, decode, eitherDecode, encode)
-import           Data.String.Conversions (SBS, ST, cs, (<>))
+import           Data.String.Conversions (SBS, cs, (<>))
 import           Network.HTTP.Types.Status (Status(statusCode))
 import           Network.Wai.Test (SResponse(..))
 import           Test.Hspec
@@ -49,6 +49,9 @@ import Refine.Backend.Server
 import Refine.Common.Rest
 import Refine.Common.Types
 
+import Data.Proxy
+import Network.URI (URI, uriToString)
+import Servant.Utils.Links (safeLink)
 
 -- * machine room
 
@@ -99,6 +102,19 @@ respCode = statusCode . simpleStatus
 postJSON :: (ToJSON a) => SBS -> a -> Wai.WaiSession SResponse
 postJSON path json = request "POST" path [("Content-Type", "application/json")] (encode json)
 
+-- * endpoints
+
+uriStr :: URI -> SBS
+uriStr u =  cs $ "/" <> uriToString id u ""
+
+listVDocsUri :: SBS
+listVDocsUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SListVDocs)
+
+getVDocUri :: ID VDoc -> SBS
+getVDocUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetVDoc)
+
+createVDocUri :: SBS
+createVDocUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SCreateVDoc)
 
 -- * test cases
 
@@ -107,18 +123,18 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
   describe "sListVDocs" $ do
     it "returns a vdocs list with HTTP status 200" $ \sess -> do
-      resp :: SResponse <- runWai sess $ get "/r/vdocs"
+      resp :: SResponse <- runWai sess $ get listVDocsUri
       respCode resp `shouldBe` 200
 
     it "yields the same vdocs list as the db" $ \sess -> do
-      vdocsRest :: SResponse <- runWai sess $ get "/r/vdocs"
+      vdocsRest :: SResponse <- runWai sess $ get listVDocsUri
       vdocsDB   :: [VDoc]    <- runDB  sess   listVDocs
       decode (simpleBody vdocsRest) `shouldBe` Just vdocsDB
 
     it "if a vdoc is created, it shows in the output" $ \sess -> do
-      bef <- runWai sess $ get "/r/vdocs"
+      bef <- runWai sess $ get listVDocsUri
       _   <- runDB  sess $ App.createVDoc sampleCreateVDoc
-      aft <- runWai sess $ get "/r/vdocs"
+      aft <- runWai sess $ get listVDocsUri
       let check :: SResponse -> Int
           check resp = either (\msg -> error $ unwords [show msg, cs $ simpleBody resp]) length
                        $ eitherDecode @[VDoc] (simpleBody resp)
@@ -127,19 +143,18 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
   describe "sGetVDoc" $ do
     it "retrieves a vdoc" $ \sess -> do
       vdoc <- runDB sess $ App.createVDoc sampleCreateVDoc
-      let vid :: ST = vdoc ^. vdocID . to toUrlPiece
-      resp <- runWai sess $ get ("/r/vdoc/" <> cs vid)
+      resp <- runWai sess . get $ getVDocUri (vdoc ^. vdocID)
       respCode resp `shouldBe` 200
 
   describe "sCreateVDoc" $ do
     it "stores a vdoc in the db" $ \sess -> do
-      fe :: CompositeVDoc <- runWaiBody sess $ postJSON "/r/vdoc" sampleCreateVDoc
+      fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
       be :: CompositeVDoc <- runDB      sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       fe `shouldBe` be
 
   describe "sAddComment" $ do
     it "stores comment with no ranges" $ \sess -> do
-      fe :: CompositeVDoc <- runWaiBody sess $ postJSON "/r/vdoc" sampleCreateVDoc
+      fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
       fc :: Comment       <- runWaiBody sess $
         postJSON
           ("/r/comment/" <> (cs $ toUrlPiece (fe ^. compositeVDocRepo . vdocHeadPatch)))

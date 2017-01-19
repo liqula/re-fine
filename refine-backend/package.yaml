@@ -28,6 +28,7 @@ dependencies:
   - monad-logger
   - mtl
   - natural-transformation
+  - network-uri
   - persistent
   - persistent-sqlite
   - persistent-template
