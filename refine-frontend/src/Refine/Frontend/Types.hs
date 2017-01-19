@@ -59,17 +59,16 @@ instance AE.FromJSON Range where
                              v AE..: "scrollOffset"
     parseJSON _          = error "not an object... what can we do?" -- TODO empty
 
--- TODO: rename this to 'RefineStore', or to 'Store'?
-data RState = RState
-  { _rsVDoc             :: Maybe CompositeVDoc
-  , _rsVDocList         :: Maybe [ID VDoc]
-  , _rsHeaderHeight     :: Int
-  , _rsMarkPositions    :: MarkPositions
-  , _rsWindowSize       :: WindowSize
-  , _rsCurrentSelection :: (Maybe Range, Maybe DeviceOffset)
+data GlobalState = GlobalState
+  { _gsVDoc             :: Maybe CompositeVDoc
+  , _gsVDocList         :: Maybe [ID VDoc]
+  , _gsHeaderHeight     :: Int
+  , _gsMarkPositions    :: MarkPositions
+  , _gsWindowSize       :: WindowSize
+  , _gsCurrentSelection :: (Maybe Range, Maybe DeviceOffset)
   } deriving (Show, Typeable, Generic, NFData, ToJSON)
 
-makeLenses ''RState
+makeLenses ''GlobalState
 
 data RefineAction = LoadDocumentList
                   | LoadedDocumentList [ID VDoc]

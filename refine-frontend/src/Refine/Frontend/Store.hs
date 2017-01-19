@@ -30,8 +30,8 @@ toSize sz
   | sz <= 1024 = Tablet
   | otherwise  = Desktop
 
-instance StoreData RState where
-    type StoreAction RState = RefineAction
+instance StoreData GlobalState where
+    type StoreAction GlobalState = RefineAction
     transform action state = do
         consoleLog "Old state: " state
         putStrLn $ "Action: " <> show action
@@ -44,16 +44,16 @@ instance StoreData RState where
                 hasRange <- js_hasRange
                 range <- if hasRange then getRange else return Nothing
                 return (range, Just deviceOffset)
-            _ -> return $ _rsCurrentSelection state
+            _ -> return $ _gsCurrentSelection state
 
 
         let newState = state
-              & rsVDoc             %~ vdocUpdate action
-              & rsVDocList         %~ vdocListUpdate action
-              & rsHeaderHeight     %~ headerHeightUpdate action
-              & rsMarkPositions    %~ markPositionsUpdate action
-              & rsWindowSize       %~ windowSizeUpdate action
-              & rsCurrentSelection .~ currentSelectionUpdate action selectedRangeOrState    -- TODO can this be improved?
+              & gsVDoc             %~ vdocUpdate action
+              & gsVDocList         %~ vdocListUpdate action
+              & gsHeaderHeight     %~ headerHeightUpdate action
+              & gsMarkPositions    %~ markPositionsUpdate action
+              & gsWindowSize       %~ windowSizeUpdate action
+              & gsCurrentSelection .~ currentSelectionUpdate action selectedRangeOrState    -- TODO can this be improved?
 
         consoleLog "New state: " newState
         return newState
@@ -92,7 +92,7 @@ currentSelectionUpdate action state = case action of
 
 
 
-emitBackendCallsFor :: RefineAction -> RState -> IO ()
+emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()
 emitBackendCallsFor action _state = case action of
     LoadDocumentList -> do
         listVDocs $ \case
@@ -138,8 +138,8 @@ handleError msg = do
             print msg
             return []
 
-refineStore :: ReactStore RState
-refineStore = mkStore $ RState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing)
+refineStore :: ReactStore GlobalState
+refineStore = mkStore $ GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing)
 
 dispatch :: RefineAction -> [SomeStoreAction]
 dispatch a = [SomeStoreAction refineStore a]

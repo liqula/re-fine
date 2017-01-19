@@ -34,10 +34,10 @@ import           Refine.Common.Rest
 -- with the store and will be re-rendered whenever the store changes.
 refineApp :: ReactView ()
 refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
-    case rs ^. rsVDoc of
-        Nothing -> vdocLoader_ (rs ^. rsVDocList)
+    case rs ^. gsVDoc of
+        Nothing -> vdocLoader_ (rs ^. gsVDocList)
         Just vdoc -> div_ $ do
-            windowSize_ (WindowSizeProps (rs ^. rsWindowSize)) mempty
+            windowSize_ (WindowSizeProps (rs ^. gsWindowSize)) mempty
             stickyContainer_ [] $ do
                 headerSizeCapture_ $ do
                     -- the following need to be siblings because of the z-index handling
@@ -53,9 +53,9 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                 main_ ["role" $= "main"] $ do
                     div_ ["className" $= "grid-wrapper"] $ do
                         div_ ["className" $= "row row-align-center row-align-top"] $ do
-                            leftAside_ (rs ^. rsMarkPositions) (rs ^. rsCurrentSelection) (rs ^. rsHeaderHeight)
+                            leftAside_ (rs ^. gsMarkPositions) (rs ^. gsCurrentSelection) (rs ^. gsHeaderHeight)
                             toArticle . HTMLT.tokensToForest . HTMLP.parseTokens . cs . _unVDocVersion $ _compositeVDocVersion vdoc
-                            rightAside_ (rs ^. rsMarkPositions)
+                            rightAside_ (rs ^. gsMarkPositions)
 
 
 toArticle :: Either ParseTokenForestError (DT.Forest HTMLP.Token) -> ReactElementM [SomeStoreAction] ()
