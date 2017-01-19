@@ -71,7 +71,8 @@ getCompositeVDoc vid = do
     vdoc     <- DB.getVDoc vid
     rid      <- DB.vdocRepo vid
     rhandle  <- DB.getRepoHandle rid
-    headid   <- view vdocHeadPatch <$> DB.getRepo rid
+    repo     <- DB.getRepo rid
+    let headid = repo ^. vdocHeadPatch
     hhandle  <- DB.getPatchHandle headid
     comments <- mapM DB.getComment =<< DB.patchComments headid
     notes    <- mapM DB.getNote    =<< DB.patchNotes    headid
@@ -86,4 +87,4 @@ getCompositeVDoc vid = do
       let chunkRanges = chunkRangesCN <> (view (patchRange . to clearTP) <$> patches)
       version <- either (throwError . AppVDocError) pure
                  =<< insertMarks chunkRanges <$> docRepo (DocRepo.getVersion rhandle hhandle)
-      pure $ CompositeVDoc vdoc version patches comments notes
+      pure $ CompositeVDoc vdoc repo version patches comments notes

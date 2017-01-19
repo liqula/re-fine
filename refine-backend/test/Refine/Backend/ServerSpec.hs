@@ -31,7 +31,13 @@ import           Data.Aeson (FromJSON, ToJSON, decode, eitherDecode, encode)
 import           Data.String.Conversions (SBS, ST, cs, (<>))
 import           Network.HTTP.Types.Status (Status(statusCode))
 import           Network.Wai.Test (SResponse(..))
-import           Test.Hspec (Spec, ActionWith, around, describe, it, shouldBe, pending)
+import           Test.Hspec
+                  ( Spec
+                  , ActionWith
+                  , around, describe, it
+                  , shouldBe, shouldContain
+                  , pending
+                  )
 import           Test.Hspec.Wai (get, request)
 import qualified Test.Hspec.Wai.Internal as Wai
 import           Web.HttpApiData (toUrlPiece)
@@ -132,8 +138,14 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       fe `shouldBe` be
 
   describe "sAddComment" $ do
-    it "..." $ \_sess -> do
-      pending
+    it "stores comment with no ranges" $ \sess -> do
+      fe :: CompositeVDoc <- runWaiBody sess $ postJSON "/r/vdoc" sampleCreateVDoc
+      fc :: Comment       <- runWaiBody sess $
+        postJSON
+          ("/r/comment/" <> (cs $ toUrlPiece (fe ^. compositeVDocRepo . vdocHeadPatch)))
+          (CreateComment "[comment]" True (CreateChunkRange Nothing Nothing))
+      be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
+      be ^. compositeVDocComments `shouldContain` [fc]
 
   describe "sAddPatch" $ do
     it "..." $ \_sess -> do
