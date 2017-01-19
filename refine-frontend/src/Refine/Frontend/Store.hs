@@ -19,6 +19,7 @@ import           Data.JSString (JSString, pack, unpack)
 
 import Refine.Common.Types
 import Refine.Common.Rest
+import Refine.Frontend.Data.Samples
 import Refine.Frontend.Rest
 import Refine.Frontend.Types
 
@@ -102,16 +103,10 @@ emitBackendCallsFor action _state = case action of
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
 
-{- TODO currently we do not have access to a demo document
     AddDemoDocument -> do
-        let vdoc = ProtoVDoc sampleTitle sampleDescription . VDocVersion . cs .
-                       replace "\\" "" .
-                       replace "<strong" " <strong" $
-                       replace "<a" " <a" sampleText
-        addVDoc vdoc $ \case
+        createVDoc (CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
--}
 
 {- TODO submitting a patch does not work yet
     SubmitPatch -> do
