@@ -157,7 +157,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
       fc :: Comment       <- runWaiBody sess $
         postJSON
-          ("/r/comment/" <> (cs $ toUrlPiece (fe ^. compositeVDocRepo . vdocHeadPatch)))
+          ("/r/comment/" <> cs (toUrlPiece (fe ^. compositeVDocRepo . vdocHeadPatch)))
           (CreateComment "[comment]" True (CreateChunkRange Nothing Nothing))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       be ^. compositeVDocComments `shouldContain` [fc]
