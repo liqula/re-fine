@@ -77,8 +77,8 @@ toHTML (DT.Node (HTMLP.ContentText content) []) = elemText content
 toHTML (DT.Node (HTMLP.ContentChar content) []) = elemText $ cs [content]
 -- a comment - do we want to support them, given our HTML editor provides no means of entering them?
 toHTML (DT.Node (HTMLP.Comment _) _) = mempty -- ignore comments
-toHTML (DT.Node (HTMLP.TagOpen lbl attrs) subForest) =
-    React.Flux.term (fromString (cs lbl)) (toProps attrs) $ toHTML `mapM_` subForest
+toHTML (DT.Node (HTMLP.TagOpen tagname attrs) subForest) =
+    React.Flux.term (fromString (cs tagname)) (toProps attrs) $ toHTML `mapM_` subForest
 
 -- the above cases cover all possibilities in the demo article, but we leave this here for discovery:
 toHTML (DT.Node rootLabel []) = p_ (elemString ("root_label_wo_children " <> show rootLabel))
