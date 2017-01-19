@@ -36,6 +36,9 @@ openTagWithOtherUID = TagOpen "tag" [(Attr "data-uid" "13")]
 openTagWithoutUID :: Token
 openTagWithoutUID = TagOpen "tag" []
 
+openMarkTag :: Token
+openMarkTag = TagOpen "mark" []
+
 spec :: Spec
 spec = parallel $ do
   describe "Enhance" $ do
@@ -61,4 +64,37 @@ spec = parallel $ do
       it "passes the passed uid to all children that do not already have one if none is present" $ do
         addDataUidsToTree "1" (Node openTagWithoutUID [(Node openTagWithoutUID []), (Node openTagWithOtherUID [])])
           `shouldBe` (Node (TagOpen "tag" [(Attr "data-uid" "1")]) [(Node (TagOpen "tag" [(Attr "data-uid" "1")]) []), (Node openTagWithOtherUID [])])
+
+    describe "addDataUidsToTree" $ do
+      it "sets an offset of 0 if we are not on a mark tag" $ do
+        addOffsetsToTree 50 (Node openTagWithUID [])    `shouldBe` (Node (TagOpen "tag" [(Attr "data-offset" "0"), (Attr "data-uid" "77")]) [], 0)
+        addOffsetsToTree 50 (Node openTagWithoutUID []) `shouldBe` (Node (TagOpen "tag" [(Attr "data-offset" "0")]) [], 0)
+
+      it "sets the passed offset if we are on a mark tag" $ do
+        addOffsetsToTree 50 (Node openMarkTag []) `shouldBe` (Node (TagOpen "mark" [Attr "data-offset" "50"]) [], 50)
+
+      it "adds up the offset of subsequent texts" $ do
+        addOffsetsToForest_ 50 [Node (ContentText "a text") [], Node (TagOpen "mark" []) [], Node (ContentText "another text") [], Node (TagOpen "mark" []) []] `shouldBe`
+          ([Node (ContentText "a text") [], Node (TagOpen "mark" [(Attr "data-offset" "56")]) [], Node (ContentText "another text") [], Node (TagOpen "mark" [(Attr "data-offset" "68")]) []], 68)
+
+      it "resets the addition when encountering a non-mark tag" $ do
+        addOffsetsToForest_ 50
+          [ Node (ContentText "a text") []
+          , Node (TagOpen "mark" []) []
+          , Node (ContentText "another text") []
+          , Node (TagOpen "div" []) []
+          , Node (ContentText "more text") []
+          , Node (TagOpen "mark" []) []
+          ] `shouldBe`
+          ([ Node (ContentText "a text") []
+          , Node (TagOpen "mark" [(Attr "data-offset" "56")]) []
+          , Node (ContentText "another text") []
+          , Node (TagOpen "div" [(Attr "data-offset" "0")]) []
+          , Node (ContentText "more text") []
+          , Node (TagOpen "mark" [(Attr "data-offset" "9")]) []
+          ], 9)
+
+      --it "carries over the offset into the next tree of the forest" $ do
+
+      --it "carries over the offset into the parent" $ do
 
