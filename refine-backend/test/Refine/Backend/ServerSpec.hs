@@ -102,6 +102,7 @@ respCode = statusCode . simpleStatus
 postJSON :: (ToJSON a) => SBS -> a -> Wai.WaiSession SResponse
 postJSON path json = request "POST" path [("Content-Type", "application/json")] (encode json)
 
+
 -- * endpoints
 
 uriStr :: URI -> SBS
@@ -111,10 +112,11 @@ listVDocsUri :: SBS
 listVDocsUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SListVDocs)
 
 getVDocUri :: ID VDoc -> SBS
-getVDocUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetVDoc)
+getVDocUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetVDoc)
 
 createVDocUri :: SBS
 createVDocUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SCreateVDoc)
+
 
 -- * test cases
 
