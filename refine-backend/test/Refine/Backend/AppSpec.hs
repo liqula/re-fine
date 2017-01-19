@@ -112,21 +112,21 @@ runProgram :: [Cmd] -> StateT VDocs (PropertyM (App DB)) ()
 runProgram = foldl (>>) (pure ()) . map runCmd
 
 runCmd :: Cmd -> StateT VDocs (PropertyM (App DB)) ()
-runCmd (AddVDoc pv) = do
-  vdoc   <- lift . run $ App.createVDoc pv
+runCmd (AddVDoc cv) = do
+  vdoc   <- lift . run $ App.createVDoc cv
   lastId <- gets $ view vdocLast
   vdocMap  %= Map.insert lastId (vdoc ^. vdocID)
   vdocLast %= (+1)
   lift . assert $
-    (vdoc ^. vdocTitle    == pv ^. protoVDocTitle) &&
-    (vdoc ^. vdocAbstract == pv ^. protoVDocAbstract)
+    (vdoc ^. vdocTitle    == cv ^. createVDocTitle) &&
+    (vdoc ^. vdocAbstract == cv ^. createVDocAbstract)
 
-runCmd (GetVDoc v pv) = do
+runCmd (GetVDoc v cv) = do
   Just vid <- gets . view $ vdocMap . at v
   vdoc <- lift . run $ App.getVDoc vid
   lift . assert $
-    (vdoc ^. vdocTitle    == pv ^. protoVDocTitle) &&
-    (vdoc ^. vdocAbstract == pv ^. protoVDocAbstract)
+    (vdoc ^. vdocTitle    == cv ^. createVDocTitle) &&
+    (vdoc ^. vdocAbstract == cv ^. createVDocAbstract)
 
 
 -- * generators
@@ -136,19 +136,19 @@ word = cs <$> listOf (elements ['a' .. 'z'])
 
 -- TODO: the pattern here is 'arbitrary<type> :: Gen <type>' should be defined in
 -- tests/Arbitrary.hs.  also, we need to make a package refine-test
-version :: Gen (VDocVersion 'HTMLRaw)
-version = pure $ VDocVersion ""
+arbitraryVersion :: Gen (VDocVersion 'HTMLRaw)
+arbitraryVersion = pure $ VDocVersion ""
 
-protoVDoc :: Gen (Create VDoc)
-protoVDoc =
+arbitraryCreateVDoc :: Gen (Create VDoc)
+arbitraryCreateVDoc =
   CreateVDoc
     <$> (Title <$> word)
     <*> (Abstract . mconcat <$> listOf word)
-    <*> version
+    <*> arbitraryVersion
 
 sampleProgram :: Gen [Cmd]
 sampleProgram = do
   n <- min 0 <$> arbitrary
   fmap concat . forM [0 .. n] $ \i -> do
-    v <- protoVDoc
+    v <- arbitraryCreateVDoc
     pure [AddVDoc v, GetVDoc i v]

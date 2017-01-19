@@ -65,3 +65,9 @@ getVersion repo vers = do
     let repoDir   = repoRoot </> (repo ^. unRepoHandle . to cs)
         patchFile = repoDir </> (vers ^. unPatchHandle . to cs)
     VDocVersion <$> ST.readFile patchFile
+
+-- | Get all patches that are directly based on a given patch.
+--
+-- TODO: Implement
+getChildPatches :: RepoHandle -> PatchHandle -> DocRepo [PatchHandle]
+getChildPatches _repo _patch = pure []

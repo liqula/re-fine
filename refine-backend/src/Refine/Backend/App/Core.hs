@@ -31,6 +31,7 @@ import Control.Monad.Reader
 import Refine.Backend.Database
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
+import Refine.Common.VDoc.HTML (VDocHTMLError)
 
 
 
@@ -47,10 +48,11 @@ makeLenses ''AppContext
 
 -- | Application monad handles
 -- * database connection
--- TODO:
--- * user authorization
--- * user authentication
 -- * event logging
+-- TODO:
+-- * user authentication (login)
+-- * user authorization (groups)
+-- * use one db connection in one run.
 newtype App db a = App { unApp :: ReaderT (AppContext db) (ExceptT AppError IO) a }
   deriving
     ( Functor
@@ -62,6 +64,7 @@ newtype App db a = App { unApp :: ReaderT (AppContext db) (ExceptT AppError IO) 
 
 data AppError
   = AppUnknownError String
+  | AppVDocError VDocHTMLError
   | AppDBError DBError
   | AppDocRepoError DocRepoError
   deriving (Show)

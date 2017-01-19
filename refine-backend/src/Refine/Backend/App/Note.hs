@@ -7,7 +7,9 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
@@ -18,28 +20,20 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Common.Types.Vote where
+{-# OPTIONS_GHC -Wall -Werror #-}
 
-import GHC.Generics (Generic)
+module Refine.Backend.App.Note where
 
+import Refine.Common.Types.Note
 import Refine.Common.Types.Prelude
-import Refine.Prelude.TH
+import Refine.Common.Types.VDoc
+
+import Refine.Backend.App.Core
+import Refine.Backend.Database.Core (DB)
+import Refine.Backend.Database.Class as DB
 
 
-data CreateVote = CreateVote
-  deriving (Eq, Ord, Show, Read, Generic)
-
-data Vote = Vote
-  deriving (Eq, Ord, Show, Read, Generic)
-
-data VoteValue = VoteValue
-  deriving (Eq, Ord, Show, Read, Generic)
-
-
--- * create types
-
-type instance Create Vote = CreateVote
-
-makeRefineType ''CreateVote
-makeRefineType ''Vote
-makeRefineType ''VoteValue
+addComment :: ID Patch -> Create Comment -> App DB Comment
+addComment pid comment = do
+  appLog "addComent"
+  db $ DB.createComment pid comment

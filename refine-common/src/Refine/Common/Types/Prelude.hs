@@ -28,13 +28,18 @@ import Generics.SOP        as SOP
 import Generics.SOP.JSON   as SOP
 import Generics.SOP.NFData as SOP
 import GHC.Generics        as GHC
-import Refine.Prelude.Generic
 import Text.Read
 import Web.HttpApiData
+
+import Refine.Prelude (ClearTP(..))
+import Refine.Prelude.Generic
 
 
 newtype ID a = ID { _unID :: Int64 }
   deriving (Eq, Ord, Show, Read, GHC.Generic)
+
+instance ClearTP ID where
+  clearTP (ID x) = ID x
 
 type family Create a :: *
 

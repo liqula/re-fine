@@ -87,9 +87,10 @@ toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError)
   where
     -- FIXME: Render JSON from the errors
     fromAppError :: AppError -> ServantErr
-    fromAppError (AppUnknownError msg)      = err500 { errBody = cs msg }
-    fromAppError (AppDBError      dbError)  = err500 { errBody = cs $ show dbError }
-    fromAppError (AppDocRepoError docError) = err500 { errBody = cs $ show docError }
+    fromAppError (AppUnknownError msg)       = err500 { errBody = cs msg }
+    fromAppError (AppVDocError    vdocError) = err500 { errBody = cs $ show vdocError }
+    fromAppError (AppDBError      dbError)   = err500 { errBody = cs $ show dbError }
+    fromAppError (AppDocRepoError docError)  = err500 { errBody = cs $ show docError }
 
 
 -- | The 's' prefix in the handlers stands for "server", and is used to dismabiguate between the code in
@@ -100,14 +101,11 @@ refineApi =
        Refine.Backend.App.listVDocs
   :<|> Refine.Backend.App.getCompositeVDoc
   :<|> Refine.Backend.App.createVDocGetComposite
-  :<|> sAddComment
+  :<|> Refine.Backend.App.addComment
   :<|> sAddPatch
 
 
 -- * vdocs
-
-sAddComment :: ID Patch -> Create Comment -> App DB Comment
-sAddComment = undefined
 
 sAddPatch :: ID Patch -> Create Patch -> App DB Patch
 sAddPatch = undefined

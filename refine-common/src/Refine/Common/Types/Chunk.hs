@@ -29,6 +29,7 @@ import qualified Generics.SOP.NFData as SOP
 import           GHC.Generics (Generic)
 
 import Refine.Common.Types.Prelude
+import Refine.Prelude (ClearTP(..))
 import Refine.Prelude.Generic
 import Refine.Prelude.TH (makeRefineType)
 
@@ -45,8 +46,8 @@ data ChunkRange owner = ChunkRange
   deriving (Eq, Ord, Show, Read, Generic)
 
 data CreateChunkRange = CreateChunkRange
-  { _protoChunkRangeBegin :: Maybe ChunkPoint
-  , _protoChunkRangeEnd   :: Maybe ChunkPoint
+  { _createChunkRangeBegin :: Maybe ChunkPoint
+  , _createChunkRangeEnd   :: Maybe ChunkPoint
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -68,6 +69,10 @@ instance Show DataUID where
 instance Read DataUID where
   readsPrec n = (_1 %~ DataUID) <$$> readsPrec n
 
+-- * clear type param
+
+instance ClearTP ChunkRange where
+  clearTP (ChunkRange i b e) = ChunkRange (clearTP i) b e
 
 -- * instances
 

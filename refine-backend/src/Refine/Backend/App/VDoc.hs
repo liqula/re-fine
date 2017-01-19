@@ -22,18 +22,21 @@
 
 module Refine.Backend.App.VDoc where
 
-import Control.Lens ((^.), view)
+import Control.Lens ((^.), to, view)
 import Control.Monad ((<=<), join, mapM)
+import Control.Monad.Except (throwError)
+import Data.Monoid ((<>))
 
 import           Refine.Backend.App.Core
 import           Refine.Backend.Database (DB)
 import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
 import           Refine.Common.Rest (CompositeVDoc(..))
+import           Refine.Common.Types.Note
 import           Refine.Common.Types.Prelude
 import           Refine.Common.Types.VDoc
-import           Refine.Common.Types.Chunk
-import           Refine.Prelude ((<@>))
+import           Refine.Common.VDoc.HTML
+import           Refine.Prelude (clearTP)
 
 
 listVDocs :: App DB [VDoc]
@@ -49,7 +52,7 @@ createVDoc pv = do
   appLog "createVDoc"
   (dr, dp) <- docRepo $ do
     dr <- DocRepo.createRepo
-    dp <- DocRepo.createInitialPatch dr (pv ^. protoVDocInitVersion)
+    dp <- DocRepo.createInitialPatch dr (pv ^. createVDocInitVersion)
     pure (dr, dp)
   db $ do
     p <- DB.createPatch dp
@@ -68,38 +71,20 @@ getCompositeVDoc vid = do
     vdoc     <- DB.getVDoc vid
     rid      <- DB.vdocRepo vid
     rhandle  <- DB.getRepoHandle rid
-    headid   <- view vdocHeadPatch <$> DB.getRepo rid
+    repo     <- DB.getRepo rid
+    let headid = repo ^. vdocHeadPatch
     hhandle  <- DB.getPatchHandle headid
-    pids     <- DB.getPatchIDs rid
-    patches  <- mapM DB.getPatch pids                                        -- TODO: only child patches to head!
-    comments <- mapM DB.getComment . mconcat =<< mapM DB.patchComments pids  -- TODO only comments applicable to head!
-    notes    <- mapM DB.getNote    . mconcat =<< mapM DB.patchNotes    pids  -- TODO only notes applicable to head!
+    comments <- mapM DB.getComment =<< DB.patchComments headid
+    notes    <- mapM DB.getNote    =<< DB.patchNotes    headid
 
-    let chunkranges = undefined
-          -- (view patchRange <$> patches) <>
-          -- (view commentRange <$> comments) <>
-          -- (view noteRange <$> notes)
-
-        -- for now, just do comments, and leave everything else for later.
-
-        -- TODO: this list of chunk ranges is needed for renderVDocHtml to work, but it's tricky:
-        -- ChunkRange takes an type parameter that identifies what it belongs to.  we need to
-        -- somehow bind the chunk range owner differently to be able to put all those different
-        -- chunk ranges into one list.  i think we should try @data ChunkRange = { ..  label ::
-        -- forall a . ID a .. }@.
+    let chunkRangesCN =
+          (view (commentRange . to clearTP) <$> comments) <>
+          (view (noteRange . to clearTP) <$> notes)
 
     pure $ do
-      CompositeVDoc vdoc
-        <$> (renderVDocHtml chunkranges <$> docRepo (DocRepo.getVersion rhandle hhandle))
-        <@> patches
-        <@> comments
-        <@> notes
-
--- TODO: implement this using 'Refine.Common.VDoc.HTML.Splice.insertMarks' from MR!12.
-renderVDocHtml :: [ChunkRange a] -> VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
-renderVDocHtml _ (VDocVersion v) = VDocVersion v
-
-
-getVersion :: ID Patch -> App DB (VDocVersion 'HTMLWithMarks)
-getVersion _ = do
-  pure $ VDocVersion "Refine.Backend.App.VDoc.getVersion"
+      hpatches <- docRepo $ DocRepo.getChildPatches rhandle hhandle
+      patches  <- db $ mapM DB.getPatchFromHandle hpatches
+      let chunkRanges = chunkRangesCN <> (view (patchRange . to clearTP) <$> patches)
+      version <- either (throwError . AppVDocError) pure
+                 =<< insertMarks chunkRanges <$> docRepo (DocRepo.getVersion rhandle hhandle)
+      pure $ CompositeVDoc vdoc repo version patches comments notes

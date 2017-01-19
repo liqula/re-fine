@@ -46,9 +46,9 @@ data VDoc = VDoc
 -- the name clashes in the record selectors are really annoying...
 -- makes me understand why people were so fond of OO when they invented it
 data CreateVDoc = CreateVDoc
-  { _protoVDocTitle       :: Title
-  , _protoVDocAbstract    :: Abstract
-  , _protoVDocInitVersion :: VDocVersion 'HTMLRaw
+  { _createVDocTitle       :: Title
+  , _createVDocAbstract    :: Abstract
+  , _createVDocInitVersion :: VDocVersion 'HTMLRaw
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -84,7 +84,7 @@ data ConflictResolution = ConflictResolution
   deriving (Eq, Ord, Show, Read, Generic)
 
 
--- * protos, instances
+-- * create types, instances
 
 type instance Create VDoc  = CreateVDoc
 type instance Create Patch = CreatePatch

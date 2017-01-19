@@ -70,6 +70,7 @@ type SAddPatch
 -- - if we try to consider comments, patches, ... on other versions than head, we are in trouble.
 data CompositeVDoc = CompositeVDoc
   { _compositeVDoc         :: VDoc
+  , _compositeVDocRepo     :: VDocRepo
   , _compositeVDocVersion  :: VDocVersion 'HTMLWithMarks
   , _compositeVDocPatches  :: [Patch]
   , _compositeVDocComments :: [Comment]

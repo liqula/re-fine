@@ -32,10 +32,11 @@ import Database.Persist.Sql (SqlBackend)
 import Lentil.Core (entityLens)
 import Lentil.Types as L
 
-import Refine.Backend.Database.Core
+import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
+import           Refine.Backend.Database.Types
 import qualified Refine.Backend.DocRepo.Core as DocRepo
-import Refine.Common.Types
+import           Refine.Common.Types
 
 
 -- FIXME: Generate this as the part of the lentil library.
@@ -88,11 +89,21 @@ vdocDBLens = entityLens vdocEntity
 vdocEntity :: L.Entity DB ID VDoc VDoc
 vdocEntity = L.Entity getVDoc updateVDoc
 
+toVDoc :: ID VDoc -> Title -> Abstract -> Key S.Repo -> VDoc
+toVDoc vid title abstract repoid = VDoc vid title abstract (S.keyToId repoid)
+
+createVDoc :: Create VDoc -> VDocRepo -> DB VDoc
+createVDoc pv vr = liftDB $ do
+  let svdoc = S.VDoc
+        (pv ^. createVDocTitle)
+        (pv ^. createVDocAbstract)
+        (vr ^. vdocRepoID . to S.idToKey)
+  key <- insert svdoc
+  void . insert $ S.VR key (vr ^. vdocRepoID . to S.idToKey)
+  pure $ S.vDocElim (toVDoc (S.keyToId key)) svdoc
+
 getVDoc :: ID VDoc -> DB VDoc
-getVDoc vid = S.vDocElim toVDoc <$> getEntity vid
-  where
-    toVDoc :: Title -> Abstract -> Key S.Repo -> VDoc
-    toVDoc title abstract repoid = VDoc vid title abstract (S.keyToId repoid)
+getVDoc vid = S.vDocElim (toVDoc vid) <$> getEntity vid
 
 -- NOTES: How to handle associations? What to update, what to keep?
 vDocToRecord :: VDoc -> DB S.VDoc
@@ -137,6 +148,16 @@ getPatchHandle pid = S.patchElim toPatchHandle <$> getEntity pid
     toPatchHandle :: ST -> DocRepo.PatchHandle -> DocRepo.PatchHandle
     toPatchHandle _desc handle = handle
 
+getPatchFromHandle :: DocRepo.PatchHandle -> DB Patch
+getPatchFromHandle hndl = do
+  ps <- liftDB $ selectList [S.PatchPatchHandle ==. hndl] []
+  p <- unique ps
+  let pid = S.keyToId $ entityKey p
+      cr = ChunkRange pid Nothing Nothing  -- TODO
+      toPatch desc _hdnl = Patch (S.keyToId $ entityKey p) desc cr
+
+  pure $ S.patchElim toPatch (entityVal p)
+
 patchNotes :: ID Patch -> DB [ID Note]
 patchNotes pid = liftDB $
   S.keyToId . S.pNNote . entityVal <$$> selectList [S.PNPatch ==. S.idToKey pid] []
@@ -144,19 +165,6 @@ patchNotes pid = liftDB $
 patchComments :: ID Patch -> DB [ID Comment]
 patchComments pid = liftDB $
   S.keyToId . S.pCComment . entityVal <$$> selectList [S.PCPatch ==. S.idToKey pid] []
-
-createVDoc :: Create VDoc -> VDocRepo -> DB VDoc
-createVDoc pv vr = do
-  key <- liftDB . insert $ S.VDoc
-            (pv ^. protoVDocTitle)
-            (pv ^. protoVDocAbstract)
-            (vr ^. vdocRepoID . to S.idToKey)
-  void . liftDB . insert $ S.VR key (vr ^. vdocRepoID . to S.idToKey)
-  pure $ VDoc
-    (S.keyToId key)
-    (pv ^. protoVDocTitle)
-    (pv ^. protoVDocAbstract)
-    (vr ^. vdocRepoID)
 
 vdocRepo :: ID VDoc -> DB (ID VDocRepo)
 vdocRepo vid = do
@@ -169,6 +177,14 @@ getRepo vid = S.repoElim toVDocRepo <$> getEntity vid
     toVDocRepo :: ST -> DocRepo.RepoHandle -> Key S.Patch -> VDocRepo
     toVDocRepo _desc _repoHandle pid = VDocRepo vid (S.keyToId pid)
 
+getRepoFromHandle :: DocRepo.RepoHandle -> DB VDocRepo
+getRepoFromHandle hndl = do
+  rs <- liftDB $ selectList [S.RepoRepoHandle ==. hndl] []
+  r <- unique rs
+  let rid = S.keyToId $ entityKey r
+      toRepo _desc _hdnl repohead = VDocRepo rid (S.keyToId repohead)
+  pure $ S.repoElim toRepo (entityVal r)
+
 getRepoHandle :: ID VDocRepo -> DB DocRepo.RepoHandle
 getRepoHandle vid = S.repoElim toRepoHandle <$> getEntity vid
   where
@@ -179,14 +195,31 @@ getPatchIDs :: ID VDocRepo -> DB [ID Patch]
 getPatchIDs vid = liftDB $
   S.keyToId . S.rPPatch . entityVal <$$> selectList [S.RPRepository ==. S.idToKey vid] []
 
-getComment :: ID Comment -> DB Comment
-getComment cid = S.commentElim toComment <$> getEntity cid
-  where
-    cr :: ChunkRange Comment
-    cr = ChunkRange cid Nothing Nothing  -- TODO
+toChunkRange :: DBChunkRange -> ID a -> ChunkRange a
+toChunkRange r i = ChunkRange i (r ^. dbChunkRangeBegin) (r ^. dbChunkRangeEnd)
 
-    toComment :: ST -> Bool -> Maybe (Key S.Comment) -> Comment
-    toComment desc public _parent = Comment cid desc public cr
+toComment :: ID Comment -> ST -> Bool -> DBChunkRange -> Maybe (Key S.Comment) -> Comment
+toComment cid desc public range _parent = Comment cid desc public (toChunkRange range cid)
+
+createComment :: ID Patch -> Create Comment -> DB Comment
+createComment pid comment = liftDB $ do
+  let scomment = S.Comment
+        (comment ^. createCommentText)
+        (comment ^. createCommentPublic)
+        (comment ^. createCommentRange . to mkDBChunkRange)
+        Nothing
+  key <- insert scomment
+  void . insert $ S.PC (S.idToKey pid) key
+  pure $ S.commentElim (toComment (S.keyToId key)) scomment
+  where
+    mkDBChunkRange :: CreateChunkRange -> DBChunkRange
+    mkDBChunkRange cr = DBChunkRange (cr ^. createChunkRangeBegin) (cr ^. createChunkRangeEnd)
+
+getComment :: ID Comment -> DB Comment
+getComment cid = S.commentElim (toComment cid) <$> getEntity cid
 
 getNote :: ID Note -> DB Note
-getNote nid = S.noteElim (Note nid) <$> getEntity nid
+getNote nid = S.noteElim toNote <$> getEntity nid
+  where
+    toNote :: ST -> NoteKind -> DBChunkRange -> Note
+    toNote desc kind range = Note nid desc kind (toChunkRange range nid)
