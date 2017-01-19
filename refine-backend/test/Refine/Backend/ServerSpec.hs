@@ -28,9 +28,12 @@ import           Control.Monad.Trans.Except (runExceptT)
 import           Control.Monad (void)
 import           Control.Natural (run)
 import           Data.Aeson (FromJSON, ToJSON, decode, eitherDecode, encode)
+import           Data.Proxy (Proxy(Proxy))
 import           Data.String.Conversions (SBS, cs, (<>))
 import           Network.HTTP.Types.Status (Status(statusCode))
+import           Network.URI (URI, uriToString)
 import           Network.Wai.Test (SResponse(..))
+import           Servant.Utils.Links (safeLink)
 import           Test.Hspec
                   ( Spec
                   , ActionWith
@@ -49,9 +52,6 @@ import Refine.Backend.Server
 import Refine.Common.Rest
 import Refine.Common.Types
 
-import Data.Proxy
-import Network.URI (URI, uriToString)
-import Servant.Utils.Links (safeLink)
 
 -- * machine room
 
