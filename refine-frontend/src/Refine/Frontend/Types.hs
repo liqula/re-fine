@@ -60,7 +60,7 @@ instance AE.FromJSON Range where
     parseJSON _          = error "not an object... what can we do?" -- TODO empty
 
 -- TODO: rename this to 'RefineStore', or to 'Store'?
-data RefineState = RefineState
+data RState = RState
   { _rsVDoc             :: Maybe CompositeVDoc
   , _rsVDocList         :: Maybe [ID VDoc]
   , _rsHeaderHeight     :: Int
@@ -69,7 +69,7 @@ data RefineState = RefineState
   , _rsCurrentSelection :: (Maybe Range, Maybe DeviceOffset)
   } deriving (Show, Typeable, Generic, NFData, ToJSON)
 
-makeLenses ''RefineState
+makeLenses ''RState
 
 data RefineAction = LoadDocumentList
                   | LoadedDocumentList [ID VDoc]

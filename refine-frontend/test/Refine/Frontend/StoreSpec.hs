@@ -24,8 +24,8 @@ instance Arbitrary (ID VDoc) where
     arbitrary = ID <$> arbitrary
 
 
-emptyState :: RefineState
-emptyState = RefineState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing)
+emptyRState :: RState
+emptyRState = RState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing)
 
 spec :: Spec
 spec = do
@@ -33,5 +33,5 @@ spec = do
     describe "transform" $ do
       it "integrates the loaded document list into the store" . property $
         \list -> monadicIO . run $ do
-            result <- transform (LoadedDocumentList list) emptyState
+            result <- transform (LoadedDocumentList list) emptyRState
             result ^. rsVDocList `shouldBe` Just list

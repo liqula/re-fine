@@ -30,8 +30,8 @@ toSize sz
   | sz <= 1024 = Tablet
   | otherwise  = Desktop
 
-instance StoreData RefineState where
-    type StoreAction RefineState = RefineAction
+instance StoreData RState where
+    type StoreAction RState = RefineAction
     transform action state = do
         consoleLog "Old state: " state
         putStrLn $ "Action: " <> show action
@@ -92,7 +92,7 @@ currentSelectionUpdate action state = case action of
 
 
 
-emitBackendCallsFor :: RefineAction -> RefineState -> IO ()
+emitBackendCallsFor :: RefineAction -> RState -> IO ()
 emitBackendCallsFor action _state = case action of
     LoadDocumentList -> do
         listVDocs $ \case
@@ -138,8 +138,8 @@ handleError msg = do
             print msg
             return []
 
-refineStore :: ReactStore RefineState
-refineStore = mkStore $ RefineState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing)
+refineStore :: ReactStore RState
+refineStore = mkStore $ RState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing)
 
 dispatch :: RefineAction -> [SomeStoreAction]
 dispatch a = [SomeStoreAction refineStore a]
