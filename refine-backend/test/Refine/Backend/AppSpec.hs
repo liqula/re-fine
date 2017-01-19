@@ -42,7 +42,8 @@ import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic
 
-import Refine.Backend.App as App
+import Refine.Backend.App         as App
+import Refine.Backend.App.User    as App
 import Refine.Backend.App.MigrateDB
 import Refine.Backend.Database
 import Refine.Backend.DocRepo
@@ -68,20 +69,42 @@ initVDocs = VDocs Map.empty 0
 
 makeLenses ''VDocs
 
+isActiveUser :: AppUserState -> Bool
+isActiveUser (ActiveUser _) = True
+isActiveUser _              = False
 
 spec :: Spec
 spec = parallel $ do
   describe "VDoc" . around provideAppRunner $ do
-    it "Random program" $ \runner -> forAll sampleProgram $ \program ->
+    it "Random program" $ \(runner :: App DB Property -> IO Property) -> forAll sampleProgram $ \program ->
       monadic (monadicApp runner) (runProgram program `evalStateT` initVDocs)
 
+  describe "User handling" . around provideAppRunner $ do
+    it "Create/login/logout" $ \(runner :: App DB () -> IO ()) -> do
+      -- NOTE: Pattern match on the result will trigger the evaluation
+      -- of the term under test.
+      () <- runner $ do
+
+        App.createUser "user" "user@user.com" "password"
+        userState0 <- get
+        appIO $ userState0 `shouldBe` NonActiveUser
+
+        App.login "user" "password"
+        userState1 <- get
+        appIO $ userState1 `shouldSatisfy` isActiveUser
+
+        App.logout
+        userState2 <- get
+        appIO $ userState2 `shouldBe` NonActiveUser
+
+      pure ()
 
 -- * Helpers
 
 withTempCurrentDirectory :: IO a -> IO a
 withTempCurrentDirectory action = withSystemTempDirectory "" (`withCurrentDirectory` action)
 
-provideAppRunner :: ActionWith (App DB Property -> IO Property) -> IO ()
+provideAppRunner :: ActionWith (App DB a -> IO a) -> IO ()
 provideAppRunner action = withTempCurrentDirectory $ do
   (runner, testDb, reposRoot) <- createAppRunner
   action runner
