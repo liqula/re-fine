@@ -27,7 +27,7 @@ cfg = ApiRequestConfig "" NoTimeout
 
 
 -- | obtain a list of all vdocs stored in the backend with auid, title.
-listVDocs :: HandleResponse [ID VDoc] -> IO ()
+listVDocs :: HandleResponse [VDoc] -> IO ()
 listVDocs = request cfg (Proxy :: Proxy SListVDocs)
 
 -- | look up a vdoc by its auid.
