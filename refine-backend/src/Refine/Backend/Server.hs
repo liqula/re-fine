@@ -99,6 +99,7 @@ toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError)
     fromAppError (AppDocRepoError docError)  = err500 { errBody = cs $ show docError }
     fromAppError (AppUserNotFound user)      = err500 { errBody = cs $ unwords ["User not found", cs user] }
     fromAppError AppUserHasNoSession         = err500 { errBody = "There is no session info where it should be." }
+    fromAppError (AppUserCreationError e)    = err500 { errBody = cs e }
 
 
 -- | The 's' prefix in the handlers stands for "server", and is used to dismabiguate between the code in

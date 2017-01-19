@@ -49,11 +49,13 @@ data AppContext db = AppContext
   }
 
 newtype UserSession = UserSession { _unUserSession :: SessionId }
+  deriving (Eq, Show)
 
 -- | The state of the application depends on the user state.
 data AppUserState
   = ActiveUser UserSession
   | NonActiveUser
+  deriving (Eq, Show)
 
 makeLenses ''AppContext
 makeLenses ''AppUserState
@@ -77,12 +79,13 @@ newtype App db a = App { unApp :: StateT AppUserState (ReaderT (AppContext db) (
     )
 
 data AppError
-  = AppUnknownError String
+  = AppUnknownError ST
   | AppVDocError VDocHTMLError
   | AppDBError DBError
   | AppDocRepoError DocRepoError
   | AppUserNotFound ST
   | AppUserHasNoSession
+  | AppUserCreationError ST
   deriving (Show)
 
 appIO :: IO a -> App db a
