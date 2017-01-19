@@ -16,14 +16,23 @@ category:            Web
 ghc-options: -j -Wall -Werror
 
 dependencies:
-  - base
+  - aeson
+  - base >= 4.7 && < 5
+  - basic-sop
+  - containers
+  - deepseq
+  - ghcjs-base
+  - html-parse
+  - json-sop
+  - lens
+  - QuickCheck
+  - quickcheck-instances
   - react-flux
   - react-flux-servant
   - refine-common
   - refine-prelude
-  - deepseq
-  - basic-sop
-  - json-sop
+  - string-conversions
+  - text
 
 library:
   source-dirs:
@@ -38,6 +47,7 @@ executables:
     dependencies:
       - hspec
       - hspec-discover
+    cpp-options: -DGHCJS_BROWSER
 
 tests:
   spec:
@@ -47,6 +57,9 @@ tests:
       - src
     ghc-options: -threaded -rtsopts -with-rtsopts=-N
     dependencies:
+      - base
       - hspec
       - hspec-core
       - hspec-discover
+      - QuickCheck
+      - quickcheck-instances

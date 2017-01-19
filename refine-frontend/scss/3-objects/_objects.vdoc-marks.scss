@@ -1,0 +1,38 @@
+.#{$namespace}mark,
+%#{$namespace}mark {
+
+    &--hover,
+    &--active {
+        // box-shadow: 0 (-$ro-border-width) 0 0 $vdoc-rollover inset;
+        border-bottom: 2px solid $vdoc-rollover;
+    }
+
+    &--comment {
+        background-color: $vdoc-comment-mark;
+    }
+
+    &--note {
+        background-color: $vdoc-note-mark;
+    }
+
+    &--question {
+        background-color: $vdoc-question-mark;
+    }
+
+    &--discussion {
+        background-color: $vdoc-discussion-mark;
+    }
+
+    &--edit {
+        background-color: $vdoc-edit-mark;
+    }
+
+    &--edit-byme {
+        background-color: $vdoc-edit-byme-mark;
+    }
+
+    &--currentSelection {
+        background-color: rgba($active-color, .5);
+    }
+
+}

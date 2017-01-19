@@ -1,0 +1,108 @@
+//------------------------------------
+//    annotation and modification snippets in sidebars
+//------------------------------------
+
+
+.#{$namespace}snippet,
+%#{$namespace}snippet {
+
+    display: block;
+    position: relative;
+
+    &__content {
+        display: none;
+    }
+
+    &__icon-bg {
+        @include center-myself-horizontal();
+        border-radius: $icon-width;
+        height: $icon-width;
+        width: $icon-width;
+    }
+
+    &__icon {
+        margin-left: 1 + $icon-width / 4;
+        margin-top: -1 + $icon-width / 4;
+    }
+
+}
+
+@include gridle_state(tablet) {
+
+    .#{$namespace}snippet,
+    %#{$namespace}snippet {
+
+        &__icon-bg {
+            border-radius: $icon-width-tablet;
+            height: $icon-width-tablet;
+            top: -$icon-width-tablet / 2;
+            width: $icon-width-tablet;
+        }
+
+        &__icon {
+            margin-left: 1 + $icon-width-tablet / 4;
+            margin-top: 1 + $icon-width-tablet / 4;
+        }
+    }
+}
+
+
+@include gridle_state(mobile tablet) {
+
+    .#{$namespace}snippet--hover,
+    %#{$namespace}snippet--hover {
+
+        .#{$namespace}snippet__icon-bg,
+        %#{$namespace}snippet__icon-bg {
+            background-color: $vdoc-rollover;
+        }
+    }
+}
+
+
+@include gridle_state(desktop) {
+
+    .#{$namespace}snippet,
+    %#{$namespace}snippet {
+
+        margin-left: 10%;
+        padding-bottom: 5%;
+        width: 80%;
+
+        &__icon-bg {
+            border-radius: $icon-width-desktop;
+            height: $icon-width-desktop;
+            top: -$icon-width-desktop / 2;
+            transform: none;
+            width: $icon-width-desktop;
+
+            &--left {
+                left: -$icon-width-desktop / 2;
+            }
+
+            &--right {
+                left: 92%; // <-- that's a dirty hack there!!
+            }
+        }
+
+        &__icon {
+            margin-left: $icon-width-desktop / 4;
+            margin-top: -2 + $icon-width-desktop / 4;
+        }
+
+        &__content {
+            display: block;
+            font-size: rem(12);
+            height: (4 - .35) + rem;
+            overflow-y: hidden;
+            padding-bottom: 5%;
+            padding-left: 5%;
+            padding-top: 5%;
+            width: 90%;
+        }
+
+        &--hover {
+            box-shadow: 0 (-$ro-border-width) 0 0 $vdoc-rollover inset;
+        }
+    }
+}

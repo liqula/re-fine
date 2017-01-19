@@ -1,0 +1,14 @@
+
+input,
+textarea {
+    border: 0 none;
+    border-radius: unset;
+}
+
+
+.o-form-input__textarea {
+    margin-left: $global-padding * 2;
+    margin-top: $global-padding * 2;
+    min-height: 100px;
+    width: 70%;
+}

@@ -1,0 +1,40 @@
+nav {
+
+    * {
+        color: $mainmenu-content-color;
+    }
+
+    ul {
+
+        list-style-type: none;
+        padding-left: 0;
+
+        > li {
+
+            float: left;
+            margin-left: 0;
+            margin-right: rem(20);
+
+            a {
+                font-weight: normal;
+            }
+
+            &::before {
+                content: none;
+            }
+        }
+
+
+    }
+
+}
+
+.#{$namespace}footer-menu,
+%#{$namespace}footer-menu {
+
+    ul {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+}

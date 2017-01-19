@@ -1,0 +1,109 @@
+//------------------------------------------
+// define colors
+//------------------------------------------
+
+// main color scheme blue
+$blue01: rgb(32, 49, 67);
+$blue02: rgb(59, 67, 87);
+$blue03: rgb(84, 99, 122);
+$blue04: rgb(100, 126, 149);
+$blue05: rgb(179, 188, 199);
+$blue06: rgb(210, 217, 223);
+$blue07: rgb(234, 236, 239);
+$blue08: rgb(246, 247, 249);
+
+
+//signal color
+$signal-yellow: rgb(224, 255, 18);
+$signal-orange: rgb(255, 89, 0);
+
+//quorum
+$red01: rgb(200, 55, 20);
+$red02: rgb(226, 155, 140);
+
+$green01: rgb(120, 200, 50);
+$green02: rgb(188, 226, 155);
+
+$orange01: rgb(231, 181, 0);
+$orange02: rgb(239, 213, 129);
+
+//comment types
+$lightyellow: rgb(237, 237, 192); //used for PRIVATE NOTE (?)
+$lightgreen: rgb(220, 229, 211); //used for QUESTION
+$lightred: rgb(219, 204, 221); //used for COMMENT (!)
+$lightblue: rgb(215, 233, 255); //used for DISCUSSION
+
+// helpers
+$white: rgb(255, 255, 255);
+$black: rgb(0, 0, 0);
+
+
+//------------------------------------------
+// assign colors
+//------------------------------------------
+
+
+// typography
+$text-color: $black;
+$headline-color: $blue01;
+$link-color: $blue04;
+$active-color: $signal-orange;
+
+// mainmenu
+$mainmenu-bg: $blue01;
+$mainmenu-mainbutton-color: $blue06;
+$mainmenu-mainbutton-combined-color: $blue02;
+$mainmenu-content-bg: $blue05;  // <- preliminary
+$mainmenu-content-color: $blue06;  // <- preliminary
+
+// footer
+$footer-bg: $mainmenu-bg;
+$footer-content-color: $blue06;
+
+//vdoc header
+$vdoc-header-bg: $blue07;
+$vdoc-toolbar-bg: $blue06;
+$vdoc-toolbar-extension-bg: $blue04;
+
+//icons
+$default-icon-bg: $blue02;
+$fallback-avatar-bg: $blue01;
+$icon-rollover: $signal-orange;
+$icon-dark: $blue01;
+$icon-bright: $blue06;
+$icon-bg-active: $signal-yellow;
+
+// comments & edits etc.
+
+$vdoc-comment: $lightred;
+$vdoc-comment-mark: rgba($vdoc-comment, .5);
+// $vdoc-comment-ro: $signal-orange;
+
+$vdoc-note: $lightyellow;
+$vdoc-note-mark: rgba($vdoc-note, .5);
+// $vdoc-note-ro: $signal-orange;
+
+$vdoc-question: $lightgreen;
+$vdoc-question-mark: rgba($vdoc-question, .5);
+// $vdoc-question-ro: $signal-orange;
+
+$vdoc-discussion: $lightblue;
+$vdoc-discussion-mark: rgba($vdoc-discussion, .8);
+// $vdoc-discussion-ro: $signal-orange;
+
+$vdoc-edit: $blue06;
+$vdoc-edit-mark: rgba($vdoc-edit, .7);
+// $vdoc-edit-ro: $signal-yellow;
+
+$vdoc-edit-byme: $signal-yellow;
+$vdoc-edit-byme-mark: rgba($vdoc-edit-byme, .5);
+// $vdoc-edit-byme-ro: $signal-orange;
+
+// maybe we get away with a single ro color ...
+$vdoc-rollover: $signal-orange;
+
+
+// overlay elements
+$overlay-content: $text-color;
+$overlay-meta: $blue03;
+$overlay-backdrop: rgba($white, .8);

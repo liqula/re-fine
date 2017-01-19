@@ -1,0 +1,112 @@
+@import '../0-settings/settings.objects';
+
+body {
+    font-size: rem($font-size-mobile);
+
+    @include gridle_state(tablet desktop) {
+        font-size: rem($font-size-desktop);
+    }
+}
+
+p,
+a,
+div,
+span,
+li,
+td {
+    color: $text-color;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: $headline-color;
+    line-height: 1.15;
+    margin-bottom: $global-margin-bottom;
+    margin-top: rem(30);
+}
+
+h2 {
+    font-size: rem(26);
+}
+
+h3 {
+    font-size: rem(22);
+}
+
+h4 {
+    font-size: rem(18);
+}
+
+h5 {
+    font-size: rem(15);
+}
+
+h6 {
+    font-size: rem(12);
+}
+
+p {
+    margin-bottom: $global-margin-bottom;
+    margin-top: 0;
+}
+
+a {
+    color: $link-color;
+    font-weight: bold;
+    transition: none;
+
+    &:hover {
+        color: $vdoc-rollover;
+    }
+}
+
+
+ul,
+ol {
+    > li {
+
+        list-style-type: none;
+        margin-left: - $global-padding * 2;
+
+        &::before {
+            color: $headline-color;
+            margin-right: $global-padding;
+        }
+    }
+}
+
+ul {
+    > li {
+        &::before {
+            content: '•';
+        }
+    }
+}
+
+ol {
+
+    counter-reset: li;
+
+    > li {
+
+        counter-increment: li;
+
+        &::before {
+            content: counter(li);
+            direction: rtl;
+            display: inline-block;
+            font-size: rem($font-size-desktop);
+            font-weight: bold;
+            letter-spacing: -.1rem;
+            margin-left: -.8rem;
+            margin-right: .5rem;
+            text-align: right;
+            width: 1rem;
+        }
+
+    }
+}

@@ -1,0 +1,86 @@
+.#{$module}-extension,
+%#{$module}-extension {
+
+    background-color: $vdoc-toolbar-extension-bg;
+    position: relative;
+
+    > *,
+    > * > * {
+        min-height: 0;
+        padding-bottom: 0;
+        padding-top: 0;
+    }
+
+    &__button {
+        padding-left: 0;
+    }
+
+    &__button-label {
+        display: inline-block;
+        font-size: rem(12);
+    }
+
+    &__icon {
+        margin-right: rem(10);
+    }
+
+    &__annotation,
+    &__modification {
+        @include center-content-vertical();
+        height: 0;
+        overflow: hidden;
+        transition: height .5s;
+    }
+
+    &--fixed {
+        position: fixed;
+        top: $mainmenu-height-mobile * 2;
+        width: 100%;
+        z-index: 100200;
+    }
+
+    &--expanded {
+        height: $vdoc-toolbar-extension-height;
+    }
+
+}
+
+
+@include gridle_state(tablet desktop) {
+
+    .#{$module}-extension,
+    %#{$module}-extension {
+
+        &__button-label {
+            display: inline-block;
+            font-size: rem($font-size-desktop);
+        }
+
+        &__icon {
+            float: left;
+        }
+
+        &__pointer {
+
+            @include triangle($vdoc-toolbar-extension-pointer-size, $vdoc-toolbar-extension-bg, up);
+
+            content: ' ';
+            opacity: 0;
+            position: absolute;
+            top: 0;
+            transition: top .5s, opacity .5s;
+            z-index: $always-on-top;
+
+            &--active {
+                opacity: 1;
+                top: -($vdoc-toolbar-extension-pointer-size * .5) + 2;
+            }
+        }
+
+        &--fixed {
+            top: $mainmenu-height;
+        }
+
+    }
+
+}

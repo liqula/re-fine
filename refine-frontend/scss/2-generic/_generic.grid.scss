@@ -1,0 +1,40 @@
+// import gridle
+
+@import 'gridle/gridle';
+@import '../0-settings/settings.gridle';
+
+
+// grid properties
+
+@include gridle_setup( (
+    context : $grid-columns,
+    gutter-width : $grid-gutterwidth,
+) );
+
+
+// responsive layouts
+
+@include gridle_register_state ( mobile , (
+    max-width : $max-mobile-width
+) );
+
+@include gridle_register_state ( tablet , (
+    min-width : $max-mobile-width + 1,
+    max-width : $max-tablet-width
+) ) ;
+
+@include gridle_register_state ( desktop , (
+    min-width : $max-tablet-width + 1
+) );
+
+@include gridle_register_state ( desktop-large , (
+    min-width : $grid-max-containerwidth
+) );
+
+// overall grid styles
+
+[class*="gr-"] {
+    padding: $global-padding;
+}
+
+@include gridle_generate_classes ();

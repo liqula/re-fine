@@ -1,0 +1,23 @@
+body.o-read-mode {
+
+    mark {
+        background-color: $white;
+    }
+
+    .o-snippet {
+        display: none !important;
+    }
+
+    // list all buttons that should be active in readmode
+    button:not(
+        .c-vdoc-toolbar__btn-read-mode,
+        .c-vdoc-toolbar__btn-index,
+        .c-mainmenu__menu-button) {
+        pointer-events: none !important;
+    }
+
+    .c-vdoc-toolbar__btn-read-mode > .c-vdoc-toolbar__icon::before {
+        background-color: $active-color;
+    }
+
+}
