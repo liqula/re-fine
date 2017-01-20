@@ -10,14 +10,14 @@ has decided on.
 
 ### establishing new rules
 
-Just open a PR on this file and have everybody comment on it.  If
+Just open a MR on this file and have everybody comment on it.  If
 nobody objects, it's a new rule!
 
 
 ### development process
 
-1. if you want to work on a branch, create PR early, label it "work in
-   progress", and assign yourself.  this way you are allowed to write
+1. if you want to work on a branch, create MR early, mark it "WIP: ",
+   and assign yourself.  this way you are allowed to write
    to it, rebase it, and nobody else is allowed to write.
 
 2. (1.) of course does not rule out ad-hoc collaboration coordinated
@@ -27,13 +27,9 @@ nobody objects, it's a new rule!
    on irc for review.
 
 4. roughly every time you start your day, you should look at the list
-   of "everything assigned to you":
+   of all issues assigned to you and all open merge requests.
 
-```sh
-      browser "https://github.com/fisx/aula2/issues?q=is%3Aopen+assignee%3A"`whoami`
-```
-
-   if the list contains pull requests for review, those have the
+   if thre are unassigned MRs or MRs assigned to you, those have the
    highest priority.
 
 
