@@ -7,11 +7,11 @@ import           Control.Monad (void)
 import           Control.Monad.Except
 import           Data.String.Conversions (ST, cs)
 import           Data.Time.Clock (NominalDiffTime)
-import qualified Web.Users.Types as Users
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.Session
 import Refine.Backend.Database.Core (DB)
+import Refine.Backend.User.Core as Users
 
 
 login :: ST -> ST -> App DB ()

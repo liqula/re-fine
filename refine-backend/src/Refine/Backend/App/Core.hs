@@ -28,12 +28,11 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Control.Natural
 import Data.String.Conversions (ST)
-import Web.Users.Types (SessionId)
 
 import Refine.Backend.Database
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
-import Refine.Backend.User
+import Refine.Backend.User.Core
 import Refine.Common.VDoc.HTML (VDocHTMLError)
 
 

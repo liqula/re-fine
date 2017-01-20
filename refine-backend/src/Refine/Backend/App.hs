@@ -34,7 +34,7 @@ import Refine.Backend.App.Core as App
 import Refine.Backend.App.Note as App
 import Refine.Backend.App.VDoc as App
 import Refine.Backend.Logger
-import Refine.Backend.User (UserHandle)
+import Refine.Backend.User.Core (UserHandle)
 
 
 runApp :: RunDB db -> RunDocRepo -> Logger -> UserHandle -> App db :~> ExceptT AppError IO
