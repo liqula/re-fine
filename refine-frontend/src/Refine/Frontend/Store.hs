@@ -11,7 +11,6 @@ module Refine.Frontend.Store where
 
 import           Control.Lens ((&), (^.), (%~), (.~))
 import qualified Data.Aeson as AE
-import           Data.Monoid ((<>))
 import qualified Data.Map.Strict as M
 import           React.Flux
 import           Data.Aeson (ToJSON, encode)
@@ -34,7 +33,7 @@ instance StoreData GlobalState where
     type StoreAction GlobalState = RefineAction
     transform action state = do
         consoleLog "Old state: " state
-        putStrLn $ "Action: " <> show action
+        consoleLog "Action: " action
 
         emitBackendCallsFor action state
 
@@ -180,5 +179,6 @@ foreign import javascript unsafe
     js_getRange :: IO JSString
 
 foreign import javascript unsafe
-  "console.log($1, JSON.parse($2));"
+  -- see webpack.config.js for a definition of the environment variable.
+  "if( process.env.IS_IN_WEBPACK ){ console.log($1, JSON.parse($2)); }"
   consoleLog_ :: JSString -> JSString -> IO ()

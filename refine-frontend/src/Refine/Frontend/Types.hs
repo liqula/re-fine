@@ -81,4 +81,4 @@ data RefineAction = LoadDocumentList
                   | SetSelection DeviceOffset
                   | SubmitPatch
                   | SaveSelect Text Text
-  deriving (Show, Typeable, Generic, NFData)
+  deriving (Show, Typeable, Generic, NFData, ToJSON)
