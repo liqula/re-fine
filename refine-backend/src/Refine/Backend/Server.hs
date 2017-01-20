@@ -35,6 +35,7 @@ import           Data.String.Conversions (cs)
 import           Network.Wai.Handler.Warp as Warp
 import           Prelude hiding ((.), id)
 import           Servant hiding (Patch)
+import           System.Directory (createDirectoryIfMissing)
 
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
@@ -65,8 +66,10 @@ defaultBackendConfig = BackendConfig True True
 
 mkBackend :: BackendConfig -> IO Backend
 mkBackend cfg = do
-  runDb      <- createDBRunner $ DBOnDisk "refine.db"
-  runDocRepo <- createRunRepo "."
+  -- FIXME: Use configuration file to set up directories.
+  createDirectoryIfMissing True "./.backend-data/docrepo"
+  runDb      <- createDBRunner $ DBOnDisk "./.backend-data/refine.db"
+  runDocRepo <- createRunRepo "./.backend-data/docrepo/"
   let logger = Logger $ if backendShouldLog cfg then putStrLn else const $ pure ()
       app    = runApp runDb runDocRepo logger
       srv    = Servant.serve (Proxy :: Proxy RefineAPI) $ serverT app refineApi
