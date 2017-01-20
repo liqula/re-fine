@@ -22,7 +22,11 @@
 
 module Refine.Frontend.Test.Enzyme where
 
-import GHCJS.Types (JSString, JSVal, nullRef)
+import Control.Exception (throwIO, ErrorCall(ErrorCall))
+import Data.Aeson (FromJSON, eitherDecode)
+import Data.JSString (JSString, unpack)
+import Data.String.Conversions (cs)
+import GHCJS.Types (JSVal, nullRef)
 import React.Flux
 import React.Flux.Internal
 
@@ -53,11 +57,13 @@ foreign import javascript unsafe
     "$1.find($2)"
     js_find :: JSVal -> JSString -> IO JSVal
 
--- | TODO: use @FromJSON a => a@ instead of @Int@ in the result.
-getWrapperAttrInt :: ShallowWrapper -> JSString -> IO Int
-getWrapperAttrInt (ShallowWrapper wrapper) selector = do
-  js_getWrapperAttrInt wrapper selector
+getWrapperAttr :: FromJSON a => ShallowWrapper -> JSString -> IO a
+getWrapperAttr (ShallowWrapper wrapper) selector = do
+  jsstring <- js_getWrapperAttr wrapper selector
+  case eitherDecode . cs . unpack $ jsstring of
+    Left e -> throwIO . ErrorCall $ show e
+    Right v -> pure v
 
 foreign import javascript unsafe
-    "$1[$2]"
-    js_getWrapperAttrInt :: JSVal -> JSString -> IO Int
+    "JSON.stringify($1[$2])"
+    js_getWrapperAttr :: JSVal -> JSString -> IO JSString

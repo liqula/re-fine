@@ -36,4 +36,4 @@ spec = it "works" $ do
   wrapper'@(ShallowWrapper jsval') <- find wrapper ".bla"
   js_consoleLog jsval'
 
-  getWrapperAttrInt wrapper' "length" `shouldReturn` 1
+  getWrapperAttr wrapper' "length" `shouldReturn` (1 :: Int)
