@@ -42,7 +42,6 @@ library
     , string-conversions
     , text
   exposed-modules:
-      Refine.Frontend.Core
       Refine.Frontend.Data.Samples
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
@@ -85,7 +84,6 @@ executable refine-frontend
     , hspec
     , hspec-discover
   other-modules:
-      Refine.Frontend.Core
       Refine.Frontend.Data.Samples
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
@@ -133,8 +131,6 @@ test-suite spec
     , QuickCheck
     , quickcheck-instances
   other-modules:
-      Refine.Frontend.Core
-      Refine.Frontend.CoreSpec
       Refine.Frontend.Data.Samples
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
