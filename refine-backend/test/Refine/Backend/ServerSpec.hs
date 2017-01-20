@@ -23,11 +23,12 @@
 module Refine.Backend.ServerSpec where
 
 import           Control.Exception (throwIO, ErrorCall(ErrorCall))
-import           Control.Lens ((^.))
+import           Control.Lens ((^.), (.~), (&))
 import           Control.Monad.Trans.Except (runExceptT)
 import           Control.Monad (void)
 import           Control.Natural (run)
 import           Data.Aeson (FromJSON, ToJSON, decode, eitherDecode, encode)
+import           Data.Default (def)
 import           Data.Proxy (Proxy(Proxy))
 import           Data.String.Conversions (SBS, cs, (<>))
 import           Network.HTTP.Types.Status (Status(statusCode))
@@ -47,6 +48,7 @@ import           Web.HttpApiData (toUrlPiece)
 
 import Refine.Backend.App as App
 import Refine.Backend.AppSpec (withTempCurrentDirectory)
+import Refine.Backend.Config
 import Refine.Backend.Database (DB)
 import Refine.Backend.Server
 import Refine.Common.Rest
@@ -83,7 +85,7 @@ errorOnLeft action = either (throwIO . ErrorCall . show) pure =<< action
 
 createTestSession :: ActionWith Backend -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
-  void $ action =<< mkBackend (defaultBackendConfig {backendShouldLog = False})
+  void $ action =<< mkBackend (def & cfgShouldLog .~ False)
 
 
 -- * test helpers

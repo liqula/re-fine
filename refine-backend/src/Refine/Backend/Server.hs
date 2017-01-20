@@ -22,12 +22,12 @@
 
 module Refine.Backend.Server
   ( startBackend
-  , BackendConfig(..), defaultBackendConfig
   , Backend(..), mkBackend
   , refineApi
   ) where
 
 import           Control.Category
+import           Control.Lens ((^.))
 import           Control.Monad.Except
 import qualified Control.Natural as CN
 import           Control.Natural (($$))
@@ -36,53 +36,38 @@ import           Network.Wai.Handler.Warp as Warp
 import           Prelude hiding ((.), id)
 import           Servant hiding (Patch)
 import           System.Directory (createDirectoryIfMissing)
-import           System.FilePath ((</>))
 
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
-import Refine.Backend.Database (DB, DBConfig(..), DBKind(..), createDBRunner)
+import Refine.Backend.Config
+import Refine.Backend.Database (DB, createDBRunner)
+import Refine.Backend.DocRepo (createRunRepo)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
-import Refine.Backend.DocRepo (createRunRepo)
 import Refine.Common.Rest
 import Refine.Common.Types
 
 
-startBackend :: IO ()
-startBackend = do
-  Warp.runSettings Warp.defaultSettings . backendServer =<< mkBackend defaultBackendConfig
+startBackend :: Config -> IO ()
+startBackend cfg = do
+  Warp.runSettings Warp.defaultSettings . backendServer =<< mkBackend cfg
 
 data Backend = Backend
   { backendServer :: Application
   , backendMonad  :: App DB CN.:~> ExceptT AppError IO
   }
 
-data BackendConfig = BackendConfig
-  { backendShouldMigrate :: Bool
-  , backendShouldLog     :: Bool
-  , backendRootDir       :: FilePath
-  }
-
--- | This will get better when we start taking configuration more serious.
-defaultBackendConfig :: BackendConfig
-defaultBackendConfig = BackendConfig True True "./.backend-data"
-
-defaultDBConfig :: DBConfig
-defaultDBConfig = DBConfig
-  { _dbConfigDBKind   = DBOnDisk (backendRootDir defaultBackendConfig </> "refine.db")
-  , _dbConfigPoolSize = 5
-  }
-
-mkBackend :: BackendConfig -> IO Backend
+mkBackend :: Config -> IO Backend
 mkBackend cfg = do
-  createDirectoryIfMissing True (backendRootDir defaultBackendConfig </> "docrepo")
-  (runDb, userHandler) <- createDBRunner defaultDBConfig
-  runDocRepo <- createRunRepo (backendRootDir defaultBackendConfig </> "docrepo/")
-  let logger = Logger $ if backendShouldLog cfg then putStrLn else const $ pure ()
+  createDirectoryIfMissing True (cfg ^. cfgRootDir)
+  createDirectoryIfMissing True (cfg ^. cfgReposRoot)
+  (runDb, userHandler) <- createDBRunner cfg
+  runDocRepo <- createRunRepo cfg
+  let logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
       app    = runApp runDb runDocRepo logger userHandler
       srv    = Servant.serve (Proxy :: Proxy RefineAPI) $ serverT app refineApi
 
-  when (backendShouldMigrate cfg) $ do
+  when (cfg ^. cfgShouldMigrate) $ do
     void $ (natThrowError . app) $$ do
       migrateDB
 

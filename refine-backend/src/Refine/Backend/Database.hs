@@ -37,20 +37,21 @@ import Data.String.Conversions (cs)
 import Database.Persist.Sqlite
 import Web.Users.Persistent as UserDB
 
+import Refine.Backend.Config
 import Refine.Backend.Database.Class
 import Refine.Backend.Database.Core
 import Refine.Backend.Database.Schema()
 import Refine.Backend.Database.Entity as Entity
 
 
-createDBRunner :: DBConfig -> IO (DB :~> ExceptT DBError IO, UserDB.Persistent)
+createDBRunner :: Config -> IO (DB :~> ExceptT DBError IO, UserDB.Persistent)
 createDBRunner cfg = do
 
-  let sqliteDb = case cfg ^. dbConfigDBKind of
+  let sqliteDb = case cfg ^. cfgDBKind of
         DBInMemory  -> ":memory:"
         DBOnDisk fp -> fp
 
-  pool <- runNoLoggingT $ createSqlitePool (cs sqliteDb) (cfg ^. dbConfigPoolSize)
+  pool <- runNoLoggingT $ createSqlitePool (cs sqliteDb) (cfg ^. cfgPoolSize)
 
   pure ( Nat (wrapErrors . (`runSqlPool` pool) . runExceptT . unDB)
        , Persistent (`runSqlPool` pool)

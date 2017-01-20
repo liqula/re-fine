@@ -23,20 +23,10 @@
 module Refine.Backend.Database.Core where
 
 import Control.Exception
-import Control.Lens (makeLenses, makePrisms)
 import Control.Monad.Except
 import Control.Monad.Reader
 import Database.Persist.Sql
 
-
-data DBKind
-  = DBInMemory
-  | DBOnDisk FilePath
-
-data DBConfig = DBConfig
-  { _dbConfigPoolSize :: Int
-  , _dbConfigDBKind   :: DBKind
-  }
 
 type SQLM = ReaderT SqlBackend IO
 
@@ -63,10 +53,3 @@ notUnique = DB . throwError . DBNotUnique
 
 liftDB :: SQLM a -> DB a
 liftDB = DB . lift
-
--- * lenses
-
-makeLenses ''DBConfig
-
-makePrisms ''DBKind
-makePrisms ''DBConfig

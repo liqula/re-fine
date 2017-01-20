@@ -33,7 +33,7 @@ import           Data.String.Conversions (ConvertibleStrings, cs)
 import           Prelude hiding ((.))
 import           System.IO.Temp (withSystemTempDirectory)
 import           System.Directory
-                    ( createDirectory
+                    ( createDirectoryIfMissing
                     , removeDirectoryRecursive
                     , removeFile
                     , withCurrentDirectory
@@ -42,6 +42,7 @@ import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic
 
+import Refine.Backend.Config
 import Refine.Backend.App         as App
 import Refine.Backend.App.User    as App
 import Refine.Backend.App.MigrateDB
@@ -112,13 +113,24 @@ provideAppRunner action = withTempCurrentDirectory $ do
   removeFile testDb
   removeDirectoryRecursive reposRoot
 
-createAppRunner :: forall a . IO (App DB a -> IO a, String, String)
+createAppRunner :: forall a . IO (App DB a -> IO a, FilePath, FilePath)
 createAppRunner = do
   let testDb    = "test.db"
       reposRoot = "repos"
-  createDirectory reposRoot
-  (runDb, userHandler) <- createDBRunner $ DBConfig 5 (DBOnDisk testDb)
-  runDocRepo <- createRunRepo reposRoot
+
+      cfg = Config
+        { _cfgShouldMigrate = False  -- (this is ignored here)
+        , _cfgShouldLog     = False  -- (this is ignored here)
+        , _cfgRootDir       = "."
+        , _cfgReposRoot     = reposRoot
+        , _cfgDBKind        = DBOnDisk testDb
+        , _cfgPoolSize      = 5
+        }
+
+  createDirectoryIfMissing True $ cfg ^. cfgRootDir
+  createDirectoryIfMissing True $ cfg ^. cfgReposRoot
+  (runDb, userHandler) <- createDBRunner cfg
+  runDocRepo <- createRunRepo cfg
   let logger = Logger . const $ pure ()
       runner :: forall b . App DB b -> IO b
       runner m = (natThrowError . runApp runDb runDocRepo logger userHandler) $$ m

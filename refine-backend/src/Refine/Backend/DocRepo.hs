@@ -31,13 +31,14 @@ import Control.Monad.Except
 import Control.Monad.Reader (runReaderT)
 import Control.Natural
 
+import Refine.Backend.Config
 import Refine.Backend.DocRepo.Core
 import Refine.Backend.DocRepo.Darcs
 
 
-createRunRepo :: FilePath -> IO (DocRepo :~> ExceptT DocRepoError IO)
-createRunRepo repoDir = pure $
-  Nat (wrapErrors . flip runReaderT (DocRepoCtx repoDir) . runExceptT . unDocRepo)
+createRunRepo :: Config -> IO (DocRepo :~> ExceptT DocRepoError IO)
+createRunRepo cfg = pure $
+  Nat (wrapErrors . flip runReaderT cfg . runExceptT . unDocRepo)
   where
     wrapErrors :: IO (Either DocRepoError a) -> ExceptT DocRepoError IO a
     wrapErrors m = do

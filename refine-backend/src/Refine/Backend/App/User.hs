@@ -17,8 +17,9 @@ import Refine.Backend.Database.Core (DB)
 login :: ST -> ST -> App DB ()
 login username (Users.PasswordPlain -> password) = do
   appLog "login"
-  -- FIXME: Valid session duration instead of 1000
-  let sessionDuration = 1000 :: NominalDiffTime
+  let sessionDuration = 1000 :: NominalDiffTime  -- FIXME: move this to
+                                                 -- 'Refine.Backend.Config.Config' and store the
+                                                 -- config passed to 'startServer' in the App state.
   userHandle <- view appUserHandle
   session <- maybe (throwError (AppUserNotFound username)) pure
              =<< appIO (Users.authUser userHandle username password sessionDuration)
