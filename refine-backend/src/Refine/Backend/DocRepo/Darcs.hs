@@ -56,7 +56,7 @@ createInitialPatch repo vers = do
     uuid <- newUUID
     let repoDir   = repoRoot </> (repo ^. unRepoHandle . to cs)
         patchFile = repoDir </> uuid
-    ST.writeFile patchFile (vers ^. unVDocVersion)  -- TODO: need to call canonicalizer!
+    ST.writeFile patchFile (vers ^. unVDocVersion)
     pure . PatchHandle $ cs uuid
 
 getVersion :: RepoHandle -> PatchHandle -> DocRepo (VDocVersion 'HTMLCanonical)
