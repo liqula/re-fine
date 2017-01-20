@@ -29,7 +29,7 @@ emptyGlobalState = GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop
 
 spec :: Spec
 spec = do
-  describe "RefineStore" $ do
+  describe "Store" $ do
     describe "transform" $ do
       it "integrates the loaded document list into the store" . property $
         \list -> monadicIO . run $ do

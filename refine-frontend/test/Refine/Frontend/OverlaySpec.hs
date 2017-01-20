@@ -2,9 +2,9 @@ module Refine.Frontend.OverlaySpec where
 
 import Test.Hspec
 
-import qualified Refine.Frontend.RefineStore as RS
-
+import qualified Refine.Frontend.Types as RS
 import           Refine.Frontend.Overlay
+
 
 rangeTopFor :: Int -> Int -> RS.Range
 rangeTopFor top =
