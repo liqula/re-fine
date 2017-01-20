@@ -94,7 +94,36 @@ spec = parallel $ do
           , Node (TagOpen "mark" [(Attr "data-offset" "9")]) []
           ], 9)
 
-      --it "carries over the offset into the next tree of the forest" $ do
-
-      --it "carries over the offset into the parent" $ do
+      it "carries over the offset from the children to the parent and into the next tree of the forest" $ do
+        addOffsetsToForest_ 50
+          [ Node (TagOpen "div" []) [ Node (ContentText "text a") []
+                                    , Node (TagOpen "mark" []) []
+                                    , Node (ContentText "marked text") []
+                                    , Node (TagClose "mark") []
+                                    , Node (ContentText "unmarked text") []]
+          , Node (ContentText "some text") []
+          , Node (TagOpen "mark" []) [ Node (ContentText "some text in mark") []
+                                      , Node (TagOpen "mark" []) []
+                                      , Node (ContentText "more text in mark") []
+                                      , Node (TagClose "mark") []
+                                      ]
+          , Node (ContentText "another text") []
+          , Node (TagOpen "mark" []) []
+          ] `shouldBe`
+          ([ Node (TagOpen "div" [(Attr "data-offset" "0")])
+                                    [ Node (ContentText "text a") [] -- length 6
+                                    , Node (TagOpen "mark" [(Attr "data-offset" "6")]) []
+                                    , Node (ContentText "marked text") [] -- length 11
+                                    , Node (TagClose "mark") []
+                                    , Node (ContentText "unmarked text") []] -- length 13
+          , Node (ContentText "some text") [] -- length 9
+          , Node (TagOpen "mark" [(Attr "data-offset" "39")])
+                                      [ Node (ContentText "some text in mark") [] -- length 17
+                                      , Node (TagOpen "mark" [(Attr "data-offset" "56")]) []
+                                      , Node (ContentText "more text in mark") [] -- length 17
+                                      , Node (TagClose "mark") []
+                                      ]
+          , Node (ContentText "another text") [] -- length 12
+          , Node (TagOpen "mark" [(Attr "data-offset" "85")]) []
+          ], 85)
 

@@ -20,7 +20,15 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Common.VDoc.HTML.Enhance where
+module Refine.Common.VDoc.HTML.Enhance
+  ( addUIInfoToForest
+  -- mainly for testing:
+  , addDataUidsToForest
+  , addDataUidsToTree
+  , addOffsetsToForest
+  , addOffsetsToForest_
+  , addOffsetsToTree
+  ) where
 
 import           Data.Maybe (fromMaybe, isNothing)
 import           Data.String (fromString)
@@ -28,6 +36,16 @@ import qualified Data.Text as T
 import           Data.Tree
 import           Text.HTML.Parser
 
+
+-- | Make sure all open tags have a @data-uid@ attribute (if missing: inherit from first suitable
+-- ancestor) and a @data-offset@ attribute that contains the text offset relative to that ancestor.
+-- (i.e., we traverse the left siblings and their descendants and compute the sum of the text
+-- lenghts.)
+--
+-- This function should probably be called on (the forest contained in) @VDocVersion
+-- 'HTMLWithMarks@, and probably only in the frontend.
+addUIInfoToForest :: Forest Token -> Forest Token
+addUIInfoToForest = addDataUidsToForest . addOffsetsToForest
 
 addDataUidsToForest :: Forest Token -> Forest Token
 addDataUidsToForest = addDataUidsToForest_ ""
