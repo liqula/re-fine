@@ -46,10 +46,10 @@ createRepo = do
     createDirectory repoDir
     pure . RepoHandle . cs $ uuid
 
-createPatch :: RepoHandle -> PatchHandle -> VDocVersion 'HTMLRaw -> DocRepo PatchHandle
+createPatch :: RepoHandle -> PatchHandle -> VDocVersion 'HTMLCanonical -> DocRepo PatchHandle
 createPatch repo _base = createInitialPatch repo
 
-createInitialPatch :: RepoHandle -> VDocVersion 'HTMLRaw -> DocRepo PatchHandle
+createInitialPatch :: RepoHandle -> VDocVersion 'HTMLCanonical -> DocRepo PatchHandle
 createInitialPatch repo vers = do
   repoRoot <- view cfgReposRoot
   docRepoIO $ do
