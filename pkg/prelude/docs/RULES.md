@@ -131,6 +131,21 @@ import qualified Data.Text.Lazy as LT
    RATIONALE: it's both better for small screens and less 1-dimensional and thus more readable on any screen.
 
 
+### finding names
+
+Append natural numbers to names in order to avoid name shadowing
+warnings.
+
+RATIONALE:
+- trailing `_` is already used by react-flux, blaze, lucid etc..
+- leading `_` is used by lens and, worse, has the special meaning as a
+  typed hole.
+- tailing `'` has an informal meaning in analysis that is different from
+  what we have in mind here (it's somehow the next step in an
+  iteration).
+- leading `'` is a syntax error (and also would be very confusing).
+
+
 ### tests
 
 Tests are written using hspec, hspec-discover.  Every package has its
