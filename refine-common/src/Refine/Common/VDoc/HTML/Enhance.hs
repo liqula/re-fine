@@ -51,20 +51,20 @@ addDataUidsToForest :: Forest Token -> Forest Token
 addDataUidsToForest = addDataUidsToForest_ ""
 
 addDataUidsToForest_ :: T.Text -> Forest Token -> Forest Token
-addDataUidsToForest_ uid forest = map (addDataUidsToTree uid) forest
+addDataUidsToForest_ uid = map (addDataUidsToTree uid)
 
 addDataUidsToTree :: T.Text -> Tree Token -> Tree Token
 addDataUidsToTree uid (Node (TagOpen tagname attrs) children) =
   let attrUid = findAttrUidIn attrs
       newUid = fromMaybe uid attrUid
-      newAttrs = if isNothing attrUid then ((Attr (fromString "data-uid") uid):attrs) else attrs
+      newAttrs = if isNothing attrUid then Attr (fromString "data-uid") uid:attrs else attrs
   in Node (TagOpen tagname newAttrs) (addDataUidsToForest_ newUid children)
   where
     findAttrUidIn :: [Attr] -> Maybe T.Text
     findAttrUidIn [] = Nothing
-    findAttrUidIn ((Attr "data-uid" value):_) = Just value
+    findAttrUidIn (Attr "data-uid" value:_) = Just value
     findAttrUidIn (_:as) = findAttrUidIn as
-addDataUidsToTree uid (Node t children) = (Node t (addDataUidsToForest_ uid children))
+addDataUidsToTree uid (Node t children) = Node t (addDataUidsToForest_ uid children)
 
 
 addOffsetsToForest :: Forest Token -> Forest Token
@@ -86,13 +86,13 @@ addOffsetsToForest_ offset (n:trees) =
 
 addOffsetsToTree :: Int -> Tree Token -> (Tree Token, Int)
 addOffsetsToTree offset (Node (TagOpen "mark" attrs) children) =
-  let newAttrs = ((Attr "data-offset" (T.pack (show offset))):attrs)
+  let newAttrs = (Attr "data-offset" (T.pack (show offset)):attrs)
       (newForest, newOffset) = addOffsetsToForest_ offset children
   in (Node (TagOpen "mark" newAttrs) newForest, newOffset)
 addOffsetsToTree _ (Node (TagOpen tagname attrs) children) =
   let (newForest, newOffset) = addOffsetsToForest_ 0 children
-  in (Node (TagOpen tagname ((Attr "data-offset" "0"):attrs)) newForest, newOffset)
+  in (Node (TagOpen tagname (Attr "data-offset" "0":attrs)) newForest, newOffset)
 addOffsetsToTree offset (Node t children) =
-  let (newForest, newOffset) = (addOffsetsToForest_ offset children)
+  let (newForest, newOffset) = addOffsetsToForest_ offset children
   in (Node t newForest, newOffset)
 
