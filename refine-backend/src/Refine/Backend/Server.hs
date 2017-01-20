@@ -92,6 +92,7 @@ toServantError :: (Monad m) => ExceptT AppError m :~> ExceptT ServantErr m
 toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError) pure)
   where
     -- FIXME: Render JSON from the errors
+    -- FIXME: some (many?) of these shouldn't be err500.
     fromAppError :: AppError -> ServantErr
     fromAppError (AppUnknownError msg)       = err500 { errBody = cs msg }
     fromAppError (AppVDocError    vdocError) = err500 { errBody = cs $ show vdocError }
