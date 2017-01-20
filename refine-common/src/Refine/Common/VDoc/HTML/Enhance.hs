@@ -78,9 +78,8 @@ addOffsetsToForest_ offset [] = ([], offset)
 addOffsetsToForest_ offset (n@(Node (ContentText t) []) : trees) =
   let (newForest, newOffset) = addOffsetsToForest_ (offset + ST.length t) trees
   in (n : newForest, newOffset)
-addOffsetsToForest_ offset (n@(Node (ContentChar _) []) : trees) =
-  let (newForest, newOffset) = addOffsetsToForest_ (offset + 1) trees
-  in (n : newForest, newOffset)
+addOffsetsToForest_ _ (Node (ContentChar _) _ : _) =
+  error "addOffsetsToForest_: non-canonical tree."
 addOffsetsToForest_ offset (n : trees) =
   let (firstTree, firstOffset) = addOffsetsToTree offset n
       (newForest, newOffset) = addOffsetsToForest_ firstOffset trees
