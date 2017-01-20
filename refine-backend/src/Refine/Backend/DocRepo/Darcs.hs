@@ -32,8 +32,6 @@ import System.Directory
 import Refine.Backend.Config
 import Refine.Backend.DocRepo.Core
 import Refine.Common.Types.VDoc
-import Refine.Common.VDoc.HTML (canonicalizeVDocVersion)
-import Refine.Prelude (monadError)
 
 
 newUUID :: IO String
@@ -48,18 +46,17 @@ createRepo = do
     createDirectory repoDir
     pure . RepoHandle . cs $ uuid
 
-createPatch :: RepoHandle -> PatchHandle -> VDocVersion 'HTMLRaw -> DocRepo PatchHandle
-createPatch repo _base = createInitialPatch repo  -- TODO: attach to parent patch.
+createPatch :: RepoHandle -> PatchHandle -> VDocVersion 'HTMLCanonical -> DocRepo PatchHandle
+createPatch repo _base = createInitialPatch repo
 
-createInitialPatch :: RepoHandle -> VDocVersion 'HTMLRaw -> DocRepo PatchHandle
+createInitialPatch :: RepoHandle -> VDocVersion 'HTMLCanonical -> DocRepo PatchHandle
 createInitialPatch repo vers = do
   repoRoot <- view cfgReposRoot
-  vers' <- monadError DocRepoVDocError $ canonicalizeVDocVersion vers
   docRepoIO $ do
     uuid <- newUUID
     let repoDir   = repoRoot </> (repo ^. unRepoHandle . to cs)
         patchFile = repoDir </> uuid
-    ST.writeFile patchFile (vers' ^. unVDocVersion)
+    ST.writeFile patchFile (vers ^. unVDocVersion)  -- TODO: need to call canonicalizer!
     pure . PatchHandle $ cs uuid
 
 getVersion :: RepoHandle -> PatchHandle -> DocRepo (VDocVersion 'HTMLCanonical)

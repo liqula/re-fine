@@ -49,9 +49,11 @@ createVDocGetComposite = (getCompositeVDoc . view vdocID) <=< createVDoc
 createVDoc :: Create VDoc -> App DB VDoc
 createVDoc pv = do
   appLog "createVDoc"
+  vd <- pv ^. createVDocInitVersion
+            . to (monadError AppVDocError . canonicalizeVDocVersion)
   (dr, dp) <- docRepo $ do
     dr <- DocRepo.createRepo
-    dp <- DocRepo.createInitialPatch dr (pv ^. createVDocInitVersion)
+    dp <- DocRepo.createInitialPatch dr vd
     pure (dr, dp)
   db $ do
     p <- DB.createPatch dp

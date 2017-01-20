@@ -29,13 +29,11 @@ import Control.Monad.Reader
 import Data.String.Conversions (ST)
 
 import Refine.Backend.Config
-import Refine.Common.VDoc.HTML (VDocHTMLError)
 
 
 data DocRepoError
   = DocRepoUnknownError String
   | DocRepoException SomeException
-  | DocRepoVDocError VDocHTMLError
   deriving (Show)
 
 newtype DocRepo a = DocRepo { unDocRepo :: ExceptT DocRepoError (ReaderT Config IO) a }
