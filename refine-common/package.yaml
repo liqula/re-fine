@@ -24,12 +24,16 @@ dependencies:
   - elim
   - functor-infix
   - generics-sop
+  - hspec
+  - hspec-core
   - html-parse
   - http-api-data
   - json-sop
   - lens
   - mtl
   - natural-transformation
+  - QuickCheck
+  - quickcheck-instances
   - refine-prelude
   - servant
   - string-conversions
