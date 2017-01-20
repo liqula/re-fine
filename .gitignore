@@ -1,4 +1,6 @@
 *.build
 *.shake
-*.cabal
 .stack-work
+/refine-prelude/refine-prelude.cabal
+/refine-common/refine-common.cabal
+/refine-backend/refine-backend.cabal
