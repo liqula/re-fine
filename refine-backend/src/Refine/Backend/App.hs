@@ -27,14 +27,19 @@ module Refine.Backend.App
 
 import Control.Monad.Except
 import Control.Monad.Reader
+import Control.Monad.State
 import Control.Natural
 
 import Refine.Backend.App.Core as App
 import Refine.Backend.App.Note as App
 import Refine.Backend.App.VDoc as App
 import Refine.Backend.Logger
+import Refine.Backend.User.Core (UserHandle)
 
 
-runApp :: RunDB db -> RunDocRepo -> Logger -> App db :~> ExceptT AppError IO
-runApp runDB runDocRepo logger =
-  Nat $ (`runReaderT` AppContext runDB runDocRepo logger) . unApp
+runApp :: RunDB db -> RunDocRepo -> Logger -> UserHandle -> App db :~> ExceptT AppError IO
+runApp runDB runDocRepo logger userHandle =
+  Nat $ runSR NonActiveUser (AppContext runDB runDocRepo logger userHandle) . unApp
+  where
+    runSR :: (Monad m) => s -> r -> StateT s (ReaderT r m) a -> m a
+    runSR s r m = runReaderT (evalStateT m s) r

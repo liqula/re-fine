@@ -28,6 +28,7 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader
 import Data.String.Conversions (ST)
 
+import Refine.Backend.Config
 
 
 data DocRepoError
@@ -35,17 +36,13 @@ data DocRepoError
   | DocRepoException SomeException
   deriving (Show)
 
-newtype DocRepoCtx = DocRepoCtx
-  { _docRepoRoot :: FilePath
-  }
-
-newtype DocRepo a = DocRepo { unDocRepo :: ExceptT DocRepoError (ReaderT DocRepoCtx IO) a }
+newtype DocRepo a = DocRepo { unDocRepo :: ExceptT DocRepoError (ReaderT Config IO) a }
   deriving
     ( Functor
     , Applicative
     , Monad
     , MonadError DocRepoError
-    , MonadReader DocRepoCtx
+    , MonadReader Config
     )
 
 docRepoIO :: IO a -> DocRepo a
@@ -61,6 +58,5 @@ newtype PatchHandle = PatchHandle { _unPatchHandle :: ST }
 
 -- * lenses
 
-makeLenses ''DocRepoCtx
 makeLenses ''RepoHandle
 makeLenses ''PatchHandle

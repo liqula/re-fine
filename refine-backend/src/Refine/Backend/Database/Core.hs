@@ -24,18 +24,11 @@ module Refine.Backend.Database.Core where
 
 import Control.Exception
 import Control.Monad.Except
-import Control.Monad.Logger
 import Control.Monad.Reader
-import Control.Monad.Trans.Resource
 import Database.Persist.Sql
 
 
-
-data DBConfig
-  = DBInMemory
-  | DBOnDisk FilePath
-
-type SQLM = ReaderT SqlBackend (NoLoggingT (ResourceT IO))
+type SQLM = ReaderT SqlBackend IO
 
 newtype DB a = DB { unDB :: ExceptT DBError SQLM a }
   deriving

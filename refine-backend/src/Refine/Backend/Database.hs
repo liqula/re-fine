@@ -29,28 +29,33 @@ module Refine.Backend.Database
   ) where
 
 import Control.Exception
+import Control.Lens ((^.))
 import Control.Monad.Except
+import Control.Monad.Logger
 import Control.Natural
 import Data.String.Conversions (cs)
 import Database.Persist.Sqlite
+import Web.Users.Persistent as UserDB
 
+import Refine.Backend.Config
 import Refine.Backend.Database.Class
 import Refine.Backend.Database.Core
 import Refine.Backend.Database.Schema()
 import Refine.Backend.Database.Entity as Entity
 
 
-
-createDBRunner :: DBConfig -> IO (DB :~> ExceptT DBError IO)
+createDBRunner :: Config -> IO (DB :~> ExceptT DBError IO, UserDB.Persistent)
 createDBRunner cfg = do
 
-  let sqliteDb = case cfg of
+  let sqliteDb = case cfg ^. cfgDBKind of
         DBInMemory  -> ":memory:"
         DBOnDisk fp -> fp
 
-  let runQuery = wrapErrors . runSqlite (cs sqliteDb) . runExceptT
+  pool <- runNoLoggingT $ createSqlitePool (cs sqliteDb) (cfg ^. cfgPoolSize)
 
-  pure $ Nat (runQuery . unDB)
+  pure ( Nat (wrapErrors . (`runSqlPool` pool) . runExceptT . unDB)
+       , Persistent (`runSqlPool` pool)
+       )
   where
     wrapErrors :: IO (Either DBError a) -> ExceptT DBError IO a
     wrapErrors =

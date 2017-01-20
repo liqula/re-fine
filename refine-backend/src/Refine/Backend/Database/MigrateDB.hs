@@ -7,10 +7,8 @@ import Refine.Backend.Database.Core
 import Refine.Backend.Database.Schema
 
 
-
 migrateDB :: DB [ST]
-migrateDB = do
-  liftDB $ do
-    mig'  <- showMigration migrateRefine
-    mig'' <- runMigrationSilent migrateRefine
-    pure $ mig' <> mig''
+migrateDB = liftDB $ do
+  mig'  <- showMigration migrateRefine
+  mig'' <- runMigrationSilent migrateRefine
+  pure $ mig' <> mig''

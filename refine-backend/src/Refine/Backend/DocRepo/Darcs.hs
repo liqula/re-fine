@@ -29,6 +29,7 @@ import System.FilePath ((</>))
 import System.Random
 import System.Directory
 
+import Refine.Backend.Config
 import Refine.Backend.DocRepo.Core
 import Refine.Common.Types.VDoc
 
@@ -38,7 +39,7 @@ newUUID = show @UUID <$> randomIO
 
 createRepo :: DocRepo RepoHandle
 createRepo = do
-  repoRoot <- view docRepoRoot
+  repoRoot <- view cfgReposRoot
   docRepoIO $ do
     uuid <- newUUID
     let repoDir = repoRoot </> uuid
@@ -50,7 +51,7 @@ createPatch repo _base = createInitialPatch repo
 
 createInitialPatch :: RepoHandle -> VDocVersion 'HTMLRaw -> DocRepo PatchHandle
 createInitialPatch repo vers = do
-  repoRoot <- view docRepoRoot
+  repoRoot <- view cfgReposRoot
   docRepoIO $ do
     uuid <- newUUID
     let repoDir   = repoRoot </> (repo ^. unRepoHandle . to cs)
@@ -60,7 +61,7 @@ createInitialPatch repo vers = do
 
 getVersion :: RepoHandle -> PatchHandle -> DocRepo (VDocVersion 'HTMLCanonical)
 getVersion repo vers = do
-  repoRoot <- view docRepoRoot
+  repoRoot <- view cfgReposRoot
   docRepoIO $ do
     let repoDir   = repoRoot </> (repo ^. unRepoHandle . to cs)
         patchFile = repoDir </> (vers ^. unPatchHandle . to cs)

@@ -19,6 +19,7 @@ dependencies:
   - aeson
   - base
   - darcs
+  - data-default
   - directory
   - elim
   - filepath
@@ -40,6 +41,9 @@ dependencies:
   - servant-server
   - string-conversions
   - text
+  - time
+  - users
+  - users-persistent
   - uuid
   - warp
 
