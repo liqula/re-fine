@@ -1,0 +1,150 @@
+-- *NOT* created by hpack any more, because hpack does not support to
+-- specify js-sources.
+--
+-- losely related: https://github.com/sol/hpack/issues/136
+
+name:           refine-frontend
+version:        0.0.0.0
+synopsis:       Refine frontend
+description:    Please see README.md
+category:       Web
+homepage:       https://github.com/fisx/refine
+author:         Andor Penzes <andor.penzes@gmail.com>,
+                Matthias Fischmann <mf@zerobuzz.net>,
+                Nicole Rauch <info@nicole-rauch.de>
+maintainer:     mf@zerobuzz.net
+copyright:      2017-2022 zerobuzz.net
+license:        AGPL
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
+
+library
+  hs-source-dirs:
+      src
+  ghc-options: -j -Wall -Werror
+  build-depends:
+      aeson
+    , base >= 4.7 && < 5
+    , basic-sop
+    , containers
+    , deepseq
+    , ghcjs-base
+    , html-parse
+    , json-sop
+    , lens
+    , QuickCheck
+    , quickcheck-instances
+    , react-flux
+    , react-flux-servant
+    , refine-common
+    , refine-prelude
+    , string-conversions
+    , text
+  exposed-modules:
+      Refine.Frontend.Core
+      Refine.Frontend.Heading
+      Refine.Frontend.Loader.Component
+      Refine.Frontend.Mark
+      Refine.Frontend.Rest
+      Refine.Frontend.StickyViews
+      Refine.Frontend.Store
+      Refine.Frontend.Style
+      Refine.Frontend.Types
+      Refine.Frontend.UtilityWidgets
+      Refine.Frontend.Views
+      Refine.Frontend.WindowSize
+  default-language: Haskell2010
+
+executable refine-frontend
+  main-is: Main.hs
+  hs-source-dirs:
+      src
+    , app
+  ghc-options: -j -Wall -Werror
+  cpp-options: -DGHCJS_BROWSER
+  build-depends:
+      aeson
+    , base >= 4.7 && < 5
+    , basic-sop
+    , containers
+    , deepseq
+    , ghcjs-base
+    , html-parse
+    , json-sop
+    , lens
+    , QuickCheck
+    , quickcheck-instances
+    , react-flux
+    , react-flux-servant
+    , refine-common
+    , refine-prelude
+    , string-conversions
+    , text
+    , hspec
+    , hspec-discover
+  other-modules:
+      Refine.Frontend.Core
+      Refine.Frontend.Heading
+      Refine.Frontend.Loader.Component
+      Refine.Frontend.Mark
+      Refine.Frontend.Rest
+      Refine.Frontend.StickyViews
+      Refine.Frontend.Store
+      Refine.Frontend.Style
+      Refine.Frontend.Types
+      Refine.Frontend.UtilityWidgets
+      Refine.Frontend.Views
+      Refine.Frontend.WindowSize
+  default-language: Haskell2010
+
+test-suite spec
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  hs-source-dirs:
+      test
+    , src
+  ghc-options: -j -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base >= 4.7 && < 5
+    , basic-sop
+    , containers
+    , deepseq
+    , ghcjs-base
+    , html-parse
+    , json-sop
+    , lens
+    , QuickCheck
+    , quickcheck-instances
+    , react-flux
+    , react-flux-servant
+    , refine-common
+    , refine-prelude
+    , string-conversions
+    , text
+    , base
+    , hspec
+    , hspec-core
+    , hspec-discover
+    , QuickCheck
+    , quickcheck-instances
+  other-modules:
+      Refine.Frontend.EnzymeSpec
+      Refine.Frontend.CoreSpec
+      Refine.Frontend.StoreSpec
+      Refine.Frontend.Core
+      Refine.Frontend.Heading
+      Refine.Frontend.Loader.Component
+      Refine.Frontend.Mark
+      Refine.Frontend.Rest
+      Refine.Frontend.StickyViews
+      Refine.Frontend.Store
+      Refine.Frontend.Style
+      Refine.Frontend.Types
+      Refine.Frontend.UtilityWidgets
+      Refine.Frontend.Views
+      Refine.Frontend.WindowSize
+  js-sources:
+      jsbits/test.js
+  default-language: Haskell2010
