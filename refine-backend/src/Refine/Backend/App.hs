@@ -39,7 +39,7 @@ import Refine.Backend.User (UserHandle)
 
 runApp :: RunDB db -> RunDocRepo -> Logger -> UserHandle -> App db :~> ExceptT AppError IO
 runApp runDB runDocRepo logger userHandle =
-  Nat $ runSR (AppContext runDB runDocRepo logger userHandle) NonActiveUser . unApp
+  Nat $ runSR NonActiveUser (AppContext runDB runDocRepo logger userHandle) . unApp
   where
-    runSR :: (Monad m) => r -> s -> StateT s (ReaderT r m) a -> m a
-    runSR r s m = runReaderT (evalStateT m s) r
+    runSR :: (Monad m) => s -> r -> StateT s (ReaderT r m) a -> m a
+    runSR s r m = runReaderT (evalStateT m s) r
