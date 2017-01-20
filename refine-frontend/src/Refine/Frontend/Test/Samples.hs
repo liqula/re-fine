@@ -19,9 +19,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 
--- | FIXME: Once #2 is closed (hopefully in !26), this can be moved to Refine.Frontend.Test.Samples,
--- and then we can keep it indefinitely.
-module Refine.Frontend.Data.Samples where
+module Refine.Frontend.Test.Samples where
 
 import           Data.String.Conversions
 import           Data.Text (replace)

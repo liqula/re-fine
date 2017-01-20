@@ -17,10 +17,10 @@ import           Data.Aeson (ToJSON, encode)
 import           Data.String.Conversions
 import           Data.JSString (JSString, pack, unpack)
 
-import Refine.Common.Types
 import Refine.Common.Rest
-import Refine.Frontend.Data.Samples
+import Refine.Common.Types
 import Refine.Frontend.Rest
+import Refine.Frontend.Test.Samples
 import Refine.Frontend.Types
 
 
