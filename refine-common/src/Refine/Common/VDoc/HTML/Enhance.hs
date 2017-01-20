@@ -32,7 +32,8 @@ module Refine.Common.VDoc.HTML.Enhance
 
 import           Data.Maybe (fromMaybe, isNothing)
 import           Data.String (fromString)
-import qualified Data.Text as T
+import           Data.String.Conversions (ST)
+import qualified Data.Text as ST
 import           Data.Tree
 import           Text.HTML.Parser
 
@@ -50,17 +51,17 @@ addUIInfoToForest = addDataUidsToForest . addOffsetsToForest
 addDataUidsToForest :: Forest Token -> Forest Token
 addDataUidsToForest = addDataUidsToForest_ ""
 
-addDataUidsToForest_ :: T.Text -> Forest Token -> Forest Token
+addDataUidsToForest_ :: ST -> Forest Token -> Forest Token
 addDataUidsToForest_ uid = map (addDataUidsToTree uid)
 
-addDataUidsToTree :: T.Text -> Tree Token -> Tree Token
+addDataUidsToTree :: ST -> Tree Token -> Tree Token
 addDataUidsToTree uid (Node (TagOpen tagname attrs) children) =
   let attrUid = findAttrUidIn attrs
       newUid = fromMaybe uid attrUid
       newAttrs = if isNothing attrUid then Attr (fromString "data-uid") uid:attrs else attrs
   in Node (TagOpen tagname newAttrs) (addDataUidsToForest_ newUid children)
   where
-    findAttrUidIn :: [Attr] -> Maybe T.Text
+    findAttrUidIn :: [Attr] -> Maybe ST
     findAttrUidIn [] = Nothing
     findAttrUidIn (Attr "data-uid" value:_) = Just value
     findAttrUidIn (_:as) = findAttrUidIn as
@@ -73,7 +74,7 @@ addOffsetsToForest = fst . addOffsetsToForest_ 0
 addOffsetsToForest_ :: Int -> Forest Token -> (Forest Token, Int)
 addOffsetsToForest_ offset [] = ([], offset)
 addOffsetsToForest_ offset (n@(Node (ContentText t) []):trees) =
-  let (newForest, newOffset) = addOffsetsToForest_ (offset + T.length t) trees
+  let (newForest, newOffset) = addOffsetsToForest_ (offset + ST.length t) trees
   in (n : newForest, newOffset)
 addOffsetsToForest_ offset (n@(Node (ContentChar _) []):trees) =
   let (newForest, newOffset) = addOffsetsToForest_ (offset + 1) trees
@@ -86,7 +87,7 @@ addOffsetsToForest_ offset (n:trees) =
 
 addOffsetsToTree :: Int -> Tree Token -> (Tree Token, Int)
 addOffsetsToTree offset (Node (TagOpen "mark" attrs) children) =
-  let newAttrs = (Attr "data-offset" (T.pack (show offset)):attrs)
+  let newAttrs = (Attr "data-offset" (ST.pack (show offset)):attrs)
       (newForest, newOffset) = addOffsetsToForest_ offset children
   in (Node (TagOpen "mark" newAttrs) newForest, newOffset)
 addOffsetsToTree _ (Node (TagOpen tagname attrs) children) =
@@ -95,4 +96,3 @@ addOffsetsToTree _ (Node (TagOpen tagname attrs) children) =
 addOffsetsToTree offset (Node t children) =
   let (newForest, newOffset) = addOffsetsToForest_ offset children
   in (Node t newForest, newOffset)
-
