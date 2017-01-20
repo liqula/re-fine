@@ -40,9 +40,6 @@ import Refine.Frontend.Views
 
 spec :: Spec
 spec = it "works" $ do
-  liftIO $ print "js_somethingGlobalAndUnlikelyNamed"
-  liftIO js_somethingGlobalAndUnlikelyNamed
-
   wrapper@(ShallowWrapper jsval) <- shallow $ icon_ "bla"
   js_consoleLog jsval
 
@@ -50,13 +47,6 @@ spec = it "works" $ do
   js_consoleLog jsval'
 
   getWrapperAttrInt wrapper' "length" `shouldReturn` 1
-
-
-
-foreign import javascript unsafe
-  "somethingGlobalAndUnlikelyNamed()"
-  js_somethingGlobalAndUnlikelyNamed :: IO ()
-
 
 
 newtype ShallowWrapper = ShallowWrapper JSVal
