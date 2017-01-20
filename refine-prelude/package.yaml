@@ -25,6 +25,7 @@ dependencies:
   - http-api-data
   - json-sop
   - lens
+  - mtl
   - natural-transformation
   - servant
   - string-conversions

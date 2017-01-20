@@ -46,6 +46,7 @@ import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Common.Rest
 import Refine.Common.Types
+import Refine.Prelude (monadError)
 
 
 startBackend :: Config -> IO ()
@@ -79,7 +80,7 @@ serverT app = enter (toServantError . cnToSn app)
 
 
 toServantError :: (Monad m) => ExceptT AppError m :~> ExceptT ServantErr m
-toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError) pure)
+toServantError = Nat ((lift . runExceptT) >=> monadError fromAppError)
   where
     -- FIXME: Render JSON from the errors
     -- FIXME: some (many?) of these shouldn't be err500.

@@ -24,7 +24,6 @@ module Refine.Backend.App.VDoc where
 
 import Control.Lens ((^.), to, view)
 import Control.Monad ((<=<), join, mapM)
-import Control.Monad.Except (throwError)
 import Data.Monoid ((<>))
 
 import           Refine.Backend.App.Core
@@ -36,7 +35,7 @@ import           Refine.Common.Types.Note
 import           Refine.Common.Types.Prelude
 import           Refine.Common.Types.VDoc
 import           Refine.Common.VDoc.HTML
-import           Refine.Prelude (clearTP)
+import           Refine.Prelude (clearTP, monadError)
 
 
 listVDocs :: App DB [VDoc]
@@ -50,9 +49,11 @@ createVDocGetComposite = (getCompositeVDoc . view vdocID) <=< createVDoc
 createVDoc :: Create VDoc -> App DB VDoc
 createVDoc pv = do
   appLog "createVDoc"
+  vd <- pv ^. createVDocInitVersion
+            . to (monadError AppVDocError . canonicalizeVDocVersion)
   (dr, dp) <- docRepo $ do
     dr <- DocRepo.createRepo
-    dp <- DocRepo.createInitialPatch dr (pv ^. createVDocInitVersion)
+    dp <- DocRepo.createInitialPatch dr vd
     pure (dr, dp)
   db $ do
     p <- DB.createPatch dp
@@ -85,6 +86,6 @@ getCompositeVDoc vid = do
       hpatches <- docRepo $ DocRepo.getChildPatches rhandle hhandle
       patches  <- db $ mapM DB.getPatchFromHandle hpatches
       let chunkRanges = chunkRangesCN <> (view (patchRange . to clearTP) <$> patches)
-      version <- either (throwError . AppVDocError) pure
+      version <- monadError AppVDocError
                  =<< insertMarks chunkRanges <$> docRepo (DocRepo.getVersion rhandle hhandle)
       pure $ CompositeVDoc vdoc repo version patches comments notes

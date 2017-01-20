@@ -67,10 +67,9 @@ insertMarks crs (VDocVersion (parseTokens -> (ts :: [Token])))
 insertMarksTs :: MonadError VDocHTMLError m
               => [ChunkRange a] -> [Token] -> m [Token]
 insertMarksTs crs ts = do
-  let catch cns = either (throwError . cns) pure
-  pf <- catch VDocHTMLErrorBadTree (tokensToForest ts)
+  pf <- monadError VDocHTMLErrorBadTree (tokensToForest ts)
   pfm <- insertMarksF crs (enablePreTokens pf)
-  catch VDocHTMLErrorInternal (resolvePreTokens $ preTokensFromForest pfm)
+  monadError VDocHTMLErrorInternal (resolvePreTokens $ preTokensFromForest pfm)
 
 
 insertMarksF :: forall m a . MonadError VDocHTMLError m

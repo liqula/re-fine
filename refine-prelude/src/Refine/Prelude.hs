@@ -33,6 +33,7 @@ module Refine.Prelude
   , fromNow
 
     -- * misc
+  , monadError
   , justIf
   , justIfP
   , toEnumMay
@@ -51,6 +52,7 @@ module Refine.Prelude
 
 import           Control.Lens
 import           Control.Monad (foldM)
+import           Control.Monad.Except (MonadError(..))
 import           Data.Char (isSpace)
 import           Data.Function (on)
 import           Data.List (replicate, sortBy)
@@ -154,6 +156,10 @@ fromNow now = iso (`diffTimestamps` now) (`addTimespan` now)
 
 
 -- * misc
+
+-- | Convert (Left e) to an MonadError and throw it.
+monadError :: (Monad m, MonadError me m) => (e -> me) -> Either e r -> m r
+monadError err = either (throwError . err) pure
 
 justIf :: a -> Bool -> Maybe a
 justIf x b = if b then Just x else Nothing
