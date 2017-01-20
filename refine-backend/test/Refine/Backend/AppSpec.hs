@@ -86,7 +86,7 @@ spec = do
       -- of the term under test.
       () <- runner $ do
 
-        App.createUser "user" "user@user.com" "password"
+        App.createUser "user" "user@example.com" "password"
         userState0 <- get
         appIO $ userState0 `shouldBe` NonActiveUser
 
