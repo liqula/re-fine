@@ -42,14 +42,18 @@ library
     , string-conversions
     , text
   exposed-modules:
-      Refine.Frontend.Data.Samples
+      -- we can't have hspec, but at least we have bash and find and perl...  :)
+      -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
+      Refine.Frontend.Overlay
       Refine.Frontend.Rest
       Refine.Frontend.StickyViews
       Refine.Frontend.Store
       Refine.Frontend.Style
+      Refine.Frontend.Test.Enzyme
+      Refine.Frontend.Test.Samples
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.Views
@@ -84,15 +88,17 @@ executable refine-frontend
     , hspec
     , hspec-discover
   other-modules:
-      Refine.Frontend.Data.Samples
+      -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
+      Refine.Frontend.Overlay
       Refine.Frontend.Rest
       Refine.Frontend.StickyViews
       Refine.Frontend.Store
       Refine.Frontend.Style
       Refine.Frontend.Test.Enzyme
+      Refine.Frontend.Test.Samples
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.Views
@@ -131,15 +137,19 @@ test-suite spec
     , QuickCheck
     , quickcheck-instances
   other-modules:
-      Refine.Frontend.Data.Samples
+      -- find src test -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
+      Refine.Frontend.Overlay
+      Refine.Frontend.OverlaySpec
       Refine.Frontend.Rest
       Refine.Frontend.StickyViews
       Refine.Frontend.Store
       Refine.Frontend.StoreSpec
       Refine.Frontend.Style
+      Refine.Frontend.Test.Enzyme
+      Refine.Frontend.Test.Samples
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.UtilityWidgetsSpec
