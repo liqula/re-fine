@@ -28,14 +28,11 @@ module Refine.Common.VDoc.HTML.Canonicalize
   , canonicalizeWhitespace
   , setElemUIDs
   , wrapInTopLevelTags
-  , trickledownUIInfo
   , canonicalizeAttrsForest, canonicalizeAttrsTree, canonicalizeAttrsStream, canonicalizeAttrs
   ) where
 
 import           Control.Exception (assert)
-import           Control.Lens ((%~), _1)
 import           Control.Monad.Error.Class (MonadError)
-import           Control.Monad.State (State, runState, modify, get)
 import           Data.Char (isSpace)
 import           Data.Function (on)
 import           Data.List as List (foldl', sort, nubBy)
@@ -117,67 +114,6 @@ wrapInTopLevelTags ts = assert (ts == canonicalizeTokens ts)
     fill :: Tree Token -> Tree Token
     fill n@(Node (ContentText _) _) = Node defaultTag [n]
     fill n                          = n
-
-
--- | Make sure all open tags have a @data-uid@ attribute (if missing: inherit from first suitable
--- ancestor) and a @data-offset@ attribute that contains the text offset relative to that ancestor.
--- (i.e., we traverse the left siblings and their descendents and compute the sum of the text
--- lenghts.)
---
--- This function should probably be called on (the forest contained in) @VDocVersion
--- 'HTMLWithMarks@, and probably only in the frontend.
---
--- TODO: it's probably better to write two functions for data-uid, data-offset and compose them.
--- also, there are probably much simpler algorithms to do this.  we probably don't need State.
-trickledownUIInfo :: Forest Token -> Forest Token
-trickledownUIInfo forest = assert (tokensFromForest forest == canonicalizeTokens (tokensFromForest forest))
-                         . assert (Right (tokensFromForest forest) == wrapInTopLevelTags (tokensFromForest forest))
-                         . fst . fst . (`runState` [])
-                         $ doforest 0 forest
-  where
-    overwriteAttrT :: Attr -> Token -> Token
-    overwriteAttrT attr (TagOpen n attrs) = canonicalizeAttrs $ TagOpen n (attr : attrs)
-    overwriteAttrT _    t                 = t
-
-    overwriteAttrN :: Attr -> Tree Token -> Tree Token
-    overwriteAttrN attr (Node t xs) = Node (overwriteAttrT attr t) xs
-
-    doforest :: Int -> [Tree Token] -> State [DataUID] ([Tree Token], Int)
-    doforest acc [] = pure ([], acc)
-    doforest acc (t : ts) = do
-      (t', l) <- dotree t
-      let t'' = overwriteAttrN (Attr "data-offset" (cs $ show acc)) t'
-      (_1 %~ (t'' :)) <$> doforest (acc + l) ts
-
-    dotree :: Tree Token -> State [DataUID] (Tree Token, Int)
-    dotree t@(Node (ContentText s) []) = do
-      pure (t, ST.length s)
-
-    dotree (Node x@(TagOpen _ _) xs) = do
-      let push :: [DataUID] -> [DataUID]
-          push stack = new : stack
-            where
-              new = case (dataUidOfToken x, stack) of
-                      (Just uid, _)       -> uid
-                      (Nothing,  uid : _) -> uid
-                      (Nothing,  [])      -> error "trickledownUIInfo: call wrapInTopLevelTags first!"
-
-          pop :: [DataUID] -> [DataUID]
-          pop (_ : stack) = stack
-          pop [] = error "impossible."
-
-      modify push
-
-      (xs', l) <- doforest 0 xs
-      (new : _) <- get
-
-      modify pop
-
-      let x' = overwriteAttrT (Attr "data-uid" (cs $ show new)) x
-          n' = Node x' xs'
-      pure (n', l)
-
-    dotree n = pure (n, 0)
 
 
 -- | Call 'canonicalizeAttrs' on a token 'Forest'.

@@ -4,7 +4,7 @@ var config = require("./webpack.config");
 
 // settings for local dev server
 var localPort = 9090;
-var proxiedServer = "http://localhost:8080";
+var proxiedServer = "http://localhost:3000";
 
 new WebpackDevServer(webpack(config), {
     publicPath: config.output.publicPath,

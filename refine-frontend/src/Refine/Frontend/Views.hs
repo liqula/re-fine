@@ -15,6 +15,10 @@ import qualified Data.Map.Strict as M
 import qualified Text.HTML.Parser as HTMLP
 import           Text.HTML.Tree as HTMLT
 
+import           Refine.Common.VDoc.HTML.Enhance (addUIInfoToForest)
+import           Refine.Common.Rest
+import           Refine.Common.Types
+
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Types as RS
 import           Refine.Frontend.Loader.Component (vdocLoader_)
@@ -26,8 +30,6 @@ import           Refine.Frontend.StickyViews (sticky_, stickyContainer_)
 import           Refine.Frontend.WindowSize (windowSize_, WindowSizeProps(..))
 import           Refine.Frontend.Style
 
-import           Refine.Common.Types
-import           Refine.Common.Rest
 
 
 -- | The controller view and also the top level of the Refine app.  This controller view registers
@@ -65,7 +67,7 @@ toArticle (Right forest) = article_
   , "className" $= "gr-20 gr-14@desktop c-article-content"
   , onMouseUp $ \_ me -> RS.dispatch . RS.SetSelection $ mouseClientY me
   , onTouchEnd $ \_ te -> RS.dispatch . RS.SetSelection . touchScreenY . head $ touches te
-  ] (mconcat $ map toHTML forest)
+  ] (mconcat $ map toHTML (addUIInfoToForest forest))
 
 
 toHTML :: DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()
