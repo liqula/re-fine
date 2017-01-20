@@ -58,7 +58,6 @@ data AppUserState
   deriving (Eq, Show)
 
 makeLenses ''AppContext
-makeLenses ''AppUserState
 makeLenses ''UserSession
 
 -- | Application monad handles
