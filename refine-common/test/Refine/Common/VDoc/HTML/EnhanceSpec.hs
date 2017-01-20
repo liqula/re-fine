@@ -59,15 +59,15 @@ spec = parallel $ do
 
       it "passes the present uid to all children that do not already have one" $ do
         addDataUidsToTree (Just "1") (Node openTagWithUID [ Node openTagWithoutUID []
-                                                   , Node openTagWithOtherUID []])
+                                                          , Node openTagWithOtherUID []])
           `shouldBe` Node openTagWithUID [ Node (TagOpen "tag" [Attr "data-uid" "77"]) []
                                          , Node openTagWithOtherUID []]
 
       it "passes the passed uid to all children that do not already have one if none is present" $ do
         addDataUidsToTree (Just "1") (Node openTagWithoutUID [ Node openTagWithoutUID []
-                                                      , Node openTagWithOtherUID []])
+                                                             , Node openTagWithOtherUID []])
           `shouldBe` Node (TagOpen "tag" [Attr "data-uid" "1"]) [ Node (TagOpen "tag" [Attr "data-uid" "1"]) []
-                                                                 , Node openTagWithOtherUID []]
+                                                                , Node openTagWithOtherUID []]
 
     describe "addDataUidsToTree" $ do
       it "sets an offset of 0 if we are not on a mark tag" $ do
@@ -98,12 +98,12 @@ spec = parallel $ do
           , Node (TagOpen "mark" []) []
           ] `shouldBe`
           ([ Node (ContentText "a text") []
-          , Node (TagOpen "mark" [Attr "data-offset" "56"]) []
-          , Node (ContentText "another text") []
-          , Node (TagOpen "div" [Attr "data-offset" "0"]) []
-          , Node (ContentText "more text") []
-          , Node (TagOpen "mark" [Attr "data-offset" "9"]) []
-          ], 9)
+           , Node (TagOpen "mark" [Attr "data-offset" "56"]) []
+           , Node (ContentText "another text") []
+           , Node (TagOpen "div" [Attr "data-offset" "0"]) []
+           , Node (ContentText "more text") []
+           , Node (TagOpen "mark" [Attr "data-offset" "9"]) []
+           ], 9)
 
       it "carries over the offset from the children to the parent and into the next tree of the forest" $ do
         addOffsetsToForest_ 50
@@ -114,10 +114,10 @@ spec = parallel $ do
                                     , Node (ContentText "unmarked text") []]
           , Node (ContentText "some text") []
           , Node (TagOpen "mark" []) [ Node (ContentText "some text in mark") []
-                                      , Node (TagOpen "mark" []) []
-                                      , Node (ContentText "more text in mark") []
-                                      , Node (TagClose "mark") []
-                                      ]
+                                     , Node (TagOpen "mark" []) []
+                                     , Node (ContentText "more text in mark") []
+                                     , Node (TagClose "mark") []
+                                     ]
           , Node (ContentText "another text") []
           , Node (TagOpen "mark" []) []
           ] `shouldBe`
