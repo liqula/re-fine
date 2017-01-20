@@ -7,16 +7,16 @@ import qualified Refine.Frontend.RefineStore as RS
 import           Refine.Frontend.Overlay
 
 rangeTopFor :: Int -> Int -> RS.Range
-rangeTopFor top scrollOffset =
-  RS.Range Nothing 0 Nothing 0 top 0 scrollOffset
+rangeTopFor top =
+  RS.Range Nothing 0 Nothing 0 top 0
 
 rangePosFor :: Int -> Int -> RS.Range
 rangePosFor top bottom =
   RS.Range Nothing 0 Nothing 0 top bottom 0
 
 rangeFor :: Int -> Int -> Int -> RS.Range
-rangeFor top bottom scrollOffset =
-  RS.Range Nothing 0 Nothing 0 top bottom scrollOffset
+rangeFor =
+  RS.Range Nothing 0 Nothing 0
 
 mh :: Int
 mh = 80 -- menu height
@@ -88,4 +88,3 @@ spec = do
 
       it "positions the top closer to the top if a large selection ended there" $ do
          quickCreateOffset (rangeFor (200+mh) (1200+mh+ih) 0) 300 0 `shouldBe` 200
-
