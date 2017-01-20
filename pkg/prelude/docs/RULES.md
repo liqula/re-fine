@@ -32,6 +32,8 @@ nobody objects, it's a new rule!
    if thre are unassigned MRs or MRs assigned to you, those have the
    highest priority.
 
+5. before merging an MR, rebase it on master or merge master into it.
+
 
 ### language extensions
 
