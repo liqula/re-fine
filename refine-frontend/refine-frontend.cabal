@@ -43,6 +43,7 @@ library
     , text
   exposed-modules:
       Refine.Frontend.Core
+      Refine.Frontend.Data.Samples
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
