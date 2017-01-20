@@ -3,7 +3,7 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Arbitrary where
+module Refine.Common.Test.Arbitrary where
 
 import           Data.List ((\\))
 import           Data.Monoid

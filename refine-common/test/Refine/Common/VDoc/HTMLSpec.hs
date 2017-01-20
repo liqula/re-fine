@@ -35,7 +35,7 @@ import           Test.QuickCheck.Instances ()
 import           Text.HTML.Parser
 import           Text.HTML.Tree
 
-import Arbitrary
+import Refine.Common.Test.Arbitrary
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML.Core
 import Refine.Common.VDoc.HTML.Canonicalize

@@ -8,7 +8,7 @@ import Test.Hspec
 import Test.QuickCheck
 import Web.HttpApiData
 
-import Arbitrary ()
+import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Types.Prelude
 
 
