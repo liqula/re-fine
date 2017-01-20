@@ -73,8 +73,9 @@ isActiveUser :: AppUserState -> Bool
 isActiveUser (ActiveUser _) = True
 isActiveUser _              = False
 
+-- Parallel run is not an option here, it could make fail the build at the cleanup stage.
 spec :: Spec
-spec = parallel $ do
+spec = do
   describe "VDoc" . around provideAppRunner $ do
     it "Random program" $ \(runner :: App DB Property -> IO Property) -> forAll sampleProgram $ \program ->
       monadic (monadicApp runner) (runProgram program `evalStateT` initVDocs)
