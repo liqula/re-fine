@@ -98,7 +98,7 @@ toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError)
     fromAppError (AppDBError      dbError)   = err500 { errBody = cs $ show dbError }
     fromAppError (AppDocRepoError docError)  = err500 { errBody = cs $ show docError }
     fromAppError (AppUserNotFound user)      = err500 { errBody = cs $ unwords ["User not found", cs user] }
-    fromAppError AppUserHasNoSession         = err500 { errBody = "There is no session info where it should be." }
+    fromAppError AppUserNotLoggedIn          = err500 { errBody = "Not logged in." }
     fromAppError (AppUserCreationError e)    = err500 { errBody = cs e }
 
 

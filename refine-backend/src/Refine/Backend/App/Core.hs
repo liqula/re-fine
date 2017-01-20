@@ -83,7 +83,7 @@ data AppError
   | AppDBError DBError
   | AppDocRepoError DocRepoError
   | AppUserNotFound ST
-  | AppUserHasNoSession
+  | AppUserNotLoggedIn
   | AppUserCreationError ST
   deriving (Show)
 

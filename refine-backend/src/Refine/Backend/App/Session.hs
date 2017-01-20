@@ -13,7 +13,7 @@ currentUserSession :: App db UserSession
 currentUserSession = do
   u <- get
   case u of
-    NonActiveUser -> throwError AppUserHasNoSession
+    NonActiveUser -> throwError AppUserNotLoggedIn
     ActiveUser s  -> pure s
 
 clearUserSession :: App db ()
