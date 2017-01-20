@@ -88,7 +88,7 @@ addOffsetsToForest_ offset (n : trees) =
 
 addOffsetsToTree :: Int -> Tree Token -> (Tree Token, Int)
 addOffsetsToTree offset (Node (TagOpen "mark" attrs) children) =
-  let newAttrs = (Attr "data-offset" (ST.pack (show offset)) : attrs)
+  let newAttrs = Attr "data-offset" (ST.pack (show offset)) : attrs
       (newForest, newOffset) = addOffsetsToForest_ offset children
   in (Node (TagOpen "mark" newAttrs) newForest, newOffset)
 addOffsetsToTree _ (Node (TagOpen tagname attrs) children) =
