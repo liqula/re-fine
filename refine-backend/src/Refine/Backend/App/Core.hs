@@ -34,7 +34,7 @@ import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.User.Core
 import Refine.Common.VDoc.HTML (VDocHTMLError)
-
+import Refine.Prelude (monadError)
 
 
 type RunDB db   = db      :~> ExceptT DBError      IO
@@ -93,13 +93,13 @@ db :: db a -> App db a
 db m = App $ do
   (Nat runDB) <- view appRunDB
   r <- liftIO (runExceptT (runDB m))
-  either (throwError . AppDBError) pure r
+  monadError AppDBError r
 
 docRepo :: DocRepo a -> App db a
 docRepo m = App $ do
   (Nat runDocRepo) <- view appRunDocRepo
   r <- liftIO (runExceptT (runDocRepo m))
-  either (throwError . AppDocRepoError) pure r
+  monadError AppDocRepoError r
 
 appLog :: String -> App db ()
 appLog msg = App $ do

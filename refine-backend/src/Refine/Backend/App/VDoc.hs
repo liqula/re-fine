@@ -85,6 +85,6 @@ getCompositeVDoc vid = do
       hpatches <- docRepo $ DocRepo.getChildPatches rhandle hhandle
       patches  <- db $ mapM DB.getPatchFromHandle hpatches
       let chunkRanges = chunkRangesCN <> (view (patchRange . to clearTP) <$> patches)
-      version <- either (throwError . AppVDocError) pure
+      version <- appError AppVDocError
                  =<< insertMarks chunkRanges <$> docRepo (DocRepo.getVersion rhandle hhandle)
       pure $ CompositeVDoc vdoc repo version patches comments notes
