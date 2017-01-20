@@ -45,26 +45,26 @@ spec = parallel $ do
     describe "addDataUidsToTree" $ do
 
       it "adds the passed uid when there is none" $ do
-        addDataUidsToTree "1" (Node openTagWithoutUID []) `shouldBe` Node (TagOpen "tag" [Attr "data-uid" "1"]) []
+        addDataUidsToTree (Just "1") (Node openTagWithoutUID []) `shouldBe` Node (TagOpen "tag" [Attr "data-uid" "1"]) []
 
       it "ignores the passed uid when there is already one" $ do
-        addDataUidsToTree "1" (Node openTagWithUID []) `shouldBe` Node openTagWithUID []
+        addDataUidsToTree (Just "1") (Node openTagWithUID []) `shouldBe` Node openTagWithUID []
 
       it "does not alter other tags" $ do
-        addDataUidsToTree "1" (Node (TagClose "tag")     []) `shouldBe` Node (TagClose "tag") []
-        addDataUidsToTree "1" (Node (ContentText "text") []) `shouldBe` Node (ContentText "text") []
-        addDataUidsToTree "1" (Node (ContentChar 'x')    []) `shouldBe` Node (ContentChar 'x') []
-        addDataUidsToTree "1" (Node (Comment "secret")   []) `shouldBe` Node (Comment "secret") []
-        addDataUidsToTree "1" (Node (Doctype "type")     []) `shouldBe` Node (Doctype "type") []
+        addDataUidsToTree (Just "1") (Node (TagClose "tag")     []) `shouldBe` Node (TagClose "tag") []
+        addDataUidsToTree (Just "1") (Node (ContentText "text") []) `shouldBe` Node (ContentText "text") []
+        addDataUidsToTree (Just "1") (Node (ContentChar 'x')    []) `shouldBe` Node (ContentChar 'x') []
+        addDataUidsToTree (Just "1") (Node (Comment "secret")   []) `shouldBe` Node (Comment "secret") []
+        addDataUidsToTree (Just "1") (Node (Doctype "type")     []) `shouldBe` Node (Doctype "type") []
 
       it "passes the present uid to all children that do not already have one" $ do
-        addDataUidsToTree "1" (Node openTagWithUID [ Node openTagWithoutUID []
+        addDataUidsToTree (Just "1") (Node openTagWithUID [ Node openTagWithoutUID []
                                                    , Node openTagWithOtherUID []])
           `shouldBe` Node openTagWithUID [ Node (TagOpen "tag" [Attr "data-uid" "77"]) []
                                          , Node openTagWithOtherUID []]
 
       it "passes the passed uid to all children that do not already have one if none is present" $ do
-        addDataUidsToTree "1" (Node openTagWithoutUID [ Node openTagWithoutUID []
+        addDataUidsToTree (Just "1") (Node openTagWithoutUID [ Node openTagWithoutUID []
                                                       , Node openTagWithOtherUID []])
           `shouldBe` Node (TagOpen "tag" [Attr "data-uid" "1"]) [ Node (TagOpen "tag" [Attr "data-uid" "1"]) []
                                                                  , Node openTagWithOtherUID []]
@@ -137,4 +137,3 @@ spec = parallel $ do
           , Node (ContentText "another text") [] -- length 12
           , Node (TagOpen "mark" [Attr "data-offset" "85"]) []
           ], 85)
-

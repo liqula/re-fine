@@ -30,7 +30,6 @@ module Refine.Common.VDoc.HTML.Enhance
   , addOffsetsToTree
   ) where
 
-import           Data.Maybe (fromMaybe, isNothing)
 import           Data.String (fromString)
 import           Data.String.Conversions (ST)
 import qualified Data.Text as ST
@@ -43,27 +42,27 @@ import           Text.HTML.Parser
 -- (i.e., we traverse the left siblings and their descendants and compute the sum of the text
 -- lenghts.)
 --
+-- It is an error to call this with a forest that has non-tag top-level elements.  Always pass data
+-- through `canonicalizeVDocVersion` (or more directly through 'wrapInTopLevelTags') to make sure
+-- this does not happen.
+--
 -- This function should probably be called on (the forest contained in) @VDocVersion
 -- 'HTMLWithMarks@, and probably only in the frontend.
 addUIInfoToForest :: Forest Token -> Forest Token
 addUIInfoToForest = addDataUidsToForest . addOffsetsToForest
 
 addDataUidsToForest :: Forest Token -> Forest Token
-addDataUidsToForest = fmap (addDataUidsToTree "")
+addDataUidsToForest = fmap (addDataUidsToTree Nothing)
 
-addDataUidsToTree :: ST -> Tree Token -> Tree Token
-addDataUidsToTree uid (Node t children) = Node t' (addDataUidsToTree uid' <$> children)
+addDataUidsToTree :: Maybe ST -> Tree Token -> Tree Token
+addDataUidsToTree muid (Node t children) = Node t' (addDataUidsToTree muid' <$> children)
   where
-    (t', uid') = case t of
-      TagOpen tagname attrs ->
-        let muid' = findAttrUidIn attrs
-            attrs' = case muid' of
-              Nothing -> Attr (fromString "data-uid") uid : attrs
-              Just _  -> attrs
-        in ( TagOpen tagname attrs'
-           , fromMaybe uid muid'
-           )
-      _ -> (t, uid)
+    (t', muid') = case t of
+      TagOpen tagname attrs -> case (findAttrUidIn attrs, muid) of
+        (Just i,  _)      -> (TagOpen tagname attrs, Just i)
+        (Nothing, Just i) -> (TagOpen tagname (Attr (fromString "data-uid") i : attrs), Just i)
+        _                 -> error "addDataUidsToTree: top-level tag without data-uid."
+      _ -> (t, muid)
 
 findAttrUidIn :: [Attr] -> Maybe ST
 findAttrUidIn [] = Nothing
