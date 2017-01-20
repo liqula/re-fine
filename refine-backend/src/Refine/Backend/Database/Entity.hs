@@ -83,6 +83,9 @@ getEntity eid = do
   e <- liftDB . get $ S.idToKey eid
   maybe (idNotFound eid) pure e
 
+mkDBChunkRange :: CreateChunkRange -> DBChunkRange
+mkDBChunkRange cr = DBChunkRange (cr ^. createChunkRangeBegin) (cr ^. createChunkRangeEnd)
+
 vdocDBLens :: EntityLens' DB (ID VDoc) VDoc
 vdocDBLens = entityLens vdocEntity
 
@@ -211,15 +214,22 @@ createComment pid comment = liftDB $ do
   key <- insert scomment
   void . insert $ S.PC (S.idToKey pid) key
   pure $ S.commentElim (toComment (S.keyToId key)) scomment
-  where
-    mkDBChunkRange :: CreateChunkRange -> DBChunkRange
-    mkDBChunkRange cr = DBChunkRange (cr ^. createChunkRangeBegin) (cr ^. createChunkRangeEnd)
 
 getComment :: ID Comment -> DB Comment
 getComment cid = S.commentElim (toComment cid) <$> getEntity cid
 
+toNote :: ID Note -> ST -> NoteKind -> DBChunkRange -> Note
+toNote nid desc kind range = Note nid desc kind (toChunkRange range nid)
+
+createNote :: ID Patch -> Create Note -> DB Note
+createNote pid note = liftDB $ do
+  let snote = S.Note
+        (note ^. createNoteText)
+        (note ^. createNoteKind)
+        (note ^. createNoteRange . to mkDBChunkRange)
+  key <- insert snote
+  void . insert $ S.PN (S.idToKey pid) key
+  pure $ S.noteElim (toNote (S.keyToId key)) snote
+
 getNote :: ID Note -> DB Note
-getNote nid = S.noteElim toNote <$> getEntity nid
-  where
-    toNote :: ST -> NoteKind -> DBChunkRange -> Note
-    toNote desc kind range = Note nid desc kind (toChunkRange range nid)
+getNote nid = S.noteElim (toNote nid) <$> getEntity nid

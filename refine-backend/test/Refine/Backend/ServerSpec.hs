@@ -166,6 +166,16 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       be ^. compositeVDocComments `shouldContain` [fc]
 
+  describe "sAddNote" $ do
+    it "stores comment with no ranges" $ \sess -> do
+      fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
+      fn :: Note          <- runWaiBody sess $
+        postJSON
+          ("/r/note/" <> cs (toUrlPiece (fe ^. compositeVDocRepo . vdocHeadPatch)))
+          (CreateNote "[note]" Remark (CreateChunkRange Nothing Nothing))
+      be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
+      be ^. compositeVDocNotes `shouldContain` [fn]
+
   describe "sAddPatch" $ do
     it "..." $ \_sess -> do
       pending
