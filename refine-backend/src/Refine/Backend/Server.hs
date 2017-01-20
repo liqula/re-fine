@@ -94,13 +94,7 @@ toServantError = Nat ((lift . runExceptT) >=> either (throwError . fromAppError)
     -- FIXME: Render JSON from the errors
     -- FIXME: some (many?) of these shouldn't be err500.
     fromAppError :: AppError -> ServantErr
-    fromAppError (AppUnknownError msg)       = err500 { errBody = cs msg }
-    fromAppError (AppVDocError    vdocError) = err500 { errBody = cs $ show vdocError }
-    fromAppError (AppDBError      dbError)   = err500 { errBody = cs $ show dbError }
-    fromAppError (AppDocRepoError docError)  = err500 { errBody = cs $ show docError }
-    fromAppError (AppUserNotFound user)      = err500 { errBody = cs $ unwords ["User not found", cs user] }
-    fromAppError AppUserNotLoggedIn          = err500 { errBody = "Not logged in." }
-    fromAppError (AppUserCreationError e)    = err500 { errBody = cs e }
+    fromAppError msg = err500 { errBody = cs $ show msg }
 
 
 -- | The 's' prefix in the handlers stands for "server", and is used to dismabiguate between the code in
