@@ -86,6 +86,7 @@ executable refine-frontend
     , hspec-discover
   other-modules:
       Refine.Frontend.Core
+      Refine.Frontend.Data.Samples
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
@@ -93,6 +94,7 @@ executable refine-frontend
       Refine.Frontend.StickyViews
       Refine.Frontend.Store
       Refine.Frontend.Style
+      Refine.Frontend.Test.Enzyme
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.Views
@@ -131,19 +133,20 @@ test-suite spec
     , QuickCheck
     , quickcheck-instances
   other-modules:
-      Refine.Frontend.EnzymeSpec
-      Refine.Frontend.CoreSpec
-      Refine.Frontend.StoreSpec
       Refine.Frontend.Core
+      Refine.Frontend.CoreSpec
+      Refine.Frontend.Data.Samples
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
       Refine.Frontend.Rest
       Refine.Frontend.StickyViews
       Refine.Frontend.Store
+      Refine.Frontend.StoreSpec
       Refine.Frontend.Style
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
+      Refine.Frontend.UtilityWidgetsSpec
       Refine.Frontend.Views
       Refine.Frontend.WindowSize
   js-sources:
