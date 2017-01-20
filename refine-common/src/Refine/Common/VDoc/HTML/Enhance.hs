@@ -49,23 +49,20 @@ addUIInfoToForest :: Forest Token -> Forest Token
 addUIInfoToForest = addDataUidsToForest . addOffsetsToForest
 
 addDataUidsToForest :: Forest Token -> Forest Token
-addDataUidsToForest = addDataUidsToForest_ ""
-
-addDataUidsToForest_ :: ST -> Forest Token -> Forest Token
-addDataUidsToForest_ uid = map (addDataUidsToTree uid)
+addDataUidsToForest = fmap (addDataUidsToTree "")
 
 addDataUidsToTree :: ST -> Tree Token -> Tree Token
 addDataUidsToTree uid (Node (TagOpen tagname attrs) children) =
   let attrUid = findAttrUidIn attrs
       newUid = fromMaybe uid attrUid
       newAttrs = if isNothing attrUid then Attr (fromString "data-uid") uid : attrs else attrs
-  in Node (TagOpen tagname newAttrs) (addDataUidsToForest_ newUid children)
+  in Node (TagOpen tagname newAttrs) (addDataUidsToTree newUid <$> children)
   where
     findAttrUidIn :: [Attr] -> Maybe ST
     findAttrUidIn [] = Nothing
     findAttrUidIn (Attr "data-uid" value : _) = Just value
     findAttrUidIn (_ : as) = findAttrUidIn as
-addDataUidsToTree uid (Node t children) = Node t (addDataUidsToForest_ uid children)
+addDataUidsToTree uid (Node t children) = Node t (addDataUidsToTree uid <$> children)
 
 
 addOffsetsToForest :: Forest Token -> Forest Token
