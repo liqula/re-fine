@@ -68,7 +68,11 @@ main = shakeArgs refineOptions $ do
     stackBuild refineBackend
 
   phony "build-frontend" $ do
+    need ["build-frontend-npm"]
     stackBuild refineFrontend
+
+  phony "build-frontend-npm" $ do
+    command_ [Cwd refineFrontend] "npm" ["install"]
 
   phony "build-all" $ do
     -- for building everything, we only need to go to backend and frontend.  prelude and common are
