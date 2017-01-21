@@ -25,15 +25,16 @@ module Refine.Frontend.UtilityWidgetsSpec where
 import Test.Hspec
 
 import Refine.Frontend.Test.Enzyme
+import Refine.Frontend.Util
 import Refine.Frontend.UtilityWidgets
 
 
 spec :: Spec
 spec = it "works" $ do
   wrapper@(ShallowWrapper jsval) <- shallow $ icon_ "bla"
-  js_consoleLog jsval
+  consoleLogJSVal "before find" jsval
 
   wrapper'@(ShallowWrapper jsval') <- find wrapper ".bla"
-  js_consoleLog jsval'
+  consoleLogJSVal "after find" jsval'
 
   getWrapperAttr wrapper' "length" `shouldReturn` (1 :: Int)

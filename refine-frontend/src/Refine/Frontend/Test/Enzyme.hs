@@ -42,13 +42,6 @@ foreign import javascript unsafe
   "enzyme.shallow($1)"
   js_shallow :: ReactElementRef -> IO JSVal
 
--- | TODO: move this together with Store.consoleLog into module Util, and import it from there.
--- (the two functions are subtly different: the one in store takes a TOJSON instance, this one takes
--- a JSVal.  we need both as it appears.)
-foreign import javascript unsafe
-  "console.log($1)"
-  js_consoleLog :: JSVal -> IO ()
-
 find :: ShallowWrapper -> JSString -> IO ShallowWrapper
 find (ShallowWrapper wrapper) selector = do
   ShallowWrapper <$> js_find wrapper selector
