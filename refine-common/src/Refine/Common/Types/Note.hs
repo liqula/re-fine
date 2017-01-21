@@ -60,6 +60,10 @@ data CreateComment = CreateComment
   deriving (Eq, Ord, Show, Read, Generic)
 
 data CreateNote = CreateNote
+  { _createNoteText  :: ST
+  , _createNoteKind  :: NoteKind
+  , _createNoteRange :: CreateChunkRange
+  }
   deriving (Eq, Ord, Show, Read, Generic)
 
 

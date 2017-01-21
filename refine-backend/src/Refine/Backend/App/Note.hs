@@ -37,3 +37,8 @@ addComment :: ID Patch -> Create Comment -> App DB Comment
 addComment pid comment = do
   appLog "addComent"
   db $ DB.createComment pid comment
+
+addNote :: ID Patch -> Create Note -> App DB Note
+addNote pid note = do
+  appLog "addNote"
+  db $ DB.createNote pid note

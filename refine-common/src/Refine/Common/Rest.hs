@@ -33,6 +33,7 @@ type RefineAPI =
   :<|> SGetVDoc
   :<|> SCreateVDoc
   :<|> SAddComment
+  :<|> SAddNote
   :<|> SAddPatch
 
 
@@ -51,6 +52,10 @@ type SCreateVDoc
 type SAddComment
   = "r" :> "comment" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Comment)
     :> Post '[JSON] Comment
+
+type SAddNote
+  = "r" :> "note" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Note)
+    :> Post '[JSON] Note
 
 type SAddPatch
   = "r" :> "patch" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Patch)

@@ -34,4 +34,5 @@ class Database db where
   getComment         :: ID Comment -> db Comment
 
   -- * Note
+  createNote         :: ID Patch -> Create Note -> db Note
   getNote            :: ID Note -> db Note

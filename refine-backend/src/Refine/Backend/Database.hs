@@ -88,4 +88,5 @@ instance Database DB where
   getComment         = Entity.getComment
 
   -- * Note
+  createNote         = Entity.createNote
   getNote            = Entity.getNote
