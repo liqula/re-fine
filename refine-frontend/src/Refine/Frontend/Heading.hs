@@ -85,63 +85,51 @@ editToolbar = defineView "EditToolbar" $ \() ->
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
         div_ ["className" $= "c-vdoc-toolbar__content"] $ do
-          iconButton_ $ IconButtonProps "c-vdoc-toolbar"
+          iconButton_ $ IconButtonProps
+                      (IconProps "c-vdoc-toolbar" True ("icon-Index_desktop", "dark") XXL)
                       "btn-index"
                       ""
-                      True
-                      ("icon-Index_desktop", "dark")
                       "index"
-                      XXL
                       (\_ _ -> [])
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          iconButton_ $ IconButtonProps "c-vdoc-toolbar"
+          iconButton_ $ IconButtonProps
+                      (IconProps "c-vdoc-toolbar" True ("icon-New_Comment", "dark") XXL)
                       "btn-add-annotation"
                       "annotation"
-                      True
-                      ("icon-New_Comment", "dark")
                       "new annotation"
-                      XXL
                       (\_ _ -> [])
 
-          iconButton_ $ IconButtonProps "c-vdoc-toolbar"
+          iconButton_ $ IconButtonProps
+                      (IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXL)
                       "btn-add-modification"
                       "modification"
-                      True
-                      ("icon-New_Edit", "dark")
                       "new modification"
-                      XXL
                       (\_ _ -> [])
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
           -- in HTML, these two icons are divs:
-          iconButton_ $ IconButtonProps "c-vdoc-toolbar"
+          iconButton_ $ IconButtonProps
+                      (IconProps "c-vdoc-toolbar" False ("icon-Comment", "dark") XXL)
                       "all-annotations"
                       ""
-                      False
-                      ("icon-Comment", "dark")
                       "all annotations"
-                      XXL
                       (\_ _ -> [])
 
-          iconButton_ $ IconButtonProps "c-vdoc-toolbar"
+          iconButton_ $ IconButtonProps
+                      (IconProps "c-vdoc-toolbar" False ("icon-Edit", "dark") XXL)
                       "all-modifications"
                       ""
-                      False
-                      ("icon-Edit", "dark")
                       "all modifications"
-                      XXL
                       (\_ _ -> [])
 
-          iconButtonWithAlignment_ $ IconButtonWithAlignmentProps (IconButtonProps "c-vdoc-toolbar"
+          iconButtonWithAlignment_ $ IconButtonWithAlignmentProps (IconButtonProps
+                                    (IconProps "c-vdoc-toolbar" True ("icon-Reader", "bright") XXL)
                                     "btn-read-mode"
                                     "" -- data-content-type is not set for this one...
-                                    True
-                                    ("icon-Reader", "bright")
                                     "read mode"
-                                    XXL
                                     (\_ _ -> []))
                                     True
                                     Nothing
@@ -156,31 +144,25 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
         div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
         div_ ["className" $= "c-vdoc-toolbar-extension__annotation"] $ do
-            iconButton_ $ IconButtonProps "c-vdoc-toolbar-extension"
+            iconButton_ $ IconButtonProps
+                        (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L) -- TODO why index and not comment?
                         "btn-new-ann-doc"
                         "annotation"
-                        True
-                        ("icon-Index_desktop", "dark")  -- why index and not comment?
                         "document annotation"
-                        L
                         (\_ _ -> [])
-            iconButton_ $ IconButtonProps "c-vdoc-toolbar-extension"
+            iconButton_ $ IconButtonProps
+                        (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
                         "btn-new-ann-text"
                         "annotation"
-                        True
-                        ("icon-Comment", "dark")
                         "annotation related to text"
-                        L
                         (\_ _ -> [])
 
         div_ ["className" $= "c-vdoc-toolbar-extension__modification"] $ do
-            iconButton_ $ IconButtonProps "c-vdoc-toolbar-extension"
+            iconButton_ $ IconButtonProps
+                        (IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") L)
                         "btn-new-mod-text"
                         "annotation"
-                        True
-                        ("icon-New_Edit", "dark")
                         "new modification"
-                        L
                         (\_ _ -> [])
 
 

@@ -19,13 +19,10 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, h
             let offset = quickCreateOffset range deviceOffset headerHeight
             in positionedIconButton_
               (IconButtonProps
-                ("o-add-" <> createType)
+                (IconProps ("o-add-" <> createType) True ("icon-New_Comment", "bright") XXL)
                 ""
                 (fromString createType)
-                True
-                ("icon-New_Comment", "bright")
                 ""
-                XXL
                 (\_ _ -> RS.dispatch RS.ShowCommentOverlay)
               ) offset
         _ -> div_ ""

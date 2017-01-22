@@ -21,16 +21,23 @@ data IconSize
     | XXL
     deriving Show
 
+data IconProps = IconProps
+  { _blockName     :: String
+  , _iconHighlight :: Bool
+  , _iconDesc      :: (String, String)
+  , _size          :: IconSize
+
+  }
+
+makeLenses ''IconProps
+
 data IconButtonProps = IconButtonProps
-    { _blockName     :: String
-    , _elementName   :: String
-    , _contentType   :: JSString
-    , _iconHighlight :: Bool
-    , _iconDesc      :: (String, String)
-    , _label         :: JSString
-    , _size          :: IconSize
-    , _clickHandler    :: ClickHandler
-    }
+  { _iconProps     :: IconProps
+  , _elementName   :: String
+  , _contentType   :: JSString
+  , _label         :: JSString
+  , _clickHandler    :: ClickHandler
+  }
 
 type ClickHandler = Event -> MouseEvent -> [SomeStoreAction]
 
@@ -45,8 +52,8 @@ data IconButtonWithAlignmentProps = IconButtonWithAlignmentProps
 makeLenses ''IconButtonWithAlignmentProps
 
 
-icon :: ReactView JSString
-icon = defineView "Icon" $ \iconClass ->
+iconCore :: ReactView JSString
+iconCore = defineView "IconCore" $ \iconClass ->
   div_ ["className" $= iconClass] $ do
     span_ ["className" $= "path1"] ""
     span_ ["className" $= "path2"] ""
@@ -57,37 +64,47 @@ icon = defineView "Icon" $ \iconClass ->
     span_ ["className" $= "path7"] ""
     span_ ["className" $= "path8"] ""
 
-icon_ :: JSString -> ReactElementM eventHandler ()
-icon_ iconClass = view icon iconClass mempty
+iconCore_ :: JSString -> ReactElementM eventHandler ()
+iconCore_ iconClass = view iconCore iconClass mempty
+
+
+icon :: ReactView IconProps
+icon = defineStatefulView "Icon" False $ \mouseIsOver props -> do
+  div_ ["className" $= fromString ((props ^. blockName) <> "__icon")
+       , onMouseEnter $ \_ _ _ -> ([], Just True)
+       , onMouseLeave $ \_ _ _ -> ([], Just False)
+       ] $ do
+    let -- TODO: these could do with better names
+      a = if props ^. iconHighlight then "o-icon-highlight " else ""
+      b = props ^. iconDesc . _1
+      c = "_" <> if mouseIsOver && (props ^. iconHighlight)
+                   then "RO"
+                   else props ^. iconDesc . _2
+      d = " " <> "iconsize-" <> map toLower (show (props ^. size))
+    iconCore_ $ fromString (a <> b <> c <> d)
+
+icon_ :: IconProps -> ReactElementM eventHandler ()
+icon_ props = view icon props mempty
 
 
 iconButtonWithAlignment :: ReactView IconButtonWithAlignmentProps
-iconButtonWithAlignment = defineStatefulView "IconButtonWithAlignment" False $ \mouseIsOver props -> do
+iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
     let bprops = props ^. iconButtonProps
+    let iprops = bprops ^. iconProps
     button_ (["data-content-type" $= (bprops ^. contentType)
-           , "className" $= fromString (concat [ bprops ^. blockName, "__button "
-                                               , bprops ^. blockName
+           , "className" $= fromString (concat [ iprops ^. blockName, "__button "
+                                               , iprops ^. blockName
                                                , if bprops ^. elementName == "" then "" else "__"
                                                , bprops ^. elementName
-                                               , alignmentClass (bprops ^. blockName)
+                                               , alignmentClass (iprops ^. blockName)
                                                                 (props ^. rightAligned)
                                                ])
-           , onMouseEnter $ \_ _ _ -> ([], Just True)
-           , onMouseLeave $ \_ _ _ -> ([], Just False)
-           , onClick $ \event mevent _ -> ((bprops ^. clickHandler) event mevent, Nothing)
+           , onClick $ bprops ^. clickHandler
            ] <> case props ^. position of
                    Nothing  -> []
                    Just pos -> ["style" @= [Style "top" pos]]) $ do
-        div_ ["className" $= fromString ((bprops ^. blockName) <> "__icon")] $ do
-            let -- TODO: these could do with better names
-                a = if bprops ^. iconHighlight then "o-icon-highlight " else ""
-                b = bprops ^. iconDesc . _1
-                c = "_" <> if mouseIsOver && (bprops ^. iconHighlight)
-                             then "RO"
-                             else bprops ^. iconDesc . _2
-                d = " " <> "iconsize-" <> map toLower (show (bprops ^. size))
-            icon_ $ fromString (a <> b <> c <> d)
-        span_ ["className" $= fromString (bprops ^. blockName <> "__button-label")] $
+        icon_ iprops
+        span_ ["className" $= fromString (iprops ^. blockName <> "__button-label")] $
             elemJSString (bprops ^. label)
     where
       alignmentClass blockName_ rightAligned_ = if rightAligned_ then " " <> blockName_ <> "--align-right" else ""

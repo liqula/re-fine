@@ -124,7 +124,7 @@ snippet = defineView "snippet" $ \props ->
                     , "style" @= [Style "top" pos]
                     ] $ do
                     div_ ["className" $= fromString ("o-snippet__icon-bg o-snippet__icon-bg--" <> _iconSide props)] $ do
-                        icon_ (fromString ("o-snippet__icon icon-" <> _iconStyle props <> " iconsize-m"))
+                        iconCore_ (fromString ("o-snippet__icon icon-" <> _iconStyle props <> " iconsize-m"))
                     div_ ["className" $= "o-snippet__content"] childrenPassedToView
 
 snippet_ :: SnippetProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
