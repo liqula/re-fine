@@ -77,6 +77,7 @@ data RefineAction = LoadDocumentList
                   | AddMarkPosition String Int
                   | SetWindowSize WindowSize
                   | SetSelection DeviceOffset
+                  | ClearSelection
                   | ShowCommentOverlay
                   | HideCommentOverlay
                   | SubmitPatch

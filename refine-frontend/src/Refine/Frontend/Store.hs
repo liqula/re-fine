@@ -88,7 +88,8 @@ windowSizeUpdate action state = case action of
 currentSelectionUpdate :: RefineAction -> (Maybe Range, Maybe DeviceOffset) -> (Maybe Range, Maybe DeviceOffset)
 currentSelectionUpdate action state = case action of
     SetSelection _ -> state -- TODO this only works because of how this is invoked -- needs improvement!
-    SubmitPatch -> (Nothing, Nothing)
+    ClearSelection -> (Nothing, Nothing)
+    SubmitPatch    -> (Nothing, Nothing)
     _ -> state
 
 showCommentOverlayUpdate :: RefineAction -> Bool -> Bool

@@ -23,7 +23,7 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, h
                 ""
                 (fromString createType)
                 ""
-                (\_ _ -> RS.dispatch RS.ShowCommentOverlay)
+                (\_ _ -> RS.dispatch RS.ClearSelection <> RS.dispatch RS.ShowCommentOverlay)
               ) offset
         _ -> div_ ""
 --    // quickCreate annotation ui events
