@@ -93,10 +93,7 @@ instance SOP.HasDatatypeInfo ChunkPoint
 instance ToJSON   ChunkPoint where toJSON    = gtoJSONDef
 instance NFData   ChunkPoint where rnf       = SOP.grnf
 instance FromJSON ChunkPoint where
-    parseJSON (Object v) = ChunkPoint <$>
-                             v .: "node" <*>
-                             v .: "offset"
-    parseJSON _          = error "not an object... what can we do?" -- TODO empty
+  parseJSON = withObject "ChunkPoint" (\v -> ChunkPoint <$> v .: "node" <*> v .: "offset")
 
 
 makeRefineType ''CreateChunkRange
