@@ -154,11 +154,11 @@ foreign import javascript unsafe
     \   var result = { os : 0, oe : 0 }; \
     \   if(range.startContainer.parentElement.attributes['data-uid']) { \
     \       result.ns = parseInt(range.startContainer.parentElement.attributes['data-uid'].value, 10); \
-    \       result.os = range.startOffset; \
+    \       result.os = range.startOffset + parseInt(range.startContainer.parentElement.attributes['data-offset'].value, 10); \
     \   } \
     \   if(range.endContainer.parentElement.attributes['data-uid']) { \
     \       result.ne = parseInt(range.endContainer.parentElement.attributes['data-uid'].value, 10); \
-    \       result.oe = range.endOffset; \
+    \       result.oe = range.endOffset + parseInt(range.endContainer.parentElement.attributes['data-offset'].value, 10); \
     \   } \
     \   result.top = range.startContainer.parentElement.getBoundingClientRect().top; \
     \   result.bottom = range.endContainer.parentElement.getBoundingClientRect().bottom; \
