@@ -131,8 +131,9 @@ import qualified Data.Text.Lazy as LT
 
 ### finding names
 
-Append natural numbers to names in order to avoid name shadowing
-warnings.
+In order to avoid name shadowing warnings, (1) try to think of another
+name that is at least as meaningful and informative, and iff failing
+to do so, (2) append natural numbers to the shadowed name.
 
 RATIONALE:
 - trailing `_` is already used by react-flux, blaze, lucid etc..
