@@ -90,7 +90,7 @@ type instance Create (ChunkRange owner) = CreateChunkRange
 
 instance SOP.Generic ChunkPoint
 instance SOP.HasDatatypeInfo ChunkPoint
-instance ToJSON   ChunkPoint where toJSON    = gtoJSONDef  -- TODO: encode owner in json object?
+instance ToJSON   ChunkPoint where toJSON    = gtoJSONDef
 instance NFData   ChunkPoint where rnf       = SOP.grnf
 instance FromJSON ChunkPoint where
     parseJSON (Object v) = ChunkPoint <$>
