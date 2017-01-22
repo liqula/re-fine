@@ -151,14 +151,18 @@ getRange = (AE.decode . cs . unpack) <$> js_getRange
 -- TODO remove the default values for os and oe
 foreign import javascript unsafe
     "(function (range) { \
-    \   var result = { os : 0, oe : 0 }; \
+    \   var result = {}; \
     \   if(range.startContainer.parentElement.attributes['data-uid']) { \
-    \       result.ns = parseInt(range.startContainer.parentElement.attributes['data-uid'].value, 10); \
-    \       result.os = range.startOffset + parseInt(range.startContainer.parentElement.attributes['data-offset'].value, 10); \
+    \       result.start = { \
+    \         node: parseInt(range.startContainer.parentElement.attributes['data-uid'].value, 10), \
+    \         offset: range.startOffset + parseInt(range.startContainer.parentElement.attributes['data-offset'].value, 10) \
+    \       }; \
     \   } \
     \   if(range.endContainer.parentElement.attributes['data-uid']) { \
-    \       result.ne = parseInt(range.endContainer.parentElement.attributes['data-uid'].value, 10); \
-    \       result.oe = range.endOffset + parseInt(range.endContainer.parentElement.attributes['data-offset'].value, 10); \
+    \       result.end = { \
+    \         node: parseInt(range.endContainer.parentElement.attributes['data-uid'].value, 10), \
+    \         offset: range.endOffset + parseInt(range.endContainer.parentElement.attributes['data-offset'].value, 10) \
+    \       };\
     \   } \
     \   result.top = range.startContainer.parentElement.getBoundingClientRect().top; \
     \   result.bottom = range.endContainer.parentElement.getBoundingClientRect().bottom; \

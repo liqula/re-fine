@@ -88,6 +88,16 @@ instance NFData   (ChunkRange owner) where rnf       = SOP.grnf
 
 type instance Create (ChunkRange owner) = CreateChunkRange
 
+instance SOP.Generic ChunkPoint
+instance SOP.HasDatatypeInfo ChunkPoint
+instance ToJSON   ChunkPoint where toJSON    = gtoJSONDef  -- TODO: encode owner in json object?
+instance NFData   ChunkPoint where rnf       = SOP.grnf
+instance FromJSON ChunkPoint where
+    parseJSON (Object v) = ChunkPoint <$>
+                             v .: "node" <*>
+                             v .: "offset"
+    parseJSON _          = error "not an object... what can we do?" -- TODO empty
+
+
 makeRefineType ''CreateChunkRange
-makeRefineType ''ChunkPoint
 makeRefineType ''DataUID
