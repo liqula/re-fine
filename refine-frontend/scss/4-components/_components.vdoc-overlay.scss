@@ -29,7 +29,7 @@ $module: #{$namespace}vdoc-overlay;
 
     &-content {
         background-color: $vdoc-comment;
-        display: none;
+        display: block;
         min-height: 200px;
         padding: $global-padding * 3 $global-padding * 2 $global-padding * 2;
 

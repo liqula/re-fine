@@ -62,7 +62,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                                      ] $ do
                               div_ ["className" $= "c-vdoc-overlay"] $ do
                                 div_ ["className" $= "c-vdoc-overlay__inner"] $ do
-                                  commentOverlay_
+                                  showCommentOverlay_ (rs ^. gsShowCommentOverlay)
                               div_ ["className" $= "c-article-content"] $ do
                                 toArticleBody . HTMLT.tokensToForest . HTMLP.parseTokens . cs . _unVDocVersion $ _compositeVDocVersion vdoc
                             rightAside_ (rs ^. gsMarkPositions)
