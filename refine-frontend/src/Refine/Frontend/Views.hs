@@ -55,18 +55,22 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                     div_ ["className" $= "grid-wrapper"] $ do
                         div_ ["className" $= "row row-align-center row-align-top"] $ do
                             leftAside_ (rs ^. gsMarkPositions) (rs ^. gsCurrentSelection) (rs ^. gsHeaderHeight)
-                            toArticle . HTMLT.tokensToForest . HTMLP.parseTokens . cs . _unVDocVersion $ _compositeVDocVersion vdoc
+                            article_ [ "id" $= "vdocValue"
+                                     , "className" $= "gr-20 gr-14@desktop"
+                                     , onMouseUp $ \_ me -> RS.dispatch . RS.SetSelection $ mouseClientY me
+                                     , onTouchEnd $ \_ te -> RS.dispatch . RS.SetSelection . touchScreenY . head $ touches te
+                                     ] $ do
+                              div_ ["className" $= "c-vdoc-overlay"] $ do
+                                div_ ["className" $= "c-vdoc-overlay__inner"] $ do
+                                  commentOverlay_
+                              div_ ["className" $= "c-article-content"] $ do
+                                toArticleBody . HTMLT.tokensToForest . HTMLP.parseTokens . cs . _unVDocVersion $ _compositeVDocVersion vdoc
                             rightAside_ (rs ^. gsMarkPositions)
 
 
-toArticle :: Either ParseTokenForestError (DT.Forest HTMLP.Token) -> ReactElementM [SomeStoreAction] ()
-toArticle (Left err) = p_ (elemString (show err))
-toArticle (Right forest) = article_
-  [ "id" $= "vdocValue"
-  , "className" $= "gr-20 gr-14@desktop c-article-content"
-  , onMouseUp $ \_ me -> RS.dispatch . RS.SetSelection $ mouseClientY me
-  , onTouchEnd $ \_ te -> RS.dispatch . RS.SetSelection . touchScreenY . head $ touches te
-  ] (mconcat $ map toHTML (addUIInfoToForest forest))
+toArticleBody :: Either ParseTokenForestError (DT.Forest HTMLP.Token) -> ReactElementM [SomeStoreAction] ()
+toArticleBody (Left err) = p_ (elemString (show err))
+toArticleBody (Right forest) = mconcat $ map toHTML (addUIInfoToForest forest)
 
 
 toHTML :: DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()
