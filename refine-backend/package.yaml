@@ -46,6 +46,7 @@ dependencies:
   - users-persistent
   - uuid
   - warp
+  - yaml
 
 library:
   source-dirs:

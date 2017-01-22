@@ -1,8 +1,13 @@
 module Main where
 
-import Data.Default (def)
+import Data.Maybe (listToMaybe)
+import System.Environment (getArgs)
+
+import Refine.Backend.Config
 import Refine.Backend.Server
+
 
 main :: IO ()
 main = do
-  startBackend def
+  cfg <- initConfig . listToMaybe =<< getArgs
+  startBackend cfg
