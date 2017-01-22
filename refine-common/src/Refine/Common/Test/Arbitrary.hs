@@ -20,6 +20,13 @@ import           Text.HTML.Tree as HTML
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML
 
+instance Arbitrary ChunkPoint where
+  arbitrary               = ChunkPoint <$> arbitrary <*> arbitrary
+  shrink (ChunkPoint n o) = ChunkPoint <$> shrink n <*> shrink o
+
+instance Arbitrary DataUID where
+  arbitrary          = DataUID <$> arbitrary
+  shrink (DataUID i) = DataUID <$> shrink i
 
 instance Arbitrary (ID a) where
   arbitrary     = ID <$> arbitrary
