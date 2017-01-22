@@ -7,6 +7,7 @@ import           Data.String (fromString)
 import           React.Flux
 
 import qualified Refine.Frontend.Types as RS
+import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.UtilityWidgets
 
 
@@ -16,7 +17,17 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, h
     -- TODO unify CSS class names with those used in iconButton_ !!
         (Just range, Just deviceOffset) ->
             let offset = quickCreateOffset range deviceOffset headerHeight
-            in positionedIconButton_ (IconButtonProps ("o-add-" <> createType) "" (fromString createType) True ("icon-New_Comment", "bright") "" XXL) offset
+            in positionedIconButton_
+              (IconButtonProps
+                ("o-add-" <> createType)
+                ""
+                (fromString createType)
+                True
+                ("icon-New_Comment", "bright")
+                ""
+                XXL
+                (\_ _ -> RS.dispatch RS.ShowCommentOverlay)
+              ) offset
         _ -> div_ ""
 --    // quickCreate annotation ui events
 --    ann.addEventListener('mousedown', quickCreateOverlay);

@@ -48,12 +48,13 @@ instance StoreData GlobalState where
 
 
         let newState = state
-              & gsVDoc             %~ vdocUpdate action
-              & gsVDocList         %~ vdocListUpdate action
-              & gsHeaderHeight     %~ headerHeightUpdate action
-              & gsMarkPositions    %~ markPositionsUpdate action
-              & gsWindowSize       %~ windowSizeUpdate action
-              & gsCurrentSelection .~ currentSelectionUpdate action selectedRangeOrState    -- TODO can this be improved?
+              & gsVDoc               %~ vdocUpdate action
+              & gsVDocList           %~ vdocListUpdate action
+              & gsHeaderHeight       %~ headerHeightUpdate action
+              & gsMarkPositions      %~ markPositionsUpdate action
+              & gsWindowSize         %~ windowSizeUpdate action
+              & gsCurrentSelection   .~ currentSelectionUpdate action selectedRangeOrState    -- TODO can this be improved?
+              & gsShowCommentOverlay %~ showCommentOverlayUpdate action
 
         consoleLog "New state: " newState
         return newState
@@ -88,6 +89,12 @@ currentSelectionUpdate :: RefineAction -> (Maybe Range, Maybe DeviceOffset) -> (
 currentSelectionUpdate action state = case action of
     SetSelection _ -> state -- TODO this only works because of how this is invoked -- needs improvement!
     SubmitPatch -> (Nothing, Nothing)
+    _ -> state
+
+showCommentOverlayUpdate :: RefineAction -> Bool -> Bool
+showCommentOverlayUpdate action state = case action of
+    ShowCommentOverlay -> True
+    HideCommentOverlay -> False
     _ -> state
 
 
@@ -133,7 +140,7 @@ handleError msg = do
             return []
 
 refineStore :: ReactStore GlobalState
-refineStore = mkStore $ GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing)
+refineStore = mkStore $ GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing) False
 
 dispatch :: RefineAction -> [SomeStoreAction]
 dispatch a = [SomeStoreAction refineStore a]

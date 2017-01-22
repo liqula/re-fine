@@ -29,7 +29,10 @@ data IconButtonProps = IconButtonProps
     , _iconDesc      :: (String, String)
     , _label         :: JSString
     , _size          :: IconSize
+    , _clickHandler    :: ClickHandler
     }
+
+type ClickHandler = Event -> MouseEvent -> [SomeStoreAction]
 
 makeLenses ''IconButtonProps
 
@@ -71,6 +74,7 @@ iconButtonWithAlignment = defineStatefulView "IconButtonWithAlignment" False $ \
                                                ])
            , onMouseEnter $ \_ _ _ -> ([], Just True)
            , onMouseLeave $ \_ _ _ -> ([], Just False)
+           , onClick $ \event mevent _ -> ((bprops ^. clickHandler) event mevent, Nothing)
            ] <> case props ^. position of
                    Nothing  -> []
                    Just pos -> ["style" @= [Style "top" pos]]) $ do

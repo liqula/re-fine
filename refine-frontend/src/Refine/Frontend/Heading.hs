@@ -92,6 +92,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ("icon-Index_desktop", "dark")
                       "index"
                       XXL
+                      (\_ _ -> [])
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
@@ -102,6 +103,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ("icon-New_Comment", "dark")
                       "new annotation"
                       XXL
+                      (\_ _ -> [])
 
           iconButton_ $ IconButtonProps "c-vdoc-toolbar"
                       "btn-add-modification"
@@ -110,6 +112,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ("icon-New_Edit", "dark")
                       "new modification"
                       XXL
+                      (\_ _ -> [])
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
@@ -121,6 +124,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ("icon-Comment", "dark")
                       "all annotations"
                       XXL
+                      (\_ _ -> [])
 
           iconButton_ $ IconButtonProps "c-vdoc-toolbar"
                       "all-modifications"
@@ -129,6 +133,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ("icon-Edit", "dark")
                       "all modifications"
                       XXL
+                      (\_ _ -> [])
 
           iconButtonWithAlignment_ $ IconButtonWithAlignmentProps (IconButtonProps "c-vdoc-toolbar"
                                     "btn-read-mode"
@@ -136,7 +141,8 @@ editToolbar = defineView "EditToolbar" $ \() ->
                                     True
                                     ("icon-Reader", "bright")
                                     "read mode"
-                                    XXL)
+                                    XXL
+                                    (\_ _ -> []))
                                     True
                                     Nothing
 
@@ -157,6 +163,7 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
                         ("icon-Index_desktop", "dark")  -- why index and not comment?
                         "document annotation"
                         L
+                        (\_ _ -> [])
             iconButton_ $ IconButtonProps "c-vdoc-toolbar-extension"
                         "btn-new-ann-text"
                         "annotation"
@@ -164,6 +171,7 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
                         ("icon-Comment", "dark")
                         "annotation related to text"
                         L
+                        (\_ _ -> [])
 
         div_ ["className" $= "c-vdoc-toolbar-extension__modification"] $ do
             iconButton_ $ IconButtonProps "c-vdoc-toolbar-extension"
@@ -173,6 +181,7 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
                         ("icon-New_Edit", "dark")
                         "new modification"
                         L
+                        (\_ _ -> [])
 
 
 editToolbarExtension_ :: ReactElementM eventHandler ()
