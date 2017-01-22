@@ -125,6 +125,7 @@ createAppRunner = do
         , _cfgReposRoot     = reposRoot
         , _cfgDBKind        = DBOnDisk testDb
         , _cfgPoolSize      = 5
+        , _cfgFileServeRoot = Nothing
         }
 
   createDirectoryIfMissing True $ cfg ^. cfgRootDir

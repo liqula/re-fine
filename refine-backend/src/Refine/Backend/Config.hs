@@ -16,6 +16,7 @@ data Config = Config
   , _cfgReposRoot     :: FilePath
   , _cfgDBKind        :: DBKind
   , _cfgPoolSize      :: Int
+  , _cfgFileServeRoot :: Maybe FilePath
   }
 
 data DBKind
@@ -30,6 +31,7 @@ instance Default Config where
     , _cfgReposRoot     = _cfgRootDir def </> "repos"
     , _cfgDBKind        = DBOnDisk (_cfgRootDir def </> "refine.db")
     , _cfgPoolSize      = 5
+    , _cfgFileServeRoot = Just "../refine-frontend/js-build"
     }
 
 
