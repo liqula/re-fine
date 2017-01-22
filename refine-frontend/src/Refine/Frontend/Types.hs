@@ -36,10 +36,8 @@ data WindowSize = Desktop | Tablet | Mobile
 type DeviceOffset = Int
 
 data Range = Range
-    { _startUid     :: Maybe Int
-    , _startOffset  :: Int -- TODO make this a Maybe
-    , _endUid       :: Maybe Int
-    , _endOffset    :: Int -- TODO make this a Maybe
+    { _startPoint   :: Maybe ChunkPoint
+    , _endPoint     :: Maybe ChunkPoint
     , _top          :: Int
     , _bottom       :: Int
     , _scrollOffset :: Int
@@ -48,12 +46,11 @@ data Range = Range
 
 makeLenses ''Range
 
+
 instance AE.FromJSON Range where
     parseJSON (AE.Object v) = Range <$>
-                             v AE..:? "ns" <*>
-                             v AE..: "os" <*>
-                             v AE..:? "ne" <*>
-                             v AE..: "oe" <*>
+                             v AE..:? "start" <*>
+                             v AE..:? "end" <*>
                              v AE..: "top" <*>
                              v AE..: "bottom" <*>
                              v AE..: "scrollOffset"

@@ -88,6 +88,13 @@ instance NFData   (ChunkRange owner) where rnf       = SOP.grnf
 
 type instance Create (ChunkRange owner) = CreateChunkRange
 
+instance SOP.Generic ChunkPoint
+instance SOP.HasDatatypeInfo ChunkPoint
+instance ToJSON   ChunkPoint where toJSON    = gtoJSONDef
+instance NFData   ChunkPoint where rnf       = SOP.grnf
+instance FromJSON ChunkPoint where
+  parseJSON = withObject "ChunkPoint" (\v -> ChunkPoint <$> v .: "node" <*> v .: "offset")
+
+
 makeRefineType ''CreateChunkRange
-makeRefineType ''ChunkPoint
 makeRefineType ''DataUID

@@ -8,15 +8,15 @@ import           Refine.Frontend.Overlay
 
 rangeTopFor :: Int -> Int -> RS.Range
 rangeTopFor top =
-  RS.Range Nothing 0 Nothing 0 top 0
+  RS.Range Nothing Nothing top 0
 
 rangePosFor :: Int -> Int -> RS.Range
 rangePosFor top bottom =
-  RS.Range Nothing 0 Nothing 0 top bottom 0
+  RS.Range Nothing Nothing top bottom 0
 
 rangeFor :: Int -> Int -> Int -> RS.Range
 rangeFor =
-  RS.Range Nothing 0 Nothing 0
+  RS.Range Nothing Nothing
 
 mh :: Int
 mh = 80 -- menu height
