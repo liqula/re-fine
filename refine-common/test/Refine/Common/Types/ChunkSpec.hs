@@ -32,9 +32,6 @@ import           Refine.Common.Types.Chunk
 
 spec :: Spec
 spec = do
-
   describe "ChunkPoint" $ do
     it "aeson encode and decode are inverses" . property $
-      \(x :: ChunkPoint) ->
-        let x' = Aeson.object ["value" Aeson..= x]
-        in Aeson.decode (Aeson.encode x') == Just x'
+      \(x :: ChunkPoint) -> Aeson.decode (Aeson.encode x) `shouldBe` Just x
