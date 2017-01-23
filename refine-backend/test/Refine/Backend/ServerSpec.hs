@@ -44,7 +44,6 @@ import           Test.Hspec
                   )
 import           Test.Hspec.Wai (get, request)
 import qualified Test.Hspec.Wai.Internal as Wai
-import           Web.HttpApiData (toUrlPiece)
 
 import Refine.Backend.App as App
 import Refine.Backend.AppSpec (withTempCurrentDirectory)
@@ -124,7 +123,11 @@ createVDocUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SCr
 addPatchUri :: ID Patch -> SBS
 addPatchUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddPatch)
 
--- TODO: Fix add comment
+addCommentUri :: ID Patch -> SBS
+addCommentUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddComment)
+
+addNoteUri :: ID Patch -> SBS
+addNoteUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddNote)
 
 -- * test cases
 
@@ -167,7 +170,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
       fc :: Comment       <- runWaiBody sess $
         postJSON
-          ("/r/comment/" <> cs (toUrlPiece (fe ^. compositeVDocRepo . vdocHeadPatch)))
+          (addCommentUri (fe ^. compositeVDocRepo . vdocHeadPatch))
           (CreateComment "[comment]" True (CreateChunkRange Nothing Nothing))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       be ^. compositeVDocComments `shouldContain` [fc]
@@ -177,7 +180,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
       fn :: Note          <- runWaiBody sess $
         postJSON
-          ("/r/note/" <> cs (toUrlPiece (fe ^. compositeVDocRepo . vdocHeadPatch)))
+          (addNoteUri (fe ^. compositeVDocRepo . vdocHeadPatch))
           (CreateNote "[note]" Remark (CreateChunkRange Nothing Nothing))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       be ^. compositeVDocNotes `shouldContain` [fn]
