@@ -57,19 +57,20 @@ quickCreateSelectionPos range deviceOffset =
 quickCreate_ :: String -> (Maybe RS.Range, Maybe RS.DeviceOffset) -> Int -> ReactElementM eventHandler ()
 quickCreate_ createType currentSelection headerHeight = view quickCreate (createType, currentSelection, headerHeight) mempty
 
+vdoc_overlay_content :: [Style]
+vdoc_overlay_content = [ Style "display" ("block" :: String)
+                       , Style "minHeight" ("200px" :: String)
+                       , Style "padding" ("15rem 10rem 10rem" :: String)
+                       ]
 
 showComment :: ReactView Bool
 showComment = defineView "ShowComment" $ \showOverlay ->
-  let vdoc_overlay_content = [ Style "display" ("block" :: String)
-                             , Style "minHeight" ("200px" :: String)
-                             , Style "padding" ("15rem 10rem 10rem" :: String)
-                             ]
-      vdoc_overlay_content_comment = [ Style "backgroundColor" ("rgb(219, 204, 221)" :: String) -- lightred
-                                     ]
+  let vdoc_overlay_content__comment = [ Style "backgroundColor" ("rgb(219, 204, 221)" :: String) -- lightred
+                                      ]
   in overlay_ ["isVisible" &= showOverlay
            , on "onCloseClicked" $ \_ -> RS.dispatch RS.HideCommentOverlay
            , "hideOnOverlayClicked" &= True
-           , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content_comment)
+           , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content__comment)
            ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
@@ -116,5 +117,5 @@ showComment = defineView "ShowComment" $ \showOverlay ->
                         <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span><span class="path6"></span><span class="path7"></span><span class="path8"></span>
                 -}
 
-showCommentOverlay_ :: Bool -> ReactElementM eventHandler ()
-showCommentOverlay_ showOverlay = view showCommentOverlay showOverlay mempty
+showComment_ :: Bool -> ReactElementM eventHandler ()
+showComment_ showOverlay = view showComment showOverlay mempty
