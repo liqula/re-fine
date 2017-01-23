@@ -40,10 +40,13 @@ instance Default Config where
     , _cfgShouldLog     = True
     , _cfgRootDir       = "./.backend-data"
     , _cfgReposRoot     = _cfgRootDir def </> "repos"
-    , _cfgDBKind        = DBOnDisk (_cfgRootDir def </> "refine.db")
+    , _cfgDBKind        = def
     , _cfgPoolSize      = 5
     , _cfgFileServeRoot = Just "../refine-frontend/js-build"
     }
+
+instance Default DBKind where
+  def = DBOnDisk (_cfgRootDir def </> "refine.db")
 
 
 -- * lenses
