@@ -39,7 +39,6 @@ import qualified Refine.Backend.DocRepo.Core as DocRepo
 import           Refine.Common.Types
 
 -- TODO: Restructure this module the mirror the structure of the Databas typeclass
--- TODO: Make a helper from this: S.keyToId . S.vRRepository . entityVal
 
 -- FIXME: Generate this as the part of the lentil library.
 type instance S.EntityRep VDoc     = S.VDoc
@@ -84,6 +83,11 @@ getEntity :: (ToBackendKey SqlBackend (S.EntityRep e), Typeable e)
 getEntity eid = do
   e <- liftDB . get $ S.idToKey eid
   maybe (idNotFound eid) pure e
+
+foreignKeyField
+  :: ToBackendKey SqlBackend (S.EntityRep a)
+  => (b -> Key (S.EntityRep a)) -> Database.Persist.Entity b -> ID a
+foreignKeyField column = S.keyToId . column . entityVal
 
 mkDBChunkRange :: CreateChunkRange -> DBChunkRange
 mkDBChunkRange cr = DBChunkRange (cr ^. createChunkRangeBegin) (cr ^. createChunkRangeEnd)
@@ -165,20 +169,20 @@ getPatchFromHandle hndl = do
 
 patchNotes :: ID Patch -> DB [ID Note]
 patchNotes pid = liftDB $
-  S.keyToId . S.pNNote . entityVal <$$> selectList [S.PNPatch ==. S.idToKey pid] []
+  foreignKeyField S.pNNote <$$> selectList [S.PNPatch ==. S.idToKey pid] []
 
 patchComments :: ID Patch -> DB [ID Comment]
 patchComments pid = liftDB $
-  S.keyToId . S.pCComment . entityVal <$$> selectList [S.PCPatch ==. S.idToKey pid] []
+  foreignKeyField S.pCComment <$$> selectList [S.PCPatch ==. S.idToKey pid] []
 
 patchVDocRepo :: ID Patch -> DB (ID VDocRepo)
 patchVDocRepo pid = do
-  rs <- liftDB $ S.keyToId . S.rPRepository . entityVal <$$> selectList [S.RPPatch ==. S.idToKey pid] []
+  rs <- liftDB $ foreignKeyField S.rPRepository <$$> selectList [S.RPPatch ==. S.idToKey pid] []
   unique rs
 
 vdocRepo :: ID VDoc -> DB (ID VDocRepo)
 vdocRepo vid = do
-  vs <- liftDB $ S.keyToId . S.vRRepository . entityVal <$$> selectList [S.VRVdoc ==. S.idToKey vid] []
+  vs <- liftDB $ foreignKeyField S.vRRepository <$$> selectList [S.VRVdoc ==. S.idToKey vid] []
   unique vs
 
 getRepo :: ID VDocRepo -> DB VDocRepo
@@ -203,7 +207,7 @@ getRepoHandle vid = S.repoElim toRepoHandle <$> getEntity vid
 
 getPatchIDs :: ID VDocRepo -> DB [ID Patch]
 getPatchIDs vid = liftDB $
-  S.keyToId . S.rPPatch . entityVal <$$> selectList [S.RPRepository ==. S.idToKey vid] []
+  foreignKeyField S.rPPatch <$$> selectList [S.RPRepository ==. S.idToKey vid] []
 
 registerPatch :: ID VDocRepo -> ID Patch -> DB ()
 registerPatch rid pid = void . liftDB . insert $ S.RP (S.idToKey rid) (S.idToKey pid)
