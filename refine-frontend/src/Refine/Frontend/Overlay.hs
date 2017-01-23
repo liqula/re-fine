@@ -26,7 +26,7 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, h
                 ""
                 (fromString createType)
                 ""
-                (\_ _ -> RS.dispatch RS.ClearSelection <> RS.dispatch RS.ShowCommentOverlay)
+                (\_ _ -> RS.dispatch RS.ClearSelection <> RS.dispatch RS.ShowCommentEditor)
               ) offset
         _ -> div_ ""
 --    // quickCreate annotation ui events
@@ -68,7 +68,7 @@ showComment = defineView "ShowComment" $ \showOverlay ->
   let vdoc_overlay_content__comment = [ Style "backgroundColor" ("rgb(219, 204, 221)" :: String) -- lightred
                                       ]
   in overlay_ ["isVisible" &= showOverlay
-           , on "onCloseClicked" $ \_ -> RS.dispatch RS.HideCommentOverlay
+           , on "onCloseClicked" $ \_ -> RS.dispatch RS.HideComment
            , "hideOnOverlayClicked" &= True
            , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content__comment)
            ] $ do
@@ -119,3 +119,71 @@ showComment = defineView "ShowComment" $ \showOverlay ->
 
 showComment_ :: Bool -> ReactElementM eventHandler ()
 showComment_ showOverlay = view showComment showOverlay mempty
+
+-- was add-annotation
+addComment :: ReactView Bool
+addComment = defineView "AddComment" $ \showOverlay ->
+  let vdoc_overlay_content__add_annotation = [ Style "backgroundColor" ("rgb(59, 67, 87)" :: String) -- std-icon-bg, blue02
+                                     ]
+  in overlay_ ["isVisible" &= showOverlay
+           , on "onCloseClicked" $ \_ -> RS.dispatch RS.HideCommentEditor
+           , "hideOnOverlayClicked" &= True
+           , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content__add_annotation)
+           ]  $ do
+              icon_ (IconProps "c-vdoc-overlay-content" False ("icon-Remark", "dark") XL)
+
+              h4_ ["className" $= "c-vdoc-overlay-content__title"] "add a comment"
+
+              form_ [ "target" $= "#"
+                   , "action" $= "POST"] $ do
+                textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"
+                         , "className" $= "o-wysiwyg o-form-input__textarea"] mempty
+
+              div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
+                p_ $ do
+                  elemString "Step 1:"
+                  span_ ["className" $= "bold"] "Select a type for your comment:"
+
+              div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do
+                iconButton_ (IconButtonProps
+                              (IconProps "c-vdoc-overlay-content" True ("icon-Question", "dark") L)
+                              "category"
+                              "question"
+                              ""
+                              "ask a question"
+                              (\_ _ -> [])
+                            )
+                iconButton_ (IconButtonProps
+                              (IconProps "c-vdoc-overlay-content" True ("icon-Remark", "dark") L)
+                              "category"
+                              "comment"
+                              ""
+                              "add a note"
+                              (\_ _ -> [])
+                            )
+                iconButton_ (IconButtonProps
+                              (IconProps "c-vdoc-overlay-content" True ("icon-Discussion", "dark") L)
+                              "category"
+                              "discussion"
+                              ""
+                              "start a discussion"
+                              (\_ _ -> [])
+                            )
+
+              div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
+                p_ $ do
+                  elemString "Step 2:"
+                  span_ ["className" $= "bold"] "finish"
+
+              iconButton_ (IconButtonProps
+                            (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
+                            "submit"
+                            ""
+                            ""
+                            "submit"
+                            (\_ _ -> [])
+                          )
+
+
+addComment_ :: Bool -> ReactElementM eventHandler ()
+addComment_ showOverlay = view addComment showOverlay mempty

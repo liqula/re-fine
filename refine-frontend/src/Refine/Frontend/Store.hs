@@ -48,13 +48,14 @@ instance StoreData GlobalState where
 
 
         let newState = state
-              & gsVDoc               %~ vdocUpdate action
-              & gsVDocList           %~ vdocListUpdate action
-              & gsHeaderHeight       %~ headerHeightUpdate action
-              & gsMarkPositions      %~ markPositionsUpdate action
-              & gsWindowSize         %~ windowSizeUpdate action
-              & gsCurrentSelection   .~ currentSelectionUpdate action selectedRangeOrState    -- TODO can this be improved?
-              & gsShowCommentOverlay %~ showCommentOverlayUpdate action
+              & gsVDoc                     %~ vdocUpdate action
+              & gsVDocList                 %~ vdocListUpdate action
+              & gsHeaderHeight             %~ headerHeightUpdate action
+              & gsMarkPositions            %~ markPositionsUpdate action
+              & gsWindowSize               %~ windowSizeUpdate action
+              & gsCurrentSelection         .~ currentSelectionUpdate action selectedRangeOrState    -- TODO can this be improved?
+              & gsCommentIsVisible         %~ commentIsVisibleUpdate action
+              & gsCommentEditorIsVisible   %~ commentEditorIsVisibleUpdate action
 
         consoleLog "New state: " newState
         return newState
@@ -92,10 +93,16 @@ currentSelectionUpdate action state = case action of
     SubmitPatch    -> (Nothing, Nothing)
     _ -> state
 
-showCommentOverlayUpdate :: RefineAction -> Bool -> Bool
-showCommentOverlayUpdate action state = case action of
-    ShowCommentOverlay -> True
-    HideCommentOverlay -> False
+commentIsVisibleUpdate :: RefineAction -> Bool -> Bool
+commentIsVisibleUpdate action state = case action of
+    ShowComment -> True
+    HideComment -> False
+    _ -> state
+
+commentEditorIsVisibleUpdate :: RefineAction -> Bool -> Bool
+commentEditorIsVisibleUpdate action state = case action of
+    ShowCommentEditor -> True
+    HideCommentEditor -> False
     _ -> state
 
 
@@ -141,7 +148,7 @@ handleError msg = do
             return []
 
 refineStore :: ReactStore GlobalState
-refineStore = mkStore $ GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing) False
+refineStore = mkStore $ GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing) False False
 
 dispatch :: RefineAction -> [SomeStoreAction]
 dispatch a = [SomeStoreAction refineStore a]

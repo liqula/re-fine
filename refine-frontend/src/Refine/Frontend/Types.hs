@@ -57,13 +57,14 @@ instance AE.FromJSON Range where
     parseJSON _          = error "not an object... what can we do?" -- TODO empty
 
 data GlobalState = GlobalState
-  { _gsVDoc               :: Maybe CompositeVDoc
-  , _gsVDocList           :: Maybe [ID VDoc]
-  , _gsHeaderHeight       :: Int
-  , _gsMarkPositions      :: MarkPositions
-  , _gsWindowSize         :: WindowSize
-  , _gsCurrentSelection   :: (Maybe Range, Maybe DeviceOffset)
-  , _gsShowCommentOverlay :: Bool
+  { _gsVDoc                   :: Maybe CompositeVDoc
+  , _gsVDocList               :: Maybe [ID VDoc]
+  , _gsHeaderHeight           :: Int
+  , _gsMarkPositions          :: MarkPositions
+  , _gsWindowSize             :: WindowSize
+  , _gsCurrentSelection       :: (Maybe Range, Maybe DeviceOffset)
+  , _gsCommentIsVisible       :: Bool
+  , _gsCommentEditorIsVisible :: Bool
   } deriving (Show, Typeable, Generic, NFData, ToJSON)
 
 makeLenses ''GlobalState
@@ -78,8 +79,10 @@ data RefineAction = LoadDocumentList
                   | SetWindowSize WindowSize
                   | SetSelection DeviceOffset
                   | ClearSelection
-                  | ShowCommentOverlay
-                  | HideCommentOverlay
+                  | ShowComment
+                  | HideComment
+                  | ShowCommentEditor
+                  | HideCommentEditor
                   | SubmitPatch
                   | SaveSelect Text Text
   deriving (Show, Typeable, Generic, NFData, ToJSON)

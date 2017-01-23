@@ -71,7 +71,8 @@ iconCore_ iconClass = view iconCore iconClass mempty
 
 icon :: ReactView IconProps
 icon = defineStatefulView "Icon" False $ \mouseIsOver props -> do
-  div_ ["className" $= fromString ((props ^. blockName) <> "__icon")
+  -- TODO unify the naming schemas of the classes of the different icons!
+  div_ ["className" $= fromString ((props ^. blockName) <> "__icon" <> " " <> (props ^. blockName) <> "__category-icon")
        , onMouseEnter $ \_ _ _ -> ([], Just True)
        , onMouseLeave $ \_ _ _ -> ([], Just False)
        ] $ do
@@ -93,7 +94,9 @@ iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
     let bprops = props ^. iconButtonProps
     let iprops = bprops ^. iconProps
     div_ (["data-content-type" $= (bprops ^. contentType)
-           , "className" $= fromString (concat [ iprops ^. blockName, "__button "
+           -- TODO unify the naming schema of the classes for the different buttons!
+           , "className" $= fromString (concat [ iprops ^. blockName, "__button"
+                                               , " "
                                                , iprops ^. blockName
                                                , if bprops ^. elementName == "" then "" else "__"
                                                , bprops ^. elementName
