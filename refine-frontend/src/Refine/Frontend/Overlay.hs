@@ -23,6 +23,7 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, h
               (IconButtonProps
                 (IconProps ("o-add-" <> createType) True ("icon-New_Comment", "bright") XXL)
                 ""
+                ""
                 (fromString createType)
                 ""
                 (\_ _ -> RS.dispatch RS.ClearSelection <> RS.dispatch RS.ShowCommentOverlay)

@@ -34,6 +34,7 @@ makeLenses ''IconProps
 data IconButtonProps = IconButtonProps
   { _iconProps     :: IconProps
   , _elementName   :: String
+  , _moduleName    :: String
   , _contentType   :: JSString
   , _label         :: JSString
   , _clickHandler    :: ClickHandler
@@ -96,6 +97,13 @@ iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
                                                , iprops ^. blockName
                                                , if bprops ^. elementName == "" then "" else "__"
                                                , bprops ^. elementName
+                                               , " "
+                                               , iprops ^. blockName
+                                               , if bprops ^. elementName == "" then "" else "__"
+                                               , bprops ^. elementName
+                                               , if bprops ^. moduleName == "" then "" else "--"
+                                               , bprops ^. moduleName
+                                               , " "
                                                , alignmentClass (iprops ^. blockName)
                                                                 (props ^. rightAligned)
                                                ])

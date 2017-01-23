@@ -89,6 +89,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       (IconProps "c-vdoc-toolbar" True ("icon-Index_desktop", "dark") XXL)
                       "btn-index"
                       ""
+                      ""
                       "index"
                       (\_ _ -> [])
 
@@ -97,6 +98,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
           iconButton_ $ IconButtonProps
                       (IconProps "c-vdoc-toolbar" True ("icon-New_Comment", "dark") XXL)
                       "btn-add-annotation"
+                      ""
                       "annotation"
                       "new annotation"
                       (\_ _ -> [])
@@ -104,6 +106,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
           iconButton_ $ IconButtonProps
                       (IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXL)
                       "btn-add-modification"
+                      ""
                       "modification"
                       "new modification"
                       (\_ _ -> [])
@@ -115,6 +118,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       (IconProps "c-vdoc-toolbar" False ("icon-Comment", "dark") XXL)
                       "all-annotations"
                       ""
+                      ""
                       "all annotations"
                       (\_ _ -> [])
 
@@ -122,12 +126,14 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       (IconProps "c-vdoc-toolbar" False ("icon-Edit", "dark") XXL)
                       "all-modifications"
                       ""
+                      ""
                       "all modifications"
                       (\_ _ -> [])
 
           iconButtonWithAlignment_ $ IconButtonWithAlignmentProps (IconButtonProps
                                     (IconProps "c-vdoc-toolbar" True ("icon-Reader", "bright") XXL)
                                     "btn-read-mode"
+                                    ""
                                     "" -- data-content-type is not set for this one...
                                     "read mode"
                                     (\_ _ -> []))
@@ -147,12 +153,14 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
             iconButton_ $ IconButtonProps
                         (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L) -- TODO why index and not comment?
                         "btn-new-ann-doc"
+                        ""
                         "annotation"
                         "document annotation"
                         (\_ _ -> [])
             iconButton_ $ IconButtonProps
                         (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
                         "btn-new-ann-text"
+                        ""
                         "annotation"
                         "annotation related to text"
                         (\_ _ -> [])
@@ -161,6 +169,7 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
             iconButton_ $ IconButtonProps
                         (IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") L)
                         "btn-new-mod-text"
+                        ""
                         "annotation"
                         "new modification"
                         (\_ _ -> [])
