@@ -55,7 +55,6 @@ library
       Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Samples
       Refine.Frontend.Types
-      Refine.Frontend.Util
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.Views
       Refine.Frontend.WindowSize
@@ -101,7 +100,6 @@ executable refine-frontend
       Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Samples
       Refine.Frontend.Types
-      Refine.Frontend.Util
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.Views
       Refine.Frontend.WindowSize
@@ -153,7 +151,6 @@ test-suite spec
       Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Samples
       Refine.Frontend.Types
-      Refine.Frontend.Util
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.UtilityWidgetsSpec
       Refine.Frontend.Views
