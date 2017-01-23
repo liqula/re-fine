@@ -33,7 +33,6 @@ import Refine.Backend.Config
 import Refine.Backend.DocRepo.Core
 import Refine.Common.Types.VDoc
 
--- TODO: Create class
 
 newUUID :: IO String
 newUUID = show @UUID <$> randomIO
