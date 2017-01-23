@@ -90,8 +90,9 @@ type instance Create (ChunkRange owner) = CreateChunkRange
 
 instance SOP.Generic ChunkPoint
 instance SOP.HasDatatypeInfo ChunkPoint
-instance ToJSON   ChunkPoint where toJSON    = gtoJSONDef
 instance NFData   ChunkPoint where rnf       = SOP.grnf
+instance ToJSON   ChunkPoint where
+  toJSON (ChunkPoint node offset) = object ["node" .= node, "offset" .= offset]
 instance FromJSON ChunkPoint where
   parseJSON = withObject "ChunkPoint" (\v -> ChunkPoint <$> v .: "node" <*> v .: "offset")
 
