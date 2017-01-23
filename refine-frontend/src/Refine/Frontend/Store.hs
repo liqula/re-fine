@@ -13,15 +13,15 @@ import           Control.Lens ((&), (^.), (%~), (.~))
 import qualified Data.Aeson as AE
 import qualified Data.Map.Strict as M
 import           React.Flux
+import           Data.Aeson (ToJSON, encode)
 import           Data.String.Conversions
-import           Data.JSString (JSString, unpack)
+import           Data.JSString (JSString, pack, unpack)
 
 import Refine.Common.Rest
 import Refine.Common.Types
 import Refine.Frontend.Rest
 import Refine.Frontend.Test.Samples
 import Refine.Frontend.Types
-import Refine.Frontend.Util
 
 
 toSize :: Int -> WindowSize
@@ -33,8 +33,8 @@ toSize sz
 instance StoreData GlobalState where
     type StoreAction GlobalState = RefineAction
     transform action state = do
-        consoleLogJSON "Old state: " state
-        consoleLogJSON "Action: " action
+        consoleLog "Old state: " state
+        consoleLog "Action: " action
 
         emitBackendCallsFor action state
 
@@ -55,7 +55,7 @@ instance StoreData GlobalState where
               & gsWindowSize       %~ windowSizeUpdate action
               & gsCurrentSelection .~ currentSelectionUpdate action selectedRangeOrState    -- TODO can this be improved?
 
-        consoleLogJSON "New state: " newState
+        consoleLog "New state: " newState
         return newState
 
 
@@ -139,6 +139,10 @@ dispatch :: RefineAction -> [SomeStoreAction]
 dispatch a = [SomeStoreAction refineStore a]
 
 
+-- (no idea if there are char encoding issues here.  but it's probably safe to use it for development.)
+consoleLog :: ToJSON a => JSString -> a -> IO ()
+consoleLog str state = consoleLog_ str ((pack . cs . encode) state)
+
 foreign import javascript unsafe
     "window.getSelection().rangeCount > 0 \
     \&& !(!window.getSelection().getRangeAt(0)) \
@@ -172,3 +176,8 @@ foreign import javascript unsafe
     \   return JSON.stringify(result); \
     \}) (window.getSelection().getRangeAt(0))"
     js_getRange :: IO JSString
+
+foreign import javascript unsafe
+  -- see webpack.config.js for a definition of the environment variable.
+  "if( process.env.IS_IN_WEBPACK ){ console.log($1, JSON.parse($2)); }"
+  consoleLog_ :: JSString -> JSString -> IO ()
