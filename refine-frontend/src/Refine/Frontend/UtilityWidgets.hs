@@ -91,7 +91,7 @@ iconButtonWithAlignment :: ReactView IconButtonWithAlignmentProps
 iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
     let bprops = props ^. iconButtonProps
     let iprops = bprops ^. iconProps
-    button_ (["data-content-type" $= (bprops ^. contentType)
+    div_ (["data-content-type" $= (bprops ^. contentType)
            , "className" $= fromString (concat [ iprops ^. blockName, "__button "
                                                , iprops ^. blockName
                                                , if bprops ^. elementName == "" then "" else "__"
