@@ -1,18 +1,21 @@
-{-# LANGUAGE DeriveAnyClass  #-}
-{-# LANGUAGE DeriveGeneric   #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveAnyClass     #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE OverloadedStrings  #-}
+{-# LANGUAGE TemplateHaskell    #-}
 
 module Refine.Backend.Config where
 
 import           Control.Exception (throwIO, ErrorCall(ErrorCall))
-import           Control.Lens (makeLenses, makePrisms)
-import           Data.Aeson (FromJSON, ToJSON)
+import           Control.Lens (makeLenses, makePrisms, (&), (^.))
+import           Data.Aeson (FromJSON, ToJSON, object, withObject, (.=), (.:))
 import           Data.Default (Default(..))
 import           Data.String.Conversions (cs)
 import qualified Data.Yaml as Yaml
 import           Data.Yaml (encode)
 import           GHC.Generics
+import           Network.Wai.Handler.Warp as Warp
 import           System.FilePath ((</>))
+import           Text.Read (readMaybe)
 
 
 -- FIXME: once we know what we need where, we can refactor this type into a tree of records, and
@@ -26,13 +29,14 @@ data Config = Config
   , _cfgDBKind        :: DBKind
   , _cfgPoolSize      :: Int
   , _cfgFileServeRoot :: Maybe FilePath
+  , _cfgWarpSettings  :: WarpSettings
   }
-  deriving (Generic, FromJSON, ToJSON)
+  deriving (Eq, Show, Generic, FromJSON, ToJSON)
 
 data DBKind
   = DBInMemory
   | DBOnDisk FilePath
-  deriving (Generic, FromJSON, ToJSON)
+  deriving (Eq, Show, Generic, FromJSON, ToJSON)
 
 instance Default Config where
   def = Config
@@ -43,18 +47,57 @@ instance Default Config where
     , _cfgDBKind        = def
     , _cfgPoolSize      = 5
     , _cfgFileServeRoot = Just "../refine-frontend/js-build"
+    , _cfgWarpSettings  = def
     }
 
 instance Default DBKind where
   def = DBOnDisk (_cfgRootDir def </> "refine.db")
 
 
+-- * warp settings
+
+-- | "Network.Wai.Handler.Warp" contains 'Settings', which we could use here, but that module is not
+-- exposed from warp.
+data WarpSettings = WarpSettings
+  { _warpSettingsPort :: Warp.Port
+  , _warpSettingsHost :: Warp.HostPreference
+  }
+  deriving (Eq, Show, Generic)
+
+instance ToJSON WarpSettings where
+  toJSON (WarpSettings port host) = object
+    [ "_warpSettingsPort" .= port
+    , "_warpSettingsHost" .= show host
+    ]
+
+instance FromJSON WarpSettings where
+  parseJSON = withObject "WarpSettings" $ \o -> WarpSettings
+    <$> o .: "_warpSettingsPort"
+    <*> (parseHost =<< o .: "_warpSettingsHost")
+    where
+      parseHost = maybe (fail "WarpSettings._warpSettingsHost") pure . readMaybe
+
+instance Default WarpSettings where
+  def = WarpSettings
+    { _warpSettingsPort = 3000
+    , _warpSettingsHost = "*4"
+    }
+
+
 -- * lenses
 
+makeLenses ''WarpSettings
 makeLenses ''Config
 
+makePrisms ''WarpSettings
 makePrisms ''DBKind
 makePrisms ''Config
+
+
+warpSettings :: Config -> Settings
+warpSettings cfg = Warp.defaultSettings
+  & setPort (cfg ^. cfgWarpSettings . warpSettingsPort)
+  & setHost (cfg ^. cfgWarpSettings . warpSettingsHost)
 
 
 -- * crude config file support

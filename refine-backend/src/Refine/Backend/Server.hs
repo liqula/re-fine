@@ -53,7 +53,7 @@ import Refine.Prelude (monadError)
 
 startBackend :: Config -> IO ()
 startBackend cfg = do
-  Warp.runSettings Warp.defaultSettings . backendServer =<< mkBackend cfg
+  Warp.runSettings (warpSettings cfg) . backendServer =<< mkBackend cfg
 
 data Backend = Backend
   { backendServer :: Application
