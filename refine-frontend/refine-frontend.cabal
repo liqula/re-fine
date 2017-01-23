@@ -49,7 +49,7 @@ library
       Refine.Frontend.Mark
       Refine.Frontend.Overlay
       Refine.Frontend.Rest
-      Refine.Frontend.StickyViews
+      Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Store
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
@@ -95,7 +95,7 @@ executable refine-frontend
       Refine.Frontend.Mark
       Refine.Frontend.Overlay
       Refine.Frontend.Rest
-      Refine.Frontend.StickyViews
+      Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Store
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
@@ -146,7 +146,7 @@ test-suite spec
       Refine.Frontend.Overlay
       Refine.Frontend.OverlaySpec
       Refine.Frontend.Rest
-      Refine.Frontend.StickyViews
+      Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Store
       Refine.Frontend.StoreSpec
       Refine.Frontend.Style

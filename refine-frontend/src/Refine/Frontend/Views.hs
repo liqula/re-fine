@@ -23,7 +23,7 @@ import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(
                                          )
 import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.Overlay
-import           Refine.Frontend.StickyViews (sticky_, stickyContainer_)
+import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
 import           Refine.Frontend.Types as RS
@@ -60,9 +60,9 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                                      , onMouseUp $ \_ me -> RS.dispatch . RS.SetSelection $ mouseClientY me
                                      , onTouchEnd $ \_ te -> RS.dispatch . RS.SetSelection . touchScreenY . head $ touches te
                                      ] $ do
-                              div_ ["className" $= "c-vdoc-overlay"] $ do
-                                div_ ["className" $= "c-vdoc-overlay__inner"] $ do
-                                  showCommentOverlay_ (rs ^. gsShowCommentOverlay)
+                              -- div_ ["className" $= "c-vdoc-overlay"] $ do
+                                -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
+                              showComment_ (rs ^. gsShowCommentOverlay)
                               div_ ["className" $= "c-article-content"] $ do
                                 toArticleBody . HTMLT.tokensToForest . HTMLP.parseTokens . cs . _unVDocVersion $ _compositeVDocVersion vdoc
                             rightAside_ (rs ^. gsMarkPositions)

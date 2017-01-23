@@ -6,8 +6,10 @@ import           Data.Monoid ((<>))
 import           Data.String (fromString)
 import           React.Flux
 
+import           Refine.Frontend.ThirdPartyViews (overlay_)
 import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.Store as RS
+import           Refine.Frontend.Style
 import           Refine.Frontend.UtilityWidgets
 
 
@@ -55,10 +57,20 @@ quickCreate_ :: String -> (Maybe RS.Range, Maybe RS.DeviceOffset) -> Int -> Reac
 quickCreate_ createType currentSelection headerHeight = view quickCreate (createType, currentSelection, headerHeight) mempty
 
 
-showCommentOverlay :: ReactView Bool
-showCommentOverlay = defineView "CommentOverlay" $ \showOverlay ->
-  if showOverlay then
-    div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
+showComment :: ReactView Bool
+showComment = defineView "ShowComment" $ \showOverlay ->
+  let vdoc_overlay_content = [ Style "display" ("block" :: String)
+                             , Style "minHeight" ("200px" :: String)
+                             , Style "padding" ("15rem 10rem 10rem" :: String)
+                             ]
+      vdoc_overlay_content_comment = [ Style "backgroundColor" ("rgb(219, 204, 221)" :: String) -- lightred
+                                     ]
+  in overlay_ ["isVisible" &= showOverlay
+           , on "onCloseClicked" $ \_ -> RS.dispatch RS.HideCommentOverlay
+           , "hideOnOverlayClicked" &= True
+           , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content_comment)
+           ] $ do
+    -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
         icon_ (IconProps "c-vdoc-overlay-content" False ("icon-Remark", "dark") L)
         {-
@@ -102,7 +114,6 @@ showCommentOverlay = defineView "CommentOverlay" $ \showOverlay ->
                     div_ [className $= "o-icon-highlight icon-Vote_negative_dark iconsize-xl">
                         <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span><span class="path6"></span><span class="path7"></span><span class="path8"></span>
                 -}
-  else mempty
 
 showCommentOverlay_ :: Bool -> ReactElementM eventHandler ()
 showCommentOverlay_ showOverlay = view showCommentOverlay showOverlay mempty
