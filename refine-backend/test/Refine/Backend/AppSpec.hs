@@ -26,6 +26,7 @@ import           Control.Category ((.))
 import           Control.Lens ((^.), (%=), at, makeLenses, view)
 import           Control.Monad.State
 import           Control.Natural (($$))
+import           Data.Default (def)
 import qualified Data.Map as Map
 import           Data.Map (Map)
 import           Data.Monoid (mconcat)
@@ -125,6 +126,8 @@ createAppRunner = do
         , _cfgReposRoot     = reposRoot
         , _cfgDBKind        = DBOnDisk testDb
         , _cfgPoolSize      = 5
+        , _cfgFileServeRoot = Nothing
+        , _cfgWarpSettings  = def
         }
 
   createDirectoryIfMissing True $ cfg ^. cfgRootDir

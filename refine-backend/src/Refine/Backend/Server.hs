@@ -35,6 +35,8 @@ import           Data.String.Conversions (cs)
 import           Network.Wai.Handler.Warp as Warp
 import           Prelude hiding ((.), id)
 import           Servant hiding (Patch)
+import           Servant.Server.Internal (responseServantErr)
+import           Servant.Utils.StaticFiles (serveDirectory)
 import           System.Directory (createDirectoryIfMissing)
 
 import Refine.Backend.App
@@ -51,7 +53,7 @@ import Refine.Prelude (monadError)
 
 startBackend :: Config -> IO ()
 startBackend cfg = do
-  Warp.runSettings Warp.defaultSettings . backendServer =<< mkBackend cfg
+  Warp.runSettings (warpSettings cfg) . backendServer =<< mkBackend cfg
 
 data Backend = Backend
   { backendServer :: Application
@@ -66,7 +68,9 @@ mkBackend cfg = do
   runDocRepo <- createRunRepo cfg
   let logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
       app    = runApp runDb runDocRepo logger userHandler
-      srv    = Servant.serve (Proxy :: Proxy RefineAPI) $ serverT app refineApi
+      srv    = Servant.serve (Proxy :: Proxy (RefineAPI :<|> Raw)) $
+                  serverT app refineApi
+             :<|> maybeServeDirectory (cfg ^. cfgFileServeRoot)
 
   when (cfg ^. cfgShouldMigrate) $ do
     void $ (natThrowError . app) $$ do
@@ -99,6 +103,10 @@ refineApi =
   :<|> Refine.Backend.App.addComment
   :<|> Refine.Backend.App.addNote
   :<|> sAddPatch
+
+
+maybeServeDirectory :: Maybe FilePath -> Server Raw
+maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) serveDirectory
 
 
 -- * vdocs

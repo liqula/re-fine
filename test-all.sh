@@ -22,6 +22,18 @@ function assert_os_package() {
 assert_os_package libcurl4-gnutls-dev
 assert_os_package stack
 
+function assert_cmd() {
+    which $1 > /dev/null || \
+        ( echo "please make sure $1 is in your path." >&2; false )
+}
+
+assert_cmd node
+assert_cmd npm
+# REMARKS
+# - node should be 6.x.x or higher.
+# - npm comes with node, so no extra version constraint here.
+# - on debian, the name for the node executable is nodejs, don't let that confuse you!
+
 stack setup --resolver lts-7.15
 stack install --resolver lts-7.15 shake
 ./build.sh setup
