@@ -40,7 +40,7 @@ import           Test.Hspec
                   , ActionWith
                   , around, describe, it
                   , shouldBe, shouldContain
-                  , pending
+                  , pendingWith
                   )
 import           Test.Hspec.Wai (get, request)
 import qualified Test.Hspec.Wai.Internal as Wai
@@ -50,6 +50,8 @@ import Refine.Backend.App as App
 import Refine.Backend.AppSpec (withTempCurrentDirectory)
 import Refine.Backend.Config
 import Refine.Backend.Database (DB)
+import Refine.Backend.Database.Class as DB
+import Refine.Backend.DocRepo as DocRepo
 import Refine.Backend.Server
 import Refine.Common.Rest
 import Refine.Common.Types
@@ -119,6 +121,10 @@ getVDocUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetVD
 createVDocUri :: SBS
 createVDocUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SCreateVDoc)
 
+addPatchUri :: ID Patch -> SBS
+addPatchUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddPatch)
+
+-- TODO: Fix add comment
 
 -- * test cases
 
@@ -132,7 +138,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
     it "yields the same vdocs list as the db" $ \sess -> do
       vdocsRest :: SResponse <- runWai sess $ get listVDocsUri
-      vdocsDB   :: [VDoc]    <- runDB  sess   listVDocs
+      vdocsDB   :: [VDoc]    <- runDB  sess   App.listVDocs
       decode (simpleBody vdocsRest) `shouldBe` Just vdocsDB
 
     it "if a vdoc is created, it shows in the output" $ \sess -> do
@@ -177,5 +183,17 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       be ^. compositeVDocNotes `shouldContain` [fn]
 
   describe "sAddPatch" $ do
-    it "..." $ \_sess -> do
-      pending
+    it "it stores a patch with no ranges" $ \sess -> do
+      fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
+      fp :: Patch         <- runWaiBody sess $
+        postJSON
+          (addPatchUri (fe ^. compositeVDocRepo . vdocHeadPatch))
+          (CreatePatch "new patch" (CreateChunkRange Nothing Nothing) (VDocVersion "[new vdoc version]"))
+      be' :: VDocVersion 'HTMLCanonical <- runDB sess $ do
+              handles <- db $ DB.repoAndPatchHandles (fp ^. patchID)
+              docRepo $ uncurry DocRepo.getVersion handles
+      be' `shouldBe` VDocVersion "<span>[new\nvdoc\nversion]</span>"
+
+      pendingWith "applicablePatches is not implemented."
+      be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
+      be ^. compositeVDocPatches `shouldContain` [fp]

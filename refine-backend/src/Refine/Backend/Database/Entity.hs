@@ -38,6 +38,8 @@ import           Refine.Backend.Database.Types
 import qualified Refine.Backend.DocRepo.Core as DocRepo
 import           Refine.Common.Types
 
+-- TODO: Restructure this module the mirror the structure of the Databas typeclass
+-- TODO: Make a helper from this: S.keyToId . S.vRRepository . entityVal
 
 -- FIXME: Generate this as the part of the lentil library.
 type instance S.EntityRep VDoc     = S.VDoc
@@ -169,6 +171,11 @@ patchComments :: ID Patch -> DB [ID Comment]
 patchComments pid = liftDB $
   S.keyToId . S.pCComment . entityVal <$$> selectList [S.PCPatch ==. S.idToKey pid] []
 
+patchVDocRepo :: ID Patch -> DB (ID VDocRepo)
+patchVDocRepo pid = do
+  rs <- liftDB $ S.keyToId . S.rPRepository . entityVal <$$> selectList [S.RPPatch ==. S.idToKey pid] []
+  unique rs
+
 vdocRepo :: ID VDoc -> DB (ID VDocRepo)
 vdocRepo vid = do
   vs <- liftDB $ S.keyToId . S.vRRepository . entityVal <$$> selectList [S.VRVdoc ==. S.idToKey vid] []
@@ -197,6 +204,9 @@ getRepoHandle vid = S.repoElim toRepoHandle <$> getEntity vid
 getPatchIDs :: ID VDocRepo -> DB [ID Patch]
 getPatchIDs vid = liftDB $
   S.keyToId . S.rPPatch . entityVal <$$> selectList [S.RPRepository ==. S.idToKey vid] []
+
+registerPatch :: ID VDocRepo -> ID Patch -> DB ()
+registerPatch rid pid = void . liftDB . insert $ S.RP (S.idToKey rid) (S.idToKey pid)
 
 toChunkRange :: DBChunkRange -> ID a -> ChunkRange a
 toChunkRange r i = ChunkRange i (r ^. dbChunkRangeBegin) (r ^. dbChunkRangeEnd)

@@ -47,7 +47,6 @@ import Refine.Backend.DocRepo (createRunRepo)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Common.Rest
-import Refine.Common.Types
 import Refine.Prelude (monadError)
 
 
@@ -102,14 +101,8 @@ refineApi =
   :<|> Refine.Backend.App.createVDocGetComposite
   :<|> Refine.Backend.App.addComment
   :<|> Refine.Backend.App.addNote
-  :<|> sAddPatch
+  :<|> Refine.Backend.App.addPatch
 
 
 maybeServeDirectory :: Maybe FilePath -> Server Raw
 maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) serveDirectory
-
-
--- * vdocs
-
-sAddPatch :: ID Patch -> Create Patch -> App DB Patch
-sAddPatch = undefined

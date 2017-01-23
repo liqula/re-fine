@@ -29,6 +29,10 @@ class Database db where
   patchComments      :: ID Patch -> db [ID Comment]
   patchNotes         :: ID Patch -> db [ID Note]
 
+  -- * Repo and patch
+  patchVDocRepo      :: ID Patch -> db (ID VDocRepo)
+  registerPatch      :: ID VDocRepo -> ID Patch -> db ()
+
   -- * Comment
   createComment      :: ID Patch -> Create Comment -> db Comment
   getComment         :: ID Comment -> db Comment
@@ -36,3 +40,13 @@ class Database db where
   -- * Note
   createNote         :: ID Patch -> Create Note -> db Note
   getNote            :: ID Note -> db Note
+
+
+-- * composite db queries
+
+repoAndPatchHandles
+  :: (Monad db, Database db)
+  => ID Patch -> db (DocRepo.RepoHandle, DocRepo.PatchHandle)
+repoAndPatchHandles pid = do
+  rid <- patchVDocRepo pid
+  (,) <$> getRepoHandle rid <*> getPatchHandle pid
