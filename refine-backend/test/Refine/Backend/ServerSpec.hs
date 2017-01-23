@@ -189,8 +189,10 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
         postJSON
           (addPatchUri (fe ^. compositeVDocRepo . vdocHeadPatch))
           (CreatePatch "new patch" (CreateChunkRange Nothing Nothing) (VDocVersion "[new vdoc version]"))
+
+      -- FIXME: Remove this check use the appropiate one after the pending.
       be' :: VDocVersion 'HTMLCanonical <- runDB sess $ do
-              handles <- db $ DB.repoAndPatchHandles (fp ^. patchID)
+              handles <- db $ DB.handlesForPatch (fp ^. patchID)
               docRepo $ uncurry DocRepo.getVersion handles
       be' `shouldBe` VDocVersion "<span>[new\nvdoc\nversion]</span>"
 

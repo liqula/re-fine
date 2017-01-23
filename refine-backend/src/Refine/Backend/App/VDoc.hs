@@ -94,9 +94,8 @@ addPatch :: ID Patch -> Create Patch -> App DB Patch
 addPatch pid patch = do
   appLog "addPatch"
   join . db $ do
-    rid           <- DB.patchVDocRepo pid
-    rhandle       <- DB.getRepoHandle rid
-    phandleParent <- DB.getPatchHandle pid
+    rid                      <- DB.patchVDocRepo pid
+    (rhandle, phandleParent) <- DB.handlesForPatch pid
     pure $ do
       version      <- patch ^. createPatchVDoc . to (monadError AppVDocError . canonicalizeVDocVersion)
       phandleChild <- docRepo $ DocRepo.createPatch rhandle phandleParent version
@@ -104,4 +103,3 @@ addPatch pid patch = do
         childPatch <- DB.createPatch phandleChild
         DB.registerPatch rid (childPatch ^. patchID)
         pure childPatch
-

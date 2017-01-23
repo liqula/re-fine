@@ -44,9 +44,9 @@ class Database db where
 
 -- * composite db queries
 
-repoAndPatchHandles
+handlesForPatch
   :: (Monad db, Database db)
   => ID Patch -> db (DocRepo.RepoHandle, DocRepo.PatchHandle)
-repoAndPatchHandles pid = do
+handlesForPatch pid = do
   rid <- patchVDocRepo pid
   (,) <$> getRepoHandle rid <*> getPatchHandle pid
