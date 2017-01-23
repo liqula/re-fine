@@ -29,7 +29,7 @@ data Config = Config
   , _cfgDBKind        :: DBKind
   , _cfgPoolSize      :: Int
   , _cfgFileServeRoot :: Maybe FilePath
-  , _cfgWarpSettings  :: WarpSettings
+  , _cfgWarpSettings  :: WarpSettings  -- ^ check test suite for examples of what can be put in here.
   }
   deriving (Eq, Show, Generic, FromJSON, ToJSON)
 
