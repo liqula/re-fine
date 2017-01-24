@@ -91,15 +91,15 @@ getCompositeVDoc vid = do
       pure $ CompositeVDoc vdoc repo version patches comments notes
 
 addPatch :: ID Patch -> Create Patch -> App DB Patch
-addPatch pid patch = do
+addPatch basepid patch = do
   appLog "addPatch"
   join . db $ do
-    rid                      <- DB.patchVDocRepo pid
-    (rhandle, phandleParent) <- DB.handlesForPatch pid
+    rid                    <- DB.patchVDocRepo basepid
+    (rhandle, basephandle) <- DB.handlesForPatch basepid
     pure $ do
       version      <- patch ^. createPatchVDoc . to (monadError AppVDocError . canonicalizeVDocVersion)
-      phandleChild <- docRepo $ DocRepo.createPatch rhandle phandleParent version
+      childphandle <- docRepo $ DocRepo.createPatch rhandle basephandle version
       db $ do
-        childPatch <- DB.createPatch phandleChild
+        childPatch <- DB.createPatch childphandle
         DB.registerPatch rid (childPatch ^. patchID)
         pure childPatch

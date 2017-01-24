@@ -186,7 +186,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       be ^. compositeVDocNotes `shouldContain` [fn]
 
   describe "sAddPatch" $ do
-    it "it stores a patch with no ranges" $ \sess -> do
+    it "stores a patch with no ranges" $ \sess -> do
       fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
       fp :: Patch         <- runWaiBody sess $
         postJSON
