@@ -1,9 +1,34 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE DeriveAnyClass             #-}
+{-# LANGUAGE ExplicitForAll             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ViewPatterns               #-}
+
 
 module Refine.Frontend.Overlay where
 
+import           Control.DeepSeq
 import           Data.Monoid ((<>))
 import           Data.String (fromString)
+import           Data.Typeable (Typeable)
+import           GHC.Generics (Generic)
 import           React.Flux
 
 import           Refine.Frontend.ThirdPartyViews (overlay_)
@@ -137,14 +162,31 @@ addComment = defineView "AddComment" $ \showOverlay ->
 
     h4_ ["className" $= "c-vdoc-overlay-content__title"] "add a comment"
 
+    commentInput_
+
+
+addComment_ :: Bool -> ReactElementM eventHandler ()
+addComment_ showOverlay = view addComment showOverlay mempty
+
+data CommentInputState = CommentInputState
+  { _commentInputStateText     :: String
+  , _commentInputStateCategory :: String
+  } deriving (Show, Typeable, Generic, NFData)
+
+commentInput :: ReactView ()
+commentInput = defineStatefulView "CommentInput" (CommentInputState "" "") $ \_curState () ->
+  div_ $ do
     form_ [ "target" $= "#"
          , "action" $= "POST"] $ do
       textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"
-               , "className" $= "o-wysiwyg o-form-input__textarea"] mempty
+                , "className" $= "o-wysiwyg o-form-input__textarea"
+                -- Update the current state with the current text in the textbox, sending no actions
+                , onChange $ \evt state -> ([], Just $ state { _commentInputStateText = target evt "value" } )
+                ] mempty
 
     div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
       p_ $ do
-        elemString "Step 1:"
+        elemString "Step 1: "
         span_ ["className" $= "bold"] "Select a type for your comment:"
 
     div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do
@@ -175,7 +217,7 @@ addComment = defineView "AddComment" $ \showOverlay ->
 
     div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
       p_ $ do
-        elemString "Step 2:"
+        elemString "Step 2: "
         span_ ["className" $= "bold"] "finish"
 
     iconButton_ (IconButtonProps
@@ -187,7 +229,5 @@ addComment = defineView "AddComment" $ \showOverlay ->
                   (\_ _ -> [])
                 )
 
-
-
-addComment_ :: Bool -> ReactElementM eventHandler ()
-addComment_ showOverlay = view addComment showOverlay mempty
+commentInput_ :: ReactElementM eventHandler ()
+commentInput_ = view commentInput () mempty
