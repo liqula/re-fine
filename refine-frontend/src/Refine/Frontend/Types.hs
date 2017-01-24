@@ -84,6 +84,7 @@ data RefineAction = LoadDocumentList
                   | ShowCommentEditor
                   | HideCommentEditor
                   | SubmitComment ST String
+                  | AddComment Comment
                   | SubmitPatch
                   | SaveSelect Text Text
   deriving (Show, Typeable, Generic, NFData, ToJSON)

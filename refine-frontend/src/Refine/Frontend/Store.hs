@@ -65,6 +65,9 @@ instance StoreData GlobalState where
 vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate action state = case action of
     OpenDocument openedVDoc -> Just openedVDoc
+    AddComment comment      -> case state of
+        Nothing   -> Nothing -- no vdoc: we cannot put the comment anywhere
+        Just vdoc -> Just $ vdoc { _compositeVDocComments = comment : vdoc ^. compositeVDocComments }
     _ -> state
 
 vdocListUpdate :: RefineAction -> Maybe [ID VDoc] -> Maybe [ID VDoc]
@@ -128,7 +131,7 @@ emitBackendCallsFor action state = case action of
       addComment (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. vdocHeadPatch)
                  (CreateComment text True (createChunkRange (state ^. gsCurrentSelection . _1))) $ \case
         (Left(_, msg)) -> handleError msg
-        (Right _) -> return [] -- later sth like: . dispatch $ OpenDocument loadedVDoc
+        (Right comment) -> return . dispatch $ AddComment comment
 
 {- TODO submitting a patch does not work yet
     SubmitPatch -> do
