@@ -15,14 +15,14 @@ class Database db where
   vdocRepo           :: ID VDoc -> db (ID VDocRepo)
 
   -- * Repo
-  createRepo         :: DocRepo.RepoHandle -> ID Patch -> db VDocRepo
+  createRepo         :: DocRepo.RepoHandle -> DocRepo.PatchHandle -> db VDocRepo
   getRepo            :: ID VDocRepo -> db VDocRepo
   getRepoFromHandle  :: DocRepo.RepoHandle -> db VDocRepo
   getRepoHandle      :: ID VDocRepo -> db DocRepo.RepoHandle
   getPatchIDs        :: ID VDocRepo -> db [ID Patch]
 
   -- * Patch
-  createPatch        :: DocRepo.PatchHandle -> db Patch
+  createPatch        :: ID VDocRepo -> DocRepo.PatchHandle -> db Patch
   getPatch           :: ID Patch -> db Patch
   getPatchFromHandle :: DocRepo.PatchHandle -> db Patch
   getPatchHandle     :: ID Patch -> db DocRepo.PatchHandle
@@ -31,7 +31,6 @@ class Database db where
 
   -- * Repo and patch
   patchVDocRepo      :: ID Patch -> db (ID VDocRepo)
-  registerPatch      :: ID VDocRepo -> ID Patch -> db ()
 
   -- * Comment
   createComment      :: ID Patch -> Create Comment -> db Comment

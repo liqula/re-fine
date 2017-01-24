@@ -56,8 +56,7 @@ createVDoc pv = do
     dp <- DocRepo.createInitialPatch dr vd
     pure (dr, dp)
   db $ do
-    p <- DB.createPatch dp
-    r <- DB.createRepo dr (p ^. patchID)
+    r <- DB.createRepo dr dp
     DB.createVDoc pv r
 
 getVDoc :: ID VDoc -> App DB VDoc
@@ -100,6 +99,5 @@ addPatch basepid patch = do
       version      <- patch ^. createPatchVDoc . to (monadError AppVDocError . canonicalizeVDocVersion)
       childphandle <- docRepo $ DocRepo.createPatch rhandle basephandle version
       db $ do
-        childPatch <- DB.createPatch childphandle
-        DB.registerPatch rid (childPatch ^. patchID)
+        childPatch <- DB.createPatch rid childphandle
         pure childPatch

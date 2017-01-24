@@ -85,7 +85,6 @@ instance Database DB where
 
   -- * Repo and patch
   patchVDocRepo      = Entity.patchVDocRepo
-  registerPatch      = Entity.registerPatch
 
   -- * Comment
   createComment      = Entity.createComment

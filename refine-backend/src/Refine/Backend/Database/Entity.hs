@@ -138,13 +138,13 @@ vdocRepo vid = do
 
 -- * Repo
 
-createRepo :: DocRepo.RepoHandle -> ID Patch -> DB VDocRepo
-createRepo repoh pid = do
-  key <- liftDB $ do
-    key <- insert $ S.Repo "title" {- TODO -} repoh (S.idToKey pid)
-    void . insert $ S.RP key (S.idToKey pid)
-    pure key
-  pure $ VDocRepo (S.keyToId key) pid
+createRepo :: DocRepo.RepoHandle -> DocRepo.PatchHandle -> DB VDocRepo
+createRepo repoh patchh = liftDB $ do
+    let desc = "" -- TODO
+    pkey <- insert $ S.Patch desc patchh
+    key  <- insert $ S.Repo "title" {- TODO -} repoh pkey
+    void  . insert $ S.RP key pkey
+    pure $ VDocRepo (S.keyToId key) (S.keyToId pkey)
 
 getRepo :: ID VDocRepo -> DB VDocRepo
 getRepo vid = S.repoElim toVDocRepo <$> getEntity vid
@@ -172,10 +172,11 @@ getPatchIDs vid = liftDB $
 
 -- * Patch
 
-createPatch :: DocRepo.PatchHandle -> DB Patch
-createPatch p = do
+createPatch :: ID VDocRepo -> DocRepo.PatchHandle -> DB Patch
+createPatch rid patchh = liftDB $ do
   let desc = "" -- TODO
-  key <- liftDB . insert $ S.Patch desc p
+  key <- insert $ S.Patch desc patchh
+  void . insert $ S.RP (S.idToKey rid) key
   let pid = S.keyToId key
       cr = ChunkRange pid Nothing Nothing  -- TODO
   pure $ Patch pid desc cr
