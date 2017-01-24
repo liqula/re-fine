@@ -32,25 +32,24 @@ import           Data.Map (Map)
 import           Data.Monoid (mconcat)
 import           Data.String.Conversions (ConvertibleStrings, cs)
 import           Prelude hiding ((.))
-import           System.IO.Temp (withSystemTempDirectory)
 import           System.Directory
                     ( createDirectoryIfMissing
                     , removeDirectoryRecursive
                     , removeFile
-                    , withCurrentDirectory
                     )
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic
 
-import Refine.Backend.Config
 import Refine.Backend.App         as App
-import Refine.Backend.App.User    as App
 import Refine.Backend.App.MigrateDB
+import Refine.Backend.App.User    as App
+import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Natural
+import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc
 
@@ -103,9 +102,6 @@ spec = do
       pure ()
 
 -- * Helpers
-
-withTempCurrentDirectory :: IO a -> IO a
-withTempCurrentDirectory action = withSystemTempDirectory "" (`withCurrentDirectory` action)
 
 provideAppRunner :: ActionWith (App DB a -> IO a) -> IO ()
 provideAppRunner action = withTempCurrentDirectory $ do

@@ -46,7 +46,7 @@ import           Test.Hspec.Wai (get, request)
 import qualified Test.Hspec.Wai.Internal as Wai
 
 import Refine.Backend.App as App
-import Refine.Backend.AppSpec (withTempCurrentDirectory)
+import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Backend.Config
 import Refine.Backend.Database (DB)
 import Refine.Backend.Database.Class as DB
