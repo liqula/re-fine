@@ -84,6 +84,12 @@ getEntity eid = do
   e <- liftDB . get $ S.idToKey eid
   maybe (idNotFound eid) pure e
 
+-- | Access the key like field in an entity and convert the key value
+-- to the Domain ID.
+--
+-- Example:
+--   * foreignKeyField S.PCComment (Entity pcid (S.PC pid cid)) == cid
+--   * foreignKeyField S.PCPatch   (Entity pcid (S.PC pid cid)) == pid
 foreignKeyField
   :: ToBackendKey SqlBackend (S.EntityRep a)
   => (b -> Key (S.EntityRep a)) -> Database.Persist.Entity b -> ID a
