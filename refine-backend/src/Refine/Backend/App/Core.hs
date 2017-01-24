@@ -65,7 +65,7 @@ makeLenses ''UserSession
 -- TODO:
 -- * user authentication (login)
 -- * user authorization (groups)
--- * use one db connection in one run.
+-- * use one db connection in one run, commit the result at the end.
 newtype App db a = App { unApp :: StateT AppUserState (ReaderT (AppContext db) (ExceptT AppError IO)) a }
   deriving
     ( Functor

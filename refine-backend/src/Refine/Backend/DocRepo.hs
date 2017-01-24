@@ -20,9 +20,11 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Refine.Backend.DocRepo
   ( module Refine.Backend.DocRepo.Core
-  , module Refine.Backend.DocRepo.Darcs
+  , module Refine.Backend.DocRepo.Class
   , createRunRepo
   ) where
 
@@ -32,8 +34,9 @@ import Control.Monad.Reader (runReaderT)
 import Control.Natural
 
 import Refine.Backend.Config
+import Refine.Backend.DocRepo.Class
 import Refine.Backend.DocRepo.Core
-import Refine.Backend.DocRepo.Darcs
+import Refine.Backend.DocRepo.Darcs as Darcs
 
 
 createRunRepo :: Config -> IO (DocRepo :~> ExceptT DocRepoError IO)
@@ -44,3 +47,11 @@ createRunRepo cfg = pure $
     wrapErrors m = do
       r <- liftIO (try m)
       either (throwError . DocRepoException) (either throwError pure) r
+
+
+instance DocumentRepository DocRepo where
+  createRepo         = Darcs.createRepo
+  createPatch        = Darcs.createPatch
+  createInitialPatch = Darcs.createInitialPatch
+  getVersion         = Darcs.getVersion
+  getChildPatches    = Darcs.getChildPatches

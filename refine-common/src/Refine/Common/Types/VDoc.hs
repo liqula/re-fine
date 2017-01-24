@@ -78,6 +78,10 @@ data Patch = Patch
   deriving (Eq, Ord, Show, Read, Generic)
 
 data CreatePatch = CreatePatch
+  { _createPatchDesc  :: ST
+  , _createPatchRange :: CreateChunkRange
+  , _createPatchVDoc  :: VDocVersion 'HTMLRaw
+  }
   deriving (Eq, Ord, Show, Read, Generic)
 
 data ConflictResolution = ConflictResolution

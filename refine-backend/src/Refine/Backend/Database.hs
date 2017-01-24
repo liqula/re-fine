@@ -83,6 +83,9 @@ instance Database DB where
   patchComments      = Entity.patchComments
   patchNotes         = Entity.patchNotes
 
+  -- * Repo and patch
+  patchVDocRepo      = Entity.patchVDocRepo
+
   -- * Comment
   createComment      = Entity.createComment
   getComment         = Entity.getComment
