@@ -39,12 +39,12 @@ instance StoreData GlobalState where
 
         emitBackendCallsFor action state
 
-        selectedRange <- case action of -- for efficiency reasons, don't ask JS on each action
+        selectionAction <- case action of -- for efficiency reasons, don't ask JS on each action
             SetSelection deviceOffset -> do
                 hasRange <- js_hasRange
                 range <- if hasRange then getRange else return Nothing
-                return (range, Just deviceOffset)
-            _ -> return $ _gsCurrentSelection state
+                return $ UpdateSelection (range, Just deviceOffset)
+            _ -> return action
 
 
         let newState = state
@@ -53,16 +53,12 @@ instance StoreData GlobalState where
               & gsHeaderHeight             %~ headerHeightUpdate action
               & gsMarkPositions            %~ markPositionsUpdate action
               & gsWindowSize               %~ windowSizeUpdate action
-              & gsCurrentSelection         %~ currentSelectionUpdate (transformSelectionAction action selectedRange)
+              & gsCurrentSelection         %~ currentSelectionUpdate selectionAction
               & gsCommentIsVisible         %~ commentIsVisibleUpdate action
               & gsCommentEditorIsVisible   %~ commentEditorIsVisibleUpdate action
 
         consoleLog "New state: " newState
         return newState
-
-transformSelectionAction :: RefineAction -> Selection -> RefineAction
-transformSelectionAction (SetSelection _) selection = UpdateSelection selection
-transformSelectionAction action _ = action
 
 
 vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
