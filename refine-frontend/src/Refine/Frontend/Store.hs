@@ -9,7 +9,7 @@
 
 module Refine.Frontend.Store where
 
-import           Control.Lens ((&), (^.), (%~), (.~))
+import           Control.Lens ((&), (^.), (%~))
 import qualified Data.Aeson as AE
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
@@ -39,8 +39,7 @@ instance StoreData GlobalState where
 
         emitBackendCallsFor action state
 
-        -- TODO can this be improved?
-        selectedRangeOrState <- case action of -- for efficiency reasons, don't ask JS for each action
+        selectedRange <- case action of -- for efficiency reasons, don't ask JS on each action
             SetSelection deviceOffset -> do
                 hasRange <- js_hasRange
                 range <- if hasRange then getRange else return Nothing
@@ -54,12 +53,16 @@ instance StoreData GlobalState where
               & gsHeaderHeight             %~ headerHeightUpdate action
               & gsMarkPositions            %~ markPositionsUpdate action
               & gsWindowSize               %~ windowSizeUpdate action
-              & gsCurrentSelection         .~ currentSelectionUpdate action selectedRangeOrState    -- TODO can this be improved?
+              & gsCurrentSelection         %~ currentSelectionUpdate (transformSelectionAction action selectedRange)
               & gsCommentIsVisible         %~ commentIsVisibleUpdate action
               & gsCommentEditorIsVisible   %~ commentEditorIsVisibleUpdate action
 
         consoleLog "New state: " newState
         return newState
+
+transformSelectionAction :: RefineAction -> Selection -> RefineAction
+transformSelectionAction (SetSelection _) selection = UpdateSelection selection
+transformSelectionAction action _ = action
 
 
 vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
@@ -90,9 +93,9 @@ windowSizeUpdate action state = case action of
     SetWindowSize newSize -> newSize
     _ -> state
 
-currentSelectionUpdate :: RefineAction -> (Maybe Range, Maybe DeviceOffset) -> (Maybe Range, Maybe DeviceOffset)
+currentSelectionUpdate :: RefineAction -> Selection -> Selection
 currentSelectionUpdate action state = case action of
-    SetSelection _ -> state -- TODO this only works because of how this is invoked -- needs improvement!
+    UpdateSelection newState -> newState
     ClearSelection -> (Nothing, Nothing)
     SubmitPatch    -> (Nothing, Nothing)
     _ -> state

@@ -56,13 +56,15 @@ instance AE.FromJSON Range where
                              v AE..: "scrollOffset"
     parseJSON _          = error "not an object... what can we do?" -- TODO empty
 
+type Selection = (Maybe Range, Maybe DeviceOffset)
+
 data GlobalState = GlobalState
   { _gsVDoc                   :: Maybe CompositeVDoc
   , _gsVDocList               :: Maybe [ID VDoc]
   , _gsHeaderHeight           :: Int
   , _gsMarkPositions          :: MarkPositions
   , _gsWindowSize             :: WindowSize
-  , _gsCurrentSelection       :: (Maybe Range, Maybe DeviceOffset)
+  , _gsCurrentSelection       :: Selection
   , _gsCommentIsVisible       :: Bool
   , _gsCommentEditorIsVisible :: (Bool, Maybe Range)
   } deriving (Show, Typeable, Generic, NFData, ToJSON)
@@ -78,6 +80,7 @@ data RefineAction = LoadDocumentList
                   | AddMarkPosition String Int
                   | SetWindowSize WindowSize
                   | SetSelection DeviceOffset
+                  | UpdateSelection Selection
                   | ClearSelection
                   | ShowComment
                   | HideComment
