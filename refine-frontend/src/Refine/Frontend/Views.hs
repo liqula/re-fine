@@ -51,6 +51,9 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                             editToolbar_
                             editToolbarExtension_
 
+                showComment_ (rs ^. gsCommentIsVisible)
+                addComment_ (rs ^. gsCommentEditorIsVisible)
+
                 main_ ["role" $= "main"] $ do
                     div_ ["className" $= "grid-wrapper"] $ do
                         div_ ["className" $= "row row-align-center row-align-top"] $ do
@@ -62,8 +65,6 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                                      ] $ do
                               -- div_ ["className" $= "c-vdoc-overlay"] $ do
                                 -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
-                              showComment_ (rs ^. gsCommentIsVisible)
-                              addComment_ (rs ^. gsCommentEditorIsVisible)
                               div_ ["className" $= "c-article-content"] $ do
                                 toArticleBody . HTMLT.tokensToForest . HTMLP.parseTokens . cs . _unVDocVersion $ _compositeVDocVersion vdoc
                             rightAside_ (rs ^. gsMarkPositions)

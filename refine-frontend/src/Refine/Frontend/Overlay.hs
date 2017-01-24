@@ -124,11 +124,13 @@ showComment_ showOverlay = view showComment showOverlay mempty
 addComment :: ReactView Bool
 addComment = defineView "AddComment" $ \showOverlay ->
   let vdoc_overlay_content__add_comment = [ Style "backgroundColor" ("rgb(219, 204, 221)" :: String) -- vdoc-comment, lightred
-                                     ]
+                                          , Style "zIndex" (6010 :: Int)
+                                          ]
   in overlay_ ["isVisible" &= showOverlay
            , on "onCloseClicked" $ \_ -> RS.dispatch RS.HideCommentEditor
            , "hideOnOverlayClicked" &= True
            , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content__add_comment)
+           , "overlayStyles" @= [Style "zIndex" (6000 :: Int)]
            ]  $ do
 
     icon_ (IconProps "c-vdoc-overlay-content" False ("icon-Remark", "dark") XL)
