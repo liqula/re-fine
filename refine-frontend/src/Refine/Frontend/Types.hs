@@ -64,7 +64,7 @@ data GlobalState = GlobalState
   , _gsWindowSize             :: WindowSize
   , _gsCurrentSelection       :: (Maybe Range, Maybe DeviceOffset)
   , _gsCommentIsVisible       :: Bool
-  , _gsCommentEditorIsVisible :: Bool
+  , _gsCommentEditorIsVisible :: (Bool, Maybe Range)
   } deriving (Show, Typeable, Generic, NFData, ToJSON)
 
 makeLenses ''GlobalState
@@ -81,9 +81,9 @@ data RefineAction = LoadDocumentList
                   | ClearSelection
                   | ShowComment
                   | HideComment
-                  | ShowCommentEditor
+                  | ShowCommentEditor (Maybe Range)
                   | HideCommentEditor
-                  | SubmitComment ST String
+                  | SubmitComment ST String (Maybe Range)
                   | AddComment Comment
                   | SubmitPatch
                   | SaveSelect Text Text

@@ -50,7 +50,7 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, h
                 ""
                 (fromString createType)
                 ""
-                (\_ _ -> RS.dispatch RS.ClearSelection <> RS.dispatch RS.ShowCommentEditor)
+                (\_ _ -> RS.dispatch RS.ClearSelection <> RS.dispatch (RS.ShowCommentEditor (fst currentSelection)))
               ) offset
         _ -> div_ ""
 --    // quickCreate annotation ui events
@@ -145,8 +145,8 @@ showComment_ :: Bool -> ReactElementM eventHandler ()
 showComment_ showOverlay = view showComment showOverlay mempty
 
 -- was add-annotation
-addComment :: ReactView Bool
-addComment = defineView "AddComment" $ \showOverlay ->
+addComment :: ReactView (Bool, Maybe RS.Range)
+addComment = defineView "AddComment" $ \(showOverlay, forRange) ->
   let vdoc_overlay_content__add_comment = [ Style "backgroundColor" ("rgb(219, 204, 221)" :: String) -- vdoc-comment, lightred
                                           , Style "zIndex" (6010 :: Int)
                                           ]
@@ -161,15 +161,15 @@ addComment = defineView "AddComment" $ \showOverlay ->
 
     h4_ ["className" $= "c-vdoc-overlay-content__title"] "add a comment"
 
-    commentInput_
+    commentInput_ forRange
 
 
-addComment_ :: Bool -> ReactElementM eventHandler ()
-addComment_ showOverlay = view addComment showOverlay mempty
+addComment_ :: (Bool, Maybe RS.Range) -> ReactElementM eventHandler ()
+addComment_ showForRange = view addComment showForRange mempty
 
 
-commentInput :: ReactView ()
-commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "" "") $ \curState () ->
+commentInput :: ReactView (Maybe RS.Range)
+commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "" "") $ \curState forRange ->
   div_ $ do
     form_ [ "target" $= "#"
          , "action" $= "POST"] $ do
@@ -222,9 +222,9 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "" "") $ 
         ""
         ""
         "submit"
-        (\_ _ -> RS.dispatch (RS.SubmitComment (curState ^. RS.commentInputStateText) (curState ^. RS.commentInputStateCategory))
+        (\_ _ -> RS.dispatch (RS.SubmitComment (curState ^. RS.commentInputStateText) (curState ^. RS.commentInputStateCategory) forRange)
               <> RS.dispatch RS.HideCommentEditor)
       )
 
-commentInput_ :: ReactElementM eventHandler ()
-commentInput_ = view commentInput () mempty
+commentInput_ :: Maybe RS.Range -> ReactElementM eventHandler ()
+commentInput_  forRange = view commentInput forRange mempty

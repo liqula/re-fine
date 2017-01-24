@@ -9,7 +9,7 @@
 
 module Refine.Frontend.Store where
 
-import           Control.Lens ((&), (^.), (%~), (.~), _1)
+import           Control.Lens ((&), (^.), (%~), (.~))
 import qualified Data.Aeson as AE
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
@@ -103,10 +103,10 @@ commentIsVisibleUpdate action state = case action of
     HideComment -> False
     _ -> state
 
-commentEditorIsVisibleUpdate :: RefineAction -> Bool -> Bool
+commentEditorIsVisibleUpdate :: RefineAction -> (Bool, Maybe Range) -> (Bool, Maybe Range)
 commentEditorIsVisibleUpdate action state = case action of
-    ShowCommentEditor -> True
-    HideCommentEditor -> False
+    ShowCommentEditor curSelection -> (True, curSelection)
+    HideCommentEditor -> (False, Nothing)
     _ -> state
 
 
@@ -127,9 +127,9 @@ emitBackendCallsFor action state = case action of
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
 
-    SubmitComment text _category -> do  -- later we will have 3 cases, depending on the category. But first the backend needs to get sorted on the types.
+    SubmitComment text _category forRange -> do  -- later we will have 3 cases, depending on the category. But first the backend needs to get sorted on the types.
       addComment (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. vdocHeadPatch)
-                 (CreateComment text True (createChunkRange (state ^. gsCurrentSelection . _1))) $ \case
+                 (CreateComment text True (createChunkRange forRange)) $ \case
         (Left(_, msg)) -> handleError msg
         (Right comment) -> return . dispatch $ AddComment comment
 
@@ -162,7 +162,7 @@ handleError msg = do
             return []
 
 refineStore :: ReactStore GlobalState
-refineStore = mkStore $ GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing) False False
+refineStore = mkStore $ GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing) False (False, Nothing)
 
 dispatch :: RefineAction -> [SomeStoreAction]
 dispatch a = [SomeStoreAction refineStore a]
