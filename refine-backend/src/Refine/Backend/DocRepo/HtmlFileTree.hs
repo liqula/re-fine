@@ -20,7 +20,12 @@
 
 module Refine.Backend.DocRepo.HtmlFileTree where
 
+import Control.Exception (throwIO, ErrorCall(ErrorCall))
+import Control.Monad ((>=>))
+import Data.List (sort)
 import Data.String.Conversions
+import Data.Text.IO as ST
+import System.Directory
 import System.IO.Temp (createTempDirectory)
 
 import Refine.Common.Types.VDoc
@@ -48,11 +53,29 @@ htmlFromFileTree :: FileTree -> VDocVersion 'HTMLCanonical
 htmlFromFileTree = undefined
 
 
-data FileTree = File FilePath ST | Directory FilePath [FileTree]
-  deriving (Eq, Show)
+data FileTree =
+    File
+      { _fileName :: FilePath
+      , _fileContent :: ST
+      }
+  | Directory
+      { _fileName :: FilePath
+      , _directoryContent :: [FileTree]
+      }
+  deriving (Eq, Ord, Show)
 
 writeFileTree :: FilePath -> FileTree -> IO ()
-writeFileTree _rootPath _ft = undefined
+writeFileTree rootPath ft = withCurrentDirectory rootPath $ do
+  case ft of
+    File fp content -> ST.writeFile fp content
+    Directory fp children -> createDirectory fp >> (writeFileTree fp `mapM_` children)
 
 readFileTree :: FilePath -> IO FileTree
-readFileTree _rootPath = undefined
+readFileTree rootPath = do
+  isdirectory <- doesDirectoryExist rootPath
+  if isdirectory
+    then withCurrentDirectory rootPath $ do
+      children <- filter (`notElem` [".", ".."]) <$> getDirectoryContents "."
+      Directory rootPath . sort <$> (readFileTree `mapM` children)
+    else
+      File rootPath <$> ST.readFile rootPath

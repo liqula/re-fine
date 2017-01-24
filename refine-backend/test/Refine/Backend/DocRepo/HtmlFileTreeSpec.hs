@@ -22,6 +22,8 @@
 
 module Refine.Backend.DocRepo.HtmlFileTreeSpec where
 
+import Data.Function (on)
+import Data.List (nubBy, sort)
 import Data.String.Conversions
 import Data.Text.IO as ST
 import System.Directory
@@ -37,12 +39,15 @@ import Refine.Common.Types
 
 instance Arbitrary FileTree where
   arbitrary = oneof
-    [ File <$> arbitrary <*> arbitrary
-    , Directory <$> arbitrary <*> scale (`div` 2) arbitrary
+    [ File <$> arbitraryFileName <*> arbitrary
+    , Directory <$> arbitraryFileName <*> (nubBy ((==) `on` _fileName) . sort <$> scale (`div` 2) arbitrary)
     ]
 
   shrink (File fp c) = File <$> shrink fp <*> shrink c
   shrink (Directory dp c) = Directory <$> shrink dp <*> shrink c
+
+arbitraryFileName :: Gen FilePath
+arbitraryFileName = elements $ show <$> [(1 :: Int)..10]
 
 
 spec :: Spec
@@ -79,21 +84,21 @@ spec = do
     it "reads top-level file correctly." $ do
       fileTree <- withTempCurrentDirectory $ do
         ST.writeFile "name" "contents"
-        readFileTree =<< getCurrentDirectory
-      fileTree `shouldBe` (File "name" "contents")
+        readFileTree "."
+      fileTree `shouldBe` (Directory "." [File "name" "contents"])
 
     it "reads directory correctly." $ do
       fileTree <- withTempCurrentDirectory $ do
         createDirectory "name"
-        readFileTree =<< getCurrentDirectory
-      fileTree `shouldBe` (Directory "name" [])
+        readFileTree "."
+      fileTree `shouldBe` (Directory "." [Directory "name" []])
 
     it "reads nested file correctly." $ do
       fileTree <- withTempCurrentDirectory $ do
         createDirectory "dir"
         ST.writeFile "./dir/file" "content"
         readFileTree "."
-      fileTree `shouldBe` (Directory "dir" [File "file" "content"])
+      fileTree `shouldBe` (Directory "." [Directory "dir" [File "file" "content"]])
 
     it "reads multiple files in lexicographical order." $ do
       fileTree <- withTempCurrentDirectory $ do
@@ -103,9 +108,9 @@ spec = do
         ST.writeFile "./dir/b" "b"
         ST.writeFile "./dir/2" "2"
         ST.writeFile "./dir/10" "10"
-        readFileTree =<< getCurrentDirectory
-      fileTree `shouldBe` (Directory "dir" ((\s -> File (cs s) s) <$> ["10", "2", "a", "b", "c"]))
+        readFileTree "."
+      fileTree `shouldBe` (Directory "." [Directory "dir" ((\s -> File (cs s) s) <$> ["10", "2", "a", "b", "c"])])
 
   describe "writeFileTree" $ do
     it "is inverse of readFileTree." . property $ \ft ->
-      withTempCurrentDirectory (writeFileTree "." ft >> readFileTree ".") `shouldReturn` ft
+      withTempCurrentDirectory (writeFileTree "." ft >> readFileTree ".") `shouldReturn` Directory "." [ft]
