@@ -17,6 +17,7 @@ ghc-options: -j -Wall -Werror
 
 dependencies:
   - aeson
+  - aeson-pretty
   - base
   - darcs
   - data-default
