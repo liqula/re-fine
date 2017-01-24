@@ -9,9 +9,10 @@
 
 module Refine.Frontend.Store where
 
-import           Control.Lens ((&), (^.), (%~), (.~))
+import           Control.Lens ((&), (^.), (%~), (.~), _1)
 import qualified Data.Aeson as AE
 import qualified Data.Map.Strict as M
+import           Data.Maybe (fromJust)
 import           React.Flux
 import           Data.Aeson (ToJSON, encode)
 import           Data.String.Conversions
@@ -108,7 +109,7 @@ commentEditorIsVisibleUpdate action state = case action of
 
 
 emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()
-emitBackendCallsFor action _state = case action of
+emitBackendCallsFor action state = case action of
     LoadDocumentList -> do
         listVDocs $ \case
             (Left(_, msg)) -> handleError msg
@@ -122,6 +123,12 @@ emitBackendCallsFor action _state = case action of
         createVDoc (CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
+
+    SubmitComment text _category -> do  -- later we will have 3 cases, depending on the category. But first the backend needs to get sorted on the types.
+      addComment (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. vdocHeadPatch)
+                 (CreateComment text True (createChunkRange (state ^. gsCurrentSelection . _1))) $ \case
+        (Left(_, msg)) -> handleError msg
+        (Right _) -> return [] -- later sth like: . dispatch $ OpenDocument loadedVDoc
 
 {- TODO submitting a patch does not work yet
     SubmitPatch -> do
@@ -141,6 +148,10 @@ emitBackendCallsFor action _state = case action of
 -}
     _ -> return ()
 
+
+createChunkRange :: Maybe Range -> CreateChunkRange
+createChunkRange Nothing = CreateChunkRange Nothing Nothing
+createChunkRange (Just range) = CreateChunkRange (range ^. startPoint) (range ^. endPoint)
 
 handleError :: String -> IO [SomeStoreAction]
 handleError msg = do

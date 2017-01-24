@@ -24,11 +24,9 @@
 
 module Refine.Frontend.Overlay where
 
-import           Control.DeepSeq
+import           Control.Lens ((^.))
 import           Data.Monoid ((<>))
 import           Data.String (fromString)
-import           Data.Typeable (Typeable)
-import           GHC.Generics (Generic)
 import           React.Flux
 
 import           Refine.Frontend.ThirdPartyViews (overlay_)
@@ -36,6 +34,7 @@ import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
 import           Refine.Frontend.UtilityWidgets
+
 
 
 quickCreate :: ReactView (String, (Maybe RS.Range, Maybe RS.DeviceOffset), Int)
@@ -168,20 +167,16 @@ addComment = defineView "AddComment" $ \showOverlay ->
 addComment_ :: Bool -> ReactElementM eventHandler ()
 addComment_ showOverlay = view addComment showOverlay mempty
 
-data CommentInputState = CommentInputState
-  { _commentInputStateText     :: String
-  , _commentInputStateCategory :: String
-  } deriving (Show, Typeable, Generic, NFData)
 
 commentInput :: ReactView ()
-commentInput = defineStatefulView "CommentInput" (CommentInputState "" "") $ \_curState () ->
+commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "" "") $ \curState () ->
   div_ $ do
     form_ [ "target" $= "#"
          , "action" $= "POST"] $ do
       textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"
                 , "className" $= "o-wysiwyg o-form-input__textarea"
                 -- Update the current state with the current text in the textbox, sending no actions
-                , onChange $ \evt state -> ([], Just $ state { _commentInputStateText = target evt "value" } )
+                , onChange $ \evt state -> ([], Just $ state { RS._commentInputStateText = target evt "value" } )
                 ] mempty
 
     div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
@@ -220,14 +215,16 @@ commentInput = defineStatefulView "CommentInput" (CommentInputState "" "") $ \_c
         elemString "Step 2: "
         span_ ["className" $= "bold"] "finish"
 
-    iconButton_ (IconButtonProps
-                  (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
-                  "submit"
-                  ""
-                  ""
-                  "submit"
-                  (\_ _ -> [])
-                )
+    iconButton_
+      (IconButtonProps
+        (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
+        "submit"
+        ""
+        ""
+        "submit"
+        (\_ _ -> RS.dispatch (RS.SubmitComment (curState ^. RS.commentInputStateText) (curState ^. RS.commentInputStateCategory))
+              <> RS.dispatch RS.HideCommentEditor)
+      )
 
 commentInput_ :: ReactElementM eventHandler ()
 commentInput_ = view commentInput () mempty

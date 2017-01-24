@@ -83,6 +83,16 @@ data RefineAction = LoadDocumentList
                   | HideComment
                   | ShowCommentEditor
                   | HideCommentEditor
+                  | SubmitComment ST String
                   | SubmitPatch
                   | SaveSelect Text Text
   deriving (Show, Typeable, Generic, NFData, ToJSON)
+
+
+-- for Overlay:
+data CommentInputState = CommentInputState
+  { _commentInputStateText     :: ST
+  , _commentInputStateCategory :: String
+  } deriving (Show, Typeable, Generic, NFData)
+
+makeLenses ''CommentInputState
