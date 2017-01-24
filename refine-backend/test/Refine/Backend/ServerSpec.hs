@@ -38,7 +38,7 @@ import           Servant.Utils.Links (safeLink)
 import           Test.Hspec
                   ( Spec
                   , ActionWith
-                  , around, describe, it
+                  , around, describe, context, it
                   , shouldBe, shouldContain
                   , pendingWith
                   )
@@ -186,19 +186,24 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       be ^. compositeVDocNotes `shouldContain` [fn]
 
   describe "sAddPatch" $ do
-    it "stores a patch with no ranges" $ \sess -> do
-      fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
-      fp :: Patch         <- runWaiBody sess $
-        postJSON
-          (addPatchUri (fe ^. compositeVDocRepo . vdocHeadPatch))
-          (CreatePatch "new patch" (CreateChunkRange Nothing Nothing) (VDocVersion "[new vdoc version]"))
+    let setup sess = do
+          fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
+          fp :: Patch         <- runWaiBody sess $
+            postJSON
+              (addPatchUri (fe ^. compositeVDocRepo . vdocHeadPatch))
+              (CreatePatch "new patch" (CreateChunkRange Nothing Nothing) (VDocVersion "[new vdoc version]"))
+          pure (fe, fp)
 
-      -- FIXME: Remove this check use the appropiate one after the pending.
-      be' :: VDocVersion 'HTMLCanonical <- runDB sess $ do
+    context "on patch without ranges" $ do
+      it "stores a patch and returns its version" $ \sess -> do
+        (_, fp) <- setup sess
+        be' :: VDocVersion 'HTMLCanonical <- runDB sess $ do
               handles <- db $ DB.handlesForPatch (fp ^. patchID)
               docRepo $ uncurry DocRepo.getVersion handles
-      be' `shouldBe` VDocVersion "<span>[new\nvdoc\nversion]</span>"
+        be' `shouldBe` VDocVersion "<span>[new\nvdoc\nversion]</span>"
 
-      pendingWith "applicablePatches is not implemented."
-      be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
-      be ^. compositeVDocPatches `shouldContain` [fp]
+      it "stores a patch and returns it in the list of patches applicable to its base" $ \sess -> do
+        pendingWith "applicablePatches is not implemented."
+        (fe, fp) <- setup sess
+        be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
+        be ^. compositeVDocPatches `shouldContain` [fp]
