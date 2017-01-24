@@ -7,6 +7,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
@@ -80,11 +81,12 @@ spec = parallel $ do
         collectDataUID _ = []
 
         withoutDataUID :: Token -> Token
-        withoutDataUID (TagOpen n xs) = TagOpen n (filter f xs)
+        withoutDataUID = \case (TagOpen n xs)      -> TagOpen n (filter f xs)
+                               (TagSelfClose n xs) -> TagSelfClose n (filter f xs)
+                               t                   -> t
           where
             f (Attr "data-uid" _) = False
             f _                   = True
-        withoutDataUID t = t
 
     it "idempotent" . property $
       \s -> setElemUIDs (setElemUIDs s) `shouldBe` setElemUIDs s
