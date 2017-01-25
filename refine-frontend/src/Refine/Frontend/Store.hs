@@ -69,6 +69,7 @@ vdocUpdate action state = case action of
     OpenDocument openedVDoc -> Just openedVDoc
     AddDiscussion discussion      -> case state of
         Nothing   -> Nothing -- no vdoc: we cannot put the comment anywhere
+                             -- FIXME: i think this should be an error. ~fisx
         Just vdoc -> Just $ vdoc { _compositeVDocComments = discussion : vdoc ^. compositeVDocComments }
     _ -> state
 
