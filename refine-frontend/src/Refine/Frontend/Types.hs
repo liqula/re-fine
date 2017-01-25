@@ -54,7 +54,6 @@ data RefineAction = LoadDocumentList
                   | AddHeaderHeight Int
                   | AddMarkPosition String Int
                   | SetWindowSize WindowSize
-                  | SetSelection DeviceOffset
                   -- Bubble Actions:
                   | UpdateSelection Selection
                   | ClearSelection
@@ -67,5 +66,7 @@ data RefineAction = LoadDocumentList
                   | AddComment Comment
                   | SubmitPatch
                   | SaveSelect Text Text
+                  -- Actions that will be transformed because they need IO:
+                  | TriggerUpdateSelection DeviceOffset
   deriving (Show, Typeable, Generic, NFData, ToJSON)
 

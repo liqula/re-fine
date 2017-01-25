@@ -62,8 +62,8 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                             leftAside_ (rs ^. gsMarkPositions) (rs ^. gsBubblesState ^. bsCurrentSelection) (rs ^. gsHeaderHeight)
                             article_ [ "id" $= "vdocValue"
                                      , "className" $= "gr-20 gr-14@desktop"
-                                     , onMouseUp $ \_ me -> RS.dispatch . RS.SetSelection $ mouseClientY me
-                                     , onTouchEnd $ \_ te -> RS.dispatch . RS.SetSelection . touchScreenY . head $ touches te
+                                     , onMouseUp $ \_ me -> RS.dispatch . RS.TriggerUpdateSelection $ mouseClientY me
+                                     , onTouchEnd $ \_ te -> RS.dispatch . RS.TriggerUpdateSelection . touchScreenY . head $ touches te
                                      ] $ do
                               -- div_ ["className" $= "c-vdoc-overlay"] $ do
                                 -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do

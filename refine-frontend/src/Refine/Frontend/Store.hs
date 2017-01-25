@@ -43,8 +43,9 @@ instance StoreData GlobalState where
 
         emitBackendCallsFor action state
 
-        selectionAction <- case action of -- for efficiency reasons, don't ask JS on each action
-            SetSelection deviceOffset -> do
+        transformedAction <- case action of
+            TriggerUpdateSelection deviceOffset -> do
+                -- for efficiency reasons, only ask JS when we get this action
                 hasRange <- js_hasRange
                 range <- if hasRange then getRange else return Nothing
                 return $ UpdateSelection (range, Just deviceOffset)
@@ -52,12 +53,12 @@ instance StoreData GlobalState where
 
 
         let newState = state
-              & gsVDoc                     %~ vdocUpdate action
-              & gsVDocList                 %~ vdocListUpdate action
-              & gsHeaderHeight             %~ headerHeightUpdate action
-              & gsMarkPositions            %~ markPositionsUpdate action
-              & gsWindowSize               %~ windowSizeUpdate action
-              & gsBubblesState             %~ bubblesStateUpdate selectionAction
+              & gsVDoc                     %~ vdocUpdate transformedAction
+              & gsVDocList                 %~ vdocListUpdate transformedAction
+              & gsHeaderHeight             %~ headerHeightUpdate transformedAction
+              & gsMarkPositions            %~ markPositionsUpdate transformedAction
+              & gsWindowSize               %~ windowSizeUpdate transformedAction
+              & gsBubblesState             %~ bubblesStateUpdate transformedAction
 
         consoleLog "New state: " newState
         return newState
