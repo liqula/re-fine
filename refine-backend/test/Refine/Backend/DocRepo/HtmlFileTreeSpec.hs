@@ -54,7 +54,7 @@ instance Arbitrary FileTree where
 arbitraryFileName :: Gen FilePath
 arbitraryFileName = elements $ show <$> [(1 :: Int)..10]
 
--- | TODO: move this to a better place
+-- | FIXME: move this to a better place
 --
 -- If a tag that *can* be closed normally is closed with the short-hand, change that.  In some
 -- functions this happens implicitly, so in order to compare the input of those function against the
