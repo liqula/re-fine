@@ -33,8 +33,6 @@ instance ToJSON MarkPositions where
 data WindowSize = Desktop | Tablet | Mobile
   deriving (Show, Typeable, Generic, NFData, ToJSON)
 
-type DeviceOffset = Int
-
 data GlobalState = GlobalState
   { _gsVDoc                   :: Maybe CompositeVDoc
   , _gsVDocList               :: Maybe [ID VDoc]

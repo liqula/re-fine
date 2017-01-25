@@ -39,7 +39,9 @@ instance AE.FromJSON Range where
                              v AE..: "scrollOffset"
     parseJSON _          = error "not an object... what can we do?" -- TODO empty
 
-type Selection = (Maybe Range, Maybe Int) -- TODO brauchen wir den zweiten Teil überhaupt??
+type DeviceOffset = Int
+
+type Selection = (Maybe Range, Maybe DeviceOffset)
 
 -- for Overlay:
 data CommentInputState = CommentInputState
