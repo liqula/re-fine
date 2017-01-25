@@ -18,7 +18,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Common.Types.Note where  -- rename to Comment
+module Refine.Common.Types.Comment where
 
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)

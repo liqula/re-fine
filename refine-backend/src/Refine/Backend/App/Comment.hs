@@ -20,9 +20,9 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Backend.App.Note where
+module Refine.Backend.App.Comment where
 
-import Refine.Common.Types.Note
+import Refine.Common.Types.Comment
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc
 import Refine.Prelude ((<@>))

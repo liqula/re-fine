@@ -47,3 +47,7 @@ addNote = request cfg (Proxy :: Proxy SAddNote)
 -- | create a new edit given a base edit and chunk range, new contents.
 addEdit :: ID Patch -> Create Patch -> HandleResponse Patch -> IO ()
 addEdit = request cfg (Proxy :: Proxy SAddPatch)
+
+-- | create a new patch given a base patch and chunk range, new contents.
+addPatch :: ID Patch -> Create Patch -> HandleResponse Patch -> IO ()
+addPatch = request cfg (Proxy :: Proxy SAddPatch)

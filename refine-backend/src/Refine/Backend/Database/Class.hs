@@ -1,7 +1,7 @@
 module Refine.Backend.Database.Class where
 
 import Refine.Backend.DocRepo.Core as DocRepo
-import Refine.Common.Types.Note
+import Refine.Common.Types.Comment
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc
 
