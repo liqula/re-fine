@@ -127,8 +127,6 @@ snippet = defineView "snippet" $ \props ->
                 div_ ["data-hunk-id" $= fromString (_dataHunkId2 props)
                     , "data-content-type" $= fromString (_dataContentType2 props)
                     , "className" $= fromString ("o-snippet o-snippet--" <> _dataContentType2 props)
-                    -- works equally well, we are experimenting with which to use:
-                    --, nestedProperty "style" ["top" @= pos]
                     , "style" @= [Style "top" pos]
                     ] $ do
                     div_ ["className" $= fromString ("o-snippet__icon-bg o-snippet__icon-bg--" <> _iconSide props)] $ do
