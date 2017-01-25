@@ -29,6 +29,8 @@ module Refine.Common.VDoc.HTML.Splice
   , resolvePreTokens
   , runPreToken
   , splitAtOffset
+  , preTokensFromForest
+  , preTokensToForest
   ) where
 
 import           Control.Exception (assert)

@@ -114,3 +114,9 @@ spec = parallel $ do
           `shouldBe` Left ("resolvePreTokens: open without close: " <> show ([PreMarkOpen "2"], bad1))
         resolvePreTokens bad2
           `shouldBe` Left ("resolvePreTokens: close without open: " <> show ([PreMarkClose "8"], bad2))
+
+
+  describe "preTokensToForest" $ do
+    it "Correctly ignores broken tree structure of PreMarkOpen, PreMarkClose." $ do
+      preTokensToForest [PreMarkOpen "1"] `shouldBe` Right [Node (PreMarkOpen "1") []]
+      preTokensToForest [PreMarkClose "1"] `shouldBe` Right [Node (PreMarkClose "1") []]
