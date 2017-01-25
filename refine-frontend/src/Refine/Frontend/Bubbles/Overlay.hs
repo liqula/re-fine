@@ -22,7 +22,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 
-module Refine.Frontend.Overlay where
+module Refine.Frontend.Bubbles.Overlay where
 
 import           Control.Lens ((^.))
 import           Data.Monoid ((<>))

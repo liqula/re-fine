@@ -22,7 +22,7 @@ import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(
                                          , editToolbarExtension_, menuButton_, headerSizeCapture_
                                          )
 import           Refine.Frontend.Loader.Component (vdocLoader_)
-import           Refine.Frontend.Overlay
+import           Refine.Frontend.Bubbles.Overlay
 import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style

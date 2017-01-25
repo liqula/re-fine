@@ -1,9 +1,9 @@
-module Refine.Frontend.OverlaySpec where
+module Refine.Frontend.Bubbles.OverlaySpec where
 
 import Test.Hspec
 
 import qualified Refine.Frontend.Types as RS
-import           Refine.Frontend.Overlay
+import           Refine.Frontend.Bubbles.Overlay
 
 
 rangeTopFor :: Int -> Int -> RS.Range
