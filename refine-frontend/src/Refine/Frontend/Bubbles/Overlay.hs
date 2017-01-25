@@ -142,20 +142,12 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "" "") $ 
 
     div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do
       iconButton_ (IconButtonProps
-                    (IconProps "c-vdoc-overlay-content" True ("icon-Question", "dark") L)
-                    "category"
-                    "question"
-                    ""
-                    "ask a question"
-                    (\_ _ -> [])
-                  )
-      iconButton_ (IconButtonProps
                     (IconProps "c-vdoc-overlay-content" True ("icon-Remark", "dark") L)
                     "category"
                     "comment"
                     ""
                     "add a note"
-                    (\_ _ -> [])
+                    (\_ _ -> RS.dispatch $ RS.SetCommentCategory RS.Note)
                   )
       iconButton_ (IconButtonProps
                     (IconProps "c-vdoc-overlay-content" True ("icon-Discussion", "dark") L)
@@ -163,7 +155,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "" "") $ 
                     "discussion"
                     ""
                     "start a discussion"
-                    (\_ _ -> [])
+                    (\_ _ -> RS.dispatch $ RS.SetCommentCategory RS.Discussion)
                   )
 
     div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do

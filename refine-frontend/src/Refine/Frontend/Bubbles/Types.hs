@@ -49,6 +49,12 @@ data CommentInputState = CommentInputState
 
 makeLenses ''CommentInputState
 
+data CommentCategory =
+    Discussion
+  | Note
+  deriving (Show, Typeable, Generic, NFData, ToJSON)
+
+
 data BubblesState = BubblesState
   { _bsCurrentSelection       :: Selection
   , _bsCommentIsVisible       :: Bool

@@ -61,6 +61,7 @@ data RefineAction = LoadDocumentList
                   | HideComment
                   | ShowCommentEditor (Maybe Range)
                   | HideCommentEditor
+                  | SetCommentCategory CommentCategory
                   | SubmitComment ST String (Maybe Range)
                   -- ...
                   | AddDiscussion Comment
