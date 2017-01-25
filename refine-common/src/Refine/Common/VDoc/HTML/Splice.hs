@@ -213,8 +213,8 @@ closeFromOpen _                         = error "closeFromOpen: internal error."
 -- | This is a bit of a hack.  We want to use tokensFromForest, so we 'fmap' 'runPreToken' on the
 -- input forest, then render that, and recover the pretokens from the tokens.
 --
--- This assumes there weren't any nodes of the form @PreToken (TagOpen "mark" _)@ in the forest, but
--- just @PreMarkOpen _@.
+-- The encoding uses 'Doctype' to encode marks, which works because all doctype elements have been
+-- removed from the input by 'canonicalizeVDocVersion'.
 preTokensFromForest :: Forest PreToken -> [PreToken]
 preTokensFromForest = fmap unstashPreToken . tokensFromForest . fmap (fmap stashPreToken)
 
@@ -223,15 +223,13 @@ preTokensToForest :: MonadError VDocHTMLError m => [PreToken] -> m (Forest PreTo
 preTokensToForest = fmap (fmap (fmap unstashPreToken)) . tokensToForest' . fmap stashPreToken
 
 stashPreToken :: PreToken -> Token
-stashPreToken (PreMarkOpen l)  = TagOpen "mark" [Attr "data-chunk-id" l]
-stashPreToken (PreMarkClose l) = TagClose ("mark_" <> l)
+stashPreToken (PreMarkOpen l)  = Doctype l
+stashPreToken (PreMarkClose l) = Doctype ("/" <> l)
 stashPreToken (PreToken t)     = t
 
 unstashPreToken :: Token -> PreToken
-unstashPreToken (TagOpen "mark" [Attr "data-chunk-id" l]) = PreMarkOpen l
-unstashPreToken bad@(TagOpen "mark" _)                    = error $ "unstashPreToken: " <> show bad
-unstashPreToken (TagClose m) | "mark_" `ST.isPrefixOf` m  = PreMarkClose $ ST.drop 5 m
-unstashPreToken t                                         = PreToken t
+unstashPreToken (Doctype l) = case ST.splitAt 1 l of ("/", l') -> PreMarkClose l'; _ -> PreMarkOpen l
+unstashPreToken t           = PreToken t
 
 
 preTokenTextLength :: PreToken -> Int
