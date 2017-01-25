@@ -101,8 +101,8 @@ showComment_ :: Bool -> ReactElementM eventHandler ()
 showComment_ showOverlay = view showComment showOverlay mempty
 
 -- was add-annotation
-addComment :: ReactView (Bool, Maybe RS.Range)
-addComment = defineView "AddComment" $ \(showOverlay, forRange) ->
+addComment :: ReactView (Bool, Maybe RS.Range, Maybe RS.CommentCategory)
+addComment = defineView "AddComment" $ \(showOverlay, forRange, commentCategory) ->
   let vdoc_overlay_content__add_comment = [ Style "backgroundColor" ("rgb(219, 204, 221)" :: String) -- vdoc-comment, lightred
                                           , Style "zIndex" (6010 :: Int)
                                           ]
@@ -117,15 +117,15 @@ addComment = defineView "AddComment" $ \(showOverlay, forRange) ->
 
     h4_ ["className" $= "c-vdoc-overlay-content__title"] "add a comment"
 
-    commentInput_ forRange
+    commentInput_ forRange commentCategory
 
 
-addComment_ :: (Bool, Maybe RS.Range) -> ReactElementM eventHandler ()
-addComment_ showForRange = view addComment showForRange mempty
+addComment_ :: (Bool, Maybe RS.Range) -> Maybe RS.CommentCategory -> ReactElementM eventHandler ()
+addComment_ (doShow, forRange) category = view addComment (doShow, forRange, category) mempty
 
 
-commentInput :: ReactView (Maybe RS.Range)
-commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "" "") $ \curState forRange ->
+commentInput :: ReactView (Maybe RS.Range, Maybe RS.CommentCategory)
+commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \curState (forRange, category) ->
   div_ $ do
     form_ [ "target" $= "#"
          , "action" $= "POST"] $ do
@@ -170,9 +170,9 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "" "") $ 
         ""
         ""
         "submit"
-        (\_ _ -> RS.dispatch (RS.SubmitComment (curState ^. RS.commentInputStateText) (curState ^. RS.commentInputStateCategory) forRange)
+        (\_ _ -> RS.dispatch (RS.SubmitComment (curState ^. RS.commentInputStateText) category forRange)
               <> RS.dispatch RS.HideCommentEditor)
       )
 
-commentInput_ :: Maybe RS.Range -> ReactElementM eventHandler ()
-commentInput_  forRange = view commentInput forRange mempty
+commentInput_ :: Maybe RS.Range -> Maybe RS.CommentCategory -> ReactElementM eventHandler ()
+commentInput_  forRange category = view commentInput (forRange, category) mempty

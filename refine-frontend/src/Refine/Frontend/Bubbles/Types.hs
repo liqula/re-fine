@@ -44,7 +44,6 @@ type Selection = (Maybe Range, Maybe Int) -- TODO brauchen wir den zweiten Teil 
 -- for Overlay:
 data CommentInputState = CommentInputState
   { _commentInputStateText     :: ST
-  , _commentInputStateCategory :: String
   } deriving (Show, Typeable, Generic, NFData)
 
 makeLenses ''CommentInputState
@@ -57,6 +56,7 @@ data CommentCategory =
 
 data BubblesState = BubblesState
   { _bsCurrentSelection       :: Selection
+  , _bsCommentCategory        :: Maybe CommentCategory
   , _bsCommentIsVisible       :: Bool
   , _bsCommentEditorIsVisible :: (Bool, Maybe Range)
   } deriving (Show, Typeable, Generic, NFData, ToJSON)

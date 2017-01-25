@@ -17,6 +17,7 @@ bubblesStateUpdate :: RefineAction -> BubblesState -> BubblesState
 bubblesStateUpdate action state =
   let newState = state
                   & bsCurrentSelection         %~ currentSelectionUpdate action
+                  & bsCommentCategory          %~ commentCategoryUpdate action
                   & bsCommentIsVisible         %~ commentIsVisibleUpdate action
                   & bsCommentEditorIsVisible   %~ commentEditorIsVisibleUpdate action
   in newState
@@ -29,6 +30,12 @@ currentSelectionUpdate action state = case action of
     ClearSelection -> (Nothing, Nothing)
     SubmitEdit     -> (Nothing, Nothing)
     _ -> state
+
+commentCategoryUpdate :: RefineAction -> Maybe CommentCategory -> Maybe CommentCategory
+commentCategoryUpdate action state = case action of
+  SetCommentCategory category -> Just category
+  HideCommentEditor -> Nothing -- when closing the comment editor, reset the selection
+  _ -> state
 
 commentIsVisibleUpdate :: RefineAction -> Bool -> Bool
 commentIsVisibleUpdate action state = case action of

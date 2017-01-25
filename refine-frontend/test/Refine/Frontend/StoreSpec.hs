@@ -26,7 +26,7 @@ instance Arbitrary (ID VDoc) where
 
 
 emptyGlobalState :: GlobalState
-emptyGlobalState = let bubblesState = BubblesState (Nothing, Nothing) False (False, Nothing)
+emptyGlobalState = let bubblesState = BubblesState (Nothing, Nothing) Nothing False (False, Nothing)
   in GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop bubblesState
 
 spec :: Spec
