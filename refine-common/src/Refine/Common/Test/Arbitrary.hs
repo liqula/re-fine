@@ -1,4 +1,5 @@
 {-# LANGUAGE DataKinds         #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -100,6 +101,9 @@ validXmlCommentText = do
 
 maxListOf :: Int -> Gen a -> Gen [a]
 maxListOf n g = take n <$> listOf g
+
+instance Arbitrary (VDocVersion 'HTMLCanonical) where
+  arbitrary = arbitraryCanonicalVDocVersion
 
 arbitraryCanonicalVDocVersion :: Gen (VDocVersion 'HTMLCanonical)
 arbitraryCanonicalVDocVersion =

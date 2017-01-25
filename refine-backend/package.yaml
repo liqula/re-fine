@@ -17,13 +17,16 @@ ghc-options: -j -Wall -Werror
 
 dependencies:
   - aeson
+  - aeson-pretty
   - base
+  - containers
   - darcs
   - data-default
   - directory
   - elim
   - filepath
   - functor-infix
+  - html-parse
   - lens
   - lentil
   - monad-logger
@@ -34,12 +37,13 @@ dependencies:
   - persistent-sqlite
   - persistent-template
   - random
-  - refine-prelude
   - refine-common
+  - refine-prelude
   - resourcet
   - servant
   - servant-server
   - string-conversions
+  - temporary
   - text
   - time
   - users
@@ -77,6 +81,7 @@ tests:
       - http-api-data
       - http-types
       - QuickCheck
+      - quickcheck-instances
       - temporary
       - transformers
       - wai-extra

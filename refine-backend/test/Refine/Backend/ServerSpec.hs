@@ -46,7 +46,7 @@ import           Test.Hspec.Wai (get, request)
 import qualified Test.Hspec.Wai.Internal as Wai
 
 import Refine.Backend.App as App
-import Refine.Backend.AppSpec (withTempCurrentDirectory)
+import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Backend.Config
 import Refine.Backend.Database (DB)
 import Refine.Backend.Database.Class as DB
@@ -200,7 +200,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
         be' :: VDocVersion 'HTMLCanonical <- runDB sess $ do
               handles <- db $ DB.handlesForPatch (fp ^. patchID)
               docRepo $ uncurry DocRepo.getVersion handles
-        be' `shouldBe` VDocVersion "<span>[new\nvdoc\nversion]</span>"
+        be' `shouldBe` VDocVersion "<span data-uid=\"1\">[new\nvdoc\nversion]</span>"
 
       it "stores a patch and returns it in the list of patches applicable to its base" $ \sess -> do
         pendingWith "applicablePatches is not implemented."

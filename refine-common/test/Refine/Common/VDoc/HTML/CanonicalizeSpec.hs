@@ -7,6 +7,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
@@ -35,12 +36,27 @@ import           Text.HTML.Parser
 import           Text.HTML.Tree
 
 import Refine.Common.Test.Arbitrary
-import Refine.Common.VDoc.HTML.Core
+import Refine.Common.Types
 import Refine.Common.VDoc.HTML.Canonicalize
+import Refine.Common.VDoc.HTML.Core
 
 
 spec :: Spec
 spec = parallel $ do
+  describe "canonicalizeVDocVersion" $ do
+    it "decorates spans with data-uid attributes even when added by 'wrapInTopLevelTags'." $ do
+      canonicalizeVDocVersion (VDocVersion "ab123")
+        `shouldBe` Right (VDocVersion "<span data-uid=\"1\">ab123</span>")
+
+    it "removes comments." $ do
+      canonicalizeVDocVersion (VDocVersion "ab<!-- wefij --> 123")
+        `shouldBe` Right (VDocVersion "<span data-uid=\"1\">ab\n123</span>")
+
+    it "removes doctype elements." $ do
+      canonicalizeVDocVersion (VDocVersion "<span>,</span><QfA] data-uid=\"18\" /><!DOCTYPEW#d>")
+        `shouldBe` Right (VDocVersion "<span data-uid=\"1\">,</span><QfA] data-uid=\"2\" />")
+
+
   describe "canonicalizeWhitespace" $ do
     it "idempotent" . property $
       \s -> canonicalizeWhitespace (canonicalizeWhitespace s) `shouldBe` canonicalizeWhitespace s
@@ -65,17 +81,21 @@ spec = parallel $ do
         collectDataUID _ = []
 
         withoutDataUID :: Token -> Token
-        withoutDataUID (TagOpen n xs) = TagOpen n (filter f xs)
+        withoutDataUID = \case (TagOpen n xs)      -> TagOpen n (filter f xs)
+                               (TagSelfClose n xs) -> TagSelfClose n (filter f xs)
+                               t                   -> t
           where
             f (Attr "data-uid" _) = False
             f _                   = True
-        withoutDataUID t = t
 
     it "idempotent" . property $
       \s -> setElemUIDs (setElemUIDs s) `shouldBe` setElemUIDs s
 
     it "existing values are overwritten with integers, starting with 1" $ do
       setElemUIDs [TagOpen "div" [Attr "data-uid" "@@"]] `shouldBe` [TagOpen "div" [Attr "data-uid" "1"]]
+
+    it "decorates TagSelfClose" $ do
+      setElemUIDs [TagSelfClose "br" []] `shouldBe` [TagSelfClose "br" [Attr "data-uid" "1"]]
 
     it "data-uid is contained in every tag of the output" . property $ do
       \tokens -> let f t@(TagOpen _ _) = collectDataUID t `shouldSatisfy` ((== 1) . length)

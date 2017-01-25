@@ -60,13 +60,21 @@ canonicalizeVDocVersion :: MonadError VDocHTMLError m
 canonicalizeVDocVersion = fmap (VDocVersion . cs . renderTokens) . canonicalize . parseTokens . _unVDocVersion
   where
     canonicalize
-      = wrapInTopLevelTags
-      . setElemUIDs
-      . fmap (onText canonicalizeWhitespace) . canonicalizeTokens
+      = fmap setElemUIDs
+      . wrapInTopLevelTags
+      . fmap (onText canonicalizeWhitespace) . canonicalizeTokens . dropCommentsAndDoctypes
 
 -- | De-canonicalizing is always safe, since every canonicalized 'VDocVersion' is also a raw one.
 decanonicalizeVDocVersion :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLRaw
 decanonicalizeVDocVersion (VDocVersion s) = VDocVersion s
+
+
+dropCommentsAndDoctypes :: [Token] -> [Token]
+dropCommentsAndDoctypes = Prelude.filter $ \case
+  (Text.HTML.Parser.Comment _) -> False
+  (Text.HTML.Parser.Doctype _) -> False
+  _                            -> True
+
 
 onText :: (ST -> ST) -> Token -> Token
 onText f (ContentText s) = ContentText $ f s
@@ -85,8 +93,9 @@ setElemUIDs :: [Token] ->  [Token]
 setElemUIDs = fill mempty . fmap clear
   where
     clear :: Token -> Token
-    clear (TagOpen n xs) = TagOpen n (Prelude.filter stale xs)
-    clear t              = t
+    clear (TagOpen      n attrs) = TagOpen      n (Prelude.filter stale attrs)
+    clear (TagSelfClose n attrs) = TagSelfClose n (Prelude.filter stale attrs)
+    clear t                      = t
 
     stale :: Attr -> Bool
     stale (Attr "data-uid" _) = False
@@ -97,8 +106,9 @@ setElemUIDs = fill mempty . fmap clear
       where
         f :: (DataUID, [Token]) -> Token -> (DataUID, [Token])
         f (next, acc) = \case
-          (TagOpen n attrs) -> (nextDataUID next, TagOpen n (Attr "data-uid" (cs $ show next) : attrs) : acc)
-          t                 -> (next,             t : acc)
+          (TagOpen      n attrs) -> (nextDataUID next, TagOpen      n (Attr "data-uid" (cs $ show next) : attrs) : acc)
+          (TagSelfClose n attrs) -> (nextDataUID next, TagSelfClose n (Attr "data-uid" (cs $ show next) : attrs) : acc)
+          t                      -> (next,             t : acc)
 
         totalMaximum s = if Set.null s then DataUID 1 else nextDataUID (Set.findMax s)
         nextDataUID (DataUID n) = DataUID (n + 1)
