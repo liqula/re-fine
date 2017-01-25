@@ -75,7 +75,11 @@ chunkRangeCanBeAppliedTs :: ChunkRange a -> [Token] -> Bool
 chunkRangeCanBeAppliedTs (ChunkRange _ mp1 mp2) ts = all (`chunkPointCanBeAppliedTs` ts) $ catMaybes [mp1, mp2]
 
 chunkPointCanBeAppliedTs :: ChunkPoint -> [Token] -> Bool
-chunkPointCanBeAppliedTs _ _ = True
+chunkPointCanBeAppliedTs (ChunkPoint uid off) ts = case tokensToForest ts of
+  Right forest ->
+    let sub = forest ^. atNode (\p -> dataUidOfToken p == Just uid)
+    in not (null sub) && forestTextLength sub >= off
+  Left _ -> False
 
 
 -- * inserting marks
@@ -114,6 +118,9 @@ insertMarksF crs = (`woodZip` splitup crs)
       = if preForestTextLength (f ^. atDataUID nod) >= off
           then pure $ f & atDataUID nod %~ insertPreToken (show cp) off mark
           else throwError $ VDocHTMLErrorBadChunkPoint f cp
+      where
+        atDataUID :: DataUID -> Traversal' (Forest PreToken) (Forest PreToken)
+        atDataUID node = atNode (\p -> dataUidOfPreToken p == Just node)
 
 
 -- | In a list of text or premark tokens, add another premark token at a given offset, splitting up
@@ -247,23 +254,20 @@ unstashPreToken (Doctype l) = case ST.splitAt 1 l of ("/", l') -> PreMarkClose l
 unstashPreToken t           = PreToken t
 
 
+tokenTextLength :: Token -> Int
+tokenTextLength = \case
+  (ContentText t) -> ST.length t
+  (ContentChar _) -> 1
+  _               -> 0
+
+forestTextLength :: Forest Token -> Int
+forestTextLength = sum . fmap tokenTextLength . tokensFromForest
+
 preTokenTextLength :: PreToken -> Int
-preTokenTextLength = \case
-  (PreToken (ContentText t)) -> ST.length t
-  (PreToken (ContentChar _)) -> 1
-  _                          -> 0
+preTokenTextLength = tokenTextLength . runPreToken
 
 preForestTextLength :: Forest PreToken -> Int
 preForestTextLength = sum . fmap preTokenTextLength . preTokensFromForest
-
-
-dataUidOfPreToken :: PreToken -> Maybe DataUID
-dataUidOfPreToken (PreToken t)     = dataUidOfToken t
-dataUidOfPreToken (PreMarkOpen _)  = Nothing
-dataUidOfPreToken (PreMarkClose _) = Nothing
-
-atDataUID :: DataUID -> Traversal' (Forest PreToken) (Forest PreToken)
-atDataUID node = atNode (\p -> dataUidOfPreToken p == Just node)
 
 
 -- * translating between pretokens and tokens
