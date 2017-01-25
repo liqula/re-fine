@@ -52,6 +52,7 @@ library
       Refine.Frontend.StickyViews
       Refine.Frontend.Store
       Refine.Frontend.Style
+      Refine.Frontend.Test.Console
       Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Samples
       Refine.Frontend.Types
@@ -97,6 +98,7 @@ executable refine-frontend
       Refine.Frontend.StickyViews
       Refine.Frontend.Store
       Refine.Frontend.Style
+      Refine.Frontend.Test.Console
       Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Samples
       Refine.Frontend.Types
@@ -148,6 +150,7 @@ test-suite spec
       Refine.Frontend.Store
       Refine.Frontend.StoreSpec
       Refine.Frontend.Style
+      Refine.Frontend.Test.Console
       Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Samples
       Refine.Frontend.Types
