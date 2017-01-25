@@ -107,7 +107,7 @@ insertMarksF crs = (`woodZip` splitup crs)
 -- canonicalized and all tags have data-uid, so the forest can only contain a single ContentText
 -- node and no deep nodes.
 insertPreToken :: String -> Int -> PreToken -> Forest PreToken -> Forest PreToken
-insertPreToken errinfo offset mark forest = either err id go
+insertPreToken errinfo offset mark forest = assert (isPreMark mark) $ either err id go
   where
     go :: MonadError VDocHTMLError m => m (Forest PreToken)
     go = do
@@ -192,6 +192,11 @@ isClose (PreMarkClose _)        = True
 isClose (PreToken (TagClose _)) = True
 isClose _                       = False
 
+isPreMark :: PreToken -> Bool
+isPreMark (PreMarkOpen _)  = True
+isPreMark (PreMarkClose _) = True
+isPreMark (PreToken _)     = False
+
 isMatchingOpenClose :: PreToken -> PreToken -> Bool
 isMatchingOpenClose (PreMarkOpen l)          (PreMarkClose l')        | l == l' = True
 isMatchingOpenClose (PreToken (TagOpen n _)) (PreToken (TagClose n')) | n == n' = True
@@ -222,6 +227,7 @@ stashPreToken (PreToken t)     = t
 
 unstashPreToken :: Token -> PreToken
 unstashPreToken (TagOpen "mark" [Attr "data-chunk-id" l]) = PreMarkOpen l
+unstashPreToken bad@(TagOpen "mark" _)                    = error $ "unstashPreToken: " <> show bad
 unstashPreToken (TagClose m) | "mark_" `ST.isPrefixOf` m  = PreMarkClose $ ST.drop 5 m
 unstashPreToken t                                         = PreToken t
 
