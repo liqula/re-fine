@@ -55,22 +55,6 @@ data IconButtonWithAlignmentProps = IconButtonWithAlignmentProps
 makeLenses ''IconButtonWithAlignmentProps
 
 
-iconCore :: ReactView JSString
-iconCore = defineView "IconCore" $ \iconClass ->
-  div_ ["className" $= iconClass] $ do
-    span_ ["className" $= "path1"] ""
-    span_ ["className" $= "path2"] ""
-    span_ ["className" $= "path3"] ""
-    span_ ["className" $= "path4"] ""
-    span_ ["className" $= "path5"] ""
-    span_ ["className" $= "path6"] ""
-    span_ ["className" $= "path7"] ""
-    span_ ["className" $= "path8"] ""
-
-iconCore_ :: JSString -> ReactElementM eventHandler ()
-iconCore_ iconClass = view iconCore iconClass mempty
-
-
 icon :: ReactView IconProps
 icon = defineStatefulView "Icon" False $ \mouseIsOver props -> do
   -- TODO unify the naming schemas of the classes of the different icons!
