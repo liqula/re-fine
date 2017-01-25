@@ -5,7 +5,6 @@ module Refine.Frontend.UtilityWidgets where
 
 import           Control.Lens (makeLenses, (^.), _1, _2)
 import           Data.Char (toLower)
-import           Data.List (intercalate)
 import           Data.Monoid ((<>))
 import           Data.String (fromString)
 import           GHCJS.Types (JSString)
@@ -98,8 +97,8 @@ iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
            , "style" @= [Style "cursor" ("pointer" :: String)]
            -- TODO unify the naming schema of the classes for the different buttons!
            , "className" $= fromString (toClasses [ iprops ^. blockName <> "__button"
-                                                  , beName
-                                                  , bemName
+                                                  , beName  -- for the vdoc-toolbar
+                                                  , bemName -- for the buttons in the overlays
                                                   , alignmentClass (iprops ^. blockName)
                                                                    (props ^. rightAligned)
                                                    ])
@@ -111,7 +110,7 @@ iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
         span_ ["className" $= fromString (iprops ^. blockName <> "__button-label")] $
             elemJSString (bprops ^. label)
     where
-      alignmentClass blockName_ rightAligned_ = if rightAligned_ then " " <> blockName_ <> "--align-right" else ""
+      alignmentClass blockName_ rightAligned_ = if rightAligned_ then blockName_ <> "--align-right" else ""
 
 iconButtonWithAlignment_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
 iconButtonWithAlignment_ props = view iconButtonWithAlignment props mempty
@@ -134,7 +133,7 @@ positionedIconButton_ props position_ = view positionedIconButton (props, positi
 
 
 toClasses :: [String] -> String
-toClasses strings = intercalate " " $ compact strings
+toClasses = unwords . compact
   where
     compact :: [String] -> [String]
-    compact = filter (\x -> length x > 0)
+    compact = filter $ not . null
