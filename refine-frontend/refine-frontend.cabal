@@ -48,6 +48,7 @@ library
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
       Refine.Frontend.Bubbles.Overlay
+      Refine.Frontend.Bubbles.QuickCreate
       Refine.Frontend.Rest
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Store
@@ -94,6 +95,7 @@ executable refine-frontend
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
       Refine.Frontend.Bubbles.Overlay
+      Refine.Frontend.Bubbles.QuickCreate
       Refine.Frontend.Rest
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Store
@@ -144,7 +146,8 @@ test-suite spec
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
       Refine.Frontend.Bubbles.Overlay
-      Refine.Frontend.Bubbles.OverlaySpec
+      Refine.Frontend.Bubbles.QuickCreate
+      Refine.Frontend.Bubbles.QuickCreateSpec
       Refine.Frontend.Rest
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Store

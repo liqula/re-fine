@@ -18,11 +18,12 @@ import           Text.HTML.Tree as HTMLT
 import           Refine.Common.Rest
 import           Refine.Common.Types
 import           Refine.Common.VDoc.HTML.Enhance (addUIInfoToForest)
+import           Refine.Frontend.Bubbles.Overlay
+import           Refine.Frontend.Bubbles.QuickCreate
 import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(..), editToolbar_
                                          , editToolbarExtension_, menuButton_, headerSizeCapture_
                                          )
 import           Refine.Frontend.Loader.Component (vdocLoader_)
-import           Refine.Frontend.Bubbles.Overlay
 import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
