@@ -38,9 +38,6 @@ getVDoc = request cfg (Proxy :: Proxy SGetVDoc)
 createVDoc :: Create VDoc -> HandleResponse CompositeVDoc -> IO ()
 createVDoc = request cfg (Proxy :: Proxy SCreateVDoc)
 
-addDiscussion :: ID Patch -> Create Comment -> HandleResponse Comment -> IO ()
-addDiscussion = request cfg (Proxy :: Proxy SAddComment)
-
 addNote :: ID Patch -> Create Note -> HandleResponse Note -> IO ()
 addNote = request cfg (Proxy :: Proxy SAddNote)
 

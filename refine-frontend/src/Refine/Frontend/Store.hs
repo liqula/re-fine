@@ -113,14 +113,10 @@ emitBackendCallsFor action state = case action of
       -- here we need to distinguish which comment category we want to submit
       -- check the state and what the user selected there
       case category of
-        Just Discussion ->
-          addDiscussion (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. RT.vdocHeadPatch)
-                     (RT.CreateComment text True (createChunkRange forRange)) $ \case
-            (Left(_, msg)) -> handleError msg
-            (Right discussion) -> return . dispatch $ AddDiscussion discussion
+        Just Discussion -> error "SubmitComment Discussion is not defined." -- TODO
         Just Note ->
           addNote (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. RT.vdocHeadPatch)
-                     (RT.CreateNote text RT.Remark (createChunkRange forRange)) $ \case
+                     (RT.CreateNote text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
             (Right note) -> return . dispatch $ AddNote note
         Nothing -> return ()
