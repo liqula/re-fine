@@ -18,7 +18,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Common.Types.Note where
+module Refine.Common.Types.Note where  -- rename to Comment
 
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
@@ -28,55 +28,114 @@ import Refine.Common.Types.Prelude
 import Refine.Prelude.TH
 
 
--- | TODO: re-think the types in this module before proceeding with the implementation.
+type CommentText = ST  -- FIXME: refactor VDocVersion to be more general and use that.
 
--- | The 'ChunkRange' here is coming from the user.  It refers to the selection (javascript
--- `window.getSelection()`) that the user made before entering the comment.  'Nothing' means comment
--- refers to the entire document.
-data Comment = Comment
-  { _commentID     :: ID Comment
-  , _commentText   :: ST
-  , _commentPublic :: Bool
-  , _commentRange  :: ChunkRange Comment
+data CreateNote = CreateNote
+  { _createNoteText   :: CommentText
+  , _createNotePublic :: Bool
+  , _createNoteRange  :: CreateChunkRange
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Note = Note
-  { _noteID    :: ID Note
-  , _noteText  :: ST
-  , _noteKind  :: NoteKind
-  , _noteRange :: ChunkRange Note
+  { _noteID         :: ID Note
+  , _noteText       :: CommentText
+  , _notePublic     :: Bool
+  , _noteChunkRange :: ChunkRange Note
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
-data NoteKind = Question | Remark
-  deriving (Eq, Ord, Show, Read, Generic)
-
-data CreateComment = CreateComment
-  { _createCommentText   :: ST
-  , _createCommentPublic :: Bool
-  , _createCommentRange  :: CreateChunkRange
+data CreateQuestion = CreateQuestion
+  { _createQuestionText   :: ST
+  , _createQuestionPublic :: Bool
+  , _createQuestionRange  :: CreateChunkRange
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
-data CreateNote = CreateNote
-  { _createNoteText  :: ST
-  , _createNoteKind  :: NoteKind
-  , _createNoteRange :: CreateChunkRange
+data Question = Question
+  { _questionID       :: ID Question
+  , _questionText     :: ST
+  , _questionAnswered :: Bool -- ^ if the asker is happy, she can mark it as answered.
+  , _questionPublic   :: Bool
+  , _questionChunkRange :: ChunkRange Question
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
+data CompositeQuestion = CompositeQuestion
+  { _compositeQuestion        :: Question
+  , _compositeQuestionAnswers :: [Answer]
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
+
+newtype CreateAnswer = CreateAnswer
+  { _createAnswerText :: CommentText
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
+
+data Answer = Answer
+  { _answerID       :: ID Answer
+  , _answerQuestion :: ID Question
+  , _answerText     :: CommentText
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
+
+data CreateDiscussion = CreateDiscussion
+  { _createDiscussionPublic :: Bool
+  , _createDiscussionRange  :: CreateChunkRange
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
+
+data Discussion = Discussion
+  { _discussionID         :: ID Discussion
+  , _discussionPublic     :: Bool
+  , _discussionChunkRange :: ChunkRange Discussion
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
+
+data CompositeDiscussion = CompositeDiscussion
+  { _compositeDiscussion     :: Discussion
+  , _compositeDiscussionTree :: [Statement] -- FIXME: This should be a tree.
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
+
+newtype CreateStatement = CreateStatement
+  { _createStatementText :: CommentText
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
+
+data Statement = Statement
+  { _statementID     :: ID Statement
+  , _statementText   :: CommentText
+  , _statementParent :: Maybe (ID Statement)
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
+
+data Comment =
+    CommentNote Note
+  | CommentDiscussion CompositeDiscussion
+  | CommentQuestion CompositeQuestion
+  deriving (Eq, Ord, Show, Read, Generic)
 
 -- * create types
 
-type instance Create Comment = CreateComment
-type instance Create Note    = CreateNote
+type instance Create Note       = CreateNote
+type instance Create Question   = CreateQuestion
+type instance Create Answer     = CreateAnswer
+type instance Create Discussion = CreateDiscussion
+type instance Create Statement  = CreateStatement
 
+-- * Refine types
 
--- * refine types
-
-makeRefineType ''Comment
-makeRefineType ''Note
-makeRefineType ''NoteKind
-makeRefineType ''CreateComment
 makeRefineType ''CreateNote
+makeRefineType ''Note
+makeRefineType ''CreateQuestion
+makeRefineType ''Question
+makeRefineType ''CompositeQuestion
+makeRefineType ''CreateAnswer
+makeRefineType ''Answer
+makeRefineType ''CreateDiscussion
+makeRefineType ''Discussion
+makeRefineType ''CompositeDiscussion
+makeRefineType ''CreateStatement
+makeRefineType ''Statement
+makeRefineType ''Comment

@@ -32,9 +32,13 @@ type RefineAPI =
        SListVDocs
   :<|> SGetVDoc
   :<|> SCreateVDoc
-  :<|> SAddComment
-  :<|> SAddNote
   :<|> SAddPatch
+  :<|> SAddNote
+  :<|> SAddQuestion
+  :<|> SAddAnswer
+  :<|> SAddDiscussion
+  :<|> SAddStatemment
+  :<|> SAddReplyStatement
 
 
 type SListVDocs
@@ -49,18 +53,33 @@ type SCreateVDoc
   = "r" :> "vdoc" :> ReqBody '[JSON] (Create VDoc)
     :> Post '[JSON] CompositeVDoc
 
-type SAddComment
-  = "r" :> "comment" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Comment)
-    :> Post '[JSON] Comment
+type SAddPatch
+  = "r" :> "patch" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Patch)
+    :> Post '[JSON] Patch
 
 type SAddNote
   = "r" :> "note" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Note)
     :> Post '[JSON] Note
 
-type SAddPatch
-  = "r" :> "patch" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Patch)
-    :> Post '[JSON] Patch
+type SAddQuestion
+  = "r" :> "question" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Question)
+    :> Post '[JSON] CompositeQuestion
 
+type SAddAnswer
+  = "r" :> "answer" :> Capture "onquestionid" (ID Question) :> ReqBody '[JSON] (Create Answer)
+    :> Post '[JSON] Answer
+
+type SAddDiscussion
+  = "r" :> "discussion" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Discussion)
+    :> Post '[JSON] CompositeDiscussion
+
+type SAddStatemment
+  = "r" :> "statement" :> Capture "ondiscussionid" (ID Discussion) :> ReqBody '[JSON] (Create Statement)
+    :> Post '[JSON] Statement
+
+type SAddReplyStatement
+  = "r" :> "statement" :> "reply" :> Capture "onstatementid" (ID Statement) :> ReqBody '[JSON] (Create Statement)
+    :> Post '[JSON] Statement
 
 -- | Packaged vdoc ready for use by client.
 --
@@ -79,8 +98,7 @@ data CompositeVDoc = CompositeVDoc
   , _compositeVDocVersion  :: VDocVersion 'HTMLWithMarks
   , _compositeVDocPatches  :: [Patch]
   , _compositeVDocComments :: [Comment]
-  , _compositeVDocNotes    :: [Note]
   }
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Show, Read, Generic)
 
 makeRefineType ''CompositeVDoc

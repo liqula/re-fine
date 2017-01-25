@@ -27,11 +27,10 @@ module Refine.Backend.Database.Schema where
 import Control.Elim
 import Data.Text
 import Database.Persist
-import Database.Persist.Sql
+import Database.Persist.Sql hiding (Statement)
 import Database.Persist.TH
 
 import Refine.Common.Types.Prelude
-import Refine.Common.Types.Note (NoteKind)
 import Refine.Common.Types.VDoc (Abstract, Title)
 import Refine.Backend.Database.Field()
 import Refine.Backend.Database.Types
@@ -56,16 +55,28 @@ Repo
     repoHandle  RepoHandle
     headId      PatchId
 
-Comment
+Note
     text        Text
     public      Bool
     range       DBChunkRange
-    parent      CommentId Maybe
 
-Note
+Question
     text        Text
-    kind        NoteKind
+    public      Bool
+    answered    Bool
     range       DBChunkRange
+
+Answer
+    question    QuestionId
+    text        Text
+
+Discussion
+    public      Bool
+    range       DBChunkRange
+
+Statement
+    text        Text
+    parent      StatementId Maybe
 
 Vote
     value       Text
@@ -85,10 +96,20 @@ RP
     patch       PatchId
     UniRP repository patch
 
-PC
+PQ
     patch       PatchId
-    comment     CommentId
-    UniPC patch comment
+    question    QuestionId
+    UniPQ patch question
+
+PD
+    patch       PatchId
+    discussion  DiscussionId
+    UniPD patch discussion
+
+DS
+    discussion  DiscussionId
+    statement   StatementId
+    UniDS discussion statement
 
 PN
     patch       PatchId
@@ -120,12 +141,17 @@ keyToId = ID . fromSqlKey
 makeElim ''VDoc
 makeElim ''Patch
 makeElim ''Repo
-makeElim ''Comment
 makeElim ''Note
+makeElim ''Question
+makeElim ''Answer
+makeElim ''Discussion
+makeElim ''Statement
 makeElim ''Vote
 
 makeElim ''VR
 makeElim ''RP
-makeElim ''PC
 makeElim ''PN
+makeElim ''PQ
+makeElim ''PD
+makeElim ''DS
 makeElim ''PV

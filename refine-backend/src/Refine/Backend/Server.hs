@@ -90,7 +90,6 @@ toServantError = Nat ((lift . runExceptT) >=> monadError fromAppError)
     fromAppError :: AppError -> ServantErr
     fromAppError msg = err500 { errBody = cs $ show msg }
 
-
 -- | The 's' prefix in the handlers stands for "server", and is used to dismabiguate between the code in
 -- 'App' vs. the code in 'ServerT'.  This is slightly less noisy than qualified imports, and it's
 -- (probably) only used internally in this module.
@@ -99,10 +98,13 @@ refineApi =
        Refine.Backend.App.listVDocs
   :<|> Refine.Backend.App.getCompositeVDoc
   :<|> Refine.Backend.App.createVDocGetComposite
-  :<|> Refine.Backend.App.addComment
-  :<|> Refine.Backend.App.addNote
   :<|> Refine.Backend.App.addPatch
-
+  :<|> Refine.Backend.App.addNote
+  :<|> Refine.Backend.App.addQuestion
+  :<|> Refine.Backend.App.addAnswer
+  :<|> Refine.Backend.App.addDiscussion
+  :<|> Refine.Backend.App.addStatement
+  :<|> Refine.Backend.App.addReplyStatement
 
 maybeServeDirectory :: Maybe FilePath -> Server Raw
 maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) serveDirectory

@@ -20,25 +20,44 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-{-# OPTIONS_GHC -Wall -Werror #-}
-
 module Refine.Backend.App.Note where
 
 import Refine.Common.Types.Note
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc
+import Refine.Prelude ((<@>))
 
 import Refine.Backend.App.Core
 import Refine.Backend.Database.Core (DB)
 import Refine.Backend.Database.Class as DB
 
 
-addComment :: ID Patch -> Create Comment -> App DB Comment
-addComment pid comment = do
-  appLog "addComment"
-  db $ DB.createComment pid comment
-
 addNote :: ID Patch -> Create Note -> App DB Note
 addNote pid note = do
   appLog "addNote"
   db $ DB.createNote pid note
+
+addQuestion :: ID Patch -> Create Question -> App DB CompositeQuestion
+addQuestion pid question = do
+  appLog "addQuestion"
+  CompositeQuestion <$> db (DB.createQuestion pid question) <@> []
+
+addAnswer :: ID Question -> Create Answer -> App DB Answer
+addAnswer qid answer = do
+  appLog "addAnswer"
+  db $ DB.createAnswer qid answer
+
+addDiscussion :: ID Patch -> Create Discussion -> App DB CompositeDiscussion
+addDiscussion pid discussion = do
+  appLog "addDiscussion"
+  CompositeDiscussion <$> db (DB.createDiscussion pid discussion) <@> []
+
+addStatement :: ID Discussion -> Create Statement -> App DB Statement
+addStatement did statement = do
+  appLog "addStatement"
+  db $ DB.createStatement did statement
+
+addReplyStatement :: ID Statement -> Create Statement -> App DB Statement
+addReplyStatement sid statement = do
+  appLog "addReplyStatement"
+  db $ DB.createReplyStatement sid statement
