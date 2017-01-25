@@ -62,7 +62,7 @@ spec = parallel $ do
 
   describe "chunkCanBeApplied" $ do
     let vers :: VDocVersion 'HTMLCanonical
-        vers = (VDocVersion "<span data-uid=\"1\">asdfasdf</span>")
+        vers = VDocVersion "<span data-uid=\"1\">asdfasdf</span>"
 
         cr :: ChunkPoint -> ChunkRange Patch
         cr p = ChunkRange (ID 3) (Just p) Nothing
