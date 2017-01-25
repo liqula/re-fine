@@ -94,6 +94,7 @@ iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
     let bprops = props ^. iconButtonProps
     let iprops = bprops ^. iconProps
     div_ (["data-content-type" $= (bprops ^. contentType)
+           , "style" @= [Style "cursor" ("pointer" :: String)]
            -- TODO unify the naming schema of the classes for the different buttons!
            , "className" $= fromString (concat [ iprops ^. blockName, "__button"
                                                , " "
