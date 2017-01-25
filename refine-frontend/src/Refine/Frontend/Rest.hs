@@ -38,8 +38,8 @@ getVDoc = request cfg (Proxy :: Proxy SGetVDoc)
 createVDoc :: Create VDoc -> HandleResponse CompositeVDoc -> IO ()
 createVDoc = request cfg (Proxy :: Proxy SCreateVDoc)
 
-addComment :: ID Patch -> Create Comment -> HandleResponse Comment -> IO ()
-addComment = request cfg (Proxy :: Proxy SAddComment)
+addDiscussion :: ID Patch -> Create Comment -> HandleResponse Comment -> IO ()
+addDiscussion = request cfg (Proxy :: Proxy SAddComment)
 
 -- | create a new edit given a base edit and chunk range, new contents.
 addEdit :: ID Patch -> Create Patch -> HandleResponse Patch -> IO ()

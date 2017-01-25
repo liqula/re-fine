@@ -67,9 +67,9 @@ instance StoreData GlobalState where
 vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate action state = case action of
     OpenDocument openedVDoc -> Just openedVDoc
-    AddComment comment      -> case state of
+    AddDiscussion discussion      -> case state of
         Nothing   -> Nothing -- no vdoc: we cannot put the comment anywhere
-        Just vdoc -> Just $ vdoc { _compositeVDocComments = comment : vdoc ^. compositeVDocComments }
+        Just vdoc -> Just $ vdoc { _compositeVDocComments = discussion : vdoc ^. compositeVDocComments }
     _ -> state
 
 vdocListUpdate :: RefineAction -> Maybe [ID VDoc] -> Maybe [ID VDoc]
@@ -108,11 +108,13 @@ emitBackendCallsFor action state = case action of
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
 
-    SubmitComment text _category forRange -> do  -- later we will have 3 cases, depending on the category. But first the backend needs to get sorted on the types.
-      addComment (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. vdocHeadPatch)
+    SubmitComment text _category forRange -> do
+      -- here we need to distinguish which comment category we want to submit
+      -- check the state and what the user selected there
+      addDiscussion (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. vdocHeadPatch)
                  (CreateComment text True (createChunkRange forRange)) $ \case
         (Left(_, msg)) -> handleError msg
-        (Right comment) -> return . dispatch $ AddComment comment
+        (Right comment) -> return . dispatch $ AddDiscussion comment
 
 {- TODO submitting a patch does not work yet
     SubmitEdit -> do
