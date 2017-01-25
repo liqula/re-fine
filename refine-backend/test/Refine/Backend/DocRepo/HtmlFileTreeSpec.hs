@@ -64,7 +64,7 @@ normalizeSelfClosingTags :: VDocVersion a -> VDocVersion a
 normalizeSelfClosingTags = VDocVersion . cs . renderTokens . smoothen . parseTokens . cs . _unVDocVersion
   where
     smoothen [] = []
-    smoothen ((TagSelfClose n attrs) : ts) = if n `elem` nonClosing
+    smoothen (TagSelfClose n attrs : ts) = if n `elem` nonClosing
       then TagOpen n attrs : smoothen ts
       else TagOpen n attrs : TagClose n : smoothen ts
     smoothen (t : ts) = t : smoothen ts
