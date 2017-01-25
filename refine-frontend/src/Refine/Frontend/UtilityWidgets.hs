@@ -72,18 +72,28 @@ iconCore_ iconClass = view iconCore iconClass mempty
 icon :: ReactView IconProps
 icon = defineStatefulView "Icon" False $ \mouseIsOver props -> do
   -- TODO unify the naming schemas of the classes of the different icons!
-  div_ ["className" $= fromString ((props ^. blockName) <> "__icon" <> " " <> (props ^. blockName) <> "__category-icon")
+  let -- TODO: these could do with better names
+    a = if props ^. iconHighlight then "o-icon-highlight " else ""
+    b = props ^. iconDesc . _1
+    c = "_" <> if mouseIsOver && (props ^. iconHighlight)
+                 then "RO"
+                 else props ^. iconDesc . _2
+    d = " " <> "iconsize-" <> map toLower (show (props ^. size))
+  div_ ["className" $= fromString ((props ^. blockName) <> "__icon" <> " " <>
+                                   (props ^. blockName) <> "__category-icon" <> " " <>
+                                   a <> b <> c <> d
+                                   )
        , onMouseEnter $ \_ _ _ -> ([], Just True)
        , onMouseLeave $ \_ _ _ -> ([], Just False)
        ] $ do
-    let -- TODO: these could do with better names
-      a = if props ^. iconHighlight then "o-icon-highlight " else ""
-      b = props ^. iconDesc . _1
-      c = "_" <> if mouseIsOver && (props ^. iconHighlight)
-                   then "RO"
-                   else props ^. iconDesc . _2
-      d = " " <> "iconsize-" <> map toLower (show (props ^. size))
-    iconCore_ $ fromString (a <> b <> c <> d)
+    span_ ["className" $= "path1"] ""
+    span_ ["className" $= "path2"] ""
+    span_ ["className" $= "path3"] ""
+    span_ ["className" $= "path4"] ""
+    span_ ["className" $= "path5"] ""
+    span_ ["className" $= "path6"] ""
+    span_ ["className" $= "path7"] ""
+    span_ ["className" $= "path8"] ""
 
 icon_ :: IconProps -> ReactElementM eventHandler ()
 icon_ props = view icon props mempty
