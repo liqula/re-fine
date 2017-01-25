@@ -18,15 +18,17 @@ import           Text.HTML.Tree as HTMLT
 import           Refine.Common.Rest
 import           Refine.Common.Types
 import           Refine.Common.VDoc.HTML.Enhance (addUIInfoToForest)
+import           Refine.Frontend.Bubbles.Overlay
+import           Refine.Frontend.Bubbles.QuickCreate
 import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(..), editToolbar_
                                          , editToolbarExtension_, menuButton_, headerSizeCapture_
                                          )
 import           Refine.Frontend.Loader.Component (vdocLoader_)
-import           Refine.Frontend.Overlay
-import           Refine.Frontend.StickyViews (sticky_, stickyContainer_)
+import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
 import           Refine.Frontend.Types as RS
+import           Refine.Frontend.Bubbles.Types as RS
 import           Refine.Frontend.UtilityWidgets
 import           Refine.Frontend.WindowSize (windowSize_, WindowSizeProps(..))
 
@@ -51,22 +53,28 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                             editToolbar_
                             editToolbarExtension_
 
+                showComment_ (rs ^. gsBubblesState ^. bsCommentIsVisible)
+                addComment_ (rs ^. gsBubblesState ^. bsCommentEditorIsVisible) (rs ^. gsBubblesState ^. bsCommentCategory)
+
                 main_ ["role" $= "main"] $ do
                     div_ ["className" $= "grid-wrapper"] $ do
                         div_ ["className" $= "row row-align-center row-align-top"] $ do
-                            leftAside_ (rs ^. gsMarkPositions) (rs ^. gsCurrentSelection) (rs ^. gsHeaderHeight)
-                            toArticle . HTMLT.tokensToForest . HTMLP.parseTokens . cs . _unVDocVersion $ _compositeVDocVersion vdoc
+                            leftAside_ (rs ^. gsMarkPositions) (rs ^. gsBubblesState ^. bsCurrentSelection) (rs ^. gsHeaderHeight)
+                            article_ [ "id" $= "vdocValue"
+                                     , "className" $= "gr-20 gr-14@desktop"
+                                     , onMouseUp $ \_ me -> RS.dispatch . RS.TriggerUpdateSelection $ mouseClientY me
+                                     , onTouchEnd $ \_ te -> RS.dispatch . RS.TriggerUpdateSelection . touchScreenY . head $ touches te
+                                     ] $ do
+                              -- div_ ["className" $= "c-vdoc-overlay"] $ do
+                                -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
+                              div_ ["className" $= "c-article-content"] $ do
+                                toArticleBody . HTMLT.tokensToForest . HTMLP.parseTokens . cs . _unVDocVersion $ _compositeVDocVersion vdoc
                             rightAside_ (rs ^. gsMarkPositions)
 
 
-toArticle :: Either ParseTokenForestError (DT.Forest HTMLP.Token) -> ReactElementM [SomeStoreAction] ()
-toArticle (Left err) = p_ (elemString (show err))
-toArticle (Right forest) = article_
-  [ "id" $= "vdocValue"
-  , "className" $= "gr-20 gr-14@desktop c-article-content"
-  , onMouseUp $ \_ me -> RS.dispatch . RS.SetSelection $ mouseClientY me
-  , onTouchEnd $ \_ te -> RS.dispatch . RS.SetSelection . touchScreenY . head $ touches te
-  ] (mconcat $ map toHTML (addUIInfoToForest forest))
+toArticleBody :: Either ParseTokenForestError (DT.Forest HTMLP.Token) -> ReactElementM [SomeStoreAction] ()
+toArticleBody (Left err) = p_ (elemString (show err))
+toArticleBody (Right forest) = mconcat $ map toHTML (addUIInfoToForest forest)
 
 
 toHTML :: DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()
@@ -124,7 +132,7 @@ snippet = defineView "snippet" $ \props ->
                     , "style" @= [Style "top" pos]
                     ] $ do
                     div_ ["className" $= fromString ("o-snippet__icon-bg o-snippet__icon-bg--" <> _iconSide props)] $ do
-                        icon_ (fromString ("o-snippet__icon icon-" <> _iconStyle props <> " iconsize-m"))
+                        iconCore_ (fromString ("o-snippet__icon icon-" <> _iconStyle props <> " iconsize-m"))
                     div_ ["className" $= "o-snippet__content"] childrenPassedToView
 
 snippet_ :: SnippetProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()

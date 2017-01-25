@@ -35,7 +35,7 @@ import Refine.Backend.Database.Class as DB
 
 addComment :: ID Patch -> Create Comment -> App DB Comment
 addComment pid comment = do
-  appLog "addComent"
+  appLog "addComment"
   db $ DB.createComment pid comment
 
 addNote :: ID Patch -> Create Note -> App DB Note

@@ -9,19 +9,24 @@
 
 module Refine.Frontend.Store where
 
-import           Control.Lens ((&), (^.), (%~), (.~))
+import           Control.Lens ((&), (^.), (%~))
 import qualified Data.Aeson as AE
 import qualified Data.Map.Strict as M
+import           Data.Maybe (fromJust)
 import           React.Flux
 import           Data.Aeson (ToJSON, encode)
 import           Data.String.Conversions
 import           Data.JSString (JSString, pack, unpack)
 
 import Refine.Common.Rest
-import Refine.Common.Types
-import Refine.Frontend.Rest
-import Refine.Frontend.Test.Samples
-import Refine.Frontend.Types
+import qualified Refine.Common.Types as RT
+
+import           Refine.Frontend.Bubbles.Store (bubblesStateUpdate)
+import           Refine.Frontend.Bubbles.Types
+import           Refine.Frontend.Rest
+import           Refine.Frontend.Test.Samples
+import           Refine.Frontend.Types
+
 
 
 toSize :: Int -> WindowSize
@@ -38,22 +43,22 @@ instance StoreData GlobalState where
 
         emitBackendCallsFor action state
 
-        -- TODO can this be improved?
-        selectedRangeOrState <- case action of -- for efficiency reasons, don't ask JS for each action
-            SetSelection deviceOffset -> do
+        transformedAction <- case action of
+            TriggerUpdateSelection deviceOffset -> do
+                -- for efficiency reasons, only ask JS when we get this action
                 hasRange <- js_hasRange
                 range <- if hasRange then getRange else return Nothing
-                return (range, Just deviceOffset)
-            _ -> return $ _gsCurrentSelection state
+                return $ UpdateSelection (range, Just deviceOffset)
+            _ -> return action
 
 
         let newState = state
-              & gsVDoc             %~ vdocUpdate action
-              & gsVDocList         %~ vdocListUpdate action
-              & gsHeaderHeight     %~ headerHeightUpdate action
-              & gsMarkPositions    %~ markPositionsUpdate action
-              & gsWindowSize       %~ windowSizeUpdate action
-              & gsCurrentSelection .~ currentSelectionUpdate action selectedRangeOrState    -- TODO can this be improved?
+              & gsVDoc                     %~ vdocUpdate transformedAction
+              & gsVDocList                 %~ vdocListUpdate transformedAction
+              & gsHeaderHeight             %~ headerHeightUpdate transformedAction
+              & gsMarkPositions            %~ markPositionsUpdate transformedAction
+              & gsWindowSize               %~ windowSizeUpdate transformedAction
+              & gsBubblesState             %~ bubblesStateUpdate transformedAction
 
         consoleLog "New state: " newState
         return newState
@@ -62,9 +67,13 @@ instance StoreData GlobalState where
 vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate action state = case action of
     OpenDocument openedVDoc -> Just openedVDoc
+    AddDiscussion discussion      -> case state of
+        Nothing   -> Nothing -- no vdoc: we cannot put the comment anywhere
+                             -- FIXME: i think this should be an error. ~fisx
+        Just vdoc -> Just $ vdoc { _compositeVDocComments = discussion : vdoc ^. compositeVDocComments }
     _ -> state
 
-vdocListUpdate :: RefineAction -> Maybe [ID VDoc] -> Maybe [ID VDoc]
+vdocListUpdate :: RefineAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
 vdocListUpdate action state = case action of
     LoadedDocumentList list -> Just list
     _ -> state
@@ -84,32 +93,40 @@ windowSizeUpdate action state = case action of
     SetWindowSize newSize -> newSize
     _ -> state
 
-currentSelectionUpdate :: RefineAction -> (Maybe Range, Maybe DeviceOffset) -> (Maybe Range, Maybe DeviceOffset)
-currentSelectionUpdate action state = case action of
-    SetSelection _ -> state -- TODO this only works because of how this is invoked -- needs improvement!
-    SubmitPatch -> (Nothing, Nothing)
-    _ -> state
-
-
-
 emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()
-emitBackendCallsFor action _state = case action of
+emitBackendCallsFor action state = case action of
     LoadDocumentList -> do
         listVDocs $ \case
             (Left(_, msg)) -> handleError msg
-            (Right loadedVDocs) -> return . dispatch $ LoadedDocumentList ((^. vdocID) <$> loadedVDocs)
+            (Right loadedVDocs) -> return . dispatch $ LoadedDocumentList ((^. RT.vdocID) <$> loadedVDocs)
     LoadDocument auid -> do
         getVDoc auid $ \case
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
 
     AddDemoDocument -> do
-        createVDoc (CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
+        createVDoc (RT.CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
 
+    SubmitComment text category forRange -> do
+      -- here we need to distinguish which comment category we want to submit
+      -- check the state and what the user selected there
+      case category of
+        Just Discussion ->
+          addDiscussion (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. RT.vdocHeadPatch)
+                     (RT.CreateComment text True (createChunkRange forRange)) $ \case
+            (Left(_, msg)) -> handleError msg
+            (Right discussion) -> return . dispatch $ AddDiscussion discussion
+        Just Note ->
+          addNote (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. RT.vdocHeadPatch)
+                     (RT.CreateNote text RT.Remark (createChunkRange forRange)) $ \case
+            (Left(_, msg)) -> handleError msg
+            (Right note) -> return . dispatch $ AddNote note
+        Nothing -> return ()
+
 {- TODO submitting a patch does not work yet
-    SubmitPatch -> do
+    SubmitEdit -> do
         let vdocId = _metaKey . _vdocMeta . fromJust $ _vdoc state
         let patchId = _vdocHead . fromJust $ _vdoc state
         let vdocChunk = VDocChunk "<p><strong>This is my new and obviously much, much better text :-)</strong></p>"
@@ -127,13 +144,17 @@ emitBackendCallsFor action _state = case action of
     _ -> return ()
 
 
+createChunkRange :: Maybe Range -> RT.CreateChunkRange
+createChunkRange Nothing = RT.CreateChunkRange Nothing Nothing
+createChunkRange (Just range) = RT.CreateChunkRange (range ^. startPoint) (range ^. endPoint)
+
 handleError :: String -> IO [SomeStoreAction]
 handleError msg = do
             print msg
             return []
 
 refineStore :: ReactStore GlobalState
-refineStore = mkStore $ GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing)
+refineStore = mkStore emptyGlobalState
 
 dispatch :: RefineAction -> [SomeStoreAction]
 dispatch a = [SomeStoreAction refineStore a]

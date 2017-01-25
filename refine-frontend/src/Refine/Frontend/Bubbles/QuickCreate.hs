@@ -1,12 +1,35 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE DeriveAnyClass             #-}
+{-# LANGUAGE ExplicitForAll             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Overlay where
+module Refine.Frontend.Bubbles.QuickCreate where
 
 import           Data.Monoid ((<>))
 import           Data.String (fromString)
 import           React.Flux
 
 import qualified Refine.Frontend.Types as RS
+import qualified Refine.Frontend.Bubbles.Types as RS
+import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.UtilityWidgets
 
 
@@ -16,7 +39,15 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, h
     -- TODO unify CSS class names with those used in iconButton_ !!
         (Just range, Just deviceOffset) ->
             let offset = quickCreateOffset range deviceOffset headerHeight
-            in positionedIconButton_ (IconButtonProps ("o-add-" <> createType) "" (fromString createType) True ("icon-New_Comment", "bright") "" XXL) offset
+            in positionedIconButton_
+              (IconButtonProps
+                (IconProps ("o-add-" <> createType) True ("icon-New_Comment", "bright") XXL)
+                ""
+                ""
+                (fromString createType)
+                ""
+                (\_ _ -> RS.dispatch RS.ClearSelection <> RS.dispatch (RS.ShowCommentEditor (fst currentSelection)))
+              ) offset
         _ -> div_ ""
 --    // quickCreate annotation ui events
 --    ann.addEventListener('mousedown', quickCreateOverlay);

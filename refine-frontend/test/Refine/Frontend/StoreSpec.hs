@@ -7,7 +7,6 @@
 module Refine.Frontend.StoreSpec where
 
 import Control.Lens ((^.))
-import qualified Data.Map.Strict as M
 import Test.Hspec
 import Test.QuickCheck
 import Test.QuickCheck.Monadic
@@ -23,9 +22,6 @@ import Refine.Frontend.Store ()
 instance Arbitrary (ID VDoc) where
     arbitrary = ID <$> arbitrary
 
-
-emptyGlobalState :: GlobalState
-emptyGlobalState = GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing)
 
 spec :: Spec
 spec = do

@@ -1,9 +1,9 @@
-module Refine.Frontend.OverlaySpec where
+module Refine.Frontend.Bubbles.QuickCreateSpec where
 
 import Test.Hspec
 
-import qualified Refine.Frontend.Types as RS
-import           Refine.Frontend.Overlay
+import qualified Refine.Frontend.Bubbles.Types as RS
+import           Refine.Frontend.Bubbles.QuickCreate
 
 
 rangeTopFor :: Int -> Int -> RS.Range
@@ -28,7 +28,7 @@ ih2 = ih `div` 2
 
 spec :: Spec
 spec = do
-  describe "Overlay" $ do
+  describe "QuickCreate" $ do
 
     describe "quickCreateSelectionTop" $ do
       it "calculates the selection top in the main section for a selection at the top of the screen" $ do
