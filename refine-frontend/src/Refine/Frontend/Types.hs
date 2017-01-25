@@ -44,6 +44,9 @@ data GlobalState = GlobalState
 
 makeLenses ''GlobalState
 
+emptyGlobalState :: GlobalState
+emptyGlobalState = GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop emptyBubblesState
+
 data RefineAction = LoadDocumentList
                   | LoadedDocumentList [ID VDoc]
                   | LoadDocument (ID VDoc)
@@ -69,4 +72,3 @@ data RefineAction = LoadDocumentList
                   -- Actions that will be transformed because they need IO:
                   | TriggerUpdateSelection DeviceOffset
   deriving (Show, Typeable, Generic, NFData, ToJSON)
-

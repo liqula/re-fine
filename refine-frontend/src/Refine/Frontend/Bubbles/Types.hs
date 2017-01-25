@@ -63,3 +63,6 @@ data BubblesState = BubblesState
   } deriving (Show, Typeable, Generic, NFData, ToJSON)
 
 makeLenses ''BubblesState
+
+emptyBubblesState :: BubblesState
+emptyBubblesState = BubblesState (Nothing, Nothing) Nothing False (False, Nothing)

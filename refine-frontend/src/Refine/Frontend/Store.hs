@@ -154,8 +154,7 @@ handleError msg = do
             return []
 
 refineStore :: ReactStore GlobalState
-refineStore = let bubblesState = BubblesState (Nothing, Nothing) Nothing False (False, Nothing)
-  in mkStore $ GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop bubblesState
+refineStore = mkStore emptyGlobalState
 
 dispatch :: RefineAction -> [SomeStoreAction]
 dispatch a = [SomeStoreAction refineStore a]
