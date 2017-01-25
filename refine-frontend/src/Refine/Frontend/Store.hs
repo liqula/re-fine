@@ -19,13 +19,13 @@ import           Data.String.Conversions
 import           Data.JSString (JSString, pack, unpack)
 
 import Refine.Common.Rest
-import Refine.Common.Types
+import qualified Refine.Common.Types as RT
 
-import Refine.Frontend.Bubbles.Store (bubblesStateUpdate)
-import Refine.Frontend.Bubbles.Types
-import Refine.Frontend.Rest
-import Refine.Frontend.Test.Samples
-import Refine.Frontend.Types
+import           Refine.Frontend.Bubbles.Store (bubblesStateUpdate)
+import           Refine.Frontend.Bubbles.Types
+import           Refine.Frontend.Rest
+import           Refine.Frontend.Test.Samples
+import           Refine.Frontend.Types
 
 
 
@@ -72,7 +72,7 @@ vdocUpdate action state = case action of
         Just vdoc -> Just $ vdoc { _compositeVDocComments = discussion : vdoc ^. compositeVDocComments }
     _ -> state
 
-vdocListUpdate :: RefineAction -> Maybe [ID VDoc] -> Maybe [ID VDoc]
+vdocListUpdate :: RefineAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
 vdocListUpdate action state = case action of
     LoadedDocumentList list -> Just list
     _ -> state
@@ -97,24 +97,32 @@ emitBackendCallsFor action state = case action of
     LoadDocumentList -> do
         listVDocs $ \case
             (Left(_, msg)) -> handleError msg
-            (Right loadedVDocs) -> return . dispatch $ LoadedDocumentList ((^. vdocID) <$> loadedVDocs)
+            (Right loadedVDocs) -> return . dispatch $ LoadedDocumentList ((^. RT.vdocID) <$> loadedVDocs)
     LoadDocument auid -> do
         getVDoc auid $ \case
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
 
     AddDemoDocument -> do
-        createVDoc (CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
+        createVDoc (RT.CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
 
-    SubmitComment text _category forRange -> do
+    SubmitComment text category forRange -> do
       -- here we need to distinguish which comment category we want to submit
       -- check the state and what the user selected there
-      addDiscussion (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. vdocHeadPatch)
-                 (CreateComment text True (createChunkRange forRange)) $ \case
-        (Left(_, msg)) -> handleError msg
-        (Right comment) -> return . dispatch $ AddDiscussion comment
+      case category of
+        Just Discussion ->
+          addDiscussion (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. RT.vdocHeadPatch)
+                     (RT.CreateComment text True (createChunkRange forRange)) $ \case
+            (Left(_, msg)) -> handleError msg
+            (Right discussion) -> return . dispatch $ AddDiscussion discussion
+        Just Note ->
+          addNote (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. RT.vdocHeadPatch)
+                     (RT.CreateNote text RT.Remark (createChunkRange forRange)) $ \case
+            (Left(_, msg)) -> handleError msg
+            (Right note) -> return . dispatch $ AddNote note
+        Nothing -> return ()
 
 {- TODO submitting a patch does not work yet
     SubmitEdit -> do
@@ -135,9 +143,9 @@ emitBackendCallsFor action state = case action of
     _ -> return ()
 
 
-createChunkRange :: Maybe Range -> CreateChunkRange
-createChunkRange Nothing = CreateChunkRange Nothing Nothing
-createChunkRange (Just range) = CreateChunkRange (range ^. startPoint) (range ^. endPoint)
+createChunkRange :: Maybe Range -> RT.CreateChunkRange
+createChunkRange Nothing = RT.CreateChunkRange Nothing Nothing
+createChunkRange (Just range) = RT.CreateChunkRange (range ^. startPoint) (range ^. endPoint)
 
 handleError :: String -> IO [SomeStoreAction]
 handleError msg = do

@@ -63,6 +63,7 @@ data RefineAction = LoadDocumentList
                   | SubmitComment ST (Maybe CommentCategory) (Maybe Range)
                   -- ...
                   | AddDiscussion Comment
+                  | AddNote Note
                   | SubmitEdit
                   | SaveSelect Text Text
                   -- Actions that will be transformed because they need IO:
