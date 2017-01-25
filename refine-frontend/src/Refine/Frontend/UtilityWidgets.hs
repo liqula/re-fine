@@ -42,7 +42,7 @@ data IconButtonProps = IconButtonProps
   , _clickHandler    :: ClickHandler
   }
 
-type ClickHandler = Event -> MouseEvent -> [SomeStoreAction]
+type ClickHandler = Event -> [SomeStoreAction]
 
 makeLenses ''IconButtonProps
 
@@ -102,7 +102,7 @@ iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
                                                   , alignmentClass (iprops ^. blockName)
                                                                    (props ^. rightAligned)
                                                    ])
-           , onClick $ bprops ^. clickHandler
+           , onClick $ const . (bprops ^. clickHandler)
            ] <> case props ^. position of
                    Nothing  -> []
                    Just pos -> ["style" @= [Style "top" pos]]) $ do
