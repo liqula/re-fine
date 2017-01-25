@@ -44,20 +44,20 @@ library
   exposed-modules:
       -- we can't have hspec, but at least we have bash and find and perl...  :)
       -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
-      Refine.Frontend.Heading
-      Refine.Frontend.Loader.Component
-      Refine.Frontend.Mark
       Refine.Frontend.Bubbles.Overlay
       Refine.Frontend.Bubbles.QuickCreate
       Refine.Frontend.Bubbles.Store
       Refine.Frontend.Bubbles.Types
+      Refine.Frontend.Heading
+      Refine.Frontend.Loader.Component
+      Refine.Frontend.Mark
       Refine.Frontend.Rest
-      Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Store
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
       Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Samples
+      Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.Views
@@ -93,20 +93,20 @@ executable refine-frontend
     , hspec-discover
   other-modules:
       -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
-      Refine.Frontend.Heading
-      Refine.Frontend.Loader.Component
-      Refine.Frontend.Mark
       Refine.Frontend.Bubbles.Overlay
       Refine.Frontend.Bubbles.QuickCreate
       Refine.Frontend.Bubbles.Store
       Refine.Frontend.Bubbles.Types
+      Refine.Frontend.Heading
+      Refine.Frontend.Loader.Component
+      Refine.Frontend.Mark
       Refine.Frontend.Rest
-      Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Store
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
       Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Samples
+      Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.Views
@@ -146,22 +146,22 @@ test-suite spec
     , quickcheck-instances
   other-modules:
       -- find src test -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
-      Refine.Frontend.Heading
-      Refine.Frontend.Loader.Component
-      Refine.Frontend.Mark
       Refine.Frontend.Bubbles.Overlay
       Refine.Frontend.Bubbles.QuickCreate
       Refine.Frontend.Bubbles.QuickCreateSpec
       Refine.Frontend.Bubbles.Store
       Refine.Frontend.Bubbles.Types
+      Refine.Frontend.Heading
+      Refine.Frontend.Loader.Component
+      Refine.Frontend.Mark
       Refine.Frontend.Rest
-      Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Store
       Refine.Frontend.StoreSpec
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
       Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Samples
+      Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.UtilityWidgetsSpec
