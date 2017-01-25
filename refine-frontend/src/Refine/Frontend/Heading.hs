@@ -123,7 +123,8 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       (\_ _ -> [])
 
           iconButton_ $ IconButtonProps
-                      (IconProps "c-vdoc-toolbar" False ("icon-Edit", "dark") XXL)
+                      -- (IconProps "c-vdoc-toolbar" False ("icon-Edit", "dark") XXL)
+                      (IconProps "c-vdoc-toolbar" True ("icon-Edit_view", "dark") XXL)
                       "all-modifications"
                       ""
                       ""

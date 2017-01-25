@@ -39,8 +39,8 @@ module.exports = {
         loaders: [
             { test: /\.css$/, loader: "style-loader!css-loader" },
             { test: /\.scss$/, loader: "style-loader!css-loader!sass-loader" },
-            { test: /\.(ttf|woff|svg)\?32imnj/, loader: "url-loader" }
-
+            { test: /\.(ttf|woff|svg)\?32imnj/, loader: "url-loader" },
+            { test: /\.svg$/, loader: "url-loader" }
         ]
     },
     sassLoader: {

@@ -21,10 +21,12 @@ data IconSize
     | XXL
     deriving Show
 
+type IconDescription = (String, String)
+
 data IconProps = IconProps
   { _blockName     :: String
   , _iconHighlight :: Bool
-  , _iconDesc      :: (String, String)
+  , _iconDesc      :: IconDescription
   , _size          :: IconSize
 
   }
@@ -53,9 +55,23 @@ data IconButtonWithAlignmentProps = IconButtonWithAlignmentProps
 makeLenses ''IconButtonWithAlignmentProps
 
 
-iconCore :: ReactView JSString
-iconCore = defineView "IconCore" $ \iconClass ->
-  div_ ["className" $= iconClass] $ do
+icon :: ReactView IconProps
+icon = defineStatefulView "Icon" False $ \mouseIsOver props -> do
+  -- TODO unify the naming schemas of the classes of the different icons!
+  let
+    highlightStyle = if mouseIsOver && (props ^. iconHighlight)
+                     then "RO"
+                     else props ^. iconDesc . _2
+  div_ ["className" $= (fromString . toClasses)
+                         [ (props ^. blockName) <> "__icon"
+                         , (props ^. blockName) <> "__category-icon"
+                         , if props ^. iconHighlight then "o-icon-highlight" else ""
+                         , props ^. iconDesc . _1 <> "_" <> highlightStyle
+                         , "iconsize-" <> map toLower (show (props ^. size))
+                         ]
+       , onMouseEnter $ \_ _ _ -> ([], Just True)
+       , onMouseLeave $ \_ _ _ -> ([], Just False)
+       ] $ do
     span_ ["className" $= "path1"] ""
     span_ ["className" $= "path2"] ""
     span_ ["className" $= "path3"] ""
@@ -65,26 +81,6 @@ iconCore = defineView "IconCore" $ \iconClass ->
     span_ ["className" $= "path7"] ""
     span_ ["className" $= "path8"] ""
 
-iconCore_ :: JSString -> ReactElementM eventHandler ()
-iconCore_ iconClass = view iconCore iconClass mempty
-
-
-icon :: ReactView IconProps
-icon = defineStatefulView "Icon" False $ \mouseIsOver props -> do
-  -- TODO unify the naming schemas of the classes of the different icons!
-  div_ ["className" $= fromString ((props ^. blockName) <> "__icon" <> " " <> (props ^. blockName) <> "__category-icon")
-       , onMouseEnter $ \_ _ _ -> ([], Just True)
-       , onMouseLeave $ \_ _ _ -> ([], Just False)
-       ] $ do
-    let -- TODO: these could do with better names
-      a = if props ^. iconHighlight then "o-icon-highlight " else ""
-      b = props ^. iconDesc . _1
-      c = "_" <> if mouseIsOver && (props ^. iconHighlight)
-                   then "RO"
-                   else props ^. iconDesc . _2
-      d = " " <> "iconsize-" <> map toLower (show (props ^. size))
-    iconCore_ $ fromString (a <> b <> c <> d)
-
 icon_ :: IconProps -> ReactElementM eventHandler ()
 icon_ props = view icon props mempty
 
@@ -93,24 +89,19 @@ iconButtonWithAlignment :: ReactView IconButtonWithAlignmentProps
 iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
     let bprops = props ^. iconButtonProps
     let iprops = bprops ^. iconProps
+    let beConnector = if bprops ^. elementName == "" then "" else "__"
+    let emConnector = if bprops ^. moduleName == "" then "" else "--"
+    let beName  = iprops ^. blockName <> beConnector <> bprops ^. elementName
+    let bemName = beName <> emConnector <> bprops ^. moduleName
     div_ (["data-content-type" $= (bprops ^. contentType)
            , "style" @= [Style "cursor" ("pointer" :: String)]
            -- TODO unify the naming schema of the classes for the different buttons!
-           , "className" $= fromString (concat [ iprops ^. blockName, "__button"
-                                               , " "
-                                               , iprops ^. blockName
-                                               , if bprops ^. elementName == "" then "" else "__"
-                                               , bprops ^. elementName
-                                               , " "
-                                               , iprops ^. blockName
-                                               , if bprops ^. elementName == "" then "" else "__"
-                                               , bprops ^. elementName
-                                               , if bprops ^. moduleName == "" then "" else "--"
-                                               , bprops ^. moduleName
-                                               , " "
-                                               , alignmentClass (iprops ^. blockName)
-                                                                (props ^. rightAligned)
-                                               ])
+           , "className" $= fromString (toClasses [ iprops ^. blockName <> "__button"
+                                                  , beName  -- for the vdoc-toolbar
+                                                  , bemName -- for the buttons in the overlays
+                                                  , alignmentClass (iprops ^. blockName)
+                                                                   (props ^. rightAligned)
+                                                   ])
            , onClick $ bprops ^. clickHandler
            ] <> case props ^. position of
                    Nothing  -> []
@@ -119,7 +110,7 @@ iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
         span_ ["className" $= fromString (iprops ^. blockName <> "__button-label")] $
             elemJSString (bprops ^. label)
     where
-      alignmentClass blockName_ rightAligned_ = if rightAligned_ then " " <> blockName_ <> "--align-right" else ""
+      alignmentClass blockName_ rightAligned_ = if rightAligned_ then blockName_ <> "--align-right" else ""
 
 iconButtonWithAlignment_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
 iconButtonWithAlignment_ props = view iconButtonWithAlignment props mempty
@@ -139,3 +130,10 @@ positionedIconButton = defineView "IconButton" $ \(props, position_) ->
 
 positionedIconButton_ :: IconButtonProps -> Int -> ReactElementM eventHandler ()
 positionedIconButton_ props position_ = view positionedIconButton (props, position_) mempty
+
+
+toClasses :: [String] -> String
+toClasses = unwords . compact
+  where
+    compact :: [String] -> [String]
+    compact = filter $ not . null

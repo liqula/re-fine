@@ -48,7 +48,7 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, h
                 ""
                 (\_ _ -> RS.dispatch RS.ClearSelection <> RS.dispatch (RS.ShowCommentEditor (fst currentSelection)))
               ) offset
-        _ -> div_ ""
+        _ -> mempty
 --    // quickCreate annotation ui events
 --    ann.addEventListener('mousedown', quickCreateOverlay);
 --    Hammer.on(ann, 'tap', quickCreateOverlay);

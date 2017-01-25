@@ -25,6 +25,16 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-Edit_view_bright {
+  background-image: url("../images/Edit_view_bright.svg");
+}
+.icon-Edit_view_dark {
+  background-image: url("../images/Edit_view_dark.svg");
+}
+.icon-Edit_view_RO {
+  background-image: url("../images/Edit_view_RO.svg");
+}
+
 .icon-Arrow_down_bright {
   &:before {
     content: $icon-Arrow_down_bright;
