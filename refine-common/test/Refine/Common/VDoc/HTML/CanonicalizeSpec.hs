@@ -106,10 +106,9 @@ spec = parallel $ do
         Left (VDocHTMLErrorBadTree (ParseTokenForestErrorBracketMismatch (PStack [] [(TagOpen "unclosed" [],[])]) Nothing))
 
     it "crashes (internal error) if input is not canonicalized" $ do
-      pendingWith "#16"
       let bad :: Either VDocHTMLError [Token]
           bad = wrapInTopLevelTags [ContentText "wef", ContentChar 'q']
-      evaluate bad `shouldThrow` anyException
+      (evaluate . length . show $ bad) `shouldThrow` anyException
 
 
   describe "canonicalizeAttrs" $ do
