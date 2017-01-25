@@ -54,7 +54,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                             editToolbarExtension_
 
                 showComment_ (rs ^. gsBubblesState ^. bsCommentIsVisible)
-                addComment_ (rs ^. gsBubblesState ^. bsCommentEditorIsVisible) ((rs ^. gsBubblesState ^. bsCommentCategory))
+                addComment_ (rs ^. gsBubblesState ^. bsCommentEditorIsVisible) (rs ^. gsBubblesState ^. bsCommentCategory)
 
                 main_ ["role" $= "main"] $ do
                     div_ ["className" $= "grid-wrapper"] $ do

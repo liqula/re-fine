@@ -44,7 +44,7 @@ type DeviceOffset = Int
 type Selection = (Maybe Range, Maybe DeviceOffset)
 
 -- for Overlay:
-data CommentInputState = CommentInputState
+newtype CommentInputState = CommentInputState
   { _commentInputStateText     :: ST
   } deriving (Show, Typeable, Generic, NFData)
 

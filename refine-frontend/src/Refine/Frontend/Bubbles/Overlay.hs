@@ -35,6 +35,7 @@ import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
 import           Refine.Frontend.UtilityWidgets
 
+{-# ANN module "HLint: ignore Use camelCase" #-}
 
 
 vdoc_overlay_content :: [Style]
