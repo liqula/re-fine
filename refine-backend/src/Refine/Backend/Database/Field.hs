@@ -10,7 +10,6 @@ import Data.Proxy
 import Data.String.Conversions (LBS, ST, cs)
 import Database.Persist
 import Database.Persist.Sql
-import Text.Read (readEither)
 
 import Refine.Common.Types.VDoc
 import Refine.Backend.Database.Types

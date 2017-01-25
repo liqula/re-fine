@@ -321,6 +321,7 @@ answersOfQuestion qid = liftDB $ do
 toStatement :: ID Statement -> ST -> Maybe (Key S.Statement) -> Statement
 toStatement sid text parent = Statement sid text (S.keyToId <$> parent)
 
+saveStatement :: ID Discussion -> S.Statement -> SQLM Statement
 saveStatement did sstatement = do
   key <- insert sstatement
   void . insert $ S.DS (S.idToKey did) key
@@ -335,7 +336,7 @@ createStatement did statement = liftDB $ do
 
 createReplyStatement :: ID Statement  -> Create Statement -> DB Statement
 createReplyStatement sid statement = do
-  ds   <- liftDB $ foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] []
+  ds  <- liftDB $ foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] []
   did <- unique ds
   liftDB $ do
     let sstatement = S.Statement
