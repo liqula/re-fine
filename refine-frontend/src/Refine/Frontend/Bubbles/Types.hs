@@ -31,13 +31,12 @@ makeLenses ''Range
 
 
 instance AE.FromJSON Range where
-    parseJSON (AE.Object v) = Range <$>
+    parseJSON = AE.withObject "Range" $ \v -> Range <$>
                              v AE..:? "start" <*>
                              v AE..:? "end" <*>
                              v AE..: "top" <*>
                              v AE..: "bottom" <*>
                              v AE..: "scrollOffset"
-    parseJSON _          = error "not an object... what can we do?" -- TODO empty
 
 type DeviceOffset = Int
 
