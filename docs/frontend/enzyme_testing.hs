@@ -20,19 +20,20 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.UtilityWidgetsSpec where
+module Refine.Frontend.MyModuleSpec where
 
 import Test.Hspec
 
+import Refine.Frontend.Test.Console
 import Refine.Frontend.Test.Enzyme
-import Refine.Frontend.UtilityWidgets
+import Refine.Frontend.MyModule
 
 
 spec :: Spec
 spec =
-  describe "The icon_ component" $ do
-    it "annotates the block together with the icon module" $ do
-      wrapper <- shallow $ icon_ (IconProps "bla" True ("Icon", "striped") XXL)
-      wrapper1 <- find wrapper ".bla__icon"
-      getWrapperAttr wrapper1 "length" `shouldReturn` (1 :: Int)
+  describe "The mymodule_ component" $ do
+    it "does great things" $ do
+      wrapper@(ShallowWrapper jsval) <- shallow $ mymodule_ params
 
+      consoleLogJSVal "..." jsval
+      -- this prints the wrapper object to the command line
