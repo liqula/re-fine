@@ -24,11 +24,14 @@
 
 module Refine.Common.VDoc.HTML.Splice
   ( insertMarks
+  , chunkRangeCanBeApplied
   , PreToken(..)
   , enablePreTokens
   , resolvePreTokens
   , runPreToken
   , splitAtOffset
+  , preTokensFromForest
+  , preTokensToForest
   ) where
 
 import           Control.Exception (assert)
@@ -57,9 +60,26 @@ insertMarks :: MonadError VDocHTMLError m
             => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> m (VDocVersion 'HTMLWithMarks)
 insertMarks crs (VDocVersion (parseTokens -> (ts :: [Token])))
   = assert (ts == canonicalizeTokens ts)
+  . assert (all (`chunkRangeCanBeAppliedTs` ts) crs)
   . fmap (VDocVersion . cs . renderTokens)  -- TODO: do we still want '\n' between tokens for darcs?
   . insertMarksTs crs
   $ ts
+
+
+-- * sanity check
+
+chunkRangeCanBeApplied :: ChunkRange a -> VDocVersion b -> Bool
+chunkRangeCanBeApplied crs (VDocVersion (parseTokens -> (ts :: [Token]))) = chunkRangeCanBeAppliedTs crs ts
+
+chunkRangeCanBeAppliedTs :: ChunkRange a -> [Token] -> Bool
+chunkRangeCanBeAppliedTs (ChunkRange _ mp1 mp2) ts = all (`chunkPointCanBeAppliedTs` ts) $ catMaybes [mp1, mp2]
+
+chunkPointCanBeAppliedTs :: ChunkPoint -> [Token] -> Bool
+chunkPointCanBeAppliedTs (ChunkPoint uid off) ts = case tokensToForest ts of
+  Right forest ->
+    let sub = forest ^. atNode (\p -> dataUidOfToken p == Just uid)
+    in not (null sub) && forestTextLength sub >= off
+  Left _ -> False
 
 
 -- * inserting marks
@@ -98,6 +118,9 @@ insertMarksF crs = (`woodZip` splitup crs)
       = if preForestTextLength (f ^. atDataUID nod) >= off
           then pure $ f & atDataUID nod %~ insertPreToken (show cp) off mark
           else throwError $ VDocHTMLErrorBadChunkPoint f cp
+      where
+        atDataUID :: DataUID -> Traversal' (Forest PreToken) (Forest PreToken)
+        atDataUID node = atNode (\p -> dataUidOfPreToken p == Just node)
 
 
 -- | In a list of text or premark tokens, add another premark token at a given offset, splitting up
@@ -107,15 +130,16 @@ insertMarksF crs = (`woodZip` splitup crs)
 -- canonicalized and all tags have data-uid, so the forest can only contain a single ContentText
 -- node and no deep nodes.
 insertPreToken :: String -> Int -> PreToken -> Forest PreToken -> Forest PreToken
-insertPreToken errinfo offset mark forest = either err id go
+insertPreToken errinfo offset mark forest = assert (isPreMark mark) $ either err id go
   where
     go :: MonadError VDocHTMLError m => m (Forest PreToken)
     go = do
       (ts, ts') <- splitAtOffset offset $ preTokensFromForest forest
       preTokensToForest $ ts <> [mark] <> ts'
 
-    -- TODO: If 'ChunkRange' does not apply to tree (e.g. because of too large offset), this throws an
-    -- internal error.  We need to catch that more gracefully.
+    -- If 'ChunkRange' does not apply to tree (e.g. because of too large offset), this throws an
+    -- internal error.  This is impossible as long as 'insertMarks' checks 'chunkCanBeApplied' on
+    -- all chunks.
     err e = error $ "internal error: insertPreToken: " <> show (e, errinfo, mark, forest)
 
 
@@ -192,6 +216,11 @@ isClose (PreMarkClose _)        = True
 isClose (PreToken (TagClose _)) = True
 isClose _                       = False
 
+isPreMark :: PreToken -> Bool
+isPreMark (PreMarkOpen _)  = True
+isPreMark (PreMarkClose _) = True
+isPreMark (PreToken _)     = False
+
 isMatchingOpenClose :: PreToken -> PreToken -> Bool
 isMatchingOpenClose (PreMarkOpen l)          (PreMarkClose l')        | l == l' = True
 isMatchingOpenClose (PreToken (TagOpen n _)) (PreToken (TagClose n')) | n == n' = True
@@ -206,8 +235,8 @@ closeFromOpen _                         = error "closeFromOpen: internal error."
 -- | This is a bit of a hack.  We want to use tokensFromForest, so we 'fmap' 'runPreToken' on the
 -- input forest, then render that, and recover the pretokens from the tokens.
 --
--- This assumes there weren't any nodes of the form @PreToken (TagOpen "mark" _)@ in the forest, but
--- just @PreMarkOpen _@.
+-- The encoding uses 'Doctype' to encode marks, which works because all doctype elements have been
+-- removed from the input by 'canonicalizeVDocVersion'.
 preTokensFromForest :: Forest PreToken -> [PreToken]
 preTokensFromForest = fmap unstashPreToken . tokensFromForest . fmap (fmap stashPreToken)
 
@@ -216,33 +245,29 @@ preTokensToForest :: MonadError VDocHTMLError m => [PreToken] -> m (Forest PreTo
 preTokensToForest = fmap (fmap (fmap unstashPreToken)) . tokensToForest' . fmap stashPreToken
 
 stashPreToken :: PreToken -> Token
-stashPreToken (PreMarkOpen l)  = TagOpen "mark" [Attr "data-chunk-id" l]
-stashPreToken (PreMarkClose l) = TagClose ("mark_" <> l)
+stashPreToken (PreMarkOpen l)  = Doctype l
+stashPreToken (PreMarkClose l) = Doctype ("/" <> l)
 stashPreToken (PreToken t)     = t
 
 unstashPreToken :: Token -> PreToken
-unstashPreToken (TagOpen "mark" [Attr "data-chunk-id" l]) = PreMarkOpen l
-unstashPreToken (TagClose m) | "mark_" `ST.isPrefixOf` m  = PreMarkClose $ ST.drop 5 m
-unstashPreToken t                                         = PreToken t
+unstashPreToken (Doctype l) = case ST.splitAt 1 l of ("/", l') -> PreMarkClose l'; _ -> PreMarkOpen l
+unstashPreToken t           = PreToken t
 
+
+tokenTextLength :: Token -> Int
+tokenTextLength = \case
+  (ContentText t) -> ST.length t
+  (ContentChar _) -> 1
+  _               -> 0
+
+forestTextLength :: Forest Token -> Int
+forestTextLength = sum . fmap tokenTextLength . tokensFromForest
 
 preTokenTextLength :: PreToken -> Int
-preTokenTextLength = \case
-  (PreToken (ContentText t)) -> ST.length t
-  (PreToken (ContentChar _)) -> 1
-  _                          -> 0
+preTokenTextLength = tokenTextLength . runPreToken
 
 preForestTextLength :: Forest PreToken -> Int
 preForestTextLength = sum . fmap preTokenTextLength . preTokensFromForest
-
-
-dataUidOfPreToken :: PreToken -> Maybe DataUID
-dataUidOfPreToken (PreToken t)     = dataUidOfToken t
-dataUidOfPreToken (PreMarkOpen _)  = Nothing
-dataUidOfPreToken (PreMarkClose _) = Nothing
-
-atDataUID :: DataUID -> Traversal' (Forest PreToken) (Forest PreToken)
-atDataUID node = atNode (\p -> dataUidOfPreToken p == Just node)
 
 
 -- * translating between pretokens and tokens

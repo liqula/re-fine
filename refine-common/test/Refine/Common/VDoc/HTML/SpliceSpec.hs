@@ -60,6 +60,28 @@ spec = parallel $ do
       eval bad `shouldThrow` anyException
 
 
+  describe "chunkCanBeApplied" $ do
+    let vers :: VDocVersion 'HTMLCanonical
+        vers = VDocVersion "<span data-uid=\"1\">asdfasdf</span>"
+
+        cr :: ChunkPoint -> ChunkRange Patch
+        cr p = ChunkRange (ID 3) (Just p) Nothing
+
+        good = ChunkPoint (DataUID 1) 3
+        bad1 = ChunkPoint (DataUID 1) 189
+        bad2 = ChunkPoint (DataUID 4) 3
+
+
+    it "returns True on valid chunks." $ do
+      chunkRangeCanBeApplied (cr good) vers `shouldBe` True
+
+    it "returns False on out-of-bounds offset." $ do
+      chunkRangeCanBeApplied (cr bad1) vers `shouldBe` False
+
+    it "returns False on invalid data-uid." $ do
+      chunkRangeCanBeApplied (cr bad2) vers `shouldBe` False
+
+
   describe "resolvePreTokens" $ do
     let runPreTokenForest :: Forest PreToken -> [Token]
         runPreTokenForest = tokensFromForest . fmap (fmap runPreToken)
@@ -114,3 +136,9 @@ spec = parallel $ do
           `shouldBe` Left ("resolvePreTokens: open without close: " <> show ([PreMarkOpen "2"], bad1))
         resolvePreTokens bad2
           `shouldBe` Left ("resolvePreTokens: close without open: " <> show ([PreMarkClose "8"], bad2))
+
+
+  describe "preTokensToForest" $ do
+    it "Correctly ignores broken tree structure of PreMarkOpen, PreMarkClose." $ do
+      preTokensToForest [PreMarkOpen "1"] `shouldBe` Right [Node (PreMarkOpen "1") []]
+      preTokensToForest [PreMarkClose "1"] `shouldBe` Right [Node (PreMarkClose "1") []]

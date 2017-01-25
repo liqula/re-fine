@@ -29,7 +29,7 @@ module Refine.Common.VDoc.HTML.Core
 
     -- * misc
   , atNode
-  , dataUidOfToken
+  , dataUidOfToken, dataUidOfPreToken
   , tokensToForest'
   ) where
 
@@ -83,7 +83,13 @@ dataUidOfToken (TagOpen _ attrs) =
   readMaybe . cs =<< listToMaybe (mconcat $ (\(Attr k v) -> [v | k == "data-uid"]) <$> attrs)
 dataUidOfToken _ = Nothing
 
--- | Call 'tokensToForest'', but convert the error type.
+dataUidOfPreToken :: PreToken -> Maybe DataUID
+dataUidOfPreToken (PreToken t)     = dataUidOfToken t
+dataUidOfPreToken (PreMarkOpen _)  = Nothing
+dataUidOfPreToken (PreMarkClose _) = Nothing
+
+
+-- | Call 'tokensToForest' and convert the error type.
 tokensToForest' :: MonadError VDocHTMLError m => [Token] -> m (Forest Token)
 tokensToForest' ts = case tokensToForest ts of
   Right f  -> pure f
