@@ -24,6 +24,7 @@
 
 module Refine.Common.VDoc.HTML.Splice
   ( insertMarks
+  , chunkRangeCanBeApplied
   , PreToken(..)
   , enablePreTokens
   , resolvePreTokens
@@ -59,9 +60,22 @@ insertMarks :: MonadError VDocHTMLError m
             => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> m (VDocVersion 'HTMLWithMarks)
 insertMarks crs (VDocVersion (parseTokens -> (ts :: [Token])))
   = assert (ts == canonicalizeTokens ts)
+  . assert (all (`chunkRangeCanBeAppliedTs` ts) crs)
   . fmap (VDocVersion . cs . renderTokens)  -- TODO: do we still want '\n' between tokens for darcs?
   . insertMarksTs crs
   $ ts
+
+
+-- * sanity check
+
+chunkRangeCanBeApplied :: ChunkRange a -> VDocVersion b -> Bool
+chunkRangeCanBeApplied crs (VDocVersion (parseTokens -> (ts :: [Token]))) = chunkRangeCanBeAppliedTs crs ts
+
+chunkRangeCanBeAppliedTs :: ChunkRange a -> [Token] -> Bool
+chunkRangeCanBeAppliedTs (ChunkRange _ mp1 mp2) ts = all (`chunkPointCanBeAppliedTs` ts) $ catMaybes [mp1, mp2]
+
+chunkPointCanBeAppliedTs :: ChunkPoint -> [Token] -> Bool
+chunkPointCanBeAppliedTs _ _ = True
 
 
 -- * inserting marks
@@ -116,8 +130,9 @@ insertPreToken errinfo offset mark forest = assert (isPreMark mark) $ either err
       (ts, ts') <- splitAtOffset offset $ preTokensFromForest forest
       preTokensToForest $ ts <> [mark] <> ts'
 
-    -- TODO: If 'ChunkRange' does not apply to tree (e.g. because of too large offset), this throws an
-    -- internal error.  We need to catch that more gracefully.
+    -- If 'ChunkRange' does not apply to tree (e.g. because of too large offset), this throws an
+    -- internal error.  This is impossible as long as 'insertMarks' checks 'chunkCanBeApplied' on
+    -- all chunks.
     err e = error $ "internal error: insertPreToken: " <> show (e, errinfo, mark, forest)
 
 
