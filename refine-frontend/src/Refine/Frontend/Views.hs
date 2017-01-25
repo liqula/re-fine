@@ -28,6 +28,7 @@ import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
 import           Refine.Frontend.Types as RS
+import           Refine.Frontend.Bubbles.Types as RS
 import           Refine.Frontend.UtilityWidgets
 import           Refine.Frontend.WindowSize (windowSize_, WindowSizeProps(..))
 
@@ -52,13 +53,13 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                             editToolbar_
                             editToolbarExtension_
 
-                showComment_ (rs ^. gsCommentIsVisible)
-                addComment_ (rs ^. gsCommentEditorIsVisible)
+                showComment_ (rs ^. gsBubblesState ^. bsCommentIsVisible)
+                addComment_ (rs ^. gsBubblesState ^. bsCommentEditorIsVisible)
 
                 main_ ["role" $= "main"] $ do
                     div_ ["className" $= "grid-wrapper"] $ do
                         div_ ["className" $= "row row-align-center row-align-top"] $ do
-                            leftAside_ (rs ^. gsMarkPositions) (rs ^. gsCurrentSelection) (rs ^. gsHeaderHeight)
+                            leftAside_ (rs ^. gsMarkPositions) (rs ^. gsBubblesState ^. bsCurrentSelection) (rs ^. gsHeaderHeight)
                             article_ [ "id" $= "vdocValue"
                                      , "className" $= "gr-20 gr-14@desktop"
                                      , onMouseUp $ \_ me -> RS.dispatch . RS.SetSelection $ mouseClientY me

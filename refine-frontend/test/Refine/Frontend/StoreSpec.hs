@@ -16,6 +16,7 @@ import Test.QuickCheck.Instances ()
 import           React.Flux (transform)
 
 import Refine.Common.Types
+import Refine.Frontend.Bubbles.Types
 import Refine.Frontend.Types
 import Refine.Frontend.Store ()
 
@@ -25,7 +26,8 @@ instance Arbitrary (ID VDoc) where
 
 
 emptyGlobalState :: GlobalState
-emptyGlobalState = GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing)
+emptyGlobalState = let bubblesState = BubblesState (Nothing, Nothing) False (False, Nothing)
+  in GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop bubblesState
 
 spec :: Spec
 spec = do

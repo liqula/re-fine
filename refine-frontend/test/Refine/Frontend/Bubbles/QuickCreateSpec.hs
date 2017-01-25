@@ -2,7 +2,7 @@ module Refine.Frontend.Bubbles.QuickCreateSpec where
 
 import Test.Hspec
 
-import qualified Refine.Frontend.Types as RS
+import qualified Refine.Frontend.Bubbles.Types as RS
 import           Refine.Frontend.Bubbles.QuickCreate
 
 

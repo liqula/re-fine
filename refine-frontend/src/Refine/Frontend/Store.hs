@@ -20,9 +20,13 @@ import           Data.JSString (JSString, pack, unpack)
 
 import Refine.Common.Rest
 import Refine.Common.Types
+
+import Refine.Frontend.Bubbles.Store (bubblesStateUpdate)
+import Refine.Frontend.Bubbles.Types
 import Refine.Frontend.Rest
 import Refine.Frontend.Test.Samples
 import Refine.Frontend.Types
+
 
 
 toSize :: Int -> WindowSize
@@ -53,9 +57,7 @@ instance StoreData GlobalState where
               & gsHeaderHeight             %~ headerHeightUpdate action
               & gsMarkPositions            %~ markPositionsUpdate action
               & gsWindowSize               %~ windowSizeUpdate action
-              & gsCurrentSelection         %~ currentSelectionUpdate selectionAction
-              & gsCommentIsVisible         %~ commentIsVisibleUpdate action
-              & gsCommentEditorIsVisible   %~ commentEditorIsVisibleUpdate action
+              & gsBubblesState             %~ bubblesStateUpdate selectionAction
 
         consoleLog "New state: " newState
         return newState
@@ -88,27 +90,6 @@ windowSizeUpdate :: RefineAction -> WindowSize -> WindowSize
 windowSizeUpdate action state = case action of
     SetWindowSize newSize -> newSize
     _ -> state
-
-currentSelectionUpdate :: RefineAction -> Selection -> Selection
-currentSelectionUpdate action state = case action of
-    UpdateSelection newState -> newState
-    ClearSelection -> (Nothing, Nothing)
-    SubmitPatch    -> (Nothing, Nothing)
-    _ -> state
-
-commentIsVisibleUpdate :: RefineAction -> Bool -> Bool
-commentIsVisibleUpdate action state = case action of
-    ShowComment -> True
-    HideComment -> False
-    _ -> state
-
-commentEditorIsVisibleUpdate :: RefineAction -> (Bool, Maybe Range) -> (Bool, Maybe Range)
-commentEditorIsVisibleUpdate action state = case action of
-    ShowCommentEditor curSelection -> (True, curSelection)
-    HideCommentEditor -> (False, Nothing)
-    _ -> state
-
-
 
 emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()
 emitBackendCallsFor action state = case action of
@@ -161,7 +142,8 @@ handleError msg = do
             return []
 
 refineStore :: ReactStore GlobalState
-refineStore = mkStore $ GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop (Nothing, Nothing) False (False, Nothing)
+refineStore = let bubblesState = BubblesState (Nothing, Nothing) False (False, Nothing)
+  in mkStore $ GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop bubblesState
 
 dispatch :: RefineAction -> [SomeStoreAction]
 dispatch a = [SomeStoreAction refineStore a]

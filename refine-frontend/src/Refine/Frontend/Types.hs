@@ -7,7 +7,6 @@
 
 module Refine.Frontend.Types where
 
-import qualified Data.Aeson as AE
 import           Control.DeepSeq
 import           Control.Lens (makeLenses)
 import           Data.Text (Text)
@@ -20,6 +19,7 @@ import           Data.String.Conversions
 import Refine.Common.Types
 import Refine.Common.Rest
 
+import Refine.Frontend.Bubbles.Types
 
 newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map String Int }
   deriving (Eq, Show, Typeable, Generic, NFData)
@@ -35,38 +35,13 @@ data WindowSize = Desktop | Tablet | Mobile
 
 type DeviceOffset = Int
 
-data Range = Range
-    { _startPoint   :: Maybe ChunkPoint
-    , _endPoint     :: Maybe ChunkPoint
-    , _top          :: Int
-    , _bottom       :: Int
-    , _scrollOffset :: Int
-    }
-    deriving (Show, Generic, NFData, ToJSON)
-
-makeLenses ''Range
-
-
-instance AE.FromJSON Range where
-    parseJSON (AE.Object v) = Range <$>
-                             v AE..:? "start" <*>
-                             v AE..:? "end" <*>
-                             v AE..: "top" <*>
-                             v AE..: "bottom" <*>
-                             v AE..: "scrollOffset"
-    parseJSON _          = error "not an object... what can we do?" -- TODO empty
-
-type Selection = (Maybe Range, Maybe DeviceOffset)
-
 data GlobalState = GlobalState
   { _gsVDoc                   :: Maybe CompositeVDoc
   , _gsVDocList               :: Maybe [ID VDoc]
   , _gsHeaderHeight           :: Int
   , _gsMarkPositions          :: MarkPositions
   , _gsWindowSize             :: WindowSize
-  , _gsCurrentSelection       :: Selection
-  , _gsCommentIsVisible       :: Bool
-  , _gsCommentEditorIsVisible :: (Bool, Maybe Range)
+  , _gsBubblesState           :: BubblesState
   } deriving (Show, Typeable, Generic, NFData, ToJSON)
 
 makeLenses ''GlobalState
@@ -80,6 +55,7 @@ data RefineAction = LoadDocumentList
                   | AddMarkPosition String Int
                   | SetWindowSize WindowSize
                   | SetSelection DeviceOffset
+                  -- Bubble Actions:
                   | UpdateSelection Selection
                   | ClearSelection
                   | ShowComment
@@ -87,16 +63,9 @@ data RefineAction = LoadDocumentList
                   | ShowCommentEditor (Maybe Range)
                   | HideCommentEditor
                   | SubmitComment ST String (Maybe Range)
+                  -- ...
                   | AddComment Comment
                   | SubmitPatch
                   | SaveSelect Text Text
   deriving (Show, Typeable, Generic, NFData, ToJSON)
 
-
--- for Overlay:
-data CommentInputState = CommentInputState
-  { _commentInputStateText     :: ST
-  , _commentInputStateCategory :: String
-  } deriving (Show, Typeable, Generic, NFData)
-
-makeLenses ''CommentInputState

@@ -30,6 +30,7 @@ import           React.Flux
 
 import           Refine.Frontend.ThirdPartyViews (overlay_)
 import qualified Refine.Frontend.Types as RS
+import qualified Refine.Frontend.Bubbles.Types as RS
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
 import           Refine.Frontend.UtilityWidgets

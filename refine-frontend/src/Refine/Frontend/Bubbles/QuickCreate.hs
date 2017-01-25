@@ -28,6 +28,7 @@ import           Data.String (fromString)
 import           React.Flux
 
 import qualified Refine.Frontend.Types as RS
+import qualified Refine.Frontend.Bubbles.Types as RS
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.UtilityWidgets
 
