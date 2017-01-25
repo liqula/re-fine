@@ -45,7 +45,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                     div_ ["className" $= "c-mainmenu__bg"] "" -- "role" $= "navigation"
                     --header_ ["role" $= "banner"] $ do
                     menuButton_
-                    documentHeader_ . DocumentHeaderProps $ vdoc ^. compositeVDoc . vdocTitle
+                    documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
                     div_ ["className" $= "c-fulltoolbar"] $ do
                         sticky_ [] $ do
                             editToolbar_
