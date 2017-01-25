@@ -64,7 +64,7 @@ data RefineAction = LoadDocumentList
                   | SubmitComment ST String (Maybe Range)
                   -- ...
                   | AddComment Comment
-                  | SubmitPatch
+                  | SubmitEdit
                   | SaveSelect Text Text
                   -- Actions that will be transformed because they need IO:
                   | TriggerUpdateSelection DeviceOffset

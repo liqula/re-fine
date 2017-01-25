@@ -27,7 +27,7 @@ currentSelectionUpdate :: RefineAction -> Selection -> Selection
 currentSelectionUpdate action state = case action of
     UpdateSelection newState -> newState
     ClearSelection -> (Nothing, Nothing)
-    SubmitPatch    -> (Nothing, Nothing)
+    SubmitEdit     -> (Nothing, Nothing)
     _ -> state
 
 commentIsVisibleUpdate :: RefineAction -> Bool -> Bool

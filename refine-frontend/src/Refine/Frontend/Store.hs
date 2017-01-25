@@ -115,7 +115,7 @@ emitBackendCallsFor action state = case action of
         (Right comment) -> return . dispatch $ AddComment comment
 
 {- TODO submitting a patch does not work yet
-    SubmitPatch -> do
+    SubmitEdit -> do
         let vdocId = _metaKey . _vdocMeta . fromJust $ _vdoc state
         let patchId = _vdocHead . fromJust $ _vdoc state
         let vdocChunk = VDocChunk "<p><strong>This is my new and obviously much, much better text :-)</strong></p>"

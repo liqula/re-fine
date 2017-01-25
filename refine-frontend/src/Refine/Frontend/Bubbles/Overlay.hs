@@ -66,7 +66,7 @@ showComment = defineView "ShowComment" $ \showOverlay ->
         div_ ["className" $= "c-vdoc-overlay-content__copy"]
             "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
 
-        -- patch/comment/etc. user meta data -->
+        -- edit/comment user meta data -->
         div_ ["className" $= "c-vdoc-overlay-meta"] $ do
             span_ ["className" $= "c-vdoc-overlay-meta__user-avatar"] $ do
                 icon_ (IconProps "c-vdoc-overlay-meta" False ("icon-User", "bright") M)
@@ -76,7 +76,7 @@ showComment = defineView "ShowComment" $ \showOverlay ->
                 -}
             span_ ["className" $= "c-vdoc-overlay-meta__user"] "meisterkaiser"
             span_ ["className" $= "c-vdoc-overlay-meta__date"] "24. 05. 2016"
-        -- END: patch/comment/etc. user meta data -->
+        -- END: edit/comment user meta data -->
 
         -- vote buttons -->
         div_ ["className" $= "c-vdoc-overlay-votes"] $ do
