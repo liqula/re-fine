@@ -5,6 +5,7 @@ module Refine.Frontend.UtilityWidgets where
 
 import           Control.Lens (makeLenses, (^.), _1, _2)
 import           Data.Char (toLower)
+import           Data.List (intercalate)
 import           Data.Monoid ((<>))
 import           Data.String (fromString)
 import           GHCJS.Types (JSString)
@@ -135,3 +136,10 @@ positionedIconButton = defineView "IconButton" $ \(props, position_) ->
 
 positionedIconButton_ :: IconButtonProps -> Int -> ReactElementM eventHandler ()
 positionedIconButton_ props position_ = view positionedIconButton (props, position_) mempty
+
+
+toClasses :: [String] -> String
+toClasses strings = intercalate " " $ compact strings
+  where
+    compact :: [String] -> [String]
+    compact = filter (\x -> length x > 0)
