@@ -115,7 +115,7 @@ data SnippetProps = SnippetProps
   { _dataHunkId2 :: String
   , _dataContentType2 :: String
   , _iconSide :: String
-  , _iconStyle :: String
+  , _iconStyle :: IconDescription
   , _markPosition :: Maybe Int
   }
 
@@ -132,7 +132,7 @@ snippet = defineView "snippet" $ \props ->
                     , "style" @= [Style "top" pos]
                     ] $ do
                     div_ ["className" $= fromString ("o-snippet__icon-bg o-snippet__icon-bg--" <> _iconSide props)] $ do
-                        iconCore_ (fromString ("o-snippet__icon icon-" <> _iconStyle props <> " iconsize-m"))
+                        icon_ (IconProps "o-snippet" False (_iconStyle props) M)
                     div_ ["className" $= "o-snippet__content"] childrenPassedToView
 
 snippet_ :: SnippetProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
@@ -141,21 +141,21 @@ snippet_ = view snippet
 
 discussionSnippet :: ReactView (String, RS.MarkPositions)
 discussionSnippet = defineView "DiscussionSnippet" $ \(dataHunkId, RS.MarkPositions markPositions) ->
-    snippet_ (SnippetProps dataHunkId "discussion" "left" "Discussion_bright" (M.lookup dataHunkId markPositions)) childrenPassedToView
+    snippet_ (SnippetProps dataHunkId "discussion" "left" ("icon-Discussion", "bright") (M.lookup dataHunkId markPositions)) childrenPassedToView
 
 discussionSnippet_ :: String -> RS.MarkPositions -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 discussionSnippet_ dataHunkId markPositions = view discussionSnippet (dataHunkId, markPositions)
 
 questionSnippet :: ReactView (String, RS.MarkPositions)
 questionSnippet = defineView "QuestionSnippet" $ \(dataHunkId, RS.MarkPositions markPositions) ->
-    snippet_ (SnippetProps dataHunkId "question" "left" "Question_dark" (M.lookup dataHunkId markPositions)) childrenPassedToView
+    snippet_ (SnippetProps dataHunkId "question" "left" ("icon-Question", "dark") (M.lookup dataHunkId markPositions)) childrenPassedToView
 
 questionSnippet_ :: String -> RS.MarkPositions -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 questionSnippet_ dataHunkId markPositions = view questionSnippet (dataHunkId, markPositions)
 
 editSnippet :: ReactView (String, RS.MarkPositions)
 editSnippet = defineView "EditSnippet" $ \(dataHunkId, RS.MarkPositions markPositions) ->
-    snippet_ (SnippetProps dataHunkId "edit" "right" "Edit_dark" (M.lookup dataHunkId markPositions)) childrenPassedToView
+    snippet_ (SnippetProps dataHunkId "edit" "right" ("icon-Edit", "dark") (M.lookup dataHunkId markPositions)) childrenPassedToView
 
 editSnippet_ :: String -> RS.MarkPositions -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 editSnippet_ dataHunkId markPositions = view editSnippet (dataHunkId, markPositions)

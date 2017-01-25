@@ -21,10 +21,12 @@ data IconSize
     | XXL
     deriving Show
 
+type IconDescription = (String, String)
+
 data IconProps = IconProps
   { _blockName     :: String
   , _iconHighlight :: Bool
-  , _iconDesc      :: (String, String)
+  , _iconDesc      :: IconDescription
   , _size          :: IconSize
 
   }
