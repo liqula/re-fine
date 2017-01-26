@@ -126,6 +126,10 @@ addPatchUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddP
 addNoteUri :: ID Patch -> SBS
 addNoteUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddNote)
 
+addDiscussionUri :: ID Patch -> SBS
+addDiscussionUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddDiscussion)
+
+
 -- * test cases
 
 spec :: Spec
@@ -163,7 +167,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       fe `shouldBe` be
 
   describe "sAddNote" $ do
-    it "stores comment with no ranges" $ \sess -> do
+    it "stores note with no ranges" $ \sess -> do
       fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
       fn :: Note          <- runWaiBody sess $
         postJSON
@@ -171,6 +175,20 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
           (CreateNote "[note]" True (CreateChunkRange Nothing Nothing))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       be ^. compositeVDocNotes `shouldContain` [fn]
+
+  describe "sAddDiscussion" $ do
+    it "stores discussion with no ranges" $ \sess -> do
+      fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
+      fn :: CompositeDiscussion <- runWaiBody sess $
+        postJSON
+          (addDiscussionUri (fe ^. compositeVDocRepo . vdocHeadPatch))
+          (CreateDiscussion "[discussion initial statement]" True (CreateChunkRange Nothing Nothing))
+      be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
+      be ^. compositeVDocDiscussions `shouldContain` [fn]
+
+  describe "sAddStatement" $ do
+    it "stores statement for given discussion" $ \_sess -> do
+      pendingWith "this test case shouldn't be too hard to write, and should be working already."
 
   describe "sAddPatch" $ do
     let setup sess = do
