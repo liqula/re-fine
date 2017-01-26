@@ -80,8 +80,9 @@ data Answer = Answer
   deriving (Eq, Ord, Show, Read, Generic)
 
 data CreateDiscussion = CreateDiscussion
-  { _createDiscussionPublic :: Bool
-  , _createDiscussionRange  :: CreateChunkRange
+  { _createDiscussionStatementText :: CommentText
+  , _createDiscussionPublic        :: Bool
+  , _createDiscussionRange         :: CreateChunkRange
   }
   deriving (Eq, Ord, Show, Read, Generic)
 

@@ -107,5 +107,4 @@ instance Database DB where
 
   -- * Statement
   createStatement      = Entity.createStatement
-  createReplyStatement = Entity.createReplyStatement
   getStatement         = Entity.getStatement

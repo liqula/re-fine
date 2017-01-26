@@ -22,6 +22,8 @@
 
 module Refine.Backend.App.Comment where
 
+import Control.Lens ((^.))
+
 import Refine.Common.Types.Comment
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc
@@ -50,14 +52,11 @@ addAnswer qid answer = do
 addDiscussion :: ID Patch -> Create Discussion -> App DB CompositeDiscussion
 addDiscussion pid discussion = do
   appLog "addDiscussion"
-  CompositeDiscussion <$> db (DB.createDiscussion pid discussion) <@> []
+  db $ do
+    dscn <- DB.createDiscussion pid discussion
+    DB.compositeDiscussion (dscn ^. discussionID)
 
-addStatement :: ID Discussion -> Create Statement -> App DB Statement
-addStatement did statement = do
+addStatement :: ID Statement -> Create Statement -> App DB Statement
+addStatement sid statement = do
   appLog "addStatement"
-  db $ DB.createStatement did statement
-
-addReplyStatement :: ID Statement -> Create Statement -> App DB Statement
-addReplyStatement sid statement = do
-  appLog "addReplyStatement"
-  db $ DB.createReplyStatement sid statement
+  db $ DB.createStatement sid statement

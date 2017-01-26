@@ -104,7 +104,6 @@ refineApi =
   :<|> Refine.Backend.App.addAnswer
   :<|> Refine.Backend.App.addDiscussion
   :<|> Refine.Backend.App.addStatement
-  :<|> Refine.Backend.App.addReplyStatement
 
 maybeServeDirectory :: Maybe FilePath -> Server Raw
 maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) serveDirectory

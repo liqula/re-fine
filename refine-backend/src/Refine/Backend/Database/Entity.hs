@@ -278,14 +278,25 @@ getQuestion qid = S.questionElim (toQuestion qid) <$> getEntity qid
 toDiscussion :: ID Discussion -> Bool -> DBChunkRange -> Discussion
 toDiscussion did pblc range = Discussion did pblc (toChunkRange range did)
 
+saveStatement :: ID Discussion -> S.Statement -> SQLM Statement
+saveStatement did sstatement = do
+  key <- insert sstatement
+  void . insert $ S.DS (S.idToKey did) key
+  pure $ S.statementElim (toStatement (S.keyToId key)) sstatement
+
 createDiscussion :: ID Patch -> Create Discussion -> DB Discussion
 createDiscussion pid disc = liftDB $ do
   let sdiscussion = S.Discussion
         (disc ^. createDiscussionPublic)
         (disc ^. createDiscussionRange . to mkDBChunkRange)
   key <- insert sdiscussion
+  let did = S.keyToId key
   void . insert $ S.PD (S.idToKey pid) key
-  pure $ S.discussionElim (toDiscussion (S.keyToId key)) sdiscussion
+  let sstatement = S.Statement
+        (disc ^. createDiscussionStatementText)
+        Nothing -- Top level node
+  void $ saveStatement did sstatement
+  pure $ S.discussionElim (toDiscussion did) sdiscussion
 
 getDiscussion :: ID Discussion -> DB Discussion
 getDiscussion did = S.discussionElim (toDiscussion did) <$> getEntity did
@@ -321,21 +332,8 @@ answersOfQuestion qid = liftDB $ do
 toStatement :: ID Statement -> ST -> Maybe (Key S.Statement) -> Statement
 toStatement sid text parent = Statement sid text (S.keyToId <$> parent)
 
-saveStatement :: ID Discussion -> S.Statement -> SQLM Statement
-saveStatement did sstatement = do
-  key <- insert sstatement
-  void . insert $ S.DS (S.idToKey did) key
-  pure $ S.statementElim (toStatement (S.keyToId key)) sstatement
-
-createStatement :: ID Discussion -> Create Statement -> DB Statement
-createStatement did statement = liftDB $ do
-  let sstatement = S.Statement
-        (statement ^. createStatementText)
-        Nothing -- Top level node
-  saveStatement did sstatement
-
-createReplyStatement :: ID Statement  -> Create Statement -> DB Statement
-createReplyStatement sid statement = do
+createStatement :: ID Statement  -> Create Statement -> DB Statement
+createStatement sid statement = do
   ds  <- liftDB $ foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] []
   did <- unique ds
   liftDB $ do

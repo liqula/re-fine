@@ -52,8 +52,7 @@ class Database db where
   statementsOfDiscussion :: ID Discussion -> db [ID Statement]
 
   -- * Statement
-  createStatement      :: ID Discussion -> Create Statement -> db Statement
-  createReplyStatement :: ID Statement  -> Create Statement -> db Statement
+  createStatement      :: ID Statement -> Create Statement -> db Statement
   getStatement         :: ID Statement  -> db Statement
 
 

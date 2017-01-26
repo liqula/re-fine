@@ -37,8 +37,7 @@ type RefineAPI =
   :<|> SAddQuestion
   :<|> SAddAnswer
   :<|> SAddDiscussion
-  :<|> SAddStatemment
-  :<|> SAddReplyStatement
+  :<|> SAddStatement
 
 
 type SListVDocs
@@ -73,11 +72,7 @@ type SAddDiscussion
   = "r" :> "discussion" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Discussion)
     :> Post '[JSON] CompositeDiscussion
 
-type SAddStatemment
-  = "r" :> "statement" :> Capture "ondiscussionid" (ID Discussion) :> ReqBody '[JSON] (Create Statement)
-    :> Post '[JSON] Statement
-
-type SAddReplyStatement
+type SAddStatement
   = "r" :> "statement" :> "reply" :> Capture "onstatementid" (ID Statement) :> ReqBody '[JSON] (Create Statement)
     :> Post '[JSON] Statement
 
