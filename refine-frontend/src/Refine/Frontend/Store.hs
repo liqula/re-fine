@@ -70,7 +70,7 @@ vdocUpdate action state = case action of
     AddDiscussion discussion      -> case state of
         Nothing   -> Nothing -- no vdoc: we cannot put the comment anywhere
                              -- FIXME: i think this should be an error. ~fisx
-        Just vdoc -> Just $ vdoc { _compositeVDocComments = discussion : vdoc ^. compositeVDocComments }
+        Just vdoc -> Just $ vdoc & compositeVDocComments %~ (RT.CommentDiscussion discussion :)
     _ -> state
 
 vdocListUpdate :: RefineAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
@@ -112,7 +112,12 @@ emitBackendCallsFor action state = case action of
     SubmitComment text kind forRange -> do
       -- here we need to distinguish which comment kind we want to submit
       -- check the state and what the user selected there
-        Just Discussion -> error "SubmitComment Discussion is not defined." -- TODO
+      case kind of
+        Just Discussion ->
+          addDiscussion (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. RT.vdocHeadPatch)
+                     (RT.CreateDiscussion text True (createChunkRange forRange)) $ \case
+            (Left(_, msg)) -> handleError msg
+            (Right discussion) -> return . dispatch $ AddDiscussion discussion
         Just Note ->
           addNote (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. RT.vdocHeadPatch)
                      (RT.CreateNote text True (createChunkRange forRange)) $ \case

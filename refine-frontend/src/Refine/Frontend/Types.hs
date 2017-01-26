@@ -65,7 +65,7 @@ data RefineAction = LoadDocumentList
                   | SetCommentCategory CommentCategory
                   | SubmitComment ST (Maybe CommentCategory) (Maybe Range)
                   -- ...
-                  | AddDiscussion Comment
+                  | AddDiscussion CompositeDiscussion
                   | AddNote Note
                   | SubmitEdit
                   | SaveSelect Text Text
