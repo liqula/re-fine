@@ -2,9 +2,9 @@ resolver: lts-7.1
 
 packages:
 - '.'
-- location: '../refine-common'
+- location: '../common'
   extra-dep: false  # run the test suite for this package
-- location: '../refine-prelude'
+- location: '../prelude'
   extra-dep: false  # run the test suite for this package
 - location:
     git: https://github.com/andorp/lentil.git

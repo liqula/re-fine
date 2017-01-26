@@ -4,9 +4,9 @@ compiler-check: match-exact
 
 packages:
 - '.'
-- location: '../refine-common'
+- location: '../common'
   extra-dep: true
-- location: '../refine-prelude'
+- location: '../prelude'
   extra-dep: true
 - location:
     git: https://github.com/andorp/elim.git

@@ -2,7 +2,7 @@ resolver: lts-7.1
 
 packages:
 - '.'
-- location: '../refine-prelude'
+- location: '../prelude'
   extra-dep: true
 - location:
     git: https://github.com/andorp/elim.git
