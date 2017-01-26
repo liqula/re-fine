@@ -72,4 +72,4 @@ type SAddDiscussion
 
 type SAddStatement
   = "r" :> "statement" :> "reply" :> Capture "onstatementid" (ID Statement) :> ReqBody '[JSON] (Create Statement)
-    :> Post '[JSON] Statement
+    :> Post '[JSON] CompositeDiscussion

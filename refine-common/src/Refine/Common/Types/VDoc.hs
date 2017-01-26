@@ -131,11 +131,13 @@ makePrisms ''VDocVersion
 --
 -- - if we try to consider comments, patches, ... on other versions than head, we are in trouble.
 data CompositeVDoc = CompositeVDoc
-  { _compositeVDoc         :: VDoc
-  , _compositeVDocRepo     :: VDocRepo
-  , _compositeVDocVersion  :: VDocVersion 'HTMLWithMarks
-  , _compositeVDocPatches  :: [Patch]
-  , _compositeVDocComments :: [Comment]
+  { _compositeVDoc            :: VDoc
+  , _compositeVDocRepo        :: VDocRepo
+  , _compositeVDocVersion     :: VDocVersion 'HTMLWithMarks
+  , _compositeVDocPatches     :: [Patch]
+  , _compositeVDocNotes       :: [Note]
+  -- , _compositeVDocQuestions   :: [Question]  -- will be due in #99
+  , _compositeVDocDiscussions :: [CompositeDiscussion]
   }
   deriving (Eq, Show, Read, Generic)
 

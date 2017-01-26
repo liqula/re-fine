@@ -104,6 +104,7 @@ instance Database DB where
   createDiscussion   = Entity.createDiscussion
   getDiscussion      = Entity.getDiscussion
   statementsOfDiscussion = Entity.statementsOfDiscussion
+  getDiscussionIDFromStatement = Entity.getDiscussionIDFromStatement
 
   -- * Statement
   createStatement      = Entity.createStatement

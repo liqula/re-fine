@@ -23,9 +23,10 @@
 
 module Refine.Backend.App.VDoc where
 
-import Control.Lens ((^.), to, view)
+import Control.Lens ((^.), (^?), to, view, has)
 import Control.Monad ((<=<), join, mapM)
 import Data.Monoid ((<>))
+import Data.Maybe (catMaybes)
 
 import           Refine.Backend.App.Core
 import           Refine.Backend.Database (DB)
@@ -76,8 +77,9 @@ getCompositeVDoc vid = do
     let headid = repo ^. vdocHeadPatch
     hhandle  <- DB.getPatchHandle headid
     comments <- DB.patchComments headid
-
-    let chunkRangesCN = commentChunkRange <$> comments
+    let commentNotes       = catMaybes $ (^? _CommentNote)       <$> filter (has _CommentNote)       comments
+        commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
+        chunkRangesCN = commentChunkRange <$> comments
 
     pure $ do
       hpatches <- docRepo $ DocRepo.getChildPatches rhandle hhandle
@@ -85,7 +87,7 @@ getCompositeVDoc vid = do
       let chunkRanges = chunkRangesCN <> (view (patchRange . to clearTP) <$> patches)
       version <- monadError AppVDocError
                  =<< insertMarks chunkRanges <$> docRepo (DocRepo.getVersion rhandle hhandle)
-      pure $ CompositeVDoc vdoc repo version patches comments
+      pure $ CompositeVDoc vdoc repo version patches commentNotes commentDiscussions
 
   where
     commentChunkRange :: Comment -> ChunkRange Void

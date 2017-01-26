@@ -170,7 +170,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
           (addNoteUri (fe ^. compositeVDocRepo . vdocHeadPatch))
           (CreateNote "[note]" True (CreateChunkRange Nothing Nothing))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
-      be ^. compositeVDocComments `shouldContain` [CommentNote fn]
+      be ^. compositeVDocNotes `shouldContain` [fn]
 
   describe "sAddPatch" $ do
     let setup sess = do

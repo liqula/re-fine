@@ -56,7 +56,9 @@ addDiscussion pid discussion = do
     dscn <- DB.createDiscussion pid discussion
     DB.compositeDiscussion (dscn ^. discussionID)
 
-addStatement :: ID Statement -> Create Statement -> App DB Statement
+addStatement :: ID Statement -> Create Statement -> App DB CompositeDiscussion
 addStatement sid statement = do
   appLog "addStatement"
-  db $ DB.createStatement sid statement
+  db $ do
+    _ <- DB.createStatement sid statement
+    DB.compositeDiscussion =<< DB.getDiscussionIDFromStatement sid
