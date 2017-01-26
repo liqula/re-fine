@@ -118,19 +118,19 @@ data SnippetProps = SnippetProps
   , _markPosition :: Maybe Int
   }
 
-snippet :: ReactView SnippetProps
+snippet :: ReactView SnippetProps  -- RENAME: bubble, bubble_, BubbleProps, ...
 snippet = defineView "snippet" $ \props ->
         case _markPosition props of
             Nothing -> div_ ""
             Just pos ->
                 div_ ["data-hunk-id" $= fromString (_dataHunkId2 props)
                     , "data-content-type" $= fromString (_dataContentType2 props)
-                    , "className" $= fromString ("o-snippet o-snippet--" <> _dataContentType2 props)
+                    , "className" $= fromString ("o-snippet o-snippet--" <> _dataContentType2 props)  -- RENAME: snippet => bubble
                     , "style" @= [Style "top" pos]
                     ] $ do
-                    div_ ["className" $= fromString ("o-snippet__icon-bg o-snippet__icon-bg--" <> _iconSide props)] $ do
-                        icon_ (IconProps "o-snippet" False (_iconStyle props) M)
-                    div_ ["className" $= "o-snippet__content"] childrenPassedToView
+                    div_ ["className" $= fromString ("o-snippet__icon-bg o-snippet__icon-bg--" <> _iconSide props)] $ do  -- RENAME: snippet => bubble
+                        icon_ (IconProps "o-snippet" False (_iconStyle props) M)  -- RENAME: snippet => bubble
+                    div_ ["className" $= "o-snippet__content"] childrenPassedToView  -- RENAME: snippet => bubble
 
 snippet_ :: SnippetProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 snippet_ = view snippet
