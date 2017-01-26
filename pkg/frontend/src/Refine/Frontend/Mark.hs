@@ -18,7 +18,6 @@ import qualified Text.HTML.Parser as HTMLP
 import           Text.Read (readMaybe)
 
 import           Refine.Common.Types
-import           Refine.Common.Rest
 
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
@@ -41,7 +40,7 @@ toMarkProps attrs vdoc = let maybeChunkId = Text.Read.readMaybe . cs $ chunkIdIn
     -- TODO better annotate the mark tokens with the kind ?!
     kindOf chunkId =
       let isNote = find (\(Note (ID noteId) _ _ _) -> noteId == chunkId) (vdoc ^. compositeVDocNotes)
-          isDiscussion = find (\(Comment (ID discId) _ _ _) -> discId == chunkId) (vdoc ^. compositeVDocComments)
+          isDiscussion = find (\(CompositeDiscussion (Discussion (ID discId) _ _) _) -> discId == chunkId) (vdoc ^. compositeVDocDiscussions)
       in if isJust isNote then "note" else if isJust isDiscussion then "discussion" else ""
 
 

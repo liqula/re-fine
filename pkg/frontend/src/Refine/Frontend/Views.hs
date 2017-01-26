@@ -64,7 +64,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                                            (rs ^. gsMarkPositions)
                                            (rs ^. gsBubblesState ^. bsCurrentSelection)
                                            (rs ^. gsHeaderHeight)
-                                           (vdoc ^. compositeVDocComments)
+                                           (vdoc ^. compositeVDocDiscussions)
                                            (vdoc ^. compositeVDocNotes)
                             article_ [ "id" $= "vdocValue"
                                      , "className" $= "gr-20 gr-14@desktop"
@@ -177,7 +177,7 @@ data LeftAsideProps = LeftAsideProps
   { _leftAsideMarkPositions :: RS.MarkPositions
   , _leftAsideCurrentSelection :: Selection
   , _leftAsideHeaderHeight :: Int
-  , _leftAsideDiscussions :: [Comment]
+  , _leftAsideDiscussions :: [CompositeDiscussion]
   , _leftAsideNotes :: [Note]
   }
 
@@ -186,9 +186,10 @@ leftAside = defineView "LeftAside" $ \props ->
     aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do
         let lookupPosition = \chunkId -> M.lookup chunkId . _unMarkPositions $ _leftAsideMarkPositions props
         -- TODO the map should use proper IDs as keys
-        mconcat $ map (\d -> discussionBubble_ (_unID (_commentID d)) (lookupPosition (_unID (_commentID d))) (elemText (_commentText d))) (_leftAsideDiscussions props)
-
-        -- ?? mconcat $ (discussonBubble_ <$> _commentID <*> (lookup . _commentID) <*> (elemText . _commentText)) (_leftAsideDiscussions props)
+        mconcat $ map (\d -> discussionBubble_ (d ^. compositeDiscussion ^. discussionID ^. unID)
+                                               (lookupPosition (d ^. compositeDiscussion ^. discussionID ^. unID))
+                                               (elemText (head (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
+                      (_leftAsideDiscussions props)
 
         noteBubble_ 1 (_leftAsideMarkPositions props) $ do
             span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
