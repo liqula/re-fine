@@ -1,7 +1,7 @@
 /.build
 /.shake
 .stack-work
-/pkg/prelude/pkg/prelude.cabal
-/pkg/common/pkg/common.cabal
-/pkg/backend/pkg/backend.cabal
+/pkg/prelude/prelude.cabal
+/pkg/common/common.cabal
+/pkg/backend/backend.cabal
 /pkg/backend/refine.db
