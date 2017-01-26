@@ -7,5 +7,7 @@ window.StickyContainer = require("react-sticky").StickyContainer;
 
 window.Overlay = require("react-skylight").SkyLightStateless;
 
+window.Hammer = require("react-hammerjs");
+
 require("./../scss/main.scss");
 

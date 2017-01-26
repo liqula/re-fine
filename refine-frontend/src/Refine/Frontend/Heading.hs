@@ -91,7 +91,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       ""
                       "index"
-                      (\_ _ -> [])
+                      (\_ -> [])
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
@@ -101,7 +101,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       "annotation"
                       "new annotation"
-                      (\_ _ -> [])
+                      (\_ -> [])
 
           iconButton_ $ IconButtonProps
                       (IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXL)
@@ -109,7 +109,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       "modification"
                       "new modification"
-                      (\_ _ -> [])
+                      (\_ -> [])
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
@@ -120,7 +120,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       ""
                       "all annotations"
-                      (\_ _ -> [])
+                      (\_ -> [])
 
           iconButton_ $ IconButtonProps
                       -- (IconProps "c-vdoc-toolbar" False ("icon-Edit", "dark") XXL)
@@ -129,7 +129,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       ""
                       "all modifications"
-                      (\_ _ -> [])
+                      (\_ -> [])
 
           iconButtonWithAlignment_ $ IconButtonWithAlignmentProps (IconButtonProps
                                     (IconProps "c-vdoc-toolbar" True ("icon-Reader", "bright") XXL)
@@ -137,7 +137,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                                     ""
                                     "" -- data-content-type is not set for this one...
                                     "read mode"
-                                    (\_ _ -> []))
+                                    (\_ -> []))
                                     True
                                     Nothing
 
@@ -157,14 +157,14 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
                         ""
                         "annotation"
                         "document annotation"
-                        (\_ _ -> [])
+                        (\_ -> [])
             iconButton_ $ IconButtonProps
                         (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
                         "btn-new-ann-text"
                         ""
                         "annotation"
                         "annotation related to text"
-                        (\_ _ -> [])
+                        (\_ -> [])
 
         div_ ["className" $= "c-vdoc-toolbar-extension__modification"] $ do
             iconButton_ $ IconButtonProps
@@ -173,7 +173,7 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
                         ""
                         "annotation"
                         "new modification"
-                        (\_ _ -> [])
+                        (\_ -> [])
 
 
 editToolbarExtension_ :: ReactElementM eventHandler ()

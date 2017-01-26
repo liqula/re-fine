@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Refine.Frontend.ThirdPartyViews
-  ( overlay_
+  ( hammer_
+  , overlay_
   , sticky_
   , stickyContainer_
   ) where
@@ -17,3 +18,6 @@ stickyContainer_ = foreign_ "StickyContainer"
 
 overlay_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 overlay_ = foreign_ "Overlay" -- SkyLightStateless from react-skylight
+
+hammer_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+hammer_ = foreign_ "Hammer"
