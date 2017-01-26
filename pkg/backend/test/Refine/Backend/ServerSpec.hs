@@ -200,14 +200,14 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
           pure (fe, fp)
 
     context "on edit without ranges" $ do
-      it "stores a edit and returns its version" $ \sess -> do
+      it "stores an edit and returns its version" $ \sess -> do
         (_, fp) <- setup sess
         be' :: VDocVersion 'HTMLCanonical <- runDB sess $ do
               handles <- db $ DB.handlesForEdit (fp ^. editID)
               docRepo $ uncurry DocRepo.getVersion handles
         be' `shouldBe` VDocVersion "<span data-uid=\"1\">[new\nvdoc\nversion]</span>"
 
-      it "stores a edit and returns it in the list of edits applicable to its base" $ \sess -> do
+      it "stores an edit and returns it in the list of edits applicable to its base" $ \sess -> do
         pendingWith "applicableEdits is not implemented."
         (fe, fp) <- setup sess
         be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)

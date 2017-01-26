@@ -127,7 +127,7 @@ emitBackendCallsFor action state = case action of
             (Right note) -> return . dispatch $ AddNote note
         Nothing -> return ()
 
-{- TODO submitting a edit does not work yet
+{- TODO submitting an edit does not work yet
     SubmitEdit -> do
         let vdocId = _metaKey . _vdocMeta . fromJust $ _vdoc state
         let editId = _vdocHead . fromJust $ _vdoc state
