@@ -73,6 +73,6 @@ quickCreateSelectionPos range deviceOffset =
         edgePosition = if closerToTop then 0 else selectionHeight - 44
     in if useIdealCenter then idealCenter else edgePosition
 
--- "annotation", "modification"
+-- "annotation" (RENAME: Comment), "modification" (RENAME: Edit)
 quickCreate_ :: String -> (Maybe RS.Range, Maybe RS.DeviceOffset) -> Int -> ReactElementM eventHandler ()
 quickCreate_ createType currentSelection headerHeight = view quickCreate (createType, currentSelection, headerHeight) mempty

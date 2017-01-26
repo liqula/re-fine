@@ -105,10 +105,10 @@ editToolbar = defineView "EditToolbar" $ \() ->
 
           iconButton_ $ IconButtonProps
                       (IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXL)
-                      "btn-add-modification"
+                      "btn-add-modification"  -- (RENAME: Edit)
                       ""
-                      "modification"
-                      "new modification"
+                      "modification"  -- (RENAME: Edit)
+                      "new modification"  -- (RENAME: Edit)
                       (\_ -> [])
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
@@ -125,10 +125,10 @@ editToolbar = defineView "EditToolbar" $ \() ->
           iconButton_ $ IconButtonProps
                       -- (IconProps "c-vdoc-toolbar" False ("icon-Edit", "dark") XXL)
                       (IconProps "c-vdoc-toolbar" True ("icon-Edit_view", "dark") XXL)
-                      "all-modifications"
+                      "all-modifications"  -- (RENAME: Edit)
                       ""
                       ""
-                      "all modifications"
+                      "all modifications"  -- (RENAME: Edit)
                       (\_ -> [])
 
           iconButtonWithAlignment_ $ IconButtonWithAlignmentProps (IconButtonProps
@@ -166,13 +166,13 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
                         "annotation related to text"
                         (\_ -> [])
 
-        div_ ["className" $= "c-vdoc-toolbar-extension__modification"] $ do
+        div_ ["className" $= "c-vdoc-toolbar-extension__modification"] $ do  -- (RENAME: Edit)
             iconButton_ $ IconButtonProps
                         (IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") L)
                         "btn-new-mod-text"
                         ""
                         "annotation"
-                        "new modification"
+                        "new modification"  -- (RENAME: Edit)
                         (\_ -> [])
 
 
