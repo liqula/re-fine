@@ -71,7 +71,12 @@ vdocUpdate action state = case action of
         Nothing   -> Nothing -- no vdoc: we cannot put the comment anywhere
                              -- FIXME: i think this should be an error. ~fisx
         Just vdoc -> Just $ vdoc & RT.compositeVDocDiscussions %~ (discussion :)
-                            -- TODO: BUG!  this adds a new version of a discussion without removing the old one!
+                            -- TODO: Will become a BUG!  this adds a new version of a discussion without removing the old one!
+    AddNote note      -> case state of
+        Nothing   -> Nothing -- no vdoc: we cannot put the note anywhere
+                             -- FIXME: i think this should be an error. ~fisx
+        Just vdoc -> Just $ vdoc & RT.compositeVDocNotes %~ (note :)
+                            -- TODO: Will become a BUG!  this adds a new version of a note without removing the old one!
     _ -> state
 
 vdocListUpdate :: RefineAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
