@@ -9,6 +9,7 @@ module Refine.Frontend.Types where
 
 import           Control.DeepSeq
 import           Control.Lens (makeLenses)
+import           Data.Int
 import           Data.Text (Text)
 import           Data.Typeable (Typeable)
 import qualified Data.Map.Strict as M
@@ -20,7 +21,7 @@ import Refine.Common.Types
 
 import Refine.Frontend.Bubbles.Types
 
-newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map String Int }
+newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map Int64 Int }
   deriving (Eq, Show, Typeable, Generic, NFData)
 
 mapToValue :: (ToJSON k, ToJSON v) => M.Map k v -> Value
@@ -52,7 +53,7 @@ data RefineAction = LoadDocumentList
                   | OpenDocument CompositeVDoc
                   | AddDemoDocument
                   | AddHeaderHeight Int
-                  | AddMarkPosition String Int
+                  | AddMarkPosition Int64 Int
                   | SetWindowSize WindowSize
                   -- Bubble Actions:
                   | UpdateSelection Selection
