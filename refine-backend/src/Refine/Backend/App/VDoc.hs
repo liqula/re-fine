@@ -31,7 +31,6 @@ import           Refine.Backend.App.Core
 import           Refine.Backend.Database (DB)
 import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
-import           Refine.Common.Rest (CompositeVDoc(..))
 import           Refine.Common.Types.Chunk
 import           Refine.Common.Types.Comment
 import           Refine.Common.Types.Prelude

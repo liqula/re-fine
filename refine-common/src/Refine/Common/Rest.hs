@@ -21,10 +21,8 @@
 module Refine.Common.Rest where
 
 import Servant.API hiding (Patch)
-import GHC.Generics (Generic)
 
 import Refine.Common.Types
-import Refine.Prelude.TH
 
 
 -- | The 'S' prefix in the handlers stands for "server" (see 'refineApi' for an explanation).
@@ -75,25 +73,3 @@ type SAddDiscussion
 type SAddStatement
   = "r" :> "statement" :> "reply" :> Capture "onstatementid" (ID Statement) :> ReqBody '[JSON] (Create Statement)
     :> Post '[JSON] Statement
-
--- | Packaged vdoc ready for use by client.
---
--- - morally we have three phases in working on a document: (1) add comments and patches, (2) merge a
---   bunch of patches and (3) create a new version.
---
--- - what follows from this:
---     - there are no patches on patches that we need to display
---     - it's ok to only display patches on head, not on any other version
---     - same for comments: comments collect on head, then then are discarded in (2), (3).
---
--- - if we try to consider comments, patches, ... on other versions than head, we are in trouble.
-data CompositeVDoc = CompositeVDoc
-  { _compositeVDoc         :: VDoc
-  , _compositeVDocRepo     :: VDocRepo
-  , _compositeVDocVersion  :: VDocVersion 'HTMLWithMarks
-  , _compositeVDocPatches  :: [Patch]
-  , _compositeVDocComments :: [Comment]
-  }
-  deriving (Eq, Show, Read, Generic)
-
-makeRefineType ''CompositeVDoc

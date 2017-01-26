@@ -17,7 +17,6 @@ import           Data.Aeson (ToJSON, encode, toJSON, Value, (.=), object)
 import           Data.String.Conversions
 
 import Refine.Common.Types
-import Refine.Common.Rest
 
 import Refine.Frontend.Bubbles.Types
 
