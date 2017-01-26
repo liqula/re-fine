@@ -39,12 +39,12 @@ import qualified Refine.Backend.DocRepo.Core as DocRepo
 import           Refine.Common.Types
 
 -- FIXME: Generate this as the part of the lentil library.
-type instance S.EntityRep VDoc     = S.VDoc
-type instance S.EntityRep Patch    = S.Patch
-type instance S.EntityRep VDocRepo = S.Repo
-type instance S.EntityRep Note     = S.Note
-type instance S.EntityRep Question = S.Question
-type instance S.EntityRep Discussion = S.Discussion -- TODO: Align
+type instance S.EntityRep VDoc       = S.VDoc
+type instance S.EntityRep Patch      = S.Patch
+type instance S.EntityRep VDocRepo   = S.Repo
+type instance S.EntityRep Note       = S.Note
+type instance S.EntityRep Question   = S.Question
+type instance S.EntityRep Discussion = S.Discussion
 type instance S.EntityRep Answer     = S.Answer
 type instance S.EntityRep Statement  = S.Statement
 
