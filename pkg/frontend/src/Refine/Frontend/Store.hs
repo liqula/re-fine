@@ -116,32 +116,32 @@ emitBackendCallsFor action state = case action of
       -- (FIXME: the new correct technical term for 'category' is 'kind'.)
       case category of
         Just Discussion ->
-          addDiscussion (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadPatch)
+          addDiscussion (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadEdit)
                      (RT.CreateDiscussion text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
             (Right discussion) -> return . dispatch $ AddDiscussion discussion
         Just Note ->
-          addNote (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadPatch)
+          addNote (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadEdit)
                      (RT.CreateNote text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
             (Right note) -> return . dispatch $ AddNote note
         Nothing -> return ()
 
-{- TODO submitting a patch does not work yet
+{- TODO submitting a edit does not work yet
     SubmitEdit -> do
         let vdocId = _metaKey . _vdocMeta . fromJust $ _vdoc state
-        let patchId = _vdocHead . fromJust $ _vdoc state
+        let editId = _vdocHead . fromJust $ _vdoc state
         let vdocChunk = VDocChunk "<p><strong>This is my new and obviously much, much better text :-)</strong></p>"
         let maybeRange = _currentSelection state
-        let patchKey = PatchKey vdocId patchId
+        let editKey = EditKey vdocId editId
         case maybeRange of
             (Nothing, _)    -> return ()
             (Just range, _) -> do
                                 let protoChunkRange = ProtoChunkRange (ChunkPoint (DataUID <$> _startUid range) (_startOffset range)) (ChunkPoint (DataUID <$> _endUid range) (_endOffset range))
-                                let patchFromClient = PatchFromClient vdocChunk (Just protoChunkRange)
-                                addPatch patchKey patchFromClient $ \case
+                                let editFromClient = EditFromClient vdocChunk (Just protoChunkRange)
+                                addEdit editKey editFromClient $ \case
                                     (Left(_, msg)) -> handleError msg
-                                    (Right _patch) -> return []
+                                    (Right _edit) -> return []
 -}
     _ -> return ()
 

@@ -46,11 +46,11 @@ instance PersistFieldSql RepoHandle where
   sqlType _ = sqlType (Proxy :: Proxy ST)
 
 
-instance PersistField PatchHandle where
-  toPersistValue (PatchHandle t) = toPersistValue t
-  fromPersistValue               = fmap PatchHandle . fromPersistValue
+instance PersistField EditHandle where
+  toPersistValue (EditHandle t) = toPersistValue t
+  fromPersistValue              = fmap EditHandle . fromPersistValue
 
-instance PersistFieldSql PatchHandle where
+instance PersistFieldSql EditHandle where
   -- CAUTION: This should be generated, to represent the actual inner type
   -- of the title
   sqlType _ = sqlType (Proxy :: Proxy ST)

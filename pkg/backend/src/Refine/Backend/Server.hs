@@ -34,7 +34,7 @@ import           Control.Natural (($$))
 import           Data.String.Conversions (cs)
 import           Network.Wai.Handler.Warp as Warp
 import           Prelude hiding ((.), id)
-import           Servant hiding (Patch)
+import           Servant
 import           Servant.Server.Internal (responseServantErr)
 import           Servant.Utils.StaticFiles (serveDirectory)
 import           System.Directory (createDirectoryIfMissing)
@@ -98,7 +98,7 @@ refineApi =
        Refine.Backend.App.listVDocs
   :<|> Refine.Backend.App.getCompositeVDoc
   :<|> Refine.Backend.App.createVDocGetComposite
-  :<|> Refine.Backend.App.addPatch
+  :<|> Refine.Backend.App.addEdit
   :<|> Refine.Backend.App.addNote
   :<|> Refine.Backend.App.addQuestion
   :<|> Refine.Backend.App.addAnswer

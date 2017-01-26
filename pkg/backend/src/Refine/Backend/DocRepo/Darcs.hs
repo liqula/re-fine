@@ -21,7 +21,7 @@
 module Refine.Backend.DocRepo.Darcs where
 
 import Control.Lens ((^.), to, view)
-import Darcs.Patch()
+import Darcs.Patch ()
 import Data.String.Conversions
 import Data.Text.IO as ST
 import Data.UUID
@@ -46,29 +46,29 @@ createRepo = do
     createDirectory repoDir
     pure . RepoHandle . cs $ uuid
 
-createPatch :: RepoHandle -> PatchHandle -> VDocVersion 'HTMLCanonical -> DocRepo PatchHandle
-createPatch repo _base = createInitialPatch repo
+createEdit :: RepoHandle -> EditHandle -> VDocVersion 'HTMLCanonical -> DocRepo EditHandle
+createEdit repo _base = createInitialEdit repo
 
-createInitialPatch :: RepoHandle -> VDocVersion 'HTMLCanonical -> DocRepo PatchHandle
-createInitialPatch repo vers = do
+createInitialEdit :: RepoHandle -> VDocVersion 'HTMLCanonical -> DocRepo EditHandle
+createInitialEdit repo vers = do
   repoRoot <- view cfgReposRoot
   docRepoIO $ do
     uuid <- newUUID
     let repoDir   = repoRoot </> (repo ^. unRepoHandle . to cs)
-        patchFile = repoDir </> uuid
-    ST.writeFile patchFile (vers ^. unVDocVersion)
-    pure . PatchHandle $ cs uuid
+        editFile = repoDir </> uuid
+    ST.writeFile editFile (vers ^. unVDocVersion)
+    pure . EditHandle $ cs uuid
 
-getVersion :: RepoHandle -> PatchHandle -> DocRepo (VDocVersion 'HTMLCanonical)
+getVersion :: RepoHandle -> EditHandle -> DocRepo (VDocVersion 'HTMLCanonical)
 getVersion repo vers = do
   repoRoot <- view cfgReposRoot
   docRepoIO $ do
     let repoDir   = repoRoot </> (repo ^. unRepoHandle . to cs)
-        patchFile = repoDir </> (vers ^. unPatchHandle . to cs)
-    VDocVersion <$> ST.readFile patchFile
+        editFile = repoDir </> (vers ^. unEditHandle . to cs)
+    VDocVersion <$> ST.readFile editFile
 
--- | Get all patches that are directly based on a given patch.
+-- | Get all edits that are directly based on a given edit.
 --
 -- TODO: Implement
-getChildPatches :: RepoHandle -> PatchHandle -> DocRepo [PatchHandle]
-getChildPatches _repo _patch = pure []
+getChildEdits :: RepoHandle -> EditHandle -> DocRepo [EditHandle]
+getChildEdits _repo _edit = pure []

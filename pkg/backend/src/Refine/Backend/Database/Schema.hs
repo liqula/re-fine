@@ -34,7 +34,7 @@ import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc (Abstract, Title)
 import Refine.Backend.Database.Field()
 import Refine.Backend.Database.Types
-import Refine.Backend.DocRepo.Core(PatchHandle, RepoHandle)
+import Refine.Backend.DocRepo.Core(EditHandle, RepoHandle)
 
 
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
@@ -46,14 +46,14 @@ VDoc
     desc        Abstract
     repo        RepoId
 
-Patch
+Edit
     desc        Text
-    patchHandle PatchHandle
+    editHandle EditHandle
 
 Repo
     name        Text
     repoHandle  RepoHandle
-    headId      PatchId
+    headId      EditId
 
 Note
     text        Text
@@ -93,18 +93,18 @@ VR
 
 RP
     repository  RepoId
-    patch       PatchId
-    UniRP repository patch
+    edit       EditId
+    UniRP repository edit
 
 PQ
-    patch       PatchId
+    edit       EditId
     question    QuestionId
-    UniPQ patch question
+    UniPQ edit question
 
 PD
-    patch       PatchId
+    edit       EditId
     discussion  DiscussionId
-    UniPD patch discussion
+    UniPD edit discussion
 
 DS
     discussion  DiscussionId
@@ -112,14 +112,14 @@ DS
     UniDS discussion statement
 
 PN
-    patch       PatchId
+    edit       EditId
     note        NoteId
-    UniPN patch note
+    UniPN edit note
 
 PV
-    patch       PatchId
+    edit       EditId
     vote        VoteId
-    UniPV patch vote
+    UniPV edit vote
 |]
 
 
@@ -139,7 +139,7 @@ keyToId = ID . fromSqlKey
 -- * eliminators
 
 makeElim ''VDoc
-makeElim ''Patch
+makeElim ''Edit
 makeElim ''Repo
 makeElim ''Note
 makeElim ''Question

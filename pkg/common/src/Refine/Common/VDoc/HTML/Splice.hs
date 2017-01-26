@@ -55,7 +55,7 @@ import Refine.Prelude
 -- * module interface
 
 -- | Render 'VDocVersion' as needed in the browser.  More specifically: Insert @mark@ html elements
--- for all chunks of all patches, comments, notes, etc.
+-- for all chunks of all edits, comments, notes, etc.
 insertMarks :: MonadError VDocHTMLError m
             => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> m (VDocVersion 'HTMLWithMarks)
 insertMarks crs (VDocVersion (parseTokens -> (ts :: [Token])))
