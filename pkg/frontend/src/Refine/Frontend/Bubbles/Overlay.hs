@@ -148,7 +148,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
   div_ $ do
     form_ [ "target" $= "#"
          , "action" $= "POST"] $ do
-      textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"
+      textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
                 , "className" $= "o-wysiwyg o-form-input__textarea"
                 -- Update the current state with the current text in the textbox, sending no actions
                 , onChange $ \evt state -> ([], Just $ state { RS._commentInputStateText = target evt "value" } )
@@ -159,7 +159,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
         elemString "Step 1: "
         span_ ["className" $= "bold"] "Select a type for your comment:"
 
-    div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do
+    div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do  -- RENAME: annotation => comment
       iconButton_ (IconButtonProps
                     (IconProps "c-vdoc-overlay-content" True ("icon-Remark", "dark") L)
                     "category"

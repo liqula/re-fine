@@ -64,7 +64,7 @@ spec = parallel $ do
     let vers :: VDocVersion 'HTMLCanonical
         vers = VDocVersion "<span data-uid=\"1\">asdfasdf</span>"
 
-        cr :: ChunkPoint -> ChunkRange Patch
+        cr :: ChunkPoint -> ChunkRange Edit
         cr p = ChunkRange (ID 3) (Just p) Nothing
 
         good = ChunkPoint (DataUID 1) 3

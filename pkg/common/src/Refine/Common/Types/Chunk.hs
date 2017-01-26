@@ -34,7 +34,7 @@ import Refine.Prelude.Generic
 import Refine.Prelude.TH (makeRefineType)
 
 
--- | Location of a 'Patch', 'Comment', ... in a 'VDocVersion'.  'Patch' etc. are called the *owner*
+-- | Location of a 'Edit', 'Comment', ... in a 'VDocVersion'.  'Edit' etc. are called the *owner*
 -- of the 'ChunkRange'.  If the begin point (resp. end point) is 'Nothing', the 'ChunkRange' starts
 -- at the beginning (resp. end) of the 'VDocVersion'.  When the owner is created, it must be
 -- 'assert'ed that @0 <= begin < end < length of 'VDocVersion'@.

@@ -55,7 +55,7 @@ createVDoc pv = do
             . to (monadError AppVDocError . canonicalizeVDocVersion)
   (dr, dp) <- docRepo $ do
     dr <- DocRepo.createRepo
-    dp <- DocRepo.createInitialPatch dr vd
+    dp <- DocRepo.createInitialEdit dr vd
     pure (dr, dp)
   db $ do
     r <- DB.createRepo dr dp
@@ -74,20 +74,20 @@ getCompositeVDoc vid = do
     rid      <- DB.vdocRepo vid
     rhandle  <- DB.getRepoHandle rid
     repo     <- DB.getRepo rid
-    let headid = repo ^. vdocHeadPatch
-    hhandle  <- DB.getPatchHandle headid
-    comments <- DB.patchComments headid
+    let headid = repo ^. vdocHeadEdit
+    hhandle  <- DB.getEditHandle headid
+    comments <- DB.editComments headid
     let commentNotes       = catMaybes $ (^? _CommentNote)       <$> filter (has _CommentNote)       comments
         commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
         chunkRangesCN = commentChunkRange <$> comments
 
     pure $ do
-      hpatches <- docRepo $ DocRepo.getChildPatches rhandle hhandle
-      patches  <- db $ mapM DB.getPatchFromHandle hpatches
-      let chunkRanges = chunkRangesCN <> (view (patchRange . to clearTP) <$> patches)
+      hedits <- docRepo $ DocRepo.getChildEdits rhandle hhandle
+      edits  <- db $ mapM DB.getEditFromHandle hedits
+      let chunkRanges = chunkRangesCN <> (view (editRange . to clearTP) <$> edits)
       version <- monadError AppVDocError
                  =<< insertMarks chunkRanges <$> docRepo (DocRepo.getVersion rhandle hhandle)
-      pure $ CompositeVDoc vdoc repo version patches commentNotes commentDiscussions
+      pure $ CompositeVDoc vdoc repo version edits commentNotes commentDiscussions
 
   where
     commentChunkRange :: Comment -> ChunkRange Void
@@ -96,15 +96,15 @@ getCompositeVDoc vid = do
       CommentQuestion q   -> q ^. compositeQuestion . questionChunkRange . to clearTP
       CommentDiscussion d -> d ^. compositeDiscussion . discussionChunkRange . to clearTP
 
-addPatch :: ID Patch -> Create Patch -> App DB Patch
-addPatch basepid patch = do
-  appLog "addPatch"
+addEdit :: ID Edit -> Create Edit -> App DB Edit
+addEdit basepid edit = do
+  appLog "addEdit"
   join . db $ do
-    rid                    <- DB.patchVDocRepo basepid
-    (rhandle, basephandle) <- DB.handlesForPatch basepid
+    rid                    <- DB.editVDocRepo basepid
+    (rhandle, basephandle) <- DB.handlesForEdit basepid
     pure $ do
-      version      <- patch ^. createPatchVDoc . to (monadError AppVDocError . canonicalizeVDocVersion)
-      childphandle <- docRepo $ DocRepo.createPatch rhandle basephandle version
+      version      <- edit ^. createEditVDoc . to (monadError AppVDocError . canonicalizeVDocVersion)
+      childphandle <- docRepo $ DocRepo.createEdit rhandle basephandle version
       db $ do
-        childPatch <- DB.createPatch rid childphandle
-        pure childPatch
+        childEdit <- DB.createEdit rid childphandle
+        pure childEdit

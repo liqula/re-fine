@@ -40,7 +40,7 @@ import           Refine.Common.Types
 
 -- FIXME: Generate this as the part of the lentil library.
 type instance S.EntityRep VDoc       = S.VDoc
-type instance S.EntityRep Patch      = S.Patch
+type instance S.EntityRep Edit       = S.Edit
 type instance S.EntityRep VDocRepo   = S.Repo
 type instance S.EntityRep Note       = S.Note
 type instance S.EntityRep Question   = S.Question
@@ -92,7 +92,7 @@ getEntity eid = do
 --
 -- Example:
 --   * foreignKeyField S.PCComment (Entity pcid (S.PC pid cid)) == cid
---   * foreignKeyField S.PCPatch   (Entity pcid (S.PC pid cid)) == pid
+--   * foreignKeyField S.PCEdit    (Entity pcid (S.PC pid cid)) == pid
 foreignKeyField
   :: ToBackendKey SqlBackend (S.EntityRep a)
   => (b -> Key (S.EntityRep a)) -> Database.Persist.Entity b -> ID a
@@ -147,10 +147,10 @@ vdocRepo vid = do
 
 -- * Repo
 
-createRepo :: DocRepo.RepoHandle -> DocRepo.PatchHandle -> DB VDocRepo
-createRepo repoh patchh = liftDB $ do
+createRepo :: DocRepo.RepoHandle -> DocRepo.EditHandle -> DB VDocRepo
+createRepo repoh edith = liftDB $ do
     let desc = "" -- TODO
-    pkey <- insert $ S.Patch desc patchh
+    pkey <- insert $ S.Edit desc edith
     key  <- insert $ S.Repo "title" {- TODO -} repoh pkey
     void  . insert $ S.RP key pkey
     pure $ VDocRepo (S.keyToId key) (S.keyToId pkey)
@@ -158,7 +158,7 @@ createRepo repoh patchh = liftDB $ do
 getRepo :: ID VDocRepo -> DB VDocRepo
 getRepo vid = S.repoElim toVDocRepo <$> getEntity vid
   where
-    toVDocRepo :: ST -> DocRepo.RepoHandle -> Key S.Patch -> VDocRepo
+    toVDocRepo :: ST -> DocRepo.RepoHandle -> Key S.Edit -> VDocRepo
     toVDocRepo _desc _repoHandle pid = VDocRepo vid (S.keyToId pid)
 
 getRepoFromHandle :: DocRepo.RepoHandle -> DB VDocRepo
@@ -172,76 +172,76 @@ getRepoFromHandle hndl = do
 getRepoHandle :: ID VDocRepo -> DB DocRepo.RepoHandle
 getRepoHandle vid = S.repoElim toRepoHandle <$> getEntity vid
   where
-    toRepoHandle :: ST -> DocRepo.RepoHandle -> Key S.Patch -> DocRepo.RepoHandle
+    toRepoHandle :: ST -> DocRepo.RepoHandle -> Key S.Edit -> DocRepo.RepoHandle
     toRepoHandle _desc repoHandle _pid = repoHandle
 
-getPatchIDs :: ID VDocRepo -> DB [ID Patch]
-getPatchIDs vid = liftDB $
-  foreignKeyField S.rPPatch <$$> selectList [S.RPRepository ==. S.idToKey vid] []
+getEditIDs :: ID VDocRepo -> DB [ID Edit]
+getEditIDs vid = liftDB $
+  foreignKeyField S.rPEdit <$$> selectList [S.RPRepository ==. S.idToKey vid] []
 
--- * Patch
+-- * Edit
 
-createPatch :: ID VDocRepo -> DocRepo.PatchHandle -> DB Patch
-createPatch rid patchh = liftDB $ do
+createEdit :: ID VDocRepo -> DocRepo.EditHandle -> DB Edit
+createEdit rid edith = liftDB $ do
   let desc = "" -- TODO
-  key <- insert $ S.Patch desc patchh
+  key <- insert $ S.Edit desc edith
   void . insert $ S.RP (S.idToKey rid) key
   let pid = S.keyToId key
       cr = ChunkRange pid Nothing Nothing  -- TODO
-  pure $ Patch pid desc cr
+  pure $ Edit pid desc cr
 
-getPatch :: ID Patch -> DB Patch
-getPatch pid = S.patchElim toPatch <$> getEntity pid
+getEdit :: ID Edit -> DB Edit
+getEdit pid = S.editElim toEdit <$> getEntity pid
   where
-    cr :: ChunkRange Patch
+    cr :: ChunkRange Edit
     cr = ChunkRange pid Nothing Nothing  -- TODO
 
-    toPatch :: ST -> DocRepo.PatchHandle -> Patch
-    toPatch desc _handle = Patch pid desc cr
+    toEdit :: ST -> DocRepo.EditHandle -> Edit
+    toEdit desc _handle = Edit pid desc cr
 
-getPatchFromHandle :: DocRepo.PatchHandle -> DB Patch
-getPatchFromHandle hndl = do
-  ps <- liftDB $ selectList [S.PatchPatchHandle ==. hndl] []
+getEditFromHandle :: DocRepo.EditHandle -> DB Edit
+getEditFromHandle hndl = do
+  ps <- liftDB $ selectList [S.EditEditHandle ==. hndl] []
   p <- unique ps
   let pid = S.keyToId $ entityKey p
       cr = ChunkRange pid Nothing Nothing  -- TODO
-      toPatch desc _hdnl = Patch (S.keyToId $ entityKey p) desc cr
-  pure $ S.patchElim toPatch (entityVal p)
+      toEdit desc _hdnl = Edit (S.keyToId $ entityKey p) desc cr
+  pure $ S.editElim toEdit (entityVal p)
 
-getPatchHandle :: ID Patch -> DB DocRepo.PatchHandle
-getPatchHandle pid = S.patchElim toPatchHandle <$> getEntity pid
+getEditHandle :: ID Edit -> DB DocRepo.EditHandle
+getEditHandle pid = S.editElim toEditHandle <$> getEntity pid
   where
-    toPatchHandle :: ST -> DocRepo.PatchHandle -> DocRepo.PatchHandle
-    toPatchHandle _desc handle = handle
+    toEditHandle :: ST -> DocRepo.EditHandle -> DocRepo.EditHandle
+    toEditHandle _desc handle = handle
 
-patchNotes :: ID Patch -> DB [ID Note]
-patchNotes pid = liftDB $
-  foreignKeyField S.pNNote <$$> selectList [S.PNPatch ==. S.idToKey pid] []
+editNotes :: ID Edit -> DB [ID Note]
+editNotes pid = liftDB $
+  foreignKeyField S.pNNote <$$> selectList [S.PNEdit ==. S.idToKey pid] []
 
-patchQuestions :: ID Patch -> DB [ID Question]
-patchQuestions pid = liftDB $
-  foreignKeyField S.pQQuestion <$$> selectList [S.PQPatch ==. S.idToKey pid] []
+editQuestions :: ID Edit -> DB [ID Question]
+editQuestions pid = liftDB $
+  foreignKeyField S.pQQuestion <$$> selectList [S.PQEdit ==. S.idToKey pid] []
 
-patchDiscussions :: ID Patch -> DB [ID Discussion]
-patchDiscussions pid = liftDB $
-  foreignKeyField S.pDDiscussion <$$> selectList [S.PDPatch ==. S.idToKey pid] []
+editDiscussions :: ID Edit -> DB [ID Discussion]
+editDiscussions pid = liftDB $
+  foreignKeyField S.pDDiscussion <$$> selectList [S.PDEdit ==. S.idToKey pid] []
 
--- * Repo and patch
+-- * Repo and edit
 
-patchVDocRepo :: ID Patch -> DB (ID VDocRepo)
-patchVDocRepo pid = do
-  rs <- liftDB $ foreignKeyField S.rPRepository <$$> selectList [S.RPPatch ==. S.idToKey pid] []
+editVDocRepo :: ID Edit -> DB (ID VDocRepo)
+editVDocRepo pid = do
+  rs <- liftDB $ foreignKeyField S.rPRepository <$$> selectList [S.RPEdit ==. S.idToKey pid] []
   unique rs
 
-registerPatch :: ID VDocRepo -> ID Patch -> DB ()
-registerPatch rid pid = void . liftDB . insert $ S.RP (S.idToKey rid) (S.idToKey pid)
+registerEdit :: ID VDocRepo -> ID Edit -> DB ()
+registerEdit rid pid = void . liftDB . insert $ S.RP (S.idToKey rid) (S.idToKey pid)
 
 -- * Note
 
 toNote :: ID Note -> ST -> Bool -> DBChunkRange -> Note
 toNote nid desc public range = Note nid desc public (toChunkRange range nid)
 
-createNote :: ID Patch -> Create Note -> DB Note
+createNote :: ID Edit -> Create Note -> DB Note
 createNote pid note = liftDB $ do
   let snote = S.Note
         (note ^. createNoteText)
@@ -259,7 +259,7 @@ getNote nid = S.noteElim (toNote nid) <$> getEntity nid
 toQuestion :: ID Question -> ST -> Bool -> Bool -> DBChunkRange -> Question
 toQuestion qid text answ pblc range = Question qid text answ pblc (toChunkRange range qid)
 
-createQuestion :: ID Patch -> Create Question -> DB Question
+createQuestion :: ID Edit -> Create Question -> DB Question
 createQuestion pid question = liftDB $ do
   let squestion = S.Question
         (question ^. createQuestionText)
@@ -284,7 +284,7 @@ saveStatement did sstatement = do
   void . insert $ S.DS (S.idToKey did) key
   pure $ S.statementElim (toStatement (S.keyToId key)) sstatement
 
-createDiscussion :: ID Patch -> Create Discussion -> DB Discussion
+createDiscussion :: ID Edit -> Create Discussion -> DB Discussion
 createDiscussion pid disc = liftDB $ do
   let sdiscussion = S.Discussion
         (disc ^. createDiscussionPublic)

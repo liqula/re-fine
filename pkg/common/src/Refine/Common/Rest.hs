@@ -20,7 +20,7 @@
 
 module Refine.Common.Rest where
 
-import Servant.API hiding (Patch)
+import Servant.API
 
 import Refine.Common.Types
 
@@ -30,7 +30,7 @@ type RefineAPI =
        SListVDocs
   :<|> SGetVDoc
   :<|> SCreateVDoc
-  :<|> SAddPatch
+  :<|> SAddEdit
   :<|> SAddNote
   :<|> SAddQuestion
   :<|> SAddAnswer
@@ -50,16 +50,16 @@ type SCreateVDoc
   = "r" :> "vdoc" :> ReqBody '[JSON] (Create VDoc)
     :> Post '[JSON] CompositeVDoc
 
-type SAddPatch
-  = "r" :> "patch" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Patch)
-    :> Post '[JSON] Patch
+type SAddEdit
+  = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Edit)
+    :> Post '[JSON] Edit
 
 type SAddNote
-  = "r" :> "note" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Note)
+  = "r" :> "note" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Note)
     :> Post '[JSON] Note
 
 type SAddQuestion
-  = "r" :> "question" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Question)
+  = "r" :> "question" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Question)
     :> Post '[JSON] CompositeQuestion
 
 type SAddAnswer
@@ -67,7 +67,7 @@ type SAddAnswer
     :> Post '[JSON] Answer
 
 type SAddDiscussion
-  = "r" :> "discussion" :> Capture "onpatchid" (ID Patch) :> ReqBody '[JSON] (Create Discussion)
+  = "r" :> "discussion" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Discussion)
     :> Post '[JSON] CompositeDiscussion
 
 type SAddStatement

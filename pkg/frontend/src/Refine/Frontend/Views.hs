@@ -118,19 +118,19 @@ data SnippetProps = SnippetProps
   , _markPosition :: Maybe Int
   }
 
-snippet :: ReactView SnippetProps
+snippet :: ReactView SnippetProps  -- RENAME: bubble, bubble_, BubbleProps, ...
 snippet = defineView "snippet" $ \props ->
         case _markPosition props of
             Nothing -> div_ ""
             Just pos ->
                 div_ ["data-hunk-id" $= fromString (_dataHunkId2 props)
                     , "data-content-type" $= fromString (_dataContentType2 props)
-                    , "className" $= fromString ("o-snippet o-snippet--" <> _dataContentType2 props)
+                    , "className" $= fromString ("o-snippet o-snippet--" <> _dataContentType2 props)  -- RENAME: snippet => bubble
                     , "style" @= [Style "top" pos]
                     ] $ do
-                    div_ ["className" $= fromString ("o-snippet__icon-bg o-snippet__icon-bg--" <> _iconSide props)] $ do
-                        icon_ (IconProps "o-snippet" False (_iconStyle props) M)
-                    div_ ["className" $= "o-snippet__content"] childrenPassedToView
+                    div_ ["className" $= fromString ("o-snippet__icon-bg o-snippet__icon-bg--" <> _iconSide props)] $ do  -- RENAME: snippet => bubble
+                        icon_ (IconProps "o-snippet" False (_iconStyle props) M)  -- RENAME: snippet => bubble
+                    div_ ["className" $= "o-snippet__content"] childrenPassedToView  -- RENAME: snippet => bubble
 
 snippet_ :: SnippetProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 snippet_ = view snippet
@@ -160,12 +160,12 @@ editSnippet_ dataHunkId markPositions = view editSnippet (dataHunkId, markPositi
 
 leftAside :: ReactView (RS.MarkPositions, (Maybe RS.Range, Maybe RS.DeviceOffset), Int)
 leftAside = defineView "LeftAside" $ \(markPositions, currentSelection, headerHeight) ->
-    aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do
+    aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
         discussionSnippet_ "1" markPositions $ do
             span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
         questionSnippet_ "3" markPositions $ do
             span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
-        quickCreate_ "annotation" currentSelection headerHeight
+        quickCreate_ "annotation" currentSelection headerHeight  -- RENAME: annotation => comment
 
 
 leftAside_ :: RS.MarkPositions -> (Maybe RS.Range, Maybe RS.DeviceOffset) -> Int -> ReactElementM eventHandler ()
@@ -175,6 +175,7 @@ leftAside_ markPositions currentSelection headerHeight = view leftAside (markPos
 rightAside :: ReactView RS.MarkPositions
 rightAside = defineView "RightAside" $ \markPositions ->
     aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do
+                                      -- (RENAME: Edit)
             editSnippet_ "2" markPositions $ do
                 span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
 

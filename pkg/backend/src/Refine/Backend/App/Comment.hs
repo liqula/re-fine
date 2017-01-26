@@ -34,12 +34,12 @@ import Refine.Backend.Database.Core (DB)
 import Refine.Backend.Database.Class as DB
 
 
-addNote :: ID Patch -> Create Note -> App DB Note
+addNote :: ID Edit -> Create Note -> App DB Note
 addNote pid note = do
   appLog "addNote"
   db $ DB.createNote pid note
 
-addQuestion :: ID Patch -> Create Question -> App DB CompositeQuestion
+addQuestion :: ID Edit -> Create Question -> App DB CompositeQuestion
 addQuestion pid question = do
   appLog "addQuestion"
   CompositeQuestion <$> db (DB.createQuestion pid question) <@> []
@@ -49,7 +49,7 @@ addAnswer qid answer = do
   appLog "addAnswer"
   db $ DB.createAnswer qid answer
 
-addDiscussion :: ID Patch -> Create Discussion -> App DB CompositeDiscussion
+addDiscussion :: ID Edit -> Create Discussion -> App DB CompositeDiscussion
 addDiscussion pid discussion = do
   appLog "addDiscussion"
   db $ do

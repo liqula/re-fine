@@ -97,18 +97,18 @@ editToolbar = defineView "EditToolbar" $ \() ->
 
           iconButton_ $ IconButtonProps
                       (IconProps "c-vdoc-toolbar" True ("icon-New_Comment", "dark") XXL)
-                      "btn-add-annotation"
+                      "btn-add-annotation"  -- RENAME: annotation => comment
                       ""
-                      "annotation"
-                      "new annotation"
+                      "annotation"  -- RENAME: annotation => comment
+                      "new annotation"  -- RENAME: annotation => comment
                       (\_ -> [])
 
           iconButton_ $ IconButtonProps
                       (IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXL)
-                      "btn-add-modification"
+                      "btn-add-modification"  -- (RENAME: Edit)
                       ""
-                      "modification"
-                      "new modification"
+                      "modification"  -- (RENAME: Edit)
+                      "new modification"  -- (RENAME: Edit)
                       (\_ -> [])
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
@@ -116,19 +116,19 @@ editToolbar = defineView "EditToolbar" $ \() ->
           -- in HTML, these two icons are divs:
           iconButton_ $ IconButtonProps
                       (IconProps "c-vdoc-toolbar" False ("icon-Comment", "dark") XXL)
-                      "all-annotations"
+                      "all-annotations"  -- RENAME: annotation => comment
                       ""
                       ""
-                      "all annotations"
+                      "all annotations"  -- RENAME: annotation => comment
                       (\_ -> [])
 
           iconButton_ $ IconButtonProps
                       -- (IconProps "c-vdoc-toolbar" False ("icon-Edit", "dark") XXL)
                       (IconProps "c-vdoc-toolbar" True ("icon-Edit_view", "dark") XXL)
-                      "all-modifications"
+                      "all-modifications"  -- (RENAME: Edit)
                       ""
                       ""
-                      "all modifications"
+                      "all modifications"  -- (RENAME: Edit)
                       (\_ -> [])
 
           iconButtonWithAlignment_ $ IconButtonWithAlignmentProps (IconButtonProps
@@ -150,29 +150,29 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
         div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
-        div_ ["className" $= "c-vdoc-toolbar-extension__annotation"] $ do
+        div_ ["className" $= "c-vdoc-toolbar-extension__annotation"] $ do  -- RENAME: annotation => comment
             iconButton_ $ IconButtonProps
                         (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L) -- TODO why index and not comment?
                         "btn-new-ann-doc"
                         ""
-                        "annotation"
-                        "document annotation"
+                        "annotation"  -- RENAME: annotation => comment
+                        "document annotation"  -- RENAME: annotation => comment
                         (\_ -> [])
             iconButton_ $ IconButtonProps
                         (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
                         "btn-new-ann-text"
                         ""
-                        "annotation"
-                        "annotation related to text"
+                        "annotation"  -- RENAME: annotation => comment
+                        "annotation related to text"  -- RENAME: annotation => comment
                         (\_ -> [])
 
-        div_ ["className" $= "c-vdoc-toolbar-extension__modification"] $ do
+        div_ ["className" $= "c-vdoc-toolbar-extension__modification"] $ do  -- (RENAME: Edit)
             iconButton_ $ IconButtonProps
                         (IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") L)
                         "btn-new-mod-text"
                         ""
-                        "annotation"
-                        "new modification"
+                        "annotation"  -- RENAME: annotation => comment
+                        "new modification"  -- (RENAME: Edit)
                         (\_ -> [])
 
 

@@ -15,56 +15,56 @@ class Database db where
   vdocRepo           :: ID VDoc -> db (ID VDocRepo)
 
   -- * Repo
-  createRepo         :: DocRepo.RepoHandle -> DocRepo.PatchHandle -> db VDocRepo
+  createRepo         :: DocRepo.RepoHandle -> DocRepo.EditHandle -> db VDocRepo
   getRepo            :: ID VDocRepo -> db VDocRepo
   getRepoFromHandle  :: DocRepo.RepoHandle -> db VDocRepo
   getRepoHandle      :: ID VDocRepo -> db DocRepo.RepoHandle
-  getPatchIDs        :: ID VDocRepo -> db [ID Patch]
+  getEditIDs         :: ID VDocRepo -> db [ID Edit]
 
-  -- * Patch
-  createPatch        :: ID VDocRepo -> DocRepo.PatchHandle -> db Patch
-  getPatch           :: ID Patch -> db Patch
-  getPatchFromHandle :: DocRepo.PatchHandle -> db Patch
-  getPatchHandle     :: ID Patch -> db DocRepo.PatchHandle
-  patchNotes         :: ID Patch -> db [ID Note]
-  patchQuestions     :: ID Patch -> db [ID Question]
-  patchDiscussions   :: ID Patch -> db [ID Discussion]
+  -- * Edit
+  createEdit         :: ID VDocRepo -> DocRepo.EditHandle -> db Edit
+  getEdit            :: ID Edit -> db Edit
+  getEditFromHandle  :: DocRepo.EditHandle -> db Edit
+  getEditHandle      :: ID Edit -> db DocRepo.EditHandle
+  editNotes          :: ID Edit -> db [ID Note]
+  editQuestions      :: ID Edit -> db [ID Question]
+  editDiscussions    :: ID Edit -> db [ID Discussion]
 
-  -- * Repo and patch
-  patchVDocRepo      :: ID Patch -> db (ID VDocRepo)
+  -- * Repo and edit
+  editVDocRepo      :: ID Edit -> db (ID VDocRepo)
 
   -- * Note
-  createNote         :: ID Patch -> Create Note -> db Note
-  getNote            :: ID Note  -> db Note
+  createNote         :: ID Edit -> Create Note -> db Note
+  getNote            :: ID Note -> db Note
 
   -- * Question
-  createQuestion     :: ID Patch    -> Create Question -> db Question
+  createQuestion     :: ID Edit     -> Create Question -> db Question
   getQuestion        :: ID Question -> db Question
 
   -- * Answer
   createAnswer       :: ID Question -> Create Answer -> db Answer
-  getAnswer          :: ID Answer -> db Answer
+  getAnswer          :: ID Answer   -> db Answer
   answersOfQuestion  :: ID Question -> db [Answer]
 
   -- * Discussion
-  createDiscussion   :: ID Patch    -> Create Discussion -> db Discussion
+  createDiscussion   :: ID Edit    -> Create Discussion -> db Discussion
   getDiscussion      :: ID Discussion -> db Discussion
   statementsOfDiscussion :: ID Discussion -> db [ID Statement]
   getDiscussionIDFromStatement :: ID Statement -> db (ID Discussion)
 
   -- * Statement
   createStatement      :: ID Statement -> Create Statement -> db Statement
-  getStatement         :: ID Statement  -> db Statement
+  getStatement         :: ID Statement -> db Statement
 
 
 -- * composite db queries
 
-handlesForPatch
+handlesForEdit
   :: (Monad db, Database db)
-  => ID Patch -> db (DocRepo.RepoHandle, DocRepo.PatchHandle)
-handlesForPatch pid = do
-  rid <- patchVDocRepo pid
-  (,) <$> getRepoHandle rid <*> getPatchHandle pid
+  => ID Edit -> db (DocRepo.RepoHandle, DocRepo.EditHandle)
+handlesForEdit pid = do
+  rid <- editVDocRepo pid
+  (,) <$> getRepoHandle rid <*> getEditHandle pid
 
 compositeQuestion
   :: (Monad db, Database db)
@@ -79,13 +79,13 @@ compositeDiscussion did = CompositeDiscussion
   <$> getDiscussion did
   <*> (mapM getStatement =<< statementsOfDiscussion did)
 
-patchComments
+editComments
   :: (Monad db, Database db)
-  => ID Patch -> db [Comment]
-patchComments pid = do
-  notes       <- mapM getNote =<< patchNotes pid
-  questions   <- mapM Refine.Backend.Database.Class.compositeQuestion =<< patchQuestions pid
-  discussions <- mapM Refine.Backend.Database.Class.compositeDiscussion =<< patchDiscussions pid
+  => ID Edit -> db [Comment]
+editComments pid = do
+  notes       <- mapM getNote =<< editNotes pid
+  questions   <- mapM Refine.Backend.Database.Class.compositeQuestion =<< editQuestions pid
+  discussions <- mapM Refine.Backend.Database.Class.compositeDiscussion =<< editDiscussions pid
   pure $ concat
     [ CommentNote       <$> notes
     , CommentQuestion   <$> questions
