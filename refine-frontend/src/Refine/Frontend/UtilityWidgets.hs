@@ -11,6 +11,7 @@ import           GHCJS.Types (JSString)
 import           React.Flux
 
 import           Refine.Frontend.Style
+import           Refine.Frontend.ThirdPartyViews (hammer_)
 
 
 data IconSize
@@ -93,22 +94,23 @@ iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
     let emConnector = if bprops ^. moduleName == "" then "" else "--"
     let beName  = iprops ^. blockName <> beConnector <> bprops ^. elementName
     let bemName = beName <> emConnector <> bprops ^. moduleName
-    div_ (["data-content-type" $= (bprops ^. contentType)
-           , "style" @= [Style "cursor" ("pointer" :: String)]
-           -- TODO unify the naming schema of the classes for the different buttons!
-           , "className" $= fromString (toClasses [ iprops ^. blockName <> "__button"
-                                                  , beName  -- for the vdoc-toolbar
-                                                  , bemName -- for the buttons in the overlays
-                                                  , alignmentClass (iprops ^. blockName)
-                                                                   (props ^. rightAligned)
-                                                   ])
-           , onClick $ const . (bprops ^. clickHandler)
-           ] <> case props ^. position of
-                   Nothing  -> []
-                   Just pos -> ["style" @= [Style "top" pos]]) $ do
-        icon_ iprops
-        span_ ["className" $= fromString (iprops ^. blockName <> "__button-label")] $
-            elemJSString (bprops ^. label)
+    hammer_ [on "onTap" $ bprops ^. clickHandler] $ do
+      div_ (["data-content-type" $= (bprops ^. contentType)
+             , "style" @= [Style "cursor" ("pointer" :: String)]
+             -- TODO unify the naming schema of the classes for the different buttons!
+             , "className" $= fromString (toClasses [ iprops ^. blockName <> "__button"
+                                                    , beName  -- for the vdoc-toolbar
+                                                    , bemName -- for the buttons in the overlays
+                                                    , alignmentClass (iprops ^. blockName)
+                                                                     (props ^. rightAligned)
+                                                     ])
+             , onClick $ const . (bprops ^. clickHandler)
+             ] <> case props ^. position of
+                     Nothing  -> []
+                     Just pos -> ["style" @= [Style "top" pos]]) $ do
+          icon_ iprops
+          span_ ["className" $= fromString (iprops ^. blockName <> "__button-label")] $
+              elemJSString (bprops ^. label)
     where
       alignmentClass blockName_ rightAligned_ = if rightAligned_ then blockName_ <> "--align-right" else ""
 

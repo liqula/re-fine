@@ -11,6 +11,7 @@
     "gridle": "2.0.48",
     "react": "15.4.1",
     "react-dom": "15.4.1",
+    "react-hammerjs": "0.5.0",
     "react-skylight": "0.4.1",
     "react-sticky": "5.0.5",
     "trumbowyg": "2.3.0"
