@@ -5,3 +5,4 @@
 /pkg/common/common.cabal
 /pkg/backend/backend.cabal
 /pkg/backend/refine.db
+pkg/backend/.backend-data
