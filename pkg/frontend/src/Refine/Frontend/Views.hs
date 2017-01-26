@@ -160,12 +160,12 @@ editSnippet_ dataHunkId markPositions = view editSnippet (dataHunkId, markPositi
 
 leftAside :: ReactView (RS.MarkPositions, (Maybe RS.Range, Maybe RS.DeviceOffset), Int)
 leftAside = defineView "LeftAside" $ \(markPositions, currentSelection, headerHeight) ->
-    aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do
+    aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
         discussionSnippet_ "1" markPositions $ do
             span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
         questionSnippet_ "3" markPositions $ do
             span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
-        quickCreate_ "annotation" currentSelection headerHeight
+        quickCreate_ "annotation" currentSelection headerHeight  -- RENAME: annotation => comment
 
 
 leftAside_ :: RS.MarkPositions -> (Maybe RS.Range, Maybe RS.DeviceOffset) -> Int -> ReactElementM eventHandler ()
