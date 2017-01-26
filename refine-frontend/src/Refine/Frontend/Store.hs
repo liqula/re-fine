@@ -109,10 +109,9 @@ emitBackendCallsFor action state = case action of
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
 
-    SubmitComment text category forRange -> do
-      -- here we need to distinguish which comment category we want to submit
+    SubmitComment text kind forRange -> do
+      -- here we need to distinguish which comment kind we want to submit
       -- check the state and what the user selected there
-      case category of
         Just Discussion -> error "SubmitComment Discussion is not defined." -- TODO
         Just Note ->
           addNote (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. RT.vdocHeadPatch)
