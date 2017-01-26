@@ -158,12 +158,12 @@ questionBubble = defineView "QuestionBubble" $ \(dataHunkId, RS.MarkPositions ma
 questionBubble_ :: Int64 -> RS.MarkPositions -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 questionBubble_ dataHunkId markPositions = view questionBubble (dataHunkId, markPositions)
 
-noteBubble :: ReactView (Int64, RS.MarkPositions)
-noteBubble = defineView "NoteBubble" $ \(dataHunkId, RS.MarkPositions markPositions) ->
-    bubble_ (BubbleProps dataHunkId "question" "left" ("icon-Question", "dark") (M.lookup dataHunkId markPositions)) childrenPassedToView
+noteBubble :: ReactView (Int64, Maybe Int)
+noteBubble = defineView "NoteBubble" $ \(dataHunkId, markPosition) ->
+    bubble_ (BubbleProps dataHunkId "question" "left" ("icon-Question", "dark") markPosition) childrenPassedToView
 
-noteBubble_ :: Int64 -> RS.MarkPositions -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-noteBubble_ dataHunkId markPositions = view noteBubble (dataHunkId, markPositions)
+noteBubble_ :: Int64 -> Maybe Int -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+noteBubble_ dataHunkId markPosition = view noteBubble (dataHunkId, markPosition)
 
 editBubble :: ReactView (Int64, RS.MarkPositions)
 editBubble = defineView "EditBubble" $ \(dataHunkId, RS.MarkPositions markPositions) ->
@@ -190,9 +190,11 @@ leftAside = defineView "LeftAside" $ \props ->
                                                (lookupPosition (d ^. compositeDiscussion ^. discussionID ^. unID))
                                                (elemText (head (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
                       (_leftAsideDiscussions props)
+        mconcat $ map (\n -> noteBubble_ (n ^. noteID ^. unID)
+                                         (lookupPosition (n ^. noteID ^. unID))
+                                         (elemText (n ^. noteText)))
+                      (_leftAsideNotes props)
 
-        noteBubble_ 1 (_leftAsideMarkPositions props) $ do
-            span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
         questionBubble_ 3 (_leftAsideMarkPositions props) $ do
             span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
         quickCreate_ "annotation" (_leftAsideCurrentSelection props) (_leftAsideHeaderHeight props)
