@@ -2,13 +2,7 @@ resolver: lts-7.1
 
 packages:
 - '.'
-- location: '../refine-common'
-  extra-dep: false  # run the test suite for this package
-- location: '../refine-prelude'
-  extra-dep: false  # run the test suite for this package
-- location:
-    git: https://github.com/andorp/lentil.git
-    commit: 61a1c8421388c525ff4d98b59b3cf3b4ca5f5ad2
+- location: '../prelude'
   extra-dep: true
 - location:
     git: https://github.com/andorp/elim.git
@@ -25,7 +19,6 @@ extra-deps:
 - html-parse-0.2.0.0
 - json-sop-0.2.0.1
 - lens-sop-0.2.0.1
-- users-persistent-0.5.0.0
 
 flags: {}
 
