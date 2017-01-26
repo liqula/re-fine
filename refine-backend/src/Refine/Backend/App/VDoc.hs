@@ -7,6 +7,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
@@ -22,20 +23,21 @@
 
 module Refine.Backend.App.VDoc where
 
-import Control.Lens ((^.), to, view)
+import Control.Lens ((^.), (^?), to, view, has)
 import Control.Monad ((<=<), join, mapM)
 import Data.Monoid ((<>))
+import Data.Maybe (catMaybes)
 
 import           Refine.Backend.App.Core
 import           Refine.Backend.Database (DB)
 import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
-import           Refine.Common.Rest (CompositeVDoc(..))
-import           Refine.Common.Types.Note
+import           Refine.Common.Types.Chunk
+import           Refine.Common.Types.Comment
 import           Refine.Common.Types.Prelude
 import           Refine.Common.Types.VDoc
 import           Refine.Common.VDoc.HTML
-import           Refine.Prelude (clearTP, monadError)
+import           Refine.Prelude (Void, clearTP, monadError)
 
 
 listVDocs :: App DB [VDoc]
@@ -74,12 +76,10 @@ getCompositeVDoc vid = do
     repo     <- DB.getRepo rid
     let headid = repo ^. vdocHeadPatch
     hhandle  <- DB.getPatchHandle headid
-    comments <- mapM DB.getComment =<< DB.patchComments headid
-    notes    <- mapM DB.getNote    =<< DB.patchNotes    headid
-
-    let chunkRangesCN =
-          (view (commentRange . to clearTP) <$> comments) <>
-          (view (noteRange . to clearTP) <$> notes)
+    comments <- DB.patchComments headid
+    let commentNotes       = catMaybes $ (^? _CommentNote)       <$> filter (has _CommentNote)       comments
+        commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
+        chunkRangesCN = commentChunkRange <$> comments
 
     pure $ do
       hpatches <- docRepo $ DocRepo.getChildPatches rhandle hhandle
@@ -87,7 +87,14 @@ getCompositeVDoc vid = do
       let chunkRanges = chunkRangesCN <> (view (patchRange . to clearTP) <$> patches)
       version <- monadError AppVDocError
                  =<< insertMarks chunkRanges <$> docRepo (DocRepo.getVersion rhandle hhandle)
-      pure $ CompositeVDoc vdoc repo version patches comments notes
+      pure $ CompositeVDoc vdoc repo version patches commentNotes commentDiscussions
+
+  where
+    commentChunkRange :: Comment -> ChunkRange Void
+    commentChunkRange = \case
+      CommentNote n       -> n ^. noteChunkRange . to clearTP
+      CommentQuestion q   -> q ^. compositeQuestion . questionChunkRange . to clearTP
+      CommentDiscussion d -> d ^. compositeDiscussion . discussionChunkRange . to clearTP
 
 addPatch :: ID Patch -> Create Patch -> App DB Patch
 addPatch basepid patch = do

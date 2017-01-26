@@ -30,9 +30,9 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Control.Natural
 
-import Refine.Backend.App.Core as App
-import Refine.Backend.App.Note as App
-import Refine.Backend.App.VDoc as App
+import Refine.Backend.App.Comment as App
+import Refine.Backend.App.Core    as App
+import Refine.Backend.App.VDoc    as App
 import Refine.Backend.Logger
 import Refine.Backend.User.Core (UserHandle)
 

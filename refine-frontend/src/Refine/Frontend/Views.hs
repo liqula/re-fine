@@ -15,7 +15,6 @@ import           React.Flux
 import qualified Text.HTML.Parser as HTMLP
 import           Text.HTML.Tree as HTMLT
 
-import           Refine.Common.Rest
 import           Refine.Common.Types
 import           Refine.Common.VDoc.HTML.Enhance (addUIInfoToForest)
 import           Refine.Frontend.Bubbles.Overlay

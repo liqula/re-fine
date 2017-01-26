@@ -17,7 +17,6 @@ import           Data.Aeson (ToJSON, encode, toJSON, Value, (.=), object)
 import           Data.String.Conversions
 
 import Refine.Common.Types
-import Refine.Common.Rest
 
 import Refine.Frontend.Bubbles.Types
 
@@ -65,7 +64,7 @@ data RefineAction = LoadDocumentList
                   | SetCommentCategory CommentCategory
                   | SubmitComment ST (Maybe CommentCategory) (Maybe Range)
                   -- ...
-                  | AddDiscussion Comment
+                  | AddDiscussion CompositeDiscussion
                   | AddNote Note
                   | SubmitEdit
                   | SaveSelect Text Text

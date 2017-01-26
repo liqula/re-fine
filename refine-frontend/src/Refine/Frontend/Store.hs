@@ -18,7 +18,7 @@ import           Data.Aeson (ToJSON, encode)
 import           Data.String.Conversions
 import           Data.JSString (JSString, pack, unpack)
 
-import Refine.Common.Rest
+import Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as RT
 
 import           Refine.Frontend.Bubbles.Store (bubblesStateUpdate)
@@ -70,7 +70,8 @@ vdocUpdate action state = case action of
     AddDiscussion discussion      -> case state of
         Nothing   -> Nothing -- no vdoc: we cannot put the comment anywhere
                              -- FIXME: i think this should be an error. ~fisx
-        Just vdoc -> Just $ vdoc { _compositeVDocComments = discussion : vdoc ^. compositeVDocComments }
+        Just vdoc -> Just $ vdoc & RT.compositeVDocDiscussions %~ (discussion :)
+                            -- TODO: BUG!  this adds a new version of a discussion without removing the old one!
     _ -> state
 
 vdocListUpdate :: RefineAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
@@ -112,15 +113,16 @@ emitBackendCallsFor action state = case action of
     SubmitComment text category forRange -> do
       -- here we need to distinguish which comment category we want to submit
       -- check the state and what the user selected there
+      -- (FIXME: the new correct technical term for 'category' is 'kind'.)
       case category of
         Just Discussion ->
-          addDiscussion (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. RT.vdocHeadPatch)
-                     (RT.CreateComment text True (createChunkRange forRange)) $ \case
+          addDiscussion (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadPatch)
+                     (RT.CreateDiscussion text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
             (Right discussion) -> return . dispatch $ AddDiscussion discussion
         Just Note ->
-          addNote (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. RT.vdocHeadPatch)
-                     (RT.CreateNote text RT.Remark (createChunkRange forRange)) $ \case
+          addNote (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadPatch)
+                     (RT.CreateNote text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
             (Right note) -> return . dispatch $ AddNote note
         Nothing -> return ()

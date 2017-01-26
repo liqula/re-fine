@@ -31,6 +31,7 @@ import           Refine.Prelude
 
 import Refine.Common.Orphans ()
 import Refine.Common.Types.Chunk
+import Refine.Common.Types.Comment
 import Refine.Common.Types.Prelude
 import Refine.Prelude.TH
 
@@ -114,3 +115,30 @@ instance SOP.FromJSON (VDocVersion a) where parseJSON = gparseJSONDef
 -- TODO: aeson-encode phantom type in json for cross-network type safety
 makeLenses ''VDocVersion
 makePrisms ''VDocVersion
+
+
+-- * composites
+
+-- | Packaged vdoc ready for use by client.
+--
+-- - morally we have three phases in working on a document: (1) add comments and patches, (2) merge a
+--   bunch of patches and (3) create a new version.
+--
+-- - what follows from this:
+--     - there are no patches on patches that we need to display
+--     - it's ok to only display patches on head, not on any other version
+--     - same for comments: comments collect on head, then then are discarded in (2), (3).
+--
+-- - if we try to consider comments, patches, ... on other versions than head, we are in trouble.
+data CompositeVDoc = CompositeVDoc
+  { _compositeVDoc            :: VDoc
+  , _compositeVDocRepo        :: VDocRepo
+  , _compositeVDocVersion     :: VDocVersion 'HTMLWithMarks
+  , _compositeVDocPatches     :: [Patch]
+  , _compositeVDocNotes       :: [Note]
+  -- , _compositeVDocQuestions   :: [Question]  -- will be due in #99
+  , _compositeVDocDiscussions :: [CompositeDiscussion]
+  }
+  deriving (Eq, Show, Read, Generic)
+
+makeRefineType ''CompositeVDoc

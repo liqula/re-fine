@@ -80,16 +80,32 @@ instance Database DB where
   getPatch           = Entity.getPatch
   getPatchFromHandle = Entity.getPatchFromHandle
   getPatchHandle     = Entity.getPatchHandle
-  patchComments      = Entity.patchComments
   patchNotes         = Entity.patchNotes
+  patchQuestions     = Entity.patchQuestions
+  patchDiscussions   = Entity.patchDiscussions
 
   -- * Repo and patch
   patchVDocRepo      = Entity.patchVDocRepo
 
-  -- * Comment
-  createComment      = Entity.createComment
-  getComment         = Entity.getComment
-
   -- * Note
   createNote         = Entity.createNote
   getNote            = Entity.getNote
+
+  -- * Question
+  createQuestion     = Entity.createQuestion
+  getQuestion        = Entity.getQuestion
+
+  -- * Answer
+  createAnswer       = Entity.createAnswer
+  getAnswer          = Entity.getAnswer
+  answersOfQuestion  = Entity.answersOfQuestion
+
+  -- * Discussion
+  createDiscussion   = Entity.createDiscussion
+  getDiscussion      = Entity.getDiscussion
+  statementsOfDiscussion = Entity.statementsOfDiscussion
+  getDiscussionIDFromStatement = Entity.getDiscussionIDFromStatement
+
+  -- * Statement
+  createStatement      = Entity.createStatement
+  getStatement         = Entity.getStatement

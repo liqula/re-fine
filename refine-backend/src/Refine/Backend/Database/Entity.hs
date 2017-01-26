@@ -39,11 +39,14 @@ import qualified Refine.Backend.DocRepo.Core as DocRepo
 import           Refine.Common.Types
 
 -- FIXME: Generate this as the part of the lentil library.
-type instance S.EntityRep VDoc     = S.VDoc
-type instance S.EntityRep Patch    = S.Patch
-type instance S.EntityRep VDocRepo = S.Repo
-type instance S.EntityRep Note     = S.Note
-type instance S.EntityRep Comment  = S.Comment
+type instance S.EntityRep VDoc       = S.VDoc
+type instance S.EntityRep Patch      = S.Patch
+type instance S.EntityRep VDocRepo   = S.Repo
+type instance S.EntityRep Note       = S.Note
+type instance S.EntityRep Question   = S.Question
+type instance S.EntityRep Discussion = S.Discussion
+type instance S.EntityRep Answer     = S.Answer
+type instance S.EntityRep Statement  = S.Statement
 
 {-
 Reading the domain structured datatypes is not a problem,
@@ -211,13 +214,17 @@ getPatchHandle pid = S.patchElim toPatchHandle <$> getEntity pid
     toPatchHandle :: ST -> DocRepo.PatchHandle -> DocRepo.PatchHandle
     toPatchHandle _desc handle = handle
 
-patchComments :: ID Patch -> DB [ID Comment]
-patchComments pid = liftDB $
-  foreignKeyField S.pCComment <$$> selectList [S.PCPatch ==. S.idToKey pid] []
-
 patchNotes :: ID Patch -> DB [ID Note]
 patchNotes pid = liftDB $
   foreignKeyField S.pNNote <$$> selectList [S.PNPatch ==. S.idToKey pid] []
+
+patchQuestions :: ID Patch -> DB [ID Question]
+patchQuestions pid = liftDB $
+  foreignKeyField S.pQQuestion <$$> selectList [S.PQPatch ==. S.idToKey pid] []
+
+patchDiscussions :: ID Patch -> DB [ID Discussion]
+patchDiscussions pid = liftDB $
+  foreignKeyField S.pDDiscussion <$$> selectList [S.PDPatch ==. S.idToKey pid] []
 
 -- * Repo and patch
 
@@ -229,35 +236,16 @@ patchVDocRepo pid = do
 registerPatch :: ID VDocRepo -> ID Patch -> DB ()
 registerPatch rid pid = void . liftDB . insert $ S.RP (S.idToKey rid) (S.idToKey pid)
 
--- * Comment
-
-toComment :: ID Comment -> ST -> Bool -> DBChunkRange -> Maybe (Key S.Comment) -> Comment
-toComment cid desc public range _parent = Comment cid desc public (toChunkRange range cid)
-
-createComment :: ID Patch -> Create Comment -> DB Comment
-createComment pid comment = liftDB $ do
-  let scomment = S.Comment
-        (comment ^. createCommentText)
-        (comment ^. createCommentPublic)
-        (comment ^. createCommentRange . to mkDBChunkRange)
-        Nothing
-  key <- insert scomment
-  void . insert $ S.PC (S.idToKey pid) key
-  pure $ S.commentElim (toComment (S.keyToId key)) scomment
-
-getComment :: ID Comment -> DB Comment
-getComment cid = S.commentElim (toComment cid) <$> getEntity cid
-
 -- * Note
 
-toNote :: ID Note -> ST -> NoteKind -> DBChunkRange -> Note
-toNote nid desc kind range = Note nid desc kind (toChunkRange range nid)
+toNote :: ID Note -> ST -> Bool -> DBChunkRange -> Note
+toNote nid desc public range = Note nid desc public (toChunkRange range nid)
 
 createNote :: ID Patch -> Create Note -> DB Note
 createNote pid note = liftDB $ do
   let snote = S.Note
         (note ^. createNoteText)
-        (note ^. createNoteKind)
+        (note ^. createNotePublic)
         (note ^. createNoteRange . to mkDBChunkRange)
   key <- insert snote
   void . insert $ S.PN (S.idToKey pid) key
@@ -265,3 +253,101 @@ createNote pid note = liftDB $ do
 
 getNote :: ID Note -> DB Note
 getNote nid = S.noteElim (toNote nid) <$> getEntity nid
+
+-- * Question
+
+toQuestion :: ID Question -> ST -> Bool -> Bool -> DBChunkRange -> Question
+toQuestion qid text answ pblc range = Question qid text answ pblc (toChunkRange range qid)
+
+createQuestion :: ID Patch -> Create Question -> DB Question
+createQuestion pid question = liftDB $ do
+  let squestion = S.Question
+        (question ^. createQuestionText)
+        False -- Not answered
+        (question ^. createQuestionPublic)
+        (question ^. createQuestionRange . to mkDBChunkRange)
+  key <- insert squestion
+  void . insert $ S.PQ (S.idToKey pid) key
+  pure $ S.questionElim (toQuestion (S.keyToId key)) squestion
+
+getQuestion :: ID Question -> DB Question
+getQuestion qid = S.questionElim (toQuestion qid) <$> getEntity qid
+
+-- * Discussion
+
+toDiscussion :: ID Discussion -> Bool -> DBChunkRange -> Discussion
+toDiscussion did pblc range = Discussion did pblc (toChunkRange range did)
+
+saveStatement :: ID Discussion -> S.Statement -> SQLM Statement
+saveStatement did sstatement = do
+  key <- insert sstatement
+  void . insert $ S.DS (S.idToKey did) key
+  pure $ S.statementElim (toStatement (S.keyToId key)) sstatement
+
+createDiscussion :: ID Patch -> Create Discussion -> DB Discussion
+createDiscussion pid disc = liftDB $ do
+  let sdiscussion = S.Discussion
+        (disc ^. createDiscussionPublic)
+        (disc ^. createDiscussionRange . to mkDBChunkRange)
+  key <- insert sdiscussion
+  let did = S.keyToId key
+  void . insert $ S.PD (S.idToKey pid) key
+  let sstatement = S.Statement
+        (disc ^. createDiscussionStatementText)
+        Nothing -- Top level node
+  void $ saveStatement did sstatement
+  pure $ S.discussionElim (toDiscussion did) sdiscussion
+
+getDiscussion :: ID Discussion -> DB Discussion
+getDiscussion did = S.discussionElim (toDiscussion did) <$> getEntity did
+
+statementsOfDiscussion :: ID Discussion -> DB [ID Statement]
+statementsOfDiscussion did = liftDB $
+  foreignKeyField S.dSStatement <$$> selectList [S.DSDiscussion ==. S.idToKey did] []
+
+-- | TODO: there is probably a way to retrieve single values in persistent somewhere that works
+-- better than 'head'.
+getDiscussionIDFromStatement :: ID Statement -> DB (ID Discussion)
+getDiscussionIDFromStatement sid = head <$> liftDB
+  (foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] [])
+
+
+-- * Answer
+
+toAnswer :: ID Answer -> Key S.Question -> ST -> Answer
+toAnswer aid qkey = Answer aid (S.keyToId qkey)
+
+createAnswer :: ID Question -> Create Answer -> DB Answer
+createAnswer qid answer = liftDB $ do
+  let sanswer = S.Answer
+        (S.idToKey qid)
+        (answer ^. createAnswerText)
+  key <- insert sanswer
+  pure $ S.answerElim (toAnswer (S.keyToId key)) sanswer
+
+getAnswer :: ID Answer -> DB Answer
+getAnswer _aid = undefined
+
+answersOfQuestion :: ID Question -> DB [Answer]
+answersOfQuestion qid = liftDB $ do
+  mkAnswer <$$> selectList [S.AnswerQuestion ==. S.idToKey qid] []
+  where
+    mkAnswer e = S.answerElim (toAnswer (S.keyToId $ entityKey e)) (entityVal e)
+
+-- * Statement
+
+toStatement :: ID Statement -> ST -> Maybe (Key S.Statement) -> Statement
+toStatement sid text parent = Statement sid text (S.keyToId <$> parent)
+
+createStatement :: ID Statement  -> Create Statement -> DB Statement
+createStatement sid statement = do
+  ds  <- liftDB $ foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] []
+  did <- unique ds
+  liftDB $ do
+    let sstatement = S.Statement
+          (statement ^. createStatementText)
+          (Just $ S.idToKey sid)
+    saveStatement did sstatement
+
+getStatement :: ID Statement -> DB Statement
+getStatement sid = S.statementElim (toStatement sid) <$> getEntity sid
