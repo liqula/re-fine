@@ -109,10 +109,11 @@ emitBackendCallsFor action state = case action of
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
 
-    SubmitComment text kind forRange -> do
-      -- here we need to distinguish which comment kind we want to submit
+    SubmitComment text category forRange -> do
+      -- here we need to distinguish which comment category we want to submit
       -- check the state and what the user selected there
-      case kind of
+      -- (FIXME: the new correct technical term for 'category' is 'kind'.)
+      case category of
         Just Discussion ->
           addDiscussion (fromJust (state ^. gsVDoc) ^. compositeVDocRepo ^. RT.vdocHeadPatch)
                      (RT.CreateDiscussion text True (createChunkRange forRange)) $ \case
