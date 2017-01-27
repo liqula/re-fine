@@ -29,7 +29,7 @@ import qualified Generics.SOP.NFData as SOP
 import           GHC.Generics (Generic)
 
 import Refine.Common.Types.Prelude
-import Refine.Prelude (ClearTP(..))
+import Refine.Prelude (ClearTypeParameter(..))
 import Refine.Prelude.Generic
 import Refine.Prelude.TH (makeRefineType)
 
@@ -71,8 +71,8 @@ instance Read DataUID where
 
 -- * clear type param
 
-instance ClearTP ChunkRange where
-  clearTP (ChunkRange i b e) = ChunkRange (clearTP i) b e
+instance ClearTypeParameter ChunkRange where
+  clearTypeParameter (ChunkRange i b e) = ChunkRange (clearTypeParameter i) b e
 
 -- * instances
 

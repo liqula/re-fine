@@ -37,7 +37,7 @@ import           Refine.Common.Types.Comment
 import           Refine.Common.Types.Prelude
 import           Refine.Common.Types.VDoc
 import           Refine.Common.VDoc.HTML
-import           Refine.Prelude (Void, clearTP, monadError)
+import           Refine.Prelude (Void, clearTypeParameter, monadError)
 
 
 listVDocs :: App DB [VDoc]
@@ -84,7 +84,7 @@ getCompositeVDoc vid = do
     pure $ do
       hedits <- docRepo $ DocRepo.getChildEdits rhandle hhandle
       edits  <- db $ mapM DB.getEditFromHandle hedits
-      let chunkRanges = chunkRangesCN <> (view (editRange . to clearTP) <$> edits)
+      let chunkRanges = chunkRangesCN <> (view (editRange . to clearTypeParameter) <$> edits)
       version <- monadError AppVDocError
                  =<< insertMarks chunkRanges <$> docRepo (DocRepo.getVersion rhandle hhandle)
       pure $ CompositeVDoc vdoc repo version edits commentNotes commentDiscussions
@@ -92,9 +92,9 @@ getCompositeVDoc vid = do
   where
     commentChunkRange :: Comment -> ChunkRange Void
     commentChunkRange = \case
-      CommentNote n       -> n ^. noteChunkRange . to clearTP
-      CommentQuestion q   -> q ^. compositeQuestion . questionChunkRange . to clearTP
-      CommentDiscussion d -> d ^. compositeDiscussion . discussionChunkRange . to clearTP
+      CommentNote n       -> n ^. noteChunkRange . to clearTypeParameter
+      CommentQuestion q   -> q ^. compositeQuestion . questionChunkRange . to clearTypeParameter
+      CommentDiscussion d -> d ^. compositeDiscussion . discussionChunkRange . to clearTypeParameter
 
 addEdit :: ID Edit -> Create Edit -> App DB Edit
 addEdit basepid edit = do
