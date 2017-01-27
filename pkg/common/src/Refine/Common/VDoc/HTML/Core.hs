@@ -58,7 +58,7 @@ data VDocHTMLError =
 -- point.  in order to keep track of which close mark belongs to which open mark, we cannot rely on
 -- their order (which still needs to be de-overlapped), so need close marks of the form
 -- @PreMarkClose "data-chunk-id-value"@.
-data PreToken = PreToken Token | PreMarkOpen ST | PreMarkClose ST
+data PreToken = PreToken Token | PreMarkOpen ST ST | PreMarkClose ST
   deriving (Eq, Show)
 
 
@@ -84,9 +84,9 @@ dataUidOfToken (TagOpen _ attrs) =
 dataUidOfToken _ = Nothing
 
 dataUidOfPreToken :: PreToken -> Maybe DataUID
-dataUidOfPreToken (PreToken t)     = dataUidOfToken t
-dataUidOfPreToken (PreMarkOpen _)  = Nothing
-dataUidOfPreToken (PreMarkClose _) = Nothing
+dataUidOfPreToken (PreToken t)      = dataUidOfToken t
+dataUidOfPreToken (PreMarkOpen _ _) = Nothing
+dataUidOfPreToken (PreMarkClose _)  = Nothing
 
 
 -- | Call 'tokensToForest' and convert the error type.

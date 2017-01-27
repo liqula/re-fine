@@ -23,7 +23,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Common.VDoc.HTML.Splice
-  ( insertMarks
+  ( insertMarks, insertMoreMarks
   , chunkRangeCanBeApplied
   , PreToken(..)
   , enablePreTokens
@@ -38,11 +38,13 @@ import           Control.Exception (assert)
 import           Control.Lens (Traversal', (&), (^.), (%~))
 import           Control.Monad.Error.Class (MonadError, throwError)
 import           Control.Monad (foldM)
+import           Data.Char (toLower)
 import           Data.Functor.Infix ((<$$>))
 import           Data.Maybe (catMaybes)
 import           Data.String.Conversions ((<>), cs)
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
+import           Data.Typeable (Typeable, typeOf)
 import           Text.HTML.Parser (Token(..), Attr(..), parseTokens, canonicalizeTokens, renderTokens)
 import           Text.HTML.Tree (tokensToForest, tokensFromForest, nonClosing)
 import           Web.HttpApiData (toUrlPiece)
@@ -56,7 +58,7 @@ import Refine.Prelude
 
 -- | Render 'VDocVersion' as needed in the browser.  More specifically: Insert @mark@ html elements
 -- for all chunks of all edits, comments, notes, etc.
-insertMarks :: MonadError VDocHTMLError m
+insertMarks :: (Typeable a, MonadError VDocHTMLError m)
             => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> m (VDocVersion 'HTMLWithMarks)
 insertMarks crs (VDocVersion (parseTokens -> (ts :: [Token])))
   = assert (ts == canonicalizeTokens ts)
@@ -64,6 +66,11 @@ insertMarks crs (VDocVersion (parseTokens -> (ts :: [Token])))
   . fmap (VDocVersion . cs . renderTokens)  -- TODO: do we still want '\n' between tokens for darcs?
   . insertMarksTs crs
   $ ts
+
+-- Calls 'insertMarks', but expects the input 'VDocVersion' to have passed through before.
+insertMoreMarks :: (Typeable a, MonadError VDocHTMLError m)
+                => [ChunkRange a] -> VDocVersion 'HTMLWithMarks -> m (VDocVersion 'HTMLWithMarks)
+insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
 
 
 -- * sanity check
@@ -84,7 +91,7 @@ chunkPointCanBeAppliedTs (ChunkPoint uid off) ts = case tokensToForest ts of
 
 -- * inserting marks
 
-insertMarksTs :: MonadError VDocHTMLError m
+insertMarksTs :: (Typeable a, MonadError VDocHTMLError m)
               => [ChunkRange a] -> [Token] -> m [Token]
 insertMarksTs crs ts = do
   pf <- monadError VDocHTMLErrorBadTree (tokensToForest ts)
@@ -92,7 +99,7 @@ insertMarksTs crs ts = do
   monadError VDocHTMLErrorInternal (resolvePreTokens $ preTokensFromForest pfm)
 
 
-insertMarksF :: forall m a . MonadError VDocHTMLError m
+insertMarksF :: forall m a . Typeable a => MonadError VDocHTMLError m
              => [ChunkRange a] -> Forest PreToken -> m (Forest PreToken)
 insertMarksF crs = (`woodZip` splitup crs)
   where
@@ -100,8 +107,9 @@ insertMarksF crs = (`woodZip` splitup crs)
     splitup :: [ChunkRange a] -> [(ChunkPoint, PreToken)]
     splitup = mconcat . fmap f
       where
+        t = cs . show . typeOf $ (undefined :: a)
         f (ChunkRange (toUrlPiece -> l) mb me) =
-            catMaybes [(, PreMarkOpen l) <$> mb, (, PreMarkClose l) <$> me]
+            catMaybes [(, PreMarkOpen l t) <$> mb, (, PreMarkClose l)  <$> me]
 
     -- FUTUREWORK: there is a faster implementation for @woodZip@: if chunks come in the correct
     -- order, we only need to traverse the forest once.  that's why it's called "zip".
@@ -194,7 +202,7 @@ splitAtOffset offset ts_ = assert (offset >= 0)
     isFlatToken = \case
       (PreToken (TagOpen n _)) -> n `notElem` nonClosing
       (PreToken (TagClose _))  -> False
-      (PreMarkOpen _)          -> True  -- TODO: why?
+      (PreMarkOpen _ _)        -> True  -- TODO: why?
       (PreMarkClose _)         -> True  -- TODO: why?
       _                        -> True
 
@@ -202,12 +210,12 @@ splitAtOffset offset ts_ = assert (offset >= 0)
 -- * pretokens
 
 runPreToken :: PreToken -> Token
-runPreToken (PreToken t)     = t
-runPreToken (PreMarkOpen l)  = TagOpen "mark" [Attr "data-chunk-id" l]
-runPreToken (PreMarkClose _) = TagClose "mark"
+runPreToken (PreToken t)      = t
+runPreToken (PreMarkOpen l k) = TagOpen "mark" [Attr "data-chunk-id" l, Attr "data-chunk-kind" $ ST.map toLower k]
+runPreToken (PreMarkClose _)  = TagClose "mark"
 
 isOpen :: PreToken -> Bool
-isOpen (PreMarkOpen _)          = True
+isOpen (PreMarkOpen _ _)        = True
 isOpen (PreToken (TagOpen n _)) = n `notElem` nonClosing
 isOpen _                        = False
 
@@ -217,17 +225,17 @@ isClose (PreToken (TagClose _)) = True
 isClose _                       = False
 
 isPreMark :: PreToken -> Bool
-isPreMark (PreMarkOpen _)  = True
-isPreMark (PreMarkClose _) = True
-isPreMark (PreToken _)     = False
+isPreMark (PreMarkOpen _ _) = True
+isPreMark (PreMarkClose _)  = True
+isPreMark (PreToken _)      = False
 
 isMatchingOpenClose :: PreToken -> PreToken -> Bool
-isMatchingOpenClose (PreMarkOpen l)          (PreMarkClose l')        | l == l' = True
+isMatchingOpenClose (PreMarkOpen l _)        (PreMarkClose l')        | l == l' = True
 isMatchingOpenClose (PreToken (TagOpen n _)) (PreToken (TagClose n')) | n == n' = True
 isMatchingOpenClose _                        _                                  = False
 
 closeFromOpen :: PreToken -> PreToken
-closeFromOpen (PreMarkOpen l)           = PreMarkClose l
+closeFromOpen (PreMarkOpen l _)         = PreMarkClose l
 closeFromOpen (PreToken (TagOpen el _)) = PreToken (TagClose el)
 closeFromOpen _                         = error "closeFromOpen: internal error."
 
@@ -245,12 +253,15 @@ preTokensToForest :: MonadError VDocHTMLError m => [PreToken] -> m (Forest PreTo
 preTokensToForest = fmap (fmap (fmap unstashPreToken)) . tokensToForest' . fmap stashPreToken
 
 stashPreToken :: PreToken -> Token
-stashPreToken (PreMarkOpen l)  = Doctype l
-stashPreToken (PreMarkClose l) = Doctype ("/" <> l)
-stashPreToken (PreToken t)     = t
+stashPreToken (PreMarkOpen l k) = Doctype $ ST.intercalate "/" [l, k]
+stashPreToken (PreMarkClose l)  = Doctype l
+stashPreToken (PreToken t)      = t
 
 unstashPreToken :: Token -> PreToken
-unstashPreToken (Doctype l) = case ST.splitAt 1 l of ("/", l') -> PreMarkClose l'; _ -> PreMarkOpen l
+unstashPreToken (Doctype s) = case ST.splitOn "/" s of
+  [l, k] -> PreMarkOpen l k
+  [l]    -> PreMarkClose l
+  bad    -> error $ "unstashPreToken: " <> show bad
 unstashPreToken t           = PreToken t
 
 
@@ -327,6 +338,6 @@ resolvePreTokens ts_ = runPreToken <$$> (filterEmptyChunks <$> go)
             = Fail $ "resolvePreTokens: open without close: " <> show (openings, ts_)
 
     filterEmptyChunks :: [PreToken] -> [PreToken]
-    filterEmptyChunks (PreMarkOpen _ : PreMarkClose _ : xs) = filterEmptyChunks xs
-    filterEmptyChunks (x : xs)                              = x : filterEmptyChunks xs
-    filterEmptyChunks []                                    = []
+    filterEmptyChunks (PreMarkOpen _ _ : PreMarkClose _ : xs) = filterEmptyChunks xs
+    filterEmptyChunks (x : xs)                                = x : filterEmptyChunks xs
+    filterEmptyChunks []                                      = []
