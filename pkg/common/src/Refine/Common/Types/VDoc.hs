@@ -21,6 +21,7 @@
 module Refine.Common.Types.VDoc where
 
 import           Control.Lens (makeLenses, makePrisms)
+import           Data.Map
 import           Data.String.Conversions (ST)
 import           GHC.Generics (Generic)
 import           Control.DeepSeq
@@ -134,10 +135,10 @@ data CompositeVDoc = CompositeVDoc
   { _compositeVDoc            :: VDoc
   , _compositeVDocRepo        :: VDocRepo
   , _compositeVDocVersion     :: VDocVersion 'HTMLWithMarks
-  , _compositeVDocEdits       :: [Edit]
-  , _compositeVDocNotes       :: [Note]
+  , _compositeVDocEdits       :: Map (ID Edit) Edit
+  , _compositeVDocNotes       :: Map (ID Note) Note
   -- , _compositeVDocQuestions   :: [Question]  -- will be due in #99
-  , _compositeVDocDiscussions :: [CompositeDiscussion]
+  , _compositeVDocDiscussions :: Map (ID Discussion) CompositeDiscussion
   }
   deriving (Eq, Show, Read, Generic)
 

@@ -23,13 +23,14 @@
 module Refine.Backend.ServerSpec where
 
 import           Control.Exception (throwIO, ErrorCall(ErrorCall))
-import           Control.Lens ((^.), (.~), (&))
+import           Control.Lens ((^.), (.~), (&), to)
 import           Control.Monad.Trans.Except (runExceptT)
 import           Control.Monad (void)
 import           Control.Natural (run)
 import           Data.Aeson (FromJSON, ToJSON, decode, eitherDecode, encode)
 import           Data.Default (def)
 import           Data.Proxy (Proxy(Proxy))
+import           Data.Map (elems)
 import           Data.String.Conversions (SBS, cs, (<>))
 import           Network.HTTP.Types.Status (Status(statusCode))
 import           Network.URI (URI, uriToString)
@@ -174,7 +175,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
           (addNoteUri (fe ^. compositeVDocRepo . vdocHeadEdit))
           (CreateNote "[note]" True (CreateChunkRange Nothing Nothing))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
-      be ^. compositeVDocNotes `shouldContain` [fn]
+      be ^. compositeVDocNotes . to elems `shouldContain` [fn]
 
   describe "sAddDiscussion" $ do
     it "stores discussion with no ranges" $ \sess -> do
@@ -184,7 +185,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
           (addDiscussionUri (fe ^. compositeVDocRepo . vdocHeadEdit))
           (CreateDiscussion "[discussion initial statement]" True (CreateChunkRange Nothing Nothing))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
-      be ^. compositeVDocDiscussions `shouldContain` [fn]
+      be ^. compositeVDocDiscussions . to elems `shouldContain` [fn]
 
   describe "sAddStatement" $ do
     it "stores statement for given discussion" $ \_sess -> do
@@ -211,4 +212,4 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
         pendingWith "applicableEdits is not implemented."
         (fe, fp) <- setup sess
         be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
-        be ^. compositeVDocEdits `shouldContain` [fp]
+        be ^. compositeVDocEdits . to elems`shouldContain` [fp]

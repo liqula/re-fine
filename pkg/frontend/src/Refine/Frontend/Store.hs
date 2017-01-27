@@ -70,7 +70,8 @@ vdocUpdate action state = case action of
     AddDiscussion discussion      -> case state of
         Nothing   -> Nothing -- no vdoc: we cannot put the comment anywhere
                              -- FIXME: i think this should be an error. ~fisx
-        Just vdoc -> Just $ vdoc & RT.compositeVDocDiscussions %~ (discussion :)
+        Just vdoc -> Just $ vdoc & RT.compositeVDocDiscussions
+                                    %~ M.insert (discussion ^. RT.compositeDiscussion . RT.discussionID) discussion
                             -- TODO: BUG!  this adds a new version of a discussion without removing the old one!
     _ -> state
 
