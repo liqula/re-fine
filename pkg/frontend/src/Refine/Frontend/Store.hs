@@ -202,5 +202,5 @@ foreign import javascript unsafe
 
 foreign import javascript unsafe
   -- see webpack.config.js for a definition of the environment variable.
-  "if( process.env.IS_IN_WEBPACK ){ console.log($1, JSON.parse($2)); }"
+  "if( process.env.NODE_ENV === 'development' ){ console.log($1, JSON.parse($2)); }"
   consoleLog_ :: JSString -> JSString -> IO ()

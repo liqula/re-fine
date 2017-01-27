@@ -24,7 +24,6 @@ windowSize = defineLifecycleView "WindowSize" () lifecycleConfig
          -- TODO debug output; remove in production
          span_ ["className" $= "layout-indicator"] . elemString $ "layout: " <> show size
    , lComponentDidMount = Just $ \_ _ _ -> do
-           consoleLog "Component did mount"
            cb <- asyncCallback setWindowSize
            js_windowAddEventListener "resize" cb
            setWindowSize
@@ -60,7 +59,3 @@ foreign import javascript unsafe
 foreign import javascript unsafe
     "window.removeEventListener($1, $2)"
     js_windowRemoveEventListener :: JSString -> Callback (IO ()) -> IO ()
-
-foreign import javascript unsafe
-  "console.log($1)"
-  consoleLog :: JSString -> IO ()

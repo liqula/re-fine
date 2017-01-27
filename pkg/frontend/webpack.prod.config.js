@@ -3,25 +3,16 @@ var webpack = require("webpack");
 var HtmlWebpackPlugin = require("html-webpack-plugin");
 var jsonImporter = require("node-sass-json-importer");
 
-var localPort = "9090";
-
 module.exports = {
     entry: [
-        "webpack-dev-server/client?http://localhost:" + localPort,
-        "webpack/hot/only-dev-server",
         "./static/hookup",
         "./js-build/frontend"
     ],
-     devServer: {
-         contentBase: "./js-build"
-     },
-    devtool: "source-map",
     output: {
         path: path.join(__dirname, "js-build"),
         filename: "[hash].bundle.js"  // for cache busting
     },
     plugins: [
-        new webpack.HotModuleReplacementPlugin(),
         // modifies index.html to include bundle.js:
         new HtmlWebpackPlugin({
             template: "./index.html"
@@ -29,7 +20,7 @@ module.exports = {
         new webpack.DefinePlugin({
             "process.env": {
                 IS_IN_WEBPACK: true,
-                NODE_ENV: '"development"'
+                NODE_ENV: '"production"'
             }
         })
     ],
