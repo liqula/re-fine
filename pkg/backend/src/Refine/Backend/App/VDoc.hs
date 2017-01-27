@@ -79,22 +79,18 @@ getCompositeVDoc vid = do
     comments <- DB.editComments headid
     let commentNotes       = catMaybes $ (^? _CommentNote)       <$> filter (has _CommentNote)       comments
         commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
-        chunkRangesCN = commentChunkRange <$> comments
 
     pure $ do
       hedits <- docRepo $ DocRepo.getChildEdits rhandle hhandle
       edits  <- db $ mapM DB.getEditFromHandle hedits
-      let chunkRanges = chunkRangesCN <> (view (editRange . to clearTypeParameter) <$> edits)
-      version <- monadError AppVDocError
-                 =<< insertMarks chunkRanges <$> docRepo (DocRepo.getVersion rhandle hhandle)
-      pure $ CompositeVDoc vdoc repo version edits commentNotes commentDiscussions
+      let insertAllMarks :: VDocVersion 'HTMLCanonical -> Either VDocHTMLError (VDocVersion 'HTMLWithMarks)
+          insertAllMarks vers = insertMarks     (view noteChunkRange <$> commentNotes) vers
+                            >>= insertMoreMarks (view (compositeDiscussion . discussionChunkRange) <$> commentDiscussions)
+                            >>= insertMoreMarks (view editRange <$> edits)
 
-  where
-    commentChunkRange :: Comment -> ChunkRange Void
-    commentChunkRange = \case
-      CommentNote n       -> n ^. noteChunkRange . to clearTypeParameter
-      CommentQuestion q   -> q ^. compositeQuestion . questionChunkRange . to clearTypeParameter
-      CommentDiscussion d -> d ^. compositeDiscussion . discussionChunkRange . to clearTypeParameter
+      version <- monadError AppVDocError
+                 =<< insertAllMarks <$> docRepo (DocRepo.getVersion rhandle hhandle)
+      pure $ CompositeVDoc vdoc repo version edits commentNotes commentDiscussions
 
 addEdit :: ID Edit -> Create Edit -> App DB Edit
 addEdit basepid edit = do

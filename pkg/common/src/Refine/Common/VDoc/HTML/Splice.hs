@@ -23,7 +23,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Common.VDoc.HTML.Splice
-  ( insertMarks
+  ( insertMarks, insertMoreMarks
   , chunkRangeCanBeApplied
   , PreToken(..)
   , enablePreTokens
@@ -66,6 +66,11 @@ insertMarks crs (VDocVersion (parseTokens -> (ts :: [Token])))
   . fmap (VDocVersion . cs . renderTokens)  -- TODO: do we still want '\n' between tokens for darcs?
   . insertMarksTs crs
   $ ts
+
+-- Calls 'insertMarks', but expects the input 'VDocVersion' to have passed through before.
+insertMoreMarks :: (Typeable a, MonadError VDocHTMLError m)
+                => [ChunkRange a] -> VDocVersion 'HTMLWithMarks -> m (VDocVersion 'HTMLWithMarks)
+insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
 
 
 -- * sanity check
