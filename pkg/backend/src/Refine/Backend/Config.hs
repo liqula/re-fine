@@ -46,7 +46,7 @@ instance Default Config where
     , _cfgReposRoot     = _cfgRootDir def </> "repos"
     , _cfgDBKind        = def
     , _cfgPoolSize      = 5
-    , _cfgFileServeRoot = Just "../refine-frontend/js-build"
+    , _cfgFileServeRoot = Just "../frontend/js-build"
     , _cfgWarpSettings  = def
     }
 
@@ -116,5 +116,9 @@ initConfig mfp = do
     , "------------------------------"
     , cs (encode cfg)
     , "------------------------------"
+    , ""
+    , "If you want to change this, copy the lines between the dashes into `me.yaml` and"
+    , "invoke the server as `refine me.yaml`."
+    , ""
     ]
   pure cfg

@@ -4,6 +4,7 @@ module Refine.Common.VDoc.HTML
   , canonicalizeVDocVersion    -- 'HTMLRaw" to 'HTMLCanonical'
   , decanonicalizeVDocVersion  -- 'HTMLCanonical' to 'HTMLRaw' (benign, but we may not actually need it)
   , insertMarks                -- 'HTMLCanonical' to 'HTMLWithMarks'
+  , insertMoreMarks            -- 'HTMLWithMarks' to 'HTMLWithMarks' (if you want to call it incrementally).
   , addUIInfoToForest          -- for 'ChunkRange' calculation (probably in the frontend)
   ) where
 

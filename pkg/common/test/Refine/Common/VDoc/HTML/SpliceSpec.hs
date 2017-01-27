@@ -37,12 +37,16 @@ import Refine.Common.VDoc.HTML.Core
 import Refine.Common.VDoc.HTML.Splice
 
 
+noChunkRanges :: [ChunkRange ()]
+noChunkRanges = []
+
+
 spec :: Spec
 spec = parallel $ do
   describe "insertMarks" $ do
     it "does not change version if chunk list is empty." . property . forAll arbitraryCanonicalVDocVersion $ do
       \vers -> do
-        _unVDocVersion <$> insertMarks [] vers `shouldBe` Right (_unVDocVersion vers)
+        _unVDocVersion <$> insertMarks noChunkRanges vers `shouldBe` Right (_unVDocVersion vers)
 
     it "generates valid output on arbitrary valid chunkranges." $ do
       pending
@@ -50,12 +54,23 @@ spec = parallel $ do
     it "marks are inserted under the correct parent node." $ do
       pending
 
+    it "adds owner type info in its own attribute." $ do
+      let cr l = [ChunkRange l (Just (ChunkPoint (DataUID 3) 1)) (Just (ChunkPoint (DataUID 3) 2))]
+          vers = VDocVersion "<span data-uid=\"3\">asdf</span>"
+          vers' l = VDocVersion $ "<span data-uid=\"3\">a<mark data-chunk-kind=\"" <> l <> "\" data-chunk-id=\"3\">s</mark>df</span>"
+
+      -- NOTE: if you change these, you will probably break css in the frontend.
+      insertMarks (cr (ID 3 :: ID Note))       vers `shouldBe` Right (vers' "note")
+      insertMarks (cr (ID 3 :: ID Question))   vers `shouldBe` Right (vers' "question")
+      insertMarks (cr (ID 3 :: ID Discussion)) vers `shouldBe` Right (vers' "discussion")
+      insertMarks (cr (ID 3 :: ID Edit))       vers `shouldBe` Right (vers' "edit")
+
     it "crashes (assertion failed) if input is not canonicalized" $ do
       let eval :: Show e => Either e a -> IO a
           eval = either (throwIO . ErrorCall . show) pure
 
           bad :: Either VDocHTMLError (VDocVersion 'HTMLWithMarks)
-          bad = insertMarks [] $ VDocVersion "<wef>q"  -- (data-uid attr. missing in tag)
+          bad = insertMarks noChunkRanges $ VDocVersion "<wef>q"  -- (data-uid attr. missing in tag)
 
       eval bad `shouldThrow` anyException
 
@@ -95,28 +110,31 @@ spec = parallel $ do
 
     context "with consistent PreMarks" $ do
       it "removes empty selections" $ do
-        resolvePreTokens [PreMarkOpen "2", PreMarkClose "2"]
+        resolvePreTokens [PreMarkOpen "2" "whoof", PreMarkClose "2"]
           `shouldBe` Right []
 
       it "keeps selections that have only tags in them, but no text" $ do
         -- (not sure this is what we want, but it's what we currently do!)
-        resolvePreTokens [PreMarkOpen "2", PreMarkOpen "8", PreMarkClose "8", PreMarkClose "2"]
-          `shouldBe` Right [TagOpen "mark" [Attr "data-chunk-id" "2"], TagClose "mark"]
+        resolvePreTokens [PreMarkOpen "2" "whoof", PreMarkOpen "8" "whoof", PreMarkClose "8", PreMarkClose "2"]
+          `shouldBe` Right [TagOpen "mark" [Attr "data-chunk-id" "2", Attr "data-chunk-kind" "whoof"], TagClose "mark"]
 
       it "renders marks as tags" $ do
-        resolvePreTokens [PreMarkOpen "2", PreToken $ ContentText "wef", PreMarkClose "2"]
-          `shouldBe` Right [TagOpen "mark" [Attr "data-chunk-id" "2"], ContentText "wef", TagClose "mark"]
-        resolvePreTokens [ PreMarkOpen "2"
+        resolvePreTokens [PreMarkOpen "2" "whoof", PreToken $ ContentText "wef", PreMarkClose "2"]
+          `shouldBe` Right [ TagOpen "mark" [Attr "data-chunk-id" "2", Attr "data-chunk-kind" "whoof"]
+                           , ContentText "wef"
+                           , TagClose "mark"
+                           ]
+        resolvePreTokens [ PreMarkOpen "2" "whoof"
                          , PreToken $ ContentText "wef"
-                         , PreMarkOpen "8"
+                         , PreMarkOpen "8" "whoof"
                          , PreToken $ ContentText "puh"
                          , PreMarkClose "8"
                          , PreMarkClose "2"
                          ]
           `shouldBe`
-               Right [ TagOpen "mark" [Attr "data-chunk-id" "2"]
+               Right [ TagOpen "mark" [Attr "data-chunk-id" "2", Attr "data-chunk-kind" "whoof"]
                      , ContentText "wef"
-                     , TagOpen "mark" [Attr "data-chunk-id" "8"]
+                     , TagOpen "mark" [Attr "data-chunk-id" "8", Attr "data-chunk-kind" "whoof"]
                      , ContentText "puh"
                      , TagClose "mark"
                      , TagClose "mark"
@@ -124,21 +142,21 @@ spec = parallel $ do
 
     context "with *in*consistent PreMarks" $ do
       it "fails" $ do
-        let bad1 = [ PreMarkOpen "2"
+        let bad1 = [ PreMarkOpen "2" "whoof"
                    ]
-            bad2 = [ PreMarkOpen "2"
-                   , PreMarkOpen "8"
+            bad2 = [ PreMarkOpen "2" "whoof"
+                   , PreMarkOpen "8" "whoof"
                    , PreMarkClose "2"
                    , PreMarkClose "8"
                    ]
 
         resolvePreTokens bad1
-          `shouldBe` Left ("resolvePreTokens: open without close: " <> show ([PreMarkOpen "2"], bad1))
+          `shouldBe` Left ("resolvePreTokens: open without close: " <> show ([PreMarkOpen "2" "whoof"], bad1))
         resolvePreTokens bad2
           `shouldBe` Left ("resolvePreTokens: close without open: " <> show ([PreMarkClose "8"], bad2))
 
 
   describe "preTokensToForest" $ do
     it "Correctly ignores broken tree structure of PreMarkOpen, PreMarkClose." $ do
-      preTokensToForest [PreMarkOpen "1"] `shouldBe` Right [Node (PreMarkOpen "1") []]
+      preTokensToForest [PreMarkOpen "1" "whoof"] `shouldBe` Right [Node (PreMarkOpen "1" "whoof") []]
       preTokensToForest [PreMarkClose "1"] `shouldBe` Right [Node (PreMarkClose "1") []]

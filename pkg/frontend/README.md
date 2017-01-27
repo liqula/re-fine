@@ -7,7 +7,7 @@ This application is based on react-flux.
 ### For the first time
 
 1. Install Node.js >= 6.x.x
-1. cd refine-frontend
+1. cd pkg/frontend
 1. npm install
 
 ### Each time

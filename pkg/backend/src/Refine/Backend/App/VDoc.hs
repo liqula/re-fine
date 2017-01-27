@@ -25,19 +25,17 @@ module Refine.Backend.App.VDoc where
 
 import Control.Lens ((^.), (^?), to, view, has)
 import Control.Monad ((<=<), join, mapM)
-import Data.Monoid ((<>))
 import Data.Maybe (catMaybes)
 
 import           Refine.Backend.App.Core
 import           Refine.Backend.Database (DB)
 import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
-import           Refine.Common.Types.Chunk
 import           Refine.Common.Types.Comment
 import           Refine.Common.Types.Prelude
 import           Refine.Common.Types.VDoc
 import           Refine.Common.VDoc.HTML
-import           Refine.Prelude (Void, clearTP, monadError)
+import           Refine.Prelude (monadError)
 
 
 listVDocs :: App DB [VDoc]
@@ -79,22 +77,18 @@ getCompositeVDoc vid = do
     comments <- DB.editComments headid
     let commentNotes       = catMaybes $ (^? _CommentNote)       <$> filter (has _CommentNote)       comments
         commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
-        chunkRangesCN = commentChunkRange <$> comments
 
     pure $ do
       hedits <- docRepo $ DocRepo.getChildEdits rhandle hhandle
       edits  <- db $ mapM DB.getEditFromHandle hedits
-      let chunkRanges = chunkRangesCN <> (view (editRange . to clearTP) <$> edits)
-      version <- monadError AppVDocError
-                 =<< insertMarks chunkRanges <$> docRepo (DocRepo.getVersion rhandle hhandle)
-      pure $ CompositeVDoc vdoc repo version edits commentNotes commentDiscussions
+      let insertAllMarks :: VDocVersion 'HTMLCanonical -> Either VDocHTMLError (VDocVersion 'HTMLWithMarks)
+          insertAllMarks vers = insertMarks     (view noteChunkRange <$> commentNotes) vers
+                            >>= insertMoreMarks (view (compositeDiscussion . discussionChunkRange) <$> commentDiscussions)
+                            >>= insertMoreMarks (view editRange <$> edits)
 
-  where
-    commentChunkRange :: Comment -> ChunkRange Void
-    commentChunkRange = \case
-      CommentNote n       -> n ^. noteChunkRange . to clearTP
-      CommentQuestion q   -> q ^. compositeQuestion . questionChunkRange . to clearTP
-      CommentDiscussion d -> d ^. compositeDiscussion . discussionChunkRange . to clearTP
+      version <- monadError AppVDocError
+                 =<< insertAllMarks <$> docRepo (DocRepo.getVersion rhandle hhandle)
+      pure $ CompositeVDoc vdoc repo version edits commentNotes commentDiscussions
 
 addEdit :: ID Edit -> Create Edit -> App DB Edit
 addEdit basepid edit = do

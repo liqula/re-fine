@@ -16,7 +16,7 @@ module Refine.Prelude
 
     -- * void
   , Void
-  , ClearTP(..)
+  , ClearTypeParameter(..)
     -- * time
   , Timestamp(..), unTimestamp
   , timestampToEpoch
@@ -75,8 +75,8 @@ data Void
 --
 -- After clearing the type parameters we could unify information
 -- from different sources.
-class ClearTP t where
-  clearTP :: t a -> t Void
+class ClearTypeParameter t where
+  clearTypeParameter :: t a -> t Void
 
 -- * time
 
