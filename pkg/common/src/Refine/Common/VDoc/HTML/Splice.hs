@@ -199,7 +199,7 @@ splitAtOffset offset ts_ = assert (offset >= 0)
 
     isFlatToken :: PreToken -> Bool
     isFlatToken = \case
-      (PreToken (TagOpen n _)) -> n `notElem` nonClosing
+      (PreToken (TagOpen n _)) -> n `elem` nonClosing
       (PreToken (TagClose _))  -> False
       (PreMarkOpen _ _)        -> True  -- TODO: why?
       (PreMarkClose _)         -> True  -- TODO: why?
