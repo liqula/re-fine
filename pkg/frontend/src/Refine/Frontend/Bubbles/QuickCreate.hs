@@ -48,6 +48,7 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, s
                 ""
                 (fromString createType)
                 ""
+                False
                 (\_ -> RS.dispatch RS.ClearSelection <> RS.dispatch (RS.ShowCommentEditor (fst currentSelection)))
               ) offset
         _ -> mempty

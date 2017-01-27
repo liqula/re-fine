@@ -91,6 +91,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       ""
                       "index"
+                      False
                       (\_ -> [])
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
@@ -101,6 +102,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       "annotation"  -- RENAME: annotation => comment
                       "new annotation"  -- RENAME: annotation => comment
+                      False
                       (\_ -> [])
 
           iconButton_ $ IconButtonProps
@@ -109,6 +111,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       "modification"  -- (RENAME: Edit)
                       "new modification"  -- (RENAME: Edit)
+                      False
                       (\_ -> [])
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
@@ -120,6 +123,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       ""
                       "all annotations"  -- RENAME: annotation => comment
+                      False
                       (\_ -> [])
 
           iconButton_ $ IconButtonProps
@@ -129,6 +133,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       ""
                       "all modifications"  -- (RENAME: Edit)
+                      False
                       (\_ -> [])
 
           iconButtonWithAlignment_ $ IconButtonWithAlignmentProps (IconButtonProps
@@ -137,6 +142,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                                     ""
                                     "" -- data-content-type is not set for this one...
                                     "read mode"
+                                    False
                                     (\_ -> []))
                                     True
                                     Nothing
@@ -157,6 +163,7 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
                         ""
                         "annotation"  -- RENAME: annotation => comment
                         "document annotation"  -- RENAME: annotation => comment
+                        False
                         (\_ -> [])
             iconButton_ $ IconButtonProps
                         (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
@@ -164,6 +171,7 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
                         ""
                         "annotation"  -- RENAME: annotation => comment
                         "annotation related to text"  -- RENAME: annotation => comment
+                        False
                         (\_ -> [])
 
         div_ ["className" $= "c-vdoc-toolbar-extension__modification"] $ do  -- (RENAME: Edit)
@@ -173,6 +181,7 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
                         ""
                         "annotation"  -- RENAME: annotation => comment
                         "new modification"  -- (RENAME: Edit)
+                        False
                         (\_ -> [])
 
 

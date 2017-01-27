@@ -166,6 +166,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
                     "comment"
                     ""
                     "add a note"
+                    False
                     (\_ -> RS.dispatch $ RS.SetCommentCategory RS.Note)
                   )
       iconButton_ (IconButtonProps
@@ -174,6 +175,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
                     "discussion"
                     ""
                     "start a discussion"
+                    False
                     (\_ -> RS.dispatch $ RS.SetCommentCategory RS.Discussion)
                   )
 
@@ -189,6 +191,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
         ""
         ""
         "submit"
+        True
         (\_ -> RS.dispatch (RS.SubmitComment (curState ^. RS.commentInputStateText) category forRange)
             <> RS.dispatch RS.HideCommentEditor)
       )

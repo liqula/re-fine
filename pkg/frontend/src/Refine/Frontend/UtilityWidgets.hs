@@ -34,16 +34,17 @@ data IconProps = IconProps
 
 makeLenses ''IconProps
 
+type ClickHandler = Event -> [SomeStoreAction]
+
 data IconButtonProps = IconButtonProps
   { _iconProps     :: IconProps
   , _elementName   :: String
   , _moduleName    :: String
   , _contentType   :: JSString
   , _label         :: JSString
+  , _disabled      :: Bool
   , _clickHandler    :: ClickHandler
   }
-
-type ClickHandler = Event -> [SomeStoreAction]
 
 makeLenses ''IconButtonProps
 
