@@ -56,6 +56,20 @@ spec = parallel $ do
       chunkRangeCanBeApplied r vers `shouldBe` True
       insertMarks [r] vers `shouldSatisfy` isRight
 
+    it "regression (1)." $ do
+      let vers = VDocVersion "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\"></div>"
+          r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 3))
+                                                   (Just (ChunkPoint (DataUID 2) 0))
+      chunkRangeCanBeApplied r vers `shouldBe` True
+      insertMarks [r] vers `shouldSatisfy` isRight
+
+    it "regression (2)." $ do
+      let vers = VDocVersion "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\">.</div>"
+          r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 3))
+                                                   (Just (ChunkPoint (DataUID 2) 0))
+      chunkRangeCanBeApplied r vers `shouldBe` True
+      insertMarks [r] vers `shouldSatisfy` isRight
+
     it "generates valid output on arbitrary valid chunkranges." . property . forAll arbitraryChunkRangesWithVersion $ do
       \(vers, rs :: [ChunkRange Edit]) -> do
         insertMarks rs vers `shouldSatisfy` isRight
