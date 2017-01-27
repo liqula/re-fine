@@ -25,19 +25,17 @@ module Refine.Backend.App.VDoc where
 
 import Control.Lens ((^.), (^?), to, view, has)
 import Control.Monad ((<=<), join, mapM)
-import Data.Monoid ((<>))
 import Data.Maybe (catMaybes)
 
 import           Refine.Backend.App.Core
 import           Refine.Backend.Database (DB)
 import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
-import           Refine.Common.Types.Chunk
 import           Refine.Common.Types.Comment
 import           Refine.Common.Types.Prelude
 import           Refine.Common.Types.VDoc
 import           Refine.Common.VDoc.HTML
-import           Refine.Prelude (Void, clearTypeParameter, monadError)
+import           Refine.Prelude (monadError)
 
 
 listVDocs :: App DB [VDoc]
