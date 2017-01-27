@@ -77,8 +77,20 @@ insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
 chunkRangeCanBeApplied :: ChunkRange a -> VDocVersion b -> Bool
 chunkRangeCanBeApplied crs (VDocVersion (parseTokens -> (ts :: [Token]))) = chunkRangeCanBeAppliedTs crs ts
 
+-- | Returns 'True' iff (a) both chunk points are either Nothing or hit into an existing point in
+-- the tree (i.e. have existing @data-uid@ attributes and offsets no larger than the text length);
+-- (b) the begin chunk point is left of the end, and the text between them is non-empty.
 chunkRangeCanBeAppliedTs :: ChunkRange a -> [Token] -> Bool
-chunkRangeCanBeAppliedTs (ChunkRange _ mp1 mp2) ts = all (`chunkPointCanBeAppliedTs` ts) $ catMaybes [mp1, mp2]
+chunkRangeCanBeAppliedTs (ChunkRange _ mp1 mp2) ts = pointsHit && rangeNonEmpty
+  where
+    pointsHit = all (`chunkPointCanBeAppliedTs` ts) $ catMaybes [mp1, mp2]
+    rangeNonEmpty = case (mp1, mp2) of
+      (Nothing, _) -> True
+      (_, Nothing) -> True
+      (Just (ChunkPoint b _), Just (ChunkPoint e _))
+        -> let ts' = dropWhile ((/= Just b) . dataUidOfToken) ts
+               ts'' = takeWhile ((/= Just e) . dataUidOfToken) ts'
+           in sum (tokenTextLength <$> ts'') > 0
 
 chunkPointCanBeAppliedTs :: ChunkPoint -> [Token] -> Bool
 chunkPointCanBeAppliedTs (ChunkPoint uid off) ts = case tokensToForest ts of
