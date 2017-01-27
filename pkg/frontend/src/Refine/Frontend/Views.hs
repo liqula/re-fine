@@ -27,7 +27,7 @@ import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.Mark
 import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
-import qualified Refine.Frontend.Screen.Types as RS
+import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
 import           Refine.Frontend.Types as RS
@@ -42,7 +42,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
     case rs ^. gsVDoc of
         Nothing -> vdocLoader_ (rs ^. gsVDocList)
         Just vdoc -> div_ $ do
-            windowSize_ (WindowSizeProps (rs ^. gsScreenState ^. RS.ssWindowSize)) mempty
+            windowSize_ (WindowSizeProps (rs ^. gsScreenState ^. SC.ssWindowSize)) mempty
             stickyContainer_ [] $ do
                 headerSizeCapture_ $ do
                     -- the following need to be siblings because of the z-index handling
@@ -64,7 +64,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                             leftAside_ $ LeftAsideProps
                                            (rs ^. gsMarkPositions)
                                            (rs ^. gsBubblesState ^. bsCurrentSelection)
-                                           (rs ^. gsScreenState ^. RS.ssHeaderHeight)
+                                           (rs ^. gsScreenState)
                                            (vdoc ^. compositeVDocDiscussions)
                                            (vdoc ^. compositeVDocNotes)
                             article_ [ "id" $= "vdocValue"
@@ -177,7 +177,7 @@ editBubble_ dataHunkId markPositions = view editBubble (dataHunkId, markPosition
 data LeftAsideProps = LeftAsideProps
   { _leftAsideMarkPositions :: RS.MarkPositions
   , _leftAsideCurrentSelection :: Selection
-  , _leftAsideHeaderHeight :: Int
+  , _leftAsideScreenState :: SC.ScreenState
   , _leftAsideDiscussions :: [CompositeDiscussion]
   , _leftAsideNotes :: [Note]
   }
@@ -198,7 +198,7 @@ leftAside = defineView "LeftAside" $ \props ->
 
         questionBubble_ 3 (_leftAsideMarkPositions props) $ do
             span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
-        quickCreate_ "annotation" (_leftAsideCurrentSelection props) (_leftAsideHeaderHeight props)  -- RENAME: annotation => comment
+        quickCreate_ "annotation" (_leftAsideCurrentSelection props) (_leftAsideScreenState props)  -- RENAME: annotation => comment
 
 
 leftAside_ :: LeftAsideProps -> ReactElementM eventHandler ()

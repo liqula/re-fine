@@ -29,16 +29,18 @@ import           React.Flux
 
 import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.Bubbles.Types as RS
+import qualified Refine.Frontend.Screen.Types as SC
+import qualified Refine.Frontend.Screen.Calculations as SC
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.UtilityWidgets
 
 
-quickCreate :: ReactView (String, (Maybe RS.Range, Maybe RS.DeviceOffset), Int)
-quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, headerHeight) ->
+quickCreate :: ReactView (String, (Maybe RS.Range, Maybe RS.DeviceOffset), SC.ScreenState)
+quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, screenState) ->
     case currentSelection of
     -- TODO unify CSS class names with those used in iconButton_ !!
         (Just range, Just deviceOffset) ->
-            let offset = quickCreateOffset range deviceOffset headerHeight
+            let offset = quickCreateOffset range deviceOffset screenState
             in positionedIconButton_
               (IconButtonProps
                 (IconProps ("o-add-" <> createType) True ("icon-New_Comment", "bright") XXL)
@@ -54,15 +56,15 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, h
 --    Hammer.on(ann, 'tap', quickCreateOverlay);
 
 
-quickCreateOffset :: RS.Range -> Int -> Int -> Int
-quickCreateOffset range deviceOffset headerHeight =
-    quickCreateSelectionTop range headerHeight +
+quickCreateOffset :: RS.Range -> Int -> SC.ScreenState -> Int
+quickCreateOffset range deviceOffset screenState =
+    quickCreateSelectionTop range screenState +
     quickCreateSelectionPos range deviceOffset
 
 
 -- | This is the offset from the bottom of the toolbar.
-quickCreateSelectionTop :: RS.Range -> Int -> Int
-quickCreateSelectionTop range headerHeight = RS._top range + RS._scrollOffset range - headerHeight - 80
+quickCreateSelectionTop :: RS.Range -> SC.ScreenState -> Int
+quickCreateSelectionTop range screenState = SC.offsetIntoText (RS._top range) (RS._scrollOffset range) screenState
 
 quickCreateSelectionPos :: RS.Range -> Int -> Int
 quickCreateSelectionPos range deviceOffset =
@@ -74,5 +76,5 @@ quickCreateSelectionPos range deviceOffset =
     in if useIdealCenter then idealCenter else edgePosition
 
 -- "annotation" (RENAME: Comment), "modification" (RENAME: Edit)
-quickCreate_ :: String -> (Maybe RS.Range, Maybe RS.DeviceOffset) -> Int -> ReactElementM eventHandler ()
-quickCreate_ createType currentSelection headerHeight = view quickCreate (createType, currentSelection, headerHeight) mempty
+quickCreate_ :: String -> (Maybe RS.Range, Maybe RS.DeviceOffset) -> SC.ScreenState -> ReactElementM eventHandler ()
+quickCreate_ createType currentSelection screenState = view quickCreate (createType, currentSelection, screenState) mempty
