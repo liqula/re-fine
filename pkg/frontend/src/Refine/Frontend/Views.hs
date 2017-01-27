@@ -187,7 +187,7 @@ data LeftAsideProps = LeftAsideProps
 leftAside :: ReactView LeftAsideProps
 leftAside = defineView "LeftAside" $ \props ->
     aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
-        let lookupPosition = \chunkId -> M.lookup chunkId . _unMarkPositions $ _leftAsideMarkPositions props
+        let lookupPosition chunkId = M.lookup chunkId . _unMarkPositions $ _leftAsideMarkPositions props
         -- TODO the map should use proper IDs as keys
         mconcat $ map (\d -> discussionBubble_ (d ^. compositeDiscussion ^. discussionID ^. unID)
                                                (lookupPosition (d ^. compositeDiscussion ^. discussionID ^. unID))

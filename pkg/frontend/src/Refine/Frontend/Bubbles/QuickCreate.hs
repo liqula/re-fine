@@ -64,7 +64,7 @@ quickCreateOffset range deviceOffset screenState =
 
 -- | This is the offset from the bottom of the toolbar.
 quickCreateSelectionTop :: RS.Range -> SC.ScreenState -> Int
-quickCreateSelectionTop range screenState = SC.offsetIntoText (RS._top range) (RS._scrollOffset range) screenState
+quickCreateSelectionTop range = SC.offsetIntoText (RS._top range) (RS._scrollOffset range)
 
 quickCreateSelectionPos :: RS.Range -> Int -> Int
 quickCreateSelectionPos range deviceOffset =
