@@ -120,13 +120,13 @@ getVDocUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetVD
 createVDocUri :: SBS
 createVDocUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SCreateVDoc)
 
-addPatchUri :: ID Patch -> SBS
-addPatchUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddPatch)
+addEditUri :: ID Edit -> SBS
+addEditUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddEdit)
 
-addNoteUri :: ID Patch -> SBS
+addNoteUri :: ID Edit -> SBS
 addNoteUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddNote)
 
-addDiscussionUri :: ID Patch -> SBS
+addDiscussionUri :: ID Edit -> SBS
 addDiscussionUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddDiscussion)
 
 
@@ -171,7 +171,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
       fn :: Note          <- runWaiBody sess $
         postJSON
-          (addNoteUri (fe ^. compositeVDocRepo . vdocHeadPatch))
+          (addNoteUri (fe ^. compositeVDocRepo . vdocHeadEdit))
           (CreateNote "[note]" True (CreateChunkRange Nothing Nothing))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       be ^. compositeVDocNotes `shouldContain` [fn]
@@ -181,7 +181,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
       fn :: CompositeDiscussion <- runWaiBody sess $
         postJSON
-          (addDiscussionUri (fe ^. compositeVDocRepo . vdocHeadPatch))
+          (addDiscussionUri (fe ^. compositeVDocRepo . vdocHeadEdit))
           (CreateDiscussion "[discussion initial statement]" True (CreateChunkRange Nothing Nothing))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       be ^. compositeVDocDiscussions `shouldContain` [fn]
@@ -190,25 +190,25 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
     it "stores statement for given discussion" $ \_sess -> do
       pendingWith "this test case shouldn't be too hard to write, and should be working already."
 
-  describe "sAddPatch" $ do
+  describe "sAddEdit" $ do
     let setup sess = do
           fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
-          fp :: Patch         <- runWaiBody sess $
+          fp :: Edit          <- runWaiBody sess $
             postJSON
-              (addPatchUri (fe ^. compositeVDocRepo . vdocHeadPatch))
-              (CreatePatch "new patch" (CreateChunkRange Nothing Nothing) (VDocVersion "[new vdoc version]"))
+              (addEditUri (fe ^. compositeVDocRepo . vdocHeadEdit))
+              (CreateEdit "new edit" (CreateChunkRange Nothing Nothing) (VDocVersion "[new vdoc version]"))
           pure (fe, fp)
 
-    context "on patch without ranges" $ do
-      it "stores a patch and returns its version" $ \sess -> do
+    context "on edit without ranges" $ do
+      it "stores an edit and returns its version" $ \sess -> do
         (_, fp) <- setup sess
         be' :: VDocVersion 'HTMLCanonical <- runDB sess $ do
-              handles <- db $ DB.handlesForPatch (fp ^. patchID)
+              handles <- db $ DB.handlesForEdit (fp ^. editID)
               docRepo $ uncurry DocRepo.getVersion handles
         be' `shouldBe` VDocVersion "<span data-uid=\"1\">[new\nvdoc\nversion]</span>"
 
-      it "stores a patch and returns it in the list of patches applicable to its base" $ \sess -> do
-        pendingWith "applicablePatches is not implemented."
+      it "stores an edit and returns it in the list of edits applicable to its base" $ \sess -> do
+        pendingWith "applicableEdits is not implemented."
         (fe, fp) <- setup sess
         be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
-        be ^. compositeVDocPatches `shouldContain` [fp]
+        be ^. compositeVDocEdits `shouldContain` [fp]

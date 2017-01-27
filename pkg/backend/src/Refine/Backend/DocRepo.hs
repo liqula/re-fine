@@ -51,7 +51,7 @@ createRunRepo cfg = pure $
 
 instance DocumentRepository DocRepo where
   createRepo         = Darcs.createRepo
-  createPatch        = Darcs.createPatch
-  createInitialPatch = Darcs.createInitialPatch
+  createEdit         = Darcs.createEdit
+  createInitialEdit  = Darcs.createInitialEdit
   getVersion         = Darcs.getVersion
-  getChildPatches    = Darcs.getChildPatches
+  getChildEdits      = Darcs.getChildEdits

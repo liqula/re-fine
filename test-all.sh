@@ -37,5 +37,7 @@ assert_cmd npm
 stack setup --resolver lts-7.15
 stack install --resolver lts-7.15 shake
 ./build.sh setup
-./build.sh clean
+if [ "$1" == "--clean" ]; then
+   ./build.sh clean
+fi
 ./build.sh

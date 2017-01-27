@@ -133,12 +133,12 @@ bubble = defineView "Bubble" $ \props ->
             Just pos ->
                 div_ ["data-chunk-id" $= fromString (show (_dataHunkId2 props))
                     , "data-content-type" $= fromString (_dataContentType2 props)
-                    , "className" $= fromString ("o-snippet o-snippet--" <> _dataContentType2 props)
+                    , "className" $= fromString ("o-snippet o-snippet--" <> _dataContentType2 props)  -- RENAME: snippet => bubble
                     , "style" @= [Style "top" pos]
                     ] $ do
-                    div_ ["className" $= fromString ("o-snippet__icon-bg o-snippet__icon-bg--" <> _iconSide props)] $ do
-                        icon_ (IconProps "o-snippet" False (_iconStyle props) M)
-                    div_ ["className" $= "o-snippet__content"] childrenPassedToView
+                    div_ ["className" $= fromString ("o-snippet__icon-bg o-snippet__icon-bg--" <> _iconSide props)] $ do  -- RENAME: snippet => bubble
+                        icon_ (IconProps "o-snippet" False (_iconStyle props) M)  -- RENAME: snippet => bubble
+                    div_ ["className" $= "o-snippet__content"] childrenPassedToView  -- RENAME: snippet => bubble
 
 bubble_ :: BubbleProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 bubble_ = view bubble
@@ -183,7 +183,7 @@ data LeftAsideProps = LeftAsideProps
 
 leftAside :: ReactView LeftAsideProps
 leftAside = defineView "LeftAside" $ \props ->
-    aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do
+    aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
         let lookupPosition = \chunkId -> M.lookup chunkId . _unMarkPositions $ _leftAsideMarkPositions props
         -- TODO the map should use proper IDs as keys
         mconcat $ map (\d -> discussionBubble_ (d ^. compositeDiscussion ^. discussionID ^. unID)
@@ -197,7 +197,7 @@ leftAside = defineView "LeftAside" $ \props ->
 
         questionBubble_ 3 (_leftAsideMarkPositions props) $ do
             span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
-        quickCreate_ "annotation" (_leftAsideCurrentSelection props) (_leftAsideHeaderHeight props)
+        quickCreate_ "annotation" (_leftAsideCurrentSelection props) (_leftAsideHeaderHeight props)  -- RENAME: annotation => comment
 
 
 leftAside_ :: LeftAsideProps -> ReactElementM eventHandler ()
@@ -206,7 +206,7 @@ leftAside_ props = view leftAside props mempty
 
 rightAside :: ReactView RS.MarkPositions
 rightAside = defineView "RightAside" $ \markPositions ->
-    aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do
+    aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do -- RENAME: modifications => ??
             editBubble_ 2 markPositions $ do
                 span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
 

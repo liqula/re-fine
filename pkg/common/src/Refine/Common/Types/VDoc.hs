@@ -67,21 +67,21 @@ newtype VDocVersion (state :: HTMLState) = VDocVersion { _unVDocVersion :: ST }
 
 data VDocRepo = VDocRepo
   { _vdocRepoID    :: ID VDocRepo
-  , _vdocHeadPatch :: ID Patch
+  , _vdocHeadEdit  :: ID Edit
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
-data Patch = Patch
-  { _patchID    :: ID Patch
-  , _patchDesc  :: ST
-  , _patchRange :: ChunkRange Patch
+data Edit = Edit
+  { _editID    :: ID Edit
+  , _editDesc  :: ST
+  , _editRange :: ChunkRange Edit
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
-data CreatePatch = CreatePatch
-  { _createPatchDesc  :: ST
-  , _createPatchRange :: CreateChunkRange
-  , _createPatchVDoc  :: VDocVersion 'HTMLRaw
+data CreateEdit = CreateEdit
+  { _createEditDesc  :: ST
+  , _createEditRange :: CreateChunkRange
+  , _createEditVDoc  :: VDocVersion 'HTMLRaw
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -92,7 +92,7 @@ data ConflictResolution = ConflictResolution
 -- * create types, instances
 
 type instance Create VDoc  = CreateVDoc
-type instance Create Patch = CreatePatch
+type instance Create Edit = CreateEdit
 
 
 -- * refine types
@@ -100,8 +100,8 @@ type instance Create Patch = CreatePatch
 makeRefineType ''VDoc
 makeRefineType ''CreateVDoc
 makeRefineType ''VDocRepo
-makeRefineType ''Patch
-makeRefineType ''CreatePatch
+makeRefineType ''Edit
+makeRefineType ''CreateEdit
 makeRefineType ''ConflictResolution
 makeRefineType ''Title
 makeRefineType ''Abstract
@@ -121,20 +121,20 @@ makePrisms ''VDocVersion
 
 -- | Packaged vdoc ready for use by client.
 --
--- - morally we have three phases in working on a document: (1) add comments and patches, (2) merge a
---   bunch of patches and (3) create a new version.
+-- - morally we have three phases in working on a document: (1) add comments and edits, (2) merge a
+--   bunch of edits and (3) create a new version.
 --
 -- - what follows from this:
---     - there are no patches on patches that we need to display
---     - it's ok to only display patches on head, not on any other version
+--     - there are no edits on edits that we need to display
+--     - it's ok to only display edits on head, not on any other version
 --     - same for comments: comments collect on head, then then are discarded in (2), (3).
 --
--- - if we try to consider comments, patches, ... on other versions than head, we are in trouble.
+-- - if we try to consider comments, edits, ... on other versions than head, we are in trouble.
 data CompositeVDoc = CompositeVDoc
   { _compositeVDoc            :: VDoc
   , _compositeVDocRepo        :: VDocRepo
   , _compositeVDocVersion     :: VDocVersion 'HTMLWithMarks
-  , _compositeVDocPatches     :: [Patch]
+  , _compositeVDocEdits       :: [Edit]
   , _compositeVDocNotes       :: [Note]
   -- , _compositeVDocQuestions   :: [Question]  -- will be due in #99
   , _compositeVDocDiscussions :: [CompositeDiscussion]

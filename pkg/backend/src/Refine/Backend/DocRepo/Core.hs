@@ -53,10 +53,10 @@ docRepoIO = DocRepo . liftIO
 newtype RepoHandle = RepoHandle { _unRepoHandle :: ST }
   deriving (Eq, Ord, Show, Read, Generic)
 
-newtype PatchHandle = PatchHandle { _unPatchHandle :: ST }
+newtype EditHandle = EditHandle { _unEditHandle :: ST }
   deriving (Eq, Ord, Show, Read, Generic)
 
 -- * lenses
 
 makeLenses ''RepoHandle
-makeLenses ''PatchHandle
+makeLenses ''EditHandle

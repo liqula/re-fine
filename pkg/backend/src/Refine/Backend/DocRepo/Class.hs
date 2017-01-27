@@ -25,8 +25,8 @@ import Refine.Common.Types.VDoc
 
 
 class DocumentRepository dr where
-  createRepo         :: dr RepoHandle
-  createPatch        :: RepoHandle -> PatchHandle -> VDocVersion 'HTMLCanonical -> dr PatchHandle
-  createInitialPatch :: RepoHandle -> VDocVersion 'HTMLCanonical -> dr PatchHandle
-  getVersion         :: RepoHandle -> PatchHandle -> dr (VDocVersion 'HTMLCanonical)
-  getChildPatches    :: RepoHandle -> PatchHandle -> dr [PatchHandle]
+  createRepo        :: dr RepoHandle
+  createEdit        :: RepoHandle -> EditHandle -> VDocVersion 'HTMLCanonical -> dr EditHandle
+  createInitialEdit :: RepoHandle -> VDocVersion 'HTMLCanonical -> dr EditHandle
+  getVersion        :: RepoHandle -> EditHandle -> dr (VDocVersion 'HTMLCanonical)
+  getChildEdits     :: RepoHandle -> EditHandle -> dr [EditHandle]

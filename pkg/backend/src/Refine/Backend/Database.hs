@@ -73,19 +73,19 @@ instance Database DB where
   getRepo            = Entity.getRepo
   getRepoFromHandle  = Entity.getRepoFromHandle
   getRepoHandle      = Entity.getRepoHandle
-  getPatchIDs        = Entity.getPatchIDs
+  getEditIDs         = Entity.getEditIDs
 
-  -- * Patch
-  createPatch        = Entity.createPatch
-  getPatch           = Entity.getPatch
-  getPatchFromHandle = Entity.getPatchFromHandle
-  getPatchHandle     = Entity.getPatchHandle
-  patchNotes         = Entity.patchNotes
-  patchQuestions     = Entity.patchQuestions
-  patchDiscussions   = Entity.patchDiscussions
+  -- * Edit
+  createEdit         = Entity.createEdit
+  getEdit            = Entity.getEdit
+  getEditFromHandle  = Entity.getEditFromHandle
+  getEditHandle      = Entity.getEditHandle
+  editNotes          = Entity.editNotes
+  editQuestions      = Entity.editQuestions
+  editDiscussions    = Entity.editDiscussions
 
-  -- * Repo and patch
-  patchVDocRepo      = Entity.patchVDocRepo
+  -- * Repo and edit
+  editVDocRepo       = Entity.editVDocRepo
 
   -- * Note
   createNote         = Entity.createNote
