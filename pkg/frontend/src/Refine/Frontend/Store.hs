@@ -24,6 +24,8 @@ import qualified Refine.Common.Types as RT
 import           Refine.Frontend.Bubbles.Store (bubblesStateUpdate)
 import           Refine.Frontend.Bubbles.Types
 import           Refine.Frontend.Rest
+import           Refine.Frontend.Screen.Store (screenStateUpdate)
+import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Test.Samples
 import           Refine.Frontend.Types
 
@@ -55,10 +57,9 @@ instance StoreData GlobalState where
         let newState = state
               & gsVDoc                     %~ vdocUpdate transformedAction
               & gsVDocList                 %~ vdocListUpdate transformedAction
-              & gsHeaderHeight             %~ headerHeightUpdate transformedAction
               & gsMarkPositions            %~ markPositionsUpdate transformedAction
-              & gsWindowSize               %~ windowSizeUpdate transformedAction
               & gsBubblesState             %~ bubblesStateUpdate transformedAction
+              & gsScreenState              %~ screenStateUpdate transformedAction
 
         consoleLog "New state: " newState
         return newState
@@ -84,19 +85,9 @@ vdocListUpdate action state = case action of
     LoadedDocumentList list -> Just list
     _ -> state
 
-headerHeightUpdate :: RefineAction -> Int -> Int
-headerHeightUpdate action state = case action of
-    AddHeaderHeight height -> height
-    _ -> state
-
 markPositionsUpdate :: RefineAction -> MarkPositions -> MarkPositions
 markPositionsUpdate action state = case action of
     AddMarkPosition dataHunkId pos -> MarkPositions $ M.alter (\_ -> Just pos) dataHunkId (_unMarkPositions state)
-    _ -> state
-
-windowSizeUpdate :: RefineAction -> WindowSize -> WindowSize
-windowSizeUpdate action state = case action of
-    SetWindowSize newSize -> newSize
     _ -> state
 
 emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()

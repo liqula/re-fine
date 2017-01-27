@@ -52,6 +52,10 @@ library
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
       Refine.Frontend.Rest
+      Refine.Frontend.Screen.Calculations
+      Refine.Frontend.Screen.Store
+      Refine.Frontend.Screen.Types
+      Refine.Frontend.Screen.WindowSize
       Refine.Frontend.Store
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
@@ -61,7 +65,6 @@ library
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.Views
-      Refine.Frontend.WindowSize
   default-language: Haskell2010
 
 executable refine-frontend
@@ -101,6 +104,10 @@ executable refine-frontend
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
       Refine.Frontend.Rest
+      Refine.Frontend.Screen.Calculations
+      Refine.Frontend.Screen.Store
+      Refine.Frontend.Screen.Types
+      Refine.Frontend.Screen.WindowSize
       Refine.Frontend.Store
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
@@ -110,7 +117,6 @@ executable refine-frontend
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.Views
-      Refine.Frontend.WindowSize
   default-language: Haskell2010
 
 test-suite spec
@@ -155,6 +161,10 @@ test-suite spec
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
       Refine.Frontend.Rest
+      Refine.Frontend.Screen.Calculations
+      Refine.Frontend.Screen.Store
+      Refine.Frontend.Screen.Types
+      Refine.Frontend.Screen.WindowSize
       Refine.Frontend.Store
       Refine.Frontend.StoreSpec
       Refine.Frontend.Style
@@ -166,7 +176,6 @@ test-suite spec
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.UtilityWidgetsSpec
       Refine.Frontend.Views
-      Refine.Frontend.WindowSize
   js-sources:
       jsbits/spec-bits.js
   default-language: Haskell2010

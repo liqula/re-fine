@@ -20,6 +20,7 @@ import           Data.String.Conversions
 import Refine.Common.Types
 
 import Refine.Frontend.Bubbles.Types
+import Refine.Frontend.Screen.Types
 
 newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map Int64 Int }
   deriving (Eq, Show, Typeable, Generic, NFData)
@@ -30,22 +31,18 @@ mapToValue = object . fmap (\(k,v) -> (cs . encode) k .= v) . M.toList
 instance ToJSON MarkPositions where
   toJSON = toJSON . mapToValue . _unMarkPositions
 
-data WindowSize = Desktop | Tablet | Mobile
-  deriving (Show, Typeable, Generic, NFData, ToJSON)
-
 data GlobalState = GlobalState
   { _gsVDoc                   :: Maybe CompositeVDoc
   , _gsVDocList               :: Maybe [ID VDoc]
-  , _gsHeaderHeight           :: Int
   , _gsMarkPositions          :: MarkPositions
-  , _gsWindowSize             :: WindowSize
   , _gsBubblesState           :: BubblesState
+  , _gsScreenState            :: ScreenState
   } deriving (Show, Typeable, Generic, NFData, ToJSON)
 
 makeLenses ''GlobalState
 
 emptyGlobalState :: GlobalState
-emptyGlobalState = GlobalState Nothing Nothing 0 (MarkPositions M.empty) Desktop emptyBubblesState
+emptyGlobalState = GlobalState Nothing Nothing (MarkPositions M.empty) emptyBubblesState emptyScreenState
 
 data RefineAction = LoadDocumentList
                   | LoadedDocumentList [ID VDoc]

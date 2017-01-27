@@ -26,12 +26,13 @@ import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(
 import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.Mark
 import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
+import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
+import qualified Refine.Frontend.Screen.Types as RS
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
 import           Refine.Frontend.Types as RS
 import           Refine.Frontend.Bubbles.Types as RS
 import           Refine.Frontend.UtilityWidgets
-import           Refine.Frontend.WindowSize (windowSize_, WindowSizeProps(..))
 
 
 -- | The controller view and also the top level of the Refine app.  This controller view registers
@@ -41,7 +42,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
     case rs ^. gsVDoc of
         Nothing -> vdocLoader_ (rs ^. gsVDocList)
         Just vdoc -> div_ $ do
-            windowSize_ (WindowSizeProps (rs ^. gsWindowSize)) mempty
+            windowSize_ (WindowSizeProps (rs ^. gsScreenState ^. RS.ssWindowSize)) mempty
             stickyContainer_ [] $ do
                 headerSizeCapture_ $ do
                     -- the following need to be siblings because of the z-index handling
@@ -63,7 +64,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                             leftAside_ $ LeftAsideProps
                                            (rs ^. gsMarkPositions)
                                            (rs ^. gsBubblesState ^. bsCurrentSelection)
-                                           (rs ^. gsHeaderHeight)
+                                           (rs ^. gsScreenState ^. RS.ssHeaderHeight)
                                            (vdoc ^. compositeVDocDiscussions)
                                            (vdoc ^. compositeVDocNotes)
                             article_ [ "id" $= "vdocValue"
