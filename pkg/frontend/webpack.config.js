@@ -18,8 +18,7 @@ module.exports = {
     devtool: "source-map",
     output: {
         path: path.join(__dirname, "js-build"),
-        //filename: "bundle.js"
-        filename: "[hash].bundle.js" // for cache busting
+        filename: "[hash].bundle.js"  // for cache busting
     },
     plugins: [
         new webpack.HotModuleReplacementPlugin(),

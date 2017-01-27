@@ -10,7 +10,6 @@ module.exports = {
     ],
     output: {
         path: path.join(__dirname, "js-build"),
-        // publicPath: './rankings/',
         filename: "[hash].bundle.js"  // for cache busting
     },
     plugins: [
