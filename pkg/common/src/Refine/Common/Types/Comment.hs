@@ -21,6 +21,7 @@
 module Refine.Common.Types.Comment where
 
 import Data.String.Conversions (ST)
+import Data.Tree (Tree)
 import GHC.Generics (Generic)
 
 import Refine.Common.Types.Chunk
@@ -95,9 +96,9 @@ data Discussion = Discussion
 
 data CompositeDiscussion = CompositeDiscussion
   { _compositeDiscussion     :: Discussion
-  , _compositeDiscussionTree :: [Statement] -- FIXME: This should be a tree.
+  , _compositeDiscussionTree :: Tree Statement
   }
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Show, Read, Generic)
 
 newtype CreateStatement = CreateStatement
   { _createStatementText :: CommentText
@@ -115,7 +116,7 @@ data Comment =
     CommentNote Note
   | CommentDiscussion CompositeDiscussion
   | CommentQuestion CompositeQuestion
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Show, Read, Generic)
 
 -- * create types
 
