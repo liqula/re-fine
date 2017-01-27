@@ -84,7 +84,7 @@ chunkPointCanBeAppliedTs :: ChunkPoint -> [Token] -> Bool
 chunkPointCanBeAppliedTs (ChunkPoint uid off) ts = case tokensToForest ts of
   Right forest ->
     let sub = forest ^. atNode (\p -> dataUidOfToken p == Just uid)
-    in not (null sub) && forestTextLength sub >= off
+    in forestTextLength sub >= off
   Left _ -> False
 
 
