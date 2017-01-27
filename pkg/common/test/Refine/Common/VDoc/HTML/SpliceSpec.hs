@@ -55,10 +55,15 @@ spec = parallel $ do
       pending
 
     it "adds owner type info in its own attribute." $ do
-      let cr = [ChunkRange (ID 3 :: ID Edit) (Just (ChunkPoint (DataUID 3) 1)) (Just (ChunkPoint (DataUID 3) 2))]
+      let cr l = [ChunkRange l (Just (ChunkPoint (DataUID 3) 1)) (Just (ChunkPoint (DataUID 3) 2))]
           vers = VDocVersion "<span data-uid=\"3\">asdf</span>"
+          vers' l = VDocVersion $ "<span data-uid=\"3\">a<mark data-chunk-kind=\"" <> l <> "\" data-chunk-id=\"3\">s</mark>df</span>"
 
-      insertMarks cr vers `shouldBe` Right (VDocVersion "<span data-uid=\"3\">a<mark data-chunk-kind=\"edit\" data-chunk-id=\"3\">s</mark>df</span>")
+      -- NOTE: if you change these, you will probably break css in the frontend.
+      insertMarks (cr (ID 3 :: ID Note))       vers `shouldBe` Right (vers' "note")
+      insertMarks (cr (ID 3 :: ID Question))   vers `shouldBe` Right (vers' "question")
+      insertMarks (cr (ID 3 :: ID Discussion)) vers `shouldBe` Right (vers' "discussion")
+      insertMarks (cr (ID 3 :: ID Edit))       vers `shouldBe` Right (vers' "edit")
 
     it "crashes (assertion failed) if input is not canonicalized" $ do
       let eval :: Show e => Either e a -> IO a
