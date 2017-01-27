@@ -1,12 +1,16 @@
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Common.Test.Arbitrary where
 
+import           Control.Exception (assert)
+import           Control.Lens ((^.))
 import           Data.List ((\\))
+import           Data.Maybe (catMaybes)
 import           Data.Monoid
 import           Data.String.Conversions (cs)
 import           Data.Tree
@@ -20,6 +24,8 @@ import           Text.HTML.Tree as HTML
 
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML
+import Refine.Common.VDoc.HTML.Core
+import Refine.Common.VDoc.HTML.Splice (chunkRangeCanBeApplied)
 
 instance Arbitrary ChunkPoint where
   arbitrary               = ChunkPoint <$> arbitrary <*> arbitrary
@@ -105,6 +111,14 @@ maxListOf n g = take n <$> listOf g
 instance Arbitrary (VDocVersion 'HTMLCanonical) where
   arbitrary = arbitraryCanonicalVDocVersion
 
+arbitraryCanonicalNonEmptyVDocVersion :: Gen (VDocVersion 'HTMLCanonical)
+arbitraryCanonicalNonEmptyVDocVersion = do
+  VDocVersion v <- arbitraryCanonicalVDocVersion
+  let v' = if (sum . fmap tokenTextLength . parseTokens $ v) == 0
+        then "<span>whee</span>" <> v
+        else v
+  pure . (\(Right v'') -> v'') . canonicalizeVDocVersion $ VDocVersion v'
+
 arbitraryCanonicalVDocVersion :: Gen (VDocVersion 'HTMLCanonical)
 arbitraryCanonicalVDocVersion =
   (\(Right v) -> v) .
@@ -134,3 +148,37 @@ validNonClosingOpen = TagOpen <$> elements nonClosing <*> arbitrary
 
 validClosingOpen :: Gen Token
 validClosingOpen = TagOpen <$> validClosingXmlTagName <*> arbitrary
+
+arbitraryValidChunkPoint :: VDocVersion h -> Maybe ChunkPoint -> Gen (Maybe ChunkPoint)
+arbitraryValidChunkPoint vers mLeftBound = do
+  let forest :: Forest Token
+      Right forest = tokensToForest . parseTokens . _unVDocVersion $ vers
+
+      uids :: [DataUID]
+      uids = catMaybes $ dataUidOfToken <$> mconcat (flatten <$> forest)
+
+      validUids :: [DataUID]
+      validUids = case mLeftBound of
+        Nothing                    -> uids
+        Just (ChunkPoint uid _off) -> tail $ dropWhile (/= uid) uids
+
+  cp <- case validUids of
+    [] -> pure Nothing
+    _ -> do
+      uid <- elements validUids
+      off <- choose (0, forestTextLength $ forest ^. atNode ((== Just uid) . dataUidOfToken))
+      pure . Just $ ChunkPoint uid off
+
+  frequency [(5, pure Nothing), (95, pure cp)]
+
+arbitraryValidChunkRange :: VDocVersion h -> Gen (ChunkRange a)
+arbitraryValidChunkRange vers = do
+  b <- arbitraryValidChunkPoint vers Nothing
+  e <- arbitraryValidChunkPoint vers b
+  pure $ ChunkRange (ID 3) b e
+
+arbitraryChunkRangesWithVersion :: Gen (VDocVersion 'HTMLCanonical, [ChunkRange a])
+arbitraryChunkRangesWithVersion = do
+  v  <- arbitraryCanonicalNonEmptyVDocVersion
+  rs <- listOf $ arbitraryValidChunkRange v
+  assert (all (`chunkRangeCanBeApplied` v) rs) $ pure (v, rs)

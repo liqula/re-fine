@@ -25,6 +25,7 @@ module Refine.Common.VDoc.HTML.SpliceSpec where
 import           Control.Exception (throwIO, ErrorCall(..))
 import           Data.String.Conversions ((<>))
 import           Data.Tree
+import           Data.Either (isRight)
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
@@ -48,8 +49,16 @@ spec = parallel $ do
       \vers -> do
         _unVDocVersion <$> insertMarks noChunkRanges vers `shouldBe` Right (_unVDocVersion vers)
 
-    it "generates valid output on arbitrary valid chunkranges." $ do
-      pending
+    it "self-closing tags *without* closing `/`." $ do
+      let vers = VDocVersion "<div data-uid=\"1\"><br>el</div>"
+          r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 0))
+                                                   (Just (ChunkPoint (DataUID 1) 1))
+      chunkRangeCanBeApplied r vers `shouldBe` True
+      insertMarks [r] vers `shouldSatisfy` isRight
+
+    it "generates valid output on arbitrary valid chunkranges." . property . forAll arbitraryChunkRangesWithVersion $ do
+      \(vers, rs :: [ChunkRange Edit]) -> do
+        insertMarks rs vers `shouldSatisfy` isRight
 
     it "marks are inserted under the correct parent node." $ do
       pending

@@ -38,15 +38,14 @@ import           Control.Exception (assert)
 import           Control.Lens (Traversal', (&), (^.), (%~))
 import           Control.Monad.Error.Class (MonadError, throwError)
 import           Control.Monad (foldM)
-import           Data.Char (toLower)
 import           Data.Functor.Infix ((<$$>))
 import           Data.Maybe (catMaybes)
 import           Data.String.Conversions ((<>), cs)
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
 import           Data.Typeable (Typeable, typeOf)
-import           Text.HTML.Parser (Token(..), Attr(..), parseTokens, canonicalizeTokens, renderTokens)
-import           Text.HTML.Tree (tokensToForest, tokensFromForest, nonClosing)
+import           Text.HTML.Parser (Token(..), parseTokens, canonicalizeTokens, renderTokens)
+import           Text.HTML.Tree (tokensToForest, nonClosing)
 import           Web.HttpApiData (toUrlPiece)
 
 import Refine.Common.Types
@@ -209,11 +208,6 @@ splitAtOffset offset ts_ = assert (offset >= 0)
 
 -- * pretokens
 
-runPreToken :: PreToken -> Token
-runPreToken (PreToken t)      = t
-runPreToken (PreMarkOpen l k) = TagOpen "mark" [Attr "data-chunk-id" l, Attr "data-chunk-kind" $ ST.map toLower k]
-runPreToken (PreMarkClose _)  = TagClose "mark"
-
 isOpen :: PreToken -> Bool
 isOpen (PreMarkOpen _ _)        = True
 isOpen (PreToken (TagOpen n _)) = n `notElem` nonClosing
@@ -238,47 +232,6 @@ closeFromOpen :: PreToken -> PreToken
 closeFromOpen (PreMarkOpen l _)         = PreMarkClose l
 closeFromOpen (PreToken (TagOpen el _)) = PreToken (TagClose el)
 closeFromOpen _                         = error "closeFromOpen: internal error."
-
-
--- | This is a bit of a hack.  We want to use tokensFromForest, so we 'fmap' 'runPreToken' on the
--- input forest, then render that, and recover the pretokens from the tokens.
---
--- The encoding uses 'Doctype' to encode marks, which works because all doctype elements have been
--- removed from the input by 'canonicalizeVDocVersion'.
-preTokensFromForest :: Forest PreToken -> [PreToken]
-preTokensFromForest = fmap unstashPreToken . tokensFromForest . fmap (fmap stashPreToken)
-
--- | Inverse of 'preTokensFromForest' (equally hacky).
-preTokensToForest :: MonadError VDocHTMLError m => [PreToken] -> m (Forest PreToken)
-preTokensToForest = fmap (fmap (fmap unstashPreToken)) . tokensToForest' . fmap stashPreToken
-
-stashPreToken :: PreToken -> Token
-stashPreToken (PreMarkOpen l k) = Doctype $ ST.intercalate "/" [l, k]
-stashPreToken (PreMarkClose l)  = Doctype l
-stashPreToken (PreToken t)      = t
-
-unstashPreToken :: Token -> PreToken
-unstashPreToken (Doctype s) = case ST.splitOn "/" s of
-  [l, k] -> PreMarkOpen l k
-  [l]    -> PreMarkClose l
-  bad    -> error $ "unstashPreToken: " <> show bad
-unstashPreToken t           = PreToken t
-
-
-tokenTextLength :: Token -> Int
-tokenTextLength = \case
-  (ContentText t) -> ST.length t
-  (ContentChar _) -> 1
-  _               -> 0
-
-forestTextLength :: Forest Token -> Int
-forestTextLength = sum . fmap tokenTextLength . tokensFromForest
-
-preTokenTextLength :: PreToken -> Int
-preTokenTextLength = tokenTextLength . runPreToken
-
-preForestTextLength :: Forest PreToken -> Int
-preForestTextLength = sum . fmap preTokenTextLength . preTokensFromForest
 
 
 -- * translating between pretokens and tokens
