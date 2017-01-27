@@ -3,10 +3,7 @@
 module Refine.Frontend.Mark where
 
 import           Control.Concurrent (forkIO)
-import           Control.Lens ((^.))
 import           Data.Int
-import           Data.List (find)
-import           Data.Maybe (isJust)
 import           Control.Monad (forM_)
 import           Data.Monoid ((<>))
 import           Data.String (fromString)
@@ -16,8 +13,6 @@ import           React.Flux
 import           React.Flux.Lifecycle
 import qualified Text.HTML.Parser as HTMLP
 import           Text.Read (readMaybe)
-
-import           Refine.Common.Types
 
 import qualified Refine.Frontend.Screen.Types as RS
 import qualified Refine.Frontend.Store as RS
@@ -29,20 +24,16 @@ data MarkProps = MarkProps
   , _dataContentType :: String
   }
 
-toMarkProps :: [HTMLP.Attr] -> CompositeVDoc -> MarkProps
-toMarkProps attrs vdoc = let maybeChunkId = Text.Read.readMaybe . cs $ chunkIdIn attrs :: Maybe Int64
+toMarkProps :: [HTMLP.Attr] -> MarkProps
+toMarkProps attrs = let maybeChunkId = readMaybe $ valueOf "data-chunk-id" attrs :: Maybe Int64
   in case maybeChunkId of
     Nothing -> MarkProps (-1) ""
-    Just chunkId -> MarkProps chunkId (kindOf chunkId)
+    Just chunkId -> MarkProps chunkId (valueOf "data-chunk-kind" attrs)
   where
-    chunkIdIn [] = ""
-    chunkIdIn ((HTMLP.Attr "data-chunk-id" value):_) = value
-    chunkIdIn (_:as) = chunkIdIn as
-    -- TODO better annotate the mark tokens with the kind ?!
-    kindOf chunkId =
-      let isNote = find (\(Note (ID noteId) _ _ _) -> noteId == chunkId) (vdoc ^. compositeVDocNotes)
-          isDiscussion = find (\(CompositeDiscussion (Discussion (ID discId) _ _) _) -> discId == chunkId) (vdoc ^. compositeVDocDiscussions)
-      in if isJust isNote then "note" else if isJust isDiscussion then "discussion" else ""
+    valueOf :: String -> [HTMLP.Attr] -> String
+    valueOf _ [] = ""
+    valueOf wantedKey (HTMLP.Attr key value:_) | key == cs wantedKey = cs value
+    valueOf wantedKey (_:as) = valueOf wantedKey as
 
 
 rfMark :: ReactView MarkProps

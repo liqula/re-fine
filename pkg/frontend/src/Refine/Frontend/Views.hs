@@ -76,36 +76,36 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                               -- div_ ["className" $= "c-vdoc-overlay"] $ do
                                 -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
                               div_ ["className" $= "c-article-content"] $ do
-                                (toArticleBody . HTMLT.tokensToForest . HTMLP.parseTokens . cs . _unVDocVersion $ _compositeVDocVersion vdoc) vdoc
+                                toArticleBody . HTMLT.tokensToForest . HTMLP.parseTokens . cs . _unVDocVersion $ _compositeVDocVersion vdoc
                             rightAside_ (rs ^. gsMarkPositions) (rs ^. gsScreenState)
 
 
-toArticleBody :: Either ParseTokenForestError (DT.Forest HTMLP.Token) -> CompositeVDoc -> ReactElementM [SomeStoreAction] ()
-toArticleBody (Left err) _ = p_ (elemString (show err))
-toArticleBody (Right forest) vdoc = mconcat $ map (toHTML vdoc) (addUIInfoToForest forest)
+toArticleBody :: Either ParseTokenForestError (DT.Forest HTMLP.Token) -> ReactElementM [SomeStoreAction] ()
+toArticleBody (Left err) = p_ (elemString (show err))
+toArticleBody (Right forest) = mconcat $ map toHTML (addUIInfoToForest forest)
 
 
-toHTML :: CompositeVDoc -> DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()
+toHTML :: DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()
 -- br and hr need to be handled differently
-toHTML _ (DT.Node (HTMLP.TagOpen "br" attrs) []) = br_ (toProps attrs)
-toHTML _ (DT.Node (HTMLP.TagOpen "hr" attrs) []) = hr_ (toProps attrs)
+toHTML (DT.Node (HTMLP.TagOpen "br" attrs) []) = br_ (toProps attrs)
+toHTML (DT.Node (HTMLP.TagOpen "hr" attrs) []) = hr_ (toProps attrs)
 -- just a node without children, containing some text:
-toHTML _ (DT.Node (HTMLP.ContentText content) []) = elemText content
-toHTML _ (DT.Node (HTMLP.ContentChar content) []) = elemText $ cs [content]
+toHTML (DT.Node (HTMLP.ContentText content) []) = elemText content
+toHTML (DT.Node (HTMLP.ContentChar content) []) = elemText $ cs [content]
 -- a comment - do we want to support them, given our HTML editor provides no means of entering them?
-toHTML _ (DT.Node (HTMLP.Comment _) _) = mempty -- ignore comments
-toHTML vdoc (DT.Node (HTMLP.TagOpen "mark" attrs) subForest) =
-    rfMark_ (toMarkProps attrs vdoc) $ (toHTML vdoc) `mapM_` subForest -- (toProps attrs)
-toHTML vdoc (DT.Node (HTMLP.TagOpen tagname attrs) subForest) =
-    React.Flux.term (fromString (cs tagname)) (toProps attrs) $ (toHTML vdoc) `mapM_` subForest
+toHTML (DT.Node (HTMLP.Comment _) _) = mempty -- ignore comments
+toHTML (DT.Node (HTMLP.TagOpen "mark" attrs) subForest) =
+    rfMark_ (toMarkProps attrs) $ toHTML `mapM_` subForest -- (toProps attrs)
+toHTML (DT.Node (HTMLP.TagOpen tagname attrs) subForest) =
+    React.Flux.term (fromString (cs tagname)) (toProps attrs) $ toHTML `mapM_` subForest
 
 -- the above cases cover all possibilities in the demo article, but we leave this here for discovery:
-toHTML _ (DT.Node rootLabel []) = p_ (elemString ("root_label_wo_children " <> show rootLabel))
-toHTML vdoc (DT.Node rootLabel subForest) = do
+toHTML (DT.Node rootLabel []) = p_ (elemString ("root_label_wo_children " <> show rootLabel))
+toHTML (DT.Node rootLabel subForest) = do
     p_ $ do
       elemString ("root_label " <> show rootLabel)
       p_ "subforest_start"
-      (toHTML vdoc) `mapM_` subForest
+      toHTML `mapM_` subForest
       p_ "subforest_end"
 
 -- alternatively: (needs `import Text.Show.Pretty`, package pretty-show.)
