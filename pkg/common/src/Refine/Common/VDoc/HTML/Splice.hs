@@ -197,12 +197,13 @@ splitAtOffset offset ts_ = assert (offset >= 0)
       bad
         -> error $ "splitTokenText: bad input " <> show (n, bad)
 
+    -- which tokens do not want a closing counter-part?
     isFlatToken :: PreToken -> Bool
     isFlatToken = \case
       (PreToken (TagOpen n _)) -> n `elem` nonClosing
       (PreToken (TagClose _))  -> False
-      (PreMarkOpen _ _)        -> True  -- TODO: why?
-      (PreMarkClose _)         -> True  -- TODO: why?
+      (PreMarkOpen _ _)        -> True
+      (PreMarkClose _)         -> True
       _                        -> True
 
 
