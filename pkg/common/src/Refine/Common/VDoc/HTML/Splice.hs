@@ -209,7 +209,8 @@ splitAtOffset offset ts_ = assert (offset >= 0)
       bad
         -> error $ "splitTokenText: bad input " <> show (n, bad)
 
-    -- which tokens do not want a closing counter-part?
+    -- which tokens do not want a closing counter-part?  premarks are considered flat here; matching
+    -- of open and close marks happens in 'resolvePreTokens'.
     isFlatToken :: PreToken -> Bool
     isFlatToken = \case
       (PreToken (TagOpen n _)) -> n `elem` nonClosing
@@ -283,9 +284,9 @@ resolvePreTokens ts_ = runPreToken <$$> (filterEmptyChunks <$> go)
         | isClose t
             = Run $ ResolvePreTokensStack openings' (opening : reopenings) (closeFromOpen opening : written) ts
 
-    f (ResolvePreTokensStack [] _ _ ts@(t : _))
+    f (ResolvePreTokensStack [] reopenings written ts@(t : _))
         | isClose t
-            = Fail $ "resolvePreTokens: close without open: " <> show (ts, ts_)
+            = Fail $ "resolvePreTokens: close without open: " <> show (ts, ts_, reopenings, written)
 
     -- (b) handle opening tags
     f (ResolvePreTokensStack openings reopenings written (t : ts'))
