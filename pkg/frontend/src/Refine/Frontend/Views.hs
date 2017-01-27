@@ -130,7 +130,7 @@ data BubbleProps = BubbleProps
 bubble :: ReactView BubbleProps
 bubble = defineView "Bubble" $ \props ->
         case _markPosition props of
-            Nothing -> div_ ""
+            Nothing -> mempty
             Just pos ->
                 div_ ["data-chunk-id" $= fromString (show (_dataHunkId2 props))
                     , "data-content-type" $= fromString (_dataContentType2 props)
