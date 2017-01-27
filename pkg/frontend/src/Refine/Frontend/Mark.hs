@@ -19,6 +19,7 @@ import           Text.Read (readMaybe)
 
 import           Refine.Common.Types
 
+import qualified Refine.Frontend.Screen.Types as RS
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
 
@@ -57,7 +58,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
              top <- js_getBoundingClientRectTop this
              props <- lGetProps propsandstate
              _ <- forkIO $ do
-                 let actions = RS.dispatch $ RS.AddMarkPosition (_dataHunkId props) top
+                 let actions = RS.dispatch $ RS.AddMarkPosition (_dataHunkId props) top 0 -- we assume that no scrolling has taken place yet
                  forM_ actions executeAction
              return ()
 
@@ -75,7 +76,7 @@ rfMark_ = view rfMark
 
 foreign import javascript unsafe
   "$1.getBoundingClientRect().top"
-  js_getBoundingClientRectTop :: JSVal -> IO Int
+  js_getBoundingClientRectTop :: JSVal -> IO RS.OffsetFromViewportTop
 
 foreign import javascript unsafe
   "console.log($1)"

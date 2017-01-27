@@ -14,6 +14,9 @@ import           GHC.Generics (Generic)
 import           Data.Aeson (ToJSON)
 
 
+type OffsetFromViewportTop = Int
+type ScrollOffsetOfViewport = Int
+
 data WindowSize = Desktop | Tablet | Mobile
   deriving (Show, Typeable, Generic, NFData, ToJSON)
 

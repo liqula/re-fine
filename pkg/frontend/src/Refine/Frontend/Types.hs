@@ -22,7 +22,7 @@ import Refine.Common.Types
 import Refine.Frontend.Bubbles.Types
 import Refine.Frontend.Screen.Types
 
-newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map Int64 Int }
+newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map Int64 (Int, Int) }
   deriving (Eq, Show, Typeable, Generic, NFData)
 
 mapToValue :: (ToJSON k, ToJSON v) => M.Map k v -> Value
@@ -50,7 +50,7 @@ data RefineAction = LoadDocumentList
                   | OpenDocument CompositeVDoc
                   | AddDemoDocument
                   | AddHeaderHeight Int
-                  | AddMarkPosition Int64 Int
+                  | AddMarkPosition Int64 OffsetFromViewportTop ScrollOffsetOfViewport
                   | SetWindowSize WindowSize
                   -- Bubble Actions:
                   | UpdateSelection Selection

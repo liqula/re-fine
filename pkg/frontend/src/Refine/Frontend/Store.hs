@@ -30,7 +30,7 @@ import           Refine.Frontend.Test.Samples
 import           Refine.Frontend.Types
 
 
-
+-- TODO: move to Screen.Calculations
 toSize :: Int -> WindowSize
 toSize sz
   | sz <= 480  = Mobile
@@ -87,7 +87,7 @@ vdocListUpdate action state = case action of
 
 markPositionsUpdate :: RefineAction -> MarkPositions -> MarkPositions
 markPositionsUpdate action state = case action of
-    AddMarkPosition dataHunkId pos -> MarkPositions $ M.alter (\_ -> Just pos) dataHunkId (_unMarkPositions state)
+    AddMarkPosition dataHunkId pos scroll -> MarkPositions $ M.alter (\_ -> Just (pos, scroll)) dataHunkId (_unMarkPositions state)
     _ -> state
 
 emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()
