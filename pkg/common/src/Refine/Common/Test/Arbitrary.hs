@@ -2,13 +2,14 @@
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections       #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Common.Test.Arbitrary where
 
-import           Control.Exception (assert)
 import           Control.Lens ((^.))
+import           Data.Functor.Infix ((<$$>))
 import           Data.List ((\\))
 import           Data.Maybe (catMaybes)
 import           Data.Monoid
@@ -25,7 +26,7 @@ import           Text.HTML.Tree as HTML
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML
 import Refine.Common.VDoc.HTML.Core
-import Refine.Common.VDoc.HTML.Splice (chunkRangeCanBeApplied)
+import Refine.Common.VDoc.HTML.Splice
 
 instance Arbitrary ChunkPoint where
   arbitrary               = ChunkPoint <$> arbitrary <*> arbitrary
@@ -154,31 +155,58 @@ arbitraryValidChunkPoint vers mLeftBound = do
   let forest :: Forest Token
       Right forest = tokensToForest . parseTokens . _unVDocVersion $ vers
 
-      uids :: [DataUID]
-      uids = catMaybes $ dataUidOfToken <$> mconcat (flatten <$> forest)
+      tokens :: [Token]
+      tokens = mconcat (flatten <$> forest)
 
-      validUids :: [DataUID]
-      validUids = case mLeftBound of
-        Nothing                    -> uids
-        Just (ChunkPoint uid _off) -> tail $ dropWhile (/= uid) uids
+      validTokens :: [Token]
+      validTokens = case mLeftBound of
+        -- when generating a left bound, make sure there is text left to the right of it so the mark
+        -- won't end up empty.
+        Nothing -> reverse . tail . dropWhile (not . isNonEmptyText) . reverse $ tokens
 
-  cp <- case validUids of
+        -- when generating a right bound, drop all the uids up to and including the left bound.
+        Just (ChunkPoint uid _off) -> tail . dropWhile ((/= Just uid) . dataUidOfToken) $ tokens
+
+      isNonEmptyText :: Token -> Bool
+      isNonEmptyText (ContentText "") = error "arbitraryValidChunkPoint: empty text nodes should be canonicalized away!"
+      isNonEmptyText (ContentText _)  = True
+      isNonEmptyText _                = False
+
+      validDataUids :: [DataUID]
+      validDataUids = catMaybes $ dataUidOfToken <$> validTokens
+
+  cp <- case validDataUids of
     [] -> pure Nothing
-    _ -> do
-      uid <- elements validUids
-      off <- choose (0, forestTextLength $ forest ^. atNode ((== Just uid) . dataUidOfToken))
+    _ : _ -> do
+      uid <- elements validDataUids
+      let offmax = forestTextLength $ forest ^. atNode ((== Just uid) . dataUidOfToken)
+      off <- choose (0, offmax)
       pure . Just $ ChunkPoint uid off
 
   frequency [(5, pure Nothing), (95, pure cp)]
 
-arbitraryValidChunkRange :: VDocVersion h -> Gen (ChunkRange a)
+arbitraryValidChunkRange :: VDocVersion h -> Gen (Int -> ChunkRange a)
 arbitraryValidChunkRange vers = do
   b <- arbitraryValidChunkPoint vers Nothing
   e <- arbitraryValidChunkPoint vers b
-  pure $ ChunkRange (ID 3) b e
+  pure $ \i -> ChunkRange (ID $ fromIntegral i) b e
 
-arbitraryChunkRangesWithVersion :: Gen (VDocVersion 'HTMLCanonical, [ChunkRange a])
+data VersWithRanges = VersWithRanges (VDocVersion 'HTMLCanonical) [ChunkRange Edit]
+  deriving (Eq, Show)
+
+instance Arbitrary VersWithRanges where
+  arbitrary = arbitraryChunkRangesWithVersion
+  shrink = shrinkChunkRangesWithVersion
+
+arbitraryChunkRangesWithVersion :: Gen VersWithRanges
 arbitraryChunkRangesWithVersion = do
   v  <- arbitraryCanonicalNonEmptyVDocVersion
-  rs <- listOf $ arbitraryValidChunkRange v
-  assert (all (`chunkRangeCanBeApplied` v) rs) $ pure (v, rs)
+  rs_ <- listOf $ arbitraryValidChunkRange v
+  let rs = zipWith ($) rs_ [0..]
+  pure $ VersWithRanges v (filter ((`chunkRangeCanBeApplied` v)) rs)
+
+shrinkChunkRangesWithVersion :: VersWithRanges -> [VersWithRanges]
+shrinkChunkRangesWithVersion (VersWithRanges vers rs) = VersWithRanges vers <$> shallowShrinkList rs
+
+shallowShrinkList :: [a] -> [[a]]
+shallowShrinkList xs = (xs !!) <$$> shrink [0 .. length xs - 1]
