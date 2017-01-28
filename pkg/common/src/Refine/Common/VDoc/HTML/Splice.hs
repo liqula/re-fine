@@ -254,27 +254,34 @@ resolvePreTokens ts_ = runPreToken <$$> (filterEmptyChunks <$> go)
     f :: ResolvePreTokensStack -> Recursion ResolvePreTokensStack String [PreToken]
     f (ResolvePreTokensStack [] [] written []) = Halt $ reverse written
 
-    -- (a) handle closing tags
+    -- handle closing tags
     f (ResolvePreTokensStack (opening : openings') reopenings written ts@(t : ts'))
         | isClose t && isMatchingOpenClose opening t
             = Run $ ResolvePreTokensStack openings' reopenings (t : written) ts'
         | isClose t
             = Run $ ResolvePreTokensStack openings' (opening : reopenings) (closeFromOpen opening : written) ts
 
-    f stack@(ResolvePreTokensStack [] _ _ (t : _))
+    -- if a close tag is encountered and there are no opens, but reopens, then flush the latter.
+    f (ResolvePreTokensStack openings reopenings@(_:_) written ts@(t : _))
+        | isClose t
+            = Run $ ResolvePreTokensStack openings [] written (reverse reopenings <> ts)
+
+    -- a close tag is encountered and there are no opens and no reopens: impossible.
+    f stack@(ResolvePreTokensStack [] [] _ (t : _))
         | isClose t
             = Fail $ "resolvePreTokens: close without open: " <> show (ts_, stack)
 
-    -- (b) handle opening tags
+    -- handle opening tags (leave reopenings untouched until hitting the next leaf)
     f (ResolvePreTokensStack openings reopenings written (t : ts'))
         | isOpen t
             = Run $ ResolvePreTokensStack (t : openings) reopenings (t : written) ts'
 
-    -- (c) *after* having handled closing tags, re-open tags artificially closed in (a)
+    -- if a flat tag (neither close nor open) is encountered and there are reopens, then flush the
+    -- latter.
     f (ResolvePreTokensStack openings reopenings@(_:_) written ts)
             = Run $ ResolvePreTokensStack openings [] written (reverse reopenings <> ts)
 
-    -- (d) simply run and output any other tags
+    -- simply run and output any other tags
     f (ResolvePreTokensStack openings [] written (t : ts'))
             = Run $ ResolvePreTokensStack openings [] (t : written) ts'
 
