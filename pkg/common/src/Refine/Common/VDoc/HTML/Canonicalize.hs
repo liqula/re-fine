@@ -62,8 +62,7 @@ canonicalizeVDocVersion = fmap (VDocVersion . cs . renderTokens) . canonicalize 
     canonicalize
       = fmap setElemUIDs
       . wrapInTopLevelTags
-      . fmap (onText canonicalizeWhitespace)
-      . fmap fixSelfClosing
+      . fmap (onText canonicalizeWhitespace . fixSelfClosing)
       . canonicalizeTokens
       . dropCommentsAndDoctypes
 

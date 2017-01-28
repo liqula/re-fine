@@ -40,7 +40,9 @@ import           Control.Monad.Error.Class (MonadError, throwError)
 import           Control.Monad (foldM)
 import           Data.Functor.Infix ((<$$>))
 import           Data.Maybe (catMaybes)
-import           Data.String.Conversions ((<>), cs)
+import           Data.Set (Set)
+import qualified Data.Set as Set
+import           Data.String.Conversions (ST, (<>), cs)
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
 import           Data.Typeable (Typeable, typeOf)
@@ -255,93 +257,50 @@ enablePreTokens ys = f <$> ys
 
 data ResolvePreTokensStack =
     ResolvePreTokensStack
-      { _rptsOpen    :: [PreToken]
-      , _rptsReopen  :: [PreToken]
+      { _rptsOpen    :: Set PreToken'
       , _rptsWritten :: [PreToken]
       , _rptsReading :: [PreToken]
       }
   deriving (Eq, Show)
 
--- | If there are any pre-marks left, open and close them as often as needed to resolve overlaps.
--- Crashes if the opening and closing premarks do not match up.
+-- | This is really just PreMarkOpen, but we want the helper functions to be total, so we scrap the
+-- constructor.
+type PreToken' = (ST, ST)
+
+
+-- | Traverse a 'PreToken' and wrap all 'PreMarkOpen' and 'PreMarkClose' directly around the
+-- affected text nodes.  Fails if the opening and closing premarks do not match up.
 resolvePreTokens :: forall m . MonadError String m => [PreToken] -> m [Token]
-resolvePreTokens ts_ = runPreToken <$$> (filterEmptyChunks <$> go)
+resolvePreTokens ts_ = runPreToken <$$> go
   where
     go :: m [PreToken]
     go = either throwError pure
        . recursion f
-       $ ResolvePreTokensStack [] [] [] ts_
+       $ ResolvePreTokensStack mempty [] ts_
 
     f :: ResolvePreTokensStack -> Recursion ResolvePreTokensStack String [PreToken]
-    f (ResolvePreTokensStack [] [] written []) = Halt $ reverse written
+    f (ResolvePreTokensStack opens written (t@(PreToken (ContentText _)) : ts')) =
+        Run $ ResolvePreTokensStack opens (wrap opens t <> written) ts'
 
-    -- handle closing tags
-    f (ResolvePreTokensStack (opening : openings') reopenings written ts@(t : ts'))
-        | isClose t && isMatchingOpenClose opening t
-            = Run $ ResolvePreTokensStack openings' reopenings (t : written) ts'
-        | isClose t
-            = Run $ ResolvePreTokensStack openings' (opening : reopenings) (closeFromOpen opening : written) ts
+    f (ResolvePreTokensStack opens written (PreMarkOpen name owner : ts')) =
+        Run $ ResolvePreTokensStack (Set.insert (name, owner) opens) written ts'
 
-    -- if a close tag is encountered and there are no opens, but reopens, then flush the latter.
-    f (ResolvePreTokensStack openings reopenings@(_:_) written ts@(t : _))
-        | isClose t
-            = Run $ ResolvePreTokensStack openings [] written (reverse reopenings <> ts)
+    f stack@(ResolvePreTokensStack opens written (PreMarkClose name : ts')) =
+        case Set.partition ((== name) . fst) opens of
+          (closing, opens') -> if Set.null closing
+            then Fail $ "resolvePreTokens: close without open: " <> show (ts_, stack)
+            else Run $ ResolvePreTokensStack opens' written ts'
 
-    -- a close tag is encountered and there are no opens and no reopens: impossible.
-    f stack@(ResolvePreTokensStack [] [] _ (t : _))
-        | isClose t
-            = Fail $ "resolvePreTokens: close without open: " <> show (ts_, stack)
+    f (ResolvePreTokensStack opens written (t : ts')) =
+        Run $ ResolvePreTokensStack opens (t : written) ts'
 
-    -- handle opening tags (leave reopenings untouched until hitting the next leaf)
-    f (ResolvePreTokensStack openings reopenings written (t : ts'))
-        | isOpen t
-            = Run $ ResolvePreTokensStack (t : openings) reopenings (t : written) ts'
+    f stack@(ResolvePreTokensStack opens written []) =
+        if Set.null opens
+          then Halt $ reverse written
+          else Fail $ "resolvePreTokens: open without close: " <> show (ts_, stack)
 
-    -- if a flat tag (neither close nor open) is encountered and there are reopens, then flush the
-    -- latter.
-    f (ResolvePreTokensStack openings reopenings@(_:_) written ts)
-            = Run $ ResolvePreTokensStack openings [] written (reverse reopenings <> ts)
-
-    -- simply run and output any other tags
-    f (ResolvePreTokensStack openings [] written (t : ts'))
-            = Run $ ResolvePreTokensStack openings [] (t : written) ts'
-
-    f stack@(ResolvePreTokensStack (_:_) [] _ [])
-            = Fail $ "resolvePreTokens: open without close: " <> show (ts_, stack)
-
-    filterEmptyChunks :: [PreToken] -> [PreToken]
-    filterEmptyChunks ts = assert (ts' == filterEmptyChunks' ts') ts'
+    wrap :: Set PreToken' -> PreToken -> [PreToken]
+    wrap (Set.toList -> opens) t = reverse (mkclose <$> opens) <> [t] <> (mkopen <$> opens)
       where
-        -- (if the assertion doesn't work out, the next best thing is to just keep running
-        -- filterEmptyChunks' until the fixpoint is reached, and hope that it takes finitely many
-        -- steps.)
-        --
-        -- (come to think of it, it is really unnecessary to keep empty open-close pairs around.
-        -- the state machine above should realize that the pair is empty and not write it out in the
-        -- first place.)
-        ts' = filterEmptyChunks' ts
-
-    filterEmptyChunks' :: [PreToken] -> [PreToken]
-    filterEmptyChunks' (PreMarkOpen _ _ : PreMarkClose _ : xs) = filterEmptyChunks xs
-    filterEmptyChunks' (x : xs)                                = x : filterEmptyChunks xs
-    filterEmptyChunks' []                                      = []
-
-    isOpen :: PreToken -> Bool
-    isOpen (PreMarkOpen _ _)        = True
-    isOpen (PreToken (TagOpen n _)) = n `notElem` nonClosing
-    isOpen _                        = False
-
-    isClose :: PreToken -> Bool
-    isClose (PreMarkClose _)        = True
-    isClose (PreToken (TagClose _)) = True
-    isClose _                       = False
-
-    isMatchingOpenClose :: PreToken -> PreToken -> Bool
-    isMatchingOpenClose (PreMarkOpen l _)        (PreMarkClose l')        | l == l' = True
-    isMatchingOpenClose (PreToken (TagOpen n _)) (PreToken (TagClose n')) | n == n' = True
-    isMatchingOpenClose _                        _                                  = False
-
-    closeFromOpen :: PreToken -> PreToken
-    closeFromOpen (PreMarkOpen l _)         = PreMarkClose l
-    closeFromOpen (PreToken (TagOpen el _)) = PreToken (TagClose el)
-    closeFromOpen _                         = error "closeFromOpen: internal error."
+        mkopen  (name, owner) = PreMarkOpen  name owner
+        mkclose (name, _)     = PreMarkClose name
