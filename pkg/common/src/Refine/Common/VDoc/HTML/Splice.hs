@@ -291,9 +291,21 @@ resolvePreTokens ts_ = runPreToken <$$> (filterEmptyChunks <$> go)
             = Fail $ "resolvePreTokens: open without close: " <> show (ts_, stack)
 
     filterEmptyChunks :: [PreToken] -> [PreToken]
-    filterEmptyChunks (PreMarkOpen _ _ : PreMarkClose _ : xs) = filterEmptyChunks xs
-    filterEmptyChunks (x : xs)                                = x : filterEmptyChunks xs
-    filterEmptyChunks []                                      = []
+    filterEmptyChunks ts = assert (ts' == filterEmptyChunks' ts') ts'
+      where
+        -- (if the assertion doesn't work out, the next best thing is to just keep running
+        -- filterEmptyChunks' until the fixpoint is reached, and hope that it takes finitely many
+        -- steps.)
+        --
+        -- (come to think of it, it is really unnecessary to keep empty open-close pairs around.
+        -- the state machine above should realize that the pair is empty and not write it out in the
+        -- first place.)
+        ts' = filterEmptyChunks' ts
+
+    filterEmptyChunks' :: [PreToken] -> [PreToken]
+    filterEmptyChunks' (PreMarkOpen _ _ : PreMarkClose _ : xs) = filterEmptyChunks xs
+    filterEmptyChunks' (x : xs)                                = x : filterEmptyChunks xs
+    filterEmptyChunks' []                                      = []
 
     isOpen :: PreToken -> Bool
     isOpen (PreMarkOpen _ _)        = True
