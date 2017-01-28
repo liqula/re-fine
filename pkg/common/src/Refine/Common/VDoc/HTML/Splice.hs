@@ -161,6 +161,11 @@ insertPreToken errinfo offset mark forest = assert (isPreMark mark) $ either err
     -- all chunks.
     err e = error $ "internal error: insertPreToken: " <> show (e, errinfo, mark, forest)
 
+    isPreMark :: PreToken -> Bool
+    isPreMark (PreMarkOpen _ _) = True
+    isPreMark (PreMarkClose _)  = True
+    isPreMark (PreToken _)      = False
+
 
 -- | Split a token stream into one that has a given number of characters @n@ in its text nodes, and
 -- the rest.  Splits up a text node into two text nodes if necessary.  Tags that have no length
@@ -220,34 +225,6 @@ splitAtOffset offset ts_ = assert (offset >= 0)
       _                        -> True
 
 
--- * pretokens
-
-isOpen :: PreToken -> Bool
-isOpen (PreMarkOpen _ _)        = True
-isOpen (PreToken (TagOpen n _)) = n `notElem` nonClosing
-isOpen _                        = False
-
-isClose :: PreToken -> Bool
-isClose (PreMarkClose _)        = True
-isClose (PreToken (TagClose _)) = True
-isClose _                       = False
-
-isPreMark :: PreToken -> Bool
-isPreMark (PreMarkOpen _ _) = True
-isPreMark (PreMarkClose _)  = True
-isPreMark (PreToken _)      = False
-
-isMatchingOpenClose :: PreToken -> PreToken -> Bool
-isMatchingOpenClose (PreMarkOpen l _)        (PreMarkClose l')        | l == l' = True
-isMatchingOpenClose (PreToken (TagOpen n _)) (PreToken (TagClose n')) | n == n' = True
-isMatchingOpenClose _                        _                                  = False
-
-closeFromOpen :: PreToken -> PreToken
-closeFromOpen (PreMarkOpen l _)         = PreMarkClose l
-closeFromOpen (PreToken (TagOpen el _)) = PreToken (TagClose el)
-closeFromOpen _                         = error "closeFromOpen: internal error."
-
-
 -- * translating between pretokens and tokens
 
 enablePreTokens :: Forest Token -> Forest PreToken
@@ -284,9 +261,9 @@ resolvePreTokens ts_ = runPreToken <$$> (filterEmptyChunks <$> go)
         | isClose t
             = Run $ ResolvePreTokensStack openings' (opening : reopenings) (closeFromOpen opening : written) ts
 
-    f (ResolvePreTokensStack [] reopenings written ts@(t : _))
+    f stack@(ResolvePreTokensStack [] _ _ (t : _))
         | isClose t
-            = Fail $ "resolvePreTokens: close without open: " <> show (ts, ts_, reopenings, written)
+            = Fail $ "resolvePreTokens: close without open: " <> show (ts_, stack)
 
     -- (b) handle opening tags
     f (ResolvePreTokensStack openings reopenings written (t : ts'))
@@ -301,10 +278,30 @@ resolvePreTokens ts_ = runPreToken <$$> (filterEmptyChunks <$> go)
     f (ResolvePreTokensStack openings [] written (t : ts'))
             = Run $ ResolvePreTokensStack openings [] (t : written) ts'
 
-    f (ResolvePreTokensStack openings@(_:_) [] _ [])
-            = Fail $ "resolvePreTokens: open without close: " <> show (openings, ts_)
+    f stack@(ResolvePreTokensStack (_:_) [] _ [])
+            = Fail $ "resolvePreTokens: open without close: " <> show (ts_, stack)
 
     filterEmptyChunks :: [PreToken] -> [PreToken]
     filterEmptyChunks (PreMarkOpen _ _ : PreMarkClose _ : xs) = filterEmptyChunks xs
     filterEmptyChunks (x : xs)                                = x : filterEmptyChunks xs
     filterEmptyChunks []                                      = []
+
+    isOpen :: PreToken -> Bool
+    isOpen (PreMarkOpen _ _)        = True
+    isOpen (PreToken (TagOpen n _)) = n `notElem` nonClosing
+    isOpen _                        = False
+
+    isClose :: PreToken -> Bool
+    isClose (PreMarkClose _)        = True
+    isClose (PreToken (TagClose _)) = True
+    isClose _                       = False
+
+    isMatchingOpenClose :: PreToken -> PreToken -> Bool
+    isMatchingOpenClose (PreMarkOpen l _)        (PreMarkClose l')        | l == l' = True
+    isMatchingOpenClose (PreToken (TagOpen n _)) (PreToken (TagClose n')) | n == n' = True
+    isMatchingOpenClose _                        _                                  = False
+
+    closeFromOpen :: PreToken -> PreToken
+    closeFromOpen (PreMarkOpen l _)         = PreMarkClose l
+    closeFromOpen (PreToken (TagOpen el _)) = PreToken (TagClose el)
+    closeFromOpen _                         = error "closeFromOpen: internal error."
