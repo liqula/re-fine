@@ -24,7 +24,7 @@
 
 module Refine.Common.VDoc.HTML.Splice
   ( insertMarks, insertMoreMarks
-  , chunkRangeCanBeApplied
+  , chunkRangeCanBeApplied, chunkRangeMismatch
   , PreToken(..)
   , enablePreTokens
   , resolvePreTokens
@@ -74,30 +74,49 @@ insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
 
 -- * sanity check
 
+data ChunkRangeMismatch =
+    ChunkRangeMismatchEmpty [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
+  | ChunkRangeOffsetTooLarge [Token] ChunkPoint
+  | ChunkRangeNotATree [Token]
+  deriving (Eq, Show)
+
 chunkRangeCanBeApplied :: ChunkRange a -> VDocVersion b -> Bool
-chunkRangeCanBeApplied crs (VDocVersion (parseTokens -> (ts :: [Token]))) = chunkRangeCanBeAppliedTs crs ts
+chunkRangeCanBeApplied crs = null . chunkRangeMismatch crs
+
+chunkRangeCanBeAppliedTs :: ChunkRange a -> [Token] -> Bool
+chunkRangeCanBeAppliedTs crs = null . chunkRangeMismatchTs crs
+
+chunkRangeMismatch :: ChunkRange a -> VDocVersion b -> [ChunkRangeMismatch]
+chunkRangeMismatch crs (VDocVersion (parseTokens -> (ts :: [Token]))) = chunkRangeMismatchTs crs ts
 
 -- | Returns 'True' iff (a) both chunk points are either Nothing or hit into an existing point in
 -- the tree (i.e. have existing @data-uid@ attributes and offsets no larger than the text length);
 -- (b) the begin chunk point is left of the end, and the text between them is non-empty.
-chunkRangeCanBeAppliedTs :: ChunkRange a -> [Token] -> Bool
-chunkRangeCanBeAppliedTs (ChunkRange _ mp1 mp2) ts = pointsHit && rangeNonEmpty
+chunkRangeMismatchTs :: ChunkRange a -> [Token] -> [ChunkRangeMismatch]
+chunkRangeMismatchTs (ChunkRange _ mp1 mp2) ts = rangeNonEmpty <> pointsHit
   where
-    pointsHit = all (`chunkPointCanBeAppliedTs` ts) $ catMaybes [mp1, mp2]
+    pointsHit :: [ChunkRangeMismatch]
+    pointsHit = mconcat $ (`chunkPointMismatchTs` ts) <$> catMaybes [mp1, mp2]
+
+    rangeNonEmpty :: [ChunkRangeMismatch]
     rangeNonEmpty = case (mp1, mp2) of
-      (Nothing, _) -> True
-      (_, Nothing) -> True
+      (Nothing, _) -> []
+      (_, Nothing) -> []
       (Just (ChunkPoint b _), Just (ChunkPoint e _))
         -> let ts' = dropWhile ((/= Just b) . dataUidOfToken) ts
                ts'' = takeWhile ((/= Just e) . dataUidOfToken) ts'
-           in sum (tokenTextLength <$> ts'') > 0
+           in if sum (tokenTextLength <$> ts'') > 0
+             then []
+             else [ChunkRangeMismatchEmpty ts mp1 mp2]
 
-chunkPointCanBeAppliedTs :: ChunkPoint -> [Token] -> Bool
-chunkPointCanBeAppliedTs (ChunkPoint uid off) ts = case tokensToForest ts of
+chunkPointMismatchTs :: ChunkPoint -> [Token] -> [ChunkRangeMismatch]
+chunkPointMismatchTs cp@(ChunkPoint uid off) ts = case tokensToForest ts of
   Right forest ->
     let sub = forest ^. atNode (\p -> dataUidOfToken p == Just uid)
-    in forestTextLength sub >= off
-  Left _ -> False
+    in if forestTextLength sub >= off
+      then []
+      else [ChunkRangeOffsetTooLarge ts cp]
+  Left _ -> [ChunkRangeNotATree ts]
 
 
 -- * inserting marks
