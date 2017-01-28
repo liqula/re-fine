@@ -115,12 +115,11 @@ insertMarksF :: forall m a . Typeable a => MonadError VDocHTMLError m
 insertMarksF crs = (`woodZip` splitup crs)
   where
     -- turn chunk ranges into chunk points.
-    splitup :: [ChunkRange a] -> [(ChunkPoint, PreToken)]
+    splitup :: [ChunkRange a] -> [(Maybe ChunkPoint, PreToken)]
     splitup = mconcat . fmap f
       where
         t = cs . show . typeOf $ (undefined :: a)
-        f (ChunkRange (toUrlPiece -> l) mb me) =
-            catMaybes [(, PreMarkOpen l t) <$> mb, (, PreMarkClose l)  <$> me]
+        f (ChunkRange (toUrlPiece -> l) mb me) = [(mb, PreMarkOpen l t), (me, PreMarkClose l)]
 
     -- FUTUREWORK: there is a faster implementation for @woodZip@: if chunks come in the correct
     -- order, we only need to traverse the forest once.  that's why it's called "zip".
@@ -129,17 +128,20 @@ insertMarksF crs = (`woodZip` splitup crs)
     -- the 'view' has proven there is sufficient text.  with more lens-foo, i bet we could write
     -- something that looks like the 'Right' branch here, but lets 'insertPreToken' return an
     -- 'Either' that is somehow propagated through '(%~)' and out of 'woodZip'.
-    woodZip :: Forest PreToken -> [(ChunkPoint, PreToken)] -> m (Forest PreToken)
+    woodZip :: Forest PreToken -> [(Maybe ChunkPoint, PreToken)] -> m (Forest PreToken)
     woodZip = foldM switch
 
-    switch :: Forest PreToken -> (ChunkPoint, PreToken) -> m (Forest PreToken)
-    switch f (cp@(ChunkPoint nod off), mark)
+    switch :: Forest PreToken -> (Maybe ChunkPoint, PreToken) -> m (Forest PreToken)
+    switch f (Nothing, mark@(PreMarkOpen _ _)) = pure $ Node mark [] : f
+    switch f (Nothing, mark@(PreMarkClose _))  = pure $ f <> [Node mark []]
+    switch f (Just cp@(ChunkPoint nod off), mark)
       = if preForestTextLength (f ^. atDataUID nod) >= off
           then pure $ f & atDataUID nod %~ insertPreToken (show cp) off mark
           else throwError $ VDocHTMLErrorBadChunkPoint f cp
       where
         atDataUID :: DataUID -> Traversal' (Forest PreToken) (Forest PreToken)
         atDataUID node = atNode (\p -> dataUidOfPreToken p == Just node)
+    switch f bad = error $ "insertMarksF: " <> show (f, bad)
 
 
 -- | In a list of text or premark tokens, add another premark token at a given offset, splitting up
