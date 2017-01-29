@@ -48,7 +48,7 @@ import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
 import           Data.Typeable (Typeable, typeOf)
 import           Text.HTML.Parser (Token(..), parseTokens, canonicalizeTokens, renderTokens)
-import           Text.HTML.Tree (tokensToForest, nonClosing)
+import           Text.HTML.Tree (tokensToForest)
 import           Web.HttpApiData (toUrlPiece)
 
 import Refine.Common.Types
@@ -197,8 +197,8 @@ insertPreToken errinfo offset mark forest = assert (isPreMark mark) $ either err
   where
     go :: MonadError VDocHTMLError m => m (Forest PreToken)
     go = do
-      (ts, ts') <- splitAtOffset offset $ preTokensFromForest forest
-      preTokensToForest $ ts <> [mark] <> ts'
+      (ts, ts') <- splitAtOffset offset forest
+      pure $ ts <> [Node mark []] <> ts'
 
     -- If 'ChunkRange' does not apply to tree (e.g. because of too large offset), this throws an
     -- internal error.  This is impossible as long as 'insertMarks' checks 'chunkCanBeApplied' on
@@ -212,61 +212,40 @@ insertPreToken errinfo offset mark forest = assert (isPreMark mark) $ either err
 
 
 -- | Split a token stream into one that has a given number of characters @n@ in its text nodes, and
--- the rest.  Splits up a text node into two text nodes if necessary.  Tags that have no length
--- (e.g. comments) go to the left.  Stops scanning on any non-flat token (definition of non-flat is
--- in the source), and either returns the resulting split or an error.
-splitAtOffset :: MonadError VDocHTMLError m => Int -> [PreToken] -> m ([PreToken], [PreToken])
-splitAtOffset offset ts_ = assert (offset >= 0)
-                         . assert ((runPreToken <$> ts_) == canonicalizeTokens (runPreToken <$> ts_))
-                         . either throwError pure
-                         $ recursion consumeToken (offset, [], ts_)
+-- the rest.  Splits up a text node into two text nodes if necessary.
+splitAtOffset :: MonadError VDocHTMLError m => Int -> Forest PreToken -> m (Forest PreToken, Forest PreToken)
+splitAtOffset offset ts_
+    = assert (offset >= 0)
+    . assert ((runPreToken <$> preTokensFromForest ts_) == canonicalizeTokens (runPreToken <$> preTokensFromForest ts_))
+    . either throwError pure
+    $ recursion consumeToken (offset, [], ts_)
   where
-    consumeToken :: (Int, [PreToken], [PreToken])
-                 -> Recursion (Int, [PreToken], [PreToken])
+    consumeToken :: (Int, Forest PreToken, Forest PreToken)
+                 -> Recursion (Int, Forest PreToken, Forest PreToken)
                               VDocHTMLError
-                              ([PreToken], [PreToken])
-    consumeToken (n, ps, ts)
-        = if n > 0
-            then hungry n ps ts
-            else nothungry ps ts
+                              (Forest PreToken, Forest PreToken)
 
-    nothungry ps []
-        = Halt (reverse ps, [])
+    consumeToken (n, ps, t@(Node (PreToken (ContentText s)) []) : ts')
+        = let n' = n - ST.length s
+          in if n' >= 0
+              then Run (n', t : ps, ts')
+              else case ST.splitAt n s of
+                (s', s'') ->
+                  let pack = (`Node` []) . PreToken . ContentText
+                  in Halt ( reverse $ pack s' : ps
+                          ,           pack s'' : ts'
+                          )
 
-    nothungry ps ts@(t : ts')
-        = if preTokenTextLength t == 0 && isFlatToken t
-            then Run (0, t : ps, ts')
-            else Halt (reverse ps, ts)
+    consumeToken (n, ps, t@(Node _ _) : ts')
+        = let n' = n - preForestTextLength [t]
+          in if n' >= 0
+              then Run (n', t : ps, ts')
+              else Fail $ VDocHTMLErrorSplitPointsToSubtree offset ts_
 
-    hungry _ _ []
-        = Fail $ VDocHTMLErrorNotEnouchCharsToSplit offset ts_
-
-    hungry n ps (t : ts')
-        | isFlatToken t
-            = let n' = n - preTokenTextLength t
-              in if n' >= 0
-                  then Run (n', t : ps, ts')
-                  else case splitTokenText n t of
-                      (p, s) -> Run (0, p : ps, s : ts')
-        | otherwise
-            = Fail $ VDocHTMLErrorNotEnouchCharsToSplit offset ts_
-
-    splitTokenText :: Int -> PreToken -> (PreToken, PreToken)
-    splitTokenText n = \case
-      (PreToken (ContentText (ST.splitAt n -> (s, s'))))
-        -> (PreToken $ ContentText s, PreToken $ ContentText s')
-      bad
-        -> error $ "splitTokenText: bad input " <> show (n, bad)
-
-    -- which tokens do not want a closing counter-part?  premarks are considered flat here; matching
-    -- of open and close marks happens in 'resolvePreTokens'.
-    isFlatToken :: PreToken -> Bool
-    isFlatToken = \case
-      (PreToken (TagOpen n _)) -> n `elem` nonClosing
-      (PreToken (TagClose _))  -> False
-      (PreMarkOpen _ _)        -> True
-      (PreMarkClose _)         -> True
-      _                        -> True
+    consumeToken (n, ps, [])
+        = if n == 0
+            then Halt (reverse ps, [])
+            else Fail $ VDocHTMLErrorNotEnoughCharsToSplit offset ts_
 
 
 -- * translating between pretokens and tokens

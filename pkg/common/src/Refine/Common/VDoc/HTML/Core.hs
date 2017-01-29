@@ -60,7 +60,8 @@ import Refine.Common.Types
 data VDocHTMLError =
     VDocHTMLErrorBadTree ParseTokenForestError
   | VDocHTMLErrorBadChunkPoint (Forest PreToken) ChunkPoint
-  | VDocHTMLErrorNotEnouchCharsToSplit Int [PreToken]
+  | VDocHTMLErrorNotEnoughCharsToSplit Int (Forest PreToken)
+  | VDocHTMLErrorSplitPointsToSubtree Int (Forest PreToken)
   | VDocHTMLErrorInternal String
   deriving (Eq, Show)
 
