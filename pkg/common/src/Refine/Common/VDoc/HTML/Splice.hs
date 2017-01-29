@@ -217,7 +217,6 @@ splitAtOffset :: MonadError VDocHTMLError m => Int -> Forest PreToken -> m (Fore
 splitAtOffset offset ts_
     = assert (offset >= 0)
     . assert ((runPreToken <$> preTokensFromForest ts_) == canonicalizeTokens (runPreToken <$> preTokensFromForest ts_))
-    . either throwError pure
     $ recursion consumeToken (offset, [], ts_)
   where
     consumeToken :: (Int, Forest PreToken, Forest PreToken)
@@ -274,9 +273,7 @@ resolvePreTokens :: forall m . MonadError String m => [PreToken] -> m [Token]
 resolvePreTokens ts_ = runPreToken <$$> go
   where
     go :: m [PreToken]
-    go = either throwError pure
-       . recursion f
-       $ ResolvePreTokensStack mempty [] ts_
+    go = recursion f $ ResolvePreTokensStack mempty [] ts_
 
     f :: ResolvePreTokensStack -> Recursion ResolvePreTokensStack String [PreToken]
     f (ResolvePreTokensStack opens written (t@(PreToken (ContentText _)) : ts')) =
