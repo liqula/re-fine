@@ -25,7 +25,9 @@
 module Refine.Frontend.Bubbles.Overlay where
 
 import           Control.Lens ((^.))
+import           Data.Maybe (isNothing)
 import           Data.Monoid ((<>))
+import qualified Data.Text as DT
 import           React.Flux
 
 import           Refine.Frontend.ThirdPartyViews (overlay_)
@@ -191,7 +193,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
         ""
         ""
         "submit"
-        True
+        ((0 == DT.length (curState ^. RS.commentInputStateText)) || isNothing category) -- no text or no category -> disable button
         (\_ -> RS.dispatch (RS.SubmitComment (curState ^. RS.commentInputStateText) category forRange)
             <> RS.dispatch RS.HideCommentEditor)
       )
