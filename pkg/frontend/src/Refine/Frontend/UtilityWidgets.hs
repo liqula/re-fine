@@ -96,9 +96,9 @@ iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
     let emConnector = if bprops ^. moduleName == "" then "" else "--"
     let beName  = iprops ^. blockName <> beConnector <> bprops ^. elementName
     let bemName = beName <> emConnector <> bprops ^. moduleName
-    hammer_ (case bprops ^. disabled of
-              True  -> []
-              False -> [on "onTap" $ bprops ^. clickHandler]
+    hammer_ (if bprops ^. disabled
+              then []
+              else [on "onTap" $ bprops ^. clickHandler]
             ) $ do
       div_ ([ "data-content-type" $= (bprops ^. contentType)
              -- TODO unify the naming schema of the classes for the different buttons!
@@ -115,9 +115,9 @@ iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
             ) $ do
           icon_ iprops
           span_ ["className" $= fromString (iprops ^. blockName <> "__button-label")
-                , "style" @= (case bprops ^. disabled of
-                                     True  -> [Style "color" Color.disabledText]
-                                     False -> [Style "cursor" ("pointer" :: String)])
+                , "style" @= (if bprops ^. disabled
+                                     then [Style "color" Color.disabledText]
+                                     else [Style "cursor" ("pointer" :: String)])
                 ] $
               elemJSString (bprops ^. label)
     where
