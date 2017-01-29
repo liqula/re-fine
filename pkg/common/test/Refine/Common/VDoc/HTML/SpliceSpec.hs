@@ -57,6 +57,7 @@ spec = parallel $ do
       insertMarks [r] vers `shouldSatisfy` isRight
 
     it "fails on self-closing tags without closing `/` (should be resolved by canonicalization)." $ do
+      pendingWith "#16"
       let vers = VDocVersion "<div data-uid=\"1\"><br>el</div>"
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 0))
                                                    (Just (ChunkPoint (DataUID 1) 1))
