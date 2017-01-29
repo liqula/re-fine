@@ -113,7 +113,7 @@ spec = parallel $ do
     it "adds owner type info in its own attribute." $ do
       let cr l = ChunkRange l (Just (ChunkPoint (DataUID 3) 1)) (Just (ChunkPoint (DataUID 3) 2))
           vers = VDocVersion "<span data-uid=\"3\">asdf</span>"
-          vers' l = VDocVersion $ "<span data-uid=\"3\">a<mark data-chunk-kind=\"" <> l <> "\" data-chunk-id=\"3\">s</mark>df</span>"
+          vers' l = VDocVersion $ "<span data-uid=\"1\">a<mark data-chunk-kind=\"" <> l <> "\" data-chunk-id=\"3\" data-uid=\"2\">s</mark>df</span>"
 
       chunkRangeMismatch (cr (ID 3 :: ID Note)) vers `shouldBe` []
 

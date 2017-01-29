@@ -25,7 +25,7 @@
 module Refine.Common.VDoc.HTML.Core
   ( -- * errors
     VDocHTMLError(..)
-  , PreToken(..), runPreToken
+  , PreToken(..), runPreToken, dropPreTokens
 
     -- * misc
   , atNode
@@ -76,6 +76,9 @@ runPreToken :: PreToken -> Token
 runPreToken (PreToken t)      = t
 runPreToken (PreMarkOpen l k) = TagOpen "mark" [Attr "data-chunk-id" l, Attr "data-chunk-kind" $ ST.map toLower k]
 runPreToken (PreMarkClose _)  = TagClose "mark"
+
+dropPreTokens :: [PreToken] -> [Token]
+dropPreTokens = fmap runPreToken . filter (\case (PreToken _) -> True; _ -> False)
 
 
 -- * misc

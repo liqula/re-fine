@@ -53,6 +53,7 @@ import           Web.HttpApiData (toUrlPiece)
 
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML.Core
+import Refine.Common.VDoc.HTML.Canonicalize
 import Refine.Prelude
 
 
@@ -62,12 +63,15 @@ import Refine.Prelude
 -- for all chunks of all edits, comments, notes, etc.
 insertMarks :: (Typeable a, MonadError VDocHTMLError m)
             => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> m (VDocVersion 'HTMLWithMarks)
-insertMarks crs (VDocVersion (parseTokens -> (ts :: [Token])))
-  = assert (ts == canonicalizeTokens ts)
-  . assert (all (`chunkRangeCanBeAppliedTs` ts) crs)
-  . fmap (VDocVersion . cs . renderTokens)  -- TODO: do we still want '\n' between tokens for darcs?
-  . insertMarksTs crs
-  $ ts
+insertMarks crs (VDocVersion (parseTokens -> (ts :: [Token]))) = do
+  ts' <- assert (ts == canonicalizeTokens ts)
+       . assert (all (`chunkRangeCanBeAppliedTs` ts) crs)
+       . insertMarksTs crs
+       $ ts
+  VDocVersion vers' <- canonicalizeVDocVersion . VDocVersion . cs . renderTokens $ ts'
+  pure $ VDocVersion vers'
+    -- TODO: do we still want '\n' between tokens for darcs?
+
 
 -- Calls 'insertMarks', but expects the input 'VDocVersion' to have passed through before.
 insertMoreMarks :: (Typeable a, MonadError VDocHTMLError m)
@@ -187,11 +191,7 @@ insertMarksF crs = (`woodZip` splitup crs)
 
 
 -- | In a list of text or premark tokens, add another premark token at a given offset, splitting up
--- an existing text if necessary.
---
--- FUTUREWORK: we could make more assumptions here on the structure of the tree: input is
--- canonicalized and all tags have data-uid, so the forest can only contain a single ContentText
--- node and no deep nodes.
+-- an existing text if necessary. The output is not canonicalized (there may be empty text nodes).
 insertPreToken :: String -> Int -> PreToken -> Forest PreToken -> Forest PreToken
 insertPreToken errinfo offset mark forest = assert (isPreMark mark) $ either err id go
   where
@@ -216,7 +216,6 @@ insertPreToken errinfo offset mark forest = assert (isPreMark mark) $ either err
 splitAtOffset :: MonadError VDocHTMLError m => Int -> Forest PreToken -> m (Forest PreToken, Forest PreToken)
 splitAtOffset offset ts_
     = assert (offset >= 0)
-    . assert ((runPreToken <$> preTokensFromForest ts_) == canonicalizeTokens (runPreToken <$> preTokensFromForest ts_))
     $ recursion consumeToken (offset, [], ts_)
   where
     consumeToken :: (Int, Forest PreToken, Forest PreToken)
