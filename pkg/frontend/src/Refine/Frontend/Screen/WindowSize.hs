@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Refine.Frontend.WindowSize where
+module Refine.Frontend.Screen.WindowSize where
 
 import           Control.Concurrent (forkIO)
 import           Control.Monad (forM_)
@@ -10,6 +10,7 @@ import           React.Flux.Lifecycle
 import           GHCJS.Foreign.Callback (Callback, asyncCallback)
 import           GHCJS.Types (JSString)
 
+import qualified Refine.Frontend.Screen.Types as RS
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
 

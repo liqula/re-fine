@@ -6,6 +6,7 @@ module Refine.Frontend.Views
   ) where
 
 import           Control.Lens ((^.))
+import           Data.Int
 import qualified Data.Map.Strict as M
 import           Data.Monoid ((<>))
 import           Data.String.Conversions
@@ -23,13 +24,16 @@ import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(
                                          , editToolbarExtension_, menuButton_, headerSizeCapture_
                                          )
 import           Refine.Frontend.Loader.Component (vdocLoader_)
+import           Refine.Frontend.Mark
 import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
+import qualified Refine.Frontend.Screen.Calculations as SC
+import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
+import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
 import           Refine.Frontend.Types as RS
 import           Refine.Frontend.Bubbles.Types as RS
 import           Refine.Frontend.UtilityWidgets
-import           Refine.Frontend.WindowSize (windowSize_, WindowSizeProps(..))
 
 
 -- | The controller view and also the top level of the Refine app.  This controller view registers
@@ -39,7 +43,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
     case rs ^. gsVDoc of
         Nothing -> vdocLoader_ (rs ^. gsVDocList)
         Just vdoc -> div_ $ do
-            windowSize_ (WindowSizeProps (rs ^. gsWindowSize)) mempty
+            windowSize_ (WindowSizeProps (rs ^. gsScreenState ^. SC.ssWindowSize)) mempty
             stickyContainer_ [] $ do
                 headerSizeCapture_ $ do
                     -- the following need to be siblings because of the z-index handling
@@ -58,7 +62,12 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                 main_ ["role" $= "main"] $ do
                     div_ ["className" $= "grid-wrapper"] $ do
                         div_ ["className" $= "row row-align-center row-align-top"] $ do
-                            leftAside_ (rs ^. gsMarkPositions) (rs ^. gsBubblesState ^. bsCurrentSelection) (rs ^. gsHeaderHeight)
+                            leftAside_ $ LeftAsideProps
+                                           (rs ^. gsMarkPositions)
+                                           (rs ^. gsBubblesState ^. bsCurrentSelection)
+                                           (rs ^. gsScreenState)
+                                           (M.elems (vdoc ^. compositeVDocDiscussions))
+                                           (M.elems (vdoc ^. compositeVDocNotes))
                             article_ [ "id" $= "vdocValue"
                                      , "className" $= "gr-20 gr-14@desktop"
                                      , onMouseUp $ \_ me -> RS.dispatch . RS.TriggerUpdateSelection $ mouseClientY me
@@ -68,7 +77,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                                 -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
                               div_ ["className" $= "c-article-content"] $ do
                                 toArticleBody . HTMLT.tokensToForest . HTMLP.parseTokens . cs . _unVDocVersion $ _compositeVDocVersion vdoc
-                            rightAside_ (rs ^. gsMarkPositions)
+                            rightAside_ (rs ^. gsMarkPositions) (rs ^. gsScreenState)
 
 
 toArticleBody :: Either ParseTokenForestError (DT.Forest HTMLP.Token) -> ReactElementM [SomeStoreAction] ()
@@ -85,6 +94,8 @@ toHTML (DT.Node (HTMLP.ContentText content) []) = elemText content
 toHTML (DT.Node (HTMLP.ContentChar content) []) = elemText $ cs [content]
 -- a comment - do we want to support them, given our HTML editor provides no means of entering them?
 toHTML (DT.Node (HTMLP.Comment _) _) = mempty -- ignore comments
+toHTML (DT.Node (HTMLP.TagOpen "mark" attrs) subForest) =
+    rfMark_ (toMarkProps attrs) $ toHTML `mapM_` subForest -- (toProps attrs)
 toHTML (DT.Node (HTMLP.TagOpen tagname attrs) subForest) =
     React.Flux.term (fromString (cs tagname)) (toProps attrs) $ toHTML `mapM_` subForest
 
@@ -100,7 +111,6 @@ toHTML (DT.Node rootLabel subForest) = do
 -- alternatively: (needs `import Text.Show.Pretty`, package pretty-show.)
 -- toHTML n@(DT.Node rootLabel subForest) = pre_ $ ppShow n
 
-
 toProps :: [HTMLP.Attr] -> [PropertyOrHandler [SomeStoreAction]]
 toProps = mconcat . fmap go
   where
@@ -110,74 +120,100 @@ toProps = mconcat . fmap go
         []
 
 
-data SnippetProps = SnippetProps
-  { _dataHunkId2 :: String
+data BubbleProps = BubbleProps
+  { _dataHunkId2 :: Int64
   , _dataContentType2 :: String
   , _iconSide :: String
   , _iconStyle :: IconDescription
-  , _markPosition :: Maybe Int
+  , _markPosition :: Maybe (Int, Int)
+  , _screenState :: SC.ScreenState
   }
 
-snippet :: ReactView SnippetProps  -- RENAME: bubble, bubble_, BubbleProps, ...
-snippet = defineView "snippet" $ \props ->
+bubble :: ReactView BubbleProps
+bubble = defineView "Bubble" $ \props ->
         case _markPosition props of
-            Nothing -> div_ ""
-            Just pos ->
-                div_ ["data-hunk-id" $= fromString (_dataHunkId2 props)
+            Nothing -> mempty
+            Just (pos, scroll) ->
+                div_ ["data-chunk-id" $= fromString (show (_dataHunkId2 props))
                     , "data-content-type" $= fromString (_dataContentType2 props)
                     , "className" $= fromString ("o-snippet o-snippet--" <> _dataContentType2 props)  -- RENAME: snippet => bubble
-                    , "style" @= [Style "top" pos]
+                    , "style" @= [Style "top" (SC.offsetIntoText pos scroll (_screenState props))]
                     ] $ do
                     div_ ["className" $= fromString ("o-snippet__icon-bg o-snippet__icon-bg--" <> _iconSide props)] $ do  -- RENAME: snippet => bubble
                         icon_ (IconProps "o-snippet" False (_iconStyle props) M)  -- RENAME: snippet => bubble
                     div_ ["className" $= "o-snippet__content"] childrenPassedToView  -- RENAME: snippet => bubble
 
-snippet_ :: SnippetProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-snippet_ = view snippet
+bubble_ :: BubbleProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+bubble_ = view bubble
 
 
-discussionSnippet :: ReactView (String, RS.MarkPositions)
-discussionSnippet = defineView "DiscussionSnippet" $ \(dataHunkId, RS.MarkPositions markPositions) ->
-    snippet_ (SnippetProps dataHunkId "discussion" "left" ("icon-Discussion", "bright") (M.lookup dataHunkId markPositions)) childrenPassedToView
+discussionBubble :: ReactView (Int64, Maybe (Int, Int), SC.ScreenState)
+discussionBubble = defineView "DiscussionBubble" $ \(dataHunkId, markPosition, screenState) ->
+    bubble_ (BubbleProps dataHunkId "discussion" "left" ("icon-Discussion", "bright") markPosition screenState) childrenPassedToView
 
-discussionSnippet_ :: String -> RS.MarkPositions -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-discussionSnippet_ dataHunkId markPositions = view discussionSnippet (dataHunkId, markPositions)
+discussionBubble_ :: Int64 -> Maybe (Int, Int) -> SC.ScreenState -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+discussionBubble_ dataHunkId markPosition screenState = view discussionBubble (dataHunkId, markPosition, screenState)
 
-questionSnippet :: ReactView (String, RS.MarkPositions)
-questionSnippet = defineView "QuestionSnippet" $ \(dataHunkId, RS.MarkPositions markPositions) ->
-    snippet_ (SnippetProps dataHunkId "question" "left" ("icon-Question", "dark") (M.lookup dataHunkId markPositions)) childrenPassedToView
+questionBubble :: ReactView (Int64, RS.MarkPositions, SC.ScreenState)
+questionBubble = defineView "QuestionBubble" $ \(dataHunkId, RS.MarkPositions markPositions, screenState) ->
+    bubble_ (BubbleProps dataHunkId "question" "left" ("icon-Question", "dark") (M.lookup dataHunkId markPositions) screenState) childrenPassedToView
 
-questionSnippet_ :: String -> RS.MarkPositions -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-questionSnippet_ dataHunkId markPositions = view questionSnippet (dataHunkId, markPositions)
+questionBubble_ :: Int64 -> RS.MarkPositions -> SC.ScreenState -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+questionBubble_ dataHunkId markPositions screenState = view questionBubble (dataHunkId, markPositions, screenState)
 
-editSnippet :: ReactView (String, RS.MarkPositions)
-editSnippet = defineView "EditSnippet" $ \(dataHunkId, RS.MarkPositions markPositions) ->
-    snippet_ (SnippetProps dataHunkId "edit" "right" ("icon-Edit", "dark") (M.lookup dataHunkId markPositions)) childrenPassedToView
+noteBubble :: ReactView (Int64, Maybe (Int, Int), SC.ScreenState)
+noteBubble = defineView "NoteBubble" $ \(dataHunkId, markPosition, screenState) ->
+    bubble_ (BubbleProps dataHunkId "question" "left" ("icon-Question", "dark") markPosition screenState) childrenPassedToView
 
-editSnippet_ :: String -> RS.MarkPositions -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-editSnippet_ dataHunkId markPositions = view editSnippet (dataHunkId, markPositions)
+noteBubble_ :: Int64 -> Maybe (Int, Int) -> SC.ScreenState -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+noteBubble_ dataHunkId markPosition screenState = view noteBubble (dataHunkId, markPosition, screenState)
+
+editBubble :: ReactView (Int64, RS.MarkPositions, SC.ScreenState)
+editBubble = defineView "EditBubble" $ \(dataHunkId, RS.MarkPositions markPositions, screenState) ->
+    bubble_ (BubbleProps dataHunkId "edit" "right" ("icon-Edit", "dark") (M.lookup dataHunkId markPositions) screenState) childrenPassedToView
+
+editBubble_ :: Int64 -> RS.MarkPositions -> SC.ScreenState -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+editBubble_ dataHunkId markPositions screenState = view editBubble (dataHunkId, markPositions, screenState)
 
 
-leftAside :: ReactView (RS.MarkPositions, (Maybe RS.Range, Maybe RS.DeviceOffset), Int)
-leftAside = defineView "LeftAside" $ \(markPositions, currentSelection, headerHeight) ->
+data LeftAsideProps = LeftAsideProps
+  { _leftAsideMarkPositions :: RS.MarkPositions
+  , _leftAsideCurrentSelection :: Selection
+  , _leftAsideScreenState :: SC.ScreenState
+  , _leftAsideDiscussions :: [CompositeDiscussion]
+  , _leftAsideNotes :: [Note]
+  }
+
+leftAside :: ReactView LeftAsideProps
+leftAside = defineView "LeftAside" $ \props ->
     aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
-        discussionSnippet_ "1" markPositions $ do
+        let lookupPosition chunkId = M.lookup chunkId . _unMarkPositions $ _leftAsideMarkPositions props
+        -- TODO the map should use proper IDs as keys
+        mconcat $ map (\d -> discussionBubble_ (d ^. compositeDiscussion ^. discussionID ^. unID)
+                                               (lookupPosition (d ^. compositeDiscussion ^. discussionID ^. unID))
+                                               (_leftAsideScreenState props)
+                                               (elemText (DT.rootLabel (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
+                      (_leftAsideDiscussions props)
+        mconcat $ map (\n -> noteBubble_ (n ^. noteID ^. unID)
+                                         (lookupPosition (n ^. noteID ^. unID))
+                                         (_leftAsideScreenState props)
+                                         (elemText (n ^. noteText)))
+                      (_leftAsideNotes props)
+
+        questionBubble_ 3 (_leftAsideMarkPositions props) (_leftAsideScreenState props) $ do
             span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
-        questionSnippet_ "3" markPositions $ do
-            span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
-        quickCreate_ "annotation" currentSelection headerHeight  -- RENAME: annotation => comment
+        quickCreate_ "annotation" (_leftAsideCurrentSelection props) (_leftAsideScreenState props)  -- RENAME: annotation => comment
 
 
-leftAside_ :: RS.MarkPositions -> (Maybe RS.Range, Maybe RS.DeviceOffset) -> Int -> ReactElementM eventHandler ()
-leftAside_ markPositions currentSelection headerHeight = view leftAside (markPositions, currentSelection, headerHeight) mempty
+leftAside_ :: LeftAsideProps -> ReactElementM eventHandler ()
+leftAside_ props = view leftAside props mempty
 
 
-rightAside :: ReactView RS.MarkPositions
-rightAside = defineView "RightAside" $ \markPositions ->
-    aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do
-                                      -- (RENAME: Edit)
-            editSnippet_ "2" markPositions $ do
+rightAside :: ReactView (RS.MarkPositions, SC.ScreenState)
+rightAside = defineView "RightAside" $ \(markPositions, screenState) ->
+    aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do -- RENAME: modifications => ??
+            editBubble_ 2 markPositions screenState $ do
                 span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
 
-rightAside_ :: RS.MarkPositions -> ReactElementM eventHandler ()
-rightAside_ markPositions = view rightAside markPositions mempty
+rightAside_ :: RS.MarkPositions -> SC.ScreenState -> ReactElementM eventHandler ()
+rightAside_ markPositions screenState = view rightAside (markPositions, screenState) mempty

@@ -21,14 +21,17 @@ import           Data.JSString (JSString, pack, unpack)
 import Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as RT
 
+import           Refine.Common.VDoc.HTML (insertMoreMarks)
 import           Refine.Frontend.Bubbles.Store (bubblesStateUpdate)
 import           Refine.Frontend.Bubbles.Types
 import           Refine.Frontend.Rest
+import           Refine.Frontend.Screen.Store (screenStateUpdate)
+import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Test.Samples
 import           Refine.Frontend.Types
 
 
-
+-- TODO: move to Screen.Calculations
 toSize :: Int -> WindowSize
 toSize sz
   | sz <= 480  = Mobile
@@ -55,10 +58,9 @@ instance StoreData GlobalState where
         let newState = state
               & gsVDoc                     %~ vdocUpdate transformedAction
               & gsVDocList                 %~ vdocListUpdate transformedAction
-              & gsHeaderHeight             %~ headerHeightUpdate transformedAction
               & gsMarkPositions            %~ markPositionsUpdate transformedAction
-              & gsWindowSize               %~ windowSizeUpdate transformedAction
               & gsBubblesState             %~ bubblesStateUpdate transformedAction
+              & gsScreenState              %~ screenStateUpdate transformedAction
 
         consoleLog "New state: " newState
         return newState
@@ -66,13 +68,29 @@ instance StoreData GlobalState where
 
 vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate action state = case action of
-    OpenDocument openedVDoc -> Just openedVDoc
-    AddDiscussion discussion      -> case state of
+    OpenDocument openedVDoc
+      -> Just openedVDoc
+
+    AddDiscussion discussion
+      -> case state of
         Nothing   -> Nothing -- no vdoc: we cannot put the comment anywhere
                              -- FIXME: i think this should be an error. ~fisx
-        Just vdoc -> Just $ vdoc & RT.compositeVDocDiscussions
-                                    %~ M.insert (discussion ^. RT.compositeDiscussion . RT.discussionID) discussion
-                            -- TODO: BUG!  this adds a new version of a discussion without removing the old one!
+        Just vdoc -> Just $ vdoc
+          & RT.compositeVDocDiscussions
+              %~ M.insert (discussion ^. RT.compositeDiscussion . RT.discussionID) discussion
+          & RT.compositeVDocVersion
+              %~ either (error . show) id . insertMoreMarks [discussion ^. RT.compositeDiscussion . RT.discussionChunkRange]
+
+    AddNote note
+      -> case state of
+        Nothing   -> Nothing -- no vdoc: we cannot put the note anywhere
+                             -- FIXME: i think this should be an error. ~fisx
+        Just vdoc -> Just $ vdoc
+          & RT.compositeVDocNotes
+              %~ M.insert (note ^. RT.noteID) note
+          & RT.compositeVDocVersion
+              %~ either (error . show) id . insertMoreMarks [note ^. RT.noteChunkRange]
+
     _ -> state
 
 vdocListUpdate :: RefineAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
@@ -80,19 +98,9 @@ vdocListUpdate action state = case action of
     LoadedDocumentList list -> Just list
     _ -> state
 
-headerHeightUpdate :: RefineAction -> Int -> Int
-headerHeightUpdate action state = case action of
-    AddHeaderHeight height -> height
-    _ -> state
-
 markPositionsUpdate :: RefineAction -> MarkPositions -> MarkPositions
 markPositionsUpdate action state = case action of
-    AddMarkPosition dataHunkId pos -> MarkPositions $ M.alter (\_ -> Just pos) dataHunkId (_unMarkPositions state)
-    _ -> state
-
-windowSizeUpdate :: RefineAction -> WindowSize -> WindowSize
-windowSizeUpdate action state = case action of
-    SetWindowSize newSize -> newSize
+    AddMarkPosition dataHunkId pos scroll -> MarkPositions $ M.alter (\_ -> Just (pos, scroll)) dataHunkId (_unMarkPositions state)
     _ -> state
 
 emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()

@@ -10,6 +10,7 @@ import           Data.String (fromString)
 import           GHCJS.Types (JSString)
 import           React.Flux
 
+import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Style
 import           Refine.Frontend.ThirdPartyViews (hammer_)
 
@@ -34,16 +35,17 @@ data IconProps = IconProps
 
 makeLenses ''IconProps
 
+type ClickHandler = Event -> [SomeStoreAction]
+
 data IconButtonProps = IconButtonProps
   { _iconProps     :: IconProps
   , _elementName   :: String
   , _moduleName    :: String
   , _contentType   :: JSString
   , _label         :: JSString
+  , _disabled      :: Bool
   , _clickHandler    :: ClickHandler
   }
-
-type ClickHandler = Event -> [SomeStoreAction]
 
 makeLenses ''IconButtonProps
 
@@ -94,22 +96,29 @@ iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
     let emConnector = if bprops ^. moduleName == "" then "" else "--"
     let beName  = iprops ^. blockName <> beConnector <> bprops ^. elementName
     let bemName = beName <> emConnector <> bprops ^. moduleName
-    hammer_ [on "onTap" $ bprops ^. clickHandler] $ do
-      div_ (["data-content-type" $= (bprops ^. contentType)
-             , "style" @= [Style "cursor" ("pointer" :: String)]
+    hammer_ (if bprops ^. disabled
+              then []
+              else [on "onTap" $ bprops ^. clickHandler]
+            ) $ do
+      div_ ([ "data-content-type" $= (bprops ^. contentType)
              -- TODO unify the naming schema of the classes for the different buttons!
-             , "className" $= fromString (toClasses [ iprops ^. blockName <> "__button"
+            , "className" $= fromString (toClasses [ iprops ^. blockName <> "__button"
                                                     , beName  -- for the vdoc-toolbar
                                                     , bemName -- for the buttons in the overlays
                                                     , alignmentClass (iprops ^. blockName)
                                                                      (props ^. rightAligned)
                                                      ])
-             , onClick $ const . (bprops ^. clickHandler)
-             ] <> case props ^. position of
-                     Nothing  -> []
-                     Just pos -> ["style" @= [Style "top" pos]]) $ do
+            , "style" @= (case props ^. position of
+                                 Nothing  -> []
+                                 Just pos -> [Style "top" pos])
+            ] <> if bprops ^. disabled then [] else [onClick $ const . (bprops ^. clickHandler)]
+            ) $ do
           icon_ iprops
-          span_ ["className" $= fromString (iprops ^. blockName <> "__button-label")] $
+          span_ ["className" $= fromString (iprops ^. blockName <> "__button-label")
+                , "style" @= (if bprops ^. disabled
+                                     then [Style "color" Color.disabledText]
+                                     else [Style "cursor" ("pointer" :: String)])
+                ] $
               elemJSString (bprops ^. label)
     where
       alignmentClass blockName_ rightAligned_ = if rightAligned_ then blockName_ <> "--align-right" else ""
