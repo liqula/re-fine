@@ -41,7 +41,7 @@ import           Data.String.Conversions (ST, (<>), cs)
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
 import           Text.HTML.Parser (Token(..), Attr(..), parseTokens, canonicalizeTokens, renderTokens)
-import           Text.HTML.Tree (tokensFromForest)
+import           Text.HTML.Tree (tokensFromForest, nonClosing)
 
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML.Core
@@ -62,7 +62,9 @@ canonicalizeVDocVersion = fmap (VDocVersion . cs . renderTokens) . canonicalize 
     canonicalize
       = fmap setElemUIDs
       . wrapInTopLevelTags
-      . fmap (onText canonicalizeWhitespace) . canonicalizeTokens . dropCommentsAndDoctypes
+      . fmap (onText canonicalizeWhitespace . fixSelfClosing)
+      . canonicalizeTokens
+      . dropCommentsAndDoctypes
 
 -- | De-canonicalizing is always safe, since every canonicalized 'VDocVersion' is also a raw one.
 decanonicalizeVDocVersion :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLRaw
@@ -75,6 +77,11 @@ dropCommentsAndDoctypes = Prelude.filter $ \case
   (Text.HTML.Parser.Doctype _) -> False
   _                            -> True
 
+-- 'nonClosing' tags are parsed as 'TagOpen' if they occur in the (unfortunately legal) form @<br>@.
+-- this function transforms them here into the equally legal form @<br/>@.
+fixSelfClosing :: Token -> Token
+fixSelfClosing (TagOpen n attrs) | n `elem` nonClosing = TagSelfClose n attrs
+fixSelfClosing t = t
 
 onText :: (ST -> ST) -> Token -> Token
 onText f (ContentText s) = ContentText $ f s

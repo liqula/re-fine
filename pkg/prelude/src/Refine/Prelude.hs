@@ -216,13 +216,13 @@ commonPrefix = go []
       | a == b = go (a:ps) as bs
       | otherwise = (reverse ps, as', bs')
 
-data Recursion a b c = Run a | Halt c | Fail b
+data Recursion a b c = Run a | Fail b | Halt c
   deriving (Eq, Show)
 
-recursion :: (a -> Recursion a b c) -> a -> Either b c
+recursion :: MonadError b m => (a -> Recursion a b c) -> a -> m c
 recursion f = go
-      where
-        go z = case f z of
-            Run  y -> go y
-            Fail e -> Left e
-            Halt r -> Right r
+  where
+    go z = case f z of
+      Run  y -> go y
+      Fail e -> throwError e
+      Halt r -> pure r

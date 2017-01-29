@@ -1,12 +1,17 @@
-{-# LANGUAGE DataKinds         #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections       #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Common.Test.Arbitrary where
 
+import           Control.Lens ((^.))
+import           Data.Functor.Infix ((<$$>))
 import           Data.List ((\\))
+import           Data.Maybe (catMaybes)
 import           Data.Monoid
 import           Data.String.Conversions (cs)
 import           Data.Tree
@@ -20,6 +25,8 @@ import           Text.HTML.Tree as HTML
 
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML
+import Refine.Common.VDoc.HTML.Core
+import Refine.Common.VDoc.HTML.Splice
 
 instance Arbitrary ChunkPoint where
   arbitrary               = ChunkPoint <$> arbitrary <*> arbitrary
@@ -105,6 +112,31 @@ maxListOf n g = take n <$> listOf g
 instance Arbitrary (VDocVersion 'HTMLCanonical) where
   arbitrary = arbitraryCanonicalVDocVersion
 
+arbitraryCanonicalNonEmptyVDocVersion :: Gen (VDocVersion 'HTMLCanonical)
+arbitraryCanonicalNonEmptyVDocVersion = do
+  VDocVersion v <- arbitraryCanonicalVDocVersion
+  let v' = if (sum . fmap tokenTextLength . parseTokens $ v) == 0
+        then "<span>whee</span>" <> v
+        else v
+  pure . (\(Right v'') -> v'') . canonicalizeVDocVersion $ VDocVersion v'
+
+-- | TODO: this doesn't do anything useful, sadly.
+shrinkCanonicalNonEmptyVDocVersionVersWithRanges :: VDocVersion 'HTMLCanonical -> [VDocVersion 'HTMLCanonical]
+shrinkCanonicalNonEmptyVDocVersionVersWithRanges v = do
+  let shrinkAttrs attrs = [[ attr | attr@(Attr k _) <- attrs, k == "data-uid" ]]  -- drop everything but data-uid.
+
+      shrinkToken (TagOpen n attrs) = TagOpen n <$> shrinkAttrs attrs
+      shrinkToken (TagSelfClose n attrs) = TagSelfClose n <$> shrinkAttrs attrs
+      shrinkToken _ = []
+
+      shrinkTree (Node t xs :: Tree Token) = Node <$> shrinkToken t <*> shrinkForest xs
+      shrinkForest = shrinkList shrinkTree
+
+      pack = VDocVersion . cs . renderTokens . tokensFromForest
+      unpack = (\(Right x) -> x) . tokensToForest . parseTokens . _unVDocVersion
+
+  pack <$> filter ((/= 0) . forestTextLength) (shrinkForest (unpack v))
+
 arbitraryCanonicalVDocVersion :: Gen (VDocVersion 'HTMLCanonical)
 arbitraryCanonicalVDocVersion =
   (\(Right v) -> v) .
@@ -134,3 +166,71 @@ validNonClosingOpen = TagOpen <$> elements nonClosing <*> arbitrary
 
 validClosingOpen :: Gen Token
 validClosingOpen = TagOpen <$> validClosingXmlTagName <*> arbitrary
+
+-- | TODO: this sometimes generates data-uid values that is not the direct parent of the text node
+-- referenced by the offset.  this triggers 'VDocHTMLErrorSplitPointsToSubtree' in 'splitAtOffset'.
+arbitraryValidChunkPoint :: VDocVersion h -> Maybe ChunkPoint -> Gen (Maybe ChunkPoint)
+arbitraryValidChunkPoint vers mLeftBound = do
+  let forest :: Forest Token
+      Right forest = tokensToForest . parseTokens . _unVDocVersion $ vers
+
+      tokens :: [Token]
+      tokens = mconcat (flatten <$> forest)
+
+      validTokens :: [Token]
+      validTokens = case mLeftBound of
+        -- when generating a left bound, make sure there is text left to the right of it so the mark
+        -- won't end up empty.
+        Nothing -> reverse . tail . dropWhile (not . isNonEmptyText) . reverse $ tokens
+
+        -- when generating a right bound, drop all the uids up to and including the left bound.
+        Just (ChunkPoint uid _off) -> tail . dropWhile ((/= Just uid) . dataUidOfToken) $ tokens
+
+      isNonEmptyText :: Token -> Bool
+      isNonEmptyText (ContentText "") = error "arbitraryValidChunkPoint: empty text nodes should be canonicalized away!"
+      isNonEmptyText (ContentText _)  = True
+      isNonEmptyText _                = False
+
+      validDataUids :: [DataUID]
+      validDataUids = catMaybes $ dataUidOfToken <$> validTokens
+
+  mcp <- case validDataUids of
+    [] -> pure Nothing
+    _ : _ -> do
+      uid <- elements validDataUids
+      let offmax = forestTextLength $ forest ^. atNode ((== Just uid) . dataUidOfToken)
+          offmin = case mLeftBound of
+            Just (ChunkPoint uid' off') -> if uid' == uid then off' else 0
+            Nothing -> 0
+      off <- choose (offmin, offmax)
+      pure . Just $ ChunkPoint uid off
+
+  frequency [(5, pure Nothing), (95, pure mcp)]
+
+arbitraryValidChunkRange :: VDocVersion h -> Gen (Int -> ChunkRange a)
+arbitraryValidChunkRange vers = do
+  b <- arbitraryValidChunkPoint vers Nothing
+  e <- arbitraryValidChunkPoint vers b
+  pure $ \i -> ChunkRange (ID $ fromIntegral i) b e
+
+data VersWithRanges = VersWithRanges (VDocVersion 'HTMLCanonical) [ChunkRange Edit]
+  deriving (Eq, Show)
+
+instance Arbitrary VersWithRanges where
+  arbitrary = arbitraryChunkRangesWithVersion
+  shrink = shrinkChunkRangesWithVersion
+
+arbitraryChunkRangesWithVersion :: Gen VersWithRanges
+arbitraryChunkRangesWithVersion = do
+  v   <- arbitraryCanonicalNonEmptyVDocVersion
+  rs_ <- listOf $ arbitraryValidChunkRange v
+  let rs = zipWith ($) rs_ [0..]
+  pure $ VersWithRanges v (filter (`chunkRangeCanBeApplied` v) rs)  -- TODO: 'arbitraryValidChunkRange' returns empty ranges.
+
+shrinkChunkRangesWithVersion :: VersWithRanges -> [VersWithRanges]
+shrinkChunkRangesWithVersion (VersWithRanges v rs) = do
+  v' <- shrinkCanonicalNonEmptyVDocVersionVersWithRanges v
+  VersWithRanges v' <$> shallowShrinkList (filter (`chunkRangeCanBeApplied` v') rs)
+
+shallowShrinkList :: [a] -> [[a]]
+shallowShrinkList xs = (xs !!) <$$> shrink [0 .. length xs - 1]
