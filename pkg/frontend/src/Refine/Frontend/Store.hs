@@ -67,17 +67,25 @@ instance StoreData GlobalState where
 
 vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate action state = case action of
-    OpenDocument openedVDoc -> Just openedVDoc
-    AddDiscussion discussion      -> case state of
+    OpenDocument openedVDoc
+      -> Just openedVDoc
+
+    AddDiscussion discussion
+      -> case state of
         Nothing   -> Nothing -- no vdoc: we cannot put the comment anywhere
                              -- FIXME: i think this should be an error. ~fisx
-        Just vdoc -> Just $ vdoc & RT.compositeVDocDiscussions
-                                    %~ M.insert (discussion ^. RT.compositeDiscussion . RT.discussionID) discussion
-    AddNote note      -> case state of
+        Just vdoc -> Just $ vdoc
+          & RT.compositeVDocDiscussions
+              %~ M.insert (discussion ^. RT.compositeDiscussion . RT.discussionID) discussion
+
+    AddNote note
+      -> case state of
         Nothing   -> Nothing -- no vdoc: we cannot put the note anywhere
                              -- FIXME: i think this should be an error. ~fisx
-        Just vdoc -> Just $ vdoc & RT.compositeVDocNotes
-                                    %~ M.insert (note ^. RT.noteID) note
+        Just vdoc -> Just $ vdoc
+          & RT.compositeVDocNotes
+              %~ M.insert (note ^. RT.noteID) note
+
     _ -> state
 
 vdocListUpdate :: RefineAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
