@@ -113,7 +113,7 @@ chunkRangeMismatchTs (ChunkRange _ mp1 mp2) ts = rangeNonEmpty <> pointsHit
                -- stop keeping tokens after the closing tag at the end of the sub-tree with the closing data-uid.
                mts'' = case find ((== Just e) . dataUidOfToken . snd) (zip [0..] ts') of
                    Nothing -> Nothing
-                   Just (treeStartIx, (TagOpen n _)) ->
+                   Just (treeStartIx, TagOpen n _) ->
                      let adhocParser :: [ST] -> [Token] -> [Token]
                          adhocParser (n_:ns') (t@(TagClose n')   : ts_) | n' == n_ = t : adhocParser ns'       ts_
                          adhocParser ns       (t@(TagOpen  n' _) : ts_)            = t : adhocParser (n' : ns) ts_

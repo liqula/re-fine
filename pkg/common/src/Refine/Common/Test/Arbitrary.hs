@@ -136,7 +136,7 @@ shrinkCanonicalNonEmptyVDocVersionVersWithRanges v = do
       pack = VDocVersion . cs . renderTokens . tokensFromForest
       unpack = (\(Right x) -> x) . tokensToForest . parseTokens . _unVDocVersion
 
-  pack <$> filter (not . (== 0) . forestTextLength) (shrinkForest (unpack v))
+  pack <$> filter ((/= 0) . forestTextLength) (shrinkForest (unpack v))
 
 arbitraryCanonicalVDocVersion :: Gen (VDocVersion 'HTMLCanonical)
 arbitraryCanonicalVDocVersion =
@@ -221,8 +221,7 @@ arbitraryChunkRangesWithVersion = do
   v   <- arbitraryCanonicalNonEmptyVDocVersion
   rs_ <- listOf $ arbitraryValidChunkRange v
   let rs = zipWith ($) rs_ [0..]
-  assert (all ((`chunkRangeCanBeApplied` v)) rs) $
-    pure $ VersWithRanges v rs
+  assert (all (`chunkRangeCanBeApplied` v) rs) . pure $ VersWithRanges v rs
 
 shrinkChunkRangesWithVersion :: VersWithRanges -> [VersWithRanges]
 shrinkChunkRangesWithVersion (VersWithRanges v rs) = do
