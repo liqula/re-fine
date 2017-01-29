@@ -24,11 +24,9 @@
 
 module Refine.Common.VDoc.HTML.Splice
   ( insertMarks, insertMoreMarks
-  , chunkRangeCanBeApplied
-  , PreToken(..)
+  , chunkRangeCanBeApplied, chunkRangeMismatch, ChunkRangeMismatch(..)
   , enablePreTokens
   , resolvePreTokens
-  , runPreToken
   , splitAtOffset
   , preTokensFromForest
   , preTokensToForest
@@ -38,19 +36,22 @@ import           Control.Exception (assert)
 import           Control.Lens (Traversal', (&), (^.), (%~))
 import           Control.Monad.Error.Class (MonadError, throwError)
 import           Control.Monad (foldM)
-import           Data.Char (toLower)
 import           Data.Functor.Infix ((<$$>))
+import           Data.List (find)
 import           Data.Maybe (catMaybes)
-import           Data.String.Conversions ((<>), cs)
+import           Data.Set (Set)
+import qualified Data.Set as Set
+import           Data.String.Conversions (ST, (<>), cs)
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
 import           Data.Typeable (Typeable, typeOf)
-import           Text.HTML.Parser (Token(..), Attr(..), parseTokens, canonicalizeTokens, renderTokens)
-import           Text.HTML.Tree (tokensToForest, tokensFromForest, nonClosing)
+import           Text.HTML.Parser (Token(..), parseTokens, canonicalizeTokens, renderTokens)
+import           Text.HTML.Tree (tokensToForest)
 import           Web.HttpApiData (toUrlPiece)
 
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML.Core
+import Refine.Common.VDoc.HTML.Canonicalize
 import Refine.Prelude
 
 
@@ -60,12 +61,15 @@ import Refine.Prelude
 -- for all chunks of all edits, comments, notes, etc.
 insertMarks :: (Typeable a, MonadError VDocHTMLError m)
             => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> m (VDocVersion 'HTMLWithMarks)
-insertMarks crs (VDocVersion (parseTokens -> (ts :: [Token])))
-  = assert (ts == canonicalizeTokens ts)
-  . assert (all (`chunkRangeCanBeAppliedTs` ts) crs)
-  . fmap (VDocVersion . cs . renderTokens)  -- TODO: do we still want '\n' between tokens for darcs?
-  . insertMarksTs crs
-  $ ts
+insertMarks crs (VDocVersion (parseTokens -> (ts :: [Token]))) = do
+  ts' <- assert (ts == canonicalizeTokens ts)
+       . assert (all (`chunkRangeCanBeAppliedTs` ts) crs)
+       . insertMarksTs crs
+       $ ts
+  VDocVersion vers' <- canonicalizeVDocVersion . VDocVersion . cs . renderTokens $ ts'
+  pure $ VDocVersion vers'
+    -- TODO: do we still want '\n' between tokens for darcs?
+
 
 -- Calls 'insertMarks', but expects the input 'VDocVersion' to have passed through before.
 insertMoreMarks :: (Typeable a, MonadError VDocHTMLError m)
@@ -75,18 +79,69 @@ insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
 
 -- * sanity check
 
+data ChunkRangeMismatch =
+    ChunkRangeMismatchEmpty [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
+  | ChunkRangeMismatchNoEndNode [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
+  | ChunkRangeOffsetTooLarge [Token] ChunkPoint
+  | ChunkRangeNotATree [Token]
+  deriving (Eq, Show)
+
 chunkRangeCanBeApplied :: ChunkRange a -> VDocVersion b -> Bool
-chunkRangeCanBeApplied crs (VDocVersion (parseTokens -> (ts :: [Token]))) = chunkRangeCanBeAppliedTs crs ts
+chunkRangeCanBeApplied crs = null . chunkRangeMismatch crs
 
 chunkRangeCanBeAppliedTs :: ChunkRange a -> [Token] -> Bool
-chunkRangeCanBeAppliedTs (ChunkRange _ mp1 mp2) ts = all (`chunkPointCanBeAppliedTs` ts) $ catMaybes [mp1, mp2]
+chunkRangeCanBeAppliedTs crs = null . chunkRangeMismatchTs crs
 
-chunkPointCanBeAppliedTs :: ChunkPoint -> [Token] -> Bool
-chunkPointCanBeAppliedTs (ChunkPoint uid off) ts = case tokensToForest ts of
+chunkRangeMismatch :: ChunkRange a -> VDocVersion b -> [ChunkRangeMismatch]
+chunkRangeMismatch crs (VDocVersion (parseTokens -> (ts :: [Token]))) = chunkRangeMismatchTs crs ts
+
+-- | Returns 'True' iff (a) both chunk points are either Nothing or hit into an existing point in
+-- the tree (i.e. have existing @data-uid@ attributes and offsets no larger than the text length);
+-- (b) the begin chunk point is left of the end, and the text between them is non-empty.
+chunkRangeMismatchTs :: ChunkRange a -> [Token] -> [ChunkRangeMismatch]
+chunkRangeMismatchTs (ChunkRange _ mp1 mp2) ts = rangeNonEmpty <> pointsHit
+  where
+    pointsHit :: [ChunkRangeMismatch]
+    pointsHit = mconcat $ (`chunkPointMismatchTs` ts) <$> catMaybes [mp1, mp2]
+
+    rangeNonEmpty :: [ChunkRangeMismatch]
+    rangeNonEmpty = case (mp1, mp2) of
+      (Nothing, _) -> []
+      (_, Nothing) -> []
+      (Just (ChunkPoint b boff), Just (ChunkPoint e eoff))
+        -> let -- start keeping tokens from the open tag with the opening data-uid
+               ts' = dropWhile ((/= Just b) . dataUidOfToken) ts
+
+               -- stop keeping tokens after the closing tag at the end of the sub-tree with the closing data-uid.
+               mts'' = case find ((== Just e) . dataUidOfToken . snd) (zip [0..] ts') of
+                   Nothing -> Nothing
+                   Just (treeStartIx, TagOpen n _) ->
+                     let adhocParser :: [ST] -> [Token] -> [Token]
+                         adhocParser (n_:ns') (t@(TagClose n')   : ts_) | n' == n_ = t : adhocParser ns'       ts_
+                         adhocParser ns       (t@(TagOpen  n' _) : ts_)            = t : adhocParser (n' : ns) ts_
+                         adhocParser ns       (t                 : ts_)            = t : adhocParser ns        ts_
+                         adhocParser []       []                                   = []
+                         adhocParser ns@(_:_) [] = error $ "chunkRangeMismatchTs: bad tree: " <> show ns
+
+                         chunkLength = treeStartIx + length (adhocParser [n] (drop (treeStartIx + 1) ts'))
+                     in Just $ take chunkLength ts'
+
+                   bad -> error $ "chunkRangeMismatchTs: non-tag end node: " <> show bad
+
+           in case mts'' of
+               Just ts'' -> if sum (tokenTextLength <$> ts'') - boff > 0 && (b /= e || boff <= eoff)
+                 then []
+                 else [ChunkRangeMismatchEmpty ts mp1 mp2]
+               Nothing -> [ChunkRangeMismatchNoEndNode ts mp1 mp2]
+
+chunkPointMismatchTs :: ChunkPoint -> [Token] -> [ChunkRangeMismatch]
+chunkPointMismatchTs cp@(ChunkPoint uid off) ts = case tokensToForest ts of
   Right forest ->
     let sub = forest ^. atNode (\p -> dataUidOfToken p == Just uid)
-    in not (null sub) && forestTextLength sub >= off
-  Left _ -> False
+    in if forestTextLength sub >= off
+      then []
+      else [ChunkRangeOffsetTooLarge ts cp]
+  Left _ -> [ChunkRangeNotATree ts]
 
 
 -- * inserting marks
@@ -104,12 +159,11 @@ insertMarksF :: forall m a . Typeable a => MonadError VDocHTMLError m
 insertMarksF crs = (`woodZip` splitup crs)
   where
     -- turn chunk ranges into chunk points.
-    splitup :: [ChunkRange a] -> [(ChunkPoint, PreToken)]
+    splitup :: [ChunkRange a] -> [(Maybe ChunkPoint, PreToken)]
     splitup = mconcat . fmap f
       where
         t = cs . show . typeOf $ (undefined :: a)
-        f (ChunkRange (toUrlPiece -> l) mb me) =
-            catMaybes [(, PreMarkOpen l t) <$> mb, (, PreMarkClose l)  <$> me]
+        f (ChunkRange (toUrlPiece -> l) mb me) = [(mb, PreMarkOpen l t), (me, PreMarkClose l)]
 
     -- FUTUREWORK: there is a faster implementation for @woodZip@: if chunks come in the correct
     -- order, we only need to traverse the forest once.  that's why it's called "zip".
@@ -118,167 +172,76 @@ insertMarksF crs = (`woodZip` splitup crs)
     -- the 'view' has proven there is sufficient text.  with more lens-foo, i bet we could write
     -- something that looks like the 'Right' branch here, but lets 'insertPreToken' return an
     -- 'Either' that is somehow propagated through '(%~)' and out of 'woodZip'.
-    woodZip :: Forest PreToken -> [(ChunkPoint, PreToken)] -> m (Forest PreToken)
+    woodZip :: Forest PreToken -> [(Maybe ChunkPoint, PreToken)] -> m (Forest PreToken)
     woodZip = foldM switch
 
-    switch :: Forest PreToken -> (ChunkPoint, PreToken) -> m (Forest PreToken)
-    switch f (cp@(ChunkPoint nod off), mark)
+    switch :: Forest PreToken -> (Maybe ChunkPoint, PreToken) -> m (Forest PreToken)
+    switch f (Nothing, mark@(PreMarkOpen _ _)) = pure $ Node mark [] : f
+    switch f (Nothing, mark@(PreMarkClose _))  = pure $ f <> [Node mark []]
+    switch f (Just cp@(ChunkPoint nod off), mark)
       = if preForestTextLength (f ^. atDataUID nod) >= off
           then pure $ f & atDataUID nod %~ insertPreToken (show cp) off mark
           else throwError $ VDocHTMLErrorBadChunkPoint f cp
       where
         atDataUID :: DataUID -> Traversal' (Forest PreToken) (Forest PreToken)
         atDataUID node = atNode (\p -> dataUidOfPreToken p == Just node)
+    switch f bad = error $ "insertMarksF: " <> show (f, bad)
 
 
 -- | In a list of text or premark tokens, add another premark token at a given offset, splitting up
--- an existing text if necessary.
---
--- FUTUREWORK: we could make more assumptions here on the structure of the tree: input is
--- canonicalized and all tags have data-uid, so the forest can only contain a single ContentText
--- node and no deep nodes.
+-- an existing text if necessary. The output is not canonicalized (there may be empty text nodes).
 insertPreToken :: String -> Int -> PreToken -> Forest PreToken -> Forest PreToken
 insertPreToken errinfo offset mark forest = assert (isPreMark mark) $ either err id go
   where
     go :: MonadError VDocHTMLError m => m (Forest PreToken)
     go = do
-      (ts, ts') <- splitAtOffset offset $ preTokensFromForest forest
-      preTokensToForest $ ts <> [mark] <> ts'
+      (ts, ts') <- splitAtOffset offset forest
+      pure $ ts <> [Node mark []] <> ts'
 
     -- If 'ChunkRange' does not apply to tree (e.g. because of too large offset), this throws an
     -- internal error.  This is impossible as long as 'insertMarks' checks 'chunkCanBeApplied' on
     -- all chunks.
     err e = error $ "internal error: insertPreToken: " <> show (e, errinfo, mark, forest)
 
+    isPreMark :: PreToken -> Bool
+    isPreMark (PreMarkOpen _ _) = True
+    isPreMark (PreMarkClose _)  = True
+    isPreMark (PreToken _)      = False
+
 
 -- | Split a token stream into one that has a given number of characters @n@ in its text nodes, and
--- the rest.  Splits up a text node into two text nodes if necessary.  Tags that have no length
--- (e.g. comments) go to the left.  Stops scanning on any non-flat token (definition of non-flat is
--- in the source), and either returns the resulting split or an error.
-splitAtOffset :: MonadError VDocHTMLError m => Int -> [PreToken] -> m ([PreToken], [PreToken])
-splitAtOffset offset ts_ = assert (offset >= 0)
-                         . assert ((runPreToken <$> ts_) == canonicalizeTokens (runPreToken <$> ts_))
-                         . either throwError pure
-                         $ recursion consumeToken (offset, [], ts_)
+-- the rest.  Splits up a text node into two text nodes if necessary.
+splitAtOffset :: MonadError VDocHTMLError m => Int -> Forest PreToken -> m (Forest PreToken, Forest PreToken)
+splitAtOffset offset ts_
+    = assert (offset >= 0)
+    $ recursion consumeToken (offset, [], ts_)
   where
-    consumeToken :: (Int, [PreToken], [PreToken])
-                 -> Recursion (Int, [PreToken], [PreToken])
+    consumeToken :: (Int, Forest PreToken, Forest PreToken)
+                 -> Recursion (Int, Forest PreToken, Forest PreToken)
                               VDocHTMLError
-                              ([PreToken], [PreToken])
-    consumeToken (n, ps, ts)
-        = if n > 0
-            then hungry n ps ts
-            else nothungry ps ts
+                              (Forest PreToken, Forest PreToken)
 
-    nothungry ps []
-        = Halt (reverse ps, [])
+    consumeToken (n, ps, t@(Node (PreToken (ContentText s)) []) : ts')
+        = let n' = n - ST.length s
+          in if n' >= 0
+              then Run (n', t : ps, ts')
+              else case ST.splitAt n s of
+                (s', s'') ->
+                  let pack = (`Node` []) . PreToken . ContentText
+                  in Halt ( reverse $ pack s' : ps
+                          ,           pack s'' : ts'
+                          )
 
-    nothungry ps ts@(t : ts')
-        = if preTokenTextLength t == 0 && isFlatToken t
-            then Run (0, t : ps, ts')
-            else Halt (reverse ps, ts)
+    consumeToken (n, ps, t@(Node _ _) : ts')
+        = let n' = n - preForestTextLength [t]
+          in if n' >= 0
+              then Run (n', t : ps, ts')
+              else Fail $ VDocHTMLErrorSplitPointsToSubtree offset ts_
 
-    hungry _ _ []
-        = Fail $ VDocHTMLErrorNotEnouchCharsToSplit offset ts_
-
-    hungry n ps (t : ts')
-        | isFlatToken t
-            = let n' = n - preTokenTextLength t
-              in if n' >= 0
-                  then Run (n', t : ps, ts')
-                  else case splitTokenText n t of
-                      (p, s) -> Run (0, p : ps, s : ts')
-        | otherwise
-            = Fail $ VDocHTMLErrorNotEnouchCharsToSplit offset ts_
-
-    splitTokenText :: Int -> PreToken -> (PreToken, PreToken)
-    splitTokenText n = \case
-      (PreToken (ContentText (ST.splitAt n -> (s, s'))))
-        -> (PreToken $ ContentText s, PreToken $ ContentText s')
-      bad
-        -> error $ "splitTokenText: bad input " <> show (n, bad)
-
-    isFlatToken :: PreToken -> Bool
-    isFlatToken = \case
-      (PreToken (TagOpen n _)) -> n `notElem` nonClosing
-      (PreToken (TagClose _))  -> False
-      (PreMarkOpen _ _)        -> True  -- TODO: why?
-      (PreMarkClose _)         -> True  -- TODO: why?
-      _                        -> True
-
-
--- * pretokens
-
-runPreToken :: PreToken -> Token
-runPreToken (PreToken t)      = t
-runPreToken (PreMarkOpen l k) = TagOpen "mark" [Attr "data-chunk-id" l, Attr "data-chunk-kind" $ ST.map toLower k]
-runPreToken (PreMarkClose _)  = TagClose "mark"
-
-isOpen :: PreToken -> Bool
-isOpen (PreMarkOpen _ _)        = True
-isOpen (PreToken (TagOpen n _)) = n `notElem` nonClosing
-isOpen _                        = False
-
-isClose :: PreToken -> Bool
-isClose (PreMarkClose _)        = True
-isClose (PreToken (TagClose _)) = True
-isClose _                       = False
-
-isPreMark :: PreToken -> Bool
-isPreMark (PreMarkOpen _ _) = True
-isPreMark (PreMarkClose _)  = True
-isPreMark (PreToken _)      = False
-
-isMatchingOpenClose :: PreToken -> PreToken -> Bool
-isMatchingOpenClose (PreMarkOpen l _)        (PreMarkClose l')        | l == l' = True
-isMatchingOpenClose (PreToken (TagOpen n _)) (PreToken (TagClose n')) | n == n' = True
-isMatchingOpenClose _                        _                                  = False
-
-closeFromOpen :: PreToken -> PreToken
-closeFromOpen (PreMarkOpen l _)         = PreMarkClose l
-closeFromOpen (PreToken (TagOpen el _)) = PreToken (TagClose el)
-closeFromOpen _                         = error "closeFromOpen: internal error."
-
-
--- | This is a bit of a hack.  We want to use tokensFromForest, so we 'fmap' 'runPreToken' on the
--- input forest, then render that, and recover the pretokens from the tokens.
---
--- The encoding uses 'Doctype' to encode marks, which works because all doctype elements have been
--- removed from the input by 'canonicalizeVDocVersion'.
-preTokensFromForest :: Forest PreToken -> [PreToken]
-preTokensFromForest = fmap unstashPreToken . tokensFromForest . fmap (fmap stashPreToken)
-
--- | Inverse of 'preTokensFromForest' (equally hacky).
-preTokensToForest :: MonadError VDocHTMLError m => [PreToken] -> m (Forest PreToken)
-preTokensToForest = fmap (fmap (fmap unstashPreToken)) . tokensToForest' . fmap stashPreToken
-
-stashPreToken :: PreToken -> Token
-stashPreToken (PreMarkOpen l k) = Doctype $ ST.intercalate "/" [l, k]
-stashPreToken (PreMarkClose l)  = Doctype l
-stashPreToken (PreToken t)      = t
-
-unstashPreToken :: Token -> PreToken
-unstashPreToken (Doctype s) = case ST.splitOn "/" s of
-  [l, k] -> PreMarkOpen l k
-  [l]    -> PreMarkClose l
-  bad    -> error $ "unstashPreToken: " <> show bad
-unstashPreToken t           = PreToken t
-
-
-tokenTextLength :: Token -> Int
-tokenTextLength = \case
-  (ContentText t) -> ST.length t
-  (ContentChar _) -> 1
-  _               -> 0
-
-forestTextLength :: Forest Token -> Int
-forestTextLength = sum . fmap tokenTextLength . tokensFromForest
-
-preTokenTextLength :: PreToken -> Int
-preTokenTextLength = tokenTextLength . runPreToken
-
-preForestTextLength :: Forest PreToken -> Int
-preForestTextLength = sum . fmap preTokenTextLength . preTokensFromForest
+    consumeToken (n, ps, [])
+        = if n == 0
+            then Halt (reverse ps, [])
+            else Fail $ VDocHTMLErrorNotEnoughCharsToSplit offset ts_
 
 
 -- * translating between pretokens and tokens
@@ -290,54 +253,48 @@ enablePreTokens ys = f <$> ys
 
 data ResolvePreTokensStack =
     ResolvePreTokensStack
-      { _rptsOpen    :: [PreToken]
-      , _rptsReopen  :: [PreToken]
+      { _rptsOpen    :: Set PreToken'
       , _rptsWritten :: [PreToken]
       , _rptsReading :: [PreToken]
       }
   deriving (Eq, Show)
 
--- | If there are any pre-marks left, open and close them as often as needed to resolve overlaps.
--- Crashes if the opening and closing premarks do not match up.
+-- | This is really just PreMarkOpen, but we want the helper functions to be total, so we scrap the
+-- constructor.
+type PreToken' = (ST, ST)
+
+
+-- | Traverse a 'PreToken' and wrap all 'PreMarkOpen' and 'PreMarkClose' directly around the
+-- affected text nodes.  Fails if the opening and closing premarks do not match up.
 resolvePreTokens :: forall m . MonadError String m => [PreToken] -> m [Token]
-resolvePreTokens ts_ = runPreToken <$$> (filterEmptyChunks <$> go)
+resolvePreTokens ts_ = runPreToken <$$> go
   where
     go :: m [PreToken]
-    go = either throwError pure
-       . recursion f
-       $ ResolvePreTokensStack [] [] [] ts_
+    go = recursion f $ ResolvePreTokensStack mempty [] ts_
 
     f :: ResolvePreTokensStack -> Recursion ResolvePreTokensStack String [PreToken]
-    f (ResolvePreTokensStack [] [] written []) = Halt $ reverse written
+    f (ResolvePreTokensStack opens written (t@(PreToken (ContentText _)) : ts')) =
+        Run $ ResolvePreTokensStack opens (wrap opens t <> written) ts'
 
-    -- (a) handle closing tags
-    f (ResolvePreTokensStack (opening : openings') reopenings written ts@(t : ts'))
-        | isClose t && isMatchingOpenClose opening t
-            = Run $ ResolvePreTokensStack openings' reopenings (t : written) ts'
-        | isClose t
-            = Run $ ResolvePreTokensStack openings' (opening : reopenings) (closeFromOpen opening : written) ts
+    f (ResolvePreTokensStack opens written (PreMarkOpen name owner : ts')) =
+        Run $ ResolvePreTokensStack (Set.insert (name, owner) opens) written ts'
 
-    f (ResolvePreTokensStack [] _ _ ts@(t : _))
-        | isClose t
-            = Fail $ "resolvePreTokens: close without open: " <> show (ts, ts_)
+    f stack@(ResolvePreTokensStack opens written (PreMarkClose name : ts')) =
+        case Set.partition ((== name) . fst) opens of
+          (closing, opens') -> if Set.null closing
+            then Fail $ "resolvePreTokens: close without open: " <> show (ts_, stack)
+            else Run $ ResolvePreTokensStack opens' written ts'
 
-    -- (b) handle opening tags
-    f (ResolvePreTokensStack openings reopenings written (t : ts'))
-        | isOpen t
-            = Run $ ResolvePreTokensStack (t : openings) reopenings (t : written) ts'
+    f (ResolvePreTokensStack opens written (t : ts')) =
+        Run $ ResolvePreTokensStack opens (t : written) ts'
 
-    -- (c) *after* having handled closing tags, re-open tags artificially closed in (a)
-    f (ResolvePreTokensStack openings reopenings@(_:_) written ts)
-            = Run $ ResolvePreTokensStack openings [] written (reverse reopenings <> ts)
+    f stack@(ResolvePreTokensStack opens written []) =
+        if Set.null opens
+          then Halt $ reverse written
+          else Fail $ "resolvePreTokens: open without close: " <> show (ts_, stack)
 
-    -- (d) simply run and output any other tags
-    f (ResolvePreTokensStack openings [] written (t : ts'))
-            = Run $ ResolvePreTokensStack openings [] (t : written) ts'
-
-    f (ResolvePreTokensStack openings@(_:_) [] _ [])
-            = Fail $ "resolvePreTokens: open without close: " <> show (openings, ts_)
-
-    filterEmptyChunks :: [PreToken] -> [PreToken]
-    filterEmptyChunks (PreMarkOpen _ _ : PreMarkClose _ : xs) = filterEmptyChunks xs
-    filterEmptyChunks (x : xs)                                = x : filterEmptyChunks xs
-    filterEmptyChunks []                                      = []
+    wrap :: Set PreToken' -> PreToken -> [PreToken]
+    wrap (Set.toList -> opens) t = reverse (mkclose <$> opens) <> [t] <> (mkopen <$> opens)
+      where
+        mkopen  (name, owner) = PreMarkOpen  name owner
+        mkclose (name, _)     = PreMarkClose name

@@ -79,6 +79,7 @@ spec = do
         `shouldBe` [File "SIBLINGORDER" "s1\n", File "s1" "phoo"]
 
     it "throws an exception if any tag has no @data-uid@ attribute." $ do
+      pendingWith "#16"
       let vers = VDocVersion "<div></div>"
       evaluate (Prelude.length . show $ htmlToFileForest vers)
         `shouldThrow` anyException
