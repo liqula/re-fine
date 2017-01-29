@@ -25,7 +25,7 @@ module Refine.Common.VDoc.HTML.SpliceSpec where
 import           Control.Exception (throwIO, ErrorCall(..))
 import           Data.String.Conversions ((<>))
 import           Data.Tree
-import           Data.Either (isRight)
+import           Data.Either (isRight, isLeft)
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
@@ -49,12 +49,19 @@ spec = parallel $ do
       \vers -> do
         _unVDocVersion <$> insertMarks noChunkRanges vers `shouldBe` Right (_unVDocVersion vers)
 
-    it "self-closing tags *without* closing `/`." $ do
-      let vers = VDocVersion "<div data-uid=\"1\"><br>el</div>"
+    it "self-closing tags with closing `/`." $ do
+      let vers = VDocVersion "<div data-uid=\"1\"><br/>el</div>"
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 0))
                                                    (Just (ChunkPoint (DataUID 1) 1))
       chunkRangeCanBeApplied r vers `shouldBe` True
       insertMarks [r] vers `shouldSatisfy` isRight
+
+    it "fails on self-closing tags without closing `/` (should be resolved by canonicalization)." $ do
+      let vers = VDocVersion "<div data-uid=\"1\"><br>el</div>"
+          r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 0))
+                                                   (Just (ChunkPoint (DataUID 1) 1))
+      chunkRangeCanBeApplied r vers `shouldBe` True
+      insertMarks [r] vers `shouldSatisfy` isLeft
 
     it "regression (1)." $ do
       let vers = VDocVersion "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\"></div>"
@@ -91,15 +98,15 @@ spec = parallel $ do
       pending
 
     it "adds owner type info in its own attribute." $ do
-      let cr l = [ChunkRange l (Just (ChunkPoint (DataUID 3) 1)) (Just (ChunkPoint (DataUID 3) 2))]
+      let cr l = ChunkRange l (Just (ChunkPoint (DataUID 3) 1)) (Just (ChunkPoint (DataUID 3) 2))
           vers = VDocVersion "<span data-uid=\"3\">asdf</span>"
           vers' l = VDocVersion $ "<span data-uid=\"3\">a<mark data-chunk-kind=\"" <> l <> "\" data-chunk-id=\"3\">s</mark>df</span>"
 
       -- NOTE: if you change these, you will probably break css in the frontend.
-      insertMarks (cr (ID 3 :: ID Note))       vers `shouldBe` Right (vers' "note")
-      insertMarks (cr (ID 3 :: ID Question))   vers `shouldBe` Right (vers' "question")
-      insertMarks (cr (ID 3 :: ID Discussion)) vers `shouldBe` Right (vers' "discussion")
-      insertMarks (cr (ID 3 :: ID Edit))       vers `shouldBe` Right (vers' "edit")
+      insertMarks [cr (ID 3 :: ID Note)]       vers `shouldBe` Right (vers' "note")
+      insertMarks [cr (ID 3 :: ID Question)]   vers `shouldBe` Right (vers' "question")
+      insertMarks [cr (ID 3 :: ID Discussion)] vers `shouldBe` Right (vers' "discussion")
+      insertMarks [cr (ID 3 :: ID Edit)]       vers `shouldBe` Right (vers' "edit")
 
     it "crashes (assertion failed) if input is not canonicalized" $ do
       let eval :: Show e => Either e a -> IO a
@@ -149,10 +156,9 @@ spec = parallel $ do
         resolvePreTokens [PreMarkOpen "2" "whoof", PreMarkClose "2"]
           `shouldBe` Right []
 
-      it "keeps selections that have only tags in them, but no text" $ do
-        -- (not sure this is what we want, but it's what we currently do!)
+      it "drops selections that have only tags in them, but no text" $ do
         resolvePreTokens [PreMarkOpen "2" "whoof", PreMarkOpen "8" "whoof", PreMarkClose "8", PreMarkClose "2"]
-          `shouldBe` Right [TagOpen "mark" [Attr "data-chunk-id" "2", Attr "data-chunk-kind" "whoof"], TagClose "mark"]
+          `shouldBe` Right []
 
       it "renders marks as tags" $ do
         resolvePreTokens [PreMarkOpen "2" "whoof", PreToken $ ContentText "wef", PreMarkClose "2"]
@@ -180,17 +186,16 @@ spec = parallel $ do
       it "fails" $ do
         let bad1 = [ PreMarkOpen "2" "whoof"
                    ]
-            bad2 = [ PreMarkOpen "2" "whoof"
-                   , PreMarkOpen "8" "whoof"
-                   , PreMarkClose "2"
-                   , PreMarkClose "8"
+            bad2 = [ PreMarkClose "8"
                    ]
-
         resolvePreTokens bad1
-          `shouldBe` Left ("resolvePreTokens: open without close: " <> show ([PreMarkOpen "2" "whoof"], bad1))
+          `shouldBe` Left "resolvePreTokens: open without close: \
+            \ ([PreMarkOpen \"2\" \"whoof\"], \
+            \ ,ResolvePreTokensStack {_rptsOpen = fromList [(\"2\",\"whoof\")], _rptsWritten = [], _rptsReading = []})"
         resolvePreTokens bad2
-          `shouldBe` Left ("resolvePreTokens: close without open: " <> show ([PreMarkClose "8"], bad2))
-
+          `shouldBe` Left "resolvePreTokens: close without open: \
+            \ ([PreMarkClose \"8\"] \
+            \ ,ResolvePreTokensStack {_rptsOpen = fromList [], _rptsWritten = [], _rptsReading = [PreMarkClose \"8\"]})"
 
   describe "preTokensToForest" $ do
     it "Correctly ignores broken tree structure of PreMarkOpen, PreMarkClose." $ do
