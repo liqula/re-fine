@@ -25,10 +25,8 @@
 module Refine.Common.VDoc.HTML.Splice
   ( insertMarks, insertMoreMarks
   , chunkRangeCanBeApplied, chunkRangeMismatch, ChunkRangeMismatch(..)
-  , PreToken(..)
   , enablePreTokens
   , resolvePreTokens
-  , runPreToken
   , splitAtOffset
   , preTokensFromForest
   , preTokensToForest
