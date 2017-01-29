@@ -48,6 +48,7 @@ library
       Refine.Frontend.Bubbles.QuickCreate
       Refine.Frontend.Bubbles.Store
       Refine.Frontend.Bubbles.Types
+      Refine.Frontend.Colors
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
@@ -100,6 +101,7 @@ executable refine-frontend
       Refine.Frontend.Bubbles.QuickCreate
       Refine.Frontend.Bubbles.Store
       Refine.Frontend.Bubbles.Types
+      Refine.Frontend.Colors
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
@@ -157,6 +159,7 @@ test-suite spec
       Refine.Frontend.Bubbles.QuickCreateSpec
       Refine.Frontend.Bubbles.Store
       Refine.Frontend.Bubbles.Types
+      Refine.Frontend.Colors
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
