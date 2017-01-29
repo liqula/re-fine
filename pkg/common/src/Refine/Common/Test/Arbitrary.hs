@@ -8,7 +8,6 @@
 
 module Refine.Common.Test.Arbitrary where
 
-import           Control.Exception (assert)
 import           Control.Lens ((^.))
 import           Data.Functor.Infix ((<$$>))
 import           Data.List ((\\))
@@ -131,7 +130,7 @@ shrinkCanonicalNonEmptyVDocVersionVersWithRanges v = do
       shrinkToken _ = []
 
       shrinkTree (Node t xs :: Tree Token) = Node <$> shrinkToken t <*> shrinkForest xs
-      shrinkForest (ts :: Forest Token) = mconcat $ shrinkTree <$$> shallowShrinkList ts
+      shrinkForest = shrinkList shrinkTree
 
       pack = VDocVersion . cs . renderTokens . tokensFromForest
       unpack = (\(Right x) -> x) . tokensToForest . parseTokens . _unVDocVersion
@@ -168,6 +167,8 @@ validNonClosingOpen = TagOpen <$> elements nonClosing <*> arbitrary
 validClosingOpen :: Gen Token
 validClosingOpen = TagOpen <$> validClosingXmlTagName <*> arbitrary
 
+-- | TODO: this sometimes generates data-uid values that is not the direct parent of the text node
+-- referenced by the offset.  this triggers 'VDocHTMLErrorSplitPointsToSubtree' in 'splitAtOffset'.
 arbitraryValidChunkPoint :: VDocVersion h -> Maybe ChunkPoint -> Gen (Maybe ChunkPoint)
 arbitraryValidChunkPoint vers mLeftBound = do
   let forest :: Forest Token
@@ -193,15 +194,18 @@ arbitraryValidChunkPoint vers mLeftBound = do
       validDataUids :: [DataUID]
       validDataUids = catMaybes $ dataUidOfToken <$> validTokens
 
-  cp <- case validDataUids of
+  mcp <- case validDataUids of
     [] -> pure Nothing
     _ : _ -> do
       uid <- elements validDataUids
       let offmax = forestTextLength $ forest ^. atNode ((== Just uid) . dataUidOfToken)
-      off <- choose (0, offmax)
+          offmin = case mLeftBound of
+            Just (ChunkPoint uid' off') -> if uid' == uid then off' else 0
+            Nothing -> 0
+      off <- choose (offmin, offmax)
       pure . Just $ ChunkPoint uid off
 
-  frequency [(5, pure Nothing), (95, pure cp)]
+  frequency [(5, pure Nothing), (95, pure mcp)]
 
 arbitraryValidChunkRange :: VDocVersion h -> Gen (Int -> ChunkRange a)
 arbitraryValidChunkRange vers = do
@@ -221,7 +225,7 @@ arbitraryChunkRangesWithVersion = do
   v   <- arbitraryCanonicalNonEmptyVDocVersion
   rs_ <- listOf $ arbitraryValidChunkRange v
   let rs = zipWith ($) rs_ [0..]
-  assert (all (`chunkRangeCanBeApplied` v) rs) . pure $ VersWithRanges v rs
+  pure $ VersWithRanges v (filter (`chunkRangeCanBeApplied` v) rs)  -- TODO: 'arbitraryValidChunkRange' returns empty ranges.
 
 shrinkChunkRangesWithVersion :: VersWithRanges -> [VersWithRanges]
 shrinkChunkRangesWithVersion (VersWithRanges v rs) = do
