@@ -27,10 +27,15 @@ pkgPrelude  = "pkg/prelude"
 
 -- * actions
 
-stackBuild :: FilePath -> Action ()
-stackBuild package = do
+stackTest :: FilePath -> Action ()
+stackTest package = do
   command_ [Cwd package] "stack" ["setup"]
   command_ [Cwd package] "stack" ["test", "--fast"]
+
+stackBuildFast :: FilePath -> Action ()
+stackBuildFast package = do
+  command_ [Cwd package] "stack" ["setup"]
+  command_ [Cwd package] "stack" ["build", "--fast"]
 
 hlintPackage :: FilePath -> Action ()
 hlintPackage package = do
@@ -47,7 +52,7 @@ hlintPackage package = do
 main :: IO ()
 main = shakeArgs refineOptions $ do
   want
-    [ "build-all"
+    [ "test-all"
     , "hlint-all"
     ]
 
@@ -58,18 +63,38 @@ main = shakeArgs refineOptions $ do
     command_ [] "stack" ["install", "hspec-discover", "--resolver", resolver]
     command_ [] "stack" ["exec", "--", "which", "hspec-discover"]
 
+  phony "test-prelude" $ do
+    stackTest pkgPrelude
+
+  phony "test-common" $ do
+    stackTest pkgCommon
+
+  phony "test-backend" $ do
+    stackTest pkgBackend
+
+  phony "test-frontend" $ do
+    need ["build-frontend-npm"]
+    stackTest pkgFrontend
+
+  phony "test-all" $ do
+    -- for building everything, we only need to go to backend and frontend.  prelude and common are
+    -- compiled in both (two different compilers), and tested (as non-extra deps in stack.yaml) in
+    -- backend.
+    need ["test-backend", "test-frontend"]
+
+
   phony "build-prelude" $ do
-    stackBuild pkgPrelude
+    stackBuildFast pkgPrelude
 
   phony "build-common" $ do
-    stackBuild pkgCommon
+    stackBuildFast pkgCommon
 
   phony "build-backend" $ do
-    stackBuild pkgBackend
+    stackBuildFast pkgBackend
 
   phony "build-frontend" $ do
     need ["build-frontend-npm"]
-    stackBuild pkgFrontend
+    stackBuildFast pkgFrontend
 
   phony "build-frontend-npm" $ do
     command_ [Cwd pkgFrontend] "npm" ["install"]
@@ -80,13 +105,6 @@ main = shakeArgs refineOptions $ do
     -- backend.
     need ["build-backend", "build-frontend"]
 
-  phony "clean" $ do
-    forM_ [pkgPrelude, pkgCommon, pkgBackend, pkgFrontend] $ \pkg -> do
-        command_ [Cwd pkg] "stack" ["clean"]
-
-  phony "dist-clean" $ do
-    forM_ [pkgPrelude, pkgCommon, pkgBackend, pkgFrontend] $ \pkg -> do
-        command_ [Cwd pkg] "rm" ["-rf", ".stack-work"]
 
   phony "hlint-prelude" $ do
     hlintPackage pkgPrelude
@@ -102,3 +120,12 @@ main = shakeArgs refineOptions $ do
 
   phony "hlint-all" $ do
     need ["hlint-prelude", "hlint-common", "hlint-backend", "hlint-frontend"]
+
+
+  phony "clean" $ do
+    forM_ [pkgPrelude, pkgCommon, pkgBackend, pkgFrontend] $ \pkg -> do
+        command_ [Cwd pkg] "stack" ["clean"]
+
+  phony "dist-clean" $ do
+    forM_ [pkgPrelude, pkgCommon, pkgBackend, pkgFrontend] $ \pkg -> do
+        command_ [Cwd pkg] "rm" ["-rf", ".stack-work"]
