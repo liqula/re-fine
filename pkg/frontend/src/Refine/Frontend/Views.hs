@@ -66,8 +66,8 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                                            (rs ^. gsMarkPositions)
                                            (rs ^. gsBubblesState ^. bsCurrentSelection)
                                            (rs ^. gsScreenState)
-                                           (vdoc ^. compositeVDocDiscussions)
-                                           (vdoc ^. compositeVDocNotes)
+                                           (M.elems (vdoc ^. compositeVDocDiscussions))
+                                           (M.elems (vdoc ^. compositeVDocNotes))
                             article_ [ "id" $= "vdocValue"
                                      , "className" $= "gr-20 gr-14@desktop"
                                      , onMouseUp $ \_ me -> RS.dispatch . RS.TriggerUpdateSelection $ mouseClientY me
@@ -192,7 +192,7 @@ leftAside = defineView "LeftAside" $ \props ->
         mconcat $ map (\d -> discussionBubble_ (d ^. compositeDiscussion ^. discussionID ^. unID)
                                                (lookupPosition (d ^. compositeDiscussion ^. discussionID ^. unID))
                                                (_leftAsideScreenState props)
-                                               (elemText (head (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
+                                               (elemText (DT.rootLabel (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
                       (_leftAsideDiscussions props)
         mconcat $ map (\n -> noteBubble_ (n ^. noteID ^. unID)
                                          (lookupPosition (n ^. noteID ^. unID))
