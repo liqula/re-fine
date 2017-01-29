@@ -22,10 +22,10 @@
 
 module Refine.Common.VDoc.HTML.SpliceSpec where
 
-import           Control.Exception (throwIO, ErrorCall(..))
+import           Control.Exception (throwIO, ErrorCall(..), evaluate)
 import           Data.String.Conversions ((<>))
 import           Data.Tree
-import           Data.Either (isRight, isLeft)
+import           Data.Either (isRight)
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
@@ -50,18 +50,17 @@ spec = parallel $ do
         _unVDocVersion <$> insertMarks noChunkRanges vers `shouldBe` Right (_unVDocVersion vers)
 
     it "self-closing tags with closing `/`." $ do
-      let vers = VDocVersion "<div data-uid=\"1\"><br/>el</div>"
+      let vers = VDocVersion "<div data-uid=\"1\"><br data-uid=\"2\"/>el</div>"
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 0))
                                                    (Just (ChunkPoint (DataUID 1) 1))
-      chunkRangeCanBeApplied r vers `shouldBe` True
+      chunkRangeMismatch r vers `shouldBe` []
       insertMarks [r] vers `shouldSatisfy` isRight
 
     it "fails on self-closing tags without closing `/` (should be resolved by canonicalization)." $ do
       let vers = VDocVersion "<div data-uid=\"1\"><br>el</div>"
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 0))
                                                    (Just (ChunkPoint (DataUID 1) 1))
-      chunkRangeCanBeApplied r vers `shouldBe` True
-      insertMarks [r] vers `shouldSatisfy` isLeft
+      (evaluate . length . show $ chunkRangeMismatch r vers) `shouldThrow` anyException
 
     it "regression (1)." $ do
       let vers = VDocVersion "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\"></div>"
@@ -174,9 +173,11 @@ spec = parallel $ do
                          , PreMarkClose "2"
                          ]
           `shouldBe`
-               Right [ TagOpen "mark" [Attr "data-chunk-id" "2", Attr "data-chunk-kind" "whoof"]
+               Right [ TagOpen "mark" [Attr "data-chunk-id" "2",Attr "data-chunk-kind" "whoof"]
                      , ContentText "wef"
-                     , TagOpen "mark" [Attr "data-chunk-id" "8", Attr "data-chunk-kind" "whoof"]
+                     , TagClose "mark"
+                     , TagOpen "mark" [Attr "data-chunk-id" "8",Attr "data-chunk-kind" "whoof"]
+                     , TagOpen "mark" [Attr "data-chunk-id" "2",Attr "data-chunk-kind" "whoof"]
                      , ContentText "puh"
                      , TagClose "mark"
                      , TagClose "mark"
@@ -190,12 +191,12 @@ spec = parallel $ do
                    ]
         resolvePreTokens bad1
           `shouldBe` Left "resolvePreTokens: open without close: \
-            \ ([PreMarkOpen \"2\" \"whoof\"], \
-            \ ,ResolvePreTokensStack {_rptsOpen = fromList [(\"2\",\"whoof\")], _rptsWritten = [], _rptsReading = []})"
+            \([PreMarkOpen \"2\" \"whoof\"]\
+            \,ResolvePreTokensStack {_rptsOpen = fromList [(\"2\",\"whoof\")], _rptsWritten = [], _rptsReading = []})"
         resolvePreTokens bad2
           `shouldBe` Left "resolvePreTokens: close without open: \
-            \ ([PreMarkClose \"8\"] \
-            \ ,ResolvePreTokensStack {_rptsOpen = fromList [], _rptsWritten = [], _rptsReading = [PreMarkClose \"8\"]})"
+            \([PreMarkClose \"8\"]\
+            \,ResolvePreTokensStack {_rptsOpen = fromList [], _rptsWritten = [], _rptsReading = [PreMarkClose \"8\"]})"
 
   describe "preTokensToForest" $ do
     it "Correctly ignores broken tree structure of PreMarkOpen, PreMarkClose." $ do

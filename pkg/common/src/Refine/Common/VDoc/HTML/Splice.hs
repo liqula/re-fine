@@ -39,6 +39,7 @@ import           Control.Lens (Traversal', (&), (^.), (%~))
 import           Control.Monad.Error.Class (MonadError, throwError)
 import           Control.Monad (foldM)
 import           Data.Functor.Infix ((<$$>))
+import           Data.List (find)
 import           Data.Maybe (catMaybes)
 import           Data.Set (Set)
 import qualified Data.Set as Set
@@ -78,6 +79,7 @@ insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
 
 data ChunkRangeMismatch =
     ChunkRangeMismatchEmpty [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
+  | ChunkRangeMismatchNoEndNode [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
   | ChunkRangeOffsetTooLarge [Token] ChunkPoint
   | ChunkRangeNotATree [Token]
   deriving (Eq, Show)
@@ -104,12 +106,31 @@ chunkRangeMismatchTs (ChunkRange _ mp1 mp2) ts = rangeNonEmpty <> pointsHit
     rangeNonEmpty = case (mp1, mp2) of
       (Nothing, _) -> []
       (_, Nothing) -> []
-      (Just (ChunkPoint b _), Just (ChunkPoint e _))
-        -> let ts' = dropWhile ((/= Just b) . dataUidOfToken) ts
-               ts'' = takeWhile ((/= Just e) . dataUidOfToken) ts'
-           in if sum (tokenTextLength <$> ts'') > 0
-             then []
-             else [ChunkRangeMismatchEmpty ts mp1 mp2]
+      (Just (ChunkPoint b boff), Just (ChunkPoint e eoff))
+        -> let -- start keeping tokens from the open tag with the opening data-uid
+               ts' = dropWhile ((/= Just b) . dataUidOfToken) ts
+
+               -- stop keeping tokens after the closing tag at the end of the sub-tree with the closing data-uid.
+               mts'' = case find ((== Just e) . dataUidOfToken . snd) (zip [0..] ts') of
+                   Nothing -> Nothing
+                   Just (treeStartIx, (TagOpen n _)) ->
+                     let adhocParser :: [ST] -> [Token] -> [Token]
+                         adhocParser (n_:ns') (t@(TagClose n')   : ts_) | n' == n_ = t : adhocParser ns'       ts_
+                         adhocParser ns       (t@(TagOpen  n' _) : ts_)            = t : adhocParser (n' : ns) ts_
+                         adhocParser ns       (t                 : ts_)            = t : adhocParser ns        ts_
+                         adhocParser []       []                                   = []
+                         adhocParser ns@(_:_) [] = error $ "chunkRangeMismatchTs: bad tree: " <> show ns
+
+                         chunkLength = treeStartIx + length (adhocParser [n] (drop (treeStartIx + 1) ts'))
+                     in Just $ take chunkLength ts'
+
+                   bad -> error $ "chunkRangeMismatchTs: non-tag end node: " <> show bad
+
+           in case mts'' of
+               Just ts'' -> if sum (tokenTextLength <$> ts'') > 0 || boff >= eoff
+                 then []
+                 else [ChunkRangeMismatchEmpty ts mp1 mp2]
+               Nothing -> [ChunkRangeMismatchNoEndNode ts mp1 mp2]
 
 chunkPointMismatchTs :: ChunkPoint -> [Token] -> [ChunkRangeMismatch]
 chunkPointMismatchTs cp@(ChunkPoint uid off) ts = case tokensToForest ts of
