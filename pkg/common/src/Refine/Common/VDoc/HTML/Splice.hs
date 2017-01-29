@@ -24,7 +24,7 @@
 
 module Refine.Common.VDoc.HTML.Splice
   ( insertMarks, insertMoreMarks
-  , chunkRangeCanBeApplied, chunkRangeMismatch
+  , chunkRangeCanBeApplied, chunkRangeMismatch, ChunkRangeMismatch(..)
   , PreToken(..)
   , enablePreTokens
   , resolvePreTokens
@@ -127,7 +127,7 @@ chunkRangeMismatchTs (ChunkRange _ mp1 mp2) ts = rangeNonEmpty <> pointsHit
                    bad -> error $ "chunkRangeMismatchTs: non-tag end node: " <> show bad
 
            in case mts'' of
-               Just ts'' -> if sum (tokenTextLength <$> ts'') > 0 || boff >= eoff
+               Just ts'' -> if sum (tokenTextLength <$> ts'') - boff > 0 && (b /= e || boff <= eoff)
                  then []
                  else [ChunkRangeMismatchEmpty ts mp1 mp2]
                Nothing -> [ChunkRangeMismatchNoEndNode ts mp1 mp2]
