@@ -8,6 +8,7 @@
 
 module Refine.Common.Test.Arbitrary where
 
+import           Control.Exception (assert)
 import           Control.Lens ((^.))
 import           Data.Functor.Infix ((<$$>))
 import           Data.List ((\\))
@@ -120,6 +121,23 @@ arbitraryCanonicalNonEmptyVDocVersion = do
         else v
   pure . (\(Right v'') -> v'') . canonicalizeVDocVersion $ VDocVersion v'
 
+-- | TODO: this doesn't do anything useful, sadly.
+shrinkCanonicalNonEmptyVDocVersionVersWithRanges :: VDocVersion 'HTMLCanonical -> [VDocVersion 'HTMLCanonical]
+shrinkCanonicalNonEmptyVDocVersionVersWithRanges v = do
+  let shrinkAttrs attrs = [[ attr | attr@(Attr k _) <- attrs, k == "data-uid" ]]  -- drop everything but data-uid.
+
+      shrinkToken (TagOpen n attrs) = TagOpen n <$> shrinkAttrs attrs
+      shrinkToken (TagSelfClose n attrs) = TagSelfClose n <$> shrinkAttrs attrs
+      shrinkToken _ = []
+
+      shrinkTree (Node t xs :: Tree Token) = Node <$> shrinkToken t <*> shrinkForest xs
+      shrinkForest (ts :: Forest Token) = mconcat $ shrinkTree <$$> shallowShrinkList ts
+
+      pack = VDocVersion . cs . renderTokens . tokensFromForest
+      unpack = (\(Right x) -> x) . tokensToForest . parseTokens . _unVDocVersion
+
+  pack <$> filter (not . (== 0) . forestTextLength) (shrinkForest (unpack v))
+
 arbitraryCanonicalVDocVersion :: Gen (VDocVersion 'HTMLCanonical)
 arbitraryCanonicalVDocVersion =
   (\(Right v) -> v) .
@@ -200,13 +218,16 @@ instance Arbitrary VersWithRanges where
 
 arbitraryChunkRangesWithVersion :: Gen VersWithRanges
 arbitraryChunkRangesWithVersion = do
-  v  <- arbitraryCanonicalNonEmptyVDocVersion
+  v   <- arbitraryCanonicalNonEmptyVDocVersion
   rs_ <- listOf $ arbitraryValidChunkRange v
   let rs = zipWith ($) rs_ [0..]
-  pure $ VersWithRanges v (filter ((`chunkRangeCanBeApplied` v)) rs)
+  assert (all ((`chunkRangeCanBeApplied` v)) rs) $
+    pure $ VersWithRanges v rs
 
 shrinkChunkRangesWithVersion :: VersWithRanges -> [VersWithRanges]
-shrinkChunkRangesWithVersion (VersWithRanges vers rs) = VersWithRanges vers <$> shallowShrinkList rs
+shrinkChunkRangesWithVersion (VersWithRanges v rs) = do
+  v' <- shrinkCanonicalNonEmptyVDocVersionVersWithRanges v
+  VersWithRanges v' <$> shallowShrinkList (filter (`chunkRangeCanBeApplied` v') rs)
 
 shallowShrinkList :: [a] -> [[a]]
 shallowShrinkList xs = (xs !!) <$$> shrink [0 .. length xs - 1]
