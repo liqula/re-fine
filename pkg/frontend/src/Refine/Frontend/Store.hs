@@ -21,6 +21,7 @@ import           Data.JSString (JSString, pack, unpack)
 import Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as RT
 
+import           Refine.Common.VDoc.HTML (insertMoreMarks)
 import           Refine.Frontend.Bubbles.Store (bubblesStateUpdate)
 import           Refine.Frontend.Bubbles.Types
 import           Refine.Frontend.Rest
@@ -77,6 +78,8 @@ vdocUpdate action state = case action of
         Just vdoc -> Just $ vdoc
           & RT.compositeVDocDiscussions
               %~ M.insert (discussion ^. RT.compositeDiscussion . RT.discussionID) discussion
+          & RT.compositeVDocVersion
+              %~ either (error . show) id . insertMoreMarks [discussion ^. RT.compositeDiscussion . RT.discussionChunkRange]
 
     AddNote note
       -> case state of
@@ -85,6 +88,8 @@ vdocUpdate action state = case action of
         Just vdoc -> Just $ vdoc
           & RT.compositeVDocNotes
               %~ M.insert (note ^. RT.noteID) note
+          & RT.compositeVDocVersion
+              %~ either (error . show) id . insertMoreMarks [note ^. RT.noteChunkRange]
 
     _ -> state
 
