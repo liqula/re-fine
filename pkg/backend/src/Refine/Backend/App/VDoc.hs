@@ -23,9 +23,11 @@
 
 module Refine.Backend.App.VDoc where
 
-import Control.Lens ((^.), (^?), to, view, has)
-import Control.Monad ((<=<), join, mapM)
-import Data.Maybe (catMaybes)
+import           Control.Arrow ((&&&))
+import           Control.Lens ((^.), (^?), to, view, has)
+import           Control.Monad ((<=<), join, mapM)
+import           Data.Maybe (catMaybes)
+import qualified Data.Map as Map
 
 import           Refine.Backend.App.Core
 import           Refine.Backend.Database (DB)
@@ -88,7 +90,14 @@ getCompositeVDoc vid = do
 
       version <- monadError AppVDocError
                  =<< insertAllMarks <$> docRepo (DocRepo.getVersion rhandle hhandle)
-      pure $ CompositeVDoc vdoc repo version edits commentNotes commentDiscussions
+      pure $
+        CompositeVDoc
+          vdoc repo version
+          (toMap editID edits)
+          (toMap noteID commentNotes)
+          (toMap (compositeDiscussion . discussionID) commentDiscussions)
+  where
+    toMap selector = Map.fromList . fmap (view selector &&& id)
 
 addEdit :: ID Edit -> Create Edit -> App DB Edit
 addEdit basepid edit = do

@@ -71,8 +71,8 @@ vdocUpdate action state = case action of
     AddDiscussion discussion      -> case state of
         Nothing   -> Nothing -- no vdoc: we cannot put the comment anywhere
                              -- FIXME: i think this should be an error. ~fisx
-        Just vdoc -> Just $ vdoc & RT.compositeVDocDiscussions %~ (discussion :)
-                            -- TODO: Will become a BUG!  this adds a new version of a discussion without removing the old one!
+        Just vdoc -> Just $ vdoc & RT.compositeVDocDiscussions
+                                    %~ M.insert (discussion ^. RT.compositeDiscussion . RT.discussionID) discussion
     AddNote note      -> case state of
         Nothing   -> Nothing -- no vdoc: we cannot put the note anywhere
                              -- FIXME: i think this should be an error. ~fisx
@@ -198,5 +198,5 @@ foreign import javascript unsafe
 
 foreign import javascript unsafe
   -- see webpack.config.js for a definition of the environment variable.
-  "if( process.env.IS_IN_WEBPACK ){ console.log($1, JSON.parse($2)); }"
+  "if( process.env.NODE_ENV === 'development' ){ console.log($1, JSON.parse($2)); }"
   consoleLog_ :: JSString -> JSString -> IO ()

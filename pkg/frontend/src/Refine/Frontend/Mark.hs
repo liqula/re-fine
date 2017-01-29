@@ -8,7 +8,7 @@ import           Control.Monad (forM_)
 import           Data.Monoid ((<>))
 import           Data.String (fromString)
 import           Data.String.Conversions
-import           GHCJS.Types (JSString, JSVal)
+import           GHCJS.Types (JSVal)
 import           React.Flux
 import           React.Flux.Lifecycle
 import qualified Text.HTML.Parser as HTMLP
@@ -44,7 +44,6 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
                ] childrenPassedToView
 
    , lComponentDidMount = Just $ \propsandstate ldom _ -> do
-             consoleLog "Component did mount"
              this <- lThis ldom
              top <- js_getBoundingClientRectTop this
              props <- lGetProps propsandstate
@@ -54,12 +53,9 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
              return ()
 
    , lComponentDidUpdate = Just $ \_ ldom _ _ _ -> do
-             consoleLog "Component did update"
              this <- lThis ldom
-             -- _ <- consoleLog this
              _top <- js_getBoundingClientRectTop this
              return ()
-             -- consoleLog $ show top
    }
 
 rfMark_ :: MarkProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
@@ -68,7 +64,3 @@ rfMark_ = view rfMark
 foreign import javascript unsafe
   "$1.getBoundingClientRect().top"
   js_getBoundingClientRectTop :: JSVal -> IO RS.OffsetFromViewportTop
-
-foreign import javascript unsafe
-  "console.log($1)"
-  consoleLog :: JSString -> IO ()

@@ -1,5 +1,6 @@
 module Refine.Backend.Database.Class where
 
+import Refine.Backend.Database.Tree
 import Refine.Backend.DocRepo.Core as DocRepo
 import Refine.Common.Types.Comment
 import Refine.Common.Types.Prelude
@@ -77,7 +78,7 @@ compositeDiscussion
   => ID Discussion -> db CompositeDiscussion
 compositeDiscussion did = CompositeDiscussion
   <$> getDiscussion did
-  <*> (mapM getStatement =<< statementsOfDiscussion did)
+  <*> (fmap (buildTree _statementParent _statementID) . mapM getStatement =<< statementsOfDiscussion did)
 
 editComments
   :: (Monad db, Database db)
