@@ -4,4 +4,5 @@
 /pkg/prelude/refine-prelude.cabal
 /pkg/common/refine-common.cabal
 /pkg/backend/refine-backend.cabal
-pkg/backend/.backend-data
+/pkg/backend/.backend-data
+/pkg/backend/server.conf
