@@ -63,7 +63,7 @@ insertMarks :: (Typeable a, MonadError VDocHTMLError m)
             => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> m (VDocVersion 'HTMLWithMarks)
 insertMarks crs (VDocVersion (parseTokens -> (ts :: [Token]))) = do
   ts' <- assert (ts == canonicalizeTokens ts)
-       . assert (all (`chunkRangeCanBeAppliedTs` ts) crs)
+       . assert (all (`chunkRangeCanBeAppliedTs` ts) crs)  -- TODO: this should be another 'VDocHTMLError'.
        . insertMarksTs crs
        $ ts
   VDocVersion vers' <- canonicalizeVDocVersion . VDocVersion . cs . renderTokens $ ts'
