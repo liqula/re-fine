@@ -52,8 +52,8 @@ hlintPackage package = do
 main :: IO ()
 main = shakeArgs refineOptions $ do
   want
-    [ "test-all"
-    , "hlint-all"
+    [ "test"
+    , "hlint"
     ]
 
   phony "setup" $ do
@@ -76,7 +76,7 @@ main = shakeArgs refineOptions $ do
     need ["build-frontend-npm"]
     stackTest pkgFrontend
 
-  phony "test-all" $ do
+  phony "test" $ do
     -- for building everything, we only need to go to backend and frontend.  prelude and common are
     -- compiled in both (two different compilers), and tested (as non-extra deps in stack.yaml) in
     -- backend.
@@ -99,7 +99,7 @@ main = shakeArgs refineOptions $ do
   phony "build-frontend-npm" $ do
     command_ [Cwd pkgFrontend] "npm" ["install"]
 
-  phony "build-all" $ do
+  phony "build" $ do
     -- for building everything, we only need to go to backend and frontend.  prelude and common are
     -- compiled in both (two different compilers), and tested (as non-extra deps in stack.yaml) in
     -- backend.
@@ -118,7 +118,7 @@ main = shakeArgs refineOptions $ do
   phony "hlint-frontend" $ do
     hlintPackage pkgFrontend
 
-  phony "hlint-all" $ do
+  phony "hlint" $ do
     need ["hlint-prelude", "hlint-common", "hlint-backend", "hlint-frontend"]
 
 
