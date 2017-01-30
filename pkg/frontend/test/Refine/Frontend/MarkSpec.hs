@@ -33,11 +33,20 @@ import Refine.Frontend.Mark
 spec :: Spec
 spec = do
   describe "The rfMark_ component" $ do
-    it "renders a mark at top level" $ do
+    it "renders a HTML mark at top level" $ do
       wrapper <- shallow $ rfMark_ (MarkProps "the-chunk-id" "the-content-type") mempty
       is wrapper (StringSelector "mark") `shouldReturn` True
 
-    it "contains the data-chunk-id annotation that was passed to it" $ do
+    it "has the data-chunk-id annotation that was passed to it" $ do
       wrapper <- shallow $ rfMark_ (MarkProps "the-chunk-id" "the-content-type") mempty
-      is wrapper (StringSelector "mark") `shouldReturn` True
+      is wrapper (PropertySelector [Prop "data-hunk-id" ("the-chunk-id" :: String)]) `shouldReturn` True
 
+    it "has a mark class" $ do
+      wrapper <- shallow $ rfMark_ (MarkProps "the-chunk-id" "the-content-type") mempty
+      is wrapper (StringSelector ".o-mark") `shouldReturn` True
+
+    it "has a mark class with the content type that was passed to it" $ do
+      wrapper <- shallow $ rfMark_ (MarkProps "the-chunk-id" "the-content-type") mempty
+      is wrapper (StringSelector ".o-mark--the-content-type") `shouldReturn` True
+
+-- TODO tests for componentDidMount code
