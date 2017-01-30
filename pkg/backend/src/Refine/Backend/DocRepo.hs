@@ -46,7 +46,8 @@ createRunRepo cfg = pure $
     wrapErrors :: IO (Either DocRepoError a) -> ExceptT DocRepoError IO a
     wrapErrors m = do
       r <- liftIO (try m)
-      either (throwError . DocRepoException) (either throwError pure) r
+      either (throwError . DocRepoException . (show :: SomeException -> String))
+             (either throwError pure) r
 
 
 instance DocumentRepository DocRepo where

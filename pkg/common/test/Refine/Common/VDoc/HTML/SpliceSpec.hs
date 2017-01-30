@@ -53,7 +53,7 @@ spec = parallel $ do
       let vers = VDocVersion "<div data-uid=\"1\"><br data-uid=\"2\"/>el</div>"
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 0))
                                                    (Just (ChunkPoint (DataUID 1) 1))
-      chunkRangeMismatch r vers `shouldBe` []
+      chunkRangeErrors r vers `shouldBe` []
       insertMarks [r] vers `shouldSatisfy` isRight
 
     it "fails on self-closing tags without closing `/` (should be resolved by canonicalization)." $ do
@@ -61,26 +61,26 @@ spec = parallel $ do
       let vers = VDocVersion "<div data-uid=\"1\"><br>el</div>"
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 0))
                                                    (Just (ChunkPoint (DataUID 1) 1))
-      (evaluate . length . show $ chunkRangeMismatch r vers) `shouldThrow` anyException
+      (evaluate . length . show $ chunkRangeErrors r vers) `shouldThrow` anyException
 
     it "regression (1)." $ do
       let vers = VDocVersion "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\"></div>"
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 3))
                                                    (Just (ChunkPoint (DataUID 2) 0))
-      chunkRangeCanBeApplied r vers `shouldBe` True
+      chunkRangeErrors r vers `shouldBe` []
       insertMarks [r] vers `shouldSatisfy` isRight
 
     it "regression (2)." $ do
       let vers = VDocVersion "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\">.</div>"
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 3))
                                                    (Just (ChunkPoint (DataUID 2) 0))
-      chunkRangeCanBeApplied r vers `shouldBe` True
+      chunkRangeErrors r vers `shouldBe` []
       insertMarks [r] vers `shouldSatisfy` isRight
 
     it "regression (3)." $ do
       let vers = VDocVersion "<span data-uid=\"1\">whee</span>"
           r :: ChunkRange Edit = ChunkRange (ID 3) (Just (ChunkPoint (DataUID 1) 2)) Nothing
-      chunkRangeCanBeApplied r vers `shouldBe` True
+      chunkRangeErrors r vers `shouldBe` []
       insertMarks [r] vers `shouldSatisfy` isRight
 
     it "regression (4)." $ do
@@ -100,7 +100,7 @@ spec = parallel $ do
           empty :: ChunkRange Edit
           empty = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 5) 1)) (Just (ChunkPoint (DataUID 6) 0))
 
-      chunkRangeMismatch empty vers `shouldNotSatisfy` null
+      chunkRangeErrors empty vers `shouldNotSatisfy` null
       insertMarks rs vers `shouldSatisfy` isRight
 
     it "generates valid output on arbitrary valid chunkranges." . property $ do
@@ -116,7 +116,7 @@ spec = parallel $ do
           vers = VDocVersion "<span data-uid=\"3\">asdf</span>"
           vers' l = VDocVersion $ "<span data-uid=\"1\">a<mark data-chunk-kind=\"" <> l <> "\" data-chunk-id=\"3\" data-uid=\"2\">s</mark>df</span>"
 
-      chunkRangeMismatch (cr (ID 3 :: ID Note)) vers `shouldBe` []
+      chunkRangeErrors (cr (ID 3 :: ID Note)) vers `shouldBe` []
 
       -- NOTE: if you change these, you will probably break css in the frontend.
       insertMarks [cr (ID 3 :: ID Note)]       vers `shouldBe` Right (vers' "note")
@@ -147,13 +147,13 @@ spec = parallel $ do
 
 
     it "returns True on valid chunks." $ do
-      chunkRangeCanBeApplied (cr good) vers `shouldBe` True
+      chunkRangeErrors (cr good) vers `shouldBe` []
 
     it "returns False on out-of-bounds offset." $ do
-      chunkRangeCanBeApplied (cr bad1) vers `shouldBe` False
+      chunkRangeErrors (cr bad1) vers `shouldNotBe` []
 
     it "returns False on invalid data-uid." $ do
-      chunkRangeCanBeApplied (cr bad2) vers `shouldBe` False
+      chunkRangeErrors (cr bad2) vers `shouldNotBe` []
 
 
   describe "resolvePreTokens" $ do

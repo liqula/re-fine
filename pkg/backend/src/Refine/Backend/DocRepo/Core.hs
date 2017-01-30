@@ -22,19 +22,21 @@ module Refine.Backend.DocRepo.Core where
 
 import GHC.Generics (Generic)
 import Control.Lens (makeLenses)
-import Control.Exception (SomeException)
 import Control.Monad.Except
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader
 import Data.String.Conversions (ST)
 
 import Refine.Backend.Config
+import Refine.Prelude.TH (makeRefineType)
 
 
 data DocRepoError
   = DocRepoUnknownError String
-  | DocRepoException SomeException
-  deriving (Show)
+  | DocRepoException String
+  deriving (Eq, Show, Generic)
+
+makeRefineType ''DocRepoError
 
 newtype DocRepo a = DocRepo { unDocRepo :: ExceptT DocRepoError (ReaderT Config IO) a }
   deriving

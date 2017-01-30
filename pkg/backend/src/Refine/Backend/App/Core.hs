@@ -28,13 +28,15 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Control.Natural
 import Data.String.Conversions (ST)
+import GHC.Generics (Generic)
 
 import Refine.Backend.Database
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.User.Core
-import Refine.Common.VDoc.HTML (VDocHTMLError)
+import Refine.Common.VDoc.HTML (VDocHTMLError(..))
 import Refine.Prelude (monadError)
+import Refine.Prelude.TH (makeRefineType)
 
 
 type RunDB db   = db      :~> ExceptT DBError      IO
@@ -84,7 +86,9 @@ data AppError
   | AppUserNotFound ST
   | AppUserNotLoggedIn
   | AppUserCreationError ST
-  deriving (Show)
+  deriving (Show, Generic)
+
+makeRefineType ''AppError
 
 appIO :: IO a -> App db a
 appIO = App . liftIO

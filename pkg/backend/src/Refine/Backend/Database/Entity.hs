@@ -145,6 +145,10 @@ vdocRepo vid = do
   vs <- liftDB $ foreignKeyField S.vRRepository <$$> selectList [S.VRVdoc ==. S.idToKey vid] []
   unique vs
 
+vdocRepoOfEdit :: ID Edit -> DB (ID VDocRepo)
+vdocRepoOfEdit eid = unique =<< liftDB
+  (foreignKeyField S.rPRepository <$$> selectList [S.RPEdit ==. S.idToKey eid] [])
+
 -- * Repo
 
 createRepo :: DocRepo.RepoHandle -> DocRepo.EditHandle -> DB VDocRepo

@@ -26,7 +26,6 @@ import           Text.HTML.Tree as HTML
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML
 import Refine.Common.VDoc.HTML.Core
-import Refine.Common.VDoc.HTML.Splice
 
 instance Arbitrary ChunkPoint where
   arbitrary               = ChunkPoint <$> arbitrary <*> arbitrary
@@ -225,12 +224,17 @@ arbitraryChunkRangesWithVersion = do
   v   <- arbitraryCanonicalNonEmptyVDocVersion
   rs_ <- listOf $ arbitraryValidChunkRange v
   let rs = zipWith ($) rs_ [0..]
-  pure $ VersWithRanges v (filter (`chunkRangeCanBeApplied` v) rs)  -- TODO: 'arbitraryValidChunkRange' returns empty ranges.
+  pure $ VersWithRanges v (filter (null . flip chunkRangeErrors v) rs)  -- TODO: 'arbitraryValidChunkRange' returns empty ranges.
+
+-- | FIXME: this function should not be necessary.  CreateChunkRange should always be validated
+-- before turned into a ChunkRange.
+chunkRangeErrors :: ChunkRange a -> VDocVersion b -> [ChunkRangeError]
+chunkRangeErrors (ChunkRange _ mp1 mp2) = createChunkRangeErrors $ CreateChunkRange mp1 mp2
 
 shrinkChunkRangesWithVersion :: VersWithRanges -> [VersWithRanges]
 shrinkChunkRangesWithVersion (VersWithRanges v rs) = do
   v' <- shrinkCanonicalNonEmptyVDocVersionVersWithRanges v
-  VersWithRanges v' <$> shallowShrinkList (filter (`chunkRangeCanBeApplied` v') rs)
+  VersWithRanges v' <$> shallowShrinkList (filter (null . flip chunkRangeErrors v') rs)
 
 shallowShrinkList :: [a] -> [[a]]
 shallowShrinkList xs = (xs !!) <$$> shrink [0 .. length xs - 1]

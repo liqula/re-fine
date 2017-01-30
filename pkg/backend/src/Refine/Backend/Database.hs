@@ -59,7 +59,8 @@ createDBRunner cfg = do
   where
     wrapErrors :: IO (Either DBError a) -> ExceptT DBError IO a
     wrapErrors =
-      lift . try >=> either (throwError . DBException) (either throwError pure)
+      lift . try >=> either (throwError . DBException . (show :: SomeException -> String))
+                            (either throwError pure)
 
 instance Database DB where
   -- * VDoc
@@ -67,6 +68,7 @@ instance Database DB where
   createVDoc         = Entity.createVDoc
   getVDoc            = Entity.getVDoc
   vdocRepo           = Entity.vdocRepo
+  vdocRepoOfEdit     = Entity.vdocRepoOfEdit
 
   -- * Repo
   createRepo         = Entity.createRepo

@@ -25,14 +25,16 @@ module Refine.Backend.App.VDoc where
 
 import           Control.Arrow ((&&&))
 import           Control.Lens ((^.), (^?), to, view, has)
+import           Control.Monad.Except (throwError)
 import           Control.Monad ((<=<), join, mapM)
-import           Data.Maybe (catMaybes)
 import qualified Data.Map as Map
+import           Data.Maybe (catMaybes)
 
 import           Refine.Backend.App.Core
 import           Refine.Backend.Database (DB)
 import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
+import           Refine.Common.Types.Chunk
 import           Refine.Common.Types.Comment
 import           Refine.Common.Types.Prelude
 import           Refine.Common.Types.VDoc
@@ -66,7 +68,16 @@ getVDoc i = do
   appLog "getVDoc"
   db $ DB.getVDoc i
 
-getCompositeVDoc :: ID VDoc -> App DB CompositeVDoc
+getVDocVersion :: ID Edit -> App DB (VDocVersion 'HTMLCanonical)
+getVDocVersion eid = do
+  appLog "getVDocVersion"
+  join . db $ do
+    rid      <- DB.vdocRepoOfEdit eid
+    rhandle  <- DB.getRepoHandle rid
+    ehandle  <- DB.getEditHandle eid
+    pure . docRepo $ DocRepo.getVersion rhandle ehandle
+
+getCompositeVDoc :: ID VDoc -> App DB CompositeVDoc  -- TODO: take an edit id here, and implement getHeadCompositeVDoc in terms of that.
 getCompositeVDoc vid = do
   appLog "getCompositeVDoc"
   join . db $ do
@@ -84,8 +95,8 @@ getCompositeVDoc vid = do
       hedits <- docRepo $ DocRepo.getChildEdits rhandle hhandle
       edits  <- db $ mapM DB.getEditFromHandle hedits
       let insertAllMarks :: VDocVersion 'HTMLCanonical -> Either VDocHTMLError (VDocVersion 'HTMLWithMarks)
-          insertAllMarks vers = insertMarks     (view noteChunkRange <$> commentNotes) vers
-                            >>= insertMoreMarks (view (compositeDiscussion . discussionChunkRange) <$> commentDiscussions)
+          insertAllMarks vers = insertMarks     (view noteRange <$> commentNotes) vers
+                            >>= insertMoreMarks (view (compositeDiscussion . discussionRange) <$> commentDiscussions)
                             >>= insertMoreMarks (view editRange <$> edits)
 
       version <- monadError AppVDocError
@@ -102,6 +113,7 @@ getCompositeVDoc vid = do
 addEdit :: ID Edit -> Create Edit -> App DB Edit
 addEdit basepid edit = do
   appLog "addEdit"
+  validateCreateChunkRange basepid (edit ^. createEditRange)
   join . db $ do
     rid                    <- DB.editVDocRepo basepid
     (rhandle, basephandle) <- DB.handlesForEdit basepid
@@ -111,3 +123,12 @@ addEdit basepid edit = do
       db $ do
         childEdit <- DB.createEdit rid childphandle
         pure childEdit
+
+
+-- | Throw an error if chunk range does not fit 'VDocVersion' identified by edit.
+validateCreateChunkRange :: ID Edit -> CreateChunkRange -> App DB ()
+validateCreateChunkRange pid cr = do
+  vers <- getVDocVersion pid
+  case createChunkRangeErrors cr vers of
+    errs@(_:_) -> throwError . AppVDocError . VDocHTMLErrorChunkRangeErrors $ errs
+    [] -> pure ()
