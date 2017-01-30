@@ -125,8 +125,15 @@ foreign import javascript unsafe
     "JSON.stringify($1[$2])"
     js_getWrapperAttr :: JSVal -> JSString -> IO JSString
 
-simulate :: ShallowWrapper -> JSString -> IO ShallowWrapper
-simulate (ShallowWrapper wrapper) event = ShallowWrapper <$> js_simulate wrapper event
+data EventType =
+    MouseEnter
+  | MouseLeave
+  deriving (Show)
+
+simulate :: ShallowWrapper -> EventType -> IO ShallowWrapper
+simulate (ShallowWrapper wrapper) event = ShallowWrapper <$> js_simulate wrapper (toJSString (show event))
+
+
 
 foreign import javascript unsafe
     "$1.simulate($2)"
