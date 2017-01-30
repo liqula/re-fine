@@ -7,26 +7,26 @@
 
 module Refine.Frontend.Screen.Types where
 
-import           Control.DeepSeq
-import           Control.Lens (makeLenses)
-import           Data.Typeable (Typeable)
-import           GHC.Generics (Generic)
-import           Data.Aeson (ToJSON)
+import GHC.Generics (Generic)
+
+import Refine.Prelude.TH (makeRefineType)
 
 
 type OffsetFromViewportTop = Int
 type ScrollOffsetOfViewport = Int
 
 data WindowSize = Desktop | Tablet | Mobile
-  deriving (Show, Typeable, Generic, NFData, ToJSON)
+  deriving (Show, Generic)
 
 
 data ScreenState = ScreenState
   { _ssHeaderHeight           :: Int
   , _ssWindowSize             :: WindowSize
-  } deriving (Show, Typeable, Generic, NFData, ToJSON)
-
-makeLenses ''ScreenState
+  } deriving (Show, Generic)
 
 emptyScreenState :: ScreenState
 emptyScreenState = ScreenState 0 Desktop
+
+
+makeRefineType ''ScreenState
+makeRefineType ''WindowSize
