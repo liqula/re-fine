@@ -23,15 +23,33 @@
 module Refine.Frontend.Test.Enzyme where
 
 import Control.Exception (throwIO, ErrorCall(ErrorCall))
-import Data.Aeson (FromJSON, eitherDecode)
+import Data.Aeson (FromJSON, eitherDecode, encode, object, (.=))
+import Data.Aeson.Types (ToJSON, toJSON)
 import Data.JSString (JSString, unpack)
-import Data.String.Conversions (cs)
+import Data.String.Conversions
 import GHCJS.Types (JSVal, nullRef)
 import React.Flux
 import React.Flux.Internal
 
 
 newtype ShallowWrapper = ShallowWrapper JSVal
+
+-- | StringSelector can be a CSS class, tag, id, prop (e.g. "[foo=3]"),
+--   component display name. (TODO should this be refined? Enhance? Be checked?)
+--   PropertySelector specifies (some of) the element's props
+--   ComponentSelector specifies the component constructor (how???)
+data EnzymeSelector =
+    StringSelector String
+  | PropertySelector [Prop]
+--  | ComponentSelector
+
+
+data Prop where
+  Prop :: forall a. (ToJSON a) => ST -> a -> Prop
+
+instance ToJSON [Prop] where
+  toJSON = object . fmap (\(Prop k v) -> k .= v)
+
 
 shallow :: ReactElementM eventHandler () -> IO ShallowWrapper
 shallow comp = do
@@ -42,13 +60,20 @@ foreign import javascript unsafe
   "enzyme.shallow($1)"
   js_shallow :: ReactElementRef -> IO JSVal
 
-find :: ShallowWrapper -> JSString -> IO ShallowWrapper
-find (ShallowWrapper wrapper) selector = do
-  ShallowWrapper <$> js_find wrapper selector
+find :: ShallowWrapper -> EnzymeSelector -> IO ShallowWrapper
+find (ShallowWrapper wrapper) (StringSelector selector) = do
+  ShallowWrapper <$> js_find_by_string wrapper (toJSString selector)
+find (ShallowWrapper wrapper) (PropertySelector selector) = do
+  ShallowWrapper <$> js_find_by_prop wrapper ((toJSString . cs) (encode selector))
+
 
 foreign import javascript unsafe
     "$1.find($2)"
-    js_find :: JSVal -> JSString -> IO JSVal
+    js_find_by_string :: JSVal -> JSString -> IO JSVal
+
+foreign import javascript unsafe
+    "$1.find(JSON.parse($2))"
+    js_find_by_prop :: JSVal -> JSString -> IO JSVal
 
 is :: ShallowWrapper -> JSString -> IO Bool
 is (ShallowWrapper wrapper) selector = do

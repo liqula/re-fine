@@ -36,10 +36,10 @@ spec = do
   describe "The menuButton_ component" $ do
     it "renders its elements" $ do
       wrapper <- shallow menuButton_
-      lengthIO (find wrapper ".c-mainmenu") `shouldReturn` (1 :: Int)
-      lengthIO (find wrapper ".c-mainmenu__menu-button") `shouldReturn` (1 :: Int)
-      lengthIO (find wrapper ".c-mainmenu__icon-bar") `shouldReturn` (3 :: Int)
-      label <- find wrapper ".c-mainmenu__menu-button-label"
+      lengthIO (find wrapper (StringSelector ".c-mainmenu")) `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper (StringSelector ".c-mainmenu__menu-button")) `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper (StringSelector ".c-mainmenu__icon-bar")) `shouldReturn` (3 :: Int)
+      label <- find wrapper (StringSelector ".c-mainmenu__menu-button-label")
       length label `shouldReturn` (1 :: Int)
       text label `shouldReturn` "MENU"
 
@@ -47,10 +47,10 @@ spec = do
   describe "The documentHeader_ component" $ do
     it "renders its elements" $ do
       wrapper <- shallow $ documentHeader_ (DocumentHeaderProps (Title "title") (Abstract "abstract"))
-      lengthIO (find wrapper ".c-vdoc-header") `shouldReturn` (1 :: Int)
-      lengthIO (find wrapper "DocumentAbstract") `shouldReturn` (1 :: Int)
-      lengthIO (find wrapper "DocumentTitle") `shouldReturn` (1 :: Int)
-      lengthIO (find wrapper "Phases") `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper (StringSelector ".c-vdoc-header")) `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper (StringSelector "DocumentAbstract")) `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper (StringSelector "DocumentTitle")) `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper (StringSelector "Phases")) `shouldReturn` (1 :: Int)
 
 
   describe "The documentTitle_ component" $ do
@@ -68,50 +68,50 @@ spec = do
   describe "The phases_ component" $ do
     it "renders its phases" $ do
       wrapper <- shallow phases_
-      lengthIO (find wrapper ".c-vdoc-header__phase") `shouldReturn` (3 :: Int)
+      lengthIO (find wrapper (StringSelector ".c-vdoc-header__phase")) `shouldReturn` (3 :: Int)
 
     it "has only one active phase" $ do
       wrapper <- shallow $ phases_
-      lengthIO (find wrapper ".c-vdoc-header__phase--active") `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper (StringSelector ".c-vdoc-header__phase--active")) `shouldReturn` (1 :: Int)
 
 
   describe "The editToolbar_ component" $ do
     it "renders an element with the toolbar class" $ do
       wrapper <- shallow editToolbar_
-      lengthIO (find wrapper ".c-vdoc-toolbar") `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper (StringSelector ".c-vdoc-toolbar")) `shouldReturn` (1 :: Int)
 
     it "contains two separators" $ do
       wrapper <- shallow editToolbar_
-      lengthIO (find wrapper ".c-vdoc-toolbar__separator") `shouldReturn` (2 :: Int)
+      lengthIO (find wrapper (StringSelector ".c-vdoc-toolbar__separator")) `shouldReturn` (2 :: Int)
 
     it "contains 5 normal icon buttons" $ do
       wrapper <- shallow editToolbar_
-      lengthIO (find wrapper "IconButton") `shouldReturn` (5 :: Int)
+      lengthIO (find wrapper (StringSelector "IconButton")) `shouldReturn` (5 :: Int)
 
     it "contains 1 aligned icon button" $ do
       wrapper <- shallow editToolbar_
-      lengthIO (find wrapper "IconButtonWithAlignment") `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper (StringSelector "IconButtonWithAlignment")) `shouldReturn` (1 :: Int)
 
   describe "The editToolbarExtension_ component" $ do
     it "renders an element with the toolbar extension class" $ do
       wrapper <- shallow editToolbarExtension_
-      lengthIO (find wrapper ".c-vdoc-toolbar-extension") `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (1 :: Int)
 
     it "contains a pointer element" $ do
       wrapper <- shallow editToolbarExtension_
-      lengthIO (find wrapper ".c-vdoc-toolbar-extension__pointer") `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension__pointer")) `shouldReturn` (1 :: Int)
 
     it "contains an annotation section with 2 normal icon buttons" $ do
       wrapper <- shallow editToolbarExtension_
-      annotation <- find wrapper ".c-vdoc-toolbar-extension__annotation"
+      annotation <- find wrapper (StringSelector ".c-vdoc-toolbar-extension__annotation")
       length annotation `shouldReturn` (1 :: Int)
-      lengthIO (find annotation "IconButton") `shouldReturn` (2 :: Int)
+      lengthIO (find annotation (StringSelector "IconButton")) `shouldReturn` (2 :: Int)
 
     it "contains a modification section with 1 normal icon button" $ do
       wrapper <- shallow editToolbarExtension_
-      modification <- find wrapper ".c-vdoc-toolbar-extension__modification"
+      modification <- find wrapper (StringSelector ".c-vdoc-toolbar-extension__modification")
       length modification `shouldReturn` (1 :: Int)
-      lengthIO (find modification "IconButton") `shouldReturn` (1 :: Int)
+      lengthIO (find modification (StringSelector "IconButton")) `shouldReturn` (1 :: Int)
 
 
 -- TODO how to test headerSizeCapture_? We want to mock js_getBoundingClientRect...
