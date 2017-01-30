@@ -24,7 +24,7 @@
 
 module Refine.Common.VDoc.HTML.Splice
   ( insertMarks, insertMoreMarks
-  , chunkRangeErrors, ChunkRangeError(..)
+  , ChunkRangeError(..), chunkRangeErrors, createChunkRangeErrors
   , enablePreTokens
   , resolvePreTokens
   , splitAtOffset
@@ -87,13 +87,19 @@ data ChunkRangeError =
   deriving (Eq, Show)
 
 chunkRangeErrors :: ChunkRange a -> VDocVersion b -> [ChunkRangeError]
-chunkRangeErrors crs (VDocVersion (parseTokens -> (ts :: [Token]))) = chunkRangeErrorsTs crs ts
+chunkRangeErrors (ChunkRange _ mp1 mp2) = createChunkRangeErrors $ CreateChunkRange mp1 mp2
+
+chunkRangeErrorsTs :: ChunkRange a -> [Token] -> [ChunkRangeError]
+chunkRangeErrorsTs (ChunkRange _ mp1 mp2) = createChunkRangeErrorsTs $ CreateChunkRange mp1 mp2
+
+createChunkRangeErrors :: CreateChunkRange -> VDocVersion b -> [ChunkRangeError]
+createChunkRangeErrors crs (VDocVersion (parseTokens -> (ts :: [Token]))) = createChunkRangeErrorsTs crs ts
 
 -- | Returns 'True' iff (a) both chunk points are either Nothing or hit into an existing point in
 -- the tree (i.e. have existing @data-uid@ attributes and offsets no larger than the text length);
 -- (b) the begin chunk point is left of the end, and the text between them is non-empty.
-chunkRangeErrorsTs :: ChunkRange a -> [Token] -> [ChunkRangeError]
-chunkRangeErrorsTs (ChunkRange _ mp1 mp2) ts = rangeNonEmpty <> pointsHit
+createChunkRangeErrorsTs :: CreateChunkRange -> [Token] -> [ChunkRangeError]
+createChunkRangeErrorsTs (CreateChunkRange mp1 mp2) ts = rangeNonEmpty <> pointsHit
   where
     pointsHit :: [ChunkRangeError]
     pointsHit = mconcat $ (`chunkPointErrorsTs` ts) <$> catMaybes [mp1, mp2]
