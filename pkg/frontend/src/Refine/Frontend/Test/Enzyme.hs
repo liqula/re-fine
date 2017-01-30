@@ -61,19 +61,21 @@ foreign import javascript unsafe
   js_shallow :: ReactElementRef -> IO JSVal
 
 find :: ShallowWrapper -> EnzymeSelector -> IO ShallowWrapper
-find (ShallowWrapper wrapper) (StringSelector selector) = do
-  ShallowWrapper <$> js_find_by_string wrapper (toJSString selector)
-find (ShallowWrapper wrapper) (PropertySelector selector) = do
-  ShallowWrapper <$> js_find_by_prop wrapper ((toJSString . cs) (encode selector))
+find = execSW "find"
 
-
-foreign import javascript unsafe
-    "$1.find($2)"
-    js_find_by_string :: JSVal -> JSString -> IO JSVal
+execSW :: String -> ShallowWrapper -> EnzymeSelector -> IO ShallowWrapper
+execSW func (ShallowWrapper wrapper) (StringSelector selector) = do
+  ShallowWrapper <$> js_exec_sw_by_string (toJSString func) wrapper (toJSString selector)
+execSW func (ShallowWrapper wrapper) (PropertySelector selector) = do
+  ShallowWrapper <$> js_exec_sw_by_prop (toJSString func) wrapper ((toJSString . cs) (encode selector))
 
 foreign import javascript unsafe
-    "$1.find(JSON.parse($2))"
-    js_find_by_prop :: JSVal -> JSString -> IO JSVal
+    "$2[$1]($3)"
+    js_exec_sw_by_string :: JSString -> JSVal -> JSString -> IO JSVal
+
+foreign import javascript unsafe
+    "$2[$1](JSON.parse($3))"
+    js_exec_sw_by_prop :: JSString -> JSVal -> JSString -> IO JSVal
 
 is :: ShallowWrapper -> JSString -> IO Bool
 is (ShallowWrapper wrapper) selector = do
