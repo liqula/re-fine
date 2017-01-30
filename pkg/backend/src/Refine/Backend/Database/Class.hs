@@ -14,6 +14,7 @@ class Database db where
   createVDoc         :: Create VDoc -> VDocRepo -> db VDoc
   getVDoc            :: ID VDoc -> db VDoc
   vdocRepo           :: ID VDoc -> db (ID VDocRepo)
+  vdocRepoOfEdit     :: ID Edit -> db (ID VDocRepo)
 
   -- * Repo
   createRepo         :: DocRepo.RepoHandle -> DocRepo.EditHandle -> db VDocRepo

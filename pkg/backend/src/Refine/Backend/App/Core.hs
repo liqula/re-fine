@@ -33,7 +33,7 @@ import Refine.Backend.Database
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.User.Core
-import Refine.Common.VDoc.HTML (VDocHTMLError)
+import Refine.Common.VDoc.HTML (VDocHTMLError(..))
 import Refine.Prelude (monadError)
 
 

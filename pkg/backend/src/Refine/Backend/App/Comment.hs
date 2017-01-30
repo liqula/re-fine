@@ -30,6 +30,7 @@ import Refine.Common.Types.VDoc
 import Refine.Prelude ((<@>))
 
 import Refine.Backend.App.Core
+import Refine.Backend.App.VDoc (validateCreateChunkRange)
 import Refine.Backend.Database.Core (DB)
 import Refine.Backend.Database.Class as DB
 
@@ -37,11 +38,13 @@ import Refine.Backend.Database.Class as DB
 addNote :: ID Edit -> Create Note -> App DB Note
 addNote pid note = do
   appLog "addNote"
+  validateCreateChunkRange pid (note ^. createNoteRange)
   db $ DB.createNote pid note
 
 addQuestion :: ID Edit -> Create Question -> App DB CompositeQuestion
 addQuestion pid question = do
   appLog "addQuestion"
+  validateCreateChunkRange pid (question ^. createQuestionRange)
   CompositeQuestion <$> db (DB.createQuestion pid question) <@> []
 
 addAnswer :: ID Question -> Create Answer -> App DB Answer
@@ -52,6 +55,7 @@ addAnswer qid answer = do
 addDiscussion :: ID Edit -> Create Discussion -> App DB CompositeDiscussion
 addDiscussion pid discussion = do
   appLog "addDiscussion"
+  validateCreateChunkRange pid (discussion ^. createDiscussionRange)
   db $ do
     dscn <- DB.createDiscussion pid discussion
     DB.compositeDiscussion (dscn ^. discussionID)

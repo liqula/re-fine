@@ -67,6 +67,7 @@ instance Database DB where
   createVDoc         = Entity.createVDoc
   getVDoc            = Entity.getVDoc
   vdocRepo           = Entity.vdocRepo
+  vdocRepoOfEdit     = Entity.vdocRepoOfEdit
 
   -- * Repo
   createRepo         = Entity.createRepo

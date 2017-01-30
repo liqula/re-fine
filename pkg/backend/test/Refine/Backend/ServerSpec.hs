@@ -168,12 +168,24 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       fe `shouldBe` be
 
   describe "sAddNote" $ do
-    it "stores note with no ranges" $ \sess -> do
+    it "stores note with full-document chunk range" $ \sess -> do
       fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
       fn :: Note          <- runWaiBody sess $
         postJSON
           (addNoteUri (fe ^. compositeVDocRepo . vdocHeadEdit))
           (CreateNote "[note]" True (CreateChunkRange Nothing Nothing))
+      be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
+      be ^. compositeVDocNotes . to elems `shouldContain` [fn]
+
+    it "stores note with non-trivial valid chunk range" $ \sess -> do
+      fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
+      fn :: Note          <- runWaiBody sess $
+        let cp1, cp2 :: ChunkPoint
+            cp1 = ChunkPoint (DataUID 1) 0
+            cp2 = ChunkPoint (DataUID 1) 1
+        in postJSON
+          (addNoteUri (fe ^. compositeVDocRepo . vdocHeadEdit))
+          (CreateNote "[note]" True (CreateChunkRange (Just cp1) (Just cp2)))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       be ^. compositeVDocNotes . to elems `shouldContain` [fn]
 

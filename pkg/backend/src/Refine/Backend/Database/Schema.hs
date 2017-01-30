@@ -91,7 +91,7 @@ VR
     UniVRV vdoc
     UniVRR repository
 
-RP
+RP  -- TODO: should be RE
     repository  RepoId
     edit       EditId
     UniRP repository edit
