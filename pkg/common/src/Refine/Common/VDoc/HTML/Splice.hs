@@ -24,7 +24,7 @@
 
 module Refine.Common.VDoc.HTML.Splice
   ( insertMarks, insertMoreMarks
-  , chunkRangeCanBeApplied, chunkRangeMismatch, ChunkRangeMismatch(..)
+  , chunkRangeErrors, ChunkRangeError(..)
   , enablePreTokens
   , resolvePreTokens
   , splitAtOffset
@@ -63,7 +63,7 @@ insertMarks :: (Typeable a, MonadError VDocHTMLError m)
             => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> m (VDocVersion 'HTMLWithMarks)
 insertMarks crs (VDocVersion (parseTokens -> (ts :: [Token]))) = do
   ts' <- assert (ts == canonicalizeTokens ts)
-       . assert (all (`chunkRangeCanBeAppliedTs` ts) crs)  -- TODO: this should be another 'VDocHTMLError'.
+       . assert (all (\cr -> null $ chunkRangeErrorsTs cr ts) crs)  -- TODO: this should be another 'VDocHTMLError'.
        . insertMarksTs crs
        $ ts
   VDocVersion vers' <- canonicalizeVDocVersion . VDocVersion . cs . renderTokens $ ts'
@@ -79,32 +79,26 @@ insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
 
 -- * sanity check
 
-data ChunkRangeMismatch =
-    ChunkRangeMismatchEmpty [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
-  | ChunkRangeMismatchNoEndNode [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
+data ChunkRangeError =
+    ChunkRangeEmpty [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
+  | ChunkRangeBadEndNode [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
   | ChunkRangeOffsetTooLarge [Token] ChunkPoint
   | ChunkRangeNotATree [Token]
   deriving (Eq, Show)
 
-chunkRangeCanBeApplied :: ChunkRange a -> VDocVersion b -> Bool
-chunkRangeCanBeApplied crs = null . chunkRangeMismatch crs
-
-chunkRangeCanBeAppliedTs :: ChunkRange a -> [Token] -> Bool
-chunkRangeCanBeAppliedTs crs = null . chunkRangeMismatchTs crs
-
-chunkRangeMismatch :: ChunkRange a -> VDocVersion b -> [ChunkRangeMismatch]
-chunkRangeMismatch crs (VDocVersion (parseTokens -> (ts :: [Token]))) = chunkRangeMismatchTs crs ts
+chunkRangeErrors :: ChunkRange a -> VDocVersion b -> [ChunkRangeError]
+chunkRangeErrors crs (VDocVersion (parseTokens -> (ts :: [Token]))) = chunkRangeErrorsTs crs ts
 
 -- | Returns 'True' iff (a) both chunk points are either Nothing or hit into an existing point in
 -- the tree (i.e. have existing @data-uid@ attributes and offsets no larger than the text length);
 -- (b) the begin chunk point is left of the end, and the text between them is non-empty.
-chunkRangeMismatchTs :: ChunkRange a -> [Token] -> [ChunkRangeMismatch]
-chunkRangeMismatchTs (ChunkRange _ mp1 mp2) ts = rangeNonEmpty <> pointsHit
+chunkRangeErrorsTs :: ChunkRange a -> [Token] -> [ChunkRangeError]
+chunkRangeErrorsTs (ChunkRange _ mp1 mp2) ts = rangeNonEmpty <> pointsHit
   where
-    pointsHit :: [ChunkRangeMismatch]
-    pointsHit = mconcat $ (`chunkPointMismatchTs` ts) <$> catMaybes [mp1, mp2]
+    pointsHit :: [ChunkRangeError]
+    pointsHit = mconcat $ (`chunkPointErrorsTs` ts) <$> catMaybes [mp1, mp2]
 
-    rangeNonEmpty :: [ChunkRangeMismatch]
+    rangeNonEmpty :: [ChunkRangeError]
     rangeNonEmpty = case (mp1, mp2) of
       (Nothing, _) -> []
       (_, Nothing) -> []
@@ -121,21 +115,21 @@ chunkRangeMismatchTs (ChunkRange _ mp1 mp2) ts = rangeNonEmpty <> pointsHit
                          adhocParser ns       (t@(TagOpen  n' _) : ts_)            = t : adhocParser (n' : ns) ts_
                          adhocParser ns       (t                 : ts_)            = t : adhocParser ns        ts_
                          adhocParser []       []                                   = []
-                         adhocParser ns@(_:_) [] = error $ "chunkRangeMismatchTs: bad tree: " <> show ns
+                         adhocParser ns@(_:_) [] = error $ "chunkRangeErrorTs: bad tree: " <> show ns
 
                          chunkLength = treeStartIx + length (adhocParser [n] (drop (treeStartIx + 1) ts'))
                      in Just $ take chunkLength ts'
 
-                   bad -> error $ "chunkRangeMismatchTs: non-tag end node: " <> show bad
+                   bad -> error $ "chunkRangeErrorTs: non-tag end node: " <> show bad
 
            in case mts'' of
                Just ts'' -> if sum (tokenTextLength <$> ts'') - boff > 0 && (b /= e || boff <= eoff)
                  then []
-                 else [ChunkRangeMismatchEmpty ts mp1 mp2]
-               Nothing -> [ChunkRangeMismatchNoEndNode ts mp1 mp2]
+                 else [ChunkRangeEmpty ts mp1 mp2]
+               Nothing -> [ChunkRangeBadEndNode ts mp1 mp2]
 
-chunkPointMismatchTs :: ChunkPoint -> [Token] -> [ChunkRangeMismatch]
-chunkPointMismatchTs cp@(ChunkPoint uid off) ts = case tokensToForest ts of
+chunkPointErrorsTs :: ChunkPoint -> [Token] -> [ChunkRangeError]
+chunkPointErrorsTs cp@(ChunkPoint uid off) ts = case tokensToForest ts of
   Right forest ->
     let sub = forest ^. atNode (\p -> dataUidOfToken p == Just uid)
     in if forestTextLength sub >= off
