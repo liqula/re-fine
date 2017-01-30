@@ -24,6 +24,8 @@ module Refine.Frontend.UtilityWidgetsSpec where
 
 import Test.Hspec
 
+import qualified Refine.Frontend.Colors as Color
+import           Refine.Frontend.Style
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.UtilityWidgets
 
@@ -84,44 +86,113 @@ spec = do
         (IconButtonWithAlignmentProps
           (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
           False Nothing)
-      lengthIO (find wrapper (PropertySelector [Prop "data-content-type" ("the-content-type" :: String)])) `shouldReturn` (1 :: Int)
+      is wrapper (PropertySelector [Prop "data-content-type" ("the-content-type" :: String)]) `shouldReturn` True
 
     it "renders the block name with the button element" $ do
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
           (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
           False Nothing)
-      consoleLogShallowWrapper "..." wrapper
-      lengthIO (find wrapper (StringSelector ".the-block-name__button")) `shouldReturn` (1 :: Int)
+      is wrapper (StringSelector ".the-block-name__button") `shouldReturn` True
 
     it "renders the block__element class as passed to it" $ do
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
           (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
           False Nothing)
-      lengthIO (find wrapper (StringSelector ".the-block-name__the-element-name")) `shouldReturn` (1 :: Int)
+      is wrapper (StringSelector ".the-block-name__the-element-name") `shouldReturn` True
 
     it "renders the block__element--module class as passed to it" $ do
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
           (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
           False Nothing)
-      lengthIO (find wrapper (StringSelector ".the-block-name__the-element-name--the-module-name")) `shouldReturn` (1 :: Int)
+      is wrapper (StringSelector ".the-block-name__the-element-name--the-module-name") `shouldReturn` True
 
     it "renders the alignment class when it should be right-aligned" $ do
+      let rightAligned1 = True
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
           (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
-          True Nothing)
-      lengthIO (find wrapper (StringSelector ".the-block-name--align-right")) `shouldReturn` (1 :: Int)
+          rightAligned1 Nothing)
+      is wrapper (StringSelector ".the-block-name--align-right") `shouldReturn` True
 
     it "does not render the alignment class when it should not be right-aligned" $ do
+      let rightAligned1 = False
+      wrapper <- shallow $ iconButtonWithAlignmentCore_
+        (IconButtonWithAlignmentProps
+          (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
+          rightAligned1 Nothing)
+      is wrapper (StringSelector ".the-block-name--align-right") `shouldReturn` False
+
+    it "renders the position when it receives a position value" $ do
+      let position1 = Just 101
+      wrapper <- shallow $ iconButtonWithAlignmentCore_
+        (IconButtonWithAlignmentProps
+          (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
+          False position1)
+      is wrapper (PropertySelector [Prop "style" [Style "top" (101 :: Int)]]) `shouldReturn` True
+
+    it "does not render the position when it receives no position value" $ do
+      let position1 = Nothing
+      wrapper <- shallow $ iconButtonWithAlignmentCore_
+        (IconButtonWithAlignmentProps
+          (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
+          False position1)
+      is wrapper (PropertySelector [Prop "style" ([] :: [Style])]) `shouldReturn` True
+
+    it "renders an Icon" $ do
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
           (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
           False Nothing)
-      lengthIO (find wrapper (StringSelector ".the-block-name--align-right")) `shouldReturn` (0 :: Int)
+      lengthIO (find wrapper (StringSelector "Icon")) `shouldReturn` (1 :: Int)
 
+    it "has a span that has the block name with the button-label module" $ do
+      wrapper <- shallow $ iconButtonWithAlignmentCore_
+        (IconButtonWithAlignmentProps
+          (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
+          False Nothing)
+      span1 <- find wrapper (StringSelector "span")
+      is span1 (StringSelector ".the-block-name__button-label") `shouldReturn` True
+
+    it "shows a pointer mouse cursor over the span text when it is not disabled" $ do
+      let disabled1 = False
+      wrapper <- shallow $ iconButtonWithAlignmentCore_
+        (IconButtonWithAlignmentProps
+          (IconButtonProps iconProps1 element module1 ctype label1 disabled1 (\_ -> []))
+          False Nothing)
+      span1 <- find wrapper (StringSelector "span")
+      is span1 (PropertySelector [Prop "style" [Style "cursor" ("pointer" :: String)]]) `shouldReturn` True
+
+    it "shows the span's text in grey when it is disabled" $ do
+      let disabled1 = True
+      wrapper <- shallow $ iconButtonWithAlignmentCore_
+        (IconButtonWithAlignmentProps
+          (IconButtonProps iconProps1 element module1 ctype label1 disabled1 (\_ -> []))
+          False Nothing)
+      span1 <- find wrapper (StringSelector "span")
+      is span1 (PropertySelector [Prop "style" [Style "color" Color.disabledText]]) `shouldReturn` True
+
+    it "displays the label as passed to it" $ do
+      wrapper <- shallow $ iconButtonWithAlignmentCore_
+        (IconButtonWithAlignmentProps
+          (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
+          False Nothing)
+      span1 <- find wrapper (StringSelector "span")
+      text span1 `shouldReturn` "the-label"
+
+{-
+TODO these can only be tested once we know how to spy on a pure function in Haskell:
+
+    it "reacts to a click event when it is not disabled" $ do
+
+    it "does not react to a click event when it is disabled" $ do
+
+    it "reacts to a tap event when it is not disabled" $ do
+
+    it "does not react to a tap event when it is disabled" $ do
+-}
 
   describe "toClasses" $ do
     it "turns one class name into a string containing that class name" $ do
