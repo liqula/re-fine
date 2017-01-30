@@ -82,8 +82,11 @@ data ChunkRangeError =
 -- point.  in order to keep track of which close mark belongs to which open mark, we cannot rely on
 -- their order (which still needs to be de-overlapped), so need close marks of the form
 -- @PreMarkClose "data-chunk-id-value"@.
-data PreToken = PreToken Token | PreMarkOpen ST ST | PreMarkClose ST
+data PreToken = PreToken Token | PreMarkOpen DataChunkID OwnerKind | PreMarkClose DataChunkID
   deriving (Eq, Show)
+
+type DataChunkID = ST  -- FIXME: @newtype DataChunkID (forall a . Eq a => ID a)@
+type OwnerKind = ST    -- FIXME: @type OwnerKind = TypeRep  -- e.g. @ID Edit@@
 
 runPreToken :: PreToken -> Token
 runPreToken (PreToken t)      = t
