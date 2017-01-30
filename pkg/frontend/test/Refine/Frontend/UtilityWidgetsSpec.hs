@@ -194,6 +194,28 @@ TODO these can only be tested once we know how to spy on a pure function in Hask
     it "does not react to a tap event when it is disabled" $ do
 -}
 
+  describe "iconButtonWithAlignment_ component" $ do
+    let iconProps1 = IconProps  "the-block-name" True ("Image", "striped") M
+    let element = "the-element-name"
+    let module1 = "the-module-name"
+    let ctype = "the-content-type"
+    let label1 = "the-label"
+
+    it "wraps hammer around the inner component" $ do
+      wrapper <- shallow $ iconButtonWithAlignment_
+        (IconButtonWithAlignmentProps
+          (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
+          False Nothing)
+      is wrapper (StringSelector "Hammer") `shouldReturn` True
+
+    it "renders the icon button core component" $ do
+      wrapper <- shallow $ iconButtonWithAlignment_
+        (IconButtonWithAlignmentProps
+          (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
+          False Nothing)
+      lengthIO (find wrapper (StringSelector "IconButtonWithAlignmentCore")) `shouldReturn` (1 :: Int)
+
+
   describe "toClasses" $ do
     it "turns one class name into a string containing that class name" $ do
       toClasses ["single-class-name"] `shouldBe` "single-class-name"
