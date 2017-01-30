@@ -88,20 +88,12 @@ icon_ :: IconProps -> ReactElementM eventHandler ()
 icon_ props = view icon props mempty
 
 
-hammerEnhancer :: ReactView IconButtonProps
-hammerEnhancer = defineView "HammerEnhancer" $ \props -> do
-    hammer_ (if props ^. disabled
-              then []
-              else [on "onTap" $ props ^. clickHandler])
-            childrenPassedToView
-
-hammerEnhancer_ :: IconButtonProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-hammerEnhancer_ = view hammerEnhancer
-
-
 iconButtonWithAlignment :: ReactView IconButtonWithAlignmentProps
 iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
-    hammerEnhancer_ (props ^. iconButtonProps) $ do
+    let bprops = props ^. iconButtonProps
+    hammer_ (if bprops ^. disabled
+              then []
+              else [on "onTap" $ bprops ^. clickHandler]) $ do
       iconButtonWithAlignmentCore_ props
 
 iconButtonWithAlignment_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
