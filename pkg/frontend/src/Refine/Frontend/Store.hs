@@ -79,7 +79,7 @@ vdocUpdate action state = case action of
           & RT.compositeVDocDiscussions
               %~ M.insert (discussion ^. RT.compositeDiscussion . RT.discussionID) discussion
           & RT.compositeVDocVersion
-              %~ either (error . show) id . insertMoreMarks [discussion ^. RT.compositeDiscussion . RT.discussionChunkRange]
+              %~ either (error . show) id . insertMoreMarks [discussion ^. RT.compositeDiscussion . RT.discussionRange]
 
     AddNote note
       -> case state of
@@ -89,7 +89,7 @@ vdocUpdate action state = case action of
           & RT.compositeVDocNotes
               %~ M.insert (note ^. RT.noteID) note
           & RT.compositeVDocVersion
-              %~ either (error . show) id . insertMoreMarks [note ^. RT.noteChunkRange]
+              %~ either (error . show) id . insertMoreMarks [note ^. RT.noteRange]
 
     _ -> state
 

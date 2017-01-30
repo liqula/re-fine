@@ -39,10 +39,10 @@ data CreateNote = CreateNote
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Note = Note
-  { _noteID         :: ID Note
-  , _noteText       :: CommentText
-  , _notePublic     :: Bool
-  , _noteChunkRange :: ChunkRange Note
+  { _noteID     :: ID Note
+  , _noteText   :: CommentText
+  , _notePublic :: Bool
+  , _noteRange  :: ChunkRange Note
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -58,7 +58,7 @@ data Question = Question
   , _questionText     :: ST
   , _questionAnswered :: Bool -- ^ if the asker is happy, she can mark it as answered.
   , _questionPublic   :: Bool
-  , _questionChunkRange :: ChunkRange Question
+  , _questionRange    :: ChunkRange Question
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -88,9 +88,9 @@ data CreateDiscussion = CreateDiscussion
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Discussion = Discussion
-  { _discussionID         :: ID Discussion
-  , _discussionPublic     :: Bool
-  , _discussionChunkRange :: ChunkRange Discussion
+  { _discussionID     :: ID Discussion
+  , _discussionPublic :: Bool
+  , _discussionRange  :: ChunkRange Discussion
   }
   deriving (Eq, Ord, Show, Read, Generic)
 

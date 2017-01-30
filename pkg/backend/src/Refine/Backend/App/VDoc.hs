@@ -84,8 +84,8 @@ getCompositeVDoc vid = do
       hedits <- docRepo $ DocRepo.getChildEdits rhandle hhandle
       edits  <- db $ mapM DB.getEditFromHandle hedits
       let insertAllMarks :: VDocVersion 'HTMLCanonical -> Either VDocHTMLError (VDocVersion 'HTMLWithMarks)
-          insertAllMarks vers = insertMarks     (view noteChunkRange <$> commentNotes) vers
-                            >>= insertMoreMarks (view (compositeDiscussion . discussionChunkRange) <$> commentDiscussions)
+          insertAllMarks vers = insertMarks     (view noteRange <$> commentNotes) vers
+                            >>= insertMoreMarks (view (compositeDiscussion . discussionRange) <$> commentDiscussions)
                             >>= insertMoreMarks (view editRange <$> edits)
 
       version <- monadError AppVDocError
