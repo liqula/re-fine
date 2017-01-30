@@ -51,7 +51,7 @@ class Database db where
   createDiscussion   :: ID Edit    -> Create Discussion -> db Discussion
   getDiscussion      :: ID Discussion -> db Discussion
   statementsOfDiscussion :: ID Discussion -> db [ID Statement]
-  getDiscussionIDFromStatement :: ID Statement -> db (ID Discussion)
+  discussionOfStatement  :: ID Statement  -> db (ID Discussion)
 
   -- * Statement
   createStatement      :: ID Statement -> Create Statement -> db Statement

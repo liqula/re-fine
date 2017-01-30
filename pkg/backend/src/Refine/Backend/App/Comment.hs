@@ -61,4 +61,4 @@ addStatement sid statement = do
   appLog "addStatement"
   db $ do
     _ <- DB.createStatement sid statement
-    DB.compositeDiscussion =<< DB.getDiscussionIDFromStatement sid
+    DB.compositeDiscussion =<< DB.discussionOfStatement sid
