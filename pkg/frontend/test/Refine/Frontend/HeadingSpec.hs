@@ -25,6 +25,7 @@ module Refine.Frontend.HeadingSpec where
 
 import Test.Hspec
 
+import Prelude hiding (length)
 import Refine.Common.Types
 import Refine.Frontend.Test.Enzyme
 import Refine.Frontend.Heading
@@ -35,21 +36,21 @@ spec = do
   describe "The menuButton_ component" $ do
     it "renders its elements" $ do
       wrapper <- shallow menuButton_
-      getIOWrapperAttr (find wrapper ".c-mainmenu") "length" `shouldReturn` (1 :: Int)
-      getIOWrapperAttr (find wrapper ".c-mainmenu__menu-button") "length" `shouldReturn` (1 :: Int)
-      getIOWrapperAttr (find wrapper ".c-mainmenu__icon-bar") "length" `shouldReturn` (3 :: Int)
+      lengthIO (find wrapper ".c-mainmenu") `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper ".c-mainmenu__menu-button") `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper ".c-mainmenu__icon-bar") `shouldReturn` (3 :: Int)
       label <- find wrapper ".c-mainmenu__menu-button-label"
-      getWrapperAttr label "length" `shouldReturn` (1 :: Int)
+      length label `shouldReturn` (1 :: Int)
       text label `shouldReturn` "MENU"
 
 
   describe "The documentHeader_ component" $ do
     it "renders its elements" $ do
       wrapper <- shallow $ documentHeader_ (DocumentHeaderProps (Title "title") (Abstract "abstract"))
-      getIOWrapperAttr (find wrapper ".c-vdoc-header") "length" `shouldReturn` (1 :: Int)
-      getIOWrapperAttr (find wrapper "DocumentAbstract") "length" `shouldReturn` (1 :: Int)
-      getIOWrapperAttr (find wrapper "DocumentTitle") "length" `shouldReturn` (1 :: Int)
-      getIOWrapperAttr (find wrapper "Phases") "length" `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper ".c-vdoc-header") `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper "DocumentAbstract") `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper "DocumentTitle") `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper "Phases") `shouldReturn` (1 :: Int)
 
 
   describe "The documentTitle_ component" $ do
@@ -67,49 +68,49 @@ spec = do
   describe "The phases_ component" $ do
     it "renders its phases" $ do
       wrapper <- shallow phases_
-      getIOWrapperAttr (find wrapper ".c-vdoc-header__phase") "length" `shouldReturn` (3 :: Int)
+      lengthIO (find wrapper ".c-vdoc-header__phase") `shouldReturn` (3 :: Int)
 
     it "has only one active phase" $ do
       wrapper <- shallow $ phases_
-      getIOWrapperAttr (find wrapper ".c-vdoc-header__phase--active") "length" `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper ".c-vdoc-header__phase--active") `shouldReturn` (1 :: Int)
 
 
   describe "The editToolbar_ component" $ do
     it "renders an element with the toolbar class" $ do
       wrapper <- shallow editToolbar_
-      getIOWrapperAttr (find wrapper ".c-vdoc-toolbar") "length" `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper ".c-vdoc-toolbar") `shouldReturn` (1 :: Int)
 
     it "contains two separators" $ do
       wrapper <- shallow editToolbar_
-      getIOWrapperAttr (find wrapper ".c-vdoc-toolbar__separator") "length" `shouldReturn` (2 :: Int)
+      lengthIO (find wrapper ".c-vdoc-toolbar__separator") `shouldReturn` (2 :: Int)
 
     it "contains 5 normal icon buttons" $ do
       wrapper <- shallow editToolbar_
-      getIOWrapperAttr (find wrapper "IconButton") "length" `shouldReturn` (5 :: Int)
+      lengthIO (find wrapper "IconButton") `shouldReturn` (5 :: Int)
 
     it "contains 1 aligned icon button" $ do
       wrapper <- shallow editToolbar_
-      getIOWrapperAttr (find wrapper "IconButtonWithAlignment") "length" `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper "IconButtonWithAlignment") `shouldReturn` (1 :: Int)
 
   describe "The editToolbarExtension_ component" $ do
     it "renders an element with the toolbar extension class" $ do
       wrapper <- shallow editToolbarExtension_
-      getIOWrapperAttr (find wrapper ".c-vdoc-toolbar-extension") "length" `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper ".c-vdoc-toolbar-extension") `shouldReturn` (1 :: Int)
 
     it "contains a pointer element" $ do
       wrapper <- shallow editToolbarExtension_
-      getIOWrapperAttr (find wrapper ".c-vdoc-toolbar-extension__pointer") "length" `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper ".c-vdoc-toolbar-extension__pointer") `shouldReturn` (1 :: Int)
 
     it "contains an annotation section with 2 normal icon buttons" $ do
       wrapper <- shallow editToolbarExtension_
       annotation <- find wrapper ".c-vdoc-toolbar-extension__annotation"
-      getWrapperAttr annotation "length" `shouldReturn` (1 :: Int)
-      getIOWrapperAttr (find annotation "IconButton") "length" `shouldReturn` (2 :: Int)
+      length annotation `shouldReturn` (1 :: Int)
+      lengthIO (find annotation "IconButton") `shouldReturn` (2 :: Int)
 
     it "contains a modification section with 1 normal icon button" $ do
       wrapper <- shallow editToolbarExtension_
       modification <- find wrapper ".c-vdoc-toolbar-extension__modification"
-      getWrapperAttr modification "length" `shouldReturn` (1 :: Int)
-      getIOWrapperAttr (find modification "IconButton") "length" `shouldReturn` (1 :: Int)
+      length modification `shouldReturn` (1 :: Int)
+      lengthIO (find modification "IconButton") `shouldReturn` (1 :: Int)
 
 

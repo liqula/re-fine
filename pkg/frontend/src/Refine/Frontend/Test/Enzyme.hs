@@ -58,6 +58,12 @@ foreign import javascript unsafe
     "$1.text()"
     js_text :: JSVal -> IO JSString
 
+length :: ShallowWrapper -> IO Int
+length wrapper = getWrapperAttr wrapper "length"
+
+lengthIO :: IO ShallowWrapper -> IO Int
+lengthIO wrapper = getIOWrapperAttr wrapper "length"
+
 getIOWrapperAttr :: FromJSON a => IO ShallowWrapper -> JSString -> IO a
 getIOWrapperAttr ioWrapper selector = do
   wrapper <- ioWrapper
