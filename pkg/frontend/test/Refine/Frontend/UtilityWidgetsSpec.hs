@@ -32,6 +32,13 @@ import           Refine.Frontend.UtilityWidgets
 
 spec :: Spec
 spec = do
+
+  let iconProps1 = IconProps  "the-block-name" True ("Image", "striped") M
+  let element = "the-element-name"
+  let module1 = "the-module-name"
+  let ctype = "the-content-type"
+  let label1 = "the-label"
+
   describe "The icon_ component" $ do
     it "annotates the block together with the icon module" $ do
       wrapper <- shallow $ icon_ (IconProps "bla" True ("Image", "striped") XXL)
@@ -75,12 +82,6 @@ spec = do
       lengthIO (find wrapper (StringSelector "span")) `shouldReturn` (8 :: Int)
 
   describe "iconButtonWithAlignmentCore_ component" $ do
-    let iconProps1 = IconProps  "the-block-name" True ("Image", "striped") M
-    let element = "the-element-name"
-    let module1 = "the-module-name"
-    let ctype = "the-content-type"
-    let label1 = "the-label"
-
     it "has the data content type passed to it" $ do
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
@@ -195,12 +196,6 @@ TODO these can only be tested once we know how to spy on a pure function in Hask
 -}
 
   describe "iconButtonWithAlignment_ component" $ do
-    let iconProps1 = IconProps  "the-block-name" True ("Image", "striped") M
-    let element = "the-element-name"
-    let module1 = "the-module-name"
-    let ctype = "the-content-type"
-    let label1 = "the-label"
-
     it "wraps hammer around the inner component" $ do
       wrapper <- shallow $ iconButtonWithAlignment_
         (IconButtonWithAlignmentProps

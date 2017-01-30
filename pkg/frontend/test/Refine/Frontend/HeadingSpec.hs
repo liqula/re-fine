@@ -71,7 +71,7 @@ spec = do
       lengthIO (find wrapper (StringSelector ".c-vdoc-header__phase")) `shouldReturn` (3 :: Int)
 
     it "has only one active phase" $ do
-      wrapper <- shallow $ phases_
+      wrapper <- shallow phases_
       lengthIO (find wrapper (StringSelector ".c-vdoc-header__phase--active")) `shouldReturn` (1 :: Int)
 
 
