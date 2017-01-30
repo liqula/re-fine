@@ -88,43 +88,58 @@ icon_ :: IconProps -> ReactElementM eventHandler ()
 icon_ props = view icon props mempty
 
 
+hammerEnhancer :: ReactView IconButtonProps
+hammerEnhancer = defineView "HammerEnhancer" $ \props -> do
+    hammer_ (if props ^. disabled
+              then []
+              else [on "onTap" $ props ^. clickHandler])
+            childrenPassedToView
+
+hammerEnhancer_ :: IconButtonProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+hammerEnhancer_ = view hammerEnhancer
+
+
 iconButtonWithAlignment :: ReactView IconButtonWithAlignmentProps
 iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
+    hammerEnhancer_ (props ^. iconButtonProps) $ do
+      iconButtonWithAlignmentCore_ props
+
+iconButtonWithAlignment_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
+iconButtonWithAlignment_ props = view iconButtonWithAlignment props mempty
+
+iconButtonWithAlignmentCore :: ReactView IconButtonWithAlignmentProps
+iconButtonWithAlignmentCore = defineView "IconButtonWithAlignmentCore" $ \props -> do
     let bprops = props ^. iconButtonProps
     let iprops = bprops ^. iconProps
     let beConnector = if bprops ^. elementName == "" then "" else "__"
     let emConnector = if bprops ^. moduleName == "" then "" else "--"
     let beName  = iprops ^. blockName <> beConnector <> bprops ^. elementName
     let bemName = beName <> emConnector <> bprops ^. moduleName
-    hammer_ (if bprops ^. disabled
-              then []
-              else [on "onTap" $ bprops ^. clickHandler]
-            ) $ do
-      div_ ([ "data-content-type" $= (bprops ^. contentType)
-             -- TODO unify the naming schema of the classes for the different buttons!
-            , "className" $= fromString (toClasses [ iprops ^. blockName <> "__button"
-                                                    , beName  -- for the vdoc-toolbar
-                                                    , bemName -- for the buttons in the overlays
-                                                    , alignmentClass (iprops ^. blockName)
-                                                                     (props ^. rightAligned)
-                                                     ])
-            , "style" @= (case props ^. position of
-                                 Nothing  -> []
-                                 Just pos -> [Style "top" pos])
-            ] <> if bprops ^. disabled then [] else [onClick $ const . (bprops ^. clickHandler)]
-            ) $ do
-          icon_ iprops
-          span_ ["className" $= fromString (iprops ^. blockName <> "__button-label")
-                , "style" @= (if bprops ^. disabled
-                                     then [Style "color" Color.disabledText]
-                                     else [Style "cursor" ("pointer" :: String)])
-                ] $
-              elemJSString (bprops ^. label)
+    div_ ([ "data-content-type" $= (bprops ^. contentType)
+           -- TODO unify the naming schema of the classes for the different buttons!
+          , "className" $= fromString (toClasses [ iprops ^. blockName <> "__button"
+                                                  , beName  -- for the vdoc-toolbar
+                                                  , bemName -- for the buttons in the overlays
+                                                  , alignmentClass (iprops ^. blockName)
+                                                                   (props ^. rightAligned)
+                                                   ])
+          , "style" @= (case props ^. position of
+                               Nothing  -> []
+                               Just pos -> [Style "top" pos])
+          ] <> if bprops ^. disabled then [] else [onClick $ const . (bprops ^. clickHandler)]
+          ) $ do
+        icon_ iprops
+        span_ ["className" $= fromString (iprops ^. blockName <> "__button-label")
+              , "style" @= (if bprops ^. disabled
+                                   then [Style "color" Color.disabledText]
+                                   else [Style "cursor" ("pointer" :: String)])
+              ] $
+            elemJSString (bprops ^. label)
     where
       alignmentClass blockName_ rightAligned_ = if rightAligned_ then blockName_ <> "--align-right" else ""
 
-iconButtonWithAlignment_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
-iconButtonWithAlignment_ props = view iconButtonWithAlignment props mempty
+iconButtonWithAlignmentCore_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
+iconButtonWithAlignmentCore_ props = view iconButtonWithAlignmentCore props mempty
 
 iconButton :: ReactView IconButtonProps
 iconButton = defineView "IconButton" $ \props ->
