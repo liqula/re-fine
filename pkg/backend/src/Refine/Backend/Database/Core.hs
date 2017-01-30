@@ -22,10 +22,12 @@
 
 module Refine.Backend.Database.Core where
 
-import Control.Exception
 import Control.Monad.Except
 import Control.Monad.Reader
 import Database.Persist.Sql
+import GHC.Generics (Generic)
+
+import Refine.Prelude.TH (makeRefineType)
 
 
 type SQLM = ReaderT SqlBackend IO
@@ -42,8 +44,10 @@ data DBError
   = DBUnknownError String
   | DBNotFound String
   | DBNotUnique String
-  | DBException SomeException
-  deriving (Show)
+  | DBException String
+  deriving (Eq, Show, Generic)
+
+makeRefineType ''DBError
 
 notFound :: String -> DB a
 notFound = DB . throwError . DBNotFound

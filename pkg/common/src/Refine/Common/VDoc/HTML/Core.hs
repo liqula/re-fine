@@ -1,5 +1,6 @@
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveAnyClass             #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE ExplicitForAll             #-}
@@ -50,11 +51,13 @@ import           Data.Maybe (listToMaybe)
 import           Data.String.Conversions (ST, cs, (<>))
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
+import           GHC.Generics (Generic)
 import           Text.HTML.Parser (Token(..), Attr(..))
 import           Text.HTML.Tree (ParseTokenForestError, tokensToForest, tokensFromForest)
 import           Text.Read (readMaybe)
 
 import Refine.Common.Types
+import Refine.Prelude.TH (makeRefineType)
 
 
 -- * errors
@@ -66,14 +69,14 @@ data VDocHTMLError =
   | VDocHTMLErrorNotEnoughCharsToSplit Int (Forest PreToken)
   | VDocHTMLErrorSplitPointsToSubtree Int (Forest PreToken)
   | VDocHTMLErrorInternal String
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
 
 data ChunkRangeError =
     ChunkRangeEmpty [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
   | ChunkRangeBadEndNode [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
   | ChunkRangeOffsetTooLarge [Token] ChunkPoint
   | ChunkRangeNotATree [Token]
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
 
 
 -- * pretokens
@@ -83,7 +86,7 @@ data ChunkRangeError =
 -- their order (which still needs to be de-overlapped), so need close marks of the form
 -- @PreMarkClose "data-chunk-id-value"@.
 data PreToken = PreToken Token | PreMarkOpen DataChunkID OwnerKind | PreMarkClose DataChunkID
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
 
 type DataChunkID = ST  -- FIXME: @newtype DataChunkID (forall a . Eq a => ID a)@
 type OwnerKind = ST    -- FIXME: @type OwnerKind = TypeRep  -- e.g. @ID Edit@@
@@ -170,3 +173,10 @@ preTokenTextLength = tokenTextLength . runPreToken
 
 preForestTextLength :: Forest PreToken -> Int
 preForestTextLength = sum . fmap preTokenTextLength . preTokensFromForest
+
+
+-- * lots of instances
+
+makeRefineType ''VDocHTMLError
+makeRefineType ''ChunkRangeError
+makeRefineType ''PreToken

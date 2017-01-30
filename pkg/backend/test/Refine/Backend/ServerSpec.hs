@@ -199,7 +199,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
           (addNoteUri (vdoc ^. compositeVDocRepo . vdocHeadEdit))
           (CreateNote "[note]" True (CreateChunkRange (Just cp1) (Just cp2)))
 
-      resp `shouldContain` "AppVDocError (VDocHTMLErrorChunkRangeErrors [ChunkRangeBadEndNode"
+      (resp `shouldContain`) `mapM_` ["AppVDocError", "VDocHTMLErrorChunkRangeErrors", "ChunkRangeBadEndNode"]
 
       vdoc' :: CompositeVDoc <- runDB sess $ getCompositeVDoc (vdoc ^. compositeVDoc . vdocID)
       vdoc' ^. compositeVDocNotes `shouldBe` mempty

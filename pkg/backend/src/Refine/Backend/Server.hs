@@ -31,7 +31,7 @@ import           Control.Lens ((^.))
 import           Control.Monad.Except
 import qualified Control.Natural as CN
 import           Control.Natural (($$))
-import           Data.String.Conversions (cs)
+import           Data.Aeson (encode)
 import           Debug.Trace (traceShow)  -- (please keep this until we have better logging)
 import           Network.Wai.Handler.Warp as Warp
 import           Prelude hiding ((.), id)
@@ -86,11 +86,10 @@ serverT app = enter (toServantError . cnToSn app)
 toServantError :: (Monad m) => ExceptT AppError m :~> ExceptT ServantErr m
 toServantError = Nat ((lift . runExceptT) >=> monadError fromAppError)
   where
-    -- FIXME: Render JSON from the errors
     -- FIXME: some (many?) of these shouldn't be err500.
     -- FIXME: implement better logging.
     fromAppError :: AppError -> ServantErr
-    fromAppError msg = traceShow msg $ err500 { errBody = cs $ show msg }
+    fromAppError msg = traceShow msg $ err500 { errBody = encode msg }
 
 -- | The 's' prefix in the handlers stands for "server", and is used to dismabiguate between the code in
 -- 'App' vs. the code in 'ServerT'.  This is slightly less noisy than qualified imports, and it's
