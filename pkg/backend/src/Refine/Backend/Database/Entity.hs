@@ -146,7 +146,7 @@ vdocRepo vid = do
   unique vs
 
 vdocRepoOfEdit :: ID Edit -> DB (ID VDocRepo)
-vdocRepoOfEdit eid = head <$> liftDB
+vdocRepoOfEdit eid = unique =<< liftDB
   (foreignKeyField S.rPRepository <$$> selectList [S.RPEdit ==. S.idToKey eid] [])
 
 -- * Repo
