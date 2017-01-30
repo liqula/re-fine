@@ -305,10 +305,8 @@ statementsOfDiscussion :: ID Discussion -> DB [ID Statement]
 statementsOfDiscussion did = liftDB $
   foreignKeyField S.dSStatement <$$> selectList [S.DSDiscussion ==. S.idToKey did] []
 
--- | TODO: there is probably a way to retrieve single values in persistent somewhere that works
--- better than 'head'.
-getDiscussionIDFromStatement :: ID Statement -> DB (ID Discussion)
-getDiscussionIDFromStatement sid = head <$> liftDB
+discussionOfStatement :: ID Statement -> DB (ID Discussion)
+discussionOfStatement sid = unique =<< liftDB
   (foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] [])
 
 
