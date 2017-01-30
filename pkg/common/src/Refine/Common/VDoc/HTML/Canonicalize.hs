@@ -24,27 +24,26 @@
 
 module Refine.Common.VDoc.HTML.Canonicalize
   ( canonicalizeVDocVersion
-  , decanonicalizeVDocVersion
+  , downgradeRawVDocVersion
   , canonicalizeWhitespace
   , setElemUIDs
   , wrapInTopLevelTags
   , canonicalizeAttrsForest, canonicalizeAttrsTree, canonicalizeAttrsStream, canonicalizeAttrs
   ) where
 
-import           Control.Exception (assert)
-import           Control.Monad.Error.Class (MonadError)
 import           Data.Char (isSpace)
 import           Data.Function (on)
+import           Data.Functor.Infix ((<$$>))
 import           Data.List as List (foldl', sort, nubBy)
-import           Data.Set as Set hiding (foldl')
+import           Data.Set (Set)
+import qualified Data.Set as Set
 import           Data.String.Conversions (ST, (<>), cs)
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
-import           Text.HTML.Parser (Token(..), Attr(..), parseTokens, canonicalizeTokens, renderTokens)
-import           Text.HTML.Tree (tokensFromForest, nonClosing)
+import           Text.HTML.Parser (Token(..), Attr(..), canonicalizeTokens)
+import           Text.HTML.Tree (tokensFromForest, tokensToForest, nonClosing)
 
 import Refine.Common.Types
-import Refine.Common.VDoc.HTML.Core
 
 
 -- | Does several things.
@@ -55,20 +54,28 @@ import Refine.Common.VDoc.HTML.Core
 --    between versions.
 -- 3. wrap all top-level text nodes into @<span>@ tags (so 'ChunkPoint' always has a @data-uid@
 --    value to point to.
-canonicalizeVDocVersion :: MonadError VDocHTMLError m
-                        => VDocVersion 'HTMLRaw -> m (VDocVersion 'HTMLCanonical)
-canonicalizeVDocVersion = fmap (VDocVersion . cs . renderTokens) . canonicalize . parseTokens . _unVDocVersion
+canonicalizeVDocVersion :: VDocVersion 'HTMLRaw -> VDocVersion 'HTMLCanonical
+canonicalizeVDocVersion (VDocVersion vers) = VDocVersion (canonicalize vers)
   where
+    canonicalize :: Forest Token -> Forest Token
     canonicalize
-      = fmap setElemUIDs
+      = onStream setElemUIDs
       . wrapInTopLevelTags
-      . fmap (onText canonicalizeWhitespace . fixSelfClosing)
-      . canonicalizeTokens
-      . dropCommentsAndDoctypes
+      . (onText canonicalizeWhitespace . fixSelfClosing <$$>)
+      . onStream (canonicalizeTokens . dropCommentsAndDoctypes)
+
+    -- | FUTUREWORK: it would be nice to avoid the detour over a list, and run all transformations
+    -- on the tree.  in particular, it would be nice if we didn't have to do the detour twice
+    -- (because transformations have to be called in this order).
+    onStream :: ([Token] -> [Token]) -> Forest Token -> Forest Token
+    onStream go forest = case tokensToForest . go . tokensFromForest $ forest of
+      Right forest' ->  forest'
+      Left err      -> error $ "canonicalizeVDocVersion: impossible: " <> show err
+
 
 -- | De-canonicalizing is always safe, since every canonicalized 'VDocVersion' is also a raw one.
-decanonicalizeVDocVersion :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLRaw
-decanonicalizeVDocVersion (VDocVersion s) = VDocVersion s
+downgradeRawVDocVersion :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLRaw
+downgradeRawVDocVersion (VDocVersion s) = VDocVersion s
 
 
 dropCommentsAndDoctypes :: [Token] -> [Token]
@@ -100,8 +107,8 @@ setElemUIDs :: [Token] ->  [Token]
 setElemUIDs = fill mempty . fmap clear
   where
     clear :: Token -> Token
-    clear (TagOpen      n attrs) = TagOpen      n (Prelude.filter stale attrs)
-    clear (TagSelfClose n attrs) = TagSelfClose n (Prelude.filter stale attrs)
+    clear (TagOpen      n attrs) = TagOpen      n (filter stale attrs)
+    clear (TagSelfClose n attrs) = TagSelfClose n (filter stale attrs)
     clear t                      = t
 
     stale :: Attr -> Bool
@@ -121,9 +128,8 @@ setElemUIDs = fill mempty . fmap clear
         nextDataUID (DataUID n) = DataUID (n + 1)
 
 
-wrapInTopLevelTags :: MonadError VDocHTMLError m => [Token] -> m [Token]
-wrapInTopLevelTags ts = assert (ts == canonicalizeTokens ts)
-                      $ tokensFromForest . fmap fill <$> tokensToForest' ts
+wrapInTopLevelTags :: Forest Token -> Forest Token
+wrapInTopLevelTags = fmap fill
   where
     defaultTag :: Token
     defaultTag = TagOpen "span" []

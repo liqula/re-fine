@@ -23,38 +23,35 @@
 
 module Refine.Common.VDoc.HTML.CanonicalizeSpec where
 
-import           Control.Exception (evaluate)
-import           Control.Monad ((>=>))
 import           Data.Char (isSpace)
 import           Data.List (nub)
 import           Data.String.Conversions (ST, cs)
 import qualified Data.Text as ST
+import           Data.Tree
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
 import           Text.HTML.Parser
-import           Text.HTML.Tree
 
 import Refine.Common.Test.Arbitrary
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML.Canonicalize
-import Refine.Common.VDoc.HTML.Core
 
 
 spec :: Spec
 spec = parallel $ do
-  describe "canonicalizeVDocVersion" $ do
+  describe "canonicalizevdocVersionST" $ do
     it "decorates spans with data-uid attributes even when added by 'wrapInTopLevelTags'." $ do
-      canonicalizeVDocVersion (VDocVersion "ab123")
-        `shouldBe` Right (VDocVersion "<span data-uid=\"1\">ab123</span>")
+      canonicalizeVDocVersion (vdocVersionFromST "ab123")
+        `shouldBe` vdocVersionFromST "<span data-uid=\"1\">ab123</span>"
 
     it "removes comments." $ do
-      canonicalizeVDocVersion (VDocVersion "ab<!-- wefij --> 123")
-        `shouldBe` Right (VDocVersion "<span data-uid=\"1\">ab\n123</span>")
+      canonicalizeVDocVersion (vdocVersionFromST "ab<!-- wefij --> 123")
+        `shouldBe` vdocVersionFromST "<span data-uid=\"1\">ab\n123</span>"
 
     it "removes doctype elements." $ do
-      canonicalizeVDocVersion (VDocVersion "<span>,</span><QfA] data-uid=\"18\" /><!DOCTYPEW#d>")
-        `shouldBe` Right (VDocVersion "<span data-uid=\"1\">,</span><QfA] data-uid=\"2\" />")
+      canonicalizeVDocVersion (vdocVersionFromST "<span>,</span><QfA] data-uid=\"18\" /><!DOCTYPEW#d>")
+        `shouldBe` vdocVersionFromST "<span data-uid=\"1\">,</span><QfA] data-uid=\"2\" />"
 
 
   describe "canonicalizeWhitespace" $ do
@@ -111,25 +108,15 @@ spec = parallel $ do
 
 
   describe "wrapInTopLevelTags" $ do
-    it "idempotent" . property . forAll arbitraryCanonicalTokenStream $
-      \stream -> let gotwice, goonce :: [Token] -> Either VDocHTMLError [Token]
-                     gotwice          = wrapInTopLevelTags >=> wrapInTopLevelTags
-                     goonce           = wrapInTopLevelTags
-                 in gotwice stream `shouldBe` goonce stream
+    it "idempotent" . property . forAll arbitraryCanonicalVDocVersion $
+      \(VDocVersion forest)
+        -> let gotwice = wrapInTopLevelTags . wrapInTopLevelTags
+               goonce  = wrapInTopLevelTags
+           in gotwice forest `shouldBe` goonce forest
 
     it "wraps naked texts in span" $ do
-      wrapInTopLevelTags [ContentText "unwrapped"] `shouldBe`
-        Right [TagOpen "span" [], ContentText "unwrapped", TagClose "span"]
-
-    it "fails if input is not a valid tree" $ do
-      wrapInTopLevelTags [TagOpen "unclosed" []] `shouldBe`
-        Left (VDocHTMLErrorBadTree (ParseTokenForestErrorBracketMismatch (PStack [] [(TagOpen "unclosed" [],[])]) Nothing))
-
-    it "crashes (internal error) if input is not canonicalized" $ do
-      pendingWith "#16"  -- TODO: wasn't there something with evaluate vs. evaluateM that i fixed in the base haddocks?
-      let bad :: Either VDocHTMLError [Token]
-          bad = wrapInTopLevelTags [ContentText "wef", ContentChar 'q']
-      (evaluate . length . show $ bad) `shouldThrow` anyException
+      wrapInTopLevelTags [Node (ContentText "unwrapped") []] `shouldBe`
+        [Node (TagOpen "span" []) [Node (ContentText "unwrapped") []]]
 
 
   describe "canonicalizeAttrs" $ do

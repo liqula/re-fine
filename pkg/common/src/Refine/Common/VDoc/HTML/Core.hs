@@ -74,7 +74,7 @@ data VDocHTMLError =
 data ChunkRangeError =
     ChunkRangeEmpty [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
   | ChunkRangeBadEndNode [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
-  | ChunkRangeOffsetTooLarge [Token] ChunkPoint
+  | ChunkRangeOffsetTooLarge (Forest Token) ChunkPoint
   | ChunkRangeNotATree [Token]
   deriving (Eq, Show, Generic)
 

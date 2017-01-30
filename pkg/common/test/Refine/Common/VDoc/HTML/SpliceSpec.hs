@@ -50,7 +50,7 @@ spec = parallel $ do
         _unVDocVersion <$> insertMarks noChunkRanges vers `shouldBe` Right (_unVDocVersion vers)
 
     it "self-closing tags with closing `/`." $ do
-      let vers = VDocVersion "<div data-uid=\"1\"><br data-uid=\"2\"/>el</div>"
+      let vers = vdocVersionFromST "<div data-uid=\"1\"><br data-uid=\"2\"/>el</div>"
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 0))
                                                    (Just (ChunkPoint (DataUID 1) 1))
       chunkRangeErrors r vers `shouldBe` []
@@ -58,40 +58,40 @@ spec = parallel $ do
 
     it "fails on self-closing tags without closing `/` (should be resolved by canonicalization)." $ do
       pendingWith "#16"
-      let vers = VDocVersion "<div data-uid=\"1\"><br>el</div>"
+      let vers = vdocVersionFromST "<div data-uid=\"1\"><br>el</div>"
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 0))
                                                    (Just (ChunkPoint (DataUID 1) 1))
       (evaluate . length . show $ chunkRangeErrors r vers) `shouldThrow` anyException
 
     it "regression (1)." $ do
-      let vers = VDocVersion "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\"></div>"
+      let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\"></div>"
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 3))
                                                    (Just (ChunkPoint (DataUID 2) 0))
       chunkRangeErrors r vers `shouldBe` []
       insertMarks [r] vers `shouldSatisfy` isRight
 
     it "regression (2)." $ do
-      let vers = VDocVersion "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\">.</div>"
+      let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\">.</div>"
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 3))
                                                    (Just (ChunkPoint (DataUID 2) 0))
       chunkRangeErrors r vers `shouldBe` []
       insertMarks [r] vers `shouldSatisfy` isRight
 
     it "regression (3)." $ do
-      let vers = VDocVersion "<span data-uid=\"1\">whee</span>"
+      let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span>"
           r :: ChunkRange Edit = ChunkRange (ID 3) (Just (ChunkPoint (DataUID 1) 2)) Nothing
       chunkRangeErrors r vers `shouldBe` []
       insertMarks [r] vers `shouldSatisfy` isRight
 
     it "regression (4)." $ do
-      let vers = VDocVersion "<span data-uid=\"1\">whee</span>"
+      let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span>"
           rs :: [ChunkRange Edit] = [ ChunkRange (ID 3) (Just (ChunkPoint (DataUID 1) 2)) Nothing
                                     , ChunkRange (ID 4) (Just (ChunkPoint (DataUID 1) 0)) Nothing
                                     ]
       insertMarks rs vers `shouldSatisfy` isRight
 
     it "regression (5)." $ do
-      let vers = VDocVersion "<span data-uid=\"4\">zC9E</span><n data-uid=\"5\"><f data-uid=\"6\"></f>;</n><T data-uid=\"7\"></T><i data-uid=\"8\"></i>"
+      let vers = vdocVersionFromST "<span data-uid=\"4\">zC9E</span><n data-uid=\"5\"><f data-uid=\"6\"></f>;</n><T data-uid=\"7\"></T><i data-uid=\"8\"></i>"
           rs :: [ChunkRange Edit]
           rs = [ ChunkRange (ID 0) (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 6) 0))
                , ChunkRange (ID 2) Nothing                           (Just (ChunkPoint (DataUID 5) 0))
@@ -113,8 +113,8 @@ spec = parallel $ do
 
     it "adds owner type info in its own attribute." $ do
       let cr l = ChunkRange l (Just (ChunkPoint (DataUID 3) 1)) (Just (ChunkPoint (DataUID 3) 2))
-          vers = VDocVersion "<span data-uid=\"3\">asdf</span>"
-          vers' l = VDocVersion $ "<span data-uid=\"1\">a<mark data-chunk-kind=\"" <> l <> "\" data-chunk-id=\"3\" data-uid=\"2\">s</mark>df</span>"
+          vers = vdocVersionFromST "<span data-uid=\"3\">asdf</span>"
+          vers' l = vdocVersionFromST $ "<span data-uid=\"1\">a<mark data-chunk-kind=\"" <> l <> "\" data-chunk-id=\"3\" data-uid=\"2\">s</mark>df</span>"
 
       chunkRangeErrors (cr (ID 3 :: ID Note)) vers `shouldBe` []
 
@@ -129,14 +129,14 @@ spec = parallel $ do
           eval = either (throwIO . ErrorCall . show) pure
 
           bad :: Either VDocHTMLError (VDocVersion 'HTMLWithMarks)
-          bad = insertMarks noChunkRanges $ VDocVersion "<wef>q"  -- (data-uid attr. missing in tag)
+          bad = insertMarks noChunkRanges $ vdocVersionFromST "<wef>q"  -- (data-uid attr. missing in tag)
 
       eval bad `shouldThrow` anyException
 
 
   describe "chunkCanBeApplied" $ do
     let vers :: VDocVersion 'HTMLCanonical
-        vers = VDocVersion "<span data-uid=\"1\">asdfasdf</span>"
+        vers = vdocVersionFromST "<span data-uid=\"1\">asdfasdf</span>"
 
         cr :: ChunkPoint -> ChunkRange Edit
         cr p = ChunkRange (ID 3) (Just p) Nothing
@@ -161,8 +161,8 @@ spec = parallel $ do
         runPreTokenForest = tokensFromForest . fmap (fmap runPreToken)
 
     context "w/o PreMarks" $ do
-      it "inverts enablePreTokens" . property . forAll arbitraryCanonicalTokenForest $ do
-        \(forest :: Forest Token) -> do
+      it "inverts enablePreTokens" . property . forAll arbitraryCanonicalVDocVersion $ do
+        \(VDocVersion forest) -> do
           let go   :: [Token] = runPreTokenForest $ enablePreTokens forest
               stay :: [Token] = tokensFromForest forest
           go `shouldBe` stay

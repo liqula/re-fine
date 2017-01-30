@@ -14,7 +14,6 @@ import           Data.String (fromString)
 import qualified Data.Tree as DT
 import           React.Flux
 import qualified Text.HTML.Parser as HTMLP
-import           Text.HTML.Tree as HTMLT
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.HTML.Enhance (addUIInfoToForest)
@@ -76,13 +75,12 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                               -- div_ ["className" $= "c-vdoc-overlay"] $ do
                                 -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
                               div_ ["className" $= "c-article-content"] $ do
-                                toArticleBody . HTMLT.tokensToForest . HTMLP.parseTokens . cs . _unVDocVersion $ _compositeVDocVersion vdoc
+                                toArticleBody . _unVDocVersion . _compositeVDocVersion $ vdoc
                             rightAside_ (rs ^. gsMarkPositions) (rs ^. gsScreenState)
 
 
-toArticleBody :: Either ParseTokenForestError (DT.Forest HTMLP.Token) -> ReactElementM [SomeStoreAction] ()
-toArticleBody (Left err) = p_ (elemString (show err))
-toArticleBody (Right forest) = mconcat $ map toHTML (addUIInfoToForest forest)
+toArticleBody :: DT.Forest HTMLP.Token -> ReactElementM [SomeStoreAction] ()
+toArticleBody forest = mconcat $ map toHTML (addUIInfoToForest forest)
 
 
 toHTML :: DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()

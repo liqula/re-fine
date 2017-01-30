@@ -32,8 +32,8 @@ import System.Directory
 import Test.Hspec
 import Test.QuickCheck
 import Test.QuickCheck.Instances ()
-import Text.HTML.Parser (Token(..), Attr(..), parseTokens, renderTokens)
-import Text.HTML.Tree (nonClosing)
+import Text.HTML.Parser (Token(..), Attr(..))
+import Text.HTML.Tree (tokensToForest, tokensFromForest, nonClosing)
 
 import Refine.Backend.DocRepo.HtmlFileTree
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
@@ -61,7 +61,7 @@ arbitraryFileName = elements $ show <$> [(1 :: Int)..10]
 -- output, we have to fake it.  Look at the places where we call this and remove the call for a
 -- better understanding.
 normalizeSelfClosingTags :: VDocVersion a -> VDocVersion a
-normalizeSelfClosingTags = VDocVersion . cs . renderTokens . smoothen . parseTokens . cs . _unVDocVersion
+normalizeSelfClosingTags = VDocVersion . (\(Right v) -> v) . tokensToForest . smoothen . tokensFromForest . _unVDocVersion
   where
     smoothen [] = []
     smoothen (TagSelfClose n attrs : ts) = if n `elem` nonClosing
@@ -74,18 +74,18 @@ spec :: Spec
 spec = do
   describe "htmlToFileTree" $ do
     it "creates files for text nodes." $ do
-      let vers = VDocVersion "phoo"
+      let vers = vdocVersionFromST "phoo"
       htmlToFileForest vers
         `shouldBe` [File "SIBLINGORDER" "s1\n", File "s1" "phoo"]
 
     it "throws an exception if any tag has no @data-uid@ attribute." $ do
       pendingWith "#16"
-      let vers = VDocVersion "<div></div>"
+      let vers = vdocVersionFromST "<div></div>"
       evaluate (Prelude.length . show $ htmlToFileForest vers)
         `shouldThrow` anyException
 
     it "creates directories for tags; stores tag names in file TAGNAME; attrs in ATTRS; uses data-uid as filename." $ do
-      let vers = VDocVersion "<div data-uid=\"234\" something=\"other\"></div>"
+      let vers = vdocVersionFromST "<div data-uid=\"234\" something=\"other\"></div>"
       htmlToFileForest vers
         `shouldBe` [ File "SIBLINGORDER" "u234\n"
                    , Directory "u234" [ File "TAGNAME" "div"
@@ -97,7 +97,7 @@ spec = do
       htmlFromFileForest (htmlToFileForest vers) `shouldBe` normalizeSelfClosingTags vers
 
     it "slightly bigger example." $ do
-      let Right vers = canonicalizeVDocVersion . VDocVersion . ST.unlines $
+      let vers = canonicalizeVDocVersion . vdocVersionFromST . ST.unlines $
             [ "<div>"
             , "  <a href=\"/link1\">link1 text</a>"
             , "  <a href=\"/link2\">link2 text</a>"
@@ -158,8 +158,8 @@ spec = do
     it "are inverses." $ do
       -- (we've covered property checking of html to/from file tree above.  but we should run these
       -- two functions once anyway, just to make sure.)
-      let Right vers = canonicalizeVDocVersion
-                     $ VDocVersion "<div a=\"3\" bw=\"phoo\">whee<p>bla</p>furgh<span>3</span></div>"
+      let vers = canonicalizeVDocVersion
+               $ vdocVersionFromST "<div a=\"3\" bw=\"phoo\">whee<p>bla</p>furgh<span>3</span></div>"
       withTempCurrentDirectory (writeHtml "." vers >>= readHtml)
         `shouldReturn` vers
 

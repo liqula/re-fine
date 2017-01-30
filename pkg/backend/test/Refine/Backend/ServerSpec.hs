@@ -98,7 +98,7 @@ sampleCreateVDoc :: CreateVDoc
 sampleCreateVDoc = CreateVDoc
   (Title "[title]")
   (Abstract "[abstract]")
-  (VDocVersion "[versioned content]")
+  (vdocVersionFromST "[versioned content]")
 
 respCode :: SResponse -> Int
 respCode = statusCode . simpleStatus
@@ -224,7 +224,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
           fp :: Edit          <- runWaiBody sess $
             postJSON
               (addEditUri (fe ^. compositeVDocRepo . vdocHeadEdit))
-              (CreateEdit "new edit" (CreateChunkRange Nothing Nothing) (VDocVersion "[new vdoc version]"))
+              (CreateEdit "new edit" (CreateChunkRange Nothing Nothing) (vdocVersionFromST "[new vdoc version]"))
           pure (fe, fp)
 
     context "on edit without ranges" $ do
@@ -233,7 +233,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
         be' :: VDocVersion 'HTMLCanonical <- runDB sess $ do
               handles <- db $ DB.handlesForEdit (fp ^. editID)
               docRepo $ uncurry DocRepo.getVersion handles
-        be' `shouldBe` VDocVersion "<span data-uid=\"1\">[new\nvdoc\nversion]</span>"
+        be' `shouldBe` vdocVersionFromST "<span data-uid=\"1\">[new\nvdoc\nversion]</span>"
 
       it "stores an edit and returns it in the list of edits applicable to its base" $ \sess -> do
         pendingWith "applicableEdits is not implemented."

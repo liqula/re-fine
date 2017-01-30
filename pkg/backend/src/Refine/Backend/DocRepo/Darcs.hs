@@ -56,7 +56,7 @@ createInitialEdit repo vers = do
     uuid <- newUUID
     let repoDir   = repoRoot </> (repo ^. unRepoHandle . to cs)
         editFile = repoDir </> uuid
-    ST.writeFile editFile (vers ^. unVDocVersion)
+    ST.writeFile editFile (vdocVersionToST vers)
     pure . EditHandle $ cs uuid
 
 getVersion :: RepoHandle -> EditHandle -> DocRepo (VDocVersion 'HTMLCanonical)
@@ -65,7 +65,7 @@ getVersion repo vers = do
   docRepoIO $ do
     let repoDir   = repoRoot </> (repo ^. unRepoHandle . to cs)
         editFile = repoDir </> (vers ^. unEditHandle . to cs)
-    VDocVersion <$> ST.readFile editFile
+    vdocVersionFromST <$> ST.readFile editFile
 
 -- | Get all edits that are directly based on a given edit.
 --

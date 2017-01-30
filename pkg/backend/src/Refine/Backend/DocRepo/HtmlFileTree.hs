@@ -33,7 +33,6 @@ import           Data.Tree
 import           System.Directory
 import           System.IO.Temp (createTempDirectory)
 import           Text.HTML.Parser
-import           Text.HTML.Tree
 
 import Refine.Common.Types.VDoc
 
@@ -52,7 +51,7 @@ readHtml = fmap htmlFromFileForest . readFileForest
 
 -- | The children order is @[TAGNAME, ATTR, SIBLINGORDER, ... (html children, in their html order)]@.
 htmlToFileForest :: VDocVersion 'HTMLCanonical -> FileForest
-htmlToFileForest = doSiblings . (\(Right v) -> v) . tokensToForest . parseTokens . _unVDocVersion
+htmlToFileForest (VDocVersion forest) = doSiblings forest
   where
     doSiblings :: Forest Token -> FileForest
     doSiblings = siblingOrderToFile . zipWith doSibling [1..]
@@ -68,7 +67,7 @@ htmlToFileForest = doSiblings . (\(Right v) -> v) . tokensToForest . parseTokens
     doSibling _ bad = error $ "htmlToFileForest: non-canonical input: " <> show bad
 
 htmlFromFileForest :: FileForest -> VDocVersion 'HTMLCanonical
-htmlFromFileForest = VDocVersion . cs . renderTokens . tokensFromForest . go
+htmlFromFileForest = VDocVersion . go
   where
     go :: FileForest -> Forest Token
     go children = case parseFileForest children of
