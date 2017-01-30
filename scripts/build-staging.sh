@@ -3,16 +3,17 @@
 set -e
 cd `dirname $0`/..
 
-# build
-./test-all.sh --clean
+./build.sh setup
+
+# build backend.
+./build.sh clean
+./build.sh build-backend
 
 # build frontend for production
-cd pkg/frontend
-npm install
-stack build
-make
+./build.sh build-frontend
 npm run build
 
 # start server
-cd ../backend
+cd pkg/backend
 stack exec -- refine server.conf
+

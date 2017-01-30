@@ -1,6 +1,6 @@
 build:
   script:
-    - ./test-all.sh  # try `./test-all.sh --clean` if anything weird is going on.
+    - ./build.sh  # try `./build.sh setup && ./build.sh clean && ./build.sh` if anything weird is going on.
 
 deploy_staging:
   stage: deploy
