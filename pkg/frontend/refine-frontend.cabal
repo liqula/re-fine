@@ -41,6 +41,7 @@ library
     , refine-prelude
     , string-conversions
     , text
+    , unordered-containers
   exposed-modules:
       -- we can't have hspec, but at least we have bash and find and perl...  :)
       -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort

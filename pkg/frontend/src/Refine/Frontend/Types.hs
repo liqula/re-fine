@@ -1,35 +1,56 @@
 {-# LANGUAGE DeriveAnyClass    #-}
 {-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE FlexibleContexts  #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE TupleSections     #-}
 {-# LANGUAGE TypeFamilies      #-}
 
 module Refine.Frontend.Types where
 
 import           Control.DeepSeq
-import           Control.Lens (makeLenses)
+import qualified Data.HashMap.Strict as HashMap
 import           Data.Int
 import           Data.Text (Text)
-import           Data.Typeable (Typeable)
+import           Data.String.Conversions
 import qualified Data.Map.Strict as M
 import           GHC.Generics (Generic)
-import           Data.Aeson (ToJSON, encode, toJSON, Value, (.=), object)
-import           Data.String.Conversions
+import           Data.Aeson (toJSON, parseJSON, object, (.=), withObject)
+import           Data.Aeson.Types (FromJSON, ToJSON, Value, Parser)
+import           Text.Read (readMaybe)
 
 import Refine.Common.Types
 
 import Refine.Frontend.Bubbles.Types
 import Refine.Frontend.Screen.Types
+import Refine.Prelude.TH (makeRefineType)
+
 
 newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map Int64 (Int, Int) }
-  deriving (Eq, Show, Typeable, Generic, NFData)
+  deriving (Eq, Show, Generic, NFData)
 
-mapToValue :: (ToJSON k, ToJSON v) => M.Map k v -> Value
-mapToValue = object . fmap (\(k,v) -> (cs . encode) k .= v) . M.toList
+-- | TODO: we have orphan instances for maps in Refine.Common.Orphans.  we should:
+-- (1) move this function there;
+-- (2) implement the orphan instances in terms of this function, not via lists;
+-- (3) same for @mapFromValue@.
+-- (4) rename to @map{From,To}JSON@.
+mapToValue :: (Show k, ToJSON v) => M.Map k v -> Value
+mapToValue = object . fmap (\(k, v) -> (cs . show) k .= v) . M.toList
+
+mapFromValue :: (Ord k, Read k, FromJSON v) => Value -> Parser (M.Map k v)
+mapFromValue = withObject "MarkPositions"
+  $ fmap M.fromList
+  . mapM (\(k, v) -> (,) <$> maybe (fail "could not parse key.") pure (readMaybe (cs k))
+                         <*> parseJSON v)
+  . HashMap.toList
 
 instance ToJSON MarkPositions where
-  toJSON = toJSON . mapToValue . _unMarkPositions
+  toJSON = mapToValue . _unMarkPositions
+
+instance FromJSON MarkPositions where
+  parseJSON = fmap MarkPositions . mapFromValue
 
 data GlobalState = GlobalState
   { _gsVDoc                   :: Maybe CompositeVDoc
@@ -37,9 +58,7 @@ data GlobalState = GlobalState
   , _gsMarkPositions          :: MarkPositions
   , _gsBubblesState           :: BubblesState
   , _gsScreenState            :: ScreenState
-  } deriving (Show, Typeable, Generic, NFData, ToJSON)
-
-makeLenses ''GlobalState
+  } deriving (Show, Generic)
 
 emptyGlobalState :: GlobalState
 emptyGlobalState = GlobalState Nothing Nothing (MarkPositions M.empty) emptyBubblesState emptyScreenState
@@ -68,4 +87,7 @@ data RefineAction = LoadDocumentList
                   | SaveSelect Text Text
                   -- Actions that will be transformed because they need IO:
                   | TriggerUpdateSelection DeviceOffset
-  deriving (Show, Typeable, Generic, NFData, ToJSON)
+  deriving (Show, Generic)
+
+makeRefineType ''GlobalState
+makeRefineType ''RefineAction

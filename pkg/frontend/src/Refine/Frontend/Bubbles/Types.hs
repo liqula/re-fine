@@ -8,27 +8,26 @@
 
 module Refine.Frontend.Bubbles.Types where
 
+import           Control.Lens (makeLenses)
 import qualified Data.Aeson as AE
 import           Control.DeepSeq
-import           Control.Lens (makeLenses)
-import           Data.Typeable (Typeable)
 import           GHC.Generics (Generic)
-import           Data.Aeson (ToJSON)
 import           Data.String.Conversions
 
 import Refine.Common.Types
+import Refine.Prelude.TH (makeRefineType)
 
-data Range = Range
+
+data Range = Range  -- FIXME: selectors should all have the prefix _range for disambiguation.
     { _startPoint   :: Maybe ChunkPoint
     , _endPoint     :: Maybe ChunkPoint
     , _top          :: Int
     , _bottom       :: Int
     , _scrollOffset :: Int
     }
-    deriving (Show, Generic, NFData, ToJSON)
+    deriving (Show, Generic, NFData)
 
 makeLenses ''Range
-
 
 instance AE.FromJSON Range where
     parseJSON = AE.withObject "Range" $ \v -> Range <$>
@@ -38,6 +37,15 @@ instance AE.FromJSON Range where
                              v AE..: "bottom" <*>
                              v AE..: "scrollOffset"
 
+instance AE.ToJSON Range where
+    toJSON (Range sp ep t b s) = AE.object
+      [ "start"        AE..= sp
+      , "end"          AE..= ep
+      , "top"          AE..= t
+      , "bottom"       AE..= b
+      , "scrollOffset" AE..= s
+      ]
+
 type DeviceOffset = Int
 
 type Selection = (Maybe Range, Maybe DeviceOffset)
@@ -45,14 +53,12 @@ type Selection = (Maybe Range, Maybe DeviceOffset)
 -- for Overlay:
 newtype CommentInputState = CommentInputState
   { _commentInputStateText     :: ST
-  } deriving (Show, Typeable, Generic, NFData)
-
-makeLenses ''CommentInputState
+  } deriving (Show, Generic)
 
 data CommentCategory =
     Discussion
   | Note
-  deriving (Show, Typeable, Generic, NFData, ToJSON)
+  deriving (Show, Generic)
 
 
 data BubblesState = BubblesState
@@ -60,9 +66,12 @@ data BubblesState = BubblesState
   , _bsCommentCategory        :: Maybe CommentCategory
   , _bsCommentIsVisible       :: Bool
   , _bsCommentEditorIsVisible :: (Bool, Maybe Range)
-  } deriving (Show, Typeable, Generic, NFData, ToJSON)
-
-makeLenses ''BubblesState
+  } deriving (Show, Generic)
 
 emptyBubblesState :: BubblesState
 emptyBubblesState = BubblesState (Nothing, Nothing) Nothing False (False, Nothing)
+
+
+makeRefineType ''CommentInputState
+makeRefineType ''CommentCategory
+makeRefineType ''BubblesState
