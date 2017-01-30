@@ -164,6 +164,7 @@ test-suite spec
       Refine.Frontend.Bubbles.Types
       Refine.Frontend.Colors
       Refine.Frontend.Heading
+      Refine.Frontend.HeadingSpec
       Refine.Frontend.Loader.Component
       Refine.Frontend.Mark
       Refine.Frontend.Rest

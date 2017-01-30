@@ -50,6 +50,19 @@ foreign import javascript unsafe
     "$1.find($2)"
     js_find :: JSVal -> JSString -> IO JSVal
 
+text :: ShallowWrapper -> IO JSString
+text (ShallowWrapper wrapper) = do
+  js_text wrapper
+
+foreign import javascript unsafe
+    "$1.text()"
+    js_text :: JSVal -> IO JSString
+
+getIOWrapperAttr :: FromJSON a => IO ShallowWrapper -> JSString -> IO a
+getIOWrapperAttr ioWrapper selector = do
+  wrapper <- ioWrapper
+  getWrapperAttr wrapper selector
+
 getWrapperAttr :: FromJSON a => ShallowWrapper -> JSString -> IO a
 getWrapperAttr (ShallowWrapper wrapper) selector = do
   jsstring <- js_getWrapperAttr wrapper selector
