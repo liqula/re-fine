@@ -52,6 +52,15 @@ spec = do
       wrapper <- shallow $ icon_ (IconProps "bla" True ("Image", "striped") XXL)
       lengthIO (find wrapper (StringSelector ".Image_striped")) `shouldReturn` (1 :: Int)
 
+    it "annotates the RO icon image when the mouse has entered the icon and the normal one when it left again" $ do
+      wrapper <- shallow $ icon_ (IconProps "bla" True ("Image", "striped") XXL)
+      wrapper2 <- simulate wrapper "mouseEnter"
+      lengthIO (find wrapper2 (StringSelector ".Image_striped")) `shouldReturn` (0 :: Int)
+      lengthIO (find wrapper2 (StringSelector ".Image_RO")) `shouldReturn` (1 :: Int)
+      wrapper3 <- simulate wrapper2 "mouseLeave"
+      lengthIO (find wrapper3 (StringSelector ".Image_striped")) `shouldReturn` (1 :: Int)
+      lengthIO (find wrapper3 (StringSelector ".Image_RO")) `shouldReturn` (0 :: Int)
+
     it "annotates the iconsize class with the correct size (XXL)" $ do
       wrapper <- shallow $ icon_ (IconProps "bla" True ("Image", "striped") XXL)
       lengthIO (find wrapper (StringSelector ".iconsize-xxl")) `shouldReturn` (1 :: Int)

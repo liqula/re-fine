@@ -124,3 +124,11 @@ getWrapperAttr (ShallowWrapper wrapper) selector = do
 foreign import javascript unsafe
     "JSON.stringify($1[$2])"
     js_getWrapperAttr :: JSVal -> JSString -> IO JSString
+
+simulate :: ShallowWrapper -> JSString -> IO ShallowWrapper
+simulate (ShallowWrapper wrapper) event = ShallowWrapper <$> js_simulate wrapper event
+
+foreign import javascript unsafe
+    "$1.simulate($2)"
+    js_simulate :: JSVal -> JSString -> IO JSVal
+
