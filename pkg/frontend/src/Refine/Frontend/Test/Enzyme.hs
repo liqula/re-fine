@@ -50,6 +50,14 @@ foreign import javascript unsafe
     "$1.find($2)"
     js_find :: JSVal -> JSString -> IO JSVal
 
+is :: ShallowWrapper -> JSString -> IO Bool
+is (ShallowWrapper wrapper) selector = do
+  js_is wrapper selector
+
+foreign import javascript unsafe
+    "$1.is($2)"
+    js_is :: JSVal -> JSString -> IO Bool
+
 text :: ShallowWrapper -> IO JSString
 text (ShallowWrapper wrapper) = do
   js_text wrapper
