@@ -212,5 +212,11 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   -- see webpack.config.js for a definition of the environment variable.
 
-  "if( process.env.NODE_ENV === 'development' ){ console.log($1, JSON.parse($2)); }"
+  "if( process.env.NODE_ENV === 'development' ){ \
+  \    try { \
+  \        console.log($1, JSON.parse($2)); \
+  \    } catch(e) { \
+  \        console.log($1, '*** ERROR in Refine.Frontend.Store.consoleLog_ (see gitlab issue #134)', e); \
+  \    } \
+  \}"
   consoleLog_ :: JSString -> JSString -> IO ()
