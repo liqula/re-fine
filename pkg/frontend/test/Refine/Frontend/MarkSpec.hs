@@ -35,9 +35,9 @@ spec = do
   describe "The rfMark_ component" $ do
     it "renders a mark at top level" $ do
       wrapper <- shallow $ rfMark_ (MarkProps "the-chunk-id" "the-content-type") mempty
-      is wrapper "mark" `shouldReturn` True
+      is wrapper (StringSelector "mark") `shouldReturn` True
 
     it "contains the data-chunk-id annotation that was passed to it" $ do
       wrapper <- shallow $ rfMark_ (MarkProps "the-chunk-id" "the-content-type") mempty
-      is wrapper "mark" `shouldReturn` True
+      is wrapper (StringSelector "mark") `shouldReturn` True
 

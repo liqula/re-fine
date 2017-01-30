@@ -63,12 +63,22 @@ foreign import javascript unsafe
 find :: ShallowWrapper -> EnzymeSelector -> IO ShallowWrapper
 find = execSW "find"
 
+is :: ShallowWrapper -> EnzymeSelector -> IO Bool
+is = execB "is"
+
 execSW :: String -> ShallowWrapper -> EnzymeSelector -> IO ShallowWrapper
 execSW func (ShallowWrapper wrapper) (StringSelector selector) = do
   ShallowWrapper <$> js_exec_sw_by_string (toJSString func) wrapper (toJSString selector)
 execSW func (ShallowWrapper wrapper) (PropertySelector selector) = do
   ShallowWrapper <$> js_exec_sw_by_prop (toJSString func) wrapper ((toJSString . cs) (encode selector))
 
+execB :: String -> ShallowWrapper -> EnzymeSelector -> IO Bool
+execB func (ShallowWrapper wrapper) (StringSelector selector) = do
+  js_exec_b_by_string (toJSString func) wrapper (toJSString selector)
+execB func (ShallowWrapper wrapper) (PropertySelector selector) = do
+  js_exec_b_by_prop (toJSString func) wrapper ((toJSString . cs) (encode selector))
+
+-- TODO unify _sw_ and _b_ by applying the appropriate transformation to the result?
 foreign import javascript unsafe
     "$2[$1]($3)"
     js_exec_sw_by_string :: JSString -> JSVal -> JSString -> IO JSVal
@@ -77,13 +87,13 @@ foreign import javascript unsafe
     "$2[$1](JSON.parse($3))"
     js_exec_sw_by_prop :: JSString -> JSVal -> JSString -> IO JSVal
 
-is :: ShallowWrapper -> JSString -> IO Bool
-is (ShallowWrapper wrapper) selector = do
-  js_is wrapper selector
+foreign import javascript unsafe
+    "$2[$1]($3)"
+    js_exec_b_by_string :: JSString -> JSVal -> JSString -> IO Bool
 
 foreign import javascript unsafe
-    "$1.is($2)"
-    js_is :: JSVal -> JSString -> IO Bool
+    "$2[$1](JSON.parse($3))"
+    js_exec_b_by_prop :: JSString -> JSVal -> JSString -> IO Bool
 
 text :: ShallowWrapper -> IO JSString
 text (ShallowWrapper wrapper) = do
