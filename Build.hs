@@ -95,6 +95,7 @@ main = shakeArgs refineOptions $ do
   phony "build-frontend" $ do
     need ["build-frontend-npm"]
     stackBuildFast pkgFrontend
+    command_ [Cwd pkgFrontend] "make" []
 
   phony "build-frontend-npm" $ do
     command_ [Cwd pkgFrontend] "npm" ["install"]
@@ -129,3 +130,18 @@ main = shakeArgs refineOptions $ do
   phony "dist-clean" $ do
     forM_ [pkgPrelude, pkgCommon, pkgBackend, pkgFrontend] $ \pkg -> do
         command_ [Cwd pkg] "rm" ["-rf", ".stack-work"]
+
+
+  -- run frontend and backend in development mode
+
+  phony "run-backend-def" $ do
+    need ["build-backend"]
+    command_ [Cwd pkgBackend] "stack" ["exec", "--", "refine"]
+
+  phony "run-backend" $ do
+    need ["build-backend"]
+    command_ [Cwd pkgBackend] "stack" ["exec", "--", "refine", "server.conf"]
+
+  phony "run-frontend" $ do
+    need ["build-frontend"]
+    command_ [Cwd pkgBackend] "npm" ["start"]
