@@ -189,6 +189,21 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       be ^. compositeVDocNotes . to elems `shouldContain` [fn]
 
+    it "fails with error on non-trivial *invalid* chunk range" $ \sess -> do
+      vdoc :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
+      Left resp :: Either String Note <- runWaiBody' sess $
+        let cp1, cp2 :: ChunkPoint
+            cp1 = ChunkPoint (DataUID 1) 0
+            cp2 = ChunkPoint (DataUID 100) 100
+        in postJSON
+          (addNoteUri (vdoc ^. compositeVDocRepo . vdocHeadEdit))
+          (CreateNote "[note]" True (CreateChunkRange (Just cp1) (Just cp2)))
+
+      resp `shouldContain` "AppVDocError (VDocHTMLErrorChunkRangeErrors [ChunkRangeBadEndNode"
+
+      vdoc' :: CompositeVDoc <- runDB sess $ getCompositeVDoc (vdoc ^. compositeVDoc . vdocID)
+      vdoc' ^. compositeVDocNotes `shouldBe` mempty
+
   describe "sAddDiscussion" $ do
     it "stores discussion with no ranges" $ \sess -> do
       fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
