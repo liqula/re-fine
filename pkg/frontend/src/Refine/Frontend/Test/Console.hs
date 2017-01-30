@@ -51,5 +51,5 @@ consoleLogJSON :: ToJSON a => JSString -> a -> IO ()
 consoleLogJSON str state = consoleLog_ str ((pack . cs . encode) state)
 
 foreign import javascript unsafe
-  "console.log($1, JSON.parse($2));"
+  "console.log($1, $2);"
   consoleLog_ :: JSString -> JSString -> IO ()
