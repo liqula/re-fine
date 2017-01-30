@@ -96,6 +96,7 @@ executable refine-frontend
     , text
     , hspec
     , hspec-discover
+    , unordered-containers
   other-modules:
       -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
       Refine.Frontend.Bubbles.Overlay
@@ -153,6 +154,7 @@ test-suite spec
     , hspec-discover
     , QuickCheck
     , quickcheck-instances
+    , unordered-containers
   other-modules:
       -- find src test -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
       Refine.Frontend.Bubbles.Overlay
