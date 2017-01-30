@@ -1,9 +1,10 @@
 -- | Code for handling `VDocVersions` with HTML content.
 module Refine.Common.VDoc.HTML
-  ( VDocHTMLError(..)
+  ( VDocHTMLError(..), ChunkRangeError(..)
   , canonicalizeVDocVersion    -- 'HTMLRaw" to 'HTMLCanonical'
   , decanonicalizeVDocVersion  -- 'HTMLCanonical' to 'HTMLRaw' (benign, but we may not actually need it)
   , insertMarks                -- 'HTMLCanonical' to 'HTMLWithMarks'
+  , createChunkRangeErrors     -- chunk range validation
   , insertMoreMarks            -- 'HTMLWithMarks' to 'HTMLWithMarks' (if you want to call it incrementally).
   , addUIInfoToForest          -- for 'ChunkRange' calculation (probably in the frontend)
   ) where

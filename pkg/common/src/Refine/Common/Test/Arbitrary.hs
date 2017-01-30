@@ -26,7 +26,6 @@ import           Text.HTML.Tree as HTML
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML
 import Refine.Common.VDoc.HTML.Core
-import Refine.Common.VDoc.HTML.Splice
 
 instance Arbitrary ChunkPoint where
   arbitrary               = ChunkPoint <$> arbitrary <*> arbitrary

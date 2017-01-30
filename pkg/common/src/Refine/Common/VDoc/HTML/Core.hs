@@ -24,7 +24,9 @@
 
 module Refine.Common.VDoc.HTML.Core
   ( -- * errors
-    VDocHTMLError(..)
+    VDocHTMLError(..), ChunkRangeError(..)
+
+    -- * pretokens
   , PreToken(..), runPreToken, dropPreTokens
 
     -- * misc
@@ -59,11 +61,22 @@ import Refine.Common.Types
 
 data VDocHTMLError =
     VDocHTMLErrorBadTree ParseTokenForestError
-  | VDocHTMLErrorBadChunkPoint (Forest PreToken) ChunkPoint
+  | VDocHTMLErrorChunkRangeErrors [ChunkRangeError]
+  | VDocHTMLErrorBadChunkPoint (Forest PreToken) ChunkPoint  -- (should be an impossible error.)
   | VDocHTMLErrorNotEnoughCharsToSplit Int (Forest PreToken)
   | VDocHTMLErrorSplitPointsToSubtree Int (Forest PreToken)
   | VDocHTMLErrorInternal String
   deriving (Eq, Show)
+
+data ChunkRangeError =
+    ChunkRangeEmpty [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
+  | ChunkRangeBadEndNode [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
+  | ChunkRangeOffsetTooLarge [Token] ChunkPoint
+  | ChunkRangeNotATree [Token]
+  deriving (Eq, Show)
+
+
+-- * pretokens
 
 -- | this type is introduced because we keep open and close marks separately in the tree at some
 -- point.  in order to keep track of which close mark belongs to which open mark, we cannot rely on
@@ -79,6 +92,31 @@ runPreToken (PreMarkClose _)  = TagClose "mark"
 
 dropPreTokens :: [PreToken] -> [Token]
 dropPreTokens = fmap runPreToken . filter (\case (PreToken _) -> True; _ -> False)
+
+
+-- | This is a bit of a hack.  We want to use tokensFromForest, so we 'fmap' 'runPreToken' on the
+-- input forest, then render that, and recover the pretokens from the tokens.
+--
+-- The encoding uses 'Doctype' to encode marks, which works because all doctype elements have been
+-- removed from the input by 'canonicalizeVDocVersion'.
+preTokensFromForest :: Forest PreToken -> [PreToken]
+preTokensFromForest = fmap unstashPreToken . tokensFromForest . fmap (fmap stashPreToken)
+
+-- | Inverse of 'preTokensFromForest' (equally hacky).
+preTokensToForest :: MonadError VDocHTMLError m => [PreToken] -> m (Forest PreToken)
+preTokensToForest = fmap (fmap (fmap unstashPreToken)) . tokensToForest' . fmap stashPreToken
+
+stashPreToken :: PreToken -> Token
+stashPreToken (PreMarkOpen l k) = Doctype $ ST.intercalate "/" [l, k]
+stashPreToken (PreMarkClose l)  = Doctype l
+stashPreToken (PreToken t)      = t
+
+unstashPreToken :: Token -> PreToken
+unstashPreToken (Doctype s) = case ST.splitOn "/" s of
+  [l, k] -> PreMarkOpen l k
+  [l]    -> PreMarkClose l
+  bad    -> error $ "unstashPreToken: " <> show bad
+unstashPreToken t           = PreToken t
 
 
 -- * misc
@@ -129,28 +167,3 @@ preTokenTextLength = tokenTextLength . runPreToken
 
 preForestTextLength :: Forest PreToken -> Int
 preForestTextLength = sum . fmap preTokenTextLength . preTokensFromForest
-
-
--- | This is a bit of a hack.  We want to use tokensFromForest, so we 'fmap' 'runPreToken' on the
--- input forest, then render that, and recover the pretokens from the tokens.
---
--- The encoding uses 'Doctype' to encode marks, which works because all doctype elements have been
--- removed from the input by 'canonicalizeVDocVersion'.
-preTokensFromForest :: Forest PreToken -> [PreToken]
-preTokensFromForest = fmap unstashPreToken . tokensFromForest . fmap (fmap stashPreToken)
-
--- | Inverse of 'preTokensFromForest' (equally hacky).
-preTokensToForest :: MonadError VDocHTMLError m => [PreToken] -> m (Forest PreToken)
-preTokensToForest = fmap (fmap (fmap unstashPreToken)) . tokensToForest' . fmap stashPreToken
-
-stashPreToken :: PreToken -> Token
-stashPreToken (PreMarkOpen l k) = Doctype $ ST.intercalate "/" [l, k]
-stashPreToken (PreMarkClose l)  = Doctype l
-stashPreToken (PreToken t)      = t
-
-unstashPreToken :: Token -> PreToken
-unstashPreToken (Doctype s) = case ST.splitOn "/" s of
-  [l, k] -> PreMarkOpen l k
-  [l]    -> PreMarkClose l
-  bad    -> error $ "unstashPreToken: " <> show bad
-unstashPreToken t           = PreToken t

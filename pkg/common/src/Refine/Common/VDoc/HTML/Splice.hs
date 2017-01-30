@@ -79,13 +79,6 @@ insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
 
 -- * sanity check
 
-data ChunkRangeError =
-    ChunkRangeEmpty [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
-  | ChunkRangeBadEndNode [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
-  | ChunkRangeOffsetTooLarge [Token] ChunkPoint
-  | ChunkRangeNotATree [Token]
-  deriving (Eq, Show)
-
 chunkRangeErrors :: ChunkRange a -> VDocVersion b -> [ChunkRangeError]
 chunkRangeErrors (ChunkRange _ mp1 mp2) = createChunkRangeErrors $ CreateChunkRange mp1 mp2
 
