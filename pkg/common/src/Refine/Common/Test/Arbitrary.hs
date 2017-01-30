@@ -226,6 +226,11 @@ arbitraryChunkRangesWithVersion = do
   let rs = zipWith ($) rs_ [0..]
   pure $ VersWithRanges v (filter (null . flip chunkRangeErrors v) rs)  -- TODO: 'arbitraryValidChunkRange' returns empty ranges.
 
+-- | FIXME: this function should not be necessary.  CreateChunkRange should always be validated
+-- before turned into a ChunkRange.
+chunkRangeErrors :: ChunkRange a -> VDocVersion b -> [ChunkRangeError]
+chunkRangeErrors (ChunkRange _ mp1 mp2) = createChunkRangeErrors $ CreateChunkRange mp1 mp2
+
 shrinkChunkRangesWithVersion :: VersWithRanges -> [VersWithRanges]
 shrinkChunkRangesWithVersion (VersWithRanges v rs) = do
   v' <- shrinkCanonicalNonEmptyVDocVersionVersWithRanges v
