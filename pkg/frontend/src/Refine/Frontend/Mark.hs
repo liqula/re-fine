@@ -39,7 +39,7 @@ toMarkProps attrs = let maybeChunkId = readMaybe $ valueOf "data-chunk-id" attrs
 rfMark :: ReactView MarkProps
 rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
    { lRender = \_state props ->
-         mark_ [ "data-hunk-id" $= fromString (show (_dataHunkId props))
+         mark_ [ "data-chunk-id" $= fromString (show (_dataHunkId props))
                , "className" $= fromString ("o-mark o-mark--" <> _dataContentType props)
                ] childrenPassedToView
 
