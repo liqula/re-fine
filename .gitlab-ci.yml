@@ -1,3 +1,13 @@
 build:
   script:
     - ./test-all.sh  # try `./test-all.sh --clean` if anything weird is going on.
+
+deploy_staging:
+  stage: deploy
+  script:
+    - curl http://zb1:3001/
+  environment:
+    name: staging
+    url: https://demo8.aula.de/
+#  only:
+#    - master
