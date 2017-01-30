@@ -72,6 +72,56 @@ spec = do
       wrapper <- shallow $ icon_ (IconProps "bla" True ("Image", "striped") M)
       lengthIO (find wrapper (StringSelector "span")) `shouldReturn` (8 :: Int)
 
+  describe "iconButtonWithAlignmentCore_ component" $ do
+    let iconProps1 = IconProps  "the-block-name" True ("Image", "striped") M
+    let element = "the-element-name"
+    let module1 = "the-module-name"
+    let ctype = "the-content-type"
+    let label1 = "the-label"
+
+    it "has the data content type passed to it" $ do
+      wrapper <- shallow $ iconButtonWithAlignmentCore_
+        (IconButtonWithAlignmentProps
+          (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
+          False Nothing)
+      lengthIO (find wrapper (PropertySelector [Prop "data-content-type" ("the-content-type" :: String)])) `shouldReturn` (1 :: Int)
+
+    it "renders the block name with the button element" $ do
+      wrapper <- shallow $ iconButtonWithAlignmentCore_
+        (IconButtonWithAlignmentProps
+          (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
+          False Nothing)
+      consoleLogShallowWrapper "..." wrapper
+      lengthIO (find wrapper (StringSelector ".the-block-name__button")) `shouldReturn` (1 :: Int)
+
+    it "renders the block__element class as passed to it" $ do
+      wrapper <- shallow $ iconButtonWithAlignmentCore_
+        (IconButtonWithAlignmentProps
+          (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
+          False Nothing)
+      lengthIO (find wrapper (StringSelector ".the-block-name__the-element-name")) `shouldReturn` (1 :: Int)
+
+    it "renders the block__element--module class as passed to it" $ do
+      wrapper <- shallow $ iconButtonWithAlignmentCore_
+        (IconButtonWithAlignmentProps
+          (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
+          False Nothing)
+      lengthIO (find wrapper (StringSelector ".the-block-name__the-element-name--the-module-name")) `shouldReturn` (1 :: Int)
+
+    it "renders the alignment class when it should be right-aligned" $ do
+      wrapper <- shallow $ iconButtonWithAlignmentCore_
+        (IconButtonWithAlignmentProps
+          (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
+          True Nothing)
+      lengthIO (find wrapper (StringSelector ".the-block-name--align-right")) `shouldReturn` (1 :: Int)
+
+    it "does not render the alignment class when it should not be right-aligned" $ do
+      wrapper <- shallow $ iconButtonWithAlignmentCore_
+        (IconButtonWithAlignmentProps
+          (IconButtonProps iconProps1 element module1 ctype label1 False (\_ -> []))
+          False Nothing)
+      lengthIO (find wrapper (StringSelector ".the-block-name--align-right")) `shouldReturn` (0 :: Int)
+
 
   describe "toClasses" $ do
     it "turns one class name into a string containing that class name" $ do
