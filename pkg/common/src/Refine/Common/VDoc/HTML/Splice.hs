@@ -33,7 +33,7 @@ module Refine.Common.VDoc.HTML.Splice
   ) where
 
 import           Control.Exception (assert)
-import           Control.Lens (Traversal', (&), (^.), (%~))
+import           Control.Lens ((&), (^.), (%~))
 import           Control.Monad.Error.Class (MonadError, throwError)
 import           Control.Monad (unless, foldM)
 import           Data.Functor.Infix ((<$$>))
@@ -170,14 +170,8 @@ insertMarksForest crs = (`woodZip` splitup crs)
     switch f (Nothing, mark@(PreMarkOpen _ _)) = pure $ Node mark [] : f
     switch f (Nothing, mark@(PreMarkClose _))  = pure $ f <> [Node mark []]
     switch f (Just cp@(ChunkPoint nod off), mark)
-      = if preForestTextLength (f ^. atDataUID nod) >= off
-          then pure $ f & atDataUID nod %~ insertPreToken (show cp) off mark
-          else throwError $ VDocHTMLErrorBadChunkPoint f cp
-      where
-        atDataUID :: DataUID -> Traversal' (Forest PreToken) (Forest PreToken)
-        atDataUID node = atNode (\p -> dataUidOfPreToken p == Just node)
+      = pure $ f & atPreToken nod %~ insertPreToken (show cp) off mark
     switch f bad = error $ "insertMarksF: " <> show (f, bad)
-
 
 -- | In a list of text or premark tokens, add another premark token at a given offset, splitting up
 -- an existing text if necessary. The output is not canonicalized (there may be empty text nodes).
@@ -190,8 +184,8 @@ insertPreToken errinfo offset mark forest = assert (isPreMark mark) $ either err
       pure $ ts <> [Node mark []] <> ts'
 
     -- If 'ChunkRange' does not apply to tree (e.g. because of too large offset), this throws an
-    -- internal error.  This is impossible as long as 'insertMarks' checks 'chunkCanBeApplied' on
-    -- all chunks.
+    -- internal error.  This is impossible as long as 'insertMarks' only ever sees chunk ranges that
+    -- have been validated by 'createChunkRangeErrors'.
     err e = error $ "internal error: insertPreToken: " <> show (e, errinfo, mark, forest)
 
     isPreMark :: PreToken -> Bool

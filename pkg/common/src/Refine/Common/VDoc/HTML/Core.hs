@@ -31,7 +31,7 @@ module Refine.Common.VDoc.HTML.Core
   , PreToken(..), runPreToken, dropPreTokens
 
     -- * misc
-  , atNode
+  , atNode, atToken, atPreToken
   , dataUidOfToken, dataUidOfPreToken
   , tokensToForest'
 
@@ -140,6 +140,12 @@ atNode prop focus = dive
       = if prop n
           then (:) <$> (Node n <$> focus chs) <*> dive ts
           else (:) <$> (Node n <$> dive  chs) <*> dive ts
+
+atToken :: DataUID -> Traversal' (Forest Token) (Forest Token)
+atToken node = atNode (\p -> dataUidOfToken p == Just node)
+
+atPreToken :: DataUID -> Traversal' (Forest PreToken) (Forest PreToken)
+atPreToken node = atNode (\p -> dataUidOfPreToken p == Just node)
 
 dataUidOfToken :: Token -> Maybe DataUID
 dataUidOfToken (TagOpen _ attrs) =
