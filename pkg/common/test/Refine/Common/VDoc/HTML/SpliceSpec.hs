@@ -232,8 +232,3 @@ spec = parallel $ do
           `shouldBe` Left "resolvePreTokens: close without open: \
             \([PreMarkClose \"8\"]\
             \,ResolvePreTokensStack {_rptsOpen = fromList [], _rptsWritten = [], _rptsReading = [PreMarkClose \"8\"]})"
-
-  describe "preTokensToForest" $ do
-    it "Correctly ignores broken tree structure of PreMarkOpen, PreMarkClose." $ do
-      preTokensToForest [PreMarkOpen "1" "whoof"] `shouldBe` Right [Node (PreMarkOpen "1" "whoof") []]
-      preTokensToForest [PreMarkClose "1"] `shouldBe` Right [Node (PreMarkClose "1") []]

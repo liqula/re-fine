@@ -33,19 +33,16 @@ module Refine.Common.VDoc.HTML.Core
     -- * misc
   , atNode, atToken, atPreToken
   , dataUidOfToken, dataUidOfPreToken
-  , tokensToForest'
 
   , tokenTextLength
   , forestTextLength
   , preTokenTextLength
   , preForestTextLength
 
-  , preTokensToForest
   , preTokensFromForest
   ) where
 
 import           Control.Lens (Traversal')
-import           Control.Monad.Error.Class (MonadError, throwError)
 import           Data.Char (toLower)
 import           Data.Maybe (listToMaybe)
 import           Data.String.Conversions (ST, cs, (<>))
@@ -53,7 +50,7 @@ import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
 import           GHC.Generics (Generic)
 import           Text.HTML.Parser (Token(..), Attr(..))
-import           Text.HTML.Tree (ParseTokenForestError, tokensToForest, tokensFromForest)
+import           Text.HTML.Tree (ParseTokenForestError, tokensFromForest)
 import           Text.Read (readMaybe)
 
 import Refine.Common.Types
@@ -108,10 +105,6 @@ dropPreTokens = fmap runPreToken . filter (\case (PreToken _) -> True; _ -> Fals
 preTokensFromForest :: Forest PreToken -> [PreToken]
 preTokensFromForest = fmap unstashPreToken . tokensFromForest . fmap (fmap stashPreToken)
 
--- | Inverse of 'preTokensFromForest' (equally hacky).
-preTokensToForest :: MonadError VDocHTMLError m => [PreToken] -> m (Forest PreToken)
-preTokensToForest = fmap (fmap (fmap unstashPreToken)) . tokensToForest' . fmap stashPreToken
-
 stashPreToken :: PreToken -> Token
 stashPreToken (PreMarkOpen l k) = Doctype $ ST.intercalate "/" [l, k]
 stashPreToken (PreMarkClose l)  = Doctype l
@@ -156,13 +149,6 @@ dataUidOfPreToken :: PreToken -> Maybe DataUID
 dataUidOfPreToken (PreToken t)      = dataUidOfToken t
 dataUidOfPreToken (PreMarkOpen _ _) = Nothing
 dataUidOfPreToken (PreMarkClose _)  = Nothing
-
-
--- | Call 'tokensToForest' and convert the error type.
-tokensToForest' :: MonadError VDocHTMLError m => [Token] -> m (Forest Token)
-tokensToForest' ts = case tokensToForest ts of
-  Right f  -> pure f
-  Left msg -> throwError $ VDocHTMLErrorBadTree msg
 
 
 tokenTextLength :: Token -> Int
