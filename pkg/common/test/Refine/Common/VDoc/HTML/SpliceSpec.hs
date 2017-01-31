@@ -91,17 +91,33 @@ spec = parallel $ do
       insertMarks rs vers `shouldSatisfy` isRight
 
     it "regression (5)." $ do
-      let vers = vdocVersionFromST "<span data-uid=\"4\">zC9E</span><n data-uid=\"5\"><f data-uid=\"6\"></f>;</n><T data-uid=\"7\"></T><i data-uid=\"8\"></i>"
+      let vers = vdocVersionFromST $
+            "<span data-uid=\"4\">zC9E</span>" <>
+            "<n data-uid=\"5\"><f data-uid=\"6\"></f>;</n>" <>
+            "<T data-uid=\"7\"></T><i data-uid=\"8\"></i>"
           rs :: [ChunkRange Edit]
           rs = [ ChunkRange (ID 0) (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 6) 0))
                , ChunkRange (ID 2) Nothing                           (Just (ChunkPoint (DataUID 5) 0))
                ]
 
-          empty :: ChunkRange Edit
-          empty = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 5) 1)) (Just (ChunkPoint (DataUID 6) 0))
-
-      chunkRangeErrors empty vers `shouldNotSatisfy` null
       insertMarks rs vers `shouldSatisfy` isRight
+
+    it "regression (6)." $ do
+      let vers = vdocVersionFromST $
+            "<span data-uid=\"4\">zC9E</span>" <>
+            "<n data-uid=\"5\"><f data-uid=\"6\">zz</f>;</n>" <>
+            "<T data-uid=\"7\"></T><i data-uid=\"8\"></i>"
+
+          -- chunk ranges must be non-empty.
+          empty :: ChunkRange Edit
+          empty = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 4) 4)) (Just (ChunkPoint (DataUID 5) 0))
+
+          -- datauid must point to direct parent of text node.
+          nonleaf :: ChunkRange Edit
+          nonleaf = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 5) 1)) (Just (ChunkPoint (DataUID 5) 2))
+
+      chunkRangeErrors empty   vers `shouldNotSatisfy` null
+      chunkRangeErrors nonleaf vers `shouldNotSatisfy` null
 
     it "generates valid output on arbitrary valid chunkranges." . property $ do
       \(VersWithRanges vers rs) -> do
@@ -114,7 +130,9 @@ spec = parallel $ do
     it "adds owner type info in its own attribute." $ do
       let cr l = ChunkRange l (Just (ChunkPoint (DataUID 3) 1)) (Just (ChunkPoint (DataUID 3) 2))
           vers = vdocVersionFromST "<span data-uid=\"3\">asdf</span>"
-          vers' l = vdocVersionFromST $ "<span data-uid=\"1\">a<mark data-chunk-kind=\"" <> l <> "\" data-chunk-id=\"3\" data-uid=\"2\">s</mark>df</span>"
+          vers' l = vdocVersionFromST $
+            "<span data-uid=\"1\">a<mark data-chunk-kind=\"" <> l <>
+            "\" data-chunk-id=\"3\" data-uid=\"2\">s</mark>df</span>"
 
       chunkRangeErrors (cr (ID 3 :: ID Note)) vers `shouldBe` []
 
