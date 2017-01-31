@@ -23,6 +23,7 @@
 module Refine.Frontend.Test.Console
   ( consoleLogJSVal
   , consoleLogJSON
+  , consoleLogShallowWrapper
   )
 where
 
@@ -30,6 +31,11 @@ import Data.Aeson (ToJSON, encode)
 import Data.JSString (JSString, pack)
 import Data.String.Conversions (cs)
 import GHCJS.Types (JSVal)
+import Refine.Frontend.Test.Enzyme
+
+
+consoleLogShallowWrapper :: JSString -> ShallowWrapper -> IO ()
+consoleLogShallowWrapper msg (ShallowWrapper jsval) = consoleLogJSVal msg jsval
 
 
 -- | Write a 'JSVal' to stdout (node) or the console (browser).  (Similar to 'consoleLogJSON', but
@@ -45,5 +51,5 @@ consoleLogJSON :: ToJSON a => JSString -> a -> IO ()
 consoleLogJSON str state = consoleLog_ str ((pack . cs . encode) state)
 
 foreign import javascript unsafe
-  "console.log($1, JSON.parse($2));"
+  "console.log($1, $2);"
   consoleLog_ :: JSString -> JSString -> IO ()
