@@ -1,8 +1,12 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 {-# OPTIONS_GHC -Wall -Werror #-}
 
 import Control.Monad
 import Data.Monoid
 import Development.Shake
+import System.Exit
+import System.Process
 
 
 refineOptions :: ShakeOptions
@@ -133,16 +137,38 @@ main = shakeArgs refineOptions $ do
         command_ [Cwd pkg] "rm" ["-rf", ".stack-work"]
 
 
-  -- run frontend and backend in development mode
+  -- run frontend in development mode
+  phony "run-dev" $ do
+    let belog = pkgBackend <//> "dev.log"
+        felog = pkgFrontend <//> "dev.log"
+        serverconf = "server.conf"
 
-  phony "run-backend-def" $ do
-    need ["build-backend"]
-    command_ [Cwd pkgBackend] "stack" ["exec", "--", "refine"]
+    need ["build-backend", "build-frontend"]
+    need [pkgBackend <//> serverconf]
 
-  phony "run-backend" $ do
-    need ["build-backend"]
-    command_ [Cwd pkgBackend] "stack" ["exec", "--", "refine", "server.conf"]
+    beh :: ProcessHandle <- cmd
+      [Cwd pkgBackend,  FileStdout belog, FileStderr belog] "stack" ["exec", "--", "refine", "server.conf"]
 
-  phony "run-frontend" $ do
-    need ["build-frontend"]
-    command_ [Cwd pkgBackend] "npm" ["start"]
+    feh :: ProcessHandle <- cmd
+      [Cwd pkgFrontend, FileStdout felog, FileStderr felog] "npm" ["start"]
+
+    liftIO $ do
+      putStrLn `mapM_`
+        [ ""
+        , "development server is not running."
+        , "interrupt if you are done or if you want shake back."
+        , ""
+        , "to see what's going on, try this:"
+        , "tail -f " <> show belog
+        , "tail -f " <> show felog
+        , ""
+        ]
+      ExitSuccess <- waitForProcess beh
+      ExitSuccess <- waitForProcess feh
+      pure ()
+
+  pkgBackend <//> "server.conf" %> \out -> do
+    yes <- doesFileExist out
+    unless yes . fail $
+      "\n*** could not find backend config at " <> show out <> "." <>
+      "\n*** try `cd pkg/backend && stack exec -- refine` and copy the output to server.config."

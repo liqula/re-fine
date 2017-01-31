@@ -6,3 +6,5 @@
 /pkg/backend/refine-backend.cabal
 /pkg/backend/.backend-data
 /pkg/backend/server.conf
+/pkg/backend/dev.log
+/pkg/frontend/dev.log
