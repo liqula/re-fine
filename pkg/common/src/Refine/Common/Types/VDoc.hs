@@ -20,20 +20,23 @@
 
 module Refine.Common.Types.VDoc where
 
+import           Control.DeepSeq
 import           Control.Lens (makeLenses, makePrisms)
 import           Data.Map
-import           Data.String.Conversions (ST)
-import           GHC.Generics (Generic)
-import           Control.DeepSeq
+import           Data.String.Conversions (ST, cs)
+import           Data.Tree (Forest)
 import qualified Generics.SOP        as SOP
 import qualified Generics.SOP.JSON   as SOP
 import qualified Generics.SOP.NFData as SOP
-import           Refine.Prelude
+import           GHC.Generics (Generic)
+import           Text.HTML.Parser (Token, renderTokens, parseTokens)
+import           Text.HTML.Tree (tokensToForest, tokensFromForest)
 
 import Refine.Common.Orphans ()
 import Refine.Common.Types.Chunk
 import Refine.Common.Types.Comment
 import Refine.Common.Types.Prelude
+import Refine.Prelude
 import Refine.Prelude.TH
 
 
@@ -52,7 +55,7 @@ data CreateVDoc = CreateVDoc
   , _createVDocAbstract    :: Abstract
   , _createVDocInitVersion :: VDocVersion 'HTMLRaw
   }
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 newtype Title = Title { _unTitle :: ST }
   deriving (Eq, Ord, Show, Read, Generic)
@@ -62,9 +65,15 @@ newtype Abstract = Abstract { _unAbstract :: ST }
 
 data HTMLState = HTMLRaw | HTMLCanonical | HTMLWithMarks
 
--- | TODO: `newtype VDocVersion = VDocVersion { _unVDocVersion :: Forest Token }` would be better.
-newtype VDocVersion (state :: HTMLState) = VDocVersion { _unVDocVersion :: ST }
-  deriving (Eq, Ord, Show, Read, Generic)
+newtype VDocVersion (state :: HTMLState) = VDocVersion { _unVDocVersion :: Forest Token }
+  deriving (Eq, Ord, Show, Generic)
+
+vdocVersionFromST :: ST -> VDocVersion b
+vdocVersionFromST = VDocVersion . (\(Right v) -> v) . tokensToForest . parseTokens
+
+vdocVersionToST :: VDocVersion b -> ST
+vdocVersionToST = cs . renderTokens . tokensFromForest . _unVDocVersion
+
 
 data VDocRepo = VDocRepo
   { _vdocRepoID    :: ID VDocRepo
@@ -84,7 +93,7 @@ data CreateEdit = CreateEdit
   , _createEditRange :: CreateChunkRange
   , _createEditVDoc  :: VDocVersion 'HTMLRaw
   }
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 data ConflictResolution = ConflictResolution
   deriving (Eq, Ord, Show, Read, Generic)
@@ -140,6 +149,6 @@ data CompositeVDoc = CompositeVDoc
   -- , _compositeVDocQuestions   :: [Question]  -- will be due in #99
   , _compositeVDocDiscussions :: Map (ID Discussion) CompositeDiscussion
   }
-  deriving (Eq, Show, Read, Generic)
+  deriving (Eq, Show, Generic)
 
 makeRefineType ''CompositeVDoc

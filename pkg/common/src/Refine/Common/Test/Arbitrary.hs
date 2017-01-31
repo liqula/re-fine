@@ -13,7 +13,6 @@ import           Data.Functor.Infix ((<$$>))
 import           Data.List ((\\))
 import           Data.Maybe (catMaybes)
 import           Data.Monoid
-import           Data.String.Conversions (cs)
 import           Data.Tree
 import qualified Data.Text as T
 import qualified Data.Text.Lazy as TL
@@ -114,14 +113,14 @@ instance Arbitrary (VDocVersion 'HTMLCanonical) where
 arbitraryCanonicalNonEmptyVDocVersion :: Gen (VDocVersion 'HTMLCanonical)
 arbitraryCanonicalNonEmptyVDocVersion = do
   VDocVersion v <- arbitraryCanonicalVDocVersion
-  let v' = if (sum . fmap tokenTextLength . parseTokens $ v) == 0
-        then "<span>whee</span>" <> v
+  let v' = if (sum . fmap tokenTextLength . tokensFromForest $ v) == 0
+        then Node (TagOpen "span" []) [Node (ContentText "whee") []] : v
         else v
-  pure . (\(Right v'') -> v'') . canonicalizeVDocVersion $ VDocVersion v'
+  pure . canonicalizeVDocVersion . VDocVersion $ v'
 
 -- | TODO: this doesn't do anything useful, sadly.
 shrinkCanonicalNonEmptyVDocVersionVersWithRanges :: VDocVersion 'HTMLCanonical -> [VDocVersion 'HTMLCanonical]
-shrinkCanonicalNonEmptyVDocVersionVersWithRanges v = do
+shrinkCanonicalNonEmptyVDocVersionVersWithRanges (VDocVersion forest) = do
   let shrinkAttrs attrs = [[ attr | attr@(Attr k _) <- attrs, k == "data-uid" ]]  -- drop everything but data-uid.
 
       shrinkToken (TagOpen n attrs) = TagOpen n <$> shrinkAttrs attrs
@@ -131,24 +130,13 @@ shrinkCanonicalNonEmptyVDocVersionVersWithRanges v = do
       shrinkTree (Node t xs :: Tree Token) = Node <$> shrinkToken t <*> shrinkForest xs
       shrinkForest = shrinkList shrinkTree
 
-      pack = VDocVersion . cs . renderTokens . tokensFromForest
-      unpack = (\(Right x) -> x) . tokensToForest . parseTokens . _unVDocVersion
+  VDocVersion <$> filter ((/= 0) . forestTextLength) (shrinkForest forest)
 
-  pack <$> filter ((/= 0) . forestTextLength) (shrinkForest (unpack v))
+arbitraryRawVDocVersion :: Gen (VDocVersion 'HTMLRaw)
+arbitraryRawVDocVersion = VDocVersion <$> arbitraryTokenForest
 
 arbitraryCanonicalVDocVersion :: Gen (VDocVersion 'HTMLCanonical)
-arbitraryCanonicalVDocVersion =
-  (\(Right v) -> v) .
-  canonicalizeVDocVersion .
-  VDocVersion . cs . renderTokens . tokensFromForest <$> arbitraryTokenForest
-
-arbitraryCanonicalTokenForest :: Gen (Forest Token)
-arbitraryCanonicalTokenForest =
-  (\(Right v) -> v) . tokensToForest <$> arbitraryCanonicalTokenStream
-
-arbitraryCanonicalTokenStream :: Gen [Token]
-arbitraryCanonicalTokenStream =
-  parseTokens . _unVDocVersion <$> arbitraryCanonicalVDocVersion
+arbitraryCanonicalVDocVersion = canonicalizeVDocVersion <$> arbitraryRawVDocVersion
 
 arbitraryTokenForest :: Gen (Forest Token)
 arbitraryTokenForest = listOf arbitraryTokenTree
@@ -169,11 +157,8 @@ validClosingOpen = TagOpen <$> validClosingXmlTagName <*> arbitrary
 -- | TODO: this sometimes generates data-uid values that is not the direct parent of the text node
 -- referenced by the offset.  this triggers 'VDocHTMLErrorSplitPointsToSubtree' in 'splitAtOffset'.
 arbitraryValidChunkPoint :: VDocVersion h -> Maybe ChunkPoint -> Gen (Maybe ChunkPoint)
-arbitraryValidChunkPoint vers mLeftBound = do
-  let forest :: Forest Token
-      Right forest = tokensToForest . parseTokens . _unVDocVersion $ vers
-
-      tokens :: [Token]
+arbitraryValidChunkPoint (VDocVersion forest) mLeftBound = do
+  let tokens :: [Token]
       tokens = mconcat (flatten <$> forest)
 
       validTokens :: [Token]

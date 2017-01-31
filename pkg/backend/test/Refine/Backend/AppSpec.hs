@@ -52,6 +52,7 @@ import Refine.Backend.Natural
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc
+import Refine.Common.Test.Arbitrary (arbitraryRawVDocVersion)
 
 
 data Cmd where
@@ -169,17 +170,12 @@ runCmd (GetVDoc v cv) = do
 word :: (ConvertibleStrings String s) => Gen s
 word = cs <$> listOf (elements ['a' .. 'z'])
 
--- TODO: the pattern here is 'arbitrary<type> :: Gen <type>' should be defined in
--- tests/Arbitrary.hs.  also, we need to make a package refine-test
-arbitraryVersion :: Gen (VDocVersion 'HTMLRaw)
-arbitraryVersion = pure $ VDocVersion ""
-
 arbitraryCreateVDoc :: Gen (Create VDoc)
 arbitraryCreateVDoc =
   CreateVDoc
     <$> (Title <$> word)
     <*> (Abstract . mconcat <$> listOf word)
-    <*> arbitraryVersion
+    <*> arbitraryRawVDocVersion
 
 sampleProgram :: Gen [Cmd]
 sampleProgram = do

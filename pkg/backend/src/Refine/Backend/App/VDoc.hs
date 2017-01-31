@@ -53,8 +53,7 @@ createVDocGetComposite = (getCompositeVDoc . view vdocID) <=< createVDoc
 createVDoc :: Create VDoc -> App DB VDoc
 createVDoc pv = do
   appLog "createVDoc"
-  vd <- pv ^. createVDocInitVersion
-            . to (monadError AppVDocError . canonicalizeVDocVersion)
+  let vd = pv ^. createVDocInitVersion . to canonicalizeVDocVersion
   (dr, dp) <- docRepo $ do
     dr <- DocRepo.createRepo
     dp <- DocRepo.createInitialEdit dr vd
@@ -118,7 +117,7 @@ addEdit basepid edit = do
     rid                    <- DB.editVDocRepo basepid
     (rhandle, basephandle) <- DB.handlesForEdit basepid
     pure $ do
-      version      <- edit ^. createEditVDoc . to (monadError AppVDocError . canonicalizeVDocVersion)
+      let version   = edit ^. createEditVDoc . to canonicalizeVDocVersion
       childphandle <- docRepo $ DocRepo.createEdit rhandle basephandle version
       db $ do
         childEdit <- DB.createEdit rid childphandle

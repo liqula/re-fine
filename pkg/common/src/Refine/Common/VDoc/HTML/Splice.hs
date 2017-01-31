@@ -45,8 +45,8 @@ import           Data.String.Conversions (ST, (<>), cs)
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
 import           Data.Typeable (Typeable, typeOf)
-import           Text.HTML.Parser (Token(..), parseTokens, canonicalizeTokens, renderTokens)
-import           Text.HTML.Tree (tokensToForest)
+import           Text.HTML.Parser (Token(..), canonicalizeTokens)
+import           Text.HTML.Tree (tokensFromForest, tokensToForest)
 import           Web.HttpApiData (toUrlPiece)
 
 import Refine.Common.Types
@@ -59,15 +59,17 @@ import Refine.Prelude
 
 -- | Render 'VDocVersion' as needed in the browser.  More specifically: Insert @mark@ html elements
 -- for all chunks of all edits, comments, notes, etc.
+--
+-- TODO: do we still want '\n' between tokens for darcs?
 insertMarks :: (Typeable a, MonadError VDocHTMLError m)
             => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> m (VDocVersion 'HTMLWithMarks)
-insertMarks crs vers = do
-  let ts = parseTokens $ _unVDocVersion vers
-  invariants ts
-  ts' <- insertMarksTs crs ts
-  VDocVersion vers' <- canonicalizeVDocVersion . VDocVersion . cs . renderTokens $ ts'
-  pure $ VDocVersion vers'
-    -- TODO: do we still want '\n' between tokens for darcs?
+insertMarks crs vers@(VDocVersion forest) = do
+    invariants (tokensFromForest forest)
+    withPreTokens <- insertMarksForest crs $ enablePreTokens forest
+    afterRunPreTokens <- monadError VDocHTMLErrorInternal . resolvePreTokens . preTokensFromForest $ withPreTokens
+    forest' <- monadError (VDocHTMLErrorInternal . show) $ tokensToForest afterRunPreTokens
+    let VDocVersion forest'' = canonicalizeVDocVersion $ VDocVersion forest'
+    pure $ VDocVersion forest''
   where
     -- FIXME: these invariants should all be caught earlier than here.  remove the checks once we've
     -- established they are.
@@ -91,17 +93,16 @@ insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
 
 -- * sanity check
 
-createChunkRangeErrors :: CreateChunkRange -> VDocVersion b -> [ChunkRangeError]
-createChunkRangeErrors crs (VDocVersion (parseTokens -> (ts :: [Token]))) = createChunkRangeErrorsTs crs ts
-
 -- | Returns 'True' iff (a) both chunk points are either Nothing or hit into an existing point in
 -- the tree (i.e. have existing @data-uid@ attributes and offsets no larger than the text length);
 -- (b) the begin chunk point is left of the end, and the text between them is non-empty.
-createChunkRangeErrorsTs :: CreateChunkRange -> [Token] -> [ChunkRangeError]
-createChunkRangeErrorsTs (CreateChunkRange mp1 mp2) ts = rangeNonEmpty <> pointsHit
+createChunkRangeErrors :: CreateChunkRange -> VDocVersion b -> [ChunkRangeError]
+createChunkRangeErrors (CreateChunkRange mp1 mp2) vers@(VDocVersion forest) = rangeNonEmpty <> pointsHit
   where
+    ts = tokensFromForest forest
+
     pointsHit :: [ChunkRangeError]
-    pointsHit = mconcat $ (`chunkPointErrorsTs` ts) <$> catMaybes [mp1, mp2]
+    pointsHit = mconcat $ (`chunkPointErrors` vers) <$> catMaybes [mp1, mp2]
 
     rangeNonEmpty :: [ChunkRangeError]
     rangeNonEmpty = case (mp1, mp2) of
@@ -133,29 +134,20 @@ createChunkRangeErrorsTs (CreateChunkRange mp1 mp2) ts = rangeNonEmpty <> points
                  else [ChunkRangeEmpty ts mp1 mp2]
                Nothing -> [ChunkRangeBadEndNode ts mp1 mp2]
 
-chunkPointErrorsTs :: ChunkPoint -> [Token] -> [ChunkRangeError]
-chunkPointErrorsTs cp@(ChunkPoint uid off) ts = case tokensToForest ts of
-  Right forest ->
-    let sub = forest ^. atNode (\p -> dataUidOfToken p == Just uid)
-    in if forestTextLength sub >= off
+chunkPointErrors :: ChunkPoint -> VDocVersion b -> [ChunkRangeError]
+chunkPointErrors cp@(ChunkPoint uid off) (VDocVersion forest) =
+    if forestTextLength sub >= off
       then []
-      else [ChunkRangeOffsetTooLarge ts cp]
-  Left _ -> [ChunkRangeNotATree ts]
+      else [ChunkRangeOffsetTooLarge sub cp]
+  where
+    sub = forest ^. atNode (\p -> dataUidOfToken p == Just uid)
 
 
 -- * inserting marks
 
-insertMarksTs :: (Typeable a, MonadError VDocHTMLError m)
-              => [ChunkRange a] -> [Token] -> m [Token]
-insertMarksTs crs ts = do
-  pf <- monadError VDocHTMLErrorBadTree (tokensToForest ts)
-  pfm <- insertMarksF crs (enablePreTokens pf)
-  monadError VDocHTMLErrorInternal (resolvePreTokens $ preTokensFromForest pfm)
-
-
-insertMarksF :: forall m a . Typeable a => MonadError VDocHTMLError m
+insertMarksForest :: forall m a . Typeable a => MonadError VDocHTMLError m
              => [ChunkRange a] -> Forest PreToken -> m (Forest PreToken)
-insertMarksF crs = (`woodZip` splitup crs)
+insertMarksForest crs = (`woodZip` splitup crs)
   where
     -- turn chunk ranges into chunk points.
     splitup :: [ChunkRange a] -> [(Maybe ChunkPoint, PreToken)]
