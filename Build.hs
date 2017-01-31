@@ -51,10 +51,11 @@ hlintPackage package = do
 
 main :: IO ()
 main = shakeArgs refineOptions $ do
-  want
-    [ "test"
-    , "hlint"
-    ]
+  want ["test-all"]
+
+  phony "test-all" $ do
+    need ["setup"]
+    need ["test", "hlint"]
 
   phony "setup" $ do
     let resolver = "nightly-2017-01-10"  -- (we need at least hlint v1.9.39, which is not in lts-7.15.)

@@ -1,6 +1,8 @@
 build:
   script:
-    - ./build.sh  # try `./build.sh setup && ./build.sh clean && ./build.sh` if anything weird is going on.
+    - ./build
+      # (try `./build setup && ./build clean && ./build` here
+      # if you suspect interference from earlier ci runs.)
 
 deploy_staging:
   stage: deploy

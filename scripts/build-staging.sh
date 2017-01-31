@@ -3,17 +3,18 @@
 set -e
 cd `dirname $0`/..
 
-./build.sh setup
+export ROOT=`pwd`
+
+./build setup
 
 # build backend.
-./build.sh clean
-./build.sh build-backend
+./build build-backend
 
 # build frontend for production
-./build.sh build-frontend
+./build build-frontend
+cd $ROOT/pkg/frontend
 npm run build
 
 # start server
-cd pkg/backend
+cd $ROOT/pkg/backend
 stack exec -- refine server.conf
-

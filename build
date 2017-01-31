@@ -42,12 +42,4 @@ stack install --resolver $RESOLVER shake
 mkdir -p .shake
 stack exec --resolver $RESOLVER -- ghc -j --make Build.hs -threaded -rtsopts -with-rtsopts="-N" -outputdir=.shake -o .shake/build
 
-case "$@" in
-    "")
-        .shake/build +RTS -N -RTS setup
-        .shake/build +RTS -N -RTS
-        ;;
-    *)
-        .shake/build +RTS -N -RTS "$@"
-        ;;
-esac
+.shake/build +RTS -N -RTS "$@"
