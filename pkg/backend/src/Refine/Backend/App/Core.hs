@@ -34,7 +34,7 @@ import Refine.Backend.Database
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.User.Core
-import Refine.Common.VDoc.HTML (VDocHTMLError(..))
+import Refine.Common.VDoc.HTML (ChunkRangeError(..))
 import Refine.Prelude (monadError)
 import Refine.Prelude.TH (makeRefineType)
 
@@ -80,7 +80,7 @@ newtype App db a = App { unApp :: StateT AppUserState (ReaderT (AppContext db) (
 
 data AppError
   = AppUnknownError ST
-  | AppVDocError VDocHTMLError
+  | AppVDocError [ChunkRangeError]
   | AppDBError DBError
   | AppDocRepoError DocRepoError
   | AppUserNotFound ST

@@ -25,10 +25,11 @@
 
 module Refine.Common.VDoc.HTML.Core
   ( -- * errors
-    VDocHTMLError(..), ChunkRangeError(..)
+    ChunkRangeError(..)
 
     -- * pretokens
-  , PreToken(..), runPreToken, dropPreTokens
+  , PreToken(..), DataChunkID, OwnerKind, runPreToken, dropPreTokens
+  , PreToken', PreToken''(..), unPreToken''
 
     -- * misc
   , atNode, atToken, atPreToken
@@ -50,7 +51,7 @@ import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
 import           GHC.Generics (Generic)
 import           Text.HTML.Parser (Token(..), Attr(..))
-import           Text.HTML.Tree (ParseTokenForestError, tokensFromForest)
+import           Text.HTML.Tree (tokensFromForest)
 import           Text.Read (readMaybe)
 
 import Refine.Common.Types
@@ -59,20 +60,11 @@ import Refine.Prelude.TH (makeRefineType)
 
 -- * errors
 
-data VDocHTMLError =
-    VDocHTMLErrorBadTree ParseTokenForestError
-  | VDocHTMLErrorChunkRangeErrors [ChunkRangeError]
-  | VDocHTMLErrorBadChunkPoint (Forest PreToken) ChunkPoint  -- (should be an impossible error.)
-  | VDocHTMLErrorNotEnoughCharsToSplit Int (Forest PreToken)
-  | VDocHTMLErrorSplitPointsToSubtree Int (Forest PreToken)
-  | VDocHTMLErrorInternal String
-  deriving (Eq, Show, Generic)
-
 data ChunkRangeError =
-    ChunkRangeEmpty [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
-  | ChunkRangeBadEndNode [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
-  | ChunkRangeOffsetTooLarge (Forest Token) ChunkPoint
-  | ChunkRangeNotATree [Token]
+    ChunkRangeBadDataUID ChunkPoint (Forest Token)
+  | ChunkRangeOffsetTooLarge ChunkPoint (Forest Token)
+  | ChunkRangeNodeMustBeDirectParent ChunkPoint (Forest Token)
+  | ChunkRangeEmpty (Maybe ChunkPoint) (Maybe ChunkPoint) (Forest Token)
   deriving (Eq, Show, Generic)
 
 
@@ -87,6 +79,17 @@ data PreToken = PreToken Token | PreMarkOpen DataChunkID OwnerKind | PreMarkClos
 
 type DataChunkID = ST  -- FIXME: @newtype DataChunkID (forall a . Eq a => ID a)@
 type OwnerKind = ST    -- FIXME: @type OwnerKind = TypeRep  -- e.g. @ID Edit@@
+
+-- | Needed to make some of the helper functions total.
+type PreToken' = (DataChunkID, OwnerKind)
+
+-- | Needed to make some of the helper functions total.
+data PreToken'' = PreMarkOpen'' DataChunkID OwnerKind | PreMarkClose'' DataChunkID
+
+unPreToken'' :: PreToken'' -> PreToken
+unPreToken'' (PreMarkOpen'' n o) = PreMarkOpen n o
+unPreToken'' (PreMarkClose'' n)  = PreMarkClose n
+
 
 runPreToken :: PreToken -> Token
 runPreToken (PreToken t)      = t
@@ -169,6 +172,5 @@ preForestTextLength = sum . fmap preTokenTextLength . preTokensFromForest
 
 -- * lots of instances
 
-makeRefineType ''VDocHTMLError
 makeRefineType ''ChunkRangeError
 makeRefineType ''PreToken

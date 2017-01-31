@@ -24,7 +24,7 @@
 module Refine.Backend.App.VDoc where
 
 import           Control.Arrow ((&&&))
-import           Control.Lens ((^.), (^?), to, view, has)
+import           Control.Lens ((&), (^.), (^?), to, view, has)
 import           Control.Monad.Except (throwError)
 import           Control.Monad ((<=<), join, mapM)
 import qualified Data.Map as Map
@@ -39,7 +39,6 @@ import           Refine.Common.Types.Comment
 import           Refine.Common.Types.Prelude
 import           Refine.Common.Types.VDoc
 import           Refine.Common.VDoc.HTML
-import           Refine.Prelude (monadError)
 
 
 listVDocs :: App DB [VDoc]
@@ -93,13 +92,13 @@ getCompositeVDoc vid = do
     pure $ do
       hedits <- docRepo $ DocRepo.getChildEdits rhandle hhandle
       edits  <- db $ mapM DB.getEditFromHandle hedits
-      let insertAllMarks :: VDocVersion 'HTMLCanonical -> Either VDocHTMLError (VDocVersion 'HTMLWithMarks)
-          insertAllMarks vers = insertMarks     (view noteRange <$> commentNotes) vers
-                            >>= insertMoreMarks (view (compositeDiscussion . discussionRange) <$> commentDiscussions)
-                            >>= insertMoreMarks (view editRange <$> edits)
+      let insertAllMarks :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
+          insertAllMarks vers = vers
+                              & insertMarks     (view noteRange <$> commentNotes)
+                              & insertMoreMarks (view (compositeDiscussion . discussionRange) <$> commentDiscussions)
+                              & insertMoreMarks (view editRange <$> edits)
 
-      version <- monadError AppVDocError
-                 =<< insertAllMarks <$> docRepo (DocRepo.getVersion rhandle hhandle)
+      version <- insertAllMarks <$> docRepo (DocRepo.getVersion rhandle hhandle)
       pure $
         CompositeVDoc
           vdoc repo version
@@ -129,5 +128,5 @@ validateCreateChunkRange :: ID Edit -> CreateChunkRange -> App DB ()
 validateCreateChunkRange pid cr = do
   vers <- getVDocVersion pid
   case createChunkRangeErrors cr vers of
-    errs@(_:_) -> throwError . AppVDocError . VDocHTMLErrorChunkRangeErrors $ errs
+    errs@(_:_) -> throwError $ AppVDocError errs
     [] -> pure ()

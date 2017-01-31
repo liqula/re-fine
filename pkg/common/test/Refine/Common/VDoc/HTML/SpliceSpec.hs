@@ -22,10 +22,9 @@
 
 module Refine.Common.VDoc.HTML.SpliceSpec where
 
-import           Control.Exception (throwIO, ErrorCall(..), evaluate)
+import           Control.Exception (evaluate)
 import           Data.String.Conversions ((<>))
 import           Data.Tree
-import           Data.Either (isRight)
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
@@ -47,14 +46,14 @@ spec = parallel $ do
   describe "insertMarks" $ do
     it "does not change version if chunk list is empty." . property . forAll arbitraryCanonicalVDocVersion $ do
       \vers -> do
-        _unVDocVersion <$> insertMarks noChunkRanges vers `shouldBe` Right (_unVDocVersion vers)
+        _unVDocVersion (insertMarks noChunkRanges vers) `shouldBe` _unVDocVersion vers
 
     it "self-closing tags with closing `/`." $ do
       let vers = vdocVersionFromST "<div data-uid=\"1\"><br data-uid=\"2\"/>el</div>"
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 0))
                                                    (Just (ChunkPoint (DataUID 1) 1))
       chunkRangeErrors r vers `shouldBe` []
-      insertMarks [r] vers `shouldSatisfy` isRight
+      insertMarks [r] vers `shouldNotBe` VDocVersion []
 
     it "fails on self-closing tags without closing `/` (should be resolved by canonicalization)." $ do
       pendingWith "#16"
@@ -68,27 +67,27 @@ spec = parallel $ do
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 3))
                                                    (Just (ChunkPoint (DataUID 2) 0))
       chunkRangeErrors r vers `shouldBe` []
-      insertMarks [r] vers `shouldSatisfy` isRight
+      insertMarks [r] vers `shouldNotBe` VDocVersion []
 
     it "regression (2)." $ do
       let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\">.</div>"
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 3))
                                                    (Just (ChunkPoint (DataUID 2) 0))
       chunkRangeErrors r vers `shouldBe` []
-      insertMarks [r] vers `shouldSatisfy` isRight
+      insertMarks [r] vers `shouldNotBe` VDocVersion []
 
     it "regression (3)." $ do
       let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span>"
           r :: ChunkRange Edit = ChunkRange (ID 3) (Just (ChunkPoint (DataUID 1) 2)) Nothing
       chunkRangeErrors r vers `shouldBe` []
-      insertMarks [r] vers `shouldSatisfy` isRight
+      insertMarks [r] vers `shouldNotBe` VDocVersion []
 
     it "regression (4)." $ do
       let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span>"
           rs :: [ChunkRange Edit] = [ ChunkRange (ID 3) (Just (ChunkPoint (DataUID 1) 2)) Nothing
                                     , ChunkRange (ID 4) (Just (ChunkPoint (DataUID 1) 0)) Nothing
                                     ]
-      insertMarks rs vers `shouldSatisfy` isRight
+      insertMarks rs vers `shouldNotBe` VDocVersion []
 
     it "regression (5)." $ do
       let vers = vdocVersionFromST $
@@ -100,7 +99,7 @@ spec = parallel $ do
                , ChunkRange (ID 2) Nothing                           (Just (ChunkPoint (DataUID 5) 0))
                ]
 
-      insertMarks rs vers `shouldSatisfy` isRight
+      insertMarks rs vers `shouldNotBe` VDocVersion []
 
     it "regression (6)." $ do
       let vers = vdocVersionFromST $
@@ -116,13 +115,14 @@ spec = parallel $ do
           nonleaf :: ChunkRange Edit
           nonleaf = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 5) 1)) (Just (ChunkPoint (DataUID 5) 2))
 
-      chunkRangeErrors empty   vers `shouldNotSatisfy` null
-      chunkRangeErrors nonleaf vers `shouldNotSatisfy` null
+      pendingWith "TODO"
+      chunkRangeErrors empty   vers `shouldNotBe` []
+      chunkRangeErrors nonleaf vers `shouldNotBe` []
 
     it "generates valid output on arbitrary valid chunkranges." . property $ do
       \(VersWithRanges vers rs) -> do
         pendingWith "test data generation is broken."
-        insertMarks rs vers `shouldSatisfy` isRight
+        insertMarks rs vers `shouldNotBe` VDocVersion []
 
     it "marks are inserted under the correct parent node." $ do
       pending
@@ -137,19 +137,10 @@ spec = parallel $ do
       chunkRangeErrors (cr (ID 3 :: ID Note)) vers `shouldBe` []
 
       -- NOTE: if you change these, you will probably break css in the frontend.
-      insertMarks [cr (ID 3 :: ID Note)]       vers `shouldBe` Right (vers' "note")
-      insertMarks [cr (ID 3 :: ID Question)]   vers `shouldBe` Right (vers' "question")
-      insertMarks [cr (ID 3 :: ID Discussion)] vers `shouldBe` Right (vers' "discussion")
-      insertMarks [cr (ID 3 :: ID Edit)]       vers `shouldBe` Right (vers' "edit")
-
-    it "crashes (assertion failed) if input is not canonicalized" $ do
-      let eval :: Show e => Either e a -> IO a
-          eval = either (throwIO . ErrorCall . show) pure
-
-          bad :: Either VDocHTMLError (VDocVersion 'HTMLWithMarks)
-          bad = insertMarks noChunkRanges $ vdocVersionFromST "<wef>q"  -- (data-uid attr. missing in tag)
-
-      eval bad `shouldThrow` anyException
+      insertMarks [cr (ID 3 :: ID Note)]       vers `shouldBe` vers' "note"
+      insertMarks [cr (ID 3 :: ID Question)]   vers `shouldBe` vers' "question"
+      insertMarks [cr (ID 3 :: ID Discussion)] vers `shouldBe` vers' "discussion"
+      insertMarks [cr (ID 3 :: ID Edit)]       vers `shouldBe` vers' "edit"
 
 
   describe "chunkCanBeApplied" $ do
@@ -188,18 +179,18 @@ spec = parallel $ do
     context "with consistent PreMarks" $ do
       it "removes empty selections" $ do
         resolvePreTokens [PreMarkOpen "2" "whoof", PreMarkClose "2"]
-          `shouldBe` Right []
+          `shouldBe` []
 
       it "drops selections that have only tags in them, but no text" $ do
         resolvePreTokens [PreMarkOpen "2" "whoof", PreMarkOpen "8" "whoof", PreMarkClose "8", PreMarkClose "2"]
-          `shouldBe` Right []
+          `shouldBe` []
 
       it "renders marks as tags" $ do
         resolvePreTokens [PreMarkOpen "2" "whoof", PreToken $ ContentText "wef", PreMarkClose "2"]
-          `shouldBe` Right [ TagOpen "mark" [Attr "data-chunk-id" "2", Attr "data-chunk-kind" "whoof"]
-                           , ContentText "wef"
-                           , TagClose "mark"
-                           ]
+          `shouldBe` [ TagOpen "mark" [Attr "data-chunk-id" "2", Attr "data-chunk-kind" "whoof"]
+                     , ContentText "wef"
+                     , TagClose "mark"
+                     ]
         resolvePreTokens [ PreMarkOpen "2" "whoof"
                          , PreToken $ ContentText "wef"
                          , PreMarkOpen "8" "whoof"
@@ -207,8 +198,7 @@ spec = parallel $ do
                          , PreMarkClose "8"
                          , PreMarkClose "2"
                          ]
-          `shouldBe`
-               Right [ TagOpen "mark" [Attr "data-chunk-id" "2",Attr "data-chunk-kind" "whoof"]
+          `shouldBe` [ TagOpen "mark" [Attr "data-chunk-id" "2",Attr "data-chunk-kind" "whoof"]
                      , ContentText "wef"
                      , TagClose "mark"
                      , TagOpen "mark" [Attr "data-chunk-id" "8",Attr "data-chunk-kind" "whoof"]
@@ -220,15 +210,11 @@ spec = parallel $ do
 
     context "with *in*consistent PreMarks" $ do
       it "fails" $ do
+        pendingWith "#16"
+
         let bad1 = [ PreMarkOpen "2" "whoof"
                    ]
             bad2 = [ PreMarkClose "8"
                    ]
-        resolvePreTokens bad1
-          `shouldBe` Left "resolvePreTokens: open without close: \
-            \([PreMarkOpen \"2\" \"whoof\"]\
-            \,ResolvePreTokensStack {_rptsOpen = fromList [(\"2\",\"whoof\")], _rptsWritten = [], _rptsReading = []})"
-        resolvePreTokens bad2
-          `shouldBe` Left "resolvePreTokens: close without open: \
-            \([PreMarkClose \"8\"]\
-            \,ResolvePreTokensStack {_rptsOpen = fromList [], _rptsWritten = [], _rptsReading = [PreMarkClose \"8\"]})"
+        evaluate (resolvePreTokens bad1) `shouldThrow` anyException
+        evaluate (resolvePreTokens bad2) `shouldThrow` anyException

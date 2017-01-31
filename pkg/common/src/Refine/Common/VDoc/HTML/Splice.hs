@@ -32,10 +32,8 @@ module Refine.Common.VDoc.HTML.Splice
 
 import           Control.Exception (assert)
 import           Control.Lens ((&), (^.), (%~))
-import           Control.Monad.Error.Class (MonadError, throwError)
-import           Control.Monad (unless, foldM)
 import           Data.Functor.Infix ((<$$>))
-import           Data.List (find)
+import           Data.List (find, foldl')
 import           Data.Maybe (catMaybes)
 import           Data.Set (Set)
 import qualified Data.Set as Set
@@ -43,6 +41,7 @@ import           Data.String.Conversions (ST, (<>), cs)
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
 import           Data.Typeable (Typeable, typeOf)
+import           Data.Void (Void, absurd)
 import           Text.HTML.Parser (Token(..), canonicalizeTokens)
 import           Text.HTML.Tree (tokensFromForest, tokensToForest)
 import           Web.HttpApiData (toUrlPiece)
@@ -59,33 +58,33 @@ import Refine.Prelude
 -- for all chunks of all edits, comments, notes, etc.
 --
 -- TODO: do we still want '\n' between tokens for darcs?
-insertMarks :: (Typeable a, MonadError VDocHTMLError m)
-            => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> m (VDocVersion 'HTMLWithMarks)
-insertMarks crs vers@(VDocVersion forest) = do
-    invariants (tokensFromForest forest)
-    withPreTokens <- insertMarksForest crs $ enablePreTokens forest
-    afterRunPreTokens <- monadError VDocHTMLErrorInternal . resolvePreTokens . preTokensFromForest $ withPreTokens
-    forest' <- monadError (VDocHTMLErrorInternal . show) $ tokensToForest afterRunPreTokens
-    let VDocVersion forest'' = canonicalizeVDocVersion $ VDocVersion forest'
-    pure $ VDocVersion forest''
+insertMarks :: Typeable a => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
+insertMarks crs vers@(VDocVersion forest) = invariants (tokensFromForest forest) `seq`
+                                            VDocVersion forest''
   where
+    withPreTokens        = insertMarksForest crs $ enablePreTokens forest
+    afterRunPreTokens    = resolvePreTokens . preTokensFromForest $ withPreTokens
+    forest'              = either (error . show) id $ tokensToForest afterRunPreTokens
+    VDocVersion forest'' = canonicalizeVDocVersion $ VDocVersion forest'
+
     -- FIXME: these invariants should all be caught earlier than here.  remove the checks once we've
     -- established they are.
-    invariants ts = canonicalized ts >> validchunks
+    invariants ts = canonicalized ts `seq` validchunks
 
-    canonicalized ts = unless (ts == canonicalizeTokens ts) . throwError . VDocHTMLErrorInternal $
-        "insertMarks: non-canonical input: " <> show ts
+    canonicalized ts = if ts /= canonicalizeTokens ts
+      then error $ "insertMarks: non-canonical input: " <> show ts
+      else ()
 
-    validchunks = unless (null errs) . throwError . VDocHTMLErrorInternal $
-        "insertMarks: invalid chunk ranges: " <> show errs
+    validchunks = if not $ null errs
+      then error $ "insertMarks: invalid chunk ranges: " <> show errs
+      else ()
       where
         errs = mconcat $ (`chunkRangeErrors` vers) <$> crs
         chunkRangeErrors (ChunkRange _ mp1 mp2) = createChunkRangeErrors $ CreateChunkRange mp1 mp2
 
 
 -- Calls 'insertMarks', but expects the input 'VDocVersion' to have passed through before.
-insertMoreMarks :: (Typeable a, MonadError VDocHTMLError m)
-                => [ChunkRange a] -> VDocVersion 'HTMLWithMarks -> m (VDocVersion 'HTMLWithMarks)
+insertMoreMarks :: Typeable a => [ChunkRange a] -> VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
 insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
 
 
@@ -129,30 +128,30 @@ createChunkRangeErrors (CreateChunkRange mp1 mp2) vers@(VDocVersion forest) = ra
            in case mts'' of
                Just ts'' -> if sum (tokenTextLength <$> ts'') - boff > 0 && (b /= e || boff <= eoff)
                  then []
-                 else [ChunkRangeEmpty ts mp1 mp2]
-               Nothing -> [ChunkRangeBadEndNode ts mp1 mp2]
+                 else [ChunkRangeEmpty mp1 mp2 forest]
+               Nothing -> error "hä?"  -- [ChunkRangeBadEndNode ts mp1 mp2]
 
 chunkPointErrors :: ChunkPoint -> VDocVersion b -> [ChunkRangeError]
 chunkPointErrors cp@(ChunkPoint uid off) (VDocVersion forest) =
     if forestTextLength sub >= off
       then []
-      else [ChunkRangeOffsetTooLarge sub cp]
+      else [ChunkRangeOffsetTooLarge cp sub]
   where
     sub = forest ^. atNode (\p -> dataUidOfToken p == Just uid)
 
 
 -- * inserting marks
 
-insertMarksForest :: forall m a . Typeable a => MonadError VDocHTMLError m
-             => [ChunkRange a] -> Forest PreToken -> m (Forest PreToken)
+insertMarksForest :: forall a . Typeable a
+                  => [ChunkRange a] -> Forest PreToken -> Forest PreToken
 insertMarksForest crs = (`woodZip` splitup crs)
   where
     -- turn chunk ranges into chunk points.
-    splitup :: [ChunkRange a] -> [(Maybe ChunkPoint, PreToken)]
+    splitup :: [ChunkRange a] -> [(Maybe ChunkPoint, PreToken'')]
     splitup = mconcat . fmap f
       where
         t = cs . show . typeOf $ (undefined :: a)
-        f (ChunkRange (toUrlPiece -> l) mb me) = [(mb, PreMarkOpen l t), (me, PreMarkClose l)]
+        f (ChunkRange (toUrlPiece -> l) mb me) = [(mb, PreMarkOpen'' l t), (me, PreMarkClose'' l)]
 
     -- FUTUREWORK: there is a faster implementation for @woodZip@: if chunks come in the correct
     -- order, we only need to traverse the forest once.  that's why it's called "zip".
@@ -161,47 +160,31 @@ insertMarksForest crs = (`woodZip` splitup crs)
     -- the 'view' has proven there is sufficient text.  with more lens-foo, i bet we could write
     -- something that looks like the 'Right' branch here, but lets 'insertPreToken' return an
     -- 'Either' that is somehow propagated through '(%~)' and out of 'woodZip'.
-    woodZip :: Forest PreToken -> [(Maybe ChunkPoint, PreToken)] -> m (Forest PreToken)
-    woodZip = foldM switch
+    woodZip :: Forest PreToken -> [(Maybe ChunkPoint, PreToken'')] -> Forest PreToken
+    woodZip = foldl' switch
 
-    switch :: Forest PreToken -> (Maybe ChunkPoint, PreToken) -> m (Forest PreToken)
-    switch f (Nothing, mark@(PreMarkOpen _ _)) = pure $ Node mark [] : f
-    switch f (Nothing, mark@(PreMarkClose _))  = pure $ f <> [Node mark []]
-    switch f (Just cp@(ChunkPoint nod off), mark)
-      = pure $ f & atPreToken nod %~ insertPreToken (show cp) off mark
-    switch f bad = error $ "insertMarksF: " <> show (f, bad)
+    switch :: Forest PreToken -> (Maybe ChunkPoint, PreToken'') -> Forest PreToken
+    switch f (Nothing, mark@(PreMarkOpen'' _ _)) = [Node (unPreToken'' mark) []] <> f
+    switch f (Nothing, mark@(PreMarkClose'' _))  =                                  f <> [Node (unPreToken'' mark) []]
+    switch f (Just (ChunkPoint nod off), mark)   = f & atPreToken nod %~ insertPreToken mark off
 
--- | In a list of text or premark tokens, add another premark token at a given offset, splitting up
--- an existing text if necessary. The output is not canonicalized (there may be empty text nodes).
-insertPreToken :: String -> Int -> PreToken -> Forest PreToken -> Forest PreToken
-insertPreToken errinfo offset mark forest = assert (isPreMark mark) $ either err id go
-  where
-    go :: MonadError VDocHTMLError m => m (Forest PreToken)
-    go = do
-      (ts, ts') <- splitAtOffset offset forest
-      pure $ ts <> [Node mark []] <> ts'
-
-    -- If 'ChunkRange' does not apply to tree (e.g. because of too large offset), this throws an
-    -- internal error.  This is impossible as long as 'insertMarks' only ever sees chunk ranges that
-    -- have been validated by 'createChunkRangeErrors'.
-    err e = error $ "internal error: insertPreToken: " <> show (e, errinfo, mark, forest)
-
-    isPreMark :: PreToken -> Bool
-    isPreMark (PreMarkOpen _ _) = True
-    isPreMark (PreMarkClose _)  = True
-    isPreMark (PreToken _)      = False
+    insertPreToken :: PreToken'' -> Int -> Forest PreToken -> Forest PreToken
+    insertPreToken mark offset forest =
+      case splitAtOffset offset forest of
+        (ts, ts') -> ts <> [Node (unPreToken'' mark) []] <> ts'
 
 
 -- | Split a token stream into one that has a given number of characters @n@ in its text nodes, and
 -- the rest.  Splits up a text node into two text nodes if necessary.
-splitAtOffset :: MonadError VDocHTMLError m => Int -> Forest PreToken -> m (Forest PreToken, Forest PreToken)
-splitAtOffset offset ts_
-    = assert (offset >= 0)
-    $ recursion consumeToken (offset, [], ts_)
+--
+-- failures in this function are internal errors.  should have been caught by
+-- 'createChunkRangeErrors' earlier.
+splitAtOffset :: Int -> Forest PreToken -> (Forest PreToken, Forest PreToken)
+splitAtOffset offset ts_ = assert (offset >= 0) . either absurd id $ recursion consumeToken (offset, [], ts_)
   where
     consumeToken :: (Int, Forest PreToken, Forest PreToken)
                  -> Recursion (Int, Forest PreToken, Forest PreToken)
-                              VDocHTMLError
+                              Void
                               (Forest PreToken, Forest PreToken)
 
     consumeToken (n, ps, t@(Node (PreToken (ContentText s)) []) : ts')
@@ -219,12 +202,12 @@ splitAtOffset offset ts_
         = let n' = n - preForestTextLength [t]
           in if n' >= 0
               then Run (n', t : ps, ts')
-              else Fail $ VDocHTMLErrorSplitPointsToSubtree offset ts_
+              else error $ "impossible ChunkRangeNodeMustBeDirectParent: " <> show (offset, ts_)
 
     consumeToken (n, ps, [])
         = if n == 0
             then Halt (reverse ps, [])
-            else Fail $ VDocHTMLErrorNotEnoughCharsToSplit offset ts_
+            else error $ "impossible ChunkRangeOffsetTooLarge " <> show (offset, ts_)
 
 
 -- * translating between pretokens and tokens
@@ -242,20 +225,19 @@ data ResolvePreTokensStack =
       }
   deriving (Eq, Show)
 
--- | This is really just PreMarkOpen, but we want the helper functions to be total, so we scrap the
--- constructor.
-type PreToken' = (ST, ST)
-
 
 -- | Traverse a 'PreToken' and wrap all 'PreMarkOpen' and 'PreMarkClose' directly around the
 -- affected text nodes.  Fails if the opening and closing premarks do not match up.
-resolvePreTokens :: forall m . MonadError String m => [PreToken] -> m [Token]
-resolvePreTokens ts_ = runPreToken <$$> go
+--
+-- failures in this function are internal errors.  should have been caught by
+-- 'createChunkRangeErrors' earlier.
+resolvePreTokens :: [PreToken] -> [Token]
+resolvePreTokens ts_ = either absurd id $ runPreToken <$$> go
   where
-    go :: m [PreToken]
+    go :: Either Void [PreToken]
     go = recursion f $ ResolvePreTokensStack mempty [] ts_
 
-    f :: ResolvePreTokensStack -> Recursion ResolvePreTokensStack String [PreToken]
+    f :: ResolvePreTokensStack -> Recursion ResolvePreTokensStack Void [PreToken]
     f (ResolvePreTokensStack opens written (t@(PreToken (ContentText _)) : ts')) =
         Run $ ResolvePreTokensStack opens (wrap opens t <> written) ts'
 
@@ -265,7 +247,7 @@ resolvePreTokens ts_ = runPreToken <$$> go
     f stack@(ResolvePreTokensStack opens written (PreMarkClose name : ts')) =
         case Set.partition ((== name) . fst) opens of
           (closing, opens') -> if Set.null closing
-            then Fail $ "resolvePreTokens: close without open: " <> show (ts_, stack)
+            then error $ "resolvePreTokens: close without open: " <> show (ts_, stack)
             else Run $ ResolvePreTokensStack opens' written ts'
 
     f (ResolvePreTokensStack opens written (t : ts')) =
@@ -274,7 +256,7 @@ resolvePreTokens ts_ = runPreToken <$$> go
     f stack@(ResolvePreTokensStack opens written []) =
         if Set.null opens
           then Halt $ reverse written
-          else Fail $ "resolvePreTokens: open without close: " <> show (ts_, stack)
+          else error $ "resolvePreTokens: open without close: " <> show (ts_, stack)
 
     wrap :: Set PreToken' -> PreToken -> [PreToken]
     wrap (Set.toList -> opens) t = reverse (mkclose <$> opens) <> [t] <> (mkopen <$> opens)

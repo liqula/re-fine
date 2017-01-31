@@ -14,9 +14,6 @@ module Refine.Prelude
     gtoJSONDef
   , gparseJSONDef
 
-    -- * void
-  , Void
-  , ClearTypeParameter(..)
     -- * time
   , Timestamp(..), unTimestamp
   , timestampToEpoch
@@ -33,6 +30,7 @@ module Refine.Prelude
   , fromNow
 
     -- * misc
+  , ClearTypeParameter(..)
   , monadError
   , justIf
   , justIfP
@@ -61,22 +59,12 @@ import           Data.Ord
 import qualified Data.Set as Set
 import           Data.Time
 import           Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
+import           Data.Void
 import qualified GHC.Generics as GHC
 
 import Refine.Prelude.Generic
 import Refine.Prelude.TH
 
-
--- * void
-
-data Void
-
--- | Clear Type Param
---
--- After clearing the type parameters we could unify information
--- from different sources.
-class ClearTypeParameter t where
-  clearTypeParameter :: t a -> t Void
 
 -- * time
 
@@ -156,6 +144,14 @@ fromNow now = iso (`diffTimestamps` now) (`addTimespan` now)
 
 
 -- * misc
+
+-- | Clear Type Param
+--
+-- After clearing the type parameters we could unify information
+-- from different sources.
+class ClearTypeParameter t where
+  clearTypeParameter :: t a -> t Void
+
 
 -- | Convert (Left e) to an MonadError and throw it.
 monadError :: (Monad m, MonadError me m) => (e -> me) -> Either e r -> m r
