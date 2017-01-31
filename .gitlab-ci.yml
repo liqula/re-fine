@@ -1,3 +1,15 @@
 build:
   script:
-    - "./test-all.sh"
+    - ./build
+      # (try `./build setup && ./build clean && ./build` here
+      # if you suspect interference from earlier ci runs.)
+
+deploy_staging:
+  stage: deploy
+  script:
+    - curl http://zb1:3001/
+  environment:
+    name: staging
+    url: https://demo8.aula.de/
+  only:
+    - master

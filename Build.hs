@@ -1,8 +1,12 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 {-# OPTIONS_GHC -Wall -Werror #-}
 
 import Control.Monad
 import Data.Monoid
 import Development.Shake
+import System.Exit
+import System.Process
 
 
 refineOptions :: ShakeOptions
@@ -27,10 +31,15 @@ pkgPrelude  = "pkg/prelude"
 
 -- * actions
 
-stackBuild :: FilePath -> Action ()
-stackBuild package = do
+stackTest :: FilePath -> Action ()
+stackTest package = do
   command_ [Cwd package] "stack" ["setup"]
   command_ [Cwd package] "stack" ["test", "--fast"]
+
+stackBuildFast :: FilePath -> Action ()
+stackBuildFast package = do
+  command_ [Cwd package] "stack" ["setup"]
+  command_ [Cwd package] "stack" ["build", "--fast"]
 
 hlintPackage :: FilePath -> Action ()
 hlintPackage package = do
@@ -46,10 +55,11 @@ hlintPackage package = do
 
 main :: IO ()
 main = shakeArgs refineOptions $ do
-  want
-    [ "build-all"
-    , "hlint-all"
-    ]
+  want ["test-all"]
+
+  phony "test-all" $ do
+    need ["setup"]
+    need ["test", "hlint"]
 
   phony "setup" $ do
     let resolver = "nightly-2017-01-10"  -- (we need at least hlint v1.9.39, which is not in lts-7.15.)
@@ -58,35 +68,49 @@ main = shakeArgs refineOptions $ do
     command_ [] "stack" ["install", "hspec-discover", "--resolver", resolver]
     command_ [] "stack" ["exec", "--", "which", "hspec-discover"]
 
+  phony "test-prelude" $ do
+    stackTest pkgPrelude
+
+  phony "test-common" $ do
+    stackTest pkgCommon
+
+  phony "test-backend" $ do
+    stackTest pkgBackend
+
+  phony "test-frontend" $ do
+    need ["build-frontend-npm"]
+    stackTest pkgFrontend
+
+  phony "test" $ do
+    -- for building everything, we only need to go to backend and frontend.  prelude and common are
+    -- compiled in both (two different compilers), and tested (as non-extra deps in stack.yaml) in
+    -- backend.
+    need ["test-backend", "test-frontend"]
+
+
   phony "build-prelude" $ do
-    stackBuild pkgPrelude
+    stackBuildFast pkgPrelude
 
   phony "build-common" $ do
-    stackBuild pkgCommon
+    stackBuildFast pkgCommon
 
   phony "build-backend" $ do
-    stackBuild pkgBackend
+    stackBuildFast pkgBackend
 
   phony "build-frontend" $ do
     need ["build-frontend-npm"]
-    stackBuild pkgFrontend
+    stackBuildFast pkgFrontend
+    command_ [Cwd pkgFrontend] "make" []
 
   phony "build-frontend-npm" $ do
     command_ [Cwd pkgFrontend] "npm" ["install"]
 
-  phony "build-all" $ do
+  phony "build" $ do
     -- for building everything, we only need to go to backend and frontend.  prelude and common are
     -- compiled in both (two different compilers), and tested (as non-extra deps in stack.yaml) in
     -- backend.
     need ["build-backend", "build-frontend"]
 
-  phony "clean" $ do
-    forM_ [pkgPrelude, pkgCommon, pkgBackend, pkgFrontend] $ \pkg -> do
-        command_ [Cwd pkg] "stack" ["clean"]
-
-  phony "dist-clean" $ do
-    forM_ [pkgPrelude, pkgCommon, pkgBackend, pkgFrontend] $ \pkg -> do
-        command_ [Cwd pkg] "rm" ["-rf", ".stack-work"]
 
   phony "hlint-prelude" $ do
     hlintPackage pkgPrelude
@@ -100,5 +124,51 @@ main = shakeArgs refineOptions $ do
   phony "hlint-frontend" $ do
     hlintPackage pkgFrontend
 
-  phony "hlint-all" $ do
+  phony "hlint" $ do
     need ["hlint-prelude", "hlint-common", "hlint-backend", "hlint-frontend"]
+
+
+  phony "clean" $ do
+    forM_ [pkgPrelude, pkgCommon, pkgBackend, pkgFrontend] $ \pkg -> do
+        command_ [Cwd pkg] "stack" ["clean"]
+
+  phony "dist-clean" $ do
+    forM_ [pkgPrelude, pkgCommon, pkgBackend, pkgFrontend] $ \pkg -> do
+        command_ [Cwd pkg] "rm" ["-rf", ".stack-work"]
+
+
+  -- run frontend in development mode
+  phony "run-dev" $ do
+    let belog = pkgBackend <//> "dev.log"
+        felog = pkgFrontend <//> "dev.log"
+        serverconf = "server.conf"
+
+    need ["build-backend", "build-frontend"]
+    need [pkgBackend <//> serverconf]
+
+    beh :: ProcessHandle <- cmd
+      [Cwd pkgBackend,  FileStdout belog, FileStderr belog] "stack" ["exec", "--", "refine", "server.conf"]
+
+    feh :: ProcessHandle <- cmd
+      [Cwd pkgFrontend, FileStdout felog, FileStderr felog] "npm" ["start"]
+
+    liftIO $ do
+      putStrLn `mapM_`
+        [ ""
+        , "development server is not running."
+        , "interrupt if you are done or if you want shake back."
+        , ""
+        , "to see what's going on, try this:"
+        , "tail -f " <> show belog
+        , "tail -f " <> show felog
+        , ""
+        ]
+      ExitSuccess <- waitForProcess beh
+      ExitSuccess <- waitForProcess feh
+      pure ()
+
+  pkgBackend <//> "server.conf" %> \out -> do
+    yes <- doesFileExist out
+    unless yes . fail $
+      "\n*** could not find backend config at " <> show out <> "." <>
+      "\n*** try `cd pkg/backend && stack exec -- refine` and copy the output to server.config."

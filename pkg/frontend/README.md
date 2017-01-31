@@ -8,10 +8,10 @@ This application is based on react-flux.
 
 1. Install Node.js >= 6.x.x
 1. cd pkg/frontend
-1. npm install
 
 ### Each time
 
+1. npm install (only needed if package.json has changed)
 1. stack build
 1. make
 

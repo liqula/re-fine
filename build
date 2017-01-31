@@ -34,10 +34,12 @@ assert_cmd npm
 # - npm comes with node, so no extra version constraint here.
 # - on debian, the name for the node executable is nodejs, don't let that confuse you!
 
-stack setup --resolver lts-7.15
-stack install --resolver lts-7.15 shake
-./build.sh setup
-if [ "$1" == "--clean" ]; then
-   ./build.sh clean
-fi
-./build.sh
+RESOLVER=lts-7.15
+
+stack setup --resolver $RESOLVER
+stack install --resolver $RESOLVER shake
+
+mkdir -p .shake
+stack exec --resolver $RESOLVER -- ghc -j --make Build.hs -threaded -rtsopts -with-rtsopts="-N" -outputdir=.shake -o .shake/build
+
+.shake/build +RTS -N -RTS "$@"
