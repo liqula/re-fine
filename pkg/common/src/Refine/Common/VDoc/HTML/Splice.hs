@@ -33,11 +33,11 @@ module Refine.Common.VDoc.HTML.Splice
 import           Control.Exception (assert)
 import           Control.Lens ((&), (^.), (%~))
 import           Data.Functor.Infix ((<$$>))
-import           Data.List (find, foldl')
+import           Data.List (foldl')
 import           Data.Maybe (catMaybes)
 import           Data.Set (Set)
 import qualified Data.Set as Set
-import           Data.String.Conversions (ST, (<>), cs)
+import           Data.String.Conversions ((<>), cs)
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
 import           Data.Typeable (Typeable, typeOf)
@@ -92,52 +92,90 @@ insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
 
 -- | Returns 'True' iff (a) both chunk points are either Nothing or hit into an existing point in
 -- the tree (i.e. have existing @data-uid@ attributes and offsets no larger than the text length);
--- (b) the begin chunk point is left of the end, and the text between them is non-empty.
-createChunkRangeErrors :: CreateChunkRange -> VDocVersion b -> [ChunkRangeError]
-createChunkRangeErrors (CreateChunkRange mp1 mp2) vers@(VDocVersion forest) = rangeNonEmpty <> pointsHit
+-- (b) the begin chunk point is left of the end; (c) the text between them is non-empty; and (d) for
+-- each chunk point, the text node targeted by the offset is a direct child of the node targeted by
+-- the corresponding @data-uid@.
+--
+-- FIXME: [performance] we are checking a number of rules individually, and some of those rules may
+-- follow from each other, or checking several rules with one sweep would be cheaper.
+createChunkRangeErrors :: CreateChunkRange -> VDocVersion 'HTMLCanonical -> [ChunkRangeError]
+createChunkRangeErrors cr@(CreateChunkRange mp1 mp2) (VDocVersion forest) =
+    badDataUID <> offsetTooLarge <> nodeMustBeDirectParent <> isEmpty
   where
-    ts = tokensFromForest forest
+    checkChunkPoint :: (ChunkPoint -> [ChunkRangeError]) -> [ChunkRangeError]
+    checkChunkPoint go = mconcat $ go <$> catMaybes [mp1, mp2]
 
-    pointsHit :: [ChunkRangeError]
-    pointsHit = mconcat $ (`chunkPointErrors` vers) <$> catMaybes [mp1, mp2]
+    badDataUID = checkChunkPoint $ \cp@(ChunkPoint uid _) ->
+      [ChunkRangeBadDataUID cp forest | null $ forest ^. atToken uid]
 
-    rangeNonEmpty :: [ChunkRangeError]
-    rangeNonEmpty = case (mp1, mp2) of
-      (Nothing, _) -> []
-      (_, Nothing) -> []
-      (Just (ChunkPoint b boff), Just (ChunkPoint e eoff))
-        -> let -- start keeping tokens from the open tag with the opening data-uid
-               ts' = dropWhile ((/= Just b) . dataUidOfToken) ts
+    offsetTooLarge = checkChunkPoint $ \cp@(ChunkPoint uid off) ->
+      [ChunkRangeOffsetTooLarge cp forest | off > forestTextLength (forest ^. atToken uid)]
 
-               -- stop keeping tokens after the closing tag at the end of the sub-tree with the closing data-uid.
-               mts'' = case find ((== Just e) . dataUidOfToken . snd) (zip [0..] ts') of
-                   Nothing -> Nothing
-                   Just (treeStartIx, TagOpen n _) ->
-                     let adhocParser :: [ST] -> [Token] -> [Token]
-                         adhocParser (n_:ns') (t@(TagClose n')   : ts_) | n' == n_ = t : adhocParser ns'       ts_
-                         adhocParser ns       (t@(TagOpen  n' _) : ts_)            = t : adhocParser (n' : ns) ts_
-                         adhocParser ns       (t                 : ts_)            = t : adhocParser ns        ts_
-                         adhocParser []       []                                   = []
-                         adhocParser ns@(_:_) [] = error $ "chunkRangeErrorTs: bad tree: " <> show ns
+    nodeMustBeDirectParent = checkChunkPoint $ \cp@(ChunkPoint uid off) ->
+      case forest ^. atToken uid of
+        [Node _ xs] ->
+          let ok :: Int -> [Tree Token] -> Bool
+              ok seen = \case
+                (Node (ContentText s) _ : ts)
+                  | seen <= off && (seen + ST.length s) >= off -> True
+                  | seen >= off                                -> False
+                  | otherwise                                  -> ok (seen + ST.length s) ts
+                (t : ts) -> ok (seen + treeTextLength t) ts
+                [] -> False
+          in [ChunkRangeNodeMustBeDirectParent cp forest | not $ off == 0 || ok 0 xs]
+        _ -> []  -- handled by @badDataUID@ above.
 
-                         chunkLength = treeStartIx + length (adhocParser [n] (drop (treeStartIx + 1) ts'))
-                     in Just $ take chunkLength ts'
+    isEmpty = [ChunkRangeEmpty mp1 mp2 forest | not $ isNonEmptyChunkRange cr forest]
 
-                   bad -> error $ "chunkRangeErrorTs: non-tag end node: " <> show bad
-
-           in case mts'' of
-               Just ts'' -> if sum (tokenTextLength <$> ts'') - boff > 0 && (b /= e || boff <= eoff)
-                 then []
-                 else [ChunkRangeEmpty mp1 mp2 forest]
-               Nothing -> error "hä?"  -- [ChunkRangeBadEndNode ts mp1 mp2]
-
-chunkPointErrors :: ChunkPoint -> VDocVersion b -> [ChunkRangeError]
-chunkPointErrors cp@(ChunkPoint uid off) (VDocVersion forest) =
-    if forestTextLength sub >= off
-      then []
-      else [ChunkRangeOffsetTooLarge cp sub]
+-- | Run through the token tree once.  Start counting characters when (1) data-uid has matched, and
+-- (2) start offset has been consumed in characters; stop counting accordingly.  Count must be > 0.
+--
+-- The state machine below only works if the two chunk points do not have the same data-uid, so we
+-- catch that case separately.  May falsely return True if there are 'ChunkRangeOffsetTooLarge'
+-- errors (which is ok, because in this error is caught in another rule in
+-- 'createChuknRangeErrors').
+isNonEmptyChunkRange :: CreateChunkRange -> Forest Token -> Bool
+isNonEmptyChunkRange (CreateChunkRange mp1 mp2) forest = onSameNode || onDifferentNodes
   where
-    sub = forest ^. atNode (\p -> dataUidOfToken p == Just uid)
+    onSameNode = case (mp1, mp2) of
+      (Just (ChunkPoint uid off), Just (ChunkPoint uid' off')) | uid == uid' -> off' > off
+      _ -> False
+
+    onDifferentNodes = findBeginUID (tokensFromForest forest) mp1
+
+    findBeginUID :: [Token] -> Maybe ChunkPoint -> Bool
+    findBeginUID ts Nothing   = findEndUID False ts mp2
+    findBeginUID ts (Just p1) = findBeginUIDJust ts p1
+
+    findBeginUIDJust :: [Token] -> ChunkPoint -> Bool
+    findBeginUIDJust []           _                       = False
+    findBeginUIDJust ts@(t : ts') p1@(ChunkPoint uid off) = if dataUidOfToken t == Just uid
+      then consumeBeginOffset ts off
+      else findBeginUIDJust ts' p1
+
+    consumeBeginOffset :: [Token] -> Int -> Bool
+    consumeBeginOffset []        _   = False
+    consumeBeginOffset (t : ts') off = assert (off >= 0) $ if n <= off
+      then consumeBeginOffset ts' (off - n)
+      else findEndUID (n > off) ts' mp2  -- (this is where we assume begin-uid /= end-uid)
+      where n = tokenTextLength t
+
+    -- keep track of whether we have seen any characters inside the range in a boolean.
+    findEndUID :: Bool -> [Token] -> Maybe ChunkPoint -> Bool
+    findEndUID False     (t : ts') Nothing   = findEndUID (tokenTextLength t > 0) ts' Nothing
+    findEndUID False     []        Nothing   = False
+    findEndUID True      _         Nothing   = True
+    findEndUID haveEaten ts        (Just p2) = findEndUIDJust haveEaten ts p2
+
+    findEndUIDJust :: Bool -> [Token] -> ChunkPoint -> Bool
+    findEndUIDJust _         []        _                       = False  -- (p2 is missing)
+    findEndUIDJust haveEaten (t : ts') p2@(ChunkPoint uid off) = if dataUidOfToken t == Just uid
+      then haveEaten || (off > 0 && consumeEndOffset (tokensFromForest $ forest ^. atToken uid))
+                           -- (must not read beyond the sub-tree under p2's data-uid!)
+      else findEndUIDJust (haveEaten || tokenTextLength t > 0) ts' p2
+
+    consumeEndOffset :: [Token] -> Bool
+    consumeEndOffset = any ((> 0) . tokenTextLength)
 
 
 -- * inserting marks
@@ -166,12 +204,7 @@ insertMarksForest crs = (`woodZip` splitup crs)
     switch :: Forest PreToken -> (Maybe ChunkPoint, PreToken'') -> Forest PreToken
     switch f (Nothing, mark@(PreMarkOpen'' _ _)) = [Node (unPreToken'' mark) []] <> f
     switch f (Nothing, mark@(PreMarkClose'' _))  =                                  f <> [Node (unPreToken'' mark) []]
-    switch f (Just (ChunkPoint nod off), mark)   = f & atPreToken nod %~ insertPreToken mark off
-
-    insertPreToken :: PreToken'' -> Int -> Forest PreToken -> Forest PreToken
-    insertPreToken mark offset forest =
-      case splitAtOffset offset forest of
-        (ts, ts') -> ts <> [Node (unPreToken'' mark) []] <> ts'
+    switch f (Just (ChunkPoint node off), mark)  = f & atPreToken node %~ splitAtOffset off [Node (unPreToken'' mark) []]
 
 
 -- | Split a token stream into one that has a given number of characters @n@ in its text nodes, and
@@ -179,9 +212,17 @@ insertMarksForest crs = (`woodZip` splitup crs)
 --
 -- failures in this function are internal errors.  should have been caught by
 -- 'createChunkRangeErrors' earlier.
-splitAtOffset :: Int -> Forest PreToken -> (Forest PreToken, Forest PreToken)
-splitAtOffset offset ts_ = assert (offset >= 0) . either absurd id $ recursion consumeToken (offset, [], ts_)
+splitAtOffset :: Int -> Forest PreToken -> Forest PreToken -> Forest PreToken
+splitAtOffset offset insertion ts_ = assert (offset >= 0)
+                                   . either absurd repack
+                                   $ recursion consumeToken (offset, [], unpack)
   where
+    unpack :: Forest PreToken
+    repack :: (Forest PreToken, Forest PreToken) -> Forest PreToken
+    (unpack, repack) = case ts_ of
+      [Node n ts'] -> (ts', \(tsleft, tsright) -> [Node n $ tsleft <> insertion <> tsright])
+      _ -> error $ "impossible splitAtOffset: " <> show (offset, ts_)
+
     consumeToken :: (Int, Forest PreToken, Forest PreToken)
                  -> Recursion (Int, Forest PreToken, Forest PreToken)
                               Void
@@ -189,25 +230,27 @@ splitAtOffset offset ts_ = assert (offset >= 0) . either absurd id $ recursion c
 
     consumeToken (n, ps, t@(Node (PreToken (ContentText s)) []) : ts')
         = let n' = n - ST.length s
-          in if n' >= 0
+          in if n' > 0
               then Run (n', t : ps, ts')
               else case ST.splitAt n s of
                 (s', s'') ->
                   let pack = (`Node` []) . PreToken . ContentText
-                  in Halt ( reverse $ pack s' : ps
+                  in Halt ( reverse $ pack s'  : ps
                           ,           pack s'' : ts'
                           )
 
     consumeToken (n, ps, t@(Node _ _) : ts')
-        = let n' = n - preForestTextLength [t]
+        = let n' = n - preTreeTextLength t
           in if n' >= 0
               then Run (n', t : ps, ts')
-              else error $ "impossible ChunkRangeNodeMustBeDirectParent: " <> show (offset, ts_)
+              else error $ "impossible ChunkRangeNodeMustBeDirectParent: "
+                        <> show (offset, insertion, ts_, n, t, ts', ps)
 
     consumeToken (n, ps, [])
         = if n == 0
             then Halt (reverse ps, [])
-            else error $ "impossible ChunkRangeOffsetTooLarge " <> show (offset, ts_)
+            else error $ "impossible ChunkRangeOffsetTooLarge " <> show (offset, n, ts_)
+                      <> show (offset, insertion, ts_, n, ps)
 
 
 -- * translating between pretokens and tokens

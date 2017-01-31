@@ -23,6 +23,7 @@
 module Refine.Common.VDoc.HTML.SpliceSpec where
 
 import           Control.Exception (evaluate)
+import           Control.Lens (has, (^.))
 import           Data.String.Conversions ((<>))
 import           Data.Tree
 import           Test.Hspec
@@ -43,89 +44,99 @@ noChunkRanges = []
 
 spec :: Spec
 spec = parallel $ do
+
+  -- * createChunkRangeErrors
+
+  describe "createChunkRangeErrors" $ do
+    it "generates valid output on arbitrary valid chunkranges." . property $ do
+      \(VersWithRanges vers rs) -> do
+        (\r -> chunkRangeErrors r vers `shouldBe` []) `mapM_` rs
+
+    let vers = vdocVersionFromST $
+          "<span data-uid=\"4\">zC9E</span>" <>
+          "<n data-uid=\"5\"><f data-uid=\"6\">zz</f>;</n>" <>
+          "<T data-uid=\"7\"></T><i data-uid=\"8\"></i>"
+
+    it "works" $ do
+      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 100) 4)) (Just (ChunkPoint (DataUID 30) 0)))
+        vers `shouldSatisfy` any (has _ChunkRangeBadDataUID)
+
+    it "works" $ do
+      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 5) 1000)) (Just (ChunkPoint (DataUID 5) 2000)))
+        vers `shouldSatisfy` any (has _ChunkRangeOffsetTooLarge)
+
+    it "works" $ do
+      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 5) 1)) (Just (ChunkPoint (DataUID 5) 2)))
+        vers `shouldSatisfy` any (has _ChunkRangeNodeMustBeDirectParent)
+
+    it "works" $ do
+      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 4)) (Just (ChunkPoint (DataUID 5) 0)))
+        vers `shouldSatisfy` any (has _ChunkRangeEmpty)
+
+    it "works" $ do
+      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 4) 2)))
+        vers `shouldSatisfy` any (has _ChunkRangeEmpty)
+
+    it "works" $ do
+      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 4) 3)))
+        vers `shouldBe` []
+
+    it "works" $ do
+      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 2)) Nothing)
+        vers `shouldBe` []
+
+    it "works" $ do
+      createChunkRangeErrors (CreateChunkRange Nothing (Just (ChunkPoint (DataUID 4) 2)))
+        vers `shouldBe` []
+
+    it "works" $ do
+      createChunkRangeErrors (CreateChunkRange Nothing (Just (ChunkPoint (DataUID 5) 0)))
+        vers `shouldBe` []
+
+
+  -- * splitAtOffset
+
+  describe "splitAtOffset" $ do
+    it "maintains tree structure if nothing is inserted." $ do
+      let VDocVersion (enablePreTokens -> forest) = vdocVersionFromST "<n><f></f>abc</n>"
+          show_   = renderTokens . tokensFromForest . fmap (fmap runPreToken)
+          nothing = []
+
+      show_ (splitAtOffset 0 nothing forest) `shouldBe` "<n><f></f>abc</n>"
+      show_ (splitAtOffset 1 nothing forest) `shouldBe` "<n><f></f>abc</n>"
+      show_ (splitAtOffset 2 nothing forest) `shouldBe` "<n><f></f>abc</n>"
+      show_ (splitAtOffset 3 nothing forest) `shouldBe` "<n><f></f>abc</n>"
+
+    it "inserts tokens at the given offset." $ do
+      let VDocVersion (enablePreTokens -> forest) = vdocVersionFromST "<n><f></f>abc</n>"
+          show_   = renderTokens . tokensFromForest . fmap (fmap runPreToken)
+          star    = [Node (PreToken (ContentText "*")) []]
+
+      show_ (splitAtOffset 0 star    forest) `shouldBe` "<n><f></f>*abc</n>"
+      show_ (splitAtOffset 1 star    forest) `shouldBe` "<n><f></f>a*bc</n>"
+      show_ (splitAtOffset 2 star    forest) `shouldBe` "<n><f></f>ab*c</n>"
+      show_ (splitAtOffset 3 star    forest) `shouldBe` "<n><f></f>abc*</n>"
+
+
+  -- * insertMarks
+
   describe "insertMarks" $ do
-    it "does not change version if chunk list is empty." . property . forAll arbitraryCanonicalVDocVersion $ do
-      \vers -> do
-        _unVDocVersion (insertMarks noChunkRanges vers) `shouldBe` _unVDocVersion vers
-
-    it "self-closing tags with closing `/`." $ do
-      let vers = vdocVersionFromST "<div data-uid=\"1\"><br data-uid=\"2\"/>el</div>"
-          r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 0))
-                                                   (Just (ChunkPoint (DataUID 1) 1))
-      chunkRangeErrors r vers `shouldBe` []
-      insertMarks [r] vers `shouldNotBe` VDocVersion []
-
-    it "fails on self-closing tags without closing `/` (should be resolved by canonicalization)." $ do
-      pendingWith "#16"
-      let vers = vdocVersionFromST "<div data-uid=\"1\"><br>el</div>"
-          r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 0))
-                                                   (Just (ChunkPoint (DataUID 1) 1))
-      (evaluate . length . show $ chunkRangeErrors r vers) `shouldThrow` anyException
-
-    it "regression (1)." $ do
-      let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\"></div>"
-          r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 3))
-                                                   (Just (ChunkPoint (DataUID 2) 0))
-      chunkRangeErrors r vers `shouldBe` []
-      insertMarks [r] vers `shouldNotBe` VDocVersion []
-
-    it "regression (2)." $ do
-      let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\">.</div>"
-          r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 3))
-                                                   (Just (ChunkPoint (DataUID 2) 0))
-      chunkRangeErrors r vers `shouldBe` []
-      insertMarks [r] vers `shouldNotBe` VDocVersion []
-
-    it "regression (3)." $ do
-      let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span>"
-          r :: ChunkRange Edit = ChunkRange (ID 3) (Just (ChunkPoint (DataUID 1) 2)) Nothing
-      chunkRangeErrors r vers `shouldBe` []
-      insertMarks [r] vers `shouldNotBe` VDocVersion []
-
-    it "regression (4)." $ do
-      let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span>"
-          rs :: [ChunkRange Edit] = [ ChunkRange (ID 3) (Just (ChunkPoint (DataUID 1) 2)) Nothing
-                                    , ChunkRange (ID 4) (Just (ChunkPoint (DataUID 1) 0)) Nothing
-                                    ]
-      insertMarks rs vers `shouldNotBe` VDocVersion []
-
-    it "regression (5)." $ do
-      let vers = vdocVersionFromST $
-            "<span data-uid=\"4\">zC9E</span>" <>
-            "<n data-uid=\"5\"><f data-uid=\"6\"></f>;</n>" <>
-            "<T data-uid=\"7\"></T><i data-uid=\"8\"></i>"
-          rs :: [ChunkRange Edit]
-          rs = [ ChunkRange (ID 0) (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 6) 0))
-               , ChunkRange (ID 2) Nothing                           (Just (ChunkPoint (DataUID 5) 0))
-               ]
-
-      insertMarks rs vers `shouldNotBe` VDocVersion []
-
-    it "regression (6)." $ do
-      let vers = vdocVersionFromST $
-            "<span data-uid=\"4\">zC9E</span>" <>
-            "<n data-uid=\"5\"><f data-uid=\"6\">zz</f>;</n>" <>
-            "<T data-uid=\"7\"></T><i data-uid=\"8\"></i>"
-
-          -- chunk ranges must be non-empty.
-          empty :: ChunkRange Edit
-          empty = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 4) 4)) (Just (ChunkPoint (DataUID 5) 0))
-
-          -- datauid must point to direct parent of text node.
-          nonleaf :: ChunkRange Edit
-          nonleaf = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 5) 1)) (Just (ChunkPoint (DataUID 5) 2))
-
-      pendingWith "TODO"
-      chunkRangeErrors empty   vers `shouldNotBe` []
-      chunkRangeErrors nonleaf vers `shouldNotBe` []
+    it "does not change version if chunk list is empty." . property $ do
+      \(vers :: VDocVersion 'HTMLCanonical) -> do
+        insertMarks noChunkRanges vers ^. unVDocVersion `shouldBe` vers ^. unVDocVersion
 
     it "generates valid output on arbitrary valid chunkranges." . property $ do
       \(VersWithRanges vers rs) -> do
-        pendingWith "test data generation is broken."
         insertMarks rs vers `shouldNotBe` VDocVersion []
 
     it "marks are inserted under the correct parent node." $ do
-      pending
+      pendingWith "not sure how to implement this test."
+
+    it "handles self-closing tags with closing `/`." $ do
+      let vers = vdocVersionFromST "<div data-uid=\"1\"><br data-uid=\"2\"/>el</div>"
+          r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 0))
+                                                   (Just (ChunkPoint (DataUID 1) 1))
+      insertMarks [r] vers `shouldNotBe` VDocVersion []
 
     it "adds owner type info in its own attribute." $ do
       let cr l = ChunkRange l (Just (ChunkPoint (DataUID 3) 1)) (Just (ChunkPoint (DataUID 3) 2))
@@ -142,28 +153,66 @@ spec = parallel $ do
       insertMarks [cr (ID 3 :: ID Discussion)] vers `shouldBe` vers' "discussion"
       insertMarks [cr (ID 3 :: ID Edit)]       vers `shouldBe` vers' "edit"
 
+    it "regression (1)." $ do
+      let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\"></div>"
+          r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 3))
+                                                   (Just (ChunkPoint (DataUID 2) 0))
+      insertMarks [r] vers `shouldNotBe` VDocVersion []
 
-  describe "chunkCanBeApplied" $ do
-    let vers :: VDocVersion 'HTMLCanonical
-        vers = vdocVersionFromST "<span data-uid=\"1\">asdfasdf</span>"
+    it "regression (2)." $ do
+      let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\">.</div>"
+          r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 3))
+                                                   (Just (ChunkPoint (DataUID 2) 0))
+      insertMarks [r] vers `shouldNotBe` VDocVersion []
 
-        cr :: ChunkPoint -> ChunkRange Edit
-        cr p = ChunkRange (ID 3) (Just p) Nothing
+    it "regression (3)." $ do
+      let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span>"
+          r :: ChunkRange Edit = ChunkRange (ID 3) (Just (ChunkPoint (DataUID 1) 2)) Nothing
+      insertMarks [r] vers `shouldNotBe` VDocVersion []
 
-        good = ChunkPoint (DataUID 1) 3
-        bad1 = ChunkPoint (DataUID 1) 189
-        bad2 = ChunkPoint (DataUID 4) 3
+    it "regression (4)." $ do
+      let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span>"
+          rs :: [ChunkRange Edit] = [ ChunkRange (ID 3) (Just (ChunkPoint (DataUID 1) 2)) Nothing
+                                    , ChunkRange (ID 4) (Just (ChunkPoint (DataUID 1) 0)) Nothing
+                                    ]
+      insertMarks rs vers `shouldNotBe` VDocVersion []
+
+    it "regression (5)." $ do
+      let vers = vdocVersionFromST $
+            "<span data-uid=\"4\">zC9E</span>" <>
+            "<n data-uid=\"5\"><f data-uid=\"6\"></f>;</n>" <>
+            "<T data-uid=\"7\"></T><i data-uid=\"8\"></i>"
+          r1, r2 :: ChunkRange Edit
+          r1 = ChunkRange (ID 0) (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 6) 0))
+          r2 = ChunkRange (ID 2) Nothing                           (Just (ChunkPoint (DataUID 5) 0))
+      insertMarks [r1, r2] vers `shouldNotBe` VDocVersion []
+
+    it "regression (6)." $ do
+      let vers = VDocVersion [Node (TagOpen "span" [Attr "data-uid" "61"]) [Node (ContentText "g") []]]
+
+          r1, r2 :: ChunkRange Edit
+          r1 = ChunkRange (ID 1) Nothing Nothing
+          r2 = ChunkRange (ID 2) Nothing Nothing
+
+      chunkRangeErrors r1 vers `shouldBe` []
+      chunkRangeErrors r2 vers `shouldBe` []
+
+      insertMarks [r1] vers `shouldNotBe` VDocVersion []
+      insertMarks [r2] vers `shouldNotBe` VDocVersion []
+      insertMarks [r1, r2] vers `shouldNotBe` VDocVersion []
+
+    it "regression (7)." $ do
+      let vers = VDocVersion [Node {rootLabel = TagOpen "phoo" [Attr "data-uid" "7"], subForest = [Node {rootLabel = ContentText "C", subForest = []},Node {rootLabel = TagSelfClose "hr" [Attr "data-uid" "8"], subForest = []},Node {rootLabel = TagOpen "phoo" [Attr "data-uid" "9"], subForest = []},Node {rootLabel = TagOpen "phoo" [Attr "data-uid" "10"], subForest = [Node {rootLabel = ContentText "wef", subForest = []}]},Node {rootLabel = TagOpen "x123" [Attr "data-uid" "11"], subForest = [Node {rootLabel = TagSelfClose "wef" [Attr "data-uid" "12"], subForest = []}]}]}]
+          -- @trace (drawForest $ cs . renderToken <$$> (vers ^. unVDocVersion))@ will show you how this looks.
+
+          rs :: [ChunkRange Edit]
+          rs = [ChunkRange (ID 3) (Just (ChunkPoint (DataUID 7) 1)) Nothing]
+
+      (\r -> chunkRangeErrors r vers `shouldBe` []) `mapM_` rs
+      insertMarks rs vers `shouldNotBe` VDocVersion []
 
 
-    it "returns True on valid chunks." $ do
-      chunkRangeErrors (cr good) vers `shouldBe` []
-
-    it "returns False on out-of-bounds offset." $ do
-      chunkRangeErrors (cr bad1) vers `shouldNotBe` []
-
-    it "returns False on invalid data-uid." $ do
-      chunkRangeErrors (cr bad2) vers `shouldNotBe` []
-
+  -- * resolvePreTokens
 
   describe "resolvePreTokens" $ do
     let runPreTokenForest :: Forest PreToken -> [Token]

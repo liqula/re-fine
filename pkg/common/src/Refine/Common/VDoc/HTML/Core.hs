@@ -26,6 +26,10 @@
 module Refine.Common.VDoc.HTML.Core
   ( -- * errors
     ChunkRangeError(..)
+  , _ChunkRangeBadDataUID
+  , _ChunkRangeOffsetTooLarge
+  , _ChunkRangeNodeMustBeDirectParent
+  , _ChunkRangeEmpty
 
     -- * pretokens
   , PreToken(..), DataChunkID, OwnerKind, runPreToken, dropPreTokens
@@ -36,8 +40,10 @@ module Refine.Common.VDoc.HTML.Core
   , dataUidOfToken, dataUidOfPreToken
 
   , tokenTextLength
+  , treeTextLength
   , forestTextLength
   , preTokenTextLength
+  , preTreeTextLength
   , preForestTextLength
 
   , preTokensFromForest
@@ -45,6 +51,7 @@ module Refine.Common.VDoc.HTML.Core
 
 import           Control.Lens (Traversal')
 import           Data.Char (toLower)
+import           Data.List (foldl')
 import           Data.Maybe (listToMaybe)
 import           Data.String.Conversions (ST, cs, (<>))
 import qualified Data.Text as ST
@@ -85,6 +92,7 @@ type PreToken' = (DataChunkID, OwnerKind)
 
 -- | Needed to make some of the helper functions total.
 data PreToken'' = PreMarkOpen'' DataChunkID OwnerKind | PreMarkClose'' DataChunkID
+  deriving (Show)
 
 unPreToken'' :: PreToken'' -> PreToken
 unPreToken'' (PreMarkOpen'' n o) = PreMarkOpen n o
@@ -123,19 +131,16 @@ unstashPreToken t           = PreToken t
 
 -- * misc
 
--- | 'Traversal' optics to find all sub-trees with a given `data-uid` html attribute.  Takes time
--- linear in size of document for find the sub-tree.
---
--- NOTE: I think if a sub-tree of a matching sub-tree matches again, that will go unnoticed.  In
--- 'atDataUID' (where always only one node must satisfy the predicate) this isn't an issue.
+-- | 'Traversal' optics to find all sub-trees with a given `data-uid` html attribute.  Sub-trees are
+-- wrapped in singleton lists.  Takes time linear in size of document for find the sub-tree.
 atNode :: (a -> Bool) -> Traversal' (Forest a) (Forest a)
 atNode prop focus = dive
   where
     dive [] = pure []
     dive (Node n chs : ts)
       = if prop n
-          then (:) <$> (Node n <$> focus chs) <*> dive ts
-          else (:) <$> (Node n <$> dive  chs) <*> dive ts
+          then (<>) <$> focus [Node n chs]    <*> dive ts
+          else (:)  <$> (Node n <$> dive chs) <*> dive ts
 
 atToken :: DataUID -> Traversal' (Forest Token) (Forest Token)
 atToken node = atNode (\p -> dataUidOfToken p == Just node)
@@ -160,14 +165,20 @@ tokenTextLength = \case
   (ContentChar _) -> 1
   _               -> 0
 
+treeTextLength :: Tree Token -> Int
+treeTextLength = foldl' (+) 0 . fmap tokenTextLength
+
 forestTextLength :: Forest Token -> Int
-forestTextLength = sum . fmap tokenTextLength . tokensFromForest
+forestTextLength = sum . fmap treeTextLength
 
 preTokenTextLength :: PreToken -> Int
 preTokenTextLength = tokenTextLength . runPreToken
 
+preTreeTextLength :: Tree PreToken -> Int
+preTreeTextLength = treeTextLength . fmap runPreToken
+
 preForestTextLength :: Forest PreToken -> Int
-preForestTextLength = sum . fmap preTokenTextLength . preTokensFromForest
+preForestTextLength = forestTextLength . fmap (fmap runPreToken)
 
 
 -- * lots of instances
