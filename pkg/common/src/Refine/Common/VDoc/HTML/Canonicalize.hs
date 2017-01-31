@@ -69,7 +69,7 @@ canonicalizeVDocVersion (VDocVersion vers) = VDocVersion (canonicalize vers)
     -- (because transformations have to be called in this order).
     onStream :: ([Token] -> [Token]) -> Forest Token -> Forest Token
     onStream go forest = case tokensToForest . go . tokensFromForest $ forest of
-      Right forest' ->  forest'
+      Right forest' -> forest'
       Left err      -> error $ "canonicalizeVDocVersion: impossible: " <> show err
 
 
