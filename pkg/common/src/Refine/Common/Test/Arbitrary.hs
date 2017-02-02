@@ -10,6 +10,7 @@ module Refine.Common.Test.Arbitrary where
 
 import           Control.Arrow ((&&&))
 import           Control.Monad.State
+import           Data.Functor.Infix ((<$$>))
 import           Data.List ((\\), partition)
 import           Data.Maybe (catMaybes)
 import           Data.Monoid
@@ -176,14 +177,14 @@ instance Arbitrary (VDocVersion 'HTMLRaw) where
 
 instance Arbitrary (VDocVersion 'HTMLCanonical) where
   arbitrary = arbitraryCanonicalNonEmptyVDocVersion
-  shrink = shrinkCanonicalNonEmptyVDocVersion
+  -- shrink = shrinkCanonicalNonEmptyVDocVersion  -- TODO: shrinking is slow and probably buggy.
 
 data VersWithRanges = VersWithRanges (VDocVersion 'HTMLCanonical) [ChunkRange Edit]
   deriving (Eq, Show)
 
 instance Arbitrary VersWithRanges where
   arbitrary = arbitraryVersWithRanges
-  shrink = shrinkVersWithRanges
+  -- shrink = shrinkVersWithRanges  -- TODO: shrinking is slow and probably buggy.
 
 data CanonicalVDocVersionPairWithDataUID =
     CanonicalVDocVersionPairWithDataUID (Forest Token, DataUID) (Forest Token)
@@ -209,7 +210,19 @@ arbitraryCanonicalNonEmptyVDocVersion = do
   let v' = if (sum . fmap tokenTextLength . tokensFromForest $ v) == 0
         then Node (TagOpen "span" []) [Node (ContentText "whee") []] : v
         else v
-  pure . canonicalizeVDocVersion . VDocVersion $ v'
+
+      -- this makes test output much more interesting, and probably not any less representative of
+      -- production data.
+      muteAttrs_ attrs = case partition isDataUID attrs of (datauid, _) -> datauid
+        where
+          isDataUID (Attr "data-uid" _) = True
+          isDataUID _                   = False
+
+      muteAttrs (TagOpen n attrs) = TagOpen n $ muteAttrs_ attrs
+      muteAttrs (TagSelfClose n attrs) = TagSelfClose n $ muteAttrs_ attrs
+      muteAttrs t = t
+
+  pure . canonicalizeVDocVersion . VDocVersion . (muteAttrs <$$>) $ v'
 
 shrinkCanonicalNonEmptyVDocVersion :: VDocVersion 'HTMLCanonical -> [VDocVersion 'HTMLCanonical]
 shrinkCanonicalNonEmptyVDocVersion (VDocVersion forest) = VDocVersion <$> shrink forest
@@ -221,7 +234,7 @@ arbitraryVersWithRanges = do
   v <- arbitraryCanonicalNonEmptyVDocVersion
   let crs = allNonEmptyCreateChunkRanges v
       rs = zipWith (\(CreateChunkRange b e) i -> ChunkRange (ID i) b e) crs [0..]
-  pure $ VersWithRanges v rs
+  VersWithRanges v <$> vectorOf 3 (elements rs)
 
 shrinkVersWithRanges :: VersWithRanges -> [VersWithRanges]
 shrinkVersWithRanges (VersWithRanges v rs) = do
