@@ -117,12 +117,16 @@ createChunkRangeErrors cr@(CreateChunkRange mp1 mp2) (VDocVersion forest) =
         [Node _ xs] ->
           let ok :: Int -> [Tree Token] -> Bool
               ok seen = \case
+                -- give up if we're past the offset or out of nodes.
+                _ | seen >= off -> False
+                [] -> False
+
+                -- check text nodes for hits.
                 (Node (ContentText s) _ : ts)
                   | seen <= off && (seen + ST.length s) >= off -> True
-                  | seen >= off                                -> False
                   | otherwise                                  -> ok (seen + ST.length s) ts
                 (t : ts) -> ok (seen + treeTextLength t) ts
-                [] -> False
+
           in [ChunkRangeNodeMustBeDirectParent cp forest | not $ off == 0 || ok 0 xs]
         _ -> []  -- handled by @badDataUID@ above.
 

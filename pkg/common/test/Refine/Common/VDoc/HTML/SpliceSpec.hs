@@ -24,6 +24,7 @@ module Refine.Common.VDoc.HTML.SpliceSpec where
 
 import           Control.Exception (evaluate)
 import           Control.Lens (has, (^.))
+import           Data.List (nub, sort)
 import           Data.String.Conversions ((<>))
 import           Data.Tree
 import           Test.Hspec
@@ -48,6 +49,20 @@ spec = parallel $ do
   -- * createChunkRangeErrors
 
   describe "createChunkRangeErrors" $ do
+
+    describe "tests for test data generation (software is fractal)." $ do
+      it "works (1)." . property $
+        \(vers :: VDocVersion 'HTMLCanonical) ->
+          let ps = allChunkPoints vers in ps `shouldBe` nub ps
+
+      it "works (2)." . property $
+        \(vers :: VDocVersion 'HTMLCanonical) ->
+          let ps = allChunkPoints vers in (snd <$> ps) `shouldBe` nub (snd <$> ps)
+
+      it "works (3)." . property $
+        \(vers :: VDocVersion 'HTMLCanonical) ->
+          let ps = allChunkPoints vers in (fst <$> ps) `shouldBe` sort (fst <$> ps)
+
     it "generates valid output on arbitrary valid chunkranges." . property $ do
       \(VersWithRanges vers rs) -> do
         (\r -> chunkRangeErrors r vers `shouldBe` []) `mapM_` rs
@@ -57,41 +72,61 @@ spec = parallel $ do
           "<n data-uid=\"5\"><f data-uid=\"6\">zz</f>;</n>" <>
           "<T data-uid=\"7\"></T><i data-uid=\"8\"></i>"
 
-    it "works" $ do
+    it "works (1)." $ do
       createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 100) 4)) (Just (ChunkPoint (DataUID 30) 0)))
         vers `shouldSatisfy` any (has _ChunkRangeBadDataUID)
 
-    it "works" $ do
+    it "works (2)." $ do
       createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 5) 1000)) (Just (ChunkPoint (DataUID 5) 2000)))
         vers `shouldSatisfy` any (has _ChunkRangeOffsetTooLarge)
 
-    it "works" $ do
+    it "works (3)." $ do
       createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 5) 1)) (Just (ChunkPoint (DataUID 5) 2)))
         vers `shouldSatisfy` any (has _ChunkRangeNodeMustBeDirectParent)
 
-    it "works" $ do
+    it "works (4)." $ do
       createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 4)) (Just (ChunkPoint (DataUID 5) 0)))
         vers `shouldSatisfy` any (has _ChunkRangeEmpty)
 
-    it "works" $ do
+    it "works (5)." $ do
       createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 4) 2)))
         vers `shouldSatisfy` any (has _ChunkRangeEmpty)
 
-    it "works" $ do
+    it "works (6)." $ do
       createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 4) 3)))
         vers `shouldBe` []
 
-    it "works" $ do
+    it "works (7)." $ do
       createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 2)) Nothing)
         vers `shouldBe` []
 
-    it "works" $ do
+    it "works (8)." $ do
       createChunkRangeErrors (CreateChunkRange Nothing (Just (ChunkPoint (DataUID 4) 2)))
         vers `shouldBe` []
 
-    it "works" $ do
+    it "works (9)." $ do
       createChunkRangeErrors (CreateChunkRange Nothing (Just (ChunkPoint (DataUID 5) 0)))
         vers `shouldBe` []
+
+    it "works (10)." $ do
+      let vers' = VDocVersion
+            [ Node (TagOpen "span" [Attr "data-uid" "183949"]) [Node {rootLabel = ContentText "wef", subForest = []}]
+            , Node {rootLabel = TagOpen "phoo" [Attr "data-uid" "50"], subForest =
+                [ Node {rootLabel = TagOpen "wef" [Attr "data-uid" "52"], subForest =
+                    [ Node {rootLabel = ContentText "**", subForest = []}
+                    ]}
+                , Node {rootLabel = ContentText "wef", subForest = []}
+                ]}
+            ]
+
+
+          rs = allNonEmptyCreateChunkRanges_ vers'
+          check (_, r) = do
+            createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeBadDataUID)
+            createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeOffsetTooLarge)
+            createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeNodeMustBeDirectParent)
+            createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeEmpty)
+      check `mapM_` rs
 
 
   -- * splitAtOffset
@@ -112,7 +147,7 @@ spec = parallel $ do
           show_   = renderTokens . tokensFromForest . fmap (fmap runPreToken)
           star    = [Node (PreToken (ContentText "*")) []]
 
-      show_ (splitAtOffset 0 star    forest) `shouldBe` "<n><f></f>*abc</n>"
+      show_ (splitAtOffset 0 star    forest) `shouldBe` "<n>*<f></f>abc</n>"
       show_ (splitAtOffset 1 star    forest) `shouldBe` "<n><f></f>a*bc</n>"
       show_ (splitAtOffset 2 star    forest) `shouldBe` "<n><f></f>ab*c</n>"
       show_ (splitAtOffset 3 star    forest) `shouldBe` "<n><f></f>abc*</n>"
@@ -210,6 +245,11 @@ spec = parallel $ do
 
       (\r -> chunkRangeErrors r vers `shouldBe` []) `mapM_` rs
       insertMarks rs vers `shouldNotBe` VDocVersion []
+
+    it "regression (8)." $ do
+      let (VersWithRanges vers [r]) = VersWithRanges (VDocVersion [Node {rootLabel = TagOpen "x123" [Attr "data-uid" "12"], subForest = [Node {rootLabel = TagOpen "wef" [Attr "data-uid" "13"], subForest = [Node {rootLabel = ContentText "phoo", subForest = []}]},Node {rootLabel = TagSelfClose "br" [Attr "data-uid" "14"], subForest = []},Node {rootLabel = TagSelfClose "phoo" [Attr "data-uid" "15"], subForest = []},Node {rootLabel = ContentText ";", subForest = []},Node {rootLabel = TagSelfClose "hr" [Attr "data-uid" "16"], subForest = []}]}]) [ChunkRange {_chunkRangeLabel = ID {_unID = 209}, _chunkRangeBegin = Just ChunkPoint {_chunkPointNode = 12, _chunkPointOffset = 0}, _chunkRangeEnd = Nothing}]
+      chunkRangeErrors r vers `shouldBe` []
+      insertMarks [r] vers `shouldNotBe` VDocVersion []
 
 
   -- * resolvePreTokens

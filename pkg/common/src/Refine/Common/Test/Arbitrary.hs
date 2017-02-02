@@ -1,24 +1,27 @@
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections       #-}
+{-# LANGUAGE ViewPatterns        #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Common.Test.Arbitrary where
 
-import           Control.Arrow ((&&&))
+import           Control.Arrow (second)
 import           Control.Monad.State
+import           Data.Function (on)
 import           Data.Functor.Infix ((<$$>))
-import           Data.List ((\\), partition)
+import           Data.List ((\\), partition, nub, nubBy)
 import           Data.Maybe (catMaybes)
 import           Data.Monoid
 import           Data.String.Conversions (ST)
-import           Data.Tree
 import qualified Data.Text as ST
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.Builder as B
+import           Data.Tree
 import qualified Data.Vector as V
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
@@ -177,14 +180,14 @@ instance Arbitrary (VDocVersion 'HTMLRaw) where
 
 instance Arbitrary (VDocVersion 'HTMLCanonical) where
   arbitrary = arbitraryCanonicalNonEmptyVDocVersion
-  -- shrink = shrinkCanonicalNonEmptyVDocVersion  -- TODO: shrinking is slow and probably buggy.
+  shrink = shrinkCanonicalNonEmptyVDocVersion  -- TODO: shrinking is slow and probably buggy.
 
 data VersWithRanges = VersWithRanges (VDocVersion 'HTMLCanonical) [ChunkRange Edit]
   deriving (Eq, Show)
 
 instance Arbitrary VersWithRanges where
   arbitrary = arbitraryVersWithRanges
-  -- shrink = shrinkVersWithRanges  -- TODO: shrinking is slow and probably buggy.
+  shrink = shrinkVersWithRanges  -- TODO: shrinking is slow and probably buggy.
 
 data CanonicalVDocVersionPairWithDataUID =
     CanonicalVDocVersionPairWithDataUID (Forest Token, DataUID) (Forest Token)
@@ -234,7 +237,7 @@ arbitraryVersWithRanges = do
   v <- arbitraryCanonicalNonEmptyVDocVersion
   let crs = allNonEmptyCreateChunkRanges v
       rs = zipWith (\(CreateChunkRange b e) i -> ChunkRange (ID i) b e) crs [0..]
-  VersWithRanges v <$> vectorOf 3 (elements rs)
+  VersWithRanges v . nub <$> vectorOf 11 (elements rs)
 
 shrinkVersWithRanges :: VersWithRanges -> [VersWithRanges]
 shrinkVersWithRanges (VersWithRanges v rs) = do
@@ -243,39 +246,75 @@ shrinkVersWithRanges (VersWithRanges v rs) = do
   pure $ VersWithRanges v' rs'
 
 
+type AllChunkPointsState = (Int, [(Int, DataUID)])
+
 -- | All theoretically possible chunk points, together with the total number of chars to their left in
 -- the 'VDocVersion'.
 allChunkPoints :: VDocVersion 'HTMLCanonical -> [(Int, ChunkPoint)]
-allChunkPoints (VDocVersion forest) = evalState (dfs forest) 0
+allChunkPoints (VDocVersion forest) = nubBy ((==) `on` snd) $ evalState (dfs forest) (0, [])
   where
-    dfs :: Forest Token -> State Int [(Int, ChunkPoint)]
-    dfs (Node t@(TagOpen _ _) forest' : forest'') = (<>) <$> mk uid forest' <*> dfs (forest' <> forest'')
-      where Just uid = dataUidOfToken t
-    dfs (_ : forest') = dfs forest'
+    dfs :: Forest Token -> State AllChunkPointsState [(Int, ChunkPoint)]
+    dfs (Node (ContentText s) [] : siblings) = do
+      let upd :: AllChunkPointsState -> ((Int, (Int, DataUID)), AllChunkPointsState)
+          upd (leftcharsForest, top@(leftcharsHere, uid) : stack)
+            = ((leftcharsForest, top), (leftcharsForest', top' : stack))
+            where
+              top'             = (mv leftcharsHere, uid)
+              leftcharsForest' = mv leftcharsForest
+              mv               = (ST.length s +)
+          upd (_, []) = error $ "allChunkPoints: text node without wrapping tag: " <> show (s, forest)
+
+      (leftcharsForest, (leftcharsHere, uid)) <- state upd
+
+      let mkpoint :: Int -> (Int, ChunkPoint)
+          mkpoint ((+) -> mv) = (mv leftcharsForest, ChunkPoint uid (mv leftcharsHere))
+
+      ((mkpoint <$> [0 .. ST.length s]) <>) <$> dfs siblings
+
+    dfs (t@(Node (dataUidOfToken -> Just uid) children@(_:_)) : siblings) = do
+      let pushuid = modify $ second ((0, uid) :)
+          popuid  = modify . second $ \case
+            (_ : (leftcharsHere, uid') : stack) -> (leftcharsHere + treeTextLength t, uid') : stack
+            [_] -> []
+            [] -> error "allChunkPoints: impossibly empty stack."
+
+      pushuid
+      childrenPoints <- dfs children
+      popuid
+      siblingsPoints <- dfs siblings
+
+      pure $ childrenPoints <> siblingsPoints
+
+    dfs (Node (TagOpen _ _) [] : siblings) = dfs siblings
+    dfs (Node t@(TagOpen _ _) _ : _) = error $ "allChunkPoints: tag without data-uid: " <> show (t, forest)
+    dfs (_ : siblings) = dfs siblings
     dfs [] = pure []
 
-    mk :: DataUID -> Forest Token -> State Int [(Int, ChunkPoint)]
-    mk uid (Node (ContentText s) [] : forest') = do
-      alreadySeen <- state $ \i -> (i, i + ST.length s)
-      let points = ((alreadySeen +) &&& ChunkPoint uid) <$> [0 .. ST.length s]
-      (points <>) <$> mk uid forest'
-    mk uid (_ : forest') = mk uid forest'
-    mk _ [] = pure []
 
 allNonEmptyCreateChunkRanges :: VDocVersion 'HTMLCanonical -> [CreateChunkRange]
-allNonEmptyCreateChunkRanges vers = snd <$> filter nonempty (mconcat rs)
+allNonEmptyCreateChunkRanges vers =
+  CreateChunkRange Nothing Nothing : cheapnub (snd <$> allNonEmptyCreateChunkRanges_ vers)
   where
-    ps = V.fromList . allChunkPoints $ vers
+    cheapnub (x : y : ys) = [x | x /= y] <> cheapnub (y : ys)
+    cheapnub (y : ys)     = y : cheapnub ys
+    cheapnub []           = []
 
-    rs = [ [ ((0, maxk), CreateChunkRange Nothing  Nothing)
-           , ((n, maxk), CreateChunkRange (Just b) Nothing)
-           , ((0, k),    CreateChunkRange Nothing  (Just e))
-           , ((n, k),    CreateChunkRange (Just b) (Just e))
-           ]
-         | i <- [0 .. V.length ps - 1], j <- [0 .. V.length ps - 1]
-         , i < j
-         , (n, b) <- [ps V.! i]
-         , (k, e) <- [ps V.! j]
+-- | 'allNonEmptyCreateChunkRanges', plus absolute offsets.
+allNonEmptyCreateChunkRanges_ :: VDocVersion 'HTMLCanonical -> [((Int, Int), CreateChunkRange)]
+allNonEmptyCreateChunkRanges_ vers = result
+  where
+    result = filter nonempty (mconcat rs)
+
+    ps = V.fromList . allChunkPoints $ vers
+    ix = [0 .. V.length ps - 1]
+
+    rs = [ let (n, b) = ps V.! i
+               (k, e) = ps V.! j
+           in [ ((n, maxk), CreateChunkRange (Just b) Nothing)
+              , ((0, k),    CreateChunkRange Nothing (Just e))
+              ]
+              <> replicate 11 ((n, k), CreateChunkRange (Just b) (Just e))
+         | i <- ix, j <- ix, i < j
          ]
 
     nonempty ((n, k), _) = n < k
