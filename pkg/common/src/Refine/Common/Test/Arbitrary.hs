@@ -8,8 +8,8 @@
 
 module Refine.Common.Test.Arbitrary where
 
-import           Control.Lens ((^.))
-import           Data.Int (Int64)
+import           Control.Arrow ((&&&))
+import           Control.Monad.State
 import           Data.List ((\\), partition)
 import           Data.Maybe (catMaybes)
 import           Data.Monoid
@@ -18,6 +18,7 @@ import           Data.Tree
 import qualified Data.Text as ST
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.Builder as B
+import qualified Data.Vector as V
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
 import           Text.HTML.Parser as HTML
@@ -217,78 +218,53 @@ shrinkCanonicalNonEmptyVDocVersion (VDocVersion forest) = VDocVersion <$> shrink
 
 arbitraryVersWithRanges :: Gen VersWithRanges
 arbitraryVersWithRanges = do
-  v   <- arbitraryCanonicalNonEmptyVDocVersion
-  rs_ <- listOf $ arbitraryValidChunkRange v
-  let rs = zipWith ($) rs_ [0..]
-  case mconcat $ (`chunkRangeErrors` v) <$> rs of
-    []        -> pure $ VersWithRanges v rs
-    bad@(_:_) -> error $ show bad
-
-arbitraryValidChunkRange :: VDocVersion h -> Gen (Int64 -> ChunkRange a)
-arbitraryValidChunkRange (VDocVersion v) = do
-  b <- arbitraryValidChunkPointBegin v
-  e <- arbitraryValidChunkPointEnd v b
-  pure $ \i -> ChunkRange (ID i) b e
-
--- | pick a uid at random from the forest; look at all direct children of the node with that uid;
--- pick one that is a text node and pick an offset in that node; finally, try again if we failed to
--- leave at least one character to the right.
-arbitraryValidChunkPointBegin :: Forest Token -> Gen (Maybe ChunkPoint)
-arbitraryValidChunkPointBegin forest = go 300  -- TODO: this is iterating too much, need to find a better implementation
-  where
-    go :: Int -> Gen (Maybe ChunkPoint)
-    go 0 = error "arbitraryValidChunkPointBegin could not find non-empty data-uid."
-    go i = case catMaybes $ dataUidOfToken <$> mconcat (flatten <$> forest) of
-      [] -> go (i - 1)
-      uids -> do
-        uid :: DataUID <- elements uids
-        let [Node _ sub] = forest ^. atToken uid
-        case chunkPointOffsetCandidates 0 sub of
-          [] -> go (i - 1)
-          cands@(_:_) -> do
-            mpoint <- pickChunkPointOffset uid cands
-            case hitTheRightWall <$> mpoint of
-              Just True -> go (i - 1)
-              _ -> pure mpoint
-
-    hitTheRightWall :: ChunkPoint -> Bool
-    hitTheRightWall (ChunkPoint node off)
-      = consumeOffset off
-      . dropWhile ((/= Just node) . dataUidOfToken)
-      . tokensFromForest
-      $ forest
-      where
-        -- consumed at least one character than eaten up by offset, then we're good.
-        consumeOffset n _ | n < 0 = False
-        consumeOffset _ []        = True
-        consumeOffset n (t : ts)  = consumeOffset (n - tokenTextLength t) ts
-
--- | calculate offset candidates of siblings with the lengths of text to their resp. lefts.
-chunkPointOffsetCandidates :: Int -> Forest Token -> [(Int, ST)]
-chunkPointOffsetCandidates = f
-  where
-    f total (Node (ContentText t) [] : ss) = (total, t) : f (total + ST.length t)      ss
-    f total (s                       : ss) =              f (total + treeTextLength s) ss
-    f _     []                             = []
-
-pickChunkPointOffset :: DataUID -> [(Int, ST)] -> Gen (Maybe ChunkPoint)
-pickChunkPointOffset _ [] = error "impossible."
-pickChunkPointOffset uid cands@(_:_) = do
-  (leftLength, thisText) <- elements cands
-  off <- choose (leftLength, leftLength + ST.length thisText)
-  let point = ChunkPoint uid off
-  frequency [(5, pure Nothing), (95, pure (Just point))]
-
--- | TODO: dfs the forest.  when hitting the left node's uid (or immediately if left node is nothing),
--- start counting characters.  when the number of characters traversed is 1 + offset of left node
--- (or 1 if left node is nothing), you have hit the range of points that you can return.  construct
--- a list of all points between here and the end of file, then pick one from that list at random.
-arbitraryValidChunkPointEnd :: Forest Token -> Maybe ChunkPoint -> Gen (Maybe ChunkPoint)
-arbitraryValidChunkPointEnd _ _ = pure Nothing
-
+  v <- arbitraryCanonicalNonEmptyVDocVersion
+  let crs = allNonEmptyCreateChunkRanges v
+      rs = zipWith (\(CreateChunkRange b e) i -> ChunkRange (ID i) b e) crs [0..]
+  pure $ VersWithRanges v rs
 
 shrinkVersWithRanges :: VersWithRanges -> [VersWithRanges]
 shrinkVersWithRanges (VersWithRanges v rs) = do
   v' <- shrink v
   rs' <- shrinkList (\_ -> []) (filter (null . (`chunkRangeErrors` v')) rs)
   pure $ VersWithRanges v' rs'
+
+
+-- | All theoretically possible chunk points, together with the total number of chars to their left in
+-- the 'VDocVersion'.
+allChunkPoints :: VDocVersion 'HTMLCanonical -> [(Int, ChunkPoint)]
+allChunkPoints (VDocVersion forest) = evalState (dfs forest) 0
+  where
+    dfs :: Forest Token -> State Int [(Int, ChunkPoint)]
+    dfs (Node t@(TagOpen _ _) forest' : forest'') = (<>) <$> mk uid forest' <*> dfs (forest' <> forest'')
+      where Just uid = dataUidOfToken t
+    dfs (_ : forest') = dfs forest'
+    dfs [] = pure []
+
+    mk :: DataUID -> Forest Token -> State Int [(Int, ChunkPoint)]
+    mk uid (Node (ContentText s) [] : forest') = do
+      alreadySeen <- state $ \i -> (i, i + ST.length s)
+      let points = ((alreadySeen +) &&& ChunkPoint uid) <$> [0 .. ST.length s]
+      (points <>) <$> mk uid forest'
+    mk uid (_ : forest') = mk uid forest'
+    mk _ [] = pure []
+
+allNonEmptyCreateChunkRanges :: VDocVersion 'HTMLCanonical -> [CreateChunkRange]
+allNonEmptyCreateChunkRanges vers = snd <$> filter nonempty (mconcat rs)
+  where
+    ps = V.fromList . allChunkPoints $ vers
+
+    rs = [ [ ((0, maxk), CreateChunkRange Nothing  Nothing)
+           , ((n, maxk), CreateChunkRange (Just b) Nothing)
+           , ((0, k),    CreateChunkRange Nothing  (Just e))
+           , ((n, k),    CreateChunkRange (Just b) (Just e))
+           ]
+         | i <- [0 .. V.length ps - 1], j <- [0 .. V.length ps - 1]
+         , i < j
+         , (n, b) <- [ps V.! i]
+         , (k, e) <- [ps V.! j]
+         ]
+
+    nonempty ((n, k), _) = n < k
+
+    maxk = fst $ V.last ps
