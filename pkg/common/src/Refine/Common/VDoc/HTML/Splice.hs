@@ -32,6 +32,7 @@ module Refine.Common.VDoc.HTML.Splice
 
 import           Control.Exception (assert)
 import           Control.Lens ((&), (^.), (%~))
+import           Control.Monad.State
 import           Data.Functor.Infix ((<$$>))
 import           Data.List (foldl')
 import           Data.Maybe (catMaybes)
@@ -127,55 +128,27 @@ createChunkRangeErrors cr@(CreateChunkRange mp1 mp2) (VDocVersion forest) =
 
     isEmpty = [ChunkRangeEmpty mp1 mp2 forest | not $ isNonEmptyChunkRange cr forest]
 
--- | Run through the token tree once.  Start counting characters when (1) data-uid has matched, and
--- (2) start offset has been consumed in characters; stop counting accordingly.  Count must be > 0.
---
--- The state machine below only works if the two chunk points do not have the same data-uid, so we
--- catch that case separately.  May falsely return True if there are 'ChunkRangeOffsetTooLarge'
--- errors (which is ok, because in this error is caught in another rule in
--- 'createChuknRangeErrors').
 isNonEmptyChunkRange :: CreateChunkRange -> Forest Token -> Bool
-isNonEmptyChunkRange (CreateChunkRange mp1 mp2) forest = onSameNode || onDifferentNodes
+isNonEmptyChunkRange cr forest = case cr of
+  (CreateChunkRange Nothing       Nothing)   -> 0               < forestTextLength forest
+  (CreateChunkRange (Just p1)     Nothing)   -> numLeftChars p1 < forestTextLength forest
+  (CreateChunkRange Nothing       (Just p2)) -> 0               < numLeftChars p2
+  (CreateChunkRange (Just p1)     (Just p2)) -> numLeftChars p1 < numLeftChars p2
   where
-    onSameNode = case (mp1, mp2) of
-      (Just (ChunkPoint uid off), Just (ChunkPoint uid' off')) | uid == uid' -> off' > off
-      _ -> False
-
-    onDifferentNodes = findBeginUID (tokensFromForest forest) mp1
-
-    findBeginUID :: [Token] -> Maybe ChunkPoint -> Bool
-    findBeginUID ts Nothing   = findEndUID False ts mp2
-    findBeginUID ts (Just p1) = findBeginUIDJust ts p1
-
-    findBeginUIDJust :: [Token] -> ChunkPoint -> Bool
-    findBeginUIDJust []           _                       = False
-    findBeginUIDJust ts@(t : ts') p1@(ChunkPoint uid off) = if dataUidOfToken t == Just uid
-      then consumeBeginOffset ts off
-      else findBeginUIDJust ts' p1
-
-    consumeBeginOffset :: [Token] -> Int -> Bool
-    consumeBeginOffset []        _   = False
-    consumeBeginOffset (t : ts') off = assert (off >= 0) $ if n <= off
-      then consumeBeginOffset ts' (off - n)
-      else findEndUID (n > off) ts' mp2  -- (this is where we assume begin-uid /= end-uid)
-      where n = tokenTextLength t
-
-    -- keep track of whether we have seen any characters inside the range in a boolean.
-    findEndUID :: Bool -> [Token] -> Maybe ChunkPoint -> Bool
-    findEndUID False     (t : ts') Nothing   = findEndUID (tokenTextLength t > 0) ts' Nothing
-    findEndUID False     []        Nothing   = False
-    findEndUID True      _         Nothing   = True
-    findEndUID haveEaten ts        (Just p2) = findEndUIDJust haveEaten ts p2
-
-    findEndUIDJust :: Bool -> [Token] -> ChunkPoint -> Bool
-    findEndUIDJust _         []        _                       = False  -- (p2 is missing)
-    findEndUIDJust haveEaten (t : ts') p2@(ChunkPoint uid off) = if dataUidOfToken t == Just uid
-      then haveEaten || (off > 0 && consumeEndOffset (tokensFromForest $ forest ^. atToken uid))
-                           -- (must not read beyond the sub-tree under p2's data-uid!)
-      else findEndUIDJust (haveEaten || tokenTextLength t > 0) ts' p2
-
-    consumeEndOffset :: [Token] -> Bool
-    consumeEndOffset = any ((> 0) . tokenTextLength)
+    numLeftChars :: ChunkPoint -> Int
+    numLeftChars (ChunkPoint uid off) = evalState (dfs forest) 0
+      where
+        dfs :: Forest Token -> State Int Int
+        dfs (Node t@(TagOpen _ _) forest' : forest'') = do
+          if dataUidOfToken t == Just uid
+            then (+ off) <$> get
+            else dfs (forest' <> forest'')
+        dfs (Node (ContentText txt) forest' : forest'') = do
+          modify (ST.length txt +)
+          dfs (forest' <> forest'')
+        dfs (Node _ forest' : forest'') = do
+          dfs (forest' <> forest'')
+        dfs [] = pure 0  -- (happens iff chunk point has 'ChunkRangeBadDataUID'.)
 
 
 -- * inserting marks
