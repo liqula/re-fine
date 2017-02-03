@@ -1,53 +1,80 @@
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE FlexibleInstances   #-}
+{-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections       #-}
+{-# LANGUAGE ViewPatterns        #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Common.Test.Arbitrary where
 
-import           Control.Lens ((^.))
+import           Control.Arrow (second)
+import           Control.Monad.State
+import           Data.Function (on)
 import           Data.Functor.Infix ((<$$>))
-import           Data.List ((\\))
+import           Data.List ((\\), partition, nub, nubBy)
 import           Data.Maybe (catMaybes)
 import           Data.Monoid
-import           Data.Tree
-import qualified Data.Text as T
-import qualified Data.Text.Lazy as TL
+import           Data.String.Conversions (ST)
+import qualified Data.Text as ST
+import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.Builder as B
+import           Data.Tree
+import qualified Data.Vector as V
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
 import           Text.HTML.Parser as HTML
 import           Text.HTML.Tree as HTML
+import           Web.HttpApiData (toUrlPiece)
 
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML
 import Refine.Common.VDoc.HTML.Core
 
-instance Arbitrary ChunkPoint where
-  arbitrary               = ChunkPoint <$> arbitrary <*> arbitrary
-  shrink (ChunkPoint n o) = ChunkPoint <$> shrink n <*> shrink o
-
-instance Arbitrary DataUID where
-  arbitrary          = DataUID <$> arbitrary
-  shrink (DataUID i) = DataUID <$> shrink i
 
 instance Arbitrary (ID a) where
-  arbitrary     = ID <$> arbitrary
-  shrink (ID i) = ID <$> shrink i
+  arbitrary = ID <$> arbitrary
+
+instance Arbitrary ChunkPoint where
+  arbitrary = ChunkPoint <$> arbitrary <*> arbitrary
+
+instance Arbitrary DataUID where
+  arbitrary = DataUID <$> arbitrary
+
+
+-- * html-parse
+
+instance Arbitrary PreToken where
+  arbitrary = oneof [PreToken <$> arbitrary, open, close]
+    where
+      open  = PreMarkOpen <$> uid <*> owner
+      close = PreMarkClose <$> uid
+      uid   = toUrlPiece . unDataUID <$> (arbitrary :: Gen DataUID)
+      owner = elements ["edit", "node", "question", "discussion"]
+
+  shrink (PreToken t) = PreToken <$> shrink t
+  shrink _ = []
 
 instance Arbitrary Token where
   arbitrary = oneof [validOpen, validClose, validFlat]
 
-  shrink (TagOpen n as)      = TagOpen n <$> shrink as
-  shrink (TagSelfClose n as) = TagSelfClose n <$> shrink as
+  shrink (TagOpen n as)      = TagOpen n <$> shrinkAttrs as
+  shrink (TagSelfClose n as) = TagSelfClose n <$> shrinkAttrs as
   shrink (TagClose _)        = []
   shrink (ContentText _)     = []
   shrink (ContentChar _)     = []
-  shrink (HTML.Comment b)    = HTML.Comment . B.fromText <$> (shrink . TL.toStrict . B.toLazyText $ b)
+  shrink (HTML.Comment b)    = HTML.Comment . B.fromText <$> (shrink . LT.toStrict . B.toLazyText $ b)
   shrink (Doctype t)         = Doctype <$> shrink t
+
+-- TODO: This does not catch on when shrinking `Forest PreToken`.  no idea why.
+shrinkAttrs :: [Attr] -> [[Attr]]
+shrinkAttrs attrs = case partition isDataUID attrs of
+  (datauid, other) -> (datauid <>) <$> shrink other
+  where
+    isDataUID (Attr "data-uid" _) = True
+    isDataUID _                   = False
 
 instance Arbitrary Attr where
   arbitrary = Attr <$> validXmlAttrName <*> validXmlAttrValue
@@ -68,75 +95,61 @@ validFlat = oneof
     , Doctype <$> validXmlText
     ]
 
+
+-- | Set this to False for nicer test failure reporting, but possibly less rigorous testing.
+useWeirdXmlNames :: Bool
+useWeirdXmlNames = False
+
+simpleNames :: [ST]
+simpleNames = ["wef", "phoo", "x123"]
+
+
 -- FIXME: sometimes it is allowed to use '<' as text token, and we don't test that yet.  (whether we
 -- like this choice or not, we may want to follow the standard here.)  (same in tag names, attr
 -- names.)
 validXmlChar :: Gen Char
 validXmlChar = elements (['\x20'..'\x7E'] \\ "\x09\x0a\x0c /<>")
 
-validXmlText :: Gen T.Text
-validXmlText = T.pack <$> sized (`maxListOf` validXmlChar)
+validXmlText :: Gen ST
+validXmlText = if useWeirdXmlNames
+  then ST.pack <$> sized (`maxListOf` validXmlChar)
+  else elements simpleNames
 
-validXmlTagName :: Gen T.Text
-validXmlTagName = do
+validXmlTagName :: Gen ST
+validXmlTagName = if useWeirdXmlNames
+  then do
     initchar  <- elements $ ['a'..'z'] <> ['A'..'Z']
     thenchars <- sized (`maxListOf` elements (['\x20'..'\x7E'] \\ "\x09\x0a\x0c /<>"))
-    pure . T.pack $ initchar : thenchars
+    pure . ST.pack $ initchar : thenchars
+  else elements simpleNames
 
-validClosingXmlTagName :: Gen T.Text
+validClosingXmlTagName :: Gen ST
 validClosingXmlTagName = do
     n <- validXmlTagName
     pure $ if n `elem` nonClosing then n <> "phoo" else n
 
-validXmlAttrName :: Gen T.Text
-validXmlAttrName = do
+validXmlAttrName :: Gen ST
+validXmlAttrName = if useWeirdXmlNames
+  then do
     initchar  <- elements $ ['a'..'z'] <> ['A'..'Z']
     thenchars <- sized (`maxListOf` elements (['\x20'..'\x7E'] \\ "\x09\x0a\x0c /=<>\x00"))
-    pure . T.pack $ initchar : thenchars
+    pure . ST.pack $ initchar : thenchars
+  else elements simpleNames
 
 -- FIXME: not sure if @Attr "key" "\""@ should be parseable, but it's not, so we don't test it.
-validXmlAttrValue :: Gen T.Text
-validXmlAttrValue = do
-    T.pack <$> sized (`maxListOf` elements (['\x20'..'\x7E'] \\ "\x09\x0a\x0c /=<>\x00\""))
+validXmlAttrValue :: Gen ST
+validXmlAttrValue = if useWeirdXmlNames
+  then do
+    ST.pack <$> sized (`maxListOf` elements (['\x20'..'\x7E'] \\ "\x09\x0a\x0c /=<>\x00\""))
+  else elements simpleNames
 
 -- FIXME: i think this should be 'validXmlChar', but that will fail the test suite.
-validXmlCommentText :: Gen T.Text
+validXmlCommentText :: Gen ST
 validXmlCommentText = do
-    T.pack <$> sized (`maxListOf` elements (['\x20'..'\x7E'] \\ "\x09\x0a\x0c /=<>\x00\"-"))
+    ST.pack <$> sized (`maxListOf` elements (['\x20'..'\x7E'] \\ "\x09\x0a\x0c /=<>\x00\"-"))
 
 maxListOf :: Int -> Gen a -> Gen [a]
 maxListOf n g = take n <$> listOf g
-
-instance Arbitrary (VDocVersion 'HTMLCanonical) where
-  arbitrary = arbitraryCanonicalVDocVersion
-
-arbitraryCanonicalNonEmptyVDocVersion :: Gen (VDocVersion 'HTMLCanonical)
-arbitraryCanonicalNonEmptyVDocVersion = do
-  VDocVersion v <- arbitraryCanonicalVDocVersion
-  let v' = if (sum . fmap tokenTextLength . tokensFromForest $ v) == 0
-        then Node (TagOpen "span" []) [Node (ContentText "whee") []] : v
-        else v
-  pure . canonicalizeVDocVersion . VDocVersion $ v'
-
--- | TODO: this doesn't do anything useful, sadly.
-shrinkCanonicalNonEmptyVDocVersionVersWithRanges :: VDocVersion 'HTMLCanonical -> [VDocVersion 'HTMLCanonical]
-shrinkCanonicalNonEmptyVDocVersionVersWithRanges (VDocVersion forest) = do
-  let shrinkAttrs attrs = [[ attr | attr@(Attr k _) <- attrs, k == "data-uid" ]]  -- drop everything but data-uid.
-
-      shrinkToken (TagOpen n attrs) = TagOpen n <$> shrinkAttrs attrs
-      shrinkToken (TagSelfClose n attrs) = TagSelfClose n <$> shrinkAttrs attrs
-      shrinkToken _ = []
-
-      shrinkTree (Node t xs :: Tree Token) = Node <$> shrinkToken t <*> shrinkForest xs
-      shrinkForest = shrinkList shrinkTree
-
-  VDocVersion <$> filter ((/= 0) . forestTextLength) (shrinkForest forest)
-
-arbitraryRawVDocVersion :: Gen (VDocVersion 'HTMLRaw)
-arbitraryRawVDocVersion = VDocVersion <$> arbitraryTokenForest
-
-arbitraryCanonicalVDocVersion :: Gen (VDocVersion 'HTMLCanonical)
-arbitraryCanonicalVDocVersion = canonicalizeVDocVersion <$> arbitraryRawVDocVersion
 
 arbitraryTokenForest :: Gen (Forest Token)
 arbitraryTokenForest = listOf arbitraryTokenTree
@@ -154,72 +167,156 @@ validNonClosingOpen = TagOpen <$> elements nonClosing <*> arbitrary
 validClosingOpen :: Gen Token
 validClosingOpen = TagOpen <$> validClosingXmlTagName <*> arbitrary
 
--- | TODO: this sometimes generates data-uid values that is not the direct parent of the text node
--- referenced by the offset.  this triggers 'VDocHTMLErrorSplitPointsToSubtree' in 'splitAtOffset'.
-arbitraryValidChunkPoint :: VDocVersion h -> Maybe ChunkPoint -> Gen (Maybe ChunkPoint)
-arbitraryValidChunkPoint (VDocVersion forest) mLeftBound = do
-  let tokens :: [Token]
-      tokens = mconcat (flatten <$> forest)
 
-      validTokens :: [Token]
-      validTokens = case mLeftBound of
-        -- when generating a left bound, make sure there is text left to the right of it so the mark
-        -- won't end up empty.
-        Nothing -> reverse . tail . dropWhile (not . isNonEmptyText) . reverse $ tokens
+-- * vdoc versions and valid chunk points
 
-        -- when generating a right bound, drop all the uids up to and including the left bound.
-        Just (ChunkPoint uid _off) -> tail . dropWhile ((/= Just uid) . dataUidOfToken) $ tokens
+-- | For testing only!  In production code, only use 'createChunkRangeErrors'!
+chunkRangeErrors :: ChunkRange a -> VDocVersion 'HTMLCanonical -> [ChunkRangeError]
+chunkRangeErrors (ChunkRange _ mp1 mp2) = createChunkRangeErrors $ CreateChunkRange mp1 mp2
 
-      isNonEmptyText :: Token -> Bool
-      isNonEmptyText (ContentText "") = error "arbitraryValidChunkPoint: empty text nodes should be canonicalized away!"
-      isNonEmptyText (ContentText _)  = True
-      isNonEmptyText _                = False
 
-      validDataUids :: [DataUID]
-      validDataUids = catMaybes $ dataUidOfToken <$> validTokens
+instance Arbitrary (VDocVersion 'HTMLRaw) where
+  arbitrary = arbitraryRawVDocVersion
 
-  mcp <- case validDataUids of
-    [] -> pure Nothing
-    _ : _ -> do
-      uid <- elements validDataUids
-      let offmax = forestTextLength $ forest ^. atNode ((== Just uid) . dataUidOfToken)
-          offmin = case mLeftBound of
-            Just (ChunkPoint uid' off') -> if uid' == uid then off' else 0
-            Nothing -> 0
-      off <- choose (offmin, offmax)
-      pure . Just $ ChunkPoint uid off
-
-  frequency [(5, pure Nothing), (95, pure mcp)]
-
-arbitraryValidChunkRange :: VDocVersion h -> Gen (Int -> ChunkRange a)
-arbitraryValidChunkRange vers = do
-  b <- arbitraryValidChunkPoint vers Nothing
-  e <- arbitraryValidChunkPoint vers b
-  pure $ \i -> ChunkRange (ID $ fromIntegral i) b e
+instance Arbitrary (VDocVersion 'HTMLCanonical) where
+  arbitrary = arbitraryCanonicalNonEmptyVDocVersion
+  shrink = shrinkCanonicalNonEmptyVDocVersion  -- TODO: shrinking is slow and probably buggy.
 
 data VersWithRanges = VersWithRanges (VDocVersion 'HTMLCanonical) [ChunkRange Edit]
   deriving (Eq, Show)
 
 instance Arbitrary VersWithRanges where
-  arbitrary = arbitraryChunkRangesWithVersion
-  shrink = shrinkChunkRangesWithVersion
+  arbitrary = arbitraryVersWithRanges
+  shrink = shrinkVersWithRanges  -- TODO: shrinking is slow and probably buggy.
 
-arbitraryChunkRangesWithVersion :: Gen VersWithRanges
-arbitraryChunkRangesWithVersion = do
-  v   <- arbitraryCanonicalNonEmptyVDocVersion
-  rs_ <- listOf $ arbitraryValidChunkRange v
-  let rs = zipWith ($) rs_ [0..]
-  pure $ VersWithRanges v (filter (null . flip chunkRangeErrors v) rs)  -- TODO: 'arbitraryValidChunkRange' returns empty ranges.
+data CanonicalVDocVersionPairWithDataUID =
+    CanonicalVDocVersionPairWithDataUID (Forest Token, DataUID) (Forest Token)
+  deriving (Eq, Show)
 
--- | FIXME: this function should not be necessary.  CreateChunkRange should always be validated
--- before turned into a ChunkRange.
-chunkRangeErrors :: ChunkRange a -> VDocVersion b -> [ChunkRangeError]
-chunkRangeErrors (ChunkRange _ mp1 mp2) = createChunkRangeErrors $ CreateChunkRange mp1 mp2
+instance Arbitrary CanonicalVDocVersionPairWithDataUID where
+  arbitrary = do
+    VDocVersion forest <- arbitraryCanonicalNonEmptyVDocVersion
+    uid <- elements . catMaybes $ dataUidOfToken <$> mconcat (flatten <$> forest)
+    VDocVersion forest' <- arbitraryCanonicalNonEmptyVDocVersion
+    pure $ CanonicalVDocVersionPairWithDataUID (forest, uid) forest'
 
-shrinkChunkRangesWithVersion :: VersWithRanges -> [VersWithRanges]
-shrinkChunkRangesWithVersion (VersWithRanges v rs) = do
-  v' <- shrinkCanonicalNonEmptyVDocVersionVersWithRanges v
-  VersWithRanges v' <$> shallowShrinkList (filter (null . flip chunkRangeErrors v') rs)
 
-shallowShrinkList :: [a] -> [[a]]
-shallowShrinkList xs = (xs !!) <$$> shrink [0 .. length xs - 1]
+arbitraryRawVDocVersion :: Gen (VDocVersion 'HTMLRaw)
+arbitraryRawVDocVersion = VDocVersion <$> arbitraryTokenForest
+
+arbitraryCanonicalVDocVersion :: Gen (VDocVersion 'HTMLCanonical)
+arbitraryCanonicalVDocVersion = canonicalizeVDocVersion <$> arbitraryRawVDocVersion
+
+arbitraryCanonicalNonEmptyVDocVersion :: Gen (VDocVersion 'HTMLCanonical)
+arbitraryCanonicalNonEmptyVDocVersion = do
+  VDocVersion v <- arbitraryCanonicalVDocVersion
+  let v' = if (sum . fmap tokenTextLength . tokensFromForest $ v) == 0
+        then Node (TagOpen "span" []) [Node (ContentText "whee") []] : v
+        else v
+
+      -- this makes test output much more interesting, and probably not any less representative of
+      -- production data.
+      muteAttrs_ attrs = case partition isDataUID attrs of (datauid, _) -> datauid
+        where
+          isDataUID (Attr "data-uid" _) = True
+          isDataUID _                   = False
+
+      muteAttrs (TagOpen n attrs) = TagOpen n $ muteAttrs_ attrs
+      muteAttrs (TagSelfClose n attrs) = TagSelfClose n $ muteAttrs_ attrs
+      muteAttrs t = t
+
+  pure . canonicalizeVDocVersion . VDocVersion . (muteAttrs <$$>) $ v'
+
+shrinkCanonicalNonEmptyVDocVersion :: VDocVersion 'HTMLCanonical -> [VDocVersion 'HTMLCanonical]
+shrinkCanonicalNonEmptyVDocVersion (VDocVersion forest) = VDocVersion <$> shrink forest
+  -- (the Token arb instance needs to make sure that data-uid attributes are not killed.)
+
+
+arbitraryVersWithRanges :: Gen VersWithRanges
+arbitraryVersWithRanges = do
+  v <- arbitraryCanonicalNonEmptyVDocVersion
+  let crs = allNonEmptyCreateChunkRanges v
+      rs = zipWith (\(CreateChunkRange b e) i -> ChunkRange (ID i) b e) crs [0..]
+  VersWithRanges v . nub <$> vectorOf 11 (elements rs)
+
+shrinkVersWithRanges :: VersWithRanges -> [VersWithRanges]
+shrinkVersWithRanges (VersWithRanges v rs) = do
+  v' <- shrink v
+  rs' <- shrinkList (\_ -> []) (filter (null . (`chunkRangeErrors` v')) rs)
+  pure $ VersWithRanges v' rs'
+
+
+type AllChunkPointsState = (Int, [(Int, DataUID)])
+
+-- | All theoretically possible chunk points, together with the total number of chars to their left in
+-- the 'VDocVersion'.
+allChunkPoints :: VDocVersion 'HTMLCanonical -> [(Int, ChunkPoint)]
+allChunkPoints (VDocVersion forest) = nubBy ((==) `on` snd) $ evalState (dfs forest) (0, [])
+  where
+    dfs :: Forest Token -> State AllChunkPointsState [(Int, ChunkPoint)]
+    dfs (Node (ContentText s) [] : siblings) = do
+      let upd :: AllChunkPointsState -> ((Int, (Int, DataUID)), AllChunkPointsState)
+          upd (leftcharsForest, top@(leftcharsHere, uid) : stack)
+            = ((leftcharsForest, top), (leftcharsForest', top' : stack))
+            where
+              top'             = (mv leftcharsHere, uid)
+              leftcharsForest' = mv leftcharsForest
+              mv               = (ST.length s +)
+          upd (_, []) = error $ "allChunkPoints: text node without wrapping tag: " <> show (s, forest)
+
+      (leftcharsForest, (leftcharsHere, uid)) <- state upd
+
+      let mkpoint :: Int -> (Int, ChunkPoint)
+          mkpoint ((+) -> mv) = (mv leftcharsForest, ChunkPoint uid (mv leftcharsHere))
+
+      ((mkpoint <$> [0 .. ST.length s]) <>) <$> dfs siblings
+
+    dfs (t@(Node (dataUidOfToken -> Just uid) children@(_:_)) : siblings) = do
+      let pushuid = modify $ second ((0, uid) :)
+          popuid  = modify . second $ \case
+            (_ : (leftcharsHere, uid') : stack) -> (leftcharsHere + treeTextLength t, uid') : stack
+            [_] -> []
+            [] -> error "allChunkPoints: impossibly empty stack."
+
+      pushuid
+      childrenPoints <- dfs children
+      popuid
+      siblingsPoints <- dfs siblings
+
+      pure $ childrenPoints <> siblingsPoints
+
+    dfs (Node (TagOpen _ _) [] : siblings) = dfs siblings
+    dfs (Node t@(TagOpen _ _) _ : _) = error $ "allChunkPoints: tag without data-uid: " <> show (t, forest)
+    dfs (_ : siblings) = dfs siblings
+    dfs [] = pure []
+
+
+allNonEmptyCreateChunkRanges :: VDocVersion 'HTMLCanonical -> [CreateChunkRange]
+allNonEmptyCreateChunkRanges vers =
+  CreateChunkRange Nothing Nothing : cheapnub (snd <$> allNonEmptyCreateChunkRanges_ vers)
+  where
+    cheapnub (x : y : ys) = [x | x /= y] <> cheapnub (y : ys)
+    cheapnub (y : ys)     = y : cheapnub ys
+    cheapnub []           = []
+
+-- | 'allNonEmptyCreateChunkRanges', plus absolute offsets.
+allNonEmptyCreateChunkRanges_ :: VDocVersion 'HTMLCanonical -> [((Int, Int), CreateChunkRange)]
+allNonEmptyCreateChunkRanges_ vers = result
+  where
+    result = filter nonempty (mconcat rs)
+
+    ps = V.fromList . allChunkPoints $ vers
+    ix = [0 .. V.length ps - 1]
+
+    rs = [ let (n, b) = ps V.! i
+               (k, e) = ps V.! j
+           in [ ((n, maxk), CreateChunkRange (Just b) Nothing)
+              , ((0, k),    CreateChunkRange Nothing (Just e))
+              ]
+              <> replicate 11 ((n, k), CreateChunkRange (Just b) (Just e))
+         | i <- ix, j <- ix, i < j
+         ]
+
+    nonempty ((n, k), _) = n < k
+
+    maxk = fst $ V.last ps

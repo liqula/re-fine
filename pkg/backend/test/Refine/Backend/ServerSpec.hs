@@ -62,17 +62,22 @@ import Refine.Common.Types
 runWai :: Backend -> Wai.WaiSession a -> IO a
 runWai sess = Wai.withApplication (backendServer sess)
 
--- | Call 'runWaiBody'' and crash if the expected type cannot be read.
+-- | Call 'runWaiBodyE' and throw an error if the expected type cannot be read.
 runWaiBody :: FromJSON a => Backend -> Wai.WaiSession SResponse -> IO a
-runWaiBody sess = errorOnLeft . runWaiBody' sess
+runWaiBody sess = errorOnLeft . runWaiBodyE sess
 
 -- | Run a rest call and parse the body.
-runWaiBody' :: FromJSON a => Backend -> Wai.WaiSession SResponse -> IO (Either String a)
-runWaiBody' sess m = do
+runWaiBodyE :: FromJSON a => Backend -> Wai.WaiSession SResponse -> IO (Either String a)
+runWaiBodyE sess m = do
   resp <- Wai.withApplication (backendServer sess) m
   pure $ case eitherDecode $ simpleBody resp of
     Left err -> Left $ show err <> cs (simpleBody resp)
     Right x  -> Right x
+
+-- | Run a rest call and return the naked request.
+runWaiBodyReq :: Backend -> Wai.WaiSession SResponse -> IO SResponse
+runWaiBodyReq sess m = do
+  Wai.withApplication (backendServer sess) m
 
 -- | Call 'runDB'' and crash on 'Left'.
 runDB :: Backend -> App DB a -> IO a
@@ -191,7 +196,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
     it "fails with error on non-trivial *invalid* chunk range" $ \sess -> do
       vdoc :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
-      Left resp :: Either String Note <- runWaiBody' sess $
+      resp :: SResponse <- runWaiBodyReq sess $
         let cp1, cp2 :: ChunkPoint
             cp1 = ChunkPoint (DataUID 1) 0
             cp2 = ChunkPoint (DataUID 100) 100
@@ -199,7 +204,8 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
           (addNoteUri (vdoc ^. compositeVDocRepo . vdocHeadEdit))
           (CreateNote "[note]" True (CreateChunkRange (Just cp1) (Just cp2)))
 
-      (resp `shouldContain`) `mapM_` ["AppVDocError", "VDocHTMLErrorChunkRangeErrors", "ChunkRangeBadEndNode"]
+      statusCode (simpleStatus resp) `shouldBe` 500  -- probably 500 is a bit harsh, but that's what we get.
+      cs (simpleBody resp) `shouldContain` "ChunkRangeBadDataUID"
 
       vdoc' :: CompositeVDoc <- runDB sess $ getCompositeVDoc (vdoc ^. compositeVDoc . vdocID)
       vdoc' ^. compositeVDocNotes `shouldBe` mempty

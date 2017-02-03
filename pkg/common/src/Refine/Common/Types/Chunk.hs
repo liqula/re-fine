@@ -61,7 +61,7 @@ data ChunkPoint = ChunkPoint
   deriving (Eq, Ord, Show, Read, Generic)
 
 newtype DataUID = DataUID { unDataUID :: Int }
-  deriving (Eq, Ord, Generic)
+  deriving (Eq, Ord, Generic, Num)
 
 instance Show DataUID where
   showsPrec n (DataUID i) = showsPrec n i

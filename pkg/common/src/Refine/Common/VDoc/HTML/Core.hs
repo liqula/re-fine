@@ -25,35 +25,40 @@
 
 module Refine.Common.VDoc.HTML.Core
   ( -- * errors
-    VDocHTMLError(..), ChunkRangeError(..)
+    ChunkRangeError(..)
+  , _ChunkRangeBadDataUID
+  , _ChunkRangeOffsetTooLarge
+  , _ChunkRangeNodeMustBeDirectParent
+  , _ChunkRangeEmpty
 
     -- * pretokens
-  , PreToken(..), runPreToken, dropPreTokens
+  , PreToken(..), DataChunkID, OwnerKind, runPreToken, dropPreTokens
+  , PreToken', PreToken''(..), unPreToken''
 
     -- * misc
-  , atNode
+  , atNode, atToken, atPreToken
   , dataUidOfToken, dataUidOfPreToken
-  , tokensToForest'
 
   , tokenTextLength
+  , treeTextLength
   , forestTextLength
   , preTokenTextLength
+  , preTreeTextLength
   , preForestTextLength
 
-  , preTokensToForest
   , preTokensFromForest
   ) where
 
 import           Control.Lens (Traversal')
-import           Control.Monad.Error.Class (MonadError, throwError)
 import           Data.Char (toLower)
+import           Data.List (foldl')
 import           Data.Maybe (listToMaybe)
 import           Data.String.Conversions (ST, cs, (<>))
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
 import           GHC.Generics (Generic)
 import           Text.HTML.Parser (Token(..), Attr(..))
-import           Text.HTML.Tree (ParseTokenForestError, tokensToForest, tokensFromForest)
+import           Text.HTML.Tree (tokensFromForest)
 import           Text.Read (readMaybe)
 
 import Refine.Common.Types
@@ -62,20 +67,11 @@ import Refine.Prelude.TH (makeRefineType)
 
 -- * errors
 
-data VDocHTMLError =
-    VDocHTMLErrorBadTree ParseTokenForestError
-  | VDocHTMLErrorChunkRangeErrors [ChunkRangeError]
-  | VDocHTMLErrorBadChunkPoint (Forest PreToken) ChunkPoint  -- (should be an impossible error.)
-  | VDocHTMLErrorNotEnoughCharsToSplit Int (Forest PreToken)
-  | VDocHTMLErrorSplitPointsToSubtree Int (Forest PreToken)
-  | VDocHTMLErrorInternal String
-  deriving (Eq, Show, Generic)
-
 data ChunkRangeError =
-    ChunkRangeEmpty [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
-  | ChunkRangeBadEndNode [Token] (Maybe ChunkPoint) (Maybe ChunkPoint)
-  | ChunkRangeOffsetTooLarge (Forest Token) ChunkPoint
-  | ChunkRangeNotATree [Token]
+    ChunkRangeBadDataUID ChunkPoint (Forest Token)
+  | ChunkRangeOffsetTooLarge ChunkPoint (Forest Token)
+  | ChunkRangeNodeMustBeDirectParent ChunkPoint (Forest Token)
+  | ChunkRangeEmpty (Maybe ChunkPoint) (Maybe ChunkPoint) (Forest Token)
   deriving (Eq, Show, Generic)
 
 
@@ -90,6 +86,18 @@ data PreToken = PreToken Token | PreMarkOpen DataChunkID OwnerKind | PreMarkClos
 
 type DataChunkID = ST  -- FIXME: @newtype DataChunkID (forall a . Eq a => ID a)@
 type OwnerKind = ST    -- FIXME: @type OwnerKind = TypeRep  -- e.g. @ID Edit@@
+
+-- | Needed to make some of the helper functions total.
+type PreToken' = (DataChunkID, OwnerKind)
+
+-- | Needed to make some of the helper functions total.
+data PreToken'' = PreMarkOpen'' DataChunkID OwnerKind | PreMarkClose'' DataChunkID
+  deriving (Show)
+
+unPreToken'' :: PreToken'' -> PreToken
+unPreToken'' (PreMarkOpen'' n o) = PreMarkOpen n o
+unPreToken'' (PreMarkClose'' n)  = PreMarkClose n
+
 
 runPreToken :: PreToken -> Token
 runPreToken (PreToken t)      = t
@@ -108,10 +116,6 @@ dropPreTokens = fmap runPreToken . filter (\case (PreToken _) -> True; _ -> Fals
 preTokensFromForest :: Forest PreToken -> [PreToken]
 preTokensFromForest = fmap unstashPreToken . tokensFromForest . fmap (fmap stashPreToken)
 
--- | Inverse of 'preTokensFromForest' (equally hacky).
-preTokensToForest :: MonadError VDocHTMLError m => [PreToken] -> m (Forest PreToken)
-preTokensToForest = fmap (fmap (fmap unstashPreToken)) . tokensToForest' . fmap stashPreToken
-
 stashPreToken :: PreToken -> Token
 stashPreToken (PreMarkOpen l k) = Doctype $ ST.intercalate "/" [l, k]
 stashPreToken (PreMarkClose l)  = Doctype l
@@ -127,19 +131,22 @@ unstashPreToken t           = PreToken t
 
 -- * misc
 
--- | 'Traversal' optics to find all sub-trees with a given `data-uid` html attribute.  Takes time
--- linear in size of document for find the sub-tree.
---
--- NOTE: I think if a sub-tree of a matching sub-tree matches again, that will go unnoticed.  In
--- 'atDataUID' (where always only one node must satisfy the predicate) this isn't an issue.
+-- | 'Traversal' optics to find all sub-trees with a given `data-uid` html attribute.  Sub-trees are
+-- wrapped in singleton lists.  Takes time linear in size of document for find the sub-tree.
 atNode :: (a -> Bool) -> Traversal' (Forest a) (Forest a)
 atNode prop focus = dive
   where
     dive [] = pure []
     dive (Node n chs : ts)
       = if prop n
-          then (:) <$> (Node n <$> focus chs) <*> dive ts
-          else (:) <$> (Node n <$> dive  chs) <*> dive ts
+          then (<>) <$> focus [Node n chs]    <*> dive ts
+          else (:)  <$> (Node n <$> dive chs) <*> dive ts
+
+atToken :: DataUID -> Traversal' (Forest Token) (Forest Token)
+atToken node = atNode (\p -> dataUidOfToken p == Just node)
+
+atPreToken :: DataUID -> Traversal' (Forest PreToken) (Forest PreToken)
+atPreToken node = atNode (\p -> dataUidOfPreToken p == Just node)
 
 dataUidOfToken :: Token -> Maybe DataUID
 dataUidOfToken (TagOpen _ attrs) =
@@ -152,31 +159,29 @@ dataUidOfPreToken (PreMarkOpen _ _) = Nothing
 dataUidOfPreToken (PreMarkClose _)  = Nothing
 
 
--- | Call 'tokensToForest' and convert the error type.
-tokensToForest' :: MonadError VDocHTMLError m => [Token] -> m (Forest Token)
-tokensToForest' ts = case tokensToForest ts of
-  Right f  -> pure f
-  Left msg -> throwError $ VDocHTMLErrorBadTree msg
-
-
 tokenTextLength :: Token -> Int
 tokenTextLength = \case
   (ContentText t) -> ST.length t
   (ContentChar _) -> 1
   _               -> 0
 
+treeTextLength :: Tree Token -> Int
+treeTextLength = foldl' (+) 0 . fmap tokenTextLength
+
 forestTextLength :: Forest Token -> Int
-forestTextLength = sum . fmap tokenTextLength . tokensFromForest
+forestTextLength = sum . fmap treeTextLength
 
 preTokenTextLength :: PreToken -> Int
 preTokenTextLength = tokenTextLength . runPreToken
 
+preTreeTextLength :: Tree PreToken -> Int
+preTreeTextLength = treeTextLength . fmap runPreToken
+
 preForestTextLength :: Forest PreToken -> Int
-preForestTextLength = sum . fmap preTokenTextLength . preTokensFromForest
+preForestTextLength = forestTextLength . fmap (fmap runPreToken)
 
 
 -- * lots of instances
 
-makeRefineType ''VDocHTMLError
 makeRefineType ''ChunkRangeError
 makeRefineType ''PreToken

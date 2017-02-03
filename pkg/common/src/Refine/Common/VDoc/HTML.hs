@@ -1,6 +1,6 @@
 -- | Code for handling `VDocVersions` with HTML content.
 module Refine.Common.VDoc.HTML
-  ( VDocHTMLError(..), ChunkRangeError(..)
+  ( ChunkRangeError(..)
   , canonicalizeVDocVersion    -- 'HTMLRaw" to 'HTMLCanonical'
   , downgradeRawVDocVersion    -- 'HTMLCanonical' to 'HTMLRaw' (benign, but we may not actually need it)
   , insertMarks                -- 'HTMLCanonical' to 'HTMLWithMarks'

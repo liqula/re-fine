@@ -39,6 +39,7 @@ dependencies:
   - string-conversions
   - text
   - time
+  - vector
 
 library:
   source-dirs:
