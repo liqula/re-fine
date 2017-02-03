@@ -118,7 +118,7 @@ createChunkRangeErrors cr@(CreateChunkRange mp1 mp2) (VDocVersion forest) =
           let ok :: Int -> [Tree Token] -> Bool
               ok seen = \case
                 -- give up if we're past the offset or out of nodes.
-                _ | seen >= off -> False
+                _ | seen > off -> False
                 [] -> False
 
                 -- check text nodes for hits.
