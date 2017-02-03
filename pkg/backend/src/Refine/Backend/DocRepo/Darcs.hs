@@ -18,7 +18,13 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Backend.DocRepo.Darcs where
+module Refine.Backend.DocRepo.Darcs
+  ( createRepo
+  , createInitialEdit
+  , createEdit
+  , getVersion
+  , getChildEdits
+  ) where
 
 import Control.Arrow ((&&&), second)
 import Control.Exception
@@ -178,6 +184,8 @@ createRepo = do
 
 contentFile :: String
 contentFile = "content"
+  -- FIXME: consider using pkg/backend/src/Refine/Backend/DocRepo/HtmlFileTree.hs here.  we should
+  -- benchmark both options and then decide which one to use.
 
 createInitialEdit :: RepoHandle -> VDocVersion 'HTMLCanonical -> DocRepo EditHandle
 createInitialEdit repo vers = do
@@ -197,14 +205,11 @@ createInitialEdit repo vers = do
     pure . EditHandle $ cs uuid
 
 
+-- | Clone the repository to a temp dir, reverting the result at some state.  Read the version out.
 getVersion :: RepoHandle -> EditHandle -> DocRepo (VDocVersion 'HTMLCanonical)
-getVersion repo vers = do
-
-  -- Clone the repository to a temp dir reverting the result at some state
-  -- Read the version out.
-
+getVersion repo edit = do
   repoRoot <- view cfgReposRoot
-  let editVersion = vers ^. unEditHandle . to cs
+  let baseEdit = edit ^. unEditHandle . to cs
 
   docRepoIO $ do
     darcsCommands $ do
@@ -212,21 +217,17 @@ getVersion repo vers = do
       let repoDir  = repoRoot </> (repo ^. unRepoHandle . to cs)
       (repoDirA, cloneTmpA, cloneTmp) <- createCloneTmp repoDir uuid
 
-      cloneCmd (repoDirA, cloneTmpA) [UpToPatch editVersion] [repoDir, cloneTmp]
+      cloneCmd (repoDirA, cloneTmpA) [UpToPatch baseEdit] [repoDir, cloneTmp]
       withTempDir cloneTmp $ do
         !ver <- vdocVersionFromST <$> ST.readFile (cloneTmp </> contentFile)
         pure ver
 
 
+-- | Clone the repo to the temporary dir; do the changes at the given version; pull the new patches from
+-- the new repo; remove the temporary directory.
 createEdit :: RepoHandle -> EditHandle -> VDocVersion 'HTMLCanonical -> DocRepo EditHandle
-createEdit repo base vers = do
-
-  -- Clone the repo to the temporary dir
-  -- do the changes at the given version
-  -- pull the new patches from the new repo
-  -- remove the temporary directory
-
-  let editBase = base ^. unEditHandle . to cs
+createEdit repo base edit = do
+  let baseEdit = base ^. unEditHandle . to cs
 
   repoRoot <- view cfgReposRoot
 
@@ -237,9 +238,9 @@ createEdit repo base vers = do
     darcsCommands $ do
       (repoDirA, cloneTmpA, cloneTmp) <- createCloneTmp repoDir uuid
 
-      cloneCmd (repoDirA, cloneTmpA) [PatchName editBase] [repoDir, cloneTmp]
+      cloneCmd (repoDirA, cloneTmpA) [PatchName baseEdit] [repoDir, cloneTmp]
       withTempDir cloneTmp $ do
-        ST.writeFile (cloneTmp </> contentFile) (vdocVersionToST vers)
+        ST.writeFile (cloneTmp </> contentFile) (vdocVersionToST edit)
 
         setCurrentDirectory cloneTmp
         recordCmd (repoDirA, repoDirA) (recordConfig uuid) []
@@ -260,6 +261,7 @@ getChildEdits repository vers = do
   docRepoIO $ do
     let repoDir  = repoRoot </> (repository ^. unRepoHandle . to cs)
     withRepositoryDirectory NoUseCache repoDir $ RepoJob (\repo -> do
+      -- Copied from "Darcs.UI.Command.ShowDependcies" (and heavily mutated).
       Sealed2 r <- readRepo repo >>= pruneRepo
       let rFL    = newset2FL r
           deps   = getDeps (removeInternalFL $ mapFL_FL hopefully rFL) rFL
@@ -313,6 +315,7 @@ getChildEdits repository vers = do
 
 type DepsGraph = Gr String ()
 
+-- | Copied from "Darcs.UI.Command.ShowDependcies".
 makeGraph :: [SPatchAndDeps p] -> DepsGraph
 makeGraph = uncurry mkGraph . second concat . unzip . map mkNodeWithEdges
     where
