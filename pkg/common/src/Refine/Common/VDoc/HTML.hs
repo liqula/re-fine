@@ -5,6 +5,7 @@ module Refine.Common.VDoc.HTML
   , downgradeRawVDocVersion    -- 'HTMLCanonical' to 'HTMLRaw' (benign, but we may not actually need it)
   , insertMarks                -- 'HTMLCanonical' to 'HTMLWithMarks'
   , createChunkRangeErrors     -- chunk range validation
+  , insertMoreMarks            -- 'HTMLWithMarks' to 'HTMLWithMarks' (if you want to call it incrementally).
   , addUIInfoToForest          -- for 'ChunkRange' calculation (probably in the frontend)
   ) where
 

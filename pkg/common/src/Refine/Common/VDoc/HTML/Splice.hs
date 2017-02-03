@@ -23,7 +23,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Common.VDoc.HTML.Splice
-  ( insertMarks
+  ( insertMarks, insertMoreMarks
   , ChunkRangeError(..), createChunkRangeErrors
   , enablePreTokens
   , resolvePreTokens
@@ -58,21 +58,12 @@ import Refine.Prelude
 -- | Render 'VDocVersion' as needed in the browser.  More specifically: Insert @mark@ html elements
 -- for all chunks of all edits, comments, notes, etc.
 --
--- FUTUREWORK: it's not so nice that we have to pass four lists of chunk ranges, but that's the
--- easiest way to work around list homogeneity.
---
 -- TODO: do we still want '\n' between tokens for darcs?
-insertMarks ::
-     [ChunkRange Edit] -> [ChunkRange Note] -> [ChunkRange Question] -> [ChunkRange Discussion]
-  -> VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
-insertMarks crse crsn crsq crsd vers@(VDocVersion forest) = invariants (tokensFromForest forest) `seq`
+insertMarks :: Typeable a => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
+insertMarks crs vers@(VDocVersion forest) = invariants (tokensFromForest forest) `seq`
                                             VDocVersion forest''
   where
-    withPreTokens        = insertMarksForest crse
-                         . insertMarksForest crsn
-                         . insertMarksForest crsq
-                         . insertMarksForest crsd
-                         $ enablePreTokens forest
+    withPreTokens        = insertMarksForest crs $ enablePreTokens forest
     afterRunPreTokens    = resolvePreTokens . preTokensFromForest $ withPreTokens
     forest'              = either (error . show) id $ tokensToForest afterRunPreTokens
     VDocVersion forest'' = canonicalizeVDocVersion $ VDocVersion forest'
@@ -89,11 +80,13 @@ insertMarks crse crsn crsq crsd vers@(VDocVersion forest) = invariants (tokensFr
       then error $ "insertMarks: invalid chunk ranges: " <> show errs
       else ()
       where
-        errs = mconcat $ ((`chunkRangeErrors` vers) <$> crse)
-                      <> ((`chunkRangeErrors` vers) <$> crsn)
-                      <> ((`chunkRangeErrors` vers) <$> crsq)
-                      <> ((`chunkRangeErrors` vers) <$> crsd)
+        errs = mconcat $ (`chunkRangeErrors` vers) <$> crs
         chunkRangeErrors (ChunkRange _ mp1 mp2) = createChunkRangeErrors $ CreateChunkRange mp1 mp2
+
+
+-- Calls 'insertMarks', but expects the input 'VDocVersion' to have passed through before.
+insertMoreMarks :: Typeable a => [ChunkRange a] -> VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
+insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
 
 
 -- * sanity check
