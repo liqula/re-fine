@@ -18,6 +18,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+-- FIXME: rename to Refine.Prelude.MakeInstances
 module Refine.Prelude.TH where
 
 import Control.Lens (makeLenses, makePrisms)
@@ -59,7 +60,7 @@ makeNFData t = do
     ]
 
 -- FIXME: Support parametric types
--- FIXME: rename to makeRefineInstances
+-- FIXME: rename to makeInstances
 makeRefineType :: Name -> Q [Dec]
 makeRefineType t = do
   l <- makeLenses t
