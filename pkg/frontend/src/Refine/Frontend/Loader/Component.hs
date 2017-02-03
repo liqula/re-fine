@@ -9,6 +9,7 @@ import           React.Flux
 import           Refine.Common.Types
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
+import qualified Refine.Prelude.BuildInfo as BuildInfo
 
 
 vdocLoader :: ReactView (Maybe [ID VDoc])
@@ -25,6 +26,14 @@ vdocLoader = defineView "VDocLoader" $ \list -> do
           ] $
           elemString "Load generated document via backend"
   vdocListLoader_ list
+
+  div_ $ do
+    br_ [] >> br_ [] >> br_ [] >> hr_ []
+    pre_ $ do
+      elemString $ "commit hash: " <> show BuildInfo.gitCommitHash
+      "\n"
+      elemString $ "build timestamp: " <> show BuildInfo.gitBuildTimestamp
+      "\n"
 
 vdocLoader_ :: Maybe [ID VDoc] -> ReactElementM eventHandler ()
 vdocLoader_ list = view vdocLoader list mempty
