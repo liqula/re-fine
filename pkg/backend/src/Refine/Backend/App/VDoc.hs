@@ -24,7 +24,7 @@
 module Refine.Backend.App.VDoc where
 
 import           Control.Arrow ((&&&))
-import           Control.Lens ((&), (^.), (^?), to, view, has)
+import           Control.Lens ((^.), (^?), to, view, has)
 import           Control.Monad.Except (throwError)
 import           Control.Monad ((<=<), join, mapM)
 import qualified Data.Map as Map
@@ -93,10 +93,11 @@ getCompositeVDoc vid = do
       hedits <- docRepo $ DocRepo.getChildEdits rhandle hhandle
       edits  <- db $ mapM DB.getEditFromHandle hedits
       let insertAllMarks :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
-          insertAllMarks vers = vers
-                              & insertMarks     (view noteRange <$> commentNotes)
-                              & insertMoreMarks (view (compositeDiscussion . discussionRange) <$> commentDiscussions)
-                              & insertMoreMarks (view editRange <$> edits)
+          insertAllMarks = insertMarks
+            (view editRange <$> edits)
+            (view noteRange <$> commentNotes)
+            []
+            (view (compositeDiscussion . discussionRange) <$> commentDiscussions)
 
       version <- insertAllMarks <$> docRepo (DocRepo.getVersion rhandle hhandle)
       pure $
