@@ -24,7 +24,7 @@ module Refine.Common.VDoc.HTML.SpliceSpec where
 
 import           Control.Exception (evaluate)
 import           Control.Lens (has, (^.))
-import           Data.List (nub, sort)
+import           Data.List (nub, sort, foldl')
 import           Data.String.Conversions ((<>))
 import           Data.Tree
 import           Test.Hspec
@@ -163,6 +163,10 @@ spec = parallel $ do
     it "generates valid output on arbitrary valid chunkranges." . property $ do
       \(VersWithRanges vers rs) -> do
         insertMarks rs vers `shouldNotBe` VDocVersion []
+
+    it "generates valid output on arbitrary valid chunkranges (incrementally)." . property $ do
+      \(VersWithRanges vers (r:rs)) -> do
+        foldl' (\vers' r' -> insertMoreMarks [r'] vers') (insertMarks [r] vers) rs `shouldNotBe` VDocVersion []
 
     it "marks are inserted under the correct parent node." $ do
       pendingWith "not sure how to implement this test."
