@@ -30,6 +30,7 @@ module Refine.Common.VDoc.HTML.Splice
   , splitAtOffset
   ) where
 
+import           Control.Arrow (second)
 import           Control.Exception (assert)
 import           Control.Lens ((&), (^.), (%~))
 import           Control.Monad.State
@@ -101,7 +102,7 @@ insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
 -- follow from each other, or checking several rules with one sweep would be cheaper.
 createChunkRangeErrors :: CreateChunkRange -> VDocVersion 'HTMLCanonical -> [ChunkRangeError]
 createChunkRangeErrors cr@(CreateChunkRange mp1 mp2) (VDocVersion forest) =
-    badDataUID <> offsetTooLarge <> nodeMustBeDirectParent <> isEmpty
+    badDataUID <> offsetTooLarge <> isEmpty
   where
     checkChunkPoint :: (ChunkPoint -> [ChunkRangeError]) -> [ChunkRangeError]
     checkChunkPoint go = mconcat $ go <$> catMaybes [mp1, mp2]
@@ -111,24 +112,6 @@ createChunkRangeErrors cr@(CreateChunkRange mp1 mp2) (VDocVersion forest) =
 
     offsetTooLarge = checkChunkPoint $ \cp@(ChunkPoint uid off) ->
       [ChunkRangeOffsetTooLarge cp forest | off > forestTextLength (forest ^. atToken uid)]
-
-    nodeMustBeDirectParent = checkChunkPoint $ \cp@(ChunkPoint uid off) ->
-      case forest ^. atToken uid of
-        [Node _ xs] ->
-          let ok :: Int -> [Tree Token] -> Bool
-              ok seen = \case
-                -- give up if we're past the offset or out of nodes.
-                _ | seen > off -> False
-                [] -> False
-
-                -- check text nodes for hits.
-                (Node (ContentText s) _ : ts)
-                  | seen <= off && (seen + ST.length s) >= off -> True
-                  | otherwise                                  -> ok (seen + ST.length s) ts
-                (t : ts) -> ok (seen + treeTextLength t) ts
-
-          in [ChunkRangeNodeMustBeDirectParent cp forest | not $ off == 0 || ok 0 xs]
-        _ -> []  -- handled by @badDataUID@ above.
 
     isEmpty = [ChunkRangeEmpty mp1 mp2 forest | not $ isNonEmptyChunkRange cr forest]
 
@@ -191,46 +174,57 @@ insertMarksForest crs = (`woodZip` splitup crs)
 -- 'createChunkRangeErrors' earlier.
 splitAtOffset :: Int -> Forest PreToken -> Forest PreToken -> Forest PreToken
 splitAtOffset offset insertion ts_ = assert (offset >= 0)
-                                   . either absurd repack
-                                   $ recursion consumeToken (offset, [], unpack)
+                                   . repack . resolve $ dfs (Just offset) unpack
   where
     unpack :: Forest PreToken
-    repack :: (Forest PreToken, Forest PreToken) -> Forest PreToken
+    repack :: Forest PreToken -> Forest PreToken
     (unpack, repack) = case ts_ of
-      [Node n ts'] -> (ts', \(tsleft, tsright) -> [Node n $ tsleft <> insertion <> tsright])
+      [Node n ts'] -> (ts', \ts'' -> [Node n ts''])
       _ -> error $ "impossible splitAtOffset: " <> show (offset, ts_)
 
-    consumeToken :: (Int, Forest PreToken, Forest PreToken)
-                 -> Recursion (Int, Forest PreToken, Forest PreToken)
-                              Void
-                              (Forest PreToken, Forest PreToken)
+    resolve :: (Maybe Int, Forest PreToken) -> Forest PreToken
+    resolve (Nothing, forest)
+        = forest
 
-    consumeToken (0, ps, ts)
-        = Halt (reverse ps, ts)
+    resolve (Just 0, forest)
+        = insertion <> forest
 
-    consumeToken (n, ps, t@(Node (PreToken (ContentText s)) []) : ts')
+    resolve (Just n, forest)
+        = assert (n > 0) . error $ "splitAtOffset: out of characters: " <> show (offset, n, forest, ts_)
+
+    dfs :: Maybe Int -> Forest PreToken -> (Maybe Int, Forest PreToken)
+    -- already done splitting.
+    dfs Nothing forest
+        = (Nothing, forest)
+
+    -- not inserted yet, but out of children on this level.  ascend if applicable.
+    dfs (Just n) []
+        = (Just n, [])
+
+    -- text nodes: update length, insert here if we have reached the offset.
+    dfs (Just n) (t@(Node (PreToken (ContentText s)) []) : siblings)
         = let n' = n - ST.length s
           in if n' > 0
-              then Run (n', t : ps, ts')
+              then second (t :) $ dfs (Just n') siblings
               else case ST.splitAt n s of
                 (s', s'') ->
-                  let pack = (`Node` []) . PreToken . ContentText
-                  in Halt ( reverse $ pack s'  : ps
-                          ,           pack s'' : ts'
-                          )
+                  let pack "" = []
+                      pack s_ = [Node (PreToken (ContentText s_)) []]
+                  in (Nothing, pack s' <> insertion <> pack s'' <> siblings)
 
-    consumeToken (n, ps, t@(Node _ _) : ts')
-        = let n' = n - preTreeTextLength t
-          in if n' >= 0
-              then Run (n', t : ps, ts')
-              else error $ "impossible ChunkRangeNodeMustBeDirectParent: "
-                        <> show (offset, insertion, ts_, n, t, ts', ps)
+    -- tag nodes: descend.
+    dfs (Just n) (Node t@(PreToken (TagOpen _ _)) children : siblings)
+        = case dfs (Just n) children of
+            (mo, children') -> case dfs mo siblings of
+              (mo', siblings') -> (mo', Node t children' : siblings')
 
-    consumeToken (n, ps, [])
-        = if n == 0
-            then Halt (reverse ps, [])
-            else error $ "impossible ChunkRangeOffsetTooLarge " <> show (offset, n, ts_)
-                      <> show (offset, insertion, ts_, n, ps)
+    -- pre-marks (also allows any other child-less nodes).
+    dfs (Just n) (t@(Node _ []) : siblings)
+        = second (t :) $ dfs (Just n) siblings
+
+    -- disallow any nodes with children that are not open tags.
+    dfs (Just n) (t : _)
+        = error $ "splitAtOffset: weirdly shaped node: " <> show (t, offset, n, ts_)
 
 
 -- * translating between pretokens and tokens

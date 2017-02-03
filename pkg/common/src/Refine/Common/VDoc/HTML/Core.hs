@@ -28,7 +28,6 @@ module Refine.Common.VDoc.HTML.Core
     ChunkRangeError(..)
   , _ChunkRangeBadDataUID
   , _ChunkRangeOffsetTooLarge
-  , _ChunkRangeNodeMustBeDirectParent
   , _ChunkRangeEmpty
 
     -- * pretokens
@@ -70,7 +69,6 @@ import Refine.Prelude.TH (makeRefineType)
 data ChunkRangeError =
     ChunkRangeBadDataUID ChunkPoint (Forest Token)
   | ChunkRangeOffsetTooLarge ChunkPoint (Forest Token)
-  | ChunkRangeNodeMustBeDirectParent ChunkPoint (Forest Token)
   | ChunkRangeEmpty (Maybe ChunkPoint) (Maybe ChunkPoint) (Forest Token)
   deriving (Eq, Show, Generic)
 

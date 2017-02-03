@@ -82,7 +82,7 @@ spec = parallel $ do
 
     it "works (3)." $ do
       createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 5) 1)) (Just (ChunkPoint (DataUID 5) 2)))
-        vers `shouldSatisfy` any (has _ChunkRangeNodeMustBeDirectParent)
+        vers `shouldBe` []
 
     it "works (4)." $ do
       createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 4)) (Just (ChunkPoint (DataUID 5) 0)))
@@ -124,7 +124,6 @@ spec = parallel $ do
           check (_, r) = do
             createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeBadDataUID)
             createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeOffsetTooLarge)
-            createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeNodeMustBeDirectParent)
             createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeEmpty)
       check `mapM_` rs
 
@@ -147,7 +146,7 @@ spec = parallel $ do
           show_   = renderTokens . tokensFromForest . fmap (fmap runPreToken)
           star    = [Node (PreToken (ContentText "*")) []]
 
-      show_ (splitAtOffset 0 star    forest) `shouldBe` "<n>*<f></f>abc</n>"
+      show_ (splitAtOffset 0 star    forest) `shouldBe` "<n><f></f>*abc</n>"
       show_ (splitAtOffset 1 star    forest) `shouldBe` "<n><f></f>a*bc</n>"
       show_ (splitAtOffset 2 star    forest) `shouldBe` "<n><f></f>ab*c</n>"
       show_ (splitAtOffset 3 star    forest) `shouldBe` "<n><f></f>abc*</n>"
@@ -165,7 +164,7 @@ spec = parallel $ do
         insertMarks rs vers `shouldNotBe` VDocVersion []
 
     it "generates valid output on arbitrary valid chunkranges (incrementally)." . property $ do
-      \(VersWithRanges vers (r:rs)) -> do
+      \(VersWithRanges vers (r : rs)) -> do
         foldl' (\vers' r' -> insertMoreMarks [r'] vers') (insertMarks [r] vers) rs `shouldNotBe` VDocVersion []
 
     it "marks are inserted under the correct parent node." $ do
@@ -181,8 +180,7 @@ spec = parallel $ do
       let cr l = ChunkRange l (Just (ChunkPoint (DataUID 3) 1)) (Just (ChunkPoint (DataUID 3) 2))
           vers = vdocVersionFromST "<span data-uid=\"3\">asdf</span>"
           vers' l = vdocVersionFromST $
-            "<span data-uid=\"1\">a<mark data-chunk-kind=\"" <> l <>
-            "\" data-chunk-id=\"3\" data-uid=\"2\">s</mark>df</span>"
+            "<span data-uid=\"1\">a<mark data-chunk-kind=\"" <> l <> "\" data-chunk-id=\"3\">s</mark>df</span>"
 
       chunkRangeErrors (cr (ID 3 :: ID Note)) vers `shouldBe` []
 
