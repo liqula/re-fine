@@ -19,13 +19,16 @@ dependencies:
   - aeson
   - aeson-pretty
   - base
+  - bytestring
   - containers
   - darcs
   - data-default
   - directory
   - elim
+  - fgl
   - filepath
   - functor-infix
+  - graphviz
   - html-parse
   - lens
   - lentil

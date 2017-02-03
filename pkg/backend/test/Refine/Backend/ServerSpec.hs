@@ -205,7 +205,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
           (CreateNote "[note]" True (CreateChunkRange (Just cp1) (Just cp2)))
 
       statusCode (simpleStatus resp) `shouldBe` 500  -- probably 500 is a bit harsh, but that's what we get.
-      cs (simpleBody resp) `shouldContain` "ChunkRangeBadDataUID"
+      cs (simpleBody resp) `shouldContain` ("ChunkRangeBadDataUID" :: String)
 
       vdoc' :: CompositeVDoc <- runDB sess $ getCompositeVDoc (vdoc ^. compositeVDoc . vdocID)
       vdoc' ^. compositeVDocNotes `shouldBe` mempty

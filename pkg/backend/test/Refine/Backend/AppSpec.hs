@@ -130,10 +130,10 @@ createAppRunner = do
   createDirectoryIfMissing True $ cfg ^. cfgRootDir
   createDirectoryIfMissing True $ cfg ^. cfgReposRoot
   (runDb, userHandler) <- createDBRunner cfg
-  runDocRepo <- createRunRepo cfg
+  runDRepo <- createRunRepo cfg
   let logger = Logger . const $ pure ()
       runner :: forall b . App DB b -> IO b
-      runner m = (natThrowError . runApp runDb runDocRepo logger userHandler) $$ m
+      runner m = (natThrowError . runApp runDb runDRepo logger userHandler) $$ m
 
   void $ runner migrateDB
   pure (runner, testDb, reposRoot)
