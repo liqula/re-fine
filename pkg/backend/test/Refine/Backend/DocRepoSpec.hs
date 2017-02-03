@@ -38,23 +38,23 @@ spec = do
   describe "DocRepo" . around provideRunner $ do
     it "getChildEdits returns multiple dependencies" $ \runner -> do
       repo  <- runner $$ createRepo
-      edit1 <- runner $$ createInitialEdit repo (VDocVersion "blah")
-      edit2 <- runner $$ createEdit repo edit1  (VDocVersion "blah\nblah2")
-      edit3 <- runner $$ createEdit repo edit1  (VDocVersion "blah\nblah3")
-      edit4 <- runner $$ createEdit repo edit3  (VDocVersion "blah\nblah3\nblah4")
-      edit5 <- runner $$ createEdit repo edit4  (VDocVersion "blah\nblah3\nblah4\nblah5")
-      edit1deps <- runner $$ getChildEdits repo edit1
-      edit2deps <- runner $$ getChildEdits repo edit2
-      edit3deps <- runner $$ getChildEdits repo edit3
-      edit4deps <- runner $$ getChildEdits repo edit4
-      edit5deps <- runner $$ getChildEdits repo edit5
+      edit1 <- runner $$ createInitialEdit repo (vdocVersionFromST "blah")
+      edit2 <- runner $$ createEdit repo edit1  (vdocVersionFromST "blah\nblah2")
+      edit3 <- runner $$ createEdit repo edit1  (vdocVersionFromST "blah\nblah3")
+      edit4 <- runner $$ createEdit repo edit3  (vdocVersionFromST "blah\nblah3\nblah4")
+      edit5 <- runner $$ createEdit repo edit4  (vdocVersionFromST "blah\nblah3\nblah4\nblah5")
+      edit1children <- runner $$ getChildEdits repo edit1
+      edit2children <- runner $$ getChildEdits repo edit2
+      edit3children <- runner $$ getChildEdits repo edit3
+      edit4children <- runner $$ getChildEdits repo edit4
+      edit5children <- runner $$ getChildEdits repo edit5
 
-      edit1deps `shouldBe` [edit2, edit3]
-      edit4deps `shouldBe` [edit5]
-      edit5deps `shouldBe` []
-      pendingWith "Needs more investigation in case of clonflicts."
-      edit3deps `shouldBe` [edit4]
-      edit2deps `shouldBe` []
+      edit1children `shouldBe` [edit2, edit3]
+      edit4children `shouldBe` [edit5]
+      edit5children `shouldBe` []
+      pendingWith "Needs more investigation in case of conflicts."
+      edit3children `shouldBe` [edit4]
+      edit2children `shouldBe` []
 
 
 cfg :: Config
