@@ -27,6 +27,7 @@ dependencies:
   - lens
   - mtl
   - natural-transformation
+  - process
   - servant
   - string-conversions
   - template-haskell
