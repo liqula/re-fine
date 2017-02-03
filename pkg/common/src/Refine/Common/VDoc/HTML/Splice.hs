@@ -205,6 +205,9 @@ splitAtOffset offset insertion ts_ = assert (offset >= 0)
                               Void
                               (Forest PreToken, Forest PreToken)
 
+    consumeToken (0, ps, ts)
+        = Halt (reverse ps, ts)
+
     consumeToken (n, ps, t@(Node (PreToken (ContentText s)) []) : ts')
         = let n' = n - ST.length s
           in if n' > 0
