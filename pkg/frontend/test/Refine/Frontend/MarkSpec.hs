@@ -25,7 +25,6 @@ module Refine.Frontend.MarkSpec where
 
 import Test.Hspec
 
-import           Prelude hiding (length)
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Mark
 

@@ -25,7 +25,6 @@ module Refine.Frontend.HeadingSpec where
 
 import Test.Hspec
 
-import Prelude hiding (length)
 import Refine.Common.Types
 import Refine.Frontend.Test.Enzyme
 import Refine.Frontend.Heading
@@ -40,7 +39,7 @@ spec = do
       lengthIO (find wrapper (StringSelector ".c-mainmenu__menu-button")) `shouldReturn` (1 :: Int)
       lengthIO (find wrapper (StringSelector ".c-mainmenu__icon-bar")) `shouldReturn` (3 :: Int)
       label <- find wrapper (StringSelector ".c-mainmenu__menu-button-label")
-      length label `shouldReturn` (1 :: Int)
+      lengthOf label `shouldReturn` (1 :: Int)
       text label `shouldReturn` "MENU"
 
 
@@ -104,13 +103,13 @@ spec = do
     it "contains an annotation section with 2 normal icon buttons" $ do
       wrapper <- shallow editToolbarExtension_
       annotation <- find wrapper (StringSelector ".c-vdoc-toolbar-extension__annotation")
-      length annotation `shouldReturn` (1 :: Int)
+      lengthOf annotation `shouldReturn` (1 :: Int)
       lengthIO (find annotation (StringSelector "IconButton")) `shouldReturn` (2 :: Int)
 
     it "contains a modification section with 1 normal icon button" $ do
       wrapper <- shallow editToolbarExtension_
       modification <- find wrapper (StringSelector ".c-vdoc-toolbar-extension__modification")
-      length modification `shouldReturn` (1 :: Int)
+      lengthOf modification `shouldReturn` (1 :: Int)
       lengthIO (find modification (StringSelector "IconButton")) `shouldReturn` (1 :: Int)
 
 
