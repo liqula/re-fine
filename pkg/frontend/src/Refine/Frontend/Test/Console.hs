@@ -24,6 +24,7 @@ module Refine.Frontend.Test.Console
   ( consoleLogJSVal
   , consoleLogJSON
   , consoleLogShallowWrapper
+  , consoleLogStringified
   )
 where
 
@@ -43,6 +44,12 @@ consoleLogShallowWrapper msg (ShallowWrapper jsval) = consoleLogJSVal msg jsval
 foreign import javascript unsafe
   "console.log($1, $2);"
   consoleLogJSVal :: JSString -> JSVal -> IO ()
+
+-- | Write a 'JSVal' to stdout (node) or the console (browser) via JSON.stringify() which allows
+-- for deep rendering of the object.
+foreign import javascript unsafe
+  "console.log($1, JSON.stringify($2));"
+  consoleLogStringified :: JSString -> JSVal -> IO ()
 
 -- | Write a 'ToJSON' instance to stdout (node) or the console (browser).  If you have a choice, use
 -- 'consoleLogJSVal' which is more efficient.  (No idea if there are char encoding issues here.  But
