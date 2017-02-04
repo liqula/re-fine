@@ -254,7 +254,8 @@ allChunkPoints :: VDocVersion 'HTMLCanonical -> [(Int, ChunkPoint)]
 allChunkPoints (VDocVersion forest) = nubBy ((==) `on` snd) $ evalState (dfs forest) (0, [])
   where
     dfs :: Forest Token -> State AllChunkPointsState [(Int, ChunkPoint)]
-    dfs (Node (ContentText s) [] : siblings) = do
+    dfs (Node (ContentText s) [] : siblings)
+      | ST.length s > 0 = do
       let upd :: AllChunkPointsState -> ((Int, (Int, DataUID)), AllChunkPointsState)
           upd (leftcharsForest, top@(leftcharsHere, uid) : stack)
             = ((leftcharsForest, top), (leftcharsForest', top' : stack))
@@ -271,7 +272,8 @@ allChunkPoints (VDocVersion forest) = nubBy ((==) `on` snd) $ evalState (dfs for
 
       ((mkpoint <$> [0 .. ST.length s]) <>) <$> dfs siblings
 
-    dfs (t@(Node (dataUidOfToken -> Just uid) children@(_:_)) : siblings) = do
+    dfs (t@(Node (dataUidOfToken -> Just uid) children@(_:_)) : siblings)
+      | treeTextLength t > 0 = do
       let pushuid = modify $ second ((0, uid) :)
           popuid  = modify . second $ \case
             (_ : (leftcharsHere, uid') : stack) -> (leftcharsHere + treeTextLength t, uid') : stack
@@ -285,8 +287,6 @@ allChunkPoints (VDocVersion forest) = nubBy ((==) `on` snd) $ evalState (dfs for
 
       pure $ childrenPoints <> siblingsPoints
 
-    dfs (Node (TagOpen _ _) [] : siblings) = dfs siblings
-    dfs (Node t@(TagOpen _ _) _ : _) = error $ "allChunkPoints: tag without data-uid: " <> show (t, forest)
     dfs (_ : siblings) = dfs siblings
     dfs [] = pure []
 

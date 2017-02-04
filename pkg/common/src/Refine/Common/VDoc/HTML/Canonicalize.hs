@@ -120,7 +120,8 @@ setElemUIDs = fill mempty . fmap clear
       where
         f :: (DataUID, [Token]) -> Token -> (DataUID, [Token])
         f (next, acc) = \case
-          (TagOpen      n attrs) -> (nextDataUID next, TagOpen      n (Attr "data-uid" (cs $ show next) : attrs) : acc)
+          (TagOpen n attrs)
+                   | n /= "mark" -> (nextDataUID next, TagOpen      n (Attr "data-uid" (cs $ show next) : attrs) : acc)
           (TagSelfClose n attrs) -> (nextDataUID next, TagSelfClose n (Attr "data-uid" (cs $ show next) : attrs) : acc)
           t                      -> (next,             t : acc)
 
