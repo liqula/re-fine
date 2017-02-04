@@ -21,11 +21,12 @@
 module Refine.Backend.DocRepo.Core where
 
 import GHC.Generics (Generic)
-import Control.Lens (makeLenses)
+import Control.Lens (makeLenses, view)
 import Control.Monad.Except
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader
 import Data.String.Conversions (ST)
+import System.Directory (canonicalizePath)
 
 import Refine.Backend.Config
 import Refine.Prelude.TH (makeRefineType)
@@ -49,6 +50,10 @@ newtype DocRepo a = DocRepo { unDocRepo :: ExceptT DocRepoError (ReaderT Config 
 
 docRepoIO :: IO a -> DocRepo a
 docRepoIO = DocRepo . liftIO
+
+docRepoIOWithReposRoot :: (FilePath -> IO a) -> DocRepo a
+docRepoIOWithReposRoot action = view cfgReposRoot >>= \fp -> DocRepo (liftIO (action =<< canonicalizePath fp))
+
 
 -- * types
 
