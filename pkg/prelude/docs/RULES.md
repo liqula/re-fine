@@ -16,12 +16,13 @@ nobody objects, it's a new rule!
 
 ### development process
 
-1. if you want to work on a branch, create MR early, mark it "WIP: ",
-   and assign yourself.  this way you are allowed to write
-   to it, rebase it, and nobody else is allowed to write.
+1. work on branches, not master.  make sure branches are kept small
+   and merged soon.  start branch names with the number of the ticket
+   they are addressing (solving or partially solving).
 
-2. (1.) of course does not rule out ad-hoc collaboration coordinated
-   through other channels like irc.
+   DEVIATING data points: https://mrdevops.io/trunk-based-development-8376fe577c11#.qucopj92o
+
+2. to merge a branch, create an MR.
 
 3. if you want a review, unassign yourself and optionally ask somebody
    on irc for review.
