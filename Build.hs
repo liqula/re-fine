@@ -128,11 +128,24 @@ main = shakeArgs refineOptions $ do
     need ["hlint-prelude", "hlint-common", "hlint-backend", "hlint-frontend"]
 
 
+  phony "clean-prelude" $ do
+    command_ [Cwd pkgPrelude] "stack" ["clean"]
+
+  phony "clean-common" $ do
+    command_ [Cwd pkgCommon] "stack" ["clean"]
+
+  phony "clean-backend" $ do
+    command_ [Cwd pkgBackend] "stack" ["clean"]
+
+  phony "clean-frontend" $ do
+    command_ [Cwd pkgFrontend] "stack" ["clean"]
+    command_ [Cwd pkgFrontend] "rm" ["-rf", "js-build"]
+
   phony "clean" $ do
-    forM_ [pkgPrelude, pkgCommon, pkgBackend, pkgFrontend] $ \pkg -> do
-        command_ [Cwd pkg] "stack" ["clean"]
+    need ["clean-prelude", "clean-common", "clean-backend", "clean-frontend"]
 
   phony "dist-clean" $ do
+    need ["clean"]
     forM_ [pkgPrelude, pkgCommon, pkgBackend, pkgFrontend] $ \pkg -> do
         command_ [Cwd pkg] "rm" ["-rf", ".stack-work"]
 
