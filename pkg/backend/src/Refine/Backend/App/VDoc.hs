@@ -90,8 +90,7 @@ getCompositeVDoc vid = do
         commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
 
     pure $ do
-      hedits <- docRepo $ DocRepo.getChildEdits rhandle hhandle
-      edits  <- db $ mapM DB.getEditFromHandle hedits
+      edits <- db $ mapM DB.getEdit =<< DB.getEditChildren headid
       let insertAllMarks :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
           insertAllMarks vers = vers
                               & insertMarks     (view noteRange <$> commentNotes)
@@ -120,6 +119,7 @@ addEdit basepid edit = do
       childphandle <- docRepo $ DocRepo.createEdit rhandle basephandle version
       db $ do
         childEdit <- DB.createEdit rid childphandle
+        DB.setEditChild basepid (childEdit ^. editID)
         pure childEdit
 
 
