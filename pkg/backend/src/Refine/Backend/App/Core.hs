@@ -101,8 +101,8 @@ db m = App $ do
 
 docRepo :: DocRepo a -> App db a
 docRepo m = App $ do
-  (Nat runDocRepo) <- view appRunDocRepo
-  r <- liftIO (runExceptT (runDocRepo m))
+  (Nat runDRepo) <- view appRunDocRepo
+  r <- liftIO (runExceptT (runDRepo m))
   monadError AppDocRepoError r
 
 appLog :: String -> App db ()
