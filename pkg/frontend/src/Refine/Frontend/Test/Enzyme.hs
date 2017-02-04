@@ -151,12 +151,7 @@ lengthOf :: ShallowWrapper -> IO Int
 lengthOf wrapper = getWrapperAttr wrapper "length"
 
 lengthOfIO :: IO ShallowWrapper -> IO Int
-lengthOfIO wrapper = getIOWrapperAttr wrapper "length"
-
-getIOWrapperAttr :: FromJSON a => IO ShallowWrapper -> JSString -> IO a
-getIOWrapperAttr ioWrapper selector = do
-  wrapper <- ioWrapper
-  getWrapperAttr wrapper selector
+lengthOfIO wrapper = lengthOf =<< wrapper
 
 getWrapperAttr :: FromJSON a => ShallowWrapper -> JSString -> IO a
 getWrapperAttr (ShallowWrapper wrapper) selector = do
