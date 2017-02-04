@@ -61,7 +61,7 @@ foreign import javascript unsafe
   js_shallow :: ReactElementRef -> IO JSVal
 
 find :: ShallowWrapper -> EnzymeSelector -> IO ShallowWrapper
-find = execSW "find"
+find = execSW_SW "find"
 
 is :: ShallowWrapper -> EnzymeSelector -> IO Bool
 is = execB "is"
@@ -69,11 +69,27 @@ is = execB "is"
 childAt :: ShallowWrapper -> Int -> IO ShallowWrapper
 childAt = execI_SW "childAt"
 
-execSW :: String -> ShallowWrapper -> EnzymeSelector -> IO ShallowWrapper
-execSW func (ShallowWrapper wrapper) (StringSelector selector) = do
-  ShallowWrapper <$> js_exec_sw_by_string (toJSString func) wrapper (toJSString selector)
-execSW func (ShallowWrapper wrapper) (PropertySelector selector) = do
-  ShallowWrapper <$> js_exec_sw_by_prop (toJSString func) wrapper ((toJSString . cs) (encode selector))
+at :: ShallowWrapper -> Int -> IO ShallowWrapper
+at = execI_SW "at"
+
+props :: ShallowWrapper -> IO JSVal
+props = exec_SW "props"
+
+typeOf :: ShallowWrapper -> IO JSVal
+typeOf = exec_SW "type"
+
+shallowChild :: ShallowWrapper -> IO ShallowWrapper
+shallowChild wrapper = ShallowWrapper <$> exec_SW "shallow" wrapper
+
+execSW_SW :: String -> ShallowWrapper -> EnzymeSelector -> IO ShallowWrapper
+execSW_SW func (ShallowWrapper wrapper) (StringSelector selector) = do
+  ShallowWrapper <$> js_exec_sw_sw_by_string (toJSString func) wrapper (toJSString selector)
+execSW_SW func (ShallowWrapper wrapper) (PropertySelector selector) = do
+  ShallowWrapper <$> js_exec_sw_sw_by_prop (toJSString func) wrapper ((toJSString . cs) (encode selector))
+
+exec_SW :: String -> ShallowWrapper -> IO JSVal
+exec_SW func (ShallowWrapper wrapper) = do
+  js_exec_sw (toJSString func) wrapper
 
 execI_SW :: String -> ShallowWrapper -> Int -> IO ShallowWrapper
 execI_SW func (ShallowWrapper wrapper) index = do
@@ -88,7 +104,11 @@ execB func (ShallowWrapper wrapper) (PropertySelector selector) = do
 -- TODO unify _sw_ and _b_ by applying the appropriate transformation to the result?
 foreign import javascript unsafe
     "$2[$1]($3)"
-    js_exec_sw_by_string :: JSString -> JSVal -> JSString -> IO JSVal
+    js_exec_sw_sw_by_string :: JSString -> JSVal -> JSString -> IO JSVal
+
+foreign import javascript unsafe
+    "$2[$1]()"
+    js_exec_sw :: JSString -> JSVal -> IO JSVal
 
 foreign import javascript unsafe
     "$2[$1]($3)"
@@ -96,7 +116,7 @@ foreign import javascript unsafe
 
 foreign import javascript unsafe
     "$2[$1](JSON.parse($3))"
-    js_exec_sw_by_prop :: JSString -> JSVal -> JSString -> IO JSVal
+    js_exec_sw_sw_by_prop :: JSString -> JSVal -> JSString -> IO JSVal
 
 foreign import javascript unsafe
     "$2[$1]($3)"
