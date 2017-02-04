@@ -260,26 +260,28 @@ getChildEdits repository vers = do
 
   docRepoIO $ do
     let repoDir  = repoRoot </> (repository ^. unRepoHandle . to cs)
-    withRepositoryDirectory NoUseCache repoDir $ RepoJob (\repo -> do
-      -- Copied from "Darcs.UI.Command.ShowDependcies" (and heavily mutated).
-      Sealed2 r <- readRepo repo >>= pruneRepo
-      let rFL    = newset2FL r
-          deps   = getDeps (removeInternalFL $ mapFL_FL hopefully rFL) rFL
-          dGraph = transitiveReduction . graphToDot nodeLabeledParams $ makeGraph deps
-          depMap = Map.unionsWith (++)
-                 . fmap (uncurry Map.singleton . (toNode &&& (pure . fromNode)))
-                 . edgeStmts
-                 . graphStatements
-                 $ dGraph
-          uuids  = fmap (nodeID &&& (uuid . nodeAttributes))
-                 . nodeStmts
-                 . graphStatements
-                 $ dGraph
-          labelMap = Map.fromList uuids
-          uuidMap  = Map.fromList $ fmap flipPair uuids
+    darcsCommands $ do
+      setCurrentDirectory repoDir
+      withRepositoryDirectory NoUseCache "." $ RepoJob (\repo -> do
+        -- Copied from "Darcs.UI.Command.ShowDependcies" (and heavily mutated).
+        Sealed2 r <- readRepo repo >>= pruneRepo
+        let rFL    = newset2FL r
+            deps   = getDeps (removeInternalFL $ mapFL_FL hopefully rFL) rFL
+            dGraph = transitiveReduction . graphToDot nodeLabeledParams $ makeGraph deps
+            depMap = Map.unionsWith (++)
+                   . fmap (uncurry Map.singleton . (toNode &&& (pure . fromNode)))
+                   . edgeStmts
+                   . graphStatements
+                   $ dGraph
+            uuids  = fmap (nodeID &&& (uuid . nodeAttributes))
+                   . nodeStmts
+                   . graphStatements
+                   $ dGraph
+            labelMap = Map.fromList uuids
+            uuidMap  = Map.fromList $ fmap flipPair uuids
 
-      pure . fmap (EditHandle . cs . flip lookupE labelMap)
-           $ lookupL (lookupE editVersion uuidMap) depMap)
+        pure . fmap (EditHandle . cs . flip lookupE labelMap)
+             $ lookupL (lookupE editVersion uuidMap) depMap)
 
   where
     lookupL k m = fromMaybe [] $ Map.lookup k m
