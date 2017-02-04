@@ -160,6 +160,7 @@ test-suite spec
   other-modules:
       -- find src test -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
       Refine.Frontend.Bubbles.Bubble
+      Refine.Frontend.Bubbles.BubbleSpec
       Refine.Frontend.Bubbles.Overlay
       Refine.Frontend.Bubbles.QuickCreate
       Refine.Frontend.Bubbles.QuickCreateSpec
