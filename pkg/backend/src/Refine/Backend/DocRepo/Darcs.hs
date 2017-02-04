@@ -165,6 +165,11 @@ contentFilePath = "content"
   -- FIXME: consider using pkg/backend/src/Refine/Backend/DocRepo/HtmlFileTree.hs here.  we should
   -- benchmark both options and then decide which one to use.
 
+tempRepo :: FilePath
+tempRepo = "tmprepo"
+
+refineSemaphore :: FilePath
+refineSemaphore = "refine.semaphore"
 
 -- * DocRepo implementation
 
@@ -204,10 +209,10 @@ getVersion repo baseEdit = do
         darcsAction _ = do
           upstreamRepoDirA <- ioAbsolute upstreamRepoDir
           hereRepoDirA <- ioAbsolute "."
-          cloneCmd (upstreamRepoDirA, hereRepoDirA) [UpToPatch basePatch] [upstreamRepoDir, "tmprepo"]
+          cloneCmd (upstreamRepoDirA, hereRepoDirA) [UpToPatch basePatch] [upstreamRepoDir, tempRepo]
 
         inspectAction wd = do
-          !vers <- vdocVersionFromST <$> ST.readFile (wd </> "tmprepo" </> contentFilePath)
+          !vers <- vdocVersionFromST <$> ST.readFile (wd </> tempRepo </> contentFilePath)
           pure vers
 
     withDarcsAction darcsAction inspectAction
@@ -225,13 +230,13 @@ createEdit repo baseEdit newVersion = do
     let darcsAction _ = do
           upstreamRepoDirA <- ioAbsolute upstreamRepoDir
           hereRepoDirA@(toFilePath -> hereRepoDir) <- ioAbsolute "."
-          cloneCmd (upstreamRepoDirA, hereRepoDirA) [UpToPatch basePatch] [upstreamRepoDir, "tmprepo"]
+          cloneCmd (upstreamRepoDirA, hereRepoDirA) [UpToPatch basePatch] [upstreamRepoDir, tempRepo]
 
           ST.writeFile contentFilePath $ vdocVersionToST newVersion
           recordCmd (hereRepoDirA, hereRepoDirA) (recordConfig newPatch) []
 
           Dir.setCurrentDirectory upstreamRepoDir
-          pullCmd (upstreamRepoDirA, hereRepoDirA) [All] [hereRepoDir </> "tmprepo"]
+          pullCmd (upstreamRepoDirA, hereRepoDirA) [All] [hereRepoDir </> tempRepo]
 
         inspectAction _ = pure . EditHandle . cs $ newPatch
 
@@ -268,10 +273,10 @@ getChildEdits repository baseHandle = do
             result <- pure . fmap (EditHandle . cs . flip lookupE labelMap)
                    $ lookupL (lookupE basePatch uuidMap) depMap
 
-            ST.writeFile (wd </> "refine.semaphore") . cs . show $ result)
+            ST.writeFile (wd </> refineSemaphore) . cs . show $ result)
 
         inspectAction wd = do
-          !edits <- read . cs <$> ST.readFile (wd </> "refine.semaphore")
+          !edits <- read . cs <$> ST.readFile (wd </> refineSemaphore)
           pure edits
 
     withDarcsAction darcsAction inspectAction
