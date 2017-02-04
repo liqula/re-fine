@@ -45,44 +45,44 @@ spec = do
   describe "The icon_ component" $ do
     it "annotates the block together with the icon module" $ do
       wrapper <- shallow $ icon_ iconPropsXXL
-      lengthIO (find wrapper (StringSelector ".the-block-name__icon")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".the-block-name__icon")) `shouldReturn` (1 :: Int)
 
     -- TODO I hope this is only temporary
     it "annotates the block together with the category-icon module" $ do
       wrapper <- shallow $ icon_ iconPropsXXL
-      lengthIO (find wrapper (StringSelector ".the-block-name__category-icon")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".the-block-name__category-icon")) `shouldReturn` (1 :: Int)
 
     it "annotates the highlight class if True is passed" $ do
       wrapper <- shallow $ icon_ iconPropsXXL
-      lengthIO (find wrapper (StringSelector ".o-icon-highlight")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".o-icon-highlight")) `shouldReturn` (1 :: Int)
 
     it "does not annotate the highlight class if False is passed" $ do
       wrapper <- shallow $ icon_ (IconProps  "the-block-name" False ("Image", "striped") XXL)
-      lengthIO (find wrapper (StringSelector ".o-icon-highlight")) `shouldReturn` (0 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".o-icon-highlight")) `shouldReturn` (0 :: Int)
 
     it "annotates the icon image class that is passed" $ do
       wrapper <- shallow $ icon_ iconPropsXXL
-      lengthIO (find wrapper (StringSelector ".Image_striped")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".Image_striped")) `shouldReturn` (1 :: Int)
 
     it "annotates the RO icon image when the mouse has entered the icon and the normal one when it left again" $ do
       wrapper <- shallow $ icon_ iconPropsXXL
       wrapper2 <- simulate wrapper MouseEnter
-      lengthIO (find wrapper2 (StringSelector ".Image_striped")) `shouldReturn` (0 :: Int)
-      lengthIO (find wrapper2 (StringSelector ".Image_RO")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper2 (StringSelector ".Image_striped")) `shouldReturn` (0 :: Int)
+      lengthOfIO (find wrapper2 (StringSelector ".Image_RO")) `shouldReturn` (1 :: Int)
       wrapper3 <- simulate wrapper2 MouseLeave
-      lengthIO (find wrapper3 (StringSelector ".Image_striped")) `shouldReturn` (1 :: Int)
-      lengthIO (find wrapper3 (StringSelector ".Image_RO")) `shouldReturn` (0 :: Int)
+      lengthOfIO (find wrapper3 (StringSelector ".Image_striped")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper3 (StringSelector ".Image_RO")) `shouldReturn` (0 :: Int)
 
     it "annotates the iconsize class with the correct size (XXL)" $ do
       wrapper <- shallow $ icon_ iconPropsXXL
-      lengthIO (find wrapper (StringSelector ".iconsize-xxl")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".iconsize-xxl")) `shouldReturn` (1 :: Int)
     it "annotates the iconsize class with the correct size (M)" $ do
       wrapper <- shallow $ icon_ iconPropsM
-      lengthIO (find wrapper (StringSelector ".iconsize-m")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".iconsize-m")) `shouldReturn` (1 :: Int)
 
     it "has 8 spans" $ do
       wrapper <- shallow $ icon_ iconPropsM
-      lengthIO (find wrapper (StringSelector "span")) `shouldReturn` (8 :: Int)
+      lengthOfIO (find wrapper (StringSelector "span")) `shouldReturn` (8 :: Int)
 
   describe "iconButtonWithAlignmentCore_ component" $ do
     it "has the data content type passed to it" $ do
@@ -150,7 +150,7 @@ spec = do
         (IconButtonWithAlignmentProps
           (IconButtonProps iconPropsM element module1 ctype label1 False (\_ -> []))
           False Nothing)
-      lengthIO (find wrapper (StringSelector "Icon")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector "Icon")) `shouldReturn` (1 :: Int)
 
     it "has a span that has the block name with the button-label module" $ do
       wrapper <- shallow $ iconButtonWithAlignmentCore_
@@ -211,7 +211,7 @@ TODO these can only be tested once we know how to spy on a pure function in Hask
         (IconButtonWithAlignmentProps
           (IconButtonProps iconPropsM element module1 ctype label1 False (\_ -> []))
           False Nothing)
-      lengthIO (find wrapper (StringSelector "IconButtonWithAlignmentCore")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector "IconButtonWithAlignmentCore")) `shouldReturn` (1 :: Int)
 
 
   describe "positionedIconButton_ component" $ do
@@ -226,7 +226,7 @@ TODO these can only be tested once we know how to spy on a pure function in Hask
     it "never renders the right-alignment flag" $ do
       coreWrapper <- shallow (positionedIconButton_ theProps 377) >>= (`find` StringSelector "IconButtonWithAlignment")
                   >>= shallowChild >>= (`find` StringSelector "IconButtonWithAlignmentCore") >>= shallowChild
-      lengthIO (find coreWrapper (StringSelector ".the-block-name--align-right")) `shouldReturn` (0 :: Int)
+      lengthOfIO (find coreWrapper (StringSelector ".the-block-name--align-right")) `shouldReturn` (0 :: Int)
 
 
   describe "toClasses" $ do

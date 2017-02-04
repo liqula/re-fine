@@ -77,13 +77,13 @@ spec = do
 
     it "has a child with the icon-bg class" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      lengthIO (find wrapper (StringSelector ".o-snippet__icon-bg")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".o-snippet__icon-bg")) `shouldReturn` (1 :: Int)
 
     it "has a child with the icon-bg + side class" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      lengthIO (find wrapper (StringSelector ".o-snippet__icon-bg--the-icon-side")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".o-snippet__icon-bg--the-icon-side")) `shouldReturn` (1 :: Int)
 
     it "has a child with the content class" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      lengthIO (find wrapper (StringSelector ".o-snippet__content")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".o-snippet__content")) `shouldReturn` (1 :: Int)
 

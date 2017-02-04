@@ -150,8 +150,8 @@ foreign import javascript unsafe
 lengthOf :: ShallowWrapper -> IO Int
 lengthOf wrapper = getWrapperAttr wrapper "length"
 
-lengthIO :: IO ShallowWrapper -> IO Int
-lengthIO wrapper = getIOWrapperAttr wrapper "length"
+lengthOfIO :: IO ShallowWrapper -> IO Int
+lengthOfIO wrapper = getIOWrapperAttr wrapper "length"
 
 getIOWrapperAttr :: FromJSON a => IO ShallowWrapper -> JSString -> IO a
 getIOWrapperAttr ioWrapper selector = do
