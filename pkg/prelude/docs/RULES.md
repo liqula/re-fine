@@ -10,31 +10,30 @@ has decided on.
 
 ### establishing new rules
 
-Just open a PR on this file and have everybody comment on it.  If
+Just open a MR on this file and have everybody comment on it.  If
 nobody objects, it's a new rule!
 
 
 ### development process
 
-1. if you want to work on a branch, create PR early, label it "work in
-   progress", and assign yourself.  this way you are allowed to write
-   to it, rebase it, and nobody else is allowed to write.
+1. work on branches, not master.  make sure branches are kept small
+   and merged soon.  start branch names with the number of the ticket
+   they are addressing (solving or partially solving).
 
-2. (1.) of course does not rule out ad-hoc collaboration coordinated
-   through other channels like irc.
+   DEVIATING data points: https://mrdevops.io/trunk-based-development-8376fe577c11#.qucopj92o
+
+2. to merge a branch, create an MR.
 
 3. if you want a review, unassign yourself and optionally ask somebody
    on irc for review.
 
 4. roughly every time you start your day, you should look at the list
-   of "everything assigned to you":
+   of all issues assigned to you and all open merge requests.
 
-```sh
-      browser "https://github.com/fisx/aula2/issues?q=is%3Aopen+assignee%3A"`whoami`
-```
+   if there are unassigned issues or MRs assigned to you, those have
+   the highest priority.
 
-   if the list contains pull requests for review, those have the
-   highest priority.
+5. before merging an MR, rebase it on master or merge master into it.
 
 
 ### language extensions
@@ -57,6 +56,7 @@ liking.
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
@@ -64,6 +64,7 @@ liking.
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeFamilyDependencies     #-}
@@ -124,6 +125,25 @@ import qualified Data.Text.Lazy as LT
 ### code layout
 
 1. two empty lines before section heading (`-- *`).
+
+2. this is a soft rule: try to keep lines shorter than 120 chars.
+   RATIONALE: avoids line breaks on small screens.
+
+
+### finding names
+
+In order to avoid name shadowing warnings, (1) try to think of another
+name that is at least as meaningful and informative, and iff failing
+to do so, (2) append natural numbers to the shadowed name.
+
+RATIONALE:
+- trailing `_` is already used by react-flux, blaze, lucid etc..
+- leading `_` is used by lens and, worse, has the special meaning as a
+  typed hole.
+- tailing `'` has an informal meaning in analysis that is different from
+  what we have in mind here (it's somehow the next step in an
+  iteration).
+- leading `'` is a syntax error (and also would be very confusing).
 
 
 ### tests
