@@ -81,6 +81,16 @@ typeOf = exec_SW "type"
 shallowChild :: ShallowWrapper -> IO ShallowWrapper
 shallowChild wrapper = ShallowWrapper <$> exec_SW "shallow" wrapper
 
+children :: ShallowWrapper -> IO ShallowWrapper
+children wrapper = ShallowWrapper <$> exec_SW "children" wrapper
+
+html :: ShallowWrapper -> IO JSString
+html = exec_SW_Str "html"
+
+text :: ShallowWrapper -> IO JSString
+text = exec_SW_Str "text"
+
+
 execSW_SW :: String -> ShallowWrapper -> EnzymeSelector -> IO ShallowWrapper
 execSW_SW func (ShallowWrapper wrapper) (StringSelector selector) = do
   ShallowWrapper <$> js_exec_sw_sw_by_string (toJSString func) wrapper (toJSString selector)
@@ -90,6 +100,10 @@ execSW_SW func (ShallowWrapper wrapper) (PropertySelector selector) = do
 exec_SW :: String -> ShallowWrapper -> IO JSVal
 exec_SW func (ShallowWrapper wrapper) = do
   js_exec_sw (toJSString func) wrapper
+
+exec_SW_Str :: String -> ShallowWrapper -> IO JSString
+exec_SW_Str func (ShallowWrapper wrapper) = do
+  js_exec_sw_str (toJSString func) wrapper
 
 execI_SW :: String -> ShallowWrapper -> Int -> IO ShallowWrapper
 execI_SW func (ShallowWrapper wrapper) index = do
@@ -111,6 +125,10 @@ foreign import javascript unsafe
     js_exec_sw :: JSString -> JSVal -> IO JSVal
 
 foreign import javascript unsafe
+    "$2[$1]()"
+    js_exec_sw_str :: JSString -> JSVal -> IO JSString
+
+foreign import javascript unsafe
     "$2[$1]($3)"
     js_exec_i_sw_by_string :: JSString -> JSVal -> Int -> IO JSVal
 
@@ -125,14 +143,6 @@ foreign import javascript unsafe
 foreign import javascript unsafe
     "$2[$1](JSON.parse($3))"
     js_exec_b_by_prop :: JSString -> JSVal -> JSString -> IO Bool
-
-text :: ShallowWrapper -> IO JSString
-text (ShallowWrapper wrapper) = do
-  js_text wrapper
-
-foreign import javascript unsafe
-    "$1.text()"
-    js_text :: JSVal -> IO JSString
 
 lengthOf :: ShallowWrapper -> IO Int
 lengthOf wrapper = getWrapperAttr wrapper "length"
