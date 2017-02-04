@@ -66,11 +66,18 @@ find = execSW "find"
 is :: ShallowWrapper -> EnzymeSelector -> IO Bool
 is = execB "is"
 
+childAt :: ShallowWrapper -> Int -> IO ShallowWrapper
+childAt = execI_SW "childAt"
+
 execSW :: String -> ShallowWrapper -> EnzymeSelector -> IO ShallowWrapper
 execSW func (ShallowWrapper wrapper) (StringSelector selector) = do
   ShallowWrapper <$> js_exec_sw_by_string (toJSString func) wrapper (toJSString selector)
 execSW func (ShallowWrapper wrapper) (PropertySelector selector) = do
   ShallowWrapper <$> js_exec_sw_by_prop (toJSString func) wrapper ((toJSString . cs) (encode selector))
+
+execI_SW :: String -> ShallowWrapper -> Int -> IO ShallowWrapper
+execI_SW func (ShallowWrapper wrapper) index = do
+  ShallowWrapper <$> js_exec_i_sw_by_string (toJSString func) wrapper index
 
 execB :: String -> ShallowWrapper -> EnzymeSelector -> IO Bool
 execB func (ShallowWrapper wrapper) (StringSelector selector) = do
@@ -82,6 +89,10 @@ execB func (ShallowWrapper wrapper) (PropertySelector selector) = do
 foreign import javascript unsafe
     "$2[$1]($3)"
     js_exec_sw_by_string :: JSString -> JSVal -> JSString -> IO JSVal
+
+foreign import javascript unsafe
+    "$2[$1]($3)"
+    js_exec_i_sw_by_string :: JSString -> JSVal -> Int -> IO JSVal
 
 foreign import javascript unsafe
     "$2[$1](JSON.parse($3))"
