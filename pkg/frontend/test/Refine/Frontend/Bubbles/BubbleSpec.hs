@@ -43,7 +43,7 @@ spec = do
       contentType = "the-content-type"
       iconSide = "the-icon-side"
       iconStyle = ("the-icon-name", "the-icon-style")
-      markPosition = (Just (140, 180))
+      markPosition = Just (140, 180)
       screenState = SC.ScreenState 95 SC.Desktop
       bubbleProps = BubbleProps chunkId contentType iconSide iconStyle markPosition screenState
 

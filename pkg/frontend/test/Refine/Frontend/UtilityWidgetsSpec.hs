@@ -215,22 +215,17 @@ TODO these can only be tested once we know how to spy on a pure function in Hask
 
 
   describe "positionedIconButton_ component" $ do
+
+    let theProps = IconButtonProps iconPropsM element module1 ctype label1 False (\_ -> [])
+
     it "always renders the position that is passed to it" $ do
-      wrapper <- shallow $ positionedIconButton_
-          (IconButtonProps iconPropsM element module1 ctype label1 False (\_ -> [])) 377
-      icons <- find wrapper (StringSelector "IconButtonWithAlignment")
-      iconWrapper <- shallowChild icons
-      cores <- find iconWrapper (StringSelector "IconButtonWithAlignmentCore")
-      coreWrapper <- shallowChild cores
+      coreWrapper <- shallow (positionedIconButton_ theProps 377) >>= (`find` StringSelector "IconButtonWithAlignment")
+                  >>= shallowChild >>= (`find` StringSelector "IconButtonWithAlignmentCore") >>= shallowChild
       is coreWrapper (PropertySelector [Prop "style" [Style "top" (377 :: Int)]]) `shouldReturn` True
 
     it "never renders the right-alignment flag" $ do
-      wrapper <- shallow $ positionedIconButton_
-          (IconButtonProps iconPropsM element module1 ctype label1 False (\_ -> [])) 377
-      icons <- find wrapper (StringSelector "IconButtonWithAlignment")
-      iconWrapper <- shallowChild icons
-      cores <- find iconWrapper (StringSelector "IconButtonWithAlignmentCore")
-      coreWrapper <- shallowChild cores
+      coreWrapper <- shallow (positionedIconButton_ theProps 377) >>= (`find` StringSelector "IconButtonWithAlignment")
+                  >>= shallowChild >>= (`find` StringSelector "IconButtonWithAlignmentCore") >>= shallowChild
       lengthIO (find coreWrapper (StringSelector ".the-block-name--align-right")) `shouldReturn` (0 :: Int)
 
 

@@ -33,6 +33,7 @@ import GHCJS.Types (JSVal, nullRef)
 import React.Flux
 import React.Flux.Internal
 
+{-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
 newtype ShallowWrapper = ShallowWrapper JSVal
 
