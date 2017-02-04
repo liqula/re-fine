@@ -6,7 +6,9 @@
 {-# LANGUAGE TypeFamilies      #-}
 
 
-module Refine.Frontend.Screen.Store where
+module Refine.Frontend.Screen.Store
+( screenStateUpdate
+) where
 
 import           Control.Lens ((&), (%~))
 
