@@ -212,6 +212,26 @@ TODO these can only be tested once we know how to spy on a pure function in Hask
       lengthIO (find wrapper (StringSelector "IconButtonWithAlignmentCore")) `shouldReturn` (1 :: Int)
 
 
+  describe "positionedIconButton_ component" $ do
+    it "always renders the position that is passed to it" $ do
+      wrapper <- shallow $ positionedIconButton_
+          (IconButtonProps iconPropsM element module1 ctype label1 False (\_ -> [])) 377
+      icons <- find wrapper (StringSelector "IconButtonWithAlignment")
+      iconWrapper <- shallowChild icons
+      cores <- find iconWrapper (StringSelector "IconButtonWithAlignmentCore")
+      coreWrapper <- shallowChild cores
+      is coreWrapper (PropertySelector [Prop "style" [Style "top" (377 :: Int)]]) `shouldReturn` True
+
+    it "never renders the right-alignment flag" $ do
+      wrapper <- shallow $ positionedIconButton_
+          (IconButtonProps iconPropsM element module1 ctype label1 False (\_ -> [])) 377
+      icons <- find wrapper (StringSelector "IconButtonWithAlignment")
+      iconWrapper <- shallowChild icons
+      cores <- find iconWrapper (StringSelector "IconButtonWithAlignmentCore")
+      coreWrapper <- shallowChild cores
+      lengthIO (find coreWrapper (StringSelector ".the-block-name--align-right")) `shouldReturn` (0 :: Int)
+
+
   describe "toClasses" $ do
     it "turns one class name into a string containing that class name" $ do
       toClasses ["single-class-name"] `shouldBe` "single-class-name"
