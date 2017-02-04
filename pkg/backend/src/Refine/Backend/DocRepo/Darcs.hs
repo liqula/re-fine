@@ -27,8 +27,7 @@ module Refine.Backend.DocRepo.Darcs
   ) where
 
 import Control.Arrow ((&&&), second)
-import Control.Exception
-import Control.Lens ((^.), to, view)
+import Control.Lens ((^.), to)
 import Data.Maybe (fromMaybe)
 import Data.Monoid ((<>))
 import Data.String.Conversions
@@ -36,8 +35,11 @@ import Data.Text.IO as ST
 import Data.UUID
 import qualified Data.ByteString.Char8 as BC ( unpack )
 import qualified Data.Map as Map
-import System.Directory hiding (makeAbsolute)
+import qualified System.Directory as Dir
 import System.FilePath ((</>))
+import System.IO.Temp (withSystemTempDirectory)
+import qualified System.Posix.Process as Proc
+import qualified System.Exit as Proc
 import System.Random
 
 import Darcs.UI.Commands        as Darcs (commandCommand)
@@ -46,7 +48,7 @@ import Darcs.UI.Commands.Clone  as Darcs (clone)
 import Darcs.UI.Commands.Init   as Darcs (initializeCmd)
 import Darcs.UI.Commands.Pull   as Darcs (pull)
 import Darcs.UI.Commands.Record as Darcs (record, RecordConfig(..))
-import Darcs.UI.Options.Flags (DarcsFlag(WorkRepoDir, PatchName, All, UpToPatch))
+import Darcs.UI.Options.Flags (DarcsFlag(WorkRepoDir, All, UpToPatch))
 import Darcs.Util.Path hiding (getCurrentDirectory, setCurrentDirectory)
 import Darcs.UI.Options.All
   ( UseCache(..)
@@ -87,45 +89,39 @@ import Data.GraphViz.Attributes.Complete
 import Data.Graph.Inductive.Graph ( Graph(..), mkGraph, LNode, UEdge )
 import Data.Graph.Inductive.PatriciaTree ( Gr )
 
-import Refine.Backend.Config
 import Refine.Backend.DocRepo.Core
 import Refine.Common.Types.VDoc
-import Refine.Prelude ((<@>))
 
-{-
-The current implementation does not support multithreaded applications.
-
-The result of the experiment: the high level darcs commands changes
-the current working directories. Having this property of the current
-implementation, if a second thread starts to manipulate a document
-the working directories would be messed up.
-
-Refactoring is needed. The proposed solution is to use the
-`withRepositoryDirectory NoUseCache repoDir $ RepoJob` combinator
-and assemble the version in some temporary directory if it is possible.
--}
 
 -- * Helpers
 
 newUUID :: IO String
 newUUID = show @UUID <$> randomIO
 
--- | Darcs changes the current directory, which has to be set
--- back after the operation.
-darcsCommands :: IO a -> IO a
-darcsCommands darcs = do
-  cwd <- getCurrentDirectory
-  !x <- darcs `finally` setCurrentDirectory cwd
-  pure x
+-- | 'withCurrentDir' creates a new POSIX process to run the action in isolation from other threads.
+--
+-- Reason: the high-level darcs commands change the current working directory. If a second thread
+-- starts to manipulate a separate document the working directories would be messed up.  Note that
+-- using `withRepositoryDirectory` does not help either: some of the darcs functions that live on
+-- the other side of this function call from the cli may also use or touch the current working
+-- directory.
+--
+-- FIXME: consolidate with 'Refine.Backend.Test.Util.withTempCurrentDirectory'.
+withForkProcCurrentDir :: FilePath -> IO () -> IO ()
+withForkProcCurrentDir wd action = do
+  ph     <- Proc.forkProcess (Dir.withCurrentDirectory wd action)
+  status <- Proc.getProcessStatus True False ph
+  case status of
+    Just (Proc.Exited Proc.ExitSuccess) -> pure ()
+    bad -> error $ "withForkProcCurrentDir: " <> show bad
 
-withTempDir :: FilePath -> IO a -> IO a
-withTempDir fp m = m `finally` removeDirectoryRecursive fp
-
-createCloneTmp :: FilePath -> FilePath -> IO (AbsolutePath, AbsolutePath, FilePath)
-createCloneTmp repoDir uuid = do
-  tmp  <- getTemporaryDirectory
-  let cloneTmp = tmp </> uuid
-  (,,) <$> ioAbsolute repoDir <*> ioAbsolute cloneTmp <@> cloneTmp
+-- | Run a darcs action wrapped in 'withForkProcCurrentDir'.  Then run an action that gets the
+-- filepath to the current working directory of the darcs action for inspection.
+withDarcsAction :: (FilePath -> IO ()) -> (FilePath -> IO a) -> IO a
+withDarcsAction darcsAction inspectAction =
+  withSystemTempDirectory "refine.darcs" $ \wd -> do
+    withForkProcCurrentDir wd (darcsAction wd)
+    inspectAction wd
 
 
 -- * High level darcs commands
@@ -164,124 +160,121 @@ recordConfig uuid = Darcs.RecordConfig
   , useCache        = NoUseCache
   }
 
+contentFilePath :: FilePath
+contentFilePath = "content"
+  -- FIXME: consider using pkg/backend/src/Refine/Backend/DocRepo/HtmlFileTree.hs here.  we should
+  -- benchmark both options and then decide which one to use.
+
 
 -- * DocRepo implementation
 
 createRepo :: DocRepo RepoHandle
 createRepo = do
-  repoRoot <- view cfgReposRoot
-  docRepoIO $ do
-    uuid <- newUUID
-    let repoDir = repoRoot </> uuid
-    createDirectory repoDir
+  docRepoIOWithReposRoot $ \reposRoot -> do
+    repoUuid <- newUUID
+    Dir.createDirectoryIfMissing True (reposRoot </> repoUuid)
+    withForkProcCurrentDir (reposRoot </> repoUuid) $ do
+      repoDirA <- ioAbsolute "."
+      Darcs.initializeCmd (repoDirA, repoDirA) [WorkRepoDir "."] []
+    pure . RepoHandle . cs $ repoUuid
 
-    repoDirA <- ioAbsolute repoDir
-    darcsCommands $ do
-      let repoDirs = (repoDirA, repoDirA)
-      Darcs.initializeCmd repoDirs [WorkRepoDir repoDir] []
 
-    pure . RepoHandle . cs $ uuid
-
-contentFile :: String
-contentFile = "content"
-  -- FIXME: consider using pkg/backend/src/Refine/Backend/DocRepo/HtmlFileTree.hs here.  we should
-  -- benchmark both options and then decide which one to use.
-
+-- | FIXME: this may be a special case of 'createEdit'.
 createInitialEdit :: RepoHandle -> VDocVersion 'HTMLCanonical -> DocRepo EditHandle
 createInitialEdit repo vers = do
-  repoRoot <- view cfgReposRoot
-  docRepoIO $ do
-    let repoDir  = repoRoot </> (repo ^. unRepoHandle . to cs)
-    uuid <- newUUID
+  docRepoIOWithReposRoot $ \reposRoot -> do
+    let repoDir = reposRoot </> (repo ^. unRepoHandle . to cs)
+    patchUuid <- newUUID  -- (it is vital to do this outside of 'withForkProcCurrentDirectory'!)
+    withForkProcCurrentDir repoDir $ do
+      ST.writeFile contentFilePath (vdocVersionToST vers)
+      repoDirA <- ioAbsolute "."
+      addCmd (repoDirA, repoDirA) [] [contentFilePath]
+      recordCmd (repoDirA, repoDirA) (recordConfig patchUuid) []
 
-    ST.writeFile (repoDir </> contentFile) (vdocVersionToST vers)
-
-    darcsCommands $ do
-      repoDirA <- ioAbsolute repoDir
-      setCurrentDirectory repoDir
-      addCmd (repoDirA, repoDirA) [] [contentFile]
-      recordCmd (repoDirA, repoDirA) (recordConfig uuid) []
-
-    pure . EditHandle $ cs uuid
+    pure . EditHandle . cs $ patchUuid
 
 
 -- | Clone the repository to a temp dir, reverting the result at some state.  Read the version out.
 getVersion :: RepoHandle -> EditHandle -> DocRepo (VDocVersion 'HTMLCanonical)
-getVersion repo edit = do
-  repoRoot <- view cfgReposRoot
-  let baseEdit = edit ^. unEditHandle . to cs
+getVersion repo baseEdit = do
+  docRepoIOWithReposRoot $ \reposRoot -> do
+    let upstreamRepoDir = reposRoot </> (repo ^. unRepoHandle . to cs)
+        basePatch = baseEdit ^. unEditHandle . to cs
 
-  docRepoIO $ do
-    darcsCommands $ do
-      uuid <- newUUID
-      let repoDir  = repoRoot </> (repo ^. unRepoHandle . to cs)
-      (repoDirA, cloneTmpA, cloneTmp) <- createCloneTmp repoDir uuid
+        darcsAction _ = do
+          upstreamRepoDirA <- ioAbsolute upstreamRepoDir
+          hereRepoDirA <- ioAbsolute "."
+          cloneCmd (upstreamRepoDirA, hereRepoDirA) [UpToPatch basePatch] [upstreamRepoDir, "tmprepo"]
 
-      cloneCmd (repoDirA, cloneTmpA) [UpToPatch baseEdit] [repoDir, cloneTmp]
-      withTempDir cloneTmp $ do
-        !ver <- vdocVersionFromST <$> ST.readFile (cloneTmp </> contentFile)
-        pure ver
+        inspectAction wd = do
+          !vers <- vdocVersionFromST <$> ST.readFile (wd </> "tmprepo" </> contentFilePath)
+          pure vers
+
+    withDarcsAction darcsAction inspectAction
 
 
 -- | Clone the repo to the temporary dir; do the changes at the given version; pull the new patches from
 -- the new repo; remove the temporary directory.
 createEdit :: RepoHandle -> EditHandle -> VDocVersion 'HTMLCanonical -> DocRepo EditHandle
-createEdit repo base edit = do
-  let baseEdit = base ^. unEditHandle . to cs
+createEdit repo baseEdit newVersion = do
+  docRepoIOWithReposRoot $ \reposRoot -> do
+    let upstreamRepoDir = reposRoot </> (repo ^. unRepoHandle . to cs)
+        basePatch = baseEdit ^. unEditHandle . to cs
+    newPatch <- newUUID
 
-  repoRoot <- view cfgReposRoot
+    let darcsAction _ = do
+          upstreamRepoDirA <- ioAbsolute upstreamRepoDir
+          hereRepoDirA@(toFilePath -> hereRepoDir) <- ioAbsolute "."
+          cloneCmd (upstreamRepoDirA, hereRepoDirA) [UpToPatch basePatch] [upstreamRepoDir, "tmprepo"]
 
-  uuid <- docRepoIO $ do
-    cwd <- getCurrentDirectory
-    uuid <- newUUID
-    let repoDir = repoRoot </> (repo ^. unRepoHandle . to cs)
-    darcsCommands $ do
-      (repoDirA, cloneTmpA, cloneTmp) <- createCloneTmp repoDir uuid
+          ST.writeFile contentFilePath $ vdocVersionToST newVersion
+          recordCmd (hereRepoDirA, hereRepoDirA) (recordConfig newPatch) []
 
-      cloneCmd (repoDirA, cloneTmpA) [PatchName baseEdit] [repoDir, cloneTmp]
-      withTempDir cloneTmp $ do
-        ST.writeFile (cloneTmp </> contentFile) (vdocVersionToST edit)
+          Dir.setCurrentDirectory upstreamRepoDir
+          pullCmd (upstreamRepoDirA, hereRepoDirA) [All] [hereRepoDir </> "tmprepo"]
 
-        setCurrentDirectory cloneTmp
-        recordCmd (repoDirA, repoDirA) (recordConfig uuid) []
-        -- PatchName is necessary to fill out patchinfo fields automatically.
-        setCurrentDirectory (cwd </> repoDir)
-        pullCmd (repoDirA, cloneTmpA) [All] [cloneTmp]
+        inspectAction _ = pure . EditHandle . cs $ newPatch
 
-    pure uuid
-
-  pure . EditHandle $ cs uuid
+    withDarcsAction darcsAction inspectAction
 
 
 -- | Get all edits that are directly based on a given edit.
 getChildEdits :: RepoHandle -> EditHandle -> DocRepo [EditHandle]
-getChildEdits repository vers = do
-  repoRoot <- view cfgReposRoot
+getChildEdits repository baseHandle = do
+  docRepoIOWithReposRoot $ \reposRoot -> do
+    let repoDir  = reposRoot </> (repository ^. unRepoHandle . to cs)
 
-  docRepoIO $ do
-    let repoDir  = repoRoot </> (repository ^. unRepoHandle . to cs)
-    darcsCommands $ do
-      setCurrentDirectory repoDir
-      withRepositoryDirectory NoUseCache "." $ RepoJob (\repo -> do
-        -- Copied from "Darcs.UI.Command.ShowDependcies" (and heavily mutated).
-        Sealed2 r <- readRepo repo >>= pruneRepo
-        let rFL    = newset2FL r
-            deps   = getDeps (removeInternalFL $ mapFL_FL hopefully rFL) rFL
-            dGraph = transitiveReduction . graphToDot nodeLabeledParams $ makeGraph deps
-            depMap = Map.unionsWith (++)
-                   . fmap (uncurry Map.singleton . (toNode &&& (pure . fromNode)))
-                   . edgeStmts
-                   . graphStatements
-                   $ dGraph
-            uuids  = fmap (nodeID &&& (uuid . nodeAttributes))
-                   . nodeStmts
-                   . graphStatements
-                   $ dGraph
-            labelMap = Map.fromList uuids
-            uuidMap  = Map.fromList $ fmap flipPair uuids
+        darcsAction :: FilePath -> IO ()
+        darcsAction wd = do
+          Dir.setCurrentDirectory repoDir
+          withRepositoryDirectory NoUseCache "." $ RepoJob (\repo -> do
+            -- Copied from "Darcs.UI.Command.ShowDependcies" (and heavily mutated).
+            Sealed2 r <- readRepo repo >>= pruneRepo
+            let rFL    = newset2FL r
+                deps   = getDeps (removeInternalFL $ mapFL_FL hopefully rFL) rFL
+                dGraph = transitiveReduction . graphToDot nodeLabeledParams $ makeGraph deps
+                depMap = Map.unionsWith (++)
+                       . fmap (uncurry Map.singleton . (toNode &&& (pure . fromNode)))
+                       . edgeStmts
+                       . graphStatements
+                       $ dGraph
+                uuids  = fmap (nodeID &&& (uuid . nodeAttributes))
+                       . nodeStmts
+                       . graphStatements
+                       $ dGraph
+                labelMap = Map.fromList uuids
+                uuidMap  = Map.fromList $ fmap flipPair uuids
 
-        pure . fmap (EditHandle . cs . flip lookupE labelMap)
-             $ lookupL (lookupE editVersion uuidMap) depMap)
+            result <- pure . fmap (EditHandle . cs . flip lookupE labelMap)
+                   $ lookupL (lookupE basePatch uuidMap) depMap
+
+            ST.writeFile (wd </> "refine.semaphore") . cs . show $ result)
+
+        inspectAction wd = do
+          !edits <- read . cs <$> ST.readFile (wd </> "refine.semaphore")
+          pure edits
+
+    withDarcsAction darcsAction inspectAction
 
   where
     lookupL k m = fromMaybe [] $ Map.lookup k m
@@ -299,10 +292,10 @@ getChildEdits repository vers = do
 
     uuid = head . map getLabel . filter isLabel
 
-    editVersion :: String
-    editVersion = vers ^. unEditHandle . to cs
+    basePatch :: String
+    basePatch = baseHandle ^. unEditHandle . to cs
 
-    pruneRepo r = case matchingHead [Match.OnePatch editVersion] r of
+    pruneRepo r = case matchingHead [Match.OnePatch basePatch] r of
                     _ :> ps' -> (pure . seal2) $ PatchSet NilRL (reverseFL ps')
 
     nodeLabeledParams :: GraphvizParams n String el () String
