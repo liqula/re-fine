@@ -29,8 +29,8 @@ nobody objects, it's a new rule!
 4. roughly every time you start your day, you should look at the list
    of all issues assigned to you and all open merge requests.
 
-   if there are unassigned MRs or MRs assigned to you, those have the
-   highest priority.
+   if there are unassigned issues or MRs assigned to you, those have
+   the highest priority.
 
 5. before merging an MR, rebase it on master or merge master into it.
 
