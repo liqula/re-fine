@@ -45,6 +45,7 @@ library
   exposed-modules:
       -- we can't have hspec, but at least we have bash and find and perl...  :)
       -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
+      Refine.Frontend.Bubbles.Bubble
       Refine.Frontend.Bubbles.Overlay
       Refine.Frontend.Bubbles.QuickCreate
       Refine.Frontend.Bubbles.Store
@@ -99,6 +100,7 @@ executable refine-frontend
     , unordered-containers
   other-modules:
       -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
+      Refine.Frontend.Bubbles.Bubble
       Refine.Frontend.Bubbles.Overlay
       Refine.Frontend.Bubbles.QuickCreate
       Refine.Frontend.Bubbles.Store
@@ -157,6 +159,7 @@ test-suite spec
     , unordered-containers
   other-modules:
       -- find src test -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
+      Refine.Frontend.Bubbles.Bubble
       Refine.Frontend.Bubbles.Overlay
       Refine.Frontend.Bubbles.QuickCreate
       Refine.Frontend.Bubbles.QuickCreateSpec
