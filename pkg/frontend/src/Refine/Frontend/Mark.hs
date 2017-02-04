@@ -49,11 +49,9 @@ data MarkProps = MarkProps
 
 makeLenses ''MarkProps
 
-toMarkProps :: [HTMLP.Attr] -> MarkProps
+toMarkProps :: [HTMLP.Attr] -> Maybe MarkProps
 toMarkProps attrs = let maybeChunkId = readMaybe $ valueOf "data-chunk-id" attrs :: Maybe Int64
-  in case maybeChunkId of
-    Nothing -> MarkProps (-1) ""
-    Just chunkId -> MarkProps chunkId (valueOf "data-chunk-kind" attrs)
+  in fmap (`MarkProps` valueOf "data-chunk-kind" attrs) maybeChunkId
   where
     valueOf :: String -> [HTMLP.Attr] -> String
     valueOf _ [] = ""
@@ -61,24 +59,28 @@ toMarkProps attrs = let maybeChunkId = readMaybe $ valueOf "data-chunk-id" attrs
     valueOf wantedKey (_:as) = valueOf wantedKey as
 
 
-rfMark :: ReactView MarkProps
+rfMark :: ReactView (Maybe MarkProps)
 rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
-   { lRender = \_state props ->
-         mark_ [ "data-chunk-id" $= fromString (show (props ^. markPropsDataChunkId))
-               , "className" $= fromString ("o-mark o-mark--" <> props ^. markPropsDataContentType)
-               ] childrenPassedToView
+   { lRender = \_state props -> case props of
+         Nothing -> mempty
+         Just p -> mark_ [ "data-chunk-id" $= fromString (show (p ^. markPropsDataChunkId))
+                   , "className" $= fromString ("o-mark o-mark--" <> p ^. markPropsDataContentType)
+                   ] childrenPassedToView
 
    , lComponentDidMount = Just $ \propsandstate ldom _ -> do
              this <- lThis ldom
              top <- js_getBoundingClientRectTop this
              props <- lGetProps propsandstate
              _ <- forkIO $ do
-                 let actions = RS.dispatch $ RS.AddMarkPosition (props ^. markPropsDataChunkId) top 0 -- we assume that no scrolling has taken place yet
-                 forM_ actions executeAction
+                 case props of
+                   Nothing -> return ()
+                   Just p -> do
+                     let actions = RS.dispatch $ RS.AddMarkPosition (p ^. markPropsDataChunkId) top 0 -- we assume that no scrolling has taken place yet
+                     forM_ actions executeAction
              return ()
    }
 
-rfMark_ :: MarkProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+rfMark_ :: Maybe MarkProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 rfMark_ = view rfMark
 
 foreign import javascript unsafe
