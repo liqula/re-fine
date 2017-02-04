@@ -244,6 +244,12 @@ createEdit repo baseEdit newVersion = do
 
 
 -- | Get all edits that are directly based on a given edit.
+--
+-- In case of clonflicting patches the darcs select automatically
+-- one patch as a parent patch. Which renders this function an inappropiate
+-- information source.
+--
+-- This is a reference implementation for the further investigation.
 getChildEdits :: RepoHandle -> EditHandle -> DocRepo [EditHandle]
 getChildEdits repository baseHandle = do
   docRepoIOWithReposRoot $ \reposRoot -> do

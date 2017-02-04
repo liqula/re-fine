@@ -230,6 +230,14 @@ editDiscussions :: ID Edit -> DB [ID Discussion]
 editDiscussions pid = liftDB $
   foreignKeyField S.pDDiscussion <$$> selectList [S.PDEdit ==. S.idToKey pid] []
 
+setEditChild :: ID Edit -> ID Edit -> DB ()
+setEditChild parent child = liftDB $ do
+  void . insert $ S.PC (S.idToKey parent) (S.idToKey child)
+
+getEditChildren :: ID Edit -> DB [ID Edit]
+getEditChildren parent = liftDB $ do
+  foreignKeyField S.pCChild <$$> selectList [S.PCParent ==. S.idToKey parent] []
+
 -- * Repo and edit
 
 editVDocRepo :: ID Edit -> DB (ID VDocRepo)

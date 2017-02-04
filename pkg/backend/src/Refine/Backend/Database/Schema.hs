@@ -96,6 +96,11 @@ RP  -- TODO: should be RE
     edit       EditId
     UniRP repository edit
 
+PC
+    parent EditId
+    child  EditId
+    UniPC parent child
+
 PQ
     edit       EditId
     question    QuestionId
@@ -151,6 +156,7 @@ makeElim ''Vote
 makeElim ''VR
 makeElim ''RP
 makeElim ''PN
+makeElim ''PC
 makeElim ''PQ
 makeElim ''PD
 makeElim ''DS

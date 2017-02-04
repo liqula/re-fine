@@ -32,6 +32,10 @@ class Database db where
   editQuestions      :: ID Edit -> db [ID Question]
   editDiscussions    :: ID Edit -> db [ID Discussion]
 
+  -- FIXME: This information should be come from the DocRepo.
+  setEditChild       :: ID Edit -> ID Edit -> db ()
+  getEditChildren    :: ID Edit -> db [ID Edit]
+
   -- * Repo and edit
   editVDocRepo      :: ID Edit -> db (ID VDocRepo)
 
