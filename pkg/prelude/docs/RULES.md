@@ -126,8 +126,8 @@ import qualified Data.Text.Lazy as LT
 
 1. two empty lines before section heading (`-- *`).
 
-2. try to keep lines shorter than 120 chars.
-   RATIONALE: it's both better for small screens and less 1-dimensional and thus more readable on any screen.
+2. this is a soft rule: try to keep lines shorter than 120 chars.
+   RATIONALE: avoids line breaks on small screens.
 
 
 ### finding names
