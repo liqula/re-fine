@@ -117,7 +117,7 @@ vdocListUpdate action state = case action of
 
 markPositionsUpdate :: RefineAction -> MarkPositions -> MarkPositions
 markPositionsUpdate action state = case action of
-    AddMarkPosition dataHunkId pos scroll -> MarkPositions $ M.alter (\_ -> Just (pos, scroll)) dataHunkId (_unMarkPositions state)
+    AddMarkPosition dataChunkId pos scroll -> MarkPositions $ M.alter (\_ -> Just (pos, scroll)) dataChunkId (_unMarkPositions state)
     _ -> state
 
 emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()
