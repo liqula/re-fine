@@ -25,6 +25,7 @@
 module Refine.Frontend.Mark where
 
 import           Control.Concurrent (forkIO)
+import           Control.Lens (makeLenses, (^.))
 import           Data.Int
 import           Control.Monad (forM_)
 import           Data.Monoid ((<>))
@@ -42,9 +43,11 @@ import qualified Refine.Frontend.Types as RS
 
 
 data MarkProps = MarkProps
-  { _dataHunkId :: Int64
-  , _dataContentType :: String
+  { _markPropsDataChunkId :: Int64
+  , _markPropsDataContentType :: String
   }
+
+makeLenses ''MarkProps
 
 toMarkProps :: [HTMLP.Attr] -> MarkProps
 toMarkProps attrs = let maybeChunkId = readMaybe $ valueOf "data-chunk-id" attrs :: Maybe Int64
@@ -61,8 +64,8 @@ toMarkProps attrs = let maybeChunkId = readMaybe $ valueOf "data-chunk-id" attrs
 rfMark :: ReactView MarkProps
 rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
    { lRender = \_state props ->
-         mark_ [ "data-chunk-id" $= fromString (show (_dataHunkId props))
-               , "className" $= fromString ("o-mark o-mark--" <> _dataContentType props)
+         mark_ [ "data-chunk-id" $= fromString (show (props ^. markPropsDataChunkId))
+               , "className" $= fromString ("o-mark o-mark--" <> props ^. markPropsDataContentType)
                ] childrenPassedToView
 
    , lComponentDidMount = Just $ \propsandstate ldom _ -> do
@@ -70,7 +73,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
              top <- js_getBoundingClientRectTop this
              props <- lGetProps propsandstate
              _ <- forkIO $ do
-                 let actions = RS.dispatch $ RS.AddMarkPosition (_dataHunkId props) top 0 -- we assume that no scrolling has taken place yet
+                 let actions = RS.dispatch $ RS.AddMarkPosition (props ^. markPropsDataChunkId) top 0 -- we assume that no scrolling has taken place yet
                  forM_ actions executeAction
              return ()
 
