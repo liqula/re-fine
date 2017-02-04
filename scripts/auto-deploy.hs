@@ -55,6 +55,7 @@ restart mpid = do
   callProcess "git" ["checkout", "master"]
   callProcess "git" ["pull"]
   callProcess "./build" ["setup"]
+  callProcess "./build" ["clean"]
   callProcess "./build" ["build-backend"]
   callProcess "./build" ["build-frontend"]
   withCurrentDirectory "pkg/frontend" $ callProcess "npm" ["run", "build"]
