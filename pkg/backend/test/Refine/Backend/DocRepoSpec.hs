@@ -39,7 +39,7 @@ spec = do
     it "getVersion returns a version" $ \runner -> do
       repo  <- runner $$ createRepo
       edit1 <- runner $$ createInitialEdit repo (vdocVersionFromST "blah")
-      (runner $$ getVersion repo edit1) `shouldReturn` (vdocVersionFromST "blah")
+      (runner $$ getVersion repo edit1) `shouldReturn` vdocVersionFromST "blah"
 
     it "getChildEdits returns multiple dependencies" $ \runner -> do
       repo  <- runner $$ createRepo
