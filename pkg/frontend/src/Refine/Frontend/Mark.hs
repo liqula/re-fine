@@ -76,11 +76,6 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
                  let actions = RS.dispatch $ RS.AddMarkPosition (props ^. markPropsDataChunkId) top 0 -- we assume that no scrolling has taken place yet
                  forM_ actions executeAction
              return ()
-
-   , lComponentDidUpdate = Just $ \_ ldom _ _ _ -> do
-             this <- lThis ldom
-             _top <- js_getBoundingClientRectTop this
-             return ()
    }
 
 rfMark_ :: MarkProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
