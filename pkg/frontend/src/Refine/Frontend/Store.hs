@@ -68,7 +68,7 @@ instance StoreData GlobalState where
                 -- for efficiency reasons, only ask JS when we get this action
                 hasRange <- js_hasRange
                 range <- if hasRange then getRange else return Nothing
-                return $ UpdateSelection (range, Just deviceOffset)
+                return . BubblesAction $ UpdateSelection (range, Just deviceOffset)
             _ -> return action
 
 
@@ -136,7 +136,7 @@ emitBackendCallsFor action state = case action of
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
 
-    SubmitComment text category forRange -> do
+    BubblesAction (SubmitComment text category forRange) -> do
       -- here we need to distinguish which comment category we want to submit
       -- check the state and what the user selected there
       -- (FIXME: the new correct technical term for 'category' is 'kind'.)

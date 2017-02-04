@@ -85,19 +85,10 @@ data RefineAction = LoadDocumentList
                   | AddHeaderHeight Int
                   | AddMarkPosition Int64 OffsetFromViewportTop ScrollOffsetOfViewport
                   | SetWindowSize WindowSize
-                  -- Bubble Actions:
-                  | UpdateSelection Selection
-                  | ClearSelection
-                  | ShowComment
-                  | HideComment
-                  | ShowCommentEditor (Maybe Range)
-                  | HideCommentEditor
-                  | SetCommentCategory CommentCategory
-                  | SubmitComment ST (Maybe CommentCategory) (Maybe Range)
+                  | BubblesAction BubblesAction
                   -- ...
                   | AddDiscussion CompositeDiscussion
                   | AddNote Note
-                  | SubmitEdit
                   | SaveSelect Text Text
                   -- Actions that will be transformed because they need IO:
                   | TriggerUpdateSelection DeviceOffset

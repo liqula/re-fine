@@ -77,6 +77,18 @@ data CommentCategory =
   | Note
   deriving (Show, Generic)
 
+data BubblesAction =
+    UpdateSelection Selection
+  | ClearSelection
+  | ShowComment
+  | HideComment
+  | ShowCommentEditor (Maybe Range)
+  | HideCommentEditor
+  | SetCommentCategory CommentCategory
+  | SubmitComment ST (Maybe CommentCategory) (Maybe Range)
+  | SubmitEdit
+  deriving (Show, Generic)
+
 
 data BubblesState = BubblesState
   { _bsCurrentSelection       :: Selection
@@ -91,4 +103,5 @@ emptyBubblesState = BubblesState (Nothing, Nothing) Nothing False (False, Nothin
 
 makeRefineType ''CommentInputState
 makeRefineType ''CommentCategory
+makeRefineType ''BubblesAction
 makeRefineType ''BubblesState
