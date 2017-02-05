@@ -129,6 +129,18 @@ lengthOf = attr "length"
 lengthOfIO :: IO ShallowWrapper -> IO Int
 lengthOfIO wrapper = lengthOf =<< wrapper
 
+-- Simulating Events --------------------------------------------------------------------
+
+data EventType =
+    MouseEnter
+  | MouseLeave
+  deriving (Show)
+
+instance PToJSVal EventType where pToJSVal = pToJSVal . show
+
+simulate :: ShallowWrapper -> EventType -> IO ShallowWrapper
+simulate = execWith1Arg "simulate"
+
 -- Preparations for the evaluation of functions in JavaScript --------------------------------------------------
 
 execWithSelector :: PFromJSVal a => String -> ShallowWrapper -> EnzymeSelector -> IO a
@@ -136,7 +148,7 @@ execWithSelector func (ShallowWrapper wrapper) es@(PropertySelector _) = pFromJS
 execWithSelector f w e = execWith1Arg f w e
 
 execWith1Arg :: (PFromJSVal a, PToJSVal b) => String -> ShallowWrapper -> b -> IO a
-execWith1Arg func (ShallowWrapper wrapper) num = pFromJSVal <$> js_exec_with_1_arg (toJSString func) wrapper (pToJSVal num)
+execWith1Arg func (ShallowWrapper wrapper) arg = pFromJSVal <$> js_exec_with_1_arg (toJSString func) wrapper (pToJSVal arg)
 
 exec :: PFromJSVal a => String -> ShallowWrapper -> IO a
 exec func (ShallowWrapper wrapper) = pFromJSVal <$> js_exec (toJSString func) wrapper
@@ -161,18 +173,3 @@ foreign import javascript unsafe
 foreign import javascript unsafe
     "$2[$1](JSON.parse($3))"
     js_exec_with_object :: JSString -> JSVal -> JSVal -> IO JSVal
-
--- Simulating Events --------------------------------------------------------------------
-
-data EventType =
-    MouseEnter
-  | MouseLeave
-  deriving (Show)
-
-simulate :: ShallowWrapper -> EventType -> IO ShallowWrapper
-simulate (ShallowWrapper wrapper) event = ShallowWrapper <$> js_simulate wrapper (toJSString (show event))
-
-foreign import javascript unsafe
-    "$1.simulate($2)"
-    js_simulate :: JSVal -> JSString -> IO JSVal
-
