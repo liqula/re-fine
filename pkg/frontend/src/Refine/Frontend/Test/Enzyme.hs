@@ -49,10 +49,9 @@ module Refine.Frontend.Test.Enzyme
 
 ) where
 
-import Control.Exception (throwIO, ErrorCall(ErrorCall))
-import Data.Aeson (FromJSON, eitherDecode, encode, object, (.=))
+import Data.Aeson (encode, object, (.=))
 import Data.Aeson.Types (ToJSON, toJSON)
-import Data.JSString (JSString, unpack)
+import Data.JSString (JSString)
 import Data.String.Conversions
 import GHCJS.Marshal.Pure
 import GHCJS.Types (JSVal, nullRef)
@@ -134,11 +133,18 @@ execWith1Arg func (ShallowWrapper wrapper) num = pFromJSVal <$> js_exec_with_1_a
 exec :: PFromJSVal a => String -> ShallowWrapper -> IO a
 exec func (ShallowWrapper wrapper) = pFromJSVal <$> js_exec (toJSString func) wrapper
 
+attr :: PFromJSVal a => String -> ShallowWrapper -> IO a
+attr name (ShallowWrapper wrapper) = pFromJSVal <$> js_attr (toJSString name) wrapper
+
 ------------------------------------
 
 foreign import javascript unsafe
     "$2[$1]()"
     js_exec :: JSString -> JSVal -> IO JSVal
+
+foreign import javascript unsafe
+    "$2[$1]"
+    js_attr :: JSString -> JSVal -> IO JSVal
 
 foreign import javascript unsafe
     "$2[$1]($3)"
@@ -151,21 +157,10 @@ foreign import javascript unsafe
 ------------------------------------
 
 lengthOf :: ShallowWrapper -> IO Int
-lengthOf wrapper = getWrapperAttr wrapper "length"
+lengthOf = attr "length"
 
 lengthOfIO :: IO ShallowWrapper -> IO Int
 lengthOfIO wrapper = lengthOf =<< wrapper
-
-getWrapperAttr :: FromJSON a => ShallowWrapper -> JSString -> IO a
-getWrapperAttr (ShallowWrapper wrapper) selector = do
-  jsstring <- js_getWrapperAttr wrapper selector
-  case eitherDecode . cs . unpack $ jsstring of
-    Left e -> throwIO . ErrorCall $ show e
-    Right v -> pure v
-
-foreign import javascript unsafe
-    "JSON.stringify($1[$2])"
-    js_getWrapperAttr :: JSVal -> JSString -> IO JSString
 
 -- Simulating Events --------------------------------------------------------------------
 
