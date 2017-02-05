@@ -123,6 +123,14 @@ html = exec "html"
 text :: ShallowWrapper -> IO JSString
 text = exec "text"
 
+lengthOf :: ShallowWrapper -> IO Int
+lengthOf = attr "length"
+
+lengthOfIO :: IO ShallowWrapper -> IO Int
+lengthOfIO wrapper = lengthOf =<< wrapper
+
+-- Preparations for the evaluation of functions in JavaScript --------------------------------------------------
+
 execWithSelector :: PFromJSVal a => String -> ShallowWrapper -> EnzymeSelector -> IO a
 execWithSelector func (ShallowWrapper wrapper) es@(PropertySelector _) = pFromJSVal <$> js_exec_with_object (toJSString func) wrapper (pToJSVal es)
 execWithSelector f w e = execWith1Arg f w e
@@ -136,7 +144,7 @@ exec func (ShallowWrapper wrapper) = pFromJSVal <$> js_exec (toJSString func) wr
 attr :: PFromJSVal a => String -> ShallowWrapper -> IO a
 attr name (ShallowWrapper wrapper) = pFromJSVal <$> js_attr (toJSString name) wrapper
 
-------------------------------------
+-- The evaluation of functions in JavaScript ----------------------------------
 
 foreign import javascript unsafe
     "$2[$1]()"
@@ -153,14 +161,6 @@ foreign import javascript unsafe
 foreign import javascript unsafe
     "$2[$1](JSON.parse($3))"
     js_exec_with_object :: JSString -> JSVal -> JSVal -> IO JSVal
-
-------------------------------------
-
-lengthOf :: ShallowWrapper -> IO Int
-lengthOf = attr "length"
-
-lengthOfIO :: IO ShallowWrapper -> IO Int
-lengthOfIO wrapper = lengthOf =<< wrapper
 
 -- Simulating Events --------------------------------------------------------------------
 
