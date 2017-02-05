@@ -54,6 +54,7 @@ import Data.Aeson (FromJSON, eitherDecode, encode, object, (.=))
 import Data.Aeson.Types (ToJSON, toJSON)
 import Data.JSString (JSString, unpack)
 import Data.String.Conversions
+import GHCJS.Marshal.Pure
 import GHCJS.Types (JSVal, nullRef)
 import React.Flux
 import React.Flux.Internal
@@ -89,10 +90,10 @@ foreign import javascript unsafe
   js_shallow :: ReactElementRef -> IO JSVal
 
 find :: ShallowWrapper -> EnzymeSelector -> IO ShallowWrapper
-find = execSW_SW "find"
+find = execWithSelector "find" ShallowWrapper
 
 is :: ShallowWrapper -> EnzymeSelector -> IO Bool
-is = execB "is"
+is = execWithSelector "is" pFromJSVal
 
 childAt :: ShallowWrapper -> Int -> IO ShallowWrapper
 childAt = execI_SW "childAt"
@@ -118,12 +119,10 @@ html = exec_SW_Str "html"
 text :: ShallowWrapper -> IO JSString
 text = exec_SW_Str "text"
 
+execWithSelector :: String -> (JSVal -> a) -> ShallowWrapper -> EnzymeSelector -> IO a
+execWithSelector func conv (ShallowWrapper wrapper) (StringSelector selector)   = conv <$> js_exec_with_string (toJSString func) wrapper (toJSString selector)
+execWithSelector func conv (ShallowWrapper wrapper) (PropertySelector selector) = conv <$> js_exec_with_object (toJSString func) wrapper ((toJSString . cs) (encode selector))
 
-execSW_SW :: String -> ShallowWrapper -> EnzymeSelector -> IO ShallowWrapper
-execSW_SW func (ShallowWrapper wrapper) (StringSelector selector) = do
-  ShallowWrapper <$> js_exec_sw_sw_by_string (toJSString func) wrapper (toJSString selector)
-execSW_SW func (ShallowWrapper wrapper) (PropertySelector selector) = do
-  ShallowWrapper <$> js_exec_sw_sw_by_prop (toJSString func) wrapper ((toJSString . cs) (encode selector))
 
 exec_SW :: String -> ShallowWrapper -> IO JSVal
 exec_SW func (ShallowWrapper wrapper) = do
@@ -137,16 +136,17 @@ execI_SW :: String -> ShallowWrapper -> Int -> IO ShallowWrapper
 execI_SW func (ShallowWrapper wrapper) index = do
   ShallowWrapper <$> js_exec_i_sw_by_string (toJSString func) wrapper index
 
-execB :: String -> ShallowWrapper -> EnzymeSelector -> IO Bool
-execB func (ShallowWrapper wrapper) (StringSelector selector) = do
-  js_exec_b_by_string (toJSString func) wrapper (toJSString selector)
-execB func (ShallowWrapper wrapper) (PropertySelector selector) = do
-  js_exec_b_by_prop (toJSString func) wrapper ((toJSString . cs) (encode selector))
 
--- TODO unify _sw_ and _b_ by applying the appropriate transformation to the result?
+------------------------------------
 foreign import javascript unsafe
     "$2[$1]($3)"
-    js_exec_sw_sw_by_string :: JSString -> JSVal -> JSString -> IO JSVal
+    js_exec_with_string :: JSString -> JSVal -> JSString -> IO JSVal
+
+foreign import javascript unsafe
+    "$2[$1](JSON.parse($3))"
+    js_exec_with_object :: JSString -> JSVal -> JSString -> IO JSVal
+
+------------------------------------
 
 foreign import javascript unsafe
     "$2[$1]()"
@@ -159,18 +159,6 @@ foreign import javascript unsafe
 foreign import javascript unsafe
     "$2[$1]($3)"
     js_exec_i_sw_by_string :: JSString -> JSVal -> Int -> IO JSVal
-
-foreign import javascript unsafe
-    "$2[$1](JSON.parse($3))"
-    js_exec_sw_sw_by_prop :: JSString -> JSVal -> JSString -> IO JSVal
-
-foreign import javascript unsafe
-    "$2[$1]($3)"
-    js_exec_b_by_string :: JSString -> JSVal -> JSString -> IO Bool
-
-foreign import javascript unsafe
-    "$2[$1](JSON.parse($3))"
-    js_exec_b_by_prop :: JSString -> JSVal -> JSString -> IO Bool
 
 lengthOf :: ShallowWrapper -> IO Int
 lengthOf wrapper = getWrapperAttr wrapper "length"
