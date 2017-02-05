@@ -96,10 +96,10 @@ is :: ShallowWrapper -> EnzymeSelector -> IO Bool
 is = execWithSelector "is" pFromJSVal
 
 childAt :: ShallowWrapper -> Int -> IO ShallowWrapper
-childAt = execI_SW "childAt"
+childAt = execWithInt "childAt" ShallowWrapper
 
 at :: ShallowWrapper -> Int -> IO ShallowWrapper
-at = execI_SW "at"
+at = execWithInt "at" ShallowWrapper
 
 props :: ShallowWrapper -> IO JSVal
 props = exec "props" id
@@ -123,14 +123,11 @@ execWithSelector :: String -> (JSVal -> a) -> ShallowWrapper -> EnzymeSelector -
 execWithSelector func conv (ShallowWrapper wrapper) (StringSelector selector)   = conv <$> js_exec_with_string (toJSString func) wrapper (toJSString selector)
 execWithSelector func conv (ShallowWrapper wrapper) (PropertySelector selector) = conv <$> js_exec_with_object (toJSString func) wrapper ((toJSString . cs) (encode selector))
 
+execWithInt :: String -> (JSVal -> a) -> ShallowWrapper -> Int -> IO a
+execWithInt func conv (ShallowWrapper wrapper) num = conv <$> js_exec_with_int (toJSString func) wrapper num
+
 exec :: String -> (JSVal -> a) -> ShallowWrapper -> IO a
 exec func conv (ShallowWrapper wrapper) = conv <$> js_exec (toJSString func) wrapper
-
-
-execI_SW :: String -> ShallowWrapper -> Int -> IO ShallowWrapper
-execI_SW func (ShallowWrapper wrapper) index = do
-  ShallowWrapper <$> js_exec_i_sw_by_string (toJSString func) wrapper index
-
 
 ------------------------------------
 
@@ -139,18 +136,16 @@ foreign import javascript unsafe
     js_exec_with_string :: JSString -> JSVal -> JSString -> IO JSVal
 
 foreign import javascript unsafe
+    "$2[$1]($3)"
+    js_exec_with_int :: JSString -> JSVal -> Int -> IO JSVal
+
+foreign import javascript unsafe
     "$2[$1](JSON.parse($3))"
     js_exec_with_object :: JSString -> JSVal -> JSString -> IO JSVal
 
 foreign import javascript unsafe
     "$2[$1]()"
     js_exec :: JSString -> JSVal -> IO JSVal
-
-------------------------------------
-
-foreign import javascript unsafe
-    "$2[$1]($3)"
-    js_exec_i_sw_by_string :: JSString -> JSVal -> Int -> IO JSVal
 
 ------------------------------------
 
