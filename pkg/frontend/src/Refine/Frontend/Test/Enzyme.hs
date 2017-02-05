@@ -22,7 +22,32 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Test.Enzyme where
+module Refine.Frontend.Test.Enzyme
+( Prop(..)
+, ShallowWrapper(..)
+, EnzymeSelector(..)
+, shallow
+-- Enzyme functions on a ShallowWrapper
+, at
+, childAt
+, children
+, find
+, html
+, is
+, props
+, shallowChild -- known as "shallow" in Enzyme
+, text
+, typeOf
+
+-- JavaScript functions on a ShallowWrapper
+, lengthOf
+, lengthOfIO
+
+-- simulating an event on a ShallowWrapper
+, simulate
+, EventType(..)
+
+) where
 
 import Control.Exception (throwIO, ErrorCall(ErrorCall))
 import Data.Aeson (FromJSON, eitherDecode, encode, object, (.=))
