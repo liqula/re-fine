@@ -102,35 +102,30 @@ at :: ShallowWrapper -> Int -> IO ShallowWrapper
 at = execI_SW "at"
 
 props :: ShallowWrapper -> IO JSVal
-props = exec_SW "props"
+props = exec "props" id
 
 typeOf :: ShallowWrapper -> IO JSVal
-typeOf = exec_SW "type"
+typeOf = exec "type" id
 
 shallowChild :: ShallowWrapper -> IO ShallowWrapper
-shallowChild wrapper = ShallowWrapper <$> exec_SW "shallow" wrapper
+shallowChild = exec "shallow" ShallowWrapper
 
 children :: ShallowWrapper -> IO ShallowWrapper
-children wrapper = ShallowWrapper <$> exec_SW "children" wrapper
+children = exec "children" ShallowWrapper
 
 html :: ShallowWrapper -> IO JSString
-html = exec_SW_Str "html"
+html = exec "html" pFromJSVal
 
 text :: ShallowWrapper -> IO JSString
-text = exec_SW_Str "text"
+text = exec "text" pFromJSVal
 
 execWithSelector :: String -> (JSVal -> a) -> ShallowWrapper -> EnzymeSelector -> IO a
 execWithSelector func conv (ShallowWrapper wrapper) (StringSelector selector)   = conv <$> js_exec_with_string (toJSString func) wrapper (toJSString selector)
 execWithSelector func conv (ShallowWrapper wrapper) (PropertySelector selector) = conv <$> js_exec_with_object (toJSString func) wrapper ((toJSString . cs) (encode selector))
 
+exec :: String -> (JSVal -> a) -> ShallowWrapper -> IO a
+exec func conv (ShallowWrapper wrapper) = conv <$> js_exec (toJSString func) wrapper
 
-exec_SW :: String -> ShallowWrapper -> IO JSVal
-exec_SW func (ShallowWrapper wrapper) = do
-  js_exec_sw (toJSString func) wrapper
-
-exec_SW_Str :: String -> ShallowWrapper -> IO JSString
-exec_SW_Str func (ShallowWrapper wrapper) = do
-  js_exec_sw_str (toJSString func) wrapper
 
 execI_SW :: String -> ShallowWrapper -> Int -> IO ShallowWrapper
 execI_SW func (ShallowWrapper wrapper) index = do
@@ -138,6 +133,7 @@ execI_SW func (ShallowWrapper wrapper) index = do
 
 
 ------------------------------------
+
 foreign import javascript unsafe
     "$2[$1]($3)"
     js_exec_with_string :: JSString -> JSVal -> JSString -> IO JSVal
@@ -146,19 +142,17 @@ foreign import javascript unsafe
     "$2[$1](JSON.parse($3))"
     js_exec_with_object :: JSString -> JSVal -> JSString -> IO JSVal
 
+foreign import javascript unsafe
+    "$2[$1]()"
+    js_exec :: JSString -> JSVal -> IO JSVal
+
 ------------------------------------
-
-foreign import javascript unsafe
-    "$2[$1]()"
-    js_exec_sw :: JSString -> JSVal -> IO JSVal
-
-foreign import javascript unsafe
-    "$2[$1]()"
-    js_exec_sw_str :: JSString -> JSVal -> IO JSString
 
 foreign import javascript unsafe
     "$2[$1]($3)"
     js_exec_i_sw_by_string :: JSString -> JSVal -> Int -> IO JSVal
+
+------------------------------------
 
 lengthOf :: ShallowWrapper -> IO Int
 lengthOf wrapper = getWrapperAttr wrapper "length"
@@ -177,6 +171,8 @@ foreign import javascript unsafe
     "JSON.stringify($1[$2])"
     js_getWrapperAttr :: JSVal -> JSString -> IO JSString
 
+-- Simulating Events --------------------------------------------------------------------
+
 data EventType =
     MouseEnter
   | MouseLeave
@@ -184,8 +180,6 @@ data EventType =
 
 simulate :: ShallowWrapper -> EventType -> IO ShallowWrapper
 simulate (ShallowWrapper wrapper) event = ShallowWrapper <$> js_simulate wrapper (toJSString (show event))
-
-
 
 foreign import javascript unsafe
     "$1.simulate($2)"
