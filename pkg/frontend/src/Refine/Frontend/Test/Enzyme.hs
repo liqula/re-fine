@@ -74,6 +74,9 @@ data EnzymeSelector =
   | PropertySelector [Prop]
 --  | ComponentSelector
 
+instance PToJSVal EnzymeSelector where
+  pToJSVal (StringSelector str) = pToJSVal str
+  pToJSVal (PropertySelector p) = pToJSVal . toJSString . cs $ encode p
 
 data Prop where
   Prop :: forall a. (ToJSON a) => ST -> a -> Prop
@@ -122,11 +125,11 @@ text :: ShallowWrapper -> IO JSString
 text = exec "text"
 
 execWithSelector :: PFromJSVal a => String -> ShallowWrapper -> EnzymeSelector -> IO a
-execWithSelector func (ShallowWrapper wrapper) (StringSelector selector)   = pFromJSVal <$> js_exec_with_string (toJSString func) wrapper (toJSString selector)
-execWithSelector func (ShallowWrapper wrapper) (PropertySelector selector) = pFromJSVal <$> js_exec_with_object (toJSString func) wrapper ((toJSString . cs) (encode selector))
+execWithSelector func (ShallowWrapper wrapper) es@(StringSelector _)   = pFromJSVal <$> js_exec_with_arg    (toJSString func) wrapper (pToJSVal es)
+execWithSelector func (ShallowWrapper wrapper) es@(PropertySelector _) = pFromJSVal <$> js_exec_with_object (toJSString func) wrapper (pToJSVal es)
 
-execWithInt :: PFromJSVal a => String -> ShallowWrapper -> Int -> IO a
-execWithInt func (ShallowWrapper wrapper) num = pFromJSVal <$> js_exec_with_int (toJSString func) wrapper num
+execWithInt :: (PFromJSVal a, PToJSVal b) => String -> ShallowWrapper -> b -> IO a
+execWithInt func (ShallowWrapper wrapper) num = pFromJSVal <$> js_exec_with_arg (toJSString func) wrapper (pToJSVal num)
 
 exec :: PFromJSVal a => String -> ShallowWrapper -> IO a
 exec func (ShallowWrapper wrapper) = pFromJSVal <$> js_exec (toJSString func) wrapper
@@ -135,15 +138,11 @@ exec func (ShallowWrapper wrapper) = pFromJSVal <$> js_exec (toJSString func) wr
 
 foreign import javascript unsafe
     "$2[$1]($3)"
-    js_exec_with_string :: JSString -> JSVal -> JSString -> IO JSVal
-
-foreign import javascript unsafe
-    "$2[$1]($3)"
-    js_exec_with_int :: JSString -> JSVal -> Int -> IO JSVal
+    js_exec_with_arg :: JSString -> JSVal -> JSVal -> IO JSVal
 
 foreign import javascript unsafe
     "$2[$1](JSON.parse($3))"
-    js_exec_with_object :: JSString -> JSVal -> JSString -> IO JSVal
+    js_exec_with_object :: JSString -> JSVal -> JSVal -> IO JSVal
 
 foreign import javascript unsafe
     "$2[$1]()"
