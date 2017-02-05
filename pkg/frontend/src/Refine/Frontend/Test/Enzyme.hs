@@ -129,7 +129,7 @@ execWithSelector func (ShallowWrapper wrapper) es@(PropertySelector _) = pFromJS
 execWithSelector f w e = execWith1Arg f w e
 
 execWith1Arg :: (PFromJSVal a, PToJSVal b) => String -> ShallowWrapper -> b -> IO a
-execWith1Arg func (ShallowWrapper wrapper) num = pFromJSVal <$> js_exec_with_arg (toJSString func) wrapper (pToJSVal num)
+execWith1Arg func (ShallowWrapper wrapper) num = pFromJSVal <$> js_exec_with_1_arg (toJSString func) wrapper (pToJSVal num)
 
 exec :: PFromJSVal a => String -> ShallowWrapper -> IO a
 exec func (ShallowWrapper wrapper) = pFromJSVal <$> js_exec (toJSString func) wrapper
@@ -137,16 +137,16 @@ exec func (ShallowWrapper wrapper) = pFromJSVal <$> js_exec (toJSString func) wr
 ------------------------------------
 
 foreign import javascript unsafe
+    "$2[$1]()"
+    js_exec :: JSString -> JSVal -> IO JSVal
+
+foreign import javascript unsafe
     "$2[$1]($3)"
-    js_exec_with_arg :: JSString -> JSVal -> JSVal -> IO JSVal
+    js_exec_with_1_arg :: JSString -> JSVal -> JSVal -> IO JSVal
 
 foreign import javascript unsafe
     "$2[$1](JSON.parse($3))"
     js_exec_with_object :: JSString -> JSVal -> JSVal -> IO JSVal
-
-foreign import javascript unsafe
-    "$2[$1]()"
-    js_exec :: JSString -> JSVal -> IO JSVal
 
 ------------------------------------
 
