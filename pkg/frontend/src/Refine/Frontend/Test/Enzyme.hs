@@ -101,10 +101,10 @@ is :: ShallowWrapper -> EnzymeSelector -> IO Bool
 is = execWithSelector "is"
 
 childAt :: ShallowWrapper -> Int -> IO ShallowWrapper
-childAt = execWithInt "childAt"
+childAt = execWith1Arg "childAt"
 
 at :: ShallowWrapper -> Int -> IO ShallowWrapper
-at = execWithInt "at"
+at = execWith1Arg "at"
 
 props :: ShallowWrapper -> IO JSVal
 props = exec "props"
@@ -125,11 +125,11 @@ text :: ShallowWrapper -> IO JSString
 text = exec "text"
 
 execWithSelector :: PFromJSVal a => String -> ShallowWrapper -> EnzymeSelector -> IO a
-execWithSelector func (ShallowWrapper wrapper) es@(StringSelector _)   = pFromJSVal <$> js_exec_with_arg    (toJSString func) wrapper (pToJSVal es)
 execWithSelector func (ShallowWrapper wrapper) es@(PropertySelector _) = pFromJSVal <$> js_exec_with_object (toJSString func) wrapper (pToJSVal es)
+execWithSelector f w e = execWith1Arg f w e
 
-execWithInt :: (PFromJSVal a, PToJSVal b) => String -> ShallowWrapper -> b -> IO a
-execWithInt func (ShallowWrapper wrapper) num = pFromJSVal <$> js_exec_with_arg (toJSString func) wrapper (pToJSVal num)
+execWith1Arg :: (PFromJSVal a, PToJSVal b) => String -> ShallowWrapper -> b -> IO a
+execWith1Arg func (ShallowWrapper wrapper) num = pFromJSVal <$> js_exec_with_arg (toJSString func) wrapper (pToJSVal num)
 
 exec :: PFromJSVal a => String -> ShallowWrapper -> IO a
 exec func (ShallowWrapper wrapper) = pFromJSVal <$> js_exec (toJSString func) wrapper
