@@ -114,12 +114,11 @@ provideAppRunner action = withTempCurrentDirectory $ do
 createAppRunner :: forall a . IO (App DB a -> IO a, FilePath, FilePath)
 createAppRunner = do
   let testDb    = "test.db"
-      reposRoot = "repos"
+      reposRoot = "./repos"
 
       cfg = Config
         { _cfgShouldMigrate = False  -- (this is ignored here)
         , _cfgShouldLog     = False  -- (this is ignored here)
-        , _cfgRootDir       = "."
         , _cfgReposRoot     = reposRoot
         , _cfgDBKind        = DBOnDisk testDb
         , _cfgPoolSize      = 5
@@ -127,7 +126,6 @@ createAppRunner = do
         , _cfgWarpSettings  = def
         }
 
-  createDirectoryIfMissing True $ cfg ^. cfgRootDir
   createDirectoryIfMissing True $ cfg ^. cfgReposRoot
   (runDb, userHandler) <- createDBRunner cfg
   runDRepo <- createRunRepo cfg

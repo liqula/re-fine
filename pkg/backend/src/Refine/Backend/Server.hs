@@ -62,7 +62,6 @@ data Backend = Backend
 
 mkBackend :: Config -> IO Backend
 mkBackend cfg = do
-  createDirectoryIfMissing True (cfg ^. cfgRootDir)
   createDirectoryIfMissing True (cfg ^. cfgReposRoot)
   (runDb, userHandler) <- createDBRunner cfg
   runDocRepo <- createRunRepo cfg

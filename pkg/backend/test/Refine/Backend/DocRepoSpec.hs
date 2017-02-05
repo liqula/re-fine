@@ -66,9 +66,8 @@ cfg :: Config
 cfg = Config
   { _cfgShouldMigrate = False  -- (this is ignored here)
   , _cfgShouldLog     = False  -- (this is ignored here)
-  , _cfgRootDir       = "."
-  , _cfgReposRoot     = "repos"
-  , _cfgDBKind        = DBOnDisk "testDb"
+  , _cfgReposRoot     = "./repos"
+  , _cfgDBKind        = DBOnDisk "./testDb"
   , _cfgPoolSize      = 5
   , _cfgFileServeRoot = Nothing
   , _cfgWarpSettings  = def
@@ -85,6 +84,5 @@ runRepo = fmap (either (error . show) id) . runDocRepo cfg
 
 createDocRepoRunner :: IO (DocRepo :~> IO)
 createDocRepoRunner = do
-  createDirectoryIfMissing True $ cfg ^. cfgRootDir
   createDirectoryIfMissing True $ cfg ^. cfgReposRoot
   pure $ Nat runRepo
