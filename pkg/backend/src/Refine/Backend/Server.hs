@@ -39,6 +39,7 @@ import           Servant
 import           Servant.Server.Internal (responseServantErr)
 import           Servant.Utils.StaticFiles (serveDirectory)
 import           System.Directory (createDirectoryIfMissing)
+import           System.FilePath (dropFileName)
 
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
@@ -62,7 +63,7 @@ data Backend = Backend
 
 mkBackend :: Config -> IO Backend
 mkBackend cfg = do
-  createDirectoryIfMissing True (cfg ^. cfgReposRoot)
+  createDataDirectories cfg
   (runDb, userHandler) <- createDBRunner cfg
   runDocRepo <- createRunRepo cfg
   let logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
@@ -76,6 +77,13 @@ mkBackend cfg = do
       migrateDB
 
   pure $ Backend srv app
+
+createDataDirectories :: Config -> IO ()
+createDataDirectories cfg = do
+  createDirectoryIfMissing True (cfg ^. cfgReposRoot)
+  case cfg ^. cfgDBKind of
+    DBInMemory    -> pure ()
+    DBOnDisk path -> createDirectoryIfMissing True (dropFileName path)
 
 
 serverT :: (App db CN.:~> ExceptT AppError IO) -> ServerT RefineAPI (App db) -> Server RefineAPI
