@@ -33,8 +33,7 @@ import           Data.Monoid (mconcat)
 import           Data.String.Conversions (ConvertibleStrings, cs)
 import           Prelude hiding ((.))
 import           System.Directory
-                    ( createDirectoryIfMissing
-                    , removeDirectoryRecursive
+                    ( removeDirectoryRecursive
                     , removeFile
                     )
 import           Test.Hspec
@@ -49,6 +48,7 @@ import Refine.Backend.Database
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Natural
+import Refine.Backend.Setup
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc
@@ -126,7 +126,7 @@ createAppRunner = do
         , _cfgWarpSettings  = def
         }
 
-  createDirectoryIfMissing True $ cfg ^. cfgReposRoot
+  createDataDirectories cfg
   (runDb, userHandler) <- createDBRunner cfg
   runDRepo <- createRunRepo cfg
   let logger = Logger . const $ pure ()
