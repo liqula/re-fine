@@ -14,7 +14,6 @@ import qualified Data.Yaml as Yaml
 import           Data.Yaml (encode)
 import           GHC.Generics
 import           Network.Wai.Handler.Warp as Warp
-import           System.FilePath ((</>))
 import           Text.Read (readMaybe)
 
 
@@ -22,14 +21,13 @@ import           Text.Read (readMaybe)
 -- only pass those parts of the config to the respective parts of the code that are actually needed.
 
 data Config = Config
-  { _cfgShouldMigrate :: Bool
-  , _cfgShouldLog     :: Bool
-  , _cfgRootDir       :: FilePath
-  , _cfgReposRoot     :: FilePath
-  , _cfgDBKind        :: DBKind
-  , _cfgPoolSize      :: Int
-  , _cfgFileServeRoot :: Maybe FilePath
-  , _cfgWarpSettings  :: WarpSettings  -- ^ check test suite for examples of what can be put in here.
+  { _cfgShouldMigrate :: Bool           -- ^ Should run the migration at start-up
+  , _cfgShouldLog     :: Bool           -- ^ Should log messages during the server run
+  , _cfgReposRoot     :: FilePath       -- ^ The directory for the document repositories
+  , _cfgDBKind        :: DBKind         -- ^ SQLite database, memory or file on the disk
+  , _cfgPoolSize      :: Int            -- ^ The size of the connection pool towards the database
+  , _cfgFileServeRoot :: Maybe FilePath -- ^ Directory for the static files
+  , _cfgWarpSettings  :: WarpSettings   -- ^ check test suite for examples of what can be put in here.
   }
   deriving (Eq, Show, Generic, FromJSON, ToJSON)
 
@@ -42,8 +40,7 @@ instance Default Config where
   def = Config
     { _cfgShouldMigrate = True
     , _cfgShouldLog     = True
-    , _cfgRootDir       = "./.backend-data"
-    , _cfgReposRoot     = _cfgRootDir def </> "repos"
+    , _cfgReposRoot     = "./.backend-data/repos"
     , _cfgDBKind        = def
     , _cfgPoolSize      = 5
     , _cfgFileServeRoot = Just "../frontend/js-build"
@@ -51,7 +48,7 @@ instance Default Config where
     }
 
 instance Default DBKind where
-  def = DBOnDisk (_cfgRootDir def </> "refine.db")
+  def = DBOnDisk "./.backend-data/refine.db"
 
 
 -- * warp settings
