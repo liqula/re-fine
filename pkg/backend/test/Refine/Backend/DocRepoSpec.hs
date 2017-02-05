@@ -28,7 +28,6 @@ import Test.Hspec
 
 import Refine.Backend.Config
 import Refine.Backend.DocRepo
-import Refine.Backend.Setup
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Common.Types.VDoc
 
@@ -85,5 +84,5 @@ runRepo = fmap (either (error . show) id) . runDocRepo cfg
 
 createDocRepoRunner :: IO (DocRepo :~> IO)
 createDocRepoRunner = do
-  createDataDirectories cfg
+  createDirectoryIfMissing True $ cfg ^. cfgReposRoot
   pure $ Nat runRepo

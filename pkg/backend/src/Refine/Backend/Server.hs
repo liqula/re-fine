@@ -38,6 +38,7 @@ import           Prelude hiding ((.), id)
 import           Servant
 import           Servant.Server.Internal (responseServantErr)
 import           Servant.Utils.StaticFiles (serveDirectory)
+import           System.Directory (createDirectoryIfMissing)
 
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
@@ -46,7 +47,6 @@ import Refine.Backend.Database (DB, createDBRunner)
 import Refine.Backend.DocRepo (createRunRepo)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
-import Refine.Backend.Setup
 import Refine.Common.Rest
 import Refine.Prelude (monadError)
 
@@ -62,7 +62,7 @@ data Backend = Backend
 
 mkBackend :: Config -> IO Backend
 mkBackend cfg = do
-  createDataDirectories cfg
+  createDirectoryIfMissing True (cfg ^. cfgReposRoot)
   (runDb, userHandler) <- createDBRunner cfg
   runDocRepo <- createRunRepo cfg
   let logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
