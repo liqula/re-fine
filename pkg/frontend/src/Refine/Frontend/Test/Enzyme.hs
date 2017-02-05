@@ -63,6 +63,8 @@ import React.Flux.Internal
 
 newtype ShallowWrapper = ShallowWrapper JSVal
 
+instance PFromJSVal ShallowWrapper where pFromJSVal = ShallowWrapper
+
 -- | StringSelector can be a CSS class, tag, id, prop (e.g. "[foo=3]"),
 --   component display name. (TODO should this be refined? Enhance? Be checked?)
 --   PropertySelector specifies (some of) the element's props
@@ -90,44 +92,44 @@ foreign import javascript unsafe
   js_shallow :: ReactElementRef -> IO JSVal
 
 find :: ShallowWrapper -> EnzymeSelector -> IO ShallowWrapper
-find = execWithSelector "find" ShallowWrapper
+find = execWithSelector "find"
 
 is :: ShallowWrapper -> EnzymeSelector -> IO Bool
-is = execWithSelector "is" pFromJSVal
+is = execWithSelector "is"
 
 childAt :: ShallowWrapper -> Int -> IO ShallowWrapper
-childAt = execWithInt "childAt" ShallowWrapper
+childAt = execWithInt "childAt"
 
 at :: ShallowWrapper -> Int -> IO ShallowWrapper
-at = execWithInt "at" ShallowWrapper
+at = execWithInt "at"
 
 props :: ShallowWrapper -> IO JSVal
-props = exec "props" id
+props = exec "props"
 
 typeOf :: ShallowWrapper -> IO JSVal
-typeOf = exec "type" id
+typeOf = exec "type"
 
 shallowChild :: ShallowWrapper -> IO ShallowWrapper
-shallowChild = exec "shallow" ShallowWrapper
+shallowChild = exec "shallow"
 
 children :: ShallowWrapper -> IO ShallowWrapper
-children = exec "children" ShallowWrapper
+children = exec "children"
 
 html :: ShallowWrapper -> IO JSString
-html = exec "html" pFromJSVal
+html = exec "html"
 
 text :: ShallowWrapper -> IO JSString
-text = exec "text" pFromJSVal
+text = exec "text"
 
-execWithSelector :: String -> (JSVal -> a) -> ShallowWrapper -> EnzymeSelector -> IO a
-execWithSelector func conv (ShallowWrapper wrapper) (StringSelector selector)   = conv <$> js_exec_with_string (toJSString func) wrapper (toJSString selector)
-execWithSelector func conv (ShallowWrapper wrapper) (PropertySelector selector) = conv <$> js_exec_with_object (toJSString func) wrapper ((toJSString . cs) (encode selector))
+execWithSelector :: PFromJSVal a => String -> ShallowWrapper -> EnzymeSelector -> IO a
+execWithSelector func (ShallowWrapper wrapper) (StringSelector selector)   = pFromJSVal <$> js_exec_with_string (toJSString func) wrapper (toJSString selector)
+execWithSelector func (ShallowWrapper wrapper) (PropertySelector selector) = pFromJSVal <$> js_exec_with_object (toJSString func) wrapper ((toJSString . cs) (encode selector))
 
-execWithInt :: String -> (JSVal -> a) -> ShallowWrapper -> Int -> IO a
-execWithInt func conv (ShallowWrapper wrapper) num = conv <$> js_exec_with_int (toJSString func) wrapper num
+execWithInt :: PFromJSVal a => String -> ShallowWrapper -> Int -> IO a
+execWithInt func (ShallowWrapper wrapper) num = pFromJSVal <$> js_exec_with_int (toJSString func) wrapper num
 
-exec :: String -> (JSVal -> a) -> ShallowWrapper -> IO a
-exec func conv (ShallowWrapper wrapper) = conv <$> js_exec (toJSString func) wrapper
+exec :: PFromJSVal a => String -> ShallowWrapper -> IO a
+exec func (ShallowWrapper wrapper) = pFromJSVal <$> js_exec (toJSString func) wrapper
 
 ------------------------------------
 
