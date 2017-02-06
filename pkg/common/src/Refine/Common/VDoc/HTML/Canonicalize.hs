@@ -108,13 +108,13 @@ setElemUIDs :: [Token] ->  [Token]
 setElemUIDs = fill mempty . fmap clear
   where
     clear :: Token -> Token
-    clear (TagOpen      n attrs) = TagOpen      n (filter stale attrs)
-    clear (TagSelfClose n attrs) = TagSelfClose n (filter stale attrs)
+    clear (TagOpen      n attrs) = TagOpen      n (filter nonStale attrs)
+    clear (TagSelfClose n attrs) = TagSelfClose n (filter nonStale attrs)
     clear t                      = t
 
-    stale :: Attr -> Bool
-    stale (Attr "data-uid" _) = False
-    stale _                   = True
+    nonStale :: Attr -> Bool
+    nonStale (Attr "data-uid" _) = False
+    nonStale _                   = True
 
     fill :: Set DataUID -> [Token] -> [Token]
     fill already = reverse . snd . foldl' f (totalMaximum already, [])
