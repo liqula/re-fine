@@ -32,13 +32,13 @@ module Refine.Common.VDoc.HTML.Enhance
   , addOffsetsToTree
   ) where
 
-import           Data.String (fromString)
 import           Data.String.Conversions (ST)
 import qualified Data.Text as ST
 import           Data.Tree
 import           Text.HTML.Parser
 
 import           Refine.Common.Types
+import           Refine.Common.VDoc.HTML.Canonicalize (canonicalizeAttrs)
 
 
 -- | Make sure all open tags have a @data-uid@ attribute (if missing: inherit from first suitable
@@ -67,7 +67,7 @@ addDataUidsToTree muid (Node t children) = Node t' (addDataUidsToTree muid' <$> 
     (t', muid') = case t of
       TagOpen tagname attrs -> case (findAttrUidIn attrs, muid) of
         (Just i,  _)      -> (TagOpen tagname attrs, Just i)
-        (Nothing, Just i) -> (TagOpen tagname (Attr (fromString "data-uid") i : attrs), Just i)
+        (Nothing, Just i) -> (TagOpen tagname (canonicalizeAttrs $ Attr "data-uid" i : attrs), Just i)
         _                 -> error "addDataUidsToTree: top-level tag without data-uid."
       _ -> (t, muid)
 
@@ -95,12 +95,15 @@ addOffsetsToForest_ offset (n : trees) =
 
 addOffsetsToTree :: Int -> Tree Token -> (Tree Token, Int)
 addOffsetsToTree offset (Node (TagOpen "mark" attrs) children) =
-  let newAttrs = Attr "data-offset" (ST.pack (show offset)) : attrs
+  let newAttrs = canonicalizeAttrs $ Attr "data-offset" (ST.pack (show offset)) : attrs
       (newForest, newOffset) = addOffsetsToForest_ offset children
   in (Node (TagOpen "mark" newAttrs) newForest, newOffset)
+
 addOffsetsToTree _ (Node (TagOpen tagname attrs) children) =
-  let (newForest, newOffset) = addOffsetsToForest_ 0 children
-  in (Node (TagOpen tagname (Attr "data-offset" "0" : attrs)) newForest, newOffset)
+  let newAttrs = canonicalizeAttrs $ Attr "data-offset" "0" : attrs
+      (newForest, newOffset) = addOffsetsToForest_ 0 children
+  in (Node (TagOpen tagname newAttrs) newForest, newOffset)
+
 addOffsetsToTree offset (Node t children) =
   let (newForest, newOffset) = addOffsetsToForest_ offset children
   in (Node t newForest, newOffset)
