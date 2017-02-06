@@ -234,7 +234,7 @@ foreign import javascript unsafe
   \    try { \
   \        console.log($1, JSON.parse($2)); \
   \    } catch(e) { \
-  \        console.log($1, '*** ERROR in Refine.Frontend.Store.consoleLog_ (see gitlab issue #134)', e); \
+  \        console.log($1, '*** ERROR in Refine.Frontend.Store.consoleLog_ (see gitlab issue #134; make sure node ==v6.)', e); \
   \    } \
   \}"
   consoleLog_ :: JSString -> JSString -> IO ()
