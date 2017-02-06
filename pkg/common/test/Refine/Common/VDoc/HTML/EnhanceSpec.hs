@@ -55,7 +55,6 @@ spec = parallel $ do
 
       let interleaveProp :: VersWithRanges -> Expectation
           interleaveProp (VersWithRanges (insertMarks ([] :: [ChunkRange Note]) -> vers) rs) = do
-              runOnce `shouldBe` runMany
               runOnce `shouldBe` addUIInfoToVDocVersion runMany
             where
               runOnce = addUIInfoToVDocVersion $ insertMoreMarks rs vers
