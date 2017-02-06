@@ -25,7 +25,10 @@ module Refine.Common.VDoc.HTML.SpliceSpec where
 import           Control.Exception (evaluate)
 import           Control.Lens (has, (^.))
 import           Data.List (nub, sort, foldl')
+import qualified Data.Set as Set
+import           Data.Set (Set)
 import           Data.String.Conversions ((<>))
+import qualified Data.Text as ST
 import           Data.Tree
 import           Test.Hspec
 import           Test.QuickCheck
@@ -37,6 +40,7 @@ import Refine.Common.Test.Arbitrary
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML.Core
 import Refine.Common.VDoc.HTML.Splice
+import Refine.Common.VDoc.HTML.CanonicalizeSpec (shouldBeVDocVersion)
 
 
 noChunkRanges :: [ChunkRange ()]
@@ -165,7 +169,9 @@ spec = parallel $ do
 
     it "generates valid output on arbitrary valid chunkranges (incrementally)." . property $ do
       \(VersWithRanges vers (r : rs)) -> do
-        foldl' (\vers' r' -> insertMoreMarks [r'] vers') (insertMarks [r] vers) rs `shouldNotBe` VDocVersion []
+        let incremental = foldl' (\vers' r' -> insertMoreMarks [r'] vers') (insertMarks [r] vers) rs
+            atonce = insertMarks (r : rs) vers
+        incremental `shouldBeLikeVDocVersion` atonce
 
     it "marks are inserted under the correct parent node." $ do
       pendingWith "not sure how to implement this test."
@@ -240,7 +246,6 @@ spec = parallel $ do
 
     it "regression (7)." $ do
       let vers = VDocVersion [Node {rootLabel = TagOpen "phoo" [Attr "data-uid" "7"], subForest = [Node {rootLabel = ContentText "C", subForest = []},Node {rootLabel = TagSelfClose "hr" [Attr "data-uid" "8"], subForest = []},Node {rootLabel = TagOpen "phoo" [Attr "data-uid" "9"], subForest = []},Node {rootLabel = TagOpen "phoo" [Attr "data-uid" "10"], subForest = [Node {rootLabel = ContentText "wef", subForest = []}]},Node {rootLabel = TagOpen "x123" [Attr "data-uid" "11"], subForest = [Node {rootLabel = TagSelfClose "wef" [Attr "data-uid" "12"], subForest = []}]}]}]
-          -- @trace (drawForest $ cs . renderToken <$$> (vers ^. unVDocVersion))@ will show you how this looks.
 
           rs :: [ChunkRange Edit]
           rs = [ChunkRange (ID 3) (Just (ChunkPoint (DataUID 7) 1)) Nothing]
@@ -309,3 +314,36 @@ spec = parallel $ do
                    ]
         evaluate (resolvePreTokens bad1) `shouldThrow` anyException
         evaluate (resolvePreTokens bad2) `shouldThrow` anyException
+
+
+-- * helpers
+
+-- | The order in which 'ChunkRange's are inserted changes the resulting token forest.
+-- This function can be used to generate values from 'VDocVersions' that can be tested for equality
+-- to abstract from these differences.  It returns a list of pairs of 'DataChunkID' set and number
+-- of characters that follow in the 'VDocVersion' covered by those chunk ids.
+marksEquivalenceClass :: VDocVersion 'HTMLWithMarks -> [(Set DataChunkID, Int)]
+marksEquivalenceClass (VDocVersion forest) = dfs mempty forest
+  where
+    push (Attr "data-chunk-id" v : _) opens = Set.insert v opens
+    push (_ : as) opens = push as opens
+    push [] _ = error "marksEquivalenceClass: mark tag without data-chunk-id attribute!"
+
+    dfs :: Set DataChunkID -> Forest Token -> [(Set DataChunkID, Int)]
+    dfs opens (Node (TagOpen "mark" attrs) children : siblings) =
+      dfs (push attrs opens) children <> dfs opens siblings
+
+    dfs opens (Node (ContentText s) [] : siblings) =
+      (opens, ST.length s) : dfs opens siblings
+
+    dfs opens (Node _ children : siblings) =
+      dfs opens children <> dfs opens siblings
+
+    dfs _ [] = []
+
+-- | Call 'shouldBeVDocVersion' if 'marksEquivalenceClass' values do not match.
+shouldBeLikeVDocVersion :: VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks -> Expectation
+shouldBeLikeVDocVersion vers vers' =
+  if marksEquivalenceClass vers == marksEquivalenceClass vers'
+    then pure ()
+    else vers `shouldBeVDocVersion` vers'
