@@ -121,18 +121,18 @@ spec = parallel $ do
 
   describe "canonicalizeAttrs" $ do
     it "takes the first of many values for one key." $ do
-      canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "x" "4"])
+      TagOpen "wef" (canonicalizeAttrs [Attr "x" "3", Attr "x" "4"])
         `shouldBe` TagOpen "wef" [Attr "x" "3"]
 
-      canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "x" "1"])
+      TagOpen "wef" (canonicalizeAttrs [Attr "x" "3", Attr "x" "1"])
         `shouldBe` TagOpen "wef" [Attr "x" "3"]
 
     it "sorts attrs alphabetially." $ do
-      canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "q" "0", Attr "x" "1"])
+      TagOpen "wef" (canonicalizeAttrs [Attr "x" "3", Attr "q" "0", Attr "x" "1"])
         `shouldBe` TagOpen "wef" [Attr "q" "0", Attr "x" "3"]
 
-      canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "q" "9"])
+      TagOpen "wef" (canonicalizeAttrs [Attr "x" "3", Attr "q" "9"])
         `shouldBe` TagOpen "wef" [Attr "q" "9", Attr "x" "3"]
 
-      canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "z" "0"])
+      TagOpen "wef" (canonicalizeAttrs [Attr "x" "3", Attr "z" "0"])
         `shouldBe` TagOpen "wef" [Attr "x" "3", Attr "z" "0"]

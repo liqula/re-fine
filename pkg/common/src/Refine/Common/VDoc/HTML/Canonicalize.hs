@@ -28,7 +28,7 @@ module Refine.Common.VDoc.HTML.Canonicalize
   , canonicalizeWhitespace
   , setElemUIDs
   , wrapInTopLevelTags
-  , canonicalizeAttrsForest, canonicalizeAttrsTree, canonicalizeAttrsStream, canonicalizeAttrs
+  , canonicalizeAttrsForest, canonicalizeAttrsTree, canonicalizeAttrsStream, canonicalizeAttrsToken, canonicalizeAttrs
   ) where
 
 import           Data.Char (isSpace)
@@ -59,7 +59,8 @@ canonicalizeVDocVersion (VDocVersion vers) = VDocVersion (canonicalize vers)
   where
     canonicalize :: Forest Token -> Forest Token
     canonicalize
-      = onStream setElemUIDs
+      = canonicalizeAttrsForest
+      . onStream setElemUIDs
       . wrapInTopLevelTags
       . (onText canonicalizeWhitespace . fixSelfClosing <$$>)
       . onStream (canonicalizeTokens . dropCommentsAndDoctypes)
@@ -146,14 +147,19 @@ canonicalizeAttrsForest = fmap canonicalizeAttrsTree
 
 -- | Call 'canonicalizeAttrs' on a token 'Tree'.
 canonicalizeAttrsTree :: Tree Token -> Tree Token
-canonicalizeAttrsTree (Node x xs) = Node (canonicalizeAttrs x) (canonicalizeAttrsForest xs)
+canonicalizeAttrsTree (Node x xs) = Node (canonicalizeAttrsToken x) (canonicalizeAttrsForest xs)
 
--- | Call 'canonicalizeAttrs' on a token list.
+-- | Call 'canonicalizeAttrsToken' on a token list.
 canonicalizeAttrsStream :: [Token] -> [Token]
-canonicalizeAttrsStream = fmap canonicalizeAttrs
+canonicalizeAttrsStream = fmap canonicalizeAttrsToken
+
+-- | Call 'canonicalizeAttrs' on attribute list.
+canonicalizeAttrsToken :: Token -> Token
+canonicalizeAttrsToken (TagOpen n xs) = TagOpen n $ canonicalizeAttrs xs
+canonicalizeAttrsToken (TagSelfClose n xs) = TagSelfClose n $ canonicalizeAttrs xs
+canonicalizeAttrsToken t = t
 
 -- | If one attribute key occurs several times, use the first occurrance and drop the rest.  Sort
 -- the resulting list.
-canonicalizeAttrs :: Token -> Token
-canonicalizeAttrs (TagOpen n xs) = TagOpen n (sort $ nubBy ((==) `on` (\(Attr k _) -> k)) xs)
-canonicalizeAttrs t = t
+canonicalizeAttrs :: [Attr] -> [Attr]
+canonicalizeAttrs = sort . nubBy ((==) `on` (\(Attr k _) -> k))
