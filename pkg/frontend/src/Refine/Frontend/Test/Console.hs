@@ -49,6 +49,7 @@ foreign import javascript unsafe
 
 -- | Write a 'JSVal' to stdout (node) or the console (browser) via JSON.stringify() which allows
 -- for deep rendering of the object.
+-- Caution: Does not work for circular objects (i.e. usually ShallowWrappers).
 foreign import javascript unsafe
   "console.log($1, JSON.stringify($2));"
   consoleLogStringified :: JSString -> JSVal -> IO ()
