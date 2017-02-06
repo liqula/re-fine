@@ -1,12 +1,26 @@
-{-# LANGUAGE DeriveAnyClass    #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE TupleSections     #-}
-{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE ExplicitForAll             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.Types where
 
@@ -71,19 +85,10 @@ data RefineAction = LoadDocumentList
                   | AddHeaderHeight Int
                   | AddMarkPosition Int64 OffsetFromViewportTop ScrollOffsetOfViewport
                   | SetWindowSize WindowSize
-                  -- Bubble Actions:
-                  | UpdateSelection Selection
-                  | ClearSelection
-                  | ShowComment
-                  | HideComment
-                  | ShowCommentEditor (Maybe Range)
-                  | HideCommentEditor
-                  | SetCommentCategory CommentCategory
-                  | SubmitComment ST (Maybe CommentCategory) (Maybe Range)
+                  | BubblesAction BubblesAction
                   -- ...
                   | AddDiscussion CompositeDiscussion
                   | AddNote Note
-                  | SubmitEdit
                   | SaveSelect Text Text
                   -- Actions that will be transformed because they need IO:
                   | TriggerUpdateSelection DeviceOffset

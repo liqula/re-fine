@@ -2,12 +2,12 @@
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE DeriveAnyClass             #-}
 {-# LANGUAGE ExplicitForAll             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
@@ -15,6 +15,7 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeFamilyDependencies     #-}
@@ -49,7 +50,7 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, s
                 (fromString createType)
                 ""
                 False
-                (\_ -> RS.dispatch RS.ClearSelection <> RS.dispatch (RS.ShowCommentEditor (fst currentSelection)))
+                (\_ -> RS.dispatch (RS.BubblesAction RS.ClearSelection) <> RS.dispatch (RS.BubblesAction (RS.ShowCommentEditor (fst currentSelection))))
               ) offset
         _ -> mempty
 --    // quickCreate annotation ui events  -- RENAME: annotation => comment

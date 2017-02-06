@@ -1,7 +1,43 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell   #-}
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE ExplicitForAll             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.UtilityWidgets where
+module Refine.Frontend.UtilityWidgets
+( IconSize(..)
+, IconDescription
+, IconProps(IconProps)
+, ClickHandler
+, IconButtonProps(IconButtonProps)
+, IconButtonWithAlignmentProps(IconButtonWithAlignmentProps)
+
+, icon_
+, iconButtonWithAlignment_
+, iconButtonWithAlignmentCore_
+, iconButton_
+, positionedIconButton_
+
+, toClasses
+) where
 
 import           Control.Lens (makeLenses, (^.), _1, _2)
 import           Data.Char (toLower)

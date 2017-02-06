@@ -1,9 +1,26 @@
-{-# LANGUAGE DeriveAnyClass    #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE ExplicitForAll             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ViewPatterns               #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -51,7 +68,7 @@ instance StoreData GlobalState where
                 -- for efficiency reasons, only ask JS when we get this action
                 hasRange <- js_hasRange
                 range <- if hasRange then getRange else return Nothing
-                return $ UpdateSelection (range, Just deviceOffset)
+                return . BubblesAction $ UpdateSelection (range, Just deviceOffset)
             _ -> return action
 
 
@@ -100,7 +117,7 @@ vdocListUpdate action state = case action of
 
 markPositionsUpdate :: RefineAction -> MarkPositions -> MarkPositions
 markPositionsUpdate action state = case action of
-    AddMarkPosition dataHunkId pos scroll -> MarkPositions $ M.alter (\_ -> Just (pos, scroll)) dataHunkId (_unMarkPositions state)
+    AddMarkPosition dataChunkId pos scroll -> MarkPositions $ M.alter (\_ -> Just (pos, scroll)) dataChunkId (_unMarkPositions state)
     _ -> state
 
 emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()
@@ -119,7 +136,7 @@ emitBackendCallsFor action state = case action of
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
 
-    SubmitComment text category forRange -> do
+    BubblesAction (SubmitComment text category forRange) -> do
       -- here we need to distinguish which comment category we want to submit
       -- check the state and what the user selected there
       -- (FIXME: the new correct technical term for 'category' is 'kind'.)

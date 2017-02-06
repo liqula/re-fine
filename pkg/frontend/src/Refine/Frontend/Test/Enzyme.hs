@@ -7,6 +7,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
@@ -14,25 +15,54 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Test.Enzyme where
+module Refine.Frontend.Test.Enzyme
+( Prop(..)
+, ShallowWrapper(..)
+, EnzymeSelector(..)
+, shallow
+-- Enzyme functions on a ShallowWrapper
+, at
+, childAt
+, children
+, find
+, html
+, is
+, props
+, shallowChild -- known as "shallow" in Enzyme
+, text
+, typeOf
 
-import Control.Exception (throwIO, ErrorCall(ErrorCall))
-import Data.Aeson (FromJSON, eitherDecode, encode, object, (.=))
+-- JavaScript functions on a ShallowWrapper
+, lengthOf
+, lengthOfIO
+
+-- simulating an event on a ShallowWrapper
+, simulate
+, EventType(..)
+
+) where
+
+import Data.Aeson (encode, object, (.=))
 import Data.Aeson.Types (ToJSON, toJSON)
-import Data.JSString (JSString, unpack)
+import Data.JSString (JSString)
 import Data.String.Conversions
+import GHCJS.Marshal.Pure
 import GHCJS.Types (JSVal, nullRef)
 import React.Flux
 import React.Flux.Internal
 
+{-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
 newtype ShallowWrapper = ShallowWrapper JSVal
+
+instance PFromJSVal ShallowWrapper where pFromJSVal = ShallowWrapper
 
 -- | StringSelector can be a CSS class, tag, id, prop (e.g. "[foo=3]"),
 --   component display name. (TODO should this be refined? Enhance? Be checked?)
@@ -43,6 +73,9 @@ data EnzymeSelector =
   | PropertySelector [Prop]
 --  | ComponentSelector
 
+instance PToJSVal EnzymeSelector where
+  pToJSVal (StringSelector str) = pToJSVal str
+  pToJSVal (PropertySelector p) = pToJSVal . toJSString . cs $ encode p
 
 data Prop where
   Prop :: forall a. (ToJSON a) => ST -> a -> Prop
@@ -61,81 +94,82 @@ foreign import javascript unsafe
   js_shallow :: ReactElementRef -> IO JSVal
 
 find :: ShallowWrapper -> EnzymeSelector -> IO ShallowWrapper
-find = execSW "find"
+find = execWithSelector "find"
 
 is :: ShallowWrapper -> EnzymeSelector -> IO Bool
-is = execB "is"
+is = execWithSelector "is"
 
-execSW :: String -> ShallowWrapper -> EnzymeSelector -> IO ShallowWrapper
-execSW func (ShallowWrapper wrapper) (StringSelector selector) = do
-  ShallowWrapper <$> js_exec_sw_by_string (toJSString func) wrapper (toJSString selector)
-execSW func (ShallowWrapper wrapper) (PropertySelector selector) = do
-  ShallowWrapper <$> js_exec_sw_by_prop (toJSString func) wrapper ((toJSString . cs) (encode selector))
+childAt :: ShallowWrapper -> Int -> IO ShallowWrapper
+childAt = execWith1Arg "childAt"
 
-execB :: String -> ShallowWrapper -> EnzymeSelector -> IO Bool
-execB func (ShallowWrapper wrapper) (StringSelector selector) = do
-  js_exec_b_by_string (toJSString func) wrapper (toJSString selector)
-execB func (ShallowWrapper wrapper) (PropertySelector selector) = do
-  js_exec_b_by_prop (toJSString func) wrapper ((toJSString . cs) (encode selector))
+at :: ShallowWrapper -> Int -> IO ShallowWrapper
+at = execWith1Arg "at"
 
--- TODO unify _sw_ and _b_ by applying the appropriate transformation to the result?
-foreign import javascript unsafe
-    "$2[$1]($3)"
-    js_exec_sw_by_string :: JSString -> JSVal -> JSString -> IO JSVal
+props :: ShallowWrapper -> IO JSVal
+props = exec "props"
 
-foreign import javascript unsafe
-    "$2[$1](JSON.parse($3))"
-    js_exec_sw_by_prop :: JSString -> JSVal -> JSString -> IO JSVal
+typeOf :: ShallowWrapper -> IO JSVal
+typeOf = exec "type"
 
-foreign import javascript unsafe
-    "$2[$1]($3)"
-    js_exec_b_by_string :: JSString -> JSVal -> JSString -> IO Bool
+shallowChild :: ShallowWrapper -> IO ShallowWrapper
+shallowChild = exec "shallow"
 
-foreign import javascript unsafe
-    "$2[$1](JSON.parse($3))"
-    js_exec_b_by_prop :: JSString -> JSVal -> JSString -> IO Bool
+children :: ShallowWrapper -> IO ShallowWrapper
+children = exec "children"
+
+html :: ShallowWrapper -> IO JSString
+html = exec "html"
 
 text :: ShallowWrapper -> IO JSString
-text (ShallowWrapper wrapper) = do
-  js_text wrapper
+text = exec "text"
 
-foreign import javascript unsafe
-    "$1.text()"
-    js_text :: JSVal -> IO JSString
+lengthOf :: ShallowWrapper -> IO Int
+lengthOf = attr "length"
 
-length :: ShallowWrapper -> IO Int
-length wrapper = getWrapperAttr wrapper "length"
+lengthOfIO :: IO ShallowWrapper -> IO Int
+lengthOfIO wrapper = lengthOf =<< wrapper
 
-lengthIO :: IO ShallowWrapper -> IO Int
-lengthIO wrapper = getIOWrapperAttr wrapper "length"
-
-getIOWrapperAttr :: FromJSON a => IO ShallowWrapper -> JSString -> IO a
-getIOWrapperAttr ioWrapper selector = do
-  wrapper <- ioWrapper
-  getWrapperAttr wrapper selector
-
-getWrapperAttr :: FromJSON a => ShallowWrapper -> JSString -> IO a
-getWrapperAttr (ShallowWrapper wrapper) selector = do
-  jsstring <- js_getWrapperAttr wrapper selector
-  case eitherDecode . cs . unpack $ jsstring of
-    Left e -> throwIO . ErrorCall $ show e
-    Right v -> pure v
-
-foreign import javascript unsafe
-    "JSON.stringify($1[$2])"
-    js_getWrapperAttr :: JSVal -> JSString -> IO JSString
+-- Simulating Events --------------------------------------------------------------------
 
 data EventType =
     MouseEnter
   | MouseLeave
   deriving (Show)
 
+instance PToJSVal EventType where pToJSVal = pToJSVal . show
+
 simulate :: ShallowWrapper -> EventType -> IO ShallowWrapper
-simulate (ShallowWrapper wrapper) event = ShallowWrapper <$> js_simulate wrapper (toJSString (show event))
+simulate = execWith1Arg "simulate"
 
+-- Preparations for the evaluation of functions in JavaScript --------------------------------------------------
 
+execWithSelector :: PFromJSVal a => String -> ShallowWrapper -> EnzymeSelector -> IO a
+execWithSelector func (ShallowWrapper wrapper) es@(PropertySelector _) = pFromJSVal <$> js_exec_with_object (toJSString func) wrapper (pToJSVal es)
+execWithSelector f w e = execWith1Arg f w e
+
+execWith1Arg :: (PFromJSVal a, PToJSVal b) => String -> ShallowWrapper -> b -> IO a
+execWith1Arg func (ShallowWrapper wrapper) arg = pFromJSVal <$> js_exec_with_1_arg (toJSString func) wrapper (pToJSVal arg)
+
+exec :: PFromJSVal a => String -> ShallowWrapper -> IO a
+exec func (ShallowWrapper wrapper) = pFromJSVal <$> js_exec (toJSString func) wrapper
+
+attr :: PFromJSVal a => String -> ShallowWrapper -> IO a
+attr name (ShallowWrapper wrapper) = pFromJSVal <$> js_attr (toJSString name) wrapper
+
+-- The evaluation of functions in JavaScript ----------------------------------
 
 foreign import javascript unsafe
-    "$1.simulate($2)"
-    js_simulate :: JSVal -> JSString -> IO JSVal
+    "$2[$1]()"
+    js_exec :: JSString -> JSVal -> IO JSVal
 
+foreign import javascript unsafe
+    "$2[$1]"
+    js_attr :: JSString -> JSVal -> IO JSVal
+
+foreign import javascript unsafe
+    "$2[$1]($3)"
+    js_exec_with_1_arg :: JSString -> JSVal -> JSVal -> IO JSVal
+
+foreign import javascript unsafe
+    "$2[$1](JSON.parse($3))"
+    js_exec_with_object :: JSString -> JSVal -> JSVal -> IO JSVal

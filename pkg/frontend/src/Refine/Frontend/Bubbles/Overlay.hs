@@ -2,12 +2,12 @@
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE DeriveAnyClass             #-}
 {-# LANGUAGE ExplicitForAll             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
@@ -15,6 +15,7 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeFamilyDependencies     #-}
@@ -69,7 +70,7 @@ showComment = defineView "ShowComment" $ \showOverlay ->
 
                                       ]
   in overlay_ ["isVisible" &= showOverlay
-           , on "onCloseClicked" $ \_ -> RS.dispatch RS.HideComment
+           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.BubblesAction RS.HideComment)
            , "hideOnOverlayClicked" &= True
            , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content__comment)
            ] $ do
@@ -128,7 +129,7 @@ addComment = defineView "AddComment" $ \(showOverlay, forRange, commentCategory)
                                           , Style "zIndex" (6010 :: Int)
                                           ]
   in overlay_ ["isVisible" &= showOverlay
-           , on "onCloseClicked" $ \_ -> RS.dispatch RS.HideCommentEditor
+           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.BubblesAction RS.HideCommentEditor)
            , "hideOnOverlayClicked" &= True
            , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content__add_comment)
            , "overlayStyles" @= [Style "zIndex" (6000 :: Int)]
@@ -169,7 +170,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
                     ""
                     "add a note"
                     False
-                    (\_ -> RS.dispatch $ RS.SetCommentCategory RS.Note)
+                    (\_ -> RS.dispatch . RS.BubblesAction $ RS.SetCommentCategory RS.Note)
                   )
       iconButton_ (IconButtonProps
                     (IconProps "c-vdoc-overlay-content" True ("icon-Discussion", "dark") L)
@@ -178,7 +179,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
                     ""
                     "start a discussion"
                     False
-                    (\_ -> RS.dispatch $ RS.SetCommentCategory RS.Discussion)
+                    (\_ -> RS.dispatch . RS.BubblesAction $ RS.SetCommentCategory RS.Discussion)
                   )
 
     div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
@@ -194,8 +195,8 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
         ""
         "submit"
         ((0 == DT.length (curState ^. RS.commentInputStateText)) || isNothing category) -- no text or no category -> disable button
-        (\_ -> RS.dispatch (RS.SubmitComment (curState ^. RS.commentInputStateText) category forRange)
-            <> RS.dispatch RS.HideCommentEditor)
+        (\_ -> RS.dispatch (RS.BubblesAction (RS.SubmitComment (curState ^. RS.commentInputStateText) category forRange))
+            <> RS.dispatch (RS.BubblesAction RS.HideCommentEditor))
       )
 
 commentInput_ :: Maybe RS.Range -> Maybe RS.CommentCategory -> ReactElementM eventHandler ()

@@ -1,9 +1,26 @@
-{-# LANGUAGE DeriveAnyClass    #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell   #-}
-{-# LANGUAGE TypeFamilies      #-}
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveAnyClass             #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE ExplicitForAll             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ViewPatterns               #-}
 
 
 module Refine.Frontend.Bubbles.Types where
@@ -60,6 +77,18 @@ data CommentCategory =
   | Note
   deriving (Show, Generic)
 
+data BubblesAction =
+    UpdateSelection Selection
+  | ClearSelection
+  | ShowComment
+  | HideComment
+  | ShowCommentEditor (Maybe Range)
+  | HideCommentEditor
+  | SetCommentCategory CommentCategory
+  | SubmitComment ST (Maybe CommentCategory) (Maybe Range)
+  | SubmitEdit
+  deriving (Show, Generic)
+
 
 data BubblesState = BubblesState
   { _bsCurrentSelection       :: Selection
@@ -74,4 +103,5 @@ emptyBubblesState = BubblesState (Nothing, Nothing) Nothing False (False, Nothin
 
 makeRefineType ''CommentInputState
 makeRefineType ''CommentCategory
+makeRefineType ''BubblesAction
 makeRefineType ''BubblesState
