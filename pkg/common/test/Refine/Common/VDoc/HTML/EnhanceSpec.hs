@@ -22,10 +22,17 @@
 
 module Refine.Common.VDoc.HTML.EnhanceSpec where
 
+import           Data.List (foldl')
 import           Data.Tree
 import           Test.Hspec
+import           Test.QuickCheck
 import           Text.HTML.Parser
+
+import Refine.Common.Test.Arbitrary
+import Refine.Common.Types
 import Refine.Common.VDoc.HTML.Enhance
+import Refine.Common.VDoc.HTML.Splice
+
 
 openTagWithUID :: Token
 openTagWithUID = TagOpen "tag" [Attr "data-uid" "77"]
@@ -41,8 +48,24 @@ openMarkTag = TagOpen "mark" []
 
 spec :: Spec
 spec = parallel $ do
-    describe "addDataUidsToTree" $ do
+    describe "addUIInfoToVDocVersion" $ do
+      it "is idempotent" . property $ do
+        \(insertMarks ([] :: [ChunkRange Note]) -> vers) ->
+          addUIInfoToVDocVersion vers `shouldBe` addUIInfoToVDocVersion (addUIInfoToVDocVersion vers)
 
+      it "can be interleaved with `insertMoreMarks`." . property $ do
+        \(VersWithRanges (insertMarks ([] :: [ChunkRange Note]) -> vers) rs) -> do
+          let runOnce = addUIInfoToVDocVersion $ insertMoreMarks rs vers
+              runMany = foldl' go vers rs
+                where
+                  go :: VDocVersion 'HTMLWithMarks -> ChunkRange Edit -> VDocVersion 'HTMLWithMarks
+                  go v r = insertMoreMarks [r] $ addUIInfoToVDocVersion v
+
+          runOnce `shouldBe` runMany
+          runOnce `shouldBe` addUIInfoToVDocVersion runMany
+
+
+    describe "addDataUidsToTree" $ do
       it "adds the passed uid when there is none" $ do
         addDataUidsToTree (Just "1") (Node openTagWithoutUID []) `shouldBe` Node (TagOpen "tag" [Attr "data-uid" "1"]) []
 
