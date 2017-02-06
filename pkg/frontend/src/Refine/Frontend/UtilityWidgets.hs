@@ -22,7 +22,22 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.UtilityWidgets where
+module Refine.Frontend.UtilityWidgets
+( IconSize(..)
+, IconDescription
+, IconProps(IconProps)
+, ClickHandler
+, IconButtonProps(IconButtonProps)
+, IconButtonWithAlignmentProps(IconButtonWithAlignmentProps)
+
+, icon_
+, iconButtonWithAlignment_
+, iconButtonWithAlignmentCore_
+, iconButton_
+, positionedIconButton_
+
+, toClasses
+) where
 
 import           Control.Lens (makeLenses, (^.), _1, _2)
 import           Data.Char (toLower)
