@@ -78,7 +78,7 @@ spec = parallel $ do
 
     it "works (2)." $ do
       createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 5) 1000)) (Just (ChunkPoint (DataUID 5) 2000)))
-        vers `shouldSatisfy` any (has _ChunkRangeOffsetTooLarge)
+        vers `shouldSatisfy` any (has _ChunkRangeOffsetOutOfBounds)
 
     it "works (3)." $ do
       createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 5) 1)) (Just (ChunkPoint (DataUID 5) 2)))
@@ -123,7 +123,7 @@ spec = parallel $ do
           rs = allNonEmptyCreateChunkRanges_ vers'
           check (_, r) = do
             createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeBadDataUID)
-            createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeOffsetTooLarge)
+            createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeOffsetOutOfBounds)
             createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeEmpty)
       check `mapM_` rs
 

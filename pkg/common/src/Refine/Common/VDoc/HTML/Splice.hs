@@ -111,7 +111,7 @@ createChunkRangeErrors cr@(CreateChunkRange mp1 mp2) (VDocVersion forest) =
       [ChunkRangeBadDataUID cp forest | null $ forest ^. atToken uid]
 
     offsetTooLarge = checkChunkPoint $ \cp@(ChunkPoint uid off) ->
-      [ChunkRangeOffsetTooLarge cp forest | off > forestTextLength (forest ^. atToken uid)]
+      [ChunkRangeOffsetOutOfBounds cp forest | off > forestTextLength (forest ^. atToken uid) || off < 0]
 
     isEmpty = [ChunkRangeEmpty mp1 mp2 forest | not $ isNonEmptyChunkRange cr forest]
 
