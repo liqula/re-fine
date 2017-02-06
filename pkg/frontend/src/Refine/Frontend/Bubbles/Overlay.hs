@@ -63,10 +63,11 @@ makeLenses ''CommentDisplayProps
 
 showComment :: ReactView CommentDisplayProps
 showComment = defineView "ShowComment" $ \props ->
-  overlay_ [on "onCloseClicked" $ \_ -> RS.dispatch (RS.BubblesAction RS.HideCommentOverlay)
-               , "hideOnOverlayClicked" &= True
-               , "dialogStyles" @= (vdoc_overlay_content <> (props ^. contentStyle))
-               ] $ do
+  overlay_ ["isVisible" &= True
+           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.BubblesAction RS.HideCommentOverlay)
+           , "hideOnOverlayClicked" &= True
+           , "dialogStyles" @= (vdoc_overlay_content <> (props ^. contentStyle))
+           ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
         icon_ (IconProps "c-vdoc-overlay-content" False (props ^. iconStyle) L) -- or XL? in question
