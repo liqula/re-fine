@@ -151,19 +151,24 @@ leftAside = defineView "LeftAside" $ \props ->
     aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
         let lookupPosition chunkId = M.lookup chunkId . _unMarkPositions $ _leftAsideMarkPositions props
         -- TODO the map should use proper IDs as keys
-        mconcat $ map (\d -> discussionBubble_ (d ^. compositeDiscussion ^. discussionID ^. unID)
-                                               (lookupPosition (d ^. compositeDiscussion ^. discussionID ^. unID))
-                                               (_leftAsideScreenState props)
+        mconcat $ map (\d -> discussionBubble_ (SpecialBubbleProps
+                                                 (d ^. compositeDiscussion ^. discussionID ^. unID)
+                                                 (lookupPosition (d ^. compositeDiscussion ^. discussionID ^. unID))
+                                                 (_leftAsideScreenState props)
+                                               )
                                                (elemText (DT.rootLabel (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
                       (_leftAsideDiscussions props)
-        mconcat $ map (\n -> noteBubble_ (n ^. noteID ^. unID)
-                                         (lookupPosition (n ^. noteID ^. unID))
-                                         (_leftAsideScreenState props)
+        mconcat $ map (\n -> noteBubble_ (SpecialBubbleProps
+                                           (n ^. noteID ^. unID)
+                                           (lookupPosition (n ^. noteID ^. unID))
+                                           (_leftAsideScreenState props)
+                                         )
                                          (elemText (n ^. noteText)))
                       (_leftAsideNotes props)
-
-        questionBubble_ 3 (_leftAsideMarkPositions props) (_leftAsideScreenState props) $ do
+{-
+        questionBubble_ (SpecialBubbleProps 3 (_leftAsideMarkPositions props) (_leftAsideScreenState props)) $ do
             span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
+-}
         quickCreate_ "annotation" (_leftAsideCurrentSelection props) (_leftAsideScreenState props)  -- RENAME: annotation => comment
 
 
@@ -172,10 +177,13 @@ leftAside_ props = view leftAside props mempty
 
 
 rightAside :: ReactView (RS.MarkPositions, SC.ScreenState)
-rightAside = defineView "RightAside" $ \(markPositions, screenState) ->
+rightAside = defineView "RightAside" $ \(_markPositions, _screenState) ->
     aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do -- RENAME: modifications => ??
+      mempty
+    {-
             editBubble_ 2 markPositions screenState $ do
                 span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
+    -}
 
 rightAside_ :: RS.MarkPositions -> SC.ScreenState -> ReactElementM eventHandler ()
 rightAside_ markPositions screenState = view rightAside (markPositions, screenState) mempty
