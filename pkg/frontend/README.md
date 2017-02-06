@@ -30,6 +30,9 @@ This application is based on react-flux.
 
 The browser window will be refreshed whenever the local JavaScript changes.
 
+NOTE: webpack does not watch *.hs files!  If you change Haskell code,
+you need to re-run the commands under section "Each time" above.
+
 ## Creating Static Assets to be delivered by the Server
 
 1. If any dependencies in package.json were changed: npm install
