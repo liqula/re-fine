@@ -50,7 +50,7 @@ spec = parallel $ do
       it "ignores the passed uid when there is already one" $ do
         addDataUidsToTree (Just "1") (Node openTagWithUID []) `shouldBe` Node openTagWithUID []
 
-      it "does not alter other tags" $ do
+      it "does not alter other tokens" $ do
         addDataUidsToTree (Just "1") (Node (TagClose "tag")     []) `shouldBe` Node (TagClose "tag") []
         addDataUidsToTree (Just "1") (Node (ContentText "text") []) `shouldBe` Node (ContentText "text") []
         addDataUidsToTree (Just "1") (Node (ContentChar 'x')    []) `shouldBe` Node (ContentChar 'x') []
@@ -69,8 +69,9 @@ spec = parallel $ do
           `shouldBe` Node (TagOpen "tag" [Attr "data-uid" "1"]) [ Node (TagOpen "tag" [Attr "data-uid" "1"]) []
                                                                 , Node openTagWithOtherUID []]
 
-    describe "addDataUidsToTree" $ do
+    describe "addOffsetsToTree" $ do
       it "sets an offset of 0 if we are not on a mark tag" $ do
+        -- the second case is impossible if input is canonicalized.
         addOffsetsToTree 50 (Node openTagWithUID [])    `shouldBe` (Node (TagOpen "tag" [Attr "data-offset" "0", Attr "data-uid" "77"]) [], 0)
         addOffsetsToTree 50 (Node openTagWithoutUID []) `shouldBe` (Node (TagOpen "tag" [Attr "data-offset" "0"]) [], 0)
 
@@ -78,6 +79,10 @@ spec = parallel $ do
         addOffsetsToTree 50 (Node openMarkTag []) `shouldBe` (Node (TagOpen "mark" [Attr "data-offset" "50"]) [], 50)
 
       it "adds up the offset of subsequent texts" $ do
+        -- offset is relative to non-mark nodes, because those are the ones that have no data-uid
+        -- (that is not inherited via 'addDataUidsToTree').  therefore, sibling marks have
+        -- accumulating offset values because all selections into their children have to refer to
+        -- the first data-uid-carrying ancestor with their offsets.
         addOffsetsToForest_ 50 [ Node (ContentText "a text") []
                                , Node (TagOpen "mark" []) []
                                , Node (ContentText "another text") []
