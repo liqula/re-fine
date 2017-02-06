@@ -28,7 +28,7 @@ import           Control.Lens (makeLenses, (^.))
 import           Data.Int
 import           Data.Monoid ((<>))
 import           Data.String (fromString)
-import           React.Flux
+import           React.Flux hiding (callback)
 
 import qualified Refine.Frontend.Screen.Calculations as SC
 import qualified Refine.Frontend.Screen.Types as SC
@@ -42,6 +42,7 @@ data BubbleProps = BubbleProps
   , _bubblePropsIconSide :: String
   , _bubblePropsIconStyle :: IconDescription
   , _bubblePropsMarkPosition :: Maybe (Int, Int)
+  , _bubblePropsCallback :: ClickHandler
   , _bubblePropsScreenState :: SC.ScreenState
   }
 
@@ -72,28 +73,32 @@ data SpecialBubbleProps = SpecialBubbleProps
 
 discussionBubble :: ReactView SpecialBubbleProps
 discussionBubble = defineView "DiscussionBubble" $ \(SpecialBubbleProps dataChunkId markPosition screenState) ->
-    bubble_ (BubbleProps dataChunkId "discussion" "left" ("icon-Discussion", "bright") markPosition screenState) childrenPassedToView
+    let callback = (\_ -> [])
+    in bubble_ (BubbleProps dataChunkId "discussion" "left" ("icon-Discussion", "bright") markPosition callback screenState) childrenPassedToView
 
 discussionBubble_ :: SpecialBubbleProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 discussionBubble_ = view discussionBubble
 
 questionBubble :: ReactView SpecialBubbleProps
 questionBubble = defineView "QuestionBubble" $ \(SpecialBubbleProps dataChunkId markPosition screenState) ->
-    bubble_ (BubbleProps dataChunkId "question" "left" ("icon-Question", "dark") markPosition screenState) childrenPassedToView
+    let callback = (\_ -> [])
+    in bubble_ (BubbleProps dataChunkId "question" "left" ("icon-Question", "dark") markPosition callback screenState) childrenPassedToView
 
 questionBubble_ :: SpecialBubbleProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 questionBubble_ = view questionBubble
 
 noteBubble :: ReactView SpecialBubbleProps
 noteBubble = defineView "NoteBubble" $ \(SpecialBubbleProps dataChunkId markPosition screenState) ->
-    bubble_ (BubbleProps dataChunkId "question" "left" ("icon-Question", "dark") markPosition screenState) childrenPassedToView
+    let callback = (\_ -> [])
+    in bubble_ (BubbleProps dataChunkId "question" "left" ("icon-Question", "dark") markPosition callback screenState) childrenPassedToView
 
 noteBubble_ :: SpecialBubbleProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 noteBubble_ = view noteBubble
 
 editBubble :: ReactView SpecialBubbleProps
 editBubble = defineView "EditBubble" $ \(SpecialBubbleProps dataChunkId markPosition screenState) ->
-    bubble_ (BubbleProps dataChunkId "edit" "right" ("icon-Edit", "dark") markPosition screenState) childrenPassedToView
+    let callback = (\_ -> [])
+    in bubble_ (BubbleProps dataChunkId "edit" "right" ("icon-Edit", "dark") markPosition callback screenState) childrenPassedToView
 
 editBubble_ :: SpecialBubbleProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 editBubble_ = view editBubble
