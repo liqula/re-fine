@@ -103,8 +103,8 @@ toArticleBody forest = mconcat $ map toHTML (addUIInfoToForest forest)
 
 toHTML :: DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()
 -- br and hr need to be handled differently
-toHTML (DT.Node (HTMLP.TagOpen "br" attrs) []) = br_ (toProps attrs)
-toHTML (DT.Node (HTMLP.TagOpen "hr" attrs) []) = hr_ (toProps attrs)
+toHTML (DT.Node (HTMLP.TagSelfClose "br" attrs) []) = br_ (toProps attrs)
+toHTML (DT.Node (HTMLP.TagSelfClose "hr" attrs) []) = hr_ (toProps attrs)
 -- just a node without children, containing some text:
 toHTML (DT.Node (HTMLP.ContentText content) []) = elemText content
 toHTML (DT.Node (HTMLP.ContentChar content) []) = elemText $ cs [content]
@@ -114,6 +114,8 @@ toHTML (DT.Node (HTMLP.TagOpen "mark" attrs) subForest) =
     rfMark_ (toMarkProps attrs) $ toHTML `mapM_` subForest -- (toProps attrs)
 toHTML (DT.Node (HTMLP.TagOpen tagname attrs) subForest) =
     React.Flux.term (fromString (cs tagname)) (toProps attrs) $ toHTML `mapM_` subForest
+toHTML (DT.Node (HTMLP.TagSelfClose tagname attrs) []) =
+    React.Flux.term (fromString (cs tagname)) (toProps attrs) mempty
 
 -- the above cases cover all possibilities in the demo article, but we leave this here for discovery:
 toHTML (DT.Node rootLabel []) = p_ (elemString ("root_label_wo_children " <> show rootLabel))
