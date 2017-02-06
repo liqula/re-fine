@@ -32,6 +32,8 @@ import Refine.Common.Test.Arbitrary
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML.Enhance
 import Refine.Common.VDoc.HTML.Splice
+import Refine.Common.VDoc.HTML.SpliceSpec (shouldBeLikeVDocVersion)
+
 
 
 openTagWithUID :: Token
@@ -53,16 +55,18 @@ spec = parallel $ do
         \(insertMarks ([] :: [ChunkRange Note]) -> vers) ->
           addUIInfoToVDocVersion vers `shouldBe` addUIInfoToVDocVersion (addUIInfoToVDocVersion vers)
 
-      it "can be interleaved with `insertMoreMarks`." . property $ do
-        \(VersWithRanges (insertMarks ([] :: [ChunkRange Note]) -> vers) rs) -> do
-          let runOnce = addUIInfoToVDocVersion $ insertMoreMarks rs vers
-              runMany = foldl' go vers rs
+      let interleaveProp :: VersWithRanges -> Expectation
+          interleaveProp (VersWithRanges (insertMarks ([] :: [ChunkRange Note]) -> vers) rs) = do
+              runOnce `shouldBeLikeVDocVersion` runMany
+            where
+              runOnce = addUIInfoToVDocVersion $ insertMoreMarks rs vers
+              runMany = addUIInfoToVDocVersion $ foldl' go vers rs
                 where
                   go :: VDocVersion 'HTMLWithMarks -> ChunkRange Edit -> VDocVersion 'HTMLWithMarks
                   go v r = insertMoreMarks [r] $ addUIInfoToVDocVersion v
 
-          runOnce `shouldBe` runMany
-          runOnce `shouldBe` addUIInfoToVDocVersion runMany
+      it "can be interleaved with `insertMoreMarks`." . property $
+        interleaveProp
 
 
     describe "addDataUidsToTree" $ do

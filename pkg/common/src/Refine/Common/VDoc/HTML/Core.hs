@@ -27,7 +27,7 @@ module Refine.Common.VDoc.HTML.Core
   ( -- * errors
     ChunkRangeError(..)
   , _ChunkRangeBadDataUID
-  , _ChunkRangeOffsetTooLarge
+  , _ChunkRangeOffsetOutOfBounds
   , _ChunkRangeEmpty
 
     -- * pretokens
@@ -68,7 +68,7 @@ import Refine.Prelude.TH (makeRefineType)
 
 data ChunkRangeError =
     ChunkRangeBadDataUID ChunkPoint (Forest Token)
-  | ChunkRangeOffsetTooLarge ChunkPoint (Forest Token)
+  | ChunkRangeOffsetOutOfBounds ChunkPoint (Forest Token)
   | ChunkRangeEmpty (Maybe ChunkPoint) (Maybe ChunkPoint) (Forest Token)
   deriving (Eq, Show, Generic)
 
@@ -82,7 +82,13 @@ data ChunkRangeError =
 data PreToken = PreToken Token | PreMarkOpen DataChunkID OwnerKind | PreMarkClose DataChunkID
   deriving (Eq, Show, Generic)
 
+-- | 'ID' of 'Edit' or 'Comment' that owns a 'ChunkRange'.  This is the @data-chunk-id@ attribute value
+-- of the @mark@ tag corresponding to the 'ChunkRange' in the dom.
 type DataChunkID = ST  -- FIXME: @newtype DataChunkID (forall a . Eq a => ID a)@
+
+-- | This is the @data-chunk-owner@ attribute value of the @mark@ tag corresponding to the
+-- 'ChunkRange' in the dom.  It can be either @edit@, @note@, @question@, @discussion@, or something
+-- like that.
 type OwnerKind = ST    -- FIXME: @type OwnerKind = TypeRep  -- e.g. @ID Edit@@
 
 -- | Needed to make some of the helper functions total.

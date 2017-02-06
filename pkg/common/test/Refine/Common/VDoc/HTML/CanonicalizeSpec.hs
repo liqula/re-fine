@@ -24,6 +24,7 @@
 module Refine.Common.VDoc.HTML.CanonicalizeSpec where
 
 import           Data.Char (isSpace)
+import           Data.Functor.Infix ((<$$>))
 import           Data.List (nub)
 import           Data.String.Conversions (ST, cs)
 import qualified Data.Text as ST
@@ -40,10 +41,10 @@ import Refine.Common.VDoc.HTML.Canonicalize
 
 spec :: Spec
 spec = parallel $ do
-  describe "canonicalizevdocVersionST" $ do
+  describe "canonicalizeVDocVersion" $ do
     it "decorates spans with data-uid attributes even when added by 'wrapInTopLevelTags'." $ do
       canonicalizeVDocVersion (vdocVersionFromST "ab123")
-        `shouldBe` vdocVersionFromST "<span data-uid=\"1\">ab123</span>"
+        `shouldBeVDocVersion` vdocVersionFromST "<span data-uid=\"1\">ab123</span>"
 
     it "removes comments." $ do
       canonicalizeVDocVersion (vdocVersionFromST "ab<!-- wefij --> 123")
@@ -121,18 +122,32 @@ spec = parallel $ do
 
   describe "canonicalizeAttrs" $ do
     it "takes the first of many values for one key." $ do
-      canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "x" "4"])
+      TagOpen "wef" (canonicalizeAttrs [Attr "x" "3", Attr "x" "4"])
         `shouldBe` TagOpen "wef" [Attr "x" "3"]
 
-      canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "x" "1"])
+      TagOpen "wef" (canonicalizeAttrs [Attr "x" "3", Attr "x" "1"])
         `shouldBe` TagOpen "wef" [Attr "x" "3"]
 
     it "sorts attrs alphabetially." $ do
-      canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "q" "0", Attr "x" "1"])
+      TagOpen "wef" (canonicalizeAttrs [Attr "x" "3", Attr "q" "0", Attr "x" "1"])
         `shouldBe` TagOpen "wef" [Attr "q" "0", Attr "x" "3"]
 
-      canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "q" "9"])
+      TagOpen "wef" (canonicalizeAttrs [Attr "x" "3", Attr "q" "9"])
         `shouldBe` TagOpen "wef" [Attr "q" "9", Attr "x" "3"]
 
-      canonicalizeAttrs (TagOpen "wef" [Attr "x" "3", Attr "z" "0"])
+      TagOpen "wef" (canonicalizeAttrs [Attr "x" "3", Attr "z" "0"])
         `shouldBe` TagOpen "wef" [Attr "x" "3", Attr "z" "0"]
+
+
+-- * helpers
+
+-- | Check vdoc versions for equality, and report failures as readable trees.  It runs slower in
+-- case of failure, but should have the same run-time cost in case of success.
+shouldBeVDocVersion :: VDocVersion a -> VDocVersion a -> Expectation
+shouldBeVDocVersion (VDocVersion vers) (VDocVersion vers') =
+  if vers == vers'
+    then pure ()
+    else draw vers `shouldBe` draw vers'
+  where
+    draw :: Forest Token -> String
+    draw f = drawForest $ cs . renderToken <$$> f

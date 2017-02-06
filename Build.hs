@@ -102,7 +102,7 @@ main = shakeArgs refineOptions $ do
     stackBuildFast pkgFrontend
     command_ [Cwd pkgFrontend] "make" []
 
-  phony "build-frontend-npm" $ do
+  phony "build-frontend-npm" $ do  -- if this fails, check #40.
     command_ [Cwd pkgFrontend] "npm" ["install"]
 
   phony "build" $ do
