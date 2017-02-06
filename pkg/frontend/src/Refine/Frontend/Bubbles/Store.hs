@@ -56,8 +56,9 @@ commentCategoryUpdate action state = case action of
 
 commentIsVisibleUpdate :: RefineAction -> Bool -> Bool
 commentIsVisibleUpdate action state = case action of
-  BubblesAction ShowComment -> True
-  BubblesAction HideComment -> False
+  BubblesAction (ShowNoteOverlay _) -> True
+  BubblesAction (ShowDiscussionOverlay _) -> True
+  BubblesAction HideCommentOverlay -> False
   _ -> state
 
 commentEditorIsVisibleUpdate :: RefineAction -> (Bool, Maybe Range) -> (Bool, Maybe Range)

@@ -50,27 +50,9 @@ vdoc_overlay_content = [ Style "display" ("block" :: String)
 showComment :: ReactView Bool
 showComment = defineView "ShowComment" $ \showOverlay ->
   let vdoc_overlay_content__comment = [ Style "backgroundColor" ("rgb(219, 204, 221)" :: String) -- vdoc-comment, lightred
-
-                                          -- FIXME: only use semantic colours ("vdoc_comment"
-                                          -- instead of "light-read" or "rgb(..)") in the code.  the
-                                          -- names of the colours should be defined globally, so the
-                                          -- designer has a complete list of all the colours that
-                                          -- are used by the application.  that globaly style
-                                          -- reference can either be the scss file tree, or a
-                                          -- haskell module that defines names like this, or
-                                          -- something else, but i do think it should be in one
-                                          -- place.  @nr if you disagree on that, we can pull out
-                                          -- all the style definitions into a dedicated section in
-                                          -- each module.  then we could also make the names a lot
-                                          -- shorter, because we can use the haskell module path as
-                                          -- a qualifier if we need to dismabiguate.  i should
-                                          -- probably stop rambling now, and it's probably obvious
-                                          -- to you that we want to clean this up and this entire
-                                          -- comment is mute.  sorry.  :)
-
                                       ]
   in overlay_ ["isVisible" &= showOverlay
-           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.BubblesAction RS.HideComment)
+           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.BubblesAction RS.HideCommentOverlay)
            , "hideOnOverlayClicked" &= True
            , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content__comment)
            ] $ do

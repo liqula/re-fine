@@ -80,8 +80,9 @@ data CommentCategory =
 data BubblesAction =
     UpdateSelection Selection
   | ClearSelection
-  | ShowComment
-  | HideComment
+  | ShowNoteOverlay (ID Note)
+  | ShowDiscussionOverlay (ID Discussion)
+  | HideCommentOverlay
   | ShowCommentEditor (Maybe Range)
   | HideCommentEditor
   | SetCommentCategory CommentCategory
