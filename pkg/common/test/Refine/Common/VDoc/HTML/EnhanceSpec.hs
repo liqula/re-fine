@@ -41,7 +41,6 @@ openMarkTag = TagOpen "mark" []
 
 spec :: Spec
 spec = parallel $ do
-  describe "Enhance" $ do
     describe "addDataUidsToTree" $ do
 
       it "adds the passed uid when there is none" $ do
