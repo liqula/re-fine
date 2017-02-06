@@ -94,12 +94,13 @@ data BubblesAction =
 data BubblesState = BubblesState
   { _bsCurrentSelection       :: Selection
   , _bsCommentCategory        :: Maybe CommentCategory
-  , _bsCommentIsVisible       :: Bool
+  , _bsDiscussionIsVisible    :: Maybe (ID Discussion)
+  , _bsNoteIsVisible          :: Maybe (ID Note)
   , _bsCommentEditorIsVisible :: (Bool, Maybe Range)
   } deriving (Show, Generic)
 
 emptyBubblesState :: BubblesState
-emptyBubblesState = BubblesState (Nothing, Nothing) Nothing False (False, Nothing)
+emptyBubblesState = BubblesState (Nothing, Nothing) Nothing Nothing Nothing (False, Nothing)
 
 
 makeRefineType ''CommentInputState

@@ -25,15 +25,18 @@
 
 module Refine.Frontend.Bubbles.Overlay where
 
-import           Control.Lens ((^.))
+import           Control.Lens (makeLenses, (^.))
 import           Data.Maybe (isNothing)
 import           Data.Monoid ((<>))
 import qualified Data.Text as DT
+import qualified Data.Tree as Tree
 import           React.Flux
 
+import           Refine.Common.Types
 import           Refine.Frontend.ThirdPartyViews (overlay_)
 import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.Bubbles.Types as RS
+import qualified Refine.Frontend.Colors as C
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
 import           Refine.Frontend.UtilityWidgets
@@ -47,39 +50,37 @@ vdoc_overlay_content = [ Style "display" ("block" :: String)
                        , Style "padding" ("15rem 10rem 10rem" :: String)
                        ]
 
-showComment :: ReactView Bool
-showComment = defineView "ShowComment" $ \showOverlay ->
-  let vdoc_overlay_content__comment = [ Style "backgroundColor" ("rgb(219, 204, 221)" :: String) -- vdoc-comment, lightred
-                                      ]
-  in overlay_ ["isVisible" &= showOverlay
-           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.BubblesAction RS.HideCommentOverlay)
-           , "hideOnOverlayClicked" &= True
-           , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content__comment)
-           ] $ do
+data CommentDisplayProps = CommentDisplayProps
+  { _commentText :: CommentText
+  , _commentTitle :: String
+  , _iconStyle :: IconDescription
+  , _userName :: String
+  , _creationDate :: String
+  , _contentStyle :: [Style]
+  }
+
+makeLenses ''CommentDisplayProps
+
+showComment :: ReactView CommentDisplayProps
+showComment = defineView "ShowComment" $ \props ->
+  overlay_ [on "onCloseClicked" $ \_ -> RS.dispatch (RS.BubblesAction RS.HideCommentOverlay)
+               , "hideOnOverlayClicked" &= True
+               , "dialogStyles" @= (vdoc_overlay_content <> (props ^. contentStyle))
+               ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
-        icon_ (IconProps "c-vdoc-overlay-content" False ("icon-Remark", "dark") L)
-        {-
-        div_ [className $= "c-vdoc-overlay-content__icon iconsize-l">
-            div_ [className $= "icon-Remark_dark">
-                <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span><span class="path6"></span><span class="path7"></span><span class="path8"></span>
-        -}
+        icon_ (IconProps "c-vdoc-overlay-content" False (props ^. iconStyle) L) -- or XL? in question
 
-        h4_ ["className" $= "c-vdoc-overlay-content__title"] "Title of comment"
+        h4_ ["className" $= "c-vdoc-overlay-content__title"] $ elemString (props ^. commentTitle)
 
-        div_ ["className" $= "c-vdoc-overlay-content__copy"]
-            "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
+        div_ ["className" $= "c-vdoc-overlay-content__copy"] $ elemText (props ^. commentText)
 
         -- edit/comment user meta data -->
         div_ ["className" $= "c-vdoc-overlay-meta"] $ do
             span_ ["className" $= "c-vdoc-overlay-meta__user-avatar"] $ do
                 icon_ (IconProps "c-vdoc-overlay-meta" False ("icon-User", "bright") M)
-                {-
-                div_ [className $= "c-vdoc-overlay-meta__icon icon-User_bright iconsize-m">
-                    <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span><span class="path6"></span><span class="path7"></span><span class="path8"></span>
-                -}
-            span_ ["className" $= "c-vdoc-overlay-meta__user"] "meisterkaiser"
-            span_ ["className" $= "c-vdoc-overlay-meta__date"] "24. 05. 2016"
+            span_ ["className" $= "c-vdoc-overlay-meta__user"] $ elemString (props ^. userName)
+            span_ ["className" $= "c-vdoc-overlay-meta__date"] $ elemString (props ^. creationDate) -- or what is this?
         -- END: edit/comment user meta data -->
 
         -- vote buttons -->
@@ -87,22 +88,59 @@ showComment = defineView "ShowComment" $ \showOverlay ->
 
             button_ ["className" $= "c-vdoc-overlay-votes__button c-vdoc-overlay-votes__btn-vote-up"] $ do
                 icon_ (IconProps "c-vdoc-overlay-votes" True ("icon-Vote_positive", "dark") XL)
-                {-
-                div_ [className $= "c-vdoc-overlay-votes__icon">
-                    div_ [className $= "o-icon-highlight icon-Vote_positive_dark iconsize-xl">
-                        <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span><span class="path6"></span><span class="path7"></span><span class="path8"></span>
-                -}
 
             button_ ["className" $= "c-vdoc-overlay-votes__button c-vdoc-overlay-votes__btn-vote-down"] $ do
                 icon_ (IconProps "c-vdoc-overlay-votes" True ("icon-Vote_negative", "dark") XL)
-                {-
-                div_ [className $= "c-vdoc-overlay-votes__icon">
-                    div_ [className $= "o-icon-highlight icon-Vote_negative_dark iconsize-xl">
-                        <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span><span class="path6"></span><span class="path7"></span><span class="path8"></span>
-                -}
+        -- END: vote buttons -->
 
-showComment_ :: Bool -> ReactElementM eventHandler ()
-showComment_ showOverlay = view showComment showOverlay mempty
+showComment_ :: CommentDisplayProps -> ReactElementM eventHandler ()
+showComment_ props = view showComment props mempty
+
+showNote :: ReactView (Maybe Note)
+showNote = defineView "ShowNote" $ \case
+  Nothing -> mempty
+  Just note ->
+    let overlayStyle1 = [ Style "backgroundColor" C.vdoc_comment ]
+        commentText1 = (note ^. noteText)
+        commentTitle1 = "Title of comment"
+        iconStyle1 = ("icon-Remark", "dark")
+        userName1 = "meisterkaiser"
+        creationDate1 = "24. 05. 2016"
+    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 overlayStyle1)
+
+showNote_ :: Maybe Note -> ReactElementM eventHandler ()
+showNote_ note = view showNote note mempty
+
+showDiscussion :: ReactView (Maybe CompositeDiscussion)
+showDiscussion = defineView "ShowDiscussion" $ \case
+  Nothing -> mempty
+  Just discussion ->
+    let overlayStyle1 = [ Style "backgroundColor" C.vdoc_discussion ]
+        commentText1 = (Tree.rootLabel (discussion ^. compositeDiscussionTree) ^. statementText)
+        commentTitle1 = "Title of discussion"
+        iconStyle1 = ("icon-Remark", "dark")
+        userName1 = "meisterkaiser"
+        creationDate1 = "24. 05. 2016"
+    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 overlayStyle1)
+
+showDiscussion_ :: Maybe CompositeDiscussion -> ReactElementM eventHandler ()
+showDiscussion_ note = view showDiscussion note mempty
+
+showQuestion :: ReactView (Maybe CompositeQuestion)
+showQuestion = defineView "ShowQuestion" $ \case
+  Nothing -> mempty
+  Just question ->
+    let overlayStyle1 = [ Style "backgroundColor" C.vdoc_question ]
+        commentText1 = (question ^. compositeQuestion ^. questionText)
+        commentTitle1 = "Title of question"
+        iconStyle1 = ("icon-Question", "dark")
+        userName1 = "meisterkaiser"
+        creationDate1 = "24. 05. 2016"
+    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 overlayStyle1)
+
+showQuestion_ :: Maybe CompositeQuestion -> ReactElementM eventHandler ()
+showQuestion_ question = view showQuestion question mempty
+
 
 -- was add-annotation
 addComment :: ReactView (Bool, Maybe RS.Range, Maybe RS.CommentCategory)

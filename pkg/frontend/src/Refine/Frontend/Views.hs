@@ -37,8 +37,10 @@ import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.HTML.Enhance (addUIInfoToForest)
+import           Refine.Frontend.Bubbles.Bubble
 import           Refine.Frontend.Bubbles.Overlay
 import           Refine.Frontend.Bubbles.QuickCreate
+import           Refine.Frontend.Bubbles.Types as RS
 import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(..), editToolbar_
                                          , editToolbarExtension_, menuButton_, headerSizeCapture_
                                          )
@@ -49,8 +51,6 @@ import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Types as RS
-import           Refine.Frontend.Bubbles.Bubble
-import           Refine.Frontend.Bubbles.Types as RS
 
 
 -- | The controller view and also the top level of the Refine app.  This controller view registers
@@ -73,7 +73,8 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                             editToolbar_
                             editToolbarExtension_
 
-                showComment_ (rs ^. gsBubblesState ^. bsCommentIsVisible)
+                showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsBubblesState ^. bsNoteIsVisible)
+                showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsBubblesState ^. bsDiscussionIsVisible)
                 addComment_ (rs ^. gsBubblesState ^. bsCommentEditorIsVisible) (rs ^. gsBubblesState ^. bsCommentCategory)
 
                 main_ ["role" $= "main"] $ do
