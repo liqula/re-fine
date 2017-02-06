@@ -21,8 +21,10 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Common.VDoc.HTML.Enhance
-  ( addUIInfoToForest
+  ( addUIInfoToVDocVersion
+
   -- mainly for testing:
+  , addUIInfoToForest
   , addDataUidsToForest
   , addDataUidsToTree
   , addOffsetsToForest
@@ -36,6 +38,8 @@ import qualified Data.Text as ST
 import           Data.Tree
 import           Text.HTML.Parser
 
+import           Refine.Common.Types
+
 
 -- | Make sure all open tags have a @data-uid@ attribute (if missing: inherit from first suitable
 -- ancestor) and a @data-offset@ attribute that contains the text offset relative to that ancestor.
@@ -48,6 +52,9 @@ import           Text.HTML.Parser
 --
 -- This function should probably be called on (the forest contained in) @VDocVersion
 -- 'HTMLWithMarks@, and probably only in the frontend.
+addUIInfoToVDocVersion :: VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
+addUIInfoToVDocVersion (VDocVersion forest) = VDocVersion (addUIInfoToForest forest)
+
 addUIInfoToForest :: Forest Token -> Forest Token
 addUIInfoToForest = addDataUidsToForest . addOffsetsToForest
 

@@ -1,6 +1,8 @@
 
 # Installation and testing
 
+Tested with nodejs-v6.9.15.  Known not to work with nodejs-v7.*!
+
 Run `./build` to build and test all packages.  (This is also what the
 ci does.)
 

@@ -38,6 +38,7 @@ import           Data.JSString (JSString, pack, unpack)
 import Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as RT
 
+import           Refine.Common.VDoc.HTML.Enhance (addUIInfoToVDocVersion)
 import           Refine.Common.VDoc.HTML (insertMoreMarks)
 import           Refine.Frontend.Bubbles.Store (bubblesStateUpdate)
 import           Refine.Frontend.Bubbles.Types
@@ -96,7 +97,7 @@ vdocUpdate action state = case action of
           & RT.compositeVDocDiscussions
               %~ M.insert (discussion ^. RT.compositeDiscussion . RT.discussionID) discussion
           & RT.compositeVDocVersion
-              %~ insertMoreMarks [discussion ^. RT.compositeDiscussion . RT.discussionRange]
+              %~ (addUIInfoToVDocVersion . insertMoreMarks [discussion ^. RT.compositeDiscussion . RT.discussionRange])
 
     AddNote note
       -> case state of
@@ -106,7 +107,7 @@ vdocUpdate action state = case action of
           & RT.compositeVDocNotes
               %~ M.insert (note ^. RT.noteID) note
           & RT.compositeVDocVersion
-              %~ insertMoreMarks [note ^. RT.noteRange]
+              %~ (addUIInfoToVDocVersion . insertMoreMarks [note ^. RT.noteRange])
 
     _ -> state
 
@@ -201,29 +202,8 @@ foreign import javascript unsafe
 getRange :: IO (Maybe Range)
 getRange = (AE.decode . cs . unpack) <$> js_getRange
 
--- TODO remove the default values for os and oe
 foreign import javascript unsafe
-    "(function (range) { \
-    \   var result = {}; \
-    \   if(range.startContainer.parentElement.attributes['data-uid']) { \
-    \       result.start = { \
-    \         node: parseInt(range.startContainer.parentElement.attributes['data-uid'].value, 10), \
-    \         offset: range.startOffset + parseInt(range.startContainer.parentElement.attributes['data-offset'].value, 10) \
-    \       }; \
-    \   } \
-    \   if(range.endContainer.parentElement.attributes['data-uid']) { \
-    \       result.end = { \
-    \         node: parseInt(range.endContainer.parentElement.attributes['data-uid'].value, 10), \
-    \         offset: range.endOffset + parseInt(range.endContainer.parentElement.attributes['data-offset'].value, 10) \
-    \       };\
-    \   } \
-    \   result.top = range.startContainer.parentElement.getBoundingClientRect().top; \
-    \   result.bottom = range.endContainer.parentElement.getBoundingClientRect().bottom; \
-    \   result.scrollOffset = typeof( window.pageYOffset ) == 'number' && window.pageYOffset \
-    \                         || document.body && document.body.scrollTop \
-    \                         || document.documentElement && document.documentElement.scrollTop; \
-    \   return JSON.stringify(result); \
-    \}) (window.getSelection().getRangeAt(0))"
+    "refine$getSelectionRange()"
     js_getRange :: IO JSString
 
 foreign import javascript unsafe
@@ -233,7 +213,7 @@ foreign import javascript unsafe
   \    try { \
   \        console.log($1, JSON.parse($2)); \
   \    } catch(e) { \
-  \        console.log($1, '*** ERROR in Refine.Frontend.Store.consoleLog_ (see gitlab issue #134)', e); \
+  \        console.log($1, '*** ERROR in Refine.Frontend.Store.consoleLog_ (see gitlab issue #134; make sure node ==v6.)', e); \
   \    } \
   \}"
   consoleLog_ :: JSString -> JSString -> IO ()
