@@ -104,6 +104,7 @@ main = shakeArgs refineOptions $ do
 
   phony "build-frontend-npm" $ do  -- if this fails, check #40.
     command_ [Cwd pkgFrontend] "node" ["--version"]
+    command_ [Cwd pkgFrontend] "stack" ["exec", "--", "node", "--version"]
     command_ [Cwd pkgFrontend] "npm" ["install"]
 
   phony "build" $ do
