@@ -24,7 +24,7 @@ window.refine$getSelectionRange = function() {
     return (function (range) {
         var result = {};
         if(range.startContainer.parentElement.attributes['data-uid']) {
-            var leftOffset = leftSiblingLength(range.startContainer);
+            var leftOffset = leftSiblingLength(range.startContainer.previousSibling);
             var dataOffset = parseInt(range.startContainer.parentElement.attributes['data-offset'].value, 10);
             result.start = {
                 node: parseInt(range.startContainer.parentElement.attributes['data-uid'].value, 10),
@@ -32,7 +32,7 @@ window.refine$getSelectionRange = function() {
             };
         }
         if(range.endContainer.parentElement.attributes['data-uid']) {
-            var leftOffset = leftSiblingLength(range.endContainer);
+            var leftOffset = leftSiblingLength(range.endContainer.previousSibling);
             var dataOffset = parseInt(range.endContainer.parentElement.attributes['data-offset'].value, 10);
             result.end = {
                 node: parseInt(range.endContainer.parentElement.attributes['data-uid'].value, 10),
