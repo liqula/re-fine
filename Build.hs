@@ -68,6 +68,11 @@ main = shakeArgs refineOptions $ do
     command_ [] "stack" ["install", "hspec-discover", "--resolver", resolver]
     command_ [] "stack" ["exec", "--", "which", "hspec-discover"]
 
+    command_ [Cwd pkgPrelude]  "stack" ["setup"]
+    command_ [Cwd pkgCommon]   "stack" ["setup"]
+    command_ [Cwd pkgBackend]  "stack" ["setup"]
+    command_ [Cwd pkgFrontend] "stack" ["setup"]
+
   phony "test-prelude" $ do
     stackTest pkgPrelude
 
