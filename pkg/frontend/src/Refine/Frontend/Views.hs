@@ -82,7 +82,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                     div_ ["className" $= "grid-wrapper"] $ do
                         div_ ["className" $= "row row-align-center row-align-top"] $ do
                             leftAside_ $ LeftAsideProps
-                                           (rs ^. gsMarkPositions)
+                                           (rs ^. gsBubblesState ^. bsMarkPositions)
                                            (rs ^. gsBubblesState ^. bsCurrentSelection)
                                            (rs ^. gsScreenState)
                                            (M.elems (vdoc ^. compositeVDocDiscussions))
@@ -96,7 +96,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                                 -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
                               div_ ["className" $= "c-article-content"] $ do
                                 toArticleBody . _unVDocVersion . _compositeVDocVersion $ vdoc
-                            rightAside_ (rs ^. gsMarkPositions) (rs ^. gsScreenState)
+                            rightAside_ (rs ^. gsBubblesState ^. bsMarkPositions) (rs ^. gsScreenState)
 
 
 toArticleBody :: DT.Forest HTMLP.Token -> ReactElementM [SomeStoreAction] ()

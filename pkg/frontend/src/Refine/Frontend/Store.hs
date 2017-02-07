@@ -76,7 +76,6 @@ instance StoreData GlobalState where
         let newState = state
               & gsVDoc                     %~ vdocUpdate transformedAction
               & gsVDocList                 %~ vdocListUpdate transformedAction
-              & gsMarkPositions            %~ markPositionsUpdate transformedAction
               & gsBubblesState             %~ bubblesStateUpdate transformedAction
               & gsScreenState              %~ screenStateUpdate transformedAction
 
@@ -114,11 +113,6 @@ vdocUpdate action state = case action of
 vdocListUpdate :: RefineAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
 vdocListUpdate action state = case action of
     LoadedDocumentList list -> Just list
-    _ -> state
-
-markPositionsUpdate :: RefineAction -> MarkPositions -> MarkPositions
-markPositionsUpdate action state = case action of
-    AddMarkPosition dataChunkId pos scroll -> MarkPositions $ M.alter (\_ -> Just (pos, scroll)) dataChunkId (_unMarkPositions state)
     _ -> state
 
 emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()
