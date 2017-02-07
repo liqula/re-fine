@@ -39,6 +39,7 @@ import           Refine.Common.Types
 import           Refine.Prelude (ClearTypeParameter(..))
 import           Refine.Common.VDoc.HTML.Enhance (addUIInfoToForest)
 import           Refine.Frontend.Bubbles.Bubble
+import           Refine.Frontend.Bubbles.Mark
 import           Refine.Frontend.Bubbles.Overlay
 import           Refine.Frontend.Bubbles.QuickCreate
 import           Refine.Frontend.Bubbles.Types as RS
@@ -46,7 +47,6 @@ import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(
                                          , editToolbarExtension_, menuButton_, headerSizeCapture_
                                          )
 import           Refine.Frontend.Loader.Component (vdocLoader_)
-import           Refine.Frontend.Mark
 import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import qualified Refine.Frontend.Screen.Types as SC

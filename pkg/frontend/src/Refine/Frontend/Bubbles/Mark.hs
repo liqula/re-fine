@@ -22,7 +22,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Mark where
+module Refine.Frontend.Bubbles.Mark where
 
 import           Control.Concurrent (forkIO)
 import           Control.Lens (makeLenses, (^.))

@@ -23,13 +23,13 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 
-module Refine.Frontend.MarkSpec where
+module Refine.Frontend.Bubbles.MarkSpec where
 
 import Test.Hspec
 
 import           Refine.Common.Types
+import           Refine.Frontend.Bubbles.Mark
 import           Refine.Frontend.Test.Enzyme
-import           Refine.Frontend.Mark
 
 
 spec :: Spec
