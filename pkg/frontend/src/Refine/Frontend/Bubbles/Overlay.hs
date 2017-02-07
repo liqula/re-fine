@@ -137,7 +137,7 @@ showDiscussion = defineView "ShowDiscussion" $ \case
   Just discussion ->
     let commentText1 = (Tree.rootLabel (discussion ^. compositeDiscussionTree) ^. statementText)
         commentTitle1 = "Title of discussion"
-        iconStyle1 = ("icon-Remark", "dark")
+        iconStyle1 = ("icon-Discussion", "dark")
         userName1 = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
     in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__discussion)

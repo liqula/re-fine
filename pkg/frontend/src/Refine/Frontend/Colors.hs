@@ -24,6 +24,7 @@
 
 module Refine.Frontend.Colors where
 
+{-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
 disabledText :: String
 disabledText = "rgb(169,169,169)" -- dark grey

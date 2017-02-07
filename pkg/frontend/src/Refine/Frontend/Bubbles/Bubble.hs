@@ -78,7 +78,7 @@ data SpecialBubbleProps = SpecialBubbleProps
 
 discussionBubble :: ReactView SpecialBubbleProps
 discussionBubble = defineView "DiscussionBubble" $ \(SpecialBubbleProps dataChunkId markPosition screenState) ->
-    let clickHandler = \_ -> RS.dispatch (RT.BubblesAction (ShowDiscussionOverlay (ID dataChunkId)))
+    let clickHandler _ = RS.dispatch (RT.BubblesAction (ShowDiscussionOverlay (ID dataChunkId)))
     in bubble_ (BubbleProps dataChunkId "discussion" "left" ("icon-Discussion", "bright") markPosition clickHandler screenState) childrenPassedToView
 
 discussionBubble_ :: SpecialBubbleProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
@@ -86,7 +86,7 @@ discussionBubble_ = view discussionBubble
 
 questionBubble :: ReactView SpecialBubbleProps
 questionBubble = defineView "QuestionBubble" $ \(SpecialBubbleProps dataChunkId markPosition screenState) ->
-    let clickHandler = (\_ -> [])
+    let clickHandler _ = []
     in bubble_ (BubbleProps dataChunkId "question" "left" ("icon-Question", "dark") markPosition clickHandler screenState) childrenPassedToView
 
 questionBubble_ :: SpecialBubbleProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
@@ -94,7 +94,7 @@ questionBubble_ = view questionBubble
 
 noteBubble :: ReactView SpecialBubbleProps
 noteBubble = defineView "NoteBubble" $ \(SpecialBubbleProps dataChunkId markPosition screenState) ->
-    let clickHandler = \_ -> RS.dispatch (RT.BubblesAction (ShowNoteOverlay (ID dataChunkId)))
+    let clickHandler _ = RS.dispatch (RT.BubblesAction (ShowNoteOverlay (ID dataChunkId)))
     in bubble_ (BubbleProps dataChunkId "question" "left" ("icon-Question", "dark") markPosition clickHandler screenState) childrenPassedToView
 
 noteBubble_ :: SpecialBubbleProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
@@ -102,7 +102,7 @@ noteBubble_ = view noteBubble
 
 editBubble :: ReactView SpecialBubbleProps
 editBubble = defineView "EditBubble" $ \(SpecialBubbleProps dataChunkId markPosition screenState) ->
-    let clickHandler = (\_ -> [])
+    let clickHandler _ = []
     in bubble_ (BubbleProps dataChunkId "edit" "right" ("icon-Edit", "dark") markPosition clickHandler screenState) childrenPassedToView
 
 editBubble_ :: SpecialBubbleProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()

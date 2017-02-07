@@ -44,7 +44,7 @@ spec = do
       iconSide = "the-icon-side"
       iconStyle = ("the-icon-name", "the-icon-style")
       markPosition = Just (140, 180)
-      callback = (\_ -> [])
+      callback _ = []
       screenState = SC.ScreenState 95 SC.Desktop
       bubbleProps = BubbleProps chunkId contentType iconSide iconStyle markPosition callback screenState
 
