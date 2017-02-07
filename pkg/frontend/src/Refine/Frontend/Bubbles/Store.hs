@@ -27,6 +27,7 @@ module Refine.Frontend.Bubbles.Store where
 
 import           Control.Lens ((&), (%~))
 
+import Refine.Common.Types
 import Refine.Frontend.Bubbles.Types
 import Refine.Frontend.Types
 
@@ -35,7 +36,8 @@ bubblesStateUpdate action state =
   let newState = state
                   & bsCurrentSelection         %~ currentSelectionUpdate action
                   & bsCommentCategory          %~ commentCategoryUpdate action
-                  & bsCommentIsVisible         %~ commentIsVisibleUpdate action
+                  & bsDiscussionIsVisible      %~ discussionIsVisibleUpdate action
+                  & bsNoteIsVisible            %~ noteIsVisibleUpdate action
                   & bsCommentEditorIsVisible   %~ commentEditorIsVisibleUpdate action
   in newState
 
@@ -54,10 +56,16 @@ commentCategoryUpdate action state = case action of
   BubblesAction HideCommentEditor -> Nothing -- when closing the comment editor, reset the selection
   _ -> state
 
-commentIsVisibleUpdate :: RefineAction -> Bool -> Bool
-commentIsVisibleUpdate action state = case action of
-  BubblesAction ShowComment -> True
-  BubblesAction HideComment -> False
+discussionIsVisibleUpdate :: RefineAction -> Maybe (ID Discussion) -> Maybe (ID Discussion)
+discussionIsVisibleUpdate action state = case action of
+  BubblesAction (ShowDiscussionOverlay discussionId) -> Just discussionId
+  BubblesAction HideCommentOverlay -> Nothing
+  _ -> state
+
+noteIsVisibleUpdate :: RefineAction -> Maybe (ID Note) -> Maybe (ID Note)
+noteIsVisibleUpdate action state = case action of
+  BubblesAction (ShowNoteOverlay noteId) -> Just noteId
+  BubblesAction HideCommentOverlay -> Nothing
   _ -> state
 
 commentEditorIsVisibleUpdate :: RefineAction -> (Bool, Maybe Range) -> (Bool, Maybe Range)

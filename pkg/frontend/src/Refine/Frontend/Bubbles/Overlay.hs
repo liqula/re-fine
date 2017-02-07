@@ -25,15 +25,18 @@
 
 module Refine.Frontend.Bubbles.Overlay where
 
-import           Control.Lens ((^.))
+import           Control.Lens (makeLenses, (^.))
 import           Data.Maybe (isNothing)
 import           Data.Monoid ((<>))
 import qualified Data.Text as DT
+import qualified Data.Tree as Tree
 import           React.Flux
 
+import           Refine.Common.Types
 import           Refine.Frontend.ThirdPartyViews (overlay_)
 import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.Bubbles.Types as RS
+import qualified Refine.Frontend.Colors as C
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
 import           Refine.Frontend.UtilityWidgets
@@ -47,57 +50,58 @@ vdoc_overlay_content = [ Style "display" ("block" :: String)
                        , Style "padding" ("15rem 10rem 10rem" :: String)
                        ]
 
-showComment :: ReactView Bool
-showComment = defineView "ShowComment" $ \showOverlay ->
-  let vdoc_overlay_content__comment = [ Style "backgroundColor" ("rgb(219, 204, 221)" :: String) -- vdoc-comment, lightred
+vdoc_overlay_content__add_comment :: [Style]
+vdoc_overlay_content__add_comment = [ Style "backgroundColor" C.vdoc_comment
+                                    , Style "zIndex" (6010 :: Int)
+                                    ]
 
-                                          -- FIXME: only use semantic colours ("vdoc_comment"
-                                          -- instead of "light-read" or "rgb(..)") in the code.  the
-                                          -- names of the colours should be defined globally, so the
-                                          -- designer has a complete list of all the colours that
-                                          -- are used by the application.  that globaly style
-                                          -- reference can either be the scss file tree, or a
-                                          -- haskell module that defines names like this, or
-                                          -- something else, but i do think it should be in one
-                                          -- place.  @nr if you disagree on that, we can pull out
-                                          -- all the style definitions into a dedicated section in
-                                          -- each module.  then we could also make the names a lot
-                                          -- shorter, because we can use the haskell module path as
-                                          -- a qualifier if we need to dismabiguate.  i should
-                                          -- probably stop rambling now, and it's probably obvious
-                                          -- to you that we want to clean this up and this entire
-                                          -- comment is mute.  sorry.  :)
+-- is vdoc_overlay_content__comment in CSS
+vdoc_overlay_content__note :: [Style]
+vdoc_overlay_content__note = [ Style "backgroundColor" C.vdoc_comment
+                              , Style "zIndex" (6010 :: Int)
+                              ]
 
-                                      ]
-  in overlay_ ["isVisible" &= showOverlay
-           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.BubblesAction RS.HideComment)
+vdoc_overlay_content__discussion :: [Style]
+vdoc_overlay_content__discussion = [ Style "backgroundColor" C.vdoc_discussion
+                                    , Style "zIndex" (6010 :: Int)
+                                    ]
+
+overlay_styles :: [Style]
+overlay_styles = [Style "zIndex" (6000 :: Int)]
+
+data CommentDisplayProps = CommentDisplayProps
+  { _commentText :: CommentText
+  , _commentTitle :: String
+  , _iconStyle :: IconDescription
+  , _userName :: String
+  , _creationDate :: String
+  , _contentStyle :: [Style]
+  }
+
+makeLenses ''CommentDisplayProps
+
+showComment :: ReactView CommentDisplayProps
+showComment = defineView "ShowComment" $ \props ->
+  overlay_ ["isVisible" &= True
+           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.BubblesAction RS.HideCommentOverlay)
            , "hideOnOverlayClicked" &= True
-           , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content__comment)
+           , "dialogStyles" @= (vdoc_overlay_content <> (props ^. contentStyle))
+           , "overlayStyles" @= overlay_styles
            ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
-        icon_ (IconProps "c-vdoc-overlay-content" False ("icon-Remark", "dark") L)
-        {-
-        div_ [className $= "c-vdoc-overlay-content__icon iconsize-l">
-            div_ [className $= "icon-Remark_dark">
-                <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span><span class="path6"></span><span class="path7"></span><span class="path8"></span>
-        -}
+        icon_ (IconProps "c-vdoc-overlay-content" False (props ^. iconStyle) L) -- or XL? in question
 
-        h4_ ["className" $= "c-vdoc-overlay-content__title"] "Title of comment"
+        h4_ ["className" $= "c-vdoc-overlay-content__title"] $ elemString (props ^. commentTitle)
 
-        div_ ["className" $= "c-vdoc-overlay-content__copy"]
-            "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
+        div_ ["className" $= "c-vdoc-overlay-content__copy"] $ elemText (props ^. commentText)
 
         -- edit/comment user meta data -->
         div_ ["className" $= "c-vdoc-overlay-meta"] $ do
             span_ ["className" $= "c-vdoc-overlay-meta__user-avatar"] $ do
                 icon_ (IconProps "c-vdoc-overlay-meta" False ("icon-User", "bright") M)
-                {-
-                div_ [className $= "c-vdoc-overlay-meta__icon icon-User_bright iconsize-m">
-                    <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span><span class="path6"></span><span class="path7"></span><span class="path8"></span>
-                -}
-            span_ ["className" $= "c-vdoc-overlay-meta__user"] "meisterkaiser"
-            span_ ["className" $= "c-vdoc-overlay-meta__date"] "24. 05. 2016"
+            span_ ["className" $= "c-vdoc-overlay-meta__user"] $ elemString (props ^. userName)
+            span_ ["className" $= "c-vdoc-overlay-meta__date"] $ elemString (props ^. creationDate) -- or what is this?
         -- END: edit/comment user meta data -->
 
         -- vote buttons -->
@@ -105,34 +109,66 @@ showComment = defineView "ShowComment" $ \showOverlay ->
 
             button_ ["className" $= "c-vdoc-overlay-votes__button c-vdoc-overlay-votes__btn-vote-up"] $ do
                 icon_ (IconProps "c-vdoc-overlay-votes" True ("icon-Vote_positive", "dark") XL)
-                {-
-                div_ [className $= "c-vdoc-overlay-votes__icon">
-                    div_ [className $= "o-icon-highlight icon-Vote_positive_dark iconsize-xl">
-                        <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span><span class="path6"></span><span class="path7"></span><span class="path8"></span>
-                -}
 
             button_ ["className" $= "c-vdoc-overlay-votes__button c-vdoc-overlay-votes__btn-vote-down"] $ do
                 icon_ (IconProps "c-vdoc-overlay-votes" True ("icon-Vote_negative", "dark") XL)
-                {-
-                div_ [className $= "c-vdoc-overlay-votes__icon">
-                    div_ [className $= "o-icon-highlight icon-Vote_negative_dark iconsize-xl">
-                        <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span><span class="path6"></span><span class="path7"></span><span class="path8"></span>
-                -}
+        -- END: vote buttons -->
 
-showComment_ :: Bool -> ReactElementM eventHandler ()
-showComment_ showOverlay = view showComment showOverlay mempty
+showComment_ :: CommentDisplayProps -> ReactElementM eventHandler ()
+showComment_ props = view showComment props mempty
+
+showNote :: ReactView (Maybe Note)
+showNote = defineView "ShowNote" $ \case
+  Nothing -> mempty
+  Just note ->
+    let commentText1 = (note ^. noteText)
+        commentTitle1 = "Title of comment"
+        iconStyle1 = ("icon-Remark", "dark")
+        userName1 = "meisterkaiser"
+        creationDate1 = "24. 05. 2016"
+    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__note)
+
+showNote_ :: Maybe Note -> ReactElementM eventHandler ()
+showNote_ note = view showNote note mempty
+
+showDiscussion :: ReactView (Maybe CompositeDiscussion)
+showDiscussion = defineView "ShowDiscussion" $ \case
+  Nothing -> mempty
+  Just discussion ->
+    let commentText1 = (Tree.rootLabel (discussion ^. compositeDiscussionTree) ^. statementText)
+        commentTitle1 = "Title of discussion"
+        iconStyle1 = ("icon-Discussion", "dark")
+        userName1 = "meisterkaiser"
+        creationDate1 = "24. 05. 2016"
+    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__discussion)
+
+showDiscussion_ :: Maybe CompositeDiscussion -> ReactElementM eventHandler ()
+showDiscussion_ note = view showDiscussion note mempty
+
+showQuestion :: ReactView (Maybe CompositeQuestion)
+showQuestion = defineView "ShowQuestion" $ \case
+  Nothing -> mempty
+  Just question ->
+    let overlayStyle1 = [ Style "backgroundColor" C.vdoc_question ]
+        commentText1 = (question ^. compositeQuestion ^. questionText)
+        commentTitle1 = "Title of question"
+        iconStyle1 = ("icon-Question", "dark")
+        userName1 = "meisterkaiser"
+        creationDate1 = "24. 05. 2016"
+    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 overlayStyle1)
+
+showQuestion_ :: Maybe CompositeQuestion -> ReactElementM eventHandler ()
+showQuestion_ question = view showQuestion question mempty
+
 
 -- was add-annotation
 addComment :: ReactView (Bool, Maybe RS.Range, Maybe RS.CommentCategory)
 addComment = defineView "AddComment" $ \(showOverlay, forRange, commentCategory) ->
-  let vdoc_overlay_content__add_comment = [ Style "backgroundColor" ("rgb(219, 204, 221)" :: String) -- vdoc-comment, lightred
-                                          , Style "zIndex" (6010 :: Int)
-                                          ]
-  in overlay_ ["isVisible" &= showOverlay
+  overlay_ ["isVisible" &= showOverlay
            , on "onCloseClicked" $ \_ -> RS.dispatch (RS.BubblesAction RS.HideCommentEditor)
            , "hideOnOverlayClicked" &= True
            , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content__add_comment)
-           , "overlayStyles" @= [Style "zIndex" (6000 :: Int)]
+           , "overlayStyles" @= overlay_styles
            ]  $ do
 
     icon_ (IconProps "c-vdoc-overlay-content" False ("icon-Remark", "dark") XL)

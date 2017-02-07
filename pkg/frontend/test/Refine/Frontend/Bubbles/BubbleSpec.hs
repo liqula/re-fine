@@ -44,12 +44,13 @@ spec = do
       iconSide = "the-icon-side"
       iconStyle = ("the-icon-name", "the-icon-style")
       markPosition = Just (140, 180)
+      callback _ = []
       screenState = SC.ScreenState 95 SC.Desktop
-      bubbleProps = BubbleProps chunkId contentType iconSide iconStyle markPosition screenState
+      bubbleProps = BubbleProps chunkId contentType iconSide iconStyle markPosition callback screenState
 
   describe "The bubble_ component" $ do
     it "does not render anything if there is no mark position in the props" $ do
-      wrapper <- shallow $ bubble_ (BubbleProps chunkId contentType iconSide iconStyle Nothing screenState) mempty
+      wrapper <- shallow $ bubble_ (BubbleProps chunkId contentType iconSide iconStyle Nothing (\_ -> []) screenState) mempty
       -- TODO actually this should already hold - improve react-flux here?
       -- lengthOf wrapper `shouldReturn` (0 :: Int)
       -- TODO and this should return ""
