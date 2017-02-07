@@ -25,7 +25,6 @@
 module Refine.Frontend.Types where
 
 import           Data.Text (Text)
-import           Data.Void
 import           GHC.Generics (Generic)
 
 import Refine.Common.Types
@@ -51,7 +50,6 @@ data RefineAction = LoadDocumentList
                   | OpenDocument CompositeVDoc
                   | AddDemoDocument
                   | AddHeaderHeight Int
-                  | AddMarkPosition (ID Void) OffsetFromViewportTop ScrollOffsetOfViewport
                   | SetWindowSize WindowSize
                   | BubblesAction BubblesAction
                   -- ...

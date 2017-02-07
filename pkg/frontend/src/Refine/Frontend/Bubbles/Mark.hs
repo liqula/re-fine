@@ -39,6 +39,7 @@ import           Text.Read (readMaybe)
 
 import           Refine.Common.Types
 import qualified Refine.Frontend.Screen.Types as RS
+import qualified Refine.Frontend.Bubbles.Types as RS
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
 
@@ -76,7 +77,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
                  case props of
                    Nothing -> return ()
                    Just p -> do
-                     let actions = RS.dispatch $ RS.AddMarkPosition (p ^. markPropsDataChunkId) top 0 -- we assume that no scrolling has taken place yet
+                     let actions = RS.dispatch . RS.BubblesAction $ RS.AddMarkPosition (p ^. markPropsDataChunkId) top 0 -- we assume that no scrolling has taken place yet
                      forM_ actions executeAction
              return ()
    }

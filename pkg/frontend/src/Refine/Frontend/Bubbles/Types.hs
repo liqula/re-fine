@@ -38,6 +38,7 @@ import           Text.Read (readMaybe)
 
 import Refine.Common.Types
 import Refine.Prelude.TH (makeRefineType)
+import Refine.Frontend.Screen.Types
 
 
 data Range = Range  -- FIXME: selectors should all have the prefix _range for disambiguation.
@@ -119,6 +120,7 @@ data BubblesAction =
   | SetCommentCategory CommentCategory
   | SubmitComment ST (Maybe CommentCategory) (Maybe Range)
   | SubmitEdit
+  | AddMarkPosition (ID Void) OffsetFromViewportTop ScrollOffsetOfViewport
   deriving (Show, Generic)
 
 

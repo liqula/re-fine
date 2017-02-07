@@ -78,6 +78,6 @@ commentEditorIsVisibleUpdate action state = case action of
 
 markPositionsUpdate :: RefineAction -> MarkPositions -> MarkPositions
 markPositionsUpdate action state = case action of
-    AddMarkPosition dataChunkId pos scroll -> MarkPositions $ M.alter (\_ -> Just (pos, scroll)) dataChunkId (_unMarkPositions state)
+    BubblesAction (AddMarkPosition dataChunkId pos scroll) -> MarkPositions $ M.alter (\_ -> Just (pos, scroll)) dataChunkId (_unMarkPositions state)
     _ -> state
 
