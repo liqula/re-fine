@@ -1,11 +1,12 @@
 {-# LANGUAGE BangPatterns        #-}
 {-# LANGUAGE DeriveGeneric       #-}
+{-# LANGUAGE EmptyDataDecls      #-}
 {-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE KindSignatures      #-}
 {-# LANGUAGE Rank2Types          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
 {-# LANGUAGE ViewPatterns        #-}
-{-# LANGUAGE EmptyDataDecls      #-}
 
 {-# OPTIONS_GHC -Wall -Werror #-}
 
@@ -149,7 +150,7 @@ fromNow now = iso (`diffTimestamps` now) (`addTimespan` now)
 --
 -- After clearing the type parameters we could unify information
 -- from different sources.
-class ClearTypeParameter t where
+class ClearTypeParameter (t :: * -> *) where
   clearTypeParameter :: t a -> t Void
 
 
