@@ -90,3 +90,14 @@ spec = do
       wrapper <- shallow $ bubble_ bubbleProps mempty
       lengthOfIO (find wrapper (StringSelector ".o-snippet__content")) `shouldReturn` (1 :: Int)
 
+    it "does not render the hover class when there is no highlighted bubble" $ do
+      wrapper <- shallow $ bubble_ bubbleProps mempty
+      is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` False
+
+    it "does not render the hover class when the highlighted bubble does not match the current one" $ do
+      wrapper <- shallow $ bubble_ (BubbleProps chunkId contentType iconSide iconStyle markPosition (Just (ID 101)) callback screenState) mempty
+      is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` False
+
+    it "renders the hover class when the highlighted bubble matches the current one" $ do
+      wrapper <- shallow $ bubble_ (BubbleProps chunkId contentType iconSide iconStyle markPosition (Just (ID 99)) callback screenState) mempty
+      is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` True

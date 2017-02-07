@@ -35,7 +35,8 @@ import           Refine.Frontend.Test.Enzyme
 spec :: Spec
 spec = do
   describe "The rfMark_ component" $ do
-    let theProps = MarkProps (Just (MarkAttributes (ID 77) "the-content-type")) Nothing
+    let theAttribs = Just (MarkAttributes (ID 77) "the-content-type")
+    let theProps = MarkProps theAttribs Nothing
 
     it "does not render anything when there are no mark props" $ do
       wrapper <- shallow $ rfMark_ (MarkProps Nothing Nothing) mempty
@@ -56,5 +57,17 @@ spec = do
     it "has a mark class with the content type that was passed to it" $ do
       wrapper <- shallow $ rfMark_ theProps mempty
       is wrapper (StringSelector ".o-mark--the-content-type") `shouldReturn` True
+
+    it "does not render the hover class when there is no selected mark" $ do
+      wrapper <- shallow $ rfMark_ theProps mempty
+      is wrapper (StringSelector ".o-mark--hover") `shouldReturn` False
+
+    it "does not render the hover class when the selected mark does not match the current one" $ do
+      wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (ID 88))) mempty
+      is wrapper (StringSelector ".o-mark--hover") `shouldReturn` False
+
+    it "renders the hover class when the selected mark matches the current one" $ do
+      wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (ID 77))) mempty
+      is wrapper (StringSelector ".o-mark--hover") `shouldReturn` True
 
 -- TODO tests for componentDidMount code
