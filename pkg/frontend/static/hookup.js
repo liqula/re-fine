@@ -17,7 +17,15 @@ window.refine$getSelectionRange = function() {
         if (node === null) {
             return 0;
         } else {
-            return (node.textContent || node.innerText).length + leftSiblingLength(node.previousElementSibling);
+            return textLength(node) + leftSiblingLength(node.previousSibling);
+        }
+    };
+
+    var textLength = function(node) {
+        if (node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE) {
+            return (node.textContent || node.innerText).length;
+        } else {
+            return 0;
         }
     };
 
