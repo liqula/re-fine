@@ -25,11 +25,17 @@
 
 module Refine.Frontend.Bubbles.MarkSpec where
 
-import Test.Hspec
+import           Control.Lens((^.), (&), (%~))
+import           Test.Hspec
+import           React.Flux (getStoreData)
 
 import           Refine.Common.Types
 import           Refine.Frontend.Bubbles.Mark
+import           Refine.Frontend.Bubbles.Types
+import           Refine.Frontend.Store (refineStore)
 import           Refine.Frontend.Test.Enzyme
+import qualified Refine.Frontend.Test.Enzyme.ReactWrapperAPI as RW
+import           Refine.Frontend.Types
 
 
 spec :: Spec
@@ -69,5 +75,18 @@ spec = do
     it "renders the hover class when the selected mark matches the current one" $ do
       wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (ID 77))) mempty
       is wrapper (StringSelector ".o-mark--hover") `shouldReturn` True
+
+    it "inserts the id of the current mark into the state on mouseEnter and removes it again on mouseLeave" $ do
+      wrapper <- RW.mount $ rfMark_ theProps mempty
+      -- init the state:
+      globalState0 <- getStoreData refineStore
+      let _ = globalState0 & gsBubblesState . bsHighlightedMarkAndBubble %~ \_ -> Nothing
+      -- simulate events:
+      _ <- RW.simulate wrapper RW.MouseEnter
+      globalState1 <- getStoreData refineStore
+      globalState1 ^. gsBubblesState ^. bsHighlightedMarkAndBubble `shouldBe` Just (ID 77)
+      _ <- RW.simulate wrapper RW.MouseLeave
+      globalState2 <- getStoreData refineStore
+      globalState2 ^. gsBubblesState ^. bsHighlightedMarkAndBubble `shouldBe` Nothing
 
 -- TODO tests for componentDidMount code
