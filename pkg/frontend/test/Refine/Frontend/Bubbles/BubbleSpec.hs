@@ -26,6 +26,7 @@ module Refine.Frontend.Bubbles.BubbleSpec where
 
 import           Test.Hspec
 
+import           Refine.Common.Types
 import qualified Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Style
 import           Refine.Frontend.Test.Enzyme
@@ -39,18 +40,19 @@ spec = do
 
 -- TODO add tests for Tablet and Mobile, where appropriate
 
-  let chunkId = 99
+  let chunkId = ID 99
       contentType = "the-content-type"
       iconSide = "the-icon-side"
       iconStyle = ("the-icon-name", "the-icon-style")
       markPosition = Just (140, 180)
+      highlight = Nothing
       callback _ = []
       screenState = SC.ScreenState 95 SC.Desktop
-      bubbleProps = BubbleProps chunkId contentType iconSide iconStyle markPosition callback screenState
+      bubbleProps = BubbleProps chunkId contentType iconSide iconStyle markPosition highlight callback screenState
 
   describe "The bubble_ component" $ do
     it "does not render anything if there is no mark position in the props" $ do
-      wrapper <- shallow $ bubble_ (BubbleProps chunkId contentType iconSide iconStyle Nothing (\_ -> []) screenState) mempty
+      wrapper <- shallow $ bubble_ (BubbleProps chunkId contentType iconSide iconStyle Nothing highlight callback screenState) mempty
       -- TODO actually this should already hold - improve react-flux here?
       -- lengthOf wrapper `shouldReturn` (0 :: Int)
       -- TODO and this should return ""
