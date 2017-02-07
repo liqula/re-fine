@@ -27,6 +27,7 @@ module Refine.Frontend.Bubbles.Store where
 
 import           Control.Lens ((&), (%~))
 import qualified Data.Map.Strict as M
+import           Data.Void
 
 import Refine.Common.Types
 import Refine.Frontend.Bubbles.Types
@@ -40,6 +41,7 @@ bubblesStateUpdate action state =
                   & bsDiscussionIsVisible      %~ discussionIsVisibleUpdate action
                   & bsNoteIsVisible            %~ noteIsVisibleUpdate action
                   & bsCommentEditorIsVisible   %~ commentEditorIsVisibleUpdate action
+                  & bsHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
                   & bsMarkPositions            %~ markPositionsUpdate action
   in newState
 
@@ -75,6 +77,12 @@ commentEditorIsVisibleUpdate action state = case action of
   BubblesAction (ShowCommentEditor curSelection) -> (True, curSelection)
   BubblesAction HideCommentEditor -> (False, Nothing)
   _ -> state
+
+highlightedMarkAndBubbleUpdate :: RefineAction -> Maybe (ID Void) -> Maybe (ID Void)
+highlightedMarkAndBubbleUpdate action state = case action of
+    BubblesAction (HighlightMarkAndBubble dataChunkId) -> Just dataChunkId
+    BubblesAction UnhighlightMarkAndBubble -> Nothing
+    _ -> state
 
 markPositionsUpdate :: RefineAction -> MarkPositions -> MarkPositions
 markPositionsUpdate action state = case action of

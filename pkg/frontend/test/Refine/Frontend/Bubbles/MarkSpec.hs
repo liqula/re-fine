@@ -35,10 +35,10 @@ import           Refine.Frontend.Test.Enzyme
 spec :: Spec
 spec = do
   describe "The rfMark_ component" $ do
-    let theProps = Just (MarkProps (ID 77) "the-content-type")
+    let theProps = MarkProps (Just (MarkAttributes (ID 77) "the-content-type")) Nothing
 
     it "does not render anything when there are no mark props" $ do
-      wrapper <- shallow $ rfMark_ Nothing mempty
+      wrapper <- shallow $ rfMark_ (MarkProps Nothing Nothing) mempty
       html wrapper `shouldReturn` "<div></div>" -- TODO should be empty
 
     it "renders a HTML mark at top level" $ do

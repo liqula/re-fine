@@ -95,37 +95,37 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                               -- div_ ["className" $= "c-vdoc-overlay"] $ do
                                 -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
                               div_ ["className" $= "c-article-content"] $ do
-                                toArticleBody . _unVDocVersion . _compositeVDocVersion $ vdoc
+                                toArticleBody (rs ^. gsBubblesState) (_unVDocVersion . _compositeVDocVersion $ vdoc)
                             rightAside_ (rs ^. gsBubblesState ^. bsMarkPositions) (rs ^. gsScreenState)
 
 
-toArticleBody :: DT.Forest HTMLP.Token -> ReactElementM [SomeStoreAction] ()
-toArticleBody forest = mconcat $ map toHTML (addUIInfoToForest forest)
+toArticleBody :: BubblesState -> DT.Forest HTMLP.Token -> ReactElementM [SomeStoreAction] ()
+toArticleBody state forest = mconcat $ map (toHTML state) (addUIInfoToForest forest)
 
 
-toHTML :: DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()
+toHTML :: BubblesState -> DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()
 -- br and hr need to be handled differently
-toHTML (DT.Node (HTMLP.TagSelfClose "br" attrs) []) = br_ (toProps attrs)
-toHTML (DT.Node (HTMLP.TagSelfClose "hr" attrs) []) = hr_ (toProps attrs)
+toHTML _ (DT.Node (HTMLP.TagSelfClose "br" attrs) []) = br_ (toProps attrs)
+toHTML _ (DT.Node (HTMLP.TagSelfClose "hr" attrs) []) = hr_ (toProps attrs)
 -- just a node without children, containing some text:
-toHTML (DT.Node (HTMLP.ContentText content) []) = elemText content
-toHTML (DT.Node (HTMLP.ContentChar content) []) = elemText $ cs [content]
+toHTML _ (DT.Node (HTMLP.ContentText content) []) = elemText content
+toHTML _ (DT.Node (HTMLP.ContentChar content) []) = elemText $ cs [content]
 -- a comment - do we want to support them, given our HTML editor provides no means of entering them?
-toHTML (DT.Node (HTMLP.Comment _) _) = mempty -- ignore comments
-toHTML (DT.Node (HTMLP.TagOpen "mark" attrs) subForest) =
-    rfMark_ (toMarkProps attrs) $ toHTML `mapM_` subForest -- (toProps attrs)
-toHTML (DT.Node (HTMLP.TagOpen tagname attrs) subForest) =
-    React.Flux.term (fromString (cs tagname)) (toProps attrs) $ toHTML `mapM_` subForest
-toHTML (DT.Node (HTMLP.TagSelfClose tagname attrs) []) =
+toHTML _ (DT.Node (HTMLP.Comment _) _) = mempty -- ignore comments
+toHTML state (DT.Node (HTMLP.TagOpen "mark" attrs) subForest) =
+    rfMark_ (MarkProps (toMarkAttributes attrs) (state ^. bsHighlightedMarkAndBubble)) $ toHTML state `mapM_` subForest -- (toProps attrs)
+toHTML state (DT.Node (HTMLP.TagOpen tagname attrs) subForest) =
+    React.Flux.term (fromString (cs tagname)) (toProps attrs) $ toHTML state `mapM_` subForest
+toHTML _ (DT.Node (HTMLP.TagSelfClose tagname attrs) []) =
     React.Flux.term (fromString (cs tagname)) (toProps attrs) mempty
 
 -- the above cases cover all possibilities in the demo article, but we leave this here for discovery:
-toHTML (DT.Node rootLabel []) = p_ (elemString ("root_label_wo_children " <> show rootLabel))
-toHTML (DT.Node rootLabel subForest) = do
+toHTML _ (DT.Node rootLabel []) = p_ (elemString ("root_label_wo_children " <> show rootLabel))
+toHTML state (DT.Node rootLabel subForest) = do
     p_ $ do
       elemString ("root_label " <> show rootLabel)
       p_ "subforest_start"
-      toHTML `mapM_` subForest
+      toHTML state `mapM_` subForest
       p_ "subforest_end"
 
 -- alternatively: (needs `import Text.Show.Pretty`, package pretty-show.)

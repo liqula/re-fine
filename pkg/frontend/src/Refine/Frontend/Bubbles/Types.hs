@@ -121,21 +121,24 @@ data BubblesAction =
   | SubmitComment ST (Maybe CommentCategory) (Maybe Range)
   | SubmitEdit
   | AddMarkPosition (ID Void) OffsetFromViewportTop ScrollOffsetOfViewport
+  | HighlightMarkAndBubble (ID Void)
+  | UnhighlightMarkAndBubble
   deriving (Show, Generic)
 
 
 data BubblesState = BubblesState
-  { _bsCurrentSelection       :: Selection
-  , _bsCommentCategory        :: Maybe CommentCategory
-  , _bsDiscussionIsVisible    :: Maybe (ID Discussion)
-  , _bsNoteIsVisible          :: Maybe (ID Note)
-  , _bsCommentEditorIsVisible :: (Bool, Maybe Range)
-  , _bsMarkPositions          :: MarkPositions
+  { _bsCurrentSelection         :: Selection
+  , _bsCommentCategory          :: Maybe CommentCategory
+  , _bsDiscussionIsVisible      :: Maybe (ID Discussion)
+  , _bsNoteIsVisible            :: Maybe (ID Note)
+  , _bsCommentEditorIsVisible   :: (Bool, Maybe Range)
+  , _bsHighlightedMarkAndBubble :: Maybe (ID Void)
+  , _bsMarkPositions            :: MarkPositions
   } deriving (Show, Generic)
 
 
 emptyBubblesState :: BubblesState
-emptyBubblesState = BubblesState (Nothing, Nothing) Nothing Nothing Nothing (False, Nothing) (MarkPositions M.empty)
+emptyBubblesState = BubblesState (Nothing, Nothing) Nothing Nothing Nothing (False, Nothing) Nothing (MarkPositions M.empty)
 
 
 makeRefineType ''CommentInputState
