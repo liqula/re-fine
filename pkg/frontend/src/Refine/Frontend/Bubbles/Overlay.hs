@@ -50,6 +50,25 @@ vdoc_overlay_content = [ Style "display" ("block" :: String)
                        , Style "padding" ("15rem 10rem 10rem" :: String)
                        ]
 
+vdoc_overlay_content__add_comment :: [Style]
+vdoc_overlay_content__add_comment = [ Style "backgroundColor" C.vdoc_comment
+                                    , Style "zIndex" (6010 :: Int)
+                                    ]
+
+-- is vdoc_overlay_content__comment in CSS
+vdoc_overlay_content__note :: [Style]
+vdoc_overlay_content__note = [ Style "backgroundColor" C.vdoc_comment
+                              , Style "zIndex" (6010 :: Int)
+                              ]
+
+vdoc_overlay_content__discussion :: [Style]
+vdoc_overlay_content__discussion = [ Style "backgroundColor" C.vdoc_discussion
+                                    , Style "zIndex" (6010 :: Int)
+                                    ]
+
+overlay_styles :: [Style]
+overlay_styles = [Style "zIndex" (6000 :: Int)]
+
 data CommentDisplayProps = CommentDisplayProps
   { _commentText :: CommentText
   , _commentTitle :: String
@@ -67,6 +86,7 @@ showComment = defineView "ShowComment" $ \props ->
            , on "onCloseClicked" $ \_ -> RS.dispatch (RS.BubblesAction RS.HideCommentOverlay)
            , "hideOnOverlayClicked" &= True
            , "dialogStyles" @= (vdoc_overlay_content <> (props ^. contentStyle))
+           , "overlayStyles" @= overlay_styles
            ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
@@ -101,13 +121,12 @@ showNote :: ReactView (Maybe Note)
 showNote = defineView "ShowNote" $ \case
   Nothing -> mempty
   Just note ->
-    let overlayStyle1 = [ Style "backgroundColor" C.vdoc_comment ]
-        commentText1 = (note ^. noteText)
+    let commentText1 = (note ^. noteText)
         commentTitle1 = "Title of comment"
         iconStyle1 = ("icon-Remark", "dark")
         userName1 = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 overlayStyle1)
+    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__note)
 
 showNote_ :: Maybe Note -> ReactElementM eventHandler ()
 showNote_ note = view showNote note mempty
@@ -116,13 +135,12 @@ showDiscussion :: ReactView (Maybe CompositeDiscussion)
 showDiscussion = defineView "ShowDiscussion" $ \case
   Nothing -> mempty
   Just discussion ->
-    let overlayStyle1 = [ Style "backgroundColor" C.vdoc_discussion ]
-        commentText1 = (Tree.rootLabel (discussion ^. compositeDiscussionTree) ^. statementText)
+    let commentText1 = (Tree.rootLabel (discussion ^. compositeDiscussionTree) ^. statementText)
         commentTitle1 = "Title of discussion"
         iconStyle1 = ("icon-Remark", "dark")
         userName1 = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 overlayStyle1)
+    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__discussion)
 
 showDiscussion_ :: Maybe CompositeDiscussion -> ReactElementM eventHandler ()
 showDiscussion_ note = view showDiscussion note mempty
@@ -146,14 +164,11 @@ showQuestion_ question = view showQuestion question mempty
 -- was add-annotation
 addComment :: ReactView (Bool, Maybe RS.Range, Maybe RS.CommentCategory)
 addComment = defineView "AddComment" $ \(showOverlay, forRange, commentCategory) ->
-  let vdoc_overlay_content__add_comment = [ Style "backgroundColor" ("rgb(219, 204, 221)" :: String) -- vdoc-comment, lightred
-                                          , Style "zIndex" (6010 :: Int)
-                                          ]
-  in overlay_ ["isVisible" &= showOverlay
+  overlay_ ["isVisible" &= showOverlay
            , on "onCloseClicked" $ \_ -> RS.dispatch (RS.BubblesAction RS.HideCommentEditor)
            , "hideOnOverlayClicked" &= True
            , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content__add_comment)
-           , "overlayStyles" @= [Style "zIndex" (6000 :: Int)]
+           , "overlayStyles" @= overlay_styles
            ]  $ do
 
     icon_ (IconProps "c-vdoc-overlay-content" False ("icon-Remark", "dark") XL)
