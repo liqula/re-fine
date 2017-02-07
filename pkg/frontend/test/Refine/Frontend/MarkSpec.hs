@@ -27,6 +27,7 @@ module Refine.Frontend.MarkSpec where
 
 import Test.Hspec
 
+import           Refine.Common.Types
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Mark
 
@@ -34,7 +35,7 @@ import           Refine.Frontend.Mark
 spec :: Spec
 spec = do
   describe "The rfMark_ component" $ do
-    let theProps = Just (MarkProps 77 "the-content-type")
+    let theProps = Just (MarkProps (ID 77) "the-content-type")
 
     it "does not render anything when there are no mark props" $ do
       wrapper <- shallow $ rfMark_ Nothing mempty

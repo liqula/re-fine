@@ -36,6 +36,7 @@ import           React.Flux
 import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
+import           Refine.Prelude (ClearTypeParameter(..))
 import           Refine.Common.VDoc.HTML.Enhance (addUIInfoToForest)
 import           Refine.Frontend.Bubbles.Bubble
 import           Refine.Frontend.Bubbles.Overlay
@@ -154,14 +155,14 @@ leftAside = defineView "LeftAside" $ \props ->
         -- TODO the map should use proper IDs as keys
         mconcat $ map (\d -> discussionBubble_ (SpecialBubbleProps
                                                  (d ^. compositeDiscussion ^. discussionID ^. unID)
-                                                 (lookupPosition (d ^. compositeDiscussion ^. discussionID ^. unID))
+                                                 (lookupPosition $ clearTypeParameter (d ^. compositeDiscussion ^. discussionID))
                                                  (_leftAsideScreenState props)
                                                )
                                                (elemText (DT.rootLabel (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
                       (_leftAsideDiscussions props)
         mconcat $ map (\n -> noteBubble_ (SpecialBubbleProps
                                            (n ^. noteID ^. unID)
-                                           (lookupPosition (n ^. noteID ^. unID))
+                                           (lookupPosition $ clearTypeParameter (n ^. noteID))
                                            (_leftAsideScreenState props)
                                          )
                                          (elemText (n ^. noteText)))

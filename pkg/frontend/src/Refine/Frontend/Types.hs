@@ -26,10 +26,10 @@ module Refine.Frontend.Types where
 
 import           Control.DeepSeq
 import qualified Data.HashMap.Strict as HashMap
-import           Data.Int
+import qualified Data.Map.Strict as M
 import           Data.Text (Text)
 import           Data.String.Conversions
-import qualified Data.Map.Strict as M
+import           Data.Void
 import           GHC.Generics (Generic)
 import           Data.Aeson (toJSON, parseJSON, object, (.=), withObject)
 import           Data.Aeson.Types (FromJSON, ToJSON, Value, Parser)
@@ -42,7 +42,7 @@ import Refine.Frontend.Screen.Types
 import Refine.Prelude.TH (makeRefineType)
 
 
-newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map Int64 (Int, Int) }
+newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map (ID Void) (Int, Int) }
   deriving (Eq, Show, Generic, NFData)
 
 -- | TODO: we have orphan instances for maps in Refine.Common.Orphans.  we should:
@@ -83,7 +83,7 @@ data RefineAction = LoadDocumentList
                   | OpenDocument CompositeVDoc
                   | AddDemoDocument
                   | AddHeaderHeight Int
-                  | AddMarkPosition Int64 OffsetFromViewportTop ScrollOffsetOfViewport
+                  | AddMarkPosition (ID Void) OffsetFromViewportTop ScrollOffsetOfViewport
                   | SetWindowSize WindowSize
                   | BubblesAction BubblesAction
                   -- ...

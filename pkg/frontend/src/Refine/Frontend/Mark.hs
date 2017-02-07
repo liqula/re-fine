@@ -26,31 +26,32 @@ module Refine.Frontend.Mark where
 
 import           Control.Concurrent (forkIO)
 import           Control.Lens (makeLenses, (^.))
-import           Data.Int
 import           Control.Monad (forM_)
 import           Data.Monoid ((<>))
 import           Data.String (fromString)
 import           Data.String.Conversions
+import           Data.Void
 import           GHCJS.Types (JSVal)
 import           React.Flux
 import           React.Flux.Lifecycle
 import qualified Text.HTML.Parser as HTMLP
 import           Text.Read (readMaybe)
 
+import           Refine.Common.Types
 import qualified Refine.Frontend.Screen.Types as RS
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
 
 
 data MarkProps = MarkProps
-  { _markPropsDataChunkId :: Int64
+  { _markPropsDataChunkId :: ID Void
   , _markPropsDataContentType :: String
   }
 
 makeLenses ''MarkProps
 
 toMarkProps :: [HTMLP.Attr] -> Maybe MarkProps
-toMarkProps attrs = let maybeChunkId = readMaybe $ valueOf "data-chunk-id" attrs :: Maybe Int64
+toMarkProps attrs = let maybeChunkId = ID <$> readMaybe (valueOf "data-chunk-id" attrs) :: Maybe (ID Void)
   in fmap (`MarkProps` valueOf "data-chunk-kind" attrs) maybeChunkId
   where
     valueOf :: String -> [HTMLP.Attr] -> String
@@ -63,7 +64,7 @@ rfMark :: ReactView (Maybe MarkProps)
 rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
    { lRender = \_state props -> case props of
          Nothing -> mempty
-         Just p -> mark_ [ "data-chunk-id" $= fromString (show (p ^. markPropsDataChunkId))
+         Just p -> mark_ [ "data-chunk-id" $= fromString (show (p ^. markPropsDataChunkId ^. unID))
                    , "className" $= fromString ("o-mark o-mark--" <> p ^. markPropsDataContentType)
                    ] childrenPassedToView
 
