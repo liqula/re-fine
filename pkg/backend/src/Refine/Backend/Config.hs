@@ -9,7 +9,7 @@ import           Control.Exception (throwIO, ErrorCall(ErrorCall))
 import           Control.Lens (makeLenses, makePrisms, (&), (^.))
 import           Data.Aeson (FromJSON, ToJSON, object, withObject, (.=), (.:))
 import           Data.Default (Default(..))
-import           Data.String.Conversions (cs)
+import           Data.String.Conversions (ST, cs)
 import qualified Data.Yaml as Yaml
 import           Data.Yaml (encode)
 import           GHC.Generics
@@ -28,6 +28,7 @@ data Config = Config
   , _cfgPoolSize      :: Int            -- ^ The size of the connection pool towards the database
   , _cfgFileServeRoot :: Maybe FilePath -- ^ Directory for the static files
   , _cfgWarpSettings  :: WarpSettings   -- ^ check test suite for examples of what can be put in here.
+  , _cfgCsrfSecret    :: ST             -- ^ The secret for csrf
   }
   deriving (Eq, Show, Generic, FromJSON, ToJSON)
 
@@ -45,6 +46,7 @@ instance Default Config where
     , _cfgPoolSize      = 5
     , _cfgFileServeRoot = Just "../frontend/js-build"
     , _cfgWarpSettings  = def
+    , _cfgCsrfSecret    = "CSRF-SECRET"
     }
 
 instance Default DBKind where

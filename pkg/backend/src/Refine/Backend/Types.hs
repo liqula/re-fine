@@ -20,27 +20,26 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Backend.App
-  ( module App
-  , runApp
-  ) where
+module Refine.Backend.Types where
 
-import Control.Monad.Except
-import Control.Monad.Reader
-import Control.Monad.State
-import Control.Natural
+import Control.Lens (makeLenses)
+import Data.String.Conversions (ST, cs)
 
-import Refine.Backend.App.Comment as App
-import Refine.Backend.App.Core    as App
-import Refine.Backend.App.VDoc    as App
-import Refine.Backend.Logger
-import Refine.Backend.Types (CsrfSecret)
-import Refine.Backend.User.Core (UserHandle)
+import Refine.Backend.User.Core (SessionId(..))
 
 
-runApp :: RunDB db -> RunDocRepo -> Logger -> UserHandle -> CsrfSecret -> App db :~> ExceptT AppError IO
-runApp runDB runDocRepo logger userHandle csrfSecret =
-  Nat $ runSR (AppState Nothing NonActiveUser) (AppContext runDB runDocRepo logger userHandle csrfSecret) . unApp
-  where
-    runSR :: (Monad m) => s -> r -> StateT s (ReaderT r m) a -> m a
-    runSR s r m = runReaderT (evalStateT m s) r
+newtype UserSession = UserSession { _unUserSession :: SessionId }
+  deriving (Eq, Show)
+
+newtype CsrfSecret = CsrfSecret { _csrfSecret :: ST }
+  deriving (Eq, Show)
+
+newtype CsrfToken = CsrfToken { _csrfToken :: ST }
+  deriving (Eq, Show)
+
+userSessionText :: UserSession -> ST
+userSessionText = cs . unSessionId . _unUserSession
+
+makeLenses ''UserSession
+makeLenses ''CsrfSecret
+makeLenses ''CsrfToken

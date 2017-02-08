@@ -7,6 +7,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
@@ -20,6 +21,8 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Refine.Backend.Server
   ( startBackend
   , Backend(..), mkBackend
@@ -27,11 +30,12 @@ module Refine.Backend.Server
   ) where
 
 import           Control.Category
-import           Control.Lens ((^.))
+import           Control.Lens ((^.), iso, prism', to)
 import           Control.Monad.Except
 import qualified Control.Natural as CN
 import           Control.Natural (($$))
 import           Data.Aeson (encode)
+import           Data.String.Conversions (cs)
 import           Debug.Trace (traceShow)  -- (please keep this until we have better logging)
 import           Network.Wai.Handler.Warp as Warp
 import           Prelude hiding ((.), id)
@@ -41,6 +45,14 @@ import           Servant.Utils.StaticFiles (serveDirectory)
 import           System.Directory (createDirectoryIfMissing)
 import           System.FilePath (dropFileName)
 
+import Servant.Cookie.Session
+import qualified Servant.Cookie.Session.CSRF as SCS (CsrfSecret(..), CsrfToken(..))
+import Servant.Cookie.Session.CSRF hiding (CsrfSecret(..), CsrfToken(..))
+import Servant.Cookie.Session.Types
+import Web.Cookie
+import Crypto.Random (MonadRandom(..))
+import Servant.Missing (ThrowError500(..))
+
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
 import Refine.Backend.Config
@@ -48,6 +60,7 @@ import Refine.Backend.Database (DB, createDBRunner)
 import Refine.Backend.DocRepo (createRunRepo)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
+import Refine.Backend.Types
 import Refine.Common.Rest
 import Refine.Prelude (monadError)
 
@@ -66,11 +79,19 @@ mkBackend cfg = do
   createDataDirectories cfg
   (runDb, userHandler) <- createDBRunner cfg
   runDocRepo <- createRunRepo cfg
-  let logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
-      app    = runApp runDb runDocRepo logger userHandler
-      srv    = Servant.serve (Proxy :: Proxy (RefineAPI :<|> Raw)) $
-                  serverT app refineApi
-             :<|> maybeServeDirectory (cfg ^. cfgFileServeRoot)
+  let refineCookie = def { setCookieName = "refine", setCookiePath = Just "/" }
+      logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
+      app    = runApp runDb runDocRepo logger userHandler (cfg ^. cfgCsrfSecret . to CsrfSecret)
+  srvApp <- serveAction
+              (Proxy :: Proxy RefineAPI)
+              (Proxy :: Proxy AppState)
+              refineCookie
+              (Nat appIO)
+              (toServantError . cnToSn app)
+              refineApi
+
+  let srv = Servant.serve (Proxy :: Proxy (Raw :<|> "static" :> Raw)) $
+              srvApp :<|> maybeServeDirectory (cfg ^. cfgFileServeRoot)
 
   when (cfg ^. cfgShouldMigrate) $ do
     void $ (natThrowError . app) $$ do
@@ -78,17 +99,40 @@ mkBackend cfg = do
 
   pure $ Backend srv app
 
+instance MonadRandom (App db) where
+  getRandomBytes = appIO . getRandomBytes
+
+instance ThrowError500 AppError where
+  error500 = prism' toAppError fromAppError
+    where
+      toAppError :: String -> AppError
+      toAppError = AppCsrfError . cs
+
+      fromAppError :: AppError -> Maybe String
+      fromAppError (AppCsrfError e) = Just $ cs e
+      fromAppError _                = Nothing
+
+instance HasSessionCsrfToken AppState where
+  sessionCsrfToken = appCsrfToken . csrfTokenIso
+    where
+      fromSCS = CsrfToken . cs . SCS.fromCsrfToken
+      toSCS   = SCS.CsrfToken . cs . _csrfToken
+      csrfTokenIso = iso (fmap toSCS) (fmap fromSCS)
+
+instance GetCsrfSecret (AppContext db) where
+  csrfSecret = appCsrfSecret . Refine.Backend.Types.csrfSecret . to (Just . SCS.CsrfSecret . cs)
+
+instance GetSessionToken AppState where
+  getSessionToken = appUserState . to (\case
+    ActiveUser    us -> Just . SessionToken . userSessionText $ us
+    NonActiveUser    -> Nothing)
+
 createDataDirectories :: Config -> IO ()
 createDataDirectories cfg = do
   createDirectoryIfMissing True (cfg ^. cfgReposRoot)
   case cfg ^. cfgDBKind of
     DBInMemory    -> pure ()
     DBOnDisk path -> createDirectoryIfMissing True (dropFileName path)
-
-
-serverT :: (App db CN.:~> ExceptT AppError IO) -> ServerT RefineAPI (App db) -> Server RefineAPI
-serverT app = enter (toServantError . cnToSn app)
-
 
 toServantError :: (Monad m) => ExceptT AppError m :~> ExceptT ServantErr m
 toServantError = Nat ((lift . runExceptT) >=> monadError fromAppError)

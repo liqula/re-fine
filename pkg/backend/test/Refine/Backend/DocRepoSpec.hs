@@ -71,6 +71,7 @@ cfg = Config
   , _cfgPoolSize      = 5
   , _cfgFileServeRoot = Nothing
   , _cfgWarpSettings  = def
+  , _cfgCsrfSecret    = "CSRF-SECRET"
   }
 
 provideRunner :: ActionWith (DocRepo :~> IO) -> IO ()

@@ -23,7 +23,7 @@
 module Refine.Backend.AppSpec where
 
 import           Control.Category ((.))
-import           Control.Lens ((^.), (%=), at, makeLenses, view)
+import           Control.Lens ((^.), (%=), at, to, makeLenses, view)
 import           Control.Monad.State
 import           Control.Natural (($$))
 import           Data.Default (def)
@@ -50,6 +50,7 @@ import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
+import Refine.Backend.Types
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc
 import Refine.Common.Test.Arbitrary (arbitraryRawVDocVersion)
@@ -89,15 +90,15 @@ spec = do
       () <- runner $ do
 
         App.createUser "user" "user@example.com" "password"
-        userState0 <- get
+        userState0 <- gets (view appUserState)
         appIO $ userState0 `shouldBe` NonActiveUser
 
         App.login "user" "password"
-        userState1 <- get
+        userState1 <- gets (view appUserState)
         appIO $ userState1 `shouldSatisfy` isActiveUser
 
         App.logout
-        userState2 <- get
+        userState2 <- gets (view appUserState)
         appIO $ userState2 `shouldBe` NonActiveUser
 
       pure ()
@@ -124,6 +125,7 @@ createAppRunner = do
         , _cfgPoolSize      = 5
         , _cfgFileServeRoot = Nothing
         , _cfgWarpSettings  = def
+        , _cfgCsrfSecret    = "CSRF-SECRET"
         }
 
   createDirectoryIfMissing True $ cfg ^. cfgReposRoot
@@ -131,7 +133,7 @@ createAppRunner = do
   runDRepo <- createRunRepo cfg
   let logger = Logger . const $ pure ()
       runner :: forall b . App DB b -> IO b
-      runner m = (natThrowError . runApp runDb runDRepo logger userHandler) $$ m
+      runner m = (natThrowError . runApp runDb runDRepo logger userHandler (cfg ^. cfgCsrfSecret . to CsrfSecret)) $$ m
 
   void $ runner migrateDB
   pure (runner, testDb, reposRoot)
