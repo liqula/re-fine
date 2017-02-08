@@ -33,7 +33,6 @@ import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
 import           Data.String.Conversions
 import           Data.JSString (JSString, pack, unpack)
-import           Data.Void
 import           React.Flux
 
 import Refine.Common.Types (CompositeVDoc(..))
