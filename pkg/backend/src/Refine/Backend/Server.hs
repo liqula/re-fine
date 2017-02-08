@@ -40,18 +40,12 @@ import           Debug.Trace (traceShow)  -- (please keep this until we have bet
 import           Network.Wai.Handler.Warp as Warp
 import           Prelude hiding ((.), id)
 import           Servant
+import qualified Servant.Cookie.Session as SCS
+import           Servant.Cookie.Session (serveAction)
 import           Servant.Server.Internal (responseServantErr)
 import           Servant.Utils.StaticFiles (serveDirectory)
 import           System.Directory (createDirectoryIfMissing)
 import           System.FilePath (dropFileName)
-
-import Servant.Cookie.Session
-import qualified Servant.Cookie.Session.CSRF as SCS (CsrfSecret(..), CsrfToken(..))
-import Servant.Cookie.Session.CSRF hiding (CsrfSecret(..), CsrfToken(..))
-import Servant.Cookie.Session.Types
-import Web.Cookie
-import Crypto.Random (MonadRandom(..))
-import Servant.Missing (ThrowError500(..))
 
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
@@ -103,7 +97,7 @@ mkBackend cfg = do
   createDataDirectories cfg
   (runDb, userHandler) <- createDBRunner cfg
   runDocRepo <- createRunRepo cfg
-  let refineCookie = def { setCookieName = "refine", setCookiePath = Just "/" }
+  let refineCookie = SCS.def { SCS.setCookieName = "refine", SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
       app    = runApp runDb runDocRepo logger userHandler (cfg ^. cfgCsrfSecret . to CsrfSecret)
   srvApp <- serveAction
@@ -137,10 +131,10 @@ toServantError = Nat ((lift . runExceptT) >=> monadError fromAppError)
 
 -- * Instances for Servant.Cookie.Session
 
-instance MonadRandom (App db) where
-  getRandomBytes = appIO . getRandomBytes
+instance SCS.MonadRandom (App db) where
+  getRandomBytes = appIO . SCS.getRandomBytes
 
-instance ThrowError500 AppError where
+instance SCS.ThrowError500 AppError where
   error500 = prism' toAppError fromAppError
     where
       toAppError :: String -> AppError
@@ -150,17 +144,17 @@ instance ThrowError500 AppError where
       fromAppError (AppCsrfError e) = Just $ cs e
       fromAppError _                = Nothing
 
-instance HasSessionCsrfToken AppState where
+instance SCS.HasSessionCsrfToken AppState where
   sessionCsrfToken = appCsrfToken . csrfTokenIso
     where
       fromSCS = CsrfToken . cs . SCS.fromCsrfToken
       toSCS   = SCS.CsrfToken . cs . _csrfToken
       csrfTokenIso = iso (fmap toSCS) (fmap fromSCS)
 
-instance GetCsrfSecret (AppContext db) where
+instance SCS.GetCsrfSecret (AppContext db) where
   csrfSecret = appCsrfSecret . Refine.Backend.Types.csrfSecret . to (Just . SCS.CsrfSecret . cs)
 
-instance GetSessionToken AppState where
+instance SCS.GetSessionToken AppState where
   getSessionToken = appUserState . to (\case
-    ActiveUser    us -> Just . SessionToken . userSessionText $ us
+    ActiveUser    us -> Just . SCS.SessionToken . userSessionText $ us
     NonActiveUser    -> Nothing)

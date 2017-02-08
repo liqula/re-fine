@@ -20,7 +20,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/zerobuzz/servant-cookie-session.git
-    commit: 595385e2fb1610df56e350c0d928c9e93c43f4c3
+    commit: 8af4157e9b73c817ad67f86ad5a6d089ba398a3d
   extra-dep: true
 
 extra-deps:
