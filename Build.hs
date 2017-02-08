@@ -68,6 +68,11 @@ main = shakeArgs refineOptions $ do
     command_ [] "stack" ["install", "hspec-discover", "--resolver", resolver]
     command_ [] "stack" ["exec", "--", "which", "hspec-discover"]
 
+    command_ [Cwd pkgPrelude]  "stack" ["setup"]
+    command_ [Cwd pkgCommon]   "stack" ["setup"]
+    command_ [Cwd pkgBackend]  "stack" ["setup"]
+    command_ [Cwd pkgFrontend] "stack" ["setup"]
+
   phony "test-prelude" $ do
     stackTest pkgPrelude
 
@@ -103,7 +108,10 @@ main = shakeArgs refineOptions $ do
     command_ [Cwd pkgFrontend] "make" []
 
   phony "build-frontend-npm" $ do  -- if this fails, check #40.
+    command_ [Cwd pkgFrontend] "node" ["--version"]
+    command_ [Cwd pkgFrontend] "stack" ["exec", "--", "node", "--version"]
     command_ [Cwd pkgFrontend] "npm" ["install"]
+    command_ [Cwd pkgFrontend] "npm" ["prune"]  -- remove unused dependencies
 
   phony "build" $ do
     -- for building everything, we only need to go to backend and frontend.  prelude and common are

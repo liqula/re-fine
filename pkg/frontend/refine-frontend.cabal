@@ -46,6 +46,7 @@ library
       -- we can't have hspec, but at least we have bash and find and perl...  :)
       -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
       Refine.Frontend.Bubbles.Bubble
+      Refine.Frontend.Bubbles.Mark
       Refine.Frontend.Bubbles.Overlay
       Refine.Frontend.Bubbles.QuickCreate
       Refine.Frontend.Bubbles.Store
@@ -53,7 +54,6 @@ library
       Refine.Frontend.Colors
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
-      Refine.Frontend.Mark
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store
@@ -63,6 +63,7 @@ library
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
       Refine.Frontend.Test.Enzyme
+      Refine.Frontend.Test.Enzyme.ReactWrapperAPI
       Refine.Frontend.Test.Samples
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Types
@@ -101,6 +102,7 @@ executable refine-frontend
   other-modules:
       -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
       Refine.Frontend.Bubbles.Bubble
+      Refine.Frontend.Bubbles.Mark
       Refine.Frontend.Bubbles.Overlay
       Refine.Frontend.Bubbles.QuickCreate
       Refine.Frontend.Bubbles.Store
@@ -108,7 +110,6 @@ executable refine-frontend
       Refine.Frontend.Colors
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
-      Refine.Frontend.Mark
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store
@@ -118,6 +119,7 @@ executable refine-frontend
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
       Refine.Frontend.Test.Enzyme
+      Refine.Frontend.Test.Enzyme.ReactWrapperAPI
       Refine.Frontend.Test.Samples
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Types
@@ -161,6 +163,8 @@ test-suite spec
       -- find src test -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
       Refine.Frontend.Bubbles.Bubble
       Refine.Frontend.Bubbles.BubbleSpec
+      Refine.Frontend.Bubbles.Mark
+      Refine.Frontend.Bubbles.MarkSpec
       Refine.Frontend.Bubbles.Overlay
       Refine.Frontend.Bubbles.QuickCreate
       Refine.Frontend.Bubbles.QuickCreateSpec
@@ -170,8 +174,6 @@ test-suite spec
       Refine.Frontend.Heading
       Refine.Frontend.HeadingSpec
       Refine.Frontend.Loader.Component
-      Refine.Frontend.Mark
-      Refine.Frontend.MarkSpec
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store
@@ -182,6 +184,7 @@ test-suite spec
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
       Refine.Frontend.Test.Enzyme
+      Refine.Frontend.Test.Enzyme.ReactWrapperAPI
       Refine.Frontend.Test.Samples
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Types

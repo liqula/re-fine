@@ -24,12 +24,19 @@
 
 module Refine.Frontend.Bubbles.BubbleSpec where
 
+import           Control.Lens((^.), (&), (%~))
 import           Test.Hspec
+import           React.Flux (getStoreData)
 
+import           Refine.Common.Types
+import           Refine.Frontend.Bubbles.Bubble
+import           Refine.Frontend.Bubbles.Types
 import qualified Refine.Frontend.Screen.Types as SC
+import           Refine.Frontend.Store (refineStore)
 import           Refine.Frontend.Style
 import           Refine.Frontend.Test.Enzyme
-import           Refine.Frontend.Bubbles.Bubble
+import qualified Refine.Frontend.Test.Enzyme.ReactWrapperAPI as RW
+import           Refine.Frontend.Types
 
 --import Refine.Frontend.Test.Console
 
@@ -39,18 +46,19 @@ spec = do
 
 -- TODO add tests for Tablet and Mobile, where appropriate
 
-  let chunkId = 99
+  let chunkId = ID 99
       contentType = "the-content-type"
       iconSide = "the-icon-side"
       iconStyle = ("the-icon-name", "the-icon-style")
       markPosition = Just (140, 180)
+      highlight = Nothing
       callback _ = []
       screenState = SC.ScreenState 95 SC.Desktop
-      bubbleProps = BubbleProps chunkId contentType iconSide iconStyle markPosition callback screenState
+      bubbleProps = BubbleProps chunkId contentType iconSide iconStyle markPosition highlight callback screenState
 
   describe "The bubble_ component" $ do
     it "does not render anything if there is no mark position in the props" $ do
-      wrapper <- shallow $ bubble_ (BubbleProps chunkId contentType iconSide iconStyle Nothing (\_ -> []) screenState) mempty
+      wrapper <- shallow $ bubble_ (BubbleProps chunkId contentType iconSide iconStyle Nothing highlight callback screenState) mempty
       -- TODO actually this should already hold - improve react-flux here?
       -- lengthOf wrapper `shouldReturn` (0 :: Int)
       -- TODO and this should return ""
@@ -88,3 +96,27 @@ spec = do
       wrapper <- shallow $ bubble_ bubbleProps mempty
       lengthOfIO (find wrapper (StringSelector ".o-snippet__content")) `shouldReturn` (1 :: Int)
 
+    it "does not render the hover class when there is no highlighted bubble" $ do
+      wrapper <- shallow $ bubble_ bubbleProps mempty
+      is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` False
+
+    it "does not render the hover class when the highlighted bubble does not match the current one" $ do
+      wrapper <- shallow $ bubble_ (BubbleProps chunkId contentType iconSide iconStyle markPosition (Just (ID 101)) callback screenState) mempty
+      is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` False
+
+    it "renders the hover class when the highlighted bubble matches the current one" $ do
+      wrapper <- shallow $ bubble_ (BubbleProps chunkId contentType iconSide iconStyle markPosition (Just (ID 99)) callback screenState) mempty
+      is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` True
+
+    it "inserts the id of the current bubble into the state on mouseEnter and removes it again on mouseLeave" $ do
+      wrapper <- RW.mount $ bubble_ bubbleProps mempty
+      -- init the state:
+      globalState0 <- getStoreData refineStore
+      let _ = globalState0 & gsBubblesState . bsHighlightedMarkAndBubble %~ \_ -> Nothing
+      -- simulate events:
+      _ <- RW.simulate wrapper RW.MouseEnter
+      globalState1 <- getStoreData refineStore
+      globalState1 ^. gsBubblesState ^. bsHighlightedMarkAndBubble `shouldBe` Just (ID 99)
+      _ <- RW.simulate wrapper RW.MouseLeave
+      globalState2 <- getStoreData refineStore
+      globalState2 ^. gsBubblesState ^. bsHighlightedMarkAndBubble `shouldBe` Nothing

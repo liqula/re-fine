@@ -1,6 +1,6 @@
 build:
   script:
-    - ./build
+    - time ./build setup && time ./build
       # (try `./build setup && ./build clean && ./build` here
       # if you suspect interference from earlier ci runs.)
 

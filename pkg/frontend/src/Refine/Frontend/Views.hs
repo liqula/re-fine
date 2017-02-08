@@ -32,12 +32,15 @@ import           Data.Monoid ((<>))
 import           Data.String.Conversions
 import           Data.String (fromString)
 import qualified Data.Tree as DT
+import           Data.Void
 import           React.Flux
 import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
+import           Refine.Prelude (ClearTypeParameter(..))
 import           Refine.Common.VDoc.HTML.Enhance (addUIInfoToForest)
 import           Refine.Frontend.Bubbles.Bubble
+import           Refine.Frontend.Bubbles.Mark
 import           Refine.Frontend.Bubbles.Overlay
 import           Refine.Frontend.Bubbles.QuickCreate
 import           Refine.Frontend.Bubbles.Types as RS
@@ -45,7 +48,6 @@ import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(
                                          , editToolbarExtension_, menuButton_, headerSizeCapture_
                                          )
 import           Refine.Frontend.Loader.Component (vdocLoader_)
-import           Refine.Frontend.Mark
 import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import qualified Refine.Frontend.Screen.Types as SC
@@ -81,8 +83,9 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                     div_ ["className" $= "grid-wrapper"] $ do
                         div_ ["className" $= "row row-align-center row-align-top"] $ do
                             leftAside_ $ LeftAsideProps
-                                           (rs ^. gsMarkPositions)
+                                           (rs ^. gsBubblesState ^. bsMarkPositions)
                                            (rs ^. gsBubblesState ^. bsCurrentSelection)
+                                           (rs ^. gsBubblesState ^. bsHighlightedMarkAndBubble)
                                            (rs ^. gsScreenState)
                                            (M.elems (vdoc ^. compositeVDocDiscussions))
                                            (M.elems (vdoc ^. compositeVDocNotes))
@@ -94,37 +97,37 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                               -- div_ ["className" $= "c-vdoc-overlay"] $ do
                                 -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
                               div_ ["className" $= "c-article-content"] $ do
-                                toArticleBody . _unVDocVersion . _compositeVDocVersion $ vdoc
-                            rightAside_ (rs ^. gsMarkPositions) (rs ^. gsScreenState)
+                                toArticleBody (rs ^. gsBubblesState) (_unVDocVersion . _compositeVDocVersion $ vdoc)
+                            rightAside_ (rs ^. gsBubblesState ^. bsMarkPositions) (rs ^. gsScreenState)
 
 
-toArticleBody :: DT.Forest HTMLP.Token -> ReactElementM [SomeStoreAction] ()
-toArticleBody forest = mconcat $ map toHTML (addUIInfoToForest forest)
+toArticleBody :: BubblesState -> DT.Forest HTMLP.Token -> ReactElementM [SomeStoreAction] ()
+toArticleBody state forest = mconcat $ map (toHTML state) (addUIInfoToForest forest)
 
 
-toHTML :: DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()
+toHTML :: BubblesState -> DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()
 -- br and hr need to be handled differently
-toHTML (DT.Node (HTMLP.TagSelfClose "br" attrs) []) = br_ (toProps attrs)
-toHTML (DT.Node (HTMLP.TagSelfClose "hr" attrs) []) = hr_ (toProps attrs)
+toHTML _ (DT.Node (HTMLP.TagSelfClose "br" attrs) []) = br_ (toProps attrs)
+toHTML _ (DT.Node (HTMLP.TagSelfClose "hr" attrs) []) = hr_ (toProps attrs)
 -- just a node without children, containing some text:
-toHTML (DT.Node (HTMLP.ContentText content) []) = elemText content
-toHTML (DT.Node (HTMLP.ContentChar content) []) = elemText $ cs [content]
+toHTML _ (DT.Node (HTMLP.ContentText content) []) = elemText content
+toHTML _ (DT.Node (HTMLP.ContentChar content) []) = elemText $ cs [content]
 -- a comment - do we want to support them, given our HTML editor provides no means of entering them?
-toHTML (DT.Node (HTMLP.Comment _) _) = mempty -- ignore comments
-toHTML (DT.Node (HTMLP.TagOpen "mark" attrs) subForest) =
-    rfMark_ (toMarkProps attrs) $ toHTML `mapM_` subForest -- (toProps attrs)
-toHTML (DT.Node (HTMLP.TagOpen tagname attrs) subForest) =
-    React.Flux.term (fromString (cs tagname)) (toProps attrs) $ toHTML `mapM_` subForest
-toHTML (DT.Node (HTMLP.TagSelfClose tagname attrs) []) =
+toHTML _ (DT.Node (HTMLP.Comment _) _) = mempty -- ignore comments
+toHTML state (DT.Node (HTMLP.TagOpen "mark" attrs) subForest) =
+    rfMark_ (MarkProps (toMarkAttributes attrs) (state ^. bsHighlightedMarkAndBubble)) $ toHTML state `mapM_` subForest -- (toProps attrs)
+toHTML state (DT.Node (HTMLP.TagOpen tagname attrs) subForest) =
+    React.Flux.term (fromString (cs tagname)) (toProps attrs) $ toHTML state `mapM_` subForest
+toHTML _ (DT.Node (HTMLP.TagSelfClose tagname attrs) []) =
     React.Flux.term (fromString (cs tagname)) (toProps attrs) mempty
 
 -- the above cases cover all possibilities in the demo article, but we leave this here for discovery:
-toHTML (DT.Node rootLabel []) = p_ (elemString ("root_label_wo_children " <> show rootLabel))
-toHTML (DT.Node rootLabel subForest) = do
+toHTML _ (DT.Node rootLabel []) = p_ (elemString ("root_label_wo_children " <> show rootLabel))
+toHTML state (DT.Node rootLabel subForest) = do
     p_ $ do
       elemString ("root_label " <> show rootLabel)
       p_ "subforest_start"
-      toHTML `mapM_` subForest
+      toHTML state `mapM_` subForest
       p_ "subforest_end"
 
 -- alternatively: (needs `import Text.Show.Pretty`, package pretty-show.)
@@ -142,6 +145,7 @@ toProps = mconcat . fmap go
 data LeftAsideProps = LeftAsideProps
   { _leftAsideMarkPositions :: RS.MarkPositions
   , _leftAsideCurrentSelection :: RS.Selection
+  , _leftAsideHighlightedBubble :: Maybe (ID Void)
   , _leftAsideScreenState :: SC.ScreenState
   , _leftAsideDiscussions :: [CompositeDiscussion]
   , _leftAsideNotes :: [Note]
@@ -153,15 +157,17 @@ leftAside = defineView "LeftAside" $ \props ->
         let lookupPosition chunkId = M.lookup chunkId . _unMarkPositions $ _leftAsideMarkPositions props
         -- TODO the map should use proper IDs as keys
         mconcat $ map (\d -> discussionBubble_ (SpecialBubbleProps
-                                                 (d ^. compositeDiscussion ^. discussionID ^. unID)
-                                                 (lookupPosition (d ^. compositeDiscussion ^. discussionID ^. unID))
+                                                 (clearTypeParameter (d ^. compositeDiscussion ^. discussionID))
+                                                 (lookupPosition $ clearTypeParameter (d ^. compositeDiscussion ^. discussionID))
+                                                 (_leftAsideHighlightedBubble props)
                                                  (_leftAsideScreenState props)
                                                )
                                                (elemText (DT.rootLabel (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
                       (_leftAsideDiscussions props)
         mconcat $ map (\n -> noteBubble_ (SpecialBubbleProps
-                                           (n ^. noteID ^. unID)
-                                           (lookupPosition (n ^. noteID ^. unID))
+                                           (clearTypeParameter (n ^. noteID))
+                                           (lookupPosition $ clearTypeParameter (n ^. noteID))
+                                           (_leftAsideHighlightedBubble props)
                                            (_leftAsideScreenState props)
                                          )
                                          (elemText (n ^. noteText)))
