@@ -61,7 +61,7 @@ instance StoreData GlobalState where
     type StoreAction GlobalState = RefineAction
     transform action state = do
         consoleLog "Old state: " state
-        consoleLog "Action: " action
+        consoleLogStringified "Action: " action
 
         emitBackendCallsFor action state
 
@@ -70,6 +70,7 @@ instance StoreData GlobalState where
                 -- for efficiency reasons, only ask JS when we get this action
                 hasRange <- js_hasRange
                 range <- if hasRange then getRange else return Nothing
+                print range
                 return . BubblesAction $ UpdateSelection (range, Just deviceOffset)
             _ -> return action
 
@@ -198,6 +199,9 @@ dispatch a = [SomeStoreAction refineStore a]
 consoleLog :: ToJSON a => JSString -> a -> IO ()
 consoleLog str state = consoleLog_ str ((pack . cs . encode) state)
 
+consoleLogStringified :: ToJSON a => JSString -> a -> IO ()
+consoleLogStringified str state = js_consoleLog str ((pack . cs . encode) state)
+
 foreign import javascript unsafe
     "window.getSelection().rangeCount > 0 \
     \&& !(!window.getSelection().getRangeAt(0)) \
@@ -222,3 +226,7 @@ foreign import javascript unsafe
   \    } \
   \}"
   consoleLog_ :: JSString -> JSString -> IO ()
+
+foreign import javascript unsafe
+  "if( process.env.NODE_ENV === 'development' ){ console.log($1, $2); }"
+  js_consoleLog :: JSString -> JSString -> IO ()
