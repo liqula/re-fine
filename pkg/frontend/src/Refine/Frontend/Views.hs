@@ -106,19 +106,19 @@ toArticleBody state forest = mconcat $ map (toHTML state) forest
 
 toHTML :: BubblesState -> DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()
 -- br and hr need to be handled differently
-toHTML _ (DT.Node (HTMLP.TagSelfClose "br" attrs) []) = br_ (toProps attrs)
-toHTML _ (DT.Node (HTMLP.TagSelfClose "hr" attrs) []) = hr_ (toProps attrs)
+toHTML _ (DT.Node (HTMLP.TagSelfClose "br" attrs) []) = br_ (toProperties attrs)
+toHTML _ (DT.Node (HTMLP.TagSelfClose "hr" attrs) []) = hr_ (toProperties attrs)
 -- just a node without children, containing some text:
 toHTML _ (DT.Node (HTMLP.ContentText content) []) = elemText content
 toHTML _ (DT.Node (HTMLP.ContentChar content) []) = elemText $ cs [content]
 -- a comment - do we want to support them, given our HTML editor provides no means of entering them?
 toHTML _ (DT.Node (HTMLP.Comment _) _) = mempty -- ignore comments
 toHTML state (DT.Node (HTMLP.TagOpen "mark" attrs) subForest) =
-    rfMark_ (MarkProps attrs (state ^. bsHighlightedMarkAndBubble)) $ toHTML state `mapM_` subForest -- (toProps attrs)
+    rfMark_ (MarkProps attrs (state ^. bsHighlightedMarkAndBubble)) $ toHTML state `mapM_` subForest -- (toProperties attrs)
 toHTML state (DT.Node (HTMLP.TagOpen tagname attrs) subForest) =
-    React.Flux.term (fromString (cs tagname)) (toProps attrs) $ toHTML state `mapM_` subForest
+    React.Flux.term (fromString (cs tagname)) (toProperties attrs) $ toHTML state `mapM_` subForest
 toHTML _ (DT.Node (HTMLP.TagSelfClose tagname attrs) []) =
-    React.Flux.term (fromString (cs tagname)) (toProps attrs) mempty
+    React.Flux.term (fromString (cs tagname)) (toProperties attrs) mempty
 
 -- the above cases cover all possibilities in the demo article, but we leave this here for discovery:
 toHTML _ (DT.Node rootLabel []) = p_ (elemString ("root_label_wo_children " <> show rootLabel))
@@ -131,14 +131,6 @@ toHTML state (DT.Node rootLabel subForest) = do
 
 -- alternatively: (needs `import Text.Show.Pretty`, package pretty-show.)
 -- toHTML n@(DT.Node rootLabel subForest) = pre_ $ ppShow n
-
-toProps :: [HTMLP.Attr] -> [PropertyOrHandler [SomeStoreAction]]
-toProps = mconcat . fmap go
-  where
-    go :: HTMLP.Attr -> [PropertyOrHandler [SomeStoreAction]]
-    go (HTMLP.Attr name value) =
-        (fromString (cs name) $= fromString (cs value)) :
-        []
 
 
 data LeftAsideProps = LeftAsideProps
