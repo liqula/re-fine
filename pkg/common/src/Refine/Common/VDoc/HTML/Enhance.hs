@@ -50,6 +50,10 @@ import           Refine.Common.VDoc.HTML.Canonicalize (canonicalizeAttrs)
 -- through `canonicalizeVDocVersion` (or more directly through 'wrapInTopLevelTags') to make sure
 -- this does not happen.
 --
+-- It is also an error to call this function with input that does not satisfy the following two
+-- invariants: (1) all non-mark tags have data-uid attributes; (2) all mark tags do *not* have
+-- data-uid attributes.
+--
 -- This function should probably be called on (the forest contained in) @VDocVersion
 -- 'HTMLWithMarks@, and probably only in the frontend.
 addUIInfoToVDocVersion :: VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
@@ -65,10 +69,12 @@ addDataUidsToTree :: Maybe ST -> Tree Token -> Tree Token
 addDataUidsToTree muid (Node t children) = Node t' (addDataUidsToTree muid' <$> children)
   where
     (t', muid') = case t of
-      TagOpen tagname attrs -> case (findAttrUidIn attrs, muid) of
-        (Just i,  _)      -> (TagOpen tagname attrs, Just i)
-        (Nothing, Just i) -> (TagOpen tagname (canonicalizeAttrs $ Attr "data-uid" i : attrs), Just i)
-        _                 -> error "addDataUidsToTree: top-level tag without data-uid."
+      TagOpen tagname@"mark" attrs -> case muid of
+        Just i  -> (TagOpen tagname (canonicalizeAttrs $ Attr "data-uid" i : attrs), muid)
+        Nothing -> error "addDataUidsToTree: mark tag without surrounding tag that carries data-uid."
+      TagOpen _ attrs -> case findAttrUidIn attrs of
+        Just i  -> (t, Just i)
+        Nothing -> error "addDataUidsToTree: non-mark tag without data-uid."
       _ -> (t, muid)
 
 findAttrUidIn :: [Attr] -> Maybe ST

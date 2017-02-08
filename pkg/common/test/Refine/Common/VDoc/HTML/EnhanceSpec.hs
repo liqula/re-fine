@@ -43,7 +43,7 @@ openTagWithOtherUID :: Token
 openTagWithOtherUID = TagOpen "tag" [Attr "data-uid" "13"]
 
 openTagWithoutUID :: Token
-openTagWithoutUID = TagOpen "tag" []
+openTagWithoutUID = openMarkTag
 
 openMarkTag :: Token
 openMarkTag = TagOpen "mark" []
@@ -71,7 +71,7 @@ spec = parallel $ do
 
     describe "addDataUidsToTree" $ do
       it "adds the passed uid when there is none" $ do
-        addDataUidsToTree (Just "1") (Node openTagWithoutUID []) `shouldBe` Node (TagOpen "tag" [Attr "data-uid" "1"]) []
+        addDataUidsToTree (Just "1") (Node openTagWithoutUID []) `shouldBe` Node (TagOpen "mark" [Attr "data-uid" "1"]) []
 
       it "ignores the passed uid when there is already one" $ do
         addDataUidsToTree (Just "1") (Node openTagWithUID []) `shouldBe` Node openTagWithUID []
@@ -86,20 +86,20 @@ spec = parallel $ do
       it "passes the present uid to all children that do not already have one" $ do
         addDataUidsToTree (Just "1") (Node openTagWithUID [ Node openTagWithoutUID []
                                                           , Node openTagWithOtherUID []])
-          `shouldBe` Node openTagWithUID [ Node (TagOpen "tag" [Attr "data-uid" "77"]) []
+          `shouldBe` Node openTagWithUID [ Node (TagOpen "mark" [Attr "data-uid" "77"]) []
                                          , Node openTagWithOtherUID []]
 
       it "passes the passed uid to all children that do not already have one if none is present" $ do
         addDataUidsToTree (Just "1") (Node openTagWithoutUID [ Node openTagWithoutUID []
                                                              , Node openTagWithOtherUID []])
-          `shouldBe` Node (TagOpen "tag" [Attr "data-uid" "1"]) [ Node (TagOpen "tag" [Attr "data-uid" "1"]) []
-                                                                , Node openTagWithOtherUID []]
+          `shouldBe` Node (TagOpen "mark" [Attr "data-uid" "1"]) [ Node (TagOpen "mark" [Attr "data-uid" "1"]) []
+                                                                 , Node openTagWithOtherUID []]
 
     describe "addOffsetsToTree" $ do
       it "sets an offset of 0 if we are not on a mark tag" $ do
         -- the second case is impossible if input is canonicalized.
         addOffsetsToTree 50 (Node openTagWithUID [])    `shouldBe` (Node (TagOpen "tag" [Attr "data-offset" "0", Attr "data-uid" "77"]) [], 0)
-        addOffsetsToTree 50 (Node openTagWithoutUID []) `shouldBe` (Node (TagOpen "tag" [Attr "data-offset" "0"]) [], 0)
+        addOffsetsToTree 50 (Node openTagWithoutUID []) `shouldBe` (Node (TagOpen "mark" [Attr "data-offset" "50"]) [], 50)
 
       it "sets the passed offset if we are on a mark tag" $ do
         addOffsetsToTree 50 (Node openMarkTag []) `shouldBe` (Node (TagOpen "mark" [Attr "data-offset" "50"]) [], 50)
