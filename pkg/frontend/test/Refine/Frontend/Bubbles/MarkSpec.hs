@@ -58,11 +58,11 @@ spec = do
       wrapper <- shallow $ rfMark_ theProps mempty
       is wrapper (StringSelector "mark") `shouldReturn` True
 
-    it "has the data-chunk-id annotation that was passed to it " $ do
+    it "has the data-chunk-id annotation that was passed to it" $ do
       wrapper <- shallow $ rfMark_ theProps mempty
       is wrapper (PropertySelector [Prop "data-chunk-id" ("77" :: String)]) `shouldReturn` True
 
-    it "has all other annotations that were passed to it " $ do
+    it "has all other annotations that were passed to it" $ do
       let moreAttrs = [HTMLP.Attr "a" "1", HTMLP.Attr "b" "2", HTMLP.Attr "c" "3"] <> theAttribs
       wrapper <- shallow $ rfMark_ (MarkProps moreAttrs Nothing) mempty
       is wrapper (PropertySelector [Prop "a" ("1" :: String), Prop "b" ("2" :: String), Prop "c" ("3" :: String)]) `shouldReturn` True

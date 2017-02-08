@@ -88,7 +88,8 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
                case chunkIdFrom (props ^. markPropsHTMLAttributes) of
                  Nothing -> return ()
                  Just dataChunkId -> do
-                   let actions = RS.dispatch . RS.BubblesAction $ RS.AddMarkPosition dataChunkId top 0 -- we assume that no scrolling has taken place yet
+                   let actions = RS.dispatch . RS.BubblesAction $ RS.AddMarkPosition dataChunkId top 0
+                       -- FIXME: we assume that no scrolling has taken place yet.  probably not a safe bet?
                    forM_ actions executeAction
              return ()
    }
