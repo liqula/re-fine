@@ -68,7 +68,7 @@ instance StoreData GlobalState where
                 -- for efficiency reasons, only ask JS when we get this action
                 hasRange <- js_hasRange
                 range <- if hasRange then getRange else return Nothing
-                print range
+                consoleLogStringified "TriggerUpdateSelection.Range: " range
                 return . BubblesAction $ UpdateSelection (range, Just deviceOffset)
             _ -> return action
 
