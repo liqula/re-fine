@@ -41,12 +41,12 @@ import Refine.Prelude.TH (makeRefineType)
 import Refine.Frontend.Screen.Types
 
 
-data Range = Range  -- FIXME: selectors should all have the prefix _range for disambiguation.
-    { _startPoint   :: Maybe ChunkPoint
-    , _endPoint     :: Maybe ChunkPoint
-    , _top          :: Int
-    , _bottom       :: Int
-    , _scrollOffset :: Int
+data Range = Range
+    { _rangeStartPoint   :: Maybe ChunkPoint
+    , _rangeEndPoint     :: Maybe ChunkPoint
+    , _rangeTopOffset    :: OffsetFromViewportTop
+    , _rangeBottom       :: Int
+    , _rangeScrollOffset :: ScrollOffsetOfViewport
     }
     deriving (Show, Generic, NFData)
 
@@ -84,7 +84,7 @@ data CommentCategory =
   deriving (Show, Generic)
 
 -- for marks:
-newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map (ID Void) (Int, Int) }
+newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map (ID Void) (OffsetFromViewportTop, ScrollOffsetOfViewport) }
   deriving (Eq, Show, Generic, NFData)
 
 -- | TODO: we have orphan instances for maps in Refine.Common.Orphans.  we should:

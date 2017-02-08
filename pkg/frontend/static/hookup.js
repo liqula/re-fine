@@ -52,7 +52,7 @@ window.refine$getSelectionRange = function() {
         }
         result.top = range.startContainer.parentElement.getBoundingClientRect().top;
         result.bottom = range.endContainer.parentElement.getBoundingClientRect().bottom;
-        result.scrollOffset = typeof( window.pageYOffset ) == 'number' && window.pageYOffset
+        result.scrollOffset = typeof( window.pageYOffset ) === 'number' && window.pageYOffset
             || document.body && document.body.scrollTop
             || document.documentElement && document.documentElement.scrollTop;
         return JSON.stringify(result);

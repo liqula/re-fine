@@ -28,12 +28,12 @@ module Refine.Frontend.Store where
 
 import           Control.Lens ((&), (^.), (%~))
 import qualified Data.Aeson as AE
+import           Data.Aeson (ToJSON, encode)
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
-import           React.Flux
-import           Data.Aeson (ToJSON, encode)
 import           Data.String.Conversions
 import           Data.JSString (JSString, pack, unpack)
+import           React.Flux
 
 import Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as RT
@@ -59,7 +59,7 @@ instance StoreData GlobalState where
     type StoreAction GlobalState = RefineAction
     transform action state = do
         consoleLog "Old state: " state
-        consoleLog "Action: " action
+        consoleLogStringified "Action: " action
 
         emitBackendCallsFor action state
 
@@ -68,6 +68,7 @@ instance StoreData GlobalState where
                 -- for efficiency reasons, only ask JS when we get this action
                 hasRange <- js_hasRange
                 range <- if hasRange then getRange else return Nothing
+                consoleLogStringified "TriggerUpdateSelection.Range: " range
                 return . BubblesAction $ UpdateSelection (range, Just deviceOffset)
             _ -> return action
 
@@ -139,13 +140,15 @@ emitBackendCallsFor action state = case action of
           addDiscussion (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadEdit)
                      (RT.CreateDiscussion text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
-            (Right discussion) -> return . dispatch $ AddDiscussion discussion
+            (Right discussion) -> return $ dispatch (AddDiscussion discussion)
         Just Note ->
           addNote (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadEdit)
                      (RT.CreateNote text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
-            (Right note) -> return . dispatch $ AddNote note
+            (Right note) -> return $ dispatch (AddNote note)
         Nothing -> return ()
+
+    _ -> return ()
 
 {- TODO submitting an edit does not work yet
     SubmitEdit -> do
@@ -163,12 +166,10 @@ emitBackendCallsFor action state = case action of
                                     (Left(_, msg)) -> handleError msg
                                     (Right _edit) -> return []
 -}
-    _ -> return ()
-
 
 createChunkRange :: Maybe Range -> RT.CreateChunkRange
 createChunkRange Nothing = RT.CreateChunkRange Nothing Nothing
-createChunkRange (Just range) = RT.CreateChunkRange (range ^. startPoint) (range ^. endPoint)
+createChunkRange (Just range) = RT.CreateChunkRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
 
 handleError :: String -> IO [SomeStoreAction]
 handleError msg = do
@@ -181,10 +182,6 @@ refineStore = mkStore emptyGlobalState
 dispatch :: RefineAction -> [SomeStoreAction]
 dispatch a = [SomeStoreAction refineStore a]
 
-
--- (no idea if there are char encoding issues here.  but it's probably safe to use it for development.)
-consoleLog :: ToJSON a => JSString -> a -> IO ()
-consoleLog str state = consoleLog_ str ((pack . cs . encode) state)
 
 foreign import javascript unsafe
     "window.getSelection().rangeCount > 0 \
@@ -199,6 +196,19 @@ foreign import javascript unsafe
     "refine$getSelectionRange()"
     js_getRange :: IO JSString
 
+
+-- * ad hoc logging.
+
+-- FUTUREWORK: we should probably find a way to avoid rendering all these json values into strings
+-- in the production code.
+
+-- (no idea if there are char encoding issues here.  but it's probably safe to use it for development.)
+consoleLog :: ToJSON a => JSString -> a -> IO ()
+consoleLog str state = consoleLog_ str ((pack . cs . encode) state)
+
+consoleLogStringified :: ToJSON a => JSString -> a -> IO ()
+consoleLogStringified str state = js_consoleLog str ((pack . cs . encode) state)
+
 foreign import javascript unsafe
   -- see webpack.config.js for a definition of the environment variable.
 
@@ -210,3 +220,7 @@ foreign import javascript unsafe
   \    } \
   \}"
   consoleLog_ :: JSString -> JSString -> IO ()
+
+foreign import javascript unsafe
+  "if( process.env.NODE_ENV === 'development' ){ console.log($1, $2); }"
+  js_consoleLog :: JSString -> JSString -> IO ()
