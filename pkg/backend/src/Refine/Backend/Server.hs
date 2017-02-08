@@ -65,14 +65,38 @@ import Refine.Common.Rest
 import Refine.Prelude (monadError)
 
 
-startBackend :: Config -> IO ()
-startBackend cfg = do
-  Warp.runSettings (warpSettings cfg) . backendServer =<< mkBackend cfg
+-- * Initialization
+
+createDataDirectories :: Config -> IO ()
+createDataDirectories cfg = do
+  createDirectoryIfMissing True (cfg ^. cfgReposRoot)
+  case cfg ^. cfgDBKind of
+    DBInMemory    -> pure ()
+    DBOnDisk path -> createDirectoryIfMissing True (dropFileName path)
+
+
+-- * backend creation
 
 data Backend = Backend
   { backendServer :: Application
   , backendMonad  :: App DB CN.:~> ExceptT AppError IO
   }
+
+refineApi :: ServerT RefineAPI (App DB)
+refineApi =
+       Refine.Backend.App.listVDocs
+  :<|> Refine.Backend.App.getCompositeVDoc
+  :<|> Refine.Backend.App.createVDocGetComposite
+  :<|> Refine.Backend.App.addEdit
+  :<|> Refine.Backend.App.addNote
+  :<|> Refine.Backend.App.addQuestion
+  :<|> Refine.Backend.App.addAnswer
+  :<|> Refine.Backend.App.addDiscussion
+  :<|> Refine.Backend.App.addStatement
+
+startBackend :: Config -> IO ()
+startBackend cfg = do
+  Warp.runSettings (warpSettings cfg) . backendServer =<< mkBackend cfg
 
 mkBackend :: Config -> IO Backend
 mkBackend cfg = do
@@ -98,6 +122,20 @@ mkBackend cfg = do
       migrateDB
 
   pure $ Backend srv app
+
+maybeServeDirectory :: Maybe FilePath -> Server Raw
+maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) serveDirectory
+
+toServantError :: (Monad m) => ExceptT AppError m :~> ExceptT ServantErr m
+toServantError = Nat ((lift . runExceptT) >=> monadError fromAppError)
+  where
+    -- FIXME: some (many?) of these shouldn't be err500.
+    -- FIXME: implement better logging.
+    fromAppError :: AppError -> ServantErr
+    fromAppError msg = traceShow msg $ err500 { errBody = encode msg }
+
+
+-- * Instances for Servant.Cookie.Session
 
 instance MonadRandom (App db) where
   getRandomBytes = appIO . getRandomBytes
@@ -126,36 +164,3 @@ instance GetSessionToken AppState where
   getSessionToken = appUserState . to (\case
     ActiveUser    us -> Just . SessionToken . userSessionText $ us
     NonActiveUser    -> Nothing)
-
-createDataDirectories :: Config -> IO ()
-createDataDirectories cfg = do
-  createDirectoryIfMissing True (cfg ^. cfgReposRoot)
-  case cfg ^. cfgDBKind of
-    DBInMemory    -> pure ()
-    DBOnDisk path -> createDirectoryIfMissing True (dropFileName path)
-
-toServantError :: (Monad m) => ExceptT AppError m :~> ExceptT ServantErr m
-toServantError = Nat ((lift . runExceptT) >=> monadError fromAppError)
-  where
-    -- FIXME: some (many?) of these shouldn't be err500.
-    -- FIXME: implement better logging.
-    fromAppError :: AppError -> ServantErr
-    fromAppError msg = traceShow msg $ err500 { errBody = encode msg }
-
--- | The 's' prefix in the handlers stands for "server", and is used to dismabiguate between the code in
--- 'App' vs. the code in 'ServerT'.  This is slightly less noisy than qualified imports, and it's
--- (probably) only used internally in this module.
-refineApi :: ServerT RefineAPI (App DB)
-refineApi =
-       Refine.Backend.App.listVDocs
-  :<|> Refine.Backend.App.getCompositeVDoc
-  :<|> Refine.Backend.App.createVDocGetComposite
-  :<|> Refine.Backend.App.addEdit
-  :<|> Refine.Backend.App.addNote
-  :<|> Refine.Backend.App.addQuestion
-  :<|> Refine.Backend.App.addAnswer
-  :<|> Refine.Backend.App.addDiscussion
-  :<|> Refine.Backend.App.addStatement
-
-maybeServeDirectory :: Maybe FilePath -> Server Raw
-maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) serveDirectory
