@@ -88,8 +88,11 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
                case chunkIdFrom (props ^. markPropsHTMLAttributes) of
                  Nothing -> return ()
                  Just dataChunkId -> do
+                   -- Here we are in componentDidMount. This Lifecycle function is invoked right after the component
+                   -- is mounted for the very first time, i.e. right after the webpage is displayed for the first time.
+                   -- At this point, I think it is safe to assume that no scrolling has taken place yet.
+                   -- Therefore we pass 0 as scrollOffset.
                    let actions = RS.dispatch . RS.BubblesAction $ RS.AddMarkPosition dataChunkId top 0
-                       -- FIXME: we assume that no scrolling has taken place yet.  probably not a safe bet?
                    forM_ actions executeAction
              return ()
    }
