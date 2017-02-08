@@ -87,6 +87,9 @@ refineApi =
   :<|> Refine.Backend.App.addAnswer
   :<|> Refine.Backend.App.addDiscussion
   :<|> Refine.Backend.App.addStatement
+  :<|> Refine.Backend.App.createUser
+  :<|> Refine.Backend.App.login
+  :<|> Refine.Backend.App.logout
 
 startBackend :: Config -> IO ()
 startBackend cfg = do

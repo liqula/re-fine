@@ -5,7 +5,7 @@ module Refine.Backend.App.User where
 import           Control.Lens ((^.), view)
 import           Control.Monad (void)
 import           Control.Monad.Except
-import           Data.String.Conversions (ST, cs)
+import           Data.String.Conversions (cs)
 import           Data.Time.Clock (NominalDiffTime)
 
 import Refine.Backend.App.Core
@@ -13,10 +13,12 @@ import Refine.Backend.App.Session
 import Refine.Backend.Database.Core (DB)
 import Refine.Backend.Types
 import Refine.Backend.User.Core as Users
+import Refine.Common.Types.User as Refine
+import Refine.Prelude (monadError)
 
 
-login :: ST -> ST -> App DB ()
-login username (Users.PasswordPlain -> password) = do
+login :: Login -> App DB LoginResult
+login (Login username (Users.PasswordPlain -> password)) = do
   appLog "login"
   let sessionDuration = 1000 :: NominalDiffTime  -- FIXME: move this to
                                                  -- 'Refine.Backend.Config.Config' and store the
@@ -25,16 +27,18 @@ login username (Users.PasswordPlain -> password) = do
   session <- maybe (throwError (AppUserNotFound username)) pure
              =<< appIO (Users.authUser userHandle username password sessionDuration)
   setUserSession (UserSession session)
+  pure LoginSuccess
 
-logout :: App DB ()
-logout = do
+logout :: Logout -> App DB LogoutResult
+logout _ = do
   session <- currentUserSession
   userHandle <- view appUserHandle
   void . appIO $ Users.destroySession userHandle (session ^. unUserSession)
   clearUserSession
+  pure LogoutSuccess
 
-createUser :: ST -> ST -> ST -> App DB ()
-createUser name email password = void $ do
+createUser :: CreateUser -> App DB Refine.User
+createUser (CreateUser name email password) = do
   appLog "createUser"
   userHandle <- view appUserHandle
   let user = Users.User
@@ -43,5 +47,6 @@ createUser name email password = void $ do
               , Users.u_password = Users.makePassword (Users.PasswordPlain password)
               , Users.u_active = True
               }
-  either (throwError . AppUserCreationError . cs . show) pure
-    =<< appIO (Users.createUser userHandle user)
+  loginId <- monadError (AppUserCreationError . cs . show)
+               =<< appIO (Users.createUser userHandle user)
+  pure . Refine.User . Users.toUserID $ loginId

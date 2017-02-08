@@ -43,7 +43,6 @@ import           Test.QuickCheck.Monadic
 
 import Refine.Backend.App         as App
 import Refine.Backend.App.MigrateDB
-import Refine.Backend.App.User    as App
 import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.DocRepo
@@ -52,6 +51,7 @@ import Refine.Backend.Natural
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Backend.Types
 import Refine.Common.Types.Prelude
+import Refine.Common.Types.User
 import Refine.Common.Types.VDoc
 import Refine.Common.Test.Arbitrary (arbitraryRawVDocVersion)
 
@@ -89,15 +89,15 @@ spec = do
       -- of the term under test.
       () <- runner $ do
 
-        App.createUser "user" "user@example.com" "password"
+        void $ App.createUser (CreateUser "user" "user@example.com" "password")
         userState0 <- gets (view appUserState)
         appIO $ userState0 `shouldBe` NonActiveUser
 
-        App.login "user" "password"
+        void $ App.login (Login "user" "password")
         userState1 <- gets (view appUserState)
         appIO $ userState1 `shouldSatisfy` isActiveUser
 
-        App.logout
+        void $ App.logout Logout
         userState2 <- gets (view appUserState)
         appIO $ userState2 `shouldBe` NonActiveUser
 

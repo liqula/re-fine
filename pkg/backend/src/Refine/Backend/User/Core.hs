@@ -7,6 +7,7 @@
 module Refine.Backend.User.Core
   ( UserHandle
   , migrateDB
+  , toUserID
   , module Web.Users.Types
   ) where
 
@@ -18,6 +19,7 @@ import Web.Users.Persistent as Users
 import Web.Users.Persistent.Definitions (migrateAll)
 
 import Refine.Backend.Database.Core
+import Refine.Common.Types.User (UserID)
 
 
 type UserHandle = Users.Persistent
@@ -33,3 +35,6 @@ migrateDB = liftDB $ do
   mig'' <- runMigrationSilent migrateAll
   pure $ mig' <> mig''
 
+-- Converts an internal UserID representation to the common UserID.
+toUserID :: Users.LoginId -> UserID
+toUserID = fromSqlKey
