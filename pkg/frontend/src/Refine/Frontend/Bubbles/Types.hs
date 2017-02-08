@@ -41,12 +41,12 @@ import Refine.Prelude.TH (makeRefineType)
 import Refine.Frontend.Screen.Types
 
 
-data Range = Range  -- FIXME: selectors should all have the prefix _range for disambiguation.
-    { _startPoint   :: Maybe ChunkPoint
-    , _endPoint     :: Maybe ChunkPoint
-    , _top          :: Int
-    , _bottom       :: Int
-    , _scrollOffset :: Int
+data Range = Range
+    { _rangeStartPoint   :: Maybe ChunkPoint
+    , _rangeEndPoint     :: Maybe ChunkPoint
+    , _rangeTop          :: Int
+    , _rangeBottom       :: Int
+    , _rangeScrollOffset :: Int
     }
     deriving (Show, Generic, NFData)
 

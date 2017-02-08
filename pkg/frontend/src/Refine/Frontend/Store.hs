@@ -168,7 +168,7 @@ emitBackendCallsFor action state = case action of
 
 createChunkRange :: Maybe Range -> RT.CreateChunkRange
 createChunkRange Nothing = RT.CreateChunkRange Nothing Nothing
-createChunkRange (Just range) = RT.CreateChunkRange (range ^. startPoint) (range ^. endPoint)
+createChunkRange (Just range) = RT.CreateChunkRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
 
 handleError :: String -> IO [SomeStoreAction]
 handleError msg = do
