@@ -50,9 +50,8 @@ import           Refine.Common.VDoc.HTML.Canonicalize (canonicalizeAttrs)
 -- through `canonicalizeVDocVersion` (or more directly through 'wrapInTopLevelTags') to make sure
 -- this does not happen.
 --
--- It is also an error to call this function with input that does not satisfy the following two
--- invariants: (1) all non-mark tags have data-uid attributes; (2) all mark tags do *not* have
--- data-uid attributes.
+-- Input must satisfy this property: all non-mark tags have data-uid attributes.  Output satisfies
+-- this property: all tags (mark and non-mark) have data-uid attributes.
 --
 -- This function should probably be called on (the forest contained in) @VDocVersion
 -- 'HTMLWithMarks@, and probably only in the frontend.
