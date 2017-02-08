@@ -114,7 +114,7 @@ toHTML _ (DT.Node (HTMLP.ContentChar content) []) = elemText $ cs [content]
 -- a comment - do we want to support them, given our HTML editor provides no means of entering them?
 toHTML _ (DT.Node (HTMLP.Comment _) _) = mempty -- ignore comments
 toHTML state (DT.Node (HTMLP.TagOpen "mark" attrs) subForest) =
-    rfMark_ (MarkProps (toMarkAttributes attrs) (state ^. bsHighlightedMarkAndBubble)) $ toHTML state `mapM_` subForest -- (toProps attrs)
+    rfMark_ (MarkProps attrs (state ^. bsHighlightedMarkAndBubble)) $ toHTML state `mapM_` subForest -- (toProps attrs)
 toHTML state (DT.Node (HTMLP.TagOpen tagname attrs) subForest) =
     React.Flux.term (fromString (cs tagname)) (toProps attrs) $ toHTML state `mapM_` subForest
 toHTML _ (DT.Node (HTMLP.TagSelfClose tagname attrs) []) =
