@@ -38,7 +38,6 @@ import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
 import           Refine.Prelude (ClearTypeParameter(..))
-import           Refine.Common.VDoc.HTML.Enhance (addUIInfoToForest)
 import           Refine.Frontend.Bubbles.Bubble
 import           Refine.Frontend.Bubbles.Mark
 import           Refine.Frontend.Bubbles.Overlay
@@ -102,7 +101,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
 
 
 toArticleBody :: BubblesState -> DT.Forest HTMLP.Token -> ReactElementM [SomeStoreAction] ()
-toArticleBody state forest = mconcat $ map (toHTML state) (addUIInfoToForest forest)
+toArticleBody state forest = mconcat $ map (toHTML state) forest
 
 
 toHTML :: BubblesState -> DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()
