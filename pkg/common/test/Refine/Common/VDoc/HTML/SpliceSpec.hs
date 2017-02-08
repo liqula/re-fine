@@ -38,9 +38,10 @@ import           Text.HTML.Tree
 
 import Refine.Common.Test.Arbitrary
 import Refine.Common.Types
-import Refine.Common.VDoc.HTML.Core
-import Refine.Common.VDoc.HTML.Splice
 import Refine.Common.VDoc.HTML.CanonicalizeSpec (shouldBeVDocVersion)
+import Refine.Common.VDoc.HTML.Core
+import Refine.Common.VDoc.HTML.Enhance (addUIInfoToForest)
+import Refine.Common.VDoc.HTML.Splice
 
 
 noChunkRanges :: [ChunkRange ()]
@@ -161,7 +162,7 @@ spec = parallel $ do
   describe "insertMarks" $ do
     it "does not change version if chunk list is empty." . property $ do
       \(vers :: VDocVersion 'HTMLCanonical) -> do
-        insertMarks noChunkRanges vers ^. unVDocVersion `shouldBe` vers ^. unVDocVersion
+        insertMarks noChunkRanges vers ^. unVDocVersion `shouldBe` addUIInfoToForest (vers ^. unVDocVersion)
 
     it "generates valid output on arbitrary valid chunkranges." . property $ do
       \(VersWithRanges vers rs) -> do
@@ -185,7 +186,7 @@ spec = parallel $ do
     it "adds owner type info in its own attribute." $ do
       let cr l = ChunkRange l (Just (ChunkPoint (DataUID 3) 1)) (Just (ChunkPoint (DataUID 3) 2))
           vers = vdocVersionFromST "<span data-uid=\"3\">asdf</span>"
-          vers' l = vdocVersionFromST $
+          vers' l = VDocVersion . addUIInfoToForest . _unVDocVersion . vdocVersionFromST $
             "<span data-uid=\"1\">a<mark data-chunk-kind=\"" <> l <> "\" data-chunk-id=\"3\">s</mark>df</span>"
 
       chunkRangeErrors (cr (ID 3 :: ID Note)) vers `shouldBe` []

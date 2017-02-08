@@ -23,8 +23,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Common.VDoc.HTML.Canonicalize
-  ( canonicalizeVDocVersion
-  , downgradeRawVDocVersion
+  ( canonicalizeVDocVersion, reCanonicalizeVDocVersion, downgradeRawVDocVersion
   , canonicalizeWhitespace
   , setElemUIDs
   , wrapInTopLevelTags
@@ -55,16 +54,16 @@ import Refine.Common.Types
 -- 3. wrap all top-level text nodes into @<span>@ tags (so 'ChunkPoint' always has a @data-uid@
 --    value to point to.
 canonicalizeVDocVersion :: VDocVersion 'HTMLRaw -> VDocVersion 'HTMLCanonical
-canonicalizeVDocVersion (VDocVersion vers) = VDocVersion (canonicalize vers)
-  where
-    canonicalize :: Forest Token -> Forest Token
-    canonicalize
+canonicalizeVDocVersion (VDocVersion vers) = VDocVersion (canonicalizeForest vers)
+
+canonicalizeForest :: Forest Token -> Forest Token
+canonicalizeForest
       = canonicalizeAttrsForest
       . onStream setElemUIDs
       . wrapInTopLevelTags
       . (onText canonicalizeWhitespace . fixSelfClosing <$$>)
       . onStream (canonicalizeTokens . dropCommentsAndDoctypes)
-
+  where
     -- | FUTUREWORK: it would be nice to avoid the detour over a list, and run all transformations
     -- on the tree.  in particular, it would be nice if we didn't have to do the detour twice
     -- (because transformations have to be called in this order).
@@ -77,6 +76,10 @@ canonicalizeVDocVersion (VDocVersion vers) = VDocVersion (canonicalize vers)
 -- | De-canonicalizing is always safe, since every canonicalized 'VDocVersion' is also a raw one.
 downgradeRawVDocVersion :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLRaw
 downgradeRawVDocVersion (VDocVersion s) = VDocVersion s
+
+-- | Canonicalization is always safe (see 'downgradeRawVDocVersion') and also idempotent.
+reCanonicalizeVDocVersion :: VDocVersion a -> VDocVersion a
+reCanonicalizeVDocVersion (VDocVersion vers) = VDocVersion (canonicalizeForest vers)
 
 
 dropCommentsAndDoctypes :: [Token] -> [Token]

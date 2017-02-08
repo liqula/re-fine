@@ -50,6 +50,9 @@ import           Refine.Common.VDoc.HTML.Canonicalize (canonicalizeAttrs)
 -- through `canonicalizeVDocVersion` (or more directly through 'wrapInTopLevelTags') to make sure
 -- this does not happen.
 --
+-- Input must satisfy this property: all non-mark tags have data-uid attributes.  Output satisfies
+-- this property: all tags (mark and non-mark) have data-uid attributes.
+--
 -- This function should probably be called on (the forest contained in) @VDocVersion
 -- 'HTMLWithMarks@, and probably only in the frontend.
 addUIInfoToVDocVersion :: VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
@@ -65,10 +68,12 @@ addDataUidsToTree :: Maybe ST -> Tree Token -> Tree Token
 addDataUidsToTree muid (Node t children) = Node t' (addDataUidsToTree muid' <$> children)
   where
     (t', muid') = case t of
-      TagOpen tagname attrs -> case (findAttrUidIn attrs, muid) of
-        (Just i,  _)      -> (TagOpen tagname attrs, Just i)
-        (Nothing, Just i) -> (TagOpen tagname (canonicalizeAttrs $ Attr "data-uid" i : attrs), Just i)
-        _                 -> error "addDataUidsToTree: top-level tag without data-uid."
+      TagOpen tagname@"mark" attrs -> case muid of
+        Just i  -> (TagOpen tagname (canonicalizeAttrs $ Attr "data-uid" i : attrs), muid)
+        Nothing -> error "addDataUidsToTree: mark tag without surrounding tag that carries data-uid."
+      TagOpen _ attrs -> case findAttrUidIn attrs of
+        Just i  -> (t, Just i)
+        Nothing -> error "addDataUidsToTree: non-mark tag without data-uid."
       _ -> (t, muid)
 
 findAttrUidIn :: [Attr] -> Maybe ST
@@ -94,16 +99,12 @@ addOffsetsToForest_ offset (n : trees) =
 
 
 addOffsetsToTree :: Int -> Tree Token -> (Tree Token, Int)
-addOffsetsToTree offset (Node (TagOpen "mark" attrs) children) =
-  let newAttrs = canonicalizeAttrs $ Attr "data-offset" (ST.pack (show offset)) : attrs
-      (newForest, newOffset) = addOffsetsToForest_ offset children
-  in (Node (TagOpen "mark" newAttrs) newForest, newOffset)
-
-addOffsetsToTree _ (Node (TagOpen tagname attrs) children) =
-  let newAttrs = canonicalizeAttrs $ Attr "data-offset" "0" : attrs
-      (newForest, newOffset) = addOffsetsToForest_ 0 children
-  in (Node (TagOpen tagname newAttrs) newForest, newOffset)
+addOffsetsToTree offset (Node (TagOpen tagname attrs) children) =
+  let newAttrs = canonicalizeAttrs $ Attr "data-offset" (ST.pack (show zeroOrOffset)) : attrs
+      zeroOrOffset = if tagname == "mark" then offset else 0
+      (newChildren, newOffset) = addOffsetsToForest_ zeroOrOffset children
+  in (Node (TagOpen tagname newAttrs) newChildren, newOffset)
 
 addOffsetsToTree offset (Node t children) =
-  let (newForest, newOffset) = addOffsetsToForest_ offset children
-  in (Node t newForest, newOffset)
+  let (newChildren, newOffset) = addOffsetsToForest_ offset children
+  in (Node t newChildren, newOffset)

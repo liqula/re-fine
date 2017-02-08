@@ -49,8 +49,9 @@ import           Text.HTML.Tree (tokensFromForest, tokensToForest)
 import           Web.HttpApiData (toUrlPiece)
 
 import Refine.Common.Types
+import Refine.Common.VDoc.HTML.Canonicalize (reCanonicalizeVDocVersion)
 import Refine.Common.VDoc.HTML.Core
-import Refine.Common.VDoc.HTML.Canonicalize
+import Refine.Common.VDoc.HTML.Enhance (addUIInfoToVDocVersion)
 import Refine.Prelude
 
 
@@ -61,13 +62,12 @@ import Refine.Prelude
 --
 -- TODO: do we still want '\n' between tokens for darcs?
 insertMarks :: Typeable a => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
-insertMarks crs vers@(VDocVersion forest) = invariants (tokensFromForest forest) `seq`
-                                            VDocVersion forest''
+insertMarks crs vers@(VDocVersion forest) = invariants (tokensFromForest forest) `seq` vers'
   where
     withPreTokens        = insertMarksForest crs $ enablePreTokens forest
     afterRunPreTokens    = resolvePreTokens . preTokensFromForest $ withPreTokens
     forest'              = either (error . show) id $ tokensToForest afterRunPreTokens
-    VDocVersion forest'' = canonicalizeVDocVersion $ VDocVersion forest'
+    vers'                = addUIInfoToVDocVersion . reCanonicalizeVDocVersion . VDocVersion $ forest'
 
     -- FIXME: these invariants should all be caught earlier than here.  remove the checks once we've
     -- established they are.
