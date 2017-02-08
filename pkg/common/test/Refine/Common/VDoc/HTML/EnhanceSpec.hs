@@ -23,19 +23,24 @@
 module Refine.Common.VDoc.HTML.EnhanceSpec where
 
 import           Data.List (foldl')
-import           Data.String.Conversions (ST)
+import           Data.String.Conversions (ST, (<>), cs)
+import qualified Data.Text as ST
 import           Data.Tree
 import           Test.Hspec
 import           Test.QuickCheck
+import qualified Text.Blaze as Blaze
+import qualified Text.Blaze.Renderer.Utf8 as Blaze (renderMarkup)
 import           Text.HTML.Parser
+import qualified Text.HTML.QQ as QQ
+import           Text.HTML.Tree
 
 import Refine.Common.Test.Arbitrary
 import Refine.Common.Types
+import Refine.Common.VDoc.HTML.Canonicalize (canonicalizeAttrsForest)
+import Refine.Common.VDoc.HTML.Core
 import Refine.Common.VDoc.HTML.Enhance
 import Refine.Common.VDoc.HTML.Splice
 import Refine.Common.VDoc.HTML.SpliceSpec (shouldBeLikeVDocVersion)
-
-
 
 openTagWithUID :: Token
 openTagWithUID = TagOpen "tag" [Attr "data-uid" "77"]
@@ -44,13 +49,91 @@ openTagWithOtherUID :: Token
 openTagWithOtherUID = TagOpen "tag" [Attr "data-uid" "13"]
 
 openTagWithoutUID :: Token
-openTagWithoutUID = openMarkTag
+openTagWithoutUID = TagOpen "tag" []
 
 openMarkTag :: Token
 openMarkTag = TagOpen "mark" []
 
+
+toTrimmedTokenForest :: QQ.Document -> Forest Token
+toTrimmedTokenForest
+    = (\(Right v) -> v) . tokensToForest
+    . canonicalizeTokens
+    . filter notDocType
+    . fmap trim
+    . parseTokens . cs
+    . Blaze.renderMarkup
+    . Blaze.toMarkup
+  where
+    trim (ContentText s) = ContentText (ST.strip s)
+    trim t = t
+
+    notDocType (Doctype _) = False
+    notDocType _ = True
+
+stripAttrForest :: ST -> Forest Token -> Forest Token
+stripAttrForest k = fmap (stripAttrTree k)
+
+stripAttrTree :: ST -> Tree Token -> Tree Token
+stripAttrTree k (Node tok children) = Node (stripAttrToken k tok) (stripAttrForest k children)
+
+stripAttrToken :: ST -> Token -> Token
+stripAttrToken k (TagOpen n attrs) = TagOpen n (stripAttr k attrs)
+stripAttrToken k (TagSelfClose n attrs) = TagSelfClose n (stripAttr k attrs)
+stripAttrToken _ t = t
+
+stripAttr :: ST -> [Attr] -> [Attr]
+stripAttr k (a@(Attr k' _) : as) = if k == k' then as else a : stripAttr k as
+stripAttr _ [] = []
+
+
+testAddOffsetsToForest :: QQ.Document -> Expectation
+testAddOffsetsToForest doc =
+  let forest = toTrimmedTokenForest doc
+  in canonicalizeAttrsForest (addOffsetsToForest (stripAttrForest "data-offset" forest)) `shouldBe` canonicalizeAttrsForest forest
+
+
 spec :: Spec
 spec = parallel $ do
+    describe "### [test qq -- should be moved further down in this module]" $ do
+      it "works" $ do
+        let forest = toTrimmedTokenForest
+              [QQ.html|<span>
+                         ab c
+                       </span>
+                      |]
+        forest `shouldBe` [Node (TagOpen "span" []) [Node (ContentText "ab c") []]]
+
+      it "also works" $ do
+        let forest = toTrimmedTokenForest [QQ.html|
+              <div data-uid="1">
+                1234
+                <mark data-uid="1" data-offset="4">
+                  asd
+                  <mark data-uid="1" data-offset="7">
+                    q
+                  </mark>
+                  wf
+                  <mark data-uid="1" data-offset="10">
+                    987
+                  </mark>
+                </mark>
+              </div>
+              |]
+
+        stripAttrForest "data-offset" forest `shouldNotBe` forest
+
+      it "also works" $ do
+        testAddOffsetsToForest [QQ.html|
+              <div data-uid="1" data-offset="0">
+                1234
+                <mark data-uid="1" data-offset="4">
+                  asd
+                </mark>
+              </div>
+              |]
+
+
     describe "addUIInfoToVDocVersion" $ do
       it "is idempotent" . property $ do
         \(insertMarks ([] :: [ChunkRange Note]) -> vers) ->
@@ -98,11 +181,142 @@ spec = parallel $ do
         hasAttrProp "data-offset"
 
 
-    describe "addDataUidsToTree" $ do
-      it "adds the passed uid when there is none" $ do
-        addDataUidsToTree (Just "1") (Node openTagWithoutUID []) `shouldBe` Node (TagOpen "mark" [Attr "data-uid" "1"]) []
+    describe "addOffsetsToForest" $ do
+      it "### for every mark tag, sets offset to the length of the text bewteen it and first non-mark open tag." . property $ do
+        \(VersWithRanges vers rs) -> do
+          let forest = addOffsetsToForest . _unVDocVersion $ insertMarks rs vers
 
-      it "ignores the passed uid when there is already one" $ do
+              check :: Int -> Forest Token -> [String]
+              check off (tree@(Node tok@(TagOpen "mark" attrs) children) : siblings) =
+                  check off children <>
+                  checkMarkNode attrs <>
+                  check (off + treeTextLength tree) siblings
+                where
+                  checkMarkNode (Attr "data-offset" off' : _) =
+                    ["bad data-offset in mark token: " <> show (off, tok) | off' /= cs (show off)]
+                  checkMarkNode (_ : attrs') =
+                    checkMarkNode attrs'
+                  checkMarkNode [] =
+                    ["no data-offset in mark token: " <> show (off, tok)]
+
+            -- TODO: has value.
+
+
+              check off (tree@(Node tok@(TagOpen _ attrs) children) : siblings) =  -- assumed to have data-uid.
+                  check 0 children <>
+                  checkNonMarkNode attrs <>
+                  check (off + treeTextLength tree) siblings
+                where
+                  checkNonMarkNode (Attr "data-offset" off' : _) =
+                    ["bad data-offset in non-mark token (should be 0): " <> show (off, tok) | off' /= "0"]
+                  checkNonMarkNode (_ : attrs') =
+                    checkNonMarkNode attrs'
+                  checkNonMarkNode [] =
+                    ["no data-offset in non-mark token: " <> show (off, tok)]
+
+              check off (tree@(Node _ []) : siblings) =
+                  check (off + treeTextLength tree) siblings
+
+              check _ [] = []
+              check badoff badforest = ["just bad: " <> show (badoff, badforest)]
+
+          check 0 forest `shouldBe` []
+
+      it "inserts the offset of a child mark node" $ do
+        testAddOffsetsToForest [QQ.html|
+                                  <p data-offset="0" data-uid="1">
+                                    texta
+                                    <mark data-offset="5" data-uid="1">
+                                      textb
+                                    </mark>
+                                    <strong data-offset="0" data-uid="2">
+                                        textc
+                                    </strong>
+                                  </p>
+                               |]
+
+      it "inserts the offset of multiple cascading mark nodes" $ do
+        testAddOffsetsToForest [QQ.html|
+                                <p data-uid="1" data-offset="0">
+                                  a text
+                                  <mark data-uid="1" data-offset="6">
+                                    another text
+                                    <mark data-uid="1" data-offset="18">
+                                    </mark>
+                                  </mark>
+                                </p>
+                               |]
+
+      it "resets the addition when encountering a non-mark tag" $ do
+        testAddOffsetsToForest [QQ.html|
+                                <p data-uid="1" data-offset="0">
+                                  a text
+                                  <mark data-uid="1" data-offset="6">
+                                    another text
+                                    <div data-uid="2" data-offset="0">
+                                      more text
+                                      <mark data-uid="2" data-offset="9">
+                                      </mark>
+                                    </div>
+                                  </mark>
+                                </p>
+                               |]
+
+      it "carries over the offset from the children to the parent and into the next tree of the forest" $ do
+        testAddOffsetsToForest [QQ.html|
+                              <p data-uid="1" data-offset="0">
+                                <div data-uid="2" data-offset="0">
+                                  text a                    <!-- length  6 -->
+                                  <mark data-uid="2" data-offset="6">
+                                    marked text             <!-- length 11 -->
+                                  </mark>
+                                  unmarked text             <!-- length 13 -->
+                                </div>
+                                some text                   <!-- length 9 -->
+                                <mark data-uid="1" data-offset="39">
+                                  some text in mark         <!-- length 17 -->
+                                  <mark data-uid="1" data-offset="56">
+                                    more text in mark       <!-- length 17 -->
+                                  </mark>
+                                </mark>
+                                another text                <!-- length 12 -->
+                                <mark data-uid="1" data-offset="85">
+                                </mark>
+                               |]
+
+      it "inserts the offset of a child mark node (and its mark children) that occur after some other node" $ do
+        testAddOffsetsToForest [QQ.html|
+                                  <p data-offset="0" data-uid="1">
+                                    texta
+                                    <strong data-offset="0" data-uid="2">
+                                        textc
+                                    </strong>
+                                    <mark data-offset="10" data-uid="1">
+                                      <mark data-offset="10" data-uid="1">
+                                        texte
+                                      </mark>
+                                    </mark>
+                                  </p>
+                               |]
+
+      it "inserts the offset of a mark node that occurs inside some non-mark node" $ do
+        testAddOffsetsToForest [QQ.html|
+                                  <p data-offset="0" data-uid="1">
+                                    texta
+                                    textb
+                                    <strong data-offset="0" data-uid="2">
+                                      te
+                                      <mark data-offset="2" data-uid="2">
+                                        xtc
+                                      </mark>
+                                    </strong>
+                                  </p>
+                               |]
+
+
+
+    describe "addDataUidsToTree" $ do
+      it "keeps the passed uid when there is already one" $ do
         addDataUidsToTree (Just "1") (Node openTagWithUID []) `shouldBe` Node openTagWithUID []
 
       it "does not alter other tokens" $ do
@@ -113,87 +327,23 @@ spec = parallel $ do
         addDataUidsToTree (Just "1") (Node (Doctype "type")     []) `shouldBe` Node (Doctype "type") []
 
       it "passes the present uid to all children that do not already have one" $ do
-        addDataUidsToTree (Just "1") (Node openTagWithUID [ Node openTagWithoutUID []
+        addDataUidsToTree (Just "1") (Node openTagWithUID [ Node openMarkTag []
                                                           , Node openTagWithOtherUID []])
           `shouldBe` Node openTagWithUID [ Node (TagOpen "mark" [Attr "data-uid" "77"]) []
                                          , Node openTagWithOtherUID []]
-
-      it "passes the passed uid to all children that do not already have one if none is present" $ do
-        addDataUidsToTree (Just "1") (Node openTagWithoutUID [ Node openTagWithoutUID []
-                                                             , Node openTagWithOtherUID []])
-          `shouldBe` Node (TagOpen "mark" [Attr "data-uid" "1"]) [ Node (TagOpen "mark" [Attr "data-uid" "1"]) []
-                                                                 , Node openTagWithOtherUID []]
 
     describe "addOffsetsToTree" $ do
       it "sets an offset of 0 if we are not on a mark tag" $ do
         -- the second case is impossible if input is canonicalized.
         addOffsetsToTree 50 (Node openTagWithUID [])    `shouldBe` (Node (TagOpen "tag" [Attr "data-offset" "0", Attr "data-uid" "77"]) [], 0)
-        addOffsetsToTree 50 (Node openTagWithoutUID []) `shouldBe` (Node (TagOpen "mark" [Attr "data-offset" "50"]) [], 50)
+        addOffsetsToTree 50 (Node openTagWithoutUID []) `shouldBe` (Node (TagOpen "tag" [Attr "data-offset" "0"]) [], 0)
 
       it "sets the passed offset if we are on a mark tag" $ do
-        addOffsetsToTree 50 (Node openMarkTag []) `shouldBe` (Node (TagOpen "mark" [Attr "data-offset" "50"]) [], 50)
+        addOffsetsToTree 50 (Node openMarkTag []) `shouldBe` (Node (TagOpen "mark" [Attr "data-offset" "50"]) [], 0)
 
-      it "adds up the offset of subsequent texts" $ do
-        -- offset is relative to non-mark nodes, because those are the ones that have no data-uid
-        -- (that is not inherited via 'addDataUidsToTree').  therefore, sibling marks have
-        -- accumulating offset values because all selections into their children have to refer to
-        -- the first data-uid-carrying ancestor with their offsets.
-        addOffsetsToForest_ 50 [ Node (ContentText "a text") []
-                               , Node (TagOpen "mark" []) []
-                               , Node (ContentText "another text") []
-                               , Node (TagOpen "mark" []) []] `shouldBe`
-          ([ Node (ContentText "a text") []
-           , Node (TagOpen "mark" [Attr "data-offset" "56"]) []
-           , Node (ContentText "another text") []
-           , Node (TagOpen "mark" [Attr "data-offset" "68"]) []
-           ], 68)
+      it "returns the length of the node" $ do
+        addOffsetsToTree 50 (Node openMarkTag [Node (ContentText "some text") []]) `shouldBe` (Node (TagOpen "mark" [Attr "data-offset" "50"]) [Node (ContentText "some text") []], 9)
+        addOffsetsToTree 50 (Node openTagWithoutUID [Node (ContentText "some text") []]) `shouldBe` (Node (TagOpen "tag" [Attr "data-offset" "0"]) [Node (ContentText "some text") []], 9)
 
-      it "resets the addition when encountering a non-mark tag" $ do
-        addOffsetsToForest_ 50
-          [ Node (ContentText "a text") []
-          , Node (TagOpen "mark" []) []
-          , Node (ContentText "another text") []
-          , Node (TagOpen "div" []) []
-          , Node (ContentText "more text") []
-          , Node (TagOpen "mark" []) []
-          ] `shouldBe`
-          ([ Node (ContentText "a text") []
-           , Node (TagOpen "mark" [Attr "data-offset" "56"]) []
-           , Node (ContentText "another text") []
-           , Node (TagOpen "div" [Attr "data-offset" "0"]) []
-           , Node (ContentText "more text") []
-           , Node (TagOpen "mark" [Attr "data-offset" "9"]) []
-           ], 9)
-
-      it "carries over the offset from the children to the parent and into the next tree of the forest" $ do
-        addOffsetsToForest_ 50
-          [ Node (TagOpen "div" []) [ Node (ContentText "text a") []
-                                    , Node (TagOpen "mark" []) []
-                                    , Node (ContentText "marked text") []
-                                    , Node (TagClose "mark") []
-                                    , Node (ContentText "unmarked text") []]
-          , Node (ContentText "some text") []
-          , Node (TagOpen "mark" []) [ Node (ContentText "some text in mark") []
-                                     , Node (TagOpen "mark" []) []
-                                     , Node (ContentText "more text in mark") []
-                                     , Node (TagClose "mark") []
-                                     ]
-          , Node (ContentText "another text") []
-          , Node (TagOpen "mark" []) []
-          ] `shouldBe`
-          ([ Node (TagOpen "div" [Attr "data-offset" "0"])
-                                    [ Node (ContentText "text a") [] -- length 6
-                                    , Node (TagOpen "mark" [Attr "data-offset" "6"]) []
-                                    , Node (ContentText "marked text") [] -- length 11
-                                    , Node (TagClose "mark") []
-                                    , Node (ContentText "unmarked text") []] -- length 13
-          , Node (ContentText "some text") [] -- length 9
-          , Node (TagOpen "mark" [Attr "data-offset" "39"])
-                                      [ Node (ContentText "some text in mark") [] -- length 17
-                                      , Node (TagOpen "mark" [Attr "data-offset" "56"]) []
-                                      , Node (ContentText "more text in mark") [] -- length 17
-                                      , Node (TagClose "mark") []
-                                      ]
-          , Node (ContentText "another text") [] -- length 12
-          , Node (TagOpen "mark" [Attr "data-offset" "85"]) []
-          ], 85)
+-- TODO we need this test somewhere: Generated marks will only contain text and marks. They will never be wrapped around
+-- other DOM elements. (i.e. they are only inserted at the leaves of the tree)
