@@ -67,14 +67,14 @@ quickCreateOffset range deviceOffset screenState =
 
 -- | This is the offset from the bottom of the toolbar.
 quickCreateSelectionTop :: RS.Range -> SC.ScreenState -> Int
-quickCreateSelectionTop range = SC.offsetIntoText (range ^. RS.rangeTop) (range ^. RS.rangeScrollOffset)
+quickCreateSelectionTop range = SC.offsetIntoText (range ^. RS.rangeTopOffset) (range ^. RS.rangeScrollOffset)
 
 quickCreateSelectionPos :: RS.Range -> Int -> Int
 quickCreateSelectionPos range deviceOffset =
-    let selectionHeight = (range ^. RS.rangeBottom) - (range ^. RS.rangeTop)
+    let selectionHeight = (range ^. RS.rangeBottom) - (range ^. RS.rangeTopOffset ^. SC.unOffsetFromViewportTop)
         idealCenter = selectionHeight `div` 2 - 22
         useIdealCenter = selectionHeight <= 200
-        closerToTop = abs (deviceOffset - range ^. RS.rangeTop) < idealCenter
+        closerToTop = abs (deviceOffset - range ^. RS.rangeTopOffset ^. SC.unOffsetFromViewportTop) < idealCenter
         edgePosition = if closerToTop then 0 else selectionHeight - 44
     in if useIdealCenter then idealCenter else edgePosition
 

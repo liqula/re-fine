@@ -47,7 +47,7 @@ data BubbleProps = BubbleProps
   , _bubblePropsDataContentType :: String
   , _bubblePropsIconSide :: String
   , _bubblePropsIconStyle :: IconDescription
-  , _bubblePropsMarkPosition :: Maybe (Int, Int)
+  , _bubblePropsMarkPosition :: Maybe (SC.OffsetFromViewportTop, SC.ScrollOffsetOfViewport)
   , _bubblePropsHighlightedBubble :: Maybe (ID Void)
   , _bubblePropsClickHandler :: ClickHandler
   , _bubblePropsScreenState :: SC.ScreenState
@@ -59,7 +59,7 @@ bubble :: ReactView BubbleProps
 bubble = defineView "Bubble" $ \props ->
         case props ^. bubblePropsMarkPosition of
             Nothing -> mempty
-            Just (pos, scroll) ->
+            Just (topOffset, scrollOffset) ->
                 div_ ["data-chunk-id" $= fromString (show (props ^. bubblePropsDataChunkId ^. unID))
                     , "data-content-type" $= fromString (props ^. bubblePropsDataContentType)
                     -- RENAME: snippet => bubble
@@ -68,7 +68,7 @@ bubble = defineView "Bubble" $ \props ->
                                   , ("o-snippet--hover", isJust (props ^. bubblePropsHighlightedBubble)
                                          && props ^. bubblePropsDataChunkId ^. unID == fromJust (props ^. bubblePropsHighlightedBubble) ^. unID)
                                   ]
-                    , "style" @= [Style "top" (SC.offsetIntoText pos scroll (props ^. bubblePropsScreenState))]
+                    , "style" @= [Style "top" (SC.offsetIntoText topOffset scrollOffset (props ^. bubblePropsScreenState))]
                     , onClick $ const . (props ^. bubblePropsClickHandler)
                     , onMouseEnter $ \_ _ -> RS.dispatch . RT.BubblesAction . RT.HighlightMarkAndBubble . clearTypeParameter $ props ^. bubblePropsDataChunkId
                     , onMouseLeave $ \_ _ -> RS.dispatch $ RT.BubblesAction RT.UnhighlightMarkAndBubble
@@ -81,8 +81,8 @@ bubble_ :: BubbleProps -> ReactElementM eventHandler () -> ReactElementM eventHa
 bubble_ = view bubble
 
 data SpecialBubbleProps = SpecialBubbleProps
-  { _specialBubblePropsDataChunkId       :: ID Void             -- This is the contents of the ID Discussion / ID Note etc.
-  , _specialBubblePropsMarkPosition      :: Maybe (Int, Int)
+  { _specialBubblePropsDataChunkId       :: ID Void
+  , _specialBubblePropsMarkPosition      :: Maybe (SC.OffsetFromViewportTop, SC.ScrollOffsetOfViewport)
   , _specialBubblePropsHighlightedBubble :: Maybe (ID Void)
   , _specialBubblePropsScreenState       :: SC.ScreenState
   }

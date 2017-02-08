@@ -175,7 +175,7 @@ emitBackendCallsFor action state = case action of
 dispatchMarkPosition :: Maybe Range -> RT.ID Void -> [SomeStoreAction]
 dispatchMarkPosition Nothing _ = []
 dispatchMarkPosition (Just range) dataChunkId =
-  dispatch . BubblesAction $ AddMarkPosition dataChunkId (range ^. rangeTop) (range ^. rangeScrollOffset)
+  dispatch . BubblesAction $ AddMarkPosition dataChunkId (range ^. rangeTopOffset) (range ^. rangeScrollOffset)
 
 
 createChunkRange :: Maybe Range -> RT.CreateChunkRange

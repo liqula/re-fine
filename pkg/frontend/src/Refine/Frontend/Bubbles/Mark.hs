@@ -92,7 +92,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
                    -- is mounted for the very first time, i.e. right after the webpage is displayed for the first time.
                    -- At this point, I think it is safe to assume that no scrolling has taken place yet.
                    -- Therefore we pass 0 as scrollOffset.
-                   let actions = RS.dispatch . RS.BubblesAction $ RS.AddMarkPosition dataChunkId top 0
+                   let actions = RS.dispatch . RS.BubblesAction $ RS.AddMarkPosition dataChunkId top (RS.ScrollOffsetOfViewport 0)
                    forM_ actions executeAction
              return ()
    }

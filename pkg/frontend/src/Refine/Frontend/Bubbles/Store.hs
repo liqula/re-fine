@@ -86,6 +86,6 @@ highlightedMarkAndBubbleUpdate action state = case action of
 
 markPositionsUpdate :: RefineAction -> MarkPositions -> MarkPositions
 markPositionsUpdate action state = case action of
-    BubblesAction (AddMarkPosition dataChunkId pos scroll) -> MarkPositions $ M.alter (\_ -> Just (pos, scroll)) dataChunkId (_unMarkPositions state)
+    BubblesAction (AddMarkPosition dataChunkId topOffset scrollOffset) -> MarkPositions $ M.alter (\_ -> Just (topOffset, scrollOffset)) dataChunkId (_unMarkPositions state)
     _ -> state
 

@@ -29,8 +29,12 @@ import GHC.Generics (Generic)
 import Refine.Prelude.TH (makeRefineType)
 
 
-type OffsetFromViewportTop = Int
-type ScrollOffsetOfViewport = Int
+newtype OffsetFromViewportTop = OffsetFromViewportTop { _unOffsetFromViewportTop :: Int }
+  deriving (Show, Generic, Eq)
+
+newtype ScrollOffsetOfViewport = ScrollOffsetOfViewport { _unScrollOffsetOfViewport :: Int }
+  deriving (Show, Generic, Eq)
+
 
 data WindowSize = Desktop | Tablet | Mobile
   deriving (Show, Generic)
@@ -45,5 +49,7 @@ emptyScreenState :: ScreenState
 emptyScreenState = ScreenState 0 Desktop
 
 
+makeRefineType ''OffsetFromViewportTop
+makeRefineType ''ScrollOffsetOfViewport
 makeRefineType ''ScreenState
 makeRefineType ''WindowSize
