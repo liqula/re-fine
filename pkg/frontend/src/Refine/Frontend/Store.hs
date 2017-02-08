@@ -183,13 +183,6 @@ dispatch :: RefineAction -> [SomeStoreAction]
 dispatch a = [SomeStoreAction refineStore a]
 
 
--- (no idea if there are char encoding issues here.  but it's probably safe to use it for development.)
-consoleLog :: ToJSON a => JSString -> a -> IO ()
-consoleLog str state = consoleLog_ str ((pack . cs . encode) state)
-
-consoleLogStringified :: ToJSON a => JSString -> a -> IO ()
-consoleLogStringified str state = js_consoleLog str ((pack . cs . encode) state)
-
 foreign import javascript unsafe
     "window.getSelection().rangeCount > 0 \
     \&& !(!window.getSelection().getRangeAt(0)) \
@@ -202,6 +195,19 @@ getRange = (AE.decode . cs . unpack) <$> js_getRange
 foreign import javascript unsafe
     "refine$getSelectionRange()"
     js_getRange :: IO JSString
+
+
+-- * ad hoc logging.
+
+-- FUTUREWORK: we should probably find a way to avoid rendering all these json values into strings
+-- in the production code.
+
+-- (no idea if there are char encoding issues here.  but it's probably safe to use it for development.)
+consoleLog :: ToJSON a => JSString -> a -> IO ()
+consoleLog str state = consoleLog_ str ((pack . cs . encode) state)
+
+consoleLogStringified :: ToJSON a => JSString -> a -> IO ()
+consoleLogStringified str state = js_consoleLog str ((pack . cs . encode) state)
 
 foreign import javascript unsafe
   -- see webpack.config.js for a definition of the environment variable.
