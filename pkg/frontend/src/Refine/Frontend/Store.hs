@@ -47,7 +47,6 @@ import           Refine.Frontend.Screen.Store (screenStateUpdate)
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Test.Samples
 import           Refine.Frontend.Types
-import           Refine.Prelude (ClearTypeParameter(..))
 
 
 -- TODO: move to Screen.Calculations
@@ -143,13 +142,11 @@ emitBackendCallsFor action state = case action of
                      (RT.CreateDiscussion text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
             (Right discussion) -> return $ dispatch (AddDiscussion discussion)
-                                        <> dispatchMarkPosition forRange (clearTypeParameter (discussion ^. RT.compositeDiscussion ^. RT.discussionID))
         Just Note ->
           addNote (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadEdit)
                      (RT.CreateNote text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
             (Right note) -> return $ dispatch (AddNote note)
-                                  <> dispatchMarkPosition forRange (clearTypeParameter (note ^. RT.noteID))
         Nothing -> return ()
 
     _ -> return ()
@@ -170,14 +167,6 @@ emitBackendCallsFor action state = case action of
                                     (Left(_, msg)) -> handleError msg
                                     (Right _edit) -> return []
 -}
-
-
-
-dispatchMarkPosition :: Maybe Range -> RT.ID Void -> [SomeStoreAction]
-dispatchMarkPosition Nothing _ = []
-dispatchMarkPosition (Just range) dataChunkId =
-  dispatch . BubblesAction $ AddMarkPosition dataChunkId (range ^. rangeTopOffset) (range ^. rangeScrollOffset)
-
 
 createChunkRange :: Maybe Range -> RT.CreateChunkRange
 createChunkRange Nothing = RT.CreateChunkRange Nothing Nothing

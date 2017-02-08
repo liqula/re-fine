@@ -82,17 +82,14 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
 
    , lComponentDidMount = Just $ \propsandstate ldom _ -> do
              this <- lThis ldom
-             top <- js_getBoundingClientRectTop this
+             topOffset <- js_getBoundingClientRectTop this
+             scrollOffset <- js_getScrollOffset
              props <- lGetProps propsandstate
              _ <- forkIO $ do
                case chunkIdFrom (props ^. markPropsHTMLAttributes) of
                  Nothing -> return ()
                  Just dataChunkId -> do
-                   -- Here we are in componentDidMount. This Lifecycle function is invoked right after the component
-                   -- is mounted for the very first time, i.e. right after the webpage is displayed for the first time.
-                   -- At this point, I think it is safe to assume that no scrolling has taken place yet.
-                   -- Therefore we pass 0 as scrollOffset.
-                   let actions = RS.dispatch . RS.BubblesAction $ RS.AddMarkPosition dataChunkId top (RS.ScrollOffsetOfViewport 0)
+                   let actions = RS.dispatch . RS.BubblesAction $ RS.AddMarkPosition dataChunkId topOffset scrollOffset
                    forM_ actions executeAction
              return ()
    }
@@ -103,3 +100,10 @@ rfMark_ = view rfMark
 foreign import javascript unsafe
   "$1.getBoundingClientRect().top"
   js_getBoundingClientRectTop :: JSVal -> IO RS.OffsetFromViewportTop
+
+foreign import javascript unsafe
+  "typeof( window.pageYOffset ) === 'number' && window.pageYOffset \
+  \ || document.body && document.body.scrollTop \
+  \ || document.documentElement && document.documentElement.scrollTop"
+  js_getScrollOffset :: IO RS.ScrollOffsetOfViewport
+
