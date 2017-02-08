@@ -31,6 +31,9 @@ window.refine$getSelectionRange = function() {
 
     return (function (range) {
         var result = {};
+        // The container tags have data-uid attributes iff they are
+        // inside the article.  If they are outside, the corresponding
+        // chunk points are Nothing.
         if(range.startContainer.parentElement.attributes['data-uid']) {
             var leftOffset = leftSiblingLength(range.startContainer.previousSibling);
             var dataOffset = parseInt(range.startContainer.parentElement.attributes['data-offset'].value, 10);

@@ -85,6 +85,7 @@ data PreToken = PreToken Token | PreMarkOpen DataChunkID OwnerKind | PreMarkClos
 -- | 'ID' of 'Edit' or 'Comment' that owns a 'ChunkRange'.  This is the @data-chunk-id@ attribute value
 -- of the @mark@ tag corresponding to the 'ChunkRange' in the dom.
 type DataChunkID = ST  -- FIXME: @newtype DataChunkID (forall a . Eq a => ID a)@
+                       -- FIXME: nope, this should be @ID a@, if possible.
 
 -- | This is the @data-chunk-owner@ attribute value of the @mark@ tag corresponding to the
 -- 'ChunkRange' in the dom.  It can be either @edit@, @note@, @question@, @discussion@, or something

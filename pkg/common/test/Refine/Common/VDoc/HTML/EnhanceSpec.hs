@@ -23,6 +23,7 @@
 module Refine.Common.VDoc.HTML.EnhanceSpec where
 
 import           Data.List (foldl')
+import           Data.String.Conversions (ST)
 import           Data.Tree
 import           Test.Hspec
 import           Test.QuickCheck
@@ -56,17 +57,45 @@ spec = parallel $ do
           addUIInfoToVDocVersion vers `shouldBe` addUIInfoToVDocVersion (addUIInfoToVDocVersion vers)
 
       let interleaveProp :: VersWithRanges -> Expectation
-          interleaveProp (VersWithRanges (insertMarks ([] :: [ChunkRange Note]) -> vers) rs) = do
+          interleaveProp (VersWithRanges vers rs) = do
               runOnce `shouldBeLikeVDocVersion` runMany
             where
-              runOnce = addUIInfoToVDocVersion $ insertMoreMarks rs vers
-              runMany = addUIInfoToVDocVersion $ foldl' go vers rs
+              runOnce = addUIInfoToVDocVersion $ insertMarks rs vers
+              runMany = addUIInfoToVDocVersion $ foldl' go (insertMarks ([] :: [ChunkRange Note]) vers) rs
                 where
                   go :: VDocVersion 'HTMLWithMarks -> ChunkRange Edit -> VDocVersion 'HTMLWithMarks
                   go v r = insertMoreMarks [r] $ addUIInfoToVDocVersion v
 
       it "can be interleaved with `insertMoreMarks`." . property $
         interleaveProp
+
+
+      let hasAttrProp :: ST -> VersWithRanges -> Expectation
+          hasAttrProp key (VersWithRanges vers rs) = do
+              violators runOnce `shouldBe` []
+              violators runMany `shouldBe` []
+            where
+              violators :: Forest Token -> [Token]
+              violators = filter f . mconcat . fmap flatten
+                where
+                  hasKey (Attr key' _ : attrs') = key' == key || hasKey attrs'
+                  hasKey [] = False
+
+                  f (TagOpen _ attrs)  = not $ hasKey attrs
+                  f (TagSelfClose _ _) = False  -- (doesn't need the data-uid, actually, so we don't care.)
+                  f _                  = False
+
+              VDocVersion runOnce = addUIInfoToVDocVersion $ insertMarks rs vers
+              VDocVersion runMany = addUIInfoToVDocVersion $ foldl' go (insertMarks ([] :: [ChunkRange Note]) vers) rs
+                where
+                  go :: VDocVersion 'HTMLWithMarks -> ChunkRange Edit -> VDocVersion 'HTMLWithMarks
+                  go v r = insertMoreMarks [r] $ addUIInfoToVDocVersion v
+
+      it "leaves no tag without data-uid attribute." . property $
+        hasAttrProp "data-uid"
+
+      it "leaves no tag without data-offset attribute." . property $
+        hasAttrProp "data-offset"
 
 
     describe "addDataUidsToTree" $ do
