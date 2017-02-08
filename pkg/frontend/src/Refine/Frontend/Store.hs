@@ -28,12 +28,13 @@ module Refine.Frontend.Store where
 
 import           Control.Lens ((&), (^.), (%~))
 import qualified Data.Aeson as AE
+import           Data.Aeson (ToJSON, encode)
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
-import           React.Flux
-import           Data.Aeson (ToJSON, encode)
 import           Data.String.Conversions
 import           Data.JSString (JSString, pack, unpack)
+import           Data.Void
+import           React.Flux
 
 import Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as RT
@@ -46,6 +47,7 @@ import           Refine.Frontend.Screen.Store (screenStateUpdate)
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Test.Samples
 import           Refine.Frontend.Types
+import           Refine.Prelude (ClearTypeParameter(..))
 
 
 -- TODO: move to Screen.Calculations
@@ -139,13 +141,17 @@ emitBackendCallsFor action state = case action of
           addDiscussion (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadEdit)
                      (RT.CreateDiscussion text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
-            (Right discussion) -> return . dispatch $ AddDiscussion discussion
+            (Right discussion) -> return $ dispatch (AddDiscussion discussion)
+                                        <> dispatchMarkPosition forRange (clearTypeParameter (discussion ^. RT.compositeDiscussion ^. RT.discussionID))
         Just Note ->
           addNote (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadEdit)
                      (RT.CreateNote text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
-            (Right note) -> return . dispatch $ AddNote note
+            (Right note) -> return $ dispatch (AddNote note)
+                                  <> dispatchMarkPosition forRange (clearTypeParameter (note ^. RT.noteID))
         Nothing -> return ()
+
+    _ -> return ()
 
 {- TODO submitting an edit does not work yet
     SubmitEdit -> do
@@ -163,7 +169,13 @@ emitBackendCallsFor action state = case action of
                                     (Left(_, msg)) -> handleError msg
                                     (Right _edit) -> return []
 -}
-    _ -> return ()
+
+
+
+dispatchMarkPosition :: Maybe Range -> RT.ID Void -> [SomeStoreAction]
+dispatchMarkPosition Nothing _ = []
+dispatchMarkPosition (Just range) dataChunkId =
+  dispatch . BubblesAction $ AddMarkPosition dataChunkId (range ^. rangeTop) (range ^. rangeScrollOffset)
 
 
 createChunkRange :: Maybe Range -> RT.CreateChunkRange
