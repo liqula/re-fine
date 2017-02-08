@@ -100,16 +100,12 @@ addOffsetsToForest_ offset (n : trees) =
 
 
 addOffsetsToTree :: Int -> Tree Token -> (Tree Token, Int)
-addOffsetsToTree offset (Node (TagOpen "mark" attrs) children) =
-  let newAttrs = canonicalizeAttrs $ Attr "data-offset" (ST.pack (show offset)) : attrs
-      (newForest, newOffset) = addOffsetsToForest_ offset children
-  in (Node (TagOpen "mark" newAttrs) newForest, newOffset)
-
-addOffsetsToTree _ (Node (TagOpen tagname attrs) children) =
-  let newAttrs = canonicalizeAttrs $ Attr "data-offset" "0" : attrs
-      (newForest, newOffset) = addOffsetsToForest_ 0 children
-  in (Node (TagOpen tagname newAttrs) newForest, newOffset)
+addOffsetsToTree offset (Node (TagOpen tagname attrs) children) =
+  let newAttrs = canonicalizeAttrs $ Attr "data-offset" (ST.pack (show zeroOrOffset)) : attrs
+      zeroOrOffset = if tagname == "mark" then offset else 0
+      (newChildren, newOffset) = addOffsetsToForest_ zeroOrOffset children
+  in (Node (TagOpen tagname newAttrs) newChildren, newOffset)
 
 addOffsetsToTree offset (Node t children) =
-  let (newForest, newOffset) = addOffsetsToForest_ offset children
-  in (Node t newForest, newOffset)
+  let (newChildren, newOffset) = addOffsetsToForest_ offset children
+  in (Node t newChildren, newOffset)
