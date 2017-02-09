@@ -122,8 +122,8 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       (IconProps "c-vdoc-toolbar" True ("icon-New_Comment", "dark") XXL)
                       "btn-add-annotation"  -- RENAME: annotation => comment
                       ""
-                      "annotation"  -- RENAME: annotation => comment
-                      "new annotation"  -- RENAME: annotation => comment
+                      "comment"
+                      "new comment"
                       False
                       (\_ -> [])
 
@@ -131,8 +131,8 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       (IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXL)
                       "btn-add-modification"  -- (RENAME: Edit)
                       ""
-                      "modification"  -- (RENAME: Edit)
-                      "new modification"  -- (RENAME: Edit)
+                      "edit"
+                      "new edit"
                       False
                       (\_ -> [])
 
@@ -144,7 +144,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       "all-annotations"  -- RENAME: annotation => comment
                       ""
                       ""
-                      "all annotations"  -- RENAME: annotation => comment
+                      "all comments"
                       False
                       (\_ -> [])
 
@@ -154,7 +154,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       "all-modifications"  -- (RENAME: Edit)
                       ""
                       ""
-                      "all modifications"  -- (RENAME: Edit)
+                      "all edits"
                       False
                       (\_ -> [])
 
@@ -162,8 +162,8 @@ editToolbar = defineView "EditToolbar" $ \() ->
                                     (IconProps "c-vdoc-toolbar" True ("icon-Reader", "bright") XXL)
                                     "btn-read-mode"
                                     ""
-                                    "" -- data-content-type is not set for this one...
-                                    "read mode"
+                                    ""
+                                    "reader"  -- TODO Nicole likes "read mode" better...
                                     False
                                     (\_ -> []))
                                     True
@@ -180,29 +180,29 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
         div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
         div_ ["className" $= "c-vdoc-toolbar-extension__annotation"] $ do  -- RENAME: annotation => comment
             iconButton_ $ IconButtonProps
-                        (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L) -- TODO why index and not comment?
-                        "btn-new-ann-doc"
-                        ""
-                        "annotation"  -- RENAME: annotation => comment
-                        "document annotation"  -- RENAME: annotation => comment
-                        False
-                        (\_ -> [])
-            iconButton_ $ IconButtonProps
                         (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
                         "btn-new-ann-text"
                         ""
-                        "annotation"  -- RENAME: annotation => comment
-                        "annotation related to text"  -- RENAME: annotation => comment
+                        "comment"
+                        "text-specific comment"
+                        False
+                        (\_ -> [])
+            iconButton_ $ IconButtonProps
+                        (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L)
+                        "btn-new-ann-doc" -- RENAME: ann => comment
+                        ""
+                        "comment"
+                        "general comment"
                         False
                         (\_ -> [])
 
         div_ ["className" $= "c-vdoc-toolbar-extension__modification"] $ do  -- (RENAME: Edit)
             iconButton_ $ IconButtonProps
                         (IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") L)
-                        "btn-new-mod-text"
+                        "btn-new-mod-text" -- RENAME: mod => edit
                         ""
-                        "annotation"  -- RENAME: annotation => comment
-                        "new modification"  -- (RENAME: Edit)
+                        "edit"
+                        "new edit"
                         False
                         (\_ -> [])
 
