@@ -100,13 +100,18 @@ editToolbar = defineView "EditToolbar" $ \() ->
 editToolbar_ :: ReactElementM eventHandler ()
 editToolbar_ = view editToolbar () mempty
 
-editToolbarExtension :: ReactView ()
-editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
+
+commentToolbarExtension :: ReactView Bool
+commentToolbarExtension = defineView "CommentToolbarExtension" $ \isVisible ->
+  if not isVisible then mempty
+  else
   div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
         div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
-        div_ ["className" $= "c-vdoc-toolbar-extension__annotation"] $ do  -- RENAME: annotation => comment
+        div_ [classNames [ ("c-vdoc-toolbar-extension__annotation", True)   -- RENAME: annotation => comment
+                         , ("c-vdoc-toolbar-extension--expanded", True) ]
+             ] $ do
             iconButton_ $ IconButtonProps
                         (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
                         "btn-new-ann-text"
@@ -124,6 +129,16 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
                         False
                         (\_ -> [])
 
+
+commentToolbarExtension_ :: Bool -> ReactElementM eventHandler ()
+commentToolbarExtension_ isVisible = view commentToolbarExtension isVisible mempty
+
+editToolbarExtension :: ReactView ()
+editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
+  div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
+    div_ ["className" $= "grid-wrapper"] $ do
+      div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
+        div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
         div_ ["className" $= "c-vdoc-toolbar-extension__modification"] $ do  -- (RENAME: Edit)
             iconButton_ $ IconButtonProps
                         (IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") L)

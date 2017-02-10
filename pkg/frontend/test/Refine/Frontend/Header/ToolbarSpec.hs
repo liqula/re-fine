@@ -50,6 +50,21 @@ spec = do
       wrapper <- shallow editToolbar_
       lengthOfIO (find wrapper (StringSelector "IconButtonWithAlignment")) `shouldReturn` (1 :: Int)
 
+  describe "The commentToolbarExtension_ component" $ do
+    it "renders an element with the toolbar extension class" $ do
+      wrapper <- shallow $ commentToolbarExtension_ True
+      lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (1 :: Int)
+
+    it "contains a pointer element" $ do
+      wrapper <- shallow $ commentToolbarExtension_ True
+      lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension__pointer")) `shouldReturn` (1 :: Int)
+
+    it "contains an annotation section with 2 normal icon buttons" $ do
+      wrapper <- shallow $ commentToolbarExtension_ True
+      annotation <- find wrapper (StringSelector ".c-vdoc-toolbar-extension__annotation")
+      lengthOf annotation `shouldReturn` (1 :: Int)
+      lengthOfIO (find annotation (StringSelector "IconButton")) `shouldReturn` (2 :: Int)
+
   describe "The editToolbarExtension_ component" $ do
     it "renders an element with the toolbar extension class" $ do
       wrapper <- shallow editToolbarExtension_
@@ -58,12 +73,6 @@ spec = do
     it "contains a pointer element" $ do
       wrapper <- shallow editToolbarExtension_
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension__pointer")) `shouldReturn` (1 :: Int)
-
-    it "contains an annotation section with 2 normal icon buttons" $ do
-      wrapper <- shallow editToolbarExtension_
-      annotation <- find wrapper (StringSelector ".c-vdoc-toolbar-extension__annotation")
-      lengthOf annotation `shouldReturn` (1 :: Int)
-      lengthOfIO (find annotation (StringSelector "IconButton")) `shouldReturn` (2 :: Int)
 
     it "contains a modification section with 1 normal icon button" $ do
       wrapper <- shallow editToolbarExtension_
