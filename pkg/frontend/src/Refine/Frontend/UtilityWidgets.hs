@@ -161,26 +161,26 @@ iconButtonWithAlignmentCore = defineView "IconButtonWithAlignmentCore" $ \props 
               ] $
             elemJSString (bprops ^. label)
     where
-      alignmentClass blockName_ rightAligned_ = if rightAligned_ then blockName_ <> "--align-right" else ""
+      alignmentClass blockName1 rightAligned1 = if rightAligned1 then blockName1 <> "--align-right" else ""
 
 iconButtonWithAlignmentCore_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
 iconButtonWithAlignmentCore_ props = view iconButtonWithAlignmentCore props mempty
 
 iconButton :: ReactView IconButtonProps
 iconButton = defineView "IconButton" $ \props ->
-    iconButtonWithAlignment_ $ IconButtonWithAlignmentProps props rightAligned_ Nothing
-    where rightAligned_ = False -- no right alignment in the standard case
+    iconButtonWithAlignment_ $ IconButtonWithAlignmentProps props rightAligned1 Nothing
+    where rightAligned1 = False -- no right alignment in the standard case
 
 iconButton_ :: IconButtonProps -> ReactElementM eventHandler ()
 iconButton_ props = view iconButton props mempty
 
 positionedIconButton :: ReactView (IconButtonProps, Int)
-positionedIconButton = defineView "IconButton" $ \(props, position_) ->
-    iconButtonWithAlignment_ $ IconButtonWithAlignmentProps props rightAligned_ (Just position_)
-    where rightAligned_ = False -- no right alignment in the standard case
+positionedIconButton = defineView "IconButton" $ \(props, position1) ->
+    iconButtonWithAlignment_ $ IconButtonWithAlignmentProps props rightAligned1 (Just position1)
+    where rightAligned1 = False -- no right alignment in the standard case
 
 positionedIconButton_ :: IconButtonProps -> Int -> ReactElementM eventHandler ()
-positionedIconButton_ props position_ = view positionedIconButton (props, position_) mempty
+positionedIconButton_ props position1 = view positionedIconButton (props, position1) mempty
 
 
 toClasses :: [String] -> String
