@@ -30,6 +30,7 @@ import           GHC.Generics (Generic)
 import Refine.Common.Types as Common
 
 import Refine.Frontend.Bubbles.Types
+import Refine.Frontend.Header.Types
 import Refine.Frontend.Screen.Types
 import Refine.Prelude.TH (makeRefineType)
 
@@ -38,11 +39,12 @@ data GlobalState = GlobalState
   { _gsVDoc                   :: Maybe CompositeVDoc
   , _gsVDocList               :: Maybe [ID VDoc]
   , _gsBubblesState           :: BubblesState
+  , _gsHeaderState            :: HeaderState
   , _gsScreenState            :: ScreenState
   } deriving (Show, Generic)
 
 emptyGlobalState :: GlobalState
-emptyGlobalState = GlobalState Nothing Nothing emptyBubblesState emptyScreenState
+emptyGlobalState = GlobalState Nothing Nothing emptyBubblesState emptyHeaderState emptyScreenState
 
 data RefineAction = LoadDocumentList
                   | LoadedDocumentList [ID VDoc]
@@ -52,6 +54,7 @@ data RefineAction = LoadDocumentList
                   | AddHeaderHeight Int
                   | SetWindowSize WindowSize
                   | BubblesAction BubblesAction
+                  | HeaderAction HeaderAction
                   -- ...
                   | AddDiscussion CompositeDiscussion
                   | AddNote Note

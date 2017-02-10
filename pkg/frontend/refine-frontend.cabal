@@ -54,7 +54,9 @@ library
       Refine.Frontend.Colors
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.Heading
+      Refine.Frontend.Header.Store
       Refine.Frontend.Header.Toolbar
+      Refine.Frontend.Header.Types
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
       Refine.Frontend.Rest
@@ -113,7 +115,9 @@ executable refine-frontend
       Refine.Frontend.Colors
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.Heading
+      Refine.Frontend.Header.Store
       Refine.Frontend.Header.Toolbar
+      Refine.Frontend.Header.Types
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
       Refine.Frontend.Rest
@@ -180,7 +184,9 @@ test-suite spec
       Refine.Frontend.Colors
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.Heading
+      Refine.Frontend.Header.Store
       Refine.Frontend.Header.Toolbar
+      Refine.Frontend.Header.Types
       Refine.Frontend.Header.DocumentHeaderSpec
       Refine.Frontend.Header.HeadingSpec
       Refine.Frontend.Header.ToolbarSpec
