@@ -53,8 +53,11 @@ tests:
       - src
     ghc-options: -threaded -rtsopts -with-rtsopts=-N
     dependencies:
+      - blaze-html
+      - blaze-markup
       - hspec
       - hspec-core
       - hspec-discover
       - QuickCheck
       - quickcheck-instances
+      - xml-html-qq

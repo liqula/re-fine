@@ -31,25 +31,23 @@ window.refine$getSelectionRange = function() {
 
     return (function (range) {
         var result = {};
-        // The container tags have data-uid attributes iff they are
-        // inside the article.  If they are outside, the corresponding
-        // chunk points are Nothing.
-        if(range.startContainer.parentElement.attributes['data-uid']) {
-            var leftOffset = leftSiblingLength(range.startContainer.previousSibling);
-            var dataOffset = parseInt(range.startContainer.parentElement.attributes['data-offset'].value, 10);
-            result.start = {
-                node: parseInt(range.startContainer.parentElement.attributes['data-uid'].value, 10),
-                offset: range.startOffset + leftOffset + dataOffset
-            };
-        }
-        if(range.endContainer.parentElement.attributes['data-uid']) {
-            var leftOffset = leftSiblingLength(range.endContainer.previousSibling);
-            var dataOffset = parseInt(range.endContainer.parentElement.attributes['data-offset'].value, 10);
-            result.end = {
-                node: parseInt(range.endContainer.parentElement.attributes['data-uid'].value, 10),
-                offset: range.endOffset + leftOffset + dataOffset
-            };
-        }
+
+        var getSelectionPoint = function(container, offset) {
+            // The container tags have data-uid attributes iff they are
+            // inside the article.  If they are outside, the corresponding
+            // chunk points are Nothing.
+            if(container.parentElement.attributes['data-uid']) {
+                var leftOffset = leftSiblingLength(container.previousSibling);
+                var dataOffset = parseInt(container.parentElement.attributes['data-offset'].value, 10);
+                return {
+                    node: parseInt(container.parentElement.attributes['data-uid'].value, 10),
+                    offset: offset + leftOffset + dataOffset
+                };
+            }
+        };
+
+        result.start = getSelectionPoint(range.startContainer, range.startOffset);
+        result.end = getSelectionPoint(range.endContainer, range.endOffset);
         result.top = range.startContainer.parentElement.getBoundingClientRect().top;
         result.bottom = range.endContainer.parentElement.getBoundingClientRect().bottom;
         result.scrollOffset = typeof( window.pageYOffset ) === 'number' && window.pageYOffset

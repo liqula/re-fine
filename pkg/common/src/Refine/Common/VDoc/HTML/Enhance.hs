@@ -82,29 +82,31 @@ findAttrUidIn (Attr "data-uid" value : _) = Just value
 findAttrUidIn (_ : as) = findAttrUidIn as
 
 
+-- | FUTUREWORK: before we touch this again, we should refactor it.
 addOffsetsToForest :: Forest Token -> Forest Token
 addOffsetsToForest = fst . addOffsetsToForest_ 0
 
 addOffsetsToForest_ :: Int -> Forest Token -> (Forest Token, Int)
-addOffsetsToForest_ offset [] = ([], offset)
-addOffsetsToForest_ offset (n@(Node (ContentText t) []) : trees) =
-  let (newForest, newOffset) = addOffsetsToForest_ (offset + ST.length t) trees
-  in (n : newForest, newOffset)
+addOffsetsToForest_ _ [] = ([], 0)
+addOffsetsToForest_ offset (firstTree@(Node (ContentText t) []) : trees) =
+  let firstLength = ST.length t
+      (restForest, restLength) = addOffsetsToForest_ (offset + firstLength) trees
+  in (firstTree : restForest, firstLength + restLength)
 addOffsetsToForest_ _ (Node (ContentChar _) _ : _) =
   error "addOffsetsToForest_: non-canonical tree."
 addOffsetsToForest_ offset (n : trees) =
-  let (firstTree, firstOffset) = addOffsetsToTree offset n
-      (newForest, newOffset) = addOffsetsToForest_ firstOffset trees
-  in (firstTree : newForest, newOffset)
+  let (firstTree, firstLength) = addOffsetsToTree offset n
+      (restForest, restLength) = addOffsetsToForest_ (offset + firstLength) trees
+  in (firstTree : restForest, firstLength + restLength)
 
 
 addOffsetsToTree :: Int -> Tree Token -> (Tree Token, Int)
 addOffsetsToTree offset (Node (TagOpen tagname attrs) children) =
-  let newAttrs = canonicalizeAttrs $ Attr "data-offset" (ST.pack (show zeroOrOffset)) : attrs
-      zeroOrOffset = if tagname == "mark" then offset else 0
-      (newChildren, newOffset) = addOffsetsToForest_ zeroOrOffset children
-  in (Node (TagOpen tagname newAttrs) newChildren, newOffset)
+  let zeroOrOffset = if tagname == "mark" then offset else 0
+      newAttrs = canonicalizeAttrs $ Attr "data-offset" (ST.pack (show zeroOrOffset)) : attrs
+      (newChildren, newLength) = addOffsetsToForest_ zeroOrOffset children
+  in (Node (TagOpen tagname newAttrs) newChildren, newLength)
 
 addOffsetsToTree offset (Node t children) =
-  let (newChildren, newOffset) = addOffsetsToForest_ offset children
-  in (Node t newChildren, newOffset)
+  let (newChildren, newLength) = addOffsetsToForest_ offset children
+  in (Node t newChildren, newLength)
