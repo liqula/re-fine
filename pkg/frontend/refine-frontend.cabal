@@ -52,7 +52,9 @@ library
       Refine.Frontend.Bubbles.Store
       Refine.Frontend.Bubbles.Types
       Refine.Frontend.Colors
-      Refine.Frontend.Heading
+      Refine.Frontend.Header.DocumentHeader
+      Refine.Frontend.Header.Heading
+      Refine.Frontend.Header.Toolbar
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
       Refine.Frontend.Rest
@@ -109,7 +111,9 @@ executable refine-frontend
       Refine.Frontend.Bubbles.Store
       Refine.Frontend.Bubbles.Types
       Refine.Frontend.Colors
-      Refine.Frontend.Heading
+      Refine.Frontend.Header.DocumentHeader
+      Refine.Frontend.Header.Heading
+      Refine.Frontend.Header.Toolbar
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
       Refine.Frontend.Rest
@@ -174,8 +178,12 @@ test-suite spec
       Refine.Frontend.Bubbles.StoreSpec
       Refine.Frontend.Bubbles.Types
       Refine.Frontend.Colors
-      Refine.Frontend.Heading
-      Refine.Frontend.HeadingSpec
+      Refine.Frontend.Header.DocumentHeader
+      Refine.Frontend.Header.Heading
+      Refine.Frontend.Header.Toolbar
+      Refine.Frontend.Header.DocumentHeaderSpec
+      Refine.Frontend.Header.HeadingSpec
+      Refine.Frontend.Header.ToolbarSpec
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
       Refine.Frontend.Rest

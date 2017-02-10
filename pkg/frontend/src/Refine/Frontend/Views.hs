@@ -43,9 +43,9 @@ import           Refine.Frontend.Bubbles.Mark
 import           Refine.Frontend.Bubbles.Overlay
 import           Refine.Frontend.Bubbles.QuickCreate
 import           Refine.Frontend.Bubbles.Types as RS
-import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(..), editToolbar_
-                                         , editToolbarExtension_, menuButton_, headerSizeCapture_
-                                         )
+import           Refine.Frontend.Header.DocumentHeader ( documentHeader_, DocumentHeaderProps(..) )
+import           Refine.Frontend.Header.Heading ( menuButton_, headerSizeCapture_ )
+import           Refine.Frontend.Header.Toolbar ( editToolbar_, editToolbarExtension_ )
 import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.Login.Component (login_)
 import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)

@@ -22,84 +22,12 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Heading where
+module Refine.Frontend.Header.Toolbar where
 
-import           Control.Concurrent (forkIO)
-import           Control.Monad (forM_)
-import           GHCJS.Types (JSVal)
-import           Data.String.Conversions
-import           Data.Text (split)
 import           React.Flux
-import           React.Flux.Lifecycle
-
-import           Refine.Common.Types
 
 import           Refine.Frontend.UtilityWidgets
-import qualified Refine.Frontend.Store as RS
-import qualified Refine.Frontend.Types as RS
 
-
-menuButton :: ReactView ()
-menuButton = defineView "MenuButton" $ \() ->
-  span_ ["className" $= "c-mainmenu"] $ do
-    button_ ["aria-controls" $= "bs-navbar"
-            , "aria-expanded" $= "false"
-            , "className" $= "c-mainmenu__menu-button"
-            , "type" $= "button"] $ do
-      span_ ["className" $= "sr-only"] "Navigation an/aus"
-      span_ ["className" $= "c-mainmenu__icon-bar"] ""
-      span_ ["className" $= "c-mainmenu__icon-bar"] ""
-      span_ ["className" $= "c-mainmenu__icon-bar"] ""
-    span_ ["className" $= "c-mainmenu__menu-button-label"] "MENU"
-
-menuButton_ :: ReactElementM eventHandler ()
-menuButton_ = view menuButton () mempty
-
-data DocumentHeaderProps = DocumentHeaderProps
-  { _headerTitle :: Title
-  , _headerAbstract :: Abstract
-  }
-
-documentHeader :: ReactView DocumentHeaderProps
-documentHeader = defineView "DocumentHeader" $ \props ->
-  div_ ["className" $= "row row-align-middle c-vdoc-header"] $ do
-      div_ ["className" $= "grid-wrapper"] $ do
-          div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
-              documentTitle_ $ _headerTitle props
-              documentAbstract_ $ _headerAbstract props
-              phases_
-
-documentHeader_ :: DocumentHeaderProps -> ReactElementM eventHandler ()
-documentHeader_ props = view documentHeader props mempty
-
-documentTitle :: ReactView Title
-documentTitle = defineView "DocumentTitle" $ \title ->
-  h1_ . elemText . cs $ _unTitle title
-
-documentTitle_ :: Title -> ReactElementM eventHandler ()
-documentTitle_ title = view documentTitle title mempty
-
-documentAbstract :: ReactView Abstract
-documentAbstract = defineView "DocumentAbstract" $ \abstract ->
-  div_ ["className" $= "c-vdoc-header__description"] $ do
-    let paragraphs = split (== '\n') . cs $ _unAbstract abstract
-    div_ ["className" $= "c-vdoc-header__description"] . mconcat $ (p_ . elemText) <$> paragraphs
-
-documentAbstract_ :: Abstract -> ReactElementM eventHandler ()
-documentAbstract_ abstract = view documentAbstract abstract mempty
-
-
-phases :: ReactView ()
-phases = defineView "Phases" $ \() ->
-  div_ ["className" $= "c-vdoc-header__phases"] $ do
-    h5_ "Phases"
-    div_ ["className" $= "c-vdoc-header__phase c-vdoc-header__phase--active"] "Text Collaboration"
-    div_ ["className" $= "c-vdoc-header__phase"] "Vote"
-    div_ ["className" $= "c-vdoc-header__phase"] "Result"
-
-
-phases_ :: ReactElementM eventHandler ()
-phases_ = view phases () mempty
 
 editToolbar :: ReactView ()
 editToolbar = defineView "EditToolbar" $ \() ->
@@ -209,23 +137,3 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
 
 editToolbarExtension_ :: ReactElementM eventHandler ()
 editToolbarExtension_ = view editToolbarExtension () mempty
-
-headerSizeCapture :: ReactView ()
-headerSizeCapture = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
-   { lRender = \_state _props ->
-       div_ ["className" $= "c-fullheader"] childrenPassedToView
-   , lComponentDidMount = Just $ \_propsandstate ldom _ -> do
-             this <- lThis ldom
-             height <- js_getBoundingClientRectHeight this
-             _ <- forkIO $ do
-                 let actions = RS.dispatch $ RS.AddHeaderHeight height
-                 forM_ actions executeAction
-             pure ()
-   }
-
-headerSizeCapture_ :: ReactElementM eventHandler () -> ReactElementM eventHandler ()
-headerSizeCapture_ = view headerSizeCapture ()
-
-foreign import javascript unsafe
-  "$1.getBoundingClientRect().height"
-  js_getBoundingClientRectHeight :: JSVal -> IO Int

@@ -23,59 +23,16 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 
-module Refine.Frontend.HeadingSpec where
+module Refine.Frontend.Header.ToolbarSpec where
 
 import Test.Hspec
 
-import Refine.Common.Types
 import Refine.Frontend.Test.Enzyme
-import Refine.Frontend.Heading
+import Refine.Frontend.Header.Toolbar
 
 
 spec :: Spec
 spec = do
-  describe "The menuButton_ component" $ do
-    it "renders its elements" $ do
-      wrapper <- shallow menuButton_
-      lengthOfIO (find wrapper (StringSelector ".c-mainmenu")) `shouldReturn` (1 :: Int)
-      lengthOfIO (find wrapper (StringSelector ".c-mainmenu__menu-button")) `shouldReturn` (1 :: Int)
-      lengthOfIO (find wrapper (StringSelector ".c-mainmenu__icon-bar")) `shouldReturn` (3 :: Int)
-      label <- find wrapper (StringSelector ".c-mainmenu__menu-button-label")
-      lengthOf label `shouldReturn` (1 :: Int)
-      text label `shouldReturn` "MENU"
-
-
-  describe "The documentHeader_ component" $ do
-    it "renders its elements" $ do
-      wrapper <- shallow $ documentHeader_ (DocumentHeaderProps (Title "title") (Abstract "abstract"))
-      lengthOfIO (find wrapper (StringSelector ".c-vdoc-header")) `shouldReturn` (1 :: Int)
-      lengthOfIO (find wrapper (StringSelector "DocumentAbstract")) `shouldReturn` (1 :: Int)
-      lengthOfIO (find wrapper (StringSelector "DocumentTitle")) `shouldReturn` (1 :: Int)
-      lengthOfIO (find wrapper (StringSelector "Phases")) `shouldReturn` (1 :: Int)
-
-
-  describe "The documentTitle_ component" $ do
-    it "renders the title" $ do
-      wrapper <- shallow $ documentTitle_ (Title "The Awesome Document Title")
-      text wrapper `shouldReturn` "The Awesome Document Title"
-
-
-  describe "The documentAbstract_ component" $ do
-    it "renders the abstract" $ do
-      wrapper <- shallow $ documentAbstract_ (Abstract "The informative document abstract.")
-      text wrapper `shouldReturn` "The informative document abstract."
-
-
-  describe "The phases_ component" $ do
-    it "renders its phases" $ do
-      wrapper <- shallow phases_
-      lengthOfIO (find wrapper (StringSelector ".c-vdoc-header__phase")) `shouldReturn` (3 :: Int)
-
-    it "has only one active phase" $ do
-      wrapper <- shallow phases_
-      lengthOfIO (find wrapper (StringSelector ".c-vdoc-header__phase--active")) `shouldReturn` (1 :: Int)
-
-
   describe "The editToolbar_ component" $ do
     it "renders an element with the toolbar class" $ do
       wrapper <- shallow editToolbar_
@@ -113,7 +70,3 @@ spec = do
       modification <- find wrapper (StringSelector ".c-vdoc-toolbar-extension__modification")
       lengthOf modification `shouldReturn` (1 :: Int)
       lengthOfIO (find modification (StringSelector "IconButton")) `shouldReturn` (1 :: Int)
-
-
--- TODO how to test headerSizeCapture_? We want to mock js_getBoundingClientRect...
--- TODO also: we need mounting for this -> we need jsdom for this -> we need ghc-dom...
