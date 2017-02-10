@@ -67,9 +67,9 @@ instance StoreData GlobalState where
             TriggerUpdateSelection deviceOffset -> do
                 -- for efficiency reasons, only ask JS when we get this action
                 hasRange <- js_hasRange
-                range <- if hasRange then getRange else return Nothing
-                return . BubblesAction $ UpdateSelection (range, Just deviceOffset)
-            _ -> return action
+                range <- if hasRange then getRange else pure Nothing
+                pure . BubblesAction $ UpdateSelection (range, Just deviceOffset)
+            _ -> pure action
 
 
         let newState = state
@@ -79,7 +79,7 @@ instance StoreData GlobalState where
               & gsScreenState              %~ screenStateUpdate transformedAction
 
         consoleLog "New state: " newState
-        return newState
+        pure newState
 
 
 vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
@@ -119,16 +119,16 @@ emitBackendCallsFor action state = case action of
     LoadDocumentList -> do
         listVDocs $ \case
             (Left(_, msg)) -> handleError msg
-            (Right loadedVDocs) -> return . dispatch $ LoadedDocumentList ((^. RT.vdocID) <$> loadedVDocs)
+            (Right loadedVDocs) -> pure . dispatch $ LoadedDocumentList ((^. RT.vdocID) <$> loadedVDocs)
     LoadDocument auid -> do
         getVDoc auid $ \case
             (Left(_, msg)) -> handleError msg
-            (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
+            (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
 
     AddDemoDocument -> do
         createVDoc (RT.CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
             (Left(_, msg)) -> handleError msg
-            (Right loadedVDoc) -> return . dispatch $ OpenDocument loadedVDoc
+            (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
 
     BubblesAction (SubmitComment text category forRange) -> do
       -- here we need to distinguish which comment category we want to submit
@@ -139,15 +139,15 @@ emitBackendCallsFor action state = case action of
           addDiscussion (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadEdit)
                      (RT.CreateDiscussion text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
-            (Right discussion) -> return $ dispatch (AddDiscussion discussion)
+            (Right discussion) -> pure $ dispatch (AddDiscussion discussion)
         Just Note ->
           addNote (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadEdit)
                      (RT.CreateNote text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
-            (Right note) -> return $ dispatch (AddNote note)
-        Nothing -> return ()
+            (Right note) -> pure $ dispatch (AddNote note)
+        Nothing -> pure ()
 
-    _ -> return ()
+    _ -> pure ()
 
 {- TODO submitting an edit does not work yet
     SubmitEdit -> do
@@ -157,13 +157,13 @@ emitBackendCallsFor action state = case action of
         let maybeRange = _currentSelection state
         let editKey = EditKey vdocId editId
         case maybeRange of
-            (Nothing, _)    -> return ()
+            (Nothing, _)    -> pure ()
             (Just range, _) -> do
                                 let protoChunkRange = ProtoChunkRange (ChunkPoint (DataUID <$> _startUid range) (_startOffset range)) (ChunkPoint (DataUID <$> _endUid range) (_endOffset range))
                                 let editFromClient = EditFromClient vdocChunk (Just protoChunkRange)
                                 addEdit editKey editFromClient $ \case
                                     (Left(_, msg)) -> handleError msg
-                                    (Right _edit) -> return []
+                                    (Right _edit) -> pure []
 -}
 
 createChunkRange :: Maybe Range -> RT.CreateChunkRange
@@ -173,7 +173,7 @@ createChunkRange (Just range) = RT.CreateChunkRange (range ^. rangeStartPoint) (
 handleError :: String -> IO [SomeStoreAction]
 handleError msg = do
             print msg
-            return []
+            pure []
 
 refineStore :: ReactStore GlobalState
 refineStore = mkStore emptyGlobalState

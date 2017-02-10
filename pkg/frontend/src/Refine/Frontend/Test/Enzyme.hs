@@ -86,7 +86,7 @@ instance ToJSON [Prop] where
 
 shallow :: ReactElementM eventHandler () -> IO ShallowWrapper
 shallow comp = do
-  (ref, _) <- mkReactElement (\_ -> return ()) (ReactThis nullRef) comp
+  (ref, _) <- mkReactElement (\_ -> pure ()) (ReactThis nullRef) comp
   ShallowWrapper <$> js_shallow ref
 
 foreign import javascript unsafe
