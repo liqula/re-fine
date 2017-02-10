@@ -159,14 +159,13 @@ spec = do
       span1 <- find wrapper (StringSelector "span")
       is span1 (StringSelector ".the-block-name__button-label") `shouldReturn` True
 
-    it "shows a pointer mouse cursor over the span text when it is not disabled" $ do
+    it "shows a pointer mouse cursor when it is not disabled" $ do
       let disabled1 = False
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
           (IconButtonProps (iconProps M) element module1 ctype label1 disabled1 (\_ -> []))
           False Nothing)
-      span1 <- find wrapper (StringSelector "span")
-      is span1 (PropertySelector [Prop "style" [Style "cursor" ("pointer" :: String)]]) `shouldReturn` True
+      is wrapper (PropertySelector [Prop "style" [Style "cursor" ("pointer" :: String)]]) `shouldReturn` True
 
     it "shows the span's text in grey when it is disabled" $ do
       let disabled1 = True

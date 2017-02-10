@@ -153,14 +153,13 @@ iconButtonWithAlignmentCore = defineView "IconButtonWithAlignmentCore" $ \props 
                                                    ])
           , "style" @= (case props ^. position of
                                Nothing  -> []
-                               Just pos -> [Style "top" pos])
+                               Just pos -> [Style "top" pos]
+                    <> [Style "cursor" ("pointer" :: String) | not (bprops ^. disabled)])
           ] <> if bprops ^. disabled then [] else [onClick $ const . (bprops ^. clickHandler)]
           ) $ do
         icon_ iprops
         span_ ["className" $= fromString (iprops ^. blockName <> "__button-label")
-              , "style" @= (if bprops ^. disabled
-                                   then [Style "color" Color.disabledText]
-                                   else [Style "cursor" ("pointer" :: String)])
+              , "style" @= [Style "color" Color.disabledText | bprops ^. disabled]
               ] $
             elemJSString (bprops ^. label)
     where
