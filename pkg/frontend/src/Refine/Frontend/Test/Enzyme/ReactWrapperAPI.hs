@@ -86,7 +86,7 @@ instance ToJSON [Prop] where
 
 mount :: ReactElementM eventHandler () -> IO ReactWrapper
 mount comp = do
-  (ref, _) <- mkReactElement (\_ -> return ()) (ReactThis nullRef) comp
+  (ref, _) <- mkReactElement (\_ -> pure ()) (ReactThis nullRef) comp
   ReactWrapper <$> js_mount ref
 
 foreign import javascript unsafe
