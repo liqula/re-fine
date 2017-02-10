@@ -259,9 +259,9 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
   describe "User handling" $ do
     context "Create, login, logout" $ do
       it "works" $ \sess -> do
-        fu :: User <- runWaiBody sess $ postJSON createUserUri (CreateUser "user" "mail@email.com" "password")
-        (li, rsp) :: (LoginResult, SResponse) <- runWaiBodyRsp sess $ postJSON loginUri (Login "user" "password")
-        (simpleHeaders rsp) `shouldSatisfy` (any (("Set-Cookie"==) *** (isPrefixOf refineCookieName . cs) >>> uncurry (&&)))
+        _fu :: User <- runWaiBody sess $ postJSON createUserUri (CreateUser "user" "mail@email.com" "password")
+        (_li, rsp) :: (LoginResult, SResponse) <- runWaiBodyRsp sess $ postJSON loginUri (Login "user" "password")
+        simpleHeaders rsp `shouldSatisfy` any (("Set-Cookie"==) *** (isPrefixOf refineCookieName . cs) >>> uncurry (&&))
         pendingWith "Sessions are not transmitted to requests."
-        (lo :: LogoutResult) <- runWaiBody sess $ postJSON logoutUri Logout
+        _lo :: LogoutResult <- runWaiBody sess $ postJSON logoutUri Logout
         pure ()
