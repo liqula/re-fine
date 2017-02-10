@@ -91,7 +91,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                                     "btn-read-mode"
                                     ""
                                     ""
-                                    "reader"  -- TODO Nicole likes "read mode" better...
+                                    "read mode"
                                     False
                                     (\_ -> []))
                                     True
