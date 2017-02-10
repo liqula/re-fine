@@ -22,6 +22,7 @@
 
 module Refine.Backend.ServerSpec where
 
+import           Control.Arrow ((***), (>>>))
 import           Control.Exception (throwIO, ErrorCall(ErrorCall))
 import           Control.Lens ((^.), (.~), (&), to)
 import           Control.Monad.Trans.Except (runExceptT)
@@ -30,6 +31,7 @@ import           Control.Natural (run)
 import           Data.Aeson (FromJSON, ToJSON, decode, eitherDecode, encode)
 import           Data.Default (def)
 import           Data.Proxy (Proxy(Proxy))
+import           Data.List (isPrefixOf)
 import           Data.Map (elems)
 import           Data.String.Conversions (SBS, cs, (<>))
 import           Network.HTTP.Types.Status (Status(statusCode))
@@ -37,12 +39,6 @@ import           Network.URI (URI, uriToString)
 import           Network.Wai.Test (SResponse(..))
 import           Servant.Utils.Links (safeLink)
 import           Test.Hspec
-                  ( Spec
-                  , ActionWith
-                  , around, describe, context, it
-                  , shouldBe, shouldContain
-                  , pendingWith
-                  )
 import           Test.Hspec.Wai (get, request)
 import qualified Test.Hspec.Wai.Internal as Wai
 
@@ -62,17 +58,21 @@ import Refine.Common.Types
 runWai :: Backend -> Wai.WaiSession a -> IO a
 runWai sess = Wai.withApplication (backendServer sess)
 
--- | Call 'runWaiBodyE' and throw an error if the expected type cannot be read.
+-- | Call 'runWaiBodyE' and throw an error if the expected type cannot be read, discards the response
 runWaiBody :: FromJSON a => Backend -> Wai.WaiSession SResponse -> IO a
-runWaiBody sess = errorOnLeft . runWaiBodyE sess
+runWaiBody sess = fmap fst . runWaiBodyRsp sess
+
+-- | Call 'runWaiBodyE' and throw an error if the expected type cannot be read.
+runWaiBodyRsp :: FromJSON a => Backend -> Wai.WaiSession SResponse -> IO (a, SResponse)
+runWaiBodyRsp sess = errorOnLeft . runWaiBodyE sess
 
 -- | Run a rest call and parse the body.
-runWaiBodyE :: FromJSON a => Backend -> Wai.WaiSession SResponse -> IO (Either String a)
+runWaiBodyE :: FromJSON a => Backend -> Wai.WaiSession SResponse -> IO (Either String (a, SResponse))
 runWaiBodyE sess m = do
   resp <- Wai.withApplication (backendServer sess) m
   pure $ case eitherDecode $ simpleBody resp of
-    Left err -> Left $ show err <> cs (simpleBody resp)
-    Right x  -> Right x
+    Left err -> Left $ unwords [show err, show (simpleHeaders resp), cs (simpleBody resp)]
+    Right x  -> Right (x, resp)
 
 -- | Run a rest call and return the naked request.
 runWaiBodyReq :: Backend -> Wai.WaiSession SResponse -> IO SResponse
@@ -134,6 +134,15 @@ addNoteUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddNo
 
 addDiscussionUri :: ID Edit -> SBS
 addDiscussionUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddDiscussion)
+
+createUserUri :: SBS
+createUserUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SCreateUser)
+
+loginUri :: SBS
+loginUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogin)
+
+logoutUri :: SBS
+logoutUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogout)
 
 
 -- * test cases
@@ -246,3 +255,13 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
         (fe, fp) <- setup sess
         be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
         be ^. compositeVDocEdits . to elems`shouldContain` [fp]
+
+  describe "User handling" $ do
+    context "Create, login, logout" $ do
+      it "works" $ \sess -> do
+        fu :: User <- runWaiBody sess $ postJSON createUserUri (CreateUser "user" "mail@email.com" "password")
+        (li, rsp) :: (LoginResult, SResponse) <- runWaiBodyRsp sess $ postJSON loginUri (Login "user" "password")
+        (simpleHeaders rsp) `shouldSatisfy` (any (("Set-Cookie"==) *** (isPrefixOf refineCookieName . cs) >>> uncurry (&&)))
+        pendingWith "Sessions are not transmitted to requests."
+        (lo :: LogoutResult) <- runWaiBody sess $ postJSON logoutUri Logout
+        pure ()

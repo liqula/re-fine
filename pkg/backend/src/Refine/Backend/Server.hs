@@ -24,7 +24,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Backend.Server
-  ( startBackend
+  ( refineCookieName
+  , startBackend
   , Backend(..), mkBackend
   , refineApi
   ) where
@@ -58,6 +59,11 @@ import Refine.Backend.Types
 import Refine.Common.Rest
 import Refine.Prelude (monadError)
 
+
+-- * Constants
+
+refineCookieName :: String
+refineCookieName = "refine"
 
 -- * Initialization
 
@@ -100,7 +106,7 @@ mkBackend cfg = do
   createDataDirectories cfg
   (runDb, userHandler) <- createDBRunner cfg
   runDocRepo <- createRunRepo cfg
-  let refineCookie = SCS.def { SCS.setCookieName = "refine", SCS.setCookiePath = Just "/" }
+  let refineCookie = SCS.def { SCS.setCookieName = cs refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
       app    = runApp runDb runDocRepo logger userHandler (cfg ^. cfgCsrfSecret . to CsrfSecret)
   srvApp <- serveAction
@@ -111,7 +117,7 @@ mkBackend cfg = do
               (toServantError . cnToSn app)
               refineApi
 
-  let srv = Servant.serve (Proxy :: Proxy (Raw :<|> "static" :> Raw)) $
+  let srv = Servant.serve (Proxy :: Proxy (Raw :<|> Raw)) $
               srvApp :<|> maybeServeDirectory (cfg ^. cfgFileServeRoot)
 
   when (cfg ^. cfgShouldMigrate) $ do
