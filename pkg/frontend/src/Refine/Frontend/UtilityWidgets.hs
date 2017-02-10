@@ -127,9 +127,7 @@ icon_ props = view icon props mempty
 iconButtonWithAlignment :: ReactView IconButtonWithAlignmentProps
 iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
     let bprops = props ^. iconButtonProps
-    hammer_ (if bprops ^. disabled
-              then []
-              else [on "onTap" $ bprops ^. clickHandler]) $ do
+    hammer_ [on "onTap" $ bprops ^. clickHandler | not (bprops ^. disabled)] $ do
       iconButtonWithAlignmentCore_ props
 
 iconButtonWithAlignment_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
@@ -155,7 +153,7 @@ iconButtonWithAlignmentCore = defineView "IconButtonWithAlignmentCore" $ \props 
                                Nothing  -> []
                                Just pos -> [Style "top" pos]
                     <> [Style "cursor" ("pointer" :: String) | not (bprops ^. disabled)])
-          ] <> if bprops ^. disabled then [] else [onClick $ const . (bprops ^. clickHandler)]
+          ] <> [onClick $ const . (bprops ^. clickHandler) | not (bprops ^. disabled)]
           ) $ do
         icon_ iprops
         span_ ["className" $= fromString (iprops ^. blockName <> "__button-label")
