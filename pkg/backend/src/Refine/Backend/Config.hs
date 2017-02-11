@@ -9,7 +9,8 @@ import           Control.Exception (throwIO, ErrorCall(ErrorCall))
 import           Control.Lens (makeLenses, makePrisms, (&), (^.))
 import           Data.Aeson (FromJSON, ToJSON, object, withObject, (.=), (.:))
 import           Data.Default (Default(..))
-import           Data.String.Conversions (ST, cs)
+import           Data.Maybe (isNothing)
+import           Data.String.Conversions (ST, cs, (<>))
 import qualified Data.Yaml as Yaml
 import           Data.Yaml (encode)
 import           GHC.Generics
@@ -112,16 +113,25 @@ initConfig :: Maybe FilePath -> IO Config
 initConfig mfp = do
   result <- maybe (pure $ pure def) Yaml.decodeFileEither mfp
   cfg <- case result of
-    Left msg -> throwIO . ErrorCall . show $ msg
+    Left msg -> throwIO . ErrorCall $ show msg <> explainConfig def "\n\nTry the following default config" False
     Right v  -> pure v
-  putStrLn $ unlines
-    [ "config:"
-    , "------------------------------"
-    , cs (encode cfg)
-    , "------------------------------"
-    , ""
-    , "If you want to change this, copy the lines between the dashes into `me.yaml` and"
-    , "invoke the server as `refine me.yaml`."
-    , ""
-    ]
+  putStrLn $ explainConfig cfg
+    (maybe "Using default config" (\fp -> "Using config from " <> show fp) mfp)
+    (isNothing mfp)
   pure cfg
+
+
+explainConfig :: Config -> String -> Bool -> String
+explainConfig cfg intro mentionServerConf = unlines $
+  [ intro <> ":"
+  , "------------------------------"
+  , cs (encode cfg)
+  , "------------------------------"
+  , ""
+  ] <>
+  if mentionServerConf
+    then [ "You can copy the yaml code between the lines above into 'server.conf',"
+         , "edit to your liking, and pass it as first argument to the server."
+         , ""
+         ]
+    else []
