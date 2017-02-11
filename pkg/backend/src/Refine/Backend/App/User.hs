@@ -5,6 +5,7 @@ module Refine.Backend.App.User where
 import           Control.Lens ((^.), view)
 import           Control.Monad (void)
 import           Control.Monad.Except
+import           Control.Monad.State (gets)
 import           Data.String.Conversions (cs)
 import           Data.Time.Clock (NominalDiffTime)
 
@@ -30,10 +31,15 @@ login (Login username (Users.PasswordPlain -> password)) = do
 
 logout :: App DB ()
 logout = do
-  session <- currentUserSession
-  userHandle <- view appUserHandle
-  void . appIO $ Users.destroySession userHandle (session ^. unUserSession)
-  clearUserSession
+  appLog "logout"
+  st <- gets (view appUserState)
+  case st of
+    UserLoggedIn session -> do
+      userHandle <- view appUserHandle
+      void . appIO $ Users.destroySession userHandle (session ^. unUserSession)
+      clearUserSession
+    UserLoggedOut -> do
+      pure ()
 
 createUser :: CreateUser -> App DB Refine.User
 createUser (CreateUser name email password) = do
