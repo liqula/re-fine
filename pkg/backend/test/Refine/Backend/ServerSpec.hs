@@ -74,11 +74,6 @@ runWaiBodyE sess m = do
     Left err -> Left $ unwords [show err, show (simpleHeaders resp), cs (simpleBody resp)]
     Right x  -> Right (x, resp)
 
--- | Run a rest call and return the naked response.
-runWaiRsp :: Backend -> Wai.WaiSession SResponse -> IO SResponse
-runWaiRsp sess m = do
-  Wai.withApplication (backendServer sess) m
-
 -- | Call 'runDB'' and crash on 'Left'.
 runDB :: Backend -> App DB a -> IO a
 runDB sess = errorOnLeft . runDB' sess
@@ -205,7 +200,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
     it "fails with error on non-trivial *invalid* chunk range" $ \sess -> do
       vdoc :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
-      resp :: SResponse <- runWaiRsp sess $
+      resp :: SResponse <- runWai sess $
         let cp1, cp2 :: ChunkPoint
             cp1 = ChunkPoint (DataUID 1) 0
             cp2 = ChunkPoint (DataUID 100) 100
@@ -277,25 +272,25 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
     describe "login" $ do
       context "with valid credentials" $ do
         it "works (and returns the cookie)" $ \sess -> do
-          resp <- runWaiRsp sess $ doCreate >> doLogin (Login userName userPass)
+          resp <- runWai sess $ doCreate >> doLogin (Login userName userPass)
           statusCode (simpleStatus resp) `shouldBe` 200
           checkCookie resp
 
       context "with invalid credentials" $ do
         it "works (and returns the cookie)" $ \sess -> do
-          resp <- runWaiRsp sess $ doCreate >> doLogin (Login userName "")
+          resp <- runWai sess $ doCreate >> doLogin (Login userName "")
           statusCode (simpleStatus resp) `shouldBe` 500  -- (yes, i know, this should not be internal error.)
           checkCookie resp
 
     describe "logout" $ do
       context "logged in" $ do
         it "works (and returns the cookie)" $ \sess -> do
-          resp <- runWaiRsp sess $ doCreate >> doLogin (Login userName userPass) >> doLogout
+          resp <- runWai sess $ doCreate >> doLogin (Login userName userPass) >> doLogout
           statusCode (simpleStatus resp) `shouldBe` 200
           checkCookie resp
 
       context "logged out" $ do
         it "works (and returns the cookie)" $ \sess -> do
-          resp <- runWaiRsp sess $ doCreate >> doLogout
+          resp <- runWai sess $ doCreate >> doLogout
           statusCode (simpleStatus resp) `shouldBe` 200
           checkCookie resp
