@@ -9,14 +9,14 @@ import Refine.Backend.Types
 
 
 setUserSession :: UserSession -> App db ()
-setUserSession session = appUserState .= ActiveUser session
+setUserSession session = appUserState .= UserLoggedIn session
 
 currentUserSession :: App db UserSession
 currentUserSession = do
   u <- gets (view appUserState)
   case u of
-    NonActiveUser -> throwError AppUserNotLoggedIn
-    ActiveUser s  -> pure s
+    UserLoggedOut  -> throwError AppUserNotLoggedIn
+    UserLoggedIn s -> pure s
 
 clearUserSession :: App db ()
-clearUserSession = appUserState .= NonActiveUser
+clearUserSession = appUserState .= UserLoggedOut

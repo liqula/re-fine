@@ -58,8 +58,8 @@ data AppState = AppState
 
 -- | The state of the application depends on the user state.
 data AppUserState
-  = ActiveUser UserSession
-  | NonActiveUser
+  = UserLoggedIn UserSession
+  | UserLoggedOut
   deriving (Eq, Show)
 
 makeLenses ''AppContext

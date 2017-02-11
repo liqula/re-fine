@@ -73,8 +73,8 @@ initVDocs = VDocs Map.empty 0
 makeLenses ''VDocs
 
 isActiveUser :: AppUserState -> Bool
-isActiveUser (ActiveUser _) = True
-isActiveUser _              = False
+isActiveUser (UserLoggedIn _) = True
+isActiveUser UserLoggedOut    = False
 
 -- Parallel run is not an option here, it could make fail the build at the cleanup stage.
 spec :: Spec
@@ -91,7 +91,7 @@ spec = do
 
         void $ App.createUser (CreateUser "user" "user@example.com" "password")
         userState0 <- gets (view appUserState)
-        appIO $ userState0 `shouldBe` NonActiveUser
+        appIO $ userState0 `shouldBe` UserLoggedOut
 
         void $ App.login (Login "user" "password")
         userState1 <- gets (view appUserState)
@@ -99,7 +99,7 @@ spec = do
 
         void $ App.logout Logout
         userState2 <- gets (view appUserState)
-        appIO $ userState2 `shouldBe` NonActiveUser
+        appIO $ userState2 `shouldBe` UserLoggedOut
 
       pure ()
 

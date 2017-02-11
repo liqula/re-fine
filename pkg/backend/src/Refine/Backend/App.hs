@@ -41,7 +41,7 @@ import Refine.Backend.User.Core (UserHandle)
 
 runApp :: RunDB db -> RunDocRepo -> Logger -> UserHandle -> CsrfSecret -> App db :~> ExceptT AppError IO
 runApp runDB runDocRepo logger userHandle csrfSecret =
-  Nat $ runSR (AppState Nothing NonActiveUser) (AppContext runDB runDocRepo logger userHandle csrfSecret) . unApp
+  Nat $ runSR (AppState Nothing UserLoggedOut) (AppContext runDB runDocRepo logger userHandle csrfSecret) . unApp
   where
     runSR :: (Monad m) => s -> r -> StateT s (ReaderT r m) a -> m a
     runSR s r m = runReaderT (evalStateT m s) r

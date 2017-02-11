@@ -170,5 +170,5 @@ instance SCS.GetCsrfSecret (AppContext db) where
 
 instance SCS.GetSessionToken AppState where
   getSessionToken = appUserState . to (\case
-    ActiveUser    us -> Just . SCS.SessionToken . userSessionText $ us
-    NonActiveUser    -> Nothing)
+    UserLoggedIn us -> Just . SCS.SessionToken . userSessionText $ us
+    UserLoggedOut   -> Nothing)
