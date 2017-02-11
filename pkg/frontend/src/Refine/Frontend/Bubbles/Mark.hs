@@ -87,11 +87,11 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
              props <- lGetProps propsandstate
              _ <- forkIO $ do
                case chunkIdFrom (props ^. markPropsHTMLAttributes) of
-                 Nothing -> return ()
+                 Nothing -> pure ()
                  Just dataChunkId -> do
                    let actions = RS.dispatch . RS.BubblesAction $ RS.AddMarkPosition dataChunkId topOffset scrollOffset
                    forM_ actions executeAction
-             return ()
+             pure ()
    }
 
 rfMark_ :: MarkProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()

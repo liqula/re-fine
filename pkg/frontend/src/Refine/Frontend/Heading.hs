@@ -220,7 +220,7 @@ headerSizeCapture = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
              _ <- forkIO $ do
                  let actions = RS.dispatch $ RS.AddHeaderHeight height
                  forM_ actions executeAction
-             return ()
+             pure ()
    }
 
 headerSizeCapture_ :: ReactElementM eventHandler () -> ReactElementM eventHandler ()

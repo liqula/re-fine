@@ -64,7 +64,7 @@ setWindowSize = do
     _ <- forkIO $ do
        let actions = RS.dispatch . RS.SetWindowSize $ RS.toSize width
        forM_ actions executeAction
-    return ()
+    pure ()
 
 foreign import javascript unsafe
 -- the internet says we should check window.innerWidth and document.documentElement.clientWidth first,

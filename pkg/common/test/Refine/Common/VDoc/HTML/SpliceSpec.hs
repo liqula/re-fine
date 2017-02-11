@@ -197,6 +197,9 @@ spec = parallel $ do
       insertMarks [cr (ID 3 :: ID Discussion)] vers `shouldBe` vers' "discussion"
       insertMarks [cr (ID 3 :: ID Edit)]       vers `shouldBe` vers' "edit"
 
+    it "mark tag children never contain other tags."
+      pending
+
     it "regression (1)." $ do
       let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\"></div>"
           r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 3))

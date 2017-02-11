@@ -32,13 +32,15 @@ module Refine.Common.VDoc.HTML.Splice
 
 import           Control.Arrow (second)
 import           Control.Exception (assert)
-import           Control.Lens ((&), (^.), (%~))
+import           Control.Lens ((^.))
 import           Control.Monad.State
 import           Data.Functor.Infix ((<$$>))
 import           Data.List (foldl')
-import           Data.Maybe (catMaybes)
+import           Data.Maybe (fromMaybe, catMaybes)
 import           Data.Set (Set)
 import qualified Data.Set as Set
+import           Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
 import           Data.String.Conversions ((<>), cs)
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
@@ -140,31 +142,49 @@ isNonEmptyChunkRange cr forest = case cr of
 
 -- * inserting marks
 
+-- | Insert Mark Forest Stack (local type for 'insertMarkForest').
+data IMFStack = IMFStack (Forest PreToken) (Forest PreToken) (Map DataUID [(Int, Forest PreToken)])
+  deriving (Show)
+
 insertMarksForest :: forall a . Typeable a
                   => [ChunkRange a] -> Forest PreToken -> Forest PreToken
-insertMarksForest crs = (`woodZip` splitup crs)
+insertMarksForest crs = (prefix <>) . (<> suffix) . dfs
   where
-    -- turn chunk ranges into chunk points.
-    splitup :: [ChunkRange a] -> [(Maybe ChunkPoint, PreToken'')]
-    splitup = mconcat . fmap f
+    IMFStack prefix suffix infixmap = foldl' unmaybe (IMFStack mempty mempty mempty) (mconcat $ f <$> crs)
       where
-        t = cs . show . typeOf $ (undefined :: a)
         f (ChunkRange (toUrlPiece -> l) mb me) = [(mb, PreMarkOpen'' l t), (me, PreMarkClose'' l)]
+          where
+            t = cs . show . typeOf $ (undefined :: a)
 
-    -- FUTUREWORK: there is a faster implementation for @woodZip@: if chunks come in the correct
-    -- order, we only need to traverse the forest once.  that's why it's called "zip".
-    --
-    -- FUTUREWORK: it's weird that we have to 'view' into the forest and then 'over' into it *after*
-    -- the 'view' has proven there is sufficient text.  with more lens-foo, i bet we could write
-    -- something that looks like the 'Right' branch here, but lets 'insertPreToken' return an
-    -- 'Either' that is somehow propagated through '(%~)' and out of 'woodZip'.
-    woodZip :: Forest PreToken -> [(Maybe ChunkPoint, PreToken'')] -> Forest PreToken
-    woodZip = foldl' switch
+    pushList :: PreToken'' -> Forest PreToken -> Forest PreToken
+    pushList mark = (Node (runPreToken'' mark) [] :)
 
-    switch :: Forest PreToken -> (Maybe ChunkPoint, PreToken'') -> Forest PreToken
-    switch f (Nothing, mark@(PreMarkOpen'' _ _)) = [Node (unPreToken'' mark) []] <> f
-    switch f (Nothing, mark@(PreMarkClose'' _))  =                                  f <> [Node (unPreToken'' mark) []]
-    switch f (Just (ChunkPoint node off), mark)  = f & atPreToken node %~ splitAtOffset off [Node (unPreToken'' mark) []]
+    pushMap :: ChunkPoint -> PreToken'' -> Map DataUID [(Int, Forest PreToken)] -> Map DataUID [(Int, Forest PreToken)]
+    pushMap (ChunkPoint duid off) mark = Map.alter upd duid
+      where
+        new = (off, [Node (runPreToken'' mark) []])
+        upd Nothing   = Just [new]
+        upd (Just xs) = Just $ new : xs
+
+    unmaybe :: IMFStack -> (Maybe ChunkPoint, PreToken'') -> IMFStack
+    unmaybe (IMFStack p s i) (Nothing, mark@(PreMarkOpen'' _ _)) = IMFStack (pushList mark p) s i
+    unmaybe (IMFStack p s i) (Nothing, mark@(PreMarkClose'' _))  = IMFStack p (pushList mark s) i
+    unmaybe (IMFStack p s i) (Just point, mark)                  = IMFStack p s (pushMap point mark i)
+
+    dfs :: Forest PreToken -> Forest PreToken
+    dfs [] = []
+    dfs (Node tok@(PreToken (TagOpen "mark" _)) children : siblings)
+      = Node tok (dfs children) : dfs siblings  -- chunk points never refer to mark nodes.
+    dfs (Node tok children : siblings)
+      = Node tok (dfs children') : dfs siblings
+      where
+        points :: [(Int, Forest PreToken)]
+        points = fromMaybe [] $ (`Map.lookup` infixmap) =<< dataUidOfPreToken tok
+
+        children' = go points children
+          where
+            go ((offset, insertion) : points') = go points' . splitAtOffset offset insertion
+            go []                              = id
 
 
 -- | Split a token stream into one that has a given number of characters @n@ in its text nodes, and
@@ -174,14 +194,8 @@ insertMarksForest crs = (`woodZip` splitup crs)
 -- 'createChunkRangeErrors' earlier.
 splitAtOffset :: Int -> Forest PreToken -> Forest PreToken -> Forest PreToken
 splitAtOffset offset insertion ts_ = assert (offset >= 0)
-                                   . repack . resolve $ dfs (Just offset) unpack
+                                   . resolve $ dfs (Just offset) ts_
   where
-    unpack :: Forest PreToken
-    repack :: Forest PreToken -> Forest PreToken
-    (unpack, repack) = case ts_ of
-      [Node n ts'] -> (ts', \ts'' -> [Node n ts''])
-      _ -> error $ "impossible splitAtOffset: " <> show (offset, ts_)
-
     resolve :: (Maybe Int, Forest PreToken) -> Forest PreToken
     resolve (Nothing, forest)
         = forest
