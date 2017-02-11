@@ -53,21 +53,9 @@ data Login = Login
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
-data LoginResult = LoginSuccess
-  deriving (Eq, Ord, Show, Read, Generic)
-
-data Logout = Logout
-  deriving (Eq, Ord, Show, Read, Generic)
-
-data LogoutResult = LogoutSuccess
-  deriving (Eq, Ord, Show, Read, Generic)
-
 
 -- * make refine types
 
 makeRefineType ''CreateUser
 makeRefineType ''User
 makeRefineType ''Login
-makeRefineType ''LoginResult
-makeRefineType ''Logout
-makeRefineType ''LogoutResult

@@ -259,7 +259,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
   describe "User handling" $ do
     let doCreate sess = runWaiBody sess $ postJSON createUserUri (CreateUser userName "mail@email.com" userPass)
         doLogin sess = runWaiRsp sess . postJSON loginUri
-        doLogout sess = runWaiRsp sess $ postJSON logoutUri Logout
+        doLogout sess = runWaiRsp sess $ postJSON logoutUri ()
 
         checkCookie resp = simpleHeaders resp `shouldSatisfy`
             any (\(k, v) -> k == "Set-Cookie" && refineCookieName `SBS.isPrefixOf` v)

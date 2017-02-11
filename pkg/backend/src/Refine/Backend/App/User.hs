@@ -17,7 +17,7 @@ import Refine.Common.Types.User as Refine
 import Refine.Prelude (monadError)
 
 
-login :: Login -> App DB LoginResult
+login :: Login -> App DB ()
 login (Login username (Users.PasswordPlain -> password)) = do
   appLog "login"
   let sessionDuration = 1000 :: NominalDiffTime  -- FIXME: move this to
@@ -26,16 +26,14 @@ login (Login username (Users.PasswordPlain -> password)) = do
   userHandle <- view appUserHandle
   session <- maybe (throwError (AppUserNotFound username)) pure
              =<< appIO (Users.authUser userHandle username password sessionDuration)
-  setUserSession (UserSession session)
-  pure LoginSuccess
+  void . setUserSession . UserSession $ session
 
-logout :: Logout -> App DB LogoutResult
-logout _ = do
+logout :: App DB ()
+logout = do
   session <- currentUserSession
   userHandle <- view appUserHandle
   void . appIO $ Users.destroySession userHandle (session ^. unUserSession)
   clearUserSession
-  pure LogoutSuccess
 
 createUser :: CreateUser -> App DB Refine.User
 createUser (CreateUser name email password) = do

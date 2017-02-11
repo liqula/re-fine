@@ -81,7 +81,7 @@ type SCreateUser
   = "r" :> "user" :> "create" :> ReqBody '[JSON] CreateUser :> Post '[JSON] User
 
 type SLogin
-  = "r" :> "user" :> "login" :> ReqBody '[JSON] Login :> Post '[JSON] LoginResult
+  = "r" :> "user" :> "login" :> ReqBody '[JSON] Login :> Post '[JSON] ()
 
 type SLogout
-  = "r" :> "user" :> "logout" :> ReqBody '[JSON] Logout :> Post '[JSON] LogoutResult
+  = "r" :> "user" :> "logout" :> Post '[JSON] ()
