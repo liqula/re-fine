@@ -9,12 +9,15 @@ import           Control.Exception (throwIO, ErrorCall(ErrorCall))
 import           Control.Lens (makeLenses, makePrisms, (&), (^.))
 import           Data.Aeson (FromJSON, ToJSON, object, withObject, (.=), (.:))
 import           Data.Default (Default(..))
-import           Data.String.Conversions (cs)
+import           Data.Maybe (isNothing)
+import           Data.String.Conversions (ST, cs, (<>))
 import qualified Data.Yaml as Yaml
 import           Data.Yaml (encode)
 import           GHC.Generics
 import           Network.Wai.Handler.Warp as Warp
 import           Text.Read (readMaybe)
+
+import           Refine.Prelude (Timespan(..))
 
 
 -- FIXME: once we know what we need where, we can refactor this type into a tree of records, and
@@ -28,6 +31,8 @@ data Config = Config
   , _cfgPoolSize      :: Int            -- ^ The size of the connection pool towards the database
   , _cfgFileServeRoot :: Maybe FilePath -- ^ Directory for the static files
   , _cfgWarpSettings  :: WarpSettings   -- ^ check test suite for examples of what can be put in here.
+  , _cfgCsrfSecret    :: ST             -- ^ The secret for csrf
+  , _cfgSessionLength :: Timespan       -- ^ Session cookie life expectancy
   }
   deriving (Eq, Show, Generic, FromJSON, ToJSON)
 
@@ -45,6 +50,8 @@ instance Default Config where
     , _cfgPoolSize      = 5
     , _cfgFileServeRoot = Just "../frontend/js-build"
     , _cfgWarpSettings  = def
+    , _cfgCsrfSecret    = "CSRF-SECRET"
+    , _cfgSessionLength = TimespanHours 72
     }
 
 instance Default DBKind where
@@ -106,16 +113,25 @@ initConfig :: Maybe FilePath -> IO Config
 initConfig mfp = do
   result <- maybe (pure $ pure def) Yaml.decodeFileEither mfp
   cfg <- case result of
-    Left msg -> throwIO . ErrorCall . show $ msg
+    Left msg -> throwIO . ErrorCall $ show msg <> explainConfig def "\n\nTry the following default config" False
     Right v  -> pure v
-  putStrLn $ unlines
-    [ "config:"
-    , "------------------------------"
-    , cs (encode cfg)
-    , "------------------------------"
-    , ""
-    , "If you want to change this, copy the lines between the dashes into `me.yaml` and"
-    , "invoke the server as `refine me.yaml`."
-    , ""
-    ]
+  putStrLn $ explainConfig cfg
+    (maybe "Using default config" (\fp -> "Using config from " <> show fp) mfp)
+    (isNothing mfp)
   pure cfg
+
+
+explainConfig :: Config -> String -> Bool -> String
+explainConfig cfg intro mentionServerConf = unlines $
+  [ intro <> ":"
+  , "------------------------------"
+  , cs (encode cfg)
+  , "------------------------------"
+  , ""
+  ] <>
+  if mentionServerConf
+    then [ "You can copy the yaml code between the lines above into 'server.conf',"
+         , "edit to your liking, and pass it as first argument to the server."
+         , ""
+         ]
+    else []

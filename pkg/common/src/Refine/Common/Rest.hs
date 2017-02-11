@@ -36,6 +36,9 @@ type RefineAPI =
   :<|> SAddAnswer
   :<|> SAddDiscussion
   :<|> SAddStatement
+  :<|> SCreateUser
+  :<|> SLogin
+  :<|> SLogout
 
 
 type SListVDocs
@@ -73,3 +76,12 @@ type SAddDiscussion
 type SAddStatement
   = "r" :> "statement" :> "reply" :> Capture "onstatementid" (ID Statement) :> ReqBody '[JSON] (Create Statement)
     :> Post '[JSON] CompositeDiscussion
+
+type SCreateUser
+  = "r" :> "user" :> "create" :> ReqBody '[JSON] CreateUser :> Post '[JSON] User
+
+type SLogin
+  = "r" :> "user" :> "login" :> ReqBody '[JSON] Login :> Post '[JSON] ()
+
+type SLogout
+  = "r" :> "user" :> "logout" :> Post '[JSON] ()

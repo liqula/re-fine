@@ -33,9 +33,10 @@ import GHC.Generics (Generic)
 import Refine.Backend.Database
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
+import Refine.Backend.Types
 import Refine.Backend.User.Core
 import Refine.Common.VDoc.HTML (ChunkRangeError(..))
-import Refine.Prelude (monadError)
+import Refine.Prelude (monadError, Timespan)
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -43,23 +44,27 @@ type RunDB db   = db      :~> ExceptT DBError      IO
 type RunDocRepo = DocRepo :~> ExceptT DocRepoError IO
 
 data AppContext db = AppContext
-  { _appRunDB      :: RunDB db
-  , _appRunDocRepo :: RunDocRepo
-  , _appLogger     :: Logger
-  , _appUserHandle :: UserHandle
+  { _appRunDB         :: RunDB db
+  , _appRunDocRepo    :: RunDocRepo
+  , _appLogger        :: Logger
+  , _appUserHandle    :: UserHandle
+  , _appCsrfSecret    :: CsrfSecret
+  , _appSessionLength :: Timespan
   }
 
-newtype UserSession = UserSession { _unUserSession :: SessionId }
-  deriving (Eq, Show)
+data AppState = AppState
+  { _appCsrfToken :: Maybe CsrfToken
+  , _appUserState :: AppUserState
+  }
 
 -- | The state of the application depends on the user state.
 data AppUserState
-  = ActiveUser UserSession
-  | NonActiveUser
+  = UserLoggedIn UserSession
+  | UserLoggedOut
   deriving (Eq, Show)
 
 makeLenses ''AppContext
-makeLenses ''UserSession
+makeLenses ''AppState
 
 -- | Application monad handles
 -- * database connection
@@ -68,14 +73,14 @@ makeLenses ''UserSession
 -- * user authentication (login)
 -- * user authorization (groups)
 -- * use one db connection in one run, commit the result at the end.
-newtype App db a = App { unApp :: StateT AppUserState (ReaderT (AppContext db) (ExceptT AppError IO)) a }
+newtype App db a = App { unApp :: StateT AppState (ReaderT (AppContext db) (ExceptT AppError IO)) a }
   deriving
     ( Functor
     , Applicative
     , Monad
     , MonadReader (AppContext db)
     , MonadError AppError
-    , MonadState AppUserState
+    , MonadState AppState
     )
 
 data AppError
@@ -86,6 +91,7 @@ data AppError
   | AppUserNotFound ST
   | AppUserNotLoggedIn
   | AppUserCreationError ST
+  | AppCsrfError ST
   deriving (Show, Generic)
 
 makeRefineType ''AppError

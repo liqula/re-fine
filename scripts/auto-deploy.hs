@@ -42,7 +42,7 @@ main = do
 
   mvar <- newMVar Nothing
   bump mvar
-  let resp = responseLBS status201 [] "refreshing refine backend, please bear with us...\n"
+  let resp = responseLBS status201 [] "server updated and restarted!\n"
       app _req respond = bump mvar >> respond resp
   run port app
 

@@ -20,7 +20,9 @@ dependencies:
   - aeson-pretty
   - base
   - bytestring
+  - cookie
   - containers
+  - cryptonite
   - darcs
   - data-default
   - directory
@@ -44,6 +46,7 @@ dependencies:
   - refine-prelude
   - resourcet
   - servant
+  - servant-cookie-session
   - servant-server
   - string-conversions
   - temporary
@@ -81,11 +84,11 @@ tests:
       - hspec
       - hspec-core
       - hspec-discover
-      - hspec-wai
       - http-api-data
       - http-types
       - QuickCheck
       - quickcheck-instances
       - temporary
       - transformers
+      - wai
       - wai-extra

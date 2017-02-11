@@ -23,7 +23,7 @@
 module Refine.Backend.AppSpec where
 
 import           Control.Category ((.))
-import           Control.Lens ((^.), (%=), at, makeLenses, view)
+import           Control.Lens ((^.), (%=), at, to, makeLenses, view)
 import           Control.Monad.State
 import           Control.Natural (($$))
 import           Data.Default (def)
@@ -43,16 +43,18 @@ import           Test.QuickCheck.Monadic
 
 import Refine.Backend.App         as App
 import Refine.Backend.App.MigrateDB
-import Refine.Backend.App.User    as App
 import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
+import Refine.Backend.Types
 import Refine.Common.Types.Prelude
+import Refine.Common.Types.User
 import Refine.Common.Types.VDoc
 import Refine.Common.Test.Arbitrary (arbitraryRawVDocVersion)
+import Refine.Prelude
 
 
 data Cmd where
@@ -72,8 +74,8 @@ initVDocs = VDocs Map.empty 0
 makeLenses ''VDocs
 
 isActiveUser :: AppUserState -> Bool
-isActiveUser (ActiveUser _) = True
-isActiveUser _              = False
+isActiveUser (UserLoggedIn _) = True
+isActiveUser UserLoggedOut    = False
 
 -- Parallel run is not an option here, it could make fail the build at the cleanup stage.
 spec :: Spec
@@ -88,17 +90,17 @@ spec = do
       -- of the term under test.
       () <- runner $ do
 
-        App.createUser "user" "user@example.com" "password"
-        userState0 <- get
-        appIO $ userState0 `shouldBe` NonActiveUser
+        void $ App.createUser (CreateUser "user" "user@example.com" "password")
+        userState0 <- gets (view appUserState)
+        appIO $ userState0 `shouldBe` UserLoggedOut
 
-        App.login "user" "password"
-        userState1 <- get
+        void $ App.login (Login "user" "password")
+        userState1 <- gets (view appUserState)
         appIO $ userState1 `shouldSatisfy` isActiveUser
 
-        App.logout
-        userState2 <- get
-        appIO $ userState2 `shouldBe` NonActiveUser
+        void App.logout
+        userState2 <- gets (view appUserState)
+        appIO $ userState2 `shouldBe` UserLoggedOut
 
       pure ()
 
@@ -124,6 +126,8 @@ createAppRunner = do
         , _cfgPoolSize      = 5
         , _cfgFileServeRoot = Nothing
         , _cfgWarpSettings  = def
+        , _cfgCsrfSecret    = "CSRF-SECRET"
+        , _cfgSessionLength = TimespanSecs 30
         }
 
   createDirectoryIfMissing True $ cfg ^. cfgReposRoot
@@ -131,7 +135,8 @@ createAppRunner = do
   runDRepo <- createRunRepo cfg
   let logger = Logger . const $ pure ()
       runner :: forall b . App DB b -> IO b
-      runner m = (natThrowError . runApp runDb runDRepo logger userHandler) $$ m
+      runner m = (natThrowError . runApp runDb runDRepo logger userHandler
+                                          (cfg ^. cfgCsrfSecret . to CsrfSecret) (cfg ^. cfgSessionLength)) $$ m
 
   void $ runner migrateDB
   pure (runner, testDb, reposRoot)

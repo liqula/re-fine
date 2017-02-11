@@ -26,6 +26,7 @@ module Refine.Prelude
   , showTimespan
   , timespanUs
   , timespanDays
+  , timespanToNominalDiffTime
   , diffTimestamps
   , addTimespan
   , fromNow
@@ -132,13 +133,16 @@ timespanDays :: Timespan -> Int
 timespanDays = (`div` (1000 * 1000 * 3600 * 24)) . timespanUs
 
 
+timespanToNominalDiffTime :: Timespan -> NominalDiffTime
+timespanToNominalDiffTime tdiff = fromRational (fromIntegral (timespanUs tdiff) / (1000 * 1000) :: Rational)
+
 diffTimestamps :: Timestamp -> Timestamp -> Timespan
 diffTimestamps (Timestamp tfrom) (Timestamp ttill) = TimespanUs .
     round $ (tfrom `diffUTCTime` ttill) * (1000 * 1000)
 
 addTimespan :: Timespan -> Timestamp -> Timestamp
 addTimespan tdiff (Timestamp tfrom) = Timestamp $
-    fromRational (fromIntegral (timespanUs tdiff) / (1000 * 1000) :: Rational) `addUTCTime` tfrom
+    timespanToNominalDiffTime tdiff `addUTCTime` tfrom
 
 fromNow :: Timestamp -> Iso' Timestamp Timespan
 fromNow now = iso (`diffTimestamps` now) (`addTimespan` now)

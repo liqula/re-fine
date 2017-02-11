@@ -18,6 +18,10 @@ packages:
     git: https://github.com/bgamari/html-parse.git
     commit: ebdd5fa3fa5a0d3c22602bec15059e821ad10ec4
   extra-dep: true
+- location:
+    git: https://github.com/zerobuzz/servant-cookie-session.git
+    commit: 8af4157e9b73c817ad67f86ad5a6d089ba398a3d
+  extra-dep: true
 
 extra-deps:
 - basic-sop-0.2.0.0
