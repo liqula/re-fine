@@ -97,7 +97,7 @@ spec = do
         userState1 <- gets (view appUserState)
         appIO $ userState1 `shouldSatisfy` isActiveUser
 
-        void $ App.logout
+        void App.logout
         userState2 <- gets (view appUserState)
         appIO $ userState2 `shouldBe` UserLoggedOut
 
