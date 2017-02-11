@@ -117,11 +117,8 @@ mkBackend cfg = do
               (toServantError . cnToSn app)
               refineApi
 
-  -- FIXME: The application from the srvApp got titched together with the
-  -- application from the maybeServeDirectory.
-  -- To achive cookie and csrf based file protection refactoring of the
-  -- Servant.Cookie.Session would be necessary. It should use extra arguments
-  -- to define the end points
+  -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
+  -- may need to refactor, e.g. by using extra arguments in the end point types.
   let srv = Servant.serve (Proxy :: Proxy (Raw :<|> Raw)) $
               srvApp :<|> maybeServeDirectory (cfg ^. cfgFileServeRoot)
 
