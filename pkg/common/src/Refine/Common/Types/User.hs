@@ -28,11 +28,12 @@ import Refine.Prelude.TH
 
 
 type Username = ST
+type Email    = ST
 type Password = ST
 
 data CreateUser = CreateUser
   { _cuName :: Username
-  , _cuMail :: ST
+  , _cuMail :: Email
   , _cuPwd  :: Password
   }
   deriving (Eq, Ord, Show, Read, Generic)
@@ -48,8 +49,8 @@ newtype User = User
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Login = Login
-  { _loginUserID :: Username
-  , _loginPwd    :: Password
+  { _loginUsername :: Username
+  , _loginPassword :: Password
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
