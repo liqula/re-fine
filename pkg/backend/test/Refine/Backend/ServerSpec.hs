@@ -32,14 +32,15 @@ import qualified Data.ByteString as SBS
 import           Data.Default (def)
 import           Data.Proxy (Proxy(Proxy))
 import           Data.Map (elems)
-import           Data.String.Conversions (SBS, cs, (<>))
+import           Data.String.Conversions (SBS, LBS, cs, (<>))
 import           Network.HTTP.Types.Status (Status(statusCode))
+import           Network.HTTP.Types (Method, Header, methodGet)
 import           Network.URI (URI, uriToString)
-import           Network.Wai.Test (SResponse(..))
+import           Network.Wai (requestMethod, requestHeaders, defaultRequest)
+import           Network.Wai.Test (SRequest(..), SResponse(..))
+import qualified Network.Wai.Test as Wai
 import           Servant.Utils.Links (safeLink)
 import           Test.Hspec
-import           Test.Hspec.Wai (get, request)
-import qualified Test.Hspec.Wai.Internal as Wai
 
 import Refine.Backend.App as App
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
@@ -54,22 +55,22 @@ import Refine.Common.Types
 
 -- * machine room
 
-runWai :: Backend -> Wai.WaiSession a -> IO a
-runWai sess = Wai.withApplication (backendServer sess)
+runWai :: Backend -> Wai.Session a -> IO a
+runWai sess m = Wai.runSession m (backendServer sess)
 
 -- | Call 'runWaiBodyE' and throw an error if the expected type cannot be read, discard the
 -- response, keep only the body.
-runWaiBody :: FromJSON a => Backend -> Wai.WaiSession SResponse -> IO a
+runWaiBody :: FromJSON a => Backend -> Wai.Session SResponse -> IO a
 runWaiBody sess = fmap fst . runWaiBodyRsp sess
 
 -- | Call 'runWaiBodyE' and throw an error if the expected type cannot be read.
-runWaiBodyRsp :: FromJSON a => Backend -> Wai.WaiSession SResponse -> IO (a, SResponse)
+runWaiBodyRsp :: FromJSON a => Backend -> Wai.Session SResponse -> IO (a, SResponse)
 runWaiBodyRsp sess = errorOnLeft . runWaiBodyE sess
 
 -- | Run a rest call and parse the body.
-runWaiBodyE :: FromJSON a => Backend -> Wai.WaiSession SResponse -> IO (Either String (a, SResponse))
+runWaiBodyE :: FromJSON a => Backend -> Wai.Session SResponse -> IO (Either String (a, SResponse))
 runWaiBodyE sess m = do
-  resp <- Wai.withApplication (backendServer sess) m
+  resp <- runWai sess m
   pure $ case eitherDecode $ simpleBody resp of
     Left err -> Left $ unwords [show err, show (simpleHeaders resp), cs (simpleBody resp)]
     Right x  -> Right (x, resp)
@@ -103,8 +104,18 @@ sampleCreateVDoc = CreateVDoc
 respCode :: SResponse -> Int
 respCode = statusCode . simpleStatus
 
-postJSON :: (ToJSON a) => SBS -> a -> Wai.WaiSession SResponse
-postJSON path json = request "POST" path [("Content-Type", "application/json")] (encode json)
+get :: SBS -> Wai.Session SResponse
+get path = request methodGet path [] ""
+
+post :: (ToJSON a) => SBS -> a -> Wai.Session SResponse
+post path json = request "POST" path [("Content-Type", "application/json")] (encode json)
+
+-- | This is from hspec-wai, but we modified it to work on 'Wai.Session' directly.  'WaiSession'
+-- does not keep the cookies in the 'Session' between requests.
+request :: Method -> SBS -> [Header] -> LBS -> Wai.Session SResponse
+request method path headers body = Wai.srequest $ SRequest req body
+  where
+    req = Wai.setPath defaultRequest {requestMethod = method, requestHeaders = headers} path
 
 
 -- * endpoints
@@ -172,43 +183,43 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
   describe "sCreateVDoc" $ do
     it "stores a vdoc in the db" $ \sess -> do
-      fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
+      fe :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
       be :: CompositeVDoc <- runDB      sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       fe `shouldBe` be
 
   describe "sAddNote" $ do
     it "stores note with full-document chunk range" $ \sess -> do
-      fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
+      fe :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
       fn :: Note          <- runWaiBody sess $
-        postJSON
+        post
           (addNoteUri (fe ^. compositeVDocRepo . vdocHeadEdit))
           (CreateNote "[note]" True (CreateChunkRange Nothing Nothing))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       be ^. compositeVDocNotes . to elems `shouldContain` [fn]
 
     it "stores note with non-trivial valid chunk range" $ \sess -> do
-      fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
+      fe :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
       fn :: Note          <- runWaiBody sess $
         let cp1, cp2 :: ChunkPoint
             cp1 = ChunkPoint (DataUID 1) 0
             cp2 = ChunkPoint (DataUID 1) 1
-        in postJSON
+        in post
           (addNoteUri (fe ^. compositeVDocRepo . vdocHeadEdit))
           (CreateNote "[note]" True (CreateChunkRange (Just cp1) (Just cp2)))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       be ^. compositeVDocNotes . to elems `shouldContain` [fn]
 
     it "fails with error on non-trivial *invalid* chunk range" $ \sess -> do
-      vdoc :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
+      vdoc :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
       resp :: SResponse <- runWai sess $
         let cp1, cp2 :: ChunkPoint
             cp1 = ChunkPoint (DataUID 1) 0
             cp2 = ChunkPoint (DataUID 100) 100
-        in postJSON
+        in post
           (addNoteUri (vdoc ^. compositeVDocRepo . vdocHeadEdit))
           (CreateNote "[note]" True (CreateChunkRange (Just cp1) (Just cp2)))
 
-      statusCode (simpleStatus resp) `shouldBe` 500  -- probably 500 is a bit harsh, but that's what we get.
+      respCode resp `shouldBe` 500  -- probably 500 is a bit harsh, but that's what we get.
       cs (simpleBody resp) `shouldContain` ("ChunkRangeBadDataUID" :: String)
 
       vdoc' :: CompositeVDoc <- runDB sess $ getCompositeVDoc (vdoc ^. compositeVDoc . vdocID)
@@ -216,9 +227,9 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
   describe "sAddDiscussion" $ do
     it "stores discussion with no ranges" $ \sess -> do
-      fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
+      fe :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
       fn :: CompositeDiscussion <- runWaiBody sess $
-        postJSON
+        post
           (addDiscussionUri (fe ^. compositeVDocRepo . vdocHeadEdit))
           (CreateDiscussion "[discussion initial statement]" True (CreateChunkRange Nothing Nothing))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
@@ -230,9 +241,9 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
   describe "sAddEdit" $ do
     let setup sess = do
-          fe :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
+          fe :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
           fp :: Edit          <- runWaiBody sess $
-            postJSON
+            post
               (addEditUri (fe ^. compositeVDocRepo . vdocHeadEdit))
               (CreateEdit "new edit" (CreateChunkRange Nothing Nothing) (vdocVersionFromST "[new vdoc version]"))
           pure (fe, fp)
@@ -252,9 +263,9 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
         be ^. compositeVDocEdits . to elems`shouldContain` [fp]
 
   describe "User handling" $ do
-    let doCreate = postJSON createUserUri (CreateUser userName "mail@email.com" userPass)
-        doLogin = postJSON loginUri
-        doLogout = postJSON logoutUri ()
+    let doCreate = post createUserUri (CreateUser userName "mail@email.com" userPass)
+        doLogin = post loginUri
+        doLogout = post logoutUri ()
 
         checkCookie resp = simpleHeaders resp `shouldSatisfy`
             any (\(k, v) -> k == "Set-Cookie" && refineCookieName `SBS.isPrefixOf` v)
@@ -273,24 +284,24 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       context "with valid credentials" $ do
         it "works (and returns the cookie)" $ \sess -> do
           resp <- runWai sess $ doCreate >> doLogin (Login userName userPass)
-          statusCode (simpleStatus resp) `shouldBe` 200
+          respCode resp `shouldBe` 200
           checkCookie resp
 
       context "with invalid credentials" $ do
         it "works (and returns the cookie)" $ \sess -> do
           resp <- runWai sess $ doCreate >> doLogin (Login userName "")
-          statusCode (simpleStatus resp) `shouldBe` 500  -- (yes, i know, this should not be internal error.)
+          respCode resp `shouldBe` 500  -- (yes, i know, this should not be internal error.)
           checkCookie resp
 
     describe "logout" $ do
       context "logged in" $ do
         it "works (and returns the cookie)" $ \sess -> do
           resp <- runWai sess $ doCreate >> doLogin (Login userName userPass) >> doLogout
-          statusCode (simpleStatus resp) `shouldBe` 200
+          respCode resp `shouldBe` 200
           checkCookie resp
 
       context "logged out" $ do
         it "works (and returns the cookie)" $ \sess -> do
           resp <- runWai sess $ doCreate >> doLogout
-          statusCode (simpleStatus resp) `shouldBe` 200
+          respCode resp `shouldBe` 200
           checkCookie resp
