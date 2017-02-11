@@ -22,16 +22,15 @@
 
 module Refine.Backend.ServerSpec where
 
-import           Control.Arrow ((***), (>>>))
 import           Control.Exception (throwIO, ErrorCall(ErrorCall))
 import           Control.Lens ((^.), (.~), (&), to)
 import           Control.Monad.Trans.Except (runExceptT)
 import           Control.Monad (void)
 import           Control.Natural (run)
 import           Data.Aeson (FromJSON, ToJSON, decode, eitherDecode, encode)
+import qualified Data.ByteString as SBS
 import           Data.Default (def)
 import           Data.Proxy (Proxy(Proxy))
-import           Data.List (isPrefixOf)
 import           Data.Map (elems)
 import           Data.String.Conversions (SBS, cs, (<>))
 import           Network.HTTP.Types.Status (Status(statusCode))
@@ -58,7 +57,8 @@ import Refine.Common.Types
 runWai :: Backend -> Wai.WaiSession a -> IO a
 runWai sess = Wai.withApplication (backendServer sess)
 
--- | Call 'runWaiBodyE' and throw an error if the expected type cannot be read, discards the response
+-- | Call 'runWaiBodyE' and throw an error if the expected type cannot be read, discard the
+-- response, keep only the body.
 runWaiBody :: FromJSON a => Backend -> Wai.WaiSession SResponse -> IO a
 runWaiBody sess = fmap fst . runWaiBodyRsp sess
 
@@ -74,9 +74,9 @@ runWaiBodyE sess m = do
     Left err -> Left $ unwords [show err, show (simpleHeaders resp), cs (simpleBody resp)]
     Right x  -> Right (x, resp)
 
--- | Run a rest call and return the naked request.
-runWaiBodyReq :: Backend -> Wai.WaiSession SResponse -> IO SResponse
-runWaiBodyReq sess m = do
+-- | Run a rest call and return the naked response.
+runWaiRsp :: Backend -> Wai.WaiSession SResponse -> IO SResponse
+runWaiRsp sess m = do
   Wai.withApplication (backendServer sess) m
 
 -- | Call 'runDB'' and crash on 'Left'.
@@ -205,7 +205,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
     it "fails with error on non-trivial *invalid* chunk range" $ \sess -> do
       vdoc :: CompositeVDoc <- runWaiBody sess $ postJSON createVDocUri sampleCreateVDoc
-      resp :: SResponse <- runWaiBodyReq sess $
+      resp :: SResponse <- runWaiRsp sess $
         let cp1, cp2 :: ChunkPoint
             cp1 = ChunkPoint (DataUID 1) 0
             cp2 = ChunkPoint (DataUID 100) 100
@@ -257,11 +257,45 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
         be ^. compositeVDocEdits . to elems`shouldContain` [fp]
 
   describe "User handling" $ do
-    context "Create, login, logout" $ do
+    let doCreate sess = runWaiBody sess $ postJSON createUserUri (CreateUser userName "mail@email.com" userPass)
+        doLogin sess = runWaiRsp sess . postJSON loginUri
+        doLogout sess = runWaiRsp sess $ postJSON logoutUri Logout
+
+        checkCookie resp = simpleHeaders resp `shouldSatisfy`
+            any (\(k, v) -> k == "Set-Cookie" && refineCookieName `SBS.isPrefixOf` v)
+
+        userName = "user"
+        userPass = "password"
+
+    describe "create" $ do
       it "works" $ \sess -> do
-        _fu :: User <- runWaiBody sess $ postJSON createUserUri (CreateUser "user" "mail@email.com" "password")
-        (_li, rsp) :: (LoginResult, SResponse) <- runWaiBodyRsp sess $ postJSON loginUri (Login "user" "password")
-        simpleHeaders rsp `shouldSatisfy` any (("Set-Cookie"==) *** (isPrefixOf @Char (cs refineCookieName) . cs) >>> uncurry (&&))
-        pendingWith "Sessions are not transmitted to requests."
-        _lo :: LogoutResult <- runWaiBody sess $ postJSON logoutUri Logout
-        pure ()
+        doCreate sess `shouldReturn` User 1
+
+      it "is secure" $ \_ -> do
+        pendingWith "needs design & implementation: what makes a create requests legit?"
+
+    describe "login" $ do
+      context "with valid credentials" $ do
+        it "works (and returns the cookie)" $ \sess -> do
+          resp <- doCreate sess >> doLogin sess (Login userName userPass)
+          statusCode (simpleStatus resp) `shouldBe` 200
+          checkCookie resp
+
+      context "with invalid credentials" $ do
+        it "works (and returns the cookie)" $ \sess -> do
+          resp <- doCreate sess >> doLogin sess (Login userName "")
+          statusCode (simpleStatus resp) `shouldBe` 500  -- (yes, i know, this should not be internal error.)
+          checkCookie resp
+
+    describe "logout" $ do
+      context "logged in" $ do
+        it "works (and returns the cookie)" $ \sess -> do
+          resp <- doCreate sess >> doLogin sess (Login userName userPass) >> doLogout sess
+          statusCode (simpleStatus resp) `shouldBe` 200
+          checkCookie resp
+
+      context "logged out" $ do
+        it "works (and returns the cookie)" $ \sess -> do
+          resp <- doCreate sess >> doLogout sess
+          statusCode (simpleStatus resp) `shouldBe` 200
+          checkCookie resp
