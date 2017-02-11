@@ -90,13 +90,14 @@ stripAttr _ [] = []
 testAddOffsetsToForest :: QQ.Document -> Expectation
 testAddOffsetsToForest doc =
   let forest = toTrimmedTokenForest doc
-  in canonicalizeAttrsForest (addOffsetsToForest (stripAttrForest "data-offset" forest)) `shouldBe` canonicalizeAttrsForest forest
+  in canonicalizeAttrsForest (addOffsetsToForest (stripAttrForest "data-offset" forest))
+      `shouldBe` canonicalizeAttrsForest forest
 
 
 spec :: Spec
 spec = parallel $ do
-    describe "### [test qq -- should be moved further down in this module]" $ do
-      it "works" $ do
+    describe "meta-test for QQ.html" $ do
+      it "works (1)." $ do
         let forest = toTrimmedTokenForest
               [QQ.html|<span>
                          ab c
@@ -104,7 +105,7 @@ spec = parallel $ do
                       |]
         forest `shouldBe` [Node (TagOpen "span" []) [Node (ContentText "ab c") []]]
 
-      it "also works" $ do
+      it "works (2)." $ do
         let forest = toTrimmedTokenForest [QQ.html|
               <div data-uid="1">
                 1234
@@ -123,7 +124,7 @@ spec = parallel $ do
 
         stripAttrForest "data-offset" forest `shouldNotBe` forest
 
-      it "also works" $ do
+      it "works (3)." $ do
         testAddOffsetsToForest [QQ.html|
               <div data-uid="1" data-offset="0">
                 1234
@@ -182,7 +183,7 @@ spec = parallel $ do
 
 
     describe "addOffsetsToForest" $ do
-      it "### for every mark tag, sets offset to the length of the text bewteen it and first non-mark open tag." . property $ do
+      it "for every mark tag, sets offset to the length of the text bewteen it and first non-mark open tag." . property $ do
         \(VersWithRanges vers rs) -> do
           let forest = addOffsetsToForest . _unVDocVersion $ insertMarks rs vers
 
@@ -198,9 +199,6 @@ spec = parallel $ do
                     checkMarkNode attrs'
                   checkMarkNode [] =
                     ["no data-offset in mark token: " <> show (off, tok)]
-
-            -- TODO: has value.
-
 
               check off (tree@(Node tok@(TagOpen _ attrs) children) : siblings) =  -- assumed to have data-uid.
                   check 0 children <>
@@ -335,15 +333,17 @@ spec = parallel $ do
     describe "addOffsetsToTree" $ do
       it "sets an offset of 0 if we are not on a mark tag" $ do
         -- the second case is impossible if input is canonicalized.
-        addOffsetsToTree 50 (Node openTagWithUID [])    `shouldBe` (Node (TagOpen "tag" [Attr "data-offset" "0", Attr "data-uid" "77"]) [], 0)
-        addOffsetsToTree 50 (Node openTagWithoutUID []) `shouldBe` (Node (TagOpen "tag" [Attr "data-offset" "0"]) [], 0)
+        addOffsetsToTree 50 (Node openTagWithUID [])    `shouldBe`
+          (Node (TagOpen "tag" [Attr "data-offset" "0", Attr "data-uid" "77"]) [], 0)
+        addOffsetsToTree 50 (Node openTagWithoutUID []) `shouldBe`
+          (Node (TagOpen "tag" [Attr "data-offset" "0"]) [], 0)
 
       it "sets the passed offset if we are on a mark tag" $ do
-        addOffsetsToTree 50 (Node openMarkTag []) `shouldBe` (Node (TagOpen "mark" [Attr "data-offset" "50"]) [], 0)
+        addOffsetsToTree 50 (Node openMarkTag []) `shouldBe`
+          (Node (TagOpen "mark" [Attr "data-offset" "50"]) [], 0)
 
       it "returns the length of the node" $ do
-        addOffsetsToTree 50 (Node openMarkTag [Node (ContentText "some text") []]) `shouldBe` (Node (TagOpen "mark" [Attr "data-offset" "50"]) [Node (ContentText "some text") []], 9)
-        addOffsetsToTree 50 (Node openTagWithoutUID [Node (ContentText "some text") []]) `shouldBe` (Node (TagOpen "tag" [Attr "data-offset" "0"]) [Node (ContentText "some text") []], 9)
-
--- TODO we need this test somewhere: Generated marks will only contain text and marks. They will never be wrapped around
--- other DOM elements. (i.e. they are only inserted at the leaves of the tree)
+        addOffsetsToTree 50 (Node openMarkTag [Node (ContentText "some text") []]) `shouldBe`
+          (Node (TagOpen "mark" [Attr "data-offset" "50"]) [Node (ContentText "some text") []], 9)
+        addOffsetsToTree 50 (Node openTagWithoutUID [Node (ContentText "some text") []]) `shouldBe`
+          (Node (TagOpen "tag" [Attr "data-offset" "0"]) [Node (ContentText "some text") []], 9)

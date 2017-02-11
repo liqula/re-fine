@@ -32,7 +32,7 @@ module Refine.Common.VDoc.HTML.Core
 
     -- * pretokens
   , PreToken(..), DataChunkID, OwnerKind, runPreToken, dropPreTokens
-  , PreToken', PreToken''(..), unPreToken''
+  , PreToken', PreToken''(..), runPreToken''
 
     -- * misc
   , atNode, atToken, atPreToken
@@ -99,9 +99,9 @@ type PreToken' = (DataChunkID, OwnerKind)
 data PreToken'' = PreMarkOpen'' DataChunkID OwnerKind | PreMarkClose'' DataChunkID
   deriving (Show)
 
-unPreToken'' :: PreToken'' -> PreToken
-unPreToken'' (PreMarkOpen'' n o) = PreMarkOpen n o
-unPreToken'' (PreMarkClose'' n)  = PreMarkClose n
+runPreToken'' :: PreToken'' -> PreToken
+runPreToken'' (PreMarkOpen'' n o) = PreMarkOpen n o
+runPreToken'' (PreMarkClose'' n)  = PreMarkClose n
 
 
 runPreToken :: PreToken -> Token
