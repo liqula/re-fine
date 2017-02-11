@@ -36,7 +36,7 @@ import Refine.Backend.Logger
 import Refine.Backend.Types
 import Refine.Backend.User.Core
 import Refine.Common.VDoc.HTML (ChunkRangeError(..))
-import Refine.Prelude (monadError)
+import Refine.Prelude (monadError, Timespan)
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -44,11 +44,12 @@ type RunDB db   = db      :~> ExceptT DBError      IO
 type RunDocRepo = DocRepo :~> ExceptT DocRepoError IO
 
 data AppContext db = AppContext
-  { _appRunDB      :: RunDB db
-  , _appRunDocRepo :: RunDocRepo
-  , _appLogger     :: Logger
-  , _appUserHandle :: UserHandle
-  , _appCsrfSecret :: CsrfSecret
+  { _appRunDB         :: RunDB db
+  , _appRunDocRepo    :: RunDocRepo
+  , _appLogger        :: Logger
+  , _appUserHandle    :: UserHandle
+  , _appCsrfSecret    :: CsrfSecret
+  , _appSessionLength :: Timespan
   }
 
 data AppState = AppState

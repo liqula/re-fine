@@ -30,7 +30,7 @@ import Refine.Backend.Config
 import Refine.Backend.DocRepo
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Common.Types.VDoc
-
+import Refine.Prelude
 
 
 spec :: Spec
@@ -72,6 +72,7 @@ cfg = Config
   , _cfgFileServeRoot = Nothing
   , _cfgWarpSettings  = def
   , _cfgCsrfSecret    = "CSRF-SECRET"
+  , _cfgSessionLength = TimespanSecs 30
   }
 
 provideRunner :: ActionWith (DocRepo :~> IO) -> IO ()

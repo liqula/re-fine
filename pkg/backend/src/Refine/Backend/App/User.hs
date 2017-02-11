@@ -6,8 +6,8 @@ import           Control.Lens ((^.), view)
 import           Control.Monad (void)
 import           Control.Monad.Except
 import           Control.Monad.State (gets)
+import           Control.Monad.Reader (ask)
 import           Data.String.Conversions (cs)
-import           Data.Time.Clock (NominalDiffTime)
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.Session
@@ -15,15 +15,13 @@ import Refine.Backend.Database.Core (DB)
 import Refine.Backend.Types
 import Refine.Backend.User.Core as Users
 import Refine.Common.Types.User as Refine
-import Refine.Prelude (monadError)
+import Refine.Prelude (monadError, timespanToNominalDiffTime)
 
 
 login :: Login -> App DB ()
 login (Login username (Users.PasswordPlain -> password)) = do
   appLog "login"
-  let sessionDuration = 1000 :: NominalDiffTime  -- FIXME: move this to
-                                                 -- 'Refine.Backend.Config.Config' and store the
-                                                 -- config passed to 'startServer' in the App state.
+  sessionDuration <- timespanToNominalDiffTime . view appSessionLength <$> ask
   userHandle <- view appUserHandle
   session <- maybe (throwError (AppUserNotFound username)) pure
              =<< appIO (Users.authUser userHandle username password sessionDuration)

@@ -108,7 +108,7 @@ mkBackend cfg = do
   runDocRepo <- createRunRepo cfg
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
-      app    = runApp runDb runDocRepo logger userHandler (cfg ^. cfgCsrfSecret . to CsrfSecret)
+      app    = runApp runDb runDocRepo logger userHandler (cfg ^. cfgCsrfSecret . to CsrfSecret) (cfg ^. cfgSessionLength)
   srvApp <- serveAction
               (Proxy :: Proxy RefineAPI)
               (Proxy :: Proxy AppState)

@@ -54,6 +54,7 @@ import Refine.Common.Types.Prelude
 import Refine.Common.Types.User
 import Refine.Common.Types.VDoc
 import Refine.Common.Test.Arbitrary (arbitraryRawVDocVersion)
+import Refine.Prelude
 
 
 data Cmd where
@@ -126,6 +127,7 @@ createAppRunner = do
         , _cfgFileServeRoot = Nothing
         , _cfgWarpSettings  = def
         , _cfgCsrfSecret    = "CSRF-SECRET"
+        , _cfgSessionLength = TimespanSecs 30
         }
 
   createDirectoryIfMissing True $ cfg ^. cfgReposRoot
@@ -133,7 +135,8 @@ createAppRunner = do
   runDRepo <- createRunRepo cfg
   let logger = Logger . const $ pure ()
       runner :: forall b . App DB b -> IO b
-      runner m = (natThrowError . runApp runDb runDRepo logger userHandler (cfg ^. cfgCsrfSecret . to CsrfSecret)) $$ m
+      runner m = (natThrowError . runApp runDb runDRepo logger userHandler
+                                          (cfg ^. cfgCsrfSecret . to CsrfSecret) (cfg ^. cfgSessionLength)) $$ m
 
   void $ runner migrateDB
   pure (runner, testDb, reposRoot)

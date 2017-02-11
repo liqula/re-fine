@@ -16,6 +16,8 @@ import           GHC.Generics
 import           Network.Wai.Handler.Warp as Warp
 import           Text.Read (readMaybe)
 
+import           Refine.Prelude (Timespan(..))
+
 
 -- FIXME: once we know what we need where, we can refactor this type into a tree of records, and
 -- only pass those parts of the config to the respective parts of the code that are actually needed.
@@ -29,6 +31,7 @@ data Config = Config
   , _cfgFileServeRoot :: Maybe FilePath -- ^ Directory for the static files
   , _cfgWarpSettings  :: WarpSettings   -- ^ check test suite for examples of what can be put in here.
   , _cfgCsrfSecret    :: ST             -- ^ The secret for csrf
+  , _cfgSessionLength :: Timespan       -- ^ Session cookie life expectancy
   }
   deriving (Eq, Show, Generic, FromJSON, ToJSON)
 
@@ -47,6 +50,7 @@ instance Default Config where
     , _cfgFileServeRoot = Just "../frontend/js-build"
     , _cfgWarpSettings  = def
     , _cfgCsrfSecret    = "CSRF-SECRET"
+    , _cfgSessionLength = TimespanHours 72
     }
 
 instance Default DBKind where
