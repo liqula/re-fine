@@ -347,6 +347,3 @@ spec = parallel $ do
           (Node (TagOpen "mark" [Attr "data-offset" "50"]) [Node (ContentText "some text") []], 9)
         addOffsetsToTree 50 (Node openTagWithoutUID [Node (ContentText "some text") []]) `shouldBe`
           (Node (TagOpen "tag" [Attr "data-offset" "0"]) [Node (ContentText "some text") []], 9)
-
--- TODO we need this test somewhere: Generated marks will only contain text and marks. They will never be wrapped around
--- other DOM elements. (i.e. they are only inserted at the leaves of the tree)
