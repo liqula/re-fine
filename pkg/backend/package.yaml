@@ -90,4 +90,5 @@ tests:
       - quickcheck-instances
       - temporary
       - transformers
+      - wai
       - wai-extra
