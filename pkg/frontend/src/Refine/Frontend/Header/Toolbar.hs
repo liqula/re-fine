@@ -26,6 +26,9 @@ module Refine.Frontend.Header.Toolbar where
 
 import           React.Flux
 
+import qualified Refine.Frontend.Header.Types as RS
+import qualified Refine.Frontend.Store as RS
+import qualified Refine.Frontend.Types as RS
 import           Refine.Frontend.UtilityWidgets
 
 
@@ -53,7 +56,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       "comment"
                       "new comment"
                       False
-                      (\_ -> [])
+                      (\_ -> RS.dispatch $ RS.HeaderAction RS.ToggleCommentToolbarExtension)
 
           iconButton_ $ IconButtonProps
                       (IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXL)

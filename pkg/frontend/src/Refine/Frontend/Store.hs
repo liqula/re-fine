@@ -41,6 +41,7 @@ import qualified Refine.Common.Types as RT
 import           Refine.Common.VDoc.HTML (insertMoreMarks)
 import           Refine.Frontend.Bubbles.Store (bubblesStateUpdate)
 import           Refine.Frontend.Bubbles.Types
+import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Rest
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
 import           Refine.Frontend.Screen.Types
@@ -76,6 +77,7 @@ instance StoreData GlobalState where
               & gsVDoc                     %~ vdocUpdate transformedAction
               & gsVDocList                 %~ vdocListUpdate transformedAction
               & gsBubblesState             %~ maybe id bubblesStateUpdate (transformedAction ^? _BubblesAction)
+              & gsHeaderState              %~ headerStateUpdate transformedAction
               & gsScreenState              %~ screenStateUpdate transformedAction
 
         consoleLog "New state: " newState

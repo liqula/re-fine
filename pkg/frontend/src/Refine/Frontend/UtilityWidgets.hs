@@ -48,7 +48,7 @@ import           React.Flux
 
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Style
-import           Refine.Frontend.ThirdPartyViews (hammer_)
+-- TODO import           Refine.Frontend.ThirdPartyViews (hammer_)
 
 
 data IconSize
@@ -126,8 +126,12 @@ icon_ props = view icon props mempty
 
 iconButtonWithAlignment :: ReactView IconButtonWithAlignmentProps
 iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
+{- TODO we currently ignore touch device handling because there are some issues with
+ - browsers emitting tap events on click and we don't know how to handle these properly.
+
     let bprops = props ^. iconButtonProps
     hammer_ [on "onTap" $ bprops ^. clickHandler | not (bprops ^. disabled)] $ do
+-}
       iconButtonWithAlignmentCore_ props
 
 iconButtonWithAlignment_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()

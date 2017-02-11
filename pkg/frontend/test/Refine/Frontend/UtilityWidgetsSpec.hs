@@ -198,6 +198,7 @@ TODO these can only be tested once we know how to spy on a pure function in Hask
 
   describe "iconButtonWithAlignment_ component" $ do
     it "wraps hammer around the inner component" $ do
+      pendingWith "We have temporarily removed hammer from the implementation"
       wrapper <- shallow $ iconButtonWithAlignment_
         (IconButtonWithAlignmentProps
           (IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []))

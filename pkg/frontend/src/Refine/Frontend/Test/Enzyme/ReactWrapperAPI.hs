@@ -131,6 +131,7 @@ lengthOfIO wrapper = lengthOf =<< wrapper
 data EventType =
     MouseEnter
   | MouseLeave
+  | Click
   deriving (Show)
 
 instance PToJSVal EventType where

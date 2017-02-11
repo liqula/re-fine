@@ -25,11 +25,16 @@
 
 module Refine.Frontend.Header.ToolbarSpec where
 
-import Test.Hspec
+import           Control.Lens((^.), (&), (%~))
+import           Test.Hspec
+import           React.Flux (getStoreData)
 
-import Refine.Frontend.Test.Enzyme
-import Refine.Frontend.Header.Toolbar
-
+import           Refine.Frontend.Header.Toolbar
+import           Refine.Frontend.Header.Types
+import           Refine.Frontend.Store (refineStore)
+import           Refine.Frontend.Test.Enzyme
+import qualified Refine.Frontend.Test.Enzyme.ReactWrapperAPI as RW
+import           Refine.Frontend.Types
 
 spec :: Spec
 spec = do
@@ -49,6 +54,21 @@ spec = do
     it "contains 1 aligned icon button" $ do
       wrapper <- shallow editToolbar_
       lengthOfIO (find wrapper (StringSelector "IconButtonWithAlignment")) `shouldReturn` (1 :: Int)
+
+    it "toggles the visibility of the comment toolbar extension when the 'new comment' button is clicked" $ do
+      wrapper <- RW.mount editToolbar_
+      -- init the state:
+      globalState0 <- getStoreData refineStore
+      let _ = globalState0 & gsHeaderState . hsCommentToolbarExtensionIsVisible %~ \_ -> False
+      button <- RW.find wrapper (RW.StringSelector ".c-vdoc-toolbar__btn-add-annotation")
+      -- simulate events:
+      _ <- RW.simulate button RW.Click
+      globalState1 <- getStoreData refineStore
+      globalState1 ^. gsHeaderState . hsCommentToolbarExtensionIsVisible `shouldBe` True
+      _ <- RW.simulate button RW.Click
+      globalState2 <- getStoreData refineStore
+      globalState2 ^. gsHeaderState . hsCommentToolbarExtensionIsVisible `shouldBe` False
+
 
   describe "The commentToolbarExtension_ component" $ do
     it "renders an element with the toolbar extension class" $ do

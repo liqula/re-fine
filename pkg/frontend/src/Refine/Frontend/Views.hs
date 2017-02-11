@@ -45,7 +45,8 @@ import           Refine.Frontend.Bubbles.QuickCreate
 import           Refine.Frontend.Bubbles.Types as RS
 import           Refine.Frontend.Header.DocumentHeader ( documentHeader_, DocumentHeaderProps(..) )
 import           Refine.Frontend.Header.Heading ( menuButton_, headerSizeCapture_ )
-import           Refine.Frontend.Header.Toolbar ( editToolbar_, editToolbarExtension_ )
+import           Refine.Frontend.Header.Toolbar ( editToolbar_, commentToolbarExtension_, editToolbarExtension_ )
+import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.Login.Component (login_)
 import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
@@ -75,6 +76,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                     div_ ["className" $= "c-fulltoolbar"] $ do
                         sticky_ [] $ do
                             editToolbar_
+                            commentToolbarExtension_ (rs ^. gsHeaderState . HT.hsCommentToolbarExtensionIsVisible)
                             editToolbarExtension_
 
                 showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsBubblesState . bsNoteIsVisible)
