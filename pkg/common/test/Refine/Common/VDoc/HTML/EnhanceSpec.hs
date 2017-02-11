@@ -199,9 +199,6 @@ spec = parallel $ do
                   checkMarkNode [] =
                     ["no data-offset in mark token: " <> show (off, tok)]
 
-            -- TODO: has value.
-
-
               check off (tree@(Node tok@(TagOpen _ attrs) children) : siblings) =  -- assumed to have data-uid.
                   check 0 children <>
                   checkNonMarkNode attrs <>
