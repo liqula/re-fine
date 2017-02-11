@@ -257,9 +257,9 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
         be ^. compositeVDocEdits . to elems`shouldContain` [fp]
 
   describe "User handling" $ do
-    let doCreate sess = runWaiBody sess $ postJSON createUserUri (CreateUser userName "mail@email.com" userPass)
-        doLogin sess = runWaiRsp sess . postJSON loginUri
-        doLogout sess = runWaiRsp sess $ postJSON logoutUri ()
+    let doCreate = postJSON createUserUri (CreateUser userName "mail@email.com" userPass)
+        doLogin = postJSON loginUri
+        doLogout = postJSON logoutUri ()
 
         checkCookie resp = simpleHeaders resp `shouldSatisfy`
             any (\(k, v) -> k == "Set-Cookie" && refineCookieName `SBS.isPrefixOf` v)
@@ -269,7 +269,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
     describe "create" $ do
       it "works" $ \sess -> do
-        doCreate sess `shouldReturn` User 1
+        runWaiBody sess doCreate `shouldReturn` User 1
 
       it "is secure" $ \_ -> do
         pendingWith "needs design & implementation: what makes a create requests legit?"
@@ -277,25 +277,25 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
     describe "login" $ do
       context "with valid credentials" $ do
         it "works (and returns the cookie)" $ \sess -> do
-          resp <- doCreate sess >> doLogin sess (Login userName userPass)
+          resp <- runWaiRsp sess $ doCreate >> doLogin (Login userName userPass)
           statusCode (simpleStatus resp) `shouldBe` 200
           checkCookie resp
 
       context "with invalid credentials" $ do
         it "works (and returns the cookie)" $ \sess -> do
-          resp <- doCreate sess >> doLogin sess (Login userName "")
+          resp <- runWaiRsp sess $ doCreate >> doLogin (Login userName "")
           statusCode (simpleStatus resp) `shouldBe` 500  -- (yes, i know, this should not be internal error.)
           checkCookie resp
 
     describe "logout" $ do
       context "logged in" $ do
         it "works (and returns the cookie)" $ \sess -> do
-          resp <- doCreate sess >> doLogin sess (Login userName userPass) >> doLogout sess
+          resp <- runWaiRsp sess $ doCreate >> doLogin (Login userName userPass) >> doLogout
           statusCode (simpleStatus resp) `shouldBe` 200
           checkCookie resp
 
       context "logged out" $ do
         it "works (and returns the cookie)" $ \sess -> do
-          resp <- doCreate sess >> doLogout sess
+          resp <- runWaiRsp sess $ doCreate >> doLogout
           statusCode (simpleStatus resp) `shouldBe` 200
           checkCookie resp
