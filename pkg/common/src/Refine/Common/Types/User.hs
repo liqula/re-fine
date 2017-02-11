@@ -38,9 +38,9 @@ data CreateUser = CreateUser
   deriving (Eq, Ord, Show, Read, Generic)
 
 
--- UserIDs are stored in the database, the primary key is used
+-- | 'UserID's are stored in the database, the primary key is used
 -- to identify the user.
-type UserID   = Int64
+type UserID = Int64
 
 newtype User = User
   { _userID :: UserID

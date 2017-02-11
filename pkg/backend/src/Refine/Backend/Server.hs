@@ -36,7 +36,7 @@ import           Control.Monad.Except
 import qualified Control.Natural as CN
 import           Control.Natural (($$))
 import           Data.Aeson (encode)
-import           Data.String.Conversions (cs)
+import           Data.String.Conversions (SBS, cs)
 import           Debug.Trace (traceShow)  -- (please keep this until we have better logging)
 import           Network.Wai.Handler.Warp as Warp
 import           Prelude hiding ((.), id)
@@ -62,7 +62,7 @@ import Refine.Prelude (monadError)
 
 -- * Constants
 
-refineCookieName :: String
+refineCookieName :: SBS
 refineCookieName = "refine"
 
 -- * Initialization
@@ -106,13 +106,13 @@ mkBackend cfg = do
   createDataDirectories cfg
   (runDb, userHandler) <- createDBRunner cfg
   runDocRepo <- createRunRepo cfg
-  let refineCookie = SCS.def { SCS.setCookieName = cs refineCookieName, SCS.setCookiePath = Just "/" }
+  let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
       app    = runApp runDb runDocRepo logger userHandler (cfg ^. cfgCsrfSecret . to CsrfSecret)
   srvApp <- serveAction
               (Proxy :: Proxy RefineAPI)
               (Proxy :: Proxy AppState)
-              refineCookie
+              cookie
               (Nat appIO)
               (toServantError . cnToSn app)
               refineApi
