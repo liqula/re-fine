@@ -71,10 +71,10 @@ quickCreateSelectionTop range = SC.offsetIntoText (range ^. RS.rangeTopOffset) (
 
 quickCreateSelectionPos :: RS.Range -> Int -> Int
 quickCreateSelectionPos range deviceOffset =
-    let selectionHeight = (range ^. RS.rangeBottom) - (range ^. RS.rangeTopOffset ^. SC.unOffsetFromViewportTop)
+    let selectionHeight = (range ^. RS.rangeBottom) - (range ^. RS.rangeTopOffset . SC.unOffsetFromViewportTop)
         idealCenter = selectionHeight `div` 2 - 22
         useIdealCenter = selectionHeight <= 200
-        closerToTop = abs (deviceOffset - range ^. RS.rangeTopOffset ^. SC.unOffsetFromViewportTop) < idealCenter
+        closerToTop = abs (deviceOffset - range ^. RS.rangeTopOffset . SC.unOffsetFromViewportTop) < idealCenter
         edgePosition = if closerToTop then 0 else selectionHeight - 44
     in if useIdealCenter then idealCenter else edgePosition
 

@@ -95,9 +95,9 @@ spec = do
       -- simulate events:
       _ <- RW.simulate wrapper RW.MouseEnter
       globalState1 <- getStoreData refineStore
-      globalState1 ^. gsBubblesState ^. bsHighlightedMarkAndBubble `shouldBe` Just (ID 77)
+      globalState1 ^. gsBubblesState . bsHighlightedMarkAndBubble `shouldBe` Just (ID 77)
       _ <- RW.simulate wrapper RW.MouseLeave
       globalState2 <- getStoreData refineStore
-      globalState2 ^. gsBubblesState ^. bsHighlightedMarkAndBubble `shouldBe` Nothing
+      globalState2 ^. gsBubblesState . bsHighlightedMarkAndBubble `shouldBe` Nothing
 
 -- TODO tests for componentDidMount code

@@ -26,7 +26,7 @@
 
 module Refine.Frontend.Store where
 
-import           Control.Lens ((&), (^.), (%~))
+import           Control.Lens ((&), (^.), (%~), to)
 import qualified Data.Aeson as AE
 import           Data.Aeson (ToJSON, encode)
 import qualified Data.Map.Strict as M
@@ -136,12 +136,12 @@ emitBackendCallsFor action state = case action of
       -- (FIXME: the new correct technical term for 'category' is 'kind'.)
       case category of
         Just Discussion ->
-          addDiscussion (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadEdit)
+          addDiscussion (state ^. gsVDoc . to fromJust . RT.compositeVDocRepo . RT.vdocHeadEdit)
                      (RT.CreateDiscussion text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
             (Right discussion) -> pure $ dispatch (AddDiscussion discussion)
         Just Note ->
-          addNote (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadEdit)
+          addNote (state ^. gsVDoc . to fromJust . RT.compositeVDocRepo . RT.vdocHeadEdit)
                      (RT.CreateNote text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
             (Right note) -> pure $ dispatch (AddNote note)
