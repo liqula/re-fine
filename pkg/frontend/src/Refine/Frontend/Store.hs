@@ -150,22 +150,19 @@ emitBackendCallsFor action state = case action of
     CreateUser createUserData -> do
       createUser createUserData $ \case
         (Left (_, msg)) -> handleError msg
-        (Right u) -> do
-          print u
+        (Right _user) -> do
           pure $ dispatch LoadDocumentList
 
     Login loginData -> do
       login loginData $ \case
         (Left(_, msg)) -> handleError msg
         (Right ()) -> do
-          print @String "logged in"
           pure $ dispatch LoadDocumentList
 
     Logout -> do
       logout $ \case
         (Left(_, msg)) -> handleError msg
         (Right ()) -> do
-          print @String "logged out"
           pure $ dispatch LoadDocumentList
 
     _ -> pure ()

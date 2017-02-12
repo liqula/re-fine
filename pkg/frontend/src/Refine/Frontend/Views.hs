@@ -61,8 +61,8 @@ refineApp :: ReactView ()
 refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
     case rs ^. gsVDoc of
         Nothing -> do
-          vdocLoader_ (rs ^. gsVDocList)
           login_
+          vdocLoader_ (rs ^. gsVDocList)
         Just vdoc -> div_ $ do
             windowSize_ (WindowSizeProps (rs ^. gsScreenState ^. SC.ssWindowSize)) mempty
             stickyContainer_ [] $ do
