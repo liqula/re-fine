@@ -47,6 +47,7 @@ import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(
                                          , editToolbarExtension_, menuButton_, headerSizeCapture_
                                          )
 import           Refine.Frontend.Loader.Component (vdocLoader_)
+import           Refine.Frontend.Login.Component (login_)
 import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import qualified Refine.Frontend.Screen.Types as SC
@@ -59,7 +60,9 @@ import           Refine.Frontend.Types as RS
 refineApp :: ReactView ()
 refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
     case rs ^. gsVDoc of
-        Nothing -> vdocLoader_ (rs ^. gsVDocList)
+        Nothing -> do
+          login_
+          vdocLoader_ (rs ^. gsVDocList)
         Just vdoc -> div_ $ do
             windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
             stickyContainer_ [] $ do

@@ -147,6 +147,24 @@ emitBackendCallsFor action state = case action of
             (Right note) -> pure $ dispatch (AddNote note)
         Nothing -> pure ()
 
+    CreateUser createUserData -> do
+      createUser createUserData $ \case
+        (Left (_, msg)) -> handleError msg
+        (Right _user) -> do
+          pure $ dispatch LoadDocumentList
+
+    Login loginData -> do
+      login loginData $ \case
+        (Left(_, msg)) -> handleError msg
+        (Right ()) -> do
+          pure $ dispatch LoadDocumentList
+
+    Logout -> do
+      logout $ \case
+        (Left(_, msg)) -> handleError msg
+        (Right ()) -> do
+          pure $ dispatch LoadDocumentList
+
     _ -> pure ()
 
 {- TODO submitting an edit does not work yet
