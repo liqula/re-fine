@@ -26,7 +26,7 @@
 
 module Refine.Frontend.Store where
 
-import           Control.Lens ((&), (^.), (%~))
+import           Control.Lens ((&), (^.), (%~), to)
 import qualified Data.Aeson as AE
 import           Data.Aeson (ToJSON, encode)
 import qualified Data.Map.Strict as M
@@ -136,7 +136,7 @@ emitBackendCallsFor action state = case action of
       -- (FIXME: the new correct technical term for 'category' is 'kind'.)
       case category of
         Just Discussion ->
-          addDiscussion (fromJust (state ^. gsVDoc) ^. RT.compositeVDocRepo ^. RT.vdocHeadEdit)
+          addDiscussion (state ^. gsVDoc . to fromJust . RT.compositeVDocRepo . RT.vdocHeadEdit)
                      (RT.CreateDiscussion text True (createChunkRange forRange)) $ \case
             (Left(_, msg)) -> handleError msg
             (Right discussion) -> pure $ dispatch (AddDiscussion discussion)
@@ -146,6 +146,27 @@ emitBackendCallsFor action state = case action of
             (Left(_, msg)) -> handleError msg
             (Right note) -> pure $ dispatch (AddNote note)
         Nothing -> pure ()
+
+    CreateUser createUserData -> do
+      createUser createUserData $ \case
+        (Left (_, msg)) -> handleError msg
+        (Right u) -> do
+          print u
+          pure $ dispatch LoadDocumentList
+
+    Login loginData -> do
+      login loginData $ \case
+        (Left(_, msg)) -> handleError msg
+        (Right ()) -> do
+          print @String "logged in"
+          pure $ dispatch LoadDocumentList
+
+    Logout -> do
+      logout $ \case
+        (Left(_, msg)) -> handleError msg
+        (Right ()) -> do
+          print @String "logged out"
+          pure $ dispatch LoadDocumentList
 
     _ -> pure ()
 

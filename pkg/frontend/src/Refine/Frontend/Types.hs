@@ -27,7 +27,7 @@ module Refine.Frontend.Types where
 import           Data.Text (Text)
 import           GHC.Generics (Generic)
 
-import Refine.Common.Types
+import Refine.Common.Types as Common
 
 import Refine.Frontend.Bubbles.Types
 import Refine.Frontend.Screen.Types
@@ -56,6 +56,10 @@ data RefineAction = LoadDocumentList
                   | AddDiscussion CompositeDiscussion
                   | AddNote Note
                   | SaveSelect Text Text
+                  -- ...
+                  | CreateUser CreateUser
+                  | Login Login
+                  | Logout
                   -- Actions that will be transformed because they need IO:
                   | TriggerUpdateSelection DeviceOffset
   deriving (Show, Generic)

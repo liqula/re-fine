@@ -54,6 +54,7 @@ library
       Refine.Frontend.Colors
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
+      Refine.Frontend.Login.Component
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store
@@ -110,6 +111,7 @@ executable refine-frontend
       Refine.Frontend.Colors
       Refine.Frontend.Heading
       Refine.Frontend.Loader.Component
+      Refine.Frontend.Login.Component
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store

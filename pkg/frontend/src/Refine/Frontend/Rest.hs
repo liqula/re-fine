@@ -57,3 +57,12 @@ addNote = request cfg (Proxy :: Proxy SAddNote)
 -- | create a new edit given a base edit and chunk range, new contents.
 addEdit :: ID Edit -> Create Edit -> HandleResponse Edit -> IO ()
 addEdit = request cfg (Proxy :: Proxy SAddEdit)
+
+createUser :: CreateUser -> HandleResponse User -> IO ()
+createUser = request cfg (Proxy :: Proxy SCreateUser)
+
+login :: Login -> HandleResponse () -> IO ()
+login = request cfg (Proxy :: Proxy SLogin)
+
+logout :: HandleResponse () -> IO ()
+logout = request cfg (Proxy :: Proxy SLogout)
