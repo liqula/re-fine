@@ -61,7 +61,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
     case rs ^. gsVDoc of
         Nothing -> vdocLoader_ (rs ^. gsVDocList)
         Just vdoc -> div_ $ do
-            windowSize_ (WindowSizeProps (rs ^. gsScreenState ^. SC.ssWindowSize)) mempty
+            windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
             stickyContainer_ [] $ do
                 headerSizeCapture_ $ do
                     -- the following need to be siblings because of the z-index handling
@@ -74,17 +74,17 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                             editToolbar_
                             editToolbarExtension_
 
-                showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsBubblesState ^. bsNoteIsVisible)
-                showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsBubblesState ^. bsDiscussionIsVisible)
-                addComment_ (rs ^. gsBubblesState ^. bsCommentEditorIsVisible) (rs ^. gsBubblesState ^. bsCommentCategory)
+                showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsBubblesState . bsNoteIsVisible)
+                showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsBubblesState . bsDiscussionIsVisible)
+                addComment_ (rs ^. gsBubblesState . bsCommentEditorIsVisible) (rs ^. gsBubblesState . bsCommentCategory)
 
                 main_ ["role" $= "main"] $ do
                     div_ ["className" $= "grid-wrapper"] $ do
                         div_ ["className" $= "row row-align-center row-align-top"] $ do
                             leftAside_ $ LeftAsideProps
-                                           (rs ^. gsBubblesState ^. bsMarkPositions)
-                                           (rs ^. gsBubblesState ^. bsCurrentSelection)
-                                           (rs ^. gsBubblesState ^. bsHighlightedMarkAndBubble)
+                                           (rs ^. gsBubblesState . bsMarkPositions)
+                                           (rs ^. gsBubblesState . bsCurrentSelection)
+                                           (rs ^. gsBubblesState . bsHighlightedMarkAndBubble)
                                            (rs ^. gsScreenState)
                                            (M.elems (vdoc ^. compositeVDocDiscussions))
                                            (M.elems (vdoc ^. compositeVDocNotes))
@@ -97,7 +97,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                                 -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
                               div_ ["className" $= "c-article-content"] $ do
                                 toArticleBody (rs ^. gsBubblesState) (_unVDocVersion . _compositeVDocVersion $ vdoc)
-                            rightAside_ (rs ^. gsBubblesState ^. bsMarkPositions) (rs ^. gsScreenState)
+                            rightAside_ (rs ^. gsBubblesState . bsMarkPositions) (rs ^. gsScreenState)
 
 
 toArticleBody :: BubblesState -> DT.Forest HTMLP.Token -> ReactElementM [SomeStoreAction] ()
@@ -148,8 +148,8 @@ leftAside = defineView "LeftAside" $ \props ->
         let lookupPosition chunkId = M.lookup chunkId . _unMarkPositions $ _leftAsideMarkPositions props
         -- TODO the map should use proper IDs as keys
         mconcat $ map (\d -> discussionBubble_ (SpecialBubbleProps
-                                                 (clearTypeParameter (d ^. compositeDiscussion ^. discussionID))
-                                                 (lookupPosition $ clearTypeParameter (d ^. compositeDiscussion ^. discussionID))
+                                                 (clearTypeParameter (d ^. compositeDiscussion . discussionID))
+                                                 (lookupPosition $ clearTypeParameter (d ^. compositeDiscussion . discussionID))
                                                  (_leftAsideHighlightedBubble props)
                                                  (_leftAsideScreenState props)
                                                )

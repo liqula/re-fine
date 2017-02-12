@@ -24,7 +24,7 @@
 
 module Refine.Frontend.Bubbles.Bubble where
 
-import           Control.Lens (makeLenses, (^.))
+import           Control.Lens ((^.), makeLenses, to)
 import           Data.Maybe (isJust, fromJust)
 import           Data.Monoid ((<>))
 import           Data.String (fromString)
@@ -60,13 +60,13 @@ bubble = defineView "Bubble" $ \props ->
         case props ^. bubblePropsMarkPosition of
             Nothing -> mempty
             Just (topOffset, scrollOffset) ->
-                div_ ["data-chunk-id" $= fromString (show (props ^. bubblePropsDataChunkId ^. unID))
+                div_ ["data-chunk-id" $= fromString (show (props ^. bubblePropsDataChunkId . unID))
                     , "data-content-type" $= fromString (props ^. bubblePropsDataContentType)
                     -- RENAME: snippet => bubble
                     , classNames [ ("o-snippet", True)
                                   , (fromString $ "o-snippet--" <> props ^. bubblePropsDataContentType, True)
                                   , ("o-snippet--hover", isJust (props ^. bubblePropsHighlightedBubble)
-                                         && props ^. bubblePropsDataChunkId ^. unID == fromJust (props ^. bubblePropsHighlightedBubble) ^. unID)
+                                         && props ^. bubblePropsDataChunkId . unID == props ^. bubblePropsHighlightedBubble . to fromJust . unID)
                                   ]
                     , "style" @= [Style "top" (SC.offsetIntoText topOffset scrollOffset (props ^. bubblePropsScreenState))]
                     , onClick $ const . (props ^. bubblePropsClickHandler)

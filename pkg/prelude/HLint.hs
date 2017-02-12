@@ -18,3 +18,5 @@ ignore "Use =<<" -- Do not change concatMap into =<< for sake of readibility.
 warn = listToMaybe (filter f xs) ==> find f xs
 warn = isJust $ find f xs ==> any f xs
 warn = return ==> pure
+warn = f ^. g ^. h ==> f ^. g . h
+warn = fx f ^. g ==> f ^. to fx . g

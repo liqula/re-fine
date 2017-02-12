@@ -150,7 +150,7 @@ showQuestion = defineView "ShowQuestion" $ \case
   Nothing -> mempty
   Just question ->
     let overlayStyle1 = [ Style "backgroundColor" C.vdoc_question ]
-        commentText1 = (question ^. compositeQuestion ^. questionText)
+        commentText1 = (question ^. compositeQuestion . questionText)
         commentTitle1 = "Title of question"
         iconStyle1 = ("icon-Question", "dark")
         userName1 = "meisterkaiser"
