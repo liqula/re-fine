@@ -34,7 +34,7 @@ import Refine.Frontend.Bubbles.Types
 import Refine.Frontend.Types
 
 bubblesStateUpdate :: RefineAction -> BubblesState -> BubblesState
-bubblesStateUpdate action state =
+bubblesStateUpdate (BubblesAction action) state =
   let newState = state
                   & bsCurrentSelection         %~ currentSelectionUpdate action
                   & bsCommentCategory          %~ commentCategoryUpdate action
@@ -44,49 +44,51 @@ bubblesStateUpdate action state =
                   & bsHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
                   & bsMarkPositions            %~ markPositionsUpdate action
   in newState
+bubblesStateUpdate _ state = state
+
 
 ---------------------------------------------------------------------------
 
-currentSelectionUpdate :: RefineAction -> Selection -> Selection
+currentSelectionUpdate :: BubblesAction -> Selection -> Selection
 currentSelectionUpdate action state = case action of
-  BubblesAction (UpdateSelection newState) -> newState
-  BubblesAction ClearSelection -> (Nothing, Nothing)
-  BubblesAction SubmitEdit     -> (Nothing, Nothing)
+  (UpdateSelection newState) -> newState
+  ClearSelection -> (Nothing, Nothing)
+  SubmitEdit     -> (Nothing, Nothing)
   _ -> state
 
-commentCategoryUpdate :: RefineAction -> Maybe CommentCategory -> Maybe CommentCategory
+commentCategoryUpdate :: BubblesAction -> Maybe CommentCategory -> Maybe CommentCategory
 commentCategoryUpdate action state = case action of
-  BubblesAction (SetCommentCategory category) -> Just category
-  BubblesAction HideCommentEditor -> Nothing -- when closing the comment editor, reset the selection
+  (SetCommentCategory category) -> Just category
+  HideCommentEditor -> Nothing -- when closing the comment editor, reset the selection
   _ -> state
 
-discussionIsVisibleUpdate :: RefineAction -> Maybe (ID Discussion) -> Maybe (ID Discussion)
+discussionIsVisibleUpdate :: BubblesAction -> Maybe (ID Discussion) -> Maybe (ID Discussion)
 discussionIsVisibleUpdate action state = case action of
-  BubblesAction (ShowDiscussionOverlay discussionId) -> Just discussionId
-  BubblesAction HideCommentOverlay -> Nothing
+  (ShowDiscussionOverlay discussionId) -> Just discussionId
+  HideCommentOverlay -> Nothing
   _ -> state
 
-noteIsVisibleUpdate :: RefineAction -> Maybe (ID Note) -> Maybe (ID Note)
+noteIsVisibleUpdate :: BubblesAction -> Maybe (ID Note) -> Maybe (ID Note)
 noteIsVisibleUpdate action state = case action of
-  BubblesAction (ShowNoteOverlay noteId) -> Just noteId
-  BubblesAction HideCommentOverlay -> Nothing
+  (ShowNoteOverlay noteId) -> Just noteId
+  HideCommentOverlay -> Nothing
   _ -> state
 
-commentEditorIsVisibleUpdate :: RefineAction -> (Bool, Maybe Range) -> (Bool, Maybe Range)
+commentEditorIsVisibleUpdate :: BubblesAction -> (Bool, Maybe Range) -> (Bool, Maybe Range)
 commentEditorIsVisibleUpdate action state = case action of
-  BubblesAction (ShowCommentEditor curSelection) -> (True, curSelection)
-  BubblesAction HideCommentEditor -> (False, Nothing)
+  (ShowCommentEditor curSelection) -> (True, curSelection)
+  HideCommentEditor -> (False, Nothing)
   _ -> state
 
-highlightedMarkAndBubbleUpdate :: RefineAction -> Maybe (ID Void) -> Maybe (ID Void)
+highlightedMarkAndBubbleUpdate :: BubblesAction -> Maybe (ID Void) -> Maybe (ID Void)
 highlightedMarkAndBubbleUpdate action state = case action of
-    BubblesAction (HighlightMarkAndBubble dataChunkId) -> Just dataChunkId
-    BubblesAction UnhighlightMarkAndBubble -> Nothing
+    (HighlightMarkAndBubble dataChunkId) -> Just dataChunkId
+    UnhighlightMarkAndBubble -> Nothing
     _ -> state
 
-markPositionsUpdate :: RefineAction -> MarkPositions -> MarkPositions
+markPositionsUpdate :: BubblesAction -> MarkPositions -> MarkPositions
 markPositionsUpdate action state = case action of
-    BubblesAction (AddMarkPosition dataChunkId topOffset scrollOffset)
+    (AddMarkPosition dataChunkId topOffset scrollOffset)
       -> let
              upd _ = Just (topOffset, scrollOffset)
          in MarkPositions $ M.alter upd dataChunkId (_unMarkPositions state)
