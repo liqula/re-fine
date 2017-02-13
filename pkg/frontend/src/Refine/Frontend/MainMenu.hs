@@ -59,7 +59,7 @@ mainMenu = defineView "MainMenu" $ \visible -> if not visible then mempty else d
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
         div_ ["className" $= "c-mainmenu-content__header"] $ do
-            iconButton_ $ IconButtonProps
+            iconButton_ IconButtonProps
               { _iconProps = IconProps
                   { _blockName     = "c-mainmenu-content"
                   , _iconHighlight = True
