@@ -36,15 +36,16 @@ import Refine.Prelude.TH (makeRefineType)
 
 
 data GlobalState = GlobalState
-  { _gsVDoc                   :: Maybe CompositeVDoc
-  , _gsVDocList               :: Maybe [ID VDoc]
-  , _gsBubblesState           :: BubblesState
-  , _gsHeaderState            :: HeaderState
-  , _gsScreenState            :: ScreenState
+  { _gsVDoc                       :: Maybe CompositeVDoc
+  , _gsVDocList                   :: Maybe [ID VDoc]
+  , _gsBubblesState               :: BubblesState
+  , _gsHeaderState                :: HeaderState
+  , _gsScreenState                :: ScreenState
+  , _gsNotImplementedYetIsVisible :: Bool
   } deriving (Show, Generic)
 
 emptyGlobalState :: GlobalState
-emptyGlobalState = GlobalState Nothing Nothing emptyBubblesState emptyHeaderState emptyScreenState
+emptyGlobalState = GlobalState Nothing Nothing emptyBubblesState emptyHeaderState emptyScreenState False
 
 data RefineAction = LoadDocumentList
                   | LoadedDocumentList [ID VDoc]
@@ -63,6 +64,8 @@ data RefineAction = LoadDocumentList
                   | CreateUser CreateUser
                   | Login Login
                   | Logout
+                  | ShowNotImplementedYet
+                  | HideNotImplementedYet
                   -- Actions that will be transformed because they need IO:
                   | TriggerUpdateSelection DeviceOffset
   deriving (Show, Generic)

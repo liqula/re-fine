@@ -95,7 +95,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                                     ""
                                     "read mode"
                                     False
-                                    (\_ -> []))
+                                    (\_ -> RS.dispatch RS.ShowNotImplementedYet))
                                     True
                                     Nothing
 
