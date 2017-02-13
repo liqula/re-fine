@@ -24,17 +24,16 @@
 
 module Refine.Frontend.Bubbles.Store where
 
-
 import           Control.Lens ((&), (%~))
 import qualified Data.Map.Strict as M
 import           Data.Void
 
 import Refine.Common.Types
 import Refine.Frontend.Bubbles.Types
-import Refine.Frontend.Types
 
-bubblesStateUpdate :: RefineAction -> BubblesState -> BubblesState
-bubblesStateUpdate (BubblesAction action) state =
+
+bubblesStateUpdate :: BubblesAction -> BubblesState -> BubblesState
+bubblesStateUpdate action state =
   let newState = state
                   & bsCurrentSelection         %~ currentSelectionUpdate action
                   & bsCommentCategory          %~ commentCategoryUpdate action
@@ -44,7 +43,6 @@ bubblesStateUpdate (BubblesAction action) state =
                   & bsHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
                   & bsMarkPositions            %~ markPositionsUpdate action
   in newState
-bubblesStateUpdate _ state = state
 
 
 ---------------------------------------------------------------------------
