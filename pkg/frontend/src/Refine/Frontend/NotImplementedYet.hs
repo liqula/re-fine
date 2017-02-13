@@ -40,13 +40,19 @@ dialogStyles =
   , Style "marginLeft" ("0" :: String)
   , Style "marginTop" ("-11.5em" :: String)
   , Style "textAlign" ("left" :: String)
-  , Style "zIndex" (6010 :: Int)
+  , Style "zIndex" (6050 :: Int)
+  ]
+
+overlayStyles :: [Style]
+overlayStyles =
+  [ Style "zIndex" (6010 :: Int)
   ]
 
 notImplementedYet :: ReactView Bool
 notImplementedYet = defineView "NotImplementedYet" $ \isVisible ->
   overlay_ ["isVisible" &= isVisible
            , "dialogStyles" @= dialogStyles
+           , "overlayStyles" @= overlayStyles
            , on "onOverlayClicked" $ \_ -> RS.dispatch RS.HideNotImplementedYet
            , on "onCloseClicked" $ \_ -> RS.dispatch RS.HideNotImplementedYet
            ] $ do
