@@ -111,9 +111,14 @@ editToolbar_ :: ReactElementM eventHandler ()
 editToolbar_ = view editToolbar () mempty
 
 
-commentToolbarExtension :: ReactView Bool
-commentToolbarExtension = defineView "CommentToolbarExtension" $ \isVisible ->
-  if not isVisible then mempty
+data CommentToolbarExtensionProps = CommentToolbarExtensionProps
+  { _ctepIsVisible :: Bool
+  , _ctepTextSpecificComment :: RS.TextSpecificComment
+  }
+
+commentToolbarExtension :: ReactView CommentToolbarExtensionProps
+commentToolbarExtension = defineView "CommentToolbarExtension" $ \props ->
+  if not $ _ctepIsVisible props then mempty
   else
     div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
       div_ ["className" $= "grid-wrapper"] $ do
@@ -121,29 +126,31 @@ commentToolbarExtension = defineView "CommentToolbarExtension" $ \isVisible ->
           div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
           div_ [classNames [ ("c-vdoc-toolbar-extension__annotation", True)   -- RENAME: annotation => comment
                            , ("c-vdoc-toolbar-extension--expanded", True) ]
-               ] $ do
-              iconButton_ $ IconButtonProps
-                          (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
-                          "btn-new-ann-text"
-                          ""
-                          "comment"
-                          "text-specific comment"
-                          False
-                          (\_ -> RS.dispatch RS.ShowNotImplementedYet)
-                          []
-              iconButton_ $ IconButtonProps
-                          (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L)
-                          "btn-new-ann-doc" -- RENAME: ann => comment
-                          ""
-                          "comment"
-                          "general comment"
-                          False
-                          (\_ -> RS.dispatch RS.ShowNotImplementedYet)
-                          []
+               ] $ case _ctepTextSpecificComment props of
+              RS.TextSpecificCommentInProgress -> div_ "Please select the text you would like to comment on"
+              RS.TextSpecificCommentInactive -> do
+                iconButton_ $ IconButtonProps
+                            (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
+                            "btn-new-ann-text"
+                            ""
+                            "comment"
+                            "text-specific comment"
+                            False
+                            (\_ -> RS.dispatch $ RS.HeaderAction RS.StartTextSpecificComment)
+                            []
+                iconButton_ $ IconButtonProps
+                            (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L)
+                            "btn-new-ann-doc" -- RENAME: ann => comment
+                            ""
+                            "comment"
+                            "general comment"
+                            False
+                            (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                            []
 
 
-commentToolbarExtension_ :: Bool -> ReactElementM eventHandler ()
-commentToolbarExtension_ isVisible = view commentToolbarExtension isVisible mempty
+commentToolbarExtension_ :: CommentToolbarExtensionProps -> ReactElementM eventHandler ()
+commentToolbarExtension_ props = view commentToolbarExtension props mempty
 
 editToolbarExtension :: ReactView ()
 editToolbarExtension = defineView "EditToolbarExtension" $ \() ->

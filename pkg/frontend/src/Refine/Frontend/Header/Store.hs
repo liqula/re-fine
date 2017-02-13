@@ -37,6 +37,7 @@ headerStateUpdate action state =
   let newState = state
                   & hsCommentToolbarExtensionIsVisible  %~ commentToolbarExtensionUpdate action
                   & hsEditToolbarExtensionIsVisible     %~ editToolbarExtensionUpdate action
+                  & hsTextSpecificComment               %~ textSpecificCommentUpdate action
   in newState
 
 ---------------------------------------------------------------------------
@@ -49,5 +50,11 @@ commentToolbarExtensionUpdate action state = case action of
 editToolbarExtensionUpdate :: RefineAction -> Bool -> Bool
 editToolbarExtensionUpdate action state = case action of
     HeaderAction ToggleEditToolbarExtension -> not state
+    _ -> state
+
+textSpecificCommentUpdate :: RefineAction -> TextSpecificComment -> TextSpecificComment
+textSpecificCommentUpdate action state = case action of
+    HeaderAction StartTextSpecificComment  -> TextSpecificCommentInProgress
+    HeaderAction FinishTextSpecificComment -> TextSpecificCommentInactive
     _ -> state
 

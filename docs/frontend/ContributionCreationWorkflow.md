@@ -7,7 +7,7 @@
 - article.onMouseUp: dispatches action TriggerUpdateSelection
 - Store: transforms action to UpdateSelection
 - Store: action updates state BubblesStore.currentSelection
-- Updated state: When x1 is not active and x2 is not active: updates LeftAsideProps
+- Updated state: When textSpecificComment is not active and x2 is not active: updates LeftAsideProps
 - Updated LeftAsideProps: create QuickCreate-button
 - Clicking QuickCreate-button:
    - dispatches action BubblesAction.ClearSelection
@@ -19,15 +19,17 @@
 ## Creating via button "text-specific comment"
 
 - User clicks "text-specific comment" button
-- Button dispatches action X1
-- BubblesStore: action X1 updates state x1
-- State x1 updates toolbar extension (displays info message)
+- Button dispatches action NewTextSpecificComment
+- BubblesStore: action StartTextSpecificComment updates state textSpecificComment
+- State textSpecificComment updates toolbar extension (displays info message)
 - article.onMouseUp: dispatches action TriggerUpdateSelection
 - Store: transforms action to UpdateSelection
 - Store: action updates state BubblesStore.currentSelection
-- Updated state: When x1 is active: dispatches action BubblesAction.ShowCommentEditor
-- Dismissing the editor: dispatches action RemoveX1 and BubblesAction.HideCommentEditor
-- Submitting the comment: dispatches action RemoveX1 and BubblesAction.SubmitComment and BubblesAction.HideCommentEditor
+- Updated state: When textSpecificComment is active: dispatches action BubblesAction.ShowCommentEditor
+- Dismissing the editor: dispatches action FinishTextSpecificComment and BubblesAction.HideCommentEditor
+- Submitting the comment: dispatches action FinishTextSpecificComment and BubblesAction.SubmitComment and BubblesAction.HideCommentEditor
+
+- TODO cancelling the operation at any point
 
 
 ## Creating via button "general comment"

@@ -47,7 +47,7 @@ import           Refine.Frontend.Bubbles.QuickCreate
 import           Refine.Frontend.Bubbles.Types as RS
 import           Refine.Frontend.Header.DocumentHeader ( documentHeader_, DocumentHeaderProps(..) )
 import           Refine.Frontend.Header.Heading ( MenuButtonProps(..), menuButton_, headerSizeCapture_ )
-import           Refine.Frontend.Header.Toolbar ( editToolbar_, commentToolbarExtension_, editToolbarExtension_ )
+import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), editToolbar_, commentToolbarExtension_, editToolbarExtension_ )
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.Login.Component (login_)
@@ -93,7 +93,9 @@ refineAppMenuClosed_ rs =
                     div_ ["className" $= "c-fulltoolbar"] $ do
                         sticky_ [on "onStickyStateChange" $ RS.dispatch . RS.ToolbarStickyStateChange . currentToolbarStickyState] $ do
                             editToolbar_
-                            commentToolbarExtension_ (rs ^. gsHeaderState . HT.hsCommentToolbarExtensionIsVisible)
+                            commentToolbarExtension_ $ CommentToolbarExtensionProps
+                                                         (rs ^. gsHeaderState . HT.hsCommentToolbarExtensionIsVisible)
+                                                         (rs ^. gsHeaderState . HT.hsTextSpecificComment)
                             editToolbarExtension_
 
                 showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsBubblesState . bsNoteIsVisible)
