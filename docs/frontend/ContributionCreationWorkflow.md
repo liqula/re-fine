@@ -7,7 +7,7 @@
 - article.onMouseUp: dispatches action TriggerUpdateSelection
 - Store: transforms action to UpdateSelection
 - Store: action updates state BubblesStore.currentSelection
-- Updated state: When x1 is not active: updates LeftAsideProps
+- Updated state: When x1 is not active and x2 is not active: updates LeftAsideProps
 - Updated LeftAsideProps: create QuickCreate-button
 - Clicking QuickCreate-button:
    - dispatches action BubblesAction.ClearSelection
@@ -23,3 +23,11 @@
 - Store: transforms action to UpdateSelection
 - Store: action updates state BubblesStore.currentSelection
 - Updated state: When x1 is active: dispatches action BubblesAction.ShowCommentEditor
+
+
+## Creating via button "general comment"
+
+- User clicks "general comment" button
+- Button dispatches action X2 and UpdateSelection(Nothing) and BubblesAction.ShowCommentEditor
+- BubblesStore: action X2 updates state x2
+- BubblesStore: action updates state currentSelection
