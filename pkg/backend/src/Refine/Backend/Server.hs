@@ -109,6 +109,9 @@ mkBackend cfg = do
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
       app    = runApp runDb runDocRepo logger userHandler (cfg ^. cfgCsrfSecret . to CsrfSecret) (cfg ^. cfgSessionLength)
+
+  -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
+  -- may need to refactor, e.g. by using extra arguments in the end point types.
   srvApp <- serveAction
               (Proxy :: Proxy RefineAPI)
               (Proxy :: Proxy AppState)
@@ -116,17 +119,13 @@ mkBackend cfg = do
               (Nat appIO)
               (toServantError . cnToSn app)
               refineApi
-
-  -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
-  -- may need to refactor, e.g. by using extra arguments in the end point types.
-  let srv = Servant.serve (Proxy :: Proxy (Raw :<|> Raw)) $
-              srvApp :<|> maybeServeDirectory (cfg ^. cfgFileServeRoot)
+              (Just (Servant.serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
 
   when (cfg ^. cfgShouldMigrate) $ do
     void $ (natThrowError . app) $$ do
       migrateDB
 
-  pure $ Backend srv app
+  pure $ Backend srvApp app
 
 maybeServeDirectory :: Maybe FilePath -> Server Raw
 maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) serveDirectory
