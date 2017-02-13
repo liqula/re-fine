@@ -12,6 +12,9 @@
 - Clicking QuickCreate-button:
    - dispatches action BubblesAction.ClearSelection
    - dispatches action BubblesAction.ShowCommentEditor
+- Submitting the comment: dispatches action BubblesAction.SubmitComment and BubblesAction.HideCommentEditor
+- Dismissing the editor: dispatches action BubblesAction.HideCommentEditor
+
 
 ## Creating via button "text-specific comment"
 
@@ -23,6 +26,8 @@
 - Store: transforms action to UpdateSelection
 - Store: action updates state BubblesStore.currentSelection
 - Updated state: When x1 is active: dispatches action BubblesAction.ShowCommentEditor
+- Dismissing the editor: dispatches action RemoveX1 and BubblesAction.HideCommentEditor
+- Submitting the comment: dispatches action RemoveX1 and BubblesAction.SubmitComment and BubblesAction.HideCommentEditor
 
 
 ## Creating via button "general comment"
@@ -31,3 +36,5 @@
 - Button dispatches action X2 and UpdateSelection(Nothing) and BubblesAction.ShowCommentEditor
 - BubblesStore: action X2 updates state x2
 - BubblesStore: action updates state currentSelection
+- Dismissing the editor: dispatches action RemoveX2 and BubblesAction.HideCommentEditor
+- Submitting the comment: dispatches action RemoveX2 and BubblesAction.SubmitComment and BubblesAction.HideCommentEditor
