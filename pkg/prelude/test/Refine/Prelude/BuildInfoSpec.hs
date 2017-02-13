@@ -20,8 +20,6 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-{-# OPTIONS_GHC -w #-}
-
 module Refine.Prelude.BuildInfoSpec
 where
 

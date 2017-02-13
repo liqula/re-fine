@@ -22,8 +22,6 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-{-# OPTIONS_GHC -Werror -Wall #-}
-
 module Refine.Frontend.Rest where
 
 import           Data.Proxy
