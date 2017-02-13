@@ -44,7 +44,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       "index"
                       False
-                      (\_ -> [])
+                      (\_ -> RS.dispatch RS.ShowNotImplementedYet)
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
@@ -64,7 +64,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       "edit"
                       "new edit"
                       False
-                      (\_ -> [])
+                      (\_ -> RS.dispatch RS.ShowNotImplementedYet)
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
@@ -76,7 +76,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       "all comments"
                       False
-                      (\_ -> [])
+                      (\_ -> RS.dispatch RS.ShowNotImplementedYet)
 
           iconButton_ $ IconButtonProps
                       -- (IconProps "c-vdoc-toolbar" False ("icon-Edit", "dark") XXL)
@@ -86,7 +86,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       "all edits"
                       False
-                      (\_ -> [])
+                      (\_ -> RS.dispatch RS.ShowNotImplementedYet)
 
           iconButtonWithAlignment_ $ IconButtonWithAlignmentProps (IconButtonProps
                                     (IconProps "c-vdoc-toolbar" True ("icon-Reader", "bright") XXL)
@@ -121,7 +121,7 @@ commentToolbarExtension = defineView "CommentToolbarExtension" $ \isVisible ->
                           "comment"
                           "text-specific comment"
                           False
-                          (\_ -> [])
+                          (\_ -> RS.dispatch RS.ShowNotImplementedYet)
               iconButton_ $ IconButtonProps
                           (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L)
                           "btn-new-ann-doc" -- RENAME: ann => comment
@@ -129,7 +129,7 @@ commentToolbarExtension = defineView "CommentToolbarExtension" $ \isVisible ->
                           "comment"
                           "general comment"
                           False
-                          (\_ -> [])
+                          (\_ -> RS.dispatch RS.ShowNotImplementedYet)
 
 
 commentToolbarExtension_ :: Bool -> ReactElementM eventHandler ()
