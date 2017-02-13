@@ -190,7 +190,7 @@ createChunkRange (Just range) = RT.CreateChunkRange (range ^. rangeStartPoint) (
 
 handleError :: String -> IO [SomeStoreAction]
 handleError msg = do
-            print msg
+            consoleLog "handleError" msg
             pure []
 
 refineStore :: ReactStore GlobalState
