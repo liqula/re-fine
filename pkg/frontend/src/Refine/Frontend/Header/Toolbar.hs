@@ -31,7 +31,6 @@ import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
 import           Refine.Frontend.UtilityWidgets
 
-
 editToolbar :: ReactView ()
 editToolbar = defineView "EditToolbar" $ \() ->
   header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
@@ -108,29 +107,29 @@ commentToolbarExtension :: ReactView Bool
 commentToolbarExtension = defineView "CommentToolbarExtension" $ \isVisible ->
   if not isVisible then mempty
   else
-  div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
-    div_ ["className" $= "grid-wrapper"] $ do
-      div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
-        div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
-        div_ [classNames [ ("c-vdoc-toolbar-extension__annotation", True)   -- RENAME: annotation => comment
-                         , ("c-vdoc-toolbar-extension--expanded", True) ]
-             ] $ do
-            iconButton_ $ IconButtonProps
-                        (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
-                        "btn-new-ann-text"
-                        ""
-                        "comment"
-                        "text-specific comment"
-                        False
-                        (\_ -> [])
-            iconButton_ $ IconButtonProps
-                        (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L)
-                        "btn-new-ann-doc" -- RENAME: ann => comment
-                        ""
-                        "comment"
-                        "general comment"
-                        False
-                        (\_ -> [])
+    div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
+      div_ ["className" $= "grid-wrapper"] $ do
+        div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
+          div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
+          div_ [classNames [ ("c-vdoc-toolbar-extension__annotation", True)   -- RENAME: annotation => comment
+                           , ("c-vdoc-toolbar-extension--expanded", True) ]
+               ] $ do
+              iconButton_ $ IconButtonProps
+                          (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
+                          "btn-new-ann-text"
+                          ""
+                          "comment"
+                          "text-specific comment"
+                          False
+                          (\_ -> [])
+              iconButton_ $ IconButtonProps
+                          (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L)
+                          "btn-new-ann-doc" -- RENAME: ann => comment
+                          ""
+                          "comment"
+                          "general comment"
+                          False
+                          (\_ -> [])
 
 
 commentToolbarExtension_ :: Bool -> ReactElementM eventHandler ()
