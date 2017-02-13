@@ -53,8 +53,9 @@ menuButton_ = view menuButton () mempty
 
 headerSizeCapture :: ReactView ()
 headerSizeCapture = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
-   { lRender = \_state _props ->
-       div_ ["className" $= "c-fullheader"] childrenPassedToView
+     -- the render function inside a Lifecycle view does not update its children when the state changes
+     -- (see react-flux issue #29), therefore we don't render anything inside a Lifecylce view.
+   { lRender = \_state _props -> mempty
    , lComponentDidMount = Just $ \_propsandstate ldom _ -> do
              this <- lThis ldom
              height <- js_getBoundingClientRectHeight this
@@ -64,8 +65,8 @@ headerSizeCapture = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
              pure ()
    }
 
-headerSizeCapture_ :: ReactElementM eventHandler () -> ReactElementM eventHandler ()
-headerSizeCapture_ = view headerSizeCapture ()
+headerSizeCapture_ :: ReactElementM eventHandler ()
+headerSizeCapture_ = view headerSizeCapture () mempty
 
 foreign import javascript unsafe
   "$1.getBoundingClientRect().height"

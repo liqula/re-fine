@@ -67,7 +67,8 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
         Just vdoc -> div_ $ do
             windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
             stickyContainer_ [] $ do
-                headerSizeCapture_ $ do
+                headerSizeCapture_
+                div_ ["className" $= "c-fullheader"] $ do
                     -- the following need to be siblings because of the z-index handling
                     div_ ["className" $= "c-mainmenu__bg"] "" -- "role" $= "navigation"
                     --header_ ["role" $= "banner"] $ do
