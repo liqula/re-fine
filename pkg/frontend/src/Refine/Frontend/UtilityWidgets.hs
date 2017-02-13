@@ -48,7 +48,7 @@ import           React.Flux
 
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Style
-import           Refine.Frontend.ThirdPartyViews (hammer_)
+-- TODO import           Refine.Frontend.ThirdPartyViews (hammer_)
 
 
 data IconSize
@@ -126,10 +126,12 @@ icon_ props = view icon props mempty
 
 iconButtonWithAlignment :: ReactView IconButtonWithAlignmentProps
 iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
+{- TODO we currently ignore touch device handling because there are some issues with
+ - browsers emitting tap events on click and we don't know how to handle these properly.
+
     let bprops = props ^. iconButtonProps
-    hammer_ (if bprops ^. disabled
-              then []
-              else [on "onTap" $ bprops ^. clickHandler]) $ do
+    hammer_ [on "onTap" $ bprops ^. clickHandler | not (bprops ^. disabled)] $ do
+-}
       iconButtonWithAlignmentCore_ props
 
 iconButtonWithAlignment_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
@@ -153,37 +155,36 @@ iconButtonWithAlignmentCore = defineView "IconButtonWithAlignmentCore" $ \props 
                                                    ])
           , "style" @= (case props ^. position of
                                Nothing  -> []
-                               Just pos -> [Style "top" pos])
-          ] <> if bprops ^. disabled then [] else [onClick $ const . (bprops ^. clickHandler)]
+                               Just pos -> [Style "top" pos]
+                    <> [Style "cursor" ("pointer" :: String) | not (bprops ^. disabled)])
+          ] <> [onClick $ const . (bprops ^. clickHandler) | not (bprops ^. disabled)]
           ) $ do
         icon_ iprops
         span_ ["className" $= fromString (iprops ^. blockName <> "__button-label")
-              , "style" @= (if bprops ^. disabled
-                                   then [Style "color" Color.disabledText]
-                                   else [Style "cursor" ("pointer" :: String)])
+              , "style" @= [Style "color" Color.disabledText | bprops ^. disabled]
               ] $
             elemJSString (bprops ^. label)
     where
-      alignmentClass blockName_ rightAligned_ = if rightAligned_ then blockName_ <> "--align-right" else ""
+      alignmentClass blockName1 rightAligned1 = if rightAligned1 then blockName1 <> "--align-right" else ""
 
 iconButtonWithAlignmentCore_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
 iconButtonWithAlignmentCore_ props = view iconButtonWithAlignmentCore props mempty
 
 iconButton :: ReactView IconButtonProps
 iconButton = defineView "IconButton" $ \props ->
-    iconButtonWithAlignment_ $ IconButtonWithAlignmentProps props rightAligned_ Nothing
-    where rightAligned_ = False -- no right alignment in the standard case
+    iconButtonWithAlignment_ $ IconButtonWithAlignmentProps props rightAligned1 Nothing
+    where rightAligned1 = False -- no right alignment in the standard case
 
 iconButton_ :: IconButtonProps -> ReactElementM eventHandler ()
 iconButton_ props = view iconButton props mempty
 
 positionedIconButton :: ReactView (IconButtonProps, Int)
-positionedIconButton = defineView "IconButton" $ \(props, position_) ->
-    iconButtonWithAlignment_ $ IconButtonWithAlignmentProps props rightAligned_ (Just position_)
-    where rightAligned_ = False -- no right alignment in the standard case
+positionedIconButton = defineView "IconButton" $ \(props, position1) ->
+    iconButtonWithAlignment_ $ IconButtonWithAlignmentProps props rightAligned1 (Just position1)
+    where rightAligned1 = False -- no right alignment in the standard case
 
 positionedIconButton_ :: IconButtonProps -> Int -> ReactElementM eventHandler ()
-positionedIconButton_ props position_ = view positionedIconButton (props, position_) mempty
+positionedIconButton_ props position1 = view positionedIconButton (props, position1) mempty
 
 
 toClasses :: [String] -> String

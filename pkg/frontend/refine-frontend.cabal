@@ -52,9 +52,14 @@ library
       Refine.Frontend.Bubbles.Store
       Refine.Frontend.Bubbles.Types
       Refine.Frontend.Colors
-      Refine.Frontend.Heading
+      Refine.Frontend.Header.DocumentHeader
+      Refine.Frontend.Header.Heading
+      Refine.Frontend.Header.Store
+      Refine.Frontend.Header.Toolbar
+      Refine.Frontend.Header.Types
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
+      Refine.Frontend.NotImplementedYet
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store
@@ -109,9 +114,14 @@ executable refine-frontend
       Refine.Frontend.Bubbles.Store
       Refine.Frontend.Bubbles.Types
       Refine.Frontend.Colors
-      Refine.Frontend.Heading
+      Refine.Frontend.Header.DocumentHeader
+      Refine.Frontend.Header.Heading
+      Refine.Frontend.Header.Store
+      Refine.Frontend.Header.Toolbar
+      Refine.Frontend.Header.Types
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
+      Refine.Frontend.NotImplementedYet
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store
@@ -174,10 +184,17 @@ test-suite spec
       Refine.Frontend.Bubbles.StoreSpec
       Refine.Frontend.Bubbles.Types
       Refine.Frontend.Colors
-      Refine.Frontend.Heading
-      Refine.Frontend.HeadingSpec
+      Refine.Frontend.Header.DocumentHeader
+      Refine.Frontend.Header.Heading
+      Refine.Frontend.Header.Store
+      Refine.Frontend.Header.Toolbar
+      Refine.Frontend.Header.Types
+      Refine.Frontend.Header.DocumentHeaderSpec
+      Refine.Frontend.Header.HeadingSpec
+      Refine.Frontend.Header.ToolbarSpec
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
+      Refine.Frontend.NotImplementedYet
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store

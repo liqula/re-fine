@@ -41,6 +41,7 @@ import qualified Refine.Common.Types as RT
 import           Refine.Common.VDoc.HTML (insertMoreMarks)
 import           Refine.Frontend.Bubbles.Store (bubblesStateUpdate)
 import           Refine.Frontend.Bubbles.Types
+import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Rest
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
 import           Refine.Frontend.Screen.Types
@@ -72,11 +73,13 @@ instance StoreData GlobalState where
             _ -> pure action
 
 
-        let newState = state  -- TODO: do all these cases like gsBubblesState.
-              & gsVDoc                     %~ vdocUpdate transformedAction
-              & gsVDocList                 %~ vdocListUpdate transformedAction
-              & gsBubblesState             %~ maybe id bubblesStateUpdate (transformedAction ^? _BubblesAction)
-              & gsScreenState              %~ screenStateUpdate transformedAction
+        let newState = state
+              & gsVDoc                       %~ vdocUpdate transformedAction
+              & gsVDocList                   %~ vdocListUpdate transformedAction
+              & gsBubblesState               %~ maybe id bubblesStateUpdate (transformedAction ^? _BubblesAction)
+              & gsHeaderState                %~ headerStateUpdate transformedAction
+              & gsScreenState                %~ screenStateUpdate transformedAction
+              & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate transformedAction
 
         consoleLog "New state: " newState
         pure newState
@@ -113,6 +116,12 @@ vdocListUpdate :: RefineAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
 vdocListUpdate action state = case action of
     LoadedDocumentList list -> Just list
     _ -> state
+
+notImplementedYetIsVisibleUpdate :: RefineAction -> Bool -> Bool
+notImplementedYetIsVisibleUpdate action state = case action of
+  ShowNotImplementedYet -> True
+  HideNotImplementedYet -> False
+  _                 -> state
 
 emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()
 emitBackendCallsFor action state = case action of

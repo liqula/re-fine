@@ -43,11 +43,13 @@ import           Refine.Frontend.Bubbles.Mark
 import           Refine.Frontend.Bubbles.Overlay
 import           Refine.Frontend.Bubbles.QuickCreate
 import           Refine.Frontend.Bubbles.Types as RS
-import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(..), editToolbar_
-                                         , editToolbarExtension_, menuButton_, headerSizeCapture_
-                                         )
+import           Refine.Frontend.Header.DocumentHeader ( documentHeader_, DocumentHeaderProps(..) )
+import           Refine.Frontend.Header.Heading ( menuButton_, headerSizeCapture_ )
+import           Refine.Frontend.Header.Toolbar ( editToolbar_, commentToolbarExtension_, editToolbarExtension_ )
+import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.Login.Component (login_)
+import           Refine.Frontend.NotImplementedYet (notImplementedYet_)
 import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import qualified Refine.Frontend.Screen.Types as SC
@@ -66,7 +68,8 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
         Just vdoc -> div_ $ do
             windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
             stickyContainer_ [] $ do
-                headerSizeCapture_ $ do
+                headerSizeCapture_
+                div_ ["className" $= "c-fullheader"] $ do
                     -- the following need to be siblings because of the z-index handling
                     div_ ["className" $= "c-mainmenu__bg"] "" -- "role" $= "navigation"
                     --header_ ["role" $= "banner"] $ do
@@ -75,11 +78,13 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                     div_ ["className" $= "c-fulltoolbar"] $ do
                         sticky_ [] $ do
                             editToolbar_
+                            commentToolbarExtension_ (rs ^. gsHeaderState . HT.hsCommentToolbarExtensionIsVisible)
                             editToolbarExtension_
 
                 showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsBubblesState . bsNoteIsVisible)
                 showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsBubblesState . bsDiscussionIsVisible)
                 addComment_ (rs ^. gsBubblesState . bsCommentEditorIsVisible) (rs ^. gsBubblesState . bsCommentCategory)
+                notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
 
                 main_ ["role" $= "main"] $ do
                     div_ ["className" $= "grid-wrapper"] $ do

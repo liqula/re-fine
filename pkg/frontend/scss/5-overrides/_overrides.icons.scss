@@ -10,6 +10,10 @@
 
 .iconsize-m {
 
+    background-size: 100%;
+    width: 8px;
+    height: 8px;
+
     &::before,
     span::before {
         font-size: rem(14);
@@ -17,6 +21,10 @@
 }
 
 .iconsize-l {
+
+    background-size: 100%;
+    width: 16px;
+    height: 16px;
 
     &::before,
     span::before {
@@ -26,6 +34,10 @@
 
 .iconsize-xl {
 
+    background-size: 100%;
+    width: 24px;
+    height: 24px;
+
     &::before,
     span::before {
         font-size: rem(24);
@@ -34,8 +46,8 @@
 
 .iconsize-xxl {
     background-size: 100%;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
 
     &::before,
     span::before {
