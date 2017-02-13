@@ -171,11 +171,13 @@ test-suite spec
       Refine.Frontend.Bubbles.QuickCreate
       Refine.Frontend.Bubbles.QuickCreateSpec
       Refine.Frontend.Bubbles.Store
+      Refine.Frontend.Bubbles.StoreSpec
       Refine.Frontend.Bubbles.Types
       Refine.Frontend.Colors
       Refine.Frontend.Heading
       Refine.Frontend.HeadingSpec
       Refine.Frontend.Loader.Component
+      Refine.Frontend.Login.Component
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store

@@ -26,7 +26,7 @@
 
 module Refine.Frontend.Store where
 
-import           Control.Lens ((&), (^.), (%~), to)
+import           Control.Lens ((&), (^.), (^?), (%~), to)
 import qualified Data.Aeson as AE
 import           Data.Aeson (ToJSON, encode)
 import qualified Data.Map.Strict as M
@@ -72,10 +72,10 @@ instance StoreData GlobalState where
             _ -> pure action
 
 
-        let newState = state
+        let newState = state  -- TODO: do all these cases like gsBubblesState.
               & gsVDoc                     %~ vdocUpdate transformedAction
               & gsVDocList                 %~ vdocListUpdate transformedAction
-              & gsBubblesState             %~ bubblesStateUpdate transformedAction
+              & gsBubblesState             %~ maybe id bubblesStateUpdate (transformedAction ^? _BubblesAction)
               & gsScreenState              %~ screenStateUpdate transformedAction
 
         consoleLog "New state: " newState
