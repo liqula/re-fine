@@ -62,11 +62,10 @@ data IconSize
 type IconDescription = (String, String)
 
 data IconProps = IconProps
-  { _blockName     :: String
-  , _iconHighlight :: Bool
-  , _iconDesc      :: IconDescription
-  , _size          :: IconSize
-
+  { _iconPropsBlockName :: String
+  , _iconPropsHighlight :: Bool
+  , _iconPropsDesc      :: IconDescription
+  , _iconPropsSize      :: IconSize
   }
 
 makeLenses ''IconProps
@@ -74,22 +73,22 @@ makeLenses ''IconProps
 type ClickHandler = Event -> [SomeStoreAction]
 
 data IconButtonProps = IconButtonProps
-  { _iconProps     :: IconProps
-  , _elementName   :: String
-  , _moduleName    :: String
-  , _contentType   :: JSString
-  , _label         :: JSString
-  , _disabled      :: Bool
-  , _clickHandler    :: ClickHandler
+  { _iconButtonPropsIconProps    :: IconProps
+  , _iconButtonPropsElementName  :: String
+  , _iconButtonPropsModuleName   :: String
+  , _iconButtonPropsContentType  :: JSString
+  , _iconButtonPropsLabel        :: JSString
+  , _iconButtonPropsDisabled     :: Bool
+  , _iconButtonPropsClickHandler :: ClickHandler
   }
 
 makeLenses ''IconButtonProps
 
 data IconButtonWithAlignmentProps = IconButtonWithAlignmentProps
-    { _iconButtonProps :: IconButtonProps
-    , _rightAligned    :: Bool
-    , _position        :: Maybe Int
-    }
+  { _iconButtonWithAlIconButtonProps :: IconButtonProps
+  , _iconButtonWithAlRightAligned    :: Bool
+  , _iconButtonWithAlPosition        :: Maybe Int
+  }
 
 makeLenses ''IconButtonWithAlignmentProps
 
@@ -98,15 +97,15 @@ icon :: ReactView IconProps
 icon = defineStatefulView "Icon" False $ \mouseIsOver props -> do
   -- TODO unify the naming schemas of the classes of the different icons!
   let
-    highlightStyle = if mouseIsOver && (props ^. iconHighlight)
+    highlightStyle = if mouseIsOver && (props ^. iconPropsHighlight)
                      then "RO"
-                     else props ^. iconDesc . _2
+                     else props ^. iconPropsDesc . _2
   div_ ["className" $= (fromString . toClasses)
-                         [ (props ^. blockName) <> "__icon"
-                         , (props ^. blockName) <> "__category-icon"
-                         , if props ^. iconHighlight then "o-icon-highlight" else ""
-                         , props ^. iconDesc . _1 <> "_" <> highlightStyle
-                         , "iconsize-" <> map toLower (show (props ^. size))
+                         [ (props ^. iconPropsBlockName) <> "__icon"
+                         , (props ^. iconPropsBlockName) <> "__category-icon"
+                         , if props ^. iconPropsHighlight then "o-icon-highlight" else ""
+                         , props ^. iconPropsDesc . _1 <> "_" <> highlightStyle
+                         , "iconsize-" <> map toLower (show (props ^. iconPropsSize))
                          ]
        , onMouseEnter $ \_ _ _ -> ([], Just True)
        , onMouseLeave $ \_ _ _ -> ([], Just False)
@@ -139,31 +138,31 @@ iconButtonWithAlignment_ props = view iconButtonWithAlignment props mempty
 
 iconButtonWithAlignmentCore :: ReactView IconButtonWithAlignmentProps
 iconButtonWithAlignmentCore = defineView "IconButtonWithAlignmentCore" $ \props -> do
-    let bprops = props ^. iconButtonProps
-    let iprops = bprops ^. iconProps
-    let beConnector = if bprops ^. elementName == "" then "" else "__"
-    let emConnector = if bprops ^. moduleName == "" then "" else "--"
-    let beName  = iprops ^. blockName <> beConnector <> bprops ^. elementName
-    let bemName = beName <> emConnector <> bprops ^. moduleName
-    div_ ([ "data-content-type" $= (bprops ^. contentType)
+    let bprops = props ^. iconButtonWithAlIconButtonProps
+    let iprops = bprops ^. iconButtonPropsIconProps
+    let beConnector = if bprops ^. iconButtonPropsElementName == "" then "" else "__"
+    let emConnector = if bprops ^. iconButtonPropsModuleName == "" then "" else "--"
+    let beName  = iprops ^. iconPropsBlockName <> beConnector <> bprops ^. iconButtonPropsElementName
+    let bemName = beName <> emConnector <> bprops ^. iconButtonPropsModuleName
+    div_ ([ "data-content-type" $= (bprops ^. iconButtonPropsContentType)
            -- TODO unify the naming schema of the classes for the different buttons!
-          , "className" $= fromString (toClasses [ iprops ^. blockName <> "__button"
+          , "className" $= fromString (toClasses [ iprops ^. iconPropsBlockName <> "__button"
                                                   , beName  -- for the vdoc-toolbar
                                                   , bemName -- for the buttons in the overlays
-                                                  , alignmentClass (iprops ^. blockName)
-                                                                   (props ^. rightAligned)
+                                                  , alignmentClass (iprops ^. iconPropsBlockName)
+                                                                   (props ^. iconButtonWithAlRightAligned)
                                                    ])
-          , "style" @= (case props ^. position of
+          , "style" @= (case props ^. iconButtonWithAlPosition of
                                Nothing  -> []
                                Just pos -> [Style "top" pos]
-                    <> [Style "cursor" ("pointer" :: String) | not (bprops ^. disabled)])
-          ] <> [onClick $ const . (bprops ^. clickHandler) | not (bprops ^. disabled)]
+                    <> [Style "cursor" ("pointer" :: String) | not (bprops ^. iconButtonPropsDisabled)])
+          ] <> [onClick $ const . (bprops ^. iconButtonPropsClickHandler) | not (bprops ^. iconButtonPropsDisabled)]
           ) $ do
         icon_ iprops
-        span_ ["className" $= fromString (iprops ^. blockName <> "__button-label")
-              , "style" @= [Style "color" Color.disabledText | bprops ^. disabled]
+        span_ ["className" $= fromString (iprops ^. iconPropsBlockName <> "__button-label")
+              , "style" @= [Style "color" Color.disabledText | bprops ^. iconButtonPropsDisabled]
               ] $
-            elemJSString (bprops ^. label)
+            elemJSString (bprops ^. iconButtonPropsLabel)
     where
       alignmentClass blockName1 rightAligned1 = if rightAligned1 then blockName1 <> "--align-right" else ""
 

@@ -60,18 +60,18 @@ mainMenu = defineView "MainMenu" $ \visible -> if not visible then mempty else d
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
         div_ ["className" $= "c-mainmenu-content__header"] $ do
             iconButton_ IconButtonProps
-              { _iconProps = IconProps
-                  { _blockName     = "c-mainmenu-content"
-                  , _iconHighlight = True
-                  , _iconDesc      = ("icon-User", "dark")
-                  , _size          = XXL
+              { _iconButtonPropsIconProps = IconProps
+                  { _iconPropsBlockName = "c-mainmenu-content"
+                  , _iconPropsHighlight = True
+                  , _iconPropsDesc      = ("icon-User", "dark")
+                  , _iconPropsSize      = XXL
                   }
-              , _elementName   = "section-button"
-              , _moduleName    = "active"
-              , _contentType   = ""
-              , _label         = ""
-              , _disabled      = False
-              , _clickHandler  = \_ -> []
+              , _iconButtonPropsElementName  = "section-button"
+              , _iconButtonPropsModuleName   = "active"
+              , _iconButtonPropsContentType  = ""
+              , _iconButtonPropsLabel        = ""
+              , _iconButtonPropsDisabled     = False
+              , _iconButtonPropsClickHandler = \_ -> []
               }
               -- not translated from prototype2016:
               -- button attribute data-section="dashboard"
