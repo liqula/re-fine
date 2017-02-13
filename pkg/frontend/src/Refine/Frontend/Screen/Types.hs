@@ -30,7 +30,7 @@ import Refine.Prelude.TH (makeRefineType)
 
 
 newtype OffsetFromViewportTop = OffsetFromViewportTop { _unOffsetFromViewportTop :: Int }
-  deriving (Show, Generic, Eq, Num)
+  deriving (Show, Generic, Eq, Ord, Num)
 
 newtype ScrollOffsetOfViewport = ScrollOffsetOfViewport { _unScrollOffsetOfViewport :: Int }
   deriving (Show, Generic, Eq, Num)
