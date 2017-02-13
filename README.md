@@ -1,4 +1,15 @@
 
+# staging server
+
+```
+https://demo8.aula.de/
+login: re-fine
+passwd: tAA957Mn4w07ok
+```
+
+(for devs: ssh to refine-stage1@zb1 for maintenance)
+
+
 # Installation and testing
 
 Tested with nodejs-v6.9.15.  Known not to work with nodejs-v7.*!
