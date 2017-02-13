@@ -80,6 +80,7 @@ instance StoreData GlobalState where
               & gsHeaderState                %~ headerStateUpdate transformedAction
               & gsScreenState                %~ screenStateUpdate transformedAction
               & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate transformedAction
+              & gsMainMenuOpen               %~ case transformedAction of ToggleMainMenu -> not; _ -> id
 
         consoleLog "New state: " newState
         pure newState

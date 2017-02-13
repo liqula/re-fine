@@ -43,9 +43,6 @@ import           Refine.Frontend.Bubbles.Mark
 import           Refine.Frontend.Bubbles.Overlay
 import           Refine.Frontend.Bubbles.QuickCreate
 import           Refine.Frontend.Bubbles.Types as RS
-import           Refine.Frontend.Heading ( documentHeader_, DocumentHeaderProps(..), editToolbar_
-                                         , editToolbarExtension_, menuButton_, headerSizeCapture_
-                                         )
 import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.Login.Component (login_)
 import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
@@ -56,10 +53,8 @@ import           Refine.Frontend.Types as RS
 import           Refine.Frontend.UtilityWidgets
 
 
-data MainMenuProps = MainMenuProps
-
-mainMenu :: ReactView MainMenuProps
-mainMenu = defineView "MainMenu" $ \MainMenuProps ->
+mainMenu :: ReactView Bool
+mainMenu = defineView "MainMenu" $ \visible -> if not visible then mempty else do
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
@@ -89,10 +84,9 @@ mainMenu = defineView "MainMenu" $ \MainMenuProps ->
 
 
 -- next steps:
--- 2. hook it to the burger button and try it out!
 -- 3. rename fields to carry prefices.
 -- 4. translate all the other buttons
--- 5. MR, closing issue!
+-- 5. remove -w flag everywhere.  MR, closing issue!
 
 
 
@@ -230,5 +224,5 @@ mainMenu = defineView "MainMenu" $ \MainMenuProps ->
 
 -}
 
-mainMenu_ :: MainMenuProps -> ReactElementM eventHandler ()
+mainMenu_ :: Bool -> ReactElementM eventHandler ()
 mainMenu_ props = view mainMenu props mempty

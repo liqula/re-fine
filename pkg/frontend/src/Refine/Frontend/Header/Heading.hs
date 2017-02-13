@@ -40,7 +40,9 @@ menuButton = defineView "MenuButton" $ \() ->
     button_ ["aria-controls" $= "bs-navbar"
             , "aria-expanded" $= "false"
             , "className" $= "c-mainmenu__menu-button"
-            , "type" $= "button"] $ do
+            , "type" $= "button"
+            , onClick $ \_ _ -> RS.dispatch RS.ToggleMainMenu
+            ] $ do
       span_ ["className" $= "sr-only"] "Navigation an/aus"
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
       span_ ["className" $= "c-mainmenu__icon-bar"] ""

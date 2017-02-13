@@ -42,10 +42,11 @@ data GlobalState = GlobalState
   , _gsHeaderState                :: HeaderState
   , _gsScreenState                :: ScreenState
   , _gsNotImplementedYetIsVisible :: Bool
+  , _gsMainMenuOpen               :: Bool
   } deriving (Show, Generic)
 
 emptyGlobalState :: GlobalState
-emptyGlobalState = GlobalState Nothing Nothing emptyBubblesState emptyHeaderState emptyScreenState False
+emptyGlobalState = GlobalState Nothing Nothing emptyBubblesState emptyHeaderState emptyScreenState False False
 
 data RefineAction = LoadDocumentList
                   | LoadedDocumentList [ID VDoc]
@@ -66,6 +67,7 @@ data RefineAction = LoadDocumentList
                   | Logout
                   | ShowNotImplementedYet
                   | HideNotImplementedYet
+                  | ToggleMainMenu
                   -- Actions that will be transformed because they need IO:
                   | TriggerUpdateSelection DeviceOffset
   deriving (Show, Generic)
