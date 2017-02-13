@@ -25,9 +25,9 @@
 module Refine.Frontend.UtilityWidgets
 ( IconSize(..)
 , IconDescription
-, IconProps(IconProps)
+, IconProps(..)
 , ClickHandler
-, IconButtonProps(IconButtonProps)
+, IconButtonProps(..)
 , IconButtonWithAlignmentProps(IconButtonWithAlignmentProps)
 
 , icon_
