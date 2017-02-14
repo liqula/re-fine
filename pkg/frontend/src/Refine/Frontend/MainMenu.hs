@@ -53,8 +53,8 @@ import           Refine.Frontend.Types as RS
 import           Refine.Frontend.UtilityWidgets
 
 
-mainMenu :: ReactView Bool
-mainMenu = defineView "MainMenu" $ \visible -> if not visible then mempty else do
+mainMenu :: ReactView ()
+mainMenu = defineView "MainMenu" $ \() ->
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
@@ -224,5 +224,5 @@ mainMenu = defineView "MainMenu" $ \visible -> if not visible then mempty else d
 
 -}
 
-mainMenu_ :: Bool -> ReactElementM eventHandler ()
-mainMenu_ props = view mainMenu props mempty
+mainMenu_ :: ReactElementM eventHandler ()
+mainMenu_ = view mainMenu () mempty

@@ -62,6 +62,12 @@ import           Refine.Frontend.Types as RS
 -- with the store and will be re-rendered whenever the store changes.
 refineApp :: ReactView ()
 refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
+  if rs ^. gsMainMenuOpen
+    then mainMenu_
+    else refineAppMenuClosed_ rs
+
+refineAppMenuClosed_ :: RS.GlobalState -> ReactElementM ViewEventHandler ()
+refineAppMenuClosed_ rs =
     case rs ^. gsVDoc of
         Nothing -> do
           login_
@@ -82,7 +88,6 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                             commentToolbarExtension_ (rs ^. gsHeaderState . HT.hsCommentToolbarExtensionIsVisible)
                             editToolbarExtension_
 
-                mainMenu_ (rs ^. gsMainMenuOpen)
                 showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsBubblesState . bsNoteIsVisible)
                 showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsBubblesState . bsDiscussionIsVisible)
                 addComment_ (rs ^. gsBubblesState . bsCommentEditorIsVisible) (rs ^. gsBubblesState . bsCommentCategory)
