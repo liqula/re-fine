@@ -30,11 +30,13 @@ import           Data.Set (Set)
 import           Data.String.Conversions ((<>))
 import qualified Data.Text as ST
 import           Data.Tree
+import           Data.Void
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
 import           Text.HTML.Parser
 import           Text.HTML.Tree
+import           Web.HttpApiData
 
 import Refine.Common.Test.Arbitrary
 import Refine.Common.Types
@@ -278,31 +280,35 @@ spec = parallel $ do
 
     context "with consistent PreMarks" $ do
       it "removes empty selections" $ do
-        resolvePreTokens [PreMarkOpen "2" "whoof", PreMarkClose "2"]
+        resolvePreTokens [PreMarkOpen (ID 2) ContribKindNote, PreMarkClose (ID 2)]
           `shouldBe` []
 
       it "drops selections that have only tags in them, but no text" $ do
-        resolvePreTokens [PreMarkOpen "2" "whoof", PreMarkOpen "8" "whoof", PreMarkClose "8", PreMarkClose "2"]
+        resolvePreTokens [ PreMarkOpen (ID 2) ContribKindNote
+                         , PreMarkOpen (ID 8) ContribKindNote
+                         , PreMarkClose (ID 8)
+                         , PreMarkClose (ID 2)
+                         ]
           `shouldBe` []
 
       it "renders marks as tags" $ do
-        resolvePreTokens [PreMarkOpen "2" "whoof", PreToken $ ContentText "wef", PreMarkClose "2"]
-          `shouldBe` [ TagOpen "mark" [Attr "data-contribution-id" "2", Attr "data-contribution-kind" "whoof"]
+        resolvePreTokens [PreMarkOpen (ID 2) ContribKindNote, PreToken $ ContentText "wef", PreMarkClose (ID 2)]
+          `shouldBe` [ TagOpen "mark" [Attr "data-contribution-id" "2", Attr "data-contribution-kind" "note"]
                      , ContentText "wef"
                      , TagClose "mark"
                      ]
-        resolvePreTokens [ PreMarkOpen "2" "whoof"
+        resolvePreTokens [ PreMarkOpen (ID 2) ContribKindNote
                          , PreToken $ ContentText "wef"
-                         , PreMarkOpen "8" "whoof"
+                         , PreMarkOpen (ID 8) ContribKindNote
                          , PreToken $ ContentText "puh"
-                         , PreMarkClose "8"
-                         , PreMarkClose "2"
+                         , PreMarkClose (ID 8)
+                         , PreMarkClose (ID 2)
                          ]
-          `shouldBe` [ TagOpen "mark" [Attr "data-contribution-id" "2",Attr "data-contribution-kind" "whoof"]
+          `shouldBe` [ TagOpen "mark" [Attr "data-contribution-id" "2", Attr "data-contribution-kind" "note"]
                      , ContentText "wef"
                      , TagClose "mark"
-                     , TagOpen "mark" [Attr "data-contribution-id" "8",Attr "data-contribution-kind" "whoof"]
-                     , TagOpen "mark" [Attr "data-contribution-id" "2",Attr "data-contribution-kind" "whoof"]
+                     , TagOpen "mark" [Attr "data-contribution-id" "8", Attr "data-contribution-kind" "note"]
+                     , TagOpen "mark" [Attr "data-contribution-id" "2", Attr "data-contribution-kind" "note"]
                      , ContentText "puh"
                      , TagClose "mark"
                      , TagClose "mark"
@@ -312,9 +318,9 @@ spec = parallel $ do
       it "fails" $ do
         pendingWith "#16"
 
-        let bad1 = [ PreMarkOpen "2" "whoof"
+        let bad1 = [ PreMarkOpen (ID 2) ContribKindNote
                    ]
-            bad2 = [ PreMarkClose "8"
+            bad2 = [ PreMarkClose (ID 8)
                    ]
         evaluate (resolvePreTokens bad1) `shouldThrow` anyException
         evaluate (resolvePreTokens bad2) `shouldThrow` anyException
@@ -326,14 +332,14 @@ spec = parallel $ do
 -- This function can be used to generate values from 'VDocVersions' that can be tested for equality
 -- to abstract from these differences.  It returns a list of pairs of 'DataChunkID' set and number
 -- of characters that follow in the 'VDocVersion' covered by those chunk ids.
-marksEquivalenceClass :: VDocVersion 'HTMLWithMarks -> [(Set DataChunkID, Int)]
+marksEquivalenceClass :: VDocVersion 'HTMLWithMarks -> [(Set (ID Void), Int)]
 marksEquivalenceClass (VDocVersion forest) = dfs mempty forest
   where
-    push (Attr "data-contribution-id" v : _) opens = Set.insert v opens
+    push (Attr "data-contribution-id" (parseUrlPiece -> Right v) : _) opens = Set.insert v opens
     push (_ : as) opens = push as opens
     push [] _ = error "marksEquivalenceClass: mark tag without data-contribution-id attribute!"
 
-    dfs :: Set DataChunkID -> Forest Token -> [(Set DataChunkID, Int)]
+    dfs :: Set (ID Void) -> Forest Token -> [(Set (ID Void), Int)]
     dfs opens (Node (TagOpen "mark" attrs) children : siblings) =
       dfs (push attrs opens) children <> dfs opens siblings
 

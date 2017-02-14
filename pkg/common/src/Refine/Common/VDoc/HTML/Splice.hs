@@ -41,14 +41,13 @@ import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
-import           Data.String.Conversions ((<>), cs)
+import           Data.String.Conversions ((<>))
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
-import           Data.Typeable (Typeable, typeOf)
+import           Data.Typeable (Typeable)
 import           Data.Void (Void, absurd)
 import           Text.HTML.Parser (Token(..), canonicalizeTokens)
 import           Text.HTML.Tree (tokensFromForest, tokensToForest)
-import           Web.HttpApiData (toUrlPiece)
 
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML.Canonicalize (reCanonicalizeVDocVersion)
@@ -152,9 +151,8 @@ insertMarksForest crs = (prefix <>) . (<> suffix) . dfs
   where
     IMFStack prefix suffix infixmap = foldl' unmaybe (IMFStack mempty mempty mempty) (mconcat $ f <$> crs)
       where
-        f (ChunkRange (toUrlPiece -> l) mb me) = [(mb, PreMarkOpen'' l t), (me, PreMarkClose'' l)]
-          where
-            t = cs . show . typeOf $ (undefined :: a)
+        f cr@(ChunkRange (clearTypeParameter -> l) mb me)
+            = [(mb, PreMarkOpen'' l (unsafeChunkRangeKind cr)), (me, PreMarkClose'' l)]
 
     pushList :: PreToken'' -> Forest PreToken -> Forest PreToken
     pushList mark = (Node (runPreToken'' mark) [] :)

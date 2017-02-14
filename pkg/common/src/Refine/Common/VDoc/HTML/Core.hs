@@ -31,7 +31,7 @@ module Refine.Common.VDoc.HTML.Core
   , _ChunkRangeEmpty
 
     -- * pretokens
-  , PreToken(..), DataChunkID, OwnerKind, runPreToken, dropPreTokens
+  , PreToken(..), ContributionKind, runPreToken, dropPreTokens
   , PreToken', PreToken''(..), runPreToken''
 
     -- * misc
@@ -49,16 +49,17 @@ module Refine.Common.VDoc.HTML.Core
   ) where
 
 import           Control.Lens (Traversal')
-import           Data.Char (toLower)
 import           Data.List (foldl')
 import           Data.Maybe (listToMaybe)
 import           Data.String.Conversions (ST, cs, (<>))
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
+import           Data.Void
 import           GHC.Generics (Generic)
 import           Text.HTML.Parser (Token(..), Attr(..))
 import           Text.HTML.Tree (tokensFromForest)
 import           Text.Read (readMaybe)
+import           Web.HttpApiData (toUrlPiece, parseUrlPiece, FromHttpApiData(..))
 
 import Refine.Common.Types
 import Refine.Prelude.TH (makeRefineType)
@@ -79,24 +80,14 @@ data ChunkRangeError =
 -- point.  in order to keep track of which close mark belongs to which open mark, we cannot rely on
 -- their order (which still needs to be de-overlapped), so need close marks of the form
 -- @PreMarkClose "data-contribution-id-value"@.
-data PreToken = PreToken Token | PreMarkOpen DataChunkID OwnerKind | PreMarkClose DataChunkID
+data PreToken = PreToken Token | PreMarkOpen (ID Void) ContributionKind | PreMarkClose (ID Void)
   deriving (Eq, Show, Generic)
 
--- | 'ID' of 'Edit' or 'Comment' that owns a 'ChunkRange'.  This is the @data-chunk-id@ attribute value
--- of the @mark@ tag corresponding to the 'ChunkRange' in the dom.
-type DataChunkID = ST  -- FIXME: @newtype DataChunkID (forall a . Eq a => ID a)@
-                       -- FIXME: nope, this should be @ID a@, if possible.
-
--- | This is the @data-chunk-owner@ attribute value of the @mark@ tag corresponding to the
--- 'ChunkRange' in the dom.  It can be either @edit@, @note@, @question@, @discussion@, or something
--- like that.
-type OwnerKind = ST    -- FIXME: @type OwnerKind = TypeRep  -- e.g. @ID Edit@@
+-- | Needed to make some of the helper functions total.
+type PreToken' = (ID Void, ContributionKind)
 
 -- | Needed to make some of the helper functions total.
-type PreToken' = (DataChunkID, OwnerKind)
-
--- | Needed to make some of the helper functions total.
-data PreToken'' = PreMarkOpen'' DataChunkID OwnerKind | PreMarkClose'' DataChunkID
+data PreToken'' = PreMarkOpen'' (ID Void) ContributionKind | PreMarkClose'' (ID Void)
   deriving (Show)
 
 runPreToken'' :: PreToken'' -> PreToken
@@ -106,7 +97,10 @@ runPreToken'' (PreMarkClose'' n)  = PreMarkClose n
 
 runPreToken :: PreToken -> Token
 runPreToken (PreToken t)      = t
-runPreToken (PreMarkOpen l k) = TagOpen "mark" [Attr "data-contribution-id" l, Attr "data-contribution-kind" $ ST.map toLower k]
+runPreToken (PreMarkOpen l k) = TagOpen "mark"
+  [ Attr "data-contribution-id"   $ toUrlPiece l
+  , Attr "data-contribution-kind" $ toUrlPiece k
+  ]
 runPreToken (PreMarkClose _)  = TagClose "mark"
 
 dropPreTokens :: [PreToken] -> [Token]
@@ -122,15 +116,18 @@ preTokensFromForest :: Forest PreToken -> [PreToken]
 preTokensFromForest = fmap unstashPreToken . tokensFromForest . fmap (fmap stashPreToken)
 
 stashPreToken :: PreToken -> Token
-stashPreToken (PreMarkOpen l k) = Doctype $ ST.intercalate "/" [l, k]
-stashPreToken (PreMarkClose l)  = Doctype l
+stashPreToken (PreMarkOpen l k) = Doctype $ ST.intercalate "/" [toUrlPiece l, toUrlPiece k]
+stashPreToken (PreMarkClose l)  = Doctype $ toUrlPiece l
 stashPreToken (PreToken t)      = t
 
 unstashPreToken :: Token -> PreToken
 unstashPreToken (Doctype s) = case ST.splitOn "/" s of
-  [l, k] -> PreMarkOpen l k
-  [l]    -> PreMarkClose l
+  [l, k] -> PreMarkOpen (confidentread l) (confidentread k)
+  [l]    -> PreMarkClose (confidentread l)
   bad    -> error $ "unstashPreToken: " <> show bad
+  where
+    confidentread :: FromHttpApiData a => ST -> a
+    confidentread = (\(Right v) -> v) . parseUrlPiece
 unstashPreToken t           = PreToken t
 
 
