@@ -1,9 +1,9 @@
 #!/usr/bin/env stack
 {- stack --resolver lts-7.15 --install-ghc runghc
+    --package executable-path
     --package string-conversions
     --package wai
     --package warp
-    --package executable-path
 
     --
 
@@ -30,6 +30,7 @@ import Network.Wai.Handler.Warp
 import System.Directory
 import System.Environment
 import System.Environment.Executable
+import System.Exit
 import System.FilePath
 import System.Process
 import Text.Read
@@ -94,5 +95,18 @@ buildFast mpid = do
     Nothing -> pure $ Right ph
     Just errmsg -> terminateProcess ph >> waitForProcess ph >> pure (Left errmsg)
 
+serverUrl :: String
+serverUrl = "http://localhost:3000/"  -- FIXME: this could look into server.conf to make a more robust guess.
+
+serverStartDelaySecs :: Int
+serverStartDelaySecs = 3
+
 livenessCheck :: IO (Maybe String)
-livenessCheck = pure Nothing
+livenessCheck = do
+  threadDelay (serverStartDelaySecs * 1000 * 1000)
+  status <- spawnProcess "curl" ["-v", serverUrl] >>= waitForProcess
+  case status of
+    ExitSuccess -> pure Nothing
+    _ -> pure . Just $ "server unreachable under "
+                        <> show serverUrl <> " after "
+                        <> show serverStartDelaySecs <> " seconds"
