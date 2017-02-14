@@ -216,6 +216,7 @@ test-suite spec
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.UtilityWidgetsSpec
       Refine.Frontend.Views
+      Refine.Frontend.ViewsSpec
   js-sources:
       jsbits/spec-bits.js
   default-language: Haskell2010

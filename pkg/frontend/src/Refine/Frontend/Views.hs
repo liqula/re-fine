@@ -24,6 +24,9 @@
 
 module Refine.Frontend.Views
   ( refineApp
+
+  -- for testing:
+  , mainScreen_
   ) where
 
 import           Control.Lens ((^.))
