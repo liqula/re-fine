@@ -25,6 +25,7 @@
 module Refine.Frontend.Test.Console
   ( consoleLogJSVal
   , consoleLogJSON
+  , consoleLogReactWrapper
   , consoleLogShallowWrapper
   , consoleLogStringified
   )
@@ -35,10 +36,14 @@ import Data.JSString (JSString, pack)
 import Data.String.Conversions (cs)
 import GHCJS.Types (JSVal)
 import Refine.Frontend.Test.Enzyme
+import Refine.Frontend.Test.Enzyme.ReactWrapperAPI
 
 
 consoleLogShallowWrapper :: JSString -> ShallowWrapper -> IO ()
 consoleLogShallowWrapper msg (ShallowWrapper jsval) = consoleLogJSVal msg jsval
+
+consoleLogReactWrapper :: JSString -> ReactWrapper -> IO ()
+consoleLogReactWrapper msg (ReactWrapper jsval) = consoleLogJSVal msg jsval
 
 
 -- | Write a 'JSVal' to stdout (node) or the console (browser).  (Similar to 'consoleLogJSON', but
