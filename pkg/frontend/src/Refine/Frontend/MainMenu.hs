@@ -24,6 +24,22 @@
 
 {-# OPTIONS_GHC -w #-}
 
+
+{-
+
+next steps:
+- z-axis is off, with the effect that quick-create buttons and bubbles are pushed down.  how can this still be caused by mainMenu_?!
+- block all events from hitting the page under the overlay.
+- fix burger layout: it becomes invisible (background-coloured) when document is scrolled up.  => @nr.
+- translate all the other buttons below.
+- remove -w flag everywhere.  MR, closing issue!
+
+-}
+
+
+
+
+
 module Refine.Frontend.MainMenu where
 
 import           Control.Lens ((^.))
@@ -77,33 +93,68 @@ mainMenu = defineView "MainMenu" $ \() ->
               -- button attribute data-section="dashboard"
               -- button attribute class="c-mainmenu-content__btn-dashboard"
 
+            iconButton_ IconButtonProps
+              { _iconButtonPropsIconProps = IconProps
+                  { _iconPropsBlockName = "c-mainmenu-content"
+                  , _iconPropsHighlight = False
+                  , _iconPropsDesc      = ("icon-Group", "dark")
+                  , _iconPropsSize      = XXL
+                  }
+              , _iconButtonPropsElementName  = "section-button"
+              , _iconButtonPropsModuleName   = ""
+              , _iconButtonPropsContentType  = ""
+              , _iconButtonPropsLabel        = ""
+              , _iconButtonPropsDisabled     = False
+              , _iconButtonPropsClickHandler = \_ -> []
+              }
+              -- not translated from prototype2016:
+              -- button attribute data-section="membership"
+              -- button attribute class="c-mainmenu-content__btn-membership"
+
+            iconButton_ IconButtonProps
+              { _iconButtonPropsIconProps = IconProps
+                  { _iconPropsBlockName = "c-mainmenu-content"
+                  , _iconPropsHighlight = False
+                  , _iconPropsDesc      = ("icon-Help", "dark")
+                  , _iconPropsSize      = XXL
+                  }
+              , _iconButtonPropsElementName  = "section-button"
+              , _iconButtonPropsModuleName   = ""
+              , _iconButtonPropsContentType  = ""
+              , _iconButtonPropsLabel        = ""
+              , _iconButtonPropsDisabled     = False
+              , _iconButtonPropsClickHandler = \_ -> []
+              }
+              -- not translated from prototype2016:
+              -- button attribute data-section="help"
+              -- button attribute class="c-mainmenu-content__btn-help"
+
+            iconButton_ IconButtonProps
+              { _iconButtonPropsIconProps = IconProps
+                  { _iconPropsBlockName = "c-mainmenu-header"
+                  , _iconPropsHighlight = False
+                  , _iconPropsDesc      = ("icon-Close", "dark")
+                  , _iconPropsSize      = XXL
+                  }
+              , _iconButtonPropsElementName  = "section-button"
+              , _iconButtonPropsModuleName   = ""
+              , _iconButtonPropsContentType  = ""
+              , _iconButtonPropsLabel        = ""
+              , _iconButtonPropsDisabled     = False
+              , _iconButtonPropsClickHandler = \_ -> RS.dispatch RS.ToggleMainMenu
+              }
+              -- not translated from prototype2016:
+              -- button attribute class="c-mainmenu-content__btn-close"
+              -- div attribute class="o-icon-highlight"
+
+mainMenu_ :: ReactElementM eventHandler ()
+mainMenu_ = view mainMenu () mempty
 
 
 {-
 
+prototype2016 draft:
 
-
--- next steps:
--- 3. rename fields to carry prefices.
--- 4. translate all the other buttons
--- 5. remove -w flag everywhere.  MR, closing issue!
-
-
-
-            <button data-section="membership" class="c-mainmenu-content__section-button c-mainmenu-content__btn-membership">
-                div_ ["className" $= "c-mainmenu-content__icon"]
-                    div_ ["className" $= "icon-Group_dark iconsize-xxl"]
-                        <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span><span class="path6"></span><span class="path7"></span><span class="path8"></span>
-            </button>
-            <button data-section="help" class="c-mainmenu-content__section-button c-mainmenu-content__btn-help">
-                div_ ["className" $= "c-mainmenu-content__icon"]
-                    div_ ["className" $= "icon-Help_dark iconsize-xxl"]
-                        <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span><span class="path6"></span><span class="path7"></span><span class="path8"></span>
-            </button>
-            <button class="c-mainmenu-header__icon c-mainmenu-content__btn-close">
-                div_ ["className" $= "o-icon-highlight icon-Close_dark iconsize-xxl"]
-                    <span class="path1"></span><span class="path2"></span><span class="path3"></span><span class="path4"></span><span class="path5"></span><span class="path6"></span><span class="path7"></span><span class="path8"></span>
-            </button>
         div_ ["className" $= "c-mainmenu-content__main"]
             div_ ["className" $= "c-mainmenu-content__section c-mainmenu-content--dashboard c-mainmenu-content__section--active"]
                 <h4 class="c-mainmenu-content__headline">Mein Dashboard</h4>
@@ -221,8 +272,4 @@ mainMenu = defineView "MainMenu" $ \() ->
             div_ ["className" $= "c-mainmenu-content__section c-mainmenu-content--help"]
                 <h4 class="c-mainmenu-content__headline">Hilfe</h4>
 
-
 -}
-
-mainMenu_ :: ReactElementM eventHandler ()
-mainMenu_ = view mainMenu () mempty
