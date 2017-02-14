@@ -74,4 +74,5 @@ login = defineStatefulView "Login" (LoginForm "" "") $ \curState () -> do
           "submit"
           (curState ^. loginFormUsername . to DT.null || curState ^. loginFormPassword . to DT.null)
           (\_ -> (RS.dispatch . RS.Login) . (Login <$> _loginFormUsername <*> _loginFormPassword) $ curState)
+          []
         )
