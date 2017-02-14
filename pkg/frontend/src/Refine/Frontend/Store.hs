@@ -81,6 +81,7 @@ instance StoreData GlobalState where
               & gsScreenState                %~ screenStateUpdate transformedAction
               & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate transformedAction
               & gsMainMenuOpen               %~ case transformedAction of ToggleMainMenu -> not; _ -> id
+              & gsToolbarSticky              %~ toolbarStickyUpdate transformedAction
 
         consoleLog "New state: " newState
         pure newState
@@ -123,6 +124,11 @@ notImplementedYetIsVisibleUpdate action state = case action of
   ShowNotImplementedYet -> True
   HideNotImplementedYet -> False
   _                 -> state
+
+toolbarStickyUpdate :: RefineAction -> Bool -> Bool
+toolbarStickyUpdate action state = case action of
+  ToolbarStickyStateChange state' -> state'
+  _                               -> state
 
 emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()
 emitBackendCallsFor action state = case action of

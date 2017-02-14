@@ -43,10 +43,11 @@ data GlobalState = GlobalState
   , _gsScreenState                :: ScreenState
   , _gsNotImplementedYetIsVisible :: Bool
   , _gsMainMenuOpen               :: Bool
+  , _gsToolbarSticky              :: Bool
   } deriving (Show, Generic)
 
 emptyGlobalState :: GlobalState
-emptyGlobalState = GlobalState Nothing Nothing emptyBubblesState emptyHeaderState emptyScreenState False False
+emptyGlobalState = GlobalState Nothing Nothing emptyBubblesState emptyHeaderState emptyScreenState False False False
 
 data RefineAction = LoadDocumentList
                   | LoadedDocumentList [ID VDoc]
@@ -57,6 +58,7 @@ data RefineAction = LoadDocumentList
                   | SetWindowSize WindowSize
                   | BubblesAction BubblesAction
                   | HeaderAction HeaderAction
+                  | ToolbarStickyStateChange Bool
                   -- ...
                   | AddDiscussion CompositeDiscussion
                   | AddNote Note

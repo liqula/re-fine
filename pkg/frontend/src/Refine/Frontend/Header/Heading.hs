@@ -25,7 +25,8 @@
 module Refine.Frontend.Header.Heading where
 
 import           Control.Concurrent (forkIO)
-import           Control.Monad (forM_)
+import           Control.Monad (forM_, unless)
+import           GHC.Generics
 import           GHCJS.Types (JSVal)
 import           React.Flux
 import           React.Flux.Lifecycle
@@ -34,9 +35,12 @@ import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
 
 
-menuButton :: ReactView ()
-menuButton = defineView "MenuButton" $ \() ->
-  span_ ["className" $= "c-mainmenu"] $ do
+newtype MenuButtonProps = MenuButtonProps Bool
+  deriving (Eq, Generic)
+
+menuButton :: ReactView MenuButtonProps
+menuButton = defineView "MenuButton" $ \(MenuButtonProps sticky) ->
+  span_ [classNames [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]] $ do
     button_ ["aria-controls" $= "bs-navbar"
             , "aria-expanded" $= "false"
             , "className" $= "c-mainmenu__menu-button"
@@ -47,10 +51,11 @@ menuButton = defineView "MenuButton" $ \() ->
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
-    span_ ["className" $= "c-mainmenu__menu-button-label"] "MENU"
+    unless sticky $
+      span_ ["className" $= "c-mainmenu__menu-button-label"] "MENU"
 
-menuButton_ :: ReactElementM eventHandler ()
-menuButton_ = view menuButton () mempty
+menuButton_ :: MenuButtonProps -> ReactElementM eventHandler ()
+menuButton_ props = view menuButton props mempty
 
 
 headerSizeCapture :: ReactView ()
