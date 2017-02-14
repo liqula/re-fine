@@ -13,11 +13,12 @@ js-build/frontend.min.js: js-build/frontend.js
 
 js-build/frontend.js: $(INSTALL_ROOT)/bin/refine-frontend.jsexe/all.js
 	mkdir -p js-build
-	echo "(function(global,React,ReactDOM) {" > js-build/frontend.js
-	cat $(INSTALL_ROOT)/bin/refine-frontend.jsexe/all.js >> js-build/frontend.js
-	echo "})(window, window['React'], window['ReactDOM']);" >> js-build/frontend.js
-	sed -i 's/goog.provide.*//' js-build/frontend.js
-	sed -i 's/goog.require.*//' js-build/frontend.js
+	echo "(function(global,React,ReactDOM) {" > js-build/frontend.js-
+	cat $(INSTALL_ROOT)/bin/refine-frontend.jsexe/all.js >> js-build/frontend.js-
+	echo "})(window, window['React'], window['ReactDOM']);" >> js-build/frontend.js-
+	sed -i 's/goog.provide.*//' js-build/frontend.js-
+	sed -i 's/goog.require.*//' js-build/frontend.js-
+	mv js-build/frontend.js- js-build/frontend.js
 
 clean:
 	rm -rf js-build
