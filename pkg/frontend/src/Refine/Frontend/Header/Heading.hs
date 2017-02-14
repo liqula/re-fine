@@ -25,13 +25,21 @@
 module Refine.Frontend.Header.Heading where
 
 import           Control.Concurrent (forkIO)
+import           Control.Lens ((^.))
 import           Control.Monad (forM_, unless)
 import           GHC.Generics
 import           GHCJS.Types (JSVal)
+import           GHCJS.Marshal.Pure
 import           React.Flux
+import           React.Flux.Internal (HandlerArg(HandlerArg))
 import           React.Flux.Lifecycle
 
+import           Refine.Common.Types
+import           Refine.Frontend.Header.DocumentHeader ( documentHeader_, DocumentHeaderProps(..) )
+import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), editToolbar_, commentToolbarExtension_, editToolbarExtension_ )
+import qualified Refine.Frontend.Header.Types as HT
 import qualified Refine.Frontend.Store as RS
+import           Refine.Frontend.ThirdPartyViews (sticky_)
 import qualified Refine.Frontend.Types as RS
 
 
@@ -58,22 +66,45 @@ menuButton_ :: MenuButtonProps -> ReactElementM eventHandler ()
 menuButton_ props = view menuButton props mempty
 
 
-headerSizeCapture :: ReactView ()
-headerSizeCapture = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
-     -- the render function inside a Lifecycle view does not update its children when the state changes
-     -- (see react-flux issue #29), therefore we don't render anything inside a Lifecylce view.
-   { lRender = \_state _props -> mempty
-   , lComponentDidMount = Just $ \_propsandstate ldom _ -> do
-             this <- lThis ldom
-             height <- js_getBoundingClientRectHeight this
-             _ <- forkIO $ do
-                 let actions = RS.dispatch $ RS.AddHeaderHeight height
-                 forM_ actions executeAction
-             pure ()
+-- | extract the new state from event.
+currentToolbarStickyState :: Event -> Bool
+currentToolbarStickyState (evtHandlerArg -> HandlerArg j) = pFromJSVal j
+
+mainHeader :: ReactView RS.GlobalState
+mainHeader = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
+     -- the render function inside a Lifecycle view does not update the children passed to it when the state changes
+     -- (see react-flux issue #29), therefore we move everything inside the Lifecylce view.
+   { lRender = \_state rs ->
+        case rs ^. RS.gsVDoc of
+          Nothing -> error "mainHeader may only be invoked after a VDoc has been loaded!"
+          Just vdoc ->
+            div_ ["className" $= "c-fullheader"] $ do
+                -- the following need to be siblings because of the z-index handling
+                div_ ["className" $= "c-mainmenu__bg"] "" -- "role" $= "navigation"
+                --header_ ["role" $= "banner"] $ do
+                menuButton_ (MenuButtonProps $ rs ^. RS.gsToolbarSticky)
+                documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
+                div_ ["className" $= "c-fulltoolbar"] $ do
+                    sticky_ [on "onStickyStateChange" $ \e _ -> (RS.dispatch . RS.ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
+                        editToolbar_
+                        commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. RS.gsHeaderState . HT.hsCommentToolbarExtensionStatus)
+                        editToolbarExtension_
+
+   , lComponentDidMount  = Just $ \_propsandstate ldom _     -> calcHeaderHeight ldom
+   -- , lComponentDidUpdate = Just $ \_propsandstate ldom _ _ _ -> calcHeaderHeight ldom
    }
 
-headerSizeCapture_ :: ReactElementM eventHandler ()
-headerSizeCapture_ = view headerSizeCapture () mempty
+calcHeaderHeight :: LDOM -> IO ()
+calcHeaderHeight ldom = do
+   this <- lThis ldom
+   height <- js_getBoundingClientRectHeight this
+   _ <- forkIO $ do
+       let actions = RS.dispatch $ RS.AddHeaderHeight height
+       forM_ actions executeAction
+   pure ()
+
+mainHeader_ :: RS.GlobalState -> ReactElementM eventHandler ()
+mainHeader_ props = view mainHeader props mempty
 
 foreign import javascript unsafe
   "$1.getBoundingClientRect().height"

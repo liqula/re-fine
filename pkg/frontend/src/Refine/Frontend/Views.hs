@@ -37,9 +37,7 @@ import           Data.String.Conversions
 import           Data.String (fromString)
 import qualified Data.Tree as DT
 import           Data.Void
-import           GHCJS.Marshal.Pure
 import           React.Flux
-import           React.Flux.Internal (HandlerArg(HandlerArg))
 import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
@@ -49,15 +47,13 @@ import           Refine.Frontend.Bubbles.Mark
 import           Refine.Frontend.Bubbles.Overlay
 import           Refine.Frontend.Bubbles.QuickCreate
 import           Refine.Frontend.Bubbles.Types as RS
-import           Refine.Frontend.Header.DocumentHeader ( documentHeader_, DocumentHeaderProps(..) )
-import           Refine.Frontend.Header.Heading ( MenuButtonProps(..), menuButton_, headerSizeCapture_ )
-import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), editToolbar_, commentToolbarExtension_, editToolbarExtension_ )
+import           Refine.Frontend.Header.Heading ( mainHeader_ )
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.Login.Component (login_)
 import           Refine.Frontend.MainMenu (mainMenu_)
 import           Refine.Frontend.NotImplementedYet (notImplementedYet_)
-import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
+import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
@@ -71,12 +67,6 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
   if rs ^. gsMainMenuOpen
     then mainMenu_
     else refineAppMenuClosed_ rs
-
-
--- | extract the new state from event.
-currentToolbarStickyState :: Event -> Bool
-currentToolbarStickyState (evtHandlerArg -> HandlerArg j) = pFromJSVal j
-
 
 refineAppMenuClosed_ :: RS.GlobalState -> ReactElementM ViewEventHandler ()
 refineAppMenuClosed_ rs =
@@ -94,19 +84,9 @@ mainScreen = defineView "MainScreen" $ \rs ->
     ] $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
       stickyContainer_ [] $ do
-          headerSizeCapture_
-          div_ ["className" $= "c-fullheader"] $ do
-              -- the following need to be siblings because of the z-index handling
-              div_ ["className" $= "c-mainmenu__bg"] "" -- "role" $= "navigation" -- leftover from p'2016
-              --header_ ["role" $= "banner"] $ do  -- leftover from p'2016
-              menuButton_ (MenuButtonProps $ rs ^. gsToolbarSticky)
-              documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
-              div_ ["className" $= "c-fulltoolbar"] $ do
-                  sticky_ [on "onStickyStateChange" $ RS.dispatch . RS.ToolbarStickyStateChange . currentToolbarStickyState] $ do
-                      editToolbar_
-                      commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . HT.hsCommentToolbarExtensionStatus)
-                      editToolbarExtension_
+          mainHeader_ rs
 
+          -- components that are only temporarily visible:
           showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsBubblesState . bsNoteIsVisible)
           showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsBubblesState . bsDiscussionIsVisible)
           addComment_ (rs ^. gsBubblesState . bsCommentEditorIsVisible) (rs ^. gsBubblesState . bsCommentCategory)
