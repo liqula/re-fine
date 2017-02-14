@@ -93,9 +93,7 @@ refineAppMenuClosed_ rs =
                     div_ ["className" $= "c-fulltoolbar"] $ do
                         sticky_ [on "onStickyStateChange" $ RS.dispatch . RS.ToolbarStickyStateChange . currentToolbarStickyState] $ do
                             editToolbar_
-                            commentToolbarExtension_ $ CommentToolbarExtensionProps
-                                                         (rs ^. gsHeaderState . HT.hsCommentToolbarExtensionIsVisible)
-                                                         (rs ^. gsHeaderState . HT.hsTextSpecificComment)
+                            commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . HT.hsCommentToolbarExtensionStatus)
                             editToolbarExtension_
 
                 showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsBubblesState . bsNoteIsVisible)

@@ -31,26 +31,25 @@ import Refine.Prelude.TH (makeRefineType)
 
 data HeaderAction =
     ToggleCommentToolbarExtension
-  | ToggleEditToolbarExtension
   | StartTextSpecificComment
-  | FinishTextSpecificComment
+  | ToggleEditToolbarExtension
   deriving (Show, Generic)
 
-data TextSpecificComment =
-    TextSpecificCommentInProgress
-  | TextSpecificCommentInactive
-  deriving (Show, Generic)
+data CommentToolbarExtensionStatus =
+    CommentToolbarExtensionClosed
+  | CommentToolbarExtensionWithButtons
+  | CommentToolbarExtensionWithSelection
+  deriving (Show, Generic, Eq)
 
 data HeaderState = HeaderState
-  { _hsCommentToolbarExtensionIsVisible     :: Bool
-  , _hsEditToolbarExtensionIsVisible        :: Bool
-  , _hsTextSpecificComment                  :: TextSpecificComment
+  { _hsCommentToolbarExtensionStatus     :: CommentToolbarExtensionStatus
+  , _hsEditToolbarExtensionIsVisible     :: Bool
   } deriving (Show, Generic)
 
 emptyHeaderState :: HeaderState
-emptyHeaderState = HeaderState False False TextSpecificCommentInactive
+emptyHeaderState = HeaderState CommentToolbarExtensionClosed False
 
 
 makeRefineType ''HeaderAction
-makeRefineType ''TextSpecificComment
+makeRefineType ''CommentToolbarExtensionStatus
 makeRefineType ''HeaderState

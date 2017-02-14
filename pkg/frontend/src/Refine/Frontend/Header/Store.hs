@@ -35,26 +35,21 @@ import Refine.Frontend.Types
 headerStateUpdate :: RefineAction -> HeaderState -> HeaderState
 headerStateUpdate action state =
   let newState = state
-                  & hsCommentToolbarExtensionIsVisible  %~ commentToolbarExtensionUpdate action
+                  & hsCommentToolbarExtensionStatus     %~ commentToolbarExtensionUpdate action
                   & hsEditToolbarExtensionIsVisible     %~ editToolbarExtensionUpdate action
-                  & hsTextSpecificComment               %~ textSpecificCommentUpdate action
   in newState
 
 ---------------------------------------------------------------------------
 
-commentToolbarExtensionUpdate :: RefineAction -> Bool -> Bool
-commentToolbarExtensionUpdate action state = case action of
-    HeaderAction ToggleCommentToolbarExtension -> not state
+commentToolbarExtensionUpdate :: RefineAction -> CommentToolbarExtensionStatus -> CommentToolbarExtensionStatus
+commentToolbarExtensionUpdate action state = case (state, action) of
+    (CommentToolbarExtensionClosed, HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithButtons
+    (_,                             HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionClosed
+    (CommentToolbarExtensionWithButtons, HeaderAction StartTextSpecificComment) -> CommentToolbarExtensionWithSelection
+    (_,                                  HeaderAction StartTextSpecificComment) -> error "text-specific comment cannot start when toolbar extension is closed or in selection mode"
     _ -> state
 
 editToolbarExtensionUpdate :: RefineAction -> Bool -> Bool
 editToolbarExtensionUpdate action state = case action of
     HeaderAction ToggleEditToolbarExtension -> not state
     _ -> state
-
-textSpecificCommentUpdate :: RefineAction -> TextSpecificComment -> TextSpecificComment
-textSpecificCommentUpdate action state = case action of
-    HeaderAction StartTextSpecificComment  -> TextSpecificCommentInProgress
-    HeaderAction FinishTextSpecificComment -> TextSpecificCommentInactive
-    _ -> state
-
