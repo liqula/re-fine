@@ -22,24 +22,12 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-{-# OPTIONS_GHC -w #-}
-
 module Refine.Frontend.MainMenuSpec where
 
-import Control.Lens ((^.))
-import Test.Hspec
-import Test.QuickCheck
-import Test.QuickCheck.Monadic
-import Test.QuickCheck.Instances ()
+import           Test.Hspec
 
-import           Refine.Frontend.Style
+import           Refine.Frontend.MainMenu
 import           Refine.Frontend.Test.Enzyme
-import           Refine.Frontend.UtilityWidgets
-
-import Refine.Common.Types
-import Refine.Frontend.Types
-import Refine.Frontend.Store ()
-import Refine.Frontend.MainMenu
 
 
 spec :: Spec

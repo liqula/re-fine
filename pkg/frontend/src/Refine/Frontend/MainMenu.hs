@@ -22,50 +22,12 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-{-# OPTIONS_GHC -w #-}
-
-
-{-
-
-next steps:
-- z-axis is off, with the effect that quick-create buttons and bubbles are pushed down.  how can this still be caused by mainMenu_?!
-- block all events from hitting the page under the overlay.
-- fix burger layout: it becomes invisible (background-coloured) when document is scrolled up.  => @nr.
-- translate all the other buttons below.
-- remove -w flag everywhere.  MR, closing issue!
-
--}
-
-
-
-
-
 module Refine.Frontend.MainMenu where
 
-import           Control.Lens ((^.))
-import qualified Data.Map.Strict as M
-import           Data.Monoid ((<>))
-import           Data.String.Conversions
-import           Data.String (fromString)
-import qualified Data.Tree as DT
-import           Data.Void
 import           React.Flux
-import qualified Text.HTML.Parser as HTMLP
 
-import           Refine.Common.Types
-import           Refine.Prelude (ClearTypeParameter(..))
-import           Refine.Frontend.Bubbles.Bubble
-import           Refine.Frontend.Bubbles.Mark
-import           Refine.Frontend.Bubbles.Overlay
-import           Refine.Frontend.Bubbles.QuickCreate
-import           Refine.Frontend.Bubbles.Types as RS
-import           Refine.Frontend.Loader.Component (vdocLoader_)
-import           Refine.Frontend.Login.Component (login_)
-import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
-import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
-import qualified Refine.Frontend.Screen.Types as SC
-import qualified Refine.Frontend.Store as RS
-import           Refine.Frontend.Types as RS
+import           Refine.Frontend.Store
+import           Refine.Frontend.Types
 import           Refine.Frontend.UtilityWidgets
 
 
@@ -141,7 +103,7 @@ mainMenu = defineView "MainMenu" $ \() ->
               , _iconButtonPropsContentType  = ""
               , _iconButtonPropsLabel        = ""
               , _iconButtonPropsDisabled     = False
-              , _iconButtonPropsClickHandler = \_ -> RS.dispatch RS.ToggleMainMenu
+              , _iconButtonPropsClickHandler = \_ -> dispatch ToggleMainMenu
               }
               -- not translated from prototype2016:
               -- button attribute class="c-mainmenu-content__btn-close"
