@@ -52,7 +52,7 @@ main = do
       run port app
 
     ["--run-once"] -> do
-      buildFast >>= \case
+      buildFast Nothing >>= \case
         Right ph    -> waitForProcess ph >> pure ()
         Left errmsg -> error errmsg
 
@@ -74,21 +74,21 @@ upgrade mvar = modifyMVar mvar
 
 upgrade_ :: Maybe ProcessHandle -> IO (Either String ProcessHandle)
 upgrade_ mpid = do
-  (\pid -> terminateProcess pid >> waitForProcess pid) `mapM_` mpid
   callProcess "git" ["checkout", "master"]
   callProcess "git" ["pull"]
-  buildThorough
+  buildThorough mpid
 
-buildThorough :: IO (Either String ProcessHandle)
-buildThorough = do
+buildThorough :: Maybe ProcessHandle -> IO (Either String ProcessHandle)
+buildThorough mpid = do
   callProcess "./build" ["setup"]
   callProcess "./build" ["clean"]
-  buildFast
+  buildFast mpid
 
-buildFast :: IO (Either String ProcessHandle)
-buildFast = do
+buildFast :: Maybe ProcessHandle -> IO (Either String ProcessHandle)
+buildFast mpid = do
   callProcess "./build" ["build-backend", "build-frontend"]
   withCurrentDirectory "pkg/frontend" $ callProcess "npm" ["run", "build"]
+  (\pid -> terminateProcess pid >> waitForProcess pid) `mapM_` mpid
   ph <- withCurrentDirectory "pkg/backend"  $ spawnProcess "stack" ["exec", "--", "refine", "server.conf"]
   livenessCheck >>= \case
     Nothing -> pure $ Right ph
