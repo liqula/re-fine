@@ -10,6 +10,7 @@
     -XDeriveDataTypeable
     -XExistentialQuantification
     -XGeneralizedNewtypeDeriving
+    -XLambdaCase
     -XOverloadedStrings
     -XPackageImports
     -XRecordWildCards
@@ -20,7 +21,7 @@
     -Wall
 -}
 
-import Control.Concurrent.MVar
+import Control.Concurrent
 import Control.Exception
 import Data.String.Conversions
 import Network.HTTP.Types
@@ -42,13 +43,18 @@ main = do
     [readMaybe . cs -> Just port] -> do
       putStrLn $ "running upgrade trigger on port " <> show port
       mvar <- newMVar Nothing
-      bump mvar
-      let resp = responseLBS status201 [] "server updated and upgraded!\n"
-          app _req respond = bump mvar >> respond resp
+      upgrade mvar >>= \case
+        Nothing     -> pure ()
+        Just errmsg -> error errmsg
+      let app _req respond = upgrade mvar >>= \case
+            Nothing     -> respond $ responseLBS status201 [] "server updated and upgraded!\n"
+            Just errmsg -> respond $ responseLBS status500 [] ("uncaught error: " <> cs errmsg)
       run port app
 
     ["--run-once"] -> do
-      buildFast >>= waitForProcess >> pure ()
+      buildFast >>= \case
+        Right ph    -> waitForProcess ph >> pure ()
+        Left errmsg -> error errmsg
 
     _ -> do
       throwIO $ ErrorCall "bad arguments."
@@ -59,24 +65,34 @@ setProperCurrentDirectory = do
   putStrLn $ "setting working directory to " <> show workingDir
   setCurrentDirectory workingDir
 
-bump :: MVar (Maybe ProcessHandle) -> IO ()
-bump mvar = modifyMVar_ mvar $ fmap Just . upgrade
+upgrade :: MVar (Maybe ProcessHandle) -> IO (Maybe String)
+upgrade mvar = modifyMVar mvar
+    $ fmap (\case
+        Right ph    -> (Just ph, Nothing)
+        Left errmsg -> (Nothing, Just errmsg))
+    . upgrade_
 
-upgrade :: Maybe ProcessHandle -> IO ProcessHandle
-upgrade mpid = do
+upgrade_ :: Maybe ProcessHandle -> IO (Either String ProcessHandle)
+upgrade_ mpid = do
   (\pid -> terminateProcess pid >> waitForProcess pid) `mapM_` mpid
   callProcess "git" ["checkout", "master"]
   callProcess "git" ["pull"]
   buildThorough
 
-buildThorough :: IO ProcessHandle
+buildThorough :: IO (Either String ProcessHandle)
 buildThorough = do
   callProcess "./build" ["setup"]
   callProcess "./build" ["clean"]
   buildFast
 
-buildFast :: IO ProcessHandle
+buildFast :: IO (Either String ProcessHandle)
 buildFast = do
   callProcess "./build" ["build-backend", "build-frontend"]
   withCurrentDirectory "pkg/frontend" $ callProcess "npm" ["run", "build"]
-  withCurrentDirectory "pkg/backend"  $ spawnProcess "stack" ["exec", "--", "refine", "server.conf"]
+  ph <- withCurrentDirectory "pkg/backend"  $ spawnProcess "stack" ["exec", "--", "refine", "server.conf"]
+  livenessCheck >>= \case
+    Nothing -> pure $ Right ph
+    Just errmsg -> terminateProcess ph >> waitForProcess ph >> pure (Left errmsg)
+
+livenessCheck :: IO (Maybe String)
+livenessCheck = pure Nothing
