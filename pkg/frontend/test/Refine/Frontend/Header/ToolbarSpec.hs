@@ -25,7 +25,7 @@
 
 module Refine.Frontend.Header.ToolbarSpec where
 
-import           Control.Lens((^.), (&), (%~))
+import           Control.Lens((^.))
 import           Test.Hspec
 import           React.Flux (getStoreData)
 
@@ -57,9 +57,6 @@ spec = do
 
     it "toggles the visibility of the edit toolbar extension when the 'new comment' button is clicked" $ do
       wrapper <- RW.mount editToolbar_
-      -- init the state:
-      globalState0 <- getStoreData refineStore
-      let _ = globalState0 & gsHeaderState . hsCommentToolbarExtensionStatus %~ \_ -> CommentToolbarExtensionClosed
       button <- RW.find wrapper (RW.StringSelector ".c-vdoc-toolbar__btn-add-annotation")
       -- simulate events:
       _ <- RW.simulate button RW.Click
