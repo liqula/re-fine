@@ -93,17 +93,19 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       (\_ -> RS.dispatch RS.ShowNotImplementedYet)
                       []
 
-          iconButtonWithAlignment_ $ IconButtonWithAlignmentProps (IconButtonProps
-                                    (IconProps "c-vdoc-toolbar" True ("icon-Reader", "bright") XXL)
-                                    "btn-read-mode"
-                                    ""
-                                    ""
-                                    "read mode"
-                                    False
-                                    (\_ -> RS.dispatch RS.ShowNotImplementedYet)
-                                    [])
-                                    True
-                                    Nothing
+          iconButtonWithAlignment_ $
+            IconButtonWithAlignmentProps
+              (IconButtonProps
+                (IconProps "c-vdoc-toolbar" True ("icon-Reader", "bright") XXL)
+                "btn-read-mode"
+                ""
+                ""
+                "read mode"
+                False
+                (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                [])
+              True
+              Nothing
 
 editToolbar_ :: ReactElementM eventHandler ()
 editToolbar_ = view editToolbar () mempty
