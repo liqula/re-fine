@@ -22,19 +22,24 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.MainMenu where
+module Refine.Frontend.MainMenu.Component where
 
+import           Control.Monad (when)
 import           React.Flux
 
+import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Types
 import           Refine.Frontend.UtilityWidgets
 
+import Refine.Frontend.Login.Component (login_, registration_)
 
-mainMenu :: ReactView ()
-mainMenu = defineView "MainMenu" $ \() ->
+
+mainMenu :: ReactView MainMenuState
+mainMenu = defineView "MainMenu" $ \menuState ->
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
+
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
         div_ ["className" $= "c-mainmenu-content__header"] $ do
             iconButton_ IconButtonProps
@@ -54,6 +59,43 @@ mainMenu = defineView "MainMenu" $ \() ->
               -- not translated from prototype2016:
               -- button attribute data-section="dashboard"
               }
+
+            iconButton_ IconButtonProps
+              { _iconButtonPropsIconProps = IconProps
+                  { _iconPropsBlockName = "c-mainmenu-content"
+                  , _iconPropsHighlight = True
+                  , _iconPropsDesc      = ("icon-User", "dark")
+                  , _iconPropsSize      = XXL
+                  }
+              , _iconButtonPropsElementName  = "section-button"
+              , _iconButtonPropsModuleName   = "active"
+              , _iconButtonPropsContentType  = ""
+              , _iconButtonPropsLabel        = ""
+              , _iconButtonPropsDisabled     = False
+              , _iconButtonPropsClickHandler = \_ -> dispatch OpenLogin
+              , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-dashboard"]
+              -- not translated from prototype2016:
+              -- button attribute data-section="dashboard"
+              }
+
+            iconButton_ IconButtonProps
+              { _iconButtonPropsIconProps = IconProps
+                  { _iconPropsBlockName = "c-mainmenu-content"
+                  , _iconPropsHighlight = True
+                  , _iconPropsDesc      = ("icon-User", "dark")
+                  , _iconPropsSize      = XXL
+                  }
+              , _iconButtonPropsElementName  = "section-button"
+              , _iconButtonPropsModuleName   = "active"
+              , _iconButtonPropsContentType  = ""
+              , _iconButtonPropsLabel        = ""
+              , _iconButtonPropsDisabled     = False
+              , _iconButtonPropsClickHandler = \_ -> dispatch OpenRegistration
+              , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-dashboard"]
+              -- not translated from prototype2016:
+              -- button attribute data-section="dashboard"
+              }
+
 
             iconButton_ IconButtonProps
               { _iconButtonPropsIconProps = IconProps
@@ -109,8 +151,14 @@ mainMenu = defineView "MainMenu" $ \() ->
               -- n/a
               }
 
-mainMenu_ :: ReactElementM eventHandler ()
-mainMenu_ = view mainMenu () mempty
+      when (menuState == MainMenuRegistration) $ do
+        registration_
+
+      when (menuState == MainMenuLogin) $ do
+        login_
+
+mainMenu_ :: MainMenuState -> ReactElementM eventHandler ()
+mainMenu_ ms = view mainMenu ms mempty
 
 
 {-

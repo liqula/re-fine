@@ -51,7 +51,8 @@ import           Refine.Frontend.Header.Heading ( mainHeader_ )
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.Login.Component (login_)
-import           Refine.Frontend.MainMenu (mainMenu_)
+import           Refine.Frontend.MainMenu.Component (mainMenu_)
+import           Refine.Frontend.MainMenu.Types (MainMenuState(..))
 import           Refine.Frontend.NotImplementedYet (notImplementedYet_)
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
@@ -64,9 +65,9 @@ import           Refine.Frontend.Types as RS
 -- with the store and will be re-rendered whenever the store changes.
 refineApp :: ReactView ()
 refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
-  if rs ^. gsMainMenuOpen
-    then mainMenu_
-    else refineAppMenuClosed_ rs
+  if rs ^. gsMainMenuState == MainMenuClosed
+    then refineAppMenuClosed_ rs
+    else mainMenu_ (rs ^. gsMainMenuState)
 
 refineAppMenuClosed_ :: RS.GlobalState -> ReactElementM ViewEventHandler ()
 refineAppMenuClosed_ rs =
