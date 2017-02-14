@@ -94,7 +94,7 @@ mainMenu = defineView "MainMenu" $ \() ->
             iconButton_ IconButtonProps
               { _iconButtonPropsIconProps = IconProps
                   { _iconPropsBlockName = "c-mainmenu-header"
-                  , _iconPropsHighlight = False
+                  , _iconPropsHighlight = True
                   , _iconPropsDesc      = ("icon-Close", "dark")
                   , _iconPropsSize      = XXL
                   }
@@ -104,7 +104,7 @@ mainMenu = defineView "MainMenu" $ \() ->
               , _iconButtonPropsLabel        = ""
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsClickHandler = \_ -> dispatch ToggleMainMenu
-              , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-close", "o-icon-highlight"]
+              , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-close"]
               }
               -- not translated from prototype2016:
 
