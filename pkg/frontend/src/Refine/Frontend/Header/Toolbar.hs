@@ -56,7 +56,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       "comment"
                       "new comment"
                       False
-                      (\_ -> RS.dispatch $ RS.HeaderAction RS.ToggleCommentToolbarExtension)
+                      (\e -> stopPropagation e : RS.dispatch (RS.HeaderAction RS.ToggleCommentToolbarExtension))
                       []
 
           iconButton_ $ IconButtonProps
@@ -136,7 +136,7 @@ commentToolbarExtension = defineView "CommentToolbarExtension" $ \props ->
                             "comment"
                             "text-specific comment"
                             False
-                            (\_ -> RS.dispatch $ RS.HeaderAction RS.StartTextSpecificComment)
+                            (\e -> stopPropagation e : RS.dispatch (RS.HeaderAction RS.StartTextSpecificComment))
                             []
                 iconButton_ $ IconButtonProps
                             (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L)

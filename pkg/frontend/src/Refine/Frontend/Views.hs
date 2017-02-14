@@ -80,7 +80,9 @@ refineAppMenuClosed_ rs =
         Nothing -> do
           login_
           vdocLoader_ (rs ^. gsVDocList)
-        Just vdoc -> div_ $ do
+        Just vdoc -> div_
+          [ onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseCommentToolbarExtension)
+          ] $ do
             windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
             stickyContainer_ [] $ do
                 headerSizeCapture_

@@ -22,14 +22,13 @@
 - Button dispatches action StartTextSpecificComment
 - BubblesStore: action StartTextSpecificComment updates state hsCommentToolbarExtensionStatus
 - State hsCommentToolbarExtensionStatus updates toolbar extension (displays info message)
+- Anywhere onClick: cancels the commentToolbarExtension (no matter in which state)
 - article.onMouseUp: dispatches action TriggerUpdateSelection
 - Store: transforms action to UpdateSelection
 - Store: action updates state BubblesStore.currentSelection
 - Updated state: When hsCommentToolbarExtensionStatus is CommentToolbarWithSelection: dispatches action BubblesAction.ShowCommentEditor
 - Dismissing the editor: dispatches action FinishTextSpecificComment and BubblesAction.HideCommentEditor
 - Submitting the comment: dispatches action FinishTextSpecificComment and BubblesAction.SubmitComment and BubblesAction.HideCommentEditor
-
-- TODO cancelling the operation at any point
 
 
 ## Creating via button "general comment"
