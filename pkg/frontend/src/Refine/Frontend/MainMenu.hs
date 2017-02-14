@@ -51,9 +51,9 @@ mainMenu = defineView "MainMenu" $ \() ->
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsClickHandler = \_ -> []
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-dashboard"]
-              }
               -- not translated from prototype2016:
               -- button attribute data-section="dashboard"
+              }
 
             iconButton_ IconButtonProps
               { _iconButtonPropsIconProps = IconProps
@@ -69,9 +69,9 @@ mainMenu = defineView "MainMenu" $ \() ->
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsClickHandler = \_ -> []
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-membership"]
-              }
               -- not translated from prototype2016:
               -- button attribute data-section="membership"
+              }
 
             iconButton_ IconButtonProps
               { _iconButtonPropsIconProps = IconProps
@@ -87,9 +87,9 @@ mainMenu = defineView "MainMenu" $ \() ->
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsClickHandler = \_ -> []
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-help"]
-              }
               -- not translated from prototype2016:
               -- button attribute data-section="help"
+              }
 
             iconButton_ IconButtonProps
               { _iconButtonPropsIconProps = IconProps
@@ -105,8 +105,9 @@ mainMenu = defineView "MainMenu" $ \() ->
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsClickHandler = \_ -> dispatch ToggleMainMenu
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-close"]
-              }
               -- not translated from prototype2016:
+              -- n/a
+              }
 
 mainMenu_ :: ReactElementM eventHandler ()
 mainMenu_ = view mainMenu () mempty
