@@ -73,6 +73,8 @@ data EnzymeSelector =
   | PropertySelector [Prop]
 --  | ComponentSelector
 
+-- | TODO: 'PropertySelector' should be translated to js array, then we could get rid of
+-- 'js_exec_with_object', and 'execWithSelector' as a special case of 'execWith1Arg'.
 instance PToJSVal EnzymeSelector where
   pToJSVal (StringSelector str) = pToJSVal str
   pToJSVal (PropertySelector p) = pToJSVal . toJSString . cs $ encode p
