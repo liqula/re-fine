@@ -45,6 +45,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       "index"
                       False
                       (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                      []
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
@@ -56,6 +57,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       "new comment"
                       False
                       (\_ -> RS.dispatch $ RS.HeaderAction RS.ToggleCommentToolbarExtension)
+                      []
 
           iconButton_ $ IconButtonProps
                       (IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXL)
@@ -65,6 +67,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       "new edit"
                       False
                       (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                      []
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
@@ -77,6 +80,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       "all comments"
                       False
                       (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                      []
 
           iconButton_ $ IconButtonProps
                       -- (IconProps "c-vdoc-toolbar" False ("icon-Edit", "dark") XXL)
@@ -87,6 +91,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       "all edits"
                       False
                       (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                      []
 
           iconButtonWithAlignment_ $ IconButtonWithAlignmentProps (IconButtonProps
                                     (IconProps "c-vdoc-toolbar" True ("icon-Reader", "bright") XXL)
@@ -95,7 +100,8 @@ editToolbar = defineView "EditToolbar" $ \() ->
                                     ""
                                     "read mode"
                                     False
-                                    (\_ -> RS.dispatch RS.ShowNotImplementedYet))
+                                    (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                                    [])
                                     True
                                     Nothing
 
@@ -122,6 +128,7 @@ commentToolbarExtension = defineView "CommentToolbarExtension" $ \isVisible ->
                           "text-specific comment"
                           False
                           (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                          []
               iconButton_ $ IconButtonProps
                           (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L)
                           "btn-new-ann-doc" -- RENAME: ann => comment
@@ -130,6 +137,7 @@ commentToolbarExtension = defineView "CommentToolbarExtension" $ \isVisible ->
                           "general comment"
                           False
                           (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                          []
 
 
 commentToolbarExtension_ :: Bool -> ReactElementM eventHandler ()
@@ -150,6 +158,7 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
                         "new edit"
                         False
                         (\_ -> [])
+                        []
 
 
 editToolbarExtension_ :: ReactElementM eventHandler ()

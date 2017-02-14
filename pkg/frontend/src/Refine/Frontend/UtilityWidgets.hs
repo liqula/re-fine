@@ -80,6 +80,7 @@ data IconButtonProps = IconButtonProps
   , _iconButtonPropsLabel        :: JSString
   , _iconButtonPropsDisabled     :: Bool
   , _iconButtonPropsClickHandler :: ClickHandler
+  , _iconButtonPropsExtraClasses :: [String]
   }
 
 makeLenses ''IconButtonProps
@@ -146,12 +147,12 @@ iconButtonWithAlignmentCore = defineView "IconButtonWithAlignmentCore" $ \props 
     let bemName = beName <> emConnector <> bprops ^. iconButtonPropsModuleName
     div_ ([ "data-content-type" $= (bprops ^. iconButtonPropsContentType)
            -- TODO unify the naming schema of the classes for the different buttons!
-          , "className" $= fromString (toClasses [ iprops ^. iconPropsBlockName <> "__button"
+          , "className" $= fromString (toClasses $ [ iprops ^. iconPropsBlockName <> "__button"
                                                   , beName  -- for the vdoc-toolbar
                                                   , bemName -- for the buttons in the overlays
                                                   , alignmentClass (iprops ^. iconPropsBlockName)
                                                                    (props ^. iconButtonWithAlRightAligned)
-                                                   ])
+                                                  ] <> bprops ^. iconButtonPropsExtraClasses)
           , "style" @= (case props ^. iconButtonWithAlPosition of
                                Nothing  -> []
                                Just pos -> [Style "top" pos]

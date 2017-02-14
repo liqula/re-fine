@@ -52,6 +52,7 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, s
                 ""
                 False
                 (\_ -> RS.dispatch (RS.BubblesAction RS.ClearSelection) <> RS.dispatch (RS.BubblesAction (RS.ShowCommentEditor (fst currentSelection))))
+                []
               ) offset
         _ -> mempty
 --    // quickCreate annotation ui events  -- RENAME: annotation => comment
