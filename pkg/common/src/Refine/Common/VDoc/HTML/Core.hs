@@ -78,7 +78,7 @@ data ChunkRangeError =
 -- | this type is introduced because we keep open and close marks separately in the tree at some
 -- point.  in order to keep track of which close mark belongs to which open mark, we cannot rely on
 -- their order (which still needs to be de-overlapped), so need close marks of the form
--- @PreMarkClose "data-chunk-id-value"@.
+-- @PreMarkClose "data-contribution-id-value"@.
 data PreToken = PreToken Token | PreMarkOpen DataChunkID OwnerKind | PreMarkClose DataChunkID
   deriving (Eq, Show, Generic)
 
@@ -106,7 +106,7 @@ runPreToken'' (PreMarkClose'' n)  = PreMarkClose n
 
 runPreToken :: PreToken -> Token
 runPreToken (PreToken t)      = t
-runPreToken (PreMarkOpen l k) = TagOpen "mark" [Attr "data-chunk-id" l, Attr "data-chunk-kind" $ ST.map toLower k]
+runPreToken (PreMarkOpen l k) = TagOpen "mark" [Attr "data-contribution-id" l, Attr "data-contribution-kind" $ ST.map toLower k]
 runPreToken (PreMarkClose _)  = TagClose "mark"
 
 dropPreTokens :: [PreToken] -> [Token]

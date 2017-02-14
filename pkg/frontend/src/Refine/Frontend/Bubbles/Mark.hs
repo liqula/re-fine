@@ -52,7 +52,7 @@ data MarkProps = MarkProps
 makeLenses ''MarkProps
 
 chunkIdFrom :: [HTMLP.Attr] -> Maybe (ID Void)
-chunkIdFrom attrs = ID <$> readMaybe (attribValueOf "data-chunk-id" attrs) :: Maybe (ID Void)
+chunkIdFrom attrs = ID <$> readMaybe (attribValueOf "data-contribution-id" attrs) :: Maybe (ID Void)
 
 toProperties :: [HTMLP.Attr] -> [PropertyOrHandler handler]
 toProperties = map (\(HTMLP.Attr key value) -> fromString (cs key) $= fromString (cs value))
@@ -66,7 +66,7 @@ rfMark :: ReactView MarkProps
 rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
   { lRender = \_state props ->
     let maybeChunkId = chunkIdFrom (props ^. markPropsHTMLAttributes)
-        dataContentType = attribValueOf "data-chunk-kind" (props ^. markPropsHTMLAttributes)
+        dataContentType = attribValueOf "data-contribution-kind" (props ^. markPropsHTMLAttributes)
     in case (maybeChunkId, dataContentType) of
       (Nothing, _) -> mempty
       (_, "") -> mempty

@@ -60,7 +60,7 @@ bubble = defineView "Bubble" $ \props ->
         case props ^. bubblePropsMarkPosition of
             Nothing -> mempty
             Just (topOffset, scrollOffset) ->
-                div_ ["data-chunk-id" $= fromString (show (props ^. bubblePropsDataChunkId . unID))
+                div_ ["data-contribution-id" $= fromString (show (props ^. bubblePropsDataChunkId . unID))
                     , "data-content-type" $= fromString (props ^. bubblePropsDataContentType)
                     -- RENAME: snippet => bubble
                     , classNames [ ("o-snippet", True)

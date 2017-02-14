@@ -187,7 +187,7 @@ spec = parallel $ do
       let cr l = ChunkRange l (Just (ChunkPoint (DataUID 3) 1)) (Just (ChunkPoint (DataUID 3) 2))
           vers = vdocVersionFromST "<span data-uid=\"3\">asdf</span>"
           vers' l = VDocVersion . addUIInfoToForest . _unVDocVersion . vdocVersionFromST $
-            "<span data-uid=\"1\">a<mark data-chunk-kind=\"" <> l <> "\" data-chunk-id=\"3\">s</mark>df</span>"
+            "<span data-uid=\"1\">a<mark data-contribution-kind=\"" <> l <> "\" data-contribution-id=\"3\">s</mark>df</span>"
 
       chunkRangeErrors (cr (ID 3 :: ID Note)) vers `shouldBe` []
 
@@ -287,7 +287,7 @@ spec = parallel $ do
 
       it "renders marks as tags" $ do
         resolvePreTokens [PreMarkOpen "2" "whoof", PreToken $ ContentText "wef", PreMarkClose "2"]
-          `shouldBe` [ TagOpen "mark" [Attr "data-chunk-id" "2", Attr "data-chunk-kind" "whoof"]
+          `shouldBe` [ TagOpen "mark" [Attr "data-contribution-id" "2", Attr "data-contribution-kind" "whoof"]
                      , ContentText "wef"
                      , TagClose "mark"
                      ]
@@ -298,11 +298,11 @@ spec = parallel $ do
                          , PreMarkClose "8"
                          , PreMarkClose "2"
                          ]
-          `shouldBe` [ TagOpen "mark" [Attr "data-chunk-id" "2",Attr "data-chunk-kind" "whoof"]
+          `shouldBe` [ TagOpen "mark" [Attr "data-contribution-id" "2",Attr "data-contribution-kind" "whoof"]
                      , ContentText "wef"
                      , TagClose "mark"
-                     , TagOpen "mark" [Attr "data-chunk-id" "8",Attr "data-chunk-kind" "whoof"]
-                     , TagOpen "mark" [Attr "data-chunk-id" "2",Attr "data-chunk-kind" "whoof"]
+                     , TagOpen "mark" [Attr "data-contribution-id" "8",Attr "data-contribution-kind" "whoof"]
+                     , TagOpen "mark" [Attr "data-contribution-id" "2",Attr "data-contribution-kind" "whoof"]
                      , ContentText "puh"
                      , TagClose "mark"
                      , TagClose "mark"
@@ -329,9 +329,9 @@ spec = parallel $ do
 marksEquivalenceClass :: VDocVersion 'HTMLWithMarks -> [(Set DataChunkID, Int)]
 marksEquivalenceClass (VDocVersion forest) = dfs mempty forest
   where
-    push (Attr "data-chunk-id" v : _) opens = Set.insert v opens
+    push (Attr "data-contribution-id" v : _) opens = Set.insert v opens
     push (_ : as) opens = push as opens
-    push [] _ = error "marksEquivalenceClass: mark tag without data-chunk-id attribute!"
+    push [] _ = error "marksEquivalenceClass: mark tag without data-contribution-id attribute!"
 
     dfs :: Set DataChunkID -> Forest Token -> [(Set DataChunkID, Int)]
     dfs opens (Node (TagOpen "mark" attrs) children : siblings) =
