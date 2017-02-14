@@ -25,10 +25,20 @@
 
 module Refine.Frontend.Header.HeadingSpec where
 
-import Test.Hspec
+import           Control.Lens ((^.))
+import qualified Data.Map.Strict as M
+import qualified Data.Tree as DT
+import           React.Flux
+import           Test.Hspec
+import qualified Text.HTML.Parser as HTMLP
 
-import Refine.Frontend.Test.Enzyme
-import Refine.Frontend.Header.Heading
+import           Refine.Common.Types
+import           Refine.Frontend.Header.Heading
+import qualified Refine.Frontend.Screen.Types as ST
+import qualified Refine.Frontend.Store as RS
+import           Refine.Frontend.Test.Enzyme
+import qualified Refine.Frontend.Test.Enzyme.ReactWrapperAPI as RW
+import qualified Refine.Frontend.Types as RS
 
 
 spec :: Spec
@@ -60,6 +70,13 @@ spec = do
         label <- find wrapper (StringSelector ".c-mainmenu--toolbar-combined")  -- (it's called combined, though, not sticky)
         lengthOf label `shouldReturn` (1 :: Int)
 
+  describe "The mainHeader_ component" $ do
+    it "sets the header height to a nonzero value" $ do
+      let newVDoc = CompositeVDoc (VDoc (ID 1) (Title "the-title") (Abstract "the-abstract") (ID 1)) (VDocRepo (ID 1) (ID 1)) (VDocVersion [DT.Node (HTMLP.TagOpen "div" []) []]) M.empty M.empty M.empty
+      _wrapper <- RW.mount (mainHeader_ $ RS.emptyGlobalState { RS._gsVDoc = Just newVDoc })
+      globalState0 <- getStoreData RS.refineStore
+      (globalState0 ^. RS.gsScreenState . ST.ssHeaderHeight) > 0 `shouldBe` True
 
--- TODO how to test headerSizeCapture_? We want to mock js_getBoundingClientRect...
+
+-- TODO how to test mainHeader_? We want to mock js_getBoundingClientRect...
 -- TODO also: we need mounting for this -> we need jsdom for this -> we need ghc-dom...
