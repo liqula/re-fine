@@ -98,7 +98,7 @@ $module: #{$namespace}mainmenu;
     %#{$module} {
 
         &__menu-button-label {
-            color: red; // $mainmenu-mainbutton-color;
+            color: $mainmenu-mainbutton-color;
             font-size: rem(20);
         }
 

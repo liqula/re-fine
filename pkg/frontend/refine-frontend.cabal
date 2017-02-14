@@ -59,6 +59,7 @@ library
       Refine.Frontend.Header.Types
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
+      Refine.Frontend.MainMenu
       Refine.Frontend.NotImplementedYet
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
@@ -121,6 +122,7 @@ executable refine-frontend
       Refine.Frontend.Header.Types
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
+      Refine.Frontend.MainMenu
       Refine.Frontend.NotImplementedYet
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
@@ -185,15 +187,17 @@ test-suite spec
       Refine.Frontend.Bubbles.Types
       Refine.Frontend.Colors
       Refine.Frontend.Header.DocumentHeader
+      Refine.Frontend.Header.DocumentHeaderSpec
       Refine.Frontend.Header.Heading
+      Refine.Frontend.Header.HeadingSpec
       Refine.Frontend.Header.Store
       Refine.Frontend.Header.Toolbar
-      Refine.Frontend.Header.Types
-      Refine.Frontend.Header.DocumentHeaderSpec
-      Refine.Frontend.Header.HeadingSpec
       Refine.Frontend.Header.ToolbarSpec
+      Refine.Frontend.Header.Types
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
+      Refine.Frontend.MainMenu
+      Refine.Frontend.MainMenuSpec
       Refine.Frontend.NotImplementedYet
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations

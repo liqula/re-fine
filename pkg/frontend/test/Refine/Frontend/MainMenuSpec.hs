@@ -7,6 +7,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
@@ -14,37 +15,24 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Prelude.BuildInfoSpec
-where
+module Refine.Frontend.MainMenuSpec where
 
-import Test.Hspec
+import           Test.Hspec
 
-import Refine.Prelude.BuildInfo
-import Refine.Prelude.BuildInfo.TH
+import           Refine.Frontend.MainMenu
+import           Refine.Frontend.Test.Enzyme
 
 
 spec :: Spec
 spec = do
-  describe "gitCommitHashIO" $ do
-    it "returns something of length 8" $ do
-      h <- gitCommitHashIO
-      length h `shouldBe` 8
-
-  describe "gitBuildTimeIO" $ do
-    it "returns something of length 30" $ do
-      h <- gitBuildTimestampIO
-      h `shouldContain` ("UTC" :: String)
-
-  describe "gitCommitHash" $ do
-    it "returns something of length 8" $ do
-      length gitCommitHash `shouldBe` 8
-
-  describe "gitBuildTime" $ do
-    it "returns something of length 30" $ do
-      gitBuildTimestamp `shouldContain` ("UTC" :: String)
+  describe "mainMenu_" $ do
+    it "renders" $ do
+      wrapper <- shallow mainMenu_
+      lengthOfIO (find wrapper (StringSelector ".c-mainmenu-content")) `shouldReturn` (1 :: Int)

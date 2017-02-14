@@ -33,7 +33,9 @@ import           Data.String.Conversions
 import           Data.String (fromString)
 import qualified Data.Tree as DT
 import           Data.Void
+import           GHCJS.Marshal.Pure
 import           React.Flux
+import           React.Flux.Internal (HandlerArg(HandlerArg))
 import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
@@ -44,11 +46,12 @@ import           Refine.Frontend.Bubbles.Overlay
 import           Refine.Frontend.Bubbles.QuickCreate
 import           Refine.Frontend.Bubbles.Types as RS
 import           Refine.Frontend.Header.DocumentHeader ( documentHeader_, DocumentHeaderProps(..) )
-import           Refine.Frontend.Header.Heading ( menuButton_, headerSizeCapture_ )
+import           Refine.Frontend.Header.Heading ( MenuButtonProps(..), menuButton_, headerSizeCapture_ )
 import           Refine.Frontend.Header.Toolbar ( editToolbar_, commentToolbarExtension_, editToolbarExtension_ )
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.Login.Component (login_)
+import           Refine.Frontend.MainMenu (mainMenu_)
 import           Refine.Frontend.NotImplementedYet (notImplementedYet_)
 import           Refine.Frontend.ThirdPartyViews (sticky_, stickyContainer_)
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
@@ -61,6 +64,18 @@ import           Refine.Frontend.Types as RS
 -- with the store and will be re-rendered whenever the store changes.
 refineApp :: ReactView ()
 refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
+  if rs ^. gsMainMenuOpen
+    then mainMenu_
+    else refineAppMenuClosed_ rs
+
+
+-- | extract the new state from event.
+currentToolbarStickyState :: Event -> Bool
+currentToolbarStickyState (evtHandlerArg -> HandlerArg j) = pFromJSVal j
+
+
+refineAppMenuClosed_ :: RS.GlobalState -> ReactElementM ViewEventHandler ()
+refineAppMenuClosed_ rs =
     case rs ^. gsVDoc of
         Nothing -> do
           login_
@@ -73,10 +88,10 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
                     -- the following need to be siblings because of the z-index handling
                     div_ ["className" $= "c-mainmenu__bg"] "" -- "role" $= "navigation"
                     --header_ ["role" $= "banner"] $ do
-                    menuButton_
+                    menuButton_ (MenuButtonProps $ rs ^. gsToolbarSticky)
                     documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
                     div_ ["className" $= "c-fulltoolbar"] $ do
-                        sticky_ [] $ do
+                        sticky_ [on "onStickyStateChange" $ RS.dispatch . RS.ToolbarStickyStateChange . currentToolbarStickyState] $ do
                             editToolbar_
                             commentToolbarExtension_ (rs ^. gsHeaderState . HT.hsCommentToolbarExtensionIsVisible)
                             editToolbarExtension_

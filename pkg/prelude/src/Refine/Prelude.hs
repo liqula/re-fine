@@ -8,8 +8,6 @@
 {-# LANGUAGE TemplateHaskell     #-}
 {-# LANGUAGE ViewPatterns        #-}
 
-{-# OPTIONS_GHC -Wall -Werror #-}
-
 module Refine.Prelude
   ( -- * generic json
     gtoJSONDef

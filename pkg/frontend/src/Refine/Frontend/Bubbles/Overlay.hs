@@ -207,6 +207,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
                     "add a note"
                     False
                     (\_ -> RS.dispatch . RS.BubblesAction $ RS.SetCommentCategory RS.Note)
+                    []
                   )
       iconButton_ (IconButtonProps
                     (IconProps "c-vdoc-overlay-content" True ("icon-Discussion", "dark") L)
@@ -216,6 +217,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
                     "start a discussion"
                     False
                     (\_ -> RS.dispatch . RS.BubblesAction $ RS.SetCommentCategory RS.Discussion)
+                    []
                   )
 
     div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
@@ -233,6 +235,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
         ((0 == DT.length (curState ^. RS.commentInputStateText)) || isNothing category) -- no text or no category -> disable button
         (\_ -> RS.dispatch (RS.BubblesAction (RS.SubmitComment (curState ^. RS.commentInputStateText) category forRange))
             <> RS.dispatch (RS.BubblesAction RS.HideCommentEditor))
+        []
       )
 
 commentInput_ :: Maybe RS.Range -> Maybe RS.CommentCategory -> ReactElementM eventHandler ()
