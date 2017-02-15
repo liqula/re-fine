@@ -31,6 +31,7 @@ module Refine.Frontend.Test.Enzyme.Core
 , ShallowWrapper (..) -- TODO is it good practice to make the constructors accessible? Or should we rather hide them in here?
 , ReactWrapper (..)
 
+, execWithSelector
 , execWith1Arg
 , exec
 , attr
@@ -89,6 +90,12 @@ class EnzymeWrapper a where
 
 instance EnzymeWrapper ShallowWrapper where unWrap = _unShallowWrapper
 instance EnzymeWrapper ReactWrapper where unWrap = _unReactWrapper
+
+-- Preparations for the evaluation of functions in JavaScript --------------------------------------------------
+
+execWithSelector :: (PFromJSVal a, EnzymeWrapper w) => String -> w -> EnzymeSelector -> IO a
+execWithSelector func wrapper es@(PropertySelector _) = pFromJSVal <$> js_exec_with_object (toJSString func) (unWrap wrapper) (pToJSVal es)
+execWithSelector f w e = execWith1Arg f w e
 
 execWith1Arg :: (PFromJSVal a, PToJSVal b, EnzymeWrapper w) => String -> w -> b -> IO a
 execWith1Arg func wrapper arg = pFromJSVal <$> js_exec_with_1_arg (toJSString func) (unWrap wrapper) (pToJSVal arg)

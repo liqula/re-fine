@@ -50,13 +50,11 @@ module Refine.Frontend.Test.Enzyme.ShallowWrapperAPI
 ) where
 
 import Data.JSString (JSString)
-import GHCJS.Marshal.Pure
 import GHCJS.Types (JSVal, nullRef)
 import React.Flux
 import React.Flux.Internal
 
 import Refine.Frontend.Test.Enzyme.Core
-import Refine.Frontend.Test.Enzyme.Internal
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
@@ -109,9 +107,3 @@ lengthOfIO wrapper = lengthOf =<< wrapper
 
 simulate :: ShallowWrapper -> EventType -> IO ShallowWrapper
 simulate = execWith1Arg "simulate"
-
--- Preparations for the evaluation of functions in JavaScript --------------------------------------------------
-
-execWithSelector :: PFromJSVal a => String -> ShallowWrapper -> EnzymeSelector -> IO a
-execWithSelector func (ShallowWrapper wrapper) es@(PropertySelector _) = pFromJSVal <$> js_exec_with_object (toJSString func) wrapper (pToJSVal es)
-execWithSelector f w e = execWith1Arg f w e
