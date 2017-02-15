@@ -50,7 +50,6 @@ import           Refine.Frontend.Bubbles.Types as RS
 import           Refine.Frontend.Header.Heading ( mainHeader_ )
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component (vdocLoader_)
-import           Refine.Frontend.Login.Component (login_)
 import           Refine.Frontend.MainMenu.Component (mainMenu_)
 import           Refine.Frontend.MainMenu.Types (MainMenuState(..))
 import           Refine.Frontend.NotImplementedYet (notImplementedYet_)
@@ -73,7 +72,6 @@ refineAppMenuClosed_ :: RS.GlobalState -> ReactElementM ViewEventHandler ()
 refineAppMenuClosed_ rs =
     case rs ^. gsVDoc of
         Nothing -> do
-          login_
           vdocLoader_ (rs ^. gsVDocList)
         Just _ -> mainScreen_ rs
 
