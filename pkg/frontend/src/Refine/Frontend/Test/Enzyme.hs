@@ -49,16 +49,14 @@ module Refine.Frontend.Test.Enzyme
 
 ) where
 
-import Data.Aeson (encode, object, (.=))
-import Data.Aeson.Types (ToJSON, toJSON)
 import Data.JSString (JSString)
-import Data.String.Conversions
 import GHCJS.Marshal.Pure
 import GHCJS.Types (JSVal, nullRef)
 import React.Flux
 import React.Flux.Internal
 
-import Refine.Common.Test.Enzyme.Core
+import Refine.Frontend.Test.Enzyme.Core
+import Refine.Frontend.Test.Enzyme.Internal
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 

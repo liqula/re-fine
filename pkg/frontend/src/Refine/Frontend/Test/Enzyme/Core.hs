@@ -30,14 +30,11 @@ module Refine.Frontend.Test.Enzyme.Core
 
 import Data.Aeson (encode, object, (.=))
 import Data.Aeson.Types (ToJSON, toJSON)
-import Data.JSString (JSString)
+import Data.Char (toLower)
 import Data.String.Conversions
 import GHCJS.Marshal.Pure
-import GHCJS.Types (JSVal, nullRef)
-import React.Flux
 import React.Flux.Internal
 
-{-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
 
 -- | StringSelector can be a CSS class, tag, id, prop (e.g. "[foo=3]"),
@@ -70,20 +67,3 @@ data Prop where
 
 instance ToJSON [Prop] where
   toJSON = object . fmap (\(Prop k v) -> k .= v)
-
-
-foreign import javascript unsafe
-    "$2[$1]()"
-    js_exec :: JSString -> JSVal -> IO JSVal
-
-foreign import javascript unsafe
-    "$2[$1]"
-    js_attr :: JSString -> JSVal -> IO JSVal
-
-foreign import javascript unsafe
-    "$2[$1]($3)"
-    js_exec_with_1_arg :: JSString -> JSVal -> JSVal -> IO JSVal
-
-foreign import javascript unsafe
-    "$2[$1](JSON.parse($3))"
-    js_exec_with_object :: JSString -> JSVal -> JSVal -> IO JSVal
