@@ -10,8 +10,14 @@ import Refine.Prelude.TH (makeRefineType)
 
 data MainMenuState
   = MainMenuClosed
-  | MainMenuLogin
-  | MainMenuRegistration
+  | MainMenuOpen MainMenuTab
   deriving (Eq, Show, Generic)
 
+data MainMenuTab = MainMenuLogin | MainMenuRegistration
+  deriving (Eq, Show, Generic)
+
+defaultMainMenuTab :: MainMenuTab
+defaultMainMenuTab = MainMenuLogin
+
 makeRefineType ''MainMenuState
+makeRefineType ''MainMenuTab

@@ -24,7 +24,6 @@
 
 module Refine.Frontend.MainMenu.Component where
 
-import           Control.Monad (when)
 import           React.Flux
 
 import           Refine.Frontend.MainMenu.Types
@@ -77,7 +76,6 @@ mainMenu = defineView "MainMenu" $ \menuState ->
               -- not translated from prototype2016:
               -- button attribute data-section="dashboard"
               }
-
 
             iconButton_ IconButtonProps
               { _iconButtonPropsIconProps = IconProps
@@ -133,11 +131,11 @@ mainMenu = defineView "MainMenu" $ \menuState ->
               -- n/a
               }
 
-      when (menuState == MainMenuRegistration) $ do
-        registration_
+      case menuState of
+        MainMenuClosed                    -> pure ()
+        MainMenuOpen MainMenuLogin        -> login_
+        MainMenuOpen MainMenuRegistration -> registration_
 
-      when (menuState == MainMenuLogin) $ do
-        login_
 
 mainMenu_ :: MainMenuState -> ReactElementM eventHandler ()
 mainMenu_ ms = view mainMenu ms mempty
