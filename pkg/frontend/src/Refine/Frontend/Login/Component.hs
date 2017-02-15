@@ -103,8 +103,8 @@ login = defineStatefulView "Login" (LoginForm "" "") $ \curState () -> do
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 
-      inputField "login-username" "text"     "Username" loginFormUsername
-      inputField "login-password" "password" "Password" loginFormPassword
+      inputField "login-username" "text"     "Username" loginFormUsername >> br_ []
+      inputField "login-password" "password" "Password" loginFormPassword >> br_ []
 
       iconButton_
         (IconButtonProps
@@ -132,10 +132,11 @@ registration = defineStatefulView "Registration" (RegistrationForm "" "" "" "" F
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 
-      inputField "registration-username"  "text"     "Username"    registrationFormUsername
-      inputField "registration-email1"    "email"    "Email"       registrationFormEmail1
-      inputField "registration-email2"    "email"    "Email again" registrationFormEmail2
-      inputField "registration-password1" "password" "Passwqord"   registrationFormPassword
+      inputField "registration-username"  "text"     "Username"    registrationFormUsername >> br_ []
+      inputField "registration-email1"    "email"    "Email"       registrationFormEmail1   >> br_ []
+      inputField "registration-email2"    "email"    "Email again" registrationFormEmail2   >> br_ []
+      inputField "registration-password1" "password" "Password"    registrationFormPassword >> br_ []
+
       inputFieldProp "registration-agree" "checkbox" "" "checked"  registrationFormAgree    >> "I agree with the terms of use." >> br_ []
 
       iconButton_
