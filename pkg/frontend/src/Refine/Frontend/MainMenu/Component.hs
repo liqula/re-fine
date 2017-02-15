@@ -54,24 +54,6 @@ mainMenu = defineView "MainMenu" $ \menuState ->
               , _iconButtonPropsContentType  = ""
               , _iconButtonPropsLabel        = ""
               , _iconButtonPropsDisabled     = False
-              , _iconButtonPropsClickHandler = \_ -> []
-              , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-dashboard"]
-              -- not translated from prototype2016:
-              -- button attribute data-section="dashboard"
-              }
-
-            iconButton_ IconButtonProps
-              { _iconButtonPropsIconProps = IconProps
-                  { _iconPropsBlockName = "c-mainmenu-content"
-                  , _iconPropsHighlight = True
-                  , _iconPropsDesc      = ("icon-User", "dark")
-                  , _iconPropsSize      = XXL
-                  }
-              , _iconButtonPropsElementName  = "section-button"
-              , _iconButtonPropsModuleName   = "active"
-              , _iconButtonPropsContentType  = ""
-              , _iconButtonPropsLabel        = ""
-              , _iconButtonPropsDisabled     = False
               , _iconButtonPropsClickHandler = \_ -> dispatch OpenLogin
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-dashboard"]
               -- not translated from prototype2016:
