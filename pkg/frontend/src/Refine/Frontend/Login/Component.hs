@@ -41,13 +41,23 @@ import           Refine.Prelude.TH (makeRefineType)
 
 -- * Helper
 
-inputField :: (FromJSVal c) => JSString -> JSString -> JSString -> ASetter s a b c -> ReactElementM (s -> ([t], Maybe a)) ()
-inputField id_ type_ placeholder_ lens =
+inputFieldProp
+  :: (FromJSVal c)
+  => JSString -> JSString -> JSString -> JSString -> ASetter s a b c
+  -> ReactElementM (s -> ([t], Maybe a)) ()
+inputFieldProp id_ type_ placeholder_ prop_ lens =
   input_ [ "id" $= id_
          , "type" $= type_
          , "placeholder" $= placeholder_
-         , onChange $ \evt state -> ([], Just (state & lens .~ target evt "value"))
+         , onChange $ \evt state -> ([], Just (state & lens .~ target evt prop_))
          ]
+
+inputField
+  :: (FromJSVal c)
+  => JSString -> JSString -> JSString -> ASetter s a b c
+  -> ReactElementM (s -> ([t], Maybe a)) ()
+inputField id_ type_ placeholder_ = inputFieldProp id_ type_ placeholder_ "value"
+
 
 -- * Form types
 
@@ -63,6 +73,7 @@ data RegistrationForm = RegistrationForm
   , _registrationFormEmail1    :: ST
   , _registrationFormEmail2    :: ST
   , _registrationFormPassword  :: ST
+  , _registrationFormAgree     :: Bool
   } deriving (Eq, Generic, Show)
 
 makeRefineType ''RegistrationForm
@@ -76,6 +87,7 @@ invalidRegistrationForm form =
      , form ^. registrationFormUsername . to DT.null
      , form ^. registrationFormEmail1 . to DT.null
      , form ^. registrationFormPassword . to DT.null
+     , form ^. registrationFormAgree . to not
      ]
 
 -- * Login
@@ -113,7 +125,7 @@ registration_ :: ReactElementM eventHandler ()
 registration_ = view registration () mempty
 
 registration :: ReactView ()
-registration = defineStatefulView "Registration" (RegistrationForm "" "" "" "") $ \curState () -> do
+registration = defineStatefulView "Registration" (RegistrationForm "" "" "" "" False) $ \curState () -> do
   h1_ "Registration"
 
   div_ $ do
@@ -124,6 +136,7 @@ registration = defineStatefulView "Registration" (RegistrationForm "" "" "" "") 
       inputField "registration-email1"    "email"    "Email"       registrationFormEmail1
       inputField "registration-email2"    "email"    "Email again" registrationFormEmail2
       inputField "registration-password1" "password" "Passwqord"   registrationFormPassword
+      inputFieldProp "registration-agree" "checkbox" "" "checked"  registrationFormAgree    >> "I agree with the terms of use." >> br_ []
 
       iconButton_
         (IconButtonProps
