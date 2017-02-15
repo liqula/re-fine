@@ -35,7 +35,7 @@ import           Refine.Common.Types
 import           Refine.Frontend.Bubbles.Mark
 import           Refine.Frontend.Bubbles.Types
 import           Refine.Frontend.Store (refineStore)
-import           Refine.Frontend.Test.Enzyme
+import           Refine.Frontend.Test.Enzyme.ShallowWrapperAPI
 import qualified Refine.Frontend.Test.Enzyme.ReactWrapperAPI as RW
 import           Refine.Frontend.Types
 

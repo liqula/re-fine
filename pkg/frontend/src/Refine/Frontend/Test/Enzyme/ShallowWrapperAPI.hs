@@ -22,7 +22,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Test.Enzyme
+module Refine.Frontend.Test.Enzyme.ShallowWrapperAPI
 ( Prop(..)
 , ShallowWrapper(..)
 , EnzymeSelector(..)

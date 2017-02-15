@@ -27,7 +27,7 @@ module Refine.Frontend.Header.HeadingSpec where
 
 import Test.Hspec
 
-import Refine.Frontend.Test.Enzyme
+import Refine.Frontend.Test.Enzyme.ShallowWrapperAPI
 import Refine.Frontend.Header.Heading
 
 

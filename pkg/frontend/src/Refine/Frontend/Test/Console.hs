@@ -37,6 +37,7 @@ import Data.String.Conversions (cs)
 import GHCJS.Types (JSVal)
 import Refine.Frontend.Test.Enzyme
 import Refine.Frontend.Test.Enzyme.ReactWrapperAPI
+import Refine.Frontend.Test.Enzyme.ShallowWrapperAPI
 
 
 consoleLogShallowWrapper :: JSString -> ShallowWrapper -> IO ()

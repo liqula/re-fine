@@ -69,10 +69,10 @@ library
       Refine.Frontend.Store
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
-      Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Enzyme.Core
       Refine.Frontend.Test.Enzyme.Internal
       Refine.Frontend.Test.Enzyme.ReactWrapperAPI
+      Refine.Frontend.Test.Enzyme.ShallowWrapperAPI
       Refine.Frontend.Test.Samples
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Types
@@ -134,10 +134,10 @@ executable refine-frontend
       Refine.Frontend.Store
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
-      Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Enzyme.Core
       Refine.Frontend.Test.Enzyme.Internal
       Refine.Frontend.Test.Enzyme.ReactWrapperAPI
+      Refine.Frontend.Test.Enzyme.ShallowWrapperAPI
       Refine.Frontend.Test.Samples
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Types
@@ -212,10 +212,10 @@ test-suite spec
       Refine.Frontend.StoreSpec
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
-      Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Enzyme.Core
       Refine.Frontend.Test.Enzyme.Internal
       Refine.Frontend.Test.Enzyme.ReactWrapperAPI
+      Refine.Frontend.Test.Enzyme.ShallowWrapperAPI
       Refine.Frontend.Test.Samples
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Types
