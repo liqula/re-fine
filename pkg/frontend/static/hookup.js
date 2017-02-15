@@ -9,8 +9,6 @@ window.Overlay = require("react-skylight").SkyLightStateless;
 
 window.Hammer = require("react-hammerjs");
 
-require("./../scss/main.scss");
-
 
 window.refine$getSelectionRange = function() {
     var leftSiblingLength = function(node) {
