@@ -31,6 +31,7 @@ module Refine.Frontend.Test.Enzyme.Core
 , ShallowWrapper (..) -- TODO is it good practice to make the constructors accessible? Or should we rather hide them in here?
 , ReactWrapper (..)
 
+-- for the APIs
 , execWithSelector
 , execWith1Arg
 , exec
@@ -43,7 +44,7 @@ import Data.Char (toLower)
 import Data.String.Conversions
 import GHCJS.Marshal.Pure
 import GHCJS.Types (JSVal)
-import React.Flux.Internal
+import React.Flux.Internal (toJSString)
 
 import Refine.Frontend.Test.Enzyme.Internal
 

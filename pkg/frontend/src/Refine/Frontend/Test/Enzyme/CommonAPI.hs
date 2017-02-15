@@ -1,4 +1,41 @@
-module Refine.Frontend.Test.Enzyme.CommonAPI where
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE ExplicitForAll             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ViewPatterns               #-}
+
+module Refine.Frontend.Test.Enzyme.CommonAPI
+ ( find
+ , is
+ , children
+ , childAt
+ , text
+ , html
+ , at
+ , props
+ , simulate
+ , typeOf
+ , lengthOf
+ , lengthOfIO
+ ) where
 
 import GHCJS.Types (JSString, JSVal)
 
@@ -96,6 +133,7 @@ simulate = execWith1Arg "simulate"
 
 -- TODO: debug
 
+-- | "type" in AirBnB Enzyme.
 typeOf :: EnzymeWrapper w => w -> IO JSVal
 typeOf = exec "type"
 
