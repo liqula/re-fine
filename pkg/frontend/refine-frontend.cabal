@@ -200,7 +200,9 @@ test-suite spec
       Refine.Frontend.Header.Types
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
-      Refine.Frontend.MainMenu
+      Refine.Frontend.MainMenu.Component
+      Refine.Frontend.MainMenu.Store
+      Refine.Frontend.MainMenu.Types
       Refine.Frontend.MainMenuSpec
       Refine.Frontend.NotImplementedYet
       Refine.Frontend.Rest
