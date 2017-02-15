@@ -84,14 +84,17 @@ spec = do
 
   describe "The editToolbarExtension_ component" $ do
     it "renders an element with the toolbar extension class" $ do
+      pendingWith "we need to enable the editToolbarExtension first"
       wrapper <- shallow editToolbarExtension_
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (1 :: Int)
 
     it "contains a pointer element" $ do
+      pendingWith "we need to enable the editToolbarExtension first"
       wrapper <- shallow editToolbarExtension_
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension__pointer")) `shouldReturn` (1 :: Int)
 
     it "contains a modification section with 1 normal icon button" $ do
+      pendingWith "we need to enable the editToolbarExtension first"
       wrapper <- shallow editToolbarExtension_
       modification <- find wrapper (StringSelector ".c-vdoc-toolbar-extension__modification")
       lengthOf modification `shouldReturn` (1 :: Int)

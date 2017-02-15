@@ -154,6 +154,8 @@ commentToolbarExtension_ props = view commentToolbarExtension props mempty
 
 editToolbarExtension :: ReactView ()
 editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
+  div_ mempty
+  {-
   div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
@@ -168,6 +170,7 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
                         False
                         (\_ -> [])
                         []
+  -}
 
 
 editToolbarExtension_ :: ReactElementM eventHandler ()
