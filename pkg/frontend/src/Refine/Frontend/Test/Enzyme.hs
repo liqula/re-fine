@@ -60,10 +60,6 @@ import Refine.Frontend.Test.Enzyme.Internal
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
-newtype ShallowWrapper = ShallowWrapper JSVal
-
-instance PFromJSVal ShallowWrapper where pFromJSVal = ShallowWrapper
-
 shallow :: ReactElementM eventHandler () -> IO ShallowWrapper
 shallow comp = do
   (ref, _) <- mkReactElement (\_ -> pure ()) (ReactThis nullRef) comp
@@ -119,12 +115,3 @@ simulate = execWith1Arg "simulate"
 execWithSelector :: PFromJSVal a => String -> ShallowWrapper -> EnzymeSelector -> IO a
 execWithSelector func (ShallowWrapper wrapper) es@(PropertySelector _) = pFromJSVal <$> js_exec_with_object (toJSString func) wrapper (pToJSVal es)
 execWithSelector f w e = execWith1Arg f w e
-
-execWith1Arg :: (PFromJSVal a, PToJSVal b) => String -> ShallowWrapper -> b -> IO a
-execWith1Arg func (ShallowWrapper wrapper) arg = pFromJSVal <$> js_exec_with_1_arg (toJSString func) wrapper (pToJSVal arg)
-
-exec :: PFromJSVal a => String -> ShallowWrapper -> IO a
-exec func (ShallowWrapper wrapper) = pFromJSVal <$> js_exec (toJSString func) wrapper
-
-attr :: PFromJSVal a => String -> ShallowWrapper -> IO a
-attr name (ShallowWrapper wrapper) = pFromJSVal <$> js_attr (toJSString name) wrapper

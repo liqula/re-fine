@@ -26,6 +26,14 @@ module Refine.Frontend.Test.Enzyme.Core
 ( Prop(..)
 , EventType(..)
 , EnzymeSelector(..)
+
+, EnzymeWrapper
+, ShallowWrapper (..) -- TODO is it good practice to make the constructors accessible? Or should we rather hide them in here?
+, ReactWrapper (..)
+
+, execWith1Arg
+, exec
+, attr
 ) where
 
 import Data.Aeson (encode, object, (.=))
@@ -33,8 +41,10 @@ import Data.Aeson.Types (ToJSON, toJSON)
 import Data.Char (toLower)
 import Data.String.Conversions
 import GHCJS.Marshal.Pure
+import GHCJS.Types (JSVal)
 import React.Flux.Internal
 
+import Refine.Frontend.Test.Enzyme.Internal
 
 
 -- | StringSelector can be a CSS class, tag, id, prop (e.g. "[foo=3]"),
@@ -67,3 +77,33 @@ data Prop where
 
 instance ToJSON [Prop] where
   toJSON = object . fmap (\(Prop k v) -> k .= v)
+
+newtype ShallowWrapper = ShallowWrapper { _unShallowWrapper :: JSVal }
+instance PFromJSVal ShallowWrapper where pFromJSVal = ShallowWrapper
+
+newtype ReactWrapper = ReactWrapper { _unReactWrapper :: JSVal }
+instance PFromJSVal ReactWrapper where pFromJSVal = ReactWrapper
+
+class EnzymeWrapper a where
+  unWrap :: a -> JSVal
+
+instance EnzymeWrapper ShallowWrapper where unWrap = _unShallowWrapper
+instance EnzymeWrapper ReactWrapper where unWrap = _unReactWrapper
+
+execWith1Arg :: (PFromJSVal a, PToJSVal b, EnzymeWrapper w) => String -> w -> b -> IO a
+execWith1Arg func wrapper = execWith1Arg_ func $ unWrap wrapper
+
+execWith1Arg_ :: (PFromJSVal a, PToJSVal b) => String -> JSVal -> b -> IO a
+execWith1Arg_ func wrapper arg = pFromJSVal <$> js_exec_with_1_arg (toJSString func) wrapper (pToJSVal arg)
+
+exec :: (PFromJSVal a, EnzymeWrapper w) => String -> w -> IO a
+exec func wrapper = exec_ func $ unWrap wrapper
+
+exec_ :: PFromJSVal a => String -> JSVal -> IO a
+exec_ func wrapper = pFromJSVal <$> js_exec (toJSString func) wrapper
+
+attr :: (PFromJSVal a, EnzymeWrapper w) => String -> w -> IO a
+attr name wrapper = attr_ name $ unWrap wrapper
+
+attr_ :: PFromJSVal a => String -> JSVal -> IO a
+attr_ name wrapper = pFromJSVal <$> js_attr (toJSString name) wrapper
