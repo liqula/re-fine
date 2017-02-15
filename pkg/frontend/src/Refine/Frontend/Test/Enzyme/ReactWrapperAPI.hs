@@ -23,37 +23,16 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.Test.Enzyme.ReactWrapperAPI
-( Prop(..)
-, ReactWrapper(..)
-, EnzymeSelector(..)
-, mount
--- Enzyme functions on a ReactWrapper
-, at
-, childAt
-, children
-, find
-, html
-, is
-, props
-, text
-, typeOf
-
--- JavaScript functions on a ReactWrapper
-, lengthOf
-, lengthOfIO
-
--- simulating an event on a ReactWrapper
-, simulate
-, EventType(..)
-
+( mount
+, module R
 ) where
 
-import Data.JSString (JSString)
 import GHCJS.Types (JSVal, nullRef)
 import React.Flux
 import React.Flux.Internal
 
-import Refine.Frontend.Test.Enzyme.Core
+import Refine.Frontend.Test.Enzyme.CommonAPI as R
+import Refine.Frontend.Test.Enzyme.Core as R
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
@@ -66,40 +45,18 @@ foreign import javascript unsafe
   "enzyme.mount($1)"
   js_mount :: ReactElementRef -> IO JSVal
 
-find :: ReactWrapper -> EnzymeSelector -> IO ReactWrapper
-find = execWithSelector "find"
+-- TODO: equals
 
-is :: ReactWrapper -> EnzymeSelector -> IO Bool
-is = execWithSelector "is"
+-- TODO: matchesElement
 
-childAt :: ReactWrapper -> Int -> IO ReactWrapper
-childAt = execWith1Arg "childAt"
+-- TODO: getDOMNode
 
-at :: ReactWrapper -> Int -> IO ReactWrapper
-at = execWith1Arg "at"
+-- TODO: simulate(event, mock)
 
-props :: ReactWrapper -> IO JSVal
-props = exec "props"
+-- TODO: mount
 
-typeOf :: ReactWrapper -> IO JSVal
-typeOf = exec "type"
+-- TODO: matchesElement
 
-children :: ReactWrapper -> IO ReactWrapper
-children = exec "children"
+-- TODO: ref
 
-html :: ReactWrapper -> IO JSString
-html = exec "html"
-
-text :: ReactWrapper -> IO JSString
-text = exec "text"
-
-lengthOf :: ReactWrapper -> IO Int
-lengthOf = attr "length"
-
-lengthOfIO :: IO ReactWrapper -> IO Int
-lengthOfIO wrapper = lengthOf =<< wrapper
-
--- Simulating Events --------------------------------------------------------------------
-
-simulate :: ReactWrapper -> EventType -> IO ReactWrapper
-simulate = execWith1Arg "simulate"
+-- TODO: detach

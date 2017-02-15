@@ -85,7 +85,7 @@ instance PFromJSVal ShallowWrapper where pFromJSVal = ShallowWrapper
 newtype ReactWrapper = ReactWrapper { _unReactWrapper :: JSVal }
 instance PFromJSVal ReactWrapper where pFromJSVal = ReactWrapper
 
-class EnzymeWrapper a where
+class PFromJSVal a => EnzymeWrapper a where
   unWrap :: a -> JSVal
 
 instance EnzymeWrapper ShallowWrapper where unWrap = _unShallowWrapper
