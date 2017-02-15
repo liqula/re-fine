@@ -27,15 +27,9 @@ module Refine.Frontend.Test.Enzyme.Core
 , EventType(..)
 , EnzymeSelector(..)
 
-, EnzymeWrapper
+, EnzymeWrapper (unWrap)
 , ShallowWrapper (..) -- TODO is it good practice to make the constructors accessible? Or should we rather hide them in here?
 , ReactWrapper (..)
-
--- for the APIs
-, execWithSelector
-, execWith1Arg
-, exec
-, attr
 ) where
 
 import Data.Aeson (encode, object, (.=))
@@ -45,8 +39,6 @@ import Data.String.Conversions
 import GHCJS.Marshal.Pure
 import GHCJS.Types (JSVal)
 import React.Flux.Internal (toJSString)
-
-import Refine.Frontend.Test.Enzyme.Internal
 
 
 -- | StringSelector can be a CSS class, tag, id, prop (e.g. "[foo=3]"),
@@ -91,19 +83,3 @@ class PFromJSVal a => EnzymeWrapper a where
 
 instance EnzymeWrapper ShallowWrapper where unWrap = _unShallowWrapper
 instance EnzymeWrapper ReactWrapper where unWrap = _unReactWrapper
-
--- Preparations for the evaluation of functions in JavaScript --------------------------------------------------
-
-execWithSelector :: (PFromJSVal a, EnzymeWrapper w) => String -> w -> EnzymeSelector -> IO a
-execWithSelector func wrapper es@(PropertySelector _) = pFromJSVal <$> js_exec_with_object (toJSString func) (unWrap wrapper) (pToJSVal es)
-execWithSelector f w e = execWith1Arg f w e
-
-execWith1Arg :: (PFromJSVal a, PToJSVal b, EnzymeWrapper w) => String -> w -> b -> IO a
-execWith1Arg func wrapper arg = pFromJSVal <$> js_exec_with_1_arg (toJSString func) (unWrap wrapper) (pToJSVal arg)
-
-exec :: (PFromJSVal a, EnzymeWrapper w) => String -> w -> IO a
-exec func wrapper = pFromJSVal <$> js_exec (toJSString func) (unWrap wrapper)
-
-attr :: (PFromJSVal a, EnzymeWrapper w) => String -> w -> IO a
-attr name wrapper = pFromJSVal <$> js_attr (toJSString name) (unWrap wrapper)
-

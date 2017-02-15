@@ -40,6 +40,7 @@ module Refine.Frontend.Test.Enzyme.CommonAPI
 import GHCJS.Types (JSString, JSVal)
 
 import Refine.Frontend.Test.Enzyme.Core
+import Refine.Frontend.Test.Enzyme.Internal
 
 -- | The Enzyme API
 
