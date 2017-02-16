@@ -24,7 +24,6 @@
 
 module Refine.Frontend.Bubbles.Mark where
 
-import           Control.Concurrent (forkIO)
 import           Control.Lens (makeLenses, (^.))
 import           Control.Monad (forM_)
 import           Data.Monoid ((<>))
@@ -85,7 +84,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
              topOffset <- js_getBoundingClientRectTop this
              scrollOffset <- js_getScrollOffset
              props <- lGetProps propsandstate
-             _ <- forkIO $ do
+             _ <- RS.reactFluxWorkAroundForkIO $ do
                case contributionIdFrom (props ^. markPropsHTMLAttributes) of
                  Nothing -> pure ()
                  Just dataChunkId -> do

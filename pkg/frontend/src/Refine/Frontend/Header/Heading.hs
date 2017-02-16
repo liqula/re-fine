@@ -24,7 +24,6 @@
 
 module Refine.Frontend.Header.Heading where
 
-import           Control.Concurrent (forkIO)
 import           Control.Lens ((^.))
 import           Control.Monad (forM_, unless)
 import           GHC.Generics
@@ -99,7 +98,7 @@ calcHeaderHeight :: LDOM -> IO ()
 calcHeaderHeight ldom = do
    this <- lThis ldom
    height <- js_getBoundingClientRectHeight this
-   _ <- forkIO $ do
+   _ <- RS.reactFluxWorkAroundForkIO $ do
        let actions = RS.dispatch $ RS.AddHeaderHeight height
        forM_ actions executeAction
    pure ()

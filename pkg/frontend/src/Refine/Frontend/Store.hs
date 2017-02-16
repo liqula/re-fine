@@ -26,6 +26,7 @@
 
 module Refine.Frontend.Store where
 
+import           Control.Concurrent (ThreadId, forkIO, threadDelay)
 import           Control.Lens ((&), (^.), (^?), (%~), to)
 import qualified Data.Aeson as AE
 import           Data.Aeson (ToJSON, encode)
@@ -258,3 +259,16 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "if( process.env.NODE_ENV === 'development' ){ console.log($1, $2); }"
   js_consoleLog :: JSString -> JSString -> IO ()
+
+
+-- * ugly hacks
+
+-- | See https://bitbucket.org/wuzzeb/react-flux/issues/28/triggering-re-render-after-store-update
+-- for details and status.
+reactFluxWorkAroundForkIO :: IO () -> IO ThreadId
+reactFluxWorkAroundForkIO = forkIO
+
+-- | See https://bitbucket.org/wuzzeb/react-flux/issues/28/triggering-re-render-after-store-update
+-- for details and status.  Try to increase microseconds if you still experience race conditions.
+reactFluxWorkAroundThreadDelay :: IO ()
+reactFluxWorkAroundThreadDelay = threadDelay 10000
