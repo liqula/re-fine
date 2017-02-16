@@ -43,31 +43,39 @@ import           Refine.Frontend.UtilityWidgets
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
+dialog_styles :: [Style]
+dialog_styles = [ -- Style "display" ("block" :: String)
+                --, Style "minHeight" ("200px" :: String)
+                 Style "padding" ("1.5rem 1.0rem 1.0rem" :: String)
 
-vdoc_overlay_content :: [Style]
-vdoc_overlay_content = [ Style "display" ("block" :: String)
-                       , Style "minHeight" ("200px" :: String)
-                       , Style "padding" ("15rem 10rem 10rem" :: String)
-                       ]
+                , Style "width" ("40rem" :: String)
+                , Style "height" ("30rem" :: String)
+                , Style "left" ("7.5rem" :: String)
+                , Style "top" ("7.5rem" :: String)
+                , Style "marginLeft" ("0" :: String)
+                , Style "marginTop" ("-1.5rem" :: String)
+                , Style "zIndex" (6050 :: Int)
+
+                , Style "position" ("absolute" :: String)
+                ]
 
 vdoc_overlay_content__add_comment :: [Style]
 vdoc_overlay_content__add_comment = [ Style "backgroundColor" C.vdoc_comment
-                                    , Style "zIndex" (6010 :: Int)
-                                    ]
+                                    ] <> dialog_styles
 
 -- is vdoc_overlay_content__comment in CSS
 vdoc_overlay_content__note :: [Style]
 vdoc_overlay_content__note = [ Style "backgroundColor" C.vdoc_comment
-                              , Style "zIndex" (6010 :: Int)
-                              ]
+                              ] <> dialog_styles
 
 vdoc_overlay_content__discussion :: [Style]
 vdoc_overlay_content__discussion = [ Style "backgroundColor" C.vdoc_discussion
-                                    , Style "zIndex" (6010 :: Int)
-                                    ]
+                                    ] <> dialog_styles
 
 overlay_styles :: [Style]
-overlay_styles = [Style "zIndex" (6000 :: Int)]
+overlay_styles =
+  [ Style "zIndex" (6010 :: Int)
+  ]
 
 data CommentDisplayProps = CommentDisplayProps
   { _commentText :: CommentText
@@ -85,7 +93,7 @@ showComment = defineView "ShowComment" $ \props ->
   overlay_ ["isVisible" &= True
            , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
            , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
-           , "dialogStyles" @= (vdoc_overlay_content <> (props ^. contentStyle))
+           , "dialogStyles" @= (props ^. contentStyle)
            , "overlayStyles" @= overlay_styles
            ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
@@ -167,7 +175,7 @@ addComment = defineView "AddComment" $ \(showOverlay, forRange, commentCategory)
   overlay_ ["isVisible" &= showOverlay
            , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
            , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
-           , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content__add_comment)
+           , "dialogStyles" @= vdoc_overlay_content__add_comment
            , "overlayStyles" @= overlay_styles
            ]  $ do
 
