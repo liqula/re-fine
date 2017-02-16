@@ -15,7 +15,7 @@ data MainMenuAction
 
 data MainMenuState
   = MainMenuClosed
-  | MainMenuOpen MainMenuTab
+  | MainMenuOpen { _mainMenuOpenTab :: MainMenuTab }
   deriving (Eq, Show, Generic)
 
 data MainMenuTab = MainMenuLogin | MainMenuRegistration

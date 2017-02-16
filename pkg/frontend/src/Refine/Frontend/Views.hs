@@ -29,7 +29,7 @@ module Refine.Frontend.Views
   , mainScreen_
   ) where
 
-import           Control.Lens ((^.))
+import           Control.Lens ((^.), (^?))
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
 import           Data.Monoid ((<>))
@@ -50,7 +50,7 @@ import           Refine.Frontend.Bubbles.Types as RS
 import           Refine.Frontend.Header.Heading ( mainHeader_ )
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.MainMenu.Component (mainMenu_)
-import           Refine.Frontend.MainMenu.Types (MainMenuState(..))
+import           Refine.Frontend.MainMenu.Types (mainMenuOpenTab)
 import           Refine.Frontend.NotImplementedYet (notImplementedYet_)
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
@@ -63,9 +63,9 @@ import           Refine.Frontend.Types as RS
 -- with the store and will be re-rendered whenever the store changes.
 refineApp :: ReactView ()
 refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
-  if rs ^. gsMainMenuState == MainMenuClosed
-    then mainScreen_ rs
-    else mainMenu_ (rs ^. gsMainMenuState)
+  case rs ^? gsMainMenuState . mainMenuOpenTab of
+    Nothing  -> mainScreen_ rs
+    Just tab -> mainMenu_ tab
 
 mainScreen :: ReactView RS.GlobalState
 mainScreen = defineView "MainScreen" $ \rs ->
