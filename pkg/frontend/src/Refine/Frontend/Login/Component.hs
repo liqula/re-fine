@@ -140,7 +140,8 @@ registration = defineStatefulView "Registration" (RegistrationForm "" "" "" "" F
       inputField "registration-email2"    "email"    "Email again" registrationFormEmail2   >> br_ []
       inputField "registration-password1" "password" "Password"    registrationFormPassword >> br_ []
 
-      inputFieldWithKey "registration-agree" "checkbox" "" "checked"  registrationFormAgree    >> "I agree with the terms of use." >> br_ []
+      inputFieldWithKey "registration-agree" "checkbox" "" "checked" registrationFormAgree
+      "I agree with the terms of use." >> br_ []
 
       iconButton_
         (IconButtonProps
