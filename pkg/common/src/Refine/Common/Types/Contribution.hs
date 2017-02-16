@@ -29,6 +29,13 @@ data Contribution =
   | ContribDiscussion Discussion
   | ContribEdit Edit
 
+class IsContribution a
+
+instance IsContribution Note
+instance IsContribution Question
+instance IsContribution Discussion
+instance IsContribution Edit
+
 -- | This is the @data-contribution-kind@ attribute value of the @mark@ tag, which links to the
 -- 'ChunkRange' in the dom, which in turn links to a contribution.
 data ContributionKind =
@@ -61,5 +68,5 @@ contributionKind (ContribDiscussion _) = ContribKindDiscussion
 contributionKind (ContribEdit _)       = ContribKindEdit
 
 -- | This is safe iff @a@ has a constructor in 'Contribution'.
-unsafeChunkRangeKind :: forall a . Typeable a => ChunkRange a -> ContributionKind
-unsafeChunkRangeKind _ = (\(Right v) -> v) . parseUrlPiece . cs . fmap toLower . show $ typeOf (undefined :: a)
+chunkRangeKind :: forall a . (Typeable a, IsContribution a) => ChunkRange a -> ContributionKind
+chunkRangeKind _ = (\(Right v) -> v) . parseUrlPiece . cs . fmap toLower . show $ typeOf (undefined :: a)

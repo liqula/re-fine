@@ -62,7 +62,7 @@ import Refine.Prelude
 -- for all chunks of all edits, comments, notes, etc.
 --
 -- TODO: do we still want '\n' between tokens for darcs?
-insertMarks :: Typeable a => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
+insertMarks :: (Typeable a, IsContribution a) => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
 insertMarks crs vers@(VDocVersion forest) = invariants (tokensFromForest forest) `seq` vers'
   where
     withPreTokens        = insertMarksForest crs $ enablePreTokens forest
@@ -87,7 +87,7 @@ insertMarks crs vers@(VDocVersion forest) = invariants (tokensFromForest forest)
 
 
 -- Calls 'insertMarks', but expects the input 'VDocVersion' to have passed through before.
-insertMoreMarks :: Typeable a => [ChunkRange a] -> VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
+insertMoreMarks :: (Typeable a, IsContribution a) => [ChunkRange a] -> VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
 insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
 
 
@@ -145,14 +145,14 @@ isNonEmptyChunkRange cr forest = case cr of
 data IMFStack = IMFStack (Forest PreToken) (Forest PreToken) (Map DataUID [(Int, Forest PreToken)])
   deriving (Show)
 
-insertMarksForest :: forall a . Typeable a
+insertMarksForest :: forall a . (Typeable a, IsContribution a)
                   => [ChunkRange a] -> Forest PreToken -> Forest PreToken
 insertMarksForest crs = (prefix <>) . (<> suffix) . dfs
   where
     IMFStack prefix suffix infixmap = foldl' unmaybe (IMFStack mempty mempty mempty) (mconcat $ f <$> crs)
       where
         f cr@(ChunkRange (clearTypeParameter -> l) mb me)
-            = [(mb, PreMarkOpen'' l (unsafeChunkRangeKind cr)), (me, PreMarkClose'' l)]
+            = [(mb, PreMarkOpen'' l (chunkRangeKind cr)), (me, PreMarkClose'' l)]
 
     pushList :: PreToken'' -> Forest PreToken -> Forest PreToken
     pushList mark = (Node (runPreToken'' mark) [] :)

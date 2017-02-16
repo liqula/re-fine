@@ -46,7 +46,7 @@ import Refine.Common.VDoc.HTML.Enhance (addUIInfoToForest)
 import Refine.Common.VDoc.HTML.Splice
 
 
-noChunkRanges :: [ChunkRange ()]
+noChunkRanges :: [ChunkRange Note]
 noChunkRanges = []
 
 
