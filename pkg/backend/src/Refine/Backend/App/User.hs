@@ -25,14 +25,16 @@ login (Login username (Users.PasswordPlain -> password)) = do
   userHandle <- view appUserHandle
   session <- maybe (throwError (AppUserNotFound username)) pure
              =<< appIO (Users.authUser userHandle username password sessionDuration)
-  void . setUserSession . UserSession $ session
+  loginId <- maybe (throwError AppSessionError) pure
+             =<< appIO (Users.verifySession userHandle session 0)
+  void $ setUserSession (toUserID loginId) (UserSession session)
 
 logout :: App DB ()
 logout = do
   appLog "logout"
   st <- gets (view appUserState)
   case st of
-    UserLoggedIn session -> do
+    UserLoggedIn _user session -> do
       userHandle <- view appUserHandle
       void . appIO $ Users.destroySession userHandle (session ^. unUserSession)
       clearUserSession

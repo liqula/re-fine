@@ -7,6 +7,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
@@ -38,6 +39,8 @@ import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Types
 import Refine.Backend.User.Core
+import Refine.Common.Types.Prelude (ID(..))
+import Refine.Common.Types.User as Types (User)
 import Refine.Common.VDoc.HTML (ChunkRangeError(..))
 import Refine.Prelude (monadError, Timespan)
 import Refine.Prelude.TH (makeRefineType)
@@ -60,7 +63,7 @@ data AppState = AppState
 
 -- | The state of the application depends on the user state.
 data AppUserState
-  = UserLoggedIn UserSession
+  = UserLoggedIn (ID Types.User) UserSession
   | UserLoggedOut
   deriving (Eq, Show)
 
@@ -93,6 +96,7 @@ data AppError
   | AppUserNotLoggedIn
   | AppUserCreationError ST
   | AppCsrfError ST
+  | AppSessionError
   deriving (Show, Generic)
 
 makeRefineType ''AppError
@@ -102,9 +106,14 @@ appIO = App . liftIO
 
 db :: db a -> App db a
 db m = App $ do
-  (Nat runDB) <- ($ ()) <$> view appRunDB
+  mu <- user <$> gets (view appUserState)
+  (Nat runDB) <- ($ DBContext mu) <$> view appRunDB
   r <- liftIO (runExceptT (runDB m))
   monadError AppDBError r
+  where
+    user = \case
+      UserLoggedOut     -> Nothing
+      UserLoggedIn u _s -> Just u
 
 docRepo :: DocRepo a -> App db a
 docRepo m = App $ do
