@@ -1,3 +1,8 @@
+Kleine Korrektur hierzu: Die Funktion, die die Echos unterdrückt, heißt "stopPropagation". "preventDefault" gibt's auch, die unterdrückt aber die Behandlung des Events durch den Browser selbst (z.
++B. Seite neu laden beim Klicken auf einen Link oder sowas).
+
+https://www.mediaevent.de/javascript/event-handler-default-verhindern.html <https://www.mediaevent.de/javascript/event-handler-default-verhindern.html>
+
 From mf@zerobuzz.net Thu Feb 16 22:32:14 2017
 Date: Thu, 16 Feb 2017 22:32:14 +0100
 From: Matthias Fischmann <mf@zerobuzz.net>
