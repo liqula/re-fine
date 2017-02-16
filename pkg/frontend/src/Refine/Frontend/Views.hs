@@ -49,6 +49,7 @@ import           Refine.Frontend.Bubbles.QuickCreate
 import           Refine.Frontend.Bubbles.Types as RS
 import           Refine.Frontend.Header.Heading ( mainHeader_ )
 import           Refine.Frontend.Header.Types as HT
+import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.MainMenu.Component (mainMenu_)
 import           Refine.Frontend.MainMenu.Types (mainMenuOpenTab)
 import           Refine.Frontend.NotImplementedYet (notImplementedYet_)
@@ -63,13 +64,16 @@ import           Refine.Frontend.Types as RS
 -- with the store and will be re-rendered whenever the store changes.
 refineApp :: ReactView ()
 refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
-  case rs ^? gsMainMenuState . mainMenuOpenTab of
-    Nothing  -> mainScreen_ rs
-    Just tab -> mainMenu_ tab
+  case rs ^. gsVDoc of
+    Nothing -> vdocLoader_ (rs ^. gsVDocList)  -- (this is just some scaffolding that will be replaced by more app once we get there.)
+    Just _ -> case rs ^? gsMainMenuState . mainMenuOpenTab of
+      Nothing  -> mainScreen_ rs
+      Just tab -> mainMenu_ tab
 
 mainScreen :: ReactView RS.GlobalState
 mainScreen = defineView "MainScreen" $ \rs ->
   let vdoc = fromJust (rs ^. gsVDoc) -- FIXME: improve this!  (introduce a custom props type with a CompositeVDoc *not* wrapped in a 'Maybe')
+
   in div_
     [ onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseCommentToolbarExtension)
     ] $ do
