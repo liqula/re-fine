@@ -32,12 +32,15 @@ import Refine.Prelude.TH (makeRefineType)
 
 type SQLM = ReaderT SqlBackend IO
 
-newtype DB a = DB { unDB :: ExceptT DBError SQLM a }
+type DBContext = ()
+
+newtype DB a = DB { unDB :: ExceptT DBError (ReaderT DBContext SQLM) a }
   deriving
     ( Functor
     , Applicative
     , Monad
     , MonadError DBError
+    , MonadReader DBContext
     )
 
 data DBError
@@ -56,4 +59,4 @@ notUnique :: String -> DB a
 notUnique = DB . throwError . DBNotUnique
 
 liftDB :: SQLM a -> DB a
-liftDB = DB . lift
+liftDB = DB . lift . lift

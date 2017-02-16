@@ -20,7 +20,10 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Backend.App.Core where
+module Refine.Backend.App.Core (
+    module Refine.Backend.App.Core
+  , RunDB
+  ) where
 
 import Control.Lens (makeLenses, view)
 import Control.Monad.Except
@@ -39,8 +42,6 @@ import Refine.Common.VDoc.HTML (ChunkRangeError(..))
 import Refine.Prelude (monadError, Timespan)
 import Refine.Prelude.TH (makeRefineType)
 
-
-type RunDB db   = db      :~> ExceptT DBError      IO
 type RunDocRepo = DocRepo :~> ExceptT DocRepoError IO
 
 data AppContext db = AppContext
@@ -101,7 +102,7 @@ appIO = App . liftIO
 
 db :: db a -> App db a
 db m = App $ do
-  (Nat runDB) <- view appRunDB
+  (Nat runDB) <- ($ ()) <$> view appRunDB
   r <- liftIO (runExceptT (runDB m))
   monadError AppDBError r
 
