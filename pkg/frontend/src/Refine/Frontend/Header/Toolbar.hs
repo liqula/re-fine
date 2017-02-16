@@ -147,7 +147,8 @@ commentToolbarExtension = defineView "CommentToolbarExtension" $ \case
           div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
           div_ [classNames [ ("c-vdoc-toolbar-extension__annotation", True)   -- RENAME: annotation => comment
                            , ("c-vdoc-toolbar-extension--expanded", True) ]
-               ] $ children
+               ]
+            children
 
 
 commentToolbarExtension_ :: CommentToolbarExtensionProps -> ReactElementM eventHandler ()
