@@ -24,7 +24,6 @@
 
 module Refine.Frontend.ViewsSpec where
 
-import           Control.Concurrent (threadDelay)
 import           Control.Monad (forM_)
 import qualified Data.Map.Strict as M
 import qualified Data.Tree as DT
@@ -74,7 +73,7 @@ clearState =
     in do
       -- FIXME: If we add ClearState to the list of Actions, we run into (timing?!) problems...
       forM_ (concatMap dispatch [OpenDocument newVDoc, HeaderAction CloseCommentToolbarExtension]) executeAction
-      threadDelay 10000
+      reactFluxWorkAroundThreadDelay
 
 
 spec :: Spec
