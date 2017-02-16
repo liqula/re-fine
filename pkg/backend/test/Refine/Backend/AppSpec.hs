@@ -74,8 +74,8 @@ initVDocs = VDocs Map.empty 0
 makeLenses ''VDocs
 
 isActiveUser :: AppUserState -> Bool
-isActiveUser (UserLoggedIn _) = True
-isActiveUser UserLoggedOut    = False
+isActiveUser (UserLoggedIn _ _) = True
+isActiveUser UserLoggedOut      = False
 
 -- Parallel run is not an option here, it could make fail the build at the cleanup stage.
 spec :: Spec
