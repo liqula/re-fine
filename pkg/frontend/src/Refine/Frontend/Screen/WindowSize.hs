@@ -24,7 +24,6 @@
 
 module Refine.Frontend.Screen.WindowSize where
 
-import           Control.Concurrent (forkIO)
 import           Control.Monad (forM_)
 import           Data.Monoid ((<>))
 import           React.Flux
@@ -61,7 +60,7 @@ windowSize_ = view windowSize
 setWindowSize :: IO ()
 setWindowSize = do
     width <- js_getWindowWidth
-    _ <- forkIO $ do
+    _ <- RS.reactFluxWorkAroundForkIO $ do
        let actions = RS.dispatch . RS.SetWindowSize $ RS.toSize width
        forM_ actions executeAction
     pure ()
