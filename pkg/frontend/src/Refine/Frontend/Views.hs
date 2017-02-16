@@ -49,7 +49,6 @@ import           Refine.Frontend.Bubbles.QuickCreate
 import           Refine.Frontend.Bubbles.Types as RS
 import           Refine.Frontend.Header.Heading ( mainHeader_ )
 import           Refine.Frontend.Header.Types as HT
-import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.MainMenu.Component (mainMenu_)
 import           Refine.Frontend.MainMenu.Types (MainMenuState(..))
 import           Refine.Frontend.NotImplementedYet (notImplementedYet_)
@@ -65,19 +64,12 @@ import           Refine.Frontend.Types as RS
 refineApp :: ReactView ()
 refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
   if rs ^. gsMainMenuState == MainMenuClosed
-    then refineAppMenuClosed_ rs
+    then mainScreen_ rs
     else mainMenu_ (rs ^. gsMainMenuState)
-
-refineAppMenuClosed_ :: RS.GlobalState -> ReactElementM ViewEventHandler ()
-refineAppMenuClosed_ rs =
-    case rs ^. gsVDoc of
-        Nothing -> do
-          vdocLoader_ (rs ^. gsVDocList)
-        Just _ -> mainScreen_ rs
 
 mainScreen :: ReactView RS.GlobalState
 mainScreen = defineView "MainScreen" $ \rs ->
-  let vdoc = fromJust (rs ^. gsVDoc) -- TODO improve this!
+  let vdoc = fromJust (rs ^. gsVDoc) -- FIXME: improve this!  (introduce a custom props type with a CompositeVDoc *not* wrapped in a 'Maybe')
   in div_
     [ onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseCommentToolbarExtension)
     ] $ do
