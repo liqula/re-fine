@@ -140,6 +140,7 @@ commentToolbarExtension = defineView "CommentToolbarExtension" $ \case
                 (\_ -> RS.dispatch RS.ShowNotImplementedYet)
                 []
   where
+    frame :: ReactElementM eventHandler () -> ReactElementM eventHandler ()
     frame children = div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
       div_ ["className" $= "grid-wrapper"] $ do
         div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
