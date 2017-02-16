@@ -39,7 +39,7 @@ import Refine.Prelude.TH (makeRefineType)
 data GlobalState = GlobalState
   { _gsVDoc                       :: Maybe CompositeVDoc
   , _gsVDocList                   :: Maybe [ID VDoc]
-  , _gsBubblesState               :: BubblesState
+  , _gsContributionState          :: ContributionState
   , _gsHeaderState                :: HeaderState
   , _gsScreenState                :: ScreenState
   , _gsNotImplementedYetIsVisible :: Bool
@@ -48,7 +48,7 @@ data GlobalState = GlobalState
   } deriving (Show, Generic)
 
 emptyGlobalState :: GlobalState
-emptyGlobalState = GlobalState Nothing Nothing emptyBubblesState emptyHeaderState emptyScreenState False MainMenuClosed False
+emptyGlobalState = GlobalState Nothing Nothing emptyContributionState emptyHeaderState emptyScreenState False MainMenuClosed False
 
 data RefineAction = LoadDocumentList
                   | LoadedDocumentList [ID VDoc]
@@ -57,7 +57,7 @@ data RefineAction = LoadDocumentList
                   | AddDemoDocument
                   | AddHeaderHeight Int
                   | SetWindowSize WindowSize
-                  | BubblesAction BubblesAction
+                  | ContributionAction ContributionAction
                   | HeaderAction HeaderAction
                   | ToolbarStickyStateChange Bool
                   -- ...

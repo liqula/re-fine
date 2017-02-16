@@ -51,7 +51,7 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, s
                 (fromString createType)
                 ""
                 False
-                (\_ -> RS.dispatch (RS.BubblesAction RS.ClearSelection) <> RS.dispatch (RS.BubblesAction (RS.ShowCommentEditor (fst currentSelection))))
+                (\_ -> RS.dispatch (RS.ContributionAction RS.ClearSelection) <> RS.dispatch (RS.ContributionAction (RS.ShowCommentEditor (fst currentSelection))))
                 []
               ) offset
         _ -> mempty

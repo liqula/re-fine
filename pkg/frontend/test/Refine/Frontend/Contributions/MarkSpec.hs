@@ -90,13 +90,13 @@ spec = do
       wrapper <- mount $ rfMark_ theProps mempty
       -- init the state:
       globalState0 <- getStoreData refineStore
-      let _ = globalState0 & gsBubblesState . bsHighlightedMarkAndBubble %~ \_ -> Nothing
+      let _ = globalState0 & gsContributionState . bsHighlightedMarkAndBubble %~ \_ -> Nothing
       -- simulate events:
       _ <- simulate wrapper MouseEnter
       globalState1 <- getStoreData refineStore
-      globalState1 ^. gsBubblesState . bsHighlightedMarkAndBubble `shouldBe` Just (ID 77)
+      globalState1 ^. gsContributionState . bsHighlightedMarkAndBubble `shouldBe` Just (ID 77)
       _ <- simulate wrapper MouseLeave
       globalState2 <- getStoreData refineStore
-      globalState2 ^. gsBubblesState . bsHighlightedMarkAndBubble `shouldBe` Nothing
+      globalState2 ^. gsContributionState . bsHighlightedMarkAndBubble `shouldBe` Nothing
 
 -- TODO tests for componentDidMount code

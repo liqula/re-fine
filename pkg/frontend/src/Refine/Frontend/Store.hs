@@ -40,7 +40,7 @@ import Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as RT
 
 import           Refine.Common.VDoc.HTML (insertMoreMarks)
-import           Refine.Frontend.Contributions.Store (bubblesStateUpdate)
+import           Refine.Frontend.Contributions.Store (contributionStateUpdate)
 import           Refine.Frontend.Contributions.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
@@ -71,14 +71,14 @@ instance StoreData GlobalState where
                 -- for efficiency reasons, only ask JS when we get this action
                 hasRange <- js_hasRange
                 range <- if hasRange then getRange else pure Nothing
-                pure . BubblesAction $ UpdateSelection (range, Just deviceOffset)
+                pure . ContributionAction $ UpdateSelection (range, Just deviceOffset)
             _ -> pure action
 
 
         let newState = state
               & gsVDoc                       %~ vdocUpdate transformedAction
               & gsVDocList                   %~ vdocListUpdate transformedAction
-              & gsBubblesState               %~ maybe id bubblesStateUpdate (transformedAction ^? _BubblesAction)
+              & gsContributionState          %~ maybe id contributionStateUpdate (transformedAction ^? _ContributionAction)
               & gsHeaderState                %~ headerStateUpdate transformedAction
               & gsScreenState                %~ screenStateUpdate transformedAction
               & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate transformedAction
@@ -148,7 +148,7 @@ emitBackendCallsFor action state = case action of
             (Left(_, msg)) -> handleError msg
             (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
 
-    BubblesAction (SubmitComment text category forRange) -> do
+    ContributionAction (SubmitComment text category forRange) -> do
       -- here we need to distinguish which comment category we want to submit
       -- check the state and what the user selected there
       -- (FIXME: the new correct technical term for 'category' is 'kind'.)

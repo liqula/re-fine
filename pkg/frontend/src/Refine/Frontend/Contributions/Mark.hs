@@ -75,8 +75,8 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
                         , (fromString $ "o-mark--" <> dataContentType, True)
                         , ("o-mark--hover", maybeChunkId == props ^. markPropsHighlightedMark)
                         ]
-           , onMouseEnter $ \_ _ _ -> (RS.dispatch . RS.BubblesAction $ RS.HighlightMarkAndBubble dataChunkId, Nothing)
-           , onMouseLeave $ \_ _ _ -> (RS.dispatch $ RS.BubblesAction RS.UnhighlightMarkAndBubble, Nothing)
+           , onMouseEnter $ \_ _ _ -> (RS.dispatch . RS.ContributionAction $ RS.HighlightMarkAndBubble dataChunkId, Nothing)
+           , onMouseLeave $ \_ _ _ -> (RS.dispatch $ RS.ContributionAction RS.UnhighlightMarkAndBubble, Nothing)
            ]) childrenPassedToView
 
    , lComponentDidMount = Just $ \propsandstate ldom _ -> do
@@ -88,7 +88,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
                case contributionIdFrom (props ^. markPropsHTMLAttributes) of
                  Nothing -> pure ()
                  Just dataChunkId -> do
-                   let actions = RS.dispatch . RS.BubblesAction $ RS.AddMarkPosition dataChunkId topOffset scrollOffset
+                   let actions = RS.dispatch . RS.ContributionAction $ RS.AddMarkPosition dataChunkId topOffset scrollOffset
                    forM_ actions executeAction
              pure ()
    }

@@ -109,7 +109,7 @@ instance FromJSON MarkPositions where
   parseJSON = fmap MarkPositions . mapFromValue
 
 
-data BubblesAction =
+data ContributionAction =
     UpdateSelection Selection
   | ClearSelection
   | ShowNoteOverlay (ID Note)
@@ -126,7 +126,7 @@ data BubblesAction =
   deriving (Show, Generic)
 
 
-data BubblesState = BubblesState
+data ContributionState = ContributionState
   { _bsCurrentSelection         :: Selection
   , _bsCommentCategory          :: Maybe CommentCategory
   , _bsDiscussionId      :: Maybe (ID Discussion)
@@ -137,11 +137,11 @@ data BubblesState = BubblesState
   } deriving (Show, Generic)
 
 
-emptyBubblesState :: BubblesState
-emptyBubblesState = BubblesState (Nothing, Nothing) Nothing Nothing Nothing (False, Nothing) Nothing (MarkPositions M.empty)
+emptyContributionState :: ContributionState
+emptyContributionState = ContributionState (Nothing, Nothing) Nothing Nothing Nothing (False, Nothing) Nothing (MarkPositions M.empty)
 
 
 makeRefineType ''CommentInputState
 makeRefineType ''CommentCategory
-makeRefineType ''BubblesAction
-makeRefineType ''BubblesState
+makeRefineType ''ContributionAction
+makeRefineType ''ContributionState
