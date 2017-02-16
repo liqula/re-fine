@@ -57,6 +57,7 @@ Note
     text        Text
     public      Bool
     range       DBChunkRange
+    owner       LoginId
 
 Question
     text        Text

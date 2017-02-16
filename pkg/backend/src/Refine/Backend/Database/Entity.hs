@@ -259,18 +259,22 @@ registerEdit rid pid = void . liftDB . insert $ S.RP (S.idToKey rid) (S.idToKey 
 
 -- * Note
 
-toNote :: ID Note -> ST -> Bool -> DBChunkRange -> Note
-toNote nid desc public range = Note nid desc public (toChunkRange range nid)
+-- TODO: Use the _lid
+toNote :: ID Note -> ST -> Bool -> DBChunkRange -> LoginId -> Note
+toNote nid desc public range _lid = Note nid desc public (toChunkRange range nid)
 
 createNote :: ID Edit -> Create Note -> DB Note
-createNote pid note = liftDB $ do
-  let snote = S.Note
-        (note ^. createNoteText)
-        (note ^. createNotePublic)
-        (note ^. createNoteRange . to mkDBChunkRange)
-  key <- insert snote
-  void . insert $ S.PN (S.idToKey pid) key
-  pure $ S.noteElim (toNote (S.keyToId key)) snote
+createNote pid note = do
+  userId <- dbUser
+  liftDB $ do
+    let snote = S.Note
+          (note ^. createNoteText)
+          (note ^. createNotePublic)
+          (note ^. createNoteRange . to mkDBChunkRange)
+          (fromUserID userId)
+    key <- insert snote
+    void . insert $ S.PN (S.idToKey pid) key
+    pure $ S.noteElim (toNote (S.keyToId key)) snote
 
 getNote :: ID Note -> DB Note
 getNote nid = S.noteElim (toNote nid) <$> getEntity nid
