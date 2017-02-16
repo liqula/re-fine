@@ -60,6 +60,7 @@ toSize sz
 
 instance StoreData GlobalState where
     type StoreAction GlobalState = RefineAction
+    transform ClearState _ = pure emptyGlobalState  -- for testing only!
     transform action state = do
         consoleLog "Old state: " state
         consoleLogStringified "Action: " action

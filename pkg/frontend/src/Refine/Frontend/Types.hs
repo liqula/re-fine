@@ -73,6 +73,8 @@ data RefineAction = LoadDocumentList
                   | MainMenuAction MainMenuAction
                   -- Actions that will be transformed because they need IO:
                   | TriggerUpdateSelection DeviceOffset
+                  -- Action only for testing:
+                  | ClearState
   deriving (Show, Generic)
 
 makeRefineType ''GlobalState
