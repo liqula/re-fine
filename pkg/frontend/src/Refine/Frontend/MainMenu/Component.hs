@@ -44,7 +44,7 @@ mainMenu = defineView "MainMenu" $ \menuTab ->
             iconButton_ IconButtonProps
               { _iconButtonPropsIconProps = IconProps
                   { _iconPropsBlockName = "c-mainmenu-content"
-                  , _iconPropsHighlight = True
+                  , _iconPropsHighlight = menuTab == MainMenuLogin
                   , _iconPropsDesc      = ("icon-User", "dark")
                   , _iconPropsSize      = XXL
                   }
@@ -62,7 +62,7 @@ mainMenu = defineView "MainMenu" $ \menuTab ->
             iconButton_ IconButtonProps
               { _iconButtonPropsIconProps = IconProps
                   { _iconPropsBlockName = "c-mainmenu-content"
-                  , _iconPropsHighlight = True
+                  , _iconPropsHighlight = menuTab == MainMenuRegistration
                   , _iconPropsDesc      = ("icon-User", "dark")
                   , _iconPropsSize      = XXL
                   }
