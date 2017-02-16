@@ -45,18 +45,18 @@ inputFieldWithKey
   :: (FromJSVal c)
   => JSString -> JSString -> JSString -> JSString -> ASetter s a b c
   -> ReactElementM (s -> ([t], Maybe a)) ()
-inputFieldWithKey id_ type_ placeholder_ key_ lens =
-  input_ [ "id" $= id_
-         , "type" $= type_
-         , "placeholder" $= placeholder_
-         , onChange $ \evt state -> ([], Just (state & lens .~ target evt key_))
+inputFieldWithKey fieldId fieldType fieldPlaceholder fieldKey lens =
+  input_ [ "id" $= fieldId
+         , "type" $= fieldType
+         , "placeholder" $= fieldPlaceholder
+         , onChange $ \evt state -> ([], Just (state & lens .~ target evt fieldKey))
          ]
 
 inputField
   :: (FromJSVal c)
   => JSString -> JSString -> JSString -> ASetter s a b c
   -> ReactElementM (s -> ([t], Maybe a)) ()
-inputField id_ type_ placeholder_ = inputFieldWithKey id_ type_ placeholder_ "value"
+inputField i t p = inputFieldWithKey i t p "value"
 
 
 -- * Form types
