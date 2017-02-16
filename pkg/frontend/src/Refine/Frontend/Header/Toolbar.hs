@@ -24,7 +24,6 @@
 
 module Refine.Frontend.Header.Toolbar where
 
-import           Control.Exception (assert)
 import           React.Flux
 
 import qualified Refine.Frontend.Header.Types as RS
@@ -118,7 +117,6 @@ newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
 
 commentToolbarExtension :: ReactView CommentToolbarExtensionProps
 commentToolbarExtension = defineView "CommentToolbarExtension" $ \(CommentToolbarExtensionProps status) ->
-  assert (status /= RS.CommentToolbarExtensionClosed) $
   if status == RS.CommentToolbarExtensionClosed then mempty
   else
     div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
