@@ -24,6 +24,7 @@
 
 module Refine.Frontend.Header.Toolbar where
 
+import           Control.Exception (assert)
 import           React.Flux
 
 import qualified Refine.Frontend.Header.Types as RS
