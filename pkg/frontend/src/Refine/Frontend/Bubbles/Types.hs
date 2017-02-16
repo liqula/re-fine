@@ -129,8 +129,8 @@ data BubblesAction =
 data BubblesState = BubblesState
   { _bsCurrentSelection         :: Selection
   , _bsCommentCategory          :: Maybe CommentCategory
-  , _bsDiscussionIsVisible      :: Maybe (ID Discussion)
-  , _bsNoteIsVisible            :: Maybe (ID Note)
+  , _bsDiscussionId      :: Maybe (ID Discussion)
+  , _bsNoteId            :: Maybe (ID Note)
   , _bsCommentEditorIsVisible   :: (Bool, Maybe Range)
   , _bsHighlightedMarkAndBubble :: Maybe (ID Void)
   , _bsMarkPositions            :: MarkPositions
