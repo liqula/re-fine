@@ -121,24 +121,24 @@ commentToolbarExtension = defineView "CommentToolbarExtension" $ \case
   (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithSelection) -> frame $ do
     div_ "Please select the text you would like to comment on"
   (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithButtons) -> frame $ do
-                iconButton_ $ IconButtonProps
-                            (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
-                            "btn-new-ann-text"
-                            ""
-                            "comment"
-                            "text-specific comment"
-                            False
-                            (\e -> stopPropagation e : RS.dispatch (RS.HeaderAction RS.StartTextSpecificComment))
-                            []
-                iconButton_ $ IconButtonProps
-                            (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L)
-                            "btn-new-ann-doc" -- RENAME: ann => comment
-                            ""
-                            "comment"
-                            "general comment"
-                            False
-                            (\_ -> RS.dispatch RS.ShowNotImplementedYet)
-                            []
+    iconButton_ $ IconButtonProps
+                (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
+                "btn-new-ann-text"
+                ""
+                "comment"
+                "text-specific comment"
+                False
+                (\e -> stopPropagation e : RS.dispatch (RS.HeaderAction RS.StartTextSpecificComment))
+                []
+    iconButton_ $ IconButtonProps
+                (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L)
+                "btn-new-ann-doc" -- RENAME: ann => comment
+                ""
+                "comment"
+                "general comment"
+                False
+                (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                []
   where
     frame children = div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
       div_ ["className" $= "grid-wrapper"] $ do
