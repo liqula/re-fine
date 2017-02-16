@@ -83,8 +83,8 @@ makeLenses ''CommentDisplayProps
 showComment :: ReactView CommentDisplayProps
 showComment = defineView "ShowComment" $ \props ->
   overlay_ ["isVisible" &= True
-           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
-           , "hideOnOverlayClicked" &= True
+           , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
+           , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
            , "dialogStyles" @= (vdoc_overlay_content <> (props ^. contentStyle))
            , "overlayStyles" @= overlay_styles
            ] $ do
@@ -165,8 +165,8 @@ showQuestion_ question = view showQuestion question mempty
 addComment :: ReactView (Bool, Maybe RS.Range, Maybe RS.CommentCategory)
 addComment = defineView "AddComment" $ \(showOverlay, forRange, commentCategory) ->
   overlay_ ["isVisible" &= showOverlay
-           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
-           , "hideOnOverlayClicked" &= True
+           , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
+           , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
            , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content__add_comment)
            , "overlayStyles" @= overlay_styles
            ]  $ do
