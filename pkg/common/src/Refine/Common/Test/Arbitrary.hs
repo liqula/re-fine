@@ -320,3 +320,7 @@ allNonEmptyCreateChunkRanges_ vers = result
     nonempty ((n, k), _) = n < k
 
     maxk = fst $ V.last ps
+
+
+instance Arbitrary ContributionKind where
+  arbitrary = elements [minBound..]
