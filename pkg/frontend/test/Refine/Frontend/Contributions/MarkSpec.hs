@@ -23,7 +23,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 
-module Refine.Frontend.Bubbles.MarkSpec where
+module Refine.Frontend.Contributions.MarkSpec where
 
 import           Control.Lens((^.), (&), (%~))
 import           Data.Monoid ((<>))
@@ -32,8 +32,8 @@ import           Test.Hspec
 import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
-import           Refine.Frontend.Bubbles.Mark
-import           Refine.Frontend.Bubbles.Types
+import           Refine.Frontend.Contributions.Mark
+import           Refine.Frontend.Contributions.Types
 import           Refine.Frontend.Store (refineStore)
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Types

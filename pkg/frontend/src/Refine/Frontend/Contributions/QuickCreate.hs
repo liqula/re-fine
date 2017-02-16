@@ -22,7 +22,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Bubbles.QuickCreate where
+module Refine.Frontend.Contributions.QuickCreate where
 
 import           Control.Lens ((^.))
 import           Data.Monoid ((<>))
@@ -30,7 +30,7 @@ import           Data.String (fromString)
 import           React.Flux
 
 import qualified Refine.Frontend.Types as RS
-import qualified Refine.Frontend.Bubbles.Types as RS
+import qualified Refine.Frontend.Contributions.Types as RS
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Screen.Calculations as SC
 import qualified Refine.Frontend.Store as RS

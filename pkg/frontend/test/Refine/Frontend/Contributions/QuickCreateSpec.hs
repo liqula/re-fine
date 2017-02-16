@@ -22,12 +22,12 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Bubbles.QuickCreateSpec where
+module Refine.Frontend.Contributions.QuickCreateSpec where
 
 import Test.Hspec
 
-import qualified Refine.Frontend.Bubbles.Types as RS
-import           Refine.Frontend.Bubbles.QuickCreate
+import qualified Refine.Frontend.Contributions.Types as RS
+import           Refine.Frontend.Contributions.QuickCreate
 import qualified Refine.Frontend.Screen.Types as RS
 
 

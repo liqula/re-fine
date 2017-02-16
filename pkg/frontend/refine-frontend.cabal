@@ -45,13 +45,13 @@ library
   exposed-modules:
       -- we can't have hspec, but at least we have bash and find and perl...  :)
       -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
-      Refine.Frontend.Bubbles.Bubble
-      Refine.Frontend.Bubbles.Mark
-      Refine.Frontend.Bubbles.Overlay
-      Refine.Frontend.Bubbles.QuickCreate
-      Refine.Frontend.Bubbles.Store
-      Refine.Frontend.Bubbles.Types
       Refine.Frontend.Colors
+      Refine.Frontend.Contributions.Bubble
+      Refine.Frontend.Contributions.Mark
+      Refine.Frontend.Contributions.Overlay
+      Refine.Frontend.Contributions.QuickCreate
+      Refine.Frontend.Contributions.Store
+      Refine.Frontend.Contributions.Types
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.Heading
       Refine.Frontend.Header.Store
@@ -114,13 +114,13 @@ executable refine-frontend
     , unordered-containers
   other-modules:
       -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
-      Refine.Frontend.Bubbles.Bubble
-      Refine.Frontend.Bubbles.Mark
-      Refine.Frontend.Bubbles.Overlay
-      Refine.Frontend.Bubbles.QuickCreate
-      Refine.Frontend.Bubbles.Store
-      Refine.Frontend.Bubbles.Types
       Refine.Frontend.Colors
+      Refine.Frontend.Contributions.Bubble
+      Refine.Frontend.Contributions.Mark
+      Refine.Frontend.Contributions.Overlay
+      Refine.Frontend.Contributions.QuickCreate
+      Refine.Frontend.Contributions.Store
+      Refine.Frontend.Contributions.Types
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.Heading
       Refine.Frontend.Header.Store
@@ -187,17 +187,17 @@ test-suite spec
     , unordered-containers
   other-modules:
       -- find src test -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
-      Refine.Frontend.Bubbles.Bubble
-      Refine.Frontend.Bubbles.BubbleSpec
-      Refine.Frontend.Bubbles.Mark
-      Refine.Frontend.Bubbles.MarkSpec
-      Refine.Frontend.Bubbles.Overlay
-      Refine.Frontend.Bubbles.QuickCreate
-      Refine.Frontend.Bubbles.QuickCreateSpec
-      Refine.Frontend.Bubbles.Store
-      Refine.Frontend.Bubbles.StoreSpec
-      Refine.Frontend.Bubbles.Types
       Refine.Frontend.Colors
+      Refine.Frontend.Contributions.Bubble
+      Refine.Frontend.Contributions.BubbleSpec
+      Refine.Frontend.Contributions.Mark
+      Refine.Frontend.Contributions.MarkSpec
+      Refine.Frontend.Contributions.Overlay
+      Refine.Frontend.Contributions.QuickCreate
+      Refine.Frontend.Contributions.QuickCreateSpec
+      Refine.Frontend.Contributions.Store
+      Refine.Frontend.Contributions.StoreSpec
+      Refine.Frontend.Contributions.Types
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.DocumentHeaderSpec
       Refine.Frontend.Header.Heading

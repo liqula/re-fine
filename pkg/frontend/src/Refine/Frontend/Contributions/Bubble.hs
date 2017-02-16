@@ -22,7 +22,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Bubbles.Bubble where
+module Refine.Frontend.Contributions.Bubble where
 
 import           Control.Lens ((^.), makeLenses, to)
 import           Data.Maybe (isJust, fromJust)
@@ -32,7 +32,7 @@ import           Data.Void
 import           React.Flux hiding (callback)
 
 import           Refine.Common.Types
-import qualified Refine.Frontend.Bubbles.Types as RT
+import qualified Refine.Frontend.Contributions.Types as RT
 import qualified Refine.Frontend.Screen.Calculations as SC
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS

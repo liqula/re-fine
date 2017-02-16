@@ -22,14 +22,14 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Bubbles.Store where
+module Refine.Frontend.Contributions.Store where
 
 import           Control.Lens ((&), (%~))
 import qualified Data.Map.Strict as M
 import           Data.Void
 
 import Refine.Common.Types
-import Refine.Frontend.Bubbles.Types
+import Refine.Frontend.Contributions.Types
 
 
 bubblesStateUpdate :: BubblesAction -> BubblesState -> BubblesState

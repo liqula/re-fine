@@ -22,15 +22,15 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Bubbles.BubbleSpec where
+module Refine.Frontend.Contributions.BubbleSpec where
 
 import           Control.Lens((^.), (&), (%~))
 import           Test.Hspec
 import           React.Flux (getStoreData)
 
 import           Refine.Common.Types
-import           Refine.Frontend.Bubbles.Bubble
-import           Refine.Frontend.Bubbles.Types
+import           Refine.Frontend.Contributions.Bubble
+import           Refine.Frontend.Contributions.Types
 import qualified Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Store (refineStore)
 import           Refine.Frontend.Style

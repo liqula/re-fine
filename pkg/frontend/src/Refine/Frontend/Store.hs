@@ -40,8 +40,8 @@ import Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as RT
 
 import           Refine.Common.VDoc.HTML (insertMoreMarks)
-import           Refine.Frontend.Bubbles.Store (bubblesStateUpdate)
-import           Refine.Frontend.Bubbles.Types
+import           Refine.Frontend.Contributions.Store (bubblesStateUpdate)
+import           Refine.Frontend.Contributions.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
 import           Refine.Frontend.Rest

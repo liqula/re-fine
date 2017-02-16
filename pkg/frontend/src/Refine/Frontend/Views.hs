@@ -42,11 +42,11 @@ import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
 import           Refine.Prelude (ClearTypeParameter(..))
-import           Refine.Frontend.Bubbles.Bubble
-import           Refine.Frontend.Bubbles.Mark
-import           Refine.Frontend.Bubbles.Overlay
-import           Refine.Frontend.Bubbles.QuickCreate
-import           Refine.Frontend.Bubbles.Types as RS
+import           Refine.Frontend.Contributions.Bubble
+import           Refine.Frontend.Contributions.Mark
+import           Refine.Frontend.Contributions.Overlay
+import           Refine.Frontend.Contributions.QuickCreate
+import           Refine.Frontend.Contributions.Types as RS
 import           Refine.Frontend.Header.Heading ( mainHeader_ )
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component (vdocLoader_)
