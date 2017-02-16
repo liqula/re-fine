@@ -31,7 +31,6 @@ import Refine.Common.Types
 
 spec :: Spec
 spec = parallel $ do
-  describe "FromHttpApiData and ToHttpApiData are inverses" .
-    mapM_ fromAndToHttpApiDataAreInverses $
-      [ h :: HttpApiGen (ID ())
-      ]
+  describe "FromHttpApiData and ToHttpApiData are inverses" $ do
+    fromAndToHttpApiDataAreInverses (h :: HttpApiGen (ID ()))
+    fromAndToHttpApiDataAreInverses (h :: HttpApiGen ContributionKind)

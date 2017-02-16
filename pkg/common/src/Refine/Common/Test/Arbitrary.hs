@@ -23,11 +23,11 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.Builder as B
 import           Data.Tree
 import qualified Data.Vector as V
+import           Data.Void
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
 import           Text.HTML.Parser as HTML
 import           Text.HTML.Tree as HTML
-import           Web.HttpApiData (toUrlPiece)
 
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML
@@ -49,10 +49,10 @@ instance Arbitrary DataUID where
 instance Arbitrary PreToken where
   arbitrary = oneof [PreToken <$> arbitrary, open, close]
     where
-      open  = PreMarkOpen <$> uid <*> owner
+      open  = PreMarkOpen <$> uid <*> kind
       close = PreMarkClose <$> uid
-      uid   = toUrlPiece . unDataUID <$> (arbitrary :: Gen DataUID)
-      owner = elements ["edit", "node", "question", "discussion"]
+      uid   = arbitrary :: Gen (ID Void)
+      kind  = elements [minBound..]
 
   shrink (PreToken t) = PreToken <$> shrink t
   shrink _ = []
@@ -320,3 +320,7 @@ allNonEmptyCreateChunkRanges_ vers = result
     nonempty ((n, k), _) = n < k
 
     maxk = fst $ V.last ps
+
+
+instance Arbitrary ContributionKind where
+  arbitrary = elements [minBound..]

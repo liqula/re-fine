@@ -34,14 +34,14 @@ import Refine.Prelude.Generic
 import Refine.Prelude.TH (makeRefineType)
 
 
--- | Location of a 'Edit', 'Comment', ... in a 'VDocVersion'.  'Edit' etc. are called the *owner*
--- of the 'ChunkRange'.  If the begin point (resp. end point) is 'Nothing', the 'ChunkRange' starts
--- at the beginning (resp. end) of the 'VDocVersion'.  When the owner is created, it must be
--- 'assert'ed that @0 <= begin < end < length of 'VDocVersion'@.
-data ChunkRange owner = ChunkRange
-  { _chunkRangeLabel :: ID owner
-  , _chunkRangeBegin :: Maybe ChunkPoint
-  , _chunkRangeEnd   :: Maybe ChunkPoint
+-- | Location of a 'Contribution' in a 'VDocVersion'.  If the begin point (resp. end point) is
+-- 'Nothing', the 'ChunkRange' starts at the beginning (resp. end) of the 'VDocVersion'.  When the
+-- 'Contribution' is created, it must be 'assert'ed that @0 <= begin < end < length of
+-- 'VDocVersion'@.
+data ChunkRange contributionkind = ChunkRange
+  { _chunkRangeContrib :: ID contributionkind
+  , _chunkRangeBegin   :: Maybe ChunkPoint
+  , _chunkRangeEnd     :: Maybe ChunkPoint
   }
   deriving (Eq, Ord, Show, Read, Generic)
 

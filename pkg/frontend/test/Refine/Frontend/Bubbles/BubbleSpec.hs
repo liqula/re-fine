@@ -64,9 +64,9 @@ spec = do
       -- TODO and this should return ""
       html wrapper `shouldReturn` "<div></div>"
 
-    it "renders the data-chunk-id that was passed to it" $ do
+    it "renders the data-contribution-id that was passed to it" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      is wrapper (PropertySelector [Prop "data-chunk-id" ("99" :: String)]) `shouldReturn` True
+      is wrapper (PropertySelector [Prop "data-contribution-id" ("99" :: String)]) `shouldReturn` True
 
     it "renders the data-content-type that was passed to it" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty

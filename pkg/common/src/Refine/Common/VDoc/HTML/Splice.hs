@@ -41,14 +41,13 @@ import           Data.Set (Set)
 import qualified Data.Set as Set
 import           Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
-import           Data.String.Conversions ((<>), cs)
+import           Data.String.Conversions ((<>))
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
-import           Data.Typeable (Typeable, typeOf)
+import           Data.Typeable (Typeable)
 import           Data.Void (Void, absurd)
 import           Text.HTML.Parser (Token(..), canonicalizeTokens)
 import           Text.HTML.Tree (tokensFromForest, tokensToForest)
-import           Web.HttpApiData (toUrlPiece)
 
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML.Canonicalize (reCanonicalizeVDocVersion)
@@ -63,7 +62,7 @@ import Refine.Prelude
 -- for all chunks of all edits, comments, notes, etc.
 --
 -- TODO: do we still want '\n' between tokens for darcs?
-insertMarks :: Typeable a => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
+insertMarks :: (Typeable a, IsContribution a) => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
 insertMarks crs vers@(VDocVersion forest) = invariants (tokensFromForest forest) `seq` vers'
   where
     withPreTokens        = insertMarksForest crs $ enablePreTokens forest
@@ -88,7 +87,7 @@ insertMarks crs vers@(VDocVersion forest) = invariants (tokensFromForest forest)
 
 
 -- Calls 'insertMarks', but expects the input 'VDocVersion' to have passed through before.
-insertMoreMarks :: Typeable a => [ChunkRange a] -> VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
+insertMoreMarks :: (Typeable a, IsContribution a) => [ChunkRange a] -> VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
 insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
 
 
@@ -146,15 +145,14 @@ isNonEmptyChunkRange cr forest = case cr of
 data IMFStack = IMFStack (Forest PreToken) (Forest PreToken) (Map DataUID [(Int, Forest PreToken)])
   deriving (Show)
 
-insertMarksForest :: forall a . Typeable a
+insertMarksForest :: forall a . (Typeable a, IsContribution a)
                   => [ChunkRange a] -> Forest PreToken -> Forest PreToken
 insertMarksForest crs = (prefix <>) . (<> suffix) . dfs
   where
     IMFStack prefix suffix infixmap = foldl' unmaybe (IMFStack mempty mempty mempty) (mconcat $ f <$> crs)
       where
-        f (ChunkRange (toUrlPiece -> l) mb me) = [(mb, PreMarkOpen'' l t), (me, PreMarkClose'' l)]
-          where
-            t = cs . show . typeOf $ (undefined :: a)
+        f cr@(ChunkRange (clearTypeParameter -> l) mb me)
+            = [(mb, PreMarkOpen'' l (chunkRangeKind cr)), (me, PreMarkClose'' l)]
 
     pushList :: PreToken'' -> Forest PreToken -> Forest PreToken
     pushList mark = (Node (runPreToken'' mark) [] :)

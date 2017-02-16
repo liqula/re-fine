@@ -51,8 +51,8 @@ data MarkProps = MarkProps
 
 makeLenses ''MarkProps
 
-chunkIdFrom :: [HTMLP.Attr] -> Maybe (ID Void)
-chunkIdFrom attrs = ID <$> readMaybe (attribValueOf "data-chunk-id" attrs) :: Maybe (ID Void)
+contributionIdFrom :: [HTMLP.Attr] -> Maybe (ID Void)
+contributionIdFrom attrs = ID <$> readMaybe (attribValueOf "data-contribution-id" attrs) :: Maybe (ID Void)
 
 toProperties :: [HTMLP.Attr] -> [PropertyOrHandler handler]
 toProperties = map (\(HTMLP.Attr key value) -> fromString (cs key) $= fromString (cs value))
@@ -65,8 +65,8 @@ attribValueOf wantedKey (_:as) = attribValueOf wantedKey as
 rfMark :: ReactView MarkProps
 rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
   { lRender = \_state props ->
-    let maybeChunkId = chunkIdFrom (props ^. markPropsHTMLAttributes)
-        dataContentType = attribValueOf "data-chunk-kind" (props ^. markPropsHTMLAttributes)
+    let maybeChunkId = contributionIdFrom (props ^. markPropsHTMLAttributes)
+        dataContentType = attribValueOf "data-contribution-kind" (props ^. markPropsHTMLAttributes)
     in case (maybeChunkId, dataContentType) of
       (Nothing, _) -> mempty
       (_, "") -> mempty
@@ -86,7 +86,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
              scrollOffset <- js_getScrollOffset
              props <- lGetProps propsandstate
              _ <- forkIO $ do
-               case chunkIdFrom (props ^. markPropsHTMLAttributes) of
+               case contributionIdFrom (props ^. markPropsHTMLAttributes) of
                  Nothing -> pure ()
                  Just dataChunkId -> do
                    let actions = RS.dispatch . RS.BubblesAction $ RS.AddMarkPosition dataChunkId topOffset scrollOffset
@@ -106,4 +106,3 @@ foreign import javascript unsafe
   \ || document.body && document.body.scrollTop \
   \ || document.documentElement && document.documentElement.scrollTop"
   js_getScrollOffset :: IO RS.ScrollOffsetOfViewport
-

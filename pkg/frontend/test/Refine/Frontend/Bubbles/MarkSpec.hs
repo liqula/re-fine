@@ -43,24 +43,24 @@ import           Refine.Frontend.Types
 spec :: Spec
 spec = do
   describe "The rfMark_ component" $ do
-    let theAttribs = [HTMLP.Attr "data-chunk-id" "77", HTMLP.Attr "data-chunk-kind" "the-content-type"]
+    let theAttribs = [HTMLP.Attr "data-contribution-id" "77", HTMLP.Attr "data-contribution-kind" "the-content-type"]
     let theProps = MarkProps theAttribs Nothing
 
-    it "does not render anything when there is no data-chunk-id" $ do
-      wrapper <- shallow $ rfMark_ (MarkProps [HTMLP.Attr "data-chunk-kind" "the-content-type"] Nothing) mempty
+    it "does not render anything when there is no data-contribution-id" $ do
+      wrapper <- shallow $ rfMark_ (MarkProps [HTMLP.Attr "data-contribution-kind" "the-content-type"] Nothing) mempty
       html wrapper `shouldReturn` "<div></div>" -- TODO should be empty
 
-    it "does not render anything when there is no data-chunk-kind" $ do
-      wrapper <- shallow $ rfMark_ (MarkProps [HTMLP.Attr "data-chunk-id" "77"] Nothing) mempty
+    it "does not render anything when there is no data-contribution-kind" $ do
+      wrapper <- shallow $ rfMark_ (MarkProps [HTMLP.Attr "data-contribution-id" "77"] Nothing) mempty
       html wrapper `shouldReturn` "<div></div>" -- TODO should be empty
 
     it "renders a HTML mark at top level" $ do
       wrapper <- shallow $ rfMark_ theProps mempty
       is wrapper (StringSelector "mark") `shouldReturn` True
 
-    it "has the data-chunk-id annotation that was passed to it" $ do
+    it "has the data-contribution-id annotation that was passed to it" $ do
       wrapper <- shallow $ rfMark_ theProps mempty
-      is wrapper (PropertySelector [Prop "data-chunk-id" ("77" :: String)]) `shouldReturn` True
+      is wrapper (PropertySelector [Prop "data-contribution-id" ("77" :: String)]) `shouldReturn` True
 
     it "has all other annotations that were passed to it" $ do
       let moreAttrs = [HTMLP.Attr "a" "1", HTMLP.Attr "b" "2", HTMLP.Attr "c" "3"] <> theAttribs
