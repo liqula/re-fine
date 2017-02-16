@@ -116,9 +116,9 @@ newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
   }
 
 commentToolbarExtension :: ReactView CommentToolbarExtensionProps
-commentToolbarExtension = defineView "CommentToolbarExtension" $ \(CommentToolbarExtensionProps status) ->
-  if status == RS.CommentToolbarExtensionClosed then mempty
-  else
+commentToolbarExtension = defineView "CommentToolbarExtension" $ \case
+  (CommentToolbarExtensionProps RS.CommentToolbarExtensionClosed) -> mempty
+  (CommentToolbarExtensionProps status) -> do
     div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
       div_ ["className" $= "grid-wrapper"] $ do
         div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
