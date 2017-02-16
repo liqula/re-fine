@@ -41,6 +41,7 @@ import qualified Refine.Frontend.Header.Types as HT
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.ThirdPartyViews (sticky_)
 import qualified Refine.Frontend.Types as RS
+import qualified Refine.Frontend.MainMenu.Types as RS
 
 
 newtype MenuButtonProps = MenuButtonProps Bool
@@ -53,7 +54,7 @@ menuButton = defineView "MenuButton" $ \(MenuButtonProps sticky) ->
             , "aria-expanded" $= "false"
             , "className" $= "c-mainmenu__menu-button"
             , "type" $= "button"
-            , onClick $ \_ _ -> RS.dispatch RS.ToggleMainMenu
+            , onClick $ \_ _ -> RS.dispatch . RS.MainMenuAction $ RS.MainMenuActionOpen RS.defaultMainMenuTab
             ] $ do
       span_ ["className" $= "sr-only"] "Navigation an/aus"
       span_ ["className" $= "c-mainmenu__icon-bar"] ""

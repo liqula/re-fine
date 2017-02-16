@@ -70,9 +70,7 @@ data RefineAction = LoadDocumentList
                   | Logout
                   | ShowNotImplementedYet
                   | HideNotImplementedYet
-                  | ToggleMainMenu
-                  | OpenRegistration
-                  | OpenLogin
+                  | MainMenuAction MainMenuAction
                   -- Actions that will be transformed because they need IO:
                   | TriggerUpdateSelection DeviceOffset
   deriving (Show, Generic)

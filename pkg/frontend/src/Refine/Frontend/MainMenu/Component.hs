@@ -53,7 +53,7 @@ mainMenu = defineView "MainMenu" $ \menuState ->
               , _iconButtonPropsContentType  = ""
               , _iconButtonPropsLabel        = ""
               , _iconButtonPropsDisabled     = False
-              , _iconButtonPropsClickHandler = \_ -> dispatch OpenLogin
+              , _iconButtonPropsClickHandler = \_ -> dispatch . MainMenuAction $ MainMenuActionOpen MainMenuLogin
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-dashboard"]
               -- not translated from prototype2016:
               -- button attribute data-section="dashboard"
@@ -71,7 +71,7 @@ mainMenu = defineView "MainMenu" $ \menuState ->
               , _iconButtonPropsContentType  = ""
               , _iconButtonPropsLabel        = ""
               , _iconButtonPropsDisabled     = False
-              , _iconButtonPropsClickHandler = \_ -> dispatch OpenRegistration
+              , _iconButtonPropsClickHandler = \_ -> dispatch . MainMenuAction $ MainMenuActionOpen MainMenuRegistration
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-dashboard"]
               -- not translated from prototype2016:
               -- button attribute data-section="dashboard"
@@ -125,7 +125,7 @@ mainMenu = defineView "MainMenu" $ \menuState ->
               , _iconButtonPropsContentType  = ""
               , _iconButtonPropsLabel        = ""
               , _iconButtonPropsDisabled     = False
-              , _iconButtonPropsClickHandler = \_ -> dispatch ToggleMainMenu
+              , _iconButtonPropsClickHandler = \_ -> dispatch . MainMenuAction $ MainMenuActionClose
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-close"]
               -- not translated from prototype2016:
               -- n/a

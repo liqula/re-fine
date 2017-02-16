@@ -8,6 +8,11 @@ import GHC.Generics (Generic)
 import Refine.Prelude.TH (makeRefineType)
 
 
+data MainMenuAction
+  = MainMenuActionClose
+  | MainMenuActionOpen MainMenuTab
+  deriving (Eq, Show, Generic)
+
 data MainMenuState
   = MainMenuClosed
   | MainMenuOpen MainMenuTab
@@ -19,5 +24,6 @@ data MainMenuTab = MainMenuLogin | MainMenuRegistration
 defaultMainMenuTab :: MainMenuTab
 defaultMainMenuTab = MainMenuLogin
 
+makeRefineType ''MainMenuAction
 makeRefineType ''MainMenuState
 makeRefineType ''MainMenuTab

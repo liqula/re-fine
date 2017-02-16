@@ -5,8 +5,6 @@ import Refine.Frontend.Types (RefineAction(..))
 
 
 mainMenuUpdate :: RefineAction -> MainMenuState -> MainMenuState
-mainMenuUpdate ToggleMainMenu   MainMenuClosed       = MainMenuOpen defaultMainMenuTab
-mainMenuUpdate ToggleMainMenu   (MainMenuOpen _)     = MainMenuClosed
-mainMenuUpdate OpenLogin        (MainMenuOpen _)     = MainMenuOpen MainMenuLogin
-mainMenuUpdate OpenRegistration (MainMenuOpen _)     = MainMenuOpen MainMenuRegistration
-mainMenuUpdate _                state                = state
+mainMenuUpdate (MainMenuAction MainMenuActionClose)      _     = MainMenuClosed
+mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) _     = MainMenuOpen tab
+mainMenuUpdate _                                         state = state
