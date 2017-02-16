@@ -44,7 +44,10 @@ data CommentToolbarExtensionStatus =
 
 data HeaderState = HeaderState
   { _hsCommentToolbarExtensionStatus     :: CommentToolbarExtensionStatus
-  , _hsEditToolbarExtensionIsVisible     :: Bool
+  , _hsEditToolbarExtensionIsVisible     :: Bool  -- FIXME: since comment and edit are mutually
+                                                  -- exclusive, it shouldn't be possible to set the
+                                                  -- two independently.  make this two constructors
+                                                  -- `HeaderStateComment`, `HeaderStateEdit`.
   } deriving (Show, Generic)
 
 emptyHeaderState :: HeaderState
