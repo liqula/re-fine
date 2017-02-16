@@ -59,7 +59,9 @@ library
       Refine.Frontend.Header.Types
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
-      Refine.Frontend.MainMenu
+      Refine.Frontend.MainMenu.Component
+      Refine.Frontend.MainMenu.Store
+      Refine.Frontend.MainMenu.Types
       Refine.Frontend.NotImplementedYet
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
@@ -122,7 +124,9 @@ executable refine-frontend
       Refine.Frontend.Header.Types
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
-      Refine.Frontend.MainMenu
+      Refine.Frontend.MainMenu.Component
+      Refine.Frontend.MainMenu.Store
+      Refine.Frontend.MainMenu.Types
       Refine.Frontend.NotImplementedYet
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
@@ -196,7 +200,9 @@ test-suite spec
       Refine.Frontend.Header.Types
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
-      Refine.Frontend.MainMenu
+      Refine.Frontend.MainMenu.Component
+      Refine.Frontend.MainMenu.Store
+      Refine.Frontend.MainMenu.Types
       Refine.Frontend.MainMenuSpec
       Refine.Frontend.NotImplementedYet
       Refine.Frontend.Rest

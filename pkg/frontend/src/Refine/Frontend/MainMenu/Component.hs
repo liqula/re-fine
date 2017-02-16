@@ -22,25 +22,29 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.MainMenu where
+module Refine.Frontend.MainMenu.Component where
 
 import           React.Flux
 
+import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Types
 import           Refine.Frontend.UtilityWidgets
 
+import Refine.Frontend.Login.Component (login_, registration_)
 
-mainMenu :: ReactView ()
-mainMenu = defineView "MainMenu" $ \() ->
+
+mainMenu :: ReactView MainMenuTab
+mainMenu = defineView "MainMenu" $ \menuTab ->
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
+
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
         div_ ["className" $= "c-mainmenu-content__header"] $ do
             iconButton_ IconButtonProps
               { _iconButtonPropsIconProps = IconProps
                   { _iconPropsBlockName = "c-mainmenu-content"
-                  , _iconPropsHighlight = True
+                  , _iconPropsHighlight = menuTab == MainMenuLogin
                   , _iconPropsDesc      = ("icon-User", "dark")
                   , _iconPropsSize      = XXL
                   }
@@ -49,7 +53,25 @@ mainMenu = defineView "MainMenu" $ \() ->
               , _iconButtonPropsContentType  = ""
               , _iconButtonPropsLabel        = ""
               , _iconButtonPropsDisabled     = False
-              , _iconButtonPropsClickHandler = \_ -> []
+              , _iconButtonPropsClickHandler = \_ -> dispatch . MainMenuAction $ MainMenuActionOpen MainMenuLogin
+              , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-dashboard"]
+              -- not translated from prototype2016:
+              -- button attribute data-section="dashboard"
+              }
+
+            iconButton_ IconButtonProps
+              { _iconButtonPropsIconProps = IconProps
+                  { _iconPropsBlockName = "c-mainmenu-content"
+                  , _iconPropsHighlight = menuTab == MainMenuRegistration
+                  , _iconPropsDesc      = ("icon-User", "dark")
+                  , _iconPropsSize      = XXL
+                  }
+              , _iconButtonPropsElementName  = "section-button"
+              , _iconButtonPropsModuleName   = "active"
+              , _iconButtonPropsContentType  = ""
+              , _iconButtonPropsLabel        = ""
+              , _iconButtonPropsDisabled     = False
+              , _iconButtonPropsClickHandler = \_ -> dispatch . MainMenuAction $ MainMenuActionOpen MainMenuRegistration
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-dashboard"]
               -- not translated from prototype2016:
               -- button attribute data-section="dashboard"
@@ -103,14 +125,19 @@ mainMenu = defineView "MainMenu" $ \() ->
               , _iconButtonPropsContentType  = ""
               , _iconButtonPropsLabel        = ""
               , _iconButtonPropsDisabled     = False
-              , _iconButtonPropsClickHandler = \_ -> dispatch ToggleMainMenu
+              , _iconButtonPropsClickHandler = \_ -> dispatch . MainMenuAction $ MainMenuActionClose
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-close"]
               -- not translated from prototype2016:
               -- n/a
               }
 
-mainMenu_ :: ReactElementM eventHandler ()
-mainMenu_ = view mainMenu () mempty
+      case menuTab of
+        MainMenuLogin        -> login_
+        MainMenuRegistration -> registration_
+
+
+mainMenu_ :: MainMenuTab -> ReactElementM eventHandler ()
+mainMenu_ ms = view mainMenu ms mempty
 
 
 {-

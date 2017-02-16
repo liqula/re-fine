@@ -26,7 +26,8 @@ module Refine.Frontend.MainMenuSpec where
 
 import           Test.Hspec
 
-import           Refine.Frontend.MainMenu
+import           Refine.Frontend.MainMenu.Component
+import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Test.Enzyme
 
 
@@ -34,5 +35,5 @@ spec :: Spec
 spec = do
   describe "mainMenu_" $ do
     it "renders" $ do
-      wrapper <- shallow mainMenu_
+      wrapper <- shallow . mainMenu_ $ defaultMainMenuTab
       lengthOfIO (find wrapper (StringSelector ".c-mainmenu-content")) `shouldReturn` (1 :: Int)

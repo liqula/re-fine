@@ -42,6 +42,7 @@ import           Refine.Common.VDoc.HTML (insertMoreMarks)
 import           Refine.Frontend.Bubbles.Store (bubblesStateUpdate)
 import           Refine.Frontend.Bubbles.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
+import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
 import           Refine.Frontend.Rest
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
 import           Refine.Frontend.Screen.Types
@@ -80,7 +81,7 @@ instance StoreData GlobalState where
               & gsHeaderState                %~ headerStateUpdate transformedAction
               & gsScreenState                %~ screenStateUpdate transformedAction
               & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate transformedAction
-              & gsMainMenuOpen               %~ case transformedAction of ToggleMainMenu -> not; _ -> id
+              & gsMainMenuState              %~ mainMenuUpdate transformedAction
               & gsToolbarSticky              %~ toolbarStickyUpdate transformedAction
 
         consoleLog "New state: " newState

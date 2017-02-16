@@ -31,6 +31,7 @@ import Refine.Common.Types as Common
 
 import Refine.Frontend.Bubbles.Types
 import Refine.Frontend.Header.Types
+import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
 import Refine.Prelude.TH (makeRefineType)
 
@@ -42,12 +43,12 @@ data GlobalState = GlobalState
   , _gsHeaderState                :: HeaderState
   , _gsScreenState                :: ScreenState
   , _gsNotImplementedYetIsVisible :: Bool
-  , _gsMainMenuOpen               :: Bool
+  , _gsMainMenuState              :: MainMenuState
   , _gsToolbarSticky              :: Bool
   } deriving (Show, Generic)
 
 emptyGlobalState :: GlobalState
-emptyGlobalState = GlobalState Nothing Nothing emptyBubblesState emptyHeaderState emptyScreenState False False False
+emptyGlobalState = GlobalState Nothing Nothing emptyBubblesState emptyHeaderState emptyScreenState False MainMenuClosed False
 
 data RefineAction = LoadDocumentList
                   | LoadedDocumentList [ID VDoc]
@@ -69,7 +70,7 @@ data RefineAction = LoadDocumentList
                   | Logout
                   | ShowNotImplementedYet
                   | HideNotImplementedYet
-                  | ToggleMainMenu
+                  | MainMenuAction MainMenuAction
                   -- Actions that will be transformed because they need IO:
                   | TriggerUpdateSelection DeviceOffset
   deriving (Show, Generic)
