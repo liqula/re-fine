@@ -116,8 +116,9 @@ newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
   }
 
 commentToolbarExtension :: ReactView CommentToolbarExtensionProps
-commentToolbarExtension = defineView "CommentToolbarExtension" $ \props ->
-  if _ctepStatus props == RS.CommentToolbarExtensionClosed then mempty
+commentToolbarExtension = defineView "CommentToolbarExtension" $ \(CommentToolbarExtensionProps status) ->
+  assert (status /= RS.CommentToolbarExtensionClosed) $
+  if status == RS.CommentToolbarExtensionClosed then mempty
   else
     div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
       div_ ["className" $= "grid-wrapper"] $ do
@@ -125,8 +126,8 @@ commentToolbarExtension = defineView "CommentToolbarExtension" $ \props ->
           div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
           div_ [classNames [ ("c-vdoc-toolbar-extension__annotation", True)   -- RENAME: annotation => comment
                            , ("c-vdoc-toolbar-extension--expanded", True) ]
-               ] $ case _ctepStatus props of
-              RS.CommentToolbarExtensionClosed -> error "Something went wrong -- we covered this case already..."
+               ] $ case status of
+              RS.CommentToolbarExtensionClosed -> error "impossible."
               RS.CommentToolbarExtensionWithSelection -> div_ "Please select the text you would like to comment on"
               RS.CommentToolbarExtensionWithButtons -> do
                 iconButton_ $ IconButtonProps
