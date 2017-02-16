@@ -276,19 +276,23 @@ getNote nid = S.noteElim (toNote nid) <$> getEntity nid
 
 -- * Question
 
-toQuestion :: ID Question -> ST -> Bool -> Bool -> DBChunkRange -> Question
-toQuestion qid text answ pblc range = Question qid text answ pblc (toChunkRange range qid)
+-- TODO: User lid
+toQuestion :: ID Question -> ST -> Bool -> Bool -> DBChunkRange -> LoginId -> Question
+toQuestion qid text answ pblc range _lid = Question qid text answ pblc (toChunkRange range qid)
 
 createQuestion :: ID Edit -> Create Question -> DB Question
-createQuestion pid question = liftDB $ do
-  let squestion = S.Question
-        (question ^. createQuestionText)
-        False -- Not answered
-        (question ^. createQuestionPublic)
-        (question ^. createQuestionRange . to mkDBChunkRange)
-  key <- insert squestion
-  void . insert $ S.PQ (S.idToKey pid) key
-  pure $ S.questionElim (toQuestion (S.keyToId key)) squestion
+createQuestion pid question = do
+  userId <- dbUser
+  liftDB $ do
+    let squestion = S.Question
+          (question ^. createQuestionText)
+          False -- Not answered
+          (question ^. createQuestionPublic)
+          (question ^. createQuestionRange . to mkDBChunkRange)
+          (fromUserID userId)
+    key <- insert squestion
+    void . insert $ S.PQ (S.idToKey pid) key
+    pure $ S.questionElim (toQuestion (S.keyToId key)) squestion
 
 getQuestion :: ID Question -> DB Question
 getQuestion qid = S.questionElim (toQuestion qid) <$> getEntity qid

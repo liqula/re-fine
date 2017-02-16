@@ -63,6 +63,7 @@ Question
     public      Bool
     answered    Bool
     range       DBChunkRange
+    owner       LoginId
 
 Answer
     question    QuestionId
