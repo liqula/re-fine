@@ -122,6 +122,7 @@ vdocDBLens = entityLens vdocEntity
 vdocEntity :: L.Entity DB ID VDoc VDoc
 vdocEntity = L.Entity getVDoc updateVDoc
 
+-- | Returns the ID of the user who runs the current DB computation.
 dbUser :: DB (ID User)
 dbUser = do
   DBContext mu <- ask
