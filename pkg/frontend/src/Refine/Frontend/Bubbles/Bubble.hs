@@ -43,7 +43,7 @@ import           Refine.Prelude (ClearTypeParameter(..))
 
 
 data BubbleProps = BubbleProps
-  { _bubblePropsDataChunkId :: ID Void
+  { _bubblePropsDataContribId :: ID Void
   , _bubblePropsDataContentType :: String
   , _bubblePropsIconSide :: String
   , _bubblePropsIconStyle :: IconDescription
@@ -60,17 +60,17 @@ bubble = defineView "Bubble" $ \props ->
         case props ^. bubblePropsMarkPosition of
             Nothing -> mempty
             Just (topOffset, scrollOffset) ->
-                div_ ["data-contribution-id" $= fromString (show (props ^. bubblePropsDataChunkId . unID))
+                div_ ["data-contribution-id" $= fromString (show (props ^. bubblePropsDataContribId . unID))
                     , "data-content-type" $= fromString (props ^. bubblePropsDataContentType)
                     -- RENAME: snippet => bubble
                     , classNames [ ("o-snippet", True)
                                   , (fromString $ "o-snippet--" <> props ^. bubblePropsDataContentType, True)
                                   , ("o-snippet--hover", isJust (props ^. bubblePropsHighlightedBubble)
-                                         && props ^. bubblePropsDataChunkId . unID == props ^. bubblePropsHighlightedBubble . to fromJust . unID)
+                                         && props ^. bubblePropsDataContribId . unID == props ^. bubblePropsHighlightedBubble . to fromJust . unID)
                                   ]
                     , "style" @= [Style "top" (SC.offsetIntoText topOffset scrollOffset (props ^. bubblePropsScreenState))]
                     , onClick $ const . (props ^. bubblePropsClickHandler)
-                    , onMouseEnter $ \_ _ -> RS.dispatch . RT.BubblesAction . RT.HighlightMarkAndBubble . clearTypeParameter $ props ^. bubblePropsDataChunkId
+                    , onMouseEnter $ \_ _ -> RS.dispatch . RT.BubblesAction . RT.HighlightMarkAndBubble . clearTypeParameter $ props ^. bubblePropsDataContribId
                     , onMouseLeave $ \_ _ -> RS.dispatch $ RT.BubblesAction RT.UnhighlightMarkAndBubble
                     ] $ do
                     div_ ["className" $= fromString ("o-snippet__icon-bg o-snippet__icon-bg--" <> props ^. bubblePropsIconSide)] $ do  -- RENAME: snippet => bubble
