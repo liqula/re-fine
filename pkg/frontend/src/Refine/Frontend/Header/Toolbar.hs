@@ -118,17 +118,9 @@ newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
 commentToolbarExtension :: ReactView CommentToolbarExtensionProps
 commentToolbarExtension = defineView "CommentToolbarExtension" $ \case
   (CommentToolbarExtensionProps RS.CommentToolbarExtensionClosed) -> mempty
-  (CommentToolbarExtensionProps status) -> do
-    div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
-      div_ ["className" $= "grid-wrapper"] $ do
-        div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
-          div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
-          div_ [classNames [ ("c-vdoc-toolbar-extension__annotation", True)   -- RENAME: annotation => comment
-                           , ("c-vdoc-toolbar-extension--expanded", True) ]
-               ] $ case status of
-              RS.CommentToolbarExtensionClosed -> error "impossible."
-              RS.CommentToolbarExtensionWithSelection -> div_ "Please select the text you would like to comment on"
-              RS.CommentToolbarExtensionWithButtons -> do
+  (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithSelection) -> frame $ do
+    div_ "Please select the text you would like to comment on"
+  (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithButtons) -> frame $ do
                 iconButton_ $ IconButtonProps
                             (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
                             "btn-new-ann-text"
@@ -147,6 +139,14 @@ commentToolbarExtension = defineView "CommentToolbarExtension" $ \case
                             False
                             (\_ -> RS.dispatch RS.ShowNotImplementedYet)
                             []
+  where
+    frame children = div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
+      div_ ["className" $= "grid-wrapper"] $ do
+        div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
+          div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
+          div_ [classNames [ ("c-vdoc-toolbar-extension__annotation", True)   -- RENAME: annotation => comment
+                           , ("c-vdoc-toolbar-extension--expanded", True) ]
+               ] $ children
 
 
 commentToolbarExtension_ :: CommentToolbarExtensionProps -> ReactElementM eventHandler ()
