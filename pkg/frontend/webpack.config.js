@@ -10,6 +10,7 @@ module.exports = {
         "webpack-dev-server/client?http://localhost:" + localPort,
         "webpack/hot/only-dev-server",
         "./static/hookup",
+        "./static/hookup_scss",
         "./js-build/frontend"
     ],
      devServer: {

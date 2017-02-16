@@ -24,10 +24,14 @@
 
 module Refine.Frontend.Views
   ( refineApp
+
+  -- for testing:
+  , mainScreen_
   ) where
 
 import           Control.Lens ((^.))
 import qualified Data.Map.Strict as M
+import           Data.Maybe (fromJust)
 import           Data.Monoid ((<>))
 import           Data.String.Conversions
 import           Data.String (fromString)
@@ -47,7 +51,7 @@ import           Refine.Frontend.Bubbles.QuickCreate
 import           Refine.Frontend.Bubbles.Types as RS
 import           Refine.Frontend.Header.DocumentHeader ( documentHeader_, DocumentHeaderProps(..) )
 import           Refine.Frontend.Header.Heading ( MenuButtonProps(..), menuButton_, headerSizeCapture_ )
-import           Refine.Frontend.Header.Toolbar ( editToolbar_, commentToolbarExtension_, editToolbarExtension_ )
+import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), editToolbar_, commentToolbarExtension_, editToolbarExtension_ )
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.Login.Component (login_)
@@ -80,47 +84,58 @@ refineAppMenuClosed_ rs =
         Nothing -> do
           login_
           vdocLoader_ (rs ^. gsVDocList)
-        Just vdoc -> div_ $ do
-            windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
-            stickyContainer_ [] $ do
-                headerSizeCapture_
-                div_ ["className" $= "c-fullheader"] $ do
-                    -- the following need to be siblings because of the z-index handling
-                    div_ ["className" $= "c-mainmenu__bg"] "" -- "role" $= "navigation"
-                    --header_ ["role" $= "banner"] $ do
-                    menuButton_ (MenuButtonProps $ rs ^. gsToolbarSticky)
-                    documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
-                    div_ ["className" $= "c-fulltoolbar"] $ do
-                        sticky_ [on "onStickyStateChange" $ RS.dispatch . RS.ToolbarStickyStateChange . currentToolbarStickyState] $ do
-                            editToolbar_
-                            commentToolbarExtension_ (rs ^. gsHeaderState . HT.hsCommentToolbarExtensionIsVisible)
-                            editToolbarExtension_
+        Just _ -> mainScreen_ rs
 
-                showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsBubblesState . bsNoteIsVisible)
-                showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsBubblesState . bsDiscussionIsVisible)
-                addComment_ (rs ^. gsBubblesState . bsCommentEditorIsVisible) (rs ^. gsBubblesState . bsCommentCategory)
-                notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
+mainScreen :: ReactView RS.GlobalState
+mainScreen = defineView "MainScreen" $ \rs ->
+  let vdoc = fromJust (rs ^. gsVDoc) -- TODO improve this!
+  in div_
+    [ onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseCommentToolbarExtension)
+    ] $ do
+      windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
+      stickyContainer_ [] $ do
+          headerSizeCapture_
+          div_ ["className" $= "c-fullheader"] $ do
+              -- the following need to be siblings because of the z-index handling
+              div_ ["className" $= "c-mainmenu__bg"] "" -- "role" $= "navigation" -- leftover from p'2016
+              --header_ ["role" $= "banner"] $ do  -- leftover from p'2016
+              menuButton_ (MenuButtonProps $ rs ^. gsToolbarSticky)
+              documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
+              div_ ["className" $= "c-fulltoolbar"] $ do
+                  sticky_ [on "onStickyStateChange" $ RS.dispatch . RS.ToolbarStickyStateChange . currentToolbarStickyState] $ do
+                      editToolbar_
+                      commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . HT.hsCommentToolbarExtensionStatus)
+                      editToolbarExtension_
 
-                main_ ["role" $= "main"] $ do
-                    div_ ["className" $= "grid-wrapper"] $ do
-                        div_ ["className" $= "row row-align-center row-align-top"] $ do
-                            leftAside_ $ LeftAsideProps
-                                           (rs ^. gsBubblesState . bsMarkPositions)
-                                           (rs ^. gsBubblesState . bsCurrentSelection)
-                                           (rs ^. gsBubblesState . bsHighlightedMarkAndBubble)
-                                           (rs ^. gsScreenState)
-                                           (M.elems (vdoc ^. compositeVDocDiscussions))
-                                           (M.elems (vdoc ^. compositeVDocNotes))
-                            article_ [ "id" $= "vdocValue"
-                                     , "className" $= "gr-20 gr-14@desktop"
-                                     , onMouseUp $ \_ me -> RS.dispatch . RS.TriggerUpdateSelection $ mouseClientY me
-                                     , onTouchEnd $ \_ te -> RS.dispatch . RS.TriggerUpdateSelection . touchScreenY . head $ touches te
-                                     ] $ do
-                              -- div_ ["className" $= "c-vdoc-overlay"] $ do
-                                -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
-                              div_ ["className" $= "c-article-content"] $ do
-                                toArticleBody (rs ^. gsBubblesState) (_unVDocVersion . _compositeVDocVersion $ vdoc)
-                            rightAside_ (rs ^. gsBubblesState . bsMarkPositions) (rs ^. gsScreenState)
+          showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsBubblesState . bsNoteIsVisible)
+          showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsBubblesState . bsDiscussionIsVisible)
+          addComment_ (rs ^. gsBubblesState . bsCommentEditorIsVisible) (rs ^. gsBubblesState . bsCommentCategory)
+          notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
+
+          main_ ["role" $= "main"] $ do
+              div_ ["className" $= "grid-wrapper"] $ do
+                  div_ ["className" $= "row row-align-center row-align-top"] $ do
+                      leftAside_ $ LeftAsideProps
+                                     (rs ^. gsBubblesState . bsMarkPositions)
+                                     (rs ^. gsBubblesState . bsCurrentSelection)
+                                     (rs ^. gsBubblesState . bsHighlightedMarkAndBubble)
+                                     (rs ^. gsScreenState)
+                                     (M.elems (vdoc ^. compositeVDocDiscussions))
+                                     (M.elems (vdoc ^. compositeVDocNotes))
+                      article_ [ "id" $= "vdocValue"
+                               , "className" $= "gr-20 gr-14@desktop"
+                               , onMouseUp $ \_ me -> RS.dispatch . RS.TriggerUpdateSelection $ mouseClientY me
+                               , onTouchEnd $ \_ te -> RS.dispatch . RS.TriggerUpdateSelection . touchScreenY . head $ touches te
+                               ] $ do
+                        -- leftover from p'2016:
+                        -- div_ ["className" $= "c-vdoc-overlay"] $ do
+                          -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
+                        div_ ["className" $= "c-article-content"] $ do
+                          toArticleBody (rs ^. gsBubblesState) (_unVDocVersion . _compositeVDocVersion $ vdoc)
+                      rightAside_ (rs ^. gsBubblesState . bsMarkPositions) (rs ^. gsScreenState)
+
+mainScreen_ :: RS.GlobalState -> ReactElementM eventHandler ()
+mainScreen_ rs = view mainScreen rs mempty
 
 
 toArticleBody :: BubblesState -> DT.Forest HTMLP.Token -> ReactElementM [SomeStoreAction] ()

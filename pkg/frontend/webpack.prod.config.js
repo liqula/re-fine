@@ -6,6 +6,7 @@ var jsonImporter = require("node-sass-json-importer");
 module.exports = {
     entry: [
         "./static/hookup",
+        "./static/hookup_scss",
         "./js-build/frontend"
     ],
     output: {

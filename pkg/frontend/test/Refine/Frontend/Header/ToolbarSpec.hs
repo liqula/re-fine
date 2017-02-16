@@ -25,7 +25,7 @@
 
 module Refine.Frontend.Header.ToolbarSpec where
 
-import           Control.Lens((^.), (&), (%~))
+import           Control.Lens((^.))
 import           Test.Hspec
 import           React.Flux (getStoreData)
 
@@ -55,46 +55,46 @@ spec = do
       wrapper <- shallow editToolbar_
       lengthOfIO (find wrapper (StringSelector "IconButtonWithAlignment")) `shouldReturn` (1 :: Int)
 
-    it "toggles the visibility of the comment toolbar extension when the 'new comment' button is clicked" $ do
+    it "toggles the visibility of the edit toolbar extension when the 'new comment' button is clicked" $ do
       wrapper <- RW.mount editToolbar_
-      -- init the state:
-      globalState0 <- getStoreData refineStore
-      let _ = globalState0 & gsHeaderState . hsCommentToolbarExtensionIsVisible %~ \_ -> False
       button <- RW.find wrapper (RW.StringSelector ".c-vdoc-toolbar__btn-add-annotation")
       -- simulate events:
       _ <- RW.simulate button RW.Click
       globalState1 <- getStoreData refineStore
-      globalState1 ^. gsHeaderState . hsCommentToolbarExtensionIsVisible `shouldBe` True
+      globalState1 ^. gsHeaderState . hsCommentToolbarExtensionStatus `shouldBe` CommentToolbarExtensionWithButtons
       _ <- RW.simulate button RW.Click
       globalState2 <- getStoreData refineStore
-      globalState2 ^. gsHeaderState . hsCommentToolbarExtensionIsVisible `shouldBe` False
+      globalState2 ^. gsHeaderState . hsCommentToolbarExtensionStatus `shouldBe` CommentToolbarExtensionClosed
 
 
   describe "The commentToolbarExtension_ component" $ do
     it "renders an element with the toolbar extension class" $ do
-      wrapper <- shallow $ commentToolbarExtension_ True
+      wrapper <- shallow . commentToolbarExtension_ $ CommentToolbarExtensionProps CommentToolbarExtensionWithButtons
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (1 :: Int)
 
     it "contains a pointer element" $ do
-      wrapper <- shallow $ commentToolbarExtension_ True
+      wrapper <- shallow . commentToolbarExtension_ $ CommentToolbarExtensionProps CommentToolbarExtensionWithButtons
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension__pointer")) `shouldReturn` (1 :: Int)
 
     it "contains an annotation section with 2 normal icon buttons" $ do
-      wrapper <- shallow $ commentToolbarExtension_ True
+      wrapper <- shallow . commentToolbarExtension_ $ CommentToolbarExtensionProps CommentToolbarExtensionWithButtons
       annotation <- find wrapper (StringSelector ".c-vdoc-toolbar-extension__annotation")
       lengthOf annotation `shouldReturn` (1 :: Int)
       lengthOfIO (find annotation (StringSelector "IconButton")) `shouldReturn` (2 :: Int)
 
   describe "The editToolbarExtension_ component" $ do
     it "renders an element with the toolbar extension class" $ do
+      pendingWith "we need to enable the editToolbarExtension first"
       wrapper <- shallow editToolbarExtension_
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (1 :: Int)
 
     it "contains a pointer element" $ do
+      pendingWith "we need to enable the editToolbarExtension first"
       wrapper <- shallow editToolbarExtension_
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension__pointer")) `shouldReturn` (1 :: Int)
 
     it "contains a modification section with 1 normal icon button" $ do
+      pendingWith "we need to enable the editToolbarExtension first"
       wrapper <- shallow editToolbarExtension_
       modification <- find wrapper (StringSelector ".c-vdoc-toolbar-extension__modification")
       lengthOf modification `shouldReturn` (1 :: Int)

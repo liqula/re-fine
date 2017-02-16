@@ -8,5 +8,4 @@ require('jsdom-global')();
 
 var document = jsdom('');
 var window = document.defaultView;
-window.Hammer = require("react-hammerjs");
 window.navigator = { userAgent: 'node.js' };

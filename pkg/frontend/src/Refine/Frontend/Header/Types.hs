@@ -31,18 +31,29 @@ import Refine.Prelude.TH (makeRefineType)
 
 data HeaderAction =
     ToggleCommentToolbarExtension
+  | StartTextSpecificComment
+  | CloseCommentToolbarExtension
   | ToggleEditToolbarExtension
   deriving (Show, Generic)
 
+data CommentToolbarExtensionStatus =
+    CommentToolbarExtensionClosed
+  | CommentToolbarExtensionWithButtons
+  | CommentToolbarExtensionWithSelection
+  deriving (Show, Generic, Eq)
 
 data HeaderState = HeaderState
-  { _hsCommentToolbarExtensionIsVisible     :: Bool
-  , _hsEditToolbarExtensionIsVisible        :: Bool
+  { _hsCommentToolbarExtensionStatus     :: CommentToolbarExtensionStatus
+  , _hsEditToolbarExtensionIsVisible     :: Bool  -- FIXME: since comment and edit are mutually
+                                                  -- exclusive, it shouldn't be possible to set the
+                                                  -- two independently.  make this two constructors
+                                                  -- `HeaderStateComment`, `HeaderStateEdit`.
   } deriving (Show, Generic)
 
 emptyHeaderState :: HeaderState
-emptyHeaderState = HeaderState False False
+emptyHeaderState = HeaderState CommentToolbarExtensionClosed False
 
 
 makeRefineType ''HeaderAction
+makeRefineType ''CommentToolbarExtensionStatus
 makeRefineType ''HeaderState

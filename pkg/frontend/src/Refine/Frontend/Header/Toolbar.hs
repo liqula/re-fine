@@ -56,7 +56,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       "comment"
                       "new comment"
                       False
-                      (\_ -> RS.dispatch $ RS.HeaderAction RS.ToggleCommentToolbarExtension)
+                      (\e -> stopPropagation e : RS.dispatch (RS.HeaderAction RS.ToggleCommentToolbarExtension))
                       []
 
           iconButton_ $ IconButtonProps
@@ -111,42 +111,53 @@ editToolbar_ :: ReactElementM eventHandler ()
 editToolbar_ = view editToolbar () mempty
 
 
-commentToolbarExtension :: ReactView Bool
-commentToolbarExtension = defineView "CommentToolbarExtension" $ \isVisible ->
-  if not isVisible then mempty
-  else
-    div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
+newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
+  { _ctepStatus :: RS.CommentToolbarExtensionStatus
+  }
+
+commentToolbarExtension :: ReactView CommentToolbarExtensionProps
+commentToolbarExtension = defineView "CommentToolbarExtension" $ \case
+  (CommentToolbarExtensionProps RS.CommentToolbarExtensionClosed) -> mempty
+  (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithSelection) -> frame $ do
+    div_ "Please select the text you would like to comment on"
+  (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithButtons) -> frame $ do
+    iconButton_ $ IconButtonProps
+                (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
+                "btn-new-ann-text"
+                ""
+                "comment"
+                "text-specific comment"
+                False
+                (\e -> stopPropagation e : RS.dispatch (RS.HeaderAction RS.StartTextSpecificComment))
+                []
+    iconButton_ $ IconButtonProps
+                (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L)
+                "btn-new-ann-doc" -- RENAME: ann => comment
+                ""
+                "comment"
+                "general comment"
+                False
+                (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                []
+  where
+    frame :: ReactElementM eventHandler () -> ReactElementM eventHandler ()
+    frame children = div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
       div_ ["className" $= "grid-wrapper"] $ do
         div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
           div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
           div_ [classNames [ ("c-vdoc-toolbar-extension__annotation", True)   -- RENAME: annotation => comment
                            , ("c-vdoc-toolbar-extension--expanded", True) ]
-               ] $ do
-              iconButton_ $ IconButtonProps
-                          (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
-                          "btn-new-ann-text"
-                          ""
-                          "comment"
-                          "text-specific comment"
-                          False
-                          (\_ -> RS.dispatch RS.ShowNotImplementedYet)
-                          []
-              iconButton_ $ IconButtonProps
-                          (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L)
-                          "btn-new-ann-doc" -- RENAME: ann => comment
-                          ""
-                          "comment"
-                          "general comment"
-                          False
-                          (\_ -> RS.dispatch RS.ShowNotImplementedYet)
-                          []
+               ]
+            children
 
 
-commentToolbarExtension_ :: Bool -> ReactElementM eventHandler ()
-commentToolbarExtension_ isVisible = view commentToolbarExtension isVisible mempty
+commentToolbarExtension_ :: CommentToolbarExtensionProps -> ReactElementM eventHandler ()
+commentToolbarExtension_ props = view commentToolbarExtension props mempty
 
 editToolbarExtension :: ReactView ()
 editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
+  div_ mempty
+  {-
   div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
@@ -161,6 +172,7 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
                         False
                         (\_ -> [])
                         []
+  -}
 
 
 editToolbarExtension_ :: ReactElementM eventHandler ()
