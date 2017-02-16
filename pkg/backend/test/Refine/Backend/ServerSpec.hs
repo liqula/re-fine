@@ -275,7 +275,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
     describe "create" $ do
       it "works" $ \sess -> do
-        runWaiBody sess doCreate `shouldReturn` User 1
+        runWaiBody sess doCreate `shouldReturn` User (ID 1)
 
       it "is secure" $ \_ -> do
         pendingWith "needs design & implementation: what makes a create requests legit?"
