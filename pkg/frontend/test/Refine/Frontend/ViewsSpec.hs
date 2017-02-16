@@ -34,7 +34,7 @@ import qualified Text.HTML.Parser as HTMLP
 import           Refine.Common.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store
-import qualified Refine.Frontend.Test.Enzyme.ReactWrapperAPI as RW
+import qualified Refine.Frontend.Test.Enzyme.ReactWrapper as RW
 import           Refine.Frontend.Types
 import           Refine.Frontend.Views
 

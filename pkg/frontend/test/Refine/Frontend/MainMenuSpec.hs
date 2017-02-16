@@ -27,7 +27,7 @@ module Refine.Frontend.MainMenuSpec where
 import           Test.Hspec
 
 import           Refine.Frontend.MainMenu
-import           Refine.Frontend.Test.Enzyme.ShallowWrapperAPI
+import           Refine.Frontend.Test.Enzyme.ShallowWrapper
 
 
 spec :: Spec

@@ -32,8 +32,8 @@ import           React.Flux (getStoreData)
 import           Refine.Frontend.Header.Toolbar
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store (refineStore)
-import           Refine.Frontend.Test.Enzyme.ShallowWrapperAPI
-import qualified Refine.Frontend.Test.Enzyme.ReactWrapperAPI as RW
+import           Refine.Frontend.Test.Enzyme.ShallowWrapper
+import qualified Refine.Frontend.Test.Enzyme.ReactWrapper as RW
 import           Refine.Frontend.Types
 
 spec :: Spec

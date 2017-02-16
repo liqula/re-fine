@@ -34,8 +34,8 @@ import           Refine.Frontend.Bubbles.Types
 import qualified Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Store (refineStore)
 import           Refine.Frontend.Style
-import           Refine.Frontend.Test.Enzyme.ShallowWrapperAPI
-import qualified Refine.Frontend.Test.Enzyme.ReactWrapperAPI as RW
+import           Refine.Frontend.Test.Enzyme.ShallowWrapper
+import qualified Refine.Frontend.Test.Enzyme.ReactWrapper as RW
 import           Refine.Frontend.Types
 
 --import Refine.Frontend.Test.Console

@@ -28,7 +28,7 @@ import Test.Hspec
 
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Style
-import           Refine.Frontend.Test.Enzyme.ShallowWrapperAPI
+import           Refine.Frontend.Test.Enzyme.ShallowWrapper
 import           Refine.Frontend.UtilityWidgets
 
 

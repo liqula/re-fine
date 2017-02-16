@@ -22,8 +22,11 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Test.Enzyme.ReactWrapperAPI
-( mount
+module Refine.Frontend.Test.Enzyme.ShallowWrapper
+( shallow
+-- Enzyme functions on a ShallowWrapper
+, shallowChild -- known as "shallow" in Enzyme
+
 , module R
 ) where
 
@@ -33,31 +36,23 @@ import React.Flux.Internal
 
 import Refine.Frontend.Test.Enzyme.Class as R
 import Refine.Frontend.Test.Enzyme.Core as R
---import Refine.Frontend.Test.Enzyme.Internal
+import Refine.Frontend.Test.Enzyme.Internal
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
-mount :: ReactElementM eventHandler () -> IO ReactWrapper
-mount comp = do
+shallow :: ReactElementM eventHandler () -> IO ShallowWrapper
+shallow comp = do
   (ref, _) <- mkReactElement (\_ -> pure ()) (ReactThis nullRef) comp
-  ReactWrapper <$> js_mount ref
+  ShallowWrapper <$> js_shallow ref
 
 foreign import javascript unsafe
-  "enzyme.mount($1)"
-  js_mount :: ReactElementRef -> IO JSVal
+  "enzyme.shallow($1)"
+  js_shallow :: ReactElementRef -> IO JSVal
 
--- TODO: equals
+shallowChild :: ShallowWrapper -> IO ShallowWrapper
+shallowChild = exec "shallow"
 
--- TODO: matchesElement
+-- TODO: simulate(event, data)
 
--- TODO: getDOMNode
+-- TODO: dive
 
--- TODO: simulate(event, mock)
-
--- TODO: mount
-
--- TODO: matchesElement
-
--- TODO: ref
-
--- TODO: detach
