@@ -22,7 +22,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Test.Enzyme.CommonAPI
+module Refine.Frontend.Test.Enzyme.Class
  ( find
  , is
  , children

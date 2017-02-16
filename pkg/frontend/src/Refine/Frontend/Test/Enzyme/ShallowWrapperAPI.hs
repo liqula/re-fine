@@ -34,7 +34,7 @@ import GHCJS.Types (JSVal, nullRef)
 import React.Flux
 import React.Flux.Internal
 
-import Refine.Frontend.Test.Enzyme.CommonAPI as R
+import Refine.Frontend.Test.Enzyme.Class as R
 import Refine.Frontend.Test.Enzyme.Core as R
 import Refine.Frontend.Test.Enzyme.Internal
 
