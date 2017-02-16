@@ -20,10 +20,10 @@
 
 module Refine.Common.Types.User where
 
-import Data.Int (Int64)
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 
+import Refine.Common.Types.Prelude (ID)
 import Refine.Prelude.TH
 
 
@@ -38,13 +38,8 @@ data CreateUser = CreateUser
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
-
--- | 'UserID's are stored in the database, the primary key is used
--- to identify the user.
-type UserID = Int64
-
 newtype User = User
-  { _userID :: UserID
+  { _userID :: ID User -- ^ The primary key is used to identify the user.
   }
   deriving (Eq, Ord, Show, Read, Generic)
 

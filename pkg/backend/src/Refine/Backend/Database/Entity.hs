@@ -24,6 +24,8 @@ module Refine.Backend.Database.Entity where
 
 import Control.Lens ((^.), to)
 import Control.Monad (void)
+import Control.Monad.Reader (ask)
+import Control.Monad.Except (throwError)
 import Data.Functor.Infix ((<$$>))
 import Data.String.Conversions (ST)
 import Data.Typeable
@@ -36,6 +38,7 @@ import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
 import           Refine.Backend.Database.Types
 import qualified Refine.Backend.DocRepo.Core as DocRepo
+import           Refine.Backend.User.Core (LoginId, fromUserID)
 import           Refine.Common.Types
 
 -- FIXME: Generate this as the part of the lentil library.
@@ -118,6 +121,11 @@ vdocDBLens = entityLens vdocEntity
 
 vdocEntity :: L.Entity DB ID VDoc VDoc
 vdocEntity = L.Entity getVDoc updateVDoc
+
+dbUser :: DB (ID User)
+dbUser = do
+  DBContext mu <- ask
+  maybe (throwError DBUserNotLoggedIn) pure mu
 
 -- * VDoc
 
@@ -287,8 +295,9 @@ getQuestion qid = S.questionElim (toQuestion qid) <$> getEntity qid
 
 -- * Discussion
 
-toDiscussion :: ID Discussion -> Bool -> DBChunkRange -> Discussion
-toDiscussion did pblc range = Discussion did pblc (toChunkRange range did)
+-- TODO: Login ID
+toDiscussion :: ID Discussion -> Bool -> DBChunkRange -> LoginId -> Discussion
+toDiscussion did pblc range _lid = Discussion did pblc (toChunkRange range did)
 
 saveStatement :: ID Discussion -> S.Statement -> SQLM Statement
 saveStatement did sstatement = do
@@ -297,18 +306,21 @@ saveStatement did sstatement = do
   pure $ S.statementElim (toStatement (S.keyToId key)) sstatement
 
 createDiscussion :: ID Edit -> Create Discussion -> DB Discussion
-createDiscussion pid disc = liftDB $ do
-  let sdiscussion = S.Discussion
-        (disc ^. createDiscussionPublic)
-        (disc ^. createDiscussionRange . to mkDBChunkRange)
-  key <- insert sdiscussion
-  let did = S.keyToId key
-  void . insert $ S.PD (S.idToKey pid) key
-  let sstatement = S.Statement
-        (disc ^. createDiscussionStatementText)
-        Nothing -- Top level node
-  void $ saveStatement did sstatement
-  pure $ S.discussionElim (toDiscussion did) sdiscussion
+createDiscussion pid disc = do
+  userId <- dbUser
+  liftDB $ do
+    let sdiscussion = S.Discussion
+          (disc ^. createDiscussionPublic)
+          (disc ^. createDiscussionRange . to mkDBChunkRange)
+          (fromUserID userId)
+    key <- insert sdiscussion
+    let did = S.keyToId key
+    void . insert $ S.PD (S.idToKey pid) key
+    let sstatement = S.Statement
+          (disc ^. createDiscussionStatementText)
+          Nothing -- Top level node
+    void $ saveStatement did sstatement
+    pure $ S.discussionElim (toDiscussion did) sdiscussion
 
 getDiscussion :: ID Discussion -> DB Discussion
 getDiscussion did = S.discussionElim (toDiscussion did) <$> getEntity did

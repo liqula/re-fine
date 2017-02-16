@@ -52,6 +52,7 @@ data DBError
   | DBNotFound String
   | DBNotUnique String
   | DBException String
+  | DBUserNotLoggedIn
   deriving (Eq, Show, Generic)
 
 makeRefineType ''DBError
