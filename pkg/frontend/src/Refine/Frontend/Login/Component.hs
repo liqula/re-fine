@@ -78,6 +78,9 @@ data RegistrationForm = RegistrationForm
 
 makeRefineType ''RegistrationForm
 
+-- | FIXME: I used the pattern "return a list of errors, and then check if that list is null to get
+-- the boolean" in `createChunkRangeErrors`, and I quite liked it, as it gives you more informative
+-- error messages when you need them.  See also: 'invalidRegistrationForm'.
 invalidLoginForm :: LoginForm -> Bool
 invalidLoginForm form = form ^. loginFormUsername . to DT.null || form ^. loginFormPassword . to DT.null
 
