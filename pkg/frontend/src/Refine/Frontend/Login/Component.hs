@@ -41,22 +41,22 @@ import           Refine.Prelude.TH (makeRefineType)
 
 -- * Helper
 
-inputFieldProp
+inputFieldWithKey
   :: (FromJSVal c)
   => JSString -> JSString -> JSString -> JSString -> ASetter s a b c
   -> ReactElementM (s -> ([t], Maybe a)) ()
-inputFieldProp id_ type_ placeholder_ prop_ lens =
+inputFieldWithKey id_ type_ placeholder_ key_ lens =
   input_ [ "id" $= id_
          , "type" $= type_
          , "placeholder" $= placeholder_
-         , onChange $ \evt state -> ([], Just (state & lens .~ target evt prop_))
+         , onChange $ \evt state -> ([], Just (state & lens .~ target evt key_))
          ]
 
 inputField
   :: (FromJSVal c)
   => JSString -> JSString -> JSString -> ASetter s a b c
   -> ReactElementM (s -> ([t], Maybe a)) ()
-inputField id_ type_ placeholder_ = inputFieldProp id_ type_ placeholder_ "value"
+inputField id_ type_ placeholder_ = inputFieldWithKey id_ type_ placeholder_ "value"
 
 
 -- * Form types
@@ -140,7 +140,7 @@ registration = defineStatefulView "Registration" (RegistrationForm "" "" "" "" F
       inputField "registration-email2"    "email"    "Email again" registrationFormEmail2   >> br_ []
       inputField "registration-password1" "password" "Password"    registrationFormPassword >> br_ []
 
-      inputFieldProp "registration-agree" "checkbox" "" "checked"  registrationFormAgree    >> "I agree with the terms of use." >> br_ []
+      inputFieldWithKey "registration-agree" "checkbox" "" "checked"  registrationFormAgree    >> "I agree with the terms of use." >> br_ []
 
       iconButton_
         (IconButtonProps
