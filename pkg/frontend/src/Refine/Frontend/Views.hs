@@ -99,8 +99,8 @@ mainScreen = defineView "MainScreen" $ \rs ->
                                      (M.elems (vdoc ^. compositeVDocNotes))
                       article_ [ "id" $= "vdocValue"
                                , "className" $= "gr-20 gr-14@desktop"
-                               , onMouseUp $ \_ me -> RS.dispatch . RS.TriggerUpdateSelection $ mouseClientY me
-                               , onTouchEnd $ \_ te -> RS.dispatch . RS.TriggerUpdateSelection . touchScreenY . head $ touches te
+                               , onMouseUp $ \_ me -> RS.dispatch . RS.TriggerUpdateSelection $ mousePageY me -- <-- relative to webpage | relative to viewport -> mouseClientY me
+                               , onTouchEnd $ \_ te -> RS.dispatch . RS.TriggerUpdateSelection . touchPageY . head $ touches te
                                ] $ do
                         -- leftover from p'2016:
                         -- div_ ["className" $= "c-vdoc-overlay"] $ do

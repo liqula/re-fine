@@ -72,7 +72,7 @@ data RefineAction = LoadDocumentList
                   | HideNotImplementedYet
                   | MainMenuAction MainMenuAction
                   -- Actions that will be transformed because they need IO:
-                  | TriggerUpdateSelection DeviceOffset
+                  | TriggerUpdateSelection DeviceOffset -- relative to webpage
                   -- Action only for testing:
                   | ClearState
   deriving (Show, Generic)
