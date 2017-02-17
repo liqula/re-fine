@@ -23,28 +23,35 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.Test.Enzyme.ReactWrapper
-( mount
-, module R
-) where
+  ( ReactWrapper
+  , mount
 
+  -- enzyme functions on ReactWrapper
+  , module R
+
+  -- helper functions
+  , consoleLogReactWrapper
+  ) where
+
+import GHCJS.Marshal.Pure
 import GHCJS.Types (JSVal, nullRef)
 import React.Flux
 import React.Flux.Internal
 
 import Refine.Frontend.Test.Enzyme.Class as R
 import Refine.Frontend.Test.Enzyme.Core as R
---import Refine.Frontend.Test.Enzyme.Internal
+import Refine.Frontend.Test.Enzyme.Internal
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
+
+newtype ReactWrapper = ReactWrapper { _unReactWrapper :: JSVal }
+instance PFromJSVal ReactWrapper where pFromJSVal = ReactWrapper
+instance EnzymeWrapper ReactWrapper where unWrap = _unReactWrapper
 
 mount :: ReactElementM eventHandler () -> IO ReactWrapper
 mount comp = do
   (ref, _) <- mkReactElement (\_ -> pure ()) (ReactThis nullRef) comp
   ReactWrapper <$> js_mount ref
-
-foreign import javascript unsafe
-  "enzyme.mount($1)"
-  js_mount :: ReactElementRef -> IO JSVal
 
 -- TODO: equals
 
@@ -61,3 +68,11 @@ foreign import javascript unsafe
 -- TODO: ref
 
 -- TODO: detach
+
+consoleLogReactWrapper :: JSString -> ReactWrapper -> IO ()
+consoleLogReactWrapper msg (ReactWrapper jsval) = js_console_log_jsval msg jsval
+
+foreign import javascript unsafe
+  "enzyme.mount($1)"
+  js_mount :: ReactElementRef -> IO JSVal
+

@@ -23,10 +23,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.Test.Console
-  ( consoleLogJSVal
-  , consoleLogJSON
-  , consoleLogReactWrapper
-  , consoleLogShallowWrapper
+  ( consoleLogJSON
   , consoleLogStringified
   )
 where
@@ -35,21 +32,7 @@ import Data.Aeson (ToJSON, encode)
 import Data.JSString (JSString, pack)
 import Data.String.Conversions (cs)
 import GHCJS.Types (JSVal)
-import Refine.Frontend.Test.Enzyme.ReactWrapper
 
-
-consoleLogShallowWrapper :: JSString -> ShallowWrapper -> IO ()
-consoleLogShallowWrapper msg (ShallowWrapper jsval) = consoleLogJSVal msg jsval
-
-consoleLogReactWrapper :: JSString -> ReactWrapper -> IO ()
-consoleLogReactWrapper msg (ReactWrapper jsval) = consoleLogJSVal msg jsval
-
-
--- | Write a 'JSVal' to stdout (node) or the console (browser).  (Similar to 'consoleLogJSON', but
--- because it doesn't use `JSON.parse`, it is faster and the encoding caveat does not apply.)
-foreign import javascript unsafe
-  "console.log($1, $2);"
-  consoleLogJSVal :: JSString -> JSVal -> IO ()
 
 -- | Write a 'JSVal' to stdout (node) or the console (browser) via JSON.stringify() which allows
 -- for deep rendering of the object.

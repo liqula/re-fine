@@ -26,10 +26,6 @@ module Refine.Frontend.Test.Enzyme.Core
 ( Prop(..)
 , EventType(..)
 , EnzymeSelector(..)
-
-, EnzymeWrapper (unWrap)
-, ShallowWrapper (..) -- TODO is it good practice to make the constructors accessible? Or should we rather hide them in here?
-, ReactWrapper (..)
 ) where
 
 import Data.Aeson (encode, object, (.=))
@@ -37,7 +33,6 @@ import Data.Aeson.Types (ToJSON, toJSON)
 import Data.Char (toLower)
 import Data.String.Conversions
 import GHCJS.Marshal.Pure
-import GHCJS.Types (JSVal)
 import React.Flux.Internal (toJSString)
 
 
@@ -71,15 +66,3 @@ data Prop where
 
 instance ToJSON [Prop] where
   toJSON = object . fmap (\(Prop k v) -> k .= v)
-
-newtype ShallowWrapper = ShallowWrapper { _unShallowWrapper :: JSVal }
-instance PFromJSVal ShallowWrapper where pFromJSVal = ShallowWrapper
-
-newtype ReactWrapper = ReactWrapper { _unReactWrapper :: JSVal }
-instance PFromJSVal ReactWrapper where pFromJSVal = ReactWrapper
-
-class PFromJSVal a => EnzymeWrapper a where
-  unWrap :: a -> JSVal
-
-instance EnzymeWrapper ShallowWrapper where unWrap = _unShallowWrapper
-instance EnzymeWrapper ReactWrapper where unWrap = _unReactWrapper

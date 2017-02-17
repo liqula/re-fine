@@ -23,13 +23,18 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.Test.Enzyme.ShallowWrapper
-( shallow
--- Enzyme functions on a ShallowWrapper
-, shallowChild -- known as "shallow" in Enzyme
+  ( ShallowWrapper
+  , shallow
 
-, module R
-) where
+  -- Enzyme functions on a ShallowWrapper
+  , shallowChild -- known as "shallow" in Enzyme
+  , module R
 
+  -- helper functions
+  , consoleLogShallowWrapper
+  ) where
+
+import GHCJS.Marshal.Pure
 import GHCJS.Types (JSVal, nullRef)
 import React.Flux
 import React.Flux.Internal
@@ -40,14 +45,14 @@ import Refine.Frontend.Test.Enzyme.Internal
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
+newtype ShallowWrapper = ShallowWrapper { _unShallowWrapper :: JSVal }
+instance PFromJSVal ShallowWrapper where pFromJSVal = ShallowWrapper
+instance EnzymeWrapper ShallowWrapper where unWrap = _unShallowWrapper
+
 shallow :: ReactElementM eventHandler () -> IO ShallowWrapper
 shallow comp = do
   (ref, _) <- mkReactElement (\_ -> pure ()) (ReactThis nullRef) comp
   ShallowWrapper <$> js_shallow ref
-
-foreign import javascript unsafe
-  "enzyme.shallow($1)"
-  js_shallow :: ReactElementRef -> IO JSVal
 
 shallowChild :: ShallowWrapper -> IO ShallowWrapper
 shallowChild = exec "shallow"
@@ -55,4 +60,11 @@ shallowChild = exec "shallow"
 -- TODO: simulate(event, data)
 
 -- TODO: dive
+
+consoleLogShallowWrapper :: JSString -> ShallowWrapper -> IO ()
+consoleLogShallowWrapper msg (ShallowWrapper jsval) = js_console_log_jsval msg jsval
+
+foreign import javascript unsafe
+  "enzyme.shallow($1)"
+  js_shallow :: ReactElementRef -> IO JSVal
 
