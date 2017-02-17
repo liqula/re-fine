@@ -36,7 +36,11 @@ newtype OffsetFromViewportTop = OffsetFromViewportTop { _unOffsetFromViewportTop
 
 -- | Distance between document top and viewport top.  See `/docs/frontend/offsets.pdf`.
 newtype ScrollOffsetOfViewport = ScrollOffsetOfViewport { _unScrollOffsetOfViewport :: Int }
-  deriving (Show, Generic, Eq, Num)
+  deriving (Show, Generic, Eq, Ord, Num)
+
+-- | Distance between document top and node (e.g., `<mark>` or `</mark>`).
+newtype OffsetFromDocumentTop = OffsetFromDocumentTop { _unOffsetFromDocumentTop :: Int }
+  deriving (Show, Generic, Eq, Ord, Num)
 
 
 data WindowSize = Desktop | Tablet | Mobile
@@ -54,5 +58,6 @@ emptyScreenState = ScreenState 0 Desktop
 
 makeRefineType ''OffsetFromViewportTop
 makeRefineType ''ScrollOffsetOfViewport
+makeRefineType ''OffsetFromDocumentTop
 makeRefineType ''ScreenState
 makeRefineType ''WindowSize

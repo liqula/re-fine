@@ -38,19 +38,19 @@ spec = do
     context "old value does not exist" $ do
       it "stores new mark position." $ do
         let markPositions  = MarkPositions mempty
-            markPositions' = MarkPositions $ Map.singleton (ID 1) (200, 100)
-            addEvent = AddMarkPosition (ID 1) 200 100
+            addEvent = AddMarkPosition (ID 1) (MarkPosition 300 320)
+            markPositions' = MarkPositions $ Map.singleton (ID 1) (MarkPosition 300 320)
         markPositionsUpdate addEvent markPositions `shouldBe` markPositions'
 
-    context "old value exists, old offset is greater or equal to current" $ do
-      it "stores new mark position." $ do
-        let markPositions  = MarkPositions $ Map.singleton (ID 1) (300, 80)
-            markPositions' = MarkPositions $ Map.singleton (ID 1) (200, 100)
-            addEvent = AddMarkPosition (ID 1) 200 100
-        markPositionsUpdate addEvent markPositions `shouldBe` markPositions'
+    context "old value exists" $ do
+      let check state action state' = do
+            let markPositions  = MarkPositions $ Map.singleton (ID 1) state
+                addEvent       = AddMarkPosition (ID 1) action
+                markPositions' = MarkPositions $ Map.singleton (ID 1) state'
+            markPositionsUpdate addEvent markPositions `shouldBe` markPositions'
 
-    context "old value exists, old offset is smaller than current" $ do
-      it "discards new mark position." $ do
-        let markPositions  = MarkPositions $ Map.singleton (ID 1) (100, 80)
-            addEvent = AddMarkPosition (ID 1) 200 100
-        markPositionsUpdate addEvent markPositions `shouldBe` markPositions
+      it "keeps min of top and max of bottom offset." $ do
+        check (MarkPosition 300 500) (MarkPosition 350 550) (MarkPosition 300 550)  -- higher / higher
+        check (MarkPosition 300 500) (MarkPosition 250 550) (MarkPosition 250 550)  -- lower / higher
+        check (MarkPosition 300 500) (MarkPosition 350 400) (MarkPosition 300 500)  -- higher / lower
+        check (MarkPosition 300 500) (MarkPosition 250 400) (MarkPosition 250 500)  -- lower / lower

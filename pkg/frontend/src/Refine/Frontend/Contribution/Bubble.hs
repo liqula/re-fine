@@ -47,7 +47,7 @@ data BubbleProps = BubbleProps
   , _bubblePropsDataContentType :: String
   , _bubblePropsIconSide :: String
   , _bubblePropsIconStyle :: IconDescription
-  , _bubblePropsMarkPosition :: Maybe (SC.OffsetFromViewportTop, SC.ScrollOffsetOfViewport)
+  , _bubblePropsMarkPosition :: Maybe RT.MarkPosition
   , _bubblePropsHighlightedBubble :: Maybe (ID Void)
   , _bubblePropsClickHandler :: ClickHandler
   , _bubblePropsScreenState :: SC.ScreenState
@@ -59,7 +59,7 @@ bubble :: ReactView BubbleProps
 bubble = defineView "Bubble" $ \props ->
         case props ^. bubblePropsMarkPosition of
             Nothing -> mempty
-            Just (topOffset, scrollOffset) ->
+            Just (RT.MarkPosition topOffset _) ->
                 div_ ["data-contribution-id" $= fromString (show (props ^. bubblePropsDataContribId . unID))
                     , "data-content-type" $= fromString (props ^. bubblePropsDataContentType)
                     -- RENAME: snippet => bubble
@@ -68,7 +68,7 @@ bubble = defineView "Bubble" $ \props ->
                                   , ("o-snippet--hover", isJust (props ^. bubblePropsHighlightedBubble)
                                          && props ^. bubblePropsDataContribId . unID == props ^. bubblePropsHighlightedBubble . to fromJust . unID)
                                   ]
-                    , "style" @= [Style "top" (SC.offsetIntoText topOffset scrollOffset (props ^. bubblePropsScreenState))]
+                    , "style" @= [Style "top" (SC.offsetIntoText topOffset (props ^. bubblePropsScreenState))]
                     , onClick $ const . (props ^. bubblePropsClickHandler)
                     , onMouseEnter $ \_ _ -> RS.dispatch . RT.ContributionAction . RT.HighlightMarkAndBubble . clearTypeParameter $ props ^. bubblePropsDataContribId
                     , onMouseLeave $ \_ _ -> RS.dispatch $ RT.ContributionAction RT.UnhighlightMarkAndBubble
@@ -82,7 +82,7 @@ bubble_ = view bubble
 
 data SpecialBubbleProps = SpecialBubbleProps
   { _specialBubblePropsDataChunkId       :: ID Void
-  , _specialBubblePropsMarkPosition      :: Maybe (SC.OffsetFromViewportTop, SC.ScrollOffsetOfViewport)
+  , _specialBubblePropsMarkPosition      :: Maybe RT.MarkPosition
   , _specialBubblePropsHighlightedBubble :: Maybe (ID Void)
   , _specialBubblePropsScreenState       :: SC.ScreenState
   }

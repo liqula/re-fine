@@ -38,6 +38,7 @@ import           Text.Read (readMaybe)
 
 import           Refine.Common.Types
 import qualified Refine.Frontend.Screen.Types as RS
+import qualified Refine.Frontend.Screen.Calculations as RS
 import qualified Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
@@ -81,14 +82,19 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
 
    , lComponentDidMount = Just $ \propsandstate ldom _ -> do
              this <- lThis ldom
-             topOffset <- js_getBoundingClientRectTop this
+             topOffset    <- js_getBoundingClientRectTop this
+             bottomOffset <- js_getBoundingClientRectBottom this
              scrollOffset <- js_getScrollOffset
              props <- lGetProps propsandstate
              _ <- RS.reactFluxWorkAroundForkIO $ do
                case contributionIdFrom (props ^. markPropsHTMLAttributes) of
                  Nothing -> pure ()
                  Just dataChunkId -> do
-                   let actions = RS.dispatch . RS.ContributionAction $ RS.AddMarkPosition dataChunkId topOffset scrollOffset
+                   let actions = RS.dispatch . RS.ContributionAction $ RS.AddMarkPosition dataChunkId markPosition
+                       markPosition = RS.MarkPosition
+                         { RS._markPositionTop    = RS.offsetFromDocumentTop topOffset    scrollOffset
+                         , RS._markPositionBottom = RS.offsetFromDocumentTop bottomOffset scrollOffset
+                         }
                    forM_ actions executeAction
              pure ()
    }
@@ -99,6 +105,10 @@ rfMark_ = view rfMark
 foreign import javascript unsafe
   "$1.getBoundingClientRect().top"
   js_getBoundingClientRectTop :: JSVal -> IO RS.OffsetFromViewportTop
+
+foreign import javascript unsafe
+  "$1.getBoundingClientRect().bottom"
+  js_getBoundingClientRectBottom :: JSVal -> IO RS.OffsetFromViewportTop
 
 foreign import javascript unsafe
   "typeof( window.pageYOffset ) === 'number' && window.pageYOffset \
