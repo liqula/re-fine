@@ -34,7 +34,7 @@ import qualified Text.HTML.Parser as HTMLP
 import           Refine.Common.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store
-import qualified Refine.Frontend.Test.Enzyme.ReactWrapper as RW
+import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Types
 import           Refine.Frontend.Views
 
@@ -45,21 +45,21 @@ import           Refine.Frontend.Views
 refineApp_ :: ReactElementM eventHandler ()
 refineApp_ = view refineApp () mempty
 
-dispatchAndMount :: [RefineAction] -> ReactElementM eventHandler () -> IO RW.ReactWrapper
+dispatchAndMount :: [RefineAction] -> ReactElementM eventHandler () -> IO ReactWrapper
 dispatchAndMount actions comp_ = do
       forM_ (concatMap dispatch actions) executeAction
-      RW.mount comp_
+      mount comp_
 
-clickNewComment :: RW.ReactWrapper -> IO ()
+clickNewComment :: ReactWrapper -> IO ()
 clickNewComment wrapper = do
-      button <- RW.find wrapper (RW.StringSelector ".c-vdoc-toolbar__btn-add-annotation")
-      _ <- RW.simulate button RW.Click
+      button <- find wrapper (StringSelector ".c-vdoc-toolbar__btn-add-annotation")
+      _ <- simulate button Click
       pure ()
 
-clickArticleContent :: RW.ReactWrapper -> IO ()
+clickArticleContent :: ReactWrapper -> IO ()
 clickArticleContent wrapper = do
-      mainText <- RW.find wrapper (RW.StringSelector ".c-article-content")
-      _ <- RW.simulate mainText RW.Click
+      mainText <- find wrapper (StringSelector ".c-article-content")
+      _ <- simulate mainText Click
       pure ()
 
 
@@ -73,31 +73,31 @@ spec = do
 
     it "initially the comment toolbar is visible" $ do
       wrapper <- dispatchAndMount [OpenDocument newVDoc, HeaderAction CloseCommentToolbarExtension] refineApp_
-      RW.lengthOfIO (RW.find wrapper (RW.StringSelector ".c-vdoc-toolbar__btn-add-annotation")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar__btn-add-annotation")) `shouldReturn` (1 :: Int)
 
     it "initially the comment toolbar extension is not visible" $ do
       wrapper <- dispatchAndMount [OpenDocument newVDoc, HeaderAction CloseCommentToolbarExtension] refineApp_
-      RW.lengthOfIO (RW.find wrapper (RW.StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (0 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (0 :: Int)
 
     it "opens the comment toolbar extension when the user clicks on the 'new comment' button" $ do
       wrapper <- dispatchAndMount [OpenDocument newVDoc, HeaderAction CloseCommentToolbarExtension] refineApp_
       clickNewComment wrapper
-      RW.lengthOfIO (RW.find wrapper (RW.StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (1 :: Int)
 
     it "closes the comment toolbar extension when the user clicks on the 'new comment' button twice" $ do
       wrapper <- dispatchAndMount [OpenDocument newVDoc, HeaderAction CloseCommentToolbarExtension] refineApp_
       clickNewComment wrapper
       clickNewComment wrapper
-      RW.lengthOfIO (RW.find wrapper (RW.StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (0 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (0 :: Int)
 
     it "closes the comment toolbar extension when the user clicks somewhere else" $ do
       wrapper <- dispatchAndMount [OpenDocument newVDoc, HeaderAction CloseCommentToolbarExtension] refineApp_
       clickNewComment wrapper
       clickArticleContent wrapper
-      RW.lengthOfIO (RW.find wrapper (RW.StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (0 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (0 :: Int)
 
     it "does not close the comment toolbar extension when the user clicks on the 'text-specific comment' button" $ do
       wrapper <- dispatchAndMount [OpenDocument newVDoc, HeaderAction CloseCommentToolbarExtension] refineApp_
       clickNewComment wrapper
       clickArticleContent wrapper
-      RW.lengthOfIO (RW.find wrapper (RW.StringSelector ".c-vdoc-toolbar-extension__btn-new-ann-text")) `shouldReturn` (0 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension__btn-new-ann-text")) `shouldReturn` (0 :: Int)

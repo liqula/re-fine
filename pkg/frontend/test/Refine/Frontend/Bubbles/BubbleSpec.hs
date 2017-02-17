@@ -34,8 +34,7 @@ import           Refine.Frontend.Bubbles.Types
 import qualified Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Store (refineStore)
 import           Refine.Frontend.Style
-import           Refine.Frontend.Test.Enzyme.ShallowWrapper
-import qualified Refine.Frontend.Test.Enzyme.ReactWrapper as RW
+import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Types
 
 --import Refine.Frontend.Test.Console
@@ -109,14 +108,14 @@ spec = do
       is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` True
 
     it "inserts the id of the current bubble into the state on mouseEnter and removes it again on mouseLeave" $ do
-      wrapper <- RW.mount $ bubble_ bubbleProps mempty
+      wrapper <- mount $ bubble_ bubbleProps mempty
       -- init the state:
       globalState0 <- getStoreData refineStore
       let _ = globalState0 & gsBubblesState . bsHighlightedMarkAndBubble %~ \_ -> Nothing
       -- simulate events:
-      _ <- RW.simulate wrapper RW.MouseEnter
+      _ <- simulate wrapper MouseEnter
       globalState1 <- getStoreData refineStore
       globalState1 ^. gsBubblesState . bsHighlightedMarkAndBubble `shouldBe` Just (ID 99)
-      _ <- RW.simulate wrapper RW.MouseLeave
+      _ <- simulate wrapper MouseLeave
       globalState2 <- getStoreData refineStore
       globalState2 ^. gsBubblesState . bsHighlightedMarkAndBubble `shouldBe` Nothing

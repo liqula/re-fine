@@ -69,6 +69,7 @@ library
       Refine.Frontend.Store
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
+      Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Enzyme.Class
       Refine.Frontend.Test.Enzyme.Class.Internal
       Refine.Frontend.Test.Enzyme.Core
@@ -135,6 +136,7 @@ executable refine-frontend
       Refine.Frontend.Store
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
+      Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Enzyme.Class
       Refine.Frontend.Test.Enzyme.Class.Internal
       Refine.Frontend.Test.Enzyme.Core
@@ -214,6 +216,7 @@ test-suite spec
       Refine.Frontend.StoreSpec
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
+      Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Enzyme.Class
       Refine.Frontend.Test.Enzyme.Class.Internal
       Refine.Frontend.Test.Enzyme.Core

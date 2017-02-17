@@ -32,8 +32,7 @@ import           React.Flux (getStoreData)
 import           Refine.Frontend.Header.Toolbar
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store (refineStore)
-import           Refine.Frontend.Test.Enzyme.ShallowWrapper
-import qualified Refine.Frontend.Test.Enzyme.ReactWrapper as RW
+import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Types
 
 spec :: Spec
@@ -56,13 +55,13 @@ spec = do
       lengthOfIO (find wrapper (StringSelector "IconButtonWithAlignment")) `shouldReturn` (1 :: Int)
 
     it "toggles the visibility of the edit toolbar extension when the 'new comment' button is clicked" $ do
-      wrapper <- RW.mount editToolbar_
-      button <- RW.find wrapper (RW.StringSelector ".c-vdoc-toolbar__btn-add-annotation")
+      wrapper <- mount editToolbar_
+      button <- find wrapper (StringSelector ".c-vdoc-toolbar__btn-add-annotation")
       -- simulate events:
-      _ <- RW.simulate button RW.Click
+      _ <- simulate button Click
       globalState1 <- getStoreData refineStore
       globalState1 ^. gsHeaderState . hsCommentToolbarExtensionStatus `shouldBe` CommentToolbarExtensionWithButtons
-      _ <- RW.simulate button RW.Click
+      _ <- simulate button Click
       globalState2 <- getStoreData refineStore
       globalState2 ^. gsHeaderState . hsCommentToolbarExtensionStatus `shouldBe` CommentToolbarExtensionClosed
 
