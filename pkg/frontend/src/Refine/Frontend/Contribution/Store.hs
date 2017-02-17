@@ -72,10 +72,10 @@ noteIsVisibleUpdate action state = case action of
   HideCommentOverlay -> Nothing
   _ -> state
 
-commentEditorIsVisibleUpdate :: ContributionAction -> (Bool, Maybe Range) -> (Bool, Maybe Range)
+commentEditorIsVisibleUpdate :: ContributionAction -> ContributionEditorData -> ContributionEditorData
 commentEditorIsVisibleUpdate action state = case action of
-  (ShowCommentEditor curSelection) -> (True, curSelection)
-  HideCommentEditor -> (False, Nothing)
+  (ShowCommentEditor curSelection) -> EditorIsVisible curSelection
+  HideCommentEditor -> EditorIsHidden
   _ -> state
 
 highlightedMarkAndBubbleUpdate :: ContributionAction -> Maybe (ID Void) -> Maybe (ID Void)

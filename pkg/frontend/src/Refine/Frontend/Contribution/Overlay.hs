@@ -170,9 +170,9 @@ showQuestion_ question = view showQuestion question mempty
 
 
 -- was add-annotation
-addComment :: ReactView (Bool, Maybe RS.Range, Maybe RS.CommentCategory)
-addComment = defineView "AddComment" $ \(showOverlay, forRange, commentCategory) ->
-  overlay_ ["isVisible" &= showOverlay
+addComment :: ReactView (Maybe RS.Range, Maybe RS.CommentCategory)
+addComment = defineView "AddComment" $ \(forRange, commentCategory) ->
+  overlay_ ["isVisible" &= True
            , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
            , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
            , "dialogStyles" @= vdoc_overlay_content__add_comment
@@ -186,8 +186,9 @@ addComment = defineView "AddComment" $ \(showOverlay, forRange, commentCategory)
     commentInput_ forRange commentCategory
 
 
-addComment_ :: (Bool, Maybe RS.Range) -> Maybe RS.CommentCategory -> ReactElementM eventHandler ()
-addComment_ (doShow, forRange) category = view addComment (doShow, forRange, category) mempty
+addComment_ :: RS.ContributionEditorData -> Maybe RS.CommentCategory -> ReactElementM eventHandler ()
+addComment_ RS.EditorIsHidden _ = mempty
+addComment_ (RS.EditorIsVisible forRange) category = view addComment (forRange, category) mempty
 
 
 commentInput :: ReactView (Maybe RS.Range, Maybe RS.CommentCategory)

@@ -112,6 +112,11 @@ mapFromValue = withObject "MarkPositions"
                          <*> parseJSON v)
   . HashMap.toList
 
+data ContributionEditorData =
+    EditorIsVisible (Maybe Range)
+  | EditorIsHidden
+  deriving (Show, Generic)
+
 
 data ContributionAction =
     UpdateSelection Selection
@@ -135,19 +140,20 @@ data ContributionState = ContributionState
   , _bsCommentCategory          :: Maybe CommentCategory
   , _bsDiscussionId             :: Maybe (ID Discussion)
   , _bsNoteId                   :: Maybe (ID Note)
-  , _bsCommentEditorIsVisible   :: (Bool, Maybe Range)
+  , _bsCommentEditorIsVisible   :: ContributionEditorData
   , _bsHighlightedMarkAndBubble :: Maybe (ID Void)
   , _bsMarkPositions            :: MarkPositions
   } deriving (Show, Generic)
 
 
 emptyContributionState :: ContributionState
-emptyContributionState = ContributionState NothingSelected Nothing Nothing Nothing (False, Nothing) Nothing (MarkPositions M.empty)
+emptyContributionState = ContributionState NothingSelected Nothing Nothing Nothing EditorIsHidden Nothing (MarkPositions M.empty)
 
 
 makeRefineType ''CommentInputState
 makeRefineType ''CommentCategory
 makeRefineType ''Selection
+makeRefineType ''ContributionEditorData
 makeRefineType ''ContributionAction
 makeRefineType ''ContributionState
 
