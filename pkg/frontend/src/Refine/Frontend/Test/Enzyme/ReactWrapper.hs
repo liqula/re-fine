@@ -44,9 +44,13 @@ import Refine.Frontend.Test.Enzyme.Internal
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
+-- | The ReactWrapper type.
+
 newtype ReactWrapper = ReactWrapper { _unReactWrapper :: JSVal }
 instance PFromJSVal ReactWrapper where pFromJSVal = ReactWrapper
 instance EnzymeWrapper ReactWrapper where unWrap = _unReactWrapper
+
+-- | Functions that only exist for ReactWrapper.
 
 mount :: ReactElementM eventHandler () -> IO ReactWrapper
 mount comp = do
@@ -68,6 +72,8 @@ mount comp = do
 -- TODO: ref
 
 -- TODO: detach
+
+-- | Helper functions
 
 consoleLogReactWrapper :: JSString -> ReactWrapper -> IO ()
 consoleLogReactWrapper msg (ReactWrapper jsval) = js_console_log_jsval msg jsval
