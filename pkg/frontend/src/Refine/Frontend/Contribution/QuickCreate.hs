@@ -70,6 +70,7 @@ quickCreateOffset range deviceOffset screenState =
 quickCreateSelectionTop :: RS.Range -> SC.ScreenState -> Int
 quickCreateSelectionTop range = SC.offsetIntoText
   (SC.offsetFromDocumentTop (range ^. RS.rangeTopOffset) (range ^. RS.rangeScrollOffset))
+      -- FIXME: should Range contain an OffsetFromDocumentTop instead?
 
 quickCreateSelectionPos :: RS.Range -> Int -> Int
 quickCreateSelectionPos range deviceOffset =
