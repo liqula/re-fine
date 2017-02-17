@@ -24,10 +24,10 @@
 
 module Refine.Frontend.Test.Enzyme.Class
  (
- -- The type class:
+ -- * The type class:
    EnzymeWrapper
 
- -- API functions common to all wrappers:
+ -- * API functions common to all wrappers:
  , find
  , is
  , children
@@ -43,4 +43,3 @@ module Refine.Frontend.Test.Enzyme.Class
  ) where
 
 import Refine.Frontend.Test.Enzyme.Class.Internal
-

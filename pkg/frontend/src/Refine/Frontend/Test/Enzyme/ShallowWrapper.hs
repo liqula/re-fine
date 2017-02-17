@@ -26,11 +26,11 @@ module Refine.Frontend.Test.Enzyme.ShallowWrapper
   ( ShallowWrapper
   , shallow
 
-  -- Enzyme functions on a ShallowWrapper
+  -- * Enzyme functions on a ShallowWrapper
   , shallowChild -- known as "shallow" in Enzyme
   , module R
 
-  -- helper functions
+  -- * helper functions
   , consoleLogShallowWrapper
   ) where
 
@@ -44,15 +44,16 @@ import Refine.Frontend.Test.Enzyme.Core as R
 import Refine.Frontend.Test.Enzyme.Class.Internal
 
 
--- | The ShallowWrapper type.
+-- * The ShallowWrapper type.
 
 newtype ShallowWrapper = ShallowWrapper { _unShallowWrapper :: JSVal }
 instance PFromJSVal ShallowWrapper where pFromJSVal = ShallowWrapper
 instance EnzymeWrapper ShallowWrapper where unWrap = _unShallowWrapper
 
--- | Functions that only exist for ShallowWrapper.
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
+
+-- * Functions that only exist for ShallowWrapper.
 
 shallow :: ReactElementM eventHandler () -> IO ShallowWrapper
 shallow comp = do
@@ -66,7 +67,8 @@ shallowChild = exec "shallow"
 
 -- TODO: dive
 
--- | Helper functions.
+
+-- * Helper functions.
 
 consoleLogShallowWrapper :: JSString -> ShallowWrapper -> IO ()
 consoleLogShallowWrapper msg (ShallowWrapper jsval) = js_console_log_jsval msg jsval
@@ -74,4 +76,3 @@ consoleLogShallowWrapper msg (ShallowWrapper jsval) = js_console_log_jsval msg j
 foreign import javascript unsafe
   "enzyme.shallow($1)"
   js_shallow :: ReactElementRef -> IO JSVal
-

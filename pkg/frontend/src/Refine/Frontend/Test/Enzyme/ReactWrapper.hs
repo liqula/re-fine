@@ -26,10 +26,10 @@ module Refine.Frontend.Test.Enzyme.ReactWrapper
   ( ReactWrapper
   , mount
 
-  -- enzyme functions on ReactWrapper
+  -- * enzyme functions on ReactWrapper
   , module R
 
-  -- helper functions
+  -- * helper functions
   , consoleLogReactWrapper
   ) where
 
@@ -42,15 +42,17 @@ import Refine.Frontend.Test.Enzyme.Class as R
 import Refine.Frontend.Test.Enzyme.Core as R
 import Refine.Frontend.Test.Enzyme.Class.Internal
 
+
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
--- | The ReactWrapper type.
+-- * The ReactWrapper type.
 
 newtype ReactWrapper = ReactWrapper { _unReactWrapper :: JSVal }
 instance PFromJSVal ReactWrapper where pFromJSVal = ReactWrapper
 instance EnzymeWrapper ReactWrapper where unWrap = _unReactWrapper
 
--- | Functions that only exist for ReactWrapper.
+
+-- * Functions that only exist for ReactWrapper.
 
 mount :: ReactElementM eventHandler () -> IO ReactWrapper
 mount comp = do
@@ -73,12 +75,13 @@ mount comp = do
 
 -- TODO: detach
 
--- | Helper functions
 
+-- * Helper functions
+
+-- | TODO: make this a class methode as well.  it even has a nice default implementation.
 consoleLogReactWrapper :: JSString -> ReactWrapper -> IO ()
 consoleLogReactWrapper msg (ReactWrapper jsval) = js_console_log_jsval msg jsval
 
 foreign import javascript unsafe
   "enzyme.mount($1)"
   js_mount :: ReactElementRef -> IO JSVal
-

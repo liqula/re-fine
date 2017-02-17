@@ -6,13 +6,13 @@ import React.Flux.Internal (toJSString)
 
 import Refine.Frontend.Test.Enzyme.Core
 
--- | This type class allows to define different wrappers
 
+-- | This type class allows to define different wrappers
 class PFromJSVal a => EnzymeWrapper a where
   unWrap :: a -> JSVal
 
 
--- | The Enzyme API that is available for all wrappers
+-- * The Enzyme API that is available for all wrappers
 
 find :: EnzymeWrapper w => w -> EnzymeSelector -> IO w
 find = execWithSelector "find"
@@ -130,7 +130,8 @@ typeOf = exec "type"
 
 -- TODO: everyWhere
 
--- | Helper Functions
+
+-- * Helper Functions
 
 lengthOf :: EnzymeWrapper w => w -> IO Int
 lengthOf = attr "length"
@@ -139,10 +140,9 @@ lengthOfIO :: EnzymeWrapper w => IO w -> IO Int
 lengthOfIO wrapper = lengthOf =<< wrapper
 
 
-
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
--- | Preparations for the evaluation of functions in JavaScript
+-- * Preparations for the evaluation of functions in JavaScript
 
 execWithSelector :: (PFromJSVal a, EnzymeWrapper w) => String -> w -> EnzymeSelector -> IO a
 execWithSelector func wrapper es@(PropertySelector _) = pFromJSVal <$> js_exec_with_object (toJSString func) (unWrap wrapper) (pToJSVal es)
@@ -157,7 +157,8 @@ exec func wrapper = pFromJSVal <$> js_exec (toJSString func) (unWrap wrapper)
 attr :: (PFromJSVal a, EnzymeWrapper w) => String -> w -> IO a
 attr name wrapper = pFromJSVal <$> js_attr (toJSString name) (unWrap wrapper)
 
--- | The actual JavaScript calls
+
+-- * The actual JavaScript calls
 
 foreign import javascript unsafe
     "$2[$1]()"
@@ -171,6 +172,11 @@ foreign import javascript unsafe
     "$2[$1]($3)"
     js_exec_with_1_arg :: JSString -> JSVal -> JSVal -> IO JSVal
 
+-- | Log objects that have no 'PToJSVal' instance, but a 'ToJSON' instance, and thus can be
+-- conveniently turned into a JSString.  (This is neither efficient nor pretty, but arguably it's
+-- good enough to write useful tests.)
+--
+-- TODO: should the third argument be 'JSString'?  or should we remove this entirely?
 foreign import javascript unsafe
     "$2[$1](JSON.parse($3))"
     js_exec_with_object :: JSString -> JSVal -> JSVal -> IO JSVal
@@ -180,4 +186,3 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "console.log($1, $2);"
   js_console_log_jsval :: JSString -> JSVal -> IO ()
-
