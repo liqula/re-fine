@@ -1,4 +1,4 @@
-module Refine.Frontend.Test.Enzyme.Internal where
+module Refine.Frontend.Test.Enzyme.Class.Internal where
 
 import GHCJS.Marshal.Pure
 import GHCJS.Types (JSString, JSVal)

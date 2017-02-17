@@ -40,7 +40,7 @@ import React.Flux.Internal
 
 import Refine.Frontend.Test.Enzyme.Class as R
 import Refine.Frontend.Test.Enzyme.Core as R
-import Refine.Frontend.Test.Enzyme.Internal
+import Refine.Frontend.Test.Enzyme.Class.Internal
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 

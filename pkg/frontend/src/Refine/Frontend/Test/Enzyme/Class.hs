@@ -42,5 +42,5 @@ module Refine.Frontend.Test.Enzyme.Class
  , lengthOfIO
  ) where
 
-import Refine.Frontend.Test.Enzyme.Internal
+import Refine.Frontend.Test.Enzyme.Class.Internal
 
