@@ -29,9 +29,12 @@ import GHC.Generics (Generic)
 import Refine.Prelude.TH (makeRefineType)
 
 
+-- | `viewport` is the browser window (the visible part of the `document`, or `page`).  See
+-- `/docs/frontend/offsets.pdf`.
 newtype OffsetFromViewportTop = OffsetFromViewportTop { _unOffsetFromViewportTop :: Int }
   deriving (Show, Generic, Eq, Ord, Num)
 
+-- | Distance between document top and viewport top.  See `/docs/frontend/offsets.pdf`.
 newtype ScrollOffsetOfViewport = ScrollOffsetOfViewport { _unScrollOffsetOfViewport :: Int }
   deriving (Show, Generic, Eq, Num)
 
