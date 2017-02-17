@@ -24,7 +24,7 @@
 
 module Refine.Frontend.Contribution.Store where
 
-import           Control.Lens ((&), (%~))
+import           Control.Lens ((&), (%~), (^.))
 import qualified Data.Map.Strict as M
 import           Data.Void
 
@@ -86,8 +86,9 @@ highlightedMarkAndBubbleUpdate action state = case action of
 
 markPositionsUpdate :: ContributionAction -> MarkPositions -> MarkPositions
 markPositionsUpdate action state = case action of
-    (AddMarkPosition dataChunkId topOffset scrollOffset)
-      -> let upd old@(Just (oldTopOffset, _)) | topOffset >= oldTopOffset = old
-             upd _ = Just (topOffset, scrollOffset)
+    (AddMarkPosition dataChunkId newMarkPosition)
+      -> let upd       = Just . maybe newMarkPosition (updTop . updBottom)
+             updTop    = markPositionTop    %~ min (newMarkPosition ^. markPositionTop)
+             updBottom = markPositionBottom %~ max (newMarkPosition ^. markPositionBottom)
          in MarkPositions $ M.alter upd dataChunkId (_unMarkPositions state)
     _ -> state

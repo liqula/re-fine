@@ -28,6 +28,8 @@ import           Control.Lens ((^.))
 
 import           Refine.Frontend.Screen.Types
 
-offsetIntoText :: OffsetFromViewportTop -> ScrollOffsetOfViewport -> ScreenState -> Int
-offsetIntoText (OffsetFromViewportTop topOffset) (ScrollOffsetOfViewport scrollOffset) state = topOffset + scrollOffset - state ^. ssHeaderHeight - 80
+offsetIntoText :: OffsetFromDocumentTop -> ScreenState -> Int
+offsetIntoText (OffsetFromDocumentTop topOffset) state = topOffset - state ^. ssHeaderHeight - 80
 
+offsetFromDocumentTop :: OffsetFromViewportTop -> ScrollOffsetOfViewport -> OffsetFromDocumentTop
+offsetFromDocumentTop (OffsetFromViewportTop v) (ScrollOffsetOfViewport d) = OffsetFromDocumentTop (v + d)

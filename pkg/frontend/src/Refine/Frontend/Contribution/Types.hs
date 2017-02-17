@@ -84,8 +84,14 @@ data CommentCategory =
   deriving (Show, Generic)
 
 -- for marks:
-newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map (ID Void) (OffsetFromViewportTop, ScrollOffsetOfViewport) }
-  deriving (Eq, Show, Generic, NFData)
+newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map (ID Void) MarkPosition }
+  deriving (Eq, Show, Generic)
+
+data MarkPosition = MarkPosition
+  { _markPositionTop    :: OffsetFromDocumentTop
+  , _markPositionBottom :: OffsetFromDocumentTop
+  }
+  deriving (Eq, Show, Generic)
 
 -- | TODO: we have orphan instances for maps in Refine.Common.Orphans.  we should:
 -- (1) move this function there;
@@ -102,12 +108,6 @@ mapFromValue = withObject "MarkPositions"
                          <*> parseJSON v)
   . HashMap.toList
 
-instance ToJSON MarkPositions where
-  toJSON = mapToValue . _unMarkPositions
-
-instance FromJSON MarkPositions where
-  parseJSON = fmap MarkPositions . mapFromValue
-
 
 data ContributionAction =
     UpdateSelection Selection
@@ -120,7 +120,7 @@ data ContributionAction =
   | SetCommentCategory CommentCategory
   | SubmitComment ST (Maybe CommentCategory) (Maybe Range)
   | SubmitEdit
-  | AddMarkPosition (ID Void) OffsetFromViewportTop ScrollOffsetOfViewport
+  | AddMarkPosition (ID Void) MarkPosition
   | HighlightMarkAndBubble (ID Void)
   | UnhighlightMarkAndBubble
   deriving (Show, Generic)
@@ -145,3 +145,13 @@ makeRefineType ''CommentInputState
 makeRefineType ''CommentCategory
 makeRefineType ''ContributionAction
 makeRefineType ''ContributionState
+
+makeRefineType ''MarkPosition
+
+deriving instance NFData MarkPositions
+
+instance ToJSON MarkPositions where
+  toJSON = mapToValue . _unMarkPositions
+
+instance FromJSON MarkPositions where
+  parseJSON = fmap MarkPositions . mapFromValue
