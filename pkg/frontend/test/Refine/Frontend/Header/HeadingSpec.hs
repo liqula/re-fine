@@ -37,7 +37,6 @@ import           Refine.Frontend.Header.Heading
 import qualified Refine.Frontend.Screen.Types as ST
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Test.Enzyme
-import qualified Refine.Frontend.Test.Enzyme.ReactWrapperAPI as RW
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import qualified Refine.Frontend.Types as RS
 
@@ -77,7 +76,7 @@ spec = do
                                   (VDocRepo (ID 1) (ID 1))
                                   (VDocVersion [DT.Node (HTMLP.TagOpen "div" [HTMLP.Attr "data-offset" "0", HTMLP.Attr "data-uid" "77"]) []])
                                   M.empty M.empty M.empty
-      _wrapper <- RW.mount (stickyContainer_ [] . mainHeader_ $ RS.emptyGlobalState { RS._gsVDoc = Just newVDoc })
+      _wrapper <- mount (stickyContainer_ [] . mainHeader_ $ RS.emptyGlobalState { RS._gsVDoc = Just newVDoc })
       globalState0 <- getStoreData RS.refineStore
       pendingWith "The action in lComponentDidMount does not seem to be executed in the test... why?"
       (globalState0 ^. RS.gsScreenState . ST.ssHeaderHeight) `shouldSatisfy` (> 0)
