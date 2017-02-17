@@ -39,7 +39,9 @@ import           Refine.Frontend.UtilityWidgets
 
 
 quickCreate :: ReactView QuickCreateProps
-quickCreate = defineView "QuickCreateButton" $ \(QuickCreateProps createType currentSelection screenState _displayInfo) ->
+quickCreate = defineView "QuickCreateButton" $ \(QuickCreateProps createType currentSelection screenState displayInfo) ->
+  if displayInfo == RS.CommentToolbarExtensionWithSelection then mempty -- do not display the buttons when selection was activated via toolbar
+  else
     case currentSelection of
     -- TODO unify CSS class names with those used in iconButton_ !!
         RS.RangeSelected range offsetFromTop ->
