@@ -31,8 +31,8 @@ import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
 import           Refine.Frontend.UtilityWidgets
 
-editToolbar :: ReactView ()
-editToolbar = defineView "EditToolbar" $ \() ->
+toolbar :: ReactView ()
+toolbar = defineView "Toolbar" $ \() ->
   header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
@@ -107,8 +107,8 @@ editToolbar = defineView "EditToolbar" $ \() ->
               True
               Nothing
 
-editToolbar_ :: ReactElementM eventHandler ()
-editToolbar_ = view editToolbar () mempty
+toolbar_ :: ReactElementM eventHandler ()
+toolbar_ = view toolbar () mempty
 
 
 newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps

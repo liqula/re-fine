@@ -35,7 +35,7 @@ import           React.Flux.Lifecycle
 
 import           Refine.Common.Types
 import           Refine.Frontend.Header.DocumentHeader ( documentHeader_, DocumentHeaderProps(..) )
-import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), editToolbar_, commentToolbarExtension_, editToolbarExtension_ )
+import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), toolbar_, commentToolbarExtension_, editToolbarExtension_ )
 import qualified Refine.Frontend.Header.Types as HT
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.ThirdPartyViews (sticky_)
@@ -86,7 +86,7 @@ mainHeader = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
                 documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
                 div_ ["className" $= "c-fulltoolbar"] $ do
                     sticky_ [on "onStickyStateChange" $ \e _ -> (RS.dispatch . RS.ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
-                        editToolbar_
+                        toolbar_
                         commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. RS.gsHeaderState . HT.hsCommentToolbarExtensionStatus)
                         editToolbarExtension_
 
