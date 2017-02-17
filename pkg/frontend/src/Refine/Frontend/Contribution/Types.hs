@@ -119,7 +119,6 @@ data ContributionEditorData =
 
 data ContributionAction =
     UpdateSelection Selection ToolbarExtensionStatus
-  | ClearSelection
   | ShowNoteOverlay (ID Note)
   | ShowDiscussionOverlay (ID Discussion)
   | HideCommentOverlay

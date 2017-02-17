@@ -54,7 +54,7 @@ quickCreate = defineView "QuickCreateButton" $ \(QuickCreateProps createType cur
                 (fromString createType)
                 ""
                 False
-                (\_ -> RS.dispatch (RS.ContributionAction RS.ClearSelection) <> (RS.dispatch . RS.ContributionAction . RS.ShowCommentEditor $ Just range))
+                (\_ -> RS.dispatch . RS.ContributionAction . RS.ShowCommentEditor $ Just range)
                 []
               ) offset
         _ -> mempty
