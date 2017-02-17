@@ -28,8 +28,9 @@ import           Control.Lens ((&), (%~), (^.))
 import qualified Data.Map.Strict as M
 import           Data.Void
 
-import Refine.Common.Types
-import Refine.Frontend.Contribution.Types
+import           Refine.Common.Types
+import           Refine.Frontend.Contribution.Types
+import qualified Refine.Frontend.Header.Types as HT
 
 
 contributionStateUpdate :: ContributionAction -> ContributionState -> ContributionState
@@ -74,7 +75,8 @@ noteIsVisibleUpdate action state = case action of
 
 commentEditorIsVisibleUpdate :: ContributionAction -> ContributionEditorData -> ContributionEditorData
 commentEditorIsVisibleUpdate action state = case action of
-  (ShowCommentEditor curSelection) -> EditorIsVisible curSelection
+  ShowCommentEditor curSelection -> EditorIsVisible curSelection
+  UpdateSelection (RangeSelected range _) HT.CommentToolbarExtensionWithSelection -> EditorIsVisible (Just range)
   HideCommentEditor -> EditorIsHidden
   _ -> state
 
