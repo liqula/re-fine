@@ -32,7 +32,7 @@ import Refine.Prelude.TH (makeRefineType)
 data HeaderAction =
     ToggleCommentToolbarExtension
   | StartTextSpecificComment
-  | CloseCommentToolbarExtension
+  | CloseToolbarExtension
   | ToggleEditToolbarExtension
   deriving (Show, Generic)
 
