@@ -78,17 +78,17 @@ quickCreateSelectionTop range = SC.offsetIntoText
 quickCreateSelectionPos :: RS.Range -> SC.OffsetFromDocumentTop -> Int
 quickCreateSelectionPos range offsetFromTop =
     let selectionHeight = (range ^. RS.rangeBottom) - (range ^. RS.rangeTopOffset . SC.unOffsetFromViewportTop)
-        idealCenter = selectionHeight `div` 2 - 22
-        useIdealCenter = selectionHeight <= 200
-        closerToTop = abs (offsetFromTop ^. SC.unOffsetFromDocumentTop - range ^. RS.rangeTopOffset . SC.unOffsetFromViewportTop) < idealCenter
-        edgePosition = if closerToTop then 0 else selectionHeight - 44
+        idealCenter     = selectionHeight `div` 2 - 22
+        useIdealCenter  = selectionHeight <= 200
+        closerToTop     = abs (offsetFromTop ^. SC.unOffsetFromDocumentTop - range ^. RS.rangeTopOffset . SC.unOffsetFromViewportTop) < idealCenter
+        edgePosition    = if closerToTop then 0 else selectionHeight - 44
     in if useIdealCenter then idealCenter else edgePosition
 
 data QuickCreateProps = QuickCreateProps
   { _quickCreateContributionkind :: String -- TODO use the proper data type here
-  , _quickCreateRange :: RS.Selection
-  , _quickCreateOffset :: SC.ScreenState
-  , _quickCreateInfo :: RS.ToolbarExtensionStatus
+  , _quickCreateRange            :: RS.Selection
+  , _quickCreateOffset           :: SC.ScreenState
+  , _quickCreateInfo             :: RS.ToolbarExtensionStatus
   }
 
 -- "annotation" (RENAME: Comment), "modification" (RENAME: Edit)

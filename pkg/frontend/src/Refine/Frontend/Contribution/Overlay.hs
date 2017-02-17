@@ -129,10 +129,10 @@ showNote :: ReactView (Maybe Note)
 showNote = defineView "ShowNote" $ \case
   Nothing -> mempty
   Just note ->
-    let commentText1 = (note ^. noteText)
+    let commentText1  = (note ^. noteText)
         commentTitle1 = "Title of comment"
-        iconStyle1 = ("icon-Remark", "dark")
-        userName1 = "meisterkaiser"
+        iconStyle1    = ("icon-Remark", "dark")
+        userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
     in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__note)
 
@@ -143,10 +143,10 @@ showDiscussion :: ReactView (Maybe CompositeDiscussion)
 showDiscussion = defineView "ShowDiscussion" $ \case
   Nothing -> mempty
   Just discussion ->
-    let commentText1 = (Tree.rootLabel (discussion ^. compositeDiscussionTree) ^. statementText)
+    let commentText1  = (Tree.rootLabel (discussion ^. compositeDiscussionTree) ^. statementText)
         commentTitle1 = "Title of discussion"
-        iconStyle1 = ("icon-Discussion", "dark")
-        userName1 = "meisterkaiser"
+        iconStyle1    = ("icon-Discussion", "dark")
+        userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
     in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__discussion)
 
@@ -158,10 +158,10 @@ showQuestion = defineView "ShowQuestion" $ \case
   Nothing -> mempty
   Just question ->
     let overlayStyle1 = [ Style "backgroundColor" C.vdoc_question ]
-        commentText1 = (question ^. compositeQuestion . questionText)
+        commentText1  = (question ^. compositeQuestion . questionText)
         commentTitle1 = "Title of question"
-        iconStyle1 = ("icon-Question", "dark")
-        userName1 = "meisterkaiser"
+        iconStyle1    = ("icon-Question", "dark")
+        userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
     in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 overlayStyle1)
 
