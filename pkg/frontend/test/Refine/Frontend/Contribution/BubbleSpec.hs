@@ -22,15 +22,15 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Bubbles.BubbleSpec where
+module Refine.Frontend.Contribution.BubbleSpec where
 
 import           Control.Lens((^.), (&), (%~))
 import           Test.Hspec
 import           React.Flux (getStoreData)
 
 import           Refine.Common.Types
-import           Refine.Frontend.Bubbles.Bubble
-import           Refine.Frontend.Bubbles.Types
+import           Refine.Frontend.Contribution.Bubble
+import           Refine.Frontend.Contribution.Types
 import qualified Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Store (refineStore)
 import           Refine.Frontend.Style
@@ -111,11 +111,11 @@ spec = do
       wrapper <- mount $ bubble_ bubbleProps mempty
       -- init the state:
       globalState0 <- getStoreData refineStore
-      let _ = globalState0 & gsBubblesState . bsHighlightedMarkAndBubble %~ \_ -> Nothing
+      let _ = globalState0 & gsContributionState . bsHighlightedMarkAndBubble %~ \_ -> Nothing
       -- simulate events:
       _ <- simulate wrapper MouseEnter
       globalState1 <- getStoreData refineStore
-      globalState1 ^. gsBubblesState . bsHighlightedMarkAndBubble `shouldBe` Just (ID 99)
+      globalState1 ^. gsContributionState . bsHighlightedMarkAndBubble `shouldBe` Just (ID 99)
       _ <- simulate wrapper MouseLeave
       globalState2 <- getStoreData refineStore
-      globalState2 ^. gsBubblesState . bsHighlightedMarkAndBubble `shouldBe` Nothing
+      globalState2 ^. gsContributionState . bsHighlightedMarkAndBubble `shouldBe` Nothing

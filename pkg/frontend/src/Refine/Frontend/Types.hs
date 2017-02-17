@@ -29,7 +29,7 @@ import           GHC.Generics (Generic)
 
 import Refine.Common.Types as Common
 
-import Refine.Frontend.Bubbles.Types
+import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
@@ -39,7 +39,7 @@ import Refine.Prelude.TH (makeRefineType)
 data GlobalState = GlobalState
   { _gsVDoc                       :: Maybe CompositeVDoc
   , _gsVDocList                   :: Maybe [ID VDoc]
-  , _gsBubblesState               :: BubblesState
+  , _gsContributionState          :: ContributionState
   , _gsHeaderState                :: HeaderState
   , _gsScreenState                :: ScreenState
   , _gsNotImplementedYetIsVisible :: Bool
@@ -48,7 +48,7 @@ data GlobalState = GlobalState
   } deriving (Show, Generic)
 
 emptyGlobalState :: GlobalState
-emptyGlobalState = GlobalState Nothing Nothing emptyBubblesState emptyHeaderState emptyScreenState False MainMenuClosed False
+emptyGlobalState = GlobalState Nothing Nothing emptyContributionState emptyHeaderState emptyScreenState False MainMenuClosed False
 
 data RefineAction = LoadDocumentList
                   | LoadedDocumentList [ID VDoc]
@@ -57,7 +57,7 @@ data RefineAction = LoadDocumentList
                   | AddDemoDocument
                   | AddHeaderHeight Int
                   | SetWindowSize WindowSize
-                  | BubblesAction BubblesAction
+                  | ContributionAction ContributionAction
                   | HeaderAction HeaderAction
                   | ToolbarStickyStateChange Bool
                   -- ...
@@ -73,6 +73,8 @@ data RefineAction = LoadDocumentList
                   | MainMenuAction MainMenuAction
                   -- Actions that will be transformed because they need IO:
                   | TriggerUpdateSelection DeviceOffset
+                  -- Action only for testing:
+                  | ClearState
   deriving (Show, Generic)
 
 makeRefineType ''GlobalState

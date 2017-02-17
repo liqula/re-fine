@@ -42,11 +42,11 @@ import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
 import           Refine.Prelude (ClearTypeParameter(..))
-import           Refine.Frontend.Bubbles.Bubble
-import           Refine.Frontend.Bubbles.Mark
-import           Refine.Frontend.Bubbles.Overlay
-import           Refine.Frontend.Bubbles.QuickCreate
-import           Refine.Frontend.Bubbles.Types as RS
+import           Refine.Frontend.Contribution.Bubble
+import           Refine.Frontend.Contribution.Mark
+import           Refine.Frontend.Contribution.Overlay
+import           Refine.Frontend.Contribution.QuickCreate
+import           Refine.Frontend.Contribution.Types as RS
 import           Refine.Frontend.Header.Heading ( mainHeader_ )
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component (vdocLoader_)
@@ -82,18 +82,18 @@ mainScreen = defineView "MainScreen" $ \rs ->
           mainHeader_ rs
 
           -- components that are only temporarily visible:
-          showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsBubblesState . bsNoteIsVisible)
-          showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsBubblesState . bsDiscussionIsVisible)
-          addComment_ (rs ^. gsBubblesState . bsCommentEditorIsVisible) (rs ^. gsBubblesState . bsCommentCategory)
+          showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsContributionState . bsNoteId)
+          showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsContributionState . bsDiscussionId)
+          addComment_ (rs ^. gsContributionState . bsCommentEditorIsVisible) (rs ^. gsContributionState . bsCommentCategory)
           notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
 
           main_ ["role" $= "main"] $ do
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       leftAside_ $ LeftAsideProps
-                                     (rs ^. gsBubblesState . bsMarkPositions)
-                                     (rs ^. gsBubblesState . bsCurrentSelection)
-                                     (rs ^. gsBubblesState . bsHighlightedMarkAndBubble)
+                                     (rs ^. gsContributionState . bsMarkPositions)
+                                     (rs ^. gsContributionState . bsCurrentSelection)
+                                     (rs ^. gsContributionState . bsHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
                                      (M.elems (vdoc ^. compositeVDocDiscussions))
                                      (M.elems (vdoc ^. compositeVDocNotes))
@@ -106,18 +106,18 @@ mainScreen = defineView "MainScreen" $ \rs ->
                         -- div_ ["className" $= "c-vdoc-overlay"] $ do
                           -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
                         div_ ["className" $= "c-article-content"] $ do
-                          toArticleBody (rs ^. gsBubblesState) (_unVDocVersion . _compositeVDocVersion $ vdoc)
-                      rightAside_ (rs ^. gsBubblesState . bsMarkPositions) (rs ^. gsScreenState)
+                          toArticleBody (rs ^. gsContributionState) (_unVDocVersion . _compositeVDocVersion $ vdoc)
+                      rightAside_ (rs ^. gsContributionState . bsMarkPositions) (rs ^. gsScreenState)
 
 mainScreen_ :: RS.GlobalState -> ReactElementM eventHandler ()
 mainScreen_ rs = view mainScreen rs mempty
 
 
-toArticleBody :: BubblesState -> DT.Forest HTMLP.Token -> ReactElementM [SomeStoreAction] ()
+toArticleBody :: ContributionState -> DT.Forest HTMLP.Token -> ReactElementM [SomeStoreAction] ()
 toArticleBody state forest = mconcat $ map (toHTML state) forest
 
 
-toHTML :: BubblesState -> DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()
+toHTML :: ContributionState -> DT.Tree HTMLP.Token -> ReactElementM [SomeStoreAction] ()
 -- br and hr need to be handled differently
 toHTML _ (DT.Node (HTMLP.TagSelfClose "br" attrs) []) = br_ (toProperties attrs)
 toHTML _ (DT.Node (HTMLP.TagSelfClose "hr" attrs) []) = hr_ (toProperties attrs)

@@ -23,7 +23,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 
-module Refine.Frontend.Bubbles.Overlay where
+module Refine.Frontend.Contribution.Overlay where
 
 import           Control.Lens (makeLenses, (^.))
 import           Data.Maybe (isNothing)
@@ -35,7 +35,7 @@ import           React.Flux
 import           Refine.Common.Types
 import           Refine.Frontend.ThirdPartyViews (overlay_)
 import qualified Refine.Frontend.Types as RS
-import qualified Refine.Frontend.Bubbles.Types as RS
+import qualified Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Colors as C
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
@@ -83,7 +83,7 @@ makeLenses ''CommentDisplayProps
 showComment :: ReactView CommentDisplayProps
 showComment = defineView "ShowComment" $ \props ->
   overlay_ ["isVisible" &= True
-           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.BubblesAction RS.HideCommentOverlay)
+           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
            , "hideOnOverlayClicked" &= True
            , "dialogStyles" @= (vdoc_overlay_content <> (props ^. contentStyle))
            , "overlayStyles" @= overlay_styles
@@ -165,7 +165,7 @@ showQuestion_ question = view showQuestion question mempty
 addComment :: ReactView (Bool, Maybe RS.Range, Maybe RS.CommentCategory)
 addComment = defineView "AddComment" $ \(showOverlay, forRange, commentCategory) ->
   overlay_ ["isVisible" &= showOverlay
-           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.BubblesAction RS.HideCommentEditor)
+           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
            , "hideOnOverlayClicked" &= True
            , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content__add_comment)
            , "overlayStyles" @= overlay_styles
@@ -206,7 +206,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
                     ""
                     "add a note"
                     False
-                    (\_ -> RS.dispatch . RS.BubblesAction $ RS.SetCommentCategory RS.Note)
+                    (\_ -> RS.dispatch . RS.ContributionAction $ RS.SetCommentCategory RS.Note)
                     []
                   )
       iconButton_ (IconButtonProps
@@ -216,7 +216,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
                     ""
                     "start a discussion"
                     False
-                    (\_ -> RS.dispatch . RS.BubblesAction $ RS.SetCommentCategory RS.Discussion)
+                    (\_ -> RS.dispatch . RS.ContributionAction $ RS.SetCommentCategory RS.Discussion)
                     []
                   )
 
@@ -233,8 +233,8 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
         ""
         "submit"
         ((0 == DT.length (curState ^. RS.commentInputStateText)) || isNothing category) -- no text or no category -> disable button
-        (\_ -> RS.dispatch (RS.BubblesAction (RS.SubmitComment (curState ^. RS.commentInputStateText) category forRange))
-            <> RS.dispatch (RS.BubblesAction RS.HideCommentEditor))
+        (\_ -> RS.dispatch (RS.ContributionAction (RS.SubmitComment (curState ^. RS.commentInputStateText) category forRange))
+            <> RS.dispatch (RS.ContributionAction RS.HideCommentEditor))
         []
       )
 

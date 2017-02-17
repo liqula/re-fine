@@ -22,23 +22,23 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Bubbles.Store where
+module Refine.Frontend.Contribution.Store where
 
 import           Control.Lens ((&), (%~))
 import qualified Data.Map.Strict as M
 import           Data.Void
 
 import Refine.Common.Types
-import Refine.Frontend.Bubbles.Types
+import Refine.Frontend.Contribution.Types
 
 
-bubblesStateUpdate :: BubblesAction -> BubblesState -> BubblesState
-bubblesStateUpdate action state =
+contributionStateUpdate :: ContributionAction -> ContributionState -> ContributionState
+contributionStateUpdate action state =
   let newState = state
                   & bsCurrentSelection         %~ currentSelectionUpdate action
                   & bsCommentCategory          %~ commentCategoryUpdate action
-                  & bsDiscussionIsVisible      %~ discussionIsVisibleUpdate action
-                  & bsNoteIsVisible            %~ noteIsVisibleUpdate action
+                  & bsDiscussionId             %~ discussionIsVisibleUpdate action
+                  & bsNoteId                   %~ noteIsVisibleUpdate action
                   & bsCommentEditorIsVisible   %~ commentEditorIsVisibleUpdate action
                   & bsHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
                   & bsMarkPositions            %~ markPositionsUpdate action
@@ -47,44 +47,44 @@ bubblesStateUpdate action state =
 
 ---------------------------------------------------------------------------
 
-currentSelectionUpdate :: BubblesAction -> Selection -> Selection
+currentSelectionUpdate :: ContributionAction -> Selection -> Selection
 currentSelectionUpdate action state = case action of
   (UpdateSelection newState) -> newState
   ClearSelection -> (Nothing, Nothing)
   SubmitEdit     -> (Nothing, Nothing)
   _ -> state
 
-commentCategoryUpdate :: BubblesAction -> Maybe CommentCategory -> Maybe CommentCategory
+commentCategoryUpdate :: ContributionAction -> Maybe CommentCategory -> Maybe CommentCategory
 commentCategoryUpdate action state = case action of
   (SetCommentCategory category) -> Just category
   HideCommentEditor -> Nothing -- when closing the comment editor, reset the selection
   _ -> state
 
-discussionIsVisibleUpdate :: BubblesAction -> Maybe (ID Discussion) -> Maybe (ID Discussion)
+discussionIsVisibleUpdate :: ContributionAction -> Maybe (ID Discussion) -> Maybe (ID Discussion)
 discussionIsVisibleUpdate action state = case action of
   (ShowDiscussionOverlay discussionId) -> Just discussionId
   HideCommentOverlay -> Nothing
   _ -> state
 
-noteIsVisibleUpdate :: BubblesAction -> Maybe (ID Note) -> Maybe (ID Note)
+noteIsVisibleUpdate :: ContributionAction -> Maybe (ID Note) -> Maybe (ID Note)
 noteIsVisibleUpdate action state = case action of
   (ShowNoteOverlay noteId) -> Just noteId
   HideCommentOverlay -> Nothing
   _ -> state
 
-commentEditorIsVisibleUpdate :: BubblesAction -> (Bool, Maybe Range) -> (Bool, Maybe Range)
+commentEditorIsVisibleUpdate :: ContributionAction -> (Bool, Maybe Range) -> (Bool, Maybe Range)
 commentEditorIsVisibleUpdate action state = case action of
   (ShowCommentEditor curSelection) -> (True, curSelection)
   HideCommentEditor -> (False, Nothing)
   _ -> state
 
-highlightedMarkAndBubbleUpdate :: BubblesAction -> Maybe (ID Void) -> Maybe (ID Void)
+highlightedMarkAndBubbleUpdate :: ContributionAction -> Maybe (ID Void) -> Maybe (ID Void)
 highlightedMarkAndBubbleUpdate action state = case action of
     (HighlightMarkAndBubble dataChunkId) -> Just dataChunkId
     UnhighlightMarkAndBubble -> Nothing
     _ -> state
 
-markPositionsUpdate :: BubblesAction -> MarkPositions -> MarkPositions
+markPositionsUpdate :: ContributionAction -> MarkPositions -> MarkPositions
 markPositionsUpdate action state = case action of
     (AddMarkPosition dataChunkId topOffset scrollOffset)
       -> let upd old@(Just (oldTopOffset, _)) | topOffset >= oldTopOffset = old

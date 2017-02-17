@@ -45,11 +45,6 @@ import           Refine.Frontend.Views
 refineApp_ :: ReactElementM eventHandler ()
 refineApp_ = view refineApp () mempty
 
-dispatchAndMount :: [RefineAction] -> ReactElementM eventHandler () -> IO ReactWrapper
-dispatchAndMount actions comp_ = do
-      forM_ (concatMap dispatch actions) executeAction
-      mount comp_
-
 clickNewComment :: ReactWrapper -> IO ()
 clickNewComment wrapper = do
       button <- find wrapper (StringSelector ".c-vdoc-toolbar__btn-add-annotation")
@@ -62,42 +57,56 @@ clickArticleContent wrapper = do
       _ <- simulate mainText Click
       pure ()
 
+clickTextSpecificComment :: ReactWrapper -> IO ()
+clickTextSpecificComment wrapper = do
+      mainText <- find wrapper (StringSelector ".c-vdoc-toolbar-extension__btn-new-ann-text")
+      _ <- simulate mainText Click
+      pure ()
 
-spec :: Spec
-spec = do
-  describe "The mainScreen_ component" $ do
+
+clearState :: IO ()
+clearState =
     let newVDoc = CompositeVDoc (VDoc (ID 1) (Title "the-title") (Abstract "the-abstract") (ID 1))
                                 (VDocRepo (ID 1) (ID 1))
                                 (VDocVersion [DT.Node (HTMLP.TagOpen "div" [HTMLP.Attr "data-uid" "77", HTMLP.Attr "data-offset" "0"]) []])
                                 M.empty M.empty M.empty
+    in do
+      -- FIXME: If we add ClearState to the list of Actions, we run into (timing?!) problems...
+      forM_ (concatMap dispatch [OpenDocument newVDoc, HeaderAction CloseCommentToolbarExtension]) executeAction
+      reactFluxWorkAroundThreadDelay
+
+
+spec :: Spec
+spec = do
+  describe "The mainScreen_ component" . before clearState $ do
 
     it "initially the comment toolbar is visible" $ do
-      wrapper <- dispatchAndMount [OpenDocument newVDoc, HeaderAction CloseCommentToolbarExtension] refineApp_
-      lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar__btn-add-annotation")) `shouldReturn` (1 :: Int)
+      wrapper <- mount refineApp_
+      lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar")) `shouldReturn` (1 :: Int)
 
     it "initially the comment toolbar extension is not visible" $ do
-      wrapper <- dispatchAndMount [OpenDocument newVDoc, HeaderAction CloseCommentToolbarExtension] refineApp_
+      wrapper <- mount refineApp_
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (0 :: Int)
 
     it "opens the comment toolbar extension when the user clicks on the 'new comment' button" $ do
-      wrapper <- dispatchAndMount [OpenDocument newVDoc, HeaderAction CloseCommentToolbarExtension] refineApp_
+      wrapper <- mount refineApp_
       clickNewComment wrapper
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (1 :: Int)
 
     it "closes the comment toolbar extension when the user clicks on the 'new comment' button twice" $ do
-      wrapper <- dispatchAndMount [OpenDocument newVDoc, HeaderAction CloseCommentToolbarExtension] refineApp_
+      wrapper <- mount refineApp_
       clickNewComment wrapper
       clickNewComment wrapper
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (0 :: Int)
 
     it "closes the comment toolbar extension when the user clicks somewhere else" $ do
-      wrapper <- dispatchAndMount [OpenDocument newVDoc, HeaderAction CloseCommentToolbarExtension] refineApp_
+      wrapper <- mount refineApp_
       clickNewComment wrapper
       clickArticleContent wrapper
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (0 :: Int)
 
     it "does not close the comment toolbar extension when the user clicks on the 'text-specific comment' button" $ do
-      wrapper <- dispatchAndMount [OpenDocument newVDoc, HeaderAction CloseCommentToolbarExtension] refineApp_
+      wrapper <- mount refineApp_
       clickNewComment wrapper
-      clickArticleContent wrapper
-      lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension__btn-new-ann-text")) `shouldReturn` (0 :: Int)
+      clickTextSpecificComment wrapper
+      lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (1 :: Int)

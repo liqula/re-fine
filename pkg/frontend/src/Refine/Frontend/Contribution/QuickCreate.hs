@@ -22,7 +22,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Bubbles.QuickCreate where
+module Refine.Frontend.Contribution.QuickCreate where
 
 import           Control.Lens ((^.))
 import           Data.Monoid ((<>))
@@ -30,7 +30,7 @@ import           Data.String (fromString)
 import           React.Flux
 
 import qualified Refine.Frontend.Types as RS
-import qualified Refine.Frontend.Bubbles.Types as RS
+import qualified Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Screen.Calculations as SC
 import qualified Refine.Frontend.Store as RS
@@ -51,7 +51,7 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, s
                 (fromString createType)
                 ""
                 False
-                (\_ -> RS.dispatch (RS.BubblesAction RS.ClearSelection) <> RS.dispatch (RS.BubblesAction (RS.ShowCommentEditor (fst currentSelection))))
+                (\_ -> RS.dispatch (RS.ContributionAction RS.ClearSelection) <> RS.dispatch (RS.ContributionAction (RS.ShowCommentEditor (fst currentSelection))))
                 []
               ) offset
         _ -> mempty

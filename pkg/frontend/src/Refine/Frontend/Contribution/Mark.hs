@@ -22,7 +22,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Bubbles.Mark where
+module Refine.Frontend.Contribution.Mark where
 
 import           Control.Lens (makeLenses, (^.))
 import           Control.Monad (forM_)
@@ -38,7 +38,7 @@ import           Text.Read (readMaybe)
 
 import           Refine.Common.Types
 import qualified Refine.Frontend.Screen.Types as RS
-import qualified Refine.Frontend.Bubbles.Types as RS
+import qualified Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
 
@@ -75,8 +75,8 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
                         , (fromString $ "o-mark--" <> dataContentType, True)
                         , ("o-mark--hover", maybeChunkId == props ^. markPropsHighlightedMark)
                         ]
-           , onMouseEnter $ \_ _ _ -> (RS.dispatch . RS.BubblesAction $ RS.HighlightMarkAndBubble dataChunkId, Nothing)
-           , onMouseLeave $ \_ _ _ -> (RS.dispatch $ RS.BubblesAction RS.UnhighlightMarkAndBubble, Nothing)
+           , onMouseEnter $ \_ _ _ -> (RS.dispatch . RS.ContributionAction $ RS.HighlightMarkAndBubble dataChunkId, Nothing)
+           , onMouseLeave $ \_ _ _ -> (RS.dispatch $ RS.ContributionAction RS.UnhighlightMarkAndBubble, Nothing)
            ]) childrenPassedToView
 
    , lComponentDidMount = Just $ \propsandstate ldom _ -> do
@@ -88,7 +88,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
                case contributionIdFrom (props ^. markPropsHTMLAttributes) of
                  Nothing -> pure ()
                  Just dataChunkId -> do
-                   let actions = RS.dispatch . RS.BubblesAction $ RS.AddMarkPosition dataChunkId topOffset scrollOffset
+                   let actions = RS.dispatch . RS.ContributionAction $ RS.AddMarkPosition dataChunkId topOffset scrollOffset
                    forM_ actions executeAction
              pure ()
    }

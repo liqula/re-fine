@@ -23,7 +23,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 
-module Refine.Frontend.Bubbles.Types where
+module Refine.Frontend.Contribution.Types where
 
 import           Control.DeepSeq
 import           Control.Lens (makeLenses)
@@ -109,7 +109,7 @@ instance FromJSON MarkPositions where
   parseJSON = fmap MarkPositions . mapFromValue
 
 
-data BubblesAction =
+data ContributionAction =
     UpdateSelection Selection
   | ClearSelection
   | ShowNoteOverlay (ID Note)
@@ -126,22 +126,22 @@ data BubblesAction =
   deriving (Show, Generic)
 
 
-data BubblesState = BubblesState
+data ContributionState = ContributionState
   { _bsCurrentSelection         :: Selection
   , _bsCommentCategory          :: Maybe CommentCategory
-  , _bsDiscussionIsVisible      :: Maybe (ID Discussion)
-  , _bsNoteIsVisible            :: Maybe (ID Note)
+  , _bsDiscussionId             :: Maybe (ID Discussion)
+  , _bsNoteId                   :: Maybe (ID Note)
   , _bsCommentEditorIsVisible   :: (Bool, Maybe Range)
   , _bsHighlightedMarkAndBubble :: Maybe (ID Void)
   , _bsMarkPositions            :: MarkPositions
   } deriving (Show, Generic)
 
 
-emptyBubblesState :: BubblesState
-emptyBubblesState = BubblesState (Nothing, Nothing) Nothing Nothing Nothing (False, Nothing) Nothing (MarkPositions M.empty)
+emptyContributionState :: ContributionState
+emptyContributionState = ContributionState (Nothing, Nothing) Nothing Nothing Nothing (False, Nothing) Nothing (MarkPositions M.empty)
 
 
 makeRefineType ''CommentInputState
 makeRefineType ''CommentCategory
-makeRefineType ''BubblesAction
-makeRefineType ''BubblesState
+makeRefineType ''ContributionAction
+makeRefineType ''ContributionState

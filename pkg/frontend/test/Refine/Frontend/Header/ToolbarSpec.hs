@@ -37,25 +37,25 @@ import           Refine.Frontend.Types
 
 spec :: Spec
 spec = do
-  describe "The editToolbar_ component" $ do
+  describe "The toolbar_ component" $ do
     it "renders an element with the toolbar class" $ do
-      wrapper <- shallow editToolbar_
+      wrapper <- shallow toolbar_
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar")) `shouldReturn` (1 :: Int)
 
     it "contains two separators" $ do
-      wrapper <- shallow editToolbar_
+      wrapper <- shallow toolbar_
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar__separator")) `shouldReturn` (2 :: Int)
 
     it "contains 5 normal icon buttons" $ do
-      wrapper <- shallow editToolbar_
+      wrapper <- shallow toolbar_
       lengthOfIO (find wrapper (StringSelector "IconButton")) `shouldReturn` (5 :: Int)
 
     it "contains 1 aligned icon button" $ do
-      wrapper <- shallow editToolbar_
+      wrapper <- shallow toolbar_
       lengthOfIO (find wrapper (StringSelector "IconButtonWithAlignment")) `shouldReturn` (1 :: Int)
 
     it "toggles the visibility of the edit toolbar extension when the 'new comment' button is clicked" $ do
-      wrapper <- mount editToolbar_
+      wrapper <- mount toolbar_
       button <- find wrapper (StringSelector ".c-vdoc-toolbar__btn-add-annotation")
       -- simulate events:
       _ <- simulate button Click
