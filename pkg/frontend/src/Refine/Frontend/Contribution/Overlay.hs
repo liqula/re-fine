@@ -43,31 +43,39 @@ import           Refine.Frontend.UtilityWidgets
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
+dialog_styles :: [Style]
+dialog_styles = [ -- Style "display" ("block" :: String)
+                --, Style "minHeight" ("200px" :: String)
+                 Style "padding" ("1.5rem 1.0rem 1.0rem" :: String)
 
-vdoc_overlay_content :: [Style]
-vdoc_overlay_content = [ Style "display" ("block" :: String)
-                       , Style "minHeight" ("200px" :: String)
-                       , Style "padding" ("15rem 10rem 10rem" :: String)
-                       ]
+                , Style "width" ("40rem" :: String)
+                , Style "height" ("30rem" :: String)
+                , Style "left" ("7.5rem" :: String)
+                , Style "top" ("7.5rem" :: String)
+                , Style "marginLeft" ("0" :: String)
+                , Style "marginTop" ("-1.5rem" :: String)
+                , Style "zIndex" (6050 :: Int)
+
+                , Style "position" ("absolute" :: String)
+                ]
 
 vdoc_overlay_content__add_comment :: [Style]
 vdoc_overlay_content__add_comment = [ Style "backgroundColor" C.vdoc_comment
-                                    , Style "zIndex" (6010 :: Int)
-                                    ]
+                                    ] <> dialog_styles
 
 -- is vdoc_overlay_content__comment in CSS
 vdoc_overlay_content__note :: [Style]
 vdoc_overlay_content__note = [ Style "backgroundColor" C.vdoc_comment
-                              , Style "zIndex" (6010 :: Int)
-                              ]
+                              ] <> dialog_styles
 
 vdoc_overlay_content__discussion :: [Style]
 vdoc_overlay_content__discussion = [ Style "backgroundColor" C.vdoc_discussion
-                                    , Style "zIndex" (6010 :: Int)
-                                    ]
+                                    ] <> dialog_styles
 
 overlay_styles :: [Style]
-overlay_styles = [Style "zIndex" (6000 :: Int)]
+overlay_styles =
+  [ Style "zIndex" (6010 :: Int)
+  ]
 
 data CommentDisplayProps = CommentDisplayProps
   { _commentText :: CommentText
@@ -83,9 +91,9 @@ makeLenses ''CommentDisplayProps
 showComment :: ReactView CommentDisplayProps
 showComment = defineView "ShowComment" $ \props ->
   overlay_ ["isVisible" &= True
-           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
-           , "hideOnOverlayClicked" &= True
-           , "dialogStyles" @= (vdoc_overlay_content <> (props ^. contentStyle))
+           , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
+           , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
+           , "dialogStyles" @= (props ^. contentStyle)
            , "overlayStyles" @= overlay_styles
            ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
@@ -121,10 +129,10 @@ showNote :: ReactView (Maybe Note)
 showNote = defineView "ShowNote" $ \case
   Nothing -> mempty
   Just note ->
-    let commentText1 = (note ^. noteText)
+    let commentText1  = (note ^. noteText)
         commentTitle1 = "Title of comment"
-        iconStyle1 = ("icon-Remark", "dark")
-        userName1 = "meisterkaiser"
+        iconStyle1    = ("icon-Remark", "dark")
+        userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
     in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__note)
 
@@ -135,10 +143,10 @@ showDiscussion :: ReactView (Maybe CompositeDiscussion)
 showDiscussion = defineView "ShowDiscussion" $ \case
   Nothing -> mempty
   Just discussion ->
-    let commentText1 = (Tree.rootLabel (discussion ^. compositeDiscussionTree) ^. statementText)
+    let commentText1  = (Tree.rootLabel (discussion ^. compositeDiscussionTree) ^. statementText)
         commentTitle1 = "Title of discussion"
-        iconStyle1 = ("icon-Discussion", "dark")
-        userName1 = "meisterkaiser"
+        iconStyle1    = ("icon-Discussion", "dark")
+        userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
     in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__discussion)
 
@@ -150,10 +158,10 @@ showQuestion = defineView "ShowQuestion" $ \case
   Nothing -> mempty
   Just question ->
     let overlayStyle1 = [ Style "backgroundColor" C.vdoc_question ]
-        commentText1 = (question ^. compositeQuestion . questionText)
+        commentText1  = (question ^. compositeQuestion . questionText)
         commentTitle1 = "Title of question"
-        iconStyle1 = ("icon-Question", "dark")
-        userName1 = "meisterkaiser"
+        iconStyle1    = ("icon-Question", "dark")
+        userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
     in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 overlayStyle1)
 
@@ -162,12 +170,12 @@ showQuestion_ question = view showQuestion question mempty
 
 
 -- was add-annotation
-addComment :: ReactView (Bool, Maybe RS.Range, Maybe RS.CommentCategory)
-addComment = defineView "AddComment" $ \(showOverlay, forRange, commentCategory) ->
-  overlay_ ["isVisible" &= showOverlay
-           , on "onCloseClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
-           , "hideOnOverlayClicked" &= True
-           , "dialogStyles" @= (vdoc_overlay_content <> vdoc_overlay_content__add_comment)
+addComment :: ReactView (Maybe RS.Range, Maybe RS.CommentCategory)
+addComment = defineView "AddComment" $ \(forRange, commentCategory) ->
+  overlay_ ["isVisible" &= True
+           , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
+           , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
+           , "dialogStyles" @= vdoc_overlay_content__add_comment
            , "overlayStyles" @= overlay_styles
            ]  $ do
 
@@ -178,8 +186,9 @@ addComment = defineView "AddComment" $ \(showOverlay, forRange, commentCategory)
     commentInput_ forRange commentCategory
 
 
-addComment_ :: (Bool, Maybe RS.Range) -> Maybe RS.CommentCategory -> ReactElementM eventHandler ()
-addComment_ (doShow, forRange) category = view addComment (doShow, forRange, category) mempty
+addComment_ :: RS.ContributionEditorData -> Maybe RS.CommentCategory -> ReactElementM eventHandler ()
+addComment_ RS.EditorIsHidden _ = mempty
+addComment_ (RS.EditorIsVisible forRange) category = view addComment (forRange, category) mempty
 
 
 commentInput :: ReactView (Maybe RS.Range, Maybe RS.CommentCategory)

@@ -72,7 +72,7 @@ clearState =
                                 M.empty M.empty M.empty
     in do
       -- FIXME: If we add ClearState to the list of Actions, we run into (timing?!) problems...
-      forM_ (concatMap dispatch [OpenDocument newVDoc, HeaderAction CloseCommentToolbarExtension]) executeAction
+      forM_ (concatMap dispatch [OpenDocument newVDoc, HeaderAction CloseToolbarExtension]) executeAction
       reactFluxWorkAroundThreadDelay
 
 

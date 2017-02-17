@@ -68,11 +68,15 @@ instance StoreData GlobalState where
         emitBackendCallsFor action state
 
         transformedAction <- case action of
-            TriggerUpdateSelection deviceOffset -> do
+            TriggerUpdateSelection releasePositionOnPage toolbarStatus -> do
                 -- for efficiency reasons, only ask JS when we get this action
                 hasRange <- js_hasRange
-                range <- if hasRange then getRange else pure Nothing
-                pure . ContributionAction $ UpdateSelection (range, Just deviceOffset)
+                mrange <- if hasRange then getRange else pure Nothing
+                pure . ContributionAction $ UpdateSelection
+                    (case mrange of
+                        Nothing -> NothingSelectedButUpdateTriggered releasePositionOnPage
+                        Just range -> RangeSelected range releasePositionOnPage)
+                    toolbarStatus
             _ -> pure action
 
 

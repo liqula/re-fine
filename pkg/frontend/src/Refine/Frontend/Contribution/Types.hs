@@ -38,6 +38,7 @@ import           Text.Read (readMaybe)
 
 import Refine.Common.Types
 import Refine.Prelude.TH (makeRefineType)
+import Refine.Frontend.Header.Types
 import Refine.Frontend.Screen.Types
 
 
@@ -69,9 +70,11 @@ instance ToJSON Range where
       , "scrollOffset" .= s
       ]
 
-type DeviceOffset = Int
-
-type Selection = (Maybe Range, Maybe DeviceOffset)
+data Selection =
+    NothingSelected
+  | NothingSelectedButUpdateTriggered OffsetFromDocumentTop -- TODO when can this happen?
+  | RangeSelected Range OffsetFromDocumentTop
+  deriving (Show, Generic)
 
 -- for Overlay:
 newtype CommentInputState = CommentInputState
@@ -108,10 +111,14 @@ mapFromValue = withObject "MarkPositions"
                          <*> parseJSON v)
   . HashMap.toList
 
+data ContributionEditorData =
+    EditorIsVisible (Maybe Range)
+  | EditorIsHidden
+  deriving (Show, Generic)
+
 
 data ContributionAction =
-    UpdateSelection Selection
-  | ClearSelection
+    UpdateSelection Selection ToolbarExtensionStatus
   | ShowNoteOverlay (ID Note)
   | ShowDiscussionOverlay (ID Discussion)
   | HideCommentOverlay
@@ -127,22 +134,24 @@ data ContributionAction =
 
 
 data ContributionState = ContributionState
-  { _bsCurrentSelection         :: Selection
-  , _bsCommentCategory          :: Maybe CommentCategory
-  , _bsDiscussionId             :: Maybe (ID Discussion)
-  , _bsNoteId                   :: Maybe (ID Note)
-  , _bsCommentEditorIsVisible   :: (Bool, Maybe Range)
-  , _bsHighlightedMarkAndBubble :: Maybe (ID Void)
-  , _bsMarkPositions            :: MarkPositions
+  { _csCurrentSelection         :: Selection
+  , _csCommentCategory          :: Maybe CommentCategory
+  , _csDiscussionId             :: Maybe (ID Discussion)
+  , _csNoteId                   :: Maybe (ID Note)
+  , _csCommentEditorIsVisible   :: ContributionEditorData
+  , _csHighlightedMarkAndBubble :: Maybe (ID Void)
+  , _csMarkPositions            :: MarkPositions
   } deriving (Show, Generic)
 
 
 emptyContributionState :: ContributionState
-emptyContributionState = ContributionState (Nothing, Nothing) Nothing Nothing Nothing (False, Nothing) Nothing (MarkPositions M.empty)
+emptyContributionState = ContributionState NothingSelected Nothing Nothing Nothing EditorIsHidden Nothing (MarkPositions M.empty)
 
 
 makeRefineType ''CommentInputState
 makeRefineType ''CommentCategory
+makeRefineType ''Selection
+makeRefineType ''ContributionEditorData
 makeRefineType ''ContributionAction
 makeRefineType ''ContributionState
 

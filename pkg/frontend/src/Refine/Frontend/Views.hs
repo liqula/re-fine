@@ -74,40 +74,47 @@ mainScreen :: ReactView RS.GlobalState
 mainScreen = defineView "MainScreen" $ \rs ->
   let vdoc = fromJust (rs ^. gsVDoc) -- FIXME: improve this!  (introduce a custom props type with a CompositeVDoc *not* wrapped in a 'Maybe')
 
-  in div_
-    [ onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseCommentToolbarExtension)
-    ] $ do
+  in div_ (case rs ^. gsHeaderState . hsToolbarExtensionStatus of
+    HT.ToolbarExtensionClosed -> []
+    _ -> [ onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseToolbarExtension)
+         ]) $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
       stickyContainer_ [] $ do
           mainHeader_ rs
 
           -- components that are only temporarily visible:
-          showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsContributionState . bsNoteId)
-          showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsContributionState . bsDiscussionId)
-          addComment_ (rs ^. gsContributionState . bsCommentEditorIsVisible) (rs ^. gsContributionState . bsCommentCategory)
+          showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsContributionState . csNoteId)
+          showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsContributionState . csDiscussionId)
+          addComment_ (rs ^. gsContributionState . csCommentEditorIsVisible) (rs ^. gsContributionState . csCommentCategory)
           notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
 
           main_ ["role" $= "main"] $ do
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
+                      let toolbarStatus = rs ^. gsHeaderState . hsToolbarExtensionStatus
                       leftAside_ $ LeftAsideProps
-                                     (rs ^. gsContributionState . bsMarkPositions)
-                                     (rs ^. gsContributionState . bsCurrentSelection)
-                                     (rs ^. gsContributionState . bsHighlightedMarkAndBubble)
+                                     (rs ^. gsContributionState . csMarkPositions)
+                                     (rs ^. gsContributionState . csCurrentSelection)
+                                     (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
                                      (M.elems (vdoc ^. compositeVDocDiscussions))
                                      (M.elems (vdoc ^. compositeVDocNotes))
+                                     toolbarStatus
                       article_ [ "id" $= "vdocValue"
                                , "className" $= "gr-20 gr-14@desktop"
-                               , onMouseUp $ \_ me -> RS.dispatch . RS.TriggerUpdateSelection $ mouseClientY me
-                               , onTouchEnd $ \_ te -> RS.dispatch . RS.TriggerUpdateSelection . touchScreenY . head $ touches te
+                               , onMouseUp  $ \_ me -> RS.dispatch $
+                                   RS.TriggerUpdateSelection (SC.OffsetFromDocumentTop $ mousePageY me) toolbarStatus
+                                     -- <-- relative to webpage | relative to viewport -> mouseClientY me
+                               , onTouchEnd $ \_ te -> RS.dispatch $
+                                   RS.TriggerUpdateSelection (SC.OffsetFromDocumentTop . touchPageY . head $ touches te) toolbarStatus
+
                                ] $ do
                         -- leftover from p'2016:
                         -- div_ ["className" $= "c-vdoc-overlay"] $ do
                           -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
                         div_ ["className" $= "c-article-content"] $ do
                           toArticleBody (rs ^. gsContributionState) (_unVDocVersion . _compositeVDocVersion $ vdoc)
-                      rightAside_ (rs ^. gsContributionState . bsMarkPositions) (rs ^. gsScreenState)
+                      rightAside_ (rs ^. gsContributionState . csMarkPositions) (rs ^. gsScreenState)
 
 mainScreen_ :: RS.GlobalState -> ReactElementM eventHandler ()
 mainScreen_ rs = view mainScreen rs mempty
@@ -127,7 +134,7 @@ toHTML _ (DT.Node (HTMLP.ContentChar content) []) = elemText $ cs [content]
 -- a comment - do we want to support them, given our HTML editor provides no means of entering them?
 toHTML _ (DT.Node (HTMLP.Comment _) _) = mempty -- ignore comments
 toHTML state (DT.Node (HTMLP.TagOpen "mark" attrs) subForest) =
-    rfMark_ (MarkProps attrs (state ^. bsHighlightedMarkAndBubble)) $ toHTML state `mapM_` subForest -- (toProperties attrs)
+    rfMark_ (MarkProps attrs (state ^. csHighlightedMarkAndBubble)) $ toHTML state `mapM_` subForest -- (toProperties attrs)
 toHTML state (DT.Node (HTMLP.TagOpen tagname attrs) subForest) =
     React.Flux.term (fromString (cs tagname)) (toProperties attrs) $ toHTML state `mapM_` subForest
 toHTML _ (DT.Node (HTMLP.TagSelfClose tagname attrs) []) =
@@ -147,12 +154,13 @@ toHTML state (DT.Node rootLabel subForest) = do
 
 
 data LeftAsideProps = LeftAsideProps
-  { _leftAsideMarkPositions :: RS.MarkPositions
-  , _leftAsideCurrentSelection :: RS.Selection
+  { _leftAsideMarkPositions     :: RS.MarkPositions
+  , _leftAsideCurrentSelection  :: RS.Selection
   , _leftAsideHighlightedBubble :: Maybe (ID Void)
-  , _leftAsideScreenState :: SC.ScreenState
-  , _leftAsideDiscussions :: [CompositeDiscussion]
-  , _leftAsideNotes :: [Note]
+  , _leftAsideScreenState       :: SC.ScreenState
+  , _leftAsideDiscussions       :: [CompositeDiscussion]
+  , _leftAsideNotes             :: [Note]
+  , _leftAsideQuickCreateInfo   :: ToolbarExtensionStatus
   }
 
 leftAside :: ReactView LeftAsideProps
@@ -176,11 +184,11 @@ leftAside = defineView "LeftAside" $ \props ->
                                          )
                                          (elemText (n ^. noteText)))
                       (_leftAsideNotes props)
-{-
+{- TODO: later
         questionBubble_ (SpecialBubbleProps 3 (_leftAsideMarkPositions props) (_leftAsideScreenState props)) $ do
             span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
 -}
-        quickCreate_ "annotation" (_leftAsideCurrentSelection props) (_leftAsideScreenState props)  -- RENAME: annotation => comment
+        quickCreate_ $ QuickCreateProps "annotation" (_leftAsideCurrentSelection props) (_leftAsideScreenState props) (_leftAsideQuickCreateInfo props)  -- RENAME: annotation => comment
 
 
 leftAside_ :: LeftAsideProps -> ReactElementM eventHandler ()
@@ -191,7 +199,7 @@ rightAside :: ReactView (RS.MarkPositions, SC.ScreenState)
 rightAside = defineView "RightAside" $ \(_markPositions, _screenState) ->
     aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do -- RENAME: modifications => ??
       mempty
-    {-
+    {- TODO: later
             editBubble_ 2 markPositions screenState $ do
                 span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
     -}

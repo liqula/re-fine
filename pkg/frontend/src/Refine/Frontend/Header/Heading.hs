@@ -87,7 +87,7 @@ mainHeader = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
                 div_ ["className" $= "c-fulltoolbar"] $ do
                     sticky_ [on "onStickyStateChange" $ \e _ -> (RS.dispatch . RS.ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
                         toolbar_
-                        commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. RS.gsHeaderState . HT.hsCommentToolbarExtensionStatus)
+                        commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. RS.gsHeaderState . HT.hsToolbarExtensionStatus)
                         editToolbarExtension_
 
    , lComponentDidMount  = Just $ \_propsandstate ldom _     -> calcHeaderHeight ldom

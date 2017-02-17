@@ -60,10 +60,10 @@ spec = do
       -- simulate events:
       _ <- simulate button Click
       globalState1 <- getStoreData refineStore
-      globalState1 ^. gsHeaderState . hsCommentToolbarExtensionStatus `shouldBe` CommentToolbarExtensionWithButtons
+      globalState1 ^. gsHeaderState . hsToolbarExtensionStatus `shouldBe` CommentToolbarExtensionWithButtons
       _ <- simulate button Click
       globalState2 <- getStoreData refineStore
-      globalState2 ^. gsHeaderState . hsCommentToolbarExtensionStatus `shouldBe` CommentToolbarExtensionClosed
+      globalState2 ^. gsHeaderState . hsToolbarExtensionStatus `shouldBe` ToolbarExtensionClosed
 
 
   describe "The commentToolbarExtension_ component" $ do

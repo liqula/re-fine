@@ -112,12 +112,12 @@ toolbar_ = view toolbar () mempty
 
 
 newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
-  { _ctepStatus :: RS.CommentToolbarExtensionStatus
+  { _ctepStatus :: RS.ToolbarExtensionStatus
   }
 
 commentToolbarExtension :: ReactView CommentToolbarExtensionProps
 commentToolbarExtension = defineView "CommentToolbarExtension" $ \case
-  (CommentToolbarExtensionProps RS.CommentToolbarExtensionClosed) -> mempty
+  (CommentToolbarExtensionProps RS.ToolbarExtensionClosed) -> mempty
   (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithSelection) -> frame $ do
     div_ "Please select the text you would like to comment on"
   (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithButtons) -> frame $ do
