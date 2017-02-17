@@ -74,9 +74,10 @@ mainScreen :: ReactView RS.GlobalState
 mainScreen = defineView "MainScreen" $ \rs ->
   let vdoc = fromJust (rs ^. gsVDoc) -- FIXME: improve this!  (introduce a custom props type with a CompositeVDoc *not* wrapped in a 'Maybe')
 
-  in div_
-    [ onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseToolbarExtension)
-    ] $ do
+  in div_ (case rs ^. gsHeaderState . hsToolbarExtensionStatus of
+    HT.ToolbarExtensionClosed -> []
+    _ -> [ onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseToolbarExtension)
+         ]) $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
       stickyContainer_ [] $ do
           mainHeader_ rs
