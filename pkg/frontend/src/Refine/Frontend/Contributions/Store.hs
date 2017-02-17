@@ -37,8 +37,8 @@ contributionStateUpdate action state =
   let newState = state
                   & bsCurrentSelection         %~ currentSelectionUpdate action
                   & bsCommentCategory          %~ commentCategoryUpdate action
-                  & bsDiscussionId      %~ discussionIsVisibleUpdate action
-                  & bsNoteId            %~ noteIsVisibleUpdate action
+                  & bsDiscussionId             %~ discussionIsVisibleUpdate action
+                  & bsNoteId                   %~ noteIsVisibleUpdate action
                   & bsCommentEditorIsVisible   %~ commentEditorIsVisibleUpdate action
                   & bsHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
                   & bsMarkPositions            %~ markPositionsUpdate action

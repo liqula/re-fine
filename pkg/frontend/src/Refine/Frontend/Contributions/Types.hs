@@ -129,8 +129,8 @@ data ContributionAction =
 data ContributionState = ContributionState
   { _bsCurrentSelection         :: Selection
   , _bsCommentCategory          :: Maybe CommentCategory
-  , _bsDiscussionId      :: Maybe (ID Discussion)
-  , _bsNoteId            :: Maybe (ID Note)
+  , _bsDiscussionId             :: Maybe (ID Discussion)
+  , _bsNoteId                   :: Maybe (ID Note)
   , _bsCommentEditorIsVisible   :: (Bool, Maybe Range)
   , _bsHighlightedMarkAndBubble :: Maybe (ID Void)
   , _bsMarkPositions            :: MarkPositions
