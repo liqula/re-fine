@@ -151,13 +151,13 @@ toHTML state (DT.Node rootLabel subForest) = do
 
 
 data LeftAsideProps = LeftAsideProps
-  { _leftAsideMarkPositions :: RS.MarkPositions
-  , _leftAsideCurrentSelection :: RS.Selection
+  { _leftAsideMarkPositions     :: RS.MarkPositions
+  , _leftAsideCurrentSelection  :: RS.Selection
   , _leftAsideHighlightedBubble :: Maybe (ID Void)
-  , _leftAsideScreenState :: SC.ScreenState
-  , _leftAsideDiscussions :: [CompositeDiscussion]
-  , _leftAsideNotes :: [Note]
-  , _leftAsideQuickCreateInfo :: ToolbarExtensionStatus
+  , _leftAsideScreenState       :: SC.ScreenState
+  , _leftAsideDiscussions       :: [CompositeDiscussion]
+  , _leftAsideNotes             :: [Note]
+  , _leftAsideQuickCreateInfo   :: ToolbarExtensionStatus
   }
 
 leftAside :: ReactView LeftAsideProps
