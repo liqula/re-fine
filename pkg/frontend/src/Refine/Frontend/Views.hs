@@ -83,9 +83,9 @@ mainScreen = defineView "MainScreen" $ \rs ->
           mainHeader_ rs
 
           -- components that are only temporarily visible:
-          showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsContributionState . bsNoteId)
-          showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsContributionState . bsDiscussionId)
-          addComment_ (rs ^. gsContributionState . bsCommentEditorIsVisible) (rs ^. gsContributionState . bsCommentCategory)
+          showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsContributionState . csNoteId)
+          showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsContributionState . csDiscussionId)
+          addComment_ (rs ^. gsContributionState . csCommentEditorIsVisible) (rs ^. gsContributionState . csCommentCategory)
           notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
 
           main_ ["role" $= "main"] $ do
@@ -93,9 +93,9 @@ mainScreen = defineView "MainScreen" $ \rs ->
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       let toolbarStatus = rs ^. gsHeaderState . hsToolbarExtensionStatus
                       leftAside_ $ LeftAsideProps
-                                     (rs ^. gsContributionState . bsMarkPositions)
-                                     (rs ^. gsContributionState . bsCurrentSelection)
-                                     (rs ^. gsContributionState . bsHighlightedMarkAndBubble)
+                                     (rs ^. gsContributionState . csMarkPositions)
+                                     (rs ^. gsContributionState . csCurrentSelection)
+                                     (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
                                      (M.elems (vdoc ^. compositeVDocDiscussions))
                                      (M.elems (vdoc ^. compositeVDocNotes))
@@ -111,7 +111,7 @@ mainScreen = defineView "MainScreen" $ \rs ->
                           -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
                         div_ ["className" $= "c-article-content"] $ do
                           toArticleBody (rs ^. gsContributionState) (_unVDocVersion . _compositeVDocVersion $ vdoc)
-                      rightAside_ (rs ^. gsContributionState . bsMarkPositions) (rs ^. gsScreenState)
+                      rightAside_ (rs ^. gsContributionState . csMarkPositions) (rs ^. gsScreenState)
 
 mainScreen_ :: RS.GlobalState -> ReactElementM eventHandler ()
 mainScreen_ rs = view mainScreen rs mempty
@@ -131,7 +131,7 @@ toHTML _ (DT.Node (HTMLP.ContentChar content) []) = elemText $ cs [content]
 -- a comment - do we want to support them, given our HTML editor provides no means of entering them?
 toHTML _ (DT.Node (HTMLP.Comment _) _) = mempty -- ignore comments
 toHTML state (DT.Node (HTMLP.TagOpen "mark" attrs) subForest) =
-    rfMark_ (MarkProps attrs (state ^. bsHighlightedMarkAndBubble)) $ toHTML state `mapM_` subForest -- (toProperties attrs)
+    rfMark_ (MarkProps attrs (state ^. csHighlightedMarkAndBubble)) $ toHTML state `mapM_` subForest -- (toProperties attrs)
 toHTML state (DT.Node (HTMLP.TagOpen tagname attrs) subForest) =
     React.Flux.term (fromString (cs tagname)) (toProperties attrs) $ toHTML state `mapM_` subForest
 toHTML _ (DT.Node (HTMLP.TagSelfClose tagname attrs) []) =

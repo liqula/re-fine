@@ -135,13 +135,13 @@ data ContributionAction =
 
 
 data ContributionState = ContributionState
-  { _bsCurrentSelection         :: Selection
-  , _bsCommentCategory          :: Maybe CommentCategory
-  , _bsDiscussionId             :: Maybe (ID Discussion)
-  , _bsNoteId                   :: Maybe (ID Note)
-  , _bsCommentEditorIsVisible   :: ContributionEditorData
-  , _bsHighlightedMarkAndBubble :: Maybe (ID Void)
-  , _bsMarkPositions            :: MarkPositions
+  { _csCurrentSelection         :: Selection
+  , _csCommentCategory          :: Maybe CommentCategory
+  , _csDiscussionId             :: Maybe (ID Discussion)
+  , _csNoteId                   :: Maybe (ID Note)
+  , _csCommentEditorIsVisible   :: ContributionEditorData
+  , _csHighlightedMarkAndBubble :: Maybe (ID Void)
+  , _csMarkPositions            :: MarkPositions
   } deriving (Show, Generic)
 
 
