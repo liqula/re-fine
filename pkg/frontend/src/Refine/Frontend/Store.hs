@@ -31,7 +31,7 @@ import           Control.Lens ((&), (^.), (^?), (%~), to)
 import qualified Data.Aeson as AE
 import           Data.Aeson (ToJSON, encode)
 import qualified Data.Map.Strict as M
-import           Data.Maybe (fromJust)
+import           Data.Maybe (fromJust, isNothing)
 import           Data.String.Conversions
 import           Data.JSString (JSString, pack, unpack)
 import           React.Flux
@@ -68,11 +68,13 @@ instance StoreData GlobalState where
         emitBackendCallsFor action state
 
         transformedAction <- case action of
-            TriggerUpdateSelection deviceOffset -> do
+            TriggerUpdateSelection releasePositionOnPage -> do
                 -- for efficiency reasons, only ask JS when we get this action
                 hasRange <- js_hasRange
                 range <- if hasRange then getRange else pure Nothing
-                pure . ContributionAction $ UpdateSelection (range, Just deviceOffset)
+                pure . ContributionAction . UpdateSelection $ if isNothing range
+                                                              then NothingSelectedButUpdateTriggered releasePositionOnPage
+                                                              else RangeSelected (fromJust range) releasePositionOnPage
             _ -> pure action
 
 

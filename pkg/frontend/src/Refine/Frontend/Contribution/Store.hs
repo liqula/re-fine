@@ -50,8 +50,8 @@ contributionStateUpdate action state =
 currentSelectionUpdate :: ContributionAction -> Selection -> Selection
 currentSelectionUpdate action state = case action of
   (UpdateSelection newState) -> newState
-  ClearSelection -> (Nothing, Nothing)
-  SubmitEdit     -> (Nothing, Nothing)
+  ClearSelection -> NothingSelected
+  SubmitEdit     -> NothingSelected
   _ -> state
 
 commentCategoryUpdate :: ContributionAction -> Maybe CommentCategory -> Maybe CommentCategory

@@ -69,9 +69,13 @@ instance ToJSON Range where
       , "scrollOffset" .= s
       ]
 
-type DeviceOffset = Int
+type DeviceOffset = Int -- TODO replace by Matthias' new type offset relative to webpage
 
-type Selection = (Maybe Range, Maybe DeviceOffset)
+data Selection =
+    NothingSelected
+  | NothingSelectedButUpdateTriggered DeviceOffset -- TODO when can this happen?
+  | RangeSelected Range DeviceOffset
+  deriving (Show, Generic)
 
 -- for Overlay:
 newtype CommentInputState = CommentInputState
@@ -138,11 +142,12 @@ data ContributionState = ContributionState
 
 
 emptyContributionState :: ContributionState
-emptyContributionState = ContributionState (Nothing, Nothing) Nothing Nothing Nothing (False, Nothing) Nothing (MarkPositions M.empty)
+emptyContributionState = ContributionState NothingSelected Nothing Nothing Nothing (False, Nothing) Nothing (MarkPositions M.empty)
 
 
 makeRefineType ''CommentInputState
 makeRefineType ''CommentCategory
+makeRefineType ''Selection
 makeRefineType ''ContributionAction
 makeRefineType ''ContributionState
 

@@ -37,11 +37,11 @@ import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.UtilityWidgets
 
 
-quickCreate :: ReactView (String, (Maybe RS.Range, Maybe RS.DeviceOffset), SC.ScreenState)
+quickCreate :: ReactView (String, RS.Selection, SC.ScreenState)
 quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, screenState) ->
     case currentSelection of
     -- TODO unify CSS class names with those used in iconButton_ !!
-        (Just range, Just deviceOffset) ->
+        RS.RangeSelected range deviceOffset ->
             let offset = quickCreateOffset range deviceOffset screenState
             in positionedIconButton_
               (IconButtonProps
@@ -51,7 +51,7 @@ quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, s
                 (fromString createType)
                 ""
                 False
-                (\_ -> RS.dispatch (RS.ContributionAction RS.ClearSelection) <> RS.dispatch (RS.ContributionAction (RS.ShowCommentEditor (fst currentSelection))))
+                (\_ -> RS.dispatch (RS.ContributionAction RS.ClearSelection) <> (RS.dispatch . RS.ContributionAction . RS.ShowCommentEditor $ Just range))
                 []
               ) offset
         _ -> mempty
@@ -82,5 +82,5 @@ quickCreateSelectionPos range deviceOffset =
     in if useIdealCenter then idealCenter else edgePosition
 
 -- "annotation" (RENAME: Comment), "modification" (RENAME: Edit)
-quickCreate_ :: String -> (Maybe RS.Range, Maybe RS.DeviceOffset) -> SC.ScreenState -> ReactElementM eventHandler ()
+quickCreate_ :: String -> RS.Selection -> SC.ScreenState -> ReactElementM eventHandler ()
 quickCreate_ createType currentSelection screenState = view quickCreate (createType, currentSelection, screenState) mempty
