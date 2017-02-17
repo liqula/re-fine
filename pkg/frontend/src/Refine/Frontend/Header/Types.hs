@@ -37,7 +37,7 @@ data HeaderAction =
   deriving (Show, Generic)
 
 data ToolbarExtensionStatus =
-    CommentToolbarExtensionClosed
+    ToolbarExtensionClosed
   | CommentToolbarExtensionWithButtons
   | CommentToolbarExtensionWithSelection
   deriving (Show, Generic, Eq)
@@ -47,7 +47,7 @@ newtype HeaderState = HeaderState
   } deriving (Show, Generic)
 
 emptyHeaderState :: HeaderState
-emptyHeaderState = HeaderState CommentToolbarExtensionClosed
+emptyHeaderState = HeaderState ToolbarExtensionClosed
 
 
 makeRefineType ''HeaderAction

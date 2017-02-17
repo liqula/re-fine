@@ -42,9 +42,9 @@ headerStateUpdate action state =
 
 toolbarExtensionUpdate :: RefineAction -> ToolbarExtensionStatus -> ToolbarExtensionStatus
 toolbarExtensionUpdate action state = case (state, action) of
-    (CommentToolbarExtensionClosed, HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithButtons
-    (_,                             HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionClosed
-    (_,                             HeaderAction CloseCommentToolbarExtension)  -> CommentToolbarExtensionClosed
+    (ToolbarExtensionClosed,             HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithButtons
+    (_,                                  HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
+    (_,                                  HeaderAction CloseCommentToolbarExtension)  -> ToolbarExtensionClosed
     (CommentToolbarExtensionWithButtons, HeaderAction StartTextSpecificComment) -> CommentToolbarExtensionWithSelection
     (_,                                  HeaderAction StartTextSpecificComment) -> error "text-specific comment cannot start when toolbar extension is closed or in selection mode"
     _ -> state
