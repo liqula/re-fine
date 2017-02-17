@@ -42,8 +42,8 @@ quickCreate :: ReactView QuickCreateProps
 quickCreate = defineView "QuickCreateButton" $ \(QuickCreateProps createType currentSelection screenState _displayInfo) ->
     case currentSelection of
     -- TODO unify CSS class names with those used in iconButton_ !!
-        RS.RangeSelected range deviceOffset ->
-            let offset = quickCreateOffset range deviceOffset screenState
+        RS.RangeSelected range offsetFromTop ->
+            let offset = quickCreateOffset range offsetFromTop screenState
             in positionedIconButton_
               (IconButtonProps
                 (IconProps ("o-add-" <> createType) True ("icon-New_Comment", "bright") XXL)
@@ -61,10 +61,10 @@ quickCreate = defineView "QuickCreateButton" $ \(QuickCreateProps createType cur
 --    Hammer.on(ann, 'tap', quickCreateOverlay);
 
 
-quickCreateOffset :: RS.Range -> Int -> SC.ScreenState -> Int
-quickCreateOffset range deviceOffset screenState =
+quickCreateOffset :: RS.Range -> SC.OffsetFromDocumentTop -> SC.ScreenState -> Int
+quickCreateOffset range offsetFromTop screenState =
     quickCreateSelectionTop range screenState +
-    quickCreateSelectionPos range deviceOffset
+    quickCreateSelectionPos range offsetFromTop
 
 
 -- | This is the offset from the bottom of the toolbar.
@@ -73,12 +73,12 @@ quickCreateSelectionTop range = SC.offsetIntoText
   (SC.offsetFromDocumentTop (range ^. RS.rangeTopOffset) (range ^. RS.rangeScrollOffset))
       -- FIXME: should Range contain an OffsetFromDocumentTop instead?
 
-quickCreateSelectionPos :: RS.Range -> Int -> Int
-quickCreateSelectionPos range deviceOffset =
+quickCreateSelectionPos :: RS.Range -> SC.OffsetFromDocumentTop -> Int
+quickCreateSelectionPos range offsetFromTop =
     let selectionHeight = (range ^. RS.rangeBottom) - (range ^. RS.rangeTopOffset . SC.unOffsetFromViewportTop)
         idealCenter = selectionHeight `div` 2 - 22
         useIdealCenter = selectionHeight <= 200
-        closerToTop = abs (deviceOffset - range ^. RS.rangeTopOffset . SC.unOffsetFromViewportTop) < idealCenter
+        closerToTop = abs (offsetFromTop ^. SC.unOffsetFromDocumentTop - range ^. RS.rangeTopOffset . SC.unOffsetFromViewportTop) < idealCenter
         edgePosition = if closerToTop then 0 else selectionHeight - 44
     in if useIdealCenter then idealCenter else edgePosition
 

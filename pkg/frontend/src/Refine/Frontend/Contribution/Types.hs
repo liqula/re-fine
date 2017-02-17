@@ -69,12 +69,10 @@ instance ToJSON Range where
       , "scrollOffset" .= s
       ]
 
-type DeviceOffset = Int -- TODO replace by Matthias' new type offset relative to webpage
-
 data Selection =
     NothingSelected
-  | NothingSelectedButUpdateTriggered DeviceOffset -- TODO when can this happen?
-  | RangeSelected Range DeviceOffset
+  | NothingSelectedButUpdateTriggered OffsetFromDocumentTop -- TODO when can this happen?
+  | RangeSelected Range OffsetFromDocumentTop
   deriving (Show, Generic)
 
 -- for Overlay:
