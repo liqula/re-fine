@@ -83,7 +83,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
    , lComponentDidMount = Just $ \propsandstate ldom _ -> do
              this <- lThis ldom
              topOffset    <- js_getBoundingClientRectTop this
-             bottomOffset <- pure $ RS.OffsetFromViewportTop (-1)  -- TODO: js_getBoundingClientRectBottom this
+             bottomOffset <- js_getBoundingClientRectBottom this
              scrollOffset <- js_getScrollOffset
              props <- lGetProps propsandstate
              _ <- RS.reactFluxWorkAroundForkIO $ do
@@ -105,6 +105,10 @@ rfMark_ = view rfMark
 foreign import javascript unsafe
   "$1.getBoundingClientRect().top"
   js_getBoundingClientRectTop :: JSVal -> IO RS.OffsetFromViewportTop
+
+foreign import javascript unsafe
+  "$1.getBoundingClientRect().bottom"
+  js_getBoundingClientRectBottom :: JSVal -> IO RS.OffsetFromViewportTop
 
 foreign import javascript unsafe
   "typeof( window.pageYOffset ) === 'number' && window.pageYOffset \
