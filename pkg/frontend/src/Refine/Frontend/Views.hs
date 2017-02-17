@@ -176,7 +176,7 @@ leftAside = defineView "LeftAside" $ \props ->
                                          )
                                          (elemText (n ^. noteText)))
                       (_leftAsideNotes props)
-{-
+{- TODO: later
         questionBubble_ (SpecialBubbleProps 3 (_leftAsideMarkPositions props) (_leftAsideScreenState props)) $ do
             span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
 -}
@@ -191,7 +191,7 @@ rightAside :: ReactView (RS.MarkPositions, SC.ScreenState)
 rightAside = defineView "RightAside" $ \(_markPositions, _screenState) ->
     aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do -- RENAME: modifications => ??
       mempty
-    {-
+    {- TODO: later
             editBubble_ 2 markPositions screenState $ do
                 span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
     -}

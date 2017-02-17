@@ -25,8 +25,8 @@
 - Anywhere onClick: cancels the commentToolbarExtension (no matter in which state)
 - article.onMouseUp: dispatches action TriggerUpdateSelection
 - Store: transforms action to UpdateSelection
+- Store: When hsCommentToolbarExtensionStatus is CommentToolbarWithSelection: dispatches action BubblesAction.ShowCommentEditor
 - Store: action updates state BubblesStore.currentSelection
-- Updated state: When hsCommentToolbarExtensionStatus is CommentToolbarWithSelection: dispatches action BubblesAction.ShowCommentEditor
 - Dismissing the editor: dispatches action FinishTextSpecificComment and BubblesAction.HideCommentEditor
 - Submitting the comment: dispatches action FinishTextSpecificComment and BubblesAction.SubmitComment and BubblesAction.HideCommentEditor
 
