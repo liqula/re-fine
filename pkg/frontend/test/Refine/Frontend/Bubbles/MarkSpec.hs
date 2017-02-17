@@ -36,7 +36,6 @@ import           Refine.Frontend.Bubbles.Mark
 import           Refine.Frontend.Bubbles.Types
 import           Refine.Frontend.Store (refineStore)
 import           Refine.Frontend.Test.Enzyme
-import qualified Refine.Frontend.Test.Enzyme.ReactWrapperAPI as RW
 import           Refine.Frontend.Types
 
 
@@ -88,15 +87,15 @@ spec = do
       is wrapper (StringSelector ".o-mark--hover") `shouldReturn` True
 
     it "inserts the id of the current mark into the state on mouseEnter and removes it again on mouseLeave" $ do
-      wrapper <- RW.mount $ rfMark_ theProps mempty
+      wrapper <- mount $ rfMark_ theProps mempty
       -- init the state:
       globalState0 <- getStoreData refineStore
       let _ = globalState0 & gsBubblesState . bsHighlightedMarkAndBubble %~ \_ -> Nothing
       -- simulate events:
-      _ <- RW.simulate wrapper RW.MouseEnter
+      _ <- simulate wrapper MouseEnter
       globalState1 <- getStoreData refineStore
       globalState1 ^. gsBubblesState . bsHighlightedMarkAndBubble `shouldBe` Just (ID 77)
-      _ <- RW.simulate wrapper RW.MouseLeave
+      _ <- simulate wrapper MouseLeave
       globalState2 <- getStoreData refineStore
       globalState2 ^. gsBubblesState . bsHighlightedMarkAndBubble `shouldBe` Nothing
 
