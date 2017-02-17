@@ -4,9 +4,9 @@
 ## Creating a comment via direct text selection
 
 - User selects text
-- article.onMouseUp: dispatches action TriggerUpdateSelection
-- Store: transforms action to UpdateSelection
-- Store: action updates state BubblesStore.currentSelection
+- article.onMouseUp: dispatches action TriggerUpdateSelection (range, toolbarStatus)
+- Store: transforms action to UpdateSelection (range, toolbarStatus)
+- Store: action updates state BubblesStore.currentSelection (range)
 - Updated state: When hsToolbarExtensionStatus is not CommentToolbarExtensionWithSelection and x2 is not active: updates LeftAsideProps
 - Updated LeftAsideProps: create QuickCreate-button
 - Clicking QuickCreate-button:
@@ -23,8 +23,8 @@
 - BubblesStore: action StartTextSpecificComment updates state hsToolbarExtensionStatus
 - State hsToolbarExtensionStatus updates toolbar extension (displays info message)
 - Anywhere onClick: cancels the commentToolbarExtension (no matter in which state)
-- article.onMouseUp: dispatches action TriggerUpdateSelection
-- Store: transforms action to UpdateSelection
+- article.onMouseUp: dispatches action TriggerUpdateSelection (range, toolbarStatus)
+- Store: transforms action to UpdateSelection (range, toolbarStatus)
 - Store: When hsToolbarExtensionStatus is CommentToolbarWithSelection: dispatches action BubblesAction.ShowCommentEditor
 - Store: action updates state BubblesStore.currentSelection
 - Dismissing the editor: dispatches action FinishTextSpecificComment and BubblesAction.HideCommentEditor

@@ -90,6 +90,7 @@ mainScreen = defineView "MainScreen" $ \rs ->
           main_ ["role" $= "main"] $ do
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
+                      let toolbarStatus = rs ^. gsHeaderState . hsToolbarExtensionStatus
                       leftAside_ $ LeftAsideProps
                                      (rs ^. gsContributionState . bsMarkPositions)
                                      (rs ^. gsContributionState . bsCurrentSelection)
@@ -97,11 +98,12 @@ mainScreen = defineView "MainScreen" $ \rs ->
                                      (rs ^. gsScreenState)
                                      (M.elems (vdoc ^. compositeVDocDiscussions))
                                      (M.elems (vdoc ^. compositeVDocNotes))
-                                     (rs ^. gsHeaderState . hsToolbarExtensionStatus)
+                                     toolbarStatus
                       article_ [ "id" $= "vdocValue"
                                , "className" $= "gr-20 gr-14@desktop"
-                               , onMouseUp $ \_ me -> RS.dispatch . RS.TriggerUpdateSelection . SC.OffsetFromDocumentTop $ mousePageY me -- <-- relative to webpage | relative to viewport -> mouseClientY me
-                               , onTouchEnd $ \_ te -> RS.dispatch . RS.TriggerUpdateSelection . SC.OffsetFromDocumentTop . touchPageY . head $ touches te
+                               , onMouseUp  $ \_ me -> RS.dispatch $ RS.TriggerUpdateSelection (SC.OffsetFromDocumentTop $ mousePageY me) toolbarStatus -- <-- relative to webpage | relative to viewport -> mouseClientY me
+                               , onTouchEnd $ \_ te -> RS.dispatch $ RS.TriggerUpdateSelection (SC.OffsetFromDocumentTop . touchPageY . head $ touches te) toolbarStatus
+
                                ] $ do
                         -- leftover from p'2016:
                         -- div_ ["className" $= "c-vdoc-overlay"] $ do

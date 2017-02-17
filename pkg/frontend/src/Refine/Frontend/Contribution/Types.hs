@@ -38,6 +38,7 @@ import           Text.Read (readMaybe)
 
 import Refine.Common.Types
 import Refine.Prelude.TH (makeRefineType)
+import Refine.Frontend.Header.Types
 import Refine.Frontend.Screen.Types
 
 
@@ -117,7 +118,7 @@ data ContributionEditorData =
 
 
 data ContributionAction =
-    UpdateSelection Selection
+    UpdateSelection Selection ToolbarExtensionStatus
   | ClearSelection
   | ShowNoteOverlay (ID Note)
   | ShowDiscussionOverlay (ID Discussion)

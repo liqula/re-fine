@@ -49,7 +49,7 @@ contributionStateUpdate action state =
 
 currentSelectionUpdate :: ContributionAction -> Selection -> Selection
 currentSelectionUpdate action state = case action of
-  (UpdateSelection newState) -> newState
+  (UpdateSelection newState _) -> newState
   ClearSelection -> NothingSelected
   SubmitEdit     -> NothingSelected
   _ -> state
