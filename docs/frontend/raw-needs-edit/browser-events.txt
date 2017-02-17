@@ -1,0 +1,265 @@
+Kleine Korrektur hierzu: Die Funktion, die die Echos unterdrückt, heißt "stopPropagation". "preventDefault" gibt's auch, die unterdrückt aber die Behandlung des Events durch den Browser selbst (z.
++B. Seite neu laden beim Klicken auf einen Link oder sowas).
+
+https://www.mediaevent.de/javascript/event-handler-default-verhindern.html <https://www.mediaevent.de/javascript/event-handler-default-verhindern.html>
+
+From mf@zerobuzz.net Thu Feb 16 22:32:14 2017
+Date: Thu, 16 Feb 2017 22:32:14 +0100
+From: Matthias Fischmann <mf@zerobuzz.net>
+To: Thomas Kaiser <tom@meisterkaiser.de>
+Cc: Nicole Rauch <info@nicole-rauch.de>
+Subject: Re: Probleme mit Hammer
+Message-ID: <20170216213214.GD1469@localhost.localdomain>
+References: <1EC6A54E-A44A-4983-BFC3-2A320CC84ECC@nicole-rauch.de>
+ <20170213154027.GI1469@localhost.localdomain>
+ <39bad407-04b9-205c-35ff-8645452b578d@meisterkaiser.de>
+ <20170216120546.GT1469@localhost.localdomain>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <20170216120546.GT1469@localhost.localdomain>
+User-Agent: Mutt/1.5.23 (2014-03-12)
+Status: RO
+Content-Length: 9246
+Lines: 238
+
+
+hab's mir tats=E4chlich heute noch durchgelesen :).  sehr interessant
+und informativ, vielen dank!  ich lege das mal in unserem repo in den
+developer docs ab.  (ich glaube, f=FCr den moment hat nicole das
+irgendwie hingefummelt, so dass wir uns mit anderen baustellen qu=E4len
+k=F6nnen :)
+
+was ich mitnehme:
+
+1. es gibt eine definierte reihenfolge, in der die events zeitlich
+   auftreten.
+
+2. mit preventDefault() kann man (hoffentlich) alle sp=E4teren events,
+   die nur "echos" des ersten sind, l=F6schen.
+
+3. wenn das nicht klappt, gibt es die m=F6glichkeit, ganz lange auf die
+   event-objekte zu starren und dort einen weg zu finden, die echos
+   dem ersten event zuzuordnen und sie zu ignorieren.
+
+4. hammerjs abstrahiert (a) von browsereigent=FCmlichkeiten und wirft
+   (b) gesten-events, die man sonst kompliziert programmieren m=FCsste.
+
+
+On Thu, Feb 16, 2017 at 01:05:46PM +0100, Matthias Fischmann wrote:
+> Date: Thu, 16 Feb 2017 13:05:46 +0100
+> From: Matthias Fischmann <mf@zerobuzz.net>
+> To: Thomas Kaiser <tom@meisterkaiser.de>
+> Cc: Nicole Rauch <info@nicole-rauch.de>
+> Subject: Re: Probleme mit Hammer
+>
+>
+> hi tom,
+>
+> danke f=FCr die ausf=FChrliche antwort!  lese ich mich heute noch durch.
+> ist immer noch nicht wirklich ruhiger geworden hier.  (-:
+>
+> zum treffen n=E4chste woche: willst du montag nach der arbeit einfach
+> bei mir zuhause vorbeischauen, und wir ziehen von hier aus los?  dann
+> kann ich ggf. noch jonte ins bett bringen und nachkommen oder so.
+>
+> lg,m
+>
+>
+>
+>
+> On Mon, Feb 13, 2017 at 10:28:50PM +0100, Thomas Kaiser wrote:
+> > Date: Mon, 13 Feb 2017 22:28:50 +0100
+> > From: Thomas Kaiser <tom@meisterkaiser.de>
+> > To: Matthias Fischmann <mf@zerobuzz.net>, Nicole Rauch
+> >  <info@nicole-rauch.de>
+> > Subject: Re: Probleme mit Hammer
+> >
+> > Hi Nicole,
+> >
+> > sorry, war seit Freitag Nachmittag mit der Band unterwegs und komm erst
+> > jetzt zum antworten...
+> >
+> > Ja, das mit den Events ist irgendwie immer Gefummel :(
+> >
+> > Der StackOverflow Link bringt glaube ich nicht weiter, dessen Problem
+> > ist ja, dass er per JS neue Elemente in den DOM haut (oder sichtbar
+> > macht) und dann gleich Events auf den neuen Elementen getriggert werden.
+> > Wenn ich das richtig verstehe, hat das mit Deinem Fall wenig zu tun (und
+> > lie=DFe sich wahrscheinlich einfach l=F6sen, wenn er zuerst das DOM umb=
+aut
+> > und erst danach die Event Listener auf den neuen DOM Elementen
+> > initialisiert).
+> >
+> > Auf die PointerEvents w=FCrde ich nicht setzen. Kenne die nicht und hab
+> > noch nicht damit rumgespielt aber es sieht nicht aus, als w=E4re das in
+> > der Breite der Browser vern=FCnftig benutzbar.
+> >
+> > Der HTML5Rocks Artikel ist zwar schon von 2013 aber hat noch die
+> > vielversprechendsten Ans=E4tze, find ich.
+> > Wie der Artikel auch sagt, muss man eigentlich beide Eventarten
+> > gleichzeitig anbieten, da es ja bl=F6derweise diese Laptops mit
+> > TouchDisplay gibt, auf denen der User nach Lust und Laune beides machen
+> > kann, schlimmstenfalls im Wechsel, gerade wie er lustig ist.
+> >
+> > Denke Dein Chrome macht deswegen auch die TouchEvents, da er nicht
+> > wissen kann, ob Du grade die Maus oder das Touchpad nimmst (auf dem
+> > TouchPad kannst Du ja neben MouseEvents/Click noch allerhand weitere
+> > Gesten veranstalten) und bietet sicherheitshalber beides an.
+> >
+> > Ich denke, der Schl=FCssel ist auch in dem Artikel zu finden, die Event
+> > Reihenfolge:
+> >
+> >     touchstart
+> >     touchmove
+> >     touchend
+> >     mouseover
+> >     mousemove
+> >     mousedown
+> >     mouseup
+> >     click
+> >
+> > Man m=FCsste also EventHandler auf zB. touchstart und click legen, und
+> > beide m=FCssen letztendlich dieselbe Aktion triggern. Da der touchStart
+> > zuerst kommt, k=F6nnte man dort mit preventDefault() verhindern, dass d=
+er
+> > click danach die gleiche Aktion nochmal ausl=F6st.
+> > Hoffe mal, das klappt - so =E4hnlich ist das zumindest im Artikel auch
+> > beschrieben. Die Reihenfolge der Events d=FCrfte sich zwischen den
+> > Browsern nicht gro=DF unterscheiden, sonst w=E4re das ganze Bedienkonze=
+pt
+> > auf den Telefonen zu uneinheitlich.
+> >
+> > Mit so einem Setup kann es Dir dann egal sein, welcher Browser aus
+> > welchem Grund auch immer welche Events abfeuert, Du musst nur beim
+> > ersten Event auf den Du reagierst willst sicher stellen, dass die
+> > weiteren (ggf. redundanten) nicht mehr die gleiche Aktion ausl=F6sen.
+> > preventDefault ist die einfachste Variante, wenn das nicht klappt,
+> > m=FCsste man wahrscheinlich mit flags oder states in den Komponenten
+> > arbeiten. Das wird dann leider etwas h=E4sslich, da bl=F6derweise das
+> > event.target bei touchEvents anders bef=FCllt ist (auch bei touchend im=
+mer
+> > das target von *touchstart*) als bei den MouseEvents (immer das Element,
+> > das sich im Moment der Aktion unterhalb der Maus befindet).
+> >
+> >
+> > Diese ganzen =DCberlegungen sind aber erstmal unabh=E4ngig von Hammer. =
+Wenn
+> > ich das richtig verstehe, kann sich Hammer Letztendlich auch nur an die
+> > vom Browser generierten Events h=E4ngen, ein Tap oder was auch immer
+> > m=FCsste auch aus zB. einem touchstart des Browsers herr=FChren. Das Pr=
+inzip
+> > von eben sollte also auch im Zusammenspiel mit Hammer funktionieren.
+> > Hammer erlaubt eben =FCber die eingebauten Events hinaus noch das Erken=
+nen
+> > weiterer Gesten (tap, pinch, swipe usw.) und bessere Kontrolle =FCber d=
+ie
+> > Einzelheiten (zB. den Delay). Die Library wird sich dabei die jeweiligen
+> > Eigenschaften unterschiedlicher Browser-Implementierungen zunutze machen
+> > - oder sie ausgleichen, so dass man sich damit dann nicht all zu sehr
+> > rumplagen muss (soweit die Theorie...).
+> >
+> > Deshalb hatte ich Hammer eingebaut - um Browserunterschiede bei den
+> > Touchevents auszub=FCgeln und ggf. mehr Kontrolle =FCber Gesten und
+> > EventTrigger zu haben. Fummelig bleibt das Thema leider trotzdem ...
+> > Hoffe, das bringt trotzdem irgendwie weiter?
+> >
+> > Womit wir nun aber endlich zum Bier kommen :)
+> > N=E4chste Woche: sehr gern!!
+> > Idealerweise Montag! Dienstag geht notfalls auch, nur Mittwoch wird bei
+> > mir wegen Bandprobe schwierig ... W=FCrde mich freuen, wenns klappt!
+> >
+> > Liebe Gr=FC=DFe, tom,
+> >
+> >
+> >
+> >
+> > On 13.02.2017 16:40, Matthias Fischmann wrote:
+> > >
+> > > au=DFerdem sind wir alle vom 20.-22.2. (einschl.) in berlin.  w=E4rst=
+ du
+> > > in der zeit ggf. zu haben f=FCr ein bier und / oder eine
+> > > browser-programmierschulung?  :-)
+> > >
+> > > lg,
+> > > m
+> > >
+> > >
+> > > On Sat, Feb 11, 2017 at 03:21:58PM +0100, Nicole Rauch wrote:
+> > >> Date: Sat, 11 Feb 2017 15:21:58 +0100
+> > >> From: Nicole Rauch <info@nicole-rauch.de>
+> > >> To: Thomas Kaiser <tom@meisterkaiser.de>
+> > >> Cc: Matthias Fischmann <mf@zerobuzz.net>
+> > >> Subject: Probleme mit Hammer
+> > >>
+> > >> Hallo Tom,
+> > >>
+> > >> ich beobachte gerade interessante Ph=E4nomene in meinem Browser (Chr=
+ome on Mac). Wenn an einem div per Hammer ein "onTap" handler dranh=E4ngt u=
+nd auch ganz normal ein "onClick" Handler dranh=E4ngt, und ich auf dieses E=
+lement draufklicke (auf meinem Mac mit dem Touchpad), dann wird sowohl ein =
+tap event als auch ein click event ausgel=F6st. Obwohl ich ja nur geklickt =
+habe und nicht getapt...
+> > >>
+> > >> Hast Du eine Ahnung, wie ich hiermit gescheit umgehen kann? Ich stol=
+pere dann haufenweise =FCber interessante und verwirrende Links wie z. B.:
+> > >>
+> > >> http://stackoverflow.com/questions/24998194/hammer-js-click-triggere=
+d-on-dom-elements-behind-tapped-after-tap-action <http://stackoverflow.com/=
+questions/24998194/hammer-js-click-triggered-on-dom-elements-behind-tapped-=
+after-tap-action>  (hier geht's aber um das Umgekehrte, d. h. dass ein Tap =
+auch ein Click ausl=F6st. Bei mir l=F6st ein Click ja aber auch ein Tap aus=
+=2E)
+> > >>
+> > >> https://www.html5rocks.com/en/mobile/touchandmouse/ <https://www.htm=
+l5rocks.com/en/mobile/touchandmouse/> (Together again? Brauche ich vielleic=
+ht gar kein Hammer - zumindest f=FCr manche events?) Und OMG, wie komplizie=
+rt wird die korrekte Event-Behandlung denn hier noch??
+> > >>
+> > >> Und was ist denn eigentlich hiermit: https://www.w3.org/TR/2013/WD-p=
+ointerevents-20130219/ <https://www.w3.org/TR/2013/WD-pointerevents-2013021=
+9/> Kommt da noch irgendwann mal was? Hast Du eine Ahnung?
+> > >>
+> > >>
+> > >> Irgendwo habe ich auch gelesen, dass Chrome auf touch-enabled device=
+s bei einem Click auch ein Tap emittiert... (ich wusste allerdings nicht, d=
+ass mein Mac als touch-enabled device durchgeht)
+> > >>
+> > >>
+> > >> Noch so eine Beobachtung: Wenn ich in einem Test ein click-event sch=
+icke, wird nur ein click-Event empfangen, das ist also keine generelle Eige=
+nschaft von Hammer.
+> > >>
+> > >> Kurzum: Ich bin einigerma=DFen verwirrt :-)
+> > >>
+> > >> Kannst Du mir weiterhelfen?
+> > >>
+> > >> LG,
+> > >> Nicole
+> > >>
+> > >> PS: Wenn Du irgendwelche gute Literatur oder Webseiten zum Thema Tou=
+ch Event Handling kennst, w=E4re ich dankbar f=FCr Input!
+> > >>
+> > >
+> > >
+> > >
+> > > --
+> > > https://zerobuzz.net/
+> > > mf@zerobuzz.net
+> > > +49 179 7733 223
+> > >
+> >
+>
+>
+>
+> --
+> https://zerobuzz.net/
+> mf@zerobuzz.net
+> +49 179 7733 223
+
+--
+https://zerobuzz.net/
+mf@zerobuzz.net
++49 179 7733 223
+
