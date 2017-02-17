@@ -29,16 +29,17 @@ import           Data.Monoid ((<>))
 import           Data.String (fromString)
 import           React.Flux
 
-import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.Contribution.Types as RS
-import qualified Refine.Frontend.Screen.Types as SC
+import qualified Refine.Frontend.Header.Types as RS
 import qualified Refine.Frontend.Screen.Calculations as SC
+import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
+import qualified Refine.Frontend.Types as RS
 import           Refine.Frontend.UtilityWidgets
 
 
-quickCreate :: ReactView (String, RS.Selection, SC.ScreenState)
-quickCreate = defineView "QuickCreateButton" $ \(createType, currentSelection, screenState) ->
+quickCreate :: ReactView QuickCreateProps
+quickCreate = defineView "QuickCreateButton" $ \(QuickCreateProps createType currentSelection screenState _displayInfo) ->
     case currentSelection of
     -- TODO unify CSS class names with those used in iconButton_ !!
         RS.RangeSelected range deviceOffset ->
@@ -81,6 +82,13 @@ quickCreateSelectionPos range deviceOffset =
         edgePosition = if closerToTop then 0 else selectionHeight - 44
     in if useIdealCenter then idealCenter else edgePosition
 
+data QuickCreateProps = QuickCreateProps
+  { _quickCreateContributionkind :: String -- TODO use the proper data type here
+  , _quickCreateRange :: RS.Selection
+  , _quickCreateOffset :: SC.ScreenState
+  , _quickCreateInfo :: RS.CommentToolbarExtensionStatus
+  }
+
 -- "annotation" (RENAME: Comment), "modification" (RENAME: Edit)
-quickCreate_ :: String -> RS.Selection -> SC.ScreenState -> ReactElementM eventHandler ()
-quickCreate_ createType currentSelection screenState = view quickCreate (createType, currentSelection, screenState) mempty
+quickCreate_ :: QuickCreateProps -> ReactElementM eventHandler ()
+quickCreate_ props = view quickCreate props mempty

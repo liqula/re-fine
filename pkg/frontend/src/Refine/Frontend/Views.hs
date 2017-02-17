@@ -97,6 +97,7 @@ mainScreen = defineView "MainScreen" $ \rs ->
                                      (rs ^. gsScreenState)
                                      (M.elems (vdoc ^. compositeVDocDiscussions))
                                      (M.elems (vdoc ^. compositeVDocNotes))
+                                     (rs ^. gsHeaderState . hsCommentToolbarExtensionStatus)
                       article_ [ "id" $= "vdocValue"
                                , "className" $= "gr-20 gr-14@desktop"
                                , onMouseUp $ \_ me -> RS.dispatch . RS.TriggerUpdateSelection $ mousePageY me -- <-- relative to webpage | relative to viewport -> mouseClientY me
@@ -153,6 +154,7 @@ data LeftAsideProps = LeftAsideProps
   , _leftAsideScreenState :: SC.ScreenState
   , _leftAsideDiscussions :: [CompositeDiscussion]
   , _leftAsideNotes :: [Note]
+  , _leftAsideQuickCreateInfo :: CommentToolbarExtensionStatus
   }
 
 leftAside :: ReactView LeftAsideProps
@@ -180,7 +182,7 @@ leftAside = defineView "LeftAside" $ \props ->
         questionBubble_ (SpecialBubbleProps 3 (_leftAsideMarkPositions props) (_leftAsideScreenState props)) $ do
             span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
 -}
-        quickCreate_ "annotation" (_leftAsideCurrentSelection props) (_leftAsideScreenState props)  -- RENAME: annotation => comment
+        quickCreate_ $ QuickCreateProps "annotation" (_leftAsideCurrentSelection props) (_leftAsideScreenState props) (_leftAsideQuickCreateInfo props)  -- RENAME: annotation => comment
 
 
 leftAside_ :: LeftAsideProps -> ReactElementM eventHandler ()
