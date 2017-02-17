@@ -22,14 +22,14 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Contributions.Store where
+module Refine.Frontend.Contribution.Store where
 
 import           Control.Lens ((&), (%~))
 import qualified Data.Map.Strict as M
 import           Data.Void
 
 import Refine.Common.Types
-import Refine.Frontend.Contributions.Types
+import Refine.Frontend.Contribution.Types
 
 
 contributionStateUpdate :: ContributionAction -> ContributionState -> ContributionState

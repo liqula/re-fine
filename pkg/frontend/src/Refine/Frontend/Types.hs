@@ -29,7 +29,7 @@ import           GHC.Generics (Generic)
 
 import Refine.Common.Types as Common
 
-import Refine.Frontend.Contributions.Types
+import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types

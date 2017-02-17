@@ -22,14 +22,14 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Contributions.StoreSpec where
+module Refine.Frontend.Contribution.StoreSpec where
 
 import qualified Data.Map as Map
 import           Test.Hspec
 
 import           Refine.Common.Types
-import           Refine.Frontend.Contributions.Store
-import           Refine.Frontend.Contributions.Types
+import           Refine.Frontend.Contribution.Store
+import           Refine.Frontend.Contribution.Types
 
 
 spec :: Spec

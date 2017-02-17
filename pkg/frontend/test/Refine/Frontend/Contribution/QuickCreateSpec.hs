@@ -22,12 +22,12 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Contributions.QuickCreateSpec where
+module Refine.Frontend.Contribution.QuickCreateSpec where
 
 import Test.Hspec
 
-import qualified Refine.Frontend.Contributions.Types as RS
-import           Refine.Frontend.Contributions.QuickCreate
+import qualified Refine.Frontend.Contribution.Types as RS
+import           Refine.Frontend.Contribution.QuickCreate
 import qualified Refine.Frontend.Screen.Types as RS
 
 

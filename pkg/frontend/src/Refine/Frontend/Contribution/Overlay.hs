@@ -23,7 +23,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 
-module Refine.Frontend.Contributions.Overlay where
+module Refine.Frontend.Contribution.Overlay where
 
 import           Control.Lens (makeLenses, (^.))
 import           Data.Maybe (isNothing)
@@ -35,7 +35,7 @@ import           React.Flux
 import           Refine.Common.Types
 import           Refine.Frontend.ThirdPartyViews (overlay_)
 import qualified Refine.Frontend.Types as RS
-import qualified Refine.Frontend.Contributions.Types as RS
+import qualified Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Colors as C
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style

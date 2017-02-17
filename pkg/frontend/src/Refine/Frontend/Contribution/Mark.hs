@@ -22,7 +22,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Contributions.Mark where
+module Refine.Frontend.Contribution.Mark where
 
 import           Control.Lens (makeLenses, (^.))
 import           Control.Monad (forM_)
@@ -38,7 +38,7 @@ import           Text.Read (readMaybe)
 
 import           Refine.Common.Types
 import qualified Refine.Frontend.Screen.Types as RS
-import qualified Refine.Frontend.Contributions.Types as RS
+import qualified Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
 

@@ -23,7 +23,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 
-module Refine.Frontend.Contributions.Types where
+module Refine.Frontend.Contribution.Types where
 
 import           Control.DeepSeq
 import           Control.Lens (makeLenses)
