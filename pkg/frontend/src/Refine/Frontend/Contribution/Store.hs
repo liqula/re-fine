@@ -53,6 +53,7 @@ currentSelectionUpdate action state = case action of
   (UpdateSelection newState _) -> newState
   SubmitEdit     -> NothingSelected
   ShowCommentEditor _          -> NothingSelected
+  HideCommentEditor            -> NothingSelected
   _ -> state
 
 commentCategoryUpdate :: ContributionAction -> Maybe CommentCategory -> Maybe CommentCategory
