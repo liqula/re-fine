@@ -97,7 +97,7 @@ mainScreen = defineView "MainScreen" $ \rs ->
                                      (rs ^. gsScreenState)
                                      (M.elems (vdoc ^. compositeVDocDiscussions))
                                      (M.elems (vdoc ^. compositeVDocNotes))
-                                     (rs ^. gsHeaderState . hsCommentToolbarExtensionStatus)
+                                     (rs ^. gsHeaderState . hsToolbarExtensionStatus)
                       article_ [ "id" $= "vdocValue"
                                , "className" $= "gr-20 gr-14@desktop"
                                , onMouseUp $ \_ me -> RS.dispatch . RS.TriggerUpdateSelection . SC.OffsetFromDocumentTop $ mousePageY me -- <-- relative to webpage | relative to viewport -> mouseClientY me
@@ -154,7 +154,7 @@ data LeftAsideProps = LeftAsideProps
   , _leftAsideScreenState :: SC.ScreenState
   , _leftAsideDiscussions :: [CompositeDiscussion]
   , _leftAsideNotes :: [Note]
-  , _leftAsideQuickCreateInfo :: CommentToolbarExtensionStatus
+  , _leftAsideQuickCreateInfo :: ToolbarExtensionStatus
   }
 
 leftAside :: ReactView LeftAsideProps

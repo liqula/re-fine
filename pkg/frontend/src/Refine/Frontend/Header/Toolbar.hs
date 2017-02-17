@@ -112,7 +112,7 @@ toolbar_ = view toolbar () mempty
 
 
 newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
-  { _ctepStatus :: RS.CommentToolbarExtensionStatus
+  { _ctepStatus :: RS.ToolbarExtensionStatus
   }
 
 commentToolbarExtension :: ReactView CommentToolbarExtensionProps

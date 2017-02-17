@@ -35,22 +35,16 @@ import Refine.Frontend.Types
 headerStateUpdate :: RefineAction -> HeaderState -> HeaderState
 headerStateUpdate action state =
   let newState = state
-                  & hsCommentToolbarExtensionStatus     %~ commentToolbarExtensionUpdate action
-                  & hsEditToolbarExtensionIsVisible     %~ editToolbarExtensionUpdate action
+                  & hsToolbarExtensionStatus     %~ toolbarExtensionUpdate action
   in newState
 
 ---------------------------------------------------------------------------
 
-commentToolbarExtensionUpdate :: RefineAction -> CommentToolbarExtensionStatus -> CommentToolbarExtensionStatus
-commentToolbarExtensionUpdate action state = case (state, action) of
+toolbarExtensionUpdate :: RefineAction -> ToolbarExtensionStatus -> ToolbarExtensionStatus
+toolbarExtensionUpdate action state = case (state, action) of
     (CommentToolbarExtensionClosed, HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithButtons
     (_,                             HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionClosed
     (_,                             HeaderAction CloseCommentToolbarExtension)  -> CommentToolbarExtensionClosed
     (CommentToolbarExtensionWithButtons, HeaderAction StartTextSpecificComment) -> CommentToolbarExtensionWithSelection
     (_,                                  HeaderAction StartTextSpecificComment) -> error "text-specific comment cannot start when toolbar extension is closed or in selection mode"
-    _ -> state
-
-editToolbarExtensionUpdate :: RefineAction -> Bool -> Bool
-editToolbarExtensionUpdate action state = case action of
-    HeaderAction ToggleEditToolbarExtension -> not state
     _ -> state

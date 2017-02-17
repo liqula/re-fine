@@ -86,7 +86,7 @@ data QuickCreateProps = QuickCreateProps
   { _quickCreateContributionkind :: String -- TODO use the proper data type here
   , _quickCreateRange :: RS.Selection
   , _quickCreateOffset :: SC.ScreenState
-  , _quickCreateInfo :: RS.CommentToolbarExtensionStatus
+  , _quickCreateInfo :: RS.ToolbarExtensionStatus
   }
 
 -- "annotation" (RENAME: Comment), "modification" (RENAME: Edit)

@@ -36,24 +36,20 @@ data HeaderAction =
   | ToggleEditToolbarExtension
   deriving (Show, Generic)
 
-data CommentToolbarExtensionStatus =
+data ToolbarExtensionStatus =
     CommentToolbarExtensionClosed
   | CommentToolbarExtensionWithButtons
   | CommentToolbarExtensionWithSelection
   deriving (Show, Generic, Eq)
 
-data HeaderState = HeaderState
-  { _hsCommentToolbarExtensionStatus     :: CommentToolbarExtensionStatus
-  , _hsEditToolbarExtensionIsVisible     :: Bool  -- FIXME: since comment and edit are mutually
-                                                  -- exclusive, it shouldn't be possible to set the
-                                                  -- two independently.  make this two constructors
-                                                  -- `HeaderStateComment`, `HeaderStateEdit`.
+newtype HeaderState = HeaderState
+  { _hsToolbarExtensionStatus     :: ToolbarExtensionStatus
   } deriving (Show, Generic)
 
 emptyHeaderState :: HeaderState
-emptyHeaderState = HeaderState CommentToolbarExtensionClosed False
+emptyHeaderState = HeaderState CommentToolbarExtensionClosed
 
 
 makeRefineType ''HeaderAction
-makeRefineType ''CommentToolbarExtensionStatus
+makeRefineType ''ToolbarExtensionStatus
 makeRefineType ''HeaderState
