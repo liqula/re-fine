@@ -298,6 +298,11 @@ resolvePreTokens ts_ = either absurd id $ runPreToken <$$> go
 -- * highlight marks
 
 -- | Insert a @'ChunkRange' ''HighlightMark'@.
+--
+-- FUTUREWORK: it may be better to not have this special case and rather store a 'Map' of
+-- 'ChunkRange's in the frontend that we can add/remove the 'HighlightMark' to/from.  (For now we
+-- don't have that 'Map', we only have the 'Map' that stores the pixel positions relative to the
+-- document, but it wouldn't be hard to add.)
 highlightRange :: Maybe ChunkPoint -> Maybe ChunkPoint
                -> VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
 highlightRange mp1 mp2 vers = reCanonicalizeVDocVersion $ insertMoreMarks [ChunkRange crid mp1 mp2] vers
