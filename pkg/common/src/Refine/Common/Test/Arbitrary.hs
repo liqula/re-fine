@@ -243,7 +243,7 @@ shrinkVersWithRanges :: VersWithRanges -> [VersWithRanges]
 shrinkVersWithRanges (VersWithRanges v rs) = do
   v' <- shrink v
   rs' <- shrinkList (\_ -> []) (filter (null . (`chunkRangeErrors` v')) rs)
-  pure $ VersWithRanges v' rs'
+  [VersWithRanges v' rs' | not $ null rs']
 
 
 type AllChunkPointsState = (Int, [(Int, DataUID)])
