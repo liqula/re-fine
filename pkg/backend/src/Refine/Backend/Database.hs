@@ -98,7 +98,7 @@ instance Database DB where
   createNote         = Entity.createNote
   getNote            = Entity.getNote
   addNoteUserAccess  = Entity.addNoteUserAccess
-  removeNoteAccess   = Entity.removeNoteAccess
+  removeNoteUserAccess   = Entity.removeNoteUserAccess
   usersOfNote        = Entity.usersOfNote
 
   -- * Question

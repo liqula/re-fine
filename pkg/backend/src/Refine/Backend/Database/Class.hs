@@ -44,7 +44,7 @@ class Database db where
   createNote         :: ID Edit -> Create Note -> db Note
   getNote            :: ID Note -> db Note
   addNoteUserAccess  :: ID Note -> ID User -> db ()
-  removeNoteAccess   :: ID Note -> ID User -> db ()
+  removeNoteUserAccess   :: ID Note -> ID User -> db ()
   usersOfNote        :: ID Note -> db [ID User]
 
   -- * Question

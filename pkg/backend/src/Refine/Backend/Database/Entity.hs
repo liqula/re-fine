@@ -283,8 +283,8 @@ getNote nid = S.noteElim (toNote nid) <$> getEntity nid
 addNoteUserAccess :: ID Note -> ID User -> DB ()
 addNoteUserAccess nid uid = void . liftDB . insert $ S.NoteAcc (S.idToKey nid) (S.idToKey uid)
 
-removeNoteAccess :: ID Note -> ID User -> DB ()
-removeNoteAccess nid uid = void . liftDB . deleteBy $ S.UniNA (S.idToKey nid) (S.idToKey uid)
+removeNoteUserAccess :: ID Note -> ID User -> DB ()
+removeNoteUserAccess nid uid = void . liftDB . deleteBy $ S.UniNA (S.idToKey nid) (S.idToKey uid)
 
 usersOfNote :: ID Note -> DB [ID User]
 usersOfNote nid = foreignKeyField S.noteAccUser <$$> liftDB (selectList [S.NoteAccNote ==. S.idToKey nid] [])
