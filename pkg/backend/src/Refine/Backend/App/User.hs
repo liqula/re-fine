@@ -4,7 +4,6 @@ module Refine.Backend.App.User where
 
 import           Control.Lens ((^.), view)
 import           Control.Monad (void)
-import           Control.Monad.Except
 import           Control.Monad.State (gets)
 import           Control.Monad.Reader (ask)
 import           Data.String.Conversions (cs)
@@ -15,7 +14,7 @@ import Refine.Backend.Database.Core (DB)
 import Refine.Backend.Types
 import Refine.Backend.User.Core as Users
 import Refine.Common.Types.User as Refine
-import Refine.Prelude (monadError, timespanToNominalDiffTime)
+import Refine.Prelude (maybeError, monadError, timespanToNominalDiffTime)
 
 
 login :: Refine.Login -> App DB ()
@@ -23,9 +22,9 @@ login (Login username (Users.PasswordPlain -> password)) = do
   appLog "login"
   sessionDuration <- timespanToNominalDiffTime . view appSessionLength <$> ask
   userHandle <- view appUserHandle
-  session <- maybe (throwError (AppUserNotFound username)) pure
+  session <- maybeError (AppUserNotFound username)
              =<< appIO (Users.authUser userHandle username password sessionDuration)
-  loginId <- maybe (throwError AppSessionError) pure
+  loginId <- maybeError AppSessionError
              =<< appIO (Users.verifySession userHandle session 0)
   void $ setUserSession (toUserID loginId) (UserSession session)
 

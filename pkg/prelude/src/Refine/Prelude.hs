@@ -32,6 +32,7 @@ module Refine.Prelude
     -- * misc
   , ClearTypeParameter(..)
   , monadError
+  , maybeError
   , justIf
   , justIfP
   , toEnumMay
@@ -159,6 +160,9 @@ class ClearTypeParameter (t :: * -> *) where
 -- | Convert (Left e) to an MonadError and throw it.
 monadError :: (Monad m, MonadError me m) => (e -> me) -> Either e r -> m r
 monadError err = either (throwError . err) pure
+
+maybeError :: (Monad m, MonadError me m) => me -> Maybe a -> m a
+maybeError err = maybe (throwError err) pure
 
 justIf :: a -> Bool -> Maybe a
 justIf x b = if b then Just x else Nothing

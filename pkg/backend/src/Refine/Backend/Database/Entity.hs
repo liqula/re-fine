@@ -25,7 +25,6 @@ module Refine.Backend.Database.Entity where
 import Control.Lens ((^.), to)
 import Control.Monad (void)
 import Control.Monad.Reader (ask)
-import Control.Monad.Except (throwError)
 import Data.Functor.Infix ((<$$>))
 import Data.String.Conversions (ST)
 import Data.Typeable
@@ -40,6 +39,7 @@ import           Refine.Backend.Database.Types
 import qualified Refine.Backend.DocRepo.Core as DocRepo
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
+import           Refine.Prelude (maybeError)
 
 -- FIXME: Generate this as the part of the lentil library.
 type instance S.EntityRep VDoc       = S.VDoc
@@ -127,7 +127,7 @@ vdocEntity = L.Entity getVDoc updateVDoc
 dbUser :: DB (ID User)
 dbUser = do
   DBContext mu <- ask
-  maybe (throwError DBUserNotLoggedIn) pure mu
+  maybeError DBUserNotLoggedIn mu
 
 -- * VDoc
 
