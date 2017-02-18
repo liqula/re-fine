@@ -42,7 +42,7 @@ import Refine.Common.Test.Arbitrary
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML.CanonicalizeSpec (shouldBeVDocVersion)
 import Refine.Common.VDoc.HTML.Core
-import Refine.Common.VDoc.HTML.Enhance (addUIInfoToForest)
+import Refine.Common.VDoc.HTML.Enhance
 import Refine.Common.VDoc.HTML.Splice
 
 
@@ -186,10 +186,11 @@ spec = parallel $ do
       insertMarks [r] vers `shouldNotBe` VDocVersion []
 
     it "adds owner type info in its own attribute." $ do
-      let cr l = ChunkRange l (Just (ChunkPoint (DataUID 3) 1)) (Just (ChunkPoint (DataUID 3) 2))
-          vers = vdocVersionFromST "<span data-uid=\"3\">asdf</span>"
-          vers' l = VDocVersion . addUIInfoToForest . _unVDocVersion . vdocVersionFromST $
-            "<span data-uid=\"1\">a<mark data-contribution-kind=\"" <> l <> "\" data-contribution-id=\"3\">s</mark>df</span>"
+      let cr l = ChunkRange l (Just (ChunkPoint (DataUID 1) 1)) (Just (ChunkPoint (DataUID 1) 2))
+          vers = vdocVersionFromST "<span data-uid=\"1\">asdf</span>"
+          vers' l = addUIInfoToVDocVersion . vdocVersionFromST $
+            "<span data-uid=\"1\">a<mark data-contribution-kind=\"" <> l <>
+            "\" data-contribution-id=\"3\">s</mark>df</span>"
 
       chunkRangeErrors (cr (ID 3 :: ID Note)) vers `shouldBe` []
 

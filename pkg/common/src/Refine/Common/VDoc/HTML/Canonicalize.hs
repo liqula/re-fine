@@ -25,7 +25,7 @@
 module Refine.Common.VDoc.HTML.Canonicalize
   ( canonicalizeVDocVersion, reCanonicalizeVDocVersion, downgradeRawVDocVersion
   , canonicalizeWhitespace
-  , setElemUIDs
+  , setElemUIDs, nextFreeElemUID
   , wrapInTopLevelTags
   , canonicalizeAttrsForest, canonicalizeAttrsTree, canonicalizeAttrsStream, canonicalizeAttrsToken, canonicalizeAttrs
   ) where
@@ -34,8 +34,7 @@ import           Data.Char (isSpace)
 import           Data.Function (on)
 import           Data.Functor.Infix ((<$$>))
 import           Data.List as List (foldl', sort, nubBy)
-import           Data.Set (Set)
-import qualified Data.Set as Set
+import           Data.Maybe (catMaybes)
 import           Data.String.Conversions (ST, (<>), cs)
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
@@ -43,6 +42,7 @@ import           Text.HTML.Parser (Token(..), Attr(..), canonicalizeTokens)
 import           Text.HTML.Tree (tokensFromForest, tokensToForest, nonClosing)
 
 import Refine.Common.Types
+import Refine.Common.VDoc.HTML.Core (dataUidOfToken)
 
 
 -- | Does several things.
@@ -108,30 +108,19 @@ canonicalizeWhitespace t = leading t <> ST.intercalate "\n" (ST.words t) <> trai
 -- | Remove all existing @data-uid@ attributes and add new attributes with fresh unique values to
 -- all tags.
 setElemUIDs :: [Token] ->  [Token]
-setElemUIDs = fill mempty . fmap clear
+setElemUIDs ts = reverse . snd $ foldl' fill (nextFreeElemUID ts, []) ts
   where
-    clear :: Token -> Token
-    clear (TagOpen      n attrs) = TagOpen      n (filter nonStale attrs)
-    clear (TagSelfClose n attrs) = TagSelfClose n (filter nonStale attrs)
-    clear t                      = t
+    fill :: (DataUID, [Token]) -> Token -> (DataUID, [Token])
+    fill (next, acc) = \case
+      (TagOpen      n attrs) | n /= "mark" -> (next + 1, TagOpen      n (addNext next attrs) : acc)
+      (TagSelfClose n attrs)               -> (next + 1, TagSelfClose n (addNext next attrs) : acc)
+      t                                    -> (next,     t                                   : acc)
 
-    nonStale :: Attr -> Bool
-    nonStale (Attr "data-uid" _) = False
-    nonStale _                   = True
+    addNext :: DataUID -> [Attr] -> [Attr]
+    addNext next attrs = canonicalizeAttrs $ attrs <> [Attr "data-uid" (cs $ show next)]
 
-    fill :: Set DataUID -> [Token] -> [Token]
-    fill already = reverse . snd . foldl' f (totalMaximum already, [])
-      where
-        f :: (DataUID, [Token]) -> Token -> (DataUID, [Token])
-        f (next, acc) = \case
-          (TagOpen n attrs)
-                   | n /= "mark" -> (nextDataUID next, TagOpen      n (Attr "data-uid" (cs $ show next) : attrs) : acc)
-          (TagSelfClose n attrs) -> (nextDataUID next, TagSelfClose n (Attr "data-uid" (cs $ show next) : attrs) : acc)
-          t                      -> (next,             t : acc)
-
-        totalMaximum s = if Set.null s then DataUID 1 else nextDataUID (Set.findMax s)
-        nextDataUID (DataUID n) = DataUID (n + 1)
-
+nextFreeElemUID :: [Token] -> DataUID
+nextFreeElemUID = (+1) . maximum . (0:) . catMaybes . fmap dataUidOfToken
 
 wrapInTopLevelTags :: Forest Token -> Forest Token
 wrapInTopLevelTags = fmap fill
