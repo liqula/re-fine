@@ -39,7 +39,7 @@ import           React.Flux
 import Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as RT
 
-import           Refine.Common.VDoc.HTML (insertMoreMarks)
+import qualified Refine.Common.VDoc.HTML as Common
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
@@ -77,6 +77,10 @@ instance StoreData GlobalState where
                         Nothing -> NothingSelectedButUpdateTriggered releasePositionOnPage
                         Just range -> RangeSelected range releasePositionOnPage)
                     toolbarStatus
+
+            ContributionAction (ShowCommentEditor _) -> do
+                js_removeAllRanges >> pure action
+
             _ -> pure action
 
         let newState = state
@@ -104,14 +108,19 @@ vdocUpdate action (Just vdoc) = Just $ case action of
           & RT.compositeVDocDiscussions
               %~ M.insert (discussion ^. RT.compositeDiscussion . RT.discussionID) discussion
           & RT.compositeVDocVersion
-              %~ insertMoreMarks [discussion ^. RT.compositeDiscussion . RT.discussionRange]
+              %~ Common.insertMoreMarks [discussion ^. RT.compositeDiscussion . RT.discussionRange]
 
     AddNote note
       -> vdoc
           & RT.compositeVDocNotes
               %~ M.insert (note ^. RT.noteID) note
           & RT.compositeVDocVersion
-              %~ insertMoreMarks [note ^. RT.noteRange]
+              %~ Common.insertMoreMarks [note ^. RT.noteRange]
+
+    ContributionAction (ShowCommentEditor (Just range))
+      -> vdoc & RT.compositeVDocVersion %~ Common.highlightRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
+    ContributionAction HideCommentEditor
+      -> vdoc & RT.compositeVDocVersion %~ Common.removeHighlights
 
     _ -> vdoc
 
@@ -272,3 +281,10 @@ reactFluxWorkAroundForkIO = forkIO
 -- for details and status.  Try to increase microseconds if you still experience race conditions.
 reactFluxWorkAroundThreadDelay :: IO ()
 reactFluxWorkAroundThreadDelay = threadDelay 10000
+
+
+-- * pretty hacks (:
+
+foreign import javascript unsafe
+  "window.getSelection().removeAllRanges();"
+  js_removeAllRanges :: IO ()
