@@ -38,7 +38,7 @@ import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
 import           Refine.Backend.Database.Types
 import qualified Refine.Backend.DocRepo.Core as DocRepo
-import           Refine.Backend.User.Core (LoginId, fromUserID)
+import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
 
 -- FIXME: Generate this as the part of the lentil library.
@@ -50,6 +50,7 @@ type instance S.EntityRep Question   = S.Question
 type instance S.EntityRep Discussion = S.Discussion
 type instance S.EntityRep Answer     = S.Answer
 type instance S.EntityRep Statement  = S.Statement
+type instance S.EntityRep User       = Users.Login
 
 {-
 Reading the domain structured datatypes is not a problem,
@@ -279,6 +280,15 @@ createNote pid note = do
 getNote :: ID Note -> DB Note
 getNote nid = S.noteElim (toNote nid) <$> getEntity nid
 
+addNoteUserAccess :: ID Note -> ID User -> DB ()
+addNoteUserAccess nid uid = void . liftDB . insert $ S.NoteAcc (S.idToKey nid) (S.idToKey uid)
+
+removeNoteAccess :: ID Note -> ID User -> DB ()
+removeNoteAccess nid uid = void . liftDB . deleteBy $ S.UniNA (S.idToKey nid) (S.idToKey uid)
+
+usersOfNote :: ID Note -> DB [ID User]
+usersOfNote nid = foreignKeyField S.noteAccUser <$$> liftDB (selectList [S.NoteAccNote ==. S.idToKey nid] [])
+
 -- * Question
 
 -- TODO: User lid
@@ -301,6 +311,15 @@ createQuestion pid question = do
 
 getQuestion :: ID Question -> DB Question
 getQuestion qid = S.questionElim (toQuestion qid) <$> getEntity qid
+
+addQuestionUserAccess :: ID Question -> ID User -> DB ()
+addQuestionUserAccess qid uid = void . liftDB . insert $ S.QstnAcc (S.idToKey qid) (S.idToKey uid)
+
+removeQuestionUserAccess :: ID Question -> ID User -> DB ()
+removeQuestionUserAccess qid uid = void . liftDB . deleteBy $ S.UniQA (S.idToKey qid) (S.idToKey uid)
+
+usersOfQuestion :: ID Question -> DB [ID User]
+usersOfQuestion qid = foreignKeyField S.qstnAccUser <$$> liftDB (selectList [S.QstnAccQuestion ==. S.idToKey qid] [])
 
 -- * Discussion
 
@@ -342,6 +361,14 @@ discussionOfStatement :: ID Statement -> DB (ID Discussion)
 discussionOfStatement sid = unique =<< liftDB
   (foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] [])
 
+addDiscussionUserAccess :: ID Discussion -> ID User -> DB ()
+addDiscussionUserAccess did uid = void . liftDB . insert $ S.DscnAcc (S.idToKey did) (S.idToKey uid)
+
+removeDiscussionUserAccess :: ID Discussion -> ID User -> DB ()
+removeDiscussionUserAccess did uid = void . liftDB . deleteBy $ S.UniDA (S.idToKey did) (S.idToKey uid)
+
+usersOfDiscussion :: ID Discussion -> DB [ID User]
+usersOfDiscussion did = foreignKeyField S.dscnAccUser <$$> liftDB (selectList [S.DscnAccDiscussion ==. S.idToKey did] [])
 
 -- * Answer
 

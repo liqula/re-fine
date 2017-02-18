@@ -10,6 +10,7 @@ module Refine.Backend.User.Core
   , toUserID
   , fromUserID
   , module Web.Users.Types
+  , Login
   , LoginId
   ) where
 
@@ -18,7 +19,7 @@ import Data.String.Conversions (ST)
 import Database.Persist.Sql
 import Web.Users.Types
 import Web.Users.Persistent as Users
-import Web.Users.Persistent.Definitions (migrateAll)
+import Web.Users.Persistent.Definitions (Login, migrateAll)
 
 import Refine.Backend.Database.Core
 import Refine.Common.Types.Prelude (ID(..))

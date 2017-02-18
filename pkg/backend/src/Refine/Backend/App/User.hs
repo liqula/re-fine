@@ -18,7 +18,7 @@ import Refine.Common.Types.User as Refine
 import Refine.Prelude (monadError, timespanToNominalDiffTime)
 
 
-login :: Login -> App DB ()
+login :: Refine.Login -> App DB ()
 login (Login username (Users.PasswordPlain -> password)) = do
   appLog "login"
   sessionDuration <- timespanToNominalDiffTime . view appSessionLength <$> ask
