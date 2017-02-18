@@ -94,6 +94,7 @@ refineApi =
   :<|> Refine.Backend.App.addDiscussion
   :<|> Refine.Backend.App.addStatement
   :<|> Refine.Backend.App.createUser
+  :<|> Refine.Backend.App.changeAccess
   :<|> Refine.Backend.App.login
   :<|> Refine.Backend.App.logout
 
