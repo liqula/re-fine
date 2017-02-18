@@ -77,7 +77,7 @@ quickCreateSelectionTop range = SC.offsetIntoText
 
 quickCreateSelectionPos :: RS.Range -> SC.OffsetFromDocumentTop -> Int
 quickCreateSelectionPos range offsetFromTop =
-    let selectionHeight = (range ^. RS.rangeBottom) - (range ^. RS.rangeTopOffset . SC.unOffsetFromViewportTop)
+    let selectionHeight = (range ^. RS.rangeBottomOffset - range ^. RS.rangeTopOffset) ^. SC.unOffsetFromViewportTop
         idealCenter     = selectionHeight `div` 2 - 22
         useIdealCenter  = selectionHeight <= 200
         closerToTop     = abs (offsetFromTop ^. SC.unOffsetFromDocumentTop - range ^. RS.rangeTopOffset . SC.unOffsetFromViewportTop) < idealCenter

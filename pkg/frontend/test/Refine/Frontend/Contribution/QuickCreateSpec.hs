@@ -38,8 +38,11 @@ rangePosFor :: Int -> Int -> RS.Range
 rangePosFor topOffset bottomOffset = rangeFor topOffset bottomOffset 0
 
 rangeFor :: Int -> Int -> Int -> RS.Range
-rangeFor topOffset bottom scrollOffset =
-  RS.Range Nothing Nothing (RS.OffsetFromViewportTop topOffset) bottom (RS.ScrollOffsetOfViewport scrollOffset)
+rangeFor topOffset bottomOffset scrollOffset =
+  RS.Range Nothing Nothing
+      (RS.OffsetFromViewportTop topOffset)
+      (RS.OffsetFromViewportTop bottomOffset)
+      (RS.ScrollOffsetOfViewport scrollOffset)
 
 mh :: Int
 mh = 80 -- menu height
