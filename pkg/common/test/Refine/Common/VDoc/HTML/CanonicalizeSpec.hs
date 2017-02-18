@@ -52,7 +52,7 @@ spec = parallel $ do
 
     it "removes doctype elements." $ do
       canonicalizeVDocVersion (vdocVersionFromST "<span>,</span><QfA] data-uid=\"18\" /><!DOCTYPEW#d>")
-        `shouldBe` vdocVersionFromST "<span data-uid=\"1\">,</span><QfA] data-uid=\"2\" />"
+        `shouldBe` vdocVersionFromST "<span data-uid=\"19\">,</span><QfA] data-uid=\"18\" />"
 
 
   describe "canonicalizeWhitespace" $ do
@@ -89,8 +89,9 @@ spec = parallel $ do
     it "idempotent" . property $
       \s -> setElemUIDs (setElemUIDs s) `shouldBe` setElemUIDs s
 
-    it "existing values are overwritten with integers, starting with 1" $ do
-      setElemUIDs [TagOpen "div" [Attr "data-uid" "@@"]] `shouldBe` [TagOpen "div" [Attr "data-uid" "1"]]
+    it "existing values are left intact" $ do
+      setElemUIDs [TagOpen "div" [Attr "data-uid" "13"]] `shouldBe` [TagOpen "div" [Attr "data-uid" "13"]]
+      setElemUIDs [TagOpen "div" [Attr "data-uid" "@@"]] `shouldBe` [TagOpen "div" [Attr "data-uid" "@@"]]
 
     it "decorates TagSelfClose" $ do
       setElemUIDs [TagSelfClose "br" []] `shouldBe` [TagSelfClose "br" [Attr "data-uid" "1"]]
@@ -105,7 +106,7 @@ spec = parallel $ do
                  in vs `shouldBe` nub vs
 
     it "everything but data-uid attributes remains unchanged" . property $ do
-      \tokens -> (withoutDataUID <$> tokens) `shouldBe` (withoutDataUID <$> setElemUIDs tokens)
+      \(canonicalizeAttrsStream -> tokens) -> (withoutDataUID <$> tokens) `shouldBe` (withoutDataUID <$> setElemUIDs tokens)
 
 
   describe "wrapInTopLevelTags" $ do

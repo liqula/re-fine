@@ -5,9 +5,7 @@
 
 module Refine.Common.Types.Contribution where
 
-import Data.Char (toLower)
-import Data.Typeable (Typeable, typeOf)
-import Data.String.Conversions (cs, (<>))
+import Data.String.Conversions (ST, cs, (<>))
 import GHC.Generics (Generic)
 import Web.HttpApiData (ToHttpApiData(..), FromHttpApiData(..))
 
@@ -29,12 +27,9 @@ data Contribution =
   | ContribDiscussion Discussion
   | ContribEdit Edit
 
-class IsContribution a
-
-instance IsContribution Note
-instance IsContribution Question
-instance IsContribution Discussion
-instance IsContribution Edit
+-- | In the frontend, for replacing the browser selection range with a mark when an editor overlay
+-- opens, we need a 'Void'-like contribution kind that cannot have a contribution value.
+data HighlightMark
 
 -- | This is the @data-contribution-kind@ attribute value of the @mark@ tag, which links to the
 -- 'ChunkRange' in the dom, which in turn links to a contribution.
@@ -43,22 +38,10 @@ data ContributionKind =
   | ContribKindQuestion
   | ContribKindDiscussion
   | ContribKindEdit
+  | ContribKindHighlightMark
   deriving (Eq, Ord, Show, Generic, Enum, Bounded)
 
 makeRefineType ''ContributionKind
-
-instance ToHttpApiData ContributionKind where
-  toUrlPiece ContribKindNote       = "note"
-  toUrlPiece ContribKindQuestion   = "question"
-  toUrlPiece ContribKindDiscussion = "discussion"
-  toUrlPiece ContribKindEdit       = "edit"
-
-instance FromHttpApiData ContributionKind where
-  parseUrlPiece "note"       = Right ContribKindNote
-  parseUrlPiece "question"   = Right ContribKindQuestion
-  parseUrlPiece "discussion" = Right ContribKindDiscussion
-  parseUrlPiece "edit"       = Right ContribKindEdit
-  parseUrlPiece bad          = Left $ "instance FromHttpApiData ContributionKind: no parse for " <> cs (show bad)
 
 
 contributionKind :: Contribution -> ContributionKind
@@ -67,6 +50,33 @@ contributionKind (ContribQuestion _)   = ContribKindQuestion
 contributionKind (ContribDiscussion _) = ContribKindDiscussion
 contributionKind (ContribEdit _)       = ContribKindEdit
 
--- | This is safe iff @a@ has a constructor in 'Contribution'.
-chunkRangeKind :: forall a . (Typeable a, IsContribution a) => ChunkRange a -> ContributionKind
-chunkRangeKind _ = (\(Right v) -> v) . parseUrlPiece . cs . fmap toLower . show $ typeOf (undefined :: a)
+
+class IsContribution a where
+  contribKind :: a -> ContributionKind
+
+instance IsContribution Note          where contribKind _ = ContribKindNote
+instance IsContribution Question      where contribKind _ = ContribKindQuestion
+instance IsContribution Discussion    where contribKind _ = ContribKindDiscussion
+instance IsContribution Edit          where contribKind _ = ContribKindEdit
+instance IsContribution HighlightMark where contribKind _ = ContribKindHighlightMark
+
+chunkRangeKind :: forall a . (IsContribution a) => ChunkRange a -> ContributionKind
+chunkRangeKind _ = contribKind (undefined :: a)
+
+contributionToUrlPiece :: IsContribution a => a -> ST
+contributionToUrlPiece = toUrlPiece . contribKind
+
+instance ToHttpApiData ContributionKind where
+  toUrlPiece ContribKindNote          = "note"
+  toUrlPiece ContribKindQuestion      = "question"
+  toUrlPiece ContribKindDiscussion    = "discussion"
+  toUrlPiece ContribKindEdit          = "edit"
+  toUrlPiece ContribKindHighlightMark = "highlight"
+
+instance FromHttpApiData ContributionKind where
+  parseUrlPiece "note"       = Right ContribKindNote
+  parseUrlPiece "question"   = Right ContribKindQuestion
+  parseUrlPiece "discussion" = Right ContribKindDiscussion
+  parseUrlPiece "edit"       = Right ContribKindEdit
+  parseUrlPiece "highlight"  = Right ContribKindHighlightMark
+  parseUrlPiece bad          = Left $ "instance FromHttpApiData ContributionKind: no parse for " <> cs (show bad)

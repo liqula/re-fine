@@ -30,16 +30,16 @@ import           Control.Concurrent (ThreadId, forkIO, threadDelay)
 import           Control.Lens ((&), (^.), (^?), (%~), to)
 import qualified Data.Aeson as AE
 import           Data.Aeson (ToJSON, encode)
+import           Data.JSString (JSString, pack, unpack)
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
 import           Data.String.Conversions
-import           Data.JSString (JSString, pack, unpack)
 import           React.Flux
 
 import Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as RT
 
-import           Refine.Common.VDoc.HTML (insertMoreMarks)
+import qualified Refine.Common.VDoc.HTML as Common
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
@@ -77,8 +77,11 @@ instance StoreData GlobalState where
                         Nothing -> NothingSelectedButUpdateTriggered releasePositionOnPage
                         Just range -> RangeSelected range releasePositionOnPage)
                     toolbarStatus
-            _ -> pure action
 
+            ContributionAction (ShowCommentEditor _) -> do
+                js_removeAllRanges >> pure action
+
+            _ -> pure action
 
         let newState = state
               & gsVDoc                       %~ vdocUpdate transformedAction
@@ -95,31 +98,32 @@ instance StoreData GlobalState where
 
 
 vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
-vdocUpdate action state = case action of
-    OpenDocument openedVDoc
-      -> Just openedVDoc
+vdocUpdate action Nothing = case action of
+    OpenDocument openedVDoc -> Just openedVDoc
+    _ -> Nothing
 
+vdocUpdate action (Just vdoc) = Just $ case action of
     AddDiscussion discussion
-      -> case state of
-        Nothing   -> Nothing -- no vdoc: we cannot put the comment anywhere
-                             -- FIXME: i think this should be an error. ~fisx
-        Just vdoc -> Just $ vdoc
+      -> vdoc
           & RT.compositeVDocDiscussions
               %~ M.insert (discussion ^. RT.compositeDiscussion . RT.discussionID) discussion
           & RT.compositeVDocVersion
-              %~ insertMoreMarks [discussion ^. RT.compositeDiscussion . RT.discussionRange]
+              %~ Common.insertMoreMarks [discussion ^. RT.compositeDiscussion . RT.discussionRange]
 
     AddNote note
-      -> case state of
-        Nothing   -> Nothing -- no vdoc: we cannot put the note anywhere
-                             -- FIXME: i think this should be an error. ~fisx
-        Just vdoc -> Just $ vdoc
+      -> vdoc
           & RT.compositeVDocNotes
               %~ M.insert (note ^. RT.noteID) note
           & RT.compositeVDocVersion
-              %~ insertMoreMarks [note ^. RT.noteRange]
+              %~ Common.insertMoreMarks [note ^. RT.noteRange]
 
-    _ -> state
+    ContributionAction (ShowCommentEditor (Just range))
+      -> vdoc & RT.compositeVDocVersion %~ Common.highlightRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
+    ContributionAction HideCommentEditor
+      -> vdoc & RT.compositeVDocVersion %~ Common.removeHighlights
+
+    _ -> vdoc
+
 
 vdocListUpdate :: RefineAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
 vdocListUpdate action state = case action of
@@ -277,3 +281,10 @@ reactFluxWorkAroundForkIO = forkIO
 -- for details and status.  Try to increase microseconds if you still experience race conditions.
 reactFluxWorkAroundThreadDelay :: IO ()
 reactFluxWorkAroundThreadDelay = threadDelay 10000
+
+
+-- * pretty hacks (:
+
+foreign import javascript unsafe
+  "window.getSelection().removeAllRanges();"
+  js_removeAllRanges :: IO ()
