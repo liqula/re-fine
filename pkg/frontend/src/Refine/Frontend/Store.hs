@@ -79,7 +79,6 @@ instance StoreData GlobalState where
                     toolbarStatus
             _ -> pure action
 
-
         let newState = state
               & gsVDoc                       %~ vdocUpdate transformedAction
               & gsVDocList                   %~ vdocListUpdate transformedAction
@@ -95,31 +94,27 @@ instance StoreData GlobalState where
 
 
 vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
-vdocUpdate action state = case action of
-    OpenDocument openedVDoc
-      -> Just openedVDoc
+vdocUpdate action Nothing = case action of
+    OpenDocument openedVDoc -> Just openedVDoc
+    _ -> Nothing
 
+vdocUpdate action (Just vdoc) = Just $ case action of
     AddDiscussion discussion
-      -> case state of
-        Nothing   -> Nothing -- no vdoc: we cannot put the comment anywhere
-                             -- FIXME: i think this should be an error. ~fisx
-        Just vdoc -> Just $ vdoc
+      -> vdoc
           & RT.compositeVDocDiscussions
               %~ M.insert (discussion ^. RT.compositeDiscussion . RT.discussionID) discussion
           & RT.compositeVDocVersion
               %~ insertMoreMarks [discussion ^. RT.compositeDiscussion . RT.discussionRange]
 
     AddNote note
-      -> case state of
-        Nothing   -> Nothing -- no vdoc: we cannot put the note anywhere
-                             -- FIXME: i think this should be an error. ~fisx
-        Just vdoc -> Just $ vdoc
+      -> vdoc
           & RT.compositeVDocNotes
               %~ M.insert (note ^. RT.noteID) note
           & RT.compositeVDocVersion
               %~ insertMoreMarks [note ^. RT.noteRange]
 
-    _ -> state
+    _ -> vdoc
+
 
 vdocListUpdate :: RefineAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
 vdocListUpdate action state = case action of
