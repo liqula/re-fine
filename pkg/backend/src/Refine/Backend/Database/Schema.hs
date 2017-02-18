@@ -81,7 +81,7 @@ Statement
 
 Vote
     value       Text
-    voter       LoginId
+    owner       LoginId
 
 -- Connection tables
 
