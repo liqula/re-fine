@@ -28,6 +28,7 @@ module Refine.Common.VDoc.HTML.Splice
   , enablePreTokens
   , resolvePreTokens
   , splitAtOffset
+  , highlightRange, removeHighlights, isHighlightingMark
   ) where
 
 import           Control.Arrow (second)
@@ -45,8 +46,9 @@ import           Data.String.Conversions ((<>))
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
 import           Data.Void (Void, absurd)
-import           Text.HTML.Parser (Token(..), canonicalizeTokens)
+import           Text.HTML.Parser (Token(..), Attr(..), canonicalizeTokens)
 import           Text.HTML.Tree (tokensFromForest, tokensToForest)
+import           Web.HttpApiData (toUrlPiece)
 
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML.Canonicalize (reCanonicalizeVDocVersion)
@@ -291,3 +293,33 @@ resolvePreTokens ts_ = either absurd id $ runPreToken <$$> go
       where
         mkopen  (name, owner) = PreMarkOpen  name owner
         mkclose (name, _)     = PreMarkClose name
+
+
+-- * highlight marks
+
+-- | Insert a @'ChunkRange' ''HighlightMark'@.
+highlightRange :: Maybe ChunkPoint -> Maybe ChunkPoint
+               -> VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
+highlightRange mp1 mp2 vers = reCanonicalizeVDocVersion $ insertMoreMarks [ChunkRange crid mp1 mp2] vers
+  where
+    crid :: ID HighlightMark
+    crid = ID (-1971)  -- FIXME: this is reserved for the data-contribution-id attribute of the single
+                       -- HighlightMark range in this document.  not sure what kind of issues that'll
+                       -- cause in the future.
+                       --
+                       -- (perhaps it is good enough to do something probabilistic here?  2k bit
+                       -- random number?)
+
+-- | Remove all @'ChunkRange' ''HighlightMark'@s.
+removeHighlights :: VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
+removeHighlights (VDocVersion forest) = reCanonicalizeVDocVersion . VDocVersion $ dfs forest
+  where
+    dfs [] = []
+    dfs (Node element children : siblings) = if isHighlightingMark element
+      then dfs children <> dfs siblings
+      else Node element (dfs children) : dfs siblings
+
+isHighlightingMark :: Token -> Bool
+isHighlightingMark (TagOpen "mark" attrs) =
+    Attr "data-contribution-kind" (toUrlPiece ContribKindHighlightMark) `elem` attrs
+isHighlightingMark _ = False

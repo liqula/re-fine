@@ -42,6 +42,7 @@ import Refine.Common.Test.Arbitrary
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML.CanonicalizeSpec (shouldBeVDocVersion)
 import Refine.Common.VDoc.HTML.Core
+import Refine.Common.VDoc.HTML.Canonicalize
 import Refine.Common.VDoc.HTML.Enhance
 import Refine.Common.VDoc.HTML.Splice
 
@@ -325,6 +326,36 @@ spec = parallel $ do
                    ]
         evaluate (resolvePreTokens bad1) `shouldThrow` anyException
         evaluate (resolvePreTokens bad2) `shouldThrow` anyException
+
+
+  -- * highlightRange, removeHighlights
+
+  describe "highlightRange" $ do
+    it "adds the highlit range." . property $ do
+      \(VersWithRanges (insertMarks ([] :: [ChunkRange Note]) -> vers) (ChunkRange _ mp1 mp2 : _)) -> do
+        let vers' = highlightRange mp1 mp2 vers
+            highlights = filter isHighlightingMark . mconcat . fmap flatten $ vers' ^. unVDocVersion
+        highlights `shouldSatisfy` (== 1) . length . nub . fmap dataContributionIDOfToken
+
+    it "has canonicalized output." . property $ do
+      \(VersWithRanges (insertMarks ([] :: [ChunkRange Note]) -> vers) (ChunkRange _ mp1 mp2 : _)) -> do
+        let vers' = highlightRange mp1 mp2 vers
+            vers'' = reCanonicalizeVDocVersion vers'
+        vers' `shouldBe` vers''
+
+    it "is not supposed to insert more than one HighlightMark tag pair into a document." $ do
+      pendingWith "not sure yet if we should support that or not.  one of the issues is getting unique contribution ids."
+
+  describe "removeHighlights" $ do
+    it "inverts highlightRange." . property $ do
+      \(VersWithRanges (insertMarks ([] :: [ChunkRange Note]) -> vers) (ChunkRange _ mp1 mp2 : _)) -> do
+        removeHighlights (highlightRange mp1 mp2 vers) `shouldBe` vers
+
+    it "has canonicalized output." . property $ do
+      \(VersWithRanges (insertMarks ([] :: [ChunkRange Note]) -> vers) (ChunkRange _ mp1 mp2 : _)) -> do
+        let vers' = removeHighlights (highlightRange mp1 mp2 vers)
+            vers'' = reCanonicalizeVDocVersion vers'
+        vers' `shouldBe` vers''
 
 
 -- * helpers
