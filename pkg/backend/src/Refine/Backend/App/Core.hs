@@ -22,8 +22,25 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Backend.App.Core (
-    module Refine.Backend.App.Core
-  , RunDB
+    RunDB
+  , RunDocRepo
+  , AppContext(..)
+  , appRunDB
+  , appRunDocRepo
+  , appLogger
+  , appUserHandle
+  , appCsrfSecret
+  , appSessionLength
+  , AppState(..)
+  , appCsrfToken
+  , appUserState
+  , AppUserState(..)
+  , App(..)
+  , AppError(..)
+  , appIO
+  , db
+  , docRepo
+  , appLog
   ) where
 
 import Control.Lens (makeLenses, view)
