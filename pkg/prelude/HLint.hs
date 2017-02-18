@@ -1,6 +1,8 @@
 -- to turn off unreasonable hints on a case-by-case basis, consult
 -- https://github.com/ndmitchell/hlint#ignoring-hints
 
+import Debug.Trace
+
 import "hlint" HLint.Default
 import "hlint" HLint.Dollar
 import "hlint" HLint.Generalise
@@ -20,3 +22,17 @@ warn = isJust $ find f xs ==> any f xs
 warn = return ==> pure
 warn = f ^. g ^. h ==> f ^. g . h
 warn = fx f ^. g ==> f ^. to fx . g
+
+-- trace turned into an error call, it is only for signaling the
+-- leftover trace-s, not to rewrite them.
+warn = trace ==> error "trace should not be used"
+warn = traceId ==> error "trace should not be used"
+warn = traceShow ==> error "trace should not be used"
+warn = traceShowId ==> error "trace should not be used"
+warn = traceStack ==> error "trace should not be used"
+warn = traceIO ==> error "trace should not be used"
+warn = traceShowM ==> error "trace should not be used"
+warn = traceEventIO ==> error "trace should not be used"
+warn = traceEvent ==> error "trace should not be used"
+warn = traceMarker ==> error "trace should not be used"
+warn = traceMarkerIO ==> error "trace should not be used"
