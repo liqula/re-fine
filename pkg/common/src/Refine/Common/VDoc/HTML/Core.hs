@@ -154,9 +154,12 @@ atPreToken :: DataUID -> Traversal' (Forest PreToken) (Forest PreToken)
 atPreToken node = atNode (\p -> dataUidOfPreToken p == Just node)
 
 dataUidOfToken :: Token -> Maybe DataUID
-dataUidOfToken (TagOpen _ attrs) =
-  readMaybe . cs =<< listToMaybe (mconcat $ (\(Attr k v) -> [v | k == "data-uid"]) <$> attrs)
-dataUidOfToken _ = Nothing
+dataUidOfToken = \case
+  (TagOpen _ attrs)      -> go attrs
+  (TagSelfClose _ attrs) -> go attrs
+  _                      -> Nothing
+  where
+    go attrs = readMaybe . cs =<< listToMaybe (mconcat $ (\(Attr k v) -> [v | k == "data-uid"]) <$> attrs)
 
 dataUidOfPreToken :: PreToken -> Maybe DataUID
 dataUidOfPreToken (PreToken t)      = dataUidOfToken t
