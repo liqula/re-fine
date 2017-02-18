@@ -54,10 +54,10 @@ import Refine.Common.Types
 -- 3. wrap all top-level text nodes into @<span>@ tags (so 'ChunkPoint' always has a @data-uid@
 --    value to point to.
 canonicalizeVDocVersion :: VDocVersion 'HTMLRaw -> VDocVersion 'HTMLCanonical
-canonicalizeVDocVersion (VDocVersion vers) = VDocVersion (canonicalizeForest vers)
+canonicalizeVDocVersion (VDocVersion vers) = VDocVersion (canonicalizeTokenForest vers)
 
-canonicalizeForest :: Forest Token -> Forest Token
-canonicalizeForest
+canonicalizeTokenForest :: Forest Token -> Forest Token
+canonicalizeTokenForest
       = canonicalizeAttrsForest
       . onStream setElemUIDs
       . wrapInTopLevelTags
@@ -79,7 +79,7 @@ downgradeRawVDocVersion (VDocVersion s) = VDocVersion s
 
 -- | Canonicalization is always safe (see 'downgradeRawVDocVersion') and also idempotent.
 reCanonicalizeVDocVersion :: VDocVersion a -> VDocVersion a
-reCanonicalizeVDocVersion (VDocVersion vers) = VDocVersion (canonicalizeForest vers)
+reCanonicalizeVDocVersion (VDocVersion vers) = VDocVersion (canonicalizeTokenForest vers)
 
 
 dropCommentsAndDoctypes :: [Token] -> [Token]

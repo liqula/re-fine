@@ -193,7 +193,7 @@ spec = parallel $ do
 
       chunkRangeErrors (cr (ID 3 :: ID Note)) vers `shouldBe` []
 
-      -- NOTE: if you change these, you will probably break css in the frontend.
+      -- NOTE: changing these ID indices will probably break css in the frontend.
       insertMarks [cr (ID 3 :: ID Note)]       vers `shouldBe` vers' "note"
       insertMarks [cr (ID 3 :: ID Question)]   vers `shouldBe` vers' "question"
       insertMarks [cr (ID 3 :: ID Discussion)] vers `shouldBe` vers' "discussion"

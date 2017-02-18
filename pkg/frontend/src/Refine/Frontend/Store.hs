@@ -30,10 +30,10 @@ import           Control.Concurrent (ThreadId, forkIO, threadDelay)
 import           Control.Lens ((&), (^.), (^?), (%~), to)
 import qualified Data.Aeson as AE
 import           Data.Aeson (ToJSON, encode)
+import           Data.JSString (JSString, pack, unpack)
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
 import           Data.String.Conversions
-import           Data.JSString (JSString, pack, unpack)
 import           React.Flux
 
 import Refine.Common.Types (CompositeVDoc(..))
