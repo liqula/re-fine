@@ -23,16 +23,15 @@ warn = return ==> pure
 warn = f ^. g ^. h ==> f ^. g . h
 warn = fx f ^. g ==> f ^. to fx . g
 
--- trace turned into an error call, it is only for signaling the
--- leftover trace-s, not to rewrite them.
-warn = trace ==> error "trace should not be used"
-warn = traceId ==> error "trace should not be used"
-warn = traceShow ==> error "trace should not be used"
-warn = traceShowId ==> error "trace should not be used"
-warn = traceStack ==> error "trace should not be used"
-warn = traceIO ==> error "trace should not be used"
-warn = traceShowM ==> error "trace should not be used"
-warn = traceEventIO ==> error "trace should not be used"
-warn = traceEvent ==> error "trace should not be used"
-warn = traceMarker ==> error "trace should not be used"
-warn = traceMarkerIO ==> error "trace should not be used"
+-- this is a bit of a hack, but it works.  use "ignore Use errorDoNotUseTrace" in annotations.
+warn = trace         ==> errorDoNotUseTrace
+warn = traceId       ==> errorDoNotUseTrace
+warn = traceShow     ==> errorDoNotUseTrace
+warn = traceShowId   ==> errorDoNotUseTrace
+warn = traceStack    ==> errorDoNotUseTrace
+warn = traceIO       ==> errorDoNotUseTrace
+warn = traceShowM    ==> errorDoNotUseTrace
+warn = traceEventIO  ==> errorDoNotUseTrace
+warn = traceEvent    ==> errorDoNotUseTrace
+warn = traceMarker   ==> errorDoNotUseTrace
+warn = traceMarkerIO ==> errorDoNotUseTrace
