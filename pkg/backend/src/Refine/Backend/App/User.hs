@@ -6,6 +6,7 @@ import           Control.Lens ((^.), view)
 import           Control.Monad (void)
 import           Control.Monad.State (gets)
 import           Control.Monad.Reader (ask)
+import           Data.Maybe (isJust)
 import           Data.String.Conversions (cs)
 
 import Refine.Backend.App.Core
@@ -13,7 +14,7 @@ import Refine.Backend.App.Session
 import Refine.Backend.Database.Core (DB)
 import Refine.Backend.Types
 import Refine.Backend.User.Core as Users
-import Refine.Common.Types.User as Refine
+import Refine.Common.Types      as Refine
 import Refine.Prelude (maybeError, monadError, timespanToNominalDiffTime)
 
 
@@ -53,3 +54,8 @@ createUser (CreateUser name email password) = do
   loginId <- monadError (AppUserCreationError . cs . show)
                =<< appIO (Users.createUser userHandle user)
   pure . Refine.User . Users.toUserID $ loginId
+
+doesUserExist :: ID Refine.User -> App DB Bool
+doesUserExist uid = do
+  userHandle <- view appUserHandle
+  isJust <$> appIO (Users.getUserById userHandle (fromUserID uid))

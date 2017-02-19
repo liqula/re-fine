@@ -114,6 +114,7 @@ data AppError
   | AppUserCreationError ST
   | AppCsrfError ST
   | AppSessionError
+  | AppSanityCheckError ST
   deriving (Show, Generic)
 
 makeRefineType ''AppError
