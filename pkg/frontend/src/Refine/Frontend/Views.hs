@@ -82,7 +82,7 @@ mainScreen = defineView "MainScreen" $ \rs ->
 
           -- components that are only temporarily visible:
           showNote_ $ showNoteProps (vdoc ^. compositeVDocNotes) rs
-          showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsContributionState . csDiscussionId)
+          showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocDiscussions) rs
           addComment_ (rs ^. gsContributionState . csCommentEditorIsVisible) (rs ^. gsContributionState . csCommentCategory)
           notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
 

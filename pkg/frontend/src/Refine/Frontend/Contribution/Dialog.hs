@@ -166,19 +166,37 @@ showNote = defineView "ShowNote" $ \case
 showNote_ :: ShowNoteProps -> ReactElementM eventHandler ()
 showNote_ props = view showNote props mempty
 
-showDiscussion :: ReactView (Maybe CompositeDiscussion)
+data ShowDiscussionProps = ShowDiscussionPropsJust
+  { _sdpNote :: CompositeDiscussion
+  , _sdpTop  :: SC.OffsetFromDocumentTop
+  }
+  | ShowDiscussionPropsNothing
+
+showDiscussionProps :: M.Map (ID Discussion) CompositeDiscussion -> RS.GlobalState -> ShowDiscussionProps
+showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
+  (Just discussion, Just offset) -> ShowDiscussionPropsJust discussion offset
+  _                              -> ShowDiscussionPropsNothing
+  where
+    maybeDiscussionID = rs ^. RS.gsContributionState . RS.csDiscussionId
+    maybeDiscussion = (`M.lookup` discussions) =<< maybeDiscussionID
+    maybeOffset = do
+      did <- maybeDiscussionID
+      rs ^? RS.gsContributionState . RS.csMarkPositions . to RS._unMarkPositions
+          . at (clearTypeParameter did) . _Just . RS.markPositionBottom
+
+showDiscussion :: ReactView ShowDiscussionProps
 showDiscussion = defineView "ShowDiscussion" $ \case
-  Nothing -> mempty
-  Just discussion ->
+  ShowDiscussionPropsNothing -> mempty
+  ShowDiscussionPropsJust discussion top ->
     let commentText1  = (Tree.rootLabel (discussion ^. compositeDiscussionTree) ^. statementText)
         commentTitle1 = "Title of discussion"
         iconStyle1    = ("icon-Discussion", "dark")
         userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__discussion (SC.OffsetFromDocumentTop 0))
+    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__discussion top)
 
-showDiscussion_ :: Maybe CompositeDiscussion -> ReactElementM eventHandler ()
-showDiscussion_ note = view showDiscussion note mempty
+showDiscussion_ :: ShowDiscussionProps -> ReactElementM eventHandler ()
+showDiscussion_ props = view showDiscussion props mempty
 
 showQuestion :: ReactView (Maybe CompositeQuestion)
 showQuestion = defineView "ShowQuestion" $ \case
