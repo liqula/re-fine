@@ -59,15 +59,19 @@ dialogStyles = [ -- Style "display" ("block" :: String)
                 , Style "position" ("absolute" :: String)
                 ]
 
+-- RENAME: addCommentDialogStyles
 vdoc_overlay_content__add_comment :: [Style]
 vdoc_overlay_content__add_comment = [ Style "backgroundColor" C.vdoc_comment
                                     ] <> dialogStyles
 
 -- is vdoc_overlay_content__comment in CSS
+
+-- RENAME: showNoteDialogStyles
 vdoc_overlay_content__note :: [Style]
 vdoc_overlay_content__note = [ Style "backgroundColor" C.vdoc_comment
                               ] <> dialogStyles
 
+-- RENAME: showDiscussionDialogStyles
 vdoc_overlay_content__discussion :: [Style]
 vdoc_overlay_content__discussion = [ Style "backgroundColor" C.vdoc_discussion
                                     ] <> dialogStyles
