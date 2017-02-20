@@ -24,12 +24,12 @@
 
 module Refine.Frontend.MainMenu.Component where
 
-import           Data.String (fromString)
 import           Data.String.Conversions (cs)
 import           React.Flux
 
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.MainMenu.Types
+import           Refine.Frontend.Prelude()
 import           Refine.Frontend.Store
 import           Refine.Frontend.Types
 import           Refine.Frontend.UtilityWidgets
@@ -129,7 +129,7 @@ mainMenu = defineView "MainMenu" $ \(menuTab, currentUser) ->
                   , _iconButtonPropsElementName  = "section-button"
                   , _iconButtonPropsModuleName   = ""
                   , _iconButtonPropsContentType  = ""
-                  , _iconButtonPropsLabel        = fromString $ cs username
+                  , _iconButtonPropsLabel        = cs username
                   , _iconButtonPropsDisabled     = False
                   , _iconButtonPropsClickHandler = \_ -> []
                   , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-help"]
