@@ -15,7 +15,7 @@ import Refine.Backend.Database.Core (DB)
 import Refine.Backend.Types
 import Refine.Backend.User.Core as Users
 import Refine.Common.Types      as Refine
-import Refine.Prelude (maybeError, monadError, timespanToNominalDiffTime)
+import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 
 
 login :: Refine.Login -> App DB ()
@@ -23,9 +23,9 @@ login (Login username (Users.PasswordPlain -> password)) = do
   appLog "login"
   sessionDuration <- timespanToNominalDiffTime . view appSessionLength <$> ask
   userHandle <- view appUserHandle
-  session <- maybeError (AppUserNotFound username)
+  session <- nothingToError (AppUserNotFound username)
              =<< appIO (Users.authUser userHandle username password sessionDuration)
-  loginId <- maybeError AppSessionError
+  loginId <- nothingToError AppSessionError
              =<< appIO (Users.verifySession userHandle session 0)
   void $ setUserSession (toUserID loginId) (UserSession session)
 
@@ -51,7 +51,7 @@ createUser (CreateUser name email password) = do
               , Users.u_password = Users.makePassword (Users.PasswordPlain password)
               , Users.u_active = True
               }
-  loginId <- monadError (AppUserCreationError . cs . show)
+  loginId <- leftToError (AppUserCreationError . cs . show)
                =<< appIO (Users.createUser userHandle user)
   pure . Refine.User . Users.toUserID $ loginId
 

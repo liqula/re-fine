@@ -57,7 +57,7 @@ import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
 import Refine.Common.Rest
-import Refine.Prelude (monadError)
+import Refine.Prelude (leftToError)
 
 
 -- * Constants
@@ -133,7 +133,7 @@ maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) 
 
 {-# ANN toServantError ("HLint: ignore Use errorDoNotUseTrace" :: String) #-}
 toServantError :: (Monad m) => ExceptT AppError m :~> ExceptT ServantErr m
-toServantError = Nat ((lift . runExceptT) >=> monadError fromAppError)
+toServantError = Nat ((lift . runExceptT) >=> leftToError fromAppError)
   where
     -- FIXME: some (many?) of these shouldn't be err500.
     -- FIXME: implement better logging.

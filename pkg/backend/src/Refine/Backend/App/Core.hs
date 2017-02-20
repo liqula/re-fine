@@ -59,7 +59,7 @@ import Refine.Backend.User.Core
 import Refine.Common.Types.Prelude (ID(..))
 import Refine.Common.Types.User as Types (User)
 import Refine.Common.VDoc.HTML (ChunkRangeError(..))
-import Refine.Prelude (monadError, Timespan)
+import Refine.Prelude (leftToError, Timespan)
 import Refine.Prelude.TH (makeRefineType)
 
 type RunDocRepo = DocRepo :~> ExceptT DocRepoError IO
@@ -127,7 +127,7 @@ db m = App $ do
   mu <- user <$> gets (view appUserState)
   (Nat runDB) <- ($ DBContext mu) <$> view appRunDB
   r <- liftIO (runExceptT (runDB m))
-  monadError AppDBError r
+  leftToError AppDBError r
   where
     user = \case
       UserLoggedOut     -> Nothing
@@ -137,7 +137,7 @@ docRepo :: DocRepo a -> App db a
 docRepo m = App $ do
   (Nat runDRepo) <- view appRunDocRepo
   r <- liftIO (runExceptT (runDRepo m))
-  monadError AppDocRepoError r
+  leftToError AppDocRepoError r
 
 appLog :: String -> App db ()
 appLog msg = App $ do

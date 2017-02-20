@@ -39,7 +39,7 @@ import           Refine.Backend.Database.Types
 import qualified Refine.Backend.DocRepo.Core as DocRepo
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
-import           Refine.Prelude (maybeError)
+import           Refine.Prelude (nothingToError)
 
 -- FIXME: Generate this as the part of the lentil library.
 type instance S.EntityRep VDoc       = S.VDoc
@@ -127,7 +127,7 @@ vdocEntity = L.Entity getVDoc updateVDoc
 dbUser :: DB (ID User)
 dbUser = do
   DBContext mu <- ask
-  maybeError DBUserNotLoggedIn mu
+  nothingToError DBUserNotLoggedIn mu
 
 -- * VDoc
 
