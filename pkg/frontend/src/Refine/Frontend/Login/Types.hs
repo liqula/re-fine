@@ -30,7 +30,7 @@ import Refine.Prelude.TH (makeRefineType)
 
 
 data CurrentUser =
-    NotLoggedInUser
+    NonLoggedInUser
   | LoggedInUser Username
   deriving (Show, Generic)
 
@@ -41,7 +41,7 @@ newtype LoginState = LoginState
 
 emptyLoginState :: LoginState
 emptyLoginState = LoginState
-  { _lsCurrentUser = NotLoggedInUser
+  { _lsCurrentUser = NonLoggedInUser
   }
 
 makeRefineType ''CurrentUser
