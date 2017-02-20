@@ -11,6 +11,7 @@ import Web.HttpApiData (ToHttpApiData(..), FromHttpApiData(..))
 
 import Refine.Common.Types.Chunk
 import Refine.Common.Types.Comment
+import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc
 import Refine.Prelude.TH (makeRefineType)
 
@@ -26,6 +27,16 @@ data Contribution =
   | ContribQuestion Question
   | ContribDiscussion Discussion
   | ContribEdit Edit
+
+-- | FUTUREWORK: It would be nice to just use @ID Contribution@ instead of 'ContributionID', but
+-- that changes the case switch implementation, and I'm not sure right now if it'll still be as
+-- straight-forward.
+data ContributionID =
+    ContribIDNote (ID Note)
+  | ContribIDQuestion (ID Question)
+  | ContribIDDiscussion (ID Discussion)
+  | ContribIDEdit (ID Edit)
+  deriving (Eq, Show, Generic)
 
 -- | In the frontend, for replacing the browser selection range with a mark when an editor overlay
 -- opens, we need a 'Void'-like contribution kind that cannot have a contribution value.
@@ -80,3 +91,6 @@ instance FromHttpApiData ContributionKind where
   parseUrlPiece "edit"       = Right ContribKindEdit
   parseUrlPiece "highlight"  = Right ContribKindHighlightMark
   parseUrlPiece bad          = Left $ "instance FromHttpApiData ContributionKind: no parse for " <> cs (show bad)
+
+
+makeRefineType ''ContributionID

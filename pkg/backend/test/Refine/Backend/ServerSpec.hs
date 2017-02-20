@@ -253,7 +253,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       () <- runWaiBody sess $
         post
           changeAccessUri
-          (ChangeAccess (AccessibleDiscussion did) Grant otherUser)
+          (ChangeAccess (ContribIDDiscussion did) Grant otherUser)
       users :: [ID User] <- runDB sess . db $ usersOfDiscussion did
       users `shouldContain` [otherUser]
 

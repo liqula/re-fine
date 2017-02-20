@@ -40,9 +40,10 @@ changeAccess (ChangeAccess ad a u) = do
   exists <- doesUserExist u
   unless exists . throwError $ AppSanityCheckError "Change access"
   case ad of
-    AccessibleNote       nid -> changeNoteAccess nid a u
-    AccessibleDiscussion did -> changeDiscussionAccess did a u
-    AccessibleQuestion   qid -> changeQuestionAccess qid a u
+    ContribIDNote       nid -> changeNoteAccess nid a u
+    ContribIDQuestion   qid -> changeQuestionAccess qid a u
+    ContribIDDiscussion did -> changeDiscussionAccess did a u
+    ContribIDEdit       _   -> error "not implemented."
 
 changeNoteAccess :: ID Note -> Access -> ID User -> App DB ()
 changeNoteAccess nid a uid = do
