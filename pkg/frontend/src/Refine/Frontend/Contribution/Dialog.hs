@@ -25,18 +25,21 @@
 
 module Refine.Frontend.Contribution.Dialog where
 
-import           Control.Lens (makeLenses, (^.))
+import           Control.Lens (makeLenses, (^.), (^?), at, to, _Just)
 import           Data.Maybe (isNothing)
+import qualified Data.Map.Strict as M
 import           Data.Monoid ((<>))
 import qualified Data.Text as DT
 import qualified Data.Tree as Tree
 import           React.Flux
 
+import           Refine.Prelude (clearTypeParameter)
 import           Refine.Common.Types
 import           Refine.Frontend.ThirdPartyViews (skylight_)
 import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Colors as C
+import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
 import           Refine.Frontend.UtilityWidgets
@@ -128,10 +131,29 @@ showComment = defineView "ShowComment" $ \props ->
 showComment_ :: CommentDisplayProps -> ReactElementM eventHandler ()
 showComment_ props = view showComment props mempty
 
-showNote :: ReactView (Maybe Note)
+showNoteProps :: M.Map (ID Note) Note -> RS.GlobalState -> ShowNoteProps
+showNoteProps notes rs = case (maybeNote, maybeOffset) of
+  (Just note, Just offset) -> ShowNotePropsJust note offset
+  _                        -> ShowNotePropsNothing
+  where
+    maybeNoteID = rs ^. RS.gsContributionState . RS.csNoteId
+    maybeNote = (`M.lookup` notes) =<< maybeNoteID
+    maybeOffset = do
+      nid <- maybeNoteID
+      rs ^? RS.gsContributionState . RS.csMarkPositions . to RS._unMarkPositions
+          . at (clearTypeParameter nid) . _Just . RS.markPositionBottom
+
+
+data ShowNoteProps = ShowNotePropsJust
+  { _snpNote :: Note
+  , _snpTop  :: SC.OffsetFromDocumentTop
+  }
+  | ShowNotePropsNothing
+
+showNote :: ReactView ShowNoteProps
 showNote = defineView "ShowNote" $ \case
-  Nothing -> mempty
-  Just note ->
+  ShowNotePropsNothing -> mempty
+  ShowNotePropsJust note _top ->
     let commentText1  = (note ^. noteText)
         commentTitle1 = "Title of comment"
         iconStyle1    = ("icon-Remark", "dark")
@@ -139,8 +161,8 @@ showNote = defineView "ShowNote" $ \case
         creationDate1 = "24. 05. 2016"
     in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__note)
 
-showNote_ :: Maybe Note -> ReactElementM eventHandler ()
-showNote_ note = view showNote note mempty
+showNote_ :: ShowNoteProps -> ReactElementM eventHandler ()
+showNote_ props = view showNote props mempty
 
 showDiscussion :: ReactView (Maybe CompositeDiscussion)
 showDiscussion = defineView "ShowDiscussion" $ \case
