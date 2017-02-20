@@ -25,8 +25,8 @@
 module Refine.Frontend.Contribution.QuickCreate where
 
 import           Control.Lens ((^.))
+import           Data.String.Conversions (cs)
 import           Data.Monoid ((<>))
-import           Data.String (fromString)
 import           React.Flux
 
 import qualified Refine.Frontend.Contribution.Types as RS
@@ -36,7 +36,7 @@ import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
 import           Refine.Frontend.UtilityWidgets
-
+import           Refine.Prelude()
 
 quickCreate :: ReactView QuickCreateProps
 quickCreate = defineView "QuickCreateButton" $ \(QuickCreateProps createType currentSelection screenState displayInfo) ->
@@ -51,7 +51,7 @@ quickCreate = defineView "QuickCreateButton" $ \(QuickCreateProps createType cur
                 (IconProps ("o-add-" <> createType) True ("icon-New_Comment", "bright") XXL)
                 ""
                 ""
-                (fromString createType)
+                (cs createType)
                 ""
                 False
                 (\_ -> RS.dispatch . RS.ContributionAction . RS.ShowCommentEditor $ Just range)

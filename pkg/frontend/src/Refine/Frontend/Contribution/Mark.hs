@@ -41,6 +41,7 @@ import qualified Refine.Frontend.Screen.Calculations as RS
 import qualified Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
+import           Refine.Prelude()
 
 
 data MarkProps = MarkProps
@@ -55,7 +56,7 @@ contributionIdFrom attrs = either (\_ -> Nothing) Just . parseUrlPiece
                          $ cs (attribValueOf "data-contribution-id" attrs)
 
 toProperties :: [HTMLP.Attr] -> [PropertyOrHandler handler]
-toProperties = map (\(HTMLP.Attr key value) -> fromString (cs key) $= fromString (cs value))
+toProperties = map (\(HTMLP.Attr key value) -> cs key $= cs value)
 
 attribValueOf :: String -> [HTMLP.Attr] -> String
 attribValueOf _ [] = ""
@@ -71,7 +72,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
       Just dataContributionId ->
         mark_ (toProperties (props ^. markPropsHTMLAttributes) <>
            [ classNames [ ("o-mark", True)
-                        , (fromString . cs $ "o-mark--" <> contributionIDToKindST dataContributionId, True)
+                        , (cs $ "o-mark--" <> contributionIDToKindST dataContributionId, True)
                         , ("o-mark--hover", Just dataContributionId == props ^. markPropsHighlightedMark)
                         ]
            , onMouseEnter $ \_ _ _ -> (RS.dispatch . RS.ContributionAction $ RS.HighlightMarkAndBubble dataContributionId, Nothing)

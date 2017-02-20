@@ -26,7 +26,6 @@ module Refine.Frontend.Contribution.Bubble where
 
 import           Control.Lens ((^.), makeLenses)
 import           Data.Monoid ((<>))
-import           Data.String (fromString)
 import           Data.String.Conversions (cs)
 import           React.Flux hiding (callback)
 import           Web.HttpApiData (toUrlPiece)
@@ -59,11 +58,11 @@ bubble = defineView "Bubble" $ \props ->
         case props ^. bubblePropsMarkPosition of
             Nothing -> mempty
             Just (RT.MarkPosition topOffset _) ->
-                div_ ["data-contribution-id" $= (fromString . cs $ toUrlPiece (props ^. bubblePropsDataContribId))
-                    , "data-content-type" $= fromString (props ^. bubblePropsDataContentType)
+                div_ ["data-contribution-id" $= cs (toUrlPiece $ props ^. bubblePropsDataContribId)
+                    , "data-content-type" $= cs (props ^. bubblePropsDataContentType)
                     -- RENAME: snippet => bubble
                     , classNames [ ("o-snippet", True)
-                                  , (fromString $ "o-snippet--" <> props ^. bubblePropsDataContentType, True)
+                                  , (cs $ "o-snippet--" <> props ^. bubblePropsDataContentType, True)
                                   , ("o-snippet--hover", Just (props ^. bubblePropsDataContribId) == props ^. bubblePropsHighlightedBubble)
                                   ]
                     , "style" @= [Style "top" (SC.offsetIntoText topOffset (props ^. bubblePropsScreenState))]
@@ -71,7 +70,7 @@ bubble = defineView "Bubble" $ \props ->
                     , onMouseEnter $ \_ _ -> RS.dispatch . RT.ContributionAction . RT.HighlightMarkAndBubble $ props ^. bubblePropsDataContribId
                     , onMouseLeave $ \_ _ -> RS.dispatch $ RT.ContributionAction RT.UnhighlightMarkAndBubble
                     ] $ do
-                    div_ ["className" $= fromString ("o-snippet__icon-bg o-snippet__icon-bg--" <> props ^. bubblePropsIconSide)] $ do  -- RENAME: snippet => bubble
+                    div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> props ^. bubblePropsIconSide)] $ do  -- RENAME: snippet => bubble
                         icon_ (IconProps "o-snippet" False (props ^. bubblePropsIconStyle) M)  -- RENAME: snippet => bubble
                     div_ ["className" $= "o-snippet__content"] childrenPassedToView  -- RENAME: snippet => bubble
 
