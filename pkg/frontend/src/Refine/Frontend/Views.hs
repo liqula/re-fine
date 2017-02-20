@@ -42,7 +42,7 @@ import qualified Text.HTML.Parser as HTMLP
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Mark
-import           Refine.Frontend.Contribution.Overlay
+import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.QuickCreate
 import           Refine.Frontend.Contribution.Types as RS
 import           Refine.Frontend.Header.Heading ( mainHeader_ )

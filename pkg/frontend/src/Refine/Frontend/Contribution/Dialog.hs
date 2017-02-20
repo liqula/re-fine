@@ -23,7 +23,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 
-module Refine.Frontend.Contribution.Overlay where
+module Refine.Frontend.Contribution.Dialog where
 
 import           Control.Lens (makeLenses, (^.))
 import           Data.Maybe (isNothing)
