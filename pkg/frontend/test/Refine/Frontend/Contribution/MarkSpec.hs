@@ -47,16 +47,12 @@ cnid = ContribIDNote . ID
 spec :: Spec
 spec = do
   describe "The rfMark_ component" $ do
-    let theAttribs = [HTMLP.Attr "data-contribution-id" "n77", HTMLP.Attr "data-contribution-kind" "note"]
+    let theAttribs = [HTMLP.Attr "data-contribution-id" "n77"]
     let theProps = MarkProps theAttribs Nothing
 
     it "does not render anything when there is no data-contribution-id" $ do
-      wrapper <- shallow $ rfMark_ (MarkProps [HTMLP.Attr "data-contribution-kind" "note"] Nothing) mempty
-      html wrapper `shouldReturn` "<div></div>" -- TODO should be empty
-
-    it "does not render anything when there is no data-contribution-kind" $ do
-      wrapper <- shallow $ rfMark_ (MarkProps [HTMLP.Attr "data-contribution-id" "n77"] Nothing) mempty
-      html wrapper `shouldReturn` "<div></div>" -- TODO should be empty
+      wrapper <- shallow $ rfMark_ (MarkProps [] Nothing) mempty
+      html wrapper `shouldReturn` "<div></div>" -- TODO should be empty (react doesn't need this work-around any more since (perhaps) 15.0)
 
     it "renders a HTML mark at top level" $ do
       wrapper <- shallow $ rfMark_ theProps mempty

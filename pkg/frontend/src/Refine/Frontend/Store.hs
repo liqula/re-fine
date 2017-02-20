@@ -36,7 +36,7 @@ import           Data.Maybe (fromJust)
 import           Data.String.Conversions
 import           React.Flux
 
-import Refine.Common.Types (CompositeVDoc(..))
+import Refine.Common.Types (CompositeVDoc(..), Contribution(..))
 import qualified Refine.Common.Types as RT
 
 import qualified Refine.Common.VDoc.HTML as Common
@@ -108,14 +108,14 @@ vdocUpdate action (Just vdoc) = Just $ case action of
           & RT.compositeVDocDiscussions
               %~ M.insert (discussion ^. RT.compositeDiscussion . RT.discussionID) discussion
           & RT.compositeVDocVersion
-              %~ Common.insertMoreMarks [discussion ^. RT.compositeDiscussion . RT.discussionRange]
+              %~ Common.insertMoreMarks [ContribDiscussion $ discussion ^. RT.compositeDiscussion]
 
     AddNote note
       -> vdoc
           & RT.compositeVDocNotes
               %~ M.insert (note ^. RT.noteID) note
           & RT.compositeVDocVersion
-              %~ Common.insertMoreMarks [note ^. RT.noteRange]
+              %~ Common.insertMoreMarks [ContribNote note]
 
     ContributionAction (ShowCommentEditor (Just range))
       -> vdoc & RT.compositeVDocVersion %~ Common.highlightRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)

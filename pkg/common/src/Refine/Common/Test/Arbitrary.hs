@@ -31,6 +31,7 @@ import           Text.HTML.Tree as HTML
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML
 import Refine.Common.VDoc.HTML.Core
+import Refine.Common.VDoc.HTML.Splice
 
 
 instance Arbitrary (ID a) where
@@ -55,10 +56,7 @@ instance Arbitrary ContributionID where
     ]
 
 instance Arbitrary PreToken where
-  arbitrary = oneof [PreToken <$> arbitrary, open, close]
-    where
-      open  = PreMarkOpen <$> arbitrary <*> arbitrary
-      close = PreMarkClose <$> arbitrary
+  arbitrary = oneof [PreToken <$> arbitrary, PreMarkOpen <$> arbitrary, PreMarkClose <$> arbitrary]
 
   shrink (PreToken t) = PreToken <$> shrink t
   shrink _ = []
@@ -177,8 +175,8 @@ validClosingOpen = TagOpen <$> validClosingXmlTagName <*> arbitrary
 -- * vdoc versions and valid chunk points
 
 -- | For testing only!  In production code, only use 'createChunkRangeErrors'!
-chunkRangeErrors :: ChunkRange a -> VDocVersion 'HTMLCanonical -> [ChunkRangeError]
-chunkRangeErrors (ChunkRange _ mp1 mp2) = createChunkRangeErrors $ CreateChunkRange mp1 mp2
+chunkRangeErrors :: ChunkRange -> VDocVersion 'HTMLCanonical -> [ChunkRangeError]
+chunkRangeErrors (ChunkRange mp1 mp2) = createChunkRangeErrors $ CreateChunkRange mp1 mp2
 
 
 instance Arbitrary (VDocVersion 'HTMLRaw) where
@@ -188,8 +186,15 @@ instance Arbitrary (VDocVersion 'HTMLCanonical) where
   arbitrary = arbitraryCanonicalNonEmptyVDocVersion
   shrink = shrinkCanonicalNonEmptyVDocVersion  -- TODO: shrinking is slow and probably buggy.
 
-data VersWithRanges = VersWithRanges (VDocVersion 'HTMLCanonical) [ChunkRange Edit]
+data VersWithRanges = VersWithRanges (VDocVersion 'HTMLCanonical) [SomethingWithChunkRangeAndID]
   deriving (Eq, Show)
+
+data SomethingWithChunkRangeAndID = SomethingWithChunkRangeAndID ChunkRange ContributionID
+  deriving (Eq, Show)
+
+instance HasChunkRangeAndID SomethingWithChunkRangeAndID where
+  askChunkRange (SomethingWithChunkRangeAndID r _) = r
+  askID         (SomethingWithChunkRangeAndID _ i) = i
 
 instance Arbitrary VersWithRanges where
   arbitrary = arbitraryVersWithRanges
@@ -242,13 +247,13 @@ arbitraryVersWithRanges :: Gen VersWithRanges
 arbitraryVersWithRanges = do
   v <- arbitraryCanonicalNonEmptyVDocVersion
   let crs = allNonEmptyCreateChunkRanges v
-      rs = zipWith (\(CreateChunkRange b e) i -> ChunkRange (ID i) b e) crs [0..]
+      rs = zipWith (\(CreateChunkRange b e) i -> SomethingWithChunkRangeAndID (ChunkRange b e) (ContribIDNote (ID i))) crs [0..]
   VersWithRanges v . nub <$> vectorOf 11 (elements rs)
 
 shrinkVersWithRanges :: VersWithRanges -> [VersWithRanges]
 shrinkVersWithRanges (VersWithRanges v rs) = do
   v' <- shrink v
-  rs' <- shrinkList (\_ -> []) (filter (null . (`chunkRangeErrors` v')) rs)
+  rs' <- shrinkList (\_ -> []) (filter (null . (`chunkRangeErrors` v') . askChunkRange) rs)
   [VersWithRanges v' rs' | not $ null rs']
 
 
@@ -326,7 +331,3 @@ allNonEmptyCreateChunkRanges_ vers = result
     nonempty ((n, k), _) = n < k
 
     maxk = fst $ V.last ps
-
-
-instance Arbitrary ContributionKind where
-  arbitrary = elements [minBound..]

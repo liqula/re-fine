@@ -33,4 +33,3 @@ spec :: Spec
 spec = parallel $ do
   describe "FromHttpApiData and ToHttpApiData are inverses" $ do
     fromAndToHttpApiDataAreInverses (h :: HttpApiGen (ID ()))
-    fromAndToHttpApiDataAreInverses (h :: HttpApiGen ContributionKind)

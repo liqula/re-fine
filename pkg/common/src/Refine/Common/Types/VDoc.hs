@@ -84,7 +84,7 @@ data VDocRepo = VDocRepo
 data Edit = Edit
   { _editID    :: ID Edit
   , _editDesc  :: ST
-  , _editRange :: ChunkRange Edit
+  , _editRange :: ChunkRange
   }
   deriving (Eq, Ord, Show, Read, Generic)
 

@@ -42,7 +42,7 @@ data Note = Note
   { _noteID     :: ID Note
   , _noteText   :: CommentText
   , _notePublic :: Bool
-  , _noteRange  :: ChunkRange Note
+  , _noteRange  :: ChunkRange
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -58,7 +58,7 @@ data Question = Question
   , _questionText     :: ST
   , _questionAnswered :: Bool -- ^ if the asker is happy, she can mark it as answered.
   , _questionPublic   :: Bool
-  , _questionRange    :: ChunkRange Question
+  , _questionRange    :: ChunkRange
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -90,7 +90,7 @@ data CreateDiscussion = CreateDiscussion
 data Discussion = Discussion
   { _discussionID     :: ID Discussion
   , _discussionPublic :: Bool
-  , _discussionRange  :: ChunkRange Discussion
+  , _discussionRange  :: ChunkRange
   }
   deriving (Eq, Ord, Show, Read, Generic)
 

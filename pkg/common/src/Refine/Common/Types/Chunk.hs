@@ -22,15 +22,13 @@ module Refine.Common.Types.Chunk where
 
 import           Data.Functor.Infix ((<$$>))
 import           Control.DeepSeq
-import           Control.Lens (makeLenses, makePrisms, _1, (%~))
+import           Control.Lens (_1, (%~))
 import           Data.Aeson
 import qualified Generics.SOP        as SOP
 import qualified Generics.SOP.NFData as SOP
 import           GHC.Generics (Generic)
 
 import Refine.Common.Types.Prelude
-import Refine.Prelude (ClearTypeParameter(..))
-import Refine.Prelude.Generic
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -38,14 +36,13 @@ import Refine.Prelude.TH (makeRefineType)
 -- 'Nothing', the 'ChunkRange' starts at the beginning (resp. end) of the 'VDocVersion'.  When the
 -- 'Contribution' is created, it must be 'assert'ed that @0 <= begin < end < length of
 -- 'VDocVersion'@.
-data ChunkRange contributionkind = ChunkRange
-  { _chunkRangeContrib :: ID contributionkind
-  , _chunkRangeBegin   :: Maybe ChunkPoint
+data ChunkRange = ChunkRange
+  { _chunkRangeBegin   :: Maybe ChunkPoint
   , _chunkRangeEnd     :: Maybe ChunkPoint
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
-data CreateChunkRange = CreateChunkRange
+data CreateChunkRange = CreateChunkRange  -- is this just 'ChunkRange'?
   { _createChunkRangeBegin :: Maybe ChunkPoint
   , _createChunkRangeEnd   :: Maybe ChunkPoint
   }
@@ -74,24 +71,10 @@ instance Read DataUID where  -- FIXME: derive Read and use 'fromUrlPiece' parsin
   readsPrec n = (_1 %~ DataUID) <$$> readsPrec n
 
 
--- * clear type param
-
-instance ClearTypeParameter ChunkRange where
-  clearTypeParameter (ChunkRange i b e) = ChunkRange (clearTypeParameter i) b e
-
 -- * instances
 
-makeLenses ''ChunkRange
-makePrisms ''ChunkRange
-
--- FIXME: use 'makeRefineType' once that can handle parametric types.
-instance SOP.Generic (ChunkRange owner)
-instance SOP.HasDatatypeInfo (ChunkRange owner)
-instance ToJSON   (ChunkRange owner) where toJSON    = gtoJSONDef  -- TODO: encode owner in json object?
-instance FromJSON (ChunkRange owner) where parseJSON = gparseJSONDef
-instance NFData   (ChunkRange owner) where rnf       = SOP.grnf
-
-type instance Create (ChunkRange owner) = CreateChunkRange
+makeRefineType ''ChunkRange
+type instance Create ChunkRange = CreateChunkRange
 
 instance SOP.Generic ChunkPoint
 instance SOP.HasDatatypeInfo ChunkPoint

@@ -36,6 +36,7 @@ import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
 import           Refine.Common.Types.Chunk
 import           Refine.Common.Types.Comment
+import           Refine.Common.Types.Contribution
 import           Refine.Common.Types.Prelude
 import           Refine.Common.Types.VDoc
 import           Refine.Common.VDoc.HTML
@@ -93,9 +94,9 @@ getCompositeVDoc vid = do
       edits <- db $ mapM DB.getEdit =<< DB.getEditChildren headid
       let insertAllMarks :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
           insertAllMarks vers = vers
-                              & insertMarks     (view noteRange <$> commentNotes)
-                              & insertMoreMarks (view (compositeDiscussion . discussionRange) <$> commentDiscussions)
-                              & insertMoreMarks (view editRange <$> edits)
+                              & insertMarks     (ContribNote <$> commentNotes)
+                              & insertMoreMarks (ContribDiscussion . view compositeDiscussion <$> commentDiscussions)
+                              & insertMoreMarks (ContribEdit <$> edits)
 
       version <- insertAllMarks <$> docRepo (DocRepo.getVersion rhandle hhandle)
       pure $

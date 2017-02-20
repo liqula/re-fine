@@ -45,6 +45,8 @@ data Contribution =
   | ContribQuestion Question
   | ContribDiscussion Discussion
   | ContribEdit Edit
+  | ContribHighlightMark ChunkRange
+  deriving (Eq, Ord, Show, Read, Generic)
 
 -- | For places where we need heterogeneous lists of different 'ID's, we can use this type.
 --
@@ -63,70 +65,31 @@ data ContributionID =
 -- opens, we need a 'Void'-like contribution kind that cannot have a contribution value.
 data HighlightMark
 
--- | This is the @data-contribution-kind@ attribute value of the @mark@ tag, which links to the
--- 'ChunkRange' in the dom, which in turn links to a contribution.
-data ContributionKind =
-    ContribKindNote
-  | ContribKindQuestion
-  | ContribKindDiscussion
-  | ContribKindEdit
-  | ContribKindHighlightMark
-  deriving (Eq, Ord, Show, Generic, Enum, Bounded)
-
-makeRefineType ''ContributionKind
-
-
-contributionKind :: Contribution -> ContributionKind
-contributionKind (ContribNote _)       = ContribKindNote
-contributionKind (ContribQuestion _)   = ContribKindQuestion
-contributionKind (ContribDiscussion _) = ContribKindDiscussion
-contributionKind (ContribEdit _)       = ContribKindEdit
-
 
 class IsContribution a where
-  contribKind :: a -> ContributionKind
   contribID :: ID a -> ContributionID
 
 instance IsContribution Note where
-  contribKind _ = ContribKindNote
   contribID = ContribIDNote
 
 instance IsContribution Question where
-  contribKind _ = ContribKindQuestion
   contribID = ContribIDQuestion
 
 instance IsContribution Discussion where
-  contribKind _ = ContribKindDiscussion
   contribID = ContribIDDiscussion
 
 instance IsContribution Edit where
-  contribKind _ = ContribKindEdit
   contribID = ContribIDEdit
 
 instance IsContribution HighlightMark where
-  contribKind _ = ContribKindHighlightMark
   contribID _ = ContribIDHighlightMark
 
-chunkRangeKind :: forall a . (IsContribution a) => ChunkRange a -> ContributionKind
-chunkRangeKind _ = contribKind (undefined :: a)
-
-contributionToUrlPiece :: IsContribution a => a -> ST
-contributionToUrlPiece = toUrlPiece . contribKind
-
-instance ToHttpApiData ContributionKind where
-  toUrlPiece ContribKindNote          = "note"
-  toUrlPiece ContribKindQuestion      = "question"
-  toUrlPiece ContribKindDiscussion    = "discussion"
-  toUrlPiece ContribKindEdit          = "edit"
-  toUrlPiece ContribKindHighlightMark = "highlight"
-
-instance FromHttpApiData ContributionKind where
-  parseUrlPiece "note"       = Right ContribKindNote
-  parseUrlPiece "question"   = Right ContribKindQuestion
-  parseUrlPiece "discussion" = Right ContribKindDiscussion
-  parseUrlPiece "edit"       = Right ContribKindEdit
-  parseUrlPiece "highlight"  = Right ContribKindHighlightMark
-  parseUrlPiece bad          = Left $ "instance FromHttpApiData ContributionKind: no parse for " <> cs (show bad)
+contributionIDToKindST :: ContributionID -> ST
+contributionIDToKindST (ContribIDNote _)       = "note"
+contributionIDToKindST (ContribIDQuestion _)   = "question"
+contributionIDToKindST (ContribIDDiscussion _) = "discussion"
+contributionIDToKindST (ContribIDEdit _)       = "edit"
+contributionIDToKindST ContribIDHighlightMark  = "highlight"
 
 
 makeRefineType ''ContributionID
@@ -142,11 +105,11 @@ instance ToHttpApiData ContributionID where
 instance FromHttpApiData ContributionID where
   parseUrlPiece piece = case ST.splitAt 1 piece of
     (ks, is) -> do
-      i :: Int64 <- either (Left . cs) Right . readEither @Int64 . cs $ is
+      let i = either (Left . cs) Right . readEither @Int64 . cs $ is
       case ks of
-        "n" -> Right $ ContribIDNote (ID i)
-        "q" -> Right $ ContribIDQuestion (ID i)
-        "d" -> Right $ ContribIDDiscussion (ID i)
-        "e" -> Right $ ContribIDEdit (ID i)
-        "h" -> Right ContribIDHighlightMark
+        "n" -> ContribIDNote . ID <$> i
+        "q" -> ContribIDQuestion . ID <$> i
+        "d" -> ContribIDDiscussion . ID <$> i
+        "e" -> ContribIDEdit . ID <$> i
+        "h" -> pure ContribIDHighlightMark
         bad -> Left . cs $ "FromHttpApiData ContributionID: no parse: " <> show bad

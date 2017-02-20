@@ -23,7 +23,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Common.VDoc.HTML.Splice
-  ( insertMarks, insertMoreMarks
+  ( HasChunkRangeAndID(..), insertMarks, insertMoreMarks
   , ChunkRangeError(..), createChunkRangeErrors
   , enablePreTokens
   , resolvePreTokens
@@ -59,14 +59,32 @@ import Refine.Prelude
 
 -- * module interface
 
+class HasChunkRangeAndID a where
+  askChunkRange :: a -> ChunkRange
+  askID         :: a -> ContributionID
+
+instance HasChunkRangeAndID Contribution where
+  askChunkRange (ContribNote note) = note ^. noteRange
+  askChunkRange (ContribQuestion question) = question ^. questionRange
+  askChunkRange (ContribDiscussion discussion) = discussion ^. discussionRange
+  askChunkRange (ContribEdit edit) = edit ^. editRange
+  askChunkRange (ContribHighlightMark cr) = cr
+
+  askID (ContribNote note) = ContribIDNote $ note ^. noteID
+  askID (ContribQuestion question) = ContribIDQuestion $ question ^. questionID
+  askID (ContribDiscussion discussion) = ContribIDDiscussion $ discussion ^. discussionID
+  askID (ContribEdit edit) = ContribIDEdit $ edit ^. editID
+  askID (ContribHighlightMark _) = ContribIDHighlightMark
+
+
 -- | Render 'VDocVersion' as needed in the browser.  More specifically: Insert @mark@ html elements
 -- for all chunks of all edits, comments, notes, etc.
 --
 -- TODO: do we still want '\n' between tokens for darcs?
-insertMarks :: (IsContribution a) => [ChunkRange a] -> VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
-insertMarks crs vers@(VDocVersion forest) = invariants (tokensFromForest forest) `seq` vers'
+insertMarks :: HasChunkRangeAndID x => [x] -> VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
+insertMarks xs vers@(VDocVersion forest) = invariants (tokensFromForest forest) `seq` vers'
   where
-    withPreTokens        = insertMarksForest crs $ enablePreTokens forest
+    withPreTokens        = insertMarksForest xs $ enablePreTokens forest
     afterRunPreTokens    = resolvePreTokens . preTokensFromForest $ withPreTokens
     forest'              = either (error . show) id $ tokensToForest afterRunPreTokens
     vers'                = addUIInfoToVDocVersion . reCanonicalizeVDocVersion . VDocVersion $ forest'
@@ -83,13 +101,13 @@ insertMarks crs vers@(VDocVersion forest) = invariants (tokensFromForest forest)
       then error $ "insertMarks: invalid chunk ranges: " <> show errs
       else ()
       where
-        errs = mconcat $ (`chunkRangeErrors` vers) <$> crs
-        chunkRangeErrors (ChunkRange _ mp1 mp2) = createChunkRangeErrors $ CreateChunkRange mp1 mp2
+        errs = mconcat $ (`chunkRangeErrors` vers) . askChunkRange <$> xs
+        chunkRangeErrors (ChunkRange mp1 mp2) = createChunkRangeErrors $ CreateChunkRange mp1 mp2
 
 
 -- Calls 'insertMarks', but expects the input 'VDocVersion' to have passed through before.
-insertMoreMarks :: (IsContribution a) => [ChunkRange a] -> VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
-insertMoreMarks crs (VDocVersion vers) = insertMarks crs (VDocVersion vers)
+insertMoreMarks :: HasChunkRangeAndID x => [x] -> VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
+insertMoreMarks xs (VDocVersion vers) = insertMarks xs (VDocVersion vers)
 
 
 -- * sanity check
@@ -146,14 +164,15 @@ isNonEmptyChunkRange cr forest = case cr of
 data IMFStack = IMFStack (Forest PreToken) (Forest PreToken) (Map DataUID [(Int, Forest PreToken)])
   deriving (Show)
 
-insertMarksForest :: forall a . (IsContribution a)
-                  => [ChunkRange a] -> Forest PreToken -> Forest PreToken
-insertMarksForest crs = (prefix <>) . (<> suffix) . dfs
+insertMarksForest :: HasChunkRangeAndID x => [x] -> Forest PreToken -> Forest PreToken
+insertMarksForest xs = (prefix <>) . (<> suffix) . dfs
   where
-    IMFStack prefix suffix infixmap = foldl' unmaybe (IMFStack mempty mempty mempty) (mconcat $ f <$> crs)
+    IMFStack prefix suffix infixmap = foldl' unmaybe (IMFStack mempty mempty mempty) (mconcat $ f <$> xs)
       where
-        f cr@(ChunkRange (contribID -> l) mb me)
-            = [(mb, PreMarkOpen'' l (chunkRangeKind cr)), (me, PreMarkClose'' l)]
+        f x = [(mb, PreMarkOpen'' cnid), (me, PreMarkClose'' cnid)]
+          where
+            ChunkRange mb me = askChunkRange x
+            cnid = askID x
 
     pushList :: PreToken'' -> Forest PreToken -> Forest PreToken
     pushList mark = (Node (runPreToken'' mark) [] :)
@@ -163,12 +182,12 @@ insertMarksForest crs = (prefix <>) . (<> suffix) . dfs
       where
         new = (off, [Node (runPreToken'' mark) []])
         upd Nothing   = Just [new]
-        upd (Just xs) = Just $ new : xs
+        upd (Just ys) = Just $ new : ys
 
     unmaybe :: IMFStack -> (Maybe ChunkPoint, PreToken'') -> IMFStack
-    unmaybe (IMFStack p s i) (Nothing, mark@(PreMarkOpen'' _ _)) = IMFStack (pushList mark p) s i
-    unmaybe (IMFStack p s i) (Nothing, mark@(PreMarkClose'' _))  = IMFStack p (pushList mark s) i
-    unmaybe (IMFStack p s i) (Just point, mark)                  = IMFStack p s (pushMap point mark i)
+    unmaybe (IMFStack p s i) (Nothing, mark@(PreMarkOpen'' _))  = IMFStack (pushList mark p) s i
+    unmaybe (IMFStack p s i) (Nothing, mark@(PreMarkClose'' _)) = IMFStack p (pushList mark s) i
+    unmaybe (IMFStack p s i) (Just point, mark)                 = IMFStack p s (pushMap point mark i)
 
     dfs :: Forest PreToken -> Forest PreToken
     dfs [] = []
@@ -249,7 +268,7 @@ enablePreTokens ys = f <$> ys
 
 data ResolvePreTokensStack =
     ResolvePreTokensStack
-      { _rptsOpen    :: Set PreToken'
+      { _rptsOpen    :: Set ContributionID
       , _rptsWritten :: [PreToken]
       , _rptsReading :: [PreToken]
       }
@@ -271,11 +290,11 @@ resolvePreTokens ts_ = either absurd id $ runPreToken <$$> go
     f (ResolvePreTokensStack opens written (t@(PreToken (ContentText _)) : ts')) =
         Run $ ResolvePreTokensStack opens (wrap opens t <> written) ts'
 
-    f (ResolvePreTokensStack opens written (PreMarkOpen name owner : ts')) =
-        Run $ ResolvePreTokensStack (Set.insert (name, owner) opens) written ts'
+    f (ResolvePreTokensStack opens written (PreMarkOpen name : ts')) =
+        Run $ ResolvePreTokensStack (Set.insert name opens) written ts'
 
     f stack@(ResolvePreTokensStack opens written (PreMarkClose name : ts')) =
-        case Set.partition ((== name) . fst) opens of
+        case Set.partition (== name) opens of
           (closing, opens') -> if Set.null closing
             then error $ "resolvePreTokens: close without open: " <> show (ts_, stack)
             else Run $ ResolvePreTokensStack opens' written ts'
@@ -288,11 +307,8 @@ resolvePreTokens ts_ = either absurd id $ runPreToken <$$> go
           then Halt $ reverse written
           else error $ "resolvePreTokens: open without close: " <> show (ts_, stack)
 
-    wrap :: Set PreToken' -> PreToken -> [PreToken]
-    wrap (Set.toList -> opens) t = reverse (mkclose <$> opens) <> [t] <> (mkopen <$> opens)
-      where
-        mkopen  (name, owner) = PreMarkOpen  name owner
-        mkclose (name, _)     = PreMarkClose name
+    wrap :: Set ContributionID -> PreToken -> [PreToken]
+    wrap (Set.toList -> opens) t = reverse (PreMarkClose <$> opens) <> [t] <> (PreMarkOpen <$> opens)
 
 
 -- * highlight marks
@@ -305,15 +321,7 @@ resolvePreTokens ts_ = either absurd id $ runPreToken <$$> go
 -- document, but it wouldn't be hard to add.)
 highlightRange :: Maybe ChunkPoint -> Maybe ChunkPoint
                -> VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
-highlightRange mp1 mp2 vers = reCanonicalizeVDocVersion $ insertMoreMarks [ChunkRange crid mp1 mp2] vers
-  where
-    crid :: ID HighlightMark
-    crid = ID (-1971)  -- FIXME: this is reserved for the data-contribution-id attribute of the single
-                       -- HighlightMark range in this document.  not sure what kind of issues that'll
-                       -- cause in the future.
-                       --
-                       -- (perhaps it is good enough to do something probabilistic here?  2k bit
-                       -- random number?)
+highlightRange mp1 mp2 = reCanonicalizeVDocVersion . insertMoreMarks [ContribHighlightMark $ ChunkRange mp1 mp2]
 
 -- | Remove all @'ChunkRange' ''HighlightMark'@s.
 removeHighlights :: VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
@@ -326,5 +334,5 @@ removeHighlights (VDocVersion forest) = reCanonicalizeVDocVersion . VDocVersion 
 
 isHighlightingMark :: Token -> Bool
 isHighlightingMark (TagOpen "mark" attrs) =
-    Attr "data-contribution-kind" (toUrlPiece ContribKindHighlightMark) `elem` attrs
+    Attr "data-contribution-id" (toUrlPiece ContribIDHighlightMark) `elem` attrs
 isHighlightingMark _ = False

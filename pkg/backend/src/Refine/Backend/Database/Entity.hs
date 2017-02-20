@@ -111,8 +111,8 @@ updateVDoc vid vdoc = do
   record <- vDocToRecord vdoc
   liftDB $ replace (S.idToKey vid) record
 
-toChunkRange :: DBChunkRange -> ID a -> ChunkRange a
-toChunkRange r i = ChunkRange i (r ^. dbChunkRangeBegin) (r ^. dbChunkRangeEnd)
+toChunkRange :: DBChunkRange -> ChunkRange
+toChunkRange r = ChunkRange (r ^. dbChunkRangeBegin) (r ^. dbChunkRangeEnd)
 
 mkDBChunkRange :: CreateChunkRange -> DBChunkRange
 mkDBChunkRange cr = DBChunkRange (cr ^. createChunkRangeBegin) (cr ^. createChunkRangeEnd)
@@ -201,14 +201,14 @@ createEdit rid edith = liftDB $ do
   key <- insert $ S.Edit desc edith
   void . insert $ S.RP (S.idToKey rid) key
   let pid = S.keyToId key
-      cr = ChunkRange pid Nothing Nothing  -- TODO
+      cr = ChunkRange Nothing Nothing  -- TODO
   pure $ Edit pid desc cr
 
 getEdit :: ID Edit -> DB Edit
 getEdit pid = S.editElim toEdit <$> getEntity pid
   where
-    cr :: ChunkRange Edit
-    cr = ChunkRange pid Nothing Nothing  -- TODO
+    cr :: ChunkRange
+    cr = ChunkRange Nothing Nothing  -- TODO
 
     toEdit :: ST -> DocRepo.EditHandle -> Edit
     toEdit desc _handle = Edit pid desc cr
@@ -217,8 +217,7 @@ getEditFromHandle :: DocRepo.EditHandle -> DB Edit
 getEditFromHandle hndl = do
   ps <- liftDB $ selectList [S.EditEditHandle ==. hndl] []
   p <- unique ps
-  let pid = S.keyToId $ entityKey p
-      cr = ChunkRange pid Nothing Nothing  -- TODO
+  let cr = ChunkRange Nothing Nothing  -- TODO
       toEdit desc _hdnl = Edit (S.keyToId $ entityKey p) desc cr
   pure $ S.editElim toEdit (entityVal p)
 
@@ -262,7 +261,7 @@ registerEdit rid pid = void . liftDB . insert $ S.RP (S.idToKey rid) (S.idToKey 
 
 -- TODO: Use the _lid
 toNote :: ID Note -> ST -> Bool -> DBChunkRange -> LoginId -> Note
-toNote nid desc public range _lid = Note nid desc public (toChunkRange range nid)
+toNote nid desc public range _lid = Note nid desc public (toChunkRange range)
 
 createNote :: ID Edit -> Create Note -> DB Note
 createNote pid note = do
@@ -293,7 +292,7 @@ usersOfNote nid = foreignKeyField S.noteAccUser <$$> liftDB (selectList [S.NoteA
 
 -- TODO: User lid
 toQuestion :: ID Question -> ST -> Bool -> Bool -> DBChunkRange -> LoginId -> Question
-toQuestion qid text answ pblc range _lid = Question qid text answ pblc (toChunkRange range qid)
+toQuestion qid text answ pblc range _lid = Question qid text answ pblc (toChunkRange range)
 
 createQuestion :: ID Edit -> Create Question -> DB Question
 createQuestion pid question = do
@@ -325,7 +324,7 @@ usersOfQuestion qid = foreignKeyField S.qstnAccUser <$$> liftDB (selectList [S.Q
 
 -- TODO: Login ID
 toDiscussion :: ID Discussion -> Bool -> DBChunkRange -> LoginId -> Discussion
-toDiscussion did pblc range _lid = Discussion did pblc (toChunkRange range did)
+toDiscussion did pblc range _lid = Discussion did pblc (toChunkRange range)
 
 saveStatement :: ID Discussion -> S.Statement -> SQLM Statement
 saveStatement did sstatement = do
