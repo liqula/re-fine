@@ -54,7 +54,6 @@ import           Data.Maybe (listToMaybe)
 import           Data.String.Conversions (ST, cs, (<>))
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
-import           Data.Void
 import           GHC.Generics (Generic)
 import           Text.HTML.Parser (Token(..), Attr(..))
 import           Text.HTML.Tree (tokensFromForest)
@@ -81,16 +80,17 @@ data ChunkRangeError =
 -- their order (which still needs to be de-overlapped), so need close marks of the form
 -- @PreMarkClose "data-contribution-id-value"@.
 --
--- @(ID Void)@ is taken from 'ChunkRange' and refers to the contribution that causes this mark token
+-- @ContributionID@ is taken from 'ChunkRange' and refers to the contribution that causes this mark token
 -- pair.
-data PreToken = PreToken Token | PreMarkOpen (ID Void) ContributionKind | PreMarkClose (ID Void)
+
+data PreToken = PreToken Token | PreMarkOpen ContributionID ContributionKind | PreMarkClose ContributionID
   deriving (Eq, Show, Generic)
 
 -- | Needed to make some of the helper functions total.
-type PreToken' = (ID Void, ContributionKind)
+type PreToken' = (ContributionID, ContributionKind)
 
 -- | Needed to make some of the helper functions total.
-data PreToken'' = PreMarkOpen'' (ID Void) ContributionKind | PreMarkClose'' (ID Void)
+data PreToken'' = PreMarkOpen'' ContributionID ContributionKind | PreMarkClose'' ContributionID
   deriving (Show)
 
 runPreToken'' :: PreToken'' -> PreToken

@@ -24,12 +24,12 @@
 
 module Refine.Frontend.Contribution.Bubble where
 
-import           Control.Lens ((^.), makeLenses, to)
-import           Data.Maybe (isJust, fromJust)
+import           Control.Lens ((^.), makeLenses)
 import           Data.Monoid ((<>))
 import           Data.String (fromString)
-import           Data.Void
+import           Data.String.Conversions (cs)
 import           React.Flux hiding (callback)
+import           Web.HttpApiData (toUrlPiece)
 
 import           Refine.Common.Types
 import qualified Refine.Frontend.Contribution.Types as RT
@@ -39,16 +39,15 @@ import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
 import qualified Refine.Frontend.Types as RT
 import           Refine.Frontend.UtilityWidgets
-import           Refine.Prelude (ClearTypeParameter(..))
 
 
 data BubbleProps = BubbleProps
-  { _bubblePropsDataContribId :: ID Void
+  { _bubblePropsDataContribId :: ContributionID
   , _bubblePropsDataContentType :: String
   , _bubblePropsIconSide :: String
   , _bubblePropsIconStyle :: IconDescription
   , _bubblePropsMarkPosition :: Maybe RT.MarkPosition
-  , _bubblePropsHighlightedBubble :: Maybe (ID Void)
+  , _bubblePropsHighlightedBubble :: Maybe ContributionID
   , _bubblePropsClickHandler :: ClickHandler
   , _bubblePropsScreenState :: SC.ScreenState
   }
@@ -60,17 +59,16 @@ bubble = defineView "Bubble" $ \props ->
         case props ^. bubblePropsMarkPosition of
             Nothing -> mempty
             Just (RT.MarkPosition topOffset _) ->
-                div_ ["data-contribution-id" $= fromString (show (props ^. bubblePropsDataContribId . unID))
+                div_ ["data-contribution-id" $= (fromString . cs $ toUrlPiece (props ^. bubblePropsDataContribId))
                     , "data-content-type" $= fromString (props ^. bubblePropsDataContentType)
                     -- RENAME: snippet => bubble
                     , classNames [ ("o-snippet", True)
                                   , (fromString $ "o-snippet--" <> props ^. bubblePropsDataContentType, True)
-                                  , ("o-snippet--hover", isJust (props ^. bubblePropsHighlightedBubble)
-                                         && props ^. bubblePropsDataContribId . unID == props ^. bubblePropsHighlightedBubble . to fromJust . unID)
+                                  , ("o-snippet--hover", Just (props ^. bubblePropsDataContribId) == props ^. bubblePropsHighlightedBubble)
                                   ]
                     , "style" @= [Style "top" (SC.offsetIntoText topOffset (props ^. bubblePropsScreenState))]
                     , onClick $ const . (props ^. bubblePropsClickHandler)
-                    , onMouseEnter $ \_ _ -> RS.dispatch . RT.ContributionAction . RT.HighlightMarkAndBubble . clearTypeParameter $ props ^. bubblePropsDataContribId
+                    , onMouseEnter $ \_ _ -> RS.dispatch . RT.ContributionAction . RT.HighlightMarkAndBubble $ props ^. bubblePropsDataContribId
                     , onMouseLeave $ \_ _ -> RS.dispatch $ RT.ContributionAction RT.UnhighlightMarkAndBubble
                     ] $ do
                     div_ ["className" $= fromString ("o-snippet__icon-bg o-snippet__icon-bg--" <> props ^. bubblePropsIconSide)] $ do  -- RENAME: snippet => bubble
@@ -81,16 +79,16 @@ bubble_ :: BubbleProps -> ReactElementM eventHandler () -> ReactElementM eventHa
 bubble_ = view bubble
 
 data SpecialBubbleProps = SpecialBubbleProps
-  { _specialBubblePropsDataChunkId       :: ID Void
+  { _specialBubblePropsContributionId    :: ContributionID
   , _specialBubblePropsMarkPosition      :: Maybe RT.MarkPosition
-  , _specialBubblePropsHighlightedBubble :: Maybe (ID Void)
+  , _specialBubblePropsHighlightedBubble :: Maybe ContributionID
   , _specialBubblePropsScreenState       :: SC.ScreenState
   }
 
 discussionBubble :: ReactView SpecialBubbleProps
-discussionBubble = defineView "DiscussionBubble" $ \(SpecialBubbleProps dataChunkId markPosition highlight screenState) ->
-    let clickHandler _ = RS.dispatch (RT.ContributionAction (RT.ShowDiscussionOverlay (ID (dataChunkId ^. unID))))
-    in bubble_ (BubbleProps dataChunkId "discussion" "left" ("icon-Discussion", "bright") markPosition highlight clickHandler screenState) childrenPassedToView
+discussionBubble = defineView "DiscussionBubble" $ \(SpecialBubbleProps contributionID markPosition highlight screenState) ->
+    let clickHandler _ = RS.dispatch (RT.ContributionAction (RT.ShowContributionDialog contributionID))
+    in bubble_ (BubbleProps contributionID "discussion" "left" ("icon-Discussion", "bright") markPosition highlight clickHandler screenState) childrenPassedToView
 
 discussionBubble_ :: SpecialBubbleProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 discussionBubble_ = view discussionBubble
@@ -104,9 +102,9 @@ questionBubble_ :: SpecialBubbleProps -> ReactElementM eventHandler () -> ReactE
 questionBubble_ = view questionBubble
 
 noteBubble :: ReactView SpecialBubbleProps
-noteBubble = defineView "NoteBubble" $ \(SpecialBubbleProps dataChunkId markPosition highlight screenState) ->
-    let clickHandler _ = RS.dispatch (RT.ContributionAction (RT.ShowNoteOverlay (ID (dataChunkId ^. unID))))
-    in bubble_ (BubbleProps dataChunkId "question" "left" ("icon-Question", "dark") markPosition highlight clickHandler screenState) childrenPassedToView
+noteBubble = defineView "NoteBubble" $ \(SpecialBubbleProps contributionID markPosition highlight screenState) ->
+    let clickHandler _ = RS.dispatch (RT.ContributionAction (RT.ShowContributionDialog contributionID))
+    in bubble_ (BubbleProps contributionID "question" "left" ("icon-Question", "dark") markPosition highlight clickHandler screenState) childrenPassedToView
 
 noteBubble_ :: SpecialBubbleProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 noteBubble_ = view noteBubble

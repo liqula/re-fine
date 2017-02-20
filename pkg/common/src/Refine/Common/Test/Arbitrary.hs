@@ -23,7 +23,6 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.Builder as B
 import           Data.Tree
 import qualified Data.Vector as V
-import           Data.Void
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
 import           Text.HTML.Parser as HTML
@@ -46,13 +45,20 @@ instance Arbitrary DataUID where
 
 -- * html-parse
 
+instance Arbitrary ContributionID where
+  arbitrary = oneof
+    [ ContribIDNote <$> arbitrary
+    , ContribIDQuestion <$> arbitrary
+    , ContribIDDiscussion <$> arbitrary
+    , ContribIDEdit <$> arbitrary
+    , pure ContribIDHighlightMark
+    ]
+
 instance Arbitrary PreToken where
   arbitrary = oneof [PreToken <$> arbitrary, open, close]
     where
-      open  = PreMarkOpen <$> uid <*> kind
-      close = PreMarkClose <$> uid
-      uid   = arbitrary :: Gen (ID Void)
-      kind  = elements [minBound..]
+      open  = PreMarkOpen <$> arbitrary <*> arbitrary
+      close = PreMarkClose <$> arbitrary
 
   shrink (PreToken t) = PreToken <$> shrink t
   shrink _ = []

@@ -32,7 +32,6 @@ import           Data.Aeson.Types (FromJSON, ToJSON, Value, Parser)
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as M
 import           Data.String.Conversions
-import           Data.Void
 import           GHC.Generics (Generic)
 import           Text.Read (readMaybe)
 
@@ -87,7 +86,7 @@ data CommentCategory =
   deriving (Show, Generic)
 
 -- for marks:
-newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map (ID Void) MarkPosition }
+newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map ContributionID MarkPosition }
   deriving (Eq, Show, Generic)
 
 data MarkPosition = MarkPosition
@@ -119,16 +118,15 @@ data ContributionEditorData =
 
 data ContributionAction =
     UpdateSelection Selection ToolbarExtensionStatus
-  | ShowNoteOverlay (ID Note)
-  | ShowDiscussionOverlay (ID Discussion)
+  | ShowContributionDialog ContributionID
   | HideCommentOverlay
   | ShowCommentEditor (Maybe Range)
   | HideCommentEditor
   | SetCommentCategory CommentCategory
   | SubmitComment ST (Maybe CommentCategory) (Maybe Range)
   | SubmitEdit
-  | AddMarkPosition (ID Void) MarkPosition
-  | HighlightMarkAndBubble (ID Void)
+  | AddMarkPosition ContributionID MarkPosition
+  | HighlightMarkAndBubble ContributionID
   | UnhighlightMarkAndBubble
   deriving (Show, Generic)
 
@@ -139,7 +137,7 @@ data ContributionState = ContributionState
   , _csDiscussionId             :: Maybe (ID Discussion)
   , _csNoteId                   :: Maybe (ID Note)
   , _csCommentEditorIsVisible   :: ContributionEditorData
-  , _csHighlightedMarkAndBubble :: Maybe (ID Void)
+  , _csHighlightedMarkAndBubble :: Maybe ContributionID
   , _csMarkPositions            :: MarkPositions
   } deriving (Show, Generic)
 

@@ -152,7 +152,7 @@ insertMarksForest crs = (prefix <>) . (<> suffix) . dfs
   where
     IMFStack prefix suffix infixmap = foldl' unmaybe (IMFStack mempty mempty mempty) (mconcat $ f <$> crs)
       where
-        f cr@(ChunkRange (clearTypeParameter -> l) mb me)
+        f cr@(ChunkRange (contribID -> l) mb me)
             = [(mb, PreMarkOpen'' l (chunkRangeKind cr)), (me, PreMarkClose'' l)]
 
     pushList :: PreToken'' -> Forest PreToken -> Forest PreToken

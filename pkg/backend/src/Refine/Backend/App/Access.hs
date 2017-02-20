@@ -44,6 +44,7 @@ changeAccess (ChangeAccess ad a u) = do
     ContribIDQuestion   qid -> changeQuestionAccess qid a u
     ContribIDDiscussion did -> changeDiscussionAccess did a u
     ContribIDEdit       _   -> error "not implemented."
+    ContribIDHighlightMark  -> error "impossible."
 
 changeNoteAccess :: ID Note -> Access -> ID User -> App DB ()
 changeNoteAccess nid a uid = do
