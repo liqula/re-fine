@@ -66,6 +66,7 @@ library
       Refine.Frontend.MainMenu.Store
       Refine.Frontend.MainMenu.Types
       Refine.Frontend.NotImplementedYet
+      Refine.Frontend.Prelude
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store
@@ -138,6 +139,7 @@ executable refine-frontend
       Refine.Frontend.MainMenu.Store
       Refine.Frontend.MainMenu.Types
       Refine.Frontend.NotImplementedYet
+      Refine.Frontend.Prelude
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store
@@ -222,6 +224,7 @@ test-suite spec
       Refine.Frontend.MainMenu.Types
       Refine.Frontend.MainMenuSpec
       Refine.Frontend.NotImplementedYet
+      Refine.Frontend.Prelude
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store
