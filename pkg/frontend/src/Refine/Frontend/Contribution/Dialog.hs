@@ -49,13 +49,13 @@ import           Refine.Frontend.UtilityWidgets
 dialogStyles :: [Style]
 dialogStyles = [ -- Style "display" ("block" :: String)
                 --, Style "minHeight" ("200px" :: String)
-                 Style "padding" ("1.5rem 1.0rem 1.0rem" :: String)
+                 Style "padding" ("3rem 1.0rem 1.0rem" :: String)
 
                 , Style "width" ("40rem" :: String)
                 , Style "height" ("30rem" :: String)
                 , Style "left" ("7.5rem" :: String)
                 , Style "marginLeft" ("0" :: String)
-                , Style "marginTop" ("-1.5rem" :: String)
+                , Style "marginTop" ("0" :: String)
                 , Style "zIndex" (6050 :: Int)
 
                 , Style "position" ("absolute" :: String)
@@ -90,16 +90,18 @@ data CommentDisplayProps = CommentDisplayProps
   , _userName :: String
   , _creationDate :: String
   , _contentStyle :: [Style]
+  , _topOffset    :: SC.OffsetFromDocumentTop
   }
 
 makeLenses ''CommentDisplayProps
 
 showComment :: ReactView CommentDisplayProps
 showComment = defineView "ShowComment" $ \props ->
-  skylight_ ["isVisible" &= True
+  let topStyle = [Style "top" (show (props ^. topOffset . SC.unOffsetFromDocumentTop + 5) <> "px")]
+  in skylight_ ["isVisible" &= True
            , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
            , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
-           , "dialogStyles" @= ((props ^. contentStyle) <> [Style "top" ("7.5rem" :: String)])
+           , "dialogStyles" @= ((props ^. contentStyle) <> topStyle)
            , "overlayStyles" @= overlayStyles
            ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
@@ -153,13 +155,13 @@ data ShowNoteProps = ShowNotePropsJust
 showNote :: ReactView ShowNoteProps
 showNote = defineView "ShowNote" $ \case
   ShowNotePropsNothing -> mempty
-  ShowNotePropsJust note _top ->
+  ShowNotePropsJust note top ->
     let commentText1  = (note ^. noteText)
         commentTitle1 = "Title of comment"
         iconStyle1    = ("icon-Remark", "dark")
         userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__note)
+    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__note top)
 
 showNote_ :: ShowNoteProps -> ReactElementM eventHandler ()
 showNote_ props = view showNote props mempty
@@ -173,7 +175,7 @@ showDiscussion = defineView "ShowDiscussion" $ \case
         iconStyle1    = ("icon-Discussion", "dark")
         userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__discussion)
+    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__discussion (SC.OffsetFromDocumentTop 0))
 
 showDiscussion_ :: Maybe CompositeDiscussion -> ReactElementM eventHandler ()
 showDiscussion_ note = view showDiscussion note mempty
@@ -188,7 +190,7 @@ showQuestion = defineView "ShowQuestion" $ \case
         iconStyle1    = ("icon-Question", "dark")
         userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 overlayStyle1)
+    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 overlayStyle1 (SC.OffsetFromDocumentTop 0))
 
 showQuestion_ :: Maybe CompositeQuestion -> ReactElementM eventHandler ()
 showQuestion_ question = view showQuestion question mempty
