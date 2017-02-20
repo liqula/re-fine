@@ -60,9 +60,10 @@ data ChunkPoint = ChunkPoint
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
--- | Identifier to connect dom content with 'VDocVersion' subtrees.  A dom-node with attribute
--- @data-uid@ can be identified with a root node of a subtree in 'VDocVersion' with the same
--- @data-uid@ value.  Not to be confused with 'DataChunkID'.
+-- | Identifier to connect dom content with 'VDocVersion' subtrees.  We need this for interpreting
+-- `getSelection()` values on 'VDocVersion's.  A dom-node with attribute @data-uid@ can be
+-- identified with a root node of a subtree in 'VDocVersion' with the same @data-uid@ value.  Not to
+-- be confused with 'DataContributionID'.
 newtype DataUID = DataUID { unDataUID :: Int }  -- FIXME: rename to '_unDataUID'
   deriving (Eq, Ord, Generic, Num)
 
