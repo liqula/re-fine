@@ -32,16 +32,17 @@ import qualified Refine.Frontend.Screen.Types as RS
 
 
 rangeTopFor :: Int -> Int -> RS.Range
-rangeTopFor topOffset scrollOffset =
-  RS.Range Nothing Nothing (RS.OffsetFromViewportTop topOffset) 0 (RS.ScrollOffsetOfViewport scrollOffset)
+rangeTopFor topOffset = rangeFor topOffset 0
 
 rangePosFor :: Int -> Int -> RS.Range
-rangePosFor topOffset bottom =
-  RS.Range Nothing Nothing (RS.OffsetFromViewportTop topOffset) bottom (RS.ScrollOffsetOfViewport 0)
+rangePosFor topOffset bottomOffset = rangeFor topOffset bottomOffset 0
 
 rangeFor :: Int -> Int -> Int -> RS.Range
-rangeFor topOffset bottom scrollOffset =
-  RS.Range Nothing Nothing (RS.OffsetFromViewportTop topOffset) bottom (RS.ScrollOffsetOfViewport scrollOffset)
+rangeFor topOffset bottomOffset scrollOffset =
+  RS.Range Nothing Nothing
+      (RS.OffsetFromViewportTop topOffset)
+      (RS.OffsetFromViewportTop bottomOffset)
+      (RS.ScrollOffsetOfViewport scrollOffset)
 
 mh :: Int
 mh = 80 -- menu height

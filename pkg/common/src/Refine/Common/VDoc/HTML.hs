@@ -6,6 +6,7 @@ module Refine.Common.VDoc.HTML
   , insertMarks                -- 'HTMLCanonical' to 'HTMLWithMarks'
   , insertMoreMarks            -- 'HTMLWithMarks' to 'HTMLWithMarks' (if you want to call it incrementally).
   , createChunkRangeErrors     -- chunk range validation
+  , highlightRange, removeHighlights
   ) where
 
 import Refine.Common.VDoc.HTML.Core

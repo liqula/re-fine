@@ -36,7 +36,7 @@ module Refine.Common.VDoc.HTML.Core
 
     -- * misc
   , atNode, atToken, atPreToken
-  , dataUidOfToken, dataUidOfPreToken
+  , dataUidOfToken, dataUidOfPreToken, dataContributionIDOfToken
 
   , tokenTextLength
   , treeTextLength
@@ -154,14 +154,22 @@ atPreToken :: DataUID -> Traversal' (Forest PreToken) (Forest PreToken)
 atPreToken node = atNode (\p -> dataUidOfPreToken p == Just node)
 
 dataUidOfToken :: Token -> Maybe DataUID
-dataUidOfToken (TagOpen _ attrs) =
-  readMaybe . cs =<< listToMaybe (mconcat $ (\(Attr k v) -> [v | k == "data-uid"]) <$> attrs)
-dataUidOfToken _ = Nothing
+dataUidOfToken = \case
+  (TagOpen _ attrs)      -> go attrs
+  (TagSelfClose _ attrs) -> go attrs
+  _                      -> Nothing
+  where
+    go attrs = readMaybe . cs =<< listToMaybe (mconcat $ (\(Attr k v) -> [v | k == "data-uid"]) <$> attrs)
 
 dataUidOfPreToken :: PreToken -> Maybe DataUID
 dataUidOfPreToken (PreToken t)      = dataUidOfToken t
 dataUidOfPreToken (PreMarkOpen _ _) = Nothing
 dataUidOfPreToken (PreMarkClose _)  = Nothing
+
+dataContributionIDOfToken :: Token -> Maybe DataUID
+dataContributionIDOfToken (TagOpen _ attrs) =
+  readMaybe . cs =<< listToMaybe (mconcat $ (\(Attr k v) -> [v | k == "data-contribution-id"]) <$> attrs)
+dataContributionIDOfToken _ = Nothing
 
 
 tokenTextLength :: Token -> Int

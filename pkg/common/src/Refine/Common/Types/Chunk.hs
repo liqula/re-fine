@@ -63,13 +63,13 @@ data ChunkPoint = ChunkPoint
 -- | Identifier to connect dom content with 'VDocVersion' subtrees.  A dom-node with attribute
 -- @data-uid@ can be identified with a root node of a subtree in 'VDocVersion' with the same
 -- @data-uid@ value.  Not to be confused with 'DataChunkID'.
-newtype DataUID = DataUID { unDataUID :: Int }
+newtype DataUID = DataUID { unDataUID :: Int }  -- FIXME: rename to '_unDataUID'
   deriving (Eq, Ord, Generic, Num)
 
-instance Show DataUID where
+instance Show DataUID where  -- FIXME: derive Show and use 'toUrlPiece' for rendering.
   showsPrec n (DataUID i) = showsPrec n i
 
-instance Read DataUID where
+instance Read DataUID where  -- FIXME: derive Read and use 'fromUrlPiece' parsing.
   readsPrec n = (_1 %~ DataUID) <$$> readsPrec n
 
 -- * clear type param

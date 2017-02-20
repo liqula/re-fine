@@ -131,6 +131,7 @@ mkBackend cfg = do
 maybeServeDirectory :: Maybe FilePath -> Server Raw
 maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) serveDirectory
 
+{-# ANN toServantError ("HLint: ignore Use errorDoNotUseTrace" :: String) #-}
 toServantError :: (Monad m) => ExceptT AppError m :~> ExceptT ServantErr m
 toServantError = Nat ((lift . runExceptT) >=> monadError fromAppError)
   where

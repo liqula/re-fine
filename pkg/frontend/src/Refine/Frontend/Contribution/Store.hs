@@ -83,15 +83,15 @@ commentEditorIsVisibleUpdate action state = case action of
 
 highlightedMarkAndBubbleUpdate :: ContributionAction -> Maybe (ID Void) -> Maybe (ID Void)
 highlightedMarkAndBubbleUpdate action state = case action of
-    (HighlightMarkAndBubble dataChunkId) -> Just dataChunkId
-    UnhighlightMarkAndBubble             -> Nothing
-    _ -> state
+  (HighlightMarkAndBubble dataChunkId) -> Just dataChunkId
+  UnhighlightMarkAndBubble             -> Nothing
+  _ -> state
 
 markPositionsUpdate :: ContributionAction -> MarkPositions -> MarkPositions
 markPositionsUpdate action state = case action of
-    (AddMarkPosition dataChunkId newMarkPosition)
-      -> let upd       = Just . maybe newMarkPosition (updTop . updBottom)
-             updTop    = markPositionTop    %~ min (newMarkPosition ^. markPositionTop)
-             updBottom = markPositionBottom %~ max (newMarkPosition ^. markPositionBottom)
-         in MarkPositions $ M.alter upd dataChunkId (_unMarkPositions state)
-    _ -> state
+  (AddMarkPosition dataChunkId newMarkPosition)
+    -> let upd       = Just . maybe newMarkPosition (updTop . updBottom)
+           updTop    = markPositionTop    %~ min (newMarkPosition ^. markPositionTop)
+           updBottom = markPositionBottom %~ max (newMarkPosition ^. markPositionBottom)
+       in MarkPositions $ M.alter upd dataChunkId (_unMarkPositions state)
+  _ -> state

@@ -46,7 +46,7 @@ data Range = Range
     { _rangeStartPoint   :: Maybe ChunkPoint
     , _rangeEndPoint     :: Maybe ChunkPoint
     , _rangeTopOffset    :: OffsetFromViewportTop
-    , _rangeBottom       :: Int
+    , _rangeBottomOffset :: OffsetFromViewportTop
     , _rangeScrollOffset :: ScrollOffsetOfViewport
     }
     deriving (Show, Generic, NFData)
