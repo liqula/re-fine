@@ -33,7 +33,7 @@ import qualified Data.Tree as Tree
 import           React.Flux
 
 import           Refine.Common.Types
-import           Refine.Frontend.ThirdPartyViews (overlay_)
+import           Refine.Frontend.ThirdPartyViews (skylight_)
 import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Colors as C
@@ -90,7 +90,7 @@ makeLenses ''CommentDisplayProps
 
 showComment :: ReactView CommentDisplayProps
 showComment = defineView "ShowComment" $ \props ->
-  overlay_ ["isVisible" &= True
+  skylight_ ["isVisible" &= True
            , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
            , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
            , "dialogStyles" @= (props ^. contentStyle)
@@ -172,7 +172,7 @@ showQuestion_ question = view showQuestion question mempty
 -- was add-annotation
 addComment :: ReactView (Maybe RS.Range, Maybe RS.CommentCategory)
 addComment = defineView "AddComment" $ \(forRange, commentCategory) ->
-  overlay_ ["isVisible" &= True
+  skylight_ ["isVisible" &= True
            , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
            , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
            , "dialogStyles" @= vdoc_overlay_content__add_comment
