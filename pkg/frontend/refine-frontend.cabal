@@ -60,6 +60,8 @@ library
       Refine.Frontend.Header.Types
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
+      Refine.Frontend.Login.Store
+      Refine.Frontend.Login.Types
       Refine.Frontend.MainMenu.Component
       Refine.Frontend.MainMenu.Store
       Refine.Frontend.MainMenu.Types
@@ -130,6 +132,8 @@ executable refine-frontend
       Refine.Frontend.Header.Types
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
+      Refine.Frontend.Login.Store
+      Refine.Frontend.Login.Types
       Refine.Frontend.MainMenu.Component
       Refine.Frontend.MainMenu.Store
       Refine.Frontend.MainMenu.Types
@@ -211,6 +215,8 @@ test-suite spec
       Refine.Frontend.Header.Types
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
+      Refine.Frontend.Login.Store
+      Refine.Frontend.Login.Types
       Refine.Frontend.MainMenu.Component
       Refine.Frontend.MainMenu.Store
       Refine.Frontend.MainMenu.Types
