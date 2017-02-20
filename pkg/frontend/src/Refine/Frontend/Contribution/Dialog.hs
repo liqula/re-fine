@@ -51,7 +51,6 @@ dialogStyles = [ -- Style "display" ("block" :: String)
                 , Style "width" ("40rem" :: String)
                 , Style "height" ("30rem" :: String)
                 , Style "left" ("7.5rem" :: String)
-                , Style "top" ("7.5rem" :: String)
                 , Style "marginLeft" ("0" :: String)
                 , Style "marginTop" ("-1.5rem" :: String)
                 , Style "zIndex" (6050 :: Int)
@@ -97,7 +96,7 @@ showComment = defineView "ShowComment" $ \props ->
   skylight_ ["isVisible" &= True
            , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
            , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
-           , "dialogStyles" @= (props ^. contentStyle)
+           , "dialogStyles" @= ((props ^. contentStyle) <> [Style "top" ("7.5rem" :: String)])
            , "overlayStyles" @= overlayStyles
            ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
@@ -179,7 +178,7 @@ addComment = defineView "AddComment" $ \(forRange, commentCategory) ->
   skylight_ ["isVisible" &= True
            , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
            , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
-           , "dialogStyles" @= vdoc_overlay_content__add_comment
+           , "dialogStyles" @= (vdoc_overlay_content__add_comment <> [Style "top" ("7.5rem" :: String)])
            , "overlayStyles" @= overlayStyles
            ]  $ do
 
