@@ -34,13 +34,11 @@ import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc (Abstract, Title)
 import Refine.Backend.Database.Field()
 import Refine.Backend.Database.Types
-import Refine.Backend.DocRepo.Core(EditHandle, RepoHandle)
+import Refine.Backend.DocRepo.Core (EditHandle, RepoHandle)
+import Refine.Backend.User.Core (LoginId)
 
 
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
-User
-    name        Text
-
 VDoc
     title       Title
     desc        Abstract
@@ -59,12 +57,14 @@ Note
     text        Text
     public      Bool
     range       DBChunkRange
+    owner       LoginId
 
 Question
     text        Text
     public      Bool
     answered    Bool
     range       DBChunkRange
+    owner       LoginId
 
 Answer
     question    QuestionId
@@ -73,6 +73,7 @@ Answer
 Discussion
     public      Bool
     range       DBChunkRange
+    owner       LoginId
 
 Statement
     text        Text
@@ -80,9 +81,27 @@ Statement
 
 Vote
     value       Text
-    voter       UserId
+    owner       LoginId
 
 -- Connection tables
+
+-- Invited users for private discussion
+DscnAcc
+    discussion DiscussionId
+    user       LoginId
+    UniDA discussion user
+
+-- Inviated users for private note
+NoteAcc
+    note NoteId
+    user LoginId
+    UniNA note user
+
+-- Invited users for private question
+QstnAcc
+    question QuestionId
+    user     LoginId
+    UniQA question user
 
 VR
     vdoc        VDocId
@@ -152,6 +171,10 @@ makeElim ''Answer
 makeElim ''Discussion
 makeElim ''Statement
 makeElim ''Vote
+
+makeElim ''DscnAcc
+makeElim ''NoteAcc
+makeElim ''QstnAcc
 
 makeElim ''VR
 makeElim ''RP

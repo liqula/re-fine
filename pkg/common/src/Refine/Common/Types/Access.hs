@@ -7,7 +7,9 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
@@ -18,40 +20,21 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Common.Types.User where
+module Refine.Common.Types.Access where
 
-import Data.String.Conversions (ST)
-import GHC.Generics (Generic)
+import GHC.Generics
 
 import Refine.Common.Types.Prelude (ID)
-import Refine.Prelude.TH
+import Refine.Common.Types.Contribution (ContributionID)
+import Refine.Common.Types.User (User)
+import Refine.Prelude.TH (makeRefineType)
 
 
-type Username = ST
-type Email    = ST
-type Password = ST
+data Access = Grant | Revoke
+  deriving (Eq, Show, Generic)
 
-data CreateUser = CreateUser
-  { _cuName :: Username
-  , _cuMail :: Email
-  , _cuPwd  :: Password
-  }
-  deriving (Eq, Ord, Show, Read, Generic)
+data ChangeAccess = ChangeAccess ContributionID Access (ID User)
+  deriving (Eq, Show, Generic)
 
-newtype User = User
-  { _userID :: ID User -- ^ The primary key is used to identify the user.
-  }
-  deriving (Eq, Ord, Show, Read, Generic)
-
-data Login = Login
-  { _loginUsername :: Username
-  , _loginPassword :: Password
-  }
-  deriving (Eq, Ord, Show, Read, Generic)
-
-
--- * make refine types
-
-makeRefineType ''CreateUser
-makeRefineType ''User
-makeRefineType ''Login
+makeRefineType ''Access
+makeRefineType ''ChangeAccess

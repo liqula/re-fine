@@ -5,6 +5,7 @@ import Refine.Backend.DocRepo.Core as DocRepo
 import Refine.Common.Types.Comment
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc
+import Refine.Common.Types.User
 
 
 class Database db where
@@ -42,10 +43,16 @@ class Database db where
   -- * Note
   createNote         :: ID Edit -> Create Note -> db Note
   getNote            :: ID Note -> db Note
+  addNoteUserAccess  :: ID Note -> ID User -> db ()
+  removeNoteUserAccess   :: ID Note -> ID User -> db ()
+  usersOfNote        :: ID Note -> db [ID User]
 
   -- * Question
   createQuestion     :: ID Edit     -> Create Question -> db Question
   getQuestion        :: ID Question -> db Question
+  addQuestionUserAccess    :: ID Question -> ID User -> db ()
+  removeQuestionUserAccess :: ID Question -> ID User -> db ()
+  usersOfQuestion          :: ID Question -> db [ID User]
 
   -- * Answer
   createAnswer       :: ID Question -> Create Answer -> db Answer
@@ -57,6 +64,9 @@ class Database db where
   getDiscussion      :: ID Discussion -> db Discussion
   statementsOfDiscussion :: ID Discussion -> db [ID Statement]
   discussionOfStatement  :: ID Statement  -> db (ID Discussion)
+  addDiscussionUserAccess    :: ID Discussion -> ID User -> db ()
+  removeDiscussionUserAccess :: ID Discussion -> ID User -> db ()
+  usersOfDiscussion          :: ID Discussion -> db [ID User]
 
   -- * Statement
   createStatement      :: ID Statement -> Create Statement -> db Statement

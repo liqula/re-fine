@@ -50,7 +50,7 @@ import Refine.Backend.Database.Class as DB
 import Refine.Backend.DocRepo as DocRepo
 import Refine.Backend.Server
 import Refine.Common.Rest
-import Refine.Common.Types
+import Refine.Common.Types as Common
 
 
 -- * machine room
@@ -144,6 +144,9 @@ addDiscussionUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy 
 createUserUri :: SBS
 createUserUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SCreateUser)
 
+changeAccessUri :: SBS
+changeAccessUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SChangeAccess)
+
 loginUri :: SBS
 loginUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogin)
 
@@ -189,6 +192,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
   describe "sAddNote" $ do
     it "stores note with full-document chunk range" $ \sess -> do
+      pendingWith "Need login"
       fe :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
       fn :: Note          <- runWaiBody sess $
         post
@@ -198,6 +202,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       be ^. compositeVDocNotes . to elems `shouldContain` [fn]
 
     it "stores note with non-trivial valid chunk range" $ \sess -> do
+      pendingWith "Need login"
       fe :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
       fn :: Note          <- runWaiBody sess $
         let cp1, cp2 :: ChunkPoint
@@ -227,6 +232,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
   describe "sAddDiscussion" $ do
     it "stores discussion with no ranges" $ \sess -> do
+      pendingWith "Need login"
       fe :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
       fn :: CompositeDiscussion <- runWaiBody sess $
         post
@@ -234,6 +240,22 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
           (CreateDiscussion "[discussion initial statement]" True (CreateChunkRange Nothing Nothing))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       be ^. compositeVDocDiscussions . to elems `shouldContain` [fn]
+
+    it "stores discussion and gives access to other user" $ \sess -> do
+      pendingWith "Need login"
+      fc :: CompositeVDoc <- runWaiBody sess $ post changeAccessUri sampleCreateVDoc
+      fd :: CompositeDiscussion <- runWaiBody sess $
+        post
+          (addDiscussionUri (fc ^. compositeVDocRepo . vdocHeadEdit))
+          (CreateDiscussion "[discussion initial statement]" True (CreateChunkRange Nothing Nothing))
+      let did = fd ^. Common.compositeDiscussion . discussionID
+          otherUser = ID 1
+      () <- runWaiBody sess $
+        post
+          changeAccessUri
+          (ChangeAccess (ContribIDDiscussion did) Grant otherUser)
+      users :: [ID User] <- runDB sess . db $ usersOfDiscussion did
+      users `shouldContain` [otherUser]
 
   describe "sAddStatement" $ do
     it "stores statement for given discussion" $ \_sess -> do
@@ -275,7 +297,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
     describe "create" $ do
       it "works" $ \sess -> do
-        runWaiBody sess doCreate `shouldReturn` User 1
+        runWaiBody sess doCreate `shouldReturn` User (ID 1)
 
       it "is secure" $ \_ -> do
         pendingWith "needs design & implementation: what makes a create requests legit?"

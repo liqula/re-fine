@@ -57,7 +57,7 @@ import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
 import Refine.Common.Rest
-import Refine.Prelude (monadError)
+import Refine.Prelude (leftToError)
 
 
 -- * Constants
@@ -94,6 +94,7 @@ refineApi =
   :<|> Refine.Backend.App.addDiscussion
   :<|> Refine.Backend.App.addStatement
   :<|> Refine.Backend.App.createUser
+  :<|> Refine.Backend.App.changeAccess
   :<|> Refine.Backend.App.login
   :<|> Refine.Backend.App.logout
 
@@ -132,7 +133,7 @@ maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) 
 
 {-# ANN toServantError ("HLint: ignore Use errorDoNotUseTrace" :: String) #-}
 toServantError :: (Monad m) => ExceptT AppError m :~> ExceptT ServantErr m
-toServantError = Nat ((lift . runExceptT) >=> monadError fromAppError)
+toServantError = Nat ((lift . runExceptT) >=> leftToError fromAppError)
   where
     -- FIXME: some (many?) of these shouldn't be err500.
     -- FIXME: implement better logging.
@@ -167,5 +168,5 @@ instance SCS.GetCsrfSecret (AppContext db) where
 
 instance SCS.GetSessionToken AppState where
   getSessionToken = appUserState . to (\case
-    UserLoggedIn us -> Just . SCS.SessionToken . userSessionText $ us
-    UserLoggedOut   -> Nothing)
+    UserLoggedIn _user session -> Just . SCS.SessionToken $ userSessionText session
+    UserLoggedOut              -> Nothing)

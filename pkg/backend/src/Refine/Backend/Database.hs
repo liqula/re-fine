@@ -25,6 +25,7 @@
 module Refine.Backend.Database
   ( module Refine.Backend.Database.Class
   , module Refine.Backend.Database.Core
+  , RunDB
   , createDBRunner
   ) where
 
@@ -32,6 +33,7 @@ import Control.Exception
 import Control.Lens ((^.))
 import Control.Monad.Except
 import Control.Monad.Logger
+import Control.Monad.Reader
 import Control.Natural
 import Data.String.Conversions (cs)
 import Database.Persist.Sqlite
@@ -43,8 +45,9 @@ import Refine.Backend.Database.Core
 import Refine.Backend.Database.Schema()
 import Refine.Backend.Database.Entity as Entity
 
+type RunDB db = DBContext -> (db :~> ExceptT DBError IO)
 
-createDBRunner :: Config -> IO (DB :~> ExceptT DBError IO, UserDB.Persistent)
+createDBRunner :: Config -> IO (RunDB DB, UserDB.Persistent)
 createDBRunner cfg = do
 
   let sqliteDb = case cfg ^. cfgDBKind of
@@ -53,7 +56,7 @@ createDBRunner cfg = do
 
   pool <- runNoLoggingT $ createSqlitePool (cs sqliteDb) (cfg ^. cfgPoolSize)
 
-  pure ( Nat (wrapErrors . (`runSqlPool` pool) . runExceptT . unDB)
+  pure ( \dbctx -> Nat (wrapErrors . (`runSqlPool` pool) . (`runReaderT` dbctx) . runExceptT . unDB)
        , Persistent (`runSqlPool` pool)
        )
   where
@@ -94,10 +97,16 @@ instance Database DB where
   -- * Note
   createNote         = Entity.createNote
   getNote            = Entity.getNote
+  addNoteUserAccess  = Entity.addNoteUserAccess
+  removeNoteUserAccess   = Entity.removeNoteUserAccess
+  usersOfNote        = Entity.usersOfNote
 
   -- * Question
   createQuestion     = Entity.createQuestion
   getQuestion        = Entity.getQuestion
+  addQuestionUserAccess    = Entity.addQuestionUserAccess
+  removeQuestionUserAccess = Entity.removeQuestionUserAccess
+  usersOfQuestion          = Entity.usersOfQuestion
 
   -- * Answer
   createAnswer       = Entity.createAnswer
@@ -109,6 +118,9 @@ instance Database DB where
   getDiscussion      = Entity.getDiscussion
   statementsOfDiscussion = Entity.statementsOfDiscussion
   discussionOfStatement  = Entity.discussionOfStatement
+  addDiscussionUserAccess    = Entity.addDiscussionUserAccess
+  removeDiscussionUserAccess = Entity.removeDiscussionUserAccess
+  usersOfDiscussion          = Entity.usersOfDiscussion
 
   -- * Statement
   createStatement      = Entity.createStatement

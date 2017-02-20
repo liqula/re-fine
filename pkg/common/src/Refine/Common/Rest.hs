@@ -37,6 +37,7 @@ type RefineAPI =
   :<|> SAddDiscussion
   :<|> SAddStatement
   :<|> SCreateUser
+  :<|> SChangeAccess
   :<|> SLogin
   :<|> SLogout
 
@@ -85,3 +86,6 @@ type SLogin
 
 type SLogout
   = "r" :> "user" :> "logout" :> Post '[JSON] ()
+
+type SChangeAccess
+  = "r" :> "change-access" :> ReqBody '[JSON] ChangeAccess :> Post '[JSON] ()

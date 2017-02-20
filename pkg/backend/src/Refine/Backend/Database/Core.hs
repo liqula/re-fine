@@ -27,17 +27,24 @@ import Control.Monad.Reader
 import Database.Persist.Sql
 import GHC.Generics (Generic)
 
+import Refine.Common.Types.Prelude (ID(..))
+import Refine.Common.Types.User (User)
 import Refine.Prelude.TH (makeRefineType)
 
 
 type SQLM = ReaderT SqlBackend IO
 
-newtype DB a = DB { unDB :: ExceptT DBError SQLM a }
+newtype DBContext = DBContext
+  { _dbLoggedInUser :: Maybe (ID User)
+  }
+
+newtype DB a = DB { unDB :: ExceptT DBError (ReaderT DBContext SQLM) a }
   deriving
     ( Functor
     , Applicative
     , Monad
     , MonadError DBError
+    , MonadReader DBContext
     )
 
 data DBError
@@ -45,6 +52,7 @@ data DBError
   | DBNotFound String
   | DBNotUnique String
   | DBException String
+  | DBUserNotLoggedIn
   deriving (Eq, Show, Generic)
 
 makeRefineType ''DBError
@@ -56,4 +64,4 @@ notUnique :: String -> DB a
 notUnique = DB . throwError . DBNotUnique
 
 liftDB :: SQLM a -> DB a
-liftDB = DB . lift
+liftDB = DB . lift . lift

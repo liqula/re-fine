@@ -24,6 +24,7 @@ module Refine.Backend.Database.Entity where
 
 import Control.Lens ((^.), to)
 import Control.Monad (void)
+import Control.Monad.Reader (ask)
 import Data.Functor.Infix ((<$$>))
 import Data.String.Conversions (ST)
 import Data.Typeable
@@ -36,7 +37,9 @@ import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
 import           Refine.Backend.Database.Types
 import qualified Refine.Backend.DocRepo.Core as DocRepo
+import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
+import           Refine.Prelude (nothingToError)
 
 -- FIXME: Generate this as the part of the lentil library.
 type instance S.EntityRep VDoc       = S.VDoc
@@ -47,6 +50,7 @@ type instance S.EntityRep Question   = S.Question
 type instance S.EntityRep Discussion = S.Discussion
 type instance S.EntityRep Answer     = S.Answer
 type instance S.EntityRep Statement  = S.Statement
+type instance S.EntityRep User       = Users.Login
 
 {-
 Reading the domain structured datatypes is not a problem,
@@ -118,6 +122,12 @@ vdocDBLens = entityLens vdocEntity
 
 vdocEntity :: L.Entity DB ID VDoc VDoc
 vdocEntity = L.Entity getVDoc updateVDoc
+
+-- | Returns the ID of the user who runs the current DB computation.
+dbUser :: DB (ID User)
+dbUser = do
+  DBContext mu <- ask
+  nothingToError DBUserNotLoggedIn mu
 
 -- * VDoc
 
@@ -250,45 +260,72 @@ registerEdit rid pid = void . liftDB . insert $ S.RP (S.idToKey rid) (S.idToKey 
 
 -- * Note
 
-toNote :: ID Note -> ST -> Bool -> DBChunkRange -> Note
-toNote nid desc public range = Note nid desc public (toChunkRange range nid)
+-- TODO: Use the _lid
+toNote :: ID Note -> ST -> Bool -> DBChunkRange -> LoginId -> Note
+toNote nid desc public range _lid = Note nid desc public (toChunkRange range nid)
 
 createNote :: ID Edit -> Create Note -> DB Note
-createNote pid note = liftDB $ do
-  let snote = S.Note
-        (note ^. createNoteText)
-        (note ^. createNotePublic)
-        (note ^. createNoteRange . to mkDBChunkRange)
-  key <- insert snote
-  void . insert $ S.PN (S.idToKey pid) key
-  pure $ S.noteElim (toNote (S.keyToId key)) snote
+createNote pid note = do
+  userId <- dbUser
+  liftDB $ do
+    let snote = S.Note
+          (note ^. createNoteText)
+          (note ^. createNotePublic)
+          (note ^. createNoteRange . to mkDBChunkRange)
+          (fromUserID userId)
+    key <- insert snote
+    void . insert $ S.PN (S.idToKey pid) key
+    pure $ S.noteElim (toNote (S.keyToId key)) snote
 
 getNote :: ID Note -> DB Note
 getNote nid = S.noteElim (toNote nid) <$> getEntity nid
 
+addNoteUserAccess :: ID Note -> ID User -> DB ()
+addNoteUserAccess nid uid = void . liftDB . insert $ S.NoteAcc (S.idToKey nid) (S.idToKey uid)
+
+removeNoteUserAccess :: ID Note -> ID User -> DB ()
+removeNoteUserAccess nid uid = void . liftDB . deleteBy $ S.UniNA (S.idToKey nid) (S.idToKey uid)
+
+usersOfNote :: ID Note -> DB [ID User]
+usersOfNote nid = foreignKeyField S.noteAccUser <$$> liftDB (selectList [S.NoteAccNote ==. S.idToKey nid] [])
+
 -- * Question
 
-toQuestion :: ID Question -> ST -> Bool -> Bool -> DBChunkRange -> Question
-toQuestion qid text answ pblc range = Question qid text answ pblc (toChunkRange range qid)
+-- TODO: User lid
+toQuestion :: ID Question -> ST -> Bool -> Bool -> DBChunkRange -> LoginId -> Question
+toQuestion qid text answ pblc range _lid = Question qid text answ pblc (toChunkRange range qid)
 
 createQuestion :: ID Edit -> Create Question -> DB Question
-createQuestion pid question = liftDB $ do
-  let squestion = S.Question
-        (question ^. createQuestionText)
-        False -- Not answered
-        (question ^. createQuestionPublic)
-        (question ^. createQuestionRange . to mkDBChunkRange)
-  key <- insert squestion
-  void . insert $ S.PQ (S.idToKey pid) key
-  pure $ S.questionElim (toQuestion (S.keyToId key)) squestion
+createQuestion pid question = do
+  userId <- dbUser
+  liftDB $ do
+    let squestion = S.Question
+          (question ^. createQuestionText)
+          False -- Not answered
+          (question ^. createQuestionPublic)
+          (question ^. createQuestionRange . to mkDBChunkRange)
+          (fromUserID userId)
+    key <- insert squestion
+    void . insert $ S.PQ (S.idToKey pid) key
+    pure $ S.questionElim (toQuestion (S.keyToId key)) squestion
 
 getQuestion :: ID Question -> DB Question
 getQuestion qid = S.questionElim (toQuestion qid) <$> getEntity qid
 
+addQuestionUserAccess :: ID Question -> ID User -> DB ()
+addQuestionUserAccess qid uid = void . liftDB . insert $ S.QstnAcc (S.idToKey qid) (S.idToKey uid)
+
+removeQuestionUserAccess :: ID Question -> ID User -> DB ()
+removeQuestionUserAccess qid uid = void . liftDB . deleteBy $ S.UniQA (S.idToKey qid) (S.idToKey uid)
+
+usersOfQuestion :: ID Question -> DB [ID User]
+usersOfQuestion qid = foreignKeyField S.qstnAccUser <$$> liftDB (selectList [S.QstnAccQuestion ==. S.idToKey qid] [])
+
 -- * Discussion
 
-toDiscussion :: ID Discussion -> Bool -> DBChunkRange -> Discussion
-toDiscussion did pblc range = Discussion did pblc (toChunkRange range did)
+-- TODO: Login ID
+toDiscussion :: ID Discussion -> Bool -> DBChunkRange -> LoginId -> Discussion
+toDiscussion did pblc range _lid = Discussion did pblc (toChunkRange range did)
 
 saveStatement :: ID Discussion -> S.Statement -> SQLM Statement
 saveStatement did sstatement = do
@@ -297,18 +334,21 @@ saveStatement did sstatement = do
   pure $ S.statementElim (toStatement (S.keyToId key)) sstatement
 
 createDiscussion :: ID Edit -> Create Discussion -> DB Discussion
-createDiscussion pid disc = liftDB $ do
-  let sdiscussion = S.Discussion
-        (disc ^. createDiscussionPublic)
-        (disc ^. createDiscussionRange . to mkDBChunkRange)
-  key <- insert sdiscussion
-  let did = S.keyToId key
-  void . insert $ S.PD (S.idToKey pid) key
-  let sstatement = S.Statement
-        (disc ^. createDiscussionStatementText)
-        Nothing -- Top level node
-  void $ saveStatement did sstatement
-  pure $ S.discussionElim (toDiscussion did) sdiscussion
+createDiscussion pid disc = do
+  userId <- dbUser
+  liftDB $ do
+    let sdiscussion = S.Discussion
+          (disc ^. createDiscussionPublic)
+          (disc ^. createDiscussionRange . to mkDBChunkRange)
+          (fromUserID userId)
+    key <- insert sdiscussion
+    let did = S.keyToId key
+    void . insert $ S.PD (S.idToKey pid) key
+    let sstatement = S.Statement
+          (disc ^. createDiscussionStatementText)
+          Nothing -- Top level node
+    void $ saveStatement did sstatement
+    pure $ S.discussionElim (toDiscussion did) sdiscussion
 
 getDiscussion :: ID Discussion -> DB Discussion
 getDiscussion did = S.discussionElim (toDiscussion did) <$> getEntity did
@@ -321,6 +361,14 @@ discussionOfStatement :: ID Statement -> DB (ID Discussion)
 discussionOfStatement sid = unique =<< liftDB
   (foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] [])
 
+addDiscussionUserAccess :: ID Discussion -> ID User -> DB ()
+addDiscussionUserAccess did uid = void . liftDB . insert $ S.DscnAcc (S.idToKey did) (S.idToKey uid)
+
+removeDiscussionUserAccess :: ID Discussion -> ID User -> DB ()
+removeDiscussionUserAccess did uid = void . liftDB . deleteBy $ S.UniDA (S.idToKey did) (S.idToKey uid)
+
+usersOfDiscussion :: ID Discussion -> DB [ID User]
+usersOfDiscussion did = foreignKeyField S.dscnAccUser <$$> liftDB (selectList [S.DscnAccDiscussion ==. S.idToKey did] [])
 
 -- * Answer
 
