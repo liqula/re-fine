@@ -43,8 +43,8 @@ import           Refine.Frontend.UtilityWidgets
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
-dialog_styles :: [Style]
-dialog_styles = [ -- Style "display" ("block" :: String)
+dialogStyles :: [Style]
+dialogStyles = [ -- Style "display" ("block" :: String)
                 --, Style "minHeight" ("200px" :: String)
                  Style "padding" ("1.5rem 1.0rem 1.0rem" :: String)
 
@@ -61,19 +61,19 @@ dialog_styles = [ -- Style "display" ("block" :: String)
 
 vdoc_overlay_content__add_comment :: [Style]
 vdoc_overlay_content__add_comment = [ Style "backgroundColor" C.vdoc_comment
-                                    ] <> dialog_styles
+                                    ] <> dialogStyles
 
 -- is vdoc_overlay_content__comment in CSS
 vdoc_overlay_content__note :: [Style]
 vdoc_overlay_content__note = [ Style "backgroundColor" C.vdoc_comment
-                              ] <> dialog_styles
+                              ] <> dialogStyles
 
 vdoc_overlay_content__discussion :: [Style]
 vdoc_overlay_content__discussion = [ Style "backgroundColor" C.vdoc_discussion
-                                    ] <> dialog_styles
+                                    ] <> dialogStyles
 
-overlay_styles :: [Style]
-overlay_styles =
+overlayStyles :: [Style]
+overlayStyles =
   [ Style "zIndex" (6010 :: Int)
   ]
 
@@ -94,7 +94,7 @@ showComment = defineView "ShowComment" $ \props ->
            , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
            , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
            , "dialogStyles" @= (props ^. contentStyle)
-           , "overlayStyles" @= overlay_styles
+           , "overlayStyles" @= overlayStyles
            ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
@@ -176,7 +176,7 @@ addComment = defineView "AddComment" $ \(forRange, commentCategory) ->
            , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
            , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
            , "dialogStyles" @= vdoc_overlay_content__add_comment
-           , "overlayStyles" @= overlay_styles
+           , "overlayStyles" @= overlayStyles
            ]  $ do
 
     icon_ (IconProps "c-vdoc-overlay-content" False ("icon-Remark", "dark") XL)
