@@ -21,20 +21,19 @@
 {-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
+{-# LANGUAGE UndecidableInstances       #-}
 
-module Refine.Frontend.MainMenuSpec where
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
-import           Test.Hspec
+module Refine.Frontend.Prelude where
 
-import           Refine.Frontend.Login.Types
-import           Refine.Frontend.MainMenu.Component
-import           Refine.Frontend.MainMenu.Types
-import           Refine.Frontend.Test.Enzyme
+import Data.String (fromString)
+import Data.String.Conversions
+import Data.JSString
 
 
-spec :: Spec
-spec = do
-  describe "mainMenu_" $ do
-    it "renders" $ do
-      wrapper <- shallow $ mainMenu_ defaultMainMenuTab UserLoggedOut
-      lengthOfIO (find wrapper (StringSelector ".c-mainmenu-content")) `shouldReturn` (1 :: Int)
+instance ConvertibleStrings JSString JSString where
+  convertString = id
+
+instance (ConvertibleStrings a String) => ConvertibleStrings a JSString where
+  convertString = fromString . cs

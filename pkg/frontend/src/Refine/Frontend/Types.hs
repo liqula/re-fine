@@ -33,6 +33,7 @@ import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
+import Refine.Frontend.Login.Types
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -44,11 +45,22 @@ data GlobalState = GlobalState
   , _gsScreenState                :: ScreenState
   , _gsNotImplementedYetIsVisible :: Bool
   , _gsMainMenuState              :: MainMenuState
+  , _gsLoginState                 :: LoginState
   , _gsToolbarSticky              :: Bool
   } deriving (Show, Generic)
 
 emptyGlobalState :: GlobalState
-emptyGlobalState = GlobalState Nothing Nothing emptyContributionState emptyHeaderState emptyScreenState False MainMenuClosed False
+emptyGlobalState = GlobalState
+  { _gsVDoc                       = Nothing
+  , _gsVDocList                   = Nothing
+  , _gsContributionState          = emptyContributionState
+  , _gsHeaderState                = emptyHeaderState
+  , _gsScreenState                = emptyScreenState
+  , _gsNotImplementedYetIsVisible = False
+  , _gsMainMenuState              = MainMenuClosed
+  , _gsLoginState                 = emptyLoginState
+  , _gsToolbarSticky              = False
+  }
 
 data RefineAction = LoadDocumentList
                   | LoadedDocumentList [ID VDoc]
@@ -71,6 +83,7 @@ data RefineAction = LoadDocumentList
                   | ShowNotImplementedYet
                   | HideNotImplementedYet
                   | MainMenuAction MainMenuAction
+                  | ChangeCurrentUser CurrentUser
                   -- Actions that will be transformed because they need IO:
                   | TriggerUpdateSelection OffsetFromDocumentTop ToolbarExtensionStatus
                   -- Action only for testing:

@@ -33,6 +33,7 @@ import           GHCJS.Marshal (FromJSVal)
 import           React.Flux
 
 import           Refine.Common.Types.User
+import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
 import           Refine.Frontend.UtilityWidgets
@@ -93,6 +94,11 @@ invalidRegistrationForm form =
      , form ^. registrationFormAgree . to not
      ]
 
+loginOrLogout_ :: CurrentUser -> ReactElementM eventHandler ()
+loginOrLogout_ = \case
+  UserLoggedOut  -> login_
+  UserLoggedIn _ -> logout_
+
 -- * Login
 
 login_ :: ReactElementM eventHandler ()
@@ -121,6 +127,30 @@ login = defineStatefulView "Login" (LoginForm "" "") $ \curState () -> do
           []
         )
 
+-- * Logout
+
+logout_ :: ReactElementM eventHandler ()
+logout_ = view logout () mempty
+
+logout :: ReactView ()
+logout = defineView "Logout" $ \() -> do
+
+  div_ $ do
+    p_ "Profile page"
+    form_ [ "target" $= "#"
+          , "action" $= "POST" ] $ do
+
+      iconButton_
+        (IconButtonProps
+          (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
+          "submit"
+          ""
+          ""
+          "Logout"
+          False
+          (\_ -> RS.dispatch RS.Logout)
+          []
+        )
 
 -- * Registration
 
