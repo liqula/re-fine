@@ -131,6 +131,8 @@ showComment = defineView "ShowComment" $ \props ->
                 icon_ (IconProps "c-vdoc-overlay-votes" True ("icon-Vote_negative", "dark") XL)
         -- END: vote buttons -->
 
+        div_ ["style" @= [Style "marginBottom" ("20px" :: String)]] "" -- make some space for the close button
+
 showComment_ :: CommentDisplayProps -> ReactElementM eventHandler ()
 showComment_ props = view showComment props mempty
 
