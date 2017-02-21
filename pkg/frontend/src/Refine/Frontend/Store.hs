@@ -192,7 +192,7 @@ emitBackendCallsFor action state = case action of
         (Right _user) -> do
           pure $ dispatchMore
             [ MainMenuAction $ MainMenuActionOpen MainMenuLogin
-            , MainMenuAction $ MainMenuActionClearErrors
+            , MainMenuAction MainMenuActionClearErrors
             ]
 
     Login loginData -> do
@@ -242,7 +242,7 @@ createChunkRange (Just range) = RT.ChunkRange (range ^. rangeStartPoint) (range 
 handleError :: (Int, String) -> (ApiError -> [RefineAction]) -> IO [SomeStoreAction]
 handleError (code, rsp) onApiError = case AE.eitherDecode $ cs rsp of
   Left err -> do
-    consoleLog "handleError" (show code ++ " " ++ rsp)
+    consoleLog "handleError" $ unwords [show code, rsp]
     consoleLog "handleError" err
     pure []
   Right apiError -> do
