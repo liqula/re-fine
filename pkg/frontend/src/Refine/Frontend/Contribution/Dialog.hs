@@ -237,7 +237,7 @@ addComment = defineView "AddComment" $ \props ->
              , "titleStyle" @= [Style "margin" ("0" :: String)]
              ]  $ do
 
-      icon_ (IconProps "c-vdoc-overlay-content" False ("icon-Note", "dark") XL)
+      icon_ (IconProps "c-vdoc-overlay-content" False ("icon-New_Comment", "dark") XL)
 
       span_ [ "className" $= "c-vdoc-overlay-content__title"
             , "style" @= [ Style "fontSize" ("1.125rem" :: String)
