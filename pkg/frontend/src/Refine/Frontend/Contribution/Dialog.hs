@@ -270,7 +270,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
 
       div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do  -- RENAME: annotation => comment
         iconButton_ (IconButtonProps
-                      (IconProps "c-vdoc-overlay-content" True ("icon-Remark", "dark") L)
+                      (IconProps "c-vdoc-overlay-content" False ("icon-Remark", "dark") L)
                       "category"
                       "comment"
                       ""
@@ -280,7 +280,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
                       []
                     )
         iconButton_ (IconButtonProps
-                      (IconProps "c-vdoc-overlay-content" True ("icon-Discussion", "dark") L)
+                      (IconProps "c-vdoc-overlay-content" False ("icon-Discussion", "dark") L)
                       "category"
                       "discussion"
                       ""
@@ -297,7 +297,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
 
       iconButton_
         (IconButtonProps
-          (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
+          (IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") L)
           "submit"
           ""
           ""
