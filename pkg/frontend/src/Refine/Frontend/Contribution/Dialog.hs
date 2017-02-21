@@ -51,7 +51,6 @@ dialogStyles = [ -- Style "display" ("block" :: String)
                  -- Style "padding" ("3rem 1.0rem 1.0rem" :: String)
 
                   Style "width" ("40rem" :: String)
-                , Style "height" ("40rem" :: String)
                 , Style "left" ("7.5rem" :: String)
                 , Style "marginLeft" ("0" :: String)
                 , Style "marginTop" ("0" :: String)
@@ -95,11 +94,14 @@ makeLenses ''CommentDisplayProps
 
 showComment :: ReactView CommentDisplayProps
 showComment = defineView "ShowComment" $ \props ->
-  let topStyle = [Style "top" (show (props ^. topOffset . SC.unOffsetFromDocumentTop + 5) <> "px")]
+  let extraStyles = [Style "top"         (show (props ^. topOffset . SC.unOffsetFromDocumentTop + 5) <> "px")
+                    , Style "height"     ("" :: String)
+                    , Style "min-height" ("100px" :: String)
+                    ]
   in skylight_ ["isVisible" &= True
            , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
            , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
-           , "dialogStyles" @= ((props ^. contentStyle) <> topStyle)
+           , "dialogStyles" @= ((props ^. contentStyle) <> extraStyles)
            , "overlayStyles" @= overlayStyles
            ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
@@ -228,11 +230,13 @@ addComment = defineView "AddComment" $ \props ->
               Nothing -> 0 -- FIXME: Invent a suitable top for the "general comment" case
               Just range -> (range ^. RS.rangeBottomOffset . SC.unOffsetFromViewportTop)
                           + (range ^. RS.rangeScrollOffset . SC.unScrollOffsetOfViewport)
-        topStyle = [Style "top" (show (top + 5) <> "px")]
+        extraStyles = [ Style "top"    (show (top + 5) <> "px")
+                      , Style "height" ("40rem" :: String)
+                      ]
     in skylight_ ["isVisible" &= True
              , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
              , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
-             , "dialogStyles" @= (vdoc_overlay_content__add_comment <> topStyle)
+             , "dialogStyles" @= (vdoc_overlay_content__add_comment <> extraStyles)
              , "overlayStyles" @= overlayStyles
              , "titleStyle" @= [Style "margin" ("0" :: String)]
              ]  $ do
