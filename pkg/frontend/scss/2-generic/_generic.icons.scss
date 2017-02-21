@@ -719,6 +719,18 @@
     content: $icon-Next_Phase_RO;
   }
 }
+.icon-Note_bright {
+  background-image: url("../images/Note_bright.svg");
+}
+.icon-Note_dark {
+  background-image: url("../images/Note_dark.svg");
+}
+.icon-Note_lightred {
+  background-image: url("../images/Note_lightred.svg");
+}
+.icon-Note_RO {
+  background-image: url("../images/Note_RO.svg");
+}
 .icon-Play_bright {
   &:before {
     content: $icon-Play_bright;
@@ -889,18 +901,6 @@
 }
 .icon-Reader_RO {
   background-image: url("../images/Reader_RO.svg");
-}
-.icon-Remark_bright {
-  background-image: url("../images/Remark_bright.svg");
-}
-.icon-Remark_dark {
-  background-image: url("../images/Remark_dark.svg");
-}
-.icon-Remark_lightred {
-  background-image: url("../images/Remark_lightred.svg");
-}
-.icon-Remark_RO {
-  background-image: url("../images/Remark_RO.svg");
 }
 .icon-Search_bright {
   &:before {

@@ -48,10 +48,10 @@ import           Refine.Frontend.UtilityWidgets
 dialogStyles :: [Style]
 dialogStyles = [ -- Style "display" ("block" :: String)
                 --, Style "minHeight" ("200px" :: String)
-                 Style "padding" ("3rem 1.0rem 1.0rem" :: String)
+                 -- Style "padding" ("3rem 1.0rem 1.0rem" :: String)
 
-                , Style "width" ("40rem" :: String)
-                , Style "height" ("30rem" :: String)
+                  Style "width" ("40rem" :: String)
+                , Style "height" ("40rem" :: String)
                 , Style "left" ("7.5rem" :: String)
                 , Style "marginLeft" ("0" :: String)
                 , Style "marginTop" ("0" :: String)
@@ -153,7 +153,7 @@ showNote = defineView "ShowNote" $ \case
   ShowNotePropsNothing -> mempty
   ShowNotePropsJust note top ->
     let commentText1  = (note ^. noteText)
-        iconStyle1    = ("icon-Remark", "dark")
+        iconStyle1    = ("icon-Note", "dark")
         userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
     in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__note top)
@@ -237,7 +237,7 @@ addComment = defineView "AddComment" $ \props ->
              , "titleStyle" @= [Style "margin" ("0" :: String)]
              ]  $ do
 
-      icon_ (IconProps "c-vdoc-overlay-content" False ("icon-Remark", "dark") XL)
+      icon_ (IconProps "c-vdoc-overlay-content" False ("icon-Note", "dark") XL)
 
       span_ [ "className" $= "c-vdoc-overlay-content__title"
             , "style" @= [ Style "fontSize" ("1.125rem" :: String)
@@ -268,7 +268,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
 
       div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do  -- RENAME: annotation => comment
         iconButton_ (IconButtonProps
-                      (IconProps "c-vdoc-overlay-content" False ("icon-Remark", "dark") L)
+                      (IconProps "c-vdoc-overlay-content" False ("icon-Note", "dark") L)
                       "category"
                       "comment"
                       ""
