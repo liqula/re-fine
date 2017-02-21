@@ -146,20 +146,23 @@ toolbarStickyUpdate action state = case action of
   ToolbarStickyStateChange state' -> state'
   _                               -> state
 
+dispatchMore :: [RefineAction] -> [SomeStoreAction]
+dispatchMore = mconcat . fmap dispatch
+
 emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()
 emitBackendCallsFor action state = case action of
     LoadDocumentList -> do
         listVDocs $ \case
-            (Left rsp) -> handleError rsp
+            (Left rsp) -> handleError rsp (const [])
             (Right loadedVDocs) -> pure . dispatch $ LoadedDocumentList ((^. RT.vdocID) <$> loadedVDocs)
     LoadDocument auid -> do
         getVDoc auid $ \case
-            (Left rsp) -> handleError rsp
+            (Left rsp) -> handleError rsp (const [])
             (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
 
     AddDemoDocument -> do
         createVDoc (RT.CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
-            (Left rsp) -> handleError rsp
+            (Left rsp) -> handleError rsp (const [])
             (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
 
     ContributionAction (SubmitComment text category forRange) -> do
@@ -170,34 +173,48 @@ emitBackendCallsFor action state = case action of
         Just Discussion ->
           addDiscussion (state ^. gsVDoc . to fromJust . RT.compositeVDocRepo . RT.vdocHeadEdit)
                      (RT.CreateDiscussion text True (createChunkRange forRange)) $ \case
-            (Left rsp) -> handleError rsp
+            (Left rsp) -> handleError rsp (const [])
             (Right discussion) -> pure $ dispatch (AddDiscussion discussion)
         Just Note ->
           addNote (state ^. gsVDoc . to fromJust . RT.compositeVDocRepo . RT.vdocHeadEdit)
                      (RT.CreateNote text True (createChunkRange forRange)) $ \case
-            (Left rsp) -> handleError rsp
+            (Left rsp) -> handleError rsp (const [])
             (Right note) -> pure $ dispatch (AddNote note)
         Nothing -> pure ()
 
     CreateUser createUserData -> do
       createUser createUserData $ \case
-        (Left rsp)    -> handleError rsp
+        (Left rsp)    -> do
+          handleError rsp $ \case
+            ApiUserCreationError e -> [MainMenuAction $ MainMenuActionRegistrationError e]
+            _                      -> []
+
         (Right _user) -> do
-          pure $ dispatch (MainMenuAction $ MainMenuActionOpen MainMenuLogin)
+          pure $ dispatchMore
+            [ MainMenuAction $ MainMenuActionOpen MainMenuLogin
+            , MainMenuAction $ MainMenuActionClearErrors
+            ]
 
     Login loginData -> do
       login loginData $ \case
-        (Left rsp) -> handleError rsp
+        (Left rsp) -> handleError rsp $ \case
+          ApiUserNotFound e -> [MainMenuAction $ MainMenuActionLoginError e]
+          _                 -> []
+
         (Right username) -> do
-          pure $ dispatch (ChangeCurrentUser $ UserLoggedIn username) <>
-                 dispatch (MainMenuAction MainMenuActionClose)
+          pure $ dispatchMore
+            [ ChangeCurrentUser $ UserLoggedIn username
+            , MainMenuAction MainMenuActionClose
+            ]
 
     Logout -> do
       logout $ \case
-        (Left rsp) -> handleError rsp
+        (Left rsp) -> handleError rsp (const [])
         (Right ()) -> do
-          pure $ dispatch (ChangeCurrentUser UserLoggedOut) <>
-                 dispatch (MainMenuAction MainMenuActionClose)
+          pure $ dispatchMore
+            [ ChangeCurrentUser UserLoggedOut
+            , MainMenuAction MainMenuActionClose
+            ]
 
     _ -> pure ()
 
@@ -214,7 +231,7 @@ emitBackendCallsFor action state = case action of
                                 let protoChunkRange = ProtoChunkRange (ChunkPoint (DataUID <$> _startUid range) (_startOffset range)) (ChunkPoint (DataUID <$> _endUid range) (_endOffset range))
                                 let editFromClient = EditFromClient vdocChunk (Just protoChunkRange)
                                 addEdit editKey editFromClient $ \case
-                                    (Left rsp) -> handleError rsp
+                                    (Left rsp) -> handleError rsp (const [])
                                     (Right _edit) -> pure []
 -}
 
@@ -222,18 +239,15 @@ createChunkRange :: Maybe Range -> RT.ChunkRange
 createChunkRange Nothing = RT.ChunkRange Nothing Nothing
 createChunkRange (Just range) = RT.ChunkRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
 
-handleError :: (Int, String) -> IO [SomeStoreAction]
-handleError (code, rsp) = case AE.eitherDecode $ cs rsp of
+handleError :: (Int, String) -> (ApiError -> [RefineAction]) -> IO [SomeStoreAction]
+handleError (code, rsp) onApiError = case AE.eitherDecode $ cs rsp of
   Left err -> do
     consoleLog "handleError" (show code ++ " " ++ rsp)
     consoleLog "handleError" err
     pure []
-  Right apiError -> handleApiError code apiError
-
-handleApiError :: Int -> ApiError -> IO [SomeStoreAction]
-handleApiError _code apiError = do
-  consoleLog "handleApiError" (show apiError)
-  pure []
+  Right apiError -> do
+    consoleLog "handleApiError" (show apiError)
+    pure . mconcat . fmap dispatch $ onApiError apiError
 
 refineStore :: ReactStore GlobalState
 refineStore = mkStore emptyGlobalState
