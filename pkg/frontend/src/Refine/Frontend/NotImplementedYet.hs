@@ -28,7 +28,7 @@ import React.Flux
 
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
-import           Refine.Frontend.ThirdPartyViews (overlay_)
+import           Refine.Frontend.ThirdPartyViews (skylight_)
 import qualified Refine.Frontend.Types as RS
 
 dialogStyles :: [Style]
@@ -50,7 +50,7 @@ overlayStyles =
 
 notImplementedYet :: ReactView Bool
 notImplementedYet = defineView "NotImplementedYet" $ \isVisible ->
-  overlay_ ["isVisible" &= isVisible
+  skylight_ ["isVisible" &= isVisible
            , "dialogStyles" @= dialogStyles
            , "overlayStyles" @= overlayStyles
            , on "onOverlayClicked" $ \_ -> RS.dispatch RS.HideNotImplementedYet

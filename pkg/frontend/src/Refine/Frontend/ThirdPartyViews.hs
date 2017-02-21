@@ -24,7 +24,7 @@
 
 module Refine.Frontend.ThirdPartyViews
   ( hammer_
-  , overlay_
+  , skylight_
   , sticky_
   , stickyContainer_
   ) where
@@ -38,8 +38,8 @@ sticky_ = foreign_ "Sticky"
 stickyContainer_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 stickyContainer_ = foreign_ "StickyContainer"
 
-overlay_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-overlay_ = foreign_ "Overlay" -- SkyLightStateless from react-skylight
+skylight_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+skylight_ = foreign_ "Skylight" -- SkyLightStateless from react-skylight
 
 hammer_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 hammer_ = foreign_ "Hammer"
