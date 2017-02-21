@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns          #-}
+{-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DeriveGeneric         #-}
 {-# LANGUAGE EmptyDataDecls        #-}
 {-# LANGUAGE FlexibleContexts      #-}
@@ -59,10 +60,16 @@ import           Control.Monad (foldM)
 import           Control.Monad.Except (MonadError(..))
 import           Data.Char (isSpace)
 import           Data.Function (on)
+#if __GLASGOW_HASKELL__ >= 800
 import           Data.List (replicate, sortBy)
+#else
+import           Data.List (sortBy)
+#endif
 import           Data.String
 import           Data.String.Conversions
+#if __GLASGOW_HASKELL__ >= 800
 import           Data.Monoid ((<>))
+#endif
 import           Data.Ord
 import qualified Data.Set as Set
 import           Data.Time

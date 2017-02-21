@@ -38,6 +38,7 @@ dependencies:
   - string-conversions
   - text
   - time
+  - transformers
   - vector
 
 library:
