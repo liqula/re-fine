@@ -243,6 +243,7 @@ addComment = defineView "AddComment" $ \props ->
             , "style" @= [ Style "fontSize" ("1.125rem" :: String)
                          , Style "lineHeight" ("1.15" :: String)
                          , Style "marginBottom" ("0.875rem" :: String)
+                         , Style "marginLeft" ("1rem" :: String)
                          , Style "fontWeight" ("bold" :: String)
                          ]
             ] "Add a comment"

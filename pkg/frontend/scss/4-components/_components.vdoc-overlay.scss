@@ -46,6 +46,7 @@ $module: #{$namespace}vdoc-overlay;
     &-content__icon {
 
         left: $global-padding * 2;
+        display: inline-block;
         top: $global-padding;
 
     }
@@ -144,7 +145,6 @@ $module: #{$namespace}vdoc-overlay;
             display: inline-block;
             left: $global-padding * 12;
             margin-top: 0;
-            position: absolute;
             top: $global-padding * 2;
             width: 70%;
         }
