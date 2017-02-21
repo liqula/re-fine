@@ -277,6 +277,9 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
                       (\_ -> RS.dispatch . RS.ContributionAction $ RS.SetCommentCategory RS.Note)
                       []
                     )
+
+        span_ ["style" @= [Style "marginRight" ("1rem" :: String)]] ""
+
         iconButton_ (IconButtonProps
                       (IconProps "c-vdoc-overlay-content" False ("icon-Discussion", "dark") L)
                       "category"
