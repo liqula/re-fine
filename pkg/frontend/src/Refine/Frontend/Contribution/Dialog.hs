@@ -84,7 +84,6 @@ overlayStyles =
 
 data CommentDisplayProps = CommentDisplayProps
   { _commentText :: CommentText
-  , _commentTitle :: String
   , _iconStyle :: IconDescription
   , _userName :: String
   , _creationDate :: String
@@ -106,8 +105,6 @@ showComment = defineView "ShowComment" $ \props ->
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
         icon_ (IconProps "c-vdoc-overlay-content" False (props ^. iconStyle) L) -- or XL? in question
-
-        h4_ ["className" $= "c-vdoc-overlay-content__title"] $ elemString (props ^. commentTitle)
 
         div_ ["className" $= "c-vdoc-overlay-content__copy"] $ elemText (props ^. commentText)
 
@@ -156,11 +153,10 @@ showNote = defineView "ShowNote" $ \case
   ShowNotePropsNothing -> mempty
   ShowNotePropsJust note top ->
     let commentText1  = (note ^. noteText)
-        commentTitle1 = "Title of comment"
         iconStyle1    = ("icon-Remark", "dark")
         userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__note top)
+    in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__note top)
 
 showNote_ :: ShowNoteProps -> ReactElementM eventHandler ()
 showNote_ props = view showNote props mempty
@@ -188,11 +184,10 @@ showDiscussion = defineView "ShowDiscussion" $ \case
   ShowDiscussionPropsNothing -> mempty
   ShowDiscussionPropsJust discussion top ->
     let commentText1  = (Tree.rootLabel (discussion ^. compositeDiscussionTree) ^. statementText)
-        commentTitle1 = "Title of discussion"
         iconStyle1    = ("icon-Discussion", "dark")
         userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__discussion top)
+    in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__discussion top)
 
 showDiscussion_ :: ShowDiscussionProps -> ReactElementM eventHandler ()
 showDiscussion_ props = view showDiscussion props mempty
@@ -203,11 +198,10 @@ showQuestion = defineView "ShowQuestion" $ \case
   Just question ->
     let overlayStyle1 = [ Style "backgroundColor" C.vdoc_question ]
         commentText1  = (question ^. compositeQuestion . questionText)
-        commentTitle1 = "Title of question"
         iconStyle1    = ("icon-Question", "dark")
         userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 commentTitle1 iconStyle1 userName1 creationDate1 overlayStyle1 (SC.OffsetFromDocumentTop 0))
+    in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1 overlayStyle1 (SC.OffsetFromDocumentTop 0))
 
 showQuestion_ :: Maybe CompositeQuestion -> ReactElementM eventHandler ()
 showQuestion_ question = view showQuestion question mempty
