@@ -19,8 +19,8 @@ data MainMenuAction
   deriving (Eq, Show, Generic)
 
 data MainMenuErrors = MainMenuErrors
-  { _mmeLogin        :: Maybe ST
-  , _mmeRegistration :: Maybe ST
+  { _mmeLogin        :: FormError
+  , _mmeRegistration :: FormError
   }
   deriving (Eq, Show, Generic)
 
