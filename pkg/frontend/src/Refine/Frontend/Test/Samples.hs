@@ -26,7 +26,6 @@ module Refine.Frontend.Test.Samples where
 import Data.Text (replace)
 
 import Refine.Common.Types
-import Refine.Common.Types.VDoc (vdocVersionFromST)
 
 
 sampleTitle :: Title
