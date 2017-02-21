@@ -28,7 +28,6 @@ import           Control.Lens (makeLenses, (^.))
 import           Control.Monad (forM_)
 import           Data.Monoid ((<>))
 import           Data.String.Conversions
-import           Data.String (fromString)
 import           GHCJS.Types (JSVal)
 import           React.Flux
 import           React.Flux.Lifecycle
