@@ -44,6 +44,7 @@ import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
+import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Login.Store (loginStateUpdate)
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Rest
@@ -181,21 +182,21 @@ emitBackendCallsFor action state = case action of
       createUser createUserData $ \case
         (Left (_, msg)) -> handleError msg
         (Right _user) -> do
-          pure $ dispatch LoadDocumentList
+          pure $ dispatch (MainMenuAction $ MainMenuActionOpen MainMenuLogin)
 
     Login loginData -> do
       login loginData $ \case
         (Left(_, msg)) -> handleError msg
         (Right username) -> do
           pure $ dispatch (ChangeCurrentUser $ UserLoggedIn username) <>
-                 dispatch LoadDocumentList
+                 dispatch (MainMenuAction MainMenuActionClose)
 
     Logout -> do
       logout $ \case
         (Left(_, msg)) -> handleError msg
         (Right ()) -> do
           pure $ dispatch (ChangeCurrentUser UserLoggedOut) <>
-                 dispatch LoadDocumentList
+                 dispatch (MainMenuAction MainMenuActionClose)
 
     _ -> pure ()
 
