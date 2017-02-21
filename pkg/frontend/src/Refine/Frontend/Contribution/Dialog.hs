@@ -94,9 +94,9 @@ makeLenses ''CommentDisplayProps
 
 showComment :: ReactView CommentDisplayProps
 showComment = defineView "ShowComment" $ \props ->
-  let extraStyles = [Style "top"         (show (props ^. topOffset . SC.unOffsetFromDocumentTop + 5) <> "px")
-                    , Style "height"     ("" :: String)
-                    , Style "min-height" ("100px" :: String)
+  let extraStyles = [Style "top"        (show (props ^. topOffset . SC.unOffsetFromDocumentTop + 5) <> "px")
+                    , Style "height"    ("" :: String)
+                    , Style "minHeight" ("100px" :: String)
                     ]
   in skylight_ ["isVisible" &= True
            , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
@@ -108,7 +108,7 @@ showComment = defineView "ShowComment" $ \props ->
            ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
-        div_ ["style" @= [Style "margin-left" ("96%" :: String)]] $ do             -- FIXME: How to do this properly?
+        div_ ["style" @= [Style "marginLeft" ("96%" :: String)]] $ do             -- FIXME: How to do this properly?
           icon_ (IconProps "c-vdoc-overlay-content" False (props ^. iconStyle) XL)
 
         div_ ["className" $= "c-vdoc-overlay-content__copy"] $ elemText (props ^. commentText)
