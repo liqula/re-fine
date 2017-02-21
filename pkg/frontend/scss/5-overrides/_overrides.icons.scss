@@ -1,23 +1,9 @@
-[class^="icon-"],
-[class*=" icon-"] {
-
-    ::before,
-    span::before {
-        font-family: 'refineIcons';
-    }
-
-}
 
 .iconsize-m {
 
     background-size: 100%;
     width: 14px;
     height: 14px;
-
-    &::before,
-    span::before {
-        font-size: rem(14);
-    }
 }
 
 .iconsize-l {
@@ -25,11 +11,6 @@
     background-size: 100%;
     width: 20px;
     height: 20px;
-
-    &::before,
-    span::before {
-        font-size: rem(18);
-    }
 }
 
 .iconsize-xl {
@@ -37,151 +18,10 @@
     background-size: 100%;
     width: 26px;
     height: 26px;
-
-    &::before,
-    span::before {
-        font-size: rem(24);
-    }
 }
 
 .iconsize-xxl {
     background-size: 100%;
     width: 32px;
     height: 32px;
-
-    &::before,
-    span::before {
-        font-family: 'refineIcons';
-        font-size: rem(28);
-    }
-}
-
-//---------------------------------------------
-// add colors to non-black, single color icons
-//---------------------------------------------
-
-.icon-Arrow_down_RO,
-.icon-Arrow_right_RO,
-.icon-Arrow_up_RO,
-.icon-Arrow-left_RO,
-.icon-Close_RO,
-.icon-Comment_RO,
-.icon-Discussion_RO,
-.icon-Index_desktop_RO,
-.icon-Index_mobile_RO,
-.icon-Private_lock_RO,
-.icon-Question_RO,
-.icon-Reader_RO,
-.icon-Note_RO,
-.icon-Search_RO,
-.icon-User_RO,
-.icon-Vote_negative_RO,
-.icon-Vote_neutral_RO,
-.icon-Vote_positive_RO,
-.icon-cat_art_RO,
-.icon-cat_fitness_RO,
-.icon-cat_flowers_RO,
-.icon-cat_party_RO,
-.icon-cat_photo_RO,
-.icon-cat_rollerdisco_RO,
-.icon-cat_romantic_RO,
-.icon-cat_sailing_RO,
-.icon-cat_work_RO,
-.icon-cat-buisness_RO,
-.icon-Group_RO,
-.icon-Help_RO,
-.icon-Idea_RO,
-.icon-Next_Phase_RO,
-.icon-Play_RO,
-.icon-Plus_RO,
-.icon-Process_RO,
-.icon-Sort_RO {
-    color: $signal-yellow;
-}
-
-
-.icon-Arrow_down_bright,
-.icon-Arrow_left_bright,
-.icon-Arrow_right_bright,
-.icon-Arrow_up_bright,
-.icon-Close_bright,
-.icon-Comment_bright,
-.icon-Private_lock_light,
-.icon-Question_bright,
-.icon-Reader_bright,
-.icon-Note_bright,
-.icon-Search_bright,
-.icon-User_bright,
-.icon-cat_art_bright,
-.icon-cat_fitness_bright,
-.icon-cat_flowers_bright,
-.icon-cat_party_bright,
-.icon-cat_photo_bright,
-.icon-cat_rollerdisco_bright,
-.icon-cat_romantic_bright,
-.icon-cat_sailing_bright,
-.icon-cat_work_bright,
-.icon-cat-buisness_bright,
-.icon-Group_bright,
-.icon-Help_bright,
-.icon-Idea_bright,
-.icon-Next_Phase_bright,
-.icon-Play_bright,
-.icon-Plus_bright,
-.icon-Process_bright,
-.icon-Sort_bright {
-    color: $icon-bright;
-}
-
-.icon-Arrow_down_dark,
-.icon-Arrow_left_dark,
-.icon-Arrow_right_dark,
-.icon-Arrow_up_dark,
-.icon-Close_dark,
-.icon-Comment_dark,
-.icon-Private_lock_dark,
-.icon-Question_dark,
-.icon-Reader_dark,
-.icon-Note_dark,
-.icon-Search_dark,
-.icon-User_dark,
-.icon-cat_art_dark,
-.icon-cat_fitness_dark,
-.icon-cat_flowers_dark,
-.icon-cat_party_dark,
-.icon-cat_photo_dark,
-.icon-cat_rollerdisco_dark,
-.icon-cat_romantic_dark,
-.icon-cat_sailing_dark,
-.icon-cat_work_dark,
-.icon-cat-buisness_dark,
-.icon-Group_dark,
-.icon-Help_dark,
-.icon-Idea_dark,
-.icon-Next_Phase_dark,
-.icon-Play_dark,
-.icon-Plus_dark,
-.icon-Process_dark,
-.icon-Sort_dark {
-    color: $icon-dark;
-}
-
-.icon-Note_lightred {
-    color: $lightred;
-}
-
-.icon-Question_lightgreen {
-    color: $lightgreen;
-}
-
-.icon-Vote_negative_dark {
-    color: $red01;
-}
-
-.icon-Vote_neutral_dark {
-    color: $orange01;
-}
-
-.icon-Vote_positive_dark {
-    color: $green01;
 }
