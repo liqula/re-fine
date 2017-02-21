@@ -37,8 +37,8 @@ import           Refine.Frontend.UtilityWidgets
 import Refine.Frontend.Login.Component (loginOrLogout_, registration_)
 
 
-mainMenu :: ReactView (MainMenuTab, CurrentUser)
-mainMenu = defineView "MainMenu" $ \(menuTab, currentUser) ->
+mainMenu :: ReactView MainMenuProps
+mainMenu = defineView "MainMenu" $ \(MainMenuProps menuTab currentUser) ->
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
 
@@ -161,7 +161,7 @@ mainMenu = defineView "MainMenu" $ \(menuTab, currentUser) ->
 
 
 mainMenu_ :: MainMenuTab -> CurrentUser -> ReactElementM eventHandler ()
-mainMenu_ ms cu = view mainMenu (ms, cu) mempty
+mainMenu_ ms cu = view mainMenu (MainMenuProps ms cu) mempty
 
 
 {-

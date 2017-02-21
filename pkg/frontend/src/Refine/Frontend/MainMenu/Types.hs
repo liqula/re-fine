@@ -5,6 +5,7 @@ module Refine.Frontend.MainMenu.Types where
 
 import GHC.Generics (Generic)
 
+import Refine.Frontend.Login.Types
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -23,6 +24,11 @@ data MainMenuTab = MainMenuLogin | MainMenuRegistration
 
 defaultMainMenuTab :: MainMenuTab
 defaultMainMenuTab = MainMenuLogin
+
+data MainMenuProps = MainMenuProps
+  { _mmpMainMenuTab :: MainMenuTab
+  , _mmpCurrentUser :: CurrentUser
+  }
 
 makeRefineType ''MainMenuAction
 makeRefineType ''MainMenuState
