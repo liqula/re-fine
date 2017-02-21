@@ -257,18 +257,6 @@ addComment_ (AddCommentProps (RS.EditorIsVisible range) category) = view addComm
 commentInput :: ReactView CommentInputProps
 commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \curState props ->
     div_ $ do
-      form_ [ "target" $= "#"
-           , "action" $= "POST"] $ do
-        textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
-                  , "className" $= "o-wysiwyg o-form-input__textarea"
-                  , "style" @= [ Style "resize" ("none" :: String)
-                               , Style "width" (600 :: Int)
-                               , Style "height" (240 :: Int)
-                               ]
-                  -- Update the current state with the current text in the textbox, sending no actions
-                  , onChange $ \evt state -> ([], Just $ state { RS._commentInputStateText = target evt "value" } )
-                  ] mempty
-
       div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
         p_ $ do
           elemString "Step 1: "
@@ -295,6 +283,18 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
                       (\_ -> RS.dispatch . RS.ContributionAction $ RS.SetCommentCategory RS.Discussion)
                       []
                     )
+      form_ [ "target" $= "#"
+           , "action" $= "POST"] $ do
+        textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
+                  , "className" $= "o-wysiwyg o-form-input__textarea"
+                  , "style" @= [ Style "resize" ("none" :: String)
+                               , Style "width" (600 :: Int)
+                               , Style "height" (240 :: Int)
+                               ]
+                  -- Update the current state with the current text in the textbox, sending no actions
+                  , onChange $ \evt state -> ([], Just $ state { RS._commentInputStateText = target evt "value" } )
+                  ] mempty
+
 
       div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
         p_ $ do
