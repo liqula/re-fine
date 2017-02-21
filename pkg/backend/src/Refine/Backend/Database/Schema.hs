@@ -32,8 +32,8 @@ import Database.Persist.TH
 
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc (Abstract, Title)
+import Refine.Common.Types.Chunk (ChunkRange(..))
 import Refine.Backend.Database.Field()
-import Refine.Backend.Database.Types
 import Refine.Backend.DocRepo.Core (EditHandle, RepoHandle)
 import Refine.Backend.User.Core (LoginId)
 
@@ -56,14 +56,14 @@ Repo
 Note
     text        Text
     public      Bool
-    range       DBChunkRange
+    range       ChunkRange
     owner       LoginId
 
 Question
     text        Text
     public      Bool
     answered    Bool
-    range       DBChunkRange
+    range       ChunkRange
     owner       LoginId
 
 Answer
@@ -72,7 +72,7 @@ Answer
 
 Discussion
     public      Bool
-    range       DBChunkRange
+    range       ChunkRange
     owner       LoginId
 
 Statement

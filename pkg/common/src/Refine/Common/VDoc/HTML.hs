@@ -5,7 +5,7 @@ module Refine.Common.VDoc.HTML
   , downgradeRawVDocVersion    -- 'HTMLCanonical' to 'HTMLRaw' (benign, but we may not actually need it)
   , insertMarks                -- 'HTMLCanonical' to 'HTMLWithMarks'
   , insertMoreMarks            -- 'HTMLWithMarks' to 'HTMLWithMarks' (if you want to call it incrementally).
-  , createChunkRangeErrors     -- chunk range validation
+  , chunkRangeErrors           -- chunk range validation
   , highlightRange, removeHighlights
   ) where
 

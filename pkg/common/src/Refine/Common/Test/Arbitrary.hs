@@ -174,11 +174,6 @@ validClosingOpen = TagOpen <$> validClosingXmlTagName <*> arbitrary
 
 -- * vdoc versions and valid chunk points
 
--- | For testing only!  In production code, only use 'createChunkRangeErrors'!
-chunkRangeErrors :: ChunkRange -> VDocVersion 'HTMLCanonical -> [ChunkRangeError]
-chunkRangeErrors (ChunkRange mp1 mp2) = createChunkRangeErrors $ CreateChunkRange mp1 mp2
-
-
 instance Arbitrary (VDocVersion 'HTMLRaw) where
   arbitrary = arbitraryRawVDocVersion
 
@@ -246,8 +241,8 @@ shrinkCanonicalNonEmptyVDocVersion (VDocVersion forest) = VDocVersion <$> shrink
 arbitraryVersWithRanges :: Gen VersWithRanges
 arbitraryVersWithRanges = do
   v <- arbitraryCanonicalNonEmptyVDocVersion
-  let crs = allNonEmptyCreateChunkRanges v
-      rs = zipWith (\(CreateChunkRange b e) i -> SomethingWithChunkRangeAndID (ChunkRange b e) (ContribIDNote (ID i))) crs [0..]
+  let crs = allNonEmptyChunkRanges v
+      rs = zipWith (\(ChunkRange b e) i -> SomethingWithChunkRangeAndID (ChunkRange b e) (ContribIDNote (ID i))) crs [0..]
   VersWithRanges v . nub <$> vectorOf 11 (elements rs)
 
 shrinkVersWithRanges :: VersWithRanges -> [VersWithRanges]
@@ -302,17 +297,17 @@ allChunkPoints (VDocVersion forest) = nubBy ((==) `on` snd) $ evalState (dfs for
     dfs [] = pure []
 
 
-allNonEmptyCreateChunkRanges :: VDocVersion 'HTMLCanonical -> [CreateChunkRange]
-allNonEmptyCreateChunkRanges vers =
-  CreateChunkRange Nothing Nothing : cheapnub (snd <$> allNonEmptyCreateChunkRanges_ vers)
+allNonEmptyChunkRanges :: VDocVersion 'HTMLCanonical -> [ChunkRange]
+allNonEmptyChunkRanges vers =
+  ChunkRange Nothing Nothing : cheapnub (snd <$> allNonEmptyChunkRanges_ vers)
   where
     cheapnub (x : y : ys) = [x | x /= y] <> cheapnub (y : ys)
     cheapnub (y : ys)     = y : cheapnub ys
     cheapnub []           = []
 
--- | 'allNonEmptyCreateChunkRanges', plus absolute offsets.
-allNonEmptyCreateChunkRanges_ :: VDocVersion 'HTMLCanonical -> [((Int, Int), CreateChunkRange)]
-allNonEmptyCreateChunkRanges_ vers = result
+-- | 'allNonEmptyChunkRanges', plus absolute offsets.
+allNonEmptyChunkRanges_ :: VDocVersion 'HTMLCanonical -> [((Int, Int), ChunkRange)]
+allNonEmptyChunkRanges_ vers = result
   where
     result = filter nonempty (mconcat rs)
 
@@ -321,10 +316,10 @@ allNonEmptyCreateChunkRanges_ vers = result
 
     rs = [ let (n, b) = ps V.! i
                (k, e) = ps V.! j
-           in [ ((n, maxk), CreateChunkRange (Just b) Nothing)
-              , ((0, k),    CreateChunkRange Nothing (Just e))
+           in [ ((n, maxk), ChunkRange (Just b) Nothing)
+              , ((0, k),    ChunkRange Nothing (Just e))
               ]
-              <> replicate 11 ((n, k), CreateChunkRange (Just b) (Just e))
+              <> replicate 11 ((n, k), ChunkRange (Just b) (Just e))
          | i <- ix, j <- ix, i < j
          ]
 

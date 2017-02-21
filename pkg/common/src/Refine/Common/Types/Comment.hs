@@ -34,7 +34,7 @@ type CommentText = ST  -- FIXME: refactor VDocVersion to be more general and use
 data CreateNote = CreateNote
   { _createNoteText   :: CommentText
   , _createNotePublic :: Bool
-  , _createNoteRange  :: CreateChunkRange
+  , _createNoteRange  :: ChunkRange
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -49,7 +49,7 @@ data Note = Note
 data CreateQuestion = CreateQuestion
   { _createQuestionText   :: ST
   , _createQuestionPublic :: Bool
-  , _createQuestionRange  :: CreateChunkRange
+  , _createQuestionRange  :: ChunkRange
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -83,7 +83,7 @@ data Answer = Answer
 data CreateDiscussion = CreateDiscussion
   { _createDiscussionStatementText :: CommentText
   , _createDiscussionPublic        :: Bool
-  , _createDiscussionRange         :: CreateChunkRange
+  , _createDiscussionRange         :: ChunkRange
   }
   deriving (Eq, Ord, Show, Read, Generic)
 

@@ -197,7 +197,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       fn :: Note          <- runWaiBody sess $
         post
           (addNoteUri (fe ^. compositeVDocRepo . vdocHeadEdit))
-          (CreateNote "[note]" True (CreateChunkRange Nothing Nothing))
+          (CreateNote "[note]" True (ChunkRange Nothing Nothing))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       be ^. compositeVDocNotes . to elems `shouldContain` [fn]
 
@@ -210,7 +210,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
             cp2 = ChunkPoint (DataUID 1) 1
         in post
           (addNoteUri (fe ^. compositeVDocRepo . vdocHeadEdit))
-          (CreateNote "[note]" True (CreateChunkRange (Just cp1) (Just cp2)))
+          (CreateNote "[note]" True (ChunkRange (Just cp1) (Just cp2)))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       be ^. compositeVDocNotes . to elems `shouldContain` [fn]
 
@@ -222,7 +222,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
             cp2 = ChunkPoint (DataUID 100) 100
         in post
           (addNoteUri (vdoc ^. compositeVDocRepo . vdocHeadEdit))
-          (CreateNote "[note]" True (CreateChunkRange (Just cp1) (Just cp2)))
+          (CreateNote "[note]" True (ChunkRange (Just cp1) (Just cp2)))
 
       respCode resp `shouldBe` 500  -- probably 500 is a bit harsh, but that's what we get.
       cs (simpleBody resp) `shouldContain` ("ChunkRangeBadDataUID" :: String)
@@ -237,7 +237,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       fn :: CompositeDiscussion <- runWaiBody sess $
         post
           (addDiscussionUri (fe ^. compositeVDocRepo . vdocHeadEdit))
-          (CreateDiscussion "[discussion initial statement]" True (CreateChunkRange Nothing Nothing))
+          (CreateDiscussion "[discussion initial statement]" True (ChunkRange Nothing Nothing))
       be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       be ^. compositeVDocDiscussions . to elems `shouldContain` [fn]
 
@@ -247,7 +247,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       fd :: CompositeDiscussion <- runWaiBody sess $
         post
           (addDiscussionUri (fc ^. compositeVDocRepo . vdocHeadEdit))
-          (CreateDiscussion "[discussion initial statement]" True (CreateChunkRange Nothing Nothing))
+          (CreateDiscussion "[discussion initial statement]" True (ChunkRange Nothing Nothing))
       let did = fd ^. Common.compositeDiscussion . discussionID
           otherUser = ID 1
       () <- runWaiBody sess $
@@ -267,7 +267,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
           fp :: Edit          <- runWaiBody sess $
             post
               (addEditUri (fe ^. compositeVDocRepo . vdocHeadEdit))
-              (CreateEdit "new edit" (CreateChunkRange Nothing Nothing) (vdocVersionFromST "[new vdoc version]"))
+              (CreateEdit "new edit" (ChunkRange Nothing Nothing) (vdocVersionFromST "[new vdoc version]"))
           pure (fe, fp)
 
     context "on edit without ranges" $ do

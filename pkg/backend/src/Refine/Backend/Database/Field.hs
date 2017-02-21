@@ -11,9 +11,9 @@ import Data.String.Conversions (LBS, ST, cs)
 import Database.Persist
 import Database.Persist.Sql
 
-import Refine.Common.Types.VDoc
-import Refine.Backend.Database.Types
 import Refine.Backend.DocRepo.Core
+import Refine.Common.Types.Chunk
+import Refine.Common.Types.VDoc
 
 
 instance PersistField Title where
@@ -55,9 +55,9 @@ instance PersistFieldSql EditHandle where
   -- of the title
   sqlType _ = sqlType (Proxy :: Proxy ST)
 
-instance PersistField DBChunkRange where
+instance PersistField ChunkRange where
   toPersistValue range = toPersistValue . cs @LBS @ST $ encode range
   fromPersistValue = (either (Left . cs) Right . eitherDecode .  cs) <=< fromPersistValue @ST
 
-instance PersistFieldSql DBChunkRange where
+instance PersistFieldSql ChunkRange where
   sqlType _ = sqlType (Proxy :: Proxy ST)

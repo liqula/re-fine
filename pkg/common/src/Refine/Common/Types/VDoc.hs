@@ -90,7 +90,7 @@ data Edit = Edit
 
 data CreateEdit = CreateEdit
   { _createEditDesc  :: ST
-  , _createEditRange :: CreateChunkRange
+  , _createEditRange :: ChunkRange
   , _createEditVDoc  :: VDocVersion 'HTMLRaw
   }
   deriving (Eq, Ord, Show, Generic)

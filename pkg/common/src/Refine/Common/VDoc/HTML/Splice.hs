@@ -24,7 +24,7 @@
 
 module Refine.Common.VDoc.HTML.Splice
   ( HasChunkRangeAndID(..), insertMarks, insertMoreMarks
-  , ChunkRangeError(..), createChunkRangeErrors
+  , ChunkRangeError(..), chunkRangeErrors
   , enablePreTokens
   , resolvePreTokens
   , splitAtOffset
@@ -102,7 +102,6 @@ insertMarks xs vers@(VDocVersion forest) = invariants (tokensFromForest forest) 
       else ()
       where
         errs = mconcat $ (`chunkRangeErrors` vers) . askChunkRange <$> xs
-        chunkRangeErrors (ChunkRange mp1 mp2) = createChunkRangeErrors $ CreateChunkRange mp1 mp2
 
 
 -- Calls 'insertMarks', but expects the input 'VDocVersion' to have passed through before.
@@ -120,8 +119,8 @@ insertMoreMarks xs (VDocVersion vers) = insertMarks xs (VDocVersion vers)
 --
 -- FIXME: [performance] we are checking a number of rules individually, and some of those rules may
 -- follow from each other, or checking several rules with one sweep would be cheaper.
-createChunkRangeErrors :: CreateChunkRange -> VDocVersion 'HTMLCanonical -> [ChunkRangeError]
-createChunkRangeErrors cr@(CreateChunkRange mp1 mp2) (VDocVersion forest) =
+chunkRangeErrors :: ChunkRange -> VDocVersion 'HTMLCanonical -> [ChunkRangeError]
+chunkRangeErrors cr@(ChunkRange mp1 mp2) (VDocVersion forest) =
     badDataUID <> offsetTooLarge <> isEmpty
   where
     checkChunkPoint :: (ChunkPoint -> [ChunkRangeError]) -> [ChunkRangeError]
@@ -135,12 +134,12 @@ createChunkRangeErrors cr@(CreateChunkRange mp1 mp2) (VDocVersion forest) =
 
     isEmpty = [ChunkRangeEmpty mp1 mp2 forest | not $ isNonEmptyChunkRange cr forest]
 
-isNonEmptyChunkRange :: CreateChunkRange -> Forest Token -> Bool
+isNonEmptyChunkRange :: ChunkRange -> Forest Token -> Bool
 isNonEmptyChunkRange cr forest = case cr of
-  (CreateChunkRange Nothing       Nothing)   -> 0               < forestTextLength forest
-  (CreateChunkRange (Just p1)     Nothing)   -> numLeftChars p1 < forestTextLength forest
-  (CreateChunkRange Nothing       (Just p2)) -> 0               < numLeftChars p2
-  (CreateChunkRange (Just p1)     (Just p2)) -> numLeftChars p1 < numLeftChars p2
+  (ChunkRange Nothing       Nothing)   -> 0               < forestTextLength forest
+  (ChunkRange (Just p1)     Nothing)   -> numLeftChars p1 < forestTextLength forest
+  (ChunkRange Nothing       (Just p2)) -> 0               < numLeftChars p2
+  (ChunkRange (Just p1)     (Just p2)) -> numLeftChars p1 < numLeftChars p2
   where
     numLeftChars :: ChunkPoint -> Int
     numLeftChars (ChunkPoint uid off) = evalState (dfs forest) 0
@@ -209,7 +208,7 @@ insertMarksForest xs = (prefix <>) . (<> suffix) . dfs
 -- the rest.  Splits up a text node into two text nodes if necessary.
 --
 -- failures in this function are internal errors.  should have been caught by
--- 'createChunkRangeErrors' earlier.
+-- 'chunkRangeErrors' earlier.
 splitAtOffset :: Int -> Forest PreToken -> Forest PreToken -> Forest PreToken
 splitAtOffset offset insertion ts_ = assert (offset >= 0)
                                    . resolve $ dfs (Just offset) ts_
@@ -279,7 +278,7 @@ data ResolvePreTokensStack =
 -- affected text nodes.  Fails if the opening and closing premarks do not match up.
 --
 -- failures in this function are internal errors.  should have been caught by
--- 'createChunkRangeErrors' earlier.
+-- 'chunkRangeErrors' earlier.
 resolvePreTokens :: [PreToken] -> [Token]
 resolvePreTokens ts_ = either absurd id $ runPreToken <$$> go
   where

@@ -80,39 +80,39 @@ spec = parallel $ do
           "<T data-uid=\"7\"></T><i data-uid=\"8\"></i>"
 
     it "works (1)." $ do
-      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 100) 4)) (Just (ChunkPoint (DataUID 30) 0)))
+      chunkRangeErrors (ChunkRange (Just (ChunkPoint (DataUID 100) 4)) (Just (ChunkPoint (DataUID 30) 0)))
         vers `shouldSatisfy` any (has _ChunkRangeBadDataUID)
 
     it "works (2)." $ do
-      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 5) 1000)) (Just (ChunkPoint (DataUID 5) 2000)))
+      chunkRangeErrors (ChunkRange (Just (ChunkPoint (DataUID 5) 1000)) (Just (ChunkPoint (DataUID 5) 2000)))
         vers `shouldSatisfy` any (has _ChunkRangeOffsetOutOfBounds)
 
     it "works (3)." $ do
-      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 5) 1)) (Just (ChunkPoint (DataUID 5) 2)))
+      chunkRangeErrors (ChunkRange (Just (ChunkPoint (DataUID 5) 1)) (Just (ChunkPoint (DataUID 5) 2)))
         vers `shouldBe` []
 
     it "works (4)." $ do
-      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 4)) (Just (ChunkPoint (DataUID 5) 0)))
+      chunkRangeErrors (ChunkRange (Just (ChunkPoint (DataUID 4) 4)) (Just (ChunkPoint (DataUID 5) 0)))
         vers `shouldSatisfy` any (has _ChunkRangeEmpty)
 
     it "works (5)." $ do
-      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 4) 2)))
+      chunkRangeErrors (ChunkRange (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 4) 2)))
         vers `shouldSatisfy` any (has _ChunkRangeEmpty)
 
     it "works (6)." $ do
-      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 4) 3)))
+      chunkRangeErrors (ChunkRange (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 4) 3)))
         vers `shouldBe` []
 
     it "works (7)." $ do
-      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 2)) Nothing)
+      chunkRangeErrors (ChunkRange (Just (ChunkPoint (DataUID 4) 2)) Nothing)
         vers `shouldBe` []
 
     it "works (8)." $ do
-      createChunkRangeErrors (CreateChunkRange Nothing (Just (ChunkPoint (DataUID 4) 2)))
+      chunkRangeErrors (ChunkRange Nothing (Just (ChunkPoint (DataUID 4) 2)))
         vers `shouldBe` []
 
     it "works (9)." $ do
-      createChunkRangeErrors (CreateChunkRange Nothing (Just (ChunkPoint (DataUID 5) 0)))
+      chunkRangeErrors (ChunkRange Nothing (Just (ChunkPoint (DataUID 5) 0)))
         vers `shouldBe` []
 
     it "works (10)." $ do
@@ -127,11 +127,11 @@ spec = parallel $ do
             ]
 
 
-          rs = allNonEmptyCreateChunkRanges_ vers'
+          rs = allNonEmptyChunkRanges_ vers'
           check (_, r) = do
-            createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeBadDataUID)
-            createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeOffsetOutOfBounds)
-            createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeEmpty)
+            chunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeBadDataUID)
+            chunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeOffsetOutOfBounds)
+            chunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeEmpty)
       check `mapM_` rs
 
 

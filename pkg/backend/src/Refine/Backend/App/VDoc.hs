@@ -125,9 +125,9 @@ addEdit basepid edit = do
 
 
 -- | Throw an error if chunk range does not fit 'VDocVersion' identified by edit.
-validateCreateChunkRange :: ID Edit -> CreateChunkRange -> App DB ()
+validateCreateChunkRange :: ID Edit -> ChunkRange -> App DB ()
 validateCreateChunkRange pid cr = do
   vers <- getVDocVersion pid
-  case createChunkRangeErrors cr vers of
+  case chunkRangeErrors cr vers of
     errs@(_:_) -> throwError $ AppVDocError errs
     [] -> pure ()

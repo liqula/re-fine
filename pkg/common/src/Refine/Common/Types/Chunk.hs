@@ -42,12 +42,6 @@ data ChunkRange = ChunkRange
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
-data CreateChunkRange = CreateChunkRange  -- is this just 'ChunkRange'?
-  { _createChunkRangeBegin :: Maybe ChunkPoint
-  , _createChunkRangeEnd   :: Maybe ChunkPoint
-  }
-  deriving (Eq, Ord, Show, Read, Generic)
-
 -- | A point in a 'VDocVersion' in state 'HTMLCanonical' or 'HTMLWithMarks' (either begin or end) as
 -- returned by `window.getSelection()` in javascript.  The 'DataUID' points to a node of the form
 -- @Node _ [ContentText _]@.  Begin and end points form a 'ChunkRange'.
@@ -74,7 +68,7 @@ instance Read DataUID where  -- FIXME: derive Read and use 'fromUrlPiece' parsin
 -- * instances
 
 makeRefineType ''ChunkRange
-type instance Create ChunkRange = CreateChunkRange
+type instance Create ChunkRange = ChunkRange
 
 instance SOP.Generic ChunkPoint
 instance SOP.HasDatatypeInfo ChunkPoint
@@ -85,5 +79,4 @@ instance FromJSON ChunkPoint where
   parseJSON = withObject "ChunkPoint" (\v -> ChunkPoint <$> v .: "node" <*> v .: "offset")
 
 
-makeRefineType ''CreateChunkRange
 makeRefineType ''DataUID
