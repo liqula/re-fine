@@ -248,6 +248,8 @@ addComment = defineView "AddComment" $ \props ->
                          ]
             ] "Add a comment"
 
+      hr_ []
+
       commentInput_ props
 
 
@@ -285,6 +287,9 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
                       (\_ -> RS.dispatch . RS.ContributionAction $ RS.SetCommentCategory RS.Discussion)
                       []
                     )
+
+      hr_ []
+
       form_ [ "target" $= "#"
            , "action" $= "POST"] $ do
         textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
@@ -297,6 +302,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
                   , onChange $ \evt state -> ([], Just $ state { RS._commentInputStateText = target evt "value" } )
                   ] mempty
 
+      hr_ []
 
       div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
         p_ $ do
