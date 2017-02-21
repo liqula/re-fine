@@ -140,6 +140,18 @@ toServantError = Nat ((lift . runExceptT) >=> leftToError fromAppError)
     fromAppError :: AppError -> ServantErr
     fromAppError msg = traceShow msg $ err500 { errBody = encode msg }
 
+toApiError :: AppError -> ApiError
+toApiError = \case
+  AppUnknownError e      -> ApiUnknownError e
+  AppVDocError cre       -> ApiVDocError cre
+  AppDBError e           -> ApiDBError $ show e
+  AppDocRepoError e      -> ApiDocRepoError $ show e
+  AppUserNotFound e      -> ApiUserNotFound e
+  AppUserNotLoggedIn     -> ApiUserNotLoggedIn
+  AppUserCreationError e -> ApiUserCreationError e
+  AppCsrfError e         -> ApiCsrfError e
+  AppSessionError        -> ApiSessionError
+  AppSanityCheckError e  -> ApiSanityCheckError e
 
 -- * Instances for Servant.Cookie.Session
 

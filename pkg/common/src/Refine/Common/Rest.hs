@@ -20,10 +20,28 @@
 
 module Refine.Common.Rest where
 
+
+import Data.String.Conversions (ST)
+import GHC.Generics (Generic)
 import Servant.API
 
 import Refine.Common.Types
+import Refine.Common.VDoc.HTML.Core
+import Refine.Prelude.TH
 
+
+data ApiError
+  = ApiUnknownError ST
+  | ApiVDocError [ChunkRangeError]
+  | ApiDBError ST
+  | ApiDocRepoError ST
+  | ApiUserNotFound ST
+  | ApiUserNotLoggedIn
+  | ApiUserCreationError ST
+  | ApiCsrfError ST
+  | ApiSessionError
+  | ApiSanityCheckError ST
+  deriving (Eq, Show, Generic)
 
 -- | The 'S' prefix in the handlers stands for "server" (see 'refineApi' for an explanation).
 type RefineAPI =
@@ -89,3 +107,6 @@ type SLogout
 
 type SChangeAccess
   = "r" :> "change-access" :> ReqBody '[JSON] ChangeAccess :> Post '[JSON] ()
+
+
+makeRefineType ''ApiError
