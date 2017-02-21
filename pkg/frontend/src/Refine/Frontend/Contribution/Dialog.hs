@@ -234,6 +234,7 @@ addComment = defineView "AddComment" $ \props ->
              , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
              , "dialogStyles" @= (vdoc_overlay_content__add_comment <> topStyle)
              , "overlayStyles" @= overlayStyles
+             , "titleStyle" @= [Style "margin" ("0" :: String)]
              ]  $ do
 
       icon_ (IconProps "c-vdoc-overlay-content" False ("icon-Remark", "dark") XL)
