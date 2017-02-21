@@ -36,6 +36,7 @@ import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
 import           Refine.Common.Types.Chunk
 import           Refine.Common.Types.Comment
+import           Refine.Common.Types.Contribution
 import           Refine.Common.Types.Prelude
 import           Refine.Common.Types.VDoc
 import           Refine.Common.VDoc.HTML
@@ -93,9 +94,9 @@ getCompositeVDoc vid = do
       edits <- db $ mapM DB.getEdit =<< DB.getEditChildren headid
       let insertAllMarks :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
           insertAllMarks vers = vers
-                              & insertMarks     (view noteRange <$> commentNotes)
-                              & insertMoreMarks (view (compositeDiscussion . discussionRange) <$> commentDiscussions)
-                              & insertMoreMarks (view editRange <$> edits)
+                              & insertMarks     (ContribNote <$> commentNotes)
+                              & insertMoreMarks (ContribDiscussion . view compositeDiscussion <$> commentDiscussions)
+                              & insertMoreMarks (ContribEdit <$> edits)
 
       version <- insertAllMarks <$> docRepo (DocRepo.getVersion rhandle hhandle)
       pure $
@@ -124,9 +125,9 @@ addEdit basepid edit = do
 
 
 -- | Throw an error if chunk range does not fit 'VDocVersion' identified by edit.
-validateCreateChunkRange :: ID Edit -> CreateChunkRange -> App DB ()
+validateCreateChunkRange :: ID Edit -> ChunkRange -> App DB ()
 validateCreateChunkRange pid cr = do
   vers <- getVDocVersion pid
-  case createChunkRangeErrors cr vers of
+  case chunkRangeErrors cr vers of
     errs@(_:_) -> throwError $ AppVDocError errs
     [] -> pure ()

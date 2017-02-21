@@ -31,6 +31,7 @@ library
     , deepseq
     , ghcjs-base
     , html-parse
+    , http-api-data
     , json-sop
     , lens
     , QuickCheck
@@ -99,6 +100,7 @@ executable refine-frontend
     , deepseq
     , ghcjs-base
     , html-parse
+    , http-api-data
     , json-sop
     , lens
     , QuickCheck
@@ -168,6 +170,7 @@ test-suite spec
     , deepseq
     , ghcjs-base
     , html-parse
+    , http-api-data
     , json-sop
     , lens
     , QuickCheck

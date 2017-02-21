@@ -137,7 +137,7 @@ spec = parallel $ do
 
     describe "addUIInfoToVDocVersion" $ do
       it "is idempotent" . property $ do
-        \(insertMarks ([] :: [ChunkRange Note]) -> vers) ->
+        \(insertMarks ([] :: [SomethingWithChunkRangeAndID]) -> vers) ->
           addUIInfoToVDocVersion vers `shouldBe` addUIInfoToVDocVersion (addUIInfoToVDocVersion vers)
 
       let interleaveProp :: VersWithRanges -> Expectation
@@ -145,9 +145,9 @@ spec = parallel $ do
               runOnce `shouldBeLikeVDocVersion` runMany
             where
               runOnce = addUIInfoToVDocVersion $ insertMarks rs vers
-              runMany = addUIInfoToVDocVersion $ foldl' go (insertMarks ([] :: [ChunkRange Note]) vers) rs
+              runMany = addUIInfoToVDocVersion $ foldl' go (insertMarks ([] :: [SomethingWithChunkRangeAndID]) vers) rs
                 where
-                  go :: VDocVersion 'HTMLWithMarks -> ChunkRange Edit -> VDocVersion 'HTMLWithMarks
+                  go :: VDocVersion 'HTMLWithMarks -> SomethingWithChunkRangeAndID -> VDocVersion 'HTMLWithMarks
                   go v r = insertMoreMarks [r] $ addUIInfoToVDocVersion v
 
       it "can be interleaved with `insertMoreMarks`." . property $
@@ -170,9 +170,9 @@ spec = parallel $ do
                   f _                  = False
 
               VDocVersion runOnce = addUIInfoToVDocVersion $ insertMarks rs vers
-              VDocVersion runMany = addUIInfoToVDocVersion $ foldl' go (insertMarks ([] :: [ChunkRange Note]) vers) rs
+              VDocVersion runMany = addUIInfoToVDocVersion $ foldl' go (insertMarks ([] :: [SomethingWithChunkRangeAndID]) vers) rs
                 where
-                  go :: VDocVersion 'HTMLWithMarks -> ChunkRange Edit -> VDocVersion 'HTMLWithMarks
+                  go :: VDocVersion 'HTMLWithMarks -> SomethingWithChunkRangeAndID -> VDocVersion 'HTMLWithMarks
                   go v r = insertMoreMarks [r] $ addUIInfoToVDocVersion v
 
       it "leaves no tag without data-uid attribute." . property $

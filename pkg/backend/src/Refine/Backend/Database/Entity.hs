@@ -35,7 +35,6 @@ import Lentil.Types as L
 
 import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
-import           Refine.Backend.Database.Types
 import qualified Refine.Backend.DocRepo.Core as DocRepo
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
@@ -110,12 +109,6 @@ updateVDoc :: ID VDoc -> VDoc -> DB ()
 updateVDoc vid vdoc = do
   record <- vDocToRecord vdoc
   liftDB $ replace (S.idToKey vid) record
-
-toChunkRange :: DBChunkRange -> ID a -> ChunkRange a
-toChunkRange r i = ChunkRange i (r ^. dbChunkRangeBegin) (r ^. dbChunkRangeEnd)
-
-mkDBChunkRange :: CreateChunkRange -> DBChunkRange
-mkDBChunkRange cr = DBChunkRange (cr ^. createChunkRangeBegin) (cr ^. createChunkRangeEnd)
 
 vdocDBLens :: EntityLens' DB (ID VDoc) VDoc
 vdocDBLens = entityLens vdocEntity
@@ -201,14 +194,14 @@ createEdit rid edith = liftDB $ do
   key <- insert $ S.Edit desc edith
   void . insert $ S.RP (S.idToKey rid) key
   let pid = S.keyToId key
-      cr = ChunkRange pid Nothing Nothing  -- TODO
+      cr = ChunkRange Nothing Nothing  -- TODO
   pure $ Edit pid desc cr
 
 getEdit :: ID Edit -> DB Edit
 getEdit pid = S.editElim toEdit <$> getEntity pid
   where
-    cr :: ChunkRange Edit
-    cr = ChunkRange pid Nothing Nothing  -- TODO
+    cr :: ChunkRange
+    cr = ChunkRange Nothing Nothing  -- TODO
 
     toEdit :: ST -> DocRepo.EditHandle -> Edit
     toEdit desc _handle = Edit pid desc cr
@@ -217,8 +210,7 @@ getEditFromHandle :: DocRepo.EditHandle -> DB Edit
 getEditFromHandle hndl = do
   ps <- liftDB $ selectList [S.EditEditHandle ==. hndl] []
   p <- unique ps
-  let pid = S.keyToId $ entityKey p
-      cr = ChunkRange pid Nothing Nothing  -- TODO
+  let cr = ChunkRange Nothing Nothing  -- TODO
       toEdit desc _hdnl = Edit (S.keyToId $ entityKey p) desc cr
   pure $ S.editElim toEdit (entityVal p)
 
@@ -261,8 +253,8 @@ registerEdit rid pid = void . liftDB . insert $ S.RP (S.idToKey rid) (S.idToKey 
 -- * Note
 
 -- TODO: Use the _lid
-toNote :: ID Note -> ST -> Bool -> DBChunkRange -> LoginId -> Note
-toNote nid desc public range _lid = Note nid desc public (toChunkRange range nid)
+toNote :: ID Note -> ST -> Bool -> ChunkRange -> LoginId -> Note
+toNote nid desc public range _lid = Note nid desc public range
 
 createNote :: ID Edit -> Create Note -> DB Note
 createNote pid note = do
@@ -271,7 +263,7 @@ createNote pid note = do
     let snote = S.Note
           (note ^. createNoteText)
           (note ^. createNotePublic)
-          (note ^. createNoteRange . to mkDBChunkRange)
+          (note ^. createNoteRange)
           (fromUserID userId)
     key <- insert snote
     void . insert $ S.PN (S.idToKey pid) key
@@ -292,8 +284,8 @@ usersOfNote nid = foreignKeyField S.noteAccUser <$$> liftDB (selectList [S.NoteA
 -- * Question
 
 -- TODO: User lid
-toQuestion :: ID Question -> ST -> Bool -> Bool -> DBChunkRange -> LoginId -> Question
-toQuestion qid text answ pblc range _lid = Question qid text answ pblc (toChunkRange range qid)
+toQuestion :: ID Question -> ST -> Bool -> Bool -> ChunkRange -> LoginId -> Question
+toQuestion qid text answ pblc range _lid = Question qid text answ pblc range
 
 createQuestion :: ID Edit -> Create Question -> DB Question
 createQuestion pid question = do
@@ -303,7 +295,7 @@ createQuestion pid question = do
           (question ^. createQuestionText)
           False -- Not answered
           (question ^. createQuestionPublic)
-          (question ^. createQuestionRange . to mkDBChunkRange)
+          (question ^. createQuestionRange)
           (fromUserID userId)
     key <- insert squestion
     void . insert $ S.PQ (S.idToKey pid) key
@@ -324,8 +316,8 @@ usersOfQuestion qid = foreignKeyField S.qstnAccUser <$$> liftDB (selectList [S.Q
 -- * Discussion
 
 -- TODO: Login ID
-toDiscussion :: ID Discussion -> Bool -> DBChunkRange -> LoginId -> Discussion
-toDiscussion did pblc range _lid = Discussion did pblc (toChunkRange range did)
+toDiscussion :: ID Discussion -> Bool -> ChunkRange -> LoginId -> Discussion
+toDiscussion did pblc range _lid = Discussion did pblc range
 
 saveStatement :: ID Discussion -> S.Statement -> SQLM Statement
 saveStatement did sstatement = do
@@ -339,7 +331,7 @@ createDiscussion pid disc = do
   liftDB $ do
     let sdiscussion = S.Discussion
           (disc ^. createDiscussionPublic)
-          (disc ^. createDiscussionRange . to mkDBChunkRange)
+          (disc ^. createDiscussionRange)
           (fromUserID userId)
     key <- insert sdiscussion
     let did = S.keyToId key

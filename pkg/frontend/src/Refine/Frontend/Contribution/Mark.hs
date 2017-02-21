@@ -27,14 +27,13 @@ module Refine.Frontend.Contribution.Mark where
 import           Control.Lens (makeLenses, (^.))
 import           Control.Monad (forM_)
 import           Data.Monoid ((<>))
-import           Data.String (fromString)
 import           Data.String.Conversions
-import           Data.Void
+import           Data.String (fromString)
 import           GHCJS.Types (JSVal)
 import           React.Flux
 import           React.Flux.Lifecycle
 import qualified Text.HTML.Parser as HTMLP
-import           Text.Read (readMaybe)
+import           Web.HttpApiData
 
 import           Refine.Common.Types
 import qualified Refine.Frontend.Screen.Types as RS
@@ -46,13 +45,14 @@ import qualified Refine.Frontend.Types as RS
 
 data MarkProps = MarkProps
   { _markPropsHTMLAttributes :: [HTMLP.Attr]
-  , _markPropsHighlightedMark :: Maybe (ID Void)
+  , _markPropsHighlightedMark :: Maybe ContributionID
   }
 
 makeLenses ''MarkProps
 
-contributionIdFrom :: [HTMLP.Attr] -> Maybe (ID Void)
-contributionIdFrom attrs = ID <$> readMaybe (attribValueOf "data-contribution-id" attrs) :: Maybe (ID Void)
+contributionIdFrom :: [HTMLP.Attr] -> Maybe ContributionID
+contributionIdFrom attrs = either (\_ -> Nothing) Just . parseUrlPiece
+                         $ cs (attribValueOf "data-contribution-id" attrs)
 
 toProperties :: [HTMLP.Attr] -> [PropertyOrHandler handler]
 toProperties = map (\(HTMLP.Attr key value) -> fromString (cs key) $= fromString (cs value))
@@ -65,18 +65,16 @@ attribValueOf wantedKey (_:as) = attribValueOf wantedKey as
 rfMark :: ReactView MarkProps
 rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
   { lRender = \_state props ->
-    let maybeChunkId = contributionIdFrom (props ^. markPropsHTMLAttributes)
-        dataContentType = attribValueOf "data-contribution-kind" (props ^. markPropsHTMLAttributes)
-    in case (maybeChunkId, dataContentType) of
-      (Nothing, _) -> mempty
-      (_, "") -> mempty
-      (Just dataChunkId, _) ->
+    let maybeContributionId = contributionIdFrom (props ^. markPropsHTMLAttributes)
+    in case maybeContributionId of
+      Nothing -> mempty
+      Just dataContributionId ->
         mark_ (toProperties (props ^. markPropsHTMLAttributes) <>
            [ classNames [ ("o-mark", True)
-                        , (fromString $ "o-mark--" <> dataContentType, True)
-                        , ("o-mark--hover", maybeChunkId == props ^. markPropsHighlightedMark)
+                        , (fromString . cs $ "o-mark--" <> contributionIDToKindST dataContributionId, True)
+                        , ("o-mark--hover", Just dataContributionId == props ^. markPropsHighlightedMark)
                         ]
-           , onMouseEnter $ \_ _ _ -> (RS.dispatch . RS.ContributionAction $ RS.HighlightMarkAndBubble dataChunkId, Nothing)
+           , onMouseEnter $ \_ _ _ -> (RS.dispatch . RS.ContributionAction $ RS.HighlightMarkAndBubble dataContributionId, Nothing)
            , onMouseLeave $ \_ _ _ -> (RS.dispatch $ RS.ContributionAction RS.UnhighlightMarkAndBubble, Nothing)
            ]) childrenPassedToView
 
@@ -89,8 +87,8 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
              _ <- RS.reactFluxWorkAroundForkIO $ do
                case contributionIdFrom (props ^. markPropsHTMLAttributes) of
                  Nothing -> pure ()
-                 Just dataChunkId -> do
-                   let actions = RS.dispatch . RS.ContributionAction $ RS.AddMarkPosition dataChunkId markPosition
+                 Just dataContributionId -> do
+                   let actions = RS.dispatch . RS.ContributionAction $ RS.AddMarkPosition dataContributionId markPosition
                        markPosition = RS.MarkPosition
                          { RS._markPositionTop    = RS.offsetFromDocumentTop topOffset    scrollOffset
                          , RS._markPositionBottom = RS.offsetFromDocumentTop bottomOffset scrollOffset

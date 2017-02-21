@@ -30,7 +30,6 @@ import           Data.Set (Set)
 import           Data.String.Conversions ((<>))
 import qualified Data.Text as ST
 import           Data.Tree
-import           Data.Void
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
@@ -47,7 +46,7 @@ import Refine.Common.VDoc.HTML.Enhance
 import Refine.Common.VDoc.HTML.Splice
 
 
-noChunkRanges :: [ChunkRange Note]
+noChunkRanges :: [SomethingWithChunkRangeAndID]
 noChunkRanges = []
 
 
@@ -73,7 +72,7 @@ spec = parallel $ do
 
     it "generates valid output on arbitrary valid chunkranges." . property $ do
       \(VersWithRanges vers rs) -> do
-        (\r -> chunkRangeErrors r vers `shouldBe` []) `mapM_` rs
+        (\r -> chunkRangeErrors r vers `shouldBe` []) `mapM_` (askChunkRange <$> rs)
 
     let vers = vdocVersionFromST $
           "<span data-uid=\"4\">zC9E</span>" <>
@@ -81,39 +80,39 @@ spec = parallel $ do
           "<T data-uid=\"7\"></T><i data-uid=\"8\"></i>"
 
     it "works (1)." $ do
-      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 100) 4)) (Just (ChunkPoint (DataUID 30) 0)))
+      chunkRangeErrors (ChunkRange (Just (ChunkPoint (DataUID 100) 4)) (Just (ChunkPoint (DataUID 30) 0)))
         vers `shouldSatisfy` any (has _ChunkRangeBadDataUID)
 
     it "works (2)." $ do
-      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 5) 1000)) (Just (ChunkPoint (DataUID 5) 2000)))
+      chunkRangeErrors (ChunkRange (Just (ChunkPoint (DataUID 5) 1000)) (Just (ChunkPoint (DataUID 5) 2000)))
         vers `shouldSatisfy` any (has _ChunkRangeOffsetOutOfBounds)
 
     it "works (3)." $ do
-      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 5) 1)) (Just (ChunkPoint (DataUID 5) 2)))
+      chunkRangeErrors (ChunkRange (Just (ChunkPoint (DataUID 5) 1)) (Just (ChunkPoint (DataUID 5) 2)))
         vers `shouldBe` []
 
     it "works (4)." $ do
-      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 4)) (Just (ChunkPoint (DataUID 5) 0)))
+      chunkRangeErrors (ChunkRange (Just (ChunkPoint (DataUID 4) 4)) (Just (ChunkPoint (DataUID 5) 0)))
         vers `shouldSatisfy` any (has _ChunkRangeEmpty)
 
     it "works (5)." $ do
-      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 4) 2)))
+      chunkRangeErrors (ChunkRange (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 4) 2)))
         vers `shouldSatisfy` any (has _ChunkRangeEmpty)
 
     it "works (6)." $ do
-      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 4) 3)))
+      chunkRangeErrors (ChunkRange (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 4) 3)))
         vers `shouldBe` []
 
     it "works (7)." $ do
-      createChunkRangeErrors (CreateChunkRange (Just (ChunkPoint (DataUID 4) 2)) Nothing)
+      chunkRangeErrors (ChunkRange (Just (ChunkPoint (DataUID 4) 2)) Nothing)
         vers `shouldBe` []
 
     it "works (8)." $ do
-      createChunkRangeErrors (CreateChunkRange Nothing (Just (ChunkPoint (DataUID 4) 2)))
+      chunkRangeErrors (ChunkRange Nothing (Just (ChunkPoint (DataUID 4) 2)))
         vers `shouldBe` []
 
     it "works (9)." $ do
-      createChunkRangeErrors (CreateChunkRange Nothing (Just (ChunkPoint (DataUID 5) 0)))
+      chunkRangeErrors (ChunkRange Nothing (Just (ChunkPoint (DataUID 5) 0)))
         vers `shouldBe` []
 
     it "works (10)." $ do
@@ -128,11 +127,11 @@ spec = parallel $ do
             ]
 
 
-          rs = allNonEmptyCreateChunkRanges_ vers'
+          rs = allNonEmptyChunkRanges_ vers'
           check (_, r) = do
-            createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeBadDataUID)
-            createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeOffsetOutOfBounds)
-            createChunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeEmpty)
+            chunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeBadDataUID)
+            chunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeOffsetOutOfBounds)
+            chunkRangeErrors r vers' `shouldNotSatisfy` any (has _ChunkRangeEmpty)
       check `mapM_` rs
 
 
@@ -182,50 +181,55 @@ spec = parallel $ do
 
     it "handles self-closing tags with closing `/`." $ do
       let vers = vdocVersionFromST "<div data-uid=\"1\"><br data-uid=\"2\"/>el</div>"
-          r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 0))
-                                                   (Just (ChunkPoint (DataUID 1) 1))
-      insertMarks [r] vers `shouldNotBe` VDocVersion []
+          r = ChunkRange (Just (ChunkPoint (DataUID 1) 0)) (Just (ChunkPoint (DataUID 1) 1))
+          s = SomethingWithChunkRangeAndID r (ContribIDEdit (ID 1))
+      insertMarks [s] vers `shouldNotBe` VDocVersion []
 
     it "adds owner type info in its own attribute." $ do
-      let cr l = ChunkRange l (Just (ChunkPoint (DataUID 1) 1)) (Just (ChunkPoint (DataUID 1) 2))
+      let cr = SomethingWithChunkRangeAndID
+                 (ChunkRange (Just (ChunkPoint (DataUID 1) 1)) (Just (ChunkPoint (DataUID 1) 2)))
           vers = vdocVersionFromST "<span data-uid=\"1\">asdf</span>"
           vers' l = addUIInfoToVDocVersion . vdocVersionFromST $
-            "<span data-uid=\"1\">a<mark data-contribution-kind=\"" <> l <>
-            "\" data-contribution-id=\"3\">s</mark>df</span>"
+            "<span data-uid=\"1\">a<mark data-contribution-id=\"" <> l <> "\">s</mark>df</span>"
 
-      chunkRangeErrors (cr (ID 3 :: ID Note)) vers `shouldBe` []
+      chunkRangeErrors (askChunkRange $ cr (ContribIDNote (ID 3))) vers `shouldBe` []
 
       -- NOTE: changing these ID indices will probably break css in the frontend.
-      insertMarks [cr (ID 3 :: ID Note)]       vers `shouldBe` vers' "note"
-      insertMarks [cr (ID 3 :: ID Question)]   vers `shouldBe` vers' "question"
-      insertMarks [cr (ID 3 :: ID Discussion)] vers `shouldBe` vers' "discussion"
-      insertMarks [cr (ID 3 :: ID Edit)]       vers `shouldBe` vers' "edit"
+      insertMarks [cr (ContribIDNote (ID 3))]       vers `shouldBe` vers' "n3"
+      insertMarks [cr (ContribIDQuestion (ID 3))]   vers `shouldBe` vers' "q3"
+      insertMarks [cr (ContribIDDiscussion (ID 3))] vers `shouldBe` vers' "d3"
+      insertMarks [cr (ContribIDEdit (ID 3))]       vers `shouldBe` vers' "e3"
+      insertMarks [cr ContribIDHighlightMark]       vers `shouldBe` vers' "h"
 
     it "mark tag children never contain other tags."
       pending
 
     it "regression (1)." $ do
       let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\"></div>"
-          r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 3))
-                                                   (Just (ChunkPoint (DataUID 2) 0))
+          r = SomethingWithChunkRangeAndID
+                (ChunkRange (Just (ChunkPoint (DataUID 1) 3)) (Just (ChunkPoint (DataUID 2) 0)))
+                (ContribIDNote (ID 1))
       insertMarks [r] vers `shouldNotBe` VDocVersion []
 
     it "regression (2)." $ do
       let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span><div O=\"\" data-uid=\"2\">.</div>"
-          r :: ChunkRange Edit = ChunkRange (ID 1) (Just (ChunkPoint (DataUID 1) 3))
-                                                   (Just (ChunkPoint (DataUID 2) 0))
+          r = SomethingWithChunkRangeAndID
+                (ChunkRange (Just (ChunkPoint (DataUID 1) 3)) (Just (ChunkPoint (DataUID 2) 0)))
+                (ContribIDNote (ID 1))
       insertMarks [r] vers `shouldNotBe` VDocVersion []
 
     it "regression (3)." $ do
       let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span>"
-          r :: ChunkRange Edit = ChunkRange (ID 3) (Just (ChunkPoint (DataUID 1) 2)) Nothing
+          r = SomethingWithChunkRangeAndID
+                (ChunkRange (Just (ChunkPoint (DataUID 1) 2)) Nothing)
+                (ContribIDNote (ID 3))
       insertMarks [r] vers `shouldNotBe` VDocVersion []
 
     it "regression (4)." $ do
       let vers = vdocVersionFromST "<span data-uid=\"1\">whee</span>"
-          rs :: [ChunkRange Edit] = [ ChunkRange (ID 3) (Just (ChunkPoint (DataUID 1) 2)) Nothing
-                                    , ChunkRange (ID 4) (Just (ChunkPoint (DataUID 1) 0)) Nothing
-                                    ]
+          rs = [ SomethingWithChunkRangeAndID (ChunkRange (Just (ChunkPoint (DataUID 1) 2)) Nothing) (ContribIDNote (ID 3))
+               , SomethingWithChunkRangeAndID (ChunkRange (Just (ChunkPoint (DataUID 1) 0)) Nothing) (ContribIDNote (ID 4))
+               ]
       insertMarks rs vers `shouldNotBe` VDocVersion []
 
     it "regression (5)." $ do
@@ -233,20 +237,20 @@ spec = parallel $ do
             "<span data-uid=\"4\">zC9E</span>" <>
             "<n data-uid=\"5\"><f data-uid=\"6\"></f>;</n>" <>
             "<T data-uid=\"7\"></T><i data-uid=\"8\"></i>"
-          r1, r2 :: ChunkRange Edit
-          r1 = ChunkRange (ID 0) (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 6) 0))
-          r2 = ChunkRange (ID 2) Nothing                           (Just (ChunkPoint (DataUID 5) 0))
+          r1 = SomethingWithChunkRangeAndID
+                (ChunkRange (Just (ChunkPoint (DataUID 4) 2)) (Just (ChunkPoint (DataUID 6) 0))) (ContribIDEdit (ID 0))
+          r2 = SomethingWithChunkRangeAndID
+                (ChunkRange Nothing                           (Just (ChunkPoint (DataUID 5) 0))) (ContribIDEdit (ID 2))
       insertMarks [r1, r2] vers `shouldNotBe` VDocVersion []
 
     it "regression (6)." $ do
       let vers = VDocVersion [Node (TagOpen "span" [Attr "data-uid" "61"]) [Node (ContentText "g") []]]
 
-          r1, r2 :: ChunkRange Edit
-          r1 = ChunkRange (ID 1) Nothing Nothing
-          r2 = ChunkRange (ID 2) Nothing Nothing
+          r1 = SomethingWithChunkRangeAndID (ChunkRange Nothing Nothing) (ContribIDEdit (ID 1))
+          r2 = SomethingWithChunkRangeAndID (ChunkRange Nothing Nothing) (ContribIDEdit (ID 2))
 
-      chunkRangeErrors r1 vers `shouldBe` []
-      chunkRangeErrors r2 vers `shouldBe` []
+      chunkRangeErrors (askChunkRange r1) vers `shouldBe` []
+      chunkRangeErrors (askChunkRange r2) vers `shouldBe` []
 
       insertMarks [r1] vers `shouldNotBe` VDocVersion []
       insertMarks [r2] vers `shouldNotBe` VDocVersion []
@@ -255,15 +259,14 @@ spec = parallel $ do
     it "regression (7)." $ do
       let vers = VDocVersion [Node {rootLabel = TagOpen "phoo" [Attr "data-uid" "7"], subForest = [Node {rootLabel = ContentText "C", subForest = []},Node {rootLabel = TagSelfClose "hr" [Attr "data-uid" "8"], subForest = []},Node {rootLabel = TagOpen "phoo" [Attr "data-uid" "9"], subForest = []},Node {rootLabel = TagOpen "phoo" [Attr "data-uid" "10"], subForest = [Node {rootLabel = ContentText "wef", subForest = []}]},Node {rootLabel = TagOpen "x123" [Attr "data-uid" "11"], subForest = [Node {rootLabel = TagSelfClose "wef" [Attr "data-uid" "12"], subForest = []}]}]}]
 
-          rs :: [ChunkRange Edit]
-          rs = [ChunkRange (ID 3) (Just (ChunkPoint (DataUID 7) 1)) Nothing]
+          rs = [SomethingWithChunkRangeAndID (ChunkRange (Just (ChunkPoint (DataUID 7) 1)) Nothing) (ContribIDNote (ID 3))]
 
-      (\r -> chunkRangeErrors r vers `shouldBe` []) `mapM_` rs
+      (\r -> chunkRangeErrors r vers `shouldBe` []) `mapM_` (askChunkRange <$> rs)
       insertMarks rs vers `shouldNotBe` VDocVersion []
 
     it "regression (8)." $ do
-      let (VersWithRanges vers [r]) = VersWithRanges (VDocVersion [Node {rootLabel = TagOpen "x123" [Attr "data-uid" "12"], subForest = [Node {rootLabel = TagOpen "wef" [Attr "data-uid" "13"], subForest = [Node {rootLabel = ContentText "phoo", subForest = []}]},Node {rootLabel = TagSelfClose "br" [Attr "data-uid" "14"], subForest = []},Node {rootLabel = TagSelfClose "phoo" [Attr "data-uid" "15"], subForest = []},Node {rootLabel = ContentText ";", subForest = []},Node {rootLabel = TagSelfClose "hr" [Attr "data-uid" "16"], subForest = []}]}]) [ChunkRange {_chunkRangeContrib = ID {_unID = 209}, _chunkRangeBegin = Just ChunkPoint {_chunkPointNode = 12, _chunkPointOffset = 0}, _chunkRangeEnd = Nothing}]
-      chunkRangeErrors r vers `shouldBe` []
+      let (VersWithRanges vers [r]) = VersWithRanges (VDocVersion [Node {rootLabel = TagOpen "x123" [Attr "data-uid" "12"], subForest = [Node {rootLabel = TagOpen "wef" [Attr "data-uid" "13"], subForest = [Node {rootLabel = ContentText "phoo", subForest = []}]},Node {rootLabel = TagSelfClose "br" [Attr "data-uid" "14"], subForest = []},Node {rootLabel = TagSelfClose "phoo" [Attr "data-uid" "15"], subForest = []},Node {rootLabel = ContentText ";", subForest = []},Node {rootLabel = TagSelfClose "hr" [Attr "data-uid" "16"], subForest = []}]}]) [SomethingWithChunkRangeAndID ChunkRange {_chunkRangeBegin = Just ChunkPoint {_chunkPointNode = 12, _chunkPointOffset = 0}, _chunkRangeEnd = Nothing} (ContribIDNote (ID 209))]
+      chunkRangeErrors (askChunkRange r) vers `shouldBe` []
       insertMarks [r] vers `shouldNotBe` VDocVersion []
 
 
@@ -272,6 +275,8 @@ spec = parallel $ do
   describe "resolvePreTokens" $ do
     let runPreTokenForest :: Forest PreToken -> [Token]
         runPreTokenForest = tokensFromForest . fmap (fmap runPreToken)
+
+        cnid = ContribIDNote . ID
 
     context "w/o PreMarks" $ do
       it "inverts enablePreTokens" . property . forAll arbitraryCanonicalVDocVersion $ do
@@ -282,35 +287,35 @@ spec = parallel $ do
 
     context "with consistent PreMarks" $ do
       it "removes empty selections" $ do
-        resolvePreTokens [PreMarkOpen (ID 2) ContribKindNote, PreMarkClose (ID 2)]
+        resolvePreTokens [PreMarkOpen (cnid 2), PreMarkClose (cnid 2)]
           `shouldBe` []
 
       it "drops selections that have only tags in them, but no text" $ do
-        resolvePreTokens [ PreMarkOpen (ID 2) ContribKindNote
-                         , PreMarkOpen (ID 8) ContribKindNote
-                         , PreMarkClose (ID 8)
-                         , PreMarkClose (ID 2)
+        resolvePreTokens [ PreMarkOpen (cnid 2)
+                         , PreMarkOpen (cnid 8)
+                         , PreMarkClose (cnid 8)
+                         , PreMarkClose (cnid 2)
                          ]
           `shouldBe` []
 
       it "renders marks as tags" $ do
-        resolvePreTokens [PreMarkOpen (ID 2) ContribKindNote, PreToken $ ContentText "wef", PreMarkClose (ID 2)]
-          `shouldBe` [ TagOpen "mark" [Attr "data-contribution-id" "2", Attr "data-contribution-kind" "note"]
+        resolvePreTokens [PreMarkOpen (cnid 2), PreToken $ ContentText "wef", PreMarkClose (cnid 2)]
+          `shouldBe` [ TagOpen "mark" [Attr "data-contribution-id" "n2"]
                      , ContentText "wef"
                      , TagClose "mark"
                      ]
-        resolvePreTokens [ PreMarkOpen (ID 2) ContribKindNote
+        resolvePreTokens [ PreMarkOpen (cnid 2)
                          , PreToken $ ContentText "wef"
-                         , PreMarkOpen (ID 8) ContribKindNote
+                         , PreMarkOpen (cnid 8)
                          , PreToken $ ContentText "puh"
-                         , PreMarkClose (ID 8)
-                         , PreMarkClose (ID 2)
+                         , PreMarkClose (cnid 8)
+                         , PreMarkClose (cnid 2)
                          ]
-          `shouldBe` [ TagOpen "mark" [Attr "data-contribution-id" "2", Attr "data-contribution-kind" "note"]
+          `shouldBe` [ TagOpen "mark" [Attr "data-contribution-id" "n2"]
                      , ContentText "wef"
                      , TagClose "mark"
-                     , TagOpen "mark" [Attr "data-contribution-id" "8", Attr "data-contribution-kind" "note"]
-                     , TagOpen "mark" [Attr "data-contribution-id" "2", Attr "data-contribution-kind" "note"]
+                     , TagOpen "mark" [Attr "data-contribution-id" "n8"]
+                     , TagOpen "mark" [Attr "data-contribution-id" "n2"]
                      , ContentText "puh"
                      , TagClose "mark"
                      , TagClose "mark"
@@ -320,9 +325,9 @@ spec = parallel $ do
       it "fails" $ do
         pendingWith "#16"
 
-        let bad1 = [ PreMarkOpen (ID 2) ContribKindNote
+        let bad1 = [ PreMarkOpen (cnid 2)
                    ]
-            bad2 = [ PreMarkClose (ID 8)
+            bad2 = [ PreMarkClose (cnid 8)
                    ]
         evaluate (resolvePreTokens bad1) `shouldThrow` anyException
         evaluate (resolvePreTokens bad2) `shouldThrow` anyException
@@ -332,13 +337,13 @@ spec = parallel $ do
 
   describe "highlightRange" $ do
     it "adds the highlit range." . property $ do
-      \(VersWithRanges (insertMarks ([] :: [ChunkRange Note]) -> vers) (ChunkRange _ mp1 mp2 : _)) -> do
+      \(VersWithRanges (insertMarks ([] :: [SomethingWithChunkRangeAndID]) -> vers) ((askChunkRange -> (ChunkRange mp1 mp2)) : _)) -> do
         let vers' = highlightRange mp1 mp2 vers
             highlights = filter isHighlightingMark . mconcat . fmap flatten $ vers' ^. unVDocVersion
         highlights `shouldSatisfy` (== 1) . length . nub . fmap dataContributionIDOfToken
 
     it "has canonicalized output." . property $ do
-      \(VersWithRanges (insertMarks ([] :: [ChunkRange Note]) -> vers) (ChunkRange _ mp1 mp2 : _)) -> do
+      \(VersWithRanges (insertMarks ([] :: [SomethingWithChunkRangeAndID]) -> vers) ((askChunkRange -> (ChunkRange mp1 mp2)) : _)) -> do
         let vers' = highlightRange mp1 mp2 vers
             vers'' = reCanonicalizeVDocVersion vers'
         vers' `shouldBe` vers''
@@ -348,11 +353,11 @@ spec = parallel $ do
 
   describe "removeHighlights" $ do
     it "inverts highlightRange." . property $ do
-      \(VersWithRanges (insertMarks ([] :: [ChunkRange Note]) -> vers) (ChunkRange _ mp1 mp2 : _)) -> do
+      \(VersWithRanges (insertMarks ([] :: [SomethingWithChunkRangeAndID]) -> vers) ((askChunkRange -> (ChunkRange mp1 mp2)) : _)) -> do
         removeHighlights (highlightRange mp1 mp2 vers) `shouldBe` vers
 
     it "has canonicalized output." . property $ do
-      \(VersWithRanges (insertMarks ([] :: [ChunkRange Note]) -> vers) (ChunkRange _ mp1 mp2 : _)) -> do
+      \(VersWithRanges (insertMarks ([] :: [SomethingWithChunkRangeAndID]) -> vers) ((askChunkRange -> (ChunkRange mp1 mp2)) : _)) -> do
         let vers' = removeHighlights (highlightRange mp1 mp2 vers)
             vers'' = reCanonicalizeVDocVersion vers'
         vers' `shouldBe` vers''
@@ -364,14 +369,14 @@ spec = parallel $ do
 -- This function can be used to generate values from 'VDocVersions' that can be tested for equality
 -- to abstract from these differences.  It returns a list of pairs of 'DataChunkID' set and number
 -- of characters that follow in the 'VDocVersion' covered by those chunk ids.
-marksEquivalenceClass :: VDocVersion 'HTMLWithMarks -> [(Set (ID Void), Int)]
+marksEquivalenceClass :: VDocVersion 'HTMLWithMarks -> [(Set ContributionID, Int)]
 marksEquivalenceClass (VDocVersion forest) = dfs mempty forest
   where
     push (Attr "data-contribution-id" (parseUrlPiece -> Right v) : _) opens = Set.insert v opens
     push (_ : as) opens = push as opens
     push [] _ = error "marksEquivalenceClass: mark tag without data-contribution-id attribute!"
 
-    dfs :: Set (ID Void) -> Forest Token -> [(Set (ID Void), Int)]
+    dfs :: Set ContributionID -> Forest Token -> [(Set ContributionID, Int)]
     dfs opens (Node (TagOpen "mark" attrs) children : siblings) =
       dfs (push attrs opens) children <> dfs opens siblings
 

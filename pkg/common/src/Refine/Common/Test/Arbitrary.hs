@@ -23,7 +23,6 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.Builder as B
 import           Data.Tree
 import qualified Data.Vector as V
-import           Data.Void
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
 import           Text.HTML.Parser as HTML
@@ -32,6 +31,7 @@ import           Text.HTML.Tree as HTML
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML
 import Refine.Common.VDoc.HTML.Core
+import Refine.Common.VDoc.HTML.Splice
 
 
 instance Arbitrary (ID a) where
@@ -46,13 +46,17 @@ instance Arbitrary DataUID where
 
 -- * html-parse
 
+instance Arbitrary ContributionID where
+  arbitrary = oneof
+    [ ContribIDNote <$> arbitrary
+    , ContribIDQuestion <$> arbitrary
+    , ContribIDDiscussion <$> arbitrary
+    , ContribIDEdit <$> arbitrary
+    , pure ContribIDHighlightMark
+    ]
+
 instance Arbitrary PreToken where
-  arbitrary = oneof [PreToken <$> arbitrary, open, close]
-    where
-      open  = PreMarkOpen <$> uid <*> kind
-      close = PreMarkClose <$> uid
-      uid   = arbitrary :: Gen (ID Void)
-      kind  = elements [minBound..]
+  arbitrary = oneof [PreToken <$> arbitrary, PreMarkOpen <$> arbitrary, PreMarkClose <$> arbitrary]
 
   shrink (PreToken t) = PreToken <$> shrink t
   shrink _ = []
@@ -170,11 +174,6 @@ validClosingOpen = TagOpen <$> validClosingXmlTagName <*> arbitrary
 
 -- * vdoc versions and valid chunk points
 
--- | For testing only!  In production code, only use 'createChunkRangeErrors'!
-chunkRangeErrors :: ChunkRange a -> VDocVersion 'HTMLCanonical -> [ChunkRangeError]
-chunkRangeErrors (ChunkRange _ mp1 mp2) = createChunkRangeErrors $ CreateChunkRange mp1 mp2
-
-
 instance Arbitrary (VDocVersion 'HTMLRaw) where
   arbitrary = arbitraryRawVDocVersion
 
@@ -182,8 +181,15 @@ instance Arbitrary (VDocVersion 'HTMLCanonical) where
   arbitrary = arbitraryCanonicalNonEmptyVDocVersion
   shrink = shrinkCanonicalNonEmptyVDocVersion  -- TODO: shrinking is slow and probably buggy.
 
-data VersWithRanges = VersWithRanges (VDocVersion 'HTMLCanonical) [ChunkRange Edit]
+data VersWithRanges = VersWithRanges (VDocVersion 'HTMLCanonical) [SomethingWithChunkRangeAndID]
   deriving (Eq, Show)
+
+data SomethingWithChunkRangeAndID = SomethingWithChunkRangeAndID ChunkRange ContributionID
+  deriving (Eq, Show)
+
+instance HasChunkRangeAndID SomethingWithChunkRangeAndID where
+  askChunkRange (SomethingWithChunkRangeAndID r _) = r
+  askID         (SomethingWithChunkRangeAndID _ i) = i
 
 instance Arbitrary VersWithRanges where
   arbitrary = arbitraryVersWithRanges
@@ -235,14 +241,14 @@ shrinkCanonicalNonEmptyVDocVersion (VDocVersion forest) = VDocVersion <$> shrink
 arbitraryVersWithRanges :: Gen VersWithRanges
 arbitraryVersWithRanges = do
   v <- arbitraryCanonicalNonEmptyVDocVersion
-  let crs = allNonEmptyCreateChunkRanges v
-      rs = zipWith (\(CreateChunkRange b e) i -> ChunkRange (ID i) b e) crs [0..]
+  let crs = allNonEmptyChunkRanges v
+      rs = zipWith (\(ChunkRange b e) i -> SomethingWithChunkRangeAndID (ChunkRange b e) (ContribIDNote (ID i))) crs [0..]
   VersWithRanges v . nub <$> vectorOf 11 (elements rs)
 
 shrinkVersWithRanges :: VersWithRanges -> [VersWithRanges]
 shrinkVersWithRanges (VersWithRanges v rs) = do
   v' <- shrink v
-  rs' <- shrinkList (\_ -> []) (filter (null . (`chunkRangeErrors` v')) rs)
+  rs' <- shrinkList (\_ -> []) (filter (null . (`chunkRangeErrors` v') . askChunkRange) rs)
   [VersWithRanges v' rs' | not $ null rs']
 
 
@@ -291,17 +297,17 @@ allChunkPoints (VDocVersion forest) = nubBy ((==) `on` snd) $ evalState (dfs for
     dfs [] = pure []
 
 
-allNonEmptyCreateChunkRanges :: VDocVersion 'HTMLCanonical -> [CreateChunkRange]
-allNonEmptyCreateChunkRanges vers =
-  CreateChunkRange Nothing Nothing : cheapnub (snd <$> allNonEmptyCreateChunkRanges_ vers)
+allNonEmptyChunkRanges :: VDocVersion 'HTMLCanonical -> [ChunkRange]
+allNonEmptyChunkRanges vers =
+  ChunkRange Nothing Nothing : cheapnub (snd <$> allNonEmptyChunkRanges_ vers)
   where
     cheapnub (x : y : ys) = [x | x /= y] <> cheapnub (y : ys)
     cheapnub (y : ys)     = y : cheapnub ys
     cheapnub []           = []
 
--- | 'allNonEmptyCreateChunkRanges', plus absolute offsets.
-allNonEmptyCreateChunkRanges_ :: VDocVersion 'HTMLCanonical -> [((Int, Int), CreateChunkRange)]
-allNonEmptyCreateChunkRanges_ vers = result
+-- | 'allNonEmptyChunkRanges', plus absolute offsets.
+allNonEmptyChunkRanges_ :: VDocVersion 'HTMLCanonical -> [((Int, Int), ChunkRange)]
+allNonEmptyChunkRanges_ vers = result
   where
     result = filter nonempty (mconcat rs)
 
@@ -310,17 +316,13 @@ allNonEmptyCreateChunkRanges_ vers = result
 
     rs = [ let (n, b) = ps V.! i
                (k, e) = ps V.! j
-           in [ ((n, maxk), CreateChunkRange (Just b) Nothing)
-              , ((0, k),    CreateChunkRange Nothing (Just e))
+           in [ ((n, maxk), ChunkRange (Just b) Nothing)
+              , ((0, k),    ChunkRange Nothing (Just e))
               ]
-              <> replicate 11 ((n, k), CreateChunkRange (Just b) (Just e))
+              <> replicate 11 ((n, k), ChunkRange (Just b) (Just e))
          | i <- ix, j <- ix, i < j
          ]
 
     nonempty ((n, k), _) = n < k
 
     maxk = fst $ V.last ps
-
-
-instance Arbitrary ContributionKind where
-  arbitrary = elements [minBound..]

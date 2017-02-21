@@ -26,7 +26,6 @@ module Refine.Frontend.Contribution.Store where
 
 import           Control.Lens ((&), (%~), (^.))
 import qualified Data.Map.Strict as M
-import           Data.Void
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
@@ -64,14 +63,14 @@ commentCategoryUpdate action state = case action of
 
 discussionIsVisibleUpdate :: ContributionAction -> Maybe (ID Discussion) -> Maybe (ID Discussion)
 discussionIsVisibleUpdate action state = case action of
-  (ShowDiscussionOverlay discussionId) -> Just discussionId
-  HideCommentOverlay                   -> Nothing
+  ShowContributionDialog (ContribIDDiscussion discussionId) -> Just discussionId
+  HideCommentOverlay                                        -> Nothing
   _ -> state
 
 noteIsVisibleUpdate :: ContributionAction -> Maybe (ID Note) -> Maybe (ID Note)
 noteIsVisibleUpdate action state = case action of
-  (ShowNoteOverlay noteId) -> Just noteId
-  HideCommentOverlay       -> Nothing
+  ShowContributionDialog (ContribIDNote noteId) -> Just noteId
+  HideCommentOverlay                            -> Nothing
   _ -> state
 
 commentEditorIsVisibleUpdate :: ContributionAction -> ContributionEditorData -> ContributionEditorData
@@ -81,7 +80,7 @@ commentEditorIsVisibleUpdate action state = case action of
   HideCommentEditor                                                               -> EditorIsHidden
   _ -> state
 
-highlightedMarkAndBubbleUpdate :: ContributionAction -> Maybe (ID Void) -> Maybe (ID Void)
+highlightedMarkAndBubbleUpdate :: ContributionAction -> Maybe ContributionID -> Maybe ContributionID
 highlightedMarkAndBubbleUpdate action state = case action of
   (HighlightMarkAndBubble dataChunkId) -> Just dataChunkId
   UnhighlightMarkAndBubble             -> Nothing

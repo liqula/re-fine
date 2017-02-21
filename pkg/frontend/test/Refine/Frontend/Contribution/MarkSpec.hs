@@ -26,6 +26,7 @@
 module Refine.Frontend.Contribution.MarkSpec where
 
 import           Control.Lens((^.), (&), (%~))
+import           Data.Int (Int64)
 import           Data.Monoid ((<>))
 import           React.Flux (getStoreData)
 import           Test.Hspec
@@ -39,19 +40,19 @@ import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Types
 
 
+cnid :: Int64 -> ContributionID
+cnid = ContribIDNote . ID
+
+
 spec :: Spec
 spec = do
   describe "The rfMark_ component" $ do
-    let theAttribs = [HTMLP.Attr "data-contribution-id" "77", HTMLP.Attr "data-contribution-kind" "the-content-type"]
+    let theAttribs = [HTMLP.Attr "data-contribution-id" "n77"]
     let theProps = MarkProps theAttribs Nothing
 
     it "does not render anything when there is no data-contribution-id" $ do
-      wrapper <- shallow $ rfMark_ (MarkProps [HTMLP.Attr "data-contribution-kind" "the-content-type"] Nothing) mempty
-      html wrapper `shouldReturn` "<div></div>" -- TODO should be empty
-
-    it "does not render anything when there is no data-contribution-kind" $ do
-      wrapper <- shallow $ rfMark_ (MarkProps [HTMLP.Attr "data-contribution-id" "77"] Nothing) mempty
-      html wrapper `shouldReturn` "<div></div>" -- TODO should be empty
+      wrapper <- shallow $ rfMark_ (MarkProps [] Nothing) mempty
+      html wrapper `shouldReturn` "<div></div>" -- TODO should be empty (react doesn't need this work-around any more since (perhaps) 15.0)
 
     it "renders a HTML mark at top level" $ do
       wrapper <- shallow $ rfMark_ theProps mempty
@@ -59,7 +60,7 @@ spec = do
 
     it "has the data-contribution-id annotation that was passed to it" $ do
       wrapper <- shallow $ rfMark_ theProps mempty
-      is wrapper (PropertySelector [Prop "data-contribution-id" ("77" :: String)]) `shouldReturn` True
+      is wrapper (PropertySelector [Prop "data-contribution-id" ("n77" :: String)]) `shouldReturn` True
 
     it "has all other annotations that were passed to it" $ do
       let moreAttrs = [HTMLP.Attr "a" "1", HTMLP.Attr "b" "2", HTMLP.Attr "c" "3"] <> theAttribs
@@ -72,18 +73,18 @@ spec = do
 
     it "has a mark class with the content type that was passed to it" $ do
       wrapper <- shallow $ rfMark_ theProps mempty
-      is wrapper (StringSelector ".o-mark--the-content-type") `shouldReturn` True
+      is wrapper (StringSelector ".o-mark--note") `shouldReturn` True
 
     it "does not render the hover class when there is no selected mark" $ do
       wrapper <- shallow $ rfMark_ theProps mempty
       is wrapper (StringSelector ".o-mark--hover") `shouldReturn` False
 
     it "does not render the hover class when the selected mark does not match the current one" $ do
-      wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (ID 88))) mempty
+      wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (cnid 88))) mempty
       is wrapper (StringSelector ".o-mark--hover") `shouldReturn` False
 
     it "renders the hover class when the selected mark matches the current one" $ do
-      wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (ID 77))) mempty
+      wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (cnid 77))) mempty
       is wrapper (StringSelector ".o-mark--hover") `shouldReturn` True
 
     it "inserts the id of the current mark into the state on mouseEnter and removes it again on mouseLeave" $ do
@@ -94,7 +95,7 @@ spec = do
       -- simulate events:
       _ <- simulate wrapper MouseEnter
       globalState1 <- getStoreData refineStore
-      globalState1 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Just (ID 77)
+      globalState1 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Just (cnid 77)
       _ <- simulate wrapper MouseLeave
       globalState2 <- getStoreData refineStore
       globalState2 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Nothing

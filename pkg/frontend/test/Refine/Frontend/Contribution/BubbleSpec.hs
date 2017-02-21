@@ -25,6 +25,7 @@
 module Refine.Frontend.Contribution.BubbleSpec where
 
 import           Control.Lens((^.), (&), (%~))
+import           Data.Int (Int64)
 import           Test.Hspec
 import           React.Flux (getStoreData)
 
@@ -40,12 +41,16 @@ import           Refine.Frontend.Types
 --import Refine.Frontend.Test.Console
 
 
+cnid :: Int64 -> ContributionID
+cnid = ContribIDNote . ID
+
+
 spec :: Spec
 spec = do
 
 -- TODO add tests for Tablet and Mobile, where appropriate
 
-  let chunkId = ID 99
+  let contributionId = cnid 99
       contentType = "the-content-type"
       iconSide = "the-icon-side"
       iconStyle = ("the-icon-name", "the-icon-style")
@@ -53,11 +58,11 @@ spec = do
       highlight = Nothing
       callback _ = []
       screenState = SC.ScreenState 95 SC.Desktop
-      bubbleProps = BubbleProps chunkId contentType iconSide iconStyle markPosition highlight callback screenState
+      bubbleProps = BubbleProps contributionId contentType iconSide iconStyle markPosition highlight callback screenState
 
   describe "The bubble_ component" $ do
     it "does not render anything if there is no mark position in the props" $ do
-      wrapper <- shallow $ bubble_ (BubbleProps chunkId contentType iconSide iconStyle Nothing highlight callback screenState) mempty
+      wrapper <- shallow $ bubble_ (BubbleProps contributionId contentType iconSide iconStyle Nothing highlight callback screenState) mempty
       -- TODO actually this should already hold - improve react-flux here?
       -- lengthOf wrapper `shouldReturn` (0 :: Int)
       -- TODO and this should return ""
@@ -65,7 +70,7 @@ spec = do
 
     it "renders the data-contribution-id that was passed to it" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      is wrapper (PropertySelector [Prop "data-contribution-id" ("99" :: String)]) `shouldReturn` True
+      is wrapper (PropertySelector [Prop "data-contribution-id" ("n99" :: String)]) `shouldReturn` True
 
     it "renders the data-content-type that was passed to it" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
@@ -100,11 +105,11 @@ spec = do
       is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` False
 
     it "does not render the hover class when the highlighted bubble does not match the current one" $ do
-      wrapper <- shallow $ bubble_ (BubbleProps chunkId contentType iconSide iconStyle markPosition (Just (ID 101)) callback screenState) mempty
+      wrapper <- shallow $ bubble_ (BubbleProps contributionId contentType iconSide iconStyle markPosition (Just (cnid 101)) callback screenState) mempty
       is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` False
 
     it "renders the hover class when the highlighted bubble matches the current one" $ do
-      wrapper <- shallow $ bubble_ (BubbleProps chunkId contentType iconSide iconStyle markPosition (Just (ID 99)) callback screenState) mempty
+      wrapper <- shallow $ bubble_ (BubbleProps contributionId contentType iconSide iconStyle markPosition (Just (cnid 99)) callback screenState) mempty
       is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` True
 
     it "inserts the id of the current bubble into the state on mouseEnter and removes it again on mouseLeave" $ do
@@ -115,7 +120,7 @@ spec = do
       -- simulate events:
       _ <- simulate wrapper MouseEnter
       globalState1 <- getStoreData refineStore
-      globalState1 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Just (ID 99)
+      globalState1 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Just (cnid 99)
       _ <- simulate wrapper MouseLeave
       globalState2 <- getStoreData refineStore
       globalState2 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Nothing

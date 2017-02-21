@@ -31,8 +31,8 @@ module Refine.Common.VDoc.HTML.Core
   , _ChunkRangeEmpty
 
     -- * pretokens
-  , PreToken(..), ContributionKind, runPreToken, dropPreTokens
-  , PreToken', PreToken''(..), runPreToken''
+  , PreToken(..), runPreToken, dropPreTokens
+  , PreToken''(..), runPreToken''
 
     -- * misc
   , atNode, atToken, atPreToken
@@ -54,7 +54,6 @@ import           Data.Maybe (listToMaybe)
 import           Data.String.Conversions (ST, cs, (<>))
 import qualified Data.Text as ST
 import           Data.Tree (Forest, Tree(..))
-import           Data.Void
 import           GHC.Generics (Generic)
 import           Text.HTML.Parser (Token(..), Attr(..))
 import           Text.HTML.Tree (tokensFromForest)
@@ -81,30 +80,23 @@ data ChunkRangeError =
 -- their order (which still needs to be de-overlapped), so need close marks of the form
 -- @PreMarkClose "data-contribution-id-value"@.
 --
--- @(ID Void)@ is taken from 'ChunkRange' and refers to the contribution that causes this mark token
--- pair.
-data PreToken = PreToken Token | PreMarkOpen (ID Void) ContributionKind | PreMarkClose (ID Void)
+-- @ContributionID@ is taken from the contribution that causes this mark token pair.
+data PreToken = PreToken Token | PreMarkOpen ContributionID | PreMarkClose ContributionID
   deriving (Eq, Show, Generic)
 
 -- | Needed to make some of the helper functions total.
-type PreToken' = (ID Void, ContributionKind)
-
--- | Needed to make some of the helper functions total.
-data PreToken'' = PreMarkOpen'' (ID Void) ContributionKind | PreMarkClose'' (ID Void)
+data PreToken'' = PreMarkOpen'' ContributionID | PreMarkClose'' ContributionID
   deriving (Show)
 
 runPreToken'' :: PreToken'' -> PreToken
-runPreToken'' (PreMarkOpen'' n o) = PreMarkOpen n o
-runPreToken'' (PreMarkClose'' n)  = PreMarkClose n
+runPreToken'' (PreMarkOpen'' n)  = PreMarkOpen n
+runPreToken'' (PreMarkClose'' n) = PreMarkClose n
 
 
 runPreToken :: PreToken -> Token
-runPreToken (PreToken t)      = t
-runPreToken (PreMarkOpen l k) = TagOpen "mark"
-  [ Attr "data-contribution-id"   $ toUrlPiece l
-  , Attr "data-contribution-kind" $ toUrlPiece k
-  ]
-runPreToken (PreMarkClose _)  = TagClose "mark"
+runPreToken (PreToken t)     = t
+runPreToken (PreMarkOpen l)  = TagOpen "mark" [Attr "data-contribution-id" $ toUrlPiece l]
+runPreToken (PreMarkClose _) = TagClose "mark"
 
 dropPreTokens :: [PreToken] -> [Token]
 dropPreTokens = fmap runPreToken . filter (\case (PreToken _) -> True; _ -> False)
@@ -119,19 +111,19 @@ preTokensFromForest :: Forest PreToken -> [PreToken]
 preTokensFromForest = fmap unstashPreToken . tokensFromForest . fmap (fmap stashPreToken)
 
 stashPreToken :: PreToken -> Token
-stashPreToken (PreMarkOpen l k) = Doctype $ ST.intercalate "/" [toUrlPiece l, toUrlPiece k]
-stashPreToken (PreMarkClose l)  = Doctype $ toUrlPiece l
-stashPreToken (PreToken t)      = t
+stashPreToken (PreMarkOpen l)  = Doctype $ toUrlPiece l
+stashPreToken (PreMarkClose l) = Doctype $ "/" <> toUrlPiece l
+stashPreToken (PreToken t)     = t
 
 unstashPreToken :: Token -> PreToken
 unstashPreToken (Doctype s) = case ST.splitOn "/" s of
-  [l, k] -> PreMarkOpen (confidentread l) (confidentread k)
-  [l]    -> PreMarkClose (confidentread l)
-  bad    -> error $ "unstashPreToken: " <> show bad
+  [l]     -> PreMarkOpen  $ confidentread l
+  ["", l] -> PreMarkClose $ confidentread l
+  bad     -> error $ "unstashPreToken: " <> show bad
   where
     confidentread :: FromHttpApiData a => ST -> a
     confidentread = (\(Right v) -> v) . parseUrlPiece
-unstashPreToken t           = PreToken t
+unstashPreToken t = PreToken t
 
 
 -- * misc
@@ -162,9 +154,9 @@ dataUidOfToken = \case
     go attrs = readMaybe . cs =<< listToMaybe (mconcat $ (\(Attr k v) -> [v | k == "data-uid"]) <$> attrs)
 
 dataUidOfPreToken :: PreToken -> Maybe DataUID
-dataUidOfPreToken (PreToken t)      = dataUidOfToken t
-dataUidOfPreToken (PreMarkOpen _ _) = Nothing
-dataUidOfPreToken (PreMarkClose _)  = Nothing
+dataUidOfPreToken (PreToken t)     = dataUidOfToken t
+dataUidOfPreToken (PreMarkOpen _)  = Nothing
+dataUidOfPreToken (PreMarkClose _) = Nothing
 
 dataContributionIDOfToken :: Token -> Maybe DataUID
 dataContributionIDOfToken (TagOpen _ attrs) =

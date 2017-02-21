@@ -84,13 +84,13 @@ data VDocRepo = VDocRepo
 data Edit = Edit
   { _editID    :: ID Edit
   , _editDesc  :: ST
-  , _editRange :: ChunkRange Edit
+  , _editRange :: ChunkRange
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
 data CreateEdit = CreateEdit
   { _createEditDesc  :: ST
-  , _createEditRange :: CreateChunkRange
+  , _createEditRange :: ChunkRange
   , _createEditVDoc  :: VDocVersion 'HTMLRaw
   }
   deriving (Eq, Ord, Show, Generic)

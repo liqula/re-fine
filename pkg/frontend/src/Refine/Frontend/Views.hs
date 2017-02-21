@@ -36,12 +36,10 @@ import           Data.Monoid ((<>))
 import           Data.String.Conversions
 import           Data.String (fromString)
 import qualified Data.Tree as DT
-import           Data.Void
 import           React.Flux
 import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
-import           Refine.Prelude (ClearTypeParameter(..))
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Overlay
@@ -156,7 +154,7 @@ toHTML state (DT.Node rootLabel subForest) = do
 data LeftAsideProps = LeftAsideProps
   { _leftAsideMarkPositions     :: RS.MarkPositions
   , _leftAsideCurrentSelection  :: RS.Selection
-  , _leftAsideHighlightedBubble :: Maybe (ID Void)
+  , _leftAsideHighlightedBubble :: Maybe ContributionID
   , _leftAsideScreenState       :: SC.ScreenState
   , _leftAsideDiscussions       :: [CompositeDiscussion]
   , _leftAsideNotes             :: [Note]
@@ -169,16 +167,16 @@ leftAside = defineView "LeftAside" $ \props ->
         let lookupPosition chunkId = M.lookup chunkId . _unMarkPositions $ _leftAsideMarkPositions props
         -- TODO the map should use proper IDs as keys
         mconcat $ map (\d -> discussionBubble_ (SpecialBubbleProps
-                                                 (clearTypeParameter (d ^. compositeDiscussion . discussionID))
-                                                 (lookupPosition $ clearTypeParameter (d ^. compositeDiscussion . discussionID))
+                                                 (ContribIDDiscussion (d ^. compositeDiscussion . discussionID))
+                                                 (lookupPosition $ ContribIDDiscussion (d ^. compositeDiscussion . discussionID))
                                                  (_leftAsideHighlightedBubble props)
                                                  (_leftAsideScreenState props)
                                                )
                                                (elemText (DT.rootLabel (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
                       (_leftAsideDiscussions props)
         mconcat $ map (\n -> noteBubble_ (SpecialBubbleProps
-                                           (clearTypeParameter (n ^. noteID))
-                                           (lookupPosition $ clearTypeParameter (n ^. noteID))
+                                           (ContribIDNote (n ^. noteID))
+                                           (lookupPosition $ ContribIDNote (n ^. noteID))
                                            (_leftAsideHighlightedBubble props)
                                            (_leftAsideScreenState props)
                                          )
