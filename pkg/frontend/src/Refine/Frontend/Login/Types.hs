@@ -29,9 +29,9 @@ import Refine.Common.Types.User (Username)
 import Refine.Prelude.TH (makeRefineType)
 
 
-data CurrentUser =
-    NonLoggedInUser
-  | LoggedInUser Username
+data CurrentUser
+  = UserLoggedIn Username
+  | UserLoggedOut
   deriving (Show, Generic)
 
 newtype LoginState = LoginState
@@ -41,7 +41,7 @@ newtype LoginState = LoginState
 
 emptyLoginState :: LoginState
 emptyLoginState = LoginState
-  { _lsCurrentUser = NonLoggedInUser
+  { _lsCurrentUser = UserLoggedOut
   }
 
 makeRefineType ''CurrentUser

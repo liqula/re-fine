@@ -187,14 +187,14 @@ emitBackendCallsFor action state = case action of
       login loginData $ \case
         (Left(_, msg)) -> handleError msg
         (Right username) -> do
-          pure $ dispatch (ChangeCurrentUser $ LoggedInUser username) <>
+          pure $ dispatch (ChangeCurrentUser $ UserLoggedIn username) <>
                  dispatch LoadDocumentList
 
     Logout -> do
       logout $ \case
         (Left(_, msg)) -> handleError msg
         (Right ()) -> do
-          pure $ dispatch (ChangeCurrentUser NonLoggedInUser) <>
+          pure $ dispatch (ChangeCurrentUser UserLoggedOut) <>
                  dispatch LoadDocumentList
 
     _ -> pure ()

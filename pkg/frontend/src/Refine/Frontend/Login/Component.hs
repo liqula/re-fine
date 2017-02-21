@@ -96,8 +96,8 @@ invalidRegistrationForm form =
 
 loginOrLogout_ :: CurrentUser -> ReactElementM eventHandler ()
 loginOrLogout_ = \case
-  NonLoggedInUser -> login_
-  LoggedInUser _  -> logout_
+  UserLoggedOut  -> login_
+  UserLoggedIn _ -> logout_
 
 -- * Login
 

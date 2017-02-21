@@ -117,8 +117,8 @@ mainMenu = defineView "MainMenu" $ \(MainMenuProps menuTab currentUser) ->
               }
 
             case currentUser of
-              NonLoggedInUser -> pure ()
-              LoggedInUser username -> do
+              UserLoggedOut -> pure ()
+              UserLoggedIn username -> do
                 iconButton_ IconButtonProps
                   { _iconButtonPropsIconProps = IconProps
                       { _iconPropsBlockName = "c-mainmenu-content"
