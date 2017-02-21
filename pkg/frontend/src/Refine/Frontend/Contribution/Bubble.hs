@@ -104,7 +104,7 @@ questionBubble_ = view questionBubble
 noteBubble :: ReactView SpecialBubbleProps
 noteBubble = defineView "NoteBubble" $ \(SpecialBubbleProps contributionID markPosition highlight screenState) ->
     let clickHandler _ = RS.dispatch (RT.ContributionAction (RT.ShowContributionDialog contributionID))
-    in bubble_ (BubbleProps contributionID "question" "left" ("icon-Question", "dark") markPosition highlight clickHandler screenState) childrenPassedToView
+    in bubble_ (BubbleProps contributionID "note" "left" ("icon-Note", "dark") markPosition highlight clickHandler screenState) childrenPassedToView
 
 noteBubble_ :: SpecialBubbleProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 noteBubble_ = view noteBubble
