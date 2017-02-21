@@ -1,15 +1,15 @@
-{-# LANGUAGE BangPatterns        #-}
-{-# LANGUAGE DeriveGeneric       #-}
-{-# LANGUAGE EmptyDataDecls      #-}
-{-# LANGUAGE FlexibleContexts    #-}
-{-# LANGUAGE FlexibleInstances   #-}
-{-# LANGUAGE KindSignatures      #-}
+{-# LANGUAGE BangPatterns          #-}
+{-# LANGUAGE DeriveGeneric         #-}
+{-# LANGUAGE EmptyDataDecls        #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE KindSignatures        #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE Rank2Types          #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell     #-}
-{-# LANGUAGE ViewPatterns        #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE Rank2Types            #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE UndecidableInstances  #-}
+{-# LANGUAGE ViewPatterns          #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
