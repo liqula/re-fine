@@ -103,10 +103,13 @@ showComment = defineView "ShowComment" $ \props ->
            , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentOverlay)
            , "dialogStyles" @= ((props ^. contentStyle) <> extraStyles)
            , "overlayStyles" @= overlayStyles
+           , "closeButtonStyle" @= [Style "top" ("" :: String), Style "bottom" ("0" :: String)]
+           , "titleStyle" @= [Style "margin" ("0" :: String)]
            ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
-        icon_ (IconProps "c-vdoc-overlay-content" False (props ^. iconStyle) XL)
+        div_ ["style" @= [Style "margin-left" ("96%" :: String)]] $ do             -- FIXME: How to do this properly?
+          icon_ (IconProps "c-vdoc-overlay-content" False (props ^. iconStyle) XL)
 
         div_ ["className" $= "c-vdoc-overlay-content__copy"] $ elemText (props ^. commentText)
 
