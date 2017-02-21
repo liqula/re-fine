@@ -34,7 +34,6 @@ import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
 import           Data.Monoid ((<>))
 import           Data.String.Conversions
-import           Data.String (fromString)
 import qualified Data.Tree as DT
 import           React.Flux
 import qualified Text.HTML.Parser as HTMLP
@@ -135,9 +134,9 @@ toHTML _ (DT.Node (HTMLP.Comment _) _) = mempty -- ignore comments
 toHTML state (DT.Node (HTMLP.TagOpen "mark" attrs) subForest) =
     rfMark_ (MarkProps attrs (state ^. csHighlightedMarkAndBubble)) $ toHTML state `mapM_` subForest -- (toProperties attrs)
 toHTML state (DT.Node (HTMLP.TagOpen tagname attrs) subForest) =
-    React.Flux.term (fromString (cs tagname)) (toProperties attrs) $ toHTML state `mapM_` subForest
+    React.Flux.term (cs tagname) (toProperties attrs) $ toHTML state `mapM_` subForest
 toHTML _ (DT.Node (HTMLP.TagSelfClose tagname attrs) []) =
-    React.Flux.term (fromString (cs tagname)) (toProperties attrs) mempty
+    React.Flux.term (cs tagname) (toProperties attrs) mempty
 
 -- the above cases cover all possibilities in the demo article, but we leave this here for discovery:
 toHTML _ (DT.Node rootLabel []) = p_ (elemString ("root_label_wo_children " <> show rootLabel))

@@ -28,13 +28,12 @@ import           Data.String.Conversions (cs)
 import           React.Flux
 
 import           Refine.Frontend.Login.Types
+import           Refine.Frontend.Login.Component
 import           Refine.Frontend.MainMenu.Types
-import           Refine.Frontend.Prelude()
 import           Refine.Frontend.Store
 import           Refine.Frontend.Types
 import           Refine.Frontend.UtilityWidgets
-
-import Refine.Frontend.Login.Component (loginOrLogout_, registration_)
+import           Refine.Prelude()
 
 
 mainMenu :: ReactView MainMenuProps

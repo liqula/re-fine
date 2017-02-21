@@ -3,6 +3,9 @@
 
 import Debug.Trace
 
+import Data.String (fromString)
+import Data.String.Conversions (cs)
+
 import "hlint" HLint.Default
 import "hlint" HLint.Dollar
 import "hlint" HLint.Generalise
@@ -22,6 +25,7 @@ warn = isJust $ find f xs ==> any f xs
 warn = return ==> pure
 warn = f ^. g ^. h ==> f ^. g . h
 warn = fx f ^. g ==> f ^. to fx . g
+warn = fromString ==> cs -- Refine.Prelude module should be imported to support this
 
 -- this is a bit of a hack, but it works.  use "ignore Use errorDoNotUseTrace" in annotations.
 warn = trace         ==> errorDoNotUseTrace

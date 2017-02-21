@@ -2,11 +2,16 @@
 {-# LANGUAGE DeriveGeneric       #-}
 {-# LANGUAGE EmptyDataDecls      #-}
 {-# LANGUAGE FlexibleContexts    #-}
+{-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE KindSignatures      #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE Rank2Types          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
 {-# LANGUAGE ViewPatterns        #-}
+{-# LANGUAGE UndecidableInstances #-}
+
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Prelude
   ( -- * generic json
@@ -55,6 +60,8 @@ import           Control.Monad.Except (MonadError(..))
 import           Data.Char (isSpace)
 import           Data.Function (on)
 import           Data.List (replicate, sortBy)
+import           Data.String
+import           Data.String.Conversions
 import           Data.Monoid ((<>))
 import           Data.Ord
 import qualified Data.Set as Set
@@ -229,3 +236,10 @@ recursion f = go
       Run  y -> go y
       Fail e -> throwError e
       Halt r -> pure r
+
+
+{-# ANN module "HLint: ignore Use cs" #-}
+instance {-# OVERLAPPABLE #-} (ConvertibleStrings a String, IsString b)
+  => ConvertibleStrings a b
+  where
+    convertString = fromString . cs
