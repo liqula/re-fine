@@ -7,7 +7,6 @@ import           Control.Monad (void)
 import           Control.Monad.State (gets)
 import           Control.Monad.Reader (ask)
 import           Data.Maybe (isJust)
-import           Data.String.Conversions (cs)
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.Session
@@ -56,7 +55,7 @@ createUser (CreateUser name email password) = do
               , Users.u_password = Users.makePassword (Users.PasswordPlain password)
               , Users.u_active = True
               }
-  loginId <- leftToError (AppUserCreationError . cs . show)
+  loginId <- leftToError AppUserCreationError
                =<< appIO (Users.createUser userHandle user)
   pure . Refine.User . Users.toUserID $ loginId
 

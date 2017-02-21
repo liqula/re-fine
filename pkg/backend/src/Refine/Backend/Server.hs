@@ -36,7 +36,7 @@ import           Control.Monad.Except
 import qualified Control.Natural as CN
 import           Control.Natural (($$))
 import           Data.Aeson (encode)
-import           Data.String.Conversions (SBS, ST, cs)
+import           Data.String.Conversions (SBS, cs)
 import           Debug.Trace (traceShow)  -- (please keep this until we have better logging)
 import           Network.Wai.Handler.Warp as Warp
 import           Prelude hiding ((.), id)
@@ -56,6 +56,7 @@ import Refine.Backend.DocRepo (DocRepoError(..), createRunRepo)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
+import Refine.Backend.User.Core (CreateUserError(..))
 import Refine.Common.Rest
 import Refine.Prelude (leftToError)
 
@@ -148,7 +149,7 @@ toApiError = \case
   AppDocRepoError e      -> ApiDocRepoError . cs $ show e
   AppUserNotFound e      -> ApiUserNotFound e
   AppUserNotLoggedIn     -> ApiUserNotLoggedIn
-  AppUserCreationError e -> ApiUserCreationError e
+  AppUserCreationError e -> ApiUserCreationError . cs $ show e
   AppCsrfError e         -> ApiCsrfError e
   AppSessionError        -> ApiSessionError
   AppSanityCheckError e  -> ApiSanityCheckError e
@@ -180,8 +181,12 @@ docRepoServantErr = \case
   DocRepoUnknownError _ -> err500
   DocRepoException    _ -> err500
 
-userCreationError :: ST -> ServantErr
-userCreationError _ = err500
+userCreationError :: CreateUserError -> ServantErr
+userCreationError = \case
+  InvalidPassword              -> err400
+  UsernameAlreadyTaken         -> err409
+  EmailAlreadyTaken            -> err409
+  UsernameAndEmailAlreadyTaken -> err409
 
 -- * Instances for Servant.Cookie.Session
 
