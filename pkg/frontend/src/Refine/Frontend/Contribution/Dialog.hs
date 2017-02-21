@@ -293,6 +293,11 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
 
       hr_ []
 
+      div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
+        p_ $ do
+          elemString "Step 2: "
+          span_ ["className" $= "bold"] "enter your comment:"
+
       form_ [ "target" $= "#"
            , "action" $= "POST"] $ do
         textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
@@ -309,7 +314,7 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
 
       div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
         p_ $ do
-          elemString "Step 2: "
+          elemString "Step 3: "
           span_ ["className" $= "bold"] "finish"
 
       iconButton_
