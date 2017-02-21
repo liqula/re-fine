@@ -104,7 +104,7 @@ showComment = defineView "ShowComment" $ \props ->
            ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
-        icon_ (IconProps "c-vdoc-overlay-content" False (props ^. iconStyle) L) -- or XL? in question
+        icon_ (IconProps "c-vdoc-overlay-content" False (props ^. iconStyle) XL)
 
         div_ ["className" $= "c-vdoc-overlay-content__copy"] $ elemText (props ^. commentText)
 
