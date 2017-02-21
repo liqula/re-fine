@@ -36,10 +36,11 @@ import           Data.Maybe (fromJust)
 import           Data.String.Conversions
 import           React.Flux
 
-import Refine.Common.Types (CompositeVDoc(..), Contribution(..))
+import           Refine.Common.Types (CompositeVDoc(..), Contribution(..))
 import qualified Refine.Common.Types as RT
-
 import qualified Refine.Common.VDoc.HTML as Common
+import           Refine.Common.Rest (ApiError(..))
+
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
@@ -149,16 +150,16 @@ emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()
 emitBackendCallsFor action state = case action of
     LoadDocumentList -> do
         listVDocs $ \case
-            (Left(_, msg)) -> handleError msg
+            (Left rsp) -> handleError rsp
             (Right loadedVDocs) -> pure . dispatch $ LoadedDocumentList ((^. RT.vdocID) <$> loadedVDocs)
     LoadDocument auid -> do
         getVDoc auid $ \case
-            (Left(_, msg)) -> handleError msg
+            (Left rsp) -> handleError rsp
             (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
 
     AddDemoDocument -> do
         createVDoc (RT.CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
-            (Left(_, msg)) -> handleError msg
+            (Left rsp) -> handleError rsp
             (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
 
     ContributionAction (SubmitComment text category forRange) -> do
@@ -169,31 +170,31 @@ emitBackendCallsFor action state = case action of
         Just Discussion ->
           addDiscussion (state ^. gsVDoc . to fromJust . RT.compositeVDocRepo . RT.vdocHeadEdit)
                      (RT.CreateDiscussion text True (createChunkRange forRange)) $ \case
-            (Left(_, msg)) -> handleError msg
+            (Left rsp) -> handleError rsp
             (Right discussion) -> pure $ dispatch (AddDiscussion discussion)
         Just Note ->
           addNote (state ^. gsVDoc . to fromJust . RT.compositeVDocRepo . RT.vdocHeadEdit)
                      (RT.CreateNote text True (createChunkRange forRange)) $ \case
-            (Left(_, msg)) -> handleError msg
+            (Left rsp) -> handleError rsp
             (Right note) -> pure $ dispatch (AddNote note)
         Nothing -> pure ()
 
     CreateUser createUserData -> do
       createUser createUserData $ \case
-        (Left (_, msg)) -> handleError msg
+        (Left rsp)    -> handleError rsp
         (Right _user) -> do
           pure $ dispatch (MainMenuAction $ MainMenuActionOpen MainMenuLogin)
 
     Login loginData -> do
       login loginData $ \case
-        (Left(_, msg)) -> handleError msg
+        (Left rsp) -> handleError rsp
         (Right username) -> do
           pure $ dispatch (ChangeCurrentUser $ UserLoggedIn username) <>
                  dispatch (MainMenuAction MainMenuActionClose)
 
     Logout -> do
       logout $ \case
-        (Left(_, msg)) -> handleError msg
+        (Left rsp) -> handleError rsp
         (Right ()) -> do
           pure $ dispatch (ChangeCurrentUser UserLoggedOut) <>
                  dispatch (MainMenuAction MainMenuActionClose)
@@ -213,7 +214,7 @@ emitBackendCallsFor action state = case action of
                                 let protoChunkRange = ProtoChunkRange (ChunkPoint (DataUID <$> _startUid range) (_startOffset range)) (ChunkPoint (DataUID <$> _endUid range) (_endOffset range))
                                 let editFromClient = EditFromClient vdocChunk (Just protoChunkRange)
                                 addEdit editKey editFromClient $ \case
-                                    (Left(_, msg)) -> handleError msg
+                                    (Left rsp) -> handleError rsp
                                     (Right _edit) -> pure []
 -}
 
@@ -221,10 +222,18 @@ createChunkRange :: Maybe Range -> RT.ChunkRange
 createChunkRange Nothing = RT.ChunkRange Nothing Nothing
 createChunkRange (Just range) = RT.ChunkRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
 
-handleError :: String -> IO [SomeStoreAction]
-handleError msg = do
-            consoleLog "handleError" msg
-            pure []
+handleError :: (Int, String) -> IO [SomeStoreAction]
+handleError (code, rsp) = case AE.eitherDecode $ cs rsp of
+  Left err -> do
+    consoleLog "handleError" (show code ++ " " ++ rsp)
+    consoleLog "handleError" err
+    pure []
+  Right apiError -> handleApiError code apiError
+
+handleApiError :: Int -> ApiError -> IO [SomeStoreAction]
+handleApiError _code apiError = do
+  consoleLog "handleApiError" (show apiError)
+  pure []
 
 refineStore :: ReactStore GlobalState
 refineStore = mkStore emptyGlobalState
