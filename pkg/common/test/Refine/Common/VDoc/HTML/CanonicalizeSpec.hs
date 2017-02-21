@@ -15,9 +15,7 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
@@ -60,7 +58,7 @@ spec = parallel $ do
       \s -> canonicalizeWhitespace (canonicalizeWhitespace s) `shouldBe` canonicalizeWhitespace s
 
     it "all whitespace is newline" . property $
-      \s -> (\c -> isSpace c `shouldBe` c == '\n') `mapM_` cs @ST @String (canonicalizeWhitespace s)
+      \s -> (\c -> isSpace c `shouldBe` c == '\n') `mapM_` (cs :: ST -> String) (canonicalizeWhitespace s)
 
     it "leading and trailing whitespace exist in output as in input" . property $
       \s -> do
