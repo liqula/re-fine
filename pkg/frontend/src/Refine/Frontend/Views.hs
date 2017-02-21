@@ -83,7 +83,8 @@ mainScreen = defineView "MainScreen" $ \rs ->
           -- components that are only temporarily visible:
           showNote_ $ showNoteProps (vdoc ^. compositeVDocNotes) rs
           showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocDiscussions) rs
-          addComment_ (rs ^. gsContributionState . csCommentEditorIsVisible) (rs ^. gsContributionState . csCommentCategory)
+          addComment_ $ AddCommentProps (rs ^. RS.gsContributionState . RS.csCommentEditorIsVisible)
+                                        (rs ^. RS.gsContributionState . RS.csCommentCategory)
           notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
 
           main_ ["role" $= "main"] $ do

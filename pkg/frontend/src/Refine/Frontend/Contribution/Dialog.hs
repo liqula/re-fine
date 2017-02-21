@@ -33,7 +33,6 @@ import qualified Data.Text as DT
 import qualified Data.Tree as Tree
 import           React.Flux
 
-import           Refine.Prelude (clearTypeParameter)
 import           Refine.Common.Types
 import           Refine.Frontend.ThirdPartyViews (skylight_)
 import qualified Refine.Frontend.Types as RS
@@ -143,7 +142,7 @@ showNoteProps notes rs = case (maybeNote, maybeOffset) of
     maybeOffset = do
       nid <- maybeNoteID
       rs ^? RS.gsContributionState . RS.csMarkPositions . to RS._unMarkPositions
-          . at (clearTypeParameter nid) . _Just . RS.markPositionBottom
+          . at (ContribIDNote nid) . _Just . RS.markPositionBottom
 
 
 data ShowNoteProps = ShowNotePropsJust
@@ -182,7 +181,7 @@ showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
     maybeOffset = do
       did <- maybeDiscussionID
       rs ^? RS.gsContributionState . RS.csMarkPositions . to RS._unMarkPositions
-          . at (clearTypeParameter did) . _Just . RS.markPositionBottom
+          . at (ContribIDDiscussion did) . _Just . RS.markPositionBottom
 
 showDiscussion :: ReactView ShowDiscussionProps
 showDiscussion = defineView "ShowDiscussion" $ \case
@@ -214,83 +213,103 @@ showQuestion_ :: Maybe CompositeQuestion -> ReactElementM eventHandler ()
 showQuestion_ question = view showQuestion question mempty
 
 
+data AddCommentProps = AddCommentProps
+  { _acpEditor    :: RS.ContributionEditorData
+  , _acpCategory :: Maybe RS.CommentCategory
+  }
+
+makeLenses ''AddCommentProps
+
+data CommentInputProps = CommentInputProps
+  { _cipRange    :: Maybe RS.Range
+  , _cipCategory :: Maybe RS.CommentCategory
+  }
+
+makeLenses ''CommentInputProps
+
 -- was add-annotation
-addComment :: ReactView (Maybe RS.Range, Maybe RS.CommentCategory)
-addComment = defineView "AddComment" $ \(forRange, commentCategory) ->
-  skylight_ ["isVisible" &= True
-           , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
-           , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
-           , "dialogStyles" @= (vdoc_overlay_content__add_comment <> [Style "top" ("7.5rem" :: String)])
-           , "overlayStyles" @= overlayStyles
-           ]  $ do
+addComment :: ReactView CommentInputProps
+addComment = defineView "AddComment" $ \props ->
+    let top = case props ^. cipRange of
+              Nothing -> 0 -- FIXME: Invent a suitable top for the "general comment" case
+              Just range -> (range ^. RS.rangeBottomOffset . SC.unOffsetFromViewportTop)
+                          + (range ^. RS.rangeScrollOffset . SC.unScrollOffsetOfViewport)
+        topStyle = [Style "top" (show (top + 5) <> "px")]
+    in skylight_ ["isVisible" &= True
+             , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
+             , on "onOverlayClicked" $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
+             , "dialogStyles" @= (vdoc_overlay_content__add_comment <> topStyle)
+             , "overlayStyles" @= overlayStyles
+             ]  $ do
 
-    icon_ (IconProps "c-vdoc-overlay-content" False ("icon-Remark", "dark") XL)
+      icon_ (IconProps "c-vdoc-overlay-content" False ("icon-Remark", "dark") XL)
 
-    h4_ ["className" $= "c-vdoc-overlay-content__title"] "add a comment"
+      h4_ ["className" $= "c-vdoc-overlay-content__title"] "add a comment"
 
-    commentInput_ forRange commentCategory
-
-
-addComment_ :: RS.ContributionEditorData -> Maybe RS.CommentCategory -> ReactElementM eventHandler ()
-addComment_ RS.EditorIsHidden _ = mempty
-addComment_ (RS.EditorIsVisible forRange) category = view addComment (forRange, category) mempty
+      commentInput_ props
 
 
-commentInput :: ReactView (Maybe RS.Range, Maybe RS.CommentCategory)
-commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \curState (forRange, category) ->
-  div_ $ do
-    form_ [ "target" $= "#"
-         , "action" $= "POST"] $ do
-      textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
-                , "className" $= "o-wysiwyg o-form-input__textarea"
-                -- Update the current state with the current text in the textbox, sending no actions
-                , onChange $ \evt state -> ([], Just $ state { RS._commentInputStateText = target evt "value" } )
-                ] mempty
+addComment_ :: AddCommentProps -> ReactElementM eventHandler ()
+addComment_ (AddCommentProps RS.EditorIsHidden _) = mempty
+addComment_ (AddCommentProps (RS.EditorIsVisible range) category) = view addComment (CommentInputProps range category) mempty
 
-    div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
-      p_ $ do
-        elemString "Step 1: "
-        span_ ["className" $= "bold"] "Select a type for your comment:"
 
-    div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do  -- RENAME: annotation => comment
-      iconButton_ (IconButtonProps
-                    (IconProps "c-vdoc-overlay-content" True ("icon-Remark", "dark") L)
-                    "category"
-                    "comment"
-                    ""
-                    "add a note"
-                    False
-                    (\_ -> RS.dispatch . RS.ContributionAction $ RS.SetCommentCategory RS.Note)
-                    []
-                  )
-      iconButton_ (IconButtonProps
-                    (IconProps "c-vdoc-overlay-content" True ("icon-Discussion", "dark") L)
-                    "category"
-                    "discussion"
-                    ""
-                    "start a discussion"
-                    False
-                    (\_ -> RS.dispatch . RS.ContributionAction $ RS.SetCommentCategory RS.Discussion)
-                    []
-                  )
+commentInput :: ReactView CommentInputProps
+commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \curState props ->
+    div_ $ do
+      form_ [ "target" $= "#"
+           , "action" $= "POST"] $ do
+        textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
+                  , "className" $= "o-wysiwyg o-form-input__textarea"
+                  -- Update the current state with the current text in the textbox, sending no actions
+                  , onChange $ \evt state -> ([], Just $ state { RS._commentInputStateText = target evt "value" } )
+                  ] mempty
 
-    div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
-      p_ $ do
-        elemString "Step 2: "
-        span_ ["className" $= "bold"] "finish"
+      div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
+        p_ $ do
+          elemString "Step 1: "
+          span_ ["className" $= "bold"] "Select a type for your comment:"
 
-    iconButton_
-      (IconButtonProps
-        (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
-        "submit"
-        ""
-        ""
-        "submit"
-        ((0 == DT.length (curState ^. RS.commentInputStateText)) || isNothing category) -- no text or no category -> disable button
-        (\_ -> RS.dispatch (RS.ContributionAction (RS.SubmitComment (curState ^. RS.commentInputStateText) category forRange))
-            <> RS.dispatch (RS.ContributionAction RS.HideCommentEditor))
-        []
-      )
+      div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do  -- RENAME: annotation => comment
+        iconButton_ (IconButtonProps
+                      (IconProps "c-vdoc-overlay-content" True ("icon-Remark", "dark") L)
+                      "category"
+                      "comment"
+                      ""
+                      "add a note"
+                      False
+                      (\_ -> RS.dispatch . RS.ContributionAction $ RS.SetCommentCategory RS.Note)
+                      []
+                    )
+        iconButton_ (IconButtonProps
+                      (IconProps "c-vdoc-overlay-content" True ("icon-Discussion", "dark") L)
+                      "category"
+                      "discussion"
+                      ""
+                      "start a discussion"
+                      False
+                      (\_ -> RS.dispatch . RS.ContributionAction $ RS.SetCommentCategory RS.Discussion)
+                      []
+                    )
 
-commentInput_ :: Maybe RS.Range -> Maybe RS.CommentCategory -> ReactElementM eventHandler ()
-commentInput_  forRange category = view commentInput (forRange, category) mempty
+      div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
+        p_ $ do
+          elemString "Step 2: "
+          span_ ["className" $= "bold"] "finish"
+
+      iconButton_
+        (IconButtonProps
+          (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
+          "submit"
+          ""
+          ""
+          "submit"
+          ((0 == DT.length (curState ^. RS.commentInputStateText)) || isNothing (props ^. cipCategory)) -- no text or no category -> disable button
+          (\_ -> RS.dispatch (RS.ContributionAction
+                (RS.SubmitComment (curState ^. RS.commentInputStateText) (props ^. cipCategory) (props ^. cipRange)))
+              <> RS.dispatch (RS.ContributionAction RS.HideCommentEditor))
+          []
+        )
+
+commentInput_ :: CommentInputProps -> ReactElementM eventHandler ()
+commentInput_  props = view commentInput props mempty
