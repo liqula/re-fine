@@ -255,7 +255,10 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
            , "action" $= "POST"] $ do
         textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
                   , "className" $= "o-wysiwyg o-form-input__textarea"
-                  , "style" @= [Style "resize" ("none" :: String)]
+                  , "style" @= [ Style "resize" ("none" :: String)
+                               , Style "width" (600 :: Int)
+                               , Style "height" (240 :: Int)
+                               ]
                   -- Update the current state with the current text in the textbox, sending no actions
                   , onChange $ \evt state -> ([], Just $ state { RS._commentInputStateText = target evt "value" } )
                   ] mempty
