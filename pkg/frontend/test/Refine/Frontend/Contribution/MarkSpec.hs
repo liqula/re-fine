@@ -73,7 +73,7 @@ spec = do
 
     it "has a mark class with the content type that was passed to it" $ do
       wrapper <- shallow $ rfMark_ theProps mempty
-      is wrapper (StringSelector ".o-mark--the-content-type") `shouldReturn` True
+      is wrapper (StringSelector ".o-mark--note") `shouldReturn` True
 
     it "does not render the hover class when there is no selected mark" $ do
       wrapper <- shallow $ rfMark_ theProps mempty

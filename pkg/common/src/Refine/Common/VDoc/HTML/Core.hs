@@ -80,9 +80,7 @@ data ChunkRangeError =
 -- their order (which still needs to be de-overlapped), so need close marks of the form
 -- @PreMarkClose "data-contribution-id-value"@.
 --
--- @ContributionID@ is taken from 'ChunkRange' and refers to the contribution that causes this mark token
--- pair.
-
+-- @ContributionID@ is taken from the contribution that causes this mark token pair.
 data PreToken = PreToken Token | PreMarkOpen ContributionID | PreMarkClose ContributionID
   deriving (Eq, Show, Generic)
 
