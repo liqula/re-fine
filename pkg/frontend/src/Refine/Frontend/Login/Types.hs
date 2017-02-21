@@ -21,20 +21,28 @@
 {-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
+module Refine.Frontend.Login.Types where
 
-module Refine.Frontend.MainMenuSpec where
+import GHC.Generics (Generic)
 
-import           Test.Hspec
-
-import           Refine.Frontend.Login.Types
-import           Refine.Frontend.MainMenu.Component
-import           Refine.Frontend.MainMenu.Types
-import           Refine.Frontend.Test.Enzyme
+import Refine.Common.Types.User (Username)
+import Refine.Prelude.TH (makeRefineType)
 
 
-spec :: Spec
-spec = do
-  describe "mainMenu_" $ do
-    it "renders" $ do
-      wrapper <- shallow $ mainMenu_ defaultMainMenuTab UserLoggedOut
-      lengthOfIO (find wrapper (StringSelector ".c-mainmenu-content")) `shouldReturn` (1 :: Int)
+data CurrentUser
+  = UserLoggedIn Username
+  | UserLoggedOut
+  deriving (Show, Generic)
+
+newtype LoginState = LoginState
+  { _lsCurrentUser :: CurrentUser
+  }
+  deriving (Show, Generic)
+
+emptyLoginState :: LoginState
+emptyLoginState = LoginState
+  { _lsCurrentUser = UserLoggedOut
+  }
+
+makeRefineType ''CurrentUser
+makeRefineType ''LoginState

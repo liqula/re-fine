@@ -34,7 +34,6 @@ import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
 import           Data.Monoid ((<>))
 import           Data.String.Conversions
-import           Data.String (fromString)
 import qualified Data.Tree as DT
 import           React.Flux
 import qualified Text.HTML.Parser as HTMLP
@@ -48,6 +47,7 @@ import           Refine.Frontend.Contribution.Types as RS
 import           Refine.Frontend.Header.Heading ( mainHeader_ )
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component (vdocLoader_)
+import           Refine.Frontend.Login.Types as LG
 import           Refine.Frontend.MainMenu.Component (mainMenu_)
 import           Refine.Frontend.MainMenu.Types (mainMenuOpenTab)
 import           Refine.Frontend.NotImplementedYet (notImplementedYet_)
@@ -66,7 +66,7 @@ refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
     Nothing -> vdocLoader_ (rs ^. gsVDocList)  -- (this is just some scaffolding that will be replaced by more app once we get there.)
     Just _ -> case rs ^? gsMainMenuState . mainMenuOpenTab of
       Nothing  -> mainScreen_ rs
-      Just tab -> mainMenu_ tab
+      Just tab -> mainMenu_ tab (rs ^. gsLoginState . lsCurrentUser)
 
 mainScreen :: ReactView RS.GlobalState
 mainScreen = defineView "MainScreen" $ \rs ->
@@ -135,9 +135,9 @@ toHTML _ (DT.Node (HTMLP.Comment _) _) = mempty -- ignore comments
 toHTML state (DT.Node (HTMLP.TagOpen "mark" attrs) subForest) =
     rfMark_ (MarkProps attrs (state ^. csHighlightedMarkAndBubble)) $ toHTML state `mapM_` subForest -- (toProperties attrs)
 toHTML state (DT.Node (HTMLP.TagOpen tagname attrs) subForest) =
-    React.Flux.term (fromString (cs tagname)) (toProperties attrs) $ toHTML state `mapM_` subForest
+    React.Flux.term (cs tagname) (toProperties attrs) $ toHTML state `mapM_` subForest
 toHTML _ (DT.Node (HTMLP.TagSelfClose tagname attrs) []) =
-    React.Flux.term (fromString (cs tagname)) (toProperties attrs) mempty
+    React.Flux.term (cs tagname) (toProperties attrs) mempty
 
 -- the above cases cover all possibilities in the demo article, but we leave this here for discovery:
 toHTML _ (DT.Node rootLabel []) = p_ (elemString ("root_label_wo_children " <> show rootLabel))

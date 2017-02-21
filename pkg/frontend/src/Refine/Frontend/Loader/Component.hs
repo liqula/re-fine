@@ -25,11 +25,13 @@
 module Refine.Frontend.Loader.Component where
 
 import           Data.Monoid ((<>))
-import           Data.String (fromString)
+import           Data.String.Conversions (cs)
 import           React.Flux
+
 import           Refine.Common.Types
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
+import           Refine.Prelude()
 import qualified Refine.Prelude.BuildInfo as BuildInfo
 
 
@@ -68,7 +70,7 @@ vdocListLoader = defineView "VDocListLoader" $ \case
   Just list -> div_ . mconcat $ map toButton list
 
 toButton :: ID VDoc -> ReactElementM [SomeStoreAction] ()
-toButton li = button_ [ "id" $= fromString ("load-vdoc-list" <> show (_unID li))
+toButton li = button_ [ "id" $= cs ("load-vdoc-list" <> show (_unID li))
                       , onClick $ \_ _ -> RS.dispatch . RS.LoadDocument $ li
                       ] $ elemString "A document on the server"
 

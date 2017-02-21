@@ -59,7 +59,7 @@ addEdit = request cfg (Proxy :: Proxy SAddEdit)
 createUser :: CreateUser -> HandleResponse User -> IO ()
 createUser = request cfg (Proxy :: Proxy SCreateUser)
 
-login :: Login -> HandleResponse () -> IO ()
+login :: Login -> HandleResponse Username -> IO ()
 login = request cfg (Proxy :: Proxy SLogin)
 
 logout :: HandleResponse () -> IO ()

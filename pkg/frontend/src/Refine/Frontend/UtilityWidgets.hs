@@ -42,12 +42,13 @@ module Refine.Frontend.UtilityWidgets
 import           Control.Lens (makeLenses, (^.), _1, _2)
 import           Data.Char (toLower)
 import           Data.Monoid ((<>))
-import           Data.String (fromString)
+import           Data.String.Conversions (cs)
 import           GHCJS.Types (JSString)
 import           React.Flux
 
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Style
+import           Refine.Prelude()
 -- TODO import           Refine.Frontend.ThirdPartyViews (hammer_)
 
 
@@ -101,7 +102,7 @@ icon = defineStatefulView "Icon" False $ \mouseIsOver props -> do
     highlightStyle = if mouseIsOver && (props ^. iconPropsHighlight)
                      then "RO"
                      else props ^. iconPropsDesc . _2
-  div_ ["className" $= (fromString . toClasses)
+  div_ ["className" $= (cs . toClasses)
                          [ (props ^. iconPropsBlockName) <> "__icon"
                          , if props ^. iconPropsHighlight then "o-icon-highlight" else ""
                          , props ^. iconPropsDesc . _1 <> "_" <> highlightStyle
@@ -146,12 +147,12 @@ iconButtonWithAlignmentCore = defineView "IconButtonWithAlignmentCore" $ \props 
     let bemName = beName <> emConnector <> bprops ^. iconButtonPropsModuleName
     div_ ([ "data-content-type" $= (bprops ^. iconButtonPropsContentType)
            -- TODO unify the naming schema of the classes for the different buttons!
-          , "className" $= fromString (toClasses $ [ iprops ^. iconPropsBlockName <> "__button"
-                                                  , beName  -- for the vdoc-toolbar
-                                                  , bemName -- for the buttons in the overlays
-                                                  , alignmentClass (iprops ^. iconPropsBlockName)
-                                                                   (props ^. iconButtonWithAlRightAligned)
-                                                  ] <> bprops ^. iconButtonPropsExtraClasses)
+          , "className" $= cs (toClasses $ [ iprops ^. iconPropsBlockName <> "__button"
+                                           , beName  -- for the vdoc-toolbar
+                                           , bemName -- for the buttons in the overlays
+                                           , alignmentClass (iprops ^. iconPropsBlockName)
+                                                            (props ^. iconButtonWithAlRightAligned)
+                                           ] <> bprops ^. iconButtonPropsExtraClasses)
           , "style" @= (case props ^. iconButtonWithAlPosition of
                                Nothing  -> []
                                Just pos -> [Style "top" pos]
@@ -159,7 +160,7 @@ iconButtonWithAlignmentCore = defineView "IconButtonWithAlignmentCore" $ \props 
           ] <> [onClick $ const . (bprops ^. iconButtonPropsClickHandler) | not (bprops ^. iconButtonPropsDisabled)]
           ) $ do
         icon_ iprops
-        span_ ["className" $= fromString (iprops ^. iconPropsBlockName <> "__button-label")
+        span_ ["className" $= cs (iprops ^. iconPropsBlockName <> "__button-label")
               , "style" @= [Style "color" Color.disabledText | bprops ^. iconButtonPropsDisabled]
               ] $
             elemJSString (bprops ^. iconButtonPropsLabel)

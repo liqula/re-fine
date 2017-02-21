@@ -24,18 +24,20 @@
 
 module Refine.Frontend.MainMenu.Component where
 
+import           Data.String.Conversions (cs)
 import           React.Flux
 
+import           Refine.Frontend.Login.Types
+import           Refine.Frontend.Login.Component
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Types
 import           Refine.Frontend.UtilityWidgets
+import           Refine.Prelude()
 
-import Refine.Frontend.Login.Component (login_, registration_)
 
-
-mainMenu :: ReactView MainMenuTab
-mainMenu = defineView "MainMenu" $ \menuTab ->
+mainMenu :: ReactView MainMenuProps
+mainMenu = defineView "MainMenu" $ \(MainMenuProps menuTab currentUser) ->
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
 
@@ -113,6 +115,27 @@ mainMenu = defineView "MainMenu" $ \menuTab ->
               -- button attribute data-section="help"
               }
 
+            case currentUser of
+              UserLoggedOut -> pure ()
+              UserLoggedIn username -> do
+                iconButton_ IconButtonProps
+                  { _iconButtonPropsIconProps = IconProps
+                      { _iconPropsBlockName = "c-mainmenu-content"
+                      , _iconPropsHighlight = False
+                      , _iconPropsDesc      = ("icon-Exit", "dark")
+                      , _iconPropsSize      = XXL
+                      }
+                  , _iconButtonPropsElementName  = "section-button"
+                  , _iconButtonPropsModuleName   = ""
+                  , _iconButtonPropsContentType  = ""
+                  , _iconButtonPropsLabel        = cs username
+                  , _iconButtonPropsDisabled     = False
+                  , _iconButtonPropsClickHandler = \_ -> []
+                  , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-help"]
+                  -- not translated from prototype2016:
+                  -- button attribute data-section="help"
+                  }
+
             iconButton_ IconButtonProps
               { _iconButtonPropsIconProps = IconProps
                   { _iconPropsBlockName = "c-mainmenu-header"
@@ -132,12 +155,12 @@ mainMenu = defineView "MainMenu" $ \menuTab ->
               }
 
       case menuTab of
-        MainMenuLogin        -> login_
+        MainMenuLogin        -> loginOrLogout_ currentUser
         MainMenuRegistration -> registration_
 
 
-mainMenu_ :: MainMenuTab -> ReactElementM eventHandler ()
-mainMenu_ ms = view mainMenu ms mempty
+mainMenu_ :: MainMenuTab -> CurrentUser -> ReactElementM eventHandler ()
+mainMenu_ ms cu = view mainMenu (MainMenuProps ms cu) mempty
 
 
 {-

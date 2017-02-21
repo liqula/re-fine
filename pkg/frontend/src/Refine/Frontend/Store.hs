@@ -44,6 +44,9 @@ import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
+import           Refine.Frontend.MainMenu.Types
+import           Refine.Frontend.Login.Store (loginStateUpdate)
+import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Rest
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
 import           Refine.Frontend.Screen.Types
@@ -90,6 +93,7 @@ instance StoreData GlobalState where
               & gsHeaderState                %~ headerStateUpdate transformedAction
               & gsScreenState                %~ screenStateUpdate transformedAction
               & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate transformedAction
+              & gsLoginState                 %~ loginStateUpdate transformedAction
               & gsMainMenuState              %~ mainMenuUpdate transformedAction
               & gsToolbarSticky              %~ toolbarStickyUpdate transformedAction
 
@@ -178,19 +182,21 @@ emitBackendCallsFor action state = case action of
       createUser createUserData $ \case
         (Left (_, msg)) -> handleError msg
         (Right _user) -> do
-          pure $ dispatch LoadDocumentList
+          pure $ dispatch (MainMenuAction $ MainMenuActionOpen MainMenuLogin)
 
     Login loginData -> do
       login loginData $ \case
         (Left(_, msg)) -> handleError msg
-        (Right ()) -> do
-          pure $ dispatch LoadDocumentList
+        (Right username) -> do
+          pure $ dispatch (ChangeCurrentUser $ UserLoggedIn username) <>
+                 dispatch (MainMenuAction MainMenuActionClose)
 
     Logout -> do
       logout $ \case
         (Left(_, msg)) -> handleError msg
         (Right ()) -> do
-          pure $ dispatch LoadDocumentList
+          pure $ dispatch (ChangeCurrentUser UserLoggedOut) <>
+                 dispatch (MainMenuAction MainMenuActionClose)
 
     _ -> pure ()
 

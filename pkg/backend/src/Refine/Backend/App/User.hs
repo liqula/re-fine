@@ -18,7 +18,11 @@ import Refine.Common.Types      as Refine
 import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 
 
-login :: Refine.Login -> App DB ()
+-- Username is returned after login. This turnes implicit user handling
+-- to explicit one. The frontend code should use the returned username.
+-- The rational here: It helps the future integration of different login
+-- providers.
+login :: Refine.Login -> App DB Username
 login (Login username (Users.PasswordPlain -> password)) = do
   appLog "login"
   sessionDuration <- timespanToNominalDiffTime . view appSessionLength <$> ask
@@ -28,6 +32,7 @@ login (Login username (Users.PasswordPlain -> password)) = do
   loginId <- nothingToError AppSessionError
              =<< appIO (Users.verifySession userHandle session 0)
   void $ setUserSession (toUserID loginId) (UserSession session)
+  pure username
 
 logout :: App DB ()
 logout = do
