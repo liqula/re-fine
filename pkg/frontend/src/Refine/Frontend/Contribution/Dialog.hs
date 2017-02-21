@@ -238,7 +238,13 @@ addComment = defineView "AddComment" $ \props ->
 
       icon_ (IconProps "c-vdoc-overlay-content" False ("icon-Remark", "dark") XL)
 
-      h4_ ["className" $= "c-vdoc-overlay-content__title"] "add a comment"
+      span_ [ "className" $= "c-vdoc-overlay-content__title"
+            , "style" @= [ Style "fontSize" ("1.125rem" :: String)
+                         , Style "lineHeight" ("1.15" :: String)
+                         , Style "marginBottom" ("0.875rem" :: String)
+                         , Style "fontWeight" ("bold" :: String)
+                         ]
+            ] "Add a comment"
 
       commentInput_ props
 
