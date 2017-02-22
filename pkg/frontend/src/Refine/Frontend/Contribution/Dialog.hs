@@ -45,13 +45,18 @@ import           Refine.Frontend.UtilityWidgets
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
+dialogWidth :: Int
+dialogWidth = 640
+
+leftFor :: Int -> Int
+leftFor windowWidth = (windowWidth - dialogWidth) `quot` 2
+
 dialogStyles :: [Style]
 dialogStyles = [ -- Style "display" ("block" :: String)
                 --, Style "minHeight" ("200px" :: String)
                  -- Style "padding" ("3rem 1.0rem 1.0rem" :: String)
 
-                  Style "width" ("40rem" :: String)
-                , Style "left" ("7.5rem" :: String)
+                  Style "width" (show dialogWidth <> "px")
                 , Style "marginLeft" ("0" :: String)
                 , Style "marginTop" ("0" :: String)
                 , Style "zIndex" (6050 :: Int)
@@ -88,6 +93,7 @@ data CommentDisplayProps = CommentDisplayProps
   , _creationDate :: String
   , _contentStyle :: [Style]
   , _topOffset    :: SC.OffsetFromDocumentTop
+  , _windowWidth  :: Int
   }
 
 makeLenses ''CommentDisplayProps
@@ -95,6 +101,7 @@ makeLenses ''CommentDisplayProps
 showComment :: ReactView CommentDisplayProps
 showComment = defineView "ShowComment" $ \props ->
   let extraStyles = [Style "top"        (show (props ^. topOffset . SC.unOffsetFromDocumentTop + 5) <> "px")
+                    , Style "left" (show (leftFor (props ^. windowWidth)) <> "px")
                     , Style "height"    ("" :: String)
                     , Style "minHeight" ("100px" :: String)
                     ]
@@ -138,7 +145,7 @@ showComment_ props = view showComment props mempty
 
 showNoteProps :: M.Map (ID Note) Note -> RS.GlobalState -> ShowNoteProps
 showNoteProps notes rs = case (maybeNote, maybeOffset) of
-  (Just note, Just offset) -> ShowNotePropsJust note offset
+  (Just note, Just offset) -> ShowNotePropsJust note offset (rs ^. RS.gsScreenState . SC.ssWindowWidth)
   _                        -> ShowNotePropsNothing
   where
     maybeNoteID = rs ^. RS.gsContributionState . RS.csNoteId
@@ -150,33 +157,36 @@ showNoteProps notes rs = case (maybeNote, maybeOffset) of
 
 
 data ShowNoteProps = ShowNotePropsJust
-  { _snpNote :: Note
-  , _snpTop  :: SC.OffsetFromDocumentTop
+  { _snpNote        :: Note
+  , _snpTop         :: SC.OffsetFromDocumentTop
+  , _snpWindowWidth :: Int
   }
   | ShowNotePropsNothing
 
 showNote :: ReactView ShowNoteProps
 showNote = defineView "ShowNote" $ \case
   ShowNotePropsNothing -> mempty
-  ShowNotePropsJust note top ->
+  ShowNotePropsJust note top windowWidth1 ->
     let commentText1  = (note ^. noteText)
         iconStyle1    = ("icon-Note", "dark")
         userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__note top)
+    in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
+                                         vdoc_overlay_content__note top windowWidth1)
 
 showNote_ :: ShowNoteProps -> ReactElementM eventHandler ()
 showNote_ props = view showNote props mempty
 
 data ShowDiscussionProps = ShowDiscussionPropsJust
-  { _sdpNote :: CompositeDiscussion
-  , _sdpTop  :: SC.OffsetFromDocumentTop
+  { _sdpNote        :: CompositeDiscussion
+  , _sdpTop         :: SC.OffsetFromDocumentTop
+  , _sdpWindowWidth :: Int
   }
   | ShowDiscussionPropsNothing
 
 showDiscussionProps :: M.Map (ID Discussion) CompositeDiscussion -> RS.GlobalState -> ShowDiscussionProps
 showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
-  (Just discussion, Just offset) -> ShowDiscussionPropsJust discussion offset
+  (Just discussion, Just offset) -> ShowDiscussionPropsJust discussion offset (rs ^. RS.gsScreenState . SC.ssWindowWidth)
   _                              -> ShowDiscussionPropsNothing
   where
     maybeDiscussionID = rs ^. RS.gsContributionState . RS.csDiscussionId
@@ -189,12 +199,13 @@ showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
 showDiscussion :: ReactView ShowDiscussionProps
 showDiscussion = defineView "ShowDiscussion" $ \case
   ShowDiscussionPropsNothing -> mempty
-  ShowDiscussionPropsJust discussion top ->
+  ShowDiscussionPropsJust discussion top windowWidth1 ->
     let commentText1  = (Tree.rootLabel (discussion ^. compositeDiscussionTree) ^. statementText)
         iconStyle1    = ("icon-Discussion", "dark")
         userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1 vdoc_overlay_content__discussion top)
+    in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
+                                         vdoc_overlay_content__discussion top windowWidth1)
 
 showDiscussion_ :: ShowDiscussionProps -> ReactElementM eventHandler ()
 showDiscussion_ props = view showDiscussion props mempty
@@ -208,22 +219,25 @@ showQuestion = defineView "ShowQuestion" $ \case
         iconStyle1    = ("icon-Question", "dark")
         userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1 overlayStyle1 (SC.OffsetFromDocumentTop 0))
+    in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
+                                         overlayStyle1 (SC.OffsetFromDocumentTop 0) 800)
 
 showQuestion_ :: Maybe CompositeQuestion -> ReactElementM eventHandler ()
 showQuestion_ question = view showQuestion question mempty
 
 
 data AddCommentProps = AddCommentProps
-  { _acpEditor    :: RS.ContributionEditorData
-  , _acpCategory :: Maybe RS.CommentCategory
+  { _acpEditor      :: RS.ContributionEditorData
+  , _acpCategory    :: Maybe RS.CommentCategory
+  , _acpWindowWidth :: Int
   }
 
 makeLenses ''AddCommentProps
 
 data CommentInputProps = CommentInputProps
-  { _cipRange    :: Maybe RS.Range
-  , _cipCategory :: Maybe RS.CommentCategory
+  { _cipRange       :: Maybe RS.Range
+  , _cipCategory    :: Maybe RS.CommentCategory
+  , _cipWindowWidth :: Int
   }
 
 makeLenses ''CommentInputProps
@@ -236,6 +250,7 @@ addComment = defineView "AddComment" $ \props ->
               Just range -> (range ^. RS.rangeBottomOffset . SC.unOffsetFromViewportTop)
                           + (range ^. RS.rangeScrollOffset . SC.unScrollOffsetOfViewport)
         extraStyles = [ Style "top"    (show (top + 5) <> "px")
+                      , Style "left" (show (leftFor (props ^. cipWindowWidth)) <> "px")
                       , Style "height" ("40rem" :: String)
                       ]
     in skylight_ ["isVisible" &= True
@@ -263,8 +278,9 @@ addComment = defineView "AddComment" $ \props ->
 
 
 addComment_ :: AddCommentProps -> ReactElementM eventHandler ()
-addComment_ (AddCommentProps RS.EditorIsHidden _) = mempty
-addComment_ (AddCommentProps (RS.EditorIsVisible range) category) = view addComment (CommentInputProps range category) mempty
+addComment_ (AddCommentProps RS.EditorIsHidden _ _) = mempty
+addComment_ (AddCommentProps (RS.EditorIsVisible range) category windowWidth1) =
+  view addComment (CommentInputProps range category windowWidth1) mempty
 
 
 commentInput :: ReactView CommentInputProps

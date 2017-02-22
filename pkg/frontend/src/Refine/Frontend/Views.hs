@@ -85,6 +85,7 @@ mainScreen = defineView "MainScreen" $ \rs ->
           showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocDiscussions) rs
           addComment_ $ AddCommentProps (rs ^. RS.gsContributionState . RS.csCommentEditorIsVisible)
                                         (rs ^. RS.gsContributionState . RS.csCommentCategory)
+                                        (rs ^. RS.gsScreenState . SC.ssWindowWidth)
           notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
 
           main_ ["role" $= "main"] $ do
