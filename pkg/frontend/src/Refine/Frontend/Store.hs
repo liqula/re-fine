@@ -242,8 +242,8 @@ createChunkRange (Just range) = RT.ChunkRange (range ^. rangeStartPoint) (range 
 handleError :: (Int, String) -> (ApiError -> [RefineAction]) -> IO [SomeStoreAction]
 handleError (code, rsp) onApiError = case AE.eitherDecode $ cs rsp of
   Left err -> do
-    consoleLog "handleError" $ unwords [show code, rsp]
-    consoleLog "handleError" err
+    consoleLog "handleError: backend sent invalid response: " $ unwords [show code, rsp, err]
+        -- FIXME: use 'gracefulError' here.  (rename 'gracefulError' to 'assertContract'?)
     pure []
   Right apiError -> do
     consoleLog "handleApiError" (show apiError)
