@@ -34,6 +34,7 @@ import qualified Data.Tree as Tree
 import           React.Flux
 
 import           Refine.Common.Types
+import qualified Refine.Frontend.ErrorHandling as E
 import           Refine.Frontend.ThirdPartyViews (skylight_)
 import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.Contribution.Types as RS
@@ -147,9 +148,14 @@ showComment_ props = view showComment props mempty
 showNoteProps :: M.Map (ID Note) Note -> RS.GlobalState -> ShowNoteProps
 showNoteProps notes rs = case (maybeNote, maybeOffset) of
   (Just note, Just offset) -> ShowNotePropsJust note offset (rs ^. RS.gsScreenState . SC.ssWindowWidth)
+  (Just note, Nothing)     -> E.gracefulError ("We have a note " <> show note <> " but no offset - how can this be?")
+                                              ShowNotePropsNothing
+  (Nothing,   Just offset) -> E.gracefulError ("We have an offset " <> show offset <> " but no note - how can this be?")
+                                              ShowNotePropsNothing
   _                        -> ShowNotePropsNothing
   where
-    maybeNoteID = rs ^. RS.gsContributionState . RS.csNoteId
+    maybeContribID = rs ^. RS.gsContributionState . RS.csDisplayedContributionID
+    maybeNoteID :: Maybe (ID Note) = getNoteID =<< maybeContribID
     maybeNote = (`M.lookup` notes) =<< maybeNoteID
     maybeOffset = do
       nid <- maybeNoteID
@@ -188,9 +194,16 @@ data ShowDiscussionProps = ShowDiscussionPropsJust
 showDiscussionProps :: M.Map (ID Discussion) CompositeDiscussion -> RS.GlobalState -> ShowDiscussionProps
 showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
   (Just discussion, Just offset) -> ShowDiscussionPropsJust discussion offset (rs ^. RS.gsScreenState . SC.ssWindowWidth)
+  (Just discussion, Nothing)     -> E.gracefulError ("We have a discussion " <> show discussion
+                                                     <> " but no offset - how can this be?")
+                                              ShowDiscussionPropsNothing
+  (Nothing,         Just offset) -> E.gracefulError ("We have an offset " <> show offset
+                                                     <> " but no discussion - how can this be?")
+                                              ShowDiscussionPropsNothing
   _                              -> ShowDiscussionPropsNothing
   where
-    maybeDiscussionID = rs ^. RS.gsContributionState . RS.csDiscussionId
+    maybeContribID = rs ^. RS.gsContributionState . RS.csDisplayedContributionID
+    maybeDiscussionID :: Maybe (ID Discussion) = getDiscussionID =<< maybeContribID
     maybeDiscussion = (`M.lookup` discussions) =<< maybeDiscussionID
     maybeOffset = do
       did <- maybeDiscussionID
