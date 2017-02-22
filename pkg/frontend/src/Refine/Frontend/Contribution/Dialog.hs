@@ -251,7 +251,7 @@ addComment = defineView "AddComment" $ \props ->
                           + (range ^. RS.rangeScrollOffset . SC.unScrollOffsetOfViewport)
         extraStyles = [ Style "top"    (show (top + 5) <> "px")
                       , Style "left" (show (leftFor (props ^. cipWindowWidth)) <> "px")
-                      , Style "height" ("40rem" :: String)
+                      , Style "height" ("560px" :: String)
                       ]
     in skylight_ ["isVisible" &= True
              , on "onCloseClicked"   $ \_ -> RS.dispatch (RS.ContributionAction RS.HideCommentEditor)
