@@ -36,5 +36,5 @@ spec :: Spec
 spec = do
   describe "mainMenu_" $ do
     it "renders" $ do
-      wrapper <- shallow $ mainMenu_ defaultMainMenuTab UserLoggedOut
+      wrapper <- shallow $ mainMenu_ defaultMainMenuTab defaultMainMenuErrors UserLoggedOut
       lengthOfIO (find wrapper (StringSelector ".c-mainmenu-content")) `shouldReturn` (1 :: Int)

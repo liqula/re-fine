@@ -24,6 +24,12 @@ data MainMenuErrors = MainMenuErrors
   }
   deriving (Eq, Show, Generic)
 
+defaultMainMenuErrors :: MainMenuErrors
+defaultMainMenuErrors = MainMenuErrors
+  { _mmeLogin        = Nothing
+  , _mmeRegistration = Nothing
+  }
+
 data MainMenuState = MainMenuState
   { _mmState  :: MainMenu
   , _mmErrors :: MainMenuErrors
@@ -33,7 +39,7 @@ data MainMenuState = MainMenuState
 emptyMainMenuState :: MainMenuState
 emptyMainMenuState = MainMenuState
   { _mmState  = MainMenuClosed
-  , _mmErrors = MainMenuErrors Nothing Nothing
+  , _mmErrors = defaultMainMenuErrors
   }
 
 data MainMenu
