@@ -146,8 +146,8 @@ toolbarStickyUpdate action state = case action of
   ToolbarStickyStateChange state' -> state'
   _                               -> state
 
-dispatchMore :: [RefineAction] -> [SomeStoreAction]
-dispatchMore = mconcat . fmap dispatch
+dispatchMany :: [RefineAction] -> [SomeStoreAction]
+dispatchMany = mconcat . fmap dispatch
 
 emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()
 emitBackendCallsFor action state = case action of
@@ -190,7 +190,7 @@ emitBackendCallsFor action state = case action of
             _                      -> []
 
         (Right _user) -> do
-          pure $ dispatchMore
+          pure $ dispatchMany
             [ MainMenuAction $ MainMenuActionOpen MainMenuLogin
             , MainMenuAction MainMenuActionClearErrors
             ]
@@ -202,7 +202,7 @@ emitBackendCallsFor action state = case action of
           _                 -> []
 
         (Right username) -> do
-          pure $ dispatchMore
+          pure $ dispatchMany
             [ ChangeCurrentUser $ UserLoggedIn username
             , MainMenuAction MainMenuActionClose
             ]
@@ -211,7 +211,7 @@ emitBackendCallsFor action state = case action of
       logout $ \case
         (Left rsp) -> handleError rsp (const [])
         (Right ()) -> do
-          pure $ dispatchMore
+          pure $ dispatchMany
             [ ChangeCurrentUser UserLoggedOut
             , MainMenuAction MainMenuActionClose
             ]
