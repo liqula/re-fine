@@ -38,6 +38,9 @@ vdoc_discussion = "rgb(215, 233, 255)" -- lightblue
 vdoc_question :: String
 vdoc_question = "rgb(220, 229, 211)" -- lightgreen
 
+white :: String
+white = "rgb(255, 255, 255)"
+
 {-
 //comment types
 $lightyellow: rgb(237, 237, 192); //used for PRIVATE NOTE (?)
@@ -45,3 +48,6 @@ $lightgreen: rgb(220, 229, 211); //used for QUESTION
 $lightred: rgb(219, 204, 221); //used for COMMENT (!)
 $lightblue: rgb(215, 233, 255); //used for DISCUSSION
 -}
+
+overlay_backdrop :: String
+overlay_backdrop = "rgba(255, 255, 255, .8)"

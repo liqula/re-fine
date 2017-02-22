@@ -84,6 +84,7 @@ vdoc_overlay_content__discussion = [ Style "backgroundColor" C.vdoc_discussion
 overlayStyles :: [Style]
 overlayStyles =
   [ Style "zIndex" (6010 :: Int)
+  , Style "backgroundColor" C.overlay_backdrop
   ]
 
 data CommentDisplayProps = CommentDisplayProps
