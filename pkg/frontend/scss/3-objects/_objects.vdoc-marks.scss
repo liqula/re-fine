@@ -35,4 +35,9 @@
         background-color: rgba($active-color, .5);
     }
 
+    &--highlight {
+        background-color: $black;
+        color: $white;
+    }
+
 }
