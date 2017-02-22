@@ -101,7 +101,7 @@ makeLenses ''CommentDisplayProps
 
 showComment :: ReactView CommentDisplayProps
 showComment = defineView "ShowComment" $ \props ->
-  let extraStyles = [Style "top"        (show (props ^. topOffset . SC.unOffsetFromDocumentTop + 5) <> "px")
+  let extraStyles = [ Style "top"        (show (props ^. topOffset . SC.unOffsetFromDocumentTop + 5) <> "px")
                     , Style "left" (show (leftFor (props ^. windowWidth)) <> "px")
                     , Style "height"    ("" :: String)
                     , Style "minHeight" ("100px" :: String)
