@@ -47,6 +47,12 @@ data WindowSize = Desktop | Tablet | Mobile
   deriving (Show, Generic)
 
 
+data ScreenAction =
+    AddHeaderHeight Int
+  | SetWindowSize WindowSize
+  deriving (Show, Generic)
+
+
 data ScreenState = ScreenState
   { _ssHeaderHeight           :: Int
   , _ssWindowSize             :: WindowSize
@@ -60,4 +66,5 @@ makeRefineType ''OffsetFromViewportTop
 makeRefineType ''ScrollOffsetOfViewport
 makeRefineType ''OffsetFromDocumentTop
 makeRefineType ''ScreenState
+makeRefineType ''ScreenAction
 makeRefineType ''WindowSize

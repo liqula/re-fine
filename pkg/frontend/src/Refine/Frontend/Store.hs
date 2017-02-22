@@ -91,7 +91,7 @@ instance StoreData GlobalState where
               & gsVDocList                   %~ vdocListUpdate transformedAction
               & gsContributionState          %~ maybe id contributionStateUpdate (transformedAction ^? _ContributionAction)
               & gsHeaderState                %~ headerStateUpdate transformedAction
-              & gsScreenState                %~ screenStateUpdate transformedAction
+              & gsScreenState                %~ maybe id screenStateUpdate (transformedAction ^? _ScreenAction)
               & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate transformedAction
               & gsLoginState                 %~ loginStateUpdate transformedAction
               & gsMainMenuState              %~ mainMenuUpdate transformedAction

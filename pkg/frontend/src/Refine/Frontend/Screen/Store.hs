@@ -30,9 +30,8 @@ module Refine.Frontend.Screen.Store
 import           Control.Lens ((&), (%~))
 
 import Refine.Frontend.Screen.Types
-import Refine.Frontend.Types
 
-screenStateUpdate :: RefineAction -> ScreenState -> ScreenState
+screenStateUpdate :: ScreenAction -> ScreenState -> ScreenState
 screenStateUpdate action state =
   let newState = state
                   & ssHeaderHeight         %~ headerHeightUpdate action
@@ -41,12 +40,12 @@ screenStateUpdate action state =
 
 ---------------------------------------------------------------------------
 
-headerHeightUpdate :: RefineAction -> Int -> Int
+headerHeightUpdate :: ScreenAction -> Int -> Int
 headerHeightUpdate action state = case action of
     AddHeaderHeight height -> height
     _ -> state
 
-windowSizeUpdate :: RefineAction -> WindowSize -> WindowSize
+windowSizeUpdate :: ScreenAction -> WindowSize -> WindowSize
 windowSizeUpdate action state = case action of
     SetWindowSize newSize -> newSize
     _ -> state
