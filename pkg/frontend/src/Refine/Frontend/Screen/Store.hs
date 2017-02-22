@@ -55,6 +55,15 @@ windowWidthUpdate action state = case action of
 
 windowSizeUpdate :: ScreenAction -> WindowSize -> WindowSize
 windowSizeUpdate action state = case action of
-    SetWindowSize newSize -> newSize
-    _ -> state
+  SetWindowWidth width -> toSize width
+  _ -> state
+
+
+toSize :: Int -> WindowSize
+toSize sz
+  | sz <= 480  = Mobile
+  | sz <= 1024 = Tablet
+  | otherwise  = Desktop
+
+
 

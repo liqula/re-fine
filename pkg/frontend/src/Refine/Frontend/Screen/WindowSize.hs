@@ -61,8 +61,7 @@ setWindowSize :: IO ()
 setWindowSize = do
     width <- js_getWindowWidth
     _ <- RS.reactFluxWorkAroundForkIO $ do
-       let actions = (RS.dispatch . RS.ScreenAction . RS.SetWindowSize $ RS.toSize width)
-                  <> (RS.dispatch . RS.ScreenAction $ RS.SetWindowWidth width)
+       let actions = RS.dispatch . RS.ScreenAction $ RS.SetWindowWidth width
        forM_ actions executeAction
     pure ()
 

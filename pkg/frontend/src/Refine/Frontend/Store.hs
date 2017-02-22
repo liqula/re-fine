@@ -49,17 +49,9 @@ import           Refine.Frontend.Login.Store (loginStateUpdate)
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Rest
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
-import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Test.Samples
 import           Refine.Frontend.Types
 
-
--- TODO: move to Screen.Calculations
-toSize :: Int -> WindowSize
-toSize sz
-  | sz <= 480  = Mobile
-  | sz <= 1024 = Tablet
-  | otherwise  = Desktop
 
 instance StoreData GlobalState where
     type StoreAction GlobalState = RefineAction

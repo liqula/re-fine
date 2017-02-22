@@ -50,7 +50,6 @@ data WindowSize = Desktop | Tablet | Mobile
 data ScreenAction =
     AddHeaderHeight Int
   | SetWindowWidth Int
-  | SetWindowSize WindowSize
   deriving (Show, Generic)
 
 
