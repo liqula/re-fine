@@ -50,6 +50,7 @@ import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Backend.Types
+import Refine.Backend.User
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.User
 import Refine.Common.Types.VDoc
@@ -135,7 +136,7 @@ createAppRunner = do
   runDRepo <- createRunRepo cfg
   let logger = Logger . const $ pure ()
       runner :: forall b . App DB b -> IO b
-      runner m = (natThrowError . runApp runDb runDRepo logger userHandler
+      runner m = (natThrowError . runApp runDb runDRepo (runUH userHandler) logger
                                           (cfg ^. cfgCsrfSecret . to CsrfSecret) (cfg ^. cfgSessionLength)) $$ m
 
   void $ runner migrateDB

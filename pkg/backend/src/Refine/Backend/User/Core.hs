@@ -1,24 +1,53 @@
-{-# LANGUAGE DeriveGeneric        #-}
-{-# LANGUAGE RankNTypes           #-}
-{-# LANGUAGE StandaloneDeriving   #-}
-{-# LANGUAGE TemplateHaskell      #-}
-{-# LANGUAGE TypeFamilies         #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE ExplicitForAll             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ViewPatterns               #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- | This module hides away the fact of the usage of the Users
 -- library.
 module Refine.Backend.User.Core
-  ( UserHandle
+  ( UserDB
+  , UserHandleContext(..), userBackend
+  , UserHandleError
+  , RunUH
+  , UH(..)
+  , uhIO
   , migrateDB
   , toUserID
   , fromUserID
-  , module Web.Users.Types
   , Login
   , LoginId
+  , SessionId(..)
+  , PasswordPlain(..)
+  , User(..)
+  , CreateUserError(..)
+  , makePassword
   ) where
 
+import Control.Lens (makeLenses)
+import Control.Monad.Except
+import Control.Monad.Reader
+import Control.Natural
 import Data.Monoid
 import Data.String.Conversions (ST)
 import Database.Persist.Sql
@@ -29,11 +58,36 @@ import Web.Users.Persistent.Definitions (Login, migrateAll)
 
 import Refine.Backend.Database.Core
 import Refine.Common.Types.Prelude (ID(..))
-import Refine.Common.Types.User as Types (User)
+import qualified Refine.Common.Types.User as Types (User)
 import Refine.Prelude.TH (makeRefineType)
 
 
-type UserHandle = Users.Persistent
+type UserDB = Users.Persistent
+
+newtype UserHandleContext = UserHandleContext
+  { _userBackend :: UserDB
+  }
+
+makeLenses ''UserHandleContext
+
+data UserHandleError
+  = UserHandleUnknownError
+  deriving (Eq, Generic, Show)
+
+makeRefineType ''UserHandleError
+
+type RunUH = UH :~> ExceptT UserHandleError IO
+
+newtype UH a = UH { unUH :: ReaderT UserHandleContext (ExceptT UserHandleError IO) a }
+  deriving
+    ( Functor
+    , Applicative
+    , Monad
+    , MonadReader UserHandleContext
+    )
+
+uhIO :: IO a -> UH a
+uhIO = UH . liftIO
 
 deriving instance Generic CreateUserError
 

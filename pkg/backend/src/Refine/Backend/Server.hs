@@ -57,6 +57,7 @@ import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
 import Refine.Backend.User.Core (CreateUserError(..))
+import Refine.Backend.User
 import Refine.Common.Rest
 import Refine.Prelude (leftToError)
 
@@ -110,7 +111,7 @@ mkBackend cfg = do
   runDocRepo <- createRunRepo cfg
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
-      app    = runApp runDb runDocRepo logger userHandler (cfg ^. cfgCsrfSecret . to CsrfSecret) (cfg ^. cfgSessionLength)
+      app    = runApp runDb runDocRepo (runUH userHandler) logger (cfg ^. cfgCsrfSecret . to CsrfSecret) (cfg ^. cfgSessionLength)
 
   -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
   -- may need to refactor, e.g. by using extra arguments in the end point types.
@@ -153,6 +154,7 @@ toApiError = \case
   AppCsrfError e         -> ApiCsrfError e
   AppSessionError        -> ApiSessionError
   AppSanityCheckError e  -> ApiSanityCheckError e
+  AppUserHandleError e   -> ApiUserHandleError . cs $ show e
 
 -- | Turns AppError to its kind of servant error.
 appServantErr :: AppError -> ServantErr
@@ -167,6 +169,7 @@ appServantErr = \case
   AppCsrfError _           -> err403
   AppSessionError          -> err403
   AppSanityCheckError _    -> err409
+  AppUserHandleError _     -> err500
 
 dbServantErr :: DBError -> ServantErr
 dbServantErr = \case

@@ -23,12 +23,13 @@
 
 module Refine.Backend.App.Core (
     RunDB
+  , RunUH
   , RunDocRepo
   , AppContext(..)
   , appRunDB
   , appRunDocRepo
+  , appRunUH
   , appLogger
-  , appUserHandle
   , appCsrfSecret
   , appSessionLength
   , AppState(..)
@@ -40,6 +41,7 @@ module Refine.Backend.App.Core (
   , appIO
   , db
   , docRepo
+  , userHandle
   , appLog
   ) where
 
@@ -67,8 +69,8 @@ type RunDocRepo = DocRepo :~> ExceptT DocRepoError IO
 data AppContext db = AppContext
   { _appRunDB         :: RunDB db
   , _appRunDocRepo    :: RunDocRepo
+  , _appRunUH         :: RunUH
   , _appLogger        :: Logger
-  , _appUserHandle    :: UserHandle
   , _appCsrfSecret    :: CsrfSecret
   , _appSessionLength :: Timespan
   }
@@ -115,6 +117,7 @@ data AppError
   | AppCsrfError ST
   | AppSessionError
   | AppSanityCheckError ST
+  | AppUserHandleError UserHandleError
   deriving (Show, Generic)
 
 makeRefineType ''AppError
@@ -138,6 +141,12 @@ docRepo m = App $ do
   (Nat runDRepo) <- view appRunDocRepo
   r <- liftIO (runExceptT (runDRepo m))
   leftToError AppDocRepoError r
+
+userHandle :: UH a -> App db a
+userHandle m = App $ do
+  (Nat runUH) <- view appRunUH
+  r <- liftIO (runExceptT (runUH m))
+  leftToError AppUserHandleError r
 
 appLog :: String -> App db ()
 appLog msg = App $ do

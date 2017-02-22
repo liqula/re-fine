@@ -7,6 +7,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
@@ -20,29 +21,30 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Backend.App
-  ( module App
-  , runApp
-  ) where
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
+module Refine.Backend.User where
+
+import Control.Natural
 import Control.Monad.Except
 import Control.Monad.Reader
-import Control.Monad.State
-import Control.Natural
 
-import Refine.Backend.App.Access  as App
-import Refine.Backend.App.Comment as App
-import Refine.Backend.App.Core    as App
-import Refine.Backend.App.User    as App
-import Refine.Backend.App.VDoc    as App
-import Refine.Backend.Logger
-import Refine.Backend.Types (CsrfSecret)
-import Refine.Prelude
+import Refine.Backend.User.Core
+import Refine.Backend.User.Impl as UH
+import Refine.Backend.User.Class
 
 
-runApp :: RunDB db -> RunDocRepo -> RunUH -> Logger -> CsrfSecret -> Timespan -> App db :~> ExceptT AppError IO
-runApp runDB runDocRepo runUH logger csrfSecret sessionLength =
-  Nat $ runSR (AppState Nothing UserLoggedOut) (AppContext runDB runDocRepo runUH logger csrfSecret sessionLength) . unApp
+runUH :: UserDB -> RunUH
+runUH usersHandle = Nat runUH'
   where
-    runSR :: (Monad m) => s -> r -> StateT s (ReaderT r m) a -> m a
-    runSR s r m = runReaderT (evalStateT m s) r
+    runUH' :: UH a -> ExceptT UserHandleError IO a
+    runUH' = (`runReaderT` UserHandleContext usersHandle) . unUH
+
+instance UserHandle UH where
+  createUser     = UH.createUser
+  getUserById    = UH.getUserById
+
+  authUser       = UH.authUser
+  verifySession  = UH.verifySession
+  destroySession = UH.destroySession
+
