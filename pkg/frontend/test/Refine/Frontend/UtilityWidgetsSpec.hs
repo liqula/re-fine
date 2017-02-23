@@ -72,10 +72,6 @@ spec = do
       wrapper <- shallow . icon_ $ iconProps M
       lengthOfIO (find wrapper (StringSelector ".iconsize-m")) `shouldReturn` (1 :: Int)
 
-    it "has 8 spans" $ do
-      wrapper <- shallow . icon_ $ iconProps M
-      lengthOfIO (find wrapper (StringSelector "span")) `shouldReturn` (8 :: Int)
-
   describe "iconButtonWithAlignmentCore_ component" $ do
     it "has the data content type passed to it" $ do
       wrapper <- shallow $ iconButtonWithAlignmentCore_
