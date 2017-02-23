@@ -111,7 +111,7 @@ data AppError
   | AppDocRepoError DocRepoError
   | AppUserNotFound ST
   | AppUserNotLoggedIn
-  | AppUserCreationError ST
+  | AppUserCreationError CreateUserError
   | AppCsrfError ST
   | AppSessionError
   | AppSanityCheckError ST

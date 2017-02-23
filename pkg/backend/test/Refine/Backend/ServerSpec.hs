@@ -224,7 +224,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
           (addNoteUri (vdoc ^. compositeVDocRepo . vdocHeadEdit))
           (CreateNote "[note]" True (ChunkRange (Just cp1) (Just cp2)))
 
-      respCode resp `shouldBe` 500  -- probably 500 is a bit harsh, but that's what we get.
+      respCode resp `shouldBe` 409
       cs (simpleBody resp) `shouldContain` ("ChunkRangeBadDataUID" :: String)
 
       vdoc' :: CompositeVDoc <- runDB sess $ getCompositeVDoc (vdoc ^. compositeVDoc . vdocID)
@@ -312,7 +312,7 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
       context "with invalid credentials" $ do
         it "works (and returns the cookie)" $ \sess -> do
           resp <- runWai sess $ doCreate >> doLogin (Login userName "")
-          respCode resp `shouldBe` 500  -- (yes, i know, this should not be internal error.)
+          respCode resp `shouldBe` 404
           checkCookie resp
 
     describe "logout" $ do

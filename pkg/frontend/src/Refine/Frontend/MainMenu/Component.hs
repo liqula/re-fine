@@ -24,6 +24,7 @@
 
 module Refine.Frontend.MainMenu.Component where
 
+import           Control.Lens ((^.))
 import           Data.String.Conversions (cs)
 import           React.Flux
 
@@ -37,7 +38,7 @@ import           Refine.Prelude()
 
 
 mainMenu :: ReactView MainMenuProps
-mainMenu = defineView "MainMenu" $ \(MainMenuProps menuTab currentUser) ->
+mainMenu = defineView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUser) ->
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
 
@@ -155,12 +156,12 @@ mainMenu = defineView "MainMenu" $ \(MainMenuProps menuTab currentUser) ->
               }
 
       case menuTab of
-        MainMenuLogin        -> loginOrLogout_ currentUser
-        MainMenuRegistration -> registration_
+        MainMenuLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
+        MainMenuRegistration -> registration_  (menuErrors ^. mmeRegistration)
 
 
-mainMenu_ :: MainMenuTab -> CurrentUser -> ReactElementM eventHandler ()
-mainMenu_ ms cu = view mainMenu (MainMenuProps ms cu) mempty
+mainMenu_ :: MainMenuTab -> MainMenuErrors -> CurrentUser -> ReactElementM eventHandler ()
+mainMenu_ mt me cu = view mainMenu (MainMenuProps mt me cu) mempty
 
 
 {-

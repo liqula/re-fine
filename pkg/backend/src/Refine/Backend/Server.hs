@@ -51,11 +51,12 @@ import           System.FilePath (dropFileName)
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
 import Refine.Backend.Config
-import Refine.Backend.Database (DB, createDBRunner)
-import Refine.Backend.DocRepo (createRunRepo)
+import Refine.Backend.Database (DB, DBError(..), createDBRunner)
+import Refine.Backend.DocRepo (DocRepoError(..), createRunRepo)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
+import Refine.Backend.User.Core (CreateUserError(..))
 import Refine.Common.Rest
 import Refine.Prelude (leftToError)
 
@@ -138,8 +139,54 @@ toServantError = Nat ((lift . runExceptT) >=> leftToError fromAppError)
     -- FIXME: some (many?) of these shouldn't be err500.
     -- FIXME: implement better logging.
     fromAppError :: AppError -> ServantErr
-    fromAppError msg = traceShow msg $ err500 { errBody = encode msg }
+    fromAppError err = traceShow err $ (appServantErr err) { errBody = encode $ toApiError err }
 
+toApiError :: AppError -> ApiError
+toApiError = \case
+  AppUnknownError e      -> ApiUnknownError e
+  AppVDocError cre       -> ApiVDocError cre
+  AppDBError e           -> ApiDBError . cs $ show e
+  AppDocRepoError e      -> ApiDocRepoError . cs $ show e
+  AppUserNotFound e      -> ApiUserNotFound e
+  AppUserNotLoggedIn     -> ApiUserNotLoggedIn
+  AppUserCreationError e -> ApiUserCreationError . cs $ show e
+  AppCsrfError e         -> ApiCsrfError e
+  AppSessionError        -> ApiSessionError
+  AppSanityCheckError e  -> ApiSanityCheckError e
+
+-- | Turns AppError to its kind of servant error.
+appServantErr :: AppError -> ServantErr
+appServantErr = \case
+  AppUnknownError _        -> err500
+  AppVDocError _           -> err409
+  AppDBError dbe           -> dbServantErr dbe
+  AppDocRepoError dre      -> docRepoServantErr dre
+  AppUserNotFound _        -> err404
+  AppUserNotLoggedIn       -> err403
+  AppUserCreationError uce -> userCreationError uce
+  AppCsrfError _           -> err403
+  AppSessionError          -> err403
+  AppSanityCheckError _    -> err409
+
+dbServantErr :: DBError -> ServantErr
+dbServantErr = \case
+  DBUnknownError    _ -> err500
+  DBNotFound        _ -> err404
+  DBNotUnique       _ -> err409
+  DBException       _ -> err500
+  DBUserNotLoggedIn   -> err403
+
+docRepoServantErr :: DocRepoError -> ServantErr
+docRepoServantErr = \case
+  DocRepoUnknownError _ -> err500
+  DocRepoException    _ -> err500
+
+userCreationError :: CreateUserError -> ServantErr
+userCreationError = \case
+  InvalidPassword              -> err400
+  UsernameAlreadyTaken         -> err409
+  EmailAlreadyTaken            -> err409
+  UsernameAndEmailAlreadyTaken -> err409
 
 -- * Instances for Servant.Cookie.Session
 

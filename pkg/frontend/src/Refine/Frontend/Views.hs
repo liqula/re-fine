@@ -49,7 +49,7 @@ import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component (vdocLoader_)
 import           Refine.Frontend.Login.Types as LG
 import           Refine.Frontend.MainMenu.Component (mainMenu_)
-import           Refine.Frontend.MainMenu.Types (mainMenuOpenTab)
+import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.NotImplementedYet (notImplementedYet_)
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
@@ -64,9 +64,11 @@ refineApp :: ReactView ()
 refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
   case rs ^. gsVDoc of
     Nothing -> vdocLoader_ (rs ^. gsVDocList)  -- (this is just some scaffolding that will be replaced by more app once we get there.)
-    Just _ -> case rs ^? gsMainMenuState . mainMenuOpenTab of
+    Just _ -> case rs ^? gsMainMenuState . mmState . mainMenuOpenTab of
       Nothing  -> mainScreen_ rs
-      Just tab -> mainMenu_ tab (rs ^. gsLoginState . lsCurrentUser)
+      Just tab -> mainMenu_ tab
+                            (rs ^. gsMainMenuState . mmErrors)
+                            (rs ^. gsLoginState . lsCurrentUser)
 
 mainScreen :: ReactView RS.GlobalState
 mainScreen = defineView "MainScreen" $ \rs ->

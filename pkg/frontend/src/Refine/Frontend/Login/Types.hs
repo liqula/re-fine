@@ -23,11 +23,15 @@
 {-# LANGUAGE ViewPatterns               #-}
 module Refine.Frontend.Login.Types where
 
+import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 
 import Refine.Common.Types.User (Username)
 import Refine.Prelude.TH (makeRefineType)
 
+
+-- | FormError can be Nothing or Just an error string.
+type FormError = Maybe ST
 
 data CurrentUser
   = UserLoggedIn Username

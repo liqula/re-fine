@@ -57,7 +57,7 @@ emptyGlobalState = GlobalState
   , _gsHeaderState                = emptyHeaderState
   , _gsScreenState                = emptyScreenState
   , _gsNotImplementedYetIsVisible = False
-  , _gsMainMenuState              = MainMenuClosed
+  , _gsMainMenuState              = emptyMainMenuState
   , _gsLoginState                 = emptyLoginState
   , _gsToolbarSticky              = False
   }

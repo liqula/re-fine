@@ -27,7 +27,7 @@ module Refine.Frontend.Login.Component where
 import           Control.Lens ((&), (.~), (^.), ASetter, to)
 import           Data.JSString (JSString)
 import qualified Data.Text as DT
-import           Data.String.Conversions (ST)
+import           Data.String.Conversions (ST, cs)
 import           GHC.Generics (Generic)
 import           GHCJS.Marshal (FromJSVal)
 import           React.Flux
@@ -65,6 +65,7 @@ inputField i t p = inputFieldWithKey i t p "value"
 data LoginForm = LoginForm
   { _loginFormUsername :: ST
   , _loginFormPassword :: ST
+  , _loginFormErrors   :: FormError
   } deriving (Eq, Generic, Show)
 
 makeRefineType ''LoginForm
@@ -75,6 +76,7 @@ data RegistrationForm = RegistrationForm
   , _registrationFormEmail2    :: ST
   , _registrationFormPassword  :: ST
   , _registrationFormAgree     :: Bool
+  , _registrationFormErrors    :: FormError
   } deriving (Eq, Generic, Show)
 
 makeRefineType ''RegistrationForm
@@ -94,23 +96,25 @@ invalidRegistrationForm form =
      , form ^. registrationFormAgree . to not
      ]
 
-loginOrLogout_ :: CurrentUser -> ReactElementM eventHandler ()
+loginOrLogout_ :: CurrentUser -> FormError -> ReactElementM eventHandler ()
 loginOrLogout_ = \case
   UserLoggedOut  -> login_
-  UserLoggedIn _ -> logout_
+  UserLoggedIn _ -> const logout_
 
 -- * Login
 
-login_ :: ReactElementM eventHandler ()
-login_ = view login () mempty
+login_ :: FormError -> ReactElementM eventHandler ()
+login_ errors = view (login errors) () mempty
 
-login :: ReactView ()
-login = defineStatefulView "Login" (LoginForm "" "") $ \curState () -> do
+login :: FormError -> ReactView ()
+login errors = defineStatefulView "Login" (LoginForm "" "" errors) $ \curState () -> do
   h1_ "Login"
 
   div_ $ do
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
+
+      mapM_ (p_ . cs) (curState ^. loginFormErrors)
 
       inputField "login-username" "text"     "Username" loginFormUsername >> br_ []
       inputField "login-password" "password" "Password" loginFormPassword >> br_ []
@@ -154,16 +158,18 @@ logout = defineView "Logout" $ \() -> do
 
 -- * Registration
 
-registration_ :: ReactElementM eventHandler ()
-registration_ = view registration () mempty
+registration_ :: FormError -> ReactElementM eventHandler ()
+registration_ errors = view (registration errors) () mempty
 
-registration :: ReactView ()
-registration = defineStatefulView "Registration" (RegistrationForm "" "" "" "" False) $ \curState () -> do
+registration :: FormError -> ReactView ()
+registration errors = defineStatefulView "Registration" (RegistrationForm "" "" "" "" False errors) $ \curState () -> do
   h1_ "Registration"
 
   div_ $ do
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
+
+      mapM_ (p_ . cs) (curState ^. registrationFormErrors)
 
       inputField "registration-username"  "text"     "Username"    registrationFormUsername >> br_ []
       inputField "registration-email1"    "email"    "Email"       registrationFormEmail1   >> br_ []

@@ -1,6 +1,11 @@
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE DeriveGeneric        #-}
 {-# LANGUAGE RankNTypes           #-}
+{-# LANGUAGE StandaloneDeriving   #-}
+{-# LANGUAGE TemplateHaskell      #-}
+{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE UndecidableInstances #-}
+
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- | This module hides away the fact of the usage of the Users
 -- library.
@@ -17,6 +22,7 @@ module Refine.Backend.User.Core
 import Data.Monoid
 import Data.String.Conversions (ST)
 import Database.Persist.Sql
+import GHC.Generics (Generic)
 import Web.Users.Types
 import Web.Users.Persistent as Users
 import Web.Users.Persistent.Definitions (Login, migrateAll)
@@ -24,9 +30,14 @@ import Web.Users.Persistent.Definitions (Login, migrateAll)
 import Refine.Backend.Database.Core
 import Refine.Common.Types.Prelude (ID(..))
 import Refine.Common.Types.User as Types (User)
+import Refine.Prelude.TH (makeRefineType)
 
 
 type UserHandle = Users.Persistent
+
+deriving instance Generic CreateUserError
+
+makeRefineType ''CreateUserError
 
 -- The same db is used to store user data as the
 -- application data. This could change in the future,
