@@ -198,7 +198,7 @@ emitBackendCallsFor action state = case action of
     Login loginData -> do
       login loginData $ \case
         (Left rsp) -> handleError rsp $ \case
-          ApiUserNotFound e -> [MainMenuAction $ MainMenuActionLoginError e]
+          ApiUserNotFound e -> [MainMenuAction . MainMenuActionLoginError $ "could not login as " <> e]
           _                 -> []
 
         (Right username) -> do
