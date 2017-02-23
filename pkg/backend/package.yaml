@@ -29,6 +29,7 @@ dependencies:
   - elim
   - fgl
   - filepath
+  - free
   - functor-infix
   - graphviz
   - html-parse

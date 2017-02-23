@@ -37,10 +37,10 @@ module Refine.Backend.User.Core
   , fromUserID
   , Login
   , LoginId
+  , CreateUserError(..)
   , SessionId(..)
   , PasswordPlain(..)
   , User(..)
-  , CreateUserError(..)
   , makePassword
   ) where
 
@@ -52,7 +52,7 @@ import Data.Monoid
 import Data.String.Conversions (ST)
 import Database.Persist.Sql
 import GHC.Generics (Generic)
-import Web.Users.Types
+import Web.Users.Types (CreateUserError(..), SessionId(..), PasswordPlain(..), User(..), makePassword)
 import Web.Users.Persistent as Users
 import Web.Users.Persistent.Definitions (Login, migrateAll)
 
