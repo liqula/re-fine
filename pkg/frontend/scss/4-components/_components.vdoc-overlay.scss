@@ -46,7 +46,7 @@ $module: #{$namespace}vdoc-overlay;
     &-content__icon {
 
         left: $global-padding * 2;
-        position: absolute;
+        display: inline-block;
         top: $global-padding;
 
     }
@@ -94,10 +94,6 @@ $module: #{$namespace}vdoc-overlay;
         flex-flow: column nowrap;
         justify-content: flex-start;
         margin-top: $global-padding * 4;
-    }
-
-    &-content__category-icon {
-        float: left;
     }
 
     &-content__button-label {
@@ -149,7 +145,6 @@ $module: #{$namespace}vdoc-overlay;
             display: inline-block;
             left: $global-padding * 12;
             margin-top: 0;
-            position: absolute;
             top: $global-padding * 2;
             width: 70%;
         }

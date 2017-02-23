@@ -1,10 +1,8 @@
 @import '../1-utils/utils.bourbon';
 
-// store variables in json format to share them between scss and js
-@import '_settings.sharedvars.json';
+@import '_settings.sharedvars';
 
 @import 'settings.colors';
-@import 'settings.icons';
 @import 'settings.fonts';
 @import 'settings.typography';
 @import 'settings.objects';

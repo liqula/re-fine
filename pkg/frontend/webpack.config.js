@@ -1,7 +1,8 @@
 var path = require("path");
 var webpack = require("webpack");
 var HtmlWebpackPlugin = require("html-webpack-plugin");
-var jsonImporter = require("node-sass-json-importer");
+
+var IS_DEV = require('isdev');
 
 var localPort = "9090";
 
@@ -11,7 +12,12 @@ module.exports = {
         "webpack/hot/only-dev-server",
         "./static/hookup",
         "./static/hookup_scss",
-        "./js-build/frontend"
+         "./js-build/frontend"
+         /*
+        "./js-build/rts",
+        "./js-build/lib",
+        "./js-build/out"
+         */
     ],
      devServer: {
          contentBase: "./js-build"
@@ -36,15 +42,33 @@ module.exports = {
     ],
     devtool: "source-map",
     module: {
-        loaders: [
-            { test: /\.css$/, loader: "style-loader!css-loader" },
-            { test: /\.scss$/, loader: "style-loader!css-loader!sass-loader" },
-            { test: /\.(ttf|woff|svg)\?32imnj/, loader: "url-loader" },
-            { test: /\.svg$/, loader: "url-loader" }
+        rules: [
+            { test: /\.css$/, use: [ { loader: "style-loader" }, { loader: "css-loader" } ] },
+            {
+                test: /\.scss$/,
+                include: [
+                    path.resolve(__dirname, "sass"),
+                    path.resolve(__dirname, "scss")
+                ],
+                use: [{
+                    loader: 'style-loader',
+                    options: {
+                        sourceMap: IS_DEV
+                    }
+                },{
+                    loader: 'css-loader',
+                    options: {
+                        sourceMap: IS_DEV
+                    }
+                },{
+                    loader: 'sass-loader',
+                    options: {
+                        sourceMap: IS_DEV,
+                        includePaths: [path.resolve(__dirname, "./node_modules/gridle/sass"), path.resolve(__dirname, "./node_modules/bourbon/app/assets/stylesheets")]
+                    }
+                }]
+            },
+            { test: /\.svg$/, use: [ { loader: "url-loader" } ] }
         ]
-    },
-    sassLoader: {
-        includePaths: [path.resolve(__dirname, "./node_modules/gridle/sass"), path.resolve(__dirname, "./node_modules/bourbon/app/assets/stylesheets")],
-        importer: jsonImporter
     }
 };

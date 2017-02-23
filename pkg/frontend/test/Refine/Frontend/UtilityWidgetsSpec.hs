@@ -46,11 +46,6 @@ spec = do
       wrapper <- shallow . icon_ $ iconProps XXL
       lengthOfIO (find wrapper (StringSelector ".the-block-name__icon")) `shouldReturn` (1 :: Int)
 
-    -- TODO I hope this is only temporary
-    it "annotates the block together with the category-icon module" $ do
-      wrapper <- shallow . icon_ $ iconProps XXL
-      lengthOfIO (find wrapper (StringSelector ".the-block-name__category-icon")) `shouldReturn` (1 :: Int)
-
     it "annotates the highlight class if True is passed" $ do
       wrapper <- shallow . icon_ $ iconProps XXL
       lengthOfIO (find wrapper (StringSelector ".o-icon-highlight")) `shouldReturn` (1 :: Int)

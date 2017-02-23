@@ -104,7 +104,6 @@ icon = defineStatefulView "Icon" False $ \mouseIsOver props -> do
                      else props ^. iconPropsDesc . _2
   div_ ["className" $= (cs . toClasses)
                          [ (props ^. iconPropsBlockName) <> "__icon"
-                         , (props ^. iconPropsBlockName) <> "__category-icon"
                          , if props ^. iconPropsHighlight then "o-icon-highlight" else ""
                          , props ^. iconPropsDesc . _1 <> "_" <> highlightStyle
                          , "iconsize-" <> map toLower (show (props ^. iconPropsSize))

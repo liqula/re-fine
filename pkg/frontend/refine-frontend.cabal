@@ -49,7 +49,7 @@ library
       Refine.Frontend.Colors
       Refine.Frontend.Contribution.Bubble
       Refine.Frontend.Contribution.Mark
-      Refine.Frontend.Contribution.Overlay
+      Refine.Frontend.Contribution.Dialog
       Refine.Frontend.Contribution.QuickCreate
       Refine.Frontend.Contribution.Store
       Refine.Frontend.Contribution.Types
@@ -121,7 +121,7 @@ executable refine-frontend
       Refine.Frontend.Colors
       Refine.Frontend.Contribution.Bubble
       Refine.Frontend.Contribution.Mark
-      Refine.Frontend.Contribution.Overlay
+      Refine.Frontend.Contribution.Dialog
       Refine.Frontend.Contribution.QuickCreate
       Refine.Frontend.Contribution.Store
       Refine.Frontend.Contribution.Types
@@ -199,7 +199,7 @@ test-suite spec
       Refine.Frontend.Contribution.BubbleSpec
       Refine.Frontend.Contribution.Mark
       Refine.Frontend.Contribution.MarkSpec
-      Refine.Frontend.Contribution.Overlay
+      Refine.Frontend.Contribution.Dialog
       Refine.Frontend.Contribution.QuickCreate
       Refine.Frontend.Contribution.QuickCreateSpec
       Refine.Frontend.Contribution.Store

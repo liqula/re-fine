@@ -41,7 +41,7 @@ import qualified Text.HTML.Parser as HTMLP
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Mark
-import           Refine.Frontend.Contribution.Overlay
+import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.QuickCreate
 import           Refine.Frontend.Contribution.Types as RS
 import           Refine.Frontend.Header.Heading ( mainHeader_ )
@@ -83,9 +83,10 @@ mainScreen = defineView "MainScreen" $ \rs ->
           mainHeader_ rs
 
           -- components that are only temporarily visible:
-          showNote_ $ (`M.lookup` (vdoc ^. compositeVDocNotes)) =<< (rs ^. gsContributionState . csNoteId)
-          showDiscussion_ $ (`M.lookup` (vdoc ^. compositeVDocDiscussions)) =<< (rs ^. gsContributionState . csDiscussionId)
-          addComment_ (rs ^. gsContributionState . csCommentEditorIsVisible) (rs ^. gsContributionState . csCommentCategory)
+          showNote_ $ showNoteProps (vdoc ^. compositeVDocNotes) rs
+          showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocDiscussions) rs
+          addComment_ $ AddCommentProps (rs ^. RS.gsContributionState . RS.csCommentEditorIsVisible)
+                                        (rs ^. RS.gsContributionState . RS.csCommentCategory)
           notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
 
           main_ ["role" $= "main"] $ do
