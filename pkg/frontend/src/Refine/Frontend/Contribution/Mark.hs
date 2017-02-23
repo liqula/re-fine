@@ -16,9 +16,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
-{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
@@ -26,7 +24,6 @@ module Refine.Frontend.Contribution.Mark where
 
 import           Control.Lens (makeLenses, (^.))
 import           Control.Monad (forM_)
-import           Data.Monoid ((<>))
 import           Data.String.Conversions
 import           GHCJS.Types (JSVal)
 import           React.Flux

@@ -12,9 +12,7 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
@@ -121,7 +119,7 @@ instance ToHttpApiData ContributionID where
 instance FromHttpApiData ContributionID where
   parseUrlPiece piece = case ST.splitAt 1 piece of
     (ks, is) -> do
-      let i = either (Left . cs) Right . readEither @Int64 . cs $ is
+      let i = either (Left . cs) Right . (readEither :: String -> Either String Int64) . cs $ is
       case ks of
         "n" -> ContribIDNote . ID <$> i
         "q" -> ContribIDQuestion . ID <$> i

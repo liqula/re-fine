@@ -16,9 +16,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
-{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
@@ -28,7 +26,6 @@ module Refine.Frontend.Test.Samples where
 import Data.Text (replace)
 
 import Refine.Common.Types
-import Refine.Common.Types.VDoc (vdocVersionFromST)
 
 
 sampleTitle :: Title

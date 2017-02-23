@@ -21,7 +21,6 @@ dependencies:
   - basic-sop
   - containers
   - deepseq
-  - elim
   - functor-infix
   - generics-sop
   - hspec
@@ -39,6 +38,7 @@ dependencies:
   - string-conversions
   - text
   - time
+  - transformers
   - vector
 
 library:

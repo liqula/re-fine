@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -12,9 +13,7 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
@@ -31,10 +30,19 @@ import Generics.SOP.NFData (grnf)
 import Refine.Prelude.Generic
 
 
+
+mkInstanceD :: Cxt -> Type -> [Dec] -> Dec
+#if __GLASGOW_HASKELL__ >= 800
+mkInstanceD = InstanceD Nothing
+#else
+mkInstanceD = InstanceD
+#endif
+
+
 makeSOPGeneric :: Name -> Q [Dec]
 makeSOPGeneric t = pure
-  [ InstanceD Nothing [] (AppT (ConT (''Generic)) (ConT t)) []
-  , InstanceD Nothing [] (AppT (ConT (''HasDatatypeInfo)) (ConT t)) []
+  [ mkInstanceD [] (AppT (ConT (''Generic)) (ConT t)) []
+  , mkInstanceD [] (AppT (ConT (''HasDatatypeInfo)) (ConT t)) []
   ]
 
 makeJSON :: Name -> Q [Dec]
@@ -44,9 +52,9 @@ makeJSON t = do
   (VarE parseJSONN)     <- [|Data.Aeson.parseJSON|]
   (VarE gparseJSONDefN) <- [|Refine.Prelude.Generic.gparseJSONDef|]
   pure
-    [ InstanceD Nothing [] (AppT (ConT (''ToJSON)) (ConT t))
+    [ mkInstanceD [] (AppT (ConT (''ToJSON)) (ConT t))
         [ FunD toJSONN [ Clause [] (NormalB (VarE gtoJSONDefN)) []] ]
-    , InstanceD Nothing [] (AppT (ConT (''FromJSON)) (ConT t))
+    , mkInstanceD [] (AppT (ConT (''FromJSON)) (ConT t))
         [ FunD parseJSONN [ Clause [] (NormalB (VarE gparseJSONDefN)) []] ]
     ]
 
@@ -55,7 +63,7 @@ makeNFData t = do
   (VarE rnfN)  <- [|Control.DeepSeq.rnf|]
   (VarE grnfN) <- [|Generics.SOP.NFData.grnf|]
   pure
-    [ InstanceD Nothing [] (AppT (ConT (''NFData)) (ConT t))
+    [ mkInstanceD [] (AppT (ConT (''NFData)) (ConT t))
         [ FunD rnfN [ Clause [] (NormalB (VarE grnfN)) []] ]
     ]
 

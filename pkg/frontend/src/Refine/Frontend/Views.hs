@@ -16,9 +16,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
-{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
@@ -32,7 +30,6 @@ module Refine.Frontend.Views
 import           Control.Lens ((^.), (^?))
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
-import           Data.Monoid ((<>))
 import           Data.String.Conversions
 import qualified Data.Tree as DT
 import           React.Flux

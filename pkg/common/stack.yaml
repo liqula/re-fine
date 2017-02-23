@@ -1,12 +1,9 @@
 resolver: lts-7.1
+#resolver: lts-6.30
 
 packages:
 - '.'
 - location: '../prelude'
-  extra-dep: true
-- location:
-    git: https://github.com/andorp/elim.git
-    commit: 558fc65a4033577092214c5e2defd47805678b97
   extra-dep: true
 - location:
     git: https://github.com/bgamari/html-parse.git

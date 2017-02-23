@@ -12,9 +12,7 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
@@ -62,4 +60,4 @@ instance ToHttpApiData (ID a) where
   toUrlPiece (ID x) = cs $ show x
 
 instance FromHttpApiData (ID a) where
-  parseUrlPiece = either (Left . cs) (Right . ID) . readEither @Int64 . cs
+  parseUrlPiece = either (Left . cs) (Right . ID) . (readEither :: String -> Either String Int64) . cs

@@ -48,8 +48,9 @@ library
       -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
       Refine.Frontend.Colors
       Refine.Frontend.Contribution.Bubble
-      Refine.Frontend.Contribution.Mark
       Refine.Frontend.Contribution.Dialog
+      Refine.Frontend.Contribution.Mark
+      Refine.Frontend.Contribution.Overlay
       Refine.Frontend.Contribution.QuickCreate
       Refine.Frontend.Contribution.Store
       Refine.Frontend.Contribution.Types
@@ -121,8 +122,9 @@ executable refine-frontend
       -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
       Refine.Frontend.Colors
       Refine.Frontend.Contribution.Bubble
-      Refine.Frontend.Contribution.Mark
       Refine.Frontend.Contribution.Dialog
+      Refine.Frontend.Contribution.Mark
+      Refine.Frontend.Contribution.Overlay
       Refine.Frontend.Contribution.QuickCreate
       Refine.Frontend.Contribution.Store
       Refine.Frontend.Contribution.Types
@@ -199,9 +201,10 @@ test-suite spec
       Refine.Frontend.Colors
       Refine.Frontend.Contribution.Bubble
       Refine.Frontend.Contribution.BubbleSpec
+      Refine.Frontend.Contribution.Dialog
       Refine.Frontend.Contribution.Mark
       Refine.Frontend.Contribution.MarkSpec
-      Refine.Frontend.Contribution.Dialog
+      Refine.Frontend.Contribution.Overlay
       Refine.Frontend.Contribution.QuickCreate
       Refine.Frontend.Contribution.QuickCreateSpec
       Refine.Frontend.Contribution.Store
@@ -221,9 +224,9 @@ test-suite spec
       Refine.Frontend.Login.Store
       Refine.Frontend.Login.Types
       Refine.Frontend.MainMenu.Component
+      Refine.Frontend.MainMenuSpec
       Refine.Frontend.MainMenu.Store
       Refine.Frontend.MainMenu.Types
-      Refine.Frontend.MainMenuSpec
       Refine.Frontend.NotImplementedYet
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
