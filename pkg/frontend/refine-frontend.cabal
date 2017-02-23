@@ -53,6 +53,7 @@ library
       Refine.Frontend.Contribution.QuickCreate
       Refine.Frontend.Contribution.Store
       Refine.Frontend.Contribution.Types
+      Refine.Frontend.ErrorHandling
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.Heading
       Refine.Frontend.Header.Store
@@ -125,6 +126,7 @@ executable refine-frontend
       Refine.Frontend.Contribution.QuickCreate
       Refine.Frontend.Contribution.Store
       Refine.Frontend.Contribution.Types
+      Refine.Frontend.ErrorHandling
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.Heading
       Refine.Frontend.Header.Store
@@ -205,6 +207,7 @@ test-suite spec
       Refine.Frontend.Contribution.Store
       Refine.Frontend.Contribution.StoreSpec
       Refine.Frontend.Contribution.Types
+      Refine.Frontend.ErrorHandling
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.DocumentHeaderSpec
       Refine.Frontend.Header.Heading

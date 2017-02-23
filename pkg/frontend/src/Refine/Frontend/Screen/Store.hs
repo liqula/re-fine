@@ -30,24 +30,40 @@ module Refine.Frontend.Screen.Store
 import           Control.Lens ((&), (%~))
 
 import Refine.Frontend.Screen.Types
-import Refine.Frontend.Types
 
-screenStateUpdate :: RefineAction -> ScreenState -> ScreenState
+screenStateUpdate :: ScreenAction -> ScreenState -> ScreenState
 screenStateUpdate action state =
   let newState = state
                   & ssHeaderHeight         %~ headerHeightUpdate action
+                  & ssWindowWidth          %~ windowWidthUpdate action
                   & ssWindowSize           %~ windowSizeUpdate action
   in newState
 
 ---------------------------------------------------------------------------
 
-headerHeightUpdate :: RefineAction -> Int -> Int
+headerHeightUpdate :: ScreenAction -> Int -> Int
 headerHeightUpdate action state = case action of
     AddHeaderHeight height -> height
     _ -> state
 
-windowSizeUpdate :: RefineAction -> WindowSize -> WindowSize
-windowSizeUpdate action state = case action of
-    SetWindowSize newSize -> newSize
+
+windowWidthUpdate :: ScreenAction -> Int -> Int
+windowWidthUpdate action state = case action of
+    SetWindowWidth width -> width
     _ -> state
+
+
+windowSizeUpdate :: ScreenAction -> WindowSize -> WindowSize
+windowSizeUpdate action state = case action of
+  SetWindowWidth width -> toSize width
+  _ -> state
+
+
+toSize :: Int -> WindowSize
+toSize sz
+  | sz <= 480  = Mobile
+  | sz <= 1024 = Tablet
+  | otherwise  = Desktop
+
+
 

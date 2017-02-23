@@ -94,6 +94,22 @@ contributionIDToKindST ContribIDHighlightMark  = "highlight"
 
 makeRefineType ''ContributionID
 
+-- This can probably solved with lenses, but we don't know how...
+getNoteID :: ContributionID -> Maybe (ID Note)
+getNoteID (ContribIDNote i)       = Just i
+getNoteID (ContribIDQuestion _)   = Nothing
+getNoteID (ContribIDDiscussion _) = Nothing
+getNoteID (ContribIDEdit _)       = Nothing
+getNoteID  ContribIDHighlightMark = Nothing
+
+-- This can probably solved with lenses, but we don't know how...
+getDiscussionID :: ContributionID -> Maybe (ID Discussion)
+getDiscussionID (ContribIDNote _)       = Nothing
+getDiscussionID (ContribIDQuestion _)   = Nothing
+getDiscussionID (ContribIDDiscussion i) = Just i
+getDiscussionID (ContribIDEdit _)       = Nothing
+getDiscussionID  ContribIDHighlightMark = Nothing
+
 
 instance ToHttpApiData ContributionID where
   toUrlPiece (ContribIDNote (ID i))       = "n" <> cs (show i)

@@ -67,8 +67,7 @@ data RefineAction = LoadDocumentList
                   | LoadDocument (ID VDoc)
                   | OpenDocument CompositeVDoc
                   | AddDemoDocument
-                  | AddHeaderHeight Int
-                  | SetWindowSize WindowSize
+                  | ScreenAction ScreenAction
                   | ContributionAction ContributionAction
                   | HeaderAction HeaderAction
                   | ToolbarStickyStateChange Bool
