@@ -23,9 +23,9 @@
 module Refine.Frontend.MainMenu.Component where
 
 import           Control.Lens ((^.))
-import           Data.String.Conversions (cs)
 import           React.Flux
 
+import           Refine.Frontend.Header.UserLoginLogout (userLoginLogoutButton_)
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Login.Component
 import           Refine.Frontend.MainMenu.Types
@@ -114,26 +114,7 @@ mainMenu = defineView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUse
               -- button attribute data-section="help"
               }
 
-            case currentUser of
-              UserLoggedOut -> pure ()
-              UserLoggedIn username -> do
-                iconButton_ IconButtonProps
-                  { _iconButtonPropsIconProps = IconProps
-                      { _iconPropsBlockName = "c-mainmenu-content"
-                      , _iconPropsHighlight = False
-                      , _iconPropsDesc      = ("icon-Exit", "dark")
-                      , _iconPropsSize      = XXL
-                      }
-                  , _iconButtonPropsElementName  = "section-button"
-                  , _iconButtonPropsModuleName   = ""
-                  , _iconButtonPropsContentType  = ""
-                  , _iconButtonPropsLabel        = cs username
-                  , _iconButtonPropsDisabled     = False
-                  , _iconButtonPropsClickHandler = \_ -> []
-                  , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-help"]
-                  -- not translated from prototype2016:
-                  -- button attribute data-section="help"
-                  }
+            userLoginLogoutButton_ currentUser
 
             iconButton_ IconButtonProps
               { _iconButtonPropsIconProps = IconProps

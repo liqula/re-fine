@@ -35,6 +35,8 @@ import           Refine.Common.Types
 import           Refine.Frontend.Header.DocumentHeader ( documentHeader_, DocumentHeaderProps(..) )
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), toolbar_, commentToolbarExtension_, editToolbarExtension_ )
 import qualified Refine.Frontend.Header.Types as HT
+import           Refine.Frontend.Header.UserLoginLogout (userLoginLogoutButton_)
+import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.ThirdPartyViews (sticky_)
 import qualified Refine.Frontend.Types as RS
@@ -42,11 +44,13 @@ import qualified Refine.Frontend.MainMenu.Types as RS
 import qualified Refine.Frontend.Screen.Types as RS
 
 
-newtype MainMenuProps = MainMenuProps Bool
-  deriving (Eq, Generic)
+data MainMenuProps = MainMenuProps
+ { _isSticky    :: Bool
+ , _currentUser :: CurrentUser
+ } deriving (Generic)
 
 mainMenu :: ReactView MainMenuProps
-mainMenu = defineView "MainMenu" $ \(MainMenuProps sticky) ->
+mainMenu = defineView "MainMenu" $ \(MainMenuProps sticky currentUser) ->
   span_ [classNames [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]] $ do
     button_ ["aria-controls" $= "bs-navbar"
             , "aria-expanded" $= "false"
@@ -60,6 +64,7 @@ mainMenu = defineView "MainMenu" $ \(MainMenuProps sticky) ->
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
     unless sticky $
       span_ ["className" $= "c-mainmenu__menu-button-label"] "MENU"
+    userLoginLogoutButton_ currentUser
 
 mainMenu_ :: MainMenuProps -> ReactElementM eventHandler ()
 mainMenu_ props = view mainMenu props mempty
@@ -81,7 +86,7 @@ mainHeader = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
                 -- the following need to be siblings because of the z-index handling
                 div_ ["className" $= "c-mainmenu__bg"] "" -- "role" $= "navigation"
                 --header_ ["role" $= "banner"] $ do
-                mainMenu_ (MainMenuProps $ rs ^. RS.gsToolbarSticky)
+                mainMenu_ (MainMenuProps (rs ^. RS.gsToolbarSticky) (rs ^. RS.gsLoginState . lsCurrentUser))
                 documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
                 div_ ["className" $= "c-fulltoolbar"] $ do
                     sticky_ [on "onStickyStateChange" $ \e _ -> (RS.dispatch . RS.ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
