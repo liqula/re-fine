@@ -23,7 +23,7 @@ import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 -- to explicit one. The frontend code should use the returned username.
 -- The rational here: It helps the future integration of different login
 -- providers.
-login :: Refine.Login -> App DB Username
+login :: Refine.Login -> App DB UH Username
 login (Login username (Users.PasswordPlain -> password)) = do
   appLog "login"
   sessionDuration <- timespanToNominalDiffTime . view appSessionLength <$> ask
@@ -34,7 +34,7 @@ login (Login username (Users.PasswordPlain -> password)) = do
   void $ setUserSession (toUserID loginId) (UserSession session)
   pure username
 
-logout :: App DB ()
+logout :: App DB UH ()
 logout = do
   appLog "logout"
   st <- gets (view appUserState)
@@ -45,7 +45,7 @@ logout = do
     UserLoggedOut -> do
       pure ()
 
-createUser :: CreateUser -> App DB Refine.User
+createUser :: CreateUser -> App DB UH Refine.User
 createUser (CreateUser name email password) = do
   appLog "createUser"
   let user = Users.User
@@ -58,6 +58,6 @@ createUser (CreateUser name email password) = do
              =<< userHandle (Users.createUser user)
   pure . Refine.User . Users.toUserID $ loginId
 
-doesUserExist :: ID Refine.User -> App DB Bool
+doesUserExist :: ID Refine.User -> App DB UH Bool
 doesUserExist uid = do
   isJust <$> userHandle (Users.getUserById (fromUserID uid))

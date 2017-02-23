@@ -49,6 +49,7 @@ import Refine.Backend.Database (DB)
 import Refine.Backend.Database.Class as DB
 import Refine.Backend.DocRepo as DocRepo
 import Refine.Backend.Server
+import Refine.Backend.User.Core (UH)
 import Refine.Common.Rest
 import Refine.Common.Types as Common
 
@@ -76,11 +77,11 @@ runWaiBodyE sess m = do
     Right x  -> Right (x, resp)
 
 -- | Call 'runDB'' and crash on 'Left'.
-runDB :: Backend -> App DB a -> IO a
+runDB :: Backend -> App DB UH a -> IO a
 runDB sess = errorOnLeft . runDB' sess
 
 -- | Call an 'App' action.
-runDB' :: Backend -> App DB a -> IO (Either AppError a)
+runDB' :: Backend -> App DB UH a -> IO (Either AppError a)
 runDB' sess = runExceptT . run (backendMonad sess)
 
 errorOnLeft :: Show e => IO (Either e a) -> IO a

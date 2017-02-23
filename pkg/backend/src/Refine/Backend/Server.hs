@@ -57,7 +57,7 @@ import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
 import Refine.Backend.User.Core (CreateUserError(..))
-import Refine.Backend.User
+import Refine.Backend.User  hiding (migrateDB)
 import Refine.Common.Rest
 import Refine.Prelude (leftToError)
 
@@ -81,10 +81,10 @@ createDataDirectories cfg = do
 
 data Backend = Backend
   { backendServer :: Application
-  , backendMonad  :: App DB CN.:~> ExceptT AppError IO
+  , backendMonad  :: App DB UH CN.:~> ExceptT AppError IO
   }
 
-refineApi :: ServerT RefineAPI (App DB)
+refineApi :: ServerT RefineAPI (App DB UH)
 refineApi =
        Refine.Backend.App.listVDocs
   :<|> Refine.Backend.App.getCompositeVDoc
@@ -193,7 +193,7 @@ userCreationError = \case
 
 -- * Instances for Servant.Cookie.Session
 
-instance SCS.MonadRandom (App db) where
+instance SCS.MonadRandom (App db uh) where
   getRandomBytes = appIO . SCS.getRandomBytes
 
 instance SCS.ThrowError500 AppError where
@@ -213,7 +213,7 @@ instance SCS.HasSessionCsrfToken AppState where
       toSCS   = SCS.CsrfToken . cs . _csrfToken
       csrfTokenIso = iso (fmap toSCS) (fmap fromSCS)
 
-instance SCS.GetCsrfSecret (AppContext db) where
+instance SCS.GetCsrfSecret (AppContext db uh) where
   csrfSecret = appCsrfSecret . Refine.Backend.Types.csrfSecret . to (Just . SCS.CsrfSecret . cs)
 
 instance SCS.GetSessionToken AppState where

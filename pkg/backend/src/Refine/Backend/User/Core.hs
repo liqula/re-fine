@@ -76,7 +76,7 @@ data UserHandleError
 
 makeRefineType ''UserHandleError
 
-type RunUH = UH :~> ExceptT UserHandleError IO
+type RunUH uh = uh :~> ExceptT UserHandleError IO
 
 newtype UH a = UH { unUH :: ReaderT UserHandleContext (ExceptT UserHandleError IO) a }
   deriving

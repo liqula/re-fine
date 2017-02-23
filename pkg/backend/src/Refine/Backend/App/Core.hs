@@ -66,10 +66,10 @@ import Refine.Prelude.TH (makeRefineType)
 
 type RunDocRepo = DocRepo :~> ExceptT DocRepoError IO
 
-data AppContext db = AppContext
+data AppContext db uh = AppContext
   { _appRunDB         :: RunDB db
   , _appRunDocRepo    :: RunDocRepo
-  , _appRunUH         :: RunUH
+  , _appRunUH         :: RunUH uh
   , _appLogger        :: Logger
   , _appCsrfSecret    :: CsrfSecret
   , _appSessionLength :: Timespan
@@ -96,12 +96,12 @@ makeLenses ''AppState
 -- * user authentication (login)
 -- * user authorization (groups)
 -- * use one db connection in one run, commit the result at the end.
-newtype App db a = App { unApp :: StateT AppState (ReaderT (AppContext db) (ExceptT AppError IO)) a }
+newtype App db uh a = App { unApp :: StateT AppState (ReaderT (AppContext db uh) (ExceptT AppError IO)) a }
   deriving
     ( Functor
     , Applicative
     , Monad
-    , MonadReader (AppContext db)
+    , MonadReader (AppContext db uh)
     , MonadError AppError
     , MonadState AppState
     )
@@ -122,10 +122,10 @@ data AppError
 
 makeRefineType ''AppError
 
-appIO :: IO a -> App db a
+appIO :: IO a -> App db uh a
 appIO = App . liftIO
 
-db :: db a -> App db a
+db :: db a -> App db uh a
 db m = App $ do
   mu <- user <$> gets (view appUserState)
   (Nat runDB) <- ($ DBContext mu) <$> view appRunDB
@@ -136,19 +136,19 @@ db m = App $ do
       UserLoggedOut     -> Nothing
       UserLoggedIn u _s -> Just u
 
-docRepo :: DocRepo a -> App db a
+docRepo :: DocRepo a -> App db uh a
 docRepo m = App $ do
   (Nat runDRepo) <- view appRunDocRepo
   r <- liftIO (runExceptT (runDRepo m))
   leftToError AppDocRepoError r
 
-userHandle :: UH a -> App db a
+userHandle :: uh a -> App db uh a
 userHandle m = App $ do
   (Nat runUH) <- view appRunUH
   r <- liftIO (runExceptT (runUH m))
   leftToError AppUserHandleError r
 
-appLog :: String -> App db ()
+appLog :: String -> App db uh ()
 appLog msg = App $ do
   logger <- view appLogger
   liftIO $ unLogger logger msg

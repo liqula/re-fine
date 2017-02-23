@@ -23,7 +23,11 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Refine.Backend.User where
+module Refine.Backend.User (
+    runUH
+  , module Refine.Backend.User.Core
+  , module Refine.Backend.User.Class
+  ) where
 
 import Control.Natural
 import Control.Monad.Except
@@ -34,7 +38,7 @@ import Refine.Backend.User.Impl as UH
 import Refine.Backend.User.Class
 
 
-runUH :: UserDB -> RunUH
+runUH :: UserDB -> RunUH UH
 runUH usersHandle = Nat runUH'
   where
     runUH' :: UH a -> ExceptT UserHandleError IO a

@@ -34,6 +34,7 @@ import           Refine.Backend.App.Core
 import           Refine.Backend.Database (DB)
 import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
+import           Refine.Backend.User.Core (UH)
 import           Refine.Common.Types.Chunk
 import           Refine.Common.Types.Comment
 import           Refine.Common.Types.Contribution
@@ -42,15 +43,15 @@ import           Refine.Common.Types.VDoc
 import           Refine.Common.VDoc.HTML
 
 
-listVDocs :: App DB [VDoc]
+listVDocs :: App DB UH [VDoc]
 listVDocs = do
   appLog "listVDocs"
   db $ mapM DB.getVDoc =<< DB.listVDocs
 
-createVDocGetComposite :: Create VDoc -> App DB CompositeVDoc
+createVDocGetComposite :: Create VDoc -> App DB UH CompositeVDoc
 createVDocGetComposite = (getCompositeVDoc . view vdocID) <=< createVDoc
 
-createVDoc :: Create VDoc -> App DB VDoc
+createVDoc :: Create VDoc -> App DB UH VDoc
 createVDoc pv = do
   appLog "createVDoc"
   let vd = pv ^. createVDocInitVersion . to canonicalizeVDocVersion
@@ -62,12 +63,12 @@ createVDoc pv = do
     r <- DB.createRepo dr dp
     DB.createVDoc pv r
 
-getVDoc :: ID VDoc -> App DB VDoc
+getVDoc :: ID VDoc -> App DB UH VDoc
 getVDoc i = do
   appLog "getVDoc"
   db $ DB.getVDoc i
 
-getVDocVersion :: ID Edit -> App DB (VDocVersion 'HTMLCanonical)
+getVDocVersion :: ID Edit -> App DB UH (VDocVersion 'HTMLCanonical)
 getVDocVersion eid = do
   appLog "getVDocVersion"
   join . db $ do
@@ -76,7 +77,7 @@ getVDocVersion eid = do
     ehandle  <- DB.getEditHandle eid
     pure . docRepo $ DocRepo.getVersion rhandle ehandle
 
-getCompositeVDoc :: ID VDoc -> App DB CompositeVDoc  -- TODO: take an edit id here, and implement getHeadCompositeVDoc in terms of that.
+getCompositeVDoc :: ID VDoc -> App DB UH CompositeVDoc  -- TODO: take an edit id here, and implement getHeadCompositeVDoc in terms of that.
 getCompositeVDoc vid = do
   appLog "getCompositeVDoc"
   join . db $ do
@@ -108,7 +109,7 @@ getCompositeVDoc vid = do
   where
     toMap selector = Map.fromList . fmap (view selector &&& id)
 
-addEdit :: ID Edit -> Create Edit -> App DB Edit
+addEdit :: ID Edit -> Create Edit -> App DB UH Edit
 addEdit basepid edit = do
   appLog "addEdit"
   validateCreateChunkRange basepid (edit ^. createEditRange)
@@ -125,7 +126,7 @@ addEdit basepid edit = do
 
 
 -- | Throw an error if chunk range does not fit 'VDocVersion' identified by edit.
-validateCreateChunkRange :: ID Edit -> ChunkRange -> App DB ()
+validateCreateChunkRange :: ID Edit -> ChunkRange -> App DB UH ()
 validateCreateChunkRange pid cr = do
   vers <- getVDocVersion pid
   case chunkRangeErrors cr vers of
