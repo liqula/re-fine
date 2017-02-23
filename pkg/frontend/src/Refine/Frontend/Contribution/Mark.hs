@@ -35,6 +35,7 @@ import qualified Text.HTML.Parser as HTMLP
 import           Web.HttpApiData
 
 import           Refine.Common.Types
+import qualified Refine.Frontend.ErrorHandling as E
 import qualified Refine.Frontend.Screen.Types as RS
 import qualified Refine.Frontend.Screen.Calculations as RS
 import qualified Refine.Frontend.Contribution.Types as RS
@@ -44,8 +45,9 @@ import           Refine.Prelude()
 
 
 data MarkProps = MarkProps
-  { _markPropsHTMLAttributes :: [HTMLP.Attr]
-  , _markPropsHighlightedMark :: Maybe ContributionID
+  { _markPropsHTMLAttributes        :: [HTMLP.Attr]
+  , _markPropsHighlightedMark       :: Maybe ContributionID
+  , _markPropsDisplayedContribution :: Maybe ContributionID
   }
 
 makeLenses ''MarkProps
@@ -67,11 +69,13 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
   { lRender = \_state props ->
     let maybeContributionId = contributionIdFrom (props ^. markPropsHTMLAttributes)
     in case maybeContributionId of
-      Nothing -> mempty
+      Nothing -> E.gracefulError "We could not find the mark's contribution ID in the attributes!" mempty
       Just dataContributionId ->
         mark_ (toProperties (props ^. markPropsHTMLAttributes) <>
            [ classNames [ ("o-mark", True)
-                        , (cs $ "o-mark--" <> contributionIDToKindST dataContributionId, True)
+                        , (cs $ "o-mark--" <> contributionIDToKindST dataContributionId,
+                                                maybeContributionId /= props ^. markPropsDisplayedContribution)
+                        , ("o-mark--highlight", maybeContributionId == props ^. markPropsDisplayedContribution)
                         , ("o-mark--hover", Just dataContributionId == props ^. markPropsHighlightedMark)
                         ]
            , onMouseEnter $ \_ _ _ -> (RS.dispatch . RS.ContributionAction $ RS.HighlightMarkAndBubble dataContributionId, Nothing)

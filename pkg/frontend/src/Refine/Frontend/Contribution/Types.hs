@@ -134,8 +134,7 @@ data ContributionAction =
 data ContributionState = ContributionState
   { _csCurrentSelection         :: Selection
   , _csCommentCategory          :: Maybe CommentCategory
-  , _csDiscussionId             :: Maybe (ID Discussion)
-  , _csNoteId                   :: Maybe (ID Note)
+  , _csDisplayedContributionID  :: Maybe ContributionID
   , _csCommentEditorIsVisible   :: ContributionEditorData
   , _csHighlightedMarkAndBubble :: Maybe ContributionID
   , _csMarkPositions            :: MarkPositions
@@ -143,7 +142,7 @@ data ContributionState = ContributionState
 
 
 emptyContributionState :: ContributionState
-emptyContributionState = ContributionState NothingSelected Nothing Nothing Nothing EditorIsHidden Nothing (MarkPositions M.empty)
+emptyContributionState = ContributionState NothingSelected Nothing Nothing EditorIsHidden Nothing (MarkPositions M.empty)
 
 
 makeRefineType ''CommentInputState

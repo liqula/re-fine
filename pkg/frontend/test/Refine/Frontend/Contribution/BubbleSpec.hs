@@ -57,7 +57,7 @@ spec = do
       markPosition = Just (MarkPosition (SC.OffsetFromDocumentTop (140 + 180)) (SC.OffsetFromDocumentTop (160 + 180)))
       highlight = Nothing
       callback _ = []
-      screenState = SC.ScreenState 95 SC.Desktop
+      screenState = SC.ScreenState 95 0 SC.Desktop
       bubbleProps = BubbleProps contributionId contentType iconSide iconStyle markPosition highlight callback screenState
 
   describe "The bubble_ component" $ do

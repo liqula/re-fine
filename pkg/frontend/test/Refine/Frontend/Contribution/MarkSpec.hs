@@ -48,10 +48,10 @@ spec :: Spec
 spec = do
   describe "The rfMark_ component" $ do
     let theAttribs = [HTMLP.Attr "data-contribution-id" "n77"]
-    let theProps = MarkProps theAttribs Nothing
+    let theProps = MarkProps theAttribs Nothing Nothing
 
     it "does not render anything when there is no data-contribution-id" $ do
-      wrapper <- shallow $ rfMark_ (MarkProps [] Nothing) mempty
+      wrapper <- shallow $ rfMark_ (MarkProps [] Nothing Nothing) mempty
       html wrapper `shouldReturn` "<div></div>" -- TODO should be empty (react doesn't need this work-around any more since (perhaps) 15.0)
 
     it "renders a HTML mark at top level" $ do
@@ -64,7 +64,7 @@ spec = do
 
     it "has all other annotations that were passed to it" $ do
       let moreAttrs = [HTMLP.Attr "a" "1", HTMLP.Attr "b" "2", HTMLP.Attr "c" "3"] <> theAttribs
-      wrapper <- shallow $ rfMark_ (MarkProps moreAttrs Nothing) mempty
+      wrapper <- shallow $ rfMark_ (MarkProps moreAttrs Nothing Nothing) mempty
       is wrapper (PropertySelector [Prop "a" ("1" :: String), Prop "b" ("2" :: String), Prop "c" ("3" :: String)]) `shouldReturn` True
 
     it "has a mark class" $ do
@@ -80,11 +80,11 @@ spec = do
       is wrapper (StringSelector ".o-mark--hover") `shouldReturn` False
 
     it "does not render the hover class when the selected mark does not match the current one" $ do
-      wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (cnid 88))) mempty
+      wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (cnid 88)) Nothing) mempty
       is wrapper (StringSelector ".o-mark--hover") `shouldReturn` False
 
     it "renders the hover class when the selected mark matches the current one" $ do
-      wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (cnid 77))) mempty
+      wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (cnid 77)) Nothing) mempty
       is wrapper (StringSelector ".o-mark--hover") `shouldReturn` True
 
     it "inserts the id of the current mark into the state on mouseEnter and removes it again on mouseLeave" $ do

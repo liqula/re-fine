@@ -37,8 +37,7 @@ contributionStateUpdate action state =
   let newState = state
                   & csCurrentSelection         %~ currentSelectionUpdate action
                   & csCommentCategory          %~ commentCategoryUpdate action
-                  & csDiscussionId             %~ discussionIsVisibleUpdate action
-                  & csNoteId                   %~ noteIsVisibleUpdate action
+                  & csDisplayedContributionID  %~ displayedContributionUpdate action
                   & csCommentEditorIsVisible   %~ commentEditorIsVisibleUpdate action
                   & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
                   & csMarkPositions            %~ markPositionsUpdate action
@@ -61,16 +60,10 @@ commentCategoryUpdate action state = case action of
   HideCommentEditor             -> Nothing -- when closing the comment editor, reset the selection
   _ -> state
 
-discussionIsVisibleUpdate :: ContributionAction -> Maybe (ID Discussion) -> Maybe (ID Discussion)
-discussionIsVisibleUpdate action state = case action of
-  ShowContributionDialog (ContribIDDiscussion discussionId) -> Just discussionId
-  HideCommentOverlay                                        -> Nothing
-  _ -> state
-
-noteIsVisibleUpdate :: ContributionAction -> Maybe (ID Note) -> Maybe (ID Note)
-noteIsVisibleUpdate action state = case action of
-  ShowContributionDialog (ContribIDNote noteId) -> Just noteId
-  HideCommentOverlay                            -> Nothing
+displayedContributionUpdate :: ContributionAction -> Maybe ContributionID -> Maybe ContributionID
+displayedContributionUpdate action state = case action of
+  ShowContributionDialog contributionId -> Just contributionId
+  HideCommentOverlay                    -> Nothing
   _ -> state
 
 commentEditorIsVisibleUpdate :: ContributionAction -> ContributionEditorData -> ContributionEditorData

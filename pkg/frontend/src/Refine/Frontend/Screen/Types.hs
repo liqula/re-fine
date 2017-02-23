@@ -47,17 +47,25 @@ data WindowSize = Desktop | Tablet | Mobile
   deriving (Show, Generic)
 
 
+data ScreenAction =
+    AddHeaderHeight Int
+  | SetWindowWidth Int
+  deriving (Show, Generic)
+
+
 data ScreenState = ScreenState
   { _ssHeaderHeight           :: Int
+  , _ssWindowWidth            :: Int
   , _ssWindowSize             :: WindowSize
   } deriving (Show, Generic)
 
 emptyScreenState :: ScreenState
-emptyScreenState = ScreenState 0 Desktop
+emptyScreenState = ScreenState 0 0 Desktop
 
 
 makeRefineType ''OffsetFromViewportTop
 makeRefineType ''ScrollOffsetOfViewport
 makeRefineType ''OffsetFromDocumentTop
 makeRefineType ''ScreenState
+makeRefineType ''ScreenAction
 makeRefineType ''WindowSize

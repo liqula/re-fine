@@ -41,6 +41,7 @@ import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.ThirdPartyViews (sticky_)
 import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.MainMenu.Types as RS
+import qualified Refine.Frontend.Screen.Types as RS
 
 
 newtype MenuButtonProps = MenuButtonProps Bool
@@ -99,7 +100,7 @@ calcHeaderHeight ldom = do
    this <- lThis ldom
    height <- js_getBoundingClientRectHeight this
    _ <- RS.reactFluxWorkAroundForkIO $ do
-       let actions = RS.dispatch $ RS.AddHeaderHeight height
+       let actions = RS.dispatch . RS.ScreenAction $ RS.AddHeaderHeight height
        forM_ actions executeAction
    pure ()
 
