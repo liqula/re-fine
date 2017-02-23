@@ -42,11 +42,11 @@ import qualified Refine.Frontend.MainMenu.Types as RS
 import qualified Refine.Frontend.Screen.Types as RS
 
 
-newtype MenuButtonProps = MenuButtonProps Bool
+newtype MainMenuProps = MainMenuProps Bool
   deriving (Eq, Generic)
 
-menuButton :: ReactView MenuButtonProps
-menuButton = defineView "MenuButton" $ \(MenuButtonProps sticky) ->
+mainMenu :: ReactView MainMenuProps
+mainMenu = defineView "MainMenu" $ \(MainMenuProps sticky) ->
   span_ [classNames [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]] $ do
     button_ ["aria-controls" $= "bs-navbar"
             , "aria-expanded" $= "false"
@@ -61,8 +61,8 @@ menuButton = defineView "MenuButton" $ \(MenuButtonProps sticky) ->
     unless sticky $
       span_ ["className" $= "c-mainmenu__menu-button-label"] "MENU"
 
-menuButton_ :: MenuButtonProps -> ReactElementM eventHandler ()
-menuButton_ props = view menuButton props mempty
+mainMenu_ :: MainMenuProps -> ReactElementM eventHandler ()
+mainMenu_ props = view mainMenu props mempty
 
 
 -- | extract the new state from event.
@@ -81,7 +81,7 @@ mainHeader = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
                 -- the following need to be siblings because of the z-index handling
                 div_ ["className" $= "c-mainmenu__bg"] "" -- "role" $= "navigation"
                 --header_ ["role" $= "banner"] $ do
-                menuButton_ (MenuButtonProps $ rs ^. RS.gsToolbarSticky)
+                mainMenu_ (MainMenuProps $ rs ^. RS.gsToolbarSticky)
                 documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
                 div_ ["className" $= "c-fulltoolbar"] $ do
                     sticky_ [on "onStickyStateChange" $ \e _ -> (RS.dispatch . RS.ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
