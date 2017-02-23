@@ -82,11 +82,11 @@ isActiveUser UserLoggedOut      = False
 spec :: Spec
 spec = do
   describe "VDoc" . around provideAppRunner $ do
-    it "Random program" $ \(runner :: App DB UH Property -> IO Property) -> forAll sampleProgram $ \program ->
+    it "Random program" $ \(runner :: AppM DB UH Property -> IO Property) -> forAll sampleProgram $ \program ->
       monadic (monadicApp runner) (runProgram program `evalStateT` initVDocs)
 
   describe "User handling" . around provideAppRunner $ do
-    it "Create/login/logout" $ \(runner :: App DB UH () -> IO ()) -> do
+    it "Create/login/logout" $ \(runner :: AppM DB UH () -> IO ()) -> do
       -- NOTE: Pattern match on the result will trigger the evaluation
       -- of the term under test.
       () <- runner $ do
@@ -107,14 +107,14 @@ spec = do
 
 -- * Helpers
 
-provideAppRunner :: ActionWith (App DB UH a -> IO a) -> IO ()
+provideAppRunner :: ActionWith (AppM DB UH a -> IO a) -> IO ()
 provideAppRunner action = withTempCurrentDirectory $ do
   (runner, testDb, reposRoot) <- createAppRunner
   action runner
   removeFile testDb
   removeDirectoryRecursive reposRoot
 
-createAppRunner :: forall a . IO (App DB UH a -> IO a, FilePath, FilePath)
+createAppRunner :: forall a . IO (AppM DB UH a -> IO a, FilePath, FilePath)
 createAppRunner = do
   let testDb    = "test.db"
       reposRoot = "./repos"
@@ -135,23 +135,23 @@ createAppRunner = do
   (runDb, userHandler) <- createDBRunner cfg
   runDRepo <- createRunRepo cfg
   let logger = Logger . const $ pure ()
-      runner :: forall b . App DB UH b -> IO b
+      runner :: forall b . AppM DB UH b -> IO b
       runner m = (natThrowError . runApp runDb runDRepo (runUH userHandler) logger
                                           (cfg ^. cfgCsrfSecret . to CsrfSecret) (cfg ^. cfgSessionLength)) $$ m
 
   void $ runner migrateDB
   pure (runner, testDb, reposRoot)
 
-monadicApp :: (App DB UH Property -> IO Property) -> App DB UH Property -> Property
+monadicApp :: (AppM DB UH Property -> IO Property) -> AppM DB UH Property -> Property
 monadicApp p = ioProperty . p
 
 
 -- * monadic property
 
-runProgram :: [Cmd] -> StateT VDocs (PropertyM (App DB UH)) ()
+runProgram :: [Cmd] -> StateT VDocs (PropertyM (AppM DB UH)) ()
 runProgram = foldl (>>) (pure ()) . map runCmd
 
-runCmd :: Cmd -> StateT VDocs (PropertyM (App DB UH)) ()
+runCmd :: Cmd -> StateT VDocs (PropertyM (AppM DB UH)) ()
 runCmd (AddVDoc cv) = do
   vdoc   <- lift . run $ App.createVDoc cv
   lastId <- gets $ view vdocLast

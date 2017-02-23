@@ -8,7 +8,7 @@ import Refine.Backend.Database.MigrateDB as DB
 import Refine.Backend.User.Core as User
 
 
-migrateDB :: App DB UH ()
+migrateDB :: AppM DB UH ()
 migrateDB = do
   appLog "Start database migration ..."
   mig <- db $ (<>) <$> DB.migrateDB <*> User.migrateDB

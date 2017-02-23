@@ -77,11 +77,11 @@ runWaiBodyE sess m = do
     Right x  -> Right (x, resp)
 
 -- | Call 'runDB'' and crash on 'Left'.
-runDB :: Backend -> App DB UH a -> IO a
+runDB :: Backend -> AppM DB UH a -> IO a
 runDB sess = errorOnLeft . runDB' sess
 
 -- | Call an 'App' action.
-runDB' :: Backend -> App DB UH a -> IO (Either AppError a)
+runDB' :: Backend -> AppM DB UH a -> IO (Either AppError a)
 runDB' sess = runExceptT . run (backendMonad sess)
 
 errorOnLeft :: Show e => IO (Either e a) -> IO a

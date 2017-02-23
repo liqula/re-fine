@@ -1,4 +1,27 @@
-{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE ExplicitForAll             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ViewPatterns               #-}
+
+{-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
 module Refine.Backend.App.User where
 
@@ -10,7 +33,6 @@ import           Data.Maybe (isJust)
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.Session
-import Refine.Backend.Database.Core (DB)
 import Refine.Backend.Types
 import Refine.Backend.User()
 import Refine.Backend.User.Core  as Users
@@ -23,7 +45,7 @@ import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 -- to explicit one. The frontend code should use the returned username.
 -- The rational here: It helps the future integration of different login
 -- providers.
-login :: Refine.Login -> App DB UH Username
+login :: Refine.Login -> App Username
 login (Login username (Users.PasswordPlain -> password)) = do
   appLog "login"
   sessionDuration <- timespanToNominalDiffTime . view appSessionLength <$> ask
@@ -34,7 +56,7 @@ login (Login username (Users.PasswordPlain -> password)) = do
   void $ setUserSession (toUserID loginId) (UserSession session)
   pure username
 
-logout :: App DB UH ()
+logout :: App ()
 logout = do
   appLog "logout"
   st <- gets (view appUserState)
@@ -45,7 +67,7 @@ logout = do
     UserLoggedOut -> do
       pure ()
 
-createUser :: CreateUser -> App DB UH Refine.User
+createUser :: CreateUser -> App Refine.User
 createUser (CreateUser name email password) = do
   appLog "createUser"
   let user = Users.User
@@ -58,6 +80,6 @@ createUser (CreateUser name email password) = do
              =<< userHandle (Users.createUser user)
   pure . Refine.User . Users.toUserID $ loginId
 
-doesUserExist :: ID Refine.User -> App DB UH Bool
+doesUserExist :: ID Refine.User -> App Bool
 doesUserExist uid = do
   isJust <$> userHandle (Users.getUserById (fromUserID uid))

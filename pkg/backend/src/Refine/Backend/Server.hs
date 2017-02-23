@@ -81,10 +81,10 @@ createDataDirectories cfg = do
 
 data Backend = Backend
   { backendServer :: Application
-  , backendMonad  :: App DB UH CN.:~> ExceptT AppError IO
+  , backendMonad  :: AppM DB UH CN.:~> ExceptT AppError IO
   }
 
-refineApi :: ServerT RefineAPI (App DB UH)
+refineApi :: ServerT RefineAPI (AppM DB UH)
 refineApi =
        Refine.Backend.App.listVDocs
   :<|> Refine.Backend.App.getCompositeVDoc
@@ -193,7 +193,7 @@ userCreationError = \case
 
 -- * Instances for Servant.Cookie.Session
 
-instance SCS.MonadRandom (App db uh) where
+instance SCS.MonadRandom (AppM db uh) where
   getRandomBytes = appIO . SCS.getRandomBytes
 
 instance SCS.ThrowError500 AppError where

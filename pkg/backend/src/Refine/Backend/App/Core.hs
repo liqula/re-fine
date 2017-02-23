@@ -36,7 +36,8 @@ module Refine.Backend.App.Core (
   , appCsrfToken
   , appUserState
   , AppUserState(..)
-  , App(..)
+  , App
+  , AppM(..)
   , AppError(..)
   , appIO
   , db
@@ -58,6 +59,7 @@ import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Types
 import Refine.Backend.User.Core
+import Refine.Backend.User.Class
 import Refine.Common.Types.Prelude (ID(..))
 import Refine.Common.Types.User as Types (User)
 import Refine.Common.VDoc.HTML (ChunkRangeError(..))
@@ -96,7 +98,7 @@ makeLenses ''AppState
 -- * user authentication (login)
 -- * user authorization (groups)
 -- * use one db connection in one run, commit the result at the end.
-newtype App db uh a = App { unApp :: StateT AppState (ReaderT (AppContext db uh) (ExceptT AppError IO)) a }
+newtype AppM db uh a = App { unApp :: StateT AppState (ReaderT (AppContext db uh) (ExceptT AppError IO)) a }
   deriving
     ( Functor
     , Applicative
@@ -105,6 +107,13 @@ newtype App db uh a = App { unApp :: StateT AppState (ReaderT (AppContext db uh)
     , MonadError AppError
     , MonadState AppState
     )
+
+-- | The 'App' defines the final constraint set that the
+-- App API should use. Scraps the boilerplate for the
+-- Refine.Backend.App.* modules.
+type App a =
+  forall db uh . (Monad db, Database db, Monad uh, UserHandle uh)
+  => AppM db uh a
 
 data AppError
   = AppUnknownError ST
@@ -122,10 +131,10 @@ data AppError
 
 makeRefineType ''AppError
 
-appIO :: IO a -> App db uh a
+appIO :: IO a -> AppM db uh a
 appIO = App . liftIO
 
-db :: db a -> App db uh a
+db :: db a -> AppM db uh a
 db m = App $ do
   mu <- user <$> gets (view appUserState)
   (Nat runDB) <- ($ DBContext mu) <$> view appRunDB
@@ -136,19 +145,19 @@ db m = App $ do
       UserLoggedOut     -> Nothing
       UserLoggedIn u _s -> Just u
 
-docRepo :: DocRepo a -> App db uh a
+docRepo :: DocRepo a -> AppM db uh a
 docRepo m = App $ do
   (Nat runDRepo) <- view appRunDocRepo
   r <- liftIO (runExceptT (runDRepo m))
   leftToError AppDocRepoError r
 
-userHandle :: uh a -> App db uh a
+userHandle :: uh a -> AppM db uh a
 userHandle m = App $ do
   (Nat runUH) <- view appRunUH
   r <- liftIO (runExceptT (runUH m))
   leftToError AppUserHandleError r
 
-appLog :: String -> App db uh ()
+appLog :: String -> AppM db uh ()
 appLog msg = App $ do
   logger <- view appLogger
   liftIO $ unLogger logger msg

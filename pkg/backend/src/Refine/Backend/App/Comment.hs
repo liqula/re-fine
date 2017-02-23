@@ -20,6 +20,8 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
+
 module Refine.Backend.App.Comment where
 
 import Control.Lens ((^.))
@@ -32,28 +34,26 @@ import Refine.Prelude ((<@>))
 import Refine.Backend.App.Core
 import Refine.Backend.App.VDoc (validateCreateChunkRange)
 import Refine.Backend.Database.Class as DB
-import Refine.Backend.Database.Core (DB)
-import Refine.Backend.User.Core (UH)
 
 
-addNote :: ID Edit -> Create Note -> App DB UH Note
+addNote :: ID Edit -> Create Note -> App Note
 addNote pid note = do
   appLog "addNote"
   validateCreateChunkRange pid (note ^. createNoteRange)
   db $ DB.createNote pid note
 
-addQuestion :: ID Edit -> Create Question -> App DB UH CompositeQuestion
+addQuestion :: ID Edit -> Create Question -> App CompositeQuestion
 addQuestion pid question = do
   appLog "addQuestion"
   validateCreateChunkRange pid (question ^. createQuestionRange)
   CompositeQuestion <$> db (DB.createQuestion pid question) <@> []
 
-addAnswer :: ID Question -> Create Answer -> App DB UH Answer
+addAnswer :: ID Question -> Create Answer -> App Answer
 addAnswer qid answer = do
   appLog "addAnswer"
   db $ DB.createAnswer qid answer
 
-addDiscussion :: ID Edit -> Create Discussion -> App DB UH CompositeDiscussion
+addDiscussion :: ID Edit -> Create Discussion -> App CompositeDiscussion
 addDiscussion pid discussion = do
   appLog "addDiscussion"
   validateCreateChunkRange pid (discussion ^. createDiscussionRange)
@@ -61,7 +61,7 @@ addDiscussion pid discussion = do
     dscn <- DB.createDiscussion pid discussion
     DB.compositeDiscussion (dscn ^. discussionID)
 
-addStatement :: ID Statement -> Create Statement -> App DB UH CompositeDiscussion
+addStatement :: ID Statement -> Create Statement -> App CompositeDiscussion
 addStatement sid statement = do
   appLog "addStatement"
   db $ do

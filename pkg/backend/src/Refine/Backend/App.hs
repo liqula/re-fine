@@ -40,7 +40,7 @@ import Refine.Backend.Types (CsrfSecret)
 import Refine.Prelude
 
 
-runApp :: RunDB db -> RunDocRepo -> RunUH uh -> Logger -> CsrfSecret -> Timespan -> App db uh :~> ExceptT AppError IO
+runApp :: RunDB db -> RunDocRepo -> RunUH uh -> Logger -> CsrfSecret -> Timespan -> AppM db uh :~> ExceptT AppError IO
 runApp runDB runDocRepo runUH logger csrfSecret sessionLength =
   Nat $ runSR (AppState Nothing UserLoggedOut) (AppContext runDB runDocRepo runUH logger csrfSecret sessionLength) . unApp
   where
