@@ -85,7 +85,8 @@ $mainmenu-content-button-height: 60px;
         }
     }
 
-    &__button {
+    // TODO this was __button, which caused a name clash
+    &__dashboard-button {
         height: $mainmenu-content-button-height;
         padding: 0;
         width: $mainmenu-content-button-width;
