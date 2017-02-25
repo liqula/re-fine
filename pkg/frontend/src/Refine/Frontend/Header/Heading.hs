@@ -111,5 +111,5 @@ mainHeader_ :: RS.GlobalState -> ReactElementM eventHandler ()
 mainHeader_ props = view mainHeader props mempty
 
 foreign import javascript unsafe
-  "$1.getBoundingClientRect().height"
+  "Math.floor($1.getBoundingClientRect().height)"
   js_getBoundingClientRectHeight :: JSVal -> IO Int
