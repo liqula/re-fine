@@ -33,6 +33,7 @@ import Test.QuickCheck.Instances ()
 import           React.Flux (transform)
 
 import Refine.Common.Types
+import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
 import Refine.Frontend.Store ()
 
@@ -49,3 +50,9 @@ spec = do
         \list -> monadicIO . run $ do
             result <- transform (LoadedDocumentList list) emptyGlobalState
             result ^. gsVDocList `shouldBe` Just list
+
+      context "gsScreenState" $ do
+        it "adds the header height to the state" $ do
+          newState <- transform (ScreenAction (AddHeaderHeight 64)) emptyGlobalState
+          _ssHeaderHeight (_gsScreenState newState) `shouldBe` (64 :: Int)
+
