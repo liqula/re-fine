@@ -44,13 +44,13 @@ import qualified Refine.Frontend.MainMenu.Types as RS
 import qualified Refine.Frontend.Screen.Types as RS
 
 
-data MainMenuProps = MainMenuProps
+data TopMenuBarProps = TopMenuBarProps
  { _isSticky    :: Bool
  , _currentUser :: CurrentUser
  } deriving (Generic)
 
-mainMenu :: ReactView MainMenuProps
-mainMenu = defineView "MainMenu" $ \(MainMenuProps sticky currentUser) ->
+topMenuBar :: ReactView TopMenuBarProps
+topMenuBar = defineView "MainMenu" $ \(TopMenuBarProps sticky currentUser) ->
   span_ [classNames [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]] $ do
     button_ ["aria-controls" $= "bs-navbar"
             , "aria-expanded" $= "false"
@@ -66,8 +66,8 @@ mainMenu = defineView "MainMenu" $ \(MainMenuProps sticky currentUser) ->
       span_ ["className" $= "c-mainmenu__menu-button-label"] "MENU"
     userLoginLogoutButton_ currentUser
 
-mainMenu_ :: MainMenuProps -> ReactElementM eventHandler ()
-mainMenu_ props = view mainMenu props mempty
+topMenuBar_ :: TopMenuBarProps -> ReactElementM eventHandler ()
+topMenuBar_ props = view topMenuBar props mempty
 
 
 -- | extract the new state from event.
@@ -86,7 +86,7 @@ mainHeader = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
                 -- the following need to be siblings because of the z-index handling
                 div_ ["className" $= "c-mainmenu__bg"] "" -- "role" $= "navigation"
                 --header_ ["role" $= "banner"] $ do
-                mainMenu_ (MainMenuProps (rs ^. RS.gsToolbarSticky) (rs ^. RS.gsLoginState . lsCurrentUser))
+                topMenuBar_ (TopMenuBarProps (rs ^. RS.gsToolbarSticky) (rs ^. RS.gsLoginState . lsCurrentUser))
                 documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
                 div_ ["className" $= "c-fulltoolbar"] $ do
                     sticky_ [on "onStickyStateChange" $ \e _ -> (RS.dispatch . RS.ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
