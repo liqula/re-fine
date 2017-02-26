@@ -50,7 +50,7 @@ data TopMenuBarProps = TopMenuBarProps
  } deriving (Generic)
 
 topMenuBar :: ReactView TopMenuBarProps
-topMenuBar = defineView "MainMenu" $ \(TopMenuBarProps sticky currentUser) ->
+topMenuBar = defineView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
   span_ [classNames [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]] $ do
     button_ ["aria-controls" $= "bs-navbar"
             , "aria-expanded" $= "false"
