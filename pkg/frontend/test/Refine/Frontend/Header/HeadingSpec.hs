@@ -76,6 +76,7 @@ spec = do
                                   (VDocVersion [DT.Node (HTMLP.TagOpen "div" [HTMLP.Attr "data-offset" "0", HTMLP.Attr "data-uid" "77"]) []])
                                   M.empty M.empty M.empty
       _wrapper <- mount (stickyContainer_ [] . mainHeader_ $ RS.emptyGlobalState { RS._gsVDoc = Just newVDoc })
-      globalState0 <- getStoreData RS.refineStore
-      pendingWith "The action in lComponentDidMount does not seem to be executed in the test... why?"
-      (globalState0 ^. RS.gsScreenState . ST.ssHeaderHeight) `shouldSatisfy` (> 0)
+
+      RS.reactFluxWorkAroundForkIO $ do
+        globalState0 <- getStoreData RS.refineStore
+        (globalState0 ^. RS.gsScreenState . ST.ssHeaderHeight) `shouldSatisfy` (> 0)
