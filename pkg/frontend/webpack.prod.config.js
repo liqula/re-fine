@@ -54,7 +54,7 @@ module.exports = {
                     }
                 }]
             },
-            { test: /\.svg$/, use: [ { loader: "url-loader" } ] }
+            { test: /\.(svg|woff2)$/, use: [ { loader: "url-loader" } ] }
         ]
     }
 };

@@ -32,6 +32,7 @@ import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
 import           Refine.Frontend.Header.Heading
+import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Screen.Types as ST
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Test.Enzyme
@@ -41,10 +42,10 @@ import qualified Refine.Frontend.Types as RS
 
 spec :: Spec
 spec = do
-  describe "The menuButton_ component" $ do
+  describe "The topMenuBar_ component" $ do
     context "not sticky" $ do
       it "renders its elements" $ do
-        wrapper <- shallow (menuButton_ (MenuButtonProps False))
+        wrapper <- shallow (topMenuBar_ (TopMenuBarProps False UserLoggedOut))
         lengthOfIO (find wrapper (StringSelector ".c-mainmenu")) `shouldReturn` (1 :: Int)
         lengthOfIO (find wrapper (StringSelector ".c-mainmenu__menu-button")) `shouldReturn` (1 :: Int)
         lengthOfIO (find wrapper (StringSelector ".c-mainmenu__icon-bar")) `shouldReturn` (3 :: Int)
@@ -53,18 +54,18 @@ spec = do
         text label `shouldReturn` "MENU"
 
       it "does not render with sticky css class" $ do
-        wrapper <- shallow (menuButton_ (MenuButtonProps False))
+        wrapper <- shallow (topMenuBar_ (TopMenuBarProps False UserLoggedOut))
         label <- find wrapper (StringSelector ".c-mainmenu--toolbar-combined")  -- (it's called combined, though, not sticky)
         lengthOf label `shouldReturn` (0 :: Int)
 
     context "sticky" $ do
       it "does not render the label" $ do
-        wrapper <- shallow (menuButton_ (MenuButtonProps True))
+        wrapper <- shallow (topMenuBar_ (TopMenuBarProps True UserLoggedOut))
         label <- find wrapper (StringSelector ".c-mainmenu__menu-button-label")
         lengthOf label `shouldReturn` (0 :: Int)
 
       it "renders with sticky css class" $ do
-        wrapper <- shallow (menuButton_ (MenuButtonProps True))
+        wrapper <- shallow (topMenuBar_ (TopMenuBarProps True UserLoggedOut))
         label <- find wrapper (StringSelector ".c-mainmenu--toolbar-combined")  -- (it's called combined, though, not sticky)
         lengthOf label `shouldReturn` (1 :: Int)
 

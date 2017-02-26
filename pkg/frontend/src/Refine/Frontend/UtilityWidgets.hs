@@ -108,15 +108,7 @@ icon = defineStatefulView "Icon" False $ \mouseIsOver props -> do
                          ]
        , onMouseEnter $ \_ _ _ -> ([], Just True)
        , onMouseLeave $ \_ _ _ -> ([], Just False)
-       ] $ do
-    span_ ["className" $= "path1"] ""
-    span_ ["className" $= "path2"] ""
-    span_ ["className" $= "path3"] ""
-    span_ ["className" $= "path4"] ""
-    span_ ["className" $= "path5"] ""
-    span_ ["className" $= "path6"] ""
-    span_ ["className" $= "path7"] ""
-    span_ ["className" $= "path8"] ""
+       ] mempty
 
 icon_ :: IconProps -> ReactElementM eventHandler ()
 icon_ props = view icon props mempty
