@@ -35,6 +35,12 @@ nobody objects, it's a new rule!
 
 5. before merging an MR, rebase it on master or merge master into it.
 
+6. do not write "Fixes #..." into commit messages.  if you want to
+   auto-close issues, add "Closes #..." to the beginning of the MR
+   description.  RATIONALE: the trigger is easier to spot for the
+   reviewer in the MR.  if you are wrong, it is (slightly) harder to
+   change a commit message than an MR description.
+
 
 ### language extensions
 
