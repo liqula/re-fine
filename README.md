@@ -25,7 +25,7 @@ the latter and interpreted as rules.  For example:
 ./build hlint            # hlint the entire repo
 ./build hlint-frontend   # hlint the frontend package
 ./build test-common      # build the common package and run the test suite
-./build dev-server       # run the test server (consult the output for shutdown instructions)
+./build run-dev          # run the test server (consult the output for shutdown instructions)
 ```
 
 The complete set of rules is in `./Build.hs` and should be
