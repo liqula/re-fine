@@ -102,10 +102,9 @@ calcHeaderHeight :: LDOM -> IO ()
 calcHeaderHeight ldom = do
    this <- lThis ldom
    height <- js_getBoundingClientRectHeight this
-   _ <- RS.reactFluxWorkAroundForkIO $ do
+   RS.reactFluxWorkAroundForkIO $ do
        let actions = RS.dispatch . RS.ScreenAction $ RS.AddHeaderHeight height
        forM_ actions executeAction
-   pure ()
 
 mainHeader_ :: RS.GlobalState -> ReactElementM eventHandler ()
 mainHeader_ props = view mainHeader props mempty
