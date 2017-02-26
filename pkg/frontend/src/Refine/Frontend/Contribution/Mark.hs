@@ -85,7 +85,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
              bottomOffset <- js_getBoundingClientRectBottom this
              scrollOffset <- js_getScrollOffset
              props <- lGetProps propsandstate
-             _ <- RS.reactFluxWorkAroundForkIO $ do
+             RS.reactFluxWorkAroundForkIO $ do
                case contributionIdFrom (props ^. markPropsHTMLAttributes) of
                  Nothing -> pure ()
                  Just dataContributionId -> do
@@ -95,7 +95,6 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
                          , RS._markPositionBottom = RS.offsetFromDocumentTop bottomOffset scrollOffset
                          }
                    forM_ actions executeAction
-             pure ()
    }
 
 rfMark_ :: MarkProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
