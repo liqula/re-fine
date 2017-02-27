@@ -25,6 +25,7 @@ module Refine.Frontend.Contribution.Mark where
 import           Control.Lens (makeLenses, (^.))
 import           Control.Monad (forM_)
 import           Data.String.Conversions
+import qualified Data.Text as T
 import           GHCJS.Types (JSVal)
 import           React.Flux
 import           React.Flux.Lifecycle
@@ -61,6 +62,15 @@ attribValueOf _ [] = ""
 attribValueOf wantedKey (HTMLP.Attr key value:_) | key == cs wantedKey = cs value
 attribValueOf wantedKey (_:as) = attribValueOf wantedKey as
 
+-- | Set the <https://facebook.github.io/react/docs/class-name-manipulation.html className> property to consist
+-- of all the names which are matched with True, allowing you to easily toggle class names based on
+-- a computation.
+classNames2 :: [(T.Text, Bool)] -> PropertyOrHandler handler
+classNames2 xs = "className" @= T.intercalate " " names
+    where
+        names = map fst $ filter snd xs
+
+
 rfMark :: ReactView MarkProps
 rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
   { lRender = \_state props ->
@@ -69,7 +79,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
       Nothing -> E.gracefulError "We could not find the mark's contribution ID in the attributes!" mempty
       Just dataContributionId ->
         mark_ (toProperties (props ^. markPropsHTMLAttributes) <>
-           [ classNames [ ("o-mark", True)
+           [ classNames2 [ ("o-mark", True)
                         , (cs $ "o-mark--" <> contributionIDToKindST dataContributionId,
                                                 maybeContributionId /= props ^. markPropsDisplayedContribution)
                         , ("o-mark--highlight", maybeContributionId == props ^. markPropsDisplayedContribution)

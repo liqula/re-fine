@@ -78,7 +78,6 @@ spec = do
     context "renders the css class that renders the selected text white-on-black" $ do
 
       it "when it is the current selection while the editor is open" $ do
-        pendingWith "No idea why this test fails..."
         wrapper <- shallow $ rfMark_ (MarkProps [HTMLP.Attr "data-contribution-id" "h"] Nothing Nothing) mempty
         -- see #243 consoleLog "mark:" (cs (html wrapper))
         is wrapper (StringSelector ".o-mark--highlight") `shouldReturn` True
