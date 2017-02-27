@@ -23,6 +23,7 @@
 
 module Refine.Frontend.Header.HeadingSpec where
 
+import           Control.Concurrent.MVar
 import           Control.Lens ((^.))
 import qualified Data.Map.Strict as M
 import qualified Data.Tree as DT
@@ -77,6 +78,12 @@ spec = do
                                   M.empty M.empty M.empty
       _wrapper <- mount (stickyContainer_ [] . mainHeader_ $ RS.emptyGlobalState { RS._gsVDoc = Just newVDoc })
 
+      pendingWith "#201, #221"
+
+      lock <- newEmptyMVar
       RS.reactFluxWorkAroundForkIO $ do
         globalState0 <- getStoreData RS.refineStore
         (globalState0 ^. RS.gsScreenState . ST.ssHeaderHeight) `shouldSatisfy` (> 0)
+        putMVar lock ()
+      () <- takeMVar lock
+      pure ()
