@@ -112,7 +112,7 @@ newtype AppM db uh a = App { unApp :: StateT AppState (ReaderT (AppContext db uh
 -- App API should use. Scraps the boilerplate for the
 -- Refine.Backend.App.* modules.
 type App a =
-  forall db uh . (Monad db, Database db, Monad uh, UserHandle uh)
+  forall db uh . (DatabaseM db, UserHandleM uh)
   => AppM db uh a
 
 data AppError

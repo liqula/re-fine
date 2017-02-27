@@ -32,7 +32,8 @@ import qualified Data.ByteString as SBS
 import           Data.Default (def)
 import           Data.Proxy (Proxy(Proxy))
 import           Data.Map (elems)
-import           Data.String.Conversions (SBS, LBS, cs, (<>))
+import           Data.Time (NominalDiffTime)
+import           Data.String.Conversions (SBS, ST, LBS, cs, (<>))
 import           Network.HTTP.Types.Status (Status(statusCode))
 import           Network.HTTP.Types (Method, Header, methodGet)
 import           Network.URI (URI, uriToString)
@@ -49,27 +50,29 @@ import Refine.Backend.Database (DB)
 import Refine.Backend.Database.Class as DB
 import Refine.Backend.DocRepo as DocRepo
 import Refine.Backend.Server
-import Refine.Backend.User.Core (UH)
+import Refine.Backend.User.Core (UH, SessionId(..), PasswordPlain(..), fromUserID)
+import Refine.Backend.User.Class (UserHandleM)
+import Refine.Backend.User.Free
 import Refine.Common.Rest
 import Refine.Common.Types as Common
 
 
 -- * machine room
 
-runWai :: Backend -> Wai.Session a -> IO a
+runWai :: Backend db uh -> Wai.Session a -> IO a
 runWai sess m = Wai.runSession m (backendServer sess)
 
 -- | Call 'runWaiBodyE' and throw an error if the expected type cannot be read, discard the
 -- response, keep only the body.
-runWaiBody :: FromJSON a => Backend -> Wai.Session SResponse -> IO a
+runWaiBody :: FromJSON a => Backend db uh -> Wai.Session SResponse -> IO a
 runWaiBody sess = fmap fst . runWaiBodyRsp sess
 
 -- | Call 'runWaiBodyE' and throw an error if the expected type cannot be read.
-runWaiBodyRsp :: FromJSON a => Backend -> Wai.Session SResponse -> IO (a, SResponse)
+runWaiBodyRsp :: FromJSON a => Backend db uh -> Wai.Session SResponse -> IO (a, SResponse)
 runWaiBodyRsp sess = errorOnLeft . runWaiBodyE sess
 
 -- | Run a rest call and parse the body.
-runWaiBodyE :: FromJSON a => Backend -> Wai.Session SResponse -> IO (Either String (a, SResponse))
+runWaiBodyE :: FromJSON a => Backend db uh -> Wai.Session SResponse -> IO (Either String (a, SResponse))
 runWaiBodyE sess m = do
   resp <- runWai sess m
   pure $ case eitherDecode $ simpleBody resp of
@@ -77,20 +80,37 @@ runWaiBodyE sess m = do
     Right x  -> Right (x, resp)
 
 -- | Call 'runDB'' and crash on 'Left'.
-runDB :: Backend -> AppM DB UH a -> IO a
+runDB :: Backend DB uh -> AppM DB uh a -> IO a
 runDB sess = errorOnLeft . runDB' sess
 
 -- | Call an 'App' action.
-runDB' :: Backend -> AppM DB UH a -> IO (Either AppError a)
+runDB' :: Backend DB uh -> AppM DB uh a -> IO (Either AppError a)
 runDB' sess = runExceptT . run (backendMonad sess)
 
 errorOnLeft :: Show e => IO (Either e a) -> IO a
 errorOnLeft action = either (throwIO . ErrorCall . show) pure =<< action
 
-createTestSession :: ActionWith Backend -> IO ()
+mockLogin :: RunUH FreeUH
+mockLogin = runFreeUH $ UHMock
+  { mockCreateUser     = \_u -> pure . Right . fromUserID $ ID 0 -- :: User    -> m (Either CreateUserError LoginId)
+  , mockGetUserById    = \_l -> pure . Just $ undefined -- :: LoginId -> m (Maybe User)
+  , mockAuthUser       = mockedLogin
+  , mockVerifySession  = \_s -> pure . Just $ fromUserID $ ID 0  -- :: SessionId -> m (Maybe LoginId)
+  , mockDestroySession = \_s -> pure () -- :: SessionId -> m ()
+  }
+
+mockedLogin :: Monad m => ST -> PasswordPlain -> NominalDiffTime -> m (Maybe SessionId)
+mockedLogin _u "" _t = pure $ Nothing
+mockedLogin _u _p _t = pure . Just $ SessionId "mock-session"
+
+
+createMockedTestSession :: (UserHandleM uh) => RunUH uh -> ActionWith (Backend DB uh) -> IO ()
+createMockedTestSession runUh action = withTempCurrentDirectory $ do
+  void $ action =<< mkTestBackend (def & cfgShouldLog .~ False) runUh
+
+createTestSession :: ActionWith (Backend DB UH) -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
   void $ action =<< mkBackend (def & cfgShouldLog .~ False)
-
 
 -- * test helpers
 
@@ -117,7 +137,6 @@ request :: Method -> SBS -> [Header] -> LBS -> Wai.Session SResponse
 request method path headers body = Wai.srequest $ SRequest req body
   where
     req = Wai.setPath defaultRequest {requestMethod = method, requestHeaders = headers} path
-
 
 -- * endpoints
 
@@ -158,7 +177,12 @@ logoutUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogout
 -- * test cases
 
 spec :: Spec
-spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (needs some work)
+spec = do
+  specMockedLogin
+  specUserHandling
+
+specMockedLogin :: Spec
+specMockedLogin = around (createMockedTestSession mockLogin) $ do  -- FUTUREWORK: mark this as 'parallel' (needs some work)
 
   describe "sListVDocs" $ do
     it "returns a vdocs list with HTTP status 200" $ \sess -> do
@@ -285,6 +309,8 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
         be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
         be ^. compositeVDocEdits . to elems`shouldContain` [fp]
 
+specUserHandling :: Spec
+specUserHandling = around createTestSession $ do
   describe "User handling" $ do
     let doCreate = post createUserUri (CreateUser userName "mail@email.com" userPass)
         doLogin = post loginUri

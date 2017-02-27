@@ -1,3 +1,4 @@
+{-# LANGUAGE ConstraintKinds #-}
 module Refine.Backend.Database.Class where
 
 import Refine.Backend.Database.Tree
@@ -7,6 +8,8 @@ import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc
 import Refine.Common.Types.User
 
+
+type DatabaseM db = (Monad db, Database db)
 
 class Database db where
 

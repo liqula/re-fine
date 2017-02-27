@@ -14,3 +14,10 @@ migrateDB = do
   mig <- db $ (<>) <$> DB.migrateDB <*> User.migrateDB
   appLog $ show mig
   appLog "Start database migration ... DONE"
+
+migrateDB' :: AppM DB uh ()
+migrateDB' = do
+  appLog "Start database migration ..."
+  mig <- db $ DB.migrateDB
+  appLog $ show mig
+  appLog "Start database migration ... DONE"

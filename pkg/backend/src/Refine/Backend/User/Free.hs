@@ -21,8 +21,14 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Backend.User.Mock where
+module Refine.Backend.User.Free (
+    FreeUH
+  , UHMock(..)
+  , runFreeUH
+  ) where
 
+import Control.Natural
+import Control.Monad.Except
 import Control.Monad.Free
 import Data.Time (NominalDiffTime)
 import Data.String.Conversions (ST)
@@ -31,38 +37,39 @@ import Refine.Backend.User.Class
 import Refine.Backend.User.Core -- FIXME: Move to types.
 
 
+
 -- FIXME: User Freer instead of Free
-data FreeDB a where
-  CreateUser     :: User    -> ((Either CreateUserError LoginId) -> a) -> FreeDB a
-  GetUserById    :: LoginId -> ((Maybe User) -> a) -> FreeDB a
+-- TODO: Rename to DBAPI
+data UHAPI a where
+  CreateUser     :: User    -> ((Either CreateUserError LoginId) -> a) -> UHAPI a
+  GetUserById    :: LoginId -> ((Maybe User) -> a) -> UHAPI a
 
-  AuthUser       :: ST -> PasswordPlain -> NominalDiffTime -> ((Maybe SessionId) -> a) -> FreeDB a
-  VerifySession  :: SessionId -> ((Maybe LoginId) -> a) -> FreeDB a
-  DestroySession :: SessionId -> (() -> a) -> FreeDB a
-
-
-deriving instance Functor FreeDB
+  AuthUser       :: ST -> PasswordPlain -> NominalDiffTime -> ((Maybe SessionId) -> a) -> UHAPI a
+  VerifySession  :: SessionId -> ((Maybe LoginId) -> a) -> UHAPI a
+  DestroySession :: SessionId -> (() -> a) -> UHAPI a
 
 
-type Mock = Free FreeDB
+deriving instance Functor UHAPI
 
-createUser_ :: User -> Mock (Either CreateUserError LoginId)
+type FreeUH = Free UHAPI
+
+createUser_ :: User -> FreeUH (Either CreateUserError LoginId)
 createUser_ u = liftF $ CreateUser u id
 
-getUserById_ :: LoginId -> Mock (Maybe User)
+getUserById_ :: LoginId -> FreeUH (Maybe User)
 getUserById_ l = liftF $ GetUserById l id
 
-authUser_ :: ST -> PasswordPlain -> NominalDiffTime -> Mock (Maybe SessionId)
+authUser_ :: ST -> PasswordPlain -> NominalDiffTime -> FreeUH (Maybe SessionId)
 authUser_ u p s = liftF $ AuthUser u p s id
 
-verifySession_ :: SessionId -> Mock (Maybe LoginId)
+verifySession_ :: SessionId -> FreeUH (Maybe LoginId)
 verifySession_ s = liftF $ VerifySession s id
 
-destroySession_ :: SessionId -> Mock ()
+destroySession_ :: SessionId -> FreeUH ()
 destroySession_ s = liftF $ DestroySession s id
 
 
-instance UserHandle Mock where
+instance UserHandle FreeUH where
   createUser     = createUser_
   getUserById    = getUserById_
 
@@ -70,7 +77,7 @@ instance UserHandle Mock where
   verifySession  = verifySession_
   destroySession = destroySession_
 
-data MockM m = MockM
+data UHMock m = UHMock
   { mockCreateUser     :: User    -> m (Either CreateUserError LoginId)
   , mockGetUserById    :: LoginId -> m (Maybe User)
   , mockAuthUser       :: ST -> PasswordPlain -> NominalDiffTime -> m (Maybe SessionId)
@@ -78,7 +85,7 @@ data MockM m = MockM
   , mockDestroySession :: SessionId -> m ()
   }
 
-interpret :: (Monad m) => MockM m -> Mock a -> m a
+interpret :: (Monad m) => UHMock m -> FreeUH a -> m a
 interpret _ (Pure x) = pure x
 
 interpret m (Free (CreateUser u k)) = do
@@ -100,3 +107,7 @@ interpret m (Free (VerifySession s k)) = do
 interpret m (Free (DestroySession s k)) = do
   r <- mockDestroySession m s
   interpret m (k r)
+
+runFreeUH :: UHMock (ExceptT UserHandleError IO) -> RunUH FreeUH
+runFreeUH m = Nat (interpret m)
+

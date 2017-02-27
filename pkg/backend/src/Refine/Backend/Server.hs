@@ -26,7 +26,7 @@
 module Refine.Backend.Server
   ( refineCookieName
   , startBackend
-  , Backend(..), mkBackend
+  , Backend(..), mkBackend, mkTestBackend
   , refineApi
   ) where
 
@@ -51,13 +51,14 @@ import           System.FilePath (dropFileName)
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
 import Refine.Backend.Config
-import Refine.Backend.Database (DB, DBError(..), createDBRunner)
+import Refine.Backend.Database (Database, DB, DBError(..), createDBRunner)
 import Refine.Backend.DocRepo (DocRepoError(..), createRunRepo)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
 import Refine.Backend.User.Core (CreateUserError(..))
 import Refine.Backend.User  hiding (migrateDB)
+import Refine.Backend.User.Class (UserHandle) -- FIXME: Reexport
 import Refine.Common.Rest
 import Refine.Prelude (leftToError)
 
@@ -79,12 +80,13 @@ createDataDirectories cfg = do
 
 -- * backend creation
 
-data Backend = Backend
+data Backend db uh = Backend
   { backendServer :: Application
-  , backendMonad  :: AppM DB UH CN.:~> ExceptT AppError IO
+  , backendMonad  :: AppM db uh CN.:~> ExceptT AppError IO -- TODO: Rename backendRunApp
   }
 
-refineApi :: ServerT RefineAPI (AppM DB UH)
+refineApi :: (Monad db, Database db, Monad uh, UserHandle uh)
+          => ServerT RefineAPI (AppM db uh)
 refineApi =
        Refine.Backend.App.listVDocs
   :<|> Refine.Backend.App.getCompositeVDoc
@@ -104,14 +106,42 @@ startBackend :: Config -> IO ()
 startBackend cfg = do
   Warp.runSettings (warpSettings cfg) . backendServer =<< mkBackend cfg
 
-mkBackend :: Config -> IO Backend
+mkBackend :: Config -> IO (Backend DB UH)
 mkBackend cfg = do
   createDataDirectories cfg
+
   (runDb, userHandler) <- createDBRunner cfg
   runDocRepo <- createRunRepo cfg
+  backend    <- mkServerApp cfg runDb runDocRepo (runUH userHandler)
+
+  when (cfg ^. cfgShouldMigrate) $ do
+    void $ (natThrowError . (backendMonad backend)) $$ do
+      migrateDB
+
+  pure backend
+
+mkTestBackend :: (UserHandleM uh) => Config -> RunUH uh -> IO (Backend DB uh)
+mkTestBackend cfg runUh = do
+  createDataDirectories cfg
+
+  (runDb, _) <- createDBRunner cfg
+  runDocRepo <- createRunRepo cfg
+  backend    <- mkServerApp cfg runDb runDocRepo runUh
+
+  when (cfg ^. cfgShouldMigrate) $ do
+    void $ (natThrowError . (backendMonad backend)) $$ do
+      migrateDB'
+
+  pure backend
+
+
+mkServerApp
+    :: (Monad db, Database db, Monad uh, UserHandle uh)
+    => Config -> RunDB db -> RunDocRepo -> RunUH uh -> IO (Backend db uh)
+mkServerApp cfg runDb runDocRepo runUh = do
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
-      app    = runApp runDb runDocRepo (runUH userHandler) logger (cfg ^. cfgCsrfSecret . to CsrfSecret) (cfg ^. cfgSessionLength)
+      app    = runApp runDb runDocRepo runUh logger (cfg ^. cfgCsrfSecret . to CsrfSecret) (cfg ^. cfgSessionLength)
 
   -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
   -- may need to refactor, e.g. by using extra arguments in the end point types.
@@ -123,10 +153,6 @@ mkBackend cfg = do
               (toServantError . cnToSn app)
               refineApi
               (Just (Servant.serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
-
-  when (cfg ^. cfgShouldMigrate) $ do
-    void $ (natThrowError . app) $$ do
-      migrateDB
 
   pure $ Backend srvApp app
 
