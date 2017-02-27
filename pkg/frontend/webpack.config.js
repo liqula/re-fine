@@ -10,8 +10,8 @@ var proxiedServer = "http://localhost:3000";
 module.exports = {
     entry: [
         "./static/hookup",
-        "./static/hookup_scss",
-         "./js-build/frontend"
+        "./static/hookup_scss"
+         // do not serve the frontend JS via webpack "./js-build/frontend"
          /*
         "./js-build/rts",
         "./js-build/lib",
@@ -38,7 +38,10 @@ module.exports = {
         new webpack.HotModuleReplacementPlugin(),
         // modifies index.html to include bundle.js:
         new HtmlWebpackPlugin({
-            template: "./index.html"
+            template: "./index-dev.html"
+            , inject: 'head'  // we need it in the head because it must be loaded
+                              // before the frontend bundle that is directly included
+                              // in the HTML body
         }),
         new webpack.DefinePlugin({
             "process.env": {
