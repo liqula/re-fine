@@ -5,11 +5,10 @@ var HtmlWebpackPlugin = require("html-webpack-plugin");
 var IS_DEV = require('isdev');
 
 var localPort = "9090";
+var proxiedServer = "http://localhost:3000";
 
 module.exports = {
     entry: [
-        "webpack-dev-server/client?http://localhost:" + localPort,
-        "webpack/hot/only-dev-server",
         "./static/hookup",
         "./static/hookup_scss",
          "./js-build/frontend"
@@ -21,6 +20,14 @@ module.exports = {
     ],
      devServer: {
          contentBase: "./js-build"
+         , lazy: false // always compile immediately to save time
+         , compress: false // do not spend time on this
+         , host: "0.0.0.0"  // server is also available externally
+         , port: localPort
+         , hot: true // hot module replacement
+         , historyApiFallback: true
+         , proxy: { "/": proxiedServer }
+
      },
     devtool: "source-map",
     output: {
