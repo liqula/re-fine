@@ -21,7 +21,8 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.Test.Console
-  ( consoleLogJSON
+  ( consoleLog
+  , consoleLogJSON
   , consoleLogStringified
   )
 where
@@ -31,6 +32,11 @@ import Data.JSString (JSString, pack)
 import Data.String.Conversions (cs)
 import GHCJS.Types (JSVal)
 
+
+-- | Write a 'JSVal' to stdout (node) or the console (browser).
+foreign import javascript unsafe
+  "console.log($1, $2);"
+  consoleLog :: JSString -> JSString -> IO ()
 
 -- | Write a 'JSVal' to stdout (node) or the console (browser) via JSON.stringify() which allows
 -- for deep rendering of the object.
