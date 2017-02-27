@@ -35,8 +35,13 @@ import           Refine.Frontend.UtilityWidgets
 import           Refine.Prelude()
 
 
-mainMenu :: ReactView MainMenuProps
-mainMenu = defineView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUser) ->
+data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
+  { _tmbimmpMainMenuTab    :: MainMenuTab
+  , _tmbimmpCurrentUser    :: CurrentUser
+  }
+
+topMenuBarInMainMenu :: ReactView TopMenuBarInMainMenuProps
+topMenuBarInMainMenu = defineView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps menuTab currentUser) ->
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
 
@@ -134,9 +139,18 @@ mainMenu = defineView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUse
               -- n/a
               }
 
-      case menuTab of
-        MainMenuLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
-        MainMenuRegistration -> registration_  (menuErrors ^. mmeRegistration)
+
+topMenuBarInMainMenu_ :: TopMenuBarInMainMenuProps -> ReactElementM eventHandler ()
+topMenuBarInMainMenu_ props = view topMenuBarInMainMenu props mempty
+
+
+mainMenu :: ReactView MainMenuProps
+mainMenu = defineView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUser) ->
+  div_ $ do
+    topMenuBarInMainMenu_ (TopMenuBarInMainMenuProps menuTab currentUser)
+    case menuTab of
+      MainMenuLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
+      MainMenuRegistration -> registration_  (menuErrors ^. mmeRegistration)
 
 
 mainMenu_ :: MainMenuTab -> MainMenuErrors -> CurrentUser -> ReactElementM eventHandler ()
