@@ -202,6 +202,7 @@ test-suite spec
       Refine.Frontend.Contribution.Bubble
       Refine.Frontend.Contribution.BubbleSpec
       Refine.Frontend.Contribution.Dialog
+      Refine.Frontend.Contribution.DialogSpec
       Refine.Frontend.Contribution.Mark
       Refine.Frontend.Contribution.MarkSpec
       Refine.Frontend.Contribution.QuickCreate

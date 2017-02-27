@@ -81,7 +81,7 @@ newtype CommentInputState = CommentInputState
 data CommentCategory =
     Discussion
   | Note
-  deriving (Show, Generic)
+  deriving (Show, Eq, Generic)
 
 -- for marks:
 newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map ContributionID MarkPosition }
