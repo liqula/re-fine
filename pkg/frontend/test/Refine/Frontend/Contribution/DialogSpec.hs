@@ -28,7 +28,6 @@ import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Test.Enzyme
 
---import Refine.Frontend.Test.Console
 
 spec :: Spec
 spec = do
@@ -54,4 +53,3 @@ spec = do
       lengthOfIO (find wrapper (StringSelector ".icon-Note_RO"))         `shouldReturn` (0 :: Int)
       lengthOfIO (find wrapper (StringSelector ".icon-Discussion_dark")) `shouldReturn` (0 :: Int)
       lengthOfIO (find wrapper (StringSelector ".icon-Discussion_RO"))   `shouldReturn` (1 :: Int)
-
