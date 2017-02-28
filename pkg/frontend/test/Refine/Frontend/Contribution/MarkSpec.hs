@@ -69,21 +69,40 @@ spec = do
       wrapper <- shallow $ rfMark_ theProps mempty
       is wrapper (StringSelector ".o-mark") `shouldReturn` True
 
-    it "has a mark class with the content type that was passed to it" $ do
-      wrapper <- shallow $ rfMark_ theProps mempty
-      is wrapper (StringSelector ".o-mark--note") `shouldReturn` True
+    describe "the css class that gives it its correct colour" $ do
 
-    it "does not render the hover class when there is no selected mark" $ do
-      wrapper <- shallow $ rfMark_ theProps mempty
-      is wrapper (StringSelector ".o-mark--hover") `shouldReturn` False
+      it "has a mark class with the content type that was passed to it" $ do
+        wrapper <- shallow $ rfMark_ theProps mempty
+        is wrapper (StringSelector ".o-mark--note") `shouldReturn` True
 
-    it "does not render the hover class when the selected mark does not match the current one" $ do
-      wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (cnid 88)) Nothing) mempty
-      is wrapper (StringSelector ".o-mark--hover") `shouldReturn` False
+    describe "the css class that renders the selected text white-on-black" $ do
 
-    it "renders the hover class when the selected mark matches the current one" $ do
-      wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (cnid 77)) Nothing) mempty
-      is wrapper (StringSelector ".o-mark--hover") `shouldReturn` True
+      it "when it is the current selection while the editor is open" $ do
+        wrapper <- shallow $ rfMark_ (MarkProps [HTMLP.Attr "data-contribution-id" "h"] Nothing Nothing) mempty
+        -- see #243 consoleLog "mark:" (cs (html wrapper))
+        is wrapper (StringSelector ".o-mark--highlight") `shouldReturn` True
+
+      it "when it is the mark that matches the current contribution view" $ do
+        wrapper <- shallow $ rfMark_ (MarkProps theAttribs Nothing (Just (cnid 77))) mempty
+        is wrapper (StringSelector ".o-mark--highlight") `shouldReturn` True
+
+      it "does not render when it is a mark that does not match the current contribution view" $ do
+        wrapper <- shallow $ rfMark_ (MarkProps theAttribs Nothing (Just (cnid 99))) mempty
+        is wrapper (StringSelector ".o-mark--highlight") `shouldReturn` False
+
+    describe "the orange line underneath the text" $ do
+
+      it "does not render the hover class when there is no selected mark" $ do
+        wrapper <- shallow $ rfMark_ theProps mempty
+        is wrapper (StringSelector ".o-mark--hover") `shouldReturn` False
+
+      it "does not render the hover class when the selected mark does not match the current one" $ do
+        wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (cnid 88)) Nothing) mempty
+        is wrapper (StringSelector ".o-mark--hover") `shouldReturn` False
+
+      it "renders the hover class when the selected mark matches the current one" $ do
+        wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (cnid 77)) Nothing) mempty
+        is wrapper (StringSelector ".o-mark--hover") `shouldReturn` True
 
     it "inserts the id of the current mark into the state on mouseEnter and removes it again on mouseLeave" $ do
       wrapper <- mount $ rfMark_ theProps mempty
@@ -98,4 +117,11 @@ spec = do
       globalState2 <- getStoreData refineStore
       globalState2 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Nothing
 
--- TODO tests for componentDidMount code
+  describe "componentDidMount" $ do
+    it "works" pending
+
+  describe "contributionIdFrom" $ do
+    it "returns the note contribution id as it was found in the attributes" $ do
+      contributionIdFrom [HTMLP.Attr "data-contribution-id" "n77"] `shouldBe` Just (ContribIDNote (ID 77))
+    it "returns the highlight mark contribution id as it was found in the attributes" $ do
+      contributionIdFrom [HTMLP.Attr "data-contribution-id" "h"] `shouldBe` Just ContribIDHighlightMark
