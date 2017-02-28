@@ -253,5 +253,6 @@ test-suite spec
       Refine.Frontend.ViewsSpec
   js-sources:
       jsbits/test.js
+      jsbits/util.js
       jsbits/hookup.js
   default-language: Haskell2010
