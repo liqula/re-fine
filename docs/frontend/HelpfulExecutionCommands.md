@@ -13,5 +13,5 @@
 
 * `stack test --fast` is the go-to command
 * Add `--test-arguments '--match=###'` to select all tests whose description contains `###`
-
+* Add `--ghc-options -Wwarn` if you can't be bothered to fix warnings right now
 * `stack test --fast && ../../build hlint && make` is the ultimate command before checking in
