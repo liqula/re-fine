@@ -35,10 +35,6 @@ import Refine.Frontend.Types
 import Refine.Frontend.Store ()
 
 
-instance Arbitrary (ID VDoc) where
-    arbitrary = ID <$> arbitrary
-
-
 spec :: Spec
 spec = do
   describe "Store" $ do
