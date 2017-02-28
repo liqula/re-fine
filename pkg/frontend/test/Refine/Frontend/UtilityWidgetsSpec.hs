@@ -173,17 +173,19 @@ spec = do
       span1 <- find wrapper (StringSelector "span")
       text span1 `shouldReturn` "the-label"
 
-{-
-TODO these can only be tested once we know how to spy on a pure function in Haskell:
+    context "enabled" $ do
+      it "reacts to a click event" $ do
+        pending
 
-    it "reacts to a click event when it is not disabled" $ do
+      it "reacts to a tap event" $ do
+        pending
 
-    it "does not react to a click event when it is disabled" $ do
+    context "disabled" $ do
+      it "does not react to a click event" $ do
+        pending
 
-    it "reacts to a tap event when it is not disabled" $ do
-
-    it "does not react to a tap event when it is disabled" $ do
--}
+      it "does not react to a tap event" $ do
+        pending
 
   describe "iconButtonWithAlignment_ component" $ do
     it "wraps hammer around the inner component" $ do
