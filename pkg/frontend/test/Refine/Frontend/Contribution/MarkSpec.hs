@@ -69,13 +69,13 @@ spec = do
       wrapper <- shallow $ rfMark_ theProps mempty
       is wrapper (StringSelector ".o-mark") `shouldReturn` True
 
-    context "renders the css class that gives it its correct colour" $ do
+    describe "the css class that gives it its correct colour" $ do
 
       it "has a mark class with the content type that was passed to it" $ do
         wrapper <- shallow $ rfMark_ theProps mempty
         is wrapper (StringSelector ".o-mark--note") `shouldReturn` True
 
-    context "renders the css class that renders the selected text white-on-black" $ do
+    describe "the css class that renders the selected text white-on-black" $ do
 
       it "when it is the current selection while the editor is open" $ do
         wrapper <- shallow $ rfMark_ (MarkProps [HTMLP.Attr "data-contribution-id" "h"] Nothing Nothing) mempty
@@ -90,7 +90,7 @@ spec = do
         wrapper <- shallow $ rfMark_ (MarkProps theAttribs Nothing (Just (cnid 99))) mempty
         is wrapper (StringSelector ".o-mark--highlight") `shouldReturn` False
 
-    context "renders the orange line underneath the text" $ do
+    describe "the orange line underneath the text" $ do
 
       it "does not render the hover class when there is no selected mark" $ do
         wrapper <- shallow $ rfMark_ theProps mempty
@@ -117,9 +117,10 @@ spec = do
       globalState2 <- getStoreData refineStore
       globalState2 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Nothing
 
--- TODO tests for componentDidMount code
+  describe "componentDidMount" $ do
+    it "works" pending
 
-  describe "The contributionIdFrom" $ do
+  describe "contributionIdFrom" $ do
     it "returns the note contribution id as it was found in the attributes" $ do
       contributionIdFrom [HTMLP.Attr "data-contribution-id" "n77"] `shouldBe` Just (ContribIDNote (ID 77))
     it "returns the highlight mark contribution id as it was found in the attributes" $ do
