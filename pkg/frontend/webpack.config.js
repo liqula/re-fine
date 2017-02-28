@@ -9,8 +9,8 @@ var proxiedServer = "http://localhost:3000";
 
 module.exports = {
     entry: [
-        "./static/hookup",
-        "./static/hookup_scss"
+        "./jsbits/hookup",
+        "./jsbits/hookup_scss"
          // do not serve the frontend JS via webpack "./js-build/frontend"
          /*
         "./js-build/rts",
