@@ -141,7 +141,7 @@ mkServerApp
 mkServerApp cfg runDb runDocRepo runUh = do
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
-      app    = runApp runDb runDocRepo runUh logger (cfg ^. cfgCsrfSecret . to CsrfSecret) (cfg ^. cfgSessionLength)
+      app    = runApp runDb runDocRepo runUh logger (cfg ^. cfgCsrfSecret . to CsrfSecret) (cfg ^. cfgSessionLength) id
 
   -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
   -- may need to refactor, e.g. by using extra arguments in the end point types.
