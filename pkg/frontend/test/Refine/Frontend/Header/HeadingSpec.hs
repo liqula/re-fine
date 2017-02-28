@@ -72,13 +72,13 @@ spec = do
 
   describe "The mainHeader_ component" $ do
     it "sets the header height to a nonzero value" $ do
+      pendingWith "#201, #221"
+
       let newVDoc = CompositeVDoc (VDoc (ID 1) (Title "the-title") (Abstract "the-abstract") (ID 1))
                                   (VDocRepo (ID 1) (ID 1))
                                   (VDocVersion [DT.Node (HTMLP.TagOpen "div" [HTMLP.Attr "data-offset" "0", HTMLP.Attr "data-uid" "77"]) []])
                                   M.empty M.empty M.empty
       _wrapper <- mount (stickyContainer_ [] . mainHeader_ $ RS.emptyGlobalState { RS._gsVDoc = Just newVDoc })
-
-      pendingWith "#201, #221"
 
       lock <- newEmptyMVar
       RS.reactFluxWorkAroundForkIO $ do
