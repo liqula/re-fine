@@ -33,7 +33,7 @@ import Data.String.Conversions (cs)
 import GHCJS.Types (JSVal)
 
 
--- | Write a 'JSVal' to stdout (node) or the console (browser).
+-- | Write a 'JSString' to stdout (node) or the console (browser).
 foreign import javascript unsafe
   "console.log($1, $2);"
   consoleLog :: JSString -> JSString -> IO ()
@@ -49,8 +49,4 @@ foreign import javascript unsafe
 -- 'consoleLogJSVal' which is more efficient.  (No idea if there are char encoding issues here.  But
 -- it's probably safe to use it for development.)
 consoleLogJSON :: ToJSON a => JSString -> a -> IO ()
-consoleLogJSON str state = consoleLog_ str ((pack . cs . encode) state)
-
-foreign import javascript unsafe
-  "console.log($1, $2);"
-  consoleLog_ :: JSString -> JSString -> IO ()
+consoleLogJSON str state = consoleLog str ((pack . cs . encode) state)
