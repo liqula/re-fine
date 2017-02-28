@@ -79,7 +79,6 @@ spec = do
 
       it "when it is the current selection while the editor is open" $ do
         wrapper <- shallow $ rfMark_ (MarkProps [HTMLP.Attr "data-contribution-id" "h"] Nothing Nothing) mempty
-        -- see #243 consoleLog "mark:" (cs (html wrapper))
         is wrapper (StringSelector ".o-mark--highlight") `shouldReturn` True
 
       it "when it is the mark that matches the current contribution view" $ do
