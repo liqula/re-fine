@@ -1,10 +1,11 @@
+(function(target) {
+    target.React = require("react");
+    target.ReactDOM = require("react-dom");
 
-window.React = require("react");
-window.ReactDOM = require("react-dom");
+    target.Sticky = require("react-sticky").Sticky;
+    target.StickyContainer = require("react-sticky").StickyContainer;
 
-window.Sticky = require("react-sticky").Sticky;
-window.StickyContainer = require("react-sticky").StickyContainer;
+    target.Skylight = require("react-skylight").SkyLightStateless;
 
-window.Skylight = require("react-skylight").SkyLightStateless;
-
-window.Hammer = require("react-hammerjs");
+    target.Hammer = require("react-hammerjs");
+})((typeof global === 'undefined') ? window : global);
