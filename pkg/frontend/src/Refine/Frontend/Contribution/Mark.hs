@@ -25,7 +25,7 @@ module Refine.Frontend.Contribution.Mark where
 import           Control.Lens (makeLenses, (^.))
 import           Control.Monad (forM_)
 import           Data.String.Conversions
-import qualified Data.Text as T
+import qualified Data.Text as ST
 import           GHCJS.Types (JSVal)
 import           React.Flux
 import           React.Flux.Lifecycle
@@ -65,8 +65,8 @@ attribValueOf wantedKey (_:as) = attribValueOf wantedKey as
 -- | Set the <https://facebook.github.io/react/docs/class-name-manipulation.html className> property to consist
 -- of all the names which are matched with True, allowing you to easily toggle class names based on
 -- a computation.
-classNames2 :: [(T.Text, Bool)] -> PropertyOrHandler handler
-classNames2 xs = "className" @= T.intercalate " " names
+classNames2 :: [(ST, Bool)] -> PropertyOrHandler handler
+classNames2 xs = "className" @= ST.intercalate " " names
     where
         names = map fst $ filter snd xs
 
