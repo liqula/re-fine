@@ -70,10 +70,10 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
       Just dataContributionId ->
         mark_ (toProperties (props ^. markPropsHTMLAttributes) <>
            [ classNames [ ("o-mark", True)
-                        , ("o-mark--highlight", maybeContributionId == props ^. markPropsDisplayedContribution)
-                        , ("o-mark--hover",     maybeContributionId == props ^. markPropsHighlightedMark)
+                        , ("o-mark--highlight", Just dataContributionId == props ^. markPropsDisplayedContribution)
+                        , ("o-mark--hover",     Just dataContributionId == props ^. markPropsHighlightedMark)
                         , (cs $ "o-mark--" <> contributionIDToKindST dataContributionId,
-                                                maybeContributionId /= props ^. markPropsDisplayedContribution)
+                                                Just dataContributionId /= props ^. markPropsDisplayedContribution)
                         ]
            , onMouseEnter $ \_ _ _ -> (RS.dispatch . RS.ContributionAction $ RS.HighlightMarkAndBubble dataContributionId, Nothing)
            , onMouseLeave $ \_ _ _ -> (RS.dispatch $ RS.ContributionAction RS.UnhighlightMarkAndBubble, Nothing)
