@@ -14,17 +14,16 @@ module.exports = {
         "./jsbits/hookup_scss"
         // do not serve the frontend JS via webpack: "./js-build/frontend"
     ],
-     devServer: {
-         contentBase: "./js-build"
-         , lazy: false // always compile immediately to save time
-         , compress: false // do not spend time on this
-         , host: "0.0.0.0"  // server is also available externally
-         , port: localPort
-         , hot: true // hot module replacement
-         , historyApiFallback: true
-         , proxy: { "/": proxiedServer }
-
-     },
+    devServer: {
+        contentBase: "./js-build",
+        lazy: false,     // always compile immediately to save time
+        compress: false, // do not spend time on this
+        host: "0.0.0.0", // server is also available externally
+        port: localPort,
+        hot: true,       // hot module replacement
+        historyApiFallback: true,
+        proxy: { "/": proxiedServer }
+    },
     devtool: "source-map",
     output: {
         path: path.join(__dirname, "js-build"),
@@ -34,8 +33,8 @@ module.exports = {
         new webpack.HotModuleReplacementPlugin(),
         // modifies index.html to include bundle.js:
         new HtmlWebpackPlugin({
-            template: "./index-dev.html"
-            , inject: 'head'  // we need it in the head because it must be loaded
+            template: "./index-dev.html",
+            inject: "head"    // we need it in the head because it must be loaded
                               // before the frontend bundle that is directly included
                               // in the HTML body
         }),
@@ -70,7 +69,8 @@ module.exports = {
                     loader: 'sass-loader',
                     options: {
                         sourceMap: IS_DEV,
-                        includePaths: [path.resolve(__dirname, "./node_modules/gridle/sass"), path.resolve(__dirname, "./node_modules/bourbon/app/assets/stylesheets")]
+                        includePaths: [path.resolve(__dirname, "./node_modules/gridle/sass"),
+                                       path.resolve(__dirname, "./node_modules/bourbon/app/assets/stylesheets")]
                     }
                 }]
             },
