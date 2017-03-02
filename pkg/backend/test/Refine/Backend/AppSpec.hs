@@ -129,6 +129,7 @@ createAppRunner = do
         , _cfgWarpSettings  = def
         , _cfgCsrfSecret    = "CSRF-SECRET"
         , _cfgSessionLength = TimespanSecs 30
+        , _cfgDevMode       = False
         }
 
   createDirectoryIfMissing True $ cfg ^. cfgReposRoot
@@ -136,8 +137,14 @@ createAppRunner = do
   runDRepo <- createRunRepo cfg
   let logger = Logger . const $ pure ()
       runner :: forall b . AppM DB UH b -> IO b
-      runner m = (natThrowError . runApp runDb runDRepo (runUH userHandler) logger
-                                          (cfg ^. cfgCsrfSecret . to CsrfSecret) (cfg ^. cfgSessionLength)) $$ m
+      runner m = (natThrowError . runApp
+                                    runDb
+                                    runDRepo
+                                    (runUH userHandler)
+                                    logger
+                                    (cfg ^. cfgCsrfSecret . to CsrfSecret)
+                                    (cfg ^. cfgSessionLength)
+                                    id) $$ m
 
   void $ runner migrateDB
   pure (runner, testDb, reposRoot)

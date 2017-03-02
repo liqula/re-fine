@@ -33,6 +33,7 @@ import           Data.Maybe (isJust)
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.Session
+import Refine.Backend.Database.Class (DatabaseM)
 import Refine.Backend.Types
 import Refine.Backend.User()
 import Refine.Backend.User.Core  as Users
@@ -83,3 +84,21 @@ createUser (CreateUser name email password) = do
 doesUserExist :: ID Refine.User -> App Bool
 doesUserExist uid = do
   isJust <$> userHandle (Users.getUserById (fromUserID uid))
+
+devModeUser :: Username
+devModeUser = "dev"
+
+devModePass :: Password
+devModePass = "pass"
+
+-- | Makes the dev user logs in to the system if the user is not logged in.
+--
+-- The user should be present in the database, or the user handling should
+-- be mocked
+devMode :: (UserHandleM uh, DatabaseM db) => AppM db uh a -> AppM db uh a
+devMode m = do
+  u <- gets (view appUserState)
+  case u of
+    UserLoggedOut    -> void . login $ Login devModeUser devModePass
+    UserLoggedIn _ _ -> pure ()
+  m

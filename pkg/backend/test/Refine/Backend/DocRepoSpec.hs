@@ -73,6 +73,7 @@ cfg = Config
   , _cfgWarpSettings  = def
   , _cfgCsrfSecret    = "CSRF-SECRET"
   , _cfgSessionLength = TimespanSecs 30
+  , _cfgDevMode       = False
   }
 
 provideRunner :: ActionWith (DocRepo :~> IO) -> IO ()

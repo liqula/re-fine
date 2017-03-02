@@ -34,8 +34,7 @@ import           Data.Default (def)
 import           Data.Proxy (Proxy(Proxy))
 import           Data.Typeable (Typeable, typeOf)
 import           Data.Map (elems)
-import           Data.Time (NominalDiffTime)
-import           Data.String.Conversions (SBS, ST, LBS, cs, (<>))
+import           Data.String.Conversions (SBS, LBS, cs, (<>))
 import           Network.HTTP.Types.Status (Status(statusCode))
 import           Network.HTTP.Types (Method, Header, methodGet)
 import           Network.URI (URI, uriToString)
@@ -50,11 +49,11 @@ import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Backend.Config
 import Refine.Backend.Database (DB)
 import Refine.Backend.Database.Class as DB
+import Refine.Backend.DevMode (mockLogin)
 import Refine.Backend.DocRepo as DocRepo
 import Refine.Backend.Server
-import Refine.Backend.User.Core (UH, SessionId(..), PasswordPlain(..), fromUserID)
+import Refine.Backend.User.Core (UH)
 import Refine.Backend.User.Class (UserHandleM)
-import Refine.Backend.User.Free
 import Refine.Common.Rest
 import Refine.Common.Types as Common
 
@@ -92,27 +91,15 @@ runDB' sess = runExceptT . run (backendMonad sess)
 errorOnLeft :: Show e => IO (Either e a) -> IO a
 errorOnLeft action = either (throwIO . ErrorCall . show) pure =<< action
 
-mockLogin :: RunUH FreeUH
-mockLogin = runFreeUH $ UHMock
-  { mockCreateUser     = \_u -> pure . Right . fromUserID $ ID 0
-  , mockGetUserById    = \_l -> pure . Just $ undefined
-  , mockAuthUser       = mockedLogin
-  , mockVerifySession  = \_s -> pure . Just $ fromUserID $ ID 0
-  , mockDestroySession = \_s -> pure ()
-  }
-
-mockedLogin :: Monad m => ST -> PasswordPlain -> NominalDiffTime -> m (Maybe SessionId)
-mockedLogin _u "" _t = pure $ Nothing
-mockedLogin _u _p _t = pure . Just $ SessionId "mock-session"
 
 
 createMockedTestSession :: (UserHandleM uh) => RunUH uh -> ActionWith (Backend DB uh) -> IO ()
 createMockedTestSession runUh action = withTempCurrentDirectory $ do
-  void $ action =<< mkTestBackend (def & cfgShouldLog .~ False) runUh
+  void $ action =<< mkDevModeBackend (def & cfgShouldLog .~ False) runUh
 
 createTestSession :: ActionWith (Backend DB UH) -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
-  void $ action =<< mkBackend (def & cfgShouldLog .~ False)
+  void $ action =<< mkProdBackend (def & cfgShouldLog .~ False)
 
 -- * test helpers
 

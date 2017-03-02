@@ -26,7 +26,7 @@
 module Refine.Backend.Server
   ( refineCookieName
   , startBackend
-  , Backend(..), mkBackend, mkTestBackend
+  , Backend(..), mkProdBackend, mkDevModeBackend
   , refineApi
   ) where
 
@@ -53,6 +53,7 @@ import Refine.Backend.App.MigrateDB
 import Refine.Backend.Config
 import Refine.Backend.Database (Database, DB, DBError(..), createDBRunner)
 import Refine.Backend.DocRepo (DocRepoError(..), createRunRepo)
+import Refine.Backend.DevMode (mockLogin)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
@@ -103,11 +104,15 @@ refineApi =
   :<|> Refine.Backend.App.logout
 
 startBackend :: Config -> IO ()
-startBackend cfg = do
-  Warp.runSettings (warpSettings cfg) . backendServer =<< mkBackend cfg
+startBackend cfg =
+  if cfg ^. cfgDevMode
+    then do backend <- mkDevModeBackend cfg mockLogin
+            Warp.runSettings (warpSettings cfg) $ backendServer backend
+    else do backend <- mkProdBackend cfg
+            Warp.runSettings (warpSettings cfg) $ backendServer backend
 
-mkBackend :: Config -> IO (Backend DB UH)
-mkBackend cfg = do
+mkProdBackend :: Config -> IO (Backend DB UH)
+mkProdBackend cfg = do
   createDataDirectories cfg
 
   (runDb, userHandler) <- createDBRunner cfg
@@ -120,8 +125,8 @@ mkBackend cfg = do
 
   pure backend
 
-mkTestBackend :: (UserHandleM uh) => Config -> RunUH uh -> IO (Backend DB uh)
-mkTestBackend cfg runUh = do
+mkDevModeBackend :: (UserHandleM uh) => Config -> RunUH uh -> IO (Backend DB uh)
+mkDevModeBackend cfg runUh = do
   createDataDirectories cfg
 
   (runDb, _) <- createDBRunner cfg
@@ -141,7 +146,13 @@ mkServerApp
 mkServerApp cfg runDb runDocRepo runUh = do
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
-      app    = runApp runDb runDocRepo runUh logger (cfg ^. cfgCsrfSecret . to CsrfSecret) (cfg ^. cfgSessionLength) id
+      app    = runApp runDb
+                      runDocRepo
+                      runUh
+                      logger
+                      (cfg ^. cfgCsrfSecret . to CsrfSecret)
+                      (cfg ^. cfgSessionLength)
+                      (if cfg ^. cfgDevMode then devMode else id)
 
   -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
   -- may need to refactor, e.g. by using extra arguments in the end point types.

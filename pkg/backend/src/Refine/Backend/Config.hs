@@ -33,6 +33,7 @@ data Config = Config
   , _cfgWarpSettings  :: WarpSettings   -- ^ check test suite for examples of what can be put in here.
   , _cfgCsrfSecret    :: ST             -- ^ The secret for csrf
   , _cfgSessionLength :: Timespan       -- ^ Session cookie life expectancy
+  , _cfgDevMode       :: Bool           -- ^ In dev mode all login attempt will be successful and dev-mode user will be forced login into the sessions
   }
   deriving (Eq, Show, Generic, FromJSON, ToJSON)
 
@@ -52,6 +53,7 @@ instance Default Config where
     , _cfgWarpSettings  = def
     , _cfgCsrfSecret    = "CSRF-SECRET"
     , _cfgSessionLength = TimespanHours 72
+    , _cfgDevMode       = False
     }
 
 instance Default DBKind where
