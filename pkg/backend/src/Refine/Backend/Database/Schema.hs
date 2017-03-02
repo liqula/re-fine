@@ -35,7 +35,7 @@ import Refine.Common.Types.VDoc (Abstract, Title)
 import Refine.Common.Types.Chunk (ChunkRange(..))
 import Refine.Backend.Database.Field()
 import Refine.Backend.DocRepo.Core (EditHandle, RepoHandle)
-import Refine.Backend.User.Core (LoginId)
+import Refine.Backend.User (LoginId)
 
 
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|

@@ -26,7 +26,7 @@
 module Refine.Backend.Server
   ( refineCookieName
   , startBackend
-  , Backend(..), mkBackend
+  , Backend(..), mkProdBackend, mkDevModeBackend
   , refineApi
   ) where
 
@@ -51,12 +51,12 @@ import           System.FilePath (dropFileName)
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
 import Refine.Backend.Config
-import Refine.Backend.Database (DB, DBError(..), createDBRunner)
+import Refine.Backend.Database (Database, DB, DBError(..), createDBRunner)
 import Refine.Backend.DocRepo (DocRepoError(..), createRunRepo)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
-import Refine.Backend.User.Core (CreateUserError(..))
+import Refine.Backend.User (CreateUserError(..), UserDB, UH, MockUH_, FreeUH, UserHandle, UserHandleC, runUH, mockLogin)
 import Refine.Common.Rest
 import Refine.Prelude (leftToError)
 
@@ -65,6 +65,7 @@ import Refine.Prelude (leftToError)
 
 refineCookieName :: SBS
 refineCookieName = "refine"
+
 
 -- * Initialization
 
@@ -78,12 +79,13 @@ createDataDirectories cfg = do
 
 -- * backend creation
 
-data Backend = Backend
+data Backend db uh = Backend
   { backendServer :: Application
-  , backendMonad  :: App DB CN.:~> ExceptT AppError IO
+  , backendRunApp :: AppM db uh CN.:~> ExceptT AppError IO
   }
 
-refineApi :: ServerT RefineAPI (App DB)
+refineApi :: (Monad db, Database db, Monad uh, UserHandle uh)
+          => ServerT RefineAPI (AppM db uh)
 refineApi =
        Refine.Backend.App.listVDocs
   :<|> Refine.Backend.App.getCompositeVDoc
@@ -100,17 +102,48 @@ refineApi =
   :<|> Refine.Backend.App.logout
 
 startBackend :: Config -> IO ()
-startBackend cfg = do
-  Warp.runSettings (warpSettings cfg) . backendServer =<< mkBackend cfg
+startBackend cfg =
+  if cfg ^. cfgDevMode
+    then do backend <- mkProdBackend cfg
+            Warp.runSettings (warpSettings cfg) $ backendServer backend
+    else do backend <- mkDevModeBackend cfg mockLogin
+            Warp.runSettings (warpSettings cfg) $ backendServer backend
 
-mkBackend :: Config -> IO Backend
-mkBackend cfg = do
+
+mkProdBackend :: Config -> IO (Backend DB UH)
+mkProdBackend cfg = mkBackend cfg runUH migrateDB
+
+mkDevModeBackend :: Config -> MockUH_ -> IO (Backend DB FreeUH)
+mkDevModeBackend cfg mock = mkBackend cfg (\_ -> runUH mock) migrateDBDevMode
+
+mkBackend :: UserHandleC uh => Config -> (UserDB -> RunUH uh) -> AppM DB uh a -> IO (Backend DB uh)
+mkBackend cfg initUH migrate = do
   createDataDirectories cfg
-  (runDb, userHandler) <- createDBRunner cfg
+
+  (runDb, runUserHandle) <- createDBRunner cfg
   runDocRepo <- createRunRepo cfg
+  backend    <- mkServerApp cfg runDb runDocRepo (initUH runUserHandle)
+
+  when (cfg ^. cfgShouldMigrate) $ do
+    void $ (natThrowError . backendRunApp backend) $$ do
+      migrate
+
+  pure backend
+
+
+mkServerApp
+    :: (Monad db, Database db, UserHandleC uh)
+    => Config -> RunDB db -> RunDocRepo -> RunUH uh -> IO (Backend db uh)
+mkServerApp cfg runDb runDocRepo runUh = do
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
-      app    = runApp runDb runDocRepo logger userHandler (cfg ^. cfgCsrfSecret . to CsrfSecret) (cfg ^. cfgSessionLength)
+      app    = runApp runDb
+                      runDocRepo
+                      runUh
+                      logger
+                      (cfg ^. cfgCsrfSecret . to CsrfSecret)
+                      (cfg ^. cfgSessionLength)
+                      (if cfg ^. cfgDevMode then devMode else id)
 
   -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
   -- may need to refactor, e.g. by using extra arguments in the end point types.
@@ -122,10 +155,6 @@ mkBackend cfg = do
               (toServantError . cnToSn app)
               refineApi
               (Just (Servant.serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
-
-  when (cfg ^. cfgShouldMigrate) $ do
-    void $ (natThrowError . app) $$ do
-      migrateDB
 
   pure $ Backend srvApp app
 
@@ -153,6 +182,7 @@ toApiError = \case
   AppCsrfError e         -> ApiCsrfError e
   AppSessionError        -> ApiSessionError
   AppSanityCheckError e  -> ApiSanityCheckError e
+  AppUserHandleError e   -> ApiUserHandleError . cs $ show e
 
 -- | Turns AppError to its kind of servant error.
 appServantErr :: AppError -> ServantErr
@@ -167,6 +197,7 @@ appServantErr = \case
   AppCsrfError _           -> err403
   AppSessionError          -> err403
   AppSanityCheckError _    -> err409
+  AppUserHandleError _     -> err500
 
 dbServantErr :: DBError -> ServantErr
 dbServantErr = \case
@@ -190,7 +221,7 @@ userCreationError = \case
 
 -- * Instances for Servant.Cookie.Session
 
-instance SCS.MonadRandom (App db) where
+instance SCS.MonadRandom (AppM db uh) where
   getRandomBytes = appIO . SCS.getRandomBytes
 
 instance SCS.ThrowError500 AppError where
@@ -210,7 +241,7 @@ instance SCS.HasSessionCsrfToken AppState where
       toSCS   = SCS.CsrfToken . cs . _csrfToken
       csrfTokenIso = iso (fmap toSCS) (fmap fromSCS)
 
-instance SCS.GetCsrfSecret (AppContext db) where
+instance SCS.GetCsrfSecret (AppContext db uh) where
   csrfSecret = appCsrfSecret . Refine.Backend.Types.csrfSecret . to (Just . SCS.CsrfSecret . cs)
 
 instance SCS.GetSessionToken AppState where

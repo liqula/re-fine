@@ -24,6 +24,7 @@ module Refine.Backend.ServerSpec where
 
 import           Control.Exception (throwIO, ErrorCall(ErrorCall))
 import           Control.Lens ((^.), (.~), (&), to)
+import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Except (runExceptT)
 import           Control.Monad (void)
 import           Control.Natural (run)
@@ -31,6 +32,7 @@ import           Data.Aeson (FromJSON, ToJSON, decode, eitherDecode, encode)
 import qualified Data.ByteString as SBS
 import           Data.Default (def)
 import           Data.Proxy (Proxy(Proxy))
+import           Data.Typeable (Typeable, typeOf)
 import           Data.Map (elems)
 import           Data.String.Conversions (SBS, LBS, cs, (<>))
 import           Network.HTTP.Types.Status (Status(statusCode))
@@ -43,32 +45,35 @@ import           Servant.Utils.Links (safeLink)
 import           Test.Hspec
 
 import Refine.Backend.App as App
-import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Backend.Config
-import Refine.Backend.Database (DB)
 import Refine.Backend.Database.Class as DB
+import Refine.Backend.Database (DB)
 import Refine.Backend.DocRepo as DocRepo
 import Refine.Backend.Server
+import Refine.Backend.Test.Util (withTempCurrentDirectory)
+import Refine.Backend.User
 import Refine.Common.Rest
 import Refine.Common.Types as Common
+
+{-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
 
 -- * machine room
 
-runWai :: Backend -> Wai.Session a -> IO a
+runWai :: Backend db uh -> Wai.Session a -> IO a
 runWai sess m = Wai.runSession m (backendServer sess)
 
 -- | Call 'runWaiBodyE' and throw an error if the expected type cannot be read, discard the
 -- response, keep only the body.
-runWaiBody :: FromJSON a => Backend -> Wai.Session SResponse -> IO a
+runWaiBody :: FromJSON a => Backend db uh -> Wai.Session SResponse -> IO a
 runWaiBody sess = fmap fst . runWaiBodyRsp sess
 
 -- | Call 'runWaiBodyE' and throw an error if the expected type cannot be read.
-runWaiBodyRsp :: FromJSON a => Backend -> Wai.Session SResponse -> IO (a, SResponse)
+runWaiBodyRsp :: FromJSON a => Backend db uh -> Wai.Session SResponse -> IO (a, SResponse)
 runWaiBodyRsp sess = errorOnLeft . runWaiBodyE sess
 
 -- | Run a rest call and parse the body.
-runWaiBodyE :: FromJSON a => Backend -> Wai.Session SResponse -> IO (Either String (a, SResponse))
+runWaiBodyE :: FromJSON a => Backend db uh -> Wai.Session SResponse -> IO (Either String (a, SResponse))
 runWaiBodyE sess m = do
   resp <- runWai sess m
   pure $ case eitherDecode $ simpleBody resp of
@@ -76,19 +81,24 @@ runWaiBodyE sess m = do
     Right x  -> Right (x, resp)
 
 -- | Call 'runDB'' and crash on 'Left'.
-runDB :: Backend -> App DB a -> IO a
+runDB :: Backend DB uh -> AppM DB uh a -> IO a
 runDB sess = errorOnLeft . runDB' sess
 
 -- | Call an 'App' action.
-runDB' :: Backend -> App DB a -> IO (Either AppError a)
-runDB' sess = runExceptT . run (backendMonad sess)
+runDB' :: Backend DB uh -> AppM DB uh a -> IO (Either AppError a)
+runDB' sess = runExceptT . run (backendRunApp sess)
 
 errorOnLeft :: Show e => IO (Either e a) -> IO a
 errorOnLeft action = either (throwIO . ErrorCall . show) pure =<< action
 
-createTestSession :: ActionWith Backend -> IO ()
+
+createDevModeTestSession :: ActionWith (Backend DB FreeUH) -> IO ()
+createDevModeTestSession action = withTempCurrentDirectory $ do
+  void $ action =<< mkDevModeBackend (def & cfgShouldLog .~ False) mockLogin
+
+createTestSession :: ActionWith (Backend DB UH) -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
-  void $ action =<< mkBackend (def & cfgShouldLog .~ False)
+  void $ action =<< mkProdBackend (def & cfgShouldLog .~ False)
 
 
 -- * test helpers
@@ -109,6 +119,13 @@ get path = request methodGet path [] ""
 
 post :: (ToJSON a) => SBS -> a -> Wai.Session SResponse
 post path json = request "POST" path [("Content-Type", "application/json")] (encode json)
+
+postJSON :: forall a b . (Typeable a, ToJSON a, FromJSON b) => SBS -> a -> Wai.Session b
+postJSON path json = do
+  resp <- request "POST" path [("Content-Type", "application/json")] (encode json)
+  liftIO $ case eitherDecode $ simpleBody resp of
+    Left err -> throwIO . ErrorCall $ unlines [cs path, show (typeOf json), show resp, show err]
+    Right x  -> pure x
 
 -- | This is from hspec-wai, but we modified it to work on 'Wai.Session' directly.  'WaiSession'
 -- does not keep the cookies in the 'Session' between requests.
@@ -157,8 +174,12 @@ logoutUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogout
 -- * test cases
 
 spec :: Spec
-spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (needs some work)
+spec = do -- FUTUREWORK: mark this as 'parallel' (needs some work)
+  specMockedLogin
+  specUserHandling
 
+specMockedLogin :: Spec
+specMockedLogin = around createDevModeTestSession $ do
   describe "sListVDocs" $ do
     it "returns a vdocs list with HTTP status 200" $ \sess -> do
       resp :: SResponse <- runWai sess $ get listVDocsUri
@@ -192,27 +213,31 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
   describe "sAddNote" $ do
     it "stores note with full-document chunk range" $ \sess -> do
-      pendingWith "Need login"
-      fe :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
-      fn :: Note          <- runWaiBody sess $
-        post
-          (addNoteUri (fe ^. compositeVDocRepo . vdocHeadEdit))
-          (CreateNote "[note]" True (ChunkRange Nothing Nothing))
-      be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
-      be ^. compositeVDocNotes . to elems `shouldContain` [fn]
+      runWai sess $ do
+        un :: Username <- postJSON loginUri $ Login "username" "password"
+        liftIO $ un `shouldBe` "username"
+        fe :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
+        fn :: Note          <- postJSON
+            (addNoteUri (fe ^. compositeVDocRepo . vdocHeadEdit))
+            (CreateNote "[note]" True (ChunkRange Nothing Nothing))
+        liftIO $ do
+          be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
+          be ^. compositeVDocNotes . to elems `shouldContain` [fn]
 
     it "stores note with non-trivial valid chunk range" $ \sess -> do
-      pendingWith "Need login"
-      fe :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
-      fn :: Note          <- runWaiBody sess $
-        let cp1, cp2 :: ChunkPoint
-            cp1 = ChunkPoint (DataUID 1) 0
+      runWai sess $ do
+        un :: Username <- postJSON loginUri $ Login "username" "password"
+        liftIO $ un `shouldBe` "username"
+        fe :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
+        let cp1 = ChunkPoint (DataUID 1) 0
             cp2 = ChunkPoint (DataUID 1) 1
-        in post
+        fn :: Note <- postJSON
           (addNoteUri (fe ^. compositeVDocRepo . vdocHeadEdit))
           (CreateNote "[note]" True (ChunkRange (Just cp1) (Just cp2)))
-      be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
-      be ^. compositeVDocNotes . to elems `shouldContain` [fn]
+
+        liftIO $ do
+          be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
+          be ^. compositeVDocNotes . to elems `shouldContain` [fn]
 
     it "fails with error on non-trivial *invalid* chunk range" $ \sess -> do
       vdoc :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
@@ -232,30 +257,37 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
 
   describe "sAddDiscussion" $ do
     it "stores discussion with no ranges" $ \sess -> do
-      pendingWith "Need login"
-      fe :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
-      fn :: CompositeDiscussion <- runWaiBody sess $
-        post
-          (addDiscussionUri (fe ^. compositeVDocRepo . vdocHeadEdit))
-          (CreateDiscussion "[discussion initial statement]" True (ChunkRange Nothing Nothing))
-      be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
-      be ^. compositeVDocDiscussions . to elems `shouldContain` [fn]
+      runWai sess $ do
+        un :: Username <- postJSON loginUri $ Login "username" "password"
+        liftIO $ un `shouldBe` "username"
+        fe :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
+        fn :: CompositeDiscussion <-
+          postJSON
+            (addDiscussionUri (fe ^. compositeVDocRepo . vdocHeadEdit))
+            (CreateDiscussion "[discussion initial statement]" True (ChunkRange Nothing Nothing))
+
+        liftIO $ do
+          be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
+          be ^. compositeVDocDiscussions . to elems `shouldContain` [fn]
 
     it "stores discussion and gives access to other user" $ \sess -> do
-      pendingWith "Need login"
-      fc :: CompositeVDoc <- runWaiBody sess $ post changeAccessUri sampleCreateVDoc
-      fd :: CompositeDiscussion <- runWaiBody sess $
-        post
-          (addDiscussionUri (fc ^. compositeVDocRepo . vdocHeadEdit))
-          (CreateDiscussion "[discussion initial statement]" True (ChunkRange Nothing Nothing))
-      let did = fd ^. Common.compositeDiscussion . discussionID
-          otherUser = ID 1
-      () <- runWaiBody sess $
-        post
-          changeAccessUri
-          (ChangeAccess (ContribIDDiscussion did) Grant otherUser)
-      users :: [ID User] <- runDB sess . db $ usersOfDiscussion did
-      users `shouldContain` [otherUser]
+      runWai sess $ do
+        un :: Username <- postJSON loginUri $ Login "username" "password"
+        liftIO $ un `shouldBe` "username"
+        fc :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
+
+        fd :: CompositeDiscussion <- postJSON
+            (addDiscussionUri (fc ^. compositeVDocRepo . vdocHeadEdit))
+            (CreateDiscussion "[discussion initial statement]" True (ChunkRange Nothing Nothing))
+
+        let did = fd ^. Common.compositeDiscussion . discussionID
+            otherUser = ID 1
+        () <- postJSON
+                changeAccessUri
+                (ChangeAccess (ContribIDDiscussion did) Grant otherUser)
+        liftIO $ do
+          users :: [ID User] <- runDB sess . db $ usersOfDiscussion did
+          users `shouldContain` [otherUser]
 
   describe "sAddStatement" $ do
     it "stores statement for given discussion" $ \_sess -> do
@@ -284,6 +316,8 @@ spec = around createTestSession $ do  -- FUTUREWORK: mark this as 'parallel' (ne
         be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
         be ^. compositeVDocEdits . to elems`shouldContain` [fp]
 
+specUserHandling :: Spec
+specUserHandling = around createTestSession $ do
   describe "User handling" $ do
     let doCreate = post createUserUri (CreateUser userName "mail@email.com" userPass)
         doLogin = post loginUri

@@ -37,13 +37,32 @@ import Refine.Backend.App.User    as App
 import Refine.Backend.App.VDoc    as App
 import Refine.Backend.Logger
 import Refine.Backend.Types (CsrfSecret)
-import Refine.Backend.User.Core (UserHandle)
 import Refine.Prelude
 
 
-runApp :: RunDB db -> RunDocRepo -> Logger -> UserHandle -> CsrfSecret -> Timespan -> App db :~> ExceptT AppError IO
-runApp runDB runDocRepo logger userHandle csrfSecret sessionLength =
-  Nat $ runSR (AppState Nothing UserLoggedOut) (AppContext runDB runDocRepo logger userHandle csrfSecret sessionLength) . unApp
-  where
-    runSR :: (Monad m) => s -> r -> StateT s (ReaderT r m) a -> m a
-    runSR s r m = runReaderT (evalStateT m s) r
+runApp
+  :: forall (db :: * -> *) (uh :: * -> *)
+  .  RunDB db
+  -> RunDocRepo
+  -> RunUH uh
+  -> Logger
+  -> CsrfSecret
+  -> Timespan
+  -> (forall a . AppM db uh a -> AppM db uh a)
+  -> (AppM db uh :~> ExceptT AppError IO)
+runApp
+  runDB
+  runDocRepo
+  runUH
+  logger
+  csrfSecret
+  sessionLength
+  wrapper =
+    Nat (runSR
+            (AppState Nothing UserLoggedOut)
+            (AppContext runDB runDocRepo runUH logger csrfSecret sessionLength)
+          . unApp
+          . wrapper)
+    where
+      runSR :: (Monad m) => s -> r -> StateT s (ReaderT r m) a -> m a
+      runSR s r m = runReaderT (evalStateT m s) r

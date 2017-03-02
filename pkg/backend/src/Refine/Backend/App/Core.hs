@@ -23,23 +23,26 @@
 
 module Refine.Backend.App.Core (
     RunDB
+  , RunUH
   , RunDocRepo
   , AppContext(..)
   , appRunDB
   , appRunDocRepo
+  , appRunUH
   , appLogger
-  , appUserHandle
   , appCsrfSecret
   , appSessionLength
   , AppState(..)
   , appCsrfToken
   , appUserState
   , AppUserState(..)
-  , App(..)
+  , App
+  , AppM(..)
   , AppError(..)
   , appIO
   , db
   , docRepo
+  , userHandle
   , appLog
   ) where
 
@@ -55,7 +58,7 @@ import Refine.Backend.Database
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Types
-import Refine.Backend.User.Core
+import Refine.Backend.User
 import Refine.Common.Types.Prelude (ID(..))
 import Refine.Common.Types.User as Types (User)
 import Refine.Common.VDoc.HTML (ChunkRangeError(..))
@@ -64,11 +67,11 @@ import Refine.Prelude.TH (makeRefineType)
 
 type RunDocRepo = DocRepo :~> ExceptT DocRepoError IO
 
-data AppContext db = AppContext
+data AppContext db uh = AppContext
   { _appRunDB         :: RunDB db
   , _appRunDocRepo    :: RunDocRepo
+  , _appRunUH         :: RunUH uh
   , _appLogger        :: Logger
-  , _appUserHandle    :: UserHandle
   , _appCsrfSecret    :: CsrfSecret
   , _appSessionLength :: Timespan
   }
@@ -94,15 +97,22 @@ makeLenses ''AppState
 -- * user authentication (login)
 -- * user authorization (groups)
 -- * use one db connection in one run, commit the result at the end.
-newtype App db a = App { unApp :: StateT AppState (ReaderT (AppContext db) (ExceptT AppError IO)) a }
+newtype AppM db uh a = AppM { unApp :: StateT AppState (ReaderT (AppContext db uh) (ExceptT AppError IO)) a }
   deriving
     ( Functor
     , Applicative
     , Monad
-    , MonadReader (AppContext db)
+    , MonadReader (AppContext db uh)
     , MonadError AppError
     , MonadState AppState
     )
+
+-- | The 'App' defines the final constraint set that the
+-- App API should use. Scraps the boilerplate for the
+-- Refine.Backend.App.* modules.
+type App a =
+  forall db uh . (DatabaseC db, UserHandleC uh)
+  => AppM db uh a
 
 data AppError
   = AppUnknownError ST
@@ -115,15 +125,16 @@ data AppError
   | AppCsrfError ST
   | AppSessionError
   | AppSanityCheckError ST
+  | AppUserHandleError UserHandleError
   deriving (Show, Generic)
 
 makeRefineType ''AppError
 
-appIO :: IO a -> App db a
-appIO = App . liftIO
+appIO :: IO a -> AppM db uh a
+appIO = AppM . liftIO
 
-db :: db a -> App db a
-db m = App $ do
+db :: db a -> AppM db uh a
+db m = AppM $ do
   mu <- user <$> gets (view appUserState)
   (Nat runDB) <- ($ DBContext mu) <$> view appRunDB
   r <- liftIO (runExceptT (runDB m))
@@ -133,13 +144,19 @@ db m = App $ do
       UserLoggedOut     -> Nothing
       UserLoggedIn u _s -> Just u
 
-docRepo :: DocRepo a -> App db a
-docRepo m = App $ do
+docRepo :: DocRepo a -> AppM db uh a
+docRepo m = AppM $ do
   (Nat runDRepo) <- view appRunDocRepo
   r <- liftIO (runExceptT (runDRepo m))
   leftToError AppDocRepoError r
 
-appLog :: String -> App db ()
-appLog msg = App $ do
+userHandle :: uh a -> AppM db uh a
+userHandle m = AppM $ do
+  (Nat runUserHandle) <- view appRunUH
+  r <- liftIO (runExceptT (runUserHandle m))
+  leftToError AppUserHandleError r
+
+appLog :: String -> AppM db uh ()
+appLog msg = AppM $ do
   logger <- view appLogger
   liftIO $ unLogger logger msg
