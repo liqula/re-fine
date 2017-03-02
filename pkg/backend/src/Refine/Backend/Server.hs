@@ -59,7 +59,7 @@ import Refine.Backend.Natural
 import Refine.Backend.Types
 import Refine.Backend.User.Core (CreateUserError(..))
 import Refine.Backend.User hiding (migrateDB)
-import Refine.Backend.User.Class (UserHandle) -- FIXME: Reexport
+import Refine.Backend.User.Class (UserHandle)
 import Refine.Common.Rest
 import Refine.Prelude (leftToError)
 
