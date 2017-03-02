@@ -86,7 +86,7 @@ runDB sess = errorOnLeft . runDB' sess
 
 -- | Call an 'App' action.
 runDB' :: Backend DB uh -> AppM DB uh a -> IO (Either AppError a)
-runDB' sess = runExceptT . run (backendMonad sess)
+runDB' sess = runExceptT . run (backendRunApp sess)
 
 errorOnLeft :: Show e => IO (Either e a) -> IO a
 errorOnLeft action = either (throwIO . ErrorCall . show) pure =<< action
