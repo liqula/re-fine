@@ -73,7 +73,7 @@ destroySession_ s = liftF $ DestroySession s id
 instance UserHandle FreeUH where
   type UserHandleInit FreeUH = MockUH_
 
-  runUH mock = runFreeUH mock
+  runUH          = runFreeUH
 
   createUser     = createUser_
   getUserById    = getUserById_
