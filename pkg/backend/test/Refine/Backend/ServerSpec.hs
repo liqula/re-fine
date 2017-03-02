@@ -51,7 +51,7 @@ import Refine.Backend.Database (DB)
 import Refine.Backend.DocRepo as DocRepo
 import Refine.Backend.Server
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
-import Refine.Backend.User hiding (User)  -- TODO: give this a different name!
+import Refine.Backend.User
 import Refine.Common.Rest
 import Refine.Common.Types as Common
 

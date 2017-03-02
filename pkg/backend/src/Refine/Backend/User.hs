@@ -24,8 +24,6 @@
 module Refine.Backend.User (module RE) where
 
 import Refine.Backend.User.Class as RE
-import Refine.Backend.User.Core as RE hiding (migrateDB)
+import Refine.Backend.User.Core as RE hiding (migrateDB, User(..))  -- ('User' clashes with refine-common.)
 import Refine.Backend.User.Impl as RE
 import Refine.Backend.User.Free as RE
-
-

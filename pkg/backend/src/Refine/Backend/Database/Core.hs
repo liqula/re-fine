@@ -38,6 +38,10 @@ newtype DBContext = DBContext
   { _dbLoggedInUser :: Maybe (ID User)
   }
 
+-- FIXME: follow the structure as in "Refine.Backend.User.*" (here as well as in "...DocRepo").
+-- this may introduce some circular dependencies, but we may be able to resolve them with creating
+-- more sub-modules, like splitting up "Refine.Backend.Database.DB" into
+-- "Refine.Backend.Database.DB" and "Refine.Backend.Database.DB.Type".
 newtype DB a = DB { unDB :: ExceptT DBError (ReaderT DBContext SQLM) a }
   deriving
     ( Functor

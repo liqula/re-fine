@@ -36,6 +36,7 @@ import Refine.Backend.App.Session
 import Refine.Backend.Database.Class (DatabaseM)
 import Refine.Backend.Types
 import Refine.Backend.User as User
+import Refine.Backend.User.Core as User (User(..))
 import Refine.Common.Types as Refine
 import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 
