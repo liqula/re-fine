@@ -25,7 +25,7 @@ module Refine.Backend.Types where
 import Control.Lens (makeLenses)
 import Data.String.Conversions (ST, cs)
 
-import Refine.Backend.User.Core (SessionId(..))
+import Refine.Backend.User (SessionId(..))
 
 
 newtype UserSession = UserSession { _unUserSession :: SessionId }

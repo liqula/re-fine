@@ -58,8 +58,7 @@ import Refine.Backend.Database
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Types
-import Refine.Backend.User.Core
-import Refine.Backend.User.Class
+import Refine.Backend.User
 import Refine.Common.Types.Prelude (ID(..))
 import Refine.Common.Types.User as Types (User)
 import Refine.Common.VDoc.HTML (ChunkRangeError(..))

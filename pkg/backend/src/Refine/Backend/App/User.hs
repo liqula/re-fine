@@ -35,10 +35,8 @@ import Refine.Backend.App.Core
 import Refine.Backend.App.Session
 import Refine.Backend.Database.Class (DatabaseM)
 import Refine.Backend.Types
-import Refine.Backend.User()
-import Refine.Backend.User.Core  as Users
-import Refine.Backend.User.Class as Users
-import Refine.Common.Types      as Refine
+import Refine.Backend.User as User
+import Refine.Common.Types as Refine
 import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 
 
@@ -47,13 +45,13 @@ import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 -- The rational here: It helps the future integration of different login
 -- providers.
 login :: Refine.Login -> App Username
-login (Login username (Users.PasswordPlain -> password)) = do
+login (Login username (User.PasswordPlain -> password)) = do
   appLog "login"
   sessionDuration <- timespanToNominalDiffTime . view appSessionLength <$> ask
   session <- nothingToError (AppUserNotFound username)
-             =<< userHandle (Users.authUser username password sessionDuration)
+             =<< userHandle (User.authUser username password sessionDuration)
   loginId <- nothingToError AppSessionError
-             =<< userHandle (Users.verifySession session)
+             =<< userHandle (User.verifySession session)
   void $ setUserSession (toUserID loginId) (UserSession session)
   pure username
 
@@ -63,7 +61,7 @@ logout = do
   st <- gets (view appUserState)
   case st of
     UserLoggedIn _user session -> do
-      void . userHandle $ Users.destroySession (session ^. unUserSession)
+      void . userHandle $ User.destroySession (session ^. unUserSession)
       clearUserSession
     UserLoggedOut -> do
       pure ()
@@ -71,19 +69,19 @@ logout = do
 createUser :: CreateUser -> App Refine.User
 createUser (CreateUser name email password) = do
   appLog "createUser"
-  let user = Users.User
-              { Users.u_name  = name
-              , Users.u_email = email
-              , Users.u_password = Users.makePassword (Users.PasswordPlain password)
-              , Users.u_active = True
+  let user = User.User
+              { User.u_name  = name
+              , User.u_email = email
+              , User.u_password = User.makePassword (User.PasswordPlain password)
+              , User.u_active = True
               }
   loginId <- leftToError AppUserCreationError
-             =<< userHandle (Users.createUser user)
-  pure . Refine.User . Users.toUserID $ loginId
+             =<< userHandle (User.createUser user)
+  pure . Refine.User . User.toUserID $ loginId
 
 doesUserExist :: ID Refine.User -> App Bool
 doesUserExist uid = do
-  isJust <$> userHandle (Users.getUserById (fromUserID uid))
+  isJust <$> userHandle (User.getUserById (fromUserID uid))
 
 devModeUser :: Username
 devModeUser = "dev"
