@@ -35,13 +35,11 @@ import Data.String.Conversions (ST)
 import Data.Time (NominalDiffTime)
 
 import Refine.Backend.User.Class
-import Refine.Backend.User.Core -- FIXME: Move to types.
+import Refine.Backend.User.Core
 import Refine.Common.Types (ID(ID))
 
 
-
--- FIXME: User Freer instead of Free
--- TODO: Rename to DBAPI
+-- FUTUREWORK: use "Freer" instead of "Free"
 data UHAPI a where
   CreateUser     :: User    -> (Either CreateUserError LoginId -> a) -> UHAPI a
   GetUserById    :: LoginId -> (Maybe User -> a) -> UHAPI a

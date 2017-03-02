@@ -66,6 +66,7 @@ import Refine.Prelude (leftToError)
 refineCookieName :: SBS
 refineCookieName = "refine"
 
+
 -- * Initialization
 
 createDataDirectories :: Config -> IO ()
