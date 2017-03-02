@@ -92,7 +92,6 @@ errorOnLeft :: Show e => IO (Either e a) -> IO a
 errorOnLeft action = either (throwIO . ErrorCall . show) pure =<< action
 
 
-
 createMockedTestSession :: RunUH FreeUH -> ActionWith (Backend DB FreeUH) -> IO ()
 createMockedTestSession runUserHandle action = withTempCurrentDirectory $ do
   void $ action =<< mkDevModeBackend (def & cfgShouldLog .~ False) runUserHandle
@@ -100,6 +99,7 @@ createMockedTestSession runUserHandle action = withTempCurrentDirectory $ do
 createTestSession :: ActionWith (Backend DB UH) -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
   void $ action =<< mkProdBackend (def & cfgShouldLog .~ False)
+
 
 -- * test helpers
 
@@ -133,6 +133,7 @@ request :: Method -> SBS -> [Header] -> LBS -> Wai.Session SResponse
 request method path headers body = Wai.srequest $ SRequest req body
   where
     req = Wai.setPath defaultRequest {requestMethod = method, requestHeaders = headers} path
+
 
 -- * endpoints
 
