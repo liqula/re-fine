@@ -57,6 +57,8 @@ import Refine.Backend.User.Free (FreeUH)
 import Refine.Common.Rest
 import Refine.Common.Types as Common
 
+{-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
+
 
 -- * machine room
 
@@ -178,7 +180,6 @@ spec = do -- FUTUREWORK: mark this as 'parallel' (needs some work)
   specMockedLogin
   specUserHandling
 
-{-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 specMockedLogin :: Spec
 specMockedLogin = around (createMockedTestSession mockLogin) $ do
   describe "sListVDocs" $ do
