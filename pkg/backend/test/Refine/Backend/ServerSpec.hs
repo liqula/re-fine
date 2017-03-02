@@ -53,7 +53,7 @@ import Refine.Backend.DevMode (mockLogin)
 import Refine.Backend.DocRepo as DocRepo
 import Refine.Backend.Server
 import Refine.Backend.User.Core (UH)
-import Refine.Backend.User.Class (UserHandleM)
+import Refine.Backend.User.Free (FreeUH)
 import Refine.Common.Rest
 import Refine.Common.Types as Common
 
@@ -93,9 +93,9 @@ errorOnLeft action = either (throwIO . ErrorCall . show) pure =<< action
 
 
 
-createMockedTestSession :: (UserHandleM uh) => RunUH uh -> ActionWith (Backend DB uh) -> IO ()
-createMockedTestSession runUh action = withTempCurrentDirectory $ do
-  void $ action =<< mkDevModeBackend (def & cfgShouldLog .~ False) runUh
+createMockedTestSession :: RunUH FreeUH -> ActionWith (Backend DB FreeUH) -> IO ()
+createMockedTestSession runUserHandle action = withTempCurrentDirectory $ do
+  void $ action =<< mkDevModeBackend (def & cfgShouldLog .~ False) runUserHandle
 
 createTestSession :: ActionWith (Backend DB UH) -> IO ()
 createTestSession action = withTempCurrentDirectory $ do

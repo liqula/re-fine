@@ -60,6 +60,7 @@ import Refine.Backend.Types
 import Refine.Backend.User.Core (CreateUserError(..))
 import Refine.Backend.User hiding (migrateDB)
 import Refine.Backend.User.Class (UserHandle)
+import Refine.Backend.User.Free (FreeUH)
 import Refine.Common.Rest
 import Refine.Prelude (leftToError)
 
@@ -125,13 +126,13 @@ mkProdBackend cfg = do
 
   pure backend
 
-mkDevModeBackend :: (UserHandleM uh) => Config -> RunUH uh -> IO (Backend DB uh)
-mkDevModeBackend cfg runUh = do
+mkDevModeBackend :: Config -> RunUH FreeUH -> IO (Backend DB FreeUH)
+mkDevModeBackend cfg runUserHandle = do
   createDataDirectories cfg
 
   (runDb, _) <- createDBRunner cfg
   runDocRepo <- createRunRepo cfg
-  backend    <- mkServerApp cfg runDb runDocRepo runUh
+  backend    <- mkServerApp cfg runDb runDocRepo runUserHandle
 
   when (cfg ^. cfgShouldMigrate) $ do
     void $ (natThrowError . backendRunApp backend) $$ do
