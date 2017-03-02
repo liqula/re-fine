@@ -45,15 +45,13 @@ import           Servant.Utils.Links (safeLink)
 import           Test.Hspec
 
 import Refine.Backend.App as App
-import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Backend.Config
-import Refine.Backend.Database (DB)
 import Refine.Backend.Database.Class as DB
-import Refine.Backend.DevMode (mockLogin)
+import Refine.Backend.Database (DB)
 import Refine.Backend.DocRepo as DocRepo
 import Refine.Backend.Server
-import Refine.Backend.User.Core (UH)
-import Refine.Backend.User.Free (FreeUH)
+import Refine.Backend.Test.Util (withTempCurrentDirectory)
+import Refine.Backend.User hiding (User)  -- TODO: give this a different name!
 import Refine.Common.Rest
 import Refine.Common.Types as Common
 
@@ -94,9 +92,9 @@ errorOnLeft :: Show e => IO (Either e a) -> IO a
 errorOnLeft action = either (throwIO . ErrorCall . show) pure =<< action
 
 
-createMockedTestSession :: RunUH FreeUH -> ActionWith (Backend DB FreeUH) -> IO ()
-createMockedTestSession runUserHandle action = withTempCurrentDirectory $ do
-  void $ action =<< mkDevModeBackend (def & cfgShouldLog .~ False) runUserHandle
+createDevModeTestSession :: ActionWith (Backend DB FreeUH) -> IO ()
+createDevModeTestSession action = withTempCurrentDirectory $ do
+  void $ action =<< mkDevModeBackend (def & cfgShouldLog .~ False) mockLogin
 
 createTestSession :: ActionWith (Backend DB UH) -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
@@ -181,7 +179,7 @@ spec = do -- FUTUREWORK: mark this as 'parallel' (needs some work)
   specUserHandling
 
 specMockedLogin :: Spec
-specMockedLogin = around (createMockedTestSession mockLogin) $ do
+specMockedLogin = around createDevModeTestSession $ do
   describe "sListVDocs" $ do
     it "returns a vdocs list with HTTP status 200" $ \sess -> do
       resp :: SResponse <- runWai sess $ get listVDocsUri

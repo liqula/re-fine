@@ -50,7 +50,7 @@ import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Backend.Types
-import Refine.Backend.User hiding (migrateDB)
+import Refine.Backend.User
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.User
 import Refine.Common.Types.VDoc

@@ -53,14 +53,10 @@ import Refine.Backend.App.MigrateDB
 import Refine.Backend.Config
 import Refine.Backend.Database (Database, DB, DBError(..), createDBRunner)
 import Refine.Backend.DocRepo (DocRepoError(..), createRunRepo)
-import Refine.Backend.DevMode (mockLogin)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
-import Refine.Backend.User.Core (CreateUserError(..))
-import Refine.Backend.User hiding (migrateDB)
-import Refine.Backend.User.Class (UserHandle)
-import Refine.Backend.User.Free (FreeUH)
+import Refine.Backend.User (CreateUserError(..), UserDB, UH, MockUH_, FreeUH, UserHandle, UserHandleM, runUH, mockLogin)
 import Refine.Common.Rest
 import Refine.Prelude (leftToError)
 
@@ -107,36 +103,29 @@ refineApi =
 startBackend :: Config -> IO ()
 startBackend cfg =
   if cfg ^. cfgDevMode
-    then do backend <- mkDevModeBackend cfg mockLogin
+    then do backend <- mkProdBackend cfg
             Warp.runSettings (warpSettings cfg) $ backendServer backend
-    else do backend <- mkProdBackend cfg
+    else do backend <- mkDevModeBackend cfg mockLogin
             Warp.runSettings (warpSettings cfg) $ backendServer backend
+
 
 mkProdBackend :: Config -> IO (Backend DB UH)
-mkProdBackend cfg = do
+mkProdBackend cfg = mkBackend cfg runUH migrateDB
+
+mkDevModeBackend :: Config -> MockUH_ -> IO (Backend DB FreeUH)
+mkDevModeBackend cfg mock = mkBackend cfg (\_ -> runUH mock) migrateDBDevMode
+
+mkBackend :: UserHandleM uh => Config -> (UserDB -> RunUH uh) -> AppM DB uh a -> IO (Backend DB uh)
+mkBackend cfg initUH migrate = do
   createDataDirectories cfg
 
-  (runDb, userHandler) <- createDBRunner cfg
+  (runDb, runUserHandle) <- createDBRunner cfg
   runDocRepo <- createRunRepo cfg
-  backend    <- mkServerApp cfg runDb runDocRepo (runUH userHandler)
+  backend    <- mkServerApp cfg runDb runDocRepo (initUH runUserHandle)
 
   when (cfg ^. cfgShouldMigrate) $ do
     void $ (natThrowError . backendRunApp backend) $$ do
-      migrateDB
-
-  pure backend
-
-mkDevModeBackend :: Config -> RunUH FreeUH -> IO (Backend DB FreeUH)
-mkDevModeBackend cfg runUserHandle = do
-  createDataDirectories cfg
-
-  (runDb, _) <- createDBRunner cfg
-  runDocRepo <- createRunRepo cfg
-  backend    <- mkServerApp cfg runDb runDocRepo runUserHandle
-
-  when (cfg ^. cfgShouldMigrate) $ do
-    void $ (natThrowError . backendRunApp backend) $$ do
-      migrateDBDevMode
+      migrate
 
   pure backend
 

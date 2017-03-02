@@ -153,8 +153,8 @@ docRepo m = AppM $ do
 
 userHandle :: uh a -> AppM db uh a
 userHandle m = AppM $ do
-  (Nat runUH) <- view appRunUH
-  r <- liftIO (runExceptT (runUH m))
+  (Nat runUserHandle) <- view appRunUH
+  r <- liftIO (runExceptT (runUserHandle m))
   leftToError AppUserHandleError r
 
 appLog :: String -> AppM db uh ()

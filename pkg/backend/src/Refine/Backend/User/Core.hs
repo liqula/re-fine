@@ -30,8 +30,6 @@ module Refine.Backend.User.Core
   , UserHandleContext(..), userBackend
   , UserHandleError
   , RunUH
-  , UH(..)
-  , uhIO
   , migrateDB
   , toUserID
   , fromUserID
@@ -46,7 +44,6 @@ module Refine.Backend.User.Core
 
 import Control.Lens (makeLenses)
 import Control.Monad.Except
-import Control.Monad.Reader
 import Control.Natural
 import Data.Monoid
 import Data.String.Conversions (ST)
@@ -77,17 +74,6 @@ data UserHandleError
 makeRefineType ''UserHandleError
 
 type RunUH uh = uh :~> ExceptT UserHandleError IO
-
-newtype UH a = UH { unUH :: ReaderT UserHandleContext (ExceptT UserHandleError IO) a }
-  deriving
-    ( Functor
-    , Applicative
-    , Monad
-    , MonadReader UserHandleContext
-    )
-
-uhIO :: IO a -> UH a
-uhIO = UH . liftIO
 
 deriving instance Generic CreateUserError
 

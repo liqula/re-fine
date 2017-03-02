@@ -21,34 +21,11 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+module Refine.Backend.User (module RE) where
 
-module Refine.Backend.User (
-    runUH
-  , module Refine.Backend.User.Core
-  , module Refine.Backend.User.Class
-  ) where
+import Refine.Backend.User.Class as RE
+import Refine.Backend.User.Core as RE hiding (migrateDB)
+import Refine.Backend.User.Impl as RE
+import Refine.Backend.User.Free as RE
 
-import Control.Natural
-import Control.Monad.Except
-import Control.Monad.Reader
-
-import Refine.Backend.User.Core
-import Refine.Backend.User.Impl as UH
-import Refine.Backend.User.Class
-
-
-runUH :: UserDB -> RunUH UH
-runUH usersHandle = Nat runUH'
-  where
-    runUH' :: UH a -> ExceptT UserHandleError IO a
-    runUH' = (`runReaderT` UserHandleContext usersHandle) . unUH
-
-instance UserHandle UH where
-  createUser     = UH.createUser
-  getUserById    = UH.getUserById
-
-  authUser       = UH.authUser
-  verifySession  = UH.verifySession
-  destroySession = UH.destroySession
 
