@@ -1,7 +1,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeFamilies               #-}
 
-module Refine.Backend.User.Impl
+module Refine.Backend.User.UH
   ( UH(..)
   , uhIO
   ) where
@@ -37,12 +37,12 @@ instance C.UserHandle UH where
 
   runUH db = Nat ((`runReaderT` UserHandleContext db) . unUH)
 
-  createUser     = Refine.Backend.User.Impl.createUser
-  getUserById    = Refine.Backend.User.Impl.getUserById
+  createUser     = Refine.Backend.User.UH.createUser
+  getUserById    = Refine.Backend.User.UH.getUserById
 
-  authUser       = Refine.Backend.User.Impl.authUser
-  verifySession  = Refine.Backend.User.Impl.verifySession
-  destroySession = Refine.Backend.User.Impl.destroySession
+  authUser       = Refine.Backend.User.UH.authUser
+  verifySession  = Refine.Backend.User.UH.verifySession
+  destroySession = Refine.Backend.User.UH.destroySession
 
 
 createUser :: User -> UH (Either CreateUserError LoginId)
