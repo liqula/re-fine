@@ -36,7 +36,7 @@ import Refine.Common.Types
 -- NOTE: There is a possible attack. The attacker can learn
 -- the user ids, probing them to give access to his own document
 -- if the access is granted, the user exists.
-changeAccess :: ChangeAccess -> App()
+changeAccess :: ChangeAccess -> App ()
 changeAccess (ChangeAccess ad a u) = do
   exists <- doesUserExist u
   unless exists . throwError $ AppSanityCheckError "Change access"
