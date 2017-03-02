@@ -56,7 +56,7 @@ import Refine.Backend.DocRepo (DocRepoError(..), createRunRepo)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
-import Refine.Backend.User (CreateUserError(..), UserDB, UH, MockUH_, FreeUH, UserHandle, UserHandleM, runUH, mockLogin)
+import Refine.Backend.User (CreateUserError(..), UserDB, UH, MockUH_, FreeUH, UserHandle, UserHandleC, runUH, mockLogin)
 import Refine.Common.Rest
 import Refine.Prelude (leftToError)
 
@@ -116,7 +116,7 @@ mkProdBackend cfg = mkBackend cfg runUH migrateDB
 mkDevModeBackend :: Config -> MockUH_ -> IO (Backend DB FreeUH)
 mkDevModeBackend cfg mock = mkBackend cfg (\_ -> runUH mock) migrateDBDevMode
 
-mkBackend :: UserHandleM uh => Config -> (UserDB -> RunUH uh) -> AppM DB uh a -> IO (Backend DB uh)
+mkBackend :: UserHandleC uh => Config -> (UserDB -> RunUH uh) -> AppM DB uh a -> IO (Backend DB uh)
 mkBackend cfg initUH migrate = do
   createDataDirectories cfg
 
@@ -132,7 +132,7 @@ mkBackend cfg initUH migrate = do
 
 
 mkServerApp
-    :: (Monad db, Database db, Monad uh, UserHandle uh)
+    :: (Monad db, Database db, UserHandleC uh)
     => Config -> RunDB db -> RunDocRepo -> RunUH uh -> IO (Backend db uh)
 mkServerApp cfg runDb runDocRepo runUh = do
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }

@@ -33,7 +33,7 @@ import           Data.Maybe (isJust)
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.Session
-import Refine.Backend.Database.Class (DatabaseM)
+import Refine.Backend.Database.Class (DatabaseC)
 import Refine.Backend.Types
 import Refine.Backend.User as User
 import Refine.Backend.User.Core as User (User(..))
@@ -94,7 +94,7 @@ devModePass = "pass"
 --
 -- The user should be present in the database, or the user handling should
 -- be mocked
-devMode :: (UserHandleM uh, DatabaseM db) => AppM db uh a -> AppM db uh a
+devMode :: (UserHandleC uh, DatabaseC db) => AppM db uh a -> AppM db uh a
 devMode m = do
   u <- gets (view appUserState)
   case u of

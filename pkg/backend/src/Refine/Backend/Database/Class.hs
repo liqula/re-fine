@@ -9,7 +9,7 @@ import Refine.Common.Types.VDoc
 import Refine.Common.Types.User
 
 
-type DatabaseM db = (Monad db, Database db)
+type DatabaseC db = (Monad db, Database db)
 
 class Database db where
 

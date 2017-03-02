@@ -11,7 +11,7 @@ import Web.Users.Persistent (LoginId)
 import Refine.Backend.User.Core
 
 
-type UserHandleM uh = (Monad uh, UserHandle uh)
+type UserHandleC uh = (Monad uh, UserHandle uh)
 
 class UserHandle uh where
   type family UserHandleInit uh
