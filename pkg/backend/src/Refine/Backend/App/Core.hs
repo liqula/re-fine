@@ -98,7 +98,7 @@ makeLenses ''AppState
 -- * user authentication (login)
 -- * user authorization (groups)
 -- * use one db connection in one run, commit the result at the end.
-newtype AppM db uh a = App { unApp :: StateT AppState (ReaderT (AppContext db uh) (ExceptT AppError IO)) a }
+newtype AppM db uh a = AppM { unApp :: StateT AppState (ReaderT (AppContext db uh) (ExceptT AppError IO)) a }
   deriving
     ( Functor
     , Applicative
@@ -132,10 +132,10 @@ data AppError
 makeRefineType ''AppError
 
 appIO :: IO a -> AppM db uh a
-appIO = App . liftIO
+appIO = AppM . liftIO
 
 db :: db a -> AppM db uh a
-db m = App $ do
+db m = AppM $ do
   mu <- user <$> gets (view appUserState)
   (Nat runDB) <- ($ DBContext mu) <$> view appRunDB
   r <- liftIO (runExceptT (runDB m))
@@ -146,18 +146,18 @@ db m = App $ do
       UserLoggedIn u _s -> Just u
 
 docRepo :: DocRepo a -> AppM db uh a
-docRepo m = App $ do
+docRepo m = AppM $ do
   (Nat runDRepo) <- view appRunDocRepo
   r <- liftIO (runExceptT (runDRepo m))
   leftToError AppDocRepoError r
 
 userHandle :: uh a -> AppM db uh a
-userHandle m = App $ do
+userHandle m = AppM $ do
   (Nat runUH) <- view appRunUH
   r <- liftIO (runExceptT (runUH m))
   leftToError AppUserHandleError r
 
 appLog :: String -> AppM db uh ()
-appLog msg = App $ do
+appLog msg = AppM $ do
   logger <- view appLogger
   liftIO $ unLogger logger msg
