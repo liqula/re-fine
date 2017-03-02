@@ -41,11 +41,11 @@ import Refine.Backend.User.Core -- FIXME: Move to types.
 -- FIXME: User Freer instead of Free
 -- TODO: Rename to DBAPI
 data UHAPI a where
-  CreateUser     :: User    -> ((Either CreateUserError LoginId) -> a) -> UHAPI a
-  GetUserById    :: LoginId -> ((Maybe User) -> a) -> UHAPI a
+  CreateUser     :: User    -> (Either CreateUserError LoginId -> a) -> UHAPI a
+  GetUserById    :: LoginId -> (Maybe User -> a) -> UHAPI a
 
-  AuthUser       :: ST -> PasswordPlain -> NominalDiffTime -> ((Maybe SessionId) -> a) -> UHAPI a
-  VerifySession  :: SessionId -> ((Maybe LoginId) -> a) -> UHAPI a
+  AuthUser       :: ST -> PasswordPlain -> NominalDiffTime -> (Maybe SessionId -> a) -> UHAPI a
+  VerifySession  :: SessionId -> (Maybe LoginId -> a) -> UHAPI a
   DestroySession :: SessionId -> (() -> a) -> UHAPI a
 
 

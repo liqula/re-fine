@@ -15,9 +15,9 @@ migrateDB = do
   appLog $ show mig
   appLog "Start database migration ... DONE"
 
-migrateDB' :: AppM DB uh ()
-migrateDB' = do
+migrateDBDevMode :: AppM DB uh ()
+migrateDBDevMode = do
   appLog "Start database migration ..."
-  mig <- db $ DB.migrateDB
+  mig <- db DB.migrateDB
   appLog $ show mig
   appLog "Start database migration ... DONE"

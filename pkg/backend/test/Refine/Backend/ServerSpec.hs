@@ -177,6 +177,7 @@ spec = do -- FUTUREWORK: mark this as 'parallel' (needs some work)
   specMockedLogin
   specUserHandling
 
+{-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 specMockedLogin :: Spec
 specMockedLogin = around (createMockedTestSession mockLogin) $ do
   describe "sListVDocs" $ do

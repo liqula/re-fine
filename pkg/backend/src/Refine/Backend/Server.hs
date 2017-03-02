@@ -120,7 +120,7 @@ mkProdBackend cfg = do
   backend    <- mkServerApp cfg runDb runDocRepo (runUH userHandler)
 
   when (cfg ^. cfgShouldMigrate) $ do
-    void $ (natThrowError . (backendMonad backend)) $$ do
+    void $ (natThrowError . backendMonad backend) $$ do
       migrateDB
 
   pure backend
@@ -134,8 +134,8 @@ mkDevModeBackend cfg runUh = do
   backend    <- mkServerApp cfg runDb runDocRepo runUh
 
   when (cfg ^. cfgShouldMigrate) $ do
-    void $ (natThrowError . (backendMonad backend)) $$ do
-      migrateDB'
+    void $ (natThrowError . backendMonad backend) $$ do
+      migrateDBDevMode
 
   pure backend
 
