@@ -261,7 +261,7 @@ makeLenses ''CommentInputProps
 -- was add-annotation
 addComment :: ReactView CommentInputProps
 addComment = defineView "AddComment" $ \props ->
-    let __ = props ^. cipTranslations . to ((.) cs)
+    let __ = props ^. cipTranslations . to (cs .)
         top = case props ^. cipRange of
               Nothing -> 0 -- FIXME: Invent a suitable top for the "general comment" case
               Just range -> (range ^. RS.rangeBottomOffset . SC.unOffsetFromViewportTop)

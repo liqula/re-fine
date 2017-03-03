@@ -34,21 +34,21 @@ spec = do
 
   describe "The commentInput_ component" $ do
     it "renders dark note and discussion icons when no comment has been selected" $ do
-      wrapper <- mount $ commentInput_ (CommentInputProps Nothing Nothing 10)
+      wrapper <- mount $ commentInput_ (CommentInputProps Nothing Nothing 10 id)
       lengthOfIO (find wrapper (StringSelector ".icon-Note_dark"))       `shouldReturn` (1 :: Int)
       lengthOfIO (find wrapper (StringSelector ".icon-Note_RO"))         `shouldReturn` (0 :: Int)
       lengthOfIO (find wrapper (StringSelector ".icon-Discussion_dark")) `shouldReturn` (1 :: Int)
       lengthOfIO (find wrapper (StringSelector ".icon-Discussion_RO"))   `shouldReturn` (0 :: Int)
 
     it "renders highlighted note and dark discussion icons when Note has been selected" $ do
-      wrapper <- mount $ commentInput_ (CommentInputProps Nothing (Just Note) 10)
+      wrapper <- mount $ commentInput_ (CommentInputProps Nothing (Just Note) 10 id)
       lengthOfIO (find wrapper (StringSelector ".icon-Note_dark"))       `shouldReturn` (0 :: Int)
       lengthOfIO (find wrapper (StringSelector ".icon-Note_RO"))         `shouldReturn` (1 :: Int)
       lengthOfIO (find wrapper (StringSelector ".icon-Discussion_dark")) `shouldReturn` (1 :: Int)
       lengthOfIO (find wrapper (StringSelector ".icon-Discussion_RO"))   `shouldReturn` (0 :: Int)
 
     it "renders dark note and highlighted discussion icons when Discussion has been selected" $ do
-      wrapper <- mount $ commentInput_ (CommentInputProps Nothing (Just Discussion) 10)
+      wrapper <- mount $ commentInput_ (CommentInputProps Nothing (Just Discussion) 10 id)
       lengthOfIO (find wrapper (StringSelector ".icon-Note_dark"))       `shouldReturn` (1 :: Int)
       lengthOfIO (find wrapper (StringSelector ".icon-Note_RO"))         `shouldReturn` (0 :: Int)
       lengthOfIO (find wrapper (StringSelector ".icon-Discussion_dark")) `shouldReturn` (0 :: Int)
