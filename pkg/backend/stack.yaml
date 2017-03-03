@@ -30,6 +30,7 @@ extra-deps:
 - graphviz-2999.18.1.2
 - heterocephalus-1.0.4.0
 - html-parse-0.2.0.0
+- i18n-0.4.0.0
 - json-sop-0.2.0.1
 - lens-sop-0.2.0.1
 - users-persistent-0.5.0.0

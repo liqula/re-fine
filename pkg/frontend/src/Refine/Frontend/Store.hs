@@ -50,6 +50,7 @@ import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Rest
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
 import           Refine.Frontend.Test.Samples
+import           Refine.Frontend.Translation
 import           Refine.Frontend.Types
 
 
@@ -57,7 +58,7 @@ instance StoreData GlobalState where
     type StoreAction GlobalState = RefineAction
     transform ClearState _ = pure emptyGlobalState  -- for testing only!
     transform action state = do
-        consoleLog "Old state: " state
+        logState "Old state: " state
         consoleLogStringified "Action: " action
 
         emitBackendCallsFor action state
@@ -88,10 +89,23 @@ instance StoreData GlobalState where
               & gsLoginState                 %~ loginStateUpdate transformedAction
               & gsMainMenuState              %~ mainMenuUpdate transformedAction
               & gsToolbarSticky              %~ toolbarStickyUpdate transformedAction
+              & gsTranslations               %~ translationsUpdate transformedAction
 
-        consoleLog "New state: " newState
+        logState "New state: " newState
         pure newState
 
+logState :: JSString -> GlobalState -> IO ()
+logState str state = consoleLog str
+  ( _gsVDoc                       state
+  , _gsVDocList                   state
+  , _gsContributionState          state
+  , _gsHeaderState                state
+  , _gsScreenState                state
+  , _gsNotImplementedYetIsVisible state
+  , _gsMainMenuState              state
+  , _gsLoginState                 state
+  , _gsToolbarSticky              state
+  )
 
 vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate action Nothing = case action of
@@ -206,6 +220,12 @@ emitBackendCallsFor action state = case action of
             [ ChangeCurrentUser UserLoggedOut
             , MainMenuAction MainMenuActionClose
             ]
+
+    LoadTranslations locate -> do
+      getTranslations (RT.GetTranslations locate) $ \case
+        (Left rsp) -> handleError rsp (const [])
+        (Right l10) -> do
+          pure . dispatch $ ChangeTranslations l10
 
     _ -> pure ()
 

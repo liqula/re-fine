@@ -57,6 +57,7 @@ type RefineAPI =
   :<|> SChangeAccess
   :<|> SLogin
   :<|> SLogout
+  :<|> SGetTranslations
 
 
 type SListVDocs
@@ -107,5 +108,7 @@ type SLogout
 type SChangeAccess
   = "r" :> "change-access" :> ReqBody '[JSON] ChangeAccess :> Post '[JSON] ()
 
+type SGetTranslations
+  = "r" :> "get-translations" :> ReqBody '[JSON] GetTranslations :> Post '[JSON] L10
 
 makeRefineType ''ApiError

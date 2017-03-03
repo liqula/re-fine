@@ -16,6 +16,7 @@ extra-deps:
 - functor-infix-0.0.4
 - heterocephalus-1.0.4.0
 - html-parse-0.2.0.0
+- i18n-0.4.0.0
 - json-sop-0.2.0.1
 - lens-sop-0.2.0.1
 - xml-html-qq-0.1.0.1

@@ -32,6 +32,7 @@ library
     , ghcjs-base
     , html-parse
     , http-api-data
+    , i18n
     , json-sop
     , lens
     , QuickCheck
@@ -83,6 +84,7 @@ library
       Refine.Frontend.Test.Enzyme.ReactWrapper
       Refine.Frontend.Test.Enzyme.ShallowWrapper
       Refine.Frontend.Test.Samples
+      Refine.Frontend.Translation
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
@@ -105,6 +107,7 @@ executable refine-frontend
     , ghcjs-base
     , html-parse
     , http-api-data
+    , i18n
     , json-sop
     , lens
     , QuickCheck
@@ -157,6 +160,7 @@ executable refine-frontend
       Refine.Frontend.Test.Enzyme.ReactWrapper
       Refine.Frontend.Test.Enzyme.ShallowWrapper
       Refine.Frontend.Test.Samples
+      Refine.Frontend.Translation
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
@@ -179,6 +183,7 @@ test-suite spec
     , ghcjs-base
     , html-parse
     , http-api-data
+    , i18n
     , json-sop
     , lens
     , QuickCheck
@@ -245,6 +250,7 @@ test-suite spec
       Refine.Frontend.Test.Enzyme.ReactWrapper
       Refine.Frontend.Test.Enzyme.ShallowWrapper
       Refine.Frontend.Test.Samples
+      Refine.Frontend.Translation
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets

@@ -62,3 +62,6 @@ login = request cfg (Proxy :: Proxy SLogin)
 
 logout :: HandleResponse () -> IO ()
 logout = request cfg (Proxy :: Proxy SLogout)
+
+getTranslations :: GetTranslations -> HandleResponse L10 -> IO ()
+getTranslations = request cfg (Proxy :: Proxy SGetTranslations)

@@ -23,6 +23,7 @@
 module Refine.Frontend.MainMenu.Component where
 
 import           Control.Lens ((^.))
+import           Data.Text.I18n (Locale(..))
 import           React.Flux
 
 import           Refine.Frontend.Header.UserLoginLogout (userLoginLogoutButton_)
@@ -100,6 +101,41 @@ topMenuBarInMainMenu = defineView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMen
               -- not translated from prototype2016:
               -- button attribute data-section="membership"
               }
+
+            -- Change language button should not be in the main menu
+            iconButton_ IconButtonProps
+              { _iconButtonPropsIconProps = IconProps
+                  { _iconPropsBlockName = "c-mainmenu-content"
+                  , _iconPropsHighlight = False
+                  , _iconPropsDesc      = ("icon-Group", "dark")
+                  , _iconPropsSize      = XXL
+                  }
+              , _iconButtonPropsElementName  = "section-button"
+              , _iconButtonPropsModuleName   = ""
+              , _iconButtonPropsContentType  = ""
+              , _iconButtonPropsLabel        = "EN"
+              , _iconButtonPropsDisabled     = False
+              , _iconButtonPropsClickHandler = \_ -> dispatch . LoadTranslations $ Locale "en_GB"
+              , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-membership"]
+              }
+
+            -- Change language button should not be in the main menu
+            iconButton_ IconButtonProps
+              { _iconButtonPropsIconProps = IconProps
+                  { _iconPropsBlockName = "c-mainmenu-content"
+                  , _iconPropsHighlight = False
+                  , _iconPropsDesc      = ("icon-Group", "dark")
+                  , _iconPropsSize      = XXL
+                  }
+              , _iconButtonPropsElementName  = "section-button"
+              , _iconButtonPropsModuleName   = ""
+              , _iconButtonPropsContentType  = ""
+              , _iconButtonPropsLabel        = "DE"
+              , _iconButtonPropsDisabled     = False
+              , _iconButtonPropsClickHandler = \_ -> dispatch . LoadTranslations $ Locale "de_DE"
+              , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-membership"]
+              }
+
 
             iconButton_ IconButtonProps
               { _iconButtonPropsIconProps = IconProps

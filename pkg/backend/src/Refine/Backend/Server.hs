@@ -100,6 +100,7 @@ refineApi =
   :<|> Refine.Backend.App.changeAccess
   :<|> Refine.Backend.App.login
   :<|> Refine.Backend.App.logout
+  :<|> Refine.Backend.App.getTranslations
 
 startBackend :: Config -> IO ()
 startBackend cfg =
