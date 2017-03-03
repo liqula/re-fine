@@ -104,7 +104,7 @@ serverStartDelaySecs = 3
 livenessCheck :: IO (Maybe String)
 livenessCheck = do
   threadDelay (serverStartDelaySecs * 1000 * 1000)
-  status <- spawnProcess "wget" [serverUrl] >>= waitForProcess
+  status <- spawnProcess "wget" ["-O", "-", serverUrl] >>= waitForProcess
                   -- (curl only gives you the choice between no output and correct exit code (-q) and vice versa.)
   case status of
     ExitSuccess -> pure Nothing

@@ -7,7 +7,7 @@ build:
 deploy_staging:
   stage: deploy
   script:
-    - wget http://zb1:3001/
+    - wget -O - http://zb1:3001/
         # (curl only gives you the choice between no output and correct exit code (-q) and vice versa.)
   environment:
     name: staging
