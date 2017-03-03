@@ -87,7 +87,7 @@ props = exec "props"
 
 -- TODO: key
 
-simulate :: EnzymeWrapper w => w -> EventType -> IO w
+simulate :: EnzymeWrapper w => w -> EventType -> IO ()
 simulate = execWith1Arg "simulate"
 
 -- TODO: setState

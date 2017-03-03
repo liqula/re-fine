@@ -33,6 +33,7 @@ import           React.Flux
 import           Refine.Common.Types.User
 import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Store as RS
+import           Refine.Frontend.Style
 import qualified Refine.Frontend.Types as RS
 import           Refine.Frontend.UtilityWidgets
 import           Refine.Prelude.TH (makeRefineType)
@@ -99,16 +100,28 @@ loginOrLogout_ = \case
   UserLoggedOut  -> login_
   UserLoggedIn _ -> const logout_
 
+defaultStyles :: [Style]
+defaultStyles =
+  [ Style "position" ("absolute" :: String)
+  , Style "zIndex" (100000 :: Int)
+  , Style "color" ("black" :: String)
+  , Style "background-color" ("white" :: String)
+  ]
+
+
 -- * Login
 
 login_ :: FormError -> ReactElementM eventHandler ()
 login_ errors = view (login errors) () mempty
 
-login :: FormError -> ReactView ()
-login errors = defineStatefulView "Login" (LoginForm "" "" errors) $ \curState () -> do
-  h1_ "Login"
+loginStyles :: [Style]
+loginStyles = defaultStyles
 
-  div_ $ do
+login :: FormError -> ReactView ()
+login errors = defineStatefulView "Login" (LoginForm "" "" errors) $ \curState () ->
+  div_ ["style" @= loginStyles] $ do
+    h1_ "Login"
+
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 
@@ -129,15 +142,18 @@ login errors = defineStatefulView "Login" (LoginForm "" "" errors) $ \curState (
           []
         )
 
+
 -- * Logout
 
 logout_ :: ReactElementM eventHandler ()
 logout_ = view logout () mempty
 
-logout :: ReactView ()
-logout = defineView "Logout" $ \() -> do
+logoutStyles :: [Style]
+logoutStyles = defaultStyles
 
-  div_ $ do
+logout :: ReactView ()
+logout = defineView "Logout" $ \() ->
+  div_ ["style" @= logoutStyles] $ do
     p_ "Profile page"
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
@@ -154,16 +170,20 @@ logout = defineView "Logout" $ \() -> do
           []
         )
 
+
 -- * Registration
 
 registration_ :: FormError -> ReactElementM eventHandler ()
 registration_ errors = view (registration errors) () mempty
 
+registrationStyles :: [Style]
+registrationStyles = defaultStyles
+
 registration :: FormError -> ReactView ()
 registration errors = defineStatefulView "Registration" (RegistrationForm "" "" "" "" False errors) $ \curState () -> do
-  h1_ "Registration"
+  div_ ["style" @= registrationStyles] $ do
+    h1_ "Registration"
 
-  div_ $ do
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 

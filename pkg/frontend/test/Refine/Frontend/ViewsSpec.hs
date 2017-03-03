@@ -79,31 +79,37 @@ spec = do
   describe "The mainScreen_ component" . before clearState $ do
 
     it "initially the comment toolbar is visible" $ do
+      pendingWith "#201"
       wrapper <- mount refineApp_
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar")) `shouldReturn` (1 :: Int)
 
     it "initially the comment toolbar extension is not visible" $ do
+      pendingWith "#201"
       wrapper <- mount refineApp_
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (0 :: Int)
 
     it "opens the comment toolbar extension when the user clicks on the 'new comment' button" $ do
+      pendingWith "#201"
       wrapper <- mount refineApp_
       clickNewComment wrapper
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (1 :: Int)
 
     it "closes the comment toolbar extension when the user clicks on the 'new comment' button twice" $ do
+      pendingWith "#201"
       wrapper <- mount refineApp_
       clickNewComment wrapper
       clickNewComment wrapper
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (0 :: Int)
 
     it "closes the comment toolbar extension when the user clicks somewhere else" $ do
+      pendingWith "#201"
       wrapper <- mount refineApp_
       clickNewComment wrapper
       clickArticleContent wrapper
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (0 :: Int)
 
     it "does not close the comment toolbar extension when the user clicks on the 'text-specific comment' button" $ do
+      pendingWith "#201"
       wrapper <- mount refineApp_
       clickNewComment wrapper
       clickTextSpecificComment wrapper

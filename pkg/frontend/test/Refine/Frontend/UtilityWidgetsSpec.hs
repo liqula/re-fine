@@ -58,12 +58,12 @@ spec = do
 
     it "annotates the RO icon image when the mouse has entered the icon and the normal one when it left again" $ do
       wrapper <- shallow . icon_ $ iconProps XXL
-      wrapper2 <- simulate wrapper MouseEnter
-      lengthOfIO (find wrapper2 (StringSelector ".Image_striped")) `shouldReturn` (0 :: Int)
-      lengthOfIO (find wrapper2 (StringSelector ".Image_RO")) `shouldReturn` (1 :: Int)
-      wrapper3 <- simulate wrapper2 MouseLeave
-      lengthOfIO (find wrapper3 (StringSelector ".Image_striped")) `shouldReturn` (1 :: Int)
-      lengthOfIO (find wrapper3 (StringSelector ".Image_RO")) `shouldReturn` (0 :: Int)
+      simulate wrapper MouseEnter
+      lengthOfIO (find wrapper (StringSelector ".Image_striped")) `shouldReturn` (0 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".Image_RO")) `shouldReturn` (1 :: Int)
+      simulate wrapper MouseLeave
+      lengthOfIO (find wrapper (StringSelector ".Image_striped")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".Image_RO")) `shouldReturn` (0 :: Int)
 
     it "annotates the iconsize class with the correct size (XXL)" $ do
       wrapper <- shallow . icon_ $ iconProps XXL
@@ -173,17 +173,19 @@ spec = do
       span1 <- find wrapper (StringSelector "span")
       text span1 `shouldReturn` "the-label"
 
-{-
-TODO these can only be tested once we know how to spy on a pure function in Haskell:
+    context "enabled" $ do
+      it "reacts to a click event" $ do
+        pending
 
-    it "reacts to a click event when it is not disabled" $ do
+      it "reacts to a tap event" $ do
+        pending
 
-    it "does not react to a click event when it is disabled" $ do
+    context "disabled" $ do
+      it "does not react to a click event" $ do
+        pending
 
-    it "reacts to a tap event when it is not disabled" $ do
-
-    it "does not react to a tap event when it is disabled" $ do
--}
+      it "does not react to a tap event" $ do
+        pending
 
   describe "iconButtonWithAlignment_ component" $ do
     it "wraps hammer around the inner component" $ do
