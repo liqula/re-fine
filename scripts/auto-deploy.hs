@@ -49,7 +49,7 @@ main = do
         Just errmsg -> error errmsg
       let app _req respond = upgrade mvar >>= \case
             Nothing     -> respond $ responseLBS status201 [] "server updated and upgraded!\n"
-            Just errmsg -> respond $ responseLBS status500 [] ("uncaught error: " <> cs errmsg)
+            Just errmsg -> respond $ responseLBS status500 [] ("uncaught error: " <> cs errmsg <> "\n")
       run port app
 
     ["--run-once"] -> do
@@ -104,7 +104,8 @@ serverStartDelaySecs = 3
 livenessCheck :: IO (Maybe String)
 livenessCheck = do
   threadDelay (serverStartDelaySecs * 1000 * 1000)
-  status <- spawnProcess "curl" ["-v", serverUrl] >>= waitForProcess
+  status <- spawnProcess "wget" [serverUrl] >>= waitForProcess
+                  -- (curl only gives you the choice between no output and correct exit code (-q) and vice versa.)
   case status of
     ExitSuccess -> pure Nothing
     _ -> pure . Just $ "server unreachable under "
