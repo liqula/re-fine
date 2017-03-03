@@ -25,11 +25,13 @@
 module Refine.Frontend.Types where
 
 import           Control.Lens (makeLenses)
+import           Data.String.Conversions (ST)
 import           Data.Text (Text)
 import           Data.Text.I18n
 import           GHC.Generics (Generic)
 
 import Refine.Common.Types as Common
+import Refine.Common.Translations (TKey)
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.MainMenu.Types
@@ -96,11 +98,10 @@ data RefineAction = LoadDocumentList
                   | ClearState
   deriving (Show, Generic)
 
-type Translations = Text -> Text
+type Translations = TKey -> ST
 
 emptyTranslations :: Translations
 emptyTranslations = id
-
 
 makeLenses ''GlobalState
 makeRefineType ''RefineAction

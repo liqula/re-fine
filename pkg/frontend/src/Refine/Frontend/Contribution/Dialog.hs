@@ -27,10 +27,12 @@ import           Control.Lens (makeLenses, (^.), (^?), at, to, _Just)
 import           Data.Maybe (isNothing)
 import qualified Data.Map.Strict as M
 import           Data.Monoid ((<>))
+import           Data.String.Conversions (cs)
 import qualified Data.Text as DT
 import qualified Data.Tree as Tree
 import           React.Flux
 
+import           Refine.Common.Translations
 import           Refine.Common.Types
 import qualified Refine.Frontend.ErrorHandling as E
 import           Refine.Frontend.ThirdPartyViews (skylight_)
@@ -242,6 +244,7 @@ data AddCommentProps = AddCommentProps
   { _acpEditor      :: RS.ContributionEditorData
   , _acpCategory    :: Maybe RS.CommentCategory
   , _acpWindowWidth :: Int
+  , _acpTranslations :: RS.Translations -- TODO
   }
 
 makeLenses ''AddCommentProps
@@ -250,6 +253,7 @@ data CommentInputProps = CommentInputProps
   { _cipRange       :: Maybe RS.Range
   , _cipCategory    :: Maybe RS.CommentCategory
   , _cipWindowWidth :: Int
+  , _cipTranslations :: RS.Translations -- TODO
   }
 
 makeLenses ''CommentInputProps
@@ -257,7 +261,8 @@ makeLenses ''CommentInputProps
 -- was add-annotation
 addComment :: ReactView CommentInputProps
 addComment = defineView "AddComment" $ \props ->
-    let top = case props ^. cipRange of
+    let __ = props ^. cipTranslations . to ((.) cs)
+        top = case props ^. cipRange of
               Nothing -> 0 -- FIXME: Invent a suitable top for the "general comment" case
               Just range -> (range ^. RS.rangeBottomOffset . SC.unOffsetFromViewportTop)
                           + (range ^. RS.rangeScrollOffset . SC.unScrollOffsetOfViewport)
@@ -282,7 +287,7 @@ addComment = defineView "AddComment" $ \props ->
                          , Style "marginLeft" ("1rem" :: String)
                          , Style "fontWeight" ("bold" :: String)
                          ]
-            ] "Add a comment"
+            ] (__ add_a_comment)
 
       hr_ []
 
@@ -290,9 +295,9 @@ addComment = defineView "AddComment" $ \props ->
 
 
 addComment_ :: AddCommentProps -> ReactElementM eventHandler ()
-addComment_ (AddCommentProps RS.EditorIsHidden _ _) = mempty
-addComment_ (AddCommentProps (RS.EditorIsVisible range) category windowWidth1) =
-  view addComment (CommentInputProps range category windowWidth1) mempty
+addComment_ (AddCommentProps RS.EditorIsHidden _ _ _) = mempty
+addComment_ (AddCommentProps (RS.EditorIsVisible range) category windowWidth1 translations) =
+  view addComment (CommentInputProps range category windowWidth1 translations) mempty
 
 
 commentInput :: ReactView CommentInputProps

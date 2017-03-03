@@ -85,6 +85,7 @@ mainScreen = defineView "MainScreen" $ \rs -> do
           addComment_ $ AddCommentProps (rs ^. RS.gsContributionState . RS.csCommentEditorIsVisible)
                                         (rs ^. RS.gsContributionState . RS.csCommentCategory)
                                         (rs ^. RS.gsScreenState . SC.ssWindowWidth)
+                                        (rs ^. RS.gsTranslations)
           notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
 
           main_ ["role" $= "main"] $ do
