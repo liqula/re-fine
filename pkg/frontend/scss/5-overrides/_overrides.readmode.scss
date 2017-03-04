@@ -1,13 +1,5 @@
 body.o-read-mode {
 
-    mark {
-        background-color: $white;
-    }
-
-    .o-snippet {
-        display: none !important;
-    }
-
     // list all buttons that should be active in readmode
     button:not(
         .c-vdoc-toolbar__btn-read-mode,
