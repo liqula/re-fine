@@ -29,6 +29,7 @@ import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State
 import Control.Natural
+import System.FilePath (FilePath)
 
 import Refine.Backend.App.Access  as App
 import Refine.Backend.App.Comment as App
@@ -49,6 +50,7 @@ runApp
   -> Logger
   -> CsrfSecret
   -> Timespan
+  -> FilePath
   -> (forall a . AppM db uh a -> AppM db uh a)
   -> (AppM db uh :~> ExceptT AppError IO)
 runApp
@@ -58,10 +60,11 @@ runApp
   logger
   csrfSecret
   sessionLength
+  poFilesRoot
   wrapper =
     Nat (runSR
             (AppState Nothing UserLoggedOut)
-            (AppContext runDB runDocRepo runUH logger csrfSecret sessionLength)
+            (AppContext runDB runDocRepo runUH logger csrfSecret sessionLength poFilesRoot)
           . unApp
           . wrapper)
     where

@@ -25,15 +25,26 @@
 
 module Refine.Backend.App.Translation where
 
-import Data.Map as Map (empty)
+import Control.Lens (view)
+import Control.Monad (join, unless)
+import Control.Monad.Except (throwError)
+import Control.Monad.Reader (asks)
+import Data.Map as Map (filterWithKey)
+import Data.String.Conversions (cs)
+import Data.Text.I18n.Po
 
 import Refine.Backend.App.Core
 import Refine.Common.Types.Translation
 
 
 getTranslations :: GetTranslations -> App L10
-getTranslations (GetTranslations _locale) = do
+getTranslations (GetTranslations locale) = do
   appLog "getTranslations"
-  pure $ L10 Map.empty
-
--- TODO: Load translation data from the Po files, and caches them.
+  poFileRoot <- asks (view appPoFilesRoot)
+  join . appIO $ do
+    (l10, parseErrors) <- getL10n poFileRoot
+    pure $ do
+      unless (null parseErrors) $ do
+        throwError . AppL10ParseErrors $ map (cs . show) parseErrors
+      -- Translations for the requested local are returned back to save bandwith.
+      pure $ L10 (Map.filterWithKey (\k _ -> k == locale) l10) locale

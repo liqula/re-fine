@@ -1,0 +1,2 @@
+msgid "add_a_comment"
+msgstr "Einen Kommentar hinzufügen"

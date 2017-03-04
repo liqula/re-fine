@@ -32,6 +32,7 @@ module Refine.Backend.App.Core (
   , appLogger
   , appCsrfSecret
   , appSessionLength
+  , appPoFilesRoot
   , AppState(..)
   , appCsrfToken
   , appUserState
@@ -53,6 +54,7 @@ import Control.Monad.State
 import Control.Natural
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
+import System.FilePath (FilePath)
 
 import Refine.Backend.Database
 import Refine.Backend.DocRepo
@@ -65,6 +67,7 @@ import Refine.Common.VDoc.HTML (ChunkRangeError(..))
 import Refine.Prelude (leftToError, Timespan)
 import Refine.Prelude.TH (makeRefineType)
 
+
 type RunDocRepo = DocRepo :~> ExceptT DocRepoError IO
 
 data AppContext db uh = AppContext
@@ -74,6 +77,7 @@ data AppContext db uh = AppContext
   , _appLogger        :: Logger
   , _appCsrfSecret    :: CsrfSecret
   , _appSessionLength :: Timespan
+  , _appPoFilesRoot   :: FilePath
   }
 
 data AppState = AppState
@@ -126,6 +130,7 @@ data AppError
   | AppSessionError
   | AppSanityCheckError ST
   | AppUserHandleError UserHandleError
+  | AppL10ParseErrors [ST]
   deriving (Show, Generic)
 
 makeRefineType ''AppError

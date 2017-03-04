@@ -33,6 +33,7 @@ dependencies:
   - functor-infix
   - graphviz
   - html-parse
+  - i18n
   - lens
   - lentil
   - monad-logger

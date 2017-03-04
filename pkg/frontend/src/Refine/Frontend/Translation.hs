@@ -13,4 +13,4 @@ translationsUpdate (ChangeTranslations l10) _ = newTranslations l10
 translationsUpdate _                        t = t
 
 newTranslations :: L10 -> Translations
-newTranslations (L10 ld) = localize ld (Locale "en_GB") . gettext
+newTranslations (L10 ld l) = localize ld l . gettext

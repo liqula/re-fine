@@ -40,6 +40,7 @@ data ApiError
   | ApiSessionError
   | ApiSanityCheckError ST
   | ApiUserHandleError ST
+  | ApiL10ParseErrors [ST]
   deriving (Eq, Show, Generic)
 
 -- | The 'S' prefix in the handlers stands for "server" (see 'refineApi' for an explanation).

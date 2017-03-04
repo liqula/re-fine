@@ -15,7 +15,7 @@ import Refine.Prelude.TH (makeRefineType)
 newtype GetTranslations = GetTranslations Locale
   deriving (Eq, Generic, Show)
 
-newtype L10 = L10 L10n
+data L10 = L10 L10n Locale
   deriving (Eq, Generic, Show)
 
 
