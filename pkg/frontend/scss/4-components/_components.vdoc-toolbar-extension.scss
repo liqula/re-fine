@@ -60,23 +60,6 @@
             float: left;
         }
 
-        &__pointer {
-
-            @include triangle($vdoc-toolbar-extension-pointer-size, $vdoc-toolbar-extension-bg, up);
-
-            content: ' ';
-            opacity: 0;
-            position: absolute;
-            top: 0;
-            transition: top .5s, opacity .5s;
-            z-index: $always-on-top;
-
-            &--active {
-                opacity: 1;
-                top: -($vdoc-toolbar-extension-pointer-size * .5) + 2;
-            }
-        }
-
         &--fixed {
             top: $mainmenu-height;
         }

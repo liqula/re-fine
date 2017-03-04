@@ -7,7 +7,6 @@
     "build": "npm install && NODE_ENV=production webpack -p --config webpack.prod.config.js"
   },
   "dependencies": {
-    "bourbon": "4.2.7",
     "gridle": "2.0.48",
     "react": "15.4.1",
     "react-dom": "15.4.1",
