@@ -38,6 +38,7 @@ import qualified Refine.Frontend.Screen.Calculations as RS
 import qualified Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
+import           Refine.Frontend.Util (classNamesAny)
 import           Refine.Prelude()
 
 
@@ -69,7 +70,8 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
       Nothing -> E.gracefulError "We could not find the mark's contribution ID in the attributes!" mempty
       Just dataContributionId ->
         mark_ (toProperties (props ^. markPropsHTMLAttributes) <>
-           [ classNames [ ("o-mark", True)
+           [ classNamesAny
+                        [ ("o-mark", True)
                         , ("o-mark--highlight", Just dataContributionId == props ^. markPropsDisplayedContribution)
                         , ("o-mark--hover",     Just dataContributionId == props ^. markPropsHighlightedMark)
                         , (cs $ "o-mark--" <> contributionIDToKindST dataContributionId,
