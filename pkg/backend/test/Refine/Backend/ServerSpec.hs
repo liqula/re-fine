@@ -299,7 +299,12 @@ specMockedLogin = around createDevModeTestSession $ do
           fp :: Edit          <- runWaiBody sess $
             post
               (addEditUri (fe ^. compositeVDocRepo . vdocHeadEdit))
-              (CreateEdit "new edit" (ChunkRange Nothing Nothing) (vdocVersionFromST "[new vdoc version]"))
+              (CreateEdit
+                "new edit"
+                (ChunkRange Nothing Nothing)
+                (vdocVersionFromST "[new vdoc version]")
+                Grammar
+                ["no motivation"])
           pure (fe, fp)
 
     context "on edit without ranges" $ do

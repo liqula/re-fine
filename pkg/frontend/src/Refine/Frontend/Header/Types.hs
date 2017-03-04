@@ -24,20 +24,23 @@ module Refine.Frontend.Header.Types where
 
 import GHC.Generics (Generic)
 
+import Refine.Common.Types (EditKind)
 import Refine.Prelude.TH (makeRefineType)
 
 
 data HeaderAction =
     ToggleCommentToolbarExtension
   | StartTextSpecificComment
-  | CloseToolbarExtension
   | ToggleEditToolbarExtension
+  | StartEdit EditKind
+  | CloseToolbarExtension
   deriving (Show, Generic)
 
 data ToolbarExtensionStatus =
     ToolbarExtensionClosed
   | CommentToolbarExtensionWithButtons
   | CommentToolbarExtensionWithSelection
+  | EditToolbarExtension
   deriving (Show, Generic, Eq)
 
 newtype HeaderState = HeaderState
