@@ -24,7 +24,6 @@
 
 module Refine.Frontend.Types where
 
-import           Control.Lens (makeLenses)
 import           Data.String.Conversions (ST)
 import           Data.Text (Text)
 import           Data.Text.I18n
@@ -37,6 +36,7 @@ import Refine.Frontend.Header.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Login.Types
+import Refine.Prelude.Aeson (NoJSONRep(..))
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -98,10 +98,10 @@ data RefineAction = LoadDocumentList
                   | ClearState
   deriving (Show, Generic)
 
-type Translations = TKey -> ST
+type Translations = NoJSONRep (TKey -> ST)
 
 emptyTranslations :: Translations
-emptyTranslations = id
+emptyTranslations = NoJSONRep id
 
-makeLenses ''GlobalState
+makeRefineType ''GlobalState
 makeRefineType ''RefineAction

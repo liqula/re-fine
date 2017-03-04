@@ -43,6 +43,7 @@ import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
 import           Refine.Frontend.UtilityWidgets
+import           Refine.Prelude.Aeson (unNoJSONRep)
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
@@ -261,7 +262,7 @@ makeLenses ''CommentInputProps
 -- was add-annotation
 addComment :: ReactView CommentInputProps
 addComment = defineView "AddComment" $ \props ->
-    let __ = props ^. cipTranslations . to (cs .)
+    let __ = props ^. cipTranslations . unNoJSONRep . to (cs .)
         top = case props ^. cipRange of
               Nothing -> 0 -- FIXME: Invent a suitable top for the "general comment" case
               Just range -> (range ^. RS.rangeBottomOffset . SC.unOffsetFromViewportTop)

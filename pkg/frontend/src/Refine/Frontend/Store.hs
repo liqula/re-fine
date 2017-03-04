@@ -58,7 +58,7 @@ instance StoreData GlobalState where
     type StoreAction GlobalState = RefineAction
     transform ClearState _ = pure emptyGlobalState  -- for testing only!
     transform action state = do
-        logState "Old state: " state
+        consoleLog "Old state: " state
         consoleLogStringified "Action: " action
 
         emitBackendCallsFor action state
@@ -91,21 +91,8 @@ instance StoreData GlobalState where
               & gsToolbarSticky              %~ toolbarStickyUpdate transformedAction
               & gsTranslations               %~ translationsUpdate transformedAction
 
-        logState "New state: " newState
+        consoleLog "New state: " newState
         pure newState
-
-logState :: JSString -> GlobalState -> IO ()
-logState str state = consoleLog str
-  ( _gsVDoc                       state
-  , _gsVDocList                   state
-  , _gsContributionState          state
-  , _gsHeaderState                state
-  , _gsScreenState                state
-  , _gsNotImplementedYetIsVisible state
-  , _gsMainMenuState              state
-  , _gsLoginState                 state
-  , _gsToolbarSticky              state
-  )
 
 vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate action Nothing = case action of
