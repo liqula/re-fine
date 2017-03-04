@@ -26,18 +26,25 @@ import GHC.Generics (Generic)
 
 import Refine.Prelude.TH (makeRefineType)
 
+data EditMode =
+    Phrasing
+  | Meaning
+  | Grammar
+  deriving (Show, Generic)
 
 data HeaderAction =
     ToggleCommentToolbarExtension
   | StartTextSpecificComment
-  | CloseToolbarExtension
   | ToggleEditToolbarExtension
+  | StartEdit EditMode
+  | CloseToolbarExtension
   deriving (Show, Generic)
 
 data ToolbarExtensionStatus =
     ToolbarExtensionClosed
   | CommentToolbarExtensionWithButtons
   | CommentToolbarExtensionWithSelection
+  | EditToolbarExtension
   deriving (Show, Generic, Eq)
 
 newtype HeaderState = HeaderState
@@ -48,6 +55,7 @@ emptyHeaderState :: HeaderState
 emptyHeaderState = HeaderState ToolbarExtensionClosed
 
 
+makeRefineType ''EditMode
 makeRefineType ''HeaderAction
 makeRefineType ''ToolbarExtensionStatus
 makeRefineType ''HeaderState
