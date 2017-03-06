@@ -24,18 +24,17 @@
 
 module Refine.Frontend.Types where
 
-import           Data.String.Conversions (ST)
 import           Data.Text (Text)
 import           Data.Text.I18n
 import           GHC.Generics (Generic)
 
 import Refine.Common.Types as Common
-import Refine.Common.Translations (TKey)
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Login.Types
+import Refine.Frontend.Translation.Types
 import Refine.Prelude.Aeson (NoJSONRep(..))
 import Refine.Prelude.TH (makeRefineType)
 
@@ -50,7 +49,7 @@ data GlobalState = GlobalState
   , _gsMainMenuState              :: MainMenuState
   , _gsLoginState                 :: LoginState
   , _gsToolbarSticky              :: Bool
-  , _gsTranslations               :: Translations
+  , _gsTranslations               :: NoJSONRep Translations
   } deriving (Show, Generic)
 
 emptyGlobalState :: GlobalState
@@ -64,7 +63,7 @@ emptyGlobalState = GlobalState
   , _gsMainMenuState              = emptyMainMenuState
   , _gsLoginState                 = emptyLoginState
   , _gsToolbarSticky              = False
-  , _gsTranslations               = emptyTranslations
+  , _gsTranslations               = NoJSONRep emptyTranslations
   }
 
 data RefineAction = LoadDocumentList
@@ -98,10 +97,7 @@ data RefineAction = LoadDocumentList
                   | ClearState
   deriving (Show, Generic)
 
-type Translations = NoJSONRep (TKey -> ST)
 
-emptyTranslations :: Translations
-emptyTranslations = NoJSONRep id
 
 makeRefineType ''GlobalState
 makeRefineType ''RefineAction

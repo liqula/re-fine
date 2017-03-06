@@ -84,7 +84,8 @@ library
       Refine.Frontend.Test.Enzyme.ReactWrapper
       Refine.Frontend.Test.Enzyme.ShallowWrapper
       Refine.Frontend.Test.Samples
-      Refine.Frontend.Translation
+      Refine.Frontend.Translation.Store
+      Refine.Frontend.Translation.Types
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
@@ -160,7 +161,8 @@ executable refine-frontend
       Refine.Frontend.Test.Enzyme.ReactWrapper
       Refine.Frontend.Test.Enzyme.ShallowWrapper
       Refine.Frontend.Test.Samples
-      Refine.Frontend.Translation
+      Refine.Frontend.Translation.Store
+      Refine.Frontend.Translation.Types
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
@@ -250,7 +252,8 @@ test-suite spec
       Refine.Frontend.Test.Enzyme.ReactWrapper
       Refine.Frontend.Test.Enzyme.ShallowWrapper
       Refine.Frontend.Test.Samples
-      Refine.Frontend.Translation
+      Refine.Frontend.Translation.Store
+      Refine.Frontend.Translation.Types
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets

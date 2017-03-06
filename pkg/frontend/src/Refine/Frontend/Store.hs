@@ -50,7 +50,7 @@ import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Rest
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
 import           Refine.Frontend.Test.Samples
-import           Refine.Frontend.Translation
+import           Refine.Frontend.Translation.Store (translationsUpdate)
 import           Refine.Frontend.Types
 
 
@@ -89,7 +89,7 @@ instance StoreData GlobalState where
               & gsLoginState                 %~ loginStateUpdate transformedAction
               & gsMainMenuState              %~ mainMenuUpdate transformedAction
               & gsToolbarSticky              %~ toolbarStickyUpdate transformedAction
-              & gsTranslations               %~ translationsUpdate transformedAction
+              & gsTranslations               %~ fmap (translationsUpdate transformedAction)
 
         consoleLog "New state: " newState
         pure newState

@@ -27,7 +27,7 @@ module Refine.Frontend.Views
   , mainScreen_
   ) where
 
-import           Control.Lens ((^.), (^?))
+import           Control.Lens ((^.), (^?), to)
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
 import           Data.String.Conversions
@@ -53,6 +53,7 @@ import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Types as RS
+import           Refine.Prelude.Aeson (unNoJSONRep)
 
 
 -- | The controller view and also the top level of the Refine app.  This controller view registers
@@ -82,10 +83,11 @@ mainScreen = defineView "MainScreen" $ \rs -> do
           -- components that are only temporarily visible:
           showNote_ $ showNoteProps (vdoc ^. compositeVDocNotes) rs
           showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocDiscussions) rs
-          addComment_ $ AddCommentProps (rs ^. RS.gsContributionState . RS.csCommentEditorIsVisible)
-                                        (rs ^. RS.gsContributionState . RS.csCommentCategory)
-                                        (rs ^. RS.gsScreenState . SC.ssWindowWidth)
-                                        (rs ^. RS.gsTranslations)
+          addComment_
+            (rs ^. RS.gsTranslations . unNoJSONRep . to (cs .))
+            $ AddCommentProps (rs ^. RS.gsContributionState . RS.csCommentEditorIsVisible)
+                              (rs ^. RS.gsContributionState . RS.csCommentCategory)
+                              (rs ^. RS.gsScreenState . SC.ssWindowWidth)
           notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
 
           main_ ["role" $= "main"] $ do

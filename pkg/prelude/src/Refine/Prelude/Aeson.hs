@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE DeriveFunctor      #-}
 {-# LANGUAGE TemplateHaskell    #-}
 {-# LANGUAGE StandaloneDeriving #-}
 
@@ -20,7 +21,7 @@ instance  {-# OVERLAPPABLE #-} (Ord k, FromJSON k, FromJSON v) => FromJSON (Map 
   parseJSON = fmap fromList . parseJSON
 
 newtype NoJSONRep a = NoJSONRep { _unNoJSONRep :: a }
-  deriving (Eq, Generic)
+  deriving (Eq, Functor, Generic)
 
 instance Show (NoJSONRep a) where
   show _ = "NoJSONRep"

@@ -27,7 +27,6 @@ import           Control.Lens (makeLenses, (^.), (^?), at, to, _Just)
 import           Data.Maybe (isNothing)
 import qualified Data.Map.Strict as M
 import           Data.Monoid ((<>))
-import           Data.String.Conversions (cs)
 import qualified Data.Text as DT
 import qualified Data.Tree as Tree
 import           React.Flux
@@ -39,11 +38,11 @@ import           Refine.Frontend.ThirdPartyViews (skylight_)
 import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Colors as C
+import qualified Refine.Frontend.Translation.Types as RS
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
 import           Refine.Frontend.UtilityWidgets
-import           Refine.Prelude.Aeson (unNoJSONRep)
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
@@ -245,7 +244,6 @@ data AddCommentProps = AddCommentProps
   { _acpEditor      :: RS.ContributionEditorData
   , _acpCategory    :: Maybe RS.CommentCategory
   , _acpWindowWidth :: Int
-  , _acpTranslations :: RS.Translations -- TODO
   }
 
 makeLenses ''AddCommentProps
@@ -254,16 +252,14 @@ data CommentInputProps = CommentInputProps
   { _cipRange       :: Maybe RS.Range
   , _cipCategory    :: Maybe RS.CommentCategory
   , _cipWindowWidth :: Int
-  , _cipTranslations :: RS.Translations -- TODO
   }
 
 makeLenses ''CommentInputProps
 
 -- was add-annotation
-addComment :: ReactView CommentInputProps
-addComment = defineView "AddComment" $ \props ->
-    let __ = props ^. cipTranslations . unNoJSONRep . to (cs .)
-        top = case props ^. cipRange of
+addComment :: RS.TranslationsRE -> ReactView CommentInputProps
+addComment __ = defineView "AddComment" $ \props ->
+    let top = case props ^. cipRange of
               Nothing -> 0 -- FIXME: Invent a suitable top for the "general comment" case
               Just range -> (range ^. RS.rangeBottomOffset . SC.unOffsetFromViewportTop)
                           + (range ^. RS.rangeScrollOffset . SC.unScrollOffsetOfViewport)
@@ -295,10 +291,10 @@ addComment = defineView "AddComment" $ \props ->
       commentInput_ props
 
 
-addComment_ :: AddCommentProps -> ReactElementM eventHandler ()
-addComment_ (AddCommentProps RS.EditorIsHidden _ _ _) = mempty
-addComment_ (AddCommentProps (RS.EditorIsVisible range) category windowWidth1 translations) =
-  view addComment (CommentInputProps range category windowWidth1 translations) mempty
+addComment_ :: RS.TranslationsRE -> AddCommentProps -> ReactElementM eventHandler ()
+addComment_ __ (AddCommentProps RS.EditorIsHidden _ _) = mempty
+addComment_ __ (AddCommentProps (RS.EditorIsVisible range) category windowWidth1) =
+  view (addComment __) (CommentInputProps range category windowWidth1) mempty
 
 
 commentInput :: ReactView CommentInputProps
