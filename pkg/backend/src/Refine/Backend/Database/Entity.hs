@@ -376,7 +376,7 @@ createAnswer qid answer = liftDB $ do
   pure $ S.answerElim (toAnswer (S.keyToId key)) sanswer
 
 getAnswer :: ID Answer -> DB Answer
-getAnswer _aid = undefined
+getAnswer aid = S.answerElim (toAnswer aid) <$> getEntity aid
 
 answersOfQuestion :: ID Question -> DB [Answer]
 answersOfQuestion qid = liftDB $ do
