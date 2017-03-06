@@ -47,7 +47,7 @@ VDoc
 
 Edit
     desc        Text
---    range       ChunkRange
+    range       ChunkRange
     editHandle  EditHandle
     kind        EditKind
     motivation  ST

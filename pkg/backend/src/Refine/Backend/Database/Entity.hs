@@ -158,10 +158,14 @@ createRepo :: DocRepo.RepoHandle -> DocRepo.EditHandle -> DB VDocRepo
 createRepo repoh edith = liftDB $ do
     let desc = "" -- TODO
         motiv = ""
-    pkey <- insert $ S.Edit desc edith Initial motiv
+    pkey <- insert $ S.Edit desc cr edith Initial motiv
     key  <- insert $ S.Repo "title" {- TODO -} repoh pkey
     void  . insert $ S.RP key pkey
     pure $ VDocRepo (S.keyToId key) (S.keyToId pkey)
+  where
+    cr :: ChunkRange
+    cr = ChunkRange Nothing Nothing  -- TODO
+
 
 getRepo :: ID VDocRepo -> DB VDocRepo
 getRepo vid = S.repoElim toVDocRepo <$> getEntity vid
@@ -193,6 +197,7 @@ createEdit :: ID VDocRepo -> DocRepo.EditHandle -> CreateEdit -> DB Edit
 createEdit rid edith ce = liftDB $ do
   key <- insert $ S.Edit
             (ce ^. createEditDesc)
+            (ce ^. createEditRange)
             edith
             (ce ^. createEditKind)
             (ce ^. createEditMotiv)
@@ -208,25 +213,21 @@ createEdit rid edith ce = liftDB $ do
 getEdit :: ID Edit -> DB Edit
 getEdit pid = S.editElim toEdit <$> getEntity pid
   where
-    cr :: ChunkRange
-    cr = ChunkRange Nothing Nothing  -- TODO
-
-    toEdit :: ST -> DocRepo.EditHandle -> EditKind -> ST -> Edit
-    toEdit desc _handle kind motiv = Edit pid desc cr kind motiv
+    toEdit :: ST -> ChunkRange -> DocRepo.EditHandle -> EditKind -> ST -> Edit
+    toEdit desc cr _handle kind motiv = Edit pid desc cr kind motiv
 
 getEditFromHandle :: DocRepo.EditHandle -> DB Edit
 getEditFromHandle hndl = do
   ps <- liftDB $ selectList [S.EditEditHandle ==. hndl] []
   p <- unique ps
-  let cr = ChunkRange Nothing Nothing  -- TODO
-      toEdit desc _hdnl = Edit (S.keyToId $ entityKey p) desc cr
+  let toEdit desc cr _hdnl kind motiv = Edit (S.keyToId $ entityKey p) desc cr kind motiv
   pure $ S.editElim toEdit (entityVal p)
 
 getEditHandle :: ID Edit -> DB DocRepo.EditHandle
 getEditHandle pid = S.editElim toEditHandle <$> getEntity pid
   where
-    toEditHandle :: ST -> DocRepo.EditHandle -> EditKind -> ST -> DocRepo.EditHandle
-    toEditHandle _desc handle _kind _motiv = handle
+    toEditHandle :: ST -> ChunkRange -> DocRepo.EditHandle -> EditKind -> ST -> DocRepo.EditHandle
+    toEditHandle _desc _cr handle _kind _motiv = handle
 
 editNotes :: ID Edit -> DB [ID Note]
 editNotes pid = liftDB $
