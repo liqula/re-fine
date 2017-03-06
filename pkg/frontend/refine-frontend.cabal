@@ -95,9 +95,7 @@ library
 
 executable refine-frontend
   main-is: Main.hs
-  hs-source-dirs:
-      src
-    , app
+  hs-source-dirs: app
   ghc-options: -j -Wall -Werror
   cpp-options: -DGHCJS_BROWSER
   build-depends:
@@ -118,56 +116,12 @@ executable refine-frontend
     , react-flux-servant
     , refine-common
     , refine-prelude
+    , refine-frontend
     , string-conversions
     , text
     , hspec
     , hspec-discover
     , unordered-containers
-  other-modules:
-      -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
-      Refine.Frontend.Colors
-      Refine.Frontend.Contribution.Bubble
-      Refine.Frontend.Contribution.Dialog
-      Refine.Frontend.Contribution.Mark
-      Refine.Frontend.Contribution.QuickCreate
-      Refine.Frontend.Contribution.Store
-      Refine.Frontend.Contribution.Types
-      Refine.Frontend.ErrorHandling
-      Refine.Frontend.Header.DocumentHeader
-      Refine.Frontend.Header.Heading
-      Refine.Frontend.Header.Store
-      Refine.Frontend.Header.Toolbar
-      Refine.Frontend.Header.Types
-      Refine.Frontend.Header.UserLoginLogout
-      Refine.Frontend.Loader.Component
-      Refine.Frontend.Login.Component
-      Refine.Frontend.Login.Store
-      Refine.Frontend.Login.Types
-      Refine.Frontend.MainMenu.Component
-      Refine.Frontend.MainMenu.Store
-      Refine.Frontend.MainMenu.Types
-      Refine.Frontend.NotImplementedYet
-      Refine.Frontend.Rest
-      Refine.Frontend.Screen.Calculations
-      Refine.Frontend.Screen.Store
-      Refine.Frontend.Screen.Types
-      Refine.Frontend.Screen.WindowSize
-      Refine.Frontend.Store
-      Refine.Frontend.Style
-      Refine.Frontend.Test.Console
-      Refine.Frontend.Test.Enzyme
-      Refine.Frontend.Test.Enzyme.Class
-      Refine.Frontend.Test.Enzyme.Class.Internal
-      Refine.Frontend.Test.Enzyme.Core
-      Refine.Frontend.Test.Enzyme.ReactWrapper
-      Refine.Frontend.Test.Enzyme.ShallowWrapper
-      Refine.Frontend.Test.Samples
-      Refine.Frontend.ThirdPartyViews
-      Refine.Frontend.Translation.Store
-      Refine.Frontend.Translation.Types
-      Refine.Frontend.Types
-      Refine.Frontend.UtilityWidgets
-      Refine.Frontend.Views
   default-language: Haskell2010
 
 test-suite spec
