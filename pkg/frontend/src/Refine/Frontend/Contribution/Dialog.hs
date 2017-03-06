@@ -31,13 +31,13 @@ import qualified Data.Text as DT
 import qualified Data.Tree as Tree
 import           React.Flux
 
-import           Refine.Common.Translations
 import           Refine.Common.Types
 import qualified Refine.Frontend.ErrorHandling as E
 import           Refine.Frontend.ThirdPartyViews (skylight_)
 import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Colors as C
+import           Refine.Frontend.TKey
 import qualified Refine.Frontend.Translation.Types as RS
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS

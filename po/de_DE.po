@@ -1,0 +1,8 @@
+<<<<<<< HEAD
+#: pkg/frontend/src/Refine/Frontend/Contribution/Dialog.hs:286
+=======
+#: pkg/frontend/src/Refine/Frontend/Contribution/Dialog.hs:287
+>>>>>>> 530577c... Add translation tables.
+msgid "add_a_comment"
+msgstr "Kommentar anlegen"
+

@@ -103,7 +103,7 @@ main = shakeArgs refineOptions $ do
     stackBuildFast pkgBackend
 
   phony "build-frontend" $ do
-    need ["build-frontend-npm"]
+    need ["build-frontend-npm", "build-frontend-trans"]
     stackBuildFast pkgFrontend
     command_ [Cwd pkgFrontend] "make" []
 
@@ -112,6 +112,14 @@ main = shakeArgs refineOptions $ do
     command_ [Cwd pkgFrontend] "stack" ["exec", "--", "node", "--version"]
     command_ [Cwd pkgFrontend] "npm" ["install"]
     command_ [Cwd pkgFrontend] "npm" ["prune"]  -- remove unused dependencies
+
+  phony "build-frontend-trans" $ do
+    command_ [] "./scripts/i18n.hs"
+      [ "pkg/frontend/src/"
+      , "pkg/frontend/src/Refine/Frontend/TKey.hs"
+      , "Refine.Frontend.TKey"
+      , "po/"
+      ]
 
   phony "build" $ do
     -- for building everything, we only need to go to backend and frontend.  prelude and common are
