@@ -32,8 +32,8 @@ instance ToJSON (NoJSONRep a) where
 instance FromJSON (NoJSONRep a) where
   parseJSON = error "NoJSONRep has no json parser."
 
-instance NFData (NoJSONRep a) where
-  rnf _ = ()
+instance NFData a => NFData (NoJSONRep a) where
+  rnf (NoJSONRep a) = rnf a `seq` ()
 
 instance SOP.Generic (NoJSONRep a)
 instance SOP.HasDatatypeInfo (NoJSONRep a)
