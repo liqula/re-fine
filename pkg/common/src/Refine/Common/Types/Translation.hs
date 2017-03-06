@@ -1,6 +1,8 @@
-{-# LANGUAGE TemplateHaskell    #-}
-{-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE FlexibleContexts   #-}
+{-# LANGUAGE Rank2Types         #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TemplateHaskell    #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -8,7 +10,7 @@ module Refine.Common.Types.Translation where
 
 import Control.Lens (makeLenses)
 import Data.String (IsString(..))
-import Data.String.Conversions (ST, cs)
+import Data.String.Conversions (ConvertibleStrings, ST, cs)
 import GHC.Generics (Generic)
 import Data.Text.I18n
 
@@ -39,3 +41,11 @@ makeRefineType ''Locale
 makeRefineType ''Msgid
 makeRefineType ''L10
 makeRefineType ''GetTranslations
+
+
+type Translations = TKey -> ST
+
+emptyTranslations :: Translations
+emptyTranslations = _unTKey
+
+type TranslationsCS = TKey -> forall s . ConvertibleStrings ST s => s

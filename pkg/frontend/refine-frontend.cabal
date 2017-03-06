@@ -87,7 +87,6 @@ library
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.TKey
       Refine.Frontend.Translation.Store
-      Refine.Frontend.Translation.Types
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.Views
@@ -210,7 +209,6 @@ test-suite spec
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.TKey
       Refine.Frontend.Translation.Store
-      Refine.Frontend.Translation.Types
       Refine.Frontend.Types
       Refine.Frontend.UtilityWidgets
       Refine.Frontend.UtilityWidgetsSpec

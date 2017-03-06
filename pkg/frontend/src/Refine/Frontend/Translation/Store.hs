@@ -6,7 +6,6 @@ import Data.String.Conversions (cs)
 import Data.Text.I18n
 
 import Refine.Common.Types.Translation
-import Refine.Frontend.Translation.Types
 import Refine.Frontend.Types
 
 

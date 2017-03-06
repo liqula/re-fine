@@ -38,7 +38,6 @@ import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Colors as C
 import           Refine.Frontend.TKey
-import qualified Refine.Frontend.Translation.Types as RS
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
@@ -257,7 +256,7 @@ data CommentInputProps = CommentInputProps
 makeLenses ''CommentInputProps
 
 -- was add-annotation
-addComment :: RS.TranslationsRE -> ReactView CommentInputProps
+addComment :: TranslationsCS -> ReactView CommentInputProps
 addComment __ = defineView "AddComment" $ \props ->
     let top = case props ^. cipRange of
               Nothing -> 0 -- FIXME: Invent a suitable top for the "general comment" case
@@ -291,7 +290,7 @@ addComment __ = defineView "AddComment" $ \props ->
       commentInput_ props
 
 
-addComment_ :: RS.TranslationsRE -> AddCommentProps -> ReactElementM eventHandler ()
+addComment_ :: TranslationsCS -> AddCommentProps -> ReactElementM eventHandler ()
 addComment_ __ (AddCommentProps RS.EditorIsHidden _ _) = mempty
 addComment_ __ (AddCommentProps (RS.EditorIsVisible range) category windowWidth1) =
   view (addComment __) (CommentInputProps range category windowWidth1) mempty

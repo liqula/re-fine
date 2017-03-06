@@ -34,7 +34,6 @@ import Refine.Frontend.Header.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Login.Types
-import Refine.Frontend.Translation.Types
 import Refine.Prelude.Aeson (NoJSONRep(..))
 import Refine.Prelude.TH (makeRefineType)
 
