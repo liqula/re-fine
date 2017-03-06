@@ -10,15 +10,8 @@ module Refine.Prelude.Aeson where
 import Control.Lens (makeLenses)
 import Control.DeepSeq
 import Data.Aeson
-import Data.Map
 import GHC.Generics
 import qualified Generics.SOP as SOP
-
-instance  {-# OVERLAPPABLE #-} (ToJSON k, ToJSON v) => ToJSON (Map k v) where
-  toJSON = toJSON . toList
-
-instance  {-# OVERLAPPABLE #-} (Ord k, FromJSON k, FromJSON v) => FromJSON (Map k v) where
-  parseJSON = fmap fromList . parseJSON
 
 newtype NoJSONRep a = NoJSONRep { _unNoJSONRep :: a }
   deriving (Eq, Functor, Generic)

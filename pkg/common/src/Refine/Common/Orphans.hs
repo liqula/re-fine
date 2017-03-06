@@ -37,10 +37,10 @@ import Refine.Prelude.TH (makeRefineType)
 instance Ord a => Ord (Tree a) where
   compare (Node x xs) (Node x' xs') = compare (x, xs) (x', xs')
 
-instance (ToJSON k, ToJSON v) => ToJSON (Map k v) where
+instance {-# OVERLAPPABLE #-} (ToJSON k, ToJSON v) => ToJSON (Map k v) where
   toJSON = toJSON . Map.toList
 
-instance (Ord k, FromJSON k, FromJSON v) => FromJSON (Map k v) where
+instance {-# OVERLAPPABLE #-} (Ord k, FromJSON k, FromJSON v) => FromJSON (Map k v) where
   parseJSON = fmap Map.fromList . parseJSON
 
 

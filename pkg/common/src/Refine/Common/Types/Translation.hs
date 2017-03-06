@@ -12,7 +12,8 @@ import Data.String.Conversions (ST, cs)
 import GHC.Generics (Generic)
 import Data.Text.I18n
 
-import Refine.Prelude.Aeson()
+import Refine.Common.Orphans ()
+import Refine.Prelude.Aeson ()
 import Refine.Prelude.TH (makeRefineType)
 
 
