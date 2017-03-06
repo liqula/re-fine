@@ -33,7 +33,8 @@ import           React.Flux.Lifecycle
 
 import           Refine.Common.Types
 import           Refine.Frontend.Header.DocumentHeader ( documentHeader_, DocumentHeaderProps(..) )
-import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), toolbar_, commentToolbarExtension_, editToolbarExtension_ )
+import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
+                                                  toolbar_, commentToolbarExtension_, editToolbarExtension_ )
 import qualified Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Header.UserLoginLogout (userLoginLogoutButton_)
 import           Refine.Frontend.Login.Types
@@ -92,7 +93,7 @@ mainHeader = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
                     sticky_ [on "onStickyStateChange" $ \e _ -> (RS.dispatch . RS.ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
                         toolbar_
                         commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. RS.gsHeaderState . HT.hsToolbarExtensionStatus)
-                        editToolbarExtension_
+                        editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. RS.gsHeaderState . HT.hsToolbarExtensionStatus)
 
    , lComponentDidMount  = Just $ \_propsandstate ldom _     -> calcHeaderHeight ldom
    -- , lComponentDidUpdate = Just $ \_propsandstate ldom _ _ _ -> calcHeaderHeight ldom

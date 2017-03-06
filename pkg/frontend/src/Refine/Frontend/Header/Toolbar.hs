@@ -22,6 +22,7 @@
 
 module Refine.Frontend.Header.Toolbar where
 
+import           GHCJS.Types (JSString)
 import           React.Flux
 
 import qualified Refine.Frontend.Header.Types as RS
@@ -64,7 +65,7 @@ toolbar = defineView "Toolbar" $ \() ->
                       "edit"
                       "new edit"
                       False
-                      (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                      (\e -> stopPropagation e : RS.dispatch (RS.HeaderAction RS.ToggleEditToolbarExtension))
                       []
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
@@ -115,7 +116,6 @@ newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
 
 commentToolbarExtension :: ReactView CommentToolbarExtensionProps
 commentToolbarExtension = defineView "CommentToolbarExtension" $ \case
-  (CommentToolbarExtensionProps RS.ToolbarExtensionClosed) -> mempty
   (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithSelection) -> frame $ do
     div_ "Please select the text you would like to comment on"
   (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithButtons) -> frame $ do
@@ -137,6 +137,7 @@ commentToolbarExtension = defineView "CommentToolbarExtension" $ \case
                 False
                 (\_ -> RS.dispatch RS.ShowNotImplementedYet)
                 []
+  (CommentToolbarExtensionProps _) -> mempty
   where
     frame :: ReactElementM eventHandler () -> ReactElementM eventHandler ()
     frame children = div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
@@ -152,26 +153,37 @@ commentToolbarExtension = defineView "CommentToolbarExtension" $ \case
 commentToolbarExtension_ :: CommentToolbarExtensionProps -> ReactElementM eventHandler ()
 commentToolbarExtension_ props = view commentToolbarExtension props mempty
 
-editToolbarExtension :: ReactView ()
-editToolbarExtension = defineView "EditToolbarExtension" $ \() ->
-  div_ mempty
-  {-
-  div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
-    div_ ["className" $= "grid-wrapper"] $ do
-      div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
-        div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
-        div_ ["className" $= "c-vdoc-toolbar-extension__modification"] $ do  -- (RENAME: Edit)
-            iconButton_ $ IconButtonProps
-                        (IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") L)
-                        "btn-new-mod-text" -- RENAME: mod => edit
-                        ""
-                        "edit"
-                        "new edit"
-                        False
-                        (\_ -> [])
-                        []
-  -}
+
+newtype EditToolbarExtensionProps = EditToolbarExtensionProps
+  { _etepStatus :: RS.ToolbarExtensionStatus
+  }
+
+editToolbarExtension :: ReactView EditToolbarExtensionProps
+editToolbarExtension = defineView "EditToolbarExtension" $ \case
+  (EditToolbarExtensionProps RS.EditToolbarExtension) -> do
+    div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
+      div_ ["className" $= "grid-wrapper"] $ do
+        div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
+          div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
+          div_ ["className" $= "c-vdoc-toolbar-extension__modification c-vdoc-toolbar-extension--expanded"] $ do  -- (RENAME: Edit)
+            editButton "phrasing"
+            editButton "meaning"
+            editButton "grammar"
+
+  (EditToolbarExtensionProps _) -> mempty
+  where
+    editButton :: JSString -> ReactElementM eventHandler ()
+    editButton label =
+      iconButton_ $ IconButtonProps
+                  (IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") L)
+                  "btn-new-mod-text" -- RENAME: mod => edit
+                  ""
+                  "edit"
+                  label
+                  False
+                  (\e -> stopPropagation e : RS.dispatch RS.ShowNotImplementedYet)
+                  []
 
 
-editToolbarExtension_ :: ReactElementM eventHandler ()
-editToolbarExtension_ = view editToolbarExtension () mempty
+editToolbarExtension_ :: EditToolbarExtensionProps -> ReactElementM eventHandler ()
+editToolbarExtension_ props = view editToolbarExtension props mempty

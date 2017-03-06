@@ -40,9 +40,22 @@ headerStateUpdate action state =
 
 toolbarExtensionUpdate :: RefineAction -> ToolbarExtensionStatus -> ToolbarExtensionStatus
 toolbarExtensionUpdate action state = case (state, action) of
-    (ToolbarExtensionClosed,             HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithButtons
-    (_,                                  HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
-    (_,                                  HeaderAction CloseToolbarExtension)  -> ToolbarExtensionClosed
-    (CommentToolbarExtensionWithButtons, HeaderAction StartTextSpecificComment) -> CommentToolbarExtensionWithSelection
-    (_,                                  HeaderAction StartTextSpecificComment) -> error "text-specific comment cannot start when toolbar extension is closed or in selection mode"
+    (ToolbarExtensionClosed,               HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithButtons
+    (CommentToolbarExtensionWithButtons,   HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
+    (CommentToolbarExtensionWithSelection, HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
+    (EditToolbarExtension,                 HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithButtons
+
+    (CommentToolbarExtensionWithButtons,   HeaderAction StartTextSpecificComment)      -> CommentToolbarExtensionWithSelection
+    (_,                                    HeaderAction StartTextSpecificComment)      -> error "text-specific comment cannot start when toolbar extension is closed or in selection mode"
+
+    (ToolbarExtensionClosed,               HeaderAction ToggleEditToolbarExtension)    -> EditToolbarExtension
+    (CommentToolbarExtensionWithButtons,   HeaderAction ToggleEditToolbarExtension)    -> EditToolbarExtension
+    (CommentToolbarExtensionWithSelection, HeaderAction ToggleEditToolbarExtension)    -> EditToolbarExtension
+    (EditToolbarExtension,                 HeaderAction ToggleEditToolbarExtension)    -> ToolbarExtensionClosed
+
+    (EditToolbarExtension,                 HeaderAction (StartEdit _))                 -> ToolbarExtensionClosed
+    (_,                                    HeaderAction (StartEdit _))                 -> error "edit cannot start when toolbar extension is closed or in comment mode"
+
+    (_,                                    HeaderAction CloseToolbarExtension)         -> ToolbarExtensionClosed
+
     _ -> state
