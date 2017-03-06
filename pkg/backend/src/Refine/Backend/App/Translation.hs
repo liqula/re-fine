@@ -37,6 +37,16 @@ import Refine.Backend.App.Core
 import Refine.Common.Types.Translation
 
 
+-- | Return the translation table for one 'Locale' (loading all translation tables no matter what the
+-- locale settings would use too much bandwidth).
+--
+-- FIXME: this always loads all translation tables from disk before selecting one of them to send it
+-- to the browser.  We should load all of them either at start time or at build time (see FUTUREWORK
+-- below).
+--
+-- FUTUREWORK: Bake the PO files into the server binary using 'readFile' from within
+-- TemplateHaskell.  This is easier on the server load, but more importantly eliminates the
+-- 'AppL10ParseErrors' constructor because those are all compile-time errors.
 getTranslations :: GetTranslations -> App L10
 getTranslations (GetTranslations locale) = do
   appLog "getTranslations"
@@ -46,5 +56,4 @@ getTranslations (GetTranslations locale) = do
     pure $ do
       unless (null parseErrors) $ do
         throwError . AppL10ParseErrors $ map (cs . show) parseErrors
-      -- Translations for the requested local are returned back to save bandwith.
       pure $ L10 (Map.filterWithKey (\k _ -> k == locale) l10) locale
