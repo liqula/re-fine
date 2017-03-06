@@ -15,4 +15,4 @@ translationsUpdate (ChangeTranslations l10) _ = newTranslations l10
 translationsUpdate _                        t = t
 
 newTranslations :: L10 -> Translations
-newTranslations (L10 ld l) = cs . localize ld l . gettext
+newTranslations (L10 ld l) = cs . localize ld l . gettext . _unTKey
