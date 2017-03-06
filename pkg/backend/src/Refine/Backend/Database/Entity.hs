@@ -157,7 +157,8 @@ vdocRepoOfEdit eid = unique =<< liftDB
 createRepo :: DocRepo.RepoHandle -> DocRepo.EditHandle -> DB VDocRepo
 createRepo repoh edith = liftDB $ do
     let desc = "" -- TODO
-    pkey <- insert $ S.Edit desc edith
+        motiv = ""
+    pkey <- insert $ S.Edit desc edith Initial motiv
     key  <- insert $ S.Repo "title" {- TODO -} repoh pkey
     void  . insert $ S.RP key pkey
     pure $ VDocRepo (S.keyToId key) (S.keyToId pkey)
@@ -188,14 +189,21 @@ getEditIDs vid = liftDB $
 
 -- * Edit
 
-createEdit :: ID VDocRepo -> DocRepo.EditHandle -> DB Edit
-createEdit rid edith = liftDB $ do
-  let desc = "" -- TODO
-  key <- insert $ S.Edit desc edith
+createEdit :: ID VDocRepo -> DocRepo.EditHandle -> CreateEdit -> DB Edit
+createEdit rid edith ce = liftDB $ do
+  key <- insert $ S.Edit
+            (ce ^. createEditDesc)
+            edith
+            (ce ^. createEditKind)
+            (ce ^. createEditMotiv)
   void . insert $ S.RP (S.idToKey rid) key
   let pid = S.keyToId key
-      cr = ChunkRange Nothing Nothing  -- TODO
-  pure $ Edit pid desc cr
+  pure $ Edit
+    pid
+    (ce ^. createEditDesc)
+    (ce ^. createEditRange)
+    (ce ^. createEditKind)
+    (ce ^. createEditMotiv)
 
 getEdit :: ID Edit -> DB Edit
 getEdit pid = S.editElim toEdit <$> getEntity pid
@@ -203,8 +211,8 @@ getEdit pid = S.editElim toEdit <$> getEntity pid
     cr :: ChunkRange
     cr = ChunkRange Nothing Nothing  -- TODO
 
-    toEdit :: ST -> DocRepo.EditHandle -> Edit
-    toEdit desc _handle = Edit pid desc cr
+    toEdit :: ST -> DocRepo.EditHandle -> EditKind -> ST -> Edit
+    toEdit desc _handle kind motiv = Edit pid desc cr kind motiv
 
 getEditFromHandle :: DocRepo.EditHandle -> DB Edit
 getEditFromHandle hndl = do
@@ -217,8 +225,8 @@ getEditFromHandle hndl = do
 getEditHandle :: ID Edit -> DB DocRepo.EditHandle
 getEditHandle pid = S.editElim toEditHandle <$> getEntity pid
   where
-    toEditHandle :: ST -> DocRepo.EditHandle -> DocRepo.EditHandle
-    toEditHandle _desc handle = handle
+    toEditHandle :: ST -> DocRepo.EditHandle -> EditKind -> ST -> DocRepo.EditHandle
+    toEditHandle _desc handle _kind _motiv = handle
 
 editNotes :: ID Edit -> DB [ID Note]
 editNotes pid = liftDB $

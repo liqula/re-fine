@@ -28,7 +28,7 @@ class Database db where
   getEditIDs         :: ID VDocRepo -> db [ID Edit]
 
   -- * Edit
-  createEdit         :: ID VDocRepo -> DocRepo.EditHandle -> db Edit
+  createEdit         :: ID VDocRepo -> DocRepo.EditHandle -> Create Edit -> db Edit
   getEdit            :: ID Edit -> db Edit
   getEditFromHandle  :: DocRepo.EditHandle -> db Edit
   getEditHandle      :: ID Edit -> db DocRepo.EditHandle

@@ -304,7 +304,7 @@ specMockedLogin = around createDevModeTestSession $ do
                 (ChunkRange Nothing Nothing)
                 (vdocVersionFromST "[new vdoc version]")
                 Grammar
-                ["no motivation"])
+                "no motivation")
           pure (fe, fp)
 
     context "on edit without ranges" $ do

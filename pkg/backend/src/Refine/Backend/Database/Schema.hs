@@ -25,13 +25,14 @@
 module Refine.Backend.Database.Schema where
 
 import Control.Elim
+import Data.String.Conversions (ST)
 import Data.Text
 import Database.Persist
 import Database.Persist.Sql hiding (Statement)
 import Database.Persist.TH
 
 import Refine.Common.Types.Prelude
-import Refine.Common.Types.VDoc (Abstract, Title)
+import Refine.Common.Types.VDoc (Abstract, EditKind, Title)
 import Refine.Common.Types.Chunk (ChunkRange(..))
 import Refine.Backend.Database.Field()
 import Refine.Backend.DocRepo.Core (EditHandle, RepoHandle)
@@ -46,7 +47,10 @@ VDoc
 
 Edit
     desc        Text
-    editHandle EditHandle
+--    range       ChunkRange
+    editHandle  EditHandle
+    kind        EditKind
+    motivation  ST
 
 Repo
     name        Text
