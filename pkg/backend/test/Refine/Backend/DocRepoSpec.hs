@@ -74,6 +74,7 @@ cfg = Config
   , _cfgCsrfSecret    = "CSRF-SECRET"
   , _cfgSessionLength = TimespanSecs 30
   , _cfgDevMode       = False
+  , _cfgPoFilesRoot   = "./repos" -- FIXME: Change when it is needed.
   }
 
 provideRunner :: ActionWith (DocRepo :~> IO) -> IO ()

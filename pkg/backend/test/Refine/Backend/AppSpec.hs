@@ -118,6 +118,7 @@ createAppRunner :: forall a . IO (AppM DB UH a -> IO a, FilePath, FilePath)
 createAppRunner = do
   let testDb    = "test.db"
       reposRoot = "./repos"
+      poRoot    = "./repos" -- FIXME: Change this when needed. Not used at the moment.
 
       cfg = Config
         { _cfgShouldMigrate = False  -- (this is ignored here)
@@ -130,6 +131,7 @@ createAppRunner = do
         , _cfgCsrfSecret    = "CSRF-SECRET"
         , _cfgSessionLength = TimespanSecs 30
         , _cfgDevMode       = False
+        , _cfgPoFilesRoot   = poRoot
         }
 
   createDirectoryIfMissing True $ cfg ^. cfgReposRoot
@@ -144,6 +146,7 @@ createAppRunner = do
                                     logger
                                     (cfg ^. cfgCsrfSecret . to CsrfSecret)
                                     (cfg ^. cfgSessionLength)
+                                    poRoot
                                     id) $$ m
 
   void $ runner migrateDB
