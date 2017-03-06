@@ -71,7 +71,6 @@ import           Data.String.Conversions
 import           Data.Monoid ((<>))
 #endif
 import           Data.Ord
-import           Data.Typeable (Typeable, typeRep)
 import qualified Data.Set as Set
 import           Data.Time
 import           Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
@@ -80,6 +79,8 @@ import qualified GHC.Generics as GHC
 
 import Refine.Prelude.Generic
 import Refine.Prelude.TH
+
+{-# ANN module "HLint: ignore Use cs" #-}
 
 
 -- * time
@@ -246,11 +247,7 @@ recursion f = go
       Halt r -> pure r
 
 
-{-# ANN module "HLint: ignore Use cs" #-}
 instance {-# OVERLAPPABLE #-} (ConvertibleStrings a String, IsString b)
   => ConvertibleStrings a b
   where
     convertString = fromString . cs
-
-instance Typeable b => Show (a -> b) where
-  show f = show $ typeRep f
