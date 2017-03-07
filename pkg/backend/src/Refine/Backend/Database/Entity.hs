@@ -214,13 +214,13 @@ getEdit :: ID Edit -> DB Edit
 getEdit pid = S.editElim toEdit <$> getEntity pid
   where
     toEdit :: ST -> ChunkRange -> DocRepo.EditHandle -> EditKind -> ST -> Edit
-    toEdit desc cr _handle kind motiv = Edit pid desc cr kind motiv
+    toEdit desc cr _handle = Edit pid desc cr
 
 getEditFromHandle :: DocRepo.EditHandle -> DB Edit
 getEditFromHandle hndl = do
   ps <- liftDB $ selectList [S.EditEditHandle ==. hndl] []
   p <- unique ps
-  let toEdit desc cr _hdnl kind motiv = Edit (S.keyToId $ entityKey p) desc cr kind motiv
+  let toEdit desc cr _hdnl = Edit (S.keyToId $ entityKey p) desc cr
   pure $ S.editElim toEdit (entityVal p)
 
 getEditHandle :: ID Edit -> DB DocRepo.EditHandle
