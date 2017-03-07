@@ -27,6 +27,7 @@ import           Control.Lens (makeLenses, (^.))
 import           Data.Maybe (isJust)
 import           Data.String.Conversions
 import qualified Data.Tree as DT
+import           GHCJS.Types (JSVal)
 import           React.Flux
 import qualified Text.HTML.Parser as HTMLP
 
@@ -55,7 +56,7 @@ makeLenses ''DocumentProps
 document :: ReactView DocumentProps
 document = defineView "Document" $ \props ->
   if isJust (props ^. dpDocumentState . dsEditMode) then
-    editor_ [] mempty
+    editor_ [property "editorState" js_newEmptyEditorState] mempty
   else
     article_ [ "id" $= "vdocValue"
              , "className" $= "gr-20 gr-14@desktop"
@@ -108,3 +109,8 @@ toHTML state (DT.Node rootLabel subForest) = do
 
 -- alternatively: (needs `import Text.Show.Pretty`, package pretty-show.)
 -- toHTML n@(DT.Node rootLabel subForest) = pre_ $ ppShow n
+
+
+foreign import javascript unsafe
+    "window.EditorState.createEmpty()"
+    js_newEmptyEditorState :: JSVal
