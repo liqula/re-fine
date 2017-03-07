@@ -51,12 +51,12 @@ import           System.FilePath (dropFileName)
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
 import Refine.Backend.Config
-import Refine.Backend.Database (Database, DB, DBError(..), createDBRunner)
-import Refine.Backend.DocRepo (DocRepoError(..), createRunRepo)
+import Refine.Backend.Database (Database, DB, DBError(..), createDBNat)
+import Refine.Backend.DocRepo (DocRepoError(..), createRepoNat)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
-import Refine.Backend.User (CreateUserError(..), UserDB, UH, MockUH_, FreeUH, UserHandle, UserHandleC, runUH, mockLogin)
+import Refine.Backend.User (CreateUserError(..), UserDB, UH, MockUH_, FreeUH, UserHandle, UserHandleC, uhNat, mockLogin)
 import Refine.Common.Rest
 import Refine.Prelude (leftToError)
 
@@ -115,18 +115,18 @@ startBackend cfg =
 
 
 mkProdBackend :: Config -> IO (Backend DB UH)
-mkProdBackend cfg = mkBackend cfg runUH migrateDB
+mkProdBackend cfg = mkBackend cfg uhNat migrateDB
 
 mkDevModeBackend :: Config -> MockUH_ -> IO (Backend DB FreeUH)
-mkDevModeBackend cfg mock = mkBackend cfg (\_ -> runUH mock) migrateDBDevMode
+mkDevModeBackend cfg mock = mkBackend cfg (\_ -> uhNat mock) migrateDBDevMode
 
-mkBackend :: UserHandleC uh => Config -> (UserDB -> RunUH uh) -> AppM DB uh a -> IO (Backend DB uh)
+mkBackend :: UserHandleC uh => Config -> (UserDB -> UHNat uh) -> AppM DB uh a -> IO (Backend DB uh)
 mkBackend cfg initUH migrate = do
   createDataDirectories cfg
 
-  (runDb, runUserHandle) <- createDBRunner cfg
-  runDocRepo <- createRunRepo cfg
-  backend    <- mkServerApp cfg runDb runDocRepo (initUH runUserHandle)
+  (dbNat, runUserHandle) <- createDBNat cfg
+  docRepoNat <- createRepoNat cfg
+  backend    <- mkServerApp cfg dbNat docRepoNat (initUH runUserHandle)
 
   when (cfg ^. cfgShouldMigrate) $ do
     void $ (natThrowError . backendRunApp backend) $$ do
@@ -137,14 +137,14 @@ mkBackend cfg initUH migrate = do
 
 mkServerApp
     :: (Monad db, Database db, UserHandleC uh)
-    => Config -> RunDB db -> RunDocRepo -> RunUH uh -> IO (Backend db uh)
-mkServerApp cfg runDb runDocRepo runUh = do
+    => Config -> DBNat db -> DocRepoNat -> UHNat uh -> IO (Backend db uh)
+mkServerApp cfg dbNat docRepoNat uh = do
   poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
-      app    = runApp runDb
-                      runDocRepo
-                      runUh
+      app    = runApp dbNat
+                      docRepoNat
+                      uh
                       logger
                       (cfg ^. cfgCsrfSecret . to CsrfSecret)
                       (cfg ^. cfgSessionLength)

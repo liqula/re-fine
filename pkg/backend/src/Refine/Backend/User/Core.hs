@@ -29,7 +29,7 @@ module Refine.Backend.User.Core
   ( UserDB
   , UserHandleContext(..), userBackend
   , UserHandleError
-  , RunUH
+  , UHNat
   , migrateDB
   , toUserID
   , fromUserID
@@ -73,7 +73,7 @@ data UserHandleError
 
 makeRefineType ''UserHandleError
 
-type RunUH uh = uh :~> ExceptT UserHandleError IO
+type UHNat uh = uh :~> ExceptT UserHandleError IO
 
 deriving instance Generic CreateUserError
 

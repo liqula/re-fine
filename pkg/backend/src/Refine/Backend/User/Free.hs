@@ -23,7 +23,7 @@
 
 module Refine.Backend.User.Free (
     FreeUH
-  , runFreeUH
+  , freeUHNat
   , MockUH(..), MockUH_
   , mockLogin
   ) where
@@ -73,7 +73,7 @@ destroySession_ s = liftF $ DestroySession s id
 instance UserHandle FreeUH where
   type UserHandleInit FreeUH = MockUH_
 
-  runUH          = runFreeUH
+  uhNat          = freeUHNat
 
   createUser     = createUser_
   getUserById    = getUserById_
@@ -106,8 +106,8 @@ interpret m (Free (DestroySession s k)) = do
   r <- mockDestroySession m s
   interpret m (k r)
 
-runFreeUH :: MockUH_ -> RunUH FreeUH
-runFreeUH m = Nat (interpret m)
+freeUHNat :: MockUH_ -> UHNat FreeUH
+freeUHNat m = Nat (interpret m)
 
 
 type MockUH_ = MockUH (ExceptT UserHandleError IO)

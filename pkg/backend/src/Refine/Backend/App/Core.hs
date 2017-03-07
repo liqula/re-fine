@@ -22,13 +22,13 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Backend.App.Core (
-    RunDB
-  , RunUH
-  , RunDocRepo
+    DBNat
+  , UHNat
+  , DocRepoNat
   , AppContext(..)
-  , appRunDB
-  , appRunDocRepo
-  , appRunUH
+  , appDBNat
+  , appDocRepoNat
+  , appUHNat
   , appLogger
   , appCsrfSecret
   , appSessionLength
@@ -68,12 +68,12 @@ import Refine.Prelude (leftToError, Timespan)
 import Refine.Prelude.TH (makeRefineType)
 
 
-type RunDocRepo = DocRepo :~> ExceptT DocRepoError IO
+type DocRepoNat = DocRepo :~> ExceptT DocRepoError IO
 
 data AppContext db uh = AppContext
-  { _appRunDB         :: RunDB db
-  , _appRunDocRepo    :: RunDocRepo
-  , _appRunUH         :: RunUH uh
+  { _appDBNat         :: DBNat db
+  , _appDocRepoNat    :: DocRepoNat
+  , _appUHNat         :: UHNat uh
   , _appLogger        :: Logger
   , _appCsrfSecret    :: CsrfSecret
   , _appSessionLength :: Timespan
@@ -141,8 +141,8 @@ appIO = AppM . liftIO
 db :: db a -> AppM db uh a
 db m = AppM $ do
   mu <- user <$> gets (view appUserState)
-  (Nat runDB) <- ($ DBContext mu) <$> view appRunDB
-  r <- liftIO (runExceptT (runDB m))
+  (Nat dbNat) <- ($ DBContext mu) <$> view appDBNat
+  r <- liftIO (runExceptT (dbNat m))
   leftToError AppDBError r
   where
     user = \case
@@ -151,13 +151,13 @@ db m = AppM $ do
 
 docRepo :: DocRepo a -> AppM db uh a
 docRepo m = AppM $ do
-  (Nat runDRepo) <- view appRunDocRepo
-  r <- liftIO (runExceptT (runDRepo m))
+  (Nat drepoNat) <- view appDocRepoNat
+  r <- liftIO (runExceptT (drepoNat m))
   leftToError AppDocRepoError r
 
 userHandle :: uh a -> AppM db uh a
 userHandle m = AppM $ do
-  (Nat runUserHandle) <- view appRunUH
+  (Nat runUserHandle) <- view appUHNat
   r <- liftIO (runExceptT (runUserHandle m))
   leftToError AppUserHandleError r
 
