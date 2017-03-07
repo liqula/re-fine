@@ -42,6 +42,7 @@ import           Refine.Common.Rest (ApiError(..))
 
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
+import           Refine.Frontend.Document.Store (documentStateUpdate)
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
 import           Refine.Frontend.MainMenu.Types
@@ -84,6 +85,7 @@ instance StoreData GlobalState where
               & gsVDocList                   %~ vdocListUpdate transformedAction
               & gsContributionState          %~ maybe id contributionStateUpdate (transformedAction ^? _ContributionAction)
               & gsHeaderState                %~ headerStateUpdate transformedAction
+              & gsDocumentState              %~ documentStateUpdate transformedAction
               & gsScreenState                %~ maybe id screenStateUpdate (transformedAction ^? _ScreenAction)
               & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate transformedAction
               & gsLoginState                 %~ loginStateUpdate transformedAction

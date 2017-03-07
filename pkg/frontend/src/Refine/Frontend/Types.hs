@@ -30,6 +30,7 @@ import           GHC.Generics (Generic)
 
 import Refine.Common.Types as Common
 import Refine.Frontend.Contribution.Types
+import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
@@ -43,6 +44,7 @@ data GlobalState = GlobalState
   , _gsVDocList                   :: Maybe [ID VDoc]
   , _gsContributionState          :: ContributionState
   , _gsHeaderState                :: HeaderState
+  , _gsDocumentState              :: DocumentState
   , _gsScreenState                :: ScreenState
   , _gsNotImplementedYetIsVisible :: Bool
   , _gsMainMenuState              :: MainMenuState
@@ -57,6 +59,7 @@ emptyGlobalState = GlobalState
   , _gsVDocList                   = Nothing
   , _gsContributionState          = emptyContributionState
   , _gsHeaderState                = emptyHeaderState
+  , _gsDocumentState              = emptyDocumentState
   , _gsScreenState                = emptyScreenState
   , _gsNotImplementedYetIsVisible = False
   , _gsMainMenuState              = emptyMainMenuState
@@ -73,6 +76,7 @@ data RefineAction = LoadDocumentList
                   | ScreenAction ScreenAction
                   | ContributionAction ContributionAction
                   | HeaderAction HeaderAction
+                  | DocumentAction DocumentAction
                   | ToolbarStickyStateChange Bool
                   -- ...
                   | AddDiscussion CompositeDiscussion

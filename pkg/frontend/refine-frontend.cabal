@@ -54,6 +54,8 @@ library
       Refine.Frontend.Contribution.QuickCreate
       Refine.Frontend.Contribution.Store
       Refine.Frontend.Contribution.Types
+      Refine.Frontend.Document.Store
+      Refine.Frontend.Document.Types
       Refine.Frontend.ErrorHandling
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.Heading
@@ -172,6 +174,8 @@ test-suite spec
       Refine.Frontend.Contribution.Store
       Refine.Frontend.Contribution.StoreSpec
       Refine.Frontend.Contribution.Types
+      Refine.Frontend.Document.Store
+      Refine.Frontend.Document.Types
       Refine.Frontend.ErrorHandling
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.DocumentHeaderSpec

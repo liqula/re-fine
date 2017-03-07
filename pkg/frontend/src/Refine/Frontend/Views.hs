@@ -29,7 +29,7 @@ module Refine.Frontend.Views
 
 import           Control.Lens ((^.), (^?), to)
 import qualified Data.Map.Strict as M
-import           Data.Maybe (fromJust)
+import           Data.Maybe (fromJust, isJust)
 import           Data.String.Conversions
 import qualified Data.Tree as DT
 import           React.Flux
@@ -41,6 +41,7 @@ import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.QuickCreate
 import           Refine.Frontend.Contribution.Types as RS
+import           Refine.Frontend.Document.Types as DS
 import           Refine.Frontend.Header.Heading ( mainHeader_ )
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component (vdocLoader_)
@@ -48,7 +49,7 @@ import           Refine.Frontend.Login.Types as LG
 import           Refine.Frontend.MainMenu.Component (mainMenu_)
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.NotImplementedYet (notImplementedYet_)
-import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
+import           Refine.Frontend.ThirdPartyViews (stickyContainer_, editor_)
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
@@ -102,20 +103,23 @@ mainScreen = defineView "MainScreen" $ \rs -> do
                                      (M.elems (vdoc ^. compositeVDocDiscussions))
                                      (M.elems (vdoc ^. compositeVDocNotes))
                                      toolbarStatus
-                      article_ [ "id" $= "vdocValue"
-                               , "className" $= "gr-20 gr-14@desktop"
-                               , onMouseUp  $ \_ me -> RS.dispatch $
-                                   RS.TriggerUpdateSelection (SC.OffsetFromDocumentTop $ mousePageY me) toolbarStatus
-                                     -- <-- relative to webpage | relative to viewport -> mouseClientY me
-                               , onTouchEnd $ \_ te -> RS.dispatch $
-                                   RS.TriggerUpdateSelection (SC.OffsetFromDocumentTop . touchPageY . head $ touches te) toolbarStatus
+                      if isJust (rs ^. RS.gsDocumentState . DS.dsEditMode) then
+                        editor_ [] mempty
+                      else
+                        article_ [ "id" $= "vdocValue"
+                                 , "className" $= "gr-20 gr-14@desktop"
+                                 , onMouseUp  $ \_ me -> RS.dispatch $
+                                     RS.TriggerUpdateSelection (SC.OffsetFromDocumentTop $ mousePageY me) toolbarStatus
+                                       -- <-- relative to webpage | relative to viewport -> mouseClientY me
+                                 , onTouchEnd $ \_ te -> RS.dispatch $
+                                     RS.TriggerUpdateSelection (SC.OffsetFromDocumentTop . touchPageY . head $ touches te) toolbarStatus
 
-                               ] $ do
-                        -- leftover from p'2016:
-                        -- div_ ["className" $= "c-vdoc-overlay"] $ do
-                          -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
-                        div_ ["className" $= "c-article-content"] $ do
-                          toArticleBody (rs ^. gsContributionState) (_unVDocVersion . _compositeVDocVersion $ vdoc)
+                                 ] $ do
+                          -- leftover from p'2016:
+                          -- div_ ["className" $= "c-vdoc-overlay"] $ do
+                            -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
+                          div_ ["className" $= "c-article-content"] $ do
+                            toArticleBody (rs ^. gsContributionState) (_unVDocVersion . _compositeVDocVersion $ vdoc)
                       rightAside_ (rs ^. gsContributionState . csMarkPositions) (rs ^. gsScreenState)
 
 mainScreen_ :: RS.GlobalState -> ReactElementM eventHandler ()

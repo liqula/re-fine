@@ -22,9 +22,10 @@
 
 module Refine.Frontend.Header.Toolbar where
 
-import           GHCJS.Types (JSString)
 import           React.Flux
+import           Data.String.Conversions
 
+import           Refine.Common.Types ( EditKind(..) )
 import qualified Refine.Frontend.Header.Types as RS
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
@@ -166,22 +167,22 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \case
         div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
           div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
           div_ ["className" $= "c-vdoc-toolbar-extension__modification c-vdoc-toolbar-extension--expanded"] $ do  -- (RENAME: Edit)
-            editButton "phrasing"
-            editButton "meaning"
-            editButton "grammar"
+            editButton Phrasing
+            editButton Meaning
+            editButton Grammar
 
   (EditToolbarExtensionProps _) -> mempty
   where
-    editButton :: JSString -> ReactElementM eventHandler ()
-    editButton label =
+    editButton :: EditKind -> ReactElementM eventHandler ()
+    editButton kind =
       iconButton_ $ IconButtonProps
                   (IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") L)
                   "btn-new-mod-text" -- RENAME: mod => edit
                   ""
                   "edit"
-                  label
+                  (cs (show kind))
                   False
-                  (\e -> stopPropagation e : RS.dispatch RS.ShowNotImplementedYet)
+                  (\e -> stopPropagation e : RS.dispatch (RS.HeaderAction (RS.StartEdit kind)))
                   []
 
 
