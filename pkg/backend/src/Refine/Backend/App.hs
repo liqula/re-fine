@@ -44,7 +44,7 @@ import Refine.Prelude
 
 runApp
   :: forall (db :: * -> *) (uh :: * -> *)
-  .  RunDB db
+  .  DBNat db
   -> RunDocRepo
   -> RunUH uh
   -> Logger
@@ -54,7 +54,7 @@ runApp
   -> (forall a . AppM db uh a -> AppM db uh a)
   -> (AppM db uh :~> ExceptT AppError IO)
 runApp
-  runDB
+  dbNat
   runDocRepo
   runUH
   logger
@@ -64,7 +64,7 @@ runApp
   wrapper =
     Nat (runSR
             (AppState Nothing UserLoggedOut)
-            (AppContext runDB runDocRepo runUH logger csrfSecret sessionLength poFilesRoot)
+            (AppContext dbNat runDocRepo runUH logger csrfSecret sessionLength poFilesRoot)
           . unApp
           . wrapper)
     where

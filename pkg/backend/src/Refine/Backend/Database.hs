@@ -25,7 +25,7 @@
 module Refine.Backend.Database
   ( module Refine.Backend.Database.Class
   , module Refine.Backend.Database.Core
-  , RunDB
+  , DBNat
   , createDBRunner
   ) where
 
@@ -45,9 +45,9 @@ import Refine.Backend.Database.Core
 import Refine.Backend.Database.Schema()
 import Refine.Backend.Database.Entity as Entity
 
-type RunDB db = DBContext -> (db :~> ExceptT DBError IO)
+type DBNat db = DBContext -> (db :~> ExceptT DBError IO)
 
-createDBRunner :: Config -> IO (RunDB DB, UserDB.Persistent)
+createDBRunner :: Config -> IO (DBNat DB, UserDB.Persistent)
 createDBRunner cfg = do
 
   let sqliteDb = case cfg ^. cfgDBKind of

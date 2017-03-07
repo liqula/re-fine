@@ -22,11 +22,11 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Backend.App.Core (
-    RunDB
+    DBNat
   , RunUH
   , RunDocRepo
   , AppContext(..)
-  , appRunDB
+  , appDBNat
   , appRunDocRepo
   , appRunUH
   , appLogger
@@ -71,7 +71,7 @@ import Refine.Prelude.TH (makeRefineType)
 type RunDocRepo = DocRepo :~> ExceptT DocRepoError IO
 
 data AppContext db uh = AppContext
-  { _appRunDB         :: RunDB db
+  { _appDBNat         :: DBNat db
   , _appRunDocRepo    :: RunDocRepo
   , _appRunUH         :: RunUH uh
   , _appLogger        :: Logger
@@ -141,8 +141,8 @@ appIO = AppM . liftIO
 db :: db a -> AppM db uh a
 db m = AppM $ do
   mu <- user <$> gets (view appUserState)
-  (Nat runDB) <- ($ DBContext mu) <$> view appRunDB
-  r <- liftIO (runExceptT (runDB m))
+  (Nat dbNat) <- ($ DBContext mu) <$> view appDBNat
+  r <- liftIO (runExceptT (dbNat m))
   leftToError AppDBError r
   where
     user = \case

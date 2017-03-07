@@ -124,9 +124,9 @@ mkBackend :: UserHandleC uh => Config -> (UserDB -> RunUH uh) -> AppM DB uh a ->
 mkBackend cfg initUH migrate = do
   createDataDirectories cfg
 
-  (runDb, runUserHandle) <- createDBRunner cfg
+  (dbNat, runUserHandle) <- createDBRunner cfg
   runDocRepo <- createRunRepo cfg
-  backend    <- mkServerApp cfg runDb runDocRepo (initUH runUserHandle)
+  backend    <- mkServerApp cfg dbNat runDocRepo (initUH runUserHandle)
 
   when (cfg ^. cfgShouldMigrate) $ do
     void $ (natThrowError . backendRunApp backend) $$ do
@@ -137,12 +137,12 @@ mkBackend cfg initUH migrate = do
 
 mkServerApp
     :: (Monad db, Database db, UserHandleC uh)
-    => Config -> RunDB db -> RunDocRepo -> RunUH uh -> IO (Backend db uh)
-mkServerApp cfg runDb runDocRepo runUh = do
+    => Config -> DBNat db -> RunDocRepo -> RunUH uh -> IO (Backend db uh)
+mkServerApp cfg dbNat runDocRepo runUh = do
   poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
-      app    = runApp runDb
+      app    = runApp dbNat
                       runDocRepo
                       runUh
                       logger
