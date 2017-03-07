@@ -11,6 +11,6 @@ import           React.Flux
 -- | See also:
 -- https://bitbucket.org/wuzzeb/react-flux/pull-requests/11/clarify-diversify-classnames-helper/diff
 classNamesAny :: [(ST, Bool)] -> PropertyOrHandler handler
-classNamesAny xs = "className" @= ST.intercalate " " names
+classNamesAny xs = "className" @= ST.unwords names
   where
     names = nub $ fst <$> filter snd xs

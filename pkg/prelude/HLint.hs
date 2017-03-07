@@ -1,10 +1,10 @@
 -- to turn off unreasonable hints on a case-by-case basis, consult
 -- https://github.com/ndmitchell/hlint#ignoring-hints
 
-import Debug.Trace
-
-import Data.String (fromString)
-import Data.String.Conversions (cs)
+import           Data.String (fromString)
+import           Data.String.Conversions (cs)
+import qualified Data.Text as ST
+import           Debug.Trace
 
 import "hlint" HLint.Default
 import "hlint" HLint.Dollar
@@ -26,6 +26,7 @@ warn = return ==> pure
 warn = f ^. g ^. h ==> f ^. g . h
 warn = fx f ^. g ==> f ^. to fx . g
 warn = fromString ==> cs -- Refine.Prelude module should be imported to support this
+warn = ST.intercalate " " ==> ST.unwords
 
 -- this is a bit of a hack, but it works.  use "ignore Use errorDoNotUseTrace" in annotations.
 warn = trace         ==> errorDoNotUseTrace
