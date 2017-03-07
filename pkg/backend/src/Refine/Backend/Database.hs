@@ -26,7 +26,7 @@ module Refine.Backend.Database
   ( module Refine.Backend.Database.Class
   , module Refine.Backend.Database.Core
   , DBNat
-  , createDBRunner
+  , createDBNat
   ) where
 
 import Control.Exception
@@ -47,8 +47,8 @@ import Refine.Backend.Database.Entity as Entity
 
 type DBNat db = DBContext -> (db :~> ExceptT DBError IO)
 
-createDBRunner :: Config -> IO (DBNat DB, UserDB.Persistent)
-createDBRunner cfg = do
+createDBNat :: Config -> IO (DBNat DB, UserDB.Persistent)
+createDBNat cfg = do
 
   let sqliteDb = case cfg ^. cfgDBKind of
         DBInMemory  -> ":memory:"

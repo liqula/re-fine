@@ -25,7 +25,7 @@
 module Refine.Backend.DocRepo
   ( module Refine.Backend.DocRepo.Core
   , module Refine.Backend.DocRepo.Class
-  , createRunRepo
+  , createRepoNat
   , runDocRepo
   ) where
 
@@ -40,8 +40,8 @@ import Refine.Backend.DocRepo.Core
 import Refine.Backend.DocRepo.Darcs as Darcs
 
 
-createRunRepo :: Config -> IO (DocRepo :~> ExceptT DocRepoError IO)
-createRunRepo cfg = pure $
+createRepoNat :: Config -> IO (DocRepo :~> ExceptT DocRepoError IO)
+createRepoNat cfg = pure $
   Nat (wrapErrors . runDocRepo cfg)
   where
     wrapErrors :: IO (Either DocRepoError a) -> ExceptT DocRepoError IO a
