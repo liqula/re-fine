@@ -26,7 +26,7 @@ module Refine.Backend.Database.Schema where
 
 import Control.Elim
 import Data.String.Conversions (ST)
-import Data.Text
+import Data.Text hiding (group)
 import Database.Persist
 import Database.Persist.Sql hiding (Statement)
 import Database.Persist.TH
@@ -86,6 +86,17 @@ Statement
 Vote
     value       Text
     owner       LoginId
+
+-- Groups
+
+Group
+    title       Text
+    description Text
+
+SubGroup
+    parent      GroupId
+    child       GroupId
+    UniSG parent child
 
 -- Connection tables
 
@@ -175,6 +186,9 @@ makeElim ''Answer
 makeElim ''Discussion
 makeElim ''Statement
 makeElim ''Vote
+
+makeElim ''Group
+makeElim ''SubGroup
 
 makeElim ''DscnAcc
 makeElim ''NoteAcc

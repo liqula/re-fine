@@ -50,6 +50,7 @@ type instance S.EntityRep Discussion = S.Discussion
 type instance S.EntityRep Answer     = S.Answer
 type instance S.EntityRep Statement  = S.Statement
 type instance S.EntityRep User       = Users.Login
+type instance S.EntityRep Group      = S.Group
 
 {-
 Reading the domain structured datatypes is not a problem,
@@ -410,3 +411,16 @@ createStatement sid statement = do
 
 getStatement :: ID Statement -> DB Statement
 getStatement sid = S.statementElim (toStatement sid) <$> getEntity sid
+
+-- * Group
+
+toGroup :: ID Group -> ST -> ST -> Group
+toGroup = Group
+
+createGroup :: Create Group -> DB Group
+createGroup group = liftDB $ do
+  let sgroup = S.Group
+        (group ^. createGroupTitle)
+        (group ^. createGroupDesc)
+  key <- insert sgroup
+  pure $ S.groupElim (toGroup (S.keyToId key)) sgroup

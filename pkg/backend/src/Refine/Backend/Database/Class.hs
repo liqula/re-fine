@@ -4,6 +4,7 @@ module Refine.Backend.Database.Class where
 import Refine.Backend.Database.Tree
 import Refine.Backend.DocRepo.Core as DocRepo
 import Refine.Common.Types.Comment
+import Refine.Common.Types.Group
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc
 import Refine.Common.Types.User
@@ -74,6 +75,9 @@ class Database db where
   -- * Statement
   createStatement      :: ID Statement -> Create Statement -> db Statement
   getStatement         :: ID Statement -> db Statement
+
+  -- * Group
+  createGroup          :: Create Group -> db Group
 
 
 -- * composite db queries

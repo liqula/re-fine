@@ -125,3 +125,6 @@ instance Database DB where
   -- * Statement
   createStatement      = Entity.createStatement
   getStatement         = Entity.getStatement
+
+  -- * Group
+  createGroup       = Entity.createGroup
