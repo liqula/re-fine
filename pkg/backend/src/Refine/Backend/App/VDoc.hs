@@ -120,7 +120,7 @@ addEdit basepid edit = do
       let version   = edit ^. createEditVDoc . to canonicalizeVDocVersion
       childphandle <- docRepo $ DocRepo.createEdit rhandle basephandle version
       db $ do
-        childEdit <- DB.createEdit rid childphandle
+        childEdit <- DB.createEdit rid childphandle edit
         DB.setEditChild basepid (childEdit ^. editID)
         pure childEdit
 

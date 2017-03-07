@@ -83,10 +83,8 @@ data Edit = Edit
   { _editID    :: ID Edit
   , _editDesc  :: ST
   , _editRange :: ChunkRange
-{- FIXME: left-over from #45.  re-activating this will require further changes in the backend.
   , _editKind  :: EditKind
-  , _editMotiv :: [ST]  -- (list of paragraphs)
--}
+  , _editMotiv :: ST  -- (list of paragraphs)
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -95,11 +93,11 @@ data CreateEdit = CreateEdit
   , _createEditRange :: ChunkRange
   , _createEditVDoc  :: VDocVersion 'HTMLRaw
   , _createEditKind  :: EditKind
-  , _createEditMotiv :: [ST]
+  , _createEditMotiv :: ST
   }
   deriving (Eq, Ord, Show, Generic)
 
-data EditKind = Grammar | Phrasing | Meaning
+data EditKind = Grammar | Phrasing | Meaning | Initial
   deriving (Eq, Ord, Show, Read, Generic)
 
 data ConflictResolution = ConflictResolution

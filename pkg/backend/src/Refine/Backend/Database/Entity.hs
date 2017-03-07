@@ -157,10 +157,15 @@ vdocRepoOfEdit eid = unique =<< liftDB
 createRepo :: DocRepo.RepoHandle -> DocRepo.EditHandle -> DB VDocRepo
 createRepo repoh edith = liftDB $ do
     let desc = "" -- TODO
-    pkey <- insert $ S.Edit desc edith
+        motiv = ""
+    pkey <- insert $ S.Edit desc cr edith Initial motiv
     key  <- insert $ S.Repo "title" {- TODO -} repoh pkey
     void  . insert $ S.RP key pkey
     pure $ VDocRepo (S.keyToId key) (S.keyToId pkey)
+  where
+    cr :: ChunkRange
+    cr = ChunkRange Nothing Nothing  -- TODO
+
 
 getRepo :: ID VDocRepo -> DB VDocRepo
 getRepo vid = S.repoElim toVDocRepo <$> getEntity vid
@@ -188,37 +193,41 @@ getEditIDs vid = liftDB $
 
 -- * Edit
 
-createEdit :: ID VDocRepo -> DocRepo.EditHandle -> DB Edit
-createEdit rid edith = liftDB $ do
-  let desc = "" -- TODO
-  key <- insert $ S.Edit desc edith
+createEdit :: ID VDocRepo -> DocRepo.EditHandle -> CreateEdit -> DB Edit
+createEdit rid edith ce = liftDB $ do
+  key <- insert $ S.Edit
+            (ce ^. createEditDesc)
+            (ce ^. createEditRange)
+            edith
+            (ce ^. createEditKind)
+            (ce ^. createEditMotiv)
   void . insert $ S.RP (S.idToKey rid) key
   let pid = S.keyToId key
-      cr = ChunkRange Nothing Nothing  -- TODO
-  pure $ Edit pid desc cr
+  pure $ Edit
+    pid
+    (ce ^. createEditDesc)
+    (ce ^. createEditRange)
+    (ce ^. createEditKind)
+    (ce ^. createEditMotiv)
 
 getEdit :: ID Edit -> DB Edit
 getEdit pid = S.editElim toEdit <$> getEntity pid
   where
-    cr :: ChunkRange
-    cr = ChunkRange Nothing Nothing  -- TODO
-
-    toEdit :: ST -> DocRepo.EditHandle -> Edit
-    toEdit desc _handle = Edit pid desc cr
+    toEdit :: ST -> ChunkRange -> DocRepo.EditHandle -> EditKind -> ST -> Edit
+    toEdit desc cr _handle = Edit pid desc cr
 
 getEditFromHandle :: DocRepo.EditHandle -> DB Edit
 getEditFromHandle hndl = do
   ps <- liftDB $ selectList [S.EditEditHandle ==. hndl] []
   p <- unique ps
-  let cr = ChunkRange Nothing Nothing  -- TODO
-      toEdit desc _hdnl = Edit (S.keyToId $ entityKey p) desc cr
+  let toEdit desc cr _hdnl = Edit (S.keyToId $ entityKey p) desc cr
   pure $ S.editElim toEdit (entityVal p)
 
 getEditHandle :: ID Edit -> DB DocRepo.EditHandle
 getEditHandle pid = S.editElim toEditHandle <$> getEntity pid
   where
-    toEditHandle :: ST -> DocRepo.EditHandle -> DocRepo.EditHandle
-    toEditHandle _desc handle = handle
+    toEditHandle :: ST -> ChunkRange -> DocRepo.EditHandle -> EditKind -> ST -> DocRepo.EditHandle
+    toEditHandle _desc _cr handle _kind _motiv = handle
 
 editNotes :: ID Edit -> DB [ID Note]
 editNotes pid = liftDB $

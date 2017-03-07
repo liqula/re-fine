@@ -57,7 +57,14 @@ instance PersistFieldSql EditHandle where
 
 instance PersistField ChunkRange where
   toPersistValue range = toPersistValue . cs @LBS @ST $ encode range
-  fromPersistValue = (either (Left . cs) Right . eitherDecode .  cs) <=< fromPersistValue @ST
+  fromPersistValue = (either (Left . cs) Right . eitherDecode . cs) <=< fromPersistValue @ST
 
 instance PersistFieldSql ChunkRange where
+  sqlType _ = sqlType (Proxy :: Proxy ST)
+
+instance PersistField EditKind where
+  toPersistValue kind = toPersistValue . cs @LBS @ST $ encode kind
+  fromPersistValue = (either (Left . cs) Right . eitherDecode . cs) <=< fromPersistValue @ST
+
+instance PersistFieldSql EditKind where
   sqlType _ = sqlType (Proxy :: Proxy ST)
