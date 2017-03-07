@@ -40,6 +40,7 @@ data ApiError
   | ApiSessionError
   | ApiSanityCheckError ST
   | ApiUserHandleError ST
+  | ApiL10ParseErrors [ST]
   deriving (Eq, Show, Generic)
 
 -- | The 'S' prefix in the handlers stands for "server" (see 'refineApi' for an explanation).
@@ -57,6 +58,7 @@ type RefineAPI =
   :<|> SChangeAccess
   :<|> SLogin
   :<|> SLogout
+  :<|> SGetTranslations
 
 
 type SListVDocs
@@ -107,5 +109,7 @@ type SLogout
 type SChangeAccess
   = "r" :> "change-access" :> ReqBody '[JSON] ChangeAccess :> Post '[JSON] ()
 
+type SGetTranslations
+  = "r" :> "get-translations" :> ReqBody '[JSON] GetTranslations :> Post '[JSON] L10
 
 makeRefineType ''ApiError

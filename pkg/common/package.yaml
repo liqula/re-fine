@@ -27,6 +27,7 @@ dependencies:
   - hspec-core
   - html-parse
   - http-api-data
+  - i18n
   - json-sop
   - lens
   - mtl

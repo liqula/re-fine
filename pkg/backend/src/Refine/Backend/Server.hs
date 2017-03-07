@@ -45,7 +45,7 @@ import qualified Servant.Cookie.Session as SCS
 import           Servant.Cookie.Session (serveAction)
 import           Servant.Server.Internal (responseServantErr)
 import           Servant.Utils.StaticFiles (serveDirectory)
-import           System.Directory (createDirectoryIfMissing)
+import           System.Directory (canonicalizePath, createDirectoryIfMissing)
 import           System.FilePath (dropFileName)
 
 import Refine.Backend.App
@@ -71,10 +71,13 @@ refineCookieName = "refine"
 
 createDataDirectories :: Config -> IO ()
 createDataDirectories cfg = do
-  createDirectoryIfMissing True (cfg ^. cfgReposRoot)
+  reposRoot <- cfg ^. cfgReposRoot . to canonicalizePath
+  createDirectoryIfMissing True reposRoot
   case cfg ^. cfgDBKind of
     DBInMemory    -> pure ()
-    DBOnDisk path -> createDirectoryIfMissing True (dropFileName path)
+    DBOnDisk path -> do
+      cpath <- canonicalizePath path
+      createDirectoryIfMissing True (dropFileName cpath)
 
 
 -- * backend creation
@@ -100,6 +103,7 @@ refineApi =
   :<|> Refine.Backend.App.changeAccess
   :<|> Refine.Backend.App.login
   :<|> Refine.Backend.App.logout
+  :<|> Refine.Backend.App.getTranslations
 
 startBackend :: Config -> IO ()
 startBackend cfg =
@@ -135,6 +139,7 @@ mkServerApp
     :: (Monad db, Database db, UserHandleC uh)
     => Config -> RunDB db -> RunDocRepo -> RunUH uh -> IO (Backend db uh)
 mkServerApp cfg runDb runDocRepo runUh = do
+  poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
       app    = runApp runDb
@@ -143,6 +148,7 @@ mkServerApp cfg runDb runDocRepo runUh = do
                       logger
                       (cfg ^. cfgCsrfSecret . to CsrfSecret)
                       (cfg ^. cfgSessionLength)
+                      poFilesRoot
                       (if cfg ^. cfgDevMode then devMode else id)
 
   -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
@@ -183,6 +189,7 @@ toApiError = \case
   AppSessionError        -> ApiSessionError
   AppSanityCheckError e  -> ApiSanityCheckError e
   AppUserHandleError e   -> ApiUserHandleError . cs $ show e
+  AppL10ParseErrors e    -> ApiL10ParseErrors e
 
 -- | Turns AppError to its kind of servant error.
 appServantErr :: AppError -> ServantErr
@@ -198,6 +205,7 @@ appServantErr = \case
   AppSessionError          -> err403
   AppSanityCheckError _    -> err409
   AppUserHandleError _     -> err500
+  AppL10ParseErrors _      -> err500
 
 dbServantErr :: DBError -> ServantErr
 dbServantErr = \case

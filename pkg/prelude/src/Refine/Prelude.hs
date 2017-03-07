@@ -80,6 +80,8 @@ import qualified GHC.Generics as GHC
 import Refine.Prelude.Generic
 import Refine.Prelude.TH
 
+{-# ANN module "HLint: ignore Use cs" #-}
+
 
 -- * time
 
@@ -245,7 +247,6 @@ recursion f = go
       Halt r -> pure r
 
 
-{-# ANN module "HLint: ignore Use cs" #-}
 instance {-# OVERLAPPABLE #-} (ConvertibleStrings a String, IsString b)
   => ConvertibleStrings a b
   where

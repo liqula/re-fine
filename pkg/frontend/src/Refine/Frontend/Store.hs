@@ -50,6 +50,7 @@ import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Rest
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
 import           Refine.Frontend.Test.Samples
+import           Refine.Frontend.Translation.Store (translationsUpdate)
 import           Refine.Frontend.Types
 
 
@@ -88,10 +89,10 @@ instance StoreData GlobalState where
               & gsLoginState                 %~ loginStateUpdate transformedAction
               & gsMainMenuState              %~ mainMenuUpdate transformedAction
               & gsToolbarSticky              %~ toolbarStickyUpdate transformedAction
+              & gsTranslations               %~ fmap (translationsUpdate transformedAction)
 
         consoleLog "New state: " newState
         pure newState
-
 
 vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate action Nothing = case action of
@@ -206,6 +207,12 @@ emitBackendCallsFor action state = case action of
             [ ChangeCurrentUser UserLoggedOut
             , MainMenuAction MainMenuActionClose
             ]
+
+    LoadTranslations locate -> do
+      getTranslations (RT.GetTranslations locate) $ \case
+        (Left rsp) -> handleError rsp (const [])
+        (Right l10) -> do
+          pure . dispatch $ ChangeTranslations l10
 
     _ -> pure ()
 

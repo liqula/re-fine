@@ -20,18 +20,21 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Refine.Frontend.Types where
 
 import           Data.Text (Text)
+import           Data.Text.I18n
 import           GHC.Generics (Generic)
 
 import Refine.Common.Types as Common
-
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Login.Types
+import Refine.Prelude.Aeson (NoJSONRep(..))
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -45,6 +48,7 @@ data GlobalState = GlobalState
   , _gsMainMenuState              :: MainMenuState
   , _gsLoginState                 :: LoginState
   , _gsToolbarSticky              :: Bool
+  , _gsTranslations               :: NoJSONRep Translations
   } deriving (Show, Generic)
 
 emptyGlobalState :: GlobalState
@@ -58,6 +62,7 @@ emptyGlobalState = GlobalState
   , _gsMainMenuState              = emptyMainMenuState
   , _gsLoginState                 = emptyLoginState
   , _gsToolbarSticky              = False
+  , _gsTranslations               = NoJSONRep emptyTranslations
   }
 
 data RefineAction = LoadDocumentList
@@ -81,11 +86,17 @@ data RefineAction = LoadDocumentList
                   | HideNotImplementedYet
                   | MainMenuAction MainMenuAction
                   | ChangeCurrentUser CurrentUser
+                  | ChangeTranslations L10
                   -- Actions that will be transformed because they need IO:
                   | TriggerUpdateSelection OffsetFromDocumentTop ToolbarExtensionStatus
+
+                  | LoadTranslations Locale
+
                   -- Action only for testing:
                   | ClearState
   deriving (Show, Generic)
+
+
 
 makeRefineType ''GlobalState
 makeRefineType ''RefineAction

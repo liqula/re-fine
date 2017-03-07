@@ -30,3 +30,17 @@ the latter and interpreted as rules.  For example:
 
 The complete set of rules is in `./Build.hs` and should be
 self-explanatory (at least for developers :).
+
+
+## I18n
+
+Instead of translateable texts, use translation keys.  Translation
+keys are fresh identifiers of type `TKey`.  If you need a new
+translation key:
+
+1. think of a name (underscores are ok).
+2. use this name in an expression of type `(__ some_t_key)` *without declaring it*.
+3. make sure to import `Refine.Frontend.TKey`.
+4. run `./build build-frontend-trans`.
+
+Search the frontend code for `__` for examples.

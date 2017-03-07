@@ -37,6 +37,7 @@ import           Refine.Frontend.ThirdPartyViews (skylight_)
 import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Colors as C
+import           Refine.Frontend.TKey
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Style
@@ -255,8 +256,8 @@ data CommentInputProps = CommentInputProps
 makeLenses ''CommentInputProps
 
 -- was add-annotation
-addComment :: ReactView CommentInputProps
-addComment = defineView "AddComment" $ \props ->
+addComment :: TranslationsCS -> ReactView CommentInputProps
+addComment __ = defineView "AddComment" $ \props ->
     let top = case props ^. cipRange of
               Nothing -> 0 -- FIXME: Invent a suitable top for the "general comment" case
               Just range -> (range ^. RS.rangeBottomOffset . SC.unOffsetFromViewportTop)
@@ -282,17 +283,17 @@ addComment = defineView "AddComment" $ \props ->
                          , Style "marginLeft" ("1rem" :: String)
                          , Style "fontWeight" ("bold" :: String)
                          ]
-            ] "Add a comment"
+            ] (__ add_a_comment)
 
       hr_ []
 
       commentInput_ props
 
 
-addComment_ :: AddCommentProps -> ReactElementM eventHandler ()
-addComment_ (AddCommentProps RS.EditorIsHidden _ _) = mempty
-addComment_ (AddCommentProps (RS.EditorIsVisible range) category windowWidth1) =
-  view addComment (CommentInputProps range category windowWidth1) mempty
+addComment_ :: TranslationsCS -> AddCommentProps -> ReactElementM eventHandler ()
+addComment_ __ (AddCommentProps RS.EditorIsHidden _ _) = mempty
+addComment_ __ (AddCommentProps (RS.EditorIsVisible range) category windowWidth1) =
+  view (addComment __) (CommentInputProps range category windowWidth1) mempty
 
 
 commentInput :: ReactView CommentInputProps
