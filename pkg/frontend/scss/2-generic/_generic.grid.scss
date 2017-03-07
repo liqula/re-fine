@@ -1,7 +1,7 @@
 // import gridle
 
 @import 'gridle/gridle';
-@import '../0-settings/settings.gridle';
+@import '../0-settings/settings.gridle';  // FIXME: this is imported for the second time here, no?  how does that work in scss?
 
 
 // grid properties

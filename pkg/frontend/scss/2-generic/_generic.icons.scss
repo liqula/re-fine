@@ -1,3 +1,5 @@
+// FIXME: we should generate this file, and only have to add icons to
+// the resp. folder in order to have the css classes.
 
 // search: (^.*).svg
 // replace: .icon-$1 {\n  background-image: url("../images/$1.svg");\n}

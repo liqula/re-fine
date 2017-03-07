@@ -55,6 +55,8 @@ $module: #{$namespace}mainmenu;
 
 }
 
+
+// media query
 @include gridle_state(tablet desktop) {
 
     .#{$module},

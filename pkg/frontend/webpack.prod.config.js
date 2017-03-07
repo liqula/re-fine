@@ -6,8 +6,6 @@ var IS_DEV = require('isdev');
 
 module.exports = {
     entry: [
-        "./jsbits/util",
-        "./jsbits/hookup",
         "./jsbits/hookup_scss",
         "./js-build/frontend"
     ],

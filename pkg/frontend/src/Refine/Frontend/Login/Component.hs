@@ -105,7 +105,7 @@ defaultStyles =
   [ Style "position" ("absolute" :: String)
   , Style "zIndex" (100000 :: Int)
   , Style "color" ("black" :: String)
-  , Style "background-color" ("white" :: String)
+  , Style "backgroundColor" ("white" :: String)
   ]
 
 
