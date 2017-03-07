@@ -23,12 +23,12 @@
 
 module Refine.Backend.App.Core (
     DBNat
-  , RunUH
+  , UHNat
   , DocRepoNat
   , AppContext(..)
   , appDBNat
   , appDocRepoNat
-  , appRunUH
+  , appUHNat
   , appLogger
   , appCsrfSecret
   , appSessionLength
@@ -73,7 +73,7 @@ type DocRepoNat = DocRepo :~> ExceptT DocRepoError IO
 data AppContext db uh = AppContext
   { _appDBNat         :: DBNat db
   , _appDocRepoNat    :: DocRepoNat
-  , _appRunUH         :: RunUH uh
+  , _appUHNat         :: UHNat uh
   , _appLogger        :: Logger
   , _appCsrfSecret    :: CsrfSecret
   , _appSessionLength :: Timespan
@@ -157,7 +157,7 @@ docRepo m = AppM $ do
 
 userHandle :: uh a -> AppM db uh a
 userHandle m = AppM $ do
-  (Nat runUserHandle) <- view appRunUH
+  (Nat runUserHandle) <- view appUHNat
   r <- liftIO (runExceptT (runUserHandle m))
   leftToError AppUserHandleError r
 

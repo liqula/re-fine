@@ -16,7 +16,7 @@ type UserHandleC uh = (Monad uh, UserHandle uh)
 class UserHandle uh where
   type family UserHandleInit uh
 
-  runUH          :: UserHandleInit uh -> RunUH uh
+  uhNat          :: UserHandleInit uh -> UHNat uh
 
   createUser     :: User    -> uh (Either CreateUserError LoginId)
   getUserById    :: LoginId -> uh (Maybe User)

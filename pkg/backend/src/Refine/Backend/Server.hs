@@ -115,12 +115,12 @@ startBackend cfg =
 
 
 mkProdBackend :: Config -> IO (Backend DB UH)
-mkProdBackend cfg = mkBackend cfg runUH migrateDB
+mkProdBackend cfg = mkBackend cfg uhNat migrateDB
 
 mkDevModeBackend :: Config -> MockUH_ -> IO (Backend DB FreeUH)
 mkDevModeBackend cfg mock = mkBackend cfg (\_ -> runUH mock) migrateDBDevMode
 
-mkBackend :: UserHandleC uh => Config -> (UserDB -> RunUH uh) -> AppM DB uh a -> IO (Backend DB uh)
+mkBackend :: UserHandleC uh => Config -> (UserDB -> UHNat uh) -> AppM DB uh a -> IO (Backend DB uh)
 mkBackend cfg initUH migrate = do
   createDataDirectories cfg
 
@@ -137,14 +137,14 @@ mkBackend cfg initUH migrate = do
 
 mkServerApp
     :: (Monad db, Database db, UserHandleC uh)
-    => Config -> DBNat db -> DocRepoNat -> RunUH uh -> IO (Backend db uh)
-mkServerApp cfg dbNat runDocRepo runUh = do
+    => Config -> DBNat db -> DocRepoNat -> UHNat uh -> IO (Backend db uh)
+mkServerApp cfg dbNat docRepoNat uh = do
   poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
       app    = runApp dbNat
-                      runDocRepo
-                      runUh
+                      docRepoNat
+                      uh
                       logger
                       (cfg ^. cfgCsrfSecret . to CsrfSecret)
                       (cfg ^. cfgSessionLength)

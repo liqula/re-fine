@@ -35,7 +35,7 @@ uhIO = UH . liftIO
 instance C.UserHandle UH where
   type UserHandleInit UH = UserDB
 
-  runUH db = Nat ((`runReaderT` UserHandleContext db) . unUH)
+  uhNat db = Nat ((`runReaderT` UserHandleContext db) . unUH)
 
   createUser     = Refine.Backend.User.UH.createUser
   getUserById    = Refine.Backend.User.UH.getUserById

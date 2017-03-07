@@ -46,7 +46,7 @@ runApp
   :: forall (db :: * -> *) (uh :: * -> *)
   .  DBNat db
   -> DocRepoNat
-  -> RunUH uh
+  -> UHNat uh
   -> Logger
   -> CsrfSecret
   -> Timespan
@@ -56,7 +56,7 @@ runApp
 runApp
   dbNat
   docRepoNat
-  runUH
+  uhNat
   logger
   csrfSecret
   sessionLength
@@ -64,7 +64,7 @@ runApp
   wrapper =
     Nat (runSR
             (AppState Nothing UserLoggedOut)
-            (AppContext dbNat docRepoNat runUH logger csrfSecret sessionLength poFilesRoot)
+            (AppContext dbNat docRepoNat uhNat logger csrfSecret sessionLength poFilesRoot)
           . unApp
           . wrapper)
     where
