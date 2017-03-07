@@ -137,7 +137,7 @@ mkBackend cfg initUH migrate = do
 
 mkServerApp
     :: (Monad db, Database db, UserHandleC uh)
-    => Config -> DBNat db -> RunDocRepo -> RunUH uh -> IO (Backend db uh)
+    => Config -> DBNat db -> DocRepoNat -> RunUH uh -> IO (Backend db uh)
 mkServerApp cfg dbNat runDocRepo runUh = do
   poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }

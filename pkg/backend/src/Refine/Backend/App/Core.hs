@@ -24,10 +24,10 @@
 module Refine.Backend.App.Core (
     DBNat
   , RunUH
-  , RunDocRepo
+  , DocRepoNat
   , AppContext(..)
   , appDBNat
-  , appRunDocRepo
+  , appDocRepoNat
   , appRunUH
   , appLogger
   , appCsrfSecret
@@ -68,11 +68,11 @@ import Refine.Prelude (leftToError, Timespan)
 import Refine.Prelude.TH (makeRefineType)
 
 
-type RunDocRepo = DocRepo :~> ExceptT DocRepoError IO
+type DocRepoNat = DocRepo :~> ExceptT DocRepoError IO
 
 data AppContext db uh = AppContext
   { _appDBNat         :: DBNat db
-  , _appRunDocRepo    :: RunDocRepo
+  , _appDocRepoNat    :: DocRepoNat
   , _appRunUH         :: RunUH uh
   , _appLogger        :: Logger
   , _appCsrfSecret    :: CsrfSecret
@@ -151,8 +151,8 @@ db m = AppM $ do
 
 docRepo :: DocRepo a -> AppM db uh a
 docRepo m = AppM $ do
-  (Nat runDRepo) <- view appRunDocRepo
-  r <- liftIO (runExceptT (runDRepo m))
+  (Nat drepoNat) <- view appDocRepoNat
+  r <- liftIO (runExceptT (drepoNat m))
   leftToError AppDocRepoError r
 
 userHandle :: uh a -> AppM db uh a
