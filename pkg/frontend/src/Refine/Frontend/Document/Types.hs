@@ -32,7 +32,7 @@ data DocumentAction =
   deriving (Show, Generic)
 
 
-data DocumentState = DocumentState
+newtype DocumentState = DocumentState
   { _dsEditMode           :: Maybe EditKind
   } deriving (Show, Generic)
 
