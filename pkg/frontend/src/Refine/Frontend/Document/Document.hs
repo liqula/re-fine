@@ -81,8 +81,10 @@ newtype EditorWrapperProps = EditorWrapperProps
   }
 
 editorWrapper :: ReactView EditorWrapperProps
-editorWrapper = defineView "EditorWrapper" $ \_props ->
-  editor_ [property "editorState" js_newEmptyEditorState] mempty
+editorWrapper = defineStatefulView "EditorWrapper" js_newEmptyEditorState $ \editorState _props ->
+  editor_ [ property "editorState" editorState
+          , onChange $ \evt _state -> ([], Just (js_eventToEditorState evt))
+          ] mempty
 
 editorWrapper_ :: EditorWrapperProps -> ReactElementM eventHandler ()
 editorWrapper_ props = view editorWrapper props mempty
@@ -125,3 +127,7 @@ toHTML state (DT.Node rootLabel subForest) = do
 foreign import javascript unsafe
     "window.EditorState.createEmpty()"
     js_newEmptyEditorState :: JSVal
+
+foreign import javascript unsafe
+    "{eventState: $1}"
+    js_eventToEditorState :: Event -> JSVal -- TODO FISX: How to turn Event into JSVal??
