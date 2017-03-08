@@ -83,10 +83,11 @@ newtype EditorWrapperProps = EditorWrapperProps
 
 editorWrapper :: ReactView EditorWrapperProps
 editorWrapper = defineStatefulView "EditorWrapper" js_newEmptyEditorState $ \editorState _props ->
-  editor_ [ property "editorState" editorState
-          , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
-              \(HandlerArg evt) _ -> ([{- this can be empty for now -}], Just evt)
-          ] mempty
+  article_ ["className" $= "gr-20 gr-14@desktop"] $
+    editor_ [ property "editorState" editorState
+            , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
+                \(HandlerArg evt) _ -> ([{- this can be empty for now -}], Just evt)
+            ] mempty
 
 editorWrapper_ :: EditorWrapperProps -> ReactElementM eventHandler ()
 editorWrapper_ props = view editorWrapper props mempty
