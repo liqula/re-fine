@@ -29,6 +29,7 @@ import           Data.String.Conversions
 import qualified Data.Tree as DT
 import           GHCJS.Types (JSVal)
 import           React.Flux
+import           React.Flux.Internal  -- (HandlerArg(..), PropertyOrHandler(..))
 import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
@@ -83,7 +84,8 @@ newtype EditorWrapperProps = EditorWrapperProps
 editorWrapper :: ReactView EditorWrapperProps
 editorWrapper = defineStatefulView "EditorWrapper" js_newEmptyEditorState $ \editorState _props ->
   editor_ [ property "editorState" editorState
-          , onChange $ \evt _state -> ([], Just (js_eventToEditorState evt))
+          , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
+              \(HandlerArg evt) _ -> ([{- this can be empty for now -}], Just evt)
           ] mempty
 
 editorWrapper_ :: EditorWrapperProps -> ReactElementM eventHandler ()
@@ -130,4 +132,4 @@ foreign import javascript unsafe
 
 foreign import javascript unsafe
     "{eventState: $1}"
-    js_eventToEditorState :: Event -> JSVal -- TODO FISX: How to turn Event into JSVal??
+    js_eventToEditorState :: JSVal -> JSVal
