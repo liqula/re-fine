@@ -24,6 +24,7 @@ module Refine.Frontend.Header.Heading where
 
 import           Control.Lens ((^.))
 import           Control.Monad (forM_, unless)
+import           Data.Maybe (isJust)
 import           GHC.Generics
 import           GHCJS.Types (JSVal)
 import           GHCJS.Marshal.Pure
@@ -32,7 +33,9 @@ import           React.Flux.Internal (HandlerArg(HandlerArg))
 import           React.Flux.Lifecycle
 
 import           Refine.Common.Types
+import qualified Refine.Frontend.Document.Types as DS
 import           Refine.Frontend.Header.DocumentHeader ( documentHeader_, DocumentHeaderProps(..) )
+import           Refine.Frontend.Header.EditToolbar ( editToolbar_ )
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_ )
 import qualified Refine.Frontend.Header.Types as HT
@@ -91,7 +94,10 @@ mainHeader = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
                 documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
                 div_ ["className" $= "c-fulltoolbar"] $ do
                     sticky_ [on "onStickyStateChange" $ \e _ -> (RS.dispatch . RS.ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
-                        toolbar_
+                        if isJust (rs ^. RS.gsDocumentState . DS.dsEditMode) then
+                          editToolbar_
+                        else
+                          toolbar_
                         commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. RS.gsHeaderState . HT.hsToolbarExtensionStatus)
                         editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. RS.gsHeaderState . HT.hsToolbarExtensionStatus)
 
