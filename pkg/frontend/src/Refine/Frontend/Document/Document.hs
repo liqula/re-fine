@@ -23,6 +23,7 @@ module Refine.Frontend.Document.Document where
 
 import           Control.DeepSeq (NFData)
 import           Control.Lens ((^.))
+import qualified Data.Aeson as Aeson
 import           Data.Maybe (isJust)
 import           Data.String.Conversions
 import qualified Data.Tree as DT
@@ -33,6 +34,7 @@ import           System.IO.Unsafe (unsafePerformIO)
 import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
+import           Refine.Common.VDoc.Draft as Draft
 import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
@@ -73,7 +75,7 @@ newtype EditorWrapperProps = EditorWrapperProps
 
 editorWrapper :: EditorState -> ReactView ()
 editorWrapper editorState_ = defineStatefulView "EditorWrapper" editorState_ $ \(EditorState editorState) () ->
-  article_ ["className" $= "gr-20 gr-14@desktop"] $
+  article_ ["className" $= "gr-20 gr-14@desktop editor_wrapper"] $
     editor_ [ property "editorState" editorState
             , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
                 \(HandlerArg evt) _ -> js_traceEditorState evt `seq` ([{- this can be empty for now -}], Just (EditorState evt))
@@ -121,8 +123,8 @@ newtype EditorState = EditorState { _unEditorState :: JSVal }
   deriving (NFData)
 
 createEditorState :: VDocVersion 'HTMLWithMarks -> EditorState
-createEditorState (VDocVersion _) = unsafePerformIO $ do
-  content <- js_CS_createFromText "bla"
+createEditorState vers = unsafePerformIO $ do
+  let content = convertFromRaw $ vDocVersionToRawContent vers
   estate <- js_ES_createWithContent content
 
   js_traceEditorState estate `seq` pure ()
@@ -140,6 +142,23 @@ foreign import javascript unsafe
 
 
 -- * https://draftjs.org/docs/api-reference-editor-state.html
+
+-- | https://draftjs.org/docs/api-reference-data-conversion.html#convertfromraw
+foreign import javascript unsafe
+    "Draft.convertFromRaw(JSON.parse($1))"
+    js_convertFromRaw :: JSString -> JSVal
+
+convertFromRaw :: RawContent -> JSVal
+convertFromRaw = js_convertFromRaw . cs . Aeson.encode
+
+-- | https://draftjs.org/docs/api-reference-data-conversion.html#converttoraw
+foreign import javascript unsafe
+    "JSON.stringify(Draft.convertToRaw($1))"
+    js_convertToRaw :: JSVal -> JSString
+
+convertToRaw :: JSVal -> RawContent
+convertToRaw = either (error . ("convertToRaw: " <>)) id . Aeson.eitherDecode . cs . js_convertToRaw
+
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#createwithcontent
 foreign import javascript unsafe

@@ -23,11 +23,11 @@
 module Refine.Common.VDoc.Draft
 where
 
+import           Control.Exception (assert)
 import           Data.Aeson
 import           Data.String.Conversions
 import           Data.List ((\\))
 import qualified Data.Text as ST
-import           Data.Tree
 import           Text.HTML.Parser
 import           Text.HTML.Tree
 
@@ -36,7 +36,8 @@ import Refine.Common.Types
 
 -- * target data types
 
-data RawContent = RawContent { _rawContentBlocks :: [Block Int] }
+newtype RawContent = RawContent { _rawContentBlocks :: [Block Int] }
+  deriving (Show)
 
 mkRawContent :: [Block ()] -> RawContent
 mkRawContent bs = RawContent $ go 0 bs
@@ -57,11 +58,13 @@ data Block rangeKey = Block
   , _blockStyles       :: [(EntityRange, Style)]
   , _blockDepth        :: Int
   }
+  deriving (Show)
 
 -- | (a bit like 'ChunkRange', but also different.)
 type EntityRange = (Int, Int)
 
-data Entity  -- (we don't need this yet.)
+data Entity = Entity -- (we don't need this yet.)
+  deriving (Show)
 
 data Style =
     Header1
@@ -71,7 +74,7 @@ data Style =
   | Italic
   | BulletPoint
   | EnumPoint
-  deriving (Eq)
+  deriving (Show, Eq)
 
 
 instance ToJSON RawContent where
@@ -80,12 +83,16 @@ instance ToJSON RawContent where
     , "entityMap" .= mkEntityMap blocks
     ]
 
+instance FromJSON RawContent where
+  parseJSON = assert False undefined
+
 instance ToJSON (Block Int) where
   toJSON (Block content ranges styles depth) = object
     [ "text"              .= content
     , "entityRanges"      .= (renderRanges <$> ranges)
     , "inlineStyleRanges" .= (renderStyles <$> styles)
     , "depth"             .= depth
+    , "type"              .= ("unstyled" :: ST)
     ]
     where
       renderRanges (k, (l, o), _) = object ["key"   .= k, "length" .= l, "offset" .= o]
@@ -111,8 +118,8 @@ instance ToJSON Style where
 
 -- * conversion
 
-vdocVersionToRawContent :: VDocVersion 'HTMLCanonical -> RawContent
-vdocVersionToRawContent (VDocVersion forest) = mkRawContent . fmap cons . merge . decons [] . tokensFromForest $ forest
+vDocVersionToRawContent :: VDocVersion a -> RawContent
+vDocVersionToRawContent (VDocVersion forest) = mkRawContent . fmap cons . merge . decons [] . tokensFromForest $ forest
   where
     -- TODO: decons is very lenient re. unexpected input, and does not generate all the styles yet.
     -- TODO: allow for styles on parts of blocks (currently every style change opens a new block).
@@ -120,7 +127,7 @@ vdocVersionToRawContent (VDocVersion forest) = mkRawContent . fmap cons . merge 
     decons styles (TagOpen n as   : tokens) = decons (styleOn n as styles) tokens
     decons styles (TagClose n     : tokens) = decons (styleOff n styles) tokens
     decons styles (ContentText st : tokens) = (styles, st) : decons styles tokens
-    decons styles _                         = []
+    decons _      _                         = []
 
     styleOn :: TagName -> [Attr] -> [Style] -> [Style]
     styleOn "h1"     _ = (Header1:)
