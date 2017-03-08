@@ -9,9 +9,10 @@ var proxiedServer = "http://localhost:3000";
 
 module.exports = {
     entry: [
+        "./jsbits/util",
+        "./jsbits/hookup",
         "./jsbits/hookup_scss"
-        // (do not serve the frontend JS via webpack; everything else
-        // is already linked in via js-sources from the cabal file.)
+        // do not serve the frontend JS via webpack: "./js-build/frontend"
     ],
     devServer: {
         contentBase: "./js-build",
