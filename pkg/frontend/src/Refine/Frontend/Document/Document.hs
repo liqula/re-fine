@@ -10,11 +10,9 @@
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
@@ -23,7 +21,7 @@
 
 module Refine.Frontend.Document.Document where
 
-import           Control.Lens (makeLenses, (^.))
+import           Control.Lens ((^.))
 import           Data.Maybe (isJust)
 import           Data.String.Conversions
 import qualified Data.Tree as DT
@@ -36,7 +34,6 @@ import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
-import           Refine.Frontend.Header.Types (ToolbarExtensionStatus)
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.ThirdPartyViews (editor_)
@@ -44,15 +41,6 @@ import qualified Refine.Frontend.Types as RS
 
 
 
-
-data DocumentProps = DocumentProps
-  { _dpDocumentState     :: DocumentState
-  , _dpContributionState :: ContributionState
-  , _dpToolbarStatus     :: ToolbarExtensionStatus
-  , _dpVDocVersion       :: VDocVersion 'HTMLWithMarks
-  }
-
-makeLenses ''DocumentProps
 
 document :: ReactView DocumentProps
 document = defineView "Document" $ \props ->

@@ -23,8 +23,11 @@
 module Refine.Frontend.Document.Types where
 
 import GHC.Generics (Generic)
+import Control.Lens (makeLenses)
 
-import           Refine.Common.Types ( EditKind )
+import           Refine.Common.Types
+import           Refine.Frontend.Contribution.Types
+import           Refine.Frontend.Header.Types
 import           Refine.Prelude.TH (makeRefineType)
 
 data DocumentAction =
@@ -40,5 +43,14 @@ emptyDocumentState :: DocumentState
 emptyDocumentState = DocumentState Nothing
 
 
+data DocumentProps = DocumentProps
+  { _dpDocumentState     :: DocumentState
+  , _dpContributionState :: ContributionState
+  , _dpToolbarStatus     :: ToolbarExtensionStatus
+  , _dpVDocVersion       :: VDocVersion 'HTMLWithMarks
+  }
+
+
 makeRefineType ''DocumentAction
 makeRefineType ''DocumentState
+makeLenses ''DocumentProps
