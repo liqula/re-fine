@@ -21,6 +21,7 @@
 
 module Refine.Frontend.Document.Document where
 
+import           Control.DeepSeq (NFData)
 import           Control.Lens ((^.))
 import           Data.Maybe (isJust)
 import           Data.String.Conversions
@@ -28,6 +29,7 @@ import qualified Data.Tree as DT
 import           GHCJS.Types (JSVal)
 import           React.Flux
 import           React.Flux.Internal  -- (HandlerArg(..), PropertyOrHandler(..))
+import           System.IO.Unsafe (unsafePerformIO)
 import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
@@ -69,16 +71,16 @@ newtype EditorWrapperProps = EditorWrapperProps
   { _ewpVDocVersion       :: VDocVersion 'HTMLWithMarks
   }
 
-editorWrapper :: ReactView EditorWrapperProps
-editorWrapper = defineStatefulView "EditorWrapper" js_newEmptyEditorState $ \editorState _props ->
+editorWrapper :: EditorState -> ReactView ()
+editorWrapper editorState_ = defineStatefulView "EditorWrapper" editorState_ $ \(EditorState editorState) () ->
   article_ ["className" $= "gr-20 gr-14@desktop"] $
     editor_ [ property "editorState" editorState
             , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
-                \(HandlerArg evt) _ -> ([{- this can be empty for now -}], Just evt)
+                \(HandlerArg evt) _ -> ([{- this can be empty for now -}], Just (EditorState evt))
             ] mempty
 
 editorWrapper_ :: EditorWrapperProps -> ReactElementM eventHandler ()
-editorWrapper_ props = view editorWrapper props mempty
+editorWrapper_ (EditorWrapperProps vers) = view (editorWrapper $ createEditorState vers) () mempty
 
 
 toArticleBody :: ContributionState -> DT.Forest HTMLP.Token -> ReactElementM [SomeStoreAction] ()
@@ -115,9 +117,23 @@ toHTML state (DT.Node rootLabel subForest) = do
 -- toHTML n@(DT.Node rootLabel subForest) = pre_ $ ppShow n
 
 
+newtype EditorState = EditorState JSVal
+  deriving (NFData)
+
+createEditorState :: VDocVersion 'HTMLWithMarks -> EditorState
+createEditorState (VDocVersion _) = unsafePerformIO $ do
+  content <- js_createContent "bla"
+  estate <- js_newEditorState content
+  pure $ EditorState estate
+
+
 foreign import javascript unsafe
-    "window.EditorState.createEmpty()"
-    js_newEmptyEditorState :: JSVal
+    "window.ContentState.createFromText($1)"
+    js_createContent :: JSString -> IO JSVal
+
+foreign import javascript unsafe
+    "window.EditorState.createWithContent($1)"
+    js_newEditorState :: JSVal -> IO JSVal
 
 foreign import javascript unsafe
     "{eventState: $1}"

@@ -11,4 +11,5 @@
 
     target.Editor = require("draft-js").Editor;
     target.EditorState = require("draft-js").EditorState;
+    target.ContentState = require("draft-js").ContentState;
 })((typeof global === 'undefined') ? window : global);
