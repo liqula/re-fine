@@ -1,4 +1,10 @@
 (function(target) {
+    target.refine$traceEditorState = function(estate) {
+        console.log('raw', Draft.convertToRaw(estate.getCurrentContent()));
+        console.log('entities', estate.getCurrentContent().getEntityMap());
+        console.log('blocks', estate.getCurrentContent().getBlockMap());
+    };
+
     target.refine$getSelectionRange = function() {
         var leftSiblingLength = function(node) {
             if (node === null) {

@@ -22,7 +22,6 @@
 
 module Refine.Frontend.ThirdPartyViews
   ( editor_
-  , editorState_
   , hammer_
   , skylight_
   , sticky_
@@ -32,20 +31,22 @@ module Refine.Frontend.ThirdPartyViews
 import           React.Flux
 
 
+-- TODO: test that this doesn't crash because the foreign object is not loaded.  this has bitten us
+-- at least twice in the past.
+
+
 sticky_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 sticky_ = foreign_ "Sticky"
 
 stickyContainer_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 stickyContainer_ = foreign_ "StickyContainer"
 
+-- | SkyLightStateless from react-skylight
 skylight_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-skylight_ = foreign_ "Skylight" -- SkyLightStateless from react-skylight
+skylight_ = foreign_ "Skylight"
 
 hammer_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 hammer_ = foreign_ "Hammer"
 
 editor_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-editor_ = foreign_ "Editor"
-
-editorState_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-editorState_ = foreign_ "EditorState"
+editor_ = foreign_ "DraftEditor"

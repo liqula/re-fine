@@ -20,37 +20,28 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Document.Types where
+module Refine.Frontend.Document.DocumentSpec
+where
 
-import GHC.Generics (Generic)
-import Control.Lens (makeLenses)
+import Test.Hspec
+import Test.QuickCheck
 
-import           Refine.Common.Types
-import           Refine.Frontend.Contribution.Types
-import           Refine.Frontend.Header.Types
-import           Refine.Prelude.TH (makeRefineType)
-
-data DocumentAction =
-    DocumentAction -- no concrete actions yet
-  deriving (Show, Generic)
+import Refine.Common.Test.Arbitrary ()
+import Refine.Common.Types
+import Refine.Common.VDoc.HTML
+import Refine.Frontend.Document.Document
+import Refine.Frontend.Test.Enzyme
 
 
-newtype DocumentState = DocumentState
-  { _dsEditMode           :: Maybe EditKind
-  } deriving (Show, Generic)
+spec :: Spec
+spec = do
+  describe "Document" $ do
+    it "renders with empty content" $ do
+      pending
+      wrapper <- shallow $ editorWrapper_ (EditorWrapperProps $ VDocVersion [])
+      lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` (1 :: Int)
 
-emptyDocumentState :: DocumentState
-emptyDocumentState = DocumentState Nothing
-
-
-data DocumentProps = DocumentProps
-  { _dpDocumentState     :: DocumentState
-  , _dpContributionState :: ContributionState
-  , _dpToolbarStatus     :: ToolbarExtensionStatus
-  , _dpVDocVersion       :: VDocVersion 'HTMLWithMarks
-  }
-
-
-makeRefineType ''DocumentAction
-makeRefineType ''DocumentState
-makeLenses ''DocumentProps
+    it "renders with arbitrary content" . property $ \(insertMarks ([] :: [Contribution]) -> vers) -> do
+      pending
+      wrapper <- shallow $ editorWrapper_ (EditorWrapperProps vers)
+      lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` (1 :: Int)

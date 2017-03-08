@@ -39,7 +39,8 @@ import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.QuickCreate
 import           Refine.Frontend.Contribution.Types as RS
-import           Refine.Frontend.Document.Document ( document_, DocumentProps(..) )
+import           Refine.Frontend.Document.Types (DocumentProps(..))
+import           Refine.Frontend.Document.Document (document_)
 import           Refine.Frontend.Header.Heading ( mainHeader_ )
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component (vdocLoader_)
