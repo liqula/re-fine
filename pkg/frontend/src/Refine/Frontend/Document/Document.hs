@@ -76,7 +76,7 @@ editorWrapper editorState_ = defineStatefulView "EditorWrapper" editorState_ $ \
   article_ ["className" $= "gr-20 gr-14@desktop"] $
     editor_ [ property "editorState" editorState
             , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
-                \(HandlerArg evt) _ -> ([{- this can be empty for now -}], Just (EditorState evt))
+                \(HandlerArg evt) _ -> js_traceEditorState evt `seq` ([{- this can be empty for now -}], Just (EditorState evt))
             ] mempty
 
 editorWrapper_ :: EditorWrapperProps -> ReactElementM eventHandler ()
@@ -117,24 +117,39 @@ toHTML state (DT.Node rootLabel subForest) = do
 -- toHTML n@(DT.Node rootLabel subForest) = pre_ $ ppShow n
 
 
-newtype EditorState = EditorState JSVal
+newtype EditorState = EditorState { _unEditorState :: JSVal }
   deriving (NFData)
 
 createEditorState :: VDocVersion 'HTMLWithMarks -> EditorState
 createEditorState (VDocVersion _) = unsafePerformIO $ do
-  content <- js_createContent "bla"
-  estate <- js_newEditorState content
+  content <- js_CS_createFromText "bla"
+  estate <- js_ES_createWithContent content
+
+  js_traceEditorState estate `seq` pure ()
+
   pure $ EditorState estate
 
 
 foreign import javascript unsafe
-    "window.ContentState.createFromText($1)"
-    js_createContent :: JSString -> IO JSVal
-
-foreign import javascript unsafe
-    "window.EditorState.createWithContent($1)"
-    js_newEditorState :: JSVal -> IO JSVal
-
-foreign import javascript unsafe
     "{eventState: $1}"
     js_eventToEditorState :: JSVal -> JSVal
+
+foreign import javascript unsafe
+    "refine$traceEditorState($1)"
+    js_traceEditorState :: JSVal -> ()
+
+
+-- * https://draftjs.org/docs/api-reference-editor-state.html
+
+-- | https://draftjs.org/docs/api-reference-editor-state.html#createwithcontent
+foreign import javascript unsafe
+    "Draft.EditorState.createWithContent($1)"
+    js_ES_createWithContent :: JSVal -> IO JSVal
+
+
+-- * https://draftjs.org/docs/api-reference-content-state.html
+
+-- | https://draftjs.org/docs/api-reference-content-state.html#createfromtext
+foreign import javascript unsafe
+    "Draft.ContentState.createFromText($1)"
+    js_CS_createFromText :: JSString -> IO JSVal

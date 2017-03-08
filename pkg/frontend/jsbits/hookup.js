@@ -9,7 +9,6 @@
 
     target.Hammer = require("react-hammerjs");
 
-    target.Editor = require("draft-js").Editor;
-    target.EditorState = require("draft-js").EditorState;
-    target.ContentState = require("draft-js").ContentState;
+    target.Draft = require("draft-js");
+    target.DraftEditor = target.Draft.Editor;  // (we need this to be a name (not an expression) for 'foreign_' to work.)
 })((typeof global === 'undefined') ? window : global);
