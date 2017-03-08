@@ -56,7 +56,7 @@ makeLenses ''DocumentProps
 document :: ReactView DocumentProps
 document = defineView "Document" $ \props ->
   if isJust (props ^. dpDocumentState . dsEditMode) then
-    editor_ [property "editorState" js_newEmptyEditorState] mempty
+    editorWrapper_ $ EditorWrapperProps (props ^. dpVDocVersion)
   else
     article_ [ "id" $= "vdocValue"
              , "className" $= "gr-20 gr-14@desktop"
@@ -75,6 +75,17 @@ document = defineView "Document" $ \props ->
 
 document_ :: DocumentProps -> ReactElementM eventHandler ()
 document_ props = view document props mempty
+
+newtype EditorWrapperProps = EditorWrapperProps
+  { _ewpVDocVersion       :: VDocVersion 'HTMLWithMarks
+  }
+
+editorWrapper :: ReactView EditorWrapperProps
+editorWrapper = defineView "EditorWrapper" $ \_props ->
+  editor_ [property "editorState" js_newEmptyEditorState] mempty
+
+editorWrapper_ :: EditorWrapperProps -> ReactElementM eventHandler ()
+editorWrapper_ props = view editorWrapper props mempty
 
 
 toArticleBody :: ContributionState -> DT.Forest HTMLP.Token -> ReactElementM [SomeStoreAction] ()
