@@ -22,25 +22,29 @@
 
 module Refine.Frontend.Document.Types where
 
-import GHC.Generics (Generic)
-import Control.Lens (makeLenses)
+import           Control.DeepSeq ( NFData )
+import           Control.Lens ( makeLenses )
+import           Data.Aeson ( FromJSON, ToJSON, parseJSON, toJSON )
+import           GHC.Generics ( Generic )
+import           GHCJS.Types ( JSVal )
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Header.Types
-import           Refine.Prelude.TH (makeRefineType)
+import           Refine.Prelude.TH ( makeRefineType )
 
 data DocumentAction =
-    DocumentAction -- no concrete actions yet
+    UpdateEditorState EditorState
   deriving (Show, Generic)
 
 
-newtype DocumentState = DocumentState
+data DocumentState = DocumentState
   { _dsEditMode           :: Maybe EditKind
-  } deriving (Show, Generic)
+  , _dsEditorState        :: Maybe EditorState
+  } deriving (Generic, Show)
 
 emptyDocumentState :: DocumentState
-emptyDocumentState = DocumentState Nothing
+emptyDocumentState = DocumentState Nothing Nothing
 
 
 data DocumentProps = DocumentProps
@@ -50,6 +54,17 @@ data DocumentProps = DocumentProps
   , _dpVDocVersion       :: VDocVersion 'HTMLWithMarks
   }
 
+newtype EditorState = EditorState { _unEditorState :: JSVal }
+  deriving (Generic, NFData)
+
+instance ToJSON EditorState where
+  toJSON _ = toJSON ("EditorState" :: String)
+
+instance FromJSON EditorState where
+  parseJSON _ = fail "cannot parse EditorState"
+
+instance Show EditorState where
+  show _ = "EditorState"
 
 makeRefineType ''DocumentAction
 makeRefineType ''DocumentState

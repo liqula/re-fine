@@ -21,16 +21,14 @@
 
 module Refine.Frontend.Document.Document where
 
-import           Control.DeepSeq (NFData)
 import           Control.Lens ((^.))
 import qualified Data.Aeson as Aeson
 import           Data.Maybe (isJust)
 import           Data.String.Conversions
 import qualified Data.Tree as DT
-import           GHCJS.Types (JSVal)
+import           GHCJS.Types ( JSVal )
 import           React.Flux
 import           React.Flux.Internal  -- (HandlerArg(..), PropertyOrHandler(..))
-import           System.IO.Unsafe (unsafePerformIO)
 import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
@@ -38,18 +36,17 @@ import           Refine.Common.VDoc.Draft as Draft
 import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Document.Store (js_traceEditorState)
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.ThirdPartyViews (editor_)
 import qualified Refine.Frontend.Types as RS
 
 
-
-
 document :: ReactView DocumentProps
 document = defineView "Document" $ \props ->
   if isJust (props ^. dpDocumentState . dsEditMode) then
-    editorWrapper_ $ EditorWrapperProps (props ^. dpVDocVersion)
+    editorWrapper_ $ EditorWrapperProps (props ^. dpDocumentState . dsEditorState)
   else
     article_ [ "id" $= "vdocValue"
              , "className" $= "gr-20 gr-14@desktop"
@@ -70,19 +67,21 @@ document_ :: DocumentProps -> ReactElementM eventHandler ()
 document_ props = view document props mempty
 
 newtype EditorWrapperProps = EditorWrapperProps
-  { _ewpVDocVersion       :: VDocVersion 'HTMLWithMarks
+  { _ewpEditorState       :: Maybe EditorState
   }
 
-editorWrapper :: EditorState -> ReactView ()
-editorWrapper editorState_ = defineStatefulView "EditorWrapper" editorState_ $ \(EditorState editorState) () ->
-  article_ ["className" $= "gr-20 gr-14@desktop editor_wrapper"] $
-    editor_ [ property "editorState" editorState
-            , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
-                \(HandlerArg evt) _ -> js_traceEditorState evt `seq` ([{- this can be empty for now -}], Just (EditorState evt))
-            ] mempty
+editorWrapper :: ReactView EditorWrapperProps
+editorWrapper = defineView "EditorWrapper" $ \case
+  EditorWrapperProps (Just (EditorState editorState)) ->
+    article_ ["className" $= "gr-20 gr-14@desktop editor_wrapper"] $
+      editor_ [ property "editorState" editorState
+              , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
+                  \(HandlerArg evt) -> js_traceEditorState evt `seq` RS.dispatch . RS.DocumentAction . UpdateEditorState $ EditorState evt
+              ] mempty
+  _ -> mempty
 
 editorWrapper_ :: EditorWrapperProps -> ReactElementM eventHandler ()
-editorWrapper_ (EditorWrapperProps vers) = view (editorWrapper $ createEditorState vers) () mempty
+editorWrapper_ props = view editorWrapper props mempty
 
 
 toArticleBody :: ContributionState -> DT.Forest HTMLP.Token -> ReactElementM [SomeStoreAction] ()
@@ -119,37 +118,7 @@ toHTML state (DT.Node rootLabel subForest) = do
 -- toHTML n@(DT.Node rootLabel subForest) = pre_ $ ppShow n
 
 
-newtype EditorState = EditorState { _unEditorState :: JSVal }
-  deriving (NFData)
-
-createEditorState :: VDocVersion 'HTMLWithMarks -> EditorState
-createEditorState vers = unsafePerformIO $ do
-  let content = convertFromRaw $ vDocVersionToRawContent vers
-  estate <- js_ES_createWithContent content
-
-  js_traceEditorState estate `seq` pure ()
-
-  pure $ EditorState estate
-
-
-foreign import javascript unsafe
-    "{eventState: $1}"
-    js_eventToEditorState :: JSVal -> JSVal
-
-foreign import javascript unsafe
-    "refine$traceEditorState($1)"
-    js_traceEditorState :: JSVal -> ()
-
-
 -- * https://draftjs.org/docs/api-reference-editor-state.html
-
--- | https://draftjs.org/docs/api-reference-data-conversion.html#convertfromraw
-foreign import javascript unsafe
-    "Draft.convertFromRaw(JSON.parse($1))"
-    js_convertFromRaw :: JSString -> JSVal
-
-convertFromRaw :: RawContent -> JSVal
-convertFromRaw = js_convertFromRaw . cs . Aeson.encode
 
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#converttoraw
 foreign import javascript unsafe
@@ -158,17 +127,3 @@ foreign import javascript unsafe
 
 convertToRaw :: JSVal -> RawContent
 convertToRaw = either (error . ("convertToRaw: " <>)) id . Aeson.eitherDecode . cs . js_convertToRaw
-
-
--- | https://draftjs.org/docs/api-reference-editor-state.html#createwithcontent
-foreign import javascript unsafe
-    "Draft.EditorState.createWithContent($1)"
-    js_ES_createWithContent :: JSVal -> IO JSVal
-
-
--- * https://draftjs.org/docs/api-reference-content-state.html
-
--- | https://draftjs.org/docs/api-reference-content-state.html#createfromtext
-foreign import javascript unsafe
-    "Draft.ContentState.createFromText($1)"
-    js_CS_createFromText :: JSString -> IO JSVal
