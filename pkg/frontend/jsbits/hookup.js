@@ -8,4 +8,7 @@
     target.Skylight = require("react-skylight").SkyLightStateless;
 
     target.Hammer = require("react-hammerjs");
+
+    target.Editor = require("draft-js").Editor;
+    target.EditorState = require("draft-js").EditorState;
 })((typeof global === 'undefined') ? window : global);

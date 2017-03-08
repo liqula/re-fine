@@ -48,13 +48,14 @@ overlayStyles =
 
 notImplementedYet :: ReactView Bool
 notImplementedYet = defineView "NotImplementedYet" $ \isVisible ->
-  skylight_ ["isVisible" &= isVisible
-           , "dialogStyles" @= dialogStyles
-           , "overlayStyles" @= overlayStyles
-           , on "onOverlayClicked" $ \_ -> RS.dispatch RS.HideNotImplementedYet
-           , on "onCloseClicked" $ \_ -> RS.dispatch RS.HideNotImplementedYet
-           ] $ do
-    div_ "This feature is not implemented yet."
+  div_ [onClick $ \e _ -> stopPropagation e : RS.dispatch RS.HideNotImplementedYet] $ do
+    skylight_ ["isVisible" &= isVisible
+             , "dialogStyles" @= dialogStyles
+             , "overlayStyles" @= overlayStyles
+             , on "onOverlayClicked" $ \_ -> RS.dispatch RS.HideNotImplementedYet
+             , on "onCloseClicked" $ \_ -> RS.dispatch RS.HideNotImplementedYet
+             ] $ do
+      div_ "This feature is not implemented yet."
 
 
 notImplementedYet_ :: Bool -> ReactElementM eventHandler ()

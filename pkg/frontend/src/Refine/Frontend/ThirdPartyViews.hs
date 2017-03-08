@@ -21,7 +21,9 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.ThirdPartyViews
-  ( hammer_
+  ( editor_
+  , editorState_
+  , hammer_
   , skylight_
   , sticky_
   , stickyContainer_
@@ -41,3 +43,9 @@ skylight_ = foreign_ "Skylight" -- SkyLightStateless from react-skylight
 
 hammer_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 hammer_ = foreign_ "Hammer"
+
+editor_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+editor_ = foreign_ "Editor"
+
+editorState_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+editorState_ = foreign_ "EditorState"
