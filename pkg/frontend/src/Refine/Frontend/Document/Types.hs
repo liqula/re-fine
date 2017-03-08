@@ -33,7 +33,7 @@ import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Prelude.TH ( makeRefineType )
 
-data DocumentAction =
+newtype DocumentAction =
     UpdateEditorState EditorState
   deriving (Show, Generic)
 
