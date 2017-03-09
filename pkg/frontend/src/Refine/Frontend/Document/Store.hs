@@ -23,6 +23,7 @@
 
 module Refine.Frontend.Document.Store
   ( documentStateUpdate
+  , createEditorState
 
   -- * https://draftjs.org/docs/api-reference-data-conversion.html
   , convertFromRaw
