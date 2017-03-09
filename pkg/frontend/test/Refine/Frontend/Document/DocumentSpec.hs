@@ -28,20 +28,22 @@ import Test.QuickCheck
 
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Types
-import Refine.Common.VDoc.HTML
 import Refine.Frontend.Document.Document
+import Refine.Frontend.Document.Store
 import Refine.Frontend.Test.Enzyme
 
 
 spec :: Spec
 spec = do
   describe "Document" $ do
+    let mkTestProps forest = EditorWrapperProps (createEditorState Grammar (VDocVersion forest))
+
     it "renders with empty content" $ do
       pending
-      wrapper <- shallow $ editorWrapper_ (EditorWrapperProps $ VDocVersion [])
+      wrapper <- shallow $ editorWrapper_ (mkTestProps [])
       lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` (1 :: Int)
 
-    it "renders with arbitrary content" . property $ \(insertMarks ([] :: [Contribution]) -> vers) -> do
+    it "renders with arbitrary content" . property $ \(VDocVersion forest :: VDocVersion 'HTMLCanonical) -> do
       pending
-      wrapper <- shallow $ editorWrapper_ (EditorWrapperProps vers)
+      wrapper <- shallow $ editorWrapper_ (mkTestProps forest)
       lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` (1 :: Int)

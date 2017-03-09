@@ -4,6 +4,9 @@
 // search: (^.*).svg
 // replace: .icon-$1 {\n  background-image: url("../images/$1.svg");\n}
 
+.icon-_dark {
+  background-image: url("../images/_dark.svg");
+}
 .icon-Arrow_down_RO {
   background-image: url("../images/Arrow_down_RO.svg");
 }

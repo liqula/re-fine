@@ -22,25 +22,30 @@
 
 module Refine.Frontend.Document.Types where
 
-import GHC.Generics (Generic)
-import Control.Lens (makeLenses)
+import           Control.Lens ( makeLenses )
+import           GHC.Generics ( Generic )
+import           GHCJS.Types ( JSVal )
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Header.Types
-import           Refine.Prelude.TH (makeRefineType)
+import           Refine.Prelude.Aeson (NoJSONRep(..))
+import           Refine.Prelude.TH ( makeRefineType )
 
-data DocumentAction =
-    DocumentAction -- no concrete actions yet
+
+newtype DocumentAction =
+    UpdateEditorState EditorState
   deriving (Show, Generic)
 
 
-newtype DocumentState = DocumentState
-  { _dsEditMode           :: Maybe EditKind
-  } deriving (Show, Generic)
+data DocumentState = DocumentStateView | DocumentStateEdit EditorState
+  deriving (Generic, Show)
 
-emptyDocumentState :: DocumentState
-emptyDocumentState = DocumentState Nothing
+data EditorState = EditorState
+  { _editorStateKind :: EditKind
+  , _editorStateVal  :: NoJSONRep JSVal
+  }
+  deriving (Generic, Show)
 
 
 data DocumentProps = DocumentProps
@@ -53,4 +58,5 @@ data DocumentProps = DocumentProps
 
 makeRefineType ''DocumentAction
 makeRefineType ''DocumentState
+makeRefineType ''EditorState
 makeLenses ''DocumentProps
