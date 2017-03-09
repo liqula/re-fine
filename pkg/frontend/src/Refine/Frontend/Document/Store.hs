@@ -30,7 +30,9 @@ module Refine.Frontend.Document.Store
   , convertToRaw
 
   -- * https://draftjs.org/docs/api-reference-editor-state.html
-  , js_traceEditorState
+  , js_ES_createWithContent
+  , js_ES_getCurrentContent
+  , js_ES_traceCurrentContent
 
   -- * https://draftjs.org/docs/api-reference-content-state.html
   , js_CS_createFromText
@@ -67,13 +69,9 @@ createEditorState kind vers = unsafePerformIO $ do
   let content = convertFromRaw $ vDocVersionToRawContent vers
   estate <- js_ES_createWithContent content
 
-  js_traceEditorState estate `seq` pure ()
+  js_ES_traceCurrentContent estate `seq` pure ()
 
   pure $ EditorState kind (NoJSONRep estate)
-
-foreign import javascript unsafe
-    "refine$traceEditorState($1)"
-    js_traceEditorState :: JSVal -> ()
 
 
 -- * https://draftjs.org/docs/api-reference-data-conversion.html
@@ -101,6 +99,16 @@ foreign import javascript unsafe
 foreign import javascript unsafe
     "Draft.EditorState.createWithContent($1)"
     js_ES_createWithContent :: JSVal -> IO JSVal
+
+-- | https://draftjs.org/docs/api-reference-editor-state.html#getcurrentcontent
+foreign import javascript unsafe
+    "$1.getCurrentContent()"
+    js_ES_getCurrentContent :: JSVal -> IO JSVal
+
+-- | Convenient wrapper for 'js_ES_getCurrentContent'.
+foreign import javascript unsafe
+    "console.log('Editor.getCurrentContent() == ', Draft.convertToRaw($1.getCurrentContent()))"
+    js_ES_traceCurrentContent :: JSVal -> ()
 
 
 -- * https://draftjs.org/docs/api-reference-content-state.html
