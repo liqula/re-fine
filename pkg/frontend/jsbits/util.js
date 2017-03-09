@@ -1,8 +1,10 @@
 (function(target) {
-    target.refine$traceEditorState = function(estate) {
-        console.log('raw', Draft.convertToRaw(estate.getCurrentContent()));
-        console.log('entities', estate.getCurrentContent().getEntityMap());
-        console.log('blocks', estate.getCurrentContent().getBlockMap());
+    target.refine$editorContentFromHtml = function(html) {
+        const blocksFromHTML = Draft.convertFromHTML(html);
+        return Draft.ContentState.createFromBlockArray(
+            blocksFromHTML.contentBlocks,
+            blocksFromHTML.entityMap
+        );
     };
 
     target.refine$getSelectionRange = function() {
