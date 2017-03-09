@@ -35,7 +35,7 @@ module Refine.Frontend.Document.Store
   , js_CS_createFromText
   ) where
 
-import           Control.Lens ((&), (%~))
+import           Control.Lens ((&), (.~))
 import qualified Data.Aeson as Aeson
 import           Data.String.Conversions
 import           GHCJS.Types ( JSString, JSVal )
@@ -50,35 +50,25 @@ import           Refine.Frontend.Types
 import           Refine.Prelude.Aeson (NoJSONRep(..))
 
 
-documentStateUpdate :: RefineAction -> DocumentState -> DocumentState
-documentStateUpdate action state =
-  let newState = state
-                  & dsEditMode         %~ editModeUpdate action
-                  & dsEditorState      %~ editorStateUpdate action
-  in newState
+documentStateUpdate :: RefineAction -> Maybe (VDocVersion 'HTMLWithMarks) -> DocumentState -> DocumentState
+documentStateUpdate (HeaderAction (StartEdit kind)) (Just vdocvers) _state
+  = DocumentStateEdit (createEditorState kind vdocvers)
 
----------------------------------------------------------------------------
+documentStateUpdate (DocumentAction (UpdateEditorState es)) (Just _) state
+  = state & _DocumentStateEdit .~ es
 
-editModeUpdate :: RefineAction -> Maybe EditKind -> Maybe EditKind
-editModeUpdate action state = case action of
-    HeaderAction (StartEdit kind) -> Just kind
-    _ -> state
-
-editorStateUpdate :: RefineAction -> Maybe EditorState -> Maybe EditorState
-editorStateUpdate action state = case action of
-    OpenDocument openedVDoc               -> Just . createEditorState $ _compositeVDocVersion openedVDoc
-    DocumentAction (UpdateEditorState es) -> Just es
-    _ -> state
+documentStateUpdate _ _ state
+  = state
 
 
-createEditorState :: VDocVersion 'HTMLWithMarks -> EditorState
-createEditorState vers = unsafePerformIO $ do
+createEditorState :: EditKind -> VDocVersion 'HTMLWithMarks -> EditorState
+createEditorState kind vers = unsafePerformIO $ do
   let content = convertFromRaw $ vDocVersionToRawContent vers
   estate <- js_ES_createWithContent content
 
   js_traceEditorState estate `seq` pure ()
 
-  pure . EditorState . NoJSONRep $ estate
+  pure $ EditorState kind (NoJSONRep estate)
 
 foreign import javascript unsafe
     "refine$traceEditorState($1)"

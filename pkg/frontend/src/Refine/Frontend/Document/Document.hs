@@ -22,7 +22,6 @@
 module Refine.Frontend.Document.Document where
 
 import           Control.Lens ((^.))
-import           Data.Maybe (isJust)
 import           Data.String.Conversions
 import qualified Data.Tree as DT
 import           React.Flux
@@ -43,41 +42,40 @@ import           Refine.Prelude.Aeson (NoJSONRep(..))
 
 document :: ReactView DocumentProps
 document = defineView "Document" $ \props ->
-  if isJust (props ^. dpDocumentState . dsEditMode) then
-    editorWrapper_ $ EditorWrapperProps (props ^. dpDocumentState . dsEditorState)
-  else
-    article_ [ "id" $= "vdocValue"
-             , "className" $= "gr-20 gr-14@desktop"
-             , onMouseUp  $ \_ me -> RS.dispatch $
-                 RS.TriggerUpdateSelection (SC.OffsetFromDocumentTop $ mousePageY me) (props ^. dpToolbarStatus)
-                   -- <-- relative to webpage | relative to viewport -> mouseClientY me
-             , onTouchEnd $ \_ te -> RS.dispatch $
-                 RS.TriggerUpdateSelection (SC.OffsetFromDocumentTop . touchPageY . head $ touches te)
-                                           (props ^. dpToolbarStatus)
-             ] $ do
-      -- leftover from p'2016:
-      -- div_ ["className" $= "c-vdoc-overlay"] $ do
-        -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
-      div_ ["className" $= "c-article-content"] $ do
-        toArticleBody (props ^. dpContributionState) (_unVDocVersion (props ^. dpVDocVersion))
+  case props ^. dpDocumentState of
+    DocumentStateEdit editorState
+      -> editorWrapper_ $ EditorWrapperProps editorState
+    DocumentStateView
+      -> article_ [ "id" $= "vdocValue"
+                  , "className" $= "gr-20 gr-14@desktop"
+                  , onMouseUp  $ \_ me -> RS.dispatch $
+                      RS.TriggerUpdateSelection (SC.OffsetFromDocumentTop $ mousePageY me) (props ^. dpToolbarStatus)
+                        -- <-- relative to webpage | relative to viewport -> mouseClientY me
+                  , onTouchEnd $ \_ te -> RS.dispatch $
+                      RS.TriggerUpdateSelection (SC.OffsetFromDocumentTop . touchPageY . head $ touches te)
+                                                (props ^. dpToolbarStatus)
+                  ] $ do
+           -- leftover from p'2016:
+           -- div_ ["className" $= "c-vdoc-overlay"] $ do
+             -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
+           div_ ["className" $= "c-article-content"] $ do
+             toArticleBody (props ^. dpContributionState) (_unVDocVersion (props ^. dpVDocVersion))
 
 document_ :: DocumentProps -> ReactElementM eventHandler ()
 document_ props = view document props mempty
 
 newtype EditorWrapperProps = EditorWrapperProps
-  { _ewpEditorState       :: Maybe EditorState
+  { _ewpEditorState       :: EditorState
   }
 
 editorWrapper :: ReactView EditorWrapperProps
-editorWrapper = defineView "EditorWrapper" $ \case
-  EditorWrapperProps (Just (EditorState (NoJSONRep editorState))) ->
+editorWrapper = defineView "EditorWrapper" $ \(EditorWrapperProps (EditorState kind (NoJSONRep editorState))) ->
     article_ ["className" $= "gr-20 gr-14@desktop editor_wrapper"] $
       editor_ [ property "editorState" editorState
               , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
                   \(HandlerArg evt) -> js_traceEditorState evt `seq`
-                                       (RS.dispatch . RS.DocumentAction . UpdateEditorState . EditorState . NoJSONRep $ evt)
+                                       (RS.dispatch . RS.DocumentAction . UpdateEditorState . EditorState kind . NoJSONRep $ evt)
               ] mempty
-  _ -> mempty
 
 editorWrapper_ :: EditorWrapperProps -> ReactElementM eventHandler ()
 editorWrapper_ props = view editorWrapper props mempty

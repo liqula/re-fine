@@ -38,15 +38,13 @@ newtype DocumentAction =
   deriving (Show, Generic)
 
 
-data DocumentState = DocumentState
-  { _dsEditMode           :: Maybe EditKind
-  , _dsEditorState        :: Maybe EditorState
-  } deriving (Generic, Show)
+data DocumentState = DocumentStateView | DocumentStateEdit EditorState
+  deriving (Generic, Show)
 
-emptyDocumentState :: DocumentState
-emptyDocumentState = DocumentState Nothing Nothing
-
-newtype EditorState = EditorState { _unEditorState :: NoJSONRep JSVal }
+data EditorState = EditorState
+  { _editorStateKind :: EditKind
+  , _editorStateVal  :: NoJSONRep JSVal
+  }
   deriving (Generic, Show)
 
 

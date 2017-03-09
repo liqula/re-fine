@@ -25,7 +25,7 @@
 module Refine.Frontend.Store where
 
 import           Control.Concurrent (forkIO, yield, threadDelay)
-import           Control.Lens ((&), (^.), (^?), (%~), to)
+import           Control.Lens (_Just, (&), (^.), (^?), (%~), to)
 import           Control.Monad (void)
 import qualified Data.Aeson as AE
 import           Data.Aeson (ToJSON, encode)
@@ -85,7 +85,7 @@ instance StoreData GlobalState where
               & gsVDocList                   %~ vdocListUpdate transformedAction
               & gsContributionState          %~ maybe id contributionStateUpdate (transformedAction ^? _ContributionAction)
               & gsHeaderState                %~ headerStateUpdate transformedAction
-              & gsDocumentState              %~ documentStateUpdate transformedAction
+              & gsDocumentState              %~ documentStateUpdate transformedAction (state ^? gsVDoc . _Just . RT.compositeVDocVersion)
               & gsScreenState                %~ maybe id screenStateUpdate (transformedAction ^? _ScreenAction)
               & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate transformedAction
               & gsLoginState                 %~ loginStateUpdate transformedAction
