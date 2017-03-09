@@ -40,6 +40,7 @@ import           Refine.Common.VDoc.Draft as Draft
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Types
+import           Refine.Prelude.Aeson (NoJSONRep(..))
 
 
 documentStateUpdate :: RefineAction -> DocumentState -> DocumentState
@@ -70,7 +71,7 @@ createEditorState vers = unsafePerformIO $ do
 
   js_traceEditorState estate `seq` pure ()
 
-  pure $ EditorState estate
+  pure . EditorState . NoJSONRep $ estate
 
 foreign import javascript unsafe
     "refine$traceEditorState($1)"

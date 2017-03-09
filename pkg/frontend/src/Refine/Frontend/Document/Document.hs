@@ -22,11 +22,9 @@
 module Refine.Frontend.Document.Document where
 
 import           Control.Lens ((^.))
-import qualified Data.Aeson as Aeson
 import           Data.Maybe (isJust)
 import           Data.String.Conversions
 import qualified Data.Tree as DT
-import           GHCJS.Types ( JSVal )
 import           React.Flux
 import           React.Flux.Internal  -- (HandlerArg(..), PropertyOrHandler(..))
 import qualified Text.HTML.Parser as HTMLP
@@ -41,6 +39,7 @@ import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.ThirdPartyViews (editor_)
 import qualified Refine.Frontend.Types as RS
+import           Refine.Prelude.Aeson (NoJSONRep(..))
 
 
 document :: ReactView DocumentProps
@@ -72,11 +71,12 @@ newtype EditorWrapperProps = EditorWrapperProps
 
 editorWrapper :: ReactView EditorWrapperProps
 editorWrapper = defineView "EditorWrapper" $ \case
-  EditorWrapperProps (Just (EditorState editorState)) ->
+  EditorWrapperProps (Just (EditorState (NoJSONRep editorState))) ->
     article_ ["className" $= "gr-20 gr-14@desktop editor_wrapper"] $
       editor_ [ property "editorState" editorState
               , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
-                  \(HandlerArg evt) -> js_traceEditorState evt `seq` RS.dispatch . RS.DocumentAction . UpdateEditorState $ EditorState evt
+                  \(HandlerArg evt) -> js_traceEditorState evt `seq`
+                                       (RS.dispatch . RS.DocumentAction . UpdateEditorState . EditorState . NoJSONRep $ evt)
               ] mempty
   _ -> mempty
 
