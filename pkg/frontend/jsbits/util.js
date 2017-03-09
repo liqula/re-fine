@@ -1,4 +1,12 @@
 (function(target) {
+    target.refine$editorContentFromHtml = function(html) {
+        const blocksFromHTML = Draft.convertFromHTML(html);
+        return Draft.ContentState.createFromBlockArray(
+            blocksFromHTML.contentBlocks,
+            blocksFromHTML.entityMap
+        );
+    };
+
     target.refine$getSelectionRange = function() {
         var leftSiblingLength = function(node) {
             if (node === null) {
