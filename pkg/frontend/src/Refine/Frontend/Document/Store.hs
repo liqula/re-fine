@@ -22,11 +22,18 @@
 
 
 module Refine.Frontend.Document.Store
-( documentStateUpdate
+  ( documentStateUpdate
 
-, convertFromRaw
-, js_traceEditorState
-) where
+  -- * https://draftjs.org/docs/api-reference-data-conversion.html
+  , convertFromRaw
+  , convertToRaw
+
+  -- * https://draftjs.org/docs/api-reference-editor-state.html
+  , js_traceEditorState
+
+  -- * https://draftjs.org/docs/api-reference-content-state.html
+  , js_CS_createFromText
+  ) where
 
 import           Control.Lens ((&), (%~))
 import qualified Data.Aeson as Aeson
@@ -77,17 +84,37 @@ foreign import javascript unsafe
     "refine$traceEditorState($1)"
     js_traceEditorState :: JSVal -> ()
 
--- * https://draftjs.org/docs/api-reference-editor-state.html
+
+-- * https://draftjs.org/docs/api-reference-data-conversion.html
 
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#convertfromraw
+convertFromRaw :: RawContent -> JSVal
+convertFromRaw = js_convertFromRaw . cs . Aeson.encode
+
 foreign import javascript unsafe
     "Draft.convertFromRaw(JSON.parse($1))"
     js_convertFromRaw :: JSString -> JSVal
 
-convertFromRaw :: RawContent -> JSVal
-convertFromRaw = js_convertFromRaw . cs . Aeson.encode
+-- | https://draftjs.org/docs/api-reference-data-conversion.html#converttoraw
+convertToRaw :: JSVal -> RawContent
+convertToRaw = either (error . ("convertToRaw: " <>)) id . Aeson.eitherDecode . cs . js_convertToRaw
+
+foreign import javascript unsafe
+    "JSON.stringify(Draft.convertToRaw($1))"
+    js_convertToRaw :: JSVal -> JSString
+
+
+-- * https://draftjs.org/docs/api-reference-editor-state.html
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#createwithcontent
 foreign import javascript unsafe
     "Draft.EditorState.createWithContent($1)"
     js_ES_createWithContent :: JSVal -> IO JSVal
+
+
+-- * https://draftjs.org/docs/api-reference-content-state.html
+
+-- | https://draftjs.org/docs/api-reference-content-state.html#createfromtext
+foreign import javascript unsafe
+    "Draft.ContentState.createFromText($1)"
+    js_CS_createFromText :: JSString -> IO JSVal

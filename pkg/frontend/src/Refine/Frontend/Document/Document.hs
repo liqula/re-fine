@@ -30,7 +30,6 @@ import           React.Flux.Internal  -- (HandlerArg(..), PropertyOrHandler(..))
 import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
-import           Refine.Common.VDoc.Draft as Draft
 import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
@@ -116,14 +115,3 @@ toHTML state (DT.Node rootLabel subForest) = do
 
 -- alternatively: (needs `import Text.Show.Pretty`, package pretty-show.)
 -- toHTML n@(DT.Node rootLabel subForest) = pre_ $ ppShow n
-
-
--- * https://draftjs.org/docs/api-reference-editor-state.html
-
--- | https://draftjs.org/docs/api-reference-data-conversion.html#converttoraw
-foreign import javascript unsafe
-    "JSON.stringify(Draft.convertToRaw($1))"
-    js_convertToRaw :: JSVal -> JSString
-
-convertToRaw :: JSVal -> RawContent
-convertToRaw = either (error . ("convertToRaw: " <>)) id . Aeson.eitherDecode . cs . js_convertToRaw
