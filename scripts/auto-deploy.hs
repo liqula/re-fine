@@ -87,7 +87,7 @@ buildThorough mpid = do
 
 buildFast :: Maybe ProcessHandle -> IO (Either String ProcessHandle)
 buildFast mpid = do
-  callProcess "./build" ["build-backend", "build-frontend"]
+  callProcess "./build" ["build-optimal"]
   withCurrentDirectory "pkg/frontend" $ callProcess "npm" ["run", "build"]
   (\pid -> terminateProcess pid >> waitForProcess pid) `mapM_` mpid
   ph <- withCurrentDirectory "pkg/backend"  $ spawnProcess "stack" ["exec", "--", "refine", "server.conf"]

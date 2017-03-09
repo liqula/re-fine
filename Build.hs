@@ -41,6 +41,11 @@ stackBuildFast package = do
   command_ [Cwd package] "stack" ["setup"]
   command_ [Cwd package] "stack" ["build", "--fast"]
 
+stackBuildOptimal :: FilePath -> Action ()
+stackBuildOptimal package = do
+  command_ [Cwd package] "stack" ["setup"]
+  command_ [Cwd package] "stack" ["build", "--split-objs", "--ghc-options", "-O2"]
+
 hlintPackage :: FilePath -> Action ()
 hlintPackage package = do
   command_ [] "stack"
@@ -127,6 +132,12 @@ main = shakeArgs refineOptions $ do
     -- backend.
     need ["build-backend", "build-frontend"]
 
+  phony "build-optimal" $ do
+    need ["clean"]
+    stackBuildOptimal pkgBackend
+    need ["build-frontend-npm", "build-frontend-trans"]
+    stackBuildOptimal pkgFrontend
+    command_ [Cwd pkgFrontend] "make" []
 
   phony "hlint-prelude" $ do
     hlintPackage pkgPrelude
