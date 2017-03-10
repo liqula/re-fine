@@ -414,7 +414,7 @@ getStatement sid = S.statementElim (toStatement sid) <$> getEntity sid
 
 -- * Group
 
-toGroup :: ID Group -> ST -> ST -> Group
+toGroup :: ID Group -> ST -> ST -> [ID Group] -> [ID Group] -> Group
 toGroup = Group
 
 createGroup :: Create Group -> DB Group
@@ -423,4 +423,7 @@ createGroup group = liftDB $ do
         (group ^. createGroupTitle)
         (group ^. createGroupDesc)
   key <- insert sgroup
-  pure $ S.groupElim (toGroup (S.keyToId key)) sgroup
+  -- TODO: Insert children
+  pure $ S.groupElim
+    (\t d -> toGroup (S.keyToId key) t d (group ^. createGroupParents) (group ^. createGroupChildren))
+    sgroup

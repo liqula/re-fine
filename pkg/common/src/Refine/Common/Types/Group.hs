@@ -14,6 +14,8 @@ import Refine.Prelude.TH (makeRefineType)
 data CreateGroup = CreateGroup {
     _createGroupTitle :: ST
   , _createGroupDesc  :: ST
+  , _createGroupParents  :: [ID Group]
+  , _createGroupChildren :: [ID Group]
   }
   deriving (Eq, Generic)
 
@@ -21,6 +23,8 @@ data Group = Group {
     _groupID    :: ID Group
   , _groupTitle :: ST
   , _groupDesc  :: ST
+  , _groupParents  :: [ID Group]
+  , _groupChildren :: [ID Group]
   }
   deriving (Eq, Generic)
 

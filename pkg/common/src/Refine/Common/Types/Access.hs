@@ -34,5 +34,16 @@ data Access = Grant | Revoke
 data ChangeAccess = ChangeAccess ContributionID Access (ID User)
   deriving (Eq, Show, Generic)
 
+data Role
+  = ReadOnly
+  | Member
+  | Moderator
+  | LocalAdmin
+  | ProcessInitiator
+  | GroupInitiator
+  deriving (Eq, Show, Generic)
+
+
 makeRefineType ''Access
 makeRefineType ''ChangeAccess
+makeRefineType ''Role

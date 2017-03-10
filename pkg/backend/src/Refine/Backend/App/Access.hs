@@ -67,3 +67,57 @@ changeQuestionAccess qid a uid = do
   db $ case a of
     Grant  -> addQuestionUserAccess qid uid
     Revoke -> removeQuestionUserAccess qid uid
+
+-- | A user is assigned to a group (and not to subgroups).
+assignRole :: Role -> ID User -> ID Group -> App ()
+assignRole = undefined
+
+-- | Unassign a role from a user in a group.
+unassignRole :: Role -> ID User -> ID Group -> App ()
+unassignRole = undefined
+
+-- | Unassign all roles from a user in a group. Remove the user from the group.
+unassignAllRoles :: ID User -> ID Group -> App ()
+unassignAllRoles = undefined
+
+-- | Return True if a user has a role in a group.
+hasRole :: Role -> ID User -> ID Group -> App Bool
+hasRole = undefined
+
+-- | Return all roles for a user from a group (and not to subgroups).
+allRoles :: ID User -> ID Group -> App [Role]
+allRoles = undefined
+
+-- ??? Transitivity?
+
+
+{- Membership is represented via Roles...
+   TODO: Remove this API if not needed.
+-- * membership
+
+-- | Invite a user to a group
+addUserToGroup :: ID User -> ID Group -> App ()
+addUserToGroup = undefined
+
+-- | Excommunicate a user from a group
+removeUserFromGroup :: ID User -> ID Group -> App ()
+removeUserFromGroup = undefined
+
+-- | All the groups which a user directly added to.
+memberships :: ID User -> App [ID Group]
+memberships = undefined
+
+-- | Return all the groups which a user directly added to
+-- and their ancestor groups.
+transitiveMemberships :: ID User -> App [ID Group]
+transitiveMemberships = undefined
+
+-- | Return True if the user is in the given group
+isMember :: ID User -> ID Group -> App Bool
+isMember = undefined
+
+-- | Return True if the user is in the subgroups of a given group.
+isTransitiveMember :: ID User -> ID Group -> App Bool
+isTransitiveMember = undefined
+-}
+
