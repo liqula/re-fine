@@ -17,7 +17,7 @@ data CreateGroup = CreateGroup {
   , _createGroupParents  :: [ID Group]
   , _createGroupChildren :: [ID Group]
   }
-  deriving (Eq, Generic)
+  deriving (Eq, Generic, Show)
 
 data Group = Group {
     _groupID    :: ID Group
@@ -26,7 +26,7 @@ data Group = Group {
   , _groupParents  :: [ID Group]
   , _groupChildren :: [ID Group]
   }
-  deriving (Eq, Generic)
+  deriving (Eq, Generic, Show)
 
 -- * create types
 

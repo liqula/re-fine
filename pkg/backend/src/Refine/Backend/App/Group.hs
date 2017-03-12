@@ -37,6 +37,11 @@ createGroup group = do
   appLog "createGroup"
   db $ DB.createGroup group
 
+getGroup :: ID Group -> App Group
+getGroup group = do
+  appLog "readGroup"
+  db $ DB.getGroup group
+
 -- | Modify the group using the new values from the `Create Group` information.
 modifyGroup :: ID Group -> Create Group -> App Group
 modifyGroup = undefined

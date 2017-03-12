@@ -34,6 +34,9 @@ data Access = Grant | Revoke
 data ChangeAccess = ChangeAccess ContributionID Access (ID User)
   deriving (Eq, Show, Generic)
 
+-- | Roles are fully ordered.
+-- Eg: If a user is a moderator in a group, it also means it is a member
+-- in that group.
 data Role
   = ReadOnly
   | Member

@@ -78,6 +78,7 @@ class Database db where
 
   -- * Group
   createGroup          :: Create Group -> db Group
+  getGroup             :: ID Group -> db Group
 
 
 -- * composite db queries
