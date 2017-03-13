@@ -23,9 +23,10 @@
 module Refine.Backend.Database.Entity where
 
 import Control.Lens ((^.), to)
-import Control.Monad (void)
+import Control.Monad (forM_, void)
 import Control.Monad.Reader (ask)
 import Data.Functor.Infix ((<$$>))
+import Data.List ((\\))
 import Data.String.Conversions (ST)
 import Data.Typeable
 import Database.Persist
@@ -414,8 +415,8 @@ getStatement sid = S.statementElim (toStatement sid) <$> getEntity sid
 
 -- * Group
 
-toGroup :: ID Group -> ST -> ST -> [ID Group] -> [ID Group] -> Group
-toGroup = Group
+toGroup :: [ID Group] -> [ID Group] -> ID Group -> ST -> ST -> Group
+toGroup parents children gid title desc = Group gid title desc parents children
 
 createGroup :: Create Group -> DB Group
 createGroup group = liftDB $ do
@@ -423,7 +424,85 @@ createGroup group = liftDB $ do
         (group ^. createGroupTitle)
         (group ^. createGroupDesc)
   key <- insert sgroup
-  -- TODO: Insert children
+  forM_ (group ^. createGroupParents) $ \parent -> do
+    insert $ S.SubGroup (S.idToKey parent) key
+  forM_ (group ^. createGroupChildren) $ \child -> do
+    insert $ S.SubGroup key (S.idToKey child)
   pure $ S.groupElim
-    (\t d -> toGroup (S.keyToId key) t d (group ^. createGroupParents) (group ^. createGroupChildren))
+    (toGroup (group ^. createGroupParents)  (group ^. createGroupChildren) (S.keyToId key))
     sgroup
+
+getChildrenOfGroup :: ID Group -> DB [ID Group]
+getChildrenOfGroup gid =
+  (S.subGroupElim (\_parent child -> S.keyToId child) . entityVal)
+  <$$> (liftDB $ selectList [S.SubGroupParent ==. S.idToKey gid] [])
+
+getParentsOfGroup :: ID Group -> DB [ID Group]
+getParentsOfGroup gid =
+  (S.subGroupElim (\parent _child -> S.keyToId parent) . entityVal)
+  <$$> (liftDB $ selectList [S.SubGroupChild ==. S.idToKey gid] [])
+
+getGroup :: ID Group -> DB Group
+getGroup gid = do
+  parents  <- getParentsOfGroup  gid
+  children <- getChildrenOfGroup gid
+  S.groupElim (toGroup parents children gid) <$> getEntity gid
+
+modifyGroup :: ID Group -> Create Group -> DB Group
+modifyGroup gid group = do
+  parents  <- getParentsOfGroup gid
+  children <- getChildrenOfGroup gid
+
+  liftDB $ do
+    -- Update title and desc
+    update (S.idToKey gid)
+      [ S.GroupTitle       =. group ^. createGroupTitle
+      , S.GroupDescription =. group ^. createGroupDesc
+      ]
+
+    -- update parents
+
+    let parentsToRemove = parents \\ group ^. createGroupParents
+    let parentsToAdd    = group ^. createGroupParents \\ parents
+
+    forM_ parentsToRemove $ \parent -> do
+      deleteWhere
+        [ S.SubGroupParent ==. S.idToKey parent
+        , S.SubGroupChild  ==. S.idToKey gid
+        ]
+
+    forM_ parentsToAdd $ \parent -> do
+      insert $ S.SubGroup (S.idToKey parent) (S.idToKey gid)
+
+    -- update children
+
+    let childrenToRemove = children \\ group ^. createGroupChildren
+    let childrenToAdd    = group ^. createGroupChildren \\ children
+
+    forM_ childrenToRemove $ \child -> do
+      deleteWhere
+        [ S.SubGroupParent ==. S.idToKey gid
+        , S.SubGroupChild  ==. S.idToKey child
+        ]
+
+    forM_ childrenToAdd $ \child -> do
+      insert $ S.SubGroup (S.idToKey gid) (S.idToKey child)
+
+  getGroup gid
+
+removeGroup :: ID Group -> DB ()
+removeGroup gid = liftDB $ do
+  deleteWhere [S.SubGroupChild  ==. S.idToKey gid]
+  deleteWhere [S.SubGroupParent ==. S.idToKey gid]
+  delete (S.idToKey gid)
+
+addSubGroup :: ID Group -> ID Group -> DB ()
+addSubGroup parent child = liftDB $ do
+  void . insert $ S.SubGroup (S.idToKey parent) (S.idToKey child)
+
+removeSubGroup :: ID Group -> ID Group -> DB ()
+removeSubGroup parent child = liftDB $ do
+  deleteWhere
+    [ S.SubGroupParent ==. S.idToKey parent
+    , S.SubGroupChild  ==. S.idToKey child
+    ]

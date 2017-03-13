@@ -44,21 +44,29 @@ getGroup group = do
 
 -- | Modify the group using the new values from the `Create Group` information.
 modifyGroup :: ID Group -> Create Group -> App Group
-modifyGroup = undefined
+modifyGroup groupId group = do
+  appLog "modifyGroup"
+  db $ DB.modifyGroup groupId group
 
 -- | Remove a group and cleans up dangling references.
 --
 -- The users won't be transitive members of supergroups any more.
 --
 removeGroup :: ID Group -> App ()
-removeGroup = undefined
+removeGroup groupId = do
+  appLog "removeGroup"
+  db $ DB.removeGroup groupId
 
 -- * subgroups
 
 -- | Add a new child group to a group
 addSubGroup :: ID Group -> ID Group -> App ()
-addSubGroup _child _parent = undefined
+addSubGroup parent child = do
+  appLog "addSubGroup"
+  db $ DB.addSubGroup parent child
 
 -- | Remove a child group from a parent
 removeSubGroup :: ID Group -> ID Group -> App ()
-removeSubGroup _child _parent = undefined
+removeSubGroup parent child = do
+  appLog "removeSubGroup"
+  db $ DB.removeSubGroup parent child

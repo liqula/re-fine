@@ -30,8 +30,8 @@ import Refine.Backend.App.Group as App
 import Refine.Backend.Database
 import Refine.Backend.User
 import Refine.Common.Types.Group
--- import Refine.Common.Types.Prelude
 import Refine.Test.App.Runner
+
 
 type AppRunner a = AppM DB UH a -> IO a
 
@@ -66,6 +66,27 @@ spec = do
           group1 ^. groupID `shouldBe` group2 ^. groupID
           group2 ^. groupID `shouldBe` group3 ^. groupID
           group3 ^. groupID `shouldBe` group4 ^. groupID
+
+    it "create with parents and children works" $ \(runner :: AppRunner (IO ())) -> do
+      join . runner $ do
+        group1 <- App.createGroup (CreateGroup "t1" "d1" [] [])
+        group2 <- App.createGroup (CreateGroup "t2" "d2" [] [])
+        group3 <- App.createGroup (CreateGroup "t3" "d3" [group1 ^. groupID] [group2 ^. groupID])
+        group4 <- App.getGroup (group3 ^. groupID)
+        pure $ do
+          group4 ^. groupParents  `shouldBe` [group1 ^. groupID]
+          group4 ^. groupChildren `shouldBe` [group2 ^. groupID]
+
+    it "modify changes subgroups" $ \(runner :: AppRunner (IO ())) ->
+      join . runner $ do
+        group1  <- App.createGroup (CreateGroup "t1" "d1" [] [])
+        group2  <- App.createGroup (CreateGroup "t2" "d2" [] [])
+        group3  <- App.createGroup (CreateGroup "t3" "d3" [] [])
+        group3' <- App.modifyGroup (group3 ^. groupID) (CreateGroup "t3" "d3" [group1 ^. groupID] [group2 ^. groupID])
+        group4  <- App.getGroup (group3' ^. groupID)
+        pure $ do
+          group4 ^. groupParents     `shouldBe` [group1 ^. groupID]
+          group4 ^. groupChildren    `shouldBe` [group2 ^. groupID]
 
     it "add and remove subgroup" $ \(runner :: AppRunner (IO ())) ->
       join . runner $ do

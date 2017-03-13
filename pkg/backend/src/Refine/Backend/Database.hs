@@ -128,3 +128,8 @@ instance Database DB where
 
   -- * Group
   createGroup       = Entity.createGroup
+  getGroup          = Entity.getGroup
+  modifyGroup       = Entity.modifyGroup
+  removeGroup       = Entity.removeGroup
+  addSubGroup       = Entity.addSubGroup
+  removeSubGroup    = Entity.removeSubGroup
