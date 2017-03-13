@@ -67,6 +67,36 @@ spec = do
           group2 ^. groupID `shouldBe` group3 ^. groupID
           group3 ^. groupID `shouldBe` group4 ^. groupID
 
+    it "add and remove subgroup" $ \(runner :: AppRunner (IO ())) ->
+      join . runner $ do
+        parentg1 <- App.createGroup (CreateGroup "title" "desc" [] [])
+        childg1  <- App.createGroup (CreateGroup "title2" "desc2" [] [])
+        ()       <- App.addSubGroup (parentg1 ^. groupID) (childg1 ^. groupID)
+        parentg2 <- App.getGroup (parentg1 ^. groupID)
+        childg2  <- App.getGroup (childg1 ^. groupID)
+        ()       <- App.removeSubGroup (parentg1 ^. groupID) (childg1 ^. groupID)
+        parentg3 <- App.getGroup (parentg1 ^. groupID)
+        childg3  <- App.getGroup (childg1 ^. groupID)
+        pure $ do
+          parentg2 ^. groupParents  `shouldBe` []
+          parentg2 ^. groupChildren `shouldBe` [childg1 ^. groupID]
+          childg2  ^. groupParents  `shouldBe` [parentg1 ^. groupID]
+          childg2  ^. groupChildren `shouldBe` []
+
+          parentg3 ^. groupParents  `shouldBe` []
+          parentg3 ^. groupChildren `shouldBe` []
+          childg3  ^. groupParents  `shouldBe` []
+          childg3  ^. groupChildren `shouldBe` []
+
+
+{- TODO: Errorneous...
+    it "remove group" $ \(runner :: AppRunner (IO ())) -> do
+      (runner $ do
+        group <- App.createGroup (CreateGroup "title" "desc" [] [])
+        ()    <- App.removeGroup (group ^. groupID)
+        void $ App.getGroup (group ^. groupID)
+-}
+
 {-
   describe "Group errorneous" . around provideAppRunner $ do
     -- provideAppRunner is not polimorphic enough
