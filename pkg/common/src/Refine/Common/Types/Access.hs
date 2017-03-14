@@ -46,7 +46,15 @@ data Role
   | GroupInitiator
   deriving (Eq, Show, Generic)
 
+-- | Rights on operations, what to do with something
+data Right
+  = Create
+  | Read
+  | Update
+  | Delete
+  deriving (Eq, Ord, Show, Generic)
 
 makeRefineType ''Access
 makeRefineType ''ChangeAccess
 makeRefineType ''Role
+makeRefineType ''Right
