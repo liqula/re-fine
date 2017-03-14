@@ -24,8 +24,11 @@
 
 module Refine.Backend.App.Group where
 
+import Control.Lens ((^.))
+
 import Refine.Backend.App.Core
 import Refine.Backend.Database.Class as DB
+import Refine.Common.ChangeAPI
 import Refine.Common.Types.Group
 import Refine.Common.Types.Prelude
 
@@ -58,6 +61,14 @@ removeGroup groupId = do
   db $ DB.removeGroup groupId
 
 -- * subgroups
+
+changeSubGroup :: ChangeSubGroup -> App ()
+changeSubGroup csg = do
+  appLog "changeSubGroup"
+  let cmd = case csg of
+              AddSubGroup{} -> Refine.Backend.App.Group.addSubGroup
+              RmSubGroup{}  -> Refine.Backend.App.Group.removeSubGroup
+  cmd (csg ^. csgParent) (csg ^. csgChild)
 
 -- | Add a new child group to a group
 addSubGroup :: ID Group -> ID Group -> App ()

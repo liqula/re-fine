@@ -105,6 +105,7 @@ refineApi =
   :<|> Refine.Backend.App.logout
   :<|> Refine.Backend.App.getTranslations
   :<|> Refine.Backend.App.createGroup
+  :<|> Refine.Backend.App.changeSubGroup
   :<|> Refine.Backend.App.changeRole
 
 startBackend :: Config -> IO ()
