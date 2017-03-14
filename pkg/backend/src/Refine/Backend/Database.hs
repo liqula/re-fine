@@ -133,3 +133,7 @@ instance Database DB where
   removeGroup       = Entity.removeGroup
   addSubGroup       = Entity.addSubGroup
   removeSubGroup    = Entity.removeSubGroup
+
+  assignRole   = Entity.assignRole
+  getRole      = Entity.getRole
+  unassignRole = Entity.unassignRole

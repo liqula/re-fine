@@ -74,10 +74,10 @@ spec = do
           -- WHEN
           ()    <- App.assignRole role user (group ^. groupID)
           -- THEN
-          roles <- App.allRoles user (group ^. groupID)
+          role' <- App.getRole user (group ^. groupID)
           pure $ do
             -- outcome: new role is assigned
-            roles `shouldContain` [role]
+            role' `shouldBe` Just role
 
       it "assign the same role" $ \(runner :: AppRunner (IO ())) -> do
         join . runner $ do
@@ -89,10 +89,10 @@ spec = do
           () <- App.assignRole role user (group ^. groupID)
           () <- App.assignRole role user (group ^. groupID)
           -- THEN
-          roles <- App.allRoles user (group ^. groupID)
+          role' <- App.getRole user (group ^. groupID)
           pure $ do
             -- outcome: the role stays
-            roles `shouldContain` [role]
+            role' `shouldBe` Just role
 
       it "overwrite new role" $ \(runner :: AppRunner (IO ())) -> do
         -- There is only one role for the user.
@@ -106,10 +106,10 @@ spec = do
           () <- App.assignRole oldrole user (group ^. groupID)
           () <- App.assignRole newrole user (group ^. groupID)
           -- THEN
-          roles <- App.allRoles user (group ^. groupID)
+          role' <- App.getRole user (group ^. groupID)
           pure $ do
             -- ouctome: the new role is there
-            roles `shouldContain` [newrole]
+            role' `shouldBe` Just newrole
 
     describe "Unassign role" $ do
       it "unassign the given role" $ \(runner :: AppRunner (IO ())) -> do
@@ -123,10 +123,10 @@ spec = do
           -- WHEN
           ()    <- App.unassignRole role user (group ^. groupID)
           -- THEN
-          roles <- App.allRoles user (group ^. groupID)
+          role' <- App.getRole user (group ^. groupID)
           pure $ do
             -- outcome: the role is unassigned
-            roles `shouldBe` []
+            role' `shouldBe` Nothing
 
       it "unassign different role" $ \(runner :: AppRunner (IO ())) -> do
         -- There is only one role for the user.
@@ -140,11 +140,10 @@ spec = do
           -- WHEN
           ()    <- App.unassignRole otherrole user (group ^. groupID)
           -- THEN
-          roles <- App.allRoles user (group ^. groupID)
+          role' <- App.getRole user (group ^. groupID)
           pure $ do
             -- outcome: the role is unassigned
-            roles `shouldNotContain` [otherrole]
-            roles `shouldContain` [role]
+            role' `shouldBe` Just role
 
       it "unassign role when role is not assigned" $ \(runner :: AppRunner (IO ())) -> do
         -- There is only one role for the user.
@@ -156,7 +155,7 @@ spec = do
           -- WHEN
           ()    <- App.unassignRole role user (group ^. groupID)
           -- THEN
-          roles <- App.allRoles user (group ^. groupID)
+          role' <- App.getRole user (group ^. groupID)
           pure $ do
             -- outcome: the role is unassigned
-            roles `shouldBe` []
+            role' `shouldBe` Nothing

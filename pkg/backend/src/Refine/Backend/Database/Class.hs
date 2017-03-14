@@ -3,6 +3,7 @@ module Refine.Backend.Database.Class where
 
 import Refine.Backend.Database.Tree
 import Refine.Backend.DocRepo.Core as DocRepo
+import Refine.Common.Types.Access
 import Refine.Common.Types.Comment
 import Refine.Common.Types.Group
 import Refine.Common.Types.Prelude
@@ -83,6 +84,11 @@ class Database db where
   removeGroup          :: ID Group -> db ()
   addSubGroup          :: ID Group -> ID Group -> db ()
   removeSubGroup       :: ID Group -> ID Group -> db ()
+
+  -- * Roles
+  assignRole   :: ID Group -> ID User -> Role -> db ()
+  getRole      :: ID Group -> ID User -> db (Maybe Role)
+  unassignRole :: ID Group -> ID User -> Role -> db ()
 
 
 -- * composite db queries

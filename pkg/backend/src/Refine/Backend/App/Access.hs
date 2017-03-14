@@ -24,12 +24,13 @@
 
 module Refine.Backend.App.Access where
 
-import Control.Monad (unless)
+import Control.Monad (unless, when)
 import Control.Monad.Except (throwError)
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.User (doesUserExist)
 import Refine.Backend.Database.Class
+import Refine.Backend.Database.Class as DB
 import Refine.Common.Types
 
 
@@ -68,25 +69,28 @@ changeQuestionAccess qid a uid = do
     Grant  -> addQuestionUserAccess qid uid
     Revoke -> removeQuestionUserAccess qid uid
 
+-- FIXME: More consistent role handling in DB and App
+
 -- | A user is assigned to a group (and not to subgroups).
 assignRole :: Role -> ID User -> ID Group -> App ()
-assignRole = undefined
+assignRole role uid gid = do
+  appLog "assignRole"
+  db $ DB.assignRole gid uid role
 
 -- | Unassign a role from a user in a group.
 unassignRole :: Role -> ID User -> ID Group -> App ()
-unassignRole = undefined
+unassignRole role uid gid = do
+  appLog "unassignRole"
+  db $ do
+    actRole <- DB.getRole gid uid
+    when (Just role == actRole) $ DB.unassignRole gid uid role
 
--- | Unassign all roles from a user in a group. Remove the user from the group.
-unassignAllRoles :: ID User -> ID Group -> App ()
-unassignAllRoles = undefined
-
--- | Return True if a user has a role in a group.
-hasRole :: Role -> ID User -> ID Group -> App Bool
-hasRole = undefined
-
--- | Return all roles for a user from a group (and not to subgroups).
-allRoles :: ID User -> ID Group -> App [Role]
-allRoles = undefined
+-- | Return (Just role) if the user has a role in that group
+-- otherwise Nothing.
+getRole :: ID User -> ID Group -> App (Maybe Role)
+getRole uid gid = do
+  appLog "getRole"
+  db $ DB.getRole gid uid
 
 -- ??? Transitivity?
 

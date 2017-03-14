@@ -31,6 +31,7 @@ import Database.Persist
 import Database.Persist.Sql hiding (Statement)
 import Database.Persist.TH
 
+import Refine.Common.Types.Access (Role)
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.VDoc (Abstract, EditKind, Title)
 import Refine.Common.Types.Chunk (ChunkRange(..))
@@ -97,6 +98,14 @@ SubGroup
     parent      GroupId
     child       GroupId
     UniSG parent child
+
+-- Roles
+
+Roles
+    group GroupId
+    user  LoginId
+    role  Role
+    UniRoles group user role
 
 -- Connection tables
 
@@ -189,6 +198,8 @@ makeElim ''Vote
 
 makeElim ''Group
 makeElim ''SubGroup
+
+makeElim ''Roles
 
 makeElim ''DscnAcc
 makeElim ''NoteAcc
