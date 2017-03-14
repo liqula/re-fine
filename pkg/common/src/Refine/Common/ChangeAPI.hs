@@ -38,8 +38,8 @@ data ChangeSubGroup
   deriving (Eq, Generic, Show)
 
 data ChangeRole
-  = AssignRole { _arGroup :: ID Group, _arUser :: ID User, _arRole :: Role }
-  | UnassignRole { _arGroup :: ID Group, _arUser :: ID User, _arRole :: Role }
+  = AssignRole   { _crGroup :: ID Group, _crUser :: ID User, _crRole :: Role }
+  | UnassignRole { _crGroup :: ID Group, _crUser :: ID User, _crRole :: Role }
   deriving (Eq, Generic, Show)
 
 -- * Refine types

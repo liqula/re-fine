@@ -24,6 +24,7 @@
 
 module Refine.Backend.App.Access where
 
+import Control.Lens ((^.))
 import Control.Monad (unless, when)
 import Control.Monad.Except (throwError)
 
@@ -31,7 +32,7 @@ import Refine.Backend.App.Core
 import Refine.Backend.App.User (doesUserExist)
 import Refine.Backend.Database.Class as DB
 import Refine.Common.Types
-import Refine.Common.ChangeAPI (ChangeAccess(..))
+import Refine.Common.ChangeAPI
 
 
 -- NOTE: There is a possible attack. The attacker can learn
@@ -70,6 +71,13 @@ changeQuestionAccess qid a uid = do
     Revoke -> removeQuestionUserAccess qid uid
 
 -- FIXME: More consistent role handling in DB and App
+
+changeRole :: ChangeRole -> App ()
+changeRole cr = do
+  let cmd = case cr of
+              AssignRole{}   -> Refine.Backend.App.Access.assignRole
+              UnassignRole{} -> Refine.Backend.App.Access.unassignRole
+  cmd (cr ^. crRole) (cr ^. crUser) (cr ^. crGroup)
 
 -- | A user is assigned to a group (and not to subgroups).
 assignRole :: Role -> ID User -> ID Group -> App ()

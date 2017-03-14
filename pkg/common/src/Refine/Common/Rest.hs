@@ -61,6 +61,7 @@ type RefineAPI =
   :<|> SLogout
   :<|> SGetTranslations
   :<|> SCreateGroup
+  :<|> SChangeRole
 
 
 type SListVDocs
@@ -120,7 +121,7 @@ type SCreateGroup
 type SSubGroup
   = "r" :> "subgroup" :> ReqBody '[JSON] ChangeSubGroup :> Post '[JSON] ()
 
-type SChangeRoles
+type SChangeRole
   = "r" :>  "role" :> ReqBody '[JSON] ChangeRole :> Post '[JSON] ()
 
 makeRefineType ''ApiError
