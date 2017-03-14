@@ -17,37 +17,33 @@
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
-
-module Refine.Common.Types.Access where
+module Refine.Common.ChangeAPI where
 
 import GHC.Generics
 
+import Refine.Common.Types.Access
+import Refine.Common.Types.Contribution (ContributionID)
+import Refine.Common.Types.Group
+import Refine.Common.Types.Prelude (ID)
+import Refine.Common.Types.User
 import Refine.Prelude.TH (makeRefineType)
 
 
-data Access = Grant | Revoke
+data ChangeAccess = ChangeAccess ContributionID Access (ID User)
   deriving (Eq, Show, Generic)
 
--- | Roles are fully ordered.
--- Eg: If a user is a moderator in a group, it also means it is a member
--- in that group.
-data Role
-  = ReadOnly
-  | Member
-  | Moderator
-  | LocalAdmin
-  | ProcessInitiator
-  | GroupInitiator
-  deriving (Eq, Show, Generic)
+data ChangeSubGroup
+  = AddSubGroup { _csgParent :: ID Group, _csgChild :: ID Group }
+  | RmSubGroup  { _csgParent :: ID Group, _csgChild :: ID Group }
+  deriving (Eq, Generic, Show)
 
--- | Rights on operations, what to do with something
-data Right
-  = Create
-  | Read
-  | Update
-  | Delete
-  deriving (Eq, Ord, Show, Generic)
+data ChangeRole
+  = AssignRole { _arGroup :: ID Group, _arUser :: ID User, _arRole :: Role }
+  | UnassignRole { _arGroup :: ID Group, _arUser :: ID User, _arRole :: Role }
+  deriving (Eq, Generic, Show)
 
-makeRefineType ''Access
-makeRefineType ''Role
-makeRefineType ''Right
+-- * Refine types
+
+makeRefineType ''ChangeAccess
+makeRefineType ''ChangeSubGroup
+makeRefineType ''ChangeRole

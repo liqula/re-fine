@@ -31,6 +31,7 @@ import Refine.Backend.App.Core
 import Refine.Backend.App.User (doesUserExist)
 import Refine.Backend.Database.Class as DB
 import Refine.Common.Types
+import Refine.Common.ChangeAPI (ChangeAccess(..))
 
 
 -- NOTE: There is a possible attack. The attacker can learn

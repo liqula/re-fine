@@ -25,6 +25,7 @@ import Servant.API
 
 import Refine.Common.Types
 import Refine.Common.VDoc.HTML.Core
+import Refine.Common.ChangeAPI
 import Refine.Prelude.TH
 
 
@@ -115,5 +116,11 @@ type SGetTranslations
 
 type SCreateGroup
   = "r" :> "group" :> ReqBody '[JSON] (Create Group) :> Post '[JSON] Group
+
+type SSubGroup
+  = "r" :> "subgroup" :> ReqBody '[JSON] ChangeSubGroup :> Post '[JSON] ()
+
+type SChangeRoles
+  = "r" :>  "role" :> ReqBody '[JSON] ChangeRole :> Post '[JSON] ()
 
 makeRefineType ''ApiError
