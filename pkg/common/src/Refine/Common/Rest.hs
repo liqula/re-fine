@@ -108,7 +108,7 @@ type SLogout
   = "r" :> "user" :> "logout" :> Post '[JSON] ()
 
 type SChangeAccess
-  = "r" :> "change-access" :> ReqBody '[JSON] ChangeAccess :> Post '[JSON] ()
+  = "r" :> "access" :> ReqBody '[JSON] ChangeAccess :> Post '[JSON] ()
 
 type SGetTranslations
   = "r" :> "get-translations" :> ReqBody '[JSON] GetTranslations :> Post '[JSON] L10
