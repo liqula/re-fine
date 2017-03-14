@@ -114,6 +114,6 @@ type SGetTranslations
   = "r" :> "get-translations" :> ReqBody '[JSON] GetTranslations :> Post '[JSON] L10
 
 type SCreateGroup
-  = "r" :> "create-group" :> ReqBody '[JSON] (Create Group) :> Post '[JSON] Group
+  = "r" :> "group" :> ReqBody '[JSON] (Create Group) :> Post '[JSON] Group
 
 makeRefineType ''ApiError
