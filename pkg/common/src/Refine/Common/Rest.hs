@@ -101,27 +101,35 @@ type SAddStatement
     :> Post '[JSON] CompositeDiscussion
 
 type SCreateUser
-  = "r" :> "user" :> "create" :> ReqBody '[JSON] CreateUser :> Post '[JSON] User
+  = "r" :> "user" :> "create" :> ReqBody '[JSON] CreateUser
+    :> Post '[JSON] User
 
 type SLogin
-  = "r" :> "user" :> "login" :> ReqBody '[JSON] Login :> Post '[JSON] Username
+  = "r" :> "user" :> "login" :> ReqBody '[JSON] Login
+    :> Post '[JSON] Username
 
 type SLogout
-  = "r" :> "user" :> "logout" :> Post '[JSON] ()
+  = "r" :> "user" :> "logout"
+    :> Post '[JSON] ()
 
 type SChangeAccess
-  = "r" :> "access" :> ReqBody '[JSON] ChangeAccess :> Post '[JSON] ()
+  = "r" :> "access" :> ReqBody '[JSON] ChangeAccess
+    :> Post '[JSON] ()
 
 type SGetTranslations
-  = "r" :> "get-translations" :> ReqBody '[JSON] GetTranslations :> Post '[JSON] L10
+  = "r" :> "get-translations" :> ReqBody '[JSON] GetTranslations
+    :> Post '[JSON] L10
 
 type SCreateGroup
-  = "r" :> "group" :> ReqBody '[JSON] (Create Group) :> Post '[JSON] Group
+  = "r" :> "group" :> ReqBody '[JSON] (Create Group)
+    :> Post '[JSON] Group
 
 type SSubGroup
-  = "r" :> "subgroup" :> ReqBody '[JSON] ChangeSubGroup :> Post '[JSON] ()
+  = "r" :> "subgroup" :> ReqBody '[JSON] ChangeSubGroup
+    :> Post '[JSON] ()
 
 type SChangeRole
-  = "r" :>  "role" :> ReqBody '[JSON] ChangeRole :> Post '[JSON] ()
+  = "r" :>  "role" :> ReqBody '[JSON] ChangeRole
+    :> Post '[JSON] ()
 
 makeRefineType ''ApiError
