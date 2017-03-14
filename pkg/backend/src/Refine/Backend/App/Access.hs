@@ -74,6 +74,7 @@ changeQuestionAccess qid a uid = do
 
 changeRole :: ChangeRole -> App ()
 changeRole cr = do
+  appLog "changeRole"
   let cmd = case cr of
               AssignRole{}   -> Refine.Backend.App.Access.assignRole
               UnassignRole{} -> Refine.Backend.App.Access.unassignRole
