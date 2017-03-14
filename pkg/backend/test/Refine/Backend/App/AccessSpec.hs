@@ -33,8 +33,9 @@ import Refine.Backend.User
 import Refine.Common.Types.Access
 import Refine.Common.Types.Group
 import Refine.Common.Types.Prelude (ID(..))
--- import Refine.Common.Types.Prelude
 import Refine.Test.App.Runner
+
+{-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
 
 type AppRunner a = AppM DB FreeUH a -> IO a

@@ -441,12 +441,12 @@ createGroup group = liftDB $ do
 getChildrenOfGroup :: ID Group -> DB [ID Group]
 getChildrenOfGroup gid =
   (S.subGroupElim (\_parent child -> S.keyToId child) . entityVal)
-  <$$> (liftDB $ selectList [S.SubGroupParent ==. S.idToKey gid] [])
+  <$$> liftDB (selectList [S.SubGroupParent ==. S.idToKey gid] [])
 
 getParentsOfGroup :: ID Group -> DB [ID Group]
 getParentsOfGroup gid =
   (S.subGroupElim (\parent _child -> S.keyToId parent) . entityVal)
-  <$$> (liftDB $ selectList [S.SubGroupChild ==. S.idToKey gid] [])
+  <$$> liftDB (selectList [S.SubGroupChild ==. S.idToKey gid] [])
 
 getGroup :: ID Group -> DB Group
 getGroup gid = do

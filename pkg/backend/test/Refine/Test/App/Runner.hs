@@ -36,7 +36,6 @@ import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
 import Refine.Backend.Config
 import Refine.Backend.Database
-import Refine.Backend.Database (DB)
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Natural

@@ -29,7 +29,6 @@ import Control.Monad.Except (throwError)
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.User (doesUserExist)
-import Refine.Backend.Database.Class
 import Refine.Backend.Database.Class as DB
 import Refine.Common.Types
 
