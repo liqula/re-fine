@@ -152,6 +152,7 @@ makePrisms ''VDocVersion
 data CompositeVDoc = CompositeVDoc
   { _compositeVDoc            :: VDoc
   , _compositeVDocRepo        :: VDocRepo
+  , _compositeVDocEditID      :: ID Edit
   , _compositeVDocVersion     :: VDocVersion 'HTMLWithMarks
   , _compositeVDocEdits       :: Map (ID Edit) Edit
   , _compositeVDocNotes       :: Map (ID Note) Note

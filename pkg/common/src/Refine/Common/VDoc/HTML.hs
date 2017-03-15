@@ -2,7 +2,9 @@
 module Refine.Common.VDoc.HTML
   ( ChunkRangeError(..)
   , canonicalizeVDocVersion    -- 'HTMLRaw" to 'HTMLCanonical'
-  , downgradeRawVDocVersion    -- 'HTMLCanonical' to 'HTMLRaw' (benign, but we may not actually need it)
+  , downgradeVDocVersionCR     -- 'HTMLCanonical' to 'HTMLRaw'
+  , downgradeVDocVersionWC     -- 'HTMLWithMarks' to 'HTMLCanonical'
+  , downgradeVDocVersionWR     -- 'HTMLWithMarks' to 'HTMLRaw'
   , insertMarks                -- 'HTMLCanonical' to 'HTMLWithMarks'
   , insertMoreMarks            -- 'HTMLWithMarks' to 'HTMLWithMarks' (if you want to call it incrementally).
   , chunkRangeErrors           -- chunk range validation
