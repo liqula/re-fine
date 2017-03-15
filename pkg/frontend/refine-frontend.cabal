@@ -55,6 +55,7 @@ library
       Refine.Frontend.Contribution.Store
       Refine.Frontend.Contribution.Types
       Refine.Frontend.Document.Document
+      Refine.Frontend.Document.FFI
       Refine.Frontend.Document.Store
       Refine.Frontend.Document.Types
       Refine.Frontend.ErrorHandling
@@ -178,6 +179,7 @@ test-suite spec
       Refine.Frontend.Contribution.Types
       Refine.Frontend.Document.Document
       Refine.Frontend.Document.DocumentSpec
+      Refine.Frontend.Document.FFI
       Refine.Frontend.Document.Store
       Refine.Frontend.Document.Types
       Refine.Frontend.ErrorHandling

@@ -32,7 +32,7 @@ import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
-import           Refine.Frontend.Document.Store (js_ES_traceCurrentContent)
+import           Refine.Frontend.Document.FFI (js_ES_traceCurrentContent)
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.ThirdPartyViews (editor_)
