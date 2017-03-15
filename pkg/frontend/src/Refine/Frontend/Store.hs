@@ -188,7 +188,7 @@ emitBackendCallsFor action state = case action of
       let eid :: RT.ID RT.Edit
           eid = state ^?! gsVDoc . _Just . RT.compositeVDocEditID
 
-          adHocFail msg = error $ "DocumentAction DocumentEditSave: " <> msg
+          adHocFail msg = error $ "DocumentAction DocumentEditSave: " <> msg  -- TODO: #255
 
       estate :: EditorState
         <- case state ^. gsDocumentState of
@@ -200,11 +200,11 @@ emitBackendCallsFor action state = case action of
 
       let cid :: RT.Create RT.Edit
           cid = RT.CreateEdit
-                  { RT._createEditDesc  = "..."
-                  , RT._createEditRange = RT.ChunkRange Nothing Nothing
+                  { RT._createEditDesc  = "..."                          -- TODO: #233
+                  , RT._createEditRange = RT.ChunkRange Nothing Nothing  -- FIXME: 'state ^. gsContributionState . csCurrentSelection'
                   , RT._createEditVDoc  = Common.downgradeVDocVersionWR newvers
                   , RT._createEditKind  = estate ^. editorStateKind
-                  , RT._createEditMotiv = "..."
+                  , RT._createEditMotiv = "..."                          -- TODO: #233
                   }
 
       addEdit eid cid $ \case
