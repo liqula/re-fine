@@ -34,6 +34,9 @@ module Refine.Frontend.Document.FFI
 
     -- * https://draftjs.org/docs/api-reference-content-state.html
   , js_CS_createFromText
+
+    -- * contrib
+  , js_Draft_stateToHTML
   ) where
 
 import qualified Data.Aeson as Aeson
@@ -96,3 +99,11 @@ foreign import javascript unsafe
 foreign import javascript unsafe
     "Draft.ContentState.createFromText($1)"
     js_CS_createFromText :: JSString -> IO JSVal
+
+
+-- * contrib
+
+-- | https://github.com/sstur/draft-js-export-html
+foreign import javascript unsafe
+    "DraftStateToHTML($1)"
+    js_Draft_stateToHTML :: JSVal -> JSString  -- ('IO'?  let's hope this is pure enough...)

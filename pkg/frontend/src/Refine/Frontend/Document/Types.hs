@@ -33,8 +33,9 @@ import           Refine.Prelude.Aeson (NoJSONRep(..))
 import           Refine.Prelude.TH ( makeRefineType )
 
 
-newtype DocumentAction =
+data DocumentAction =
     DocumentEditStart EditorState
+  | DocumentEditSave
   deriving (Show, Generic)
 
 

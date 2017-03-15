@@ -66,8 +66,11 @@ data HTMLState = HTMLRaw | HTMLCanonical | HTMLWithMarks
 newtype VDocVersion (state :: HTMLState) = VDocVersion { _unVDocVersion :: Forest Token }
   deriving (Eq, Ord, Show, Generic)
 
+vdocVersionFromSTSafe :: ST -> Either String (VDocVersion b)
+vdocVersionFromSTSafe = either (Left . show) (Right . VDocVersion) . tokensToForest . parseTokens
+
 vdocVersionFromST :: ST -> VDocVersion b
-vdocVersionFromST = VDocVersion . (\(Right v) -> v) . tokensToForest . parseTokens
+vdocVersionFromST = (\(Right v) -> v) . vdocVersionFromSTSafe
 
 vdocVersionToST :: VDocVersion b -> ST
 vdocVersionToST = cs . renderTokens . tokensFromForest . _unVDocVersion

@@ -26,6 +26,7 @@ import           React.Flux
 
 import           Refine.Frontend.Store
 import           Refine.Frontend.Types
+import           Refine.Frontend.Document.Types
 import           Refine.Frontend.UtilityWidgets
 
 editToolbar :: ReactView ()
@@ -117,7 +118,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                 ""
                 "save"
                 False
-                (\_ -> dispatch ShowNotImplementedYet)
+                (\_ -> dispatch $ DocumentAction DocumentEditSave)
                 [])
               True
               Nothing

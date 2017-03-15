@@ -26,8 +26,10 @@ module Refine.Frontend.Document.Store
   , createEditorState
   ) where
 
-import           Control.Lens ((&), (.~))
-import           React.Flux ()  -- instance IsString JSString
+import           Control.Lens ((&), (.~), (^.))
+import           Data.JSString (unpack)
+import           Data.String.Conversions
+import           GHCJS.Types (JSVal, JSString)
 import           System.IO.Unsafe (unsafePerformIO)
 import           Text.HTML.Tree (tokensFromForest)
 
@@ -36,7 +38,7 @@ import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Types
-import           Refine.Prelude.Aeson (NoJSONRep(..))
+import           Refine.Prelude.Aeson (NoJSONRep(..), unNoJSONRep)
 
 
 documentStateUpdate :: RefineAction -> Maybe (VDocVersion 'HTMLWithMarks) -> DocumentState -> DocumentState
@@ -45,6 +47,9 @@ documentStateUpdate (HeaderAction (StartEdit kind)) (Just vdocvers) _state
 
 documentStateUpdate (DocumentAction (DocumentEditStart es)) (Just _) state
   = state & _DocumentStateEdit .~ es
+
+documentStateUpdate (DocumentAction DocumentEditSave) _ state
+  = traceShow (documentStateToHTML state) DocumentStateView
 
 documentStateUpdate _ _ state
   = state
@@ -58,3 +63,23 @@ createEditorState kind (VDocVersion vers) = unsafePerformIO $ do
   js_ES_traceCurrentContent estate `seq` pure ()
 
   pure $ EditorState kind (NoJSONRep estate)
+
+
+documentStateToHTML :: DocumentState -> Either String (VDocVersion 'HTMLWithMarks)
+documentStateToHTML DocumentStateView = Left "editor not running"
+documentStateToHTML (DocumentStateEdit s) = editorStateToHTML s
+
+editorStateToHTML :: EditorState -> Either String (VDocVersion 'HTMLWithMarks)
+editorStateToHTML estate = result
+  where
+    stateval :: JSVal
+    stateval = estate ^. editorStateVal . unNoJSONRep
+
+    curcontent :: JSVal
+    curcontent = unsafePerformIO $ js_ES_getCurrentContent stateval
+
+    curhtml :: JSString
+    curhtml = js_Draft_stateToHTML curcontent
+
+    result :: Either String (VDocVersion 'HTMLWithMarks)
+    result = vdocVersionFromSTSafe . cs . unpack $ curhtml
