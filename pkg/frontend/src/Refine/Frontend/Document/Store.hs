@@ -76,7 +76,7 @@ editorStateToHTML estate = result
     stateval = estate ^. editorStateVal . unNoJSONRep
 
     curcontent :: JSVal
-    curcontent = unsafePerformIO $ js_ES_getCurrentContent stateval
+    curcontent = js_ES_getCurrentContent stateval
 
     curhtml :: JSString
     curhtml = js_Draft_stateToHTML curcontent

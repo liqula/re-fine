@@ -85,7 +85,7 @@ foreign import javascript unsafe
 -- | https://draftjs.org/docs/api-reference-editor-state.html#getcurrentcontent
 foreign import javascript unsafe
     "$1.getCurrentContent()"
-    js_ES_getCurrentContent :: JSVal -> IO JSVal
+    js_ES_getCurrentContent :: JSVal -> JSVal
 
 -- | Convenient wrapper for 'js_ES_getCurrentContent'.
 foreign import javascript unsafe
@@ -106,4 +106,4 @@ foreign import javascript unsafe
 -- | https://github.com/sstur/draft-js-export-html
 foreign import javascript unsafe
     "DraftStateToHTML($1)"
-    js_Draft_stateToHTML :: JSVal -> JSString  -- ('IO'?  let's hope this is pure enough...)
+    js_Draft_stateToHTML :: JSVal -> JSString
