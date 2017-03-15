@@ -41,8 +41,8 @@ module Refine.Frontend.Document.FFI
 
 import qualified Data.Aeson as Aeson
 import           Data.String.Conversions
-import           GHCJS.Types ( JSString, JSVal )
-import           React.Flux ()  -- instance IsString JSString
+import           Data.JSString ()  -- instance IsString JSString
+import           GHCJS.Types (JSString, JSVal)
 import           Text.HTML.Parser
 
 import qualified Refine.Common.VDoc.Draft as Draft

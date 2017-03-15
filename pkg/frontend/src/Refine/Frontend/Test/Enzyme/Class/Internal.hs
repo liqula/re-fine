@@ -1,8 +1,8 @@
 module Refine.Frontend.Test.Enzyme.Class.Internal where
 
+import Data.JSString (pack)
 import GHCJS.Marshal.Pure
 import GHCJS.Types (JSString, JSVal)
-import React.Flux.Internal (toJSString)
 
 import Refine.Frontend.Test.Enzyme.Core
 
@@ -145,17 +145,17 @@ lengthOfIO wrapper = lengthOf =<< wrapper
 -- * Preparations for the evaluation of functions in JavaScript
 
 execWithSelector :: (PFromJSVal a, EnzymeWrapper w) => String -> w -> EnzymeSelector -> IO a
-execWithSelector func wrapper es@(PropertySelector _) = pFromJSVal <$> js_exec_with_object (toJSString func) (unWrap wrapper) (pToJSVal es)
+execWithSelector func wrapper es@(PropertySelector _) = pFromJSVal <$> js_exec_with_object (pack func) (unWrap wrapper) (pToJSVal es)
 execWithSelector f w e = execWith1Arg f w e
 
 execWith1Arg :: (PFromJSVal a, PToJSVal b, EnzymeWrapper w) => String -> w -> b -> IO a
-execWith1Arg func wrapper arg = pFromJSVal <$> js_exec_with_1_arg (toJSString func) (unWrap wrapper) (pToJSVal arg)
+execWith1Arg func wrapper arg = pFromJSVal <$> js_exec_with_1_arg (pack func) (unWrap wrapper) (pToJSVal arg)
 
 exec :: (PFromJSVal a, EnzymeWrapper w) => String -> w -> IO a
-exec func wrapper = pFromJSVal <$> js_exec (toJSString func) (unWrap wrapper)
+exec func wrapper = pFromJSVal <$> js_exec (pack func) (unWrap wrapper)
 
 attr :: (PFromJSVal a, EnzymeWrapper w) => String -> w -> IO a
-attr name wrapper = pFromJSVal <$> js_attr (toJSString name) (unWrap wrapper)
+attr name wrapper = pFromJSVal <$> js_attr (pack name) (unWrap wrapper)
 
 
 -- * The actual JavaScript calls
