@@ -81,6 +81,7 @@ data RefineAction = LoadDocumentList
                   -- ...
                   | AddDiscussion CompositeDiscussion
                   | AddNote Note
+                  | AddEdit Edit
                   | SaveSelect Text Text
                   -- ...
                   | CreateUser CreateUser

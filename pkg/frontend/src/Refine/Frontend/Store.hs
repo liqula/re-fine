@@ -25,7 +25,7 @@
 module Refine.Frontend.Store where
 
 import           Control.Concurrent (forkIO, yield, threadDelay)
-import           Control.Lens (_Just, (&), (^.), (^?), (%~), to)
+import           Control.Lens (_Just, (&), (^.), (^?), (^?!), (%~), to)
 import           Control.Monad (void)
 import qualified Data.Aeson as AE
 import           Data.JSString (JSString, unpack)
@@ -41,7 +41,8 @@ import           Refine.Common.Rest (ApiError(..))
 
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
-import           Refine.Frontend.Document.Store (documentStateUpdate)
+import           Refine.Frontend.Document.Store (documentStateUpdate, editorStateToVDocVersion)
+import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
 import           Refine.Frontend.MainMenu.Types
@@ -116,6 +117,13 @@ vdocUpdate action (Just vdoc) = Just $ case action of
           & RT.compositeVDocVersion
               %~ Common.insertMoreMarks [ContribNote note]
 
+    AddEdit edit
+      -> vdoc
+          & RT.compositeVDocEdits
+              %~ M.insert (edit ^. RT.editID) edit
+          & RT.compositeVDocVersion
+              %~ Common.insertMoreMarks [ContribEdit edit]
+
     ContributionAction (ShowCommentEditor (Just range))
       -> vdoc & RT.compositeVDocVersion %~ Common.highlightRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
     ContributionAction HideCommentEditor
@@ -176,6 +184,33 @@ emitBackendCallsFor action state = case action of
             (Right note) -> pure $ dispatch (AddNote note)
         Nothing -> pure ()
 
+    DocumentAction DocumentEditSave -> do
+      let eid :: RT.ID RT.Edit
+          eid = state ^?! gsVDoc . _Just . RT.compositeVDocEditID
+
+          adHocFail msg = error $ "DocumentAction DocumentEditSave: " <> msg
+
+      estate :: EditorState
+        <- case state ^. gsDocumentState of
+             DocumentStateEdit s -> pure s
+             DocumentStateView   -> adHocFail "document state is in 'view'"
+
+      newvers :: RT.VDocVersion 'RT.HTMLWithMarks
+        <- either (adHocFail . ("newvers cannot be parsed: " <>)) pure $ editorStateToVDocVersion estate
+
+      let cid :: RT.Create RT.Edit
+          cid = RT.CreateEdit
+                  { RT._createEditDesc  = "..."
+                  , RT._createEditRange = RT.ChunkRange Nothing Nothing
+                  , RT._createEditVDoc  = Common.downgradeVDocVersionWR newvers
+                  , RT._createEditKind  = estate ^. editorStateKind
+                  , RT._createEditMotiv = "..."
+                  }
+
+      addEdit eid cid $ \case
+        Left rsp   -> handleError rsp (const [])
+        Right edit -> pure $ dispatch (AddEdit edit)
+
     CreateUser createUserData -> do
       createUser createUserData $ \case
         (Left rsp)    -> do
@@ -217,23 +252,6 @@ emitBackendCallsFor action state = case action of
           pure . dispatch $ ChangeTranslations l10
 
     _ -> pure ()
-
-{- TODO submitting an edit does not work yet
-    SubmitEdit -> do
-        let vdocId = _metaKey . _vdocMeta . fromJust $ _vdoc state
-        let editId = _vdocHead . fromJust $ _vdoc state
-        let vdocChunk = VDocChunk "<p><strong>This is my new and obviously much, much better text :-)</strong></p>"
-        let maybeRange = _currentSelection state
-        let editKey = EditKey vdocId editId
-        case maybeRange of
-            (Nothing, _)    -> pure ()
-            (Just range, _) -> do
-                                let protoChunkRange = ProtoChunkRange (ChunkPoint (DataUID <$> _startUid range) (_startOffset range)) (ChunkPoint (DataUID <$> _endUid range) (_endOffset range))
-                                let editFromClient = EditFromClient vdocChunk (Just protoChunkRange)
-                                addEdit editKey editFromClient $ \case
-                                    (Left rsp) -> handleError rsp (const [])
-                                    (Right _edit) -> pure []
--}
 
 createChunkRange :: Maybe Range -> RT.ChunkRange
 createChunkRange Nothing = RT.ChunkRange Nothing Nothing

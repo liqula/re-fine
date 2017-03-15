@@ -24,6 +24,7 @@
 module Refine.Frontend.Document.Store
   ( documentStateUpdate
   , createEditorState
+  , editorStateToVDocVersion
   ) where
 
 import           Control.Lens ((&), (.~), (^.))
@@ -48,8 +49,8 @@ documentStateUpdate (HeaderAction (StartEdit kind)) (Just vdocvers) _state
 documentStateUpdate (DocumentAction (DocumentEditStart es)) (Just _) state
   = state & _DocumentStateEdit .~ es
 
-documentStateUpdate (DocumentAction DocumentEditSave) _ state
-  = traceShow (documentStateToHTML state) DocumentStateView
+documentStateUpdate (DocumentAction DocumentEditSave) _ _
+  = DocumentStateView
 
 documentStateUpdate _ _ state
   = state
@@ -65,12 +66,8 @@ createEditorState kind (VDocVersion vers) = unsafePerformIO $ do
   pure $ EditorState kind (NoJSONRep estate)
 
 
-documentStateToHTML :: DocumentState -> Either String (VDocVersion 'HTMLWithMarks)
-documentStateToHTML DocumentStateView = Left "editor not running"
-documentStateToHTML (DocumentStateEdit s) = editorStateToHTML s
-
-editorStateToHTML :: EditorState -> Either String (VDocVersion 'HTMLWithMarks)
-editorStateToHTML estate = result
+editorStateToVDocVersion :: EditorState -> Either String (VDocVersion 'HTMLWithMarks)
+editorStateToVDocVersion estate = result
   where
     stateval :: JSVal
     stateval = estate ^. editorStateVal . unNoJSONRep
