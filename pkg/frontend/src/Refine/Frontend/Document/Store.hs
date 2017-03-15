@@ -43,7 +43,7 @@ documentStateUpdate :: RefineAction -> Maybe (VDocVersion 'HTMLWithMarks) -> Doc
 documentStateUpdate (HeaderAction (StartEdit kind)) (Just vdocvers) _state
   = DocumentStateEdit (createEditorState kind vdocvers)
 
-documentStateUpdate (DocumentAction (UpdateEditorState es)) (Just _) state
+documentStateUpdate (DocumentAction (DocumentEditStart es)) (Just _) state
   = state & _DocumentStateEdit .~ es
 
 documentStateUpdate _ _ state

@@ -34,7 +34,7 @@ import           Refine.Prelude.TH ( makeRefineType )
 
 
 newtype DocumentAction =
-    UpdateEditorState EditorState
+    DocumentEditStart EditorState
   deriving (Show, Generic)
 
 
