@@ -44,10 +44,21 @@ spec = do
     it "getChildEdits returns multiple dependencies" $ \runner -> do
       repo  <- runner $$ createRepo
       edit1 <- runner $$ createInitialEdit repo (vdocVersionFromST "blah")
+      (runner $$ getVersion repo edit1) `shouldReturn` vdocVersionFromST "blah"
+
       edit2 <- runner $$ createEdit repo edit1  (vdocVersionFromST "blah\nblah2")
+      (runner $$ getVersion repo edit2) `shouldReturn` vdocVersionFromST "blah\nblah2"
+
       edit3 <- runner $$ createEdit repo edit1  (vdocVersionFromST "blah\nblah3")
+      pendingWith "#257"
+      (runner $$ getVersion repo edit3) `shouldReturn` vdocVersionFromST "blah\nblah3"
+
       edit4 <- runner $$ createEdit repo edit3  (vdocVersionFromST "blah\nblah3\nblah4")
+      (runner $$ getVersion repo edit4) `shouldReturn` vdocVersionFromST "blah\nblah3\nblah4"
+
       edit5 <- runner $$ createEdit repo edit4  (vdocVersionFromST "blah\nblah3\nblah4\nblah5")
+      (runner $$ getVersion repo edit5) `shouldReturn` vdocVersionFromST "blah\nblah3\nblah4\nblah5"
+
       edit1children <- runner $$ getChildEdits repo edit1
       edit2children <- runner $$ getChildEdits repo edit2
       edit3children <- runner $$ getChildEdits repo edit3
