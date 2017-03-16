@@ -28,6 +28,7 @@ import Test.Hspec
 import Refine.Backend.App.Core  as App
 import Refine.Backend.App.Group as App
 import Refine.Backend.Database
+import Refine.Backend.Test.Util (forceEval)
 import Refine.Backend.User
 import Refine.Common.Types.Group
 import Refine.Common.Types.Prelude (ID(..))
@@ -114,22 +115,16 @@ spec = do
     -- provideAppRunner is not polimorphic enough
 
     it "remove group" $ \runner -> do
-      pendingWith "#258"
-      -- parenthesis are needed otherwise anyException catches the
-      -- exception from pending and the test passes! brrr.
-      ((do () <- runner $ do
-                  group <- App.addGroup (CreateGroup "title" "desc" [] [])
-                  ()    <- App.removeGroup (group ^. groupID)
-                  void $ App.getGroup (group ^. groupID)
-           pure ())
+      (forceEval . runner $ do
+          group <- App.addGroup (CreateGroup "title" "desc" [] [])
+          ()    <- App.removeGroup (group ^. groupID)
+          void $ App.getGroup (group ^. groupID))
        `shouldThrow`
-       anyException)
+       anyException
 
     it "non-existing group" $ \runner -> do
-      pendingWith "#258"
-      ((do () <- runner $ do
-              (Group _gid _title _desc _parents _children) <- App.getGroup (ID 100000000)
-              pure ()
-           pure ())
+      (forceEval . runner $ do
+          (Group _gid _title _desc _parents _children) <- App.getGroup (ID 100000000)
+          pure ())
        `shouldThrow`
-       anyException)
+       anyException

@@ -40,6 +40,7 @@ import           Text.HTML.Parser
 import Refine.Backend.App         as App
 import Refine.Backend.Database
 import Refine.Backend.User
+import Refine.Backend.Test.Util (forceEval)
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.User
 import Refine.Common.Types.VDoc
@@ -80,9 +81,7 @@ spec = do
   describe "User handling" . around provideAppRunner $ do
     -- FIXME: Use the Cmd type instead
     it "Create/login/logout" $ \(runner :: AppM DB UH () -> IO ()) -> do
-      -- NOTE: Pattern match on the result will trigger the evaluation
-      -- of the term under test.
-      () <- runner $ do
+      forceEval . runner $ do
 
         void $ App.createUser (CreateUser "user" "user@example.com" "password")
         userState0 <- gets (view appUserState)
@@ -96,7 +95,6 @@ spec = do
         userState2 <- gets (view appUserState)
         appIO $ userState2 `shouldBe` UserLoggedOut
 
-      pure ()
 
   describe "Regression" . around provideAppRunner $ do
     it "Regression test program" $ \(runner :: AppM DB UH () -> IO ()) -> do

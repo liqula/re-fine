@@ -29,3 +29,10 @@ import           System.Directory (withCurrentDirectory)
 
 withTempCurrentDirectory :: IO a -> IO a
 withTempCurrentDirectory action = withSystemTempDirectory "refine.tmp" (`withCurrentDirectory` action)
+
+-- | Pattern match on the result will trigger the evaluation
+-- of the term under test.
+forceEval :: Monad m => m () -> m ()
+forceEval m = do
+  () <- m
+  pure ()
