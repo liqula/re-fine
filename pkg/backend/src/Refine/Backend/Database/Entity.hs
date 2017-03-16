@@ -158,10 +158,10 @@ createRepo :: DocRepo.RepoHandle -> DocRepo.EditHandle -> DB VDocRepo
 createRepo repoh edith = liftDB $ do
     let desc = "" -- TODO
         motiv = ""
-    pkey <- insert $ S.Edit desc cr edith Initial motiv
-    key  <- insert $ S.Repo "title" {- TODO -} repoh pkey
-    void  . insert $ S.RP key pkey
-    pure $ VDocRepo (S.keyToId key) (S.keyToId pkey)
+    editkey <- insert $ S.Edit desc cr edith Initial motiv
+    repokey <- insert $ S.Repo "title" {- TODO -} repoh editkey
+    void  . insert $ S.RP repokey editkey
+    pure $ VDocRepo (S.keyToId repokey) (S.keyToId editkey)
   where
     cr :: ChunkRange
     cr = ChunkRange Nothing Nothing  -- TODO

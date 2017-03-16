@@ -102,7 +102,7 @@ getCompositeVDoc vid = do
       version <- insertAllMarks <$> docRepo (DocRepo.getVersion rhandle hhandle)
       pure $
         CompositeVDoc
-          vdoc repo version
+          vdoc repo headid version
           (toMap editID edits)
           (toMap noteID commentNotes)
           (toMap (compositeDiscussion . discussionID) commentDiscussions)

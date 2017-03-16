@@ -20,33 +20,67 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+-- | FUTUREWORK: this module pulls its development mode status from the webpack config, not from
+-- "Refine.Backend.Config".  we should unify that at some point.
 module Refine.Frontend.Test.Console
-  ( consoleLog
-  , consoleLogJSON
-  , consoleLogStringified
+  ( consoleLogJSString, consoleLogJSStringM
+  , consoleLogJSVal, consoleLogJSValM
+  , consoleLogJSON, consoleLogJSONM
+  , consoleLogJSONAsString, consoleLogJSONAsStringM
   )
 where
 
 import Data.Aeson (ToJSON, encode)
-import Data.JSString (JSString, pack)
-import Data.String.Conversions (cs)
-import GHCJS.Types (JSVal)
+import Data.JSString ()  -- instance IsString JSString
+import Data.String.Conversions (ConvertibleStrings, cs)
+import GHCJS.Types (JSVal, JSString)
+
+import Refine.Prelude ()  -- instance IsString s => ConvertibleStrings LBS s
 
 
--- | Write a 'JSString' to stdout (node) or the console (browser).
+consoleLogJSStringM :: (Monad m) => JSString -> JSString -> m ()
+consoleLogJSStringM msg val = consoleLogJSString msg val `seq` pure ()
+
+consoleLogJSValM :: (Monad m) => JSString -> JSVal -> m ()
+consoleLogJSValM msg val = consoleLogJSVal msg val `seq` pure ()
+
+consoleLogJSONM :: (Monad m, ToJSON a) => JSString -> a -> m ()
+consoleLogJSONM msg val = consoleLogJSON msg val `seq` pure ()
+
+consoleLogJSONAsStringM :: (Monad m, ConvertibleStrings s JSString) => JSString -> s -> m ()
+consoleLogJSONAsStringM msg val = consoleLogJSONAsString msg val `seq` pure ()
+
+
+consoleLogJSString :: JSString -> JSString -> ()
+consoleLogJSString = if js_devMode then js_consoleLogJSString else \_ _ -> ()
+
 foreign import javascript unsafe
-  "console.log($1, $2);"
-  consoleLog :: JSString -> JSString -> IO ()
+  "console.log($1, $2)"
+  js_consoleLogJSString :: JSString -> JSString -> ()
 
--- | Write a 'JSVal' to stdout (node) or the console (browser) via JSON.stringify() which allows
--- for deep rendering of the object.
--- Caution: Does not work for circular objects (i.e. usually ShallowWrappers).
+
+consoleLogJSVal :: JSString -> JSVal -> ()
+consoleLogJSVal = if js_devMode then js_consoleLogJSVal else \_ _ -> ()
+
 foreign import javascript unsafe
-  "console.log($1, JSON.stringify($2));"
-  consoleLogStringified :: JSString -> JSVal -> IO ()
+  "console.log($1, $2)"
+  js_consoleLogJSVal :: JSString -> JSVal -> ()
+
 
 -- | Write a 'ToJSON' instance to stdout (node) or the console (browser).  If you have a choice, use
--- 'consoleLogJSVal' which is more efficient.  (No idea if there are char encoding issues here.  But
+-- 'js_consoleLogJSON' which is more efficient.  (No idea if there are char encoding issues here.  But
 -- it's probably safe to use it for development.)
-consoleLogJSON :: ToJSON a => JSString -> a -> IO ()
-consoleLogJSON str state = consoleLog str ((pack . cs . encode) state)
+consoleLogJSON :: ToJSON a => JSString -> a -> ()
+consoleLogJSON = if js_devMode then \str -> js_consoleLogJSON str . cs . encode else \_ _ -> ()
+
+consoleLogJSONAsString :: ConvertibleStrings s JSString => JSString -> s -> ()
+consoleLogJSONAsString = if js_devMode then \str -> js_consoleLogJSON str . cs else \_ _ -> ()
+
+foreign import javascript unsafe
+  "console.log($1, JSON.parse($2))"
+  js_consoleLogJSON :: JSString -> JSString -> ()
+
+
+foreign import javascript unsafe
+  "process.env.NODE_ENV === 'development' ? true : false"
+  js_devMode :: Bool

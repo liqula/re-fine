@@ -21,7 +21,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Common.VDoc.HTML.Canonicalize
-  ( canonicalizeVDocVersion, reCanonicalizeVDocVersion, downgradeRawVDocVersion
+  ( canonicalizeVDocVersion, reCanonicalizeVDocVersion, downgradeVDocVersionCR
   , canonicalizeWhitespace
   , setElemUIDs, nextFreeElemUID
   , wrapInTopLevelTags
@@ -72,8 +72,8 @@ canonicalizeTokenForest
 
 
 -- | De-canonicalizing is always safe, since every canonicalized 'VDocVersion' is also a raw one.
-downgradeRawVDocVersion :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLRaw
-downgradeRawVDocVersion (VDocVersion s) = VDocVersion s
+downgradeVDocVersionCR :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLRaw
+downgradeVDocVersionCR (VDocVersion s) = VDocVersion s
 
 -- | Canonicalization is always safe (see 'downgradeRawVDocVersion') and also idempotent.
 reCanonicalizeVDocVersion :: VDocVersion a -> VDocVersion a

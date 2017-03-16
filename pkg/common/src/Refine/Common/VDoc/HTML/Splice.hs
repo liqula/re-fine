@@ -21,7 +21,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Common.VDoc.HTML.Splice
-  ( HasChunkRangeAndID(..), insertMarks, insertMoreMarks
+  ( HasChunkRangeAndID(..), insertMarks, insertMoreMarks, downgradeVDocVersionWC, downgradeVDocVersionWR
   , ChunkRangeError(..), chunkRangeErrors
   , enablePreTokens
   , resolvePreTokens
@@ -49,7 +49,7 @@ import           Text.HTML.Tree (tokensFromForest, tokensToForest)
 import           Web.HttpApiData (toUrlPiece)
 
 import Refine.Common.Types
-import Refine.Common.VDoc.HTML.Canonicalize (reCanonicalizeVDocVersion)
+import Refine.Common.VDoc.HTML.Canonicalize (reCanonicalizeVDocVersion, downgradeVDocVersionCR)
 import Refine.Common.VDoc.HTML.Core
 import Refine.Common.VDoc.HTML.Enhance (addUIInfoToVDocVersion)
 import Refine.Prelude
@@ -105,6 +105,18 @@ insertMarks xs vers@(VDocVersion forest) = invariants (tokensFromForest forest) 
 -- Calls 'insertMarks', but expects the input 'VDocVersion' to have passed through before.
 insertMoreMarks :: HasChunkRangeAndID x => [x] -> VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLWithMarks
 insertMoreMarks xs (VDocVersion vers) = insertMarks xs (VDocVersion vers)
+
+-- | See also: 'removeHighlights'.
+downgradeVDocVersionWC :: VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLCanonical
+downgradeVDocVersionWC (VDocVersion forest) = reCanonicalizeVDocVersion . VDocVersion $ dfs forest
+  where
+    dfs [] = []
+    dfs (Node element children : siblings) = case element of
+      TagOpen "mark" _ ->               dfs children <> dfs siblings
+      _                -> Node element (dfs children) : dfs siblings
+
+downgradeVDocVersionWR :: VDocVersion 'HTMLWithMarks -> VDocVersion 'HTMLRaw
+downgradeVDocVersionWR = downgradeVDocVersionCR . downgradeVDocVersionWC
 
 
 -- * sanity check

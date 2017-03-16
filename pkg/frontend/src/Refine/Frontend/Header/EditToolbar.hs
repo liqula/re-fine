@@ -24,8 +24,9 @@ module Refine.Frontend.Header.EditToolbar where
 
 import           React.Flux
 
-import qualified Refine.Frontend.Store as RS
-import qualified Refine.Frontend.Types as RS
+import           Refine.Frontend.Store
+import           Refine.Frontend.Types
+import           Refine.Frontend.Document.Types
 import           Refine.Frontend.UtilityWidgets
 
 editToolbar :: ReactView ()
@@ -44,7 +45,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       "header 1"
                       False
-                      (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                      (\_ -> dispatch ShowNotImplementedYet)
                       []
           iconButton_ $ IconButtonProps
                       (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
@@ -53,7 +54,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       "header 2"
                       False
-                      (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                      (\_ -> dispatch ShowNotImplementedYet)
                       []
           iconButton_ $ IconButtonProps
                       (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
@@ -62,7 +63,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       "header 3"
                       False
-                      (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                      (\_ -> dispatch ShowNotImplementedYet)
                       []
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
@@ -74,7 +75,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       "bold"
                       False
-                      (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                      (\_ -> dispatch ShowNotImplementedYet)
                       []
           iconButton_ $ IconButtonProps
                       (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
@@ -83,7 +84,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       "italic"
                       False
-                      (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                      (\_ -> dispatch ShowNotImplementedYet)
                       []
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
@@ -95,7 +96,7 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       "bullets"
                       False
-                      (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                      (\_ -> dispatch ShowNotImplementedYet)
                       []
           iconButton_ $ IconButtonProps
                       (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
@@ -104,8 +105,8 @@ editToolbar = defineView "EditToolbar" $ \() ->
                       ""
                       "numbers"
                       False
-                      (\_ -> RS.dispatch RS.ShowNotImplementedYet)
-                      -- (\e -> stopPropagation e : RS.dispatch (RS.HeaderAction RS.ToggleEditToolbarExtension))
+                      (\_ -> dispatch ShowNotImplementedYet)
+                      -- (\e -> stopPropagation e : dispatch (HeaderAction ToggleEditToolbarExtension))
                       []
 
           iconButtonWithAlignment_ $
@@ -117,13 +118,10 @@ editToolbar = defineView "EditToolbar" $ \() ->
                 ""
                 "save"
                 False
-                (\_ -> RS.dispatch RS.ShowNotImplementedYet)
+                (\_ -> dispatch $ DocumentAction DocumentEditSave)
                 [])
               True
               Nothing
 
 editToolbar_ :: ReactElementM eventHandler ()
 editToolbar_ = view editToolbar () mempty
-
-
-

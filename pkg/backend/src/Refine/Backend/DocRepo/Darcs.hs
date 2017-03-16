@@ -146,7 +146,7 @@ recordConfig uuid = Darcs.RecordConfig
   , pipe            = False
   , askDeps         = False
   , askLongComment  = Just NoEditLongComment
-  , lookfor         = LookFor YesLookForAdds YesLookForReplaces YesLookForMoves
+  , lookfor         = LookFor NoLookForAdds NoLookForReplaces NoLookForMoves
   , _workingRepoDir = Nothing
   , withContext     = NoContext
   , diffAlgorithm   = PatienceDiff
@@ -233,7 +233,7 @@ createEdit repo baseEdit newVersion = do
           cloneCmd (upstreamRepoDirA, hereRepoDirA) [UpToPatch basePatch] [upstreamRepoDir, tempRepo]
 
           ST.writeFile contentFilePath $ vdocVersionToST newVersion
-          recordCmd (hereRepoDirA, hereRepoDirA) (recordConfig newPatch) []
+          recordCmd (hereRepoDirA, hereRepoDirA) (recordConfig newPatch) [contentFilePath]
 
           Dir.setCurrentDirectory upstreamRepoDir
           pullCmd (upstreamRepoDirA, hereRepoDirA) [All] [hereRepoDir </> tempRepo]

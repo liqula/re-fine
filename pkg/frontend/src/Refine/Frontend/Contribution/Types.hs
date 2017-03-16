@@ -31,12 +31,14 @@ import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as M
 import           Data.String.Conversions
 import           GHC.Generics (Generic)
+import           Text.HTML.Parser (Attr)
 import           Text.Read (readMaybe)
 
 import Refine.Common.Types
-import Refine.Prelude.TH (makeRefineType)
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Screen.Types
+import Refine.Frontend.UtilityWidgets
+import Refine.Prelude.TH (makeRefineType)
 
 
 data Range = Range
@@ -159,3 +161,25 @@ instance ToJSON MarkPositions where
 
 instance FromJSON MarkPositions where
   parseJSON = fmap MarkPositions . mapFromValue
+
+
+data MarkProps = MarkProps
+  { _markPropsHTMLAttributes        :: [Attr]
+  , _markPropsHighlightedMark       :: Maybe ContributionID
+  , _markPropsDisplayedContribution :: Maybe ContributionID
+  }
+
+makeLenses ''MarkProps
+
+data BubbleProps = BubbleProps
+  { _bubblePropsDataContribId :: ContributionID
+  , _bubblePropsDataContentType :: String
+  , _bubblePropsIconSide :: String
+  , _bubblePropsIconStyle :: IconDescription
+  , _bubblePropsMarkPosition :: Maybe MarkPosition
+  , _bubblePropsHighlightedBubble :: Maybe ContributionID
+  , _bubblePropsClickHandler :: ClickHandler
+  , _bubblePropsScreenState :: ScreenState
+  }
+
+makeLenses ''BubbleProps

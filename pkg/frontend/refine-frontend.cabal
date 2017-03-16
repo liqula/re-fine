@@ -19,10 +19,18 @@ license-file:   LICENSE
 build-type:     Simple
 cabal-version:  >= 1.10
 
+-- (`stack build --ghc-options -Wwarn` does not override the
+-- ghc-options set in the cabal targets below, so we work with a flag
+-- instead.)
+flag ghc-warn-error
+  default: True
+
 library
   hs-source-dirs:
       src
-  ghc-options: -j -Wall -Werror
+  ghc-options: -j -Wall
+  if flag(ghc-warn-error)
+      ghc-options: -Werror
   build-depends:
       aeson
     , base >= 4.7 && < 5
@@ -55,6 +63,7 @@ library
       Refine.Frontend.Contribution.Store
       Refine.Frontend.Contribution.Types
       Refine.Frontend.Document.Document
+      Refine.Frontend.Document.FFI
       Refine.Frontend.Document.Store
       Refine.Frontend.Document.Types
       Refine.Frontend.ErrorHandling
@@ -100,7 +109,9 @@ library
 executable refine-frontend
   main-is: Main.hs
   hs-source-dirs: app
-  ghc-options: -j -Wall -Werror
+  ghc-options: -j -Wall
+  if flag(ghc-warn-error)
+      ghc-options: -Werror
   cpp-options: -DGHCJS_BROWSER
   build-depends:
       aeson
@@ -134,7 +145,9 @@ test-suite spec
   hs-source-dirs:
       test
     , src
-  ghc-options: -j -Wall -Werror -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -j -Wall -threaded -rtsopts -with-rtsopts=-N
+  if flag(ghc-warn-error)
+      ghc-options: -Werror
   build-depends:
       aeson
     , base >= 4.7 && < 5
@@ -178,6 +191,7 @@ test-suite spec
       Refine.Frontend.Contribution.Types
       Refine.Frontend.Document.Document
       Refine.Frontend.Document.DocumentSpec
+      Refine.Frontend.Document.FFI
       Refine.Frontend.Document.Store
       Refine.Frontend.Document.Types
       Refine.Frontend.ErrorHandling

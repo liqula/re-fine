@@ -32,7 +32,7 @@ import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
-import           Refine.Frontend.Document.Store (js_ES_traceCurrentContent)
+import           Refine.Frontend.Document.FFI (js_ES_traceCurrentContent)
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.ThirdPartyViews (editor_)
@@ -74,7 +74,7 @@ editorWrapper = defineView "EditorWrapper" $ \(EditorWrapperProps (EditorState k
       editor_ [ property "editorState" editorState
               , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
                   \(HandlerArg evt) -> js_ES_traceCurrentContent `seq`
-                                       (RS.dispatch . RS.DocumentAction . UpdateEditorState . EditorState kind . NoJSONRep $ evt)
+                                       (RS.dispatch . RS.DocumentAction . DocumentEditStart . EditorState kind . NoJSONRep $ evt)
               ] mempty
 
 editorWrapper_ :: EditorWrapperProps -> ReactElementM eventHandler ()

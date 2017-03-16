@@ -25,11 +25,10 @@
 module Refine.Frontend.Store where
 
 import           Control.Concurrent (forkIO, yield, threadDelay)
-import           Control.Lens (_Just, (&), (^.), (^?), (%~), to)
+import           Control.Lens (_Just, (&), (^.), (^?), (^?!), (%~), to)
 import           Control.Monad (void)
 import qualified Data.Aeson as AE
-import           Data.Aeson (ToJSON, encode)
-import           Data.JSString (JSString, pack, unpack)
+import           Data.JSString (JSString, unpack)
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
 import           Data.String.Conversions
@@ -42,7 +41,8 @@ import           Refine.Common.Rest (ApiError(..))
 
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
-import           Refine.Frontend.Document.Store (documentStateUpdate)
+import           Refine.Frontend.Document.Store (documentStateUpdate, editorStateToVDocVersion)
+import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
 import           Refine.Frontend.MainMenu.Types
@@ -53,14 +53,15 @@ import           Refine.Frontend.Screen.Store (screenStateUpdate)
 import           Refine.Frontend.Test.Samples
 import           Refine.Frontend.Translation.Store (translationsUpdate)
 import           Refine.Frontend.Types
+import           Refine.Frontend.Test.Console
 
 
 instance StoreData GlobalState where
     type StoreAction GlobalState = RefineAction
     transform ClearState _ = pure emptyGlobalState  -- for testing only!
     transform action state = do
-        consoleLog "Old state: " state
-        consoleLogStringified "Action: " action
+        consoleLogJSONM "Old state: " state
+        consoleLogJSONM "Action: " action
 
         emitBackendCallsFor action state
 
@@ -93,7 +94,7 @@ instance StoreData GlobalState where
               & gsToolbarSticky              %~ toolbarStickyUpdate transformedAction
               & gsTranslations               %~ fmap (translationsUpdate transformedAction)
 
-        consoleLog "New state: " newState
+        consoleLogJSONM "New state: " newState
         pure newState
 
 vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
@@ -115,6 +116,13 @@ vdocUpdate action (Just vdoc) = Just $ case action of
               %~ M.insert (note ^. RT.noteID) note
           & RT.compositeVDocVersion
               %~ Common.insertMoreMarks [ContribNote note]
+
+    AddEdit edit
+      -> vdoc
+          & RT.compositeVDocEdits
+              %~ M.insert (edit ^. RT.editID) edit
+          & RT.compositeVDocVersion
+              %~ Common.insertMoreMarks [ContribEdit edit]
 
     ContributionAction (ShowCommentEditor (Just range))
       -> vdoc & RT.compositeVDocVersion %~ Common.highlightRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
@@ -176,6 +184,33 @@ emitBackendCallsFor action state = case action of
             (Right note) -> pure $ dispatch (AddNote note)
         Nothing -> pure ()
 
+    DocumentAction DocumentEditSave -> do
+      let eid :: RT.ID RT.Edit
+          eid = state ^?! gsVDoc . _Just . RT.compositeVDocEditID
+
+          adHocFail msg = error $ "DocumentAction DocumentEditSave: " <> msg  -- TODO: #255
+
+      estate :: EditorState
+        <- case state ^. gsDocumentState of
+             DocumentStateEdit s -> pure s
+             DocumentStateView   -> adHocFail "document state is in 'view'"
+
+      newvers :: RT.VDocVersion 'RT.HTMLWithMarks
+        <- either (adHocFail . ("newvers cannot be parsed: " <>)) pure $ editorStateToVDocVersion estate
+
+      let cid :: RT.Create RT.Edit
+          cid = RT.CreateEdit
+                  { RT._createEditDesc  = "..."                          -- TODO: #233
+                  , RT._createEditRange = RT.ChunkRange Nothing Nothing  -- FIXME: 'state ^. gsContributionState . csCurrentSelection'
+                  , RT._createEditVDoc  = Common.downgradeVDocVersionWR newvers
+                  , RT._createEditKind  = estate ^. editorStateKind
+                  , RT._createEditMotiv = "..."                          -- TODO: #233
+                  }
+
+      addEdit eid cid $ \case
+        Left rsp   -> handleError rsp (const [])
+        Right edit -> pure $ dispatch (AddEdit edit)
+
     CreateUser createUserData -> do
       createUser createUserData $ \case
         (Left rsp)    -> do
@@ -218,23 +253,6 @@ emitBackendCallsFor action state = case action of
 
     _ -> pure ()
 
-{- TODO submitting an edit does not work yet
-    SubmitEdit -> do
-        let vdocId = _metaKey . _vdocMeta . fromJust $ _vdoc state
-        let editId = _vdocHead . fromJust $ _vdoc state
-        let vdocChunk = VDocChunk "<p><strong>This is my new and obviously much, much better text :-)</strong></p>"
-        let maybeRange = _currentSelection state
-        let editKey = EditKey vdocId editId
-        case maybeRange of
-            (Nothing, _)    -> pure ()
-            (Just range, _) -> do
-                                let protoChunkRange = ProtoChunkRange (ChunkPoint (DataUID <$> _startUid range) (_startOffset range)) (ChunkPoint (DataUID <$> _endUid range) (_endOffset range))
-                                let editFromClient = EditFromClient vdocChunk (Just protoChunkRange)
-                                addEdit editKey editFromClient $ \case
-                                    (Left rsp) -> handleError rsp (const [])
-                                    (Right _edit) -> pure []
--}
-
 createChunkRange :: Maybe Range -> RT.ChunkRange
 createChunkRange Nothing = RT.ChunkRange Nothing Nothing
 createChunkRange (Just range) = RT.ChunkRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
@@ -242,11 +260,11 @@ createChunkRange (Just range) = RT.ChunkRange (range ^. rangeStartPoint) (range 
 handleError :: (Int, String) -> (ApiError -> [RefineAction]) -> IO [SomeStoreAction]
 handleError (code, rsp) onApiError = case AE.eitherDecode $ cs rsp of
   Left err -> do
-    consoleLog "handleError: backend sent invalid response: " $ unwords [show code, rsp, err]
+    consoleLogJSStringM "handleError: backend sent invalid response: " . cs $ unwords [show code, rsp, err]
         -- FIXME: use 'gracefulError' here.  (rename 'gracefulError' to 'assertContract'?)
     pure []
   Right apiError -> do
-    consoleLog "handleApiError" (show apiError)
+    consoleLogJSStringM "handleApiError" . cs $ show apiError
     pure . mconcat . fmap dispatch $ onApiError apiError
 
 refineStore :: ReactStore GlobalState
@@ -268,35 +286,6 @@ getRange = (AE.decode . cs . unpack) <$> js_getRange
 foreign import javascript unsafe
     "refine$getSelectionRange()"
     js_getRange :: IO JSString
-
-
--- * ad hoc logging.
-
--- FUTUREWORK: we should probably find a way to avoid rendering all these json values into strings
--- in the production code.
-
--- (no idea if there are char encoding issues here.  but it's probably safe to use it for development.)
-consoleLog :: ToJSON a => JSString -> a -> IO ()
-consoleLog str state = consoleLog_ str ((pack . cs . encode) state)
-
-consoleLogStringified :: ToJSON a => JSString -> a -> IO ()
-consoleLogStringified str state = js_consoleLog str ((pack . cs . encode) state)
-
-foreign import javascript unsafe
-  -- see webpack.config.js for a definition of the environment variable.
-
-  "if( process.env.NODE_ENV === 'development' ){ \
-  \    try { \
-  \        console.log($1, JSON.parse($2)); \
-  \    } catch(e) { \
-  \        console.log($1, '*** ERROR in Refine.Frontend.Store.consoleLog_ (see gitlab issue #134; make sure node ==v6.)', e); \
-  \    } \
-  \}"
-  consoleLog_ :: JSString -> JSString -> IO ()
-
-foreign import javascript unsafe
-  "if( process.env.NODE_ENV === 'development' ){ console.log($1, $2); }"
-  js_consoleLog :: JSString -> JSString -> IO ()
 
 
 -- * ugly hacks

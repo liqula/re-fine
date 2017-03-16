@@ -10,11 +10,9 @@
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
@@ -22,7 +20,7 @@
 
 module Refine.Frontend.Contribution.Mark where
 
-import           Control.Lens (makeLenses, (^.))
+import           Control.Lens ((^.))
 import           Control.Monad (forM_)
 import           Data.String.Conversions
 import           GHCJS.Types (JSVal)
@@ -35,20 +33,12 @@ import           Refine.Common.Types
 import qualified Refine.Frontend.ErrorHandling as E
 import qualified Refine.Frontend.Screen.Types as RS
 import qualified Refine.Frontend.Screen.Calculations as RS
-import qualified Refine.Frontend.Contribution.Types as RS
+import           Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
 import           Refine.Frontend.Util (classNamesAny)
 import           Refine.Prelude()
 
-
-data MarkProps = MarkProps
-  { _markPropsHTMLAttributes        :: [HTMLP.Attr]
-  , _markPropsHighlightedMark       :: Maybe ContributionID
-  , _markPropsDisplayedContribution :: Maybe ContributionID
-  }
-
-makeLenses ''MarkProps
 
 contributionIdFrom :: [HTMLP.Attr] -> Maybe ContributionID
 contributionIdFrom attrs = either (\_ -> Nothing) Just . parseUrlPiece

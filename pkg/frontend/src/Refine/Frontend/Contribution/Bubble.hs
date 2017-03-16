@@ -10,11 +10,9 @@
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
@@ -22,14 +20,14 @@
 
 module Refine.Frontend.Contribution.Bubble where
 
-import           Control.Lens ((^.), makeLenses)
+import           Control.Lens ((^.))
 import           Data.Monoid ((<>))
 import           Data.String.Conversions (cs)
 import           React.Flux hiding (callback)
 import           Web.HttpApiData (toUrlPiece)
 
 import           Refine.Common.Types
-import qualified Refine.Frontend.Contribution.Types as RT
+import           Refine.Frontend.Contribution.Types as RT
 import qualified Refine.Frontend.Screen.Calculations as SC
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
@@ -37,19 +35,6 @@ import           Refine.Frontend.Style
 import qualified Refine.Frontend.Types as RT
 import           Refine.Frontend.UtilityWidgets
 
-
-data BubbleProps = BubbleProps
-  { _bubblePropsDataContribId :: ContributionID
-  , _bubblePropsDataContentType :: String
-  , _bubblePropsIconSide :: String
-  , _bubblePropsIconStyle :: IconDescription
-  , _bubblePropsMarkPosition :: Maybe RT.MarkPosition
-  , _bubblePropsHighlightedBubble :: Maybe ContributionID
-  , _bubblePropsClickHandler :: ClickHandler
-  , _bubblePropsScreenState :: SC.ScreenState
-  }
-
-makeLenses ''BubbleProps
 
 bubble :: ReactView BubbleProps
 bubble = defineView "Bubble" $ \props ->

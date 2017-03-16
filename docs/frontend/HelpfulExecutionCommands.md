@@ -6,12 +6,12 @@
 
 ## Compiling
 
-* `stack build --fast && make` to explore things in the running application
+* `stack build --fast --no-test --flag refine-frontend:-ghc-warn-error && make` to explore things in the running application
 
 
 ## Running the tests
 
 * `stack test --fast` is the go-to command
 * Add `--test-arguments '--match=###'` to select all tests whose description contains `###`
-* Add `--ghc-options -Wwarn` if you can't be bothered to fix warnings right now
-* `stack test --fast && ../../build hlint && make` is the ultimate command before checking in
+* Add `--flag refine-frontend:-ghc-warn-error--ghc-options -Wwarn` if you can't be bothered to fix warnings right now
+* `../../build` is the ultimate command before checking in (does everything, takes a long time).
