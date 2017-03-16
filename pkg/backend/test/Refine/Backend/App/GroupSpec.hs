@@ -47,23 +47,26 @@ spec = do
         pure $ do
           group1 `shouldBe` group2
 
-    it "modify works" $ \(runner :: AppRunner (IO ())) -> do
+    it "modify once works" $ \(runner :: AppRunner (IO ())) -> do
       join . runner $ do
         group1 <- App.addGroup (CreateGroup "title" "desc" [] [])
         group2 <- App.modifyGroup (group1 ^. groupID) (CreateGroup "title1" "desc1" [] [])
         group3 <- App.getGroup (group1 ^. groupID)
         pure $ do
+          group1 `shouldNotBe` group3
           group2 `shouldBe` group3
           group1 ^. groupID `shouldBe` group2 ^. groupID
           group2 ^. groupID `shouldBe` group3 ^. groupID
 
-    it "modify works" $ \(runner :: AppRunner (IO ())) -> do
+    it "modify twice works" $ \(runner :: AppRunner (IO ())) -> do
       join . runner $ do
         group1 <- App.addGroup (CreateGroup "title" "desc" [] [])
         group2 <- App.modifyGroup (group1 ^. groupID) (CreateGroup "t2" "d2" [] [])
         group3 <- App.modifyGroup (group1 ^. groupID) (CreateGroup "t3" "d3" [] [])
         group4 <- App.getGroup (group1 ^. groupID)
         pure $ do
+          group1 `shouldNotBe` group4
+          group2 `shouldNotBe` group4
           group3 `shouldBe` group4
           group1 ^. groupID `shouldBe` group2 ^. groupID
           group2 ^. groupID `shouldBe` group3 ^. groupID
@@ -76,6 +79,7 @@ spec = do
         group3 <- App.addGroup (CreateGroup "t3" "d3" [group1 ^. groupID] [group2 ^. groupID])
         group4 <- App.getGroup (group3 ^. groupID)
         pure $ do
+          group3 `shouldBe` group4
           group4 ^. groupParents  `shouldBe` [group1 ^. groupID]
           group4 ^. groupChildren `shouldBe` [group2 ^. groupID]
 
@@ -87,6 +91,7 @@ spec = do
         group3' <- App.modifyGroup (group3 ^. groupID) (CreateGroup "t3" "d3" [group1 ^. groupID] [group2 ^. groupID])
         group4  <- App.getGroup (group3' ^. groupID)
         pure $ do
+          group3' `shouldBe` group4
           group4 ^. groupParents     `shouldBe` [group1 ^. groupID]
           group4 ^. groupChildren    `shouldBe` [group2 ^. groupID]
 
@@ -111,8 +116,8 @@ spec = do
           childg3  ^. groupParents  `shouldBe` []
           childg3  ^. groupChildren `shouldBe` []
 
-  describe "Group errorneous" . around provideAppRunner $ do
-    -- provideAppRunner is not polimorphic enough
+  describe "error handling" . around provideAppRunner $ do
+    -- 'provideAppRunner' is not polymorphic enough
 
     it "remove group" $ \runner -> do
       (forceEval . runner $ do
