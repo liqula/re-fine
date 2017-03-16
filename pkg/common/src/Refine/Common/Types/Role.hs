@@ -25,9 +25,6 @@ import GHC.Generics
 import Refine.Prelude.TH (makeRefineType)
 
 
-data Access = Grant | Revoke
-  deriving (Eq, Show, Generic)
-
 -- | The 'Process' type determines the list of assignable roles (essentially just badges the user can
 -- present to gain certain permissions) and what permissions the user gains by carrying what role.
 -- This part can not only be changed in code.
@@ -53,6 +50,5 @@ data Right
   | Delete
   deriving (Eq, Ord, Show, Generic)
 
-makeRefineType ''Access
 makeRefineType ''Role
 makeRefineType ''Right

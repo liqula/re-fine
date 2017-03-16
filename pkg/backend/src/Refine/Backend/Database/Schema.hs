@@ -109,24 +109,6 @@ Roles
 
 -- Connection tables
 
--- Invited users for private discussion
-DscnAcc
-    discussion DiscussionId
-    user       LoginId
-    UniDA discussion user
-
--- Inviated users for private note
-NoteAcc
-    note NoteId
-    user LoginId
-    UniNA note user
-
--- Invited users for private question
-QstnAcc
-    question QuestionId
-    user     LoginId
-    UniQA question user
-
 VR
     vdoc        VDocId
     repository  RepoId
@@ -200,10 +182,6 @@ makeElim ''Group
 makeElim ''SubGroup
 
 makeElim ''Roles
-
-makeElim ''DscnAcc
-makeElim ''NoteAcc
-makeElim ''QstnAcc
 
 makeElim ''VR
 makeElim ''RP

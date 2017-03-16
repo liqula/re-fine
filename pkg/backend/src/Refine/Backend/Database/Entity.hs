@@ -289,14 +289,6 @@ createNote pid note = do
 getNote :: ID Note -> DB Note
 getNote nid = S.noteElim (toNote nid) <$> getEntity nid
 
-addNoteUserAccess :: ID Note -> ID User -> DB ()
-addNoteUserAccess nid uid = void . liftDB . insert $ S.NoteAcc (S.idToKey nid) (S.idToKey uid)
-
-removeNoteUserAccess :: ID Note -> ID User -> DB ()
-removeNoteUserAccess nid uid = void . liftDB . deleteBy $ S.UniNA (S.idToKey nid) (S.idToKey uid)
-
-usersOfNote :: ID Note -> DB [ID User]
-usersOfNote nid = foreignKeyField S.noteAccUser <$$> liftDB (selectList [S.NoteAccNote ==. S.idToKey nid] [])
 
 -- * Question
 
@@ -321,14 +313,6 @@ createQuestion pid question = do
 getQuestion :: ID Question -> DB Question
 getQuestion qid = S.questionElim (toQuestion qid) <$> getEntity qid
 
-addQuestionUserAccess :: ID Question -> ID User -> DB ()
-addQuestionUserAccess qid uid = void . liftDB . insert $ S.QstnAcc (S.idToKey qid) (S.idToKey uid)
-
-removeQuestionUserAccess :: ID Question -> ID User -> DB ()
-removeQuestionUserAccess qid uid = void . liftDB . deleteBy $ S.UniQA (S.idToKey qid) (S.idToKey uid)
-
-usersOfQuestion :: ID Question -> DB [ID User]
-usersOfQuestion qid = foreignKeyField S.qstnAccUser <$$> liftDB (selectList [S.QstnAccQuestion ==. S.idToKey qid] [])
 
 -- * Discussion
 
@@ -370,14 +354,6 @@ discussionOfStatement :: ID Statement -> DB (ID Discussion)
 discussionOfStatement sid = unique =<< liftDB
   (foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] [])
 
-addDiscussionUserAccess :: ID Discussion -> ID User -> DB ()
-addDiscussionUserAccess did uid = void . liftDB . insert $ S.DscnAcc (S.idToKey did) (S.idToKey uid)
-
-removeDiscussionUserAccess :: ID Discussion -> ID User -> DB ()
-removeDiscussionUserAccess did uid = void . liftDB . deleteBy $ S.UniDA (S.idToKey did) (S.idToKey uid)
-
-usersOfDiscussion :: ID Discussion -> DB [ID User]
-usersOfDiscussion did = foreignKeyField S.dscnAccUser <$$> liftDB (selectList [S.DscnAccDiscussion ==. S.idToKey did] [])
 
 -- * Answer
 

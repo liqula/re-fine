@@ -23,15 +23,11 @@ module Refine.Common.ChangeAPI where
 import GHC.Generics
 
 import Refine.Common.Types.Role
-import Refine.Common.Types.Contribution (ContributionID)
 import Refine.Common.Types.Group
 import Refine.Common.Types.Prelude (ID)
 import Refine.Common.Types.User
 import Refine.Prelude.TH (makeRefineType)
 
-
-data ChangeAccess = ChangeAccess ContributionID Access (ID User)
-  deriving (Eq, Show, Generic)
 
 data ChangeSubGroup
   = AddSubGroup { _csgParent :: ID Group, _csgChild :: ID Group }
@@ -45,6 +41,5 @@ data ChangeRole
 
 -- * Refine types
 
-makeRefineType ''ChangeAccess
 makeRefineType ''ChangeSubGroup
 makeRefineType ''ChangeRole
