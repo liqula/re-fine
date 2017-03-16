@@ -52,6 +52,7 @@ import Refine.Backend.DocRepo as DocRepo
 import Refine.Backend.Server
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Backend.User
+import Refine.Common.ChangeAPI
 import Refine.Common.Rest
 import Refine.Common.Types as Common
 
