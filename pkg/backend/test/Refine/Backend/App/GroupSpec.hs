@@ -117,7 +117,8 @@ spec = do
           childg3  ^. groupChildren `shouldBe` []
 
   describe "error handling" . around provideAppRunner $ do
-    -- 'provideAppRunner' is not polymorphic enough
+    -- The way polymorphism works, we have to open a new 'around' here, or the 'provideAppRunner'
+    -- will be restricted to an inconsistent type.
 
     it "remove group" $ \runner -> do
       (forceEval . runner $ do
