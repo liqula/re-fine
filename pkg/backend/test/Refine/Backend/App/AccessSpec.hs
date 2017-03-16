@@ -25,15 +25,15 @@ import Control.Lens
 import Control.Monad (join)
 import Test.Hspec
 
-import Refine.Backend.App.Core   as App
 import Refine.Backend.App.Access as App
+import Refine.Backend.App.Core   as App
 import Refine.Backend.App.Group  as App
 import Refine.Backend.Database
+import Refine.Backend.Test.AppRunner
 import Refine.Backend.User
 import Refine.Common.Types.Access
 import Refine.Common.Types.Group
 import Refine.Common.Types.Prelude (ID(..))
-import Refine.Test.App.Runner
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 

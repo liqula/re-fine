@@ -39,14 +39,14 @@ import           Text.HTML.Parser
 
 import Refine.Backend.App         as App
 import Refine.Backend.Database
-import Refine.Backend.User
+import Refine.Backend.Test.AppRunner
 import Refine.Backend.Test.Util (forceEval)
+import Refine.Backend.User
+import Refine.Common.Test.Arbitrary (arbitraryRawVDocVersion)
+import Refine.Common.Types.Chunk
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.User
 import Refine.Common.Types.VDoc
-import Refine.Common.Types.Chunk
-import Refine.Common.Test.Arbitrary (arbitraryRawVDocVersion)
-import Refine.Test.App.Runner
 
 
 

@@ -28,11 +28,11 @@ import Test.Hspec
 import Refine.Backend.App.Core  as App
 import Refine.Backend.App.Group as App
 import Refine.Backend.Database
+import Refine.Backend.Test.AppRunner
 import Refine.Backend.Test.Util (forceEval)
 import Refine.Backend.User
 import Refine.Common.Types.Group
 import Refine.Common.Types.Prelude (ID(..))
-import Refine.Test.App.Runner
 
 
 type AppRunner a = AppM DB UH a -> IO a

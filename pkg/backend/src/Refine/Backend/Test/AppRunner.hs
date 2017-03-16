@@ -19,7 +19,8 @@
 {-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
-module Refine.Test.App.Runner where
+
+module Refine.Backend.Test.AppRunner where
 
 import Control.Category
 import Control.Lens
