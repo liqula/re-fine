@@ -19,7 +19,7 @@
 {-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
-module Refine.Backend.App.AccessSpec where
+module Refine.Backend.App.RoleSpec where
 
 import Control.Lens
 import Control.Monad (join)

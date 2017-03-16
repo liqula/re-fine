@@ -31,10 +31,10 @@ import Control.Monad.State
 import Control.Natural
 import System.FilePath (FilePath)
 
-import Refine.Backend.App.Access      as App
 import Refine.Backend.App.Comment     as App
 import Refine.Backend.App.Core        as App
 import Refine.Backend.App.Group       as App
+import Refine.Backend.App.Role        as App
 import Refine.Backend.App.Translation as App
 import Refine.Backend.App.User        as App
 import Refine.Backend.App.VDoc        as App

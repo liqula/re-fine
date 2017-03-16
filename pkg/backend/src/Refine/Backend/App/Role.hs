@@ -22,7 +22,7 @@
 
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
-module Refine.Backend.App.Access where
+module Refine.Backend.App.Role where
 
 import Control.Lens ((^.))
 import Control.Monad (when)
@@ -37,8 +37,8 @@ changeRole :: ChangeRole -> App ()
 changeRole cr = do
   appLog "changeRole"
   let cmd = case cr of
-              AssignRole{}   -> Refine.Backend.App.Access.assignRole
-              UnassignRole{} -> Refine.Backend.App.Access.unassignRole
+              AssignRole {}   -> Refine.Backend.App.Role.assignRole
+              UnassignRole {} -> Refine.Backend.App.Role.unassignRole
   cmd (cr ^. crRole) (cr ^. crUser) (cr ^. crGroup)
 
 -- | A user is assigned to a group (and not to subgroups).
