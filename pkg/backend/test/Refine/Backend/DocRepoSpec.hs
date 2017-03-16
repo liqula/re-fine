@@ -32,6 +32,7 @@ import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Common.Types.VDoc
 import Refine.Prelude
 
+{-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
 spec :: Spec
 spec = do
