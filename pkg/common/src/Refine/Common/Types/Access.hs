@@ -28,9 +28,14 @@ import Refine.Prelude.TH (makeRefineType)
 data Access = Grant | Revoke
   deriving (Eq, Show, Generic)
 
--- | Roles are fully ordered.
--- Eg: If a user is a moderator in a group, it also means it is a member
--- in that group.
+-- | The 'Process' type determines the list of assignable roles (essentially just badges the user can
+-- present to gain certain permissions) and what permissions the user gains by carrying what role.
+-- This part can not only be changed in code.
+--
+-- Certain 'Role' constructors grant the power to assign 'Role's to other users (this happens at run
+-- time in the UI).
+--
+-- TODO: #262.
 data Role
   = ReadOnly
   | Member
