@@ -40,28 +40,6 @@ import Refine.Test.App.Runner
 
 type AppRunner a = AppM DB FreeUH a -> IO a
 
-{-
--- | A user is assigned to a group (and not to subgroups).
-assignRole :: Role -> ID User -> ID Group -> App ()
-assignRole = undefined
-
--- | Unassign a role from a user in a group.
-unassignRole :: Role -> ID User -> ID Group -> App ()
-unassignRole = undefined
-
--- | Unassign all roles from a user in a group. Remove the user from the group.
-unassignAllRoles :: ID User -> ID Group -> App ()
-unassignAllRoles = undefined
-
--- | Return True if a user has a role in a group.
-hasRole :: Role -> ID User -> ID Group -> App Bool
-hasRole = undefined
-
--- | Return all roles for a user from a group (and not to subgroups).
-allRoles :: ID User -> ID Group -> App [Role]
-allRoles = undefined
--}
-
 spec :: Spec
 spec = do
   describe "Refine.Backend.App.Access" . around provideDevModeAppRunner $ do

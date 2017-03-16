@@ -70,8 +70,6 @@ changeQuestionAccess qid a uid = do
     Grant  -> addQuestionUserAccess qid uid
     Revoke -> removeQuestionUserAccess qid uid
 
--- FIXME: More consistent role handling in DB and App
-
 changeRole :: ChangeRole -> App ()
 changeRole cr = do
   appLog "changeRole"
@@ -100,37 +98,3 @@ getRole :: ID User -> ID Group -> App (Maybe Role)
 getRole uid gid = do
   appLog "getRole"
   db $ DB.getRole gid uid
-
--- ??? Transitivity?
-
-
-{- Membership is represented via Roles...
-   TODO: Remove this API if not needed.
--- * membership
-
--- | Invite a user to a group
-addUserToGroup :: ID User -> ID Group -> App ()
-addUserToGroup = undefined
-
--- | Excommunicate a user from a group
-removeUserFromGroup :: ID User -> ID Group -> App ()
-removeUserFromGroup = undefined
-
--- | All the groups which a user directly added to.
-memberships :: ID User -> App [ID Group]
-memberships = undefined
-
--- | Return all the groups which a user directly added to
--- and their ancestor groups.
-transitiveMemberships :: ID User -> App [ID Group]
-transitiveMemberships = undefined
-
--- | Return True if the user is in the given group
-isMember :: ID User -> ID Group -> App Bool
-isMember = undefined
-
--- | Return True if the user is in the subgroups of a given group.
-isTransitiveMember :: ID User -> ID Group -> App Bool
-isTransitiveMember = undefined
--}
-
