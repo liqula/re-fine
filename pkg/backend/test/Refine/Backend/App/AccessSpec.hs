@@ -31,9 +31,9 @@ import Refine.Backend.App.Group  as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
 import Refine.Backend.User
-import Refine.Common.Types.Access
 import Refine.Common.Types.Group
 import Refine.Common.Types.Prelude (ID(..))
+import Refine.Common.Types.Role
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 

@@ -12,8 +12,8 @@ import Database.Persist
 import Database.Persist.Sql
 
 import Refine.Backend.DocRepo.Core
-import Refine.Common.Types.Access (Role(..))
 import Refine.Common.Types.Chunk
+import Refine.Common.Types.Role (Role(..))
 import Refine.Common.Types.VDoc
 
 

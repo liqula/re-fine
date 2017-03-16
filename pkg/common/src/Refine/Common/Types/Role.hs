@@ -18,7 +18,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Common.Types.Access where
+module Refine.Common.Types.Role where
 
 import GHC.Generics
 

@@ -4,12 +4,7 @@ module Refine.Backend.Database.Class where
 
 import Refine.Backend.Database.Tree
 import Refine.Backend.DocRepo.Core as DocRepo
-import Refine.Common.Types.Access
-import Refine.Common.Types.Comment
-import Refine.Common.Types.Group
-import Refine.Common.Types.Prelude
-import Refine.Common.Types.VDoc
-import Refine.Common.Types.User
+import Refine.Common.Types
 
 
 type DatabaseC db = (Monad db, Database db)

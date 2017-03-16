@@ -17,11 +17,12 @@
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
+
 module Refine.Common.ChangeAPI where
 
 import GHC.Generics
 
-import Refine.Common.Types.Access
+import Refine.Common.Types.Role
 import Refine.Common.Types.Contribution (ContributionID)
 import Refine.Common.Types.Group
 import Refine.Common.Types.Prelude (ID)
