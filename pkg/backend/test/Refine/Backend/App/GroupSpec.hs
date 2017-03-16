@@ -22,7 +22,7 @@
 module Refine.Backend.App.GroupSpec where
 
 import Control.Lens
-import Control.Monad (join)
+import Control.Monad (join, void)
 import Test.Hspec
 
 import Refine.Backend.App.Core  as App
@@ -30,6 +30,7 @@ import Refine.Backend.App.Group as App
 import Refine.Backend.Database
 import Refine.Backend.User
 import Refine.Common.Types.Group
+import Refine.Common.Types.Prelude (ID(..))
 import Refine.Test.App.Runner
 
 
@@ -109,23 +110,24 @@ spec = do
           childg3  ^. groupParents  `shouldBe` []
           childg3  ^. groupChildren `shouldBe` []
 
-
-{- TODO: Errorneous...
-    it "remove group" $ \(runner :: AppRunner (IO ())) -> do
-      (runner $ do
-        group <- App.createGroup (CreateGroup "title" "desc" [] [])
-        ()    <- App.removeGroup (group ^. groupID)
-        void $ App.getGroup (group ^. groupID)
--}
-
-{-
   describe "Group errorneous" . around provideAppRunner $ do
     -- provideAppRunner is not polimorphic enough
+
+    it "remove group" $ \runner -> do
+      pendingWith "#258"
+      -- parenthesis are needed otherwise anyException catches the
+      -- exception from pending and the test passes! brrr.
+      ((runner $ do
+        group <- App.createGroup (CreateGroup "title" "desc" [] [])
+        ()    <- App.removeGroup (group ^. groupID)
+        void $ App.getGroup (group ^. groupID))
+       `shouldThrow`
+       anyException)
+
     it "non-existing group" $ \runner -> do
-      (runner $ do
-        !(Group _id _title _desc _parents _children) <- App.getGroup (ID 100000000)
-        () <- appIO $ putStrLn "hello"
-        pure ())
-      `shouldThrow`
-      anyException
--}
+      pendingWith "#258"
+      ((runner $ do
+        (Group gid _title _desc _parents _children) <- App.getGroup (ID 100000000)
+        appIO $ gid `shouldBe` (ID 100000000))
+       `shouldThrow`
+       anyException)
