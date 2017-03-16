@@ -41,14 +41,14 @@ spec = do
   describe "Group" . around provideAppRunner $ do
     it "create works" $ \(runner :: AppRunner (IO ())) -> do
       join . runner $ do
-        group1 <- App.createGroup (CreateGroup "title" "desc" [] [])
+        group1 <- App.addGroup (CreateGroup "title" "desc" [] [])
         group2 <- App.getGroup (group1 ^. groupID)
         pure $ do
           group1 `shouldBe` group2
 
     it "modify works" $ \(runner :: AppRunner (IO ())) -> do
       join . runner $ do
-        group1 <- App.createGroup (CreateGroup "title" "desc" [] [])
+        group1 <- App.addGroup (CreateGroup "title" "desc" [] [])
         group2 <- App.modifyGroup (group1 ^. groupID) (CreateGroup "title1" "desc1" [] [])
         group3 <- App.getGroup (group1 ^. groupID)
         pure $ do
@@ -58,7 +58,7 @@ spec = do
 
     it "modify works" $ \(runner :: AppRunner (IO ())) -> do
       join . runner $ do
-        group1 <- App.createGroup (CreateGroup "title" "desc" [] [])
+        group1 <- App.addGroup (CreateGroup "title" "desc" [] [])
         group2 <- App.modifyGroup (group1 ^. groupID) (CreateGroup "t2" "d2" [] [])
         group3 <- App.modifyGroup (group1 ^. groupID) (CreateGroup "t3" "d3" [] [])
         group4 <- App.getGroup (group1 ^. groupID)
@@ -70,9 +70,9 @@ spec = do
 
     it "create with parents and children works" $ \(runner :: AppRunner (IO ())) -> do
       join . runner $ do
-        group1 <- App.createGroup (CreateGroup "t1" "d1" [] [])
-        group2 <- App.createGroup (CreateGroup "t2" "d2" [] [])
-        group3 <- App.createGroup (CreateGroup "t3" "d3" [group1 ^. groupID] [group2 ^. groupID])
+        group1 <- App.addGroup (CreateGroup "t1" "d1" [] [])
+        group2 <- App.addGroup (CreateGroup "t2" "d2" [] [])
+        group3 <- App.addGroup (CreateGroup "t3" "d3" [group1 ^. groupID] [group2 ^. groupID])
         group4 <- App.getGroup (group3 ^. groupID)
         pure $ do
           group4 ^. groupParents  `shouldBe` [group1 ^. groupID]
@@ -80,9 +80,9 @@ spec = do
 
     it "modify changes subgroups" $ \(runner :: AppRunner (IO ())) ->
       join . runner $ do
-        group1  <- App.createGroup (CreateGroup "t1" "d1" [] [])
-        group2  <- App.createGroup (CreateGroup "t2" "d2" [] [])
-        group3  <- App.createGroup (CreateGroup "t3" "d3" [] [])
+        group1  <- App.addGroup (CreateGroup "t1" "d1" [] [])
+        group2  <- App.addGroup (CreateGroup "t2" "d2" [] [])
+        group3  <- App.addGroup (CreateGroup "t3" "d3" [] [])
         group3' <- App.modifyGroup (group3 ^. groupID) (CreateGroup "t3" "d3" [group1 ^. groupID] [group2 ^. groupID])
         group4  <- App.getGroup (group3' ^. groupID)
         pure $ do
@@ -91,8 +91,8 @@ spec = do
 
     it "add and remove subgroup" $ \(runner :: AppRunner (IO ())) ->
       join . runner $ do
-        parentg1 <- App.createGroup (CreateGroup "title" "desc" [] [])
-        childg1  <- App.createGroup (CreateGroup "title2" "desc2" [] [])
+        parentg1 <- App.addGroup (CreateGroup "title" "desc" [] [])
+        childg1  <- App.addGroup (CreateGroup "title2" "desc2" [] [])
         ()       <- App.addSubGroup (parentg1 ^. groupID) (childg1 ^. groupID)
         parentg2 <- App.getGroup (parentg1 ^. groupID)
         childg2  <- App.getGroup (childg1 ^. groupID)
@@ -117,17 +117,19 @@ spec = do
       pendingWith "#258"
       -- parenthesis are needed otherwise anyException catches the
       -- exception from pending and the test passes! brrr.
-      ((runner $ do
-        group <- App.createGroup (CreateGroup "title" "desc" [] [])
-        ()    <- App.removeGroup (group ^. groupID)
-        void $ App.getGroup (group ^. groupID))
+      ((do () <- runner $ do
+                  group <- App.addGroup (CreateGroup "title" "desc" [] [])
+                  ()    <- App.removeGroup (group ^. groupID)
+                  void $ App.getGroup (group ^. groupID)
+           pure ())
        `shouldThrow`
        anyException)
 
     it "non-existing group" $ \runner -> do
       pendingWith "#258"
-      ((runner $ do
-        (Group gid _title _desc _parents _children) <- App.getGroup (ID 100000000)
-        appIO $ gid `shouldBe` (ID 100000000))
+      ((do () <- runner $ do
+              (Group _gid _title _desc _parents _children) <- App.getGroup (ID 100000000)
+              pure ()
+           pure ())
        `shouldThrow`
        anyException)

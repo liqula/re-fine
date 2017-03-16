@@ -49,7 +49,7 @@ spec = do
           -- GIVEN
           let role = Member
               user = ID 1
-          group <- App.createGroup (CreateGroup "title" "desc" [] [])
+          group <- App.addGroup (CreateGroup "title" "desc" [] [])
           -- WHEN
           ()    <- App.assignRole role user (group ^. groupID)
           -- THEN
@@ -63,7 +63,7 @@ spec = do
           -- GIVEN
           let role = Member
               user = ID 1
-          group <- App.createGroup (CreateGroup "title" "desc" [] [])
+          group <- App.addGroup (CreateGroup "title" "desc" [] [])
           -- WHEN
           () <- App.assignRole role user (group ^. groupID)
           () <- App.assignRole role user (group ^. groupID)
@@ -80,7 +80,7 @@ spec = do
           let oldrole = Member
               newrole = Moderator
               user = ID 1
-          group <- App.createGroup (CreateGroup "title" "desc" [] [])
+          group <- App.addGroup (CreateGroup "title" "desc" [] [])
           -- WHEN
           () <- App.assignRole oldrole user (group ^. groupID)
           () <- App.assignRole newrole user (group ^. groupID)
@@ -97,7 +97,7 @@ spec = do
           -- GIVEN
           let role = Member
               user = ID 1
-          group <- App.createGroup (CreateGroup "title" "desc" [] [])
+          group <- App.addGroup (CreateGroup "title" "desc" [] [])
           ()    <- App.assignRole role user (group ^. groupID)
           -- WHEN
           ()    <- App.unassignRole role user (group ^. groupID)
@@ -114,7 +114,7 @@ spec = do
           let role = Member
               otherrole = Moderator
               user = ID 1
-          group <- App.createGroup (CreateGroup "title" "desc" [] [])
+          group <- App.addGroup (CreateGroup "title" "desc" [] [])
           ()    <- App.assignRole role user (group ^. groupID)
           -- WHEN
           ()    <- App.unassignRole otherrole user (group ^. groupID)
@@ -130,7 +130,7 @@ spec = do
           -- GIVEN
           let role = Member
               user = ID 1
-          group <- App.createGroup (CreateGroup "title" "desc" [] [])
+          group <- App.addGroup (CreateGroup "title" "desc" [] [])
           -- WHEN
           ()    <- App.unassignRole role user (group ^. groupID)
           -- THEN

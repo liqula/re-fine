@@ -35,9 +35,9 @@ import Refine.Common.Types.Prelude
 
 -- * group manipulation
 
-createGroup :: Create Group -> App Group -- TODO: Rename addGroup
-createGroup group = do
-  appLog "createGroup"
+addGroup :: Create Group -> App Group
+addGroup group = do
+  appLog "addGroup"
   db $ DB.createGroup group
 
 getGroup :: ID Group -> App Group
