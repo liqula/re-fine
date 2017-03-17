@@ -31,7 +31,7 @@ import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as M
 import           Data.String.Conversions
 import           GHC.Generics (Generic)
-import           Text.HTML.Parser (Attr)
+import           React.Flux.Internal (PropertyOrHandler)
 import           Text.Read (readMaybe)
 
 import Refine.Common.Types
@@ -164,7 +164,10 @@ instance FromJSON MarkPositions where
 
 
 data MarkProps = MarkProps
-  { _markPropsHTMLAttributes        :: [Attr]
+  { _markPropsHTMLAttributes        :: forall handler. [PropertyOrHandler handler]
+                                    -- @(() -> ([SomeStoreAction], Maybe ()))@ for lifecycle views,
+                                    -- @[SomeStoreAction]@ for simple views.
+  , _markPropsContributionID        :: ContributionID
   , _markPropsHighlightedMark       :: Maybe ContributionID
   , _markPropsDisplayedContribution :: Maybe ContributionID
   }

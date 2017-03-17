@@ -23,16 +23,17 @@
 
 module Refine.Frontend.Contribution.MarkSpec where
 
-import           Control.Lens((^.), (&), (%~))
+import           Control.Lens((^.), (&), (.~), (%~))
 import           Data.Int (Int64)
 import           Data.Monoid ((<>))
-import           React.Flux (getStoreData)
+import           React.Flux (getStoreData, ($=))
 import           Test.Hspec
-import qualified Text.HTML.Parser as HTMLP
+import           Text.HTML.Parser
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Types
+import           Refine.Frontend.Document.VDoc
 import           Refine.Frontend.Store (refineStore)
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Types
@@ -45,12 +46,8 @@ cnid = ContribIDNote . ID
 spec :: Spec
 spec = do
   describe "The rfMark_ component" $ do
-    let theAttribs = [HTMLP.Attr "data-contribution-id" "n77"]
-    let theProps = MarkProps theAttribs Nothing Nothing
-
-    it "does not render anything when there is no data-contribution-id" $ do
-      wrapper <- shallow $ rfMark_ (MarkProps [] Nothing Nothing) mempty
-      html wrapper `shouldReturn` "<div></div>" -- TODO should be empty (react doesn't need this work-around any more since (perhaps) 15.0)
+    let theAttrs = ["data-contribution-id" $= "n77"]
+    let theProps = MarkProps theAttrs (ContribIDNote (ID 77)) Nothing Nothing
 
     it "renders a HTML mark at top level" $ do
       wrapper <- shallow $ rfMark_ theProps mempty
@@ -61,8 +58,9 @@ spec = do
       is wrapper (PropertySelector [Prop "data-contribution-id" ("n77" :: String)]) `shouldReturn` True
 
     it "has all other annotations that were passed to it" $ do
-      let moreAttrs = [HTMLP.Attr "a" "1", HTMLP.Attr "b" "2", HTMLP.Attr "c" "3"] <> theAttribs
-      wrapper <- shallow $ rfMark_ (MarkProps moreAttrs Nothing Nothing) mempty
+      let moreAttrs = ["a" $= "1", "b" $= "2", "c" $= "3"]
+          moreProps = MarkProps (moreAttrs <> theAttrs) (ContribIDNote (ID 77)) Nothing Nothing
+      wrapper <- shallow $ rfMark_ moreProps mempty
       is wrapper (PropertySelector [Prop "a" ("1" :: String), Prop "b" ("2" :: String), Prop "c" ("3" :: String)]) `shouldReturn` True
 
     it "has a mark class" $ do
@@ -78,15 +76,18 @@ spec = do
     describe "the css class that renders the selected text white-on-black" $ do
 
       it "when it is the current selection while the editor is open" $ do
-        wrapper <- shallow $ rfMark_ (MarkProps [HTMLP.Attr "data-contribution-id" "h"] Nothing Nothing) mempty
+        let moreProps = MarkProps ["data-contribution-id" $= "h"] ContribIDHighlightMark Nothing Nothing
+        wrapper <- shallow $ rfMark_ moreProps mempty
         is wrapper (StringSelector ".o-mark--highlight") `shouldReturn` True
 
       it "when it is the mark that matches the current contribution view" $ do
-        wrapper <- shallow $ rfMark_ (MarkProps theAttribs Nothing (Just (cnid 77))) mempty
+        let moreProps = theProps & markPropsDisplayedContribution .~ Just (cnid 77)
+        wrapper <- shallow $ rfMark_ moreProps mempty
         is wrapper (StringSelector ".o-mark--highlight") `shouldReturn` True
 
       it "does not render when it is a mark that does not match the current contribution view" $ do
-        wrapper <- shallow $ rfMark_ (MarkProps theAttribs Nothing (Just (cnid 99))) mempty
+        let moreProps = theProps & markPropsDisplayedContribution .~ Just (cnid 99)
+        wrapper <- shallow $ rfMark_ moreProps mempty
         is wrapper (StringSelector ".o-mark--highlight") `shouldReturn` False
 
     describe "the orange line underneath the text" $ do
@@ -96,11 +97,13 @@ spec = do
         is wrapper (StringSelector ".o-mark--hover") `shouldReturn` False
 
       it "does not render the hover class when the selected mark does not match the current one" $ do
-        wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (cnid 88)) Nothing) mempty
+        let moreProps = theProps & markPropsHighlightedMark .~ Just (cnid 88)
+        wrapper <- shallow $ rfMark_ moreProps mempty
         is wrapper (StringSelector ".o-mark--hover") `shouldReturn` False
 
       it "renders the hover class when the selected mark matches the current one" $ do
-        wrapper <- shallow $ rfMark_ (MarkProps theAttribs (Just (cnid 77)) Nothing) mempty
+        let moreProps = theProps & markPropsHighlightedMark .~ Just (cnid 77)
+        wrapper <- shallow $ rfMark_ moreProps mempty
         is wrapper (StringSelector ".o-mark--hover") `shouldReturn` True
 
     it "inserts the id of the current mark into the state on mouseEnter and removes it again on mouseLeave" $ do
@@ -121,6 +124,6 @@ spec = do
 
   describe "contributionIdFrom" $ do
     it "returns the note contribution id as it was found in the attributes" $ do
-      contributionIdFrom [HTMLP.Attr "data-contribution-id" "n77"] `shouldBe` Just (ContribIDNote (ID 77))
+      contributionIdFrom [Attr "data-contribution-id" "n77"] `shouldBe` Just (ContribIDNote (ID 77))
     it "returns the highlight mark contribution id as it was found in the attributes" $ do
-      contributionIdFrom [HTMLP.Attr "data-contribution-id" "h"] `shouldBe` Just ContribIDHighlightMark
+      contributionIdFrom [Attr "data-contribution-id" "h"] `shouldBe` Just ContribIDHighlightMark

@@ -21,45 +21,26 @@
 module Refine.Frontend.Contribution.Mark where
 
 import           Control.Lens ((^.))
-import           Control.Monad (forM_)
 import           Data.String.Conversions
 import           GHCJS.Types (JSVal)
 import           React.Flux
 import           React.Flux.Lifecycle
-import qualified Text.HTML.Parser as HTMLP
-import           Web.HttpApiData
 
 import           Refine.Common.Types
-import qualified Refine.Frontend.ErrorHandling as E
 import qualified Refine.Frontend.Screen.Types as RS
 import qualified Refine.Frontend.Screen.Calculations as RS
 import           Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Store as RS
-import qualified Refine.Frontend.Types as RS
+import           Refine.Frontend.Types as RS
 import           Refine.Frontend.Util (classNamesAny)
 import           Refine.Prelude()
 
 
-contributionIdFrom :: [HTMLP.Attr] -> Maybe ContributionID
-contributionIdFrom attrs = either (\_ -> Nothing) Just . parseUrlPiece
-                         $ cs (attribValueOf "data-contribution-id" attrs)
-
-toProperties :: [HTMLP.Attr] -> [PropertyOrHandler handler]
-toProperties = map (\(HTMLP.Attr key value) -> cs key $= cs value)
-
-attribValueOf :: String -> [HTMLP.Attr] -> String
-attribValueOf _ [] = ""
-attribValueOf wantedKey (HTMLP.Attr key value:_) | key == cs wantedKey = cs value
-attribValueOf wantedKey (_:as) = attribValueOf wantedKey as
-
 rfMark :: ReactView MarkProps
 rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
-  { lRender = \_state props ->
-    let maybeContributionId = contributionIdFrom (props ^. markPropsHTMLAttributes)
-    in case maybeContributionId of
-      Nothing -> E.gracefulError "We could not find the mark's contribution ID in the attributes!" mempty
-      Just dataContributionId ->
-        mark_ (toProperties (props ^. markPropsHTMLAttributes) <>
+  { lRender = \_state props -> do
+      let dataContributionId = props ^. markPropsContributionID
+      mark_ ((props ^. markPropsHTMLAttributes) <>
            [ classNamesAny
                         [ ("o-mark", True)
                         , ("o-mark--highlight", Just dataContributionId == props ^. markPropsDisplayedContribution)
@@ -72,25 +53,30 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
            ]) childrenPassedToView
 
    , lComponentDidMount = Just $ \propsandstate ldom _ -> do
-             this <- lThis ldom
-             topOffset    <- js_getBoundingClientRectTop this
-             bottomOffset <- js_getBoundingClientRectBottom this
-             scrollOffset <- js_getScrollOffset
-             props <- lGetProps propsandstate
-             RS.reactFluxWorkAroundForkIO $ do
-               case contributionIdFrom (props ^. markPropsHTMLAttributes) of
-                 Nothing -> pure ()
-                 Just dataContributionId -> do
-                   let actions = RS.dispatch . RS.ContributionAction $ RS.AddMarkPosition dataContributionId markPosition
-                       markPosition = RS.MarkPosition
-                         { RS._markPositionTop    = RS.offsetFromDocumentTop topOffset    scrollOffset
-                         , RS._markPositionBottom = RS.offsetFromDocumentTop bottomOffset scrollOffset
-                         }
-                   forM_ actions executeAction
+             props  <- lGetProps propsandstate
+             mark   <- lThis ldom
+             action <- readMarkPosition (props ^. markPropsContributionID) mark
+             RS.reactFluxWorkAroundForkIO $ executeAction `mapM_` RS.dispatch action
    }
 
 rfMark_ :: MarkProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 rfMark_ = view rfMark
+
+
+-- | (this is also a hidden type in React.Flux.Lifecycle)
+type HTMLElement = JSVal
+
+readMarkPosition :: ContributionID -> HTMLElement -> IO RefineAction
+readMarkPosition dataContributionId element = do
+  topOffset    <- js_getBoundingClientRectTop element
+  bottomOffset <- js_getBoundingClientRectBottom element
+  scrollOffset <- js_getScrollOffset
+  let markPosition = RS.MarkPosition
+        { RS._markPositionTop    = RS.offsetFromDocumentTop topOffset    scrollOffset
+        , RS._markPositionBottom = RS.offsetFromDocumentTop bottomOffset scrollOffset
+        }
+      action = RS.ContributionAction $ RS.AddMarkPosition dataContributionId markPosition
+  pure action
 
 foreign import javascript unsafe
   "$1.getBoundingClientRect().top"

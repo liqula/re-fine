@@ -66,6 +66,7 @@ library
       Refine.Frontend.Document.FFI
       Refine.Frontend.Document.Store
       Refine.Frontend.Document.Types
+      Refine.Frontend.Document.VDoc
       Refine.Frontend.ErrorHandling
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.EditToolbar
@@ -194,6 +195,7 @@ test-suite spec
       Refine.Frontend.Document.FFI
       Refine.Frontend.Document.Store
       Refine.Frontend.Document.Types
+      Refine.Frontend.Document.VDoc
       Refine.Frontend.ErrorHandling
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.DocumentHeaderSpec
