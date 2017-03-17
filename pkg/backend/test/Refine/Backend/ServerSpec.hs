@@ -161,9 +161,6 @@ addDiscussionUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy 
 createUserUri :: SBS
 createUserUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SCreateUser)
 
-changeAccessUri :: SBS
-changeAccessUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SChangeAccess)
-
 loginUri :: SBS
 loginUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogin)
 
@@ -269,25 +266,6 @@ specMockedLogin = around createDevModeTestSession $ do
         liftIO $ do
           be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
           be ^. compositeVDocDiscussions . to elems `shouldContain` [fn]
-
-    it "stores discussion and gives access to other user" $ \sess -> do
-      runWai sess $ do
-        un :: Username <- postJSON loginUri $ Login "username" "password"
-        liftIO $ un `shouldBe` "username"
-        fc :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
-
-        fd :: CompositeDiscussion <- postJSON
-            (addDiscussionUri (fc ^. compositeVDocRepo . vdocHeadEdit))
-            (CreateDiscussion "[discussion initial statement]" True (ChunkRange Nothing Nothing))
-
-        let did = fd ^. Common.compositeDiscussion . discussionID
-            otherUser = ID 1
-        () <- postJSON
-                changeAccessUri
-                (ChangeAccess (ContribIDDiscussion did) Grant otherUser)
-        liftIO $ do
-          users :: [ID User] <- runDB sess . db $ usersOfDiscussion did
-          users `shouldContain` [otherUser]
 
   describe "sAddStatement" $ do
     it "stores statement for given discussion" $ \_sess -> do

@@ -97,16 +97,10 @@ instance Database DB where
   -- * Note
   createNote         = Entity.createNote
   getNote            = Entity.getNote
-  addNoteUserAccess  = Entity.addNoteUserAccess
-  removeNoteUserAccess   = Entity.removeNoteUserAccess
-  usersOfNote        = Entity.usersOfNote
 
   -- * Question
   createQuestion     = Entity.createQuestion
   getQuestion        = Entity.getQuestion
-  addQuestionUserAccess    = Entity.addQuestionUserAccess
-  removeQuestionUserAccess = Entity.removeQuestionUserAccess
-  usersOfQuestion          = Entity.usersOfQuestion
 
   -- * Answer
   createAnswer       = Entity.createAnswer
@@ -114,14 +108,23 @@ instance Database DB where
   answersOfQuestion  = Entity.answersOfQuestion
 
   -- * Discussion
-  createDiscussion   = Entity.createDiscussion
-  getDiscussion      = Entity.getDiscussion
+  createDiscussion       = Entity.createDiscussion
+  getDiscussion          = Entity.getDiscussion
   statementsOfDiscussion = Entity.statementsOfDiscussion
   discussionOfStatement  = Entity.discussionOfStatement
-  addDiscussionUserAccess    = Entity.addDiscussionUserAccess
-  removeDiscussionUserAccess = Entity.removeDiscussionUserAccess
-  usersOfDiscussion          = Entity.usersOfDiscussion
 
   -- * Statement
   createStatement      = Entity.createStatement
   getStatement         = Entity.getStatement
+
+  -- * Group
+  createGroup       = Entity.createGroup
+  getGroup          = Entity.getGroup
+  modifyGroup       = Entity.modifyGroup
+  removeGroup       = Entity.removeGroup
+  addSubGroup       = Entity.addSubGroup
+  removeSubGroup    = Entity.removeSubGroup
+
+  assignRole   = Entity.assignRole
+  getRole      = Entity.getRole
+  unassignRole = Entity.unassignRole

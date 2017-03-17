@@ -26,14 +26,15 @@ module Refine.Backend.Database.Schema where
 
 import Control.Elim
 import Data.String.Conversions (ST)
-import Data.Text
+import Data.Text hiding (group)
 import Database.Persist
 import Database.Persist.Sql hiding (Statement)
 import Database.Persist.TH
 
-import Refine.Common.Types.Prelude
-import Refine.Common.Types.VDoc (Abstract, EditKind, Title)
 import Refine.Common.Types.Chunk (ChunkRange(..))
+import Refine.Common.Types.Prelude
+import Refine.Common.Types.Role (Role)
+import Refine.Common.Types.VDoc (Abstract, EditKind, Title)
 import Refine.Backend.Database.Field()
 import Refine.Backend.DocRepo.Core (EditHandle, RepoHandle)
 import Refine.Backend.User (LoginId)
@@ -87,25 +88,26 @@ Vote
     value       Text
     owner       LoginId
 
+-- Groups
+
+Group
+    title       Text
+    description Text
+
+SubGroup
+    parent      GroupId
+    child       GroupId
+    UniSG parent child
+
+-- Roles
+
+Roles
+    group GroupId
+    user  LoginId
+    role  Role
+    UniRoles group user role
+
 -- Connection tables
-
--- Invited users for private discussion
-DscnAcc
-    discussion DiscussionId
-    user       LoginId
-    UniDA discussion user
-
--- Inviated users for private note
-NoteAcc
-    note NoteId
-    user LoginId
-    UniNA note user
-
--- Invited users for private question
-QstnAcc
-    question QuestionId
-    user     LoginId
-    UniQA question user
 
 VR
     vdoc        VDocId
@@ -176,9 +178,10 @@ makeElim ''Discussion
 makeElim ''Statement
 makeElim ''Vote
 
-makeElim ''DscnAcc
-makeElim ''NoteAcc
-makeElim ''QstnAcc
+makeElim ''Group
+makeElim ''SubGroup
+
+makeElim ''Roles
 
 makeElim ''VR
 makeElim ''RP

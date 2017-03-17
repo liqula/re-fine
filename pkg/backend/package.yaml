@@ -20,8 +20,8 @@ dependencies:
   - aeson-pretty
   - base
   - bytestring
-  - cookie
   - containers
+  - cookie
   - cryptonite
   - darcs
   - data-default
@@ -32,6 +32,7 @@ dependencies:
   - free
   - functor-infix
   - graphviz
+  - hspec
   - html-parse
   - i18n
   - lens
@@ -43,6 +44,7 @@ dependencies:
   - persistent
   - persistent-sqlite
   - persistent-template
+  - QuickCheck
   - random
   - refine-common
   - refine-prelude

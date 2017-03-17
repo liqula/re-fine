@@ -23,9 +23,10 @@
 module Refine.Backend.Database.Entity where
 
 import Control.Lens ((^.), to)
-import Control.Monad (void)
+import Control.Monad (forM_, void)
 import Control.Monad.Reader (ask)
 import Data.Functor.Infix ((<$$>))
+import Data.List ((\\))
 import Data.String.Conversions (ST)
 import Data.Typeable
 import Database.Persist
@@ -50,6 +51,7 @@ type instance S.EntityRep Discussion = S.Discussion
 type instance S.EntityRep Answer     = S.Answer
 type instance S.EntityRep Statement  = S.Statement
 type instance S.EntityRep User       = Users.Login
+type instance S.EntityRep Group      = S.Group
 
 {-
 Reading the domain structured datatypes is not a problem,
@@ -83,6 +85,12 @@ unique :: [a] -> DB a
 unique [x] = pure x
 unique []  = notFound "Unique value is not found"
 unique _   = notUnique "Value is not unique"
+
+-- FIXME: Better error message
+zeroOrOne :: [a] -> DB (Maybe a)
+zeroOrOne []  = pure Nothing
+zeroOrOne [x] = pure $ Just x
+zeroOrOne _   = notUnique "Value is not unique"
 
 getEntity :: (ToBackendKey SqlBackend (S.EntityRep e), Typeable e)
           => ID e -> DB (S.EntityRep e)
@@ -281,14 +289,6 @@ createNote pid note = do
 getNote :: ID Note -> DB Note
 getNote nid = S.noteElim (toNote nid) <$> getEntity nid
 
-addNoteUserAccess :: ID Note -> ID User -> DB ()
-addNoteUserAccess nid uid = void . liftDB . insert $ S.NoteAcc (S.idToKey nid) (S.idToKey uid)
-
-removeNoteUserAccess :: ID Note -> ID User -> DB ()
-removeNoteUserAccess nid uid = void . liftDB . deleteBy $ S.UniNA (S.idToKey nid) (S.idToKey uid)
-
-usersOfNote :: ID Note -> DB [ID User]
-usersOfNote nid = foreignKeyField S.noteAccUser <$$> liftDB (selectList [S.NoteAccNote ==. S.idToKey nid] [])
 
 -- * Question
 
@@ -313,14 +313,6 @@ createQuestion pid question = do
 getQuestion :: ID Question -> DB Question
 getQuestion qid = S.questionElim (toQuestion qid) <$> getEntity qid
 
-addQuestionUserAccess :: ID Question -> ID User -> DB ()
-addQuestionUserAccess qid uid = void . liftDB . insert $ S.QstnAcc (S.idToKey qid) (S.idToKey uid)
-
-removeQuestionUserAccess :: ID Question -> ID User -> DB ()
-removeQuestionUserAccess qid uid = void . liftDB . deleteBy $ S.UniQA (S.idToKey qid) (S.idToKey uid)
-
-usersOfQuestion :: ID Question -> DB [ID User]
-usersOfQuestion qid = foreignKeyField S.qstnAccUser <$$> liftDB (selectList [S.QstnAccQuestion ==. S.idToKey qid] [])
 
 -- * Discussion
 
@@ -362,14 +354,6 @@ discussionOfStatement :: ID Statement -> DB (ID Discussion)
 discussionOfStatement sid = unique =<< liftDB
   (foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] [])
 
-addDiscussionUserAccess :: ID Discussion -> ID User -> DB ()
-addDiscussionUserAccess did uid = void . liftDB . insert $ S.DscnAcc (S.idToKey did) (S.idToKey uid)
-
-removeDiscussionUserAccess :: ID Discussion -> ID User -> DB ()
-removeDiscussionUserAccess did uid = void . liftDB . deleteBy $ S.UniDA (S.idToKey did) (S.idToKey uid)
-
-usersOfDiscussion :: ID Discussion -> DB [ID User]
-usersOfDiscussion did = foreignKeyField S.dscnAccUser <$$> liftDB (selectList [S.DscnAccDiscussion ==. S.idToKey did] [])
 
 -- * Answer
 
@@ -410,3 +394,120 @@ createStatement sid statement = do
 
 getStatement :: ID Statement -> DB Statement
 getStatement sid = S.statementElim (toStatement sid) <$> getEntity sid
+
+-- * Group
+
+toGroup :: [ID Group] -> [ID Group] -> ID Group -> ST -> ST -> Group
+toGroup parents children gid title desc = Group gid title desc parents children
+
+createGroup :: Create Group -> DB Group
+createGroup group = liftDB $ do
+  let sgroup = S.Group
+        (group ^. createGroupTitle)
+        (group ^. createGroupDesc)
+  key <- insert sgroup
+  forM_ (group ^. createGroupParents) $ \parent -> do
+    insert $ S.SubGroup (S.idToKey parent) key
+  forM_ (group ^. createGroupChildren) $ \child -> do
+    insert $ S.SubGroup key (S.idToKey child)
+  pure $ S.groupElim
+    (toGroup (group ^. createGroupParents)  (group ^. createGroupChildren) (S.keyToId key))
+    sgroup
+
+getChildrenOfGroup :: ID Group -> DB [ID Group]
+getChildrenOfGroup gid =
+  (S.subGroupElim (\_parent child -> S.keyToId child) . entityVal)
+  <$$> liftDB (selectList [S.SubGroupParent ==. S.idToKey gid] [])
+
+getParentsOfGroup :: ID Group -> DB [ID Group]
+getParentsOfGroup gid =
+  (S.subGroupElim (\parent _child -> S.keyToId parent) . entityVal)
+  <$$> liftDB (selectList [S.SubGroupChild ==. S.idToKey gid] [])
+
+getGroup :: ID Group -> DB Group
+getGroup gid = do
+  parents  <- getParentsOfGroup  gid
+  children <- getChildrenOfGroup gid
+  S.groupElim (toGroup parents children gid) <$> getEntity gid
+
+modifyGroup :: ID Group -> Create Group -> DB Group
+modifyGroup gid group = do
+  parents  <- getParentsOfGroup gid
+  children <- getChildrenOfGroup gid
+
+  liftDB $ do
+    -- Update title and desc
+    update (S.idToKey gid)
+      [ S.GroupTitle       =. group ^. createGroupTitle
+      , S.GroupDescription =. group ^. createGroupDesc
+      ]
+
+    -- update parents
+
+    let parentsToRemove = parents \\ group ^. createGroupParents
+    let parentsToAdd    = group ^. createGroupParents \\ parents
+
+    forM_ parentsToRemove $ \parent -> do
+      deleteWhere
+        [ S.SubGroupParent ==. S.idToKey parent
+        , S.SubGroupChild  ==. S.idToKey gid
+        ]
+
+    forM_ parentsToAdd $ \parent -> do
+      insert $ S.SubGroup (S.idToKey parent) (S.idToKey gid)
+
+    -- update children
+
+    let childrenToRemove = children \\ group ^. createGroupChildren
+    let childrenToAdd    = group ^. createGroupChildren \\ children
+
+    forM_ childrenToRemove $ \child -> do
+      deleteWhere
+        [ S.SubGroupParent ==. S.idToKey gid
+        , S.SubGroupChild  ==. S.idToKey child
+        ]
+
+    forM_ childrenToAdd $ \child -> do
+      insert $ S.SubGroup (S.idToKey gid) (S.idToKey child)
+
+  getGroup gid
+
+removeGroup :: ID Group -> DB ()
+removeGroup gid = liftDB $ do
+  deleteWhere [S.SubGroupChild  ==. S.idToKey gid]
+  deleteWhere [S.SubGroupParent ==. S.idToKey gid]
+  delete (S.idToKey gid)
+
+addSubGroup :: ID Group -> ID Group -> DB ()
+addSubGroup parent child = liftDB $ do
+  void . insert $ S.SubGroup (S.idToKey parent) (S.idToKey child)
+
+removeSubGroup :: ID Group -> ID Group -> DB ()
+removeSubGroup parent child = liftDB $ do
+  deleteWhere
+    [ S.SubGroupParent ==. S.idToKey parent
+    , S.SubGroupChild  ==. S.idToKey child
+    ]
+
+-- * Roles
+
+assignRole :: ID Group -> ID User -> Role -> DB ()
+assignRole gid uid role = liftDB $ do
+  deleteWhere
+    [ S.RolesGroup ==. S.idToKey gid
+    , S.RolesUser  ==. S.idToKey uid
+    ]
+  void . insert $ S.Roles (S.idToKey gid) (S.idToKey uid) role
+
+getRole :: ID Group -> ID User -> DB (Maybe Role)
+getRole gid uid = do
+  roles <- liftDB $ selectList [S.RolesGroup ==. S.idToKey gid, S.RolesUser ==. S.idToKey uid] []
+  (S.rolesElim (\_gid _uid role' -> role') . entityVal) <$$> zeroOrOne roles
+
+unassignRole :: ID Group -> ID User -> Role -> DB ()
+unassignRole gid uid role = liftDB $ do
+  deleteWhere
+    [ S.RolesGroup ==. S.idToKey gid
+    , S.RolesUser  ==. S.idToKey uid
+    , S.RolesRole  ==. role
+    ]

@@ -23,44 +23,31 @@
 module Refine.Backend.AppSpec where
 
 import           Control.Category ((.))
-import           Control.Lens ((^.), (^?!), (%=), at, to, makeLenses, view, _Just)
-import           Control.Monad.State
-import           Control.Natural (($$))
-import           Control.Monad (unless)
+import           Control.Lens hiding (elements)
 import           Control.Monad.Trans.Identity
-import           Data.Default (def)
+import           Control.Monad.State
 import qualified Data.Map as Map
 import           Data.Map (Map)
 import           Data.Monoid (mconcat)
 import           Data.String.Conversions (ConvertibleStrings, cs)
 import           Data.Tree
 import           Prelude hiding ((.))
-import           System.Directory
-                    ( createDirectoryIfMissing
-                    , removeDirectoryRecursive
-                    , removeFile
-                    )
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic
 import           Text.HTML.Parser
 
 import Refine.Backend.App         as App
-import Refine.Backend.App.MigrateDB
-import Refine.Backend.Config
 import Refine.Backend.Database
-import Refine.Backend.DocRepo
-import Refine.Backend.Logger
-import Refine.Backend.Natural
-import Refine.Backend.Test.Util (withTempCurrentDirectory)
-import Refine.Backend.Types
+import Refine.Backend.Test.AppRunner
+import Refine.Backend.Test.Util (forceEval)
 import Refine.Backend.User
+import Refine.Common.Test.Arbitrary (arbitraryRawVDocVersion)
+import Refine.Common.Types.Chunk
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.User
 import Refine.Common.Types.VDoc
-import Refine.Common.Types.Chunk
-import Refine.Common.Test.Arbitrary (arbitraryRawVDocVersion)
-import Refine.Prelude
+
 
 
 data Cmd where
@@ -94,9 +81,7 @@ spec = do
   describe "User handling" . around provideAppRunner $ do
     -- FIXME: Use the Cmd type instead
     it "Create/login/logout" $ \(runner :: AppM DB UH () -> IO ()) -> do
-      -- NOTE: Pattern match on the result will trigger the evaluation
-      -- of the term under test.
-      () <- runner $ do
+      forceEval . runner $ do
 
         void $ App.createUser (CreateUser "user" "user@example.com" "password")
         userState0 <- gets (view appUserState)
@@ -110,7 +95,6 @@ spec = do
         userState2 <- gets (view appUserState)
         appIO $ userState2 `shouldBe` UserLoggedOut
 
-      pure ()
 
   describe "Regression" . around provideAppRunner $ do
     it "Regression test program" $ \(runner :: AppM DB UH () -> IO ()) -> do
@@ -119,58 +103,6 @@ spec = do
             , AddEditToHead 0 sampleCreateEdit1
             ]
       runner . runIdentityT $ runProgram program `evalStateT` initVDocs
-
-
--- * Helpers
-
-provideAppRunner :: ActionWith (AppM DB UH a -> IO a) -> IO ()
-provideAppRunner action = withTempCurrentDirectory $ do
-  (runner, testDb, reposRoot) <- createAppRunner
-  action runner
-  removeFile testDb
-  removeDirectoryRecursive reposRoot
-
-createAppRunner :: forall a . IO (AppM DB UH a -> IO a, FilePath, FilePath)
-createAppRunner = do
-  let testDb    = "test.db"
-      reposRoot = "./repos"
-      poRoot    = "./repos" -- FIXME: Change this when needed. Not used at the moment.
-
-      cfg = Config
-        { _cfgShouldMigrate = False  -- (this is ignored here)
-        , _cfgShouldLog     = False  -- (this is ignored here)
-        , _cfgReposRoot     = reposRoot
-        , _cfgDBKind        = DBOnDisk testDb
-        , _cfgPoolSize      = 5
-        , _cfgFileServeRoot = Nothing
-        , _cfgWarpSettings  = def
-        , _cfgCsrfSecret    = "CSRF-SECRET"
-        , _cfgSessionLength = TimespanSecs 30
-        , _cfgDevMode       = False
-        , _cfgPoFilesRoot   = poRoot
-        }
-
-  createDirectoryIfMissing True $ cfg ^. cfgReposRoot
-  (dbNat, userHandler) <- createDBNat cfg
-  drepoNat <- createRepoNat cfg
-  let logger = Logger . const $ pure ()
-      runner :: forall b . AppM DB UH b -> IO b
-      runner m = (natThrowError . runApp
-                                    dbNat
-                                    drepoNat
-                                    (uhNat userHandler)
-                                    logger
-                                    (cfg ^. cfgCsrfSecret . to CsrfSecret)
-                                    (cfg ^. cfgSessionLength)
-                                    poRoot
-                                    id) $$ m
-
-  void $ runner migrateDB
-  pure (runner, testDb, reposRoot)
-
-monadicApp :: (AppM DB UH Property -> IO Property) -> AppM DB UH Property -> Property
-monadicApp p = ioProperty . p
-
 
 -- * Program Runner interface
 
@@ -182,7 +114,6 @@ instance ProgramRunner PropertyM where
 
 instance ProgramRunner IdentityT where
   check x = unless x $ error "Assertion has failed."
-
 
 -- * monadic property
 

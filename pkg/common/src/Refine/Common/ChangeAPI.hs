@@ -14,27 +14,34 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Backend.Test.Util
-where
+-- | This module mostly exists to resolve an import cycle between "Refine.Common.Types.Role" and
+-- "Refine.Common.Types.Group".
+module Refine.Common.ChangeAPI where
 
-import           System.IO.Temp (withSystemTempDirectory)
-import           System.Directory (withCurrentDirectory)
+import GHC.Generics
+
+import Refine.Common.Types.Role
+import Refine.Common.Types.Group
+import Refine.Common.Types.Prelude (ID)
+import Refine.Common.Types.User
+import Refine.Prelude.TH (makeRefineType)
 
 
-withTempCurrentDirectory :: IO a -> IO a
-withTempCurrentDirectory action = withSystemTempDirectory "refine.tmp" (`withCurrentDirectory` action)
+data ChangeSubGroup
+  = AddSubGroup { _csgParent :: ID Group, _csgChild :: ID Group }
+  | RmSubGroup  { _csgParent :: ID Group, _csgChild :: ID Group }
+  deriving (Eq, Generic, Show)
 
--- | Pattern match on the result will trigger the evaluation of the term under test.  The trick is
--- that there are two different units: the one that is returned by 'm' and pattern-matched, and the
--- one that is returned from 'forceEval'.  This way, even if outside the call to 'forceEval' the
--- unit is not matched and thus forced, the unit of the 'm' argument is still forced.
-forceEval :: Monad m => m () -> m ()
-forceEval m = do
-  () <- m
-  pure ()
+data ChangeRole
+  = AssignRole   { _crGroup :: ID Group, _crUser :: ID User, _crRole :: Role }
+  | UnassignRole { _crGroup :: ID Group, _crUser :: ID User, _crRole :: Role }
+  deriving (Eq, Generic, Show)
+
+-- * Refine types
+
+makeRefineType ''ChangeSubGroup
+makeRefineType ''ChangeRole
