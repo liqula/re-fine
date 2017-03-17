@@ -131,7 +131,7 @@ mkBackend cfg initUH migrate = do
   backend    <- mkServerApp cfg dbNat docRepoNat (initUH runUserHandle)
 
   when (cfg ^. cfgShouldMigrate) $ do
-    result <- runExceptT ((backendRunApp backend) $$ migrate)
+    result <- runExceptT (backendRunApp backend $$ migrate)
     case result of
       Left err -> error $ show err
       Right _  -> pure ()

@@ -28,7 +28,7 @@ doMigrate migration True = do
       throwError $ DBMigrationParseErrors parseErrors
 
     Right cautiousMigration ->
-      unless (null $ filter fst cautiousMigration) $
+      unless (not (any fst cautiousMigration)) .
         throwError $ DBUnsafeMigration cautiousMigration
 
   liftDB $ runMigrationSilent migration
