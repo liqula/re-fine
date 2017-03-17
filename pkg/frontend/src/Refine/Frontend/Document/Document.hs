@@ -44,7 +44,8 @@ document :: ReactView DocumentProps
 document = defineView "Document" $ \props ->
   case props ^. dpDocumentState of
     DocumentStateEdit editorState
-      -> editorWrapper_ $ EditorWrapperProps editorState
+      -> article_ ["className" $= "gr-20 gr-14@desktop editor_wrapper"] $ do
+            editorWrapper_ $ EditorWrapperProps editorState
     DocumentStateView
       -> article_ [ "id" $= "vdocValue"
                   , "className" $= "gr-20 gr-14@desktop"
@@ -70,7 +71,6 @@ newtype EditorWrapperProps = EditorWrapperProps
 
 editorWrapper :: ReactView EditorWrapperProps
 editorWrapper = defineView "EditorWrapper" $ \(EditorWrapperProps (EditorState kind (NoJSONRep editorState))) ->
-    article_ ["className" $= "gr-20 gr-14@desktop editor_wrapper"] $
       editor_ [ property "editorState" editorState
               , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
                   \(HandlerArg evt) -> js_ES_traceCurrentContent `seq`
