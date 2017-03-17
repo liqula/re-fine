@@ -18,6 +18,8 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+-- | This module mostly exists to resolve an import cycle between "Refine.Common.Types.Role" and
+-- "Refine.Common.Types.Group".
 module Refine.Common.ChangeAPI where
 
 import GHC.Generics
