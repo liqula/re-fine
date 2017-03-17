@@ -30,7 +30,6 @@ module Refine.Backend.User.Core
   , UserHandleContext(..), userBackend
   , UserHandleError
   , UHNat
-  , migrateDB
   , toUserID
   , fromUserID
   , Login
@@ -45,14 +44,12 @@ module Refine.Backend.User.Core
 import Control.Lens (makeLenses)
 import Control.Monad.Except
 import Control.Natural
-import Data.String.Conversions (ST)
 import Database.Persist.Sql
 import GHC.Generics (Generic)
 import Web.Users.Types (CreateUserError(..), SessionId(..), PasswordPlain(..), User(..), makePassword)
 import Web.Users.Persistent as Users
-import Web.Users.Persistent.Definitions (Login, migrateAll)
+import Web.Users.Persistent.Definitions (Login)
 
-import Refine.Backend.Database.Core
 import Refine.Common.Types.Prelude (ID(..))
 import qualified Refine.Common.Types.User as Types (User)
 import Refine.Prelude.TH (makeRefineType)
@@ -77,30 +74,6 @@ type UHNat uh = uh :~> ExceptT UserHandleError IO
 deriving instance Generic CreateUserError
 
 makeRefineType ''CreateUserError
-
--- | Run the migration.
--- In dev mode the unsafemigration runs
--- In non-dev mode the exceptions are thrown.
-migrateDB :: Bool -> DB [ST]
-
--- unsafe migration
-migrateDB False = liftDB $ do
-  mig <- getMigration migrateAll
-  runMigrationUnsafe migrateAll
-  pure mig
-
--- safe migration
-migrateDB True = do
-  result <- liftDB $ parseMigration migrateAll
-  case result of
-    Left parseErrors ->
-      throwError $ DBMigrationParseErrors parseErrors
-
-    Right cautiousMigration ->
-      unless (null $ filter fst cautiousMigration) $
-        throwError $ DBUnsafeMigration cautiousMigration
-
-  liftDB $ runMigrationSilent migrateAll
 
 -- Converts an internal UserID representation to the common UserID.
 toUserID :: Users.LoginId -> ID Types.User

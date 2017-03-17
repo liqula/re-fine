@@ -10,16 +10,19 @@ import Refine.Backend.Database.Schema
 
 -- | Run the migration.
 migrateDB :: Bool -> DB [ST]
+migrateDB = doMigrate migrateRefine
+
+doMigrate :: Migration -> Bool -> DB [ST]
 
 -- Nonsafe migration
-migrateDB False = liftDB $ do
-  mig <- getMigration migrateRefine
-  runMigrationUnsafe migrateRefine
+doMigrate migration False = liftDB $ do
+  mig <- getMigration migration
+  runMigrationUnsafe migration
   pure mig
 
 -- Safe migration
-migrateDB True = do
-  result <- liftDB $ parseMigration migrateRefine
+doMigrate migration True = do
+  result <- liftDB $ parseMigration migration
   case result of
     Left parseErrors ->
       throwError $ DBMigrationParseErrors parseErrors
@@ -28,4 +31,4 @@ migrateDB True = do
       unless (null $ filter fst cautiousMigration) $
         throwError $ DBUnsafeMigration cautiousMigration
 
-  liftDB $ runMigrationSilent migrateRefine
+  liftDB $ runMigrationSilent migration
