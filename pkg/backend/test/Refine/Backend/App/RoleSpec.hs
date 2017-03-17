@@ -25,9 +25,9 @@ import Control.Lens
 import Control.Monad (join)
 import Test.Hspec
 
-import Refine.Backend.App.Access as App
 import Refine.Backend.App.Core   as App
 import Refine.Backend.App.Group  as App
+import Refine.Backend.App.Role   as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
 import Refine.Backend.User
@@ -41,8 +41,7 @@ import Refine.Common.Types.Role
 type AppRunner a = AppM DB FreeUH a -> IO a
 
 spec :: Spec
-spec = do
-  describe "Refine.Backend.App.Access" . around provideDevModeAppRunner $ do
+spec = around provideDevModeAppRunner $ do
     describe "Assign role" $ do
       it "assign new role" $ \(runner :: AppRunner (IO ())) -> do
         join . runner $ do
