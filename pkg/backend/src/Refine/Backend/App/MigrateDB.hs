@@ -14,13 +14,13 @@ import Refine.Backend.User
 migrateDB :: AppM DB UH ()
 migrateDB = do
   appLog "Start database migration ..."
-  mig <- db $ (<>) <$> DB.migrateDB <*> User.migrateDB
+  mig <- db $ (<>) <$> DB.migrateDB True <*> User.migrateDB True
   appLog $ show mig
   appLog "Start database migration ... DONE"
 
 migrateDBDevMode :: AppM DB FreeUH ()
 migrateDBDevMode = do
   appLog "Start database migration ..."
-  mig <- db DB.migrateDB
+  mig <- db $ DB.migrateDB False
   appLog $ show mig
   appLog "Start database migration ... DONE"

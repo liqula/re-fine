@@ -8,8 +8,17 @@ import Refine.Backend.Database.Core
 import Refine.Backend.Database.Schema
 
 
-migrateDB :: DB [ST]
-migrateDB = do
+-- | Run the migration.
+migrateDB :: Bool -> DB [ST]
+
+-- Nonsafe migration
+migrateDB False = liftDB $ do
+  mig <- getMigration migrateRefine
+  runMigrationUnsafe migrateRefine
+  pure mig
+
+-- Safe migration
+migrateDB True = do
   result <- liftDB $ parseMigration migrateRefine
   case result of
     Left parseErrors ->

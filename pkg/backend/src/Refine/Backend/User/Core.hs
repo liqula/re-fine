@@ -78,8 +78,19 @@ deriving instance Generic CreateUserError
 
 makeRefineType ''CreateUserError
 
-migrateDB :: DB [ST]
-migrateDB = do
+-- | Run the migration.
+-- In dev mode the unsafemigration runs
+-- In non-dev mode the exceptions are thrown.
+migrateDB :: Bool -> DB [ST]
+
+-- unsafe migration
+migrateDB False = liftDB $ do
+  mig <- getMigration migrateAll
+  runMigrationUnsafe migrateAll
+  pure mig
+
+-- safe migration
+migrateDB True = do
   result <- liftDB $ parseMigration migrateAll
   case result of
     Left parseErrors ->
