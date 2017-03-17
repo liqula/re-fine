@@ -61,7 +61,7 @@ instance StoreData GlobalState where
     transform ClearState _ = pure emptyGlobalState  -- for testing only!
     transform action state = do
         consoleLogJSONM "Old state: " state
-        consoleLogJSONM "Action: " action
+        consoleLogJSStringM "Action: " (cs $ show action)
 
         emitBackendCallsFor action state
 
