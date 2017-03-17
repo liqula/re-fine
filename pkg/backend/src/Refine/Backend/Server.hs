@@ -131,8 +131,10 @@ mkBackend cfg initUH migrate = do
   backend    <- mkServerApp cfg dbNat docRepoNat (initUH runUserHandle)
 
   when (cfg ^. cfgShouldMigrate) $ do
-    void $ (natThrowError . backendRunApp backend) $$ do
-      migrate
+    result <- runExceptT ((backendRunApp backend) $$ migrate)
+    case result of
+      Left err -> error $ show err
+      Right _  -> pure ()
 
   pure backend
 
@@ -216,6 +218,8 @@ dbServantErr = \case
   DBNotUnique       _ -> err409
   DBException       _ -> err500
   DBUserNotLoggedIn   -> err403
+  DBMigrationParseErrors _ -> err500
+  DBUnsafeMigration _      -> err500
 
 docRepoServantErr :: DocRepoError -> ServantErr
 docRepoServantErr = \case

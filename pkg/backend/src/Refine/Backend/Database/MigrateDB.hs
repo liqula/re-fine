@@ -1,14 +1,22 @@
 module Refine.Backend.Database.MigrateDB where
 
-import Data.Monoid ((<>))
+import Control.Monad.Except
 import Data.String.Conversions (ST)
 import Database.Persist.Sql
+
 import Refine.Backend.Database.Core
 import Refine.Backend.Database.Schema
 
 
 migrateDB :: DB [ST]
-migrateDB = liftDB $ do
-  mig'  <- showMigration migrateRefine
-  mig'' <- runMigrationSilent migrateRefine
-  pure $ mig' <> mig''
+migrateDB = do
+  result <- liftDB $ parseMigration migrateRefine
+  case result of
+    Left parseErrors ->
+      throwError $ DBMigrationParseErrors parseErrors
+
+    Right cautiousMigration ->
+      unless (null $ filter fst cautiousMigration) $
+        throwError $ DBUnsafeMigration cautiousMigration
+
+  liftDB $ runMigrationSilent migrateRefine

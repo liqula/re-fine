@@ -45,7 +45,6 @@ module Refine.Backend.User.Core
 import Control.Lens (makeLenses)
 import Control.Monad.Except
 import Control.Natural
-import Data.Monoid
 import Data.String.Conversions (ST)
 import Database.Persist.Sql
 import GHC.Generics (Generic)
@@ -79,16 +78,18 @@ deriving instance Generic CreateUserError
 
 makeRefineType ''CreateUserError
 
--- The same db is used to store user data as the
--- application data. This could change in the future,
--- but at the moment the migration should happen at the same
--- time and with the same abstraction as the application
--- m igration.
 migrateDB :: DB [ST]
-migrateDB = liftDB $ do
-  mig'  <- showMigration migrateAll
-  mig'' <- runMigrationSilent migrateAll
-  pure $ mig' <> mig''
+migrateDB = do
+  result <- liftDB $ parseMigration migrateAll
+  case result of
+    Left parseErrors ->
+      throwError $ DBMigrationParseErrors parseErrors
+
+    Right cautiousMigration ->
+      unless (null $ filter fst cautiousMigration) $
+        throwError $ DBUnsafeMigration cautiousMigration
+
+  liftDB $ runMigrationSilent migrateAll
 
 -- Converts an internal UserID representation to the common UserID.
 toUserID :: Users.LoginId -> ID Types.User
