@@ -67,9 +67,7 @@ instance StoreData GlobalState where
 
         transformedAction <- case action of
             TriggerUpdateSelection releasePositionOnPage toolbarStatus -> do
-                -- for efficiency reasons, only ask JS when we get this action
-                hasRange <- js_hasRange
-                mrange <- if hasRange then getRange else pure Nothing
+                mrange <- getRange
                 pure . ContributionAction $ UpdateSelection
                     (case mrange of
                         Nothing -> NothingSelectedButUpdateTriggered releasePositionOnPage
@@ -275,18 +273,16 @@ dispatchMany :: [GlobalAction] -> [SomeStoreAction]
 dispatchMany = mconcat . fmap dispatch
 
 
-foreign import javascript unsafe
-    "window.getSelection().rangeCount > 0 \
-    \&& !(!window.getSelection().getRangeAt(0)) \
-    \&& !window.getSelection().getRangeAt(0).collapsed"
-    js_hasRange :: IO Bool
-
 getRange :: IO (Maybe Range)
 getRange = (AE.decode . cs . unpack) <$> js_getRange
 
 foreign import javascript unsafe
     "refine$getSelectionRange()"
     js_getRange :: IO JSString
+
+foreign import javascript unsafe
+  "window.getSelection().removeAllRanges();"
+  js_removeAllRanges :: IO ()
 
 
 -- * ugly hacks
@@ -300,10 +296,3 @@ reactFluxWorkAroundForkIO action = void . forkIO $ yield >> action
 -- for details and status.  Try to increase microseconds if you still experience race conditions.
 reactFluxWorkAroundThreadDelay :: IO ()
 reactFluxWorkAroundThreadDelay = threadDelay 10000
-
-
--- * pretty hacks (:
-
-foreign import javascript unsafe
-  "window.getSelection().removeAllRanges();"
-  js_removeAllRanges :: IO ()

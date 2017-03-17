@@ -8,6 +8,15 @@
     };
 
     target.refine$getSelectionRange = function() {
+        // if there is no valid selection, return the empty string.
+        // this will return very fast, and aeson will parse it to
+        // 'Nothing' in haskell.
+        if (!(window.getSelection().rangeCount > 0 &&
+              !(!window.getSelection().getRangeAt(0)) &&
+              !window.getSelection().getRangeAt(0).collapsed)) {
+            return "";
+        }
+
         var leftSiblingLength = function(node) {
             if (node === null) {
                 return 0;
