@@ -66,7 +66,7 @@ rfMark_ = view rfMark
 -- | (this is also a hidden type in React.Flux.Lifecycle)
 type HTMLElement = JSVal
 
-readMarkPosition :: ContributionID -> HTMLElement -> IO RefineAction
+readMarkPosition :: ContributionID -> HTMLElement -> IO GlobalAction
 readMarkPosition dataContributionId element = do
   topOffset    <- js_getBoundingClientRectTop element
   bottomOffset <- js_getBoundingClientRectBottom element

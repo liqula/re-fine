@@ -57,7 +57,7 @@ import           Refine.Frontend.Test.Console
 
 
 instance StoreData GlobalState where
-    type StoreAction GlobalState = RefineAction
+    type StoreAction GlobalState = GlobalAction
     transform ClearState _ = pure emptyGlobalState  -- for testing only!
     transform action state = do
         consoleLogJSONM "Old state: " state
@@ -97,7 +97,7 @@ instance StoreData GlobalState where
         consoleLogJSONM "New state: " newState
         pure newState
 
-vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
+vdocUpdate :: GlobalAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate action Nothing = case action of
     OpenDocument openedVDoc -> Just openedVDoc
     _ -> Nothing
@@ -132,26 +132,26 @@ vdocUpdate action (Just vdoc) = Just $ case action of
     _ -> vdoc
 
 
-vdocListUpdate :: RefineAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
+vdocListUpdate :: GlobalAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
 vdocListUpdate action state = case action of
     LoadedDocumentList list -> Just list
     _ -> state
 
-notImplementedYetIsVisibleUpdate :: RefineAction -> Bool -> Bool
+notImplementedYetIsVisibleUpdate :: GlobalAction -> Bool -> Bool
 notImplementedYetIsVisibleUpdate action state = case action of
   ShowNotImplementedYet -> True
   HideNotImplementedYet -> False
   _                 -> state
 
-toolbarStickyUpdate :: RefineAction -> Bool -> Bool
+toolbarStickyUpdate :: GlobalAction -> Bool -> Bool
 toolbarStickyUpdate action state = case action of
   ToolbarStickyStateChange state' -> state'
   _                               -> state
 
-dispatchMany :: [RefineAction] -> [SomeStoreAction]
+dispatchMany :: [GlobalAction] -> [SomeStoreAction]
 dispatchMany = mconcat . fmap dispatch
 
-emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()
+emitBackendCallsFor :: GlobalAction -> GlobalState -> IO ()
 emitBackendCallsFor action state = case action of
     LoadDocumentList -> do
         listVDocs $ \case
@@ -257,7 +257,7 @@ createChunkRange :: Maybe Range -> RT.ChunkRange
 createChunkRange Nothing = RT.ChunkRange Nothing Nothing
 createChunkRange (Just range) = RT.ChunkRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
 
-handleError :: (Int, String) -> (ApiError -> [RefineAction]) -> IO [SomeStoreAction]
+handleError :: (Int, String) -> (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
 handleError (code, rsp) onApiError = case AE.eitherDecode $ cs rsp of
   Left err -> do
     consoleLogJSStringM "handleError: backend sent invalid response: " . cs $ unwords [show code, rsp, err]
@@ -270,7 +270,7 @@ handleError (code, rsp) onApiError = case AE.eitherDecode $ cs rsp of
 refineStore :: ReactStore GlobalState
 refineStore = mkStore emptyGlobalState
 
-dispatch :: RefineAction -> [SomeStoreAction]
+dispatch :: GlobalAction -> [SomeStoreAction]
 dispatch a = [SomeStoreAction refineStore a]
 
 

@@ -9,7 +9,7 @@ import Refine.Common.Types.Translation
 import Refine.Frontend.Types
 
 
-translationsUpdate :: RefineAction -> Translations -> Translations
+translationsUpdate :: GlobalAction -> Translations -> Translations
 translationsUpdate (ChangeTranslations l10) _ = newTranslations l10
 translationsUpdate _                        t = t
 

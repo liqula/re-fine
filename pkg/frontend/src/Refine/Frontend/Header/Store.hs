@@ -30,7 +30,7 @@ import           Control.Lens ((&), (%~))
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Types
 
-headerStateUpdate :: RefineAction -> HeaderState -> HeaderState
+headerStateUpdate :: GlobalAction -> HeaderState -> HeaderState
 headerStateUpdate action state =
   let newState = state
                   & hsToolbarExtensionStatus     %~ toolbarExtensionUpdate action
@@ -38,7 +38,7 @@ headerStateUpdate action state =
 
 ---------------------------------------------------------------------------
 
-toolbarExtensionUpdate :: RefineAction -> ToolbarExtensionStatus -> ToolbarExtensionStatus
+toolbarExtensionUpdate :: GlobalAction -> ToolbarExtensionStatus -> ToolbarExtensionStatus
 toolbarExtensionUpdate action state = case (state, action) of
     (ToolbarExtensionClosed,               HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithButtons
     (CommentToolbarExtensionWithButtons,   HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
