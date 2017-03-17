@@ -148,9 +148,6 @@ toolbarStickyUpdate action state = case action of
   ToolbarStickyStateChange state' -> state'
   _                               -> state
 
-dispatchMany :: [GlobalAction] -> [SomeStoreAction]
-dispatchMany = mconcat . fmap dispatch
-
 emitBackendCallsFor :: GlobalAction -> GlobalState -> IO ()
 emitBackendCallsFor action state = case action of
     LoadDocumentList -> do
@@ -270,8 +267,12 @@ handleError (code, rsp) onApiError = case AE.eitherDecode $ cs rsp of
 refineStore :: ReactStore GlobalState
 refineStore = mkStore emptyGlobalState
 
+-- FIXME: return a single some-action, not a list?
 dispatch :: GlobalAction -> [SomeStoreAction]
 dispatch a = [SomeStoreAction refineStore a]
+
+dispatchMany :: [GlobalAction] -> [SomeStoreAction]
+dispatchMany = mconcat . fmap dispatch
 
 
 foreign import javascript unsafe
