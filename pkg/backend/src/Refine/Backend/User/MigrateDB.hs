@@ -39,5 +39,5 @@ import Refine.Backend.Database.MigrateDB
 -- but at the moment the migration should happen at the same
 -- time and with the same abstraction as the application
 -- migration.
-migrateDB :: Bool -> DB [ST]
+migrateDB :: MigrationSafety -> DB [ST]
 migrateDB = doMigrate migrateAll

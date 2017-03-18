@@ -8,8 +8,10 @@ import Refine.Backend.Database.Core
 import Refine.Backend.Database.Schema
 
 
+data MigrationSafety = SafeMigration | UnsafeMigration
+
 -- | Run the migration.
-migrateDB :: Bool -> DB [ST]
+migrateDB :: MigrationSafety -> DB [ST]
 migrateDB = doMigrate migrateRefine
 
 
@@ -19,16 +21,14 @@ migrateDB = doMigrate migrateRefine
 -- Spivak has contributed to the Opaleye project, maybe that could be
 -- used for automatic migration... (?)
 -- http://hackage.haskell.org/package/opaleye
-doMigrate :: Migration -> Bool -> DB [ST]
+doMigrate :: Migration -> MigrationSafety -> DB [ST]
 
--- Nonsafe migration
-doMigrate migration False = liftDB $ do
+doMigrate migration UnsafeMigration = liftDB $ do
   mig <- getMigration migration
   runMigrationUnsafe migration
   pure mig
 
--- Safe migration
-doMigrate migration True = do
+doMigrate migration SafeMigration = do
   result <- liftDB $ parseMigration migration
   case result of
     Left parseErrors ->

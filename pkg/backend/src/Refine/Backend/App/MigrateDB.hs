@@ -15,12 +15,12 @@ import Refine.Backend.User.MigrateDB as User
 -- | (With dependent types, we could take a 'Config' as argument here and then return an @AppM DB
 -- uh@.  But as it is, we have to have two functions, this and 'migrateDBDevMode'.)
 migrateDB :: AppM DB UH ()
-migrateDB = migrate_ True
+migrateDB = migrate_ SafeMigration
 
 migrateDBDevMode :: AppM DB FreeUH ()
-migrateDBDevMode = migrate_ False
+migrateDBDevMode = migrate_ UnsafeMigration
 
-migrate_ :: Bool -> AppM DB uh ()
+migrate_ :: MigrationSafety -> AppM DB uh ()
 migrate_ safe = do
   appLog "Start database migration ..."
   mig <- db $ (<>) <$> DB.migrateDB safe <*> User.migrateDB safe
