@@ -30,8 +30,8 @@ import Data.Text hiding (group)
 import Database.Persist
 import Database.Persist.Sql hiding (Statement)
 import Database.Persist.TH
-import Web.Users.Persistent (LoginId) -- Same as Refine.Backend.User.LoginId ***
-                                      -- The Refine.Backend.User.Types module could be introduced instead.
+import Web.Users.Persistent (LoginId) -- Same as Refine.Backend.User.LoginId, but that produced an import cycle.
+                                      -- "Refine.Backend.User.Types" could be introduced instead.
 
 import Refine.Common.Types.Chunk (ChunkRange(..))
 import Refine.Common.Types.Prelude
