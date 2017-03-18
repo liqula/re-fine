@@ -1,4 +1,7 @@
-module Refine.Backend.App.MigrateDB where
+module Refine.Backend.App.MigrateDB
+  ( Refine.Backend.App.MigrateDB.migrateDB
+  , Refine.Backend.App.MigrateDB.migrateDBDevMode
+  ) where
 
 import Data.Monoid ((<>))
 
@@ -12,15 +15,14 @@ import Refine.Backend.User.MigrateDB as User
 -- | (With dependent types, we could take a 'Config' as argument here and then return an @AppM DB
 -- uh@.  But as it is, we have to have two functions, this and 'migrateDBDevMode'.
 migrateDB :: AppM DB UH ()
-migrateDB = do
-  appLog "Start database migration ..."
-  mig <- db $ (<>) <$> DB.migrateDB True <*> User.migrateDB True
-  appLog $ show mig
-  appLog "Start database migration ... DONE"
+migrateDB = migrate_ True
 
 migrateDBDevMode :: AppM DB FreeUH ()
-migrateDBDevMode = do
+migrateDBDevMode = migrate_ False
+
+migrate_ :: Bool -> AppM DB uh ()
+migrate_ safe = do
   appLog "Start database migration ..."
-  mig <- db $ (<>) <$> DB.migrateDB False <*> User.migrateDB False
+  mig <- db $ (<>) <$> DB.migrateDB safe <*> User.migrateDB safe
   appLog $ show mig
   appLog "Start database migration ... DONE"
