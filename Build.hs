@@ -137,7 +137,7 @@ main = shakeArgs refineOptions $ do
     stackBuildOptimal pkgBackend
     need ["build-frontend-npm", "build-frontend-trans"]
     stackBuildOptimal pkgFrontend
-    command_ [Cwd pkgFrontend] "make" []
+    command_ [Cwd pkgFrontend] "make" ["optimize"]
 
   phony "hlint-prelude" $ do
     hlintPackage pkgPrelude
