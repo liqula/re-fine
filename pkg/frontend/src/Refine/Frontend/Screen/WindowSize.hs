@@ -25,7 +25,7 @@ module Refine.Frontend.Screen.WindowSize where
 import           Control.Monad (forM_)
 import           Data.Monoid ((<>))
 import           React.Flux
-import           React.Flux.Lifecycle
+import           React.Flux.Outdated
 import           GHCJS.Foreign.Callback (Callback, asyncCallback)
 import           GHCJS.Types (JSString)
 

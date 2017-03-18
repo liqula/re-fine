@@ -111,14 +111,11 @@ defaultStyles =
 
 -- * Login
 
-login_ :: FormError -> ReactElementM eventHandler ()
-login_ errors = view (login errors) () mempty
-
 loginStyles :: [Style]
 loginStyles = defaultStyles
 
-login :: FormError -> ReactView ()
-login errors = defineStatefulView "Login" (LoginForm "" "" errors) $ \curState () ->
+login :: FormError -> View '[()]
+login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState () ->
   div_ ["style" @= loginStyles] $ do
     h1_ "Login"
 
@@ -142,17 +139,17 @@ login errors = defineStatefulView "Login" (LoginForm "" "" errors) $ \curState (
           []
         )
 
+login_ :: FormError -> ReactElementM eventHandler ()
+login_ !errors = view_ (login errors) "login_" ()
+
 
 -- * Logout
-
-logout_ :: ReactElementM eventHandler ()
-logout_ = view logout () mempty
 
 logoutStyles :: [Style]
 logoutStyles = defaultStyles
 
-logout :: ReactView ()
-logout = defineView "Logout" $ \() ->
+logout :: View '[()]
+logout = mkView "Logout" $ \() ->
   div_ ["style" @= logoutStyles] $ do
     p_ "Profile page"
     form_ [ "target" $= "#"
@@ -170,17 +167,17 @@ logout = defineView "Logout" $ \() ->
           []
         )
 
+logout_ :: ReactElementM eventHandler ()
+logout_ = view_ logout "logout_" ()
+
 
 -- * Registration
-
-registration_ :: FormError -> ReactElementM eventHandler ()
-registration_ errors = view (registration errors) () mempty
 
 registrationStyles :: [Style]
 registrationStyles = defaultStyles
 
-registration :: FormError -> ReactView ()
-registration errors = defineStatefulView "Registration" (RegistrationForm "" "" "" "" False errors) $ \curState () -> do
+registration :: FormError -> View '[()]
+registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "" False errors) $ \curState () -> do
   div_ ["style" @= registrationStyles] $ do
     h1_ "Registration"
 
@@ -212,3 +209,6 @@ registration errors = defineStatefulView "Registration" (RegistrationForm "" "" 
             $ curState)
           []
         )
+
+registration_ :: FormError -> ReactElementM eventHandler ()
+registration_ !errors = view_ (registration errors) "registration_" ()

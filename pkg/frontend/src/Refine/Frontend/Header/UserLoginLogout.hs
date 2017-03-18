@@ -32,13 +32,13 @@ import           Refine.Frontend.UtilityWidgets
 import           Refine.Prelude()
 
 
+userLoginLogoutButton :: View '[CurrentUser]
+userLoginLogoutButton = mkView "UserLoginLogoutButton" $ \case
+  UserLoggedOut           -> iconButton_ loginLogoutProps { _iconButtonPropsLabel = "Log In" }
+  (UserLoggedIn username) -> iconButton_ loginLogoutProps { _iconButtonPropsLabel = cs username }
 
-userLoginLogoutButton :: ReactView CurrentUser
-userLoginLogoutButton = defineView "UserLoginLogoutButton" $ \currentUser ->
-  case currentUser of
-    UserLoggedOut         -> iconButton_ loginLogoutProps { _iconButtonPropsLabel = "Log In" }
-    UserLoggedIn username -> iconButton_ loginLogoutProps { _iconButtonPropsLabel = cs username }
-
+userLoginLogoutButton_ :: CurrentUser -> ReactElementM eventHandler ()
+userLoginLogoutButton_ !currentUser = view_ userLoginLogoutButton "userLoginLogoutButton_" currentUser
 
 loginLogoutProps :: IconButtonProps
 loginLogoutProps = IconButtonProps
@@ -58,7 +58,3 @@ loginLogoutProps = IconButtonProps
   -- not translated from prototype2016:
   -- button attribute data-section="help"
   }
-
-userLoginLogoutButton_ :: CurrentUser -> ReactElementM eventHandler ()
-userLoginLogoutButton_ currentUser = view userLoginLogoutButton currentUser mempty
-

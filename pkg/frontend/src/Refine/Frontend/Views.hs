@@ -16,6 +16,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
@@ -51,25 +52,25 @@ import           Refine.Frontend.NotImplementedYet (notImplementedYet_)
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import qualified Refine.Frontend.Screen.Types as SC
-import qualified Refine.Frontend.Store as RS
+import           Refine.Frontend.Store as RS
 import           Refine.Frontend.Types as RS
 import           Refine.Prelude.Aeson (unNoJSONRep)
 
 
 -- | The controller view and also the top level of the Refine app.  This controller view registers
 -- with the store and will be re-rendered whenever the store changes.
-refineApp :: ReactView ()
-refineApp = defineControllerView "RefineApp" RS.refineStore $ \rs () ->
-  case rs ^. gsVDoc of
-    Nothing -> vdocLoader_ (rs ^. gsVDocList)  -- (this is just some scaffolding that will be replaced by more app once we get there.)
-    Just _ -> case rs ^? gsMainMenuState . mmState . mainMenuOpenTab of
-      Nothing  -> mainScreen_ rs
+refineApp :: View '[]
+refineApp = mkControllerView @'[StoreArg GlobalState] "RefineApp" $ \gs ->
+  case gs ^. gsVDoc of
+    Nothing -> vdocLoader_ (gs ^. gsVDocList)  -- (this is just some scaffolding that will be replaced by more app once we get there.)
+    Just _ -> case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
+      Nothing  -> mainScreen_ gs
       Just tab -> mainMenu_ tab
-                            (rs ^. gsMainMenuState . mmErrors)
-                            (rs ^. gsLoginState . lsCurrentUser)
+                            (gs ^. gsMainMenuState . mmErrors)
+                            (gs ^. gsLoginState . lsCurrentUser)
 
-mainScreen :: ReactView RS.GlobalState
-mainScreen = defineView "MainScreen" $ \rs -> do
+mainScreen :: View '[RS.GlobalState]
+mainScreen = mkView "MainScreen" $ \rs -> do
   let vdoc = fromJust (rs ^. gsVDoc) -- FIXME: improve this!  (introduce a custom props type with a CompositeVDoc *not* wrapped in a 'Maybe')
 
   div_ (case rs ^. gsHeaderState . hsToolbarExtensionStatus of
@@ -109,7 +110,7 @@ mainScreen = defineView "MainScreen" $ \rs -> do
                       rightAside_ (rs ^. gsContributionState . csMarkPositions) (rs ^. gsScreenState)
 
 mainScreen_ :: RS.GlobalState -> ReactElementM eventHandler ()
-mainScreen_ rs = view mainScreen rs mempty
+mainScreen_ !rs = view_ mainScreen "mainScreen_" rs
 
 
 data LeftAsideProps = LeftAsideProps
@@ -122,8 +123,8 @@ data LeftAsideProps = LeftAsideProps
   , _leftAsideQuickCreateInfo   :: ToolbarExtensionStatus
   }
 
-leftAside :: ReactView LeftAsideProps
-leftAside = defineView "LeftAside" $ \props ->
+leftAside :: View '[LeftAsideProps]
+leftAside = mkView "LeftAside" $ \props ->
     aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
         let lookupPosition chunkId = M.lookup chunkId . _unMarkPositions $ _leftAsideMarkPositions props
         -- TODO the map should use proper IDs as keys
@@ -151,11 +152,11 @@ leftAside = defineView "LeftAside" $ \props ->
 
 
 leftAside_ :: LeftAsideProps -> ReactElementM eventHandler ()
-leftAside_ props = view leftAside props mempty
+leftAside_ !props = view_ leftAside "leftAside_" props
 
 
-rightAside :: ReactView (RS.MarkPositions, SC.ScreenState)
-rightAside = defineView "RightAside" $ \(_markPositions, _screenState) ->
+rightAside :: View '[(RS.MarkPositions, SC.ScreenState)]
+rightAside = mkView "RightAside" $ \(_markPositions, _screenState) ->
     aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do -- RENAME: modifications => ??
       mempty
     {- TODO: later
@@ -164,4 +165,4 @@ rightAside = defineView "RightAside" $ \(_markPositions, _screenState) ->
     -}
 
 rightAside_ :: RS.MarkPositions -> SC.ScreenState -> ReactElementM eventHandler ()
-rightAside_ markPositions screenState = view rightAside (markPositions, screenState) mempty
+rightAside_ !markPositions !screenState = view_ rightAside "rightAside_" (markPositions, screenState)

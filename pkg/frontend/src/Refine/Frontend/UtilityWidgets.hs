@@ -93,8 +93,8 @@ data IconButtonWithAlignmentProps = IconButtonWithAlignmentProps
 makeLenses ''IconButtonWithAlignmentProps
 
 
-icon :: ReactView IconProps
-icon = defineStatefulView "Icon" False $ \mouseIsOver props -> do
+icon :: View '[IconProps]
+icon = mkStatefulView "Icon" False $ \mouseIsOver props -> do
   -- TODO unify the naming schemas of the classes of the different icons!
   let
     highlightStyle = if mouseIsOver && (props ^. iconPropsHighlight)
@@ -111,11 +111,11 @@ icon = defineStatefulView "Icon" False $ \mouseIsOver props -> do
        ] mempty
 
 icon_ :: IconProps -> ReactElementM eventHandler ()
-icon_ props = view icon props mempty
+icon_ !props = view_ icon "Icon_" props
 
 
-iconButtonWithAlignment :: ReactView IconButtonWithAlignmentProps
-iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
+iconButtonWithAlignment :: View '[IconButtonWithAlignmentProps]
+iconButtonWithAlignment = mkView "IconButtonWithAlignment" $ \props -> do
 {- TODO we currently ignore touch device handling because there are some issues with
  - browsers emitting tap events on click and we don't know how to handle these properly.
 
@@ -125,10 +125,10 @@ iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
       iconButtonWithAlignmentCore_ props
 
 iconButtonWithAlignment_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
-iconButtonWithAlignment_ props = view iconButtonWithAlignment props mempty
+iconButtonWithAlignment_ !props = view_ iconButtonWithAlignment "iconButtonWithAlignment_" props
 
-iconButtonWithAlignmentCore :: ReactView IconButtonWithAlignmentProps
-iconButtonWithAlignmentCore = defineView "IconButtonWithAlignmentCore" $ \props -> do
+iconButtonWithAlignmentCore :: View '[IconButtonWithAlignmentProps]
+iconButtonWithAlignmentCore = mkView "IconButtonWithAlignmentCore" $ \props -> do
     let bprops = props ^. iconButtonWithAlIconButtonProps
     let iprops = bprops ^. iconButtonPropsIconProps
     let beConnector = if bprops ^. iconButtonPropsElementName == "" then "" else "__"
@@ -158,23 +158,23 @@ iconButtonWithAlignmentCore = defineView "IconButtonWithAlignmentCore" $ \props 
       alignmentClass blockName1 rightAligned1 = if rightAligned1 then blockName1 <> "--align-right" else ""
 
 iconButtonWithAlignmentCore_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
-iconButtonWithAlignmentCore_ props = view iconButtonWithAlignmentCore props mempty
+iconButtonWithAlignmentCore_ !props = view_ iconButtonWithAlignmentCore "iconButtonWithAlignmentCore_" props
 
-iconButton :: ReactView IconButtonProps
-iconButton = defineView "IconButton" $ \props ->
+iconButton :: View '[IconButtonProps]
+iconButton = mkView "IconButton" $ \props ->
     iconButtonWithAlignment_ $ IconButtonWithAlignmentProps props rightAligned1 Nothing
     where rightAligned1 = False -- no right alignment in the standard case
 
 iconButton_ :: IconButtonProps -> ReactElementM eventHandler ()
-iconButton_ props = view iconButton props mempty
+iconButton_ !props = view_ iconButton "iconButton_" props
 
-positionedIconButton :: ReactView (IconButtonProps, Int)
-positionedIconButton = defineView "IconButton" $ \(props, position1) ->
+positionedIconButton :: View '[(IconButtonProps, Int)]
+positionedIconButton = mkView "IconButton" $ \(props, position1) ->
     iconButtonWithAlignment_ $ IconButtonWithAlignmentProps props rightAligned1 (Just position1)
     where rightAligned1 = False -- no right alignment in the standard case
 
-positionedIconButton_ :: IconButtonProps -> Int -> ReactElementM eventHandler ()
-positionedIconButton_ props position1 = view positionedIconButton (props, position1) mempty
+positionedIconButton_ :: (IconButtonProps, Int) -> ReactElementM eventHandler ()
+positionedIconButton_ !props = view_ positionedIconButton "positionedIconButton_" props
 
 
 toClasses :: [String] -> String

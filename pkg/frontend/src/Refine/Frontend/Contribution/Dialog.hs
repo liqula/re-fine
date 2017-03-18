@@ -99,8 +99,8 @@ data CommentDisplayProps = CommentDisplayProps
 
 makeLenses ''CommentDisplayProps
 
-showComment :: ReactView CommentDisplayProps
-showComment = defineView "ShowComment" $ \props ->
+showComment :: View '[CommentDisplayProps]
+showComment = mkView "ShowComment" $ \props ->
   let extraStyles = [ Style "top"        (show (props ^. topOffset . SC.unOffsetFromDocumentTop + 5) <> "px")
                     , Style "left" (show (leftFor (props ^. windowWidth)) <> "px")
                     , Style "height"    ("" :: String)
@@ -142,7 +142,7 @@ showComment = defineView "ShowComment" $ \props ->
         div_ ["style" @= [Style "marginBottom" ("20px" :: String)]] "" -- make some space for the close button
 
 showComment_ :: CommentDisplayProps -> ReactElementM eventHandler ()
-showComment_ props = view showComment props mempty
+showComment_ !props = view_ showComment "showComment_" props
 
 showNoteProps :: M.Map (ID Note) Note -> RS.GlobalState -> ShowNoteProps
 showNoteProps notes rs = case (maybeNote, maybeOffset) of
@@ -169,8 +169,8 @@ data ShowNoteProps = ShowNotePropsJust
   }
   | ShowNotePropsNothing
 
-showNote :: ReactView ShowNoteProps
-showNote = defineView "ShowNote" $ \case
+showNote :: View '[ShowNoteProps]
+showNote = mkView "ShowNote" $ \case
   ShowNotePropsNothing -> mempty
   ShowNotePropsJust note top windowWidth1 ->
     let commentText1  = (note ^. noteText)
@@ -181,7 +181,7 @@ showNote = defineView "ShowNote" $ \case
                                          vdoc_overlay_content__note top windowWidth1)
 
 showNote_ :: ShowNoteProps -> ReactElementM eventHandler ()
-showNote_ props = view showNote props mempty
+showNote_ !props = view_ showNote "showNote_" props
 
 data ShowDiscussionProps = ShowDiscussionPropsJust
   { _sdpNote        :: CompositeDiscussion
@@ -209,8 +209,8 @@ showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
       rs ^? RS.gsContributionState . RS.csMarkPositions . to RS._unMarkPositions
           . at (ContribIDDiscussion did) . _Just . RS.markPositionBottom
 
-showDiscussion :: ReactView ShowDiscussionProps
-showDiscussion = defineView "ShowDiscussion" $ \case
+showDiscussion :: View '[ShowDiscussionProps]
+showDiscussion = mkView "ShowDiscussion" $ \case
   ShowDiscussionPropsNothing -> mempty
   ShowDiscussionPropsJust discussion top windowWidth1 ->
     let commentText1  = (Tree.rootLabel (discussion ^. compositeDiscussionTree) ^. statementText)
@@ -221,10 +221,10 @@ showDiscussion = defineView "ShowDiscussion" $ \case
                                          vdoc_overlay_content__discussion top windowWidth1)
 
 showDiscussion_ :: ShowDiscussionProps -> ReactElementM eventHandler ()
-showDiscussion_ props = view showDiscussion props mempty
+showDiscussion_ !props = view_ showDiscussion "showDiscussion_" props
 
-showQuestion :: ReactView (Maybe CompositeQuestion)
-showQuestion = defineView "ShowQuestion" $ \case
+showQuestion :: View '[Maybe CompositeQuestion]
+showQuestion = mkView "ShowQuestion" $ \case
   Nothing -> mempty
   Just question ->
     let overlayStyle1 = [ Style "backgroundColor" C.vdoc_question ]
@@ -236,7 +236,7 @@ showQuestion = defineView "ShowQuestion" $ \case
                                          overlayStyle1 (SC.OffsetFromDocumentTop 0) 800)
 
 showQuestion_ :: Maybe CompositeQuestion -> ReactElementM eventHandler ()
-showQuestion_ question = view showQuestion question mempty
+showQuestion_ !question = view_ showQuestion "showQuestion_" question
 
 
 data AddCommentProps = AddCommentProps
@@ -256,8 +256,8 @@ data CommentInputProps = CommentInputProps
 makeLenses ''CommentInputProps
 
 -- was add-annotation
-addComment :: TranslationsCS -> ReactView CommentInputProps
-addComment __ = defineView "AddComment" $ \props ->
+addComment :: TranslationsCS -> View '[CommentInputProps]
+addComment __ = mkView "AddComment" $ \props ->
     let top = case props ^. cipRange of
               Nothing -> 0 -- FIXME: Invent a suitable top for the "general comment" case
               Just range -> (range ^. RS.rangeBottomOffset . SC.unOffsetFromViewportTop)
@@ -293,11 +293,11 @@ addComment __ = defineView "AddComment" $ \props ->
 addComment_ :: TranslationsCS -> AddCommentProps -> ReactElementM eventHandler ()
 addComment_ __ (AddCommentProps RS.EditorIsHidden _ _) = mempty
 addComment_ __ (AddCommentProps (RS.EditorIsVisible range) category windowWidth1) =
-  view (addComment __) (CommentInputProps range category windowWidth1) mempty
+  view_ (addComment __) "addComment_" (CommentInputProps range category windowWidth1)
 
 
-commentInput :: ReactView CommentInputProps
-commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \curState props ->
+commentInput :: View '[CommentInputProps]
+commentInput = mkStatefulView "CommentInput" (RS.CommentInputState "") $ \curState props ->
     div_ $ do
       div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
         p_ $ do
@@ -376,4 +376,4 @@ commentInput = defineStatefulView "CommentInput" (RS.CommentInputState "") $ \cu
         )
 
 commentInput_ :: CommentInputProps -> ReactElementM eventHandler ()
-commentInput_  props = view commentInput props mempty
+commentInput_ !props = view_ commentInput "commentInput_" props

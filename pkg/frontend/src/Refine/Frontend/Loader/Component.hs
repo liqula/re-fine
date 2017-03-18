@@ -33,8 +33,8 @@ import           Refine.Prelude()
 import qualified Refine.Prelude.BuildInfo as BuildInfo
 
 
-vdocLoader :: ReactView (Maybe [ID VDoc])
-vdocLoader = defineView "VDocLoader" $ \list -> do
+vdocLoader :: View '[Maybe [ID VDoc]]
+vdocLoader = mkView "VDocLoader" $ \list -> do
   h1_ "Load a VDoc"
 {-
   button_ [ "id" $= "load-demo"
@@ -57,10 +57,10 @@ vdocLoader = defineView "VDocLoader" $ \list -> do
       "\n"
 
 vdocLoader_ :: Maybe [ID VDoc] -> ReactElementM eventHandler ()
-vdocLoader_ list = view vdocLoader list mempty
+vdocLoader_ !list = view_ vdocLoader "vdocLoader_" list
 
-vdocListLoader :: ReactView (Maybe [ID VDoc])
-vdocListLoader = defineView "VDocListLoader" $ \case
+vdocListLoader :: View '[Maybe [ID VDoc]]
+vdocListLoader = mkView "VDocListLoader" $ \case
   Nothing -> button_ [ "id" $= "load-vdoc-list-from-server"
                       , onClick $ \_ _ -> RS.dispatch RS.LoadDocumentList
                       ] $
@@ -68,10 +68,11 @@ vdocListLoader = defineView "VDocListLoader" $ \case
   Just list -> div_ . mconcat $ map toButton list
 
 toButton :: ID VDoc -> ReactElementM [SomeStoreAction] ()
-toButton li = button_ [ "id" $= cs ("load-vdoc-list" <> show (_unID li))
-                      , onClick $ \_ _ -> RS.dispatch . RS.LoadDocument $ li
-                      ] $ elemString "A document on the server"
-
+toButton li = button_
+  [ "id" $= cs ("load-vdoc-list" <> show (_unID li))
+  , onClick $ \_ _ -> RS.dispatch . RS.LoadDocument $ li
+  ]
+  "A document on the server"
 
 vdocListLoader_ :: Maybe [ID VDoc] -> ReactElementM eventHandler ()
-vdocListLoader_ list = view vdocListLoader list mempty
+vdocListLoader_ !list = view_ vdocListLoader "vdocListLoader_" list

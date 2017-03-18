@@ -41,8 +41,8 @@ data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
   , _tmbimmpCurrentUser    :: CurrentUser
   }
 
-topMenuBarInMainMenu :: ReactView TopMenuBarInMainMenuProps
-topMenuBarInMainMenu = defineView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps menuTab currentUser) ->
+topMenuBarInMainMenu :: View '[TopMenuBarInMainMenuProps]
+topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps menuTab currentUser) ->
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
 
@@ -177,11 +177,11 @@ topMenuBarInMainMenu = defineView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMen
 
 
 topMenuBarInMainMenu_ :: TopMenuBarInMainMenuProps -> ReactElementM eventHandler ()
-topMenuBarInMainMenu_ props = view topMenuBarInMainMenu props mempty
+topMenuBarInMainMenu_ !props = view_ topMenuBarInMainMenu "topMenuBarInMainMenu_" props
 
 
-mainMenu :: ReactView MainMenuProps
-mainMenu = defineView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUser) ->
+mainMenu :: View '[MainMenuProps]
+mainMenu = mkView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUser) ->
   div_ $ do
     topMenuBarInMainMenu_ (TopMenuBarInMainMenuProps menuTab currentUser)
     case menuTab of
@@ -190,7 +190,7 @@ mainMenu = defineView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUse
 
 
 mainMenu_ :: MainMenuTab -> MainMenuErrors -> CurrentUser -> ReactElementM eventHandler ()
-mainMenu_ mt me cu = view mainMenu (MainMenuProps mt me cu) mempty
+mainMenu_ mt me cu = view_ mainMenu "mainMenu_" (MainMenuProps mt me cu)
 
 
 {-

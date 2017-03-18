@@ -29,8 +29,8 @@ import           Refine.Frontend.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.UtilityWidgets
 
-editToolbar :: ReactView ()
-editToolbar = defineView "EditToolbar" $ \() ->
+editToolbar :: View '[()]  -- TODO: can we get rid of the ()?  (grep for '[()]', it also happens in one more case!)
+editToolbar = mkView "EditToolbar" $ \() ->
   header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
@@ -124,4 +124,4 @@ editToolbar = defineView "EditToolbar" $ \() ->
               Nothing
 
 editToolbar_ :: ReactElementM eventHandler ()
-editToolbar_ = view editToolbar () mempty
+editToolbar_ = view_ editToolbar "editToolbar_" ()

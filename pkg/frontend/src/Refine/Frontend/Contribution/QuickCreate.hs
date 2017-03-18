@@ -36,8 +36,8 @@ import qualified Refine.Frontend.Types as RS
 import           Refine.Frontend.UtilityWidgets
 import           Refine.Prelude()
 
-quickCreate :: ReactView QuickCreateProps
-quickCreate = defineView "QuickCreateButton" $ \(QuickCreateProps createType currentSelection screenState displayInfo) ->
+quickCreate :: View '[QuickCreateProps]
+quickCreate = mkView "QuickCreateButton" $ \(QuickCreateProps createType currentSelection screenState displayInfo) ->
   if displayInfo == RS.CommentToolbarExtensionWithSelection then mempty -- do not display the buttons when selection was activated via toolbar
   else
     case currentSelection of
@@ -45,16 +45,17 @@ quickCreate = defineView "QuickCreateButton" $ \(QuickCreateProps createType cur
         RS.RangeSelected range offsetFromTop ->
             let offset = quickCreateOffset range offsetFromTop screenState
             in positionedIconButton_
-              (IconButtonProps
-                (IconProps ("o-add-" <> createType) True ("icon-New_Comment", "bright") XXL)
-                ""
-                ""
-                (cs createType)
-                ""
-                False
-                (\_ -> RS.dispatch . RS.ContributionAction . RS.ShowCommentEditor $ Just range)
-                []
-              ) offset
+              ( IconButtonProps
+                  (IconProps ("o-add-" <> createType) True ("icon-New_Comment", "bright") XXL)
+                  ""
+                  ""
+                  (cs createType)
+                  ""
+                  False
+                  (\_ -> RS.dispatch . RS.ContributionAction . RS.ShowCommentEditor $ Just range)
+                  []
+              , offset
+              )
         _ -> mempty
 --    // quickCreate annotation ui events  -- RENAME: annotation => comment
 --    ann.addEventListener('mousedown', quickCreateOverlay);
@@ -65,7 +66,6 @@ quickCreateOffset :: RS.Range -> SC.OffsetFromDocumentTop -> SC.ScreenState -> I
 quickCreateOffset range offsetFromTop screenState =
     quickCreateSelectionTop range screenState +
     quickCreateSelectionPos range offsetFromTop
-
 
 -- | This is the offset from the bottom of the toolbar.
 quickCreateSelectionTop :: RS.Range -> SC.ScreenState -> Int
@@ -91,4 +91,4 @@ data QuickCreateProps = QuickCreateProps
 
 -- "annotation" (RENAME: Comment), "modification" (RENAME: Edit)
 quickCreate_ :: QuickCreateProps -> ReactElementM eventHandler ()
-quickCreate_ props = view quickCreate props mempty
+quickCreate_ !props = view_ quickCreate "quickCreate_" props

@@ -16,27 +16,25 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.Contribution.BubbleSpec where
 
-import           Control.Lens((^.), (&), (%~))
+import           Control.Lens((^.))
 import           Data.Int (Int64)
 import           Test.Hspec
-import           React.Flux (getStoreData)
+import           React.Flux (registerInitialStore, readStoreData)
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Types
 import qualified Refine.Frontend.Screen.Types as SC
-import           Refine.Frontend.Store (refineStore)
 import           Refine.Frontend.Style
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Types
-
---import Refine.Frontend.Test.Console
 
 
 cnid :: Int64 -> ContributionID
@@ -45,9 +43,6 @@ cnid = ContribIDNote . ID
 
 spec :: Spec
 spec = do
-
--- TODO add tests for Tablet and Mobile, where appropriate
-
   let contributionId = cnid 99
       contentType = "the-content-type"
       iconSide = "the-icon-side"
@@ -111,14 +106,19 @@ spec = do
       is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` True
 
     it "inserts the id of the current bubble into the state on mouseEnter and removes it again on mouseLeave" $ do
+      registerInitialStore emptyGlobalState
       wrapper <- mount $ bubble_ bubbleProps mempty
-      -- init the state:
-      globalState0 <- getStoreData refineStore
-      let _ = globalState0 & gsContributionState . csHighlightedMarkAndBubble %~ \_ -> Nothing
-      -- simulate events:
+      globalState0 <- readStoreData @GlobalState
+      globalState0 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Nothing
+
       _ <- simulate wrapper MouseEnter
-      globalState1 <- getStoreData refineStore
+      globalState1 <- readStoreData @GlobalState
       globalState1 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Just (cnid 99)
+
       _ <- simulate wrapper MouseLeave
-      globalState2 <- getStoreData refineStore
+      globalState2 <- readStoreData @GlobalState
       globalState2 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Nothing
+
+  describe "tablet and mobile" $ do
+    it "works" $ do
+      pending

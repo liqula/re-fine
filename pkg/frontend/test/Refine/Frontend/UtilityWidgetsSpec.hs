@@ -209,12 +209,12 @@ spec = do
     let theProps = IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []) []
 
     it "always renders the position that is passed to it" $ do
-      coreWrapper <- shallow (positionedIconButton_ theProps 377) >>= (`find` StringSelector "IconButtonWithAlignment")
+      coreWrapper <- shallow (positionedIconButton_ (theProps, 377)) >>= (`find` StringSelector "IconButtonWithAlignment")
                   >>= shallowChild >>= (`find` StringSelector "IconButtonWithAlignmentCore") >>= shallowChild
       is coreWrapper (PropertySelector [Prop "style" [Style "top" (377 :: Int)]]) `shouldReturn` True
 
     it "never renders the right-alignment flag" $ do
-      coreWrapper <- shallow (positionedIconButton_ theProps 377) >>= (`find` StringSelector "IconButtonWithAlignment")
+      coreWrapper <- shallow (positionedIconButton_ (theProps, 377)) >>= (`find` StringSelector "IconButtonWithAlignment")
                   >>= shallowChild >>= (`find` StringSelector "IconButtonWithAlignmentCore") >>= shallowChild
       lengthOfIO (find coreWrapper (StringSelector ".the-block-name--align-right")) `shouldReturn` (0 :: Int)
 

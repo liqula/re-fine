@@ -31,7 +31,7 @@ import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as M
 import           Data.String.Conversions
 import           GHC.Generics (Generic)
-import           React.Flux.Internal (PropertyOrHandler)
+import           React.Flux (PropertyOrHandler, ViewEventHandler)
 import           Text.Read (readMaybe)
 
 import Refine.Common.Types
@@ -164,9 +164,7 @@ instance FromJSON MarkPositions where
 
 
 data MarkProps = MarkProps
-  { _markPropsHTMLAttributes        :: forall handler. [PropertyOrHandler handler]
-                                    -- @(() -> ([SomeStoreAction], Maybe ()))@ for lifecycle views,
-                                    -- @[SomeStoreAction]@ for simple views.
+  { _markPropsViewEventHandlers     :: [PropertyOrHandler ViewEventHandler]
   , _markPropsContributionID        :: ContributionID
   , _markPropsHighlightedMark       :: Maybe ContributionID
   , _markPropsDisplayedContribution :: Maybe ContributionID
@@ -176,9 +174,9 @@ makeLenses ''MarkProps
 
 data BubbleProps = BubbleProps
   { _bubblePropsDataContribId :: ContributionID
-  , _bubblePropsDataContentType :: String
-  , _bubblePropsIconSide :: String
-  , _bubblePropsIconStyle :: IconDescription
+  , _bubblePropsDataContentType :: String  -- TODO: should be determined by _bubblePropsDataContribId, so remove it?
+  , _bubblePropsIconSide :: String  -- TODO: either "left" or "right", make this a custom boolean!
+  , _bubblePropsIconStyle :: IconDescription  -- TODO: align this!
   , _bubblePropsMarkPosition :: Maybe MarkPosition
   , _bubblePropsHighlightedBubble :: Maybe ContributionID
   , _bubblePropsClickHandler :: ClickHandler
@@ -186,3 +184,12 @@ data BubbleProps = BubbleProps
   }
 
 makeLenses ''BubbleProps
+
+data SpecialBubbleProps = SpecialBubbleProps
+  { _specialBubblePropsContributionId    :: ContributionID
+  , _specialBubblePropsMarkPosition      :: Maybe MarkPosition
+  , _specialBubblePropsHighlightedBubble :: Maybe ContributionID
+  , _specialBubblePropsScreenState       :: ScreenState
+  }
+
+makeLenses ''SpecialBubbleProps

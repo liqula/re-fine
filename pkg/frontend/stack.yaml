@@ -1,10 +1,24 @@
-# regarding downgrading to lts-6.30, see #217.
+resolver: lts-7.19
 
-resolver: lts-7.1
-compiler: ghcjs-0.2.1.9007001_ghc-8.0.1
+compiler: ghcjs-0.2.1.9007019_ghc-8.0.1
 compiler-check: match-exact
+
 # for custom ghcjs compilers, set version like this:
 # ghcjs-`ghcjs --numeric-version`_ghc-`ghcjs --numeric-ghc-version`
+#export PATH=/home/mf/src/ghcjs/.cabal-sandbox/bin:$PATH
+#stack build --fast --system-ghc
+#compiler: ghcjs-0.2.1_ghc-8.0.2
+#compiler-check: match-exact
+
+setup-info:
+  ghcjs:
+    source:
+      ghcjs-0.2.1.9007019_ghc-8.0.1:
+           url: http://ghcjs.tolysz.org/ghc-8.0-2017-02-05-lts-7.19-9007019.tar.gz
+           sha1: d2cfc25f9cda32a25a87d9af68891b2186ee52f9
+      ghcjs-0.2.1.9007013_ghc-8.0.1:
+          url: http://ghcjs.tolysz.org/ghc-8.0-2016-12-18-lts-7.13-9007013.tar.gz
+          sha1: 530c4ee5e19e2874e128431c7ad421e336df0303
 
 packages:
 - '.'
@@ -16,6 +30,14 @@ packages:
     git: https://github.com/bgamari/html-parse.git
     commit: ebdd5fa3fa5a0d3c22602bec15059e821ad10ec4
   extra-dep: true
+- location:
+    hg: https://bitbucket.org/fisx/react-flux
+    commit: e49cf08a4158856285395470285b611da7edfe37
+  extra-dep: true
+- location:
+    hg: https://bitbucket.org/fisx/react-flux-servant
+    commit: c11235f02ef1fed6923a40d6ceea268ef3535b2d
+  extra-dep: true
 
 extra-deps:
 - aeson-extra-0.4.0.0
@@ -25,15 +47,8 @@ extra-deps:
 - i18n-0.4.0.0
 - json-sop-0.2.0.1
 - lens-sop-0.2.0.1
-- react-flux-1.2.3
-- react-flux-servant-0.1.1
+- react-flux-1.3.0
+- react-flux-servant-0.2.0
 - recursion-schemes-5.0.1
 - refine-common-0.0.0.0
 - string-0.4.0
-
-setup-info:
-  ghcjs:
-    source:
-      ghcjs-0.2.1.9007001_ghc-8.0.1:
-        url: http://tolysz.org/ghcjs/ghc-8.0-2016-09-26-lts-7.1-9007001-mem.tar.gz
-        sha1: e640724883238593e2d2f7f03991cb413ec0347b

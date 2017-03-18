@@ -31,8 +31,8 @@ import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Types as RS
 import           Refine.Frontend.UtilityWidgets
 
-toolbar :: ReactView ()
-toolbar = defineView "Toolbar" $ \() ->
+toolbar :: View '[()]
+toolbar = mkView "Toolbar" $ \() ->
   header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
@@ -108,15 +108,15 @@ toolbar = defineView "Toolbar" $ \() ->
               Nothing
 
 toolbar_ :: ReactElementM eventHandler ()
-toolbar_ = view toolbar () mempty
+toolbar_ = view_ toolbar "toolbar_" ()
 
 
 newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
   { _ctepStatus :: RS.ToolbarExtensionStatus
   }
 
-commentToolbarExtension :: ReactView CommentToolbarExtensionProps
-commentToolbarExtension = defineView "CommentToolbarExtension" $ \case
+commentToolbarExtension :: View '[CommentToolbarExtensionProps]
+commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
   (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithSelection) -> frame $ do
     div_ "Please select the text you would like to comment on"
   (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithButtons) -> frame $ do
@@ -152,15 +152,15 @@ commentToolbarExtension = defineView "CommentToolbarExtension" $ \case
 
 
 commentToolbarExtension_ :: CommentToolbarExtensionProps -> ReactElementM eventHandler ()
-commentToolbarExtension_ props = view commentToolbarExtension props mempty
+commentToolbarExtension_ !props = view_ commentToolbarExtension "commentToolbarExtension_" props
 
 
 newtype EditToolbarExtensionProps = EditToolbarExtensionProps
   { _etepStatus :: RS.ToolbarExtensionStatus
   }
 
-editToolbarExtension :: ReactView EditToolbarExtensionProps
-editToolbarExtension = defineView "EditToolbarExtension" $ \case
+editToolbarExtension :: View '[EditToolbarExtensionProps]
+editToolbarExtension = mkView "EditToolbarExtension" $ \case
   (EditToolbarExtensionProps RS.EditToolbarExtension) -> do
     div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
       div_ ["className" $= "grid-wrapper"] $ do
@@ -187,4 +187,4 @@ editToolbarExtension = defineView "EditToolbarExtension" $ \case
 
 
 editToolbarExtension_ :: EditToolbarExtensionProps -> ReactElementM eventHandler ()
-editToolbarExtension_ props = view editToolbarExtension props mempty
+editToolbarExtension_ !props = view_ editToolbarExtension "editToolbarExtension_" props

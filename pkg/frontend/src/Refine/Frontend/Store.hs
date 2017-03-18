@@ -16,6 +16,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
@@ -44,16 +45,16 @@ import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Store (documentStateUpdate, editorStateToVDocVersion)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
-import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
-import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Login.Store (loginStateUpdate)
 import           Refine.Frontend.Login.Types
+import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
+import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Rest
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
+import           Refine.Frontend.Test.Console
 import           Refine.Frontend.Test.Samples
 import           Refine.Frontend.Translation.Store (translationsUpdate)
 import           Refine.Frontend.Types
-import           Refine.Frontend.Test.Console
 
 
 instance StoreData GlobalState where
@@ -262,12 +263,10 @@ handleError (code, rsp) onApiError = case AE.eitherDecode $ cs rsp of
     consoleLogJSStringM "handleApiError" . cs $ show apiError
     pure . mconcat . fmap dispatch $ onApiError apiError
 
-refineStore :: ReactStore GlobalState
-refineStore = mkStore emptyGlobalState
 
 -- FIXME: return a single some-action, not a list?
 dispatch :: GlobalAction -> [SomeStoreAction]
-dispatch a = [SomeStoreAction refineStore a]
+dispatch a = [someStoreAction @GlobalState a]
 
 dispatchMany :: [GlobalAction] -> [SomeStoreAction]
 dispatchMany = mconcat . fmap dispatch

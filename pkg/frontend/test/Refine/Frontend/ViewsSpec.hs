@@ -41,7 +41,7 @@ import           Refine.Frontend.Views
 
 -- we do not need this in prod, but it is important for testing the full app including the global state
 refineApp_ :: ReactElementM eventHandler ()
-refineApp_ = view refineApp () mempty
+refineApp_ = view_ refineApp "refineApp_"
 
 clickNewComment :: ReactWrapper -> IO ()
 clickNewComment wrapper = do

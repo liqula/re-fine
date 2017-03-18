@@ -21,10 +21,11 @@
 module Refine.Frontend.Contribution.Mark where
 
 import           Control.Lens ((^.))
+import           Data.Functor.Infix ((<$$>))
 import           Data.String.Conversions
 import           GHCJS.Types (JSVal)
 import           React.Flux
-import           React.Flux.Lifecycle
+import           React.Flux.Outdated
 
 import           Refine.Common.Types
 import qualified Refine.Frontend.Screen.Types as RS
@@ -40,7 +41,9 @@ rfMark :: ReactView MarkProps
 rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
   { lRender = \_state props -> do
       let dataContributionId = props ^. markPropsContributionID
-      mark_ ((props ^. markPropsHTMLAttributes) <>
+          statefulEventHandlers :: [PropertyOrHandler (() -> ([SomeStoreAction], Maybe ()))]
+          statefulEventHandlers = (\h _ -> (h, Nothing)) <$$> (props ^. markPropsViewEventHandlers)
+      mark_ (statefulEventHandlers <>
            [ classNamesAny
                         [ ("o-mark", True)
                         , ("o-mark--highlight", Just dataContributionId == props ^. markPropsDisplayedContribution)
