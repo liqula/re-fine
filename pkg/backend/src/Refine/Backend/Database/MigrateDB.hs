@@ -24,6 +24,8 @@ migrateDB = doMigrate migrateRefine
 doMigrate :: Migration -> MigrationSafety -> DB [ST]
 
 doMigrate migration UnsafeMigration = liftDB $ do
+  liftIO $ putStrLn "Migration to execute, when fails manual intervention is needed."
+  printMigration migration
   mig <- getMigration migration
   runMigrationUnsafe migration
   pure mig
