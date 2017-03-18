@@ -24,8 +24,7 @@ import           Refine.Prelude (Timespan(..))
 -- only pass those parts of the config to the respective parts of the code that are actually needed.
 
 data Config = Config
-  { _cfgShouldMigrate :: Bool           -- ^ Should run the migration at start-up
-  , _cfgShouldLog     :: Bool           -- ^ Should log messages during the server run
+  { _cfgShouldLog     :: Bool           -- ^ Should log messages during the server run
   , _cfgReposRoot     :: FilePath       -- ^ The directory for the document repositories
   , _cfgDBKind        :: DBKind         -- ^ SQLite database, memory or file on the disk
   , _cfgPoolSize      :: Int            -- ^ The size of the connection pool towards the database
@@ -45,8 +44,7 @@ data DBKind
 
 instance Default Config where
   def = Config
-    { _cfgShouldMigrate = True
-    , _cfgShouldLog     = True
+    { _cfgShouldLog     = True
     , _cfgReposRoot     = "./.backend-data/repos"
     , _cfgDBKind        = def
     , _cfgPoolSize      = 5

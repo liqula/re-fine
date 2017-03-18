@@ -126,15 +126,16 @@ mkBackend :: UserHandleC uh => Config -> (UserDB -> UHNat uh) -> AppM DB uh a ->
 mkBackend cfg initUH migrate = do
   createDataDirectories cfg
 
+  -- create runners
   (dbNat, runUserHandle) <- createDBNat cfg
   docRepoNat <- createRepoNat cfg
   backend    <- mkServerApp cfg dbNat docRepoNat (initUH runUserHandle)
 
-  when (cfg ^. cfgShouldMigrate) $ do
-    result <- runExceptT (backendRunApp backend $$ migrate)
-    case result of
-      Left err -> error $ show err
-      Right _  -> pure ()
+  -- migration
+  result <- runExceptT (backendRunApp backend $$ migrate)
+  case result of
+    Left err -> error $ show err
+    Right _  -> pure ()
 
   pure backend
 
