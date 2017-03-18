@@ -61,8 +61,7 @@ createAppRunner = do
       poRoot    = "./repos" -- FIXME: Change this when needed. Not used at the moment.
 
       cfg = Config
-        { _cfgShouldMigrate = False  -- (this is ignored here)
-        , _cfgShouldLog     = False  -- (this is ignored here)
+        { _cfgShouldLog     = False  -- (this is ignored here)
         , _cfgReposRoot     = reposRoot
         , _cfgDBKind        = DBOnDisk testDb
         , _cfgPoolSize      = 5
@@ -89,7 +88,7 @@ createAppRunner = do
                                     poRoot
                                     id) $$ m
 
-  void $ runner migrateDB
+  void $ runner (migrateDB cfg)
   pure (runner, testDb, reposRoot)
 
 monadicApp :: (AppM DB UH Property -> IO Property) -> AppM DB UH Property -> Property

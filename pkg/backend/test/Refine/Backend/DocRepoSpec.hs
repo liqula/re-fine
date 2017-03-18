@@ -76,8 +76,7 @@ spec = do
 
 cfg :: Config
 cfg = Config
-  { _cfgShouldMigrate = False  -- (this is ignored here)
-  , _cfgShouldLog     = False  -- (this is ignored here)
+  { _cfgShouldLog     = False  -- (this is ignored here)
   , _cfgReposRoot     = "./repos"
   , _cfgDBKind        = DBOnDisk "./testDb"
   , _cfgPoolSize      = 5

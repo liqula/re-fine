@@ -24,6 +24,7 @@ module Refine.Backend.Database.Core where
 
 import Control.Monad.Except
 import Control.Monad.Reader
+import Data.String.Conversions (ST)
 import Database.Persist.Sql
 import GHC.Generics (Generic)
 
@@ -57,6 +58,8 @@ data DBError
   | DBNotUnique String
   | DBException String
   | DBUserNotLoggedIn
+  | DBMigrationParseErrors [ST]
+  | DBUnsafeMigration [(Bool, ST)]
   deriving (Eq, Show, Generic)
 
 makeRefineType ''DBError
