@@ -68,7 +68,7 @@ emptyGlobalState = GlobalState
   , _gsTranslations               = NoJSONRep emptyTranslations
   }
 
-data RefineAction = LoadDocumentList
+data GlobalAction = LoadDocumentList
                   | LoadedDocumentList [ID VDoc]
                   | LoadDocument (ID VDoc)
                   | OpenDocument CompositeVDoc
@@ -104,4 +104,4 @@ data RefineAction = LoadDocumentList
 
 
 makeRefineType ''GlobalState
-makeRefineType ''RefineAction
+makeRefineType ''GlobalAction

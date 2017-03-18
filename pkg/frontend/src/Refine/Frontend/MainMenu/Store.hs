@@ -3,11 +3,11 @@ module Refine.Frontend.MainMenu.Store where
 import Control.Lens ((&), (.~))
 
 import Refine.Frontend.MainMenu.Types
-import Refine.Frontend.Types (RefineAction(..))
+import Refine.Frontend.Types (GlobalAction(..))
 
 
 -- TODO: Alignment
-mainMenuUpdate :: RefineAction -> MainMenuState -> MainMenuState
+mainMenuUpdate :: GlobalAction -> MainMenuState -> MainMenuState
 mainMenuUpdate (MainMenuAction MainMenuActionClose) state =
   state & mmState .~ MainMenuClosed
         & mmErrors . mmeLogin        .~ Nothing

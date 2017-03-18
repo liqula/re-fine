@@ -57,19 +57,17 @@ import           Refine.Frontend.Test.Console
 
 
 instance StoreData GlobalState where
-    type StoreAction GlobalState = RefineAction
+    type StoreAction GlobalState = GlobalAction
     transform ClearState _ = pure emptyGlobalState  -- for testing only!
     transform action state = do
         consoleLogJSONM "Old state: " state
-        consoleLogJSONM "Action: " action
+        consoleLogJSStringM "Action: " (cs $ show action)
 
         emitBackendCallsFor action state
 
         transformedAction <- case action of
             TriggerUpdateSelection releasePositionOnPage toolbarStatus -> do
-                -- for efficiency reasons, only ask JS when we get this action
-                hasRange <- js_hasRange
-                mrange <- if hasRange then getRange else pure Nothing
+                mrange <- getRange
                 pure . ContributionAction $ UpdateSelection
                     (case mrange of
                         Nothing -> NothingSelectedButUpdateTriggered releasePositionOnPage
@@ -97,7 +95,7 @@ instance StoreData GlobalState where
         consoleLogJSONM "New state: " newState
         pure newState
 
-vdocUpdate :: RefineAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
+vdocUpdate :: GlobalAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate action Nothing = case action of
     OpenDocument openedVDoc -> Just openedVDoc
     _ -> Nothing
@@ -132,26 +130,23 @@ vdocUpdate action (Just vdoc) = Just $ case action of
     _ -> vdoc
 
 
-vdocListUpdate :: RefineAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
+vdocListUpdate :: GlobalAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
 vdocListUpdate action state = case action of
     LoadedDocumentList list -> Just list
     _ -> state
 
-notImplementedYetIsVisibleUpdate :: RefineAction -> Bool -> Bool
+notImplementedYetIsVisibleUpdate :: GlobalAction -> Bool -> Bool
 notImplementedYetIsVisibleUpdate action state = case action of
   ShowNotImplementedYet -> True
   HideNotImplementedYet -> False
   _                 -> state
 
-toolbarStickyUpdate :: RefineAction -> Bool -> Bool
+toolbarStickyUpdate :: GlobalAction -> Bool -> Bool
 toolbarStickyUpdate action state = case action of
   ToolbarStickyStateChange state' -> state'
   _                               -> state
 
-dispatchMany :: [RefineAction] -> [SomeStoreAction]
-dispatchMany = mconcat . fmap dispatch
-
-emitBackendCallsFor :: RefineAction -> GlobalState -> IO ()
+emitBackendCallsFor :: GlobalAction -> GlobalState -> IO ()
 emitBackendCallsFor action state = case action of
     LoadDocumentList -> do
         listVDocs $ \case
@@ -257,7 +252,7 @@ createChunkRange :: Maybe Range -> RT.ChunkRange
 createChunkRange Nothing = RT.ChunkRange Nothing Nothing
 createChunkRange (Just range) = RT.ChunkRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
 
-handleError :: (Int, String) -> (ApiError -> [RefineAction]) -> IO [SomeStoreAction]
+handleError :: (Int, String) -> (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
 handleError (code, rsp) onApiError = case AE.eitherDecode $ cs rsp of
   Left err -> do
     consoleLogJSStringM "handleError: backend sent invalid response: " . cs $ unwords [show code, rsp, err]
@@ -270,15 +265,13 @@ handleError (code, rsp) onApiError = case AE.eitherDecode $ cs rsp of
 refineStore :: ReactStore GlobalState
 refineStore = mkStore emptyGlobalState
 
-dispatch :: RefineAction -> [SomeStoreAction]
+-- FIXME: return a single some-action, not a list?
+dispatch :: GlobalAction -> [SomeStoreAction]
 dispatch a = [SomeStoreAction refineStore a]
 
+dispatchMany :: [GlobalAction] -> [SomeStoreAction]
+dispatchMany = mconcat . fmap dispatch
 
-foreign import javascript unsafe
-    "window.getSelection().rangeCount > 0 \
-    \&& !(!window.getSelection().getRangeAt(0)) \
-    \&& !window.getSelection().getRangeAt(0).collapsed"
-    js_hasRange :: IO Bool
 
 getRange :: IO (Maybe Range)
 getRange = (AE.decode . cs . unpack) <$> js_getRange
@@ -286,6 +279,10 @@ getRange = (AE.decode . cs . unpack) <$> js_getRange
 foreign import javascript unsafe
     "refine$getSelectionRange()"
     js_getRange :: IO JSString
+
+foreign import javascript unsafe
+  "window.getSelection().removeAllRanges();"
+  js_removeAllRanges :: IO ()
 
 
 -- * ugly hacks
@@ -299,10 +296,3 @@ reactFluxWorkAroundForkIO action = void . forkIO $ yield >> action
 -- for details and status.  Try to increase microseconds if you still experience race conditions.
 reactFluxWorkAroundThreadDelay :: IO ()
 reactFluxWorkAroundThreadDelay = threadDelay 10000
-
-
--- * pretty hacks (:
-
-foreign import javascript unsafe
-  "window.getSelection().removeAllRanges();"
-  js_removeAllRanges :: IO ()

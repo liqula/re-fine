@@ -42,7 +42,7 @@ import           Refine.Frontend.Types
 import           Refine.Prelude.Aeson (NoJSONRep(..), unNoJSONRep)
 
 
-documentStateUpdate :: RefineAction -> Maybe (VDocVersion 'HTMLWithMarks) -> DocumentState -> DocumentState
+documentStateUpdate :: GlobalAction -> Maybe (VDocVersion 'HTMLWithMarks) -> DocumentState -> DocumentState
 documentStateUpdate (HeaderAction (StartEdit kind)) (Just vdocvers) _state
   = DocumentStateEdit (createEditorState kind vdocvers)
 
