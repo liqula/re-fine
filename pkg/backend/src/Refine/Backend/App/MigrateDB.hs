@@ -13,7 +13,7 @@ import Refine.Backend.User.MigrateDB as User
 
 
 -- | (With dependent types, we could take a 'Config' as argument here and then return an @AppM DB
--- uh@.  But as it is, we have to have two functions, this and 'migrateDBDevMode'.
+-- uh@.  But as it is, we have to have two functions, this and 'migrateDBDevMode'.)
 migrateDB :: AppM DB UH ()
 migrateDB = migrate_ True
 
