@@ -49,7 +49,7 @@ import           System.Directory (canonicalizePath, createDirectoryIfMissing)
 import           System.FilePath (dropFileName)
 
 import Refine.Backend.App
-import Refine.Backend.App.MigrateDB
+import Refine.Backend.App.MigrateDB (migrateDB)
 import Refine.Backend.Config
 import Refine.Backend.Database (Database, DB, DBError(..), createDBNat)
 import Refine.Backend.DocRepo (DocRepoError(..), createRepoNat)
@@ -117,10 +117,10 @@ startBackend cfg =
 
 
 mkProdBackend :: Config -> IO (Backend DB UH)
-mkProdBackend cfg = mkBackend cfg uhNat migrateDB
+mkProdBackend cfg = mkBackend cfg uhNat (migrateDB cfg)
 
 mkDevModeBackend :: Config -> MockUH_ -> IO (Backend DB FreeUH)
-mkDevModeBackend cfg mock = mkBackend cfg (\_ -> uhNat mock) migrateDBDevMode
+mkDevModeBackend cfg mock = mkBackend cfg (\_ -> uhNat mock) (migrateDB cfg)
 
 mkBackend :: UserHandleC uh => Config -> (UserDB -> UHNat uh) -> AppM DB uh a -> IO (Backend DB uh)
 mkBackend cfg initUH migrate = do
