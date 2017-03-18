@@ -21,6 +21,6 @@ migrateDB = do
 migrateDBDevMode :: AppM DB FreeUH ()
 migrateDBDevMode = do
   appLog "Start database migration ..."
-  mig <- db $ DB.migrateDB False
+  mig <- db $ (<>) <$> DB.migrateDB False <*> User.migrateDB False
   appLog $ show mig
   appLog "Start database migration ... DONE"
