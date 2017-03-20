@@ -126,5 +126,5 @@ instance Database DB where
   removeSubGroup    = Entity.removeSubGroup
 
   assignRole   = Entity.assignRole
-  getRole      = Entity.getRole
+  getRoles     = Entity.getRoles
   unassignRole = Entity.unassignRole

@@ -86,12 +86,6 @@ unique [x] = pure x
 unique []  = notFound "Unique value is not found"
 unique _   = notUnique "Value is not unique"
 
--- FIXME: Better error message
-zeroOrOne :: [a] -> DB (Maybe a)
-zeroOrOne []  = pure Nothing
-zeroOrOne [x] = pure $ Just x
-zeroOrOne _   = notUnique "Value is not unique"
-
 getEntity :: (ToBackendKey SqlBackend (S.EntityRep e), Typeable e)
           => ID e -> DB (S.EntityRep e)
 getEntity eid = do
@@ -493,16 +487,13 @@ removeSubGroup parent child = liftDB $ do
 
 assignRole :: ID Group -> ID User -> Role -> DB ()
 assignRole gid uid role = liftDB $ do
-  deleteWhere
-    [ S.RolesGroup ==. S.idToKey gid
-    , S.RolesUser  ==. S.idToKey uid
-    ]
+  -- TODO: Remove the ones that are implied for the new one
   void . insert $ S.Roles (S.idToKey gid) (S.idToKey uid) role
 
-getRole :: ID Group -> ID User -> DB (Maybe Role)
-getRole gid uid = do
+getRoles :: ID Group -> ID User -> DB [Role]
+getRoles gid uid = do
   roles <- liftDB $ selectList [S.RolesGroup ==. S.idToKey gid, S.RolesUser ==. S.idToKey uid] []
-  (S.rolesElim (\_gid _uid role' -> role') . entityVal) <$$> zeroOrOne roles
+  pure $ (S.rolesElim (\_gid _uid role' -> role') . entityVal) <$> roles
 
 unassignRole :: ID Group -> ID User -> Role -> DB ()
 unassignRole gid uid role = liftDB $ do

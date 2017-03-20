@@ -41,6 +41,7 @@ dependencies:
   - mtl
   - natural-transformation
   - network-uri
+  - partial-order
   - persistent
   - persistent-sqlite
   - persistent-template
