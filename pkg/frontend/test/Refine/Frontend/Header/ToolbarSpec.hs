@@ -56,6 +56,8 @@ spec = do
       wrapper <- mount toolbar_
       button <- find wrapper (StringSelector ".c-vdoc-toolbar__btn-add-annotation")
 
+      pending
+
       _ <- simulate button Click
       globalState1 <- readStoreData @GlobalState
       globalState1 ^. gsHeaderState . hsToolbarExtensionStatus `shouldBe` CommentToolbarExtensionWithButtons
