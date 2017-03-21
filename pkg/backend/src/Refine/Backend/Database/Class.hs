@@ -77,6 +77,9 @@ class Database db where
   getRoles     :: ID Group -> ID User -> db [Role]
   unassignRole :: ID Group -> ID User -> Role -> db ()
 
+  -- Process
+  createProcess :: CreateProcess a -> db (Process a)
+  getProcess    :: ID (Process a) -> db (Process a)
 
 -- * composite db queries
 

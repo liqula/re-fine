@@ -109,6 +109,11 @@ Roles
     role  Role
     UniRoles group user role
 
+-- Processes
+
+Process
+    data ST
+
 -- Connection tables
 
 VR
@@ -157,7 +162,7 @@ PV
 
 -- * helpers
 
-type family EntityRep c = b | b -> c
+type family EntityRep c = b
 
 
 idToKey :: (ToBackendKey SqlBackend (EntityRep a))

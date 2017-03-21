@@ -52,6 +52,7 @@ type instance S.EntityRep Answer     = S.Answer
 type instance S.EntityRep Statement  = S.Statement
 type instance S.EntityRep User       = Users.Login
 type instance S.EntityRep Group      = S.Group
+type instance S.EntityRep (Process a) = S.Process
 
 {-
 Reading the domain structured datatypes is not a problem,
@@ -502,3 +503,14 @@ unassignRole gid uid role = liftDB $ do
     , S.RolesUser  ==. S.idToKey uid
     , S.RolesRole  ==. role
     ]
+
+-- * Process
+
+createProcess :: CreateProcess a -> DB (Process a)
+createProcess process = liftDB $ do
+  key <- insert $ S.Process "process"
+  pure $ Process (S.keyToId key) (process ^. createProcessData)
+
+getProcess :: ID (Process a) -> DB (Process a)
+getProcess pid = do
+  pure $ Process pid (error "Read process data")

@@ -125,6 +125,11 @@ instance Database DB where
   addSubGroup       = Entity.addSubGroup
   removeSubGroup    = Entity.removeSubGroup
 
+  -- * Role
   assignRole   = Entity.assignRole
   getRoles     = Entity.getRoles
   unassignRole = Entity.unassignRole
+
+  -- * Process
+  createProcess = Entity.createProcess
+  getProcess    = Entity.getProcess

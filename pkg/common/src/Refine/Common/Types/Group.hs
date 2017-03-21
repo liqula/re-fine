@@ -37,19 +37,6 @@ data Group = Group
   }
   deriving (Eq, Generic, Show)
 
--- | A *process* has a certain type (more general: "collecting wild ideas",
--- "collaborative text editing", ...; or more specific: "spending a school budget", "updating a
--- party constitution", "setting up a Ltd.", ...) that determines much of what it looks like and how
--- it works.
---
--- Like groups, processes are initiated by users.  Unlike groups, a process always has exactly one
--- parent group ("its *home group*", or just "its group") and no children.
---
--- > data Process = Process (UID Process) MetaInfo Title Description (UID Group)
---
--- FIXME: not implemented yet.
-data Process
-
 type instance Create Group = CreateGroup
 
 makeRefineType ''CreateGroup
