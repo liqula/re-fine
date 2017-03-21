@@ -25,8 +25,7 @@
 module Refine.Backend.App.Role where
 
 import Control.Lens ((^.))
-import Control.Monad (when)
-import qualified Data.PartialOrd as PO
+import Control.Monad (when, unless)
 
 import Refine.Backend.App.Core
 import Refine.Backend.Database.Class as DB
@@ -50,12 +49,7 @@ assignRole role uid gid = do
   appLog "assignRole"
   db $ do
     roles <- DB.getRoles gid uid
-    let needAssign = role `PO.notElem` roles &&
-                     role `PO.elem` PO.maxima (role:roles)
-        removeRoles = filter (PO.< role) roles
-    when needAssign $ do
-      mapM_ (DB.unassignRole gid uid) removeRoles
-      DB.assignRole gid uid role
+    unless (role `elem` roles) $ DB.assignRole gid uid role
 
 -- | Unassign a role from a user in a group.
 unassignRole :: Role -> ID User -> ID Group -> App ()

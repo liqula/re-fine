@@ -32,7 +32,6 @@ dependencies:
   - lens
   - mtl
   - natural-transformation
-  - partial-order
   - QuickCheck
   - quickcheck-instances
   - refine-prelude

@@ -483,11 +483,11 @@ removeSubGroup parent child = liftDB $ do
     , S.SubGroupChild  ==. S.idToKey child
     ]
 
+
 -- * Roles
 
 assignRole :: ID Group -> ID User -> Role -> DB ()
 assignRole gid uid role = liftDB $ do
-  -- TODO: Remove the ones that are implied for the new one
   void . insert $ S.Roles (S.idToKey gid) (S.idToKey uid) role
 
 getRoles :: ID Group -> ID User -> DB [Role]
