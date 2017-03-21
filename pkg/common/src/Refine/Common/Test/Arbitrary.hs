@@ -326,3 +326,7 @@ allNonEmptyChunkRanges_ vers = result
     nonempty ((n, k), _) = n < k
 
     maxk = fst $ V.last ps
+
+
+instance Arbitrary Role where
+  arbitrary = elements [minBound..]

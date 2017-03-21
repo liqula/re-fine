@@ -40,7 +40,7 @@ data Role
   | LocalAdmin
   | ProcessInitiator
   | GroupInitiator
-  deriving (Enum, Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Bounded, Enum, Show, Generic)
 
 -- | Rights on operations, what to do with something
 data Right

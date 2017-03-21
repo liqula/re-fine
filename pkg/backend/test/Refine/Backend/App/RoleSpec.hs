@@ -22,9 +22,10 @@
 module Refine.Backend.App.RoleSpec where
 
 import Control.Lens
-import Control.Monad (join)
-import Data.List (sort)
+import Control.Monad (join, forM_)
+import Data.List (sort, nub, (\\))
 import Test.Hspec
+import Test.QuickCheck
 
 import Refine.Backend.App.Core   as App
 import Refine.Backend.App.Group  as App
@@ -32,6 +33,7 @@ import Refine.Backend.App.Role   as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
 import Refine.Backend.User
+import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Types.Group
 import Refine.Common.Types.Prelude (ID(..))
 import Refine.Common.Types.Role
@@ -75,6 +77,20 @@ spec = around provideDevModeAppRunner $ do
               -- outcome: the role stays
               roles `shouldBe` [role]
 
+      it "role is always in new role set, old and new role are equal except for assigned role" $
+        \(runner :: RoleAppRunner) -> do
+          property $ \(role :: Role, roles :: [Role]) -> do
+            join . runner $ do
+              let uid = ID 1
+              group       <- App.addGroup (CreateGroup "title" "desc" [] [])
+              ()          <- forM_ roles $ \r -> App.assignRole r uid (group ^. groupID)
+              rolesBefore <- App.allRoles uid (group ^. groupID)
+              ()          <- App.assignRole role uid (group ^. groupID)
+              rolesAfter  <- App.allRoles uid (group ^. groupID)
+              pure $ do
+                sort rolesBefore `shouldBe` (nub $ sort roles)
+                rolesAfter `shouldContain` [role]
+                sort (rolesBefore \\ [role]) `shouldBe` sort (rolesAfter \\ [role])
 
     describe "### unassign role" $ do
       context "role previously assigned" $ do
@@ -127,3 +143,17 @@ spec = around provideDevModeAppRunner $ do
               -- outcome: the role is unassigned
               role' `shouldBe` []
 
+      it "role is never in new role set, old and new role are equal except for assigned role" $
+        \(runner :: RoleAppRunner) -> do
+          property $ \(role :: Role, roles :: [Role]) -> do
+            join . runner $ do
+              let uid = ID 1
+              group       <- App.addGroup (CreateGroup "title" "desc" [] [])
+              ()          <- forM_ roles $ \r -> App.assignRole r uid (group ^. groupID)
+              rolesBefore <- App.allRoles uid (group ^. groupID)
+              ()          <- App.unassignRole role uid (group ^. groupID)
+              rolesAfter  <- App.allRoles uid (group ^. groupID)
+              pure $ do
+                sort rolesBefore `shouldBe` (nub $ sort roles)
+                rolesAfter `shouldNotContain` [role]
+                sort (rolesBefore \\ [role]) `shouldBe` sort (rolesAfter \\ [role])
