@@ -88,11 +88,11 @@ spec = around provideDevModeAppRunner $ do
               ()          <- App.assignRole role uid (group ^. groupID)
               rolesAfter  <- App.allRoles uid (group ^. groupID)
               pure $ do
-                sort rolesBefore `shouldBe` (nub $ sort roles)
+                sort rolesBefore `shouldBe` nub (sort roles)
                 rolesAfter `shouldContain` [role]
                 sort (rolesBefore \\ [role]) `shouldBe` sort (rolesAfter \\ [role])
 
-    describe "### unassign role" $ do
+    describe "unassign role" $ do
       context "role previously assigned" $ do
         it "unassigns the given role" $ \(runner :: RoleAppRunner) -> do
           join . runner $ do
@@ -154,6 +154,6 @@ spec = around provideDevModeAppRunner $ do
               ()          <- App.unassignRole role uid (group ^. groupID)
               rolesAfter  <- App.allRoles uid (group ^. groupID)
               pure $ do
-                sort rolesBefore `shouldBe` (nub $ sort roles)
+                sort rolesBefore `shouldBe` nub (sort roles)
                 rolesAfter `shouldNotContain` [role]
                 sort (rolesBefore \\ [role]) `shouldBe` sort (rolesAfter \\ [role])
