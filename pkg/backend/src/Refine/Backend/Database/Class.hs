@@ -74,7 +74,7 @@ class Database db where
 
   -- Roles
   assignRole   :: ID Group -> ID User -> Role -> db ()
-  getRole      :: ID Group -> ID User -> db (Maybe Role)
+  getRoles     :: ID Group -> ID User -> db [Role]
   unassignRole :: ID Group -> ID User -> Role -> db ()
 
 

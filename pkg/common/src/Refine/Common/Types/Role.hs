@@ -40,7 +40,7 @@ data Role
   | LocalAdmin
   | ProcessInitiator
   | GroupInitiator
-  deriving (Eq, Show, Generic)
+  deriving (Eq, Ord, Bounded, Enum, Show, Generic)
 
 -- | Rights on operations, what to do with something
 data Right
@@ -48,7 +48,7 @@ data Right
   | Read
   | Update
   | Delete
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Show, Generic)
 
 makeRefineType ''Role
 makeRefineType ''Right
