@@ -27,6 +27,10 @@ packages:
 - location: '../prelude'
   extra-dep: true
 - location:
+    git: https://github.com/well-typed/basic-sop.git
+    commit: 1e98bc7829e8c4ca5fe408ed5bfc7ad2a988d88c
+  extra-dep: true
+- location:
     git: https://github.com/bgamari/html-parse.git
     commit: ebdd5fa3fa5a0d3c22602bec15059e821ad10ec4
   extra-dep: true
