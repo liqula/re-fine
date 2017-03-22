@@ -13,6 +13,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
@@ -39,7 +40,7 @@ newtype ID a = ID { _unID :: Int64 }
 instance ClearTypeParameter ID where
   clearTypeParameter (ID x) = ID x
 
-type family Create a :: *
+type family Create a = b | b -> a
 
 
 -- * lens

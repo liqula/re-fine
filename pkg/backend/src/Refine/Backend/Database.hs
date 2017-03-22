@@ -132,4 +132,4 @@ instance Database DB where
 
   -- * Process
   createProcess = Entity.createProcess
-  getProcess    = Entity.getProcess
+--  getProcess    = Entity.getProcess

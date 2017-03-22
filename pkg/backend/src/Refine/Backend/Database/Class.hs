@@ -1,4 +1,5 @@
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Refine.Backend.Database.Class where
 
@@ -78,8 +79,12 @@ class Database db where
   unassignRole :: ID Group -> ID User -> Role -> db ()
 
   -- Process
-  createProcess :: CreateProcess a -> db (Process a)
-  getProcess    :: ID (Process a) -> db (Process a)
+  createProcess :: StoreProcessData db a => Create (Process a) -> db (Process a)
+--  getProcess    :: ID (Process a) -> db (Process a)
+
+class StoreProcessData db c where
+  processDataGroupID :: Create (Process c) -> db (ID Group)
+  createProcessData  :: ID (Process c) -> Create (Process c) -> db c
 
 -- * composite db queries
 

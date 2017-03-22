@@ -20,9 +20,11 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Refine.Backend.Database.Entity where
 
-import Control.Lens ((^.), to)
+import Control.Lens ((^.), to, view)
 import Control.Monad (forM_, void)
 import Control.Monad.Reader (ask)
 import Data.Functor.Infix ((<$$>))
@@ -35,6 +37,7 @@ import Lentil.Core (entityLens)
 import Lentil.Types as L
 
 import           Refine.Backend.Database.Core
+import qualified Refine.Backend.Database.Class as C
 import qualified Refine.Backend.Database.Schema as S
 import qualified Refine.Backend.DocRepo.Core as DocRepo
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
@@ -53,6 +56,14 @@ type instance S.EntityRep Statement  = S.Statement
 type instance S.EntityRep User       = Users.Login
 type instance S.EntityRep Group      = S.Group
 type instance S.EntityRep (Process a) = S.Process
+type instance S.EntityRep CollaborativeEdit = S.CollabEditProcess
+type instance S.EntityRep Aula              = S.AulaProcess
+
+type instance S.ProcessDataRep CollaborativeEdit = S.CollabEditProcess
+type instance S.ProcessDataRep Aula              = S.AulaProcess
+
+type instance S.ProcessDataConnectionRep CollaborativeEdit = S.ProcessOfCollabEdit
+type instance S.ProcessDataConnectionRep Aula              = S.ProcessOfAula
 
 {-
 Reading the domain structured datatypes is not a problem,
@@ -504,13 +515,30 @@ unassignRole gid uid role = liftDB $ do
     , S.RolesRole  ==. role
     ]
 
+
 -- * Process
 
-createProcess :: CreateProcess a -> DB (Process a)
-createProcess process = liftDB $ do
-  key <- insert $ S.Process "process"
-  pure $ Process (S.keyToId key) (process ^. createProcessData)
+instance C.StoreProcessData DB CollaborativeEdit where
+  processDataGroupID = pure . view createCollabEditProcessGroupID
+  createProcessData pid process = do
+    liftDB $ do
+      dkey <- insert $ S.CollabEditProcess
+                (process ^. createCollabEditProcessVDocID . to S.idToKey)
+                (process ^. createCollabEditProcessPhase)
+      _ <- insert $ S.ProcessOfCollabEdit (S.idToKey pid) dkey
+      pure $ CollaborativeEdit (S.keyToId dkey) (process ^. createCollabEditProcessPhase)
 
-getProcess :: ID (Process a) -> DB (Process a)
-getProcess pid = do
-  pure $ Process pid (error "Read process data")
+instance C.StoreProcessData DB Aula where
+  processDataGroupID = pure . view createAulaProcessGroupID
+  createProcessData pid process = do
+    liftDB $ do
+      dkey <- insert $ S.AulaProcess (process ^. createAulaProcessClassName)
+      _ <- insert $ S.ProcessOfAula (S.idToKey pid) dkey
+      pure $ Aula (S.keyToId dkey) (process ^. createAulaProcessClassName)
+
+createProcess :: (C.StoreProcessData DB a) => Create (Process a) -> DB (Process a)
+createProcess process = do
+  gid   <- C.processDataGroupID process
+  pkey  <- liftDB $ insert $ S.Process (S.idToKey gid)
+  pdata <- C.createProcessData (S.keyToId pkey) process
+  pure $ Process (S.keyToId pkey) pdata
