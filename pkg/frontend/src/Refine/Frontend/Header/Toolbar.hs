@@ -167,9 +167,7 @@ editToolbarExtension = mkView "EditToolbarExtension" $ \case
         div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
           div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
           div_ ["className" $= "c-vdoc-toolbar-extension__modification c-vdoc-toolbar-extension--expanded"] $ do  -- (RENAME: Edit)
-            editButton Phrasing
-            editButton Meaning
-            editButton Grammar
+            editButton `mapM_` [Grammar, Phrasing, Meaning]
 
   (EditToolbarExtensionProps _) -> mempty
   where
