@@ -188,6 +188,7 @@ test-suite spec
       Refine.Frontend.MainMenuSpec
       Refine.Frontend.StoreSpec
       Refine.Frontend.UtilityWidgetsSpec
+      Refine.Frontend.UtilSpec
       Refine.Frontend.ViewsSpec
   js-sources:
       jsbits/test.js

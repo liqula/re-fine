@@ -33,8 +33,6 @@ module Refine.Frontend.UtilityWidgets
 , iconButtonWithAlignmentCore_
 , iconButton_
 , positionedIconButton_
-
-, toClasses
 ) where
 
 import           Control.Lens (makeLenses, (^.), _1, _2)
@@ -44,9 +42,10 @@ import           Data.String.Conversions (cs)
 import           GHCJS.Types (JSString)
 import           React.Flux
 
+import           Refine.Frontend.Util
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Style
-import           Refine.Prelude()
+import           Refine.Prelude ()
 -- TODO import           Refine.Frontend.ThirdPartyViews (hammer_)
 
 
@@ -175,10 +174,3 @@ positionedIconButton = mkView "IconButton" $ \(props, position1) ->
 
 positionedIconButton_ :: (IconButtonProps, Int) -> ReactElementM eventHandler ()
 positionedIconButton_ !props = view_ positionedIconButton "positionedIconButton_" props
-
-
-toClasses :: [String] -> String
-toClasses = unwords . compact
-  where
-    compact :: [String] -> [String]
-    compact = filter $ not . null

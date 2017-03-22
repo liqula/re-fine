@@ -217,12 +217,3 @@ spec = do
       coreWrapper <- shallow (positionedIconButton_ (theProps, 377)) >>= (`find` StringSelector "IconButtonWithAlignment")
                   >>= shallowChild >>= (`find` StringSelector "IconButtonWithAlignmentCore") >>= shallowChild
       lengthOfIO (find coreWrapper (StringSelector ".the-block-name--align-right")) `shouldReturn` (0 :: Int)
-
-
-  describe "toClasses" $ do
-    it "turns one class name into a string containing that class name" $ do
-      toClasses ["single-class-name"] `shouldBe` "single-class-name"
-    it "intersperses multiple class names with blanks" $ do
-      toClasses ["class-name-1", "class-name-2"] `shouldBe` "class-name-1 class-name-2"
-    it "ignores empty strings" $ do
-      toClasses ["", "class-name-1", "", "class-name-2", ""] `shouldBe` "class-name-1 class-name-2"

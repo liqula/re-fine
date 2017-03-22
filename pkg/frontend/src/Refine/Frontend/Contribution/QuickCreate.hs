@@ -83,7 +83,7 @@ quickCreateSelectionPos range offsetFromTop =
     in if useIdealCenter then idealCenter else edgePosition
 
 data QuickCreateProps = QuickCreateProps
-  { _quickCreateContributionkind :: String -- TODO use the proper data type here
+  { _quickCreateContributionkind :: String  -- FIXME: use the proper data type here (or, more likely, get rid of this field.)
   , _quickCreateRange            :: RS.Selection
   , _quickCreateOffset           :: SC.ScreenState
   , _quickCreateInfo             :: RS.ToolbarExtensionStatus

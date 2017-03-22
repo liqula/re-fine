@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings     #-}
+{-# LANGUAGE FlexibleContexts      #-}
 
 module Refine.Frontend.Util
 where
@@ -14,3 +15,6 @@ classNamesAny :: [(ST, Bool)] -> PropertyOrHandler handler
 classNamesAny xs = "className" @= ST.unwords names
   where
     names = nub $ fst <$> filter snd xs
+
+toClasses :: [String] -> String
+toClasses = cs . unwords . filter (not . null) . fmap cs
