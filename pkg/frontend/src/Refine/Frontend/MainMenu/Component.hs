@@ -49,7 +49,8 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
         div_ ["className" $= "c-mainmenu-content__header"] $ do
             iconButton_ IconButtonProps
-              { _iconButtonPropsIconProps = IconProps
+              { _iconButtonPropsListKey = "login"
+              , _iconButtonPropsIconProps = IconProps
                   { _iconPropsBlockName = "c-mainmenu-content"
                   , _iconPropsHighlight = menuTab == MainMenuLogin
                   , _iconPropsDesc      = ("icon-User", "dark")
@@ -67,7 +68,8 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               }
 
             iconButton_ IconButtonProps
-              { _iconButtonPropsIconProps = IconProps
+              { _iconButtonPropsListKey = "register"
+              , _iconButtonPropsIconProps = IconProps
                   { _iconPropsBlockName = "c-mainmenu-content"
                   , _iconPropsHighlight = menuTab == MainMenuRegistration
                   , _iconPropsDesc      = ("icon-User", "dark")
@@ -85,7 +87,8 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               }
 
             iconButton_ IconButtonProps
-              { _iconButtonPropsIconProps = IconProps
+              { _iconButtonPropsListKey = "...1"
+              , _iconButtonPropsIconProps = IconProps
                   { _iconPropsBlockName = "c-mainmenu-content"
                   , _iconPropsHighlight = False
                   , _iconPropsDesc      = ("icon-Group", "dark")
@@ -104,7 +107,8 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
 
             -- Change language button should not be in the main menu
             iconButton_ IconButtonProps
-              { _iconButtonPropsIconProps = IconProps
+              { _iconButtonPropsListKey = "locale-EN"
+              , _iconButtonPropsIconProps = IconProps
                   { _iconPropsBlockName = "c-mainmenu-content"
                   , _iconPropsHighlight = False
                   , _iconPropsDesc      = ("icon-Group", "dark")
@@ -121,7 +125,8 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
 
             -- Change language button should not be in the main menu
             iconButton_ IconButtonProps
-              { _iconButtonPropsIconProps = IconProps
+              { _iconButtonPropsListKey = "locale-DE"
+              , _iconButtonPropsIconProps = IconProps
                   { _iconPropsBlockName = "c-mainmenu-content"
                   , _iconPropsHighlight = False
                   , _iconPropsDesc      = ("icon-Group", "dark")
@@ -138,7 +143,8 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
 
 
             iconButton_ IconButtonProps
-              { _iconButtonPropsIconProps = IconProps
+              { _iconButtonPropsListKey = "help"
+              , _iconButtonPropsIconProps = IconProps
                   { _iconPropsBlockName = "c-mainmenu-content"
                   , _iconPropsHighlight = False
                   , _iconPropsDesc      = ("icon-Help", "dark")
@@ -158,7 +164,8 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
             userLoginLogoutButton_ currentUser
 
             iconButton_ IconButtonProps
-              { _iconButtonPropsIconProps = IconProps
+              { _iconButtonPropsListKey = "close"
+              , _iconButtonPropsIconProps = IconProps
                   { _iconPropsBlockName = "c-mainmenu-header"
                   , _iconPropsHighlight = True
                   , _iconPropsDesc      = ("icon-Close", "dark")

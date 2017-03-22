@@ -42,7 +42,8 @@ userLoginLogoutButton_ !currentUser = view_ userLoginLogoutButton "userLoginLogo
 
 loginLogoutProps :: IconButtonProps
 loginLogoutProps = IconButtonProps
-  { _iconButtonPropsIconProps = IconProps
+  { _iconButtonPropsListKey = "key"
+  , _iconButtonPropsIconProps = IconProps
      { _iconPropsBlockName = "c-mainmenu-content"
      , _iconPropsHighlight = False
      , _iconPropsDesc      = ("icon-Exit", "dark")

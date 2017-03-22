@@ -76,28 +76,28 @@ spec = do
     it "has the data content type passed to it" $ do
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
-          (IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []) [])
+          (IconButtonProps "key" (iconProps M) element module1 ctype label1 False (\_ -> []) [])
           False Nothing)
       is wrapper (PropertySelector [Prop "data-content-type" ("the-content-type" :: String)]) `shouldReturn` True
 
     it "renders the block name with the button element" $ do
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
-          (IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []) [])
+          (IconButtonProps "key" (iconProps M) element module1 ctype label1 False (\_ -> []) [])
           False Nothing)
       is wrapper (StringSelector ".the-block-name__button") `shouldReturn` True
 
     it "renders the block__element class as passed to it" $ do
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
-          (IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []) [])
+          (IconButtonProps "key" (iconProps M) element module1 ctype label1 False (\_ -> []) [])
           False Nothing)
       is wrapper (StringSelector ".the-block-name__the-element-name") `shouldReturn` True
 
     it "renders the block__element--module class as passed to it" $ do
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
-          (IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []) [])
+          (IconButtonProps "key" (iconProps M) element module1 ctype label1 False (\_ -> []) [])
           False Nothing)
       is wrapper (StringSelector ".the-block-name__the-element-name--the-module-name") `shouldReturn` True
 
@@ -105,7 +105,7 @@ spec = do
       let rightAligned1 = True
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
-          (IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []) [])
+          (IconButtonProps "key" (iconProps M) element module1 ctype label1 False (\_ -> []) [])
           rightAligned1 Nothing)
       is wrapper (StringSelector ".the-block-name--align-right") `shouldReturn` True
 
@@ -113,7 +113,7 @@ spec = do
       let rightAligned1 = False
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
-          (IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []) [])
+          (IconButtonProps "key" (iconProps M) element module1 ctype label1 False (\_ -> []) [])
           rightAligned1 Nothing)
       is wrapper (StringSelector ".the-block-name--align-right") `shouldReturn` False
 
@@ -121,7 +121,7 @@ spec = do
       let position1 = Just 101
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
-          (IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []) [])
+          (IconButtonProps "key" (iconProps M) element module1 ctype label1 False (\_ -> []) [])
           False position1)
       is wrapper (PropertySelector [Prop "style" [Style "top" (101 :: Int)]]) `shouldReturn` True
 
@@ -129,21 +129,21 @@ spec = do
       let position1 = Nothing
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
-          (IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []) [])
+          (IconButtonProps "key" (iconProps M) element module1 ctype label1 False (\_ -> []) [])
           False position1)
       is wrapper (PropertySelector [Prop "style" ([] :: [Style])]) `shouldReturn` True
 
     it "renders an Icon" $ do
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
-          (IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []) [])
+          (IconButtonProps "key" (iconProps M) element module1 ctype label1 False (\_ -> []) [])
           False Nothing)
       lengthOfIO (find wrapper (StringSelector "Icon")) `shouldReturn` (1 :: Int)
 
     it "has a span that has the block name with the button-label module" $ do
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
-          (IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []) [])
+          (IconButtonProps "key" (iconProps M) element module1 ctype label1 False (\_ -> []) [])
           False Nothing)
       span1 <- find wrapper (StringSelector "span")
       is span1 (StringSelector ".the-block-name__button-label") `shouldReturn` True
@@ -152,7 +152,7 @@ spec = do
       let disabled1 = False
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
-          (IconButtonProps (iconProps M) element module1 ctype label1 disabled1 (\_ -> []) [])
+          (IconButtonProps "key" (iconProps M) element module1 ctype label1 disabled1 (\_ -> []) [])
           False Nothing)
       is wrapper (PropertySelector [Prop "style" [Style "cursor" ("pointer" :: String)]]) `shouldReturn` True
 
@@ -160,7 +160,7 @@ spec = do
       let disabled1 = True
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
-          (IconButtonProps (iconProps M) element module1 ctype label1 disabled1 (\_ -> []) [])
+          (IconButtonProps "key" (iconProps M) element module1 ctype label1 disabled1 (\_ -> []) [])
           False Nothing)
       span1 <- find wrapper (StringSelector "span")
       is span1 (PropertySelector [Prop "style" [Style "color" Color.disabledText]]) `shouldReturn` True
@@ -168,7 +168,7 @@ spec = do
     it "displays the label as passed to it" $ do
       wrapper <- shallow $ iconButtonWithAlignmentCore_
         (IconButtonWithAlignmentProps
-          (IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []) [])
+          (IconButtonProps "key" (iconProps M) element module1 ctype label1 False (\_ -> []) [])
           False Nothing)
       span1 <- find wrapper (StringSelector "span")
       text span1 `shouldReturn` "the-label"
@@ -192,21 +192,21 @@ spec = do
       pendingWith "We have temporarily removed hammer from the implementation"
       wrapper <- shallow $ iconButtonWithAlignment_
         (IconButtonWithAlignmentProps
-          (IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []) [])
+          (IconButtonProps "key" (iconProps M) element module1 ctype label1 False (\_ -> []) [])
           False Nothing)
       is wrapper (StringSelector "Hammer") `shouldReturn` True
 
     it "renders the icon button core component" $ do
       wrapper <- shallow $ iconButtonWithAlignment_
         (IconButtonWithAlignmentProps
-          (IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []) [])
+          (IconButtonProps "key" (iconProps M) element module1 ctype label1 False (\_ -> []) [])
           False Nothing)
       lengthOfIO (find wrapper (StringSelector "IconButtonWithAlignmentCore")) `shouldReturn` (1 :: Int)
 
 
   describe "positionedIconButton_ component" $ do
 
-    let theProps = IconButtonProps (iconProps M) element module1 ctype label1 False (\_ -> []) []
+    let theProps = IconButtonProps "key" (iconProps M) element module1 ctype label1 False (\_ -> []) []
 
     it "always renders the position that is passed to it" $ do
       coreWrapper <- shallow (positionedIconButton_ (theProps, 377)) >>= (`find` StringSelector "IconButtonWithAlignment")

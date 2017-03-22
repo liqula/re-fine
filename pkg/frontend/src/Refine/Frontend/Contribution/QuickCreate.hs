@@ -45,7 +45,7 @@ quickCreate = mkView "QuickCreateButton" $ \(QuickCreateProps createType current
         RS.RangeSelected range offsetFromTop ->
             let offset = quickCreateOffset range offsetFromTop screenState
             in positionedIconButton_
-              ( IconButtonProps
+              ( IconButtonProps "key"
                   (IconProps ("o-add-" <> createType) True ("icon-New_Comment", "bright") XXL)
                   ""
                   ""

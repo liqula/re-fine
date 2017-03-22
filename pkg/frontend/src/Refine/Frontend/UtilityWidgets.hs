@@ -49,6 +49,9 @@ import           Refine.Prelude ()
 -- TODO import           Refine.Frontend.ThirdPartyViews (hammer_)
 
 
+type ReactListKey = JSString  -- do not move this to Frontend.Types, importing this here creates a cycle.
+
+
 data IconSize
     = S
     | M
@@ -71,7 +74,8 @@ makeLenses ''IconProps
 type ClickHandler = Event -> [SomeStoreAction]
 
 data IconButtonProps = IconButtonProps
-  { _iconButtonPropsIconProps    :: IconProps
+  { _iconButtonPropsListKey      :: ReactListKey
+  , _iconButtonPropsIconProps    :: IconProps
   , _iconButtonPropsElementName  :: String
   , _iconButtonPropsModuleName   :: String
   , _iconButtonPropsContentType  :: JSString

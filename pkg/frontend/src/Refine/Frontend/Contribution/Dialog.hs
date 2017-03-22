@@ -305,7 +305,7 @@ commentInput = mkStatefulView "CommentInput" (RS.CommentInputState "") $ \curSta
           span_ ["className" $= "bold"] "Select a type for your comment:"
 
       div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do  -- RENAME: annotation => comment
-        iconButton_ (IconButtonProps
+        iconButton_ (IconButtonProps "note"
                       (IconProps "c-vdoc-overlay-content"
                                  False
                                  ("icon-Note", if props ^. cipCategory == Just RS.Note then "RO" else "dark")
@@ -321,7 +321,7 @@ commentInput = mkStatefulView "CommentInput" (RS.CommentInputState "") $ \curSta
 
         span_ ["style" @= [Style "marginRight" ("1rem" :: String)]] ""
 
-        iconButton_ (IconButtonProps
+        iconButton_ (IconButtonProps "discussion"
                       (IconProps "c-vdoc-overlay-content"
                              False
                              ("icon-Discussion", if props ^. cipCategory == Just RS.Discussion then "RO" else "dark")
@@ -362,7 +362,7 @@ commentInput = mkStatefulView "CommentInput" (RS.CommentInputState "") $ \curSta
           span_ ["className" $= "bold"] "finish"
 
       iconButton_
-        (IconButtonProps
+        (IconButtonProps "key"
           (IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") L)
           "submit"
           ""

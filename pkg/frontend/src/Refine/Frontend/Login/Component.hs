@@ -128,7 +128,7 @@ login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState () ->
       inputField "login-password" "password" "Password" loginFormPassword >> br_ []
 
       iconButton_
-        (IconButtonProps
+        (IconButtonProps "key"
           (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
           "submit"
           ""
@@ -156,7 +156,7 @@ logout = mkView "Logout" $ \() ->
           , "action" $= "POST" ] $ do
 
       iconButton_
-        (IconButtonProps
+        (IconButtonProps "key"
           (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
           "submit"
           ""
@@ -195,7 +195,7 @@ registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "
       "I agree with the terms of use." >> br_ []
 
       iconButton_
-        (IconButtonProps
+        (IconButtonProps "key"
           (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
           "submit"
           ""

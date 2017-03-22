@@ -38,7 +38,7 @@ editToolbar = mkView "EditToolbar" $ \() ->
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          iconButton_ $ IconButtonProps
+          iconButton_ $ IconButtonProps "h1"
                       (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
                       "btn-index"
                       ""
@@ -47,7 +47,7 @@ editToolbar = mkView "EditToolbar" $ \() ->
                       False
                       (\_ -> dispatch ShowNotImplementedYet)
                       []
-          iconButton_ $ IconButtonProps
+          iconButton_ $ IconButtonProps "h2"
                       (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
                       "btn-index"
                       ""
@@ -56,7 +56,7 @@ editToolbar = mkView "EditToolbar" $ \() ->
                       False
                       (\_ -> dispatch ShowNotImplementedYet)
                       []
-          iconButton_ $ IconButtonProps
+          iconButton_ $ IconButtonProps "h3"
                       (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
                       "btn-index"
                       ""
@@ -68,7 +68,7 @@ editToolbar = mkView "EditToolbar" $ \() ->
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          iconButton_ $ IconButtonProps
+          iconButton_ $ IconButtonProps "bold"
                       (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
                       "btn-index"
                       ""
@@ -77,7 +77,7 @@ editToolbar = mkView "EditToolbar" $ \() ->
                       False
                       (\_ -> dispatch ShowNotImplementedYet)
                       []
-          iconButton_ $ IconButtonProps
+          iconButton_ $ IconButtonProps "italic"
                       (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
                       "btn-index"
                       ""
@@ -89,7 +89,7 @@ editToolbar = mkView "EditToolbar" $ \() ->
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          iconButton_ $ IconButtonProps
+          iconButton_ $ IconButtonProps "bullets"
                       (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
                       "btn-index"
                       ""
@@ -98,7 +98,7 @@ editToolbar = mkView "EditToolbar" $ \() ->
                       False
                       (\_ -> dispatch ShowNotImplementedYet)
                       []
-          iconButton_ $ IconButtonProps
+          iconButton_ $ IconButtonProps "numbers"
                       (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
                       "btn-index"
                       ""
@@ -111,7 +111,7 @@ editToolbar = mkView "EditToolbar" $ \() ->
 
           iconButtonWithAlignment_ $
             IconButtonWithAlignmentProps
-              (IconButtonProps
+              (IconButtonProps "key"
                 (IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXL)
                 "btn-index"
                 ""

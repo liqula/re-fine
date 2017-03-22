@@ -37,7 +37,7 @@ toolbar = mkView "Toolbar" $ \() ->
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
         div_ ["className" $= "c-vdoc-toolbar__content"] $ do
-          iconButton_ $ IconButtonProps
+          iconButton_ $ IconButtonProps "index"
                       (IconProps "c-vdoc-toolbar" True ("icon-Index_desktop", "dark") XXL)
                       "btn-index"
                       ""
@@ -49,7 +49,7 @@ toolbar = mkView "Toolbar" $ \() ->
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          iconButton_ $ IconButtonProps
+          iconButton_ $ IconButtonProps "new-comment"
                       (IconProps "c-vdoc-toolbar" True ("icon-New_Comment", "dark") XXL)
                       "btn-add-annotation"  -- RENAME: annotation => comment
                       ""
@@ -59,7 +59,7 @@ toolbar = mkView "Toolbar" $ \() ->
                       (\e -> stopPropagation e : RS.dispatch (RS.HeaderAction RS.ToggleCommentToolbarExtension))
                       []
 
-          iconButton_ $ IconButtonProps
+          iconButton_ $ IconButtonProps "new-edit"
                       (IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXL)
                       "btn-add-modification"  -- (RENAME: Edit)
                       ""
@@ -72,7 +72,7 @@ toolbar = mkView "Toolbar" $ \() ->
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
           -- in HTML, these two icons are divs:
-          iconButton_ $ IconButtonProps
+          iconButton_ $ IconButtonProps "all-comments"
                       (IconProps "c-vdoc-toolbar" False ("icon-Comment", "dark") XXL)
                       "all-annotations"  -- RENAME: annotation => comment
                       ""
@@ -82,7 +82,7 @@ toolbar = mkView "Toolbar" $ \() ->
                       (\_ -> RS.dispatch RS.ShowNotImplementedYet)
                       []
 
-          iconButton_ $ IconButtonProps
+          iconButton_ $ IconButtonProps "all-edits"
                       -- (IconProps "c-vdoc-toolbar" False ("icon-Edit", "dark") XXL)
                       (IconProps "c-vdoc-toolbar" True ("icon-Edit_view", "dark") XXL)
                       "all-modifications"  -- (RENAME: Edit)
@@ -95,7 +95,7 @@ toolbar = mkView "Toolbar" $ \() ->
 
           iconButtonWithAlignment_ $
             IconButtonWithAlignmentProps
-              (IconButtonProps
+              (IconButtonProps "key"
                 (IconProps "c-vdoc-toolbar" True ("icon-Reader", "bright") XXL)
                 "btn-read-mode"
                 ""
@@ -120,7 +120,7 @@ commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
   (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithSelection) -> frame $ do
     div_ "Please select the text you would like to comment on"
   (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithButtons) -> frame $ do
-    iconButton_ $ IconButtonProps
+    iconButton_ $ IconButtonProps "comment-range"
                 (IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L)
                 "btn-new-ann-text"
                 ""
@@ -129,7 +129,7 @@ commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
                 False
                 (\e -> stopPropagation e : RS.dispatch (RS.HeaderAction RS.StartTextSpecificComment))
                 []
-    iconButton_ $ IconButtonProps
+    iconButton_ $ IconButtonProps "comment-all"
                 (IconProps "c-vdoc-toolbar-extension" True ("icon-Index_desktop", "dark") L)
                 "btn-new-ann-doc" -- RENAME: ann => comment
                 ""
@@ -175,7 +175,7 @@ editToolbarExtension = mkView "EditToolbarExtension" $ \case
   where
     editButton :: EditKind -> ReactElementM eventHandler ()
     editButton kind =
-      iconButton_ $ IconButtonProps
+      iconButton_ $ IconButtonProps (cs (show kind))
                   (IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") L)
                   "btn-new-mod-text" -- RENAME: mod => edit
                   ""
