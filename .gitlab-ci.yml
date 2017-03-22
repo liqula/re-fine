@@ -7,10 +7,7 @@ build:
 deploy_staging:
   stage: deploy
   script:
-    - wget -O - http://zb1:3001/
-        # (curl only gives you the choice between no output and correct exit code (-q) and vice versa.)
+    - curl -q -m $[2*60*60] http://zb1:3001/
   environment:
     name: staging
     url: https://demo8.aula.de/
-  only:
-    - master
