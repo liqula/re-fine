@@ -60,6 +60,9 @@ data IconSize
     | XXL
     deriving Show
 
+renderIconSize :: IconSize -> JSString
+renderIconSize = ("iconsize-" <>) . cs . fmap toLower . show
+
 type IconDescription = (String, String)
 
 data IconProps = IconProps
@@ -107,7 +110,7 @@ icon = mkStatefulView "Icon" False $ \mouseIsOver props -> do
                          [ (props ^. iconPropsBlockName) <> "__icon"
                          , if props ^. iconPropsHighlight then "o-icon-highlight" else ""
                          , props ^. iconPropsDesc . _1 <> "_" <> highlightStyle
-                         , "iconsize-" <> map toLower (show (props ^. iconPropsSize))
+                         , cs (renderIconSize (props ^. iconPropsSize))
                          ]
        , onMouseEnter $ \_ _ _ -> ([], Just True)
        , onMouseLeave $ \_ _ _ -> ([], Just False)
