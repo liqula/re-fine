@@ -11,3 +11,5 @@ deploy_staging:
   environment:
     name: staging
     url: https://demo8.aula.de/
+  only:
+    - master
