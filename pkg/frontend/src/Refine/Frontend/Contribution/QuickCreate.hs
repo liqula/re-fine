@@ -37,7 +37,7 @@ import           Refine.Frontend.UtilityWidgets
 import           Refine.Prelude()
 
 quickCreate :: View '[QuickCreateProps]
-quickCreate = mkView "QuickCreateButton" $ \(QuickCreateProps createType currentSelection screenState displayInfo) ->
+quickCreate = mkView "QuickCreateButton" $ \(QuickCreateProps (cs -> createType) currentSelection screenState displayInfo) ->
   if displayInfo == RS.CommentToolbarExtensionWithSelection then mempty -- do not display the buttons when selection was activated via toolbar
   else
     case currentSelection of
