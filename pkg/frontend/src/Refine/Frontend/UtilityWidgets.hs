@@ -165,10 +165,12 @@ iconButtonPropsToClasses props =
     alignmentClass blockName1 rightAligned1 = if rightAligned1 then blockName1 <> "--align-right" else ""
 
 iconButtonPropsToStyles :: IconButtonWithAlignmentProps -> [Style]
-iconButtonPropsToStyles props = (case props ^. iconButtonWithAlPosition of
-                               Nothing  -> []
-                               Just pos -> [Style "top" pos]
-                    <> [Style "cursor" ("pointer" :: String) | not (props ^. iconButtonWithAlIconButtonProps . iconButtonPropsDisabled)])
+iconButtonPropsToStyles props = alpos <> curpoint
+  where
+    alpos = case props ^. iconButtonWithAlPosition of
+              Nothing  -> []
+              Just pos -> [Style "top" pos]
+    curpoint = [Style "cursor" ("pointer" :: String) | not (props ^. iconButtonWithAlIconButtonProps . iconButtonPropsDisabled)]
 
 iconButtonWithAlignmentCore_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
 iconButtonWithAlignmentCore_ !props = view_ iconButtonWithAlignmentCore "iconButtonWithAlignmentCore_" props

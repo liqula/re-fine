@@ -36,7 +36,7 @@ import           React.Flux
 
 import Refine.Common.Types.Translation (TKey)
 
-{-# ANN module ("HLint: Use cs" :: String) #-}
+{-# ANN module ("HLint: ignore Use cs" :: String) #-}
 
 
 {- FUTUREWORK: we used to have this:
@@ -100,7 +100,7 @@ instance ConvertibleStrings JSS.JSString (ReactElementM handler ()) where
 
 -- | The return type of the result monad type needs to be fixed to '()', because usually on the call
 -- site there is no reason for the type checker to assume that.
-elemCS :: ConvertibleStrings s (ReactElementM handler ()) => s -> (ReactElementM handler ())
+elemCS :: ConvertibleStrings s (ReactElementM handler ()) => s -> ReactElementM handler ()
 elemCS = cs
 
 -- | this is a sub-type of TranslationsCS that makes the type checker not trip over the constraints.
