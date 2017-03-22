@@ -31,7 +31,6 @@ module Refine.Frontend.Views
 import           Control.Lens ((^.), (^?), to)
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
-import           Data.String.Conversions
 import qualified Data.Tree as DT
 import           React.Flux
 
@@ -40,6 +39,7 @@ import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.QuickCreate
 import           Refine.Frontend.Contribution.Types as RS
+import           Refine.Frontend.CS
 import           Refine.Frontend.Document.Types (DocumentProps(..))
 import           Refine.Frontend.Document.Document (document_)
 import           Refine.Frontend.Header.Heading ( mainHeader_ )
@@ -85,7 +85,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           showNote_ $ showNoteProps (vdoc ^. compositeVDocNotes) rs
           showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocDiscussions) rs
           addComment_
-            (rs ^. RS.gsTranslations . unNoJSONRep . to (cs .))
+            (rs ^. RS.gsTranslations . unNoJSONRep . to (elemCS .))
             $ AddCommentProps (rs ^. RS.gsContributionState . RS.csCommentEditorIsVisible)
                               (rs ^. RS.gsContributionState . RS.csCommentCategory)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)

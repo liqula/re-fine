@@ -35,7 +35,7 @@ import Data.JSString ()  -- instance IsString JSString
 import Data.String.Conversions (ConvertibleStrings, cs)
 import GHCJS.Types (JSVal, JSString)
 
-import Refine.Prelude ()  -- instance IsString s => ConvertibleStrings LBS s
+import Refine.Frontend.CS ()
 
 
 consoleLogJSStringM :: (Monad m) => JSString -> JSString -> m ()

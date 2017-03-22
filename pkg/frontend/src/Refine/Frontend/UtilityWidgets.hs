@@ -45,7 +45,7 @@ import           React.Flux
 import           Refine.Frontend.Util
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Style
-import           Refine.Prelude ()
+import           Refine.Frontend.CS ()
 -- TODO import           Refine.Frontend.ThirdPartyViews (hammer_)
 
 
@@ -110,7 +110,7 @@ icon = mkStatefulView "Icon" False $ \mouseIsOver props -> do
                          [ (props ^. iconPropsBlockName) <> "__icon"
                          , if props ^. iconPropsHighlight then "o-icon-highlight" else ""
                          , props ^. iconPropsDesc . _1 <> "_" <> highlightStyle
-                         , cs (renderIconSize (props ^. iconPropsSize))
+                         , renderIconSize (props ^. iconPropsSize)
                          ]
        , onMouseEnter $ \_ _ _ -> ([], Just True)
        , onMouseLeave $ \_ _ _ -> ([], Just False)
@@ -143,7 +143,7 @@ iconButtonWithAlignmentCore = mkView "IconButtonWithAlignmentCore" $ \props -> d
           ] <> [onClick $ const . (bprops ^. iconButtonPropsClickHandler) | not (bprops ^. iconButtonPropsDisabled)]
           ) $ do
         icon_ iprops
-        span_ ["className" $= cs (iprops ^. iconPropsBlockName <> "__button-label")
+        span_ ["className" $= (iprops ^. iconPropsBlockName <> "__button-label")
               , "style" @= [Style "color" Color.disabledText | bprops ^. iconButtonPropsDisabled]
               ] $
             elemJSString (bprops ^. iconButtonPropsLabel)

@@ -16,6 +16,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
@@ -25,7 +26,7 @@ module Refine.Frontend.Login.Component where
 import           Control.Lens ((&), (.~), (^.), ASetter, to)
 import           Data.JSString (JSString)
 import qualified Data.Text as DT
-import           Data.String.Conversions (ST, cs)
+import           Data.String.Conversions (ST)
 import           GHC.Generics (Generic)
 import           GHCJS.Marshal (FromJSVal)
 import           React.Flux
@@ -37,6 +38,7 @@ import           Refine.Frontend.Style
 import qualified Refine.Frontend.Types as RS
 import           Refine.Frontend.UtilityWidgets
 import           Refine.Prelude.TH (makeRefineType)
+import           Refine.Frontend.CS (elemCS)
 
 
 -- * Helper
@@ -122,7 +124,8 @@ login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState () ->
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 
-      mapM_ (p_ . cs) (curState ^. loginFormErrors)
+      mapM_ (p_ . elemCS)
+        (curState ^. loginFormErrors)
 
       inputField "login-username" "text"     "Username" loginFormUsername >> br_ []
       inputField "login-password" "password" "Password" loginFormPassword >> br_ []
@@ -184,7 +187,8 @@ registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 
-      mapM_ (p_ . cs) (curState ^. registrationFormErrors)
+      mapM_ (p_ . elemCS)
+        (curState ^. registrationFormErrors)
 
       inputField "registration-username"  "text"     "Username"    registrationFormUsername >> br_ []
       inputField "registration-email1"    "email"    "Email"       registrationFormEmail1   >> br_ []

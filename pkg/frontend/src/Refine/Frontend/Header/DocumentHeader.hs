@@ -27,6 +27,7 @@ import           Data.Text (split)
 import           React.Flux
 
 import           Refine.Common.Types
+import           Refine.Frontend.CS ()
 
 
 data DocumentHeaderProps = DocumentHeaderProps
