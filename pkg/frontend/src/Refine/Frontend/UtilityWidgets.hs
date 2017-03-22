@@ -137,7 +137,8 @@ iconButtonWithAlignmentCore :: View '[IconButtonWithAlignmentProps]
 iconButtonWithAlignmentCore = mkView "IconButtonWithAlignmentCore" $ \props -> do
     let bprops = props ^. iconButtonWithAlIconButtonProps
     let iprops = bprops ^. iconButtonPropsIconProps
-    div_ ([ "data-content-type" $= (bprops ^. iconButtonPropsContentType)
+    div_ ([ "key" $= (bprops ^. iconButtonPropsListKey)  -- TODO: append this to the first argument of 'mkView' instead!
+          , "data-content-type" $= (bprops ^. iconButtonPropsContentType)
           , "className" $= toClasses (iconButtonPropsToClasses props)
           , "style" @= iconButtonPropsToStyles props
           ] <> [onClick $ const . (bprops ^. iconButtonPropsClickHandler) | not (bprops ^. iconButtonPropsDisabled)]
