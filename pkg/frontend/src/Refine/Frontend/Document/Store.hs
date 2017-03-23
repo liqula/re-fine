@@ -56,6 +56,7 @@ documentStateUpdate _ _ state
   = state
 
 
+{-# NOINLINE createEditorState #-}
 createEditorState :: EditKind -> VDocVersion 'HTMLWithMarks -> EditorState
 createEditorState kind (VDocVersion vers) = unsafePerformIO $ do
   let content = convertFromHtml $ tokensFromForest vers

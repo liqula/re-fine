@@ -46,6 +46,7 @@ import           GHCJS.Types (JSString, JSVal)
 import           Text.HTML.Parser
 
 import qualified Refine.Common.VDoc.Draft as Draft
+import           Refine.Frontend.CS ()
 
 
 -- * https://draftjs.org/docs/api-reference-data-conversion.html

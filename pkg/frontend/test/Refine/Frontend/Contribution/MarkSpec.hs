@@ -16,6 +16,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
@@ -26,7 +27,7 @@ module Refine.Frontend.Contribution.MarkSpec where
 import           Control.Lens((^.), (&), (.~), (%~))
 import           Data.Int (Int64)
 import           Data.Monoid ((<>))
-import           React.Flux (getStoreData, ($=))
+import           React.Flux (registerInitialStore, readStoreData, ($=))
 import           Test.Hspec
 import           Text.HTML.Parser
 
@@ -34,7 +35,6 @@ import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.VDoc
-import           Refine.Frontend.Store (refineStore)
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Types
 
@@ -107,16 +107,17 @@ spec = do
         is wrapper (StringSelector ".o-mark--hover") `shouldReturn` True
 
     it "inserts the id of the current mark into the state on mouseEnter and removes it again on mouseLeave" $ do
+      registerInitialStore emptyGlobalState
       wrapper <- mount $ rfMark_ theProps mempty
       -- init the state:
-      globalState0 <- getStoreData refineStore
+      globalState0 <- readStoreData @GlobalState
       let _ = globalState0 & gsContributionState . csHighlightedMarkAndBubble %~ \_ -> Nothing
       -- simulate events:
       _ <- simulate wrapper MouseEnter
-      globalState1 <- getStoreData refineStore
+      globalState1 <- readStoreData @GlobalState
       globalState1 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Just (cnid 77)
       _ <- simulate wrapper MouseLeave
-      globalState2 <- getStoreData refineStore
+      globalState2 <- readStoreData @GlobalState
       globalState2 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Nothing
 
   describe "componentDidMount" $ do

@@ -21,34 +21,44 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.UtilityWidgets
-( IconSize(..)
-, IconDescription
-, IconProps(..)
-, ClickHandler
-, IconButtonProps(..)
-, IconButtonWithAlignmentProps(IconButtonWithAlignmentProps)
+  ( IconProps(..), icon_
+  , iconPropsBlockName
+  , iconPropsHighlight
+  , iconPropsDesc
+  , iconPropsSize
 
-, icon_
-, iconButtonWithAlignment_
-, iconButtonWithAlignmentCore_
-, iconButton_
-, positionedIconButton_
+  , IconButtonProps(..), iconButton_
+  , iconButtonPropsListKey
+  , iconButtonPropsIconProps
+  , iconButtonPropsElementName
+  , iconButtonPropsModuleName
+  , iconButtonPropsLabel
+  , iconButtonPropsDisabled
+  , iconButtonPropsPosition
+  , iconButtonPropsAlignRight
+  , iconButtonPropsClickHandler
+  , iconButtonPropsExtraClasses
 
-, toClasses
-) where
+  , IconSize(..)
+  , IconDescription
+  , ClickHandler
+  ) where
 
 import           Control.Lens (makeLenses, (^.), _1, _2)
 import           Data.Char (toLower)
+import           Data.Default (Default(def))
 import           Data.Monoid ((<>))
 import           Data.String.Conversions (cs)
 import           GHCJS.Types (JSString)
 import           React.Flux
 
 import qualified Refine.Frontend.Colors as Color
+import           Refine.Frontend.CS ()
 import           Refine.Frontend.Style
-import           Refine.Prelude()
--- TODO import           Refine.Frontend.ThirdPartyViews (hammer_)
+import           Refine.Frontend.Util
 
+
+type ReactListKey = JSString  -- do not move this to Frontend.Types, importing this here creates a cycle.
 
 data IconSize
     = S
@@ -58,127 +68,127 @@ data IconSize
     | XXL
     deriving Show
 
-type IconDescription = (String, String)
+instance CssClass IconSize where
+  showCssClass = ("iconsize-" <>) . cs . fmap toLower . show
+
+
+-- * icon
 
 data IconProps = IconProps
-  { _iconPropsBlockName :: String
+  { _iconPropsBlockName :: JSString
   , _iconPropsHighlight :: Bool
   , _iconPropsDesc      :: IconDescription
   , _iconPropsSize      :: IconSize
   }
 
+type IconDescription = (JSString, JSString)
+
 makeLenses ''IconProps
 
-type ClickHandler = Event -> [SomeStoreAction]
+instance Default IconProps where
+  def = IconProps
+    { _iconPropsBlockName = ""
+    , _iconPropsHighlight = False
+    , _iconPropsDesc      = ("", "")
+    , _iconPropsSize      = L
+    }
 
-data IconButtonProps = IconButtonProps
-  { _iconButtonPropsIconProps    :: IconProps
-  , _iconButtonPropsElementName  :: String
-  , _iconButtonPropsModuleName   :: String
-  , _iconButtonPropsContentType  :: JSString
-  , _iconButtonPropsLabel        :: JSString
-  , _iconButtonPropsDisabled     :: Bool
-  , _iconButtonPropsClickHandler :: ClickHandler
-  , _iconButtonPropsExtraClasses :: [String]
-  }
-
-makeLenses ''IconButtonProps
-
-data IconButtonWithAlignmentProps = IconButtonWithAlignmentProps
-  { _iconButtonWithAlIconButtonProps :: IconButtonProps
-  , _iconButtonWithAlRightAligned    :: Bool
-  , _iconButtonWithAlPosition        :: Maybe Int
-  }
-
-makeLenses ''IconButtonWithAlignmentProps
-
-
-icon :: ReactView IconProps
-icon = defineStatefulView "Icon" False $ \mouseIsOver props -> do
-  -- TODO unify the naming schemas of the classes of the different icons!
+icon :: View '[IconProps]
+icon = mkStatefulView "Icon" False $ \mouseIsOver props -> do
   let
     highlightStyle = if mouseIsOver && (props ^. iconPropsHighlight)
                      then "RO"
                      else props ^. iconPropsDesc . _2
-  div_ ["className" $= (cs . toClasses)
+  div_ ["className" $= toClasses
                          [ (props ^. iconPropsBlockName) <> "__icon"
                          , if props ^. iconPropsHighlight then "o-icon-highlight" else ""
                          , props ^. iconPropsDesc . _1 <> "_" <> highlightStyle
-                         , "iconsize-" <> map toLower (show (props ^. iconPropsSize))
+                         , showCssClass (props ^. iconPropsSize)
                          ]
        , onMouseEnter $ \_ _ _ -> ([], Just True)
        , onMouseLeave $ \_ _ _ -> ([], Just False)
        ] mempty
 
 icon_ :: IconProps -> ReactElementM eventHandler ()
-icon_ props = view icon props mempty
+icon_ !props = view_ icon "Icon_" props
 
 
-iconButtonWithAlignment :: ReactView IconButtonWithAlignmentProps
-iconButtonWithAlignment = defineView "IconButtonWithAlignment" $ \props -> do
+-- * icon button
+
+data IconButtonProps = IconButtonProps
+  { _iconButtonPropsListKey      :: ReactListKey  -- (this is not morally part of the props, but it's convenient to keep it here.)
+  , _iconButtonPropsIconProps    :: IconProps
+  , _iconButtonPropsElementName  :: JSString
+  , _iconButtonPropsModuleName   :: JSString
+  , _iconButtonPropsLabel        :: JSString
+  , _iconButtonPropsDisabled     :: Bool  -- TODO: make this 'enabled'
+  , _iconButtonPropsPosition     :: Maybe Int
+  , _iconButtonPropsAlignRight   :: Bool
+  , _iconButtonPropsClickHandler :: ClickHandler
+  , _iconButtonPropsExtraClasses :: [JSString]
+  }
+
+type ClickHandler = Event -> [SomeStoreAction]
+
+makeLenses ''IconButtonProps
+
+instance Default IconButtonProps where
+  def = IconButtonProps
+    { _iconButtonPropsListKey      = ""
+    , _iconButtonPropsIconProps    = def
+    , _iconButtonPropsElementName  = ""
+    , _iconButtonPropsModuleName   = ""
+    , _iconButtonPropsLabel        = ""
+    , _iconButtonPropsDisabled     = False
+    , _iconButtonPropsPosition     = Nothing
+    , _iconButtonPropsAlignRight   = False
+    , _iconButtonPropsClickHandler = \_ -> []
+    , _iconButtonPropsExtraClasses = []
+    }
+
+iconButtonPropsToClasses :: IconButtonProps -> [JSString]
+iconButtonPropsToClasses props =
+  [ iprops ^. iconPropsBlockName <> "__button"
+  , beName  -- for the vdoc-toolbar
+  , bemName -- for the buttons in the overlays
+  ] <> alignmentClass
+    <> props ^. iconButtonPropsExtraClasses
+  where
+    iprops = props ^. iconButtonPropsIconProps
+    beConnector = if props ^. iconButtonPropsElementName == "" then "" else "__"
+    emConnector = if props ^. iconButtonPropsModuleName == "" then "" else "--"
+    beName  = iprops ^. iconPropsBlockName <> beConnector <> props ^. iconButtonPropsElementName
+    bemName = beName <> emConnector <> props ^. iconButtonPropsModuleName
+    alignmentClass = [ iprops ^. iconPropsBlockName <> "--align-right" | props ^. iconButtonPropsAlignRight ]
+
+iconButtonPropsToStyles :: IconButtonProps -> [Style]
+iconButtonPropsToStyles props = alpos <> curpoint
+  where
+    alpos = case props ^. iconButtonPropsPosition of
+              Just pos  -> [Style "top" pos]
+              Nothing   -> []
+    curpoint = [Style "cursor" ("pointer" :: String) | not (props ^. iconButtonPropsDisabled)]
+
 {- TODO we currently ignore touch device handling because there are some issues with
  - browsers emitting tap events on click and we don't know how to handle these properly.
 
+    import Refine.Frontend.ThirdPartyViews (hammer_)
     let bprops = props ^. iconButtonProps
     hammer_ [on "onTap" $ bprops ^. clickHandler | not (bprops ^. disabled)] $ do
 -}
-      iconButtonWithAlignmentCore_ props
 
-iconButtonWithAlignment_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
-iconButtonWithAlignment_ props = view iconButtonWithAlignment props mempty
-
-iconButtonWithAlignmentCore :: ReactView IconButtonWithAlignmentProps
-iconButtonWithAlignmentCore = defineView "IconButtonWithAlignmentCore" $ \props -> do
-    let bprops = props ^. iconButtonWithAlIconButtonProps
-    let iprops = bprops ^. iconButtonPropsIconProps
-    let beConnector = if bprops ^. iconButtonPropsElementName == "" then "" else "__"
-    let emConnector = if bprops ^. iconButtonPropsModuleName == "" then "" else "--"
-    let beName  = iprops ^. iconPropsBlockName <> beConnector <> bprops ^. iconButtonPropsElementName
-    let bemName = beName <> emConnector <> bprops ^. iconButtonPropsModuleName
-    div_ ([ "data-content-type" $= (bprops ^. iconButtonPropsContentType)
-           -- TODO unify the naming schema of the classes for the different buttons!
-          , "className" $= cs (toClasses $ [ iprops ^. iconPropsBlockName <> "__button"
-                                           , beName  -- for the vdoc-toolbar
-                                           , bemName -- for the buttons in the overlays
-                                           , alignmentClass (iprops ^. iconPropsBlockName)
-                                                            (props ^. iconButtonWithAlRightAligned)
-                                           ] <> bprops ^. iconButtonPropsExtraClasses)
-          , "style" @= (case props ^. iconButtonWithAlPosition of
-                               Nothing  -> []
-                               Just pos -> [Style "top" pos]
-                    <> [Style "cursor" ("pointer" :: String) | not (bprops ^. iconButtonPropsDisabled)])
-          ] <> [onClick $ const . (bprops ^. iconButtonPropsClickHandler) | not (bprops ^. iconButtonPropsDisabled)]
+iconButton :: View '[IconButtonProps]
+iconButton = mkView "IconButton" $ \props -> do
+    let iprops = props ^. iconButtonPropsIconProps
+    div_ ([ "className" $= toClasses (iconButtonPropsToClasses props)
+          , "style" @= iconButtonPropsToStyles props
+          ] <> [onClick $ const . (props ^. iconButtonPropsClickHandler) | not (props ^. iconButtonPropsDisabled)]
           ) $ do
         icon_ iprops
-        span_ ["className" $= cs (iprops ^. iconPropsBlockName <> "__button-label")
-              , "style" @= [Style "color" Color.disabledText | bprops ^. iconButtonPropsDisabled]
+        span_ [ "className" $= (iprops ^. iconPropsBlockName <> "__button-label")
+              , "style" @= [Style "color" Color.disabledText | props ^. iconButtonPropsDisabled]
               ] $
-            elemJSString (bprops ^. iconButtonPropsLabel)
-    where
-      alignmentClass blockName1 rightAligned1 = if rightAligned1 then blockName1 <> "--align-right" else ""
-
-iconButtonWithAlignmentCore_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
-iconButtonWithAlignmentCore_ props = view iconButtonWithAlignmentCore props mempty
-
-iconButton :: ReactView IconButtonProps
-iconButton = defineView "IconButton" $ \props ->
-    iconButtonWithAlignment_ $ IconButtonWithAlignmentProps props rightAligned1 Nothing
-    where rightAligned1 = False -- no right alignment in the standard case
+            elemJSString (props ^. iconButtonPropsLabel)
 
 iconButton_ :: IconButtonProps -> ReactElementM eventHandler ()
-iconButton_ props = view iconButton props mempty
-
-positionedIconButton :: ReactView (IconButtonProps, Int)
-positionedIconButton = defineView "IconButton" $ \(props, position1) ->
-    iconButtonWithAlignment_ $ IconButtonWithAlignmentProps props rightAligned1 (Just position1)
-    where rightAligned1 = False -- no right alignment in the standard case
-
-positionedIconButton_ :: IconButtonProps -> Int -> ReactElementM eventHandler ()
-positionedIconButton_ props position1 = view positionedIconButton (props, position1) mempty
-
-
-toClasses :: [String] -> String
-toClasses = unwords . compact
-  where
-    compact :: [String] -> [String]
-    compact = filter $ not . null
+iconButton_ !props = view_ iconButton ("iconButton_" <> props ^. iconButtonPropsListKey) props

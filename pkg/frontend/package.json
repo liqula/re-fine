@@ -11,8 +11,8 @@
     "draft-js-export-html": "0.5.2",
     "google-closure-compiler-js": "20170218.0.0",
     "gridle": "2.0.48",
-    "react": "15.4.1",
-    "react-dom": "15.4.1",
+    "react": "15.4.2",
+    "react-dom": "15.4.2",
     "react-hammerjs": "0.5.0",
     "react-skylight": "0.4.1",
     "react-sticky": "5.0.5"

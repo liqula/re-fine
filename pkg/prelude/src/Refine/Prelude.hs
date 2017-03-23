@@ -65,8 +65,6 @@ import           Data.List (replicate, sortBy)
 #else
 import           Data.List (sortBy)
 #endif
-import           Data.String
-import           Data.String.Conversions
 #if __GLASGOW_HASKELL__ >= 800
 import           Data.Monoid ((<>))
 #endif
@@ -245,9 +243,3 @@ recursion f = go
       Run  y -> go y
       Fail e -> throwError e
       Halt r -> pure r
-
-
-instance {-# OVERLAPPABLE #-} (ConvertibleStrings a String, IsString b)
-  => ConvertibleStrings a b
-  where
-    convertString = fromString . cs

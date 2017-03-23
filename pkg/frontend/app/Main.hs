@@ -1,11 +1,16 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
-import qualified React.Flux  as F
 import React.Flux.Ajax (initAjax)
-import qualified Refine.Frontend.Views as RF
+import React.Flux (registerInitialStore, reactRenderView)
 
--- the first argument of reactRender is the id of the DOM element in index.html that the app will be rendered into
+import Refine.Frontend.Types (emptyGlobalState)
+import Refine.Frontend.Views (refineApp)
+
+-- | the first argument of reactRender is the id of the DOM element in index.html that the app will be rendered into
 main :: IO ()
 main = do
+    registerInitialStore emptyGlobalState
     initAjax
-    F.reactRender "refine" RF.refineApp ()
+    reactRenderView "refine" refineApp

@@ -46,8 +46,8 @@ overlayStyles =
   [ Style "zIndex" (6010 :: Int)
   ]
 
-notImplementedYet :: ReactView Bool
-notImplementedYet = defineView "NotImplementedYet" $ \isVisible ->
+notImplementedYet :: View '[Bool]
+notImplementedYet = mkView "NotImplementedYet" $ \isVisible ->
   div_ [onClick $ \e _ -> stopPropagation e : RS.dispatch RS.HideNotImplementedYet] $ do
     skylight_ ["isVisible" &= isVisible
              , "dialogStyles" @= dialogStyles
@@ -59,4 +59,4 @@ notImplementedYet = defineView "NotImplementedYet" $ \isVisible ->
 
 
 notImplementedYet_ :: Bool -> ReactElementM eventHandler ()
-notImplementedYet_ isVisible = view notImplementedYet isVisible mempty
+notImplementedYet_ !isVisible = view_ notImplementedYet "notImplementedYet_" isVisible

@@ -27,6 +27,7 @@ import           Data.Text (split)
 import           React.Flux
 
 import           Refine.Common.Types
+import           Refine.Frontend.CS ()
 
 
 data DocumentHeaderProps = DocumentHeaderProps
@@ -34,8 +35,8 @@ data DocumentHeaderProps = DocumentHeaderProps
   , _headerAbstract :: Abstract
   }
 
-documentHeader :: ReactView DocumentHeaderProps
-documentHeader = defineView "DocumentHeader" $ \props ->
+documentHeader :: View '[DocumentHeaderProps]
+documentHeader = mkView "DocumentHeader" $ \props ->
   div_ ["className" $= "row row-align-middle c-vdoc-header"] $ do
       div_ ["className" $= "grid-wrapper"] $ do
           div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
@@ -44,27 +45,26 @@ documentHeader = defineView "DocumentHeader" $ \props ->
               phases_
 
 documentHeader_ :: DocumentHeaderProps -> ReactElementM eventHandler ()
-documentHeader_ props = view documentHeader props mempty
+documentHeader_ !props = view_ documentHeader "DocumentHeader_" props
 
-documentTitle :: ReactView Title
-documentTitle = defineView "DocumentTitle" $ \title ->
-  h1_ . elemText . cs $ _unTitle title
+documentTitle :: View '[Title]
+documentTitle = mkView "DocumentTitle" $ h1_ . cs . _unTitle
 
 documentTitle_ :: Title -> ReactElementM eventHandler ()
-documentTitle_ title = view documentTitle title mempty
+documentTitle_ !title = view_ documentTitle "DocumentTitle_" title
 
-documentAbstract :: ReactView Abstract
-documentAbstract = defineView "DocumentAbstract" $ \abstract ->
+documentAbstract :: View '[Abstract]
+documentAbstract = mkView "DocumentAbstract" $ \abstract ->
   div_ ["className" $= "c-vdoc-header__description"] $ do
     let paragraphs = split (== '\n') . cs $ _unAbstract abstract
     div_ ["className" $= "c-vdoc-header__description"] . mconcat $ (p_ . elemText) <$> paragraphs
 
 documentAbstract_ :: Abstract -> ReactElementM eventHandler ()
-documentAbstract_ abstract = view documentAbstract abstract mempty
+documentAbstract_ !abstract = view_ documentAbstract "DocumentAbstract_" abstract
 
 
-phases :: ReactView ()
-phases = defineView "Phases" $ \() ->
+phases :: View '[()]  -- TODO: can we remove the () altogether?  what then?  what if we have more than one arg?
+phases = mkView "Phases" $ \() ->
   div_ ["className" $= "c-vdoc-header__phases"] $ do
     h5_ "Phases"
     div_ ["className" $= "c-vdoc-header__phase c-vdoc-header__phase--active"] "Text Collaboration"
@@ -73,4 +73,4 @@ phases = defineView "Phases" $ \() ->
 
 
 phases_ :: ReactElementM eventHandler ()
-phases_ = view phases () mempty
+phases_ = view_ phases "Phases_" ()

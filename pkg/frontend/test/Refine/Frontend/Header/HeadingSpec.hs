@@ -16,6 +16,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
@@ -38,7 +39,7 @@ import qualified Refine.Frontend.Screen.Types as ST
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
-import qualified Refine.Frontend.Types as RS
+import           Refine.Frontend.Types as RS
 
 
 spec :: Spec
@@ -83,7 +84,7 @@ spec = do
 
       lock <- newEmptyMVar
       RS.reactFluxWorkAroundForkIO $ do
-        globalState0 <- getStoreData RS.refineStore
+        globalState0 <- readStoreData @GlobalState
         (globalState0 ^. RS.gsScreenState . ST.ssHeaderHeight) `shouldSatisfy` (> 0)
         putMVar lock ()
       () <- takeMVar lock

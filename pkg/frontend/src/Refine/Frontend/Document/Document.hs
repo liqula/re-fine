@@ -35,8 +35,8 @@ import qualified Refine.Frontend.Types as RS
 import           Refine.Prelude.Aeson (NoJSONRep(..))
 
 
-document :: ReactView DocumentProps
-document = defineView "Document" $ \props ->
+document :: View '[DocumentProps]
+document = mkView "Document" $ \props ->
   case props ^. dpDocumentState of
     DocumentStateEdit editorState
       -> article_ ["className" $= "gr-20 gr-14@desktop editor_wrapper"] $ do
@@ -58,15 +58,15 @@ document = defineView "Document" $ \props ->
              vdocToHTML (props ^. dpContributionState) (props ^. dpVDocVersion)
 
 document_ :: DocumentProps -> ReactElementM eventHandler ()
-document_ props = view document props mempty
+document_ !props = view_ document "document_" props
 
 
 newtype EditorWrapperProps = EditorWrapperProps
   { _ewpEditorState       :: EditorState
   }
 
-editorWrapper :: ReactView EditorWrapperProps
-editorWrapper = defineView "EditorWrapper" $ \(EditorWrapperProps (EditorState kind (NoJSONRep editorState))) ->
+editorWrapper :: View '[EditorWrapperProps]
+editorWrapper = mkView "EditorWrapper" $ \(EditorWrapperProps (EditorState kind (NoJSONRep editorState))) ->
       editor_ [ property "editorState" editorState
               , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
                   \(HandlerArg evt) -> js_ES_traceCurrentContent `seq`
@@ -74,4 +74,4 @@ editorWrapper = defineView "EditorWrapper" $ \(EditorWrapperProps (EditorState k
               ] mempty
 
 editorWrapper_ :: EditorWrapperProps -> ReactElementM eventHandler ()
-editorWrapper_ props = view editorWrapper props mempty
+editorWrapper_ !props = view_ editorWrapper "editorWrapper_" props

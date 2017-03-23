@@ -16,6 +16,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
@@ -23,9 +24,10 @@
 module Refine.Frontend.Login.Component where
 
 import           Control.Lens ((&), (.~), (^.), ASetter, to)
+import           Data.Default (def)
 import           Data.JSString (JSString)
 import qualified Data.Text as DT
-import           Data.String.Conversions (ST, cs)
+import           Data.String.Conversions (ST)
 import           GHC.Generics (Generic)
 import           GHCJS.Marshal (FromJSVal)
 import           React.Flux
@@ -37,6 +39,7 @@ import           Refine.Frontend.Style
 import qualified Refine.Frontend.Types as RS
 import           Refine.Frontend.UtilityWidgets
 import           Refine.Prelude.TH (makeRefineType)
+import           Refine.Frontend.CS (elemCS)
 
 
 -- * Helper
@@ -111,83 +114,72 @@ defaultStyles =
 
 -- * Login
 
-login_ :: FormError -> ReactElementM eventHandler ()
-login_ errors = view (login errors) () mempty
-
 loginStyles :: [Style]
 loginStyles = defaultStyles
 
-login :: FormError -> ReactView ()
-login errors = defineStatefulView "Login" (LoginForm "" "" errors) $ \curState () ->
+login :: FormError -> View '[()]
+login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState () ->
   div_ ["style" @= loginStyles] $ do
     h1_ "Login"
 
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 
-      mapM_ (p_ . cs) (curState ^. loginFormErrors)
+      mapM_ (p_ . elemCS)
+        (curState ^. loginFormErrors)
 
       inputField "login-username" "text"     "Username" loginFormUsername >> br_ []
       inputField "login-password" "password" "Password" loginFormPassword >> br_ []
 
-      iconButton_
-        (IconButtonProps
-          (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
-          "submit"
-          ""
-          ""
-          "submit"
-          (invalidLoginForm curState)
-          (\_ -> (RS.dispatch . RS.Login) . (Login <$> _loginFormUsername <*> _loginFormPassword) $ curState)
-          []
-        )
+      iconButton_ $ def
+        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L
+        & iconButtonPropsElementName  .~ "submit"
+        & iconButtonPropsLabel        .~ "submit"
+        & iconButtonPropsDisabled     .~ invalidLoginForm curState
+        & iconButtonPropsClickHandler .~ (\_ -> (RS.dispatch . RS.Login) . (Login <$> _loginFormUsername <*> _loginFormPassword) $ curState)
+
+login_ :: FormError -> ReactElementM eventHandler ()
+login_ !errors = view_ (login errors) "login_" ()
 
 
 -- * Logout
 
-logout_ :: ReactElementM eventHandler ()
-logout_ = view logout () mempty
-
 logoutStyles :: [Style]
 logoutStyles = defaultStyles
 
-logout :: ReactView ()
-logout = defineView "Logout" $ \() ->
+logout :: View '[()]
+logout = mkView "Logout" $ \() ->
   div_ ["style" @= logoutStyles] $ do
     p_ "Profile page"
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 
-      iconButton_
-        (IconButtonProps
-          (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
-          "submit"
-          ""
-          ""
-          "Logout"
-          False
-          (\_ -> RS.dispatch RS.Logout)
-          []
-        )
+      iconButton_ $ def
+        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L
+        & iconButtonPropsElementName  .~ "submit"
+        & iconButtonPropsLabel        .~ "logout"
+        & iconButtonPropsDisabled     .~ False
+        & iconButtonPropsClickHandler .~ (\_ -> RS.dispatch RS.Logout)
+
+logout_ :: ReactElementM eventHandler ()
+logout_ = view_ logout "logout_" ()
 
 
 -- * Registration
 
-registration_ :: FormError -> ReactElementM eventHandler ()
-registration_ errors = view (registration errors) () mempty
-
 registrationStyles :: [Style]
 registrationStyles = defaultStyles
 
-registration :: FormError -> ReactView ()
-registration errors = defineStatefulView "Registration" (RegistrationForm "" "" "" "" False errors) $ \curState () -> do
+registration :: FormError -> View '[()]
+registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "" False errors) $ \curState () -> do
   div_ ["style" @= registrationStyles] $ do
     h1_ "Registration"
 
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 
-      mapM_ (p_ . cs) (curState ^. registrationFormErrors)
+      mapM_ (p_ . elemCS)
+        (curState ^. registrationFormErrors)
 
       inputField "registration-username"  "text"     "Username"    registrationFormUsername >> br_ []
       inputField "registration-email1"    "email"    "Email"       registrationFormEmail1   >> br_ []
@@ -197,18 +189,16 @@ registration errors = defineStatefulView "Registration" (RegistrationForm "" "" 
       inputFieldWithKey "registration-agree" "checkbox" "" "checked" registrationFormAgree
       "I agree with the terms of use." >> br_ []
 
-      iconButton_
-        (IconButtonProps
-          (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
-          "submit"
-          ""
-          ""
-          "submit"
-          (invalidRegistrationForm curState)
-          (\_ -> (RS.dispatch . RS.CreateUser) .
-            (CreateUser <$> _registrationFormUsername
-                        <*> _registrationFormEmail1
-                        <*> _registrationFormPassword)
-            $ curState)
-          []
-        )
+      iconButton_ $ def
+        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L
+        & iconButtonPropsElementName  .~ "submit"
+        & iconButtonPropsLabel        .~ "submit"
+        & iconButtonPropsDisabled     .~ invalidRegistrationForm curState
+        & iconButtonPropsClickHandler .~ (\_ -> (RS.dispatch . RS.CreateUser)
+                                              . (CreateUser <$> _registrationFormUsername
+                                                            <*> _registrationFormEmail1
+                                                            <*> _registrationFormPassword)
+                                              $ curState)
+
+registration_ :: FormError -> ReactElementM eventHandler ()
+registration_ !errors = view_ (registration errors) "registration_" ()

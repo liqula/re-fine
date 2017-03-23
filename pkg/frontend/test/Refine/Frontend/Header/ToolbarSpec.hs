@@ -16,20 +16,19 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
-
 
 module Refine.Frontend.Header.ToolbarSpec where
 
 import           Control.Lens((^.))
 import           Test.Hspec
-import           React.Flux (getStoreData)
+import           React.Flux (registerInitialStore, readStoreData)
 
 import           Refine.Frontend.Header.Toolbar
 import           Refine.Frontend.Header.Types
-import           Refine.Frontend.Store (refineStore)
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Types
 
@@ -44,23 +43,23 @@ spec = do
       wrapper <- shallow toolbar_
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar__separator")) `shouldReturn` (2 :: Int)
 
-    it "contains 5 normal icon buttons" $ do
+    it "contains 6 icon buttons" $ do
       wrapper <- shallow toolbar_
-      lengthOfIO (find wrapper (StringSelector "IconButton")) `shouldReturn` (5 :: Int)
-
-    it "contains 1 aligned icon button" $ do
-      wrapper <- shallow toolbar_
-      lengthOfIO (find wrapper (StringSelector "IconButtonWithAlignment")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector "IconButton")) `shouldReturn` (6 :: Int)
 
     it "toggles the visibility of the edit toolbar extension when the 'new comment' button is clicked" $ do
+      registerInitialStore emptyGlobalState
       wrapper <- mount toolbar_
       button <- find wrapper (StringSelector ".c-vdoc-toolbar__btn-add-annotation")
-      -- simulate events:
+
+      pending
+
       _ <- simulate button Click
-      globalState1 <- getStoreData refineStore
+      globalState1 <- readStoreData @GlobalState
       globalState1 ^. gsHeaderState . hsToolbarExtensionStatus `shouldBe` CommentToolbarExtensionWithButtons
+
       _ <- simulate button Click
-      globalState2 <- getStoreData refineStore
+      globalState2 <- readStoreData @GlobalState
       globalState2 ^. gsHeaderState . hsToolbarExtensionStatus `shouldBe` ToolbarExtensionClosed
 
 

@@ -36,7 +36,9 @@ library
     , base >= 4.7 && < 5
     , basic-sop
     , containers
+    , data-default
     , deepseq
+    , functor-infix
     , ghcjs-base
     , html-parse
     , http-api-data
@@ -62,6 +64,7 @@ library
       Refine.Frontend.Contribution.QuickCreate
       Refine.Frontend.Contribution.Store
       Refine.Frontend.Contribution.Types
+      Refine.Frontend.CS
       Refine.Frontend.Document.Document
       Refine.Frontend.Document.FFI
       Refine.Frontend.Document.Store
@@ -121,6 +124,8 @@ executable refine-frontend
     , containers
     , deepseq
     , ghcjs-base
+    , hspec
+    , hspec-discover
     , html-parse
     , http-api-data
     , i18n
@@ -131,12 +136,10 @@ executable refine-frontend
     , react-flux
     , react-flux-servant
     , refine-common
-    , refine-prelude
     , refine-frontend
+    , refine-prelude
     , string-conversions
     , text
-    , hspec
-    , hspec-discover
     , unordered-containers
   default-language: Haskell2010
 
@@ -145,7 +148,6 @@ test-suite spec
   main-is: Spec.hs
   hs-source-dirs:
       test
-    , src
   ghc-options: -j -Wall -threaded -rtsopts -with-rtsopts=-N
   if flag(ghc-warn-error)
       ghc-options: -Werror
@@ -156,6 +158,9 @@ test-suite spec
     , containers
     , deepseq
     , ghcjs-base
+    , hspec
+    , hspec-core
+    , hspec-discover
     , html-parse
     , http-api-data
     , i18n
@@ -166,80 +171,26 @@ test-suite spec
     , react-flux
     , react-flux-servant
     , refine-common
+    , refine-frontend
     , refine-prelude
     , string-conversions
     , text
-    , base
-    , hspec
-    , hspec-core
-    , hspec-discover
-    , QuickCheck
-    , quickcheck-instances
     , unordered-containers
   other-modules:
-      -- find src test -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
-      Refine.Frontend.Colors
-      Refine.Frontend.Contribution.Bubble
+      -- find test -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
       Refine.Frontend.Contribution.BubbleSpec
-      Refine.Frontend.Contribution.Dialog
       Refine.Frontend.Contribution.DialogSpec
-      Refine.Frontend.Contribution.Mark
       Refine.Frontend.Contribution.MarkSpec
-      Refine.Frontend.Contribution.QuickCreate
       Refine.Frontend.Contribution.QuickCreateSpec
-      Refine.Frontend.Contribution.Store
       Refine.Frontend.Contribution.StoreSpec
-      Refine.Frontend.Contribution.Types
-      Refine.Frontend.Document.Document
       Refine.Frontend.Document.DocumentSpec
-      Refine.Frontend.Document.FFI
-      Refine.Frontend.Document.Store
-      Refine.Frontend.Document.Types
-      Refine.Frontend.Document.VDoc
-      Refine.Frontend.ErrorHandling
-      Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.DocumentHeaderSpec
-      Refine.Frontend.Header.EditToolbar
-      Refine.Frontend.Header.Heading
       Refine.Frontend.Header.HeadingSpec
-      Refine.Frontend.Header.Store
-      Refine.Frontend.Header.Toolbar
       Refine.Frontend.Header.ToolbarSpec
-      Refine.Frontend.Header.Types
-      Refine.Frontend.Header.UserLoginLogout
-      Refine.Frontend.Loader.Component
-      Refine.Frontend.Login.Component
-      Refine.Frontend.Login.Store
-      Refine.Frontend.Login.Types
-      Refine.Frontend.MainMenu.Component
       Refine.Frontend.MainMenuSpec
-      Refine.Frontend.MainMenu.Store
-      Refine.Frontend.MainMenu.Types
-      Refine.Frontend.NotImplementedYet
-      Refine.Frontend.Rest
-      Refine.Frontend.Screen.Calculations
-      Refine.Frontend.Screen.Store
-      Refine.Frontend.Screen.Types
-      Refine.Frontend.Screen.WindowSize
-      Refine.Frontend.Store
       Refine.Frontend.StoreSpec
-      Refine.Frontend.Style
-      Refine.Frontend.Test.Console
-      Refine.Frontend.Test.Enzyme
-      Refine.Frontend.Test.Enzyme.Class
-      Refine.Frontend.Test.Enzyme.Class.Internal
-      Refine.Frontend.Test.Enzyme.Core
-      Refine.Frontend.Test.Enzyme.ReactWrapper
-      Refine.Frontend.Test.Enzyme.ShallowWrapper
-      Refine.Frontend.Test.Samples
-      Refine.Frontend.ThirdPartyViews
-      Refine.Frontend.TKey
-      Refine.Frontend.Translation.Store
-      Refine.Frontend.Types
-      Refine.Frontend.Util
-      Refine.Frontend.UtilityWidgets
       Refine.Frontend.UtilityWidgetsSpec
-      Refine.Frontend.Views
+      Refine.Frontend.UtilSpec
       Refine.Frontend.ViewsSpec
   js-sources:
       jsbits/test.js

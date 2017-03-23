@@ -29,7 +29,7 @@ import           GHCJS.Types (JSVal)
 import           GHCJS.Marshal.Pure
 import           React.Flux
 import           React.Flux.Internal (HandlerArg(HandlerArg))
-import           React.Flux.Lifecycle
+import           React.Flux.Outdated
 
 import           Refine.Common.Types
 import qualified Refine.Frontend.Document.Types as DS

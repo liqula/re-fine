@@ -6,6 +6,15 @@
 .PHONY: all clean
 INSTALL_ROOT:=$(shell stack path --local-install-root)
 
+# to build with cabal:
+# curl https://www.stackage.org/lts-7.19/cabal.config >> cabal.config
+# (uncomment a few entries in cabal.config if they conflict with the ghcjs constraints)
+# cabal sandbox init
+# cabal sandbox add-source ../{prelude,common} ~/src/{html-parse,react-flux{,-servant}}
+# cabal install
+#INSTALL_ROOT:=.cabal-sandbox
+
+
 # VERY LONG BUILD-TIME: google-closure-compiler-js runs for >28
 # minutes on a lenovo t420s with compilationLevel=WHITESPACE_ONLY.
 GOOGLE_CLOSURE=time ./node_modules/.bin/google-closure-compiler-js --compilationLevel=ADVANCED
