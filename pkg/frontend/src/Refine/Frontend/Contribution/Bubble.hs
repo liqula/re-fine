@@ -39,33 +39,33 @@ import           Refine.Frontend.UtilityWidgets
 bubble :: ReactElementM [SomeStoreAction] () -> View '[BubbleProps]
 bubble children = mkView "Bubble" $ \props ->
   case props ^. bubblePropsMarkPosition of
-      Nothing -> renderBubble children props 0
-          -- FIXME: should be mempty, and the contents should be accessible elsewhere.  but this is
-          -- good for testing, especially stacks.
-      Just (MarkPosition topOffset _) -> renderBubble children props topOffset
+    Nothing -> renderBubble children props 0
+        -- FIXME: should be mempty, and the contents should be accessible elsewhere.  but this is
+        -- good for testing, especially stacks.
+    Just (MarkPosition topOffset _) -> renderBubble children props topOffset
 
 renderBubble :: ReactElementM [SomeStoreAction] () -> BubbleProps -> OffsetFromDocumentTop -> ReactElementM [SomeStoreAction] ()
 renderBubble children props topOffset = do
-          let contribKind = case props ^. bubblePropsDataContribId of
-                  ContribIDNote _         -> ("o-snippet--note",       True)
-                  ContribIDQuestion _     -> ("o-snippet--question",   True)
-                  ContribIDDiscussion _   -> ("o-snippet--discussion", True)
-                  ContribIDEdit _         -> ("o-snippet--edit",       True)
-                  ContribIDHighlightMark  -> ("", False)
-          div_ ["data-contribution-id" $= cs (toUrlPiece $ props ^. bubblePropsDataContribId)
-              , classNames [ ("o-snippet", True)  -- RENAME: snippet => bubble
-                           , contribKind
-                           , ("o-snippet--hover", Just (props ^. bubblePropsDataContribId) == props ^. bubblePropsHighlightedBubble)
-                           ]
-              , "style" @= [Style "top" (offsetIntoText topOffset (props ^. bubblePropsScreenState))]
-              , onClick $ const . (props ^. bubblePropsClickHandler)
-              , onMouseEnter $ \_ _ -> dispatch . ContributionAction . HighlightMarkAndBubble $ props ^. bubblePropsDataContribId
-              , onMouseLeave $ \_ _ -> dispatch $ ContributionAction UnhighlightMarkAndBubble
-              ] $ do
-              div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> props ^. bubblePropsIconSide)] $ do  -- RENAME: snippet => bubble
-                  icon_ (IconProps "o-snippet" False (props ^. bubblePropsIconStyle) M)  -- RENAME: snippet => bubble
-              div_ ["className" $= "o-snippet__content"]  -- RENAME: snippet => bubble
-                  children
+  let contribKind = case props ^. bubblePropsDataContribId of
+          ContribIDNote _         -> ("o-snippet--note",       True)
+          ContribIDQuestion _     -> ("o-snippet--question",   True)
+          ContribIDDiscussion _   -> ("o-snippet--discussion", True)
+          ContribIDEdit _         -> ("o-snippet--edit",       True)
+          ContribIDHighlightMark  -> ("", False)
+  div_ ["data-contribution-id" $= cs (toUrlPiece $ props ^. bubblePropsDataContribId)
+       , classNames [ ("o-snippet", True)  -- RENAME: snippet => bubble
+                    , contribKind
+                    , ("o-snippet--hover", Just (props ^. bubblePropsDataContribId) == props ^. bubblePropsHighlightedBubble)
+                    ]
+       , "style" @= [Style "top" (offsetIntoText topOffset (props ^. bubblePropsScreenState))]
+       , onClick $ const . (props ^. bubblePropsClickHandler)
+       , onMouseEnter $ \_ _ -> dispatch . ContributionAction . HighlightMarkAndBubble $ props ^. bubblePropsDataContribId
+       , onMouseLeave $ \_ _ -> dispatch $ ContributionAction UnhighlightMarkAndBubble
+       ] $ do
+    div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> props ^. bubblePropsIconSide)] $ do  -- RENAME: snippet => bubble
+      icon_ (IconProps "o-snippet" False (props ^. bubblePropsIconStyle) M)  -- RENAME: snippet => bubble
+    div_ ["className" $= "o-snippet__content"]  -- RENAME: snippet => bubble
+      children
 
 bubble_ :: BubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
 bubble_ !props children = view_ (bubble children) "bubble_" props
