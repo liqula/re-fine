@@ -183,8 +183,7 @@ iconButtonPropsToStyles props = alpos <> curpoint
 iconButton :: View '[IconButtonProps]
 iconButton = mkView "IconButton" $ \props -> do
     let iprops = props ^. iconButtonPropsIconProps
-    div_ ([ "key" $= (props ^. iconButtonPropsListKey)  -- TODO: append this to the first argument of 'mkView' instead!
-          , "data-content-type" $= (props ^. iconButtonPropsContentType)
+    div_ ([ "data-content-type" $= (props ^. iconButtonPropsContentType)
           , "className" $= toClasses (iconButtonPropsToClasses props)
           , "style" @= iconButtonPropsToStyles props
           ] <> [onClick $ const . (props ^. iconButtonPropsClickHandler) | not (props ^. iconButtonPropsDisabled)]
@@ -196,4 +195,4 @@ iconButton = mkView "IconButton" $ \props -> do
             elemJSString (props ^. iconButtonPropsLabel)
 
 iconButton_ :: IconButtonProps -> ReactElementM eventHandler ()
-iconButton_ !props = view_ iconButton "iconButton_" props
+iconButton_ !props = view_ iconButton ("iconButton_" <> props ^. iconButtonPropsListKey) props
