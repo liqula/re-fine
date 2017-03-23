@@ -27,11 +27,11 @@ import           React.Flux hiding (callback)
 import           Web.HttpApiData (toUrlPiece)
 
 import           Refine.Common.Types.Contribution
-import           Refine.Frontend.Contribution.Types as RT
-import qualified Refine.Frontend.Screen.Calculations as SC
-import qualified Refine.Frontend.Store as RS
+import           Refine.Frontend.Contribution.Types
+import           Refine.Frontend.Screen.Calculations
+import           Refine.Frontend.Store
 import           Refine.Frontend.Style
-import           Refine.Frontend.Types as RT
+import           Refine.Frontend.Types
 import           Refine.Frontend.UtilityWidgets
 
 
@@ -39,7 +39,7 @@ bubble :: ReactElementM [SomeStoreAction] () -> View '[BubbleProps]
 bubble children = mkView "Bubble" $ \props ->
   case props ^. bubblePropsMarkPosition of
       Nothing -> mempty
-      Just (RT.MarkPosition topOffset _) -> do
+      Just (MarkPosition topOffset _) -> do
           let contribKind = case props ^. bubblePropsDataContribId of
                   ContribIDNote _         -> ("o-snippet--note",       True)
                   ContribIDQuestion _     -> ("o-snippet--question",   True)
@@ -51,10 +51,10 @@ bubble children = mkView "Bubble" $ \props ->
                            , contribKind
                            , ("o-snippet--hover", Just (props ^. bubblePropsDataContribId) == props ^. bubblePropsHighlightedBubble)
                            ]
-              , "style" @= [Style "top" (SC.offsetIntoText topOffset (props ^. bubblePropsScreenState))]
+              , "style" @= [Style "top" (offsetIntoText topOffset (props ^. bubblePropsScreenState))]
               , onClick $ const . (props ^. bubblePropsClickHandler)
-              , onMouseEnter $ \_ _ -> RS.dispatch . RT.ContributionAction . RT.HighlightMarkAndBubble $ props ^. bubblePropsDataContribId
-              , onMouseLeave $ \_ _ -> RS.dispatch $ RT.ContributionAction RT.UnhighlightMarkAndBubble
+              , onMouseEnter $ \_ _ -> dispatch . ContributionAction . HighlightMarkAndBubble $ props ^. bubblePropsDataContribId
+              , onMouseLeave $ \_ _ -> dispatch $ ContributionAction UnhighlightMarkAndBubble
               ] $ do
               div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> props ^. bubblePropsIconSide)] $ do  -- RENAME: snippet => bubble
                   icon_ (IconProps "o-snippet" False (props ^. bubblePropsIconStyle) M)  -- RENAME: snippet => bubble
@@ -67,7 +67,7 @@ bubble_ !props children = view_ (bubble children) "bubble_" props
 
 discussionBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
 discussionBubble children = mkView "DiscussionBubble" $ \(SpecialBubbleProps contributionID markPosition highlight screenState) ->
-    let clickHandler _ = RS.dispatch (RT.ContributionAction (RT.ShowContributionDialog contributionID))
+    let clickHandler _ = dispatch (ContributionAction (ShowContributionDialog contributionID))
     in bubble_ (BubbleProps contributionID "left" ("icon-Discussion", "bright") markPosition highlight clickHandler screenState)
         children
 
@@ -85,7 +85,7 @@ questionBubble_ !props children = view_ (questionBubble children) "questionBubbl
 
 noteBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
 noteBubble children = mkView "NoteBubble" $ \(SpecialBubbleProps contributionID markPosition highlight screenState) ->
-    let clickHandler _ = RS.dispatch (RT.ContributionAction (RT.ShowContributionDialog contributionID))
+    let clickHandler _ = dispatch (ContributionAction (ShowContributionDialog contributionID))
     in bubble_ (BubbleProps contributionID "left" ("icon-Note", "dark") markPosition highlight clickHandler screenState)
         children
 
