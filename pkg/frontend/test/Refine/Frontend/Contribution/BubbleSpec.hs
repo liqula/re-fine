@@ -53,13 +53,6 @@ spec = do
       bubbleProps = BubbleProps contributionId iconSide iconStyle markPosition highlight callback screenState
 
   describe "The bubble_ component" $ do
-    it "does not render anything if there is no mark position in the props" $ do
-      wrapper <- shallow $ bubble_ (bubbleProps & bubblePropsMarkPosition .~ Nothing) mempty
-      -- TODO actually this should already hold - improve react-flux here?
-      -- lengthOf wrapper `shouldReturn` (0 :: Int)
-      -- TODO and this should return ""
-      html wrapper `shouldReturn` "<div></div>"
-
     it "renders the data-contribution-id that was passed to it" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
       is wrapper (PropertySelector [Prop "data-contribution-id" ("n99" :: String)]) `shouldReturn` True

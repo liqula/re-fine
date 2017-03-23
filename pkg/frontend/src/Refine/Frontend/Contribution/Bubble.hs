@@ -39,7 +39,9 @@ import           Refine.Frontend.UtilityWidgets
 bubble :: ReactElementM [SomeStoreAction] () -> View '[BubbleProps]
 bubble children = mkView "Bubble" $ \props ->
   case props ^. bubblePropsMarkPosition of
-      Nothing -> mempty
+      Nothing -> renderBubble children props 0
+          -- FIXME: should be mempty, and the contents should be accessible elsewhere.  but this is
+          -- good for testing, especially stacks.
       Just (MarkPosition topOffset _) -> renderBubble children props topOffset
 
 renderBubble :: ReactElementM [SomeStoreAction] () -> BubbleProps -> OffsetFromDocumentTop -> ReactElementM [SomeStoreAction] ()
