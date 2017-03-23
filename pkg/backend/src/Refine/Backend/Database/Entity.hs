@@ -522,6 +522,7 @@ instance C.StoreProcessData DB CollaborativeEdit where
   processDataGroupID = pure . view createCollabEditProcessGroupID
 
   createProcessData pid process = do
+    vdoc <- getVDoc (process ^. createCollabEditProcessVDocID)
     liftDB $ do
       dkey <- insert $ S.CollabEditProcess
                 (process ^. createCollabEditProcessVDocID . to S.idToKey)
@@ -530,17 +531,18 @@ instance C.StoreProcessData DB CollaborativeEdit where
       pure $ CollaborativeEdit
         (S.keyToId dkey)
         (process ^. createCollabEditProcessPhase)
-        (process ^. createCollabEditProcessVDocID)
+        vdoc
 
   getProcessData pid = do
     ceids <- foreignKeyField S.processOfCollabEditCollabEdit
              <$$> liftDB (selectList [S.ProcessOfCollabEditProcess ==. S.idToKey pid] [])
     ceid <- unique ceids
     cedata <- getEntity ceid
+    vdoc <- getVDoc (S.keyToId $ S.collabEditProcessVdoc cedata)
     pure $ CollaborativeEdit
       ceid
       (S.collabEditProcessPhase cedata)
-      (S.keyToId $ S.collabEditProcessVdoc cedata)
+      vdoc
 
 instance C.StoreProcessData DB Aula where
   processDataGroupID = pure . view createAulaProcessGroupID

@@ -87,7 +87,7 @@ data CollaborativeEdit =
   CollaborativeEdit
     { _collaborativeEditID    :: ID CollaborativeEdit
     , _collaborativeEditPhase :: CollaborativeEditPhase
-    , _collaborativeEditVDoc  :: ID VDoc -- TODO
+    , _collaborativeEditVDoc  :: VDoc
     }
   deriving (Eq, Show, Generic)
 
