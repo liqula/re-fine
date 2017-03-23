@@ -66,7 +66,7 @@ instance StoreData GlobalState where
 
         emitBackendCallsFor action state
 
-        transformedAction <- case action of
+        action' <- case action of
             TriggerUpdateSelection releasePositionOnPage toolbarStatus -> do
                 mrange <- getRange
                 pure . ContributionAction $ UpdateSelection
@@ -80,21 +80,21 @@ instance StoreData GlobalState where
 
             _ -> pure action
 
-        let newState = state
-              & gsVDoc                       %~ vdocUpdate transformedAction
-              & gsVDocList                   %~ vdocListUpdate transformedAction
-              & gsContributionState          %~ maybe id contributionStateUpdate (transformedAction ^? _ContributionAction)
-              & gsHeaderState                %~ headerStateUpdate transformedAction
-              & gsDocumentState              %~ documentStateUpdate transformedAction (state ^? gsVDoc . _Just . RT.compositeVDocVersion)
-              & gsScreenState                %~ maybe id screenStateUpdate (transformedAction ^? _ScreenAction)
-              & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate transformedAction
-              & gsLoginState                 %~ loginStateUpdate transformedAction
-              & gsMainMenuState              %~ mainMenuUpdate transformedAction
-              & gsToolbarSticky              %~ toolbarStickyUpdate transformedAction
-              & gsTranslations               %~ fmap (translationsUpdate transformedAction)
+        let state' = state
+              & gsVDoc                       %~ vdocUpdate action'
+              & gsVDocList                   %~ vdocListUpdate action'
+              & gsContributionState          %~ maybe id contributionStateUpdate (action' ^? _ContributionAction)
+              & gsHeaderState                %~ headerStateUpdate action'
+              & gsDocumentState              %~ documentStateUpdate action' (state ^? gsVDoc . _Just . RT.compositeVDocVersion)
+              & gsScreenState                %~ maybe id screenStateUpdate (action' ^? _ScreenAction)
+              & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate action'
+              & gsLoginState                 %~ loginStateUpdate action'
+              & gsMainMenuState              %~ mainMenuUpdate action'
+              & gsToolbarSticky              %~ toolbarStickyUpdate action'
+              & gsTranslations               %~ fmap (translationsUpdate action')
 
-        consoleLogJSONM "New state: " newState
-        pure newState
+        consoleLogJSONM "New state: " state'
+        pure state'
 
 vdocUpdate :: GlobalAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate action Nothing = case action of

@@ -20,21 +20,19 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-
 module Refine.Frontend.Types where
 
 import           Data.Text (Text)
 import           Data.Text.I18n
 import           GHC.Generics (Generic)
 
-import Refine.Common.Types as Common
+import Refine.Common.Types
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
+import Refine.Frontend.Login.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
-import Refine.Frontend.Login.Types
 import Refine.Prelude.Aeson (NoJSONRep(..))
 import Refine.Prelude.TH (makeRefineType)
 
@@ -78,30 +76,32 @@ data GlobalAction = LoadDocumentList
                   | HeaderAction HeaderAction
                   | DocumentAction DocumentAction
                   | ToolbarStickyStateChange Bool
-                  -- ...
-                  | AddDiscussion CompositeDiscussion
+                  | MainMenuAction MainMenuAction
+
+                  -- i18n
+                  | LoadTranslations Locale
+                  | ChangeTranslations L10
+
+                  -- contributions
                   | AddNote Note
+                  | AddDiscussion CompositeDiscussion
                   | AddEdit Edit
                   | SaveSelect Text Text
-                  -- ...
+
+                  -- user management
                   | CreateUser CreateUser
                   | Login Login
                   | Logout
-                  | ShowNotImplementedYet
-                  | HideNotImplementedYet
-                  | MainMenuAction MainMenuAction
                   | ChangeCurrentUser CurrentUser
-                  | ChangeTranslations L10
+
                   -- Actions that will be transformed because they need IO:
                   | TriggerUpdateSelection OffsetFromDocumentTop ToolbarExtensionStatus
 
-                  | LoadTranslations Locale
-
                   -- Action only for testing:
                   | ClearState
+                  | ShowNotImplementedYet
+                  | HideNotImplementedYet
   deriving (Show, Generic)
-
-
 
 makeRefineType ''GlobalState
 makeRefineType ''GlobalAction
