@@ -41,3 +41,6 @@ classNamesAny xs = "className" @= ST.unwords names
 
 toClasses :: (ConvertibleStrings s JSS.JSString, ConvertibleStrings JSS.JSString s) => [s] -> s
 toClasses = cs . JSS.unwords . filter (not . JSS.null) . fmap cs
+
+class CssClass a where
+  showCssClass :: a -> JSS.JSString
