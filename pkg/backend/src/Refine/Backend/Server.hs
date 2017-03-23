@@ -26,6 +26,7 @@
 module Refine.Backend.Server
   ( refineCookieName
   , startBackend
+  , runCliAppCommand
   , Backend(..), mkProdBackend, mkDevModeBackend
   , refineApi
   ) where
@@ -115,6 +116,10 @@ startBackend cfg =
     else do backend <- mkProdBackend cfg
             Warp.runSettings (warpSettings cfg) $ backendServer backend
 
+runCliAppCommand :: Config -> AppM DB UH a -> IO ()
+runCliAppCommand cfg cmd = do
+  backend <- mkProdBackend cfg
+  void $ (natThrowError . (backendRunApp backend)) $$ cmd
 
 mkProdBackend :: Config -> IO (Backend DB UH)
 mkProdBackend cfg = mkBackend cfg uhNat (migrateDB cfg)
