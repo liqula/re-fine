@@ -46,11 +46,9 @@ import           Refine.Frontend.Util
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Style
 import           Refine.Frontend.CS ()
--- TODO import           Refine.Frontend.ThirdPartyViews (hammer_)
 
 
 type ReactListKey = JSString  -- do not move this to Frontend.Types, importing this here creates a cycle.
-
 
 data IconSize
     = S
@@ -63,7 +61,8 @@ data IconSize
 instance CssClass IconSize where
   showCssClass = ("iconsize-" <>) . cs . fmap toLower . show
 
-type IconDescription = (JSString, JSString)
+
+-- * icon
 
 data IconProps = IconProps
   { _iconPropsBlockName :: JSString
@@ -72,36 +71,12 @@ data IconProps = IconProps
   , _iconPropsSize      :: IconSize
   }
 
+type IconDescription = (JSString, JSString)
+
 makeLenses ''IconProps
-
-type ClickHandler = Event -> [SomeStoreAction]
-
-data IconButtonProps = IconButtonProps
-  { _iconButtonPropsListKey      :: ReactListKey
-  , _iconButtonPropsIconProps    :: IconProps
-  , _iconButtonPropsElementName  :: JSString
-  , _iconButtonPropsModuleName   :: JSString
-  , _iconButtonPropsContentType  :: JSString
-  , _iconButtonPropsLabel        :: JSString
-  , _iconButtonPropsDisabled     :: Bool
-  , _iconButtonPropsClickHandler :: ClickHandler
-  , _iconButtonPropsExtraClasses :: [JSString]
-  }
-
-makeLenses ''IconButtonProps
-
-data IconButtonWithAlignmentProps = IconButtonWithAlignmentProps
-  { _iconButtonWithAlIconButtonProps :: IconButtonProps
-  , _iconButtonWithAlRightAligned    :: Bool
-  , _iconButtonWithAlPosition        :: Maybe Int
-  }
-
-makeLenses ''IconButtonWithAlignmentProps
-
 
 icon :: View '[IconProps]
 icon = mkStatefulView "Icon" False $ \mouseIsOver props -> do
-  -- TODO unify the naming schemas of the classes of the different icons!
   let
     highlightStyle = if mouseIsOver && (props ^. iconPropsHighlight)
                      then "RO"
@@ -120,34 +95,31 @@ icon_ :: IconProps -> ReactElementM eventHandler ()
 icon_ !props = view_ icon "Icon_" props
 
 
-iconButtonWithAlignment :: View '[IconButtonWithAlignmentProps]
-iconButtonWithAlignment = mkView "IconButtonWithAlignment" $ \props -> do
-{- TODO we currently ignore touch device handling because there are some issues with
- - browsers emitting tap events on click and we don't know how to handle these properly.
+-- * icon button
 
-    let bprops = props ^. iconButtonProps
-    hammer_ [on "onTap" $ bprops ^. clickHandler | not (bprops ^. disabled)] $ do
--}
-      iconButtonWithAlignmentCore_ props
+data IconButtonProps = IconButtonProps
+  { _iconButtonPropsListKey      :: ReactListKey  -- (this is not morally part of the props, but it's convenient to keep it here.)
+  , _iconButtonPropsIconProps    :: IconProps
+  , _iconButtonPropsElementName  :: JSString
+  , _iconButtonPropsModuleName   :: JSString
+  , _iconButtonPropsContentType  :: JSString
+  , _iconButtonPropsLabel        :: JSString
+  , _iconButtonPropsDisabled     :: Bool
+  , _iconButtonPropsClickHandler :: ClickHandler
+  , _iconButtonPropsExtraClasses :: [JSString]
+  }
 
-iconButtonWithAlignment_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
-iconButtonWithAlignment_ !props = view_ iconButtonWithAlignment "iconButtonWithAlignment_" props
+type ClickHandler = Event -> [SomeStoreAction]
 
-iconButtonWithAlignmentCore :: View '[IconButtonWithAlignmentProps]
-iconButtonWithAlignmentCore = mkView "IconButtonWithAlignmentCore" $ \props -> do
-    let bprops = props ^. iconButtonWithAlIconButtonProps
-    let iprops = bprops ^. iconButtonPropsIconProps
-    div_ ([ "key" $= (bprops ^. iconButtonPropsListKey)  -- TODO: append this to the first argument of 'mkView' instead!
-          , "data-content-type" $= (bprops ^. iconButtonPropsContentType)
-          , "className" $= toClasses (iconButtonPropsToClasses props)
-          , "style" @= iconButtonPropsToStyles props
-          ] <> [onClick $ const . (bprops ^. iconButtonPropsClickHandler) | not (bprops ^. iconButtonPropsDisabled)]
-          ) $ do
-        icon_ iprops
-        span_ ["className" $= (iprops ^. iconPropsBlockName <> "__button-label")
-              , "style" @= [Style "color" Color.disabledText | bprops ^. iconButtonPropsDisabled]
-              ] $
-            elemJSString (bprops ^. iconButtonPropsLabel)
+makeLenses ''IconButtonProps
+
+data IconButtonWithAlignmentProps = IconButtonWithAlignmentProps
+  { _iconButtonWithAlIconButtonProps :: IconButtonProps
+  , _iconButtonWithAlRightAligned    :: Bool
+  , _iconButtonWithAlPosition        :: Maybe Int
+  }
+
+makeLenses ''IconButtonWithAlignmentProps
 
 iconButtonPropsToClasses :: IconButtonWithAlignmentProps -> [JSString]
 iconButtonPropsToClasses props =
@@ -172,6 +144,36 @@ iconButtonPropsToStyles props = alpos <> curpoint
               Nothing  -> []
               Just pos -> [Style "top" pos]
     curpoint = [Style "cursor" ("pointer" :: String) | not (props ^. iconButtonWithAlIconButtonProps . iconButtonPropsDisabled)]
+
+iconButtonWithAlignment :: View '[IconButtonWithAlignmentProps]
+iconButtonWithAlignment = mkView "IconButtonWithAlignment" $ \props -> do
+{- TODO we currently ignore touch device handling because there are some issues with
+ - browsers emitting tap events on click and we don't know how to handle these properly.
+
+    import Refine.Frontend.ThirdPartyViews (hammer_)
+    let bprops = props ^. iconButtonProps
+    hammer_ [on "onTap" $ bprops ^. clickHandler | not (bprops ^. disabled)] $ do
+-}
+      iconButtonWithAlignmentCore_ props
+
+iconButtonWithAlignment_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
+iconButtonWithAlignment_ !props = view_ iconButtonWithAlignment "iconButtonWithAlignment_" props
+
+iconButtonWithAlignmentCore :: View '[IconButtonWithAlignmentProps]
+iconButtonWithAlignmentCore = mkView "IconButtonWithAlignmentCore" $ \props -> do
+    let bprops = props ^. iconButtonWithAlIconButtonProps
+    let iprops = bprops ^. iconButtonPropsIconProps
+    div_ ([ "key" $= (bprops ^. iconButtonPropsListKey)  -- TODO: append this to the first argument of 'mkView' instead!
+          , "data-content-type" $= (bprops ^. iconButtonPropsContentType)
+          , "className" $= toClasses (iconButtonPropsToClasses props)
+          , "style" @= iconButtonPropsToStyles props
+          ] <> [onClick $ const . (bprops ^. iconButtonPropsClickHandler) | not (bprops ^. iconButtonPropsDisabled)]
+          ) $ do
+        icon_ iprops
+        span_ ["className" $= (iprops ^. iconPropsBlockName <> "__button-label")
+              , "style" @= [Style "color" Color.disabledText | bprops ^. iconButtonPropsDisabled]
+              ] $
+            elemJSString (bprops ^. iconButtonPropsLabel)
 
 iconButtonWithAlignmentCore_ :: IconButtonWithAlignmentProps -> ReactElementM eventHandler ()
 iconButtonWithAlignmentCore_ !props = view_ iconButtonWithAlignmentCore "iconButtonWithAlignmentCore_" props
