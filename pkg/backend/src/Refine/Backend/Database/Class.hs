@@ -3,6 +3,8 @@
 
 module Refine.Backend.Database.Class where
 
+import Data.Typeable (Typeable)
+
 import Refine.Backend.Database.Tree
 import Refine.Backend.DocRepo.Core as DocRepo
 import Refine.Common.Types
@@ -80,11 +82,12 @@ class Database db where
 
   -- Process
   createProcess :: StoreProcessData db a => Create (Process a) -> db (Process a)
---  getProcess    :: ID (Process a) -> db (Process a)
+  getProcess    :: (StoreProcessData db a, Typeable a) => ID (Process a) -> db (Process a)
 
 class StoreProcessData db c where
   processDataGroupID :: Create (Process c) -> db (ID Group)
   createProcessData  :: ID (Process c) -> Create (Process c) -> db c
+  getProcessData     :: ID (Process c) -> db c
 
 -- * composite db queries
 
