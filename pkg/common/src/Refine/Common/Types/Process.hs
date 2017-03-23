@@ -69,8 +69,9 @@ data CreateAulaProcess = CreateAulaProcess
 --
 -- FIXME: not implemented yet.
 data Process a = Process
-  { _processID   :: ID (Process a)
-  , _processData :: a
+  { _processID    :: ID (Process a)
+  , _processGroup :: ID Group -- TODO
+  , _processData  :: a
   }
   deriving (Eq, Ord, Generic)
 
@@ -86,6 +87,7 @@ data CollaborativeEdit =
   CollaborativeEdit
     { _collaborativeEditID    :: ID CollaborativeEdit
     , _collaborativeEditPhase :: CollaborativeEditPhase
+    , _collaborativeEditVDoc  :: ID VDoc -- TODO
     }
   deriving (Eq, Show, Generic)
 

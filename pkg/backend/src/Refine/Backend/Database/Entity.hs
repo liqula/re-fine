@@ -520,16 +520,21 @@ unassignRole gid uid role = liftDB $ do
 
 instance C.StoreProcessData DB CollaborativeEdit where
   processDataGroupID = pure . view createCollabEditProcessGroupID
+
   createProcessData pid process = do
     liftDB $ do
       dkey <- insert $ S.CollabEditProcess
                 (process ^. createCollabEditProcessVDocID . to S.idToKey)
                 (process ^. createCollabEditProcessPhase)
       _ <- insert $ S.ProcessOfCollabEdit (S.idToKey pid) dkey
-      pure $ CollaborativeEdit (S.keyToId dkey) (process ^. createCollabEditProcessPhase)
+      pure $ CollaborativeEdit
+        (S.keyToId dkey)
+        (process ^. createCollabEditProcessPhase)
+        (process ^. createCollabEditProcessVDocID)
 
 instance C.StoreProcessData DB Aula where
   processDataGroupID = pure . view createAulaProcessGroupID
+
   createProcessData pid process = do
     liftDB $ do
       dkey <- insert $ S.AulaProcess (process ^. createAulaProcessClassName)
@@ -541,4 +546,4 @@ createProcess process = do
   gid   <- C.processDataGroupID process
   pkey  <- liftDB $ insert $ S.Process (S.idToKey gid)
   pdata <- C.createProcessData (S.keyToId pkey) process
-  pure $ Process (S.keyToId pkey) pdata
+  pure $ Process (S.keyToId pkey) gid pdata
