@@ -70,10 +70,10 @@ data CreateAulaProcess = CreateAulaProcess
 -- FIXME: not implemented yet.
 data Process a = Process
   { _processID    :: ID (Process a)
-  , _processGroup :: ID Group -- TODO
+  , _processGroup :: Group
   , _processData  :: a
   }
-  deriving (Eq, Ord, Generic)
+  deriving (Eq, Generic)
 
 type instance Create (Process CollaborativeEdit) = CreateCollabEditProcess
 type instance Create (Process Aula)              = CreateAulaProcess

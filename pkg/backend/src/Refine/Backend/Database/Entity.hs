@@ -563,10 +563,12 @@ createProcess process = do
   gid   <- C.processDataGroupID process
   pkey  <- liftDB $ insert $ S.Process (S.idToKey gid)
   pdata <- C.createProcessData (S.keyToId pkey) process
-  pure $ Process (S.keyToId pkey) gid pdata
+  group <- getGroup gid
+  pure $ Process (S.keyToId pkey) group pdata
 
 getProcess :: (C.StoreProcessData DB a, Typeable a) => ID (Process a) -> DB (Process a)
 getProcess pid = do
   process <- getEntity pid
   pdata   <- C.getProcessData pid
-  pure $ Process pid (S.keyToId $ S.processGroup process) pdata
+  group   <- getGroup (S.keyToId $ S.processGroup process)
+  pure $ Process pid group pdata
