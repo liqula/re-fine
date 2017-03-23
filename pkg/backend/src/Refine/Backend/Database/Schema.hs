@@ -122,6 +122,7 @@ CollabEditProcess
 ProcessOfCollabEdit
     process    ProcessId
     collabEdit CollabEditProcessId
+    UniPOCE process collabEdit
 
 AulaProcess
     class   ST
@@ -129,6 +130,7 @@ AulaProcess
 ProcessOfAula
     process    ProcessId
     aula       AulaProcessId
+    UniPOA process aula
 
 -- Connection tables
 
