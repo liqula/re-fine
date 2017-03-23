@@ -81,7 +81,6 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
                   }
               , _iconButtonPropsElementName  = "section-button"
               , _iconButtonPropsModuleName   = ""
-              , _iconButtonPropsContentType  = ""
               , _iconButtonPropsLabel        = "EN"
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsPosition     = Nothing
@@ -101,7 +100,6 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
                   }
               , _iconButtonPropsElementName  = "section-button"
               , _iconButtonPropsModuleName   = ""
-              , _iconButtonPropsContentType  = ""
               , _iconButtonPropsLabel        = "DE"
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsPosition     = Nothing
@@ -121,7 +119,6 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
                   }
               , _iconButtonPropsElementName  = "section-button"
               , _iconButtonPropsModuleName   = ""
-              , _iconButtonPropsContentType  = ""
               , _iconButtonPropsLabel        = ""
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsPosition     = Nothing
@@ -144,7 +141,6 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
                   }
               , _iconButtonPropsElementName  = "section-button"
               , _iconButtonPropsModuleName   = ""
-              , _iconButtonPropsContentType  = ""
               , _iconButtonPropsLabel        = ""
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsPosition     = Nothing

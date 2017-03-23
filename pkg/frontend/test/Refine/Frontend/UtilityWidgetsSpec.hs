@@ -34,16 +34,13 @@ import           Refine.Frontend.UtilityWidgets
 
 iconButtonTestProps :: IconButtonProps
 iconButtonTestProps =
-    IconButtonProps "key" (iconProps M) element module1 ctype label1 False Nothing False (\_ -> []) []
+    IconButtonProps "key" (iconProps M) element module1 label1 False Nothing False (\_ -> []) []
   where
     element :: JSString
     element = "the-element-name"
 
     module1 :: JSString
     module1 = "the-module-name"
-
-    ctype :: JSString
-    ctype = "the-content-type"
 
     label1 :: JSString
     label1 = "the-label"
@@ -88,11 +85,6 @@ spec = do
       lengthOfIO (find wrapper (StringSelector ".iconsize-m")) `shouldReturn` (1 :: Int)
 
   describe "iconButton_ component" $ do
-    it "has the data content type passed to it" $ do
-      wrapper <- shallow $ iconButton_
-        iconButtonTestProps
-      is wrapper (PropertySelector [Prop "data-content-type" ("the-content-type" :: String)]) `shouldReturn` True
-
     it "renders the block name with the button element" $ do
       wrapper <- shallow $ iconButton_
         iconButtonTestProps

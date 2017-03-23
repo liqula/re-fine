@@ -173,14 +173,13 @@ data MarkProps = MarkProps
 makeLenses ''MarkProps
 
 data BubbleProps = BubbleProps
-  { _bubblePropsDataContribId :: ContributionID
-  , _bubblePropsDataContentType :: String  -- TODO: should be determined by _bubblePropsDataContribId, so remove it?
-  , _bubblePropsIconSide :: String  -- TODO: either "left" or "right", make this a custom boolean!
-  , _bubblePropsIconStyle :: IconDescription  -- TODO: align this!
-  , _bubblePropsMarkPosition :: Maybe MarkPosition
+  { _bubblePropsDataContribId     :: ContributionID
+  , _bubblePropsIconSide          :: String  -- FIXME: either "left" or "right", make this a custom boolean!
+  , _bubblePropsIconStyle         :: IconDescription
+  , _bubblePropsMarkPosition      :: Maybe MarkPosition
   , _bubblePropsHighlightedBubble :: Maybe ContributionID
-  , _bubblePropsClickHandler :: ClickHandler
-  , _bubblePropsScreenState :: ScreenState
+  , _bubblePropsClickHandler      :: ClickHandler
+  , _bubblePropsScreenState       :: ScreenState
   }
 
 makeLenses ''BubbleProps

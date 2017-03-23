@@ -32,7 +32,6 @@ module Refine.Frontend.UtilityWidgets
   , iconButtonPropsIconProps
   , iconButtonPropsElementName
   , iconButtonPropsModuleName
-  , iconButtonPropsContentType
   , iconButtonPropsLabel
   , iconButtonPropsDisabled
   , iconButtonPropsPosition
@@ -121,7 +120,6 @@ data IconButtonProps = IconButtonProps
   , _iconButtonPropsIconProps    :: IconProps
   , _iconButtonPropsElementName  :: JSString
   , _iconButtonPropsModuleName   :: JSString
-  , _iconButtonPropsContentType  :: JSString
   , _iconButtonPropsLabel        :: JSString
   , _iconButtonPropsDisabled     :: Bool  -- TODO: make this 'enabled'
   , _iconButtonPropsPosition     :: Maybe Int
@@ -140,7 +138,6 @@ instance Default IconButtonProps where
     , _iconButtonPropsIconProps    = def
     , _iconButtonPropsElementName  = ""
     , _iconButtonPropsModuleName   = ""
-    , _iconButtonPropsContentType  = ""
     , _iconButtonPropsLabel        = ""
     , _iconButtonPropsDisabled     = False
     , _iconButtonPropsPosition     = Nothing
@@ -183,8 +180,7 @@ iconButtonPropsToStyles props = alpos <> curpoint
 iconButton :: View '[IconButtonProps]
 iconButton = mkView "IconButton" $ \props -> do
     let iprops = props ^. iconButtonPropsIconProps
-    div_ ([ "data-content-type" $= (props ^. iconButtonPropsContentType)
-          , "className" $= toClasses (iconButtonPropsToClasses props)
+    div_ ([ "className" $= toClasses (iconButtonPropsToClasses props)
           , "style" @= iconButtonPropsToStyles props
           ] <> [onClick $ const . (props ^. iconButtonPropsClickHandler) | not (props ^. iconButtonPropsDisabled)]
           ) $ do

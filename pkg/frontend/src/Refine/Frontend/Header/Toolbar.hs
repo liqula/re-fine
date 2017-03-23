@@ -55,7 +55,6 @@ toolbar = mkView "Toolbar" $ \() ->
             & iconButtonPropsListKey      .~ "new-comment"
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Comment", "dark") XXL
             & iconButtonPropsElementName  .~ "btn-add-annotation"
-            & iconButtonPropsContentType  .~ "comment"
             & iconButtonPropsLabel        .~ "new comment"
             & iconButtonPropsClickHandler .~ (\e -> stopPropagation e : RS.dispatch (RS.HeaderAction RS.ToggleCommentToolbarExtension))
 
@@ -63,7 +62,6 @@ toolbar = mkView "Toolbar" $ \() ->
             & iconButtonPropsListKey      .~ "new-edit"
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXL
             & iconButtonPropsElementName  .~ "bt-add-modification"  -- RENAME: edit
-            & iconButtonPropsContentType  .~ "edit"
             & iconButtonPropsLabel        .~ "new edit"
             & iconButtonPropsClickHandler .~ (\e -> stopPropagation e : RS.dispatch (RS.HeaderAction RS.ToggleEditToolbarExtension))
 
@@ -108,14 +106,12 @@ commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
       & iconButtonPropsListKey      .~ "comment-range"
       & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L
       & iconButtonPropsElementName  .~ "btn-new-ann-text" -- RENAME: ann => comment
-      & iconButtonPropsContentType  .~ "comment"
       & iconButtonPropsLabel        .~ "text-specific comment"
       & iconButtonPropsClickHandler .~ (\e -> stopPropagation e : RS.dispatch (RS.HeaderAction RS.StartTextSpecificComment))
     iconButton_ $ def
       & iconButtonPropsListKey      .~ "comment-all"
       & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L
       & iconButtonPropsElementName  .~ "btn-new-ann-doc"  -- RENAME: ann => comment
-      & iconButtonPropsContentType  .~ "comment"
       & iconButtonPropsLabel        .~ "general comment"
       & iconButtonPropsClickHandler .~ (\_ -> RS.dispatch RS.ShowNotImplementedYet)
   (CommentToolbarExtensionProps _) -> mempty
@@ -157,7 +153,6 @@ editToolbarExtension = mkView "EditToolbarExtension" $ \case
         & iconButtonPropsListKey      .~ cs (show kind)
         & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") L
         & iconButtonPropsElementName  .~ "btn-new-mod-text" -- RENAME: mod => edit
-        & iconButtonPropsContentType  .~ "edit"
         & iconButtonPropsLabel        .~ cs (show kind)
         & iconButtonPropsClickHandler .~ (\e -> stopPropagation e : RS.dispatch (RS.HeaderAction (RS.StartEdit kind)))
 

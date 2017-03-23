@@ -46,7 +46,6 @@ quickCreate = mkView "QuickCreateButton" $ \(QuickCreateProps (cs -> createType)
         RS.RangeSelected range offsetFromTop ->
             iconButton_ $ def
               & iconButtonPropsIconProps    .~ IconProps ("o-add-" <> createType) True ("icon-New_Comment", "bright") XXL
-              & iconButtonPropsContentType  .~ cs createType
               & iconButtonPropsPosition     .~ Just (quickCreateOffset range offsetFromTop screenState)
               & iconButtonPropsClickHandler .~ (\_ -> RS.dispatch . RS.ContributionAction . RS.ShowCommentEditor $ Just range)
         _ -> mempty
