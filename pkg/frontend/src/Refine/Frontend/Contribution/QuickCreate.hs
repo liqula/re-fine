@@ -22,9 +22,10 @@
 
 module Refine.Frontend.Contribution.QuickCreate where
 
-import           Control.Lens ((^.))
-import           Data.String.Conversions (cs)
+import           Control.Lens ((^.), (&), (.~))
+import           Data.Default (def)
 import           Data.Monoid ((<>))
+import           Data.String.Conversions (cs)
 import           React.Flux
 
 import qualified Refine.Frontend.Contribution.Types as RS
@@ -43,19 +44,11 @@ quickCreate = mkView "QuickCreateButton" $ \(QuickCreateProps (cs -> createType)
     case currentSelection of
     -- TODO unify CSS class names with those used in iconButton_ !!
         RS.RangeSelected range offsetFromTop ->
-            let offset = quickCreateOffset range offsetFromTop screenState
-            in positionedIconButton_
-              ( IconButtonProps "key"
-                  (IconProps ("o-add-" <> createType) True ("icon-New_Comment", "bright") XXL)
-                  ""
-                  ""
-                  (cs createType)
-                  ""
-                  False
-                  (\_ -> RS.dispatch . RS.ContributionAction . RS.ShowCommentEditor $ Just range)
-                  []
-              , offset
-              )
+            iconButton_ $ def
+              & iconButtonPropsIconProps    .~ IconProps ("o-add-" <> createType) True ("icon-New_Comment", "bright") XXL
+              & iconButtonPropsContentType  .~ cs createType
+              & iconButtonPropsPosition     .~ Just (quickCreateOffset range offsetFromTop screenState)
+              & iconButtonPropsClickHandler .~ (\_ -> RS.dispatch . RS.ContributionAction . RS.ShowCommentEditor $ Just range)
         _ -> mempty
 --    // quickCreate annotation ui events  -- RENAME: annotation => comment
 --    ann.addEventListener('mousedown', quickCreateOverlay);

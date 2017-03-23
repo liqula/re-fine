@@ -43,13 +43,9 @@ spec = do
       wrapper <- shallow toolbar_
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar__separator")) `shouldReturn` (2 :: Int)
 
-    it "contains 5 normal icon buttons" $ do
+    it "contains 6 icon buttons" $ do
       wrapper <- shallow toolbar_
-      lengthOfIO (find wrapper (StringSelector "IconButton")) `shouldReturn` (5 :: Int)
-
-    it "contains 1 aligned icon button" $ do
-      wrapper <- shallow toolbar_
-      lengthOfIO (find wrapper (StringSelector "IconButtonWithAlignment")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector "IconButton")) `shouldReturn` (6 :: Int)
 
     it "toggles the visibility of the edit toolbar extension when the 'new comment' button is clicked" $ do
       registerInitialStore emptyGlobalState

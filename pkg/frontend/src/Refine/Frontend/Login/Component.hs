@@ -24,6 +24,7 @@
 module Refine.Frontend.Login.Component where
 
 import           Control.Lens ((&), (.~), (^.), ASetter, to)
+import           Data.Default (def)
 import           Data.JSString (JSString)
 import qualified Data.Text as DT
 import           Data.String.Conversions (ST)
@@ -130,17 +131,12 @@ login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState () ->
       inputField "login-username" "text"     "Username" loginFormUsername >> br_ []
       inputField "login-password" "password" "Password" loginFormPassword >> br_ []
 
-      iconButton_
-        (IconButtonProps "key"
-          (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
-          "submit"
-          ""
-          ""
-          "submit"
-          (invalidLoginForm curState)
-          (\_ -> (RS.dispatch . RS.Login) . (Login <$> _loginFormUsername <*> _loginFormPassword) $ curState)
-          []
-        )
+      iconButton_ $ def
+        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L
+        & iconButtonPropsElementName  .~ "submit"
+        & iconButtonPropsLabel        .~ "submit"
+        & iconButtonPropsDisabled     .~ invalidLoginForm curState
+        & iconButtonPropsClickHandler .~ (\_ -> (RS.dispatch . RS.Login) . (Login <$> _loginFormUsername <*> _loginFormPassword) $ curState)
 
 login_ :: FormError -> ReactElementM eventHandler ()
 login_ !errors = view_ (login errors) "login_" ()
@@ -158,17 +154,12 @@ logout = mkView "Logout" $ \() ->
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 
-      iconButton_
-        (IconButtonProps "key"
-          (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
-          "submit"
-          ""
-          ""
-          "Logout"
-          False
-          (\_ -> RS.dispatch RS.Logout)
-          []
-        )
+      iconButton_ $ def
+        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L
+        & iconButtonPropsElementName  .~ "submit"
+        & iconButtonPropsLabel        .~ "logout"
+        & iconButtonPropsDisabled     .~ False
+        & iconButtonPropsClickHandler .~ (\_ -> RS.dispatch RS.Logout)
 
 logout_ :: ReactElementM eventHandler ()
 logout_ = view_ logout "logout_" ()
@@ -198,21 +189,16 @@ registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "
       inputFieldWithKey "registration-agree" "checkbox" "" "checked" registrationFormAgree
       "I agree with the terms of use." >> br_ []
 
-      iconButton_
-        (IconButtonProps "key"
-          (IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L)
-          "submit"
-          ""
-          ""
-          "submit"
-          (invalidRegistrationForm curState)
-          (\_ -> (RS.dispatch . RS.CreateUser) .
-            (CreateUser <$> _registrationFormUsername
-                        <*> _registrationFormEmail1
-                        <*> _registrationFormPassword)
-            $ curState)
-          []
-        )
+      iconButton_ $ def
+        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L
+        & iconButtonPropsElementName  .~ "submit"
+        & iconButtonPropsLabel        .~ "submit"
+        & iconButtonPropsDisabled     .~ invalidRegistrationForm curState
+        & iconButtonPropsClickHandler .~ (\_ -> (RS.dispatch . RS.CreateUser)
+                                              . (CreateUser <$> _registrationFormUsername
+                                                            <*> _registrationFormEmail1
+                                                            <*> _registrationFormPassword)
+                                              $ curState)
 
 registration_ :: FormError -> ReactElementM eventHandler ()
 registration_ !errors = view_ (registration errors) "registration_" ()

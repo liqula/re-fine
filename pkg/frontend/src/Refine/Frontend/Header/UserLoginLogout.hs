@@ -24,7 +24,9 @@
 
 module Refine.Frontend.Header.UserLoginLogout where
 
+import           Control.Lens ((&), (.~))
 import           Data.String.Conversions (cs)
+import           Data.Default (def)
 import           React.Flux
 
 import           Refine.Frontend.Login.Types
@@ -41,21 +43,15 @@ userLoginLogoutButton_ :: CurrentUser -> ReactElementM eventHandler ()
 userLoginLogoutButton_ !currentUser = view_ userLoginLogoutButton "userLoginLogoutButton_" currentUser
 
 loginLogoutProps :: IconButtonProps
-loginLogoutProps = IconButtonProps
-  { _iconButtonPropsListKey = "key"
-  , _iconButtonPropsIconProps = IconProps
-     { _iconPropsBlockName = "c-mainmenu-content"
-     , _iconPropsHighlight = False
-     , _iconPropsDesc      = ("icon-Exit", "dark")
-     , _iconPropsSize      = XXL
-     }
-  , _iconButtonPropsElementName  = "section-button"
-  , _iconButtonPropsModuleName   = ""
-  , _iconButtonPropsContentType  = ""
-  , _iconButtonPropsLabel        = ""
-  , _iconButtonPropsDisabled     = False
-  , _iconButtonPropsClickHandler = \_ -> []
-  , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-help"]
+loginLogoutProps = def
+  & iconButtonPropsListKey .~ "logInOut"
+  & iconButtonPropsIconProps .~ (def
+      & iconPropsBlockName .~ "c-mainmenu-content"
+      & iconPropsDesc      .~ ("icon-Exit", "dark")
+      & iconPropsSize      .~ XXL
+      )
+  & iconButtonPropsElementName  .~ "section-button"
+  & iconButtonPropsClickHandler .~ (\_ -> [])
+  & iconButtonPropsExtraClasses .~ ["c-mainmenu-content__btn-help"]
   -- not translated from prototype2016:
   -- button attribute data-section="help"
-  }

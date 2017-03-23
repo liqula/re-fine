@@ -23,7 +23,8 @@
 
 module Refine.Frontend.Contribution.Dialog where
 
-import           Control.Lens (makeLenses, (^.), (^?), at, to, _Just)
+import           Control.Lens (makeLenses, (^.), (^?), (&), (.~), at, to, _Just)
+import           Data.Default (def)
 import           Data.Maybe (isNothing)
 import qualified Data.Map.Strict as M
 import           Data.Monoid ((<>))
@@ -305,36 +306,28 @@ commentInput = mkStatefulView "CommentInput" (RS.CommentInputState "") $ \curSta
           elemString "Step 1: "
           span_ ["className" $= "bold"] "Select a type for your comment:"
 
+      let checkCipKind k = if props ^. cipCategory == Just k then "RO" else "dark"
+
       div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do  -- RENAME: annotation => comment
-        iconButton_ (IconButtonProps "note"
-                      (IconProps "c-vdoc-overlay-content"
-                                 False
-                                 ("icon-Note", if props ^. cipCategory == Just RS.Note then "RO" else "dark")
-                                 L)
-                      "category"
-                      "comment"
-                      ""
-                      "add a note"
-                      False
-                      (\_ -> RS.dispatch . RS.ContributionAction $ RS.SetCommentCategory RS.Note)
-                      []
-                    )
+        iconButton_ $ def
+          & iconButtonPropsListKey      .~ "note"
+          & iconButtonPropsIconProps . iconPropsBlockName .~ "c-vdoc-overlay-content"
+          & iconButtonPropsIconProps . iconPropsDesc      .~ ("icon-Note", checkCipKind RS.Note)
+          & iconButtonPropsElementName  .~ "category"
+          & iconButtonPropsModuleName   .~ "comment"
+          & iconButtonPropsLabel        .~ "add a node"
+          & iconButtonPropsClickHandler .~ (\_ -> RS.dispatch . RS.ContributionAction $ RS.SetCommentCategory RS.Note)
 
         span_ ["style" @= [Style "marginRight" ("1rem" :: String)]] ""
 
-        iconButton_ (IconButtonProps "discussion"
-                      (IconProps "c-vdoc-overlay-content"
-                             False
-                             ("icon-Discussion", if props ^. cipCategory == Just RS.Discussion then "RO" else "dark")
-                             L)
-                      "category"
-                      "discussion"
-                      ""
-                      "start a discussion"
-                      False
-                      (\_ -> RS.dispatch . RS.ContributionAction $ RS.SetCommentCategory RS.Discussion)
-                      []
-                    )
+        iconButton_ $ def
+          & iconButtonPropsListKey      .~ "discussion"
+          & iconButtonPropsIconProps . iconPropsBlockName .~ "c-vdoc-overlay-content"
+          & iconButtonPropsIconProps . iconPropsDesc      .~ ("icon-Discussion", checkCipKind RS.Discussion)
+          & iconButtonPropsElementName  .~ "category"
+          & iconButtonPropsModuleName   .~ "discussion"
+          & iconButtonPropsLabel        .~ "start a discussion"
+          & iconButtonPropsClickHandler .~ (\_ -> RS.dispatch . RS.ContributionAction $ RS.SetCommentCategory RS.Discussion)
 
       hr_ []
 
@@ -362,19 +355,18 @@ commentInput = mkStatefulView "CommentInput" (RS.CommentInputState "") $ \curSta
           elemString "Step 3: "
           span_ ["className" $= "bold"] "finish"
 
-      iconButton_
-        (IconButtonProps "key"
-          (IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") L)
-          "submit"
-          ""
-          ""
-          "submit"
-          ((0 == DT.length (curState ^. RS.commentInputStateText)) || isNothing (props ^. cipCategory)) -- no text or no category -> disable button
-          (\_ -> RS.dispatch (RS.ContributionAction
-                (RS.SubmitComment (curState ^. RS.commentInputStateText) (props ^. cipCategory) (props ^. cipRange)))
-              <> RS.dispatch (RS.ContributionAction RS.HideCommentEditor))
-          []
-        )
+      let notATextOrCategory = 0 == DT.length (curState ^. RS.commentInputStateText)
+                            || isNothing (props ^. cipCategory)
+          handler _ = RS.dispatchMany
+            [ RS.ContributionAction (RS.SubmitComment (curState ^. RS.commentInputStateText) (props ^. cipCategory) (props ^. cipRange))
+            , RS.ContributionAction RS.HideCommentEditor
+            ]
+        in iconButton_ $ def
+          & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") L
+          & iconButtonPropsElementName  .~ "submit"
+          & iconButtonPropsLabel        .~ "submit"
+          & iconButtonPropsDisabled     .~ notATextOrCategory
+          & iconButtonPropsClickHandler .~ handler
 
 commentInput_ :: CommentInputProps -> ReactElementM eventHandler ()
 commentInput_ !props = view_ commentInput "commentInput_" props

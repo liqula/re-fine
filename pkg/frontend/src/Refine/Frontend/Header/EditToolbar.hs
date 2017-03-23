@@ -22,6 +22,8 @@
 
 module Refine.Frontend.Header.EditToolbar where
 
+import           Control.Lens
+import           Data.Default (def)
 import           React.Flux
 
 import           Refine.Frontend.Store
@@ -38,90 +40,55 @@ editToolbar = mkView "EditToolbar" $ \() ->
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          iconButton_ $ IconButtonProps "h1"
-                      (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
-                      "btn-index"
-                      ""
-                      ""
-                      "header 1"
-                      False
-                      (\_ -> dispatch ShowNotImplementedYet)
-                      []
-          iconButton_ $ IconButtonProps "h2"
-                      (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
-                      "btn-index"
-                      ""
-                      ""
-                      "header 2"
-                      False
-                      (\_ -> dispatch ShowNotImplementedYet)
-                      []
-          iconButton_ $ IconButtonProps "h3"
-                      (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
-                      "btn-index"
-                      ""
-                      ""
-                      "header 3"
-                      False
-                      (\_ -> dispatch ShowNotImplementedYet)
-                      []
+          let editButton = def
+                & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL
+                & iconButtonPropsElementName  .~ "btn-index"
+
+          iconButton_ $ editButton
+            & iconButtonPropsListKey      .~ "h1"
+            & iconButtonPropsLabel        .~ "header 1"
+            & iconButtonPropsClickHandler .~ (\_ -> dispatch ShowNotImplementedYet)
+
+          iconButton_ $ editButton
+            & iconButtonPropsListKey      .~ "h2"
+            & iconButtonPropsLabel        .~ "header 2"
+            & iconButtonPropsClickHandler .~ (\_ -> dispatch ShowNotImplementedYet)
+
+          iconButton_ $ editButton
+            & iconButtonPropsListKey      .~ "h3"
+            & iconButtonPropsLabel        .~ "header 3"
+            & iconButtonPropsClickHandler .~ (\_ -> dispatch ShowNotImplementedYet)
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          iconButton_ $ IconButtonProps "bold"
-                      (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
-                      "btn-index"
-                      ""
-                      ""
-                      "bold"
-                      False
-                      (\_ -> dispatch ShowNotImplementedYet)
-                      []
-          iconButton_ $ IconButtonProps "italic"
-                      (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
-                      "btn-index"
-                      ""
-                      ""
-                      "italic"
-                      False
-                      (\_ -> dispatch ShowNotImplementedYet)
-                      []
+          iconButton_ $ editButton
+            & iconButtonPropsListKey      .~ "bold"
+            & iconButtonPropsLabel        .~ "bold"
+            & iconButtonPropsClickHandler .~ (\_ -> dispatch ShowNotImplementedYet)
+
+          iconButton_ $ editButton
+            & iconButtonPropsListKey      .~ "italic"
+            & iconButtonPropsLabel        .~ "italic"
+            & iconButtonPropsClickHandler .~ (\_ -> dispatch ShowNotImplementedYet)
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          iconButton_ $ IconButtonProps "bullets"
-                      (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
-                      "btn-index"
-                      ""
-                      ""
-                      "bullets"
-                      False
-                      (\_ -> dispatch ShowNotImplementedYet)
-                      []
-          iconButton_ $ IconButtonProps "numbers"
-                      (IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL)
-                      "btn-index"
-                      ""
-                      ""
-                      "numbers"
-                      False
-                      (\_ -> dispatch ShowNotImplementedYet)
-                      -- (\e -> stopPropagation e : dispatch (HeaderAction ToggleEditToolbarExtension))
-                      []
+          iconButton_ $ editButton
+            & iconButtonPropsListKey      .~ "bullets"
+            & iconButtonPropsLabel        .~ "bullets"
+            & iconButtonPropsClickHandler .~ (\_ -> dispatch ShowNotImplementedYet)
 
-          iconButtonWithAlignment_ $
-            IconButtonWithAlignmentProps
-              (IconButtonProps "key"
-                (IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXL)
-                "btn-index"
-                ""
-                ""
-                "save"
-                False
-                (\_ -> dispatch $ DocumentAction DocumentEditSave)
-                [])
-              True
-              Nothing
+          iconButton_ $ editButton
+            & iconButtonPropsListKey      .~ "numbers"
+            & iconButtonPropsLabel        .~ "numbers"
+            & iconButtonPropsClickHandler .~ (\_ -> dispatch ShowNotImplementedYet)
+
+          iconButton_ $ editButton
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXL
+            & iconButtonPropsListKey      .~ "save"
+            & iconButtonPropsLabel        .~ "save"
+            & iconButtonPropsAlignRight   .~ True
+            & iconButtonPropsClickHandler .~ (\_ -> dispatch $ DocumentAction DocumentEditSave)
 
 editToolbar_ :: ReactElementM eventHandler ()
 editToolbar_ = view_ editToolbar "editToolbar_" ()
