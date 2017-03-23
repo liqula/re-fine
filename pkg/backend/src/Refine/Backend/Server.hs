@@ -109,10 +109,11 @@ refineApi =
 
 startBackend :: Config -> IO ()
 startBackend cfg =
-  backend <- if cfg ^. cfgDevMode
-    then mkDevModeBackend cfg mockLogin
-    else mkProdBackend cfg
-  Warp.runSettings (warpSettings cfg) $ backendServer backend
+  if cfg ^. cfgDevMode
+    then do backend <- mkDevModeBackend cfg mockLogin
+            Warp.runSettings (warpSettings cfg) $ backendServer backend
+    else do backend <- mkProdBackend cfg
+            Warp.runSettings (warpSettings cfg) $ backendServer backend
 
 
 mkProdBackend :: Config -> IO (Backend DB UH)
