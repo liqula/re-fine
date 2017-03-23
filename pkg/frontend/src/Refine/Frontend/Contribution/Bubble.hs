@@ -29,6 +29,7 @@ import           Web.HttpApiData (toUrlPiece)
 import           Refine.Common.Types.Contribution
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Screen.Calculations
+import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Style
 import           Refine.Frontend.Types
@@ -39,7 +40,10 @@ bubble :: ReactElementM [SomeStoreAction] () -> View '[BubbleProps]
 bubble children = mkView "Bubble" $ \props ->
   case props ^. bubblePropsMarkPosition of
       Nothing -> mempty
-      Just (MarkPosition topOffset _) -> do
+      Just (MarkPosition topOffset _) -> renderBubble children props topOffset
+
+renderBubble :: ReactElementM [SomeStoreAction] () -> BubbleProps -> OffsetFromDocumentTop -> ReactElementM [SomeStoreAction] ()
+renderBubble children props topOffset = do
           let contribKind = case props ^. bubblePropsDataContribId of
                   ContribIDNote _         -> ("o-snippet--note",       True)
                   ContribIDQuestion _     -> ("o-snippet--question",   True)
