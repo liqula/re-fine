@@ -84,10 +84,13 @@ transformGlobalState = transf
         consoleLogJSONM "Old state: " state
         consoleLogJSStringM "Action: " (cs $ show action)
 
+        -- all updates to state are pure!
+        let state' = pureTransform action state
+
         -- ajax
         emitBackendCallsFor action state
 
-        -- effects
+        -- other effects
         case action of
             TriggerUpdateSelection releasePositionOnPage toolbarStatus -> do
                 mrange <- getRange
@@ -101,9 +104,6 @@ transformGlobalState = transf
                 js_removeAllRanges
 
             _ -> pure ()
-
-        -- pure updates
-        let state' = pureTransform action state
 
         consoleLogJSONM "New state: " state'
         pure state'
