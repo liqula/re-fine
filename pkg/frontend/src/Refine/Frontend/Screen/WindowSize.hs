@@ -22,7 +22,6 @@
 
 module Refine.Frontend.Screen.WindowSize where
 
-import           Control.Monad (forM_)
 import           Data.Monoid ((<>))
 import           React.Flux
 import           React.Flux.Outdated
@@ -59,8 +58,7 @@ setWindowSize :: IO ()
 setWindowSize = do
     width <- js_getWindowWidth
     RS.reactFluxWorkAroundForkIO $ do
-       let actions = RS.dispatch . RS.ScreenAction $ RS.SetWindowWidth width
-       forM_ actions executeAction
+       RS.dispatchM . RS.ScreenAction $ RS.SetWindowWidth width
 
 foreign import javascript unsafe
 -- the internet says we should check window.innerWidth and document.documentElement.clientWidth first,

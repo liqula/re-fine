@@ -22,7 +22,6 @@
 
 module Refine.Frontend.ViewsSpec where
 
-import           Control.Monad (forM_)
 import qualified Data.Map.Strict as M
 import qualified Data.Tree as DT
 import           React.Flux
@@ -70,7 +69,7 @@ clearState =
                                 M.empty M.empty M.empty
     in do
       -- FIXME: If we add ClearState to the list of Actions, we run into (timing?!) problems...
-      forM_ (concatMap dispatch [OpenDocument newVDoc, HeaderAction CloseToolbarExtension]) executeAction
+      dispatchManyM [OpenDocument newVDoc, HeaderAction CloseToolbarExtension]
       reactFluxWorkAroundThreadDelay
 
 

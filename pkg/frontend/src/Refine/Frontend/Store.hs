@@ -88,22 +88,22 @@ transformGlobalState = transf
         emitBackendCallsFor action state
 
         -- effects
-        action' <- case action of
+        case action of
             TriggerUpdateSelection releasePositionOnPage toolbarStatus -> do
                 mrange <- getRange
-                pure . ContributionAction $ UpdateSelection
+                dispatchM . ContributionAction $ UpdateSelection
                     (case mrange of
                         Nothing -> NothingSelectedButUpdateTriggered releasePositionOnPage
                         Just range -> RangeSelected range releasePositionOnPage)
                     toolbarStatus
 
             ContributionAction (ShowCommentEditor _) -> do
-                js_removeAllRanges >> pure action
+                js_removeAllRanges
 
-            _ -> pure action
+            _ -> pure ()
 
         -- pure updates
-        let state' = pureTransform action' state
+        let state' = pureTransform action state
 
         consoleLogJSONM "New state: " state'
         pure state'
@@ -305,8 +305,14 @@ handleError (code, rsp) onApiError = case eitherDecode $ cs rsp of
 dispatch :: GlobalAction -> [SomeStoreAction]
 dispatch a = [someStoreAction @GlobalState a]
 
+dispatchM :: GlobalAction -> IO ()
+dispatchM = mapM_ executeAction . dispatch
+
 dispatchMany :: [GlobalAction] -> [SomeStoreAction]
 dispatchMany = mconcat . fmap dispatch
+
+dispatchManyM :: [GlobalAction] -> IO ()
+dispatchManyM = mapM_ executeAction . dispatchMany
 
 
 getRange :: IO (Maybe Range)

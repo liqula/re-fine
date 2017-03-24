@@ -23,7 +23,7 @@
 module Refine.Frontend.Header.Heading where
 
 import           Control.Lens ((^.))
-import           Control.Monad (forM_, unless)
+import           Control.Monad (unless)
 import           GHC.Generics
 import           GHCJS.Types (JSVal)
 import           GHCJS.Marshal.Pure
@@ -108,8 +108,7 @@ calcHeaderHeight ldom = do
    this <- lThis ldom
    height <- js_getBoundingClientRectHeight this
    RS.reactFluxWorkAroundForkIO $ do
-       let actions = RS.dispatch . RS.ScreenAction $ RS.AddHeaderHeight height
-       forM_ actions executeAction
+       RS.dispatchM . RS.ScreenAction $ RS.AddHeaderHeight height
 
 mainHeader_ :: RS.GlobalState -> ReactElementM eventHandler ()
 mainHeader_ props = view mainHeader props mempty
