@@ -201,22 +201,13 @@ emitBackendCallsFor action state = case action of
             (Right note) -> pure $ dispatch (AddNote note)
         Nothing -> pure ()
 
-    DocumentAction DocumentEditSave -> do
-      let eid :: C.ID C.Edit
-          eid = state ^?! gsVDoc . _Just . C.compositeVDocEditID
+    DocumentAction DocumentEditSave -> case state ^? gsDocumentState . documentStateEdit of
+      Just estate@(editorStateToVDocVersion -> Right newvers) -> do
+        let eid :: C.ID C.Edit
+            eid = state ^?! gsVDoc . _Just . C.compositeVDocEditID
 
-          adHocFail msg = error $ "DocumentAction DocumentEditSave: " <> msg  -- TODO: #255
-
-      estate :: EditorState
-        <- case state ^. gsDocumentState of
-             DocumentStateEdit s -> pure s
-             DocumentStateView   -> adHocFail "document state is in 'view'"
-
-      newvers :: C.VDocVersion 'C.HTMLWithMarks
-        <- either (adHocFail . ("newvers cannot be parsed: " <>)) pure $ editorStateToVDocVersion estate
-
-      let cid :: C.Create C.Edit
-          cid = C.CreateEdit
+            cid :: C.Create C.Edit
+            cid = C.CreateEdit
                   { C._createEditDesc  = "..."                          -- TODO: #233
                   , C._createEditRange = C.ChunkRange Nothing Nothing  -- FIXME: 'state ^. gsContributionState . csCurrentSelection'
                   , C._createEditVDoc  = C.downgradeVDocVersionWR newvers
@@ -224,9 +215,14 @@ emitBackendCallsFor action state = case action of
                   , C._createEditMotiv = "..."                          -- TODO: #233
                   }
 
-      addEdit eid cid $ \case
-        Left rsp   -> handleError rsp (const [])
-        Right edit -> pure $ dispatch (AddEdit edit)
+        addEdit eid cid $ \case
+          Left rsp   -> handleError rsp (const [])
+          Right edit -> pure $ dispatch (AddEdit edit)
+
+      bad -> let msg = "DocumentAction DocumentEditSave: "
+                    <> "not in editor state or content cannot be converted to html."
+                    <> show bad
+             in gracefulError msg $ pure ()
 
 
     -- i18n

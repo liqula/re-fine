@@ -39,7 +39,9 @@ data DocumentAction =
   deriving (Show, Generic)
 
 
-data DocumentState = DocumentStateView | DocumentStateEdit EditorState
+data DocumentState =
+    DocumentStateView
+  | DocumentStateEdit { _documentStateEdit :: EditorState }
   deriving (Generic, Show)
 
 data EditorState = EditorState
