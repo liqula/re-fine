@@ -11,6 +11,9 @@ import Refine.Frontend.Test.Enzyme.Core
 class PFromJSVal a => EnzymeWrapper a where
   unWrap :: a -> JSVal
 
+  consoleLogWrapper :: JSString -> a -> IO ()
+  consoleLogWrapper msg = js_console_log_jsval msg . unWrap
+
 
 -- * The Enzyme API that is available for all wrappers
 

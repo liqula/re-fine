@@ -26,9 +26,6 @@ module Refine.Frontend.Test.Enzyme.ReactWrapper
 
   -- * enzyme functions on ReactWrapper
   , module R
-
-  -- * helper functions
-  , consoleLogReactWrapper
   ) where
 
 import GHCJS.Marshal.Pure
@@ -75,10 +72,6 @@ mount comp = do
 
 
 -- * Helper functions
-
--- | TODO: make this a class methode as well.  it even has a nice default implementation.
-consoleLogReactWrapper :: JSString -> ReactWrapper -> IO ()
-consoleLogReactWrapper msg (ReactWrapper jsval) = js_console_log_jsval msg jsval
 
 foreign import javascript unsafe
   "enzyme.mount($1)"

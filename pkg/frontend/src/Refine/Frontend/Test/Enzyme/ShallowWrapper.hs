@@ -27,9 +27,6 @@ module Refine.Frontend.Test.Enzyme.ShallowWrapper
   -- * Enzyme functions on a ShallowWrapper
   , shallowChild -- known as "shallow" in Enzyme
   , module R
-
-  -- * helper functions
-  , consoleLogShallowWrapper
   ) where
 
 import GHCJS.Marshal.Pure
@@ -67,9 +64,6 @@ shallowChild = exec "shallow"
 
 
 -- * Helper functions.
-
-consoleLogShallowWrapper :: JSString -> ShallowWrapper -> IO ()
-consoleLogShallowWrapper msg (ShallowWrapper jsval) = js_console_log_jsval msg jsval
 
 foreign import javascript unsafe
   "enzyme.shallow($1)"

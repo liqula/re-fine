@@ -35,6 +35,6 @@ spec =
     it "does great things" $ do
       wrapper@(ShallowWrapper jsval) <- shallow $ mymodule_ params
 
-      consoleLogShallowWrapper "..." wrapper
+      consoleLogWrapper "..." wrapper
       js_consoleLogJSVal "..." jsval `seq` pure ()
       -- this prints the wrapper object to the command line
