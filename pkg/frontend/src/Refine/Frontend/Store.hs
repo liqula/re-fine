@@ -169,6 +169,9 @@ toolbarStickyUpdate action state = case action of
 
 emitBackendCallsFor :: GlobalAction -> GlobalState -> IO ()
 emitBackendCallsFor action state = case action of
+
+    -- documents
+
     LoadDocumentList -> do
         listVDocs $ \case
             (Left rsp) -> handleError rsp (const [])
@@ -178,10 +181,8 @@ emitBackendCallsFor action state = case action of
             (Left rsp) -> handleError rsp (const [])
             (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
 
-    AddDemoDocument -> do
-        createVDoc (C.CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
-            (Left rsp) -> handleError rsp (const [])
-            (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
+
+    -- contributions
 
     ContributionAction (SubmitComment text category forRange) -> do
       -- here we need to distinguish which comment category we want to submit
@@ -227,6 +228,18 @@ emitBackendCallsFor action state = case action of
         Left rsp   -> handleError rsp (const [])
         Right edit -> pure $ dispatch (AddEdit edit)
 
+
+    -- i18n
+
+    LoadTranslations locate -> do
+      getTranslations (C.GetTranslations locate) $ \case
+        (Left rsp) -> handleError rsp (const [])
+        (Right l10) -> do
+          pure . dispatch $ ChangeTranslations l10
+
+
+    -- users
+
     CreateUser createUserData -> do
       createUser createUserData $ \case
         (Left rsp)    -> do
@@ -261,13 +274,19 @@ emitBackendCallsFor action state = case action of
             , MainMenuAction MainMenuActionClose
             ]
 
-    LoadTranslations locate -> do
-      getTranslations (C.GetTranslations locate) $ \case
-        (Left rsp) -> handleError rsp (const [])
-        (Right l10) -> do
-          pure . dispatch $ ChangeTranslations l10
+
+    -- testing & dev
+
+    AddDemoDocument -> do
+        createVDoc (C.CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
+            (Left rsp) -> handleError rsp (const [])
+            (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
+
+
+    -- default
 
     _ -> pure ()
+
 
 createChunkRange :: Maybe Range -> C.ChunkRange
 createChunkRange Nothing = C.ChunkRange Nothing Nothing

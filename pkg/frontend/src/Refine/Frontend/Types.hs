@@ -66,41 +66,41 @@ emptyGlobalState = GlobalState
   , _gsTranslations               = NoJSONRep emptyTranslations
   }
 
-data GlobalAction = LoadDocumentList
-                  | LoadedDocumentList [ID VDoc]
-                  | LoadDocument (ID VDoc)
-                  | OpenDocument CompositeVDoc
-                  | AddDemoDocument
-                  | ScreenAction ScreenAction
-                  | ContributionAction ContributionAction
-                  | HeaderAction HeaderAction
-                  | DocumentAction DocumentAction
-                  | ToolbarStickyStateChange Bool
-                  | MainMenuAction MainMenuAction
+data GlobalAction =
+    -- documents
+    LoadDocumentList
+  | LoadedDocumentList [ID VDoc]
+  | LoadDocument (ID VDoc)
+  | OpenDocument CompositeVDoc
 
-                  -- i18n
-                  | LoadTranslations Locale
-                  | ChangeTranslations L10
+    -- contributions
+  | ScreenAction ScreenAction
+  | ContributionAction ContributionAction
+  | HeaderAction HeaderAction
+  | DocumentAction DocumentAction
+  | ToolbarStickyStateChange Bool
+  | MainMenuAction MainMenuAction
+  | AddNote Note
+  | AddDiscussion CompositeDiscussion
+  | AddEdit Edit
+  | SaveSelect Text Text
+  | TriggerUpdateSelection OffsetFromDocumentTop ToolbarExtensionStatus
 
-                  -- contributions
-                  | AddNote Note
-                  | AddDiscussion CompositeDiscussion
-                  | AddEdit Edit
-                  | SaveSelect Text Text
+    -- i18n
+  | LoadTranslations Locale
+  | ChangeTranslations L10
 
-                  -- user management
-                  | CreateUser CreateUser
-                  | Login Login
-                  | Logout
-                  | ChangeCurrentUser CurrentUser
+    -- users
+  | CreateUser CreateUser
+  | Login Login
+  | Logout
+  | ChangeCurrentUser CurrentUser
 
-                  -- Actions that will be transformed because they need IO:
-                  | TriggerUpdateSelection OffsetFromDocumentTop ToolbarExtensionStatus
-
-                  -- Action only for testing:
-                  | ClearState
-                  | ShowNotImplementedYet
-                  | HideNotImplementedYet
+    -- testing & dev
+  | AddDemoDocument
+  | ClearState
+  | ShowNotImplementedYet
+  | HideNotImplementedYet
   deriving (Show, Generic)
 
 makeRefineType ''GlobalState
