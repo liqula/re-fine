@@ -164,16 +164,16 @@ attr name wrapper = pFromJSVal <$> js_attr (pack name) (unWrap wrapper)
 -- * The actual JavaScript calls
 
 foreign import javascript unsafe
-    "$2[$1]()"
-    js_exec :: JSString -> JSVal -> IO JSVal
+  "$2[$1]()"
+  js_exec :: JSString -> JSVal -> IO JSVal
 
 foreign import javascript unsafe
-    "$2[$1]"
-    js_attr :: JSString -> JSVal -> IO JSVal
+  "$2[$1]"
+  js_attr :: JSString -> JSVal -> IO JSVal
 
 foreign import javascript unsafe
-    "$2[$1]($3)"
-    js_exec_with_1_arg :: JSString -> JSVal -> JSVal -> IO JSVal
+  "$2[$1]($3)"
+  js_exec_with_1_arg :: JSString -> JSVal -> JSVal -> IO JSVal
 
 -- | Log objects that have no 'PToJSVal' instance, but a 'ToJSON' instance, and thus can be
 -- conveniently turned into a JSString.  (This is neither efficient nor pretty, but arguably it's
@@ -181,8 +181,8 @@ foreign import javascript unsafe
 --
 -- TODO: should the third argument be 'JSString'?  or should we remove this entirely?
 foreign import javascript unsafe
-    "$2[$1](JSON.parse($3))"
-    js_exec_with_object :: JSString -> JSVal -> JSVal -> IO JSVal
+  "$2[$1](JSON.parse($3))"
+  js_exec_with_object :: JSString -> JSVal -> JSVal -> IO JSVal
 
 -- | Write a 'JSVal' to stdout (node) or the console (browser). Should only be used for logging wrapped JavaScript objects.
 -- The first parameter can be used to briefly describe the log output.
