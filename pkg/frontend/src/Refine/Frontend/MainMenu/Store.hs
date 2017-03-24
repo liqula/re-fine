@@ -8,10 +8,9 @@ import Refine.Frontend.Types (GlobalAction(..))
 
 -- TODO: Alignment
 mainMenuUpdate :: GlobalAction -> MainMenuState -> MainMenuState
-mainMenuUpdate (MainMenuAction MainMenuActionClose) state =
-  state & mmState .~ MainMenuClosed
-        & mmErrors . mmeLogin        .~ Nothing
-        & mmErrors . mmeRegistration .~ Nothing
+mainMenuUpdate (MainMenuAction MainMenuActionClose) state = state & mmState .~ MainMenuClosed
+  & mmErrors . mmeLogin        .~ Nothing
+  & mmErrors . mmeRegistration .~ Nothing
 
 mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) state =
   state & mmState .~ MainMenuOpen tab

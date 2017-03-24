@@ -31,18 +31,14 @@ import qualified Refine.Frontend.Header.Types as HT
 
 
 contributionStateUpdate :: ContributionAction -> ContributionState -> ContributionState
-contributionStateUpdate action state =
-  let newState = state
-                  & csCurrentSelection         %~ currentSelectionUpdate action
-                  & csCommentCategory          %~ commentCategoryUpdate action
-                  & csDisplayedContributionID  %~ displayedContributionUpdate action
-                  & csCommentEditorIsVisible   %~ commentEditorIsVisibleUpdate action
-                  & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
-                  & csMarkPositions            %~ markPositionsUpdate action
-  in newState
+contributionStateUpdate action state = state
+  & csCurrentSelection         %~ currentSelectionUpdate action
+  & csCommentCategory          %~ commentCategoryUpdate action
+  & csDisplayedContributionID  %~ displayedContributionUpdate action
+  & csCommentEditorIsVisible   %~ commentEditorIsVisibleUpdate action
+  & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
+  & csMarkPositions            %~ markPositionsUpdate action
 
-
----------------------------------------------------------------------------
 
 currentSelectionUpdate :: ContributionAction -> Selection -> Selection
 currentSelectionUpdate action state = case action of

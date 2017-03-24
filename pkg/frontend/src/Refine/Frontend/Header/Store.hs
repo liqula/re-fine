@@ -22,8 +22,8 @@
 
 
 module Refine.Frontend.Header.Store
-( headerStateUpdate
-) where
+  ( headerStateUpdate
+  ) where
 
 import           Control.Lens ((&), (%~))
 
@@ -31,12 +31,9 @@ import Refine.Frontend.Header.Types
 import Refine.Frontend.Types
 
 headerStateUpdate :: GlobalAction -> HeaderState -> HeaderState
-headerStateUpdate action state =
-  let newState = state
-                  & hsToolbarExtensionStatus     %~ toolbarExtensionUpdate action
-  in newState
+headerStateUpdate action state = state
+  & hsToolbarExtensionStatus %~ toolbarExtensionUpdate action
 
----------------------------------------------------------------------------
 
 toolbarExtensionUpdate :: GlobalAction -> ToolbarExtensionStatus -> ToolbarExtensionStatus
 toolbarExtensionUpdate action state = case (state, action) of
