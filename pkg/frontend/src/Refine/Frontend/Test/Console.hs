@@ -27,12 +27,13 @@ module Refine.Frontend.Test.Console
   , consoleLogJSVal, consoleLogJSValM
   , consoleLogJSON, consoleLogJSONM
   , consoleLogJSONAsString, consoleLogJSONAsStringM
+  , gracefulError
   )
 where
 
 import Data.Aeson (ToJSON, encode)
 import Data.JSString ()  -- instance IsString JSString
-import Data.String.Conversions (ConvertibleStrings, cs)
+import Data.String.Conversions (ConvertibleStrings, cs, (<>))
 import GHCJS.Types (JSVal, JSString)
 
 import Refine.Frontend.CS ()
@@ -84,3 +85,13 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "process.env.NODE_ENV === 'development' ? true : false"
   js_devMode :: Bool
+
+
+-- | Log a recoverable error and stay in business.
+--
+-- FUTUREWORK: instead of logging to the console, this would be a good think to hear about on the
+-- server side as well.  we could have an end-point that just receives frontend errors and logs.
+-- This probably needs log levels to be useful and sufficiently non-invasive.
+{-# ANN gracefulError ("HLint: ignore Use errorDoNotUseTrace" :: String) #-}
+gracefulError :: ConvertibleStrings s JSString => s -> a -> a
+gracefulError msg = consoleLogJSString ("\n\n\n***** " <> cs msg <> "\n\n\n") `seq` id

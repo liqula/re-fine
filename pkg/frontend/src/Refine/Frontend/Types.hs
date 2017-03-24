@@ -20,21 +20,19 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans #-}
-
 module Refine.Frontend.Types where
 
 import           Data.Text (Text)
 import           Data.Text.I18n
 import           GHC.Generics (Generic)
 
-import Refine.Common.Types as Common
+import Refine.Common.Types
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
+import Refine.Frontend.Login.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
-import Refine.Frontend.Login.Types
 import Refine.Prelude.Aeson (NoJSONRep(..))
 import Refine.Prelude.TH (makeRefineType)
 
@@ -68,40 +66,42 @@ emptyGlobalState = GlobalState
   , _gsTranslations               = NoJSONRep emptyTranslations
   }
 
-data GlobalAction = LoadDocumentList
-                  | LoadedDocumentList [ID VDoc]
-                  | LoadDocument (ID VDoc)
-                  | OpenDocument CompositeVDoc
-                  | AddDemoDocument
-                  | ScreenAction ScreenAction
-                  | ContributionAction ContributionAction
-                  | HeaderAction HeaderAction
-                  | DocumentAction DocumentAction
-                  | ToolbarStickyStateChange Bool
-                  -- ...
-                  | AddDiscussion CompositeDiscussion
-                  | AddNote Note
-                  | AddEdit Edit
-                  | SaveSelect Text Text
-                  -- ...
-                  | CreateUser CreateUser
-                  | Login Login
-                  | Logout
-                  | ShowNotImplementedYet
-                  | HideNotImplementedYet
-                  | MainMenuAction MainMenuAction
-                  | ChangeCurrentUser CurrentUser
-                  | ChangeTranslations L10
-                  -- Actions that will be transformed because they need IO:
-                  | TriggerUpdateSelection OffsetFromDocumentTop ToolbarExtensionStatus
+data GlobalAction =
+    -- documents
+    LoadDocumentList
+  | LoadedDocumentList [ID VDoc]
+  | LoadDocument (ID VDoc)
+  | OpenDocument CompositeVDoc
 
-                  | LoadTranslations Locale
+    -- contributions
+  | ScreenAction ScreenAction
+  | ContributionAction ContributionAction
+  | HeaderAction HeaderAction
+  | DocumentAction DocumentAction
+  | ToolbarStickyStateChange Bool
+  | MainMenuAction MainMenuAction
+  | AddNote Note
+  | AddDiscussion CompositeDiscussion
+  | AddEdit Edit
+  | SaveSelect Text Text
+  | TriggerUpdateSelection OffsetFromDocumentTop ToolbarExtensionStatus
 
-                  -- Action only for testing:
-                  | ClearState
+    -- i18n
+  | LoadTranslations Locale
+  | ChangeTranslations L10
+
+    -- users
+  | CreateUser CreateUser
+  | Login Login
+  | Logout
+  | ChangeCurrentUser CurrentUser
+
+    -- testing & dev
+  | AddDemoDocument
+  | ClearState
+  | ShowNotImplementedYet
+  | HideNotImplementedYet
   deriving (Show, Generic)
-
-
 
 makeRefineType ''GlobalState
 makeRefineType ''GlobalAction

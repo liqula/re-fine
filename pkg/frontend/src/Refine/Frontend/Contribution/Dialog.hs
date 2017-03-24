@@ -33,7 +33,7 @@ import qualified Data.Tree as Tree
 import           React.Flux
 
 import           Refine.Common.Types
-import qualified Refine.Frontend.ErrorHandling as E
+import           Refine.Frontend.Test.Console (gracefulError)
 import           Refine.Frontend.ThirdPartyViews (skylight_)
 import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.Contribution.Types as RS
@@ -149,10 +149,8 @@ showComment_ !props = view_ showComment "showComment_" props
 showNoteProps :: M.Map (ID Note) Note -> RS.GlobalState -> ShowNoteProps
 showNoteProps notes rs = case (maybeNote, maybeOffset) of
   (Just note, Just offset) -> ShowNotePropsJust note offset (rs ^. RS.gsScreenState . SC.ssWindowWidth)
-  (Just note, Nothing)     -> E.gracefulError ("We have a note " <> show note <> " but no offset - how can this be?")
-                                              ShowNotePropsNothing
-  (Nothing,   Just offset) -> E.gracefulError ("We have an offset " <> show offset <> " but no note - how can this be?")
-                                              ShowNotePropsNothing
+  (Just note, Nothing)     -> err "note" note "offset" ShowNotePropsNothing
+  (Nothing,   Just offset) -> err "offset" offset "note" ShowNotePropsNothing
   _                        -> ShowNotePropsNothing
   where
     maybeContribID = rs ^. RS.gsContributionState . RS.csDisplayedContributionID
@@ -162,6 +160,8 @@ showNoteProps notes rs = case (maybeNote, maybeOffset) of
       nid <- maybeNoteID
       rs ^? RS.gsContributionState . RS.csMarkPositions . to RS._unMarkPositions
           . at (ContribIDNote nid) . _Just . RS.markPositionBottom
+
+    err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
 
 data ShowNoteProps = ShowNotePropsJust
@@ -195,12 +195,8 @@ data ShowDiscussionProps = ShowDiscussionPropsJust
 showDiscussionProps :: M.Map (ID Discussion) CompositeDiscussion -> RS.GlobalState -> ShowDiscussionProps
 showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
   (Just discussion, Just offset) -> ShowDiscussionPropsJust discussion offset (rs ^. RS.gsScreenState . SC.ssWindowWidth)
-  (Just discussion, Nothing)     -> E.gracefulError ("We have a discussion " <> show discussion
-                                                     <> " but no offset - how can this be?")
-                                              ShowDiscussionPropsNothing
-  (Nothing,         Just offset) -> E.gracefulError ("We have an offset " <> show offset
-                                                     <> " but no discussion - how can this be?")
-                                              ShowDiscussionPropsNothing
+  (Just discussion, Nothing)     -> err "discussion" discussion "offset" ShowDiscussionPropsNothing
+  (Nothing,         Just offset) -> err "offset" offset "discussion" ShowDiscussionPropsNothing
   _                              -> ShowDiscussionPropsNothing
   where
     maybeContribID = rs ^. RS.gsContributionState . RS.csDisplayedContributionID
@@ -210,6 +206,8 @@ showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
       did <- maybeDiscussionID
       rs ^? RS.gsContributionState . RS.csMarkPositions . to RS._unMarkPositions
           . at (ContribIDDiscussion did) . _Just . RS.markPositionBottom
+
+    err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
 showDiscussion :: View '[ShowDiscussionProps]
 showDiscussion = mkView "ShowDiscussion" $ \case

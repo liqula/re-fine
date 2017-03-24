@@ -38,6 +38,7 @@ module Refine.Frontend.Test.Enzyme.Class
  , typeOf
  , lengthOf
  , lengthOfIO
+ , consoleLogWrapper
  ) where
 
 import Refine.Frontend.Test.Enzyme.Class.Internal

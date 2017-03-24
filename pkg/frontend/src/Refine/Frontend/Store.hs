@@ -28,7 +28,7 @@ module Refine.Frontend.Store where
 import           Control.Concurrent (forkIO, yield, threadDelay)
 import           Control.Lens (_Just, (&), (^.), (^?), (^?!), (%~), to)
 import           Control.Monad (void)
-import qualified Data.Aeson as AE
+import           Data.Aeson (decode, eitherDecode)
 import           Data.JSString (JSString, unpack)
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
@@ -36,10 +36,9 @@ import           Data.String.Conversions
 import           React.Flux
 
 import           Refine.Common.Types (CompositeVDoc(..), Contribution(..))
-import qualified Refine.Common.Types as RT
-import qualified Refine.Common.VDoc.HTML as Common
+import qualified Refine.Common.Types as C
+import qualified Refine.Common.VDoc.HTML as C
 import           Refine.Common.Rest (ApiError(..))
-
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Store (documentStateUpdate, editorStateToVDocVersion)
@@ -59,14 +58,37 @@ import           Refine.Frontend.Types
 
 instance StoreData GlobalState where
     type StoreAction GlobalState = GlobalAction
-    transform ClearState _ = pure emptyGlobalState  -- for testing only!
-    transform action state = do
+    transform = transformGlobalState
+
+-- | FUTUREWORK: have more fine-grained constraints on 'm'.
+transformGlobalState :: m ~ IO => GlobalAction -> GlobalState -> m GlobalState
+transformGlobalState = transf
+  where
+    pureTransform :: GlobalAction -> GlobalState -> GlobalState
+    pureTransform action state = state
+      & gsVDoc                       %~ vdocUpdate action
+      & gsVDocList                   %~ vdocListUpdate action
+      & gsContributionState          %~ maybe id contributionStateUpdate (action ^? _ContributionAction)
+      & gsHeaderState                %~ headerStateUpdate action
+      & gsDocumentState              %~ documentStateUpdate action (state ^? gsVDoc . _Just . C.compositeVDocVersion)
+      & gsScreenState                %~ maybe id screenStateUpdate (action ^? _ScreenAction)
+      & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate action
+      & gsLoginState                 %~ loginStateUpdate action
+      & gsMainMenuState              %~ mainMenuUpdate action
+      & gsToolbarSticky              %~ toolbarStickyUpdate action
+      & gsTranslations               %~ fmap (translationsUpdate action)
+
+    transf :: m ~ IO => GlobalAction -> GlobalState -> m GlobalState
+    transf ClearState _ = pure emptyGlobalState  -- for testing only!
+    transf action state = do
         consoleLogJSONM "Old state: " state
         consoleLogJSStringM "Action: " (cs $ show action)
 
+        -- ajax
         emitBackendCallsFor action state
 
-        transformedAction <- case action of
+        -- effects
+        action' <- case action of
             TriggerUpdateSelection releasePositionOnPage toolbarStatus -> do
                 mrange <- getRange
                 pure . ContributionAction $ UpdateSelection
@@ -80,21 +102,14 @@ instance StoreData GlobalState where
 
             _ -> pure action
 
-        let newState = state
-              & gsVDoc                       %~ vdocUpdate transformedAction
-              & gsVDocList                   %~ vdocListUpdate transformedAction
-              & gsContributionState          %~ maybe id contributionStateUpdate (transformedAction ^? _ContributionAction)
-              & gsHeaderState                %~ headerStateUpdate transformedAction
-              & gsDocumentState              %~ documentStateUpdate transformedAction (state ^? gsVDoc . _Just . RT.compositeVDocVersion)
-              & gsScreenState                %~ maybe id screenStateUpdate (transformedAction ^? _ScreenAction)
-              & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate transformedAction
-              & gsLoginState                 %~ loginStateUpdate transformedAction
-              & gsMainMenuState              %~ mainMenuUpdate transformedAction
-              & gsToolbarSticky              %~ toolbarStickyUpdate transformedAction
-              & gsTranslations               %~ fmap (translationsUpdate transformedAction)
+        -- pure updates
+        let state' = pureTransform action' state
 
-        consoleLogJSONM "New state: " newState
-        pure newState
+        consoleLogJSONM "New state: " state'
+        pure state'
+
+
+-- * pure updates
 
 vdocUpdate :: GlobalAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate action Nothing = case action of
@@ -104,37 +119,38 @@ vdocUpdate action Nothing = case action of
 vdocUpdate action (Just vdoc) = Just $ case action of
     AddDiscussion discussion
       -> vdoc
-          & RT.compositeVDocDiscussions
-              %~ M.insert (discussion ^. RT.compositeDiscussion . RT.discussionID) discussion
-          & RT.compositeVDocVersion
-              %~ Common.insertMoreMarks [ContribDiscussion $ discussion ^. RT.compositeDiscussion]
+          & C.compositeVDocDiscussions
+              %~ M.insert (discussion ^. C.compositeDiscussion . C.discussionID) discussion
+          & C.compositeVDocVersion
+              %~ C.insertMoreMarks [ContribDiscussion $ discussion ^. C.compositeDiscussion]
 
     AddNote note
       -> vdoc
-          & RT.compositeVDocNotes
-              %~ M.insert (note ^. RT.noteID) note
-          & RT.compositeVDocVersion
-              %~ Common.insertMoreMarks [ContribNote note]
+          & C.compositeVDocNotes
+              %~ M.insert (note ^. C.noteID) note
+          & C.compositeVDocVersion
+              %~ C.insertMoreMarks [ContribNote note]
 
     AddEdit edit
       -> vdoc
-          & RT.compositeVDocEdits
-              %~ M.insert (edit ^. RT.editID) edit
-          & RT.compositeVDocVersion
-              %~ Common.insertMoreMarks [ContribEdit edit]
+          & C.compositeVDocEdits
+              %~ M.insert (edit ^. C.editID) edit
+          & C.compositeVDocVersion
+              %~ C.insertMoreMarks [ContribEdit edit]
 
     ContributionAction (ShowCommentEditor (Just range))
-      -> vdoc & RT.compositeVDocVersion %~ Common.highlightRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
+      -> vdoc & C.compositeVDocVersion %~ C.highlightRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
     ContributionAction HideCommentEditor
-      -> vdoc & RT.compositeVDocVersion %~ Common.removeHighlights
+      -> vdoc & C.compositeVDocVersion %~ C.removeHighlights
 
     _ -> vdoc
 
 
-vdocListUpdate :: GlobalAction -> Maybe [RT.ID RT.VDoc] -> Maybe [RT.ID RT.VDoc]
+vdocListUpdate :: GlobalAction -> Maybe [C.ID C.VDoc] -> Maybe [C.ID C.VDoc]
 vdocListUpdate action state = case action of
     LoadedDocumentList list -> Just list
     _ -> state
+
 
 notImplementedYetIsVisibleUpdate :: GlobalAction -> Bool -> Bool
 notImplementedYetIsVisibleUpdate action state = case action of
@@ -142,26 +158,31 @@ notImplementedYetIsVisibleUpdate action state = case action of
   HideNotImplementedYet -> False
   _                 -> state
 
+
 toolbarStickyUpdate :: GlobalAction -> Bool -> Bool
 toolbarStickyUpdate action state = case action of
   ToolbarStickyStateChange state' -> state'
   _                               -> state
 
+
+-- * ajax
+
 emitBackendCallsFor :: GlobalAction -> GlobalState -> IO ()
 emitBackendCallsFor action state = case action of
+
+    -- documents
+
     LoadDocumentList -> do
         listVDocs $ \case
             (Left rsp) -> handleError rsp (const [])
-            (Right loadedVDocs) -> pure . dispatch $ LoadedDocumentList ((^. RT.vdocID) <$> loadedVDocs)
+            (Right loadedVDocs) -> pure . dispatch $ LoadedDocumentList ((^. C.vdocID) <$> loadedVDocs)
     LoadDocument auid -> do
         getVDoc auid $ \case
             (Left rsp) -> handleError rsp (const [])
             (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
 
-    AddDemoDocument -> do
-        createVDoc (RT.CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
-            (Left rsp) -> handleError rsp (const [])
-            (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
+
+    -- contributions
 
     ContributionAction (SubmitComment text category forRange) -> do
       -- here we need to distinguish which comment category we want to submit
@@ -169,43 +190,51 @@ emitBackendCallsFor action state = case action of
       -- (FIXME: the new correct technical term for 'category' is 'kind'.)
       case category of
         Just Discussion ->
-          addDiscussion (state ^. gsVDoc . to fromJust . RT.compositeVDocRepo . RT.vdocHeadEdit)
-                     (RT.CreateDiscussion text True (createChunkRange forRange)) $ \case
+          addDiscussion (state ^. gsVDoc . to fromJust . C.compositeVDocRepo . C.vdocHeadEdit)
+                     (C.CreateDiscussion text True (createChunkRange forRange)) $ \case
             (Left rsp) -> handleError rsp (const [])
             (Right discussion) -> pure $ dispatch (AddDiscussion discussion)
         Just Note ->
-          addNote (state ^. gsVDoc . to fromJust . RT.compositeVDocRepo . RT.vdocHeadEdit)
-                     (RT.CreateNote text True (createChunkRange forRange)) $ \case
+          addNote (state ^. gsVDoc . to fromJust . C.compositeVDocRepo . C.vdocHeadEdit)
+                     (C.CreateNote text True (createChunkRange forRange)) $ \case
             (Left rsp) -> handleError rsp (const [])
             (Right note) -> pure $ dispatch (AddNote note)
         Nothing -> pure ()
 
-    DocumentAction DocumentEditSave -> do
-      let eid :: RT.ID RT.Edit
-          eid = state ^?! gsVDoc . _Just . RT.compositeVDocEditID
+    DocumentAction DocumentEditSave -> case state ^? gsDocumentState . documentStateEdit of
+      Just estate@(editorStateToVDocVersion -> Right newvers) -> do
+        let eid :: C.ID C.Edit
+            eid = state ^?! gsVDoc . _Just . C.compositeVDocEditID
 
-          adHocFail msg = error $ "DocumentAction DocumentEditSave: " <> msg  -- TODO: #255
-
-      estate :: EditorState
-        <- case state ^. gsDocumentState of
-             DocumentStateEdit s -> pure s
-             DocumentStateView   -> adHocFail "document state is in 'view'"
-
-      newvers :: RT.VDocVersion 'RT.HTMLWithMarks
-        <- either (adHocFail . ("newvers cannot be parsed: " <>)) pure $ editorStateToVDocVersion estate
-
-      let cid :: RT.Create RT.Edit
-          cid = RT.CreateEdit
-                  { RT._createEditDesc  = "..."                          -- TODO: #233
-                  , RT._createEditRange = RT.ChunkRange Nothing Nothing  -- FIXME: 'state ^. gsContributionState . csCurrentSelection'
-                  , RT._createEditVDoc  = Common.downgradeVDocVersionWR newvers
-                  , RT._createEditKind  = estate ^. editorStateKind
-                  , RT._createEditMotiv = "..."                          -- TODO: #233
+            cid :: C.Create C.Edit
+            cid = C.CreateEdit
+                  { C._createEditDesc  = "..."                          -- TODO: #233
+                  , C._createEditRange = C.ChunkRange Nothing Nothing  -- FIXME: 'state ^. gsContributionState . csCurrentSelection'
+                  , C._createEditVDoc  = C.downgradeVDocVersionWR newvers
+                  , C._createEditKind  = estate ^. editorStateKind
+                  , C._createEditMotiv = "..."                          -- TODO: #233
                   }
 
-      addEdit eid cid $ \case
-        Left rsp   -> handleError rsp (const [])
-        Right edit -> pure $ dispatch (AddEdit edit)
+        addEdit eid cid $ \case
+          Left rsp   -> handleError rsp (const [])
+          Right edit -> pure $ dispatch (AddEdit edit)
+
+      bad -> let msg = "DocumentAction DocumentEditSave: "
+                    <> "not in editor state or content cannot be converted to html."
+                    <> show bad
+             in gracefulError msg $ pure ()
+
+
+    -- i18n
+
+    LoadTranslations locate -> do
+      getTranslations (C.GetTranslations locate) $ \case
+        (Left rsp) -> handleError rsp (const [])
+        (Right l10) -> do
+          pure . dispatch $ ChangeTranslations l10
+
+
+    -- users
 
     CreateUser createUserData -> do
       createUser createUserData $ \case
@@ -241,20 +270,26 @@ emitBackendCallsFor action state = case action of
             , MainMenuAction MainMenuActionClose
             ]
 
-    LoadTranslations locate -> do
-      getTranslations (RT.GetTranslations locate) $ \case
-        (Left rsp) -> handleError rsp (const [])
-        (Right l10) -> do
-          pure . dispatch $ ChangeTranslations l10
+
+    -- testing & dev
+
+    AddDemoDocument -> do
+        createVDoc (C.CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
+            (Left rsp) -> handleError rsp (const [])
+            (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
+
+
+    -- default
 
     _ -> pure ()
 
-createChunkRange :: Maybe Range -> RT.ChunkRange
-createChunkRange Nothing = RT.ChunkRange Nothing Nothing
-createChunkRange (Just range) = RT.ChunkRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
+
+createChunkRange :: Maybe Range -> C.ChunkRange
+createChunkRange Nothing = C.ChunkRange Nothing Nothing
+createChunkRange (Just range) = C.ChunkRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
 
 handleError :: (Int, String) -> (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
-handleError (code, rsp) onApiError = case AE.eitherDecode $ cs rsp of
+handleError (code, rsp) onApiError = case eitherDecode $ cs rsp of
   Left err -> do
     consoleLogJSStringM "handleError: backend sent invalid response: " . cs $ unwords [show code, rsp, err]
         -- FIXME: use 'gracefulError' here.  (rename 'gracefulError' to 'assertContract'?)
@@ -263,6 +298,8 @@ handleError (code, rsp) onApiError = case AE.eitherDecode $ cs rsp of
     consoleLogJSStringM "handleApiError" . cs $ show apiError
     pure . mconcat . fmap dispatch $ onApiError apiError
 
+
+-- * helpers
 
 -- FIXME: return a single some-action, not a list?
 dispatch :: GlobalAction -> [SomeStoreAction]
@@ -273,11 +310,11 @@ dispatchMany = mconcat . fmap dispatch
 
 
 getRange :: IO (Maybe Range)
-getRange = (AE.decode . cs . unpack) <$> js_getRange
+getRange = decode . cs . unpack <$> js_getRange
 
 foreign import javascript unsafe
-    "refine$getSelectionRange()"
-    js_getRange :: IO JSString
+  "refine$getSelectionRange()"
+  js_getRange :: IO JSString
 
 foreign import javascript unsafe
   "window.getSelection().removeAllRanges();"
