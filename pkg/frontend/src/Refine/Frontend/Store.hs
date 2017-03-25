@@ -26,7 +26,7 @@
 module Refine.Frontend.Store where
 
 import           Control.Concurrent (forkIO, yield, threadDelay)
-import           Control.Lens (_Just, (&), (^.), (^?), (^?!), (%~))
+import           Control.Lens (_Just, (&), (^.), (^?), (^?!), (%~), (.~), to)
 import           Control.Monad (void)
 import           Data.Aeson (decode, eitherDecode)
 import           Data.JSString (JSString, unpack)
@@ -101,6 +101,11 @@ transformGlobalState = transf
 
             ContributionAction (ShowCommentEditor _) -> do
                 js_removeAllRanges
+
+            DocumentAction (TriggerDocumentEditStart estate) -> do
+                mrange <- getRange
+                js_removeAllRanges
+                dispatchM $ DocumentAction (DocumentEditStart $ estate & editorStateSelection .~ mrange)
 
             _ -> pure ()
 
@@ -208,7 +213,7 @@ emitBackendCallsFor action state = case action of
             cid :: C.Create C.Edit
             cid = C.CreateEdit
                   { C._createEditDesc  = "..."                          -- TODO: #233
-                  , C._createEditRange = C.ChunkRange Nothing Nothing  -- FIXME: 'state ^. gsContributionState . csCurrentSelection'
+                  , C._createEditRange = estate ^. editorStateSelection . to createChunkRange
                   , C._createEditVDoc  = C.downgradeVDocVersionWR newvers
                   , C._createEditKind  = estate ^. editorStateKind
                   , C._createEditMotiv = "..."                          -- TODO: #233

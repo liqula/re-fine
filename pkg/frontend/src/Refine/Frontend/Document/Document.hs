@@ -66,11 +66,11 @@ newtype EditorWrapperProps = EditorWrapperProps
   }
 
 editorWrapper :: View '[EditorWrapperProps]
-editorWrapper = mkView "EditorWrapper" $ \(EditorWrapperProps (EditorState kind (NoJSONRep editorState))) ->
+editorWrapper = mkView "EditorWrapper" $ \(EditorWrapperProps (EditorState kind (NoJSONRep editorState) mrange)) ->
       editor_ [ property "editorState" editorState
               , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
                   \(HandlerArg evt) -> js_ES_traceCurrentContent `seq`
-                                       (RS.dispatch . RS.DocumentAction . DocumentEditStart . EditorState kind . NoJSONRep $ evt)
+                                       (RS.dispatch . RS.DocumentAction $ DocumentEditStart (EditorState kind (NoJSONRep evt) mrange))
               ] mempty
 
 editorWrapper_ :: EditorWrapperProps -> ReactElementM eventHandler ()

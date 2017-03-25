@@ -64,7 +64,7 @@ createEditorState kind (VDocVersion vers) = unsafePerformIO $ do
 
   js_ES_traceCurrentContent estate `seq` pure ()
 
-  pure $ EditorState kind (NoJSONRep estate)
+  pure $ EditorState kind (NoJSONRep estate) Nothing
 
 
 editorStateToVDocVersion :: EditorState -> Either String (VDocVersion 'HTMLWithMarks)

@@ -34,7 +34,8 @@ import           Refine.Prelude.TH ( makeRefineType )
 
 
 data DocumentAction =
-    DocumentEditStart EditorState
+    TriggerDocumentEditStart EditorState
+  | DocumentEditStart EditorState
   | DocumentEditSave
   deriving (Show, Generic)
 
@@ -45,8 +46,9 @@ data DocumentState =
   deriving (Generic, Show)
 
 data EditorState = EditorState
-  { _editorStateKind :: EditKind
-  , _editorStateVal  :: NoJSONRep JSVal
+  { _editorStateKind      :: EditKind
+  , _editorStateVal       :: NoJSONRep JSVal
+  , _editorStateSelection :: Maybe Range
   }
   deriving (Generic, Show)
 
