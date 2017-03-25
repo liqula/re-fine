@@ -403,14 +403,16 @@ getStatement sid = S.statementElim (toStatement sid) <$> getEntity sid
 
 -- * Group
 
-toGroup :: [ID Group] -> [ID Group] -> ID Group -> ST -> ST -> Group
-toGroup parents children gid title desc = Group gid title desc parents children
+toGroup :: [ID Group] -> [ID Group] -> ID Group -> ST -> ST -> Bool -> Group
+toGroup parents children gid title desc universal =
+  Group gid title desc parents children universal
 
 createGroup :: Create Group -> DB Group
 createGroup group = liftDB $ do
   let sgroup = S.Group
         (group ^. createGroupTitle)
         (group ^. createGroupDesc)
+        (group ^. createGroupUniversal)
   key <- insert sgroup
   forM_ (group ^. createGroupParents) $ \parent -> do
     insert $ S.SubGroup (S.idToKey parent) key
@@ -495,6 +497,10 @@ removeSubGroup parent child = liftDB $ do
     , S.SubGroupChild  ==. S.idToKey child
     ]
 
+universalGroup :: DB (ID Group)
+universalGroup = do
+  xs <- (S.keyToId . entityKey) <$$> liftDB (selectList [ S.GroupUniversal ==. True ] [])
+  unique xs
 
 -- * Roles
 

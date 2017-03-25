@@ -74,6 +74,7 @@ class Database db where
   removeGroup          :: ID Group -> db ()
   addSubGroup          :: ID Group -> ID Group -> db ()
   removeSubGroup       :: ID Group -> ID Group -> db ()
+  universalGroup       :: db (ID Group)
 
   -- Roles
   assignRole   :: ID Group -> ID User -> Role -> db ()

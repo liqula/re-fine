@@ -96,6 +96,7 @@ Vote
 Group
     title       Text
     description Text
+    universal   Bool
 
 SubGroup
     parent      GroupId

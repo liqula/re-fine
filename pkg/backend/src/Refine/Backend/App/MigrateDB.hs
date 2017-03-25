@@ -49,5 +49,5 @@ migrateDB cfg = do
 createInitialDB :: AppM DB uh ()
 createInitialDB = do
   appLog "Create initial database state ..."
-  appLog . show =<< db (DB.createGroup (CreateGroup "Universal" "Group for all of the users" [] []))
+  appLog . show =<< db (DB.createGroup (CreateGroup "Universal" "Group for all of the users" [] [] True))
   appLog "Create initial database state ... DONE"
