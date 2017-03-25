@@ -48,13 +48,13 @@ data CreateCollabEditProcess = CreateCollabEditProcess
   , _createCollabEditProcessGroupID :: ID Group
   , _createCollabEditProcessVDocID  :: ID VDoc
   }
-  deriving (Eq, Ord, Generic)
+  deriving (Eq, Show, Generic)
 
 data CreateAulaProcess = CreateAulaProcess
   { _createAulaProcessClassName :: ST
   , _createAulaProcessGroupID   :: ID Group
   }
-  deriving (Eq, Ord, Generic)
+  deriving (Eq, Show, Generic)
 
 
 -- | A *process* has a certain type (more general: "collecting wild ideas",
@@ -73,15 +73,10 @@ data Process a = Process
   , _processGroup :: Group
   , _processData  :: a
   }
-  deriving (Eq, Generic)
+  deriving (Eq, Show, Generic)
 
 type instance Create (Process CollaborativeEdit) = CreateCollabEditProcess
 type instance Create (Process Aula)              = CreateAulaProcess
-
-data CreateCollaborativeEdit = CreateCollaborativeEdit
-  { _createCollaborativeEditPhase :: CollaborativeEditPhase
-  }
-  deriving (Eq, Ord, Generic)
 
 data CollaborativeEdit =
   CollaborativeEdit
@@ -102,9 +97,21 @@ data Aula = Aula
   }
   deriving (Eq, Show, Generic)
 
+data AddProcess
+  = AddCollabEditProcess CreateCollabEditProcess
+  | AddAulaProcess       CreateAulaProcess
+  deriving (Eq, Show, Generic)
+
+data CreatedProcess
+  = CreatedCollabEditProcess (Process CollaborativeEdit)
+  | CreatedAulaProcess       (Process Aula)
+  deriving (Eq, Show, Generic)
+
 makeRefineType ''CreateCollabEditProcess
 makeRefineType ''CreateAulaProcess
 makeRefineType ''Process
 makeRefineType ''CollaborativeEdit
 makeRefineType ''CollaborativeEditPhase
 makeRefineType ''Aula
+makeRefineType ''AddProcess
+makeRefineType ''CreatedProcess

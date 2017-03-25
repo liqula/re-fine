@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -52,13 +53,14 @@ import           System.FilePath (dropFileName)
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB (migrateDB)
 import Refine.Backend.Config
-import Refine.Backend.Database (Database, DB, DBError(..), createDBNat)
+import Refine.Backend.Database (Database, DB, DBError(..), createDBNat, StoreProcessData)
 import Refine.Backend.DocRepo (DocRepoError(..), createRepoNat)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
 import Refine.Backend.User (CreateUserError(..), UserDB, UH, MockUH_, FreeUH, UserHandle, UserHandleC, uhNat, mockLogin)
 import Refine.Common.Rest
+import Refine.Common.Types
 import Refine.Prelude (leftToError)
 
 
@@ -88,8 +90,16 @@ data Backend db uh = Backend
   , backendRunApp :: AppM db uh CN.:~> ExceptT AppError IO
   }
 
-refineApi :: (Monad db, Database db, Monad uh, UserHandle uh)
-          => ServerT RefineAPI (AppM db uh)
+type RefineAPIConstraints db uh =
+  ( Monad db
+  , Database db
+  , Monad uh
+  , UserHandle uh
+  , StoreProcessData db Aula
+  , StoreProcessData db CollaborativeEdit
+  )
+
+refineApi :: RefineAPIConstraints db uh => ServerT RefineAPI (AppM db uh)
 refineApi =
        Refine.Backend.App.listVDocs
   :<|> Refine.Backend.App.getCompositeVDoc
@@ -107,6 +117,7 @@ refineApi =
   :<|> Refine.Backend.App.addGroup
   :<|> Refine.Backend.App.changeSubGroup
   :<|> Refine.Backend.App.changeRole
+  :<|> Refine.Backend.App.addProcess
 
 startBackend :: Config -> IO ()
 startBackend cfg =
@@ -146,7 +157,7 @@ mkBackend cfg initUH migrate = do
 
 
 mkServerApp
-    :: (Monad db, Database db, UserHandleC uh)
+    :: RefineAPIConstraints db uh
     => Config -> DBNat db -> DocRepoNat -> UHNat uh -> IO (Backend db uh)
 mkServerApp cfg dbNat docRepoNat uh = do
   poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath
