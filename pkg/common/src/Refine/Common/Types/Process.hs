@@ -107,6 +107,11 @@ data CreatedProcess
   | CreatedAulaProcess       (Process Aula)
   deriving (Eq, Show, Generic)
 
+data RemoveProcess
+  = RemoveCollabEditProcess (ID (Process CollaborativeEdit))
+  | RemoveAulaProcess       (ID (Process Aula))
+  deriving (Eq, Show, Generic)
+
 makeRefineType ''CreateCollabEditProcess
 makeRefineType ''CreateAulaProcess
 makeRefineType ''Process
@@ -115,3 +120,4 @@ makeRefineType ''CollaborativeEditPhase
 makeRefineType ''Aula
 makeRefineType ''AddProcess
 makeRefineType ''CreatedProcess
+makeRefineType ''RemoveProcess

@@ -64,6 +64,7 @@ type RefineAPI =
   :<|> SChangeRole
   :<|> SAddProcess
   :<|> SChangeProcess
+  :<|> SRemoveProcess
 
 
 type SListVDocs
@@ -136,6 +137,10 @@ type SAddProcess
 
 type SChangeProcess
   = "r" :> "process" :> "change" :> ReqBody '[JSON] ChangeProcess
+    :> Post '[JSON] ()
+
+type SRemoveProcess
+  = "r" :> "process" :> "remove" :> ReqBody '[JSON] RemoveProcess
     :> Post '[JSON] ()
 
 makeRefineType ''ApiError

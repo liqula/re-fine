@@ -84,12 +84,14 @@ class Database db where
   createProcess :: StoreProcessData db a => Create (Process a) -> db (Process a)
   getProcess    :: (StoreProcessData db a, Typeable a) => ID (Process a) -> db (Process a)
   updateProcess :: StoreProcessData db a => ID (Process a) -> Create (Process a) -> db ()
+  removeProcess :: (StoreProcessData db a, Typeable a) => ID (Process a) -> db ()
 
 class StoreProcessData db c where
   processDataGroupID :: Create (Process c) -> db (ID Group)
   createProcessData  :: ID (Process c) -> Create (Process c) -> db c
   getProcessData     :: ID (Process c) -> db c
   updateProcessData  :: ID (Process c) -> Create (Process c) -> db ()
+  removeProcessData  :: c -> db ()
 
 -- * composite db queries
 

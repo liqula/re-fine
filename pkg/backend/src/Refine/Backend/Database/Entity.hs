@@ -552,6 +552,11 @@ instance C.StoreProcessData DB CollaborativeEdit where
       [ S.CollabEditProcessVdoc  =. process ^. createCollabEditProcessVDocID . to S.idToKey
       , S.CollabEditProcessPhase =. process ^. createCollabEditProcessPhase
       ]
+
+  removeProcessData pdata = liftDB $ do
+    deleteWhere [S.ProcessOfCollabEditCollabEdit ==. pdata ^. collaborativeEditID . to S.idToKey]
+    delete (pdata ^. collaborativeEditID . to S.idToKey)
+
 instance C.StoreProcessData DB Aula where
   processDataGroupID = pure . view createAulaProcessGroupID
 
@@ -575,6 +580,11 @@ instance C.StoreProcessData DB Aula where
     liftDB $ update (S.idToKey aid)
       [ S.AulaProcessClass =. process ^. createAulaProcessClassName
       ]
+
+  removeProcessData pdata = liftDB $ do
+    deleteWhere [S.ProcessOfAulaAula ==. pdata ^. aulaID . to S.idToKey]
+    delete (pdata ^. aulaID . to S.idToKey)
+
 createProcess :: (C.StoreProcessData DB a) => Create (Process a) -> DB (Process a)
 createProcess process = do
   gid   <- C.processDataGroupID process
@@ -597,3 +607,9 @@ updateProcess pid process = do
     [ S.ProcessGroup =. S.idToKey gid
     ]
   C.updateProcessData pid process
+
+removeProcess :: (C.StoreProcessData DB a, Typeable a) => ID (Process a) -> DB ()
+removeProcess pid = do
+  process <- getProcess pid
+  C.removeProcessData (process ^. processData)
+  liftDB $ delete (process ^. processID . to S.idToKey)

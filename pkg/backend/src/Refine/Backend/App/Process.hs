@@ -24,14 +24,11 @@
 
 module Refine.Backend.App.Process where
 
-import Data.Typeable
-
 import Refine.Backend.App.Core
 import Refine.Backend.Database.Class as DB
 import Refine.Backend.User.Class
 import Refine.Common.ChangeAPI
 import Refine.Common.Types.Process
-import Refine.Common.Types.Prelude
 
 
 type AppProcessConstraint db uh =
@@ -40,14 +37,6 @@ type AppProcessConstraint db uh =
   , DatabaseC db
   , UserHandleC uh
   )
-
-type AppProcessConstraintT db uh a =
-  ( StoreProcessData db a
-  , DatabaseC db
-  , Typeable a
-  , UserHandleC uh
-  )
-
 
 addProcess :: AppProcessConstraint db uh => AddProcess -> AppM db uh CreatedProcess
 addProcess ap = do
@@ -65,3 +54,10 @@ changeProcess change = do
 
     ChangeProcessAulaClassName pid create -> do
       DB.updateProcess pid create
+
+removeProcess :: AppProcessConstraint db uh => RemoveProcess -> AppM db uh ()
+removeProcess remove = do
+  appLog "removeProcess"
+  db $ case remove of
+    RemoveCollabEditProcess pid -> DB.removeProcess pid
+    RemoveAulaProcess       pid -> DB.removeProcess pid

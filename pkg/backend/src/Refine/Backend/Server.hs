@@ -119,6 +119,7 @@ refineApi =
   :<|> Refine.Backend.App.changeRole
   :<|> Refine.Backend.App.addProcess
   :<|> Refine.Backend.App.changeProcess
+  :<|> Refine.Backend.App.removeProcess
 
 startBackend :: Config -> IO ()
 startBackend cfg =

@@ -134,3 +134,4 @@ instance Database DB where
   createProcess = Entity.createProcess
   getProcess    = Entity.getProcess
   updateProcess = Entity.updateProcess
+  removeProcess = Entity.removeProcess
