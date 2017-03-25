@@ -132,7 +132,7 @@ startBackend cfg =
 runCliAppCommand :: Config -> AppM DB UH a -> IO ()
 runCliAppCommand cfg cmd = do
   backend <- mkProdBackend cfg
-  void $ (natThrowError . (backendRunApp backend)) $$ cmd
+  void $ (natThrowError . backendRunApp backend) $$ cmd
 
 mkProdBackend :: Config -> IO (Backend DB UH)
 mkProdBackend cfg = mkBackend cfg uhNat (migrateDB cfg)

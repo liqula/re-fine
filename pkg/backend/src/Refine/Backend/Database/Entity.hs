@@ -588,7 +588,7 @@ instance C.StoreProcessData DB Aula where
 createProcess :: (C.StoreProcessData DB a) => Create (Process a) -> DB (Process a)
 createProcess process = do
   gid   <- C.processDataGroupID process
-  pkey  <- liftDB $ insert $ S.Process (S.idToKey gid)
+  pkey  <- liftDB . insert $ S.Process (S.idToKey gid)
   pdata <- C.createProcessData (S.keyToId pkey) process
   group <- getGroup gid
   pure $ Process (S.keyToId pkey) group pdata

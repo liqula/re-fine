@@ -24,6 +24,7 @@ import Control.Lens (makeLenses, makePrisms)
 import Control.DeepSeq (NFData(..))
 import Data.Aeson (FromJSON(..), ToJSON(..))
 import Data.Maybe (listToMaybe)
+import Data.Monoid ((<>))
 import Language.Haskell.TH
 import Generics.SOP
 import Generics.SOP.NFData (grnf)
@@ -45,7 +46,7 @@ typeVarName (KindedTV name _kind) = name
 firstTypeParam :: Dec -> Maybe Name
 firstTypeParam (DataD _ _ vars _ _ _)    = listToMaybe $ map typeVarName vars
 firstTypeParam (NewtypeD _ _ vars _ _ _) = listToMaybe $ map typeVarName vars
-firstTypeParam dec = error $ "firstTypeParam got invalid Dec " ++ show dec
+firstTypeParam dec = error $ "firstTypeParam got invalid Dec " <> show dec
 
 typeOf :: Name -> Q (Type, Maybe Type)
 typeOf t = do
