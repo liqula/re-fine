@@ -26,12 +26,11 @@
 module Refine.Frontend.Store where
 
 import           Control.Concurrent (forkIO, yield, threadDelay)
-import           Control.Lens (_Just, (&), (^.), (^?), (^?!), (%~), to)
+import           Control.Lens (_Just, (&), (^.), (^?), (^?!), (%~))
 import           Control.Monad (void)
 import           Data.Aeson (decode, eitherDecode)
 import           Data.JSString (JSString, unpack)
 import qualified Data.Map.Strict as M
-import           Data.Maybe (fromJust)
 import           Data.String.Conversions
 import           React.Flux
 
@@ -190,12 +189,12 @@ emitBackendCallsFor action state = case action of
       -- (FIXME: the new correct technical term for 'category' is 'kind'.)
       case category of
         Just Discussion ->
-          addDiscussion (state ^. gsVDoc . to fromJust . C.compositeVDocRepo . C.vdocHeadEdit)
+          addDiscussion (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
                      (C.CreateDiscussion text True (createChunkRange forRange)) $ \case
             (Left rsp) -> handleError rsp (const [])
             (Right discussion) -> pure $ dispatch (AddDiscussion discussion)
         Just Note ->
-          addNote (state ^. gsVDoc . to fromJust . C.compositeVDocRepo . C.vdocHeadEdit)
+          addNote (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
                      (C.CreateNote text True (createChunkRange forRange)) $ \case
             (Left rsp) -> handleError rsp (const [])
             (Right note) -> pure $ dispatch (AddNote note)
