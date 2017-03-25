@@ -544,6 +544,14 @@ instance C.StoreProcessData DB CollaborativeEdit where
       (S.collabEditProcessPhase cedata)
       vdoc
 
+  updateProcessData pid process = do
+    ceids <- foreignKeyField S.processOfCollabEditCollabEdit
+             <$$> liftDB (selectList [S.ProcessOfCollabEditProcess ==. S.idToKey pid] [])
+    ceid :: ID CollaborativeEdit <- unique ceids
+    liftDB $ update (S.idToKey ceid)
+      [ S.CollabEditProcessVdoc  =. process ^. createCollabEditProcessVDocID . to S.idToKey
+      , S.CollabEditProcessPhase =. process ^. createCollabEditProcessPhase
+      ]
 instance C.StoreProcessData DB Aula where
   processDataGroupID = pure . view createAulaProcessGroupID
 
@@ -560,6 +568,13 @@ instance C.StoreProcessData DB Aula where
     saula <- getEntity aid
     pure $ Aula aid (S.aulaProcessClass saula)
 
+  updateProcessData pid process = do
+    as  <- foreignKeyField S.processOfAulaAula
+            <$$> liftDB (selectList [S.ProcessOfAulaProcess ==. S.idToKey pid] [])
+    aid :: ID Aula <- unique as
+    liftDB $ update (S.idToKey aid)
+      [ S.AulaProcessClass =. process ^. createAulaProcessClassName
+      ]
 createProcess :: (C.StoreProcessData DB a) => Create (Process a) -> DB (Process a)
 createProcess process = do
   gid   <- C.processDataGroupID process
@@ -574,3 +589,11 @@ getProcess pid = do
   pdata   <- C.getProcessData pid
   group   <- getGroup (S.keyToId $ S.processGroup process)
   pure $ Process pid group pdata
+
+updateProcess :: (C.StoreProcessData DB a) => ID (Process a) -> Create (Process a) -> DB ()
+updateProcess pid process = do
+  gid <- C.processDataGroupID process
+  liftDB $ update (S.idToKey pid)
+    [ S.ProcessGroup =. S.idToKey gid
+    ]
+  C.updateProcessData pid process

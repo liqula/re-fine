@@ -133,3 +133,4 @@ instance Database DB where
   -- * Process
   createProcess = Entity.createProcess
   getProcess    = Entity.getProcess
+  updateProcess = Entity.updateProcess
