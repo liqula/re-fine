@@ -28,7 +28,7 @@ import Refine.Common.Types.VDoc (VDoc)
 import Refine.Prelude.TH (makeRefineType)
 
 
--- | TODO: Explain the error and why we can not do this...
+-- Explanation:
 --
 -- data CreateProcess a = CreateProcess
 --   { _createProcessData :: Create a
