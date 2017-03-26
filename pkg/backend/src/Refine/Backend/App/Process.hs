@@ -64,12 +64,12 @@ addInitialCollabEditProcess aice = do
   gid <- case aice ^. aiceGroup of
           UniversalGroup -> db universalGroup
           DedicatedGroup gid' -> pure gid'
-  vdoc <- createVDoc $ CreateVDoc
+  vdoc <- createVDoc CreateVDoc
     { _createVDocTitle       = aice ^. aiceTitle
     , _createVDocAbstract    = aice  ^. aiceAbstract
     , _createVDocInitVersion = emptyVDocVersion
     }
-  addProcess . AddCollabEditProcess $ CreateCollabEditProcess
+  addProcess $ AddCollabEditProcess CreateCollabEditProcess
     { _createCollabEditProcessPhase   = CollaborativeEditOnlyPhase
     , _createCollabEditProcessGroupID = gid
     , _createCollabEditProcessVDocID  = vdoc ^. vdocID

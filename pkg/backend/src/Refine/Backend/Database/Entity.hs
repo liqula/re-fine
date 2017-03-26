@@ -404,8 +404,8 @@ getStatement sid = S.statementElim (toStatement sid) <$> getEntity sid
 -- * Group
 
 toGroup :: [ID Group] -> [ID Group] -> ID Group -> ST -> ST -> Bool -> Group
-toGroup parents children gid title desc universal =
-  Group gid title desc parents children universal
+toGroup parents children gid title desc =
+  Group gid title desc parents children
 
 createGroup :: Create Group -> DB Group
 createGroup group = liftDB $ do
