@@ -63,6 +63,7 @@ type RefineAPI =
   :<|> SChangeSubGroup
   :<|> SChangeRole
   :<|> SAddProcess
+  :<|> SAddInitialCollabEditProcess
   :<|> SChangeProcess
   :<|> SRemoveProcess
 
@@ -133,6 +134,10 @@ type SChangeRole
 
 type SAddProcess
   = "r" :> "process" :> ReqBody '[JSON] AddProcess
+    :> Post '[JSON] CreatedProcess
+
+type SAddInitialCollabEditProcess
+  = "r" :> "process" :> "initial" :> ReqBody '[JSON] AddInitialCollabEditProcess
     :> Post '[JSON] CreatedProcess
 
 type SChangeProcess

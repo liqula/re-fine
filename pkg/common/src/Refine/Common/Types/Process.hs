@@ -24,7 +24,7 @@ import GHC.Generics
 
 import Refine.Common.Types.Prelude (ID(..), Create)
 import Refine.Common.Types.Group (Group)
-import Refine.Common.Types.VDoc (VDoc)
+import Refine.Common.Types.VDoc (VDoc, Title, Abstract)
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -56,6 +56,8 @@ data CreateAulaProcess = CreateAulaProcess
   }
   deriving (Eq, Show, Generic)
 
+data ProcessGroup = UniversalGroup | DedicatedGroup (ID Group)
+  deriving (Eq, Show, Generic)
 
 -- | A *process* has a certain type (more general: "collecting wild ideas",
 -- "collaborative text editing", ...; or more specific: "spending a school budget", "updating a
@@ -102,6 +104,13 @@ data AddProcess
   | AddAulaProcess       CreateAulaProcess
   deriving (Eq, Show, Generic)
 
+data AddInitialCollabEditProcess = AddInitialCollabEditProcess
+  { _aiceTitle    :: Title
+  , _aiceAbstract :: Abstract
+  , _aiceGroup    :: ProcessGroup
+  }
+  deriving (Eq, Show, Generic)
+
 data CreatedProcess
   = CreatedCollabEditProcess (Process CollaborativeEdit)
   | CreatedAulaProcess       (Process Aula)
@@ -112,6 +121,7 @@ data RemoveProcess
   | RemoveAulaProcess       (ID (Process Aula))
   deriving (Eq, Show, Generic)
 
+makeRefineType ''ProcessGroup
 makeRefineType ''CreateCollabEditProcess
 makeRefineType ''CreateAulaProcess
 makeRefineType ''Process
@@ -119,5 +129,6 @@ makeRefineType ''CollaborativeEdit
 makeRefineType ''CollaborativeEditPhase
 makeRefineType ''Aula
 makeRefineType ''AddProcess
+makeRefineType ''AddInitialCollabEditProcess
 makeRefineType ''CreatedProcess
 makeRefineType ''RemoveProcess

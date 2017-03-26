@@ -75,6 +75,8 @@ vdocVersionFromST = (\(Right v) -> v) . vdocVersionFromSTSafe
 vdocVersionToST :: VDocVersion b -> ST
 vdocVersionToST = cs . renderTokens . tokensFromForest . _unVDocVersion
 
+emptyVDocVersion :: VDocVersion b
+emptyVDocVersion = vdocVersionFromST ""
 
 data VDocRepo = VDocRepo
   { _vdocRepoID    :: ID VDocRepo

@@ -24,11 +24,15 @@
 
 module Refine.Backend.App.Process where
 
+import Control.Lens ((^.))
+
 import Refine.Backend.App.Core
-import Refine.Backend.Database.Class as DB
+import Refine.Backend.App.VDoc
+import Refine.Backend.Database.Class as DB hiding (createVDoc)
 import Refine.Backend.User.Class
 import Refine.Common.ChangeAPI
 import Refine.Common.Types.Process
+import Refine.Common.Types.VDoc
 
 {-
 
@@ -51,6 +55,25 @@ type AppProcessConstraint db uh =
   , DatabaseC db
   , UserHandleC uh
   )
+
+addInitialCollabEditProcess
+  :: AppProcessConstraint db uh
+  => AddInitialCollabEditProcess -> AppM db uh CreatedProcess
+addInitialCollabEditProcess aice = do
+  appLog "addInitialCollabEditProcess"
+  gid <- case aice ^. aiceGroup of
+          UniversalGroup -> db universalGroup
+          DedicatedGroup gid' -> pure gid'
+  vdoc <- createVDoc $ CreateVDoc
+    { _createVDocTitle       = aice ^. aiceTitle
+    , _createVDocAbstract    = aice  ^. aiceAbstract
+    , _createVDocInitVersion = emptyVDocVersion
+    }
+  addProcess . AddCollabEditProcess $ CreateCollabEditProcess
+    { _createCollabEditProcessPhase   = CollaborativeEditOnlyPhase
+    , _createCollabEditProcessGroupID = gid
+    , _createCollabEditProcessVDocID  = vdoc ^. vdocID
+    }
 
 addProcess :: AppProcessConstraint db uh => AddProcess -> AppM db uh CreatedProcess
 addProcess ap = do
