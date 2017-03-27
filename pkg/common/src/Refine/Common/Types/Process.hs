@@ -28,7 +28,7 @@ import Refine.Common.Types.VDoc (VDoc, Title, Abstract)
 import Refine.Prelude.TH (makeRefineType)
 
 
--- Explanation:
+-- | Explanation:
 --
 -- data CreateProcess a = CreateProcess
 --   { _createProcessData :: Create a
@@ -66,10 +66,6 @@ data ProcessGroup = UniversalGroup | DedicatedGroup (ID Group)
 --
 -- Like groups, processes are initiated by users.  Unlike groups, a process always has exactly one
 -- parent group ("its *home group*", or just "its group") and no children.
---
--- > data Process = Process (UID Process) MetaInfo Title Description (UID Group)
---
--- FIXME: not implemented yet.
 data Process a = Process
   { _processID    :: ID (Process a)
   , _processGroup :: Group
@@ -91,8 +87,9 @@ data CollaborativeEdit =
 data CollaborativeEditPhase = CollaborativeEditOnlyPhase  -- to be extended.
   deriving (Eq, Ord, Show, Generic)
 
--- FIXME: This is a placeholder item as an example of a different process type
--- This process type supports the database multitable implementation.
+
+-- | This is a placeholder item as an example of a different process type to demonstrate the
+-- database multitable implementation.  FIXME: implement for real or remove.
 data Aula = Aula
   { _aulaID    :: ID Aula
   , _aulaClass :: ST

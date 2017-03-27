@@ -22,6 +22,20 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{- |
+
+How to add a new process type?
+
+- Create a Process type (PT) in Refine.Common.Types.Process.
+- Create a 'Create' type for PT (CPT)
+- Add to the type family instance: `type instance Create (Process PT) = CPT`
+- Adjust the AddProcess, CreatedProcess, RemoveProcess types in the Refine.Common.Types.Process
+- Adjust ChangeProcess in the Refine.Common.ChangeAPI module.
+- Create a table and a connection table in the Refine.Backend.Database.Schema module
+- Implement the StoreProcessData typeclass for the PT type in the Refine.Backend.Database.Entity module.
+- Adjust the combinators in this module.
+
+-}
 module Refine.Backend.App.Process where
 
 import Control.Lens ((^.))
@@ -34,20 +48,6 @@ import Refine.Common.ChangeAPI
 import Refine.Common.Types.Process
 import Refine.Common.Types.VDoc
 
-{-
-
-How to add a new process type?
-
-- Create a Process type (PT) in Refine.Common.Types.Process.
-- Create a 'Create' type for PT (CPT)
-- Add to the type family instance: type family (Process PT) = CPT
-- Adjust the AddProcess, CreatedProcess, RemoveProcess types in the Refine.Common.Types.Process
-- Adjust the ChangeProcess in the Refine.Common.ChangeAPI module.
-- Create a table and a connection table in the Refine.Backend.Database.Schema module
-- Implement the StoreProcessData typeclass for the PT type in the Refine.Backend.Database.Entity module.
-- Adjust the combinators in this module.
-
--}
 
 type AppProcessConstraint db uh =
   ( StoreProcessData db Aula
