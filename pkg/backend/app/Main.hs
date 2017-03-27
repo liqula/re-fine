@@ -36,8 +36,6 @@ main :: IO ()
 main = do
   args <- getArgs
   case args of
-    [arg] | arg == "--help" -> help
-          | arg == "--init" -> runInitDB Nothing
-    (arg:cfg) | arg == "--help" -> help
-              | arg == "--init" -> runInitDB (listToMaybe cfg)
+    arg:cfg | arg == "--help" -> help
+            | arg == "--init" -> runInitDB (listToMaybe cfg)
     cfg -> startServer (listToMaybe cfg)
