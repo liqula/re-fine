@@ -24,17 +24,19 @@ import GHC.Generics
 
 import Refine.Common.Types.Prelude (ID(..), Create)
 import Refine.Common.Types.Group (Group)
-import Refine.Common.Types.VDoc (VDoc, Title, Abstract)
+import Refine.Common.Types.VDoc (VDoc, CompositeVDoc)
 import Refine.Prelude.TH (makeRefineType)
 
 
--- | Explanation:
+-- | We can't do this, which would be more polymorphic:
 --
 -- data CreateProcess a = CreateProcess
 --   { _createProcessData :: Create a
 -- --  , _createProcessGRoup :: ID Group
 --   }
 --   deriving (Eq, Ord, Generic)
+--
+-- because ghc is not smart enough:
 --
 --    • No instance for (Eq (Create a))
 --        arising from the first field of ‘CreateProcess’ (type ‘Create a’)
@@ -44,18 +46,30 @@ import Refine.Prelude.TH (makeRefineType)
 --    • When deriving the instance for (Eq (CreateProcess a))
 --
 data CreateCollabEditProcess = CreateCollabEditProcess
-  { _createCollabEditProcessPhase   :: CollaborativeEditPhase
-  , _createCollabEditProcessGroupID :: ID Group
-  , _createCollabEditProcessVDocID  :: ID VDoc
+  { _createCollabEditProcessPhase :: CollaborativeEditPhase
+  , _createCollabEditProcessGroup :: ProcessGroup
+  , _createCollabEditProcessVDoc  :: Create VDoc
   }
   deriving (Eq, Show, Generic)
 
+-- | 'CreateAulaProcess' is simple enough so we don't have to introduce an extra
+-- 'CreateDBAulaProcess' that is a member of the 'CreateDB' type family in the backend.  This means
+-- we cannot use 'UniveresalGroup' as a group reference.  We may want to change this in the future.
 data CreateAulaProcess = CreateAulaProcess
   { _createAulaProcessClassName :: ST
   , _createAulaProcessGroupID   :: ID Group
   }
   deriving (Eq, Show, Generic)
 
+-- | There is a special way to refer to a group called 'UniversalGroup', which is the root that
+-- always exists.  'RefGroup' is a way to refer to either the universal group or some group that we
+-- have the 'ID' of.
+--
+-- (Ultimately, we may not want to have this type around here, becasue there won't be a universal
+-- group in which people do stuff in the portal once it has grown more mature.  For now it's a
+-- useful and adequate abstraction.)
+--
+-- TODO: rename: data GroupRef = UniversalGroup | GroupByID (ID Group)
 data ProcessGroup = UniversalGroup | DedicatedGroup (ID Group)
   deriving (Eq, Show, Generic)
 
@@ -80,7 +94,7 @@ data CollaborativeEdit =
   CollaborativeEdit
     { _collaborativeEditID    :: ID CollaborativeEdit
     , _collaborativeEditPhase :: CollaborativeEditPhase
-    , _collaborativeEditVDoc  :: VDoc
+    , _collaborativeEditVDoc  :: CompositeVDoc
     }
   deriving (Eq, Show, Generic)
 
@@ -101,13 +115,6 @@ data AddProcess
   | AddAulaProcess       CreateAulaProcess
   deriving (Eq, Show, Generic)
 
-data AddInitialCollabEditProcess = AddInitialCollabEditProcess
-  { _aiceTitle    :: Title
-  , _aiceAbstract :: Abstract
-  , _aiceGroup    :: ProcessGroup
-  }
-  deriving (Eq, Show, Generic)
-
 data CreatedProcess
   = CreatedCollabEditProcess (Process CollaborativeEdit)
   | CreatedAulaProcess       (Process Aula)
@@ -126,6 +133,5 @@ makeRefineType ''CollaborativeEdit
 makeRefineType ''CollaborativeEditPhase
 makeRefineType ''Aula
 makeRefineType ''AddProcess
-makeRefineType ''AddInitialCollabEditProcess
 makeRefineType ''CreatedProcess
 makeRefineType ''RemoveProcess

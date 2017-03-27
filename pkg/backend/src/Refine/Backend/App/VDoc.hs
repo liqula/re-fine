@@ -48,9 +48,11 @@ listVDocs = do
   appLog "listVDocs"
   db $ mapM DB.getVDoc =<< DB.listVDocs
 
+-- | Create 'VDoc' and return the corresponding 'CompositeVDoc'.
 createVDocGetComposite :: Create VDoc -> App CompositeVDoc
 createVDocGetComposite = (getCompositeVDoc . view vdocID) <=< createVDoc
 
+-- | Creates a 'VDoc'.  See also: 'createVDocGetComposite'.
 createVDoc :: Create VDoc -> App VDoc
 createVDoc pv = do
   appLog "createVDoc"

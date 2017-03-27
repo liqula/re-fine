@@ -1,4 +1,4 @@
-{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Refine.Backend.Database.Class where
@@ -6,6 +6,7 @@ module Refine.Backend.Database.Class where
 import Data.Typeable (Typeable)
 
 import Refine.Backend.Database.Tree
+import Refine.Backend.Database.Types
 import Refine.Backend.DocRepo.Core as DocRepo
 import Refine.Common.Types
 
@@ -82,17 +83,29 @@ class Database db where
   unassignRole :: ID Group -> ID User -> Role -> db ()
 
   -- Process
-  createProcess :: StoreProcessData db a => Create (Process a) -> db (Process a)
-  getProcess    :: (StoreProcessData db a, Typeable a) => ID (Process a) -> db (Process a)
-  updateProcess :: StoreProcessData db a => ID (Process a) -> Create (Process a) -> db ()
+
+  -- @Process (ResultDB (Process a))@ is a parametric type applied to a type family value of a
+  -- polymoprhic type.  yeay!  :)
+  --
+  -- the reason this happens is that in 'DB', we cannot return the results in a form that they are
+  -- required in by the frontend: we need 'App' to turn the @ResultDB (Process a)@ into an @a@.
+  --
+  -- example: we need to build the 'CompositeVDoc' (which requires "Refine.Backend.DocRepo") from
+  -- the @VDoc@ that can be produced inside 'DB'.
+
+  createProcess :: StoreProcessData db a => CreateDB (Process a) -> db (Process (ResultDB (Process a)))
+  getProcess    :: (StoreProcessData db a, Typeable a) => ID (Process a) -> db (Process (ResultDB (Process a)))
+  updateProcess :: StoreProcessData db a => ID (Process a) -> CreateDB (Process a) -> db ()
   removeProcess :: (StoreProcessData db a, Typeable a) => ID (Process a) -> db ()
 
+
 class StoreProcessData db c where
-  processDataGroupID :: Create (Process c) -> db (ID Group)
-  createProcessData  :: ID (Process c) -> Create (Process c) -> db c
-  getProcessData     :: ID (Process c) -> db c
-  updateProcessData  :: ID (Process c) -> Create (Process c) -> db ()
-  removeProcessData  :: c -> db ()
+  processDataGroupID :: CreateDB (Process c) -> db (ID Group)
+  createProcessData  :: ID (Process c) -> CreateDB (Process c) -> db (ResultDB (Process c))
+  getProcessData     :: ID (Process c) -> db (ResultDB (Process c))
+  updateProcessData  :: ID (Process c) -> CreateDB (Process c) -> db ()
+  removeProcessData  :: ResultDB (Process c) -> db ()
+
 
 -- * composite db queries
 

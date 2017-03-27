@@ -36,17 +36,21 @@ How to add a new process type?
 - Adjust the combinators in this module.
 
 -}
-module Refine.Backend.App.Process where
+module Refine.Backend.App.Process
+  ( Refine.Backend.App.Process.addProcess
+  , Refine.Backend.App.Process.changeProcess
+  , Refine.Backend.App.Process.removeProcess
+  ) where
 
 import Control.Lens ((^.))
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.VDoc
 import Refine.Backend.Database.Class as DB hiding (createVDoc)
+import Refine.Backend.Database.Types
 import Refine.Backend.User.Class
 import Refine.Common.ChangeAPI
-import Refine.Common.Types.Process
-import Refine.Common.Types.VDoc
+import Refine.Common.Types
 
 
 type AppProcessConstraint db uh =
@@ -56,41 +60,52 @@ type AppProcessConstraint db uh =
   , UserHandleC uh
   )
 
-addInitialCollabEditProcess
-  :: AppProcessConstraint db uh
-  => AddInitialCollabEditProcess -> AppM db uh CreatedProcess
-addInitialCollabEditProcess aice = do
-  appLog "addInitialCollabEditProcess"
-  gid <- case aice ^. aiceGroup of
+addProcessCollabEdit :: AppProcessConstraint db uh
+                     => Create (Process CollaborativeEdit) -> AppM db uh (Process CollaborativeEdit)
+addProcessCollabEdit aice = do
+  appLog "addProcessCollabEdit"
+  gid <- case aice ^. createCollabEditProcessGroup of
           UniversalGroup -> db universalGroup
           DedicatedGroup gid' -> pure gid'
-  vdoc <- createVDoc CreateVDoc
-    { _createVDocTitle       = aice ^. aiceTitle
-    , _createVDocAbstract    = aice  ^. aiceAbstract
-    , _createVDocInitVersion = emptyVDocVersion
+  vdoc <- createVDoc (aice ^. createCollabEditProcessVDoc)
+  process <- db $ do
+    createProcess CreateDBCollabEditProcess
+      { _createDBCollabEditProcessPhase   = aice ^. createCollabEditProcessPhase
+      , _createDBCollabEditProcessGroupID = gid
+      , _createDBCollabEditProcessVDocID  = vdoc ^. vdocID
+      }
+  cvdoc <- getCompositeVDoc (vdoc ^. vdocID)
+  pure $ Process
+    { _processID    = ID . _unID $ process ^. processID
+    , _processGroup = process ^. processGroup
+    , _processData  = CollaborativeEdit
+        (process ^. processData . collaborativeEditDBID)
+        (process ^. processData . collaborativeEditDBPhase)
+        cvdoc
     }
-  addProcess $ AddCollabEditProcess CreateCollabEditProcess
-    { _createCollabEditProcessPhase   = CollaborativeEditOnlyPhase
-    , _createCollabEditProcessGroupID = gid
-    , _createCollabEditProcessVDocID  = vdoc ^. vdocID
-    }
+
+-- | FIXME: currently, 'changeProcess' allows to overwrite the process data completely, but we
+-- probably want something more subtle, like not destroying the VDoc, but changing the group.  needs
+-- more thinking.
+updateProcessCollabEdit :: AppProcessConstraint db uh
+                        => ID (Process CollaborativeEdit) -> Create (Process CollaborativeEdit) -> AppM db uh ()
+updateProcessCollabEdit _pid _aice = do
+  appLog "updateProcessCollabEdit"
+  error "not implemented yet."
 
 addProcess :: AppProcessConstraint db uh => AddProcess -> AppM db uh CreatedProcess
 addProcess ap = do
   appLog "addProcess"
-  db $ case ap of
-    AddAulaProcess p       -> CreatedAulaProcess       <$> createProcess p
-    AddCollabEditProcess p -> CreatedCollabEditProcess <$> createProcess p
+  case ap of
+    AddCollabEditProcess p -> CreatedCollabEditProcess <$> addProcessCollabEdit p
+    AddAulaProcess p       -> CreatedAulaProcess       <$> db (createProcess p)
 
 changeProcess :: AppProcessConstraint db uh => ChangeProcess -> AppM db uh ()
 changeProcess change = do
   appLog "changeProcess"
-  db $ case change of
-    ChangeProcessCollaborativeEditPhase pid create -> do
-      DB.updateProcess pid create
-
-    ChangeProcessAulaClassName pid create -> do
-      DB.updateProcess pid create
+  case change of
+    ChangeProcessCollaborativeEditPhase pid create -> updateProcessCollabEdit pid create
+    ChangeProcessAulaClassName pid create          -> db $ DB.updateProcess pid create
 
 removeProcess :: AppProcessConstraint db uh => RemoveProcess -> AppM db uh ()
 removeProcess remove = do

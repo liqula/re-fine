@@ -118,7 +118,6 @@ refineApi =
   :<|> Refine.Backend.App.changeSubGroup
   :<|> Refine.Backend.App.changeRole
   :<|> Refine.Backend.App.addProcess
-  :<|> Refine.Backend.App.addInitialCollabEditProcess
   :<|> Refine.Backend.App.changeProcess
   :<|> Refine.Backend.App.removeProcess
 

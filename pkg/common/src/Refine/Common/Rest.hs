@@ -63,7 +63,6 @@ type RefineAPI =
   :<|> SChangeSubGroup
   :<|> SChangeRole
   :<|> SAddProcess
-  :<|> SAddInitialCollabEditProcess
   :<|> SChangeProcess
   :<|> SRemoveProcess
 
@@ -76,7 +75,7 @@ type SGetVDoc
   = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc)
     :> Get '[JSON] CompositeVDoc
 
-type SCreateVDoc
+type SCreateVDoc  -- FIXME: remove this, vdocs should only be created inside CollabEditProcesses.
   = "r" :> "vdoc" :> ReqBody '[JSON] (Create VDoc)
     :> Post '[JSON] CompositeVDoc
 
@@ -134,10 +133,6 @@ type SChangeRole
 
 type SAddProcess
   = "r" :> "process" :> ReqBody '[JSON] AddProcess
-    :> Post '[JSON] CreatedProcess
-
-type SAddInitialCollabEditProcess
-  = "r" :> "process" :> "initial" :> ReqBody '[JSON] AddInitialCollabEditProcess
     :> Post '[JSON] CreatedProcess
 
 type SChangeProcess
