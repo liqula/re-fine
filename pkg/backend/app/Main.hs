@@ -1,7 +1,8 @@
 module Main where
 
 import Data.Maybe (listToMaybe)
-import System.Environment (getArgs)
+import Data.Monoid ((<>))
+import System.Environment (getArgs, getProgName)
 import System.IO (hSetBuffering, BufferMode(NoBuffering), stdout, stderr)
 
 import Refine.Backend.Config
@@ -10,8 +11,9 @@ import Refine.Backend.App.MigrateDB (createInitialDB)
 
 help :: IO ()
 help = do
+  progname <- getProgName
   putStrLn $ unlines
-    [ "Usage: re-fine [--init | --help] [cfg]"
+    [ "Usage: " <> progname <> " [--init | --help] [cfg]"
     , "  --help  Print this help"
     , "  --init  Creates initial database"
     , ""
