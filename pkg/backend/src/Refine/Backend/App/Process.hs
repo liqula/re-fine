@@ -66,7 +66,7 @@ addProcessCollabEdit aice = do
   appLog "addProcessCollabEdit"
   gid <- case aice ^. createCollabEditProcessGroup of
           UniversalGroup -> db universalGroup
-          DedicatedGroup gid' -> pure gid'
+          GroupRef i     -> pure i
   vdoc <- createVDoc (aice ^. createCollabEditProcessVDoc)
   process <- db $ do
     createProcess CreateDBCollabEditProcess

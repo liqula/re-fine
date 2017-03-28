@@ -47,7 +47,7 @@ import Refine.Prelude.TH (makeRefineType)
 --
 data CreateCollabEditProcess = CreateCollabEditProcess
   { _createCollabEditProcessPhase :: CollaborativeEditPhase
-  , _createCollabEditProcessGroup :: ProcessGroup
+  , _createCollabEditProcessGroup :: GroupRef
   , _createCollabEditProcessVDoc  :: Create VDoc
   }
   deriving (Eq, Show, Generic)
@@ -62,15 +62,13 @@ data CreateAulaProcess = CreateAulaProcess
   deriving (Eq, Show, Generic)
 
 -- | There is a special way to refer to a group called 'UniversalGroup', which is the root that
--- always exists.  'RefGroup' is a way to refer to either the universal group or some group that we
+-- always exists.  'GroupRef' is a way to refer to either the universal group or some group that we
 -- have the 'ID' of.
 --
 -- (Ultimately, we may not want to have this type around here, becasue there won't be a universal
 -- group in which people do stuff in the portal once it has grown more mature.  For now it's a
 -- useful and adequate abstraction.)
---
--- TODO: rename: data GroupRef = UniversalGroup | GroupByID (ID Group)
-data ProcessGroup = UniversalGroup | DedicatedGroup (ID Group)
+data GroupRef = GroupRef (ID Group) | UniversalGroup
   deriving (Eq, Show, Generic)
 
 -- | A *process* has a certain type (more general: "collecting wild ideas",
@@ -110,6 +108,8 @@ data Aula = Aula
   }
   deriving (Eq, Show, Generic)
 
+-- | FIXME: rename to @CreateProcess@, instantiate 'Create' type family.  (or remove the latter, i
+-- don't think it's used for anything any more.)
 data AddProcess
   = AddCollabEditProcess CreateCollabEditProcess
   | AddAulaProcess       CreateAulaProcess
@@ -125,7 +125,7 @@ data RemoveProcess
   | RemoveAulaProcess       (ID (Process Aula))
   deriving (Eq, Show, Generic)
 
-makeRefineType ''ProcessGroup
+makeRefineType ''GroupRef
 makeRefineType ''CreateCollabEditProcess
 makeRefineType ''CreateAulaProcess
 makeRefineType ''Process
