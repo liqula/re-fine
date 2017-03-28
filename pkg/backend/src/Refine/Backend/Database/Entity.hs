@@ -601,11 +601,11 @@ createProcess process = do
   pure $ Process (S.keyToId pkey) group pdata
 
 getProcess :: (C.StoreProcessData DB a, Typeable a) => ID (Process a) -> DB (Process (ResultDB (Process a)))
-getProcess pid@(ID untypedPID) = do
+getProcess pid = do
   process <- getEntity pid
   pdata   <- C.getProcessData pid
   group   <- getGroup (S.keyToId $ S.processGroup process)
-  pure $ Process pid group pdata
+  pure $ Process (unsafeCoerceID pid) group pdata
 
 updateProcess :: (C.StoreProcessData DB a) => ID (Process a) -> CreateDB (Process a) -> DB ()
 updateProcess pid process = do

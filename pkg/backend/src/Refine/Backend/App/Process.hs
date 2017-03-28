@@ -42,7 +42,7 @@ module Refine.Backend.App.Process
   , Refine.Backend.App.Process.removeProcess
   ) where
 
-import Control.Lens ((^.))
+import Control.Lens ((^.), to)
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.VDoc
@@ -75,8 +75,8 @@ addProcessCollabEdit aice = do
       , _createDBCollabEditProcessVDocID  = vdoc ^. vdocID
       }
   cvdoc <- getCompositeVDoc (vdoc ^. vdocID)
-  pure $ Process
-    { _processID    = ID . _unID $ process ^. processID
+  pure Process
+    { _processID    = process ^. processID . to unsafeCoerceID
     , _processGroup = process ^. processGroup
     , _processData  = CollaborativeEdit
         (process ^. processData . collaborativeEditDBID)
