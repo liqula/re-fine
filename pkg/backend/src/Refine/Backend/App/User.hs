@@ -27,13 +27,13 @@ module Refine.Backend.App.User where
 
 import           Control.Lens ((^.), view)
 import           Control.Monad (void)
+import           Control.Monad.Except (throwError)
 import           Control.Monad.State (gets)
 import           Control.Monad.Reader (ask)
 import           Data.Maybe (isJust)
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.Session
-import Refine.Backend.Database.Class (DatabaseC)
 import Refine.Backend.Types
 import Refine.Backend.User as User
 import Refine.Backend.User.Core as User (User(..))
@@ -55,6 +55,16 @@ login (Login username (User.PasswordPlain -> password)) = do
              =<< userHandle (User.verifySession session)
   void $ setUserSession (toUserID loginId) (UserSession session)
   pure username
+
+-- | Returns the current ID of the current user if the user
+-- is logged in otherwise trows an AppUserNotLoggedIn error.
+-- TODO: Use elimintars
+currentUser :: App (ID Refine.User)
+currentUser = do
+  st <- gets (view appUserState)
+  case st of
+    UserLoggedIn user _session -> pure user
+    UserLoggedOut              -> throwError AppUserNotLoggedIn
 
 logout :: App ()
 logout = do
@@ -94,7 +104,7 @@ devModePass = "pass"
 --
 -- The user should be present in the database, or the user handling should
 -- be mocked
-devMode :: (UserHandleC uh, DatabaseC db) => AppM db uh a -> AppM db uh a
+devMode :: AppConstraints db uh => AppM db uh a -> AppM db uh a
 devMode m = do
   u <- gets (view appUserState)
   case u of

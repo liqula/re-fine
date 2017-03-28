@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -37,6 +38,7 @@ module Refine.Backend.App.Core (
   , appCsrfToken
   , appUserState
   , AppUserState(..)
+  , AppConstraints
   , App
   , AppM(..)
   , AppError(..)
@@ -61,8 +63,7 @@ import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Types
 import Refine.Backend.User
-import Refine.Common.Types.Prelude (ID(..))
-import Refine.Common.Types.User as Types (User)
+import Refine.Common.Types as Types
 import Refine.Common.VDoc.HTML (ChunkRangeError(..))
 import Refine.Prelude (leftToError, Timespan)
 import Refine.Prelude.TH (makeRefineType)
@@ -111,12 +112,17 @@ newtype AppM db uh a = AppM { unApp :: StateT AppState (ReaderT (AppContext db u
     , MonadState AppState
     )
 
+type AppConstraints db uh =
+  ( DatabaseC db
+  , StoreProcessData db Aula
+  , StoreProcessData db CollaborativeEdit
+  , UserHandleC uh
+  )
+
 -- | The 'App' defines the final constraint set that the
 -- App API should use. Scraps the boilerplate for the
 -- Refine.Backend.App.* modules.
-type App a =
-  forall db uh . (DatabaseC db, UserHandleC uh)
-  => AppM db uh a
+type App a = forall db uh . AppConstraints db uh => AppM db uh a
 
 data AppError
   = AppUnknownError ST
