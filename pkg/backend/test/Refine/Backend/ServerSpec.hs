@@ -41,14 +41,17 @@ import           Network.URI (URI, uriToString)
 import           Network.Wai (requestMethod, requestHeaders, defaultRequest)
 import           Network.Wai.Test (SRequest(..), SResponse(..))
 import qualified Network.Wai.Test as Wai
+import           Prelude hiding ((.))
 import           Servant.Utils.Links (safeLink)
 import           Test.Hspec
 
 import Refine.Backend.App as App
+import Refine.Backend.App.MigrateDB (createInitialDB)
 import Refine.Backend.Config
 import Refine.Backend.Database.Class as DB
 import Refine.Backend.Database (DB)
 import Refine.Backend.DocRepo as DocRepo
+import Refine.Backend.Natural
 import Refine.Backend.Server
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Backend.User
@@ -94,7 +97,9 @@ errorOnLeft action = either (throwIO . ErrorCall . show) pure =<< action
 
 createDevModeTestSession :: ActionWith (Backend DB FreeUH) -> IO ()
 createDevModeTestSession action = withTempCurrentDirectory $ do
-  void $ action =<< mkDevModeBackend (def & cfgShouldLog .~ False) mockLogin
+  backend :: Backend DB FreeUH <- mkDevModeBackend (def & cfgShouldLog .~ False) mockLogin
+  (natThrowError . backendRunApp backend) $$ createInitialDB
+  action backend
 
 createTestSession :: ActionWith (Backend DB UH) -> IO ()
 createTestSession action = withTempCurrentDirectory $ do

@@ -18,14 +18,16 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Backend.Natural where
+module Refine.Backend.Natural (cnToSn, natThrowError, (.), ($$)) where
 
+import Control.Category ((.))
 import Control.Monad.Except (ExceptT, runExceptT)
+import Control.Natural (($$))
 import Data.Either (either)
+import Prelude hiding ((.))
 
 import qualified Control.Natural     as CN
 import qualified Servant.Utils.Enter as SN
-
 
 
 cnToSn :: (a CN.:~> b) -> (a SN.:~> b)

@@ -88,7 +88,7 @@ createAppRunner = do
                                     poRoot
                                     id) $$ m
 
-  void $ runner (migrateDB cfg)
+  void $ runner (migrateDB cfg >> createInitialDB)
   pure (runner, testDb, reposRoot)
 
 monadicApp :: (AppM DB UH Property -> IO Property) -> AppM DB UH Property -> Property

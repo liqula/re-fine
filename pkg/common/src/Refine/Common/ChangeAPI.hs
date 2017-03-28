@@ -27,6 +27,7 @@ import GHC.Generics
 import Refine.Common.Types.Role
 import Refine.Common.Types.Group
 import Refine.Common.Types.Prelude (ID)
+import Refine.Common.Types.Process
 import Refine.Common.Types.User
 import Refine.Prelude.TH (makeRefineType)
 
@@ -41,7 +42,19 @@ data ChangeRole
   | UnassignRole { _crGroup :: ID Group, _crUser :: ID User, _crRole :: Role }
   deriving (Eq, Generic, Show)
 
+data ChangeProcess
+  = ChangeProcessCollaborativeEditPhase
+    { _cpProcessEditID :: ID (Process CollaborativeEdit)
+    , _cpCollabEdit    :: CreateCollabEditProcess
+    }
+  | ChangeProcessAulaClassName
+    { _cpProcessAulaID :: ID (Process Aula)
+    , _cpAula          :: CreateAulaProcess
+    }
+  deriving (Eq, Generic, Show)
+
 -- * Refine types
 
 makeRefineType ''ChangeSubGroup
 makeRefineType ''ChangeRole
+makeRefineType ''ChangeProcess

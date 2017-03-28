@@ -62,6 +62,9 @@ type RefineAPI =
   :<|> SAddGroup
   :<|> SChangeSubGroup
   :<|> SChangeRole
+  :<|> SAddProcess
+  :<|> SChangeProcess
+  :<|> SRemoveProcess
 
 
 type SListVDocs
@@ -72,7 +75,7 @@ type SGetVDoc
   = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc)
     :> Get '[JSON] CompositeVDoc
 
-type SCreateVDoc
+type SCreateVDoc  -- FIXME: remove this, vdocs should only be created inside CollabEditProcesses.
   = "r" :> "vdoc" :> ReqBody '[JSON] (Create VDoc)
     :> Post '[JSON] CompositeVDoc
 
@@ -126,6 +129,18 @@ type SChangeSubGroup
 
 type SChangeRole
   = "r" :>  "role" :> ReqBody '[JSON] ChangeRole
+    :> Post '[JSON] ()
+
+type SAddProcess
+  = "r" :> "process" :> ReqBody '[JSON] AddProcess
+    :> Post '[JSON] CreatedProcess
+
+type SChangeProcess
+  = "r" :> "process" :> "change" :> ReqBody '[JSON] ChangeProcess
+    :> Post '[JSON] ()
+
+type SRemoveProcess
+  = "r" :> "process" :> "remove" :> ReqBody '[JSON] RemoveProcess
     :> Post '[JSON] ()
 
 makeRefineType ''ApiError

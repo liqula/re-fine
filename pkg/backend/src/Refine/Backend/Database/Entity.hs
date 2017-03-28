@@ -20,9 +20,11 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Refine.Backend.Database.Entity where
 
-import Control.Lens ((^.), to)
+import Control.Lens ((^.), to, view)
 import Control.Monad (forM_, void)
 import Control.Monad.Reader (ask)
 import Data.Functor.Infix ((<$$>))
@@ -34,8 +36,10 @@ import Database.Persist.Sql (SqlBackend)
 import Lentil.Core (entityLens)
 import Lentil.Types as L
 
+import qualified Refine.Backend.Database.Class as C
 import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
+import           Refine.Backend.Database.Types
 import qualified Refine.Backend.DocRepo.Core as DocRepo
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
@@ -52,6 +56,15 @@ type instance S.EntityRep Answer     = S.Answer
 type instance S.EntityRep Statement  = S.Statement
 type instance S.EntityRep User       = Users.Login
 type instance S.EntityRep Group      = S.Group
+type instance S.EntityRep (Process a) = S.Process
+type instance S.EntityRep CollaborativeEdit = S.CollabEditProcess
+type instance S.EntityRep Aula              = S.AulaProcess
+
+type instance S.ProcessDataRep CollaborativeEdit = S.CollabEditProcess
+type instance S.ProcessDataRep Aula              = S.AulaProcess
+
+type instance S.ProcessDataConnectionRep CollaborativeEdit = S.ProcessOfCollabEdit
+type instance S.ProcessDataConnectionRep Aula              = S.ProcessOfAula
 
 {-
 Reading the domain structured datatypes is not a problem,
@@ -391,14 +404,16 @@ getStatement sid = S.statementElim (toStatement sid) <$> getEntity sid
 
 -- * Group
 
-toGroup :: [ID Group] -> [ID Group] -> ID Group -> ST -> ST -> Group
-toGroup parents children gid title desc = Group gid title desc parents children
+toGroup :: [ID Group] -> [ID Group] -> ID Group -> ST -> ST -> Bool -> Group
+toGroup parents children gid title desc =
+  Group gid title desc parents children
 
 createGroup :: Create Group -> DB Group
 createGroup group = liftDB $ do
   let sgroup = S.Group
         (group ^. createGroupTitle)
         (group ^. createGroupDesc)
+        (group ^. createGroupUniversal)
   key <- insert sgroup
   forM_ (group ^. createGroupParents) $ \parent -> do
     insert $ S.SubGroup (S.idToKey parent) key
@@ -483,6 +498,10 @@ removeSubGroup parent child = liftDB $ do
     , S.SubGroupChild  ==. S.idToKey child
     ]
 
+universalGroup :: DB (ID Group)
+universalGroup = do
+  xs <- (S.keyToId . entityKey) <$$> liftDB (selectList [ S.GroupUniversal ==. True ] [])
+  unique xs
 
 -- * Roles
 
@@ -502,3 +521,102 @@ unassignRole gid uid role = liftDB $ do
     , S.RolesUser  ==. S.idToKey uid
     , S.RolesRole  ==. role
     ]
+
+
+-- * Process
+
+instance C.StoreProcessData DB CollaborativeEdit where
+  processDataGroupID = pure . view createDBCollabEditProcessGroupID
+
+  createProcessData pid process = do
+    liftDB $ do
+      dkey <- insert $ S.CollabEditProcess
+                (process ^. createDBCollabEditProcessVDocID . to S.idToKey)
+                (process ^. createDBCollabEditProcessPhase)
+      _ <- insert $ S.ProcessOfCollabEdit (S.idToKey pid) dkey
+      pure $ CollaborativeEditDB
+        (S.keyToId dkey)
+        (process ^. createDBCollabEditProcessPhase)
+        (process ^. createDBCollabEditProcessVDocID)
+
+  getProcessData pid = do
+    ceids <- foreignKeyField S.processOfCollabEditCollabEdit
+             <$$> liftDB (selectList [S.ProcessOfCollabEditProcess ==. S.idToKey pid] [])
+    ceid <- unique ceids
+    cedata <- getEntity ceid
+    pure $ CollaborativeEditDB
+      ceid
+      (S.collabEditProcessPhase cedata)
+      (S.keyToId $ S.collabEditProcessVdoc cedata)
+
+  updateProcessData pid process = do
+    ceids <- foreignKeyField S.processOfCollabEditCollabEdit
+             <$$> liftDB (selectList [S.ProcessOfCollabEditProcess ==. S.idToKey pid] [])
+    ceid :: ID CollaborativeEdit <- unique ceids
+    liftDB $ update (S.idToKey ceid)
+      [ S.CollabEditProcessVdoc  =. process ^. createDBCollabEditProcessVDocID . to S.idToKey
+      , S.CollabEditProcessPhase =. process ^. createDBCollabEditProcessPhase
+      ]
+
+  removeProcessData pdata = liftDB $ do
+    let key = pdata ^. collaborativeEditDBID . to S.idToKey
+    deleteWhere [S.ProcessOfCollabEditCollabEdit ==. key]
+    delete key
+    error "TODO: also remove VDoc and all its contents from the various tables.  see #273."
+
+instance C.StoreProcessData DB Aula where
+  processDataGroupID = pure . view createAulaProcessGroupID
+
+  createProcessData pid process = do
+    liftDB $ do
+      dkey <- insert $ S.AulaProcess (process ^. createAulaProcessClassName)
+      _ <- insert $ S.ProcessOfAula (S.idToKey pid) dkey
+      pure $ Aula (S.keyToId dkey) (process ^. createAulaProcessClassName)
+
+  getProcessData pid = do
+    as  <- foreignKeyField S.processOfAulaAula
+            <$$> liftDB (selectList [S.ProcessOfAulaProcess ==. S.idToKey pid] [])
+    aid <- unique as
+    saula <- getEntity aid
+    pure $ Aula aid (S.aulaProcessClass saula)
+
+  updateProcessData pid process = do
+    as  <- foreignKeyField S.processOfAulaAula
+            <$$> liftDB (selectList [S.ProcessOfAulaProcess ==. S.idToKey pid] [])
+    aid :: ID Aula <- unique as
+    liftDB $ update (S.idToKey aid)
+      [ S.AulaProcessClass =. process ^. createAulaProcessClassName
+      ]
+
+  removeProcessData pdata = liftDB $ do
+    deleteWhere [S.ProcessOfAulaAula ==. pdata ^. aulaID . to S.idToKey]
+    delete (pdata ^. aulaID . to S.idToKey)
+
+createProcess :: (C.StoreProcessData DB a) => CreateDB (Process a) -> DB (Process (ResultDB (Process a)))
+createProcess process = do
+  gid   <- C.processDataGroupID process
+  pkey  <- liftDB . insert $ S.Process (S.idToKey gid)
+  pdata <- C.createProcessData (S.keyToId pkey) process
+  group <- getGroup gid
+  pure $ Process (S.keyToId pkey) group pdata
+
+getProcess :: (C.StoreProcessData DB a, Typeable a) => ID (Process a) -> DB (Process (ResultDB (Process a)))
+getProcess pid = do
+  process <- getEntity pid
+  pdata   <- C.getProcessData pid
+  group   <- getGroup (S.keyToId $ S.processGroup process)
+  pure $ Process (unsafeCoerceID pid) group pdata
+
+updateProcess :: (C.StoreProcessData DB a) => ID (Process a) -> CreateDB (Process a) -> DB ()
+updateProcess pid process = do
+  gid <- C.processDataGroupID process
+  liftDB $ update (S.idToKey pid)
+    [ S.ProcessGroup =. S.idToKey gid
+    ]
+  C.updateProcessData pid process
+
+removeProcess :: (C.StoreProcessData DB a, Typeable a) => ID (Process a) -> DB ()
+removeProcess pid = do
+  process <- getProcess pid
+  C.removeProcessData (process ^. processData)
+  liftDB $ delete (process ^. processID . to S.idToKey)

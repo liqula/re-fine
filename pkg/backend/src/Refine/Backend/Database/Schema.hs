@@ -35,6 +35,7 @@ import Web.Users.Persistent (LoginId) -- Same as Refine.Backend.User.LoginId, bu
 
 import Refine.Common.Types.Chunk (ChunkRange(..))
 import Refine.Common.Types.Prelude
+import Refine.Common.Types.Process (CollaborativeEditPhase)
 import Refine.Common.Types.Role (Role)
 import Refine.Common.Types.VDoc (Abstract, EditKind, Title)
 import Refine.Backend.Database.Field()
@@ -95,6 +96,7 @@ Vote
 Group
     title       Text
     description Text
+    universal   Bool
 
 SubGroup
     parent      GroupId
@@ -108,6 +110,28 @@ Roles
     user  LoginId
     role  Role
     UniRoles group user role
+
+-- Processes
+
+Process
+    group   GroupId
+
+CollabEditProcess
+    vdoc    VDocId
+    phase   CollaborativeEditPhase
+
+ProcessOfCollabEdit
+    process    ProcessId
+    collabEdit CollabEditProcessId
+    UniPOCE process collabEdit
+
+AulaProcess
+    class   ST
+
+ProcessOfAula
+    process    ProcessId
+    aula       AulaProcessId
+    UniPOA process aula
 
 -- Connection tables
 
@@ -157,8 +181,14 @@ PV
 
 -- * helpers
 
-type family EntityRep c = b | b -> c
+-- | Connect a type defined in the common with a type defined in the database.
+type family EntityRep c = b
 
+-- | Connect a process data type with its representation in the database.
+type family ProcessDataRep c = b
+
+-- | Defines the connection type for a given process data type.
+type family ProcessDataConnectionRep c = b
 
 idToKey :: (ToBackendKey SqlBackend (EntityRep a))
         => ID a -> Key (EntityRep a)

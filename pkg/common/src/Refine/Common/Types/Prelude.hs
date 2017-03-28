@@ -7,12 +7,14 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
@@ -39,7 +41,11 @@ newtype ID a = ID { _unID :: Int64 }
 instance ClearTypeParameter ID where
   clearTypeParameter (ID x) = ID x
 
-type family Create a :: *
+-- | There may be a nicer solution, but andorp and fisx haven't managed to find one in 15 minutes.
+unsafeCoerceID :: ID a -> ID b
+unsafeCoerceID (ID a) = ID a
+
+type family Create a = b | b -> a
 
 
 -- * lens

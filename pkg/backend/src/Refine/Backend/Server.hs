@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -26,6 +27,7 @@
 module Refine.Backend.Server
   ( refineCookieName
   , startBackend
+  , runCliAppCommand
   , Backend(..), mkProdBackend, mkDevModeBackend
   , refineApi
   ) where
@@ -51,13 +53,14 @@ import           System.FilePath (dropFileName)
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB (migrateDB)
 import Refine.Backend.Config
-import Refine.Backend.Database (Database, DB, DBError(..), createDBNat)
+import Refine.Backend.Database (Database, DB, DBError(..), createDBNat, StoreProcessData)
 import Refine.Backend.DocRepo (DocRepoError(..), createRepoNat)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
 import Refine.Backend.User (CreateUserError(..), UserDB, UH, MockUH_, FreeUH, UserHandle, UserHandleC, uhNat, mockLogin)
 import Refine.Common.Rest
+import Refine.Common.Types
 import Refine.Prelude (leftToError)
 
 
@@ -87,8 +90,16 @@ data Backend db uh = Backend
   , backendRunApp :: AppM db uh CN.:~> ExceptT AppError IO
   }
 
-refineApi :: (Monad db, Database db, Monad uh, UserHandle uh)
-          => ServerT RefineAPI (AppM db uh)
+type RefineAPIConstraint db uh =
+  ( Monad db
+  , Database db
+  , Monad uh
+  , UserHandle uh
+  , StoreProcessData db Aula
+  , StoreProcessData db CollaborativeEdit
+  )
+
+refineApi :: RefineAPIConstraint db uh => ServerT RefineAPI (AppM db uh)
 refineApi =
        Refine.Backend.App.listVDocs
   :<|> Refine.Backend.App.getCompositeVDoc
@@ -106,6 +117,9 @@ refineApi =
   :<|> Refine.Backend.App.addGroup
   :<|> Refine.Backend.App.changeSubGroup
   :<|> Refine.Backend.App.changeRole
+  :<|> Refine.Backend.App.addProcess
+  :<|> Refine.Backend.App.changeProcess
+  :<|> Refine.Backend.App.removeProcess
 
 startBackend :: Config -> IO ()
 startBackend cfg =
@@ -115,6 +129,10 @@ startBackend cfg =
     else do backend <- mkProdBackend cfg
             Warp.runSettings (warpSettings cfg) $ backendServer backend
 
+runCliAppCommand :: Config -> AppM DB UH a -> IO ()
+runCliAppCommand cfg cmd = do
+  backend <- mkProdBackend cfg
+  void $ (natThrowError . backendRunApp backend) $$ cmd
 
 mkProdBackend :: Config -> IO (Backend DB UH)
 mkProdBackend cfg = mkBackend cfg uhNat (migrateDB cfg)
@@ -141,7 +159,7 @@ mkBackend cfg initUH migrate = do
 
 
 mkServerApp
-    :: (Monad db, Database db, UserHandleC uh)
+    :: RefineAPIConstraint db uh
     => Config -> DBNat db -> DocRepoNat -> UHNat uh -> IO (Backend db uh)
 mkServerApp cfg dbNat docRepoNat uh = do
   poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath
