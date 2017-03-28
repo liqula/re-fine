@@ -164,6 +164,8 @@ loginUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogin)
 logoutUri :: SBS
 logoutUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogout)
 
+addProcessUri :: SBS
+addProcessUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddProcess)
 
 -- * test cases
 
@@ -271,17 +273,24 @@ specMockedLogin = around createDevModeTestSession $ do
   describe "sAddEdit" $ do
     let setup sess = runWai sess $ do
           _l :: Username      <- postJSON loginUri (Login devModeUser devModePass)
-          fe :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
-          fp :: Edit          <-
+          (CreatedCollabEditProcess fp) :: CreatedProcess <-
+            postJSON addProcessUri
+              (AddCollabEditProcess CreateCollabEditProcess
+                { _createCollabEditProcessPhase = CollaborativeEditOnlyPhase
+                , _createCollabEditProcessGroup = UniversalGroup
+                , _createCollabEditProcessVDoc  = sampleCreateVDoc
+                })
+          let fc = fp ^. processData . collaborativeEditVDoc
+          fe :: Edit <-
             postJSON
-              (addEditUri (fe ^. compositeVDocRepo . vdocHeadEdit))
+              (addEditUri (fc ^. compositeVDocRepo . vdocHeadEdit))
               (CreateEdit
                 "new edit"
                 (ChunkRange Nothing Nothing)
                 (vdocVersionFromST "[new vdoc version]")
                 Grammar
                 "no motivation")
-          pure (fe, fp)
+          pure (fc, fe)
 
     context "on edit without ranges" $ do
       it "stores an edit and returns its version" $ \sess -> do
