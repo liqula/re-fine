@@ -131,6 +131,7 @@ data AppError
   | AppSanityCheckError ST
   | AppUserHandleError UserHandleError
   | AppL10ParseErrors [ST]
+  | AppUnauthorized
   deriving (Show, Generic)
 
 makeRefineType ''AppError

@@ -213,6 +213,7 @@ toApiError = \case
   AppSanityCheckError e  -> ApiSanityCheckError e
   AppUserHandleError e   -> ApiUserHandleError . cs $ show e
   AppL10ParseErrors e    -> ApiL10ParseErrors e
+  AppUnauthorized        -> ApiUnauthorized
 
 -- | Turns AppError to its kind of servant error.
 appServantErr :: AppError -> ServantErr
@@ -229,6 +230,7 @@ appServantErr = \case
   AppSanityCheckError _    -> err409
   AppUserHandleError _     -> err500
   AppL10ParseErrors _      -> err500
+  AppUnauthorized          -> err401
 
 dbServantErr :: DBError -> ServantErr
 dbServantErr = \case
