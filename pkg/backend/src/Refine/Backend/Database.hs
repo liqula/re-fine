@@ -73,6 +73,8 @@ instance Database DB where
   vdocRepo           = Entity.vdocRepo
   vdocRepoOfEdit     = Entity.vdocRepoOfEdit
 
+  vDocRepoVDoc       = Entity.vDocRepoVDoc
+
   -- * Repo
   createRepo         = Entity.createRepo
   getRepo            = Entity.getRepo
@@ -136,3 +138,5 @@ instance Database DB where
   getProcess    = Entity.getProcess
   updateProcess = Entity.updateProcess
   removeProcess = Entity.removeProcess
+
+  vDocProcess   = Entity.vDocProcess

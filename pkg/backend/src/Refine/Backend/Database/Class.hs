@@ -22,6 +22,8 @@ class Database db where
   vdocRepo           :: ID VDoc -> db (ID VDocRepo)
   vdocRepoOfEdit     :: ID Edit -> db (ID VDocRepo)
 
+  vDocRepoVDoc      :: ID VDocRepo -> db (ID VDoc)
+
   -- Repo
   createRepo         :: DocRepo.RepoHandle -> DocRepo.EditHandle -> db VDocRepo
   getRepo            :: ID VDocRepo -> db VDocRepo
@@ -98,6 +100,7 @@ class Database db where
   updateProcess :: StoreProcessData db a => ID (Process a) -> CreateDB (Process a) -> db ()
   removeProcess :: (StoreProcessData db a, Typeable a) => ID (Process a) -> db ()
 
+  vDocProcess :: ID VDoc -> db (ID (Process CollaborativeEdit))
 
 class StoreProcessData db c where
   processDataGroupID :: CreateDB (Process c) -> db (ID Group)

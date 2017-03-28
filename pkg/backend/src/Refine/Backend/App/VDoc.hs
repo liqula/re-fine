@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -28,18 +29,16 @@ module Refine.Backend.App.VDoc where
 import           Control.Arrow ((&&&))
 import           Control.Lens ((&), (^.), (^?), to, view, has)
 import           Control.Monad.Except (throwError)
-import           Control.Monad ((<=<), join, mapM)
+import           Control.Monad ((<=<), join, mapM, unless)
 import qualified Data.Map as Map
 import           Data.Maybe (catMaybes)
 
 import           Refine.Backend.App.Core
+import           Refine.Backend.App.User
 import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
-import           Refine.Common.Types.Chunk
-import           Refine.Common.Types.Comment
-import           Refine.Common.Types.Contribution
-import           Refine.Common.Types.Prelude
-import           Refine.Common.Types.VDoc
+import           Refine.Common.Types
+import qualified Refine.Common.Types.Role as Role
 import           Refine.Common.VDoc.HTML
 
 
@@ -111,9 +110,34 @@ getCompositeVDoc vid = do
   where
     toMap selector = Map.fromList . fmap (view selector &&& id)
 
+class Allow a where
+  allow :: proxy a -> [Role] -> [Right]
+
+instance Allow Edit where
+  allow _ _roles = [Role.Update]
+
+canPerformAddEdit :: ID Edit -> App ()
+canPerformAddEdit editId = do
+  -- Check of the user has access to the vdoc
+  -- * The user is in a group
+  -- * The group has a process
+  -- * The process has a a vdoc that has the edits
+  userId <- currentUser
+  join . db $ do
+    repoId    <- DB.editVDocRepo editId
+    vdocId    <- DB.vDocRepoVDoc repoId
+    processId <- DB.vDocProcess  vdocId
+    process   <- DB.getProcess   processId
+    let g = process ^. processGroup
+    roles     <- DB.getRoles (g ^. groupID) userId
+    let rs = allow editId roles
+    pure $ do
+      unless (Role.Update `elem` rs) $ throwError AppUnauthorized
+
 addEdit :: ID Edit -> Create Edit -> App Edit
 addEdit basepid edit = do
   appLog "addEdit"
+  canPerformAddEdit basepid
   validateCreateChunkRange basepid (edit ^. createEditRange)
   join . db $ do
     rid                    <- DB.editVDocRepo basepid

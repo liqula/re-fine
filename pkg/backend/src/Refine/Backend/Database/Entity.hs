@@ -206,6 +206,14 @@ getEditIDs :: ID VDocRepo -> DB [ID Edit]
 getEditIDs vid = liftDB $
   foreignKeyField S.rPEdit <$$> selectList [S.RPRepository ==. S.idToKey vid] []
 
+-- * DocRepo and VDoc
+
+vDocRepoVDoc :: ID VDocRepo -> DB (ID VDoc)
+vDocRepoVDoc rid = do
+  repos <- foreignKeyField S.vRVdoc
+            <$$> liftDB (selectList [S.VRRepository ==. S.idToKey rid] [])
+  unique repos
+
 -- * Edit
 
 createEdit :: ID VDocRepo -> DocRepo.EditHandle -> CreateEdit -> DB Edit
@@ -620,3 +628,13 @@ removeProcess pid = do
   process <- getProcess pid
   C.removeProcessData (process ^. processData)
   liftDB $ delete (process ^. processID . to S.idToKey)
+
+vDocProcess :: ID VDoc -> DB (ID (Process CollaborativeEdit))
+vDocProcess vid = do
+  -- CollabEditProcess
+  cedits <- entityKey <$$> liftDB (selectList [S.CollabEditProcessVdoc ==. S.idToKey vid] [])
+  cedit <- unique cedits
+  -- ProcessOfCollabEdit
+  processes <- foreignKeyField S.processOfCollabEditProcess
+                <$$> liftDB (selectList [S.ProcessOfCollabEditCollabEdit ==. cedit] [])
+  unique processes
