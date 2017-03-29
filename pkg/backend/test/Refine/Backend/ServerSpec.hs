@@ -57,6 +57,7 @@ import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Backend.User
 import Refine.Common.Rest
 import Refine.Common.Types as Common
+import Refine.Common.ChangeAPI
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
@@ -167,6 +168,9 @@ logoutUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogout
 addProcessUri :: SBS
 addProcessUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddProcess)
 
+changeRoleUri :: SBS
+changeRoleUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SChangeRole)
+
 -- * test cases
 
 spec :: Spec
@@ -272,14 +276,26 @@ specMockedLogin = around createDevModeTestSession $ do
 
   describe "sAddEdit" $ do
     let setup sess = runWai sess $ do
-          _l :: Username      <- postJSON loginUri (Login devModeUser devModePass)
+          let group = UniversalGroup
+          _l :: Username <- postJSON loginUri (Login devModeUser devModePass)
           (CreatedCollabEditProcess fp) :: CreatedProcess <-
             postJSON addProcessUri
               (AddCollabEditProcess CreateCollabEditProcess
                 { _createCollabEditProcessPhase = CollaborativeEditOnlyPhase
-                , _createCollabEditProcessGroup = UniversalGroup
+                , _createCollabEditProcessGroup = group
                 , _createCollabEditProcessVDoc  = sampleCreateVDoc
                 })
+
+          userId <- liftIO . runDB sess $ do
+            (Just loginId) <- userHandle $ getUserIdByName devModeUser
+            pure (toUserID loginId)
+
+          () <- postJSON changeRoleUri $ AssignRole
+                  { _crGroupRef = group
+                  , _crUser     = userId
+                  , _crRole     = Member
+                  }
+
           let fc = fp ^. processData . collaborativeEditVDoc
           fe :: Edit <-
             postJSON
