@@ -38,8 +38,8 @@ module Refine.Backend.App.Core (
   , appCsrfToken
   , appUserState
   , AppUserState(..)
-  , AppConstraints
   , App
+  , AppC
   , AppM(..)
   , AppError(..)
   , appIO
@@ -112,7 +112,7 @@ newtype AppM db uh a = AppM { unApp :: StateT AppState (ReaderT (AppContext db u
     , MonadState AppState
     )
 
-type AppConstraints db uh =
+type AppC db uh =
   ( DatabaseC db
   , StoreProcessData db Aula
   , StoreProcessData db CollaborativeEdit
@@ -123,7 +123,7 @@ type AppConstraints db uh =
 -- | The 'App' defines the final constraint set that the
 -- App API should use. Scraps the boilerplate for the
 -- Refine.Backend.App.* modules.
-type App a = forall db uh . AppConstraints db uh => AppM db uh a
+type App a = forall db uh . AppC db uh => AppM db uh a
 
 data AppError
   = AppUnknownError ST

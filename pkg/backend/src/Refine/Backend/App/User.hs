@@ -104,7 +104,7 @@ devModePass = "pass"
 --
 -- The user should be present in the database, or the user handling should
 -- be mocked
-devMode :: AppConstraints db uh => AppM db uh a -> AppM db uh a
+devMode :: AppC db uh => AppM db uh a -> AppM db uh a
 devMode m = do
   u <- gets (view appUserState)
   case u of

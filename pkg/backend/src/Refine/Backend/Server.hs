@@ -92,7 +92,7 @@ data Backend db uh = Backend
 type RefineAPIConstraint db uh =
   ( Monad db
   , Monad uh
-  , AppConstraints db uh
+  , AppC db uh
   )
 
 refineApi :: RefineAPIConstraint db uh => ServerT RefineAPI (AppM db uh)
