@@ -1,5 +1,6 @@
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE LambdaCase            #-}
 
 module Refine.Backend.Database.Class where
 
@@ -144,3 +145,10 @@ editComments pid = do
     , CommentQuestion   <$> questions
     , CommentDiscussion <$> discussions
     ]
+
+groupRef
+  :: (Monad db, Database db)
+  => GroupRef -> db (ID Group)
+groupRef = \case
+  UniversalGroup -> universalGroup
+  GroupRef gid   -> pure gid

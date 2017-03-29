@@ -55,11 +55,9 @@ import Refine.Common.Types
 addProcessCollabEdit :: Create (Process CollaborativeEdit) -> App (Process CollaborativeEdit)
 addProcessCollabEdit aice = do
   appLog "addProcessCollabEdit"
-  gid <- case aice ^. createCollabEditProcessGroup of
-          UniversalGroup -> db universalGroup
-          GroupRef i     -> pure i
   vdoc <- createVDoc (aice ^. createCollabEditProcessVDoc)
   process <- db $ do
+    gid <- aice ^. createCollabEditProcessGroup . to groupRef
     createProcess CreateDBCollabEditProcess
       { _createDBCollabEditProcessPhase   = aice ^. createCollabEditProcessPhase
       , _createDBCollabEditProcessGroupID = gid
