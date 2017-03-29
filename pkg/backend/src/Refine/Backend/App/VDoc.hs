@@ -37,6 +37,7 @@ import           Refine.Backend.App.Core
 import           Refine.Backend.App.User
 import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
+import           Refine.Common.Allow
 import           Refine.Common.Types
 import qualified Refine.Common.Types.Role as Role
 import           Refine.Common.VDoc.HTML
@@ -110,11 +111,6 @@ getCompositeVDoc vid = do
   where
     toMap selector = Map.fromList . fmap (view selector &&& id)
 
-class Allow a where
-  allow :: proxy a -> [Role] -> [Right]
-
-instance Allow Edit where
-  allow _ _roles = [Role.Update]
 
 canPerformAddEdit :: ID Edit -> App ()
 canPerformAddEdit editId = do
@@ -130,9 +126,9 @@ canPerformAddEdit editId = do
     process   <- DB.getProcess   processId
     let g = process ^. processGroup
     roles     <- DB.getRoles (g ^. groupID) userId
-    let rs = allow editId roles
+    let rs = concatMap (allow editId) roles
     pure $ do
-      unless (Role.Update `elem` rs) $ throwError AppUnauthorized
+      unless (Role.Create `elem` rs) $ throwError AppUnauthorized
 
 addEdit :: ID Edit -> Create Edit -> App Edit
 addEdit basepid edit = do

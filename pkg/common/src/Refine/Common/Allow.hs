@@ -2,8 +2,6 @@
 
 module Refine.Common.Allow where
 
-import Data.Typeable (Proxy)
-
 import Refine.Common.Types
 
 
@@ -11,8 +9,16 @@ import Refine.Common.Types
 -- slightly more clumsy to call than simple functions like 'allowGroup', 'allowVDoc', but it gives
 -- the type checker more structure to work with.
 class Allow a where
-  allow :: Proxy a -> Role -> [Right]
+  allow :: proxy a -> Role -> [Perm]
 
+instance Allow Edit where
+  allow _ = \case
+    ReadOnly         -> [Read]
+    Member           -> [Create, Read]
+    Moderator        -> []
+    LocalAdmin       -> []
+    ProcessInitiator -> []
+    GroupInitiator   -> []
 
 instance Allow Group where
   allow _ = \case
