@@ -39,23 +39,25 @@ changeRole cr = do
   let cmd = case cr of
               AssignRole {}   -> Refine.Backend.App.Role.assignRole
               UnassignRole {} -> Refine.Backend.App.Role.unassignRole
-  cmd (cr ^. crRole) (cr ^. crUser) (cr ^. crGroup)
+  cmd (cr ^. crRole) (cr ^. crUser) (cr ^. crGroupRef)
 
 -- | Assign a role lenitently to a user in a group. If the role is already overruled
 -- the new role is not assigned. If the role is overrules the overruled one
 -- is removed.
-assignRole :: Role -> ID User -> ID Group -> App ()
-assignRole role uid gid = do
+assignRole :: Role -> ID User -> GroupRef -> App ()
+assignRole role uid gref = do
   appLog "assignRole"
   db $ do
+    gid <- groupRef gref
     roles <- DB.getRoles gid uid
     unless (role `elem` roles) $ DB.assignRole gid uid role
 
 -- | Unassign a role from a user in a group.
-unassignRole :: Role -> ID User -> ID Group -> App ()
-unassignRole role uid gid = do
+unassignRole :: Role -> ID User -> GroupRef -> App ()
+unassignRole role uid gref = do
   appLog "unassignRole"
   db $ do
+    gid <- groupRef gref
     actRoles <- DB.getRoles gid uid
     when (role `elem` actRoles) $ DB.unassignRole gid uid role
 
