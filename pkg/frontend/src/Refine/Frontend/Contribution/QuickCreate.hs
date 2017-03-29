@@ -32,9 +32,9 @@ import qualified Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Header.Types as RS
 import qualified Refine.Frontend.Screen.Calculations as SC
 import qualified Refine.Frontend.Screen.Types as SC
-import qualified Refine.Frontend.Store as RS
-import qualified Refine.Frontend.Types as RS
+import qualified Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.UtilityWidgets
+import           Refine.Frontend.UtilityWidgets.Types
 import           Refine.Prelude()
 
 quickCreate :: View '[QuickCreateProps]
@@ -47,7 +47,7 @@ quickCreate = mkView "QuickCreateButton" $ \(QuickCreateProps (cs -> createType)
             iconButton_ $ def
               & iconButtonPropsIconProps    .~ IconProps ("o-add-" <> createType) True ("icon-New_Comment", "bright") XXL
               & iconButtonPropsPosition     .~ Just (quickCreateOffset range offsetFromTop screenState)
-              & iconButtonPropsClickHandler .~ (\_ -> RS.dispatch . RS.ContributionAction . RS.ShowCommentEditor $ Just range)
+              & iconButtonPropsClickActions .~ [RS.ContributionAction . RS.ShowCommentEditor $ Just range]
         _ -> mempty
 --    // quickCreate annotation ui events  -- RENAME: annotation => comment
 --    ann.addEventListener('mousedown', quickCreateOverlay);
@@ -80,6 +80,7 @@ data QuickCreateProps = QuickCreateProps
   , _quickCreateOffset           :: SC.ScreenState
   , _quickCreateInfo             :: RS.ToolbarExtensionStatus
   }
+  deriving (Eq)
 
 -- "annotation" (RENAME: Comment), "modification" (RENAME: Edit)
 quickCreate_ :: QuickCreateProps -> ReactElementM eventHandler ()

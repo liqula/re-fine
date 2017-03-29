@@ -41,21 +41,19 @@ newtype OffsetFromDocumentTop = OffsetFromDocumentTop { _unOffsetFromDocumentTop
   deriving (Show, Generic, Eq, Ord, Num)
 
 
-data WindowSize = Desktop | Tablet | Mobile
-  deriving (Show, Generic)
-
-
 data ScreenAction =
     AddHeaderHeight Int
   | SetWindowWidth Int
-  deriving (Show, Generic)
+  deriving (Show, Eq, Generic)
 
+data WindowSize = Desktop | Tablet | Mobile
+  deriving (Show, Eq, Generic)
 
 data ScreenState = ScreenState
   { _ssHeaderHeight           :: Int
   , _ssWindowWidth            :: Int
   , _ssWindowSize             :: WindowSize
-  } deriving (Show, Generic)
+  } deriving (Show, Eq, Generic)
 
 emptyScreenState :: ScreenState
 emptyScreenState = ScreenState 0 0 Desktop

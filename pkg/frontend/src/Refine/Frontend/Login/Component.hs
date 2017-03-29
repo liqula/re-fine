@@ -34,10 +34,10 @@ import           React.Flux
 
 import           Refine.Common.Types.User
 import           Refine.Frontend.Login.Types
-import qualified Refine.Frontend.Store as RS
+import qualified Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.Style
-import qualified Refine.Frontend.Types as RS
 import           Refine.Frontend.UtilityWidgets
+import           Refine.Frontend.UtilityWidgets.Types
 import           Refine.Prelude.TH (makeRefineType)
 import           Refine.Frontend.CS (elemCS)
 
@@ -105,10 +105,10 @@ loginOrLogout_ = \case
 
 defaultStyles :: [Style]
 defaultStyles =
-  [ Style "position" ("absolute" :: String)
-  , Style "zIndex" (100000 :: Int)
-  , Style "color" ("black" :: String)
-  , Style "backgroundColor" ("white" :: String)
+  [ StyleST "position" "absolute"
+  , StyleInt "zIndex" 100000
+  , StyleST "color" "black"
+  , StyleST "backgroundColor" "white"
   ]
 
 
@@ -117,8 +117,8 @@ defaultStyles =
 loginStyles :: [Style]
 loginStyles = defaultStyles
 
-login :: FormError -> View '[()]
-login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState () ->
+login :: FormError -> View '[]
+login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState ->
   div_ ["style" @= loginStyles] $ do
     h1_ "Login"
 
@@ -136,10 +136,10 @@ login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState () ->
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "submit"
         & iconButtonPropsDisabled     .~ invalidLoginForm curState
-        & iconButtonPropsClickHandler .~ (\_ -> (RS.dispatch . RS.Login) . (Login <$> _loginFormUsername <*> _loginFormPassword) $ curState)
+        & iconButtonPropsClickActions .~ [RS.Login . (Login <$> _loginFormUsername <*> _loginFormPassword) $ curState]
 
 login_ :: FormError -> ReactElementM eventHandler ()
-login_ !errors = view_ (login errors) "login_" ()
+login_ !errors = view_ (login errors) "login_"
 
 
 -- * Logout
@@ -159,7 +159,7 @@ logout = mkView "Logout" $ \() ->
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "logout"
         & iconButtonPropsDisabled     .~ False
-        & iconButtonPropsClickHandler .~ (\_ -> RS.dispatch RS.Logout)
+        & iconButtonPropsClickActions .~ [RS.Logout]
 
 logout_ :: ReactElementM eventHandler ()
 logout_ = view_ logout "logout_" ()
@@ -194,11 +194,11 @@ registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "submit"
         & iconButtonPropsDisabled     .~ invalidRegistrationForm curState
-        & iconButtonPropsClickHandler .~ (\_ -> (RS.dispatch . RS.CreateUser)
+        & iconButtonPropsClickActions .~ [RS.CreateUser
                                               . (CreateUser <$> _registrationFormUsername
                                                             <*> _registrationFormEmail1
                                                             <*> _registrationFormPassword)
-                                              $ curState)
+                                              $ curState]
 
 registration_ :: FormError -> ReactElementM eventHandler ()
 registration_ !errors = view_ (registration errors) "registration_" ()

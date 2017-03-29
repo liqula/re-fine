@@ -30,11 +30,12 @@ import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Style
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.UtilityWidgets
+import           Refine.Frontend.UtilityWidgets.Types
 
 
 iconButtonTestProps :: IconButtonProps
 iconButtonTestProps =
-    IconButtonProps "key" (iconProps M) element module1 label1 False Nothing False (\_ -> []) []
+    IconButtonProps "key" (iconProps M) element module1 label1 False Nothing False [] True []
   where
     element :: JSString
     element = "the-element-name"
@@ -110,7 +111,7 @@ spec = do
 
     it "renders the position when it receives a position value" $ do
       wrapper <- shallow $ iconButton_ (iconButtonTestProps & iconButtonPropsPosition .~ Just 101)
-      is wrapper (PropertySelector [Prop "style" [Style "top" (101 :: Int)]]) `shouldReturn` True
+      is wrapper (PropertySelector [Prop "style" [StyleInt "top" 101]]) `shouldReturn` True
 
     it "does not render the position when it receives no position value" $ do
       wrapper <- shallow $ iconButton_ iconButtonTestProps
@@ -128,11 +129,11 @@ spec = do
     it "shows the span's text in grey when it is disabled" $ do
       wrapper <- shallow $ iconButton_ (iconButtonTestProps & iconButtonPropsDisabled .~ True)
       span1 <- find wrapper (StringSelector "span")
-      is span1 (PropertySelector [Prop "style" [Style "color" Color.disabledText]]) `shouldReturn` True
+      is span1 (PropertySelector [Prop "style" [mkStyle "color" Color.DisabledText]]) `shouldReturn` True
 
     it "shows a pointer mouse cursor when it is not disabled" $ do
       wrapper <- shallow $ iconButton_ iconButtonTestProps
-      is wrapper (PropertySelector [Prop "style" [Style "cursor" ("pointer" :: String)]]) `shouldReturn` True
+      is wrapper (PropertySelector [Prop "style" [StyleST "cursor" "pointer"]]) `shouldReturn` True
 
     it "displays the label as passed to it" $ do
       wrapper <- shallow $ iconButton_ iconButtonTestProps
@@ -170,7 +171,7 @@ spec = do
 
     it "always renders the position that is passed to it" $ do
       wrapper <- shallow (iconButton_ theProps)
-      is wrapper (PropertySelector [Prop "style" [Style "top" (377 :: Int)]]) `shouldReturn` True
+      is wrapper (PropertySelector [Prop "style" [StyleInt "top" 377]]) `shouldReturn` True
 
     it "never renders the right-alignment flag" $ do
       wrapper <- shallow (iconButton_ theProps)

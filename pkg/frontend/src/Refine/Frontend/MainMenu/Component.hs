@@ -31,9 +31,10 @@ import           Refine.Frontend.Header.UserLoginLogout (userLoginLogoutButton_)
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Login.Component
 import           Refine.Frontend.MainMenu.Types
-import           Refine.Frontend.Store
+import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
 import           Refine.Frontend.UtilityWidgets
+import           Refine.Frontend.UtilityWidgets.Types
 import           Refine.Prelude()
 
 
@@ -41,6 +42,7 @@ data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
   { _tmbimmpMainMenuTab    :: MainMenuTab
   , _tmbimmpCurrentUser    :: CurrentUser
   }
+  deriving (Eq)
 
 topMenuBarInMainMenu :: View '[TopMenuBarInMainMenuProps]
 topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps menuTab currentUser) ->
@@ -56,7 +58,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               & iconButtonPropsIconProps    .~ iprops MainMenuLogin
               & iconButtonPropsElementName  .~ "section-button"
               & iconButtonPropsModuleName   .~ "active"
-              & iconButtonPropsClickHandler .~ (\_ -> dispatch . MainMenuAction $ MainMenuActionOpen MainMenuLogin)
+              & iconButtonPropsClickActions .~ [MainMenuAction $ MainMenuActionOpen MainMenuLogin]
               -- not translated from prototype2016:
               -- button attribute data-section="dashboard"
 
@@ -65,7 +67,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               & iconButtonPropsIconProps    .~ iprops MainMenuRegistration
               & iconButtonPropsElementName  .~ "section-button"
               & iconButtonPropsModuleName   .~ "active"
-              & iconButtonPropsClickHandler .~ (\_ -> dispatch . MainMenuAction $ MainMenuActionOpen MainMenuRegistration)
+              & iconButtonPropsClickActions .~ [MainMenuAction $ MainMenuActionOpen MainMenuRegistration]
               & iconButtonPropsExtraClasses .~ ["c-mainmenu-content__btn-dashboard"]
               -- not translated from prototype2016:
               -- button attribute data-section="dashboard"
@@ -85,7 +87,8 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsPosition     = Nothing
               , _iconButtonPropsAlignRight   = False
-              , _iconButtonPropsClickHandler = \_ -> dispatch . LoadTranslations $ Locale "en_GB"
+              , _iconButtonPropsClickActions = [LoadTranslations $ Locale "en_GB"]
+              , _iconButtonPropsClickPropag  = True
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-membership"]
               }
 
@@ -104,7 +107,8 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsPosition     = Nothing
               , _iconButtonPropsAlignRight   = False
-              , _iconButtonPropsClickHandler = \_ -> dispatch . LoadTranslations $ Locale "de_DE"
+              , _iconButtonPropsClickActions = [LoadTranslations $ Locale "de_DE"]
+              , _iconButtonPropsClickPropag  = True
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-membership"]
               }
 
@@ -123,7 +127,8 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsPosition     = Nothing
               , _iconButtonPropsAlignRight   = False
-              , _iconButtonPropsClickHandler = \_ -> []
+              , _iconButtonPropsClickActions = []
+              , _iconButtonPropsClickPropag  = True
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-help"]
               -- not translated from prototype2016:
               -- button attribute data-section="help"
@@ -145,7 +150,8 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsPosition     = Nothing
               , _iconButtonPropsAlignRight   = False
-              , _iconButtonPropsClickHandler = \_ -> dispatch . MainMenuAction $ MainMenuActionClose
+              , _iconButtonPropsClickActions = [MainMenuAction MainMenuActionClose]
+              , _iconButtonPropsClickPropag  = True
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-close"]
               -- not translated from prototype2016:
               -- n/a

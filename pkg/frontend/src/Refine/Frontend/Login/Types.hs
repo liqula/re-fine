@@ -34,12 +34,12 @@ type FormError = Maybe ST
 data CurrentUser
   = UserLoggedIn Username
   | UserLoggedOut
-  deriving (Show, Generic)
+  deriving (Show, Eq, Generic)
 
 newtype LoginState = LoginState
   { _lsCurrentUser :: CurrentUser
   }
-  deriving (Show, Generic)
+  deriving (Show, Eq, Generic)
 
 emptyLoginState :: LoginState
 emptyLoginState = LoginState

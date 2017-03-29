@@ -29,7 +29,11 @@ import           Data.List (nub)
 import qualified Data.JSString as JSS
 import           Data.String.Conversions
 import qualified Data.Text as ST
+import           GHCJS.Types (JSVal)
 import           React.Flux
+import           Text.HTML.Parser (Attr(Attr))
+
+import           Refine.Frontend.CS ()
 
 
 -- | See also:
@@ -42,5 +46,14 @@ classNamesAny xs = "className" @= ST.unwords names
 toClasses :: (ConvertibleStrings s JSS.JSString, ConvertibleStrings JSS.JSString s) => [s] -> s
 toClasses = cs . JSS.unwords . filter (not . JSS.null) . fmap cs
 
-class CssClass a where
-  showCssClass :: a -> JSS.JSString
+toProperty :: Attr -> forall handler. PropertyOrHandler handler
+toProperty (Attr key value) = cs key $= cs value
+
+attribValueOf :: ST -> [Attr] -> Maybe ST
+attribValueOf _ [] = Nothing
+attribValueOf wantedKey (Attr key value : _) | key == wantedKey = Just value
+attribValueOf wantedKey (_ : as) = attribValueOf wantedKey as
+
+foreign import javascript unsafe
+  "$1 === $2"
+  js_eq :: JSVal -> JSVal -> Bool

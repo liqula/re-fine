@@ -28,7 +28,7 @@ import           Test.Hspec
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Test.Enzyme
-import           Refine.Frontend.Types (emptyGlobalState)
+import           Refine.Frontend.Store.Types (emptyGlobalState)
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 

@@ -26,10 +26,11 @@ import           Control.Lens
 import           Data.Default (def)
 import           React.Flux
 
-import           Refine.Frontend.Store
-import           Refine.Frontend.Types
 import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Types
 import           Refine.Frontend.UtilityWidgets
+import           Refine.Frontend.UtilityWidgets.Types
 
 editToolbar :: View '[()]  -- TODO: can we get rid of the ()?  (grep for '[()]', it also happens in one more case!)
 editToolbar = mkView "EditToolbar" $ \() ->
@@ -47,48 +48,48 @@ editToolbar = mkView "EditToolbar" $ \() ->
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "h1"
             & iconButtonPropsLabel        .~ "header 1"
-            & iconButtonPropsClickHandler .~ (\_ -> dispatch ShowNotImplementedYet)
+            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
 
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "h2"
             & iconButtonPropsLabel        .~ "header 2"
-            & iconButtonPropsClickHandler .~ (\_ -> dispatch ShowNotImplementedYet)
+            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
 
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "h3"
             & iconButtonPropsLabel        .~ "header 3"
-            & iconButtonPropsClickHandler .~ (\_ -> dispatch ShowNotImplementedYet)
+            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "bold"
             & iconButtonPropsLabel        .~ "bold"
-            & iconButtonPropsClickHandler .~ (\_ -> dispatch ShowNotImplementedYet)
+            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
 
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "italic"
             & iconButtonPropsLabel        .~ "italic"
-            & iconButtonPropsClickHandler .~ (\_ -> dispatch ShowNotImplementedYet)
+            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "bullets"
             & iconButtonPropsLabel        .~ "bullets"
-            & iconButtonPropsClickHandler .~ (\_ -> dispatch ShowNotImplementedYet)
+            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
 
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "numbers"
             & iconButtonPropsLabel        .~ "numbers"
-            & iconButtonPropsClickHandler .~ (\_ -> dispatch ShowNotImplementedYet)
+            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
 
           iconButton_ $ editButton
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXL
             & iconButtonPropsListKey      .~ "save"
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True
-            & iconButtonPropsClickHandler .~ (\_ -> dispatch $ DocumentAction DocumentEditSave)
+            & iconButtonPropsClickActions .~ [DocumentAction DocumentEditSave]
 
 editToolbar_ :: ReactElementM eventHandler ()
 editToolbar_ = view_ editToolbar "editToolbar_" ()

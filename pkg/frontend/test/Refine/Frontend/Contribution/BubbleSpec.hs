@@ -34,7 +34,7 @@ import           Refine.Frontend.Contribution.Types
 import qualified Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Style
 import           Refine.Frontend.Test.Enzyme
-import           Refine.Frontend.Types
+import           Refine.Frontend.Store.Types
 
 
 cnid :: Int64 -> ContributionID
@@ -48,9 +48,9 @@ spec = do
       iconStyle = ("the-icon-name", "the-icon-style")
       markPosition = Just (MarkPosition (SC.OffsetFromDocumentTop (140 + 180)) (SC.OffsetFromDocumentTop (160 + 180)))
       highlight = Nothing
-      callback _ = []
+      actions = []
       screenState = SC.ScreenState 95 0 SC.Desktop
-      bubbleProps = BubbleProps contributionId iconSide iconStyle markPosition highlight callback screenState
+      bubbleProps = BubbleProps contributionId iconSide iconStyle markPosition highlight actions screenState
 
   describe "The bubble_ component" $ do
     it "renders the data-contribution-id that was passed to it" $ do
@@ -63,19 +63,19 @@ spec = do
 
     it "renders the top style with the correct value" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      is wrapper (PropertySelector [Prop "style" [Style "top" (145 :: Int)]]) `shouldReturn` True
+      is wrapper (PropertySelector [Prop "style" [StyleInt "top" 145]]) `shouldReturn` True
 
     it "has a child with the icon-bg class" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      lengthOfIO (find wrapper (StringSelector ".o-snippet__icon-bg")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".o-snippet__icon-bg")) `shouldReturn` 1
 
     it "has a child with the icon-bg + side class" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      lengthOfIO (find wrapper (StringSelector ".o-snippet__icon-bg--the-icon-side")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".o-snippet__icon-bg--the-icon-side")) `shouldReturn` 1
 
     it "has a child with the content class" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      lengthOfIO (find wrapper (StringSelector ".o-snippet__content")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".o-snippet__content")) `shouldReturn` 1
 
     it "does not render the hover class when there is no highlighted bubble" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty

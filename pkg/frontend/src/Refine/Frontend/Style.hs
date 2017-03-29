@@ -22,7 +22,10 @@
 
 
 -- | see also: #211
-module Refine.Frontend.Style where
+module Refine.Frontend.Style
+  ( Style(..), styleCS
+  , IsStyle(..)
+  ) where
 
 import           Data.Aeson ((.=), object)
 import           Data.Aeson.Types (ToJSON, toJSON)
@@ -30,54 +33,78 @@ import           Data.String.Conversions
 
 
 -- | 'Style' constructor takes a ToJSON value; the other constructors take values of concrete types.
--- Our types have the same structure as
--- <http://hackage.haskell.org/package/language-css-0.0.3/docs/Language-Css-Syntax.html#g:6>.
-data Style where
-  Style :: forall a. (ToJSON a) => ST -> a -> Style  -- FIXME: this is deprecated, use the other constructors instead!
+data Style =
+    StyleInt ST Int
+  | StyleDouble ST Double
+  | StyleST ST ST
+  | StyleRem ST Double
 
-  StyleIdent      :: ST -> Int -> Style
-  -- StyleFunc       :: ST -> Ident -> Expr -> Style  -- (not sure how this works, and we're not using it yet.)
-  StyleDeg        :: ST -> Double -> Style
-  StyleRad        :: ST -> Double -> Style
-  StyleGrad       :: ST -> Double -> Style
-  StyleCword      :: ST -> ST -> Style
-  StyleHz         :: ST -> Double -> Style
-  StyleKHz        :: ST -> Double -> Style
-  StyleEm         :: ST -> Double -> Style
-  StyleEx         :: ST -> Double -> Style
-  StylePx         :: ST -> Int -> Style
-  StyleIn         :: ST -> Double -> Style
-  StyleCm         :: ST -> Double -> Style
-  StyleMm         :: ST -> Double -> Style
-  StylePc         :: ST -> Double -> Style
-  StylePt         :: ST -> Int -> Style
-  StylePercentage :: ST -> Double -> Style
-  StyleMs         :: ST -> Double -> Style
-  StyleS          :: ST -> Double -> Style
-  StyleUri        :: ST -> ST -> Style
+  -- The following constructors follow
+  -- <http://hackage.haskell.org/package/language-css-0.0.3/docs/Language-Css-Syntax.html#g:6>.
+
+  -- StyleIdent ST Int
+  -- StyleFunc  ST Ident Expr
+  -- StyleDeg ST Double
+  -- StyleRad ST Double
+  -- StyleGrad ST Double
+  -- StyleCword ST ST
+  -- StyleHz ST Double
+  -- StyleKHz ST Double
+  | StyleEm ST Double
+  | StyleEx ST Double
+  | StylePx ST Int
+  | StyleIn ST Double
+  | StyleCm ST Double
+  | StyleMm ST Double
+  | StylePc ST Double
+  | StylePt ST Int
+  | StylePercentage ST Double
+  -- StyleMs ST Double
+  -- StyleS ST Double
+  -- StyleUri ST ST
+  deriving (Eq)
 
 instance ToJSON [Style] where
   toJSON = object . fmap (\case
-    Style k v -> k .= v
+    StyleInt         k v -> k .= vshow v
+    StyleDouble      k v -> k .= vshow v
+    StyleST          k v -> k .= v
+    StyleRem         k v -> k .= (vshow v <> "rem")
 
-    StyleIdent      k v -> k .= v
-    -- StyleFunc       k v e -> k .= [v, e]
-    StyleDeg        k v -> k .= v
-    StyleRad        k v -> k .= v
-    StyleGrad       k v -> k .= v
-    StyleCword      k v -> k .= v
-    StyleHz         k v -> k .= v
-    StyleKHz        k v -> k .= v
-    StyleEm         k v -> k .= v
-    StyleEx         k v -> k .= v
-    StylePx         k v -> k .= v
-    StyleIn         k v -> k .= v
-    StyleCm         k v -> k .= v
-    StyleMm         k v -> k .= v
-    StylePc         k v -> k .= v
-    StylePt         k v -> k .= v
-    StylePercentage k v -> k .= v
-    StyleMs         k v -> k .= v
-    StyleS          k v -> k .= v
-    StyleUri        k v -> k .= v
+    -- StyleIdent      k v -> k .= v
+    -- StyleFunc       k v e -> k .= [v, e]  -- (probably not)
+    -- StyleDeg        k v -> k .= v
+    -- StyleRad        k v -> k .= v
+    -- StyleGrad       k v -> k .= v
+    -- StyleCword      k v -> k .= v
+    -- StyleHz         k v -> k .= v
+    -- StyleKHz        k v -> k .= v
+    StyleEm         k v -> k .= (vshow v <> "em")  -- TODO: only add unit of measure if /= 0
+    StyleEx         k v -> k .= (vshow v <> "ex")
+    StylePx         k v -> k .= (vshow v <> "px")
+    StyleIn         k v -> k .= (vshow v <> "in")
+    StyleCm         k v -> k .= (vshow v <> "cm")
+    StyleMm         k v -> k .= (vshow v <> "mm")
+    StylePc         k v -> k .= (vshow v <> "pc")
+    StylePt         k v -> k .= (vshow v <> "pt")
+    StylePercentage k v -> k .= (vshow v <> "%")
+    -- StyleMs         k v -> k .= v
+    -- StyleS          k v -> k .= v
+    -- StyleUri        k v -> k .= v
     )
+
+
+-- TODO: there should be a faster implementation of converting doubles and ints to aeson string.
+-- look it up and use it!
+vshow :: Show a => a -> String
+vshow = show
+
+
+class IsStyle a where
+  mkStyle :: ST -> a -> Style
+
+
+-- | (would be nice to have this as a constructor, but then 'Eq' wouldn't be derivable any more.
+-- would be nice to make it a 'IsStyle' instance, but that would overlap.)
+styleCS :: forall s. (ConvertibleStrings s ST) => ST -> s -> Style
+styleCS k v = StyleST k (cs v)

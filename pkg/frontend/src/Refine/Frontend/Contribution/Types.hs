@@ -31,13 +31,13 @@ import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as M
 import           Data.String.Conversions
 import           GHC.Generics (Generic)
-import           React.Flux (PropertyOrHandler, ViewEventHandler)
+import           Text.HTML.Parser (Attr)
 import           Text.Read (readMaybe)
 
 import Refine.Common.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Screen.Types
-import Refine.Frontend.UtilityWidgets
+import Refine.Frontend.Types
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -48,7 +48,7 @@ data Range = Range
     , _rangeBottomOffset :: OffsetFromViewportTop
     , _rangeScrollOffset :: ScrollOffsetOfViewport
     }
-    deriving (Show, Generic, NFData)
+    deriving (Show, Eq, Generic, NFData)
 
 makeLenses ''Range
 
@@ -73,12 +73,12 @@ data Selection =
     NothingSelected
   | NothingSelectedButUpdateTriggered OffsetFromDocumentTop -- TODO when can this happen?
   | RangeSelected Range OffsetFromDocumentTop
-  deriving (Show, Generic)
+  deriving (Show, Eq, Generic)
 
 -- for Overlay:
 newtype CommentInputState = CommentInputState
   { _commentInputStateText     :: ST
-  } deriving (Show, Generic)
+  } deriving (Show, Eq, Generic)
 
 data CommentCategory =
     Discussion
@@ -87,7 +87,7 @@ data CommentCategory =
 
 -- for marks:
 newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map ContributionID MarkPosition }
-  deriving (Eq, Show, Generic)
+  deriving (Show, Eq, Generic)
 
 data MarkPosition = MarkPosition
   { _markPositionTop    :: OffsetFromDocumentTop
@@ -113,7 +113,7 @@ mapFromValue = withObject "MarkPositions"
 data ContributionEditorData =
     EditorIsVisible (Maybe Range)
   | EditorIsHidden
-  deriving (Show, Generic)
+  deriving (Show, Eq, Generic)
 
 
 data ContributionAction =
@@ -128,7 +128,7 @@ data ContributionAction =
   | AddMarkPosition ContributionID MarkPosition
   | HighlightMarkAndBubble ContributionID
   | UnhighlightMarkAndBubble
-  deriving (Show, Generic)
+  deriving (Show, Eq, Generic)
 
 
 data ContributionState = ContributionState
@@ -138,7 +138,7 @@ data ContributionState = ContributionState
   , _csCommentEditorIsVisible   :: ContributionEditorData
   , _csHighlightedMarkAndBubble :: Maybe ContributionID
   , _csMarkPositions            :: MarkPositions
-  } deriving (Show, Generic)
+  } deriving (Show, Eq, Generic)
 
 
 emptyContributionState :: ContributionState
@@ -164,11 +164,12 @@ instance FromJSON MarkPositions where
 
 
 data MarkProps = MarkProps
-  { _markPropsViewEventHandlers     :: [PropertyOrHandler ViewEventHandler]
+  { _markPropsAttrs                 :: [Attr]
   , _markPropsContributionID        :: ContributionID
   , _markPropsHighlightedMark       :: Maybe ContributionID
   , _markPropsDisplayedContribution :: Maybe ContributionID
   }
+  deriving (Eq)
 
 makeLenses ''MarkProps
 
@@ -178,9 +179,10 @@ data BubbleProps = BubbleProps
   , _bubblePropsIconStyle         :: IconDescription
   , _bubblePropsMarkPosition      :: Maybe MarkPosition
   , _bubblePropsHighlightedBubble :: Maybe ContributionID
-  , _bubblePropsClickHandler      :: ClickHandler
+  , _bubblePropsClickActions      :: [ContributionAction]
   , _bubblePropsScreenState       :: ScreenState
   }
+  deriving (Eq)
 
 makeLenses ''BubbleProps
 
@@ -190,5 +192,6 @@ data SpecialBubbleProps = SpecialBubbleProps
   , _specialBubblePropsHighlightedBubble :: Maybe ContributionID
   , _specialBubblePropsScreenState       :: ScreenState
   }
+  deriving (Eq)
 
 makeLenses ''SpecialBubbleProps

@@ -31,6 +31,7 @@ import           Refine.Frontend.Header.Toolbar
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Types
+import           Refine.Frontend.Store.Types
 
 spec :: Spec
 spec = do

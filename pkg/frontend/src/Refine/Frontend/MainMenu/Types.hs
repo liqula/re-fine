@@ -60,6 +60,7 @@ data MainMenuProps = MainMenuProps
   , _mmpMainMenuErrors :: MainMenuErrors
   , _mmpCurrentUser    :: CurrentUser
   }
+  deriving (Eq)
 
 makeRefineType ''MainMenuAction
 makeRefineType ''MainMenuErrors

@@ -30,8 +30,8 @@ import           Refine.Frontend.Document.FFI (js_ES_traceCurrentContent)
 import           Refine.Frontend.Document.VDoc (vdocToHTML)
 import qualified Refine.Frontend.Screen.Types as SC
 import qualified Refine.Frontend.Store as RS
+import qualified Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.ThirdPartyViews (editor_)
-import qualified Refine.Frontend.Types as RS
 import           Refine.Prelude.Aeson (NoJSONRep(..))
 
 
@@ -60,10 +60,6 @@ document = mkView "Document" $ \props ->
 document_ :: DocumentProps -> ReactElementM eventHandler ()
 document_ !props = view_ document "document_" props
 
-
-newtype EditorWrapperProps = EditorWrapperProps
-  { _ewpEditorState       :: EditorState
-  }
 
 editorWrapper :: View '[EditorWrapperProps]
 editorWrapper = mkView "EditorWrapper" $ \(EditorWrapperProps (EditorState kind (NoJSONRep editorState) mrange)) ->

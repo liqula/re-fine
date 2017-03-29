@@ -35,11 +35,11 @@ import qualified Text.HTML.Parser as HTMLP
 import           Refine.Common.Types
 import           Refine.Frontend.Header.Heading
 import           Refine.Frontend.Login.Types
-import qualified Refine.Frontend.Screen.Types as ST
-import qualified Refine.Frontend.Store as RS
+import           Refine.Frontend.Screen.Types
+import           Refine.Frontend.Store
+import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
-import           Refine.Frontend.Types as RS
 
 
 spec :: Spec
@@ -80,12 +80,12 @@ spec = do
                                   (ID 1)
                                   (VDocVersion [DT.Node (HTMLP.TagOpen "div" [HTMLP.Attr "data-offset" "0", HTMLP.Attr "data-uid" "77"]) []])
                                   M.empty M.empty M.empty
-      _wrapper <- mount (stickyContainer_ [] . mainHeader_ $ RS.emptyGlobalState { RS._gsVDoc = Just newVDoc })
+      _wrapper <- mount (stickyContainer_ [] . mainHeader_ $ emptyGlobalState { _gsVDoc = Just newVDoc })
 
       lock <- newEmptyMVar
-      RS.reactFluxWorkAroundForkIO $ do
+      reactFluxWorkAroundForkIO $ do
         globalState0 <- readStoreData @GlobalState
-        (globalState0 ^. RS.gsScreenState . ST.ssHeaderHeight) `shouldSatisfy` (> 0)
+        (globalState0 ^. gsScreenState . ssHeaderHeight) `shouldSatisfy` (> 0)
         putMVar lock ()
       () <- takeMVar lock
       pure ()

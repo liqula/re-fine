@@ -34,6 +34,7 @@ data DocumentHeaderProps = DocumentHeaderProps
   { _headerTitle :: Title
   , _headerAbstract :: Abstract
   }
+  deriving (Eq)
 
 documentHeader :: View '[DocumentHeaderProps]
 documentHeader = mkView "DocumentHeader" $ \props ->

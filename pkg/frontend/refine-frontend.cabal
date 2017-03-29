@@ -91,6 +91,7 @@ library
       Refine.Frontend.Screen.Types
       Refine.Frontend.Screen.WindowSize
       Refine.Frontend.Store
+      Refine.Frontend.Store.Types
       Refine.Frontend.Style
       Refine.Frontend.Test.Console
       Refine.Frontend.Test.Enzyme
@@ -106,6 +107,7 @@ library
       Refine.Frontend.Types
       Refine.Frontend.Util
       Refine.Frontend.UtilityWidgets
+      Refine.Frontend.UtilityWidgets.Types
       Refine.Frontend.Views
   default-language: Haskell2010
 

@@ -31,8 +31,8 @@ import qualified Text.HTML.Parser as HTMLP
 import           Refine.Common.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store
+import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Enzyme
-import           Refine.Frontend.Types
 import           Refine.Frontend.Views
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}

@@ -30,6 +30,7 @@ import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Types
 import Refine.Frontend.Document.Document
 import Refine.Frontend.Document.Store
+import Refine.Frontend.Document.Types
 import Refine.Frontend.Test.Enzyme
 
 

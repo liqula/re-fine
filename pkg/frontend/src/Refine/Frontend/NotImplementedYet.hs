@@ -25,25 +25,25 @@ module Refine.Frontend.NotImplementedYet where
 import React.Flux
 
 import qualified Refine.Frontend.Store as RS
+import qualified Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.Style
 import           Refine.Frontend.ThirdPartyViews (skylight_)
-import qualified Refine.Frontend.Types as RS
 
 dialogStyles :: [Style]
 dialogStyles =
-  [ Style "width" ("23em" :: String)
-  , Style "height" ("8em" :: String)
-  -- , Style "left" ("7.5em" :: String)
-  -- , Style "top" ("undefined" :: String)
-  , Style "marginLeft" ("0" :: String)
-  , Style "marginTop" ("-11.5em" :: String)
-  , Style "textAlign" ("left" :: String)
-  , Style "zIndex" (6050 :: Int)
+  [ StyleEm "width" 23
+  , StyleEm "height" 8
+  -- , StyleEm "left" 7.5
+  -- , StyleCword "top" "undefined"
+  , StyleEm "marginLeft" 0
+  , StyleEm "marginTop" (-11.5)
+  , StyleST "textAlign" "left"
+  , StyleInt "zIndex" 6050
   ]
 
 overlayStyles :: [Style]
 overlayStyles =
-  [ Style "zIndex" (6010 :: Int)
+  [ StyleInt "zIndex" 6010
   ]
 
 notImplementedYet :: View '[Bool]

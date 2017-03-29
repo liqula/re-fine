@@ -21,77 +21,23 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.UtilityWidgets
-  ( IconProps(..), icon_
-  , iconPropsBlockName
-  , iconPropsHighlight
-  , iconPropsDesc
-  , iconPropsSize
-
-  , IconButtonProps(..), iconButton_
-  , iconButtonPropsListKey
-  , iconButtonPropsIconProps
-  , iconButtonPropsElementName
-  , iconButtonPropsModuleName
-  , iconButtonPropsLabel
-  , iconButtonPropsDisabled
-  , iconButtonPropsPosition
-  , iconButtonPropsAlignRight
-  , iconButtonPropsClickHandler
-  , iconButtonPropsExtraClasses
-
-  , IconSize(..)
-  , IconDescription
-  , ClickHandler
+  ( icon_, iconButton_
   ) where
 
-import           Control.Lens (makeLenses, (^.), _1, _2)
-import           Data.Char (toLower)
-import           Data.Default (Default(def))
+import           Control.Lens ((^.), _1, _2)
 import           Data.Monoid ((<>))
-import           Data.String.Conversions (cs)
 import           GHCJS.Types (JSString)
 import           React.Flux
 
 import qualified Refine.Frontend.Colors as Color
-import           Refine.Frontend.CS ()
+import           Refine.Frontend.Store
 import           Refine.Frontend.Style
+import           Refine.Frontend.Types
 import           Refine.Frontend.Util
-
-
-type ReactListKey = JSString  -- do not move this to Frontend.Types, importing this here creates a cycle.
-
-data IconSize
-    = S
-    | M
-    | L
-    | XL
-    | XXL
-    deriving Show
-
-instance CssClass IconSize where
-  showCssClass = ("iconsize-" <>) . cs . fmap toLower . show
+import           Refine.Frontend.UtilityWidgets.Types
 
 
 -- * icon
-
-data IconProps = IconProps
-  { _iconPropsBlockName :: JSString
-  , _iconPropsHighlight :: Bool
-  , _iconPropsDesc      :: IconDescription
-  , _iconPropsSize      :: IconSize
-  }
-
-type IconDescription = (JSString, JSString)
-
-makeLenses ''IconProps
-
-instance Default IconProps where
-  def = IconProps
-    { _iconPropsBlockName = ""
-    , _iconPropsHighlight = False
-    , _iconPropsDesc      = ("", "")
-    , _iconPropsSize      = L
-    }
 
 icon :: View '[IconProps]
 icon = mkStatefulView "Icon" False $ \mouseIsOver props -> do
@@ -115,37 +61,6 @@ icon_ !props = view_ icon "Icon_" props
 
 -- * icon button
 
-data IconButtonProps = IconButtonProps
-  { _iconButtonPropsListKey      :: ReactListKey  -- (this is not morally part of the props, but it's convenient to keep it here.)
-  , _iconButtonPropsIconProps    :: IconProps
-  , _iconButtonPropsElementName  :: JSString
-  , _iconButtonPropsModuleName   :: JSString
-  , _iconButtonPropsLabel        :: JSString
-  , _iconButtonPropsDisabled     :: Bool  -- TODO: make this 'enabled'
-  , _iconButtonPropsPosition     :: Maybe Int
-  , _iconButtonPropsAlignRight   :: Bool
-  , _iconButtonPropsClickHandler :: ClickHandler
-  , _iconButtonPropsExtraClasses :: [JSString]
-  }
-
-type ClickHandler = Event -> [SomeStoreAction]
-
-makeLenses ''IconButtonProps
-
-instance Default IconButtonProps where
-  def = IconButtonProps
-    { _iconButtonPropsListKey      = ""
-    , _iconButtonPropsIconProps    = def
-    , _iconButtonPropsElementName  = ""
-    , _iconButtonPropsModuleName   = ""
-    , _iconButtonPropsLabel        = ""
-    , _iconButtonPropsDisabled     = False
-    , _iconButtonPropsPosition     = Nothing
-    , _iconButtonPropsAlignRight   = False
-    , _iconButtonPropsClickHandler = \_ -> []
-    , _iconButtonPropsExtraClasses = []
-    }
-
 iconButtonPropsToClasses :: IconButtonProps -> [JSString]
 iconButtonPropsToClasses props =
   [ iprops ^. iconPropsBlockName <> "__button"
@@ -165,9 +80,9 @@ iconButtonPropsToStyles :: IconButtonProps -> [Style]
 iconButtonPropsToStyles props = alpos <> curpoint
   where
     alpos = case props ^. iconButtonPropsPosition of
-              Just pos  -> [Style "top" pos]
+              Just pos  -> [StyleInt "top" pos]
               Nothing   -> []
-    curpoint = [Style "cursor" ("pointer" :: String) | not (props ^. iconButtonPropsDisabled)]
+    curpoint = [StyleST "cursor" "pointer" | not (props ^. iconButtonPropsDisabled)]
 
 {- TODO we currently ignore touch device handling because there are some issues with
  - browsers emitting tap events on click and we don't know how to handle these properly.
@@ -180,15 +95,20 @@ iconButtonPropsToStyles props = alpos <> curpoint
 iconButton :: View '[IconButtonProps]
 iconButton = mkView "IconButton" $ \props -> do
     let iprops = props ^. iconButtonPropsIconProps
+
     div_ ([ "className" $= toClasses (iconButtonPropsToClasses props)
           , "style" @= iconButtonPropsToStyles props
-          ] <> [onClick $ const . (props ^. iconButtonPropsClickHandler) | not (props ^. iconButtonPropsDisabled)]
+          ] <> [onClick $ mkClickHandler props | not (props ^. iconButtonPropsDisabled)]
           ) $ do
         icon_ iprops
         span_ [ "className" $= (iprops ^. iconPropsBlockName <> "__button-label")
-              , "style" @= [Style "color" Color.disabledText | props ^. iconButtonPropsDisabled]
+              , "style" @= [mkStyle "color" Color.DisabledText | props ^. iconButtonPropsDisabled]
               ] $
             elemJSString (props ^. iconButtonPropsLabel)
 
 iconButton_ :: IconButtonProps -> ReactElementM eventHandler ()
 iconButton_ !props = view_ iconButton ("iconButton_" <> props ^. iconButtonPropsListKey) props
+
+mkClickHandler :: IconButtonProps -> Event -> MouseEvent -> [SomeStoreAction]
+mkClickHandler props evt _ = [ stopPropagation evt | not $ props ^. iconButtonPropsClickPropag ]
+                          <> dispatchMany (props ^. iconButtonPropsClickActions)

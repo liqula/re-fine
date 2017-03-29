@@ -28,7 +28,7 @@ module Refine.Frontend.Views
   , mainScreen_
   ) where
 
-import           Control.Lens ((^.), (^?), to)
+import           Control.Lens ((^.), (^?))
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
 import qualified Data.Tree as DT
@@ -39,7 +39,7 @@ import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.QuickCreate
 import           Refine.Frontend.Contribution.Types as RS
-import           Refine.Frontend.CS
+import           Refine.Frontend.CS ()
 import           Refine.Frontend.Document.Types (DocumentProps(..))
 import           Refine.Frontend.Document.Document (document_)
 import           Refine.Frontend.Header.Heading ( mainHeader_ )
@@ -53,8 +53,7 @@ import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import qualified Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Store as RS
-import           Refine.Frontend.Types as RS
-import           Refine.Prelude.Aeson (unNoJSONRep)
+import           Refine.Frontend.Store.Types as RS
 
 
 -- | The controller view and also the top level of the Refine app.  This controller view registers
@@ -69,9 +68,12 @@ refineApp = mkControllerView @'[StoreArg GlobalState] "RefineApp" $ \gs ->
                             (gs ^. gsMainMenuState . mmErrors)
                             (gs ^. gsLoginState . lsCurrentUser)
 
-mainScreen :: View '[RS.GlobalState]
+mainScreen :: View '[GlobalState]
 mainScreen = mkView "MainScreen" $ \rs -> do
   let vdoc = fromJust (rs ^. gsVDoc) -- FIXME: improve this!  (introduce a custom props type with a CompositeVDoc *not* wrapped in a 'Maybe')
+
+      __ :: Translations = rs ^. RS.gsTranslations . unTrans
+                                -- FIXME: I think this could be only done more nicely.
 
   div_ (case rs ^. gsHeaderState . hsToolbarExtensionStatus of
     HT.ToolbarExtensionClosed -> []
@@ -84,8 +86,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           -- components that are only temporarily visible:
           showNote_ $ showNoteProps (vdoc ^. compositeVDocNotes) rs
           showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocDiscussions) rs
-          addComment_
-            (rs ^. RS.gsTranslations . unNoJSONRep . to (elemCS .))
+          addComment_ __
             $ AddCommentProps (rs ^. RS.gsContributionState . RS.csCommentEditorIsVisible)
                               (rs ^. RS.gsContributionState . RS.csCommentCategory)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
@@ -109,7 +110,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                                                 (_compositeVDocVersion vdoc)
                       rightAside_ (rs ^. gsContributionState . csMarkPositions) (rs ^. gsScreenState)
 
-mainScreen_ :: RS.GlobalState -> ReactElementM eventHandler ()
+mainScreen_ :: GlobalState -> ReactElementM eventHandler ()
 mainScreen_ !rs = view_ mainScreen "mainScreen_" rs
 
 
@@ -122,6 +123,7 @@ data LeftAsideProps = LeftAsideProps
   , _leftAsideNotes             :: [Note]
   , _leftAsideQuickCreateInfo   :: ToolbarExtensionStatus
   }
+  deriving (Eq)
 
 leftAside :: View '[LeftAsideProps]
 leftAside = mkView "LeftAside" $ \props ->

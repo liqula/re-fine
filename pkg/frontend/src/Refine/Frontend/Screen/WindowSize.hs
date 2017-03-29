@@ -30,12 +30,13 @@ import           GHCJS.Types (JSString)
 
 import qualified Refine.Frontend.Screen.Types as RS
 import qualified Refine.Frontend.Store as RS
-import qualified Refine.Frontend.Types as RS
+import qualified Refine.Frontend.Store.Types as RS
 
 
 newtype WindowSizeProps = WindowSizeProps
-    { _currentSize :: RS.WindowSize
-    }
+  { _currentSize :: RS.WindowSize
+  }
+  deriving (Eq)
 
 windowSize :: ReactView WindowSizeProps
 windowSize = defineLifecycleView "WindowSize" () lifecycleConfig

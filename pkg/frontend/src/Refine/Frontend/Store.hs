@@ -49,10 +49,10 @@ import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Rest
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
+import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Console
 import           Refine.Frontend.Test.Samples
 import           Refine.Frontend.Translation.Store (translationsUpdate)
-import           Refine.Frontend.Types
 
 
 instance StoreData GlobalState where
@@ -75,7 +75,7 @@ transformGlobalState = transf
       & gsLoginState                 %~ loginStateUpdate action
       & gsMainMenuState              %~ mainMenuUpdate action
       & gsToolbarSticky              %~ toolbarStickyUpdate action
-      & gsTranslations               %~ fmap (translationsUpdate action)
+      & gsTranslations               %~ translationsUpdate action
 
     transf :: m ~ IO => GlobalAction -> GlobalState -> m GlobalState
     transf ClearState _ = pure emptyGlobalState  -- for testing only!

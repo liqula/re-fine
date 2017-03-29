@@ -25,10 +25,11 @@ module Refine.Frontend.Header.Store
   ( headerStateUpdate
   ) where
 
-import           Control.Lens ((&), (%~))
+import Control.Lens ((&), (%~))
 
 import Refine.Frontend.Header.Types
-import Refine.Frontend.Types
+import Refine.Frontend.Store.Types
+
 
 headerStateUpdate :: GlobalAction -> HeaderState -> HeaderState
 headerStateUpdate action state = state

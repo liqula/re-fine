@@ -22,22 +22,7 @@
 
 module Refine.Frontend.Colors where
 
-{-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
-
-disabledText :: String
-disabledText = "rgb(169,169,169)" -- dark grey
-
-vdoc_comment :: String
-vdoc_comment = "rgb(219, 204, 221)" -- lightred
-
-vdoc_discussion :: String
-vdoc_discussion = "rgb(215, 233, 255)" -- lightblue
-
-vdoc_question :: String
-vdoc_question = "rgb(220, 229, 211)" -- lightgreen
-
-white :: String
-white = "rgb(255, 255, 255)"
+import Refine.Frontend.Style
 
 {-
 //comment types
@@ -47,5 +32,24 @@ $lightred: rgb(219, 204, 221); //used for COMMENT (!)
 $lightblue: rgb(215, 233, 255); //used for DISCUSSION
 -}
 
-overlay_backdrop :: String
-overlay_backdrop = "rgba(255, 255, 255, .8)"
+data Color =
+    DisabledText
+  | VDocComment
+  | VDocNote
+  | VDocQuestion
+  | VDocDiscussion
+  | White
+  | OverlayBackdrop
+
+instance IsStyle Color where
+  mkStyle c DisabledText    = StyleST c "rgb(169,169,169)" -- dark grey
+  mkStyle c VDocComment     = StyleST c "rgb(219, 204, 221)" -- lightred
+  mkStyle c VDocNote        = StyleST c "rgb(219, 204, 221)" -- lightred
+  mkStyle c VDocQuestion    = StyleST c "rgb(220, 229, 211)" -- lightgreen
+  mkStyle c VDocDiscussion  = StyleST c "rgb(215, 233, 255)" -- lightblue
+  mkStyle c White           = StyleST c "rgb(255, 255, 255)"
+  mkStyle c OverlayBackdrop = StyleST c "rgba(255, 255, 255, .8)"
+
+
+-- FUTUREWORK: make two types: one that describes the color, and one that describes its meaning,
+-- whose values are associated with values of the former.

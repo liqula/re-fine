@@ -38,7 +38,7 @@ import           Refine.Common.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
-import           Refine.Frontend.Types
+import           Refine.Frontend.Store.Types
 import           Refine.Prelude.Aeson (NoJSONRep(..), unNoJSONRep)
 
 

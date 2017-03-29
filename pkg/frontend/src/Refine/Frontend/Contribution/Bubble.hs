@@ -18,7 +18,13 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Contribution.Bubble where
+module Refine.Frontend.Contribution.Bubble
+  ( bubble_
+  , noteBubble_
+  , questionBubble_
+  , discussionBubble_
+  , editBubble_
+  ) where
 
 import           Control.Lens ((^.))
 import           Data.Monoid ((<>))
@@ -31,10 +37,15 @@ import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Screen.Calculations
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
+import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Style
 import           Refine.Frontend.Types
 import           Refine.Frontend.UtilityWidgets
+import           Refine.Frontend.UtilityWidgets.Types
 
+
+mkClickHandler :: [ContributionAction] -> Event -> MouseEvent -> [SomeStoreAction]
+mkClickHandler actions _ _ = dispatchMany $ ContributionAction <$> actions
 
 bubble :: ReactElementM [SomeStoreAction] () -> View '[BubbleProps]
 bubble children = mkView "Bubble" $ \props ->
@@ -57,10 +68,10 @@ renderBubble children props topOffset = do
                     , contribKind
                     , ("o-snippet--hover", Just (props ^. bubblePropsDataContribId) == props ^. bubblePropsHighlightedBubble)
                     ]
-       , "style" @= [Style "top" (offsetIntoText topOffset (props ^. bubblePropsScreenState))]
-       , onClick $ const . (props ^. bubblePropsClickHandler)
-       , onMouseEnter $ \_ _ -> dispatch . ContributionAction . HighlightMarkAndBubble $ props ^. bubblePropsDataContribId
-       , onMouseLeave $ \_ _ -> dispatch $ ContributionAction UnhighlightMarkAndBubble
+       , "style" @= [StyleInt "top" (offsetIntoText topOffset (props ^. bubblePropsScreenState))]
+       , onClick      $ mkClickHandler (props ^. bubblePropsClickActions)
+       , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble $ props ^. bubblePropsDataContribId]
+       , onMouseLeave $ mkClickHandler [UnhighlightMarkAndBubble]
        ] $ do
     div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> props ^. bubblePropsIconSide)] $ do  -- RENAME: snippet => bubble
       icon_ (IconProps "o-snippet" False (props ^. bubblePropsIconStyle) M)  -- RENAME: snippet => bubble
@@ -73,36 +84,34 @@ bubble_ !props children = view_ (bubble children) "bubble_" props
 
 discussionBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
 discussionBubble children = mkView "DiscussionBubble" $ \(SpecialBubbleProps contributionID markPosition highlight screenState) ->
-    let clickHandler _ = dispatch (ContributionAction (ShowContributionDialog contributionID))
-    in bubble_ (BubbleProps contributionID "left" ("icon-Discussion", "bright") markPosition highlight clickHandler screenState)
-        children
+  bubble_ (BubbleProps contributionID "left" ("icon-Discussion", "bright") markPosition highlight
+                       [ShowContributionDialog contributionID] screenState)
+    children
 
 discussionBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
 discussionBubble_ !props children = view_ (discussionBubble children) "discussionBubble_" props
 
 questionBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
 questionBubble children = mkView "QuestionBubble" $ \(SpecialBubbleProps dataChunkId markPosition highlight screenState) ->
-    let clickHandler _ = []
-    in bubble_ (BubbleProps dataChunkId "left" ("icon-Question", "dark") markPosition highlight clickHandler screenState)
-        children
+  bubble_ (BubbleProps dataChunkId "left" ("icon-Question", "dark") markPosition highlight [] screenState)
+    children
 
 questionBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
 questionBubble_ !props children = view_ (questionBubble children) "questionBubble_" props
 
 noteBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
 noteBubble children = mkView "NoteBubble" $ \(SpecialBubbleProps contributionID markPosition highlight screenState) ->
-    let clickHandler _ = dispatch (ContributionAction (ShowContributionDialog contributionID))
-    in bubble_ (BubbleProps contributionID "left" ("icon-Note", "dark") markPosition highlight clickHandler screenState)
-        children
+  bubble_ (BubbleProps contributionID "left" ("icon-Note", "dark") markPosition highlight
+                       [ShowContributionDialog contributionID] screenState)
+    children
 
 noteBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
 noteBubble_ !props children = view_ (noteBubble children) "noteBubble_" props
 
 editBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
 editBubble children = mkView "EditBubble" $ \(SpecialBubbleProps dataChunkId markPosition highlight screenState) ->
-    let clickHandler _ = []
-    in bubble_ (BubbleProps dataChunkId "right" ("icon-Edit", "dark") markPosition highlight clickHandler screenState)
-        children
+  bubble_ (BubbleProps dataChunkId "right" ("icon-Edit", "dark") markPosition highlight [] screenState)
+    children
 
 editBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
 editBubble_ !props children = view_ (editBubble children) "editBubble_" props

@@ -26,7 +26,6 @@ import           Data.JSString (JSString)
 import           Data.String.Conversions
 import           Data.Tree
 import           React.Flux
-import           React.Flux.Internal (PropertyOrHandler(..))
 import           Text.HTML.Parser
 import           Web.HttpApiData
 
@@ -34,6 +33,7 @@ import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Types
 import qualified Refine.Frontend.Test.Console as Console
+import           Refine.Frontend.Util
 
 
 vdocToHTML :: ContributionState -> VDocVersion 'HTMLWithMarks -> ReactElementM [SomeStoreAction] ()
@@ -48,7 +48,7 @@ treeToHTML state = go
     go tree@(Node (TagOpen tagname attrs) children) = tag $ forestToHTML state children
       where
         props cid = MarkProps
-          (toProperty <$> attrs)
+          attrs
           cid
           (state ^. csHighlightedMarkAndBubble)
           (state ^. csDisplayedContributionID)
@@ -75,15 +75,7 @@ treeToHTML state = go
       -- TODO: make this a gracefulError; consolidate gracefulError with Test.Console module.
 
 
-toProperty :: Attr -> forall handler. PropertyOrHandler handler
-toProperty (Attr key value) = cs key $= cs value
-
 -- FUTUREWORK: this should not be 'Maybe', but we don't know what to put here if it is.
 contributionIdFrom :: [Attr] -> Maybe ContributionID
 contributionIdFrom attrs =
   either (const Nothing) Just . parseUrlPiece . cs =<< attribValueOf "data-contribution-id" attrs
-
-attribValueOf :: ST -> [Attr] -> Maybe ST
-attribValueOf _ [] = Nothing
-attribValueOf wantedKey (Attr key value : _) | key == wantedKey = Just value
-attribValueOf wantedKey (_ : as) = attribValueOf wantedKey as

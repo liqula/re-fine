@@ -41,8 +41,8 @@ import qualified Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Header.UserLoginLogout (userLoginLogoutButton_)
 import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Store as RS
+import qualified Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.ThirdPartyViews (sticky_)
-import qualified Refine.Frontend.Types as RS
 import qualified Refine.Frontend.MainMenu.Types as RS
 import qualified Refine.Frontend.Screen.Types as RS
 
