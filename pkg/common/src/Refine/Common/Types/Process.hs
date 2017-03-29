@@ -23,7 +23,7 @@ import Data.String.Conversions (ST)
 import GHC.Generics
 
 import Refine.Common.Types.Prelude (ID(..), Create)
-import Refine.Common.Types.Group (Group)
+import Refine.Common.Types.Group (Group, GroupRef)
 import Refine.Common.Types.VDoc (VDoc, CompositeVDoc)
 import Refine.Prelude.TH (makeRefineType)
 
@@ -78,16 +78,6 @@ data RemoveProcess
   | RemoveAulaProcess       (ID (Process Aula))
   deriving (Eq, Show, Generic)
 
--- | There is a special way to refer to a group called 'UniversalGroup', which is the root that
--- always exists.  'GroupRef' is a way to refer to either the universal group or some group that we
--- have the 'ID' of.
---
--- (Ultimately, we may not want to have this type around here, becasue there won't be a universal
--- group in which people do stuff in the portal once it has grown more mature.  For now it's a
--- useful and adequate abstraction.)
-data GroupRef = GroupRef (ID Group) | UniversalGroup
-  deriving (Eq, Show, Generic)
-
 
 -- * collaborative editing
 
@@ -140,7 +130,6 @@ makeRefineType ''Process
 makeRefineType ''AddProcess
 makeRefineType ''CreatedProcess
 makeRefineType ''RemoveProcess
-makeRefineType ''GroupRef
 makeRefineType ''CollaborativeEdit
 makeRefineType ''CollaborativeEditPhase
 makeRefineType ''CreateCollabEditProcess
