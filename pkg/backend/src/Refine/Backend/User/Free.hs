@@ -36,13 +36,14 @@ import Data.Time (NominalDiffTime)
 
 import Refine.Backend.User.Class
 import Refine.Backend.User.Core
-import Refine.Common.Types (ID(ID))
+import Refine.Common.Types (ID(ID), Username)
 
 
 -- FUTUREWORK: use "Freer" instead of "Free"
 data UHAPI a where
   CreateUser     :: User    -> (Either CreateUserError LoginId -> a) -> UHAPI a
   GetUserById    :: LoginId -> (Maybe User -> a) -> UHAPI a
+  GetUserIdByName :: Username -> (Maybe LoginId -> a) -> UHAPI a
 
   AuthUser       :: ST -> PasswordPlain -> NominalDiffTime -> (Maybe SessionId -> a) -> UHAPI a
   VerifySession  :: SessionId -> (Maybe LoginId -> a) -> UHAPI a
@@ -60,6 +61,9 @@ createUser_ u = liftF $ CreateUser u id
 getUserById_ :: LoginId -> FreeUH (Maybe User)
 getUserById_ l = liftF $ GetUserById l id
 
+getUserIdByName_ :: Username -> FreeUH (Maybe LoginId)
+getUserIdByName_ u = liftF $ GetUserIdByName u id
+
 authUser_ :: ST -> PasswordPlain -> NominalDiffTime -> FreeUH (Maybe SessionId)
 authUser_ u p s = liftF $ AuthUser u p s id
 
@@ -70,6 +74,7 @@ destroySession_ :: SessionId -> FreeUH ()
 destroySession_ s = liftF $ DestroySession s id
 
 
+-- TODO: Align
 instance UserHandle FreeUH where
   type UserHandleInit FreeUH = MockUH_
 
@@ -77,6 +82,7 @@ instance UserHandle FreeUH where
 
   createUser     = createUser_
   getUserById    = getUserById_
+  getUserIdByName = getUserIdByName_
 
   authUser       = authUser_
   verifySession  = verifySession_
@@ -92,6 +98,10 @@ interpret m (Free (CreateUser u k)) = do
 
 interpret m (Free (GetUserById l k)) = do
   r <- mockGetUserById m l
+  interpret m (k r)
+
+interpret m (Free (GetUserIdByName l k)) = do
+  r <- mockGetUserIdByName m l
   interpret m (k r)
 
 interpret m (Free (AuthUser u p s k)) = do
@@ -112,22 +122,27 @@ freeUHNat m = Nat (interpret m)
 
 type MockUH_ = MockUH (ExceptT UserHandleError IO)
 
+-- TODO: Align
 data MockUH m = MockUH
   { mockCreateUser     :: User    -> m (Either CreateUserError LoginId)
   , mockGetUserById    :: LoginId -> m (Maybe User)
+  , mockGetUserIdByName :: Username -> m (Maybe LoginId)
   , mockAuthUser       :: ST -> PasswordPlain -> NominalDiffTime -> m (Maybe SessionId)
   , mockVerifySession  :: SessionId -> m (Maybe LoginId)
   , mockDestroySession :: SessionId -> m ()
   }
 
+-- TODO: Align
 mockLogin :: Monad m => MockUH m
 mockLogin = MockUH
-  { mockCreateUser     = \_u -> pure . Right . fromUserID $ ID 0
+  { mockCreateUser     = \_u -> pure . Right $ fromUserID userId
   , mockGetUserById    = \_l -> pure . Just $ error "mockLogin: No user information available."
+  , mockGetUserIdByName = \_u -> pure . Just $ fromUserID userId
   , mockAuthUser       = mockAuthUserImpl
-  , mockVerifySession  = \_s -> pure . Just . fromUserID $ ID 0
+  , mockVerifySession  = \_s -> pure . Just $ fromUserID userId
   , mockDestroySession = \_s -> pure ()
   }
   where
+    userId = ID 0
     mockAuthUserImpl _u "" _t = pure Nothing
     mockAuthUserImpl _u _p _t = pure . Just $ SessionId "mock-session"

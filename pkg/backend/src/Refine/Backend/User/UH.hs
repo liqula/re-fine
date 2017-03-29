@@ -17,6 +17,7 @@ import Web.Users.Types      as Users
 
 import Refine.Backend.User.Core
 import qualified Refine.Backend.User.Class as C
+import Refine.Common.Types.User (Username)
 
 
 newtype UH a = UH { unUH :: ReaderT UserHandleContext (ExceptT UserHandleError IO) a }
@@ -32,6 +33,7 @@ uhIO :: IO a -> UH a
 uhIO = UH . liftIO
 
 
+-- TODO: Align
 instance C.UserHandle UH where
   type UserHandleInit UH = UserDB
 
@@ -39,6 +41,7 @@ instance C.UserHandle UH where
 
   createUser     = Refine.Backend.User.UH.createUser
   getUserById    = Refine.Backend.User.UH.getUserById
+  getUserIdByName  = Refine.Backend.User.UH.getUserIdByName
 
   authUser       = Refine.Backend.User.UH.authUser
   verifySession  = Refine.Backend.User.UH.verifySession
@@ -54,6 +57,11 @@ getUserById :: LoginId -> UH (Maybe User)
 getUserById user = do
   ub <- view userBackend
   uhIO $ Users.getUserById ub user
+
+getUserIdByName :: Username -> UH (Maybe LoginId)
+getUserIdByName username = do
+  ub <- view userBackend
+  uhIO (Users.getUserIdByName ub username)
 
 authUser :: ST -> PasswordPlain -> NominalDiffTime -> UH (Maybe SessionId)
 authUser username password sessionDuration = do

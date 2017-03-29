@@ -43,7 +43,7 @@ data Role
   deriving (Eq, Ord, Bounded, Enum, Show, Generic)
 
 -- | Rights on operations, what to do with something
-data Right
+data Perm
   = Create
   | Read
   | Update
@@ -51,4 +51,4 @@ data Right
   deriving (Eq, Show, Generic)
 
 makeRefineType ''Role
-makeRefineType ''Right
+makeRefineType ''Perm
