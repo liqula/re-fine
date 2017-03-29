@@ -226,7 +226,7 @@ appServantErr = \case
   AppSanityCheckError _    -> err409
   AppUserHandleError _     -> err500
   AppL10ParseErrors _      -> err500
-  AppUnauthorized          -> err401
+  AppUnauthorized          -> err403
 
 dbServantErr :: DBError -> ServantErr
 dbServantErr = \case
