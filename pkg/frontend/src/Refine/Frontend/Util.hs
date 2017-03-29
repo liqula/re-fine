@@ -46,13 +46,13 @@ classNamesAny xs = "className" @= ST.unwords names
 toClasses :: (ConvertibleStrings s JSS.JSString, ConvertibleStrings JSS.JSString s) => [s] -> s
 toClasses = cs . JSS.unwords . filter (not . JSS.null) . fmap cs
 
-toProperty :: Attr -> forall handler. PropertyOrHandler handler
-toProperty (Attr key value) = cs key $= cs value
+attrToProp :: Attr -> forall handler. PropertyOrHandler handler
+attrToProp (Attr key value) = cs key $= cs value
 
-attribValueOf :: ST -> [Attr] -> Maybe ST
-attribValueOf _ [] = Nothing
-attribValueOf wantedKey (Attr key value : _) | key == wantedKey = Just value
-attribValueOf wantedKey (_ : as) = attribValueOf wantedKey as
+lookupAttrs :: ST -> [Attr] -> Maybe ST
+lookupAttrs _ [] = Nothing
+lookupAttrs wantedKey (Attr key value : _) | key == wantedKey = Just value
+lookupAttrs wantedKey (_ : as) = lookupAttrs wantedKey as
 
 foreign import javascript unsafe
   "$1 === $2"

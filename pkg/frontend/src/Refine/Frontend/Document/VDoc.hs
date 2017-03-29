@@ -57,10 +57,10 @@ treeToHTML state = go
           then case contributionIdFrom attrs of
             Just cid -> rfMark_ (props cid)
             Nothing  -> warn "mark tag without data-contribution-id" tree `seq` mempty
-          else React.Flux.term (cs tagname) (toProperty <$> attrs)
+          else React.Flux.term (cs tagname) (attrToProp <$> attrs)
 
     go (Node (TagSelfClose tagname attrs) []) =
-      React.Flux.term (cs tagname) (toProperty <$> attrs) mempty
+      React.Flux.term (cs tagname) (attrToProp <$> attrs) mempty
 
     go (Node (ContentText content) []) = elemText content
     go (Node (ContentChar content) []) = elemText $ cs [content]
@@ -78,4 +78,4 @@ treeToHTML state = go
 -- FUTUREWORK: this should not be 'Maybe', but we don't know what to put here if it is.
 contributionIdFrom :: [Attr] -> Maybe ContributionID
 contributionIdFrom attrs =
-  either (const Nothing) Just . parseUrlPiece . cs =<< attribValueOf "data-contribution-id" attrs
+  either (const Nothing) Just . parseUrlPiece . cs =<< lookupAttrs "data-contribution-id" attrs

@@ -33,7 +33,7 @@ import qualified Refine.Frontend.Screen.Calculations as RS
 import           Refine.Frontend.Contribution.Types as RS
 import qualified Refine.Frontend.Store as RS
 import           Refine.Frontend.Store.Types as RS
-import           Refine.Frontend.Util (classNamesAny, toProperty)
+import           Refine.Frontend.Util (classNamesAny, attrToProp)
 import           Refine.Prelude()
 
 
@@ -42,7 +42,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
   { lRender = \_state props -> do
       let dataContributionId = props ^. markPropsContributionID
           statefulEventHandlers :: [PropertyOrHandler (() -> ([SomeStoreAction], Maybe ()))]
-          statefulEventHandlers = (\h _ -> (h, Nothing)) <$$> (toProperty <$> props ^. markPropsAttrs)
+          statefulEventHandlers = (\h _ -> (h, Nothing)) <$$> (attrToProp <$> props ^. markPropsAttrs)
       mark_ (statefulEventHandlers <>
            [ classNamesAny
                         [ ("o-mark", True)
