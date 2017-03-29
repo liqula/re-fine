@@ -120,12 +120,8 @@ canPerformAddEdit editId = do
   -- * The process has a a vdoc that has the edits
   userId <- currentUser
   join . db $ do
-    repoId    <- DB.editVDocRepo editId
-    vdocId    <- DB.vDocRepoVDoc repoId
-    processId <- DB.vDocProcess  vdocId
-    process   <- DB.getProcess   processId
-    let g = process ^. processGroup
-    roles     <- DB.getRoles (g ^. groupID) userId
+    group <- DB.groupOf editId
+    roles <- DB.getRoles (group ^. groupID) userId
     let rs = concatMap (allow editId) roles
     pure $ do
       unless (Role.Create `elem` rs) $ throwError AppUnauthorized

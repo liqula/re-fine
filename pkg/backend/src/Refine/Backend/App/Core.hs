@@ -117,6 +117,7 @@ type AppConstraints db uh =
   , StoreProcessData db Aula
   , StoreProcessData db CollaborativeEdit
   , UserHandleC uh
+  , GroupOf db Edit
   )
 
 -- | The 'App' defines the final constraint set that the

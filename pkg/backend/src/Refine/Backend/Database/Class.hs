@@ -110,6 +110,8 @@ class StoreProcessData db c where
   updateProcessData  :: ID (Process c) -> CreateDB (Process c) -> db ()
   removeProcessData  :: ResultDB (Process c) -> db ()
 
+class GroupOf db e where
+  groupOf :: ID e -> db Group
 
 -- * composite db queries
 

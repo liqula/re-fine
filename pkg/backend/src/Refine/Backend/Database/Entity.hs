@@ -25,7 +25,7 @@
 module Refine.Backend.Database.Entity where
 
 import Control.Lens ((^.), to, view)
-import Control.Monad (forM_, void)
+import Control.Monad ((>=>), forM_, void)
 import Control.Monad.Reader (ask)
 import Data.Functor.Infix ((<$$>))
 import Data.List ((\\))
@@ -638,3 +638,18 @@ vDocProcess vid = do
   processes <- foreignKeyField S.processOfCollabEditProcess
                 <$$> liftDB (selectList [S.ProcessOfCollabEditCollabEdit ==. cedit] [])
   unique processes
+
+
+-- * GroupOf
+
+instance (C.StoreProcessData DB a, Typeable a) => C.GroupOf DB (Process a) where
+  groupOf = fmap (view processGroup) . getProcess
+
+instance C.GroupOf DB VDoc where
+  groupOf = vDocProcess >=> C.groupOf
+
+instance C.GroupOf DB VDocRepo where
+  groupOf = vDocRepoVDoc >=> C.groupOf
+
+instance C.GroupOf DB Edit where
+  groupOf = editVDocRepo >=> C.groupOf

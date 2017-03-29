@@ -53,14 +53,13 @@ import           System.FilePath (dropFileName)
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB (migrateDB)
 import Refine.Backend.Config
-import Refine.Backend.Database (Database, DB, DBError(..), createDBNat, StoreProcessData)
+import Refine.Backend.Database
 import Refine.Backend.DocRepo (DocRepoError(..), createRepoNat)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
-import Refine.Backend.User (CreateUserError(..), UserDB, UH, MockUH_, FreeUH, UserHandle, UserHandleC, uhNat, mockLogin)
+import Refine.Backend.User (CreateUserError(..), UserDB, UH, MockUH_, FreeUH, UserHandleC, uhNat, mockLogin)
 import Refine.Common.Rest
-import Refine.Common.Types
 import Refine.Prelude (leftToError)
 
 
@@ -92,11 +91,8 @@ data Backend db uh = Backend
 
 type RefineAPIConstraint db uh =
   ( Monad db
-  , Database db
   , Monad uh
-  , UserHandle uh
-  , StoreProcessData db Aula
-  , StoreProcessData db CollaborativeEdit
+  , AppConstraints db uh
   )
 
 refineApi :: RefineAPIConstraint db uh => ServerT RefineAPI (AppM db uh)
