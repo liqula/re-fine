@@ -20,7 +20,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.UtilityWidgetsSpec where
+module Refine.Frontend.IconSpec where
 
 import Control.Lens ((&), (.~))
 import Data.JSString (JSString)
@@ -29,8 +29,8 @@ import Test.Hspec
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Style
 import           Refine.Frontend.Test.Enzyme
-import           Refine.Frontend.UtilityWidgets
-import           Refine.Frontend.UtilityWidgets.Types
+import           Refine.Frontend.Icon
+import           Refine.Frontend.Icon.Types
 
 
 iconButtonTestProps :: IconButtonProps

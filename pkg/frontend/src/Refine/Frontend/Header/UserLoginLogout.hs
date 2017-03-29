@@ -30,8 +30,8 @@ import           Data.Default (def)
 import           React.Flux
 
 import           Refine.Frontend.Login.Types
-import           Refine.Frontend.UtilityWidgets
-import           Refine.Frontend.UtilityWidgets.Types
+import           Refine.Frontend.Icon
+import           Refine.Frontend.Icon.Types
 import           Refine.Prelude()
 
 

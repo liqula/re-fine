@@ -106,8 +106,8 @@ library
       Refine.Frontend.Translation.Store
       Refine.Frontend.Types
       Refine.Frontend.Util
-      Refine.Frontend.UtilityWidgets
-      Refine.Frontend.UtilityWidgets.Types
+      Refine.Frontend.Icon
+      Refine.Frontend.Icon.Types
       Refine.Frontend.Views
   default-language: Haskell2010
 
@@ -190,7 +190,7 @@ test-suite spec
       Refine.Frontend.Header.ToolbarSpec
       Refine.Frontend.MainMenuSpec
       Refine.Frontend.StoreSpec
-      Refine.Frontend.UtilityWidgetsSpec
+      Refine.Frontend.IconSpec
       Refine.Frontend.UtilSpec
       Refine.Frontend.ViewsSpec
   js-sources:

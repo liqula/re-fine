@@ -36,8 +36,8 @@ import           Refine.Common.Types.User
 import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.Style
-import           Refine.Frontend.UtilityWidgets
-import           Refine.Frontend.UtilityWidgets.Types
+import           Refine.Frontend.Icon
+import           Refine.Frontend.Icon.Types
 import           Refine.Prelude.TH (makeRefineType)
 import           Refine.Frontend.CS (elemCS)
 

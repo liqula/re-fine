@@ -20,7 +20,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.UtilityWidgets.Types
+module Refine.Frontend.Icon.Types
   ( ReactListKey
   , IconSize(..)
   , IconDescription

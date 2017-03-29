@@ -29,8 +29,8 @@ import           React.Flux
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
-import           Refine.Frontend.UtilityWidgets
-import           Refine.Frontend.UtilityWidgets.Types
+import           Refine.Frontend.Icon
+import           Refine.Frontend.Icon.Types
 
 editToolbar :: View '[()]  -- TODO: can we get rid of the ()?  (grep for '[()]', it also happens in one more case!)
 editToolbar = mkView "EditToolbar" $ \() ->

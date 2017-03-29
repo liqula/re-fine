@@ -30,8 +30,8 @@ import           React.Flux
 import           Refine.Common.Types ( EditKind(..) )
 import qualified Refine.Frontend.Header.Types as RS
 import qualified Refine.Frontend.Store.Types as RS
-import           Refine.Frontend.UtilityWidgets
-import           Refine.Frontend.UtilityWidgets.Types
+import           Refine.Frontend.Icon
+import           Refine.Frontend.Icon.Types
 
 toolbar :: View '[()]
 toolbar = mkView "Toolbar" $ \() ->

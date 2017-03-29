@@ -33,8 +33,8 @@ import Refine.Frontend.Header.Types
 import Refine.Frontend.Screen.Calculations
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Store.Types
-import Refine.Frontend.UtilityWidgets
-import Refine.Frontend.UtilityWidgets.Types
+import Refine.Frontend.Icon
+import Refine.Frontend.Icon.Types
 import Refine.Prelude ()
 
 quickCreate :: View '[QuickCreateProps]

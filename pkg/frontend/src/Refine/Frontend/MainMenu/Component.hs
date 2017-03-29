@@ -33,8 +33,8 @@ import           Refine.Frontend.Login.Component
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
-import           Refine.Frontend.UtilityWidgets
-import           Refine.Frontend.UtilityWidgets.Types
+import           Refine.Frontend.Icon
+import           Refine.Frontend.Icon.Types
 import           Refine.Prelude()
 
 

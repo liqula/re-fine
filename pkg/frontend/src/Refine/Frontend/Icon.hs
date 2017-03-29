@@ -20,7 +20,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.UtilityWidgets
+module Refine.Frontend.Icon
   ( icon_, iconButton_
   ) where
 
@@ -34,7 +34,7 @@ import           Refine.Frontend.Store
 import           Refine.Frontend.Style
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
-import           Refine.Frontend.UtilityWidgets.Types
+import           Refine.Frontend.Icon.Types
 
 
 -- * icon
