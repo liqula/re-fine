@@ -20,7 +20,11 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Header.Heading where
+module Refine.Frontend.Header.Heading
+  ( TopMenuBarProps(..)
+  , topMenuBar, topMenuBar_
+  , mainHeader, mainHeader_
+  ) where
 
 import           Control.Lens ((^.))
 import           Control.Monad (unless)
@@ -29,7 +33,7 @@ import           GHCJS.Types (JSVal)
 import           GHCJS.Marshal.Pure
 import           React.Flux
 import           React.Flux.Internal (HandlerArg(HandlerArg))
-import           React.Flux.Outdated
+import           React.Flux.Outdated (ReactView, LifecycleViewConfig(..), LDOM(..), lifecycleConfig, defineLifecycleView, view)
 
 import           Refine.Common.Types
 import qualified Refine.Frontend.Document.Types as DS
@@ -50,10 +54,10 @@ import qualified Refine.Frontend.Screen.Types as RS
 data TopMenuBarProps = TopMenuBarProps
  { _isSticky    :: Bool
  , _currentUser :: CurrentUser
- } deriving (Generic)
+ } deriving (Eq, Generic)
 
-topMenuBar :: ReactView TopMenuBarProps
-topMenuBar = defineView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
+topMenuBar :: View '[TopMenuBarProps]
+topMenuBar = mkView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
   span_ [classNames [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]] $ do
     button_ ["aria-controls" $= "bs-navbar"
             , "aria-expanded" $= "false"
@@ -70,7 +74,7 @@ topMenuBar = defineView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
     userLoginLogoutButton_ currentUser
 
 topMenuBar_ :: TopMenuBarProps -> ReactElementM eventHandler ()
-topMenuBar_ props = view topMenuBar props mempty
+topMenuBar_ !props = view_ topMenuBar "TopMenuBar_" props
 
 
 -- | extract the new state from event.
@@ -99,9 +103,11 @@ mainHeader = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
                         commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. RS.gsHeaderState . HT.hsToolbarExtensionStatus)
                         editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. RS.gsHeaderState . HT.hsToolbarExtensionStatus)
 
-   , lComponentDidMount  = Just $ \_propsandstate ldom _     -> calcHeaderHeight ldom
-   -- , lComponentDidUpdate = Just $ \_propsandstate ldom _ _ _ -> calcHeaderHeight ldom
+   , lComponentDidMount = Just $ \_propsandstate ldom _ -> calcHeaderHeight ldom
    }
+
+mainHeader_ :: RS.GlobalState -> ReactElementM eventHandler ()
+mainHeader_ props = view mainHeader props mempty
 
 calcHeaderHeight :: LDOM -> IO ()
 calcHeaderHeight ldom = do
@@ -109,9 +115,6 @@ calcHeaderHeight ldom = do
    height <- js_getBoundingClientRectHeight this
    RS.reactFluxWorkAroundForkIO $ do
        RS.dispatchM . RS.ScreenAction $ RS.AddHeaderHeight height
-
-mainHeader_ :: RS.GlobalState -> ReactElementM eventHandler ()
-mainHeader_ props = view mainHeader props mempty
 
 foreign import javascript unsafe
   "Math.floor($1.getBoundingClientRect().height)"

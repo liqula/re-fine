@@ -28,7 +28,7 @@ module Refine.Frontend.Store where
 import           Control.Concurrent (forkIO, yield, threadDelay)
 import           Control.Lens (_Just, (&), (^.), (^?), (^?!), (%~), (.~), to)
 import           Control.Monad (void)
-import           Data.Aeson (decode, eitherDecode)
+import           Data.Aeson (decode, eitherDecode, toJSON, Value(String))
 import           Data.JSString (JSString, unpack)
 import qualified Data.Map.Strict as M
 import           Data.String.Conversions
@@ -109,7 +109,7 @@ transformGlobalState = transf
 
             _ -> pure ()
 
-        consoleLogJSONM "New state: " state'
+        consoleLogJSONM "New state: " $ if state' /= state then toJSON state' else (String "[UNCHANGED]" :: Value)
         pure state'
 
 
