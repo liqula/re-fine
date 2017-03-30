@@ -36,7 +36,7 @@ packages:
   extra-dep: true
 - location:
     hg: https://bitbucket.org/fisx/react-flux
-    commit: 39322b0bf7aed593f75bc439d873bd34464f26dc
+    commit: b95a6a87a477cc9a466fc9092c4a6778563f5752
   extra-dep: true
 - location:
     hg: https://bitbucket.org/fisx/react-flux-servant
