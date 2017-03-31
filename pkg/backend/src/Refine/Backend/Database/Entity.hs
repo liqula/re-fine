@@ -657,20 +657,17 @@ instance C.GroupOf DB Edit where
 
 -- * ProcessOf
 
-{-
-class ProcessOf db e where
-  type ProcessResult db e :: *
-  processOf :: ID e -> db (Process (ProcessResult db e))
--}
+type instance C.ProcessResult Edit = C.ProcessResult VDocRepo
 
 instance C.ProcessOf DB Edit where
-  type ProcessResult DB Edit = C.ProcessResult DB VDocRepo
   processOf = editVDocRepo >=> C.processOf
 
+type instance C.ProcessResult VDocRepo = C.ProcessResult VDoc
+
 instance C.ProcessOf DB VDocRepo where
-  type ProcessResult DB VDocRepo = C.ProcessResult DB VDoc
   processOf = vDocRepoVDoc >=> C.processOf
 
+type instance C.ProcessResult VDoc = CollaborativeEdit
+
 instance C.ProcessOf DB VDoc where
-  type ProcessResult DB VDoc = CollaborativeEditDB
   processOf = vDocProcess >=> getProcess

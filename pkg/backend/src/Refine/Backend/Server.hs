@@ -59,6 +59,7 @@ import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
 import Refine.Backend.User (CreateUserError(..), UserDB, UH, MockUH_, FreeUH, UserHandleC, uhNat, mockLogin)
+import Refine.Common.Allow
 import Refine.Common.Rest
 import Refine.Common.Types.VDoc (Edit)
 import Refine.Prelude (leftToError)
@@ -94,7 +95,7 @@ type RefineAPIConstraint db uh =
   ( Monad db
   , Monad uh
   , AppC db uh
-  , CheckPerm (ProcessResult db Edit)
+  , CheckPerm (ProcessResult Edit) Edit
   )
 
 refineApi :: RefineAPIConstraint db uh => ServerT RefineAPI (AppM db uh)

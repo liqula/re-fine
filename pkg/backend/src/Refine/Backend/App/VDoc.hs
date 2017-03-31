@@ -113,22 +113,17 @@ getCompositeVDoc vid = do
   where
     toMap selector = Map.fromList . fmap (view selector &&& id)
 
-data Action = CreateEditAction
-
-class CheckPerm e where
-  checkPerm :: Maybe (ID User) -> Process e -> [Perm] -> Action -> Bool
-
-instance CheckPerm DB.CollaborativeEditDB where
-  checkPerm _ _ perms CreateEditAction = Role.Create `elem` perms
+instance CheckPerm CollaborativeEdit Edit where
+  checkPerm _ _ _ perms CE_CreateEdit = Role.Create `elem` perms
 
 assertPerm
   ::  ( AppC db uh
       , Allow e
       , DB.GroupOf db e
       , DB.ProcessOf db e
-      , CheckPerm (DB.ProcessResult db e)
+      , CheckPerm (DB.ProcessResult e) e
       )
-  => ID e -> Action -> AppM db uh ()
+  => ID e -> ProcessAction (Process (DB.ProcessResult e)) -> AppM db uh ()
 assertPerm eid action = do
   userId <- currentUser
   join . db $ do
@@ -137,15 +132,15 @@ assertPerm eid action = do
     roles <- DB.getRoles (group ^. groupID) userId
     let rights = concatMap (allow eid) roles
     pure $ do
-      unless (checkPerm (Just userId) prc rights action) $
+      unless (checkPerm (Just userId) prc eid rights action) $
         throwError AppUnauthorized
 
 addEdit
-  :: (AppC db uh, CheckPerm (DB.ProcessResult db Edit))
+  :: (AppC db uh, CheckPerm (DB.ProcessResult Edit) Edit)
   => ID Edit -> Create Edit -> AppM db uh Edit
 addEdit basepid edit = do
   appLog "addEdit"
-  assertPerm basepid CreateEditAction
+  assertPerm basepid CE_CreateEdit
   validateCreateChunkRange basepid (edit ^. createEditRange)
   join . db $ do
     rid                    <- DB.editVDocRepo basepid

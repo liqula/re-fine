@@ -1,4 +1,5 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE LambdaCase            #-}
 
 module Refine.Common.Allow where
 
@@ -37,3 +38,12 @@ instance Allow VDoc where
     LocalAdmin       -> [Create, Read, Update, Delete]
     ProcessInitiator -> [Create, Read, Update, Delete]
     GroupInitiator   -> [Create, Read, Update, Delete]
+
+class CheckPerm process target where
+  checkPerm
+    :: Maybe (ID User)
+    -> Process process
+    -> proxy target
+    -> [Perm]
+    -> ProcessAction (Process process)
+    -> Bool

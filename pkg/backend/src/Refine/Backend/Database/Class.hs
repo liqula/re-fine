@@ -2,6 +2,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeFamilyDependencies #-}
 
 module Refine.Backend.Database.Class where
 
@@ -114,9 +115,11 @@ class StoreProcessData db c where
 class GroupOf db e where
   groupOf :: ID e -> db Group
 
+
+type family ProcessResult e = r
+
 class ProcessOf db e where
-  type ProcessResult db e :: *
-  processOf :: ID e -> db (Process (ProcessResult db e))
+  processOf :: ID e -> db (Process (ProcessResult e))
 
 -- * composite db queries
 

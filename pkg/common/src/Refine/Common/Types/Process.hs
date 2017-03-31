@@ -15,6 +15,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 module Refine.Common.Types.Process where
@@ -43,6 +44,8 @@ data Process a = Process
   , _processData  :: a
   }
   deriving (Eq, Show, Generic)
+
+type family ProcessAction a = b | b -> a
 
 -- | We can't do this, which would be more polymorphic:
 --
@@ -85,9 +88,13 @@ data CollaborativeEdit =
   CollaborativeEdit
     { _collaborativeEditID    :: ID CollaborativeEdit
     , _collaborativeEditPhase :: CollaborativeEditPhase
-    , _collaborativeEditVDoc  :: CompositeVDoc
+    , _collaborativeEditVDoc  :: ID VDoc
     }
   deriving (Eq, Show, Generic)
+
+-- FIXME: Add more actions
+data CollaborativeEditAction
+  = CE_CreateEdit -- TODO: Rename constructor
 
 data CollaborativeEditPhase = CollaborativeEditOnlyPhase  -- to be extended.
   deriving (Eq, Ord, Show, Generic)
@@ -99,7 +106,8 @@ data CreateCollabEditProcess = CreateCollabEditProcess
   }
   deriving (Eq, Show, Generic)
 
-type instance Create (Process CollaborativeEdit) = CreateCollabEditProcess
+type instance Create (Process CollaborativeEdit)        = CreateCollabEditProcess
+type instance ProcessAction (Process CollaborativeEdit) = CollaborativeEditAction
 
 
 -- * aula
@@ -112,6 +120,8 @@ data Aula = Aula
   }
   deriving (Eq, Show, Generic)
 
+data AulaAction = AA_ChangeClassName
+
 -- | 'CreateAulaProcess' is simple enough so we don't have to introduce an extra
 -- 'CreateDBAulaProcess' that is a member of the 'CreateDB' type family in the backend.  This means
 -- we cannot use 'UniveresalGroup' as a group reference.  We may want to change this in the future.
@@ -121,8 +131,8 @@ data CreateAulaProcess = CreateAulaProcess
   }
   deriving (Eq, Show, Generic)
 
-type instance Create (Process Aula)              = CreateAulaProcess
-
+type instance Create (Process Aula)        = CreateAulaProcess
+type instance ProcessAction (Process Aula) = AulaAction
 
 -- * boilerplace
 
