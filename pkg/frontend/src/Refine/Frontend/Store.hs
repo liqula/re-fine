@@ -179,11 +179,11 @@ emitBackendCallsFor action state = case action of
     LoadDocumentList -> do
         listVDocs $ \case
             (Left rsp) -> handleError rsp (const [])
-            (Right loadedVDocs) -> pure . dispatch $ LoadedDocumentList ((^. C.vdocID) <$> loadedVDocs)
+            (Right loadedVDocs) -> dispatchM $ LoadedDocumentList ((^. C.vdocID) <$> loadedVDocs)
     LoadDocument auid -> do
         getVDoc auid $ \case
             (Left rsp) -> handleError rsp (const [])
-            (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
+            (Right loadedVDoc) -> dispatchM $ OpenDocument loadedVDoc
 
 
     -- contributions
@@ -197,12 +197,12 @@ emitBackendCallsFor action state = case action of
           addDiscussion (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
                      (C.CreateDiscussion text True (createChunkRange forRange)) $ \case
             (Left rsp) -> handleError rsp (const [])
-            (Right discussion) -> pure $ dispatch (AddDiscussion discussion)
+            (Right discussion) -> dispatchM $ AddDiscussion discussion
         Just Note ->
           addNote (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
                      (C.CreateNote text True (createChunkRange forRange)) $ \case
             (Left rsp) -> handleError rsp (const [])
-            (Right note) -> pure $ dispatch (AddNote note)
+            (Right note) -> dispatchM $ AddNote note
         Nothing -> pure ()
 
     DocumentAction DocumentEditSave -> case state ^? gsDocumentState . documentStateEdit of
@@ -221,7 +221,7 @@ emitBackendCallsFor action state = case action of
 
         addEdit eid cid $ \case
           Left rsp   -> handleError rsp (const [])
-          Right edit -> pure $ dispatch (AddEdit edit)
+          Right edit -> dispatchM $ AddEdit edit
 
       bad -> let msg = "DocumentAction DocumentEditSave: "
                     <> "not in editor state or content cannot be converted to html."
@@ -235,7 +235,7 @@ emitBackendCallsFor action state = case action of
       getTranslations (C.GetTranslations locate) $ \case
         (Left rsp) -> handleError rsp (const [])
         (Right l10) -> do
-          pure . dispatch $ ChangeTranslations l10
+          dispatchM $ ChangeTranslations l10
 
 
     -- users
@@ -248,7 +248,7 @@ emitBackendCallsFor action state = case action of
             _                      -> []
 
         (Right _user) -> do
-          pure $ dispatchMany
+          dispatchManyM
             [ MainMenuAction $ MainMenuActionOpen MainMenuLogin
             , MainMenuAction MainMenuActionClearErrors
             ]
@@ -260,7 +260,7 @@ emitBackendCallsFor action state = case action of
           _                 -> []
 
         (Right username) -> do
-          pure $ dispatchMany
+          dispatchManyM
             [ ChangeCurrentUser $ UserLoggedIn username
             , MainMenuAction MainMenuActionClose
             ]
@@ -269,7 +269,7 @@ emitBackendCallsFor action state = case action of
       logout $ \case
         (Left rsp) -> handleError rsp (const [])
         (Right ()) -> do
-          pure $ dispatchMany
+          dispatchManyM
             [ ChangeCurrentUser UserLoggedOut
             , MainMenuAction MainMenuActionClose
             ]
@@ -280,7 +280,7 @@ emitBackendCallsFor action state = case action of
     AddDemoDocument -> do
         createVDoc (C.CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
             (Left rsp) -> handleError rsp (const [])
-            (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
+            (Right loadedVDoc) -> dispatchM $ OpenDocument loadedVDoc
 
 
     -- default
