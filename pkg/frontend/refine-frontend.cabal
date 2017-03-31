@@ -121,29 +121,9 @@ executable refine-frontend
       ghc-options: -Werror
   cpp-options: -DGHCJS_BROWSER
   build-depends:
-      aeson
-    , base >= 4.7 && < 5
-    , basic-sop
-    , containers
-    , deepseq
-    , ghcjs-base
-    , hspec
-    , hspec-discover
-    , html-parse
-    , http-api-data
-    , i18n
-    , json-sop
-    , lens
-    , QuickCheck
-    , quickcheck-instances
+      base >= 4.7 && < 5
     , react-flux
-    , react-flux-servant
-    , refine-common
     , refine-frontend
-    , refine-prelude
-    , string-conversions
-    , text
-    , unordered-containers
   default-language: Haskell2010
 
 test-suite spec

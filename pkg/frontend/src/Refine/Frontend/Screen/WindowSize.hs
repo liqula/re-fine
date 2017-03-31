@@ -28,13 +28,13 @@ import           React.Flux.Outdated
 import           GHCJS.Foreign.Callback (Callback, asyncCallback)
 import           GHCJS.Types (JSString)
 
-import qualified Refine.Frontend.Screen.Types as RS
-import qualified Refine.Frontend.Store as RS
-import qualified Refine.Frontend.Store.Types as RS
+import           Refine.Frontend.Screen.Types
+import           Refine.Frontend.Store
+import           Refine.Frontend.Store.Types
 
 
 newtype WindowSizeProps = WindowSizeProps
-  { _currentSize :: RS.WindowSize
+  { _currentSize :: WindowSize
   }
   deriving (Eq)
 
@@ -58,8 +58,8 @@ windowSize_ = view windowSize
 setWindowSize :: IO ()
 setWindowSize = do
     width <- js_getWindowWidth
-    RS.reactFluxWorkAroundForkIO $ do
-       RS.dispatchAndExec . RS.ScreenAction $ RS.SetWindowWidth width
+    reactFluxWorkAroundForkIO $ do
+       dispatchAndExec . ScreenAction $ SetWindowWidth width
 
 foreign import javascript unsafe
 -- the internet says we should check window.innerWidth and document.documentElement.clientWidth first,
