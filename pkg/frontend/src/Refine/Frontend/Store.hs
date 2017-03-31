@@ -310,13 +310,17 @@ dispatch :: GlobalAction -> [SomeStoreAction]
 dispatch a = [someStoreAction @GlobalState a]
 
 dispatchM :: GlobalAction -> IO ()
-dispatchM = mapM_ executeAction . dispatch
+dispatchM a = do
+  () <- executeAction `mapM_` dispatch a
+  pure ()
 
 dispatchMany :: [GlobalAction] -> [SomeStoreAction]
 dispatchMany = mconcat . fmap dispatch
 
 dispatchManyM :: [GlobalAction] -> IO ()
-dispatchManyM = mapM_ executeAction . dispatchMany
+dispatchManyM a = do
+  () <- executeAction `mapM_` dispatchMany a
+  pure ()
 
 
 getRange :: IO (Maybe Range)
@@ -331,7 +335,7 @@ foreign import javascript unsafe
   js_removeAllRanges :: IO ()
 
 
--- * ugly hacks
+-- * work-arounds for known bugs.
 
 -- | See https://bitbucket.org/wuzzeb/react-flux/issues/28/triggering-re-render-after-store-update
 -- for details and status.
