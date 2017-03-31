@@ -112,9 +112,7 @@ mainHeader_ props = view mainHeader props mempty
 calcHeaderHeight :: LDOM -> IO ()
 calcHeaderHeight ldom = do
    this <- lThis ldom
-   height <- js_getBoundingClientRectHeight this
-   reactFluxWorkAroundForkIO $ do
-       dispatchAndExec . ScreenAction $ AddHeaderHeight height
+   dispatchAndExec . ScreenAction . AddHeaderHeight =<< js_getBoundingClientRectHeight this
 
 foreign import javascript unsafe
   "Math.floor($1.getBoundingClientRect().height)"

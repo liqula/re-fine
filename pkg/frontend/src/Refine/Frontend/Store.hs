@@ -339,12 +339,12 @@ reDispatchManyM :: MonadState [GlobalAction] m => [GlobalAction] -> m ()
 reDispatchManyM as = modify (<> as)
 
 dispatchAndExec :: MonadIO m => GlobalAction -> m ()
-dispatchAndExec a = liftIO $ do
+dispatchAndExec a = liftIO . reactFluxWorkAroundForkIO $ do
   () <- executeAction `mapM_` dispatch a
   pure ()
 
 dispatchAndExecMany :: MonadIO m => [GlobalAction] -> m ()
-dispatchAndExecMany as = liftIO $ do
+dispatchAndExecMany as = liftIO . reactFluxWorkAroundForkIO $ do
   () <- executeAction `mapM_` dispatchMany as
   pure ()
 

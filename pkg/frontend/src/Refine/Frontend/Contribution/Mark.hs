@@ -59,7 +59,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
              props  <- lGetProps propsandstate
              mark   <- lThis ldom
              action <- readMarkPosition (props ^. markPropsContributionID) mark
-             reactFluxWorkAroundForkIO $ dispatchAndExec action
+             dispatchAndExec action
    }
 
 rfMark_ :: MarkProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()

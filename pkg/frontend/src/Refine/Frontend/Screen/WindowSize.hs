@@ -56,10 +56,7 @@ windowSize_ :: WindowSizeProps -> ReactElementM eventHandler () -> ReactElementM
 windowSize_ = view windowSize
 
 setWindowSize :: IO ()
-setWindowSize = do
-    width <- js_getWindowWidth
-    reactFluxWorkAroundForkIO $ do
-       dispatchAndExec . ScreenAction $ SetWindowWidth width
+setWindowSize = dispatchAndExec . ScreenAction . SetWindowWidth =<< js_getWindowWidth
 
 foreign import javascript unsafe
 -- the internet says we should check window.innerWidth and document.documentElement.clientWidth first,
