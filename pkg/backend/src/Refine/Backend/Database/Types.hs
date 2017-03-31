@@ -38,7 +38,7 @@ data CollaborativeEditDB =
     }
   deriving (Eq, Show, Generic)
 
-type instance ResultDB (Process CollaborativeEdit) = CollaborativeEditDB
+type instance ResultDB (Process CollaborativeEdit) = CollaborativeEdit
 type instance ResultDB (Process Aula)              = Aula
 
 makeRefineType ''CollaborativeEditDB

@@ -63,14 +63,14 @@ addProcessCollabEdit aice = do
       , _createDBCollabEditProcessGroupID = gid
       , _createDBCollabEditProcessVDocID  = vdoc ^. vdocID
       }
-  cvdoc <- getCompositeVDoc (vdoc ^. vdocID)
+  -- cvdoc <- getCompositeVDoc (vdoc ^. vdocID)
   pure Process
     { _processID    = process ^. processID . to unsafeCoerceID
     , _processGroup = process ^. processGroup
     , _processData  = CollaborativeEdit
-        (process ^. processData . collaborativeEditDBID)
-        (process ^. processData . collaborativeEditDBPhase)
-        cvdoc
+        (process ^. processData . collaborativeEditID)
+        (process ^. processData . collaborativeEditPhase)
+        (vdoc ^. vdocID)
     }
 
 -- | FIXME: currently, 'changeProcess' allows to overwrite the process data completely, but we

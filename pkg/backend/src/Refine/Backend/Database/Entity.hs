@@ -543,7 +543,7 @@ instance C.StoreProcessData DB CollaborativeEdit where
                 (process ^. createDBCollabEditProcessVDocID . to S.idToKey)
                 (process ^. createDBCollabEditProcessPhase)
       _ <- insert $ S.ProcessOfCollabEdit (S.idToKey pid) dkey
-      pure $ CollaborativeEditDB
+      pure $ CollaborativeEdit
         (S.keyToId dkey)
         (process ^. createDBCollabEditProcessPhase)
         (process ^. createDBCollabEditProcessVDocID)
@@ -553,7 +553,7 @@ instance C.StoreProcessData DB CollaborativeEdit where
              <$$> liftDB (selectList [S.ProcessOfCollabEditProcess ==. S.idToKey pid] [])
     ceid <- unique ceids
     cedata <- getEntity ceid
-    pure $ CollaborativeEditDB
+    pure $ CollaborativeEdit
       ceid
       (S.collabEditProcessPhase cedata)
       (S.keyToId $ S.collabEditProcessVdoc cedata)
@@ -568,7 +568,7 @@ instance C.StoreProcessData DB CollaborativeEdit where
       ]
 
   removeProcessData pdata = liftDB $ do
-    let key = pdata ^. collaborativeEditDBID . to S.idToKey
+    let key = pdata ^. collaborativeEditID . to S.idToKey
     deleteWhere [S.ProcessOfCollabEditCollabEdit ==. key]
     delete key
     error "TODO: also remove VDoc and all its contents from the various tables.  see #273."
