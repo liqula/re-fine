@@ -59,7 +59,7 @@ setWindowSize :: IO ()
 setWindowSize = do
     width <- js_getWindowWidth
     RS.reactFluxWorkAroundForkIO $ do
-       RS.dispatchM . RS.ScreenAction $ RS.SetWindowWidth width
+       RS.dispatchAndExec . RS.ScreenAction $ RS.SetWindowWidth width
 
 foreign import javascript unsafe
 -- the internet says we should check window.innerWidth and document.documentElement.clientWidth first,

@@ -45,6 +45,7 @@ library
     , i18n
     , json-sop
     , lens
+    , mtl
     , QuickCheck
     , quickcheck-instances
     , react-flux
@@ -53,6 +54,7 @@ library
     , refine-prelude
     , string-conversions
     , text
+    , transformers
     , unordered-containers
   exposed-modules:
       -- we can't have hspec, but at least we have bash and find and perl...  :)

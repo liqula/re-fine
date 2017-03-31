@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -27,6 +28,9 @@ module Refine.Frontend.Store where
 
 import           Control.Concurrent (forkIO, yield, threadDelay)
 import           Control.Lens (_Just, (&), (^.), (^?), (^?!), (%~), (.~), to)
+import           Control.Monad.IO.Class
+import           Control.Monad.State.Class (MonadState, modify)
+import           Control.Monad.Trans.State (StateT, runStateT)
 import           Control.Monad (void)
 import           Data.Aeson (decode, eitherDecode, toJSON, Value(String))
 import           Data.JSString (JSString, unpack)
@@ -57,10 +61,19 @@ import           Refine.Frontend.Translation.Store (translationsUpdate)
 
 instance StoreData GlobalState where
     type StoreAction GlobalState = GlobalAction
-    transform = transformGlobalState
+    transform = loop . (:[])
+      where
+        loop :: [GlobalAction] -> GlobalState -> IO GlobalState
+        loop [] state = pure state
+        loop (action : actions) state = do
+          (state', actions') <- runStateT (transformGlobalState @Transform action state) []
+          loop (actions <> actions') state'
+
+type MonadTransform m = (Functor m, Applicative m, Monad m, MonadIO m, MonadState [GlobalAction] m)
+type Transform = StateT [GlobalAction] IO
 
 -- | FUTUREWORK: have more fine-grained constraints on 'm'.
-transformGlobalState :: m ~ IO => GlobalAction -> GlobalState -> m GlobalState
+transformGlobalState :: forall m. MonadTransform m => GlobalAction -> GlobalState -> m GlobalState
 transformGlobalState = transf
   where
     pureTransform :: GlobalAction -> GlobalState -> GlobalState
@@ -77,7 +90,7 @@ transformGlobalState = transf
       & gsToolbarSticky              %~ toolbarStickyUpdate action
       & gsTranslations               %~ translationsUpdate action
 
-    transf :: m ~ IO => GlobalAction -> GlobalState -> m GlobalState
+    transf :: GlobalAction -> GlobalState -> m GlobalState  -- TODO: shuffle code: flip this with pure above.
     transf ClearState _ = pure emptyGlobalState  -- for testing only!
     transf action state = do
         consoleLogJSONM "Old state: " state
@@ -87,25 +100,26 @@ transformGlobalState = transf
         let state' = pureTransform action state
 
         -- ajax
-        emitBackendCallsFor action state
+        liftIO $ emitBackendCallsFor action state
 
         -- other effects
         case action of
             TriggerUpdateSelection releasePositionOnPage toolbarStatus -> do
                 mrange <- getRange
-                dispatchM . ContributionAction $ UpdateSelection
-                    (case mrange of
+                let action' = ContributionAction $ UpdateSelection
+                      (case mrange of
                         Nothing -> NothingSelectedButUpdateTriggered releasePositionOnPage
                         Just range -> RangeSelected range releasePositionOnPage)
-                    toolbarStatus
+                      toolbarStatus
+                reDispatchM action'
 
             ContributionAction (ShowCommentEditor _) -> do
-                js_removeAllRanges
+                removeAllRanges
 
             DocumentAction (TriggerDocumentEditStart estate) -> do
                 mrange <- getRange
-                js_removeAllRanges
-                dispatchM $ DocumentAction (DocumentEditStart $ estate & editorStateSelection .~ mrange)
+                removeAllRanges
+                reDispatchM $ DocumentAction (DocumentEditStart $ estate & editorStateSelection .~ mrange)
 
             _ -> pure ()
 
@@ -303,32 +317,49 @@ handleError (code, rsp) onApiError = case eitherDecode $ cs rsp of
     pure . mconcat . fmap dispatch $ onApiError apiError
 
 
--- * helpers
+-- * triggering actions
 
 -- FIXME: return a single some-action, not a list?
 dispatch :: GlobalAction -> [SomeStoreAction]
 dispatch a = [someStoreAction @GlobalState a]
 
-dispatchM :: GlobalAction -> IO ()
-dispatchM a = do
-  () <- executeAction `mapM_` dispatch a
-  pure ()
-
 dispatchMany :: [GlobalAction] -> [SomeStoreAction]
 dispatchMany = mconcat . fmap dispatch
 
-dispatchManyM :: [GlobalAction] -> IO ()
-dispatchManyM a = do
-  () <- executeAction `mapM_` dispatchMany a
+dispatchM :: Monad m => GlobalAction -> m [SomeStoreAction]
+dispatchM = pure . dispatch
+
+dispatchManyM :: Monad m => [GlobalAction] -> m [SomeStoreAction]
+dispatchManyM = pure . dispatchMany
+
+reDispatchM :: MonadState [GlobalAction] m => GlobalAction -> m ()
+reDispatchM a = reDispatchManyM [a]
+
+reDispatchManyM :: MonadState [GlobalAction] m => [GlobalAction] -> m ()
+reDispatchManyM as = modify (<> as)
+
+dispatchAndExec :: MonadIO m => GlobalAction -> m ()
+dispatchAndExec a = liftIO $ do
+  () <- executeAction `mapM_` dispatch a
+  pure ()
+
+dispatchAndExecMany :: MonadIO m => [GlobalAction] -> m ()
+dispatchAndExecMany as = liftIO $ do
+  () <- executeAction `mapM_` dispatchMany as
   pure ()
 
 
-getRange :: IO (Maybe Range)
-getRange = decode . cs . unpack <$> js_getRange
+-- * ranges and selections
+
+getRange :: MonadIO m => m (Maybe Range)
+getRange = liftIO $ decode . cs . unpack <$> js_getRange
 
 foreign import javascript unsafe
   "refine$getSelectionRange()"
   js_getRange :: IO JSString
+
+removeAllRanges :: MonadIO m => m ()
+removeAllRanges = liftIO js_removeAllRanges
 
 foreign import javascript unsafe
   "window.getSelection().removeAllRanges();"

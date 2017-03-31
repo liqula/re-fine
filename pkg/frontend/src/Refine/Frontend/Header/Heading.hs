@@ -114,7 +114,7 @@ calcHeaderHeight ldom = do
    this <- lThis ldom
    height <- js_getBoundingClientRectHeight this
    RS.reactFluxWorkAroundForkIO $ do
-       RS.dispatchM . RS.ScreenAction $ RS.AddHeaderHeight height
+       RS.dispatchAndExec . RS.ScreenAction $ RS.AddHeaderHeight height
 
 foreign import javascript unsafe
   "Math.floor($1.getBoundingClientRect().height)"
