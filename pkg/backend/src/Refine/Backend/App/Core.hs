@@ -118,6 +118,11 @@ type AppC db uh =
   , StoreProcessData db CollaborativeEdit
   , UserHandleC uh
   , GroupOf db Edit
+  , ProcessOf db Edit
+  , Functor db
+  , Applicative db
+  , Monad db
+  , Monad uh
   )
 
 -- | The 'App' defines the final constraint set that the

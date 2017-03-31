@@ -25,6 +25,7 @@
 module Refine.Backend.Database
   ( module Refine.Backend.Database.Class
   , module Refine.Backend.Database.Core
+  , module Refine.Backend.Database.Types
   , DBNat
   , createDBNat
   ) where
@@ -44,6 +45,8 @@ import Refine.Backend.Database.Class
 import Refine.Backend.Database.Core
 import Refine.Backend.Database.Schema()
 import Refine.Backend.Database.Entity as Entity
+import Refine.Backend.Database.Types
+
 
 type DBNat db = DBContext -> (db :~> ExceptT DBError IO)
 

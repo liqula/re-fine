@@ -19,6 +19,7 @@
 {-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
+{-# LANGUAGE UndecidableInstances       #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -653,3 +654,23 @@ instance C.GroupOf DB VDocRepo where
 
 instance C.GroupOf DB Edit where
   groupOf = editVDocRepo >=> C.groupOf
+
+-- * ProcessOf
+
+{-
+class ProcessOf db e where
+  type ProcessResult db e :: *
+  processOf :: ID e -> db (Process (ProcessResult db e))
+-}
+
+instance C.ProcessOf DB Edit where
+  type ProcessResult DB Edit = C.ProcessResult DB VDocRepo
+  processOf = editVDocRepo >=> C.processOf
+
+instance C.ProcessOf DB VDocRepo where
+  type ProcessResult DB VDocRepo = C.ProcessResult DB VDoc
+  processOf = vDocRepoVDoc >=> C.processOf
+
+instance C.ProcessOf DB VDoc where
+  type ProcessResult DB VDoc = CollaborativeEditDB
+  processOf = vDocProcess >=> getProcess

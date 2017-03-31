@@ -1,3 +1,4 @@
+{-# LANGUAGE AllowAmbiguousTypes        #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DataKinds                  #-}
@@ -36,6 +37,7 @@ import           Data.Maybe (catMaybes)
 import           Refine.Backend.App.Core
 import           Refine.Backend.App.User
 import qualified Refine.Backend.Database.Class as DB
+import qualified Refine.Backend.Database.Types as DB
 import qualified Refine.Backend.DocRepo as DocRepo
 import           Refine.Common.Allow
 import           Refine.Common.Types
@@ -111,25 +113,39 @@ getCompositeVDoc vid = do
   where
     toMap selector = Map.fromList . fmap (view selector &&& id)
 
+data Action = CreateEditAction
 
-canPerformAddEdit :: ID Edit -> App ()
-canPerformAddEdit editId = do
-  -- Check of the user has access to the vdoc
-  -- * The user is in a group
-  -- * The group has a process
-  -- * The process has a a vdoc that has the edits
+class CheckPerm e where
+  checkPerm :: Maybe (ID User) -> Process e -> [Perm] -> Action -> Bool
+
+instance CheckPerm DB.CollaborativeEditDB where
+  checkPerm _ _ perms CreateEditAction = Role.Create `elem` perms
+
+assertPerm
+  ::  ( AppC db uh
+      , Allow e
+      , DB.GroupOf db e
+      , DB.ProcessOf db e
+      , CheckPerm (DB.ProcessResult db e)
+      )
+  => ID e -> Action -> AppM db uh ()
+assertPerm eid action = do
   userId <- currentUser
   join . db $ do
-    group <- DB.groupOf editId
+    group <- DB.groupOf eid
+    prc <- DB.processOf eid
     roles <- DB.getRoles (group ^. groupID) userId
-    let rs = concatMap (allow editId) roles
+    let rights = concatMap (allow eid) roles
     pure $ do
-      unless (Role.Create `elem` rs) $ throwError AppUnauthorized
+      unless (checkPerm (Just userId) prc rights action) $
+        throwError AppUnauthorized
 
-addEdit :: ID Edit -> Create Edit -> App Edit
+addEdit
+  :: (AppC db uh, CheckPerm (DB.ProcessResult db Edit))
+  => ID Edit -> Create Edit -> AppM db uh Edit
 addEdit basepid edit = do
   appLog "addEdit"
-  canPerformAddEdit basepid
+  assertPerm basepid CreateEditAction
   validateCreateChunkRange basepid (edit ^. createEditRange)
   join . db $ do
     rid                    <- DB.editVDocRepo basepid
