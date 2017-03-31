@@ -33,7 +33,7 @@ import           Refine.Frontend.Screen.Calculations
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Util (classNamesAny, attrToProp)
+import           Refine.Frontend.Util (attrToProp)
 import           Refine.Prelude()
 
 

@@ -64,7 +64,8 @@ renderBubble children props topOffset = do
           ContribIDEdit _         -> ("o-snippet--edit",       True)
           ContribIDHighlightMark  -> ("", False)
   div_ ["data-contribution-id" $= cs (toUrlPiece $ props ^. bubblePropsDataContribId)
-       , classNames [ ("o-snippet", True)  -- RENAME: snippet => bubble
+       , classNamesAny
+                    [ ("o-snippet", True)  -- RENAME: snippet => bubble
                     , contribKind
                     , ("o-snippet--hover", Just (props ^. bubblePropsDataContribId) == props ^. bubblePropsHighlightedBubble)
                     ]

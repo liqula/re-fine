@@ -125,7 +125,8 @@ commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
       div_ ["className" $= "grid-wrapper"] $ do
         div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
           div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
-          div_ [classNames [ ("c-vdoc-toolbar-extension__annotation", True)   -- RENAME: annotation => comment
+          div_ [classNamesAny
+                           [ ("c-vdoc-toolbar-extension__annotation", True)   -- RENAME: annotation => comment
                            , ("c-vdoc-toolbar-extension--expanded", True) ]
                ]
             children

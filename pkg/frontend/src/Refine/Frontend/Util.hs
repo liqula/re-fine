@@ -25,23 +25,14 @@
 module Refine.Frontend.Util
 where
 
-import           Data.List (nub)
 import qualified Data.JSString as JSS
 import           Data.String.Conversions
-import qualified Data.Text as ST
 import           GHCJS.Types (JSVal)
 import           React.Flux
 import           Text.HTML.Parser (Attr(Attr))
 
 import           Refine.Frontend.CS ()
 
-
--- | See also:
--- https://bitbucket.org/wuzzeb/react-flux/pull-requests/11/clarify-diversify-classnames-helper/diff
-classNamesAny :: [(ST, Bool)] -> PropertyOrHandler handler
-classNamesAny xs = "className" @= ST.unwords names
-  where
-    names = nub $ fst <$> filter snd xs
 
 toClasses :: (ConvertibleStrings s JSS.JSString, ConvertibleStrings JSS.JSString s) => [s] -> s
 toClasses = cs . JSS.unwords . filter (not . JSS.null) . fmap cs

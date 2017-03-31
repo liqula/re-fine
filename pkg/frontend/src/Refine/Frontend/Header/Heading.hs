@@ -58,7 +58,7 @@ data TopMenuBarProps = TopMenuBarProps
 
 topMenuBar :: View '[TopMenuBarProps]
 topMenuBar = mkView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
-  span_ [classNames [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]] $ do
+  span_ [classNamesAny [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]] $ do
     button_ ["aria-controls" $= "bs-navbar"
             , "aria-expanded" $= "false"
             , "className" $= "c-mainmenu__menu-button"
