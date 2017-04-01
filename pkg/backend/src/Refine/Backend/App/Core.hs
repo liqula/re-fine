@@ -113,7 +113,7 @@ newtype AppM db uh a = AppM { unApp :: StateT AppState (ReaderT (AppContext db u
     )
 
 type MonadApp db uh =
-  ( DatabaseC db
+  ( MonadDatabase db
   , StoreProcessData db Aula
   , StoreProcessData db CollaborativeEdit
   , UserHandleC uh
@@ -121,7 +121,6 @@ type MonadApp db uh =
   , ProcessOf db Edit
   , Functor db
   , Applicative db
-  , Monad db
   , Monad uh
   )
 

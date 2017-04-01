@@ -14,7 +14,7 @@ import Refine.Backend.DocRepo.Core as DocRepo
 import Refine.Common.Types
 
 
-type DatabaseC db = (Monad db, Database db)
+type MonadDatabase db = (Monad db, Database db)
 
 class Database db where
 
