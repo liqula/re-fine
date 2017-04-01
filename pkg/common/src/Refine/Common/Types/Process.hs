@@ -41,7 +41,7 @@ import Refine.Prelude.TH (makeRefineType)
 data Process a = Process
   { _processID    :: ID (Process a)
   , _processGroup :: Group
-  , _processData  :: a
+  , _processPayload :: a
   }
   deriving (Eq, Show, Generic)
 

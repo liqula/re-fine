@@ -115,11 +115,11 @@ class StoreProcessData db c where
 class GroupOf db e where
   groupOf :: ID e -> db Group
 
-
-type family ProcessResult e = r
+-- | Type of contents of process, also used as an index type to identify process "kind".
+type family ProcessPayload e = r
 
 class ProcessOf db e where
-  processOf :: ID e -> db (Process (ProcessResult e))
+  processOf :: ID e -> db (Process (ProcessPayload e))
 
 -- * composite db queries
 

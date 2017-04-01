@@ -627,7 +627,7 @@ updateProcess pid process = do
 removeProcess :: (C.StoreProcessData DB a, Typeable a) => ID (Process a) -> DB ()
 removeProcess pid = do
   process <- getProcess pid
-  C.removeProcessData (process ^. processData)
+  C.removeProcessData (process ^. processPayload)
   liftDB $ delete (process ^. processID . to S.idToKey)
 
 vDocProcess :: ID VDoc -> DB (ID (Process CollaborativeEdit))
@@ -657,17 +657,17 @@ instance C.GroupOf DB Edit where
 
 -- * ProcessOf
 
-type instance C.ProcessResult Edit = C.ProcessResult VDocRepo
+type instance C.ProcessPayload Edit = C.ProcessPayload VDocRepo
 
 instance C.ProcessOf DB Edit where
   processOf = editVDocRepo >=> C.processOf
 
-type instance C.ProcessResult VDocRepo = C.ProcessResult VDoc
+type instance C.ProcessPayload VDocRepo = C.ProcessPayload VDoc
 
 instance C.ProcessOf DB VDocRepo where
   processOf = vDocRepoVDoc >=> C.processOf
 
-type instance C.ProcessResult VDoc = CollaborativeEdit
+type instance C.ProcessPayload VDoc = CollaborativeEdit
 
 instance C.ProcessOf DB VDoc where
   processOf = vDocProcess >=> getProcess

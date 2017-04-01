@@ -67,9 +67,9 @@ addProcessCollabEdit aice = do
   pure Process
     { _processID    = process ^. processID . to unsafeCoerceID
     , _processGroup = process ^. processGroup
-    , _processData  = CollaborativeEdit
-        (process ^. processData . collaborativeEditID)
-        (process ^. processData . collaborativeEditPhase)
+    , _processPayload = CollaborativeEdit
+        (process ^. processPayload . collaborativeEditID)
+        (process ^. processPayload . collaborativeEditPhase)
         (vdoc ^. vdocID)
     }
 
