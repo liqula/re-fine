@@ -112,7 +112,7 @@ transformGlobalState = transf
             DocumentAction (TriggerDocumentEditStart estate) -> do
                 mrange <- getRange
                 removeAllRanges
-                reDispatchM $ DocumentAction (DocumentEditStart $ estate & editorStateSelection .~ mrange)
+                reDispatchM $ DocumentAction (DocumentEditStart $ estate & documentEditStateSelection .~ mrange)
 
             _ -> pure ()
 
@@ -234,9 +234,9 @@ emitBackendCallsFor action state = case action of
             cid :: C.Create C.Edit
             cid = C.CreateEdit
                   { C._createEditDesc  = "..."                          -- TODO: #233
-                  , C._createEditRange = estate ^. editorStateSelection . to createChunkRange
+                  , C._createEditRange = estate ^. documentEditStateSelection . to createChunkRange
                   , C._createEditVDoc  = C.downgradeVDocVersionWR newvers
-                  , C._createEditKind  = estate ^. editorStateKind
+                  , C._createEditKind  = estate ^. documentEditStateKind
                   , C._createEditMotiv = "..."                          -- TODO: #233
                   }
 

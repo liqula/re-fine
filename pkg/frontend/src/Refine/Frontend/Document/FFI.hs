@@ -22,89 +22,109 @@
 
 
 module Refine.Frontend.Document.FFI
-  ( -- * https://draftjs.org/docs/api-reference-data-conversion.html
-    convertFromRaw
+  ( -- * types
+    EditorState(..)
+  , ContentState(..)
+
+    -- * https://draftjs.org/docs/api-reference-data-conversion.html
+  , convertFromRaw
   , convertToRaw
   , convertFromHtml
 
     -- * https://draftjs.org/docs/api-reference-editor-state.html
-  , js_ES_createWithContent
-  , js_ES_getCurrentContent
-  , js_ES_traceCurrentContent
+  , createWithContent
+  , getCurrentContent
+  , traceCurrentContent
 
     -- * https://draftjs.org/docs/api-reference-content-state.html
-  , js_CS_createFromText
+  , createFromText
 
     -- * contrib
-  , js_Draft_stateToHTML
+  , stateToHTML
   ) where
 
 import qualified Data.Aeson as Aeson
 import           Data.String.Conversions
-import           Data.JSString ()  -- instance IsString JSString
-import           GHCJS.Types (JSString, JSVal)
+import           GHCJS.Types (JSString)
 import           Text.HTML.Parser
 
 import qualified Refine.Common.VDoc.Draft as Draft
 import           Refine.Frontend.CS ()
+import           Refine.Frontend.Document.FFI.Types
+import           Refine.Prelude.Aeson (NoJSONRep(NoJSONRep))
 
 
 -- * https://draftjs.org/docs/api-reference-data-conversion.html
 
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#convertfromraw
-convertFromRaw :: Draft.RawContent -> JSVal
+convertFromRaw :: Draft.RawContent -> ContentState
 convertFromRaw = js_convertFromRaw . cs . Aeson.encode
 
 foreign import javascript unsafe
     "Draft.convertFromRaw(JSON.parse($1))"
-    js_convertFromRaw :: JSString -> JSVal
+    js_convertFromRaw :: JSString -> ContentState
 
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#converttoraw
-convertToRaw :: JSVal -> Draft.RawContent
+convertToRaw :: ContentState -> Draft.RawContent
 convertToRaw = either (error . ("convertToRaw: " <>)) id . Aeson.eitherDecode . cs . js_convertToRaw
 
 foreign import javascript unsafe
     "JSON.stringify(Draft.convertToRaw($1))"
-    js_convertToRaw :: JSVal -> JSString
+    js_convertToRaw :: ContentState -> JSString
 
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#convertfromhtml
-convertFromHtml :: [Token] -> JSVal
+convertFromHtml :: [Token] -> ContentState
 convertFromHtml = js_convertFromHtml . cs . renderTokens
 
 foreign import javascript unsafe
     "refine$editorContentFromHtml($1)"
-    js_convertFromHtml :: JSString -> JSVal
+    js_convertFromHtml :: JSString -> ContentState
 
 
 -- * https://draftjs.org/docs/api-reference-editor-state.html
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#createwithcontent
+createWithContent :: ContentState -> IO EditorState
+createWithContent = js_ES_createWithContent
+
 foreign import javascript unsafe
     "Draft.EditorState.createWithContent($1)"
-    js_ES_createWithContent :: JSVal -> IO JSVal
+    js_ES_createWithContent :: ContentState -> IO EditorState
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#getcurrentcontent
+getCurrentContent :: EditorState -> ContentState
+getCurrentContent = js_ES_getCurrentContent
+
 foreign import javascript unsafe
     "$1.getCurrentContent()"
-    js_ES_getCurrentContent :: JSVal -> JSVal
+    js_ES_getCurrentContent :: EditorState -> ContentState
 
--- | Convenient wrapper for 'js_ES_getCurrentContent'.
+-- | Convenient wrapper for 'getCurrentContent'.
+traceCurrentContent :: EditorState -> IO ()
+traceCurrentContent s = do () <- js_ES_traceCurrentContent s; pure ()
+
 foreign import javascript unsafe
     "console.log('Editor.getCurrentContent() == ', Draft.convertToRaw($1.getCurrentContent()))"
-    js_ES_traceCurrentContent :: JSVal -> ()
+    js_ES_traceCurrentContent :: EditorState -> IO ()
 
 
 -- * https://draftjs.org/docs/api-reference-content-state.html
 
 -- | https://draftjs.org/docs/api-reference-content-state.html#createfromtext
+createFromText :: JSString -> IO ContentState
+createFromText = js_CS_createFromText
+
 foreign import javascript unsafe
     "Draft.ContentState.createFromText($1)"
-    js_CS_createFromText :: JSString -> IO JSVal
+    js_CS_createFromText :: JSString -> IO ContentState
 
 
 -- * contrib
 
 -- | https://github.com/sstur/draft-js-export-html
+stateToHTML :: ContentState -> [Token]
+stateToHTML = parseTokens . cs . js_Draft_stateToHTML
+
 foreign import javascript unsafe
     "DraftStateToHTML($1)"
-    js_Draft_stateToHTML :: JSVal -> JSString
+    js_Draft_stateToHTML :: ContentState -> JSString

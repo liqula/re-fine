@@ -24,39 +24,32 @@ module Refine.Frontend.Document.Types where
 
 import           Control.Lens (makeLenses)
 import           GHC.Generics (Generic)
-import           GHCJS.Types (JSVal)
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
+import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Header.Types
-import           Refine.Frontend.Util (js_eq)
-import           Refine.Prelude.Aeson (NoJSONRep(..))
 import           Refine.Prelude.TH (makeRefineType)
 
 
 data DocumentAction =
-    TriggerDocumentEditStart EditorState
-  | DocumentEditStart EditorState
+    TriggerDocumentEditStart DocumentEditState
+  | DocumentEditStart DocumentEditState
+  | DocumentEditUpdate DocumentEditState
   | DocumentEditSave
   deriving (Show, Eq, Generic)
 
 data DocumentState =
     DocumentStateView
-  | DocumentStateEdit { _documentStateEdit :: EditorState }
+  | DocumentStateEdit { _documentStateEdit :: DocumentEditState }
   deriving (Show, Eq, Generic)
 
-data EditorState = EditorState
-  { _editorStateKind      :: EditKind
-  , _editorStateVal       :: NoJSONRep JSVal
-  , _editorStateSelection :: Maybe Range
+data DocumentEditState = DocumentEditState
+  { _documentEditStateKind      :: EditKind
+  , _documentEditStateVal       :: EditorState
+  , _documentEditStateSelection :: Maybe Range
   }
-  deriving (Show, Generic)
-
-instance Eq EditorState where
-  EditorState k (NoJSONRep js) mr == EditorState k' (NoJSONRep js') mr'
-      = k == k'
-     && js_eq js js'  -- (not too confident about this one...)
-     && mr == mr'
+  deriving (Show, Eq, Generic)
 
 data DocumentProps = DocumentProps
   { _dpDocumentState     :: DocumentState
@@ -67,12 +60,12 @@ data DocumentProps = DocumentProps
   deriving (Show, Eq, Generic)
 
 newtype EditorWrapperProps = EditorWrapperProps
-  { _ewpEditorState :: EditorState
+  { _ewpEditorState :: DocumentEditState
   }
   deriving (Eq)
 
 makeRefineType ''DocumentAction
 makeRefineType ''DocumentState
-makeRefineType ''EditorState
+makeRefineType ''DocumentEditState
 makeLenses ''DocumentProps
 makeLenses ''EditorWrapperProps

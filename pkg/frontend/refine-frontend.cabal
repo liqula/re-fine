@@ -69,6 +69,7 @@ library
       Refine.Frontend.CS
       Refine.Frontend.Document.Document
       Refine.Frontend.Document.FFI
+      Refine.Frontend.Document.FFI.Types
       Refine.Frontend.Document.Store
       Refine.Frontend.Document.Types
       Refine.Frontend.Document.VDoc

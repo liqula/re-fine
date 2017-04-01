@@ -21,18 +21,17 @@
 
 module Refine.Frontend.Document.Document where
 
-import           Control.Lens ((^.))
+import           Control.Lens ((^.), (.~), (&), to)
 import           React.Flux
 import           React.Flux.Internal (HandlerArg(..), PropertyOrHandler(..))
 
+import           Refine.Frontend.Document.FFI.Types (unsafeMkEditorState, unEditorState)
 import           Refine.Frontend.Document.Types
-import           Refine.Frontend.Document.FFI (js_ES_traceCurrentContent)
 import           Refine.Frontend.Document.VDoc (vdocToHTML)
-import qualified Refine.Frontend.Screen.Types as SC
-import qualified Refine.Frontend.Store as RS
-import qualified Refine.Frontend.Store.Types as RS
+import           Refine.Frontend.Screen.Types
+import           Refine.Frontend.Store
+import           Refine.Frontend.Store.Types
 import           Refine.Frontend.ThirdPartyViews (editor_)
-import           Refine.Prelude.Aeson (NoJSONRep(..))
 
 
 document :: View '[DocumentProps]
@@ -44,11 +43,11 @@ document = mkView "Document" $ \props ->
     DocumentStateView
       -> article_ [ "id" $= "vdocValue"
                   , "className" $= "gr-20 gr-14@desktop"
-                  , onMouseUp  $ \_ me -> RS.dispatch $
-                      RS.TriggerUpdateSelection (SC.OffsetFromDocumentTop $ mousePageY me) (props ^. dpToolbarStatus)
+                  , onMouseUp  $ \_ me -> dispatch $
+                      TriggerUpdateSelection (OffsetFromDocumentTop $ mousePageY me) (props ^. dpToolbarStatus)
                         -- <-- relative to webpage | relative to viewport -> mouseClientY me
-                  , onTouchEnd $ \_ te -> RS.dispatch $
-                      RS.TriggerUpdateSelection (SC.OffsetFromDocumentTop . touchPageY . head $ touches te)
+                  , onTouchEnd $ \_ te -> dispatch $
+                      TriggerUpdateSelection (OffsetFromDocumentTop . touchPageY . head $ touches te)
                                                 (props ^. dpToolbarStatus)
                   ] $ do
            -- leftover from p'2016:
@@ -61,12 +60,14 @@ document_ :: DocumentProps -> ReactElementM eventHandler ()
 document_ !props = view_ document "document_" props
 
 
+-- TODO: `git grep -Hni editorwrapper`; drop the "wrapper"
+-- TODO: indentation in the following lines.
+
 editorWrapper :: View '[EditorWrapperProps]
-editorWrapper = mkView "EditorWrapper" $ \(EditorWrapperProps (EditorState kind (NoJSONRep editorState) mrange)) ->
-      editor_ [ property "editorState" editorState
+editorWrapper = mkView "EditorWrapper" $ \(EditorWrapperProps estate) ->
+      editor_ [ property "editorState" (estate ^. documentEditStateVal . to unEditorState)
               , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
-                  \(HandlerArg evt) -> js_ES_traceCurrentContent `seq`
-                                       (RS.dispatch . RS.DocumentAction $ DocumentEditStart (EditorState kind (NoJSONRep evt) mrange))
+                  \(HandlerArg evt) -> dispatch . DocumentAction . DocumentEditUpdate $ estate & documentEditStateVal .~ unsafeMkEditorState evt
               ] mempty
 
 editorWrapper_ :: EditorWrapperProps -> ReactElementM eventHandler ()
