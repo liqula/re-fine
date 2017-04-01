@@ -52,7 +52,9 @@ import Refine.Common.ChangeAPI
 import Refine.Common.Types
 
 
-addProcessCollabEdit :: Create (Process CollaborativeEdit) -> App (Process CollaborativeEdit)
+addProcessCollabEdit
+  :: Create (Process CollaborativeEdit)
+  -> App (Process CollaborativeEdit, CompositeVDoc)
 addProcessCollabEdit aice = do
   appLog "addProcessCollabEdit"
   vdoc <- createVDoc (aice ^. createCollabEditProcessVDoc)
@@ -63,15 +65,8 @@ addProcessCollabEdit aice = do
       , _createDBCollabEditProcessGroupID = gid
       , _createDBCollabEditProcessVDocID  = vdoc ^. vdocID
       }
-  -- cvdoc <- getCompositeVDoc (vdoc ^. vdocID)
-  pure Process
-    { _processID    = process ^. processID
-    , _processGroup = process ^. processGroup
-    , _processPayload = CollaborativeEdit
-        (process ^. processPayload . collaborativeEditID)
-        (process ^. processPayload . collaborativeEditPhase)
-        (vdoc ^. vdocID)
-    }
+  cvdoc <- getCompositeVDoc (vdoc ^. vdocID)
+  pure (process, cvdoc)
 
 -- | FIXME: currently, 'changeProcess' allows to overwrite the process data completely, but we
 -- probably want something more subtle, like not destroying the VDoc, but changing the group.  needs
@@ -86,8 +81,8 @@ addProcess :: AddProcess -> App CreatedProcess
 addProcess ap = do
   appLog "addProcess"
   case ap of
-    AddCollabEditProcess p -> CreatedCollabEditProcess <$> addProcessCollabEdit p
-    AddAulaProcess p       -> CreatedAulaProcess       <$> db (createProcess p)
+    AddCollabEditProcess p -> uncurry CreatedCollabEditProcess <$> addProcessCollabEdit p
+    AddAulaProcess p       -> CreatedAulaProcess               <$> db (createProcess p)
 
 changeProcess :: ChangeProcess -> App ()
 changeProcess change = do

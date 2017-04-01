@@ -72,8 +72,13 @@ data AddProcess
   deriving (Eq, Show, Generic)
 
 data CreatedProcess
-  = CreatedCollabEditProcess (Process CollaborativeEdit)
-  | CreatedAulaProcess       (Process Aula)
+  = CreatedCollabEditProcess
+    { _ccepProcess :: Process CollaborativeEdit
+    , _ccepVDoc    :: CompositeVDoc
+    }
+  | CreatedAulaProcess
+    { _capProcess :: Process Aula
+    }
   deriving (Eq, Show, Generic)
 
 data RemoveProcess
