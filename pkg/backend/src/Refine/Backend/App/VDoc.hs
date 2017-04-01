@@ -114,14 +114,13 @@ getCompositeVDoc vid = do
   where
     toMap selector = Map.fromList . fmap (view selector &&& id)
 
--- TODO: Rename e to target
 assertPerm
   ::  ( AppC db uh
-      , DB.GroupOf db e
-      , DB.ProcessOf db e
-      , Allow (DB.ProcessPayload e) e
+      , DB.GroupOf db target
+      , DB.ProcessOf db target
+      , Allow (DB.ProcessPayload target) target
       )
-  => ID e -> [Perm] -> AppM db uh ()
+  => ID target -> [Perm] -> AppM db uh ()
 assertPerm eid needPerms = do
   muserId <- currentUser
   join . db $ do
