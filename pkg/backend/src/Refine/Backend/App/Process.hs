@@ -65,7 +65,7 @@ addProcessCollabEdit aice = do
       }
   -- cvdoc <- getCompositeVDoc (vdoc ^. vdocID)
   pure Process
-    { _processID    = process ^. processID . to unsafeCoerceID
+    { _processID    = process ^. processID
     , _processGroup = process ^. processGroup
     , _processPayload = CollaborativeEdit
         (process ^. processPayload . collaborativeEditID)

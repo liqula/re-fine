@@ -98,8 +98,8 @@ class Database db where
   -- example: we need to build the 'CompositeVDoc' (which requires "Refine.Backend.DocRepo") from
   -- the @VDoc@ that can be produced inside 'DB'.
 
-  createProcess :: StoreProcessData db a => CreateDB (Process a) -> db (Process (ResultDB (Process a)))
-  getProcess    :: (StoreProcessData db a, Typeable a) => ID (Process a) -> db (Process (ResultDB (Process a)))
+  createProcess :: StoreProcessData db a => CreateDB (Process a) -> db (Process a)
+  getProcess    :: (StoreProcessData db a, Typeable a) => ID (Process a) -> db (Process a)
   updateProcess :: StoreProcessData db a => ID (Process a) -> CreateDB (Process a) -> db ()
   removeProcess :: (StoreProcessData db a, Typeable a) => ID (Process a) -> db ()
 
@@ -107,10 +107,10 @@ class Database db where
 
 class StoreProcessData db c where
   processDataGroupID :: CreateDB (Process c) -> db (ID Group)
-  createProcessData  :: ID (Process c) -> CreateDB (Process c) -> db (ResultDB (Process c))
-  getProcessData     :: ID (Process c) -> db (ResultDB (Process c))
+  createProcessData  :: ID (Process c) -> CreateDB (Process c) -> db c
+  getProcessData     :: ID (Process c) -> db c
   updateProcessData  :: ID (Process c) -> CreateDB (Process c) -> db ()
-  removeProcessData  :: ResultDB (Process c) -> db ()
+  removeProcessData  :: c -> db ()
 
 class GroupOf db e where
   groupOf :: ID e -> db Group

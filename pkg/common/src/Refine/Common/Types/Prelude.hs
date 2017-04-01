@@ -41,10 +41,6 @@ newtype ID a = ID { _unID :: Int64 }
 instance ClearTypeParameter ID where
   clearTypeParameter (ID x) = ID x
 
--- | There may be a nicer solution, but andorp and fisx haven't managed to find one in 15 minutes.
-unsafeCoerceID :: ID a -> ID b
-unsafeCoerceID (ID a) = ID a
-
 type family Create a = b | b -> a
 
 

@@ -601,7 +601,7 @@ instance C.StoreProcessData DB Aula where
     deleteWhere [S.ProcessOfAulaAula ==. pdata ^. aulaID . to S.idToKey]
     delete (pdata ^. aulaID . to S.idToKey)
 
-createProcess :: (C.StoreProcessData DB a) => CreateDB (Process a) -> DB (Process (ResultDB (Process a)))
+createProcess :: (C.StoreProcessData DB a) => CreateDB (Process a) -> DB (Process a)
 createProcess process = do
   gid   <- C.processDataGroupID process
   pkey  <- liftDB . insert $ S.Process (S.idToKey gid)
@@ -609,12 +609,12 @@ createProcess process = do
   group <- getGroup gid
   pure $ Process (S.keyToId pkey) group pdata
 
-getProcess :: (C.StoreProcessData DB a, Typeable a) => ID (Process a) -> DB (Process (ResultDB (Process a)))
+getProcess :: (C.StoreProcessData DB a, Typeable a) => ID (Process a) -> DB (Process a)
 getProcess pid = do
   process <- getEntity pid
   pdata   <- C.getProcessData pid
   group   <- getGroup (S.keyToId $ S.processGroup process)
-  pure $ Process (unsafeCoerceID pid) group pdata
+  pure $ Process pid group pdata
 
 updateProcess :: (C.StoreProcessData DB a) => ID (Process a) -> CreateDB (Process a) -> DB ()
 updateProcess pid process = do

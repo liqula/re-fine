@@ -26,19 +26,3 @@ type instance CreateDB (Process CollaborativeEdit) = CreateDBCollabEditProcess
 type instance CreateDB (Process Aula)              = CreateAulaProcess
 
 makeRefineType ''CreateDBCollabEditProcess
-
-
-type family ResultDB a = b | b -> a
-
-data CollaborativeEditDB =
-  CollaborativeEditDB
-    { _collaborativeEditDBID    :: ID CollaborativeEdit
-    , _collaborativeEditDBPhase :: CollaborativeEditPhase
-    , _collaborativeEditDBVDoc  :: ID VDoc
-    }
-  deriving (Eq, Show, Generic)
-
-type instance ResultDB (Process CollaborativeEdit) = CollaborativeEdit
-type instance ResultDB (Process Aula)              = Aula
-
-makeRefineType ''CollaborativeEditDB
