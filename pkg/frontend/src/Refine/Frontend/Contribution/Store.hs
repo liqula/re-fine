@@ -22,7 +22,8 @@
 
 module Refine.Frontend.Contribution.Store where
 
-import           Control.Lens ((&), (%~), (^.))
+import           Control.Lens ((&), (%~), (.~), (^.), to)
+import           Data.List (foldl')
 import qualified Data.Map.Strict as M
 
 import           Refine.Common.Types
@@ -75,9 +76,18 @@ highlightedMarkAndBubbleUpdate action state = case action of
 
 markPositionsUpdate :: ContributionAction -> MarkPositions -> MarkPositions
 markPositionsUpdate action state = case action of
-  (AddMarkPosition dataChunkId newMarkPosition)
+  (ScheduleAddMarkPosition dataChunkId newMarkPosition)
     -> let upd       = Just . maybe newMarkPosition (updTop . updBottom)
            updTop    = markPositionTop    %~ min (newMarkPosition ^. markPositionTop)
            updBottom = markPositionBottom %~ max (newMarkPosition ^. markPositionBottom)
-       in MarkPositions $ M.alter upd dataChunkId (_unMarkPositions state)
+
+          -- FIXME: i'm not too confident this is going into the right direction.  why are marks
+          -- rendered so many times before they finally have a stable bounding rectangle?
+
+       in state & markPositionsScheduled %~ M.alter upd dataChunkId
+  DischargeAddMarkPositions
+    -> let upd :: M.Map ContributionID MarkPosition -> M.Map ContributionID MarkPosition
+           upd firstm = foldl' (\m (i, p) -> M.insert i p m) firstm (state ^. markPositionsScheduled. to M.toList)
+       in state & markPositionsMap       %~ upd
+                & markPositionsScheduled .~ mempty
   _ -> state

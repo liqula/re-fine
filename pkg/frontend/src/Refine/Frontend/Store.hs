@@ -31,7 +31,7 @@ import           Control.Lens (_Just, (&), (^.), (^?), (^?!), (%~), (.~), to)
 import           Control.Monad.IO.Class
 import           Control.Monad.State.Class (MonadState, modify)
 import           Control.Monad.Trans.State (StateT, runStateT)
-import           Control.Monad (void)
+import           Control.Monad (void, when)
 import           Data.Aeson (decode, eitherDecode, toJSON, Value(String))
 import           Data.JSString (JSString, unpack)
 import qualified Data.Map.Strict as M
@@ -101,6 +101,13 @@ transformGlobalState = transf
 
             ContributionAction (ShowCommentEditor _) -> do
                 removeAllRanges
+
+            ContributionAction (ScheduleAddMarkPosition _ _) -> do
+                let nothingScheduled = M.null $ state ^. gsContributionState . csMarkPositions . markPositionsScheduled
+                    delayMiliSecs = 150
+                when nothingScheduled . void . liftIO . forkIO $ do
+                  threadDelay $ delayMiliSecs * 1000
+                  dispatchAndExec $ ContributionAction DischargeAddMarkPositions
 
             DocumentAction (TriggerDocumentEditStart estate) -> do
                 mrange <- getRange

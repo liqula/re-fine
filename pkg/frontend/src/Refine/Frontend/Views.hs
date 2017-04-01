@@ -119,7 +119,7 @@ leftAside :: View '[LeftAsideProps]
 leftAside = mkView "LeftAside" $ \props ->
     aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
         let lookupPosition :: ContributionID -> Maybe MarkPosition
-            lookupPosition cid = props ^? leftAsideMarkPositions . unMarkPositions . at cid . _Just
+            lookupPosition cid = props ^? leftAsideMarkPositions . markPositionsMap . at cid . _Just
         mconcat $ map (\d -> discussionBubble_ (SpecialBubbleProps
                                                  (ContribIDDiscussion (d ^. compositeDiscussion . discussionID))
                                                  (lookupPosition $ ContribIDDiscussion (d ^. compositeDiscussion . discussionID))

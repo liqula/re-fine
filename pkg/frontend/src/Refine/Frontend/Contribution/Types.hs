@@ -89,9 +89,26 @@ data CommentKind =
   | CommentKindDiscussion
   deriving (Show, Eq, Generic)
 
--- for marks:
-newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map ContributionID MarkPosition }
-  deriving (Show, Eq, Generic)
+-- | Mark positions updates have experienced long cascades of changing values for the same
+-- 'ContributionID'.  Now the 'ScheduleAddMarkPosition' handler will store new additions in a
+-- separate `scheduled` map, and a 'DischargeAddMarkPositions' will be dispatched with a delay.  If
+-- the 'DischargeAddMarkPositions' handler finds something in the `scheduled` map, it will add those
+-- and remove them there; otherwise it will do nothing.
+--
+-- TODO: We should find out where the cascades actually come from and find a better fix: (1) the
+-- instances of 'Eq', 'FromJSON', 'ToJSON' do not consider the '_markPositionsScheduled' field,
+-- which is necessary for the 'DischargeAddMarkPositions' hack to work, but confusing; (2) we're
+-- still receiving too many 'ScheduleAddMarkPosition' actions, and should rather figure out how to
+-- only fire those that are necessary.
+data MarkPositions =
+    MarkPositions
+      { _markPositionsMap       :: M.Map ContributionID MarkPosition
+      , _markPositionsScheduled :: M.Map ContributionID MarkPosition
+      }
+  deriving (Show, Generic)
+
+instance Eq MarkPositions where
+  MarkPositions m _ == MarkPositions m' _ = m == m'
 
 data MarkPosition = MarkPosition
   { _markPositionTop    :: OffsetFromDocumentTop
@@ -129,7 +146,8 @@ data ContributionAction =
   | SetCommentKind CommentKind
   | SubmitComment ST (Maybe CommentKind) (Maybe Range)
   | SubmitEdit
-  | AddMarkPosition ContributionID MarkPosition
+  | ScheduleAddMarkPosition ContributionID MarkPosition  -- see 'MarkPosition'
+  | DischargeAddMarkPositions                            -- see 'MarkPosition'
   | HighlightMarkAndBubble ContributionID
   | UnhighlightMarkAndBubble
   deriving (Show, Eq, Generic)
@@ -146,7 +164,7 @@ data ContributionState = ContributionState
 
 
 emptyContributionState :: ContributionState
-emptyContributionState = ContributionState NothingSelected Nothing Nothing EditorIsHidden Nothing (MarkPositions M.empty)
+emptyContributionState = ContributionState NothingSelected Nothing Nothing EditorIsHidden Nothing (MarkPositions mempty mempty)
 
 
 makeRefineType ''CommentInputState
@@ -163,10 +181,10 @@ makeLenses ''MarkPositions
 deriving instance NFData MarkPositions
 
 instance ToJSON MarkPositions where
-  toJSON = mapToValue . _unMarkPositions
+  toJSON = mapToValue . _markPositionsMap
 
 instance FromJSON MarkPositions where
-  parseJSON = fmap MarkPositions . mapFromValue
+  parseJSON = fmap (`MarkPositions` mempty) . mapFromValue
 
 
 data MarkProps = MarkProps

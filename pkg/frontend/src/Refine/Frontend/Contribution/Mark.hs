@@ -78,7 +78,7 @@ dispatchMarkPosition dataContributionId element = dispatchAndExec =<< do
         { _markPositionTop    = offsetFromDocumentTop topOffset    scrollOffset
         , _markPositionBottom = offsetFromDocumentTop bottomOffset scrollOffset
         }
-      action = ContributionAction $ AddMarkPosition dataContributionId markPosition
+      action = ContributionAction $ ScheduleAddMarkPosition dataContributionId markPosition
   pure action
 
 foreign import javascript unsafe
