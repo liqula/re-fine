@@ -117,7 +117,6 @@ getCompositeVDoc vid = do
 -- TODO: Rename e to target
 assertPerm
   ::  ( AppC db uh
-      , Allow e
       , DB.GroupOf db e
       , DB.ProcessOf db e
       , CheckPerm (DB.ProcessPayload e) e
