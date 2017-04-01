@@ -30,13 +30,12 @@ module Refine.Backend.App.VDoc where
 import           Control.Arrow ((&&&))
 import           Control.Lens ((&), (^.), (^?), to, view, has)
 import           Control.Monad.Except (throwError)
-import           Control.Monad ((<=<), join, mapM, unless)
+import           Control.Monad ((<=<), join, mapM)
 import qualified Data.Map as Map
 import           Data.Maybe (catMaybes)
-import qualified Data.Set as Set
 
+import           Refine.Backend.App.Allow
 import           Refine.Backend.App.Core
-import           Refine.Backend.App.User
 import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
 import           Refine.Common.Allow
@@ -111,24 +110,6 @@ getCompositeVDoc vid = do
           (toMap (compositeDiscussion . discussionID) commentDiscussions)
   where
     toMap selector = Map.fromList . fmap (view selector &&& id)
-
-assertPerm
-  ::  ( AppC db uh
-      , DB.GroupOf db target
-      , DB.ProcessOf db target
-      , Allow (DB.ProcessPayload target) target
-      )
-  => ID target -> [Perm] -> AppM db uh ()
-assertPerm eid needPerms = do
-  muserId <- currentUser
-  join . db $ do
-    group <- DB.groupOf eid
-    prc   <- DB.processOf eid
-    roles <- maybe (pure []) (DB.getRoles (group ^. groupID)) muserId
-    pure $ do
-      let perms = concatMap (allow muserId prc eid) roles
-      unless (Set.fromList needPerms `Set.isSubsetOf` Set.fromList perms) $
-        throwError AppUnauthorized
 
 addEdit
   :: (AppC db uh, Allow (DB.ProcessPayload Edit) Edit)
