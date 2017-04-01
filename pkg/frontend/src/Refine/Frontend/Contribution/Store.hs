@@ -33,7 +33,7 @@ import qualified Refine.Frontend.Header.Types as HT
 contributionStateUpdate :: ContributionAction -> ContributionState -> ContributionState
 contributionStateUpdate action state = state
   & csCurrentSelection         %~ currentSelectionUpdate action
-  & csCommentCategory          %~ commentCategoryUpdate action
+  & csCommentKind              %~ commentKindUpdate action
   & csDisplayedContributionID  %~ displayedContributionUpdate action
   & csCommentEditorIsVisible   %~ commentEditorIsVisibleUpdate action
   & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
@@ -48,10 +48,10 @@ currentSelectionUpdate action state = case action of
   HideCommentEditor            -> NothingSelected
   _ -> state
 
-commentCategoryUpdate :: ContributionAction -> Maybe CommentCategory -> Maybe CommentCategory
-commentCategoryUpdate action state = case action of
-  (SetCommentCategory category) -> Just category
-  HideCommentEditor             -> Nothing -- when closing the comment editor, reset the selection
+commentKindUpdate :: ContributionAction -> Maybe CommentKind -> Maybe CommentKind
+commentKindUpdate action state = case action of
+  (SetCommentKind k) -> Just k
+  HideCommentEditor  -> Nothing -- when closing the comment editor, reset the selection
   _ -> state
 
 displayedContributionUpdate :: ContributionAction -> Maybe ContributionID -> Maybe ContributionID

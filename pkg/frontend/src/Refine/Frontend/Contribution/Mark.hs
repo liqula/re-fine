@@ -58,8 +58,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
    , lComponentDidMount = Just $ \propsandstate ldom _ -> do
              props  <- lGetProps propsandstate
              mark   <- lThis ldom
-             action <- readMarkPosition (props ^. markPropsContributionID) mark
-             dispatchAndExec action
+             dispatchMarkPosition (props ^. markPropsContributionID) mark
    }
 
 rfMark_ :: MarkProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
@@ -69,8 +68,9 @@ rfMark_ = view rfMark
 -- | (this is also a hidden type in React.Flux.Lifecycle)
 type HTMLElement = JSVal
 
-readMarkPosition :: ContributionID -> HTMLElement -> IO GlobalAction
-readMarkPosition dataContributionId element = do
+-- | Take the vertical dimension of the bounding rectangle for the mark, and dispatch it.
+dispatchMarkPosition :: ContributionID -> HTMLElement -> IO ()
+dispatchMarkPosition dataContributionId element = dispatchAndExec =<< do
   topOffset    <- js_getBoundingClientRectTop element
   bottomOffset <- js_getBoundingClientRectBottom element
   scrollOffset <- js_getScrollOffset

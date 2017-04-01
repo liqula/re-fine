@@ -49,7 +49,7 @@ spec = do
 
     it "renders highlighted note and dark discussion icons when Note has been selected" $ do
       registerInitialStore emptyGlobalState
-      wrapper <- mount $ commentInput_ (CommentInputProps Nothing (Just Note) 10)
+      wrapper <- mount $ commentInput_ (CommentInputProps Nothing (Just CommentKindNote) 10)
       lengthOfIO (find wrapper (StringSelector ".icon-Note_dark"))       `shouldReturn` (0 :: Int)
       lengthOfIO (find wrapper (StringSelector ".icon-Note_RO"))         `shouldReturn` (1 :: Int)
 
@@ -60,7 +60,7 @@ spec = do
 
     it "renders dark note and highlighted discussion icons when Discussion has been selected" $ do
       registerInitialStore emptyGlobalState
-      wrapper <- mount $ commentInput_ (CommentInputProps Nothing (Just Discussion) 10)
+      wrapper <- mount $ commentInput_ (CommentInputProps Nothing (Just CommentKindDiscussion) 10)
       lengthOfIO (find wrapper (StringSelector ".icon-Note_dark"))       `shouldReturn` (1 :: Int)
       lengthOfIO (find wrapper (StringSelector ".icon-Note_RO"))         `shouldReturn` (0 :: Int)
 

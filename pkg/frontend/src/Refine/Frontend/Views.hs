@@ -28,7 +28,7 @@ module Refine.Frontend.Views
   , mainScreen_
   ) where
 
-import           Control.Lens ((^.), (^?))
+import           Control.Lens ((^.), (^?), at, _Just)
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
 import qualified Data.Tree as DT
@@ -54,6 +54,7 @@ import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps
 import qualified Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Store as RS
 import           Refine.Frontend.Store.Types as RS
+import           Refine.Frontend.Views.Types
 
 
 -- | The controller view and also the top level of the Refine app.  This controller view registers
@@ -88,7 +89,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocDiscussions) rs
           addComment_ __
             $ AddCommentProps (rs ^. RS.gsContributionState . RS.csCommentEditorIsVisible)
-                              (rs ^. RS.gsContributionState . RS.csCommentCategory)
+                              (rs ^. RS.gsContributionState . RS.csCommentKind)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
           notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
 
@@ -114,22 +115,11 @@ mainScreen_ :: GlobalState -> ReactElementM eventHandler ()
 mainScreen_ !rs = view_ mainScreen "mainScreen_" rs
 
 
-data LeftAsideProps = LeftAsideProps
-  { _leftAsideMarkPositions     :: RS.MarkPositions
-  , _leftAsideCurrentSelection  :: RS.Selection
-  , _leftAsideHighlightedBubble :: Maybe ContributionID
-  , _leftAsideScreenState       :: SC.ScreenState
-  , _leftAsideDiscussions       :: [CompositeDiscussion]
-  , _leftAsideNotes             :: [Note]
-  , _leftAsideQuickCreateInfo   :: ToolbarExtensionStatus
-  }
-  deriving (Eq)
-
 leftAside :: View '[LeftAsideProps]
 leftAside = mkView "LeftAside" $ \props ->
     aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
-        let lookupPosition chunkId = M.lookup chunkId . _unMarkPositions $ _leftAsideMarkPositions props
-        -- TODO the map should use proper IDs as keys
+        let lookupPosition :: ContributionID -> Maybe MarkPosition
+            lookupPosition cid = props ^? leftAsideMarkPositions . unMarkPositions . at cid . _Just
         mconcat $ map (\d -> discussionBubble_ (SpecialBubbleProps
                                                  (ContribIDDiscussion (d ^. compositeDiscussion . discussionID))
                                                  (lookupPosition $ ContribIDDiscussion (d ^. compositeDiscussion . discussionID))

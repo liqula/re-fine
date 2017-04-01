@@ -202,17 +202,17 @@ emitBackendCallsFor action state = case action of
 
     -- contributions
 
-    ContributionAction (SubmitComment text category forRange) -> do
+    ContributionAction (SubmitComment text kind forRange) -> do
       -- here we need to distinguish which comment category we want to submit
       -- check the state and what the user selected there
       -- (FIXME: the new correct technical term for 'category' is 'kind'.)
-      case category of
-        Just Discussion ->
+      case kind of
+        Just CommentKindDiscussion ->
           addDiscussion (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
                      (C.CreateDiscussion text True (createChunkRange forRange)) $ \case
             (Left rsp) -> handleError rsp (const [])
             (Right discussion) -> dispatchM $ AddDiscussion discussion
-        Just Note ->
+        Just CommentKindNote ->
           addNote (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
                      (C.CreateNote text True (createChunkRange forRange)) $ \case
             (Left rsp) -> handleError rsp (const [])

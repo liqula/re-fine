@@ -7,11 +7,12 @@
 
 module Refine.Prelude.Aeson where
 
-import Control.Lens (makeLenses)
-import Control.DeepSeq
-import Data.Aeson
-import GHC.Generics
+import           Control.Lens (makeLenses)
+import           Control.DeepSeq
+import           Data.Aeson
+import           Data.String.Conversions
 import qualified Generics.SOP as SOP
+import           GHC.Generics
 
 newtype NoJSONRep a = NoJSONRep { _unNoJSONRep :: a }
   deriving (Eq, Functor, Generic)
@@ -32,3 +33,8 @@ instance SOP.Generic (NoJSONRep a)
 instance SOP.HasDatatypeInfo (NoJSONRep a)
 
 makeLenses ''NoJSONRep
+
+
+(.=?) :: (KeyValue kv, ToJSON v) => ST -> Maybe v -> Maybe kv
+(.=?) k (Just v) = Just $ k .= v
+(.=?) _ Nothing  = Nothing

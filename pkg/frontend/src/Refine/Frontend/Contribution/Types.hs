@@ -29,6 +29,7 @@ import           Data.Aeson (toJSON, parseJSON, object, (.=), (.:), (.:?), withO
 import           Data.Aeson.Types (FromJSON, ToJSON, Value, Parser)
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as M
+import           Data.Maybe (catMaybes)
 import           Data.String.Conversions
 import           GHC.Generics (Generic)
 import           Text.HTML.Parser (Attr)
@@ -39,6 +40,7 @@ import Refine.Frontend.Header.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
 import Refine.Prelude.TH (makeRefineType)
+import Refine.Prelude.Aeson ((.=?))
 
 
 data Range = Range
@@ -61,28 +63,30 @@ instance FromJSON Range where
                              v .: "scrollOffset"
 
 instance ToJSON Range where
-    toJSON (Range sp ep t b s) = object
-      [ "start"        .= sp
-      , "end"          .= ep
-      , "top"          .= t
-      , "bottom"       .= b
-      , "scrollOffset" .= s
-      ]
+    toJSON (Range sp ep t b s) = object $
+      catMaybes [ "start" .=? sp
+                , "end"   .=? ep
+                ]
+      <> [ "top"          .= t
+         , "bottom"       .= b
+         , "scrollOffset" .= s
+         ]
 
 data Selection =
     NothingSelected
-  | NothingSelectedButUpdateTriggered OffsetFromDocumentTop -- TODO when can this happen?
+  | NothingSelectedButUpdateTriggered OffsetFromDocumentTop  -- TODO when can this happen?
   | RangeSelected Range OffsetFromDocumentTop
   deriving (Show, Eq, Generic)
 
--- for Overlay:
+-- | for overlay
 newtype CommentInputState = CommentInputState
-  { _commentInputStateText     :: ST
+  { _commentInputStateText :: ST
   } deriving (Show, Eq, Generic)
 
-data CommentCategory =
-    Discussion
-  | Note
+data CommentKind =
+    CommentKindNote
+  -- | CommentKindQuestion
+  | CommentKindDiscussion
   deriving (Show, Eq, Generic)
 
 -- for marks:
@@ -122,8 +126,8 @@ data ContributionAction =
   | HideCommentOverlay
   | ShowCommentEditor (Maybe Range)
   | HideCommentEditor
-  | SetCommentCategory CommentCategory
-  | SubmitComment ST (Maybe CommentCategory) (Maybe Range)
+  | SetCommentKind CommentKind
+  | SubmitComment ST (Maybe CommentKind) (Maybe Range)
   | SubmitEdit
   | AddMarkPosition ContributionID MarkPosition
   | HighlightMarkAndBubble ContributionID
@@ -133,7 +137,7 @@ data ContributionAction =
 
 data ContributionState = ContributionState
   { _csCurrentSelection         :: Selection
-  , _csCommentCategory          :: Maybe CommentCategory
+  , _csCommentKind              :: Maybe CommentKind
   , _csDisplayedContributionID  :: Maybe ContributionID
   , _csCommentEditorIsVisible   :: ContributionEditorData
   , _csHighlightedMarkAndBubble :: Maybe ContributionID
@@ -146,13 +150,15 @@ emptyContributionState = ContributionState NothingSelected Nothing Nothing Edito
 
 
 makeRefineType ''CommentInputState
-makeRefineType ''CommentCategory
+makeRefineType ''CommentKind
 makeRefineType ''Selection
 makeRefineType ''ContributionEditorData
 makeRefineType ''ContributionAction
 makeRefineType ''ContributionState
 
 makeRefineType ''MarkPosition
+
+makeLenses ''MarkPositions
 
 deriving instance NFData MarkPositions
 
