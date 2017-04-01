@@ -12,7 +12,7 @@ import Refine.Backend.User.Core
 import Refine.Common.Types.User (Username)
 
 
-type UserHandleC uh = (Monad uh, UserHandle uh)
+type MonadUserHandle uh = (Monad uh, UserHandle uh)
 
 -- TODO: Align
 class UserHandle uh where

@@ -116,12 +116,11 @@ type MonadApp db uh =
   ( MonadDatabase db
   , StoreProcessData db Aula
   , StoreProcessData db CollaborativeEdit
-  , UserHandleC uh
+  , MonadUserHandle uh
   , GroupOf db Edit
   , ProcessOf db Edit
   , Functor db
   , Applicative db
-  , Monad uh
   )
 
 -- | The 'App' defines the final constraint set that the

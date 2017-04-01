@@ -58,7 +58,7 @@ import Refine.Backend.DocRepo (DocRepoError(..), createRepoNat)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
-import Refine.Backend.User (CreateUserError(..), UserDB, UH, MockUH_, FreeUH, UserHandleC, uhNat, mockLogin)
+import Refine.Backend.User
 import Refine.Common.Allow
 import Refine.Common.Rest
 import Refine.Common.Types.VDoc (Edit)
@@ -137,7 +137,7 @@ mkProdBackend cfg = mkBackend cfg uhNat (migrateDB cfg)
 mkDevModeBackend :: Config -> MockUH_ -> IO (Backend DB FreeUH)
 mkDevModeBackend cfg mock = mkBackend cfg (\_ -> uhNat mock) (migrateDB cfg)
 
-mkBackend :: UserHandleC uh => Config -> (UserDB -> UHNat uh) -> AppM DB uh a -> IO (Backend DB uh)
+mkBackend :: MonadUserHandle uh => Config -> (UserDB -> UHNat uh) -> AppM DB uh a -> IO (Backend DB uh)
 mkBackend cfg initUH migrate = do
   createDataDirectories cfg
 
