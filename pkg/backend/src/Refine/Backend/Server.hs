@@ -95,7 +95,7 @@ type RefineAPIConstraint db uh =
   ( Monad db
   , Monad uh
   , AppC db uh
-  , CheckPerm (ProcessPayload Edit) Edit
+  , Allow (ProcessPayload Edit) Edit
   )
 
 refineApi :: RefineAPIConstraint db uh => ServerT RefineAPI (AppM db uh)

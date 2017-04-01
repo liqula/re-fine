@@ -119,7 +119,7 @@ assertPerm
   ::  ( AppC db uh
       , DB.GroupOf db e
       , DB.ProcessOf db e
-      , CheckPerm (DB.ProcessPayload e) e
+      , Allow (DB.ProcessPayload e) e
       )
   => ID e -> [Perm] -> AppM db uh ()
 assertPerm eid needPerms = do
@@ -129,12 +129,12 @@ assertPerm eid needPerms = do
     prc   <- DB.processOf eid
     roles <- DB.getRoles (group ^. groupID) userId
     pure $ do
-      let perms = concatMap (checkPerm (Just userId) prc eid) roles
+      let perms = concatMap (allow (Just userId) prc eid) roles
       unless (Set.fromList needPerms `Set.isSubsetOf` Set.fromList perms) $
         throwError AppUnauthorized
 
 addEdit
-  :: (AppC db uh, CheckPerm (DB.ProcessPayload Edit) Edit)
+  :: (AppC db uh, Allow (DB.ProcessPayload Edit) Edit)
   => ID Edit -> Create Edit -> AppM db uh Edit
 addEdit basepid edit = do
   appLog "addEdit"

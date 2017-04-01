@@ -5,17 +5,17 @@ module Refine.Common.Allow where
 
 import Refine.Common.Types
 
--- TODO: Rename it to Allow
-class CheckPerm process target where
-  checkPerm
+
+class Allow process target where
+  allow
     :: Maybe (ID User)
     -> Process process
     -> proxy target
     -> Role
     -> [Perm]
 
-instance CheckPerm CollaborativeEdit Edit where
-  checkPerm _ _ _ = \case
+instance Allow CollaborativeEdit Edit where
+  allow _ _ _ = \case
     ReadOnly         -> [Read]
     Member           -> [Create, Read]
     Moderator        -> []
