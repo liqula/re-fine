@@ -39,11 +39,21 @@ instance Allow VDoc where
     ProcessInitiator -> [Create, Read, Update, Delete]
     GroupInitiator   -> [Create, Read, Update, Delete]
 
+-- TODO: Rename it to Allow
 class CheckPerm process target where
   checkPerm
     :: Maybe (ID User)
     -> Process process
     -> proxy target
+    -> Role
     -> [Perm]
-    -> ProcessAction (Process process)
-    -> Bool
+
+instance CheckPerm CollaborativeEdit Edit where
+  checkPerm _ _ _ = \case
+    ReadOnly         -> [Read]
+    Member           -> [Create, Read]
+    Moderator        -> []
+    LocalAdmin       -> []
+    ProcessInitiator -> []
+    GroupInitiator   -> []
+

@@ -48,7 +48,7 @@ data Perm
   | Read
   | Update
   | Delete
-  deriving (Eq, Show, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 makeRefineType ''Role
 makeRefineType ''Perm

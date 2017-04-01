@@ -33,6 +33,7 @@ import           Control.Monad.Except (throwError)
 import           Control.Monad ((<=<), join, mapM, unless)
 import qualified Data.Map as Map
 import           Data.Maybe (catMaybes)
+import qualified Data.Set as Set
 
 import           Refine.Backend.App.Core
 import           Refine.Backend.App.User
@@ -113,34 +114,32 @@ getCompositeVDoc vid = do
   where
     toMap selector = Map.fromList . fmap (view selector &&& id)
 
-instance CheckPerm CollaborativeEdit Edit where
-  checkPerm _ _ _ perms CE_CreateEdit = Role.Create `elem` perms
-
+-- TODO: Rename e to target
 assertPerm
   ::  ( AppC db uh
       , Allow e
       , DB.GroupOf db e
       , DB.ProcessOf db e
-      , CheckPerm (DB.ProcessResult e) e
+      , CheckPerm (DB.ProcessPayload e) e
       )
-  => ID e -> ProcessAction (Process (DB.ProcessResult e)) -> AppM db uh ()
-assertPerm eid action = do
+  => ID e -> [Perm] -> AppM db uh ()
+assertPerm eid needPerms = do
   userId <- currentUser
   join . db $ do
     group <- DB.groupOf eid
-    prc <- DB.processOf eid
+    prc   <- DB.processOf eid
     roles <- DB.getRoles (group ^. groupID) userId
-    let rights = concatMap (allow eid) roles
     pure $ do
-      unless (checkPerm (Just userId) prc eid rights action) $
+      let perms = concatMap (checkPerm (Just userId) prc eid) roles
+      unless (Set.fromList needPerms `Set.isSubsetOf` Set.fromList perms) $
         throwError AppUnauthorized
 
 addEdit
-  :: (AppC db uh, CheckPerm (DB.ProcessResult Edit) Edit)
+  :: (AppC db uh, CheckPerm (DB.ProcessPayload Edit) Edit)
   => ID Edit -> Create Edit -> AppM db uh Edit
 addEdit basepid edit = do
   appLog "addEdit"
-  assertPerm basepid CE_CreateEdit
+  assertPerm basepid [Create]
   validateCreateChunkRange basepid (edit ^. createEditRange)
   join . db $ do
     rid                    <- DB.editVDocRepo basepid
