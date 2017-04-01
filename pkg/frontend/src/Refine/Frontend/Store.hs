@@ -76,21 +76,7 @@ type Transform = StateT [GlobalAction] IO
 transformGlobalState :: forall m. MonadTransform m => GlobalAction -> GlobalState -> m GlobalState
 transformGlobalState = transf
   where
-    pureTransform :: GlobalAction -> GlobalState -> GlobalState
-    pureTransform action state = state
-      & gsVDoc                       %~ vdocUpdate action
-      & gsVDocList                   %~ vdocListUpdate action
-      & gsContributionState          %~ maybe id contributionStateUpdate (action ^? _ContributionAction)
-      & gsHeaderState                %~ headerStateUpdate action
-      & gsDocumentState              %~ documentStateUpdate action (state ^? gsVDoc . _Just . C.compositeVDocVersion)
-      & gsScreenState                %~ maybe id screenStateUpdate (action ^? _ScreenAction)
-      & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate action
-      & gsLoginState                 %~ loginStateUpdate action
-      & gsMainMenuState              %~ mainMenuUpdate action
-      & gsToolbarSticky              %~ toolbarStickyUpdate action
-      & gsTranslations               %~ translationsUpdate action
-
-    transf :: GlobalAction -> GlobalState -> m GlobalState  -- TODO: shuffle code: flip this with pure above.
+    transf :: GlobalAction -> GlobalState -> m GlobalState
     transf ClearState _ = pure emptyGlobalState  -- for testing only!
     transf action state = do
         consoleLogJSONM "Old state: " state
@@ -125,6 +111,20 @@ transformGlobalState = transf
 
         consoleLogJSONM "New state: " $ if state' /= state then toJSON state' else (String "[UNCHANGED]" :: Value)
         pure state'
+
+    pureTransform :: GlobalAction -> GlobalState -> GlobalState
+    pureTransform action state = state
+      & gsVDoc                       %~ vdocUpdate action
+      & gsVDocList                   %~ vdocListUpdate action
+      & gsContributionState          %~ maybe id contributionStateUpdate (action ^? _ContributionAction)
+      & gsHeaderState                %~ headerStateUpdate action
+      & gsDocumentState              %~ documentStateUpdate action (state ^? gsVDoc . _Just . C.compositeVDocVersion)
+      & gsScreenState                %~ maybe id screenStateUpdate (action ^? _ScreenAction)
+      & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate action
+      & gsLoginState                 %~ loginStateUpdate action
+      & gsMainMenuState              %~ mainMenuUpdate action
+      & gsToolbarSticky              %~ toolbarStickyUpdate action
+      & gsTranslations               %~ translationsUpdate action
 
 
 -- * pure updates
