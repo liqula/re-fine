@@ -59,7 +59,7 @@ data DocumentProps = DocumentProps
   }
   deriving (Show, Eq, Generic)
 
-newtype EditorWrapperProps = EditorWrapperProps
+newtype EditorProps = EditorProps
   { _ewpEditorState :: DocumentEditState
   }
   deriving (Eq)
@@ -68,4 +68,4 @@ makeRefineType ''DocumentAction
 makeRefineType ''DocumentState
 makeRefineType ''DocumentEditState
 makeLenses ''DocumentProps
-makeLenses ''EditorWrapperProps
+makeLenses ''EditorProps

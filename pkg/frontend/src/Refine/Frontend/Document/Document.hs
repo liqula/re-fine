@@ -31,7 +31,7 @@ import           Refine.Frontend.Document.VDoc (vdocToHTML)
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.ThirdPartyViews (editor_)
+import qualified Refine.Frontend.ThirdPartyViews as TP (editor_)
 
 
 document :: View '[DocumentProps]
@@ -39,7 +39,7 @@ document = mkView "Document" $ \props ->
   case props ^. dpDocumentState of
     DocumentStateEdit editorState
       -> article_ ["className" $= "gr-20 gr-14@desktop editor_wrapper"] $ do
-            editorWrapper_ $ EditorWrapperProps editorState
+            editor_ $ EditorProps editorState
     DocumentStateView
       -> article_ [ "id" $= "vdocValue"
                   , "className" $= "gr-20 gr-14@desktop"
@@ -60,15 +60,12 @@ document_ :: DocumentProps -> ReactElementM eventHandler ()
 document_ !props = view_ document "document_" props
 
 
--- TODO: `git grep -Hni editorwrapper`; drop the "wrapper"
--- TODO: indentation in the following lines.
+editor :: View '[EditorProps]
+editor = mkView "EditorWrapper" $ \(EditorProps estate) -> TP.editor_
+  [ property "editorState" (estate ^. documentEditStateVal . to unEditorState)
+  , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
+      \(HandlerArg evt) -> dispatch . DocumentAction . DocumentEditUpdate $ estate & documentEditStateVal .~ unsafeMkEditorState evt
+  ] mempty
 
-editorWrapper :: View '[EditorWrapperProps]
-editorWrapper = mkView "EditorWrapper" $ \(EditorWrapperProps estate) ->
-      editor_ [ property "editorState" (estate ^. documentEditStateVal . to unEditorState)
-              , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
-                  \(HandlerArg evt) -> dispatch . DocumentAction . DocumentEditUpdate $ estate & documentEditStateVal .~ unsafeMkEditorState evt
-              ] mempty
-
-editorWrapper_ :: EditorWrapperProps -> ReactElementM eventHandler ()
-editorWrapper_ !props = view_ editorWrapper "editorWrapper_" props
+editor_ :: EditorProps -> ReactElementM eventHandler ()
+editor_ !props = view_ editor "editorWrapper_" props
