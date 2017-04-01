@@ -278,7 +278,7 @@ specMockedLogin = around createDevModeTestSession $ do
     let setup sess = runWai sess $ do
           let group = UniversalGroup
           _l :: Username <- postJSON loginUri (Login devModeUser devModePass)
-          (CreatedCollabEditProcess fp) :: CreatedProcess <-
+          (CreatedCollabEditProcess _fp fc) :: CreatedProcess <-
             postJSON addProcessUri
               (AddCollabEditProcess CreateCollabEditProcess
                 { _createCollabEditProcessPhase = CollaborativeEditOnlyPhase
@@ -296,7 +296,6 @@ specMockedLogin = around createDevModeTestSession $ do
                   , _crRole     = Member
                   }
 
-          let fc = fp ^. processData . collaborativeEditVDoc
           fe :: Edit <-
             postJSON
               (addEditUri (fc ^. compositeVDocRepo . vdocHeadEdit))
