@@ -91,12 +91,12 @@ data Backend db uh = Backend
   , backendRunApp :: AppM db uh CN.:~> ExceptT AppError IO
   }
 
-type RefineAPIConstraint db uh =
+type MonadRefine db uh =
   ( MonadApp db uh
   , Allow (ProcessPayload Edit) Edit
   )
 
-refineApi :: RefineAPIConstraint db uh => ServerT RefineAPI (AppM db uh)
+refineApi :: MonadRefine db uh => ServerT RefineAPI (AppM db uh)
 refineApi =
        Refine.Backend.App.listVDocs
   :<|> Refine.Backend.App.getCompositeVDoc
@@ -156,7 +156,7 @@ mkBackend cfg initUH migrate = do
 
 
 mkServerApp
-    :: RefineAPIConstraint db uh
+    :: MonadRefine db uh
     => Config -> DBNat db -> DocRepoNat -> UHNat uh -> IO (Backend db uh)
 mkServerApp cfg dbNat docRepoNat uh = do
   poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath
