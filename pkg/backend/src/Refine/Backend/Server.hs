@@ -92,9 +92,7 @@ data Backend db uh = Backend
   }
 
 type RefineAPIConstraint db uh =
-  ( Monad db
-  , Monad uh
-  , AppC db uh
+  ( MonadApp db uh
   , Allow (ProcessPayload Edit) Edit
   )
 

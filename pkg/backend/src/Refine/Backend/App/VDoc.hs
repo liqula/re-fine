@@ -112,7 +112,7 @@ getCompositeVDoc vid = do
     toMap selector = Map.fromList . fmap (view selector &&& id)
 
 addEdit
-  :: (AppC db uh, Allow (DB.ProcessPayload Edit) Edit)
+  :: (MonadApp db uh, Allow (DB.ProcessPayload Edit) Edit)
   => ID Edit -> Create Edit -> AppM db uh Edit
 addEdit basepid edit = do
   appLog "addEdit"

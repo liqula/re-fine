@@ -41,7 +41,7 @@ import           Refine.Common.Types
 
 
 assertPerm
-  ::  ( AppC db uh
+  ::  ( MonadApp db uh
       , DB.GroupOf db target
       , DB.ProcessOf db target
       , Allow (DB.ProcessPayload target) target
