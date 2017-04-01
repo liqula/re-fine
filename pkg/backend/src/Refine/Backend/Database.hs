@@ -23,9 +23,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Backend.Database
-  ( module Refine.Backend.Database.Class
-  , module Refine.Backend.Database.Core
-  , module Refine.Backend.Database.Types
+  ( module DatabaseCore
   , DBNat
   , createDBNat
   ) where
@@ -41,11 +39,11 @@ import Database.Persist.Sqlite
 import Web.Users.Persistent as UserDB
 
 import Refine.Backend.Config
-import Refine.Backend.Database.Class
-import Refine.Backend.Database.Core
+import Refine.Backend.Database.Class as DatabaseCore
+import Refine.Backend.Database.Core  as DatabaseCore
 import Refine.Backend.Database.Schema()
 import Refine.Backend.Database.Entity as Entity
-import Refine.Backend.Database.Types
+import Refine.Backend.Database.Types as DatabaseCore
 
 
 type DBNat db = DBContext -> (db :~> ExceptT DBError IO)

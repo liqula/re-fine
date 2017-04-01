@@ -38,11 +38,9 @@ import qualified Data.Set as Set
 import           Refine.Backend.App.Core
 import           Refine.Backend.App.User
 import qualified Refine.Backend.Database.Class as DB
-import qualified Refine.Backend.Database.Types as DB
 import qualified Refine.Backend.DocRepo as DocRepo
 import           Refine.Common.Allow
 import           Refine.Common.Types
-import qualified Refine.Common.Types.Role as Role
 import           Refine.Common.VDoc.HTML
 
 

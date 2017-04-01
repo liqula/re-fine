@@ -290,7 +290,7 @@ specMockedLogin = around createDevModeTestSession $ do
             (Just loginId) <- userHandle $ getUserIdByName devModeUser
             pure (toUserID loginId)
 
-          () <- postJSON changeRoleUri $ AssignRole
+          () <- postJSON changeRoleUri AssignRole
                   { _crGroupRef = group
                   , _crUser     = userId
                   , _crRole     = Member

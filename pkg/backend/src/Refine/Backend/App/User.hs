@@ -27,7 +27,6 @@ module Refine.Backend.App.User where
 
 import           Control.Lens ((^.), view)
 import           Control.Monad (void)
-import           Control.Monad.Except (throwError)
 import           Control.Monad.State (gets)
 import           Control.Monad.Reader (ask)
 import           Data.Maybe (isJust)
