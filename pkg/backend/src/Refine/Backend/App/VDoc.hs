@@ -123,13 +123,13 @@ assertPerm
       )
   => ID e -> [Perm] -> AppM db uh ()
 assertPerm eid needPerms = do
-  userId <- currentUser
+  muserId <- currentUser
   join . db $ do
     group <- DB.groupOf eid
     prc   <- DB.processOf eid
-    roles <- DB.getRoles (group ^. groupID) userId
+    roles <- maybe (pure []) (DB.getRoles (group ^. groupID)) muserId
     pure $ do
-      let perms = concatMap (allow (Just userId) prc eid) roles
+      let perms = concatMap (allow muserId prc eid) roles
       unless (Set.fromList needPerms `Set.isSubsetOf` Set.fromList perms) $
         throwError AppUnauthorized
 

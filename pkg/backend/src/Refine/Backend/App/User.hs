@@ -59,12 +59,12 @@ login (Login username (User.PasswordPlain -> password)) = do
 -- | Returns the current ID of the current user if the user
 -- is logged in otherwise trows an AppUserNotLoggedIn error.
 -- TODO: Use elimintars
-currentUser :: App (ID Refine.User)
+currentUser :: App (Maybe (ID Refine.User))
 currentUser = do
   st <- gets (view appUserState)
-  case st of
-    UserLoggedIn user _session -> pure user
-    UserLoggedOut              -> throwError AppUserNotLoggedIn
+  pure $ case st of
+    UserLoggedIn user _session -> Just user
+    UserLoggedOut              -> Nothing
 
 logout :: App ()
 logout = do
