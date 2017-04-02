@@ -97,64 +97,81 @@ mainScreen = mkView "MainScreen" $ \rs -> do
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       let toolbarStatus = rs ^. gsHeaderState . hsToolbarExtensionStatus
-                      leftAside_ $ LeftAsideProps
+                          asideProps = AsideProps
                                      (rs ^. gsContributionState . csMarkPositions)
                                      (rs ^. gsContributionState . csCurrentSelection)
                                      (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
                                      (M.elems (vdoc ^. compositeVDocDiscussions))
                                      (M.elems (vdoc ^. compositeVDocNotes))
+                                     (M.elems (vdoc ^. compositeVDocEdits))
                                      toolbarStatus
+                      leftAside_ asideProps
                       document_ $ DocumentProps (rs ^. RS.gsDocumentState)
                                                 (rs ^. RS.gsContributionState)
                                                 toolbarStatus
                                                 (_compositeVDocVersion vdoc)
-                      rightAside_ (rs ^. gsContributionState . csMarkPositions) (rs ^. gsScreenState)
+                      rightAside_ asideProps
 
 mainScreen_ :: GlobalState -> ReactElementM eventHandler ()
 mainScreen_ !rs = view_ mainScreen "mainScreen_" rs
 
 
-leftAside :: View '[LeftAsideProps]
+leftAside :: View '[AsideProps]
 leftAside = mkView "LeftAside" $ \props ->
     aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
-        let lookupPosition :: ContributionID -> Maybe MarkPosition
-            lookupPosition cid = props ^? leftAsideMarkPositions . markPositionsMap . at cid . _Just
         mconcat $ map (\d -> discussionBubble_ (SpecialBubbleProps
                                                  (ContribIDDiscussion (d ^. compositeDiscussion . discussionID))
-                                                 (lookupPosition $ ContribIDDiscussion (d ^. compositeDiscussion . discussionID))
-                                                 (_leftAsideHighlightedBubble props)
-                                                 (_leftAsideScreenState props)
+                                                 (lookupPosition props $ ContribIDDiscussion (d ^. compositeDiscussion . discussionID))
+                                                 (props ^. asideHighlightedBubble)
+                                                 (props ^. asideScreenState)
                                                )
                                                (elemText (DT.rootLabel (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
-                      (_leftAsideDiscussions props)
+                      (props ^. asideDiscussions)
         mconcat $ map (\n -> noteBubble_ (SpecialBubbleProps
                                            (ContribIDNote (n ^. noteID))
-                                           (lookupPosition $ ContribIDNote (n ^. noteID))
-                                           (_leftAsideHighlightedBubble props)
-                                           (_leftAsideScreenState props)
+                                           (lookupPosition props $ ContribIDNote (n ^. noteID))
+                                           (_asideHighlightedBubble props)
+                                           (_asideScreenState props)
                                          )
                                          (elemText (n ^. noteText)))
-                      (_leftAsideNotes props)
+                      (props ^. asideNotes)
 {- TODO: later
-        questionBubble_ (SpecialBubbleProps 3 (_leftAsideMarkPositions props) (_leftAsideScreenState props)) $ do
+        questionBubble_ (SpecialBubbleProps 3 (_asideMarkPositions props) (_asideScreenState props)) $ do
             span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
 -}
-        quickCreate_ $ QuickCreateProps "annotation" (_leftAsideCurrentSelection props) (_leftAsideScreenState props) (_leftAsideQuickCreateInfo props)  -- RENAME: annotation => comment
+        quickCreate_ $ QuickCreateProps "annotation"  -- RENAME: annotation => comment
+            (props ^. asideCurrentSelection)
+            (props ^. asideScreenState)
+            (props ^. asideQuickCreateInfo)
 
 
-leftAside_ :: LeftAsideProps -> ReactElementM eventHandler ()
+leftAside_ :: AsideProps -> ReactElementM eventHandler ()
 leftAside_ !props = view_ leftAside "leftAside_" props
 
 
-rightAside :: View '[(RS.MarkPositions, SC.ScreenState)]
-rightAside = mkView "RightAside" $ \(_markPositions, _screenState) ->
-    aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do -- RENAME: modifications => ??
-      mempty
-    {- TODO: later
-            editBubble_ 2 markPositions screenState $ do
-                span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
-    -}
+rightAside :: View '[AsideProps]
+rightAside = mkView "RightAside" $ \props ->
+  aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: modifications => edit
+    mconcat $ map (\e -> editBubble_ (SpecialBubbleProps
+                                       (ContribIDEdit (e ^. editID))
+                                       (lookupPosition props $ ContribIDEdit (e ^. editID))
+                                       (props ^. asideHighlightedBubble)
+                                       (props ^. asideScreenState)
+                                     )
+                                     (elemText (e ^. editDesc)))
+                  (props ^. asideEdits)
 
-rightAside_ :: RS.MarkPositions -> SC.ScreenState -> ReactElementM eventHandler ()
-rightAside_ !markPositions !screenState = view_ rightAside "rightAside_" (markPositions, screenState)
+    quickCreate_ $ QuickCreateProps "modification"  -- RENAME: modification => edit
+      (props ^. asideCurrentSelection)
+      (props ^. asideScreenState)
+      (props ^. asideQuickCreateInfo)
+
+rightAside_ :: AsideProps -> ReactElementM eventHandler ()
+rightAside_ !props = view_ rightAside "rightAside_" props
+
+
+-- * helpers
+
+lookupPosition :: AsideProps -> ContributionID -> Maybe MarkPosition
+lookupPosition props cid = props ^? asideMarkPositions . markPositionsMap . at cid . _Just
