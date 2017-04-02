@@ -29,6 +29,7 @@ import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Header.Types
+import           Refine.Frontend.Types
 import           Refine.Prelude.TH (makeRefineType)
 
 

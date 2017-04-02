@@ -31,10 +31,11 @@ import           React.Flux (registerInitialStore, readStoreData)
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Types
-import qualified Refine.Frontend.Screen.Types as SC
+import           Refine.Frontend.Screen.Types
+import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Style
 import           Refine.Frontend.Test.Enzyme
-import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Types
 
 
 cnid :: Int64 -> ContributionID
@@ -46,10 +47,10 @@ spec = do
   let contributionId = cnid 99
       iconSide = "the-icon-side"
       iconStyle = ("the-icon-name", "the-icon-style")
-      markPosition = Just (MarkPosition (SC.OffsetFromDocumentTop (140 + 180)) (SC.OffsetFromDocumentTop (160 + 180)))
+      markPosition = Just (MarkPosition (OffsetFromDocumentTop (140 + 180)) (OffsetFromDocumentTop (160 + 180)))
       highlight = Nothing
       actions = []
-      screenState = SC.ScreenState 95 0 SC.Desktop
+      screenState = ScreenState 95 0 Desktop
       bubbleProps = BubbleProps contributionId iconSide iconStyle markPosition highlight actions screenState
 
   describe "The bubble_ component" $ do

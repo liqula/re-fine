@@ -27,20 +27,6 @@ import GHC.Generics (Generic)
 import Refine.Prelude.TH (makeRefineType)
 
 
--- | `viewport` is the browser window (the visible part of the `document`, or `page`).  See
--- `/docs/frontend/offsets.pdf`.
-newtype OffsetFromViewportTop = OffsetFromViewportTop { _unOffsetFromViewportTop :: Int }
-  deriving (Show, Generic, Eq, Ord, Num)
-
--- | Distance between document top and viewport top.  See `/docs/frontend/offsets.pdf`.
-newtype ScrollOffsetOfViewport = ScrollOffsetOfViewport { _unScrollOffsetOfViewport :: Int }
-  deriving (Show, Generic, Eq, Ord, Num)
-
--- | Distance between document top and node (e.g., `<mark>` or `</mark>`).
-newtype OffsetFromDocumentTop = OffsetFromDocumentTop { _unOffsetFromDocumentTop :: Int }
-  deriving (Show, Generic, Eq, Ord, Num)
-
-
 data ScreenAction =
     AddHeaderHeight Int
   | SetWindowWidth Int
@@ -59,9 +45,6 @@ emptyScreenState :: ScreenState
 emptyScreenState = ScreenState 0 0 Desktop
 
 
-makeRefineType ''OffsetFromViewportTop
-makeRefineType ''ScrollOffsetOfViewport
-makeRefineType ''OffsetFromDocumentTop
 makeRefineType ''ScreenState
 makeRefineType ''ScreenAction
 makeRefineType ''WindowSize

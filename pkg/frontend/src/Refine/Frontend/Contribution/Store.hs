@@ -29,6 +29,7 @@ import qualified Data.Map.Strict as M
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
 import qualified Refine.Frontend.Header.Types as HT
+import           Refine.Frontend.Types
 
 
 contributionStateUpdate :: ContributionAction -> ContributionState -> ContributionState

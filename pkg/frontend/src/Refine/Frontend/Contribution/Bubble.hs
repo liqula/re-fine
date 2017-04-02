@@ -35,7 +35,6 @@ import           Web.HttpApiData (toUrlPiece)
 import           Refine.Common.Types.Contribution
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Screen.Calculations
-import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Style

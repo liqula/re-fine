@@ -28,10 +28,10 @@ import           React.Flux.Internal (HandlerArg(..), PropertyOrHandler(..))
 import           Refine.Frontend.Document.FFI.Types (unsafeMkEditorState, unEditorState)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Document.VDoc (vdocToHTML)
-import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import qualified Refine.Frontend.ThirdPartyViews as TP (editor_)
+import           Refine.Frontend.Types
 
 
 document :: View '[DocumentProps]

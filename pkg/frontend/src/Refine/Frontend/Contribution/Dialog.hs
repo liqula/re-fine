@@ -39,13 +39,14 @@ import           Refine.Frontend.ThirdPartyViews (skylight_)
 import           Refine.Frontend.Contribution.Types
 import qualified Refine.Frontend.Colors as C
 import           Refine.Frontend.CS
-import           Refine.Frontend.TKey
+import           Refine.Frontend.Icon
+import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Style
-import           Refine.Frontend.Icon
-import           Refine.Frontend.Icon.Types
+import           Refine.Frontend.TKey
+import           Refine.Frontend.Types
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 

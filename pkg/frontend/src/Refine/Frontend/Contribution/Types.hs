@@ -25,11 +25,10 @@ module Refine.Frontend.Contribution.Types where
 
 import           Control.DeepSeq
 import           Control.Lens (makeLenses)
-import           Data.Aeson (toJSON, parseJSON, object, (.=), (.:), (.:?), withObject)
+import           Data.Aeson (toJSON, parseJSON, object, (.=), withObject)
 import           Data.Aeson.Types (FromJSON, ToJSON, Value, Parser)
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as M
-import           Data.Maybe (catMaybes)
 import           Data.String.Conversions
 import           GHC.Generics (Generic)
 import           Text.HTML.Parser (Attr)
@@ -40,43 +39,7 @@ import Refine.Frontend.Header.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
 import Refine.Prelude.TH (makeRefineType)
-import Refine.Prelude.Aeson ((.=?))
 
-
-data Range = Range
-    { _rangeStartPoint   :: Maybe ChunkPoint
-    , _rangeEndPoint     :: Maybe ChunkPoint
-    , _rangeTopOffset    :: OffsetFromViewportTop
-    , _rangeBottomOffset :: OffsetFromViewportTop
-    , _rangeScrollOffset :: ScrollOffsetOfViewport
-    }
-    deriving (Show, Eq, Generic, NFData)
-
-makeLenses ''Range
-
-instance FromJSON Range where
-    parseJSON = withObject "Range" $ \v -> Range <$>
-                             v .:? "start" <*>
-                             v .:? "end" <*>
-                             v .: "top" <*>
-                             v .: "bottom" <*>
-                             v .: "scrollOffset"
-
-instance ToJSON Range where
-    toJSON (Range sp ep t b s) = object $
-      catMaybes [ "start" .=? sp
-                , "end"   .=? ep
-                ]
-      <> [ "top"          .= t
-         , "bottom"       .= b
-         , "scrollOffset" .= s
-         ]
-
-data Selection =
-    NothingSelected
-  | NothingSelectedButUpdateTriggered OffsetFromDocumentTop  -- TODO when can this happen?
-  | RangeSelected Range OffsetFromDocumentTop
-  deriving (Show, Eq, Generic)
 
 -- | for overlay
 newtype CommentInputState = CommentInputState
@@ -169,7 +132,6 @@ emptyContributionState = ContributionState NothingSelected Nothing Nothing Edito
 
 makeRefineType ''CommentInputState
 makeRefineType ''CommentKind
-makeRefineType ''Selection
 makeRefineType ''ContributionEditorData
 makeRefineType ''ContributionAction
 makeRefineType ''ContributionState

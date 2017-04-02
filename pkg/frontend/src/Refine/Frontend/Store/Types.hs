@@ -33,6 +33,7 @@ import Refine.Frontend.Header.Types
 import Refine.Frontend.Login.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
+import Refine.Frontend.Types
 import Refine.Prelude.TH (makeRefineType)
 
 

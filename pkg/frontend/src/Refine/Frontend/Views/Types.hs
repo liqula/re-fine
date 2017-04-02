@@ -26,9 +26,10 @@ module Refine.Frontend.Views.Types where
 import           Control.Lens (makeLenses)
 
 import           Refine.Common.Types (ContributionID, CompositeDiscussion, Note, Edit)
-import           Refine.Frontend.Contribution.Types (MarkPositions, Selection)
+import           Refine.Frontend.Contribution.Types (MarkPositions)
 import           Refine.Frontend.Header.Types (ToolbarExtensionStatus)
 import           Refine.Frontend.Screen.Types (ScreenState)
+import           Refine.Frontend.Types (Selection)
 
 
 data AsideProps = AsideProps

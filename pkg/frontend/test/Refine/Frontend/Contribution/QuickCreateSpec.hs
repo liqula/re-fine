@@ -24,23 +24,23 @@ module Refine.Frontend.Contribution.QuickCreateSpec where
 
 import Test.Hspec
 
-import qualified Refine.Frontend.Contribution.Types as RS
 import           Refine.Frontend.Contribution.QuickCreate
-import qualified Refine.Frontend.Screen.Types as RS
+import           Refine.Frontend.Screen.Types
+import           Refine.Frontend.Types
 
 
-rangeTopFor :: Int -> Int -> RS.Range
+rangeTopFor :: Int -> Int -> Range
 rangeTopFor topOffset = rangeFor topOffset 0
 
-rangePosFor :: Int -> Int -> RS.Range
+rangePosFor :: Int -> Int -> Range
 rangePosFor topOffset bottomOffset = rangeFor topOffset bottomOffset 0
 
-rangeFor :: Int -> Int -> Int -> RS.Range
+rangeFor :: Int -> Int -> Int -> Range
 rangeFor topOffset bottomOffset scrollOffset =
-  RS.Range Nothing Nothing
-      (RS.OffsetFromViewportTop topOffset)
-      (RS.OffsetFromViewportTop bottomOffset)
-      (RS.ScrollOffsetOfViewport scrollOffset)
+  Range Nothing Nothing
+      (OffsetFromViewportTop topOffset)
+      (OffsetFromViewportTop bottomOffset)
+      (ScrollOffsetOfViewport scrollOffset)
 
 mh :: Int
 mh = 80 -- menu height
@@ -49,8 +49,8 @@ ih = 44 -- icon height
 ih2 :: Int
 ih2 = ih `div` 2
 
-state :: Int -> RS.ScreenState
-state headerHeight = RS.ScreenState headerHeight 0 RS.Desktop
+state :: Int -> ScreenState
+state headerHeight = ScreenState headerHeight 0 Desktop
 
 spec :: Spec
 spec = do

@@ -57,6 +57,7 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Console
 import           Refine.Frontend.Test.Samples
 import           Refine.Frontend.Translation.Store (translationsUpdate)
+import           Refine.Frontend.Types
 
 
 instance StoreData GlobalState where

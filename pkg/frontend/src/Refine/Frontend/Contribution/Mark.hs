@@ -28,13 +28,13 @@ import           React.Flux
 import           React.Flux.Outdated
 
 import           Refine.Common.Types
-import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Screen.Calculations
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Util (attrToProp)
-import           Refine.Prelude()
+import           Refine.Frontend.Types
+import           Refine.Prelude ()
 
 
 rfMark :: ReactView MarkProps
