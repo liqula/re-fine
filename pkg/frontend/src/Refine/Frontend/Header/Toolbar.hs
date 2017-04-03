@@ -33,8 +33,8 @@ import qualified Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
 
-toolbar :: View '[()]
-toolbar = mkView "Toolbar" $ \() ->
+toolbar :: View '[]
+toolbar = mkView "Toolbar" $ do
   header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
@@ -92,7 +92,7 @@ toolbar = mkView "Toolbar" $ \() ->
             & iconButtonPropsAlignRight   .~ True
 
 toolbar_ :: ReactElementM eventHandler ()
-toolbar_ = view_ toolbar "toolbar_" ()
+toolbar_ = view_ toolbar "toolbar_"
 
 
 newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps

@@ -147,8 +147,8 @@ login_ !errors = view_ (login errors) "login_"
 logoutStyles :: [Style]
 logoutStyles = defaultStyles
 
-logout :: View '[()]
-logout = mkView "Logout" $ \() ->
+logout :: View '[]
+logout = mkView "Logout" $ do
   div_ ["style" @= logoutStyles] $ do
     p_ "Profile page"
     form_ [ "target" $= "#"
@@ -162,7 +162,7 @@ logout = mkView "Logout" $ \() ->
         & iconButtonPropsClickActions .~ [RS.Logout]
 
 logout_ :: ReactElementM eventHandler ()
-logout_ = view_ logout "logout_" ()
+logout_ = view_ logout "logout_"
 
 
 -- * Registration
@@ -170,8 +170,8 @@ logout_ = view_ logout "logout_" ()
 registrationStyles :: [Style]
 registrationStyles = defaultStyles
 
-registration :: FormError -> View '[()]
-registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "" False errors) $ \curState () -> do
+registration :: FormError -> View '[]
+registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "" False errors) $ \curState -> do
   div_ ["style" @= registrationStyles] $ do
     h1_ "Registration"
 
@@ -201,4 +201,4 @@ registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "
                                               $ curState]
 
 registration_ :: FormError -> ReactElementM eventHandler ()
-registration_ !errors = view_ (registration errors) "registration_" ()
+registration_ !errors = view_ (registration errors) "registration_"

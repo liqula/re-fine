@@ -64,8 +64,8 @@ documentAbstract_ :: Abstract -> ReactElementM eventHandler ()
 documentAbstract_ !abstract = view_ documentAbstract "DocumentAbstract_" abstract
 
 
-phases :: View '[()]  -- TODO: can we remove the () altogether?  what then?  what if we have more than one arg?
-phases = mkView "Phases" $ \() ->
+phases :: View '[]
+phases = mkView "Phases" $ do
   div_ ["className" $= "c-vdoc-header__phases"] $ do
     h5_ "Phases"
     div_ ["className" $= "c-vdoc-header__phase c-vdoc-header__phase--active"] "Text Collaboration"
@@ -74,4 +74,4 @@ phases = mkView "Phases" $ \() ->
 
 
 phases_ :: ReactElementM eventHandler ()
-phases_ = view_ phases "Phases_" ()
+phases_ = view_ phases "Phases_"

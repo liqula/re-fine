@@ -32,8 +32,8 @@ import           Refine.Frontend.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
 
-editToolbar :: View '[()]  -- TODO: can we get rid of the ()?  (grep for '[()]', it also happens in one more case!)
-editToolbar = mkView "EditToolbar" $ \() ->
+editToolbar :: View '[]
+editToolbar = mkView "EditToolbar" $ do
   header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
@@ -92,4 +92,4 @@ editToolbar = mkView "EditToolbar" $ \() ->
             & iconButtonPropsClickActions .~ [DocumentAction DocumentEditSave]
 
 editToolbar_ :: ReactElementM eventHandler ()
-editToolbar_ = view_ editToolbar "editToolbar_" ()
+editToolbar_ = view_ editToolbar "editToolbar_"
