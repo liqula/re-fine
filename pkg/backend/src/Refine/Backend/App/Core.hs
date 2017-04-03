@@ -138,16 +138,19 @@ makeRefineType ''AppError
 appIO :: IO a -> AppM db uh a
 appIO = AppM . liftIO
 
-db :: db a -> AppM db uh a
-db m = AppM $ do
+dbFilter :: Maybe Filter -> db a -> AppM db uh a
+dbFilter mfltr m = AppM $ do
   mu <- user <$> gets (view appUserState)
-  (Nat dbNat) <- ($ DBContext mu) <$> view appDBNat
+  (Nat dbNat) <- ($ DBContext mu mfltr) <$> view appDBNat
   r <- liftIO (runExceptT (dbNat m))
   leftToError AppDBError r
   where
     user = \case
       UserLoggedOut     -> Nothing
       UserLoggedIn u _s -> Just u
+
+db :: db a -> AppM db uh a
+db = dbFilter Nothing
 
 docRepo :: DocRepo a -> AppM db uh a
 docRepo m = AppM $ do
