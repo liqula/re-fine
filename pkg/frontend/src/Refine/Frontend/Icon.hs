@@ -80,7 +80,7 @@ iconButtonPropsToStyles :: IconButtonProps -> [Style]
 iconButtonPropsToStyles props = alpos <> curpoint
   where
     alpos = case props ^. iconButtonPropsPosition of
-              Just pos  -> [StyleInt "top" pos]
+              Just pos  -> [StylePx "top" pos]
               Nothing   -> []
     curpoint = [StyleST "cursor" "pointer" | not (props ^. iconButtonPropsDisabled)]
 

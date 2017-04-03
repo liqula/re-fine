@@ -62,8 +62,8 @@ dialogStyles = [ -- Style "display" ("block" :: String)
                  -- Style "padding" ("3rem 1.0rem 1.0rem" :: String)
 
                   StylePx "width" dialogWidth
-                , StyleInt "marginLeft" 0
-                , StyleInt "marginTop" 0
+                , StylePx "marginLeft" 0
+                , StylePx "marginTop" 0
                 , StyleInt "zIndex" 6050
 
                 , StyleST "position" "absolute"
@@ -114,8 +114,8 @@ showComment = mkView "ShowComment" $ \props ->
            , on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentOverlay)
            , "dialogStyles" @= ((props ^. contentStyle) <> extraStyles)
            , "overlayStyles" @= overlayStyles
-           , "closeButtonStyle" @= [StyleST "top" "", StyleInt "bottom" 0]
-           , "titleStyle" @= [StyleInt "margin" 0]
+           , "closeButtonStyle" @= [StylePx "top" 0, StylePx "bottom" 0]
+           , "titleStyle" @= [StylePx "margin" 0]
            ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
@@ -278,7 +278,7 @@ addComment __ = mkView "AddComment" $ \props ->
              , on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentEditor)
              , "dialogStyles" @= (vdoc_overlay_content__add_comment <> extraStyles)
              , "overlayStyles" @= overlayStyles
-             , "titleStyle" @= [StyleInt "margin" 0]
+             , "titleStyle" @= [StylePx "margin" 0]
              ]  $ do
 
       icon_ (IconProps "c-vdoc-overlay-content" False ("icon-New_Comment", "dark") XL)
@@ -346,8 +346,8 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
         textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
                   , "className" $= "o-wysiwyg o-form-input__textarea"
                   , "style" @= [ StyleST "resize" "none"
-                               , StyleInt "width" 600
-                               , StyleInt "height" 240
+                               , StylePx "width" 600
+                               , StylePx "height" 240
                                ]
                   -- Update the current state with the current text in the textbox, sending no actions
                   , onChange $ \evt state -> ([], Just $ state & commentInputStateText .~ target evt "value")

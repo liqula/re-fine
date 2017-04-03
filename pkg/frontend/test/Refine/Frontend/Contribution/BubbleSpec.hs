@@ -64,7 +64,7 @@ spec = do
 
     it "renders the top style with the correct value" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      is wrapper (PropertySelector [Prop "style" [StyleInt "top" 145]]) `shouldReturn` True
+      is wrapper (PropertySelector [Prop "style" [StylePx "top" 145]]) `shouldReturn` True
 
     it "has a child with the icon-bg class" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty

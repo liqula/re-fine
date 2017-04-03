@@ -111,7 +111,7 @@ spec = do
 
     it "renders the position when it receives a position value" $ do
       wrapper <- shallow $ iconButton_ (iconButtonTestProps & iconButtonPropsPosition .~ Just 101)
-      is wrapper (PropertySelector [Prop "style" [StyleInt "top" 101]]) `shouldReturn` True
+      is wrapper (PropertySelector [Prop "style" [StylePx "top" 101]]) `shouldReturn` True
 
     it "does not render the position when it receives no position value" $ do
       wrapper <- shallow $ iconButton_ iconButtonTestProps
@@ -171,7 +171,7 @@ spec = do
 
     it "always renders the position that is passed to it" $ do
       wrapper <- shallow (iconButton_ theProps)
-      is wrapper (PropertySelector [Prop "style" [StyleInt "top" 377]]) `shouldReturn` True
+      is wrapper (PropertySelector [Prop "style" [StylePx "top" 377]]) `shouldReturn` True
 
     it "never renders the right-alignment flag" $ do
       wrapper <- shallow (iconButton_ theProps)
