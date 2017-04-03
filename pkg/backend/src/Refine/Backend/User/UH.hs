@@ -33,19 +33,18 @@ uhIO :: IO a -> UH a
 uhIO = UH . liftIO
 
 
--- TODO: Align
 instance C.UserHandle UH where
   type UserHandleInit UH = UserDB
 
   uhNat db = Nat ((`runReaderT` UserHandleContext db) . unUH)
 
-  createUser     = Refine.Backend.User.UH.createUser
-  getUserById    = Refine.Backend.User.UH.getUserById
-  getUserIdByName  = Refine.Backend.User.UH.getUserIdByName
+  createUser      = Refine.Backend.User.UH.createUser
+  getUserById     = Refine.Backend.User.UH.getUserById
+  getUserIdByName = Refine.Backend.User.UH.getUserIdByName
 
-  authUser       = Refine.Backend.User.UH.authUser
-  verifySession  = Refine.Backend.User.UH.verifySession
-  destroySession = Refine.Backend.User.UH.destroySession
+  authUser        = Refine.Backend.User.UH.authUser
+  verifySession   = Refine.Backend.User.UH.verifySession
+  destroySession  = Refine.Backend.User.UH.destroySession
 
 
 createUser :: User -> UH (Either CreateUserError LoginId)

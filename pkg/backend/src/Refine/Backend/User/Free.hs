@@ -74,19 +74,18 @@ destroySession_ :: SessionId -> FreeUH ()
 destroySession_ s = liftF $ DestroySession s id
 
 
--- TODO: Align
 instance UserHandle FreeUH where
   type UserHandleInit FreeUH = MockUH_
 
-  uhNat          = freeUHNat
+  uhNat           = freeUHNat
 
-  createUser     = createUser_
-  getUserById    = getUserById_
+  createUser      = createUser_
+  getUserById     = getUserById_
   getUserIdByName = getUserIdByName_
 
-  authUser       = authUser_
-  verifySession  = verifySession_
-  destroySession = destroySession_
+  authUser        = authUser_
+  verifySession   = verifySession_
+  destroySession  = destroySession_
 
 
 interpret :: (Monad m) => MockUH m -> FreeUH a -> m a
@@ -122,25 +121,23 @@ freeUHNat m = Nat (interpret m)
 
 type MockUH_ = MockUH (ExceptT UserHandleError IO)
 
--- TODO: Align
 data MockUH m = MockUH
-  { mockCreateUser     :: User    -> m (Either CreateUserError LoginId)
-  , mockGetUserById    :: LoginId -> m (Maybe User)
+  { mockCreateUser      :: User    -> m (Either CreateUserError LoginId)
+  , mockGetUserById     :: LoginId -> m (Maybe User)
   , mockGetUserIdByName :: Username -> m (Maybe LoginId)
-  , mockAuthUser       :: ST -> PasswordPlain -> NominalDiffTime -> m (Maybe SessionId)
-  , mockVerifySession  :: SessionId -> m (Maybe LoginId)
-  , mockDestroySession :: SessionId -> m ()
+  , mockAuthUser        :: ST -> PasswordPlain -> NominalDiffTime -> m (Maybe SessionId)
+  , mockVerifySession   :: SessionId -> m (Maybe LoginId)
+  , mockDestroySession  :: SessionId -> m ()
   }
 
--- TODO: Align
 mockLogin :: Monad m => MockUH m
 mockLogin = MockUH
-  { mockCreateUser     = \_u -> pure . Right $ fromUserID userId
-  , mockGetUserById    = \_l -> pure . Just $ error "mockLogin: No user information available."
+  { mockCreateUser      = \_u -> pure . Right $ fromUserID userId
+  , mockGetUserById     = \_l -> pure . Just $ error "mockLogin: No user information available."
   , mockGetUserIdByName = \_u -> pure . Just $ fromUserID userId
-  , mockAuthUser       = mockAuthUserImpl
-  , mockVerifySession  = \_s -> pure . Just $ fromUserID userId
-  , mockDestroySession = \_s -> pure ()
+  , mockAuthUser        = mockAuthUserImpl
+  , mockVerifySession   = \_s -> pure . Just $ fromUserID userId
+  , mockDestroySession  = \_s -> pure ()
   }
   where
     userId = ID 0

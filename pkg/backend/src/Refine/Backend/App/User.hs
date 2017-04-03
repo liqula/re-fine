@@ -55,9 +55,8 @@ login (Login username (User.PasswordPlain -> password)) = do
   void $ setUserSession (toUserID loginId) (UserSession session)
   pure username
 
--- | Returns the current ID of the current user if the user
--- is logged in otherwise trows an AppUserNotLoggedIn error.
--- TODO: Use elimintars
+-- | Returns (Just (current ID)) of the current user if the user
+-- is logged in otherwise Nothing.
 currentUser :: App (Maybe (ID Refine.User))
 currentUser = do
   st <- gets (view appUserState)

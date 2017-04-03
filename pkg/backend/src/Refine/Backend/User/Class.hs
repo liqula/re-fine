@@ -14,16 +14,15 @@ import Refine.Common.Types.User (Username)
 
 type MonadUserHandle uh = (Monad uh, UserHandle uh)
 
--- TODO: Align
 class UserHandle uh where
   type family UserHandleInit uh
 
-  uhNat          :: UserHandleInit uh -> UHNat uh
+  uhNat           :: UserHandleInit uh -> UHNat uh
 
-  createUser     :: User    -> uh (Either CreateUserError LoginId)
-  getUserById    :: LoginId -> uh (Maybe User)
-  getUserIdByName  :: Username -> uh (Maybe LoginId)
+  createUser      :: User    -> uh (Either CreateUserError LoginId)
+  getUserById     :: LoginId -> uh (Maybe User)
+  getUserIdByName :: Username -> uh (Maybe LoginId)
 
-  authUser       :: ST -> PasswordPlain -> NominalDiffTime -> uh (Maybe SessionId)
-  verifySession  :: SessionId -> uh (Maybe LoginId)
-  destroySession :: SessionId -> uh ()
+  authUser        :: ST -> PasswordPlain -> NominalDiffTime -> uh (Maybe SessionId)
+  verifySession   :: SessionId -> uh (Maybe LoginId)
+  destroySession  :: SessionId -> uh ()
