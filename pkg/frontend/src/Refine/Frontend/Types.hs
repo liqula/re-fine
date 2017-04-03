@@ -76,6 +76,7 @@ makeRefineType ''OffsetFromDocumentTop
 data Range = Range
     { _rangeStartPoint   :: Maybe ChunkPoint
     , _rangeEndPoint     :: Maybe ChunkPoint
+    , _rangeDocTopOffset :: OffsetFromDocumentTop
     , _rangeTopOffset    :: OffsetFromViewportTop
     , _rangeBottomOffset :: OffsetFromViewportTop
     , _rangeScrollOffset :: ScrollOffsetOfViewport
@@ -90,24 +91,18 @@ instance FromJSON Range where
     parseJSON = withObject "Range" $ \v -> Range <$>
                              v .:? "start" <*>
                              v .:? "end" <*>
+                             v .: "doctop" <*>
                              v .: "top" <*>
                              v .: "bottom" <*>
                              v .: "scrollOffset"
 
 instance ToJSON Range where
-    toJSON (Range sp ep t b s) = object $
+    toJSON (Range sp ep dt t b s) = object $
       catMaybes [ "start" .=? sp
                 , "end"   .=? ep
                 ]
       <> [ "top"          .= t
+         , "doctop"       .= dt
          , "bottom"       .= b
          , "scrollOffset" .= s
          ]
-
-data Selection =
-    NothingSelected
-  | NothingSelectedButUpdateTriggered OffsetFromDocumentTop  -- TODO when can this happen?
-  | RangeSelected Range OffsetFromDocumentTop
-  deriving (Show, Eq, Generic)
-
-makeRefineType ''Selection

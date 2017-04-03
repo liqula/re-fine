@@ -7,7 +7,7 @@
         );
     };
 
-    target.refine$getSelectionRange = function() {
+    target.refine$getSelectionRange = function(doctop) {
         // if there is no valid selection, return the empty string.
         // this will return very fast, and aeson will parse it to
         // 'Nothing' in haskell.
@@ -52,6 +52,7 @@
 
             result.start = getSelectionPoint(range.startContainer, range.startOffset);
             result.end = getSelectionPoint(range.endContainer, range.endOffset);
+            result.doctop = doctop;
             result.top = range.startContainer.parentElement.getBoundingClientRect().top;
             result.bottom = range.endContainer.parentElement.getBoundingClientRect().bottom;
             result.scrollOffset = typeof( target.pageYOffset ) === 'number' && target.pageYOffset

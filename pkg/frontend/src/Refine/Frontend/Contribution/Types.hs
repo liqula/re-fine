@@ -31,26 +31,20 @@ import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as M
 import           Data.String.Conversions
 import           GHC.Generics (Generic)
+import           GHCJS.Types
 import           Text.HTML.Parser (Attr)
 import           Text.Read (readMaybe)
 
 import Refine.Common.Types
-import Refine.Frontend.Header.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
 import Refine.Prelude.TH (makeRefineType)
 
 
--- | for overlay
 newtype CommentInputState = CommentInputState
   { _commentInputStateText :: ST
   } deriving (Show, Eq, Generic)
 
-data CommentKind =
-    CommentKindNote
-  -- | CommentKindQuestion
-  | CommentKindDiscussion
-  deriving (Show, Eq, Generic)
 
 -- | Mark positions updates have experienced long cascades of changing values for the same
 -- 'ContributionID'.  Now the 'ScheduleAddMarkPosition' handler will store new additions in a
@@ -69,6 +63,10 @@ data MarkPositions =
       , _markPositionsScheduled :: M.Map ContributionID MarkPosition
       }
   deriving (Show, Generic)
+
+instance Monoid MarkPositions where
+  mempty = MarkPositions mempty mempty
+  mappend (MarkPositions m s) (MarkPositions m' s') = MarkPositions (m <> m') (s <> s')
 
 instance Eq MarkPositions where
   MarkPositions m _ == MarkPositions m' _ = m == m'
@@ -94,59 +92,51 @@ mapFromValue = withObject "MarkPositions"
                          <*> parseJSON v)
   . HashMap.toList
 
-data ContributionEditorData =
-    EditorIsVisible (Maybe Range)
-  | EditorIsHidden
-  deriving (Show, Eq, Generic)
-
 
 data ContributionAction =
-    UpdateSelection Selection ToolbarExtensionStatus
+    TriggerUpdateSelection (Maybe OffsetFromDocumentTop)
+          -- ^ pixels between article top and mouse/finger from the mouse/touch release event.
+          --   'Nothing' means clear existing selection.
+  | UpdateSelection (Maybe Selection)
   | ShowContributionDialog ContributionID
   | HideCommentOverlay
-  | ShowCommentEditor (Maybe Range)
+  | ShowCommentEditor
   | HideCommentEditor
   | SetCommentKind CommentKind
-  | SubmitComment ST (Maybe CommentKind) (Maybe Range)
-  | SubmitEdit
-  | ScheduleAddMarkPosition ContributionID MarkPosition  -- see 'MarkPosition'
-  | DischargeAddMarkPositions                            -- see 'MarkPosition'
+  | SubmitComment ST (Maybe CommentKind)
+  | ScheduleAddMarkPosition ContributionID MarkPosition  -- ^ see 'MarkPosition'
+  | DischargeAddMarkPositions                            -- ^ see 'MarkPosition'
   | HighlightMarkAndBubble ContributionID
   | UnhighlightMarkAndBubble
   deriving (Show, Eq, Generic)
 
 
 data ContributionState = ContributionState
-  { _csCurrentSelection         :: Selection
+  { _csCurrentSelection         :: Maybe Selection
   , _csCommentKind              :: Maybe CommentKind
   , _csDisplayedContributionID  :: Maybe ContributionID
-  , _csCommentEditorIsVisible   :: ContributionEditorData
+  , _csCommentEditorVisible     :: Bool  -- ^ (the comment or edit dialog, that is.  not the vdoc editor.)
   , _csHighlightedMarkAndBubble :: Maybe ContributionID
+  , _csQuickCreateShowState     :: QuickCreateShowState
   , _csMarkPositions            :: MarkPositions
   } deriving (Show, Eq, Generic)
 
+data CommentKind =
+    CommentKindNote
+  -- | CommentKindQuestion
+  | CommentKindDiscussion
+  deriving (Show, Eq, Generic)
 
 emptyContributionState :: ContributionState
-emptyContributionState = ContributionState NothingSelected Nothing Nothing EditorIsHidden Nothing (MarkPositions mempty mempty)
-
-
-makeRefineType ''CommentInputState
-makeRefineType ''CommentKind
-makeRefineType ''ContributionEditorData
-makeRefineType ''ContributionAction
-makeRefineType ''ContributionState
-
-makeRefineType ''MarkPosition
-
-makeLenses ''MarkPositions
-
-deriving instance NFData MarkPositions
-
-instance ToJSON MarkPositions where
-  toJSON = mapToValue . _markPositionsMap
-
-instance FromJSON MarkPositions where
-  parseJSON = fmap (`MarkPositions` mempty) . mapFromValue
+emptyContributionState = ContributionState
+  { _csCurrentSelection         = Nothing
+  , _csCommentKind              = Nothing
+  , _csDisplayedContributionID  = Nothing
+  , _csCommentEditorVisible     = False
+  , _csHighlightedMarkAndBubble = Nothing
+  , _csQuickCreateShowState     = QuickCreateNotShown
+  , _csMarkPositions            = mempty
+  }
 
 
 data MarkProps = MarkProps
@@ -156,8 +146,6 @@ data MarkProps = MarkProps
   , _markPropsDisplayedContribution :: Maybe ContributionID
   }
   deriving (Eq)
-
-makeLenses ''MarkProps
 
 data BubbleProps = BubbleProps
   { _bubblePropsDataContribId     :: ContributionID
@@ -170,8 +158,6 @@ data BubbleProps = BubbleProps
   }
   deriving (Eq)
 
-makeLenses ''BubbleProps
-
 data SpecialBubbleProps = SpecialBubbleProps
   { _specialBubblePropsContributionId    :: ContributionID
   , _specialBubblePropsMarkPosition      :: Maybe MarkPosition
@@ -180,4 +166,50 @@ data SpecialBubbleProps = SpecialBubbleProps
   }
   deriving (Eq)
 
+data QuickCreateProps = QuickCreateProps
+  { _quickCreateSide        :: QuickCreateSide
+  , _quickCreateShowState   :: QuickCreateShowState
+  , _quickCreateSelection   :: Maybe Range
+  , _quickCreateScreenState :: ScreenState
+  }
+  deriving (Eq)
+
+data QuickCreateSide = QuickCreateComment | QuickCreateEdit
+  deriving (Show, Eq, Generic)
+
+renderQuickCreateSide :: QuickCreateSide -> JSString
+renderQuickCreateSide QuickCreateComment = "o-add-annotation"
+renderQuickCreateSide QuickCreateEdit    = "o-add-modification"
+
+data QuickCreateShowState =
+    QuickCreateShown     -- ^ visible
+  | QuickCreateNotShown  -- ^ will be visible when user selects a range
+  | QuickCreateBlocked   -- ^ will not be shown even if user selects a range
+  deriving (Show, Eq, Generic)
+
+
+-- * boilerplate
+
+makeRefineType ''MarkPosition
+makeLenses ''MarkPositions
+
+deriving instance NFData MarkPositions
+
+instance ToJSON MarkPositions where
+  toJSON = mapToValue . _markPositionsMap
+
+instance FromJSON MarkPositions where
+  parseJSON = fmap (`MarkPositions` mempty) . mapFromValue
+
+makeRefineType ''CommentInputState
+makeRefineType ''ContributionAction
+makeRefineType ''ContributionState
+makeRefineType ''CommentKind
+
+makeLenses ''MarkProps
+makeLenses ''BubbleProps
 makeLenses ''SpecialBubbleProps
+makeLenses ''QuickCreateProps
+
+makeRefineType ''QuickCreateSide
+makeRefineType ''QuickCreateShowState

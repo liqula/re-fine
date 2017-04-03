@@ -27,7 +27,7 @@
 module Refine.Frontend.Store where
 
 import           Control.Concurrent (forkIO, yield, threadDelay)
-import           Control.Lens (_Just, (&), (^.), (^?), (^?!), (%~), (.~), to)
+import           Control.Lens (_Just, (&), (^.), (^?), (^?!), (%~), to)
 import           Control.Monad.IO.Class
 import           Control.Monad.State.Class (MonadState, modify)
 import           Control.Monad.Trans.State (StateT, runStateT)
@@ -47,6 +47,7 @@ import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Store (documentStateUpdate, editorStateToVDocVersion)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
+import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Login.Store (loginStateUpdate)
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
@@ -91,17 +92,15 @@ transformGlobalState = transf
 
         -- other effects
         case action of
-            TriggerUpdateSelection releasePositionOnPage toolbarStatus -> do
-                mrange <- getRange
-                let action' = ContributionAction $ UpdateSelection
-                      (case mrange of
-                        Nothing -> NothingSelectedButUpdateTriggered releasePositionOnPage
-                        Just range -> RangeSelected range releasePositionOnPage)
-                      toolbarStatus
-                reDispatchM action'
+            ContributionAction (TriggerUpdateSelection mReleasePositionOnPage) -> do
+                reDispatchM . ContributionAction . UpdateSelection
+                    =<< maybe (pure Nothing) getRange mReleasePositionOnPage
+                removeAllRanges  -- (See also: calls to 'C.highlightRange', 'C.removeHighlights' below.)
 
-            ContributionAction (ShowCommentEditor _) -> do
-                removeAllRanges
+                when (state ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithSelection) $ do
+                  -- (if the comment editor (or dialog) is started via the toolbar extension, this
+                  -- is where it should be started.)
+                  reDispatchM $ ContributionAction ShowCommentEditor
 
             ContributionAction (ScheduleAddMarkPosition _ _) -> do
                 let nothingScheduled = M.null $ state ^. gsContributionState . csMarkPositions . markPositionsScheduled
@@ -109,11 +108,6 @@ transformGlobalState = transf
                 when nothingScheduled . void . liftIO . forkIO $ do
                   threadDelay $ delayMiliSecs * 1000
                   dispatchAndExec $ ContributionAction DischargeAddMarkPositions
-
-            DocumentAction (TriggerDocumentEditStart estate) -> do
-                mrange <- getRange
-                removeAllRanges
-                reDispatchM $ DocumentAction (DocumentEditStart $ estate & documentEditStateSelection .~ mrange)
 
             _ -> pure ()
 
@@ -124,7 +118,7 @@ transformGlobalState = transf
     pureTransform action state = state
       & gsVDoc                       %~ vdocUpdate action
       & gsVDocList                   %~ vdocListUpdate action
-      & gsContributionState          %~ maybe id contributionStateUpdate (action ^? _ContributionAction)
+      & gsContributionState          %~ contributionStateUpdate action
       & gsHeaderState                %~ headerStateUpdate action
       & gsDocumentState              %~ documentStateUpdate action (state ^? gsVDoc . _Just . C.compositeVDocVersion)
       & gsScreenState                %~ maybe id screenStateUpdate (action ^? _ScreenAction)
@@ -164,9 +158,9 @@ vdocUpdate action (Just vdoc) = Just $ case action of
           & C.compositeVDocVersion
               %~ C.insertMoreMarks [ContribEdit edit]
 
-    ContributionAction (ShowCommentEditor (Just range))
+    ContributionAction (UpdateSelection (Just range))
       -> vdoc & C.compositeVDocVersion %~ C.highlightRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
-    ContributionAction HideCommentEditor
+    ContributionAction (UpdateSelection Nothing)
       -> vdoc & C.compositeVDocVersion %~ C.removeHighlights
 
     _ -> vdoc
@@ -210,19 +204,18 @@ emitBackendCallsFor action state = case action of
 
     -- contributions
 
-    ContributionAction (SubmitComment text kind forRange) -> do
-      -- here we need to distinguish which comment category we want to submit
-      -- check the state and what the user selected there
-      -- (FIXME: the new correct technical term for 'category' is 'kind'.)
+    ContributionAction (SubmitComment text kind) -> do
+      let forRange :: C.ChunkRange
+          forRange = state ^. gsContributionState . csCurrentSelection . to createChunkRange
       case kind of
         Just CommentKindDiscussion ->
           addDiscussion (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
-                     (C.CreateDiscussion text True (createChunkRange forRange)) $ \case
+                     (C.CreateDiscussion text True forRange) $ \case
             (Left rsp) -> handleError rsp (const [])
             (Right discussion) -> dispatchM $ AddDiscussion discussion
         Just CommentKindNote ->
           addNote (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
-                     (C.CreateNote text True (createChunkRange forRange)) $ \case
+                     (C.CreateNote text True forRange) $ \case
             (Left rsp) -> handleError rsp (const [])
             (Right note) -> dispatchM $ AddNote note
         Nothing -> pure ()
@@ -235,7 +228,7 @@ emitBackendCallsFor action state = case action of
             cid :: C.Create C.Edit
             cid = C.CreateEdit
                   { C._createEditDesc  = "..."                          -- TODO: #233
-                  , C._createEditRange = estate ^. documentEditStateSelection . to createChunkRange
+                  , C._createEditRange = state ^. gsContributionState . csCurrentSelection . to createChunkRange
                   , C._createEditVDoc  = C.downgradeVDocVersionWR newvers
                   , C._createEditKind  = estate ^. documentEditStateKind
                   , C._createEditMotiv = "..."                          -- TODO: #233
@@ -359,12 +352,12 @@ dispatchAndExecMany as = liftIO . reactFluxWorkAroundForkIO $ do
 
 -- * ranges and selections
 
-getRange :: MonadIO m => m (Maybe Range)
-getRange = liftIO $ decode . cs . unpack <$> js_getRange
+getRange :: MonadIO m => OffsetFromDocumentTop -> m (Maybe Range)
+getRange pos = liftIO $ decode . cs . unpack <$> js_getRange pos
 
 foreign import javascript unsafe
-  "refine$getSelectionRange()"
-  js_getRange :: IO JSString
+  "refine$getSelectionRange($1)"
+  js_getRange :: OffsetFromDocumentTop -> IO JSString
 
 removeAllRanges :: MonadIO m => m ()
 removeAllRanges = liftIO js_removeAllRanges

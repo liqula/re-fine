@@ -29,14 +29,11 @@ import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Header.Types
-import           Refine.Frontend.Types
 import           Refine.Prelude.TH (makeRefineType)
 
 
 data DocumentAction =
-    TriggerDocumentEditStart DocumentEditState
-  | DocumentEditStart DocumentEditState
-  | DocumentEditUpdate DocumentEditState
+    DocumentEditUpdate DocumentEditState
   | DocumentEditSave
   deriving (Show, Eq, Generic)
 
@@ -48,7 +45,6 @@ data DocumentState =
 data DocumentEditState = DocumentEditState
   { _documentEditStateKind      :: EditKind
   , _documentEditStateVal       :: EditorState
-  , _documentEditStateSelection :: Maybe Range
   }
   deriving (Show, Eq, Generic)
 

@@ -33,7 +33,6 @@ import Refine.Frontend.Header.Types
 import Refine.Frontend.Login.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
-import Refine.Frontend.Types
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -84,7 +83,6 @@ data GlobalAction =
   | AddDiscussion CompositeDiscussion
   | AddEdit Edit
   | SaveSelect ST ST
-  | TriggerUpdateSelection OffsetFromDocumentTop ToolbarExtensionStatus
 
     -- i18n
   | LoadTranslations Locale

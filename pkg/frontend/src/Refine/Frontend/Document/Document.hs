@@ -25,6 +25,7 @@ import           Control.Lens ((^.), (.~), (&), to)
 import           React.Flux
 import           React.Flux.Internal (HandlerArg(..), PropertyOrHandler(..))
 
+import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI.Types (unsafeMkEditorState, unEditorState)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Document.VDoc (vdocToHTML)
@@ -41,18 +42,13 @@ document = mkView "Document" $ \props ->
       -> article_ ["className" $= "gr-20 gr-14@desktop editor_wrapper"] $ do
             editor_ $ EditorProps editorState
     DocumentStateView
-      -> article_ [ "id" $= "vdocValue"
+      -> let dispatchUpdate = dispatch . ContributionAction . TriggerUpdateSelection . Just . OffsetFromDocumentTop in
+         article_ [ "id" $= "vdocValue"
                   , "className" $= "gr-20 gr-14@desktop"
-                  , onMouseUp  $ \_ me -> dispatch $
-                      TriggerUpdateSelection (OffsetFromDocumentTop $ mousePageY me) (props ^. dpToolbarStatus)
-                        -- <-- relative to webpage | relative to viewport -> mouseClientY me
-                  , onTouchEnd $ \_ te -> dispatch $
-                      TriggerUpdateSelection (OffsetFromDocumentTop . touchPageY . head $ touches te)
-                                                (props ^. dpToolbarStatus)
+                      -- 'mousePageY': relative to article top; 'mouseClientY': relative to window top
+                  , onMouseUp  $ \_ me -> dispatchUpdate (mousePageY me)
+                  , onTouchEnd $ \_ te -> dispatchUpdate (touchPageY . head . touches $ te)
                   ] $ do
-           -- leftover from p'2016:
-           -- div_ ["className" $= "c-vdoc-overlay"] $ do
-             -- div_ ["className" $= "c-vdoc-overlay__inner"] $ do
            div_ ["className" $= "c-article-content"] $ do
              vdocToHTML (props ^. dpContributionState) (props ^. dpVDocVersion)
 

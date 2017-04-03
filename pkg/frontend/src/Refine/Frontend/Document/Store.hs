@@ -42,7 +42,7 @@ documentStateUpdate :: GlobalAction -> Maybe (VDocVersion 'HTMLWithMarks) -> Doc
 documentStateUpdate (HeaderAction (StartEdit kind)) (Just vdocvers) _state
   = DocumentStateEdit (createEditorState kind vdocvers)
 
-documentStateUpdate (DocumentAction (DocumentEditStart es)) (Just _) state
+documentStateUpdate (DocumentAction (DocumentEditUpdate es)) (Just _) state
   = state & _DocumentStateEdit .~ es
 
 documentStateUpdate (DocumentAction DocumentEditSave) _ _
@@ -57,7 +57,7 @@ createEditorState :: EditKind -> VDocVersion 'HTMLWithMarks -> DocumentEditState
 createEditorState kind (VDocVersion vers) = unsafePerformIO $ do
   let content = convertFromHtml $ tokensFromForest vers
   estate <- createWithContent content
-  pure $ DocumentEditState kind estate Nothing
+  pure $ DocumentEditState kind estate
 
 
 -- | FIXME: there is no validation here.

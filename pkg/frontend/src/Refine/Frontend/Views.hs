@@ -87,8 +87,9 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           -- components that are only temporarily visible:
           showNote_ $ showNoteProps (vdoc ^. compositeVDocNotes) rs
           showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocDiscussions) rs
-          addComment_ __
-            $ AddCommentProps (rs ^. RS.gsContributionState . RS.csCommentEditorIsVisible)
+          addComment_ __ $ AddCommentProps
+                              (rs ^. RS.gsContributionState . RS.csCommentEditorVisible)
+                              (rs ^. RS.gsContributionState . RS.csCurrentSelection)
                               (rs ^. RS.gsContributionState . RS.csCommentKind)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
           notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
@@ -96,8 +97,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           main_ ["role" $= "main"] $ do
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
-                      let toolbarStatus = rs ^. gsHeaderState . hsToolbarExtensionStatus
-                          asideProps = AsideProps
+                      let asideProps = AsideProps
                                      (rs ^. gsContributionState . csMarkPositions)
                                      (rs ^. gsContributionState . csCurrentSelection)
                                      (rs ^. gsContributionState . csHighlightedMarkAndBubble)
@@ -105,12 +105,12 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                                      (M.elems (vdoc ^. compositeVDocDiscussions))
                                      (M.elems (vdoc ^. compositeVDocNotes))
                                      (M.elems (vdoc ^. compositeVDocEdits))
-                                     toolbarStatus
+                                     (rs ^. gsContributionState . csQuickCreateShowState)
                       leftAside_ asideProps
                       document_ $ DocumentProps (rs ^. RS.gsDocumentState)
                                                 (rs ^. RS.gsContributionState)
-                                                toolbarStatus
-                                                (_compositeVDocVersion vdoc)
+                                                (rs ^. gsHeaderState . hsToolbarExtensionStatus)
+                                                (vdoc ^. compositeVDocVersion)
                       rightAside_ asideProps
 
 mainScreen_ :: GlobalState -> ReactElementM eventHandler ()
@@ -136,15 +136,10 @@ leftAside = mkView "LeftAside" $ \props ->
                                          )
                                          (elemText (n ^. noteText)))
                       (props ^. asideNotes)
-{- TODO: later
-        questionBubble_ (SpecialBubbleProps 3 (_asideMarkPositions props) (_asideScreenState props)) $ do
-            span_ "Ut wis is enim ad minim veniam, quis nostrud exerci tution ullam corper suscipit lobortis nisi ut aliquip ex ea commodo consequat. Duis te feugi facilisi. Duis autem dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit au gue duis dolore te feugat nulla facilisi."
--}
-        quickCreate_ $ QuickCreateProps "annotation"  -- RENAME: annotation => comment
+        quickCreate_ $ QuickCreateProps QuickCreateComment
+            (props ^. asideQuickCreateShow)
             (props ^. asideCurrentSelection)
             (props ^. asideScreenState)
-            (props ^. asideQuickCreateInfo)
-
 
 leftAside_ :: AsideProps -> ReactElementM eventHandler ()
 leftAside_ !props = view_ leftAside "leftAside_" props
@@ -162,10 +157,10 @@ rightAside = mkView "RightAside" $ \props ->
                                      (elemText (e ^. editDesc)))
                   (props ^. asideEdits)
 
-    quickCreate_ $ QuickCreateProps "modification"  -- RENAME: modification => edit
+    quickCreate_ $ QuickCreateProps QuickCreateEdit
+      (props ^. asideQuickCreateShow)
       (props ^. asideCurrentSelection)
       (props ^. asideScreenState)
-      (props ^. asideQuickCreateInfo)
 
 rightAside_ :: AsideProps -> ReactElementM eventHandler ()
 rightAside_ !props = view_ rightAside "rightAside_" props

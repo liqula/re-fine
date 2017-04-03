@@ -28,8 +28,9 @@ import           Data.String.Conversions
 import           React.Flux
 
 import           Refine.Common.Types ( EditKind(..) )
-import qualified Refine.Frontend.Header.Types as RS
-import qualified Refine.Frontend.Store.Types as RS
+import           Refine.Frontend.Header.Types
+import           Refine.Frontend.Contribution.Types
+import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
 
@@ -47,16 +48,16 @@ toolbar = mkView "Toolbar" $ do
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Index_desktop", "dark") XXL
             & iconButtonPropsElementName  .~ "btn-index"
             & iconButtonPropsLabel        .~ "index"
-            & iconButtonPropsClickActions .~ [RS.ShowNotImplementedYet]
+            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
           iconButton_ $ toolbarButton
             & iconButtonPropsListKey      .~ "new-comment"
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Comment", "dark") XXL
-            & iconButtonPropsElementName  .~ "btn-add-annotation"
+            & iconButtonPropsElementName  .~ "btn-add-annotation"  -- RENAME
             & iconButtonPropsLabel        .~ "new comment"
-            & iconButtonPropsClickActions .~ [RS.HeaderAction RS.ToggleCommentToolbarExtension]
+            & iconButtonPropsClickActions .~ [HeaderAction ToggleCommentToolbarExtension]
             & iconButtonPropsClickPropag  .~ False
 
           iconButton_ $ toolbarButton
@@ -64,7 +65,7 @@ toolbar = mkView "Toolbar" $ do
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXL
             & iconButtonPropsElementName  .~ "bt-add-modification"  -- RENAME: edit
             & iconButtonPropsLabel        .~ "new edit"
-            & iconButtonPropsClickActions .~ [RS.HeaderAction RS.ToggleEditToolbarExtension]
+            & iconButtonPropsClickActions .~ [ContributionAction (TriggerUpdateSelection Nothing), HeaderAction ToggleEditToolbarExtension]
             & iconButtonPropsClickPropag  .~ False
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
@@ -74,21 +75,21 @@ toolbar = mkView "Toolbar" $ do
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" False ("icon-Comment", "dark") XXL
             & iconButtonPropsElementName  .~ "all-annotations"   -- RENAME: annotation => comment
             & iconButtonPropsLabel        .~ "all comments"
-            & iconButtonPropsClickActions .~ [RS.ShowNotImplementedYet]
+            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
 
           iconButton_ $ toolbarButton
             & iconButtonPropsListKey      .~ "all-edits"
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Edit_view", "dark") XXL
             & iconButtonPropsElementName  .~ "all-modifications"  -- RENAME: edit
             & iconButtonPropsLabel        .~ "all edits"
-            & iconButtonPropsClickActions .~ [RS.ShowNotImplementedYet]
+            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
 
           iconButton_ $ toolbarButton
             & iconButtonPropsListKey      .~ "read-only"
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Reader", "bright") XXL
             & iconButtonPropsElementName  .~ "btn-read-mode"
             & iconButtonPropsLabel        .~ "read mode"
-            & iconButtonPropsClickActions .~ [RS.ShowNotImplementedYet]
+            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
             & iconButtonPropsAlignRight   .~ True
 
 toolbar_ :: ReactElementM eventHandler ()
@@ -96,28 +97,28 @@ toolbar_ = view_ toolbar "toolbar_"
 
 
 newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
-  { _ctepStatus :: RS.ToolbarExtensionStatus
+  { _ctepStatus :: ToolbarExtensionStatus
   }
   deriving (Eq)
 
 commentToolbarExtension :: View '[CommentToolbarExtensionProps]
 commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
-  (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithSelection) -> frame $ do
+  (CommentToolbarExtensionProps CommentToolbarExtensionWithSelection) -> frame $ do
     div_ "Please select the text you would like to comment on"
-  (CommentToolbarExtensionProps RS.CommentToolbarExtensionWithButtons) -> frame $ do
+  (CommentToolbarExtensionProps CommentToolbarExtensionWithButtons) -> frame $ do
     iconButton_ $ def
       & iconButtonPropsListKey      .~ "comment-range"
       & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L
       & iconButtonPropsElementName  .~ "btn-new-ann-text" -- RENAME: ann => comment
       & iconButtonPropsLabel        .~ "text-specific comment"
-      & iconButtonPropsClickActions .~ [RS.HeaderAction RS.StartTextSpecificComment]
+      & iconButtonPropsClickActions .~ [HeaderAction StartTextSpecificComment]
       & iconButtonPropsClickPropag  .~ False
     iconButton_ $ def
       & iconButtonPropsListKey      .~ "comment-all"
       & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L
       & iconButtonPropsElementName  .~ "btn-new-ann-doc"  -- RENAME: ann => comment
       & iconButtonPropsLabel        .~ "general comment"
-      & iconButtonPropsClickActions .~ [RS.ShowNotImplementedYet]
+      & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
   (CommentToolbarExtensionProps _) -> mempty
   where
     frame :: ReactElementM eventHandler () -> ReactElementM eventHandler ()
@@ -137,13 +138,13 @@ commentToolbarExtension_ !props = view_ commentToolbarExtension "commentToolbarE
 
 
 newtype EditToolbarExtensionProps = EditToolbarExtensionProps
-  { _etepStatus :: RS.ToolbarExtensionStatus
+  { _etepStatus :: ToolbarExtensionStatus
   }
   deriving (Eq)
 
 editToolbarExtension :: View '[EditToolbarExtensionProps]
 editToolbarExtension = mkView "EditToolbarExtension" $ \case
-  (EditToolbarExtensionProps RS.EditToolbarExtension) -> do
+  (EditToolbarExtensionProps EditToolbarExtension) -> do
     div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
       div_ ["className" $= "grid-wrapper"] $ do
         div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
@@ -160,7 +161,7 @@ editToolbarExtension = mkView "EditToolbarExtension" $ \case
         & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") L
         & iconButtonPropsElementName  .~ "btn-new-mod-text" -- RENAME: mod => edit
         & iconButtonPropsLabel        .~ cs (show kind)
-        & iconButtonPropsClickActions .~ [RS.HeaderAction (RS.StartEdit kind)]
+        & iconButtonPropsClickActions .~ [HeaderAction (StartEdit kind)]
         & iconButtonPropsClickPropag  .~ False
 
 editToolbarExtension_ :: EditToolbarExtensionProps -> ReactElementM eventHandler ()

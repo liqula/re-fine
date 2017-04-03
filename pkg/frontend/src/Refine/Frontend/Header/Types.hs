@@ -38,7 +38,7 @@ data HeaderAction =
 
 data ToolbarExtensionStatus =
     ToolbarExtensionClosed
-  | CommentToolbarExtensionWithButtons
+  | CommentToolbarExtensionWithButtons  -- TODO: rename to `...WithoutSelection`
   | CommentToolbarExtensionWithSelection
   | EditToolbarExtension
   deriving (Show, Eq, Generic)

@@ -26,11 +26,12 @@ import           Control.Lens
 import           Data.Default (def)
 import           React.Flux
 
+import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
-import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
+import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Types
 
 editToolbar :: View '[]
 editToolbar = mkView "EditToolbar" $ do
@@ -89,7 +90,7 @@ editToolbar = mkView "EditToolbar" $ do
             & iconButtonPropsListKey      .~ "save"
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True
-            & iconButtonPropsClickActions .~ [DocumentAction DocumentEditSave]
+            & iconButtonPropsClickActions .~ [ContributionAction (TriggerUpdateSelection Nothing), DocumentAction DocumentEditSave]
 
 editToolbar_ :: ReactElementM eventHandler ()
 editToolbar_ = view_ editToolbar "editToolbar_"

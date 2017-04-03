@@ -147,6 +147,16 @@ showComment = mkView "ShowComment" $ \props ->
 showComment_ :: CommentDisplayProps -> ReactElementM eventHandler ()
 showComment_ !props = view_ showComment "showComment_" props
 
+
+data ShowNoteProps =
+    ShowNotePropsJust
+      { _snpNote        :: Note
+      , _snpTop         :: OffsetFromDocumentTop
+      , _snpWindowWidth :: Int
+      }
+  | ShowNotePropsNothing
+  deriving (Eq)
+
 showNoteProps :: M.Map (ID Note) Note -> GlobalState -> ShowNoteProps
 showNoteProps notes rs = case (maybeNote, maybeOffset) of
   (Just note, Just offset) -> ShowNotePropsJust note offset (rs ^. gsScreenState . ssWindowWidth)
@@ -165,15 +175,6 @@ showNoteProps notes rs = case (maybeNote, maybeOffset) of
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
 
-data ShowNoteProps =
-    ShowNotePropsJust
-      { _snpNote        :: Note
-      , _snpTop         :: OffsetFromDocumentTop
-      , _snpWindowWidth :: Int
-      }
-  | ShowNotePropsNothing
-  deriving (Eq)
-
 showNote :: View '[ShowNoteProps]
 showNote = mkView "ShowNote" $ \case
   ShowNotePropsNothing -> mempty
@@ -187,6 +188,7 @@ showNote = mkView "ShowNote" $ \case
 
 showNote_ :: ShowNoteProps -> ReactElementM eventHandler ()
 showNote_ !props = view_ showNote "showNote_" props
+
 
 data ShowDiscussionProps =
     ShowDiscussionPropsJust
@@ -213,6 +215,7 @@ showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
           . at (ContribIDDiscussion did) . _Just . markPositionBottom
 
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
+
 
 showDiscussion :: View '[ShowDiscussionProps]
 showDiscussion = mkView "ShowDiscussion" $ \case
@@ -245,32 +248,24 @@ showQuestion_ !question = view_ showQuestion "showQuestion_" question
 
 
 data AddCommentProps = AddCommentProps
-  { _acpEditor      :: ContributionEditorData
-  , _acpCommentKind :: Maybe CommentKind
-  , _acpWindowWidth :: Int
+  { _acpVisible       :: Bool
+  , _acpRange         :: Maybe Range
+  , _acpCommentKind   :: Maybe CommentKind
+  , _acpWindowWidth   :: Int
   }
   deriving (Eq)
 
 makeLenses ''AddCommentProps
 
-data CommentInputProps = CommentInputProps
-  { _cipRange       :: Maybe Range
-  , _cipCommentKind :: Maybe CommentKind
-  , _cipWindowWidth :: Int
-  }
-  deriving (Eq)
 
-makeLenses ''CommentInputProps
-
--- was add-annotation
-addComment :: Translations -> View '[CommentInputProps]
-addComment __ = mkView "AddComment" $ \props ->
-    let top = case props ^. cipRange of
-              Nothing -> 0 -- FIXME: Invent a suitable top for the "general comment" case
+addComment :: Translations -> View '[AddCommentProps]
+addComment __ = mkView "AddComment" $ \props -> if not (props ^. acpVisible) then mempty else
+    let top = case props ^. acpRange of
+              Nothing -> 30
               Just range -> (range ^. rangeBottomOffset . unOffsetFromViewportTop)
                           + (range ^. rangeScrollOffset . unScrollOffsetOfViewport)
         extraStyles = [ StylePx "top" (top + 5)
-                      , StylePx "left" (leftFor (props ^. cipWindowWidth))
+                      , StylePx "left" (leftFor (props ^. acpWindowWidth))
                       , StylePx "height" 560
                       ]
     in skylight_ ["isVisible" &= True
@@ -296,14 +291,11 @@ addComment __ = mkView "AddComment" $ \props ->
 
       commentInput_ props
 
-
 addComment_ :: Translations -> AddCommentProps -> ReactElementM eventHandler ()
-addComment_ __ (AddCommentProps EditorIsHidden _ _) = mempty
-addComment_ __ (AddCommentProps (EditorIsVisible range) kind windowWidth1) =
-  view_ (addComment __) "addComment_" (CommentInputProps range kind windowWidth1)
+addComment_ __ !props = view_ (addComment __) "addComment_" props
 
 
-commentInput :: View '[CommentInputProps]
+commentInput :: View '[AddCommentProps]
 commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState props ->
     div_ $ do
       div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
@@ -311,13 +303,13 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
           elemString "Step 1: "
           span_ ["className" $= "bold"] "Select a type for your comment:"
 
-      let checkCipKind k = if props ^. cipCommentKind == Just k then "RO" else "dark"
+      let checkAcpKind k = if props ^. acpCommentKind == Just k then "RO" else "dark"
 
       div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do  -- RENAME: annotation => comment
         iconButton_ $ def
           & iconButtonPropsListKey      .~ "note"
           & iconButtonPropsIconProps . iconPropsBlockName .~ "c-vdoc-overlay-content"
-          & iconButtonPropsIconProps . iconPropsDesc      .~ ("icon-Note", checkCipKind CommentKindNote)
+          & iconButtonPropsIconProps . iconPropsDesc      .~ ("icon-Note", checkAcpKind CommentKindNote)
           & iconButtonPropsElementName  .~ "category"  -- RENAME: category => kind
           & iconButtonPropsModuleName   .~ "comment"
           & iconButtonPropsLabel        .~ "add a node"
@@ -328,7 +320,7 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
         iconButton_ $ def
           & iconButtonPropsListKey      .~ "discussion"
           & iconButtonPropsIconProps . iconPropsBlockName .~ "c-vdoc-overlay-content"
-          & iconButtonPropsIconProps . iconPropsDesc      .~ ("icon-Discussion", checkCipKind CommentKindDiscussion)
+          & iconButtonPropsIconProps . iconPropsDesc      .~ ("icon-Discussion", checkAcpKind CommentKindDiscussion)
           & iconButtonPropsElementName  .~ "category"
           & iconButtonPropsModuleName   .~ "discussion"  -- RENAME: category => kind
           & iconButtonPropsLabel        .~ "start a discussion"
@@ -361,16 +353,16 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
           span_ ["className" $= "bold"] "finish"
 
       let notATextOrKind = 0 == DT.length (curState ^. commentInputStateText)
-                        || isNothing (props ^. cipCommentKind)
+                        || isNothing (props ^. acpCommentKind)
         in iconButton_ $ def
           & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") L
           & iconButtonPropsElementName  .~ "submit"
           & iconButtonPropsLabel        .~ "submit"
           & iconButtonPropsDisabled     .~ notATextOrKind
           & iconButtonPropsClickActions .~
-                [ ContributionAction (SubmitComment (curState ^. commentInputStateText) (props ^. cipCommentKind) (props ^. cipRange))
+                [ ContributionAction (SubmitComment (curState ^. commentInputStateText) (props ^. acpCommentKind))
                 , ContributionAction HideCommentEditor
                 ]
 
-commentInput_ :: CommentInputProps -> ReactElementM eventHandler ()
+commentInput_ :: AddCommentProps -> ReactElementM eventHandler ()
 commentInput_ !props = view_ commentInput "commentInput_" props
