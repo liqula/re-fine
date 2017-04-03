@@ -92,12 +92,12 @@ transformGlobalState = transf
 
         -- other effects
         case action of
-            ContributionAction (TriggerUpdateSelection mReleasePositionOnPage) -> do
-                reDispatchM . ContributionAction . UpdateSelection
+            ContributionAction (TriggerUpdateRange mReleasePositionOnPage) -> do
+                reDispatchM . ContributionAction . UpdateRange
                     =<< maybe (pure Nothing) getRange mReleasePositionOnPage
                 removeAllRanges  -- (See also: calls to 'C.highlightRange', 'C.removeHighlights' below.)
 
-                when (state ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithSelection) $ do
+                when (state ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithRange) $ do
                   -- (if the comment editor (or dialog) is started via the toolbar extension, this
                   -- is where it should be started.)
                   reDispatchM $ ContributionAction ShowCommentEditor
@@ -158,9 +158,9 @@ vdocUpdate action (Just vdoc) = Just $ case action of
           & C.compositeVDocVersion
               %~ C.insertMoreMarks [ContribEdit edit]
 
-    ContributionAction (UpdateSelection (Just range))
+    ContributionAction (UpdateRange (Just range))
       -> vdoc & C.compositeVDocVersion %~ C.highlightRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
-    ContributionAction (UpdateSelection Nothing)
+    ContributionAction (UpdateRange Nothing)
       -> vdoc & C.compositeVDocVersion %~ C.removeHighlights
 
     _ -> vdoc
@@ -206,7 +206,7 @@ emitBackendCallsFor action state = case action of
 
     ContributionAction (SubmitComment text kind) -> do
       let forRange :: C.ChunkRange
-          forRange = state ^. gsContributionState . csCurrentSelection . to createChunkRange
+          forRange = state ^. gsContributionState . csCurrentRange . to createChunkRange
       case kind of
         Just CommentKindDiscussion ->
           addDiscussion (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
@@ -228,7 +228,7 @@ emitBackendCallsFor action state = case action of
             cid :: C.Create C.Edit
             cid = C.CreateEdit
                   { C._createEditDesc  = "..."                          -- TODO: #233
-                  , C._createEditRange = state ^. gsContributionState . csCurrentSelection . to createChunkRange
+                  , C._createEditRange = state ^. gsContributionState . csCurrentRange . to createChunkRange
                   , C._createEditVDoc  = C.downgradeVDocVersionWR newvers
                   , C._createEditKind  = estate ^. documentEditStateKind
                   , C._createEditMotiv = "..."                          -- TODO: #233

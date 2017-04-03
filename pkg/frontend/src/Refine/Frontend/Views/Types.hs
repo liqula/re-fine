@@ -28,12 +28,12 @@ import           Control.Lens (makeLenses)
 import           Refine.Common.Types (ContributionID, CompositeDiscussion, Note, Edit)
 import           Refine.Frontend.Contribution.Types (MarkPositions, QuickCreateShowState)
 import           Refine.Frontend.Screen.Types (ScreenState)
-import           Refine.Frontend.Types (Selection)
+import           Refine.Frontend.Types (Range)
 
 
 data AsideProps = AsideProps
   { _asideMarkPositions     :: MarkPositions
-  , _asideCurrentSelection  :: Maybe Selection
+  , _asideCurrentRange      :: Maybe Range
   , _asideHighlightedBubble :: Maybe ContributionID
   , _asideScreenState       :: ScreenState
   , _asideDiscussions       :: [CompositeDiscussion]

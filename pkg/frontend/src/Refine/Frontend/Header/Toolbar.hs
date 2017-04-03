@@ -65,7 +65,7 @@ toolbar = mkView "Toolbar" $ do
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXL
             & iconButtonPropsElementName  .~ "bt-add-modification"  -- RENAME: edit
             & iconButtonPropsLabel        .~ "new edit"
-            & iconButtonPropsClickActions .~ [ContributionAction (TriggerUpdateSelection Nothing), HeaderAction ToggleEditToolbarExtension]
+            & iconButtonPropsClickActions .~ [ContributionAction (TriggerUpdateRange Nothing), HeaderAction ToggleEditToolbarExtension]
             & iconButtonPropsClickPropag  .~ False
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
@@ -103,9 +103,9 @@ newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
 
 commentToolbarExtension :: View '[CommentToolbarExtensionProps]
 commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
-  (CommentToolbarExtensionProps CommentToolbarExtensionWithSelection) -> frame $ do
+  (CommentToolbarExtensionProps CommentToolbarExtensionWithRange) -> frame $ do
     div_ "Please select the text you would like to comment on"
-  (CommentToolbarExtensionProps CommentToolbarExtensionWithButtons) -> frame $ do
+  (CommentToolbarExtensionProps CommentToolbarExtensionWithoutRange) -> frame $ do
     iconButton_ $ def
       & iconButtonPropsListKey      .~ "comment-range"
       & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L

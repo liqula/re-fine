@@ -89,7 +89,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocDiscussions) rs
           addComment_ __ $ AddCommentProps
                               (rs ^. RS.gsContributionState . RS.csCommentEditorVisible)
-                              (rs ^. RS.gsContributionState . RS.csCurrentSelection)
+                              (rs ^. RS.gsContributionState . RS.csCurrentRange)
                               (rs ^. RS.gsContributionState . RS.csCommentKind)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
           notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
@@ -99,7 +99,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       let asideProps = AsideProps
                                      (rs ^. gsContributionState . csMarkPositions)
-                                     (rs ^. gsContributionState . csCurrentSelection)
+                                     (rs ^. gsContributionState . csCurrentRange)
                                      (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
                                      (M.elems (vdoc ^. compositeVDocDiscussions))
@@ -138,7 +138,7 @@ leftAside = mkView "LeftAside" $ \props ->
                       (props ^. asideNotes)
         quickCreate_ $ QuickCreateProps QuickCreateComment
             (props ^. asideQuickCreateShow)
-            (props ^. asideCurrentSelection)
+            (props ^. asideCurrentRange)
             (props ^. asideScreenState)
 
 leftAside_ :: AsideProps -> ReactElementM eventHandler ()
@@ -159,7 +159,7 @@ rightAside = mkView "RightAside" $ \props ->
 
     quickCreate_ $ QuickCreateProps QuickCreateEdit
       (props ^. asideQuickCreateShow)
-      (props ^. asideCurrentSelection)
+      (props ^. asideCurrentRange)
       (props ^. asideScreenState)
 
 rightAside_ :: AsideProps -> ReactElementM eventHandler ()

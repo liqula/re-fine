@@ -93,11 +93,12 @@ mapFromValue = withObject "MarkPositions"
   . HashMap.toList
 
 
+-- | TODO: give record selectors to all fields.
 data ContributionAction =
-    TriggerUpdateSelection (Maybe OffsetFromDocumentTop)
+    TriggerUpdateRange (Maybe OffsetFromDocumentTop)
           -- ^ pixels between article top and mouse/finger from the mouse/touch release event.
           --   'Nothing' means clear existing selection.
-  | UpdateSelection (Maybe Selection)
+  | UpdateRange (Maybe Range)
   | ShowContributionDialog ContributionID
   | HideCommentOverlay
   | ShowCommentEditor
@@ -112,7 +113,7 @@ data ContributionAction =
 
 
 data ContributionState = ContributionState
-  { _csCurrentSelection         :: Maybe Selection
+  { _csCurrentRange             :: Maybe Range
   , _csCommentKind              :: Maybe CommentKind
   , _csDisplayedContributionID  :: Maybe ContributionID
   , _csCommentEditorVisible     :: Bool  -- ^ (the comment or edit dialog, that is.  not the vdoc editor.)
@@ -129,7 +130,7 @@ data CommentKind =
 
 emptyContributionState :: ContributionState
 emptyContributionState = ContributionState
-  { _csCurrentSelection         = Nothing
+  { _csCurrentRange             = Nothing
   , _csCommentKind              = Nothing
   , _csDisplayedContributionID  = Nothing
   , _csCommentEditorVisible     = False
@@ -169,7 +170,7 @@ data SpecialBubbleProps = SpecialBubbleProps
 data QuickCreateProps = QuickCreateProps
   { _quickCreateSide        :: QuickCreateSide
   , _quickCreateShowState   :: QuickCreateShowState
-  , _quickCreateSelection   :: Maybe Range
+  , _quickCreateRange       :: Maybe Range
   , _quickCreateScreenState :: ScreenState
   }
   deriving (Eq)

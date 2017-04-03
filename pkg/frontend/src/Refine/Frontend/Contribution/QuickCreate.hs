@@ -39,15 +39,15 @@ import Refine.Prelude ()
 
 quickCreate :: View '[QuickCreateProps]
 quickCreate = mkView "QuickCreateButton" $ \props ->
-    case (props ^. quickCreateSelection, props ^. quickCreateShowState) of
+    case (props ^. quickCreateRange, props ^. quickCreateShowState) of
         (Just range, QuickCreateShown) ->
             iconButton_ $ def
               & iconButtonPropsIconProps    .~ IconProps (renderQuickCreateSide (props ^. quickCreateSide))
                                                          True ("icon-New_Comment", "bright") XXL
               & iconButtonPropsPosition     .~ Just (mkQuickCreateOffset range (props ^. quickCreateScreenState))
               & iconButtonPropsClickActions .~ case props ^. quickCreateSide of
-                  QuickCreateComment -> [ContributionAction (TriggerUpdateSelection Nothing), ContributionAction ShowCommentEditor]
-                  QuickCreateEdit    -> [ContributionAction (TriggerUpdateSelection Nothing), HeaderAction ToggleEditToolbarExtension]
+                  QuickCreateComment -> [ContributionAction (TriggerUpdateRange Nothing), ContributionAction ShowCommentEditor]
+                  QuickCreateEdit    -> [ContributionAction (TriggerUpdateRange Nothing), HeaderAction ToggleEditToolbarExtension]
         _ -> mempty
 --    // quickCreate annotation ui events  -- RENAME: annotation => comment
 --    ann.addEventListener('mousedown', quickCreateOverlay);
@@ -59,16 +59,16 @@ quickCreate_ !props = view_ quickCreate "quickCreate_" props
 
 mkQuickCreateOffset :: Range -> ScreenState -> Int
 mkQuickCreateOffset range screenState =
-    mkQuickCreateSelectionTop range screenState +
-    mkQuickCreateSelectionPos range
+    mkQuickCreateRangeTop range screenState +
+    mkQuickCreateRangePos range
 
 -- | This is the offset from the bottom of the toolbar.
-mkQuickCreateSelectionTop :: Range -> ScreenState -> Int
-mkQuickCreateSelectionTop range = offsetIntoText
+mkQuickCreateRangeTop :: Range -> ScreenState -> Int
+mkQuickCreateRangeTop range = offsetIntoText
     (offsetFromDocumentTop (range ^. rangeTopOffset) (range ^. rangeScrollOffset))
 
-mkQuickCreateSelectionPos :: Range -> Int
-mkQuickCreateSelectionPos range = if useIdealCenter then idealCenter else edgePosition
+mkQuickCreateRangePos :: Range -> Int
+mkQuickCreateRangePos range = if useIdealCenter then idealCenter else edgePosition
   where
     offsetFromTop   = range ^. rangeDocTopOffset
     selectionHeight = (range ^. rangeBottomOffset - range ^. rangeTopOffset) ^. unOffsetFromViewportTop

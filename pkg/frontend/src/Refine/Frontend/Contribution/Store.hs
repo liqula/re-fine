@@ -37,7 +37,7 @@ contributionStateUpdate :: GlobalAction -> ContributionState -> ContributionStat
 contributionStateUpdate a = localAction a . globalAction a
   where
     localAction (ContributionAction action) state = state
-      & csCurrentSelection         %~ currentSelectionUpdate action
+      & csCurrentRange             %~ currentRangeUpdate action
       & csCommentKind              %~ commentKindUpdate action
       & csDisplayedContributionID  %~ displayedContributionUpdate action
       & csCommentEditorVisible     %~ commentEditorVisibleUpdate action
@@ -49,9 +49,9 @@ contributionStateUpdate a = localAction a . globalAction a
       & csQuickCreateShowState     %~ quickCreateShowStateUpdate action
 
 
-currentSelectionUpdate :: ContributionAction -> Maybe Range -> Maybe Range
-currentSelectionUpdate action = case action of
-  (UpdateSelection mrange) -> const mrange
+currentRangeUpdate :: ContributionAction -> Maybe Range -> Maybe Range
+currentRangeUpdate action = case action of
+  (UpdateRange mrange) -> const mrange
   _ -> id
 
 commentKindUpdate :: ContributionAction -> Maybe CommentKind -> Maybe CommentKind
@@ -80,8 +80,8 @@ highlightedMarkAndBubbleUpdate action state = case action of
 
 quickCreateShowStateUpdate :: GlobalAction -> QuickCreateShowState -> QuickCreateShowState
 quickCreateShowStateUpdate action state = case action of
-  ContributionAction (UpdateSelection (Just _)) -> somethingWasSelected
-  ContributionAction (UpdateSelection Nothing)  -> selectionWasRemoved
+  ContributionAction (UpdateRange (Just _))     -> somethingWasSelected
+  ContributionAction (UpdateRange Nothing)      -> selectionWasRemoved
   HeaderAction ToggleCommentToolbarExtension    -> toolbarWasToggled
   HeaderAction StartTextSpecificComment         -> QuickCreateBlocked
   HeaderAction ToggleEditToolbarExtension       -> toolbarWasToggled

@@ -42,7 +42,7 @@ document = mkView "Document" $ \props ->
       -> article_ ["className" $= "gr-20 gr-14@desktop editor_wrapper"] $ do
             editor_ $ EditorProps editorState
     DocumentStateView
-      -> let dispatchUpdate = dispatch . ContributionAction . TriggerUpdateSelection . Just . OffsetFromDocumentTop in
+      -> let dispatchUpdate = dispatch . ContributionAction . TriggerUpdateRange . Just . OffsetFromDocumentTop in
          article_ [ "id" $= "vdocValue"
                   , "className" $= "gr-20 gr-14@desktop"
                       -- 'mousePageY': relative to article top; 'mouseClientY': relative to window top
