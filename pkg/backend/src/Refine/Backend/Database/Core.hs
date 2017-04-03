@@ -65,7 +65,7 @@ data DBError
 
 -- | Filters the queries in the database.
 -- Userful to implement pagination, uniqueness etc.
-data Filter = Limit Int
+newtype Filter = Limit Int
 
 makeRefineType ''DBError
 
