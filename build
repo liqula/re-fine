@@ -20,6 +20,7 @@ function assert_os_package() {
 }
 
 assert_os_package libcurl4-gnutls-dev
+assert_os_package libncurses5-dev
 assert_os_package stack
 
 function assert_cmd() {
