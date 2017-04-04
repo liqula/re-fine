@@ -7,6 +7,7 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
@@ -134,8 +135,17 @@ vdocEntity = L.Entity getVDoc updateVDoc
 -- | Returns the ID of the user who runs the current DB computation.
 dbUser :: DB (ID User)
 dbUser = do
-  DBContext mu <- ask
+  DBContext mu _filter <- ask
   nothingToError DBUserNotLoggedIn mu
+
+-- FUTUREWORK: Make dbSelectOpts typesafe.
+dbSelectOpts :: DB [SelectOpt entity]
+dbSelectOpts = do
+  DBContext _mu fltrs <- ask
+  pure . mconcat $ filterToSelectOpt <$> fltrs
+  where
+    filterToSelectOpt = \case
+      Limit n -> [LimitTo n]
 
 -- * VDoc
 
@@ -143,7 +153,9 @@ toVDoc :: ID VDoc -> Title -> Abstract -> Key S.Repo -> VDoc
 toVDoc vid title abstract repoid = VDoc vid title abstract (S.keyToId repoid)
 
 listVDocs :: DB [ID VDoc]
-listVDocs = liftDB $ S.keyToId <$$> selectKeysList [] []
+listVDocs = do
+  opts <- dbSelectOpts
+  liftDB $ S.keyToId <$$> selectKeysList [] opts
 
 createVDoc :: Create VDoc -> VDocRepo -> DB VDoc
 createVDoc pv vr = liftDB $ do
@@ -160,12 +172,15 @@ getVDoc vid = S.vDocElim (toVDoc vid) <$> getEntity vid
 
 vdocRepo :: ID VDoc -> DB (ID VDocRepo)
 vdocRepo vid = do
-  vs <- liftDB $ foreignKeyField S.vRRepository <$$> selectList [S.VRVdoc ==. S.idToKey vid] []
+  opts <- dbSelectOpts
+  vs <- liftDB $ foreignKeyField S.vRRepository <$$> selectList [S.VRVdoc ==. S.idToKey vid] opts
   unique vs
 
 vdocRepoOfEdit :: ID Edit -> DB (ID VDocRepo)
-vdocRepoOfEdit eid = unique =<< liftDB
-  (foreignKeyField S.rPRepository <$$> selectList [S.RPEdit ==. S.idToKey eid] [])
+vdocRepoOfEdit eid = do
+  opts <- dbSelectOpts
+  unique =<< liftDB
+    (foreignKeyField S.rPRepository <$$> selectList [S.RPEdit ==. S.idToKey eid] opts)
 
 -- * Repo
 
@@ -190,7 +205,8 @@ getRepo vid = S.repoElim toVDocRepo <$> getEntity vid
 
 getRepoFromHandle :: DocRepo.RepoHandle -> DB VDocRepo
 getRepoFromHandle hndl = do
-  rs <- liftDB $ selectList [S.RepoRepoHandle ==. hndl] []
+  opts <- dbSelectOpts
+  rs <- liftDB $ selectList [S.RepoRepoHandle ==. hndl] opts
   r <- unique rs
   let rid = S.keyToId $ entityKey r
       toRepo _desc _hdnl repohead = VDocRepo rid (S.keyToId repohead)
@@ -233,7 +249,8 @@ getEdit pid = S.editElim toEdit <$> getEntity pid
 
 getEditFromHandle :: DocRepo.EditHandle -> DB Edit
 getEditFromHandle hndl = do
-  ps <- liftDB $ selectList [S.EditEditHandle ==. hndl] []
+  opts <- dbSelectOpts
+  ps <- liftDB $ selectList [S.EditEditHandle ==. hndl] opts
   p <- unique ps
   let toEdit desc cr _hdnl = Edit (S.keyToId $ entityKey p) desc cr
   pure $ S.editElim toEdit (entityVal p)
@@ -245,30 +262,39 @@ getEditHandle pid = S.editElim toEditHandle <$> getEntity pid
     toEditHandle _desc _cr handle _kind _motiv = handle
 
 editNotes :: ID Edit -> DB [ID Note]
-editNotes pid = liftDB $
-  foreignKeyField S.pNNote <$$> selectList [S.PNEdit ==. S.idToKey pid] []
+editNotes pid = do
+  opts <- dbSelectOpts
+  liftDB $
+    foreignKeyField S.pNNote <$$> selectList [S.PNEdit ==. S.idToKey pid] opts
 
 editQuestions :: ID Edit -> DB [ID Question]
-editQuestions pid = liftDB $
-  foreignKeyField S.pQQuestion <$$> selectList [S.PQEdit ==. S.idToKey pid] []
+editQuestions pid = do
+  opts <- dbSelectOpts
+  liftDB $
+    foreignKeyField S.pQQuestion <$$> selectList [S.PQEdit ==. S.idToKey pid] opts
 
 editDiscussions :: ID Edit -> DB [ID Discussion]
-editDiscussions pid = liftDB $
-  foreignKeyField S.pDDiscussion <$$> selectList [S.PDEdit ==. S.idToKey pid] []
+editDiscussions pid = do
+  opts <- dbSelectOpts
+  liftDB $
+    foreignKeyField S.pDDiscussion <$$> selectList [S.PDEdit ==. S.idToKey pid] opts
 
 setEditChild :: ID Edit -> ID Edit -> DB ()
 setEditChild parent child = liftDB $ do
   void . insert $ S.PC (S.idToKey parent) (S.idToKey child)
 
 getEditChildren :: ID Edit -> DB [ID Edit]
-getEditChildren parent = liftDB $ do
-  foreignKeyField S.pCChild <$$> selectList [S.PCParent ==. S.idToKey parent] []
+getEditChildren parent = do
+  opts <- dbSelectOpts
+  liftDB $ do
+    foreignKeyField S.pCChild <$$> selectList [S.PCParent ==. S.idToKey parent] opts
 
 -- * Repo and edit
 
 editVDocRepo :: ID Edit -> DB (ID VDocRepo)
 editVDocRepo pid = do
-  rs <- liftDB $ foreignKeyField S.rPRepository <$$> selectList [S.RPEdit ==. S.idToKey pid] []
+  opts <- dbSelectOpts
+  rs <- liftDB $ foreignKeyField S.rPRepository <$$> selectList [S.RPEdit ==. S.idToKey pid] opts
   unique rs
 
 registerEdit :: ID VDocRepo -> ID Edit -> DB ()
@@ -354,12 +380,16 @@ getDiscussion :: ID Discussion -> DB Discussion
 getDiscussion did = S.discussionElim (toDiscussion did) <$> getEntity did
 
 statementsOfDiscussion :: ID Discussion -> DB [ID Statement]
-statementsOfDiscussion did = liftDB $
-  foreignKeyField S.dSStatement <$$> selectList [S.DSDiscussion ==. S.idToKey did] []
+statementsOfDiscussion did = do
+  opts <- dbSelectOpts
+  liftDB $
+    foreignKeyField S.dSStatement <$$> selectList [S.DSDiscussion ==. S.idToKey did] opts
 
 discussionOfStatement :: ID Statement -> DB (ID Discussion)
-discussionOfStatement sid = unique =<< liftDB
-  (foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] [])
+discussionOfStatement sid = do
+  opts <- dbSelectOpts
+  unique =<< liftDB
+    (foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] opts)
 
 
 -- * Answer
@@ -379,8 +409,10 @@ getAnswer :: ID Answer -> DB Answer
 getAnswer aid = S.answerElim (toAnswer aid) <$> getEntity aid
 
 answersOfQuestion :: ID Question -> DB [Answer]
-answersOfQuestion qid = liftDB $ do
-  mkAnswer <$$> selectList [S.AnswerQuestion ==. S.idToKey qid] []
+answersOfQuestion qid = do
+  opts <- dbSelectOpts
+  liftDB $ do
+    mkAnswer <$$> selectList [S.AnswerQuestion ==. S.idToKey qid] opts
   where
     mkAnswer e = S.answerElim (toAnswer (S.keyToId $ entityKey e)) (entityVal e)
 
@@ -391,7 +423,8 @@ toStatement sid text parent = Statement sid text (S.keyToId <$> parent)
 
 createStatement :: ID Statement  -> Create Statement -> DB Statement
 createStatement sid statement = do
-  ds  <- liftDB $ foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] []
+  opts <- dbSelectOpts
+  ds  <- liftDB $ foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] opts
   did <- unique ds
   liftDB $ do
     let sstatement = S.Statement
@@ -424,14 +457,16 @@ createGroup group = liftDB $ do
     sgroup
 
 getChildrenOfGroup :: ID Group -> DB [ID Group]
-getChildrenOfGroup gid =
+getChildrenOfGroup gid = do
+  opts <- dbSelectOpts
   (S.subGroupElim (\_parent child -> S.keyToId child) . entityVal)
-  <$$> liftDB (selectList [S.SubGroupParent ==. S.idToKey gid] [])
+    <$$> liftDB (selectList [S.SubGroupParent ==. S.idToKey gid] opts)
 
 getParentsOfGroup :: ID Group -> DB [ID Group]
-getParentsOfGroup gid =
+getParentsOfGroup gid = do
+  opts <- dbSelectOpts
   (S.subGroupElim (\parent _child -> S.keyToId parent) . entityVal)
-  <$$> liftDB (selectList [S.SubGroupChild ==. S.idToKey gid] [])
+    <$$> liftDB (selectList [S.SubGroupChild ==. S.idToKey gid] opts)
 
 getGroup :: ID Group -> DB Group
 getGroup gid = do
@@ -500,7 +535,8 @@ removeSubGroup parent child = liftDB $ do
 
 universalGroup :: DB (ID Group)
 universalGroup = do
-  xs <- (S.keyToId . entityKey) <$$> liftDB (selectList [ S.GroupUniversal ==. True ] [])
+  opts <- dbSelectOpts
+  xs <- (S.keyToId . entityKey) <$$> liftDB (selectList [ S.GroupUniversal ==. True ] opts)
   unique xs
 
 -- * Roles
@@ -511,7 +547,8 @@ assignRole gid uid role = liftDB $ do
 
 getRoles :: ID Group -> ID User -> DB [Role]
 getRoles gid uid = do
-  roles <- liftDB $ selectList [S.RolesGroup ==. S.idToKey gid, S.RolesUser ==. S.idToKey uid] []
+  opts <- dbSelectOpts
+  roles <- liftDB $ selectList [S.RolesGroup ==. S.idToKey gid, S.RolesUser ==. S.idToKey uid] opts
   pure $ (S.rolesElim (\_gid _uid role' -> role') . entityVal) <$> roles
 
 unassignRole :: ID Group -> ID User -> Role -> DB ()
@@ -540,8 +577,9 @@ instance C.StoreProcessData DB CollaborativeEdit where
         (process ^. createDBCollabEditProcessVDocID)
 
   getProcessData pid = do
+    opts <- dbSelectOpts
     ceids <- foreignKeyField S.processOfCollabEditCollabEdit
-             <$$> liftDB (selectList [S.ProcessOfCollabEditProcess ==. S.idToKey pid] [])
+             <$$> liftDB (selectList [S.ProcessOfCollabEditProcess ==. S.idToKey pid] opts)
     ceid <- unique ceids
     cedata <- getEntity ceid
     pure $ CollaborativeEditDB
@@ -550,8 +588,9 @@ instance C.StoreProcessData DB CollaborativeEdit where
       (S.keyToId $ S.collabEditProcessVdoc cedata)
 
   updateProcessData pid process = do
+    opts <- dbSelectOpts
     ceids <- foreignKeyField S.processOfCollabEditCollabEdit
-             <$$> liftDB (selectList [S.ProcessOfCollabEditProcess ==. S.idToKey pid] [])
+             <$$> liftDB (selectList [S.ProcessOfCollabEditProcess ==. S.idToKey pid] opts)
     ceid :: ID CollaborativeEdit <- unique ceids
     liftDB $ update (S.idToKey ceid)
       [ S.CollabEditProcessVdoc  =. process ^. createDBCollabEditProcessVDocID . to S.idToKey
@@ -574,15 +613,17 @@ instance C.StoreProcessData DB Aula where
       pure $ Aula (S.keyToId dkey) (process ^. createAulaProcessClassName)
 
   getProcessData pid = do
+    opts <- dbSelectOpts
     as  <- foreignKeyField S.processOfAulaAula
-            <$$> liftDB (selectList [S.ProcessOfAulaProcess ==. S.idToKey pid] [])
+            <$$> liftDB (selectList [S.ProcessOfAulaProcess ==. S.idToKey pid] opts)
     aid <- unique as
     saula <- getEntity aid
     pure $ Aula aid (S.aulaProcessClass saula)
 
   updateProcessData pid process = do
+    opts <- dbSelectOpts
     as  <- foreignKeyField S.processOfAulaAula
-            <$$> liftDB (selectList [S.ProcessOfAulaProcess ==. S.idToKey pid] [])
+            <$$> liftDB (selectList [S.ProcessOfAulaProcess ==. S.idToKey pid] opts)
     aid :: ID Aula <- unique as
     liftDB $ update (S.idToKey aid)
       [ S.AulaProcessClass =. process ^. createAulaProcessClassName
