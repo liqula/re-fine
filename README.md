@@ -30,6 +30,13 @@ To install nodejs-v6.x on Debian execute these commands (as root):
     apt update && apt install nodejs
 
 
+## Workaround Issue #40
+
+The following command may be needed to workaround Issue #40 in a fresh build:
+
+    (cd pkg/frontend; npm install)
+
+
 ## Run the build script
 
 Run `./build` to build and test all packages.  (This is also what the
