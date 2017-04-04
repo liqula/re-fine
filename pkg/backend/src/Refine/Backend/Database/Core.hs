@@ -25,7 +25,7 @@ module Refine.Backend.Database.Core where
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.String.Conversions (ST)
-import Database.Persist.Sql
+import Database.Persist.Sql hiding (Filter)
 import GHC.Generics (Generic)
 
 import Refine.Common.Types.Prelude (ID(..))
@@ -35,8 +35,9 @@ import Refine.Prelude.TH (makeRefineType)
 
 type SQLM = ReaderT SqlBackend IO
 
-newtype DBContext = DBContext
+data DBContext = DBContext
   { _dbLoggedInUser :: Maybe (ID User)
+  , _dbFilter       :: Filters
   }
 
 -- FIXME: follow the structure as in "Refine.Backend.User.*" (here as well as in "...DocRepo").
@@ -61,6 +62,17 @@ data DBError
   | DBMigrationParseErrors [ST]
   | DBUnsafeMigration [(Bool, ST)]
   deriving (Eq, Show, Generic)
+
+-- | Filters the queries in the database.
+-- Userful to implement pagination, uniqueness etc.
+--
+-- FIXME: In its current state this is not very practical, as it requires the output to be ordered
+-- by default (which we probably never want), and it does not let you specify a page number.  The
+-- next step (if we want pagination and not, say, filtering by full-text search), could be @data
+-- Filter = Paginate PageNum PageLength | Sort@.
+newtype Filter = Limit Int
+
+type Filters = [Filter]
 
 makeRefineType ''DBError
 
