@@ -30,6 +30,7 @@ function assert_cmd() {
 
 assert_cmd node
 assert_cmd npm
+assert_cmd cabal
 # REMARKS
 # - node should be 6.x.x or higher.
 # - npm comes with node, so no extra version constraint here.
