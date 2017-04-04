@@ -141,8 +141,8 @@ dbUser = do
 -- FUTUREWORK: Make dbSelectOpts typesafe.
 dbSelectOpts :: DB [SelectOpt entity]
 dbSelectOpts = do
-  DBContext _mu mfilter <- ask
-  pure $ maybe [] filterToSelectOpt mfilter
+  DBContext _mu fltrs <- ask
+  pure . mconcat $ filterToSelectOpt <$> fltrs
   where
     filterToSelectOpt = \case
       Limit n -> [LimitTo n]

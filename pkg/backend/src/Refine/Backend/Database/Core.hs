@@ -37,7 +37,7 @@ type SQLM = ReaderT SqlBackend IO
 
 data DBContext = DBContext
   { _dbLoggedInUser :: Maybe (ID User)
-  , _dbFilter       :: Maybe Filter
+  , _dbFilter       :: Filters
   }
 
 -- FIXME: follow the structure as in "Refine.Backend.User.*" (here as well as in "...DocRepo").
@@ -71,6 +71,8 @@ data DBError
 -- next step (if we want pagination and not, say, filtering by full-text search), could be @data
 -- Filter = Paginate PageNum PageLength | Sort@.
 newtype Filter = Limit Int
+
+type Filters = [Filter]
 
 makeRefineType ''DBError
 
