@@ -138,7 +138,7 @@ dbUser = do
   DBContext mu _filter <- ask
   nothingToError DBUserNotLoggedIn mu
 
--- FIXME: Make dbSelectOpts typesafe.
+-- FUTUREWORK: Make dbSelectOpts typesafe.
 dbSelectOpts :: DB [SelectOpt entity]
 dbSelectOpts = do
   DBContext _mu mfilter <- ask

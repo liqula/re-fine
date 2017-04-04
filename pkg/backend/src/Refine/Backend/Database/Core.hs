@@ -65,6 +65,11 @@ data DBError
 
 -- | Filters the queries in the database.
 -- Userful to implement pagination, uniqueness etc.
+--
+-- FIXME: In its current state this is not very practical, as it requires the output to be ordered
+-- by default (which we probably never want), and it does not let you specify a page number.  The
+-- next step (if we want pagination and not, say, filtering by full-text search), could be @data
+-- Filter = Paginate PageNum PageLength | Sort@.
 newtype Filter = Limit Int
 
 makeRefineType ''DBError
