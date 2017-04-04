@@ -1,5 +1,8 @@
 {-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE LambdaCase            #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeFamilyDependencies #-}
 
 module Refine.Backend.Database.Class where
 
@@ -11,7 +14,7 @@ import Refine.Backend.DocRepo.Core as DocRepo
 import Refine.Common.Types
 
 
-type DatabaseC db = (Monad db, Database db)
+type MonadDatabase db = (Monad db, Database db)
 
 class Database db where
 
@@ -21,6 +24,8 @@ class Database db where
   getVDoc            :: ID VDoc -> db VDoc
   vdocRepo           :: ID VDoc -> db (ID VDocRepo)
   vdocRepoOfEdit     :: ID Edit -> db (ID VDocRepo)
+
+  vDocRepoVDoc      :: ID VDocRepo -> db (ID VDoc)
 
   -- Repo
   createRepo         :: DocRepo.RepoHandle -> DocRepo.EditHandle -> db VDocRepo
@@ -93,19 +98,28 @@ class Database db where
   -- example: we need to build the 'CompositeVDoc' (which requires "Refine.Backend.DocRepo") from
   -- the @VDoc@ that can be produced inside 'DB'.
 
-  createProcess :: StoreProcessData db a => CreateDB (Process a) -> db (Process (ResultDB (Process a)))
-  getProcess    :: (StoreProcessData db a, Typeable a) => ID (Process a) -> db (Process (ResultDB (Process a)))
+  createProcess :: StoreProcessData db a => CreateDB (Process a) -> db (Process a)
+  getProcess    :: (StoreProcessData db a, Typeable a) => ID (Process a) -> db (Process a)
   updateProcess :: StoreProcessData db a => ID (Process a) -> CreateDB (Process a) -> db ()
   removeProcess :: (StoreProcessData db a, Typeable a) => ID (Process a) -> db ()
 
+  vDocProcess :: ID VDoc -> db (ID (Process CollaborativeEdit))
 
 class StoreProcessData db c where
   processDataGroupID :: CreateDB (Process c) -> db (ID Group)
-  createProcessData  :: ID (Process c) -> CreateDB (Process c) -> db (ResultDB (Process c))
-  getProcessData     :: ID (Process c) -> db (ResultDB (Process c))
+  createProcessData  :: ID (Process c) -> CreateDB (Process c) -> db c
+  getProcessData     :: ID (Process c) -> db c
   updateProcessData  :: ID (Process c) -> CreateDB (Process c) -> db ()
-  removeProcessData  :: ResultDB (Process c) -> db ()
+  removeProcessData  :: c -> db ()
 
+class GroupOf db e where
+  groupOf :: ID e -> db Group
+
+-- | Type of contents of process, also used as an index type to identify process "kind".
+type family ProcessPayload e = r
+
+class ProcessOf db e where
+  processOf :: ID e -> db (Process (ProcessPayload e))
 
 -- * composite db queries
 
@@ -141,3 +155,10 @@ editComments pid = do
     , CommentQuestion   <$> questions
     , CommentDiscussion <$> discussions
     ]
+
+groupRef
+  :: (Monad db, Database db)
+  => GroupRef -> db (ID Group)
+groupRef = \case
+  UniversalGroup -> universalGroup
+  GroupRef gid   -> pure gid

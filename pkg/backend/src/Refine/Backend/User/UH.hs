@@ -17,6 +17,7 @@ import Web.Users.Types      as Users
 
 import Refine.Backend.User.Core
 import qualified Refine.Backend.User.Class as C
+import Refine.Common.Types.User (Username)
 
 
 newtype UH a = UH { unUH :: ReaderT UserHandleContext (ExceptT UserHandleError IO) a }
@@ -37,12 +38,13 @@ instance C.UserHandle UH where
 
   uhNat db = Nat ((`runReaderT` UserHandleContext db) . unUH)
 
-  createUser     = Refine.Backend.User.UH.createUser
-  getUserById    = Refine.Backend.User.UH.getUserById
+  createUser      = Refine.Backend.User.UH.createUser
+  getUserById     = Refine.Backend.User.UH.getUserById
+  getUserIdByName = Refine.Backend.User.UH.getUserIdByName
 
-  authUser       = Refine.Backend.User.UH.authUser
-  verifySession  = Refine.Backend.User.UH.verifySession
-  destroySession = Refine.Backend.User.UH.destroySession
+  authUser        = Refine.Backend.User.UH.authUser
+  verifySession   = Refine.Backend.User.UH.verifySession
+  destroySession  = Refine.Backend.User.UH.destroySession
 
 
 createUser :: User -> UH (Either CreateUserError LoginId)
@@ -54,6 +56,11 @@ getUserById :: LoginId -> UH (Maybe User)
 getUserById user = do
   ub <- view userBackend
   uhIO $ Users.getUserById ub user
+
+getUserIdByName :: Username -> UH (Maybe LoginId)
+getUserIdByName username = do
+  ub <- view userBackend
+  uhIO (Users.getUserIdByName ub username)
 
 authUser :: ST -> PasswordPlain -> NominalDiffTime -> UH (Maybe SessionId)
 authUser username password sessionDuration = do

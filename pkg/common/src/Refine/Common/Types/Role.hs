@@ -32,7 +32,8 @@ import Refine.Prelude.TH (makeRefineType)
 -- Certain 'Role' constructors grant the power to assign 'Role's to other users (this happens at run
 -- time in the UI).
 --
--- TODO: #262.
+-- TODO: (1) I think #262 is mostly fixed by now, but I (fisx) want to check that again; (2) Should
+-- we (can we?) collapse 'ProcessInitiator' and 'GroupInitiator' into a single role 'Initiator'?
 data Role
   = ReadOnly
   | Member
@@ -43,12 +44,12 @@ data Role
   deriving (Eq, Ord, Bounded, Enum, Show, Generic)
 
 -- | Rights on operations, what to do with something
-data Right
+data Perm
   = Create
   | Read
   | Update
   | Delete
-  deriving (Eq, Show, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 makeRefineType ''Role
-makeRefineType ''Right
+makeRefineType ''Perm

@@ -57,6 +57,7 @@ import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Backend.User
 import Refine.Common.Rest
 import Refine.Common.Types as Common
+import Refine.Common.ChangeAPI
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
@@ -66,22 +67,14 @@ import Refine.Common.Types as Common
 runWai :: Backend db uh -> Wai.Session a -> IO a
 runWai sess m = Wai.runSession m (backendServer sess)
 
--- | Call 'runWaiBodyE' and throw an error if the expected type cannot be read, discard the
+-- | Call 'runWai' and throw an error if the expected type cannot be read, discard the
 -- response, keep only the body.
-runWaiBody :: FromJSON a => Backend db uh -> Wai.Session SResponse -> IO a
-runWaiBody sess = fmap fst . runWaiBodyRsp sess
-
--- | Call 'runWaiBodyE' and throw an error if the expected type cannot be read.
-runWaiBodyRsp :: FromJSON a => Backend db uh -> Wai.Session SResponse -> IO (a, SResponse)
-runWaiBodyRsp sess = errorOnLeft . runWaiBodyE sess
-
--- | Run a rest call and parse the body.
-runWaiBodyE :: FromJSON a => Backend db uh -> Wai.Session SResponse -> IO (Either String (a, SResponse))
-runWaiBodyE sess m = do
+runWaiJSON :: FromJSON a => Backend db uh -> Wai.Session SResponse -> IO a
+runWaiJSON sess m = do
   resp <- runWai sess m
-  pure $ case eitherDecode $ simpleBody resp of
-    Left err -> Left $ unwords [show err, show (simpleHeaders resp), cs (simpleBody resp)]
-    Right x  -> Right (x, resp)
+  case eitherDecode $ simpleBody resp of
+    Left err -> throwIO . ErrorCall $ unwords [show err, show (simpleHeaders resp), cs (simpleBody resp)]
+    Right x  -> pure x
 
 -- | Call 'runDB'' and crash on 'Left'.
 runDB :: Backend DB uh -> AppM DB uh a -> IO a
@@ -172,6 +165,11 @@ loginUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogin)
 logoutUri :: SBS
 logoutUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogout)
 
+addProcessUri :: SBS
+addProcessUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddProcess)
+
+changeRoleUri :: SBS
+changeRoleUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SChangeRole)
 
 -- * test cases
 
@@ -209,8 +207,8 @@ specMockedLogin = around createDevModeTestSession $ do
 
   describe "sCreateVDoc" $ do
     it "stores a vdoc in the db" $ \sess -> do
-      fe :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
-      be :: CompositeVDoc <- runDB      sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
+      fe :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
+      be :: CompositeVDoc <- runDB  sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
       fe `shouldBe` be
 
   describe "sAddNote" $ do
@@ -242,7 +240,7 @@ specMockedLogin = around createDevModeTestSession $ do
           be ^. compositeVDocNotes . to elems `shouldContain` [fn]
 
     it "fails with error on non-trivial *invalid* chunk range" $ \sess -> do
-      vdoc :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
+      vdoc :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
       resp :: SResponse <- runWai sess $
         let cp1, cp2 :: ChunkPoint
             cp1 = ChunkPoint (DataUID 1) 0
@@ -277,18 +275,37 @@ specMockedLogin = around createDevModeTestSession $ do
       pendingWith "this test case shouldn't be too hard to write, and should be working already."
 
   describe "sAddEdit" $ do
-    let setup sess = do
-          fe :: CompositeVDoc <- runWaiBody sess $ post createVDocUri sampleCreateVDoc
-          fp :: Edit          <- runWaiBody sess $
-            post
-              (addEditUri (fe ^. compositeVDocRepo . vdocHeadEdit))
+    let setup sess = runWai sess $ do
+          let group = UniversalGroup
+          _l :: Username <- postJSON loginUri (Login devModeUser devModePass)
+          (CreatedCollabEditProcess _fp fc) :: CreatedProcess <-
+            postJSON addProcessUri
+              (AddCollabEditProcess CreateCollabEditProcess
+                { _createCollabEditProcessPhase = CollaborativeEditOnlyPhase
+                , _createCollabEditProcessGroup = group
+                , _createCollabEditProcessVDoc  = sampleCreateVDoc
+                })
+
+          userId <- liftIO . runDB sess $ do
+            (Just loginId) <- userHandle $ getUserIdByName devModeUser
+            pure (toUserID loginId)
+
+          () <- postJSON changeRoleUri AssignRole
+                  { _crGroupRef = group
+                  , _crUser     = userId
+                  , _crRole     = Member
+                  }
+
+          fe :: Edit <-
+            postJSON
+              (addEditUri (fc ^. compositeVDocRepo . vdocHeadEdit))
               (CreateEdit
                 "new edit"
                 (ChunkRange Nothing Nothing)
                 (vdocVersionFromST "[new vdoc version]")
                 Grammar
                 "no motivation")
-          pure (fe, fp)
+          pure (fc, fe)
 
     context "on edit without ranges" $ do
       it "stores an edit and returns its version" $ \sess -> do
@@ -319,7 +336,7 @@ specUserHandling = around createTestSession $ do
 
     describe "create" $ do
       it "works" $ \sess -> do
-        runWaiBody sess doCreate `shouldReturn` User (ID 1)
+        runWaiJSON sess doCreate `shouldReturn` User (ID 1)
 
       it "is secure" $ \_ -> do
         pendingWith "needs design & implementation: what makes a create requests legit?"

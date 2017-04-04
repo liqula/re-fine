@@ -33,7 +33,6 @@ import           Data.Maybe (isJust)
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.Session
-import Refine.Backend.Database.Class (DatabaseC)
 import Refine.Backend.Types
 import Refine.Backend.User as User
 import Refine.Backend.User.Core as User (User(..))
@@ -55,6 +54,15 @@ login (Login username (User.PasswordPlain -> password)) = do
              =<< userHandle (User.verifySession session)
   void $ setUserSession (toUserID loginId) (UserSession session)
   pure username
+
+-- | Returns (Just (current ID)) of the current user if the user
+-- is logged in otherwise Nothing.
+currentUser :: App (Maybe (ID Refine.User))
+currentUser = do
+  st <- gets (view appUserState)
+  pure $ case st of
+    UserLoggedIn user _session -> Just user
+    UserLoggedOut              -> Nothing
 
 logout :: App ()
 logout = do
@@ -94,7 +102,7 @@ devModePass = "pass"
 --
 -- The user should be present in the database, or the user handling should
 -- be mocked
-devMode :: (UserHandleC uh, DatabaseC db) => AppM db uh a -> AppM db uh a
+devMode :: MonadApp db uh => AppM db uh a -> AppM db uh a
 devMode m = do
   u <- gets (view appUserState)
   case u of

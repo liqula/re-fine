@@ -23,8 +23,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Backend.Database
-  ( module Refine.Backend.Database.Class
-  , module Refine.Backend.Database.Core
+  ( module DatabaseCore
   , DBNat
   , createDBNat
   ) where
@@ -40,10 +39,12 @@ import Database.Persist.Sqlite
 import Web.Users.Persistent as UserDB
 
 import Refine.Backend.Config
-import Refine.Backend.Database.Class
-import Refine.Backend.Database.Core
+import Refine.Backend.Database.Class as DatabaseCore
+import Refine.Backend.Database.Core  as DatabaseCore
 import Refine.Backend.Database.Schema()
 import Refine.Backend.Database.Entity as Entity
+import Refine.Backend.Database.Types as DatabaseCore
+
 
 type DBNat db = DBContext -> (db :~> ExceptT DBError IO)
 
@@ -72,6 +73,8 @@ instance Database DB where
   getVDoc            = Entity.getVDoc
   vdocRepo           = Entity.vdocRepo
   vdocRepoOfEdit     = Entity.vdocRepoOfEdit
+
+  vDocRepoVDoc       = Entity.vDocRepoVDoc
 
   -- * Repo
   createRepo         = Entity.createRepo
@@ -136,3 +139,5 @@ instance Database DB where
   getProcess    = Entity.getProcess
   updateProcess = Entity.updateProcess
   removeProcess = Entity.removeProcess
+
+  vDocProcess   = Entity.vDocProcess

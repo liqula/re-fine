@@ -1,4 +1,6 @@
+{-# LANGUAGE AllowAmbiguousTypes        #-}
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -32,14 +34,12 @@ import           Control.Monad ((<=<), join, mapM)
 import qualified Data.Map as Map
 import           Data.Maybe (catMaybes)
 
+import           Refine.Backend.App.Allow
 import           Refine.Backend.App.Core
 import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
-import           Refine.Common.Types.Chunk
-import           Refine.Common.Types.Comment
-import           Refine.Common.Types.Contribution
-import           Refine.Common.Types.Prelude
-import           Refine.Common.Types.VDoc
+import           Refine.Common.Allow
+import           Refine.Common.Types
 import           Refine.Common.VDoc.HTML
 
 
@@ -111,9 +111,13 @@ getCompositeVDoc vid = do
   where
     toMap selector = Map.fromList . fmap (view selector &&& id)
 
-addEdit :: ID Edit -> Create Edit -> App Edit
+addEdit
+  :: (MonadApp db uh, Allow (DB.ProcessPayload Edit) Edit)
+  => ID Edit -> Create Edit -> AppM db uh Edit
 addEdit basepid edit = do
   appLog "addEdit"
+  assertPerms basepid [Create]  -- (note that the user must have create permission on the *base
+                                -- edit*, not the edit about to get created.)
   validateCreateChunkRange basepid (edit ^. createEditRange)
   join . db $ do
     rid                    <- DB.editVDocRepo basepid

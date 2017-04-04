@@ -119,6 +119,7 @@ Process
 CollabEditProcess
     vdoc    VDocId
     phase   CollaborativeEditPhase
+    UniCEPVDoc vdoc
 
 ProcessOfCollabEdit
     process    ProcessId

@@ -48,66 +48,50 @@ import Refine.Backend.App.Core
 import Refine.Backend.App.VDoc
 import Refine.Backend.Database.Class as DB hiding (createVDoc)
 import Refine.Backend.Database.Types
-import Refine.Backend.User.Class
 import Refine.Common.ChangeAPI
 import Refine.Common.Types
 
 
-type AppProcessConstraint db uh =
-  ( StoreProcessData db Aula
-  , StoreProcessData db CollaborativeEdit
-  , DatabaseC db
-  , UserHandleC uh
-  )
-
-addProcessCollabEdit :: AppProcessConstraint db uh
-                     => Create (Process CollaborativeEdit) -> AppM db uh (Process CollaborativeEdit)
+addProcessCollabEdit
+  :: Create (Process CollaborativeEdit)
+  -> App (Process CollaborativeEdit, CompositeVDoc)
 addProcessCollabEdit aice = do
   appLog "addProcessCollabEdit"
-  gid <- case aice ^. createCollabEditProcessGroup of
-          UniversalGroup -> db universalGroup
-          GroupRef i     -> pure i
   vdoc <- createVDoc (aice ^. createCollabEditProcessVDoc)
   process <- db $ do
+    gid <- aice ^. createCollabEditProcessGroup . to groupRef
     createProcess CreateDBCollabEditProcess
       { _createDBCollabEditProcessPhase   = aice ^. createCollabEditProcessPhase
       , _createDBCollabEditProcessGroupID = gid
       , _createDBCollabEditProcessVDocID  = vdoc ^. vdocID
       }
   cvdoc <- getCompositeVDoc (vdoc ^. vdocID)
-  pure Process
-    { _processID    = process ^. processID . to unsafeCoerceID
-    , _processGroup = process ^. processGroup
-    , _processData  = CollaborativeEdit
-        (process ^. processData . collaborativeEditDBID)
-        (process ^. processData . collaborativeEditDBPhase)
-        cvdoc
-    }
+  pure (process, cvdoc)
 
 -- | FIXME: currently, 'changeProcess' allows to overwrite the process data completely, but we
 -- probably want something more subtle, like not destroying the VDoc, but changing the group.  needs
 -- more thinking.
-updateProcessCollabEdit :: AppProcessConstraint db uh
-                        => ID (Process CollaborativeEdit) -> Create (Process CollaborativeEdit) -> AppM db uh ()
+updateProcessCollabEdit
+  :: ID (Process CollaborativeEdit) -> Create (Process CollaborativeEdit) -> App ()
 updateProcessCollabEdit _pid _aice = do
   appLog "updateProcessCollabEdit"
   error "not implemented yet."
 
-addProcess :: AppProcessConstraint db uh => AddProcess -> AppM db uh CreatedProcess
+addProcess :: AddProcess -> App CreatedProcess
 addProcess ap = do
   appLog "addProcess"
   case ap of
-    AddCollabEditProcess p -> CreatedCollabEditProcess <$> addProcessCollabEdit p
-    AddAulaProcess p       -> CreatedAulaProcess       <$> db (createProcess p)
+    AddCollabEditProcess p -> uncurry CreatedCollabEditProcess <$> addProcessCollabEdit p
+    AddAulaProcess p       -> CreatedAulaProcess               <$> db (createProcess p)
 
-changeProcess :: AppProcessConstraint db uh => ChangeProcess -> AppM db uh ()
+changeProcess :: ChangeProcess -> App ()
 changeProcess change = do
   appLog "changeProcess"
   case change of
     ChangeProcessCollaborativeEditPhase pid create -> updateProcessCollabEdit pid create
     ChangeProcessAulaClassName pid create          -> db $ DB.updateProcess pid create
 
-removeProcess :: AppProcessConstraint db uh => RemoveProcess -> AppM db uh ()
+removeProcess :: RemoveProcess -> App ()
 removeProcess remove = do
   appLog "removeProcess"
   db $ case remove of

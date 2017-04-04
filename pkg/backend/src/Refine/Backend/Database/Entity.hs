@@ -20,13 +20,14 @@
 {-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
+{-# LANGUAGE UndecidableInstances       #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Backend.Database.Entity where
 
 import Control.Lens ((^.), to, view)
-import Control.Monad (forM_, void)
+import Control.Monad ((>=>), forM_, void)
 import Control.Monad.Reader (ask)
 import Data.Functor.Infix ((<$$>))
 import Data.List ((\\))
@@ -221,6 +222,14 @@ getRepoHandle vid = S.repoElim toRepoHandle <$> getEntity vid
 getEditIDs :: ID VDocRepo -> DB [ID Edit]
 getEditIDs vid = liftDB $
   foreignKeyField S.rPEdit <$$> selectList [S.RPRepository ==. S.idToKey vid] []
+
+-- * DocRepo and VDoc
+
+vDocRepoVDoc :: ID VDocRepo -> DB (ID VDoc)
+vDocRepoVDoc rid = do
+  repos <- foreignKeyField S.vRVdoc
+            <$$> liftDB (selectList [S.VRRepository ==. S.idToKey rid] [])
+  unique repos
 
 -- * Edit
 
@@ -571,7 +580,7 @@ instance C.StoreProcessData DB CollaborativeEdit where
                 (process ^. createDBCollabEditProcessVDocID . to S.idToKey)
                 (process ^. createDBCollabEditProcessPhase)
       _ <- insert $ S.ProcessOfCollabEdit (S.idToKey pid) dkey
-      pure $ CollaborativeEditDB
+      pure $ CollaborativeEdit
         (S.keyToId dkey)
         (process ^. createDBCollabEditProcessPhase)
         (process ^. createDBCollabEditProcessVDocID)
@@ -582,7 +591,7 @@ instance C.StoreProcessData DB CollaborativeEdit where
              <$$> liftDB (selectList [S.ProcessOfCollabEditProcess ==. S.idToKey pid] opts)
     ceid <- unique ceids
     cedata <- getEntity ceid
-    pure $ CollaborativeEditDB
+    pure $ CollaborativeEdit
       ceid
       (S.collabEditProcessPhase cedata)
       (S.keyToId $ S.collabEditProcessVdoc cedata)
@@ -598,7 +607,7 @@ instance C.StoreProcessData DB CollaborativeEdit where
       ]
 
   removeProcessData pdata = liftDB $ do
-    let key = pdata ^. collaborativeEditDBID . to S.idToKey
+    let key = pdata ^. collaborativeEditID . to S.idToKey
     deleteWhere [S.ProcessOfCollabEditCollabEdit ==. key]
     delete key
     error "TODO: also remove VDoc and all its contents from the various tables.  see #273."
@@ -633,7 +642,7 @@ instance C.StoreProcessData DB Aula where
     deleteWhere [S.ProcessOfAulaAula ==. pdata ^. aulaID . to S.idToKey]
     delete (pdata ^. aulaID . to S.idToKey)
 
-createProcess :: (C.StoreProcessData DB a) => CreateDB (Process a) -> DB (Process (ResultDB (Process a)))
+createProcess :: (C.StoreProcessData DB a) => CreateDB (Process a) -> DB (Process a)
 createProcess process = do
   gid   <- C.processDataGroupID process
   pkey  <- liftDB . insert $ S.Process (S.idToKey gid)
@@ -641,12 +650,12 @@ createProcess process = do
   group <- getGroup gid
   pure $ Process (S.keyToId pkey) group pdata
 
-getProcess :: (C.StoreProcessData DB a, Typeable a) => ID (Process a) -> DB (Process (ResultDB (Process a)))
+getProcess :: (C.StoreProcessData DB a, Typeable a) => ID (Process a) -> DB (Process a)
 getProcess pid = do
   process <- getEntity pid
   pdata   <- C.getProcessData pid
   group   <- getGroup (S.keyToId $ S.processGroup process)
-  pure $ Process (unsafeCoerceID pid) group pdata
+  pure $ Process pid group pdata
 
 updateProcess :: (C.StoreProcessData DB a) => ID (Process a) -> CreateDB (Process a) -> DB ()
 updateProcess pid process = do
@@ -659,5 +668,47 @@ updateProcess pid process = do
 removeProcess :: (C.StoreProcessData DB a, Typeable a) => ID (Process a) -> DB ()
 removeProcess pid = do
   process <- getProcess pid
-  C.removeProcessData (process ^. processData)
+  C.removeProcessData (process ^. processPayload)
   liftDB $ delete (process ^. processID . to S.idToKey)
+
+vDocProcess :: ID VDoc -> DB (ID (Process CollaborativeEdit))
+vDocProcess vid = do
+  -- CollabEditProcess
+  cedits <- entityKey <$$> liftDB (selectList [S.CollabEditProcessVdoc ==. S.idToKey vid] [])
+  cedit <- unique cedits
+  -- ProcessOfCollabEdit
+  processes <- foreignKeyField S.processOfCollabEditProcess
+                <$$> liftDB (selectList [S.ProcessOfCollabEditCollabEdit ==. cedit] [])
+  unique processes
+
+
+-- * GroupOf
+
+instance (C.StoreProcessData DB a, Typeable a) => C.GroupOf DB (Process a) where
+  groupOf = fmap (view processGroup) . getProcess
+
+instance C.GroupOf DB VDoc where
+  groupOf = vDocProcess >=> C.groupOf
+
+instance C.GroupOf DB VDocRepo where
+  groupOf = vDocRepoVDoc >=> C.groupOf
+
+instance C.GroupOf DB Edit where
+  groupOf = editVDocRepo >=> C.groupOf
+
+-- * ProcessOf
+
+type instance C.ProcessPayload Edit = C.ProcessPayload VDocRepo
+
+instance C.ProcessOf DB Edit where
+  processOf = editVDocRepo >=> C.processOf
+
+type instance C.ProcessPayload VDocRepo = C.ProcessPayload VDoc
+
+instance C.ProcessOf DB VDocRepo where
+  processOf = vDocRepoVDoc >=> C.processOf
+
+type instance C.ProcessPayload VDoc = CollaborativeEdit
+
+instance C.ProcessOf DB VDoc where
+  processOf = vDocProcess >=> getProcess

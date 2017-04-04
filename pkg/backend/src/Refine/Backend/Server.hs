@@ -53,14 +53,15 @@ import           System.FilePath (dropFileName)
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB (migrateDB)
 import Refine.Backend.Config
-import Refine.Backend.Database (Database, DB, DBError(..), createDBNat, StoreProcessData)
+import Refine.Backend.Database
 import Refine.Backend.DocRepo (DocRepoError(..), createRepoNat)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
-import Refine.Backend.User (CreateUserError(..), UserDB, UH, MockUH_, FreeUH, UserHandle, UserHandleC, uhNat, mockLogin)
+import Refine.Backend.User
+import Refine.Common.Allow
 import Refine.Common.Rest
-import Refine.Common.Types
+import Refine.Common.Types.VDoc (Edit)
 import Refine.Prelude (leftToError)
 
 
@@ -90,16 +91,12 @@ data Backend db uh = Backend
   , backendRunApp :: AppM db uh CN.:~> ExceptT AppError IO
   }
 
-type RefineAPIConstraint db uh =
-  ( Monad db
-  , Database db
-  , Monad uh
-  , UserHandle uh
-  , StoreProcessData db Aula
-  , StoreProcessData db CollaborativeEdit
+type MonadRefine db uh =
+  ( MonadApp db uh
+  , Allow (ProcessPayload Edit) Edit
   )
 
-refineApi :: RefineAPIConstraint db uh => ServerT RefineAPI (AppM db uh)
+refineApi :: MonadRefine db uh => ServerT RefineAPI (AppM db uh)
 refineApi =
        Refine.Backend.App.listVDocs
   :<|> Refine.Backend.App.getCompositeVDoc
@@ -140,7 +137,7 @@ mkProdBackend cfg = mkBackend cfg uhNat (migrateDB cfg)
 mkDevModeBackend :: Config -> MockUH_ -> IO (Backend DB FreeUH)
 mkDevModeBackend cfg mock = mkBackend cfg (\_ -> uhNat mock) (migrateDB cfg)
 
-mkBackend :: UserHandleC uh => Config -> (UserDB -> UHNat uh) -> AppM DB uh a -> IO (Backend DB uh)
+mkBackend :: MonadUserHandle uh => Config -> (UserDB -> UHNat uh) -> AppM DB uh a -> IO (Backend DB uh)
 mkBackend cfg initUH migrate = do
   createDataDirectories cfg
 
@@ -159,7 +156,7 @@ mkBackend cfg initUH migrate = do
 
 
 mkServerApp
-    :: RefineAPIConstraint db uh
+    :: MonadRefine db uh
     => Config -> DBNat db -> DocRepoNat -> UHNat uh -> IO (Backend db uh)
 mkServerApp cfg dbNat docRepoNat uh = do
   poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath
@@ -213,6 +210,7 @@ toApiError = \case
   AppSanityCheckError e  -> ApiSanityCheckError e
   AppUserHandleError e   -> ApiUserHandleError . cs $ show e
   AppL10ParseErrors e    -> ApiL10ParseErrors e
+  AppUnauthorized        -> ApiUnauthorized
 
 -- | Turns AppError to its kind of servant error.
 appServantErr :: AppError -> ServantErr
@@ -229,6 +227,7 @@ appServantErr = \case
   AppSanityCheckError _    -> err409
   AppUserHandleError _     -> err500
   AppL10ParseErrors _      -> err500
+  AppUnauthorized          -> err403
 
 dbServantErr :: DBError -> ServantErr
 dbServantErr = \case
