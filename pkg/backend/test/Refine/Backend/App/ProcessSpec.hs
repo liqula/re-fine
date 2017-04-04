@@ -44,8 +44,10 @@ spec = do
 
     it "create works" $ \(runner :: AppRunner (IO ())) -> do
       join . runner $ do
-        CreatedCollabEditProcess _process cvdoc <- App.addProcess $ AddCollabEditProcess crproc
-        pure $ (cvdoc ^. compositeVDoc . vdocTitle) `shouldBe` title
+        CreatedCollabEditProcess process cvdoc <- App.addProcess $ AddCollabEditProcess crproc
+        pure $ do
+          (cvdoc ^. compositeVDoc . vdocTitle) `shouldBe` title
+          (process ^. processID) `shouldNotBe` ID (-1)
 
     it "read works" $ \(_runner :: AppRunner (IO ())) -> do
       pending

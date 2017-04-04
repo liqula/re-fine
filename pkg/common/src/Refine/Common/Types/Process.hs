@@ -105,7 +105,8 @@ data CreateCollabEditProcess = CreateCollabEditProcess
   }
   deriving (Eq, Show, Generic)
 
-type instance Create (Process CollaborativeEdit)        = CreateCollabEditProcess
+type instance Create (Process CollaborativeEdit) = CreateCollabEditProcess
+
 
 -- * aula
 
@@ -126,9 +127,10 @@ data CreateAulaProcess = CreateAulaProcess
   }
   deriving (Eq, Show, Generic)
 
-type instance Create (Process Aula)        = CreateAulaProcess
+type instance Create (Process Aula) = CreateAulaProcess
 
--- * boilerplace
+
+-- * boilerplate
 
 makeRefineType ''Process
 makeRefineType ''AddProcess
