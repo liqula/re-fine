@@ -116,8 +116,8 @@ addEdit
   => ID Edit -> Create Edit -> AppM db uh Edit
 addEdit basepid edit = do
   appLog "addEdit"
-  assertPerm basepid [Create]  -- (note that the user must have create permission on the *base
-                               -- edit*, not the edit about to get created.)
+  assertPerms basepid [Create]  -- (note that the user must have create permission on the *base
+                                -- edit*, not the edit about to get created.)
   validateCreateChunkRange basepid (edit ^. createEditRange)
   join . db $ do
     rid                    <- DB.editVDocRepo basepid

@@ -40,14 +40,14 @@ import           Refine.Common.Allow
 import           Refine.Common.Types
 
 
-assertPerm
+assertPerms
   ::  ( MonadApp db uh
       , DB.GroupOf db target
       , DB.ProcessOf db target
       , Allow (DB.ProcessPayload target) target
       )
   => ID target -> [Perm] -> AppM db uh ()
-assertPerm eid needPerms = do
+assertPerms eid needPerms = do
   muserId <- currentUser
   join . db $ do
     group <- DB.groupOf eid
