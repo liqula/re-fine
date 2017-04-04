@@ -37,7 +37,7 @@ type AppRunner a = AppM DB UH a -> IO a
 
 spec :: Spec
 spec = do
-  describe "### CollaborativeEdit" . around provideAppRunner $ do
+  describe "CollaborativeEdit" . around provideAppRunner $ do
     let crproc = CreateCollabEditProcess CollaborativeEditOnlyPhase UniversalGroup crvdoc
         crvdoc = CreateVDoc title (Abstract mempty) (VDocVersion mempty)
         title  = Title "fnorgh"
