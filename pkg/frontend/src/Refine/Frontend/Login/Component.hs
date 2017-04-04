@@ -131,12 +131,12 @@ login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState ->
       inputField "login-username" "text"     "Username" loginFormUsername >> br_ []
       inputField "login-password" "password" "Password" loginFormPassword >> br_ []
 
-      iconButton_ $ def
+      iconButton_ $ def @IconButtonProps
         & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "submit"
         & iconButtonPropsDisabled     .~ invalidLoginForm curState
-        & iconButtonPropsClickActions .~ [RS.Login . (Login <$> _loginFormUsername <*> _loginFormPassword) $ curState]
+        & iconButtonPropsOnClick      .~ [RS.Login . (Login <$> _loginFormUsername <*> _loginFormPassword) $ curState]
 
 login_ :: FormError -> ReactElementM eventHandler ()
 login_ !errors = view_ (login errors) "login_"
@@ -154,12 +154,12 @@ logout = mkView "Logout" $ do
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 
-      iconButton_ $ def
+      iconButton_ $ def @IconButtonProps
         & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "logout"
         & iconButtonPropsDisabled     .~ False
-        & iconButtonPropsClickActions .~ [RS.Logout]
+        & iconButtonPropsOnClick      .~ [RS.Logout]
 
 logout_ :: ReactElementM eventHandler ()
 logout_ = view_ logout "logout_"
@@ -189,12 +189,12 @@ registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "
       inputFieldWithKey "registration-agree" "checkbox" "" "checked" registrationFormAgree
       "I agree with the terms of use." >> br_ []
 
-      iconButton_ $ def
+      iconButton_ $ def @IconButtonProps
         & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "submit"
         & iconButtonPropsDisabled     .~ invalidRegistrationForm curState
-        & iconButtonPropsClickActions .~ [RS.CreateUser
+        & iconButtonPropsOnClick      .~ [RS.CreateUser
                                               . (CreateUser <$> _registrationFormUsername
                                                             <*> _registrationFormEmail1
                                                             <*> _registrationFormPassword)

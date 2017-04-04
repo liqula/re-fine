@@ -95,9 +95,10 @@ mapFromValue = withObject "MarkPositions"
 
 -- | TODO: give record selectors to all fields.
 data ContributionAction =
-    TriggerUpdateRange (Maybe OffsetFromDocumentTop)
-          -- ^ pixels between article top and mouse/finger from the mouse/touch release event.
-          --   'Nothing' means clear existing selection.
+    TriggerUpdateRange OffsetFromDocumentTop
+          -- ^ pixels between article top and mouse/finger from the mouse/touch release event need
+          -- to be extracted from the mouse event.  to clear range, dispatch @'UpdateRange'
+          -- 'Nothing'@.
   | UpdateRange (Maybe Range)
   | ShowContributionDialog ContributionID
   | HideCommentOverlay
@@ -173,7 +174,7 @@ data QuickCreateProps = QuickCreateProps
   , _quickCreateRange       :: Maybe Range
   , _quickCreateScreenState :: ScreenState
   }
-  deriving (Eq)
+  deriving (Show, Eq)
 
 data QuickCreateSide = QuickCreateComment | QuickCreateEdit
   deriving (Show, Eq, Generic)

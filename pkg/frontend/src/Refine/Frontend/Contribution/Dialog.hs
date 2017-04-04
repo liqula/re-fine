@@ -16,6 +16,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
@@ -306,25 +307,25 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
       let checkAcpKind k = if props ^. acpCommentKind == Just k then "RO" else "dark"
 
       div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do  -- RENAME: annotation => comment
-        iconButton_ $ def
+        iconButton_ $ def @IconButtonProps
           & iconButtonPropsListKey      .~ "note"
           & iconButtonPropsIconProps . iconPropsBlockName .~ "c-vdoc-overlay-content"
           & iconButtonPropsIconProps . iconPropsDesc      .~ ("icon-Note", checkAcpKind CommentKindNote)
           & iconButtonPropsElementName  .~ "category"  -- RENAME: category => kind
           & iconButtonPropsModuleName   .~ "comment"
           & iconButtonPropsLabel        .~ "add a node"
-          & iconButtonPropsClickActions .~ [ContributionAction $ SetCommentKind CommentKindNote]
+          & iconButtonPropsOnClick      .~ [ContributionAction $ SetCommentKind CommentKindNote]
 
         span_ ["style" @= [StyleRem "marginRight" 1]] ""
 
-        iconButton_ $ def
+        iconButton_ $ def @IconButtonProps
           & iconButtonPropsListKey      .~ "discussion"
           & iconButtonPropsIconProps . iconPropsBlockName .~ "c-vdoc-overlay-content"
           & iconButtonPropsIconProps . iconPropsDesc      .~ ("icon-Discussion", checkAcpKind CommentKindDiscussion)
           & iconButtonPropsElementName  .~ "category"
           & iconButtonPropsModuleName   .~ "discussion"  -- RENAME: category => kind
           & iconButtonPropsLabel        .~ "start a discussion"
-          & iconButtonPropsClickActions .~ [ContributionAction $ SetCommentKind CommentKindDiscussion]
+          & iconButtonPropsOnClick      .~ [ContributionAction $ SetCommentKind CommentKindDiscussion]
 
       hr_ []
 
@@ -354,13 +355,14 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
 
       let notATextOrKind = 0 == DT.length (curState ^. commentInputStateText)
                         || isNothing (props ^. acpCommentKind)
-        in iconButton_ $ def
+        in iconButton_ $ def @IconButtonProps
           & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") L
           & iconButtonPropsElementName  .~ "submit"
           & iconButtonPropsLabel        .~ "submit"
           & iconButtonPropsDisabled     .~ notATextOrKind
-          & iconButtonPropsClickActions .~
-                [ ContributionAction (SubmitComment (curState ^. commentInputStateText) (props ^. acpCommentKind))
+          & iconButtonPropsOnClick      .~
+                [ ContributionAction $ SubmitComment (curState ^. commentInputStateText) (props ^. acpCommentKind)
+                , ContributionAction $ UpdateRange Nothing
                 , ContributionAction HideCommentEditor
                 ]
 

@@ -92,9 +92,8 @@ transformGlobalState = transf
 
         -- other effects
         case action of
-            ContributionAction (TriggerUpdateRange mReleasePositionOnPage) -> do
-                reDispatchM . ContributionAction . UpdateRange
-                    =<< maybe (pure Nothing) getRange mReleasePositionOnPage
+            ContributionAction (TriggerUpdateRange releasePositionOnPage) -> do
+                reDispatchM . ContributionAction . UpdateRange =<< getRange releasePositionOnPage
                 removeAllRanges  -- (See also: calls to 'C.highlightRange', 'C.removeHighlights' below.)
 
                 when (state ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithRange) $ do
@@ -159,7 +158,8 @@ vdocUpdate action (Just vdoc) = Just $ case action of
               %~ C.insertMoreMarks [ContribEdit edit]
 
     ContributionAction (UpdateRange (Just range))
-      -> vdoc & C.compositeVDocVersion %~ C.highlightRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
+      -> vdoc & C.compositeVDocVersion %~ C.removeHighlights  -- FIXME: this should be implicit in highlightRange
+              & C.compositeVDocVersion %~ C.highlightRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
     ContributionAction (UpdateRange Nothing)
       -> vdoc & C.compositeVDocVersion %~ C.removeHighlights
 
@@ -321,16 +321,16 @@ handleError (code, rsp) onApiError = case eitherDecode $ cs rsp of
 -- * triggering actions
 
 -- FIXME: return a single some-action, not a list?
-dispatch :: GlobalAction -> [SomeStoreAction]
+dispatch :: GlobalAction -> ViewEventHandler
 dispatch a = [someStoreAction @GlobalState a]
 
-dispatchMany :: [GlobalAction] -> [SomeStoreAction]
+dispatchMany :: [GlobalAction] -> ViewEventHandler
 dispatchMany = mconcat . fmap dispatch
 
-dispatchM :: Monad m => GlobalAction -> m [SomeStoreAction]
+dispatchM :: Monad m => GlobalAction -> m ViewEventHandler
 dispatchM = pure . dispatch
 
-dispatchManyM :: Monad m => [GlobalAction] -> m [SomeStoreAction]
+dispatchManyM :: Monad m => [GlobalAction] -> m ViewEventHandler
 dispatchManyM = pure . dispatchMany
 
 reDispatchM :: MonadState [GlobalAction] m => GlobalAction -> m ()

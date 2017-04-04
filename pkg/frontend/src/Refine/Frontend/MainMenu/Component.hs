@@ -16,6 +16,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
@@ -53,21 +54,21 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
         div_ ["className" $= "c-mainmenu-content__header"] $ do
             let iprops activeTab = IconProps "c-mainmenu-content" (menuTab == activeTab) ("icon-User", "dark") XXL
 
-            iconButton_ $ def
+            iconButton_ $ def @IconButtonProps
               & iconButtonPropsListKey      .~ "login"
               & iconButtonPropsIconProps    .~ iprops MainMenuLogin
               & iconButtonPropsElementName  .~ "section-button"
               & iconButtonPropsModuleName   .~ "active"
-              & iconButtonPropsClickActions .~ [MainMenuAction $ MainMenuActionOpen MainMenuLogin]
+              & iconButtonPropsOnClick      .~ [MainMenuAction $ MainMenuActionOpen MainMenuLogin]
               -- not translated from prototype2016:
               -- button attribute data-section="dashboard"
 
-            iconButton_ $ def
+            iconButton_ $ def @IconButtonProps
               & iconButtonPropsListKey      .~ "register"
               & iconButtonPropsIconProps    .~ iprops MainMenuRegistration
               & iconButtonPropsElementName  .~ "section-button"
               & iconButtonPropsModuleName   .~ "active"
-              & iconButtonPropsClickActions .~ [MainMenuAction $ MainMenuActionOpen MainMenuRegistration]
+              & iconButtonPropsOnClick      .~ [MainMenuAction $ MainMenuActionOpen MainMenuRegistration]
               & iconButtonPropsExtraClasses .~ ["c-mainmenu-content__btn-dashboard"]
               -- not translated from prototype2016:
               -- button attribute data-section="dashboard"
@@ -87,7 +88,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsPosition     = Nothing
               , _iconButtonPropsAlignRight   = False
-              , _iconButtonPropsClickActions = [LoadTranslations $ Locale "en_GB"]
+              , _iconButtonPropsOnClick      = [LoadTranslations $ Locale "en_GB"]
               , _iconButtonPropsClickPropag  = True
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-membership"]
               }
@@ -107,7 +108,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsPosition     = Nothing
               , _iconButtonPropsAlignRight   = False
-              , _iconButtonPropsClickActions = [LoadTranslations $ Locale "de_DE"]
+              , _iconButtonPropsOnClick      = [LoadTranslations $ Locale "de_DE"]
               , _iconButtonPropsClickPropag  = True
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-membership"]
               }
@@ -127,7 +128,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsPosition     = Nothing
               , _iconButtonPropsAlignRight   = False
-              , _iconButtonPropsClickActions = []
+              , _iconButtonPropsOnClick      = [] :: [GlobalAction]
               , _iconButtonPropsClickPropag  = True
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-help"]
               -- not translated from prototype2016:
@@ -150,7 +151,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               , _iconButtonPropsDisabled     = False
               , _iconButtonPropsPosition     = Nothing
               , _iconButtonPropsAlignRight   = False
-              , _iconButtonPropsClickActions = [MainMenuAction MainMenuActionClose]
+              , _iconButtonPropsOnClick      = [MainMenuAction MainMenuActionClose]
               , _iconButtonPropsClickPropag  = True
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-close"]
               -- not translated from prototype2016:

@@ -85,7 +85,9 @@ quickCreateShowStateUpdate action state = case action of
   HeaderAction ToggleCommentToolbarExtension    -> toolbarWasToggled
   HeaderAction StartTextSpecificComment         -> QuickCreateBlocked
   HeaderAction ToggleEditToolbarExtension       -> toolbarWasToggled
-  HeaderAction (StartEdit _)                    -> QuickCreateBlocked
+  HeaderAction (StartEdit _)                    -> QuickCreateNotShown  -- (article is hidden, so
+                                                                        -- quick create buttons are
+                                                                        -- never triggered.)
   HeaderAction CloseToolbarExtension            -> toolbarWasToggled
   _ -> state
   where

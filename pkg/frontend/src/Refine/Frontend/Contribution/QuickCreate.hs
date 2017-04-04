@@ -16,9 +16,12 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
+
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.Contribution.QuickCreate where
 
@@ -32,6 +35,7 @@ import Refine.Frontend.Icon
 import Refine.Frontend.Icon.Types
 import Refine.Frontend.Screen.Calculations
 import Refine.Frontend.Screen.Types
+import Refine.Frontend.Store
 import Refine.Frontend.Store.Types
 import Refine.Frontend.Types
 import Refine.Prelude ()
@@ -41,13 +45,11 @@ quickCreate :: View '[QuickCreateProps]
 quickCreate = mkView "QuickCreateButton" $ \props ->
     case (props ^. quickCreateRange, props ^. quickCreateShowState) of
         (Just range, QuickCreateShown) ->
-            iconButton_ $ def
+            iconButton_ $ def @(IconButtonPropsWithHandler QuickCreateSide)
               & iconButtonPropsIconProps    .~ IconProps (renderQuickCreateSide (props ^. quickCreateSide))
                                                          True ("icon-New_Comment", "bright") XXL
               & iconButtonPropsPosition     .~ Just (mkQuickCreateOffset range (props ^. quickCreateScreenState))
-              & iconButtonPropsClickActions .~ case props ^. quickCreateSide of
-                  QuickCreateComment -> [ContributionAction (TriggerUpdateRange Nothing), ContributionAction ShowCommentEditor]
-                  QuickCreateEdit    -> [ContributionAction (TriggerUpdateRange Nothing), HeaderAction ToggleEditToolbarExtension]
+              & iconButtonPropsOnClick      .~ (props ^. quickCreateSide)
         _ -> mempty
 --    // quickCreate annotation ui events  -- RENAME: annotation => comment
 --    ann.addEventListener('mousedown', quickCreateOverlay);
@@ -55,6 +57,13 @@ quickCreate = mkView "QuickCreateButton" $ \props ->
 
 quickCreate_ :: QuickCreateProps -> ReactElementM eventHandler ()
 quickCreate_ !props = view_ quickCreate "quickCreate_" props
+
+
+instance IconButtonPropsOnClick QuickCreateSide where
+  runIconButtonPropsOnClick _ _ = dispatch . \case
+    QuickCreateComment -> ContributionAction ShowCommentEditor
+    QuickCreateEdit    -> HeaderAction ToggleEditToolbarExtension
+  defaultOnClick = QuickCreateComment
 
 
 mkQuickCreateOffset :: Range -> ScreenState -> Int

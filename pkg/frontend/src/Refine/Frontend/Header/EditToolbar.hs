@@ -16,6 +16,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
@@ -41,55 +42,57 @@ editToolbar = mkView "EditToolbar" $ do
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          let editButton = def
+          let editButton = def @IconButtonProps
                 & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL
                 & iconButtonPropsElementName  .~ "btn-index"
 
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "h1"
             & iconButtonPropsLabel        .~ "header 1"
-            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "h2"
             & iconButtonPropsLabel        .~ "header 2"
-            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "h3"
             & iconButtonPropsLabel        .~ "header 3"
-            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "bold"
             & iconButtonPropsLabel        .~ "bold"
-            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "italic"
             & iconButtonPropsLabel        .~ "italic"
-            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "bullets"
             & iconButtonPropsLabel        .~ "bullets"
-            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "numbers"
             & iconButtonPropsLabel        .~ "numbers"
-            & iconButtonPropsClickActions .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
           iconButton_ $ editButton
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXL
             & iconButtonPropsListKey      .~ "save"
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True
-            & iconButtonPropsClickActions .~ [ContributionAction (TriggerUpdateRange Nothing), DocumentAction DocumentEditSave]
+            & iconButtonPropsOnClick      .~ [ DocumentAction DocumentEditSave
+                                             , ContributionAction $ UpdateRange Nothing
+                                             ]
 
 editToolbar_ :: ReactElementM eventHandler ()
 editToolbar_ = view_ editToolbar "editToolbar_"

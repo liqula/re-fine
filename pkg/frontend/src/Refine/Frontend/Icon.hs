@@ -30,7 +30,6 @@ import           GHCJS.Types (JSString)
 import           React.Flux
 
 import qualified Refine.Frontend.Colors as Color
-import           Refine.Frontend.Store
 import           Refine.Frontend.Style
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
@@ -61,8 +60,8 @@ icon_ !props = view_ icon "Icon_" props
 
 -- * icon button
 
-iconButtonPropsToClasses :: IconButtonProps -> [JSString]
-iconButtonPropsToClasses props =
+iconButtonPropsToClasses :: IconButtonPropsWithHandler onclick -> JSString
+iconButtonPropsToClasses props = toClasses $
   [ iprops ^. iconPropsBlockName <> "__button"
   , beName  -- for the vdoc-toolbar
   , bemName -- for the buttons in the overlays
@@ -76,7 +75,7 @@ iconButtonPropsToClasses props =
     bemName = beName <> emConnector <> props ^. iconButtonPropsModuleName
     alignmentClass = [ iprops ^. iconPropsBlockName <> "--align-right" | props ^. iconButtonPropsAlignRight ]
 
-iconButtonPropsToStyles :: IconButtonProps -> [Style]
+iconButtonPropsToStyles :: IconButtonPropsWithHandler onclick -> [Style]
 iconButtonPropsToStyles props = alpos <> curpoint
   where
     alpos = case props ^. iconButtonPropsPosition of
@@ -92,23 +91,22 @@ iconButtonPropsToStyles props = alpos <> curpoint
     hammer_ [on "onTap" $ bprops ^. clickHandler | not (bprops ^. disabled)] $ do
 -}
 
-iconButton :: View '[IconButtonProps]
+iconButton :: IconButtonPropsOnClick onclick => View '[IconButtonPropsWithHandler onclick]
 iconButton = mkView "IconButton" $ \props -> do
-    let iprops = props ^. iconButtonPropsIconProps
-
-    div_ ([ "className" $= toClasses (iconButtonPropsToClasses props)
+    div_ ([ "className" $= iconButtonPropsToClasses props
           , "style" @= iconButtonPropsToStyles props
           ] <> [onClick $ mkClickHandler props | not (props ^. iconButtonPropsDisabled)]
-          ) $ do
-        icon_ iprops
-        span_ [ "className" $= (iprops ^. iconPropsBlockName <> "__button-label")
+         ) $ do
+        icon_ $ props ^. iconButtonPropsIconProps
+        span_ [ "className" $= (props ^. iconButtonPropsIconProps . iconPropsBlockName <> "__button-label")
               , "style" @= [mkStyle "color" Color.DisabledText | props ^. iconButtonPropsDisabled]
               ] $
             elemJSString (props ^. iconButtonPropsLabel)
 
-iconButton_ :: IconButtonProps -> ReactElementM eventHandler ()
+iconButton_ :: IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick -> ReactElementM eventHandler ()
 iconButton_ !props = view_ iconButton ("iconButton_" <> props ^. iconButtonPropsListKey) props
 
-mkClickHandler :: IconButtonProps -> Event -> MouseEvent -> [SomeStoreAction]
-mkClickHandler props evt _ = [ stopPropagation evt | not $ props ^. iconButtonPropsClickPropag ]
-                          <> dispatchMany (props ^. iconButtonPropsClickActions)
+mkClickHandler :: IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick -> Event -> MouseEvent -> ViewEventHandler
+mkClickHandler props evt mevt =
+  [ stopPropagation evt | not $ props ^. iconButtonPropsClickPropag ] <>
+  runIconButtonPropsOnClick evt mevt (props ^. iconButtonPropsOnClick)

@@ -20,6 +20,8 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Refine.Frontend.Icon.Types
   ( ReactListKey
   , IconSize(..)
@@ -31,7 +33,7 @@ module Refine.Frontend.Icon.Types
   , iconPropsDesc
   , iconPropsSize
 
-  , IconButtonProps(..)
+  , IconButtonPropsWithHandler(..), IconButtonProps
   , iconButtonPropsListKey
   , iconButtonPropsIconProps
   , iconButtonPropsElementName
@@ -40,17 +42,22 @@ module Refine.Frontend.Icon.Types
   , iconButtonPropsDisabled
   , iconButtonPropsPosition
   , iconButtonPropsAlignRight
-  , iconButtonPropsClickActions
+  , iconButtonPropsOnClick
   , iconButtonPropsClickPropag
   , iconButtonPropsExtraClasses
+
+  , IconButtonPropsOnClick(..)
   ) where
 
 import           Control.Lens (makeLenses)
 import           Data.Default (Default(def))
+import           Data.Typeable (Typeable)
 import           GHCJS.Types (JSString)
+import           React.Flux (Event, MouseEvent, ViewEventHandler)
 
 import           Refine.Frontend.CS ()
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Store (dispatchMany)
 import           Refine.Frontend.Types
 
 
@@ -74,7 +81,7 @@ instance Default IconProps where
     , _iconPropsSize      = L
     }
 
-data IconButtonProps = IconButtonProps
+data IconButtonPropsWithHandler onclick = IconButtonProps
   { _iconButtonPropsListKey      :: ReactListKey  -- (this is not morally part of the props, but it's convenient to keep it here.)
   , _iconButtonPropsIconProps    :: IconProps
   , _iconButtonPropsElementName  :: JSString
@@ -83,15 +90,15 @@ data IconButtonProps = IconButtonProps
   , _iconButtonPropsDisabled     :: Bool  -- TODO: make this 'enabled'
   , _iconButtonPropsPosition     :: Maybe Int
   , _iconButtonPropsAlignRight   :: Bool
-  , _iconButtonPropsClickActions :: [GlobalAction]
+  , _iconButtonPropsOnClick      :: onclick
   , _iconButtonPropsClickPropag  :: Bool
   , _iconButtonPropsExtraClasses :: [JSString]
   }
   deriving (Eq)
 
-makeLenses ''IconButtonProps
+makeLenses ''IconButtonPropsWithHandler
 
-instance Default IconButtonProps where
+instance IconButtonPropsOnClick onclick => Default (IconButtonPropsWithHandler onclick) where
   def = IconButtonProps
     { _iconButtonPropsListKey      = ""
     , _iconButtonPropsIconProps    = def
@@ -101,7 +108,17 @@ instance Default IconButtonProps where
     , _iconButtonPropsDisabled     = False
     , _iconButtonPropsPosition     = Nothing
     , _iconButtonPropsAlignRight   = False
-    , _iconButtonPropsClickActions = []
+    , _iconButtonPropsOnClick      = defaultOnClick
     , _iconButtonPropsClickPropag  = True  -- Iff 'False', call 'stopPropagation'.  See 'mkClickHandler'.
     , _iconButtonPropsExtraClasses = []
     }
+
+class (Typeable onclick, Eq onclick) => IconButtonPropsOnClick onclick where
+  runIconButtonPropsOnClick :: Event -> MouseEvent -> onclick -> ViewEventHandler
+  defaultOnClick            :: onclick  -- ^ @instance Default [GlobalAction]@ would lead to overlaps.
+
+type IconButtonProps = IconButtonPropsWithHandler [GlobalAction]
+
+instance IconButtonPropsOnClick [GlobalAction] where
+  runIconButtonPropsOnClick _ _ = dispatchMany
+  defaultOnClick                = mempty

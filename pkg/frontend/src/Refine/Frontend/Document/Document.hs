@@ -42,12 +42,12 @@ document = mkView "Document" $ \props ->
       -> article_ ["className" $= "gr-20 gr-14@desktop editor_wrapper"] $ do
             editor_ $ EditorProps editorState
     DocumentStateView
-      -> let dispatchUpdate = dispatch . ContributionAction . TriggerUpdateRange . Just . OffsetFromDocumentTop in
+      -> let dispatchTriggerUpdateRange = dispatch . ContributionAction . TriggerUpdateRange . OffsetFromDocumentTop in
          article_ [ "id" $= "vdocValue"
                   , "className" $= "gr-20 gr-14@desktop"
                       -- 'mousePageY': relative to article top; 'mouseClientY': relative to window top
-                  , onMouseUp  $ \_ me -> dispatchUpdate (mousePageY me)
-                  , onTouchEnd $ \_ te -> dispatchUpdate (touchPageY . head . touches $ te)
+                  , onMouseUp  $ \_ me -> dispatchTriggerUpdateRange (mousePageY me)
+                  , onTouchEnd $ \_ te -> dispatchTriggerUpdateRange (touchPageY . head . touches $ te)
                   ] $ do
            div_ ["className" $= "c-article-content"] $ do
              vdocToHTML (props ^. dpContributionState) (props ^. dpVDocVersion)
