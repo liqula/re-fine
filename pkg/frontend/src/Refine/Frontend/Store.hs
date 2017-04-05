@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -27,11 +28,13 @@ module Refine.Frontend.Store where
 
 import           Control.Concurrent (forkIO, yield, threadDelay)
 import           Control.Lens (_Just, (&), (^.), (^?), (^?!), (%~), to)
-import           Control.Monad (void)
-import           Data.Aeson (decode, eitherDecode)
+import           Control.Monad.IO.Class
+import           Control.Monad.State.Class (MonadState, modify)
+import           Control.Monad.Trans.State (StateT, runStateT)
+import           Control.Monad (void, when)
+import           Data.Aeson (decode, eitherDecode, toJSON, Value(String))
 import           Data.JSString (JSString, unpack)
 import qualified Data.Map.Strict as M
-import           Data.Maybe (fromJust)
 import           Data.String.Conversions
 import           React.Flux
 
@@ -44,12 +47,14 @@ import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Store (documentStateUpdate, editorStateToVDocVersion)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
+import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Login.Store (loginStateUpdate)
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Rest
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
+import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Console
 import           Refine.Frontend.Test.Samples
 import           Refine.Frontend.Translation.Store (translationsUpdate)
@@ -58,17 +63,62 @@ import           Refine.Frontend.Types
 
 instance StoreData GlobalState where
     type StoreAction GlobalState = GlobalAction
-    transform = transformGlobalState
+    transform = loop . (:[])
+      where
+        loop :: [GlobalAction] -> GlobalState -> IO GlobalState
+        loop [] state = pure state
+        loop (action : actions) state = do
+          (state', actions') <- runStateT (transformGlobalState @Transform action state) []
+          loop (actions <> actions') state'
+
+type MonadTransform m = (Functor m, Applicative m, Monad m, MonadIO m, MonadState [GlobalAction] m)
+type Transform = StateT [GlobalAction] IO
 
 -- | FUTUREWORK: have more fine-grained constraints on 'm'.
-transformGlobalState :: m ~ IO => GlobalAction -> GlobalState -> m GlobalState
+transformGlobalState :: forall m. MonadTransform m => GlobalAction -> GlobalState -> m GlobalState
 transformGlobalState = transf
   where
+    transf :: GlobalAction -> GlobalState -> m GlobalState
+    transf ClearState _ = pure emptyGlobalState  -- for testing only!
+    transf action state = do
+        consoleLogJSONM "Old state: " state
+        consoleLogJSStringM "Action: " (cs $ show action)
+
+        -- all updates to state are pure!
+        let state' = pureTransform action state
+
+        -- ajax
+        liftIO $ emitBackendCallsFor action state
+
+        -- other effects
+        case action of
+            ContributionAction (TriggerUpdateRange releasePositionOnPage) -> do
+                reDispatchM . ContributionAction . maybe ClearRange SetRange
+                    =<< getRange releasePositionOnPage
+                removeAllRanges  -- (See also: calls to 'C.highlightRange', 'C.removeHighlights' below.)
+
+                when (state ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithRange) $ do
+                  -- (if the comment editor (or dialog) is started via the toolbar extension, this
+                  -- is where it should be started.)
+                  reDispatchM $ ContributionAction ShowCommentEditor
+
+            ContributionAction (ScheduleAddMarkPosition _ _) -> do
+                let nothingScheduled = M.null $ state ^. gsContributionState . csMarkPositions . markPositionsScheduled
+                    delayMiliSecs = 150
+                when nothingScheduled . void . liftIO . forkIO $ do
+                  threadDelay $ delayMiliSecs * 1000
+                  dispatchAndExec $ ContributionAction DischargeAddMarkPositions
+
+            _ -> pure ()
+
+        consoleLogJSONM "New state: " $ if state' /= state then toJSON state' else (String "[UNCHANGED]" :: Value)
+        pure state'
+
     pureTransform :: GlobalAction -> GlobalState -> GlobalState
     pureTransform action state = state
       & gsVDoc                       %~ vdocUpdate action
       & gsVDocList                   %~ vdocListUpdate action
-      & gsContributionState          %~ maybe id contributionStateUpdate (action ^? _ContributionAction)
+      & gsContributionState          %~ contributionStateUpdate action
       & gsHeaderState                %~ headerStateUpdate action
       & gsDocumentState              %~ documentStateUpdate action (state ^? gsVDoc . _Just . C.compositeVDocVersion)
       & gsScreenState                %~ maybe id screenStateUpdate (action ^? _ScreenAction)
@@ -76,37 +126,7 @@ transformGlobalState = transf
       & gsLoginState                 %~ loginStateUpdate action
       & gsMainMenuState              %~ mainMenuUpdate action
       & gsToolbarSticky              %~ toolbarStickyUpdate action
-      & gsTranslations               %~ fmap (translationsUpdate action)
-
-    transf :: m ~ IO => GlobalAction -> GlobalState -> m GlobalState
-    transf ClearState _ = pure emptyGlobalState  -- for testing only!
-    transf action state = do
-        consoleLogJSONM "Old state: " state
-        consoleLogJSStringM "Action: " (cs $ show action)
-
-        -- ajax
-        emitBackendCallsFor action state
-
-        -- effects
-        action' <- case action of
-            TriggerUpdateSelection releasePositionOnPage toolbarStatus -> do
-                mrange <- getRange
-                pure . ContributionAction $ UpdateSelection
-                    (case mrange of
-                        Nothing -> NothingSelectedButUpdateTriggered releasePositionOnPage
-                        Just range -> RangeSelected range releasePositionOnPage)
-                    toolbarStatus
-
-            ContributionAction (ShowCommentEditor _) -> do
-                js_removeAllRanges >> pure action
-
-            _ -> pure action
-
-        -- pure updates
-        let state' = pureTransform action' state
-
-        consoleLogJSONM "New state: " state'
-        pure state'
+      & gsTranslations               %~ translationsUpdate action
 
 
 -- * pure updates
@@ -138,9 +158,10 @@ vdocUpdate action (Just vdoc) = Just $ case action of
           & C.compositeVDocVersion
               %~ C.insertMoreMarks [ContribEdit edit]
 
-    ContributionAction (ShowCommentEditor (Just range))
-      -> vdoc & C.compositeVDocVersion %~ C.highlightRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
-    ContributionAction HideCommentEditor
+    ContributionAction (SetRange range)
+      -> vdoc & C.compositeVDocVersion %~ C.removeHighlights  -- FIXME: this should be implicit in highlightRange
+              & C.compositeVDocVersion %~ C.highlightRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
+    ContributionAction ClearRange
       -> vdoc & C.compositeVDocVersion %~ C.removeHighlights
 
     _ -> vdoc
@@ -175,30 +196,29 @@ emitBackendCallsFor action state = case action of
     LoadDocumentList -> do
         listVDocs $ \case
             (Left rsp) -> handleError rsp (const [])
-            (Right loadedVDocs) -> pure . dispatch $ LoadedDocumentList ((^. C.vdocID) <$> loadedVDocs)
+            (Right loadedVDocs) -> dispatchM $ LoadedDocumentList ((^. C.vdocID) <$> loadedVDocs)
     LoadDocument auid -> do
         getVDoc auid $ \case
             (Left rsp) -> handleError rsp (const [])
-            (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
+            (Right loadedVDoc) -> dispatchM $ OpenDocument loadedVDoc
 
 
     -- contributions
 
-    ContributionAction (SubmitComment text category forRange) -> do
-      -- here we need to distinguish which comment category we want to submit
-      -- check the state and what the user selected there
-      -- (FIXME: the new correct technical term for 'category' is 'kind'.)
-      case category of
-        Just Discussion ->
-          addDiscussion (state ^. gsVDoc . to fromJust . C.compositeVDocRepo . C.vdocHeadEdit)
-                     (C.CreateDiscussion text True (createChunkRange forRange)) $ \case
+    ContributionAction (SubmitComment text kind) -> do
+      let forRange :: C.ChunkRange
+          forRange = state ^. gsContributionState . csCurrentRange . to createChunkRange
+      case kind of
+        Just CommentKindDiscussion ->
+          addDiscussion (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
+                     (C.CreateDiscussion text True forRange) $ \case
             (Left rsp) -> handleError rsp (const [])
-            (Right discussion) -> pure $ dispatch (AddDiscussion discussion)
-        Just Note ->
-          addNote (state ^. gsVDoc . to fromJust . C.compositeVDocRepo . C.vdocHeadEdit)
-                     (C.CreateNote text True (createChunkRange forRange)) $ \case
+            (Right discussion) -> dispatchM $ AddDiscussion discussion
+        Just CommentKindNote ->
+          addNote (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
+                     (C.CreateNote text True forRange) $ \case
             (Left rsp) -> handleError rsp (const [])
-            (Right note) -> pure $ dispatch (AddNote note)
+            (Right note) -> dispatchM $ AddNote note
         Nothing -> pure ()
 
     DocumentAction DocumentEditSave -> case state ^? gsDocumentState . documentStateEdit of
@@ -209,15 +229,15 @@ emitBackendCallsFor action state = case action of
             cid :: C.Create C.Edit
             cid = C.CreateEdit
                   { C._createEditDesc  = "..."                          -- TODO: #233
-                  , C._createEditRange = C.ChunkRange Nothing Nothing  -- FIXME: 'state ^. gsContributionState . csCurrentSelection'
+                  , C._createEditRange = state ^. gsContributionState . csCurrentRange . to createChunkRange
                   , C._createEditVDoc  = C.downgradeVDocVersionWR newvers
-                  , C._createEditKind  = estate ^. editorStateKind
+                  , C._createEditKind  = estate ^. documentEditStateKind
                   , C._createEditMotiv = "..."                          -- TODO: #233
                   }
 
         addEdit eid cid $ \case
           Left rsp   -> handleError rsp (const [])
-          Right edit -> pure $ dispatch (AddEdit edit)
+          Right edit -> dispatchM $ AddEdit edit
 
       bad -> let msg = "DocumentAction DocumentEditSave: "
                     <> "not in editor state or content cannot be converted to html."
@@ -231,7 +251,7 @@ emitBackendCallsFor action state = case action of
       getTranslations (C.GetTranslations locate) $ \case
         (Left rsp) -> handleError rsp (const [])
         (Right l10) -> do
-          pure . dispatch $ ChangeTranslations l10
+          dispatchM $ ChangeTranslations l10
 
 
     -- users
@@ -244,7 +264,7 @@ emitBackendCallsFor action state = case action of
             _                      -> []
 
         (Right _user) -> do
-          pure $ dispatchMany
+          dispatchManyM
             [ MainMenuAction $ MainMenuActionOpen MainMenuLogin
             , MainMenuAction MainMenuActionClearErrors
             ]
@@ -256,7 +276,7 @@ emitBackendCallsFor action state = case action of
           _                 -> []
 
         (Right username) -> do
-          pure $ dispatchMany
+          dispatchManyM
             [ ChangeCurrentUser $ UserLoggedIn username
             , MainMenuAction MainMenuActionClose
             ]
@@ -265,7 +285,7 @@ emitBackendCallsFor action state = case action of
       logout $ \case
         (Left rsp) -> handleError rsp (const [])
         (Right ()) -> do
-          pure $ dispatchMany
+          dispatchManyM
             [ ChangeCurrentUser UserLoggedOut
             , MainMenuAction MainMenuActionClose
             ]
@@ -276,7 +296,7 @@ emitBackendCallsFor action state = case action of
     AddDemoDocument -> do
         createVDoc (C.CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
             (Left rsp) -> handleError rsp (const [])
-            (Right loadedVDoc) -> pure . dispatch $ OpenDocument loadedVDoc
+            (Right loadedVDoc) -> dispatchM $ OpenDocument loadedVDoc
 
 
     -- default
@@ -299,29 +319,56 @@ handleError (code, rsp) onApiError = case eitherDecode $ cs rsp of
     pure . mconcat . fmap dispatch $ onApiError apiError
 
 
--- * helpers
+-- * triggering actions
 
 -- FIXME: return a single some-action, not a list?
-dispatch :: GlobalAction -> [SomeStoreAction]
+dispatch :: GlobalAction -> ViewEventHandler
 dispatch a = [someStoreAction @GlobalState a]
 
-dispatchMany :: [GlobalAction] -> [SomeStoreAction]
+dispatchMany :: [GlobalAction] -> ViewEventHandler
 dispatchMany = mconcat . fmap dispatch
 
+dispatchM :: Monad m => GlobalAction -> m ViewEventHandler
+dispatchM = pure . dispatch
 
-getRange :: IO (Maybe Range)
-getRange = decode . cs . unpack <$> js_getRange
+dispatchManyM :: Monad m => [GlobalAction] -> m ViewEventHandler
+dispatchManyM = pure . dispatchMany
+
+reDispatchM :: MonadState [GlobalAction] m => GlobalAction -> m ()
+reDispatchM a = reDispatchManyM [a]
+
+reDispatchManyM :: MonadState [GlobalAction] m => [GlobalAction] -> m ()
+reDispatchManyM as = modify (<> as)
+
+dispatchAndExec :: MonadIO m => GlobalAction -> m ()
+dispatchAndExec a = liftIO . reactFluxWorkAroundForkIO $ do
+  () <- executeAction `mapM_` dispatch a
+  pure ()
+
+dispatchAndExecMany :: MonadIO m => [GlobalAction] -> m ()
+dispatchAndExecMany as = liftIO . reactFluxWorkAroundForkIO $ do
+  () <- executeAction `mapM_` dispatchMany as
+  pure ()
+
+
+-- * ranges and selections
+
+getRange :: MonadIO m => OffsetFromDocumentTop -> m (Maybe Range)
+getRange pos = liftIO $ decode . cs . unpack <$> js_getRange pos
 
 foreign import javascript unsafe
-  "refine$getSelectionRange()"
-  js_getRange :: IO JSString
+  "refine$getSelectionRange($1)"
+  js_getRange :: OffsetFromDocumentTop -> IO JSString
+
+removeAllRanges :: MonadIO m => m ()
+removeAllRanges = liftIO js_removeAllRanges
 
 foreign import javascript unsafe
   "window.getSelection().removeAllRanges();"
   js_removeAllRanges :: IO ()
 
 
--- * ugly hacks
+-- * work-arounds for known bugs.
 
 -- | See https://bitbucket.org/wuzzeb/react-flux/issues/28/triggering-re-render-after-store-update
 -- for details and status.

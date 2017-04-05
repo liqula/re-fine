@@ -22,86 +22,87 @@
 
 module Refine.Frontend.Types where
 
-import           Data.Text (Text)
-import           Data.Text.I18n
-import           GHC.Generics (Generic)
+import Control.Lens (makeLenses)
+import Data.Aeson
+import Data.Char (toLower)
+import Data.JSString (JSString)
+import Data.Maybe (catMaybes)
+import Data.String.Conversions
+import GHC.Generics (Generic)
 
 import Refine.Common.Types
-import Refine.Frontend.Contribution.Types
-import Refine.Frontend.Document.Types
-import Refine.Frontend.Header.Types
-import Refine.Frontend.Login.Types
-import Refine.Frontend.MainMenu.Types
-import Refine.Frontend.Screen.Types
-import Refine.Prelude.Aeson (NoJSONRep(..))
-import Refine.Prelude.TH (makeRefineType)
+import Refine.Frontend.CS ()
+import Refine.Prelude.TH (makeRefineType, makeSOPGeneric, makeNFData)
+import Refine.Prelude.Aeson ((.=?))
 
 
-data GlobalState = GlobalState
-  { _gsVDoc                       :: Maybe CompositeVDoc
-  , _gsVDocList                   :: Maybe [ID VDoc]
-  , _gsContributionState          :: ContributionState
-  , _gsHeaderState                :: HeaderState
-  , _gsDocumentState              :: DocumentState
-  , _gsScreenState                :: ScreenState
-  , _gsNotImplementedYetIsVisible :: Bool
-  , _gsMainMenuState              :: MainMenuState
-  , _gsLoginState                 :: LoginState
-  , _gsToolbarSticky              :: Bool
-  , _gsTranslations               :: NoJSONRep Translations
-  } deriving (Show, Generic)
+class CssClass a where
+  showCssClass :: a -> JSString
 
-emptyGlobalState :: GlobalState
-emptyGlobalState = GlobalState
-  { _gsVDoc                       = Nothing
-  , _gsVDocList                   = Nothing
-  , _gsContributionState          = emptyContributionState
-  , _gsHeaderState                = emptyHeaderState
-  , _gsDocumentState              = DocumentStateView
-  , _gsScreenState                = emptyScreenState
-  , _gsNotImplementedYetIsVisible = False
-  , _gsMainMenuState              = emptyMainMenuState
-  , _gsLoginState                 = emptyLoginState
-  , _gsToolbarSticky              = False
-  , _gsTranslations               = NoJSONRep emptyTranslations
-  }
+type ReactListKey = JSString  -- do not move this to Frontend.Types, importing this here creates a cycle.
 
-data GlobalAction =
-    -- documents
-    LoadDocumentList
-  | LoadedDocumentList [ID VDoc]
-  | LoadDocument (ID VDoc)
-  | OpenDocument CompositeVDoc
+data IconSize
+  = S
+  | M
+  | L
+  | XL
+  | XXL
+  deriving (Eq, Show)
 
-    -- contributions
-  | ScreenAction ScreenAction
-  | ContributionAction ContributionAction
-  | HeaderAction HeaderAction
-  | DocumentAction DocumentAction
-  | ToolbarStickyStateChange Bool
-  | MainMenuAction MainMenuAction
-  | AddNote Note
-  | AddDiscussion CompositeDiscussion
-  | AddEdit Edit
-  | SaveSelect Text Text
-  | TriggerUpdateSelection OffsetFromDocumentTop ToolbarExtensionStatus
+instance CssClass IconSize where
+  showCssClass = ("iconsize-" <>) . cs . fmap toLower . show
 
-    -- i18n
-  | LoadTranslations Locale
-  | ChangeTranslations L10
+type IconDescription = (JSString, JSString)
 
-    -- users
-  | CreateUser CreateUser
-  | Login Login
-  | Logout
-  | ChangeCurrentUser CurrentUser
 
-    -- testing & dev
-  | AddDemoDocument
-  | ClearState
-  | ShowNotImplementedYet
-  | HideNotImplementedYet
-  deriving (Show, Generic)
+-- | `viewport` is the browser window (the visible part of the `document`, or `page`).  See
+-- `/docs/frontend/offsets.pdf`.
+newtype OffsetFromViewportTop = OffsetFromViewportTop { _unOffsetFromViewportTop :: Int }
+  deriving (Show, Generic, Eq, Ord, Num)
 
-makeRefineType ''GlobalState
-makeRefineType ''GlobalAction
+-- | Distance between document top and viewport top.  See `/docs/frontend/offsets.pdf`.
+newtype ScrollOffsetOfViewport = ScrollOffsetOfViewport { _unScrollOffsetOfViewport :: Int }
+  deriving (Show, Generic, Eq, Ord, Num)
+
+-- | Distance between document top and node (e.g., `<mark>` or `</mark>`).
+newtype OffsetFromDocumentTop = OffsetFromDocumentTop { _unOffsetFromDocumentTop :: Int }
+  deriving (Show, Generic, Eq, Ord, Num)
+
+makeRefineType ''OffsetFromViewportTop
+makeRefineType ''ScrollOffsetOfViewport
+makeRefineType ''OffsetFromDocumentTop
+
+
+data Range = Range
+    { _rangeStartPoint   :: Maybe ChunkPoint
+    , _rangeEndPoint     :: Maybe ChunkPoint
+    , _rangeDocTopOffset :: OffsetFromDocumentTop
+    , _rangeTopOffset    :: OffsetFromViewportTop
+    , _rangeBottomOffset :: OffsetFromViewportTop
+    , _rangeScrollOffset :: ScrollOffsetOfViewport
+    }
+    deriving (Show, Eq, Generic)
+
+makeLenses ''Range
+makeSOPGeneric ''Range
+makeNFData ''Range
+
+instance FromJSON Range where
+    parseJSON = withObject "Range" $ \v -> Range <$>
+                             v .:? "start" <*>
+                             v .:? "end" <*>
+                             v .: "doctop" <*>
+                             v .: "top" <*>
+                             v .: "bottom" <*>
+                             v .: "scrollOffset"
+
+instance ToJSON Range where
+    toJSON (Range sp ep dt t b s) = object $
+      catMaybes [ "start" .=? sp
+                , "end"   .=? ep
+                ]
+      <> [ "top"          .= t
+         , "doctop"       .= dt
+         , "bottom"       .= b
+         , "scrollOffset" .= s
+         ]

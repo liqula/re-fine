@@ -30,20 +30,21 @@ import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Types
 import Refine.Frontend.Document.Document
 import Refine.Frontend.Document.Store
+import Refine.Frontend.Document.Types
 import Refine.Frontend.Test.Enzyme
 
 
 spec :: Spec
 spec = do
   describe "Document" $ do
-    let mkTestProps forest = EditorWrapperProps (createEditorState Grammar (VDocVersion forest))
+    let mkTestProps forest = EditorProps (createEditorState Grammar (VDocVersion forest))
 
     it "renders with empty content" $ do
       pending
-      wrapper <- shallow $ editorWrapper_ (mkTestProps [])
+      wrapper <- shallow $ editor_ (mkTestProps [])
       lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` (1 :: Int)
 
     it "renders with arbitrary content" . property $ \(VDocVersion forest :: VDocVersion 'HTMLCanonical) -> do
       pending
-      wrapper <- shallow $ editorWrapper_ (mkTestProps forest)
+      wrapper <- shallow $ editor_ (mkTestProps forest)
       lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` (1 :: Int)

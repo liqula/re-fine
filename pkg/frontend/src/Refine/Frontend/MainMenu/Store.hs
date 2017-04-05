@@ -3,15 +3,14 @@ module Refine.Frontend.MainMenu.Store where
 import Control.Lens ((&), (.~))
 
 import Refine.Frontend.MainMenu.Types
-import Refine.Frontend.Types (GlobalAction(..))
+import Refine.Frontend.Store.Types (GlobalAction(..))
 
 
 -- TODO: Alignment
 mainMenuUpdate :: GlobalAction -> MainMenuState -> MainMenuState
-mainMenuUpdate (MainMenuAction MainMenuActionClose) state =
-  state & mmState .~ MainMenuClosed
-        & mmErrors . mmeLogin        .~ Nothing
-        & mmErrors . mmeRegistration .~ Nothing
+mainMenuUpdate (MainMenuAction MainMenuActionClose) state = state & mmState .~ MainMenuClosed
+  & mmErrors . mmeLogin        .~ Nothing
+  & mmErrors . mmeRegistration .~ Nothing
 
 mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) state =
   state & mmState .~ MainMenuOpen tab

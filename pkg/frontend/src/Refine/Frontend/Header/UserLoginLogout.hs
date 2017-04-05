@@ -30,7 +30,8 @@ import           Data.Default (def)
 import           React.Flux
 
 import           Refine.Frontend.Login.Types
-import           Refine.Frontend.UtilityWidgets
+import           Refine.Frontend.Icon
+import           Refine.Frontend.Icon.Types
 import           Refine.Prelude()
 
 
@@ -51,7 +52,6 @@ loginLogoutProps = def
       & iconPropsSize      .~ XXL
       )
   & iconButtonPropsElementName  .~ "section-button"
-  & iconButtonPropsClickHandler .~ (\_ -> [])
   & iconButtonPropsExtraClasses .~ ["c-mainmenu-content__btn-help"]
   -- not translated from prototype2016:
   -- button attribute data-section="help"

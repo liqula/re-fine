@@ -3,7 +3,7 @@ module Refine.Frontend.Login.Store where
 import Control.Lens ((&), (.~))
 
 import Refine.Frontend.Login.Types
-import Refine.Frontend.Types (GlobalAction(..))
+import Refine.Frontend.Store.Types (GlobalAction(..))
 
 
 loginStateUpdate :: GlobalAction -> LoginState -> LoginState

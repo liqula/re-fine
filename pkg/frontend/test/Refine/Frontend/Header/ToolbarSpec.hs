@@ -30,7 +30,7 @@ import           React.Flux (registerInitialStore, readStoreData)
 import           Refine.Frontend.Header.Toolbar
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Test.Enzyme
-import           Refine.Frontend.Types
+import           Refine.Frontend.Store.Types
 
 spec :: Spec
 spec = do
@@ -56,7 +56,7 @@ spec = do
 
       _ <- simulate button Click
       globalState1 <- readStoreData @GlobalState
-      globalState1 ^. gsHeaderState . hsToolbarExtensionStatus `shouldBe` CommentToolbarExtensionWithButtons
+      globalState1 ^. gsHeaderState . hsToolbarExtensionStatus `shouldBe` CommentToolbarExtensionWithoutRange
 
       _ <- simulate button Click
       globalState2 <- readStoreData @GlobalState
@@ -65,15 +65,15 @@ spec = do
 
   describe "The commentToolbarExtension_ component" $ do
     it "renders an element with the toolbar extension class" $ do
-      wrapper <- shallow . commentToolbarExtension_ $ CommentToolbarExtensionProps CommentToolbarExtensionWithButtons
+      wrapper <- shallow . commentToolbarExtension_ $ CommentToolbarExtensionProps CommentToolbarExtensionWithoutRange
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (1 :: Int)
 
     it "contains a pointer element" $ do
-      wrapper <- shallow . commentToolbarExtension_ $ CommentToolbarExtensionProps CommentToolbarExtensionWithButtons
+      wrapper <- shallow . commentToolbarExtension_ $ CommentToolbarExtensionProps CommentToolbarExtensionWithoutRange
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension__pointer")) `shouldReturn` (1 :: Int)
 
     it "contains an annotation section with 2 normal icon buttons" $ do
-      wrapper <- shallow . commentToolbarExtension_ $ CommentToolbarExtensionProps CommentToolbarExtensionWithButtons
+      wrapper <- shallow . commentToolbarExtension_ $ CommentToolbarExtensionProps CommentToolbarExtensionWithoutRange
       annotation <- find wrapper (StringSelector ".c-vdoc-toolbar-extension__annotation")
       lengthOf annotation `shouldReturn` (1 :: Int)
       lengthOfIO (find annotation (StringSelector "IconButton")) `shouldReturn` (2 :: Int)

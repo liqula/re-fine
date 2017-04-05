@@ -31,8 +31,8 @@ import           React.Flux (transform)
 
 import Refine.Common.Types
 import Refine.Frontend.Screen.Types
-import Refine.Frontend.Types
 import Refine.Frontend.Store ()
+import Refine.Frontend.Store.Types
 
 
 spec :: Spec

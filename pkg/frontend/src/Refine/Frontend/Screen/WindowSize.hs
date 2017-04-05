@@ -22,21 +22,21 @@
 
 module Refine.Frontend.Screen.WindowSize where
 
-import           Control.Monad (forM_)
 import           Data.Monoid ((<>))
 import           React.Flux
 import           React.Flux.Outdated
 import           GHCJS.Foreign.Callback (Callback, asyncCallback)
 import           GHCJS.Types (JSString)
 
-import qualified Refine.Frontend.Screen.Types as RS
-import qualified Refine.Frontend.Store as RS
-import qualified Refine.Frontend.Types as RS
+import           Refine.Frontend.Screen.Types
+import           Refine.Frontend.Store
+import           Refine.Frontend.Store.Types
 
 
 newtype WindowSizeProps = WindowSizeProps
-    { _currentSize :: RS.WindowSize
-    }
+  { _currentSize :: WindowSize
+  }
+  deriving (Eq)
 
 windowSize :: ReactView WindowSizeProps
 windowSize = defineLifecycleView "WindowSize" () lifecycleConfig
@@ -56,11 +56,7 @@ windowSize_ :: WindowSizeProps -> ReactElementM eventHandler () -> ReactElementM
 windowSize_ = view windowSize
 
 setWindowSize :: IO ()
-setWindowSize = do
-    width <- js_getWindowWidth
-    RS.reactFluxWorkAroundForkIO $ do
-       let actions = RS.dispatch . RS.ScreenAction $ RS.SetWindowWidth width
-       forM_ actions executeAction
+setWindowSize = dispatchAndExec . ScreenAction . SetWindowWidth =<< js_getWindowWidth
 
 foreign import javascript unsafe
 -- the internet says we should check window.innerWidth and document.documentElement.clientWidth first,

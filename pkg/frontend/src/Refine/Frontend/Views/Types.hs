@@ -16,35 +16,31 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Screen.Types where
+module Refine.Frontend.Views.Types where
 
-import GHC.Generics (Generic)
+import           Control.Lens (makeLenses)
 
-import Refine.Prelude.TH (makeRefineType)
-
-
-data ScreenAction =
-    AddHeaderHeight Int
-  | SetWindowWidth Int
-  deriving (Show, Eq, Generic)
-
-data WindowSize = Desktop | Tablet | Mobile
-  deriving (Show, Eq, Generic)
-
-data ScreenState = ScreenState
-  { _ssHeaderHeight           :: Int
-  , _ssWindowWidth            :: Int
-  , _ssWindowSize             :: WindowSize
-  } deriving (Show, Eq, Generic)
-
-emptyScreenState :: ScreenState
-emptyScreenState = ScreenState 0 0 Desktop
+import           Refine.Common.Types (ContributionID, CompositeDiscussion, Note, Edit)
+import           Refine.Frontend.Contribution.Types (MarkPositions, QuickCreateShowState)
+import           Refine.Frontend.Screen.Types (ScreenState)
+import           Refine.Frontend.Types (Range)
 
 
-makeRefineType ''ScreenState
-makeRefineType ''ScreenAction
-makeRefineType ''WindowSize
+data AsideProps = AsideProps
+  { _asideMarkPositions     :: MarkPositions
+  , _asideCurrentRange      :: Maybe Range
+  , _asideHighlightedBubble :: Maybe ContributionID
+  , _asideScreenState       :: ScreenState
+  , _asideDiscussions       :: [CompositeDiscussion]
+  , _asideNotes             :: [Note]
+  , _asideEdits             :: [Edit]
+  , _asideQuickCreateShow   :: QuickCreateShowState
+  }
+  deriving (Eq)
+
+makeLenses ''AsideProps

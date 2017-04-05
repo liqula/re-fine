@@ -1,16 +1,16 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Refine.Frontend.Translation.Store where
+module Refine.Frontend.Translation.Store (translationsUpdate) where
 
 import Data.String.Conversions (cs)
 import Data.Text.I18n
 
 import Refine.Common.Types.Translation
-import Refine.Frontend.Types
+import Refine.Frontend.Store.Types
 
 
-translationsUpdate :: GlobalAction -> Translations -> Translations
-translationsUpdate (ChangeTranslations l10) _ = newTranslations l10
+translationsUpdate :: GlobalAction -> Trans -> Trans
+translationsUpdate (ChangeTranslations l10) t = updateTrans t $ newTranslations l10
 translationsUpdate _                        t = t
 
 newTranslations :: L10 -> Translations

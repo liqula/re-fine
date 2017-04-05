@@ -22,22 +22,19 @@
 
 
 module Refine.Frontend.Screen.Store
-( screenStateUpdate
-) where
+  ( screenStateUpdate
+  ) where
 
 import           Control.Lens ((&), (%~))
 
 import Refine.Frontend.Screen.Types
 
 screenStateUpdate :: ScreenAction -> ScreenState -> ScreenState
-screenStateUpdate action state =
-  let newState = state
-                  & ssHeaderHeight         %~ headerHeightUpdate action
-                  & ssWindowWidth          %~ windowWidthUpdate action
-                  & ssWindowSize           %~ windowSizeUpdate action
-  in newState
+screenStateUpdate action state = state
+  & ssHeaderHeight         %~ headerHeightUpdate action
+  & ssWindowWidth          %~ windowWidthUpdate action
+  & ssWindowSize           %~ windowSizeUpdate action
 
----------------------------------------------------------------------------
 
 headerHeightUpdate :: ScreenAction -> Int -> Int
 headerHeightUpdate action state = case action of
@@ -62,6 +59,3 @@ toSize sz
   | sz <= 480  = Mobile
   | sz <= 1024 = Tablet
   | otherwise  = Desktop
-
-
-

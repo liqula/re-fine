@@ -22,34 +22,31 @@
 
 module Refine.Frontend.Document.Types where
 
-import           Control.Lens ( makeLenses )
-import           GHC.Generics ( Generic )
-import           GHCJS.Types ( JSVal )
+import           Control.Lens (makeLenses)
+import           GHC.Generics (Generic)
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
+import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Header.Types
-import           Refine.Prelude.Aeson (NoJSONRep(..))
-import           Refine.Prelude.TH ( makeRefineType )
+import           Refine.Prelude.TH (makeRefineType)
 
 
 data DocumentAction =
-    DocumentEditStart EditorState
+    DocumentEditUpdate DocumentEditState
   | DocumentEditSave
-  deriving (Show, Generic)
-
+  deriving (Show, Eq, Generic)
 
 data DocumentState =
     DocumentStateView
-  | DocumentStateEdit { _documentStateEdit :: EditorState }
-  deriving (Generic, Show)
+  | DocumentStateEdit { _documentStateEdit :: DocumentEditState }
+  deriving (Show, Eq, Generic)
 
-data EditorState = EditorState
-  { _editorStateKind :: EditKind
-  , _editorStateVal  :: NoJSONRep JSVal
+data DocumentEditState = DocumentEditState
+  { _documentEditStateKind      :: EditKind
+  , _documentEditStateVal       :: EditorState
   }
-  deriving (Generic, Show)
-
+  deriving (Show, Eq, Generic)
 
 data DocumentProps = DocumentProps
   { _dpDocumentState     :: DocumentState
@@ -57,9 +54,15 @@ data DocumentProps = DocumentProps
   , _dpToolbarStatus     :: ToolbarExtensionStatus
   , _dpVDocVersion       :: VDocVersion 'HTMLWithMarks
   }
+  deriving (Show, Eq, Generic)
 
+newtype EditorProps = EditorProps
+  { _ewpEditorState :: DocumentEditState
+  }
+  deriving (Eq)
 
 makeRefineType ''DocumentAction
 makeRefineType ''DocumentState
-makeRefineType ''EditorState
+makeRefineType ''DocumentEditState
 makeLenses ''DocumentProps
+makeLenses ''EditorProps

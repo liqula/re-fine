@@ -22,35 +22,33 @@
 
 
 module Refine.Frontend.Header.Store
-( headerStateUpdate
-) where
+  ( headerStateUpdate
+  ) where
 
-import           Control.Lens ((&), (%~))
+import Control.Lens ((&), (%~))
 
 import Refine.Frontend.Header.Types
-import Refine.Frontend.Types
+import Refine.Frontend.Store.Types
+
 
 headerStateUpdate :: GlobalAction -> HeaderState -> HeaderState
-headerStateUpdate action state =
-  let newState = state
-                  & hsToolbarExtensionStatus     %~ toolbarExtensionUpdate action
-  in newState
+headerStateUpdate action state = state
+  & hsToolbarExtensionStatus %~ toolbarExtensionUpdate action
 
----------------------------------------------------------------------------
 
 toolbarExtensionUpdate :: GlobalAction -> ToolbarExtensionStatus -> ToolbarExtensionStatus
 toolbarExtensionUpdate action state = case (state, action) of
-    (ToolbarExtensionClosed,               HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithButtons
-    (CommentToolbarExtensionWithButtons,   HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
-    (CommentToolbarExtensionWithSelection, HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
-    (EditToolbarExtension,                 HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithButtons
+    (ToolbarExtensionClosed,               HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithoutRange
+    (CommentToolbarExtensionWithoutRange,  HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
+    (CommentToolbarExtensionWithRange,     HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
+    (EditToolbarExtension,                 HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithoutRange
 
-    (CommentToolbarExtensionWithButtons,   HeaderAction StartTextSpecificComment)      -> CommentToolbarExtensionWithSelection
+    (CommentToolbarExtensionWithoutRange,  HeaderAction StartTextSpecificComment)      -> CommentToolbarExtensionWithRange
     (_,                                    HeaderAction StartTextSpecificComment)      -> error "text-specific comment cannot start when toolbar extension is closed or in selection mode"
 
     (ToolbarExtensionClosed,               HeaderAction ToggleEditToolbarExtension)    -> EditToolbarExtension
-    (CommentToolbarExtensionWithButtons,   HeaderAction ToggleEditToolbarExtension)    -> EditToolbarExtension
-    (CommentToolbarExtensionWithSelection, HeaderAction ToggleEditToolbarExtension)    -> EditToolbarExtension
+    (CommentToolbarExtensionWithoutRange,  HeaderAction ToggleEditToolbarExtension)    -> EditToolbarExtension
+    (CommentToolbarExtensionWithRange,     HeaderAction ToggleEditToolbarExtension)    -> EditToolbarExtension
     (EditToolbarExtension,                 HeaderAction ToggleEditToolbarExtension)    -> ToolbarExtensionClosed
 
     (EditToolbarExtension,                 HeaderAction (StartEdit _))                 -> ToolbarExtensionClosed

@@ -27,7 +27,7 @@ module Refine.Frontend.Contribution.MarkSpec where
 import           Control.Lens((^.), (&), (.~), (%~))
 import           Data.Int (Int64)
 import           Data.Monoid ((<>))
-import           React.Flux (registerInitialStore, readStoreData, ($=))
+import           React.Flux (registerInitialStore, readStoreData)
 import           Test.Hspec
 import           Text.HTML.Parser
 
@@ -36,7 +36,7 @@ import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.VDoc
 import           Refine.Frontend.Test.Enzyme
-import           Refine.Frontend.Types
+import           Refine.Frontend.Store.Types
 
 
 cnid :: Int64 -> ContributionID
@@ -46,7 +46,7 @@ cnid = ContribIDNote . ID
 spec :: Spec
 spec = do
   describe "The rfMark_ component" $ do
-    let theAttrs = ["data-contribution-id" $= "n77"]
+    let theAttrs = [Attr "data-contribution-id" "n77"]
     let theProps = MarkProps theAttrs (ContribIDNote (ID 77)) Nothing Nothing
 
     it "renders a HTML mark at top level" $ do
@@ -58,7 +58,7 @@ spec = do
       is wrapper (PropertySelector [Prop "data-contribution-id" ("n77" :: String)]) `shouldReturn` True
 
     it "has all other annotations that were passed to it" $ do
-      let moreAttrs = ["a" $= "1", "b" $= "2", "c" $= "3"]
+      let moreAttrs = [Attr "a" "1", Attr "b" "2", Attr "c" "3"]
           moreProps = MarkProps (moreAttrs <> theAttrs) (ContribIDNote (ID 77)) Nothing Nothing
       wrapper <- shallow $ rfMark_ moreProps mempty
       is wrapper (PropertySelector [Prop "a" ("1" :: String), Prop "b" ("2" :: String), Prop "c" ("3" :: String)]) `shouldReturn` True
@@ -76,7 +76,7 @@ spec = do
     describe "the css class that renders the selected text white-on-black" $ do
 
       it "when it is the current selection while the editor is open" $ do
-        let moreProps = MarkProps ["data-contribution-id" $= "h"] ContribIDHighlightMark Nothing Nothing
+        let moreProps = MarkProps [Attr "data-contribution-id" "h"] ContribIDHighlightMark Nothing Nothing
         wrapper <- shallow $ rfMark_ moreProps mempty
         is wrapper (StringSelector ".o-mark--highlight") `shouldReturn` True
 

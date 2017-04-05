@@ -31,7 +31,8 @@ import           React.Flux (registerInitialStore, readStoreData)
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Types
-import qualified Refine.Frontend.Screen.Types as SC
+import           Refine.Frontend.Screen.Types
+import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Style
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Types
@@ -46,20 +47,13 @@ spec = do
   let contributionId = cnid 99
       iconSide = "the-icon-side"
       iconStyle = ("the-icon-name", "the-icon-style")
-      markPosition = Just (MarkPosition (SC.OffsetFromDocumentTop (140 + 180)) (SC.OffsetFromDocumentTop (160 + 180)))
+      markPosition = Just (MarkPosition (OffsetFromDocumentTop (140 + 180)) (OffsetFromDocumentTop (160 + 180)))
       highlight = Nothing
-      callback _ = []
-      screenState = SC.ScreenState 95 0 SC.Desktop
-      bubbleProps = BubbleProps contributionId iconSide iconStyle markPosition highlight callback screenState
+      actions = []
+      screenState = ScreenState 95 0 Desktop
+      bubbleProps = BubbleProps contributionId iconSide iconStyle markPosition highlight actions screenState
 
   describe "The bubble_ component" $ do
-    it "does not render anything if there is no mark position in the props" $ do
-      wrapper <- shallow $ bubble_ (bubbleProps & bubblePropsMarkPosition .~ Nothing) mempty
-      -- TODO actually this should already hold - improve react-flux here?
-      -- lengthOf wrapper `shouldReturn` (0 :: Int)
-      -- TODO and this should return ""
-      html wrapper `shouldReturn` "<div></div>"
-
     it "renders the data-contribution-id that was passed to it" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
       is wrapper (PropertySelector [Prop "data-contribution-id" ("n99" :: String)]) `shouldReturn` True
@@ -70,19 +64,19 @@ spec = do
 
     it "renders the top style with the correct value" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      is wrapper (PropertySelector [Prop "style" [Style "top" (145 :: Int)]]) `shouldReturn` True
+      is wrapper (PropertySelector [Prop "style" [StylePx "top" 145]]) `shouldReturn` True
 
     it "has a child with the icon-bg class" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      lengthOfIO (find wrapper (StringSelector ".o-snippet__icon-bg")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".o-snippet__icon-bg")) `shouldReturn` 1
 
     it "has a child with the icon-bg + side class" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      lengthOfIO (find wrapper (StringSelector ".o-snippet__icon-bg--the-icon-side")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".o-snippet__icon-bg--the-icon-side")) `shouldReturn` 1
 
     it "has a child with the content class" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      lengthOfIO (find wrapper (StringSelector ".o-snippet__content")) `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".o-snippet__content")) `shouldReturn` 1
 
     it "does not render the hover class when there is no highlighted bubble" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty

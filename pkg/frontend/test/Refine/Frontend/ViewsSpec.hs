@@ -22,7 +22,6 @@
 
 module Refine.Frontend.ViewsSpec where
 
-import           Control.Monad (forM_)
 import qualified Data.Map.Strict as M
 import qualified Data.Tree as DT
 import           React.Flux
@@ -32,8 +31,8 @@ import qualified Text.HTML.Parser as HTMLP
 import           Refine.Common.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store
+import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Enzyme
-import           Refine.Frontend.Types
 import           Refine.Frontend.Views
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
@@ -70,7 +69,7 @@ clearState =
                                 M.empty M.empty M.empty
     in do
       -- FIXME: If we add ClearState to the list of Actions, we run into (timing?!) problems...
-      forM_ (concatMap dispatch [OpenDocument newVDoc, HeaderAction CloseToolbarExtension]) executeAction
+      dispatchAndExecMany [OpenDocument newVDoc, HeaderAction CloseToolbarExtension]
       reactFluxWorkAroundThreadDelay
 
 

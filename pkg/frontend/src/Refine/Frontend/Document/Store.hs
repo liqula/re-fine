@@ -28,25 +28,21 @@ module Refine.Frontend.Document.Store
   ) where
 
 import           Control.Lens ((&), (.~), (^.))
-import           Data.JSString (unpack)
-import           Data.String.Conversions
-import           GHCJS.Types (JSVal, JSString)
 import           System.IO.Unsafe (unsafePerformIO)
-import           Text.HTML.Tree (tokensFromForest)
+import           Text.HTML.Tree (tokensFromForest, tokensToForest, ParseTokenForestError)
 
 import           Refine.Common.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
-import           Refine.Frontend.Types
-import           Refine.Prelude.Aeson (NoJSONRep(..), unNoJSONRep)
+import           Refine.Frontend.Store.Types
 
 
 documentStateUpdate :: GlobalAction -> Maybe (VDocVersion 'HTMLWithMarks) -> DocumentState -> DocumentState
 documentStateUpdate (HeaderAction (StartEdit kind)) (Just vdocvers) _state
   = DocumentStateEdit (createEditorState kind vdocvers)
 
-documentStateUpdate (DocumentAction (DocumentEditStart es)) (Just _) state
+documentStateUpdate (DocumentAction (DocumentEditUpdate es)) (Just _) state
   = state & _DocumentStateEdit .~ es
 
 documentStateUpdate (DocumentAction DocumentEditSave) _ _
@@ -57,27 +53,14 @@ documentStateUpdate _ _ state
 
 
 {-# NOINLINE createEditorState #-}
-createEditorState :: EditKind -> VDocVersion 'HTMLWithMarks -> EditorState
+createEditorState :: EditKind -> VDocVersion 'HTMLWithMarks -> DocumentEditState
 createEditorState kind (VDocVersion vers) = unsafePerformIO $ do
   let content = convertFromHtml $ tokensFromForest vers
-  estate <- js_ES_createWithContent content
-
-  js_ES_traceCurrentContent estate `seq` pure ()
-
-  pure $ EditorState kind (NoJSONRep estate)
+  estate <- createWithContent content
+  pure $ DocumentEditState kind estate
 
 
-editorStateToVDocVersion :: EditorState -> Either String (VDocVersion 'HTMLWithMarks)
-editorStateToVDocVersion estate = result
-  where
-    stateval :: JSVal
-    stateval = estate ^. editorStateVal . unNoJSONRep
-
-    curcontent :: JSVal
-    curcontent = js_ES_getCurrentContent stateval
-
-    curhtml :: JSString
-    curhtml = js_Draft_stateToHTML curcontent
-
-    result :: Either String (VDocVersion 'HTMLWithMarks)
-    result = vdocVersionFromSTSafe . cs . unpack $ curhtml
+-- | FIXME: there is no validation here.
+editorStateToVDocVersion :: DocumentEditState -> Either ParseTokenForestError (VDocVersion 'HTMLWithMarks)
+editorStateToVDocVersion estate =
+  VDocVersion <$> (tokensToForest . stateToHTML . getCurrentContent $ estate ^. documentEditStateVal)

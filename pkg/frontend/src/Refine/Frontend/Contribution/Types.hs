@@ -25,69 +25,51 @@ module Refine.Frontend.Contribution.Types where
 
 import           Control.DeepSeq
 import           Control.Lens (makeLenses)
-import           Data.Aeson (toJSON, parseJSON, object, (.=), (.:), (.:?), withObject)
+import           Data.Aeson (toJSON, parseJSON, object, (.=), withObject)
 import           Data.Aeson.Types (FromJSON, ToJSON, Value, Parser)
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as M
 import           Data.String.Conversions
 import           GHC.Generics (Generic)
-import           React.Flux (PropertyOrHandler, ViewEventHandler)
+import           GHCJS.Types
+import           Text.HTML.Parser (Attr)
 import           Text.Read (readMaybe)
 
 import Refine.Common.Types
-import Refine.Frontend.Header.Types
 import Refine.Frontend.Screen.Types
-import Refine.Frontend.UtilityWidgets
+import Refine.Frontend.Types
 import Refine.Prelude.TH (makeRefineType)
 
 
-data Range = Range
-    { _rangeStartPoint   :: Maybe ChunkPoint
-    , _rangeEndPoint     :: Maybe ChunkPoint
-    , _rangeTopOffset    :: OffsetFromViewportTop
-    , _rangeBottomOffset :: OffsetFromViewportTop
-    , _rangeScrollOffset :: ScrollOffsetOfViewport
-    }
-    deriving (Show, Generic, NFData)
+newtype CommentInputState = CommentInputState
+  { _commentInputStateText :: ST
+  } deriving (Show, Eq, Generic)
 
-makeLenses ''Range
 
-instance FromJSON Range where
-    parseJSON = withObject "Range" $ \v -> Range <$>
-                             v .:? "start" <*>
-                             v .:? "end" <*>
-                             v .: "top" <*>
-                             v .: "bottom" <*>
-                             v .: "scrollOffset"
-
-instance ToJSON Range where
-    toJSON (Range sp ep t b s) = object
-      [ "start"        .= sp
-      , "end"          .= ep
-      , "top"          .= t
-      , "bottom"       .= b
-      , "scrollOffset" .= s
-      ]
-
-data Selection =
-    NothingSelected
-  | NothingSelectedButUpdateTriggered OffsetFromDocumentTop -- TODO when can this happen?
-  | RangeSelected Range OffsetFromDocumentTop
+-- | Mark positions updates have experienced long cascades of changing values for the same
+-- 'ContributionID'.  Now the 'ScheduleAddMarkPosition' handler will store new additions in a
+-- separate `scheduled` map, and a 'DischargeAddMarkPositions' will be dispatched with a delay.  If
+-- the 'DischargeAddMarkPositions' handler finds something in the `scheduled` map, it will add those
+-- and remove them there; otherwise it will do nothing.
+--
+-- TODO: We should find out where the cascades actually come from and find a better fix: (1) the
+-- instances of 'Eq', 'FromJSON', 'ToJSON' do not consider the '_markPositionsScheduled' field,
+-- which is necessary for the 'DischargeAddMarkPositions' hack to work, but confusing; (2) we're
+-- still receiving too many 'ScheduleAddMarkPosition' actions, and should rather figure out how to
+-- only fire those that are necessary.
+data MarkPositions =
+    MarkPositions
+      { _markPositionsMap       :: M.Map ContributionID MarkPosition
+      , _markPositionsScheduled :: M.Map ContributionID MarkPosition
+      }
   deriving (Show, Generic)
 
--- for Overlay:
-newtype CommentInputState = CommentInputState
-  { _commentInputStateText     :: ST
-  } deriving (Show, Generic)
+instance Monoid MarkPositions where
+  mempty = MarkPositions mempty mempty
+  mappend (MarkPositions m s) (MarkPositions m' s') = MarkPositions (m <> m') (s <> s')
 
-data CommentCategory =
-    Discussion
-  | Note
-  deriving (Show, Eq, Generic)
-
--- for marks:
-newtype MarkPositions = MarkPositions { _unMarkPositions :: M.Map ContributionID MarkPosition }
-  deriving (Eq, Show, Generic)
+instance Eq MarkPositions where
+  MarkPositions m _ == MarkPositions m' _ = m == m'
 
 data MarkPosition = MarkPosition
   { _markPositionTop    :: OffsetFromDocumentTop
@@ -110,67 +92,62 @@ mapFromValue = withObject "MarkPositions"
                          <*> parseJSON v)
   . HashMap.toList
 
-data ContributionEditorData =
-    EditorIsVisible (Maybe Range)
-  | EditorIsHidden
-  deriving (Show, Generic)
 
-
+-- | TODO: give record selectors to all fields.
 data ContributionAction =
-    UpdateSelection Selection ToolbarExtensionStatus
+    TriggerUpdateRange OffsetFromDocumentTop
+          -- ^ pixels between article top and mouse/finger from the mouse/touch release event need
+          -- to be extracted from the mouse event.  to clear range, dispatch 'ClearRange'.
+  | SetRange Range
+  | ClearRange
   | ShowContributionDialog ContributionID
   | HideCommentOverlay
-  | ShowCommentEditor (Maybe Range)
+  | ShowCommentEditor
   | HideCommentEditor
-  | SetCommentCategory CommentCategory
-  | SubmitComment ST (Maybe CommentCategory) (Maybe Range)
-  | SubmitEdit
-  | AddMarkPosition ContributionID MarkPosition
+  | SetCommentKind CommentKind
+  | SubmitComment ST (Maybe CommentKind)
+  | ScheduleAddMarkPosition ContributionID MarkPosition  -- ^ see 'MarkPosition'
+  | DischargeAddMarkPositions                            -- ^ see 'MarkPosition'
   | HighlightMarkAndBubble ContributionID
   | UnhighlightMarkAndBubble
-  deriving (Show, Generic)
+  deriving (Show, Eq, Generic)
 
 
 data ContributionState = ContributionState
-  { _csCurrentSelection         :: Selection
-  , _csCommentCategory          :: Maybe CommentCategory
+  { _csCurrentRange             :: Maybe Range
+  , _csCommentKind              :: Maybe CommentKind
   , _csDisplayedContributionID  :: Maybe ContributionID
-  , _csCommentEditorIsVisible   :: ContributionEditorData
+  , _csCommentEditorVisible     :: Bool  -- ^ (the comment or edit dialog, that is.  not the vdoc editor.)
   , _csHighlightedMarkAndBubble :: Maybe ContributionID
+  , _csQuickCreateShowState     :: QuickCreateShowState
   , _csMarkPositions            :: MarkPositions
-  } deriving (Show, Generic)
+  } deriving (Show, Eq, Generic)
 
+data CommentKind =
+    CommentKindNote
+  -- | CommentKindQuestion
+  | CommentKindDiscussion
+  deriving (Show, Eq, Generic)
 
 emptyContributionState :: ContributionState
-emptyContributionState = ContributionState NothingSelected Nothing Nothing EditorIsHidden Nothing (MarkPositions M.empty)
-
-
-makeRefineType ''CommentInputState
-makeRefineType ''CommentCategory
-makeRefineType ''Selection
-makeRefineType ''ContributionEditorData
-makeRefineType ''ContributionAction
-makeRefineType ''ContributionState
-
-makeRefineType ''MarkPosition
-
-deriving instance NFData MarkPositions
-
-instance ToJSON MarkPositions where
-  toJSON = mapToValue . _unMarkPositions
-
-instance FromJSON MarkPositions where
-  parseJSON = fmap MarkPositions . mapFromValue
+emptyContributionState = ContributionState
+  { _csCurrentRange             = Nothing
+  , _csCommentKind              = Nothing
+  , _csDisplayedContributionID  = Nothing
+  , _csCommentEditorVisible     = False
+  , _csHighlightedMarkAndBubble = Nothing
+  , _csQuickCreateShowState     = QuickCreateNotShown
+  , _csMarkPositions            = mempty
+  }
 
 
 data MarkProps = MarkProps
-  { _markPropsViewEventHandlers     :: [PropertyOrHandler ViewEventHandler]
+  { _markPropsAttrs                 :: [Attr]
   , _markPropsContributionID        :: ContributionID
   , _markPropsHighlightedMark       :: Maybe ContributionID
   , _markPropsDisplayedContribution :: Maybe ContributionID
   }
-
-makeLenses ''MarkProps
+  deriving (Eq)
 
 data BubbleProps = BubbleProps
   { _bubblePropsDataContribId     :: ContributionID
@@ -178,11 +155,10 @@ data BubbleProps = BubbleProps
   , _bubblePropsIconStyle         :: IconDescription
   , _bubblePropsMarkPosition      :: Maybe MarkPosition
   , _bubblePropsHighlightedBubble :: Maybe ContributionID
-  , _bubblePropsClickHandler      :: ClickHandler
+  , _bubblePropsClickActions      :: [ContributionAction]
   , _bubblePropsScreenState       :: ScreenState
   }
-
-makeLenses ''BubbleProps
+  deriving (Eq)
 
 data SpecialBubbleProps = SpecialBubbleProps
   { _specialBubblePropsContributionId    :: ContributionID
@@ -190,5 +166,52 @@ data SpecialBubbleProps = SpecialBubbleProps
   , _specialBubblePropsHighlightedBubble :: Maybe ContributionID
   , _specialBubblePropsScreenState       :: ScreenState
   }
+  deriving (Eq)
 
+data QuickCreateProps = QuickCreateProps
+  { _quickCreateSide        :: QuickCreateSide
+  , _quickCreateShowState   :: QuickCreateShowState
+  , _quickCreateRange       :: Maybe Range
+  , _quickCreateScreenState :: ScreenState
+  }
+  deriving (Show, Eq)
+
+data QuickCreateSide = QuickCreateComment | QuickCreateEdit
+  deriving (Show, Eq, Generic)
+
+renderQuickCreateSide :: QuickCreateSide -> JSString
+renderQuickCreateSide QuickCreateComment = "o-add-annotation"
+renderQuickCreateSide QuickCreateEdit    = "o-add-modification"
+
+data QuickCreateShowState =
+    QuickCreateShown     -- ^ visible
+  | QuickCreateNotShown  -- ^ will be visible when user selects a range
+  | QuickCreateBlocked   -- ^ will not be shown even if user selects a range
+  deriving (Show, Eq, Generic)
+
+
+-- * boilerplate
+
+makeRefineType ''MarkPosition
+makeLenses ''MarkPositions
+
+deriving instance NFData MarkPositions
+
+instance ToJSON MarkPositions where
+  toJSON = mapToValue . _markPositionsMap
+
+instance FromJSON MarkPositions where
+  parseJSON = fmap (`MarkPositions` mempty) . mapFromValue
+
+makeRefineType ''CommentInputState
+makeRefineType ''ContributionAction
+makeRefineType ''ContributionState
+makeRefineType ''CommentKind
+
+makeLenses ''MarkProps
+makeLenses ''BubbleProps
 makeLenses ''SpecialBubbleProps
+makeLenses ''QuickCreateProps
+
+makeRefineType ''QuickCreateSide
+makeRefineType ''QuickCreateShowState

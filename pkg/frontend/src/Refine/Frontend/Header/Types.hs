@@ -34,18 +34,18 @@ data HeaderAction =
   | ToggleEditToolbarExtension
   | StartEdit EditKind
   | CloseToolbarExtension
-  deriving (Show, Generic)
+  deriving (Show, Eq, Generic)
 
 data ToolbarExtensionStatus =
     ToolbarExtensionClosed
-  | CommentToolbarExtensionWithButtons
-  | CommentToolbarExtensionWithSelection
+  | CommentToolbarExtensionWithoutRange
+  | CommentToolbarExtensionWithRange
   | EditToolbarExtension
-  deriving (Show, Generic, Eq)
+  deriving (Show, Eq, Generic)
 
 newtype HeaderState = HeaderState
-  { _hsToolbarExtensionStatus     :: ToolbarExtensionStatus
-  } deriving (Show, Generic)
+  { _hsToolbarExtensionStatus :: ToolbarExtensionStatus
+  } deriving (Show, Eq, Generic)
 
 emptyHeaderState :: HeaderState
 emptyHeaderState = HeaderState ToolbarExtensionClosed

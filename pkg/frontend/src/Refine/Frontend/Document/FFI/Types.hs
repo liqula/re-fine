@@ -20,31 +20,37 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Screen.Types where
 
-import GHC.Generics (Generic)
+module Refine.Frontend.Document.FFI.Types
+  ( EditorState(..)
+  , ContentState(..)
+  , unEditorState
+  , unsafeMkEditorState
+  ) where
 
-import Refine.Prelude.TH (makeRefineType)
+import           GHC.Generics (Generic)
+import           GHCJS.Types (JSVal)
 
-
-data ScreenAction =
-    AddHeaderHeight Int
-  | SetWindowWidth Int
-  deriving (Show, Eq, Generic)
-
-data WindowSize = Desktop | Tablet | Mobile
-  deriving (Show, Eq, Generic)
-
-data ScreenState = ScreenState
-  { _ssHeaderHeight           :: Int
-  , _ssWindowWidth            :: Int
-  , _ssWindowSize             :: WindowSize
-  } deriving (Show, Eq, Generic)
-
-emptyScreenState :: ScreenState
-emptyScreenState = ScreenState 0 0 Desktop
+import           Refine.Frontend.Util (js_eq)
+import           Refine.Prelude.Aeson (NoJSONRep(NoJSONRep))
+import           Refine.Prelude.TH (makeRefineType)
 
 
-makeRefineType ''ScreenState
-makeRefineType ''ScreenAction
-makeRefineType ''WindowSize
+newtype EditorState = EditorState (NoJSONRep JSVal)
+  deriving (Show, Generic)
+
+instance Eq EditorState where
+  EditorState (NoJSONRep js) == EditorState (NoJSONRep js') = js_eq js js'  -- (not too confident about this one...)
+
+newtype ContentState = ContentState (NoJSONRep JSVal)
+  deriving (Show, Generic)
+
+makeRefineType ''EditorState
+makeRefineType ''ContentState
+
+
+unEditorState :: EditorState -> JSVal
+unEditorState (EditorState (NoJSONRep jsval)) = jsval
+
+unsafeMkEditorState :: JSVal -> EditorState
+unsafeMkEditorState = EditorState . NoJSONRep

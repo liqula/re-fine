@@ -24,7 +24,9 @@ module Refine.Frontend.Screen.Calculations where
 
 import           Control.Lens ((^.))
 
+import           Refine.Frontend.Types
 import           Refine.Frontend.Screen.Types
+
 
 offsetIntoText :: OffsetFromDocumentTop -> ScreenState -> Int
 offsetIntoText (OffsetFromDocumentTop topOffset) state = topOffset - state ^. ssHeaderHeight - 80

@@ -28,7 +28,7 @@ import           React.Flux
 
 import           Refine.Common.Types
 import qualified Refine.Frontend.Store as RS
-import qualified Refine.Frontend.Types as RS
+import qualified Refine.Frontend.Store.Types as RS
 import           Refine.Prelude()
 import qualified Refine.Prelude.BuildInfo as BuildInfo
 

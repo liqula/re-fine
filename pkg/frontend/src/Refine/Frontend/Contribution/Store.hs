@@ -22,40 +22,43 @@
 
 module Refine.Frontend.Contribution.Store where
 
-import           Control.Lens ((&), (%~), (^.))
+import           Control.Lens ((&), (%~), (.~), (^.), to)
+import           Data.List (foldl')
 import qualified Data.Map.Strict as M
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
-import qualified Refine.Frontend.Header.Types as HT
+import           Refine.Frontend.Header.Types
+import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Types
 
 
-contributionStateUpdate :: ContributionAction -> ContributionState -> ContributionState
-contributionStateUpdate action state =
-  let newState = state
-                  & csCurrentSelection         %~ currentSelectionUpdate action
-                  & csCommentCategory          %~ commentCategoryUpdate action
-                  & csDisplayedContributionID  %~ displayedContributionUpdate action
-                  & csCommentEditorIsVisible   %~ commentEditorIsVisibleUpdate action
-                  & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
-                  & csMarkPositions            %~ markPositionsUpdate action
-  in newState
+contributionStateUpdate :: GlobalAction -> ContributionState -> ContributionState
+contributionStateUpdate a = localAction a . globalAction a
+  where
+    localAction (ContributionAction action) state = state
+      & csCurrentRange             %~ currentRangeUpdate action
+      & csCommentKind              %~ commentKindUpdate action
+      & csDisplayedContributionID  %~ displayedContributionUpdate action
+      & csCommentEditorVisible     %~ commentEditorVisibleUpdate action
+      & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
+      & csMarkPositions            %~ markPositionsUpdate action
+    localAction _ state = state
+
+    globalAction action state = state
+      & csQuickCreateShowState     %~ quickCreateShowStateUpdate action
 
 
----------------------------------------------------------------------------
+currentRangeUpdate :: ContributionAction -> Maybe Range -> Maybe Range
+currentRangeUpdate action = case action of
+  SetRange range -> const (Just range)
+  ClearRange     -> const Nothing
+  _ -> id
 
-currentSelectionUpdate :: ContributionAction -> Selection -> Selection
-currentSelectionUpdate action state = case action of
-  (UpdateSelection newState _) -> newState
-  ShowCommentEditor _          -> NothingSelected
-  SubmitEdit                   -> NothingSelected
-  HideCommentEditor            -> NothingSelected
-  _ -> state
-
-commentCategoryUpdate :: ContributionAction -> Maybe CommentCategory -> Maybe CommentCategory
-commentCategoryUpdate action state = case action of
-  (SetCommentCategory category) -> Just category
-  HideCommentEditor             -> Nothing -- when closing the comment editor, reset the selection
+commentKindUpdate :: ContributionAction -> Maybe CommentKind -> Maybe CommentKind
+commentKindUpdate action state = case action of
+  (SetCommentKind k) -> Just k
+  HideCommentEditor  -> Nothing  -- when closing the comment editor, reset the choice
   _ -> state
 
 displayedContributionUpdate :: ContributionAction -> Maybe ContributionID -> Maybe ContributionID
@@ -64,12 +67,11 @@ displayedContributionUpdate action state = case action of
   HideCommentOverlay                    -> Nothing
   _ -> state
 
-commentEditorIsVisibleUpdate :: ContributionAction -> ContributionEditorData -> ContributionEditorData
-commentEditorIsVisibleUpdate action state = case action of
-  ShowCommentEditor curSelection                                                  -> EditorIsVisible curSelection
-  UpdateSelection (RangeSelected range _) HT.CommentToolbarExtensionWithSelection -> EditorIsVisible (Just range)
-  HideCommentEditor                                                               -> EditorIsHidden
-  _ -> state
+commentEditorVisibleUpdate :: ContributionAction -> Bool -> Bool
+commentEditorVisibleUpdate = \case
+  ShowCommentEditor -> const True
+  HideCommentEditor -> const False
+  _ -> id
 
 highlightedMarkAndBubbleUpdate :: ContributionAction -> Maybe ContributionID -> Maybe ContributionID
 highlightedMarkAndBubbleUpdate action state = case action of
@@ -77,11 +79,48 @@ highlightedMarkAndBubbleUpdate action state = case action of
   UnhighlightMarkAndBubble             -> Nothing
   _ -> state
 
+quickCreateShowStateUpdate :: GlobalAction -> QuickCreateShowState -> QuickCreateShowState
+quickCreateShowStateUpdate action state = case action of
+  ContributionAction (SetRange _)               -> somethingWasSelected
+  ContributionAction ClearRange                 -> selectionWasRemoved
+  HeaderAction ToggleCommentToolbarExtension    -> toolbarWasToggled
+  HeaderAction StartTextSpecificComment         -> QuickCreateBlocked
+  HeaderAction ToggleEditToolbarExtension       -> toolbarWasToggled
+  HeaderAction (StartEdit _)                    -> QuickCreateNotShown  -- (article is hidden, so
+                                                                        -- quick create buttons are
+                                                                        -- never triggered.)
+  HeaderAction CloseToolbarExtension            -> toolbarWasToggled
+  _ -> state
+  where
+    somethingWasSelected = case state of
+      QuickCreateShown     -> QuickCreateShown
+      QuickCreateNotShown  -> QuickCreateShown
+      QuickCreateBlocked   -> QuickCreateBlocked
+
+    selectionWasRemoved = case state of
+      QuickCreateShown     -> QuickCreateNotShown
+      QuickCreateNotShown  -> QuickCreateNotShown
+      QuickCreateBlocked   -> QuickCreateBlocked
+
+    toolbarWasToggled = case state of
+      QuickCreateShown     -> QuickCreateNotShown
+      QuickCreateNotShown  -> QuickCreateNotShown
+      QuickCreateBlocked   -> QuickCreateNotShown
+
 markPositionsUpdate :: ContributionAction -> MarkPositions -> MarkPositions
 markPositionsUpdate action state = case action of
-  (AddMarkPosition dataChunkId newMarkPosition)
+  (ScheduleAddMarkPosition dataChunkId newMarkPosition)
     -> let upd       = Just . maybe newMarkPosition (updTop . updBottom)
            updTop    = markPositionTop    %~ min (newMarkPosition ^. markPositionTop)
            updBottom = markPositionBottom %~ max (newMarkPosition ^. markPositionBottom)
-       in MarkPositions $ M.alter upd dataChunkId (_unMarkPositions state)
+
+          -- FIXME: i'm not too confident this is going into the right direction.  why are marks
+          -- rendered so many times before they finally have a stable bounding rectangle?
+
+       in state & markPositionsScheduled %~ M.alter upd dataChunkId
+  DischargeAddMarkPositions
+    -> let upd :: M.Map ContributionID MarkPosition -> M.Map ContributionID MarkPosition
+           upd firstm = foldl' (\m (i, p) -> M.insert i p m) firstm (state ^. markPositionsScheduled. to M.toList)
+       in state & markPositionsMap       %~ upd
+                & markPositionsScheduled .~ mempty
   _ -> state
