@@ -17,7 +17,7 @@ import Web.Users.Types      as Users
 
 import Refine.Backend.User.Core
 import qualified Refine.Backend.User.Class as C
-import Refine.Common.Types.User (Username)
+import Refine.Common.Types.Prelude (Username)
 
 
 newtype UH a = UH { unUH :: ReaderT UserHandleContext (ExceptT UserHandleError IO) a }

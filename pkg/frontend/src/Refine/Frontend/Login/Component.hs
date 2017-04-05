@@ -32,7 +32,7 @@ import           GHC.Generics (Generic)
 import           GHCJS.Marshal (FromJSVal)
 import           React.Flux
 
-import           Refine.Common.Types.User
+import           Refine.Common.Types.Prelude
 import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.Style

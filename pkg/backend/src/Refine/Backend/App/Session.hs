@@ -31,8 +31,7 @@ import Control.Monad.State (gets)
 
 import Refine.Backend.App.Core
 import Refine.Backend.Types
-import Refine.Common.Types.Prelude (ID)
-import Refine.Common.Types.User (User)
+import Refine.Common.Types.Prelude (ID, User)
 
 
 setUserSession :: ID User -> UserSession -> App ()

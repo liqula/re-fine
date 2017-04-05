@@ -24,7 +24,7 @@ module Refine.Frontend.Login.Types where
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 
-import Refine.Common.Types.User (Username)
+import Refine.Common.Types.Prelude (Username)
 import Refine.Prelude.TH (makeRefineType)
 
 
