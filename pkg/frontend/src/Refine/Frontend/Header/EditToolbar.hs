@@ -91,7 +91,7 @@ editToolbar = mkView "EditToolbar" $ do
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True
             & iconButtonPropsOnClick      .~ [ DocumentAction DocumentEditSave
-                                             , ContributionAction $ UpdateRange Nothing
+                                             , ContributionAction ClearRange
                                              ]
 
 editToolbar_ :: ReactElementM eventHandler ()

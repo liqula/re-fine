@@ -362,7 +362,7 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
           & iconButtonPropsDisabled     .~ notATextOrKind
           & iconButtonPropsOnClick      .~
                 [ ContributionAction $ SubmitComment (curState ^. commentInputStateText) (props ^. acpCommentKind)
-                , ContributionAction $ UpdateRange Nothing
+                , ContributionAction ClearRange
                 , ContributionAction HideCommentEditor
                 ]
 

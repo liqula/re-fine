@@ -93,7 +93,8 @@ transformGlobalState = transf
         -- other effects
         case action of
             ContributionAction (TriggerUpdateRange releasePositionOnPage) -> do
-                reDispatchM . ContributionAction . UpdateRange =<< getRange releasePositionOnPage
+                reDispatchM . ContributionAction . maybe ClearRange SetRange
+                    =<< getRange releasePositionOnPage
                 removeAllRanges  -- (See also: calls to 'C.highlightRange', 'C.removeHighlights' below.)
 
                 when (state ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithRange) $ do
@@ -157,10 +158,10 @@ vdocUpdate action (Just vdoc) = Just $ case action of
           & C.compositeVDocVersion
               %~ C.insertMoreMarks [ContribEdit edit]
 
-    ContributionAction (UpdateRange (Just range))
+    ContributionAction (SetRange range)
       -> vdoc & C.compositeVDocVersion %~ C.removeHighlights  -- FIXME: this should be implicit in highlightRange
               & C.compositeVDocVersion %~ C.highlightRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
-    ContributionAction (UpdateRange Nothing)
+    ContributionAction ClearRange
       -> vdoc & C.compositeVDocVersion %~ C.removeHighlights
 
     _ -> vdoc
