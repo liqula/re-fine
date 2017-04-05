@@ -14,6 +14,31 @@ passwd: tAA957Mn4w07ok
 
 Tested with nodejs-v6.9.15.  Known not to work with nodejs-v7.*!
 
+
+## Node.js on Debian
+
+To install nodejs-v6.x on Debian execute these commands (as root):
+
+    # Pre-requisites
+    apt install apt-transport-https curl
+    # Add GPG key for signing packages
+    curl -s https://deb.nodesource.com/gpgkey/nodesource.gpg.key | apt-key add -
+    # Create additionnal sources.list
+    echo "deb https://deb.nodesource.com/node_6.x jessie main" > /etc/apt/sources.list.d/nodesource.list
+    echo "deb-src https://deb.nodesource.com/node_6.x jessie main" >> /etc/apt/sources.list.d/nodesource.list
+    # Update packages cache and install
+    apt update && apt install nodejs
+
+
+## Workaround Issue #40
+
+The following command may be needed to workaround Issue #40 in a fresh build:
+
+    (cd pkg/frontend; npm install)
+
+
+## Run the build script
+
 Run `./build` to build and test all packages.  (This is also what the
 ci does.)
 

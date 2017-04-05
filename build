@@ -20,6 +20,7 @@ function assert_os_package() {
 }
 
 assert_os_package libcurl4-gnutls-dev
+assert_os_package libncurses5-dev
 assert_os_package stack
 
 function assert_cmd() {
@@ -29,6 +30,7 @@ function assert_cmd() {
 
 assert_cmd node
 assert_cmd npm
+assert_cmd cabal
 # REMARKS
 # - node should be 6.x.x or higher.
 # - npm comes with node, so no extra version constraint here.
