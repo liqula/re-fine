@@ -45,7 +45,6 @@ import Refine.Backend.User
 import Refine.Common.Test.Arbitrary (arbitraryRawVDocVersion)
 import Refine.Common.Types.Chunk
 import Refine.Common.Types.Prelude
-import Refine.Common.Types.User
 import Refine.Common.Types.VDoc
 
 

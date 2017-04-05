@@ -26,9 +26,8 @@ import GHC.Generics
 
 import Refine.Common.Types.Role
 import Refine.Common.Types.Group
-import Refine.Common.Types.Prelude (ID)
+import Refine.Common.Types.Prelude
 import Refine.Common.Types.Process
-import Refine.Common.Types.User
 import Refine.Prelude.TH (makeRefineType)
 
 

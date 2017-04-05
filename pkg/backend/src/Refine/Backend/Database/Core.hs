@@ -28,8 +28,7 @@ import Data.String.Conversions (ST)
 import Database.Persist.Sql hiding (Filter)
 import GHC.Generics (Generic)
 
-import Refine.Common.Types.Prelude (ID(..))
-import Refine.Common.Types.User (User)
+import Refine.Common.Types.Prelude (ID(..), User)
 import Refine.Prelude.TH (makeRefineType)
 
 

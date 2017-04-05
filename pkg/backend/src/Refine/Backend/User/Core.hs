@@ -50,9 +50,9 @@ import Web.Users.Types (CreateUserError(..), SessionId(..), PasswordPlain(..), U
 import Web.Users.Persistent as Users
 import Web.Users.Persistent.Definitions (Login)
 
-import Refine.Common.Types.Prelude (ID(..))
-import qualified Refine.Common.Types.User as Types (User)
-import Refine.Prelude.TH (makeRefineType)
+import           Refine.Common.Types.Prelude (ID(..))
+import qualified Refine.Common.Types.Prelude as Types (User)
+import           Refine.Prelude.TH (makeRefineType)
 
 
 type UserDB = Users.Persistent

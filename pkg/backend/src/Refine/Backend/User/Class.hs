@@ -9,7 +9,7 @@ import Web.Users.Types (PasswordPlain, SessionId, User, CreateUserError)
 import Web.Users.Persistent (LoginId)
 
 import Refine.Backend.User.Core
-import Refine.Common.Types.User (Username)
+import Refine.Common.Types.Prelude (Username)
 
 
 type MonadUserHandle uh = (Monad uh, UserHandle uh)
