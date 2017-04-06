@@ -31,7 +31,7 @@ import           GHC.Generics (Generic)
 import           Text.Read
 import           Web.HttpApiData
 
-import Refine.Prelude (ClearTypeParameter(..))
+import Refine.Prelude (ClearTypeParameter(..), Timestamp)
 import Refine.Prelude.Generic
 import Refine.Prelude.TH
 
@@ -90,9 +90,41 @@ data Login = Login
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
+data UserInfo = UserIP ST | UserID (ID User) | Anonymous
+  deriving (Eq, Ord, Show, Read, Generic)
+
+
+-- * meta info
+
+data Meta = Meta
+  { _metaCreatedBy :: UserInfo
+  , _metaCreatedAt :: Timestamp
+  , _metaChangedBy :: UserInfo
+  , _metaChangedAt :: Timestamp
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
+
+data MetaID a = MetaID
+  { _miID   :: ID a
+  , _miMeta :: Meta
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
+
+makeLenses ''MetaID
+makePrisms ''MetaID
+
+instance SOP.Generic (MetaID a)
+instance SOP.HasDatatypeInfo (MetaID a)
+instance NFData (MetaID a) where rnf = SOP.grnf
+instance ToJSON (MetaID a) where toJSON = gtoJSONDef
+instance FromJSON (MetaID a) where parseJSON = gparseJSONDef
+
 
 -- * make refine types
 
 makeRefineType ''CreateUser
 makeRefineType ''User
 makeRefineType ''Login
+makeRefineType ''UserInfo
+makeRefineType ''Meta
+-- makeRefineType ''MetaID  -- does not work yet
