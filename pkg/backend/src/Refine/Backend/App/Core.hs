@@ -58,7 +58,7 @@ import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 import System.FilePath (FilePath)
 
-import Refine.Backend.Database
+import Refine.Backend.Database hiding (dbFilter)
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Types
