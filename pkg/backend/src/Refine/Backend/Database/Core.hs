@@ -78,7 +78,6 @@ type Filters = [Filter]
 makeRefineType ''DBError
 
 makeLenses ''DBContext
-makePrisms ''DBContext
 
 notFound :: String -> DB a
 notFound = DB . throwError . DBNotFound

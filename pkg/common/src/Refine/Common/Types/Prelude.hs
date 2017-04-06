@@ -48,7 +48,6 @@ type family Create a = b | b -> a
 -- * lens
 
 makeLenses ''ID
-makePrisms ''ID
 
 instance SOP.Generic (ID a)
 instance SOP.HasDatatypeInfo (ID a)
@@ -111,7 +110,6 @@ data MetaID a = MetaID
   deriving (Eq, Ord, Show, Read, Generic)
 
 makeLenses ''MetaID
-makePrisms ''MetaID
 
 instance SOP.Generic (MetaID a)
 instance SOP.HasDatatypeInfo (MetaID a)
