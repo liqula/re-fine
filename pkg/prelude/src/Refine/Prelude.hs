@@ -24,6 +24,7 @@ module Refine.Prelude
   , timestampToEpoch
   , readTimestamp
   , showTimestamp
+  , getCurrentTimestamp
   , timestampFormat
   , timestampFormatLength
   , Timespan(..)
@@ -104,6 +105,9 @@ readTimestamp = fmap Timestamp . parseTimeM True defaultTimeLocale timestampForm
 
 showTimestamp :: Timestamp -> String
 showTimestamp = formatTime defaultTimeLocale timestampFormat . _unTimestamp
+
+getCurrentTimestamp :: IO Timestamp
+getCurrentTimestamp = Timestamp <$> getCurrentTime
 
 timestampFormat :: String
 timestampFormat = "%F_%T_%q"
