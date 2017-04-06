@@ -34,6 +34,7 @@ import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Views
+import           Refine.Frontend.Test.Samples (sampleMetaID)
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
