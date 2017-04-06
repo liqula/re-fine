@@ -54,6 +54,7 @@ library
     , refine-prelude
     , string-conversions
     , text
+    , time
     , transformers
     , unordered-containers
   exposed-modules:
@@ -160,6 +161,7 @@ test-suite spec
     , refine-prelude
     , string-conversions
     , text
+    , time
     , unordered-containers
   other-modules:
       -- find test -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
