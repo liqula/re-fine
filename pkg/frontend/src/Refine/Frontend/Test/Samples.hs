@@ -29,6 +29,7 @@ import Data.Time.Format (parseTimeOrError, defaultTimeLocale)
 import Refine.Prelude (Timestamp(..))
 import Refine.Common.Types
 
+
 sampleTitle :: Title
 sampleTitle = Title "Gesellschaftsvertrag Genossenschaft zur universellen Erhabenheit GmbH & Ko KG Ltd. AG, Inc."
 
