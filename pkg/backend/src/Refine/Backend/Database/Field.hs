@@ -26,7 +26,7 @@ instance PersistField Timestamp where
 
 instance PersistFieldSql Timestamp where
   -- CAUTION: This should be generated, to represent the actual inner type
-  -- of the title
+  -- of the newtype
   sqlType _ = sqlType (Proxy :: Proxy ST)
 
 
