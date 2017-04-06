@@ -50,6 +50,7 @@ newtype DB a = DB { unDB :: ExceptT DBError (ReaderT DBContext SQLM) a }
     , Monad
     , MonadError DBError
     , MonadReader DBContext
+    , MonadIO
     )
 
 data DBError
