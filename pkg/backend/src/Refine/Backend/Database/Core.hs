@@ -22,6 +22,7 @@
 
 module Refine.Backend.Database.Core where
 
+import Control.Lens
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.String.Conversions (ST)
@@ -75,6 +76,9 @@ newtype Filter = Limit Int
 type Filters = [Filter]
 
 makeRefineType ''DBError
+
+makeLenses ''DBContext
+makePrisms ''DBContext
 
 notFound :: String -> DB a
 notFound = DB . throwError . DBNotFound
