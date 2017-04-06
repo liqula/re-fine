@@ -29,6 +29,7 @@ import Data.String.Conversions (ST)
 import Database.Persist.Sql hiding (Filter)
 import GHC.Generics (Generic)
 
+import Refine.Prelude (HasCurrentTime(..))
 import Refine.Common.Types.Prelude (ID(..), User)
 import Refine.Prelude.TH (makeRefineType)
 
@@ -51,7 +52,6 @@ newtype DB a = DB { unDB :: ExceptT DBError (ReaderT DBContext SQLM) a }
     , Monad
     , MonadError DBError
     , MonadReader DBContext
-    , MonadIO
     )
 
 data DBError
@@ -63,6 +63,9 @@ data DBError
   | DBMigrationParseErrors [ST]
   | DBUnsafeMigration [(Bool, ST)]
   deriving (Eq, Show, Generic)
+
+instance HasCurrentTime DB where
+  getCurrentTimestamp = DB $ liftIO getCurrentTimestamp
 
 -- | Filters the queries in the database.
 -- Userful to implement pagination, uniqueness etc.

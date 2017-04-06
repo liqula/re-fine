@@ -29,7 +29,6 @@ module Refine.Backend.Database.Entity where
 import Control.Lens ((^.), to, view)
 import Control.Monad ((>=>), forM_, void)
 import Control.Monad.Reader (ask)
-import Control.Monad.IO.Class (liftIO)
 import Data.Functor.Infix ((<$$>))
 import Data.List ((\\))
 import Data.String.Conversions (ST)
@@ -158,7 +157,7 @@ dbSelectOpts = do
 createMetaID :: ID a -> DB (MetaID a)
 createMetaID ida = do
   user <- view $ dbLoggedInUser . to (maybe Anonymous UserID)  -- TODO: LATER: use IP address if available
-  time <- liftIO getCurrentTimestamp
+  time <- getCurrentTimestamp
   let meta = S.Meta user time user time
   void . liftDB $ insertKey (S.idToKey (coerce ida :: ID Meta)) meta
   pure . MetaID ida $ S.metaElim Meta meta
@@ -166,7 +165,7 @@ createMetaID ida = do
 modifyMetaID :: ID a -> DB ()
 modifyMetaID ida = do
   user <- view $ dbLoggedInUser . to (maybe Anonymous UserID)
-  time <- liftIO getCurrentTimestamp
+  time <- getCurrentTimestamp
   meta <- getEntity idm
   let meta' = meta {S.metaModBy = user, S.metaModAt = time}
   liftDB $ replace (S.idToKey idm) meta'
