@@ -29,6 +29,7 @@ module Refine.Backend.Database.Entity where
 import Control.Lens ((^.), to, view)
 import Control.Monad ((>=>), forM_, void)
 import Control.Monad.Reader (ask)
+import Control.Monad.IO.Class (liftIO)
 import Data.Functor.Infix ((<$$>))
 import Data.List ((\\))
 import Data.String.Conversions (ST)
@@ -45,9 +46,11 @@ import           Refine.Backend.Database.Types
 import qualified Refine.Backend.DocRepo.Core as DocRepo
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
-import           Refine.Prelude (nothingToError)
+import           Refine.Common.Types.Prelude (ID(..))
+import           Refine.Prelude (nothingToError, getCurrentTimestamp)
 
 -- FIXME: Generate this as the part of the lentil library.
+type instance S.EntityRep Meta       = S.Meta
 type instance S.EntityRep VDoc       = S.VDoc
 type instance S.EntityRep Edit       = S.Edit
 type instance S.EntityRep VDocRepo   = S.Repo
@@ -148,9 +151,24 @@ dbSelectOpts = do
     filterToSelectOpt = \case
       Limit n -> [LimitTo n]
 
+-- * Meta
+
+createMetaID :: ID a -> DB (MetaID a)
+createMetaID ida@(ID x) = do
+  user <- view $ dbLoggedInUser . to (maybe Anonymous UserID)
+  time <- liftIO getCurrentTimestamp
+  let meta = S.Meta user time user time
+  void . liftDB $ insertKey (S.idToKey (ID x :: ID Meta)) meta
+  pure $ MetaID ida $ S.metaElim Meta meta
+
+getMeta :: ID a -> DB (MetaID a)
+getMeta ida@(ID x) = do
+  meta <- getEntity (ID x :: ID Meta)
+  pure $ MetaID ida $ S.metaElim Meta meta
+
 -- * VDoc
 
-toVDoc :: ID VDoc -> Title -> Abstract -> Key S.Repo -> VDoc
+toVDoc :: MetaID VDoc -> Title -> Abstract -> Key S.Repo -> VDoc
 toVDoc vid title abstract repoid = VDoc vid title abstract (S.keyToId repoid)
 
 listVDocs :: DB [ID VDoc]
@@ -159,17 +177,20 @@ listVDocs = do
   liftDB $ S.keyToId <$$> selectKeysList [] opts
 
 createVDoc :: Create VDoc -> VDocRepo -> DB VDoc
-createVDoc pv vr = liftDB $ do
+createVDoc pv vr = do
   let svdoc = S.VDoc
         (pv ^. createVDocTitle)
         (pv ^. createVDocAbstract)
         (vr ^. vdocRepoID . to S.idToKey)
-  key <- insert svdoc
-  void . insert $ S.VR key (vr ^. vdocRepoID . to S.idToKey)
-  pure $ S.vDocElim (toVDoc (S.keyToId key)) svdoc
+  key <- liftDB $ insert svdoc
+  void . liftDB . insert $ S.VR key (vr ^. vdocRepoID . to S.idToKey)
+  mid <- createMetaID $ S.keyToId key
+  pure $ S.vDocElim (toVDoc mid) svdoc
 
 getVDoc :: ID VDoc -> DB VDoc
-getVDoc vid = S.vDocElim (toVDoc vid) <$> getEntity vid
+getVDoc vid = do
+    mid <- getMeta vid
+    S.vDocElim (toVDoc mid) <$> getEntity vid
 
 vdocRepo :: ID VDoc -> DB (ID VDocRepo)
 vdocRepo vid = do
