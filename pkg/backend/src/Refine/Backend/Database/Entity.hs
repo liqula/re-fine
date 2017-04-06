@@ -34,6 +34,7 @@ import Data.Functor.Infix ((<$$>))
 import Data.List ((\\))
 import Data.String.Conversions (ST)
 import Data.Typeable
+import Data.Coerce (coerce)
 import Database.Persist
 import Database.Persist.Sql (SqlBackend)
 import Lentil.Core (entityLens)
@@ -155,24 +156,26 @@ dbSelectOpts = do
 -- * Meta
 
 createMetaID :: ID a -> DB (MetaID a)
-createMetaID ida@(ID x) = do
+createMetaID ida = do
   user <- view $ dbLoggedInUser . to (maybe Anonymous UserID)  -- TODO: LATER: use IP address if available
   time <- liftIO getCurrentTimestamp
   let meta = S.Meta user time user time
-  void . liftDB $ insertKey (S.idToKey (ID x :: ID Meta)) meta
+  void . liftDB $ insertKey (S.idToKey (coerce ida :: ID Meta)) meta
   pure . MetaID ida $ S.metaElim Meta meta
 
 modifyMetaID :: ID a -> DB ()
-modifyMetaID (ID x) = do
+modifyMetaID ida = do
   user <- view $ dbLoggedInUser . to (maybe Anonymous UserID)
   time <- liftIO getCurrentTimestamp
-  meta <- getEntity (ID x :: ID Meta)
+  meta <- getEntity idm
   let meta' = meta {S.metaModBy = user, S.metaModAt = time}
-  liftDB $ replace (S.idToKey (ID x :: ID Meta)) meta'
+  liftDB $ replace (S.idToKey idm) meta'
+  where
+    idm = coerce ida :: ID Meta
 
 getMeta :: ID a -> DB (MetaID a)
-getMeta ida@(ID x) = do
-  meta <- getEntity (ID x :: ID Meta)
+getMeta ida = do
+  meta <- getEntity (coerce ida :: ID Meta)
   pure . MetaID ida $ S.metaElim Meta meta
 
 -- * VDoc
