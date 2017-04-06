@@ -33,8 +33,9 @@ import Database.Persist.TH
 import Web.Users.Persistent (LoginId) -- Same as Refine.Backend.User.LoginId, but that produced an import cycle.
                                       -- "Refine.Backend.User.Types" could be introduced instead.
 
+import Refine.Prelude (Timestamp)
 import Refine.Common.Types.Chunk (ChunkRange(..))
-import Refine.Common.Types.Prelude
+import Refine.Common.Types.Prelude hiding (Meta)
 import Refine.Common.Types.Process (CollaborativeEditPhase)
 import Refine.Common.Types.Role (Role)
 import Refine.Common.Types.VDoc (Abstract, EditKind, Title)
@@ -44,6 +45,12 @@ import Refine.Backend.DocRepo.Core (EditHandle, RepoHandle)
 
 
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
+Meta
+    createBy    UserInfo
+    createAt    Timestamp
+    modBy       UserInfo
+    modAt       Timestamp
+
 VDoc
     title       Title
     desc        Abstract
@@ -201,6 +208,7 @@ keyToId = ID . fromSqlKey
 
 -- * eliminators
 
+makeElim ''Meta
 makeElim ''VDoc
 makeElim ''Edit
 makeElim ''Repo
