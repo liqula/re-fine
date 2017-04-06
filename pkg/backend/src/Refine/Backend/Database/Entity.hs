@@ -129,6 +129,7 @@ updateVDoc :: ID VDoc -> VDoc -> DB ()
 updateVDoc vid vdoc = do
   record <- vDocToRecord vdoc
   liftDB $ replace (S.idToKey vid) record
+  modifyMetaID vid
 
 vdocDBLens :: EntityLens' DB (ID VDoc) VDoc
 vdocDBLens = entityLens vdocEntity
@@ -159,12 +160,20 @@ createMetaID ida@(ID x) = do
   time <- liftIO getCurrentTimestamp
   let meta = S.Meta user time user time
   void . liftDB $ insertKey (S.idToKey (ID x :: ID Meta)) meta
-  pure $ MetaID ida $ S.metaElim Meta meta
+  pure . MetaID ida $ S.metaElim Meta meta
+
+modifyMetaID :: ID a -> DB ()
+modifyMetaID (ID x) = do
+  user <- view $ dbLoggedInUser . to (maybe Anonymous UserID)
+  time <- liftIO getCurrentTimestamp
+  meta <- getEntity (ID x :: ID Meta)
+  let meta' = meta {S.metaModBy = user, S.metaModAt = time}
+  liftDB $ replace (S.idToKey (ID x :: ID Meta)) meta'
 
 getMeta :: ID a -> DB (MetaID a)
 getMeta ida@(ID x) = do
   meta <- getEntity (ID x :: ID Meta)
-  pure $ MetaID ida $ S.metaElim Meta meta
+  pure . MetaID ida $ S.metaElim Meta meta
 
 -- * VDoc
 
