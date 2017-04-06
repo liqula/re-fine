@@ -156,7 +156,7 @@ dbSelectOpts = do
 
 createMetaID :: ID a -> DB (MetaID a)
 createMetaID ida@(ID x) = do
-  user <- view $ dbLoggedInUser . to (maybe Anonymous UserID)
+  user <- view $ dbLoggedInUser . to (maybe Anonymous UserID)  -- TODO: LATER: use IP address if available
   time <- liftIO getCurrentTimestamp
   let meta = S.Meta user time user time
   void . liftDB $ insertKey (S.idToKey (ID x :: ID Meta)) meta
