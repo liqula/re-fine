@@ -67,14 +67,14 @@ spec = do
       wrapper <- shallow $ rfMark_ theProps mempty
       is wrapper (StringSelector ".o-mark") `shouldReturn` True
 
-    describe "the css class that gives it its correct colour" $ do
 
+    describe "the css class that gives it its correct colour" $ do
       it "has a mark class with the content type that was passed to it" $ do
         wrapper <- shallow $ rfMark_ theProps mempty
         is wrapper (StringSelector ".o-mark--note") `shouldReturn` True
 
-    describe "the css class that renders the selected text white-on-black" $ do
 
+    describe "the css class that renders the selected text white-on-black" $ do
       it "when it is the current selection while the editor is open" $ do
         let moreProps = MarkProps [Attr "data-contribution-id" "h"] ContribIDHighlightMark Nothing Nothing
         wrapper <- shallow $ rfMark_ moreProps mempty
@@ -90,8 +90,8 @@ spec = do
         wrapper <- shallow $ rfMark_ moreProps mempty
         is wrapper (StringSelector ".o-mark--highlight") `shouldReturn` False
 
-    describe "the orange line underneath the text" $ do
 
+    describe "the orange line underneath the text" $ do
       it "does not render the hover class when there is no selected mark" $ do
         wrapper <- shallow $ rfMark_ theProps mempty
         is wrapper (StringSelector ".o-mark--hover") `shouldReturn` False
@@ -106,6 +106,7 @@ spec = do
         wrapper <- shallow $ rfMark_ moreProps mempty
         is wrapper (StringSelector ".o-mark--hover") `shouldReturn` True
 
+
     it "inserts the id of the current mark into the state on mouseEnter and removes it again on mouseLeave" $ do
       registerInitialStore emptyGlobalState
       wrapper <- mount $ rfMark_ theProps mempty
@@ -119,6 +120,7 @@ spec = do
       _ <- simulate wrapper MouseLeave
       globalState2 <- readStoreData @GlobalState
       globalState2 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Nothing
+
 
   describe "componentDidMount" $ do
     it "works" pending
