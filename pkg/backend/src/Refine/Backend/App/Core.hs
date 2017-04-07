@@ -23,11 +23,14 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Backend.App.Core (
-    DBNat
+    MkDBNat
+  , DBRunner(..)
+  , DBConnection(..)
   , UHNat
   , DocRepoNat
   , AppContext(..)
-  , appDBNat
+  , appMkDBNat
+  , appDBConnection
   , appDocRepoNat
   , appUHNat
   , appLogger
@@ -72,7 +75,8 @@ import Refine.Prelude.TH (makeRefineType)
 type DocRepoNat = DocRepo :~> ExceptT DocRepoError IO
 
 data AppContext db uh = AppContext
-  { _appDBNat         :: DBNat db
+  { _appMkDBNat       :: MkDBNat db
+  , _appDBConnection  :: DBConnection
   , _appDocRepoNat    :: DocRepoNat
   , _appUHNat         :: UHNat uh
   , _appLogger        :: Logger
@@ -151,8 +155,10 @@ appIO = AppM . liftIO
 
 dbFilter :: Filters -> db a -> AppM db uh a
 dbFilter fltrs m = AppM $ do
-  mu <- user <$> gets (view appUserState)
-  (Nat dbNat) <- ($ DBContext mu fltrs) <$> view appDBNat
+  mu      <- user <$> gets (view appUserState)
+  mkNatDB <- view appMkDBNat
+  conn    <- view appDBConnection
+  let (Nat dbNat) = mkNatDB conn (DBContext mu fltrs)
   r <- liftIO (runExceptT (dbNat m))
   leftToError AppDBError r
   where

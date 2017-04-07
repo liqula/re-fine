@@ -37,6 +37,7 @@ dependencies:
   - i18n
   - lens
   - lentil
+  - monad-control
   - monad-logger
   - mtl
   - natural-transformation
@@ -45,6 +46,7 @@ dependencies:
   - persistent-sqlite
   - persistent-template
   - QuickCheck
+  - resource-pool
   - random
   - refine-common
   - refine-prelude

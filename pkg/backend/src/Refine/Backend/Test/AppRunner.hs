@@ -74,12 +74,13 @@ createAppRunner = do
         }
 
   createDirectoryIfMissing True $ cfg ^. cfgReposRoot
-  (dbNat, userHandler) <- createDBNat cfg
+  (dbRunner, dbNat, userHandler) <- createDBNat cfg
   drepoNat <- createRepoNat cfg
   let logger = Logger . const $ pure ()
       runner :: forall b . AppM DB UH b -> IO b
       runner m = (natThrowError . runApp
                                     dbNat
+                                    dbRunner
                                     drepoNat
                                     (uhNat userHandler)
                                     logger

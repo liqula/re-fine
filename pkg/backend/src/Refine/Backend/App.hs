@@ -46,7 +46,8 @@ import Refine.Prelude
 
 runApp
   :: forall (db :: * -> *) (uh :: * -> *)
-  .  DBNat db
+  .  MkDBNat db
+  -> DBRunner
   -> DocRepoNat
   -> UHNat uh
   -> Logger
@@ -57,6 +58,7 @@ runApp
   -> (AppM db uh :~> ExceptT AppError IO)
 runApp
   dbNat
+  dbrunner
   docRepoNat
   uhNat
   logger
@@ -64,11 +66,17 @@ runApp
   sessionLength
   poFilesRoot
   wrapper =
-    Nat (runSR
-            (AppState Nothing UserLoggedOut)
-            (AppContext dbNat docRepoNat uhNat logger csrfSecret sessionLength poFilesRoot)
-          . unApp
-          . wrapper)
+    Nat (runSR . unApp . wrapper)
     where
-      runSR :: (Monad m) => s -> r -> StateT s (ReaderT r m) a -> m a
-      runSR s r m = runReaderT (evalStateT m s) r
+      runSR
+        :: StateT AppState (ReaderT (AppContext db uh) (ExceptT AppError IO)) x
+        -> ExceptT AppError IO x
+      runSR m = do
+        unDBRunner dbrunner $ \dbc -> do
+          dbInit dbc
+          let r = AppContext dbNat dbc docRepoNat uhNat logger csrfSecret sessionLength poFilesRoot
+              s = AppState Nothing UserLoggedOut
+          x <- runReaderT (evalStateT m s) r
+          dbCommit dbc
+          pure x
+
