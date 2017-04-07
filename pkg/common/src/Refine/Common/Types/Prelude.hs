@@ -95,7 +95,7 @@ data UserInfo = UserIP ST | UserID (ID User) | Anonymous
 
 -- * meta info
 
-data Meta = Meta
+data MetaInfo = MetaInfo
   { _metaCreatedBy :: UserInfo
   , _metaCreatedAt :: Timestamp
   , _metaChangedBy :: UserInfo
@@ -105,7 +105,7 @@ data Meta = Meta
 
 data MetaID a = MetaID
   { _miID   :: ID a
-  , _miMeta :: Meta
+  , _miMeta :: MetaInfo
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -124,5 +124,5 @@ makeRefineType ''CreateUser
 makeRefineType ''User
 makeRefineType ''Login
 makeRefineType ''UserInfo
-makeRefineType ''Meta
+makeRefineType ''MetaInfo
 -- makeRefineType ''MetaID  -- does not work yet

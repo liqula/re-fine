@@ -50,7 +50,7 @@ import           Refine.Common.Types.Prelude (ID(..))
 import           Refine.Prelude (nothingToError, getCurrentTimestamp)
 
 -- FIXME: Generate this as the part of the lentil library.
-type instance S.EntityRep Meta       = S.Meta
+type instance S.EntityRep MetaInfo   = S.MetaInfo
 type instance S.EntityRep VDoc       = S.VDoc
 type instance S.EntityRep Edit       = S.Edit
 type instance S.EntityRep VDocRepo   = S.Repo
@@ -152,30 +152,30 @@ dbSelectOpts = do
     filterToSelectOpt = \case
       Limit n -> [LimitTo n]
 
--- * Meta
+-- * MetaInfo
 
 createMetaID :: ID a -> DB (MetaID a)
 createMetaID ida = do
   user <- view $ dbLoggedInUser . to (maybe Anonymous UserID)  -- TODO: LATER: use IP address if available
   time <- getCurrentTimestamp
-  let meta = S.Meta user time user time
-  void . liftDB $ insertKey (S.idToKey (coerce ida :: ID Meta)) meta
-  pure . MetaID ida $ S.metaElim Meta meta
+  let meta = S.MetaInfo user time user time
+  void . liftDB $ insertKey (S.idToKey (coerce ida :: ID MetaInfo)) meta
+  pure . MetaID ida $ S.metaInfoElim MetaInfo meta
 
 modifyMetaID :: ID a -> DB ()
 modifyMetaID ida = do
   user <- view $ dbLoggedInUser . to (maybe Anonymous UserID)
   time <- getCurrentTimestamp
   meta <- getEntity idm
-  let meta' = meta {S.metaModBy = user, S.metaModAt = time}
+  let meta' = meta {S.metaInfoModBy = user, S.metaInfoModAt = time}
   liftDB $ replace (S.idToKey idm) meta'
   where
-    idm = coerce ida :: ID Meta
+    idm = coerce ida :: ID MetaInfo
 
 getMeta :: ID a -> DB (MetaID a)
 getMeta ida = do
-  meta <- getEntity (coerce ida :: ID Meta)
-  pure . MetaID ida $ S.metaElim Meta meta
+  meta <- getEntity (coerce ida :: ID MetaInfo)
+  pure . MetaID ida $ S.metaInfoElim MetaInfo meta
 
 -- * VDoc
 

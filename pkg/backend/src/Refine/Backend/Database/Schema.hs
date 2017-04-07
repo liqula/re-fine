@@ -35,7 +35,7 @@ import Web.Users.Persistent (LoginId) -- Same as Refine.Backend.User.LoginId, bu
 
 import Refine.Prelude (Timestamp)
 import Refine.Common.Types.Chunk (ChunkRange(..))
-import Refine.Common.Types.Prelude hiding (Meta)
+import Refine.Common.Types.Prelude hiding (MetaInfo)
 import Refine.Common.Types.Process (CollaborativeEditPhase)
 import Refine.Common.Types.Role (Role)
 import Refine.Common.Types.VDoc (Abstract, EditKind, Title)
@@ -45,7 +45,7 @@ import Refine.Backend.DocRepo.Core (EditHandle, RepoHandle)
 
 
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
-Meta
+MetaInfo
     createBy    UserInfo
     createAt    Timestamp
     modBy       UserInfo
@@ -208,7 +208,7 @@ keyToId = ID . fromSqlKey
 
 -- * eliminators
 
-makeElim ''Meta
+makeElim ''MetaInfo
 makeElim ''VDoc
 makeElim ''Edit
 makeElim ''Repo

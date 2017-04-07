@@ -52,8 +52,8 @@ sampleTime = Timestamp $ parseTimeOrError True defaultTimeLocale "%Y-%m-%d %H:%M
 sampleUserInfo :: UserInfo
 sampleUserInfo = Anonymous
 
-sampleMeta :: Meta
-sampleMeta = Meta sampleUserInfo sampleTime sampleUserInfo sampleTime
+sampleMetaInfo :: MetaInfo
+sampleMetaInfo = MetaInfo sampleUserInfo sampleTime sampleUserInfo sampleTime
 
 sampleMetaID :: MetaID a
-sampleMetaID = MetaID sampleID sampleMeta
+sampleMetaID = MetaID sampleID sampleMetaInfo
