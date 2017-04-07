@@ -48,6 +48,7 @@ data GlobalState = GlobalState
   , _gsLoginState                 :: LoginState
   , _gsToolbarSticky              :: Bool
   , _gsTranslations               :: Trans
+  , _gsDevState                   :: Maybe DevState  -- ^ for development & testing, see 'devStateUpdate'.
   } deriving (Show, Eq, Generic)
 
 emptyGlobalState :: GlobalState
@@ -63,7 +64,16 @@ emptyGlobalState = GlobalState
   , _gsLoginState                 = emptyLoginState
   , _gsToolbarSticky              = False
   , _gsTranslations               = emptyTrans
+  , _gsDevState                   = Nothing
   }
+
+newtype DevState = DevState
+  { _devStateTrace :: [GlobalAction]
+  }
+  deriving (Show, Eq, Generic)
+
+emptyDevState :: DevState
+emptyDevState = DevState []
 
 data GlobalAction =
     -- documents
@@ -102,4 +112,5 @@ data GlobalAction =
   deriving (Show, Eq, Generic)
 
 makeRefineType ''GlobalState
+makeRefineType ''DevState
 makeRefineType ''GlobalAction

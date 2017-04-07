@@ -24,10 +24,11 @@
 
 module Refine.Frontend.Contribution.MarkSpec where
 
-import           Control.Lens((^.), (&), (.~))
+import           Control.Concurrent
+import           Control.Lens ((^.), (^?), (&), (.~), _Just, to)
 import           Data.Int (Int64)
 import           Data.Monoid ((<>))
-import           React.Flux (registerInitialStore, readStoreData)
+import           React.Flux
 import           Test.Hspec
 import           Text.HTML.Parser
 
@@ -45,10 +46,10 @@ cnid = ContribIDNote . ID
 
 spec :: Spec
 spec = do
-  describe "The rfMark_ component" $ do
-    let theAttrs = [Attr "data-contribution-id" "n77"]
-    let theProps = MarkProps theAttrs (ContribIDNote (ID 77)) Nothing Nothing
+  let theAttrs = [Attr "data-contribution-id" "n77"]
+  let theProps = MarkProps theAttrs (ContribIDNote (ID 77)) Nothing Nothing
 
+  describe "The rfMark_ component" $ do
     it "renders a HTML mark at top level" $ do
       wrapper <- shallow $ rfMark_ theProps mempty
       is wrapper (StringSelector "mark") `shouldReturn` True
@@ -119,7 +120,22 @@ spec = do
 
 
   describe "componentDidMount" $ do
-    it "works" pending
+    let test :: ReactElementM ViewEventHandler () -> Expectation
+        test chldrn = do
+          reactFluxWorkAroundThreadDelay 0.1  -- (if i remove this, the next line is executed too late.  what?!)
+          registerInitialStore (emptyGlobalState & gsDevState .~ Just (DevState []))
+          state <- reactFluxWorkAroundThreadDelay 0.1 >> readStoreData @GlobalState
+          state ^? gsDevState . _Just . devStateTrace . to length `shouldBe` Just 0
+          _ <- mount $ rfMark_ theProps chldrn
+          state' <- reactFluxWorkAroundThreadDelay 0.1 >> readStoreData @GlobalState
+          state' ^? gsDevState . _Just . devStateTrace . to length `shouldBe` Just 1
+
+    context "component without children" $ do
+      it "dispatches ScheduleAddMarkPosition only once" $ test mempty
+
+    context "component with children" $ do
+      it "dispatches ScheduleAddMarkPosition only once" $ test (div_ $ p_ "wef")
+
 
   describe "contributionIdFrom" $ do
     it "returns the note contribution id as it was found in the attributes" $ do

@@ -28,6 +28,7 @@ module Refine.Frontend.Test.Console
   , consoleLogJSON, consoleLogJSONM
   , consoleLogJSONAsString, consoleLogJSONAsStringM
   , gracefulError
+  , weAreInDevMode
   )
 where
 
@@ -81,6 +82,9 @@ foreign import javascript unsafe
   "console.log($1, JSON.parse($2))"
   js_consoleLogJSON :: JSString -> JSString -> ()
 
+
+weAreInDevMode :: Bool
+weAreInDevMode = js_devMode
 
 foreign import javascript unsafe
   "process.env.NODE_ENV === 'development' ? true : false"

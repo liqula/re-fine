@@ -70,7 +70,7 @@ clearState =
     in do
       -- FIXME: If we add ClearState to the list of Actions, we run into (timing?!) problems...
       dispatchAndExecMany [OpenDocument newVDoc, HeaderAction CloseToolbarExtension]
-      reactFluxWorkAroundThreadDelay
+      reactFluxWorkAroundThreadDelay 0.01
 
 
 spec :: Spec
