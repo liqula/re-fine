@@ -266,34 +266,36 @@ vDocRepoVDoc rid = do
 -- * Edit
 
 createEdit :: ID VDocRepo -> DocRepo.EditHandle -> CreateEdit -> DB Edit
-createEdit rid edith ce = liftDB $ do
-  key <- insert $ S.Edit
+createEdit rid edith ce = do
+  key <- liftDB . insert $ S.Edit
             (ce ^. createEditDesc)
             (ce ^. createEditRange)
             edith
             (ce ^. createEditKind)
             (ce ^. createEditMotiv)
-  void . insert $ S.RP (S.idToKey rid) key
-  let pid = S.keyToId key
+  void . liftDB . insert $ S.RP (S.idToKey rid) key
+  mid <- createMetaID $ S.keyToId key
   pure $ Edit
-    pid
+    mid
     (ce ^. createEditDesc)
     (ce ^. createEditRange)
     (ce ^. createEditKind)
     (ce ^. createEditMotiv)
 
 getEdit :: ID Edit -> DB Edit
-getEdit pid = S.editElim toEdit <$> getEntity pid
-  where
-    toEdit :: ST -> ChunkRange -> DocRepo.EditHandle -> EditKind -> ST -> Edit
-    toEdit desc cr _handle = Edit pid desc cr
+getEdit pid = do
+    mid <- getMeta pid
+    let toEdit :: ST -> ChunkRange -> DocRepo.EditHandle -> EditKind -> ST -> Edit
+        toEdit desc cr _handle = Edit mid desc cr
+    S.editElim toEdit <$> getEntity pid
 
 getEditFromHandle :: DocRepo.EditHandle -> DB Edit
 getEditFromHandle hndl = do
   opts <- dbSelectOpts
   ps <- liftDB $ selectList [S.EditEditHandle ==. hndl] opts
   p <- unique ps
-  let toEdit desc cr _hdnl = Edit (S.keyToId $ entityKey p) desc cr
+  mid <- getMeta . S.keyToId $ entityKey p
+  let toEdit desc cr _hdnl = Edit mid desc cr
   pure $ S.editElim toEdit (entityVal p)
 
 getEditHandle :: ID Edit -> DB DocRepo.EditHandle

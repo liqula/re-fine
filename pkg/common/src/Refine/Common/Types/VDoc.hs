@@ -85,11 +85,11 @@ data VDocRepo = VDocRepo
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Edit = Edit
-  { _editID    :: ID Edit
-  , _editDesc  :: ST
-  , _editRange :: ChunkRange
-  , _editKind  :: EditKind
-  , _editMotiv :: ST  -- (list of paragraphs)
+  { _editMetaID :: MetaID Edit
+  , _editDesc   :: ST
+  , _editRange  :: ChunkRange
+  , _editKind   :: EditKind
+  , _editMotiv  :: ST  -- (list of paragraphs)
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -169,3 +169,6 @@ makeRefineType ''CompositeVDoc
 
 vdocID :: Lens' VDoc (ID VDoc)
 vdocID = vdocMetaID . miID
+
+editID :: Lens' Edit (ID Edit)
+editID = editMetaID . miID
