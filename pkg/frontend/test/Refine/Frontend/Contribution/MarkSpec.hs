@@ -24,7 +24,7 @@
 
 module Refine.Frontend.Contribution.MarkSpec where
 
-import           Control.Lens((^.), (&), (.~), (%~))
+import           Control.Lens((^.), (&), (.~))
 import           Data.Int (Int64)
 import           Data.Monoid ((<>))
 import           React.Flux (registerInitialStore, readStoreData)
@@ -110,10 +110,6 @@ spec = do
     it "inserts the id of the current mark into the state on mouseEnter and removes it again on mouseLeave" $ do
       registerInitialStore emptyGlobalState
       wrapper <- mount $ rfMark_ theProps mempty
-      -- init the state:
-      globalState0 <- readStoreData @GlobalState
-      let _ = globalState0 & gsContributionState . csHighlightedMarkAndBubble %~ \_ -> Nothing
-      -- simulate events:
       _ <- simulate wrapper MouseEnter
       globalState1 <- readStoreData @GlobalState
       globalState1 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Just (cnid 77)
