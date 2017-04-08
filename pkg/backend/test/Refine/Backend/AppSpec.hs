@@ -43,10 +43,7 @@ import Refine.Backend.Test.AppRunner
 import Refine.Backend.Test.Util (forceEval)
 import Refine.Backend.User
 import Refine.Common.Test.Arbitrary (arbitraryRawVDocVersion)
-import Refine.Common.Types.Chunk
-import Refine.Common.Types.Prelude
-import Refine.Common.Types.VDoc
-
+import Refine.Common.Types
 
 
 data Cmd where
@@ -94,6 +91,24 @@ spec = do
         userState2 <- gets (view appUserState)
         appIO $ userState2 `shouldBe` UserLoggedOut
 
+  describe "Database handling" . around provideAppRunner $ do
+    it "Calls db combinator twice" $ \(runner :: AppM DB UH () -> IO ()) -> do
+      forceEval . runner $ do
+        void $ do
+          let createGroup1 = CreateGroup "group1" "desc1" [] [] False
+              createGroup2 = CreateGroup "group2" "desc2" [] [] False
+              sameGroupInfo cgrp grp = and
+                [ cgrp ^. createGroupTitle     == grp ^. groupTitle
+                , cgrp ^. createGroupDesc      == grp ^. groupDesc
+                , cgrp ^. createGroupParents   == grp ^. groupParents
+                , cgrp ^. createGroupChildren  == grp ^. groupChildren
+                , cgrp ^. createGroupUniversal == grp ^. groupUniversal
+                ]
+          grp1 <- App.addGroup createGroup1
+          grp2 <- App.addGroup createGroup2
+
+          appIO $ grp1 `shouldSatisfy` sameGroupInfo createGroup1
+          appIO $ grp2 `shouldSatisfy` sameGroupInfo createGroup2
 
   describe "Regression" . around provideAppRunner $ do
     it "Regression test program" $ \(runner :: AppM DB UH () -> IO ()) -> do
