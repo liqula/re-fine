@@ -40,6 +40,7 @@ library
     , deepseq
     , functor-infix
     , ghcjs-base
+    , hspec
     , html-parse
     , http-api-data
     , i18n
@@ -106,6 +107,7 @@ library
       Refine.Frontend.Test.Enzyme.ReactWrapper
       Refine.Frontend.Test.Enzyme.ShallowWrapper
       Refine.Frontend.Test.Samples
+      Refine.Frontend.Test.Store
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.TKey
       Refine.Frontend.Translation.Store

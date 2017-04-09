@@ -23,19 +23,18 @@
 
 module Refine.Frontend.Contribution.BubbleSpec where
 
-import           Control.Lens((^.), (&), (.~))
+import           Control.Lens ((^.), (&), (.~))
 import           Data.Int (Int64)
 import           Test.Hspec
-import           React.Flux (readStoreData)
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Screen.Types
-import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Style
 import           Refine.Frontend.Test.Enzyme
+import           Refine.Frontend.Test.Store
 import           Refine.Frontend.Types
 
 
@@ -92,18 +91,15 @@ spec = do
       is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` True
 
     it "inserts the id of the current bubble into the state on mouseEnter and removes it again on mouseLeave" $ do
-      dispatchAndExec $ ResetState emptyGlobalState
+      resetState emptyGlobalState
       wrapper <- mount $ bubble_ bubbleProps mempty
-      globalState0 <- reactFluxWorkAroundThreadDelay 0.1 >> readStoreData @GlobalState
-      globalState0 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Nothing
+      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) Nothing
 
       _ <- simulate wrapper MouseEnter
-      globalState1 <- reactFluxWorkAroundThreadDelay 0.1 >> readStoreData @GlobalState
-      globalState1 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Just (cnid 99)
+      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) $ Just (cnid 99)
 
       _ <- simulate wrapper MouseLeave
-      globalState2 <- reactFluxWorkAroundThreadDelay 0.1 >> readStoreData @GlobalState
-      globalState2 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Nothing
+      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) Nothing
 
   describe "tablet and mobile" $ do
     it "works" $ do

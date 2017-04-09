@@ -21,12 +21,12 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-
 module Refine.Frontend.Contribution.MarkSpec where
 
 import           Control.Lens ((^.), (^?!), (&), (.~), _Just)
 import           Data.Int (Int64)
 import           Data.Monoid ((<>))
+import           GHC.Stack (HasCallStack)
 import           React.Flux
 import           Test.Hspec
 import           Text.HTML.Parser
@@ -36,6 +36,7 @@ import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.VDoc
 import           Refine.Frontend.Test.Enzyme
+import           Refine.Frontend.Test.Store
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 
@@ -109,27 +110,25 @@ spec = do
 
 
     it "inserts the id of the current mark into the state on mouseEnter and removes it again on mouseLeave" $ do
-      dispatchAndExec $ ResetState emptyGlobalState
+      resetState emptyGlobalState
       wrapper <- mount $ rfMark_ theProps mempty
       _ <- simulate wrapper MouseEnter
-      globalState1 <- readStoreData @GlobalState
-      globalState1 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Just (cnid 77)
+      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) $ Just (cnid 77)
       _ <- simulate wrapper MouseLeave
-      globalState2 <- readStoreData @GlobalState
-      globalState2 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Nothing
+      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) Nothing
 
 
   describe "componentDidMount" $ do
-    let test :: ReactElementM ViewEventHandler () -> Expectation
+    let test :: HasCallStack => ReactElementM ViewEventHandler () -> Expectation
         test chldrn = do
-          reactFluxWorkAroundThreadDelay 0.5  -- FIXME: without this, there are failures.  why?!
-          dispatchAndExec $ ResetState (emptyGlobalState & gsDevState .~ Just (DevState []))
-          -- FIXME: a delay of 0.1 seconds is not enough.  why?!
-          state <- reactFluxWorkAroundThreadDelay 0.5 >> readStoreData @GlobalState
-          state ^?! gsDevState . _Just . devStateTrace `shouldBe` []
+          reactFluxWorkAroundThreadDelay 0.5
+          resetState (emptyGlobalState & gsDevState .~ Just (DevState []))
+          -- FIXME: without the call to 'reactFluxWorkAroundThreadDelay' above, this fails.  why?!
+          -- FIXME: resetState here is taking more than 0.1 seconds to stabilize.  why?!
+
+          storeShouldEventuallyBe (^?! gsDevState . _Just . devStateTrace) []
           _ <- mount $ rfMark_ theProps chldrn
-          state' <- reactFluxWorkAroundThreadDelay 0.5 >> readStoreData @GlobalState
-          state' ^?! gsDevState . _Just . devStateTrace `shouldContain`
+          storeShouldEventuallyContain (^?! gsDevState . _Just . devStateTrace)
             [ContributionAction (ScheduleAddMarkPosition (ContribIDNote (ID 77)) (MarkPosition 0 0))]
 
     context "component without children" $ do
