@@ -94,15 +94,15 @@ spec = do
     it "inserts the id of the current bubble into the state on mouseEnter and removes it again on mouseLeave" $ do
       dispatchAndExec $ ResetState emptyGlobalState
       wrapper <- mount $ bubble_ bubbleProps mempty
-      globalState0 <- readStoreData @GlobalState
+      globalState0 <- reactFluxWorkAroundThreadDelay 0.1 >> readStoreData @GlobalState
       globalState0 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Nothing
 
       _ <- simulate wrapper MouseEnter
-      globalState1 <- readStoreData @GlobalState
+      globalState1 <- reactFluxWorkAroundThreadDelay 0.1 >> readStoreData @GlobalState
       globalState1 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Just (cnid 99)
 
       _ <- simulate wrapper MouseLeave
-      globalState2 <- readStoreData @GlobalState
+      globalState2 <- reactFluxWorkAroundThreadDelay 0.1 >> readStoreData @GlobalState
       globalState2 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Nothing
 
   describe "tablet and mobile" $ do

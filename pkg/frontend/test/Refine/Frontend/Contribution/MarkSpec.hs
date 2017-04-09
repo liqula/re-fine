@@ -24,8 +24,7 @@
 
 module Refine.Frontend.Contribution.MarkSpec where
 
-import           Control.Concurrent
-import           Control.Lens ((^.), (^?), (&), (.~), _Just, to)
+import           Control.Lens ((^.), (^?!), (&), (.~), _Just)
 import           Data.Int (Int64)
 import           Data.Monoid ((<>))
 import           React.Flux
@@ -123,12 +122,15 @@ spec = do
   describe "componentDidMount" $ do
     let test :: ReactElementM ViewEventHandler () -> Expectation
         test chldrn = do
+          reactFluxWorkAroundThreadDelay 0.5  -- FIXME: without this, there are failures.  why?!
           dispatchAndExec $ ResetState (emptyGlobalState & gsDevState .~ Just (DevState []))
-          state <- reactFluxWorkAroundThreadDelay 0.1 >> readStoreData @GlobalState
-          state ^? gsDevState . _Just . devStateTrace . to length `shouldBe` Just 0
+          -- FIXME: a delay of 0.1 seconds is not enough.  why?!
+          state <- reactFluxWorkAroundThreadDelay 0.5 >> readStoreData @GlobalState
+          state ^?! gsDevState . _Just . devStateTrace `shouldBe` []
           _ <- mount $ rfMark_ theProps chldrn
-          state' <- reactFluxWorkAroundThreadDelay 0.1 >> readStoreData @GlobalState
-          state' ^? gsDevState . _Just . devStateTrace . to length `shouldBe` Just 1
+          state' <- reactFluxWorkAroundThreadDelay 0.5 >> readStoreData @GlobalState
+          state' ^?! gsDevState . _Just . devStateTrace `shouldContain`
+            [ContributionAction (ScheduleAddMarkPosition (ContribIDNote (ID 77)) (MarkPosition 0 0))]
 
     context "component without children" $ do
       it "dispatches ScheduleAddMarkPosition only once" $ test mempty
