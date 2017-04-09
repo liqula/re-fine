@@ -37,6 +37,7 @@ import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.VDoc
 import           Refine.Frontend.Test.Enzyme
+import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 
 
@@ -109,7 +110,7 @@ spec = do
 
 
     it "inserts the id of the current mark into the state on mouseEnter and removes it again on mouseLeave" $ do
-      registerInitialStore emptyGlobalState
+      dispatchAndExec $ ResetState emptyGlobalState
       wrapper <- mount $ rfMark_ theProps mempty
       _ <- simulate wrapper MouseEnter
       globalState1 <- readStoreData @GlobalState
@@ -122,8 +123,7 @@ spec = do
   describe "componentDidMount" $ do
     let test :: ReactElementM ViewEventHandler () -> Expectation
         test chldrn = do
-          reactFluxWorkAroundThreadDelay 0.1  -- (if i remove this, the next line is executed too late.  what?!)
-          registerInitialStore (emptyGlobalState & gsDevState .~ Just (DevState []))
+          dispatchAndExec $ ResetState (emptyGlobalState & gsDevState .~ Just (DevState []))
           state <- reactFluxWorkAroundThreadDelay 0.1 >> readStoreData @GlobalState
           state ^? gsDevState . _Just . devStateTrace . to length `shouldBe` Just 0
           _ <- mount $ rfMark_ theProps chldrn

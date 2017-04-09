@@ -106,7 +106,7 @@ data GlobalAction =
 
     -- testing & dev
   | AddDemoDocument
-  | ClearState
+  | ResetState GlobalState
   | ShowNotImplementedYet
   | HideNotImplementedYet
   deriving (Show, Eq, Generic)

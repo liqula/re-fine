@@ -79,7 +79,7 @@ transformGlobalState :: forall m. MonadTransform m => GlobalAction -> GlobalStat
 transformGlobalState = transf
   where
     transf :: GlobalAction -> GlobalState -> m GlobalState
-    transf ClearState _ = pure emptyGlobalState  -- for testing only!
+    transf (ResetState s) _ = pure s  -- for testing only!
     transf action state = do
         consoleLogJSONM "Old state: " state
         consoleLogJSStringM "Action: " (cs $ show action)

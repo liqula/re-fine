@@ -25,11 +25,12 @@ module Refine.Frontend.Header.ToolbarSpec where
 
 import           Control.Lens((^.))
 import           Test.Hspec
-import           React.Flux (registerInitialStore, readStoreData)
+import           React.Flux (readStoreData)
 
 import           Refine.Frontend.Header.Toolbar
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Test.Enzyme
+import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 
 spec :: Spec
@@ -48,7 +49,7 @@ spec = do
       lengthOfIO (find wrapper (StringSelector "IconButton")) `shouldReturn` (6 :: Int)
 
     it "toggles the visibility of the edit toolbar extension when the 'new comment' button is clicked" $ do
-      registerInitialStore emptyGlobalState
+      dispatchAndExec $ ResetState emptyGlobalState
       wrapper <- mount toolbar_
       button <- find wrapper (StringSelector ".c-vdoc-toolbar__btn-add-annotation")
 
