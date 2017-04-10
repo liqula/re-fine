@@ -6,6 +6,7 @@
 
 module Refine.Backend.Database.Class where
 
+import Control.Lens ((^.))
 import Data.Typeable (Typeable)
 
 import Refine.Backend.Database.Tree
@@ -141,7 +142,7 @@ compositeDiscussion
   => ID Discussion -> db CompositeDiscussion
 compositeDiscussion did = CompositeDiscussion
   <$> getDiscussion did
-  <*> (fmap (buildTree _statementParent _statementID) . mapM getStatement =<< statementsOfDiscussion did)
+  <*> (fmap (buildTree _statementParent (^. statementID)) . mapM getStatement =<< statementsOfDiscussion did)
 
 editComments
   :: (Monad db, Database db)

@@ -4,6 +4,7 @@
 
 module Refine.Common.Types.Group where
 
+import Control.Lens (Lens')
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 
@@ -30,11 +31,11 @@ data CreateGroup = CreateGroup
 -- Groups form a directed acyclic graph (DAG): Every group can have one or more children, but other
 -- than in a tree-shaped hierarchy, every child can have multiple parents.
 data Group = Group
-  { _groupID    :: ID Group
-  , _groupTitle :: ST
-  , _groupDesc  :: ST
-  , _groupParents  :: [ID Group]
-  , _groupChildren :: [ID Group]
+  { _groupMetaID    :: MetaID Group
+  , _groupTitle     :: ST
+  , _groupDesc      :: ST
+  , _groupParents   :: [ID Group]
+  , _groupChildren  :: [ID Group]
   , _groupUniversal :: Bool
   }
   deriving (Eq, Generic, Show)
@@ -54,3 +55,6 @@ data GroupRef = GroupRef (ID Group) | UniversalGroup
 makeRefineType ''CreateGroup
 makeRefineType ''Group
 makeRefineType ''GroupRef
+
+groupID :: Lens' Group (ID Group)
+groupID = groupMetaID . miID

@@ -18,6 +18,7 @@
 
 module Refine.Common.Types.Comment where
 
+import Control.Lens (Lens')
 import Data.String.Conversions (ST)
 import Data.Tree (Tree)
 import GHC.Generics (Generic)
@@ -37,7 +38,7 @@ data CreateNote = CreateNote
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Note = Note
-  { _noteID     :: ID Note
+  { _noteMetaID :: MetaID Note
   , _noteText   :: CommentText
   , _notePublic :: Bool
   , _noteRange  :: ChunkRange
@@ -52,7 +53,7 @@ data CreateQuestion = CreateQuestion
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Question = Question
-  { _questionID       :: ID Question
+  { _questionMetaID   :: MetaID Question
   , _questionText     :: ST
   , _questionAnswered :: Bool -- ^ if the asker is happy, she can mark it as answered.
   , _questionPublic   :: Bool
@@ -72,7 +73,7 @@ newtype CreateAnswer = CreateAnswer
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Answer = Answer
-  { _answerID       :: ID Answer
+  { _answerMetaID   :: MetaID Answer
   , _answerQuestion :: ID Question
   , _answerText     :: CommentText
   }
@@ -86,7 +87,7 @@ data CreateDiscussion = CreateDiscussion
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Discussion = Discussion
-  { _discussionID     :: ID Discussion
+  { _discussionMetaID :: MetaID Discussion
   , _discussionPublic :: Bool
   , _discussionRange  :: ChunkRange
   }
@@ -104,7 +105,7 @@ newtype CreateStatement = CreateStatement
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Statement = Statement
-  { _statementID     :: ID Statement
+  { _statementMetaID :: MetaID Statement
   , _statementText   :: CommentText
   , _statementParent :: Maybe (ID Statement)
   }
@@ -139,3 +140,20 @@ makeRefineType ''CompositeDiscussion
 makeRefineType ''CreateStatement
 makeRefineType ''Statement
 makeRefineType ''Comment
+
+-- * Lenses
+
+noteID :: Lens' Note (ID Note)
+noteID = noteMetaID . miID
+
+questionID :: Lens' Question (ID Question)
+questionID = questionMetaID . miID
+
+answerID :: Lens' Answer (ID Answer)
+answerID = answerMetaID . miID
+
+discussionID :: Lens' Discussion (ID Discussion)
+discussionID = discussionMetaID . miID
+
+statementID :: Lens' Statement (ID Statement)
+statementID = statementMetaID . miID

@@ -20,10 +20,11 @@
 {-# LANGUAGE ViewPatterns               #-}
 module Refine.Common.Types.Process where
 
+import Control.Lens (Lens')
 import Data.String.Conversions (ST)
 import GHC.Generics
 
-import Refine.Common.Types.Prelude (ID(..), Create)
+import Refine.Common.Types.Prelude (ID(..), MetaID, miID, Create)
 import Refine.Common.Types.Group (Group, GroupRef)
 import Refine.Common.Types.VDoc (VDoc, CompositeVDoc)
 import Refine.Prelude.TH (makeRefineType)
@@ -39,8 +40,8 @@ import Refine.Prelude.TH (makeRefineType)
 -- Like groups, processes are initiated by users.  Unlike groups, a process always has exactly one
 -- parent group ("its *home group*", or just "its group") and no children.
 data Process a = Process
-  { _processID    :: ID (Process a)
-  , _processGroup :: Group
+  { _processMetaID  :: MetaID (Process a)
+  , _processGroup   :: Group
   , _processPayload :: a
   }
   deriving (Eq, Show, Generic)
@@ -141,3 +142,6 @@ makeRefineType ''CollaborativeEditPhase
 makeRefineType ''CreateCollabEditProcess
 makeRefineType ''Aula
 makeRefineType ''CreateAulaProcess
+
+processID :: Lens' (Process a) (ID (Process a))
+processID = processMetaID . miID
