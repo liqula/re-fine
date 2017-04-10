@@ -47,7 +47,7 @@ import qualified Refine.Backend.DocRepo.Core as DocRepo
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
-import           Refine.Prelude (nothingToError, getCurrentTimestamp)
+import           Refine.Prelude (nothingToError, Timestamp, getCurrentTimestamp)
 
 -- FIXME: Generate this as the part of the lentil library.
 type instance S.EntityRep MetaInfo   = S.MetaInfo
@@ -154,18 +154,22 @@ dbSelectOpts = do
 
 -- * MetaInfo
 
+getUserAndTime :: DB (UserInfo, Timestamp)
+getUserAndTime = do
+  user <- view $ dbLoggedInUser . to (maybe Anonymous UserID)  -- FUTUREWORK: use IP address if available
+  time <- getCurrentTimestamp
+  pure (user, time)
+
 createMetaID :: ID a -> DB (MetaID a)
 createMetaID ida = do
-  user <- view $ dbLoggedInUser . to (maybe Anonymous UserID)  -- TODO: LATER: use IP address if available
-  time <- getCurrentTimestamp
+  (user, time) <- getUserAndTime
   let meta = S.MetaInfo user time user time
   void . liftDB $ insertKey (S.idToKey (coerce ida :: ID MetaInfo)) meta
   pure . MetaID ida $ S.metaInfoElim MetaInfo meta
 
 modifyMetaID :: ID a -> DB ()
 modifyMetaID ida = do
-  user <- view $ dbLoggedInUser . to (maybe Anonymous UserID)
-  time <- getCurrentTimestamp
+  (user, time) <- getUserAndTime
   meta <- getEntity idm
   let meta' = meta {S.metaInfoModBy = user, S.metaInfoModAt = time}
   liftDB $ replace (S.idToKey idm) meta'
