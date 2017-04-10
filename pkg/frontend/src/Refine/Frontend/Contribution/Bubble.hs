@@ -61,28 +61,28 @@ bubble_ !props children = view_ (bubble children) (bubbleKey props) props
   -- (there is React.Flux.Internal.childrenPassedToView, but doing it by hand is easier to understand.)
 
 bubbleKey :: BubbleProps -> JSString
-bubbleKey props = "bubble_" <> props ^. bubblePropsDataContribId . to (cs . toUrlPiece)
+bubbleKey props = "bubble_" <> props ^. bubblePropsContributionId . to (cs . toUrlPiece)
 
 specialBubbleKey :: SpecialBubbleProps -> JSString
 specialBubbleKey props = "bubble_" <> props ^. specialBubblePropsContributionId . to (cs . toUrlPiece)
 
 renderBubble :: ReactElementM [SomeStoreAction] () -> BubbleProps -> OffsetFromDocumentTop -> ReactElementM [SomeStoreAction] ()
 renderBubble children props topOffset = do
-  let contribKind = case props ^. bubblePropsDataContribId of
+  let contribKind = case props ^. bubblePropsContributionId of
           ContribIDNote _         -> ("o-snippet--note",       True)
           ContribIDQuestion _     -> ("o-snippet--question",   True)
           ContribIDDiscussion _   -> ("o-snippet--discussion", True)
           ContribIDEdit _         -> ("o-snippet--edit",       True)
           ContribIDHighlightMark  -> ("", False)
-  div_ ["data-contribution-id" $= cs (toUrlPiece $ props ^. bubblePropsDataContribId)
+  div_ ["data-contribution-id" $= cs (toUrlPiece $ props ^. bubblePropsContributionId)
        , classNamesAny
                     [ ("o-snippet", True)  -- RENAME: snippet => bubble
                     , contribKind
-                    , ("o-snippet--hover", Just (props ^. bubblePropsDataContribId) == props ^. bubblePropsHighlightedBubble)
+                    , ("o-snippet--hover", Just (props ^. bubblePropsContributionId) == props ^. bubblePropsHighlightedBubble)
                     ]
        , "style" @= [StylePx "top" (offsetIntoText topOffset (props ^. bubblePropsScreenState))]
        , onClick      $ mkClickHandler (props ^. bubblePropsClickActions)
-       , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble $ props ^. bubblePropsDataContribId]
+       , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble $ props ^. bubblePropsContributionId]
        , onMouseLeave $ mkClickHandler [UnhighlightMarkAndBubble]
        ] $ do
     div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> props ^. bubblePropsIconSide)] $ do  -- RENAME: snippet => bubble
