@@ -44,14 +44,16 @@ import Refine.Backend.Database.Types (MetaInfoType)
 import Refine.Backend.DocRepo.Core (EditHandle, RepoHandle)
 
 
-
+-- TODO: do not use VDocId in MetaInfo/typeId
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
 MetaInfo
     typeTag     MetaInfoType
+    typeId      VDocId
     createBy    UserInfo
     createAt    Timestamp
     modBy       UserInfo
     modAt       Timestamp
+    UniMetaInfo typeTag typeId
 
 VDoc
     title       Title

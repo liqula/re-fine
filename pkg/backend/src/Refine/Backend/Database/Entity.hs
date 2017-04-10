@@ -167,9 +167,9 @@ createMetaID
 createMetaID a = do
   ida <- S.keyToId <$> liftDB (insert a)
   (user, time) <- getUserAndTime
-  let meta = S.MetaInfo (metaInfoType ida) user time user time
-  void . liftDB $ insertKey (S.idToKey (coerce ida :: ID MetaInfo)) meta
-  pure . MetaID ida $ S.metaInfoElim (const MetaInfo) meta
+  let meta = S.MetaInfo (metaInfoType ida) (S.idToKey (coerce ida :: ID VDoc)) user time user time
+  void . liftDB $ insert meta
+  pure . MetaID ida $ S.metaInfoElim (const $ const MetaInfo) meta
 
 addConnection
     :: (PersistEntityBackend record ~ BaseBackend SqlBackend, ToBackendKey SqlBackend record
@@ -177,22 +177,23 @@ addConnection
     => (Key (S.EntityRep a) -> Key (S.EntityRep b) -> record) -> ID a -> ID b -> DB ()
 addConnection t rid mid = void . liftDB . insert $ t (S.idToKey rid) (S.idToKey mid)
 
-modifyMetaID :: ID a -> DB ()
-modifyMetaID ida = do
-  (user, time) <- getUserAndTime
-  meta <- getEntity idm
-  let meta' = meta {S.metaInfoModBy = user, S.metaInfoModAt = time}
-  liftDB $ replace (S.idToKey idm) meta'
-  where
-    idm = coerce ida :: ID MetaInfo
+getMetaInfo :: HasMetaInfo a => ID a -> DB (Database.Persist.Entity (S.EntityRep MetaInfo))
+getMetaInfo ida = maybe (error "no meta info for ...") id <$> do
+  liftDB $ getBy $ S.UniMetaInfo (metaInfoType ida) (S.idToKey (coerce ida :: ID VDoc))
 
-getMeta :: ID a -> DB (MetaID a)
+modifyMetaID :: HasMetaInfo a => ID a -> DB ()
+modifyMetaID ida = do
+  meta <- getMetaInfo ida
+  (user, time) <- getUserAndTime
+  liftDB $ update (entityKey meta) [S.MetaInfoModBy =. user, S.MetaInfoModAt =. time]
+
+getMeta :: HasMetaInfo a => ID a -> DB (MetaID a)
 getMeta ida = do
-  meta <- getEntity (coerce ida :: ID MetaInfo)
-  pure . MetaID ida $ S.metaInfoElim (const MetaInfo) meta
+  meta <- getMetaInfo ida
+  pure . MetaID ida $ S.metaInfoElim (const $ const MetaInfo) $ entityVal meta
 
 getMetaEntity
-  :: (ToBackendKey SqlBackend (S.EntityRep e), Typeable e)
+  :: (ToBackendKey SqlBackend (S.EntityRep e), Typeable e, HasMetaInfo e)
   => (MetaID e -> S.EntityRep e -> b) -> ID e -> DB b
 getMetaEntity f i = do
     mid <- getMeta i
