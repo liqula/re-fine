@@ -40,6 +40,7 @@ library
     , deepseq
     , functor-infix
     , ghcjs-base
+    , hspec
     , html-parse
     , http-api-data
     , i18n
@@ -106,6 +107,7 @@ library
       Refine.Frontend.Test.Enzyme.ReactWrapper
       Refine.Frontend.Test.Enzyme.ShallowWrapper
       Refine.Frontend.Test.Samples
+      Refine.Frontend.Test.Store
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.TKey
       Refine.Frontend.Translation.Store
@@ -130,7 +132,7 @@ executable refine-frontend
 
 test-suite spec
   type: exitcode-stdio-1.0
-  main-is: Spec.hs
+  main-is: Main.hs
   hs-source-dirs:
       test
   ghc-options: -j -Wall -threaded -rtsopts -with-rtsopts=-N
@@ -162,7 +164,8 @@ test-suite spec
     , text
     , unordered-containers
   other-modules:
-      -- find test -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
+      -- (echo '      Spec'; (find test -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \;)) | sort
+      Main
       Refine.Frontend.Contribution.BubbleSpec
       Refine.Frontend.Contribution.DialogSpec
       Refine.Frontend.Contribution.MarkSpec
@@ -177,6 +180,7 @@ test-suite spec
       Refine.Frontend.StoreSpec
       Refine.Frontend.UtilSpec
       Refine.Frontend.ViewsSpec
+      Spec
   js-sources:
       jsbits/test.js
       jsbits/util.js

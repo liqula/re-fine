@@ -25,11 +25,11 @@ module Refine.Frontend.Header.ToolbarSpec where
 
 import           Control.Lens((^.))
 import           Test.Hspec
-import           React.Flux (registerInitialStore, readStoreData)
 
 import           Refine.Frontend.Header.Toolbar
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Test.Enzyme
+import           Refine.Frontend.Test.Store
 import           Refine.Frontend.Store.Types
 
 spec :: Spec
@@ -48,19 +48,15 @@ spec = do
       lengthOfIO (find wrapper (StringSelector "IconButton")) `shouldReturn` (6 :: Int)
 
     it "toggles the visibility of the edit toolbar extension when the 'new comment' button is clicked" $ do
-      registerInitialStore emptyGlobalState
+      resetState emptyGlobalState
       wrapper <- mount toolbar_
       button <- find wrapper (StringSelector ".c-vdoc-toolbar__btn-add-annotation")
 
-      pending
+      _ <- simulate button Click
+      storeShouldEventuallyBe (^. gsHeaderState . hsToolbarExtensionStatus) CommentToolbarExtensionWithoutRange
 
       _ <- simulate button Click
-      globalState1 <- readStoreData @GlobalState
-      globalState1 ^. gsHeaderState . hsToolbarExtensionStatus `shouldBe` CommentToolbarExtensionWithoutRange
-
-      _ <- simulate button Click
-      globalState2 <- readStoreData @GlobalState
-      globalState2 ^. gsHeaderState . hsToolbarExtensionStatus `shouldBe` ToolbarExtensionClosed
+      storeShouldEventuallyBe (^. gsHeaderState . hsToolbarExtensionStatus) ToolbarExtensionClosed
 
 
   describe "The commentToolbarExtension_ component" $ do

@@ -128,6 +128,23 @@ import qualified Data.Text.Lazy as LT
 3. For converting between strings, use `cs` where possible.
 
 
+### comments
+
+There are some keywords to give special semantics to source code
+comments.  They always have the form `-- KEYWORD: ...`, where `...` is
+some free text.  The keywords are:
+
+1. TODO: shouldn't make it to master.  it's clearly broken in a known
+   way.
+
+2. FIXME: works as it is, but there is a better implementation.  if we
+   need to touch this code again, we should probably resolve the FIXME
+   first.
+
+3. FUTUREWORK: there are some nice ideas about how to improve things
+   here, but they are not urgent.
+
+
 ### code layout
 
 1. two empty lines before section heading (`-- *`).

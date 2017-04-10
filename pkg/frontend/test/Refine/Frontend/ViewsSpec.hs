@@ -68,9 +68,9 @@ clearState =
                                 (VDocVersion [DT.Node (HTMLP.TagOpen "div" [HTMLP.Attr "data-uid" "77", HTMLP.Attr "data-offset" "0"]) []])
                                 M.empty M.empty M.empty
     in do
-      -- FIXME: If we add ClearState to the list of Actions, we run into (timing?!) problems...
+      -- FIXME: If we add ResetState to the list of Actions, we run into (timing?!) problems...
       dispatchAndExecMany [OpenDocument newVDoc, HeaderAction CloseToolbarExtension]
-      reactFluxWorkAroundThreadDelay
+      reactFluxWorkAroundThreadDelay 0.01
 
 
 spec :: Spec
