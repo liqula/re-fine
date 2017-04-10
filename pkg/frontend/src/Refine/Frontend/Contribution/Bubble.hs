@@ -26,8 +26,9 @@ module Refine.Frontend.Contribution.Bubble
   , editBubble_
   ) where
 
-import           Control.Lens ((^.))
+import           Control.Lens ((^.), to)
 import           Data.Monoid ((<>))
+import           Data.JSString
 import           Data.String.Conversions (cs)
 import           React.Flux hiding (callback)
 import           Web.HttpApiData (toUrlPiece)
@@ -55,6 +56,16 @@ bubble children = mkView "Bubble" $ \props ->
         -- FIXME: 'OffsetFromDocumentTop' should be part of the props, not a separate parameter.
     Just (MarkPosition topOffset _) -> renderBubble children props topOffset
 
+bubble_ :: BubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
+bubble_ !props children = view_ (bubble children) (bubbleKey props) props
+  -- (there is React.Flux.Internal.childrenPassedToView, but doing it by hand is easier to understand.)
+
+bubbleKey :: BubbleProps -> JSString
+bubbleKey props = "bubble_" <> props ^. bubblePropsDataContribId . to (cs . toUrlPiece)
+
+specialBubbleKey :: SpecialBubbleProps -> JSString
+specialBubbleKey props = "bubble_" <> props ^. specialBubblePropsContributionId . to (cs . toUrlPiece)
+
 renderBubble :: ReactElementM [SomeStoreAction] () -> BubbleProps -> OffsetFromDocumentTop -> ReactElementM [SomeStoreAction] ()
 renderBubble children props topOffset = do
   let contribKind = case props ^. bubblePropsDataContribId of
@@ -79,9 +90,6 @@ renderBubble children props topOffset = do
     div_ ["className" $= "o-snippet__content"]  -- RENAME: snippet => bubble
       children
 
-bubble_ :: BubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
-bubble_ !props children = view_ (bubble children) "bubble_" props
-  -- (there is React.Flux.Internal.childrenPassedToView, but doing it by hand is easier to understand.)
 
 discussionBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
 discussionBubble children = mkView "DiscussionBubble" $ \(SpecialBubbleProps contributionID markPosition highlight screenState) ->
@@ -90,7 +98,7 @@ discussionBubble children = mkView "DiscussionBubble" $ \(SpecialBubbleProps con
     children
 
 discussionBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
-discussionBubble_ !props children = view_ (discussionBubble children) "discussionBubble_" props
+discussionBubble_ !props children = view_ (discussionBubble children) (specialBubbleKey props) props
 
 questionBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
 questionBubble children = mkView "QuestionBubble" $ \(SpecialBubbleProps dataChunkId markPosition highlight screenState) ->
@@ -98,7 +106,7 @@ questionBubble children = mkView "QuestionBubble" $ \(SpecialBubbleProps dataChu
     children
 
 questionBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
-questionBubble_ !props children = view_ (questionBubble children) "questionBubble_" props
+questionBubble_ !props children = view_ (questionBubble children) (specialBubbleKey props) props
 
 noteBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
 noteBubble children = mkView "NoteBubble" $ \(SpecialBubbleProps contributionID markPosition highlight screenState) ->
@@ -107,7 +115,7 @@ noteBubble children = mkView "NoteBubble" $ \(SpecialBubbleProps contributionID 
     children
 
 noteBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
-noteBubble_ !props children = view_ (noteBubble children) "noteBubble_" props
+noteBubble_ !props children = view_ (noteBubble children) (specialBubbleKey props) props
 
 editBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
 editBubble children = mkView "EditBubble" $ \(SpecialBubbleProps dataChunkId markPosition highlight screenState) ->
@@ -115,4 +123,4 @@ editBubble children = mkView "EditBubble" $ \(SpecialBubbleProps dataChunkId mar
     children
 
 editBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
-editBubble_ !props children = view_ (editBubble children) "editBubble_" props
+editBubble_ !props children = view_ (editBubble children) (specialBubbleKey props) props
