@@ -160,12 +160,21 @@ getUserAndTime = do
   time <- getCurrentTimestamp
   pure (user, time)
 
-createMetaID :: ID a -> DB (MetaID a)
-createMetaID ida = do
+createMetaID
+  :: (ra ~ S.EntityRep a, PersistEntityBackend ra ~ BaseBackend SqlBackend, ToBackendKey SqlBackend ra)
+  => ra -> DB (MetaID a)
+createMetaID a = do
+  ida <- S.keyToId <$> liftDB (insert a)
   (user, time) <- getUserAndTime
   let meta = S.MetaInfo user time user time
   void . liftDB $ insertKey (S.idToKey (coerce ida :: ID MetaInfo)) meta
   pure . MetaID ida $ S.metaInfoElim MetaInfo meta
+
+addConnection
+    :: (PersistEntityBackend record ~ BaseBackend SqlBackend, ToBackendKey SqlBackend record
+       , ToBackendKey SqlBackend (S.EntityRep a), ToBackendKey SqlBackend (S.EntityRep b))
+    => (Key (S.EntityRep a) -> Key (S.EntityRep b) -> record) -> ID a -> ID b -> DB ()
+addConnection t rid mid = void . liftDB . insert $ t (S.idToKey rid) (S.idToKey mid)
 
 modifyMetaID :: ID a -> DB ()
 modifyMetaID ida = do
@@ -197,9 +206,8 @@ createVDoc pv vr = do
         (pv ^. createVDocTitle)
         (pv ^. createVDocAbstract)
         (vr ^. vdocRepoID . to S.idToKey)
-  key <- liftDB $ insert svdoc
-  mid <- createMetaID $ S.keyToId key
-  void . liftDB . insert $ S.VR key (vr ^. vdocRepoID . to S.idToKey)
+  mid <- createMetaID svdoc
+  addConnection S.VR (mid ^. miID) (vr ^. vdocRepoID)
   pure $ S.vDocElim (toVDoc mid) svdoc
 
 getVDoc :: ID VDoc -> DB VDoc
@@ -271,14 +279,13 @@ vDocRepoVDoc rid = do
 
 createEdit :: ID VDocRepo -> DocRepo.EditHandle -> CreateEdit -> DB Edit
 createEdit rid edith ce = do
-  key <- liftDB . insert $ S.Edit
+  mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
             (ce ^. createEditRange)
             edith
             (ce ^. createEditKind)
             (ce ^. createEditMotiv)
-  mid <- createMetaID $ S.keyToId key
-  void . liftDB . insert $ S.RP (S.idToKey rid) key
+  addConnection S.RP rid (mid ^. miID)
   pure $ Edit
     mid
     (ce ^. createEditDesc)
@@ -361,11 +368,8 @@ createNote pid note = do
           (note ^. createNotePublic)
           (note ^. createNoteRange)
           (fromUserID userId)
-  key <- liftDB $ do
-    key <- insert snote
-    void . insert $ S.PN (S.idToKey pid) key
-    pure key
-  mid <- createMetaID $ S.keyToId key
+  mid <- createMetaID snote
+  addConnection S.PN pid (mid ^. miID)
   pure $ S.noteElim (toNote mid) snote
 
 getNote :: ID Note -> DB Note
@@ -389,11 +393,8 @@ createQuestion pid question = do
           (question ^. createQuestionPublic)
           (question ^. createQuestionRange)
           (fromUserID userId)
-  key <- liftDB $ do
-    key <- insert squestion
-    void . insert $ S.PQ (S.idToKey pid) key
-    pure key
-  mid <- createMetaID $ S.keyToId key
+  mid <- createMetaID squestion
+  addConnection S.PQ pid (mid ^. miID)
   pure $ S.questionElim (toQuestion mid) squestion
 
 getQuestion :: ID Question -> DB Question
@@ -410,9 +411,8 @@ toDiscussion did pblc range _lid = Discussion did pblc range
 
 saveStatement :: ID Discussion -> S.Statement -> DB Statement
 saveStatement did sstatement = do
-  key <- liftDB $ insert sstatement
-  mid <- createMetaID $ S.keyToId key
-  void . liftDB . insert $ S.DS (S.idToKey did) key
+  mid <- createMetaID sstatement
+  addConnection S.DS did (mid ^. miID)
   pure $ S.statementElim (toStatement mid) sstatement
 
 createDiscussion :: ID Edit -> Create Discussion -> DB Discussion
@@ -422,14 +422,12 @@ createDiscussion pid disc = do
           (disc ^. createDiscussionPublic)
           (disc ^. createDiscussionRange)
           (fromUserID userId)
-  key <- liftDB $ insert sdiscussion
-  let did = S.keyToId key
-  mid <- createMetaID did
-  void . liftDB . insert $ S.PD (S.idToKey pid) key
+  mid <- createMetaID sdiscussion
+  addConnection S.PD pid (mid ^. miID)
   let sstatement = S.Statement
           (disc ^. createDiscussionStatementText)
           Nothing -- Top level node
-  void $ saveStatement did sstatement
+  void $ saveStatement (mid ^. miID) sstatement
   pure $ S.discussionElim (toDiscussion mid) sdiscussion
 
 getDiscussion :: ID Discussion -> DB Discussion
@@ -460,8 +458,7 @@ createAnswer qid answer = do
   let sanswer = S.Answer
         (S.idToKey qid)
         (answer ^. createAnswerText)
-  key <- liftDB $ insert sanswer
-  mid <- createMetaID $ S.keyToId key
+  mid <- createMetaID sanswer
   pure $ S.answerElim (toAnswer mid) sanswer
 
 getAnswer :: ID Answer -> DB Answer
@@ -509,13 +506,9 @@ createGroup group = do
         (group ^. createGroupTitle)
         (group ^. createGroupDesc)
         (group ^. createGroupUniversal)
-  key <- liftDB $ insert sgroup
-  mid <- createMetaID $ S.keyToId key
-  liftDB $ do
-    forM_ (group ^. createGroupParents) $ \parent -> do
-      insert $ S.SubGroup (S.idToKey parent) key
-    forM_ (group ^. createGroupChildren) $ \child -> do
-      insert $ S.SubGroup key (S.idToKey child)
+  mid <- createMetaID sgroup
+  forM_ (group ^. createGroupParents) $ \parent -> addConnection S.SubGroup parent (mid ^. miID)
+  forM_ (group ^. createGroupChildren) $ \child -> addConnection S.SubGroup (mid ^. miID) child
   pure $ S.groupElim
     (toGroup (group ^. createGroupParents) (group ^. createGroupChildren) mid)
     sgroup
@@ -702,9 +695,8 @@ instance C.StoreProcessData DB Aula where
 createProcess :: (C.StoreProcessData DB a) => CreateDB (Process a) -> DB (Process a)
 createProcess process = do
   gid   <- C.processDataGroupID process
-  pkey  <- liftDB . insert $ S.Process (S.idToKey gid)
-  mid   <- createMetaID $ S.keyToId pkey
-  pdata <- C.createProcessData (S.keyToId pkey) process
+  mid   <- createMetaID $ S.Process (S.idToKey gid)
+  pdata <- C.createProcessData (mid ^. miID) process
   group <- getGroup gid
   pure $ Process mid group pdata
 
