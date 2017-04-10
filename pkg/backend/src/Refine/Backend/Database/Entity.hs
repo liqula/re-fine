@@ -161,14 +161,15 @@ getUserAndTime = do
   pure (user, time)
 
 createMetaID
-  :: (ra ~ S.EntityRep a, PersistEntityBackend ra ~ BaseBackend SqlBackend, ToBackendKey SqlBackend ra)
+  :: (ra ~ S.EntityRep a, PersistEntityBackend ra ~ BaseBackend SqlBackend, ToBackendKey SqlBackend ra
+     , HasMetaInfo a)
   => ra -> DB (MetaID a)
 createMetaID a = do
   ida <- S.keyToId <$> liftDB (insert a)
   (user, time) <- getUserAndTime
-  let meta = S.MetaInfo user time user time
+  let meta = S.MetaInfo (metaInfoType ida) user time user time
   void . liftDB $ insertKey (S.idToKey (coerce ida :: ID MetaInfo)) meta
-  pure . MetaID ida $ S.metaInfoElim MetaInfo meta
+  pure . MetaID ida $ S.metaInfoElim (const MetaInfo) meta
 
 addConnection
     :: (PersistEntityBackend record ~ BaseBackend SqlBackend, ToBackendKey SqlBackend record
@@ -188,7 +189,7 @@ modifyMetaID ida = do
 getMeta :: ID a -> DB (MetaID a)
 getMeta ida = do
   meta <- getEntity (coerce ida :: ID MetaInfo)
-  pure . MetaID ida $ S.metaInfoElim MetaInfo meta
+  pure . MetaID ida $ S.metaInfoElim (const MetaInfo) meta
 
 getMetaEntity
   :: (ToBackendKey SqlBackend (S.EntityRep e), Typeable e)

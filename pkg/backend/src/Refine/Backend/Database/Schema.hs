@@ -40,12 +40,14 @@ import Refine.Common.Types.Process (CollaborativeEditPhase)
 import Refine.Common.Types.Role (Role)
 import Refine.Common.Types.VDoc (Abstract, EditKind, Title)
 import Refine.Backend.Database.Field()
+import Refine.Backend.Database.Types (MetaInfoType)
 import Refine.Backend.DocRepo.Core (EditHandle, RepoHandle)
 
 
 
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
 MetaInfo
+    typeTag     MetaInfoType
     createBy    UserInfo
     createAt    Timestamp
     modBy       UserInfo
