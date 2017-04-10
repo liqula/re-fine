@@ -30,10 +30,10 @@ import Control.Lens ((^.), to, view)
 import Control.Monad ((>=>), forM, forM_, void)
 import Control.Monad.Reader (ask)
 import Data.Functor.Infix ((<$$>))
+import Data.Maybe (fromMaybe)
 import Data.List ((\\))
 import Data.String.Conversions (ST)
 import Data.Typeable
-import Data.Coerce (coerce)
 import Database.Persist
 import Database.Persist.Sql (SqlBackend)
 import Lentil.Core (entityLens)
@@ -167,9 +167,9 @@ createMetaID
 createMetaID a = do
   ida <- S.keyToId <$> liftDB (insert a)
   (user, time) <- getUserAndTime
-  let meta = S.MetaInfo (metaInfoType ida) (S.idToKey (coerce ida :: ID VDoc)) user time user time
+  let meta = S.MetaInfo (metaInfoType ida) user time user time
   void . liftDB $ insert meta
-  pure . MetaID ida $ S.metaInfoElim (const $ const MetaInfo) meta
+  pure . MetaID ida $ S.metaInfoElim (const MetaInfo) meta
 
 addConnection
     :: (PersistEntityBackend record ~ BaseBackend SqlBackend, ToBackendKey SqlBackend record
@@ -178,8 +178,8 @@ addConnection
 addConnection t rid mid = void . liftDB . insert $ t (S.idToKey rid) (S.idToKey mid)
 
 getMetaInfo :: HasMetaInfo a => ID a -> DB (Database.Persist.Entity (S.EntityRep MetaInfo))
-getMetaInfo ida = maybe (error "no meta info for ...") id <$> do
-  liftDB $ getBy $ S.UniMetaInfo (metaInfoType ida) (S.idToKey (coerce ida :: ID VDoc))
+getMetaInfo ida = fromMaybe (error "no meta info for ...") <$> do
+  liftDB . getBy $ S.UniMetaInfo (metaInfoType ida)
 
 modifyMetaID :: HasMetaInfo a => ID a -> DB ()
 modifyMetaID ida = do
@@ -190,7 +190,7 @@ modifyMetaID ida = do
 getMeta :: HasMetaInfo a => ID a -> DB (MetaID a)
 getMeta ida = do
   meta <- getMetaInfo ida
-  pure . MetaID ida $ S.metaInfoElim (const $ const MetaInfo) $ entityVal meta
+  pure . MetaID ida . S.metaInfoElim (const MetaInfo) $ entityVal meta
 
 getMetaEntity
   :: (ToBackendKey SqlBackend (S.EntityRep e), Typeable e, HasMetaInfo e)

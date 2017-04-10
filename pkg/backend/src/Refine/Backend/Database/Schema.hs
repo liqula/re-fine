@@ -40,20 +40,18 @@ import Refine.Common.Types.Process (CollaborativeEditPhase)
 import Refine.Common.Types.Role (Role)
 import Refine.Common.Types.VDoc (Abstract, EditKind, Title)
 import Refine.Backend.Database.Field()
-import Refine.Backend.Database.Types (MetaInfoType)
+import Refine.Backend.Database.Types (MetaInfoID)
 import Refine.Backend.DocRepo.Core (EditHandle, RepoHandle)
 
 
--- TODO: do not use VDocId in MetaInfo/typeId
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
 MetaInfo
-    typeTag     MetaInfoType
-    typeId      VDocId
+    typeTag     MetaInfoID
     createBy    UserInfo
     createAt    Timestamp
     modBy       UserInfo
     modAt       Timestamp
-    UniMetaInfo typeTag typeId
+    UniMetaInfo typeTag
 
 VDoc
     title       Title
