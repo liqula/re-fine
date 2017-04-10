@@ -190,6 +190,14 @@ getMeta ida = do
   meta <- getEntity (coerce ida :: ID MetaInfo)
   pure . MetaID ida $ S.metaInfoElim MetaInfo meta
 
+getMetaEntity
+  :: (ToBackendKey SqlBackend (S.EntityRep e), Typeable e)
+  => (MetaID e -> S.EntityRep e -> b) -> ID e -> DB b
+getMetaEntity f i = do
+    mid <- getMeta i
+    f mid <$> getEntity i
+
+
 -- * VDoc
 
 toVDoc :: MetaID VDoc -> Title -> Abstract -> Key S.Repo -> VDoc
@@ -211,9 +219,7 @@ createVDoc pv vr = do
   pure $ S.vDocElim (toVDoc mid) svdoc
 
 getVDoc :: ID VDoc -> DB VDoc
-getVDoc vid = do
-    mid <- getMeta vid
-    S.vDocElim (toVDoc mid) <$> getEntity vid
+getVDoc = getMetaEntity (S.vDocElim . toVDoc)
 
 vdocRepo :: ID VDoc -> DB (ID VDocRepo)
 vdocRepo vid = do
@@ -294,11 +300,7 @@ createEdit rid edith ce = do
     (ce ^. createEditMotiv)
 
 getEdit :: ID Edit -> DB Edit
-getEdit pid = do
-    mid <- getMeta pid
-    let toEdit :: ST -> ChunkRange -> DocRepo.EditHandle -> EditKind -> ST -> Edit
-        toEdit desc cr _handle = Edit mid desc cr
-    S.editElim toEdit <$> getEntity pid
+getEdit = getMetaEntity $ \mid -> S.editElim $ \desc cr _handle -> Edit mid desc cr
 
 getEditFromHandle :: DocRepo.EditHandle -> DB Edit
 getEditFromHandle hndl = do
@@ -373,9 +375,7 @@ createNote pid note = do
   pure $ S.noteElim (toNote mid) snote
 
 getNote :: ID Note -> DB Note
-getNote nid = do
-  mid <- getMeta nid
-  S.noteElim (toNote mid) <$> getEntity nid
+getNote = getMetaEntity (S.noteElim . toNote)
 
 
 -- * Question
@@ -398,9 +398,7 @@ createQuestion pid question = do
   pure $ S.questionElim (toQuestion mid) squestion
 
 getQuestion :: ID Question -> DB Question
-getQuestion qid = do
-  mid <- getMeta qid
-  S.questionElim (toQuestion mid) <$> getEntity qid
+getQuestion = getMetaEntity (S.questionElim . toQuestion)
 
 
 -- * Discussion
@@ -431,9 +429,7 @@ createDiscussion pid disc = do
   pure $ S.discussionElim (toDiscussion mid) sdiscussion
 
 getDiscussion :: ID Discussion -> DB Discussion
-getDiscussion did = do
-  mid <- getMeta did
-  S.discussionElim (toDiscussion mid) <$> getEntity did
+getDiscussion = getMetaEntity (S.discussionElim . toDiscussion)
 
 statementsOfDiscussion :: ID Discussion -> DB [ID Statement]
 statementsOfDiscussion did = do
@@ -462,9 +458,7 @@ createAnswer qid answer = do
   pure $ S.answerElim (toAnswer mid) sanswer
 
 getAnswer :: ID Answer -> DB Answer
-getAnswer aid = do
-  mid <- getMeta aid
-  S.answerElim (toAnswer mid) <$> getEntity aid
+getAnswer = getMetaEntity (S.answerElim . toAnswer)
 
 answersOfQuestion :: ID Question -> DB [Answer]
 answersOfQuestion qid = do
@@ -490,9 +484,7 @@ createStatement sid statement = do
   saveStatement did sstatement
 
 getStatement :: ID Statement -> DB Statement
-getStatement sid = do
-  mid <- getMeta sid
-  S.statementElim (toStatement mid) <$> getEntity sid
+getStatement = getMetaEntity (S.statementElim . toStatement)
 
 -- * Group
 
@@ -529,8 +521,7 @@ getGroup :: ID Group -> DB Group
 getGroup gid = do
   parents  <- getParentsOfGroup  gid
   children <- getChildrenOfGroup gid
-  mid <- getMeta gid
-  S.groupElim (toGroup parents children mid) <$> getEntity gid
+  getMetaEntity (S.groupElim . toGroup parents children) gid
 
 modifyGroup :: ID Group -> Create Group -> DB Group
 modifyGroup gid group = do
