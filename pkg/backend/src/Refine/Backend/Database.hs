@@ -141,3 +141,5 @@ instance Database DB where
   removeProcess = Entity.removeProcess
 
   vDocProcess   = Entity.vDocProcess
+
+  createMetaID_ = Entity.createMetaID_

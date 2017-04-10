@@ -166,6 +166,11 @@ createMetaID
   => ra -> DB (MetaID a)
 createMetaID a = do
   ida <- S.keyToId <$> liftDB (insert a)
+  createMetaID_ ida
+
+createMetaID_
+  :: (HasMetaInfo a) => ID a -> DB (MetaID a)
+createMetaID_ ida = do
   (user, time) <- getUserAndTime
   let meta = S.MetaInfo (metaInfoType ida) user time user time
   void . liftDB $ insert meta

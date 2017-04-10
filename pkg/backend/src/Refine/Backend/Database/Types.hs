@@ -35,6 +35,7 @@ data MetaInfoID
   | MetaStatement  (ID Statement)
   | MetaGroup      (ID Group)
   | MetaProcess    (ID (Process ()))  -- ^ FIXME: use (Process a)
+  | MetaUser       (ID User)
   | MetaVDoc       (ID VDoc)
   | MetaEdit       (ID Edit)
   deriving (Eq, Show, Generic)
@@ -49,6 +50,7 @@ instance HasMetaInfo Discussion  where metaInfoType = MetaDiscussion
 instance HasMetaInfo Statement   where metaInfoType = MetaStatement
 instance HasMetaInfo Group       where metaInfoType = MetaGroup
 instance HasMetaInfo (Process a) where metaInfoType = MetaProcess . coerce
+instance HasMetaInfo User        where metaInfoType = MetaUser
 instance HasMetaInfo VDoc        where metaInfoType = MetaVDoc
 instance HasMetaInfo Edit        where metaInfoType = MetaEdit
 

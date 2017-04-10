@@ -79,7 +79,7 @@ data CreateUser = CreateUser
   deriving (Eq, Ord, Show, Read, Generic)
 
 newtype User = User
-  { _userID :: ID User -- ^ The primary key is used to identify the user.
+  { _userMetaID :: MetaID User -- ^ The primary key is used to identify the user.
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -126,3 +126,6 @@ makeRefineType ''Login
 makeRefineType ''UserInfo
 makeRefineType ''MetaInfo
 -- makeRefineType ''MetaID  -- does not work yet
+
+userID :: Lens' User (ID User)
+userID = userMetaID . miID

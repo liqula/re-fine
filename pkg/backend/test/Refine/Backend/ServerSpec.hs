@@ -53,7 +53,7 @@ import Refine.Backend.Database (DB)
 import Refine.Backend.DocRepo as DocRepo
 import Refine.Backend.Natural
 import Refine.Backend.Server
-import Refine.Backend.Test.Util (withTempCurrentDirectory)
+import Refine.Backend.Test.Util (withTempCurrentDirectory, sampleMetaID)
 import Refine.Backend.User
 import Refine.Common.Rest
 import Refine.Common.Types as Common
@@ -336,7 +336,7 @@ specUserHandling = around createTestSession $ do
 
     describe "create" $ do
       it "works" $ \sess -> do
-        runWaiJSON sess doCreate `shouldReturn` User (ID 1)
+        runWaiJSON sess doCreate `shouldReturn` User sampleMetaID
 
       it "is secure" $ \_ -> do
         pendingWith "needs design & implementation: what makes a create requests legit?"
