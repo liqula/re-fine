@@ -150,7 +150,7 @@ data MarkProps = MarkProps
   deriving (Eq)
 
 data BubbleProps = BubbleProps
-  { _bubblePropsDataContribId     :: ContributionID
+  { _bubblePropsContributionId    :: ContributionID
   , _bubblePropsIconSide          :: String  -- FIXME: either "left" or "right", make this a custom boolean!
   , _bubblePropsIconStyle         :: IconDescription
   , _bubblePropsMarkPosition      :: Maybe MarkPosition
