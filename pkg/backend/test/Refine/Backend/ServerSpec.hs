@@ -336,7 +336,8 @@ specUserHandling = around createTestSession $ do
 
     describe "create" $ do
       it "works" $ \sess -> do
-        runWaiJSON sess doCreate `shouldReturn` User sampleMetaID
+        (^. miID) <$> runWaiJSON sess doCreate `shouldReturn` User (sampleMetaID ^. miID)
+        -- (sampleMetaID should match, too, but time stamps may vary.)
 
       it "is secure" $ \_ -> do
         pendingWith "needs design & implementation: what makes a create requests legit?"
