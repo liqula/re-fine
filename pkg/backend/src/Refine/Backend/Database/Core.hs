@@ -22,14 +22,15 @@
 
 module Refine.Backend.Database.Core where
 
+import Control.Lens
 import Control.Monad.Except
 import Control.Monad.Reader
 import Data.String.Conversions (ST)
 import Database.Persist.Sql hiding (Filter)
 import GHC.Generics (Generic)
 
-import Refine.Common.Types.Prelude (ID(..))
-import Refine.Common.Types.User (User)
+import Refine.Prelude (HasCurrentTime(..))
+import Refine.Common.Types.Prelude (ID(..), User)
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -63,6 +64,9 @@ data DBError
   | DBUnsafeMigration [(Bool, ST)]
   deriving (Eq, Show, Generic)
 
+instance HasCurrentTime DB where
+  getCurrentTimestamp = DB $ liftIO getCurrentTimestamp
+
 -- | Filters the queries in the database.
 -- Userful to implement pagination, uniqueness etc.
 --
@@ -75,6 +79,8 @@ newtype Filter = Limit Int
 type Filters = [Filter]
 
 makeRefineType ''DBError
+
+makeLenses ''DBContext
 
 notFound :: String -> DB a
 notFound = DB . throwError . DBNotFound

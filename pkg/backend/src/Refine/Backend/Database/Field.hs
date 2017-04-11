@@ -11,11 +11,24 @@ import Data.String.Conversions (LBS, ST, cs)
 import Database.Persist
 import Database.Persist.Sql
 
+import Refine.Prelude (Timestamp(..))
 import Refine.Backend.DocRepo.Core
+import Refine.Backend.Database.Types (MetaInfoID(..))
+import Refine.Common.Types.Prelude (UserInfo)
 import Refine.Common.Types.Chunk
 import Refine.Common.Types.Process
 import Refine.Common.Types.Role (Role(..))
 import Refine.Common.Types.VDoc
+
+
+instance PersistField Timestamp where
+  toPersistValue (Timestamp t) = toPersistValue t
+  fromPersistValue         = fmap Timestamp . fromPersistValue
+
+instance PersistFieldSql Timestamp where
+  -- CAUTION: This should be generated, to represent the actual inner type
+  -- of the newtype
+  sqlType _ = sqlType (Proxy :: Proxy ST)
 
 
 instance PersistField Title where
@@ -89,5 +102,19 @@ instance PersistField CollaborativeEditPhase where
   fromPersistValue = fromPersistJSONValue
 
 instance PersistFieldSql CollaborativeEditPhase where
+  sqlType _ = sqlType (Proxy :: Proxy ST)
+
+instance PersistField UserInfo where
+  toPersistValue   = toPersistJSONValue
+  fromPersistValue = fromPersistJSONValue
+
+instance PersistFieldSql UserInfo where
+  sqlType _ = sqlType (Proxy :: Proxy ST)
+
+instance PersistField MetaInfoID where
+  toPersistValue   = toPersistJSONValue
+  fromPersistValue = fromPersistJSONValue
+
+instance PersistFieldSql MetaInfoID where
   sqlType _ = sqlType (Proxy :: Proxy ST)
 

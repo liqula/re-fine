@@ -6,6 +6,7 @@
 
 module Refine.Backend.Database.Class where
 
+import Control.Lens ((^.))
 import Data.Typeable (Typeable)
 
 import Refine.Backend.Database.Tree
@@ -105,6 +106,9 @@ class Database db where
 
   vDocProcess :: ID VDoc -> db (ID (Process CollaborativeEdit))
 
+  createMetaID_ :: HasMetaInfo a => ID a -> db (MetaID a)
+
+
 class StoreProcessData db c where
   processDataGroupID :: CreateDB (Process c) -> db (ID Group)
   createProcessData  :: ID (Process c) -> CreateDB (Process c) -> db c
@@ -141,7 +145,7 @@ compositeDiscussion
   => ID Discussion -> db CompositeDiscussion
 compositeDiscussion did = CompositeDiscussion
   <$> getDiscussion did
-  <*> (fmap (buildTree _statementParent _statementID) . mapM getStatement =<< statementsOfDiscussion did)
+  <*> (fmap (buildTree _statementParent (^. statementID)) . mapM getStatement =<< statementsOfDiscussion did)
 
 editComments
   :: (Monad db, Database db)

@@ -38,6 +38,7 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Test.Store
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
+import           Refine.Frontend.Test.Samples (sampleMetaID)
 
 
 spec :: Spec
@@ -74,7 +75,7 @@ spec = do
       pendingWith "#201, #221"
 
       let newVDoc :: CompositeVDoc
-          newVDoc = CompositeVDoc (VDoc (ID 1) (Title "the-title") (Abstract "the-abstract") (ID 1))
+          newVDoc = CompositeVDoc (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1))
                                   (VDocRepo (ID 1) (ID 1))
                                   (ID 1)
                                   (VDocVersion [DT.Node (HTMLP.TagOpen "div" [HTMLP.Attr "data-offset" "0", HTMLP.Attr "data-uid" "77"]) []])

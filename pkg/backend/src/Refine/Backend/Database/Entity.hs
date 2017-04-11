@@ -27,9 +27,10 @@
 module Refine.Backend.Database.Entity where
 
 import Control.Lens ((^.), to, view)
-import Control.Monad ((>=>), forM_, void)
+import Control.Monad ((>=>), forM, forM_, void)
 import Control.Monad.Reader (ask)
 import Data.Functor.Infix ((<$$>))
+import Data.Maybe (fromMaybe)
 import Data.List ((\\))
 import Data.String.Conversions (ST)
 import Data.Typeable
@@ -45,9 +46,11 @@ import           Refine.Backend.Database.Types
 import qualified Refine.Backend.DocRepo.Core as DocRepo
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
-import           Refine.Prelude (nothingToError)
+import           Refine.Common.Types.Prelude (ID(..))
+import           Refine.Prelude (nothingToError, Timestamp, getCurrentTimestamp)
 
 -- FIXME: Generate this as the part of the lentil library.
+type instance S.EntityRep MetaInfo   = S.MetaInfo
 type instance S.EntityRep VDoc       = S.VDoc
 type instance S.EntityRep Edit       = S.Edit
 type instance S.EntityRep VDocRepo   = S.Repo
@@ -126,6 +129,7 @@ updateVDoc :: ID VDoc -> VDoc -> DB ()
 updateVDoc vid vdoc = do
   record <- vDocToRecord vdoc
   liftDB $ replace (S.idToKey vid) record
+  modifyMetaID vid
 
 vdocDBLens :: EntityLens' DB (ID VDoc) VDoc
 vdocDBLens = entityLens vdocEntity
@@ -148,9 +152,62 @@ dbSelectOpts = do
     filterToSelectOpt = \case
       Limit n -> [LimitTo n]
 
+-- * MetaInfo
+
+getUserAndTime :: DB (UserInfo, Timestamp)
+getUserAndTime = do
+  user <- view $ dbLoggedInUser . to (maybe Anonymous UserID)  -- FUTUREWORK: use IP address if available
+  time <- getCurrentTimestamp
+  pure (user, time)
+
+createMetaID
+  :: (ra ~ S.EntityRep a, PersistEntityBackend ra ~ BaseBackend SqlBackend, ToBackendKey SqlBackend ra
+     , HasMetaInfo a)
+  => ra -> DB (MetaID a)
+createMetaID a = do
+  ida <- S.keyToId <$> liftDB (insert a)
+  createMetaID_ ida
+
+createMetaID_
+  :: (HasMetaInfo a) => ID a -> DB (MetaID a)
+createMetaID_ ida = do
+  (user, time) <- getUserAndTime
+  let meta = S.MetaInfo (metaInfoType ida) user time user time
+  void . liftDB $ insert meta
+  pure . MetaID ida $ S.metaInfoElim (const MetaInfo) meta
+
+addConnection
+    :: (PersistEntityBackend record ~ BaseBackend SqlBackend, ToBackendKey SqlBackend record
+       , ToBackendKey SqlBackend (S.EntityRep a), ToBackendKey SqlBackend (S.EntityRep b))
+    => (Key (S.EntityRep a) -> Key (S.EntityRep b) -> record) -> ID a -> ID b -> DB ()
+addConnection t rid mid = void . liftDB . insert $ t (S.idToKey rid) (S.idToKey mid)
+
+getMetaInfo :: HasMetaInfo a => ID a -> DB (Database.Persist.Entity (S.EntityRep MetaInfo))
+getMetaInfo ida = fromMaybe (error "no meta info for ...") <$> do
+  liftDB . getBy $ S.UniMetaInfo (metaInfoType ida)
+
+modifyMetaID :: HasMetaInfo a => ID a -> DB ()
+modifyMetaID ida = do
+  meta <- getMetaInfo ida
+  (user, time) <- getUserAndTime
+  liftDB $ update (entityKey meta) [S.MetaInfoModBy =. user, S.MetaInfoModAt =. time]
+
+getMeta :: HasMetaInfo a => ID a -> DB (MetaID a)
+getMeta ida = do
+  meta <- getMetaInfo ida
+  pure . MetaID ida . S.metaInfoElim (const MetaInfo) $ entityVal meta
+
+getMetaEntity
+  :: (ToBackendKey SqlBackend (S.EntityRep e), Typeable e, HasMetaInfo e)
+  => (MetaID e -> S.EntityRep e -> b) -> ID e -> DB b
+getMetaEntity f i = do
+    mid <- getMeta i
+    f mid <$> getEntity i
+
+
 -- * VDoc
 
-toVDoc :: ID VDoc -> Title -> Abstract -> Key S.Repo -> VDoc
+toVDoc :: MetaID VDoc -> Title -> Abstract -> Key S.Repo -> VDoc
 toVDoc vid title abstract repoid = VDoc vid title abstract (S.keyToId repoid)
 
 listVDocs :: DB [ID VDoc]
@@ -159,17 +216,17 @@ listVDocs = do
   liftDB $ S.keyToId <$$> selectKeysList [] opts
 
 createVDoc :: Create VDoc -> VDocRepo -> DB VDoc
-createVDoc pv vr = liftDB $ do
+createVDoc pv vr = do
   let svdoc = S.VDoc
         (pv ^. createVDocTitle)
         (pv ^. createVDocAbstract)
         (vr ^. vdocRepoID . to S.idToKey)
-  key <- insert svdoc
-  void . insert $ S.VR key (vr ^. vdocRepoID . to S.idToKey)
-  pure $ S.vDocElim (toVDoc (S.keyToId key)) svdoc
+  mid <- createMetaID svdoc
+  addConnection S.VR (mid ^. miID) (vr ^. vdocRepoID)
+  pure $ S.vDocElim (toVDoc mid) svdoc
 
 getVDoc :: ID VDoc -> DB VDoc
-getVDoc vid = S.vDocElim (toVDoc vid) <$> getEntity vid
+getVDoc = getMetaEntity (S.vDocElim . toVDoc)
 
 vdocRepo :: ID VDoc -> DB (ID VDocRepo)
 vdocRepo vid = do
@@ -234,34 +291,31 @@ vDocRepoVDoc rid = do
 -- * Edit
 
 createEdit :: ID VDocRepo -> DocRepo.EditHandle -> CreateEdit -> DB Edit
-createEdit rid edith ce = liftDB $ do
-  key <- insert $ S.Edit
+createEdit rid edith ce = do
+  mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
             (ce ^. createEditRange)
             edith
             (ce ^. createEditKind)
             (ce ^. createEditMotiv)
-  void . insert $ S.RP (S.idToKey rid) key
-  let pid = S.keyToId key
+  addConnection S.RP rid (mid ^. miID)
   pure $ Edit
-    pid
+    mid
     (ce ^. createEditDesc)
     (ce ^. createEditRange)
     (ce ^. createEditKind)
     (ce ^. createEditMotiv)
 
 getEdit :: ID Edit -> DB Edit
-getEdit pid = S.editElim toEdit <$> getEntity pid
-  where
-    toEdit :: ST -> ChunkRange -> DocRepo.EditHandle -> EditKind -> ST -> Edit
-    toEdit desc cr _handle = Edit pid desc cr
+getEdit = getMetaEntity $ \mid -> S.editElim $ \desc cr _handle -> Edit mid desc cr
 
 getEditFromHandle :: DocRepo.EditHandle -> DB Edit
 getEditFromHandle hndl = do
   opts <- dbSelectOpts
   ps <- liftDB $ selectList [S.EditEditHandle ==. hndl] opts
   p <- unique ps
-  let toEdit desc cr _hdnl = Edit (S.keyToId $ entityKey p) desc cr
+  mid <- getMeta . S.keyToId $ entityKey p
+  let toEdit desc cr _hdnl = Edit mid desc cr
   pure $ S.editElim toEdit (entityVal p)
 
 getEditHandle :: ID Edit -> DB DocRepo.EditHandle
@@ -312,81 +366,77 @@ registerEdit rid pid = void . liftDB . insert $ S.RP (S.idToKey rid) (S.idToKey 
 -- * Note
 
 -- TODO: Use the _lid
-toNote :: ID Note -> ST -> Bool -> ChunkRange -> LoginId -> Note
+toNote :: MetaID Note -> ST -> Bool -> ChunkRange -> LoginId -> Note
 toNote nid desc public range _lid = Note nid desc public range
 
 createNote :: ID Edit -> Create Note -> DB Note
 createNote pid note = do
   userId <- dbUser
-  liftDB $ do
-    let snote = S.Note
+  let snote = S.Note
           (note ^. createNoteText)
           (note ^. createNotePublic)
           (note ^. createNoteRange)
           (fromUserID userId)
-    key <- insert snote
-    void . insert $ S.PN (S.idToKey pid) key
-    pure $ S.noteElim (toNote (S.keyToId key)) snote
+  mid <- createMetaID snote
+  addConnection S.PN pid (mid ^. miID)
+  pure $ S.noteElim (toNote mid) snote
 
 getNote :: ID Note -> DB Note
-getNote nid = S.noteElim (toNote nid) <$> getEntity nid
+getNote = getMetaEntity (S.noteElim . toNote)
 
 
 -- * Question
 
 -- TODO: User lid
-toQuestion :: ID Question -> ST -> Bool -> Bool -> ChunkRange -> LoginId -> Question
+toQuestion :: MetaID Question -> ST -> Bool -> Bool -> ChunkRange -> LoginId -> Question
 toQuestion qid text answ pblc range _lid = Question qid text answ pblc range
 
 createQuestion :: ID Edit -> Create Question -> DB Question
 createQuestion pid question = do
   userId <- dbUser
-  liftDB $ do
-    let squestion = S.Question
+  let squestion = S.Question
           (question ^. createQuestionText)
           False -- Not answered
           (question ^. createQuestionPublic)
           (question ^. createQuestionRange)
           (fromUserID userId)
-    key <- insert squestion
-    void . insert $ S.PQ (S.idToKey pid) key
-    pure $ S.questionElim (toQuestion (S.keyToId key)) squestion
+  mid <- createMetaID squestion
+  addConnection S.PQ pid (mid ^. miID)
+  pure $ S.questionElim (toQuestion mid) squestion
 
 getQuestion :: ID Question -> DB Question
-getQuestion qid = S.questionElim (toQuestion qid) <$> getEntity qid
+getQuestion = getMetaEntity (S.questionElim . toQuestion)
 
 
 -- * Discussion
 
 -- TODO: Login ID
-toDiscussion :: ID Discussion -> Bool -> ChunkRange -> LoginId -> Discussion
+toDiscussion :: MetaID Discussion -> Bool -> ChunkRange -> LoginId -> Discussion
 toDiscussion did pblc range _lid = Discussion did pblc range
 
-saveStatement :: ID Discussion -> S.Statement -> SQLM Statement
+saveStatement :: ID Discussion -> S.Statement -> DB Statement
 saveStatement did sstatement = do
-  key <- insert sstatement
-  void . insert $ S.DS (S.idToKey did) key
-  pure $ S.statementElim (toStatement (S.keyToId key)) sstatement
+  mid <- createMetaID sstatement
+  addConnection S.DS did (mid ^. miID)
+  pure $ S.statementElim (toStatement mid) sstatement
 
 createDiscussion :: ID Edit -> Create Discussion -> DB Discussion
 createDiscussion pid disc = do
   userId <- dbUser
-  liftDB $ do
-    let sdiscussion = S.Discussion
+  let sdiscussion = S.Discussion
           (disc ^. createDiscussionPublic)
           (disc ^. createDiscussionRange)
           (fromUserID userId)
-    key <- insert sdiscussion
-    let did = S.keyToId key
-    void . insert $ S.PD (S.idToKey pid) key
-    let sstatement = S.Statement
+  mid <- createMetaID sdiscussion
+  addConnection S.PD pid (mid ^. miID)
+  let sstatement = S.Statement
           (disc ^. createDiscussionStatementText)
           Nothing -- Top level node
-    void $ saveStatement did sstatement
-    pure $ S.discussionElim (toDiscussion did) sdiscussion
+  void $ saveStatement (mid ^. miID) sstatement
+  pure $ S.discussionElim (toDiscussion mid) sdiscussion
 
 getDiscussion :: ID Discussion -> DB Discussion
-getDiscussion did = S.discussionElim (toDiscussion did) <$> getEntity did
+getDiscussion = getMetaEntity (S.discussionElim . toDiscussion)
 
 statementsOfDiscussion :: ID Discussion -> DB [ID Statement]
 statementsOfDiscussion did = do
@@ -403,31 +453,31 @@ discussionOfStatement sid = do
 
 -- * Answer
 
-toAnswer :: ID Answer -> Key S.Question -> ST -> Answer
+toAnswer :: MetaID Answer -> Key S.Question -> ST -> Answer
 toAnswer aid qkey = Answer aid (S.keyToId qkey)
 
 createAnswer :: ID Question -> Create Answer -> DB Answer
-createAnswer qid answer = liftDB $ do
+createAnswer qid answer = do
   let sanswer = S.Answer
         (S.idToKey qid)
         (answer ^. createAnswerText)
-  key <- insert sanswer
-  pure $ S.answerElim (toAnswer (S.keyToId key)) sanswer
+  mid <- createMetaID sanswer
+  pure $ S.answerElim (toAnswer mid) sanswer
 
 getAnswer :: ID Answer -> DB Answer
-getAnswer aid = S.answerElim (toAnswer aid) <$> getEntity aid
+getAnswer = getMetaEntity (S.answerElim . toAnswer)
 
 answersOfQuestion :: ID Question -> DB [Answer]
 answersOfQuestion qid = do
   opts <- dbSelectOpts
-  liftDB $ do
-    mkAnswer <$$> selectList [S.AnswerQuestion ==. S.idToKey qid] opts
-  where
-    mkAnswer e = S.answerElim (toAnswer (S.keyToId $ entityKey e)) (entityVal e)
+  sls <- liftDB $ selectList [S.AnswerQuestion ==. S.idToKey qid] opts
+  forM sls $ \e -> do
+    mid <- getMeta . S.keyToId $ entityKey e
+    pure $ S.answerElim (toAnswer mid) (entityVal e)
 
 -- * Statement
 
-toStatement :: ID Statement -> ST -> Maybe (Key S.Statement) -> Statement
+toStatement :: MetaID Statement -> ST -> Maybe (Key S.Statement) -> Statement
 toStatement sid text parent = Statement sid text (S.keyToId <$> parent)
 
 createStatement :: ID Statement  -> Create Statement -> DB Statement
@@ -435,34 +485,31 @@ createStatement sid statement = do
   opts <- dbSelectOpts
   ds  <- liftDB $ foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] opts
   did <- unique ds
-  liftDB $ do
-    let sstatement = S.Statement
+  let sstatement = S.Statement
           (statement ^. createStatementText)
           (Just $ S.idToKey sid)
-    saveStatement did sstatement
+  saveStatement did sstatement
 
 getStatement :: ID Statement -> DB Statement
-getStatement sid = S.statementElim (toStatement sid) <$> getEntity sid
+getStatement = getMetaEntity (S.statementElim . toStatement)
 
 -- * Group
 
-toGroup :: [ID Group] -> [ID Group] -> ID Group -> ST -> ST -> Bool -> Group
+toGroup :: [ID Group] -> [ID Group] -> MetaID Group -> ST -> ST -> Bool -> Group
 toGroup parents children gid title desc =
   Group gid title desc parents children
 
 createGroup :: Create Group -> DB Group
-createGroup group = liftDB $ do
+createGroup group = do
   let sgroup = S.Group
         (group ^. createGroupTitle)
         (group ^. createGroupDesc)
         (group ^. createGroupUniversal)
-  key <- insert sgroup
-  forM_ (group ^. createGroupParents) $ \parent -> do
-    insert $ S.SubGroup (S.idToKey parent) key
-  forM_ (group ^. createGroupChildren) $ \child -> do
-    insert $ S.SubGroup key (S.idToKey child)
+  mid <- createMetaID sgroup
+  forM_ (group ^. createGroupParents) $ \parent -> addConnection S.SubGroup parent (mid ^. miID)
+  forM_ (group ^. createGroupChildren) $ \child -> addConnection S.SubGroup (mid ^. miID) child
   pure $ S.groupElim
-    (toGroup (group ^. createGroupParents)  (group ^. createGroupChildren) (S.keyToId key))
+    (toGroup (group ^. createGroupParents) (group ^. createGroupChildren) mid)
     sgroup
 
 getChildrenOfGroup :: ID Group -> DB [ID Group]
@@ -481,7 +528,7 @@ getGroup :: ID Group -> DB Group
 getGroup gid = do
   parents  <- getParentsOfGroup  gid
   children <- getChildrenOfGroup gid
-  S.groupElim (toGroup parents children gid) <$> getEntity gid
+  getMetaEntity (S.groupElim . toGroup parents children) gid
 
 modifyGroup :: ID Group -> Create Group -> DB Group
 modifyGroup gid group = do
@@ -523,6 +570,7 @@ modifyGroup gid group = do
     forM_ childrenToAdd $ \child -> do
       insert $ S.SubGroup (S.idToKey gid) (S.idToKey child)
 
+  modifyMetaID gid
   getGroup gid
 
 removeGroup :: ID Group -> DB ()
@@ -645,17 +693,18 @@ instance C.StoreProcessData DB Aula where
 createProcess :: (C.StoreProcessData DB a) => CreateDB (Process a) -> DB (Process a)
 createProcess process = do
   gid   <- C.processDataGroupID process
-  pkey  <- liftDB . insert $ S.Process (S.idToKey gid)
-  pdata <- C.createProcessData (S.keyToId pkey) process
+  mid   <- createMetaID $ S.Process (S.idToKey gid)
+  pdata <- C.createProcessData (mid ^. miID) process
   group <- getGroup gid
-  pure $ Process (S.keyToId pkey) group pdata
+  pure $ Process mid group pdata
 
 getProcess :: (C.StoreProcessData DB a, Typeable a) => ID (Process a) -> DB (Process a)
 getProcess pid = do
   process <- getEntity pid
   pdata   <- C.getProcessData pid
   group   <- getGroup (S.keyToId $ S.processGroup process)
-  pure $ Process pid group pdata
+  mid     <- getMeta pid
+  pure $ Process mid group pdata
 
 updateProcess :: (C.StoreProcessData DB a) => ID (Process a) -> CreateDB (Process a) -> DB ()
 updateProcess pid process = do

@@ -36,6 +36,7 @@ import Refine.Backend.App.Session
 import Refine.Backend.Types
 import Refine.Backend.User as User
 import Refine.Backend.User.Core as User (User(..))
+import Refine.Backend.Database.Class (createMetaID_)
 import Refine.Common.Types as Refine
 import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 
@@ -86,7 +87,7 @@ createUser (CreateUser name email password) = do
               }
   loginId <- leftToError AppUserCreationError
              =<< userHandle (User.createUser user)
-  pure . Refine.User . User.toUserID $ loginId
+  Refine.User <$> db (createMetaID_ $ User.toUserID loginId)
 
 doesUserExist :: ID Refine.User -> App Bool
 doesUserExist uid = do

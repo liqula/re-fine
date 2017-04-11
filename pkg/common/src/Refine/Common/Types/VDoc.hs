@@ -19,7 +19,7 @@
 module Refine.Common.Types.VDoc where
 
 import           Control.DeepSeq
-import           Control.Lens (makeLenses, makePrisms)
+import           Control.Lens (makeLenses, makePrisms, Lens')
 import           Data.Map
 import           Data.String.Conversions (ST, cs)
 import           Data.Tree (Forest)
@@ -39,7 +39,7 @@ import Refine.Prelude.TH
 
 
 data VDoc = VDoc
-  { _vdocID       :: ID VDoc
+  { _vdocMetaID   :: MetaID VDoc
   , _vdocTitle    :: Title
   , _vdocAbstract :: Abstract
   , _vdocRepo     :: ID VDocRepo
@@ -85,11 +85,11 @@ data VDocRepo = VDocRepo
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Edit = Edit
-  { _editID    :: ID Edit
-  , _editDesc  :: ST
-  , _editRange :: ChunkRange
-  , _editKind  :: EditKind
-  , _editMotiv :: ST  -- (list of paragraphs)
+  { _editMetaID :: MetaID Edit
+  , _editDesc   :: ST
+  , _editRange  :: ChunkRange
+  , _editKind   :: EditKind
+  , _editMotiv  :: ST  -- (list of paragraphs)
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -164,3 +164,11 @@ data CompositeVDoc = CompositeVDoc
   deriving (Eq, Show, Generic)
 
 makeRefineType ''CompositeVDoc
+
+-- *
+
+vdocID :: Lens' VDoc (ID VDoc)
+vdocID = vdocMetaID . miID
+
+editID :: Lens' Edit (ID Edit)
+editID = editMetaID . miID

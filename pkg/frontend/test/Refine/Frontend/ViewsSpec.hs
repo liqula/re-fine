@@ -34,6 +34,7 @@ import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Views
+import           Refine.Frontend.Test.Samples (sampleMetaID)
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
@@ -63,7 +64,7 @@ clickTextSpecificComment wrapper = do
 
 clearState :: IO ()
 clearState =
-    let newVDoc = CompositeVDoc (VDoc (ID 1) (Title "the-title") (Abstract "the-abstract") (ID 1))
+    let newVDoc = CompositeVDoc (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1))
                                 (VDocRepo (ID 1) (ID 1)) (ID 1)
                                 (VDocVersion [DT.Node (HTMLP.TagOpen "div" [HTMLP.Attr "data-uid" "77", HTMLP.Attr "data-offset" "0"]) []])
                                 M.empty M.empty M.empty
