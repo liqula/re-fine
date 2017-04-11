@@ -23,10 +23,11 @@
 module Refine.Frontend.ViewsSpec where
 
 import qualified Data.Map.Strict as M
-import qualified Data.Tree as DT
+import           Data.String.Conversions
+import           Data.Tree
 import           React.Flux
 import           Test.Hspec
-import qualified Text.HTML.Parser as HTMLP
+import           Text.HTML.Parser
 
 import           Refine.Common.Types
 import           Refine.Frontend.Header.Types
@@ -66,7 +67,7 @@ clearState :: IO ()
 clearState =
     let newVDoc = CompositeVDoc (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1))
                                 (VDocRepo (ID 1) (ID 1)) (ID 1)
-                                (VDocVersion [DT.Node (HTMLP.TagOpen "div" [HTMLP.Attr "data-uid" "77", HTMLP.Attr "data-offset" "0"]) []])
+                                (VDocVersion [Node (TagOpen "div" [Attr "data-uid" "77", Attr "data-offset" "0"]) []])
                                 M.empty M.empty M.empty
     in do
       -- FIXME: If we add ResetState to the list of Actions, we run into (timing?!) problems...
@@ -76,6 +77,12 @@ clearState =
 
 spec :: Spec
 spec = do
+  describe "The refineApp root component" . before clearState $ do
+    it "starts fine" $ do
+      wrapper <- mount refineApp_
+      contents :: String <- cs <$> html wrapper
+      contents `shouldContain` "Load a VDoc"
+
   describe "The mainScreen_ component" . before clearState $ do
 
     it "initially the comment toolbar is visible" $ do
