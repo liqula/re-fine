@@ -79,7 +79,7 @@ transformGlobalState :: forall m. MonadTransform m => GlobalAction -> GlobalStat
 transformGlobalState = transf
   where
     transf :: GlobalAction -> GlobalState -> m GlobalState
-    transf ClearState _ = pure emptyGlobalState  -- for testing only!
+    transf (ResetState s) _ = pure s  -- for testing only!
     transf action state = do
         consoleLogJSONM "Old state: " state
         consoleLogJSStringM "Action: " (cs $ show action)
@@ -127,6 +127,7 @@ transformGlobalState = transf
       & gsMainMenuState              %~ mainMenuUpdate action
       & gsToolbarSticky              %~ toolbarStickyUpdate action
       & gsTranslations               %~ translationsUpdate action
+      & gsDevState                   %~ devStateUpdate action
 
 
 -- * pure updates
@@ -184,6 +185,16 @@ toolbarStickyUpdate :: GlobalAction -> Bool -> Bool
 toolbarStickyUpdate action state = case action of
   ToolbarStickyStateChange state' -> state'
   _                               -> state
+
+
+-- | Only touches the 'DevState' if it is 'Just'.  In production, 'gsDevState' should always be
+-- 'Nothing'.  Use 'weAreInDevMode' to decide whether you want to initialize it, or, when writing
+-- test cases, initialize it unconditionally (See `test/Refine/Frontend/Contribution/MarkSpec.hs`).
+devStateUpdate :: GlobalAction -> Maybe DevState -> Maybe DevState
+devStateUpdate _ Nothing = Nothing
+devStateUpdate action (Just devstate) = Just $ upd action devstate
+  where
+    upd a (DevState as) = DevState $ a : as
 
 
 -- * ajax
@@ -377,5 +388,5 @@ reactFluxWorkAroundForkIO action = void . forkIO $ yield >> action
 
 -- | See https://bitbucket.org/wuzzeb/react-flux/issues/28/triggering-re-render-after-store-update
 -- for details and status.  Try to increase microseconds if you still experience race conditions.
-reactFluxWorkAroundThreadDelay :: IO ()
-reactFluxWorkAroundThreadDelay = threadDelay 10000
+reactFluxWorkAroundThreadDelay :: Double -> IO ()
+reactFluxWorkAroundThreadDelay seconds = threadDelay . round $ seconds * 1000 * 1000

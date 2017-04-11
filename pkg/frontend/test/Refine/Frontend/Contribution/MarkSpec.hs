@@ -21,13 +21,13 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-
 module Refine.Frontend.Contribution.MarkSpec where
 
-import           Control.Lens((^.), (&), (.~), (%~))
+import           Control.Lens ((^.), (^?!), (&), (.~), _Just)
 import           Data.Int (Int64)
 import           Data.Monoid ((<>))
-import           React.Flux (registerInitialStore, readStoreData)
+import           GHC.Stack (HasCallStack)
+import           React.Flux
 import           Test.Hspec
 import           Text.HTML.Parser
 
@@ -36,6 +36,8 @@ import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.VDoc
 import           Refine.Frontend.Test.Enzyme
+import           Refine.Frontend.Test.Store
+import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 
 
@@ -45,10 +47,10 @@ cnid = ContribIDNote . ID
 
 spec :: Spec
 spec = do
-  describe "The rfMark_ component" $ do
-    let theAttrs = [Attr "data-contribution-id" "n77"]
-    let theProps = MarkProps theAttrs (ContribIDNote (ID 77)) Nothing Nothing
+  let theAttrs = [Attr "data-contribution-id" "n77"]
+  let theProps = MarkProps theAttrs (ContribIDNote (ID 77)) Nothing Nothing
 
+  describe "The rfMark_ component" $ do
     it "renders a HTML mark at top level" $ do
       wrapper <- shallow $ rfMark_ theProps mempty
       is wrapper (StringSelector "mark") `shouldReturn` True
@@ -67,14 +69,14 @@ spec = do
       wrapper <- shallow $ rfMark_ theProps mempty
       is wrapper (StringSelector ".o-mark") `shouldReturn` True
 
-    describe "the css class that gives it its correct colour" $ do
 
+    describe "the css class that gives it its correct colour" $ do
       it "has a mark class with the content type that was passed to it" $ do
         wrapper <- shallow $ rfMark_ theProps mempty
         is wrapper (StringSelector ".o-mark--note") `shouldReturn` True
 
-    describe "the css class that renders the selected text white-on-black" $ do
 
+    describe "the css class that renders the selected text white-on-black" $ do
       it "when it is the current selection while the editor is open" $ do
         let moreProps = MarkProps [Attr "data-contribution-id" "h"] ContribIDHighlightMark Nothing Nothing
         wrapper <- shallow $ rfMark_ moreProps mempty
@@ -90,8 +92,8 @@ spec = do
         wrapper <- shallow $ rfMark_ moreProps mempty
         is wrapper (StringSelector ".o-mark--highlight") `shouldReturn` False
 
-    describe "the orange line underneath the text" $ do
 
+    describe "the orange line underneath the text" $ do
       it "does not render the hover class when there is no selected mark" $ do
         wrapper <- shallow $ rfMark_ theProps mempty
         is wrapper (StringSelector ".o-mark--hover") `shouldReturn` False
@@ -106,22 +108,35 @@ spec = do
         wrapper <- shallow $ rfMark_ moreProps mempty
         is wrapper (StringSelector ".o-mark--hover") `shouldReturn` True
 
+
     it "inserts the id of the current mark into the state on mouseEnter and removes it again on mouseLeave" $ do
-      registerInitialStore emptyGlobalState
+      resetState emptyGlobalState
       wrapper <- mount $ rfMark_ theProps mempty
-      -- init the state:
-      globalState0 <- readStoreData @GlobalState
-      let _ = globalState0 & gsContributionState . csHighlightedMarkAndBubble %~ \_ -> Nothing
-      -- simulate events:
       _ <- simulate wrapper MouseEnter
-      globalState1 <- readStoreData @GlobalState
-      globalState1 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Just (cnid 77)
+      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) $ Just (cnid 77)
       _ <- simulate wrapper MouseLeave
-      globalState2 <- readStoreData @GlobalState
-      globalState2 ^. gsContributionState . csHighlightedMarkAndBubble `shouldBe` Nothing
+      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) Nothing
+
 
   describe "componentDidMount" $ do
-    it "works" pending
+    let test :: HasCallStack => ReactElementM ViewEventHandler () -> Expectation
+        test chldrn = do
+          reactFluxWorkAroundThreadDelay 0.5
+          resetState (emptyGlobalState & gsDevState .~ Just (DevState []))
+          -- FIXME: without the call to 'reactFluxWorkAroundThreadDelay' above, this fails.  why?!
+          -- FIXME: resetState here is taking more than 0.1 seconds to stabilize.  why?!
+
+          storeShouldEventuallyBe (^?! gsDevState . _Just . devStateTrace) []
+          _ <- mount $ rfMark_ theProps chldrn
+          storeShouldEventuallyContain (^?! gsDevState . _Just . devStateTrace)
+            [ContributionAction (ScheduleAddMarkPosition (ContribIDNote (ID 77)) (MarkPosition 0 0))]
+
+    context "component without children" $ do
+      it "dispatches ScheduleAddMarkPosition only once" $ test mempty
+
+    context "component with children" $ do
+      it "dispatches ScheduleAddMarkPosition only once" $ test (div_ $ p_ "wef")
+
 
   describe "contributionIdFrom" $ do
     it "returns the note contribution id as it was found in the attributes" $ do

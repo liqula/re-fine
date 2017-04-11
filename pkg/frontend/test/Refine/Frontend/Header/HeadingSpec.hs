@@ -24,11 +24,9 @@
 
 module Refine.Frontend.Header.HeadingSpec where
 
-import           Control.Concurrent.MVar
-import           Control.Lens ((^.))
+import           Control.Lens ((^.), (&), (.~))
 import qualified Data.Map.Strict as M
 import qualified Data.Tree as DT
-import           React.Flux
 import           Test.Hspec
 import qualified Text.HTML.Parser as HTMLP
 
@@ -36,9 +34,9 @@ import           Refine.Common.Types
 import           Refine.Frontend.Header.Heading
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Screen.Types
-import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Enzyme
+import           Refine.Frontend.Test.Store
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Test.Samples (sampleMetaID)
 
@@ -76,17 +74,16 @@ spec = do
     it "sets the header height to a nonzero value" $ do
       pendingWith "#201, #221"
 
-      let newVDoc = CompositeVDoc (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1))
+      let newVDoc :: CompositeVDoc
+          newVDoc = CompositeVDoc (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1))
                                   (VDocRepo (ID 1) (ID 1))
                                   (ID 1)
                                   (VDocVersion [DT.Node (HTMLP.TagOpen "div" [HTMLP.Attr "data-offset" "0", HTMLP.Attr "data-uid" "77"]) []])
                                   M.empty M.empty M.empty
-      _wrapper <- mount (stickyContainer_ [] . mainHeader_ $ emptyGlobalState { _gsVDoc = Just newVDoc })
 
-      lock <- newEmptyMVar
-      reactFluxWorkAroundForkIO $ do
-        globalState0 <- readStoreData @GlobalState
-        (globalState0 ^. gsScreenState . ssHeaderHeight) `shouldSatisfy` (> 0)
-        putMVar lock ()
-      () <- takeMVar lock
-      pure ()
+          gs :: GlobalState
+          gs = emptyGlobalState & gsVDoc .~ Just newVDoc
+
+      resetState gs
+      _wrapper <- mount (stickyContainer_ [] $ mainHeader_ gs)
+      storeShouldEventuallySatisfy (^. gsScreenState . ssHeaderHeight) (> 0)
