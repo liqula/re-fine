@@ -55,9 +55,10 @@ import Refine.Backend.Natural
 import Refine.Backend.Server
 import Refine.Backend.Test.Util (withTempCurrentDirectory, sampleMetaID)
 import Refine.Backend.User
+import Refine.Common.ChangeAPI
 import Refine.Common.Rest
 import Refine.Common.Types as Common
-import Refine.Common.ChangeAPI
+import Refine.Prelude (getCurrentTimestamp)
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
@@ -336,8 +337,13 @@ specUserHandling = around createTestSession $ do
 
     describe "create" $ do
       it "works" $ \sess -> do
-        (^. miID) <$> runWaiJSON sess doCreate `shouldReturn` User (sampleMetaID ^. miID)
-        -- (sampleMetaID should match, too, but time stamps may vary.)
+        timeBefore <- getCurrentTimestamp
+        u :: User <- runWaiJSON sess doCreate
+        let timeThen = u ^. userMetaID . miMeta . metaCreatedAt
+        timeAfter <- getCurrentTimestamp
+        u ^. userID `shouldBe` sampleMetaID ^. miID
+        timeBefore `shouldSatisfy` (< timeThen)
+        timeThen   `shouldSatisfy` (< timeAfter)
 
       it "is secure" $ \_ -> do
         pendingWith "needs design & implementation: what makes a create requests legit?"
