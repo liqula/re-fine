@@ -86,6 +86,11 @@ data MetaInfo = MetaInfo
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
+-- | 'MetaInfo' and 'ID', packed together to be contained in all the many types that need both.
+--
+-- FUTUREWORK: we could add a field @_medaID :: ID@ to 'MetaInfo' and replace 'MetaID' with that.
+-- That would be awkward if we had to handle 'MetaInfo' values in contexts where we don't have an
+-- 'ID' yet, but if that never happens we should consider refactoring this.
 data MetaID a = MetaID
   { _miID   :: ID a
   , _miMeta :: MetaInfo
