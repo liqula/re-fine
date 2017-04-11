@@ -20,21 +20,18 @@
 
 module Refine.Common.Types.Prelude where
 
-import           Control.DeepSeq
 import           Control.Lens
 import           Data.Int
 import           Data.String.Conversions (ST, cs)
-import qualified Generics.SOP        as SOP
-import           Generics.SOP.JSON   as SOP
-import           Generics.SOP.NFData as SOP
 import           GHC.Generics (Generic)
 import           Text.Read
 import           Web.HttpApiData
 
 import Refine.Prelude (ClearTypeParameter(..), Timestamp)
-import Refine.Prelude.Generic
 import Refine.Prelude.TH
 
+
+-- * ID
 
 newtype ID a = ID { _unID :: Int64 }
   deriving (Eq, Ord, Show, Read, Generic)
@@ -43,20 +40,6 @@ instance ClearTypeParameter ID where
   clearTypeParameter (ID x) = ID x
 
 type family Create a = b | b -> a
-
-
--- * lens
-
-makeLenses ''ID
-
-instance SOP.Generic (ID a)
-instance SOP.HasDatatypeInfo (ID a)
-instance NFData (ID a) where rnf = SOP.grnf
-instance ToJSON (ID a) where toJSON = gtoJSONDef
-instance FromJSON (ID a) where parseJSON = gparseJSONDef
-
-
--- * HttpApiData
 
 instance ToHttpApiData (ID a) where
   toUrlPiece (ID x) = cs $ show x
@@ -109,14 +92,6 @@ data MetaID a = MetaID
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
-makeLenses ''MetaID
-
-instance SOP.Generic (MetaID a)
-instance SOP.HasDatatypeInfo (MetaID a)
-instance NFData (MetaID a) where rnf = SOP.grnf
-instance ToJSON (MetaID a) where toJSON = gtoJSONDef
-instance FromJSON (MetaID a) where parseJSON = gparseJSONDef
-
 
 -- * make refine types
 
@@ -124,8 +99,9 @@ makeRefineType ''CreateUser
 makeRefineType ''User
 makeRefineType ''Login
 makeRefineType ''UserInfo
+makeRefineType ''ID
 makeRefineType ''MetaInfo
--- makeRefineType ''MetaID  -- does not work yet
+makeRefineType ''MetaID
 
 userID :: Lens' User (ID User)
 userID = userMetaID . miID

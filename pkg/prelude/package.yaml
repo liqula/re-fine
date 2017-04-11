@@ -13,7 +13,7 @@ data-files:
   - README.md
   - docs/*
 
-ghc-options: -j -Wall -Werror
+ghc-options: -j -Wall -Wno-redundant-constraints -Werror
 
 dependencies:
   - aeson

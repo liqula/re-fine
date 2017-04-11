@@ -28,7 +28,7 @@ flag ghc-warn-error
 library
   hs-source-dirs:
       src
-  ghc-options: -j -Wall
+  ghc-options: -j -Wall -Wno-redundant-constraints
   if flag(ghc-warn-error)
       ghc-options: -Werror
   build-depends:
@@ -121,7 +121,7 @@ library
 executable refine-frontend
   main-is: Main.hs
   hs-source-dirs: app
-  ghc-options: -j -Wall
+  ghc-options: -j -Wall -Wno-redundant-constraints
   if flag(ghc-warn-error)
       ghc-options: -Werror
   cpp-options: -DGHCJS_BROWSER
@@ -136,7 +136,7 @@ test-suite spec
   main-is: Main.hs
   hs-source-dirs:
       test
-  ghc-options: -j -Wall -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -j -Wall -Wno-redundant-constraints -threaded -rtsopts -with-rtsopts=-N
   if flag(ghc-warn-error)
       ghc-options: -Werror
   build-depends:
