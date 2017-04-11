@@ -108,6 +108,8 @@ type SCreateUser
   = "r" :> "user" :> "create" :> ReqBody '[JSON] CreateUser
     :> Post '[JSON] User
 
+-- | FUTUREWORK: this may be a little simple.  take a look at servant-auth-token and see if that
+-- inspires more trust into its security than what we cooked together ourselves here.
 type SLogin
   = "r" :> "user" :> "login" :> ReqBody '[JSON] Login
     :> Post '[JSON] Username

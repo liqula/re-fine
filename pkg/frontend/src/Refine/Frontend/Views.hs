@@ -74,7 +74,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
   let vdoc = fromJust (rs ^. gsVDoc) -- FIXME: improve this!  (introduce a custom props type with a CompositeVDoc *not* wrapped in a 'Maybe')
 
       __ :: Translations = rs ^. RS.gsTranslations . unTrans
-                                -- FIXME: I think this could be only done more nicely.
+                                -- FIXME: I think this could be done more nicely.
 
   div_ (case rs ^. gsHeaderState . hsToolbarExtensionStatus of
     HT.ToolbarExtensionClosed -> []
