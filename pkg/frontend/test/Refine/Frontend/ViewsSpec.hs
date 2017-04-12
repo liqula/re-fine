@@ -84,7 +84,6 @@ spec = do
       contents `shouldContain` "Load a VDoc"
 
   describe "The mainScreen_ component" . before clearState $ do
-
     it "initially the comment toolbar is visible" $ do
       pendingWith "#201"
       wrapper <- mount refineApp_

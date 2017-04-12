@@ -35,12 +35,12 @@ packages:
     commit: ebdd5fa3fa5a0d3c22602bec15059e821ad10ec4
   extra-dep: true
 - location:
-    hg: https://bitbucket.org/fisx/react-flux
-    commit: dee27f37acb9b9494f878bcc6f867bc0b27494cf
+    git: https://github.com/liqula/react-flux
+    commit: fc09983c313536d51278f9fa3bdbc10dd9d1149e
   extra-dep: true
 - location:
-    hg: https://bitbucket.org/fisx/react-flux-servant
-    commit: afbca86883dccf69ae43024f1a2a5374b0d0f048
+    git: https://github.com/liqula/react-flux-servant
+    commit: 029581885116d71e7e4441a42b7789ee2e75e3a6
   extra-dep: true
 
 extra-deps:

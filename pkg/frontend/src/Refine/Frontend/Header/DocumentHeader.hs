@@ -20,6 +20,8 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Refine.Frontend.Header.DocumentHeader where
 
 import           Data.String.Conversions
@@ -36,6 +38,8 @@ data DocumentHeaderProps = DocumentHeaderProps
   }
   deriving (Eq)
 
+instance UnoverlapAllEq DocumentHeaderProps
+
 documentHeader :: View '[DocumentHeaderProps]
 documentHeader = mkView "DocumentHeader" $ \props ->
   div_ ["className" $= "row row-align-middle c-vdoc-header"] $ do
@@ -48,11 +52,15 @@ documentHeader = mkView "DocumentHeader" $ \props ->
 documentHeader_ :: DocumentHeaderProps -> ReactElementM eventHandler ()
 documentHeader_ !props = view_ documentHeader "DocumentHeader_" props
 
+instance UnoverlapAllEq Title
+
 documentTitle :: View '[Title]
 documentTitle = mkView "DocumentTitle" $ h1_ . cs . _unTitle
 
 documentTitle_ :: Title -> ReactElementM eventHandler ()
 documentTitle_ !title = view_ documentTitle "DocumentTitle_" title
+
+instance UnoverlapAllEq Abstract
 
 documentAbstract :: View '[Abstract]
 documentAbstract = mkView "DocumentAbstract" $ \abstract ->

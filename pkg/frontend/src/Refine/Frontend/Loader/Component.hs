@@ -20,33 +20,36 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Loader.Component where
+module Refine.Frontend.Loader.Component (vdocLoader_, VDocLoaderProps(..)) where
 
 import           Data.Monoid ((<>))
 import           Data.String.Conversions (cs)
+import           GHC.Generics (Generic)
 import           React.Flux
 
 import           Refine.Common.Types
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Store.Types as RS
-import           Refine.Prelude()
+import           Refine.Prelude ()
+import           Refine.Prelude.TH (makeRefineType)
 import qualified Refine.Prelude.BuildInfo as BuildInfo
 
 
-vdocLoader :: View '[Maybe [ID VDoc]]
-vdocLoader = mkView "VDocLoader" $ \list -> do
+data VDocLoaderProps = VDocLoaderProps (Maybe [ID VDoc])
+  deriving (Eq, Show, Generic)
+
+makeRefineType ''VDocLoaderProps
+instance UnoverlapAllEq VDocLoaderProps
+
+
+vdocLoader :: View '[VDocLoaderProps]
+vdocLoader = mkView "VDocLoader" $ \props -> do
   h1_ "Load a VDoc"
-{-
-  button_ [ "id" $= "load-demo"
-          , onClick $ \_ _ -> RS.dispatch (RS.OpenDocument sampleVDoc)
-          ] $
-          elemString "Load dummy document"
--}
   button_ [ "id" $= "add-vdoc-to-backend"
           , onClick $ \_ _ -> RS.dispatch RS.AddDemoDocument
           ] $
           elemString "Load generated document via backend"
-  vdocListLoader_ list
+  vdocListLoader_ props
 
   div_ $ do
     br_ [] >> br_ [] >> br_ [] >> hr_ []
@@ -56,16 +59,18 @@ vdocLoader = mkView "VDocLoader" $ \list -> do
       elemString $ "build timestamp: " <> show BuildInfo.gitBuildTimestamp
       "\n"
 
-vdocLoader_ :: Maybe [ID VDoc] -> ReactElementM eventHandler ()
-vdocLoader_ !list = view_ vdocLoader "vdocLoader_" list
+vdocLoader_ :: VDocLoaderProps -> ReactElementM eventHandler ()
+vdocLoader_ !props = view_ vdocLoader "vdocLoader_" props
 
-vdocListLoader :: View '[Maybe [ID VDoc]]
+vdocListLoader :: View '[VDocLoaderProps]
 vdocListLoader = mkView "VDocListLoader" $ \case
-  Nothing -> button_ [ "id" $= "load-vdoc-list-from-server"
+  VDocLoaderProps Nothing
+            -> button_ [ "id" $= "load-vdoc-list-from-server"
                       , onClick $ \_ _ -> RS.dispatch RS.LoadDocumentList
                       ] $
                       elemString "Load list of documents from server"
-  Just list -> div_ . mconcat $ map toButton list
+  VDocLoaderProps (Just list)
+            -> div_ $ toButton `mapM_` list
 
 toButton :: ID VDoc -> ReactElementM [SomeStoreAction] ()
 toButton li = button_
@@ -74,5 +79,5 @@ toButton li = button_
   ]
   "A document on the server"
 
-vdocListLoader_ :: Maybe [ID VDoc] -> ReactElementM eventHandler ()
-vdocListLoader_ !list = view_ vdocListLoader "vdocListLoader_" list
+vdocListLoader_ :: VDocLoaderProps -> ReactElementM eventHandler ()
+vdocListLoader_ !props = view_ vdocListLoader "vdocListLoader_" props

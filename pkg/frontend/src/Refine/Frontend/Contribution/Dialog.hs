@@ -21,6 +21,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.Contribution.Dialog where
 
@@ -103,6 +104,8 @@ data CommentDisplayProps = CommentDisplayProps
 
 makeLenses ''CommentDisplayProps
 
+instance UnoverlapAllEq CommentDisplayProps
+
 showComment :: View '[CommentDisplayProps]
 showComment = mkView "ShowComment" $ \props ->
   let extraStyles = [ StylePx "top" (props ^. topOffset . unOffsetFromDocumentTop + 5)
@@ -176,6 +179,8 @@ showNoteProps notes rs = case (maybeNote, maybeOffset) of
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
 
+instance UnoverlapAllEq ShowNoteProps
+
 showNote :: View '[ShowNoteProps]
 showNote = mkView "ShowNote" $ \case
   ShowNotePropsNothing -> mempty
@@ -218,6 +223,8 @@ showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
 
+instance UnoverlapAllEq ShowDiscussionProps
+
 showDiscussion :: View '[ShowDiscussionProps]
 showDiscussion = mkView "ShowDiscussion" $ \case
   ShowDiscussionPropsNothing -> mempty
@@ -231,6 +238,8 @@ showDiscussion = mkView "ShowDiscussion" $ \case
 
 showDiscussion_ :: ShowDiscussionProps -> ReactElementM eventHandler ()
 showDiscussion_ !props = view_ showDiscussion "showDiscussion_" props
+
+instance UnoverlapAllEq (Maybe CompositeQuestion)
 
 showQuestion :: View '[Maybe CompositeQuestion]
 showQuestion = mkView "ShowQuestion" $ \case
@@ -295,6 +304,8 @@ addComment __ = mkView "AddComment" $ \props -> if not (props ^. acpVisible) the
 addComment_ :: Translations -> AddCommentProps -> ReactElementM eventHandler ()
 addComment_ __ !props = view_ (addComment __) "addComment_" props
 
+
+instance UnoverlapAllEq AddCommentProps
 
 commentInput :: View '[AddCommentProps]
 commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState props ->

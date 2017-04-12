@@ -46,9 +46,11 @@ overlayStyles =
   [ StyleInt "zIndex" 6010
   ]
 
+instance UnoverlapAllEq Bool
+
 notImplementedYet :: View '[Bool]
 notImplementedYet = mkView "NotImplementedYet" $ \isVisible ->
-  div_ [onClick $ \e _ -> stopPropagation e : RS.dispatch RS.HideNotImplementedYet] $ do
+  div_ [onClick $ \e _ -> stopPropagation e `seq` RS.dispatch RS.HideNotImplementedYet] $ do
     skylight_ ["isVisible" &= isVisible
              , "dialogStyles" @= dialogStyles
              , "overlayStyles" @= overlayStyles

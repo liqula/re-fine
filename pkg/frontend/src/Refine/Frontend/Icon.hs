@@ -108,5 +108,5 @@ iconButton_ !props = view_ iconButton ("iconButton_" <> props ^. iconButtonProps
 
 mkClickHandler :: IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick -> Event -> MouseEvent -> ViewEventHandler
 mkClickHandler props evt mevt =
-  [ stopPropagation evt | not $ props ^. iconButtonPropsClickPropag ] <>
+  (if props ^. iconButtonPropsClickPropag then () else stopPropagation evt) `seq`
   runIconButtonPropsOnClick evt mevt (props ^. iconButtonPropsOnClick)

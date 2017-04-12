@@ -41,6 +41,8 @@ import Refine.Frontend.Types
 import Refine.Prelude ()
 
 
+instance UnoverlapAllEq QuickCreateProps
+
 quickCreate :: View '[QuickCreateProps]
 quickCreate = mkView "QuickCreateButton" $ \props ->
     case (props ^. quickCreateRange, props ^. quickCreateShowState) of

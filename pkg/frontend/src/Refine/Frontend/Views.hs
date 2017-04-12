@@ -44,7 +44,7 @@ import           Refine.Frontend.Document.Types (DocumentProps(..))
 import           Refine.Frontend.Document.Document (document_)
 import           Refine.Frontend.Header.Heading ( mainHeader_ )
 import           Refine.Frontend.Header.Types as HT
-import           Refine.Frontend.Loader.Component (vdocLoader_)
+import           Refine.Frontend.Loader.Component
 import           Refine.Frontend.Login.Types as LG
 import           Refine.Frontend.MainMenu.Component (mainMenu_)
 import           Refine.Frontend.MainMenu.Types
@@ -62,7 +62,7 @@ import           Refine.Frontend.Views.Types
 refineApp :: View '[]
 refineApp = mkControllerView @'[StoreArg GlobalState] "RefineApp" $ \gs ->
   case gs ^. gsVDoc of
-    Nothing -> vdocLoader_ (gs ^. gsVDocList)  -- (this is just some scaffolding that will be replaced by more app once we get there.)
+    Nothing -> vdocLoader_ (VDocLoaderProps $ gs ^. gsVDocList)  -- (this is just some scaffolding that will be replaced by more app once we get there.)
     Just _ -> case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
       Nothing  -> mainScreen_ gs
       Just tab -> mainMenu_ tab

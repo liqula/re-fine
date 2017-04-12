@@ -34,6 +34,7 @@ import           GHC.Generics (Generic)
 import           GHCJS.Types
 import           Text.HTML.Parser (Attr)
 import           Text.Read (readMaybe)
+import           React.Flux (UnoverlapAllEq)
 
 import Refine.Common.Types
 import Refine.Frontend.Screen.Types
@@ -160,6 +161,8 @@ data BubbleProps = BubbleProps
   }
   deriving (Eq)
 
+instance UnoverlapAllEq BubbleProps
+
 data SpecialBubbleProps = SpecialBubbleProps
   { _specialBubblePropsContributionId    :: ContributionID
   , _specialBubblePropsMarkPosition      :: Maybe MarkPosition
@@ -167,6 +170,8 @@ data SpecialBubbleProps = SpecialBubbleProps
   , _specialBubblePropsScreenState       :: ScreenState
   }
   deriving (Eq)
+
+instance UnoverlapAllEq SpecialBubbleProps
 
 data QuickCreateProps = QuickCreateProps
   { _quickCreateSide        :: QuickCreateSide
