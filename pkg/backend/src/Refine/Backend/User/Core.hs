@@ -28,7 +28,7 @@
 module Refine.Backend.User.Core
   ( UserDB
   , UserHandleContext(..), userBackend
-  , UserHandleError
+  , UserHandleError(..)
   , UHNat
   , toUserID
   , fromUserID
@@ -63,8 +63,8 @@ newtype UserHandleContext = UserHandleContext
 
 makeLenses ''UserHandleContext
 
-data UserHandleError
-  = UserHandleUnknownError
+newtype UserHandleError
+  = UserHandleUnknownError String
   deriving (Eq, Generic, Show)
 
 makeRefineType ''UserHandleError

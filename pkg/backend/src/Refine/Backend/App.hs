@@ -77,6 +77,7 @@ runApp
           let r = AppContext dbNat dbc docRepoNat uhNat logger csrfSecret sessionLength poFilesRoot
               s = AppState Nothing UserLoggedOut
           x <- runReaderT (evalStateT m s) r
-          dbCommit dbc
+               `finally`
+               dbCommit dbc
           pure x
 
