@@ -255,7 +255,6 @@ specMockedLogin = around createDevModeTestSession $ do
       respCode resp `shouldBe` 409
       cs (simpleBody resp) `shouldContain` ("ChunkRangeBadDataUID" :: String)
 
-      pendingWith "ErrorError call in SQL."
       vdoc' :: CompositeVDoc <- runDB sess $ getCompositeVDoc (vdoc ^. compositeVDoc . vdocID)
       vdoc' ^. compositeVDocNotes `shouldBe` mempty
 
