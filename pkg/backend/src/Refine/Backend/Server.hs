@@ -39,7 +39,8 @@ import qualified Control.Natural as CN
 import           Control.Natural (($$))
 import           Data.Aeson (encode)
 import           Data.String.Conversions (SBS, cs)
-import           Debug.Trace (traceShow)  -- (please keep this until we have better logging)
+import           Data.Monoid ((<>))
+import           Debug.Trace (trace)  -- (please keep this until we have better logging)
 import           Network.Wai.Handler.Warp as Warp
 import           Prelude hiding ((.), id)
 import           Servant
@@ -195,7 +196,10 @@ toServantError = Nat ((lift . runExceptT) >=> leftToError fromAppError)
     -- FIXME: some (many?) of these shouldn't be err500.
     -- FIXME: implement better logging.
     fromAppError :: AppError -> ServantErr
-    fromAppError err = traceShow err $ (appServantErr err) { errBody = encode $ toApiError err }
+    fromAppError err = traceShow' err $ (appServantErr err) { errBody = encode $ toApiError err }
+
+    traceShow' :: (Show a) => a -> b -> b
+    traceShow' a = trace ("toServantError: " <> show a)
 
 toApiError :: AppError -> ApiError
 toApiError = \case
