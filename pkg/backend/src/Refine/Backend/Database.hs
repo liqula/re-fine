@@ -63,9 +63,7 @@ createDBNat cfg = do
 
   pool <- runNoLoggingT $ createSqlitePool (cs sqliteDb) (cfg ^. cfgPoolSize)
   let dbConnectionCont :: (MonadBaseControl IO m) => (DBConnection -> m a) -> m a
-      dbConnectionCont m = withResource pool $ \conn -> do
-        let dbc = mkDBConnection conn
-        m dbc
+      dbConnectionCont m = withResource pool (m . mkDBConnection)
 
   pure ( DBRunner dbConnectionCont
        , \dbc dbctx -> Nat (wrapErrors . dbRun dbc . (`runReaderT` dbctx) . runExceptT . unDB)
