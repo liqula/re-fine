@@ -52,6 +52,7 @@ module Refine.Backend.App.Core (
   , appLog
   ) where
 
+import Control.Exception (SomeException, try)
 import Control.Lens (makeLenses, view)
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -159,8 +160,9 @@ dbFilter fltrs m = AppM $ do
   mkNatDB <- view appMkDBNat
   conn    <- view appDBConnection
   let (Nat dbNat) = mkNatDB conn (DBContext mu fltrs)
-  r <- liftIO (runExceptT (dbNat m))
-  leftToError AppDBError r
+  r   <- liftIO (try' $ runExceptT (dbNat m))
+  r'  <- leftToError (AppDBError . DBUnknownError . show) r
+  leftToError AppDBError r'
   where
     user = \case
       UserLoggedOut     -> Nothing
@@ -172,16 +174,21 @@ db = dbFilter mempty
 docRepo :: DocRepo a -> AppM db uh a
 docRepo m = AppM $ do
   (Nat drepoNat) <- view appDocRepoNat
-  r <- liftIO (runExceptT (drepoNat m))
-  leftToError AppDocRepoError r
+  r  <- liftIO (try' $ runExceptT (drepoNat m))
+  r' <- leftToError (AppDocRepoError . DocRepoUnknownError . show) r
+  leftToError AppDocRepoError r'
 
 userHandle :: uh a -> AppM db uh a
 userHandle m = AppM $ do
   (Nat runUserHandle) <- view appUHNat
-  r <- liftIO (runExceptT (runUserHandle m))
-  leftToError AppUserHandleError r
+  r  <- liftIO (try' $ runExceptT (runUserHandle m))
+  r' <- leftToError (AppUserHandleError . UserHandleUnknownError . show) r
+  leftToError AppUserHandleError r'
 
 appLog :: String -> AppM db uh ()
 appLog msg = AppM $ do
   logger <- view appLogger
   liftIO $ unLogger logger msg
+
+try' :: IO a -> IO (Either SomeException a)
+try' = try
