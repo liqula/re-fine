@@ -26,6 +26,7 @@ import           Data.Monoid ((<>))
 import           Data.String.Conversions (cs)
 import           GHC.Generics (Generic)
 import           React.Flux
+import           Web.HttpApiData (toUrlPiece)
 
 import           Refine.Common.Types
 import qualified Refine.Frontend.Store as RS
@@ -77,7 +78,7 @@ toButton li = button_
   [ "id" $= cs ("load-vdoc-list" <> show (_unID li))
   , onClick $ \_ _ -> RS.dispatch . RS.LoadDocument $ li
   ]
-  "A document on the server"
+  (elemText $ toUrlPiece li)
 
 vdocListLoader_ :: VDocLoaderProps -> ReactElementM eventHandler ()
 vdocListLoader_ !props = view_ vdocListLoader "vdocListLoader_" props
