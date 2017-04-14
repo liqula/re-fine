@@ -44,7 +44,6 @@ data GlobalState = GlobalState
   , _gsHeaderState                :: HeaderState
   , _gsDocumentState              :: DocumentState
   , _gsScreenState                :: ScreenState
-  , _gsNotImplementedYetIsVisible :: Bool
   , _gsMainMenuState              :: MainMenuState
   , _gsLoginState                 :: LoginState
   , _gsToolbarSticky              :: Bool
@@ -60,7 +59,6 @@ emptyGlobalState = GlobalState
   , _gsHeaderState                = emptyHeaderState
   , _gsDocumentState              = DocumentStateView
   , _gsScreenState                = emptyScreenState
-  , _gsNotImplementedYetIsVisible = False
   , _gsMainMenuState              = emptyMainMenuState
   , _gsLoginState                 = emptyLoginState
   , _gsToolbarSticky              = False
@@ -109,7 +107,6 @@ data GlobalAction =
   | AddDemoDocument
   | ResetState GlobalState
   | ShowNotImplementedYet
-  | HideNotImplementedYet
   deriving (Show, Eq, Generic)
 
 makeRefineType ''GlobalState

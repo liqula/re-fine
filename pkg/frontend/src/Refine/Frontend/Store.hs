@@ -109,6 +109,9 @@ transformGlobalState = transf
                   threadDelay $ delayMiliSecs * 1000
                   dispatchAndExec $ ContributionAction DischargeAddMarkPositions
 
+            ShowNotImplementedYet -> do
+                liftIO $ windowAlertST "not implemented yet."
+
             _ -> pure ()
 
         consoleLogJSONM "New state: " $ if state' /= state then toJSON state' else (String "[UNCHANGED]" :: Value)
@@ -122,7 +125,6 @@ transformGlobalState = transf
       & gsHeaderState                %~ headerStateUpdate action
       & gsDocumentState              %~ documentStateUpdate action (state ^? gsVDoc . _Just . C.compositeVDocVersion)
       & gsScreenState                %~ maybe id screenStateUpdate (action ^? _ScreenAction)
-      & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate action
       & gsLoginState                 %~ loginStateUpdate action
       & gsMainMenuState              %~ mainMenuUpdate action
       & gsToolbarSticky              %~ toolbarStickyUpdate action
@@ -172,13 +174,6 @@ vdocListUpdate :: GlobalAction -> Maybe [C.ID C.VDoc] -> Maybe [C.ID C.VDoc]
 vdocListUpdate action state = case action of
     LoadedDocumentList list -> Just list
     _ -> state
-
-
-notImplementedYetIsVisibleUpdate :: GlobalAction -> Bool -> Bool
-notImplementedYetIsVisibleUpdate action state = case action of
-  ShowNotImplementedYet -> True
-  HideNotImplementedYet -> False
-  _                 -> state
 
 
 toolbarStickyUpdate :: GlobalAction -> Bool -> Bool

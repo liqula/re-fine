@@ -29,12 +29,15 @@ module Refine.Frontend.Test.Console
   , consoleLogJSONAsString, consoleLogJSONAsStringM
   , gracefulError
   , weAreInDevMode
+  , windowAlert
+  , windowAlertST
   )
 where
 
+import Control.Monad.IO.Class
 import Data.Aeson (ToJSON, encode)
 import Data.JSString ()  -- instance IsString JSString
-import Data.String.Conversions (ConvertibleStrings, cs, (<>))
+import Data.String.Conversions (ConvertibleStrings, cs, (<>), ST)
 import GHCJS.Types (JSVal, JSString)
 
 import Refine.Frontend.CS ()
@@ -99,3 +102,14 @@ foreign import javascript unsafe
 {-# ANN gracefulError ("HLint: ignore Use errorDoNotUseTrace" :: String) #-}
 gracefulError :: ConvertibleStrings s JSString => s -> a -> a
 gracefulError msg = consoleLogJSString ("\n\n\n***** " <> cs msg <> "\n\n\n") `seq` id
+
+
+windowAlert :: (MonadIO m, ConvertibleStrings s JSString) => s -> m ()
+windowAlert = liftIO . js_alert . cs
+
+windowAlertST :: MonadIO m => ST -> m ()
+windowAlertST = windowAlert
+
+foreign import javascript unsafe
+  "window.alert($1)"
+  js_alert :: JSString -> IO ()

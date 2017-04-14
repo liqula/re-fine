@@ -48,7 +48,6 @@ import           Refine.Frontend.Loader.Component
 import           Refine.Frontend.Login.Types as LG
 import           Refine.Frontend.MainMenu.Component (mainMenu_)
 import           Refine.Frontend.MainMenu.Types
-import           Refine.Frontend.NotImplementedYet (notImplementedYet_)
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import qualified Refine.Frontend.Screen.Types as SC
@@ -92,7 +91,6 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                               (rs ^. RS.gsContributionState . RS.csCurrentRange)
                               (rs ^. RS.gsContributionState . RS.csCommentKind)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
-          notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
 
           main_ ["role" $= "main"] $ do
               div_ ["className" $= "grid-wrapper"] $ do
