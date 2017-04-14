@@ -36,7 +36,7 @@ import           Refine.Prelude.TH (makeRefineType)
 import qualified Refine.Prelude.BuildInfo as BuildInfo
 
 
-data VDocLoaderProps = VDocLoaderProps (Maybe [ID VDoc])
+newtype VDocLoaderProps = VDocLoaderProps (Maybe [ID VDoc])
   deriving (Eq, Show, Generic)
 
 makeRefineType ''VDocLoaderProps
