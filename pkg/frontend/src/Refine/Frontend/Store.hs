@@ -66,6 +66,8 @@ instance StoreData GlobalState where
     transform = loop . (:[])
       where
         loop :: [GlobalAction] -> GlobalState -> IO GlobalState
+          -- TODO: we don't need this, we can implement reDispatch much more straight-forwardly as
+          -- @forkIO . dispatchM@.
         loop [] state = pure state
         loop (action : actions) state = do
           (state', actions') <- runStateT (transformGlobalState @Transform action state) []

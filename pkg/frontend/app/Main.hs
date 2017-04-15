@@ -8,7 +8,6 @@ import React.Flux (registerInitialStore, reactRenderView)
 import Refine.Frontend.Store.Types (emptyGlobalState)
 import Refine.Frontend.Views (refineApp)
 
--- | the first argument of reactRender is the id of the DOM element in index.html that the app will be rendered into
 main :: IO ()
 main = do
     registerInitialStore emptyGlobalState

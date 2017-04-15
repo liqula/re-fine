@@ -187,7 +187,7 @@ main = shakeArgs refineOptions $ do
     need [pkgBackend <//> serverconf]
 
     beh :: ProcessHandle <- cmd
-      [Cwd pkgBackend,  FileStdout belog, FileStderr belog] "stack" ["exec", "--", "refine", "server.conf"]
+      [Cwd pkgBackend, FileStdout belog, FileStderr belog] "stack" ["exec", "--", "refine", "server.conf"]
 
     feh :: ProcessHandle <- cmd
       [Cwd pkgFrontend, FileStdout felog, FileStderr felog] "npm" ["start"]
