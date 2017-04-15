@@ -39,14 +39,6 @@ import           Refine.Frontend.Icon.Types
 import           Refine.Prelude()
 
 
-data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
-  { _tmbimmpMainMenuTab    :: MainMenuTab
-  , _tmbimmpCurrentUser    :: CurrentUser
-  }
-  deriving (Eq)
-
-instance UnoverlapAllEq TopMenuBarInMainMenuProps
-
 topMenuBarInMainMenu :: View '[TopMenuBarInMainMenuProps]
 topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps menuTab currentUser) ->
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
@@ -164,8 +156,6 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
 topMenuBarInMainMenu_ :: TopMenuBarInMainMenuProps -> ReactElementM eventHandler ()
 topMenuBarInMainMenu_ !props = view_ topMenuBarInMainMenu "topMenuBarInMainMenu_" props
 
-
-instance UnoverlapAllEq MainMenuProps
 
 mainMenu :: View '[MainMenuProps]
 mainMenu = mkView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUser) ->
