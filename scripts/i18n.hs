@@ -45,6 +45,7 @@ import           Turtle hiding (f)
 
 usage :: ExitCode -> IO ()
 usage exitCode = do
+  unitTestMatchTKeys
   pname <- getProgName
   putStrLn $ unlines
     [ unwords ["usage:", pname, "<source_tree>", "<trans_module_path>", "<trans_module_name>", "<po*_path>"]
@@ -111,15 +112,17 @@ matchTKeys line = case mrSubList res of
   bad   -> error $ "getTKeyCalls: impossible regex match: " <> show bad
   where
     res :: MatchResult SBS
-    res = line =~ ("\\(__ ([^\\)]+)\\)" :: SBS)
+    res = line =~ ("__ (\\w\\w\\w+)" :: SBS)
 
 unitTestMatchTKeys :: IO ()
-unitTestMatchTKeys = assert (and tests) (pure ())
-  where
-    tests =
-      [ matchTKeys "(__ some_keyIWU)" == ["some_keyIWU"]
-      , matchTKeys "..  (__ some_keyIWU) .. (__ WER) ..." == ["some_keyIWU", "WER"]
-      ]
+unitTestMatchTKeys = sequence_ $
+  [ ($ pure ()) . assert $ matchTKeys "(__ some_keyIWU)" == ["some_keyIWU"]
+  , ($ pure ()) . assert $ matchTKeys "..  (__ some_keyIWU) .. (__ WER) ..." == ["some_keyIWU", "WER"]
+  , ($ pure ()) . assert $ matchTKeys "            ] (elemText $ __ add_a_comment)" == ["add_a_comment"]
+  , ($ pure ()) . assert $ matchTKeys "       elemText $ __ add1_a_comment" == ["add1_a_comment"]
+  , ($ pure ()) . assert $ matchTKeys "       elemText $ __ add2_a_comment," == ["add2_a_comment"]
+  , ($ pure ()) . assert $ matchTKeys "       elemText $ __ add3_a_comment " == ["add3_a_comment"]
+  ]
 
 
 -- * generate
