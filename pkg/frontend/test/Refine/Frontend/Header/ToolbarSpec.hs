@@ -48,6 +48,7 @@ spec = do
       lengthOfIO (find wrapper (StringSelector "IconButton")) `shouldReturn` (6 :: Int)
 
     it "toggles the visibility of the edit toolbar extension when the 'new comment' button is clicked" $ do
+      pending
       wrapper <- mount toolbar_
       button <- find wrapper (StringSelector ".c-vdoc-toolbar__btn-add-annotation")
 
