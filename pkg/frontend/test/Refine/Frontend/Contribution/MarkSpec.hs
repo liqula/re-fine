@@ -110,7 +110,6 @@ spec = do
 
 
     it "inserts the id of the current mark into the state on mouseEnter and removes it again on mouseLeave" $ do
-      resetState emptyGlobalState
       wrapper <- mount $ rfMark_ theProps mempty
       _ <- simulate wrapper MouseEnter
       storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) $ Just (cnid 77)

@@ -22,20 +22,12 @@
 
 module Refine.Frontend.ViewsSpec where
 
-import qualified Data.Map.Strict as M
 import           Data.String.Conversions
-import           Data.Tree
 import           React.Flux
 import           Test.Hspec
-import           Text.HTML.Parser
 
-import           Refine.Common.Types
-import           Refine.Frontend.Header.Types
-import           Refine.Frontend.Store
-import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Views
-import           Refine.Frontend.Test.Samples (sampleMetaID)
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
@@ -63,28 +55,16 @@ clickTextSpecificComment wrapper = do
       pure ()
 
 
-clearState :: IO ()
-clearState =
-    let newVDoc = CompositeVDoc (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1))
-                                (VDocRepo (ID 1) (ID 1)) (ID 1)
-                                (VDocVersion [Node (TagOpen "div" [Attr "data-uid" "77", Attr "data-offset" "0"]) []])
-                                M.empty M.empty M.empty
-    in do
-      -- FIXME: If we add ResetState to the list of Actions, we run into (timing?!) problems...
-      dispatchAndExecMany [OpenDocument newVDoc, HeaderAction CloseToolbarExtension]
-      reactFluxWorkAroundThreadDelay 0.01
-
-
 spec :: Spec
 spec = do
-  describe "The refineApp root component" . before clearState $ do
+  describe "The refineApp root component" $ do
     it "starts fine" $ do
       pending
       wrapper <- mount refineApp_
       contents :: String <- cs <$> html wrapper
       contents `shouldContain` "Load a VDoc"
 
-  describe "The mainScreen_ component" . before clearState $ do
+  describe "The mainScreen_ component" $ do
     it "initially the comment toolbar is visible" $ do
       pendingWith "#201"
       wrapper <- mount refineApp_

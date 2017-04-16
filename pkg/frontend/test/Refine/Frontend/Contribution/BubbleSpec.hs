@@ -91,7 +91,6 @@ spec = do
       is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` True
 
     it "inserts the id of the current bubble into the state on mouseEnter and removes it again on mouseLeave" $ do
-      resetState emptyGlobalState
       wrapper <- mount $ bubble_ bubbleProps mempty
       storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) Nothing
 
