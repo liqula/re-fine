@@ -5,6 +5,7 @@ module Refine.Frontend.MainMenu.Types where
 
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
+import React.Flux (UnoverlapAllEq)
 
 import Refine.Frontend.Login.Types
 import Refine.Prelude.TH (makeRefineType)
@@ -61,6 +62,15 @@ data MainMenuProps = MainMenuProps
   , _mmpCurrentUser    :: CurrentUser
   }
   deriving (Eq)
+
+data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
+  { _tmbimmpMainMenuTab    :: MainMenuTab
+  , _tmbimmpCurrentUser    :: CurrentUser
+  }
+  deriving (Eq)
+
+instance UnoverlapAllEq MainMenuProps
+instance UnoverlapAllEq TopMenuBarInMainMenuProps
 
 makeRefineType ''MainMenuAction
 makeRefineType ''MainMenuErrors

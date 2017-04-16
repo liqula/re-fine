@@ -53,7 +53,7 @@ import           Control.Lens (makeLenses)
 import           Data.Default (Default(def))
 import           Data.Typeable (Typeable)
 import           GHCJS.Types (JSString)
-import           React.Flux (Event, MouseEvent, ViewEventHandler)
+import           React.Flux (Event, MouseEvent, ViewEventHandler, UnoverlapAllEq)
 
 import           Refine.Frontend.CS ()
 import           Refine.Frontend.Store.Types
@@ -71,6 +71,7 @@ data IconProps = IconProps
   }
   deriving (Eq)
 
+instance UnoverlapAllEq IconProps
 makeLenses ''IconProps
 
 instance Default IconProps where
@@ -96,6 +97,7 @@ data IconButtonPropsWithHandler onclick = IconButtonProps
   }
   deriving (Eq)
 
+instance UnoverlapAllEq (IconButtonPropsWithHandler onclick)
 makeLenses ''IconButtonPropsWithHandler
 
 instance IconButtonPropsOnClick onclick => Default (IconButtonPropsWithHandler onclick) where

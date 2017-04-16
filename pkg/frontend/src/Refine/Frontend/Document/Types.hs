@@ -24,6 +24,7 @@ module Refine.Frontend.Document.Types where
 
 import           Control.Lens (makeLenses)
 import           GHC.Generics (Generic)
+import           React.Flux (UnoverlapAllEq)
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
@@ -60,6 +61,9 @@ newtype EditorProps = EditorProps
   { _ewpEditorState :: DocumentEditState
   }
   deriving (Eq)
+
+instance UnoverlapAllEq DocumentProps
+instance UnoverlapAllEq EditorProps
 
 makeRefineType ''DocumentAction
 makeRefineType ''DocumentState

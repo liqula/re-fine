@@ -44,11 +44,10 @@ import           Refine.Frontend.Document.Types (DocumentProps(..))
 import           Refine.Frontend.Document.Document (document_)
 import           Refine.Frontend.Header.Heading ( mainHeader_ )
 import           Refine.Frontend.Header.Types as HT
-import           Refine.Frontend.Loader.Component (vdocLoader_)
+import           Refine.Frontend.Loader.Component
 import           Refine.Frontend.Login.Types as LG
 import           Refine.Frontend.MainMenu.Component (mainMenu_)
 import           Refine.Frontend.MainMenu.Types
-import           Refine.Frontend.NotImplementedYet (notImplementedYet_)
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import qualified Refine.Frontend.Screen.Types as SC
@@ -62,7 +61,7 @@ import           Refine.Frontend.Views.Types
 refineApp :: View '[]
 refineApp = mkControllerView @'[StoreArg GlobalState] "RefineApp" $ \gs ->
   case gs ^. gsVDoc of
-    Nothing -> vdocLoader_ (gs ^. gsVDocList)  -- (this is just some scaffolding that will be replaced by more app once we get there.)
+    Nothing -> vdocLoader_ (VDocLoaderProps $ gs ^. gsVDocList)  -- (this is just some scaffolding that will be replaced by more app once we get there.)
     Just _ -> case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
       Nothing  -> mainScreen_ gs
       Just tab -> mainMenu_ tab
@@ -74,7 +73,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
   let vdoc = fromJust (rs ^. gsVDoc) -- FIXME: improve this!  (introduce a custom props type with a CompositeVDoc *not* wrapped in a 'Maybe')
 
       __ :: Translations = rs ^. RS.gsTranslations . unTrans
-                                -- FIXME: I think this could be only done more nicely.
+                                -- FIXME: I think this could be done more nicely.
 
   div_ (case rs ^. gsHeaderState . hsToolbarExtensionStatus of
     HT.ToolbarExtensionClosed -> []
@@ -92,7 +91,6 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                               (rs ^. RS.gsContributionState . RS.csCurrentRange)
                               (rs ^. RS.gsContributionState . RS.csCommentKind)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
-          notImplementedYet_ (rs ^. gsNotImplementedYetIsVisible)
 
           main_ ["role" $= "main"] $ do
               div_ ["className" $= "grid-wrapper"] $ do

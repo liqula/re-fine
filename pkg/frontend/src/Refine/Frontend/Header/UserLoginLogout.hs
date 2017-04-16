@@ -22,6 +22,8 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Refine.Frontend.Header.UserLoginLogout where
 
 import           Control.Lens ((&), (.~))
@@ -34,6 +36,8 @@ import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
 import           Refine.Prelude()
 
+
+instance UnoverlapAllEq CurrentUser
 
 userLoginLogoutButton :: View '[CurrentUser]
 userLoginLogoutButton = mkView "UserLoginLogoutButton" $ \case

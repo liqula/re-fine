@@ -24,6 +24,7 @@ module Refine.Frontend.IconSpec where
 
 import Control.Lens ((&), (.~))
 import Data.JSString (JSString)
+import Data.String.Conversions (cs)
 import Test.Hspec
 
 import qualified Refine.Frontend.Colors as Color
@@ -53,6 +54,16 @@ iconProps = IconProps "the-block-name" True ("Image", "striped")
 spec :: Spec
 spec = do
   describe "The icon_ component" $ do
+    it "renders ok" $ do  -- FUTUREWORK: make this a generic test that is run on all properties implicitly.
+      wrapper <- mount $ icon_ IconProps
+          { _iconPropsBlockName = "blockname"
+          , _iconPropsHighlight = True
+          , _iconPropsDesc      = ("desc1", "desc2")
+          , _iconPropsSize      = S
+          }
+      contents :: String <- cs <$> html wrapper
+      contents `shouldContain` "<div "
+
     it "annotates the block together with the icon module" $ do
       wrapper <- shallow . icon_ $ iconProps XXL
       lengthOfIO (find wrapper (StringSelector ".the-block-name__icon")) `shouldReturn` (1 :: Int)

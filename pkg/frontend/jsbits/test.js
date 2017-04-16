@@ -1,8 +1,10 @@
-var jsdom = require('jsdom').jsdom;
+// only used by node, so no need for the funny node-vs-browser-switch like in hookup.js)
+
+global.jsdom = require('jsdom').jsdom;
 require('jsdom-global')();
 
-var document = jsdom('');
-var window = document.defaultView;
-window.navigator = { userAgent: 'node.js' };
+global.document = jsdom('');
+global.window = document.defaultView;
+global.window.navigator = { userAgent: 'node.js' };
 
-var enzyme = require('enzyme');
+global.enzyme = require('enzyme');

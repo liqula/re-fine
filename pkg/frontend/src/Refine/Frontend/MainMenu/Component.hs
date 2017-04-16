@@ -39,12 +39,6 @@ import           Refine.Frontend.Icon.Types
 import           Refine.Prelude()
 
 
-data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
-  { _tmbimmpMainMenuTab    :: MainMenuTab
-  , _tmbimmpCurrentUser    :: CurrentUser
-  }
-  deriving (Eq)
-
 topMenuBarInMainMenu :: View '[TopMenuBarInMainMenuProps]
 topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps menuTab currentUser) ->
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do

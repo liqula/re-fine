@@ -98,11 +98,10 @@ https://hackage.haskell.org/package/gdiff
 idNotFound :: (Typeable d) => ID d -> DB a
 idNotFound i = notFound $ unwords [show $ typeOf i, show i, "is not found."]
 
--- FIXME: Better error messages
-unique :: [a] -> DB a
-unique [x] = pure x
-unique []  = notFound "Unique value is not found"
-unique _   = notUnique "Value is not unique"
+unique :: String -> [a] -> DB a
+unique _      [x] = pure x
+unique errmsg []  = notFound errmsg
+unique errmsg _   = notUnique errmsg
 
 getEntity :: (ToBackendKey SqlBackend (S.EntityRep e), Typeable e)
           => ID e -> DB (S.EntityRep e)
@@ -232,12 +231,12 @@ vdocRepo :: ID VDoc -> DB (ID VDocRepo)
 vdocRepo vid = do
   opts <- dbSelectOpts
   vs <- liftDB $ foreignKeyField S.vRRepository <$$> selectList [S.VRVdoc ==. S.idToKey vid] opts
-  unique vs
+  unique "vdocRepo" vs
 
 vdocRepoOfEdit :: ID Edit -> DB (ID VDocRepo)
 vdocRepoOfEdit eid = do
   opts <- dbSelectOpts
-  unique =<< liftDB
+  unique "vdocRepoOfEdit" =<< liftDB
     (foreignKeyField S.rPRepository <$$> selectList [S.RPEdit ==. S.idToKey eid] opts)
 
 -- * Repo
@@ -265,7 +264,7 @@ getRepoFromHandle :: DocRepo.RepoHandle -> DB VDocRepo
 getRepoFromHandle hndl = do
   opts <- dbSelectOpts
   rs <- liftDB $ selectList [S.RepoRepoHandle ==. hndl] opts
-  r <- unique rs
+  r <- unique "getRepoFromHandle" rs
   let rid = S.keyToId $ entityKey r
       toRepo _desc _hdnl repohead = VDocRepo rid (S.keyToId repohead)
   pure $ S.repoElim toRepo (entityVal r)
@@ -286,7 +285,7 @@ vDocRepoVDoc :: ID VDocRepo -> DB (ID VDoc)
 vDocRepoVDoc rid = do
   repos <- foreignKeyField S.vRVdoc
             <$$> liftDB (selectList [S.VRRepository ==. S.idToKey rid] [])
-  unique repos
+  unique "vdocRepoVDoc" repos
 
 -- * Edit
 
@@ -313,7 +312,7 @@ getEditFromHandle :: DocRepo.EditHandle -> DB Edit
 getEditFromHandle hndl = do
   opts <- dbSelectOpts
   ps <- liftDB $ selectList [S.EditEditHandle ==. hndl] opts
-  p <- unique ps
+  p <- unique "getEditFromHandle" ps
   mid <- getMeta . S.keyToId $ entityKey p
   let toEdit desc cr _hdnl = Edit mid desc cr
   pure $ S.editElim toEdit (entityVal p)
@@ -358,7 +357,7 @@ editVDocRepo :: ID Edit -> DB (ID VDocRepo)
 editVDocRepo pid = do
   opts <- dbSelectOpts
   rs <- liftDB $ foreignKeyField S.rPRepository <$$> selectList [S.RPEdit ==. S.idToKey pid] opts
-  unique rs
+  unique "editVDocRepo" rs
 
 registerEdit :: ID VDocRepo -> ID Edit -> DB ()
 registerEdit rid pid = void . liftDB . insert $ S.RP (S.idToKey rid) (S.idToKey pid)
@@ -447,7 +446,7 @@ statementsOfDiscussion did = do
 discussionOfStatement :: ID Statement -> DB (ID Discussion)
 discussionOfStatement sid = do
   opts <- dbSelectOpts
-  unique =<< liftDB
+  unique "discussionOfStatement" =<< liftDB
     (foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] opts)
 
 
@@ -484,7 +483,7 @@ createStatement :: ID Statement  -> Create Statement -> DB Statement
 createStatement sid statement = do
   opts <- dbSelectOpts
   ds  <- liftDB $ foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] opts
-  did <- unique ds
+  did <- unique "createStatement" ds
   let sstatement = S.Statement
           (statement ^. createStatementText)
           (Just $ S.idToKey sid)
@@ -594,7 +593,7 @@ universalGroup :: DB (ID Group)
 universalGroup = do
   opts <- dbSelectOpts
   xs <- (S.keyToId . entityKey) <$$> liftDB (selectList [ S.GroupUniversal ==. True ] opts)
-  unique xs
+  unique "universalGroup" xs
 
 -- * Roles
 
@@ -637,7 +636,7 @@ instance C.StoreProcessData DB CollaborativeEdit where
     opts <- dbSelectOpts
     ceids <- foreignKeyField S.processOfCollabEditCollabEdit
              <$$> liftDB (selectList [S.ProcessOfCollabEditProcess ==. S.idToKey pid] opts)
-    ceid <- unique ceids
+    ceid <- unique "getProcessData" ceids
     cedata <- getEntity ceid
     pure $ CollaborativeEdit
       ceid
@@ -648,7 +647,7 @@ instance C.StoreProcessData DB CollaborativeEdit where
     opts <- dbSelectOpts
     ceids <- foreignKeyField S.processOfCollabEditCollabEdit
              <$$> liftDB (selectList [S.ProcessOfCollabEditProcess ==. S.idToKey pid] opts)
-    ceid :: ID CollaborativeEdit <- unique ceids
+    ceid :: ID CollaborativeEdit <- unique "updateProcessData" ceids
     liftDB $ update (S.idToKey ceid)
       [ S.CollabEditProcessVdoc  =. process ^. createDBCollabEditProcessVDocID . to S.idToKey
       , S.CollabEditProcessPhase =. process ^. createDBCollabEditProcessPhase
@@ -673,7 +672,7 @@ instance C.StoreProcessData DB Aula where
     opts <- dbSelectOpts
     as  <- foreignKeyField S.processOfAulaAula
             <$$> liftDB (selectList [S.ProcessOfAulaProcess ==. S.idToKey pid] opts)
-    aid <- unique as
+    aid <- unique "getProcessData" as
     saula <- getEntity aid
     pure $ Aula aid (S.aulaProcessClass saula)
 
@@ -681,7 +680,7 @@ instance C.StoreProcessData DB Aula where
     opts <- dbSelectOpts
     as  <- foreignKeyField S.processOfAulaAula
             <$$> liftDB (selectList [S.ProcessOfAulaProcess ==. S.idToKey pid] opts)
-    aid :: ID Aula <- unique as
+    aid :: ID Aula <- unique "updateProcessData" as
     liftDB $ update (S.idToKey aid)
       [ S.AulaProcessClass =. process ^. createAulaProcessClassName
       ]
@@ -724,11 +723,11 @@ vDocProcess :: ID VDoc -> DB (ID (Process CollaborativeEdit))
 vDocProcess vid = do
   -- CollabEditProcess
   cedits <- entityKey <$$> liftDB (selectList [S.CollabEditProcessVdoc ==. S.idToKey vid] [])
-  cedit <- unique cedits
+  cedit <- unique "vDocProcess.e" cedits
   -- ProcessOfCollabEdit
   processes <- foreignKeyField S.processOfCollabEditProcess
                 <$$> liftDB (selectList [S.ProcessOfCollabEditCollabEdit ==. cedit] [])
-  unique processes
+  unique "vDocProcess.p" processes
 
 
 -- * GroupOf

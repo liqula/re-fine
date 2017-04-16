@@ -56,6 +56,8 @@ data TopMenuBarProps = TopMenuBarProps
  , _currentUser :: CurrentUser
  } deriving (Eq, Generic)
 
+instance UnoverlapAllEq TopMenuBarProps
+
 topMenuBar :: View '[TopMenuBarProps]
 topMenuBar = mkView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
   span_ [classNamesAny [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]] $ do

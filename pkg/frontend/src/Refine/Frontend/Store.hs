@@ -65,6 +65,13 @@ instance StoreData GlobalState where
     type StoreAction GlobalState = GlobalAction
     transform = loop . (:[])
       where
+        -- FUTUREWORK: we don't need this loop trick, we can implement reDispatch much more
+        -- straight-forwardly as @forkIO . dispatchM@.  (change this only when switching to a future
+        -- version of react-flux that has a monad-constraint-based interface.  then we'll have
+        -- @MonadState GlobalState@ here and probably can get rid of the need for redispatch
+        -- altogether, because it will be more easy to just apply a local state modification
+        -- instead.  which raises the question whether we want to keep the separation between the
+        -- pure state update and effects.)
         loop :: [GlobalAction] -> GlobalState -> IO GlobalState
         loop [] state = pure state
         loop (action : actions) state = do
@@ -109,6 +116,9 @@ transformGlobalState = transf
                   threadDelay $ delayMiliSecs * 1000
                   dispatchAndExec $ ContributionAction DischargeAddMarkPositions
 
+            ShowNotImplementedYet -> do
+                liftIO $ windowAlertST "not implemented yet."
+
             _ -> pure ()
 
         consoleLogJSONM "New state: " $ if state' /= state then toJSON state' else (String "[UNCHANGED]" :: Value)
@@ -122,7 +132,6 @@ transformGlobalState = transf
       & gsHeaderState                %~ headerStateUpdate action
       & gsDocumentState              %~ documentStateUpdate action (state ^? gsVDoc . _Just . C.compositeVDocVersion)
       & gsScreenState                %~ maybe id screenStateUpdate (action ^? _ScreenAction)
-      & gsNotImplementedYetIsVisible %~ notImplementedYetIsVisibleUpdate action
       & gsLoginState                 %~ loginStateUpdate action
       & gsMainMenuState              %~ mainMenuUpdate action
       & gsToolbarSticky              %~ toolbarStickyUpdate action
@@ -172,13 +181,6 @@ vdocListUpdate :: GlobalAction -> Maybe [C.ID C.VDoc] -> Maybe [C.ID C.VDoc]
 vdocListUpdate action state = case action of
     LoadedDocumentList list -> Just list
     _ -> state
-
-
-notImplementedYetIsVisibleUpdate :: GlobalAction -> Bool -> Bool
-notImplementedYetIsVisibleUpdate action state = case action of
-  ShowNotImplementedYet -> True
-  HideNotImplementedYet -> False
-  _                 -> state
 
 
 toolbarStickyUpdate :: GlobalAction -> Bool -> Bool
