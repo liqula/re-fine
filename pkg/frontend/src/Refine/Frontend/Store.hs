@@ -65,9 +65,14 @@ instance StoreData GlobalState where
     type StoreAction GlobalState = GlobalAction
     transform = loop . (:[])
       where
+        -- FUTUREWORK: we don't need this loop trick, we can implement reDispatch much more
+        -- straight-forwardly as @forkIO . dispatchM@.  (change this only when switching to a future
+        -- version of react-flux that has a monad-constraint-based interface.  then we'll have
+        -- @MonadState GlobalState@ here and probably can get rid of the need for redispatch
+        -- altogether, because it will be more easy to just apply a local state modification
+        -- instead.  which raises the question whether we want to keep the separation between the
+        -- pure state update and effects.)
         loop :: [GlobalAction] -> GlobalState -> IO GlobalState
-          -- TODO: we don't need this, we can implement reDispatch much more straight-forwardly as
-          -- @forkIO . dispatchM@.
         loop [] state = pure state
         loop (action : actions) state = do
           (state', actions') <- runStateT (transformGlobalState @Transform action state) []
