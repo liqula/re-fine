@@ -78,11 +78,13 @@ spec = do
     -- FIXME: Use the Cmd type instead
     it "Create/login/logout" $ \(runner :: AppM DB UH () -> IO ()) -> do
       forceEval . runner $ do
-
         void $ App.createUser (CreateUser "user" "user@example.com" "password")
         userState0 <- gets (view appUserState)
         appIO $ userState0 `shouldBe` UserLoggedOut
 
+      -- The user creation should happen in a different session, than
+      -- the login.
+      forceEval . runner $ do
         void $ App.login (Login "user" "password")
         userState1 <- gets (view appUserState)
         appIO $ userState1 `shouldSatisfy` isActiveUser
