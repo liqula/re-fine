@@ -79,6 +79,7 @@ spec :: Spec
 spec = do
   describe "The refineApp root component" . before clearState $ do
     it "starts fine" $ do
+      pending
       wrapper <- mount refineApp_
       contents :: String <- cs <$> html wrapper
       contents `shouldContain` "Load a VDoc"
