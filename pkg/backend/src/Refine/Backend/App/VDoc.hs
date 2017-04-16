@@ -114,27 +114,27 @@ getCompositeVDoc vid = do
 addEdit
   :: (MonadApp db uh, Allow (DB.ProcessPayload Edit) Edit)
   => ID Edit -> Create Edit -> AppM db uh Edit
-addEdit basepid edit = do
+addEdit baseeid edit = do
   appLog "addEdit"
-  assertPerms basepid [Create]  -- (note that the user must have create permission on the *base
+  assertPerms baseeid [Create]  -- (note that the user must have create permission on the *base
                                 -- edit*, not the edit about to get created.)
-  validateCreateChunkRange basepid (edit ^. createEditRange)
+  validateCreateChunkRange baseeid (edit ^. createEditRange)
   join . db $ do
-    rid                    <- DB.editVDocRepo basepid
-    (rhandle, basephandle) <- DB.handlesForEdit basepid
+    rid                    <- DB.editVDocRepo baseeid
+    (rhandle, baseehandle) <- DB.handlesForEdit baseeid
     pure $ do
       let version   = edit ^. createEditVDoc . to canonicalizeVDocVersion
-      childphandle <- docRepo $ DocRepo.createEdit rhandle basephandle version
+      childphandle <- docRepo $ DocRepo.createEdit rhandle baseehandle version
       db $ do
         childEdit <- DB.createEdit rid childphandle edit
-        DB.setEditChild basepid (childEdit ^. editID)
+        DB.setEditChild baseeid (childEdit ^. editID)
         pure childEdit
 
 
 -- | Throw an error if chunk range does not fit 'VDocVersion' identified by edit.
 validateCreateChunkRange :: ID Edit -> ChunkRange -> App ()
-validateCreateChunkRange pid cr = do
-  vers <- getVDocVersion pid
+validateCreateChunkRange eid cr = do
+  vers <- getVDocVersion eid
   case chunkRangeErrors cr vers of
     errs@(_:_) -> throwError $ AppVDocError errs
     [] -> pure ()
