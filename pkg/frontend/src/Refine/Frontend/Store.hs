@@ -239,8 +239,8 @@ emitBackendCallsFor action state = case action of
         let eid :: C.ID C.Edit
             eid = state ^?! gsVDoc . _Just . C.compositeVDocEditID
 
-            cid :: C.Create C.Edit
-            cid = C.CreateEdit
+            cedit :: C.Create C.Edit
+            cedit = C.CreateEdit
                   { C._createEditDesc  = "..."                          -- TODO: #233
                   , C._createEditRange = state ^. gsContributionState . csCurrentRange . to createChunkRange
                   , C._createEditVDoc  = C.downgradeVDocVersionWR newvers
@@ -248,7 +248,7 @@ emitBackendCallsFor action state = case action of
                   , C._createEditMotiv = "..."                          -- TODO: #233
                   }
 
-        addEdit eid cid $ \case
+        addEdit eid cedit $ \case
           Left rsp   -> handleError rsp (const [])
           Right edit -> dispatchM $ AddEdit edit
 

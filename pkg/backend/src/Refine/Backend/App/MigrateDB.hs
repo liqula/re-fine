@@ -24,7 +24,6 @@
 module Refine.Backend.App.MigrateDB where
 
 import Control.Lens
-import Control.Monad ((=<<))
 import Data.Monoid ((<>))
 
 import Refine.Backend.Config
@@ -46,8 +45,9 @@ migrateDB cfg = do
   appLog $ show mig
   appLog "Start database migration ... DONE"
 
-createInitialDB :: AppM DB uh ()
-createInitialDB = do
+initializeDB :: AppM DB uh ()
+initializeDB = do
   appLog "Create initial database state ..."
-  appLog . show =<< db (DB.createGroup (CreateGroup "Universal" "Group for all of the users" [] [] True))
+  ugroup <- db (DB.createGroup (CreateGroup "Universe" "The group that contains everything" [] [] True))
+  appLog $ show ugroup
   appLog "Create initial database state ... DONE"
