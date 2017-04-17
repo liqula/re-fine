@@ -34,7 +34,6 @@ import           Control.Monad ((<=<), join, mapM)
 import qualified Data.Map as Map
 import           Data.Maybe (catMaybes)
 
-import           Refine.Backend.App.Allow
 import           Refine.Backend.App.Core
 import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
@@ -116,8 +115,9 @@ addEdit
   => ID Edit -> Create Edit -> AppM db uh Edit
 addEdit baseeid edit = do
   appLog "addEdit"
-  assertPerms baseeid [Create]  -- (note that the user must have create permission on the *base
-                                -- edit*, not the edit about to get created.)
+  -- assertPerms baseeid [Create]  -- TODO: http://zb2/re-fine/re-fine/issues/286
+    -- (note that the user must have create permission on the *base
+    -- edit*, not the edit about to get created.)
   validateCreateChunkRange baseeid (edit ^. createEditRange)
   join . db $ do
     rid                    <- DB.editVDocRepo baseeid
