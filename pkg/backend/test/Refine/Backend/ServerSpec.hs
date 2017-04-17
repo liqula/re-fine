@@ -46,7 +46,7 @@ import           Servant.Utils.Links (safeLink)
 import           Test.Hspec
 
 import Refine.Backend.App as App
-import Refine.Backend.App.MigrateDB (createInitialDB)
+import Refine.Backend.App.MigrateDB (initializeDB)
 import Refine.Backend.Config
 import Refine.Backend.Database.Class as DB
 import Refine.Backend.Database (DB)
@@ -92,7 +92,7 @@ errorOnLeft action = either (throwIO . ErrorCall . show) pure =<< action
 createDevModeTestSession :: ActionWith (Backend DB FreeUH) -> IO ()
 createDevModeTestSession action = withTempCurrentDirectory $ do
   backend :: Backend DB FreeUH <- mkDevModeBackend (def & cfgShouldLog .~ False) mockLogin
-  (natThrowError . backendRunApp backend) $$ createInitialDB
+  (natThrowError . backendRunApp backend) $$ initializeDB
   action backend
 
 createTestSession :: ActionWith (Backend DB UH) -> IO ()

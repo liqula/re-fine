@@ -7,7 +7,7 @@ import System.IO (hSetBuffering, BufferMode(NoBuffering), stdout, stderr)
 
 import Refine.Backend.Config
 import Refine.Backend.Server
-import Refine.Backend.App.MigrateDB (createInitialDB)
+import Refine.Backend.App.MigrateDB (initializeDB)
 
 help :: IO ()
 help = do
@@ -23,7 +23,7 @@ help = do
 runInitDB :: Maybe FilePath -> IO ()
 runInitDB configPath = do
   cfg <- initConfig configPath
-  runCliAppCommand cfg createInitialDB
+  runCliAppCommand cfg initializeDB
 
 startServer :: Maybe FilePath -> IO ()
 startServer configPath = do
