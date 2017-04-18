@@ -90,7 +90,7 @@ The *merge* operation can join two branches of this tree, thus the history evolv
 
 ## Automatic merging
 
-I propose an automatic merging algorithm, similar to the one defined at https://github.com/exFalso/OT/blob/master/Patchable.hs#L64  
+I propose an automatic merging algorithm, similar to the one defined at https://github.com/exFalso/OT/blob/master/Patchable.hs#L64
 This works by successive merging of elementary edits.
 
 The algorithm can be tuned by defining the type of elementary edits and the merging of any two of them.
