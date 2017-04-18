@@ -20,10 +20,26 @@ is not relevant when the document is finalised.
 This difference is not relevant from the patch theory point of view;
 current state means current working state from now on (so it contains the comments too).
 
+(CLARIFICATION: "working state" is probably not a good term, and
+should not be used outside of this document.  i think it denotes the
+'VDoc' together with its associated 'Contribution's, i.e. comments
+(notes, questions, discussions) and edits.  contributions are always
+relevant for historical reasons even after releasing a new version, in
+the same way that a source code repository is not just the latest
+release, or even just the commits, but also the commit messages.
+comments differ from edits in that they are associated with specific
+versions of the document, while edits constitute and define these
+versions.)
+
 
 # Edits
 
 Edits mean *possible modifications* on a current state.
+
+(CLARIFICATION: "edit" is our technical term for patch, and not
+restricted to any specific kind of patches.  it can be merged,
+rejected, compounded into a list of larger edits, but it will always
+remain an edit.)
 
 
 ## Elementary edits
@@ -41,6 +57,17 @@ The associated data type `EEdit d` will denote the type of elementary edits on d
 The type `Edit d` will denote the type of edits, it is defined as
 
     type Edit d = [EEdit d]
+
+(CLARIFICATION: for sophisticated compounding of edits, we may need
+something like this:
+
+    data (Edit d) = ElementaryEdit (EEdit d) | CompoundedEdit [Edit d]
+
+that allows us to keep track of every compounding of even
+non-elementary edit lists, and to compound several times and later
+revert any number of those compoundings.)
+
+(QUESTIONS: does granularity affect size of edits?)
 
 
 ## Edits may depend on the current state
@@ -62,6 +89,13 @@ In case of multiple users, an edit also contains the id of the user who made the
 In this case *allowed editors* may be part of the current state to be
 able to restrict the possible edits by user id (because the edits depend on the value of the current state).
 
+(OBJECTION: this probably does not fit into our current authorization
+concept.  we already have the type 'MetaInfo' to keep track of
+creators and last changers, and we have functions to restrict access.
+it may make sense to leave a hole for these things in the version
+control modules of our code, but they must not re-introduce competing
+solutions for problems we've already solved.)
+
 
 # History
 
@@ -74,6 +108,12 @@ The *empty document* is value of type `d` (a type class member).
 
 *Local modifications* are the edits at the end of the history which are not yet stored in the server side
 (no acknowledgement was received from the server).
+
+(OBJECTION: please call them local edits, and do not introduce a new term "modification".)
+
+(QUESTION: we currently create an edit on the server.  the client can
+merely *request* creation of an edit.  so i don't think local edits
+can exist unless we change our implementation.
 
 
 ## Tags
@@ -101,5 +141,9 @@ The automatic merging algorithm may note if any information is lost.
 In case of the automatic merging does not give a sufficient result (especially in cases when information is lost),
 one can use a merge editor which applies additional edits to correct the automatic merging result.
 
-
-
+(COMMENT: it would be awesome (in the literal meaning of the word) if
+we could have a lot of cases in which we can prove that no information
+is destroyed by the merge, but i'm skeptical.  anyway we need to start
+with something very simple here, and focus on making the UI suitable
+for average word-users, not experienced git-users.  great automatic
+merging heuristics and algorithms will be the next step after that.)
