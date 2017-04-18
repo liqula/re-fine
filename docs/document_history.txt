@@ -32,8 +32,8 @@ An edit is a sequence of *elementary edits*.
 An elementary edit can be insertion of a character or insertion of a word.
 
 The granularity of elementary edits is only relevant in the merging algorithm.
-The merging is completely defined if merging of two elementary edit is defined.
-It is easier to defined merging in case of smaller elementary edits; whilst more sophisticated merging
+The merging is completely defined if merging of two elementary edits is defined.
+It is easier to define merging in case of smaller elementary edits; whilst more sophisticated merging
 needs more complex elementary edits.
 
 The associated data type `EEdit d` will denote the type of elementary edits on documents with type `d`.
@@ -47,7 +47,7 @@ The type `Edit d` will denote the type of edits, it is defined as
 
 The proper type of `EEdit` is not `* -> *` but `(d :: *) -> d -> *` i.e.
 the type of edits may depend on the *value* of the current state too:
-it is not possible delete from an empty list, for example.
+it is not possible to delete from an empty list, for example.
 We simplify the type of `EEdit` to avoid dependent types.
 
 
@@ -59,7 +59,7 @@ It may also contain metadata like modification time (when the edit was created).
 ### Authorisation
 
 In case of multiple users, an edit also contains the id of the user who made the modification.
-In this case *allowed editors* may part of the current state to be
+In this case *allowed editors* may be part of the current state to be
 able to restrict the possible edits by user id (because the edits depend on the value of the current state).
 
 
@@ -84,7 +84,7 @@ Tags are history identifiers.
 
 # Merging
 
-By edits on can construct a history tree.
+By edits one can construct a history tree.
 The *merge* operation can join two branches of this tree, thus the history evolves to a DAG.
 
 
