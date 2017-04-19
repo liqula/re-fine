@@ -36,13 +36,20 @@ data ApiError
   | ApiDocRepoError ST
   | ApiUserNotFound ST
   | ApiUserNotLoggedIn
-  | ApiUserCreationError ST
+  | ApiUserCreationError ApiErrorCreateUser
   | ApiCsrfError ST
   | ApiSessionError
   | ApiSanityCheckError ST
   | ApiUserHandleError ST
   | ApiL10ParseErrors [ST]
   | ApiUnauthorized
+  deriving (Eq, Show, Generic)
+
+data ApiErrorCreateUser
+  = ApiErrorInvalidPassword
+  | ApiErrorUsernameAlreadyTaken
+  | ApiErrorEmailAlreadyTaken
+  | ApiErrorUsernameAndEmailAlreadyTaken
   deriving (Eq, Show, Generic)
 
 -- | The 'S' prefix in the handlers stands for "server" (see 'refineApi' for an explanation).
@@ -147,3 +154,4 @@ type SRemoveProcess
     :> Post '[JSON] ()
 
 makeRefineType ''ApiError
+makeRefineType ''ApiErrorCreateUser

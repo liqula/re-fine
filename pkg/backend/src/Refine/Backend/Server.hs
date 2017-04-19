@@ -204,13 +204,20 @@ toApiError = \case
   AppDocRepoError e      -> ApiDocRepoError . cs $ show e
   AppUserNotFound e      -> ApiUserNotFound e
   AppUserNotLoggedIn     -> ApiUserNotLoggedIn
-  AppUserCreationError e -> ApiUserCreationError . cs $ show e
+  AppUserCreationError e -> ApiUserCreationError $ createUserErrorToApiError e
   AppCsrfError e         -> ApiCsrfError e
   AppSessionError        -> ApiSessionError
   AppSanityCheckError e  -> ApiSanityCheckError e
   AppUserHandleError e   -> ApiUserHandleError . cs $ show e
   AppL10ParseErrors e    -> ApiL10ParseErrors e
   AppUnauthorized        -> ApiUnauthorized
+
+-- | so we don't have to export backend types to the frontend.
+createUserErrorToApiError :: CreateUserError -> ApiErrorCreateUser
+createUserErrorToApiError InvalidPassword              = ApiErrorInvalidPassword
+createUserErrorToApiError UsernameAlreadyTaken         = ApiErrorUsernameAlreadyTaken
+createUserErrorToApiError EmailAlreadyTaken            = ApiErrorEmailAlreadyTaken
+createUserErrorToApiError UsernameAndEmailAlreadyTaken = ApiErrorUsernameAndEmailAlreadyTaken
 
 -- | Turns AppError to its kind of servant error.
 appServantErr :: AppError -> ServantErr

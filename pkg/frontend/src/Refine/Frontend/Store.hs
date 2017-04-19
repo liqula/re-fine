@@ -208,11 +208,11 @@ emitBackendCallsFor action state = case action of
 
     LoadDocumentList -> do
         listVDocs $ \case
-            (Left rsp) -> handleError rsp (const [])
+            (Left rsp) -> ajaxFail rsp Nothing
             (Right loadedVDocs) -> dispatchM $ LoadedDocumentList ((^. C.vdocID) <$> loadedVDocs)
     LoadDocument auid -> do
         getVDoc auid $ \case
-            (Left rsp) -> handleError rsp (const [])
+            (Left rsp) -> ajaxFail rsp Nothing
             (Right loadedVDoc) -> dispatchM $ OpenDocument loadedVDoc
 
 
@@ -225,12 +225,12 @@ emitBackendCallsFor action state = case action of
         Just CommentKindDiscussion ->
           addDiscussion (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
                      (C.CreateDiscussion text True forRange) $ \case
-            (Left rsp) -> handleError rsp (const [])
+            (Left rsp) -> ajaxFail rsp Nothing
             (Right discussion) -> dispatchM $ AddDiscussion discussion
         Just CommentKindNote ->
           addNote (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
                      (C.CreateNote text True forRange) $ \case
-            (Left rsp) -> handleError rsp (const [])
+            (Left rsp) -> ajaxFail rsp Nothing
             (Right note) -> dispatchM $ AddNote note
         Nothing -> pure ()
 
@@ -249,7 +249,7 @@ emitBackendCallsFor action state = case action of
                   }
 
         addEdit eid cedit $ \case
-          Left rsp   -> handleError rsp (const [])
+          Left rsp   -> ajaxFail rsp Nothing
           Right edit -> dispatchM $ AddEdit edit
 
       bad -> let msg = "DocumentAction DocumentEditSave: "
@@ -262,7 +262,7 @@ emitBackendCallsFor action state = case action of
 
     LoadTranslations locate -> do
       getTranslations (C.GetTranslations locate) $ \case
-        (Left rsp) -> handleError rsp (const [])
+        (Left rsp) -> ajaxFail rsp Nothing
         (Right l10) -> do
           dispatchM $ ChangeTranslations l10
 
@@ -271,10 +271,9 @@ emitBackendCallsFor action state = case action of
 
     CreateUser createUserData -> do
       createUser createUserData $ \case
-        (Left rsp)    -> do
-          handleError rsp $ \case
-            ApiUserCreationError e -> [MainMenuAction $ MainMenuActionRegistrationError e]
-            _                      -> []
+        (Left rsp) -> ajaxFail rsp . Just $ \case
+          ApiUserCreationError u -> [MainMenuAction $ MainMenuActionRegistrationError u]
+          _                      -> []
 
         (Right _user) -> do
           dispatchManyM
@@ -284,8 +283,8 @@ emitBackendCallsFor action state = case action of
 
     Login loginData -> do
       login loginData $ \case
-        (Left rsp) -> handleError rsp $ \case
-          ApiUserNotFound e -> [MainMenuAction . MainMenuActionLoginError $ "could not login as " <> e]
+        (Left rsp) -> ajaxFail rsp . Just $ \case
+          ApiUserNotFound e -> [MainMenuAction $ MainMenuActionLoginError e]
           _                 -> []
 
         (Right username) -> do
@@ -296,7 +295,7 @@ emitBackendCallsFor action state = case action of
 
     Logout -> do
       logout $ \case
-        (Left rsp) -> handleError rsp (const [])
+        (Left rsp) -> ajaxFail rsp Nothing
         (Right ()) -> do
           dispatchManyM
             [ ChangeCurrentUser UserLoggedOut
@@ -308,7 +307,7 @@ emitBackendCallsFor action state = case action of
 
     AddDemoDocument -> do
         createVDoc (C.CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
-            (Left rsp) -> handleError rsp (const [])
+            (Left rsp) -> ajaxFail rsp Nothing
             (Right loadedVDoc) -> dispatchM $ OpenDocument loadedVDoc
 
 
@@ -321,15 +320,11 @@ createChunkRange :: Maybe Range -> C.ChunkRange
 createChunkRange Nothing = C.ChunkRange Nothing Nothing
 createChunkRange (Just range) = C.ChunkRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
 
-handleError :: (Int, String) -> (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
-handleError (code, rsp) onApiError = case eitherDecode $ cs rsp of
-  Left err -> do
-    consoleLogJSStringM "handleError: backend sent invalid response: " . cs $ unwords [show code, rsp, err]
-        -- FIXME: use 'gracefulError' here.  (rename 'gracefulError' to 'assertContract'?)
-    pure []
-  Right apiError -> do
-    consoleLogJSStringM "handleApiError" . cs $ show apiError
-    pure . mconcat . fmap dispatch $ onApiError apiError
+ajaxFail :: (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
+ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of
+  (Right err, Just onApiError) -> dispatchManyM (onApiError err)
+  (Right err, Nothing)         -> windowAlert ("Unexpected error from server: " <> show (code, err))     >> pure []
+  (Left bad, _)                -> windowAlert ("Corrupted error from server: " <> show (code, rsp, bad)) >> pure []
 
 
 -- * triggering actions

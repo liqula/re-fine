@@ -1,6 +1,7 @@
 module Refine.Frontend.MainMenu.Store where
 
 import Control.Lens ((&), (.~))
+import Data.String.Conversions (cs)
 
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Store.Types (GlobalAction(..))
@@ -18,8 +19,8 @@ mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) state =
 mainMenuUpdate (MainMenuAction (MainMenuActionLoginError e)) state =
   state & mmErrors . mmeLogin .~ Just e
 
-mainMenuUpdate (MainMenuAction (MainMenuActionRegistrationError e)) state =
-  state & mmErrors . mmeRegistration .~ Just e
+mainMenuUpdate (MainMenuAction (MainMenuActionRegistrationError e)) state = state
+  & mmErrors . mmeRegistration .~ Just (cs $ show e)
 
 mainMenuUpdate (MainMenuAction MainMenuActionClearErrors) state =
   state & mmErrors . mmeLogin        .~ Nothing
