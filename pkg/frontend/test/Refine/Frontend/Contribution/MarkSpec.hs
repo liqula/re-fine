@@ -128,7 +128,7 @@ spec = do
           storeShouldEventuallyBe (^?! gsDevState . _Just . devStateTrace) []
           _ <- mount $ rfMark_ theProps chldrn
           storeShouldEventuallyContain (^?! gsDevState . _Just . devStateTrace)
-            [ContributionAction (ScheduleAddMarkPosition (ContribIDNote (ID 77)) (MarkPosition 0 0))]
+            [ContributionAction (AddMarkPosition (ContribIDNote (ID 77)) (MarkPosition 0 0))]
 
     context "component without children" $ do
       it "dispatches ScheduleAddMarkPosition only once" $ test mempty

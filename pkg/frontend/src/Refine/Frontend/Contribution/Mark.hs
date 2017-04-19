@@ -58,7 +58,7 @@ rfMark = defineLifecycleView "RefineMark" () lifecycleConfig
    , lComponentDidMount = Just $ \propsandstate ldom _ -> do
              props  <- lGetProps propsandstate
              mark   <- lThis ldom
-             dispatchMarkPosition (props ^. markPropsContributionID) mark
+             dispatchAddMarkPosition (props ^. markPropsContributionID) mark
    }
 
 rfMark_ :: MarkProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
@@ -69,8 +69,8 @@ rfMark_ = view rfMark
 type HTMLElement = JSVal
 
 -- | Take the vertical dimension of the bounding rectangle for the mark, and dispatch it.
-dispatchMarkPosition :: ContributionID -> HTMLElement -> IO ()
-dispatchMarkPosition dataContributionId element = dispatchAndExec =<< do
+dispatchAddMarkPosition :: ContributionID -> HTMLElement -> IO ()
+dispatchAddMarkPosition dataContributionId element = dispatchAndExec =<< do
   topOffset    <- js_getBoundingClientRectTop element
   bottomOffset <- js_getBoundingClientRectBottom element
   scrollOffset <- js_getScrollOffset
@@ -78,7 +78,7 @@ dispatchMarkPosition dataContributionId element = dispatchAndExec =<< do
         { _markPositionTop    = offsetFromDocumentTop topOffset    scrollOffset
         , _markPositionBottom = offsetFromDocumentTop bottomOffset scrollOffset
         }
-      action = ContributionAction $ ScheduleAddMarkPosition dataContributionId markPosition
+      action = ContributionAction $ AddMarkPosition dataContributionId markPosition
   pure action
 
 foreign import javascript unsafe

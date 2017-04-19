@@ -40,16 +40,16 @@ spec = do
   describe "markPositionsUpdate" $ do
     context "old value does not exist" $ do
       it "stores new mark position." $ do
-        let markPositions  = MarkPositions mempty mempty
-            addEvent = ScheduleAddMarkPosition (cnid 1) (MarkPosition 300 320)
-            markPositions' = MarkPositions mempty (Map.singleton (cnid 1) (MarkPosition 300 320))
+        let markPositions  = MarkPositions mempty
+            addEvent = AddMarkPosition (cnid 1) (MarkPosition 300 320)
+            markPositions' = MarkPositions (Map.singleton (cnid 1) (MarkPosition 300 320))
         markPositionsUpdate addEvent markPositions `shouldBe` markPositions'
 
     context "old value exists" $ do
       let check state action state' = do
-            let markPositions  = MarkPositions mempty (Map.singleton (cnid 1) state)
-                addEvent       = ScheduleAddMarkPosition (cnid 1) action
-                markPositions' = MarkPositions mempty (Map.singleton (cnid 1) state')
+            let markPositions  = MarkPositions (Map.singleton (cnid 1) state)
+                addEvent       = AddMarkPosition (cnid 1) action
+                markPositions' = MarkPositions (Map.singleton (cnid 1) state')
             markPositionsUpdate addEvent markPositions `shouldBe` markPositions'
 
       it "keeps min of top and max of bottom offset." $ do
