@@ -3,10 +3,11 @@
 
 module Refine.Frontend.MainMenu.Types where
 
-import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 import React.Flux (UnoverlapAllEq)
 
+import Refine.Common.Rest (ApiErrorCreateUser)
+import Refine.Common.Types.Prelude (Username)
 import Refine.Frontend.Login.Types
 import Refine.Prelude.TH (makeRefineType)
 
@@ -14,8 +15,8 @@ import Refine.Prelude.TH (makeRefineType)
 data MainMenuAction
   = MainMenuActionClose
   | MainMenuActionOpen MainMenuTab
-  | MainMenuActionLoginError        ST
-  | MainMenuActionRegistrationError ST
+  | MainMenuActionLoginError        Username
+  | MainMenuActionRegistrationError ApiErrorCreateUser
   | MainMenuActionClearErrors
   deriving (Eq, Show, Generic)
 
