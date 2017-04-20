@@ -66,12 +66,12 @@ editToolbar = mkView "EditToolbar" $ do
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "bold"
             & iconButtonPropsLabel        .~ "bold"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [DocumentAction DocumentToggleBold]
 
           iconButton_ $ editButton
             & iconButtonPropsListKey      .~ "italic"
             & iconButtonPropsLabel        .~ "italic"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [DocumentAction DocumentToggleItalic]
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
