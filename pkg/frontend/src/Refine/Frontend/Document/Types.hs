@@ -36,6 +36,8 @@ import           Refine.Prelude.TH (makeRefineType)
 data DocumentAction =
     DocumentEditUpdate DocumentEditState
   | DocumentEditSave
+  | DocumentToggleBold
+  | DocumentToggleItalic
   deriving (Show, Eq, Generic)
 
 data DocumentState =

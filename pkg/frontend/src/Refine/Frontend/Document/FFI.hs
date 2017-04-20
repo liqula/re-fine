@@ -41,6 +41,10 @@ module Refine.Frontend.Document.FFI
 
     -- * contrib
   , stateToHTML
+
+    -- * editor state actions
+  , documentToggleBold
+  , documentToggleItalic
   ) where
 
 import qualified Data.Aeson as Aeson
@@ -128,3 +132,19 @@ stateToHTML = parseTokens . cs . js_Draft_stateToHTML
 foreign import javascript unsafe
     "DraftStateToHTML($1)"
     js_Draft_stateToHTML :: ContentState -> JSString
+
+
+-- * editor state actions
+
+-- | toggle bold style on current selection
+documentToggleBold :: EditorState -> EditorState
+documentToggleBold st = js_ES_toggleInlineStyle st "BOLD"
+
+-- | toggle italic style on current selection
+documentToggleItalic :: EditorState -> EditorState
+documentToggleItalic st = js_ES_toggleInlineStyle st "ITALIC"
+
+-- | https://draftjs.org/docs/api-reference-rich-utils.html#content
+foreign import javascript unsafe
+    "RichUtils.toggleInlineStyle($1,$2)"
+    js_ES_toggleInlineStyle :: EditorState -> JSString -> EditorState

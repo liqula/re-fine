@@ -27,7 +27,7 @@ module Refine.Frontend.Document.Store
   , editorStateToVDocVersion
   ) where
 
-import           Control.Lens ((&), (.~), (^.))
+import           Control.Lens ((&), (.~), (%~), (^.))
 import           System.IO.Unsafe (unsafePerformIO)
 import           Text.HTML.Tree (tokensFromForest, tokensToForest, ParseTokenForestError)
 
@@ -44,6 +44,12 @@ documentStateUpdate (HeaderAction (StartEdit kind)) (Just vdocvers) _state
 
 documentStateUpdate (DocumentAction (DocumentEditUpdate es)) (Just _) state
   = state & _DocumentStateEdit .~ es
+
+documentStateUpdate (DocumentAction DocumentToggleBold) (Just _) state
+  = state & _DocumentStateEdit . documentEditStateVal %~ documentToggleBold
+
+documentStateUpdate (DocumentAction DocumentToggleItalic) (Just _) state
+  = state & _DocumentStateEdit . documentEditStateVal %~ documentToggleItalic
 
 documentStateUpdate (DocumentAction DocumentEditSave) _ _
   = DocumentStateView

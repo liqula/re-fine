@@ -11,6 +11,7 @@
 
     target.Draft = require("draft-js");
     target.DraftEditor = target.Draft.Editor;  // (we need this to be a name (not an expression) for 'foreign_' to work.)
+    target.RichUtils = target.Draft.RichUtils;
 
     target.DraftStateToHTML = require("draft-js-export-html").stateToHTML;
 
