@@ -121,15 +121,15 @@ instance FromJSON RawContent where
 instance ToJSON (Block EntityKey) where
   toJSON (Block content ranges styles ty key) = object $
     [ "text"              .= content
-    , "entityRanges"      .= (renderRanges <$> ranges)
-    , "inlineStyleRanges" .= (renderStyles <$> styles)
+    , "entityRanges"      .= (renderRange <$> ranges)
+    , "inlineStyleRanges" .= (renderStyle <$> styles)
     , "depth"             .= blockTypeDepth ty
     , "type"              .= ty
     ] <>
     [ "key" .= k | k <- maybeToList key ]
     where
-      renderRanges (k, (l, o))    = object ["key"   .= k, "length" .= l, "offset" .= o]
-      renderStyles ((l, o), s)    = object ["style" .= s, "length" .= l, "offset" .= o]
+      renderRange (k, (l, o)) = object ["key"   .= k, "length" .= l, "offset" .= o]
+      renderStyle ((l, o), s) = object ["style" .= s, "length" .= l, "offset" .= o]
 
 instance ToJSON BlockType where
   toJSON NormalText      = "unstyled"
