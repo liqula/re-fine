@@ -59,6 +59,7 @@ tests:
       - hspec
       - hspec-core
       - hspec-discover
+      - hspec-golden-aeson
       - QuickCheck
       - quickcheck-instances
       - xml-html-qq

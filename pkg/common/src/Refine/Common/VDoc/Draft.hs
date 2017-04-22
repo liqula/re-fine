@@ -35,6 +35,9 @@ import qualified Data.Map as Map
 import           Data.Monoid ((<>))
 import           Data.Maybe (fromMaybe, maybeToList)
 import           Data.String.Conversions
+import           GHC.Generics
+
+import Refine.Prelude.TH
 
 
 -- * data types
@@ -45,7 +48,7 @@ data RawContent = RawContent
   { _rawContentBlocks    :: [Block EntityKey]
   , _rawContentEntityMap :: IntMap Entity  -- ^ for performance, do not use @Map EntityKey Entity@ here.
   }
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
 
 -- | typical rangekey values are 'Int' and 'Entity'
 data Block rangeKey = Block
@@ -55,16 +58,16 @@ data Block rangeKey = Block
   , _blockType         :: BlockType
   , _blockKey          :: Maybe BlockKey
   }
-  deriving (Eq, Show, Functor, Foldable)
+  deriving (Eq, Show, Functor, Foldable, Generic)
 
 -- | `key` attribute of the 'Block'.  'SelectionState' uses this to refer to blocks.  If in doubt
 -- leave it 'Nothing'.
 newtype BlockKey = BlockKey ST
-  deriving (Eq, Ord, Show, ToJSON, FromJSON)
+  deriving (Eq, Ord, Show, ToJSON, FromJSON, Generic)
 
 -- | key into 'rawContentEntityMap'.
 newtype EntityKey = EntityKey { _unEntityKey :: Int }
-  deriving (Eq, Ord, Show, ToJSON, FromJSON)
+  deriving (Eq, Ord, Show, ToJSON, FromJSON, Generic)
 
 type EntityRange = (Int, Int)
 
@@ -72,13 +75,13 @@ type EntityRange = (Int, Int)
 newtype Entity =
     EntityLink ST  -- ^ url
 --  | ...
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Generic)
 
 -- | a style's range should fit into a single block
 data Style =
     Bold
   | Italic
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
 
 -- | each block has a unique blocktype
 data BlockType =
@@ -88,7 +91,7 @@ data BlockType =
   | Header3
   | BulletPoint Int -- ^ depth
   | EnumPoint   Int -- ^ depth
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
 
 
 -- | https://draftjs.org/docs/api-reference-selection-state.html
@@ -97,17 +100,37 @@ data SelectionState
       { _selectionStart :: SelectionPoint
       , _selectionEnd   :: SelectionPoint
       }
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Generic)
 
 data SelectionPoint
   = SelectionPoint
       { _selectionBlock  :: BlockKey
       , _selectionOffset :: Int
       }
-  deriving (Eq, Ord)
+  deriving (Eq, Ord, Generic)
 
 
 -- * instances
+
+makeSOPGeneric ''RawContent
+makeSOPGeneric ''Block
+makeSOPGeneric ''BlockKey
+makeSOPGeneric ''EntityKey
+makeSOPGeneric ''Entity
+makeSOPGeneric ''Style
+makeSOPGeneric ''BlockType
+makeSOPGeneric ''SelectionState
+makeSOPGeneric ''SelectionPoint
+
+makeNFData ''RawContent
+makeNFData ''Block
+makeNFData ''BlockKey
+makeNFData ''EntityKey
+makeNFData ''Entity
+makeNFData ''Style
+makeNFData ''BlockType
+makeNFData ''SelectionState
+makeNFData ''SelectionPoint
 
 instance ToJSON RawContent where
   toJSON (RawContent blocks entitymap) = object
