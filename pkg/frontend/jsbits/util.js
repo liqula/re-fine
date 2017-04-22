@@ -7,6 +7,14 @@
         );
     };
 
+    target.refine$getSelection = function () {
+        var es = EditorState.getSelection();
+        return { _selectionStart: { _selectionBlock: es.getStartKey(), _selectionOffset: es.getStartOffset() },
+                 _selectionEnd:   { _selectionBlock: es.getEndKey(),   _selectionOffset: es.getEndOffset() }
+               };
+    };
+
+    // DEPRECATED
     target.refine$getSelectionRange = function(doctop) {
         // if there is no valid selection, return the empty string.
         // this will return very fast, and aeson will parse it to

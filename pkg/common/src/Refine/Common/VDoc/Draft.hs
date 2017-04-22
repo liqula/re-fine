@@ -60,11 +60,11 @@ data Block rangeKey = Block
 -- | `key` attribute of the 'Block'.  'SelectionState' uses this to refer to blocks.  If in doubt
 -- leave it 'Nothing'.
 newtype BlockKey = BlockKey ST
-  deriving (Eq, Show, ToJSON, FromJSON)
+  deriving (Eq, Ord, Show, ToJSON, FromJSON)
 
 -- | key into 'rawContentEntityMap'.
 newtype EntityKey = EntityKey { _unEntityKey :: Int }
-  deriving (Eq, Show, ToJSON, FromJSON)
+  deriving (Eq, Ord, Show, ToJSON, FromJSON)
 
 type EntityRange = (Int, Int)
 
@@ -89,6 +89,22 @@ data BlockType =
   | BulletPoint Int -- ^ depth
   | EnumPoint   Int -- ^ depth
   deriving (Show, Eq)
+
+
+-- | https://draftjs.org/docs/api-reference-selection-state.html
+data SelectionState
+  = Selection
+      { _selectionStart :: SelectionPoint
+      , _selectionEnd   :: SelectionPoint
+      }
+  deriving (Eq, Ord)
+
+data SelectionPoint
+  = SelectionPoint
+      { _selectionBlock  :: BlockKey
+      , _selectionOffset :: Int
+      }
+  deriving (Eq, Ord)
 
 
 -- * instances
