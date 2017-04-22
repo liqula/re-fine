@@ -69,7 +69,7 @@ newtype EntityKey = EntityKey { _unEntityKey :: Int }
 type EntityRange = (Int, Int)
 
 -- | an entity's range may span across multiple blocks
-data Entity =
+newtype Entity =
     EntityLink ST  -- ^ url
 --  | ...
   deriving (Show, Eq, Ord)
