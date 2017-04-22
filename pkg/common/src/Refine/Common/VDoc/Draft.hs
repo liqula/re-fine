@@ -24,7 +24,7 @@
 module Refine.Common.VDoc.Draft
 where
 
-import           Control.Exception (assert)
+import           Control.Lens (Lens', (^.), (.~), (&))
 import           Data.Aeson
 import           Data.Foldable (toList)
 import           Data.Functor.Infix ((<$$>))
@@ -116,20 +116,46 @@ instance ToJSON RawContent where
     ]
 
 instance FromJSON RawContent where
-  parseJSON = assert False undefined
+  parseJSON = withObject "RawContent" $ \obj -> RawContent
+    <$> obj .: "blocks"
+    <*> obj .: "entityMap"
 
 instance ToJSON (Block EntityKey) where
   toJSON (Block content ranges styles ty key) = object $
     [ "text"              .= content
     , "entityRanges"      .= (renderRange <$> ranges)
     , "inlineStyleRanges" .= (renderStyle <$> styles)
-    , "depth"             .= blockTypeDepth ty
+    , "depth"             .= (ty ^. blockTypeDepth)
     , "type"              .= ty
     ] <>
     [ "key" .= k | k <- maybeToList key ]
     where
       renderRange (k, (l, o)) = object ["key"   .= k, "length" .= l, "offset" .= o]
       renderStyle ((l, o), s) = object ["style" .= s, "length" .= l, "offset" .= o]
+
+instance FromJSON (Block EntityKey) where
+  parseJSON = withObject "Block EntityKey" $ \obj -> Block
+    <$> obj .: "text"
+    <*> (mapM parseRange =<< (obj .: "entityRanges"))
+    <*> (mapM parseStyle =<< (obj .: "inlineStyleRanges"))
+    <*> getType obj
+    <*> obj .:? "key"
+    where
+      parseRange = withObject "Block EntityKey: entityRanges" $ \obj -> do
+        k <- obj .: "key"
+        l <- obj .: "length"
+        o <- obj .: "offset"
+        pure (k, (l, o))
+      parseStyle = withObject "Block EntityKey: inlineStyleRanges" $ \obj -> do
+        s <- obj .: "style"
+        l <- obj .: "length"
+        o <- obj .: "offset"
+        pure ((l, o), s)
+
+      getType obj = do
+        d <- obj .: "depth"
+        t <- obj .: "type"
+        pure (t & blockTypeDepth .~ d)
 
 instance ToJSON BlockType where
   toJSON NormalText      = "unstyled"
@@ -139,6 +165,15 @@ instance ToJSON BlockType where
   toJSON (BulletPoint _) = "unordered-list-item"
   toJSON (EnumPoint _)   = "ordered-list-item"
 
+instance FromJSON BlockType where
+  parseJSON (String "unstyled")            = pure NormalText
+  parseJSON (String "header-one")          = pure Header1
+  parseJSON (String "header-two")          = pure Header2
+  parseJSON (String "header-three")        = pure Header3
+  parseJSON (String "unordered-list-item") = pure $ BulletPoint 0
+  parseJSON (String "ordered-list-item")   = pure $ EnumPoint 0
+  parseJSON bad = fail $ "BlockType: no parse for " <> show bad
+
 instance ToJSON Entity where
   toJSON (EntityLink url) = object
     [ "type"            .= ("LINK" :: ST)
@@ -146,9 +181,21 @@ instance ToJSON Entity where
     , "data"            .= object ["url" .= url]
     ]
 
+instance FromJSON Entity where
+  parseJSON = withObject "Entity" $ \obj -> do
+    ty :: ST <- obj .: "type"
+    case ty of
+      "LINK" -> EntityLink <$> obj .: "url"
+      bad -> fail $ "Entity: no parse for " <> show bad
+
 instance ToJSON Style where
   toJSON Bold   = "BOLD"
   toJSON Italic = "ITALIC"
+
+instance FromJSON Style where
+  parseJSON (String "BOLD")   = pure Bold
+  parseJSON (String "ITALIC") = pure Italic
+  parseJSON bad = fail $ "Style: no parse for " <> show bad
 
 
 -- * functions
@@ -165,7 +212,11 @@ mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
 
     em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
 
-blockTypeDepth :: BlockType -> Int
-blockTypeDepth (BulletPoint d) = d
-blockTypeDepth (EnumPoint d)   = d
-blockTypeDepth _               = 0
+blockTypeDepth :: Lens' BlockType Int
+blockTypeDepth focus = \case
+  NormalText    -> const NormalText <$> focus 0
+  Header1       -> const Header1    <$> focus 0
+  Header2       -> const Header2    <$> focus 0
+  Header3       -> const Header3    <$> focus 0
+  BulletPoint d -> BulletPoint      <$> focus d
+  EnumPoint d   -> EnumPoint        <$> focus d
