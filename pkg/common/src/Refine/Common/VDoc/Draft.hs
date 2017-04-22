@@ -26,35 +26,36 @@ where
 
 import           Control.Exception (assert)
 import           Data.Aeson
-import           Data.String.Conversions
-import           Data.List (nub)
-import           Data.Maybe (fromMaybe, maybeToList)
 import           Data.Foldable (toList)
-import qualified Data.Map as Map
+import           Data.Functor.Infix ((<$$>))
+import           Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
+import           Data.List (nub)
+import qualified Data.Map as Map
+import           Data.Monoid ((<>))
+import           Data.Maybe (fromMaybe, maybeToList)
+import           Data.String.Conversions
 
 
--- * target data types
-
--- FIXME: should be called RawDraftContentState
+-- | FIXME: should be called RawDraftContentState
 data RawContent = RawContent
   { _rawContentBlocks    :: [Block EntityKey]
-  , _rawContentEntityMap :: IntMap.IntMap Entity
+  , _rawContentEntityMap :: IntMap Entity  -- ^ for performance, do not use @Map EntityKey Entity@ here.
   }
-  deriving (Show)
+  deriving (Eq, Show)
 
--- FIXME: this should be a newtype
-type EntityKey = Int
+newtype EntityKey = EntityKey { _unEntityKey :: Int }
+  deriving (Eq, Show, ToJSON, FromJSON)
 
 mkRawContent :: [Block Entity] -> RawContent
-mkRawContent bs = RawContent (fmap index <$> bs) (IntMap.fromList entities)
+mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
   where
     -- FUTUREWORK: it is possible to do just one traversal to collect and index entities
     -- https://www.reddit.com/r/haskell/comments/610sa1/applicative_sorting/
     entities = zip [0..] . nub $ concatMap toList bs
 
-    index :: Entity -> Int
-    index e = fromMaybe (error "mkRawContent: impossible") $ Map.lookup e em
+    index :: Entity -> EntityKey
+    index e = EntityKey . fromMaybe (error "mkRawContent: impossible") $ Map.lookup e em
 
     em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
 
@@ -64,18 +65,18 @@ data Block rangeKey = Block
   , _blockEntityRanges :: [(rangeKey, EntityRange)]
   , _blockStyles       :: [(EntityRange, Style)]
   , _blockType         :: BlockType
-  , _blockKey          :: Maybe BlockKey -- ^ SelectionState uses this to refer to blocks; if in doubt leave it Nothing
+  , _blockKey          :: Maybe BlockKey  -- ^ SelectionState uses this to refer to blocks; if in doubt leave it Nothing
   }
-  deriving (Show, Functor, Foldable)
+  deriving (Eq, Show, Functor, Foldable)
 
 newtype BlockKey = BlockKey ST
-  deriving (Show, ToJSON, FromJSON)
+  deriving (Eq, Show, ToJSON, FromJSON)
 
 type EntityRange = (Int, Int)
 
 -- | an entity's range may span across multiple blocks
 data Entity =
-    EntityLink ST   -- url
+    EntityLink ST  -- ^ url
 --  | ...
   deriving (Show, Eq, Ord)
 
@@ -87,12 +88,12 @@ data Style =
 
 -- | each block has a unique blocktype
 data BlockType =
-    NormalText --Int -- FUTUREWORK: add depth
+    NormalText  -- FUTUREWORK: add depth
   | Header1
   | Header2
   | Header3
-  | BulletPoint Int -- depth
-  | EnumPoint   Int -- depth
+  | BulletPoint Int -- ^ depth
+  | EnumPoint   Int -- ^ depth
   deriving (Show, Eq)
 
 blockTypeDepth :: BlockType -> Int
@@ -109,14 +110,14 @@ instance ToJSON RawContent where
 instance FromJSON RawContent where
   parseJSON = assert False undefined
 
-instance ToJSON (Block Int) where
+instance ToJSON (Block EntityKey) where
   toJSON (Block content ranges styles ty key) = object $
     [ "text"              .= content
     , "entityRanges"      .= (renderRanges <$> ranges)
     , "inlineStyleRanges" .= (renderStyles <$> styles)
     , "depth"             .= blockTypeDepth ty
     , "type"              .= ty
-    ] ++
+    ] <>
     [ "key" .= k | k <- maybeToList key ]
     where
       renderRanges (k, (l, o))    = object ["key"   .= k, "length" .= l, "offset" .= o]
