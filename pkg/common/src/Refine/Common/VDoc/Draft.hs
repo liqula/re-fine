@@ -39,15 +39,13 @@ import           Data.String.Conversions
 
 -- * data types
 
--- | FIXME: should be called RawDraftContentState
+-- | Haskell representation of the javascript @RawDraftContentState@.
+-- https://draftjs.org/docs/api-reference-data-conversion.html#content
 data RawContent = RawContent
   { _rawContentBlocks    :: [Block EntityKey]
   , _rawContentEntityMap :: IntMap Entity  -- ^ for performance, do not use @Map EntityKey Entity@ here.
   }
   deriving (Eq, Show)
-
-newtype EntityKey = EntityKey { _unEntityKey :: Int }
-  deriving (Eq, Show, ToJSON, FromJSON)
 
 -- | typical rangekey values are 'Int' and 'Entity'
 data Block rangeKey = Block
@@ -55,11 +53,17 @@ data Block rangeKey = Block
   , _blockEntityRanges :: [(rangeKey, EntityRange)]
   , _blockStyles       :: [(EntityRange, Style)]
   , _blockType         :: BlockType
-  , _blockKey          :: Maybe BlockKey  -- ^ SelectionState uses this to refer to blocks; if in doubt leave it Nothing
+  , _blockKey          :: Maybe BlockKey
   }
   deriving (Eq, Show, Functor, Foldable)
 
+-- | `key` attribute of the 'Block'.  'SelectionState' uses this to refer to blocks.  If in doubt
+-- leave it 'Nothing'.
 newtype BlockKey = BlockKey ST
+  deriving (Eq, Show, ToJSON, FromJSON)
+
+-- | key into 'rawContentEntityMap'.
+newtype EntityKey = EntityKey { _unEntityKey :: Int }
   deriving (Eq, Show, ToJSON, FromJSON)
 
 type EntityRange = (Int, Int)
