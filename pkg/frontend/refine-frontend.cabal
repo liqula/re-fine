@@ -171,7 +171,6 @@ test-suite spec
       Refine.Frontend.Contribution.DialogSpec
       Refine.Frontend.Contribution.MarkSpec
       Refine.Frontend.Contribution.QuickCreateSpec
-      Refine.Frontend.Contribution.StoreSpec
       Refine.Frontend.Document.DocumentSpec
       Refine.Frontend.Header.DocumentHeaderSpec
       Refine.Frontend.Header.HeadingSpec
