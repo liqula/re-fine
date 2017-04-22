@@ -37,6 +37,8 @@ import           Data.Maybe (fromMaybe, maybeToList)
 import           Data.String.Conversions
 
 
+-- * data types
+
 -- | FIXME: should be called RawDraftContentState
 data RawContent = RawContent
   { _rawContentBlocks    :: [Block EntityKey]
@@ -46,18 +48,6 @@ data RawContent = RawContent
 
 newtype EntityKey = EntityKey { _unEntityKey :: Int }
   deriving (Eq, Show, ToJSON, FromJSON)
-
-mkRawContent :: [Block Entity] -> RawContent
-mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
-  where
-    -- FUTUREWORK: it is possible to do just one traversal to collect and index entities
-    -- https://www.reddit.com/r/haskell/comments/610sa1/applicative_sorting/
-    entities = zip [0..] . nub $ concatMap toList bs
-
-    index :: Entity -> EntityKey
-    index e = EntityKey . fromMaybe (error "mkRawContent: impossible") $ Map.lookup e em
-
-    em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
 
 -- | typical rangekey values are 'Int' and 'Entity'
 data Block rangeKey = Block
@@ -96,10 +86,8 @@ data BlockType =
   | EnumPoint   Int -- ^ depth
   deriving (Show, Eq)
 
-blockTypeDepth :: BlockType -> Int
-blockTypeDepth (BulletPoint d) = d
-blockTypeDepth (EnumPoint d)   = d
-blockTypeDepth _               = 0
+
+-- * instances
 
 instance ToJSON RawContent where
   toJSON (RawContent blocks entitymap) = object
@@ -141,3 +129,23 @@ instance ToJSON Entity where
 instance ToJSON Style where
   toJSON Bold   = "BOLD"
   toJSON Italic = "ITALIC"
+
+
+-- * functions
+
+mkRawContent :: [Block Entity] -> RawContent
+mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
+  where
+    -- FUTUREWORK: it is possible to do just one traversal to collect and index entities
+    -- https://www.reddit.com/r/haskell/comments/610sa1/applicative_sorting/
+    entities = zip [0..] . nub $ concatMap toList bs
+
+    index :: Entity -> EntityKey
+    index e = EntityKey . fromMaybe (error "mkRawContent: impossible") $ Map.lookup e em
+
+    em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
+
+blockTypeDepth :: BlockType -> Int
+blockTypeDepth (BulletPoint d) = d
+blockTypeDepth (EnumPoint d)   = d
+blockTypeDepth _               = 0
