@@ -6,6 +6,12 @@ packages:
 - location: '../prelude'
   extra-dep: true
 - location:
+    git: https://github.com/ekmett/lens.git
+    commit: 7d16b2b8715ce2123f1c4f5cb5330416d1967e9b
+  extra-dep: true
+  subdirs:
+  - lens-properties  # the hackage version has outdated version bounds (we have transformers-0.5.2.0)
+- location:
     git: https://github.com/bgamari/html-parse.git
     commit: ebdd5fa3fa5a0d3c22602bec15059e821ad10ec4
   extra-dep: true
@@ -18,6 +24,7 @@ extra-deps:
 - html-parse-0.2.0.0
 - i18n-0.4.0.0
 - json-sop-0.2.0.1
+- lens-properties-4.11
 - lens-sop-0.2.0.1
 - xml-html-qq-0.1.0.1
 

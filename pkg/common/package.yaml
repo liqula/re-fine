@@ -60,6 +60,7 @@ tests:
       - hspec-core
       - hspec-discover
       - hspec-golden-aeson
+      - lens-properties
       - QuickCheck
       - quickcheck-instances
       - xml-html-qq

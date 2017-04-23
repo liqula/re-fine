@@ -235,6 +235,7 @@ mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
 
     em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
 
+-- | TODO: this is a Prism, not a Lens.  that's why the test case fails.
 blockTypeDepth :: Lens' BlockType Int
 blockTypeDepth focus = \case
   NormalText    -> const NormalText <$> focus 0

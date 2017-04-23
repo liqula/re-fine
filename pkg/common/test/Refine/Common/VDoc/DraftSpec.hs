@@ -22,12 +22,18 @@
 
 module Refine.Common.VDoc.DraftSpec where
 
-import           Test.Hspec
+import           Control.Lens.Properties
 import           Test.Aeson.GenericSpecs
+import           Test.Hspec
 
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.VDoc.Draft
 
 
 spec :: Spec
-spec = roundtripSpecs (Proxy @RawContent)
+spec = do
+  describe "RawContent" $ do
+    roundtripSpecs (Proxy @RawContent)
+  describe "blockTypeDepth" $ do
+    it "is a setter" $ isSetter blockTypeDepth
+    it "is a lens"   $ isLens blockTypeDepth
