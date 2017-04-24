@@ -25,9 +25,12 @@ module Refine.Common.VDoc.Draft
 where
 
 import           Control.Lens (Lens', (^.), (.~), (&))
+import           Control.Monad (foldM)
 import           Data.Aeson
+import           Data.Aeson.Types (Parser)
 import           Data.Foldable (toList)
 import           Data.Functor.Infix ((<$$>))
+import qualified Data.HashMap.Lazy as HashMap
 import           Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import           Data.List (nub)
@@ -135,13 +138,20 @@ makeNFData ''SelectionPoint
 instance ToJSON RawContent where
   toJSON (RawContent blocks entitymap) = object
     [ "blocks"    .= blocks
-    , "entityMap" .= object [ cs (show a) .= b | (a, b) <- IntMap.toList entitymap ]
+    , "entityMap" .= renderEntityMap entitymap
     ]
+    where
+      renderEntityMap m = object [ cs (show a) .= b | (a, b) <- IntMap.toList m ]
 
 instance FromJSON RawContent where
   parseJSON = withObject "RawContent" $ \obj -> RawContent
     <$> obj .: "blocks"
-    <*> obj .: "entityMap"
+    <*> (parseEntityMap =<< obj .: "entityMap")
+    where
+      parseEntityMap = withObject "parseEntityMap" $ foldM f mempty . HashMap.toList
+        where
+          f :: IntMap Entity -> (ST, Value) -> Parser (IntMap Entity)
+          f m (read . cs -> k, v) = (\e -> IntMap.insert k e m) <$> parseJSON v
 
 instance ToJSON (Block EntityKey) where
   toJSON (Block content ranges styles ty key) = object $
@@ -208,7 +218,8 @@ instance FromJSON Entity where
   parseJSON = withObject "Entity" $ \obj -> do
     ty :: ST <- obj .: "type"
     case ty of
-      "LINK" -> EntityLink <$> obj .: "url"
+      "LINK" -> let parseData = withObject "LINK data" (.: "url")
+                in EntityLink <$> (parseData =<< obj .: "data")
       bad -> fail $ "Entity: no parse for " <> show bad
 
 instance ToJSON Style where
