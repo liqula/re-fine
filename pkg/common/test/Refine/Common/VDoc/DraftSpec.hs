@@ -22,7 +22,6 @@
 
 module Refine.Common.VDoc.DraftSpec where
 
-import           Control.Lens.Properties
 import           Test.Aeson.GenericSpecs
 import           Test.Hspec
 
@@ -34,6 +33,3 @@ spec :: Spec
 spec = do
   describe "RawContent" $ do
     roundtripSpecs (Proxy @RawContent)
-  describe "blockTypeDepth" $ do
-    it "is a setter" $ isSetter blockTypeDepth
-    it "is a lens"   $ isLens blockTypeDepth

@@ -24,7 +24,6 @@
 module Refine.Common.VDoc.Draft
 where
 
-import           Control.Lens (Lens', (^.), (.~), (&))
 import           Control.Monad (foldM)
 import           Data.Aeson
 import           Data.Aeson.Types (Parser)
@@ -59,6 +58,7 @@ data Block rangeKey = Block
   , _blockEntityRanges :: [(rangeKey, EntityRange)]
   , _blockStyles       :: [(EntityRange, Style)]
   , _blockType         :: BlockType
+  , _blockDepth        :: Int
   , _blockKey          :: Maybe BlockKey
   }
   deriving (Eq, Show, Functor, Foldable, Generic)
@@ -88,12 +88,12 @@ data Style =
 
 -- | each block has a unique blocktype
 data BlockType =
-    NormalText  -- FUTUREWORK: add depth
+    NormalText
   | Header1
   | Header2
   | Header3
-  | BulletPoint Int -- ^ depth
-  | EnumPoint   Int -- ^ depth
+  | BulletPoint
+  | EnumPoint
   deriving (Show, Eq, Generic)
 
 
@@ -154,11 +154,11 @@ instance FromJSON RawContent where
           f m (read . cs -> k, v) = (\e -> IntMap.insert k e m) <$> parseJSON v
 
 instance ToJSON (Block EntityKey) where
-  toJSON (Block content ranges styles ty key) = object $
+  toJSON (Block content ranges styles ty depth key) = object $
     [ "text"              .= content
     , "entityRanges"      .= (renderRange <$> ranges)
     , "inlineStyleRanges" .= (renderStyle <$> styles)
-    , "depth"             .= (ty ^. blockTypeDepth)
+    , "depth"             .= depth  -- ^ (if certain BlockType values force this field to be 0, move this field there.)
     , "type"              .= ty
     ] <>
     [ "key" .= k | k <- maybeToList key ]
@@ -171,7 +171,8 @@ instance FromJSON (Block EntityKey) where
     <$> obj .: "text"
     <*> (mapM parseRange =<< (obj .: "entityRanges"))
     <*> (mapM parseStyle =<< (obj .: "inlineStyleRanges"))
-    <*> getType obj
+    <*> obj .: "type"
+    <*> (round <$> (obj .: "depth" :: Parser Double))
     <*> obj .:? "key"
     where
       parseRange = withObject "Block EntityKey: entityRanges" $ \obj -> do
@@ -185,26 +186,21 @@ instance FromJSON (Block EntityKey) where
         o <- obj .: "offset"
         pure ((l, o), s)
 
-      getType obj = do
-        d <- obj .: "depth"
-        t <- obj .: "type"
-        pure (t & blockTypeDepth .~ d)
-
 instance ToJSON BlockType where
-  toJSON NormalText      = "unstyled"
-  toJSON Header1         = "header-one"
-  toJSON Header2         = "header-two"
-  toJSON Header3         = "header-three"
-  toJSON (BulletPoint _) = "unordered-list-item"
-  toJSON (EnumPoint _)   = "ordered-list-item"
+  toJSON NormalText  = "unstyled"
+  toJSON Header1     = "header-one"
+  toJSON Header2     = "header-two"
+  toJSON Header3     = "header-three"
+  toJSON BulletPoint = "unordered-list-item"
+  toJSON EnumPoint   = "ordered-list-item"
 
 instance FromJSON BlockType where
   parseJSON (String "unstyled")            = pure NormalText
   parseJSON (String "header-one")          = pure Header1
   parseJSON (String "header-two")          = pure Header2
   parseJSON (String "header-three")        = pure Header3
-  parseJSON (String "unordered-list-item") = pure $ BulletPoint 0
-  parseJSON (String "ordered-list-item")   = pure $ EnumPoint 0
+  parseJSON (String "unordered-list-item") = pure BulletPoint
+  parseJSON (String "ordered-list-item")   = pure EnumPoint
   parseJSON bad = fail $ "BlockType: no parse for " <> show bad
 
 instance ToJSON Entity where
@@ -245,13 +241,3 @@ mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
     index e = EntityKey . fromMaybe (error "mkRawContent: impossible") $ Map.lookup e em
 
     em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
-
--- | TODO: this is a Prism, not a Lens.  that's why the test case fails.
-blockTypeDepth :: Lens' BlockType Int
-blockTypeDepth focus = \case
-  NormalText    -> const NormalText <$> focus 0
-  Header1       -> const Header1    <$> focus 0
-  Header2       -> const Header2    <$> focus 0
-  Header3       -> const Header3    <$> focus 0
-  BulletPoint d -> BulletPoint      <$> focus d
-  EnumPoint d   -> EnumPoint        <$> focus d
