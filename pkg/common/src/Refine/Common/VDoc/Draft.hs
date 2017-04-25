@@ -24,6 +24,7 @@
 module Refine.Common.VDoc.Draft
 where
 
+import           Control.Lens (makeLenses)
 import           Control.Monad (foldM)
 import           Data.Aeson
 import           Data.Aeson.Types (Parser)
@@ -114,6 +115,16 @@ data SelectionPoint
 
 
 -- * instances
+
+makeLenses ''RawContent
+makeLenses ''Block
+makeLenses ''BlockKey
+makeLenses ''EntityKey
+makeLenses ''Entity
+makeLenses ''Style
+makeLenses ''BlockType
+makeLenses ''SelectionState
+makeLenses ''SelectionPoint
 
 makeSOPGeneric ''RawContent
 makeSOPGeneric ''Block
