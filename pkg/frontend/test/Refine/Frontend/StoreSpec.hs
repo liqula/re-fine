@@ -25,9 +25,10 @@
 module Refine.Frontend.StoreSpec where
 
 import Control.Lens ((^.))
+import Data.Aeson (encode)
+import React.Flux (transform)
 import Test.Hspec
-
-import           React.Flux (transform)
+import Text.Read (readMaybe)
 
 import Refine.Common.Types
 import Refine.Frontend.Screen.Types
@@ -49,3 +50,28 @@ spec = do
         it "adds the header height to the state" $ do
           newState <- transform (ScreenAction (AddHeaderHeight 64)) emptyGlobalState
           _ssHeaderHeight (_gsScreenState newState) `shouldBe` (64 :: Int)
+
+
+  describe "issue #242" $ do
+    it "ffi throw an exception when marshalling Ints fails" $ do
+      js_reproduce_issue_242            `shouldReturn` 123
+
+    it "ffi throw an exception when marshalling Ints fails (+1)" $ do
+      ((+1) <$> js_reproduce_issue_242) `shouldReturn` 124
+
+    it "ffi throw an exception when marshalling Ints fails (show)" $ do
+      (show <$> js_reproduce_issue_242) `shouldReturn` "123"
+
+    it "ffi throw an exception when marshalling Ints fails (Aeson.encode)" $ do
+      (encode <$> js_reproduce_issue_242) `shouldReturn` "123"
+
+    it "readMaybe" $ do
+      readMaybe "123.123" `shouldBe` (Nothing :: Maybe Int)
+
+    it "read" $ do
+      print (read "123.123" :: Int) `shouldThrow` anyException
+
+
+foreign import javascript unsafe
+  "123.456"
+  js_reproduce_issue_242 :: IO Int
