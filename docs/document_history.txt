@@ -1,0 +1,145 @@
+% General view on documents, document history and merging
+
+
+# The current state of a document
+
+The type variable `d` will denote the *current state* of the document.
+
+
+## Typical parts of the current state
+
+The current state typically contains the text with markups.
+
+
+### Current state vs. current working state (side note)
+
+One can make difference between current state and current working state.
+The difference is that the current working state contains information -- typically comments on the text -- which
+is not relevant when the document is finalised.
+
+This difference is not relevant from the patch theory point of view;
+current state means current working state from now on (so it contains the comments too).
+
+(CLARIFICATION: "working state" is probably not a good term, and
+should not be used outside of this document.  i think it denotes the
+'VDoc' together with its associated 'Contribution's, i.e. comments
+(notes, questions, discussions) and edits.  contributions are always
+relevant for historical reasons even after releasing a new version, in
+the same way that a source code repository is not just the latest
+release, or even just the commits, but also the commit messages.
+comments differ from edits in that they are associated with specific
+versions of the document, while edits constitute and define these
+versions.)
+
+
+# Edits
+
+Edits mean *possible modifications* on a current state.  "possible" in
+the sense of "sound" or "consistent"; this excludes attempts to, say,
+delete a line that does not exist.
+
+Edits can be merged, rejected, compounded into a list of larger edits.
+
+
+## Elementary edits
+
+An edit is a sequence of *elementary edits*.
+An elementary edit can be insertion of a character or insertion of a word.
+
+The granularity of elementary edits is only relevant in the merging algorithm.
+The merging is completely defined if merging of two elementary edits is defined.
+It is easier to define merging in case of smaller elementary edits; whilst more sophisticated merging
+needs more complex elementary edits.
+
+The associated data type `EEdit d` will denote the type of elementary edits on documents with type `d`.
+
+The type `Edit d` will denote the type of edits, it is defined as
+
+    type Edit d = [EEdit d]
+
+(CLARIFICATION: for sophisticated compounding of edits, we may need
+something like this:
+
+    data (Edit d) = ElementaryEdit (EEdit d) | CompoundedEdit [Edit d]
+
+that allows us to keep track of every compounding of even
+non-elementary edit lists, and to compound several times and later
+revert any number of those compoundings.)
+
+
+## Edits may depend on the current state
+
+The proper type of `EEdit` is not `* -> *` but `(d :: *) -> d -> *` i.e.
+the type of edits may depend on the *value* of the current state too:
+it is not possible to delete from an empty list, for example.
+We simplify the type of `EEdit` to avoid dependent types.
+
+
+## Typical parts of an edit
+
+An (elementary) edit typically contains insertion and deletion of text and modifying markups.
+It may also contain metadata like modification time (when the edit was created).
+
+### Authorisation
+
+In case of multiple users, an edit also contains the id of the user who made the modification.
+In this case *allowed editors* may be part of the current state to be
+able to restrict the possible edits by user id (because the edits depend on the value of the current state).
+
+(OBJECTION: this probably does not fit into our current authorization
+concept.  we already have the type 'MetaInfo' to keep track of
+creators and last changers, and we have functions to restrict access.
+it may make sense to leave a hole for these things in the version
+control modules of our code, but they must not re-introduce competing
+solutions for problems we've already solved.)
+
+
+# History
+
+The *history* of a document is the sequence of edits by which the current state was constructed from the empty document.
+
+The *empty document* is value of type `d` (a type class member).
+
+
+## Local edits
+
+*Local edits* are the edits at the end of the history which are not yet stored in the server side
+(no acknowledgement was received from the server).
+
+we currently create an edit on the server.  the client can merely
+*request* creation of an edit.  local edits may become a thing in the
+future, though.
+
+
+## Tags
+
+Tags are history identifiers.
+(Tags could have the same representation as histories but that would be inefficient.)
+
+
+# Merging
+
+By edits one can construct a history tree.
+The *merge* operation can join two branches of this tree, thus the history evolves to a DAG.
+
+
+## Automatic merging
+
+I propose an automatic merging algorithm, similar to the one defined at https://github.com/exFalso/OT/blob/master/Patchable.hs#L64
+This works by successive merging of elementary edits.
+
+The algorithm can be tuned by defining the type of elementary edits and the merging of any two of them.
+There is a lot of room for tuning.
+
+The automatic merging algorithm may note if any information is lost.
+
+In case of the automatic merging does not give a sufficient result (especially in cases when information is lost),
+one can use a merge editor which applies additional edits to correct the automatic merging result.
+
+(CLARIFICATION: edits that destroy the natural-language consistency of
+a text, say, by removing a sentence that is referred to implicitly in
+a sentence much later, cannot be auto-detected.  merge is about the
+things that can happen *between two* edits: information is destroyed
+if you have to pick between two conflicting elementary edits,
+e.g. when a character is both deleted and changed into another
+character.  this can be auto-detected relatively easily.)
