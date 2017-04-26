@@ -22,14 +22,16 @@
 
 module Refine.Frontend.Contribution.Store where
 
-import           Control.Lens ((&), (%~), (.~), (^.), to)
-import           Data.List (foldl')
+import           Control.Lens ((&), (%~))
 import qualified Data.Map.Strict as M
+import           Data.Maybe (isJust)
+import           Data.Monoid ((<>))
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Test.Console (gracefulError)
 import           Refine.Frontend.Types
 
 
@@ -109,18 +111,10 @@ quickCreateShowStateUpdate action state = case action of
 
 markPositionsUpdate :: ContributionAction -> MarkPositions -> MarkPositions
 markPositionsUpdate action state = case action of
-  (ScheduleAddMarkPosition dataChunkId newMarkPosition)
-    -> let upd       = Just . maybe newMarkPosition (updTop . updBottom)
-           updTop    = markPositionTop    %~ min (newMarkPosition ^. markPositionTop)
-           updBottom = markPositionBottom %~ max (newMarkPosition ^. markPositionBottom)
-
-          -- FIXME: i'm not too confident this is going into the right direction.  why are marks
-          -- rendered so many times before they finally have a stable bounding rectangle?
-
-       in state & markPositionsScheduled %~ M.alter upd dataChunkId
-  DischargeAddMarkPositions
-    -> let upd :: M.Map ContributionID MarkPosition -> M.Map ContributionID MarkPosition
-           upd firstm = foldl' (\m (i, p) -> M.insert i p m) firstm (state ^. markPositionsScheduled. to M.toList)
-       in state & markPositionsMap       %~ upd
-                & markPositionsScheduled .~ mempty
+  AddMarkPosition cid newMarkPosition
+    -> let upd oldValue = Just newMarkPosition &
+              if isJust oldValue
+                then gracefulError ("mark position registered twice for contribID" <> show cid)
+                else id
+       in state & markPositionsMap %~ M.alter upd cid
   _ -> state

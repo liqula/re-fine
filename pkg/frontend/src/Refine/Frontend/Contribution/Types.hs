@@ -58,19 +58,12 @@ newtype CommentInputState = CommentInputState
 -- which is necessary for the 'DischargeAddMarkPositions' hack to work, but confusing; (2) we're
 -- still receiving too many 'ScheduleAddMarkPosition' actions, and should rather figure out how to
 -- only fire those that are necessary.
-data MarkPositions =
-    MarkPositions
-      { _markPositionsMap       :: M.Map ContributionID MarkPosition
-      , _markPositionsScheduled :: M.Map ContributionID MarkPosition
-      }
-  deriving (Show, Generic)
+newtype MarkPositions = MarkPositions { _markPositionsMap :: M.Map ContributionID MarkPosition }
+  deriving (Show, Eq, Generic)
 
 instance Monoid MarkPositions where
-  mempty = MarkPositions mempty mempty
-  mappend (MarkPositions m s) (MarkPositions m' s') = MarkPositions (m <> m') (s <> s')
-
-instance Eq MarkPositions where
-  MarkPositions m _ == MarkPositions m' _ = m == m'
+  mempty = MarkPositions mempty
+  mappend (MarkPositions m) (MarkPositions m') = MarkPositions (m <> m')
 
 data MarkPosition = MarkPosition
   { _markPositionTop    :: OffsetFromDocumentTop
@@ -107,8 +100,7 @@ data ContributionAction =
   | HideCommentEditor
   | SetCommentKind CommentKind
   | SubmitComment ST (Maybe CommentKind)
-  | ScheduleAddMarkPosition ContributionID MarkPosition  -- ^ see 'MarkPosition'
-  | DischargeAddMarkPositions                            -- ^ see 'MarkPosition'
+  | AddMarkPosition ContributionID MarkPosition  -- ^ see 'MarkPosition'
   | HighlightMarkAndBubble ContributionID
   | UnhighlightMarkAndBubble
   deriving (Show, Eq, Generic)
@@ -206,7 +198,7 @@ instance ToJSON MarkPositions where
   toJSON = mapToValue . _markPositionsMap
 
 instance FromJSON MarkPositions where
-  parseJSON = fmap (`MarkPositions` mempty) . mapFromValue
+  parseJSON = fmap MarkPositions . mapFromValue
 
 makeRefineType ''CommentInputState
 makeRefineType ''ContributionAction

@@ -1,9 +1,13 @@
 {-# LANGUAGE DataKinds           #-}
+{-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE Rank2Types          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections       #-}
+{-# LANGUAGE TypeApplications    #-}
+{-# LANGUAGE TypeFamilies        #-}
 {-# LANGUAGE ViewPatterns        #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -14,7 +18,8 @@ import           Control.Arrow (second)
 import           Control.Monad.State
 import           Data.Function (on)
 import           Data.Functor.Infix ((<$$>))
-import           Data.List ((\\), partition, nub, nubBy)
+import           Data.List ((\\), nub, nubBy)
+import qualified Data.List as List
 import           Data.Maybe (catMaybes)
 import           Data.Monoid
 import           Data.String.Conversions (ST)
@@ -23,12 +28,14 @@ import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.Builder as B
 import           Data.Tree
 import qualified Data.Vector as V
+import           Generics.SOP
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
 import           Text.HTML.Parser as HTML
 import           Text.HTML.Tree as HTML
 
 import Refine.Common.Types
+import Refine.Common.VDoc.Draft
 import Refine.Common.VDoc.HTML
 import Refine.Common.VDoc.HTML.Core
 import Refine.Common.VDoc.HTML.Splice
@@ -74,7 +81,7 @@ instance Arbitrary Token where
 
 -- TODO: This does not catch on when shrinking `Forest PreToken`.  no idea why.
 shrinkAttrs :: [Attr] -> [[Attr]]
-shrinkAttrs attrs = case partition isDataUID attrs of
+shrinkAttrs attrs = case List.partition isDataUID attrs of
   (datauid, other) -> (datauid <>) <$> shrink other
   where
     isDataUID (Attr "data-uid" _) = True
@@ -153,7 +160,7 @@ validXmlCommentText = do
     ST.pack <$> sized (`maxListOf` elements (['\x20'..'\x7E'] \\ "\x09\x0a\x0c /=<>\x00\"-"))
 
 maxListOf :: Int -> Gen a -> Gen [a]
-maxListOf n g = take n <$> listOf g
+maxListOf n g = List.take n <$> listOf g
 
 arbitraryTokenForest :: Gen (Forest Token)
 arbitraryTokenForest = listOf arbitraryTokenTree
@@ -222,7 +229,7 @@ arbitraryCanonicalNonEmptyVDocVersion = do
 
       -- this makes test output much more interesting, and probably not any less representative of
       -- production data.
-      muteAttrs_ attrs = case partition isDataUID attrs of (datauid, _) -> datauid
+      muteAttrs_ attrs = case List.partition isDataUID attrs of (datauid, _) -> datauid
         where
           isDataUID (Attr "data-uid" _) = True
           isDataUID _                   = False
@@ -242,14 +249,14 @@ arbitraryVersWithRanges :: Gen VersWithRanges
 arbitraryVersWithRanges = do
   v <- arbitraryCanonicalNonEmptyVDocVersion
   let crs = allNonEmptyChunkRanges v
-      rs = zipWith (\(ChunkRange b e) i -> SomethingWithChunkRangeAndID (ChunkRange b e) (ContribIDNote (ID i))) crs [0..]
+      rs = List.zipWith (\(ChunkRange b e) i -> SomethingWithChunkRangeAndID (ChunkRange b e) (ContribIDNote (ID i))) crs [0..]
   VersWithRanges v . nub <$> vectorOf 11 (elements rs)
 
 shrinkVersWithRanges :: VersWithRanges -> [VersWithRanges]
 shrinkVersWithRanges (VersWithRanges v rs) = do
   v' <- shrink v
-  rs' <- shrinkList (\_ -> []) (filter (null . (`chunkRangeErrors` v') . askChunkRange) rs)
-  [VersWithRanges v' rs' | not $ null rs']
+  rs' <- shrinkList (\_ -> []) (List.filter (List.null . (`chunkRangeErrors` v') . askChunkRange) rs)
+  [VersWithRanges v' rs' | not $ List.null rs']
 
 
 type AllChunkPointsState = (Int, [(Int, DataUID)])
@@ -309,7 +316,7 @@ allNonEmptyChunkRanges vers =
 allNonEmptyChunkRanges_ :: VDocVersion 'HTMLCanonical -> [((Int, Int), ChunkRange)]
 allNonEmptyChunkRanges_ vers = result
   where
-    result = filter nonempty (mconcat rs)
+    result = List.filter nonempty (mconcat rs)
 
     ps = V.fromList . allChunkPoints $ vers
     ix = [0 .. V.length ps - 1]
@@ -319,7 +326,7 @@ allNonEmptyChunkRanges_ vers = result
            in [ ((n, maxk), ChunkRange (Just b) Nothing)
               , ((0, k),    ChunkRange Nothing (Just e))
               ]
-              <> replicate 11 ((n, k), ChunkRange (Just b) (Just e))
+              <> List.replicate 11 ((n, k), ChunkRange (Just b) (Just e))
          | i <- ix, j <- ix, i < j
          ]
 
@@ -330,3 +337,68 @@ allNonEmptyChunkRanges_ vers = result
 
 instance Arbitrary Role where
   arbitrary = elements [minBound..]
+
+
+-- * draft.js
+
+-- | copied from https://github.com/liqd/aula, file src/Arbitrary.hs
+garbitrary' :: forall a. (Int -> Int) -> (Generic a, All2 Arbitrary (Code a)) => Gen a
+garbitrary' scaling = to <$> (hsequence =<< elements subs)
+  where
+    subs :: [SOP Gen (Code a)]
+    subs = apInjs_POP (hcpure (Proxy @Arbitrary) (scale scaling arbitrary))
+
+-- | copied from https://github.com/liqd/aula, file src/Arbitrary.hs
+garbitrary :: forall a. (Generic a, All2 Arbitrary (Code a)) => Gen a
+garbitrary = garbitrary' (max 0 . subtract 10)
+
+-- | copied from https://github.com/liqd/aula, file src/Arbitrary.hs
+gshrink :: forall a . (Generic a, All2 Arbitrary (Code a)) => a -> [a]
+gshrink = List.map to . shrinkSOP . from
+  where
+    shrinkSOP :: All2 Arbitrary xss => SOP I xss -> [SOP I xss]
+    shrinkSOP (SOP nsp) = SOP <$> shrinkNS nsp
+
+    shrinkNS :: All2 Arbitrary xss => NS (NP I) xss -> [NS (NP I) xss]
+    shrinkNS (Z Nil) = []
+    shrinkNS (Z np)  = Z <$> (hsequence . hap (hcpure (Proxy @Arbitrary) (mkFn shrink))) np
+    shrinkNS (S ns)  = S <$> shrinkNS ns
+
+    mkFn f = Fn (f . unI)
+
+
+instance Arbitrary RawContent where
+  arbitrary = garbitrary
+  shrink    = gshrink
+
+instance (Generic a, Arbitrary a) => Arbitrary (Block a) where
+  arbitrary = garbitrary
+  shrink    = gshrink
+
+instance Arbitrary BlockKey where
+  arbitrary = garbitrary
+  shrink    = gshrink
+
+instance Arbitrary EntityKey where
+  arbitrary = garbitrary
+  shrink    = gshrink
+
+instance Arbitrary Entity where
+  arbitrary = garbitrary
+  shrink    = gshrink
+
+instance Arbitrary Style where
+  arbitrary = garbitrary
+  shrink    = gshrink
+
+instance Arbitrary BlockType where
+  arbitrary = garbitrary
+  shrink    = gshrink
+
+instance Arbitrary SelectionState where
+  arbitrary = garbitrary
+  shrink    = gshrink
+
+instance Arbitrary SelectionPoint where
+  arbitrary = garbitrary
+  shrink    = gshrink

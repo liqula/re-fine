@@ -109,13 +109,6 @@ transformGlobalState = transf
                   -- is where it should be started.)
                   reDispatchM $ ContributionAction ShowCommentEditor
 
-            ContributionAction (ScheduleAddMarkPosition _ _) -> do
-                let nothingScheduled = M.null $ state ^. gsContributionState . csMarkPositions . markPositionsScheduled
-                    delayMiliSecs = 150
-                when nothingScheduled . void . liftIO . forkIO $ do
-                  threadDelay $ delayMiliSecs * 1000
-                  dispatchAndExec $ ContributionAction DischargeAddMarkPositions
-
             ShowNotImplementedYet -> do
                 liftIO $ windowAlertST "not implemented yet."
 

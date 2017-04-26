@@ -103,6 +103,10 @@ iconButton = mkView "IconButton" $ \props -> do
               ] $
             elemJSString (props ^. iconButtonPropsLabel)
 
+        -- TODO: i think the span_ node should be a child of the icon_ node so that the css info on
+        -- the latter can apply (e.g. "bright" vs. "dark").  a more aggressive refactoring may be a
+        -- better idea, though.  this part of the code base is a bit brittle and confusing.
+
 iconButton_ :: IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick -> ReactElementM eventHandler ()
 iconButton_ !props = view_ iconButton ("iconButton_" <> props ^. iconButtonPropsListKey) props
 

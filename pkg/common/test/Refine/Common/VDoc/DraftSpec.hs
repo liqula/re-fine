@@ -15,16 +15,21 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Common.VDoc.DraftSpec where
 
+import           Test.Aeson.GenericSpecs
 import           Test.Hspec
 
-import Refine.Common.VDoc.Draft ()
+import Refine.Common.Test.Arbitrary ()
+import Refine.Common.VDoc.Draft
 
 
 spec :: Spec
-spec = it "works" pending
+spec = do
+  describe "RawContent" $ do
+    roundtripSpecs (Proxy @RawContent)

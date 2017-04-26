@@ -41,7 +41,7 @@ instance UnoverlapAllEq CurrentUser
 
 userLoginLogoutButton :: View '[CurrentUser]
 userLoginLogoutButton = mkView "UserLoginLogoutButton" $ \case
-  UserLoggedOut           -> iconButton_ loginLogoutProps { _iconButtonPropsLabel = "Log In" }
+  UserLoggedOut           -> iconButton_ loginLogoutProps { _iconButtonPropsLabel = "login" }
   (UserLoggedIn username) -> iconButton_ loginLogoutProps { _iconButtonPropsLabel = cs username }
 
 userLoginLogoutButton_ :: CurrentUser -> ReactElementM eventHandler ()
@@ -52,7 +52,7 @@ loginLogoutProps = def
   & iconButtonPropsListKey .~ "logInOut"
   & iconButtonPropsIconProps .~ (def
       & iconPropsBlockName .~ "c-mainmenu-content"
-      & iconPropsDesc      .~ ("icon-Exit", "dark")
+      & iconPropsDesc      .~ ("icon-Login", "bright")
       & iconPropsSize      .~ XXL
       )
   & iconButtonPropsElementName  .~ "section-button"

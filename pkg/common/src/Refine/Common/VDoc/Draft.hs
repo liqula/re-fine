@@ -19,138 +19,236 @@
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
+{-# LANGUAGE DeriveFoldable             #-}
 
 module Refine.Common.VDoc.Draft
 where
 
-import           Control.Exception (assert)
+import           Control.Lens (makeLenses)
+import           Control.Monad (foldM)
 import           Data.Aeson
+import           Data.Aeson.Types (Parser)
+import           Data.Foldable (toList)
+import           Data.Functor.Infix ((<$$>))
+import qualified Data.HashMap.Lazy as HashMap
+import           Data.IntMap (IntMap)
+import qualified Data.IntMap as IntMap
+import           Data.List (nub)
+import qualified Data.Map as Map
+import           Data.Monoid ((<>))
+import           Data.Maybe (fromMaybe, maybeToList)
 import           Data.String.Conversions
-import           Data.List ((\\))
-import qualified Data.Text as ST
-import           Text.HTML.Parser
-import           Text.HTML.Tree
+import           GHC.Generics
 
-import Refine.Common.Types
+import Refine.Prelude.TH
 
 
--- * target data types
+-- * data types
 
-newtype RawContent = RawContent { _rawContentBlocks :: [Block Int] }
-  deriving (Show)
+-- | Haskell representation of the javascript @RawDraftContentState@.
+-- https://draftjs.org/docs/api-reference-data-conversion.html#content
+data RawContent = RawContent
+  { _rawContentBlocks    :: [Block EntityKey]
+  , _rawContentEntityMap :: IntMap Entity  -- ^ for performance, do not use @Map EntityKey Entity@ here.
+  }
+  deriving (Eq, Show, Generic)
 
-mkRawContent :: [Block ()] -> RawContent
-mkRawContent bs = RawContent $ go 0 bs
-  where
-    go _ [] = []
-    go n (Block text ranges styles depth : blocks) = block' : blocks'
-      where
-        blocks' = go n' blocks
-        n'      = n + length ranges
-        block'  = Block text ranges' styles depth
-        ranges' = zipWith (\i (_, r, e) -> (i, r, e)) [n..] ranges
-
--- | ('rangeKey' must be 'Int' if you want to construct 'RawContent', but it can be '()' if you want
--- to just float around 'Blocks' without knowing about the other blocks and the order yet.)
+-- | typical rangekey values are 'Int' and 'Entity'
 data Block rangeKey = Block
   { _blockText         :: ST
-  , _blockEntityRanges :: [(rangeKey, EntityRange, Entity)]
+  , _blockEntityRanges :: [(rangeKey, EntityRange)]
   , _blockStyles       :: [(EntityRange, Style)]
+  , _blockType         :: BlockType
   , _blockDepth        :: Int
+  , _blockKey          :: Maybe BlockKey
   }
-  deriving (Show)
+  deriving (Eq, Show, Functor, Foldable, Generic)
 
--- | (a bit like 'ChunkRange', but also different.)
+-- | `key` attribute of the 'Block'.  'SelectionState' uses this to refer to blocks.  If in doubt
+-- leave it 'Nothing'.
+newtype BlockKey = BlockKey ST
+  deriving (Eq, Ord, Show, ToJSON, FromJSON, Generic)
+
+-- | key into 'rawContentEntityMap'.
+newtype EntityKey = EntityKey { _unEntityKey :: Int }
+  deriving (Eq, Ord, Show, ToJSON, FromJSON, Generic)
+
 type EntityRange = (Int, Int)
 
-data Entity = Entity -- (we don't need this yet.)
-  deriving (Show)
+-- | an entity's range may span across multiple blocks
+newtype Entity =
+    EntityLink ST  -- ^ url
+--  | ...
+  deriving (Show, Eq, Ord, Generic)
 
+-- | a style's range should fit into a single block
 data Style =
-    Header1
+    Bold
+  | Italic
+  deriving (Show, Eq, Generic)
+
+-- | each block has a unique blocktype
+data BlockType =
+    NormalText
+  | Header1
   | Header2
   | Header3
-  | Bold
-  | Italic
   | BulletPoint
   | EnumPoint
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic)
 
+
+-- | https://draftjs.org/docs/api-reference-selection-state.html
+data SelectionState
+  = Selection
+      { _selectionStart :: SelectionPoint
+      , _selectionEnd   :: SelectionPoint
+      }
+  deriving (Eq, Ord, Generic)
+
+data SelectionPoint
+  = SelectionPoint
+      { _selectionBlock  :: BlockKey
+      , _selectionOffset :: Int
+      }
+  deriving (Eq, Ord, Generic)
+
+
+-- * instances
+
+makeLenses ''RawContent
+makeLenses ''Block
+makeLenses ''BlockKey
+makeLenses ''EntityKey
+makeLenses ''Entity
+makeLenses ''Style
+makeLenses ''BlockType
+makeLenses ''SelectionState
+makeLenses ''SelectionPoint
+
+makeSOPGeneric ''RawContent
+makeSOPGeneric ''Block
+makeSOPGeneric ''BlockKey
+makeSOPGeneric ''EntityKey
+makeSOPGeneric ''Entity
+makeSOPGeneric ''Style
+makeSOPGeneric ''BlockType
+makeSOPGeneric ''SelectionState
+makeSOPGeneric ''SelectionPoint
+
+makeNFData ''RawContent
+makeNFData ''Block
+makeNFData ''BlockKey
+makeNFData ''EntityKey
+makeNFData ''Entity
+makeNFData ''Style
+makeNFData ''BlockType
+makeNFData ''SelectionState
+makeNFData ''SelectionPoint
 
 instance ToJSON RawContent where
-  toJSON (RawContent blocks) = object
-    [ "blocks" .= (toJSON <$> blocks)
-    , "entityMap" .= mkEntityMap blocks
-    ]
-
-instance FromJSON RawContent where
-  parseJSON = assert False undefined
-
-instance ToJSON (Block Int) where
-  toJSON (Block content ranges styles depth) = object
-    [ "text"              .= content
-    , "entityRanges"      .= (renderRanges <$> ranges)
-    , "inlineStyleRanges" .= (renderStyles <$> styles)
-    , "depth"             .= depth
-    , "type"              .= ("unstyled" :: ST)
+  toJSON (RawContent blocks entitymap) = object
+    [ "blocks"    .= blocks
+    , "entityMap" .= renderEntityMap entitymap
     ]
     where
-      renderRanges (k, (l, o), _) = object ["key"   .= k, "length" .= l, "offset" .= o]
-      renderStyles ((l, o), s)    = object ["style" .= s, "length" .= l, "offset" .= o]
+      renderEntityMap m = object [ cs (show a) .= b | (a, b) <- IntMap.toList m ]
 
-data EntityMap = EntityMap
+instance FromJSON RawContent where
+  parseJSON = withObject "RawContent" $ \obj -> RawContent
+    <$> obj .: "blocks"
+    <*> (parseEntityMap =<< obj .: "entityMap")
+    where
+      parseEntityMap = withObject "parseEntityMap" $ foldM f mempty . HashMap.toList
+        where
+          f :: IntMap Entity -> (ST, Value) -> Parser (IntMap Entity)
+          f m (read . cs -> k, v) = (\e -> IntMap.insert k e m) <$> parseJSON v
 
-mkEntityMap :: [Block Int] -> EntityMap
-mkEntityMap _ = EntityMap
+instance ToJSON (Block EntityKey) where
+  toJSON (Block content ranges styles ty depth key) = object $
+    [ "text"              .= content
+    , "entityRanges"      .= (renderRange <$> ranges)
+    , "inlineStyleRanges" .= (renderStyle <$> styles)
+    , "depth"             .= depth  -- ^ (if certain BlockType values force this field to be 0, move this field there.)
+    , "type"              .= ty
+    ] <>
+    [ "key" .= k | k <- maybeToList key ]
+    where
+      renderRange (k, (l, o)) = object ["key"   .= k, "length" .= l, "offset" .= o]
+      renderStyle ((l, o), s) = object ["style" .= s, "length" .= l, "offset" .= o]
 
-instance ToJSON EntityMap where
-  toJSON _ = object []
+instance FromJSON (Block EntityKey) where
+  parseJSON = withObject "Block EntityKey" $ \obj -> Block
+    <$> obj .: "text"
+    <*> (mapM parseRange =<< (obj .: "entityRanges"))
+    <*> (mapM parseStyle =<< (obj .: "inlineStyleRanges"))
+    <*> obj .: "type"
+    <*> (round <$> (obj .: "depth" :: Parser Double))
+    <*> obj .:? "key"
+    where
+      parseRange = withObject "Block EntityKey: entityRanges" $ \obj -> do
+        k <- obj .: "key"
+        l <- obj .: "length"
+        o <- obj .: "offset"
+        pure (k, (l, o))
+      parseStyle = withObject "Block EntityKey: inlineStyleRanges" $ \obj -> do
+        s <- obj .: "style"
+        l <- obj .: "length"
+        o <- obj .: "offset"
+        pure ((l, o), s)
+
+instance ToJSON BlockType where
+  toJSON NormalText  = "unstyled"
+  toJSON Header1     = "header-one"
+  toJSON Header2     = "header-two"
+  toJSON Header3     = "header-three"
+  toJSON BulletPoint = "unordered-list-item"
+  toJSON EnumPoint   = "ordered-list-item"
+
+instance FromJSON BlockType where
+  parseJSON (String "unstyled")            = pure NormalText
+  parseJSON (String "header-one")          = pure Header1
+  parseJSON (String "header-two")          = pure Header2
+  parseJSON (String "header-three")        = pure Header3
+  parseJSON (String "unordered-list-item") = pure BulletPoint
+  parseJSON (String "ordered-list-item")   = pure EnumPoint
+  parseJSON bad = fail $ "BlockType: no parse for " <> show bad
+
+instance ToJSON Entity where
+  toJSON (EntityLink url) = object
+    [ "type"            .= ("LINK" :: ST)
+    , "mutability"      .= ("MUTABLE" :: ST)
+    , "data"            .= object ["url" .= url]
+    ]
+
+instance FromJSON Entity where
+  parseJSON = withObject "Entity" $ \obj -> do
+    ty :: ST <- obj .: "type"
+    case ty of
+      "LINK" -> let parseData = withObject "LINK data" (.: "url")
+                in EntityLink <$> (parseData =<< obj .: "data")
+      bad -> fail $ "Entity: no parse for " <> show bad
 
 instance ToJSON Style where
-  toJSON Header1 = "HEADER1"
-  toJSON Header2 = "HEADER2"
-  toJSON Header3 = "HEADER3"
-  toJSON Bold = "BOLD"
+  toJSON Bold   = "BOLD"
   toJSON Italic = "ITALIC"
-  toJSON BulletPoint = "BULLETPOINT"
-  toJSON EnumPoint = "ENUMPOINT"
+
+instance FromJSON Style where
+  parseJSON (String "BOLD")   = pure Bold
+  parseJSON (String "ITALIC") = pure Italic
+  parseJSON bad = fail $ "Style: no parse for " <> show bad
 
 
--- * conversion
+-- * functions
 
-vDocVersionToRawContent :: VDocVersion a -> RawContent
-vDocVersionToRawContent (VDocVersion forest) = mkRawContent . fmap cons . merge . decons [] . tokensFromForest $ forest
+mkRawContent :: [Block Entity] -> RawContent
+mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
   where
-    -- TODO: decons is very lenient re. unexpected input, and does not generate all the styles yet.
-    -- TODO: allow for styles on parts of blocks (currently every style change opens a new block).
-    decons :: [Style] -> [Token] -> [([Style], ST)]
-    decons styles (TagOpen n as   : tokens) = decons (styleOn n as styles) tokens
-    decons styles (TagClose n     : tokens) = decons (styleOff n styles) tokens
-    decons styles (ContentText st : tokens) = (styles, st) : decons styles tokens
-    decons _      _                         = []
+    -- FUTUREWORK: it is possible to do just one traversal to collect and index entities
+    -- https://www.reddit.com/r/haskell/comments/610sa1/applicative_sorting/
+    entities = zip [0..] . nub $ concatMap toList bs
 
-    styleOn :: TagName -> [Attr] -> [Style] -> [Style]
-    styleOn "h1"     _ = (Header1:)
-    styleOn "h2"     _ = (Header2:)
-    styleOn "h3"     _ = (Header3:)
-    styleOn "strong" _ = (Bold:)
-    styleOn _        _ = id
+    index :: Entity -> EntityKey
+    index e = EntityKey . fromMaybe (error "mkRawContent: impossible") $ Map.lookup e em
 
-    styleOff :: TagName -> [Style] -> [Style]
-    styleOff "h1"     = (\\ [Header1])
-    styleOff "h2"     = (\\ [Header2])
-    styleOff "h3"     = (\\ [Header3])
-    styleOff "strong" = (\\ [Bold])
-    styleOff _        = id
-
-    merge :: [([Style], ST)] -> [([Style], ST)]
-    merge = id
-
-    cons :: ([Style], ST) -> Block ()
-    cons (styles, st) = Block st [] ((range,) <$> styles) 0
-      where
-        range = (0, ST.length st - 1)
-
-
--- TODO: i am wondering at this point if we really want to have the html rep.  what about
--- always using draft, even for the view mode?
+    em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
