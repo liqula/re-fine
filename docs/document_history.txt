@@ -34,12 +34,11 @@ versions.)
 
 # Edits
 
-Edits mean *possible modifications* on a current state.
+Edits mean *possible modifications* on a current state.  "possible" in
+the sense of "sound" or "consistent"; this excludes attempts to, say,
+delete a line that does not exist.
 
-(CLARIFICATION: "edit" is our technical term for patch, and not
-restricted to any specific kind of patches.  it can be merged,
-rejected, compounded into a list of larger edits, but it will always
-remain an edit.)
+Edits can be merged, rejected, compounded into a list of larger edits.
 
 
 ## Elementary edits
@@ -66,8 +65,6 @@ something like this:
 that allows us to keep track of every compounding of even
 non-elementary edit lists, and to compound several times and later
 revert any number of those compoundings.)
-
-(QUESTIONS: does granularity affect size of edits?)
 
 
 ## Edits may depend on the current state
@@ -104,16 +101,14 @@ The *history* of a document is the sequence of edits by which the current state 
 The *empty document* is value of type `d` (a type class member).
 
 
-## Local modifications
+## Local edits
 
-*Local modifications* are the edits at the end of the history which are not yet stored in the server side
+*Local edits* are the edits at the end of the history which are not yet stored in the server side
 (no acknowledgement was received from the server).
 
-(OBJECTION: please call them local edits, and do not introduce a new term "modification".)
-
-(QUESTION: we currently create an edit on the server.  the client can
-merely *request* creation of an edit.  so i don't think local edits
-can exist unless we change our implementation.
+we currently create an edit on the server.  the client can merely
+*request* creation of an edit.  local edits may become a thing in the
+future, though.
 
 
 ## Tags
@@ -141,9 +136,10 @@ The automatic merging algorithm may note if any information is lost.
 In case of the automatic merging does not give a sufficient result (especially in cases when information is lost),
 one can use a merge editor which applies additional edits to correct the automatic merging result.
 
-(COMMENT: it would be awesome (in the literal meaning of the word) if
-we could have a lot of cases in which we can prove that no information
-is destroyed by the merge, but i'm skeptical.  anyway we need to start
-with something very simple here, and focus on making the UI suitable
-for average word-users, not experienced git-users.  great automatic
-merging heuristics and algorithms will be the next step after that.)
+(CLARIFICATION: edits that destroy the natural-language consistency of
+a text, say, by removing a sentence that is referred to implicitly in
+a sentence much later, cannot be auto-detected.  merge is about the
+things that can happen *between two* edits: information is destroyed
+if you have to pick between two conflicting elementary edits,
+e.g. when a character is both deleted and changed into another
+character.  this can be auto-detected relatively easily.)
