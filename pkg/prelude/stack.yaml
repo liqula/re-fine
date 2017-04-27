@@ -4,8 +4,8 @@ packages:
 - '.'
 
 extra-deps:
-- basic-sop-0.2.0.0
-- json-sop-0.2.0.1
+- basic-sop-0.2.0.1
+- json-sop-0.2.0.2
 - lens-sop-0.2.0.1
 
 flags: {}

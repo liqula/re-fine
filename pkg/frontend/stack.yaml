@@ -13,22 +13,33 @@ compiler-check: match-exact
 setup-info:
   ghcjs:
     source:
+
+      # FIXME: the ghcjs packages from matchwood trigger are fine from
+      # all i know, but they trigger series of minor issues in re-fine
+      # that should only be tackled once there is a practial reason.
+      # for instance, aeson since lts-7.19 or earlier has Map
+      # instances that conflict with the ones we use; lentil does not
+      # compile any more (https://github.com/andorp/lentil/issues/1);
+      # possibly others.
+
+      ghcjs-0.2.1.9008005_ghc-8.0.2:
+        url: https://github.com/matchwood/ghcjs-stack-dist/raw/master/ghcjs-0.2.1.9008005.tar.gz
+        sha1: 903ef8646719b688ccf6cd416e4d588a7d4ec911
+      ghcjs-0.2.1.9008000_ghc-8.0.2:
+        url: https://github.com/matchwood/ghcjs-stack-dist/raw/master/ghcjs-0.2.1.9008000.tar.gz
+        sha1: 815f26834ac25d72f58792524740fe3cca0ce3a6
       ghcjs-0.2.1.9007019_ghc-8.0.1:
-           url: http://ghcjs.tolysz.org/ghc-8.0-2017-02-05-lts-7.19-9007019.tar.gz
-           sha1: d2cfc25f9cda32a25a87d9af68891b2186ee52f9
+        url: http://ghcjs.tolysz.org/ghc-8.0-2017-02-05-lts-7.19-9007019.tar.gz
+        sha1: d2cfc25f9cda32a25a87d9af68891b2186ee52f9
       ghcjs-0.2.1.9007013_ghc-8.0.1:
-          url: http://ghcjs.tolysz.org/ghc-8.0-2016-12-18-lts-7.13-9007013.tar.gz
-          sha1: 530c4ee5e19e2874e128431c7ad421e336df0303
+        url: http://ghcjs.tolysz.org/ghc-8.0-2016-12-18-lts-7.13-9007013.tar.gz
+        sha1: 530c4ee5e19e2874e128431c7ad421e336df0303
 
 packages:
 - '.'
 - location: '../common'
   extra-dep: true
 - location: '../prelude'
-  extra-dep: true
-- location:
-    git: https://github.com/well-typed/basic-sop.git
-    commit: 1e98bc7829e8c4ca5fe408ed5bfc7ad2a988d88c
   extra-dep: true
 - location:
     git: https://github.com/bgamari/html-parse.git
@@ -44,11 +55,11 @@ packages:
 
 extra-deps:
 - aeson-extra-0.4.0.0
-- basic-sop-0.2.0.0
+- basic-sop-0.2.0.1
 - functor-infix-0.0.4
 - html-parse-0.2.0.0
 - i18n-0.4.0.0
-- json-sop-0.2.0.1
+- json-sop-0.2.0.2
 - lens-sop-0.2.0.1
 - react-hs-0.0.1
 - react-hs-servant-0.0.1

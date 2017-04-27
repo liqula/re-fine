@@ -30,14 +30,14 @@ packages:
   extra-dep: true
 
 extra-deps:
-- basic-sop-0.2.0.0
+- basic-sop-0.2.0.1
 - from-sum-0.2.1.0
 - functor-infix-0.0.4
 - graphviz-2999.18.1.2
 - heterocephalus-1.0.4.0
 - html-parse-0.2.0.0
 - i18n-0.4.0.0
-- json-sop-0.2.0.1
+- json-sop-0.2.0.2
 - lens-properties-4.11
 - lens-sop-0.2.0.1
 - users-persistent-0.5.0.0
