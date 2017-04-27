@@ -21,14 +21,11 @@ module Refine.Common.Types.VDoc where
 import           Control.DeepSeq
 import           Control.Lens (makeLenses, makePrisms, Lens')
 import           Data.Map
-import           Data.String.Conversions (ST, cs)
-import           Data.Tree (Forest)
+import           Data.String.Conversions (ST)
 import qualified Generics.SOP        as SOP
 import qualified Generics.SOP.JSON   as SOP
 import qualified Generics.SOP.NFData as SOP
 import           GHC.Generics (Generic)
-import           Text.HTML.Parser (Token, renderTokens, parseTokens)
-import           Text.HTML.Tree (tokensToForest, tokensFromForest)
 
 import Refine.Common.Orphans ()
 import Refine.Common.Types.Chunk
@@ -51,7 +48,7 @@ data VDoc = VDoc
 data CreateVDoc = CreateVDoc
   { _createVDocTitle       :: Title
   , _createVDocAbstract    :: Abstract
-  , _createVDocInitVersion :: VDocVersion 'HTMLRaw
+  , _createVDocInitVersion :: VDocVersion
   }
   deriving (Eq, Ord, Show, Generic)
 
@@ -61,22 +58,16 @@ newtype Title = Title { _unTitle :: ST }
 newtype Abstract = Abstract { _unAbstract :: ST }
   deriving (Eq, Ord, Show, Read, Generic)
 
-data HTMLState = HTMLRaw | HTMLCanonical | HTMLWithMarks
+newtype VDocVersion = VDocVersion { _unVDocVersion :: ST }
+  deriving (Eq, Ord, Show, Generic, Monoid)
 
-newtype VDocVersion (state :: HTMLState) = VDocVersion { _unVDocVersion :: Forest Token }
-  deriving (Eq, Ord, Show, Generic)
+-- | TODO: this should not be needed anywhere except perhaps in tests
+vdocVersionFromSTSafe :: ST -> Either String VDocVersion
+vdocVersionFromSTSafe = Right . VDocVersion
 
-vdocVersionFromSTSafe :: ST -> Either String (VDocVersion b)
-vdocVersionFromSTSafe = either (Left . show) (Right . VDocVersion) . tokensToForest . parseTokens
-
-vdocVersionFromST :: ST -> VDocVersion b
-vdocVersionFromST = (\(Right v) -> v) . vdocVersionFromSTSafe
-
-vdocVersionToST :: VDocVersion b -> ST
-vdocVersionToST = cs . renderTokens . tokensFromForest . _unVDocVersion
-
-emptyVDocVersion :: VDocVersion b
-emptyVDocVersion = vdocVersionFromST ""
+-- | TODO: this should not be needed anywhere except perhaps in tests
+vdocVersionFromST :: ST -> VDocVersion
+vdocVersionFromST = VDocVersion
 
 data VDocRepo = VDocRepo
   { _vdocRepoID    :: ID VDocRepo
@@ -96,7 +87,7 @@ data Edit = Edit
 data CreateEdit = CreateEdit
   { _createEditDesc  :: ST
   , _createEditRange :: ChunkRange
-  , _createEditVDoc  :: VDocVersion 'HTMLRaw
+  , _createEditVDoc  :: VDocVersion
   , _createEditKind  :: EditKind
   , _createEditMotiv :: ST
   }
@@ -128,11 +119,11 @@ makeRefineType ''Title
 makeRefineType ''Abstract
 
 -- ('makeRefineType' doesn't support parametric types.)
-instance SOP.Generic (VDocVersion a)
-instance SOP.HasDatatypeInfo (VDocVersion a)
-instance NFData (VDocVersion a) where rnf = SOP.grnf
-instance SOP.ToJSON (VDocVersion a) where toJSON = gtoJSONDef
-instance SOP.FromJSON (VDocVersion a) where parseJSON = gparseJSONDef
+instance SOP.Generic VDocVersion
+instance SOP.HasDatatypeInfo VDocVersion
+instance NFData VDocVersion where rnf = SOP.grnf
+instance SOP.ToJSON VDocVersion where toJSON = gtoJSONDef
+instance SOP.FromJSON VDocVersion where parseJSON = gparseJSONDef
 -- TODO: aeson-encode phantom type in json for cross-network type safety
 makeLenses ''VDocVersion
 makePrisms ''VDocVersion
@@ -155,7 +146,7 @@ data CompositeVDoc = CompositeVDoc
   { _compositeVDoc            :: VDoc
   , _compositeVDocRepo        :: VDocRepo
   , _compositeVDocEditID      :: ID Edit
-  , _compositeVDocVersion     :: VDocVersion 'HTMLWithMarks
+  , _compositeVDocVersion     :: VDocVersion
   , _compositeVDocEdits       :: Map (ID Edit) Edit
   , _compositeVDocNotes       :: Map (ID Note) Note
   -- , _compositeVDocQuestions   :: [Question]  -- will be due in #99
