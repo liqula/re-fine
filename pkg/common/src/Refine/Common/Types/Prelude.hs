@@ -29,7 +29,7 @@ import           GHC.Generics (Generic)
 import           Text.Read
 import           Web.HttpApiData
 
-import Refine.Prelude (ClearTypeParameter(..), Timestamp)
+import Refine.Prelude (Timestamp)
 import Refine.Prelude.TH
 
 
@@ -38,8 +38,6 @@ import Refine.Prelude.TH
 newtype ID a = ID { _unID :: Int64 }
   deriving (Eq, Ord, Show, Read, Generic)
 
-instance ClearTypeParameter ID where
-  clearTypeParameter (ID x) = ID x
 makeRefineType ''ID
 
 type family Create a = b | b -> a

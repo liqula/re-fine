@@ -165,8 +165,6 @@ data CompositeVDoc = CompositeVDoc
 
 makeRefineType ''CompositeVDoc
 
--- *
-
 vdocID :: Lens' VDoc (ID VDoc)
 vdocID = vdocMetaID . miID
 
