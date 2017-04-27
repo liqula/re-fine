@@ -15,10 +15,11 @@
 module Refine.Common.Test.Arbitrary where
 
 import           Control.Arrow (second)
+import           Control.Lens ((^.), (^?!), (.~), (%~), _Just)
 import           Control.Monad.State
 import           Data.Function (on)
 import           Data.Functor.Infix ((<$$>))
-import           Data.List ((\\), nub, nubBy)
+import           Data.List ((\\), nub, nubBy, sort)
 import qualified Data.List as List
 import           Data.Maybe (catMaybes)
 import           Data.Monoid
@@ -413,3 +414,40 @@ instance Arbitrary SelectionState where
 instance Arbitrary SelectionPoint where
   arbitrary = garbitrary
   shrink    = gshrink
+
+data RawContentWithSelections = RawContentWithSelections RawContent [SelectionState]
+  deriving (Eq, Show)
+
+instance Arbitrary RawContentWithSelections where
+  arbitrary = do
+    c  <- arbitraryNonNothingBlockKeys . makeNonEmpty <$> arbitrary
+    ss <- replicateM 11 (arbitrarySoundSelectionState c)
+    pure $ RawContentWithSelections c ss
+
+makeNonEmpty :: RawContent -> RawContent
+makeNonEmpty = rawContentBlocks %~ (b:)
+  where
+    b = Block
+      { _blockText         = "wefwef"
+      , _blockEntityRanges = []
+      , _blockStyles       = []
+      , _blockType         = minBound
+      , _blockDepth        = 0
+      , _blockKey          = Nothing
+      }
+
+arbitraryNonNothingBlockKeys :: RawContent -> RawContent
+arbitraryNonNothingBlockKeys = rawContentBlocks %~ zipWith (\k -> blockKey .~ (Just . BlockKey . cs . show $ k)) [(0 :: Int)..]
+
+arbitrarySoundSelectionState :: RawContent -> Gen SelectionState
+arbitrarySoundSelectionState (RawContent bs _) = do
+  let arbpoint = do
+        i <- choose (0, length bs - 1)
+        let b = bs !! i
+            blockkey = b ^?! blockKey . _Just
+        offset <- choose (0, ST.length (b ^. blockText) - 1)
+        pure (i, SelectionPoint blockkey offset)
+  anchor <- arbpoint
+  point  <- arbpoint
+  let [start, end] = snd <$> sort [anchor, point]
+  pure $ SelectionState start end

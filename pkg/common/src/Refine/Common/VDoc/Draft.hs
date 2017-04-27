@@ -95,23 +95,23 @@ data BlockType =
   | Header3
   | BulletPoint
   | EnumPoint
-  deriving (Show, Eq, Generic)
+  deriving (Show, Eq, Generic, Bounded, Enum)
 
 
 -- | https://draftjs.org/docs/api-reference-selection-state.html
 data SelectionState
-  = Selection
+  = SelectionState
       { _selectionStart :: SelectionPoint
       , _selectionEnd   :: SelectionPoint
       }
-  deriving (Eq, Ord, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 data SelectionPoint
   = SelectionPoint
       { _selectionBlock  :: BlockKey
       , _selectionOffset :: Int
       }
-  deriving (Eq, Ord, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 
 -- * instances
