@@ -160,8 +160,8 @@ dbFilter fltrs m = AppM $ do
   mkNatDB <- view appMkDBNat
   conn    <- view appDBConnection
   let (Nat dbNat) = mkNatDB conn (DBContext mu fltrs)
-  r   <- liftIO (try' $ runExceptT (dbNat m))
-  r'  <- leftToError (AppDBError . DBUnknownError . show) r
+  r   <- liftIO (try $ runExceptT (dbNat m))
+  r'  <- leftToError (AppDBError . DBUnknownError . show @SomeException) r
   leftToError AppDBError r'
   where
     user = \case
@@ -174,21 +174,18 @@ db = dbFilter mempty
 docRepo :: DocRepo a -> AppM db uh a
 docRepo m = AppM $ do
   (Nat drepoNat) <- view appDocRepoNat
-  r  <- liftIO (try' $ runExceptT (drepoNat m))
-  r' <- leftToError (AppDocRepoError . DocRepoUnknownError . show) r
+  r  <- liftIO (try $ runExceptT (drepoNat m))
+  r' <- leftToError (AppDocRepoError . DocRepoUnknownError . show @SomeException) r
   leftToError AppDocRepoError r'
 
 userHandle :: uh a -> AppM db uh a
 userHandle m = AppM $ do
   (Nat runUserHandle) <- view appUHNat
-  r  <- liftIO (try' $ runExceptT (runUserHandle m))
-  r' <- leftToError (AppUserHandleError . UserHandleUnknownError . show) r
+  r  <- liftIO (try $ runExceptT (runUserHandle m))
+  r' <- leftToError (AppUserHandleError . UserHandleUnknownError . show @SomeException) r
   leftToError AppUserHandleError r'
 
 appLog :: String -> AppM db uh ()
 appLog msg = AppM $ do
   logger <- view appLogger
   liftIO $ unLogger logger msg
-
-try' :: IO a -> IO (Either SomeException a)
-try' = try
