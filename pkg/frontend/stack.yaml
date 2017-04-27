@@ -66,3 +66,6 @@ extra-deps:
 - recursion-schemes-5.0.1
 - refine-common-0.0.0.0
 - string-0.4.0
+- quickcheck-instances-0.3.12
+- quickcheck-io-0.1.4
+- comonad-5.0.1
