@@ -49,8 +49,8 @@ library
     , mtl
     , QuickCheck
     , quickcheck-instances
-    , react-flux
-    , react-flux-servant
+    , react-hs
+    , react-hs-servant
     , refine-common
     , refine-prelude
     , string-conversions
@@ -126,7 +126,7 @@ executable refine-frontend
   cpp-options: -DGHCJS_BROWSER
   build-depends:
       base >= 4.7 && < 5
-    , react-flux
+    , react-hs
     , refine-frontend
   default-language: Haskell2010
 
@@ -155,8 +155,8 @@ test-suite spec
     , lens
     , QuickCheck
     , quickcheck-instances
-    , react-flux
-    , react-flux-servant
+    , react-hs
+    , react-hs-servant
     , refine-common
     , refine-frontend
     , refine-prelude
