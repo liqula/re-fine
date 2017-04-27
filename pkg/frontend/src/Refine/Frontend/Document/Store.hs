@@ -23,50 +23,70 @@
 
 module Refine.Frontend.Document.Store
   ( documentStateUpdate
-  , createEditorState
+  , mkDocumentStateEdit
   , editorStateToVDocVersion
+  , editorStateFromVDocVersion
+  , vdocVersionToRawContent
+  , vdocVersionFromRawContent
+  , vdocVersionToContent
+  , vdocVersionFromContent
   ) where
 
-import           Control.Lens ((&), (.~), (%~), (^.))
-import           System.IO.Unsafe (unsafePerformIO)
-import           Text.HTML.Tree (tokensFromForest, tokensToForest, ParseTokenForestError)
+import           Control.Lens ((&), (%~))
+import           Data.Aeson (encode, eitherDecode)
+import           Data.String.Conversions (cs, (<>))
 
 import           Refine.Common.Types
+import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store.Types
 
 
-documentStateUpdate :: GlobalAction -> Maybe (VDocVersion 'HTMLWithMarks) -> DocumentState -> DocumentState
+documentStateUpdate :: GlobalAction -> Maybe VDocVersion -> DocumentState -> DocumentState
 documentStateUpdate (HeaderAction (StartEdit kind)) (Just vdocvers) _state
-  = DocumentStateEdit (createEditorState kind vdocvers)
+  = mkDocumentStateEdit kind vdocvers
 
-documentStateUpdate (DocumentAction (DocumentEditUpdate es)) (Just _) state
-  = state & _DocumentStateEdit .~ es
+documentStateUpdate (DocumentAction (DocumentUpdate state')) (Just _) _state
+  = state'
 
 documentStateUpdate (DocumentAction DocumentToggleBold) (Just _) state
-  = state & _DocumentStateEdit . documentEditStateVal %~ documentToggleBold
+  = state & documentStateVal %~ documentToggleBold
 
 documentStateUpdate (DocumentAction DocumentToggleItalic) (Just _) state
-  = state & _DocumentStateEdit . documentEditStateVal %~ documentToggleItalic
+  = state & documentStateVal %~ documentToggleItalic
 
-documentStateUpdate (DocumentAction DocumentEditSave) _ _
-  = DocumentStateView
+documentStateUpdate (DocumentAction DocumentSave) _ _
+  = emptyDocumentState
 
 documentStateUpdate _ _ state
   = state
 
 
-{-# NOINLINE createEditorState #-}
-createEditorState :: EditKind -> VDocVersion 'HTMLWithMarks -> DocumentEditState
-createEditorState kind (VDocVersion vers) = unsafePerformIO $ do
-  let content = convertFromHtml $ tokensFromForest vers
-  estate <- createWithContent content
-  pure $ DocumentEditState kind estate
+-- TODO: 'VDocVersion' will be entirely replaced by 'RawContent', the following functions will go away.
+
+mkDocumentStateEdit :: EditKind -> VDocVersion -> DocumentState
+mkDocumentStateEdit kind vers = DocumentStateEdit (editorStateFromVDocVersion vers) kind
+
+editorStateToVDocVersion :: EditorState -> VDocVersion
+editorStateToVDocVersion = vdocVersionFromContent . getCurrentContent
+
+editorStateFromVDocVersion :: VDocVersion -> EditorState
+editorStateFromVDocVersion = createWithContent . vdocVersionToContent
 
 
--- | FIXME: there is no validation here.
-editorStateToVDocVersion :: DocumentEditState -> Either ParseTokenForestError (VDocVersion 'HTMLWithMarks)
-editorStateToVDocVersion estate =
-  VDocVersion <$> (tokensToForest . stateToHTML . getCurrentContent $ estate ^. documentEditStateVal)
+vdocVersionToRawContent :: VDocVersion -> RawContent
+vdocVersionToRawContent (VDocVersion st) = case eitherDecode $ cs st of
+  Right v -> v
+  Left msg -> error $ "vdocVersionToRawContent: " <> show (msg, st)
+
+vdocVersionFromRawContent :: RawContent -> VDocVersion
+vdocVersionFromRawContent = VDocVersion . cs . encode
+
+
+vdocVersionToContent :: VDocVersion -> ContentState
+vdocVersionToContent = convertFromRaw . vdocVersionToRawContent
+
+vdocVersionFromContent :: ContentState -> VDocVersion
+vdocVersionFromContent = vdocVersionFromRawContent . convertToRaw

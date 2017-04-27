@@ -21,47 +21,53 @@
 
 module Refine.Frontend.Document.Document where
 
-import           Control.Lens ((^.), (.~), (&), to)
+import           Control.Lens ((^.), (.~), (&), has, view)
 import           React.Flux
-import           React.Flux.Internal (HandlerArg(..), PropertyOrHandler(..))
 
-import           Refine.Frontend.Contribution.Types
-import           Refine.Frontend.Document.FFI.Types (unsafeMkEditorState, unEditorState)
+import           Refine.Common.Types
+import           Refine.Frontend.Contribution.Types (ContributionState, ContributionAction(TriggerUpdateRange))
+import           Refine.Frontend.Document.FFI (updateEditorState, createWithContent)
+import           Refine.Frontend.Document.Store (vdocVersionToContent)
 import           Refine.Frontend.Document.Types
-import           Refine.Frontend.Document.VDoc (vdocToHTML)
+import           Refine.Frontend.Header.Types (ToolbarExtensionStatus)
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
-import qualified Refine.Frontend.ThirdPartyViews as TP (editor_)
+import           Refine.Frontend.ThirdPartyViews (editor_)
 import           Refine.Frontend.Types
 
 
 document :: View '[DocumentProps]
 document = mkView "Document" $ \props ->
-  case props ^. dpDocumentState of
-    DocumentStateEdit editorState
-      -> article_ ["className" $= "gr-20 gr-14@desktop editor_wrapper"] $ do
-            editor_ $ EditorProps editorState
-    DocumentStateView
-      -> let dispatchTriggerUpdateRange = dispatch . ContributionAction . TriggerUpdateRange . OffsetFromDocumentTop in
-         article_ [ "id" $= "vdocValue"
-                  , "className" $= "gr-20 gr-14@desktop"
-                      -- 'mousePageY': relative to article top; 'mouseClientY': relative to window top
-                  , onMouseUp  $ \_ me -> dispatchTriggerUpdateRange (mousePageY me)
-                  , onTouchEnd $ \_ te -> dispatchTriggerUpdateRange (touchPageY . head . touches $ te)
-                  ] $ do
-           div_ ["className" $= "c-article-content"] $ do
-             vdocToHTML (props ^. dpContributionState) (props ^. dpVDocVersion)
+  article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
+           , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
+           ] $ do
+    editor_
+      [ "editorState" &= (props ^. dpDocumentState . documentStateVal)
+      , "readOnly" &= readonly props
+      , onChange $ \evt ->
+          let newDocState :: DocumentState
+              newDocState = (props ^. dpDocumentState) & documentStateVal .~ updateEditorState evt
+          in dispatch . DocumentAction . DocumentUpdate $ newDocState
+
+      , onMouseUp  $ \_ me -> dispatchTriggerUpdateRange (mousePageY me)
+      , onTouchEnd $ \_ te -> dispatchTriggerUpdateRange (touchPageY . head . touches $ te)
+        -- '{mouse,touch}PageY': relative to article top; '{mouse,touch}ClientY': relative to window top
+      ] mempty
+  where
+    dispatchTriggerUpdateRange :: Int -> ViewEventHandler
+    dispatchTriggerUpdateRange = dispatch . ContributionAction . TriggerUpdateRange . OffsetFromDocumentTop
+
+    readonly :: DocumentProps -> Bool
+    readonly = has _DocumentStateView . view dpDocumentState
 
 document_ :: DocumentProps -> ReactElementM eventHandler ()
 document_ !props = view_ document "document_" props
 
 
-editor :: View '[EditorProps]
-editor = mkView "EditorWrapper" $ \(EditorProps estate) -> TP.editor_
-  [ property "editorState" (estate ^. documentEditStateVal . to unEditorState)
-  , CallbackPropertyWithSingleArgument "onChange" $  -- 'onChange' or 'on' do not match the type we need.
-      \(HandlerArg evt) -> dispatch . DocumentAction . DocumentEditUpdate $ estate & documentEditStateVal .~ unsafeMkEditorState evt
-  ] mempty
-
-editor_ :: EditorProps -> ReactElementM eventHandler ()
-editor_ !props = view_ editor "editorWrapper_" props
+-- | FIXME: see FIXME on 'gsVDoc'.  if we fix that, this helper should go away.
+mkDocumentProps :: DocumentState -> ContributionState -> ToolbarExtensionStatus -> VDocVersion -> DocumentProps
+mkDocumentProps ds cs tes vdoc = DocumentProps ds' cs tes
+  where
+    ds' = case ds of
+     DocumentStateView _   -> DocumentStateView . createWithContent . vdocVersionToContent $ vdoc
+     DocumentStateEdit _ _ -> ds

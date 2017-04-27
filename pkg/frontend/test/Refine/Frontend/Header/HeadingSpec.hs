@@ -26,9 +26,7 @@ module Refine.Frontend.Header.HeadingSpec where
 
 import           Control.Lens ((^.), (&), (.~))
 import qualified Data.Map.Strict as M
-import qualified Data.Tree as DT
 import           Test.Hspec
-import qualified Text.HTML.Parser as HTMLP
 
 import           Refine.Common.Types
 import           Refine.Frontend.Header.Heading
@@ -38,8 +36,7 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Test.Store
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
-import           Refine.Frontend.Test.Samples (sampleMetaID)
-
+import           Refine.Frontend.Test.Samples (sampleText, sampleMetaID)
 
 spec :: Spec
 spec = do
@@ -78,7 +75,7 @@ spec = do
           newVDoc = CompositeVDoc (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1))
                                   (VDocRepo (ID 1) (ID 1))
                                   (ID 1)
-                                  (VDocVersion [DT.Node (HTMLP.TagOpen "div" [HTMLP.Attr "data-offset" "0", HTMLP.Attr "data-uid" "77"]) []])
+                                  sampleText
                                   M.empty M.empty M.empty
 
           gs :: GlobalState

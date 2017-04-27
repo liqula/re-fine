@@ -74,7 +74,6 @@ library
       Refine.Frontend.Document.FFI.Types
       Refine.Frontend.Document.Store
       Refine.Frontend.Document.Types
-      Refine.Frontend.Document.VDoc
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.EditToolbar
       Refine.Frontend.Header.Heading

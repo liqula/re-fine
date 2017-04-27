@@ -24,33 +24,35 @@
 module Refine.Frontend.Document.FFI.Types
   ( EditorState(..)
   , ContentState(..)
-  , unEditorState
-  , unsafeMkEditorState
+  , mkEditorState
+  , updateEditorState
   ) where
 
 import           GHC.Generics (Generic)
+import           GHCJS.Marshal (FromJSVal, ToJSVal)
 import           GHCJS.Types (JSVal)
+import           React.Flux (Event, evtHandlerArg)
+import           React.Flux.Internal (HandlerArg(HandlerArg))
 
-import           Refine.Frontend.Util (js_eq)
+import           Refine.Frontend.Util ((===))
 import           Refine.Prelude.Aeson (NoJSONRep(NoJSONRep))
 import           Refine.Prelude.TH (makeRefineType)
 
 
 newtype EditorState = EditorState (NoJSONRep JSVal)
-  deriving (Show, Generic)
+  deriving (Show, Generic, ToJSVal, FromJSVal)
 
 instance Eq EditorState where
-  EditorState (NoJSONRep js) == EditorState (NoJSONRep js') = js_eq js js'  -- (not too confident about this one...)
+  EditorState (NoJSONRep js) == EditorState (NoJSONRep js') = js === js'
 
 newtype ContentState = ContentState (NoJSONRep JSVal)
-  deriving (Show, Generic)
+  deriving (Show, Generic, ToJSVal, FromJSVal)
 
 makeRefineType ''EditorState
 makeRefineType ''ContentState
 
+mkEditorState :: JSVal -> EditorState
+mkEditorState = EditorState . NoJSONRep
 
-unEditorState :: EditorState -> JSVal
-unEditorState (EditorState (NoJSONRep jsval)) = jsval
-
-unsafeMkEditorState :: JSVal -> EditorState
-unsafeMkEditorState = EditorState . NoJSONRep
+updateEditorState :: Event -> EditorState
+updateEditorState (evtHandlerArg -> HandlerArg evt) = EditorState $ NoJSONRep evt

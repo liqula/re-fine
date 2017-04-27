@@ -32,20 +32,20 @@ import           Control.Monad.IO.Class
 import           Control.Monad.State.Class (MonadState, modify)
 import           Control.Monad.Trans.State (StateT, runStateT)
 import           Control.Monad (void, when)
-import           Data.Aeson (decode, eitherDecode, toJSON, Value(String))
+import           Data.Aeson (decode, eitherDecode, Value(String))
 import           Data.JSString (JSString, unpack)
 import qualified Data.Map.Strict as M
 import           Data.String.Conversions
 import           React.Flux
 
-import           Refine.Common.Types (CompositeVDoc(..), Contribution(..))
+import           Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as C
-import qualified Refine.Common.VDoc.HTML as C
 import           Refine.Common.Rest (ApiError(..))
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Store (documentStateUpdate, editorStateToVDocVersion)
 import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Document.FFI (traceCurrentEditorState, traceCurrentContent)
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Login.Store (loginStateUpdate)
@@ -88,8 +88,11 @@ transformGlobalState = transf
     transf :: GlobalAction -> GlobalState -> m GlobalState
     transf (ResetState s) _ = pure s  -- for testing only!
     transf action state = do
-        consoleLogJSONM "Old state: " state
-        consoleLogJSStringM "Action: " (cs $ show action)
+        liftIO . when weAreInDevMode $ do
+          consoleLogJSONM "Old state: " state
+          traceCurrentEditorState (state ^. gsDocumentState . documentStateVal)
+          traceCurrentContent (state ^. gsDocumentState . documentStateVal)
+          consoleLogJSStringM "Action: " (cs $ show action)
 
         -- all updates to state are pure!
         let state' = pureTransform action state
@@ -102,7 +105,7 @@ transformGlobalState = transf
             ContributionAction (TriggerUpdateRange releasePositionOnPage) -> do
                 reDispatchM . ContributionAction . maybe ClearRange SetRange
                     =<< getRange releasePositionOnPage
-                removeAllRanges  -- (See also: calls to 'C.highlightRange', 'C.removeHighlights' below.)
+                removeAllRanges
 
                 when (state ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithRange) $ do
                   -- (if the comment editor (or dialog) is started via the toolbar extension, this
@@ -114,7 +117,14 @@ transformGlobalState = transf
 
             _ -> pure ()
 
-        consoleLogJSONM "New state: " $ if state' /= state then toJSON state' else (String "[UNCHANGED]" :: Value)
+        liftIO . when weAreInDevMode $ if state' /= state
+          then do
+            consoleLogJSONM "New state: " state'
+            traceCurrentEditorState (state' ^. gsDocumentState . documentStateVal)
+            traceCurrentContent (state' ^. gsDocumentState . documentStateVal)
+          else do
+            consoleLogJSONM "New state: " (String "[UNCHANGED]" :: Value)
+
         pure state'
 
     pureTransform :: GlobalAction -> GlobalState -> GlobalState
@@ -144,28 +154,16 @@ vdocUpdate action (Just vdoc) = Just $ case action of
       -> vdoc
           & C.compositeVDocDiscussions
               %~ M.insert (discussion ^. C.compositeDiscussion . C.discussionID) discussion
-          & C.compositeVDocVersion
-              %~ C.insertMoreMarks [ContribDiscussion $ discussion ^. C.compositeDiscussion]
 
     AddNote note
       -> vdoc
           & C.compositeVDocNotes
               %~ M.insert (note ^. C.noteID) note
-          & C.compositeVDocVersion
-              %~ C.insertMoreMarks [ContribNote note]
 
     AddEdit edit
       -> vdoc
           & C.compositeVDocEdits
               %~ M.insert (edit ^. C.editID) edit
-          & C.compositeVDocVersion
-              %~ C.insertMoreMarks [ContribEdit edit]
-
-    ContributionAction (SetRange range)
-      -> vdoc & C.compositeVDocVersion %~ C.removeHighlights  -- FIXME: this should be implicit in highlightRange
-              & C.compositeVDocVersion %~ C.highlightRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
-    ContributionAction ClearRange
-      -> vdoc & C.compositeVDocVersion %~ C.removeHighlights
 
     _ -> vdoc
 
@@ -227,8 +225,8 @@ emitBackendCallsFor action state = case action of
             (Right note) -> dispatchM $ AddNote note
         Nothing -> pure ()
 
-    DocumentAction DocumentEditSave -> case state ^? gsDocumentState . documentStateEdit of
-      Just estate@(editorStateToVDocVersion -> Right newvers) -> do
+    DocumentAction DocumentSave -> case state ^. gsDocumentState of
+      dstate@(DocumentStateEdit _ kind) -> do
         let eid :: C.ID C.Edit
             eid = state ^?! gsVDoc . _Just . C.compositeVDocEditID
 
@@ -236,8 +234,8 @@ emitBackendCallsFor action state = case action of
             cedit = C.CreateEdit
                   { C._createEditDesc  = "..."                          -- TODO: #233
                   , C._createEditRange = state ^. gsContributionState . csCurrentRange . to createChunkRange
-                  , C._createEditVDoc  = C.downgradeVDocVersionWR newvers
-                  , C._createEditKind  = estate ^. documentEditStateKind
+                  , C._createEditVDoc  = editorStateToVDocVersion (dstate ^. documentStateVal)
+                  , C._createEditKind  = kind
                   , C._createEditMotiv = "..."                          -- TODO: #233
                   }
 

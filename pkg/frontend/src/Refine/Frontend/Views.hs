@@ -40,9 +40,8 @@ import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.QuickCreate
 import           Refine.Frontend.Contribution.Types as RS
 import           Refine.Frontend.CS ()
-import           Refine.Frontend.Document.Types (DocumentProps(..))
-import           Refine.Frontend.Document.Document (document_)
-import           Refine.Frontend.Header.Heading ( mainHeader_ )
+import           Refine.Frontend.Document.Document
+import           Refine.Frontend.Header.Heading (mainHeader_)
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component
 import           Refine.Frontend.Login.Types as LG
@@ -105,10 +104,10 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                                      (M.elems (vdoc ^. compositeVDocEdits))
                                      (rs ^. gsContributionState . csQuickCreateShowState)
                       leftAside_ asideProps
-                      document_ $ DocumentProps (rs ^. RS.gsDocumentState)
-                                                (rs ^. RS.gsContributionState)
-                                                (rs ^. gsHeaderState . hsToolbarExtensionStatus)
-                                                (vdoc ^. compositeVDocVersion)
+                      document_ $ mkDocumentProps (rs ^. RS.gsDocumentState)
+                                                  (rs ^. RS.gsContributionState)
+                                                  (rs ^. gsHeaderState . hsToolbarExtensionStatus)
+                                                  (vdoc ^. compositeVDocVersion)
                       rightAside_ asideProps
 
 mainScreen_ :: GlobalState -> ReactElementM eventHandler ()

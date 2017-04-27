@@ -38,8 +38,11 @@ import Refine.Prelude.TH (makeRefineType)
 
 
 data GlobalState = GlobalState
-  { _gsVDoc                       :: Maybe CompositeVDoc
-  , _gsVDocList                   :: Maybe [ID VDoc]
+  { _gsVDoc                       :: Maybe CompositeVDoc  -- ^ FIXME: this should be split up into
+                                                          -- its 'gsDocumentState' part and its
+                                                          -- 'gsContributionState' part.
+  , _gsVDocList                   :: Maybe [ID VDoc]  -- ^ FIXME: this should be live in it's own
+                                                      -- 'GlobalState' constructor.
   , _gsContributionState          :: ContributionState
   , _gsHeaderState                :: HeaderState
   , _gsDocumentState              :: DocumentState
@@ -57,7 +60,7 @@ emptyGlobalState = GlobalState
   , _gsVDocList                   = Nothing
   , _gsContributionState          = emptyContributionState
   , _gsHeaderState                = emptyHeaderState
-  , _gsDocumentState              = DocumentStateView
+  , _gsDocumentState              = emptyDocumentState
   , _gsScreenState                = emptyScreenState
   , _gsMainMenuState              = emptyMainMenuState
   , _gsLoginState                 = emptyLoginState

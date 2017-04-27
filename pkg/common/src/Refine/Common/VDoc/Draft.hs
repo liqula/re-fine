@@ -24,7 +24,7 @@
 module Refine.Common.VDoc.Draft
 where
 
-import           Control.Lens (makeLenses)
+import           Control.Lens (makeLenses, set)
 import           Control.Monad (foldM)
 import           Data.Aeson
 import           Data.Aeson.Types (Parser)
@@ -252,3 +252,6 @@ mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
     index e = EntityKey . fromMaybe (error "mkRawContent: impossible") $ Map.lookup e em
 
     em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
+
+resetBlockKeys :: RawContent -> RawContent
+resetBlockKeys (RawContent bs es) = RawContent (set blockKey Nothing <$> bs) es
