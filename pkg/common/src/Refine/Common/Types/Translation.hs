@@ -1,6 +1,8 @@
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE Rank2Types                 #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
@@ -12,7 +14,8 @@ module Refine.Common.Types.Translation where
 import Control.Lens (Getter, makeLenses, to)
 import Data.String.Conversions (ConvertibleStrings, ST, cs)
 import Data.String (IsString(..))
-import Data.Text.I18n
+import Data.Text.I18n as I18n (Locale(..), L10n, Msgid(..), Context)
+import Data.Aeson.Types
 import GHC.Generics (Generic)
 
 import Refine.Common.Orphans ()
@@ -26,7 +29,23 @@ data L10 = L10 L10n Locale
   deriving (Eq, Generic, Show)
 
 deriving instance Generic Locale
+
+instance ToJSONKey Locale where
+  toJSONKey = ToJSONKeyValue (\(Locale s) -> String s) toEncoding
+
+instance FromJSONKey Locale
+
 deriving instance Generic Msgid
+
+instance ToJSONKey Msgid where
+  toJSONKey = ToJSONKeyValue (\(Msgid s) -> String s) toEncoding
+
+instance FromJSONKey Msgid
+
+instance ToJSONKey (Maybe I18n.Context) where
+  toJSONKey = ToJSONKeyValue toJSON toEncoding
+
+instance FromJSONKey (Maybe I18n.Context)
 
 
 -- | Translation Key

@@ -22,8 +22,9 @@ import           Data.List ((\\), nub, nubBy)
 import qualified Data.List as List
 import           Data.Maybe (catMaybes)
 import           Data.Monoid
-import           Data.String.Conversions (ST)
+import           Data.String.Conversions (ST, cs)
 import qualified Data.Text as ST
+import qualified Data.Text.I18n as I18n
 import qualified Data.Text.Lazy as LT
 import qualified Data.Text.Lazy.Builder as B
 import           Data.Tree
@@ -39,6 +40,16 @@ import Refine.Common.VDoc.Draft
 import Refine.Common.VDoc.HTML
 import Refine.Common.VDoc.HTML.Core
 import Refine.Common.VDoc.HTML.Splice
+
+
+instance Arbitrary L10 where
+  arbitrary = L10 <$> scale (`div` 3) arbitrary <*> arbitrary
+
+instance Arbitrary I18n.Locale where
+  arbitrary = I18n.Locale . cs . show <$> elements [(1 :: Int)..10]
+
+instance Arbitrary I18n.Msgid where
+  arbitrary = I18n.Msgid . cs . show <$> elements [(1 :: Int)..10]
 
 
 instance Arbitrary (ID a) where

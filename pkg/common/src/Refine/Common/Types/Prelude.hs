@@ -21,6 +21,8 @@
 module Refine.Common.Types.Prelude where
 
 import           Control.Lens
+import           Data.Aeson
+import           Data.Aeson.Types
 import           Data.Int
 import           Data.String.Conversions (ST, cs)
 import           GHC.Generics (Generic)
@@ -38,6 +40,7 @@ newtype ID a = ID { _unID :: Int64 }
 
 instance ClearTypeParameter ID where
   clearTypeParameter (ID x) = ID x
+makeRefineType ''ID
 
 type family Create a = b | b -> a
 
@@ -46,6 +49,13 @@ instance ToHttpApiData (ID a) where
 
 instance FromHttpApiData (ID a) where
   parseUrlPiece = either (Left . cs) (Right . ID) . (readEither :: String -> Either String Int64) . cs
+
+instance (ToJSON a) => ToJSONKey (ID a) where
+  toJSONKey = ToJSONKeyValue (Data.Aeson.Types.Number . fromIntegral . _unID) toEncoding
+
+instance (FromJSON a) => FromJSONKey (ID a)
+
+-- FUTUREWORK: aeson has Int64 instances for ToJSONKey, FromJSONKey.  how can we use those?
 
 
 -- * user related types
@@ -104,7 +114,6 @@ makeRefineType ''CreateUser
 makeRefineType ''User
 makeRefineType ''Login
 makeRefineType ''UserInfo
-makeRefineType ''ID
 makeRefineType ''MetaInfo
 makeRefineType ''MetaID
 

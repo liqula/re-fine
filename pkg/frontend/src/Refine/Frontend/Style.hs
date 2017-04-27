@@ -64,7 +64,7 @@ data Style =
   -- StyleUri ST ST
   deriving (Eq)
 
-instance ToJSON [Style] where
+instance {-# OVERLAPPING #-} ToJSON [Style] where
   toJSON = object . fmap (\case
     StyleInt         k v -> k .= vshow v
     StyleDouble      k v -> k .= vshow v
