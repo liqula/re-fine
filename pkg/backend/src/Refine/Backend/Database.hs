@@ -39,7 +39,7 @@ import Control.Monad.Trans.Control
 import Control.Natural
 import Data.Pool (withResource)
 import Data.String.Conversions (cs)
-import Database.Persist.Sqlite (SqlBackend)
+import Database.Persist.Sqlite (SqlBackend, createSqlitePool, runSqlPool, persistBackend, getStmtConn, connBegin, connRollback, connCommit)
 import Web.Users.Persistent as UserDB
 
 import Refine.Backend.Config
