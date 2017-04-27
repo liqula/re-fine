@@ -54,7 +54,6 @@ spec = do
 
   describe "issue #242" $ do
     it "ffi throw an exception when marshalling Ints fails" $ do
-      pendingWith "#242"
       js_reproduce_issue_242            `shouldReturn` 123
 
     it "ffi throw an exception when marshalling Ints fails (+1)" $ do
@@ -64,7 +63,6 @@ spec = do
       (show <$> js_reproduce_issue_242) `shouldReturn` "123"
 
     it "ffi throw an exception when marshalling Ints fails (Aeson.encode)" $ do
-      pendingWith "#242"
       (encode <$> js_reproduce_issue_242) `shouldReturn` "123"
 
     it "readMaybe" $ do
