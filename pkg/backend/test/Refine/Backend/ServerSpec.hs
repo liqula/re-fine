@@ -252,6 +252,8 @@ specMockedLogin = around createDevModeTestSession $ do
           (addNoteUri (vdoc ^. compositeVDocRepo . vdocHeadEdit))
           (CreateNote "[note]" True (ChunkRange (Just cp1) (Just cp2)))
 
+      pendingWith "'validateCreateChunkRange' is not implemented yet."
+
       respCode resp `shouldBe` 409
       cs (simpleBody resp) `shouldContain` ("ChunkRangeBadDataUID" :: String)
 
@@ -313,10 +315,10 @@ specMockedLogin = around createDevModeTestSession $ do
     context "on edit without ranges" $ do
       it "stores an edit and returns its version" $ \sess -> do
         (_, fp) <- setup sess
-        be' :: VDocVersion 'HTMLCanonical <- runDB sess $ do
+        be' :: VDocVersion <- runDB sess $ do
               handles <- db $ DB.handlesForEdit (fp ^. editID)
               docRepo $ uncurry DocRepo.getVersion handles
-        be' `shouldBe` vdocVersionFromST "<span data-uid=\"1\">[new\nvdoc\nversion]</span>"
+        be' `shouldBe` vdocVersionFromST "[new vdoc version]"
 
       it "stores an edit and returns it in the list of edits applicable to its base" $ \sess -> do
         pendingWith "applicableEdits is not implemented."
@@ -339,6 +341,9 @@ specUserHandling = around createTestSession $ do
 
     describe "create" $ do
       it "works" $ \sess -> do
+
+        pendingWith "#291"
+
         timeBefore <- getCurrentTimestamp
         u :: User <- runWaiJSON sess doCreate
         let timeThen = u ^. userMetaID . miMeta . metaCreatedAt
@@ -353,12 +358,18 @@ specUserHandling = around createTestSession $ do
     describe "login" $ do
       context "with valid credentials" $ do
         it "works (and returns the cookie)" $ \sess -> do
+
+          pendingWith "#291"
+
           resp <- runWai sess $ doCreate >> doLogin (Login userName userPass)
           respCode resp `shouldBe` 200
           checkCookie resp
 
       context "with invalid credentials" $ do
         it "works (and returns the cookie)" $ \sess -> do
+
+          pendingWith "#291"
+
           resp <- runWai sess $ doCreate >> doLogin (Login userName "")
           respCode resp `shouldBe` 404
           checkCookie resp
