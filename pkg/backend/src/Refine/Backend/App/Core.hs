@@ -161,8 +161,8 @@ dbFilter fltrs m = AppM $ do
   conn    <- view appDBConnection
   let (Nat dbNat) = mkNatDB conn (DBContext mu fltrs)
   r   <- liftIO (try $ runExceptT (dbNat m))
-  r'  <- leftToError (AppDBError . DBUnknownError . show @SomeException) r
-  leftToError AppDBError r'
+  r'  <- leftToError (AppDBError . DBUnknownError . show @SomeException) r  -- catch (unexpected?) IO errors
+  leftToError AppDBError r'  -- catch (expected) errors we throw ourselves
   where
     user = \case
       UserLoggedOut     -> Nothing
