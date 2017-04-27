@@ -64,7 +64,7 @@ newtype UserHandleContext = UserHandleContext
 makeLenses ''UserHandleContext
 
 newtype UserHandleError
-  = UserHandleUnknownError String
+  = UserHandleUnknownError String  -- ^ FUTUREWORK: make this 'SomeException'?
   deriving (Eq, Generic, Show)
 
 makeRefineType ''UserHandleError
@@ -75,7 +75,7 @@ deriving instance Generic CreateUserError
 
 makeRefineType ''CreateUserError
 
--- Converts an internal UserID representation to the common UserID.
+-- | Converts an internal UserID representation to the common UserID.
 toUserID :: Users.LoginId -> ID Types.User
 toUserID = ID . fromSqlKey
 
