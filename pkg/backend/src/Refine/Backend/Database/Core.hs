@@ -38,7 +38,7 @@ type SQLM = ReaderT SqlBackend IO
 
 data DBContext = DBContext
   { _dbLoggedInUser :: Maybe (ID User)
-  , _dbFilter       :: Filters
+  , _dbFilters      :: Filters
   }
 
 -- FIXME: follow the structure as in "Refine.Backend.User.*" (here as well as in "...DocRepo").

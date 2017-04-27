@@ -62,7 +62,7 @@ import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 import System.FilePath (FilePath)
 
-import Refine.Backend.Database hiding (dbFilter)
+import Refine.Backend.Database
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Types
@@ -154,8 +154,8 @@ makeRefineType ''AppError
 appIO :: IO a -> AppM db uh a
 appIO = AppM . liftIO
 
-dbFilter :: Filters -> db a -> AppM db uh a
-dbFilter fltrs m = AppM $ do
+dbWithFilters :: Filters -> db a -> AppM db uh a
+dbWithFilters fltrs m = AppM $ do
   mu      <- user <$> gets (view appUserState)
   mkNatDB <- view appMkDBNat
   conn    <- view appDBConnection
@@ -169,7 +169,7 @@ dbFilter fltrs m = AppM $ do
       UserLoggedIn u _s -> Just u
 
 db :: db a -> AppM db uh a
-db = dbFilter mempty
+db = dbWithFilters mempty
 
 docRepo :: DocRepo a -> AppM db uh a
 docRepo m = AppM $ do

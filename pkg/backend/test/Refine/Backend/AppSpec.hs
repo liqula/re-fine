@@ -75,15 +75,14 @@ spec = do
       monadic (monadicApp runner) (runProgram program `evalStateT` initVDocs)
 
   describe "User handling" . around provideAppRunner $ do
-    -- FIXME: Use the Cmd type instead
+    -- FUTUREWORK: Use the Cmd dsl for this test
     it "Create/login/logout" $ \(runner :: AppM DB UH () -> IO ()) -> do
       forceEval . runner $ do
         void $ App.createUser (CreateUser "user" "user@example.com" "password")
         userState0 <- gets (view appUserState)
         appIO $ userState0 `shouldBe` UserLoggedOut
 
-      -- The user creation should happen in a different session, than
-      -- the login.
+      -- FIXME: #291
       forceEval . runner $ do
         void $ App.login (Login "user" "password")
         userState1 <- gets (view appUserState)
@@ -94,7 +93,7 @@ spec = do
         appIO $ userState2 `shouldBe` UserLoggedOut
 
   describe "Database handling" . around provideAppRunner $ do
-    it "Calls db combinator twice" $ \(runner :: AppM DB UH () -> IO ()) -> do
+    it "db (or dbWithFilters) can be called twice inside the same AppM" $ \(runner :: AppM DB UH () -> IO ()) -> do
       forceEval . runner $ do
         void $ do
           let createGroup1 = CreateGroup "group1" "desc1" [] [] False
