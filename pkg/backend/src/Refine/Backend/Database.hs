@@ -37,9 +37,9 @@ import Control.Monad.Logger
 import Control.Monad.Reader
 import Control.Monad.Trans.Control
 import Control.Natural
-import Data.Pool
+import Data.Pool (withResource)
 import Data.String.Conversions (cs)
-import Database.Persist.Sqlite
+import Database.Persist.Sqlite (SqlBackend)
 import Web.Users.Persistent as UserDB
 
 import Refine.Backend.Config
@@ -52,7 +52,7 @@ import Refine.Backend.Database.Types as DatabaseCore
 
 type MkDBNat db = DBConnection -> DBContext -> (db :~> ExceptT DBError IO)
 
-newtype DBRunner = DBRunner { unDBRunner :: forall m a . MonadBaseControl IO m => (DBConnection -> m a) -> m a } -- Pool SqlBackend
+newtype DBRunner = DBRunner { unDBRunner :: forall m a . MonadBaseControl IO m => (DBConnection -> m a) -> m a }
 
 createDBNat :: Config -> IO (DBRunner, MkDBNat DB, UserDB.Persistent)
 createDBNat cfg = do
