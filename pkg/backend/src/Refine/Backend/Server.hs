@@ -39,7 +39,8 @@ import qualified Control.Natural as CN
 import           Control.Natural (($$))
 import           Data.Aeson (encode)
 import           Data.String.Conversions (SBS, cs)
-import           Debug.Trace (traceShow)  -- (please keep this until we have better logging)
+import           Data.Monoid ((<>))
+import           Debug.Trace (trace)  -- (please keep this until we have better logging)
 import           Network.Wai.Handler.Warp as Warp
 import           Prelude hiding ((.), id)
 import           Servant
@@ -142,9 +143,9 @@ mkBackend cfg initUH migrate = do
   createDataDirectories cfg
 
   -- create runners
-  (dbNat, runUserHandle) <- createDBNat cfg
+  (dbRunner, dbNat, runUserHandle) <- createDBNat cfg
   docRepoNat <- createRepoNat cfg
-  backend    <- mkServerApp cfg dbNat docRepoNat (initUH runUserHandle)
+  backend    <- mkServerApp cfg dbNat dbRunner docRepoNat (initUH runUserHandle)
 
   -- migration
   result <- runExceptT (backendRunApp backend $$ migrate)
@@ -157,12 +158,13 @@ mkBackend cfg initUH migrate = do
 
 mkServerApp
     :: MonadRefine db uh
-    => Config -> DBNat db -> DocRepoNat -> UHNat uh -> IO (Backend db uh)
-mkServerApp cfg dbNat docRepoNat uh = do
+    => Config -> MkDBNat db -> DBRunner -> DocRepoNat -> UHNat uh -> IO (Backend db uh)
+mkServerApp cfg dbNat dbRunner docRepoNat uh = do
   poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
       app    = runApp dbNat
+                      dbRunner
                       docRepoNat
                       uh
                       logger
@@ -194,7 +196,10 @@ toServantError = Nat ((lift . runExceptT) >=> leftToError fromAppError)
     -- FIXME: some (many?) of these shouldn't be err500.
     -- FIXME: implement better logging.
     fromAppError :: AppError -> ServantErr
-    fromAppError err = traceShow err $ (appServantErr err) { errBody = encode $ toApiError err }
+    fromAppError err = traceShow' err $ (appServantErr err) { errBody = encode $ toApiError err }
+
+    traceShow' :: (Show a) => a -> b -> b
+    traceShow' a = trace ("toServantError: " <> show a)
 
 toApiError :: AppError -> ApiError
 toApiError = \case

@@ -23,11 +23,14 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Backend.App.Core (
-    DBNat
+    MkDBNat
+  , DBRunner(..)
+  , DBConnection(..)
   , UHNat
   , DocRepoNat
   , AppContext(..)
-  , appDBNat
+  , appMkDBNat
+  , appDBConnection
   , appDocRepoNat
   , appUHNat
   , appLogger
@@ -49,6 +52,7 @@ module Refine.Backend.App.Core (
   , appLog
   ) where
 
+import Control.Exception (SomeException, try)
 import Control.Lens (makeLenses, view)
 import Control.Monad.Except
 import Control.Monad.Reader
@@ -58,7 +62,7 @@ import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 import System.FilePath (FilePath)
 
-import Refine.Backend.Database hiding (dbFilter)
+import Refine.Backend.Database
 import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Types
@@ -72,7 +76,8 @@ import Refine.Prelude.TH (makeRefineType)
 type DocRepoNat = DocRepo :~> ExceptT DocRepoError IO
 
 data AppContext db uh = AppContext
-  { _appDBNat         :: DBNat db
+  { _appMkDBNat       :: MkDBNat db
+  , _appDBConnection  :: DBConnection
   , _appDocRepoNat    :: DocRepoNat
   , _appUHNat         :: UHNat uh
   , _appLogger        :: Logger
@@ -149,31 +154,36 @@ makeRefineType ''AppError
 appIO :: IO a -> AppM db uh a
 appIO = AppM . liftIO
 
-dbFilter :: Filters -> db a -> AppM db uh a
-dbFilter fltrs m = AppM $ do
-  mu <- user <$> gets (view appUserState)
-  (Nat dbNat) <- ($ DBContext mu fltrs) <$> view appDBNat
-  r <- liftIO (runExceptT (dbNat m))
-  leftToError AppDBError r
+dbWithFilters :: Filters -> db a -> AppM db uh a
+dbWithFilters fltrs m = AppM $ do
+  mu      <- user <$> gets (view appUserState)
+  mkNatDB <- view appMkDBNat
+  conn    <- view appDBConnection
+  let (Nat dbNat) = mkNatDB conn (DBContext mu fltrs)
+  r   <- liftIO (try $ runExceptT (dbNat m))
+  r'  <- leftToError (AppDBError . DBUnknownError . show @SomeException) r  -- catch (unexpected?) IO errors
+  leftToError AppDBError r'  -- catch (expected) errors we throw ourselves
   where
     user = \case
       UserLoggedOut     -> Nothing
       UserLoggedIn u _s -> Just u
 
 db :: db a -> AppM db uh a
-db = dbFilter mempty
+db = dbWithFilters mempty
 
 docRepo :: DocRepo a -> AppM db uh a
 docRepo m = AppM $ do
   (Nat drepoNat) <- view appDocRepoNat
-  r <- liftIO (runExceptT (drepoNat m))
-  leftToError AppDocRepoError r
+  r  <- liftIO (try $ runExceptT (drepoNat m))
+  r' <- leftToError (AppDocRepoError . DocRepoUnknownError . show @SomeException) r
+  leftToError AppDocRepoError r'
 
 userHandle :: uh a -> AppM db uh a
 userHandle m = AppM $ do
   (Nat runUserHandle) <- view appUHNat
-  r <- liftIO (runExceptT (runUserHandle m))
-  leftToError AppUserHandleError r
+  r  <- liftIO (try $ runExceptT (runUserHandle m))
+  r' <- leftToError (AppUserHandleError . UserHandleUnknownError . show @SomeException) r
+  leftToError AppUserHandleError r'
 
 appLog :: String -> AppM db uh ()
 appLog msg = AppM $ do

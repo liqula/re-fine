@@ -72,41 +72,38 @@ getVDoc i = do
 getVDocVersion :: ID Edit -> App (VDocVersion 'HTMLCanonical)
 getVDocVersion eid = do
   appLog "getVDocVersion"
-  join . db $ do
-    rid      <- DB.vdocRepoOfEdit eid
-    rhandle  <- DB.getRepoHandle rid
-    ehandle  <- DB.getEditHandle eid
-    pure . docRepo $ DocRepo.getVersion rhandle ehandle
+  rid      <- db $ DB.vdocRepoOfEdit eid
+  rhandle  <- db $ DB.getRepoHandle rid
+  ehandle  <- db $ DB.getEditHandle eid
+  docRepo $ DocRepo.getVersion rhandle ehandle
 
 getCompositeVDoc :: ID VDoc -> App CompositeVDoc  -- TODO: take an edit id here, and implement getHeadCompositeVDoc in terms of that.
 getCompositeVDoc vid = do
   appLog "getCompositeVDoc"
-  join . db $ do
-    vdoc     <- DB.getVDoc vid
-    rid      <- DB.vdocRepo vid
-    rhandle  <- DB.getRepoHandle rid
-    repo     <- DB.getRepo rid
-    let headid = repo ^. vdocHeadEdit
-    hhandle  <- DB.getEditHandle headid
-    comments <- DB.editComments headid
-    let commentNotes       = catMaybes $ (^? _CommentNote)       <$> filter (has _CommentNote)       comments
-        commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
+  vdoc     <- db $ DB.getVDoc vid
+  rid      <- db $ DB.vdocRepo vid
+  rhandle  <- db $ DB.getRepoHandle rid
+  repo     <- db $ DB.getRepo rid
+  let headid = repo ^. vdocHeadEdit
+  hhandle  <- db $ DB.getEditHandle headid
+  comments <- db $ DB.editComments headid
+  let commentNotes       = catMaybes $ (^? _CommentNote)       <$> filter (has _CommentNote)       comments
+      commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
 
-    pure $ do
-      edits <- db $ mapM DB.getEdit =<< DB.getEditChildren headid
-      let insertAllMarks :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
-          insertAllMarks vers = vers
-                              & insertMarks     (ContribNote <$> commentNotes)
-                              & insertMoreMarks (ContribDiscussion . view compositeDiscussion <$> commentDiscussions)
-                              & insertMoreMarks (ContribEdit <$> edits)
+  edits <- db $ mapM DB.getEdit =<< DB.getEditChildren headid
+  let insertAllMarks :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
+      insertAllMarks vers = vers
+                          & insertMarks     (ContribNote <$> commentNotes)
+                          & insertMoreMarks (ContribDiscussion . view compositeDiscussion <$> commentDiscussions)
+                          & insertMoreMarks (ContribEdit <$> edits)
 
-      version <- insertAllMarks <$> docRepo (DocRepo.getVersion rhandle hhandle)
-      pure $
-        CompositeVDoc
-          vdoc repo headid version
-          (toMap editID edits)
-          (toMap noteID commentNotes)
-          (toMap (compositeDiscussion . discussionID) commentDiscussions)
+  version <- insertAllMarks <$> docRepo (DocRepo.getVersion rhandle hhandle)
+  pure $
+    CompositeVDoc
+      vdoc repo headid version
+      (toMap editID edits)
+      (toMap noteID commentNotes)
+      (toMap (compositeDiscussion . discussionID) commentDiscussions)
   where
     toMap selector = Map.fromList . fmap (view selector &&& id)
 

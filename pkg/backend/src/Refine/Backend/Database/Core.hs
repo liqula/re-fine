@@ -38,7 +38,7 @@ type SQLM = ReaderT SqlBackend IO
 
 data DBContext = DBContext
   { _dbLoggedInUser :: Maybe (ID User)
-  , _dbFilter       :: Filters
+  , _dbFilters      :: Filters
   }
 
 -- FIXME: follow the structure as in "Refine.Backend.User.*" (here as well as in "...DocRepo").
@@ -55,10 +55,10 @@ newtype DB a = DB { unDB :: ExceptT DBError (ReaderT DBContext SQLM) a }
     )
 
 data DBError
-  = DBUnknownError String
+  = DBUnknownError String  -- ^ FUTUREWORK: make this 'SomeException'?
   | DBNotFound String
   | DBNotUnique String
-  | DBException String
+  | DBException String     -- ^ FUTUREWORK: make this 'SomeException'?
   | DBUserNotLoggedIn
   | DBMigrationParseErrors [ST]
   | DBUnsafeMigration [(Bool, ST)]

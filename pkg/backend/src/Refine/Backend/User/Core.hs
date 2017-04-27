@@ -28,7 +28,7 @@
 module Refine.Backend.User.Core
   ( UserDB
   , UserHandleContext(..), userBackend
-  , UserHandleError
+  , UserHandleError(..)
   , UHNat
   , toUserID
   , fromUserID
@@ -63,8 +63,8 @@ newtype UserHandleContext = UserHandleContext
 
 makeLenses ''UserHandleContext
 
-data UserHandleError
-  = UserHandleUnknownError
+newtype UserHandleError
+  = UserHandleUnknownError String  -- ^ FUTUREWORK: make this 'SomeException'?
   deriving (Eq, Generic, Show)
 
 makeRefineType ''UserHandleError
@@ -75,7 +75,7 @@ deriving instance Generic CreateUserError
 
 makeRefineType ''CreateUserError
 
--- Converts an internal UserID representation to the common UserID.
+-- | Converts an internal UserID representation to the common UserID.
 toUserID :: Users.LoginId -> ID Types.User
 toUserID = ID . fromSqlKey
 

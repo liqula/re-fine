@@ -40,6 +40,7 @@ module Refine.Prelude
   , ClearTypeParameter(..)
   , leftToError
   , nothingToError
+  , finally
   , justIf
   , justIfP
   , toEnumMay
@@ -184,6 +185,14 @@ leftToError err = either (throwError . err) pure
 
 nothingToError :: (Monad m, MonadError me m) => me -> Maybe a -> m a
 nothingToError err = maybe (throwError err) pure
+
+-- | Runs the first computation and the second one, even if
+-- the first created an error.
+finally :: (MonadError e m) => m a -> m () -> m a
+finally m f =
+  do {x <- m; f; pure x}
+  `catchError`
+  (\e -> do {f; throwError e})
 
 justIf :: a -> Bool -> Maybe a
 justIf x b = if b then Just x else Nothing

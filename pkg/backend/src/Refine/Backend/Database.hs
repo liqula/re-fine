@@ -24,7 +24,9 @@
 
 module Refine.Backend.Database
   ( module DatabaseCore
-  , DBNat
+  , MkDBNat
+  , DBRunner(..)
+  , DBConnection(..)
   , createDBNat
   ) where
 
@@ -33,9 +35,11 @@ import Control.Lens ((^.))
 import Control.Monad.Except
 import Control.Monad.Logger
 import Control.Monad.Reader
+import Control.Monad.Trans.Control
 import Control.Natural
+import Data.Pool (withResource)
 import Data.String.Conversions (cs)
-import Database.Persist.Sqlite
+import Database.Persist.Sqlite (SqlBackend, createSqlitePool, runSqlPool, persistBackend, getStmtConn, connBegin, connRollback, connCommit)
 import Web.Users.Persistent as UserDB
 
 import Refine.Backend.Config
@@ -46,9 +50,11 @@ import Refine.Backend.Database.Entity as Entity
 import Refine.Backend.Database.Types as DatabaseCore
 
 
-type DBNat db = DBContext -> (db :~> ExceptT DBError IO)
+type MkDBNat db = DBConnection -> DBContext -> (db :~> ExceptT DBError IO)
 
-createDBNat :: Config -> IO (DBNat DB, UserDB.Persistent)
+newtype DBRunner = DBRunner { unDBRunner :: forall m a . MonadBaseControl IO m => (DBConnection -> m a) -> m a }
+
+createDBNat :: Config -> IO (DBRunner, MkDBNat DB, UserDB.Persistent)
 createDBNat cfg = do
 
   let sqliteDb = case cfg ^. cfgDBKind of
@@ -56,8 +62,11 @@ createDBNat cfg = do
         DBOnDisk fp -> fp
 
   pool <- runNoLoggingT $ createSqlitePool (cs sqliteDb) (cfg ^. cfgPoolSize)
+  let dbConnectionCont :: (MonadBaseControl IO m) => (DBConnection -> m a) -> m a
+      dbConnectionCont m = withResource pool (m . mkDBConnection)
 
-  pure ( \dbctx -> Nat (wrapErrors . (`runSqlPool` pool) . (`runReaderT` dbctx) . runExceptT . unDB)
+  pure ( DBRunner dbConnectionCont
+       , \dbc dbctx -> Nat (wrapErrors . dbRun dbc . (`runReaderT` dbctx) . runExceptT . unDB)
        , Persistent (`runSqlPool` pool)
        )
   where
@@ -65,6 +74,31 @@ createDBNat cfg = do
     wrapErrors =
       lift . try >=> either (throwError . DBException . show @SomeException)
                             (either throwError pure)
+
+    -- Refactored from:
+    -- https://hackage.haskell.org/package/persistent-2.6.1/docs/src/Database-Persist-Sql-Run.html#runSqlConn
+    mkDBConnection :: SqlBackend -> DBConnection
+    mkDBConnection conn =
+      let conn'  = persistBackend conn
+          getter = getStmtConn conn'
+      in DBConnection
+        { dbInit   = control $ \runInIO -> mask $ \restore -> do
+                       restore $ connBegin conn' getter
+                       runInIO $ pure ()
+        , dbRun    = \r -> control $ \runInIO -> mask $ \restore -> do
+                             onException
+                               (restore . runInIO $ runReaderT r conn)
+                               (restore $ connRollback conn' getter)
+        , dbCommit = do control $ \runInIO -> mask $ \restore -> do
+                          restore $ connCommit conn' getter
+                          runInIO $ pure ()
+        }
+
+data DBConnection = DBConnection
+  { dbInit   :: forall m   . (MonadBaseControl IO m) => m ()
+  , dbRun    :: forall m a . (MonadBaseControl IO m) => ReaderT SqlBackend m a -> m a
+  , dbCommit :: forall m   . (MonadBaseControl IO m) => m ()
+  }
 
 instance Database DB where
   -- * VDoc

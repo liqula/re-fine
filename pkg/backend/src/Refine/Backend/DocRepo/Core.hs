@@ -33,8 +33,8 @@ import Refine.Prelude.TH (makeRefineType)
 
 
 data DocRepoError
-  = DocRepoUnknownError String
-  | DocRepoException String
+  = DocRepoUnknownError String  -- ^ FUTUREWORK: make this 'SomeException'?
+  | DocRepoException String     -- ^ FUTUREWORK: make this 'SomeException'?
   deriving (Eq, Show, Generic)
 
 makeRefineType ''DocRepoError

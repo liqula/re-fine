@@ -86,7 +86,9 @@ runDB' :: Backend DB uh -> AppM DB uh a -> IO (Either AppError a)
 runDB' sess = runExceptT . run (backendRunApp sess)
 
 errorOnLeft :: Show e => IO (Either e a) -> IO a
-errorOnLeft action = either (throwIO . ErrorCall . show) pure =<< action
+errorOnLeft action = either (throwIO . ErrorCall . show') pure =<< action
+  where
+    show' x = "errorOnLeft: " <> show x
 
 
 createDevModeTestSession :: ActionWith (Backend DB FreeUH) -> IO ()
