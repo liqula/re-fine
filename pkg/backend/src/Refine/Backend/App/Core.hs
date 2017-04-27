@@ -159,7 +159,7 @@ dbWithFilters fltrs m = AppM $ do
   mu      <- user <$> gets (view appUserState)
   mkNatDB <- view appMkDBNat
   conn    <- view appDBConnection
-  let (Nat dbNat) = mkNatDB conn (DBContext mu fltrs)
+  let (NT dbNat) = mkNatDB conn (DBContext mu fltrs)
   r   <- liftIO (try $ runExceptT (dbNat m))
   r'  <- leftToError (AppDBError . DBUnknownError . show @SomeException) r  -- catch (unexpected?) IO errors
   leftToError AppDBError r'  -- catch (expected) errors we throw ourselves
@@ -173,14 +173,14 @@ db = dbWithFilters mempty
 
 docRepo :: DocRepo a -> AppM db uh a
 docRepo m = AppM $ do
-  (Nat drepoNat) <- view appDocRepoNat
+  (NT drepoNat) <- view appDocRepoNat
   r  <- liftIO (try $ runExceptT (drepoNat m))
   r' <- leftToError (AppDocRepoError . DocRepoUnknownError . show @SomeException) r
   leftToError AppDocRepoError r'
 
 userHandle :: uh a -> AppM db uh a
 userHandle m = AppM $ do
-  (Nat runUserHandle) <- view appUHNat
+  (NT runUserHandle) <- view appUHNat
   r  <- liftIO (try $ runExceptT (runUserHandle m))
   r' <- leftToError (AppUserHandleError . UserHandleUnknownError . show @SomeException) r
   leftToError AppUserHandleError r'

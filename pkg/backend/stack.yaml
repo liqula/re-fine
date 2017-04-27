@@ -7,8 +7,8 @@ packages:
 - location: '../prelude'
   extra-dep: false  # run the test suite for this package
 - location:
-    git: https://github.com/andorp/lentil.git
-    commit: 61a1c8421388c525ff4d98b59b3cf3b4ca5f5ad2
+    git: https://github.com/zerobuzz/lentil.git
+    commit: 3fcde2423b176c6addf86f038dbf3e39db771410
   extra-dep: true
 - location:
     git: https://github.com/andorp/elim.git

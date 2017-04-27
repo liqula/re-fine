@@ -116,7 +116,7 @@ interpret m (Free (DestroySession s k)) = do
   interpret m (k r)
 
 freeUHNat :: MockUH_ -> UHNat FreeUH
-freeUHNat m = Nat (interpret m)
+freeUHNat m = NT (interpret m)
 
 
 type MockUH_ = MockUH (ExceptT UserHandleError IO)

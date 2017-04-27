@@ -42,7 +42,7 @@ import Refine.Backend.DocRepo.Darcs as Darcs
 
 createRepoNat :: Config -> IO (DocRepo :~> ExceptT DocRepoError IO)
 createRepoNat cfg = pure $
-  Nat (wrapErrors . runDocRepo cfg)
+  NT (wrapErrors . runDocRepo cfg)
   where
     wrapErrors :: IO (Either DocRepoError a) -> ExceptT DocRepoError IO a
     wrapErrors m = do
