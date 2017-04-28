@@ -66,7 +66,7 @@ createDBNat cfg = do
       dbConnectionCont m = withResource pool (m . mkDBConnection)
 
   pure ( DBRunner dbConnectionCont
-       , \dbc dbctx -> Nat (wrapErrors . dbRun dbc . (`runReaderT` dbctx) . runExceptT . unDB)
+       , \dbc dbctx -> NT (wrapErrors . dbRun dbc . (`runReaderT` dbctx) . runExceptT . unDB)
        , Persistent (`runSqlPool` pool)
        )
   where

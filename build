@@ -36,7 +36,7 @@ assert_cmd cabal
 # - npm comes with node, so no extra version constraint here.
 # - on debian, the name for the node executable is nodejs, don't let that confuse you!
 
-RESOLVER=lts-7.15
+RESOLVER=lts-8.5
 
 stack setup --resolver $RESOLVER
 stack install --resolver $RESOLVER shake

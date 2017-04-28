@@ -96,9 +96,9 @@ monadicApp :: (AppM DB UH Property -> IO Property) -> AppM DB UH Property -> Pro
 monadicApp p = ioProperty . p
 
 errorNat :: (Show e, Functor m) => ExceptT e m :~> m
-errorNat = Nat (fmap (either (error . show) id) . runExceptT)
+errorNat = NT (fmap (either (error . show) id) . runExceptT)
 
 provideDevModeAppRunner :: ActionWith (AppM DB FreeUH a -> IO a) -> IO ()
 provideDevModeAppRunner action = withTempCurrentDirectory $ do
   backend <- backendRunApp <$> mkDevModeBackend (def & cfgShouldLog .~ False) mockLogin
-  void $ action (run (errorNat . backend))
+  void $ action (unwrapNT (errorNat . backend))

@@ -100,4 +100,4 @@ runRepo = fmap (either (error . show) id) . runDocRepo cfg
 createDocRepoRunner :: IO (DocRepo :~> IO)
 createDocRepoRunner = do
   createDirectoryIfMissing True $ cfg ^. cfgReposRoot
-  pure $ Nat runRepo
+  pure $ NT runRepo

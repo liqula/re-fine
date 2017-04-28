@@ -62,5 +62,5 @@ instance PToJSVal EventType where
 data Prop where
   Prop :: forall a. (ToJSON a) => ST -> a -> Prop
 
-instance ToJSON [Prop] where
+instance {-# OVERLAPPING #-} ToJSON [Prop] where
   toJSON = object . fmap (\(Prop k v) -> k .= v)

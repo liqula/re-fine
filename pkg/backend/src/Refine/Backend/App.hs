@@ -66,7 +66,7 @@ runApp
   sessionLength
   poFilesRoot
   wrapper =
-    Nat (runSR . unApp . wrapper)
+    NT (runSR . unApp . wrapper)
     where
       runSR
         :: StateT AppState (ReaderT (AppContext db uh) (ExceptT AppError IO)) x
@@ -80,4 +80,3 @@ runApp
                `finally`
                dbCommit dbc
           pure x
-

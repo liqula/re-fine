@@ -103,9 +103,9 @@ unique _      [x] = pure x
 unique errmsg []  = notFound errmsg
 unique errmsg _   = notUnique errmsg
 
-getEntity :: (ToBackendKey SqlBackend (S.EntityRep e), Typeable e)
-          => ID e -> DB (S.EntityRep e)
-getEntity eid = do
+getEntityRep :: (ToBackendKey SqlBackend (S.EntityRep e), Typeable e)
+             => ID e -> DB (S.EntityRep e)
+getEntityRep eid = do
   e <- liftDB . get $ S.idToKey eid
   maybe (idNotFound eid) pure e
 
@@ -201,7 +201,7 @@ getMetaEntity
   => (MetaID e -> S.EntityRep e -> b) -> ID e -> DB b
 getMetaEntity f i = do
     mid <- getMeta i
-    f mid <$> getEntity i
+    f mid <$> getEntityRep i
 
 
 -- * VDoc
@@ -255,7 +255,7 @@ createRepo repoh edith = liftDB $ do
 
 
 getRepo :: ID VDocRepo -> DB VDocRepo
-getRepo vid = S.repoElim toVDocRepo <$> getEntity vid
+getRepo vid = S.repoElim toVDocRepo <$> getEntityRep vid
   where
     toVDocRepo :: ST -> DocRepo.RepoHandle -> Key S.Edit -> VDocRepo
     toVDocRepo _desc _repoHandle pid = VDocRepo vid (S.keyToId pid)
@@ -270,7 +270,7 @@ getRepoFromHandle hndl = do
   pure $ S.repoElim toRepo (entityVal r)
 
 getRepoHandle :: ID VDocRepo -> DB DocRepo.RepoHandle
-getRepoHandle vid = S.repoElim toRepoHandle <$> getEntity vid
+getRepoHandle vid = S.repoElim toRepoHandle <$> getEntityRep vid
   where
     toRepoHandle :: ST -> DocRepo.RepoHandle -> Key S.Edit -> DocRepo.RepoHandle
     toRepoHandle _desc repoHandle _pid = repoHandle
@@ -318,7 +318,7 @@ getEditFromHandle hndl = do
   pure $ S.editElim toEdit (entityVal p)
 
 getEditHandle :: ID Edit -> DB DocRepo.EditHandle
-getEditHandle pid = S.editElim toEditHandle <$> getEntity pid
+getEditHandle pid = S.editElim toEditHandle <$> getEntityRep pid
   where
     toEditHandle :: ST -> ChunkRange -> DocRepo.EditHandle -> EditKind -> ST -> DocRepo.EditHandle
     toEditHandle _desc _cr handle _kind _motiv = handle
@@ -637,7 +637,7 @@ instance C.StoreProcessData DB CollaborativeEdit where
     ceids <- foreignKeyField S.processOfCollabEditCollabEdit
              <$$> liftDB (selectList [S.ProcessOfCollabEditProcess ==. S.idToKey pid] opts)
     ceid <- unique "getProcessData" ceids
-    cedata <- getEntity ceid
+    cedata <- getEntityRep ceid
     pure $ CollaborativeEdit
       ceid
       (S.collabEditProcessPhase cedata)
@@ -673,7 +673,7 @@ instance C.StoreProcessData DB Aula where
     as  <- foreignKeyField S.processOfAulaAula
             <$$> liftDB (selectList [S.ProcessOfAulaProcess ==. S.idToKey pid] opts)
     aid <- unique "getProcessData" as
-    saula <- getEntity aid
+    saula <- getEntityRep aid
     pure $ Aula aid (S.aulaProcessClass saula)
 
   updateProcessData pid process = do
@@ -699,7 +699,7 @@ createProcess process = do
 
 getProcess :: (C.StoreProcessData DB a, Typeable a) => ID (Process a) -> DB (Process a)
 getProcess pid = do
-  process <- getEntity pid
+  process <- getEntityRep pid
   pdata   <- C.getProcessData pid
   group   <- getGroup (S.keyToId $ S.processGroup process)
   mid     <- getMeta pid

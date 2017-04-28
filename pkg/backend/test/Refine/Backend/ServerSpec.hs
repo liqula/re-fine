@@ -27,7 +27,7 @@ import           Control.Lens ((^.), (.~), (&), to)
 import           Control.Monad.IO.Class (liftIO)
 import           Control.Monad.Trans.Except (runExceptT)
 import           Control.Monad (void)
-import           Control.Natural (run)
+import           Control.Natural (unwrapNT)
 import           Data.Aeson (FromJSON, ToJSON, decode, eitherDecode, encode)
 import qualified Data.ByteString as SBS
 import           Data.Default (def)
@@ -83,7 +83,7 @@ runDB sess = errorOnLeft . runDB' sess
 
 -- | Call an 'App' action.
 runDB' :: Backend DB uh -> AppM DB uh a -> IO (Either AppError a)
-runDB' sess = runExceptT . run (backendRunApp sess)
+runDB' sess = runExceptT . unwrapNT (backendRunApp sess)
 
 errorOnLeft :: Show e => IO (Either e a) -> IO a
 errorOnLeft action = either (throwIO . ErrorCall . show') pure =<< action
