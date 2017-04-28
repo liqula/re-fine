@@ -1,6 +1,6 @@
-resolver: lts-8.5
+resolver: lts-8.11
 
-compiler: ghcjs-0.2.1.9008005_ghc-8.0.2
+compiler: ghcjs-0.2.1.9008011_ghc-8.0.2
 compiler-check: match-exact
 
 # for custom ghcjs compilers, set version like this:
@@ -13,12 +13,9 @@ compiler-check: match-exact
 setup-info:
   ghcjs:
     source:
-      ghcjs-0.2.1.9008005_ghc-8.0.2:
-        url: https://github.com/matchwood/ghcjs-stack-dist/raw/master/ghcjs-0.2.1.9008005.tar.gz
-        sha1: 903ef8646719b688ccf6cd416e4d588a7d4ec911
-      ghcjs-0.2.1.9008000_ghc-8.0.2:
-        url: https://github.com/matchwood/ghcjs-stack-dist/raw/master/ghcjs-0.2.1.9008000.tar.gz
-        sha1: 815f26834ac25d72f58792524740fe3cca0ce3a6
+      ghcjs-0.2.1.9008011_ghc-8.0.2:
+        url: https://github.com/zerobuzz/ghcjs-stack-dist/raw/master/ghcjs-0.2.1.9008011.tar.gz
+        sha1: a72a5181124baf64bcd0e68a8726e65914473b3b
       ghcjs-0.2.1.9007019_ghc-8.0.1:
         url: http://ghcjs.tolysz.org/ghc-8.0-2017-02-05-lts-7.19-9007019.tar.gz
         sha1: d2cfc25f9cda32a25a87d9af68891b2186ee52f9
