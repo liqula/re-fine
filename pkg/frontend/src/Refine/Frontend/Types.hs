@@ -22,18 +22,14 @@
 
 module Refine.Frontend.Types where
 
-import Control.Lens (makeLenses)
-import Data.Aeson
 import Data.Char (toLower)
 import Data.JSString (JSString)
-import Data.Maybe (catMaybes)
 import Data.String.Conversions
 import GHC.Generics (Generic)
 
 import Refine.Common.Types
 import Refine.Frontend.CS ()
-import Refine.Prelude.TH (makeRefineType, makeSOPGeneric, makeNFData)
-import Refine.Prelude.Aeson ((.=?))
+import Refine.Prelude.TH (makeRefineType)
 
 
 class CssClass a where
@@ -74,36 +70,36 @@ makeRefineType ''ScrollOffsetOfViewport
 makeRefineType ''OffsetFromDocumentTop
 
 
+-- | 'Range' contains the 'SelectionState' from draftjs, plus some measurements about the window
+-- scroll state and size.
+--
+-- Some thoughts on the applicability of 'SelectionState':
+--
+-- a selection state is only valid wrt. a specific RawContent, as the block keys are used to
+-- identify locations in the dom.  this means that if the content changes during edits, teh
+-- selection state may get outdated.
+--
+-- when creating comments, the text remains read-only during creation of a comment, so the selection
+-- will be valid on submit.  good, no issue here.
+--
+-- when creating edits, the selection state applies to the previous version, so we're fine, too.
+-- BUT: as long as we convert selection state to chunk range to store it in the (outdated) backend,
+-- we need to get the conversion right.
+--
+-- so we need to store the chunkrange in Range for now instead of the SelectionState, and replace it
+-- with SelectionState once ChunkRange and the Chunk module get completely removed from
+-- refine-common.
+--
+-- CAVEAT: we make some assumptions here about the block keys being stable: *iff* the editor never
+-- changes block keys for lines once they have one *and* we never store rawcontent values that are
+-- *not* already decorated with block keys by draft, *then* we're good.
 data Range = Range
-    { _rangeStartPoint   :: Maybe ChunkPoint
-    , _rangeEndPoint     :: Maybe ChunkPoint
-    , _rangeDocTopOffset :: OffsetFromDocumentTop
-    , _rangeTopOffset    :: OffsetFromViewportTop
-    , _rangeBottomOffset :: OffsetFromViewportTop
-    , _rangeScrollOffset :: ScrollOffsetOfViewport
+    { _rangeSelectionState :: ChunkRange
+    , _rangeDocTopOffset   :: OffsetFromDocumentTop
+    , _rangeTopOffset      :: OffsetFromViewportTop
+    , _rangeBottomOffset   :: OffsetFromViewportTop
+    , _rangeScrollOffset   :: ScrollOffsetOfViewport
     }
     deriving (Show, Eq, Generic)
 
-makeLenses ''Range
-makeSOPGeneric ''Range
-makeNFData ''Range
-
-instance FromJSON Range where
-    parseJSON = withObject "Range" $ \v -> Range <$>
-                             v .:? "start" <*>
-                             v .:? "end" <*>
-                             v .: "doctop" <*>
-                             v .: "top" <*>
-                             v .: "bottom" <*>
-                             v .: "scrollOffset"
-
-instance ToJSON Range where
-    toJSON (Range sp ep dt t b s) = object $
-      catMaybes [ "start" .=? sp
-                , "end"   .=? ep
-                ]
-      <> [ "top"          .= t
-         , "doctop"       .= dt
-         , "bottom"       .= b
-         , "scrollOffset" .= s
-         ]
+makeRefineType ''Range

@@ -23,7 +23,6 @@
 
 module Refine.Frontend.Document.Store
   ( documentStateUpdate
-  , mkDocumentStateEdit
   , editorStateToVDocVersion
   , editorStateFromVDocVersion
   , vdocVersionToRawContent
@@ -32,7 +31,7 @@ module Refine.Frontend.Document.Store
   , vdocVersionFromContent
   ) where
 
-import           Control.Lens ((&), (%~))
+import           Control.Lens ((&), (%~), (^.))
 import           Data.Aeson (encode, eitherDecode)
 import           Data.String.Conversions (cs, (<>))
 
@@ -45,8 +44,11 @@ import           Refine.Frontend.Store.Types
 
 
 documentStateUpdate :: GlobalAction -> Maybe VDocVersion -> DocumentState -> DocumentState
-documentStateUpdate (HeaderAction (StartEdit kind)) (Just vdocvers) _state
-  = mkDocumentStateEdit kind vdocvers
+documentStateUpdate (OpenDocument vdocvers) _ _state
+  = DocumentStateView (editorStateFromVDocVersion (vdocvers ^. compositeVDocVersion))
+
+documentStateUpdate (HeaderAction (StartEdit kind)) (Just _) (DocumentStateView estate)
+  = DocumentStateEdit estate kind
 
 documentStateUpdate (DocumentAction (DocumentUpdate state')) (Just _) _state
   = state'
@@ -57,17 +59,14 @@ documentStateUpdate (DocumentAction DocumentToggleBold) (Just _) state
 documentStateUpdate (DocumentAction DocumentToggleItalic) (Just _) state
   = state & documentStateVal %~ documentToggleItalic
 
-documentStateUpdate (DocumentAction DocumentSave) _ _
-  = emptyDocumentState
+documentStateUpdate (DocumentAction DocumentSave) (Just vdocvers) _state
+  = DocumentStateView (editorStateFromVDocVersion vdocvers)
 
 documentStateUpdate _ _ state
   = state
 
 
 -- TODO: 'VDocVersion' will be entirely replaced by 'RawContent', the following functions will go away.
-
-mkDocumentStateEdit :: EditKind -> VDocVersion -> DocumentState
-mkDocumentStateEdit kind vers = DocumentStateEdit (editorStateFromVDocVersion vers) kind
 
 editorStateToVDocVersion :: EditorState -> VDocVersion
 editorStateToVDocVersion = vdocVersionFromContent . getCurrentContent

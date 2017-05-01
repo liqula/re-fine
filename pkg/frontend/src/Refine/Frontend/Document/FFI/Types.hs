@@ -39,6 +39,38 @@ import           Refine.Prelude.Aeson (NoJSONRep(NoJSONRep))
 import           Refine.Prelude.TH (makeRefineType)
 
 
+-- | Javascript representation of editor state.  It looks something like this:
+--
+-- >>> EditorState: Record
+-- >>>   _immutable: Record
+-- >>>     _map: Map
+-- >>>       allowUndo: true
+-- >>>       currentContent: ContentState
+-- >>>         ...
+-- >>>       decorator: null
+-- >>>       directionMap: OrderedMap
+-- >>>         ...
+-- >>>       forceSelection: false
+-- >>>       inCompositionMode: false
+-- >>>       inlineStyleOverride: null
+-- >>>       lastChangeType: null
+-- >>>       length: 13
+-- >>>       nativelyRenderedContent: null
+-- >>>       redoStack: Stack
+-- >>>         ...
+-- >>>       undoStack: Stack
+-- >>>         ...
+-- >>>       selection: SelectionState
+-- >>>         _map: Map
+-- >>>           anchorKey: "cgd0m"  // b._immutable._map.get('selection')._map.get('anchorKey')
+-- >>>           anchorOffset: 0
+-- >>>           focusKey: "cgd0m"
+-- >>>           focusOffset: 0
+-- >>>           hasFocus: false
+-- >>>           isBackward: false
+-- >>>           length: 6
+-- >>>       treeMap: OrderedMap
+-- >>>         ...
 newtype EditorState = EditorState (NoJSONRep JSVal)
   deriving (Show, Generic, ToJSVal, FromJSVal)
 

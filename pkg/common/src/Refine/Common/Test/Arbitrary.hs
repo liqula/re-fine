@@ -217,5 +217,6 @@ arbitrarySoundSelectionState (RawContent bs _) = do
         pure (i, SelectionPoint blockkey offset)
   anchor <- arbpoint
   point  <- arbpoint
+  isback <- arbitrary
   let [start, end] = snd <$> sort [anchor, point]
-  pure $ SelectionState start end
+  pure $ SelectionState isback start end

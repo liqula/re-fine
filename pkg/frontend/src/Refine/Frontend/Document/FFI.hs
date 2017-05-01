@@ -48,11 +48,14 @@ module Refine.Frontend.Document.FFI
     -- * editor state actions
   , documentToggleBold
   , documentToggleItalic
+
+    -- * selections
+  , getSelection
   ) where
 
 import qualified Data.Aeson as Aeson
 import           Data.String.Conversions
-import           GHCJS.Types (JSString)
+import           GHCJS.Types (JSString, JSVal)
 import           Text.HTML.Parser
 
 import qualified Refine.Common.VDoc.Draft as Draft
@@ -164,3 +167,41 @@ documentToggleItalic st = js_ES_toggleInlineStyle st "ITALIC"
 foreign import javascript unsafe
     "RichUtils.toggleInlineStyle($1,$2)"
     js_ES_toggleInlineStyle :: EditorState -> JSString -> EditorState
+
+
+-- * selections
+
+-- | https://draftjs.org/docs/api-reference-editor-state.html#getselection
+--
+-- Draft never actually nulls this field.  There is always have a selection, but start and end point
+-- may be identical.  See 'selectionIsEmpty', 'getRangeAction' for context.
+getSelection :: EditorState -> Draft.SelectionState
+getSelection (js_ES_getSelection -> sel) =
+  Draft.SelectionState
+    (js_ES_getSelectionIsBackward sel)
+    (Draft.SelectionPoint (Draft.BlockKey . cs $ js_ES_getSelectionStartKey sel) (js_ES_getSelectionStartOffset sel))
+    (Draft.SelectionPoint (Draft.BlockKey . cs $ js_ES_getSelectionEndKey sel)   (js_ES_getSelectionEndOffset sel))
+
+foreign import javascript unsafe
+    "$1.getSelection()"
+    js_ES_getSelection :: EditorState -> JSVal
+
+foreign import javascript unsafe
+    "$1.getIsBackward()"
+    js_ES_getSelectionIsBackward :: JSVal -> Bool
+
+foreign import javascript unsafe
+    "$1.getStartKey()"
+    js_ES_getSelectionStartKey :: JSVal -> JSString
+
+foreign import javascript unsafe
+    "$1.getStartOffset()"
+    js_ES_getSelectionStartOffset :: JSVal -> Int
+
+foreign import javascript unsafe
+    "$1.getEndKey()"
+    js_ES_getSelectionEndKey :: JSVal -> JSString
+
+foreign import javascript unsafe
+    "$1.getEndOffset()"
+    js_ES_getSelectionEndOffset :: JSVal -> Int

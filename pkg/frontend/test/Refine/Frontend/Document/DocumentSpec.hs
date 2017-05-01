@@ -87,7 +87,7 @@ spec = do
   describe "Document" $ do
     let mkTestProps :: RawContent -> DocumentProps
         mkTestProps c = DocumentProps
-          (DocumentStateEdit (vdocVersionFromRawContent c) Grammar)
+          (DocumentStateEdit (editorStateFromVDocVersion $ vdocVersionFromRawContent c) Grammar)
           emptyContributionState
           EditToolbarExtension
 

@@ -19,18 +19,17 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 
-module Refine.Frontend.Document.Document where
+module Refine.Frontend.Document.Document (document, document_) where
 
-import           Control.Lens ((^.), (.~), (&), has, view)
+import           Control.Lens ((^.), (.~), (&), has)
+import           GHCJS.Types
 import           React.Flux
 
-import           Refine.Frontend.Contribution.Types (ContributionAction(TriggerUpdateRange))
 import           Refine.Frontend.Document.FFI (updateEditorState)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.ThirdPartyViews (editor_)
-import           Refine.Frontend.Types
 
 
 document :: View '[DocumentProps]
@@ -40,22 +39,22 @@ document = mkView "Document" $ \props ->
            ] $ do
     editor_
       [ "editorState" &= (props ^. dpDocumentState . documentStateVal)
-      , "readOnly" &= readonly props
+      , setReadOnly (has _DocumentStateView (props ^. dpDocumentState))
       , onChange $ \evt ->
           let newDocState :: DocumentState
               newDocState = (props ^. dpDocumentState) & documentStateVal .~ updateEditorState evt
           in dispatch . DocumentAction . DocumentUpdate $ newDocState
-
-      , onMouseUp  $ \_ me -> dispatchTriggerUpdateRange (mousePageY me)
-      , onTouchEnd $ \_ te -> dispatchTriggerUpdateRange (touchPageY . head . touches $ te)
-        -- '{mouse,touch}PageY': relative to article top; '{mouse,touch}ClientY': relative to window top
       ] mempty
-  where
-    dispatchTriggerUpdateRange :: Int -> ViewEventHandler
-    dispatchTriggerUpdateRange = dispatch . ContributionAction . TriggerUpdateRange . OffsetFromDocumentTop
-
-    readonly :: DocumentProps -> Bool
-    readonly = has _DocumentStateView . view dpDocumentState
 
 document_ :: DocumentProps -> ReactElementM eventHandler ()
 document_ !props = view_ document "document_" props
+
+
+-- | in read-only mode, onchange is not fired even on selection.
+-- https://github.com/facebook/draft-js/issues/690#issuecomment-282824570
+setReadOnly :: forall handler. Bool -> PropertyOrHandler handler
+setReadOnly ro = "handleBeforeInput" &= js_setReadOnly ro
+
+foreign import javascript unsafe
+  "function() { return $1 ? 'handled' : 'unhandled'; }"
+  js_setReadOnly :: Bool -> JSVal

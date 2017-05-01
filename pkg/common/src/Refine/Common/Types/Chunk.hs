@@ -37,7 +37,7 @@ import Refine.Prelude.TH (makeRefineType)
 -- backend :-).  The 'RawContent' is needed to convert block keys to block numbers and back.  This
 -- function isn't total, but all undefined values are internal errors`.
 chunkRangeToSelectionState :: RawContent -> ChunkRange -> SelectionState
-chunkRangeToSelectionState (RawContent bs _) (ChunkRange s e) = SelectionState (trans s) (trans e)
+chunkRangeToSelectionState (RawContent bs _) (ChunkRange s e) = SelectionState False (trans s) (trans e)
   where
     trans (Just (ChunkPoint (DataUID blocknum) offset)) = SelectionPoint blockkey offset
       where
@@ -45,7 +45,7 @@ chunkRangeToSelectionState (RawContent bs _) (ChunkRange s e) = SelectionState (
 
 -- | See 'chunkRangeToSelectionState'.
 selectionStateToChunkRange :: RawContent -> SelectionState -> ChunkRange
-selectionStateToChunkRange (RawContent bs _) (SelectionState s e) = ChunkRange (trans s) (trans e)
+selectionStateToChunkRange (RawContent bs _) (SelectionState _ s e) = ChunkRange (trans s) (trans e)
   where
     trans (SelectionPoint blockkey offset) = Just (ChunkPoint (DataUID blocknum) offset)
       where

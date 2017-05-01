@@ -27,25 +27,28 @@
 module Refine.Frontend.Store where
 
 import           Control.Concurrent (forkIO, yield, threadDelay)
-import           Control.Lens (_Just, (&), (^.), (^?), (^?!), (%~), to)
+import           Control.Lens (Lens', _Just, (&), (^.), (.~), (^?), (^?!), (%~))
 import           Control.Monad.IO.Class
 import           Control.Monad.State.Class (MonadState, modify)
 import           Control.Monad.Trans.State (StateT, runStateT)
 import           Control.Monad (void, when)
-import           Data.Aeson (decode, eitherDecode, Value(String))
-import           Data.JSString (JSString, unpack)
+import           Data.Aeson (eitherDecode, Value(String))
 import qualified Data.Map.Strict as M
+import           Data.Maybe (fromMaybe)
 import           Data.String.Conversions
 import           React.Flux
 
 import           Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as C
+import           Refine.Common.VDoc.Draft (selectionIsEmpty, selectionIsBackward)
 import           Refine.Common.Rest (ApiError(..))
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Store (documentStateUpdate, editorStateToVDocVersion)
 import           Refine.Frontend.Document.Types
-import           Refine.Frontend.Document.FFI (traceCurrentEditorState, traceCurrentContent)
+import           Refine.Frontend.Document.FFI ( EditorState, getSelection, getCurrentContent, convertToRaw
+                                              , traceCurrentContent, traceCurrentEditorState
+                                              )
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Login.Store (loginStateUpdate)
@@ -102,15 +105,21 @@ transformGlobalState = transf
 
         -- other effects
         case action of
-            ContributionAction (TriggerUpdateRange releasePositionOnPage) -> do
-                reDispatchM . ContributionAction . maybe ClearRange SetRange
-                    =<< getRange releasePositionOnPage
-                removeAllRanges
+            DocumentAction (DocumentUpdate dstate) -> do
+                mRangeEvent <- getRangeAction (state ^. gsDocumentState . documentStateVal) (dstate ^. documentStateVal)
+                case mRangeEvent of
+                    Nothing -> pure ()
+                    Just rangeEvent -> do
+                        reDispatchM $ ContributionAction rangeEvent
+                        -- TODO: call 'removeAllRanges' here and handle highlighting of the current
+                        -- selection ourselves.  (we may want to only do that in read-only mode, or
+                        -- draft may get confused and kill its own selection as well.)
 
-                when (state ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithRange) $ do
-                  -- (if the comment editor (or dialog) is started via the toolbar extension, this
-                  -- is where it should be started.)
-                  reDispatchM $ ContributionAction ShowCommentEditor
+                        when (state ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithRange) $ do
+                          -- (if the comment editor (or dialog) is started via the toolbar
+                          -- extension, this is where it should be started.  assume that this can
+                          -- only happen if rangeEvent is SetRange, not ClearRange.)
+                          reDispatchM $ ContributionAction ShowCommentEditor
 
             ShowNotImplementedYet -> do
                 liftIO $ windowAlertST "not implemented yet."
@@ -146,7 +155,7 @@ transformGlobalState = transf
 
 vdocUpdate :: GlobalAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate action Nothing = case action of
-    OpenDocument openedVDoc -> Just openedVDoc
+    OpenDocument newvdoc -> Just newvdoc
     _ -> Nothing
 
 vdocUpdate action (Just vdoc) = Just $ case action of
@@ -210,17 +219,15 @@ emitBackendCallsFor action state = case action of
     -- contributions
 
     ContributionAction (SubmitComment text kind) -> do
-      let forRange :: C.ChunkRange
-          forRange = state ^. gsContributionState . csCurrentRange . to createChunkRange
       case kind of
         Just CommentKindDiscussion ->
           addDiscussion (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
-                     (C.CreateDiscussion text True forRange) $ \case
+                     (C.CreateDiscussion text True (state ^. gsChunkRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right discussion) -> dispatchM $ AddDiscussion discussion
         Just CommentKindNote ->
           addNote (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
-                     (C.CreateNote text True forRange) $ \case
+                     (C.CreateNote text True (state ^. gsChunkRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right note) -> dispatchM $ AddNote note
         Nothing -> pure ()
@@ -233,7 +240,7 @@ emitBackendCallsFor action state = case action of
             cedit :: C.Create C.Edit
             cedit = C.CreateEdit
                   { C._createEditDesc  = "..."                          -- TODO: #233
-                  , C._createEditRange = state ^. gsContributionState . csCurrentRange . to createChunkRange
+                  , C._createEditRange = state ^. gsChunkRange
                   , C._createEditVDoc  = editorStateToVDocVersion (dstate ^. documentStateVal)
                   , C._createEditKind  = kind
                   , C._createEditMotiv = "..."                          -- TODO: #233
@@ -307,10 +314,6 @@ emitBackendCallsFor action state = case action of
     _ -> pure ()
 
 
-createChunkRange :: Maybe Range -> C.ChunkRange
-createChunkRange Nothing = C.ChunkRange Nothing Nothing
-createChunkRange (Just range) = C.ChunkRange (range ^. rangeStartPoint) (range ^. rangeEndPoint)
-
 ajaxFail :: (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
 ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of
   (Right err, Just onApiError) -> dispatchManyM (onApiError err)
@@ -352,12 +355,64 @@ dispatchAndExecMany as = liftIO . reactFluxWorkAroundForkIO $ do
 
 -- * ranges and selections
 
-getRange :: MonadIO m => OffsetFromDocumentTop -> m (Maybe Range)
-getRange pos = liftIO $ decode . cs . unpack <$> js_getRange pos
+-- FIXME: move this section to somewhere in Document.* modules, together with the Range type.
+
+gsChunkRange :: Lens' GlobalState C.ChunkRange
+gsChunkRange f gs = outof <$> f (into gs)
+  where
+    into :: GlobalState -> C.ChunkRange
+    into s = fromMaybe (C.ChunkRange Nothing Nothing)
+               (s ^? gsContributionState . csCurrentRange . _Just . rangeSelectionState)
+
+    outof :: C.ChunkRange -> GlobalState
+    outof r = gs & gsContributionState . csCurrentRange . _Just . rangeSelectionState .~ r
+
+-- | See also: 'Range' type.
+--
+-- Note that draft does not delete a selection if you single-click, but it creates an empty
+-- selection, i.e. one where the start and the end point are identical.  In this case we emit a
+-- 'ClearRange' action.
+--
+-- (This has to have IO because we look at the DOM for the position data.)
+getRangeAction :: MonadIO m => EditorState -> EditorState -> m (Maybe ContributionAction)
+getRangeAction beforeState afterState = do
+  let beforeSelection = getSelection beforeState
+      afterSelection  = getSelection afterState
+  case (beforeSelection == afterSelection, afterSelection) of
+    (True,  _)                        -> pure Nothing
+    (False, selectionIsEmpty -> True) -> pure $ Just ClearRange
+    (False, sel)                      -> Just . SetRange <$> do
+      topOffset    <- liftIO js_getRangeTopOffset
+      bottomOffset <- liftIO js_getRangeBottomOffset
+      scrollOffset <- liftIO js_getRangeScrollOffset
+      let doctop = scrollOffset + if sel ^. selectionIsBackward then topOffset else bottomOffset
+
+      pure Range
+        { _rangeSelectionState = C.selectionStateToChunkRange (convertToRaw $ getCurrentContent afterState) sel
+        , _rangeDocTopOffset   = OffsetFromDocumentTop  doctop
+        , _rangeTopOffset      = OffsetFromViewportTop  topOffset
+        , _rangeBottomOffset   = OffsetFromViewportTop  bottomOffset
+        , _rangeScrollOffset   = ScrollOffsetOfViewport scrollOffset
+        }
 
 foreign import javascript unsafe
-  "refine$getSelectionRange($1)"
-  js_getRange :: OffsetFromDocumentTop -> IO JSString
+  "getSelection().getRangeAt(0).startContainer.parentElement.getBoundingClientRect().top"
+  js_getRangeTopOffset :: IO Int
+
+foreign import javascript unsafe
+  "getSelection().getRangeAt(0).endContainer.parentElement.getBoundingClientRect().bottom"
+  js_getRangeBottomOffset :: IO Int
+
+-- an earlier implementation had two fallbacks:
+--
+-- ```javascript
+--    typeof(target.pageYOffset) === 'number' && target.pageYOffset                 ||
+--    document.body                           && document.body.scrollTop            ||
+--    document.documentElement                && document.documentElement.scrollTop;
+-- ```
+foreign import javascript unsafe
+  "(function() { return pageYOffset; })()"
+  js_getRangeScrollOffset :: IO Int
 
 removeAllRanges :: MonadIO m => m ()
 removeAllRanges = liftIO js_removeAllRanges

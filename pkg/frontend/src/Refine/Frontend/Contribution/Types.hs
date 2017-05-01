@@ -89,11 +89,8 @@ mapFromValue = withObject "MarkPositions"
 
 -- | TODO: give record selectors to all fields.
 data ContributionAction =
-    TriggerUpdateRange OffsetFromDocumentTop
-          -- ^ pixels between article top and mouse/finger from the mouse/touch release event need
-          -- to be extracted from the mouse event.  to clear range, dispatch 'ClearRange'.
-  | SetRange Range
-  | ClearRange
+    SetRange Range  -- TODO: move this to 'DocumentAction'
+  | ClearRange      -- TODO: move this to 'DocumentAction'
   | ShowContributionDialog ContributionID
   | HideCommentOverlay
   | ShowCommentEditor

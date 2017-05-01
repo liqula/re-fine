@@ -101,8 +101,9 @@ data BlockType =
 -- | https://draftjs.org/docs/api-reference-selection-state.html
 data SelectionState
   = SelectionState
-      { _selectionStart :: SelectionPoint
-      , _selectionEnd   :: SelectionPoint
+      { _selectionIsBackward :: Bool
+      , _selectionStart      :: SelectionPoint
+      , _selectionEnd        :: SelectionPoint
       }
   deriving (Eq, Ord, Show, Generic)
 
@@ -123,8 +124,6 @@ makeLenses ''EntityKey
 makeLenses ''Entity
 makeLenses ''Style
 makeLenses ''BlockType
-makeLenses ''SelectionState
-makeLenses ''SelectionPoint
 
 makeSOPGeneric ''RawContent
 makeSOPGeneric ''Block
@@ -133,8 +132,6 @@ makeSOPGeneric ''EntityKey
 makeSOPGeneric ''Entity
 makeSOPGeneric ''Style
 makeSOPGeneric ''BlockType
-makeSOPGeneric ''SelectionState
-makeSOPGeneric ''SelectionPoint
 
 makeNFData ''RawContent
 makeNFData ''Block
@@ -143,8 +140,6 @@ makeNFData ''EntityKey
 makeNFData ''Entity
 makeNFData ''Style
 makeNFData ''BlockType
-makeNFData ''SelectionState
-makeNFData ''SelectionPoint
 
 instance ToJSON RawContent where
   toJSON (RawContent blocks entitymap) = object
@@ -238,6 +233,9 @@ instance FromJSON Style where
   parseJSON (String "ITALIC") = pure Italic
   parseJSON bad = fail $ "Style: no parse for " <> show bad
 
+makeRefineType ''SelectionState
+makeRefineType ''SelectionPoint
+
 
 -- * functions
 
@@ -255,3 +253,9 @@ mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
 
 resetBlockKeys :: RawContent -> RawContent
 resetBlockKeys (RawContent bs es) = RawContent (set blockKey Nothing <$> bs) es
+
+-- | 'SelectionState' is always defined, even if nothing is selected.  If the browser api says that
+-- no selection is active, the selection state value in the editor state has the same point for
+-- start and end.
+selectionIsEmpty :: SelectionState -> Bool
+selectionIsEmpty (SelectionState _ s e) = s == e

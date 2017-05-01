@@ -20,6 +20,7 @@
 
 module Refine.Common.Types.ChunkSpec where
 
+import           Control.Lens
 import           Control.Monad
 import           Test.Hspec
 import           Test.QuickCheck
@@ -27,11 +28,12 @@ import           Test.QuickCheck.Instances ()
 
 import           Refine.Common.Test.Arbitrary
 import           Refine.Common.Types.Chunk
+import           Refine.Common.VDoc.Draft
 
 
 spec :: Spec
 spec = do
   describe "SelectionState vs. ChunkRange" $ do
-    it "are isomorphic" . property $
+    it "are isomorphic (except for backwards flag)" . property $
       \(RawContentWithSelections c ss) -> forM_ ss $ \s -> do
-        chunkRangeToSelectionState c (selectionStateToChunkRange c s) `shouldBe` s
+        chunkRangeToSelectionState c (selectionStateToChunkRange c s) `shouldBe` (s & selectionIsBackward .~ False)
