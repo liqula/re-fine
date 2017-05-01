@@ -24,12 +24,9 @@ module Refine.Frontend.Document.Document where
 import           Control.Lens ((^.), (.~), (&), has, view)
 import           React.Flux
 
-import           Refine.Common.Types
-import           Refine.Frontend.Contribution.Types (ContributionState, ContributionAction(TriggerUpdateRange))
-import           Refine.Frontend.Document.FFI (updateEditorState, createWithContent)
-import           Refine.Frontend.Document.Store (vdocVersionToContent)
+import           Refine.Frontend.Contribution.Types (ContributionAction(TriggerUpdateRange))
+import           Refine.Frontend.Document.FFI (updateEditorState)
 import           Refine.Frontend.Document.Types
-import           Refine.Frontend.Header.Types (ToolbarExtensionStatus)
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.ThirdPartyViews (editor_)
@@ -62,12 +59,3 @@ document = mkView "Document" $ \props ->
 
 document_ :: DocumentProps -> ReactElementM eventHandler ()
 document_ !props = view_ document "document_" props
-
-
--- | FIXME: see FIXME on 'gsVDoc'.  if we fix that, this helper should go away.
-mkDocumentProps :: DocumentState -> ContributionState -> ToolbarExtensionStatus -> VDocVersion -> DocumentProps
-mkDocumentProps ds cs tes vdoc = DocumentProps ds' cs tes
-  where
-    ds' = case ds of
-     DocumentStateView _   -> DocumentStateView . createWithContent . vdocVersionToContent $ vdoc
-     DocumentStateEdit _ _ -> ds

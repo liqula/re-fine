@@ -41,17 +41,18 @@ import           Refine.Frontend.Contribution.QuickCreate
 import           Refine.Frontend.Contribution.Types as RS
 import           Refine.Frontend.CS ()
 import           Refine.Frontend.Document.Document
+import           Refine.Frontend.Document.Types (DocumentProps(DocumentProps))
 import           Refine.Frontend.Header.Heading (mainHeader_)
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component
 import           Refine.Frontend.Login.Types as LG
 import           Refine.Frontend.MainMenu.Component (mainMenu_)
 import           Refine.Frontend.MainMenu.Types
-import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
-import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import qualified Refine.Frontend.Screen.Types as SC
+import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import           Refine.Frontend.Store as RS
 import           Refine.Frontend.Store.Types as RS
+import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Views.Types
 
 
@@ -104,10 +105,9 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                                      (M.elems (vdoc ^. compositeVDocEdits))
                                      (rs ^. gsContributionState . csQuickCreateShowState)
                       leftAside_ asideProps
-                      document_ $ mkDocumentProps (rs ^. RS.gsDocumentState)
-                                                  (rs ^. RS.gsContributionState)
-                                                  (rs ^. gsHeaderState . hsToolbarExtensionStatus)
-                                                  (vdoc ^. compositeVDocVersion)
+                      document_ $ DocumentProps (rs ^. RS.gsDocumentState)
+                                                (rs ^. RS.gsContributionState)
+                                                (rs ^. gsHeaderState . hsToolbarExtensionStatus)
                       rightAside_ asideProps
 
 mainScreen_ :: GlobalState -> ReactElementM eventHandler ()
