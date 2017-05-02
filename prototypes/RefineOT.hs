@@ -44,6 +44,8 @@ type Edit d = [EEdit d]
 
 class Editable d where
 
+    docCost :: d -> Int
+
     data EEdit d            -- elementary edit
 
     eCost :: EEdit d -> Int
@@ -52,6 +54,7 @@ class Editable d where
 
     ePatch :: EEdit d -> d -> d
 
+    -- assume second happend later in case of conflicts
     eMerge :: d -> EEdit d -> EEdit d -> (Edit d, Edit d)
 
     eInverse :: d -> EEdit d -> Edit d        -- needed for supporting undo/redo
@@ -88,20 +91,29 @@ class (Editable d, Arbitrary d, Eq d, Show d, Show (EEdit d)) => GenEdit d where
 test_all :: forall d. GenEdit d => Proxy d -> IO ()
 test_all _ = do
   let args = stdArgs { maxSuccess = 5000 }
-      tests = [test_edit_composition, test_diamond, test_diamond_right_join, test_diamond_left_join, test_inverse, test_diff]
+      tests =
+        [ test_edit_composition
+        , test_diamond
+        , test_diamond_right_join
+        , test_diamond_left_join
+        , test_inverse
+        , test_diff
+        , test_inverse_inverse
+        ]
         :: [d -> Gen Property]
   forM_ tests $ \f -> do
     quickCheckWith args f
 
-equalPatch :: (Editable d, Eq d) => Edit d -> Edit d -> d -> Bool
-equalPatch p0 p1 d = patch p0 d == patch p1 d
+-- compare two edits by effect
+equalEdit :: (Editable d, Eq d) => Edit d -> Edit d -> d -> Bool
+equalEdit e0 e1 d = patch e0 d == patch e1 d
 
 failPrint :: (Show a, Testable prop) => a -> prop -> Gen Property
 failPrint a p = pure $ whenFail (print a) p
 
 ---------------------
 
-test_edit_composition, test_diamond, test_diamond_right_join, test_diamond_left_join, test_inverse, test_diff
+test_edit_composition, test_diamond, test_diamond_right_join, test_diamond_left_join, test_inverse, test_diff, test_inverse_inverse
   :: GenEdit d => d -> Gen Property
 
 test_edit_composition d = do
@@ -111,69 +123,76 @@ test_edit_composition d = do
   failPrint (a, b) $ patch b d' == patch (a <> b) d
 
 {-
-  a//\b    a/\\b
-   \\/      \//
+  a//\b  =  a/\\b
+   \\/       \//
 -}
 test_diamond d = do
   a <- genEdit d
   b <- genEdit d
-  failPrint (a, b) $ equalPatch (a <> fst (merge d a b)) (b <> snd (merge d a b)) d
+  failPrint (a, b) $ equalEdit (a <> fst (merge d a b)) (b <> snd (merge d a b)) d
 
 {-
-        a/\b     a/\b<>c
-          /\c       \
-           //       //
+        a/\b  =  a/\b<>c
+         \/\c     \ \
+          \//      \//
 -}
 test_diamond_right_join d = do
   a <- genEdit d
   b <- genEdit d
   let d' = patch b d
   c <- genEdit d'
-  failPrint (a, b, c) $ (equalPatch (snd $ merge d' (snd $ merge d a b) c) (snd $ merge d a (b <> c)) (patch c d'))
+  failPrint (a, b, c) $ equalEdit (snd $ merge d' (snd $ merge d a b) c) (snd $ merge d a (b <> c)) (patch c d')
 
 {- mirror of test_diamond_right_join
-        b/\a  b<>c/\a
-       c/\       /
-       \\       \\
+        b/\a  = b<>c/\a
+       c/\/        / /
+       \\/        \\/
 -}
 test_diamond_left_join d = do
   a <- genEdit d
   b <- genEdit d
   let d' = patch b d
   c <- genEdit d'
-  failPrint (a, b, c) $ equalPatch (fst $ merge d' c (fst $ merge d b a)) (fst $ merge d (b <> c) a) (patch c d')
+  failPrint (a, b, c) $ equalEdit (fst $ merge d' c (fst $ merge d b a)) (fst $ merge d (b <> c) a) (patch c d')
 
 test_inverse d = do
   a <- genEdit d
-  failPrint () $ equalPatch [] (a <> inverse d a) d
+  failPrint () $ equalEdit (a <> inverse d a) mempty d
 
--- TODO: add laws for inverse in diamonds
+test_inverse_inverse d = do
+  a <- genEdit d
+  failPrint () $ equalEdit (inverse (patch a d) (inverse d a)) a d
+
+-- TODO: add laws for inverse in diamonds  -- ask Andás
 
 test_diff d = do
     p <- genEdit d
     let p' = diff d (patch p d)
-    failPrint (p, p') $ equalPatch p p' d
+    failPrint (p, p') $ equalEdit p p' d
 
 ---------------------------------------- Char instance
 
 instance Editable Char where
+
+    docCost _ = 1
+
     data EEdit Char = ReplaceChar Char
             deriving (Show)
 
     eCost _ = 1
 
-    diff a b | a == b = []
+    diff a b | a == b    = mempty
              | otherwise = [ReplaceChar b]
 
     ePatch (ReplaceChar x) _ = x
 
-    eMerge _ a b = ([b], [])
+    eMerge _ a@ReplaceChar{} b@ReplaceChar{} = ([b], mempty)
 
-    eInverse c _ = [ReplaceChar c]
+    eInverse c ReplaceChar{} = [ReplaceChar c]
 
 instance GenEdit Char where
     genEdit d = oneof
-        [ pure []
+        [ pure mempty
         , do
             c <- arbitrary
             (ReplaceChar c:) <$> genEdit d
@@ -181,19 +200,23 @@ instance GenEdit Char where
 
 test_Char = test_all (Proxy :: Proxy Char)
 
----------------------------------------- String instance
+---------------------------------------- List instance
 
 editItem i [] = []
 editItem i p  = [EditItem i p]
 
 instance Editable a => Editable [a] where
+
+    docCost = sum . map docCost
+
     data EEdit [a]
         = DeleteItem Int
         | InsertItem Int a
         | EditItem Int (Edit a)
+        | SwapItems Int     -- needed for expressing .....
 
     eCost = \case
-        InsertItem _ _ -> 1
+        InsertItem _ d -> 1 + docCost d
         DeleteItem _   -> 1
         EditItem _ p   -> 1 + cost p
 
@@ -248,7 +271,7 @@ ins 0 a `merge` del 0   = (del 1  , ins 0 a)
 del 0   `merge` ins 0 b = (ins 0 b, del 1  )
 
 ins 0 a `merge` edi 0 p = (edi 1 p, ins 0 a)                        --      ap...
-ins 0 a `merge` edi 0 p = (del 0 <> ins 1 a <> edi 0 p, ins 1 a)    --      pa...
+ins 0 a `merge` edi 0 p = (del 0 <> ins 1 a <> edi 0 p, ins 1 a)    --      x... -> ax... -> Xa...
 ins 0 a `merge` edi 0 p = (swap 0 <> edi 0 p, ins 1 a)              --      pa...
 -}
 
@@ -289,16 +312,23 @@ data Block = Block BlockType [LineElem]
    deriving (Show, Eq)
 
 data BlockType =
-     Header Int -- 1, 2, 3
+     Header HeaderLevel
    | Item ItemType Int -- depth
+   deriving (Show, Eq)
+
+data HeaderLevel
+    = HL1 | HL2 | HL3
    deriving (Show, Eq)
 
 data ItemType = NormalText | BulletPoint | EnumPoint
    deriving (Show, Eq)
 
-data LineElem = LineElem [Entity] String
+data LineElem = LineElem (Set Entity) String
    deriving (Show, Eq)
 
+type Set a = [a]  -- TODO: this should be a newtype
+
+-- | This is both Entity and Style in Draft
 data Entity
     = EntityLink String
     | EntityBold
@@ -313,18 +343,21 @@ xxxxxxxxxxxxxxxxxxxxxx converted to line elements:
   ---               bold
      ---            bold + italic
         -----       italic
+
+ xxx [xxXXXx](www.1) xxxxx
+ xxx [xx](www.1)[XXX](www.1)[x](www.1) xxxxx
 -}
 
 ---------------- tests
 
 doc1, doc2 :: Doc
 doc1 = Doc
-    [ Block (Header 1) [LineElem [] "Introduction"]
+    [ Block (Header HL1) [LineElem [] "Introduction"]
     , Block (Item NormalText 0) [LineElem [] "This is the introduction"]
     ]
 
 doc2 = Doc
-    [ Block (Header 1) [LineElem [] "Introduction"]
+    [ Block (Header HL1) [LineElem [] "Introduction"]
     , Block (Item NormalText 0) [LineElem [EntityBold] "This", LineElem [] " is the introduction"]
     ]
 
