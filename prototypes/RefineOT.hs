@@ -293,7 +293,7 @@ test_StringListList = test_all 50 (Proxy :: Proxy [[[Atom Char]]])
 
 ---------------------------------------- (Bounded, Enum) instance
 
-newtype Atom a = Atom { unAtom :: a }  -- (is 'Atom' a good name?)
+newtype Atom a = Atom { unAtom :: a }
   deriving (Eq, Show, Bounded, Enum)
 
 instance (Eq a, Bounded a, Enum a) => Editable (Atom a) where
@@ -316,6 +316,33 @@ instance (Eq a, Show a, Arbitrary (Atom a), Bounded a, Enum a) => GenEdit (Atom 
 
 test_HeaderLevel = test_all 5000 (Proxy :: Proxy (Atom HeaderLevel))
 test_ItemType = test_all 5000 (Proxy :: Proxy (Atom ItemType))
+
+---------------------------------------- BlockType instance
+
+-- this is very similar to BoundedEnum, but writing the enum instance for BlockType is a little
+-- awkward.
+
+instance Editable BlockType where
+    data EEdit BlockType = ReplaceBlockType BlockType
+      deriving (Show)
+
+    eCost _ = 1
+    docCost _ = 1
+
+    diff a b = [ReplaceBlockType b | a /= b]
+    ePatch (ReplaceBlockType a) _ = a
+    eMerge _ ReplaceBlockType{} b@ReplaceBlockType{} = ([b], mempty)
+    eInverse d ReplaceBlockType{} = [ReplaceBlockType d]
+
+instance Arbitrary BlockType where
+  arbitrary = oneof [ Header <$> (unAtom <$> arbitrary)
+                    , Item <$> (unAtom <$> arbitrary) <*> arbitrary
+                    ]
+
+instance GenEdit BlockType where
+    genEdit _ = fmap ReplaceBlockType <$> listOf arbitrary
+
+test_BlockType = test_all 5000 (Proxy :: Proxy BlockType)
 
 ---------------------------------------- Pair instance
 
