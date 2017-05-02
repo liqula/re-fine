@@ -6,6 +6,7 @@ TODO
 -   lots of tests & examples
 -   separate the common parts into a library   -- Prezi could release this too?
 -   move to code refine
+-   make diff faster
 
 FUTUREWORK
 -   measure information lost
@@ -58,6 +59,7 @@ class Editable d where
 
     -- assume second happend later in case of conflicts
     eMerge :: d -> EEdit d -> EEdit d -> (Edit d, Edit d)
+    eMerge = secondWins
 
     eInverse :: d -> EEdit d -> Edit d        -- needed for supporting undo/redo
 
@@ -84,6 +86,9 @@ inverse d e = f [] d e
   where
     f acc _ [] = acc
     f acc d (x: xs) = f (eInverse d x <> acc) (ePatch x d) xs
+
+-- good for default
+secondWins d a b = (eInverse d a <> [b], []) -- information lost!
 
 ---------------------------------------- quickcheck laws
 
@@ -195,13 +200,15 @@ editItem i p  = [EditItem i p]
 
 instance Editable a => Editable [a] where
 
-    docCost = sum . map docCost
+    docCost = (+1) . sum . map docCost
 
     data EEdit [a]
         = DeleteItem Int
         | InsertItem Int a
         | EditItem Int (Edit a)
-        | SwapItems Int     -- needed for expressing .....
+        -- not used yet
+        | MoveItem Int Int     -- needed for expressing .....
+        | DuplicateItem Int
 
     eCost = \case
         InsertItem _ d -> 1 + docCost d
@@ -354,7 +361,7 @@ editSecond e  = [EditSecond e]
 
 instance (Editable a, Editable b) => Editable (a, b) where
 
-    docCost (a, b) = docCost a + docCost b
+    docCost (a, b) = 1 + docCost a + docCost b
 
     data EEdit (a, b)
         = EditFirst  (Edit a)
@@ -394,6 +401,111 @@ test_PairCharPairCharChar = test_all 5000 (Proxy :: Proxy (Char, (Char, Char)))
 test_PairStringString = test_all 500 (Proxy :: Proxy ([Char], [Char]))
 test_PairCharCharList = test_all 500 (Proxy :: Proxy [(Char, Char)])
 
+
+---------------------------------------- Set instance
+
+newtype Set a = Set {unSet :: [a]}
+   deriving (Show, Eq)
+
+instance Ord a => Monoid (Set a) where
+    mempty = Set []
+    mappend (Set a) (Set b) = Set $ mergeList a b
+
+mergeList [] xs = xs
+mergeList xs [] = xs
+mergeList (x: xs) (y: ys) = case compare x y of
+    LT -> x: mergeList xs (y: ys)
+    GT -> y: mergeList (x: xs) ys
+    _  -> x: mergeList xs ys
+
+editElem i [] = []
+editElem i p  = [EditElem i p]
+
+instance (Editable a, Ord a) => Editable (Set a) where
+
+    docCost (Set x) = (+1) . sum $ map docCost x
+
+    data EEdit (Set a)
+        = DeleteElem a
+        | InsertElem a          -- it is not valid to insert an elem which is already in the set
+        | EditElem a (Edit a)   -- it is not valid to edit such that the result is already in the set
+
+    eCost = \case
+        InsertElem d -> 1 + docCost d
+        DeleteElem _ -> 1
+        EditElem _ e -> 1 + cost e
+
+    ePatch (DeleteElem x) (Set xs) = Set $ filter (/=x) xs
+    ePatch (InsertElem x) (Set xs) = Set $ insert x xs
+    ePatch (EditElem x e) (Set xs) = Set $ insert (patch e x) $ filter (/=x) xs
+
+    diff (Set a) (Set b) = f a b
+      where
+        f [] [] = []
+        f [] (x:xs) = InsertElem x: f [] xs
+        f (x:xs) [] = DeleteElem x: f xs []
+        f (x:xs) (y:ys) = case compare x y of
+            EQ -> f xs ys
+            LT -> DeleteElem x: f xs (y: ys)
+            GT -> InsertElem y: f (x: xs) ys
+
+    eMerge _ a b | a == b = ([], [])
+    eMerge d a@(EditElem i x) b@(EditElem i' y) | i == i'
+        = if patch (x <> x2) i `notElem` unSet d
+            then (editElem (patch x i) x2, editElem (patch y i) y2)
+            else secondWins d a b
+      where
+        (x2, y2) = merge i x y
+    eMerge d a@(EditElem i x) b@(EditElem i' y) | i /= i' && patch x i == patch y i' = secondWins d a b
+    eMerge _ (EditElem i x) (DeleteElem i') | i == i' = ([DeleteElem (patch x i)], [])      -- FUTUREWORK: information lost!
+    eMerge d (DeleteElem i) (EditElem i' x) | i == i' = ([InsertElem (patch x i)], [])
+    eMerge _ (InsertElem x) (EditElem y e) | x == patch e y = if x == y then ([], []) else ([DeleteElem y], [])
+    eMerge d a@(EditElem y e) b@(InsertElem x) | x == patch e y = if x == y then ([], []) else secondWins d a b
+    eMerge _ a b = ([b], [a])
+
+    eInverse d = \case
+        EditElem x e -> [EditElem (patch e x) (inverse x e)]
+        DeleteElem x -> [InsertElem x]
+        InsertElem x -> [DeleteElem x]
+
+deriving instance (Show a, Show (EEdit a)) => Show (EEdit (Set a))
+
+instance (Eq a, Editable a) => Eq (EEdit (Set a)) where
+    InsertElem a == InsertElem b = a == b
+    DeleteElem a == DeleteElem b = a == b
+    EditElem a ea == EditElem b eb = a == b && patch ea a == patch eb b
+    _ == _ = False
+
+tt = do
+    let d = Set {unSet = "K"}
+        a = [InsertElem '.',DeleteElem '.']
+        b = [EditElem 'K' [ReplaceChar '.']]
+    print $ equalEdit (a <> fst (merge d a b)) (b <> snd (merge d a b)) d
+
+
+instance (Arbitrary a, Ord a) => Arbitrary (Set a) where
+    arbitrary = Set . nub . getOrdered <$> arbitrary
+
+instance (GenEdit a, Ord a) => GenEdit (Set a) where
+    genEdit d = oneof
+        [ pure []
+        , do
+            c <- genEdit d
+            let d' = patch c d
+            oneof $
+                    [ do
+                        x <- arbitrary `suchThat` (`notElem` unSet d')
+                        pure $ c ++ [InsertElem x]]
+                 ++ [ pure $ c ++ [DeleteElem x] | x <- unSet d']
+                 ++ [ do
+                        cx <- genEdit x `suchThat` \cx -> patch cx x `notElem` unSet d'
+                        pure $ c ++ [EditElem x cx]
+                    | x <- unSet d']
+      ]
+
+test_CharSet = test_all 5000 (Proxy :: Proxy (Set Char))
+--test_StringList = test_all 500 (Proxy :: Proxy [[Char]])
+
 ---------------------------------------------------------------------------------------------- application specific part
 
 ---------------------------------------- document data type
@@ -419,14 +531,12 @@ data ItemType = NormalText | BulletPoint | EnumPoint
 data LineElem = LineElem (Set Entity) String
    deriving (Show, Eq)
 
-type Set a = [a]  -- TODO: this should be a newtype
-
 -- | This is both Entity and Style in Draft
 data Entity
     = EntityLink String
     | EntityBold
     | EntityItalic
-   deriving (Show, Eq)
+   deriving (Show, Eq, Ord)
 
     -- this is something which is described with an EntityRange
 {-
@@ -445,11 +555,11 @@ xxxxxxxxxxxxxxxxxxxxxx converted to line elements:
 
 doc1, doc2 :: Doc
 doc1 = Doc
-    [ Block (Header HL1) [LineElem [] "Introduction"]
-    , Block (Item NormalText 0) [LineElem [] "This is the introduction"]
+    [ Block (Header HL1) [LineElem mempty "Introduction"]
+    , Block (Item NormalText 0) [LineElem mempty "This is the introduction"]
     ]
 
 doc2 = Doc
-    [ Block (Header HL1) [LineElem [] "Introduction"]
-    , Block (Item NormalText 0) [LineElem [EntityBold] "This", LineElem [] " is the introduction"]
+    [ Block (Header HL1) [LineElem mempty "Introduction"]
+    , Block (Item NormalText 0) [LineElem (Set [EntityBold]) "This", LineElem mempty " is the introduction"]
     ]
