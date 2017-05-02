@@ -315,6 +315,56 @@ test_String = test_all 5000 (Proxy :: Proxy [Char])
 test_StringList = test_all 500 (Proxy :: Proxy [[Char]])
 test_StringListList = test_all 50 (Proxy :: Proxy [[[Char]]])
 
+---------------------------------------- Pair instance
+
+editFirst [] = []
+editFirst e  = [EditFirst e]
+
+editSecond [] = []
+editSecond e  = [EditSecond e]
+
+instance (Editable a, Editable b) => Editable (a, b) where
+
+    docCost (a, b) = docCost a + docCost b
+
+    data EEdit (a, b)
+        = EditFirst  (Edit a)
+        | EditSecond (Edit b)
+
+    eCost = \case
+        EditFirst  e -> 1 + cost e
+        EditSecond e -> 1 + cost e
+
+    ePatch (EditFirst  e) (a, b) = (patch e a, b)
+    ePatch (EditSecond e) (a, b) = (a, patch e b)
+
+    diff (a, b) (c, d) = editFirst (diff a c) <> editSecond (diff b d)
+
+    eMerge _ (EditFirst ea) (EditSecond eb) = (editSecond eb, editFirst ea)
+    eMerge _ (EditSecond eb) (EditFirst ea) = (editFirst ea, editSecond eb)
+    eMerge (a, _) (EditFirst e) (EditFirst f) = (editFirst e2, editFirst f2)
+      where (e2, f2) = merge a e f
+    eMerge (_, b) (EditSecond e) (EditSecond f) = (editSecond e2, editSecond f2)
+      where (e2, f2) = merge b e f
+
+    eInverse (a, b) = \case
+        EditFirst  e -> editFirst  $ inverse a e
+        EditSecond e -> editSecond $ inverse b e
+
+instance (GenEdit a, GenEdit b) => GenEdit (a, b) where
+    genEdit (a, b) = oneof
+        [ pure []
+        , pure . EditFirst  <$> genEdit a
+        , pure . EditSecond <$> genEdit b
+        ]
+
+deriving instance (Show a, Show (EEdit a), Show b, Show (EEdit b)) => Show (EEdit (a, b))
+
+test_PairCharChar = test_all 5000 (Proxy :: Proxy (Char, Char))
+test_PairCharPairCharChar = test_all 5000 (Proxy :: Proxy (Char, (Char, Char)))
+test_PairStringString = test_all 500 (Proxy :: Proxy ([Char], [Char]))
+test_PairCharCharList = test_all 500 (Proxy :: Proxy [(Char, Char)])
+
 ---------------------------------------------------------------------------------------------- application specific part
 
 ---------------------------------------- document data type
