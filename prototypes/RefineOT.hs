@@ -88,17 +88,18 @@ inverse d e = f [] d e
 class (Editable d, Arbitrary d, Eq d, Show d, Show (EEdit d)) => GenEdit d where
     genEdit :: d -> Gen (Edit d)
 
-test_all :: forall d. GenEdit d => Proxy d -> IO ()
-test_all _ = do
-  let args = stdArgs { maxSuccess = 5000 }
+test_all :: forall d. GenEdit d => Int -> Proxy d -> IO ()
+test_all num _ = do
+  let args = stdArgs { maxSuccess = num }
       tests =
         [ test_edit_composition
         , test_diamond
         , test_diamond_right_join
         , test_diamond_left_join
         , test_inverse
-        , test_diff
         , test_inverse_inverse
+        , test_inverse_diamond
+        , test_diff
         ]
         :: [d -> Gen Property]
   forM_ tests $ \f -> do
@@ -113,9 +114,7 @@ failPrint a p = pure $ whenFail (print a) p
 
 ---------------------
 
-test_edit_composition, test_diamond, test_diamond_right_join, test_diamond_left_join, test_inverse, test_diff, test_inverse_inverse
-  :: GenEdit d => d -> Gen Property
-
+test_edit_composition :: GenEdit d => d -> Gen Property
 test_edit_composition d = do
   a <- genEdit d
   let d' = patch a d
@@ -126,6 +125,7 @@ test_edit_composition d = do
   a//\b  =  a/\\b
    \\/       \//
 -}
+test_diamond :: GenEdit d => d -> Gen Property
 test_diamond d = do
   a <- genEdit d
   b <- genEdit d
@@ -136,6 +136,7 @@ test_diamond d = do
          \/\c     \ \
           \//      \//
 -}
+test_diamond_right_join :: GenEdit d => d -> Gen Property
 test_diamond_right_join d = do
   a <- genEdit d
   b <- genEdit d
@@ -148,6 +149,7 @@ test_diamond_right_join d = do
        c/\/        / /
        \\/        \\/
 -}
+test_diamond_left_join :: GenEdit d => d -> Gen Property
 test_diamond_left_join d = do
   a <- genEdit d
   b <- genEdit d
@@ -155,16 +157,26 @@ test_diamond_left_join d = do
   c <- genEdit d'
   failPrint (a, b, c) $ equalEdit (fst $ merge d' c (fst $ merge d b a)) (fst $ merge d (b <> c) a) (patch c d')
 
+test_inverse :: GenEdit d => d -> Gen Property
 test_inverse d = do
   a <- genEdit d
-  failPrint () $ equalEdit (a <> inverse d a) mempty d
+  failPrint a $ equalEdit (a <> inverse d a) mempty d
 
+test_inverse_inverse :: GenEdit d => d -> Gen Property
 test_inverse_inverse d = do
   a <- genEdit d
-  failPrint () $ equalEdit (inverse (patch a d) (inverse d a)) a d
+  failPrint a $ equalEdit (inverse (patch a d) (inverse d a)) a d
 
--- TODO: add laws for inverse in diamonds  -- ask Andás
+-- this law is derivable
+test_inverse_diamond :: GenEdit d => d -> Gen Property
+test_inverse_diamond d = do
+  a <- genEdit d
+  b <- genEdit d
+  let (a2, b2) = merge d a b
+      d' = patch (a <> a2) d
+  failPrint (a, b) $ equalEdit (inverse d (a <> a2)) (inverse d (b <> b2)) d'
 
+test_diff :: GenEdit d => d -> Gen Property
 test_diff d = do
     p <- genEdit d
     let p' = diff d (patch p d)
@@ -198,7 +210,7 @@ instance GenEdit Char where
             (ReplaceChar c:) <$> genEdit d
         ]
 
-test_Char = test_all (Proxy :: Proxy Char)
+test_Char = test_all 5000 (Proxy :: Proxy Char)
 
 ---------------------------------------- List instance
 
@@ -242,7 +254,7 @@ instance Editable a => Editable [a] where
         mk x = (cost x, x)
         (ca, a) `add` (cb, b) = (ca + cb, a <> b)
 
-    eMerge d (EditItem i x) (EditItem i' y) | i == i' = ([EditItem i (y <> y2)], [EditItem i (x <> x2)])
+    eMerge d (EditItem i x) (EditItem i' y) | i == i' = ([EditItem i x2], [EditItem i y2])
       where
         (x2, y2) = merge (d !! i) x y
     eMerge _ (EditItem i x) (DeleteItem i') | i == i' = ([DeleteItem i], [])      -- FUTUREWORK: information lost!
@@ -299,7 +311,9 @@ instance (GenEdit a) => GenEdit [a] where
 
 deriving instance (Show a, Show (EEdit a)) => Show (EEdit [a])
 
-test_String = test_all (Proxy :: Proxy [Char])
+test_String = test_all 5000 (Proxy :: Proxy [Char])
+test_StringList = test_all 500 (Proxy :: Proxy [[Char]])
+test_StringListList = test_all 50 (Proxy :: Proxy [[[Char]]])
 
 ---------------------------------------------------------------------------------------------- application specific part
 
