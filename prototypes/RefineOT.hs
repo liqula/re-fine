@@ -26,6 +26,8 @@ FUTUREWORK
 {-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE PatternSynonyms            #-}
+{-# LANGUAGE UndecidableInstances       #-}
 module RefineOT where
 
 import Data.Monoid
@@ -184,33 +186,7 @@ test_diff d = do
 
 ---------------------------------------- Char instance
 
-instance Editable Char where
-
-    docCost _ = 1
-
-    data EEdit Char = ReplaceChar Char
-            deriving (Show)
-
-    eCost _ = 1
-
-    diff a b | a == b    = mempty
-             | otherwise = [ReplaceChar b]
-
-    ePatch (ReplaceChar x) _ = x
-
-    eMerge _ a@ReplaceChar{} b@ReplaceChar{} = ([b], mempty)
-
-    eInverse c ReplaceChar{} = [ReplaceChar c]
-
-instance GenEdit Char where
-    genEdit d = oneof
-        [ pure mempty
-        , do
-            c <- arbitrary
-            (ReplaceChar c:) <$> genEdit d
-        ]
-
-test_Char = test_all 5000 (Proxy :: Proxy Char)
+test_Char = test_all 5000 (Proxy :: Proxy (Atom Char))
 
 ---------------------------------------- List instance
 
@@ -311,9 +287,35 @@ instance (GenEdit a) => GenEdit [a] where
 
 deriving instance (Show a, Show (EEdit a)) => Show (EEdit [a])
 
-test_String = test_all 5000 (Proxy :: Proxy [Char])
-test_StringList = test_all 500 (Proxy :: Proxy [[Char]])
-test_StringListList = test_all 50 (Proxy :: Proxy [[[Char]]])
+test_String = test_all 5000 (Proxy :: Proxy [Atom Char])
+test_StringList = test_all 500 (Proxy :: Proxy [[Atom Char]])
+test_StringListList = test_all 50 (Proxy :: Proxy [[[Atom Char]]])
+
+---------------------------------------- (Bounded, Enum) instance
+
+newtype Atom a = Atom { unAtom :: a }  -- (is 'Atom' a good name?)
+  deriving (Eq, Show, Bounded, Enum)
+
+instance (Eq a, Bounded a, Enum a) => Editable (Atom a) where
+    data EEdit (Atom a) = ReplaceEnum (Atom a)
+      deriving (Show)
+
+    eCost _ = 1
+    docCost _ = 1
+
+    diff a b = [ReplaceEnum b | a /= b]
+    ePatch (ReplaceEnum a) _ = a
+    eMerge _ ReplaceEnum{} b@ReplaceEnum{} = ([b], mempty)
+    eInverse d ReplaceEnum{} = [ReplaceEnum d]
+
+instance (Bounded a, Enum a) => Arbitrary (Atom a) where
+  arbitrary = Atom <$> elements [minBound..]
+
+instance (Eq a, Show a, Arbitrary (Atom a), Bounded a, Enum a) => GenEdit (Atom a) where
+    genEdit _ = fmap ReplaceEnum <$> listOf arbitrary
+
+test_HeaderLevel = test_all 5000 (Proxy :: Proxy (Atom HeaderLevel))
+test_ItemType = test_all 5000 (Proxy :: Proxy (Atom ItemType))
 
 ---------------------------------------------------------------------------------------------- application specific part
 
@@ -332,10 +334,10 @@ data BlockType =
 
 data HeaderLevel
     = HL1 | HL2 | HL3
-   deriving (Show, Eq)
+   deriving (Show, Eq, Bounded, Enum)
 
 data ItemType = NormalText | BulletPoint | EnumPoint
-   deriving (Show, Eq)
+   deriving (Show, Eq, Bounded, Enum)
 
 data LineElem = LineElem (Set Entity) String
    deriving (Show, Eq)
@@ -374,5 +376,3 @@ doc2 = Doc
     [ Block (Header HL1) [LineElem [] "Introduction"]
     , Block (Item NormalText 0) [LineElem [EntityBold] "This", LineElem [] " is the introduction"]
     ]
-
-
