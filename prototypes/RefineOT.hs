@@ -313,31 +313,6 @@ instance (Bounded a, Enum a) => Arbitrary (Atom a) where
 instance (Eq a, Show a, Arbitrary (Atom a), Bounded a, Enum a) => GenEdit (Atom a) where
     genEdit _ = fmap ReplaceEnum <$> listOf arbitrary
 
----------------------------------------- BlockType instance
-
--- this is very similar to BoundedEnum, but writing the enum instance for BlockType is a little
--- awkward.
-
-instance Editable BlockType where
-    data EEdit BlockType = ReplaceBlockType BlockType
-      deriving (Show)
-
-    eCost _ = 1
-    docCost _ = 1
-
-    diff a b = [ReplaceBlockType b | a /= b]
-    ePatch (ReplaceBlockType a) _ = a
-    eMerge _ ReplaceBlockType{} b@ReplaceBlockType{} = ([b], mempty)
-    eInverse d ReplaceBlockType{} = [ReplaceBlockType d]
-
-instance Arbitrary BlockType where
-  arbitrary = oneof [ Header <$> (unAtom <$> arbitrary)
-                    , Item <$> (unAtom <$> arbitrary) <*> arbitrary
-                    ]
-
-instance GenEdit BlockType where
-    genEdit _ = fmap ReplaceBlockType <$> listOf arbitrary
-
 ---------------------------------------- Pair instance
 
 editFirst [] = []
@@ -523,6 +498,31 @@ xxxxxxxxxxxxxxxxxxxxxx converted to line elements:
  xxx [xxXXXx](www.1) xxxxx
  xxx [xx](www.1)[XXX](www.1)[x](www.1) xxxxx
 -}
+
+---------------------------------------- Editable instances
+
+-- this is very similar to BoundedEnum, but writing the enum instance for BlockType is a little
+-- awkward.
+
+instance Editable BlockType where
+    data EEdit BlockType = ReplaceBlockType BlockType
+      deriving (Show)
+
+    eCost _ = 1
+    docCost _ = 1
+
+    diff a b = [ReplaceBlockType b | a /= b]
+    ePatch (ReplaceBlockType a) _ = a
+    eMerge _ ReplaceBlockType{} b@ReplaceBlockType{} = ([b], mempty)
+    eInverse d ReplaceBlockType{} = [ReplaceBlockType d]
+
+instance Arbitrary BlockType where
+  arbitrary = oneof [ Header <$> (unAtom <$> arbitrary)
+                    , Item <$> (unAtom <$> arbitrary) <*> arbitrary
+                    ]
+
+instance GenEdit BlockType where
+    genEdit _ = fmap ReplaceBlockType <$> listOf arbitrary
 
 ---------------- tests
 
