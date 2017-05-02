@@ -106,7 +106,7 @@ test_all num _ = do
         , test_inverse
         , test_inverse_inverse
         , test_inverse_diamond
-        , test_diff
+        --, test_diff
         ]
         :: [d -> Gen Property]
   forM_ tests $ \f -> do
@@ -188,10 +188,6 @@ test_diff d = do
     p <- genEdit d
     let p' = diff d (patch p d)
     failPrint (p, p') $ equalEdit p p' d
-
----------------------------------------- Char instance
-
-test_Char = test_all 5000 (Proxy :: Proxy (Atom Char))
 
 ---------------------------------------- List instance
 
@@ -294,14 +290,10 @@ instance (GenEdit a) => GenEdit [a] where
 
 deriving instance (Show a, Show (EEdit a)) => Show (EEdit [a])
 
-test_String = test_all 5000 (Proxy :: Proxy [Atom Char])
-test_StringList = test_all 500 (Proxy :: Proxy [[Atom Char]])
-test_StringListList = test_all 50 (Proxy :: Proxy [[[Atom Char]]])
-
 ---------------------------------------- (Bounded, Enum) instance
 
 newtype Atom a = Atom { unAtom :: a }
-  deriving (Eq, Show, Bounded, Enum)
+  deriving (Eq, Ord, Show, Bounded, Enum)
 
 instance (Eq a, Bounded a, Enum a) => Editable (Atom a) where
     data EEdit (Atom a) = ReplaceEnum (Atom a)
@@ -320,9 +312,6 @@ instance (Bounded a, Enum a) => Arbitrary (Atom a) where
 
 instance (Eq a, Show a, Arbitrary (Atom a), Bounded a, Enum a) => GenEdit (Atom a) where
     genEdit _ = fmap ReplaceEnum <$> listOf arbitrary
-
-test_HeaderLevel = test_all 5000 (Proxy :: Proxy (Atom HeaderLevel))
-test_ItemType = test_all 5000 (Proxy :: Proxy (Atom ItemType))
 
 ---------------------------------------- BlockType instance
 
@@ -348,8 +337,6 @@ instance Arbitrary BlockType where
 
 instance GenEdit BlockType where
     genEdit _ = fmap ReplaceBlockType <$> listOf arbitrary
-
-test_BlockType = test_all 5000 (Proxy :: Proxy BlockType)
 
 ---------------------------------------- Pair instance
 
@@ -396,16 +383,10 @@ instance (GenEdit a, GenEdit b) => GenEdit (a, b) where
 
 deriving instance (Show a, Show (EEdit a), Show b, Show (EEdit b)) => Show (EEdit (a, b))
 
-test_PairCharChar = test_all 5000 (Proxy :: Proxy (Char, Char))
-test_PairCharPairCharChar = test_all 5000 (Proxy :: Proxy (Char, (Char, Char)))
-test_PairStringString = test_all 500 (Proxy :: Proxy ([Char], [Char]))
-test_PairCharCharList = test_all 500 (Proxy :: Proxy [(Char, Char)])
-
-
 ---------------------------------------- Set instance
 
 newtype Set a = Set {unSet :: [a]}
-   deriving (Show, Eq)
+   deriving (Show, Eq, Ord)
 
 instance Ord a => Monoid (Set a) where
     mempty = Set []
@@ -476,17 +457,10 @@ instance (Eq a, Editable a) => Eq (EEdit (Set a)) where
     EditElem a ea == EditElem b eb = a == b && patch ea a == patch eb b
     _ == _ = False
 
-tt = do
-    let d = Set {unSet = "K"}
-        a = [InsertElem '.',DeleteElem '.']
-        b = [EditElem 'K' [ReplaceChar '.']]
-    print $ equalEdit (a <> fst (merge d a b)) (b <> snd (merge d a b)) d
-
-
 instance (Arbitrary a, Ord a) => Arbitrary (Set a) where
     arbitrary = Set . nub . getOrdered <$> arbitrary
 
-instance (GenEdit a, Ord a) => GenEdit (Set a) where
+instance (GenEdit a, Ord a, Enum a, Bounded a) => GenEdit (Set a) where
     genEdit d = oneof
         [ pure []
         , do
@@ -495,16 +469,15 @@ instance (GenEdit a, Ord a) => GenEdit (Set a) where
             oneof $
                     [ do
                         x <- arbitrary `suchThat` (`notElem` unSet d')
-                        pure $ c ++ [InsertElem x]]
+                        pure $ c ++ [InsertElem x] | hasSpace d']
                  ++ [ pure $ c ++ [DeleteElem x] | x <- unSet d']
                  ++ [ do
                         cx <- genEdit x `suchThat` \cx -> patch cx x `notElem` unSet d'
                         pure $ c ++ [EditElem x cx]
-                    | x <- unSet d']
-      ]
-
-test_CharSet = test_all 5000 (Proxy :: Proxy (Set Char))
---test_StringList = test_all 500 (Proxy :: Proxy [[Char]])
+                    | hasSpace d', x <- unSet d']
+        ]
+      where
+        hasSpace (Set x) = length x <= fromEnum (maxBound :: a) - fromEnum (minBound :: a)
 
 ---------------------------------------------------------------------------------------------- application specific part
 
@@ -563,3 +536,30 @@ doc2 = Doc
     [ Block (Header HL1) [LineElem mempty "Introduction"]
     , Block (Item NormalText 0) [LineElem (Set [EntityBold]) "This", LineElem mempty " is the introduction"]
     ]
+
+---------------------- data type used for testing
+
+data Digit = D1 | D2 | D3 | D4 | D5
+    deriving (Eq, Ord, Show, Enum, Bounded)
+
+type ADigit = Atom Digit
+
+allTests = do
+    test_all 5000 (Proxy :: Proxy [ADigit])
+    test_all 500  (Proxy :: Proxy [[ADigit]])
+    test_all 50   (Proxy :: Proxy [[[ADigit]]])
+
+    test_all 5000 (Proxy :: Proxy ADigit)
+
+    test_all 5000 (Proxy :: Proxy (Atom HeaderLevel))
+    test_all 5000 (Proxy :: Proxy (Atom ItemType))
+
+    test_all 5000 (Proxy :: Proxy BlockType)
+
+    test_all 5000 (Proxy :: Proxy (ADigit, ADigit))
+    test_all 5000 (Proxy :: Proxy (ADigit, (ADigit, ADigit)))
+    test_all 500  (Proxy :: Proxy ([ADigit], [ADigit]))
+    test_all 500  (Proxy :: Proxy [(ADigit, ADigit)])
+
+    test_all 500  (Proxy :: Proxy (Set ADigit))
+    -- test_all 50 (Proxy :: Proxy (Set (Set ADigit)))
