@@ -29,6 +29,7 @@ FUTUREWORK
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE DefaultSignatures          #-}
 module RefineOT where
 
 import Data.Monoid
@@ -314,6 +315,21 @@ instance (Bounded a, Enum a) => Arbitrary (Atom a) where
 instance (Eq a, Show a, Arbitrary (Atom a), Bounded a, Enum a) => GenEdit (Atom a) where
     genEdit _ = fmap ReplaceEnum <$> listOf arbitrary
 
+---------------------------------------- Char instance (via Atom Char)
+
+instance Editable Char where
+    newtype EEdit Char = EChar {unEChar :: EEdit (Atom Char)}
+        deriving (Show)
+    docCost = docCost . Atom
+    eCost = eCost . unEChar
+    diff a b = map EChar $ diff (Atom a) (Atom b)
+    ePatch e = unAtom . ePatch (unEChar e) . Atom
+    eMerge d a b = map EChar *** map EChar $ eMerge (Atom d) (unEChar a) (unEChar b)
+    eInverse d = map EChar . eInverse (Atom d) . unEChar
+
+instance GenEdit Char where
+    genEdit = fmap (map EChar) . genEdit . Atom
+
 ---------------------------------------- (,) instance
 
 editFirst :: Edit a -> Edit (a, b)
@@ -515,7 +531,7 @@ instance (Eq a, Editable a) => Eq (EEdit (Set a)) where
 instance (Arbitrary a, Ord a) => Arbitrary (Set a) where
     arbitrary = Set . nub . getOrdered <$> arbitrary
 
-instance (GenEdit a, Ord a, Enum a, Bounded a) => GenEdit (Set a) where
+instance (GenEdit a, Ord a, HasEnoughElems a) => GenEdit (Set a) where
     genEdit d = oneof
         [ pure []
         , do
@@ -532,7 +548,16 @@ instance (GenEdit a, Ord a, Enum a, Bounded a) => GenEdit (Set a) where
                     | hasSpace d', x <- unSet d']
         ]
       where
-        hasSpace (Set x) = length x <= fromEnum (maxBound :: a) - fromEnum (minBound :: a)
+        hasSpace (Set x) = hasMoreElemsThan (Proxy :: Proxy a) (length x)
+
+-- | Auxiliary class to ensure that a type have enough inhabitants
+--   used for generating random elements
+class HasEnoughElems a where
+    hasMoreElemsThan :: Proxy a -> Int -> Bool
+    default hasMoreElemsThan :: (Enum a, Bounded a) => Proxy a -> Int -> Bool
+    hasMoreElemsThan _ n = n <= fromEnum (maxBound :: a) - fromEnum (minBound :: a)
+
+instance (Enum a, Bounded a) => HasEnoughElems (Atom a)
 
 ------------------------------------------------------- auxiliary definitions
 
@@ -626,6 +651,8 @@ instance Editable Entity where
     eMerge d a b = map EEntity *** map EEntity $ eMerge (from d) (unEEntity a) (unEEntity b)
     eInverse d = map EEntity . eInverse (from d) . unEEntity
 
+instance HasEnoughElems Entity where hasMoreElemsThan _ _ = True
+
 instance Arbitrary Entity where
     arbitrary = to <$> arbitrary
 
@@ -640,15 +667,95 @@ instance Representable Entity where
         EntityBold   -> Right (Left ())
         EntityItalic -> Right (Right ())
 
+----------------------
+
+instance Representable LineElem where
+    type Rep LineElem = (Set Entity, String)
+    to (a, b) = LineElem a b
+    from (LineElem a b) = (a, b)
+
+instance Arbitrary LineElem where
+    arbitrary = to <$> arbitrary
+
+instance Editable LineElem where
+
+    newtype EEdit LineElem
+        = ELineElem {unELineElem :: EEdit (Rep LineElem)}
+      deriving (Show)
+
+    docCost = docCost . from
+    eCost = eCost . unELineElem
+    diff a b = map ELineElem $ diff (from a) (from b)
+    ePatch e = to . ePatch (unELineElem e) . from
+    eMerge d a b = map ELineElem *** map ELineElem $ eMerge (from d) (unELineElem a) (unELineElem b)
+    eInverse d = map ELineElem . eInverse (from d) . unELineElem
+
+instance GenEdit LineElem where
+    genEdit d = map ELineElem <$> genEdit (from d)
+
+----------------------
+
+instance Representable Block where
+    type Rep Block = (BlockType, [LineElem])
+    to (a, b) = Block a b
+    from (Block a b) = (a, b)
+
+instance Arbitrary Block where
+    arbitrary = to <$> arbitrary
+
+instance Editable Block where
+
+    newtype EEdit Block
+        = EBlock {unEBlock :: EEdit (Rep Block)}
+      deriving (Show)
+
+    docCost = docCost . from
+    eCost = eCost . unEBlock
+    diff a b = map EBlock $ diff (from a) (from b)
+    ePatch e = to . ePatch (unEBlock e) . from
+    eMerge d a b = map EBlock *** map EBlock $ eMerge (from d) (unEBlock a) (unEBlock b)
+    eInverse d = map EBlock . eInverse (from d) . unEBlock
+
+instance GenEdit Block where
+    genEdit d = map EBlock <$> genEdit (from d)
+
+----------------------
+
+instance Representable Doc where
+    type Rep Doc = [Block]
+    to = Doc
+    from (Doc a) = a
+
+instance Arbitrary Doc where
+    arbitrary = to <$> arbitrary
+
+instance Editable Doc where
+
+    newtype EEdit Doc
+        = EDoc {unEDoc :: EEdit (Rep Doc)}
+      deriving (Show)
+
+    docCost = docCost . from
+    eCost = eCost . unEDoc
+    diff a b = map EDoc $ diff (from a) (from b)
+    ePatch e = to . ePatch (unEDoc e) . from
+    eMerge d a b = map EDoc *** map EDoc $ eMerge (from d) (unEDoc a) (unEDoc b)
+    eInverse d = map EDoc . eInverse (from d) . unEDoc
+
+instance GenEdit Doc where
+    genEdit d = map EDoc <$> genEdit (from d)
+
+------------------
+
 doc1, doc2 :: Doc
 doc1 = Doc
-    [ Block (Header HL1) [LineElem mempty "Introduction"]
-    , Block (Item NormalText 0) [LineElem mempty "This is the introduction"]
+    [ Block (Header HL1) [LineElem mempty "Intro"]
+    , Block (Item NormalText 0) [LineElem mempty "This is"]
     ]
 
 doc2 = Doc
-    [ Block (Header HL1) [LineElem mempty "Introduction"]
-    , Block (Item NormalText 0) [LineElem (Set [EntityBold]) "This", LineElem mempty " is the introduction"]
+    [ Block (Header HL1) [LineElem mempty "Intro"]
+    , Block (Item NormalText 0) [LineElem (Set [EntityBold]) "This", LineElem mempty " is"]
     ]
 
 ---------------------- data type used for testing
@@ -665,10 +772,6 @@ allTests = do
     test_all 50   (Proxy :: Proxy [[[ADigit]]])
 
     test_all 5000 (Proxy :: Proxy ADigit)
-    test_all 5000 (Proxy :: Proxy (Atom HeaderLevel))
-    test_all 5000 (Proxy :: Proxy (Atom ItemType))
-
-    test_all 5000 (Proxy :: Proxy BlockType)
 
     test_all 5000 (Proxy :: Proxy (ADigit, ADigit))
     test_all 5000 (Proxy :: Proxy (ADigit, (ADigit, ADigit)))
@@ -681,3 +784,8 @@ allTests = do
 
     test_all 500  (Proxy :: Proxy (Set ADigit))
     -- test_all 50 (Proxy :: Proxy (Set (Set ADigit)))
+
+    test_all 5000 (Proxy :: Proxy (Atom HeaderLevel))
+    test_all 5000 (Proxy :: Proxy (Atom ItemType))
+    test_all 5000 (Proxy :: Proxy BlockType)
+    test_all 10   (Proxy :: Proxy LineElem)
