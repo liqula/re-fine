@@ -92,7 +92,7 @@ gshrink = List.map to . shrinkSOP . from
 
 
 instance Arbitrary RawContent where
-  arbitrary = sanitizeRawContent . mkRawContent <$> garbitrary
+  arbitrary = sanitizeRawContent . mkRawContent <$> ((:) <$> arbitrary <*> arbitrary)
   shrink    = fmap sanitizeRawContent <$> gshrink
 
 -- | These are the sanity conditions imposed on 'ContentState' by the draft library.  Everything

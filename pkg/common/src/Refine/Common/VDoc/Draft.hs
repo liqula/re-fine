@@ -48,7 +48,7 @@ import Refine.Prelude.TH
 -- | Haskell representation of the javascript @RawDraftContentState@.
 -- https://draftjs.org/docs/api-reference-data-conversion.html#content
 data RawContent = RawContent
-  { _rawContentBlocks    :: [Block EntityKey]
+  { _rawContentBlocks    :: [Block EntityKey]  -- ^ FIXME: use Data.List.NonEmpty from semigroups.
   , _rawContentEntityMap :: IntMap Entity  -- ^ for performance, do not use @Map EntityKey Entity@ here.
   }
   deriving (Eq, Show, Generic)
@@ -239,7 +239,9 @@ makeRefineType ''SelectionPoint
 
 -- * functions
 
+-- | Note: empty block list is illegal.  For once it will make draft crash in 'stateFromContent'.
 mkRawContent :: [Block Entity] -> RawContent
+mkRawContent [] = error "mkRawContent: empty block list."
 mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
   where
     -- FUTUREWORK: it is possible to do just one traversal to collect and index entities
@@ -252,7 +254,10 @@ mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
     em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
 
 emptyRawContent :: RawContent
-emptyRawContent = mkRawContent mempty
+emptyRawContent = mkRawContent [emptyBlock]
+
+emptyBlock :: Block rangeKey
+emptyBlock = Block "" [] [] NormalText 0 Nothing
 
 resetBlockKeys :: RawContent -> RawContent
 resetBlockKeys (RawContent bs es) = RawContent (set blockKey Nothing <$> bs) es
