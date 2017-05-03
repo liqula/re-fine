@@ -27,6 +27,7 @@ import           GHC.Generics (Generic)
 import           React.Flux (UnoverlapAllEq)
 
 import           Refine.Common.Types
+import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Header.Types
@@ -44,7 +45,10 @@ data DocumentAction =
 -- other stuff, see #233.
 data DocumentState =
     DocumentStateView
-      { _documentStateVal      :: EditorState
+      { _documentStateContent  :: RawContent  -- ^ in read-only mode, change to the content is
+                                              -- driven by haskell, so we keep the haskell
+                                              -- representation around.
+      , _documentStateVal      :: EditorState
       }
   | DocumentStateEdit
       { _documentStateVal      :: EditorState
@@ -52,8 +56,11 @@ data DocumentState =
       }
   deriving (Show, Eq, Generic)
 
+mkDocumentStateView :: ContentState -> DocumentState
+mkDocumentStateView c = DocumentStateView (convertToRaw c) (createWithContent c)
+
 emptyDocumentState :: DocumentState
-emptyDocumentState = DocumentStateView (createWithContent $ createFromText "")
+emptyDocumentState = mkDocumentStateView $ createFromText ""
 
 data DocumentProps = DocumentProps
   { _dpDocumentState     :: DocumentState

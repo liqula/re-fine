@@ -31,7 +31,7 @@ module Refine.Frontend.Document.Store
   , vdocVersionFromContent
   ) where
 
-import           Control.Lens ((&), (%~), (^.))
+import           Control.Lens ((&), (%~), (^.), to)
 import           Data.Aeson (encode, eitherDecode)
 import           Data.String.Conversions (cs, (<>))
 
@@ -44,10 +44,13 @@ import           Refine.Frontend.Store.Types
 
 
 documentStateUpdate :: GlobalAction -> Maybe VDocVersion -> DocumentState -> DocumentState
-documentStateUpdate (OpenDocument vdocvers) _ _state
-  = DocumentStateView (editorStateFromVDocVersion (vdocvers ^. compositeVDocVersion))
+documentStateUpdate (OpenDocument cvdoc) _ _state
+  = cvdoc ^. compositeVDocVersion . to vdocVersionToContent . to mkDocumentStateView
 
-documentStateUpdate (HeaderAction (StartEdit kind)) (Just _) (DocumentStateView estate)
+documentStateUpdate (DocumentAction DocumentSave) (Just vdocvers) _state
+  = vdocvers ^. to vdocVersionToContent . to mkDocumentStateView
+
+documentStateUpdate (HeaderAction (StartEdit kind)) (Just _) (DocumentStateView _ estate)
   = DocumentStateEdit estate kind
 
 documentStateUpdate (DocumentAction (DocumentUpdate state')) (Just _) _state
@@ -58,9 +61,6 @@ documentStateUpdate (DocumentAction DocumentToggleBold) (Just _) state
 
 documentStateUpdate (DocumentAction DocumentToggleItalic) (Just _) state
   = state & documentStateVal %~ documentToggleItalic
-
-documentStateUpdate (DocumentAction DocumentSave) (Just vdocvers) _state
-  = DocumentStateView (editorStateFromVDocVersion vdocvers)
 
 documentStateUpdate _ _ state
   = state
