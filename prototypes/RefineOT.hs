@@ -34,10 +34,9 @@ module RefineOT where
 import Data.Monoid
 import Data.Function
 import Data.List
-import Control.Monad.State
+import Control.Arrow
+import Control.Monad
 import Test.QuickCheck
-import Test.QuickCheck.Gen
-import Test.QuickCheck.Random
 import Data.Typeable
 
 ---------------------------------------------------------------------------------------------- application independent part
@@ -82,12 +81,13 @@ merge d (a0: a1) (b0: b1) = (b0a0a1 <> b1a0b0a1b0a0, a0b0b1 <> a1b0a0b1a0b0)
     (b1a0b0a1b0a0, a1b0a0b1a0b0) = merge (patch (a0: b0a0) d) a1b0a0 b1a0b0
 
 inverse :: Editable d => d -> Edit d -> Edit d
-inverse d e = f [] d e
+inverse = f []
   where
     f acc _ [] = acc
     f acc d (x: xs) = f (eInverse d x <> acc) (ePatch x d) xs
 
--- good for default
+-- good for default eMerge
+secondWins :: Editable d => d -> EEdit d -> EEdit d -> (Edit d, Edit d)
 secondWins d a b = (eInverse d a <> [b], []) -- information lost!
 
 ---------------------------------------- quickcheck laws
@@ -191,7 +191,8 @@ test_diff d = do
 
 ---------------------------------------- List instance
 
-editItem i [] = []
+editItem :: Int -> Edit a -> Edit [a]
+editItem _ [] = []
 editItem i p  = [EditItem i p]
 
 instance Editable a => Editable [a] where
@@ -203,8 +204,8 @@ instance Editable a => Editable [a] where
         | InsertItem Int a
         | EditItem Int (Edit a)
         -- not used yet
-        | MoveItem Int Int     -- needed for expressing .....
-        | DuplicateItem Int
+        --  MoveItem Int Int     -- needed for expressing .....
+        --  DuplicateItem Int
 
     eCost = \case
         InsertItem _ d -> 1 + docCost d
@@ -215,12 +216,12 @@ instance Editable a => Editable [a] where
     ePatch (InsertItem i x) xs = take i xs ++ x: drop i xs
     ePatch (EditItem   i x) xs = take i xs ++ patch x (xs !! i): drop (i+1) xs
 
-    diff a b = snd $ f 0 a b
+    diff = (snd .) . f 0
       where
-        f n [] [] = mk []
+        f _ [] [] = mk []
         f n [] (x:xs) = mk [InsertItem n x] `add` f (n+1) [] xs
-        f n (x:xs) [] = mk [DeleteItem n] `add` f n xs []
-        f n (x:xs) (y:ys)
+        f n (_: xs) [] = mk [DeleteItem n] `add` f n xs []
+        f n (x: xs) (y: ys)
             | null dxy = f (n+1) xs ys
             | otherwise = minimumBy (compare `on` fst)
                 [ mk (editItem n dxy) `add` f (n+1) xs ys
@@ -236,20 +237,20 @@ instance Editable a => Editable [a] where
     eMerge d (EditItem i x) (EditItem i' y) | i == i' = ([EditItem i x2], [EditItem i y2])
       where
         (x2, y2) = merge (d !! i) x y
-    eMerge _ (EditItem i x) (DeleteItem i') | i == i' = ([DeleteItem i], [])      -- FUTUREWORK: information lost!
+    eMerge _ (EditItem i _) (DeleteItem i') | i == i' = ([DeleteItem i], [])      -- FUTUREWORK: information lost!
     eMerge d (DeleteItem i) (EditItem i' x) | i == i' = ([InsertItem i (d !! i), EditItem i x], [])
     eMerge _ (DeleteItem i) (DeleteItem i') | i == i' = ([], [])
-    eMerge _ a b = (mod 0 a b, mod 1 b a)
+    eMerge _ a b = (modify 0 a b, modify 1 b a)
       where
-        mod k a b = case b of
-            InsertItem i x -> [InsertItem (di k i) x]
+        modify l e = \case
+            InsertItem i x -> [InsertItem (di l i) x]
             DeleteItem i   -> [DeleteItem (di 1 i)  ]
             EditItem   i x -> [EditItem   (di 1 i) x]
           where
-            di k i = case a of
+            di k i = case e of
                 InsertItem j _ -> if j==i then i+k else if j<i then i+1 else i
                 DeleteItem j   -> if j==i then i else if j<i then i-1 else i
-                EditItem j _   -> i
+                EditItem{}     -> i
 {-
 edi 0 p `merge` del 0   = (del 0  , []     )               --      x... --> ...
 edi 0 p `merge` del 0   = ([]     , ins 0 x <> edi 0 p)    --      x... --> p...
@@ -296,7 +297,7 @@ newtype Atom a = Atom { unAtom :: a }
   deriving (Eq, Ord, Show, Bounded, Enum)
 
 instance (Eq a, Bounded a, Enum a) => Editable (Atom a) where
-    data EEdit (Atom a) = ReplaceEnum (Atom a)
+    newtype EEdit (Atom a) = ReplaceEnum (Atom a)
       deriving (Show)
 
     eCost _ = 1
@@ -313,11 +314,13 @@ instance (Bounded a, Enum a) => Arbitrary (Atom a) where
 instance (Eq a, Show a, Arbitrary (Atom a), Bounded a, Enum a) => GenEdit (Atom a) where
     genEdit _ = fmap ReplaceEnum <$> listOf arbitrary
 
----------------------------------------- Pair instance
+---------------------------------------- (,) instance
 
+editFirst :: Edit a -> Edit (a, b)
 editFirst [] = []
 editFirst e  = [EditFirst e]
 
+editSecond :: Edit b -> Edit (a, b)
 editSecond [] = []
 editSecond e  = [EditSecond e]
 
@@ -358,6 +361,81 @@ instance (GenEdit a, GenEdit b) => GenEdit (a, b) where
 
 deriving instance (Show a, Show (EEdit a), Show b, Show (EEdit b)) => Show (EEdit (a, b))
 
+---------------------------------------- Either instance
+
+editLeft :: Edit a -> Edit (Either a b)
+editLeft [] = []
+editLeft e  = [EditLeft e]
+
+editRight :: Edit b -> Edit (Either a b)
+editRight [] = []
+editRight e  = [EditRight e]
+
+instance (Editable a, Editable b) => Editable (Either a b) where
+
+    docCost (Left a)  = 1 + docCost a
+    docCost (Right b) = 1 + docCost b
+
+    data EEdit (Either a b)
+        = EditLeft  (Edit a)
+        | EditRight (Edit b)
+        | SetEither (Either a b)
+
+    eCost = \case
+        EditLeft  e -> 1 + cost e
+        EditRight e -> 1 + cost e
+        SetEither x -> 1 + either docCost docCost x
+
+    ePatch (EditLeft  e) (Left  a) = Left  (patch e a)
+    ePatch (EditRight e) (Right b) = Right (patch e b)
+    ePatch (SetEither x) _         = x
+
+    diff (Left  a) (Left  a') = editLeft  $ diff a a'
+    diff (Right b) (Right b') = editRight $ diff b b'
+    diff _ x = [SetEither x]
+
+    eMerge (Left  a) (EditLeft  ea) (EditLeft  ea') = editLeft  *** editLeft  $ merge a ea ea'
+    eMerge (Right b) (EditRight eb) (EditRight eb') = editRight *** editRight $ merge b eb eb'
+    eMerge d a b = secondWins d a b
+
+    eInverse (Left  a) (EditLeft  e) = editLeft  $ inverse a e
+    eInverse (Right b) (EditRight e) = editRight $ inverse b e
+    eInverse x         (SetEither _) = [SetEither x]
+
+instance (GenEdit a, GenEdit b) => GenEdit (Either a b) where
+    genEdit = \case
+        Left a -> oneof
+            [ pure []
+            , pure . EditLeft  <$> genEdit a
+            , pure . SetEither <$> arbitrary
+            ]
+        Right b -> oneof
+            [ pure []
+            , pure . EditRight <$> genEdit b
+            , pure . SetEither <$> arbitrary
+            ]
+
+deriving instance (Show a, Show (EEdit a), Show b, Show (EEdit b)) => Show (EEdit (Either a b))
+
+---------------------------------------- () instance
+
+instance Editable () where
+
+    docCost _  = 1
+
+    data EEdit ()
+
+    eCost _ = error "impossible"
+    ePatch _ _ = error "impossible"
+    diff _ _ = []
+    eMerge _ _ _ = error "impossible"
+    eInverse _ _ = error "impossible"
+
+instance GenEdit () where
+    genEdit _ = pure []
+
+instance Show (EEdit ()) where show = error "impossible"
+
 ---------------------------------------- Set instance
 
 newtype Set a = Set {unSet :: [a]}
@@ -367,6 +445,7 @@ instance Ord a => Monoid (Set a) where
     mempty = Set []
     mappend (Set a) (Set b) = Set $ mergeList a b
 
+mergeList :: Ord a => [a] -> [a] -> [a]
 mergeList [] xs = xs
 mergeList xs [] = xs
 mergeList (x: xs) (y: ys) = case compare x y of
@@ -374,7 +453,8 @@ mergeList (x: xs) (y: ys) = case compare x y of
     GT -> y: mergeList (x: xs) ys
     _  -> x: mergeList xs ys
 
-editElem i [] = []
+editElem :: a -> Edit a -> Edit (Set a)
+editElem _ [] = []
 editElem i p  = [EditElem i p]
 
 instance (Editable a, Ord a) => Editable (Set a) where
@@ -414,12 +494,12 @@ instance (Editable a, Ord a) => Editable (Set a) where
         (x2, y2) = merge i x y
     eMerge d a@(EditElem i x) b@(EditElem i' y) | i /= i' && patch x i == patch y i' = secondWins d a b
     eMerge _ (EditElem i x) (DeleteElem i') | i == i' = ([DeleteElem (patch x i)], [])      -- FUTUREWORK: information lost!
-    eMerge d (DeleteElem i) (EditElem i' x) | i == i' = ([InsertElem (patch x i)], [])
+    eMerge _ (DeleteElem i) (EditElem i' x) | i == i' = ([InsertElem (patch x i)], [])
     eMerge _ (InsertElem x) (EditElem y e) | x == patch e y = if x == y then ([], []) else ([DeleteElem y], [])
     eMerge d a@(EditElem y e) b@(InsertElem x) | x == patch e y = if x == y then ([], []) else secondWins d a b
     eMerge _ a b = ([b], [a])
 
-    eInverse d = \case
+    eInverse _ = \case
         EditElem x e -> [EditElem (patch e x) (inverse x e)]
         DeleteElem x -> [InsertElem x]
         InsertElem x -> [DeleteElem x]
@@ -453,6 +533,13 @@ instance (GenEdit a, Ord a, Enum a, Bounded a) => GenEdit (Set a) where
         ]
       where
         hasSpace (Set x) = length x <= fromEnum (maxBound :: a) - fromEnum (minBound :: a)
+
+------------------------------------------------------- auxiliary definitions
+
+class Representable a where
+  type Rep a
+  to   :: Rep a -> a
+  from :: a -> Rep a
 
 ---------------------------------------------------------------------------------------------- application specific part
 
@@ -524,7 +611,34 @@ instance Arbitrary BlockType where
 instance GenEdit BlockType where
     genEdit _ = fmap ReplaceBlockType <$> listOf arbitrary
 
----------------- tests
+----------------------
+
+instance Editable Entity where
+
+    newtype EEdit Entity
+        = EEntity {unEEntity :: EEdit (Rep Entity)}
+      deriving (Show)
+
+    docCost = docCost . from
+    eCost = eCost . unEEntity
+    diff a b = map EEntity $ diff (from a) (from b)
+    ePatch e = to . ePatch (unEEntity e) . from
+    eMerge d a b = map EEntity *** map EEntity $ eMerge (from d) (unEEntity a) (unEEntity b)
+    eInverse d = map EEntity . eInverse (from d) . unEEntity
+
+instance Arbitrary Entity where
+    arbitrary = to <$> arbitrary
+
+instance GenEdit Entity where
+    genEdit d = map EEntity <$> genEdit (from d)
+
+instance Representable Entity where
+    type Rep Entity = Either [Atom Char] (Either () ())
+    to = either (EntityLink . map unAtom) (either (const EntityBold) (const EntityItalic))
+    from = \case
+        EntityLink s -> Left $ Atom <$> s
+        EntityBold   -> Right (Left ())
+        EntityItalic -> Right (Right ())
 
 doc1, doc2 :: Doc
 doc1 = Doc
@@ -544,13 +658,13 @@ data Digit = D1 | D2 | D3 | D4 | D5
 
 type ADigit = Atom Digit
 
+allTests :: IO ()
 allTests = do
     test_all 5000 (Proxy :: Proxy [ADigit])
     test_all 500  (Proxy :: Proxy [[ADigit]])
     test_all 50   (Proxy :: Proxy [[[ADigit]]])
 
     test_all 5000 (Proxy :: Proxy ADigit)
-
     test_all 5000 (Proxy :: Proxy (Atom HeaderLevel))
     test_all 5000 (Proxy :: Proxy (Atom ItemType))
 
@@ -560,6 +674,10 @@ allTests = do
     test_all 5000 (Proxy :: Proxy (ADigit, (ADigit, ADigit)))
     test_all 500  (Proxy :: Proxy ([ADigit], [ADigit]))
     test_all 500  (Proxy :: Proxy [(ADigit, ADigit)])
+
+    test_all 5000 (Proxy :: Proxy ())
+    test_all 5000 (Proxy :: Proxy (Either () ()))
+    test_all 5000 (Proxy :: Proxy (Either ADigit ADigit))
 
     test_all 500  (Proxy :: Proxy (Set ADigit))
     -- test_all 50 (Proxy :: Proxy (Set (Set ADigit)))
