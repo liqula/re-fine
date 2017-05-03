@@ -105,7 +105,6 @@ library
       Refine.Frontend.Test.Enzyme.Core
       Refine.Frontend.Test.Enzyme.ReactWrapper
       Refine.Frontend.Test.Enzyme.ShallowWrapper
-      Refine.Frontend.Test.Samples
       Refine.Frontend.Test.Store
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.TKey

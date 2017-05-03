@@ -29,6 +29,7 @@ import Test.Hspec
 import Test.QuickCheck
 
 import Refine.Common.Test.Arbitrary
+import Refine.Common.Test.Samples
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft
 import Refine.Frontend.Contribution.Types
@@ -39,14 +40,13 @@ import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Test.Console
 import Refine.Frontend.Test.Enzyme
-import Refine.Frontend.Test.Samples
 
 
 spec :: Spec
 spec = do
   describe "Samples" $ do
     it "work" $ do
-      (rawContentFromVDocVersion sampleText ^. rawContentBlocks) `shouldNotBe` []
+      (rawContentFromVDocVersion sampleVDocVersion ^. rawContentBlocks) `shouldNotBe` []
 
   describe "convertToRaw, convertFromRaw" $ do
     it "are isomorphic" . property $ \(sanitizeRawContent -> rawContent) -> do

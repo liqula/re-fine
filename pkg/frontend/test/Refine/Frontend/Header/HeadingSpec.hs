@@ -28,6 +28,7 @@ import           Control.Lens ((^.), (&), (.~))
 import qualified Data.Map.Strict as M
 import           Test.Hspec
 
+import           Refine.Common.Test.Samples (sampleVDocVersion, sampleMetaID)
 import           Refine.Common.Types
 import           Refine.Frontend.Header.Heading
 import           Refine.Frontend.Login.Types
@@ -36,7 +37,6 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Test.Store
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
-import           Refine.Frontend.Test.Samples (sampleText, sampleMetaID)
 
 spec :: Spec
 spec = do
@@ -75,7 +75,7 @@ spec = do
           newVDoc = CompositeVDoc (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1))
                                   (VDocRepo (ID 1) (ID 1))
                                   (ID 1)
-                                  sampleText
+                                  sampleVDocVersion
                                   M.empty M.empty M.empty
 
           gs :: GlobalState

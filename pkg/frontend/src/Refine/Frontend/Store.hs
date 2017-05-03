@@ -42,6 +42,7 @@ import           Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as C
 import           Refine.Common.VDoc.Draft (selectionIsEmpty, selectionIsBackward)
 import           Refine.Common.Rest (ApiError(..))
+import           Refine.Common.Test.Samples
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Store (documentStateUpdate, editorStateToVDocVersion)
@@ -59,7 +60,6 @@ import           Refine.Frontend.Rest
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Console
-import           Refine.Frontend.Test.Samples
 import           Refine.Frontend.Translation.Store (translationsUpdate)
 import           Refine.Frontend.Types
 
@@ -304,7 +304,7 @@ emitBackendCallsFor action state = case action of
     -- testing & dev
 
     AddDemoDocument -> do
-        createVDoc (C.CreateVDoc sampleTitle sampleAbstract sampleText) $ \case
+        createVDoc (C.CreateVDoc sampleTitle sampleAbstract sampleVDocVersion) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right loadedVDoc) -> dispatchM $ OpenDocument loadedVDoc
 
