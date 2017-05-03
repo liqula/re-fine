@@ -1,16 +1,14 @@
 {-
 TODO
--   Editable instace for Doc
--   tr1 :: Doc -> DDoc
-    tr2 :: DDoc -> Doc
--   lots of tests & examples
--   separate the common parts into a library   -- Prezi could release this too?
--   move to code refine
+-   tr1 :: Doc -> DraftDoc
+    tr2 :: DraftDoc -> Doc
 -   make diff faster
+-   separate the common parts into a library
+-   move to code refine
+-   smarter Editable instace for Doc
 
 FUTUREWORK
 -   measure information lost
--   undo/redo support
 -}
 
 {-# LANGUAGE TypeFamilies               #-}
