@@ -1,11 +1,8 @@
 {-
 TODO
--   tr1 :: Doc -> DraftDoc
-    tr2 :: DraftDoc -> Doc
--   make diff faster
--   separate the common parts into a library
 -   move code to refine
 -   smarter Editable instance for Doc
+-   separate the common parts into a library
 
 FUTUREWORK
 -   measure information lost during merge
@@ -13,7 +10,6 @@ FUTUREWORK
 
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -28,11 +24,12 @@ FUTUREWORK
 {-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE UndecidableInstances       #-}
 {-# LANGUAGE DefaultSignatures          #-}
-module RefineOT where
+--module RefineOT where
 
 import Data.Monoid
 import Data.Function
 import Data.List
+import qualified Data.Vector as Vec
 import Control.Arrow
 import Control.Monad
 import Test.QuickCheck
@@ -105,7 +102,7 @@ test_all num _ = do
         , test_inverse
         , test_inverse_inverse
         , test_inverse_diamond
-        --, test_diff
+        , test_diff
         ]
         :: [d -> Gen Property]
   forM_ tests $ \f -> do
@@ -186,7 +183,7 @@ test_diff :: GenEdit d => d -> Gen Property
 test_diff d = do
     p <- genEdit d
     let p' = diff d (patch p d)
-    failPrint (p, p') $ equalEdit p p' d
+    failPrint (p, patch p d, p', patch p' d) $ equalEdit p p' d
 
 ---------------------------------------- List instance
 
@@ -215,17 +212,26 @@ instance Editable a => Editable [a] where
     ePatch (InsertItem i x) xs = take i xs ++ x: drop i xs
     ePatch (EditItem   i x) xs = take i xs ++ patch x (xs !! i): drop (i+1) xs
 
-    diff = (snd .) . f 0
+    diff s1 s2 = snd $ f' $ length s1 * xx + nmax
       where
+        table :: Vec.Vector (Int, Edit [a])
+        table = Vec.fromList $ zipWith f_ [0..] $ (,) <$> reverse (tails s1) <*> reverse (tails $ zip [0..] s2)
+
+        f' i = table Vec.! i
+        nmax = length s2
+        xx = nmax + 1
+
+        f_ a (b, c) = f a b c
+
         f _ [] [] = mk []
-        f n [] (x:xs) = mk [InsertItem n x] `add` f (n+1) [] xs
-        f n (_: xs) [] = mk [DeleteItem n] `add` f n xs []
-        f n (x: xs) (y: ys)
-            | null dxy = f (n+1) xs ys
+        f j [] ((n,x): _) = mk [InsertItem n x] `add` f' (j-1)
+        f i (_: _) [] = mk [DeleteItem nmax] `add` f' (i-xx)
+        f ij (x: _) ((n, y): _)
+            | null dxy = f' (ij-xx-1)
             | otherwise = minimumBy (compare `on` fst)
-                [ mk (editItem n dxy) `add` f (n+1) xs ys
-                , mk [InsertItem n y] `add` f (n+1) (x:xs) ys
-                , mk [DeleteItem n] `add` f n xs (y:ys)
+                [ mk (editItem n dxy) `add` f' (ij-xx-1)
+                , mk [InsertItem n y] `add` f' (ij-1)
+                , mk [DeleteItem n]   `add` f' (ij-xx)
                 ]
           where
             dxy = diff x y
@@ -293,7 +299,9 @@ deriving instance (Show a, Show (EEdit a)) => Show (EEdit [a])
 ---------------------------------------- (Bounded, Enum) instance
 
 newtype Atom a = Atom { unAtom :: a }
-  deriving (Eq, Ord, Show, Bounded, Enum)
+  deriving (Eq, Ord, Bounded, Enum)
+
+instance Show a => Show (Atom a) where show = show . unAtom
 
 instance (Eq a, Bounded a, Enum a) => Editable (Atom a) where
     newtype EEdit (Atom a) = ReplaceEnum (Atom a)
@@ -574,8 +582,7 @@ type ADigit = Atom Digit
 allTests :: IO ()
 allTests = do
     test_all 5000 (Proxy :: Proxy [ADigit])
-    test_all 500  (Proxy :: Proxy [[ADigit]])
-    test_all 50   (Proxy :: Proxy [[[ADigit]]])
+    test_all 50   (Proxy :: Proxy [[ADigit]])
 
     test_all 5000 (Proxy :: Proxy ADigit)
 
@@ -590,4 +597,9 @@ allTests = do
 
     test_all 500  (Proxy :: Proxy (Set ADigit))
     -- test_all 50 (Proxy :: Proxy (Set (Set ADigit)))
+
+main = do
+    --allTests
+    -- | performance benchmark
+    let n = 1000 in print $ diff (take n ['a'..]) (take n ['A'..])
 
