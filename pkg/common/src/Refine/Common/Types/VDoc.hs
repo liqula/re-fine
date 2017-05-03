@@ -20,8 +20,9 @@ module Refine.Common.Types.VDoc where
 
 import           Control.DeepSeq
 import           Control.Lens (makeLenses, makePrisms, Lens')
+import           Data.Aeson
 import           Data.Map
-import           Data.String.Conversions (ST)
+import           Data.String.Conversions (ST, cs, (<>))
 import qualified Generics.SOP        as SOP
 import qualified Generics.SOP.JSON   as SOP
 import qualified Generics.SOP.NFData as SOP
@@ -31,6 +32,7 @@ import Refine.Common.Orphans ()
 import Refine.Common.Types.Chunk
 import Refine.Common.Types.Comment
 import Refine.Common.Types.Prelude
+import Refine.Common.VDoc.Draft
 import Refine.Prelude
 import Refine.Prelude.TH
 
@@ -161,3 +163,18 @@ vdocID = vdocMetaID . miID
 
 editID :: Lens' Edit (ID Edit)
 editID = editMetaID . miID
+
+
+-- * draft
+
+rawContentFromCompositeVDoc :: CompositeVDoc -> RawContent
+rawContentFromCompositeVDoc (CompositeVDoc _ _ _ vers _edits _notes _discussions) = rawContentFromVDocVersion vers
+  -- TODO: insert marks with contribution ids.
+
+rawContentFromVDocVersion :: VDocVersion -> RawContent
+rawContentFromVDocVersion (VDocVersion st) = case eitherDecode $ cs st of
+  Right v -> v
+  Left msg -> error $ "vdocVersionToRawContent: " <> show (msg, st)
+
+rawContentToVDocVersion :: RawContent -> VDocVersion
+rawContentToVDocVersion = VDocVersion . cs . encode

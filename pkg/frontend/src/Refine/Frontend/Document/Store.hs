@@ -25,67 +25,42 @@ module Refine.Frontend.Document.Store
   ( documentStateUpdate
   , editorStateToVDocVersion
   , editorStateFromVDocVersion
-  , vdocVersionToRawContent
-  , vdocVersionFromRawContent
-  , vdocVersionToContent
-  , vdocVersionFromContent
   ) where
 
-import           Control.Lens ((&), (%~), (^.), to)
-import           Data.Aeson (encode, eitherDecode)
-import           Data.String.Conversions (cs, (<>))
+import           Control.Lens ((&), (%~), (^?!), _Just)
 
 import           Refine.Common.Types
-import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store.Types
 
 
-documentStateUpdate :: GlobalAction -> Maybe VDocVersion -> DocumentState -> DocumentState
+documentStateUpdate :: GlobalAction -> GlobalState -> DocumentState -> DocumentState
 documentStateUpdate (OpenDocument cvdoc) _ _state
-  = cvdoc ^. compositeVDocVersion . to vdocVersionToContent . to mkDocumentStateView
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (DocumentAction DocumentSave) (Just vdocvers) _state
-  = vdocvers ^. to vdocVersionToContent . to mkDocumentStateView
+documentStateUpdate (DocumentAction DocumentSave) ((^?! gsVDoc . _Just) -> cvdoc) _state
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (HeaderAction (StartEdit kind)) (Just _) (DocumentStateView _ estate)
+documentStateUpdate (HeaderAction (StartEdit kind)) _ (DocumentStateView _ estate)
   = DocumentStateEdit estate kind
 
-documentStateUpdate (DocumentAction (DocumentUpdate state')) (Just _) _state
+documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _state
   = state'
 
-documentStateUpdate (DocumentAction DocumentToggleBold) (Just _) state
+documentStateUpdate (DocumentAction DocumentToggleBold) _ state
   = state & documentStateVal %~ documentToggleBold
 
-documentStateUpdate (DocumentAction DocumentToggleItalic) (Just _) state
+documentStateUpdate (DocumentAction DocumentToggleItalic) _ state
   = state & documentStateVal %~ documentToggleItalic
 
 documentStateUpdate _ _ state
   = state
 
 
--- TODO: 'VDocVersion' will be entirely replaced by 'RawContent', the following functions will go away.
-
 editorStateToVDocVersion :: EditorState -> VDocVersion
-editorStateToVDocVersion = vdocVersionFromContent . getCurrentContent
+editorStateToVDocVersion = rawContentToVDocVersion . convertToRaw . getCurrentContent
 
 editorStateFromVDocVersion :: VDocVersion -> EditorState
-editorStateFromVDocVersion = createWithContent . vdocVersionToContent
-
-
-vdocVersionToRawContent :: VDocVersion -> RawContent
-vdocVersionToRawContent (VDocVersion st) = case eitherDecode $ cs st of
-  Right v -> v
-  Left msg -> error $ "vdocVersionToRawContent: " <> show (msg, st)
-
-vdocVersionFromRawContent :: RawContent -> VDocVersion
-vdocVersionFromRawContent = VDocVersion . cs . encode
-
-
-vdocVersionToContent :: VDocVersion -> ContentState
-vdocVersionToContent = convertFromRaw . vdocVersionToRawContent
-
-vdocVersionFromContent :: ContentState -> VDocVersion
-vdocVersionFromContent = vdocVersionFromRawContent . convertToRaw
+editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion

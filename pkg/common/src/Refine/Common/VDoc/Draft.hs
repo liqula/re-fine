@@ -251,6 +251,9 @@ mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
 
     em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
 
+emptyRawContent :: RawContent
+emptyRawContent = mkRawContent mempty
+
 resetBlockKeys :: RawContent -> RawContent
 resetBlockKeys (RawContent bs es) = RawContent (set blockKey Nothing <$> bs) es
 

@@ -56,11 +56,11 @@ data DocumentState =
       }
   deriving (Show, Eq, Generic)
 
-mkDocumentStateView :: ContentState -> DocumentState
-mkDocumentStateView c = DocumentStateView (convertToRaw c) (createWithContent c)
+mkDocumentStateView :: RawContent -> DocumentState
+mkDocumentStateView c = DocumentStateView c (createWithContent (convertFromRaw c))
 
 emptyDocumentState :: DocumentState
-emptyDocumentState = mkDocumentStateView $ createFromText ""
+emptyDocumentState = mkDocumentStateView emptyRawContent
 
 data DocumentProps = DocumentProps
   { _dpDocumentState     :: DocumentState

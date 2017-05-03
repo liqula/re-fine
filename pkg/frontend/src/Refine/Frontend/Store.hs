@@ -142,7 +142,7 @@ transformGlobalState = transf
       & gsVDocList                   %~ vdocListUpdate action
       & gsContributionState          %~ contributionStateUpdate action
       & gsHeaderState                %~ headerStateUpdate action
-      & gsDocumentState              %~ documentStateUpdate action (state ^? gsVDoc . _Just . C.compositeVDocVersion)
+      & gsDocumentState              %~ documentStateUpdate action state
       & gsScreenState                %~ maybe id screenStateUpdate (action ^? _ScreenAction)
       & gsLoginState                 %~ loginStateUpdate action
       & gsMainMenuState              %~ mainMenuUpdate action

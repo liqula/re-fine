@@ -46,7 +46,7 @@ spec :: Spec
 spec = do
   describe "Samples" $ do
     it "work" $ do
-      (vdocVersionToRawContent sampleText ^. rawContentBlocks) `shouldNotBe` []
+      (rawContentFromVDocVersion sampleText ^. rawContentBlocks) `shouldNotBe` []
 
   describe "convertToRaw, convertFromRaw" $ do
     it "are isomorphic" . property $ \(sanitizeRawContent -> rawContent) -> do
@@ -87,7 +87,7 @@ spec = do
   describe "Document" $ do
     let mkTestProps :: RawContent -> DocumentProps
         mkTestProps c = DocumentProps
-          (DocumentStateEdit (editorStateFromVDocVersion $ vdocVersionFromRawContent c) Grammar)
+          (DocumentStateEdit (editorStateFromVDocVersion $ rawContentToVDocVersion c) Grammar)
           emptyContributionState
           EditToolbarExtension
 
