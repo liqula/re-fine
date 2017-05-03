@@ -10,21 +10,16 @@ FUTUREWORK
 
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE DeriveDataTypeable         #-}
-{-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE ViewPatterns               #-}
 {-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE UndecidableInstances       #-}
 {-# LANGUAGE DefaultSignatures          #-}
---module RefineOT where
+module RefineOT where
 
 import Data.Monoid
 import Data.Function
@@ -598,8 +593,8 @@ allTests = do
     test_all 500  (Proxy :: Proxy (Set ADigit))
     -- test_all 50 (Proxy :: Proxy (Set (Set ADigit)))
 
+main :: IO ()
 main = do
     --allTests
     -- | performance benchmark
     let n = 1000 in print $ diff (take n ['a'..]) (take n ['A'..])
-
