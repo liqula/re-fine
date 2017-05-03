@@ -48,7 +48,7 @@ import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Store (documentStateUpdate, editorStateToVDocVersion)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Document.FFI ( EditorState, getSelection, getCurrentContent, convertToRaw
-                                              , traceCurrentContent, traceCurrentEditorState
+                                              , traceContentInEditorState, traceEditorState
                                               )
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
@@ -91,11 +91,7 @@ transformGlobalState = transf
     transf :: GlobalAction -> GlobalState -> m GlobalState
     transf (ResetState s) _ = pure s  -- for testing only!
     transf action state = do
-        liftIO . when weAreInDevMode $ do
-          consoleLogJSONM "Old state: " state
-          traceCurrentEditorState (state ^. gsDocumentState . documentStateVal)
-          traceCurrentContent (state ^. gsDocumentState . documentStateVal)
-          consoleLogJSStringM "Action: " (cs $ show action)
+        consoleLogGlobalStateBefore weAreInDevMode action state
 
         -- all updates to state are pure!
         let state' = pureTransform action state
@@ -126,14 +122,7 @@ transformGlobalState = transf
 
             _ -> pure ()
 
-        liftIO . when weAreInDevMode $ if state' /= state
-          then do
-            consoleLogJSONM "New state: " state'
-            traceCurrentEditorState (state' ^. gsDocumentState . documentStateVal)
-            traceCurrentContent (state' ^. gsDocumentState . documentStateVal)
-          else do
-            consoleLogJSONM "New state: " (String "[UNCHANGED]" :: Value)
-
+        consoleLogGlobalStateAfter weAreInDevMode (state' /= state) state'
         pure state'
 
     pureTransform :: GlobalAction -> GlobalState -> GlobalState
@@ -149,6 +138,26 @@ transformGlobalState = transf
       & gsToolbarSticky              %~ toolbarStickyUpdate action
       & gsTranslations               %~ translationsUpdate action
       & gsDevState                   %~ devStateUpdate action
+
+
+consoleLogGlobalStateBefore :: forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
+consoleLogGlobalStateBefore False _ _ = pure ()
+consoleLogGlobalStateBefore True action state = liftIO $ do
+  consoleLogJSStringM "" "\n"
+  consoleLogJSONM "Old state: " state
+  traceEditorState (state ^. gsDocumentState . documentStateVal)
+  traceContentInEditorState (state ^. gsDocumentState . documentStateVal)
+  consoleLogJSONM "Action: " action
+  -- consoleLogJSStringM "Action: " (cs $ show action)
+
+consoleLogGlobalStateAfter :: forall m. MonadTransform m => Bool -> Bool -> GlobalState -> m ()
+consoleLogGlobalStateAfter False _ _ = pure ()
+consoleLogGlobalStateAfter True False _ = do
+  consoleLogJSONM "New state: " (String "[UNCHANGED]" :: Value)
+consoleLogGlobalStateAfter True True state = liftIO $ do
+  consoleLogJSONM "New state: " state
+  traceEditorState (state ^. gsDocumentState . documentStateVal)
+  traceContentInEditorState (state ^. gsDocumentState . documentStateVal)
 
 
 -- * pure updates

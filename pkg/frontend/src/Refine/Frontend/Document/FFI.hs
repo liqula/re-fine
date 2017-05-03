@@ -36,8 +36,9 @@ module Refine.Frontend.Document.FFI
     -- * https://draftjs.org/docs/api-reference-editor-state.html
   , createWithContent
   , getCurrentContent
-  , traceCurrentEditorState
-  , traceCurrentContent
+  , traceEditorState
+  , traceContentState
+  , traceContentInEditorState
 
     -- * https://draftjs.org/docs/api-reference-content-state.html
   , createFromText
@@ -112,19 +113,26 @@ foreign import javascript unsafe
 
 -- * logging
 
-traceCurrentEditorState :: EditorState -> IO ()
-traceCurrentEditorState s = do () <- js_ES_traceCurrentEditorState s; pure ()
+traceEditorState :: EditorState -> IO ()
+traceEditorState s = do () <- js_ES_traceEditorState s; pure ()
 
 foreign import javascript unsafe
-    "console.log('traceCurrentEditorState', $1)"
-    js_ES_traceCurrentEditorState :: EditorState -> IO ()
+    "console.log('traceEditorState', $1)"
+    js_ES_traceEditorState :: EditorState -> IO ()
 
-traceCurrentContent :: EditorState -> IO ()
-traceCurrentContent s = do () <- js_ES_traceCurrentContent s; pure ()
+traceContentState :: ContentState -> IO ()
+traceContentState s = do () <- js_ES_traceContentState s; pure ()
 
 foreign import javascript unsafe
-    "console.log('traceCurrentContent', Draft.convertToRaw($1.getCurrentContent()))"
-    js_ES_traceCurrentContent :: EditorState -> IO ()
+    "console.log('traceContentState', $1)"
+    js_ES_traceContentState :: ContentState -> IO ()
+
+traceContentInEditorState :: EditorState -> IO ()
+traceContentInEditorState s = do () <- js_ES_traceContentInEditorState s; pure ()
+
+foreign import javascript unsafe
+    "console.log('traceContentInEditorState', Draft.convertToRaw($1.getCurrentContent()))"
+    js_ES_traceContentInEditorState :: EditorState -> IO ()
 
 
 -- * https://draftjs.org/docs/api-reference-content-state.html
