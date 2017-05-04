@@ -11,6 +11,7 @@
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE UndecidableInstances       #-}
 {-# LANGUAGE DefaultSignatures          #-}
+{-# LANGUAGE TypeApplications           #-}
 module RefineOT where
 
 import Data.Monoid
@@ -75,7 +76,8 @@ inverse = f []
     f acc _ [] = acc
     f acc d (x: xs) = f (eInverse d x <> acc) (ePatch x d) xs
 
--- good for default eMerge
+-- valid default for eMerge
+-- forget the first edit at merge - this fulfills the laws but a bit primitive
 secondWins :: Editable d => d -> EEdit d -> EEdit d -> (Edit d, Edit d)
 secondWins d a b = (eInverse d a <> [b], []) -- information lost!
 
@@ -85,22 +87,28 @@ secondWins d a b = (eInverse d a <> [b], []) -- information lost!
 class (Editable d, Arbitrary d, Eq d, Show d, Show (EEdit d)) => GenEdit d where
     genEdit :: d -> Gen (Edit d)
 
-test_all :: forall d. GenEdit d => Int -> Proxy d -> IO ()
-test_all num _ = do
-  let args = stdArgs { maxSuccess = num }
-      tests =
-        [ test_edit_composition
-        , test_diamond
-        , test_diamond_right_join
-        , test_diamond_left_join
-        , test_inverse
-        , test_inverse_inverse
-        , test_inverse_diamond
-        , test_diff
-        ]
-        :: [d -> Gen Property]
-  forM_ tests $ \f -> do
-    quickCheckWith args f
+runTest :: forall d. GenEdit d => Int -> [d -> Gen Property] -> IO ()
+runTest num tests = forM_ tests $ quickCheckWith stdArgs { maxSuccess = num }
+
+---------------------
+
+allTestsButDiff :: GenEdit d => [d -> Gen Property]
+allTestsButDiff =
+    [ test_edit_composition
+    , test_diamond
+    , test_diamond_right_join
+    , test_diamond_left_join
+    , test_inverse
+    , test_inverse_inverse
+    , test_inverse_diamond
+    ]
+
+allTests :: GenEdit d => [d -> Gen Property]
+allTests = allTestsButDiff ++
+    [ test_diff
+    ]
+
+---------------------
 
 -- compare two edits by effect
 equalEdit :: (Editable d, Eq d) => Edit d -> Edit d -> d -> Bool
@@ -182,14 +190,11 @@ test_diff d = do
 ---------------------------------------- () instance
 
 instance Editable () where
-
-    docCost _  = 1
-
     data EEdit ()
-
-    eCost _ = error "impossible"
-    ePatch _ _ = error "impossible"
-    diff _ _ = []
+    docCost _    = 1
+    eCost _      = error "impossible"
+    ePatch _ _   = error "impossible"
+    diff _ _     = []
     eMerge _ _ _ = error "impossible"
     eInverse _ _ = error "impossible"
 
@@ -547,6 +552,9 @@ class HasEnoughElems a where
 
 instance (Enum a, Bounded a) => HasEnoughElems (Atom a)
 
+instance HasEnoughElems [a] where hasMoreElemsThan _ _ = True
+instance HasEnoughElems a => HasEnoughElems (Set a) where hasMoreElemsThan _ _ = True  -- FIXME
+
 ------------------------------------------------------- auxiliary definitions
 
 class Representable a where
@@ -561,24 +569,24 @@ data Digit = D1 | D2 | D3 | D4 | D5
 
 type ADigit = Atom Digit
 
-allTests :: IO ()
-allTests = do
-    test_all 5000 (Proxy :: Proxy [ADigit])
-    test_all 50   (Proxy :: Proxy [[ADigit]])
-
-    test_all 5000 (Proxy :: Proxy ADigit)
-
-    test_all 5000 (Proxy :: Proxy (ADigit, ADigit))
-    test_all 5000 (Proxy :: Proxy (ADigit, (ADigit, ADigit)))
-    test_all 500  (Proxy :: Proxy ([ADigit], [ADigit]))
-    test_all 500  (Proxy :: Proxy [(ADigit, ADigit)])
-
-    test_all 5000 (Proxy :: Proxy ())
-    test_all 5000 (Proxy :: Proxy (Either () ()))
-    test_all 5000 (Proxy :: Proxy (Either ADigit ADigit))
-
-    test_all 500  (Proxy :: Proxy (Set ADigit))
-    -- test_all 50 (Proxy :: Proxy (Set (Set ADigit)))
+runTests :: IO ()
+runTests = do
+    runTest 1000 $ allTests @()
+    runTest 1000 $ allTests @ADigit
+    runTest 1000 $ allTests @(ADigit, ADigit)
+    runTest 1000 $ allTests @(ADigit, (ADigit, ADigit))
+    runTest 1000 $ allTests @(Either ADigit ADigit)
+    runTest 1000 $ allTests @(Either ADigit (Either ADigit ADigit))
+    runTest 1000 $ allTests @(Either ADigit ADigit, ADigit)
+    runTest 1000 $ allTests @(Either ADigit (ADigit, ADigit))
+    runTest 200  $ allTests @[ADigit]
+    runTest 200  $ allTests @[(ADigit, ADigit)]
+    runTest 200  $ allTests @([ADigit], [ADigit])
+    runTest 50   $ allTestsButDiff @[[ADigit]]
+    runTest 200  $ allTests @(Set ADigit)
+    runTest 50   $ allTests @(Set [ADigit])
+    runTest 50   $ allTests @[Set ADigit]
+    runTest 50   $ allTests @(Set (Set ADigit))
 
 main :: IO ()
 main = do

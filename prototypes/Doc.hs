@@ -15,11 +15,11 @@
 {-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE UndecidableInstances       #-}
 {-# LANGUAGE DefaultSignatures          #-}
+{-# LANGUAGE TypeApplications           #-}
 module Doc where
 
 import Control.Arrow
 import Test.QuickCheck
-import Data.Typeable
 
 import RefineOT
 
@@ -67,6 +67,7 @@ xxxxxxxxxxxxxxxxxxxxxx converted to line elements:
 -}
 
 ---------------------------------------- Editable instances
+-- FUTUREWORK: make these instances smarter
 
 -- this is very similar to BoundedEnum, but writing the enum instance for BlockType is a little
 -- awkward.
@@ -106,7 +107,7 @@ instance Arbitrary Entity where
 
 instance Editable Entity where
 
-    data EEdit Entity
+    newtype EEdit Entity
         = EEntity {unEEntity :: EEdit (Rep Entity)}
       deriving (Show)
 
@@ -215,9 +216,9 @@ doc2 = Doc
 
 ---------------------- data type used for testing
 
-allTests :: IO ()
-allTests = do
-    test_all 5000 (Proxy :: Proxy (Atom HeaderLevel))
-    test_all 5000 (Proxy :: Proxy (Atom ItemType))
-    test_all 5000 (Proxy :: Proxy BlockType)
-    test_all 10   (Proxy :: Proxy LineElem)
+runTests :: IO ()
+runTests = do
+    runTest 1000 $ allTests @(Atom HeaderLevel)
+    runTest 1000 $ allTests @(Atom ItemType)
+    runTest 1000 $ allTests @BlockType
+    runTest 1000 $ allTests @LineElem
