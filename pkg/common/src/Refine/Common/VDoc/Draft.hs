@@ -24,7 +24,8 @@
 module Refine.Common.VDoc.Draft
 where
 
-import           Control.Lens (makeLenses, set)
+import           Control.Exception (assert)
+import           Control.Lens (makeLenses, view, set, (^.))
 import           Control.Monad (foldM)
 import           Data.Aeson
 import           Data.Aeson.Types (Parser)
@@ -38,6 +39,7 @@ import qualified Data.Map as Map
 import           Data.Monoid ((<>))
 import           Data.Maybe (fromMaybe, maybeToList)
 import           Data.String.Conversions
+import qualified Data.Text as ST
 import           GHC.Generics
 
 import Refine.Prelude.TH
@@ -60,7 +62,8 @@ data Block rangeKey = Block
   , _blockStyles       :: [(EntityRange, Style)]
   , _blockType         :: BlockType
   , _blockDepth        :: Int
-  , _blockKey          :: Maybe BlockKey
+  , _blockKey          :: Maybe BlockKey  -- ^ FIXME: many function rely on this being defined.
+                                          -- make this an index and either store '()' or 'BlockKey'.
   }
   deriving (Eq, Show, Functor, Foldable, Generic)
 
@@ -81,10 +84,19 @@ newtype Entity =
 --  | ...
   deriving (Show, Eq, Ord, Generic)
 
--- | a style's range should fit into a single block
+-- | a style's range should fit into a single block.
+--
+-- FUTUREWORK: 'RangeComment', 'RangeEdit' could carry the numbers of open comments and edits,
+-- resp., then we could make the transparency of N overlapping marks non-linear in N, or even depend
+-- on the maximum number of overlaps.
 data Style =
     Bold
   | Italic
+  | Underline
+  | Code
+    -- custom styles
+  | RangeComment
+  | RangeEdit
   deriving (Show, Eq, Generic)
 
 -- | each block has a unique blocktype
@@ -225,12 +237,20 @@ instance FromJSON Entity where
       bad -> fail $ "Entity: no parse for " <> show bad
 
 instance ToJSON Style where
-  toJSON Bold   = "BOLD"
-  toJSON Italic = "ITALIC"
+  toJSON Bold         = "BOLD"
+  toJSON Italic       = "ITALIC"
+  toJSON Underline    = "UNDERLINE"
+  toJSON Code         = "CODE"
+  toJSON RangeComment = "CUSTOM_RANGE_COMMENT"
+  toJSON RangeEdit    = "CUSTOM_RANGE_EDIT"
 
 instance FromJSON Style where
-  parseJSON (String "BOLD")   = pure Bold
-  parseJSON (String "ITALIC") = pure Italic
+  parseJSON (String "BOLD")                 = pure Bold
+  parseJSON (String "ITALIC")               = pure Italic
+  parseJSON (String "UNDERLINE")            = pure Underline
+  parseJSON (String "CODE")                 = pure Code
+  parseJSON (String "CUSTOM_RANGE_COMMENT") = pure RangeComment
+  parseJSON (String "CUSTOM_RANGE_EDIT")    = pure RangeEdit
   parseJSON bad = fail $ "Style: no parse for " <> show bad
 
 makeRefineType ''SelectionState
@@ -256,14 +276,42 @@ mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
 emptyRawContent :: RawContent
 emptyRawContent = mkRawContent [emptyBlock]
 
+mkBlock :: ST -> Block rangeKey
+mkBlock t = Block t [] [] NormalText 0 Nothing
+
 emptyBlock :: Block rangeKey
-emptyBlock = Block "" [] [] NormalText 0 Nothing
+emptyBlock = mkBlock mempty
 
 resetBlockKeys :: RawContent -> RawContent
 resetBlockKeys (RawContent bs es) = RawContent (set blockKey Nothing <$> bs) es
 
--- | 'SelectionState' is always defined, even if nothing is selected.  If the browser api says that
--- no selection is active, the selection state value in the editor state has the same point for
--- start and end.
-selectionIsEmpty :: SelectionState -> Bool
-selectionIsEmpty (SelectionState _ s e) = s == e
+-- | Two points worth nothing here:
+--
+-- (1) 'SelectionState' is always defined, even if nothing is selected.  If `window.getSelection()`
+-- yields nothing, the selection state value in the editor state contains the empty selection (start
+-- point == end point).
+--
+-- (2) Since blocks can be empty, empty selections can range over many lines.
+selectionIsEmpty :: RawContent -> SelectionState -> Bool
+selectionIsEmpty (RawContent bs _) ss@(SelectionState _ s e) = s == e || multiLineCase
+  where
+    multiLineCase = case selectedBlocks ss bs of
+      []        -> True
+      [_]       -> assert (not $ s == e) False
+      (b : bs') -> and [ ST.length (b ^. blockText) == (s ^. selectionOffset)
+                       , e ^. selectionOffset == 0
+                       , all (ST.null . view blockText) (init bs')
+                       ]
+
+selectedBlocks :: SelectionState -> [Block EntityKey] -> [Block EntityKey]
+selectedBlocks (SelectionState _ (SelectionPoint sk _) (SelectionPoint ek _)) = f
+  where
+    f [] = []
+    f (b:bs) = if b ^. blockKey == Just sk then b : g bs else f bs
+
+    g [] = []
+    g (b:bs) = if b ^. blockKey == Just ek then [b] else b : g bs
+
+-- | Like 'selectionIsEmpty', but much simpler!
+entityRangeIsEmpty :: EntityRange -> Bool
+entityRangeIsEmpty (_, j) = j == 0

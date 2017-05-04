@@ -27,7 +27,7 @@ module Refine.Frontend.Document.Store
   , editorStateFromVDocVersion
   ) where
 
-import           Control.Lens ((&), (%~), (^?!), _Just)
+import           Control.Lens ((&), (%~))
 
 import           Refine.Common.Types
 import           Refine.Frontend.Document.FFI
@@ -36,12 +36,12 @@ import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store.Types
 
 
-documentStateUpdate :: GlobalAction -> GlobalState -> DocumentState -> DocumentState
+documentStateUpdate :: GlobalAction -> Maybe CompositeVDoc -> DocumentState -> DocumentState
 documentStateUpdate (OpenDocument cvdoc) _ _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (DocumentAction DocumentSave) ((^?! gsVDoc . _Just) -> cvdoc) _state
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
+documentStateUpdate (DocumentAction DocumentSave) (Just cvdoc) _state
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- FIXME: store last state before edit in DocumentStateEdit, and restore it from there?
 
 documentStateUpdate (HeaderAction (StartEdit kind)) _ (DocumentStateView _ estate)
   = DocumentStateEdit estate kind
@@ -54,6 +54,15 @@ documentStateUpdate (DocumentAction DocumentToggleBold) _ state
 
 documentStateUpdate (DocumentAction DocumentToggleItalic) _ state
   = state & documentStateVal %~ documentToggleItalic
+
+documentStateUpdate (AddDiscussion _) (Just cvdoc) _state
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
+
+documentStateUpdate (AddNote _) (Just cvdoc) _state
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
+
+documentStateUpdate (AddEdit _) (Just cvdoc) _state
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
 documentStateUpdate _ _ state
   = state

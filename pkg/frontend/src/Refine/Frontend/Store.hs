@@ -27,7 +27,8 @@
 module Refine.Frontend.Store where
 
 import           Control.Concurrent (forkIO, yield, threadDelay)
-import           Control.Lens (Lens', _Just, (&), (^.), (.~), (^?), (^?!), (%~))
+import           Control.Exception (assert)
+import           Control.Lens (Lens', _Just, (&), (^.), (.~), (^?), (^?!), (%~), has)
 import           Control.Monad.IO.Class
 import           Control.Monad.State.Class (MonadState, modify)
 import           Control.Monad.Trans.State (StateT, runStateT)
@@ -40,16 +41,14 @@ import           React.Flux
 
 import           Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as C
-import           Refine.Common.VDoc.Draft (selectionIsEmpty, selectionIsBackward)
+import           Refine.Common.VDoc.Draft
 import           Refine.Common.Rest (ApiError(..))
 import           Refine.Common.Test.Samples
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Store (documentStateUpdate, editorStateToVDocVersion)
 import           Refine.Frontend.Document.Types
-import           Refine.Frontend.Document.FFI ( EditorState, getSelection, getCurrentContent, convertToRaw
-                                              , traceContentInEditorState, traceEditorState
-                                              )
+import           Refine.Frontend.Document.FFI (getSelection, traceContentInEditorState, traceEditorState)
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Login.Store (loginStateUpdate)
@@ -93,7 +92,6 @@ transformGlobalState = transf
     transf action state = do
         consoleLogGlobalStateBefore weAreInDevMode action state
 
-        -- all updates to state are pure!
         let state' = pureTransform action state
 
         -- ajax
@@ -102,7 +100,7 @@ transformGlobalState = transf
         -- other effects
         case action of
             DocumentAction (DocumentUpdate dstate) -> do
-                mRangeEvent <- getRangeAction (state ^. gsDocumentState . documentStateVal) (dstate ^. documentStateVal)
+                mRangeEvent <- getRangeAction (state ^. gsDocumentState) dstate
                 case mRangeEvent of
                     Nothing -> pure ()
                     Just rangeEvent -> do
@@ -126,18 +124,19 @@ transformGlobalState = transf
         pure state'
 
     pureTransform :: GlobalAction -> GlobalState -> GlobalState
-    pureTransform action state = state
-      & gsVDoc                       %~ vdocUpdate action
-      & gsVDocList                   %~ vdocListUpdate action
-      & gsContributionState          %~ contributionStateUpdate action
-      & gsHeaderState                %~ headerStateUpdate action
-      & gsDocumentState              %~ documentStateUpdate action state
-      & gsScreenState                %~ maybe id screenStateUpdate (action ^? _ScreenAction)
-      & gsLoginState                 %~ loginStateUpdate action
-      & gsMainMenuState              %~ mainMenuUpdate action
-      & gsToolbarSticky              %~ toolbarStickyUpdate action
-      & gsTranslations               %~ translationsUpdate action
-      & gsDevState                   %~ devStateUpdate action
+    pureTransform action state = state'
+      where state' = state
+              & gsVDoc                %~ vdocUpdate action
+              & gsVDocList            %~ vdocListUpdate action
+              & gsContributionState   %~ contributionStateUpdate action
+              & gsHeaderState         %~ headerStateUpdate action
+              & gsDocumentState       %~ documentStateUpdate action (state' ^. gsVDoc)
+              & gsScreenState         %~ maybe id screenStateUpdate (action ^? _ScreenAction)
+              & gsLoginState          %~ loginStateUpdate action
+              & gsMainMenuState       %~ mainMenuUpdate action
+              & gsToolbarSticky       %~ toolbarStickyUpdate action
+              & gsTranslations        %~ translationsUpdate action
+              & gsDevState            %~ devStateUpdate action
 
 
 consoleLogGlobalStateBefore :: forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
@@ -383,21 +382,24 @@ gsChunkRange f gs = outof <$> f (into gs)
 -- 'ClearRange' action.
 --
 -- (This has to have IO because we look at the DOM for the position data.)
-getRangeAction :: MonadIO m => EditorState -> EditorState -> m (Maybe ContributionAction)
-getRangeAction beforeState afterState = do
-  let beforeSelection = getSelection beforeState
-      afterSelection  = getSelection afterState
+getRangeAction :: MonadIO m => DocumentState -> DocumentState -> m (Maybe ContributionAction)
+getRangeAction beforeState afterState = assert (has _DocumentStateView beforeState) $ do
+  let beforeSelection = getSelection (beforeState ^. documentStateVal)
+      afterSelection  = getSelection (afterState ^. documentStateVal)
   case (beforeSelection == afterSelection, afterSelection) of
-    (True,  _)                        -> pure Nothing
-    (False, selectionIsEmpty -> True) -> pure $ Just ClearRange
-    (False, sel)                      -> Just . SetRange <$> do
+    (True,  _)
+      -> pure Nothing
+    (False, selectionIsEmpty (beforeState ^?! documentStateContent :: RawContent) -> True)
+      -> pure $ Just ClearRange
+    (False, sel)
+      -> Just . SetRange <$> do
       topOffset    <- liftIO js_getRangeTopOffset
       bottomOffset <- liftIO js_getRangeBottomOffset
       scrollOffset <- liftIO js_getRangeScrollOffset
       let doctop = scrollOffset + if sel ^. selectionIsBackward then topOffset else bottomOffset
 
       pure Range
-        { _rangeSelectionState = C.selectionStateToChunkRange (convertToRaw $ getCurrentContent afterState) sel
+        { _rangeSelectionState = C.selectionStateToChunkRange (beforeState ^?! documentStateContent) sel
         , _rangeDocTopOffset   = OffsetFromDocumentTop  doctop
         , _rangeTopOffset      = OffsetFromViewportTop  topOffset
         , _rangeBottomOffset   = OffsetFromViewportTop  bottomOffset

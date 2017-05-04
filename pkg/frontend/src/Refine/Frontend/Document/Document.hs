@@ -22,6 +22,7 @@
 module Refine.Frontend.Document.Document (document, document_) where
 
 import           Control.Lens ((^.), (.~), (&), has)
+import           Data.Aeson
 import           GHCJS.Types
 import           React.Flux
 
@@ -39,6 +40,7 @@ document = mkView "Document" $ \props ->
            ] $ do
     editor_
       [ "editorState" &= (props ^. dpDocumentState . documentStateVal)
+      , "customStyleMap" &= documentStyleMap
       , setReadOnly (has _DocumentStateView (props ^. dpDocumentState))
       , onChange $ \evt ->
           let newDocState :: DocumentState
@@ -58,3 +60,14 @@ setReadOnly ro = "handleBeforeInput" &= js_setReadOnly ro
 foreign import javascript unsafe
   "function() { return $1 ? 'handled' : 'unhandled'; }"
   js_setReadOnly :: Bool -> JSVal
+
+
+documentStyleMap :: Value
+documentStyleMap = object
+  [ "CUSTOM_RANGE_COMMENT"
+    .= object [ "background" .= String "rgba(255, 0, 0, 0.3)"
+              ]
+  , "CUSTOM_RANGE_EDIT"
+    .= object [ "background" .= String "rgba(0, 255, 0, 0.3)"
+              ]
+  ]

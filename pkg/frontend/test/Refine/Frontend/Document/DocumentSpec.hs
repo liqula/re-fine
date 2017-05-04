@@ -73,15 +73,35 @@ spec = do
       (resetBlockKeys . convertToRaw . convertFromRaw) rawContent `shouldBe` resetBlockKeys rawContent
 
     it "regression.2" $ do
-      pending
-      let rawContent = RawContent {_rawContentBlocks = [Block {_blockText = "rF", _blockEntityRanges = [], _blockStyles = [((0,1),Italic),((1,1),Italic),((1,1),Italic),((0,1),Bold)], _blockType = NormalText, _blockDepth = 0, _blockKey = Nothing}], _rawContentEntityMap = mempty}
+      let rawContent = RawContent
+            { _rawContentBlocks =
+                [ Block { _blockText = "rF"
+                        , _blockEntityRanges = []
+                        , _blockStyles = [((0,1),Italic),((1,1),Italic),((1,1),Italic),((0,1),Bold)]
+                        , _blockType = NormalText
+                        , _blockDepth = 0
+                        , _blockKey = Nothing
+                        }
+                ]
+            , _rawContentEntityMap = mempty
+            }
       (resetBlockKeys . convertToRaw . convertFromRaw) rawContent `shouldBe` rawContent
+
 
     it "regression.1" $ do
-      pending
-      let rawContent = RawContent {_rawContentBlocks = [Block {_blockText = "rF", _blockEntityRanges = [], _blockStyles = [((0,1),Italic)], _blockType = NormalText, _blockDepth = 0, _blockKey = Nothing}], _rawContentEntityMap = mempty}
+      let rawContent = RawContent
+            { _rawContentBlocks =
+                [ Block { _blockText = "rF"
+                        , _blockEntityRanges = []
+                        , _blockStyles = [((0,1),Italic)]
+                        , _blockType = NormalText
+                        , _blockDepth = 0
+                        , _blockKey = Nothing
+                        }
+                ]
+            , _rawContentEntityMap = mempty
+            }
       (resetBlockKeys . convertToRaw . convertFromRaw) rawContent `shouldBe` rawContent
-
 
 
   describe "Document" $ do
