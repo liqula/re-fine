@@ -50,6 +50,10 @@ class Editable d where
     -- | Inverse of an elementary edit
     eInverse :: d -> EEdit d -> Edit d        -- needed for supporting undo/redo
 
+    compressEdit :: d -> Edit d -> Edit d
+    compressEdit _ = id
+    -- FIXME: implement smarter compressEdit instances
+
 -- | Cost of an edit
 cost :: Editable d => Edit d -> Int
 cost = sum . map eCost
@@ -79,7 +83,7 @@ inverse = f []
 -- valid default for eMerge
 -- forget the first edit at merge - this fulfills the laws but a bit primitive
 secondWins :: Editable d => d -> EEdit d -> EEdit d -> (Edit d, Edit d)
-secondWins d a b = (eInverse d a <> [b], []) -- information lost!
+secondWins d a b = (compressEdit d $ eInverse d a <> [b], []) -- information lost!
 
 ---------------------------------------- quickcheck laws
 
@@ -121,10 +125,10 @@ failPrint a p = pure $ whenFail (print a) p
 
 test_edit_composition :: GenEdit d => d -> Gen Property
 test_edit_composition d = do
-  a <- genEdit d
-  let d' = patch a d
-  b <- genEdit d'
-  failPrint (a, b) $ patch b d' == patch (a <> b) d
+    a <- genEdit d
+    let d' = patch a d
+    b <- genEdit d'
+    failPrint (a, b) $ patch b d' == patch (a <> b) d
 
 {-
   a//\b  =  a/\\b
@@ -132,9 +136,9 @@ test_edit_composition d = do
 -}
 test_diamond :: GenEdit d => d -> Gen Property
 test_diamond d = do
-  a <- genEdit d
-  b <- genEdit d
-  failPrint (a, b) $ equalEdit (a <> fst (merge d a b)) (b <> snd (merge d a b)) d
+    a <- genEdit d
+    b <- genEdit d
+    failPrint (a, b) $ equalEdit (a <> fst (merge d a b)) (b <> snd (merge d a b)) d
 
 {-
         a/\b  =  a/\b<>c
@@ -143,11 +147,11 @@ test_diamond d = do
 -}
 test_diamond_right_join :: GenEdit d => d -> Gen Property
 test_diamond_right_join d = do
-  a <- genEdit d
-  b <- genEdit d
-  let d' = patch b d
-  c <- genEdit d'
-  failPrint (a, b, c) $ equalEdit (snd $ merge d' (snd $ merge d a b) c) (snd $ merge d a (b <> c)) (patch c d')
+    a <- genEdit d
+    b <- genEdit d
+    let d' = patch b d
+    c <- genEdit d'
+    failPrint (a, b, c) $ equalEdit (snd $ merge d' (snd $ merge d a b) c) (snd $ merge d a (b <> c)) (patch c d')
 
 {- mirror of test_diamond_right_join
         b/\a  = b<>c/\a
@@ -156,30 +160,30 @@ test_diamond_right_join d = do
 -}
 test_diamond_left_join :: GenEdit d => d -> Gen Property
 test_diamond_left_join d = do
-  a <- genEdit d
-  b <- genEdit d
-  let d' = patch b d
-  c <- genEdit d'
-  failPrint (a, b, c) $ equalEdit (fst $ merge d' c (fst $ merge d b a)) (fst $ merge d (b <> c) a) (patch c d')
+    a <- genEdit d
+    b <- genEdit d
+    let d' = patch b d
+    c <- genEdit d'
+    failPrint (a, b, c) $ equalEdit (fst $ merge d' c (fst $ merge d b a)) (fst $ merge d (b <> c) a) (patch c d')
 
 test_inverse :: GenEdit d => d -> Gen Property
 test_inverse d = do
-  a <- genEdit d
-  failPrint a $ equalEdit (a <> inverse d a) mempty d
+    a <- genEdit d
+    failPrint a $ equalEdit (a <> inverse d a) mempty d
 
 test_inverse_inverse :: GenEdit d => d -> Gen Property
 test_inverse_inverse d = do
-  a <- genEdit d
-  failPrint a $ equalEdit (inverse (patch a d) (inverse d a)) a d
+    a <- genEdit d
+    failPrint a $ equalEdit (inverse (patch a d) (inverse d a)) a d
 
 -- this law is derivable
 test_inverse_diamond :: GenEdit d => d -> Gen Property
 test_inverse_diamond d = do
-  a <- genEdit d
-  b <- genEdit d
-  let (a2, b2) = merge d a b
-      d' = patch (a <> a2) d
-  failPrint (a, b) $ equalEdit (inverse d (a <> a2)) (inverse d (b <> b2)) d'
+    a <- genEdit d
+    b <- genEdit d
+    let (a2, b2) = merge d a b
+        d' = patch (a <> a2) d
+    failPrint (a, b) $ equalEdit (inverse d (a <> a2)) (inverse d (b <> b2)) d'
 
 test_diff :: GenEdit d => d -> Gen Property
 test_diff d = do
@@ -232,10 +236,8 @@ instance (Editable a, Editable b) => Editable (a, b) where
 
     eMerge _ (EditFirst ea) (EditSecond eb) = (editSecond eb, editFirst ea)
     eMerge _ (EditSecond eb) (EditFirst ea) = (editFirst ea, editSecond eb)
-    eMerge (a, _) (EditFirst e) (EditFirst f) = (editFirst e2, editFirst f2)
-      where (e2, f2) = merge a e f
-    eMerge (_, b) (EditSecond e) (EditSecond f) = (editSecond e2, editSecond f2)
-      where (e2, f2) = merge b e f
+    eMerge (a, _) (EditFirst e)  (EditFirst f)  = editFirst  *** editFirst  $ merge a e f
+    eMerge (_, b) (EditSecond e) (EditSecond f) = editSecond *** editSecond $ merge b e f
 
     eInverse (a, b) = \case
         EditFirst  e -> editFirst  $ inverse a e
@@ -262,7 +264,7 @@ editRight e  = [EditRight e]
 
 instance (Editable a, Editable b) => Editable (Either a b) where
 
-    docCost (Left a)  = 1 + docCost a
+    docCost (Left  a) = 1 + docCost a
     docCost (Right b) = 1 + docCost b
 
     data EEdit (Either a b)
@@ -326,7 +328,7 @@ instance (Eq a, Bounded a, Enum a) => Editable (Atom a) where
     eInverse d ReplaceEnum{} = [ReplaceEnum d]
 
 instance (Bounded a, Enum a) => Arbitrary (Atom a) where
-  arbitrary = Atom <$> elements [minBound..]
+    arbitrary = Atom <$> elements [minBound..]
 
 instance (Eq a, Show a, Arbitrary (Atom a), Bounded a, Enum a) => GenEdit (Atom a) where
     genEdit _ = fmap ReplaceEnum <$> listOf arbitrary
@@ -403,11 +405,9 @@ instance Editable a => Editable [a] where
           where
             f acc xs = acc: f (head xs: acc) (tail xs)
 
-    eMerge d (EditItem i x) (EditItem i' y) | i == i' = ([EditItem i x2], [EditItem i y2])
-      where
-        (x2, y2) = merge (d !! i) x y
+    eMerge d (EditItem i x) (EditItem i' y) | i == i' = editItem i *** editItem i $ merge (d !! i) x y
     eMerge _ (EditItem i _) (DeleteItem i') | i == i' = ([DeleteItem i], [])      -- FUTUREWORK: information lost!
-    eMerge d (DeleteItem i) (EditItem i' x) | i == i' = ([InsertItem i (d !! i), EditItem i x], [])
+    eMerge d (DeleteItem i) (EditItem i' x) | i == i' = (InsertItem i (d !! i): editItem i x, [])
     eMerge _ (DeleteItem i) (DeleteItem i') | i == i' = ([], [])
     eMerge _ a b = (modify 0 a b, modify 1 b a)
       where
@@ -422,7 +422,7 @@ instance Editable a => Editable [a] where
                 EditItem{}     -> i
 
     eInverse d = \case
-        EditItem i x   -> [EditItem i (inverse (d !! i) x)]
+        EditItem i x   -> editItem i $ inverse (d !! i) x
         DeleteItem i   -> [InsertItem i (d !! i)]
         InsertItem i _ -> [DeleteItem i]
 
