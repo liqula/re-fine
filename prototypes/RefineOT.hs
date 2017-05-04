@@ -1,12 +1,4 @@
-{-
-TODO
--   move code to refine
--   smarter Editable instance for Doc
--   separate the common parts into a library
-
-FUTUREWORK
--   measure information lost during merge
--}
+-- FUTUREWORK: release this file as a library
 
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE FlexibleContexts           #-}
@@ -36,10 +28,13 @@ type Edit d = [EEdit d]
 
 class Editable d where
 
+    -- | Cost of a document
     docCost :: d -> Int
 
-    data EEdit d            -- elementary edit
+    -- | Elementary edit of `d`
+    data EEdit d
 
+    -- | Cost of an elementary edit
     eCost :: EEdit d -> Int
 
     diff   :: d -> d -> Edit d
@@ -47,11 +42,14 @@ class Editable d where
     ePatch :: EEdit d -> d -> d
 
     -- assume second happend later in case of conflicts
+    -- FUTUREWORK: measure information lost during merge
     eMerge :: d -> EEdit d -> EEdit d -> (Edit d, Edit d)
     eMerge = secondWins
 
+    -- | Inverse of an elementary edit
     eInverse :: d -> EEdit d -> Edit d        -- needed for supporting undo/redo
 
+-- | Cost of an edit
 cost :: Editable d => Edit d -> Int
 cost = sum . map eCost
 
@@ -70,6 +68,7 @@ merge d (a0: a1) (b0: b1) = (b0a0a1 <> b1a0b0a1b0a0, a0b0b1 <> a1b0a0b1a0b0)
     (b1a0b0, a0b0b1) = merge (ePatch b0 d) a0b0 b1
     (b1a0b0a1b0a0, a1b0a0b1a0b0) = merge (patch (a0: b0a0) d) a1b0a0 b1a0b0
 
+-- | Inverse of an edit
 inverse :: Editable d => d -> Edit d -> Edit d
 inverse = f []
   where
@@ -82,6 +81,7 @@ secondWins d a b = (eInverse d a <> [b], []) -- information lost!
 
 ---------------------------------------- quickcheck laws
 
+-- | Auxiliary class needed for testing only
 class (Editable d, Arbitrary d, Eq d, Show d, Show (EEdit d)) => GenEdit d where
     genEdit :: d -> Gen (Edit d)
 
@@ -179,159 +179,24 @@ test_diff d = do
     let p' = diff d (patch p d)
     failPrint (p, patch p d, p', patch p' d) $ equalEdit p p' d
 
----------------------------------------- List instance
+---------------------------------------- () instance
 
-editItem :: Int -> Edit a -> Edit [a]
-editItem _ [] = []
-editItem i p  = [EditItem i p]
+instance Editable () where
 
-instance Editable a => Editable [a] where
+    docCost _  = 1
 
-    docCost = (+1) . sum . map docCost
+    data EEdit ()
 
-    data EEdit [a]
-        = DeleteItem Int
-        | InsertItem Int a
-        | EditItem Int (Edit a)
-        -- not used yet
-        --  MoveItem Int Int     -- needed for expressing .....
-        --  DuplicateItem Int
+    eCost _ = error "impossible"
+    ePatch _ _ = error "impossible"
+    diff _ _ = []
+    eMerge _ _ _ = error "impossible"
+    eInverse _ _ = error "impossible"
 
-    eCost = \case
-        InsertItem _ d -> 1 + docCost d
-        DeleteItem _   -> 1
-        EditItem _ p   -> 1 + cost p
+instance GenEdit () where
+    genEdit _ = pure []
 
-    ePatch (DeleteItem i  ) xs = take i xs ++ drop (i+1) xs
-    ePatch (InsertItem i x) xs = take i xs ++ x: drop i xs
-    ePatch (EditItem   i x) xs = take i xs ++ patch x (xs !! i): drop (i+1) xs
-
-    diff s1 s2 = snd $ snd $ triangle !! (length s1 + lenS2) !! lenS2
-      where
-        triangle = scanl ff [(error "impossible", mk [])] $ zip (revInits $ reverse s1) s2''
-
-        s2' = reverse (zip [0..] s2) ++ repeat (error "impossible")
-
-        s2'' = tail $ scanl (\x e -> e `add` x) (mk []) [mk [InsertItem n y] | ~(n, y) <- s2']
-
-        ff es'@((_, e): es) (xs, ye)
-            = (e, mk [DeleteItem lenS2] `add` e): zipWith4 gg xs s2' es' es ++ [(error "impossible", ye)]
-          where
-            gg x (n, y) (fo, f1) (_, f2) = (,) f2 $ if null dxy then fo else
-                minimumBy (compare `on` fst)
-                    [ mk (editItem n dxy) `add` fo
-                    , mk [InsertItem n y] `add` f1
-                    , mk [DeleteItem n]   `add` f2
-                    ]
-              where
-                dxy = diff x y
-
-        lenS2 = length s2
-
-        mk x = (cost x, x)
-        (ca, a) `add` (cb, b) = (ca + cb, a <> b)
-
-        revInits :: [a] -> [[a]]
-        revInits = f []
-          where
-            f acc xs = acc: f (head xs: acc) (tail xs)
-
-    eMerge d (EditItem i x) (EditItem i' y) | i == i' = ([EditItem i x2], [EditItem i y2])
-      where
-        (x2, y2) = merge (d !! i) x y
-    eMerge _ (EditItem i _) (DeleteItem i') | i == i' = ([DeleteItem i], [])      -- FUTUREWORK: information lost!
-    eMerge d (DeleteItem i) (EditItem i' x) | i == i' = ([InsertItem i (d !! i), EditItem i x], [])
-    eMerge _ (DeleteItem i) (DeleteItem i') | i == i' = ([], [])
-    eMerge _ a b = (modify 0 a b, modify 1 b a)
-      where
-        modify l e = \case
-            InsertItem i x -> [InsertItem (di l i) x]
-            DeleteItem i   -> [DeleteItem (di 1 i)  ]
-            EditItem   i x -> [EditItem   (di 1 i) x]
-          where
-            di k i = case e of
-                InsertItem j _ -> if j==i then i+k else if j<i then i+1 else i
-                DeleteItem j   -> if j==i then i else if j<i then i-1 else i
-                EditItem{}     -> i
-{-
-edi 0 p `merge` del 0   = (del 0  , []     )               --      x... --> ...
-edi 0 p `merge` del 0   = ([]     , ins 0 x <> edi 0 p)    --      x... --> p...
-
-ins 0 a `merge` ins 0 b = (ins 0 b, ins 1 a)    --      ba...
-ins 0 a `merge` ins 0 b = (ins 1 b, ins 0 a)    --      ab...
-
-ins 0 a `merge` del 0   = (del 1  , ins 0 a)
-
-del 0   `merge` ins 0 b = (ins 0 b, del 1  )
-
-ins 0 a `merge` edi 0 p = (edi 1 p, ins 0 a)                        --      ap...
-ins 0 a `merge` edi 0 p = (del 0 <> ins 1 a <> edi 0 p, ins 1 a)    --      x... -> ax... -> Xa...
-ins 0 a `merge` edi 0 p = (swap 0 <> edi 0 p, ins 1 a)              --      pa...
--}
-
-    eInverse d = \case
-        EditItem i x   -> [EditItem i (inverse (d !! i) x)]
-        DeleteItem i   -> [InsertItem i (d !! i)]
-        InsertItem i _ -> [DeleteItem i]
-
-instance (GenEdit a) => GenEdit [a] where
-    genEdit d = oneof
-        [ pure []
-        , do
-            c <- genEdit d
-            ch <- arbitrary
-            let d' = patch c d
-                n = length d'
-            oneof $
-                    [pure $ c ++ [InsertItem i ch] | i <- [0..n]]
-                 ++ [pure $ c ++ [DeleteItem i] | i <- [0..n-1]]
-                 ++ [ do
-                        cx <- genEdit x
-                        pure $ c ++ [EditItem i cx]
-                    | (i, x) <- zip [0..] d']
-        ]
-
-deriving instance (Show a, Show (EEdit a)) => Show (EEdit [a])
-
----------------------------------------- (Bounded, Enum) instance
-
-newtype Atom a = Atom { unAtom :: a }
-  deriving (Eq, Ord, Bounded, Enum)
-
-instance Show a => Show (Atom a) where show = show . unAtom
-
-instance (Eq a, Bounded a, Enum a) => Editable (Atom a) where
-    newtype EEdit (Atom a) = ReplaceEnum (Atom a)
-      deriving (Show)
-
-    eCost _ = 1
-    docCost _ = 1
-
-    diff a b = [ReplaceEnum b | a /= b]
-    ePatch (ReplaceEnum a) _ = a
-    eMerge _ ReplaceEnum{} b@ReplaceEnum{} = ([b], mempty)
-    eInverse d ReplaceEnum{} = [ReplaceEnum d]
-
-instance (Bounded a, Enum a) => Arbitrary (Atom a) where
-  arbitrary = Atom <$> elements [minBound..]
-
-instance (Eq a, Show a, Arbitrary (Atom a), Bounded a, Enum a) => GenEdit (Atom a) where
-    genEdit _ = fmap ReplaceEnum <$> listOf arbitrary
-
----------------------------------------- Char instance (via Atom Char)
-
-instance Editable Char where
-    newtype EEdit Char = EChar {unEChar :: EEdit (Atom Char)}
-        deriving (Show)
-    docCost = docCost . Atom
-    eCost = eCost . unEChar
-    diff a b = map EChar $ diff (Atom a) (Atom b)
-    ePatch e = unAtom . ePatch (unEChar e) . Atom
-    eMerge d a b = map EChar *** map EChar $ eMerge (Atom d) (unEChar a) (unEChar b)
-    eInverse d = map EChar . eInverse (Atom d) . unEChar
-
-instance GenEdit Char where
-    genEdit = fmap (map EChar) . genEdit . Atom
+instance Show (EEdit ()) where show = error "impossible"
 
 ---------------------------------------- (,) instance
 
@@ -436,24 +301,144 @@ instance (GenEdit a, GenEdit b) => GenEdit (Either a b) where
 
 deriving instance (Show a, Show (EEdit a), Show b, Show (EEdit b)) => Show (EEdit (Either a b))
 
----------------------------------------- () instance
+---------------------------------------- (Bounded, Enum) instance
 
-instance Editable () where
+newtype Atom a = Atom { unAtom :: a }
+  deriving (Eq, Ord, Bounded, Enum)
 
-    docCost _  = 1
+instance Show a => Show (Atom a) where show = show . unAtom
 
-    data EEdit ()
+instance (Eq a, Bounded a, Enum a) => Editable (Atom a) where
+    newtype EEdit (Atom a) = ReplaceEnum (Atom a)
+      deriving (Show)
 
-    eCost _ = error "impossible"
-    ePatch _ _ = error "impossible"
-    diff _ _ = []
-    eMerge _ _ _ = error "impossible"
-    eInverse _ _ = error "impossible"
+    eCost _ = 1
+    docCost _ = 1
 
-instance GenEdit () where
-    genEdit _ = pure []
+    diff a b = [ReplaceEnum b | a /= b]
+    ePatch (ReplaceEnum a) _ = a
+    eMerge _ ReplaceEnum{} b@ReplaceEnum{} = ([b], mempty)
+    eInverse d ReplaceEnum{} = [ReplaceEnum d]
 
-instance Show (EEdit ()) where show = error "impossible"
+instance (Bounded a, Enum a) => Arbitrary (Atom a) where
+  arbitrary = Atom <$> elements [minBound..]
+
+instance (Eq a, Show a, Arbitrary (Atom a), Bounded a, Enum a) => GenEdit (Atom a) where
+    genEdit _ = fmap ReplaceEnum <$> listOf arbitrary
+
+---------------------------------------- Char instance (via Atom Char)
+
+instance Editable Char where
+    newtype EEdit Char = EChar {unEChar :: EEdit (Atom Char)}
+        deriving (Show)
+    docCost = docCost . Atom
+    eCost = eCost . unEChar
+    diff a b = map EChar $ diff (Atom a) (Atom b)
+    ePatch e = unAtom . ePatch (unEChar e) . Atom
+    eMerge d a b = map EChar *** map EChar $ eMerge (Atom d) (unEChar a) (unEChar b)
+    eInverse d = map EChar . eInverse (Atom d) . unEChar
+
+instance GenEdit Char where
+    genEdit = fmap (map EChar) . genEdit . Atom
+
+---------------------------------------- List instance
+
+editItem :: Int -> Edit a -> Edit [a]
+editItem _ [] = []
+editItem i p  = [EditItem i p]
+
+instance Editable a => Editable [a] where
+
+    docCost = (+1) . sum . map docCost
+
+    data EEdit [a]
+        = DeleteItem Int
+        | InsertItem Int a
+        | EditItem Int (Edit a)
+        -- not used yet
+        --  MoveItem Int Int     -- needed for expressing .....
+        --  DuplicateItem Int
+
+    eCost = \case
+        InsertItem _ d -> 1 + docCost d
+        DeleteItem _   -> 1
+        EditItem _ p   -> 1 + cost p
+
+    ePatch (DeleteItem i  ) xs = take i xs ++ drop (i+1) xs
+    ePatch (InsertItem i x) xs = take i xs ++ x: drop i xs
+    ePatch (EditItem   i x) xs = take i xs ++ patch x (xs !! i): drop (i+1) xs
+
+    diff s1 s2 = snd $ snd $ triangle !! (length s1 + lenS2) !! lenS2
+      where
+        triangle = scanl ff [(error "impossible", mk [])] $ zip (revInits $ reverse s1) s2''
+
+        s2' = reverse (zip [0..] s2) ++ repeat (error "impossible")
+
+        s2'' = tail $ scanl (\x e -> e `add` x) (mk []) [mk [InsertItem n y] | ~(n, y) <- s2']
+
+        ff es'@((_, e): es) (xs, ye)
+            = (e, mk [DeleteItem lenS2] `add` e): zipWith4 gg xs s2' es' es ++ [(error "impossible", ye)]
+          where
+            gg x (n, y) (fo, f1) (_, f2) = (,) f2 $ if null dxy then fo else
+                minimumBy (compare `on` fst)
+                    [ mk (editItem n dxy) `add` fo
+                    , mk [InsertItem n y] `add` f1
+                    , mk [DeleteItem n]   `add` f2
+                    ]
+              where
+                dxy = diff x y
+
+        lenS2 = length s2
+
+        mk x = (cost x, x)
+        (ca, a) `add` (cb, b) = (ca + cb, a <> b)
+
+        revInits :: [a] -> [[a]]
+        revInits = f []
+          where
+            f acc xs = acc: f (head xs: acc) (tail xs)
+
+    eMerge d (EditItem i x) (EditItem i' y) | i == i' = ([EditItem i x2], [EditItem i y2])
+      where
+        (x2, y2) = merge (d !! i) x y
+    eMerge _ (EditItem i _) (DeleteItem i') | i == i' = ([DeleteItem i], [])      -- FUTUREWORK: information lost!
+    eMerge d (DeleteItem i) (EditItem i' x) | i == i' = ([InsertItem i (d !! i), EditItem i x], [])
+    eMerge _ (DeleteItem i) (DeleteItem i') | i == i' = ([], [])
+    eMerge _ a b = (modify 0 a b, modify 1 b a)
+      where
+        modify l e = \case
+            InsertItem i x -> [InsertItem (di l i) x]
+            DeleteItem i   -> [DeleteItem (di 1 i)  ]
+            EditItem   i x -> [EditItem   (di 1 i) x]
+          where
+            di k i = case e of
+                InsertItem j _ -> if j==i then i+k else if j<i then i+1 else i
+                DeleteItem j   -> if j==i then i else if j<i then i-1 else i
+                EditItem{}     -> i
+
+    eInverse d = \case
+        EditItem i x   -> [EditItem i (inverse (d !! i) x)]
+        DeleteItem i   -> [InsertItem i (d !! i)]
+        InsertItem i _ -> [DeleteItem i]
+
+instance (GenEdit a) => GenEdit [a] where
+    genEdit d = oneof
+        [ pure []
+        , do
+            c <- genEdit d
+            ch <- arbitrary
+            let d' = patch c d
+                n = length d'
+            oneof $
+                    [pure $ c ++ [InsertItem i ch] | i <- [0..n]]
+                 ++ [pure $ c ++ [DeleteItem i] | i <- [0..n-1]]
+                 ++ [ do
+                        cx <- genEdit x
+                        pure $ c ++ [EditItem i cx]
+                    | (i, x) <- zip [0..] d']
+        ]
+
+deriving instance (Show a, Show (EEdit a)) => Show (EEdit [a])
 
 ---------------------------------------- Set instance
 
