@@ -89,6 +89,18 @@ mkRawContent bs = RawContent (fmap index <$> bs) (IntMap.fromList entities)
     em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
 
 ----------------------------------------------
+{- segments
+  ------            bold
+     --------       italic
+xxxxxxxxxxxxxxxxxxxxxx converted to line elements:
+  ---               bold
+     ---            bold + italic
+        -----       italic
+
+ xxx [xxXXXx](www.1) xxxxx
+ xxx [xx](www.1)[XXX](www.1)[x](www.1) xxxxx
+-}
+
 
 rawContentToDoc :: RawContent -> Doc.Doc
 rawContentToDoc (RawContent blocks entities) = Doc.Doc $ mkBlock <$> blocks
@@ -132,6 +144,7 @@ rawContentToDoc (RawContent blocks entities) = Doc.Doc $ mkBlock <$> blocks
                 (a: _, b: _) -> min a b
                 (a: _, _)    -> a
                 (_, b: _)    -> b
+                _            -> error "impossible"
 
 docToRawContent :: Doc.Doc -> RawContent
 docToRawContent (Doc.Doc blocks) = mkRawContent $ mkBlock <$> blocks
@@ -173,3 +186,4 @@ docToRawContent (Doc.Doc blocks) = mkRawContent $ mkBlock <$> blocks
         mkRanges n acc ((len, s): ss)
             = [((beg, n), sty) | (beg, sty) <- acc, sty `notElem` s]
             ++ mkRanges (n + len) [(beg, sty) | (beg, sty) <- acc, sty `elem` s] ss
+        mkRanges _ _ _ = error "impossible"

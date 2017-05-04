@@ -280,6 +280,8 @@ instance (Editable a, Editable b) => Editable (Either a b) where
     ePatch (EditLeft  e) (Left  a) = Left  (patch e a)
     ePatch (EditRight e) (Right b) = Right (patch e b)
     ePatch (SetEither x) _         = x
+    ePatch EditLeft{} Right{} = error "impossible"
+    ePatch EditRight{} Left{} = error "impossible"
 
     diff (Left  a) (Left  a') = editLeft  $ diff a a'
     diff (Right b) (Right b') = editRight $ diff b b'
@@ -292,6 +294,8 @@ instance (Editable a, Editable b) => Editable (Either a b) where
     eInverse (Left  a) (EditLeft  e) = editLeft  $ inverse a e
     eInverse (Right b) (EditRight e) = editRight $ inverse b e
     eInverse x         (SetEither _) = [SetEither x]
+    eInverse Left{} EditRight{} = error "impossible"
+    eInverse Right{} EditLeft{} = error "impossible"
 
 instance (GenEdit a, GenEdit b) => GenEdit (Either a b) where
     genEdit = \case
@@ -362,7 +366,7 @@ instance Editable a => Editable [a] where
         = DeleteItem Int
         | InsertItem Int a
         | EditItem Int (Edit a)
-        -- not used yet
+        -- FUTUREWORK: detect swapping/moving and duplication of items
         --  MoveItem Int Int     -- needed for expressing .....
         --  DuplicateItem Int
 
@@ -394,6 +398,7 @@ instance Editable a => Editable [a] where
                     ]
               where
                 dxy = diff x y
+        ff [] _ = error "impossible"
 
         lenS2 = length s2
 
@@ -554,6 +559,11 @@ instance (Enum a, Bounded a) => HasEnoughElems (Atom a)
 
 instance HasEnoughElems [a] where hasMoreElemsThan _ _ = True
 instance HasEnoughElems a => HasEnoughElems (Set a) where hasMoreElemsThan _ _ = True  -- FIXME
+
+---------------------------------------- Map instance
+-- FUTUREWORK: implement Editable Map
+newtype Map a b = Map {unMap :: [(a, b)]}
+   deriving (Show, Eq, Ord)
 
 ------------------------------------------------------- auxiliary definitions
 
