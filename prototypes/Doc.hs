@@ -4,14 +4,20 @@
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE TypeApplications           #-}
+{-# OPTIONS_GHC -fno-warn-orphans       #-}   -- FIXME: elim this
 module Doc where
 
-import Control.Arrow
-import Test.QuickCheck
+import           Control.Arrow
+import           Data.Function
+import           Data.List
+import qualified Data.IntMap as IntMap
+import           Test.QuickCheck
 
 import OT hiding (runTests)
+import Draft (RawContent)
+import qualified Draft as Draft
 
----------------------------------------- document data type
+---------------------------------------- auxiliary document data type
 
 newtype Doc = Doc [Block]
    deriving (Show, Eq)
@@ -41,6 +47,106 @@ data Entity
     | EntityBold
     | EntityItalic
    deriving (Show, Eq, Ord)
+
+---------------------------------------- conversion functions
+{- segments
+  ------            bold
+     --------       italic
+xxxxxxxxxxxxxxxxxxxxxx converted to line elements:
+  ---               bold
+     ---            bold + italic
+        -----       italic
+
+ xxx [xxXXXx](www.1) xxxxx
+ xxx [xx](www.1)[XXX](www.1)[x](www.1) xxxxx
+-}
+
+rawContentToDoc :: Draft.RawContent -> Doc
+rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
+  where
+    fromEntity :: Draft.Entity -> Entity
+    fromEntity (Draft.EntityLink s) = EntityLink s
+
+    fromStyle :: Draft.Style -> Entity
+    fromStyle = \case
+        Draft.Bold   -> EntityBold
+        Draft.Italic -> EntityItalic
+
+    mkBlockType :: Int -> Draft.BlockType -> BlockType
+    mkBlockType d = \case
+        Draft.Header1     -> Header HL1
+        Draft.Header2     -> Header HL2
+        Draft.Header3     -> Header HL3
+        Draft.NormalText  -> Item NormalText  d
+        Draft.BulletPoint -> Item BulletPoint d
+        Draft.EnumPoint   -> Item EnumPoint   d
+
+    mkBlock :: Draft.Block Draft.EntityKey -> Block
+    mkBlock (Draft.Block txt eranges styles ty depth _key) = Block (mkBlockType depth ty) (segment segments txt)
+      where
+        segment [] "" = []
+        segment [] text = [LineElem mempty text]
+        segment ((len, s): ss) text = LineElem (Set $ sort s) (take len text): segment ss (drop len text)
+
+        segments =
+              mkSegments 0 []
+            . sortBy (compare `on` fst)
+            . map (\((beg, end), s) -> (beg, (end, s)))
+            $ [(r, fromEntity $ entities IntMap.! k) | (Draft.EntityKey k, r) <- eranges] ++ [(r, fromStyle s) | (r, s) <- styles]
+
+        mkSegments n stack ((n', z): ss) | n' == n = mkSegments n (insertBy (compare `on` fst) z stack) ss
+        mkSegments n ((n', _): stack) ss | n' == n = mkSegments n stack ss
+        mkSegments _ [] [] = []
+        mkSegments n stack ss = (n' - n, snd <$> stack): mkSegments n' stack ss
+          where
+            n' = case (fst <$> stack, fst <$> ss) of
+                (a: _, b: _) -> min a b
+                (a: _, _)    -> a
+                (_, b: _)    -> b
+                _            -> error "impossible"
+
+docToRawContent :: Doc -> Draft.RawContent
+docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
+  where
+    toEntity :: Entity -> Maybe Draft.Entity
+    toEntity = \case
+        EntityLink s -> Just (Draft.EntityLink s)
+        _ -> Nothing
+
+    toStyle :: Entity -> Maybe Draft.Style
+    toStyle = \case
+        EntityBold   -> Just Draft.Bold
+        EntityItalic -> Just Draft.Italic
+        _ -> Nothing
+
+    mkType = \case
+        Header HL1         -> (Draft.Header1, 0)
+        Header HL2         -> (Draft.Header2, 0)
+        Header HL3         -> (Draft.Header3, 0)
+        Item NormalText  d -> (Draft.NormalText,  d)
+        Item BulletPoint d -> (Draft.BulletPoint, d)
+        Item EnumPoint   d -> (Draft.EnumPoint,   d)
+
+    getText (LineElem _ txt) = txt
+
+    mkBlock :: Block -> Draft.Block Draft.Entity
+    mkBlock (Block ty es) = Draft.Block
+        (concatMap getText es)
+        [(e, r) | (r, toEntity -> Just e) <- ranges]
+        [(r, s) | (r, toStyle  -> Just s) <- ranges]
+        (fst $ mkType ty)
+        (snd $ mkType ty)
+        Nothing
+      where
+        ranges =
+            mkRanges 0 mempty $ [(length txt, unSet s) | LineElem s txt <- es] ++ [(0, mempty)]
+
+        mkRanges _ [] [] = []
+        mkRanges n acc ((len, s): ss)
+            = [((beg, n), sty) | (beg, sty) <- acc, sty `notElem` s]
+            ++ mkRanges (n + len) [(beg, sty) | (beg, sty) <- acc, sty `elem` s] ss
+        mkRanges _ _ _ = error "impossible"
+
 
 ---------------------------------------- Editable instances
 -- FUTUREWORK: make these instances smarter
@@ -185,7 +291,33 @@ instance Editable Doc where
 instance GenEdit Doc where
     genEdit d = map EDoc <$> genEdit (from d)
 
-------------------
+----------------------
+
+instance Representable RawContent where
+    type Rep RawContent = Doc
+    to = docToRawContent
+    from = rawContentToDoc
+
+instance Arbitrary RawContent where
+    arbitrary = to <$> arbitrary
+
+instance Editable RawContent where
+
+    newtype EEdit RawContent
+        = ERawContent {unERawContent :: EEdit (Rep RawContent)}
+      deriving (Show)
+
+    docCost = docCost . from
+    eCost = eCost . unERawContent
+    diff a b = map ERawContent $ diff (from a) (from b)
+    ePatch e = to . ePatch (unERawContent e) . from
+    eMerge d a b = map ERawContent *** map ERawContent $ eMerge (from d) (unERawContent a) (unERawContent b)
+    eInverse d = map ERawContent . eInverse (from d) . unERawContent
+
+instance GenEdit RawContent where
+    genEdit d = map ERawContent <$> genEdit (from d)
+
+--------------------------------------------------------- tests
 
 doc1, doc2 :: Doc
 doc1 = Doc
