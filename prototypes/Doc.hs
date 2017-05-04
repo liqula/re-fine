@@ -21,7 +21,7 @@ module Doc where
 import Control.Arrow
 import Test.QuickCheck
 
-import RefineOT
+import OT
 
 ---------------------------------------- document data type
 

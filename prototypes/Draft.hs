@@ -17,7 +17,7 @@ import           Data.Maybe (fromMaybe)
 import           GHC.Generics
 
 import qualified Doc
-import qualified RefineOT as Doc
+import qualified OT as Doc
 
 type ST = String
 

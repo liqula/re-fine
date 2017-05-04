@@ -12,7 +12,7 @@
 {-# LANGUAGE UndecidableInstances       #-}
 {-# LANGUAGE DefaultSignatures          #-}
 {-# LANGUAGE TypeApplications           #-}
-module RefineOT where
+module OT where
 
 import Data.Monoid
 import Data.Function
