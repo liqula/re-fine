@@ -24,7 +24,6 @@ module RefineOT where
 import Data.Monoid
 import Data.Function
 import Data.List
-import qualified Data.Vector as Vec
 import Control.Arrow
 import Control.Monad
 import Test.QuickCheck
@@ -207,32 +206,35 @@ instance Editable a => Editable [a] where
     ePatch (InsertItem i x) xs = take i xs ++ x: drop i xs
     ePatch (EditItem   i x) xs = take i xs ++ patch x (xs !! i): drop (i+1) xs
 
-    diff s1 s2 = snd $ f' $ length s1 * xx + nmax
+    diff s1 s2 = snd $ snd $ triangle !! (length s1 + lenS2) !! lenS2
       where
-        table :: Vec.Vector (Int, Edit [a])
-        table = Vec.fromList $ zipWith f_ [0..] $ (,) <$> reverse (tails s1) <*> reverse (tails $ zip [0..] s2)
+        triangle = scanl ff [(error "impossible", mk [])] $ zip (revInits $ reverse s1) s2''
 
-        f' i = table Vec.! i
-        nmax = length s2
-        xx = nmax + 1
+        s2' = reverse (zip [0..] s2) ++ repeat (error "impossible")
 
-        f_ a (b, c) = f a b c
+        s2'' = tail $ scanl (\x e -> e `add` x) (mk []) [mk [InsertItem n y] | ~(n, y) <- s2']
 
-        f _ [] [] = mk []
-        f j [] ((n,x): _) = mk [InsertItem n x] `add` f' (j-1)
-        f i (_: _) [] = mk [DeleteItem nmax] `add` f' (i-xx)
-        f ij (x: _) ((n, y): _)
-            | null dxy = f' (ij-xx-1)
-            | otherwise = minimumBy (compare `on` fst)
-                [ mk (editItem n dxy) `add` f' (ij-xx-1)
-                , mk [InsertItem n y] `add` f' (ij-1)
-                , mk [DeleteItem n]   `add` f' (ij-xx)
-                ]
+        ff es'@((_, e): es) (xs, ye)
+            = (e, mk [DeleteItem lenS2] `add` e): zipWith4 gg xs s2' es' es ++ [(error "impossible", ye)]
           where
-            dxy = diff x y
+            gg x (n, y) (fo, f1) (_, f2) = (,) f2 $ if null dxy then fo else
+                minimumBy (compare `on` fst)
+                    [ mk (editItem n dxy) `add` fo
+                    , mk [InsertItem n y] `add` f1
+                    , mk [DeleteItem n]   `add` f2
+                    ]
+              where
+                dxy = diff x y
+
+        lenS2 = length s2
 
         mk x = (cost x, x)
         (ca, a) `add` (cb, b) = (ca + cb, a <> b)
+
+        revInits :: [a] -> [[a]]
+        revInits = f []
+          where
+            f acc xs = acc: f (head xs: acc) (tail xs)
 
     eMerge d (EditItem i x) (EditItem i' y) | i == i' = ([EditItem i x2], [EditItem i y2])
       where
