@@ -92,8 +92,11 @@ gshrink = List.map to . shrinkSOP . from
 
 
 instance Arbitrary RawContent where
-  arbitrary = sanitizeRawContent . mkRawContent <$> ((:) <$> arbitrary <*> arbitrary)
+  arbitrary = initBlockKeys . sanitizeRawContent . mkRawContent <$> ((:) <$> arbitrary <*> arbitrary)
   shrink    = fmap sanitizeRawContent <$> gshrink
+
+initBlockKeys :: RawContent -> RawContent
+initBlockKeys = rawContentBlocks %~ zipWith (\k -> blockKey .~ (Just . BlockKey . cs . show $ k)) [(0 :: Int)..]
 
 -- | These are the sanity conditions imposed on 'ContentState' by the draft library.  Everything
 -- that does not meet these conditions will be silently removed from the input.
@@ -125,7 +128,7 @@ sanitizeRawContent = deleteDanglingEntityRefs . deleteDanglingEntities . deleteB
           [ offset >= 0
           , offset < ml
           , len > 0  -- (ranges must be non-empty, i think)
-          , offset + len < ml
+          , len < ml - offset
           ]
 
     deleteDanglingEntityRefs (RawContent bs es) = RawContent (sieve <$> bs) es
@@ -188,9 +191,9 @@ data RawContentWithSelections = RawContentWithSelections RawContent [SelectionSt
 
 instance Arbitrary RawContentWithSelections where
   arbitrary = do
-    c  <- arbitraryNonNothingBlockKeys . makeNonEmpty <$> arbitrary
-    ss <- replicateM 11 (arbitrarySoundSelectionState c)
-    pure $ RawContentWithSelections c ss
+    rc <- arbitrary
+    ss <- replicateM 11 $ arbitrarySoundSelectionState rc
+    pure $ RawContentWithSelections rc ss
 
 makeNonEmpty :: RawContent -> RawContent
 makeNonEmpty = rawContentBlocks %~ (b:)
@@ -204,17 +207,16 @@ makeNonEmpty = rawContentBlocks %~ (b:)
       , _blockKey          = Nothing
       }
 
-arbitraryNonNothingBlockKeys :: RawContent -> RawContent
-arbitraryNonNothingBlockKeys = rawContentBlocks %~ zipWith (\k -> blockKey .~ (Just . BlockKey . cs . show $ k)) [(0 :: Int)..]
-
 arbitrarySoundSelectionState :: RawContent -> Gen SelectionState
 arbitrarySoundSelectionState (RawContent bs _) = do
   let arbpoint = do
         i <- choose (0, length bs - 1)
         let b = bs !! i
             blockkey = b ^?! blockKey . _Just
-        offset <- choose (0, ST.length (b ^. blockText) - 1)
-        pure (i, SelectionPoint blockkey offset)
+        offset <- choose (0, max 0 (ST.length (b ^. blockText) - 1))
+        pure ( (i, offset)  -- this is used to tell which is start and which is end.
+             , SelectionPoint blockkey offset
+             )
   anchor <- arbpoint
   point  <- arbpoint
   isback <- arbitrary
