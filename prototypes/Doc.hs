@@ -90,14 +90,16 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
 
         segments =
               mkSegments 0 []
-            . sortBy (compare `on` fst)
             . map (\((beg, end), s) -> (beg, (end, s)))
+            . sortBy (compare `on` fst)
             $ [(r, fromEntity $ entities IntMap.! k) | (Draft.EntityKey k, r) <- eranges] ++ [(r, fromStyle s) | (r, s) <- styles]
 
+        mkSegments _ [] [] = []
         mkSegments n stack ((n', z): ss) | n' == n = mkSegments n (insertBy (compare `on` fst) z stack) ss
         mkSegments n ((n', _): stack) ss | n' == n = mkSegments n stack ss
-        mkSegments _ [] [] = []
-        mkSegments n stack ss = (n' - n, snd <$> stack): mkSegments n' stack ss
+        mkSegments n stack ss
+            | n' > n = (n' - n, snd <$> stack): mkSegments n' stack ss
+            | otherwise = error "impossible"
           where
             n' = case (fst <$> stack, fst <$> ss) of
                 (a: _, b: _) -> min a b
@@ -138,18 +140,42 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
         (snd $ mkType ty)
         Nothing
       where
-        ranges =
-            mkRanges 0 mempty $ [(length txt, unSet s) | LineElem s txt <- es] ++ [(0, mempty)]
+        ranges = mkRanges 0 mempty $ [(length txt, unSet s) | LineElem s txt <- es] ++ [(0, mempty)]
 
         mkRanges _ [] [] = []
         mkRanges n acc ((len, s): ss)
-            = [((beg, n), sty) | (beg, sty) <- acc, sty `notElem` s]
-            ++ mkRanges (n + len) [(beg, sty) | (beg, sty) <- acc, sty `elem` s] ss
+            = [((beg, n), sty) | (beg, sty) <- acc, sty `notElem` s, beg /= n]
+            ++ mkRanges (n + len)
+                        (foldr (insertBy (compare `on` fst))
+                               [(beg, sty) | (beg, sty) <- acc, sty `elem` s]
+                               [(n, sty) | sty <- s, sty `notElem` (map snd acc)])
+                        ss
         mkRanges _ _ _ = error "impossible"
 
+test_transform :: Doc -> Bool
+test_transform d = rawContentToDoc (docToRawContent d) == simplifyDoc d
+
+simplifyDoc :: Doc -> Doc
+simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
+  where
+    simplifyBlock (Block a b) = Block a $ filter notNull $ map joinElems $ groupBy ((==) `on` attrs) b
+
+    attrs (LineElem x _) = x
+    txt   (LineElem _ x) = x
+
+    joinElems xs = LineElem (attrs $ head xs) $ concatMap txt xs
+
+    notNull (LineElem _ "") = False
+    notNull _ = True
 
 ---------------------------------------- Editable instances
 -- FUTUREWORK: make these instances smarter
+
+instance Arbitrary HeaderLevel where
+    arbitrary = elements [minBound..]
+
+instance Arbitrary ItemType where
+    arbitrary = elements [minBound..]
 
 
 instance Representable BlockType where

@@ -315,7 +315,7 @@ deriving instance (Show a, Show (EEdit a), Show b, Show (EEdit b)) => Show (EEdi
 ---------------------------------------- (Bounded, Enum) instance
 
 newtype Atom a = Atom { unAtom :: a }
-  deriving (Eq, Ord, Bounded, Enum)
+  deriving (Eq, Ord, Bounded, Enum, Arbitrary)
 
 instance Show a => Show (Atom a) where show = show . unAtom
 
@@ -330,9 +330,6 @@ instance (Eq a, Bounded a, Enum a) => Editable (Atom a) where
     ePatch (ReplaceEnum a) _ = a
     eMerge _ ReplaceEnum{} b@ReplaceEnum{} = ([b], mempty)
     eInverse d ReplaceEnum{} = [ReplaceEnum d]
-
-instance (Bounded a, Enum a) => Arbitrary (Atom a) where
-    arbitrary = Atom <$> elements [minBound..]
 
 instance (Eq a, Show a, Arbitrary (Atom a), Bounded a, Enum a) => GenEdit (Atom a) where
     genEdit _ = fmap ReplaceEnum <$> listOf arbitrary
@@ -576,6 +573,9 @@ class Representable a where
 
 data Digit = D1 | D2 | D3 | D4 | D5
     deriving (Eq, Ord, Show, Enum, Bounded)
+
+instance Arbitrary Digit where
+    arbitrary = elements [minBound..]
 
 type ADigit = Atom Digit
 

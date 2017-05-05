@@ -7,7 +7,6 @@
 module Draft
 where
 
-import           Data.Function
 import           Data.Foldable (toList)
 import           Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
