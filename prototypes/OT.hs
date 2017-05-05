@@ -9,18 +9,12 @@
 {-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE UndecidableInstances       #-}
-{-# LANGUAGE DefaultSignatures          #-}
-{-# LANGUAGE TypeApplications           #-}
 module OT where
 
 import Data.Monoid
 import Data.Function
 import Data.List
 import Control.Arrow
-import Control.Monad
-import Test.QuickCheck
-import Data.Typeable
 
 ----------------------------------------------------------------------------------------------
 
@@ -85,112 +79,6 @@ inverse = f []
 secondWins :: Editable d => d -> EEdit d -> EEdit d -> (Edit d, Edit d)
 secondWins d a b = (compressEdit d $ eInverse d a <> [b], []) -- information lost!
 
----------------------------------------- quickcheck laws
-
--- | Auxiliary class needed for testing only
-class (Editable d, Arbitrary d, Eq d, Show d, Show (EEdit d)) => GenEdit d where
-    genEdit :: d -> Gen (Edit d)
-
-runTest :: forall d. GenEdit d => Int -> [d -> Gen Property] -> IO ()
-runTest num tests = forM_ tests $ quickCheckWith stdArgs { maxSuccess = num }
-
----------------------
-
-allTestsButDiff :: GenEdit d => [d -> Gen Property]
-allTestsButDiff =
-    [ test_edit_composition
-    , test_diamond
-    , test_diamond_right_join
-    , test_diamond_left_join
-    , test_inverse
-    , test_inverse_inverse
-    , test_inverse_diamond
-    ]
-
-allTests :: GenEdit d => [d -> Gen Property]
-allTests = allTestsButDiff ++
-    [ test_diff
-    ]
-
----------------------
-
--- compare two edits by effect
-equalEdit :: (Editable d, Eq d) => Edit d -> Edit d -> d -> Bool
-equalEdit e0 e1 d = patch e0 d == patch e1 d
-
-failPrint :: (Show a, Testable prop) => a -> prop -> Gen Property
-failPrint a p = pure $ whenFail (print a) p
-
----------------------
-
-test_edit_composition :: GenEdit d => d -> Gen Property
-test_edit_composition d = do
-    a <- genEdit d
-    let d' = patch a d
-    b <- genEdit d'
-    failPrint (a, b) $ patch b d' == patch (a <> b) d
-
-{-
-  a//\b  =  a/\\b
-   \\/       \//
--}
-test_diamond :: GenEdit d => d -> Gen Property
-test_diamond d = do
-    a <- genEdit d
-    b <- genEdit d
-    failPrint (a, b) $ equalEdit (a <> fst (merge d a b)) (b <> snd (merge d a b)) d
-
-{-
-        a/\b  =  a/\b<>c
-         \/\c     \ \
-          \//      \//
--}
-test_diamond_right_join :: GenEdit d => d -> Gen Property
-test_diamond_right_join d = do
-    a <- genEdit d
-    b <- genEdit d
-    let d' = patch b d
-    c <- genEdit d'
-    failPrint (a, b, c) $ equalEdit (snd $ merge d' (snd $ merge d a b) c) (snd $ merge d a (b <> c)) (patch c d')
-
-{- mirror of test_diamond_right_join
-        b/\a  = b<>c/\a
-       c/\/        / /
-       \\/        \\/
--}
-test_diamond_left_join :: GenEdit d => d -> Gen Property
-test_diamond_left_join d = do
-    a <- genEdit d
-    b <- genEdit d
-    let d' = patch b d
-    c <- genEdit d'
-    failPrint (a, b, c) $ equalEdit (fst $ merge d' c (fst $ merge d b a)) (fst $ merge d (b <> c) a) (patch c d')
-
-test_inverse :: GenEdit d => d -> Gen Property
-test_inverse d = do
-    a <- genEdit d
-    failPrint a $ equalEdit (a <> inverse d a) mempty d
-
-test_inverse_inverse :: GenEdit d => d -> Gen Property
-test_inverse_inverse d = do
-    a <- genEdit d
-    failPrint a $ equalEdit (inverse (patch a d) (inverse d a)) a d
-
--- this law is derivable
-test_inverse_diamond :: GenEdit d => d -> Gen Property
-test_inverse_diamond d = do
-    a <- genEdit d
-    b <- genEdit d
-    let (a2, b2) = merge d a b
-        d' = patch (a <> a2) d
-    failPrint (a, b) $ equalEdit (inverse d (a <> a2)) (inverse d (b <> b2)) d'
-
-test_diff :: GenEdit d => d -> Gen Property
-test_diff d = do
-    p <- genEdit d
-    let p' = diff d (patch p d)
-    failPrint (p, patch p d, p', patch p' d) $ equalEdit p p' d
-
 ---------------------------------------- () instance
 
 instance Editable () where
@@ -201,9 +89,6 @@ instance Editable () where
     diff _ _     = []
     eMerge _ _ _ = error "impossible"
     eInverse _ _ = error "impossible"
-
-instance GenEdit () where
-    genEdit _ = pure []
 
 instance Show (EEdit ()) where show = error "impossible"
 
@@ -242,13 +127,6 @@ instance (Editable a, Editable b) => Editable (a, b) where
     eInverse (a, b) = \case
         EditFirst  e -> editFirst  $ inverse a e
         EditSecond e -> editSecond $ inverse b e
-
-instance (GenEdit a, GenEdit b) => GenEdit (a, b) where
-    genEdit (a, b) = oneof
-        [ pure []
-        , pure . EditFirst  <$> genEdit a
-        , pure . EditSecond <$> genEdit b
-        ]
 
 deriving instance (Show a, Show (EEdit a), Show b, Show (EEdit b)) => Show (EEdit (a, b))
 
@@ -297,25 +175,12 @@ instance (Editable a, Editable b) => Editable (Either a b) where
     eInverse Left{} EditRight{} = error "impossible"
     eInverse Right{} EditLeft{} = error "impossible"
 
-instance (GenEdit a, GenEdit b) => GenEdit (Either a b) where
-    genEdit = \case
-        Left a -> oneof
-            [ pure []
-            , pure . EditLeft  <$> genEdit a
-            , pure . SetEither <$> arbitrary
-            ]
-        Right b -> oneof
-            [ pure []
-            , pure . EditRight <$> genEdit b
-            , pure . SetEither <$> arbitrary
-            ]
-
 deriving instance (Show a, Show (EEdit a), Show b, Show (EEdit b)) => Show (EEdit (Either a b))
 
 ---------------------------------------- (Bounded, Enum) instance
 
 newtype Atom a = Atom { unAtom :: a }
-  deriving (Eq, Ord, Bounded, Enum, Arbitrary)
+  deriving (Eq, Ord, Bounded, Enum)
 
 instance Show a => Show (Atom a) where show = show . unAtom
 
@@ -331,9 +196,6 @@ instance (Eq a, Bounded a, Enum a) => Editable (Atom a) where
     eMerge _ ReplaceEnum{} b@ReplaceEnum{} = ([b], mempty)
     eInverse d ReplaceEnum{} = [ReplaceEnum d]
 
-instance (Eq a, Show a, Arbitrary (Atom a), Bounded a, Enum a) => GenEdit (Atom a) where
-    genEdit _ = fmap ReplaceEnum <$> listOf arbitrary
-
 ---------------------------------------- Char instance (via Atom Char)
 
 instance Editable Char where
@@ -345,9 +207,6 @@ instance Editable Char where
     ePatch e = unAtom . ePatch (unEChar e) . Atom
     eMerge d a b = map EChar *** map EChar $ eMerge (Atom d) (unEChar a) (unEChar b)
     eInverse d = map EChar . eInverse (Atom d) . unEChar
-
-instance GenEdit Char where
-    genEdit = fmap (map EChar) . genEdit . Atom
 
 ---------------------------------------- List instance
 
@@ -428,23 +287,6 @@ instance Editable a => Editable [a] where
         DeleteItem i   -> [InsertItem i (d !! i)]
         InsertItem i _ -> [DeleteItem i]
 
-instance (GenEdit a) => GenEdit [a] where
-    genEdit d = oneof
-        [ pure []
-        , do
-            c <- genEdit d
-            ch <- arbitrary
-            let d' = patch c d
-                n = length d'
-            oneof $
-                    [pure $ c ++ [InsertItem i ch] | i <- [0..n]]
-                 ++ [pure $ c ++ [DeleteItem i] | i <- [0..n-1]]
-                 ++ [ do
-                        cx <- genEdit x
-                        pure $ c ++ [EditItem i cx]
-                    | (i, x) <- zip [0..] d']
-        ]
-
 deriving instance (Show a, Show (EEdit a)) => Show (EEdit [a])
 
 ---------------------------------------- Set instance
@@ -523,40 +365,6 @@ instance (Eq a, Editable a) => Eq (EEdit (Set a)) where
     EditElem a ea == EditElem b eb = a == b && patch ea a == patch eb b
     _ == _ = False
 
-instance (Arbitrary a, Ord a) => Arbitrary (Set a) where
-    arbitrary = Set . nub . getOrdered <$> arbitrary
-
-instance (GenEdit a, Ord a, HasEnoughElems a) => GenEdit (Set a) where
-    genEdit d = oneof
-        [ pure []
-        , do
-            c <- genEdit d
-            let d' = patch c d
-            oneof $
-                    [ do
-                        x <- arbitrary `suchThat` (`notElem` unSet d')
-                        pure $ c ++ [InsertElem x] | hasSpace d']
-                 ++ [ pure $ c ++ [DeleteElem x] | x <- unSet d']
-                 ++ [ do
-                        cx <- genEdit x `suchThat` \cx -> patch cx x `notElem` unSet d'
-                        pure $ c ++ [EditElem x cx]
-                    | hasSpace d', x <- unSet d']
-        ]
-      where
-        hasSpace (Set x) = hasMoreElemsThan (Proxy :: Proxy a) (length x)
-
--- | Auxiliary class to ensure that a type have enough inhabitants
---   used for generating random elements
-class HasEnoughElems a where
-    hasMoreElemsThan :: Proxy a -> Int -> Bool
-    default hasMoreElemsThan :: (Enum a, Bounded a) => Proxy a -> Int -> Bool
-    hasMoreElemsThan _ n = n <= fromEnum (maxBound :: a) - fromEnum (minBound :: a)
-
-instance (Enum a, Bounded a) => HasEnoughElems (Atom a)
-
-instance HasEnoughElems [a] where hasMoreElemsThan _ _ = True
-instance HasEnoughElems a => HasEnoughElems (Set a) where hasMoreElemsThan _ _ = True  -- FIXME
-
 ---------------------------------------- Map instance
 -- FUTUREWORK: implement Editable Map
 newtype Map a b = Map {unMap :: [(a, b)]}
@@ -569,37 +377,3 @@ class Representable a where
   to   :: Rep a -> a
   from :: a -> Rep a
 
----------------------- data type used for testing
-
-data Digit = D1 | D2 | D3 | D4 | D5
-    deriving (Eq, Ord, Show, Enum, Bounded)
-
-instance Arbitrary Digit where
-    arbitrary = elements [minBound..]
-
-type ADigit = Atom Digit
-
-runTests :: IO ()
-runTests = do
-    runTest 1000 $ allTests @()
-    runTest 1000 $ allTests @ADigit
-    runTest 1000 $ allTests @(ADigit, ADigit)
-    runTest 1000 $ allTests @(ADigit, (ADigit, ADigit))
-    runTest 1000 $ allTests @(Either ADigit ADigit)
-    runTest 1000 $ allTests @(Either ADigit (Either ADigit ADigit))
-    runTest 1000 $ allTests @(Either ADigit ADigit, ADigit)
-    runTest 1000 $ allTests @(Either ADigit (ADigit, ADigit))
-    runTest 200  $ allTests @[ADigit]
-    runTest 200  $ allTests @[(ADigit, ADigit)]
-    runTest 200  $ allTests @([ADigit], [ADigit])
-    runTest 50   $ allTestsButDiff @[[ADigit]]
-    runTest 200  $ allTests @(Set ADigit)
-    runTest 50   $ allTests @(Set [ADigit])
-    runTest 50   $ allTests @[Set ADigit]
-    runTest 50   $ allTests @(Set (Set ADigit))
-
-main :: IO ()
-main = do
-    --allTests
-    -- | performance benchmark
-    let n = 1000 in print $ diff (take n ['a'..]) (take n ['A'..])

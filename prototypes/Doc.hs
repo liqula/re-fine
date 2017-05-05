@@ -3,7 +3,6 @@
 {-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE PatternSynonyms            #-}
-{-# LANGUAGE TypeApplications           #-}
 {-# OPTIONS_GHC -fno-warn-orphans       #-}   -- FIXME: elim this
 module Doc where
 
@@ -11,9 +10,8 @@ import           Control.Arrow
 import           Data.Function
 import           Data.List
 import qualified Data.IntMap as IntMap
-import           Test.QuickCheck
 
-import OT hiding (runTests)
+import OT
 import Draft (RawContent)
 import qualified Draft as Draft
 
@@ -152,9 +150,6 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
                         ss
         mkRanges _ _ _ = error "impossible"
 
-test_transform :: Doc -> Bool
-test_transform d = rawContentToDoc (docToRawContent d) == simplifyDoc d
-
 simplifyDoc :: Doc -> Doc
 simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
   where
@@ -171,22 +166,12 @@ simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
 ---------------------------------------- Editable instances
 -- FUTUREWORK: make these instances smarter
 
-instance Arbitrary HeaderLevel where
-    arbitrary = elements [minBound..]
-
-instance Arbitrary ItemType where
-    arbitrary = elements [minBound..]
-
-
 instance Representable BlockType where
     type Rep BlockType = Either (Atom HeaderLevel) (Atom ItemType, Atom Int)
     to = either (Header . unAtom) (uncurry Item . (unAtom *** unAtom))
     from = \case
         Header s -> Left $ Atom s
         Item a b -> Right (Atom a, Atom b)
-
-instance Arbitrary BlockType where
-    arbitrary = to <$> arbitrary
 
 instance Editable BlockType where
 
@@ -201,11 +186,6 @@ instance Editable BlockType where
     eMerge d a b = map EBlockType *** map EBlockType $ eMerge (from d) (unEBlockType a) (unEBlockType b)
     eInverse d = map EBlockType . eInverse (from d) . unEBlockType
 
---instance HasEnoughElems BlockType where hasMoreElemsThan _ _ = True
-
-instance GenEdit BlockType where
-    genEdit d = map EBlockType <$> genEdit (from d)
-
 ----------------------
 
 instance Representable Entity where
@@ -215,9 +195,6 @@ instance Representable Entity where
         EntityLink s -> Left $ Atom <$> s
         EntityBold   -> Right (Left ())
         EntityItalic -> Right (Right ())
-
-instance Arbitrary Entity where
-    arbitrary = to <$> arbitrary
 
 instance Editable Entity where
 
@@ -232,20 +209,12 @@ instance Editable Entity where
     eMerge d a b = map EEntity *** map EEntity $ eMerge (from d) (unEEntity a) (unEEntity b)
     eInverse d = map EEntity . eInverse (from d) . unEEntity
 
-instance HasEnoughElems Entity where hasMoreElemsThan _ _ = True
-
-instance GenEdit Entity where
-    genEdit d = map EEntity <$> genEdit (from d)
-
 ----------------------
 
 instance Representable LineElem where
     type Rep LineElem = (Set Entity, String)
     to (a, b) = LineElem a b
     from (LineElem a b) = (a, b)
-
-instance Arbitrary LineElem where
-    arbitrary = to <$> arbitrary
 
 instance Editable LineElem where
 
@@ -261,18 +230,12 @@ instance Editable LineElem where
     eMerge d a b = map ELineElem *** map ELineElem $ eMerge (from d) (unELineElem a) (unELineElem b)
     eInverse d = map ELineElem . eInverse (from d) . unELineElem
 
-instance GenEdit LineElem where
-    genEdit d = map ELineElem <$> genEdit (from d)
-
 ----------------------
 
 instance Representable Block where
     type Rep Block = (BlockType, [LineElem])
     to (a, b) = Block a b
     from (Block a b) = (a, b)
-
-instance Arbitrary Block where
-    arbitrary = to <$> arbitrary
 
 instance Editable Block where
 
@@ -288,18 +251,12 @@ instance Editable Block where
     eMerge d a b = map EBlock *** map EBlock $ eMerge (from d) (unEBlock a) (unEBlock b)
     eInverse d = map EBlock . eInverse (from d) . unEBlock
 
-instance GenEdit Block where
-    genEdit d = map EBlock <$> genEdit (from d)
-
 ----------------------
 
 instance Representable Doc where
     type Rep Doc = [Block]
     to = Doc
     from (Doc a) = a
-
-instance Arbitrary Doc where
-    arbitrary = to <$> arbitrary
 
 instance Editable Doc where
 
@@ -314,18 +271,12 @@ instance Editable Doc where
     eMerge d a b = map EDoc *** map EDoc $ eMerge (from d) (unEDoc a) (unEDoc b)
     eInverse d = map EDoc . eInverse (from d) . unEDoc
 
-instance GenEdit Doc where
-    genEdit d = map EDoc <$> genEdit (from d)
-
 ----------------------
 
 instance Representable RawContent where
     type Rep RawContent = Doc
     to = docToRawContent
     from = rawContentToDoc
-
-instance Arbitrary RawContent where
-    arbitrary = to <$> arbitrary
 
 instance Editable RawContent where
 
@@ -340,27 +291,3 @@ instance Editable RawContent where
     eMerge d a b = map ERawContent *** map ERawContent $ eMerge (from d) (unERawContent a) (unERawContent b)
     eInverse d = map ERawContent . eInverse (from d) . unERawContent
 
-instance GenEdit RawContent where
-    genEdit d = map ERawContent <$> genEdit (from d)
-
---------------------------------------------------------- tests
-
-doc1, doc2 :: Doc
-doc1 = Doc
-    [ Block (Header HL1) [LineElem mempty "Intro"]
-    , Block (Item NormalText 0) [LineElem mempty "This is"]
-    ]
-
-doc2 = Doc
-    [ Block (Header HL1) [LineElem mempty "Intro"]
-    , Block (Item NormalText 0) [LineElem (Set [EntityBold]) "This", LineElem mempty " is"]
-    ]
-
----------------------- data type used for testing
-
-runTests :: IO ()
-runTests = do
-    runTest 1000 $ allTests @(Atom HeaderLevel)
-    runTest 1000 $ allTests @(Atom ItemType)
-    runTest 1000 $ allTests @BlockType
-    runTest 1000 $ allTests @LineElem
