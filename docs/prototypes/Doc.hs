@@ -36,7 +36,8 @@ data ItemType = NormalText | BulletPoint | EnumPoint
    deriving (Show, Eq, Bounded, Enum)
 
 -- | This is something which is described with an EntityRange
-data LineElem = LineElem (Set Entity{-should be Map, it is not allowed to have two links on the same character-}) String
+data LineElem = LineElem (Set Entity) String
+    -- FIXME: (Set Entity) should be (Maybe String, Bool, Bool), it is not allowed to have two links on the same character
    deriving (Show, Eq)
 
 -- | This is both Entity and Style in Draft
