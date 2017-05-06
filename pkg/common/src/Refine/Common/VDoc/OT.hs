@@ -36,9 +36,11 @@ data HeaderLevel
 data ItemType = NormalText | BulletPoint | EnumPoint
    deriving (Show, Eq, Bounded, Enum)
 
--- | This is something which is described with an EntityRange
+-- | A segment of an inline style, consisting of 'EntityRange' and 'Style'.
+--
+-- FIXME: (Set Entity) should be (Maybe String, Bool, Bool), it is not allowed to have two links on
+-- the same character.
 data LineElem = LineElem (Set.Set Entity) String
-    -- FIXME: (Set Entity) should be (Maybe String, Bool, Bool), it is not allowed to have two links on the same character
    deriving (Show, Eq)
 
 -- | This is both Entity and Style in Draft
@@ -49,7 +51,8 @@ data Entity
    deriving (Show, Eq, Ord)
 
 ---------------------------------------- conversion functions
-{- segments
+
+{- ranges
   ------            bold
      --------       italic
 xxxxxxxxxxxxxxxxxxxxxx converted to line elements:
@@ -222,7 +225,7 @@ instance Editable LineElem where
 
     newtype EEdit LineElem
         = ELineElem {unELineElem :: EEdit (Rep LineElem)}
-        -- FUTUREWORK: detect and be able to merge joining and splitting of lineelems
+        -- FUTUREWORK: detect and be able to merge joining and splitting of 'LineElem's
       deriving (Show)
 
     docCost = docCost . from
@@ -243,7 +246,7 @@ instance Editable Block where
 
     newtype EEdit Block
         = EBlock {unEBlock :: EEdit (Rep Block)}
-        -- FUTUREWORK: detect and be able to merge joining and splitting of blocks
+        -- FUTUREWORK: detect and be able to merge joining and splitting of 'Block's
       deriving (Show)
 
     docCost = docCost . from

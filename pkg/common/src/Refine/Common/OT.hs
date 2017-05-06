@@ -1,5 +1,3 @@
--- FUTUREWORK: release this file as a library
-
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
@@ -9,6 +7,8 @@
 {-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE LambdaCase                 #-}
+
+-- | FUTUREWORK: release this file as a library
 module Refine.Common.OT where
 
 import           Data.Monoid
@@ -19,7 +19,7 @@ import           Control.Arrow
 
 ----------------------------------------------------------------------------------------------
 
--- [a, b, c] means first a, then b and c
+-- | @[a, b, c]@ means first a, then b, then c
 type Edit d = [EEdit d]
 
 class Editable d where
@@ -37,17 +37,17 @@ class Editable d where
 
     ePatch :: EEdit d -> d -> d
 
-    -- assume second happend later in case of conflicts
+    -- | assume second happend later in case of conflicts
     -- FUTUREWORK: measure information lost during merge
     eMerge :: d -> EEdit d -> EEdit d -> (Edit d, Edit d)
     eMerge = secondWins
 
-    -- | Inverse of an elementary edit
-    eInverse :: d -> EEdit d -> Edit d        -- needed for supporting undo/redo
+    -- | Inverse of an elementary edit (needed for supporting undo/redo)
+    eInverse :: d -> EEdit d -> Edit d
 
+    -- | FIXME: implement smarter compressEdit instances
     compressEdit :: d -> Edit d -> Edit d
     compressEdit _ = id
-    -- FIXME: implement smarter compressEdit instances
 
 -- | Cost of an edit
 cost :: Editable d => Edit d -> Int
@@ -56,8 +56,11 @@ cost = sum . map eCost
 patch :: Editable d => Edit d -> d -> d
 patch = foldr (flip (.) . ePatch) id
 
--- warning: this is at least quadratic, use with care
--- a >< b = (a x b, b x a) with 'a' having precedence
+-- | warning: this is at least quadratic, use with care
+--
+-- >>> a >< b = (a x b, b x a)
+--
+-- with 'a' having precedence
 merge :: Editable d => d -> Edit d -> Edit d -> (Edit d, Edit d)
 merge _ [] b = (b, [])
 merge _ b [] = ([], b)
@@ -75,8 +78,8 @@ inverse = f []
     f acc _ [] = acc
     f acc d (x: xs) = f (eInverse d x <> acc) (ePatch x d) xs
 
--- valid default for eMerge
--- forget the first edit at merge - this fulfills the laws but a bit primitive
+-- | An 'eMerge' implementation that works for any instance.
+-- Forget the first edit at merge.  This fulfills the laws but is a bit primitive.
 secondWins :: Editable d => d -> EEdit d -> EEdit d -> (Edit d, Edit d)
 secondWins d a b = (compressEdit d $ eInverse d a <> [b], []) -- information lost!
 
@@ -268,7 +271,7 @@ instance Editable a => Editable [a] where
             f acc xs = acc: f (head xs: acc) (tail xs)
 
     eMerge d (EditItem i x) (EditItem i' y) | i == i' = editItem i *** editItem i $ merge (d !! i) x y
-    eMerge _ (EditItem i _) (DeleteItem i') | i == i' = ([DeleteItem i], [])      -- FUTUREWORK: information lost!
+    eMerge _ (EditItem i _) (DeleteItem i') | i == i' = ([DeleteItem i], [])      -- information lost!
     eMerge d (DeleteItem i) (EditItem i' x) | i == i' = (InsertItem i (d !! i): editItem i x, [])
     eMerge _ (DeleteItem i) (DeleteItem i') | i == i' = ([], [])
     eMerge _ a b = (modify 0 a b, modify 1 b a)
@@ -322,6 +325,9 @@ instance (Editable a, Ord a) => Editable (Set.Set a) where
             <> [InsertElem x | x <- Set.elems $ Set.difference b a]
 
 {-
+    -- this is an 'eMerge' implementation for lists interpreted as sets.  for now, we just use
+    -- 'secondWins'.
+
     eMerge _ a b | a == b = ([], [])
     eMerge d a@(EditElem i x) b@(EditElem i' y) | i == i'
         = if patch (x <> x2) i `notElem` unSet d
@@ -330,12 +336,13 @@ instance (Editable a, Ord a) => Editable (Set.Set a) where
       where
         (x2, y2) = merge i x y
     eMerge d a@(EditElem i x) b@(EditElem i' y) | i /= i' && patch x i == patch y i' = secondWins d a b
-    eMerge _ (EditElem i x) (DeleteElem i') | i == i' = ([DeleteElem (patch x i)], [])      -- FUTUREWORK: information lost!
+    eMerge _ (EditElem i x) (DeleteElem i') | i == i' = ([DeleteElem (patch x i)], [])  -- information lost!
     eMerge _ (DeleteElem i) (EditElem i' x) | i == i' = ([InsertElem (patch x i)], [])
     eMerge _ (InsertElem x) (EditElem y e) | x == patch e y = if x == y then ([], []) else ([DeleteElem y], [])
     eMerge d a@(EditElem y e) b@(InsertElem x) | x == patch e y = if x == y then ([], []) else secondWins d a b
     eMerge _ a b = ([b], [a])
 -}
+
     eInverse _ = \case
         EditElem x e -> [EditElem (patch e x) (inverse x e)]
         DeleteElem x -> [InsertElem x]
@@ -350,7 +357,8 @@ instance (Eq a, Editable a) => Eq (EEdit (Set.Set a)) where
     _ == _ = False
 
 ---------------------------------------- Map instance
--- FUTUREWORK: implement Editable Map
+
+-- | FUTUREWORK: implement Editable Map
 newtype Map a b = Map {unMap :: [(a, b)]}
    deriving (Show, Eq, Ord)
 
@@ -360,4 +368,3 @@ class Representable a where
   type Rep a
   to   :: Rep a -> a
   from :: a -> Rep a
-
