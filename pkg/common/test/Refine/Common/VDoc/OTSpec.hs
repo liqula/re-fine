@@ -3,6 +3,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans       #-}
 module Refine.Common.VDoc.OTSpec where
 
+import qualified Data.Set as Set
 import           Test.QuickCheck
 import           Test.Hspec
 
@@ -40,7 +41,11 @@ instance GenEdit Entity where
 ----------------------
 
 instance Arbitrary LineElem where
-    arbitrary = to <$> arbitrary
+    arbitrary = LineElem <$> attrs <*> arbitrary
+      where
+        attrs = Set.fromList <$> do
+            n <- elements [0..10]
+            vectorOf n arbitrary
 
 instance GenEdit LineElem where
     genEdit d = map ELineElem <$> genEdit (from d)
@@ -80,4 +85,4 @@ spec = parallel $ do
     runTest $ allTests @(Atom ItemType)
     runTest $ allTests @BlockType
     runTest $ allTests @LineElem
-    --FIXME: to slow -- it "Doc <-> RawContent conversion" $ property test_transform
+    it "Doc <-> RawContent conversion" $ property test_transform
