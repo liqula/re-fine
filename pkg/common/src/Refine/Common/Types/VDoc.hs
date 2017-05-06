@@ -251,7 +251,7 @@ addMarksToBlock pointmap block = f (fromMaybe [] $ Map.lookup (block ^?! blockKe
       blk & blockStyles %~ (inlineStyles <>) & pure
 
 addMarkToBlock :: forall a. (Typeable a) => Int -> Bool -> [SoloSelectionPoint a] -> SoloSelectionPoint a -> (EntityRange, Style)
-addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (start >= 0 && end >= 0) $ ((start, end), style)
+addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (start >= 0 && end >= 0) ((start, end), style)
   where
     style = if
       | typeOf (Proxy :: Proxy a) == typeOf (Proxy :: Proxy Edit) -> RangeEdit

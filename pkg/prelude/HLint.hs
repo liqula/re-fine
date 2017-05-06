@@ -19,6 +19,7 @@ ignore "Use record patterns"
 ignore "Unused LANGUAGE pragma"  -- tried to that with `{-# ANN module ... #-}`, but then ghc-8.0.1
                                  -- couldn't find the module keyword any more.
 ignore "Use =<<" -- Do not change concatMap into =<< for sake of readibility.
+ignore "Use &&"
 
 warn = listToMaybe (filter f xs) ==> find f xs
 warn = isJust $ find f xs ==> any f xs

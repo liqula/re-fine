@@ -297,7 +297,7 @@ selectionIsEmpty (RawContent bs _) ss@(SelectionState _ s e) = s == e || multiLi
   where
     multiLineCase = case selectedBlocks ss bs of
       []        -> True
-      [_]       -> assert (not $ s == e) False
+      [_]       -> assert (s /= e) False
       (b : bs') -> and [ ST.length (b ^. blockText) == (s ^. selectionOffset)
                        , e ^. selectionOffset == 0
                        , all (ST.null . view blockText) (init bs')
