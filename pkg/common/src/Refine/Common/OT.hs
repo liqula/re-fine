@@ -53,7 +53,7 @@ cost :: Editable d => Edit d -> Int
 cost = sum . map eCost
 
 patch :: Editable d => Edit d -> d -> d
-patch = foldr (flip (.)) id . map ePatch
+patch = foldr (flip (.) . ePatch) id
 
 -- warning: this is at least quadratic, use with care
 -- a >< b = (a x b, b x a) with 'a' having precedence
@@ -231,20 +231,20 @@ instance Editable a => Editable [a] where
         DeleteItem _   -> 1
         EditItem _ p   -> 1 + cost p
 
-    ePatch (DeleteItem i  ) xs = take i xs ++ drop (i+1) xs
-    ePatch (InsertItem i x) xs = take i xs ++ x: drop i xs
-    ePatch (EditItem   i x) xs = take i xs ++ patch x (xs !! i): drop (i+1) xs
+    ePatch (DeleteItem i  ) xs = take i xs <> drop (i+1) xs
+    ePatch (InsertItem i x) xs = take i xs <> (x: drop i xs)
+    ePatch (EditItem   i x) xs = take i xs <> (patch x (xs !! i): drop (i+1) xs)
 
-    diff s1 s2 = snd $ snd $ triangle !! (length s1 + lenS2) !! lenS2
+    diff s1 s2 = snd . snd $ triangle !! (length s1 + lenS2) !! lenS2
       where
         triangle = scanl ff [(error "impossible", mk [])] $ zip (revInits $ reverse s1) s2''
 
-        s2' = reverse (zip [0..] s2) ++ repeat (error "impossible")
+        s2' = reverse (zip [0..] s2) <> repeat (error "impossible")
 
-        s2'' = tail $ scanl (\x e -> e `add` x) (mk []) [mk [InsertItem n y] | ~(n, y) <- s2']
+        s2'' = tail $ scanl (flip add) (mk []) [mk [InsertItem n y] | ~(n, y) <- s2']
 
         ff es'@((_, e): es) (xs, ye)
-            = (e, mk [DeleteItem lenS2] `add` e): zipWith4 gg xs s2' es' es ++ [(error "impossible", ye)]
+            = (e, mk [DeleteItem lenS2] `add` e): zipWith4 gg xs s2' es' es <> [(error "impossible", ye)]
           where
             gg x (n, y) (fo, f1) (_, f2) = (,) f2 $ if null dxy then fo else
                 minimumBy (compare `on` fst)
@@ -278,8 +278,12 @@ instance Editable a => Editable [a] where
             EditItem   i x -> [EditItem   (di 1 i) x]
           where
             di k i = case e of
-                InsertItem j _ -> if j==i then i+k else if j<i then i+1 else i
-                DeleteItem j   -> if j==i then i else if j<i then i-1 else i
+                InsertItem j _ | j==i      -> i+k
+                               | j<i       -> i+1
+                               | otherwise -> i
+                DeleteItem j   | j==i      -> i
+                               | j<i       -> i-1
+                               | otherwise -> i
                 EditItem{}     -> i
 
     eInverse d = \case
@@ -326,7 +330,7 @@ instance (Editable a, Ord a) => Editable (Set a) where
 
     ePatch (DeleteElem x) (Set xs) = Set $ filter (/=x) xs
     ePatch (InsertElem x) (Set xs) = Set $ insert x xs
-    ePatch (EditElem x e) (Set xs) = Set $ insert (patch e x) $ filter (/=x) xs
+    ePatch (EditElem x e) (Set xs) = Set . insert (patch e x) $ filter (/=x) xs
 
     diff (Set a) (Set b) = f a b
       where

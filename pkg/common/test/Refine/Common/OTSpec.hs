@@ -33,8 +33,8 @@ class (Editable d, Arbitrary d, Eq d, Show d, Show (EEdit d)) => GenEdit d where
 
 runTest :: forall d. (Typeable d, GenEdit d) => [(String, d -> Gen Property)] -> Spec
 runTest tests
-    = describe ("Editable instance for  " ++ show (typeRep (Proxy :: Proxy d)))
-    $ forM_ tests $ \(name, test) -> it name $ property test --quickCheckWith stdArgs { maxSuccess = num }
+    = describe ("Editable instance for  " <> show (typeRep (Proxy :: Proxy d)))
+    . forM_ tests $ \(name, test) -> it name $ property test --quickCheckWith stdArgs { maxSuccess = num }
 
 ---------------------
 
@@ -50,7 +50,7 @@ allTestsButDiff =
     ]
 
 allTests :: GenEdit d => [(String, d -> Gen Property)]
-allTests = allTestsButDiff ++
+allTests = allTestsButDiff <>
     [ (,) "diff" test_diff
     ]
 
@@ -89,11 +89,17 @@ test_diamond d = do
 -}
 test_diamond_right_join :: GenEdit d => d -> Gen Property
 test_diamond_right_join d = do
+    (a, b, d', c) <- genPatchesForDiamondJoin d
+    failPrint (a, b, c) $ equalEdit (snd $ merge d' (snd $ merge d a b) c) (snd $ merge d a (b <> c)) (patch c d')
+
+-- FIXME: I had to add this helper function only because hlint complained about duplicate code
+genPatchesForDiamondJoin :: GenEdit d => d -> Gen (Edit d, Edit d, d, Edit d)
+genPatchesForDiamondJoin d = do
     a <- genEdit d
     b <- genEdit d
     let d' = patch b d
     c <- genEdit d'
-    failPrint (a, b, c) $ equalEdit (snd $ merge d' (snd $ merge d a b) c) (snd $ merge d a (b <> c)) (patch c d')
+    pure (a, b, d', c)
 
 {- mirror of test_diamond_right_join
         b/\a  = b<>c/\a
@@ -102,10 +108,7 @@ test_diamond_right_join d = do
 -}
 test_diamond_left_join :: GenEdit d => d -> Gen Property
 test_diamond_left_join d = do
-    a <- genEdit d
-    b <- genEdit d
-    let d' = patch b d
-    c <- genEdit d'
+    (a, b, d', c) <- genPatchesForDiamondJoin d
     failPrint (a, b, c) $ equalEdit (fst $ merge d' c (fst $ merge d b a)) (fst $ merge d (b <> c) a) (patch c d')
 
 test_inverse :: GenEdit d => d -> Gen Property
@@ -185,11 +188,11 @@ instance (GenEdit a) => GenEdit [a] where
             let d' = patch c d
                 n = length d'
             oneof $
-                    [pure $ c ++ [InsertItem i ch] | i <- [0..n]]
-                 ++ [pure $ c ++ [DeleteItem i] | i <- [0..n-1]]
-                 ++ [ do
+                    [pure $ c <> [InsertItem i ch] | i <- [0..n]]
+                 <> [pure $ c <> [DeleteItem i] | i <- [0..n-1]]
+                 <> [ do
                         cx <- genEdit x
-                        pure $ c ++ [EditItem i cx]
+                        pure $ c <> [EditItem i cx]
                     | (i, x) <- zip [0..] d']
         ]
 
@@ -207,11 +210,11 @@ instance (GenEdit a, Ord a, HasEnoughElems a) => GenEdit (Set a) where
             oneof $
                     [ do
                         x <- arbitrary `suchThat` (`notElem` unSet d')
-                        pure $ c ++ [InsertElem x] | hasSpace d']
-                 ++ [ pure $ c ++ [DeleteElem x] | x <- unSet d']
-                 ++ [ do
+                        pure $ c <> [InsertElem x] | hasSpace d']
+                 <> [ pure $ c <> [DeleteElem x] | x <- unSet d']
+                 <> [ do
                         cx <- genEdit x `suchThat` \cx -> patch cx x `notElem` unSet d'
-                        pure $ c ++ [EditElem x cx]
+                        pure $ c <> [EditElem x cx]
                     | hasSpace d', x <- unSet d']
         ]
       where

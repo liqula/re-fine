@@ -2,7 +2,6 @@
 {-# LANGUAGE ViewPatterns               #-}
 {-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE PatternSynonyms            #-}
 {-# OPTIONS_GHC -fno-warn-orphans       #-}   -- FIXME: elim this
 module Refine.Common.VDoc.OT where
 
@@ -92,7 +91,7 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
               mkSegments 0 []
             . map (\((beg, end), s) -> (beg, (end, s)))
             . sortBy (compare `on` fst)
-            $ [(r, fromEntity $ entities IntMap.! k) | (Draft.EntityKey k, r) <- eranges] ++ [(r, fromStyle s) | (r, s) <- styles]
+            $ [(r, fromEntity $ entities IntMap.! k) | (Draft.EntityKey k, r) <- eranges] <> [(r, fromStyle s) | (r, s) <- styles]
 
         mkSegments _ [] [] = []
         mkSegments n stack ((n', z): ss) | n' == n = mkSegments n (insertBy (compare `on` fst) z stack) ss
@@ -132,31 +131,31 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
     getText (LineElem _ txt) = txt
 
     mkBlock :: Block -> Draft.Block Draft.Entity
-    mkBlock (Block ty es) = Draft.Block
-        (cs $ concatMap getText es)
-        [(e, r) | (r, toEntity -> Just e) <- ranges]
-        [(r, s) | (r, toStyle  -> Just s) <- ranges]
-        (fst $ mkType ty)
-        (snd $ mkType ty)
+    mkBlock (Block ty es) = uncurry
+        (Draft.Block
+            (cs $ concatMap getText es)
+            [(e, r) | (r, toEntity -> Just e) <- ranges]
+            [(r, s) | (r, toStyle  -> Just s) <- ranges])
+        (mkType ty)
         Nothing
       where
         ranges = mkRanges 0 mempty
-            $ [(len, unSet s) | LineElem s txt <- es, let len = length txt, len > 0] ++ [(0, mempty)]
+            $ [(len, unSet s) | LineElem s txt <- es, let len = length txt, len > 0] <> [(0, mempty)]
 
         mkRanges _ [] [] = []
         mkRanges n acc ((len, s): ss)
             = [((beg, n), sty) | (beg, sty) <- acc, sty `notElem` s, beg /= n]
-            ++ mkRanges (n + len)
+            <> mkRanges (n + len)
                         (foldr (insertBy (compare `on` fst))
                                [(beg, sty) | (beg, sty) <- acc, sty `elem` s]
-                               [(n, sty) | sty <- s, sty `notElem` (map snd acc)])
+                               [(n, sty) | sty <- s, sty `notElem` map snd acc])
                         ss
         mkRanges _ _ _ = error "impossible"
 
 simplifyDoc :: Doc -> Doc
 simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
   where
-    simplifyBlock (Block a b) = Block a $ map joinElems $ groupBy ((==) `on` attrs) $ filter notNull b
+    simplifyBlock (Block a b) = Block a . map joinElems . groupBy ((==) `on` attrs) $ filter notNull b
 
     attrs (LineElem x _) = x
     txt   (LineElem _ x) = x
