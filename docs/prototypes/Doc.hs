@@ -140,7 +140,8 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
         (snd $ mkType ty)
         Nothing
       where
-        ranges = mkRanges 0 mempty $ [(length txt, unSet s) | LineElem s txt <- es] ++ [(0, mempty)]
+        ranges = mkRanges 0 mempty
+            $ [(len, unSet s) | LineElem s txt <- es, let len = length txt, len > 0] ++ [(0, mempty)]
 
         mkRanges _ [] [] = []
         mkRanges n acc ((len, s): ss)

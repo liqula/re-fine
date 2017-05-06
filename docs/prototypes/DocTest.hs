@@ -3,7 +3,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans       #-}
 module DocTest where
 
-import           Test.QuickCheck
+import Test.QuickCheck
+import Data.List
 
 import OT
 import OTTest hiding (runTests)
@@ -39,7 +40,11 @@ instance GenEdit Entity where
 ----------------------
 
 instance Arbitrary LineElem where
-    arbitrary = to <$> arbitrary
+    arbitrary = LineElem <$> attrs <*> arbitrary
+      where
+        attrs = Set . nub . sort <$> do
+            n <- elements [0,1,2,3]
+            vectorOf n arbitrary
 
 instance GenEdit LineElem where
     genEdit d = map ELineElem <$> genEdit (from d)
