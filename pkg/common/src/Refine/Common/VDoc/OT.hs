@@ -179,7 +179,6 @@ instance Representable BlockType where
         Item a b -> Right (Atom a, Atom b)
 
 instance Editable BlockType where
-
     newtype EEdit BlockType
         = EBlockType {unEBlockType :: EEdit (Rep BlockType)}
       deriving (Show)
@@ -202,7 +201,6 @@ instance Representable Entity where
         EntityItalic -> Right (Right ())
 
 instance Editable Entity where
-
     newtype EEdit Entity
         = EEntity {unEEntity :: EEdit (Rep Entity)}
       deriving (Show)
@@ -222,7 +220,6 @@ instance Representable LineElem where
     from (LineElem a b) = (a, b)
 
 instance Editable LineElem where
-
     newtype EEdit LineElem
         = ELineElem {unELineElem :: EEdit (Rep LineElem)}
         -- FUTUREWORK: detect and be able to merge joining and splitting of 'LineElem's
@@ -243,7 +240,6 @@ instance Representable Block where
     from (Block a b) = (a, b)
 
 instance Editable Block where
-
     newtype EEdit Block
         = EBlock {unEBlock :: EEdit (Rep Block)}
         -- FUTUREWORK: detect and be able to merge joining and splitting of 'Block's
@@ -264,7 +260,6 @@ instance Representable Doc where
     from (Doc a) = a
 
 instance Editable Doc where
-
     newtype EEdit Doc
         = EDoc {unEDoc :: EEdit (Rep Doc)}
       deriving (Show)
@@ -284,7 +279,6 @@ instance Representable RawContent where
     from = rawContentToDoc
 
 instance Editable RawContent where
-
     newtype EEdit RawContent
         = ERawContent {unERawContent :: EEdit (Rep RawContent)}
       deriving (Show)
@@ -295,4 +289,3 @@ instance Editable RawContent where
     ePatch e = to . ePatch (unERawContent e) . from
     eMerge d a b = map ERawContent *** map ERawContent $ eMerge (from d) (unERawContent a) (unERawContent b)
     eInverse d = map ERawContent . eInverse (from d) . unERawContent
-
