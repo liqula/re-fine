@@ -124,7 +124,7 @@ traceContentState :: ContentState -> IO ()
 traceContentState s = do () <- js_ES_traceContentState s; pure ()
 
 foreign import javascript unsafe
-    "console.log('traceContentState', $1)"
+    "console.log('traceContentState', Draft.convertToRaw($1))"
     js_ES_traceContentState :: ContentState -> IO ()
 
 traceContentInEditorState :: EditorState -> IO ()
