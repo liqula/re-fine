@@ -198,7 +198,7 @@ instance (GenEdit a) => GenEdit [a] where
 
 ---------------------------------------- Set instance
 
-instance (GenEdit a, Ord a, HasEnoughElems a) => GenEdit (Set.Set a) where
+instance (GenEdit a, Ord a, HasEnoughInhabitants a) => GenEdit (Set.Set a) where
     genEdit d = oneof
         [ pure []
         , do
@@ -215,19 +215,19 @@ instance (GenEdit a, Ord a, HasEnoughElems a) => GenEdit (Set.Set a) where
                     | hasSpace d', x <- Set.elems d']
         ]
       where
-        hasSpace s = hasMoreElemsThan (Proxy :: Proxy a) (Set.size s)
+        hasSpace s = hasMoreInhabitantsThan (Proxy :: Proxy a) (Set.size s)
 
 -- | Auxiliary class to ensure that a type have enough inhabitants
 --   used for generating random elements
-class HasEnoughElems a where
-    hasMoreElemsThan :: Proxy a -> Int -> Bool
-    default hasMoreElemsThan :: (Enum a, Bounded a) => Proxy a -> Int -> Bool
-    hasMoreElemsThan _ n = n <= fromEnum (maxBound :: a) - fromEnum (minBound :: a)
+class HasEnoughInhabitants a where
+    hasMoreInhabitantsThan :: Proxy a -> Int -> Bool
+    default hasMoreInhabitantsThan :: (Enum a, Bounded a) => Proxy a -> Int -> Bool
+    hasMoreInhabitantsThan _ n = n <= fromEnum (maxBound :: a) - fromEnum (minBound :: a)
 
-instance (Enum a, Bounded a) => HasEnoughElems (Atom a)
+instance (Enum a, Bounded a) => HasEnoughInhabitants (Atom a)
 
-instance HasEnoughElems [a] where hasMoreElemsThan _ _ = True
-instance HasEnoughElems a => HasEnoughElems (Set.Set a) where hasMoreElemsThan _ _ = True  -- FIXME
+instance HasEnoughInhabitants [a] where hasMoreInhabitantsThan _ _ = True
+instance HasEnoughInhabitants a => HasEnoughInhabitants (Set.Set a) where hasMoreInhabitantsThan _ _ = True  -- FIXME
 
 ---------------------- data type used for testing
 

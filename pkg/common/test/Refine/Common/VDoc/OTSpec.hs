@@ -33,7 +33,7 @@ instance GenEdit BlockType where
 instance Arbitrary Entity where
     arbitrary = to <$> arbitrary
 
-instance HasEnoughElems Entity where hasMoreElemsThan _ _ = True
+instance HasEnoughInhabitants Entity where hasMoreInhabitantsThan _ _ = True
 
 instance GenEdit Entity where
     genEdit d = map EEntity <$> genEdit (from d)
