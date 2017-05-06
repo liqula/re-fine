@@ -10,6 +10,7 @@ import           Control.Arrow
 import           Data.Function
 import           Data.List
 import qualified Data.IntMap as IntMap
+import           Data.String.Conversions
 
 import OT
 import Draft (RawContent)
@@ -64,7 +65,7 @@ rawContentToDoc :: Draft.RawContent -> Doc
 rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
   where
     fromEntity :: Draft.Entity -> Entity
-    fromEntity (Draft.EntityLink s) = EntityLink s
+    fromEntity (Draft.EntityLink s) = EntityLink $ cs s
 
     fromStyle :: Draft.Style -> Entity
     fromStyle = \case
@@ -81,7 +82,7 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
         Draft.EnumPoint   -> Item EnumPoint   d
 
     mkBlock :: Draft.Block Draft.EntityKey -> Block
-    mkBlock (Draft.Block txt eranges styles ty depth _key) = Block (mkBlockType depth ty) (segment segments txt)
+    mkBlock (Draft.Block txt eranges styles ty depth _key) = Block (mkBlockType depth ty) (segment segments $ cs txt)
       where
         segment [] "" = []
         segment [] text = [LineElem mempty text]
@@ -111,7 +112,7 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
   where
     toEntity :: Entity -> Maybe Draft.Entity
     toEntity = \case
-        EntityLink s -> Just (Draft.EntityLink s)
+        EntityLink s -> Just (Draft.EntityLink $ cs s)
         _ -> Nothing
 
     toStyle :: Entity -> Maybe Draft.Style
@@ -132,7 +133,7 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
 
     mkBlock :: Block -> Draft.Block Draft.Entity
     mkBlock (Block ty es) = Draft.Block
-        (concatMap getText es)
+        (cs $ concatMap getText es)
         [(e, r) | (r, toEntity -> Just e) <- ranges]
         [(r, s) | (r, toStyle  -> Just s) <- ranges]
         (fst $ mkType ty)
@@ -154,7 +155,7 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
 simplifyDoc :: Doc -> Doc
 simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
   where
-    simplifyBlock (Block a b) = Block a $ filter notNull $ map joinElems $ groupBy ((==) `on` attrs) b
+    simplifyBlock (Block a b) = Block a $ map joinElems $ groupBy ((==) `on` attrs) $ filter notNull b
 
     attrs (LineElem x _) = x
     txt   (LineElem _ x) = x

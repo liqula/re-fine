@@ -92,3 +92,4 @@ runTests = do
     runTest 1000 $ allTests @(Atom ItemType)
     runTest 1000 $ allTests @BlockType
     runTest 1000 $ allTests @LineElem
+    quickCheck test_transform

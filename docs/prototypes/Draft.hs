@@ -13,9 +13,8 @@ import qualified Data.IntMap as IntMap
 import           Data.List
 import qualified Data.Map as Map
 import           Data.Maybe (fromMaybe)
+import           Data.String.Conversions
 import           GHC.Generics
-
-type ST = String
 
 -- * data types
 
