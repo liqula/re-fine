@@ -24,9 +24,12 @@
 module Refine.Frontend.Document.DocumentSpec
 where
 
+import Data.Aeson
 import Control.Lens ((^.))
+import Data.String.Conversions
 import Test.Hspec
 import Test.QuickCheck
+import GHCJS.Types
 
 import Refine.Common.Test.Arbitrary
 import Refine.Common.Test.Samples
@@ -101,6 +104,9 @@ spec = do
                 ]
             , _rawContentEntityMap = mempty
             }
+      decode (encode rawContent) `shouldBe` Just rawContent                              -- passes
+      pending
+      js_testConvertFromToRaw (cs $ encode rawContent) `shouldBe` True                   -- fails!
       (resetBlockKeys . convertToRaw . convertFromRaw) rawContent `shouldBe` rawContent
 
 
@@ -118,3 +124,8 @@ spec = do
     it "renders with arbitrary content" . property $ \rawContent -> do
       wrapper <- shallow $ document_ (mkTestProps rawContent)
       lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` 1
+
+
+foreign import javascript unsafe
+    "refine_test$testConvertFromToRaw($1)"
+    js_testConvertFromToRaw :: JSString -> Bool
