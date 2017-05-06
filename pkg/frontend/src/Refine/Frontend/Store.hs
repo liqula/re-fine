@@ -99,7 +99,7 @@ transformGlobalState = transf
 
         -- other effects
         case action of
-            DocumentAction (DocumentUpdate dstate) -> do
+            DocumentAction (DocumentUpdate dstate@DocumentStateView{}) -> do
                 mRangeEvent <- getRangeAction (state ^. gsDocumentState) dstate
                 case mRangeEvent of
                     Nothing -> pure ()
