@@ -55,7 +55,7 @@ allTests = allTestsButDiff <>
 
 ---------------------
 
--- compare two edits by effect
+-- | compare two edits by effect
 equalEdit :: (Editable d, Eq d) => Edit d -> Edit d -> d -> Bool
 equalEdit e0 e1 d = patch e0 d == patch e1 d
 
@@ -71,7 +71,7 @@ test_edit_composition d = do
     b <- genEdit d'
     failPrint (a, b) $ patch b d' == patch (a <> b) d
 
-{-
+{- |
   a//\b  =  a/\\b
    \\/       \//
 -}
@@ -81,7 +81,7 @@ test_diamond d = do
     b <- genEdit d
     failPrint (a, b) $ equalEdit (a <> fst (merge d a b)) (b <> snd (merge d a b)) d
 
-{-
+{- |
         a/\b  =  a/\b<>c
          \/\c     \ \
           \//      \//
@@ -91,7 +91,7 @@ test_diamond_right_join d = do
     (a, b, d', c) <- genPatchesForDiamondJoin d
     failPrint (a, b, c) $ equalEdit (snd $ merge d' (snd $ merge d a b) c) (snd $ merge d a (b <> c)) (patch c d')
 
--- FIXME: I had to add this helper function only because hlint complained about duplicate code
+-- | FIXME: I had to add this helper function only because hlint complained about duplicate code
 genPatchesForDiamondJoin :: GenEdit d => d -> Gen (Edit d, Edit d, d, Edit d)
 genPatchesForDiamondJoin d = do
     a <- genEdit d
@@ -100,7 +100,8 @@ genPatchesForDiamondJoin d = do
     c <- genEdit d'
     pure (a, b, d', c)
 
-{- mirror of test_diamond_right_join
+{- | mirror of test_diamond_right_join
+
         b/\a  = b<>c/\a
        c/\/        / /
        \\/        \\/
@@ -120,7 +121,7 @@ test_inverse_inverse d = do
     a <- genEdit d
     failPrint a $ equalEdit (inverse (patch a d) (inverse d a)) a d
 
--- this law is derivable
+-- | this law is derivable
 test_inverse_diamond :: GenEdit d => d -> Gen Property
 test_inverse_diamond d = do
     a <- genEdit d
