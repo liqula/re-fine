@@ -86,7 +86,7 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
       where
         segment [] "" = []
         segment [] text = [LineElem mempty text]
-        segment ((len, s): ss) text = LineElem (Set.fromList s) (take len text): segment ss (drop len text)
+        segment ((len, s): ss) text = LineElem s (take len text): segment ss (drop len text)
 
         segments =
               mkSegments 0 []
@@ -98,7 +98,7 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
         mkSegments n stack ((n', z): ss) | n' == n = mkSegments n (insertBy (compare `on` fst) z stack) ss
         mkSegments n ((n', _): stack) ss | n' == n = mkSegments n stack ss
         mkSegments n stack ss
-            | n' > n = (n' - n, snd <$> stack): mkSegments n' stack ss
+            | n' > n = (n' - n, Set.fromList $ snd <$> stack): mkSegments n' stack ss
             | otherwise = error "impossible"
           where
             n' = case (fst <$> stack, fst <$> ss) of
@@ -141,17 +141,16 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
         Nothing
       where
         ranges = mkRanges 0 mempty
-            $ [(len, Set.elems s) | LineElem s txt <- es, let len = length txt, len > 0] <> [(0, mempty)]
+            $ [(len, s) | LineElem s txt <- es, let len = length txt, len > 0] <> [(0, mempty)]
 
-        mkRanges _ [] [] = []
+        mkRanges _ _ [] = []
         mkRanges n acc ((len, s): ss)
-            = [((beg, n), sty) | (beg, sty) <- acc, sty `notElem` s, beg /= n]
+            = [((beg, n), sty) | (beg, sty) <- acc, sty `Set.notMember` s, beg /= n]
             <> mkRanges (n + len)
                         (foldr (insertBy (compare `on` fst))
-                               [(beg, sty) | (beg, sty) <- acc, sty `elem` s]
-                               [(n, sty) | sty <- s, sty `notElem` map snd acc])
+                               [(beg, sty) | (beg, sty) <- acc, sty `Set.member` s]
+                               [(n, sty) | sty <- Set.elems s, sty `notElem` map snd acc])
                         ss
-        mkRanges _ _ _ = error "impossible"
 
 simplifyDoc :: Doc -> Doc
 simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks

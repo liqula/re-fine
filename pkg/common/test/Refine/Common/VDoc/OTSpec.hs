@@ -3,7 +3,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans       #-}
 module Refine.Common.VDoc.OTSpec where
 
-import qualified Data.Set as Set
 import           Test.QuickCheck
 import           Test.Hspec
 
@@ -41,11 +40,7 @@ instance GenEdit Entity where
 ----------------------
 
 instance Arbitrary LineElem where
-    arbitrary = LineElem <$> attrs <*> arbitrary
-      where
-        attrs = Set.fromList <$> do
-            n <- elements [0..3]
-            vectorOf n arbitrary
+    arbitrary = to <$> arbitrary
 
 instance GenEdit LineElem where
     genEdit d = map ELineElem <$> genEdit (from d)
