@@ -11,10 +11,11 @@
 {-# LANGUAGE LambdaCase                 #-}
 module Refine.Common.OT where
 
-import Data.Monoid
-import Data.Function
-import Data.List
-import Control.Arrow
+import           Data.Monoid
+import qualified Data.Set as Set
+import           Data.Function
+import           Data.List
+import           Control.Arrow
 
 ----------------------------------------------------------------------------------------------
 
@@ -295,30 +296,15 @@ deriving instance (Show a, Show (EEdit a)) => Show (EEdit [a])
 
 ---------------------------------------- Set instance
 
-newtype Set a = Set {unSet :: [a]}
-   deriving (Show, Eq, Ord)
-
-instance Ord a => Monoid (Set a) where
-    mempty = Set []
-    mappend (Set a) (Set b) = Set $ mergeList a b
-
-mergeList :: Ord a => [a] -> [a] -> [a]
-mergeList [] xs = xs
-mergeList xs [] = xs
-mergeList (x: xs) (y: ys) = case compare x y of
-    LT -> x: mergeList xs (y: ys)
-    GT -> y: mergeList (x: xs) ys
-    _  -> x: mergeList xs ys
-
-editElem :: a -> Edit a -> Edit (Set a)
+editElem :: a -> Edit a -> Edit (Set.Set a)
 editElem _ [] = []
 editElem i p  = [EditElem i p]
 
-instance (Editable a, Ord a) => Editable (Set a) where
+instance (Editable a, Ord a) => Editable (Set.Set a) where
 
-    docCost (Set x) = (+1) . sum $ map docCost x
+    docCost = (+1) . sum . map docCost . Set.elems
 
-    data EEdit (Set a)
+    data EEdit (Set.Set a)
         = DeleteElem a
         | InsertElem a          -- it is not valid to insert an elem which is already in the set
         | EditElem a (Edit a)   -- it is not valid to edit such that the result is already in the set
@@ -328,20 +314,14 @@ instance (Editable a, Ord a) => Editable (Set a) where
         DeleteElem _ -> 1
         EditElem _ e -> 1 + cost e
 
-    ePatch (DeleteElem x) (Set xs) = Set $ filter (/=x) xs
-    ePatch (InsertElem x) (Set xs) = Set $ insert x xs
-    ePatch (EditElem x e) (Set xs) = Set . insert (patch e x) $ filter (/=x) xs
+    ePatch (DeleteElem x) = Set.filter (/=x)
+    ePatch (InsertElem x) = Set.insert x
+    ePatch (EditElem x e) = Set.insert (patch e x) . Set.delete x
 
-    diff (Set a) (Set b) = f a b
-      where
-        f [] [] = []
-        f [] (x:xs) = InsertElem x: f [] xs
-        f (x:xs) [] = DeleteElem x: f xs []
-        f (x:xs) (y:ys) = case compare x y of
-            EQ -> f xs ys
-            LT -> DeleteElem x: f xs (y: ys)
-            GT -> InsertElem y: f (x: xs) ys
+    diff a b = [DeleteElem x | x <- Set.elems $ Set.difference a b]
+            <> [InsertElem x | x <- Set.elems $ Set.difference b a]
 
+{-
     eMerge _ a b | a == b = ([], [])
     eMerge d a@(EditElem i x) b@(EditElem i' y) | i == i'
         = if patch (x <> x2) i `notElem` unSet d
@@ -355,15 +335,15 @@ instance (Editable a, Ord a) => Editable (Set a) where
     eMerge _ (InsertElem x) (EditElem y e) | x == patch e y = if x == y then ([], []) else ([DeleteElem y], [])
     eMerge d a@(EditElem y e) b@(InsertElem x) | x == patch e y = if x == y then ([], []) else secondWins d a b
     eMerge _ a b = ([b], [a])
-
+-}
     eInverse _ = \case
         EditElem x e -> [EditElem (patch e x) (inverse x e)]
         DeleteElem x -> [InsertElem x]
         InsertElem x -> [DeleteElem x]
 
-deriving instance (Show a, Show (EEdit a)) => Show (EEdit (Set a))
+deriving instance (Show a, Show (EEdit a)) => Show (EEdit (Set.Set a))
 
-instance (Eq a, Editable a) => Eq (EEdit (Set a)) where
+instance (Eq a, Editable a) => Eq (EEdit (Set.Set a)) where
     InsertElem a == InsertElem b = a == b
     DeleteElem a == DeleteElem b = a == b
     EditElem a ea == EditElem b eb = a == b && patch ea a == patch eb b

@@ -3,9 +3,9 @@
 {-# OPTIONS_GHC -fno-warn-orphans       #-}
 module Refine.Common.VDoc.OTSpec where
 
-import Test.QuickCheck
-import Test.Hspec
-import Data.List
+import qualified Data.Set as Set
+import           Test.QuickCheck
+import           Test.Hspec
 
 import Refine.Common.OT
 import Refine.Common.OTSpec hiding (spec)
@@ -43,8 +43,8 @@ instance GenEdit Entity where
 instance Arbitrary LineElem where
     arbitrary = LineElem <$> attrs <*> arbitrary
       where
-        attrs = Set . nub . sort <$> do
-            n <- elements [0,1,2,3]
+        attrs = Set.fromList <$> do
+            n <- elements [0..3]
             vectorOf n arbitrary
 
 instance GenEdit LineElem where

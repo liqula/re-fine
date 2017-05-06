@@ -9,6 +9,7 @@ import           Control.Arrow
 import           Data.Function
 import           Data.List
 import qualified Data.IntMap as IntMap
+import qualified Data.Set as Set
 import           Data.String.Conversions
 
 import Refine.Common.OT
@@ -36,7 +37,7 @@ data ItemType = NormalText | BulletPoint | EnumPoint
    deriving (Show, Eq, Bounded, Enum)
 
 -- | This is something which is described with an EntityRange
-data LineElem = LineElem (Set Entity) String
+data LineElem = LineElem (Set.Set Entity) String
     -- FIXME: (Set Entity) should be (Maybe String, Bool, Bool), it is not allowed to have two links on the same character
    deriving (Show, Eq)
 
@@ -85,7 +86,7 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
       where
         segment [] "" = []
         segment [] text = [LineElem mempty text]
-        segment ((len, s): ss) text = LineElem (Set $ sort s) (take len text): segment ss (drop len text)
+        segment ((len, s): ss) text = LineElem (Set.fromList s) (take len text): segment ss (drop len text)
 
         segments =
               mkSegments 0 []
@@ -140,7 +141,7 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
         Nothing
       where
         ranges = mkRanges 0 mempty
-            $ [(len, unSet s) | LineElem s txt <- es, let len = length txt, len > 0] <> [(0, mempty)]
+            $ [(len, Set.elems s) | LineElem s txt <- es, let len = length txt, len > 0] <> [(0, mempty)]
 
         mkRanges _ [] [] = []
         mkRanges n acc ((len, s): ss)
@@ -214,7 +215,7 @@ instance Editable Entity where
 ----------------------
 
 instance Representable LineElem where
-    type Rep LineElem = (Set Entity, String)
+    type Rep LineElem = (Set.Set Entity, String)
     to (a, b) = LineElem a b
     from (LineElem a b) = (a, b)
 

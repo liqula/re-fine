@@ -15,13 +15,12 @@
 {-# OPTIONS_GHC -fno-warn-orphans       #-}
 module Refine.Common.OTSpec where
 
-import Data.Monoid
-import Data.List
-import Control.Monad
-import Test.QuickCheck
-import Data.Typeable
-
-import Test.Hspec
+import           Data.Monoid
+import           Data.Typeable
+import qualified Data.Set as Set
+import           Control.Monad
+import           Test.QuickCheck
+import           Test.Hspec
 
 import Refine.Common.OT
 
@@ -198,10 +197,7 @@ instance (GenEdit a) => GenEdit [a] where
 
 ---------------------------------------- Set instance
 
-instance (Arbitrary a, Ord a) => Arbitrary (Set a) where
-    arbitrary = Set . nub . getOrdered <$> arbitrary
-
-instance (GenEdit a, Ord a, HasEnoughElems a) => GenEdit (Set a) where
+instance (GenEdit a, Ord a, HasEnoughElems a) => GenEdit (Set.Set a) where
     genEdit d = oneof
         [ pure []
         , do
@@ -209,16 +205,16 @@ instance (GenEdit a, Ord a, HasEnoughElems a) => GenEdit (Set a) where
             let d' = patch c d
             oneof $
                     [ do
-                        x <- arbitrary `suchThat` (`notElem` unSet d')
+                        x <- arbitrary `suchThat` (`Set.notMember` d')
                         pure $ c <> [InsertElem x] | hasSpace d']
-                 <> [ pure $ c <> [DeleteElem x] | x <- unSet d']
+                 <> [ pure $ c <> [DeleteElem x] | x <- Set.elems d']
                  <> [ do
-                        cx <- genEdit x `suchThat` \cx -> patch cx x `notElem` unSet d'
+                        cx <- genEdit x `suchThat` \cx -> patch cx x `Set.notMember` d'
                         pure $ c <> [EditElem x cx]
-                    | hasSpace d', x <- unSet d']
+                    | hasSpace d', x <- Set.elems d']
         ]
       where
-        hasSpace (Set x) = hasMoreElemsThan (Proxy :: Proxy a) (length x)
+        hasSpace s = hasMoreElemsThan (Proxy :: Proxy a) (Set.size s)
 
 -- | Auxiliary class to ensure that a type have enough inhabitants
 --   used for generating random elements
@@ -230,7 +226,7 @@ class HasEnoughElems a where
 instance (Enum a, Bounded a) => HasEnoughElems (Atom a)
 
 instance HasEnoughElems [a] where hasMoreElemsThan _ _ = True
-instance HasEnoughElems a => HasEnoughElems (Set a) where hasMoreElemsThan _ _ = True  -- FIXME
+instance HasEnoughElems a => HasEnoughElems (Set.Set a) where hasMoreElemsThan _ _ = True  -- FIXME
 
 ---------------------- data type used for testing
 
@@ -256,10 +252,10 @@ spec = parallel $ do
     runTest $ allTests @[(ADigit, ADigit)]
     runTest $ allTests @([ADigit], [ADigit])
     runTest $ allTestsButDiff @[[ADigit]]
-    runTest $ allTests @(Set ADigit)
-    runTest $ allTests @(Set [ADigit])
-    runTest $ allTests @[Set ADigit]
-    runTest $ allTests @(Set (Set ADigit))
+    runTest $ allTests @(Set.Set ADigit)
+    runTest $ allTests @(Set.Set [ADigit])
+    runTest $ allTests @[Set.Set ADigit]
+    runTest $ allTests @(Set.Set (Set.Set ADigit))
 
 main :: IO ()
 main = do
