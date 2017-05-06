@@ -258,8 +258,7 @@ spec = parallel $ do
     runTest $ allTests @[Set.Set ADigit]
     runTest $ allTests @(Set.Set (Set.Set ADigit))
 
-main :: IO ()
-main = do
-    --allTests
-    -- | performance benchmark
-    let n = 1000 in print $ diff (take n ['a'..]) (take n ['A'..])
+-- | running in ghci8 on a lenovo t420s with no attempt at optimizing, @n = 1000@: @(2.88 secs,
+-- 2,382,007,256 bytes)@.  this should be our baseline from which to improve.
+simplePerformanceBenchmark :: IO ()
+simplePerformanceBenchmark = let n = 1000 in print $ diff (take n ['a'..]) (take n ['A'..])
