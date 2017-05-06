@@ -79,6 +79,9 @@ instance GenEdit RawContent where
 test_transform :: Doc -> Bool
 test_transform d = rawContentToDoc (docToRawContent d) == simplifyDoc d
 
+test_transform' :: RawContent -> Bool
+test_transform' d = docToRawContent (rawContentToDoc d) == d
+
 spec :: Spec
 spec = parallel $ do
     runTest $ allTests @(Atom HeaderLevel)
@@ -86,3 +89,4 @@ spec = parallel $ do
     runTest $ allTests @BlockType
     runTest $ allTests @LineElem
     it "Doc <-> RawContent conversion" $ property test_transform
+    it "RawContent <-> Doc conversion" $ property test_transform'
