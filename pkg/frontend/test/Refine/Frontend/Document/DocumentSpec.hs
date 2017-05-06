@@ -112,11 +112,9 @@ spec = do
           EditToolbarExtension
 
     it "renders with empty content" $ do
-      pending
-      wrapper <- shallow $ document_ (mkTestProps $ mkRawContent [])
+      wrapper <- shallow $ document_ (mkTestProps emptyRawContent)
       lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` 1
 
     it "renders with arbitrary content" . property $ \rawContent -> do
-      pending
       wrapper <- shallow $ document_ (mkTestProps rawContent)
       lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` 1
