@@ -38,7 +38,7 @@ import Refine.Common.Types.Chunk (ChunkRange(..))
 import Refine.Common.Types.Prelude hiding (MetaInfo)
 import Refine.Common.Types.Process (CollaborativeEditPhase)
 import Refine.Common.Types.Role (Role)
-import Refine.Common.Types.VDoc (Abstract, EditKind, Title)
+import Refine.Common.Types.VDoc (Abstract, EditKind, Title, VDocVersion)
 import Refine.Backend.Database.Field()
 import Refine.Backend.Database.Types (MetaInfoID)
 import Refine.Backend.DocRepo.Core (EditHandle, RepoHandle)
@@ -62,6 +62,7 @@ Edit
     desc        Text
     range       ChunkRange
     editHandle  EditHandle
+    editVDoc    VDocVersion
     kind        EditKind
     motivation  ST
 

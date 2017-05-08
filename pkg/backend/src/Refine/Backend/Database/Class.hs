@@ -29,17 +29,18 @@ class Database db where
   vDocRepoVDoc      :: ID VDocRepo -> db (ID VDoc)
 
   -- Repo
-  createRepo         :: DocRepo.RepoHandle -> DocRepo.EditHandle -> db VDocRepo
+  createRepo         :: DocRepo.RepoHandle -> DocRepo.EditHandle -> VDocVersion -> db VDocRepo
   getRepo            :: ID VDocRepo -> db VDocRepo
   getRepoFromHandle  :: DocRepo.RepoHandle -> db VDocRepo
   getRepoHandle      :: ID VDocRepo -> db DocRepo.RepoHandle
   getEditIDs         :: ID VDocRepo -> db [ID Edit]
 
   -- Edit
-  createEdit         :: ID VDocRepo -> DocRepo.EditHandle -> Create Edit -> db Edit
+  createEdit         :: ID VDocRepo -> DocRepo.EditHandle -> VDocVersion -> Create Edit -> db Edit
   getEdit            :: ID Edit -> db Edit
   getEditFromHandle  :: DocRepo.EditHandle -> db Edit
   getEditHandle      :: ID Edit -> db DocRepo.EditHandle
+  getVersion         :: ID Edit -> db VDocVersion
   editNotes          :: ID Edit -> db [ID Note]
   editQuestions      :: ID Edit -> db [ID Question]
   editDiscussions    :: ID Edit -> db [ID Discussion]

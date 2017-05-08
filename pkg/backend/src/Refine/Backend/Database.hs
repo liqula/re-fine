@@ -122,6 +122,7 @@ instance Database DB where
   getEdit            = Entity.getEdit
   getEditFromHandle  = Entity.getEditFromHandle
   getEditHandle      = Entity.getEditHandle
+  getVersion         = Entity.getVersion
   editNotes          = Entity.editNotes
   editQuestions      = Entity.editQuestions
   editDiscussions    = Entity.editDiscussions

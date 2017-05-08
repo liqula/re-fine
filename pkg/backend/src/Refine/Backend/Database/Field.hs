@@ -31,6 +31,16 @@ instance PersistFieldSql Timestamp where
   sqlType _ = sqlType (Proxy :: Proxy ST)
 
 
+instance PersistField VDocVersion where
+  toPersistValue (VDocVersion t) = toPersistValue t
+  fromPersistValue         = fmap VDocVersion . fromPersistValue
+
+instance PersistFieldSql VDocVersion where
+  -- CAUTION: This should be generated, to represent the actual inner type
+  -- of the newtype
+  sqlType _ = sqlType (Proxy :: Proxy ST)
+
+
 instance PersistField Title where
   toPersistValue (Title t) = toPersistValue t
   fromPersistValue         = fmap Title . fromPersistValue

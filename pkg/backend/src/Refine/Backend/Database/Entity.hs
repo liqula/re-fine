@@ -241,11 +241,11 @@ vdocRepoOfEdit eid = do
 
 -- * Repo
 
-createRepo :: DocRepo.RepoHandle -> DocRepo.EditHandle -> DB VDocRepo
-createRepo repoh edith = liftDB $ do
+createRepo :: DocRepo.RepoHandle -> DocRepo.EditHandle -> VDocVersion -> DB VDocRepo
+createRepo repoh edith vdoc = liftDB $ do
     let desc = "" -- TODO
         motiv = ""
-    editkey <- insert $ S.Edit desc cr edith Initial motiv
+    editkey <- insert $ S.Edit desc cr edith vdoc Initial motiv
     repokey <- insert $ S.Repo "title" {- TODO -} repoh editkey
     void  . insert $ S.RP repokey editkey
     pure $ VDocRepo (S.keyToId repokey) (S.keyToId editkey)
@@ -289,12 +289,13 @@ vDocRepoVDoc rid = do
 
 -- * Edit
 
-createEdit :: ID VDocRepo -> DocRepo.EditHandle -> CreateEdit -> DB Edit
-createEdit rid edith ce = do
+createEdit :: ID VDocRepo -> DocRepo.EditHandle -> VDocVersion -> CreateEdit -> DB Edit
+createEdit rid edith vdoc ce = do
   mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
             (ce ^. createEditRange)
             edith
+            vdoc
             (ce ^. createEditKind)
             (ce ^. createEditMotiv)
   addConnection S.RP rid (mid ^. miID)
@@ -306,7 +307,7 @@ createEdit rid edith ce = do
     (ce ^. createEditMotiv)
 
 getEdit :: ID Edit -> DB Edit
-getEdit = getMetaEntity $ \mid -> S.editElim $ \desc cr _handle -> Edit mid desc cr
+getEdit = getMetaEntity $ \mid -> S.editElim $ \desc cr _handle _ -> Edit mid desc cr
 
 getEditFromHandle :: DocRepo.EditHandle -> DB Edit
 getEditFromHandle hndl = do
@@ -314,14 +315,17 @@ getEditFromHandle hndl = do
   ps <- liftDB $ selectList [S.EditEditHandle ==. hndl] opts
   p <- unique "getEditFromHandle" ps
   mid <- getMeta . S.keyToId $ entityKey p
-  let toEdit desc cr _hdnl = Edit mid desc cr
+  let toEdit desc cr _hdnl _ = Edit mid desc cr
   pure $ S.editElim toEdit (entityVal p)
 
 getEditHandle :: ID Edit -> DB DocRepo.EditHandle
 getEditHandle pid = S.editElim toEditHandle <$> getEntityRep pid
   where
-    toEditHandle :: ST -> ChunkRange -> DocRepo.EditHandle -> EditKind -> ST -> DocRepo.EditHandle
-    toEditHandle _desc _cr handle _kind _motiv = handle
+    toEditHandle :: ST -> ChunkRange -> DocRepo.EditHandle -> VDocVersion -> EditKind -> ST -> DocRepo.EditHandle
+    toEditHandle _desc _cr handle _ _kind _motiv = handle
+
+getVersion :: ID Edit -> DB VDocVersion
+getVersion pid = S.editElim (\_ _ _ vdoc _ _ -> vdoc) <$> getEntityRep pid
 
 editNotes :: ID Edit -> DB [ID Note]
 editNotes pid = do

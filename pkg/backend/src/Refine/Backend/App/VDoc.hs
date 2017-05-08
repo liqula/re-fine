@@ -59,7 +59,7 @@ createVDoc pv = do
     dp <- DocRepo.createInitialEdit dr vd
     pure (dr, dp)
   db $ do
-    r <- DB.createRepo dr dp
+    r <- DB.createRepo dr dp vd
     DB.createVDoc pv r
 
 getVDoc :: ID VDoc -> App VDoc
@@ -70,26 +70,21 @@ getVDoc i = do
 getVDocVersion :: ID Edit -> App VDocVersion
 getVDocVersion eid = do
   appLog "getVDocVersion"
-  rid      <- db $ DB.vdocRepoOfEdit eid
-  rhandle  <- db $ DB.getRepoHandle rid
-  ehandle  <- db $ DB.getEditHandle eid
-  docRepo $ DocRepo.getVersion rhandle ehandle
+  db $ DB.getVersion eid
 
 getCompositeVDoc :: ID VDoc -> App CompositeVDoc  -- TODO: take an edit id here, and implement getHeadCompositeVDoc in terms of that.
 getCompositeVDoc vid = do
   appLog "getCompositeVDoc"
   vdoc     <- db $ DB.getVDoc vid
   rid      <- db $ DB.vdocRepo vid
-  rhandle  <- db $ DB.getRepoHandle rid
   repo     <- db $ DB.getRepo rid
   let headid = repo ^. vdocHeadEdit
-  hhandle  <- db $ DB.getEditHandle headid
   comments <- db $ DB.editComments headid
   let commentNotes       = catMaybes $ (^? _CommentNote)       <$> filter (has _CommentNote)       comments
       commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
 
   edits <- db $ mapM DB.getEdit =<< DB.getEditChildren headid
-  version <- docRepo (DocRepo.getVersion rhandle hhandle)
+  version <- db $ DB.getVersion headid
   pure $
     CompositeVDoc
       vdoc repo headid version
@@ -115,7 +110,7 @@ addEdit baseeid edit = do
       let version   = edit ^. createEditVDoc
       childphandle <- docRepo $ DocRepo.createEdit rhandle baseehandle version
       db $ do
-        childEdit <- DB.createEdit rid childphandle edit
+        childEdit <- DB.createEdit rid childphandle version edit
         DB.setEditChild baseeid (childEdit ^. editID)
         pure childEdit
 
