@@ -23,7 +23,6 @@ dependencies:
   - containers
   - cookie
   - cryptonite
-  - darcs
   - data-default
   - directory
   - elim
