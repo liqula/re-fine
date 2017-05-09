@@ -34,6 +34,7 @@ module Refine.Frontend.Document.FFI
   , convertFromHtml
 
     -- * https://draftjs.org/docs/api-reference-editor-state.html
+  , createEmpty
   , createWithContent
   , getCurrentContent
   , traceEditorState
@@ -93,6 +94,14 @@ foreign import javascript unsafe
 
 
 -- * https://draftjs.org/docs/api-reference-editor-state.html
+
+-- | https://draftjs.org/docs/api-reference-editor-state.html#createempty
+createEmpty :: EditorState
+createEmpty = js_ES_createEmpty
+
+foreign import javascript unsafe
+    "Draft.EditorState.createEmpty()"
+    js_ES_createEmpty :: EditorState
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#createwithcontent
 createWithContent :: ContentState -> EditorState
