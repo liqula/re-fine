@@ -28,7 +28,6 @@ import Control.Lens ((^.))
 import Data.Aeson
 import Data.String.Conversions
 import GHCJS.Types
-import React.Flux hiding (property)
 import Test.Hspec
 import Test.QuickCheck
 
@@ -114,7 +113,7 @@ spec = do
   describe "Draft" $ do
     it "editor_ mounts" $ do
       let doc :: String = "1243/asdf_#$%^"
-      wrapper <- mount $ editor_ ["editorState" &= (createWithContent . createFromText . cs $ doc)] mempty
+      wrapper <- mount $ editor_ (defaultEditorProps doc) mempty
       contents :: String <- cs <$> html wrapper
       contents `shouldContain` "class=\"public-DraftEditor-content\""
       contents `shouldContain` doc

@@ -19,14 +19,20 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 
-module Refine.Frontend.Document.Document (document, document_) where
+module Refine.Frontend.Document.Document
+  ( document
+  , document_
+  , emptyEditorProps
+  , defaultEditorProps
+  ) where
 
 import           Control.Lens ((^.), (.~), (&), has)
 import           Data.Aeson
+import           Data.String.Conversions
 import           GHCJS.Types
 import           React.Flux
 
-import           Refine.Frontend.Document.FFI (updateEditorState)
+import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
@@ -71,3 +77,10 @@ documentStyleMap = object
     .= object [ "background" .= String "rgba(0, 255, 0, 0.3)"
               ]
   ]
+
+
+emptyEditorProps :: [PropertyOrHandler handler]
+emptyEditorProps = ["editorState" &= createEmpty]
+
+defaultEditorProps :: ConvertibleStrings s JSString => s -> [PropertyOrHandler handler]
+defaultEditorProps txt = ["editorState" &= (createWithContent . createFromText . cs) txt]
