@@ -22,12 +22,10 @@
 
 module Refine.Common.Types.VDocSpec where
 
-import           Control.Arrow (second)
-import           Control.Exception (assert, evaluate)
-import           Control.Lens ((^.), (%~), (&), view, _1, _2, _3)
+import           Control.Exception (assert)
+import           Control.Lens ((^.), (%~), view, _1, _2, _3)
 import           Data.List as List
 import           Data.Map as Map
-import qualified Data.IntMap as IntMap
 import           Data.String.Conversions
 import           Data.Typeable
 import           Test.Hspec
