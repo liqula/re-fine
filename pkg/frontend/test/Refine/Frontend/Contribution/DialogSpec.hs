@@ -36,30 +36,30 @@ spec = do
   describe "The commentInput_ component" $ do
     it "renders dark note and discussion icons when no comment has been selected" $ do
       wrapper <- mount $ commentInput_ (AddCommentProps True Nothing Nothing 10)
-      lengthOfIO (find wrapper (StringSelector ".icon-Note_dark"))       `shouldReturn` (1 :: Int)
-      lengthOfIO (find wrapper (StringSelector ".icon-Note_RO"))         `shouldReturn` (0 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".icon-Note_dark"))       `shouldReturn` 1
+      lengthOfIO (find wrapper (StringSelector ".icon-Note_RO"))         `shouldReturn` 0
 
       pending
 
-      lengthOfIO (find wrapper (StringSelector ".icon-Discussion_dark")) `shouldReturn` (1 :: Int)
-      lengthOfIO (find wrapper (StringSelector ".icon-Discussion_RO"))   `shouldReturn` (0 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".icon-Discussion_dark")) `shouldReturn` 1
+      lengthOfIO (find wrapper (StringSelector ".icon-Discussion_RO"))   `shouldReturn` 0
 
     it "renders highlighted note and dark discussion icons when Note has been selected" $ do
       wrapper <- mount $ commentInput_ (AddCommentProps True Nothing (Just CommentKindNote) 10)
-      lengthOfIO (find wrapper (StringSelector ".icon-Note_dark"))       `shouldReturn` (0 :: Int)
-      lengthOfIO (find wrapper (StringSelector ".icon-Note_RO"))         `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".icon-Note_dark"))       `shouldReturn` 0
+      lengthOfIO (find wrapper (StringSelector ".icon-Note_RO"))         `shouldReturn` 1
 
       pending
 
-      lengthOfIO (find wrapper (StringSelector ".icon-Discussion_dark")) `shouldReturn` (1 :: Int)
-      lengthOfIO (find wrapper (StringSelector ".icon-Discussion_RO"))   `shouldReturn` (0 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".icon-Discussion_dark")) `shouldReturn` 1
+      lengthOfIO (find wrapper (StringSelector ".icon-Discussion_RO"))   `shouldReturn` 0
 
     it "renders dark note and highlighted discussion icons when Discussion has been selected" $ do
       wrapper <- mount $ commentInput_ (AddCommentProps True Nothing (Just CommentKindDiscussion) 10)
-      lengthOfIO (find wrapper (StringSelector ".icon-Note_dark"))       `shouldReturn` (1 :: Int)
-      lengthOfIO (find wrapper (StringSelector ".icon-Note_RO"))         `shouldReturn` (0 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".icon-Note_dark"))       `shouldReturn` 1
+      lengthOfIO (find wrapper (StringSelector ".icon-Note_RO"))         `shouldReturn` 0
 
       pending
 
-      lengthOfIO (find wrapper (StringSelector ".icon-Discussion_dark")) `shouldReturn` (0 :: Int)
-      lengthOfIO (find wrapper (StringSelector ".icon-Discussion_RO"))   `shouldReturn` (1 :: Int)
+      lengthOfIO (find wrapper (StringSelector ".icon-Discussion_dark")) `shouldReturn` 0
+      lengthOfIO (find wrapper (StringSelector ".icon-Discussion_RO"))   `shouldReturn` 1
