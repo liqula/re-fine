@@ -181,8 +181,8 @@ instance ToJSON (Block EntityKey) where
     ] <>
     [ "key" .= k | k <- maybeToList key ]
     where
-      renderRange (k, (l, o)) = object ["key"   .= k, "length" .= l, "offset" .= o]
-      renderStyle ((l, o), s) = object ["style" .= s, "length" .= l, "offset" .= o]
+      renderRange (k, (o, l)) = object ["key"   .= k, "length" .= l, "offset" .= o]
+      renderStyle ((o, l), s) = object ["style" .= s, "length" .= l, "offset" .= o]
 
 instance FromJSON (Block EntityKey) where
   parseJSON = withObject "Block EntityKey" $ \obj -> Block
@@ -197,12 +197,12 @@ instance FromJSON (Block EntityKey) where
         k <- obj .: "key"
         l <- obj .: "length"
         o <- obj .: "offset"
-        pure (k, (l, o))
+        pure (k, (o, l))
       parseStyle = withObject "Block EntityKey: inlineStyleRanges" $ \obj -> do
         s <- obj .: "style"
         l <- obj .: "length"
         o <- obj .: "offset"
-        pure ((l, o), s)
+        pure ((o, l), s)
 
 instance ToJSON BlockType where
   toJSON NormalText  = "unstyled"

@@ -24,7 +24,7 @@
 module Refine.Frontend.Document.DocumentSpec
 where
 
-import Control.Lens ((^.))
+import Control.Lens ((^.), (&), (.~))
 import Data.Aeson
 import Data.String.Conversions
 import GHCJS.Types
@@ -41,7 +41,6 @@ import Refine.Frontend.Document.FFI
 import Refine.Frontend.Document.Store
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
-import Refine.Frontend.Test.Console
 import Refine.Frontend.Test.Enzyme
 import Refine.Frontend.ThirdPartyViews
 
@@ -54,60 +53,35 @@ spec = do
 
   describe "convertToRaw, convertFromRaw" $ do
     it "are isomorphic" . property $ \(sanitizeRawContent -> rawContent) -> do
-      pending
-      consoleLogJSONM "**" (convertFromRaw rawContent)
-      consoleLogJSONM "**" rawContent
+      -- because entity ranges are canonicalized, we make the test slightly weaker.  see regression
+      -- tests below for details.
+      let f = convertToRaw . convertFromRaw
+          f' = f . f
+      f' rawContent `shouldBe` f rawContent
 
-      {-
+    it "regression.4" $ do
+      let rawContent = mkRawContent [mkBlock "rF.." & blockEntityRanges .~
+              [ (EntityLink "http://www.example.com", (0,1))
+              , (EntityLink "http://www.example.com", (1,1))
+              , (EntityLink "http://www.example.com", (2,1))
+              , (EntityLink "http://www.example.com", (3,1))
+              ]]
+          rawContent' = (resetBlockKeys . convertToRaw . convertFromRaw) rawContent
+      head (rawContent' ^. rawContentBlocks) ^. blockEntityRanges `shouldBe` [(EntityKey {_unEntityKey = 0},(0,4))]
 
-      observations:
-
-      - some things having ranges disappear, some are left intact.
-      - both the removed ones and the intact ones had valid offset and length.
-      - it affects both blockStyles and entityRanges.
-
-      questions:
-
-      - is there something wrong with ghcjs again?
-      - is it about this: "Ignoring that the GHCJS boot package "aeson" has a different version, 1.1.1.0, than the resolver's wanted version, 1.0.2.1"
-      - or with draft?
-
-      -}
-
-      (resetBlockKeys . convertToRaw . convertFromRaw) rawContent `shouldBe` resetBlockKeys rawContent
+    it "regression.3" $ do
+      let rawContent = mkRawContent [mkBlock "rF" & blockEntityRanges .~ [(EntityLink "http://www.example.com", (0,2))]]
+          rawContent' = (resetBlockKeys . convertToRaw . convertFromRaw) rawContent
+      rawContent' `shouldBe` rawContent
 
     it "regression.2" $ do
-      let rawContent = RawContent
-            { _rawContentBlocks =
-                [ Block { _blockText = "rF"
-                        , _blockEntityRanges = []
-                        , _blockStyles = [((0,1),Italic),((1,1),Italic),((1,1),Italic),((0,1),Bold)]
-                        , _blockType = NormalText
-                        , _blockDepth = 0
-                        , _blockKey = Nothing
-                        }
-                ]
-            , _rawContentEntityMap = mempty
-            }
-      pending
-      (resetBlockKeys . convertToRaw . convertFromRaw) rawContent `shouldBe` rawContent
+      let rawContent = mkRawContent [mkBlock "rF" & blockStyles .~ [((0,1),Italic),((1,1),Italic),((1,1),Italic),((0,1),Bold)]]
+          rawContent' = (resetBlockKeys . convertToRaw . convertFromRaw) rawContent
+      head (rawContent' ^. rawContentBlocks) ^. blockStyles `shouldBe` [((0,2),Italic),((0,1),Bold)]
 
     it "regression.1" $ do
-      let rawContent = RawContent
-            { _rawContentBlocks =
-                [ Block { _blockText = "rF"
-                        , _blockEntityRanges = []
-                        , _blockStyles = [((0,1),Italic)]
-                        , _blockType = NormalText
-                        , _blockDepth = 0
-                        , _blockKey = Nothing
-                        }
-                ]
-            , _rawContentEntityMap = mempty
-            }
-      decode (encode rawContent) `shouldBe` Just rawContent                              -- passes
-      pending
-      js_testConvertFromToRaw (cs $ encode rawContent) `shouldBe` True                   -- fails!
+      let rawContent = mkRawContent [mkBlock "rF" & blockStyles .~ [((0,1),Italic)]]
+      decode (encode rawContent) `shouldBe` Just rawContent
       (resetBlockKeys . convertToRaw . convertFromRaw) rawContent `shouldBe` rawContent
 
 
