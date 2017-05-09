@@ -69,7 +69,7 @@ spec = do
 
   describe "The mainHeader_ component" $ do
     it "sets the header height to a nonzero value" $ do
-      pendingWith "#201, #221"
+      pendingWith "#201, #221"  -- (i actually think this may fail because we fail to handle actions in Enzyme.ReactWrapper.mount.)
 
       let newVDoc :: CompositeVDoc
           newVDoc = CompositeVDoc (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1))

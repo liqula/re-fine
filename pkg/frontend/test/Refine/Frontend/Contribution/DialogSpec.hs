@@ -39,8 +39,6 @@ spec = do
       lengthOfIO (find wrapper (StringSelector ".icon-Note_dark"))       `shouldReturn` 1
       lengthOfIO (find wrapper (StringSelector ".icon-Note_RO"))         `shouldReturn` 0
 
-      pending
-
       lengthOfIO (find wrapper (StringSelector ".icon-Discussion_dark")) `shouldReturn` 1
       lengthOfIO (find wrapper (StringSelector ".icon-Discussion_RO"))   `shouldReturn` 0
 
@@ -49,8 +47,6 @@ spec = do
       lengthOfIO (find wrapper (StringSelector ".icon-Note_dark"))       `shouldReturn` 0
       lengthOfIO (find wrapper (StringSelector ".icon-Note_RO"))         `shouldReturn` 1
 
-      pending
-
       lengthOfIO (find wrapper (StringSelector ".icon-Discussion_dark")) `shouldReturn` 1
       lengthOfIO (find wrapper (StringSelector ".icon-Discussion_RO"))   `shouldReturn` 0
 
@@ -58,8 +54,6 @@ spec = do
       wrapper <- mount $ commentInput_ (AddCommentProps True Nothing (Just CommentKindDiscussion) 10)
       lengthOfIO (find wrapper (StringSelector ".icon-Note_dark"))       `shouldReturn` 1
       lengthOfIO (find wrapper (StringSelector ".icon-Note_RO"))         `shouldReturn` 0
-
-      pending
 
       lengthOfIO (find wrapper (StringSelector ".icon-Discussion_dark")) `shouldReturn` 0
       lengthOfIO (find wrapper (StringSelector ".icon-Discussion_RO"))   `shouldReturn` 1
