@@ -220,7 +220,7 @@ createVDoc pv vdoc = do
         (pv ^. createVDocAbstract)
         Nothing -- hack: use a dummy key which will be replaced by a proper one before createVDoc returns
   mid <- createMetaID svdoc
-  e <- createEdit (mid ^. miID) Nothing vdoc $ CreateEdit
+  e <- createEdit (mid ^. miID) Nothing $ CreateEdit
     { _createEditDesc  = "" -- FIXME
     , _createEditRange = ChunkRange Nothing Nothing  -- QUESTION: is this ok?
     , _createEditVDoc  = vdoc
@@ -241,12 +241,12 @@ getEditIDs vid = liftDB $ S.keyToId . entityKey <$$> selectList [S.EditRepositor
 
 -- * Edit
 
-createEdit :: ID VDoc -> Maybe (ID Edit) -> VDocVersion{-TODO: eliminate this-} -> CreateEdit -> DB Edit
-createEdit rid me vdoc ce = do
+createEdit :: ID VDoc -> Maybe (ID Edit) -> CreateEdit -> DB Edit
+createEdit rid me ce = do
   mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
             (ce ^. createEditRange)
-            vdoc
+            (ce ^. createEditVDoc)
             (S.idToKey rid)
             (S.idToKey <$> me)
             (ce ^. createEditKind)

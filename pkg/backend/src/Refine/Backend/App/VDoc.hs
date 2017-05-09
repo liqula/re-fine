@@ -29,7 +29,7 @@ module Refine.Backend.App.VDoc where
 
 import           Control.Arrow ((&&&))
 import           Control.Lens ((^.), (^?), view, has)
-import           Control.Monad ((<=<), join, mapM)
+import           Control.Monad ((<=<), mapM)
 import qualified Data.Map as Map
 import           Data.Maybe (catMaybes)
 
@@ -94,13 +94,10 @@ addEdit baseeid edit = do
     -- (note that the user must have create permission on the *base
     -- edit*, not the edit about to get created.)
   validateCreateChunkRange baseeid (edit ^. createEditRange)
-  join . db $ do
-    rid                    <- DB.vdocOfEdit baseeid
-    pure $ do
-      let version   = edit ^. createEditVDoc
-      db $ do
-        childEdit <- DB.createEdit rid (Just baseeid) version edit
-        pure childEdit
+  db $ do
+    rid <- DB.vdocOfEdit baseeid
+    childEdit <- DB.createEdit rid (Just baseeid) edit
+    pure childEdit
 
 
 -- | Throw an error if chunk range does not fit 'VDocVersion' identified by edit.
