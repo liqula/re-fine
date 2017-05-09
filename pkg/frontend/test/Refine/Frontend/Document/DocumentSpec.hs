@@ -112,6 +112,86 @@ spec = do
 
   describe "Draft" $ do
     it "editor_ mounts" $ do
+
+
+{----------------------------------------------------------------------
+-- *actually* working solution.  (but still not fitting the react-flux types.)
+
+foreign import javascript unsafe
+  "Draft.Editor"
+  js_draftEditor :: ReactViewRef Object
+
+editor' :: String -> IO ReactElementRef
+editor' (createWithContent . createFromText . cs -> estate) =
+  foreignComponent js_draftEditor ["editorState" &= estate] EmptyElement
+
+foreignComponent :: ReactViewRef Object -> [PropertyOrHandler eventHandler] -> ReactElement eventHandler -> IO ReactElementRef
+foreignComponent cref cprops cchildren = do
+  ([ref], _callbacks) <- runWriterT  -- TODO: release _callbacks (where?).
+                       . createElement runHandler this
+                       $ ForeignElement (Right cref) cprops cchildren
+  pure ref
+  where
+    runHandler = \_ -> pure ()  -- TODO: i think i have to take the SomeAction thingies here and execute them somehow.
+    this = ReactThis nullRef    -- TODO: i probably should have this?
+
+mount' :: ReactElementRef -> IO ReactWrapper
+mount' comp = ReactWrapper <$> js_mount' comp
+
+foreign import javascript unsafe
+  -- "(function() { console.log('3mounting...'); console.log($1); var x = enzyme.mount($1); console.log(x); console.log('success!'); return x; })()"
+  "enzyme.mount($1)"
+  js_mount' :: ReactElementRef -> IO JSVal
+
+----------------------------------------------------------------------}
+
+
+{----------------------------------------------------------------------
+-- second working solution.
+
+editor' :: IO ReactElementRef
+editor' = foreignComponent "Editor" ["editorState" &= createEmpty] EmptyElement
+
+foreignComponent :: JSString -> [PropertyOrHandler eventHandler] -> ReactElement eventHandler -> IO ReactElementRef
+foreignComponent name props children = do
+  ([ref], _callbacks) <- runWriterT  -- TODO: release _callbacks (where?).
+                       . createElement runHandler this
+                       $ ForeignElement (Left name) props children
+  pure ref
+  where
+    runHandler = \_ -> pure ()  -- TODO: i think i have to take the SomeAction thingies here and execute them somehow.
+    this = ReactThis nullRef    -- TODO: i probably should have this?
+
+mount' :: ReactElementRef -> IO ReactWrapper
+mount' comp = ReactWrapper <$> js_mount' comp
+
+foreign import javascript unsafe
+  "(function() { console.log('3mounting...'); console.log($1); var x = enzyme.mount($1); console.log(x); console.log('success!'); return x; })()"
+  js_mount' :: ReactElementRef -> IO JSVal
+
+----------------------------------------------------------------------}
+
+
+{----------------------------------------------------------------------
+-- first working solution.
+
+editor' :: IO (ReactViewRef ())
+editor' = js_editor'
+
+foreign import javascript unsafe
+    "React.createElement('Editor', { editorState: Draft.EditorState.createEmpty() })"
+    js_editor' :: IO (ReactViewRef ())
+
+mount' :: (ReactViewRef ()) -> IO ReactWrapper
+mount' comp = ReactWrapper <$> js_mount' comp
+
+foreign import javascript unsafe
+  "(function() { console.log('3mounting...'); console.log($1); var x = enzyme.mount($1); console.log(x); console.log('success!'); return x; })()"
+  js_mount' :: (ReactViewRef ()) -> IO JSVal
+
+----------------------------------------------------------------------}
+
+
       let doc :: String = "1243/asdf_#$%^"
       wrapper <- mount $ editor_ (defaultEditorProps doc) mempty
       contents :: String <- cs <$> html wrapper
