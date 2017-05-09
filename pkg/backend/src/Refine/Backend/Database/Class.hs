@@ -28,7 +28,7 @@ class Database db where
   getEditIDs         :: ID VDoc -> db [ID Edit]
 
   -- Edit
-  createEdit         :: ID VDoc{-should be Edit?-} -> VDocVersion -> Create Edit -> db Edit
+  createEdit         :: ID VDoc -> Maybe (ID Edit) -> VDocVersion -> Create Edit -> db Edit
   getEdit            :: ID Edit -> db Edit
   getVersion         :: ID Edit -> db VDocVersion
   editNotes          :: ID Edit -> db [ID Note]
@@ -36,7 +36,6 @@ class Database db where
   editDiscussions    :: ID Edit -> db [ID Discussion]
 
   -- FIXME: This information should come from DocRepo.
-  setEditChild       :: ID Edit -> ID Edit -> db ()
   getEditChildren    :: ID Edit -> db [ID Edit]
 
   -- Note

@@ -115,7 +115,6 @@ instance Database DB where
   editNotes          = Entity.editNotes
   editQuestions      = Entity.editQuestions
   editDiscussions    = Entity.editDiscussions
-  setEditChild       = Entity.setEditChild
   getEditChildren    = Entity.getEditChildren
 
   -- * Note

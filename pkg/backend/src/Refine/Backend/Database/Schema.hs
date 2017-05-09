@@ -61,6 +61,7 @@ Edit
     range       ChunkRange
     editVDoc    VDocVersion
     repository  VDocId
+    parent      EditId Maybe
     kind        EditKind
     motivation  ST
 
@@ -139,11 +140,6 @@ ProcessOfAula
 
 -- Connection tables
 
-PC
-    parent EditId
-    child  EditId
-    UniPC parent child
-
 PQ
     edit       EditId
     question    QuestionId
@@ -208,7 +204,6 @@ makeElim ''SubGroup
 makeElim ''Roles
 
 makeElim ''PN
-makeElim ''PC
 makeElim ''PQ
 makeElim ''PD
 makeElim ''DS

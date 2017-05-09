@@ -99,8 +99,7 @@ addEdit baseeid edit = do
     pure $ do
       let version   = edit ^. createEditVDoc
       db $ do
-        childEdit <- DB.createEdit rid version edit
-        DB.setEditChild baseeid (childEdit ^. editID)
+        childEdit <- DB.createEdit rid (Just baseeid) version edit
         pure childEdit
 
 
