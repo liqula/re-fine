@@ -89,6 +89,7 @@ spec = do
                 ]
             , _rawContentEntityMap = mempty
             }
+      pending
       (resetBlockKeys . convertToRaw . convertFromRaw) rawContent `shouldBe` rawContent
 
     it "regression.1" $ do
