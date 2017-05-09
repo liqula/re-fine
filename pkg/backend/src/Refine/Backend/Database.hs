@@ -105,14 +105,7 @@ instance Database DB where
   listVDocs          = Entity.listVDocs
   createVDoc         = Entity.createVDoc
   getVDoc            = Entity.getVDoc
-  vdocRepo           = Entity.vdocRepo
-  vdocRepoOfEdit     = Entity.vdocRepoOfEdit
-
-  vDocRepoVDoc       = Entity.vDocRepoVDoc
-
-  -- * Repo
-  createRepo         = Entity.createRepo
-  getRepo            = Entity.getRepo
+  vdocOfEdit         = Entity.vdocOfEdit
   getEditIDs         = Entity.getEditIDs
 
   -- * Edit
@@ -124,9 +117,6 @@ instance Database DB where
   editDiscussions    = Entity.editDiscussions
   setEditChild       = Entity.setEditChild
   getEditChildren    = Entity.getEditChildren
-
-  -- * Repo and edit
-  editVDocRepo       = Entity.editVDocRepo
 
   -- * Note
   createNote         = Entity.createNote

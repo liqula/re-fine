@@ -55,7 +55,7 @@ MetaInfo
 VDoc
     title       Title
     desc        Abstract
-    repo        RepoId
+    headId      EditId
 
 Edit
     desc        Text
@@ -63,10 +63,6 @@ Edit
     editVDoc    VDocVersion
     kind        EditKind
     motivation  ST
-
-Repo
-    name        Text
-    headId      EditId
 
 Note
     text        Text
@@ -143,15 +139,8 @@ ProcessOfAula
 
 -- Connection tables
 
-VR
-    vdoc        VDocId
-    repository  RepoId
-    UniVR vdoc repository
-    UniVRV vdoc
-    UniVRR repository
-
 RP  -- TODO: should be RE
-    repository  RepoId
+    repository  VDocId
     edit       EditId
     UniRP repository edit
 
@@ -211,7 +200,6 @@ keyToId = ID . fromSqlKey
 makeElim ''MetaInfo
 makeElim ''VDoc
 makeElim ''Edit
-makeElim ''Repo
 makeElim ''Note
 makeElim ''Question
 makeElim ''Answer
@@ -224,7 +212,6 @@ makeElim ''SubGroup
 
 makeElim ''Roles
 
-makeElim ''VR
 makeElim ''RP
 makeElim ''PN
 makeElim ''PC

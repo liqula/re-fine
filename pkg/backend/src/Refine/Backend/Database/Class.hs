@@ -20,20 +20,15 @@ class Database db where
 
   -- VDoc
   listVDocs          :: db [ID VDoc]
-  createVDoc         :: Create VDoc -> VDocRepo -> db VDoc
+  createVDoc         :: Create VDoc -> VDocVersion -> db VDoc
   getVDoc            :: ID VDoc -> db VDoc
-  vdocRepo           :: ID VDoc -> db (ID VDocRepo)
-  vdocRepoOfEdit     :: ID Edit -> db (ID VDocRepo)
-
-  vDocRepoVDoc      :: ID VDocRepo -> db (ID VDoc)
+  vdocOfEdit         :: ID Edit -> db (ID VDoc)
 
   -- Repo
-  createRepo         :: VDocVersion -> db VDocRepo
-  getRepo            :: ID VDocRepo -> db VDocRepo
-  getEditIDs         :: ID VDocRepo -> db [ID Edit]
+  getEditIDs         :: ID VDoc -> db [ID Edit]
 
   -- Edit
-  createEdit         :: ID VDocRepo -> VDocVersion -> Create Edit -> db Edit
+  createEdit         :: ID VDoc{-should be Edit?-} -> VDocVersion -> Create Edit -> db Edit
   getEdit            :: ID Edit -> db Edit
   getVersion         :: ID Edit -> db VDocVersion
   editNotes          :: ID Edit -> db [ID Note]
@@ -43,9 +38,6 @@ class Database db where
   -- FIXME: This information should come from DocRepo.
   setEditChild       :: ID Edit -> ID Edit -> db ()
   getEditChildren    :: ID Edit -> db [ID Edit]
-
-  -- Repo and edit
-  editVDocRepo      :: ID Edit -> db (ID VDocRepo)
 
   -- Note
   createNote         :: ID Edit -> Create Note -> db Note

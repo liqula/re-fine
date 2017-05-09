@@ -52,7 +52,6 @@ import           Refine.Prelude (nothingToError, Timestamp, getCurrentTimestamp)
 type instance S.EntityRep MetaInfo   = S.MetaInfo
 type instance S.EntityRep VDoc       = S.VDoc
 type instance S.EntityRep Edit       = S.Edit
-type instance S.EntityRep VDocRepo   = S.Repo
 type instance S.EntityRep Note       = S.Note
 type instance S.EntityRep Question   = S.Question
 type instance S.EntityRep Discussion = S.Discussion
@@ -205,7 +204,7 @@ getMetaEntity f i = do
 
 -- * VDoc
 
-toVDoc :: MetaID VDoc -> Title -> Abstract -> Key S.Repo -> VDoc
+toVDoc :: MetaID VDoc -> Title -> Abstract -> Key S.Edit -> VDoc
 toVDoc vid title abstract repoid = VDoc vid title abstract (S.keyToId repoid)
 
 listVDocs :: DB [ID VDoc]
@@ -213,67 +212,33 @@ listVDocs = do
   opts <- dbSelectOpts
   liftDB $ S.keyToId <$$> selectKeysList [] opts
 
-createVDoc :: Create VDoc -> VDocRepo -> DB VDoc
-createVDoc pv vr = do
+createVDoc :: Create VDoc -> VDocVersion -> DB VDoc
+createVDoc pv vdoc = do
+  let desc = "" -- TODO
+      motiv = ""
+      cr = ChunkRange Nothing Nothing  -- TODO
+  -- FIXME: no metaID is made for initial edit
+  editkey <- liftDB . insert $ S.Edit desc cr vdoc Initial motiv
   let svdoc = S.VDoc
         (pv ^. createVDocTitle)
         (pv ^. createVDocAbstract)
-        (vr ^. vdocRepoID . to S.idToKey)
+        editkey
   mid <- createMetaID svdoc
-  addConnection S.VR (mid ^. miID) (vr ^. vdocRepoID)
+  addConnection S.RP (mid ^. miID) (S.keyToId editkey :: ID Edit)
   pure $ S.vDocElim (toVDoc mid) svdoc
 
 getVDoc :: ID VDoc -> DB VDoc
 getVDoc = getMetaEntity (S.vDocElim . toVDoc)
 
-vdocRepo :: ID VDoc -> DB (ID VDocRepo)
-vdocRepo vid = do
-  opts <- dbSelectOpts
-  vs <- liftDB $ foreignKeyField S.vRRepository <$$> selectList [S.VRVdoc ==. S.idToKey vid] opts
-  unique "vdocRepo" vs
-
-vdocRepoOfEdit :: ID Edit -> DB (ID VDocRepo)
-vdocRepoOfEdit eid = do
-  opts <- dbSelectOpts
-  unique "vdocRepoOfEdit" =<< liftDB
-    (foreignKeyField S.rPRepository <$$> selectList [S.RPEdit ==. S.idToKey eid] opts)
-
 -- * Repo
 
-createRepo :: VDocVersion -> DB VDocRepo
-createRepo vdoc = liftDB $ do
-    let desc = "" -- TODO
-        motiv = ""
-    editkey <- insert $ S.Edit desc cr vdoc Initial motiv
-    repokey <- insert $ S.Repo "title" {- TODO -} editkey
-    void  . insert $ S.RP repokey editkey
-    pure $ VDocRepo (S.keyToId repokey) (S.keyToId editkey)
-  where
-    cr :: ChunkRange
-    cr = ChunkRange Nothing Nothing  -- TODO
-
-
-getRepo :: ID VDocRepo -> DB VDocRepo
-getRepo vid = S.repoElim toVDocRepo <$> getEntityRep vid
-  where
-    toVDocRepo :: ST -> Key S.Edit -> VDocRepo
-    toVDocRepo _desc pid = VDocRepo vid (S.keyToId pid)
-
-getEditIDs :: ID VDocRepo -> DB [ID Edit]
+getEditIDs :: ID VDoc -> DB [ID Edit]
 getEditIDs vid = liftDB $
   foreignKeyField S.rPEdit <$$> selectList [S.RPRepository ==. S.idToKey vid] []
 
--- * DocRepo and VDoc
-
-vDocRepoVDoc :: ID VDocRepo -> DB (ID VDoc)
-vDocRepoVDoc rid = do
-  repos <- foreignKeyField S.vRVdoc
-            <$$> liftDB (selectList [S.VRRepository ==. S.idToKey rid] [])
-  unique "vdocRepoVDoc" repos
-
 -- * Edit
 
-createEdit :: ID VDocRepo -> VDocVersion -> CreateEdit -> DB Edit
+createEdit :: ID VDoc -> VDocVersion -> CreateEdit -> DB Edit
 createEdit rid vdoc ce = do
   mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
@@ -325,13 +290,14 @@ getEditChildren parent = do
 
 -- * Repo and edit
 
-editVDocRepo :: ID Edit -> DB (ID VDocRepo)
-editVDocRepo pid = do
+vdocOfEdit :: ID Edit -> DB (ID VDoc)
+vdocOfEdit pid = do
   opts <- dbSelectOpts
   rs <- liftDB $ foreignKeyField S.rPRepository <$$> selectList [S.RPEdit ==. S.idToKey pid] opts
-  unique "editVDocRepo" rs
+  unique "vdocOfEdit" rs
 
-registerEdit :: ID VDocRepo -> ID Edit -> DB ()
+-- TODO: elim
+registerEdit :: ID VDoc -> ID Edit -> DB ()
 registerEdit rid pid = void . liftDB . insert $ S.RP (S.idToKey rid) (S.idToKey pid)
 
 -- * Note
@@ -710,23 +676,15 @@ instance (C.StoreProcessData DB a, Typeable a) => C.GroupOf DB (Process a) where
 instance C.GroupOf DB VDoc where
   groupOf = vDocProcess >=> C.groupOf
 
-instance C.GroupOf DB VDocRepo where
-  groupOf = vDocRepoVDoc >=> C.groupOf
-
 instance C.GroupOf DB Edit where
-  groupOf = editVDocRepo >=> C.groupOf
+  groupOf = vdocOfEdit >=> C.groupOf
 
 -- * ProcessOf
 
-type instance C.ProcessPayload Edit = C.ProcessPayload VDocRepo
+type instance C.ProcessPayload Edit = C.ProcessPayload VDoc
 
 instance C.ProcessOf DB Edit where
-  processOf = editVDocRepo >=> C.processOf
-
-type instance C.ProcessPayload VDocRepo = C.ProcessPayload VDoc
-
-instance C.ProcessOf DB VDocRepo where
-  processOf = vDocRepoVDoc >=> C.processOf
+  processOf = vdocOfEdit >=> C.processOf
 
 type instance C.ProcessPayload VDoc = CollaborativeEdit
 

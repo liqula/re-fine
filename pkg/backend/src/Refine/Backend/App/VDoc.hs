@@ -53,9 +53,7 @@ createVDoc :: Create VDoc -> App VDoc
 createVDoc pv = do
   appLog "createVDoc"
   let vd = pv ^. createVDocInitVersion
-  db $ do
-    r <- DB.createRepo vd
-    DB.createVDoc pv r
+  db $ DB.createVDoc pv vd
 
 getVDoc :: ID VDoc -> App VDoc
 getVDoc i = do
@@ -71,9 +69,7 @@ getCompositeVDoc :: ID VDoc -> App CompositeVDoc  -- TODO: take an edit id here,
 getCompositeVDoc vid = do
   appLog "getCompositeVDoc"
   vdoc     <- db $ DB.getVDoc vid
-  rid      <- db $ DB.vdocRepo vid
-  repo     <- db $ DB.getRepo rid
-  let headid = repo ^. vdocHeadEdit
+  let headid = vdoc ^. vdocHeadEdit
   comments <- db $ DB.editComments headid
   let commentNotes       = catMaybes $ (^? _CommentNote)       <$> filter (has _CommentNote)       comments
       commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
@@ -82,7 +78,7 @@ getCompositeVDoc vid = do
   version <- db $ DB.getVersion headid
   pure $
     CompositeVDoc
-      vdoc repo headid version
+      vdoc headid version
       (toMap editID edits)
       (toMap noteID commentNotes)
       (toMap (compositeDiscussion . discussionID) commentDiscussions)
@@ -99,7 +95,7 @@ addEdit baseeid edit = do
     -- edit*, not the edit about to get created.)
   validateCreateChunkRange baseeid (edit ^. createEditRange)
   join . db $ do
-    rid                    <- DB.editVDocRepo baseeid
+    rid                    <- DB.vdocOfEdit baseeid
     pure $ do
       let version   = edit ^. createEditVDoc
       db $ do

@@ -36,7 +36,7 @@ data VDoc = VDoc
   { _vdocMetaID   :: MetaID VDoc
   , _vdocTitle    :: Title
   , _vdocAbstract :: Abstract
-  , _vdocRepo     :: ID VDocRepo
+  , _vdocHeadEdit :: ID Edit
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -65,12 +65,6 @@ vdocVersionFromSTSafe = Right . VDocVersion
 -- | TODO: this should not be needed anywhere except perhaps in tests
 vdocVersionFromST :: ST -> VDocVersion
 vdocVersionFromST = VDocVersion
-
-data VDocRepo = VDocRepo
-  { _vdocRepoID    :: ID VDocRepo
-  , _vdocHeadEdit  :: ID Edit
-  }
-  deriving (Eq, Ord, Show, Read, Generic)
 
 data Edit = Edit
   { _editMetaID :: MetaID Edit
@@ -107,7 +101,6 @@ type instance Create Edit = CreateEdit
 
 makeRefineType ''VDoc
 makeRefineType ''CreateVDoc
-makeRefineType ''VDocRepo
 makeRefineType ''Edit
 makeRefineType ''CreateEdit
 makeRefineType ''EditKind
@@ -131,7 +124,6 @@ makeRefineType ''VDocVersion
 -- - if we try to consider comments, edits, ... on other versions than head, we are in trouble.
 data CompositeVDoc = CompositeVDoc
   { _compositeVDoc            :: VDoc
-  , _compositeVDocRepo        :: VDocRepo
   , _compositeVDocEditID      :: ID Edit
   , _compositeVDocVersion     :: VDocVersion
   , _compositeVDocEdits       :: Map (ID Edit) Edit
