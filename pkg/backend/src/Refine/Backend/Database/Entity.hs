@@ -120,7 +120,7 @@ foreignKeyField column = S.keyToId . column . entityVal
 
 -- NOTES: How to handle associations? What to update, what to keep?
 vDocToRecord :: VDoc -> DB S.VDoc
-vDocToRecord (VDoc _i t a r) = pure (S.VDoc t a (S.idToKey r))
+vDocToRecord (VDoc _i t a r) = pure (S.VDoc t a (Just $ S.idToKey r))
 
 updateVDoc :: ID VDoc -> VDoc -> DB ()
 updateVDoc vid vdoc = do
@@ -204,8 +204,9 @@ getMetaEntity f i = do
 
 -- * VDoc
 
-toVDoc :: MetaID VDoc -> Title -> Abstract -> Key S.Edit -> VDoc
-toVDoc vid title abstract repoid = VDoc vid title abstract (S.keyToId repoid)
+toVDoc :: MetaID VDoc -> Title -> Abstract -> Maybe (Key S.Edit) -> VDoc
+toVDoc vid title abstract (Just repoid) = VDoc vid title abstract (S.keyToId repoid)
+toVDoc _ _ _ Nothing = error "impossible"
 
 listVDocs :: DB [ID VDoc]
 listVDocs = do
@@ -214,18 +215,21 @@ listVDocs = do
 
 createVDoc :: Create VDoc -> VDocVersion -> DB VDoc
 createVDoc pv vdoc = do
-  let desc = "" -- TODO
-      motiv = ""
-      cr = ChunkRange Nothing Nothing  -- TODO
-  -- FIXME: no metaID is made for initial edit
-  editkey <- liftDB . insert $ S.Edit desc cr vdoc Initial motiv
   let svdoc = S.VDoc
         (pv ^. createVDocTitle)
         (pv ^. createVDocAbstract)
-        editkey
+        Nothing -- hack: use a dummy key which will be replaced by a proper one before createVDoc returns
   mid <- createMetaID svdoc
-  addConnection S.RP (mid ^. miID) (S.keyToId editkey :: ID Edit)
-  pure $ S.vDocElim (toVDoc mid) svdoc
+  e <- createEdit (mid ^. miID) vdoc $ CreateEdit
+    { _createEditDesc  = "" -- FIXME
+    , _createEditRange = ChunkRange Nothing Nothing  -- QUESTION: is this ok?
+    , _createEditVDoc  = vdoc
+    , _createEditKind  = Initial
+    , _createEditMotiv = "" -- FIXME
+    }
+  let e' = S.idToKey (e ^. editMetaID . miID) :: Key S.Edit
+  liftDB $ update (S.idToKey $ mid ^. miID) [S.VDocHeadId =. Just e']
+  pure $ S.vDocElim (toVDoc mid) svdoc {S.vDocHeadId = Just e'}
 
 getVDoc :: ID VDoc -> DB VDoc
 getVDoc = getMetaEntity (S.vDocElim . toVDoc)
@@ -233,20 +237,19 @@ getVDoc = getMetaEntity (S.vDocElim . toVDoc)
 -- * Repo
 
 getEditIDs :: ID VDoc -> DB [ID Edit]
-getEditIDs vid = liftDB $
-  foreignKeyField S.rPEdit <$$> selectList [S.RPRepository ==. S.idToKey vid] []
+getEditIDs vid = liftDB $ S.keyToId . entityKey <$$> selectList [S.EditRepository ==. S.idToKey vid] []
 
 -- * Edit
 
-createEdit :: ID VDoc -> VDocVersion -> CreateEdit -> DB Edit
+createEdit :: ID VDoc -> VDocVersion{-TODO: eliminate this-} -> CreateEdit -> DB Edit
 createEdit rid vdoc ce = do
   mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
             (ce ^. createEditRange)
             vdoc
+            (S.idToKey rid)
             (ce ^. createEditKind)
             (ce ^. createEditMotiv)
-  addConnection S.RP rid (mid ^. miID)
   pure $ Edit
     mid
     (ce ^. createEditDesc)
@@ -255,10 +258,10 @@ createEdit rid vdoc ce = do
     (ce ^. createEditMotiv)
 
 getEdit :: ID Edit -> DB Edit
-getEdit = getMetaEntity $ \mid -> S.editElim $ \desc cr _ -> Edit mid desc cr
+getEdit = getMetaEntity $ \mid -> S.editElim $ \desc cr _ _ -> Edit mid desc cr
 
 getVersion :: ID Edit -> DB VDocVersion
-getVersion pid = S.editElim (\_ _ vdoc _ _ -> vdoc) <$> getEntityRep pid
+getVersion pid = S.editElim (\_ _ vdoc _ _ _ -> vdoc) <$> getEntityRep pid
 
 editNotes :: ID Edit -> DB [ID Note]
 editNotes pid = do
@@ -291,14 +294,7 @@ getEditChildren parent = do
 -- * Repo and edit
 
 vdocOfEdit :: ID Edit -> DB (ID VDoc)
-vdocOfEdit pid = do
-  opts <- dbSelectOpts
-  rs <- liftDB $ foreignKeyField S.rPRepository <$$> selectList [S.RPEdit ==. S.idToKey pid] opts
-  unique "vdocOfEdit" rs
-
--- TODO: elim
-registerEdit :: ID VDoc -> ID Edit -> DB ()
-registerEdit rid pid = void . liftDB . insert $ S.RP (S.idToKey rid) (S.idToKey pid)
+vdocOfEdit pid = S.editElim (\_ _ _ vid _ _ -> S.keyToId vid) <$> getEntityRep pid
 
 -- * Note
 

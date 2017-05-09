@@ -42,7 +42,6 @@ import Refine.Common.Types.VDoc (Abstract, EditKind, Title, VDocVersion)
 import Refine.Backend.Database.Field()
 import Refine.Backend.Database.Types (MetaInfoID)
 
-
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
 MetaInfo
     typeTag     MetaInfoID
@@ -55,12 +54,13 @@ MetaInfo
 VDoc
     title       Title
     desc        Abstract
-    headId      EditId
+    headId      EditId Maybe
 
 Edit
     desc        Text
     range       ChunkRange
     editVDoc    VDocVersion
+    repository  VDocId
     kind        EditKind
     motivation  ST
 
@@ -139,11 +139,6 @@ ProcessOfAula
 
 -- Connection tables
 
-RP  -- TODO: should be RE
-    repository  VDocId
-    edit       EditId
-    UniRP repository edit
-
 PC
     parent EditId
     child  EditId
@@ -212,7 +207,6 @@ makeElim ''SubGroup
 
 makeElim ''Roles
 
-makeElim ''RP
 makeElim ''PN
 makeElim ''PC
 makeElim ''PQ
