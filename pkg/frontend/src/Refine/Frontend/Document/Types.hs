@@ -22,7 +22,6 @@
 
 module Refine.Frontend.Document.Types where
 
-import           Control.Exception (assert)
 import           Control.Lens (makeLenses)
 import           GHC.Generics (Generic)
 import           React.Flux (UnoverlapAllEq)
@@ -58,8 +57,7 @@ data DocumentState =
   deriving (Show, Eq, Generic)
 
 mkDocumentStateView :: RawContent -> DocumentState
-mkDocumentStateView c = assert (c == resetBlockKeys c')
-                      $ DocumentStateView c' e
+mkDocumentStateView c = DocumentStateView c' e
   where
     e  = createWithContent $ convertFromRaw c
     c' = convertToRaw $ getCurrentContent e
