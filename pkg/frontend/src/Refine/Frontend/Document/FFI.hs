@@ -173,7 +173,7 @@ documentToggleItalic st = js_ES_toggleInlineStyle st "ITALIC"
 
 -- | https://draftjs.org/docs/api-reference-rich-utils.html#content
 foreign import javascript unsafe
-    "RichUtils.toggleInlineStyle($1,$2)"
+    "Draft.RichUtils.toggleInlineStyle($1,$2)"
     js_ES_toggleInlineStyle :: EditorState -> JSString -> EditorState
 
 

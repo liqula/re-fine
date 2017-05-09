@@ -3,12 +3,9 @@
 if (!global.React           ||
     !global.ReactDOM        ||
     !global.Sticky          ||
-    !global.StickyContainer ||
     !global.Skylight        ||
     !global.Hammer          ||
     !global.Draft           ||
-    !global.DraftEditor     ||
-    !global.RichUtils       ||
     !global.DraftStateToHTML) {
     throw "hookup.js should have been called by now."
 }

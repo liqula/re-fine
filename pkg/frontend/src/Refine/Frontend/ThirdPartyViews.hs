@@ -21,14 +21,15 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.ThirdPartyViews
-  ( editor_
-  , hammer_
-  , skylight_
-  , sticky_
+  ( sticky_
   , stickyContainer_
+  , skylight_
+  , hammer_
+  , editor_
   ) where
 
-import           React.Flux
+import GHCJS.Types
+import React.Flux
 
 
 -- TODO: test that this doesn't crash because the foreign object is not loaded.  this has bitten us
@@ -36,17 +37,30 @@ import           React.Flux
 
 
 sticky_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-sticky_ = foreign_ "Sticky"
+sticky_ = foreignClass js_sticky
+
+foreign import javascript unsafe "Sticky.Sticky" js_sticky :: JSVal
+
 
 stickyContainer_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-stickyContainer_ = foreign_ "StickyContainer"
+stickyContainer_ = foreignClass js_stickyContainer
 
--- | SkyLightStateless from react-skylight
+foreign import javascript unsafe "Sticky.StickyContainer" js_stickyContainer :: JSVal
+
+
 skylight_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-skylight_ = foreign_ "Skylight"
+skylight_ = foreignClass js_skylight
+
+foreign import javascript unsafe "Skylight.SkyLightStateless" js_skylight :: JSVal
+
 
 hammer_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-hammer_ = foreign_ "Hammer"
+hammer_ = foreignClass js_hammer
+
+foreign import javascript unsafe "Hammer" js_hammer :: JSVal
+
 
 editor_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-editor_ = foreign_ "DraftEditor"
+editor_ = foreignClass js_editor
+
+foreign import javascript unsafe "Draft.Editor" js_editor :: JSVal
