@@ -24,12 +24,13 @@
 module Refine.Frontend.Document.DocumentSpec
 where
 
-import Data.Aeson
 import Control.Lens ((^.))
+import Data.Aeson
 import Data.String.Conversions
+import GHCJS.Types
+import React.Flux hiding (property)
 import Test.Hspec
 import Test.QuickCheck
-import GHCJS.Types
 
 import Refine.Common.Test.Arbitrary
 import Refine.Common.Test.Samples
@@ -43,6 +44,7 @@ import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Test.Console
 import Refine.Frontend.Test.Enzyme
+import Refine.Frontend.ThirdPartyViews
 
 
 spec :: Spec
@@ -90,7 +92,6 @@ spec = do
             }
       (resetBlockKeys . convertToRaw . convertFromRaw) rawContent `shouldBe` rawContent
 
-
     it "regression.1" $ do
       let rawContent = RawContent
             { _rawContentBlocks =
@@ -110,6 +111,15 @@ spec = do
       (resetBlockKeys . convertToRaw . convertFromRaw) rawContent `shouldBe` rawContent
 
 
+  describe "Draft" $ do
+    it "editor_ mounts" $ do
+      let doc :: String = "1243/asdf_#$%^"
+      wrapper <- mount $ editor_ ["editorState" &= (createWithContent . createFromText . cs $ doc)] mempty
+      contents :: String <- cs <$> html wrapper
+      contents `shouldContain` "class=\"public-DraftEditor-content\""
+      contents `shouldContain` doc
+
+
   describe "Document" $ do
     let mkTestProps :: RawContent -> DocumentProps
         mkTestProps c = DocumentProps
@@ -124,6 +134,21 @@ spec = do
     it "renders with arbitrary content" . property $ \rawContent -> do
       wrapper <- shallow $ document_ (mkTestProps rawContent)
       lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` 1
+
+    it "document_ mounts" $ do
+      let rawContent = RawContent [Block "asdf_1234-#$!&" [] [] NormalText 0 (Just (BlockKey "0"))] mempty
+      wrapper <- mount $ document_ (mkTestProps rawContent)
+      contents :: String <- cs <$> html wrapper
+      contents `shouldContain` "<article "
+
+    it "marks overlapping contribution ranges correctly" $ do
+      pending
+      -- select df_12
+      -- mark as bold
+      -- select 1234
+      -- mark as italic
+      -- retrieve rawcontent and check inline styles against literal.
+      -- see also: https://github.com/facebook/draft-js/issues/325#issuecomment-273915121
 
 
 foreign import javascript unsafe
