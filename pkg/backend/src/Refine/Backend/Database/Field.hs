@@ -12,7 +12,6 @@ import Database.Persist
 import Database.Persist.Sql
 
 import Refine.Prelude (Timestamp(..))
-import Refine.Backend.DocRepo.Core
 import Refine.Backend.Database.Types (MetaInfoID(..))
 import Refine.Common.Types.Prelude (UserInfo)
 import Refine.Common.Types.Chunk
@@ -60,23 +59,6 @@ instance PersistFieldSql Abstract where
   -- of the title
   sqlType _ = sqlType (Proxy :: Proxy ST)
 
-
-instance PersistField RepoHandle where
-  toPersistValue (RepoHandle t) = toPersistValue t
-  fromPersistValue              = fmap RepoHandle . fromPersistValue
-
-instance PersistFieldSql RepoHandle where
-  -- CAUTION: This should be generated, to represent the actual inner type
-  -- of the title
-  sqlType _ = sqlType (Proxy :: Proxy ST)
-
-
-instance PersistField EditHandle where
-  toPersistValue (EditHandle t) = toPersistValue t
-  fromPersistValue              = fmap EditHandle . fromPersistValue
-
-instance PersistFieldSql EditHandle where
-  sqlType _ = sqlType (Proxy :: Proxy ST)
 
 -- * JSON stored values
 

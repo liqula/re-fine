@@ -55,7 +55,6 @@ import Refine.Backend.App
 import Refine.Backend.App.MigrateDB (migrateDB)
 import Refine.Backend.Config
 import Refine.Backend.Database
-import Refine.Backend.DocRepo (DocRepoError(..), createRepoNat)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
@@ -144,8 +143,7 @@ mkBackend cfg initUH migrate = do
 
   -- create runners
   (dbRunner, dbNat, runUserHandle) <- createDBNat cfg
-  docRepoNat <- createRepoNat cfg
-  backend    <- mkServerApp cfg dbNat dbRunner docRepoNat (initUH runUserHandle)
+  backend    <- mkServerApp cfg dbNat dbRunner (initUH runUserHandle)
 
   -- migration
   result <- runExceptT (backendRunApp backend $$ migrate)
@@ -158,14 +156,13 @@ mkBackend cfg initUH migrate = do
 
 mkServerApp
     :: MonadRefine db uh
-    => Config -> MkDBNat db -> DBRunner -> DocRepoNat -> UHNat uh -> IO (Backend db uh)
-mkServerApp cfg dbNat dbRunner docRepoNat uh = do
+    => Config -> MkDBNat db -> DBRunner -> UHNat uh -> IO (Backend db uh)
+mkServerApp cfg dbNat dbRunner uh = do
   poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
       app    = runApp dbNat
                       dbRunner
-                      docRepoNat
                       uh
                       logger
                       (cfg ^. cfgCsrfSecret . to CsrfSecret)
@@ -206,7 +203,6 @@ toApiError = \case
   AppUnknownError e      -> ApiUnknownError e
   AppVDocVersionError    -> ApiVDocVersionError
   AppDBError e           -> ApiDBError . cs $ show e
-  AppDocRepoError e      -> ApiDocRepoError . cs $ show e
   AppUserNotFound e      -> ApiUserNotFound e
   AppUserNotLoggedIn     -> ApiUserNotLoggedIn
   AppUserCreationError e -> ApiUserCreationError $ createUserErrorToApiError e
@@ -230,7 +226,6 @@ appServantErr = \case
   AppUnknownError _        -> err500
   AppVDocVersionError      -> err409
   AppDBError dbe           -> dbServantErr dbe
-  AppDocRepoError dre      -> docRepoServantErr dre
   AppUserNotFound _        -> err404
   AppUserNotLoggedIn       -> err403
   AppUserCreationError uce -> userCreationError uce
@@ -250,11 +245,6 @@ dbServantErr = \case
   DBUserNotLoggedIn   -> err403
   DBMigrationParseErrors _ -> err500
   DBUnsafeMigration _      -> err500
-
-docRepoServantErr :: DocRepoError -> ServantErr
-docRepoServantErr = \case
-  DocRepoUnknownError _ -> err500
-  DocRepoException    _ -> err500
 
 userCreationError :: CreateUserError -> ServantErr
 userCreationError = \case

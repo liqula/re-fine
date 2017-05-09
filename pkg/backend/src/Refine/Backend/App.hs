@@ -48,7 +48,6 @@ runApp
   :: forall (db :: * -> *) (uh :: * -> *)
   .  MkDBNat db
   -> DBRunner
-  -> DocRepoNat
   -> UHNat uh
   -> Logger
   -> CsrfSecret
@@ -59,7 +58,6 @@ runApp
 runApp
   dbNat
   dbrunner
-  docRepoNat
   uhNat
   logger
   csrfSecret
@@ -74,7 +72,7 @@ runApp
       runSR m = do
         unDBRunner dbrunner $ \dbc -> do
           dbInit dbc
-          let r = AppContext dbNat dbc docRepoNat uhNat logger csrfSecret sessionLength poFilesRoot
+          let r = AppContext dbNat dbc uhNat logger csrfSecret sessionLength poFilesRoot
               s = AppState Nothing UserLoggedOut
           x <- runReaderT (evalStateT m s) r
                `finally`

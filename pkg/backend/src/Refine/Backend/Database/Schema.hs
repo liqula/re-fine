@@ -41,7 +41,6 @@ import Refine.Common.Types.Role (Role)
 import Refine.Common.Types.VDoc (Abstract, EditKind, Title, VDocVersion)
 import Refine.Backend.Database.Field()
 import Refine.Backend.Database.Types (MetaInfoID)
-import Refine.Backend.DocRepo.Core (EditHandle, RepoHandle)
 
 
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
@@ -61,14 +60,12 @@ VDoc
 Edit
     desc        Text
     range       ChunkRange
-    editHandle  EditHandle
     editVDoc    VDocVersion
     kind        EditKind
     motivation  ST
 
 Repo
     name        Text
-    repoHandle  RepoHandle
     headId      EditId
 
 Note

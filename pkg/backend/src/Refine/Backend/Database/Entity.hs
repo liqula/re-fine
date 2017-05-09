@@ -43,7 +43,6 @@ import qualified Refine.Backend.Database.Class as C
 import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
 import           Refine.Backend.Database.Types
-import qualified Refine.Backend.DocRepo.Core as DocRepo
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
@@ -241,12 +240,12 @@ vdocRepoOfEdit eid = do
 
 -- * Repo
 
-createRepo :: DocRepo.RepoHandle -> DocRepo.EditHandle -> VDocVersion -> DB VDocRepo
-createRepo repoh edith vdoc = liftDB $ do
+createRepo :: VDocVersion -> DB VDocRepo
+createRepo vdoc = liftDB $ do
     let desc = "" -- TODO
         motiv = ""
-    editkey <- insert $ S.Edit desc cr edith vdoc Initial motiv
-    repokey <- insert $ S.Repo "title" {- TODO -} repoh editkey
+    editkey <- insert $ S.Edit desc cr vdoc Initial motiv
+    repokey <- insert $ S.Repo "title" {- TODO -} editkey
     void  . insert $ S.RP repokey editkey
     pure $ VDocRepo (S.keyToId repokey) (S.keyToId editkey)
   where
@@ -257,23 +256,8 @@ createRepo repoh edith vdoc = liftDB $ do
 getRepo :: ID VDocRepo -> DB VDocRepo
 getRepo vid = S.repoElim toVDocRepo <$> getEntityRep vid
   where
-    toVDocRepo :: ST -> DocRepo.RepoHandle -> Key S.Edit -> VDocRepo
-    toVDocRepo _desc _repoHandle pid = VDocRepo vid (S.keyToId pid)
-
-getRepoFromHandle :: DocRepo.RepoHandle -> DB VDocRepo
-getRepoFromHandle hndl = do
-  opts <- dbSelectOpts
-  rs <- liftDB $ selectList [S.RepoRepoHandle ==. hndl] opts
-  r <- unique "getRepoFromHandle" rs
-  let rid = S.keyToId $ entityKey r
-      toRepo _desc _hdnl repohead = VDocRepo rid (S.keyToId repohead)
-  pure $ S.repoElim toRepo (entityVal r)
-
-getRepoHandle :: ID VDocRepo -> DB DocRepo.RepoHandle
-getRepoHandle vid = S.repoElim toRepoHandle <$> getEntityRep vid
-  where
-    toRepoHandle :: ST -> DocRepo.RepoHandle -> Key S.Edit -> DocRepo.RepoHandle
-    toRepoHandle _desc repoHandle _pid = repoHandle
+    toVDocRepo :: ST -> Key S.Edit -> VDocRepo
+    toVDocRepo _desc pid = VDocRepo vid (S.keyToId pid)
 
 getEditIDs :: ID VDocRepo -> DB [ID Edit]
 getEditIDs vid = liftDB $
@@ -289,12 +273,11 @@ vDocRepoVDoc rid = do
 
 -- * Edit
 
-createEdit :: ID VDocRepo -> DocRepo.EditHandle -> VDocVersion -> CreateEdit -> DB Edit
-createEdit rid edith vdoc ce = do
+createEdit :: ID VDocRepo -> VDocVersion -> CreateEdit -> DB Edit
+createEdit rid vdoc ce = do
   mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
             (ce ^. createEditRange)
-            edith
             vdoc
             (ce ^. createEditKind)
             (ce ^. createEditMotiv)
@@ -307,25 +290,10 @@ createEdit rid edith vdoc ce = do
     (ce ^. createEditMotiv)
 
 getEdit :: ID Edit -> DB Edit
-getEdit = getMetaEntity $ \mid -> S.editElim $ \desc cr _handle _ -> Edit mid desc cr
-
-getEditFromHandle :: DocRepo.EditHandle -> DB Edit
-getEditFromHandle hndl = do
-  opts <- dbSelectOpts
-  ps <- liftDB $ selectList [S.EditEditHandle ==. hndl] opts
-  p <- unique "getEditFromHandle" ps
-  mid <- getMeta . S.keyToId $ entityKey p
-  let toEdit desc cr _hdnl _ = Edit mid desc cr
-  pure $ S.editElim toEdit (entityVal p)
-
-getEditHandle :: ID Edit -> DB DocRepo.EditHandle
-getEditHandle pid = S.editElim toEditHandle <$> getEntityRep pid
-  where
-    toEditHandle :: ST -> ChunkRange -> DocRepo.EditHandle -> VDocVersion -> EditKind -> ST -> DocRepo.EditHandle
-    toEditHandle _desc _cr handle _ _kind _motiv = handle
+getEdit = getMetaEntity $ \mid -> S.editElim $ \desc cr _ -> Edit mid desc cr
 
 getVersion :: ID Edit -> DB VDocVersion
-getVersion pid = S.editElim (\_ _ _ vdoc _ _ -> vdoc) <$> getEntityRep pid
+getVersion pid = S.editElim (\_ _ vdoc _ _ -> vdoc) <$> getEntityRep pid
 
 editNotes :: ID Edit -> DB [ID Note]
 editNotes pid = do

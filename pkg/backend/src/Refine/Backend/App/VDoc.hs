@@ -35,7 +35,6 @@ import           Data.Maybe (catMaybes)
 
 import           Refine.Backend.App.Core
 import qualified Refine.Backend.Database.Class as DB
-import qualified Refine.Backend.DocRepo as DocRepo
 import           Refine.Common.Allow
 import           Refine.Common.Types
 
@@ -54,12 +53,8 @@ createVDoc :: Create VDoc -> App VDoc
 createVDoc pv = do
   appLog "createVDoc"
   let vd = pv ^. createVDocInitVersion
-  (dr, dp) <- docRepo $ do
-    dr <- DocRepo.createRepo
-    dp <- DocRepo.createInitialEdit dr vd
-    pure (dr, dp)
   db $ do
-    r <- DB.createRepo dr dp vd
+    r <- DB.createRepo vd
     DB.createVDoc pv r
 
 getVDoc :: ID VDoc -> App VDoc
@@ -105,12 +100,10 @@ addEdit baseeid edit = do
   validateCreateChunkRange baseeid (edit ^. createEditRange)
   join . db $ do
     rid                    <- DB.editVDocRepo baseeid
-    (rhandle, baseehandle) <- DB.handlesForEdit baseeid
     pure $ do
       let version   = edit ^. createEditVDoc
-      childphandle <- docRepo $ DocRepo.createEdit rhandle baseehandle version
       db $ do
-        childEdit <- DB.createEdit rid childphandle version edit
+        childEdit <- DB.createEdit rid version edit
         DB.setEditChild baseeid (childEdit ^. editID)
         pure childEdit
 

@@ -50,7 +50,6 @@ import Refine.Backend.App.MigrateDB (initializeDB)
 import Refine.Backend.Config
 import Refine.Backend.Database.Class as DB
 import Refine.Backend.Database (DB)
-import Refine.Backend.DocRepo as DocRepo
 import Refine.Backend.Natural
 import Refine.Backend.Server
 import Refine.Backend.Test.Util (withTempCurrentDirectory, sampleMetaID)
@@ -315,9 +314,7 @@ specMockedLogin = around createDevModeTestSession $ do
     context "on edit without ranges" $ do
       it "stores an edit and returns its version" $ \sess -> do
         (_, fp) <- setup sess
-        be' :: VDocVersion <- runDB sess $ do
-              handles <- db $ DB.handlesForEdit (fp ^. editID)
-              docRepo $ uncurry DocRepo.getVersion handles
+        be' :: VDocVersion <- runDB sess . db . getVersion $ fp ^. editID
         be' `shouldBe` vdocVersionFromST "[new vdoc version]"
 
       it "stores an edit and returns it in the list of edits applicable to its base" $ \sess -> do

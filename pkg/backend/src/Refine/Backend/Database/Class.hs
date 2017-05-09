@@ -11,7 +11,6 @@ import Data.Typeable (Typeable)
 
 import Refine.Backend.Database.Tree
 import Refine.Backend.Database.Types
-import Refine.Backend.DocRepo.Core as DocRepo
 import Refine.Common.Types
 
 
@@ -29,17 +28,13 @@ class Database db where
   vDocRepoVDoc      :: ID VDocRepo -> db (ID VDoc)
 
   -- Repo
-  createRepo         :: DocRepo.RepoHandle -> DocRepo.EditHandle -> VDocVersion -> db VDocRepo
+  createRepo         :: VDocVersion -> db VDocRepo
   getRepo            :: ID VDocRepo -> db VDocRepo
-  getRepoFromHandle  :: DocRepo.RepoHandle -> db VDocRepo
-  getRepoHandle      :: ID VDocRepo -> db DocRepo.RepoHandle
   getEditIDs         :: ID VDocRepo -> db [ID Edit]
 
   -- Edit
-  createEdit         :: ID VDocRepo -> DocRepo.EditHandle -> VDocVersion -> Create Edit -> db Edit
+  createEdit         :: ID VDocRepo -> VDocVersion -> Create Edit -> db Edit
   getEdit            :: ID Edit -> db Edit
-  getEditFromHandle  :: DocRepo.EditHandle -> db Edit
-  getEditHandle      :: ID Edit -> db DocRepo.EditHandle
   getVersion         :: ID Edit -> db VDocVersion
   editNotes          :: ID Edit -> db [ID Note]
   editQuestions      :: ID Edit -> db [ID Question]
@@ -127,13 +122,6 @@ class ProcessOf db e where
   processOf :: ID e -> db (Process (ProcessPayload e))
 
 -- * composite db queries
-
-handlesForEdit
-  :: (Monad db, Database db)
-  => ID Edit -> db (DocRepo.RepoHandle, DocRepo.EditHandle)
-handlesForEdit pid = do
-  rid <- editVDocRepo pid
-  (,) <$> getRepoHandle rid <*> getEditHandle pid
 
 compositeQuestion
   :: (Monad db, Database db)

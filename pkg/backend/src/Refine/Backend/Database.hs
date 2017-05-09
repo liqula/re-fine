@@ -113,15 +113,11 @@ instance Database DB where
   -- * Repo
   createRepo         = Entity.createRepo
   getRepo            = Entity.getRepo
-  getRepoFromHandle  = Entity.getRepoFromHandle
-  getRepoHandle      = Entity.getRepoHandle
   getEditIDs         = Entity.getEditIDs
 
   -- * Edit
   createEdit         = Entity.createEdit
   getEdit            = Entity.getEdit
-  getEditFromHandle  = Entity.getEditFromHandle
-  getEditHandle      = Entity.getEditHandle
   getVersion         = Entity.getVersion
   editNotes          = Entity.editNotes
   editQuestions      = Entity.editQuestions

@@ -37,7 +37,6 @@ import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
 import Refine.Backend.Config
 import Refine.Backend.Database
-import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Server
@@ -75,13 +74,11 @@ createAppRunner = do
 
   createDirectoryIfMissing True $ cfg ^. cfgReposRoot
   (dbRunner, dbNat, userHandler) <- createDBNat cfg
-  drepoNat <- createRepoNat cfg
   let logger = Logger . const $ pure ()
       runner :: forall b . AppM DB UH b -> IO b
       runner m = (natThrowError . runApp
                                     dbNat
                                     dbRunner
-                                    drepoNat
                                     (uhNat userHandler)
                                     logger
                                     (cfg ^. cfgCsrfSecret . to CsrfSecret)
