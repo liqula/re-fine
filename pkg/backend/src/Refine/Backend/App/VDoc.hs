@@ -96,7 +96,7 @@ addEdit baseeid edit = do
   validateCreateChunkRange baseeid (edit ^. createEditRange)
   db $ do
     rid <- DB.vdocOfEdit baseeid
-    childEdit <- DB.createEdit rid (Just baseeid) edit
+    childEdit <- DB.createEdit rid (EditOfEdit () baseeid) edit
     pure childEdit
 
 

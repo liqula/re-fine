@@ -28,7 +28,7 @@ class Database db where
   getEditIDs         :: ID VDoc -> db [ID Edit]
 
   -- Edit
-  createEdit         :: ID VDoc -> Maybe (ID Edit) -> Create Edit -> db Edit
+  createEdit         :: ID VDoc -> EditSource (ID Edit) -> Create Edit -> db Edit
   getEdit            :: ID Edit -> db Edit
   getVersion         :: ID Edit -> db VDocVersion
   editNotes          :: ID Edit -> db [ID Note]

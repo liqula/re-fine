@@ -220,7 +220,7 @@ createVDoc pv vdoc = do
         (pv ^. createVDocAbstract)
         Nothing -- hack: use a dummy key which will be replaced by a proper one before createVDoc returns
   mid <- createMetaID svdoc
-  e <- createEdit (mid ^. miID) Nothing $ CreateEdit
+  e <- createEdit (mid ^. miID) InitialEdit $ CreateEdit
     { _createEditDesc  = "" -- FIXME
     , _createEditRange = ChunkRange Nothing Nothing  -- QUESTION: is this ok?
     , _createEditVDoc  = vdoc
@@ -241,16 +241,22 @@ getEditIDs vid = liftDB $ S.keyToId . entityKey <$$> selectList [S.EditRepositor
 
 -- * Edit
 
-createEdit :: ID VDoc -> Maybe (ID Edit) -> CreateEdit -> DB Edit
+createEdit :: ID VDoc -> EditSource (ID Edit) -> CreateEdit -> DB Edit
 createEdit rid me ce = do
   mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
             (ce ^. createEditRange)
             (ce ^. createEditVDoc)
             (S.idToKey rid)
-            (S.idToKey <$> me)
             (ce ^. createEditKind)
             (ce ^. createEditMotiv)
+  liftDB $ case me of
+    InitialEdit -> pure ()
+    EditOfEdit () parent -> do
+      void . insert $ S.ParentChild (S.idToKey parent) (S.idToKey $ mid ^. miID)
+    MergeOfEdits parent1 parent2 -> do
+      void . insert $ S.ParentChild (S.idToKey parent1) (S.idToKey $ mid ^. miID)
+      void . insert $ S.ParentChild (S.idToKey parent2) (S.idToKey $ mid ^. miID)
   pure $ Edit
     mid
     (ce ^. createEditDesc)
@@ -259,10 +265,10 @@ createEdit rid me ce = do
     (ce ^. createEditMotiv)
 
 getEdit :: ID Edit -> DB Edit
-getEdit = getMetaEntity $ \mid -> S.editElim $ \desc cr _ _ _ -> Edit mid desc cr
+getEdit = getMetaEntity $ \mid -> S.editElim $ \desc cr _ _ -> Edit mid desc cr
 
 getVersion :: ID Edit -> DB VDocVersion
-getVersion pid = S.editElim (\_ _ vdoc _ _ _ _ -> vdoc) <$> getEntityRep pid
+getVersion pid = S.editElim (\_ _ vdoc _ _ _ -> vdoc) <$> getEntityRep pid
 
 editNotes :: ID Edit -> DB [ID Note]
 editNotes pid = do
@@ -286,12 +292,12 @@ getEditChildren :: ID Edit -> DB [ID Edit]
 getEditChildren parent = do
   opts <- dbSelectOpts
   liftDB $ do
-    S.keyToId . entityKey <$$> selectList [S.EditParent ==. Just (S.idToKey parent)] opts
+    foreignKeyField S.parentChildChild <$$> selectList [S.ParentChildParent ==. S.idToKey parent] opts
 
 -- * Repo and edit
 
 vdocOfEdit :: ID Edit -> DB (ID VDoc)
-vdocOfEdit pid = S.editElim (\_ _ _ vid _ _ _ -> S.keyToId vid) <$> getEntityRep pid
+vdocOfEdit pid = S.editElim (\_ _ _ vid _ _ -> S.keyToId vid) <$> getEntityRep pid
 
 -- * Note
 
