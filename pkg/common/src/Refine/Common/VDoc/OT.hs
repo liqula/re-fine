@@ -202,16 +202,9 @@ instance Editable BlockType where
 ----------------------
 
 instance Representable Entity where
-    type Rep Entity = Either [Atom Char] (Either () (Either () (Either () (Either () (Either () ())))))
-    to = either (EntityLink . map unAtom) (either (const EntityBold) (const EntityItalic))
-    from = \case
-        EntityLink s       -> Left $ Atom <$> s
-        EntityBold         -> Right (Left ())
-        EntityItalic       -> Right (Right (Left ()))
-        EntityUnderline    -> Right (Right (Right (Left ())))
-        EntityCode         -> Right (Right (Right (Right (Left ()))))
-        EntityRangeComment -> Right (Right (Right (Right (Right (Left ())))))
-        EntityRangeEdit    -> Right (Right (Right (Right (Right (Right ())))))
+    type Rep Entity = Atom Entity
+    to = unAtom
+    from = Atom
 
 instance Editable Entity where
     newtype EEdit Entity
