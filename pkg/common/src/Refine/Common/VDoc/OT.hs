@@ -92,6 +92,7 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
         Draft.BulletPoint -> Item BulletPoint d
         Draft.EnumPoint   -> Item EnumPoint   d
 
+    -- see also: 'Refine.Common.VDoc.Draft.addMarksToBlock'.
     mkBlock :: Draft.Block Draft.EntityKey -> Block
     mkBlock (Draft.Block txt eranges styles ty depth _key) = Block (mkBlockType depth ty) (segment segments $ cs txt)
       where
