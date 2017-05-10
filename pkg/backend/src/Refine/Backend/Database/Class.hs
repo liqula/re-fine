@@ -12,6 +12,7 @@ import Data.Typeable (Typeable)
 import Refine.Backend.Database.Tree
 import Refine.Backend.Database.Types
 import Refine.Common.Types
+import Refine.Common.VDoc.OT (EditSource)
 
 
 type MonadDatabase db = (Monad db, Database db)

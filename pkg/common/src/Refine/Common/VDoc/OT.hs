@@ -4,6 +4,9 @@
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE ViewPatterns               #-}
+{-# LANGUAGE PatternSynonyms            #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE DeriveFunctor              #-}
 {-# OPTIONS_GHC -fno-warn-orphans       #-}   -- FIXME: elim this
 module Refine.Common.VDoc.OT where
 
@@ -39,6 +42,14 @@ data LineElem = LineElem (Set.Set Entity) String
 
 newtype Entity = Entity { unEntity :: Either Draft.Entity Draft.Style }
    deriving (Show, Eq, Ord, Generic)
+
+---------------------------------------- 
+
+data EditSource a =
+    InitialEdit
+  | EditOfEdit (Edit RawContent) a
+  | MergeOfEdits a a
+  deriving (Show, Functor)
 
 ---------------------------------------- conversion functions
 

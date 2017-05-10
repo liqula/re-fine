@@ -47,6 +47,7 @@ import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
 import           Refine.Prelude (nothingToError, Timestamp, getCurrentTimestamp)
+import           Refine.Common.VDoc.OT (EditSource(..))
 
 -- FIXME: Generate this as the part of the lentil library.
 type instance S.EntityRep MetaInfo   = S.MetaInfo
@@ -252,7 +253,7 @@ createEdit rid me ce = do
             (ce ^. createEditMotiv)
   liftDB $ case me of
     InitialEdit -> pure ()
-    EditOfEdit () parent -> do
+    EditOfEdit _edit{-TODO-} parent -> do
       void . insert $ S.ParentChild (S.idToKey parent) (S.idToKey $ mid ^. miID)
     MergeOfEdits parent1 parent2 -> do
       void . insert $ S.ParentChild (S.idToKey parent1) (S.idToKey $ mid ^. miID)

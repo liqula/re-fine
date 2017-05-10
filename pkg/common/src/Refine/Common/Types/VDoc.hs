@@ -75,17 +75,10 @@ data Edit = Edit
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
-data EditSource a =
-    InitialEdit
-  | EditOfEdit (){-FIXME: OT.Edit VDocVersion-} a
-  | MergeOfEdits a a
-  deriving (Eq, Ord, Show, Read, Generic, Functor)
-
 data CreateEdit = CreateEdit
   { _createEditDesc  :: ST
   , _createEditRange :: ChunkRange
   , _createEditVDoc  :: VDocVersion
--- FIXME: add:  , _createEditSource :: EditSource (ID Edit)
   , _createEditKind  :: EditKind
   , _createEditMotiv :: ST
   }
