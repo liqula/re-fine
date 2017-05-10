@@ -148,8 +148,8 @@ instance (Generic a, Arbitrary a) => Arbitrary (Block a) where
     let ml = ST.length (b ^. blockText)
         fixrange (off, len) = (off', len')
           where
-            off' = abs off `min` (ml - 1)     -- FIXME: 'mod' triggers div-by-zero errors?!
-            len' = abs len `min` (ml - off')
+            off' = min (abs off) (abs (ml - 1))
+            len' = min (abs len) (abs (ml - off'))
     pure $ case ml of
       0 -> b & blockEntityRanges .~ []
              & blockStyles       .~ []
