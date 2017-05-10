@@ -9,6 +9,7 @@ import           Test.Hspec
 
 import Refine.Common.OT
 import Refine.Common.OTSpec hiding (spec)
+import Refine.Common.Test.Arbitrary ()
 import Refine.Common.VDoc.OT
 import Refine.Common.VDoc.Draft (RawContent)
 
@@ -67,9 +68,6 @@ instance GenEdit Doc where
     genEdit d = map EDoc <$> genEdit (from d)
 
 ----------------------
-
-instance Arbitrary RawContent where
-    arbitrary = to <$> arbitrary
 
 instance GenEdit RawContent where
     genEdit d = map ERawContent <$> genEdit (from d)
