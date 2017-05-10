@@ -11,7 +11,7 @@ import Refine.Common.OT
 import Refine.Common.OTSpec hiding (spec)
 import Refine.Common.Test.Arbitrary
 import Refine.Common.VDoc.OT
-import Refine.Common.VDoc.Draft (RawContent, resetBlockKeys)
+import Refine.Common.VDoc.Draft (RawContent, resetBlockKeys, samples)
 
 
 ---------------------------------------- Editable instances
@@ -86,3 +86,9 @@ spec = parallel $ do
 
     it "RawContent <-> Doc conversion" . property $ \d ->
       docToRawContent (rawContentToDoc d) `shouldBe` resetBlockKeys d
+
+    it "RawContent <-> Doc conversion" $ do
+      let d = samples !! 0 in docToRawContent (rawContentToDoc d) `shouldBe` resetBlockKeys d
+
+    it "RawContent <-> Doc conversion" $ do
+      let d = samples !! 1 in docToRawContent (rawContentToDoc d) `shouldBe` resetBlockKeys d
