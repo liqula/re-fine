@@ -1,7 +1,8 @@
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE ViewPatterns               #-}
-{-# LANGUAGE PatternSynonyms            #-}
-{-# LANGUAGE LambdaCase                 #-}
 {-# OPTIONS_GHC -fno-warn-orphans       #-}   -- FIXME: elim this
 module Refine.Common.VDoc.OT where
 
@@ -11,6 +12,8 @@ import           Data.List
 import qualified Data.IntMap as IntMap
 import qualified Data.Set as Set
 import           Data.String.Conversions
+import qualified Generics.SOP as SOP
+import           GHC.Generics (Generic)
 
 import Refine.Common.OT
 import Refine.Common.VDoc.Draft (RawContent)
@@ -19,29 +22,29 @@ import qualified Refine.Common.VDoc.Draft as Draft
 ---------------------------------------- auxiliary document data type
 
 newtype Doc = Doc [Block]
-   deriving (Show, Eq)
+   deriving (Show, Eq, Generic)
 
 data Block = Block BlockType [LineElem]
-   deriving (Show, Eq)
+   deriving (Show, Eq, Generic)
 
 data BlockType =
      Header HeaderLevel
    | Item ItemType Int -- depth
-   deriving (Show, Eq)
+   deriving (Show, Eq, Generic)
 
 data HeaderLevel
     = HL1 | HL2 | HL3
-   deriving (Show, Eq, Bounded, Enum)
+   deriving (Show, Eq, Bounded, Enum, Generic)
 
 data ItemType = NormalText | BulletPoint | EnumPoint
-   deriving (Show, Eq, Bounded, Enum)
+   deriving (Show, Eq, Bounded, Enum, Generic)
 
 -- | A segment of an inline style, consisting of 'EntityRange' and 'Style'.
 --
 -- FIXME: (Set Entity) should be (Maybe String, Bool, Bool), it is not allowed to have two links on
 -- the same character.
 data LineElem = LineElem (Set.Set Entity) String
-   deriving (Show, Eq)
+   deriving (Show, Eq, Generic)
 
 -- | This is both Entity and Style in Draft
 data Entity
@@ -52,7 +55,7 @@ data Entity
     | EntityCode
     | EntityRangeComment
     | EntityRangeEdit
-   deriving (Show, Eq, Ord)
+   deriving (Show, Eq, Ord, Generic)
 
 ---------------------------------------- conversion functions
 
@@ -295,3 +298,20 @@ instance Editable RawContent where
     ePatch e = to . ePatch (unERawContent e) . from
     eMerge d a b = map ERawContent *** map ERawContent $ eMerge (from d) (unERawContent a) (unERawContent b)
     eInverse d = map ERawContent . eInverse (from d) . unERawContent
+
+
+instance SOP.Generic Doc
+instance SOP.Generic Block
+instance SOP.Generic BlockType
+instance SOP.Generic HeaderLevel
+instance SOP.Generic ItemType
+instance SOP.Generic LineElem
+instance SOP.Generic Entity
+
+instance SOP.HasDatatypeInfo Doc
+instance SOP.HasDatatypeInfo Block
+instance SOP.HasDatatypeInfo BlockType
+instance SOP.HasDatatypeInfo HeaderLevel
+instance SOP.HasDatatypeInfo ItemType
+instance SOP.HasDatatypeInfo LineElem
+instance SOP.HasDatatypeInfo Entity

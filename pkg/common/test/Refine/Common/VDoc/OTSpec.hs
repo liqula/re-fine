@@ -9,7 +9,7 @@ import           Test.Hspec
 
 import Refine.Common.OT
 import Refine.Common.OTSpec hiding (spec)
-import Refine.Common.Test.Arbitrary ()
+import Refine.Common.Test.Arbitrary
 import Refine.Common.VDoc.OT
 import Refine.Common.VDoc.Draft (RawContent)
 
@@ -24,7 +24,7 @@ instance Arbitrary ItemType where
     arbitrary = elements [minBound..]
 
 instance Arbitrary BlockType where
-    arbitrary = to <$> arbitrary
+    arbitrary = garbitrary
 
 instance GenEdit BlockType where
     genEdit d = map EBlockType <$> genEdit (from d)
@@ -32,7 +32,7 @@ instance GenEdit BlockType where
 ----------------------
 
 instance Arbitrary Entity where
-    arbitrary = to <$> arbitrary
+    arbitrary = garbitrary
 
 instance HasEnoughInhabitants Entity where hasMoreInhabitantsThan _ _ = True
 
@@ -54,7 +54,7 @@ instance GenEdit LineElem where
 ----------------------
 
 instance Arbitrary Block where
-    arbitrary = to <$> arbitrary
+    arbitrary = garbitrary
 
 instance GenEdit Block where
     genEdit d = map EBlock <$> genEdit (from d)
@@ -62,7 +62,7 @@ instance GenEdit Block where
 ----------------------
 
 instance Arbitrary Doc where
-    arbitrary = to <$> ((:) <$> arbitrary <*> arbitrary)  -- RawContent block list must not be empty!
+    arbitrary = Doc <$> ((:) <$> arbitrary <*> arbitrary)  -- RawContent block list must not be empty!
 
 instance GenEdit Doc where
     genEdit d = map EDoc <$> genEdit (from d)
