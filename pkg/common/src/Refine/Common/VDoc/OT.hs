@@ -28,7 +28,7 @@ data Block = Block BlockType [LineElem]
    deriving (Show, Eq, Generic)
 
 data BlockType =
-     Header HeaderLevel
+     Header HeaderLevel Int -- depth (even though it may not make sense here, the js types still support it).
    | Item ItemType Int -- depth
    deriving (Show, Eq, Generic)
 
@@ -88,9 +88,9 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
 
     mkBlockType :: Int -> Draft.BlockType -> BlockType
     mkBlockType d = \case
-        Draft.Header1     -> Header HL1
-        Draft.Header2     -> Header HL2
-        Draft.Header3     -> Header HL3
+        Draft.Header1     -> Header HL1 d
+        Draft.Header2     -> Header HL2 d
+        Draft.Header3     -> Header HL3 d
         Draft.NormalText  -> Item NormalText  d
         Draft.BulletPoint -> Item BulletPoint d
         Draft.EnumPoint   -> Item EnumPoint   d
@@ -137,9 +137,9 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
         _ -> Nothing
 
     mkType = \case
-        Header HL1         -> (Draft.Header1, 0)
-        Header HL2         -> (Draft.Header2, 0)
-        Header HL3         -> (Draft.Header3, 0)
+        Header HL1 d       -> (Draft.Header1, d)
+        Header HL2 d       -> (Draft.Header2, d)
+        Header HL3 d       -> (Draft.Header3, d)
         Item NormalText  d -> (Draft.NormalText,  d)
         Item BulletPoint d -> (Draft.BulletPoint, d)
         Item EnumPoint   d -> (Draft.EnumPoint,   d)
@@ -184,11 +184,11 @@ simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
 -- FUTUREWORK: make these instances smarter
 
 instance Representable BlockType where
-    type Rep BlockType = Either (Atom HeaderLevel) (Atom ItemType, Atom Int)
-    to = either (Header . unAtom) (uncurry Item . (unAtom *** unAtom))
+    type Rep BlockType = Either (Atom HeaderLevel, Atom Int) (Atom ItemType, Atom Int)
+    to = either (uncurry Header . (unAtom *** unAtom)) (uncurry Item . (unAtom *** unAtom))
     from = \case
-        Header s -> Left $ Atom s
-        Item a b -> Right (Atom a, Atom b)
+        Header s d -> Left (Atom s, Atom d)
+        Item a b   -> Right (Atom a, Atom b)
 
 instance Editable BlockType where
     newtype EEdit BlockType
