@@ -72,6 +72,7 @@ spec = do
       print (read "123.123" :: Int) `shouldThrow` anyException
 
 
+
 foreign import javascript unsafe
   "123.456"
   js_reproduce_issue_242 :: IO Int

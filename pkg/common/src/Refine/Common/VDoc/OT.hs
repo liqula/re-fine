@@ -48,6 +48,10 @@ data Entity
     = EntityLink String
     | EntityBold
     | EntityItalic
+    | EntityUnderline
+    | EntityCode
+    | EntityRangeComment
+    | EntityRangeEdit
    deriving (Show, Eq, Ord)
 
 ---------------------------------------- conversion functions
@@ -72,8 +76,12 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
 
     fromStyle :: Draft.Style -> Entity
     fromStyle = \case
-        Draft.Bold   -> EntityBold
-        Draft.Italic -> EntityItalic
+        Draft.Bold         -> EntityBold
+        Draft.Italic       -> EntityItalic
+        Draft.Underline    -> EntityUnderline
+        Draft.Code         -> EntityCode
+        Draft.RangeComment -> EntityItalic
+        Draft.RangeEdit    -> EntityItalic
 
     mkBlockType :: Int -> Draft.BlockType -> BlockType
     mkBlockType d = \case
@@ -193,12 +201,16 @@ instance Editable BlockType where
 ----------------------
 
 instance Representable Entity where
-    type Rep Entity = Either [Atom Char] (Either () ())
+    type Rep Entity = Either [Atom Char] (Either () (Either () (Either () (Either () (Either () ())))))
     to = either (EntityLink . map unAtom) (either (const EntityBold) (const EntityItalic))
     from = \case
-        EntityLink s -> Left $ Atom <$> s
-        EntityBold   -> Right (Left ())
-        EntityItalic -> Right (Right ())
+        EntityLink s       -> Left $ Atom <$> s
+        EntityBold         -> Right (Left ())
+        EntityItalic       -> Right (Right (Left ()))
+        EntityUnderline    -> Right (Right (Right (Left ())))
+        EntityCode         -> Right (Right (Right (Right (Left ()))))
+        EntityRangeComment -> Right (Right (Right (Right (Right (Left ())))))
+        EntityRangeEdit    -> Right (Right (Right (Right (Right (Right ())))))
 
 instance Editable Entity where
     newtype EEdit Entity

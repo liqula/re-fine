@@ -24,33 +24,67 @@
 module Refine.Frontend.Document.FFI.Types
   ( EditorState(..)
   , ContentState(..)
-  , unEditorState
-  , unsafeMkEditorState
+  , mkEditorState
+  , updateEditorState
   ) where
 
 import           GHC.Generics (Generic)
+import           GHCJS.Marshal (FromJSVal, ToJSVal)
 import           GHCJS.Types (JSVal)
+import           React.Flux (Event, evtHandlerArg)
+import           React.Flux.Internal (HandlerArg(HandlerArg))
 
-import           Refine.Frontend.Util (js_eq)
+import           Refine.Frontend.Util ((===))
 import           Refine.Prelude.Aeson (NoJSONRep(NoJSONRep))
 import           Refine.Prelude.TH (makeRefineType)
 
 
+-- | Javascript representation of editor state.  It looks something like this:
+--
+-- >>> EditorState: Record
+-- >>>   _immutable: Record
+-- >>>     _map: Map
+-- >>>       allowUndo: true
+-- >>>       currentContent: ContentState
+-- >>>         ...
+-- >>>       decorator: null
+-- >>>       directionMap: OrderedMap
+-- >>>         ...
+-- >>>       forceSelection: false
+-- >>>       inCompositionMode: false
+-- >>>       inlineStyleOverride: null
+-- >>>       lastChangeType: null
+-- >>>       length: 13
+-- >>>       nativelyRenderedContent: null
+-- >>>       redoStack: Stack
+-- >>>         ...
+-- >>>       undoStack: Stack
+-- >>>         ...
+-- >>>       selection: SelectionState
+-- >>>         _map: Map
+-- >>>           anchorKey: "cgd0m"  // b._immutable._map.get('selection')._map.get('anchorKey')
+-- >>>           anchorOffset: 0
+-- >>>           focusKey: "cgd0m"
+-- >>>           focusOffset: 0
+-- >>>           hasFocus: false
+-- >>>           isBackward: false
+-- >>>           length: 6
+-- >>>       treeMap: OrderedMap
+-- >>>         ...
 newtype EditorState = EditorState (NoJSONRep JSVal)
-  deriving (Show, Generic)
+  deriving (Show, Generic, ToJSVal, FromJSVal)
 
 instance Eq EditorState where
-  EditorState (NoJSONRep js) == EditorState (NoJSONRep js') = js_eq js js'  -- (not too confident about this one...)
+  EditorState (NoJSONRep js) == EditorState (NoJSONRep js') = js === js'
 
 newtype ContentState = ContentState (NoJSONRep JSVal)
-  deriving (Show, Generic)
+  deriving (Show, Generic, ToJSVal, FromJSVal)
 
 makeRefineType ''EditorState
 makeRefineType ''ContentState
 
+mkEditorState :: JSVal -> EditorState
+mkEditorState = EditorState . NoJSONRep
 
-unEditorState :: EditorState -> JSVal
-unEditorState (EditorState (NoJSONRep jsval)) = jsval
-
-unsafeMkEditorState :: JSVal -> EditorState
-unsafeMkEditorState = EditorState . NoJSONRep
+updateEditorState :: Event -> EditorState
+updateEditorState (evtHandlerArg -> HandlerArg evt) = EditorState $ NoJSONRep evt

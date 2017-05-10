@@ -28,8 +28,7 @@
 module Refine.Backend.App.VDoc where
 
 import           Control.Arrow ((&&&))
-import           Control.Lens ((&), (^.), (^?), to, view, has)
-import           Control.Monad.Except (throwError)
+import           Control.Lens ((^.), (^?), view, has)
 import           Control.Monad ((<=<), join, mapM)
 import qualified Data.Map as Map
 import           Data.Maybe (catMaybes)
@@ -39,7 +38,6 @@ import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Backend.DocRepo as DocRepo
 import           Refine.Common.Allow
 import           Refine.Common.Types
-import           Refine.Common.VDoc.HTML
 
 
 listVDocs :: App [VDoc]
@@ -55,7 +53,7 @@ createVDocGetComposite = (getCompositeVDoc . view vdocID) <=< createVDoc
 createVDoc :: Create VDoc -> App VDoc
 createVDoc pv = do
   appLog "createVDoc"
-  let vd = pv ^. createVDocInitVersion . to canonicalizeVDocVersion
+  let vd = pv ^. createVDocInitVersion
   (dr, dp) <- docRepo $ do
     dr <- DocRepo.createRepo
     dp <- DocRepo.createInitialEdit dr vd
@@ -69,7 +67,7 @@ getVDoc i = do
   appLog "getVDoc"
   db $ DB.getVDoc i
 
-getVDocVersion :: ID Edit -> App (VDocVersion 'HTMLCanonical)
+getVDocVersion :: ID Edit -> App VDocVersion
 getVDocVersion eid = do
   appLog "getVDocVersion"
   rid      <- db $ DB.vdocRepoOfEdit eid
@@ -91,13 +89,7 @@ getCompositeVDoc vid = do
       commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
 
   edits <- db $ mapM DB.getEdit =<< DB.getEditChildren headid
-  let insertAllMarks :: VDocVersion 'HTMLCanonical -> VDocVersion 'HTMLWithMarks
-      insertAllMarks vers = vers
-                          & insertMarks     (ContribNote <$> commentNotes)
-                          & insertMoreMarks (ContribDiscussion . view compositeDiscussion <$> commentDiscussions)
-                          & insertMoreMarks (ContribEdit <$> edits)
-
-  version <- insertAllMarks <$> docRepo (DocRepo.getVersion rhandle hhandle)
+  version <- docRepo (DocRepo.getVersion rhandle hhandle)
   pure $
     CompositeVDoc
       vdoc repo headid version
@@ -120,7 +112,7 @@ addEdit baseeid edit = do
     rid                    <- DB.editVDocRepo baseeid
     (rhandle, baseehandle) <- DB.handlesForEdit baseeid
     pure $ do
-      let version   = edit ^. createEditVDoc . to canonicalizeVDocVersion
+      let version   = edit ^. createEditVDoc
       childphandle <- docRepo $ DocRepo.createEdit rhandle baseehandle version
       db $ do
         childEdit <- DB.createEdit rid childphandle edit
@@ -129,9 +121,6 @@ addEdit baseeid edit = do
 
 
 -- | Throw an error if chunk range does not fit 'VDocVersion' identified by edit.
+-- FIXME: for RawContent this still needs to be implemented.
 validateCreateChunkRange :: ID Edit -> ChunkRange -> App ()
-validateCreateChunkRange eid cr = do
-  vers <- getVDocVersion eid
-  case chunkRangeErrors cr vers of
-    errs@(_:_) -> throwError $ AppVDocError errs
-    [] -> pure ()
+validateCreateChunkRange _ _ = pure ()  -- throwError AppVDocVersionError

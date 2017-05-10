@@ -34,7 +34,6 @@ import           Text.HTML.Parser
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Mark
 import           Refine.Frontend.Contribution.Types
-import           Refine.Frontend.Document.VDoc
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Test.Store
 import           Refine.Frontend.Store
@@ -135,10 +134,3 @@ spec = do
 
     context "component with children" $ do
       it "dispatches ScheduleAddMarkPosition only once" $ test (div_ $ p_ "wef")
-
-
-  describe "contributionIdFrom" $ do
-    it "returns the note contribution id as it was found in the attributes" $ do
-      contributionIdFrom [Attr "data-contribution-id" "n77"] `shouldBe` Just (ContribIDNote (ID 77))
-    it "returns the highlight mark contribution id as it was found in the attributes" $ do
-      contributionIdFrom [Attr "data-contribution-id" "h"] `shouldBe` Just ContribIDHighlightMark

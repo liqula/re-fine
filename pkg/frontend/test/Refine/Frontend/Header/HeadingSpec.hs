@@ -26,10 +26,9 @@ module Refine.Frontend.Header.HeadingSpec where
 
 import           Control.Lens ((^.), (&), (.~))
 import qualified Data.Map.Strict as M
-import qualified Data.Tree as DT
 import           Test.Hspec
-import qualified Text.HTML.Parser as HTMLP
 
+import           Refine.Common.Test.Samples (sampleVDocVersion, sampleMetaID)
 import           Refine.Common.Types
 import           Refine.Frontend.Header.Heading
 import           Refine.Frontend.Login.Types
@@ -38,8 +37,6 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Test.Store
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
-import           Refine.Frontend.Test.Samples (sampleMetaID)
-
 
 spec :: Spec
 spec = do
@@ -72,13 +69,13 @@ spec = do
 
   describe "The mainHeader_ component" $ do
     it "sets the header height to a nonzero value" $ do
-      pendingWith "#201, #221"
+      pendingWith "#201, #221"  -- (i actually think this may fail because we fail to handle actions in Enzyme.ReactWrapper.mount.)
 
       let newVDoc :: CompositeVDoc
           newVDoc = CompositeVDoc (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1))
                                   (VDocRepo (ID 1) (ID 1))
                                   (ID 1)
-                                  (VDocVersion [DT.Node (HTMLP.TagOpen "div" [HTMLP.Attr "data-offset" "0", HTMLP.Attr "data-uid" "77"]) []])
+                                  sampleVDocVersion
                                   M.empty M.empty M.empty
 
           gs :: GlobalState

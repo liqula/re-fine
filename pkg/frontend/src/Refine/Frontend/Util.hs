@@ -22,16 +22,20 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Refine.Frontend.Util
 where
 
 import qualified Data.JSString as JSS
 import           Data.String.Conversions
+import           GHCJS.Marshal
 import           GHCJS.Types (JSVal)
 import           React.Flux
 import           Text.HTML.Parser (Attr(Attr))
 
 import           Refine.Frontend.CS ()
+import           Refine.Prelude.Aeson (NoJSONRep(..))
 
 
 toClasses :: (ConvertibleStrings s JSS.JSString, ConvertibleStrings JSS.JSString s) => [s] -> s
@@ -47,4 +51,8 @@ lookupAttrs wantedKey (_ : as) = lookupAttrs wantedKey as
 
 foreign import javascript unsafe
   "$1 === $2"
-  js_eq :: JSVal -> JSVal -> Bool
+  (===) :: JSVal -> JSVal -> Bool
+
+
+deriving instance FromJSVal (NoJSONRep JSVal)
+deriving instance ToJSVal (NoJSONRep JSVal)

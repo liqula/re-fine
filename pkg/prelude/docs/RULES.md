@@ -144,6 +144,9 @@ some free text.  The keywords are:
 3. FUTUREWORK: there are some nice ideas about how to improve things
    here, but they are not urgent.
 
+3. TUNING: performance-specific things to improve.  this should help with
+   profiling and benchmarking work.
+
 
 ### code layout
 

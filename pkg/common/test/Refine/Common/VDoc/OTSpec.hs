@@ -61,7 +61,7 @@ instance GenEdit Block where
 ----------------------
 
 instance Arbitrary Doc where
-    arbitrary = to <$> arbitrary
+    arbitrary = to <$> ((:) <$> arbitrary <*> arbitrary)  -- RawContent block list must not be empty!
 
 instance GenEdit Doc where
     genEdit d = map EDoc <$> genEdit (from d)

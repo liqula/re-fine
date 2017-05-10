@@ -26,7 +26,7 @@ module Refine.Frontend.Header.Heading
   , mainHeader, mainHeader_
   ) where
 
-import           Control.Lens ((^.))
+import           Control.Lens ((^.), has)
 import           Control.Monad (unless)
 import           GHC.Generics
 import           GHCJS.Types (JSVal)
@@ -99,9 +99,9 @@ mainHeader = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
                 documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
                 div_ ["className" $= "c-fulltoolbar"] $ do
                     sticky_ [on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
-                        case rs ^. gsDocumentState of
-                          DocumentStateEdit _ -> editToolbar_
-                          DocumentStateView   -> toolbar_
+                        if has _DocumentStateView $ rs ^. gsDocumentState
+                          then toolbar_
+                          else editToolbar_
                         commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
                         editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
 

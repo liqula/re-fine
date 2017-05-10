@@ -204,7 +204,7 @@ toServantError = Nat ((lift . runExceptT) >=> leftToError fromAppError)
 toApiError :: AppError -> ApiError
 toApiError = \case
   AppUnknownError e      -> ApiUnknownError e
-  AppVDocError cre       -> ApiVDocError cre
+  AppVDocVersionError    -> ApiVDocVersionError
   AppDBError e           -> ApiDBError . cs $ show e
   AppDocRepoError e      -> ApiDocRepoError . cs $ show e
   AppUserNotFound e      -> ApiUserNotFound e
@@ -228,7 +228,7 @@ createUserErrorToApiError UsernameAndEmailAlreadyTaken = ApiErrorUsernameAndEmai
 appServantErr :: AppError -> ServantErr
 appServantErr = \case
   AppUnknownError _        -> err500
-  AppVDocError _           -> err409
+  AppVDocVersionError      -> err409
   AppDBError dbe           -> dbServantErr dbe
   AppDocRepoError dre      -> docRepoServantErr dre
   AppUserNotFound _        -> err404

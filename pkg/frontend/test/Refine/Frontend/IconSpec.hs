@@ -171,9 +171,7 @@ spec = do
       is wrapper (StringSelector "Hammer") `shouldReturn` True
 
     it "renders" $ do
-
       pending
-
       wrapper <- shallow $ iconButton_ iconButtonTestProps
       lengthOfIO (find wrapper (StringSelector "IconButton")) `shouldReturn` 1
 

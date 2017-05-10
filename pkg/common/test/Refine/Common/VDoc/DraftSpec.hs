@@ -24,12 +24,18 @@ module Refine.Common.VDoc.DraftSpec where
 
 import           Test.Aeson.GenericSpecs
 import           Test.Hspec
+import           Test.QuickCheck
 
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.VDoc.Draft
+import Refine.Common.Test.Samples ()  -- (just importing it so we know it compiles.)
 
 
 spec :: Spec
 spec = do
   describe "RawContent" $ do
     roundtripSpecs (Proxy @RawContent)
+
+  describe "rawContentToVDocVersion, rawContentFromVDocVersion" $ do
+    it "rawContentFromVDocVersion . rawContentToVDocVersion == id" . property $ \(rawContent :: RawContent) -> do
+      rawContentFromVDocVersion (rawContentToVDocVersion rawContent) `shouldBe` rawContent

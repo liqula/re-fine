@@ -17,6 +17,8 @@ INSTALL_ROOT:=$(shell stack path --local-install-root)
 
 # VERY LONG BUILD-TIME: google-closure-compiler-js runs for >28
 # minutes on a lenovo t420s with compilationLevel=WHITESPACE_ONLY.
+# also consider https://prepack.io/ (discussed here:
+# https://www.reddit.com/r/haskell/comments/698zl9/can_javascripts_prepack_help_with_ghcjs_output/)
 GOOGLE_CLOSURE=time ./node_modules/.bin/google-closure-compiler-js --compilationLevel=ADVANCED
 
 # all: js-build/install-root js-build/frontend.min.js

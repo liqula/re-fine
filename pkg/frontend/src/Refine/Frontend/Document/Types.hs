@@ -27,6 +27,7 @@ import           GHC.Generics (Generic)
 import           React.Flux (UnoverlapAllEq)
 
 import           Refine.Common.Types
+import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Header.Types
@@ -34,41 +35,45 @@ import           Refine.Prelude.TH (makeRefineType)
 
 
 data DocumentAction =
-    DocumentEditUpdate DocumentEditState
-  | DocumentEditSave
+    DocumentUpdate DocumentState
+  | DocumentSave
   | DocumentToggleBold
   | DocumentToggleItalic
   deriving (Show, Eq, Generic)
 
+-- | FIXME: 'documentStateEditKind' will fan out into a 'EditInfo' record containing 'EditKind' and
+-- other stuff, see #233.
 data DocumentState =
     DocumentStateView
-  | DocumentStateEdit { _documentStateEdit :: DocumentEditState }
+      { _documentStateContent  :: RawContent  -- ^ in read-only mode, change to the content is
+                                              -- driven by haskell, so we keep the haskell
+                                              -- representation around.
+      , _documentStateVal      :: EditorState
+      }
+  | DocumentStateEdit
+      { _documentStateVal      :: EditorState
+      , _documentStateEditKind :: EditKind
+      }
   deriving (Show, Eq, Generic)
 
-data DocumentEditState = DocumentEditState
-  { _documentEditStateKind      :: EditKind
-  , _documentEditStateVal       :: EditorState
-  }
-  deriving (Show, Eq, Generic)
+mkDocumentStateView :: RawContent -> DocumentState
+mkDocumentStateView c = DocumentStateView c' e
+  where
+    e  = createWithContent $ convertFromRaw c
+    c' = convertToRaw $ getCurrentContent e
+
+emptyDocumentState :: DocumentState
+emptyDocumentState = mkDocumentStateView emptyRawContent
 
 data DocumentProps = DocumentProps
   { _dpDocumentState     :: DocumentState
   , _dpContributionState :: ContributionState
   , _dpToolbarStatus     :: ToolbarExtensionStatus
-  , _dpVDocVersion       :: VDocVersion 'HTMLWithMarks
   }
   deriving (Show, Eq, Generic)
 
-newtype EditorProps = EditorProps
-  { _ewpEditorState :: DocumentEditState
-  }
-  deriving (Eq)
-
 instance UnoverlapAllEq DocumentProps
-instance UnoverlapAllEq EditorProps
 
 makeRefineType ''DocumentAction
 makeRefineType ''DocumentState
-makeRefineType ''DocumentEditState
 makeLenses ''DocumentProps
-makeLenses ''EditorProps

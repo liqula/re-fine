@@ -185,13 +185,13 @@ createRepo = do
 
 
 -- | FIXME: this may be a special case of 'createEdit'.
-createInitialEdit :: RepoHandle -> VDocVersion 'HTMLCanonical -> DocRepo EditHandle
+createInitialEdit :: RepoHandle -> VDocVersion -> DocRepo EditHandle
 createInitialEdit repo vers = do
   docRepoIOWithReposRoot $ \reposRoot -> do
     let repoDir = reposRoot </> (repo ^. unRepoHandle . to cs)
     patchUuid <- newUUID  -- (it is vital to do this outside of 'withForkProcCurrentDirectory'!)
     withForkProcCurrentDir repoDir $ do
-      ST.writeFile contentFilePath (vdocVersionToST vers)
+      ST.writeFile contentFilePath (vers ^. unVDocVersion)
       repoDirA <- ioAbsolute "."
       addCmd (repoDirA, repoDirA) [] [contentFilePath]
       recordCmd (repoDirA, repoDirA) (recordConfig patchUuid) []
@@ -200,7 +200,7 @@ createInitialEdit repo vers = do
 
 
 -- | Clone the repository to a temp dir, reverting the result at some state.  Read the version out.
-getVersion :: RepoHandle -> EditHandle -> DocRepo (VDocVersion 'HTMLCanonical)
+getVersion :: RepoHandle -> EditHandle -> DocRepo VDocVersion
 getVersion repo baseEdit = do
   docRepoIOWithReposRoot $ \reposRoot -> do
     let upstreamRepoDir = reposRoot </> (repo ^. unRepoHandle . to cs)
@@ -220,7 +220,7 @@ getVersion repo baseEdit = do
 
 -- | Clone the repo to the temporary dir; do the changes at the given version; pull the new patches from
 -- the new repo; remove the temporary directory.
-createEdit :: RepoHandle -> EditHandle -> VDocVersion 'HTMLCanonical -> DocRepo EditHandle
+createEdit :: RepoHandle -> EditHandle -> VDocVersion -> DocRepo EditHandle
 createEdit repo baseEdit newVersion = do
   docRepoIOWithReposRoot $ \reposRoot -> do
     let upstreamRepoDir = reposRoot </> (repo ^. unRepoHandle . to cs)
@@ -232,7 +232,7 @@ createEdit repo baseEdit newVersion = do
           hereRepoDirA@(toFilePath -> hereRepoDir) <- ioAbsolute "."
           cloneCmd (upstreamRepoDirA, hereRepoDirA) [UpToPatch basePatch] [upstreamRepoDir, tempRepo]
 
-          ST.writeFile contentFilePath $ vdocVersionToST newVersion
+          ST.writeFile contentFilePath $ newVersion ^. unVDocVersion
           recordCmd (hereRepoDirA, hereRepoDirA) (recordConfig newPatch) [contentFilePath]
 
           Dir.setCurrentDirectory upstreamRepoDir

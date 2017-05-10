@@ -36,7 +36,7 @@ import Refine.Prelude.TH
 -- * ID
 
 newtype ID a = ID { _unID :: Int64 }
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Ord, Enum, Num, Show, Read, Generic)
 
 makeRefineType ''ID
 

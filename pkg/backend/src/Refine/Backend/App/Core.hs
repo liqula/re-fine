@@ -68,7 +68,6 @@ import Refine.Backend.Logger
 import Refine.Backend.Types
 import Refine.Backend.User
 import Refine.Common.Types as Types
-import Refine.Common.VDoc.HTML (ChunkRangeError(..))
 import Refine.Prelude (leftToError, Timespan)
 import Refine.Prelude.TH (makeRefineType)
 
@@ -135,7 +134,7 @@ type App a = forall db uh . MonadApp db uh => AppM db uh a
 
 data AppError
   = AppUnknownError ST
-  | AppVDocError [ChunkRangeError]
+  | AppVDocVersionError
   | AppDBError DBError
   | AppDocRepoError DocRepoError
   | AppUserNotFound ST

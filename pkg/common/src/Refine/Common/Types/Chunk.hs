@@ -16,6 +16,8 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
+
 module Refine.Common.Types.Chunk where
 
 import           Data.Functor.Infix ((<$$>))
@@ -34,6 +36,8 @@ import Refine.Prelude.TH (makeRefineType)
 -- 'Nothing', the 'ChunkRange' starts at the beginning (resp. end) of the 'VDocVersion'.  When the
 -- 'Contribution' is created, it must be 'assert'ed that @0 <= begin < end < length of
 -- 'VDocVersion'@.
+--
+-- TODO: this is called 'SelectionState' now.
 data ChunkRange = ChunkRange
   { _chunkRangeBegin   :: Maybe ChunkPoint
   , _chunkRangeEnd     :: Maybe ChunkPoint
@@ -43,6 +47,8 @@ data ChunkRange = ChunkRange
 -- | A point in a 'VDocVersion' in state 'HTMLCanonical' or 'HTMLWithMarks' (either begin or end) as
 -- returned by `window.getSelection()` in javascript.  The 'DataUID' points to a node of the form
 -- @Node _ [ContentText _]@.  Begin and end points form a 'ChunkRange'.
+--
+-- TODO: this is called 'SelectionPoint' now.
 data ChunkPoint = ChunkPoint
   { _chunkPointNode :: DataUID
   , _chunkPointOffset :: Int
@@ -55,7 +61,7 @@ data ChunkPoint = ChunkPoint
 -- be confused with 'DataContributionID'.
 --
 -- TODO: this is called EntityKey now.
-newtype DataUID = DataUID { unDataUID :: Int }  -- FIXME: rename to '_unDataUID'
+newtype DataUID = DataUID { unDataUID :: Int }
   deriving (Eq, Ord, Generic, Num)
 
 instance Show DataUID where  -- FIXME: derive Show and use 'toUrlPiece' for rendering.

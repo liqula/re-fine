@@ -24,6 +24,7 @@ module Refine.Frontend.Contribution.QuickCreateSpec where
 
 import Test.Hspec
 
+import           Refine.Common.Types
 import           Refine.Frontend.Contribution.QuickCreate
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Types
@@ -37,7 +38,7 @@ rangePosFor topOffset bottomOffset = rangeFor 0 topOffset bottomOffset 0
 
 rangeFor :: Int -> Int -> Int -> Int -> Range
 rangeFor docTopOffset topOffset bottomOffset scrollOffset =
-  Range Nothing Nothing
+  Range (ChunkRange Nothing Nothing)
       (OffsetFromDocumentTop docTopOffset)
       (OffsetFromViewportTop topOffset)
       (OffsetFromViewportTop bottomOffset)

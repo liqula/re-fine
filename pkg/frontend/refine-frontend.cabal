@@ -74,7 +74,6 @@ library
       Refine.Frontend.Document.FFI.Types
       Refine.Frontend.Document.Store
       Refine.Frontend.Document.Types
-      Refine.Frontend.Document.VDoc
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.EditToolbar
       Refine.Frontend.Header.Heading
@@ -106,7 +105,6 @@ library
       Refine.Frontend.Test.Enzyme.Core
       Refine.Frontend.Test.Enzyme.ReactWrapper
       Refine.Frontend.Test.Enzyme.ShallowWrapper
-      Refine.Frontend.Test.Samples
       Refine.Frontend.Test.Store
       Refine.Frontend.ThirdPartyViews
       Refine.Frontend.TKey
@@ -182,7 +180,7 @@ test-suite spec
       Refine.Frontend.ViewsSpec
       Spec
   js-sources:
-      jsbits/test.js
-      jsbits/util.js
       jsbits/hookup.js
+      jsbits/util.js
+      jsbits/test.js
   default-language: Haskell2010

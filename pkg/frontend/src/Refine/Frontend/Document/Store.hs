@@ -23,50 +23,54 @@
 
 module Refine.Frontend.Document.Store
   ( documentStateUpdate
-  , createEditorState
   , editorStateToVDocVersion
+  , editorStateFromVDocVersion
   ) where
 
-import           Control.Lens ((&), (.~), (%~), (^.))
-import           System.IO.Unsafe (unsafePerformIO)
-import           Text.HTML.Tree (tokensFromForest, tokensToForest, ParseTokenForestError)
+import           Control.Lens ((&), (%~))
 
 import           Refine.Common.Types
+import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store.Types
 
 
-documentStateUpdate :: GlobalAction -> Maybe (VDocVersion 'HTMLWithMarks) -> DocumentState -> DocumentState
-documentStateUpdate (HeaderAction (StartEdit kind)) (Just vdocvers) _state
-  = DocumentStateEdit (createEditorState kind vdocvers)
+documentStateUpdate :: GlobalAction -> Maybe CompositeVDoc -> DocumentState -> DocumentState
+documentStateUpdate (OpenDocument cvdoc) _ _state
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (DocumentAction (DocumentEditUpdate es)) (Just _) state
-  = state & _DocumentStateEdit .~ es
+documentStateUpdate (DocumentAction DocumentSave) (Just cvdoc) _state
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- FIXME: store last state before edit in DocumentStateEdit, and restore it from there?
 
-documentStateUpdate (DocumentAction DocumentToggleBold) (Just _) state
-  = state & _DocumentStateEdit . documentEditStateVal %~ documentToggleBold
+documentStateUpdate (HeaderAction (StartEdit kind)) _ (DocumentStateView _ estate)
+  = DocumentStateEdit estate kind
 
-documentStateUpdate (DocumentAction DocumentToggleItalic) (Just _) state
-  = state & _DocumentStateEdit . documentEditStateVal %~ documentToggleItalic
+documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _state
+  = state'
 
-documentStateUpdate (DocumentAction DocumentEditSave) _ _
-  = DocumentStateView
+documentStateUpdate (DocumentAction DocumentToggleBold) _ state
+  = state & documentStateVal %~ documentToggleBold
+
+documentStateUpdate (DocumentAction DocumentToggleItalic) _ state
+  = state & documentStateVal %~ documentToggleItalic
+
+documentStateUpdate (AddDiscussion _) (Just cvdoc) _state
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
+
+documentStateUpdate (AddNote _) (Just cvdoc) _state
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
+
+documentStateUpdate (AddEdit _) (Just cvdoc) _state
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
 documentStateUpdate _ _ state
   = state
 
 
-{-# NOINLINE createEditorState #-}
-createEditorState :: EditKind -> VDocVersion 'HTMLWithMarks -> DocumentEditState
-createEditorState kind (VDocVersion vers) = unsafePerformIO $ do
-  let content = convertFromHtml $ tokensFromForest vers
-  estate <- createWithContent content
-  pure $ DocumentEditState kind estate
+editorStateToVDocVersion :: EditorState -> VDocVersion
+editorStateToVDocVersion = rawContentToVDocVersion . convertToRaw . getCurrentContent
 
-
--- | FIXME: there is no validation here.
-editorStateToVDocVersion :: DocumentEditState -> Either ParseTokenForestError (VDocVersion 'HTMLWithMarks)
-editorStateToVDocVersion estate =
-  VDocVersion <$> (tokensToForest . stateToHTML . getCurrentContent $ estate ^. documentEditStateVal)
+editorStateFromVDocVersion :: VDocVersion -> EditorState
+editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion

@@ -90,7 +90,7 @@ editToolbar = mkView "EditToolbar" $ do
             & iconButtonPropsListKey      .~ "save"
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True
-            & iconButtonPropsOnClick      .~ [ DocumentAction DocumentEditSave
+            & iconButtonPropsOnClick      .~ [ DocumentAction DocumentSave
                                              , ContributionAction ClearRange
                                              ]
 
