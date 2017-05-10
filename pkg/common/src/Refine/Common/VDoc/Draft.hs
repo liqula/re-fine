@@ -25,6 +25,7 @@
 module Refine.Common.VDoc.Draft
 where
 
+import           Control.Arrow (second)
 import           Control.Exception (assert)
 import           Control.Lens (makeLenses, view, set, (^.), (&), (%~), _Just, to, (^?!))
 import           Control.Monad (foldM)
@@ -309,6 +310,12 @@ selectionIsEmpty (RawContent bs _) ss@(SelectionState _ s e) = s == e || multiLi
                        , all (ST.null . view blockText) (init bs')
                        ]
 
+-- | alternative implementation (it would be interesting to benchmark both):
+--
+-- >>> takeWhile1 ((/= Just ek) . (^. blockKey)) . dropWhile ((/= Just sk) . (^. blockKey))
+-- >>>
+-- >>> takeWhileAndOneMore p [] = []
+-- >>> takeWhileAndOneMore p (x : xs) = x : if p x then takeWhile1 p xs else []
 selectedBlocks :: SelectionState -> [Block EntityKey] -> [Block EntityKey]
 selectedBlocks (SelectionState _ (SelectionPoint sk _) (SelectionPoint ek _)) = f
   where
@@ -391,7 +398,7 @@ warmupSelectionStates :: forall a. (Typeable a) => Map (ID a) SelectionState -> 
 warmupSelectionStates = aggr . mconcat . fmap trans . Map.toList
   where
     aggr :: (Ord k) => [(k, v)] -> Map k [v]
-    aggr = List.foldl' (\m (k, v) -> Map.alter (Just . maybe [v] (v:)) k m) mempty
+    aggr = Map.fromListWith (<>) . map (second pure)
 
     trans :: (ID a, SelectionState) -> [(BlockKey, SoloSelectionPoint a)]
     trans (i, SelectionState _ p1 p2) =
@@ -399,6 +406,10 @@ warmupSelectionStates = aggr . mconcat . fmap trans . Map.toList
       , (p2 ^. selectionBlock, SoloSelectionPoint p2 i False)
       ]
 
+-- | 'Refine.Common.VDoc.OT.mkBlock' solves a similar problem.  Basically the ranges are sorted by
+-- starting point, then I go through this sorted list and a stack of active ranges is maintained
+-- during it. If I would have more time I would think of the performance of these two alternative
+-- approaches or how these could be tuned if necessary.
 addMarksToBlock :: forall a. (Typeable a) => Map BlockKey [SoloSelectionPoint a] -> Block EntityKey -> AddMarksState a (Block EntityKey)
 addMarksToBlock pointmap block = f (fromMaybe [] $ Map.lookup (block ^?! blockKey . _Just) pointmap) block
   where
