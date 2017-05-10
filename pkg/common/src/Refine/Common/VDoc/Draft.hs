@@ -267,7 +267,7 @@ makeRefineType ''SelectionPoint
 
 -- | Note: empty block list is illegal.  For once it will make draft crash in 'stateFromContent'.
 mkRawContent :: [Block Entity] -> RawContent
-mkRawContent [] = error "mkRawContent: empty block list."
+mkRawContent [] = mkRawContent [emptyBlock]
 mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
   where
     -- FUTUREWORK: it is possible to do just one traversal to collect and index entities
