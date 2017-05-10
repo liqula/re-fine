@@ -30,6 +30,7 @@ module Refine.Frontend.Document.Store
 import           Control.Lens ((&), (%~))
 
 import           Refine.Common.Types
+import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types

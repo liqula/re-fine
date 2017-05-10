@@ -21,16 +21,10 @@
 module Refine.Common.Types.VDoc where
 
 import           Control.DeepSeq
-import           Control.Exception (assert)
-import           Control.Lens (makeLenses, makePrisms, Lens', view, (&), (%~), (^?!), _Just, (^.), to)
-import           Control.Monad.State
+import           Control.Lens (makeLenses, makePrisms, Lens')
 import           Data.Aeson
-import           Data.List as List
 import           Data.Map as Map
-import           Data.Maybe (fromMaybe)
-import           Data.String.Conversions (ST, cs, (<>))
-import qualified Data.Text           as ST
-import           Data.Typeable
+import           Data.String.Conversions (ST)
 import qualified Generics.SOP        as SOP
 import qualified Generics.SOP.JSON   as SOP
 import qualified Generics.SOP.NFData as SOP
@@ -40,7 +34,6 @@ import Refine.Common.Orphans ()
 import Refine.Common.Types.Chunk
 import Refine.Common.Types.Comment
 import Refine.Common.Types.Prelude
-import Refine.Common.VDoc.Draft
 import Refine.Prelude
 import Refine.Prelude.TH (makeRefineType)
 
@@ -171,97 +164,3 @@ vdocID = vdocMetaID . miID
 
 editID :: Lens' Edit (ID Edit)
 editID = editMetaID . miID
-
-
--- * draft
-
-rawContentFromCompositeVDoc :: CompositeVDoc -> RawContent
-rawContentFromCompositeVDoc (CompositeVDoc _ _ _ vers edits notes discussions) =
-  rawContentFromVDocVersion vers & rawContentBlocks %~ f
-  where
-    -- 'convertHack' will go away when 'ChunkRange' goes away.
-    convertHack = chunkRangeToSelectionState (rawContentFromVDocVersion vers)
-    f = addMarksToBlocks (convertHack . view editRange <$> edits)
-      . addMarksToBlocks (convertHack . view noteRange <$> notes)
-      . addMarksToBlocks (convertHack . view (compositeDiscussion . discussionRange) <$> discussions)
-      . fmap deleteMarksFromBlock  -- (this shouldn't be doing anything, the raw content value has
-                                   -- just been created.  but it may be necessary somewhere else,
-                                   -- after vdoc version has been refactored away, so we keep it as
-                                   -- a reminder.)
-
-
-rawContentFromVDocVersion :: VDocVersion -> RawContent
-rawContentFromVDocVersion (VDocVersion st) = case eitherDecode $ cs st of
-  Right v -> v
-  Left msg -> error $ "vdocVersionToRawContent: " <> show (msg, st)
-
-rawContentToVDocVersion :: RawContent -> VDocVersion
-rawContentToVDocVersion = VDocVersion . cs . encode
-
-
-deleteMarksFromBlock :: Block EntityKey -> Block EntityKey
-deleteMarksFromBlock = blockStyles %~ List.filter ((`elem` [Bold, Italic, Underline, Code]) . snd)
-
-addMarksToBlocks :: forall a. (Typeable a) => Map (ID a) SelectionState -> [Block EntityKey] -> [Block EntityKey]
-addMarksToBlocks m bs = case (addMarksToBlock (warmupSelectionStates m) `mapM` bs) `runState` [] of
-  (bs', []) -> bs'
-  bad -> error $ "addMarksToBlocks: impossible: " <> show bad
-
-type AddMarksState a = State [SoloSelectionPoint a]
-
--- | 'SelectionPoint' that carries extra information needed for 'addMarksToBlocks'.
-data SoloSelectionPoint a = SoloSelectionPoint
-  { soloSelectionPointPoint   :: SelectionPoint
-  , soloSelectionPointID      :: ID a
-  , soloSelectionPointIsStart :: Bool
-  }
-  deriving (Eq, Show)
-
-warmupSelectionStates :: forall a. (Typeable a) => Map (ID a) SelectionState -> Map BlockKey [SoloSelectionPoint a]
-warmupSelectionStates = aggr . mconcat . fmap trans . Map.toList
-  where
-    aggr :: (Ord k) => [(k, v)] -> Map k [v]
-    aggr = List.foldl' (\m (k, v) -> Map.alter (Just . maybe [v] (v:)) k m) mempty
-
-    trans :: (ID a, SelectionState) -> [(BlockKey, SoloSelectionPoint a)]
-    trans (i, SelectionState _ p1 p2) =
-      [ (p1 ^. selectionBlock, SoloSelectionPoint p1 i True)
-      , (p2 ^. selectionBlock, SoloSelectionPoint p2 i False)
-      ]
-
-addMarksToBlock :: forall a. (Typeable a) => Map BlockKey [SoloSelectionPoint a] -> Block EntityKey -> AddMarksState a (Block EntityKey)
-addMarksToBlock pointmap block = f (fromMaybe [] $ Map.lookup (block ^?! blockKey . _Just) pointmap) block
-  where
-    f :: [SoloSelectionPoint a] -> Block EntityKey -> AddMarksState a (Block EntityKey)
-    f pointlist blk = do
-      previousOpenPoints :: [SoloSelectionPoint a] <- get
-      let (newOpenPoints, newClosePoints) = List.partition soloSelectionPointIsStart pointlist
-
-          blocklen :: Int
-          blocklen = blk ^. blockText . to ST.length
-
-          inlineStyles :: [(EntityRange, Style)]
-          inlineStyles = List.filter (not . entityRangeIsEmpty . fst)
-                       $ (addMarkToBlock blocklen True  newClosePoints <$> previousOpenPoints)
-                      <> (addMarkToBlock blocklen False newClosePoints <$> newOpenPoints)
-
-      modify ( List.filter ((`notElem` (soloSelectionPointID <$> newClosePoints)) . soloSelectionPointID)
-             . (newOpenPoints <>)
-             )
-      blk & blockStyles %~ (inlineStyles <>) & pure
-
-addMarkToBlock :: forall a. (Typeable a) => Int -> Bool -> [SoloSelectionPoint a] -> SoloSelectionPoint a -> (EntityRange, Style)
-addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (start >= 0 && end >= 0) ((start, end), style)
-  where
-    style = if
-      | typeOf (Proxy :: Proxy a) == typeOf (Proxy :: Proxy Edit) -> RangeEdit
-      | otherwise                                                 -> RangeComment
-
-    start = if openedInOtherBlock
-      then 0
-      else soloSelectionPointPoint thisPoint ^. selectionOffset
-
-    end = case List.filter ((== soloSelectionPointID thisPoint) . soloSelectionPointID) newClosePoints of
-      []   -> blocklen
-      [sp] -> soloSelectionPointPoint sp ^. selectionOffset - start
-      bad  -> error $ "addMarkToBlock: impossible: " <> show bad

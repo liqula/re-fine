@@ -27,7 +27,6 @@ import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
 
 import           Refine.Common.Test.Arbitrary
-import           Refine.Common.Types.Chunk
 import           Refine.Common.VDoc.Draft
 
 

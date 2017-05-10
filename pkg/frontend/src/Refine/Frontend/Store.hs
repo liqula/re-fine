@@ -399,7 +399,7 @@ getRangeAction beforeState afterState = assert (has _DocumentStateView beforeSta
       let doctop = scrollOffset + if sel ^. selectionIsBackward then topOffset else bottomOffset
 
       pure Range
-        { _rangeSelectionState = C.selectionStateToChunkRange (beforeState ^?! documentStateContent) sel
+        { _rangeSelectionState = selectionStateToChunkRange (beforeState ^?! documentStateContent) sel
         , _rangeDocTopOffset   = OffsetFromDocumentTop  doctop
         , _rangeTopOffset      = OffsetFromViewportTop  topOffset
         , _rangeBottomOffset   = OffsetFromViewportTop  bottomOffset

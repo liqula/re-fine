@@ -22,34 +22,14 @@ module Refine.Common.Types.Chunk where
 
 import           Data.Functor.Infix ((<$$>))
 import           Control.DeepSeq
-import           Control.Lens (_1, (%~), (^.))
+import           Control.Lens (_1, (%~))
 import           Data.Aeson
 import qualified Generics.SOP        as SOP
 import qualified Generics.SOP.NFData as SOP
 import           GHC.Generics (Generic)
 
 import Refine.Common.Types.Prelude
-import Refine.Common.VDoc.Draft
 import Refine.Prelude.TH (makeRefineType)
-
-
--- | The 'DataUID' values are actually block numbers (yes, this is cheating, but it works for the
--- backend :-).  The 'RawContent' is needed to convert block keys to block numbers and back.  This
--- function isn't total, but all undefined values are internal errors`.
-chunkRangeToSelectionState :: RawContent -> ChunkRange -> SelectionState
-chunkRangeToSelectionState (RawContent bs _) (ChunkRange s e) = SelectionState False (trans s) (trans e)
-  where
-    trans (Just (ChunkPoint (DataUID blocknum) offset)) = SelectionPoint blockkey offset
-      where
-        Just blockkey = (bs !! blocknum) ^. blockKey
-
--- | See 'chunkRangeToSelectionState'.
-selectionStateToChunkRange :: RawContent -> SelectionState -> ChunkRange
-selectionStateToChunkRange (RawContent bs _) (SelectionState _ s e) = ChunkRange (trans s) (trans e)
-  where
-    trans (SelectionPoint blockkey offset) = Just (ChunkPoint (DataUID blocknum) offset)
-      where
-        [(blocknum, _)] = filter (\(_, b) -> b ^. blockKey == Just blockkey) $ zip [0..] bs
 
 
 -- | Location of a 'Contribution' in a 'VDocVersion'.  If the begin point (resp. end point) is

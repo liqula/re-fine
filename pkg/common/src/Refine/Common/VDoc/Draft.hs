@@ -1,5 +1,6 @@
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveFoldable             #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE ExplicitForAll             #-}
@@ -9,6 +10,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE MultiWayIf                 #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
@@ -19,14 +21,14 @@
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
-{-# LANGUAGE DeriveFoldable             #-}
 
 module Refine.Common.VDoc.Draft
 where
 
 import           Control.Exception (assert)
-import           Control.Lens (makeLenses, view, set, (^.))
+import           Control.Lens (makeLenses, view, set, (^.), (&), (%~), _Just, to, (^?!))
 import           Control.Monad (foldM)
+import           Control.Monad.State
 import           Data.Aeson
 import           Data.Aeson.Types (Parser)
 import           Data.Foldable (toList)
@@ -35,14 +37,18 @@ import qualified Data.HashMap.Lazy as HashMap
 import           Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
 import           Data.List (nub)
+import qualified Data.List as List
+import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Data.Monoid ((<>))
 import           Data.Maybe (fromMaybe, maybeToList)
 import           Data.String.Conversions
 import qualified Data.Text as ST
-import           GHC.Generics
+import           Data.Typeable (Typeable, Proxy(Proxy), typeOf)
+import           GHC.Generics hiding (to)
 
-import Refine.Prelude.TH
+import Refine.Common.Types
+import Refine.Prelude.TH hiding (typeOf)
 
 
 -- * data types
@@ -315,3 +321,117 @@ selectedBlocks (SelectionState _ (SelectionPoint sk _) (SelectionPoint ek _)) = 
 -- | Like 'selectionIsEmpty', but much simpler!
 entityRangeIsEmpty :: EntityRange -> Bool
 entityRangeIsEmpty (_, j) = j == 0
+
+
+-- * vdoc
+
+-- | The 'DataUID' values are actually block numbers (yes, this is cheating, but it works for the
+-- backend :-).  The 'RawContent' is needed to convert block keys to block numbers and back.  This
+-- function isn't total, but all undefined values are internal errors`.
+chunkRangeToSelectionState :: RawContent -> ChunkRange -> SelectionState
+chunkRangeToSelectionState (RawContent bs _) (ChunkRange s e) = SelectionState False (trans s) (trans e)
+  where
+    trans (Just (ChunkPoint (DataUID blocknum) offset)) = SelectionPoint blockkey offset
+      where
+        Just blockkey = (bs !! blocknum) ^. blockKey
+    trans bad = error $ "chunkRangeToSelectionState: impossibel: " <> show bad
+
+-- | See 'chunkRangeToSelectionState'.
+selectionStateToChunkRange :: RawContent -> SelectionState -> ChunkRange
+selectionStateToChunkRange (RawContent bs _) (SelectionState _ s e) = ChunkRange (trans s) (trans e)
+  where
+    trans (SelectionPoint blockkey offset) = Just (ChunkPoint (DataUID blocknum) offset)
+      where
+        [(blocknum, _)] = filter (\(_, b) -> b ^. blockKey == Just blockkey) $ zip [0..] bs
+
+
+rawContentFromCompositeVDoc :: CompositeVDoc -> RawContent
+rawContentFromCompositeVDoc (CompositeVDoc _ _ _ vers edits notes discussions) =
+  rawContentFromVDocVersion vers & rawContentBlocks %~ f
+  where
+    -- 'convertHack' will go away when 'ChunkRange' goes away.
+    convertHack = chunkRangeToSelectionState (rawContentFromVDocVersion vers)
+    f = addMarksToBlocks (convertHack . view editRange <$> edits)
+      . addMarksToBlocks (convertHack . view noteRange <$> notes)
+      . addMarksToBlocks (convertHack . view (compositeDiscussion . discussionRange) <$> discussions)
+      . fmap deleteMarksFromBlock  -- (this shouldn't be doing anything, the raw content value has
+                                   -- just been created.  but it may be necessary somewhere else,
+                                   -- after vdoc version has been refactored away, so we keep it as
+                                   -- a reminder.)
+
+
+rawContentFromVDocVersion :: VDocVersion -> RawContent
+rawContentFromVDocVersion (VDocVersion st) = case eitherDecode $ cs st of
+  Right v -> v
+  Left msg -> error $ "vdocVersionToRawContent: " <> show (msg, st)
+
+rawContentToVDocVersion :: RawContent -> VDocVersion
+rawContentToVDocVersion = VDocVersion . cs . encode
+
+
+deleteMarksFromBlock :: Block EntityKey -> Block EntityKey
+deleteMarksFromBlock = blockStyles %~ List.filter ((`elem` [Bold, Italic, Underline, Code]) . snd)
+
+addMarksToBlocks :: forall a. (Typeable a) => Map (ID a) SelectionState -> [Block EntityKey] -> [Block EntityKey]
+addMarksToBlocks m bs = case (addMarksToBlock (warmupSelectionStates m) `mapM` bs) `runState` [] of
+  (bs', []) -> bs'
+  bad -> error $ "addMarksToBlocks: impossible: " <> show bad
+
+type AddMarksState a = State [SoloSelectionPoint a]
+
+-- | 'SelectionPoint' that carries extra information needed for 'addMarksToBlocks'.
+data SoloSelectionPoint a = SoloSelectionPoint
+  { soloSelectionPointPoint   :: SelectionPoint
+  , soloSelectionPointID      :: ID a
+  , soloSelectionPointIsStart :: Bool
+  }
+  deriving (Eq, Show)
+
+warmupSelectionStates :: forall a. (Typeable a) => Map (ID a) SelectionState -> Map BlockKey [SoloSelectionPoint a]
+warmupSelectionStates = aggr . mconcat . fmap trans . Map.toList
+  where
+    aggr :: (Ord k) => [(k, v)] -> Map k [v]
+    aggr = List.foldl' (\m (k, v) -> Map.alter (Just . maybe [v] (v:)) k m) mempty
+
+    trans :: (ID a, SelectionState) -> [(BlockKey, SoloSelectionPoint a)]
+    trans (i, SelectionState _ p1 p2) =
+      [ (p1 ^. selectionBlock, SoloSelectionPoint p1 i True)
+      , (p2 ^. selectionBlock, SoloSelectionPoint p2 i False)
+      ]
+
+addMarksToBlock :: forall a. (Typeable a) => Map BlockKey [SoloSelectionPoint a] -> Block EntityKey -> AddMarksState a (Block EntityKey)
+addMarksToBlock pointmap block = f (fromMaybe [] $ Map.lookup (block ^?! blockKey . _Just) pointmap) block
+  where
+    f :: [SoloSelectionPoint a] -> Block EntityKey -> AddMarksState a (Block EntityKey)
+    f pointlist blk = do
+      previousOpenPoints :: [SoloSelectionPoint a] <- get
+      let (newOpenPoints, newClosePoints) = List.partition soloSelectionPointIsStart pointlist
+
+          blocklen :: Int
+          blocklen = blk ^. blockText . to ST.length
+
+          inlineStyles :: [(EntityRange, Style)]
+          inlineStyles = List.filter (not . entityRangeIsEmpty . fst)
+                       $ (addMarkToBlock blocklen True  newClosePoints <$> previousOpenPoints)
+                      <> (addMarkToBlock blocklen False newClosePoints <$> newOpenPoints)
+
+      modify ( List.filter ((`notElem` (soloSelectionPointID <$> newClosePoints)) . soloSelectionPointID)
+             . (newOpenPoints <>)
+             )
+      blk & blockStyles %~ (inlineStyles <>) & pure
+
+addMarkToBlock :: forall a. (Typeable a) => Int -> Bool -> [SoloSelectionPoint a] -> SoloSelectionPoint a -> (EntityRange, Style)
+addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (start >= 0 && end >= 0) ((start, end), style)
+  where
+    style = if
+      | typeOf (Proxy :: Proxy a) == typeOf (Proxy :: Proxy Edit) -> RangeEdit
+      | otherwise                                                 -> RangeComment
+
+    start = if openedInOtherBlock
+      then 0
+      else soloSelectionPointPoint thisPoint ^. selectionOffset
+
+    end = case List.filter ((== soloSelectionPointID thisPoint) . soloSelectionPointID) newClosePoints of
+      []   -> blocklen
+      [sp] -> soloSelectionPointPoint sp ^. selectionOffset - start
+      bad  -> error $ "addMarkToBlock: impossible: " <> show bad

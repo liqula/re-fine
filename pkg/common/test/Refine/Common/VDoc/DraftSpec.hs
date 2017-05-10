@@ -28,7 +28,6 @@ import           Test.QuickCheck
 
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.VDoc.Draft
-import Refine.Common.Types
 import Refine.Common.Test.Samples ()  -- (just importing it so we know it compiles.)
 
 
