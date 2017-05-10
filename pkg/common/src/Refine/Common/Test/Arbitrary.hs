@@ -92,8 +92,8 @@ gshrink = List.map to . shrinkSOP . from
 
 
 instance Arbitrary RawContent where
-  arbitrary = initBlockKeys . sanitizeRawContent . mkRawContent <$> ((:) <$> arbitrary <*> arbitrary)
-  shrink    = fmap sanitizeRawContent <$> gshrink
+  arbitrary = initBlockKeys . sanitizeRawContent . mkRawContent <$> arbitrary
+  shrink    = fmap sanitizeRawContent . filter ((/= []) . view rawContentBlocks) <$> gshrink
 
 initBlockKeys :: RawContent -> RawContent
 initBlockKeys = rawContentBlocks %~ zipWith (\k -> blockKey .~ (Just . BlockKey . cs . show $ k)) [(0 :: Int)..]
