@@ -83,8 +83,8 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
         Draft.Italic       -> EntityItalic
         Draft.Underline    -> EntityUnderline
         Draft.Code         -> EntityCode
-        Draft.RangeComment -> EntityItalic
-        Draft.RangeEdit    -> EntityItalic
+        Draft.RangeComment -> EntityRangeComment
+        Draft.RangeEdit    -> EntityRangeEdit
 
     mkBlockType :: Int -> Draft.BlockType -> BlockType  -- FIXME: why don't we use the RawContent type here?
     mkBlockType d = \case
@@ -105,7 +105,7 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
 
         segments =
               mkSegments 0 []
-            . map (\((offset, len), s) -> (offset, (len, s)))
+            . map (\((offset, len), s) -> (offset, (offset + len, s)))
             . sortBy (compare `on` fst)
             $ [(r, fromEntity $ entities IntMap.! k) | (Draft.EntityKey k, r) <- eranges] <> [(r, fromStyle s) | (r, s) <- styles]
 
@@ -124,16 +124,15 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
 docToRawContent :: Doc -> Draft.RawContent
 docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
   where
-    toEntity :: Entity -> Maybe Draft.Entity
-    toEntity = \case
-        EntityLink s -> Just (Draft.EntityLink $ cs s)
-        _ -> Nothing
-
-    toStyle :: Entity -> Maybe Draft.Style
-    toStyle = \case
-        EntityBold   -> Just Draft.Bold
-        EntityItalic -> Just Draft.Italic
-        _ -> Nothing
+    toEntityStyle :: Entity -> Either Draft.Entity Draft.Style
+    toEntityStyle = \case
+        EntityLink s        -> Left (Draft.EntityLink $ cs s)
+        EntityBold          -> Right Draft.Bold
+        EntityItalic        -> Right Draft.Italic
+        EntityUnderline     -> Right Draft.Underline
+        EntityCode          -> Right Draft.Code
+        EntityRangeComment  -> Right Draft.RangeComment
+        EntityRangeEdit     -> Right Draft.RangeEdit
 
     mkType = \case
         Header HL1 d       -> (Draft.Header1, d)
@@ -149,8 +148,8 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
     mkBlock (Block ty es) = uncurry
         (Draft.Block
             (cs $ concatMap getText es)
-            [(e, r) | (r, toEntity -> Just e) <- ranges]
-            [(r, s) | (r, toStyle  -> Just s) <- ranges])
+            [(e, r) | (r, toEntityStyle -> Left e) <- ranges]
+            [(r, s) | (r, toEntityStyle -> Right s) <- ranges])
         (mkType ty)
         Nothing
       where
@@ -159,11 +158,10 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
 
         mkRanges _ _ [] = []
         mkRanges n acc ((len, s): ss)
-            = [((offset, len), sty) | (offset, sty) <- acc, sty `Set.notMember` s, offset /= n]  -- TODO: why not `member`?
+            = [((offset, l), sty) | (offset, sty) <- acc, sty `Set.notMember` s, let l = n - offset, l > 0]  -- TODO: why not `member`?
             <> mkRanges (n + len)
-                        (foldr (insertBy (compare `on` fst))
-                               [(offset, sty) | (offset, sty) <- acc, sty `Set.member` s]
-                               [(n, sty) | sty <- Set.elems s, sty `notElem` map snd acc])
+                        (  [(offset, sty) | (offset, sty) <- acc, sty `Set.member` s]
+                        ++ [(n, sty) | sty <- Set.elems s, sty `notElem` map snd acc])
                         ss
 
 -- | Block canonicalization: remove empty line elems; merge neighboring line elems with same attr set.
