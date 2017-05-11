@@ -444,3 +444,23 @@ addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (st
       []   -> blocklen
       [sp] -> soloSelectionPointPoint sp ^. selectionOffset - start
       bad  -> error $ "addMarkToBlock: impossible: " <> show bad
+
+
+-- * docks
+
+-- | Javascript: `document.querySelectorAll('article span[data-offset-key="2vutk-0-1"]');`.  The
+-- offset-key is constructed from block key, a '0' literal, and the number of left siblings of the
+-- span the selector refers to.
+data MarkSelector = MarkSelector MarkSelectorPos BlockKey Int
+  deriving (Eq, Show, Generic)
+
+data MarkSelectorPos = MarkSelectorUnknownPos | MarkSelectorTop | MarkSelectorBottom
+  deriving (Eq, Show, Generic)
+
+getMarkSelectors :: RawContent -> [(ContributionID, SelectionState)] -> [(ContributionID, MarkSelector, MarkSelector)]
+getMarkSelectors = undefined
+
+  -- TODO: in order to get further here, i need a function that turns overlapping ranges into
+  -- segments.  we've implemented that twice already ('addMarksToBlocks' above in this module, and
+  -- in 'rawContentToDoc' in "Common.VDoc.OT"), so we should consolidate those two implementations
+  -- and reuse them here.
