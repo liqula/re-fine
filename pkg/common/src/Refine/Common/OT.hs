@@ -188,7 +188,7 @@ newtype Atom a = Atom { unAtom :: a }
 
 instance Show a => Show (Atom a) where show = show . unAtom
 
-instance (Eq a, Bounded a, Enum a) => Editable (Atom a) where
+instance (Eq a) => Editable (Atom a) where
     newtype EEdit (Atom a) = ReplaceEnum (Atom a)
       deriving (Show)
 

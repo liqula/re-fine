@@ -32,7 +32,7 @@ class (Editable d, Arbitrary d, Eq d, Show d, Show (EEdit d)) => GenEdit d where
 
 runTest :: forall d. (Typeable d, GenEdit d) => [(String, d -> Gen Property)] -> Spec
 runTest tests
-    = describe ("Editable instance for  " <> show (typeRep (Proxy :: Proxy d)))
+    = describe ("Editable instance for " <> show (typeRep (Proxy :: Proxy d)))
     . forM_ tests $ \(name, test) -> it name $ property test --quickCheckWith stdArgs { maxSuccess = num }
 
 ---------------------
@@ -42,7 +42,7 @@ allTestsButDiff =
     [ (,) "edit composition"    test_edit_composition
     , (,) "diamond"             test_diamond
     , (,) "diamond right join"  test_diamond_right_join
-    , (,) "dimaond left join"   test_diamond_left_join
+    , (,) "diamond left join"   test_diamond_left_join
     , (,) "inverse"             test_inverse
     , (,) "inverse of inverse"  test_inverse_inverse
     , (,) "inverted diamond"    test_inverse_diamond
@@ -167,7 +167,7 @@ instance (GenEdit a, GenEdit b) => GenEdit (Either a b) where
 
 ---------------------------------------- (Bounded, Enum) instance
 
-instance (Eq a, Show a, Arbitrary (Atom a), Bounded a, Enum a) => GenEdit (Atom a) where
+instance (Eq a, Show a, Arbitrary (Atom a)) => GenEdit (Atom a) where
     genEdit _ = fmap ReplaceEnum <$> listOf arbitrary
 
 deriving instance Arbitrary a => Arbitrary (Atom a)

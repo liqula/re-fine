@@ -104,7 +104,7 @@ data Style =
     -- custom styles
   | RangeComment
   | RangeEdit
-  deriving (Show, Eq, Generic)
+  deriving (Show, Eq, Ord, Generic)
 
 -- | each block has a unique blocktype
 data BlockType =
@@ -409,7 +409,7 @@ warmupSelectionStates = aggr . mconcat . fmap trans . Map.toList
 -- | 'Refine.Common.VDoc.OT.mkBlock' solves a similar problem.  Basically the ranges are sorted by
 -- starting point, then I go through this sorted list and a stack of active ranges is maintained
 -- during it. If I would have more time I would think of the performance of these two alternative
--- approaches or how these could be tuned if necessary.
+-- approaches or how these could be tuned if necessary.  [divipp]
 addMarksToBlock :: forall a. (Typeable a) => Map BlockKey [SoloSelectionPoint a] -> Block EntityKey -> AddMarksState a (Block EntityKey)
 addMarksToBlock pointmap block = f (fromMaybe [] $ Map.lookup (block ^?! blockKey . _Just) pointmap) block
   where

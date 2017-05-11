@@ -1,7 +1,9 @@
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE PatternSynonyms            #-}
+{-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE ViewPatterns               #-}
-{-# LANGUAGE PatternSynonyms            #-}
-{-# LANGUAGE LambdaCase                 #-}
 {-# OPTIONS_GHC -fno-warn-orphans       #-}   -- FIXME: elim this
 module Refine.Common.VDoc.OT where
 
@@ -11,48 +13,32 @@ import           Data.List
 import qualified Data.IntMap as IntMap
 import qualified Data.Set as Set
 import           Data.String.Conversions
+import qualified Generics.SOP as SOP
+import           GHC.Generics (Generic)
 
 import Refine.Common.OT
 import Refine.Common.VDoc.Draft (RawContent)
 import qualified Refine.Common.VDoc.Draft as Draft
+import Refine.Prelude.TH (makeJSON)
 
 ---------------------------------------- auxiliary document data type
 
 newtype Doc = Doc [Block]
-   deriving (Show, Eq)
+   deriving (Show, Eq, Generic)
 
-data Block = Block BlockType [LineElem]
-   deriving (Show, Eq)
-
-data BlockType =
-     Header HeaderLevel
-   | Item ItemType Int -- depth
-   deriving (Show, Eq)
-
-data HeaderLevel
-    = HL1 | HL2 | HL3
-   deriving (Show, Eq, Bounded, Enum)
-
-data ItemType = NormalText | BulletPoint | EnumPoint
-   deriving (Show, Eq, Bounded, Enum)
+-- | (third constructor arg is depth)
+data Block = Block Draft.BlockType [LineElem] Int
+   deriving (Show, Eq, Generic)
 
 -- | A segment of an inline style, consisting of 'EntityRange' and 'Style'.
 --
 -- FIXME: (Set Entity) should be (Maybe String, Bool, Bool), it is not allowed to have two links on
 -- the same character.
 data LineElem = LineElem (Set.Set Entity) String
-   deriving (Show, Eq)
+   deriving (Show, Eq, Generic)
 
--- | This is both Entity and Style in Draft
-data Entity
-    = EntityLink String
-    | EntityBold
-    | EntityItalic
-    | EntityUnderline
-    | EntityCode
-    | EntityRangeComment
-    | EntityRangeEdit
-   deriving (Show, Eq, Ord)
+newtype Entity = Entity { unEntity :: Either Draft.Entity Draft.Style }
+   deriving (Show, Eq, Ord, Generic)
 
 ---------------------------------------- conversion functions
 
@@ -71,29 +57,9 @@ xxxxxxxxxxxxxxxxxxxxxx converted to line elements:
 rawContentToDoc :: Draft.RawContent -> Doc
 rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
   where
-    fromEntity :: Draft.Entity -> Entity
-    fromEntity (Draft.EntityLink s) = EntityLink (cs s)
-
-    fromStyle :: Draft.Style -> Entity
-    fromStyle = \case
-        Draft.Bold         -> EntityBold
-        Draft.Italic       -> EntityItalic
-        Draft.Underline    -> EntityUnderline
-        Draft.Code         -> EntityCode
-        Draft.RangeComment -> EntityItalic
-        Draft.RangeEdit    -> EntityItalic
-
-    mkBlockType :: Int -> Draft.BlockType -> BlockType
-    mkBlockType d = \case
-        Draft.Header1     -> Header HL1
-        Draft.Header2     -> Header HL2
-        Draft.Header3     -> Header HL3
-        Draft.NormalText  -> Item NormalText  d
-        Draft.BulletPoint -> Item BulletPoint d
-        Draft.EnumPoint   -> Item EnumPoint   d
-
+    -- see also: 'Refine.Common.VDoc.Draft.addMarksToBlock'.
     mkBlock :: Draft.Block Draft.EntityKey -> Block
-    mkBlock (Draft.Block txt eranges styles ty depth _key) = Block (mkBlockType depth ty) (segment segments $ cs txt)
+    mkBlock (Draft.Block txt eranges styles ty depth _key) = Block ty (segment segments $ cs txt) depth
       where
         segment [] "" = []
         segment [] text = [LineElem mempty text]
@@ -101,72 +67,56 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
 
         segments =
               mkSegments 0 []
-            . map (\((beg, end), s) -> (beg, (end, s)))
+            . map (\((offset, len), s) -> (offset, (offset + len, s)))
             . sortBy (compare `on` fst)
-            $ [(r, fromEntity $ entities IntMap.! k) | (Draft.EntityKey k, r) <- eranges] <> [(r, fromStyle s) | (r, s) <- styles]
+            $ [(r, Entity . Left $ entities IntMap.! k) | (Draft.EntityKey k, r) <- eranges] <> [(r, Entity $ Right s) | (r, s) <- styles]
 
-        mkSegments _ [] [] = []
-        mkSegments n stack ((n', z): ss) | n' == n = mkSegments n (insertBy (compare `on` fst) z stack) ss
-        mkSegments n ((n', _): stack) ss | n' == n = mkSegments n stack ss
-        mkSegments n stack ss
-            | n' > n = (n' - n, Set.fromList $ snd <$> stack): mkSegments n' stack ss
-            | otherwise = error "impossible"
+        -- TODO: stack (2nd arg) should be @IntMap (Set style)@ (keyed by @offset@).
+        mkSegments _ [] [] = []  -- (stack will be emptied in the third case.)
+        mkSegments n stack ((offset, s): ss) | offset == n = mkSegments n (insertBy (compare `on` fst) s stack) ss
+        mkSegments n ((offset, _): stack) ss | offset == n = mkSegments n stack ss
+        mkSegments n stack ss                | offset > n  = (offset - n, Set.fromList $ snd <$> stack): mkSegments offset stack ss
           where
-            n' = case (fst <$> stack, fst <$> ss) of
+            offset = case (fst <$> stack, fst <$> ss) of
                 (a: _, b: _) -> min a b
-                (a: _, _)    -> a
-                (_, b: _)    -> b
-                _            -> error "impossible"
+                (a: _, [])   -> a
+                ([],   b: _) -> b
+                ([],   [])   -> error "impossible"
+        mkSegments n stack ss = error $ "impossible: " <> show (n, stack, ss)
 
 docToRawContent :: Doc -> Draft.RawContent
 docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
   where
-    toEntity :: Entity -> Maybe Draft.Entity
-    toEntity = \case
-        EntityLink s -> Just (Draft.EntityLink $ cs s)
-        _ -> Nothing
-
-    toStyle :: Entity -> Maybe Draft.Style
-    toStyle = \case
-        EntityBold   -> Just Draft.Bold
-        EntityItalic -> Just Draft.Italic
-        _ -> Nothing
-
-    mkType = \case
-        Header HL1         -> (Draft.Header1, 0)
-        Header HL2         -> (Draft.Header2, 0)
-        Header HL3         -> (Draft.Header3, 0)
-        Item NormalText  d -> (Draft.NormalText,  d)
-        Item BulletPoint d -> (Draft.BulletPoint, d)
-        Item EnumPoint   d -> (Draft.EnumPoint,   d)
-
     getText (LineElem _ txt) = txt
 
     mkBlock :: Block -> Draft.Block Draft.Entity
-    mkBlock (Block ty es) = uncurry
-        (Draft.Block
-            (cs $ concatMap getText es)
-            [(e, r) | (r, toEntity -> Just e) <- ranges]
-            [(r, s) | (r, toStyle  -> Just s) <- ranges])
-        (mkType ty)
+    mkBlock (Block ty es d) = Draft.Block
+        (cs $ concatMap getText es)
+        [(e, r) | (r, unEntity -> Left e) <- ranges]
+        [(r, s) | (r, unEntity -> Right s) <- ranges]
+        ty
+        d
         Nothing
       where
         ranges = mkRanges 0 mempty
-            $ [(len, s) | LineElem s txt <- es, let len = length txt, len > 0] <> [(0, mempty)]
+            $ [(len, s) | LineElem s txt <- es, let len = length txt, len > 0]
+            <> [(0, mempty)]  -- this is to avoid one more case in mkRanges below when we're done.
 
         mkRanges _ _ [] = []
         mkRanges n acc ((len, s): ss)
-            = [((beg, n), sty) | (beg, sty) <- acc, sty `Set.notMember` s, beg /= n]
-            <> mkRanges (n + len)
-                        (foldr (insertBy (compare `on` fst))
-                               [(beg, sty) | (beg, sty) <- acc, sty `Set.member` s]
-                               [(n, sty) | sty <- Set.elems s, sty `notElem` map snd acc])
+            = -- construct all non-empty ranges that are closed in s
+              [((offset, l), sty) | (offset, sty) <- acc, sty `Set.notMember` s, let l = n - offset, l > 0]
+           <> -- jump to the next segment (aka line element)
+              mkRanges (n + len)
+                        (  [(offset, sty) | (offset, sty) <- acc, sty `Set.member` s]
+                        <> [(n, sty) | sty <- Set.elems s, sty `notElem` map snd acc])
                         ss
 
+-- | Block canonicalization: remove empty line elems; merge neighboring line elems with same attr set.
 simplifyDoc :: Doc -> Doc
 simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
   where
-    simplifyBlock (Block a b) = Block a . map joinElems . groupBy ((==) `on` attrs) $ filter notNull b
+    simplifyBlock (Block a b d) = Block a (map joinElems . groupBy ((==) `on` attrs) $ filter notNull b) d
 
     attrs (LineElem x _) = x
     txt   (LineElem _ x) = x
@@ -179,16 +129,14 @@ simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
 ---------------------------------------- Editable instances
 -- FUTUREWORK: make these instances smarter
 
-instance Representable BlockType where
-    type Rep BlockType = Either (Atom HeaderLevel) (Atom ItemType, Atom Int)
-    to = either (Header . unAtom) (uncurry Item . (unAtom *** unAtom))
-    from = \case
-        Header s -> Left $ Atom s
-        Item a b -> Right (Atom a, Atom b)
+instance Representable Draft.BlockType where
+    type Rep Draft.BlockType = (Atom Draft.BlockType)
+    to = unAtom
+    from = Atom
 
-instance Editable BlockType where
-    newtype EEdit BlockType
-        = EBlockType {unEBlockType :: EEdit (Rep BlockType)}
+instance Editable Draft.BlockType where
+    newtype EEdit Draft.BlockType
+        = EBlockType {unEBlockType :: EEdit (Rep Draft.BlockType)}
       deriving (Show)
 
     docCost = docCost . from
@@ -201,16 +149,9 @@ instance Editable BlockType where
 ----------------------
 
 instance Representable Entity where
-    type Rep Entity = Either [Atom Char] (Either () (Either () (Either () (Either () (Either () ())))))
-    to = either (EntityLink . map unAtom) (either (const EntityBold) (const EntityItalic))
-    from = \case
-        EntityLink s       -> Left $ Atom <$> s
-        EntityBold         -> Right (Left ())
-        EntityItalic       -> Right (Right (Left ()))
-        EntityUnderline    -> Right (Right (Right (Left ())))
-        EntityCode         -> Right (Right (Right (Right (Left ()))))
-        EntityRangeComment -> Right (Right (Right (Right (Right (Left ())))))
-        EntityRangeEdit    -> Right (Right (Right (Right (Right (Right ())))))
+    type Rep Entity = Atom Entity
+    to = unAtom
+    from = Atom
 
 instance Editable Entity where
     newtype EEdit Entity
@@ -247,9 +188,9 @@ instance Editable LineElem where
 ----------------------
 
 instance Representable Block where
-    type Rep Block = (BlockType, [LineElem])
-    to (a, b) = Block a b
-    from (Block a b) = (a, b)
+    type Rep Block = ((Draft.BlockType, [LineElem]), Atom Int)
+    to ((a, b), Atom d) = Block a b d
+    from (Block a b d) = ((a, b), Atom d)
 
 instance Editable Block where
     newtype EEdit Block
@@ -301,3 +242,19 @@ instance Editable RawContent where
     ePatch e = to . ePatch (unERawContent e) . from
     eMerge d a b = map ERawContent *** map ERawContent $ eMerge (from d) (unERawContent a) (unERawContent b)
     eInverse d = map ERawContent . eInverse (from d) . unERawContent
+
+
+instance SOP.Generic Doc
+instance SOP.Generic Block
+instance SOP.Generic LineElem
+instance SOP.Generic Entity
+
+instance SOP.HasDatatypeInfo Doc
+instance SOP.HasDatatypeInfo Block
+instance SOP.HasDatatypeInfo LineElem
+instance SOP.HasDatatypeInfo Entity
+
+makeJSON ''Doc
+makeJSON ''Block
+makeJSON ''LineElem
+makeJSON ''Entity

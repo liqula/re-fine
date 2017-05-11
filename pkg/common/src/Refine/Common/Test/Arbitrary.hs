@@ -15,8 +15,9 @@
 module Refine.Common.Test.Arbitrary where
 
 import           Control.Arrow (first, second)
-import           Control.Lens ((^.), (^?!), (.~), (%~), (&), _Just, view)
+import           Control.Lens (Lens', (^.), (^?!), (.~), (%~), (&), _Just, view, _1, _2)
 import           Control.Monad.State
+import           Data.Function (on)
 import qualified Data.IntMap as IntMap
 import           Data.List (sort)
 import qualified Data.List as List
@@ -92,8 +93,8 @@ gshrink = List.map to . shrinkSOP . from
 
 
 instance Arbitrary RawContent where
-  arbitrary = initBlockKeys . sanitizeRawContent . mkRawContent <$> ((:) <$> arbitrary <*> arbitrary)
-  shrink    = fmap sanitizeRawContent <$> gshrink
+  arbitrary = initBlockKeys . sanitizeRawContent . mkRawContent <$> arbitrary
+  shrink    = fmap sanitizeRawContent . filter ((/= []) . view rawContentBlocks) <$> gshrink
 
 initBlockKeys :: RawContent -> RawContent
 initBlockKeys = rawContentBlocks %~ zipWith (\k -> blockKey .~ (Just . BlockKey . cs . show $ k)) [(0 :: Int)..]
@@ -106,7 +107,7 @@ initBlockKeys = rawContentBlocks %~ zipWith (\k -> blockKey .~ (Just . BlockKey 
 -- optimized for run-time, but for readability.  if you want to use it in production, check if you
 -- want to improve on that first.
 sanitizeRawContent :: RawContent -> RawContent
-sanitizeRawContent = deleteDanglingEntityRefs . deleteDanglingEntities . deleteBadRanges . boundDepth . removeIllegalChars
+sanitizeRawContent = mergeOverlaps . deleteDanglingEntityRefs . deleteDanglingEntities . deleteBadRanges . boundDepth . removeIllegalChars
   where
     removeIllegalChars (RawContent bs es) = RawContent ((blockText %~ ST.filter ok) <$> bs) es
       where
@@ -140,6 +141,40 @@ sanitizeRawContent = deleteDanglingEntityRefs . deleteDanglingEntities . deleteB
       where
         entityKeys :: [EntityKey]
         entityKeys = fst <$> mconcat (view blockEntityRanges <$> bs)
+
+    -- if two ranges overlap for the same (Eq) thing, they will merge into one range.  (FIXME: this
+    -- works for styles, but entities must not overlap so we should filter them instead of merging
+    -- them.)
+    mergeOverlaps :: RawContent -> RawContent
+    mergeOverlaps  (RawContent bs es) = RawContent ((blockStyles %~ goStyles) . (blockEntityRanges %~ goEntities) <$> bs) es
+      where
+        goStyles :: (Eq a, Ord a) => [(EntityRange, a)] -> [(EntityRange, a)]
+        goStyles = go _1 _2
+
+        goEntities :: (Eq a, Ord a) => [(a, EntityRange)] -> [(a, EntityRange)]
+        goEntities = go _2 _1
+
+        go :: forall a payload. (Eq payload, Ord payload) => Lens' a EntityRange -> Lens' a payload -> [a] -> [a]
+        go range payload = sortR
+                         . mconcat
+                         . fmap (goGroup . sortR)
+                         . sortGroupP
+          where
+            sortR      = List.sortBy (compare `on` view range)
+            sortGroupP = List.groupBy ((==) `on` view payload)
+                       . List.sortBy (compare `on` view payload)
+
+            goGroup [] = []
+            goGroup [x] = [x]
+            goGroup (x@(view range -> (o, l)) : x'@(view range -> (o', l')) : xs)
+              = if o + l >= o'
+                  then goGroup ((x & range .~ merge (o, l) (o', l')) : xs)
+                  else x : goGroup (x' : xs)
+
+            merge (o, l) (o', l') = (o'', l'')
+              where
+                o'' = min o o'
+                l'' = max (o + l) (o' + l') - o''
 
 
 instance (Generic a, Arbitrary a) => Arbitrary (Block a) where

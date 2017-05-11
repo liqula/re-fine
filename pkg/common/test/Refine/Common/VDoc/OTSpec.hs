@@ -9,29 +9,21 @@ import           Test.Hspec
 
 import Refine.Common.OT
 import Refine.Common.OTSpec hiding (spec)
+import Refine.Common.Test.Arbitrary
 import Refine.Common.VDoc.OT
-import Refine.Common.VDoc.Draft (RawContent)
+import qualified Refine.Common.VDoc.Draft as Draft
 
 
 ---------------------------------------- Editable instances
 -- FUTUREWORK: make these instances smarter
 
-instance Arbitrary HeaderLevel where
-    arbitrary = elements [minBound..]
-
-instance Arbitrary ItemType where
-    arbitrary = elements [minBound..]
-
-instance Arbitrary BlockType where
-    arbitrary = to <$> arbitrary
-
-instance GenEdit BlockType where
+instance GenEdit Draft.BlockType where
     genEdit d = map EBlockType <$> genEdit (from d)
 
 ----------------------
 
 instance Arbitrary Entity where
-    arbitrary = to <$> arbitrary
+    arbitrary = garbitrary
 
 instance HasEnoughInhabitants Entity where hasMoreInhabitantsThan _ _ = True
 
@@ -53,7 +45,7 @@ instance GenEdit LineElem where
 ----------------------
 
 instance Arbitrary Block where
-    arbitrary = to <$> arbitrary
+    arbitrary = garbitrary
 
 instance GenEdit Block where
     genEdit d = map EBlock <$> genEdit (from d)
@@ -61,30 +53,26 @@ instance GenEdit Block where
 ----------------------
 
 instance Arbitrary Doc where
-    arbitrary = to <$> ((:) <$> arbitrary <*> arbitrary)  -- RawContent block list must not be empty!
+    arbitrary = Doc <$> ((:) <$> arbitrary <*> arbitrary)  -- RawContent block list must not be empty!
 
 instance GenEdit Doc where
     genEdit d = map EDoc <$> genEdit (from d)
 
 ----------------------
 
-instance Arbitrary RawContent where
-    arbitrary = to <$> arbitrary
-
-instance GenEdit RawContent where
+instance GenEdit Draft.RawContent where
     genEdit d = map ERawContent <$> genEdit (from d)
 
 --------------------------------------------------------- tests
 
 spec :: Spec
 spec = parallel $ do
-    runTest $ allTests @(Atom HeaderLevel)
-    runTest $ allTests @(Atom ItemType)
-    runTest $ allTests @BlockType
+    runTest $ allTests @Draft.BlockType
     runTest $ allTests @LineElem
 
     it "Doc <-> RawContent conversion" . property $ \d ->
       rawContentToDoc (docToRawContent d) `shouldBe` simplifyDoc d
 
-    it "RawContent <-> Doc conversion" . property $ \d ->
-      docToRawContent (rawContentToDoc d) `shouldBe` d
+    it "RawContent <-> Doc conversion" . property $ \d -> do
+      let clear = sanitizeRawContent . Draft.resetBlockKeys
+      (clear . docToRawContent . rawContentToDoc) d `shouldBe` clear d
