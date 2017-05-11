@@ -161,7 +161,7 @@ sanitizeRawContent = mergeOverlaps . deleteDanglingEntityRefs . deleteDanglingEn
                          . sortGroupP
           where
             sortR      = List.sortBy (compare `on` view range)
-            sortGroupP = List.groupBy ((==) `on` (view payload))
+            sortGroupP = List.groupBy ((==) `on` view payload)
                        . List.sortBy (compare `on` view payload)
 
             goGroup [] = []
