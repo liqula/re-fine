@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE PatternSynonyms            #-}
+{-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE ViewPatterns               #-}
 {-# OPTIONS_GHC -fno-warn-orphans       #-}   -- FIXME: elim this
@@ -18,6 +19,7 @@ import           GHC.Generics (Generic)
 import Refine.Common.OT
 import Refine.Common.VDoc.Draft (RawContent)
 import qualified Refine.Common.VDoc.Draft as Draft
+import Refine.Prelude.TH (makeJSON)
 
 ---------------------------------------- auxiliary document data type
 
@@ -251,3 +253,8 @@ instance SOP.HasDatatypeInfo Doc
 instance SOP.HasDatatypeInfo Block
 instance SOP.HasDatatypeInfo LineElem
 instance SOP.HasDatatypeInfo Entity
+
+makeJSON ''Doc
+makeJSON ''Block
+makeJSON ''LineElem
+makeJSON ''Entity
