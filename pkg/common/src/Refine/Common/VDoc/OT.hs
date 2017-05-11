@@ -74,10 +74,10 @@ xxxxxxxxxxxxxxxxxxxxxx converted to line elements:
 rawContentToDoc :: Draft.RawContent -> Doc
 rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
   where
-    fromEntity :: Draft.Entity -> Entity
+    fromEntity :: Draft.Entity -> Entity  -- FIXME: why don't we use the RawContent type here?
     fromEntity (Draft.EntityLink s) = EntityLink (cs s)
 
-    fromStyle :: Draft.Style -> Entity
+    fromStyle :: Draft.Style -> Entity  -- FIXME: why don't we use the RawContent type here?
     fromStyle = \case
         Draft.Bold         -> EntityBold
         Draft.Italic       -> EntityItalic
@@ -86,7 +86,7 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
         Draft.RangeComment -> EntityItalic
         Draft.RangeEdit    -> EntityItalic
 
-    mkBlockType :: Int -> Draft.BlockType -> BlockType
+    mkBlockType :: Int -> Draft.BlockType -> BlockType  -- FIXME: why don't we use the RawContent type here?
     mkBlockType d = \case
         Draft.Header1     -> Header HL1 d
         Draft.Header2     -> Header HL2 d
@@ -167,6 +167,7 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
                                [(n, sty) | sty <- Set.elems s, sty `notElem` map snd acc])
                         ss
 
+-- | Block canonicalization: remove empty line elems; merge neighboring line elems with same attr set.
 simplifyDoc :: Doc -> Doc
 simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
   where
