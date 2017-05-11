@@ -221,7 +221,7 @@ createVDoc pv vdoc = do
         (pv ^. createVDocAbstract)
         Nothing -- hack: use a dummy key which will be replaced by a proper one before createVDoc returns
   mid <- createMetaID svdoc
-  e <- createEdit (mid ^. miID) InitialEdit $ CreateEdit
+  e <- createEdit (mid ^. miID) InitialEdit CreateEdit
     { _createEditDesc  = "" -- FIXME
     , _createEditRange = ChunkRange Nothing Nothing  -- QUESTION: is this ok?
     , _createEditVDoc  = vdoc

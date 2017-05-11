@@ -22,6 +22,7 @@ import qualified Data.Algorithm.Patience as Diff
 import qualified Data.Text as Text
 import           GHC.Generics hiding (Rep)
 import           Data.Aeson
+import           Data.Coerce
 
 ----------------------------------------------------------------------------------------------
 
@@ -39,50 +40,50 @@ class Editable d where
     -- | Cost of an elementary edit
     eCost :: EEdit d -> Int
 
+    -- | Cost of an edit
+    cost :: Edit d -> Int
+    cost = sum . map eCost
+
     diff   :: d -> d -> Edit d
 
     ePatch :: EEdit d -> d -> d
+
+    patch :: Edit d -> d -> d
+    patch = foldr (flip (.) . ePatch) id
 
     -- | assume second happend later in case of conflicts
     -- FUTUREWORK: measure information lost during merge
     eMerge :: d -> EEdit d -> EEdit d -> (Edit d, Edit d)
     eMerge = secondWins
 
+    -- | warning: this is at least quadratic, use with care
+    --
+    -- >>> a >< b = (a x b, b x a)
+    --
+    -- with 'a' having precedence
+    merge :: d -> Edit d -> Edit d -> (Edit d, Edit d)
+    merge _ [] b = (b, [])
+    merge _ b [] = ([], b)
+    merge d (a0: a1) (b0: b1) = (b0a0a1 <> b1a0b0a1b0a0, a0b0b1 <> a1b0a0b1a0b0)
+      where
+        (b0a0, a0b0) = eMerge d a0 b0
+        (b0a0a1, a1b0a0) = merge (ePatch a0 d) a1 b0a0
+        (b1a0b0, a0b0b1) = merge (ePatch b0 d) a0b0 b1
+        (b1a0b0a1b0a0, a1b0a0b1a0b0) = merge (patch (a0: b0a0) d) a1b0a0 b1a0b0
+
     -- | Inverse of an elementary edit (needed for supporting undo/redo)
     eInverse :: d -> EEdit d -> Edit d
+
+    -- | Inverse of an edit
+    inverse :: d -> Edit d -> Edit d
+    inverse = f []
+      where
+        f acc _ [] = acc
+        f acc d (x: xs) = f (eInverse d x <> acc) (ePatch x d) xs
 
     -- | FIXME: implement smarter compressEdit instances
     compressEdit :: d -> Edit d -> Edit d
     compressEdit _ = id
-
--- | Cost of an edit
-cost :: Editable d => Edit d -> Int
-cost = sum . map eCost
-
-patch :: Editable d => Edit d -> d -> d
-patch = foldr (flip (.) . ePatch) id
-
--- | warning: this is at least quadratic, use with care
---
--- >>> a >< b = (a x b, b x a)
---
--- with 'a' having precedence
-merge :: Editable d => d -> Edit d -> Edit d -> (Edit d, Edit d)
-merge _ [] b = (b, [])
-merge _ b [] = ([], b)
-merge d (a0: a1) (b0: b1) = (b0a0a1 <> b1a0b0a1b0a0, a0b0b1 <> a1b0a0b1a0b0)
-  where
-    (b0a0, a0b0) = eMerge d a0 b0
-    (b0a0a1, a1b0a0) = merge (ePatch a0 d) a1 b0a0
-    (b1a0b0, a0b0b1) = merge (ePatch b0 d) a0b0 b1
-    (b1a0b0a1b0a0, a1b0a0b1a0b0) = merge (patch (a0: b0a0) d) a1b0a0 b1a0b0
-
--- | Inverse of an edit
-inverse :: Editable d => d -> Edit d -> Edit d
-inverse = f []
-  where
-    f acc _ [] = acc
-    f acc d (x: xs) = f (eInverse d x <> acc) (ePatch x d) xs
 
 -- | An 'eMerge' implementation that works for any instance.
 -- Forget the first edit at merge.  This fulfills the laws but is a bit primitive.
@@ -226,8 +227,8 @@ instance Editable Char where
     eCost = eCost . unEChar
     diff a b = map EChar $ diff (Atom a) (Atom b)
     ePatch e = unAtom . ePatch (unEChar e) . Atom
-    eMerge d a b = map EChar *** map EChar $ eMerge (Atom d) (unEChar a) (unEChar b)
-    eInverse d = map EChar . eInverse (Atom d) . unEChar
+    eMerge d a b = coerce $ eMerge (Atom d) (unEChar a) (unEChar b)
+    eInverse d = coerce . eInverse (Atom d) . unEChar
 
 instance ToJSON (EEdit Char)
 instance FromJSON (EEdit Char)
@@ -334,8 +335,8 @@ instance Editable Text.Text where
         f n (Diff.Old{}: es) = EText (DeleteItem n): f n es
         f _ [] = []
     ePatch e = Text.pack . ePatch (unEText e) . Text.unpack
-    eMerge d a b = map EText *** map EText $ eMerge (Text.unpack d) (unEText a) (unEText b)
-    eInverse d = map EText . eInverse (Text.unpack d) . unEText
+    eMerge d a b = coerce $ eMerge (Text.unpack d) (unEText a) (unEText b)
+    eInverse d = coerce . eInverse (Text.unpack d) . unEText
 
 instance ToJSON (EEdit Text.Text)
 instance FromJSON (EEdit Text.Text)

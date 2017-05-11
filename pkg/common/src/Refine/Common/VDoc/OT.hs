@@ -22,6 +22,7 @@ import           Data.String.Conversions
 import qualified Generics.SOP as SOP
 import           GHC.Generics (Generic)
 import           Data.Aeson
+--import           Data.Coerce
 
 import Refine.Common.OT
 import Refine.Common.VDoc.Draft (RawContent)
@@ -278,6 +279,7 @@ instance Editable RawContent where
     eCost = eCost . unERawContent
     diff a b = map ERawContent $ diff (from a) (from b)
     ePatch e = to . ePatch (unERawContent e) . from
+    patch e = to . patch (unERawContent <$> e) . from
     eMerge d a b = map ERawContent *** map ERawContent $ eMerge (from d) (unERawContent a) (unERawContent b)
     eInverse d = map ERawContent . eInverse (from d) . unERawContent
 
