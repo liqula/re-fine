@@ -109,7 +109,8 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
             . sortBy (compare `on` fst)
             $ [(r, fromEntity $ entities IntMap.! k) | (Draft.EntityKey k, r) <- eranges] <> [(r, fromStyle s) | (r, s) <- styles]
 
-        mkSegments _ [] [] = []  -- TODO: why does the stack have to be empty?
+        -- TODO: stack (2nd arg) should be @IntMap (Set style)@ (keyed by @offset@).
+        mkSegments _ [] [] = []  -- (stack will be emptied in the third case.)
         mkSegments n stack ((offset, s): ss) | offset == n = mkSegments n (insertBy (compare `on` fst) s stack) ss
         mkSegments n ((offset, _): stack) ss | offset == n = mkSegments n stack ss
         mkSegments n stack ss                | offset > n  = (offset - n, Set.fromList $ snd <$> stack): mkSegments offset stack ss
@@ -154,12 +155,15 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
         Nothing
       where
         ranges = mkRanges 0 mempty
-            $ [(len, s) | LineElem s txt <- es, let len = length txt, len > 0] <> [(0, mempty)]
+            $ [(len, s) | LineElem s txt <- es, let len = length txt, len > 0]
+            <> [(0, mempty)]  -- this is to avoid one more case in mkRanges below when we're done.
 
         mkRanges _ _ [] = []
         mkRanges n acc ((len, s): ss)
-            = [((offset, l), sty) | (offset, sty) <- acc, sty `Set.notMember` s, let l = n - offset, l > 0]  -- TODO: why not `member`?
-            <> mkRanges (n + len)
+            = -- construct all non-empty ranges that are closed in s
+              [((offset, l), sty) | (offset, sty) <- acc, sty `Set.notMember` s, let l = n - offset, l > 0]
+           <> -- jump to the next segment (aka line element)
+              mkRanges (n + len)
                         (  [(offset, sty) | (offset, sty) <- acc, sty `Set.member` s]
                         ++ [(n, sty) | sty <- Set.elems s, sty `notElem` map snd acc])
                         ss
