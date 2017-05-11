@@ -7,7 +7,6 @@ import qualified Data.Set as Set
 import           Test.QuickCheck
 import           Test.Hspec
 
-import Refine.Common.OT
 import Refine.Common.OTSpec hiding (spec)
 import Refine.Common.Test.Arbitrary
 import Refine.Common.VDoc.OT

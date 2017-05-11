@@ -169,8 +169,8 @@ instance (GenEdit a, GenEdit b) => GenEdit (Either a b) where
 
 ---------------------------------------- (Bounded, Enum) instance
 
-instance (Eq a, Show a, Arbitrary (Atom a)) => GenEdit (Atom a) where
-    genEdit _ = fmap ReplaceEnum <$> listOf arbitrary
+instance (Eq a, Show a, Arbitrary a) => GenEdit (Atom a) where
+    genEdit _ = fmap EAtom <$> listOf arbitrary
 
 deriving instance Arbitrary a => Arbitrary (Atom a)
 

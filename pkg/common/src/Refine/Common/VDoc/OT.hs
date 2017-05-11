@@ -8,6 +8,7 @@
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE FlexibleInstances          #-}
 {-# OPTIONS_GHC -fno-warn-orphans       #-}   -- FIXME: elim this
 module Refine.Common.VDoc.OT where
 
@@ -20,6 +21,7 @@ import qualified Data.Text as Text
 import           Data.String.Conversions
 import qualified Generics.SOP as SOP
 import           GHC.Generics (Generic)
+import           Data.Aeson
 
 import Refine.Common.OT
 import Refine.Common.VDoc.Draft (RawContent)
@@ -139,18 +141,26 @@ simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
     notNull (LineElem _ "") = False
     notNull _ = True
 
+------------------------------------------------------- auxiliary definitions
+
+class Representable a where
+  type Rep a
+  to   :: Rep a -> a
+  from :: a -> Rep a
+
 ---------------------------------------- Editable instances
 -- FUTUREWORK: make these instances smarter
 
+
 instance Representable Draft.BlockType where
-    type Rep Draft.BlockType = (Atom Draft.BlockType)
+    type Rep Draft.BlockType = Atom Draft.BlockType
     to = unAtom
     from = Atom
 
 instance Editable Draft.BlockType where
     newtype EEdit Draft.BlockType
         = EBlockType {unEBlockType :: EEdit (Rep Draft.BlockType)}
-      deriving (Show)
+      deriving (Generic, Show)
 
     docCost = docCost . from
     eCost = eCost . unEBlockType
@@ -158,6 +168,9 @@ instance Editable Draft.BlockType where
     ePatch e = to . ePatch (unEBlockType e) . from
     eMerge d a b = map EBlockType *** map EBlockType $ eMerge (from d) (unEBlockType a) (unEBlockType b)
     eInverse d = map EBlockType . eInverse (from d) . unEBlockType
+
+instance ToJSON (EEdit Draft.BlockType)
+instance FromJSON (EEdit Draft.BlockType)
 
 ----------------------
 
@@ -169,7 +182,7 @@ instance Representable Entity where
 instance Editable Entity where
     newtype EEdit Entity
         = EEntity {unEEntity :: EEdit (Rep Entity)}
-      deriving (Show)
+      deriving (Generic, Show)
 
     docCost = docCost . from
     eCost = eCost . unEEntity
@@ -177,6 +190,9 @@ instance Editable Entity where
     ePatch e = to . ePatch (unEEntity e) . from
     eMerge d a b = map EEntity *** map EEntity $ eMerge (from d) (unEEntity a) (unEEntity b)
     eInverse d = map EEntity . eInverse (from d) . unEEntity
+
+instance ToJSON (EEdit Entity)
+instance FromJSON (EEdit Entity)
 
 ----------------------
 
@@ -189,7 +205,7 @@ instance Editable LineElem where
     newtype EEdit LineElem
         = ELineElem {unELineElem :: EEdit (Rep LineElem)}
         -- FUTUREWORK: detect and be able to merge joining and splitting of 'LineElem's
-      deriving (Show)
+      deriving (Generic, Show)
 
     docCost = docCost . from
     eCost = eCost . unELineElem
@@ -197,6 +213,9 @@ instance Editable LineElem where
     ePatch e = to . ePatch (unELineElem e) . from
     eMerge d a b = map ELineElem *** map ELineElem $ eMerge (from d) (unELineElem a) (unELineElem b)
     eInverse d = map ELineElem . eInverse (from d) . unELineElem
+
+instance ToJSON (EEdit LineElem)
+instance FromJSON (EEdit LineElem)
 
 ----------------------
 
@@ -209,7 +228,7 @@ instance Editable Block where
     newtype EEdit Block
         = EBlock {unEBlock :: EEdit (Rep Block)}
         -- FUTUREWORK: detect and be able to merge joining and splitting of 'Block's
-      deriving (Show)
+      deriving (Generic, Show)
 
     docCost = docCost . from
     eCost = eCost . unEBlock
@@ -217,6 +236,9 @@ instance Editable Block where
     ePatch e = to . ePatch (unEBlock e) . from
     eMerge d a b = map EBlock *** map EBlock $ eMerge (from d) (unEBlock a) (unEBlock b)
     eInverse d = map EBlock . eInverse (from d) . unEBlock
+
+instance ToJSON (EEdit Block)
+instance FromJSON (EEdit Block)
 
 ----------------------
 
@@ -228,7 +250,7 @@ instance Representable Doc where
 instance Editable Doc where
     newtype EEdit Doc
         = EDoc {unEDoc :: EEdit (Rep Doc)}
-      deriving (Show)
+      deriving (Generic, Show)
 
     docCost = docCost . from
     eCost = eCost . unEDoc
@@ -236,6 +258,9 @@ instance Editable Doc where
     ePatch e = to . ePatch (unEDoc e) . from
     eMerge d a b = map EDoc *** map EDoc $ eMerge (from d) (unEDoc a) (unEDoc b)
     eInverse d = map EDoc . eInverse (from d) . unEDoc
+
+instance ToJSON (EEdit Doc)
+instance FromJSON (EEdit Doc)
 
 ----------------------
 
@@ -247,7 +272,7 @@ instance Representable RawContent where
 instance Editable RawContent where
     newtype EEdit RawContent
         = ERawContent {unERawContent :: EEdit (Rep RawContent)}
-      deriving (Show)
+      deriving (Generic, Show)
 
     docCost = docCost . from
     eCost = eCost . unERawContent
@@ -256,6 +281,8 @@ instance Editable RawContent where
     eMerge d a b = map ERawContent *** map ERawContent $ eMerge (from d) (unERawContent a) (unERawContent b)
     eInverse d = map ERawContent . eInverse (from d) . unERawContent
 
+instance ToJSON (EEdit RawContent)
+instance FromJSON (EEdit RawContent)
 
 instance SOP.Generic Doc
 instance SOP.Generic Block
