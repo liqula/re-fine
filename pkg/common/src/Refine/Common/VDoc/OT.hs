@@ -105,22 +105,21 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
 
         segments =
               mkSegments 0 []
-            . map (\((beg, end), s) -> (beg, (end, s)))
+            . map (\((offset, len), s) -> (offset, (len, s)))
             . sortBy (compare `on` fst)
             $ [(r, fromEntity $ entities IntMap.! k) | (Draft.EntityKey k, r) <- eranges] <> [(r, fromStyle s) | (r, s) <- styles]
 
-        mkSegments _ [] [] = []
-        mkSegments n stack ((n', z): ss) | n' == n = mkSegments n (insertBy (compare `on` fst) z stack) ss
-        mkSegments n ((n', _): stack) ss | n' == n = mkSegments n stack ss
-        mkSegments n stack ss
-            | n' > n = (n' - n, Set.fromList $ snd <$> stack): mkSegments n' stack ss
-            | otherwise = error "impossible"
+        mkSegments _ [] [] = []  -- TODO: why does the stack have to be empty?
+        mkSegments n stack ((offset, s): ss) | offset == n = mkSegments n (insertBy (compare `on` fst) s stack) ss
+        mkSegments n ((offset, _): stack) ss | offset == n = mkSegments n stack ss
+        mkSegments n stack ss                | offset > n  = (offset - n, Set.fromList $ snd <$> stack): mkSegments offset stack ss
           where
-            n' = case (fst <$> stack, fst <$> ss) of
+            offset = case (fst <$> stack, fst <$> ss) of
                 (a: _, b: _) -> min a b
-                (a: _, _)    -> a
-                (_, b: _)    -> b
-                _            -> error "impossible"
+                (a: _, [])   -> a
+                ([],   b: _) -> b
+                ([],   [])   -> error "impossible"
+        mkSegments n stack ss = error $ "impossible: " <> show (n, stack, ss)
 
 docToRawContent :: Doc -> Draft.RawContent
 docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
@@ -160,10 +159,10 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
 
         mkRanges _ _ [] = []
         mkRanges n acc ((len, s): ss)
-            = [((beg, n), sty) | (beg, sty) <- acc, sty `Set.notMember` s, beg /= n]
+            = [((offset, len), sty) | (offset, sty) <- acc, sty `Set.notMember` s, offset /= n]  -- TODO: why not `member`?
             <> mkRanges (n + len)
                         (foldr (insertBy (compare `on` fst))
-                               [(beg, sty) | (beg, sty) <- acc, sty `Set.member` s]
+                               [(offset, sty) | (offset, sty) <- acc, sty `Set.member` s]
                                [(n, sty) | sty <- Set.elems s, sty `notElem` map snd acc])
                         ss
 
