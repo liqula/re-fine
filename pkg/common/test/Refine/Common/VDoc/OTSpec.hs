@@ -76,9 +76,3 @@ spec = parallel $ do
     it "RawContent <-> Doc conversion" . property $ \d -> do
       let clear = sanitizeRawContent . Draft.resetBlockKeys
       (clear . docToRawContent . rawContentToDoc) d `shouldBe` clear d
-
-    it "RawContent <-> Doc conversion" $ do
-      let d = Draft.samples !! 0 in docToRawContent (rawContentToDoc d) `shouldBe` Draft.resetBlockKeys d
-
-    it "RawContent <-> Doc conversion" $ do
-      let d = Draft.samples !! 1 in docToRawContent (rawContentToDoc d) `shouldBe` Draft.resetBlockKeys d

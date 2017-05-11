@@ -446,12 +446,3 @@ addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (st
       []   -> blocklen
       [sp] -> soloSelectionPointPoint sp ^. selectionOffset - start
       bad  -> error $ "addMarkToBlock: impossible: " <> show bad
-
-
-
-samples :: [RawContent]
-samples =
-  [ RawContent {_rawContentBlocks = [Block {_blockText = "", _blockEntityRanges = [], _blockStyles = [], _blockType = Header3, _blockDepth = 1, _blockKey = Just (BlockKey "2")}], _rawContentEntityMap = mempty}
-
-  , RawContent {_rawContentBlocks = [Block {_blockText = "asdf", _blockEntityRanges = [], _blockStyles = [((3,1),Underline)], _blockType = NormalText, _blockDepth = 0, _blockKey = Just (BlockKey "4")}], _rawContentEntityMap = mempty}
-  ]
