@@ -109,7 +109,7 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
            <> -- jump to the next segment (aka line element)
               mkRanges (n + len)
                         (  [(offset, sty) | (offset, sty) <- acc, sty `Set.member` s]
-                        ++ [(n, sty) | sty <- Set.elems s, sty `notElem` map snd acc])
+                        <> [(n, sty) | sty <- Set.elems s, sty `notElem` map snd acc])
                         ss
 
 -- | Block canonicalization: remove empty line elems; merge neighboring line elems with same attr set.
