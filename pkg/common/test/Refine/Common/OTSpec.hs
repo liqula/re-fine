@@ -24,6 +24,7 @@ import           Test.Hspec
 import qualified Data.Text as Text
 
 import Refine.Common.OT
+import Refine.Common.Test.Arbitrary ()
 
 ---------------------------------------- quickcheck laws
 
@@ -198,9 +199,6 @@ instance (GenEdit a) => GenEdit [a] where
         ]
 
 ---------------------------------------- Strict text instance
-
-instance Arbitrary Text.Text where
-    arbitrary = Text.pack <$> arbitrary
 
 instance GenEdit Text.Text where
     genEdit = fmap (map EText) . genEdit . Text.unpack

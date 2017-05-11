@@ -7,6 +7,7 @@
 {-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE OverloadedStrings          #-}
 {-# OPTIONS_GHC -fno-warn-orphans       #-}   -- FIXME: elim this
 module Refine.Common.VDoc.OT where
 
@@ -15,6 +16,7 @@ import           Data.Function
 import           Data.List
 import qualified Data.IntMap as IntMap
 import qualified Data.Set as Set
+import qualified Data.Text as Text
 import           Data.String.Conversions
 import qualified Generics.SOP as SOP
 import           GHC.Generics (Generic)
@@ -37,7 +39,7 @@ data Block = Block Draft.BlockType [LineElem] Int
 --
 -- FIXME: (Set Entity) should be (Maybe String, Bool, Bool), it is not allowed to have two links on
 -- the same character.
-data LineElem = LineElem (Set.Set Entity) String
+data LineElem = LineElem (Set.Set Entity) ST
    deriving (Show, Eq, Generic)
 
 newtype Entity = Entity { unEntity :: Either Draft.Entity Draft.Style }
@@ -70,11 +72,11 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
   where
     -- see also: 'Refine.Common.VDoc.Draft.addMarksToBlock'.
     mkBlock :: Draft.Block Draft.EntityKey -> Block
-    mkBlock (Draft.Block txt eranges styles ty depth _key) = Block ty (segment segments $ cs txt) depth
+    mkBlock (Draft.Block txt eranges styles ty depth _key) = Block ty (segment segments txt) depth
       where
         segment [] "" = []
         segment [] text = [LineElem mempty text]
-        segment ((len, s): ss) text = LineElem s (take len text): segment ss (drop len text)
+        segment ((len, s): ss) text = LineElem s (Text.take len text): segment ss (Text.drop len text)
 
         segments =
               mkSegments 0 []
@@ -102,7 +104,7 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
 
     mkBlock :: Block -> Draft.Block Draft.Entity
     mkBlock (Block ty es d) = Draft.Block
-        (cs $ concatMap getText es)
+        (mconcat $ map getText es)
         [(e, r) | (r, unEntity -> Left e) <- ranges]
         [(r, s) | (r, unEntity -> Right s) <- ranges]
         ty
@@ -110,7 +112,7 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
         Nothing
       where
         ranges = mkRanges 0 mempty
-            $ [(len, s) | LineElem s txt <- es, let len = length txt, len > 0]
+            $ [(len, s) | LineElem s txt <- es, let len = Text.length txt, len > 0]
             <> [(0, mempty)]  -- this is to avoid one more case in mkRanges below when we're done.
 
         mkRanges _ _ [] = []
@@ -132,7 +134,7 @@ simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
     attrs (LineElem x _) = x
     txt   (LineElem _ x) = x
 
-    joinElems xs = LineElem (attrs $ head xs) $ concatMap txt xs
+    joinElems xs = LineElem (attrs $ head xs) . mconcat $ map txt xs
 
     notNull (LineElem _ "") = False
     notNull _ = True
@@ -179,7 +181,7 @@ instance Editable Entity where
 ----------------------
 
 instance Representable LineElem where
-    type Rep LineElem = (Set.Set Entity, String)
+    type Rep LineElem = (Set.Set Entity, ST)
     to (a, b) = LineElem a b
     from (LineElem a b) = (a, b)
 
