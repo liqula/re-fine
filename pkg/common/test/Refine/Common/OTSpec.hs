@@ -21,6 +21,7 @@ import qualified Data.Set as Set
 import           Control.Monad
 import           Test.QuickCheck
 import           Test.Hspec
+import qualified Data.Text as Text
 
 import Refine.Common.OT
 
@@ -196,6 +197,15 @@ instance (GenEdit a) => GenEdit [a] where
                     | (i, x) <- zip [0..] d']
         ]
 
+---------------------------------------- Strict text instance
+
+instance Arbitrary Text.Text where
+    arbitrary = Text.pack <$> arbitrary
+
+instance GenEdit Text.Text where
+    genEdit = fmap (map EText) . genEdit . Text.unpack
+
+
 ---------------------------------------- Set instance
 
 instance (GenEdit a, Ord a, HasEnoughInhabitants a) => GenEdit (Set.Set a) where
@@ -257,6 +267,7 @@ spec = parallel $ do
     runTest $ allTests @(Set.Set [ADigit])
     runTest $ allTests @[Set.Set ADigit]
     runTest $ allTests @(Set.Set (Set.Set ADigit))
+    runTest $ allTests @Text.Text
 
 -- | running in ghci8 on a lenovo t420s with no attempt at optimizing, @n = 1000@: @(2.88 secs,
 -- 2,382,007,256 bytes)@.  this should be our baseline from which to improve.

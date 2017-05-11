@@ -7,6 +7,7 @@
 {-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE BangPatterns               #-}
 
 -- | FUTUREWORK: release this file as a library
 module Refine.Common.OT where
@@ -16,6 +17,8 @@ import qualified Data.Set as Set
 import           Data.Function
 import           Data.List
 import           Control.Arrow
+import qualified Data.Algorithm.Patience as Diff
+import qualified Data.Text as Text
 
 ----------------------------------------------------------------------------------------------
 
@@ -296,6 +299,23 @@ instance Editable a => Editable [a] where
         InsertItem i _ -> [DeleteItem i]
 
 deriving instance (Show a, Show (EEdit a)) => Show (EEdit [a])
+
+---------------------------------------- StrictText instance
+
+instance Editable Text.Text where
+    newtype EEdit Text.Text = EText {unEText :: EEdit String}
+        deriving (Show)
+    docCost = Text.length
+    eCost = eCost . unEText
+    diff a b = f 0 $ Diff.diff (Text.unpack a) (Text.unpack b)
+      where
+        f !n (Diff.Both{}: es) = f (n+1) es
+        f n (Diff.New c: es) = EText (InsertItem n c): f (n+1) es
+        f n (Diff.Old{}: es) = EText (DeleteItem n): f n es
+        f _ [] = []
+    ePatch e = Text.pack . ePatch (unEText e) . Text.unpack
+    eMerge d a b = map EText *** map EText $ eMerge (Text.unpack d) (unEText a) (unEText b)
+    eInverse d = map EText . eInverse (Text.unpack d) . unEText
 
 ---------------------------------------- Set instance
 

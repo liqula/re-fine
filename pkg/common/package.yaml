@@ -32,6 +32,7 @@ dependencies:
   - lens
   - mtl
   - natural-transformation
+  - patience
   - QuickCheck
   - quickcheck-instances
   - refine-prelude
