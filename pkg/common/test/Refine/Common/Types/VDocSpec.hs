@@ -37,6 +37,7 @@ import Refine.Common.Test.Arbitrary
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft
 
+{-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
 rawContentToCompositeVDoc :: RawContentWithSelections -> CompositeVDoc
 rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
@@ -140,8 +141,14 @@ spec = do
             let marks = fromList [(3 :: ID Edit, SelectionState False p1 p2)]
                 p1 = SelectionPoint (BlockKey "0") i
                 p2 = SelectionPoint (BlockKey "0") j
-            (view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks))
-              `shouldBe` [[((i, j - i), mark1)]]
+
+                have :: [[EntityRange]]
+                have = fst <$$> view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks)
+
+                want :: [[EntityRange]]
+                want = [[(i, j - i)]]
+
+            have `shouldBe` List.filter (not . entityRangeIsEmpty) <$> want
 
       check `mapM_` [ (i, j) | i <- [0..3], j <- [0..3], i < j ]
 
@@ -153,9 +160,14 @@ spec = do
             let marks = fromList [(3 :: ID Note, SelectionState False p1 p2)]
                 p1 = SelectionPoint (BlockKey "0") i
                 p2 = SelectionPoint (BlockKey "1") j
-            (view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks))
-              `shouldBe` (List.filter (not . entityRangeIsEmpty . fst) <$>
-                          [[((i, 3), mark1)], [((0, j), mark2)]])
+
+                have :: [[EntityRange]]
+                have = fst <$$> view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks)
+
+                want :: [[EntityRange]]
+                want = [[(i, 3)], [(0, j)]]
+
+            have `shouldBe` List.filter (not . entityRangeIsEmpty) <$> want
 
       check `mapM_` [ (i, j) | i <- [0..3], j <- [0..4] ]
 
@@ -173,8 +185,8 @@ spec = do
 
                 want :: [[EntityRange]]
                 want = [[(i, 3)], [], [(0, 3)], [(0, 1)], [(0, j)], []]
-            have `shouldBe` List.filter (not . entityRangeIsEmpty) <$> want
 
+            have `shouldBe` List.filter (not . entityRangeIsEmpty) <$> want
 
       check `mapM_` [ (i, j) | i <- [0..3], j <- [0..4] ]
 
