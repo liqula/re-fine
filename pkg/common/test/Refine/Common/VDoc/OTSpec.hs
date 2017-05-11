@@ -11,22 +11,13 @@ import Refine.Common.OT
 import Refine.Common.OTSpec hiding (spec)
 import Refine.Common.Test.Arbitrary
 import Refine.Common.VDoc.OT
-import Refine.Common.VDoc.Draft (RawContent, resetBlockKeys, samples)
+import qualified Refine.Common.VDoc.Draft as Draft
 
 
 ---------------------------------------- Editable instances
 -- FUTUREWORK: make these instances smarter
 
-instance Arbitrary HeaderLevel where
-    arbitrary = elements [minBound..]
-
-instance Arbitrary ItemType where
-    arbitrary = elements [minBound..]
-
-instance Arbitrary BlockType where
-    arbitrary = garbitrary
-
-instance GenEdit BlockType where
+instance GenEdit Draft.BlockType where
     genEdit d = map EBlockType <$> genEdit (from d)
 
 ----------------------
@@ -69,26 +60,24 @@ instance GenEdit Doc where
 
 ----------------------
 
-instance GenEdit RawContent where
+instance GenEdit Draft.RawContent where
     genEdit d = map ERawContent <$> genEdit (from d)
 
 --------------------------------------------------------- tests
 
 spec :: Spec
 spec = parallel $ do
-    runTest $ allTests @(Atom HeaderLevel)
-    runTest $ allTests @(Atom ItemType)
-    runTest $ allTests @BlockType
+    runTest $ allTests @Draft.BlockType
     runTest $ allTests @LineElem
 
     it "Doc <-> RawContent conversion" . property $ \d ->
       rawContentToDoc (docToRawContent d) `shouldBe` simplifyDoc d
 
     it "RawContent <-> Doc conversion" . property $ \d ->
-      docToRawContent (rawContentToDoc d) `shouldBe` resetBlockKeys d
+      docToRawContent (rawContentToDoc d) `shouldBe` Draft.resetBlockKeys d
 
     it "RawContent <-> Doc conversion" $ do
-      let d = samples !! 0 in docToRawContent (rawContentToDoc d) `shouldBe` resetBlockKeys d
+      let d = Draft.samples !! 0 in docToRawContent (rawContentToDoc d) `shouldBe` Draft.resetBlockKeys d
 
     it "RawContent <-> Doc conversion" $ do
-      let d = samples !! 1 in docToRawContent (rawContentToDoc d) `shouldBe` resetBlockKeys d
+      let d = Draft.samples !! 1 in docToRawContent (rawContentToDoc d) `shouldBe` Draft.resetBlockKeys d

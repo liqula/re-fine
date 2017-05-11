@@ -24,20 +24,9 @@ import qualified Refine.Common.VDoc.Draft as Draft
 newtype Doc = Doc [Block]
    deriving (Show, Eq, Generic)
 
-data Block = Block BlockType [LineElem]
+-- | (third constructor arg is depth)
+data Block = Block Draft.BlockType [LineElem] Int
    deriving (Show, Eq, Generic)
-
-data BlockType =
-     Header HeaderLevel Int -- depth (even though it may not make sense here, the js types still support it).
-   | Item ItemType Int -- depth
-   deriving (Show, Eq, Generic)
-
-data HeaderLevel
-    = HL1 | HL2 | HL3
-   deriving (Show, Eq, Bounded, Enum, Generic)
-
-data ItemType = NormalText | BulletPoint | EnumPoint
-   deriving (Show, Eq, Bounded, Enum, Generic)
 
 -- | A segment of an inline style, consisting of 'EntityRange' and 'Style'.
 --
@@ -46,15 +35,7 @@ data ItemType = NormalText | BulletPoint | EnumPoint
 data LineElem = LineElem (Set.Set Entity) String
    deriving (Show, Eq, Generic)
 
--- | This is both Entity and Style in Draft
-data Entity
-    = EntityLink String
-    | EntityBold
-    | EntityItalic
-    | EntityUnderline
-    | EntityCode
-    | EntityRangeComment
-    | EntityRangeEdit
+newtype Entity = Entity { unEntity :: Either Draft.Entity Draft.Style }
    deriving (Show, Eq, Ord, Generic)
 
 ---------------------------------------- conversion functions
@@ -74,30 +55,9 @@ xxxxxxxxxxxxxxxxxxxxxx converted to line elements:
 rawContentToDoc :: Draft.RawContent -> Doc
 rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
   where
-    fromEntity :: Draft.Entity -> Entity  -- FIXME: why don't we use the RawContent type here?
-    fromEntity (Draft.EntityLink s) = EntityLink (cs s)
-
-    fromStyle :: Draft.Style -> Entity  -- FIXME: why don't we use the RawContent type here?
-    fromStyle = \case
-        Draft.Bold         -> EntityBold
-        Draft.Italic       -> EntityItalic
-        Draft.Underline    -> EntityUnderline
-        Draft.Code         -> EntityCode
-        Draft.RangeComment -> EntityRangeComment
-        Draft.RangeEdit    -> EntityRangeEdit
-
-    mkBlockType :: Int -> Draft.BlockType -> BlockType  -- FIXME: why don't we use the RawContent type here?
-    mkBlockType d = \case
-        Draft.Header1     -> Header HL1 d
-        Draft.Header2     -> Header HL2 d
-        Draft.Header3     -> Header HL3 d
-        Draft.NormalText  -> Item NormalText  d
-        Draft.BulletPoint -> Item BulletPoint d
-        Draft.EnumPoint   -> Item EnumPoint   d
-
     -- see also: 'Refine.Common.VDoc.Draft.addMarksToBlock'.
     mkBlock :: Draft.Block Draft.EntityKey -> Block
-    mkBlock (Draft.Block txt eranges styles ty depth _key) = Block (mkBlockType depth ty) (segment segments $ cs txt)
+    mkBlock (Draft.Block txt eranges styles ty depth _key) = Block ty (segment segments $ cs txt) depth
       where
         segment [] "" = []
         segment [] text = [LineElem mempty text]
@@ -107,7 +67,7 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
               mkSegments 0 []
             . map (\((offset, len), s) -> (offset, (offset + len, s)))
             . sortBy (compare `on` fst)
-            $ [(r, fromEntity $ entities IntMap.! k) | (Draft.EntityKey k, r) <- eranges] <> [(r, fromStyle s) | (r, s) <- styles]
+            $ [(r, Entity . Left $ entities IntMap.! k) | (Draft.EntityKey k, r) <- eranges] <> [(r, Entity $ Right s) | (r, s) <- styles]
 
         -- TODO: stack (2nd arg) should be @IntMap (Set style)@ (keyed by @offset@).
         mkSegments _ [] [] = []  -- (stack will be emptied in the third case.)
@@ -125,33 +85,15 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
 docToRawContent :: Doc -> Draft.RawContent
 docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
   where
-    toEntityStyle :: Entity -> Either Draft.Entity Draft.Style
-    toEntityStyle = \case
-        EntityLink s        -> Left (Draft.EntityLink $ cs s)
-        EntityBold          -> Right Draft.Bold
-        EntityItalic        -> Right Draft.Italic
-        EntityUnderline     -> Right Draft.Underline
-        EntityCode          -> Right Draft.Code
-        EntityRangeComment  -> Right Draft.RangeComment
-        EntityRangeEdit     -> Right Draft.RangeEdit
-
-    mkType = \case
-        Header HL1 d       -> (Draft.Header1, d)
-        Header HL2 d       -> (Draft.Header2, d)
-        Header HL3 d       -> (Draft.Header3, d)
-        Item NormalText  d -> (Draft.NormalText,  d)
-        Item BulletPoint d -> (Draft.BulletPoint, d)
-        Item EnumPoint   d -> (Draft.EnumPoint,   d)
-
     getText (LineElem _ txt) = txt
 
     mkBlock :: Block -> Draft.Block Draft.Entity
-    mkBlock (Block ty es) = uncurry
-        (Draft.Block
-            (cs $ concatMap getText es)
-            [(e, r) | (r, toEntityStyle -> Left e) <- ranges]
-            [(r, s) | (r, toEntityStyle -> Right s) <- ranges])
-        (mkType ty)
+    mkBlock (Block ty es d) = Draft.Block
+        (cs $ concatMap getText es)
+        [(e, r) | (r, unEntity -> Left e) <- ranges]
+        [(r, s) | (r, unEntity -> Right s) <- ranges]
+        ty
+        d
         Nothing
       where
         ranges = mkRanges 0 mempty
@@ -172,7 +114,7 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
 simplifyDoc :: Doc -> Doc
 simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
   where
-    simplifyBlock (Block a b) = Block a . map joinElems . groupBy ((==) `on` attrs) $ filter notNull b
+    simplifyBlock (Block a b d) = Block a (map joinElems . groupBy ((==) `on` attrs) $ filter notNull b) d
 
     attrs (LineElem x _) = x
     txt   (LineElem _ x) = x
@@ -185,16 +127,14 @@ simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
 ---------------------------------------- Editable instances
 -- FUTUREWORK: make these instances smarter
 
-instance Representable BlockType where
-    type Rep BlockType = Either (Atom HeaderLevel, Atom Int) (Atom ItemType, Atom Int)
-    to = either (uncurry Header . (unAtom *** unAtom)) (uncurry Item . (unAtom *** unAtom))
-    from = \case
-        Header s d -> Left (Atom s, Atom d)
-        Item a b   -> Right (Atom a, Atom b)
+instance Representable Draft.BlockType where
+    type Rep Draft.BlockType = (Atom Draft.BlockType)
+    to = unAtom
+    from = Atom
 
-instance Editable BlockType where
-    newtype EEdit BlockType
-        = EBlockType {unEBlockType :: EEdit (Rep BlockType)}
+instance Editable Draft.BlockType where
+    newtype EEdit Draft.BlockType
+        = EBlockType {unEBlockType :: EEdit (Rep Draft.BlockType)}
       deriving (Show)
 
     docCost = docCost . from
@@ -246,9 +186,9 @@ instance Editable LineElem where
 ----------------------
 
 instance Representable Block where
-    type Rep Block = (BlockType, [LineElem])
-    to (a, b) = Block a b
-    from (Block a b) = (a, b)
+    type Rep Block = ((Draft.BlockType, [LineElem]), Atom Int)
+    to ((a, b), Atom d) = Block a b d
+    from (Block a b d) = ((a, b), Atom d)
 
 instance Editable Block where
     newtype EEdit Block
@@ -304,16 +244,10 @@ instance Editable RawContent where
 
 instance SOP.Generic Doc
 instance SOP.Generic Block
-instance SOP.Generic BlockType
-instance SOP.Generic HeaderLevel
-instance SOP.Generic ItemType
 instance SOP.Generic LineElem
 instance SOP.Generic Entity
 
 instance SOP.HasDatatypeInfo Doc
 instance SOP.HasDatatypeInfo Block
-instance SOP.HasDatatypeInfo BlockType
-instance SOP.HasDatatypeInfo HeaderLevel
-instance SOP.HasDatatypeInfo ItemType
 instance SOP.HasDatatypeInfo LineElem
 instance SOP.HasDatatypeInfo Entity

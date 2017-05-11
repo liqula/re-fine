@@ -104,7 +104,7 @@ data Style =
     -- custom styles
   | RangeComment
   | RangeEdit
-  deriving (Show, Eq, Generic)
+  deriving (Show, Eq, Ord, Generic)
 
 -- | each block has a unique blocktype
 data BlockType =
