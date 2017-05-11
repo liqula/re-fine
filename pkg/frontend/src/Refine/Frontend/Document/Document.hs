@@ -44,14 +44,15 @@ document = mkView "Document" $ \props ->
   article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
            , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
            ] $ do
+    let dstate = props ^. dpDocumentState
     editor_
-      [ "editorState" &= (props ^. dpDocumentState . documentStateVal)
+      [ "editorState" &= (dstate ^. documentStateVal)
       , "customStyleMap" &= documentStyleMap
-      , setReadOnly (has _DocumentStateView (props ^. dpDocumentState))
+      , setReadOnly (has _DocumentStateView dstate)
       , onChange $ \evt ->
-          let newDocState :: DocumentState
-              newDocState = (props ^. dpDocumentState) & documentStateVal .~ updateEditorState evt
-          in dispatch . DocumentAction . DocumentUpdate $ newDocState
+          let dstate' :: DocumentState
+              dstate' = dstate & documentStateVal .~ updateEditorState evt
+          in dispatch . DocumentAction . DocumentUpdate $ dstate'
       ] mempty
 
 document_ :: DocumentProps -> ReactElementM eventHandler ()
