@@ -45,8 +45,9 @@ import           Data.Monoid ((<>))
 import           Data.Maybe (fromMaybe, maybeToList)
 import           Data.String.Conversions
 import qualified Data.Text as ST
-import           Data.Typeable (Typeable, Proxy(Proxy), typeOf)
+import           Data.Typeable (Typeable)
 import           GHC.Generics hiding (to)
+import           Web.HttpApiData (toUrlPiece, parseUrlPiece)
 
 import Refine.Common.Types
 import Refine.Prelude.TH hiding (typeOf)
@@ -93,17 +94,15 @@ newtype Entity =
 
 -- | a style's range should fit into a single block.
 --
--- FUTUREWORK: 'RangeComment', 'RangeEdit' could carry the numbers of open comments and edits,
--- resp., then we could make the transparency of N overlapping marks non-linear in N, or even depend
--- on the maximum number of overlaps.
+-- NOTE: 'Mark' could be an entity if it weren't for the fact that we need overlaps (see
+-- https://github.com/facebook/draft-js/issues/212).
 data Style =
     Bold
   | Italic
   | Underline
   | Code
     -- custom styles
-  | RangeComment
-  | RangeEdit
+  | Mark ContributionID
   deriving (Show, Eq, Ord, Generic)
 
 -- | each block has a unique blocktype
@@ -248,16 +247,15 @@ instance ToJSON Style where
   toJSON Italic       = "ITALIC"
   toJSON Underline    = "UNDERLINE"
   toJSON Code         = "CODE"
-  toJSON RangeComment = "CUSTOM_RANGE_COMMENT"
-  toJSON RangeEdit    = "CUSTOM_RANGE_EDIT"
+  toJSON (Mark cid)   = String $ "MARK__" <> toUrlPiece cid
 
 instance FromJSON Style where
   parseJSON (String "BOLD")                 = pure Bold
   parseJSON (String "ITALIC")               = pure Italic
   parseJSON (String "UNDERLINE")            = pure Underline
   parseJSON (String "CODE")                 = pure Code
-  parseJSON (String "CUSTOM_RANGE_COMMENT") = pure RangeComment
-  parseJSON (String "CUSTOM_RANGE_EDIT")    = pure RangeEdit
+  parseJSON (String (ST.splitAt 6 -> ("MARK__", parseUrlPiece -> Right cid)))
+                                            = pure $ Mark cid
   parseJSON bad = fail $ "Style: no parse for " <> show bad
 
 makeRefineType ''SelectionState
@@ -370,7 +368,7 @@ rawContentFromCompositeVDoc (CompositeVDoc _ _ _ vers edits notes discussions) =
 rawContentFromVDocVersion :: VDocVersion -> RawContent
 rawContentFromVDocVersion (VDocVersion st) = case eitherDecode $ cs st of
   Right v -> v
-  Left msg -> error $ "vdocVersionToRawContent: " <> show (msg, st)
+  Left msg -> error $ "rawContentFromVDocVersion: " <> show (msg, st)
 
 rawContentToVDocVersion :: RawContent -> VDocVersion
 rawContentToVDocVersion = VDocVersion . cs . encode
@@ -379,7 +377,7 @@ rawContentToVDocVersion = VDocVersion . cs . encode
 deleteMarksFromBlock :: Block EntityKey -> Block EntityKey
 deleteMarksFromBlock = blockStyles %~ List.filter ((`elem` [Bold, Italic, Underline, Code]) . snd)
 
-addMarksToBlocks :: forall a. (Typeable a) => Map (ID a) SelectionState -> [Block EntityKey] -> [Block EntityKey]
+addMarksToBlocks :: forall a. (Typeable a, IsContribution a) => Map (ID a) SelectionState -> [Block EntityKey] -> [Block EntityKey]
 addMarksToBlocks m bs = case (addMarksToBlock (warmupSelectionStates m) `mapM` bs) `runState` [] of
   (bs', []) -> bs'
   bad -> error $ "addMarksToBlocks: impossible: " <> show bad
@@ -410,7 +408,8 @@ warmupSelectionStates = aggr . mconcat . fmap trans . Map.toList
 -- starting point, then I go through this sorted list and a stack of active ranges is maintained
 -- during it. If I would have more time I would think of the performance of these two alternative
 -- approaches or how these could be tuned if necessary.  [divipp]
-addMarksToBlock :: forall a. (Typeable a) => Map BlockKey [SoloSelectionPoint a] -> Block EntityKey -> AddMarksState a (Block EntityKey)
+addMarksToBlock :: forall a. (Typeable a, IsContribution a)
+                => Map BlockKey [SoloSelectionPoint a] -> Block EntityKey -> AddMarksState a (Block EntityKey)
 addMarksToBlock pointmap block = f (fromMaybe [] $ Map.lookup (block ^?! blockKey . _Just) pointmap) block
   where
     f :: [SoloSelectionPoint a] -> Block EntityKey -> AddMarksState a (Block EntityKey)
@@ -431,12 +430,11 @@ addMarksToBlock pointmap block = f (fromMaybe [] $ Map.lookup (block ^?! blockKe
              )
       blk & blockStyles %~ (inlineStyles <>) & pure
 
-addMarkToBlock :: forall a. (Typeable a) => Int -> Bool -> [SoloSelectionPoint a] -> SoloSelectionPoint a -> (EntityRange, Style)
+addMarkToBlock :: forall a. (Typeable a, IsContribution a)
+               => Int -> Bool -> [SoloSelectionPoint a] -> SoloSelectionPoint a -> (EntityRange, Style)
 addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (start >= 0 && end >= 0) ((start, end), style)
   where
-    style = if
-      | typeOf (Proxy :: Proxy a) == typeOf (Proxy :: Proxy Edit) -> RangeEdit
-      | otherwise                                                 -> RangeComment
+    style = Mark . contribID . soloSelectionPointID $ thisPoint
 
     start = if openedInOtherBlock
       then 0
