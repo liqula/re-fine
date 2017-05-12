@@ -24,7 +24,7 @@ instance GenEdit Draft.BlockType where
 instance Arbitrary Entity where
     arbitrary = garbitrary
 
-instance HasEnoughInhabitants Entity where hasMoreInhabitantsThan _ _ = True
+instance HasEnoughInhabitants Entity where numOfInhabitants _ = Nothing
 
 instance GenEdit Entity where
     genEdit d = map EEntity <$> genEdit (from d)

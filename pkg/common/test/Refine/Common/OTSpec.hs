@@ -228,14 +228,22 @@ instance (GenEdit a, Ord a, HasEnoughInhabitants a) => GenEdit (Set.Set a) where
 -- | Auxiliary class to ensure that a type have enough inhabitants
 --   used for generating random elements
 class HasEnoughInhabitants a where
-    hasMoreInhabitantsThan :: Proxy a -> Int -> Bool
-    default hasMoreInhabitantsThan :: (Enum a, Bounded a) => Proxy a -> Int -> Bool
-    hasMoreInhabitantsThan _ n = n <= fromEnum (maxBound :: a) - fromEnum (minBound :: a)
+    -- | Number of inhabitants; Nothing means a lot (more than 1000)
+    numOfInhabitants :: Proxy a -> Maybe Int
+    default numOfInhabitants :: (Enum a, Bounded a) => Proxy a -> Maybe Int
+    numOfInhabitants _ = Just $ fromEnum (maxBound :: a) - fromEnum (minBound :: a) + 1
+
+hasMoreInhabitantsThan :: (HasEnoughInhabitants a) => Proxy a -> Int -> Bool
+hasMoreInhabitantsThan p n = maybe True (n <) $ numOfInhabitants p
 
 instance (Enum a, Bounded a) => HasEnoughInhabitants (Atom a)
 
-instance HasEnoughInhabitants [a] where hasMoreInhabitantsThan _ _ = True
-instance HasEnoughInhabitants a => HasEnoughInhabitants (Set.Set a) where hasMoreInhabitantsThan _ _ = True  -- FIXME
+instance HasEnoughInhabitants [a] where numOfInhabitants _ = Nothing
+instance HasEnoughInhabitants a => HasEnoughInhabitants (Set.Set a) where
+    numOfInhabitants _ = do
+        n <- numOfInhabitants (Proxy :: Proxy a)
+        guard (n < 10)  -- to prevent overflow
+        pure $ 2^n
 
 ---------------------- data type used for testing
 
