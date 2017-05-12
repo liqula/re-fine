@@ -58,14 +58,6 @@ newtype Abstract = Abstract { _unAbstract :: ST }
 newtype VDocVersion = VDocVersion { _unVDocVersion :: ST }
   deriving (Eq, Ord, Show, Generic, Monoid)
 
--- | TODO: this should not be needed anywhere except perhaps in tests
-vdocVersionFromSTSafe :: ST -> Either String VDocVersion
-vdocVersionFromSTSafe = Right . VDocVersion
-
--- | TODO: this should not be needed anywhere except perhaps in tests
-vdocVersionFromST :: ST -> VDocVersion
-vdocVersionFromST = VDocVersion
-
 data Edit = Edit
   { _editMetaID :: MetaID Edit
   , _editDesc   :: ST
