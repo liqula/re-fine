@@ -7,6 +7,8 @@
 {-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DeriveGeneric              #-}
 
 -- | FUTUREWORK: release this file as a library
 module Refine.Common.OT where
@@ -16,6 +18,11 @@ import qualified Data.Set as Set
 import           Data.Function
 import           Data.List
 import           Control.Arrow
+import qualified Data.Algorithm.Patience as Diff
+import qualified Data.Text as Text
+import           GHC.Generics hiding (Rep)
+import           Data.Aeson
+import           Data.Coerce
 
 ----------------------------------------------------------------------------------------------
 
@@ -33,50 +40,50 @@ class Editable d where
     -- | Cost of an elementary edit
     eCost :: EEdit d -> Int
 
+    -- | Cost of an edit
+    cost :: Edit d -> Int
+    cost = sum . map eCost
+
     diff   :: d -> d -> Edit d
 
     ePatch :: EEdit d -> d -> d
+
+    patch :: Edit d -> d -> d
+    patch = foldr (flip (.) . ePatch) id
 
     -- | assume second happend later in case of conflicts
     -- FUTUREWORK: measure information lost during merge
     eMerge :: d -> EEdit d -> EEdit d -> (Edit d, Edit d)
     eMerge = secondWins
 
+    -- | warning: this is at least quadratic, use with care
+    --
+    -- >>> a >< b = (a x b, b x a)
+    --
+    -- with 'a' having precedence
+    merge :: d -> Edit d -> Edit d -> (Edit d, Edit d)
+    merge _ [] b = (b, [])
+    merge _ b [] = ([], b)
+    merge d (a0: a1) (b0: b1) = (b0a0a1 <> b1a0b0a1b0a0, a0b0b1 <> a1b0a0b1a0b0)
+      where
+        (b0a0, a0b0) = eMerge d a0 b0
+        (b0a0a1, a1b0a0) = merge (ePatch a0 d) a1 b0a0
+        (b1a0b0, a0b0b1) = merge (ePatch b0 d) a0b0 b1
+        (b1a0b0a1b0a0, a1b0a0b1a0b0) = merge (patch (a0: b0a0) d) a1b0a0 b1a0b0
+
     -- | Inverse of an elementary edit (needed for supporting undo/redo)
     eInverse :: d -> EEdit d -> Edit d
 
-    -- | FIXME: implement smarter compressEdit instances
+    -- | Inverse of an edit
+    inverse :: d -> Edit d -> Edit d
+    inverse = f []
+      where
+        f acc _ [] = acc
+        f acc d (x: xs) = f (eInverse d x <> acc) (ePatch x d) xs
+
+    -- | FIXME & TUNING: implement smarter compressEdit instances
     compressEdit :: d -> Edit d -> Edit d
     compressEdit _ = id
-
--- | Cost of an edit
-cost :: Editable d => Edit d -> Int
-cost = sum . map eCost
-
-patch :: Editable d => Edit d -> d -> d
-patch = foldr (flip (.) . ePatch) id
-
--- | warning: this is at least quadratic, use with care
---
--- >>> a >< b = (a x b, b x a)
---
--- with 'a' having precedence
-merge :: Editable d => d -> Edit d -> Edit d -> (Edit d, Edit d)
-merge _ [] b = (b, [])
-merge _ b [] = ([], b)
-merge d (a0: a1) (b0: b1) = (b0a0a1 <> b1a0b0a1b0a0, a0b0b1 <> a1b0a0b1a0b0)
-  where
-    (b0a0, a0b0) = eMerge d a0 b0
-    (b0a0a1, a1b0a0) = merge (ePatch a0 d) a1 b0a0
-    (b1a0b0, a0b0b1) = merge (ePatch b0 d) a0b0 b1
-    (b1a0b0a1b0a0, a1b0a0b1a0b0) = merge (patch (a0: b0a0) d) a1b0a0 b1a0b0
-
--- | Inverse of an edit
-inverse :: Editable d => d -> Edit d -> Edit d
-inverse = f []
-  where
-    f acc _ [] = acc
-    f acc d (x: xs) = f (eInverse d x <> acc) (ePatch x d) xs
 
 -- | An 'eMerge' implementation that works for any instance.
 -- Forget the first edit at merge.  This fulfills the laws but is a bit primitive.
@@ -87,6 +94,7 @@ secondWins d a b = (compressEdit d $ eInverse d a <> [b], []) -- information los
 
 instance Editable () where
     data EEdit ()
+        deriving (Generic)
     docCost _    = 1
     eCost _      = error "impossible"
     ePatch _ _   = error "impossible"
@@ -94,7 +102,9 @@ instance Editable () where
     eMerge _ _ _ = error "impossible"
     eInverse _ _ = error "impossible"
 
-instance Show (EEdit ()) where show = error "impossible"
+instance Show (EEdit ()) where show _ = error "impossible"
+instance ToJSON (EEdit ()) where toJSON _ = error "impossible"
+instance FromJSON (EEdit ()) where parseJSON _ = error "impossible"
 
 ---------------------------------------- (,) instance
 
@@ -113,7 +123,7 @@ instance (Editable a, Editable b) => Editable (a, b) where
     data EEdit (a, b)
         = EditFirst  (Edit a)
         | EditSecond (Edit b)
-
+            deriving (Generic)
     eCost = \case
         EditFirst  e -> 1 + cost e
         EditSecond e -> 1 + cost e
@@ -132,7 +142,9 @@ instance (Editable a, Editable b) => Editable (a, b) where
         EditFirst  e -> editFirst  $ inverse a e
         EditSecond e -> editSecond $ inverse b e
 
-deriving instance (Show a, Show (EEdit a), Show b, Show (EEdit b)) => Show (EEdit (a, b))
+deriving instance (Show (EEdit a), Show (EEdit b)) => Show (EEdit (a, b))
+instance (ToJSON (EEdit a), ToJSON (EEdit b)) => ToJSON (EEdit (a, b))
+instance (FromJSON (EEdit a), FromJSON (EEdit b)) => FromJSON (EEdit (a, b))
 
 ---------------------------------------- Either instance
 
@@ -153,6 +165,7 @@ instance (Editable a, Editable b) => Editable (Either a b) where
         = EditLeft  (Edit a)
         | EditRight (Edit b)
         | SetEither (Either a b)
+            deriving (Generic)
 
     eCost = \case
         EditLeft  e -> 1 + cost e
@@ -180,6 +193,8 @@ instance (Editable a, Editable b) => Editable (Either a b) where
     eInverse Right{} EditLeft{} = error "impossible"
 
 deriving instance (Show a, Show (EEdit a), Show b, Show (EEdit b)) => Show (EEdit (Either a b))
+instance (ToJSON (EEdit a), ToJSON (EEdit b), ToJSON a, ToJSON b) => ToJSON (EEdit (Either a b))
+instance (FromJSON (EEdit a), FromJSON (EEdit b), FromJSON a, FromJSON b) => FromJSON (EEdit (Either a b))
 
 ---------------------------------------- (Bounded, Enum) instance
 
@@ -189,28 +204,34 @@ newtype Atom a = Atom { unAtom :: a }
 instance Show a => Show (Atom a) where show = show . unAtom
 
 instance (Eq a) => Editable (Atom a) where
-    newtype EEdit (Atom a) = ReplaceEnum (Atom a)
-      deriving (Show)
+    newtype EEdit (Atom a) = EAtom a
+      deriving (Generic, Show)
 
     eCost _ = 1
     docCost _ = 1
 
-    diff a b = [ReplaceEnum b | a /= b]
-    ePatch (ReplaceEnum a) _ = a
-    eMerge _ ReplaceEnum{} b@ReplaceEnum{} = ([b], mempty)
-    eInverse d ReplaceEnum{} = [ReplaceEnum d]
+    diff (Atom a) (Atom b) = [EAtom b | a /= b]
+    ePatch (EAtom a) _ = Atom a
+    eMerge _ EAtom{} b@EAtom{} = ([b], mempty)
+    eInverse (Atom d) EAtom{} = [EAtom d]
+
+instance (ToJSON a) => ToJSON (EEdit (Atom a))
+instance (FromJSON a) => FromJSON (EEdit (Atom a))
 
 ---------------------------------------- Char instance (via Atom Char)
 
 instance Editable Char where
     newtype EEdit Char = EChar {unEChar :: EEdit (Atom Char)}
-        deriving (Show)
+        deriving (Generic, Show)
     docCost = docCost . Atom
     eCost = eCost . unEChar
     diff a b = map EChar $ diff (Atom a) (Atom b)
     ePatch e = unAtom . ePatch (unEChar e) . Atom
-    eMerge d a b = map EChar *** map EChar $ eMerge (Atom d) (unEChar a) (unEChar b)
-    eInverse d = map EChar . eInverse (Atom d) . unEChar
+    eMerge d a b = coerce $ eMerge (Atom d) (unEChar a) (unEChar b)
+    eInverse d = coerce . eInverse (Atom d) . unEChar
+
+instance ToJSON (EEdit Char)
+instance FromJSON (EEdit Char)
 
 ---------------------------------------- List instance
 
@@ -223,12 +244,13 @@ instance Editable a => Editable [a] where
     docCost = (+1) . sum . map docCost
 
     data EEdit [a]
-        = DeleteItem Int
-        | InsertItem Int a
+        = DeleteItem Int    -- TUNING: DeleteRange Int{-offset-} Int{-length-}
+        | InsertItem Int a  -- TUNING: InsertItems Int{-offset-} [a]{-elems-}
         | EditItem Int (Edit a)
         -- FUTUREWORK: detect swapping/moving and duplication of items
         --  MoveItem Int Int     -- needed for expressing .....
         --  DuplicateItem Int
+            deriving (Generic)
 
     eCost = \case
         InsertItem _ d -> 1 + docCost d
@@ -296,6 +318,44 @@ instance Editable a => Editable [a] where
         InsertItem i _ -> [DeleteItem i]
 
 deriving instance (Show a, Show (EEdit a)) => Show (EEdit [a])
+instance (ToJSON a, ToJSON (EEdit a)) => ToJSON (EEdit [a])
+instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit [a])
+
+---------------------------------------- StrictText instance
+
+instance Editable Text.Text where
+    newtype EEdit Text.Text = EText {unEText :: EEdit String}
+        deriving (Generic, Show)
+    docCost = Text.length
+    eCost = eCost . unEText
+
+    -- | Data.Algorithm.Patience.diff is used from the patience package
+    --
+    -- Possible alternatives:
+    --
+    -- Data.Algorithm.Diff.getDiff from the Diff package
+    -- Data.Algorithm.Diff.Gestalt.diff from the diff-gestalt package
+    --
+    -- Data.Algorithm.Patience.diff is the fastest and most stable according to these benchmarks:
+    --
+    -- diff (replicate 1000 'a') (replicate 1000 'b')
+    -- diff (take 1000 ['a'..]) (take 1000 ['A'..])
+    -- diff (take 1000 ['A'..]) (take 1000 ['a'..])
+    diff a b = f 0 $ Diff.diff (Text.unpack a) (Text.unpack b)
+      where
+        f !n (Diff.Both{}: es) = f (n+1) es
+        f n (Diff.New c: es) = EText (InsertItem n c): f (n+1) es
+        f n (Diff.Old{}: es) = EText (DeleteItem n): f n es
+        f _ [] = []
+    ePatch e = Text.pack . ePatch (coerce e) . Text.unpack
+    patch e = Text.pack . patch (coerce e) . Text.unpack
+    eMerge d a b = coerce $ eMerge (Text.unpack d) (coerce a) (coerce b)
+    merge d a b = coerce $ merge (Text.unpack d) (coerce a) (coerce b)
+    eInverse d = coerce . eInverse (Text.unpack d) . coerce
+    inverse d = coerce . inverse (Text.unpack d) . coerce
+
+instance ToJSON (EEdit Text.Text)
+instance FromJSON (EEdit Text.Text)
 
 ---------------------------------------- Set instance
 
@@ -311,6 +371,7 @@ instance (Editable a, Ord a) => Editable (Set.Set a) where
         = DeleteElem a
         | InsertElem a          -- it is not valid to insert an elem which is already in the set
         | EditElem a (Edit a)   -- it is not valid to edit such that the result is already in the set
+            deriving (Generic)
 
     eCost = \case
         InsertElem d -> 1 + docCost d
@@ -324,13 +385,9 @@ instance (Editable a, Ord a) => Editable (Set.Set a) where
     diff a b = [DeleteElem x | x <- Set.elems $ Set.difference a b]
             <> [InsertElem x | x <- Set.elems $ Set.difference b a]
 
-{-
-    -- this is an 'eMerge' implementation for lists interpreted as sets.  for now, we just use
-    -- 'secondWins'.
-
     eMerge _ a b | a == b = ([], [])
     eMerge d a@(EditElem i x) b@(EditElem i' y) | i == i'
-        = if patch (x <> x2) i `notElem` unSet d
+        = if patch (x <> x2) i `Set.notMember` d
             then (editElem (patch x i) x2, editElem (patch y i) y2)
             else secondWins d a b
       where
@@ -341,7 +398,6 @@ instance (Editable a, Ord a) => Editable (Set.Set a) where
     eMerge _ (InsertElem x) (EditElem y e) | x == patch e y = if x == y then ([], []) else ([DeleteElem y], [])
     eMerge d a@(EditElem y e) b@(InsertElem x) | x == patch e y = if x == y then ([], []) else secondWins d a b
     eMerge _ a b = ([b], [a])
--}
 
     eInverse _ = \case
         EditElem x e -> [EditElem (patch e x) (inverse x e)]
@@ -356,15 +412,8 @@ instance (Eq a, Editable a) => Eq (EEdit (Set.Set a)) where
     EditElem a ea == EditElem b eb = a == b && patch ea a == patch eb b
     _ == _ = False
 
----------------------------------------- Map instance
+instance (ToJSON a, ToJSON (EEdit a)) => ToJSON (EEdit (Set.Set a))
+instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit (Set.Set a))
 
--- | FUTUREWORK: implement Editable Map
-newtype Map a b = Map {unMap :: [(a, b)]}
-   deriving (Show, Eq, Ord)
+---------------------------------------- FUTUREWORK: Map instance
 
-------------------------------------------------------- auxiliary definitions
-
-class Representable a where
-  type Rep a
-  to   :: Rep a -> a
-  from :: a -> Rep a

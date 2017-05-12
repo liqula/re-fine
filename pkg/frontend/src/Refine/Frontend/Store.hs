@@ -229,12 +229,12 @@ emitBackendCallsFor action state = case action of
     ContributionAction (SubmitComment text kind) -> do
       case kind of
         Just CommentKindDiscussion ->
-          addDiscussion (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
+          addDiscussion (state ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
                      (C.CreateDiscussion text True (state ^. gsChunkRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right discussion) -> dispatchM $ AddDiscussion discussion
         Just CommentKindNote ->
-          addNote (state ^?! gsVDoc . _Just . C.compositeVDocRepo . C.vdocHeadEdit)
+          addNote (state ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
                      (C.CreateNote text True (state ^. gsChunkRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right note) -> dispatchM $ AddNote note

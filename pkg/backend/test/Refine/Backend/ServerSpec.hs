@@ -50,7 +50,6 @@ import Refine.Backend.App.MigrateDB (initializeDB)
 import Refine.Backend.Config
 import Refine.Backend.Database.Class as DB
 import Refine.Backend.Database (DB)
-import Refine.Backend.DocRepo as DocRepo
 import Refine.Backend.Natural
 import Refine.Backend.Server
 import Refine.Backend.Test.Util (withTempCurrentDirectory, sampleMetaID)
@@ -58,6 +57,7 @@ import Refine.Backend.User
 import Refine.Common.ChangeAPI
 import Refine.Common.Rest
 import Refine.Common.Types as Common
+import Refine.Common.VDoc.Draft
 import Refine.Prelude (getCurrentTimestamp)
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
@@ -110,7 +110,7 @@ sampleCreateVDoc :: CreateVDoc
 sampleCreateVDoc = CreateVDoc
   (Title "[title]")
   (Abstract "[abstract]")
-  (vdocVersionFromST "[versioned content]")
+  (rawContentToVDocVersion $ mkRawContent [mkBlock "[versioned content]"])
 
 respCode :: SResponse -> Int
 respCode = statusCode . simpleStatus
@@ -221,7 +221,7 @@ specMockedLogin = around createDevModeTestSession $ do
         liftIO $ un `shouldBe` "username"
         fe :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
         fn :: Note          <- postJSON
-            (addNoteUri (fe ^. compositeVDocRepo . vdocHeadEdit))
+            (addNoteUri (fe ^. compositeVDoc . vdocHeadEdit))
             (CreateNote "[note]" True (ChunkRange Nothing Nothing))
         liftIO $ do
           be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
@@ -235,7 +235,7 @@ specMockedLogin = around createDevModeTestSession $ do
         let cp1 = ChunkPoint (DataUID 1) 0
             cp2 = ChunkPoint (DataUID 1) 1
         fn :: Note <- postJSON
-          (addNoteUri (fe ^. compositeVDocRepo . vdocHeadEdit))
+          (addNoteUri (fe ^. compositeVDoc . vdocHeadEdit))
           (CreateNote "[note]" True (ChunkRange (Just cp1) (Just cp2)))
 
         liftIO $ do
@@ -249,7 +249,7 @@ specMockedLogin = around createDevModeTestSession $ do
             cp1 = ChunkPoint (DataUID 1) 0
             cp2 = ChunkPoint (DataUID 100) 100
         in post
-          (addNoteUri (vdoc ^. compositeVDocRepo . vdocHeadEdit))
+          (addNoteUri (vdoc ^. compositeVDoc . vdocHeadEdit))
           (CreateNote "[note]" True (ChunkRange (Just cp1) (Just cp2)))
 
       pendingWith "'validateCreateChunkRange' is not implemented yet."
@@ -268,7 +268,7 @@ specMockedLogin = around createDevModeTestSession $ do
         fe :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
         fn :: CompositeDiscussion <-
           postJSON
-            (addDiscussionUri (fe ^. compositeVDocRepo . vdocHeadEdit))
+            (addDiscussionUri (fe ^. compositeVDoc . vdocHeadEdit))
             (CreateDiscussion "[discussion initial statement]" True (ChunkRange Nothing Nothing))
 
         liftIO $ do
@@ -303,11 +303,11 @@ specMockedLogin = around createDevModeTestSession $ do
 
           fe :: Edit <-
             postJSON
-              (addEditUri (fc ^. compositeVDocRepo . vdocHeadEdit))
+              (addEditUri (fc ^. compositeVDoc . vdocHeadEdit))
               (CreateEdit
                 "new edit"
                 (ChunkRange Nothing Nothing)
-                (vdocVersionFromST "[new vdoc version]")
+                (rawContentToVDocVersion $ mkRawContent [mkBlock "[new vdoc version]"])
                 Grammar
                 "no motivation")
           pure (fc, fe)
@@ -315,10 +315,8 @@ specMockedLogin = around createDevModeTestSession $ do
     context "on edit without ranges" $ do
       it "stores an edit and returns its version" $ \sess -> do
         (_, fp) <- setup sess
-        be' :: VDocVersion <- runDB sess $ do
-              handles <- db $ DB.handlesForEdit (fp ^. editID)
-              docRepo $ uncurry DocRepo.getVersion handles
-        be' `shouldBe` vdocVersionFromST "[new vdoc version]"
+        be' :: VDocVersion <- runDB sess . db . getVersion $ fp ^. editID
+        be' `shouldBe` rawContentToVDocVersion (mkRawContent [mkBlock "[new vdoc version]"])
 
       it "stores an edit and returns it in the list of edits applicable to its base" $ \sess -> do
         pendingWith "applicableEdits is not implemented."

@@ -351,7 +351,7 @@ selectionStateToChunkRange (RawContent bs _) (SelectionState _ s e) = ChunkRange
 
 
 rawContentFromCompositeVDoc :: CompositeVDoc -> RawContent
-rawContentFromCompositeVDoc (CompositeVDoc _ _ _ vers edits notes discussions) =
+rawContentFromCompositeVDoc (CompositeVDoc _ _ vers edits notes discussions) =
   rawContentFromVDocVersion vers & rawContentBlocks %~ f
   where
     -- 'convertHack' will go away when 'ChunkRange' goes away.

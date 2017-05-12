@@ -42,7 +42,7 @@ import Refine.Common.VDoc.Draft
 rawContentToCompositeVDoc :: RawContentWithSelections -> CompositeVDoc
 rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
     = assert (length selections == length es + length ns + length ds)
-    $ CompositeVDoc un un un vers (fromList es) (fromList ns) (fromList ds)
+    $ CompositeVDoc un un vers (fromList es) (fromList ns) (fromList ds)
   where
     un = undefined
     vers = rawContentToVDocVersion rawContent

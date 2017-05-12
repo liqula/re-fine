@@ -43,17 +43,16 @@ import qualified Refine.Backend.Database.Class as C
 import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
 import           Refine.Backend.Database.Types
-import qualified Refine.Backend.DocRepo.Core as DocRepo
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
 import           Refine.Prelude (nothingToError, Timestamp, getCurrentTimestamp)
+import           Refine.Common.VDoc.OT (EditSource(..))
 
 -- FIXME: Generate this as the part of the lentil library.
 type instance S.EntityRep MetaInfo   = S.MetaInfo
 type instance S.EntityRep VDoc       = S.VDoc
 type instance S.EntityRep Edit       = S.Edit
-type instance S.EntityRep VDocRepo   = S.Repo
 type instance S.EntityRep Note       = S.Note
 type instance S.EntityRep Question   = S.Question
 type instance S.EntityRep Discussion = S.Discussion
@@ -122,7 +121,7 @@ foreignKeyField column = S.keyToId . column . entityVal
 
 -- NOTES: How to handle associations? What to update, what to keep?
 vDocToRecord :: VDoc -> DB S.VDoc
-vDocToRecord (VDoc _i t a r) = pure (S.VDoc t a (S.idToKey r))
+vDocToRecord (VDoc _i t a r) = pure (S.VDoc t a (Just $ S.idToKey r))
 
 updateVDoc :: ID VDoc -> VDoc -> DB ()
 updateVDoc vid vdoc = do
@@ -206,98 +205,59 @@ getMetaEntity f i = do
 
 -- * VDoc
 
-toVDoc :: MetaID VDoc -> Title -> Abstract -> Key S.Repo -> VDoc
-toVDoc vid title abstract repoid = VDoc vid title abstract (S.keyToId repoid)
+toVDoc :: MetaID VDoc -> Title -> Abstract -> Maybe (Key S.Edit) -> VDoc
+toVDoc vid title abstract (Just repoid) = VDoc vid title abstract (S.keyToId repoid)
+toVDoc _ _ _ Nothing = error "impossible"
 
 listVDocs :: DB [ID VDoc]
 listVDocs = do
   opts <- dbSelectOpts
   liftDB $ S.keyToId <$$> selectKeysList [] opts
 
-createVDoc :: Create VDoc -> VDocRepo -> DB VDoc
-createVDoc pv vr = do
+createVDoc :: Create VDoc -> VDocVersion -> DB VDoc
+createVDoc pv vdoc = do
   let svdoc = S.VDoc
         (pv ^. createVDocTitle)
         (pv ^. createVDocAbstract)
-        (vr ^. vdocRepoID . to S.idToKey)
+        Nothing -- hack: use a dummy key which will be replaced by a proper one before createVDoc returns
   mid <- createMetaID svdoc
-  addConnection S.VR (mid ^. miID) (vr ^. vdocRepoID)
-  pure $ S.vDocElim (toVDoc mid) svdoc
+  e <- createEdit (mid ^. miID) InitialEdit CreateEdit
+    { _createEditDesc  = "" -- FIXME
+    , _createEditRange = ChunkRange Nothing Nothing  -- QUESTION: is this ok?
+    , _createEditVDoc  = vdoc
+    , _createEditKind  = Initial
+    , _createEditMotiv = "" -- FIXME
+    }
+  let e' = S.idToKey (e ^. editMetaID . miID) :: Key S.Edit
+  liftDB $ update (S.idToKey $ mid ^. miID) [S.VDocHeadId =. Just e']
+  pure $ S.vDocElim (toVDoc mid) svdoc {S.vDocHeadId = Just e'}
 
 getVDoc :: ID VDoc -> DB VDoc
 getVDoc = getMetaEntity (S.vDocElim . toVDoc)
 
-vdocRepo :: ID VDoc -> DB (ID VDocRepo)
-vdocRepo vid = do
-  opts <- dbSelectOpts
-  vs <- liftDB $ foreignKeyField S.vRRepository <$$> selectList [S.VRVdoc ==. S.idToKey vid] opts
-  unique "vdocRepo" vs
-
-vdocRepoOfEdit :: ID Edit -> DB (ID VDocRepo)
-vdocRepoOfEdit eid = do
-  opts <- dbSelectOpts
-  unique "vdocRepoOfEdit" =<< liftDB
-    (foreignKeyField S.rPRepository <$$> selectList [S.RPEdit ==. S.idToKey eid] opts)
-
 -- * Repo
 
-createRepo :: DocRepo.RepoHandle -> DocRepo.EditHandle -> DB VDocRepo
-createRepo repoh edith = liftDB $ do
-    let desc = "" -- TODO
-        motiv = ""
-    editkey <- insert $ S.Edit desc cr edith Initial motiv
-    repokey <- insert $ S.Repo "title" {- TODO -} repoh editkey
-    void  . insert $ S.RP repokey editkey
-    pure $ VDocRepo (S.keyToId repokey) (S.keyToId editkey)
-  where
-    cr :: ChunkRange
-    cr = ChunkRange Nothing Nothing  -- TODO
-
-
-getRepo :: ID VDocRepo -> DB VDocRepo
-getRepo vid = S.repoElim toVDocRepo <$> getEntityRep vid
-  where
-    toVDocRepo :: ST -> DocRepo.RepoHandle -> Key S.Edit -> VDocRepo
-    toVDocRepo _desc _repoHandle pid = VDocRepo vid (S.keyToId pid)
-
-getRepoFromHandle :: DocRepo.RepoHandle -> DB VDocRepo
-getRepoFromHandle hndl = do
-  opts <- dbSelectOpts
-  rs <- liftDB $ selectList [S.RepoRepoHandle ==. hndl] opts
-  r <- unique "getRepoFromHandle" rs
-  let rid = S.keyToId $ entityKey r
-      toRepo _desc _hdnl repohead = VDocRepo rid (S.keyToId repohead)
-  pure $ S.repoElim toRepo (entityVal r)
-
-getRepoHandle :: ID VDocRepo -> DB DocRepo.RepoHandle
-getRepoHandle vid = S.repoElim toRepoHandle <$> getEntityRep vid
-  where
-    toRepoHandle :: ST -> DocRepo.RepoHandle -> Key S.Edit -> DocRepo.RepoHandle
-    toRepoHandle _desc repoHandle _pid = repoHandle
-
-getEditIDs :: ID VDocRepo -> DB [ID Edit]
-getEditIDs vid = liftDB $
-  foreignKeyField S.rPEdit <$$> selectList [S.RPRepository ==. S.idToKey vid] []
-
--- * DocRepo and VDoc
-
-vDocRepoVDoc :: ID VDocRepo -> DB (ID VDoc)
-vDocRepoVDoc rid = do
-  repos <- foreignKeyField S.vRVdoc
-            <$$> liftDB (selectList [S.VRRepository ==. S.idToKey rid] [])
-  unique "vdocRepoVDoc" repos
+getEditIDs :: ID VDoc -> DB [ID Edit]
+getEditIDs vid = liftDB $ S.keyToId . entityKey <$$> selectList [S.EditRepository ==. S.idToKey vid] []
 
 -- * Edit
 
-createEdit :: ID VDocRepo -> DocRepo.EditHandle -> CreateEdit -> DB Edit
-createEdit rid edith ce = do
+createEdit :: ID VDoc -> EditSource (ID Edit) -> CreateEdit -> DB Edit
+createEdit rid me ce = do
   mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
             (ce ^. createEditRange)
-            edith
+            (ce ^. createEditVDoc)
+            (S.idToKey rid)
             (ce ^. createEditKind)
             (ce ^. createEditMotiv)
-  addConnection S.RP rid (mid ^. miID)
+  liftDB $ case me of
+    InitialEdit -> pure ()
+    EditOfEdit edit parent -> do
+      void . insert $ S.ParentChild (S.idToKey parent) (RawContentEdit edit) (S.idToKey $ mid ^. miID)
+    MergeOfEdits parent1 parent2 -> do
+      void . insert $ S.ParentChild (S.idToKey parent1) mempty (S.idToKey $ mid ^. miID)
+      void . insert $ S.ParentChild (S.idToKey parent2) mempty (S.idToKey $ mid ^. miID)
   pure $ Edit
     mid
     (ce ^. createEditDesc)
@@ -306,22 +266,10 @@ createEdit rid edith ce = do
     (ce ^. createEditMotiv)
 
 getEdit :: ID Edit -> DB Edit
-getEdit = getMetaEntity $ \mid -> S.editElim $ \desc cr _handle -> Edit mid desc cr
+getEdit = getMetaEntity $ \mid -> S.editElim $ \desc cr _ _ -> Edit mid desc cr
 
-getEditFromHandle :: DocRepo.EditHandle -> DB Edit
-getEditFromHandle hndl = do
-  opts <- dbSelectOpts
-  ps <- liftDB $ selectList [S.EditEditHandle ==. hndl] opts
-  p <- unique "getEditFromHandle" ps
-  mid <- getMeta . S.keyToId $ entityKey p
-  let toEdit desc cr _hdnl = Edit mid desc cr
-  pure $ S.editElim toEdit (entityVal p)
-
-getEditHandle :: ID Edit -> DB DocRepo.EditHandle
-getEditHandle pid = S.editElim toEditHandle <$> getEntityRep pid
-  where
-    toEditHandle :: ST -> ChunkRange -> DocRepo.EditHandle -> EditKind -> ST -> DocRepo.EditHandle
-    toEditHandle _desc _cr handle _kind _motiv = handle
+getVersion :: ID Edit -> DB VDocVersion
+getVersion pid = S.editElim (\_ _ vdoc _ _ _ -> vdoc) <$> getEntityRep pid
 
 editNotes :: ID Edit -> DB [ID Note]
 editNotes pid = do
@@ -341,26 +289,16 @@ editDiscussions pid = do
   liftDB $
     foreignKeyField S.pDDiscussion <$$> selectList [S.PDEdit ==. S.idToKey pid] opts
 
-setEditChild :: ID Edit -> ID Edit -> DB ()
-setEditChild parent child = liftDB $ do
-  void . insert $ S.PC (S.idToKey parent) (S.idToKey child)
-
 getEditChildren :: ID Edit -> DB [ID Edit]
 getEditChildren parent = do
   opts <- dbSelectOpts
   liftDB $ do
-    foreignKeyField S.pCChild <$$> selectList [S.PCParent ==. S.idToKey parent] opts
+    foreignKeyField S.parentChildChild <$$> selectList [S.ParentChildParent ==. S.idToKey parent] opts
 
 -- * Repo and edit
 
-editVDocRepo :: ID Edit -> DB (ID VDocRepo)
-editVDocRepo pid = do
-  opts <- dbSelectOpts
-  rs <- liftDB $ foreignKeyField S.rPRepository <$$> selectList [S.RPEdit ==. S.idToKey pid] opts
-  unique "editVDocRepo" rs
-
-registerEdit :: ID VDocRepo -> ID Edit -> DB ()
-registerEdit rid pid = void . liftDB . insert $ S.RP (S.idToKey rid) (S.idToKey pid)
+vdocOfEdit :: ID Edit -> DB (ID VDoc)
+vdocOfEdit pid = S.editElim (\_ _ _ vid _ _ -> S.keyToId vid) <$> getEntityRep pid
 
 -- * Note
 
@@ -738,23 +676,15 @@ instance (C.StoreProcessData DB a, Typeable a) => C.GroupOf DB (Process a) where
 instance C.GroupOf DB VDoc where
   groupOf = vDocProcess >=> C.groupOf
 
-instance C.GroupOf DB VDocRepo where
-  groupOf = vDocRepoVDoc >=> C.groupOf
-
 instance C.GroupOf DB Edit where
-  groupOf = editVDocRepo >=> C.groupOf
+  groupOf = vdocOfEdit >=> C.groupOf
 
 -- * ProcessOf
 
-type instance C.ProcessPayload Edit = C.ProcessPayload VDocRepo
+type instance C.ProcessPayload Edit = C.ProcessPayload VDoc
 
 instance C.ProcessOf DB Edit where
-  processOf = editVDocRepo >=> C.processOf
-
-type instance C.ProcessPayload VDocRepo = C.ProcessPayload VDoc
-
-instance C.ProcessOf DB VDocRepo where
-  processOf = vDocRepoVDoc >=> C.processOf
+  processOf = vdocOfEdit >=> C.processOf
 
 type instance C.ProcessPayload VDoc = CollaborativeEdit
 

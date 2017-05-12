@@ -25,7 +25,6 @@ import           Refine.Prelude (Timespan(..))
 
 data Config = Config
   { _cfgShouldLog     :: Bool           -- ^ Should log messages during the server run
-  , _cfgReposRoot     :: FilePath       -- ^ The directory for the document repositories
   , _cfgDBKind        :: DBKind         -- ^ SQLite database, memory or file on the disk
   , _cfgPoolSize      :: Int            -- ^ The size of the connection pool towards the database
   , _cfgFileServeRoot :: Maybe FilePath -- ^ Directory for the static files
@@ -45,7 +44,6 @@ data DBKind
 instance Default Config where
   def = Config
     { _cfgShouldLog     = True
-    , _cfgReposRoot     = "./.backend-data/repos"
     , _cfgDBKind        = def
     , _cfgPoolSize      = 5
     , _cfgFileServeRoot = Just "../frontend/js-build"

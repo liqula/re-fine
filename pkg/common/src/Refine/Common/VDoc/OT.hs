@@ -4,6 +4,9 @@
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE ViewPatterns               #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE FlexibleInstances          #-}
 {-# OPTIONS_GHC -fno-warn-orphans       #-}   -- FIXME: elim this
 module Refine.Common.VDoc.OT where
 
@@ -12,9 +15,12 @@ import           Data.Function
 import           Data.List
 import qualified Data.IntMap as IntMap
 import qualified Data.Set as Set
+import qualified Data.Text as Text
 import           Data.String.Conversions
 import qualified Generics.SOP as SOP
 import           GHC.Generics (Generic)
+import           Data.Aeson
+--import           Data.Coerce
 
 import Refine.Common.OT
 import Refine.Common.VDoc.Draft (RawContent)
@@ -34,11 +40,19 @@ data Block = Block Draft.BlockType [LineElem] Int
 --
 -- FIXME: (Set Entity) should be (Maybe String, Bool, Bool), it is not allowed to have two links on
 -- the same character.
-data LineElem = LineElem (Set.Set Entity) String
+data LineElem = LineElem (Set.Set Entity) ST
    deriving (Show, Eq, Generic)
 
 newtype Entity = Entity { unEntity :: Either Draft.Entity Draft.Style }
    deriving (Show, Eq, Ord, Generic)
+
+---------------------------------------- 
+
+data EditSource a =
+    InitialEdit
+  | EditOfEdit (Edit RawContent) a
+  | MergeOfEdits a a
+  deriving (Show, Functor)
 
 ---------------------------------------- conversion functions
 
@@ -59,11 +73,11 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
   where
     -- see also: 'Refine.Common.VDoc.Draft.addMarksToBlock'.
     mkBlock :: Draft.Block Draft.EntityKey -> Block
-    mkBlock (Draft.Block txt eranges styles ty depth _key) = Block ty (segment segments $ cs txt) depth
+    mkBlock (Draft.Block txt eranges styles ty depth _key) = Block ty (segment segments txt) depth
       where
         segment [] "" = []
         segment [] text = [LineElem mempty text]
-        segment ((len, s): ss) text = LineElem s (take len text): segment ss (drop len text)
+        segment ((len, s): ss) text = LineElem s (Text.take len text): segment ss (Text.drop len text)
 
         segments =
               mkSegments 0 []
@@ -91,7 +105,7 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
 
     mkBlock :: Block -> Draft.Block Draft.Entity
     mkBlock (Block ty es d) = Draft.Block
-        (cs $ concatMap getText es)
+        (mconcat $ map getText es)
         [(e, r) | (r, unEntity -> Left e) <- ranges]
         [(r, s) | (r, unEntity -> Right s) <- ranges]
         ty
@@ -99,7 +113,7 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
         Nothing
       where
         ranges = mkRanges 0 mempty
-            $ [(len, s) | LineElem s txt <- es, let len = length txt, len > 0]
+            $ [(len, s) | LineElem s txt <- es, let len = Text.length txt, len > 0]
             <> [(0, mempty)]  -- this is to avoid one more case in mkRanges below when we're done.
 
         mkRanges _ _ [] = []
@@ -121,30 +135,46 @@ simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
     attrs (LineElem x _) = x
     txt   (LineElem _ x) = x
 
-    joinElems xs = LineElem (attrs $ head xs) $ concatMap txt xs
+    joinElems xs = LineElem (attrs $ head xs) . mconcat $ map txt xs
 
     notNull (LineElem _ "") = False
     notNull _ = True
 
+------------------------------------------------------- auxiliary definitions
+
+class Representable a where
+  type Rep a
+  to   :: Rep a -> a
+  from :: a -> Rep a
+
 ---------------------------------------- Editable instances
 -- FUTUREWORK: make these instances smarter
 
+
 instance Representable Draft.BlockType where
-    type Rep Draft.BlockType = (Atom Draft.BlockType)
+    type Rep Draft.BlockType = Atom Draft.BlockType
     to = unAtom
     from = Atom
 
 instance Editable Draft.BlockType where
     newtype EEdit Draft.BlockType
         = EBlockType {unEBlockType :: EEdit (Rep Draft.BlockType)}
-      deriving (Show)
+      deriving (Generic, Show)
 
     docCost = docCost . from
     eCost = eCost . unEBlockType
+
+    -- FIXME & TUNING: use coerce like in Editable Text instance (ghc doesn't accept it here unfortunately)
     diff a b = map EBlockType $ diff (from a) (from b)
     ePatch e = to . ePatch (unEBlockType e) . from
+    patch e = to . patch (unEBlockType <$> e) . from
     eMerge d a b = map EBlockType *** map EBlockType $ eMerge (from d) (unEBlockType a) (unEBlockType b)
+    merge d a b = map EBlockType *** map EBlockType $ merge (from d) (unEBlockType <$> a) (unEBlockType <$> b)
     eInverse d = map EBlockType . eInverse (from d) . unEBlockType
+    inverse d = map EBlockType . inverse (from d) . map unEBlockType
+
+instance ToJSON (EEdit Draft.BlockType)
+instance FromJSON (EEdit Draft.BlockType)
 
 ----------------------
 
@@ -156,19 +186,26 @@ instance Representable Entity where
 instance Editable Entity where
     newtype EEdit Entity
         = EEntity {unEEntity :: EEdit (Rep Entity)}
-      deriving (Show)
+      deriving (Generic, Show)
 
     docCost = docCost . from
     eCost = eCost . unEEntity
+
     diff a b = map EEntity $ diff (from a) (from b)
     ePatch e = to . ePatch (unEEntity e) . from
+    patch e = to . patch (unEEntity <$> e) . from
     eMerge d a b = map EEntity *** map EEntity $ eMerge (from d) (unEEntity a) (unEEntity b)
+    merge d a b = map EEntity *** map EEntity $ merge (from d) (unEEntity <$> a) (unEEntity <$> b)
     eInverse d = map EEntity . eInverse (from d) . unEEntity
+    inverse d = map EEntity . inverse (from d) . map unEEntity
+
+instance ToJSON (EEdit Entity)
+instance FromJSON (EEdit Entity)
 
 ----------------------
 
 instance Representable LineElem where
-    type Rep LineElem = (Set.Set Entity, String)
+    type Rep LineElem = (Set.Set Entity, ST)
     to (a, b) = LineElem a b
     from (LineElem a b) = (a, b)
 
@@ -176,14 +213,21 @@ instance Editable LineElem where
     newtype EEdit LineElem
         = ELineElem {unELineElem :: EEdit (Rep LineElem)}
         -- FUTUREWORK: detect and be able to merge joining and splitting of 'LineElem's
-      deriving (Show)
+      deriving (Generic, Show)
 
     docCost = docCost . from
     eCost = eCost . unELineElem
+
     diff a b = map ELineElem $ diff (from a) (from b)
     ePatch e = to . ePatch (unELineElem e) . from
+    patch e = to . patch (unELineElem <$> e) . from
     eMerge d a b = map ELineElem *** map ELineElem $ eMerge (from d) (unELineElem a) (unELineElem b)
+    merge d a b = map ELineElem *** map ELineElem $ merge (from d) (unELineElem <$> a) (unELineElem <$> b)
     eInverse d = map ELineElem . eInverse (from d) . unELineElem
+    inverse d = map ELineElem . inverse (from d) . map unELineElem
+
+instance ToJSON (EEdit LineElem)
+instance FromJSON (EEdit LineElem)
 
 ----------------------
 
@@ -196,14 +240,21 @@ instance Editable Block where
     newtype EEdit Block
         = EBlock {unEBlock :: EEdit (Rep Block)}
         -- FUTUREWORK: detect and be able to merge joining and splitting of 'Block's
-      deriving (Show)
+      deriving (Generic, Show)
 
     docCost = docCost . from
     eCost = eCost . unEBlock
+
     diff a b = map EBlock $ diff (from a) (from b)
     ePatch e = to . ePatch (unEBlock e) . from
+    patch e = to . patch (unEBlock <$> e) . from
     eMerge d a b = map EBlock *** map EBlock $ eMerge (from d) (unEBlock a) (unEBlock b)
+    merge d a b = map EBlock *** map EBlock $ merge (from d) (unEBlock <$> a) (unEBlock <$> b)
     eInverse d = map EBlock . eInverse (from d) . unEBlock
+    inverse d = map EBlock . inverse (from d) . map unEBlock
+
+instance ToJSON (EEdit Block)
+instance FromJSON (EEdit Block)
 
 ----------------------
 
@@ -215,14 +266,21 @@ instance Representable Doc where
 instance Editable Doc where
     newtype EEdit Doc
         = EDoc {unEDoc :: EEdit (Rep Doc)}
-      deriving (Show)
+      deriving (Generic, Show)
 
     docCost = docCost . from
     eCost = eCost . unEDoc
+
     diff a b = map EDoc $ diff (from a) (from b)
     ePatch e = to . ePatch (unEDoc e) . from
+    patch e = to . patch (unEDoc <$> e) . from
     eMerge d a b = map EDoc *** map EDoc $ eMerge (from d) (unEDoc a) (unEDoc b)
+    merge d a b = map EDoc *** map EDoc $ merge (from d) (unEDoc <$> a) (unEDoc <$> b)
     eInverse d = map EDoc . eInverse (from d) . unEDoc
+    inverse d = map EDoc . inverse (from d) . map unEDoc
+
+instance ToJSON (EEdit Doc)
+instance FromJSON (EEdit Doc)
 
 ----------------------
 
@@ -234,15 +292,21 @@ instance Representable RawContent where
 instance Editable RawContent where
     newtype EEdit RawContent
         = ERawContent {unERawContent :: EEdit (Rep RawContent)}
-      deriving (Show)
+      deriving (Generic, Show)
 
     docCost = docCost . from
     eCost = eCost . unERawContent
+
     diff a b = map ERawContent $ diff (from a) (from b)
     ePatch e = to . ePatch (unERawContent e) . from
+    patch e = to . patch (unERawContent <$> e) . from
     eMerge d a b = map ERawContent *** map ERawContent $ eMerge (from d) (unERawContent a) (unERawContent b)
+    merge d a b = map ERawContent *** map ERawContent $ merge (from d) (unERawContent <$> a) (unERawContent <$> b)
     eInverse d = map ERawContent . eInverse (from d) . unERawContent
+    inverse d = map ERawContent . inverse (from d) . map unERawContent
 
+instance ToJSON (EEdit RawContent)
+instance FromJSON (EEdit RawContent)
 
 instance SOP.Generic Doc
 instance SOP.Generic Block

@@ -21,8 +21,10 @@ import qualified Data.Set as Set
 import           Control.Monad
 import           Test.QuickCheck
 import           Test.Hspec
+import qualified Data.Text as Text
 
 import Refine.Common.OT
+import Refine.Common.Test.Arbitrary ()
 
 ---------------------------------------- quickcheck laws
 
@@ -31,14 +33,18 @@ class (Editable d, Arbitrary d, Eq d, Show d, Show (EEdit d)) => GenEdit d where
     genEdit :: d -> Gen (Edit d)
 
 runTest :: forall d. (Typeable d, GenEdit d) => [(String, d -> Gen Property)] -> Spec
-runTest tests
+runTest = runTest' 1
+
+runTest' :: forall d. (Typeable d, GenEdit d) => Int -> [(String, d -> Gen Property)] -> Spec
+runTest' scaleFactor tests
     = describe ("Editable instance for " <> show (typeRep (Proxy :: Proxy d)))
-    . forM_ tests $ \(name, test) -> it name $ property test --quickCheckWith stdArgs { maxSuccess = num }
+    . forM_ tests $ \(name, test) -> it name
+    $ property (scale (`div` scaleFactor) <$> test) -- quickCheckWith stdArgs { maxSuccess = num }
 
 ---------------------
 
-allTestsButDiff :: GenEdit d => [(String, d -> Gen Property)]
-allTestsButDiff =
+fastTests :: GenEdit d => [(String, d -> Gen Property)]
+fastTests =
     [ (,) "edit composition"    test_edit_composition
     , (,) "diamond"             test_diamond
     , (,) "diamond right join"  test_diamond_right_join
@@ -48,10 +54,13 @@ allTestsButDiff =
     , (,) "inverted diamond"    test_inverse_diamond
     ]
 
-allTests :: GenEdit d => [(String, d -> Gen Property)]
-allTests = allTestsButDiff <>
+hardTests :: GenEdit d => [(String, d -> Gen Property)]
+hardTests =
     [ (,) "diff" test_diff
     ]
+
+allTests :: GenEdit d => [(String, d -> Gen Property)]
+allTests = fastTests <> hardTests
 
 ---------------------
 
@@ -167,8 +176,8 @@ instance (GenEdit a, GenEdit b) => GenEdit (Either a b) where
 
 ---------------------------------------- (Bounded, Enum) instance
 
-instance (Eq a, Show a, Arbitrary (Atom a)) => GenEdit (Atom a) where
-    genEdit _ = fmap ReplaceEnum <$> listOf arbitrary
+instance (Eq a, Show a, Arbitrary a) => GenEdit (Atom a) where
+    genEdit _ = fmap EAtom <$> listOf arbitrary
 
 deriving instance Arbitrary a => Arbitrary (Atom a)
 
@@ -196,6 +205,12 @@ instance (GenEdit a) => GenEdit [a] where
                     | (i, x) <- zip [0..] d']
         ]
 
+---------------------------------------- Strict text instance
+
+instance GenEdit Text.Text where
+    genEdit = fmap (map EText) . genEdit . Text.unpack
+
+
 ---------------------------------------- Set instance
 
 instance (GenEdit a, Ord a, HasEnoughInhabitants a) => GenEdit (Set.Set a) where
@@ -220,14 +235,22 @@ instance (GenEdit a, Ord a, HasEnoughInhabitants a) => GenEdit (Set.Set a) where
 -- | Auxiliary class to ensure that a type have enough inhabitants
 --   used for generating random elements
 class HasEnoughInhabitants a where
-    hasMoreInhabitantsThan :: Proxy a -> Int -> Bool
-    default hasMoreInhabitantsThan :: (Enum a, Bounded a) => Proxy a -> Int -> Bool
-    hasMoreInhabitantsThan _ n = n <= fromEnum (maxBound :: a) - fromEnum (minBound :: a)
+    -- | Number of inhabitants; Nothing means a lot (more than 1000)
+    numOfInhabitants :: Proxy a -> Maybe Int
+    default numOfInhabitants :: (Enum a, Bounded a) => Proxy a -> Maybe Int
+    numOfInhabitants _ = Just $ fromEnum (maxBound :: a) - fromEnum (minBound :: a) + 1
+
+hasMoreInhabitantsThan :: (HasEnoughInhabitants a) => Proxy a -> Int -> Bool
+hasMoreInhabitantsThan p n = maybe True (n <) $ numOfInhabitants p
 
 instance (Enum a, Bounded a) => HasEnoughInhabitants (Atom a)
 
-instance HasEnoughInhabitants [a] where hasMoreInhabitantsThan _ _ = True
-instance HasEnoughInhabitants a => HasEnoughInhabitants (Set.Set a) where hasMoreInhabitantsThan _ _ = True  -- FIXME
+instance HasEnoughInhabitants [a] where numOfInhabitants _ = Nothing
+instance HasEnoughInhabitants a => HasEnoughInhabitants (Set.Set a) where
+    numOfInhabitants _ = do
+        n <- numOfInhabitants (Proxy :: Proxy a)
+        guard (n < 10)  -- to prevent overflow
+        pure $ 2^n
 
 ---------------------- data type used for testing
 
@@ -252,11 +275,18 @@ spec = parallel $ do
     runTest $ allTests @[ADigit]
     runTest $ allTests @[(ADigit, ADigit)]
     runTest $ allTests @([ADigit], [ADigit])
-    runTest $ allTestsButDiff @[[ADigit]]
     runTest $ allTests @(Set.Set ADigit)
     runTest $ allTests @(Set.Set [ADigit])
     runTest $ allTests @[Set.Set ADigit]
     runTest $ allTests @(Set.Set (Set.Set ADigit))
+    runTest $ allTests @Text.Text
+    runTest $ allTests @Char
+
+    runTest $ fastTests @[[ADigit]]
+
+    -- these take too long to run on a regular basis, just activate for debugging or deep-tests:
+    -- runTest' 500 $ allTests @[[ADigit]]
+
 
 -- | running in ghci8 on a lenovo t420s with no attempt at optimizing, @n = 1000@: @(2.88 secs,
 -- 2,382,007,256 bytes)@.  this should be our baseline from which to improve.

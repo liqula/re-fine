@@ -27,11 +27,9 @@ module Refine.Backend.App.Core (
   , DBRunner(..)
   , DBConnection(..)
   , UHNat
-  , DocRepoNat
   , AppContext(..)
   , appMkDBNat
   , appDBConnection
-  , appDocRepoNat
   , appUHNat
   , appLogger
   , appCsrfSecret
@@ -47,7 +45,6 @@ module Refine.Backend.App.Core (
   , MonadApp
   , appIO
   , db
-  , docRepo
   , userHandle
   , appLog
   ) where
@@ -63,7 +60,6 @@ import GHC.Generics (Generic)
 import System.FilePath (FilePath)
 
 import Refine.Backend.Database
-import Refine.Backend.DocRepo
 import Refine.Backend.Logger
 import Refine.Backend.Types
 import Refine.Backend.User
@@ -72,12 +68,9 @@ import Refine.Prelude (leftToError, Timespan)
 import Refine.Prelude.TH (makeRefineType)
 
 
-type DocRepoNat = DocRepo :~> ExceptT DocRepoError IO
-
 data AppContext db uh = AppContext
   { _appMkDBNat       :: MkDBNat db
   , _appDBConnection  :: DBConnection
-  , _appDocRepoNat    :: DocRepoNat
   , _appUHNat         :: UHNat uh
   , _appLogger        :: Logger
   , _appCsrfSecret    :: CsrfSecret
@@ -136,7 +129,6 @@ data AppError
   = AppUnknownError ST
   | AppVDocVersionError
   | AppDBError DBError
-  | AppDocRepoError DocRepoError
   | AppUserNotFound ST
   | AppUserNotLoggedIn
   | AppUserCreationError CreateUserError
@@ -169,13 +161,6 @@ dbWithFilters fltrs m = AppM $ do
 
 db :: db a -> AppM db uh a
 db = dbWithFilters mempty
-
-docRepo :: DocRepo a -> AppM db uh a
-docRepo m = AppM $ do
-  (NT drepoNat) <- view appDocRepoNat
-  r  <- liftIO (try $ runExceptT (drepoNat m))
-  r' <- leftToError (AppDocRepoError . DocRepoUnknownError . show @SomeException) r
-  leftToError AppDocRepoError r'
 
 userHandle :: uh a -> AppM db uh a
 userHandle m = AppM $ do

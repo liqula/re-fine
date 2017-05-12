@@ -20,21 +20,15 @@
 
 module Refine.Common.Types.VDoc where
 
-import           Control.DeepSeq
-import           Control.Lens (makeLenses, makePrisms, Lens')
-import           Data.Aeson
+import           Control.Lens (Lens')
 import           Data.Map as Map
 import           Data.String.Conversions (ST)
-import qualified Generics.SOP        as SOP
-import qualified Generics.SOP.JSON   as SOP
-import qualified Generics.SOP.NFData as SOP
 import           GHC.Generics (Generic)
 
 import Refine.Common.Orphans ()
 import Refine.Common.Types.Chunk
 import Refine.Common.Types.Comment
 import Refine.Common.Types.Prelude
-import Refine.Prelude
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -42,7 +36,7 @@ data VDoc = VDoc
   { _vdocMetaID   :: MetaID VDoc
   , _vdocTitle    :: Title
   , _vdocAbstract :: Abstract
-  , _vdocRepo     :: ID VDocRepo
+  , _vdocHeadEdit :: ID Edit
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -63,20 +57,6 @@ newtype Abstract = Abstract { _unAbstract :: ST }
 
 newtype VDocVersion = VDocVersion { _unVDocVersion :: ST }
   deriving (Eq, Ord, Show, Generic, Monoid)
-
--- | TODO: this should not be needed anywhere except perhaps in tests
-vdocVersionFromSTSafe :: ST -> Either String VDocVersion
-vdocVersionFromSTSafe = Right . VDocVersion
-
--- | TODO: this should not be needed anywhere except perhaps in tests
-vdocVersionFromST :: ST -> VDocVersion
-vdocVersionFromST = VDocVersion
-
-data VDocRepo = VDocRepo
-  { _vdocRepoID    :: ID VDocRepo
-  , _vdocHeadEdit  :: ID Edit
-  }
-  deriving (Eq, Ord, Show, Read, Generic)
 
 data Edit = Edit
   { _editMetaID :: MetaID Edit
@@ -113,24 +93,13 @@ type instance Create Edit = CreateEdit
 
 makeRefineType ''VDoc
 makeRefineType ''CreateVDoc
-makeRefineType ''VDocRepo
 makeRefineType ''Edit
 makeRefineType ''CreateEdit
 makeRefineType ''EditKind
 makeRefineType ''ConflictResolution
 makeRefineType ''Title
 makeRefineType ''Abstract
-
--- ('makeRefineType' doesn't support parametric types.)
-instance SOP.Generic VDocVersion
-instance SOP.HasDatatypeInfo VDocVersion
-instance NFData VDocVersion where rnf = SOP.grnf
-instance SOP.ToJSON VDocVersion where toJSON = gtoJSONDef
-instance SOP.FromJSON VDocVersion where parseJSON = gparseJSONDef
--- TODO: aeson-encode phantom type in json for cross-network type safety
-makeLenses ''VDocVersion
-makePrisms ''VDocVersion
-
+makeRefineType ''VDocVersion
 
 -- * composites
 
@@ -147,7 +116,6 @@ makePrisms ''VDocVersion
 -- - if we try to consider comments, edits, ... on other versions than head, we are in trouble.
 data CompositeVDoc = CompositeVDoc
   { _compositeVDoc            :: VDoc
-  , _compositeVDocRepo        :: VDocRepo
   , _compositeVDocEditID      :: ID Edit
   , _compositeVDocVersion     :: VDocVersion
   , _compositeVDocEdits       :: Map (ID Edit) Edit

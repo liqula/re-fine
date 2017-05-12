@@ -12,8 +12,7 @@ import Database.Persist
 import Database.Persist.Sql
 
 import Refine.Prelude (Timestamp(..))
-import Refine.Backend.DocRepo.Core
-import Refine.Backend.Database.Types (MetaInfoID(..))
+import Refine.Backend.Database.Types (MetaInfoID(..), RawContentEdit(..))
 import Refine.Common.Types.Prelude (UserInfo)
 import Refine.Common.Types.Chunk
 import Refine.Common.Types.Process
@@ -26,6 +25,16 @@ instance PersistField Timestamp where
   fromPersistValue         = fmap Timestamp . fromPersistValue
 
 instance PersistFieldSql Timestamp where
+  -- CAUTION: This should be generated, to represent the actual inner type
+  -- of the newtype
+  sqlType _ = sqlType (Proxy :: Proxy ST)
+
+
+instance PersistField VDocVersion where
+  toPersistValue (VDocVersion t) = toPersistValue t
+  fromPersistValue         = fmap VDocVersion . fromPersistValue
+
+instance PersistFieldSql VDocVersion where
   -- CAUTION: This should be generated, to represent the actual inner type
   -- of the newtype
   sqlType _ = sqlType (Proxy :: Proxy ST)
@@ -50,23 +59,6 @@ instance PersistFieldSql Abstract where
   -- of the title
   sqlType _ = sqlType (Proxy :: Proxy ST)
 
-
-instance PersistField RepoHandle where
-  toPersistValue (RepoHandle t) = toPersistValue t
-  fromPersistValue              = fmap RepoHandle . fromPersistValue
-
-instance PersistFieldSql RepoHandle where
-  -- CAUTION: This should be generated, to represent the actual inner type
-  -- of the title
-  sqlType _ = sqlType (Proxy :: Proxy ST)
-
-
-instance PersistField EditHandle where
-  toPersistValue (EditHandle t) = toPersistValue t
-  fromPersistValue              = fmap EditHandle . fromPersistValue
-
-instance PersistFieldSql EditHandle where
-  sqlType _ = sqlType (Proxy :: Proxy ST)
 
 -- * JSON stored values
 
@@ -118,3 +110,9 @@ instance PersistField MetaInfoID where
 instance PersistFieldSql MetaInfoID where
   sqlType _ = sqlType (Proxy :: Proxy ST)
 
+instance PersistField RawContentEdit where
+  toPersistValue   = toPersistJSONValue
+  fromPersistValue = fromPersistJSONValue
+
+instance PersistFieldSql RawContentEdit where
+  sqlType _ = sqlType (Proxy :: Proxy ST)

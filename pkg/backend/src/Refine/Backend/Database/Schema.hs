@@ -38,11 +38,9 @@ import Refine.Common.Types.Chunk (ChunkRange(..))
 import Refine.Common.Types.Prelude hiding (MetaInfo)
 import Refine.Common.Types.Process (CollaborativeEditPhase)
 import Refine.Common.Types.Role (Role)
-import Refine.Common.Types.VDoc (Abstract, EditKind, Title)
+import Refine.Common.Types.VDoc (Abstract, EditKind, Title, VDocVersion)
 import Refine.Backend.Database.Field()
-import Refine.Backend.Database.Types (MetaInfoID)
-import Refine.Backend.DocRepo.Core (EditHandle, RepoHandle)
-
+import Refine.Backend.Database.Types (MetaInfoID, RawContentEdit)
 
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
 MetaInfo
@@ -56,19 +54,15 @@ MetaInfo
 VDoc
     title       Title
     desc        Abstract
-    repo        RepoId
+    headId      EditId Maybe
 
 Edit
     desc        Text
     range       ChunkRange
-    editHandle  EditHandle
+    editVDoc    VDocVersion
+    repository  VDocId
     kind        EditKind
     motivation  ST
-
-Repo
-    name        Text
-    repoHandle  RepoHandle
-    headId      EditId
 
 Note
     text        Text
@@ -145,20 +139,9 @@ ProcessOfAula
 
 -- Connection tables
 
-VR
-    vdoc        VDocId
-    repository  RepoId
-    UniVR vdoc repository
-    UniVRV vdoc
-    UniVRR repository
-
-RP  -- TODO: should be RE
-    repository  RepoId
-    edit       EditId
-    UniRP repository edit
-
-PC
+ParentChild
     parent EditId
+    edit   RawContentEdit
     child  EditId
     UniPC parent child
 
@@ -213,7 +196,6 @@ keyToId = ID . fromSqlKey
 makeElim ''MetaInfo
 makeElim ''VDoc
 makeElim ''Edit
-makeElim ''Repo
 makeElim ''Note
 makeElim ''Question
 makeElim ''Answer
@@ -226,10 +208,8 @@ makeElim ''SubGroup
 
 makeElim ''Roles
 
-makeElim ''VR
-makeElim ''RP
+makeElim ''ParentChild
 makeElim ''PN
-makeElim ''PC
 makeElim ''PQ
 makeElim ''PD
 makeElim ''DS

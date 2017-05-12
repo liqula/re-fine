@@ -7,7 +7,6 @@ import qualified Data.Set as Set
 import           Test.QuickCheck
 import           Test.Hspec
 
-import Refine.Common.OT
 import Refine.Common.OTSpec hiding (spec)
 import Refine.Common.Test.Arbitrary
 import Refine.Common.VDoc.OT
@@ -25,7 +24,7 @@ instance GenEdit Draft.BlockType where
 instance Arbitrary Entity where
     arbitrary = garbitrary
 
-instance HasEnoughInhabitants Entity where hasMoreInhabitantsThan _ _ = True
+instance HasEnoughInhabitants Entity where numOfInhabitants _ = Nothing
 
 instance GenEdit Entity where
     genEdit d = map EEntity <$> genEdit (from d)
@@ -68,7 +67,13 @@ instance GenEdit Draft.RawContent where
 spec :: Spec
 spec = parallel $ do
     runTest $ allTests @Draft.BlockType
+    runTest $ allTests @Entity
     runTest $ allTests @LineElem
+    runTest $ allTests @Block
+
+    -- these take too long to run on a regular basis, just activate for debugging or deep-tests:
+    -- runTest $ fastTests @Doc
+    -- runTest $ fastTests @Draft.RawContent
 
     it "Doc <-> RawContent conversion" . property $ \d ->
       rawContentToDoc (docToRawContent d) `shouldBe` simplifyDoc d
