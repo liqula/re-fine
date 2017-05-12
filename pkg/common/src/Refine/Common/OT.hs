@@ -385,13 +385,9 @@ instance (Editable a, Ord a) => Editable (Set.Set a) where
     diff a b = [DeleteElem x | x <- Set.elems $ Set.difference a b]
             <> [InsertElem x | x <- Set.elems $ Set.difference b a]
 
-{-
-    -- this is an 'eMerge' implementation for lists interpreted as sets.  for now, we just use
-    -- 'secondWins'.
-
     eMerge _ a b | a == b = ([], [])
     eMerge d a@(EditElem i x) b@(EditElem i' y) | i == i'
-        = if patch (x <> x2) i `notElem` unSet d
+        = if patch (x <> x2) i `Set.notMember` d
             then (editElem (patch x i) x2, editElem (patch y i) y2)
             else secondWins d a b
       where
@@ -402,7 +398,6 @@ instance (Editable a, Ord a) => Editable (Set.Set a) where
     eMerge _ (InsertElem x) (EditElem y e) | x == patch e y = if x == y then ([], []) else ([DeleteElem y], [])
     eMerge d a@(EditElem y e) b@(InsertElem x) | x == patch e y = if x == y then ([], []) else secondWins d a b
     eMerge _ a b = ([b], [a])
--}
 
     eInverse _ = \case
         EditElem x e -> [EditElem (patch e x) (inverse x e)]
