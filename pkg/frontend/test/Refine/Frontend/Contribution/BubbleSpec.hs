@@ -91,6 +91,8 @@ spec = do
       is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` True
 
     it "inserts the id of the current bubble into the state on mouseEnter and removes it again on mouseLeave" $ do
+      pendingWith "race condition, this only sporadically fails!"
+
       wrapper <- mount $ bubble_ bubbleProps mempty
       storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) Nothing
 
