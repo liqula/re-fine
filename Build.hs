@@ -67,7 +67,7 @@ main = shakeArgs refineOptions $ do
     need ["test", "hlint"]
 
   phony "setup" $ do
-    let resolver = "nightly-2017-01-10"  -- (we need at least hlint v1.9.39, which is not in lts-7.15.)
+    let resolver = "lts-8.11"
     command_ [] "stack" ["install", "hlint", "--resolver", resolver]
     command_ [] "stack" ["exec", "--", "hlint", "--version"]
     command_ [] "stack" ["install", "hspec-discover", "--resolver", resolver]
