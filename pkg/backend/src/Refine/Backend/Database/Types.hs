@@ -1,17 +1,22 @@
-{-# LANGUAGE ConstraintKinds        #-}
-{-# LANGUAGE DeriveGeneric          #-}
-{-# LANGUAGE MultiParamTypeClasses  #-}
-{-# LANGUAGE TemplateHaskell        #-}
-{-# LANGUAGE TypeFamilies           #-}
-{-# LANGUAGE TypeFamilyDependencies #-}
+{-# LANGUAGE ConstraintKinds            #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Refine.Backend.Database.Types where
 
 import GHC.Generics
 import Data.Coerce (coerce)
+import Data.Aeson
 
-import Refine.Common.Types
-import Refine.Prelude.TH (makeRefineType)
+import           Refine.Common.Types
+import           Refine.Prelude.TH (makeRefineType)
+import           Refine.Common.VDoc.Draft (RawContent)
+import qualified Refine.Common.OT as OT
+import           Refine.Common.VDoc.OT ()
 
 
 type family CreateDB a = b | b -> a
@@ -61,6 +66,9 @@ instance HasMetaInfo (Process a) where metaInfoType = MetaProcess . coerce
 instance HasMetaInfo User        where metaInfoType = MetaUser
 instance HasMetaInfo VDoc        where metaInfoType = MetaVDoc
 instance HasMetaInfo Edit        where metaInfoType = MetaEdit
+
+newtype RawContentEdit = RawContentEdit {unRawContentEdit :: OT.Edit RawContent}
+  deriving (ToJSON, FromJSON, Monoid)
 
 makeRefineType ''CreateDBCollabEditProcess
 makeRefineType ''MetaInfoID

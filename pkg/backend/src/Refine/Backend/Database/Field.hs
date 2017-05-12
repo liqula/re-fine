@@ -12,7 +12,7 @@ import Database.Persist
 import Database.Persist.Sql
 
 import Refine.Prelude (Timestamp(..))
-import Refine.Backend.Database.Types (MetaInfoID(..))
+import Refine.Backend.Database.Types (MetaInfoID(..), RawContentEdit(..))
 import Refine.Common.Types.Prelude (UserInfo)
 import Refine.Common.Types.Chunk
 import Refine.Common.Types.Process
@@ -110,3 +110,9 @@ instance PersistField MetaInfoID where
 instance PersistFieldSql MetaInfoID where
   sqlType _ = sqlType (Proxy :: Proxy ST)
 
+instance PersistField RawContentEdit where
+  toPersistValue   = toPersistJSONValue
+  fromPersistValue = fromPersistJSONValue
+
+instance PersistFieldSql RawContentEdit where
+  sqlType _ = sqlType (Proxy :: Proxy ST)

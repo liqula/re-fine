@@ -40,7 +40,7 @@ import Refine.Common.Types.Process (CollaborativeEditPhase)
 import Refine.Common.Types.Role (Role)
 import Refine.Common.Types.VDoc (Abstract, EditKind, Title, VDocVersion)
 import Refine.Backend.Database.Field()
-import Refine.Backend.Database.Types (MetaInfoID)
+import Refine.Backend.Database.Types (MetaInfoID, RawContentEdit)
 
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
 MetaInfo
@@ -141,6 +141,7 @@ ProcessOfAula
 
 ParentChild
     parent EditId
+    edit   RawContentEdit
     child  EditId
     UniPC parent child
 

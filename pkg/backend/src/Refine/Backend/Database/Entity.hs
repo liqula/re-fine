@@ -253,11 +253,11 @@ createEdit rid me ce = do
             (ce ^. createEditMotiv)
   liftDB $ case me of
     InitialEdit -> pure ()
-    EditOfEdit _edit{-TODO-} parent -> do
-      void . insert $ S.ParentChild (S.idToKey parent) (S.idToKey $ mid ^. miID)
+    EditOfEdit edit parent -> do
+      void . insert $ S.ParentChild (S.idToKey parent) (RawContentEdit edit) (S.idToKey $ mid ^. miID)
     MergeOfEdits parent1 parent2 -> do
-      void . insert $ S.ParentChild (S.idToKey parent1) (S.idToKey $ mid ^. miID)
-      void . insert $ S.ParentChild (S.idToKey parent2) (S.idToKey $ mid ^. miID)
+      void . insert $ S.ParentChild (S.idToKey parent1) mempty (S.idToKey $ mid ^. miID)
+      void . insert $ S.ParentChild (S.idToKey parent2) mempty (S.idToKey $ mid ^. miID)
   pure $ Edit
     mid
     (ce ^. createEditDesc)
