@@ -25,7 +25,6 @@ dependencies:
   - generics-sop
   - hspec
   - hspec-core
-  - html-parse
   - http-api-data
   - i18n
   - json-sop

@@ -25,7 +25,6 @@ import           Data.Map as Map
 import           Data.String.Conversions (ST)
 import           GHC.Generics (Generic)
 
-import Refine.Common.Orphans ()
 import Refine.Common.Types.Chunk
 import Refine.Common.Types.Comment
 import Refine.Common.Types.Prelude

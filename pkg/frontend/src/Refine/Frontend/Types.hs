@@ -103,3 +103,7 @@ data Range = Range
     deriving (Show, Eq, Generic)
 
 makeRefineType ''Range
+
+
+data Attr = Attr ST ST
+  deriving (Eq)

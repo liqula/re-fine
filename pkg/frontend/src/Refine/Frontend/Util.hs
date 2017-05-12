@@ -32,9 +32,9 @@ import           Data.String.Conversions
 import           GHCJS.Marshal
 import           GHCJS.Types (JSVal)
 import           React.Flux
-import           Text.HTML.Parser (Attr(Attr))
 
 import           Refine.Frontend.CS ()
+import           Refine.Frontend.Types
 import           Refine.Prelude.Aeson (NoJSONRep(..))
 
 

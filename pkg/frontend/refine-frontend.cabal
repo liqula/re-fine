@@ -41,7 +41,6 @@ library
     , functor-infix
     , ghcjs-base
     , hspec
-    , html-parse
     , http-api-data
     , i18n
     , json-sop
@@ -146,7 +145,6 @@ test-suite spec
     , hspec
     , hspec-core
     , hspec-discover
-    , html-parse
     , http-api-data
     , i18n
     , json-sop

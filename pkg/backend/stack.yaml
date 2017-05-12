@@ -21,10 +21,6 @@ packages:
   subdirs:
   - lens-properties  # the hackage version has outdated version bounds (we have transformers-0.5.2.0)
 - location:
-    git: https://github.com/bgamari/html-parse.git
-    commit: ebdd5fa3fa5a0d3c22602bec15059e821ad10ec4
-  extra-dep: true
-- location:
     git: https://github.com/zerobuzz/servant-cookie-session.git
     commit: 7186ca8c53778822b45bd5d3d71945add778770f
   extra-dep: true
@@ -32,7 +28,6 @@ packages:
 extra-deps:
 - basic-sop-0.2.0.1
 - functor-infix-0.0.4
-- html-parse-0.2.0.0
 - i18n-0.4.0.0
 - json-sop-0.2.0.2
 - lens-properties-4.11

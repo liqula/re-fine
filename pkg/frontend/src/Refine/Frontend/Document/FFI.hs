@@ -58,7 +58,6 @@ module Refine.Frontend.Document.FFI
 import qualified Data.Aeson as Aeson
 import           Data.String.Conversions
 import           GHCJS.Types (JSString, JSVal)
-import           Text.HTML.Parser
 
 import qualified Refine.Common.VDoc.Draft as Draft
 import           Refine.Frontend.CS ()
@@ -85,8 +84,8 @@ foreign import javascript unsafe
     js_convertToRaw :: ContentState -> JSString
 
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#convertfromhtml
-convertFromHtml :: [Token] -> ContentState
-convertFromHtml = js_convertFromHtml . cs . renderTokens
+convertFromHtml :: JSString -> ContentState
+convertFromHtml = js_convertFromHtml
 
 foreign import javascript unsafe
     "refine$editorContentFromHtml($1)"
@@ -158,8 +157,8 @@ foreign import javascript unsafe
 -- * contrib
 
 -- | https://github.com/sstur/draft-js-export-html
-stateToHTML :: ContentState -> [Token]
-stateToHTML = parseTokens . cs . js_Draft_stateToHTML
+stateToHTML :: ContentState -> JSString
+stateToHTML = js_Draft_stateToHTML
 
 foreign import javascript unsafe
     "DraftStateToHTML($1)"

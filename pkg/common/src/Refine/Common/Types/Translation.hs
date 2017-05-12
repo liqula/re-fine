@@ -18,7 +18,6 @@ import Data.Text.I18n as I18n (Locale(..), L10n, Msgid(..), Context)
 import Data.Aeson.Types
 import GHC.Generics (Generic)
 
-import Refine.Common.Orphans ()
 import Refine.Prelude.Aeson (NoJSONRep(..))
 import Refine.Prelude.TH (makeRefineType)
 

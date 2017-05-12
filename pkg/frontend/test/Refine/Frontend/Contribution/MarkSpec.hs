@@ -29,7 +29,6 @@ import           Data.Monoid ((<>))
 import           GHC.Stack (HasCallStack)
 import           React.Flux
 import           Test.Hspec
-import           Text.HTML.Parser
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Mark
@@ -38,6 +37,7 @@ import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Test.Store
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Types
 
 
 cnid :: Int64 -> ContributionID

@@ -32,7 +32,6 @@ dependencies:
   - functor-infix
   - graphviz
   - hspec
-  - html-parse
   - i18n
   - lens
   - lentil
