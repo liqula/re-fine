@@ -328,6 +328,19 @@ instance Editable Text.Text where
         deriving (Generic, Show)
     docCost = Text.length
     eCost = eCost . unEText
+
+    -- | Data.Algorithm.Patience.diff is used from the patiens package
+    --
+    -- Possible alternatives:
+    --
+    -- Data.Algorithm.Diff.getDiff from the Diff package
+    -- Data.Algorithm.Diff.Gestalt.diff from the diff-gestalt package
+    --
+    -- Data.Algorithm.Patience.diff is the fastest and most stable according to these benchmarks:
+    --
+    -- diff (replicate 1000 'a') (replicate 1000 'b')
+    -- diff (take 1000 ['a'..]) (take 1000 ['A'..])
+    -- diff (take 1000 ['A'..]) (take 1000 ['a'..])
     diff a b = f 0 $ Diff.diff (Text.unpack a) (Text.unpack b)
       where
         f !n (Diff.Both{}: es) = f (n+1) es
