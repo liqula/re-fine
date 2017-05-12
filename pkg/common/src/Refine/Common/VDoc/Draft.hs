@@ -378,6 +378,7 @@ rawContentToVDocVersion = VDocVersion . cs . encode
 deleteMarksFromBlock :: Block EntityKey -> Block EntityKey
 deleteMarksFromBlock = blockStyles %~ List.filter ((`elem` [Bold, Italic, Underline, Code]) . snd)
 
+-- | See also: #301
 addMarksToBlocks :: forall a. (Typeable a, IsContribution a) => Map (ID a) SelectionState -> [Block EntityKey] -> [Block EntityKey]
 addMarksToBlocks m bs = case (addMarksToBlock (warmupSelectionStates m) `mapM` bs) `runState` [] of
   (bs', []) -> bs'
@@ -458,6 +459,7 @@ data MarkSelector = MarkSelector MarkSelectorPos BlockKey Int
 data MarkSelectorPos = MarkSelectorUnknownPos | MarkSelectorTop | MarkSelectorBottom
   deriving (Eq, Show, Generic)
 
+-- | See also: #301
 getMarkSelectors :: RawContent -> [(ContributionID, SelectionState)] -> [(ContributionID, MarkSelector, MarkSelector)]
 getMarkSelectors (RawContent _blocks _) sels = map f sels
   where
@@ -472,8 +474,3 @@ getMarkSelectors (RawContent _blocks _) sels = map f sels
             | (_, SelectionState _ start end) <- sels
             , SelectionPoint bk offs <- [start, end]
             ]
-
-  -- TODO: in order to get further here, i need a function that turns overlapping ranges into
-  -- segments.  we've implemented that twice already ('addMarksToBlocks' above in this module, and
-  -- in 'rawContentToDoc' in "Common.VDoc.OT"), so we should consolidate those two implementations
-  -- and reuse them here.

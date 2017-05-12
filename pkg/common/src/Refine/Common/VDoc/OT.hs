@@ -68,6 +68,7 @@ xxxxxxxxxxxxxxxxxxxxxx converted to line elements:
  xxx [xx](www.1)[XXX](www.1)[x](www.1) xxxxx
 -}
 
+-- | See also: #301
 rawContentToDoc :: Draft.RawContent -> Doc
 rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
   where
