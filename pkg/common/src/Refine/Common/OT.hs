@@ -329,7 +329,7 @@ instance Editable Text.Text where
     docCost = Text.length
     eCost = eCost . unEText
 
-    -- | Data.Algorithm.Patience.diff is used from the patiens package
+    -- | Data.Algorithm.Patience.diff is used from the patience package
     --
     -- Possible alternatives:
     --
