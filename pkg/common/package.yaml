@@ -59,7 +59,6 @@ tests:
       - blaze-markup
       - hspec
       - hspec-core
-      - hspec-discover
       - hspec-golden-aeson
 #      - lens-properties
       - QuickCheck

@@ -87,7 +87,6 @@ tests:
       - directory
       - hspec
       - hspec-core
-      - hspec-discover
       - http-api-data
       - http-types
       - QuickCheck

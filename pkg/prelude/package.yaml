@@ -46,7 +46,6 @@ tests:
       - base
       - hspec
       - hspec-core
-      - hspec-discover
       - QuickCheck
       - quickcheck-instances
       - refine-prelude

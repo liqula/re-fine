@@ -144,7 +144,6 @@ test-suite spec
     , ghcjs-base
     , hspec
     , hspec-core
-    , hspec-discover
     , http-api-data
     , i18n
     , json-sop
