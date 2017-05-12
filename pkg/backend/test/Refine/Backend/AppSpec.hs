@@ -114,7 +114,7 @@ spec = do
           appIO $ grp2 `shouldSatisfy` sameGroupInfo createGroup2
 
   describe "Regression" . around provideAppRunner $ do
-    it "### Regression test program" $ \(runner :: AppM DB UH () -> IO ()) -> do
+    it "Regression test program" $ \(runner :: AppM DB UH () -> IO ()) -> do
       let program =
             [ AddVDoc (CreateVDoc (Title "title...") (Abstract "abstract...") sampleVDocVersion)
             , AddEditToHead 0 sampleCreateEdit1
