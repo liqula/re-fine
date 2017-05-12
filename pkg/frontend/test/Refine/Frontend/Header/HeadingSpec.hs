@@ -73,7 +73,6 @@ spec = do
 
       let newVDoc :: CompositeVDoc
           newVDoc = CompositeVDoc (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1))
-                                  (VDocRepo (ID 1) (ID 1))
                                   (ID 1)
                                   sampleVDocVersion
                                   M.empty M.empty M.empty
