@@ -75,8 +75,6 @@ refineCookieName = "refine"
 
 createDataDirectories :: Config -> IO ()
 createDataDirectories cfg = do
-  reposRoot <- cfg ^. cfgReposRoot . to canonicalizePath
-  createDirectoryIfMissing True reposRoot
   case cfg ^. cfgDBKind of
     DBInMemory    -> pure ()
     DBOnDisk path -> do

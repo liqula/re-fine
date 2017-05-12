@@ -48,20 +48,17 @@ import Refine.Prelude
 
 provideAppRunner :: ActionWith (AppM DB UH a -> IO a) -> IO ()
 provideAppRunner action = withTempCurrentDirectory $ do
-  (runner, testDb, reposRoot) <- createAppRunner
+  (runner, testDb) <- createAppRunner
   action runner
   removeFile testDb
-  removeDirectoryRecursive reposRoot
 
-createAppRunner :: forall a . IO (AppM DB UH a -> IO a, FilePath, FilePath)
+createAppRunner :: forall a . IO (AppM DB UH a -> IO a, FilePath)
 createAppRunner = do
   let testDb    = "test.db"
-      reposRoot = "./repos"
       poRoot    = "./repos" -- FIXME: Change this when needed. Not used at the moment.
 
       cfg = Config
         { _cfgShouldLog     = False  -- (this is ignored here)
-        , _cfgReposRoot     = reposRoot
         , _cfgDBKind        = DBOnDisk testDb
         , _cfgPoolSize      = 5
         , _cfgFileServeRoot = Nothing
@@ -72,7 +69,6 @@ createAppRunner = do
         , _cfgPoFilesRoot   = poRoot
         }
 
-  createDirectoryIfMissing True $ cfg ^. cfgReposRoot
   (dbRunner, dbNat, userHandler) <- createDBNat cfg
   let logger = Logger . const $ pure ()
       runner :: forall b . AppM DB UH b -> IO b
@@ -87,7 +83,7 @@ createAppRunner = do
                                     id) $$ m
 
   void $ runner (migrateDB cfg >> initializeDB)
-  pure (runner, testDb, reposRoot)
+  pure (runner, testDb)
 
 monadicApp :: (AppM DB UH Property -> IO Property) -> AppM DB UH Property -> Property
 monadicApp p = ioProperty . p
