@@ -32,7 +32,6 @@ import qualified Data.Map.Strict as M
 import           Data.String.Conversions
 import           GHC.Generics (Generic)
 import           GHCJS.Types
-import           Text.HTML.Parser (Attr)
 import           Text.Read (readMaybe)
 import           React.Flux (UnoverlapAllEq)
 

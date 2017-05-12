@@ -32,7 +32,6 @@ dependencies:
   - functor-infix
   - graphviz
   - hspec
-  - html-parse
   - i18n
   - lens
   - lentil
@@ -88,7 +87,6 @@ tests:
       - directory
       - hspec
       - hspec-core
-      - hspec-discover
       - http-api-data
       - http-types
       - QuickCheck
