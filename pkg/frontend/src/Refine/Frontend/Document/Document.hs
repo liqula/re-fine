@@ -26,12 +26,16 @@ module Refine.Frontend.Document.Document
   , defaultEditorProps
   ) where
 
-import           Control.Lens ((^.), (.~), (&), has)
+import           Control.Lens ((^?), (^.), (.~), (&), has, view)
 import           Data.Aeson
+import           Data.Aeson.Types (Pair)
 import           Data.String.Conversions
+import qualified Data.Text as ST
 import           GHCJS.Types
 import           React.Flux
 
+import           Refine.Common.Types
+import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Store
@@ -44,14 +48,15 @@ document = mkView "Document" $ \props ->
   article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
            , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
            ] $ do
+    let dstate = props ^. dpDocumentState
     editor_
-      [ "editorState" &= (props ^. dpDocumentState . documentStateVal)
-      , "customStyleMap" &= documentStyleMap
-      , setReadOnly (has _DocumentStateView (props ^. dpDocumentState))
+      [ "editorState" &= (dstate ^. documentStateVal)
+      , "customStyleMap" &= documentStyleMap (dstate ^? documentStateContent)
+      , setReadOnly (has _DocumentStateView dstate)
       , onChange $ \evt ->
-          let newDocState :: DocumentState
-              newDocState = (props ^. dpDocumentState) & documentStateVal .~ updateEditorState evt
-          in dispatch . DocumentAction . DocumentUpdate $ newDocState
+          let dstate' :: DocumentState
+              dstate' = dstate & documentStateVal .~ updateEditorState evt
+          in dispatch . DocumentAction . DocumentUpdate $ dstate'
       ] mempty
 
 document_ :: DocumentProps -> ReactElementM eventHandler ()
@@ -68,15 +73,39 @@ foreign import javascript unsafe
   js_setReadOnly :: Bool -> JSVal
 
 
-documentStyleMap :: Value
-documentStyleMap = object
-  [ "CUSTOM_RANGE_COMMENT"
-    .= object [ "background" .= String "rgba(255, 0, 0, 0.3)"
-              ]
-  , "CUSTOM_RANGE_EDIT"
-    .= object [ "background" .= String "rgba(0, 255, 0, 0.3)"
-              ]
-  ]
+documentStyleMap :: Maybe RawContent -> Value
+documentStyleMap Nothing = object []
+documentStyleMap (Just rawContent) = object . mconcat $ go <$> marks
+  where
+    marks :: [Style]
+    marks = map snd . mconcat $ view blockStyles <$> (rawContent ^. rawContentBlocks)
+
+    go :: Style -> [Pair]
+    go s@(Mark cid) = [markToST s .= mksty cid]
+    go _ = []
+
+    mksty :: ContributionID -> Value
+    mksty (ContribIDNote i)       = bg   0 255 (shade i) 0.3
+    mksty (ContribIDQuestion i)   = bg   0 255 (shade i) 0.3
+    mksty (ContribIDDiscussion i) = bg   0 255 (shade i) 0.3
+    mksty (ContribIDEdit i)       = bg 255   0 (shade i) 0.3
+    mksty ContribIDHighlightMark  = bg 255 255 0         0.3
+
+    bg :: Int -> Int -> Int -> Double -> Value
+    bg r g b t = object ["background" .= String s]
+      where
+        s = "rgba(" <> ST.intercalate ", " ((cs . show <$> [r, g, b]) <> [cs . show $ t]) <> ")"
+
+    shade :: ID a -> Int
+    shade _ = 0
+
+
+-- | FIXME: this should be delivered from where the instance ToJSON Style is defined, and that
+-- instance should be defined in terms of this.
+markToST :: Style -> ST
+markToST s = case toJSON s of
+  String txt -> txt
+  _ -> error "impossible."
 
 
 emptyEditorProps :: [PropertyOrHandler handler]

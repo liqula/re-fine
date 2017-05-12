@@ -53,11 +53,8 @@ spec = do
 
   describe "convertToRaw, convertFromRaw" $ do
     it "are isomorphic" . property $ \(sanitizeRawContent -> rawContent) -> do
-      -- because entity ranges are canonicalized, we make the test slightly weaker.  see regression
-      -- tests below for details.
       let f = convertToRaw . convertFromRaw
-          f' = f . f
-      f' rawContent `shouldBe` f rawContent
+      sanitizeRawContent (f rawContent) `shouldBe` sanitizeRawContent rawContent
 
     it "regression.4" $ do
       let rawContent = mkRawContent [mkBlock "rF.." & blockEntityRanges .~

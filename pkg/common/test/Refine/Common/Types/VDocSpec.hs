@@ -24,6 +24,7 @@ module Refine.Common.Types.VDocSpec where
 
 import           Control.Exception (assert)
 import           Control.Lens ((^.), (%~), view, _1, _2, _3)
+import           Data.Functor.Infix ((<$$>))
 import           Data.List as List
 import           Data.Map as Map
 import           Data.String.Conversions
@@ -36,6 +37,7 @@ import Refine.Common.Test.Arbitrary
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft
 
+{-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
 rawContentToCompositeVDoc :: RawContentWithSelections -> CompositeVDoc
 rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
@@ -62,6 +64,13 @@ rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
 
     build :: Proxy a -> Int -> (ChunkRange -> b) -> SelectionState -> (ID a, b)
     build Proxy i cons sel = (ID $ fromIntegral i, cons $ selectionStateToChunkRange rawContent sel)
+
+
+mark1 :: Style
+mark1 = Mark (ContribIDEdit (ID 0))
+
+mark2 :: Style
+mark2 = Mark (ContribIDNote (ID 1))
 
 
 spec :: Spec
@@ -104,7 +113,7 @@ spec = do
                [ SelectionState True (SelectionPoint (BlockKey "0") 0) (SelectionPoint (BlockKey "1") 0)
                , SelectionState False (SelectionPoint (BlockKey "0") 0) (SelectionPoint (BlockKey "1") 0)
                ]
-            expected = [[((0,1),RangeEdit),((0,1),RangeComment)],[]]
+            expected = [[((0, 1), mark1), ((0, 1), mark2)], []]
         checkNumRanges (Just expected) given
 
       it "example 2" $ do
@@ -116,7 +125,7 @@ spec = do
                [ SelectionState False (SelectionPoint (BlockKey "0") 3) (SelectionPoint (BlockKey "0") 9)
                , SelectionState False (SelectionPoint (BlockKey "0") 6) (SelectionPoint (BlockKey "0") 12)
                ]
-            expected = [[((3,6),RangeEdit),((6,6),RangeComment)]]
+            expected = [[((3, 6), mark1), ((6, 6), mark2)]]
         checkNumRanges (Just expected) given
 
       it "(property)" . property $
@@ -132,8 +141,14 @@ spec = do
             let marks = fromList [(3 :: ID Edit, SelectionState False p1 p2)]
                 p1 = SelectionPoint (BlockKey "0") i
                 p2 = SelectionPoint (BlockKey "0") j
-            (view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks))
-              `shouldBe` [[((i, j - i), RangeEdit)]]
+
+                have :: [[EntityRange]]
+                have = fst <$$> view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks)
+
+                want :: [[EntityRange]]
+                want = [[(i, j - i)]]
+
+            have `shouldBe` List.filter (not . entityRangeIsEmpty) <$> want
 
       check `mapM_` [ (i, j) | i <- [0..3], j <- [0..3], i < j ]
 
@@ -145,9 +160,14 @@ spec = do
             let marks = fromList [(3 :: ID Note, SelectionState False p1 p2)]
                 p1 = SelectionPoint (BlockKey "0") i
                 p2 = SelectionPoint (BlockKey "1") j
-            (view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks))
-              `shouldBe` (List.filter (not . entityRangeIsEmpty . fst) <$>
-                          [[((i, 3), RangeComment)], [((0, j), RangeComment)]])
+
+                have :: [[EntityRange]]
+                have = fst <$$> view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks)
+
+                want :: [[EntityRange]]
+                want = [[(i, 3)], [(0, j)]]
+
+            have `shouldBe` List.filter (not . entityRangeIsEmpty) <$> want
 
       check `mapM_` [ (i, j) | i <- [0..3], j <- [0..4] ]
 
@@ -159,9 +179,14 @@ spec = do
             let marks = fromList [(3 :: ID Note, SelectionState False p1 p2)]
                 p1 = SelectionPoint (BlockKey "0") i
                 p2 = SelectionPoint (BlockKey "4") j
-            (view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks))
-              `shouldBe` (List.filter (not . entityRangeIsEmpty . fst) <$>
-                          [[((i, 3), RangeComment)], [], [((0, 3), RangeComment)], [((0, 1), RangeComment)], [((0, j), RangeComment)], []])
+
+                have :: [[EntityRange]]
+                have = fst <$$> view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks)
+
+                want :: [[EntityRange]]
+                want = [[(i, 3)], [], [(0, 3)], [(0, 1)], [(0, j)], []]
+
+            have `shouldBe` List.filter (not . entityRangeIsEmpty) <$> want
 
       check `mapM_` [ (i, j) | i <- [0..3], j <- [0..4] ]
 
