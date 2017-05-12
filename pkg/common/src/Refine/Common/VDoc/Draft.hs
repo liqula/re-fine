@@ -37,6 +37,7 @@ import           Data.Functor.Infix ((<$$>))
 import qualified Data.HashMap.Lazy as HashMap
 import           Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
+import qualified Data.Set as Set
 import           Data.List (nub)
 import qualified Data.List as List
 import           Data.Map (Map)
@@ -458,7 +459,19 @@ data MarkSelectorPos = MarkSelectorUnknownPos | MarkSelectorTop | MarkSelectorBo
   deriving (Eq, Show, Generic)
 
 getMarkSelectors :: RawContent -> [(ContributionID, SelectionState)] -> [(ContributionID, MarkSelector, MarkSelector)]
-getMarkSelectors = undefined
+getMarkSelectors (RawContent _blocks _) sels = map f sels
+  where
+    f (cid, SelectionState _ begin@(SelectionPoint bkbegin _) end@(SelectionPoint bkend _))
+        = (cid, MarkSelector MarkSelectorTop bkbegin (g begin), MarkSelector MarkSelectorBottom bkend (g end - 1))
+
+    g (SelectionPoint bk offset) = Set.findIndex offset $ offsets Map.! bk
+
+    -- | offset sets for each block key
+    offsets = (Set.singleton 0 <>) <$> Map.fromListWith (<>)
+            [ (bk, Set.singleton offs)
+            | (_, SelectionState _ start end) <- sels
+            , SelectionPoint bk offs <- [start, end]
+            ]
 
   -- TODO: in order to get further here, i need a function that turns overlapping ranges into
   -- segments.  we've implemented that twice already ('addMarksToBlocks' above in this module, and

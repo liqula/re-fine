@@ -59,6 +59,12 @@ spec = do
           want       = [(cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 1)]
       getMarkSelectors rawContent marks `shouldBe` want
 
+    it "works (2.5)" $ do
+      let rawContent = initBlockKeys $ mkRawContent [mkBlock "1234567890"]
+          marks      = [(cid0, SelectionState False (SelectionPoint block0 0) (SelectionPoint block0 4))]
+          want       = [(cid0, MarkSelector MarkSelectorTop block0 0, MarkSelector MarkSelectorBottom block0 0)]
+      getMarkSelectors rawContent marks `shouldBe` want
+
     it "works (3)" $ do
       let rawContent = initBlockKeys $ mkRawContent [mkBlock "1234567890"]
           marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block0 4))
@@ -74,7 +80,7 @@ spec = do
           marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block1 3))
                        , (cid1, SelectionState True (SelectionPoint block1 1) (SelectionPoint block1 2))
                        ]
-          want       = [ (cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block1 3)
-                       , (cid1, MarkSelector MarkSelectorTop block1 1, MarkSelector MarkSelectorBottom block1 2)
+          want       = [ (cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block1 2)
+                       , (cid1, MarkSelector MarkSelectorTop block1 1, MarkSelector MarkSelectorBottom block1 1)
                        ]
       getMarkSelectors rawContent marks `shouldBe` want
