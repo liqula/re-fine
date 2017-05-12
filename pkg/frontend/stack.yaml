@@ -42,7 +42,6 @@ packages:
   - react-hs-servant
 
 extra-deps:
-- aeson-extra-0.4.0.0
 - basic-sop-0.2.0.1
 - functor-infix-0.0.4
 - html-parse-0.2.0.0
@@ -51,9 +50,5 @@ extra-deps:
 - lens-sop-0.2.0.1
 - react-hs-0.0.1
 - react-hs-servant-0.0.1
-- recursion-schemes-5.0.1
 - refine-common-0.0.0.0
 - string-0.4.0
-- quickcheck-instances-0.3.12
-- quickcheck-io-0.1.4
-- comonad-5.0.1
