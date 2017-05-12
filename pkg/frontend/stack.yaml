@@ -1,4 +1,6 @@
-resolver: lts-8.11
+resolver:
+  name: stack-snapshot
+  location: ../../stack-snapshot.yaml
 
 compiler: ghcjs-0.2.1.9008011_ghc-8.0.2
 compiler-check: match-exact
@@ -38,11 +40,6 @@ packages:
   - react-hs-servant
 
 extra-deps:
-- basic-sop-0.2.0.1
-- functor-infix-0.0.4
-- i18n-0.4.0.0
-- json-sop-0.2.0.2
-- lens-sop-0.2.0.1
 - react-hs-0.0.1
 - react-hs-servant-0.0.1
 - refine-common-0.0.0.0
