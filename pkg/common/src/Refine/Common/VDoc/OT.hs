@@ -163,10 +163,15 @@ instance Editable Draft.BlockType where
 
     docCost = docCost . from
     eCost = eCost . unEBlockType
+
+    -- FIXME & TUNING: use coerce like in Editable Text instance (ghc doesn't accept it here unfortunately)
     diff a b = map EBlockType $ diff (from a) (from b)
     ePatch e = to . ePatch (unEBlockType e) . from
+    patch e = to . patch (unEBlockType <$> e) . from
     eMerge d a b = map EBlockType *** map EBlockType $ eMerge (from d) (unEBlockType a) (unEBlockType b)
+    merge d a b = map EBlockType *** map EBlockType $ merge (from d) (unEBlockType <$> a) (unEBlockType <$> b)
     eInverse d = map EBlockType . eInverse (from d) . unEBlockType
+    inverse d = map EBlockType . inverse (from d) . map unEBlockType
 
 instance ToJSON (EEdit Draft.BlockType)
 instance FromJSON (EEdit Draft.BlockType)
@@ -185,10 +190,14 @@ instance Editable Entity where
 
     docCost = docCost . from
     eCost = eCost . unEEntity
+
     diff a b = map EEntity $ diff (from a) (from b)
     ePatch e = to . ePatch (unEEntity e) . from
+    patch e = to . patch (unEEntity <$> e) . from
     eMerge d a b = map EEntity *** map EEntity $ eMerge (from d) (unEEntity a) (unEEntity b)
+    merge d a b = map EEntity *** map EEntity $ merge (from d) (unEEntity <$> a) (unEEntity <$> b)
     eInverse d = map EEntity . eInverse (from d) . unEEntity
+    inverse d = map EEntity . inverse (from d) . map unEEntity
 
 instance ToJSON (EEdit Entity)
 instance FromJSON (EEdit Entity)
@@ -208,10 +217,14 @@ instance Editable LineElem where
 
     docCost = docCost . from
     eCost = eCost . unELineElem
+
     diff a b = map ELineElem $ diff (from a) (from b)
     ePatch e = to . ePatch (unELineElem e) . from
+    patch e = to . patch (unELineElem <$> e) . from
     eMerge d a b = map ELineElem *** map ELineElem $ eMerge (from d) (unELineElem a) (unELineElem b)
+    merge d a b = map ELineElem *** map ELineElem $ merge (from d) (unELineElem <$> a) (unELineElem <$> b)
     eInverse d = map ELineElem . eInverse (from d) . unELineElem
+    inverse d = map ELineElem . inverse (from d) . map unELineElem
 
 instance ToJSON (EEdit LineElem)
 instance FromJSON (EEdit LineElem)
@@ -231,10 +244,14 @@ instance Editable Block where
 
     docCost = docCost . from
     eCost = eCost . unEBlock
+
     diff a b = map EBlock $ diff (from a) (from b)
     ePatch e = to . ePatch (unEBlock e) . from
+    patch e = to . patch (unEBlock <$> e) . from
     eMerge d a b = map EBlock *** map EBlock $ eMerge (from d) (unEBlock a) (unEBlock b)
+    merge d a b = map EBlock *** map EBlock $ merge (from d) (unEBlock <$> a) (unEBlock <$> b)
     eInverse d = map EBlock . eInverse (from d) . unEBlock
+    inverse d = map EBlock . inverse (from d) . map unEBlock
 
 instance ToJSON (EEdit Block)
 instance FromJSON (EEdit Block)
@@ -253,10 +270,14 @@ instance Editable Doc where
 
     docCost = docCost . from
     eCost = eCost . unEDoc
+
     diff a b = map EDoc $ diff (from a) (from b)
     ePatch e = to . ePatch (unEDoc e) . from
+    patch e = to . patch (unEDoc <$> e) . from
     eMerge d a b = map EDoc *** map EDoc $ eMerge (from d) (unEDoc a) (unEDoc b)
+    merge d a b = map EDoc *** map EDoc $ merge (from d) (unEDoc <$> a) (unEDoc <$> b)
     eInverse d = map EDoc . eInverse (from d) . unEDoc
+    inverse d = map EDoc . inverse (from d) . map unEDoc
 
 instance ToJSON (EEdit Doc)
 instance FromJSON (EEdit Doc)
@@ -275,11 +296,14 @@ instance Editable RawContent where
 
     docCost = docCost . from
     eCost = eCost . unERawContent
+
     diff a b = map ERawContent $ diff (from a) (from b)
     ePatch e = to . ePatch (unERawContent e) . from
     patch e = to . patch (unERawContent <$> e) . from
     eMerge d a b = map ERawContent *** map ERawContent $ eMerge (from d) (unERawContent a) (unERawContent b)
+    merge d a b = map ERawContent *** map ERawContent $ merge (from d) (unERawContent <$> a) (unERawContent <$> b)
     eInverse d = map ERawContent . eInverse (from d) . unERawContent
+    inverse d = map ERawContent . inverse (from d) . map unERawContent
 
 instance ToJSON (EEdit RawContent)
 instance FromJSON (EEdit RawContent)
