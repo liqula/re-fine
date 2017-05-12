@@ -57,6 +57,7 @@ import Refine.Backend.User
 import Refine.Common.ChangeAPI
 import Refine.Common.Rest
 import Refine.Common.Types as Common
+import Refine.Common.VDoc.Draft
 import Refine.Prelude (getCurrentTimestamp)
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
@@ -109,7 +110,7 @@ sampleCreateVDoc :: CreateVDoc
 sampleCreateVDoc = CreateVDoc
   (Title "[title]")
   (Abstract "[abstract]")
-  (vdocVersionFromST "[versioned content]")
+  (rawContentToVDocVersion $ mkRawContent [mkBlock "[versioned content]"])
 
 respCode :: SResponse -> Int
 respCode = statusCode . simpleStatus
@@ -306,7 +307,7 @@ specMockedLogin = around createDevModeTestSession $ do
               (CreateEdit
                 "new edit"
                 (ChunkRange Nothing Nothing)
-                (vdocVersionFromST "[new vdoc version]")
+                (rawContentToVDocVersion $ mkRawContent [mkBlock "[new vdoc version]"])
                 Grammar
                 "no motivation")
           pure (fc, fe)
@@ -315,7 +316,7 @@ specMockedLogin = around createDevModeTestSession $ do
       it "stores an edit and returns its version" $ \sess -> do
         (_, fp) <- setup sess
         be' :: VDocVersion <- runDB sess . db . getVersion $ fp ^. editID
-        be' `shouldBe` vdocVersionFromST "[new vdoc version]"
+        be' `shouldBe` rawContentToVDocVersion (mkRawContent [mkBlock "[new vdoc version]"])
 
       it "stores an edit and returns it in the list of edits applicable to its base" $ \sess -> do
         pendingWith "applicableEdits is not implemented."
