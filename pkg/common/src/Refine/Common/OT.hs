@@ -81,7 +81,7 @@ class Editable d where
         f acc _ [] = acc
         f acc d (x: xs) = f (eInverse d x <> acc) (ePatch x d) xs
 
-    -- | FIXME: implement smarter compressEdit instances
+    -- | FIXME & TUNING: implement smarter compressEdit instances
     compressEdit :: d -> Edit d -> Edit d
     compressEdit _ = id
 
@@ -244,8 +244,8 @@ instance Editable a => Editable [a] where
     docCost = (+1) . sum . map docCost
 
     data EEdit [a]
-        = DeleteItem Int
-        | InsertItem Int a
+        = DeleteItem Int    -- TUNING: DeleteRange Int{-offset-} Int{-length-}
+        | InsertItem Int a  -- TUNING: InsertItems Int{-offset-} [a]{-elems-}
         | EditItem Int (Edit a)
         -- FUTUREWORK: detect swapping/moving and duplication of items
         --  MoveItem Int Int     -- needed for expressing .....
@@ -347,9 +347,12 @@ instance Editable Text.Text where
         f n (Diff.New c: es) = EText (InsertItem n c): f (n+1) es
         f n (Diff.Old{}: es) = EText (DeleteItem n): f n es
         f _ [] = []
-    ePatch e = Text.pack . ePatch (unEText e) . Text.unpack
-    eMerge d a b = coerce $ eMerge (Text.unpack d) (unEText a) (unEText b)
-    eInverse d = coerce . eInverse (Text.unpack d) . unEText
+    ePatch e = Text.pack . ePatch (coerce e) . Text.unpack
+    patch e = Text.pack . patch (coerce e) . Text.unpack
+    eMerge d a b = coerce $ eMerge (Text.unpack d) (coerce a) (coerce b)
+    merge d a b = coerce $ merge (Text.unpack d) (coerce a) (coerce b)
+    eInverse d = coerce . eInverse (Text.unpack d) . coerce
+    inverse d = coerce . inverse (Text.unpack d) . coerce
 
 instance ToJSON (EEdit Text.Text)
 instance FromJSON (EEdit Text.Text)
