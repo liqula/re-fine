@@ -33,14 +33,18 @@ class (Editable d, Arbitrary d, Eq d, Show d, Show (EEdit d)) => GenEdit d where
     genEdit :: d -> Gen (Edit d)
 
 runTest :: forall d. (Typeable d, GenEdit d) => [(String, d -> Gen Property)] -> Spec
-runTest tests
+runTest = runTest' 1
+
+runTest' :: forall d. (Typeable d, GenEdit d) => Int -> [(String, d -> Gen Property)] -> Spec
+runTest' scaleFactor tests
     = describe ("Editable instance for " <> show (typeRep (Proxy :: Proxy d)))
-    . forM_ tests $ \(name, test) -> it name $ property test --quickCheckWith stdArgs { maxSuccess = num }
+    . forM_ tests $ \(name, test) -> it name
+    $ property (scale (`div` scaleFactor) <$> test) -- quickCheckWith stdArgs { maxSuccess = num }
 
 ---------------------
 
-allTestsButDiff :: GenEdit d => [(String, d -> Gen Property)]
-allTestsButDiff =
+fastTests :: GenEdit d => [(String, d -> Gen Property)]
+fastTests =
     [ (,) "edit composition"    test_edit_composition
     , (,) "diamond"             test_diamond
     , (,) "diamond right join"  test_diamond_right_join
@@ -50,10 +54,13 @@ allTestsButDiff =
     , (,) "inverted diamond"    test_inverse_diamond
     ]
 
-allTests :: GenEdit d => [(String, d -> Gen Property)]
-allTests = allTestsButDiff <>
+hardTests :: GenEdit d => [(String, d -> Gen Property)]
+hardTests =
     [ (,) "diff" test_diff
     ]
+
+allTests :: GenEdit d => [(String, d -> Gen Property)]
+allTests = fastTests <> hardTests
 
 ---------------------
 
@@ -268,12 +275,18 @@ spec = parallel $ do
     runTest $ allTests @[ADigit]
     runTest $ allTests @[(ADigit, ADigit)]
     runTest $ allTests @([ADigit], [ADigit])
-    runTest $ allTestsButDiff @[[ADigit]]
     runTest $ allTests @(Set.Set ADigit)
     runTest $ allTests @(Set.Set [ADigit])
     runTest $ allTests @[Set.Set ADigit]
     runTest $ allTests @(Set.Set (Set.Set ADigit))
     runTest $ allTests @Text.Text
+    runTest $ allTests @Char
+
+    runTest $ fastTests @[[ADigit]]
+
+    -- these take too long to run on a regular basis, just activate for debugging or deep-tests:
+    -- runTest' 500 $ allTests @[[ADigit]]
+
 
 -- | running in ghci8 on a lenovo t420s with no attempt at optimizing, @n = 1000@: @(2.88 secs,
 -- 2,382,007,256 bytes)@.  this should be our baseline from which to improve.

@@ -67,7 +67,13 @@ instance GenEdit Draft.RawContent where
 spec :: Spec
 spec = parallel $ do
     runTest $ allTests @Draft.BlockType
+    runTest $ allTests @Entity
     runTest $ allTests @LineElem
+    runTest $ allTests @Block
+
+    -- these take too long to run on a regular basis, just activate for debugging or deep-tests:
+    -- runTest $ fastTests @Doc
+    -- runTest $ fastTests @Draft.RawContent
 
     it "Doc <-> RawContent conversion" . property $ \d ->
       rawContentToDoc (docToRawContent d) `shouldBe` simplifyDoc d
