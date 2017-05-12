@@ -37,6 +37,7 @@ import           Data.Functor.Infix ((<$$>))
 import qualified Data.HashMap.Lazy as HashMap
 import           Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
+import qualified Data.Set as Set
 import           Data.List (nub)
 import qualified Data.List as List
 import           Data.Map (Map)
@@ -377,6 +378,7 @@ rawContentToVDocVersion = VDocVersion . cs . encode
 deleteMarksFromBlock :: Block EntityKey -> Block EntityKey
 deleteMarksFromBlock = blockStyles %~ List.filter ((`elem` [Bold, Italic, Underline, Code]) . snd)
 
+-- | See also: #301
 addMarksToBlocks :: forall a. (Typeable a, IsContribution a) => Map (ID a) SelectionState -> [Block EntityKey] -> [Block EntityKey]
 addMarksToBlocks m bs = case (addMarksToBlock (warmupSelectionStates m) `mapM` bs) `runState` [] of
   (bs', []) -> bs'
@@ -444,3 +446,31 @@ addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (st
       []   -> blocklen
       [sp] -> soloSelectionPointPoint sp ^. selectionOffset - start
       bad  -> error $ "addMarkToBlock: impossible: " <> show bad
+
+
+-- * docks
+
+-- | Javascript: `document.querySelectorAll('article span[data-offset-key="2vutk-0-1"]');`.  The
+-- offset-key is constructed from block key, a '0' literal, and the number of left siblings of the
+-- span the selector refers to.
+data MarkSelector = MarkSelector MarkSelectorPos BlockKey Int
+  deriving (Eq, Show, Generic)
+
+data MarkSelectorPos = MarkSelectorUnknownPos | MarkSelectorTop | MarkSelectorBottom
+  deriving (Eq, Show, Generic)
+
+-- | See also: #301
+getMarkSelectors :: [(ContributionID, SelectionState)] -> [(ContributionID, MarkSelector, MarkSelector)]
+getMarkSelectors sels = f <$> sels
+  where
+    f (cid, SelectionState _ begin@(SelectionPoint bkbegin _) end@(SelectionPoint bkend _))
+        = (cid, MarkSelector MarkSelectorTop bkbegin (g begin), MarkSelector MarkSelectorBottom bkend (g end - 1))
+
+    g (SelectionPoint bk offset) = Set.findIndex offset $ offsets Map.! bk
+
+    -- | offset sets for each block key
+    offsets = (Set.singleton 0 <>) <$> Map.fromListWith (<>)
+            [ (bk, Set.singleton offs)
+            | (_, SelectionState _ start end) <- sels
+            , SelectionPoint bk offs <- [start, end]
+            ]
