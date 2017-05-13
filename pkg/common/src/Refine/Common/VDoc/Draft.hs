@@ -449,10 +449,10 @@ addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (st
 -- | Javascript: `document.querySelectorAll('article span[data-offset-key="2vutk-0-1"]');`.  The
 -- offset-key is constructed from block key, a '0' literal, and the number of left siblings of the
 -- span the selector refers to.
-data MarkSelector = MarkSelector MarkSelectorPos BlockKey Int
+data MarkSelector = MarkSelector MarkSelectorSide BlockKey Int
   deriving (Eq, Show, Generic)
 
-data MarkSelectorPos = MarkSelectorUnknownPos | MarkSelectorTop | MarkSelectorBottom
+data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom | MarkSelectorUnknownSide
   deriving (Eq, Show, Generic)
 
 -- | See also: #301
