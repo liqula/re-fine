@@ -15,7 +15,7 @@ import           Data.Function
 import           Data.List
 import qualified Data.IntMap as IntMap
 import qualified Data.Set as Set
-import qualified Data.Text as Text
+import qualified Data.Text as ST
 import           Data.String.Conversions
 import qualified Generics.SOP as SOP
 import           GHC.Generics (Generic)
@@ -78,7 +78,7 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
       where
         segment [] "" = []
         segment [] text = [LineElem mempty text]
-        segment ((len, s): ss) text = LineElem s (Text.take len text): segment ss (Text.drop len text)
+        segment ((len, s): ss) text = LineElem s (ST.take len text): segment ss (ST.drop len text)
 
         segments =
               mkSegments 0 []
@@ -114,7 +114,7 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
         Nothing
       where
         ranges = mkRanges 0 mempty
-            $ [(len, s) | LineElem s txt <- es, let len = Text.length txt, len > 0]
+            $ [(len, s) | LineElem s txt <- es, let len = ST.length txt, len > 0]
             <> [(0, mempty)]  -- this is to avoid one more case in mkRanges below when we're done.
 
         mkRanges _ _ [] = []
