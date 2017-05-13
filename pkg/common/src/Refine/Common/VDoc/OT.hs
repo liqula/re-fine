@@ -80,8 +80,8 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
 
         segments :: [(Int, Set.Set Entity)]
         segments = Draft.mkSomeSegments fst snd
-                 $ ((\(r, s) -> (r, Entity (Right s)))                             <$> styles)
-                <> ((\(e, r) -> (r, Entity (Left (entities IntMap.! (coerce e))))) <$> eranges)
+                 $ ((\(r, s) -> (r, Entity (Right s)))                           <$> styles)
+                <> ((\(e, r) -> (r, Entity (Left (entities IntMap.! coerce e)))) <$> eranges)
 
 docToRawContent :: Doc -> Draft.RawContent
 docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
