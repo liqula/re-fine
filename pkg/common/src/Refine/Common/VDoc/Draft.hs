@@ -37,7 +37,6 @@ import           Data.Functor.Infix ((<$$>))
 import qualified Data.HashMap.Lazy as HashMap
 import           Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
-import qualified Data.Set as Set
 import           Data.List (nub)
 import qualified Data.List as List
 import           Data.Map (Map)
@@ -46,7 +45,6 @@ import           Data.Monoid ((<>))
 import           Data.Maybe (fromMaybe, maybeToList)
 import           Data.String.Conversions
 import qualified Data.Text as ST
-import           Data.Typeable (Typeable)
 import           GHC.Generics hiding (to)
 import           Web.HttpApiData (toUrlPiece, parseUrlPiece)
 
@@ -353,18 +351,15 @@ selectionStateToChunkRange (RawContent bs _) (SelectionState _ s e) = ChunkRange
 
 rawContentFromCompositeVDoc :: CompositeVDoc -> RawContent
 rawContentFromCompositeVDoc (CompositeVDoc _ _ vers edits notes discussions) =
-  rawContentFromVDocVersion vers & rawContentBlocks %~ f
+  addMarksToRawContent marks rawContent
   where
-    -- 'convertHack' will go away when 'ChunkRange' goes away.
-    convertHack = chunkRangeToSelectionState (rawContentFromVDocVersion vers)
-    f = addMarksToBlocks (convertHack . view editRange <$> edits)
-      . addMarksToBlocks (convertHack . view noteRange <$> notes)
-      . addMarksToBlocks (convertHack . view (compositeDiscussion . discussionRange) <$> discussions)
-      . fmap deleteMarksFromBlock  -- (this shouldn't be doing anything, the raw content value has
-                                   -- just been created.  but it may be necessary somewhere else,
-                                   -- after vdoc version has been refactored away, so we keep it as
-                                   -- a reminder.)
+    rawContent = rawContentFromVDocVersion vers
+    convertHack l (k, v) = (contribID k, chunkRangeToSelectionState rawContent $ v ^. l)
 
+    marks :: [(ContributionID, SelectionState)]
+    marks = (convertHack editRange                               <$> Map.toList edits)
+         <> (convertHack noteRange                               <$> Map.toList notes)
+         <> (convertHack (compositeDiscussion . discussionRange) <$> Map.toList discussions)
 
 rawContentFromVDocVersion :: VDocVersion -> RawContent
 rawContentFromVDocVersion (VDocVersion st) = case eitherDecode $ cs st of
@@ -375,32 +370,37 @@ rawContentToVDocVersion :: RawContent -> VDocVersion
 rawContentToVDocVersion = VDocVersion . cs . encode
 
 
+-- * marks
+
+addMarksToRawContent :: [(ContributionID, SelectionState)] -> RawContent -> RawContent
+addMarksToRawContent marks = rawContentBlocks %~ addMarksToBlocks marks
+
 deleteMarksFromBlock :: Block EntityKey -> Block EntityKey
 deleteMarksFromBlock = blockStyles %~ List.filter ((`elem` [Bold, Italic, Underline, Code]) . snd)
 
 -- | See also: #301
-addMarksToBlocks :: forall a. (Typeable a, IsContribution a) => Map (ID a) SelectionState -> [Block EntityKey] -> [Block EntityKey]
+addMarksToBlocks :: [(ContributionID, SelectionState)] -> [Block EntityKey] -> [Block EntityKey]
 addMarksToBlocks m bs = case (addMarksToBlock (warmupSelectionStates m) `mapM` bs) `runState` [] of
   (bs', []) -> bs'
   bad -> error $ "addMarksToBlocks: impossible: " <> show bad
 
-type AddMarksState a = State [SoloSelectionPoint a]
+type AddMarksState = State [SoloSelectionPoint]
 
 -- | 'SelectionPoint' that carries extra information needed for 'addMarksToBlocks'.
-data SoloSelectionPoint a = SoloSelectionPoint
+data SoloSelectionPoint = SoloSelectionPoint
   { soloSelectionPointPoint   :: SelectionPoint
-  , soloSelectionPointID      :: ID a
+  , soloSelectionPointID      :: ContributionID
   , soloSelectionPointIsStart :: Bool
   }
   deriving (Eq, Show)
 
-warmupSelectionStates :: forall a. (Typeable a) => Map (ID a) SelectionState -> Map BlockKey [SoloSelectionPoint a]
-warmupSelectionStates = aggr . mconcat . fmap trans . Map.toList
+warmupSelectionStates :: [(ContributionID, SelectionState)] -> Map BlockKey [SoloSelectionPoint]
+warmupSelectionStates = aggr . mconcat . fmap trans
   where
     aggr :: (Ord k) => [(k, v)] -> Map k [v]
     aggr = Map.fromListWith (<>) . map (second pure)
 
-    trans :: (ID a, SelectionState) -> [(BlockKey, SoloSelectionPoint a)]
+    trans :: (ContributionID, SelectionState) -> [(BlockKey, SoloSelectionPoint)]
     trans (i, SelectionState _ p1 p2) =
       [ (p1 ^. selectionBlock, SoloSelectionPoint p1 i True)
       , (p2 ^. selectionBlock, SoloSelectionPoint p2 i False)
@@ -410,13 +410,12 @@ warmupSelectionStates = aggr . mconcat . fmap trans . Map.toList
 -- starting point, then I go through this sorted list and a stack of active ranges is maintained
 -- during it. If I would have more time I would think of the performance of these two alternative
 -- approaches or how these could be tuned if necessary.  [divipp]
-addMarksToBlock :: forall a. (Typeable a, IsContribution a)
-                => Map BlockKey [SoloSelectionPoint a] -> Block EntityKey -> AddMarksState a (Block EntityKey)
+addMarksToBlock :: Map BlockKey [SoloSelectionPoint] -> Block EntityKey -> AddMarksState (Block EntityKey)
 addMarksToBlock pointmap block = f (fromMaybe [] $ Map.lookup (block ^?! blockKey . _Just) pointmap) block
   where
-    f :: [SoloSelectionPoint a] -> Block EntityKey -> AddMarksState a (Block EntityKey)
+    f :: [SoloSelectionPoint] -> Block EntityKey -> AddMarksState (Block EntityKey)
     f pointlist blk = do
-      previousOpenPoints :: [SoloSelectionPoint a] <- get
+      previousOpenPoints :: [SoloSelectionPoint] <- get
       let (newOpenPoints, newClosePoints) = List.partition soloSelectionPointIsStart pointlist
 
           blocklen :: Int
@@ -432,11 +431,10 @@ addMarksToBlock pointmap block = f (fromMaybe [] $ Map.lookup (block ^?! blockKe
              )
       blk & blockStyles %~ (inlineStyles <>) & pure
 
-addMarkToBlock :: forall a. (Typeable a, IsContribution a)
-               => Int -> Bool -> [SoloSelectionPoint a] -> SoloSelectionPoint a -> (EntityRange, Style)
+addMarkToBlock :: Int -> Bool -> [SoloSelectionPoint] -> SoloSelectionPoint -> (EntityRange, Style)
 addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (start >= 0 && end >= 0) ((start, end), style)
   where
-    style = Mark . contribID . soloSelectionPointID $ thisPoint
+    style = Mark . soloSelectionPointID $ thisPoint
 
     start = if openedInOtherBlock
       then 0
@@ -448,8 +446,6 @@ addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (st
       bad  -> error $ "addMarkToBlock: impossible: " <> show bad
 
 
--- * docks
-
 -- | Javascript: `document.querySelectorAll('article span[data-offset-key="2vutk-0-1"]');`.  The
 -- offset-key is constructed from block key, a '0' literal, and the number of left siblings of the
 -- span the selector refers to.
@@ -460,8 +456,11 @@ data MarkSelectorPos = MarkSelectorUnknownPos | MarkSelectorTop | MarkSelectorBo
   deriving (Eq, Show, Generic)
 
 -- | See also: #301
-getMarkSelectors :: RawContent -> [(ContributionID, SelectionState)] -> [(ContributionID, MarkSelector, MarkSelector)]
-getMarkSelectors (RawContent _blocks _) sels = map f sels
+getMarkSelectors :: RawContent -> [(ContributionID, MarkSelector, MarkSelector)]
+getMarkSelectors = undefined
+
+{-
+getMarkSelectors (rawContentToDoc -> Doc blocks) = map f sels
   where
     f (cid, SelectionState _ begin@(SelectionPoint bkbegin _) end@(SelectionPoint bkend _))
         = (cid, MarkSelector MarkSelectorTop bkbegin (g begin), MarkSelector MarkSelectorBottom bkend (g end - 1))
@@ -474,3 +473,4 @@ getMarkSelectors (RawContent _blocks _) sels = map f sels
             | (_, SelectionState _ start end) <- sels
             , SelectionPoint bk offs <- [start, end]
             ]
+-}

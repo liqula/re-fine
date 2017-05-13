@@ -98,8 +98,9 @@ spec = do
                 inlineStyles = fmap (view blockStyles) . view rawContentBlocks
 
             numInlineStyles rawContent' `shouldSatisfy` (>= numInlineStyles rawContent + length selections)
+            let sanitize = (sort <$>) . (fst <$$>)
             case mExpected of
-              Just expected -> inlineStyles rawContent' `shouldBe` expected
+              Just expected -> sanitize (inlineStyles rawContent') `shouldBe` sanitize expected
               Nothing -> pure ()
                       -- traceM $ "you should have expected this: " <> show (inlineStyles rawContent')
 
@@ -138,7 +139,7 @@ spec = do
 
           check :: EntityRange -> Spec
           check (i, j) = it (show (i, j)) $ do
-            let marks = fromList [(3 :: ID Edit, SelectionState False p1 p2)]
+            let marks = [(ContribIDEdit 3, SelectionState False p1 p2)]
                 p1 = SelectionPoint (BlockKey "0") i
                 p2 = SelectionPoint (BlockKey "0") j
 
@@ -157,7 +158,7 @@ spec = do
 
           check :: EntityRange -> Spec
           check (i, j) = it (show (i, j)) $ do
-            let marks = fromList [(3 :: ID Note, SelectionState False p1 p2)]
+            let marks = [(ContribIDNote 3, SelectionState False p1 p2)]
                 p1 = SelectionPoint (BlockKey "0") i
                 p2 = SelectionPoint (BlockKey "1") j
 
@@ -176,7 +177,7 @@ spec = do
 
           check :: EntityRange -> Spec
           check (i, j) = it (show (i, j)) $ do
-            let marks = fromList [(3 :: ID Note, SelectionState False p1 p2)]
+            let marks = [(ContribIDNote 3, SelectionState False p1 p2)]
                 p1 = SelectionPoint (BlockKey "0") i
                 p2 = SelectionPoint (BlockKey "4") j
 
@@ -191,7 +192,7 @@ spec = do
       check `mapM_` [ (i, j) | i <- [0..3], j <- [0..4] ]
 
     it "is idempotent (together with 'deleteMarksFromBlock')" . property $
-      \(RawContentWithSelections rawContent (fromList . zip [(0 :: ID Edit)..] -> selections)) -> do
+      \(RawContentWithSelections rawContent (zip (ContribIDEdit <$> [0..]) -> selections)) -> do
         let blocks   = rawContent ^. rawContentBlocks
             blocks'  = addMarksToBlocks selections (deleteMarksFromBlock <$> blocks)
             blocks'' = addMarksToBlocks selections (deleteMarksFromBlock <$> blocks')
