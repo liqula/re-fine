@@ -68,11 +68,9 @@ xxxxxxxxxxxxxxxxxxxxxx converted to line elements:
  xxx [xx](www.1)[XXX](www.1)[x](www.1) xxxxx
 -}
 
--- | See also: #301
 rawContentToDoc :: Draft.RawContent -> Doc
 rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
   where
-    -- see also: 'Refine.Common.VDoc.Draft.addMarksToBlock'.
     mkBlock :: Draft.Block Draft.EntityKey -> Block
     mkBlock (Draft.Block txt eranges styles ty depth _key) = Block ty (segment segments txt) depth
       where
@@ -81,38 +79,9 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
         segment ((len, s): ss) text = LineElem s (ST.take len text): segment ss (ST.drop len text)
 
         segments :: [(Int, Set.Set Entity)]
-        segments = mkSomeSegments fst snd
+        segments = Draft.mkSomeSegments fst snd
                  $ ((\(r, s) -> (r, Entity (Right s)))                             <$> styles)
                 <> ((\(e, r) -> (r, Entity (Left (entities IntMap.! (coerce e))))) <$> eranges)
-
-mkInlineStyleSegments :: [(Draft.EntityRange, Draft.Style)] -> [(Int, Set.Set Draft.Style)]
-mkInlineStyleSegments = mkSomeSegments fst snd
-
-mkEntitySegments :: [(Draft.EntityKey, Draft.EntityRange)] -> IntMap.IntMap Draft.Entity -> [(Int, Set.Set Draft.Entity)]
-mkEntitySegments eranges entities = mkSomeSegments snd ((entities IntMap.!) . coerce . fst) eranges
-
-mkSomeSegments :: (Ord payload, Show payload)
-               => (el -> Draft.EntityRange) -> (el -> payload) -> [el] -> [(Int, Set.Set payload)]
-mkSomeSegments frange fpayload els = segments
-  where
-        segments =
-              mkSegments 0 []
-            . map (\((offset, len), s) -> (offset, (offset + len, s)))
-            . sortBy (compare `on` fst)
-            $ [(frange el, fpayload el) | el <- els]
-
-        -- TODO: stack (2nd arg) should be @IntMap (Set style)@ (keyed by @offset@).
-        mkSegments _ [] [] = []  -- (stack will be emptied in the third case.)
-        mkSegments n stack ((offset, s): ss) | offset == n = mkSegments n (insertBy (compare `on` fst) s stack) ss
-        mkSegments n ((offset, _): stack) ss | offset == n = mkSegments n stack ss
-        mkSegments n stack ss                | offset > n  = (offset - n, Set.fromList $ snd <$> stack): mkSegments offset stack ss
-          where
-            offset = case (fst <$> stack, fst <$> ss) of
-                (a: _, b: _) -> min a b
-                (a: _, [])   -> a
-                ([],   b: _) -> b
-                ([],   [])   -> error "impossible"
-        mkSegments n stack ss = error $ "impossible: " <> show (n, stack, ss)
 
 docToRawContent :: Doc -> Draft.RawContent
 docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks

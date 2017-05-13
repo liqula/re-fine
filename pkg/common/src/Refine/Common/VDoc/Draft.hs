@@ -32,17 +32,21 @@ import           Control.Monad (foldM)
 import           Control.Monad.State
 import           Data.Aeson
 import           Data.Aeson.Types (Parser)
+import           Data.Coerce (coerce)
 import           Data.Foldable (toList)
+import           Data.Function (on)
 import           Data.Functor.Infix ((<$$>))
 import qualified Data.HashMap.Lazy as HashMap
 import           Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
-import           Data.List (nub)
+import           Data.List (nub, sortBy, insertBy)
 import qualified Data.List as List
 import           Data.Map (Map)
 import qualified Data.Map as Map
 import           Data.Monoid ((<>))
 import           Data.Maybe (fromMaybe, maybeToList)
+import           Data.Set (Set)
+import qualified Data.Set as Set
 import           Data.String.Conversions
 import qualified Data.Text as ST
 import           GHC.Generics hiding (to)
@@ -444,6 +448,41 @@ addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (st
       []   -> blocklen
       [sp] -> soloSelectionPointPoint sp ^. selectionOffset - start
       bad  -> error $ "addMarkToBlock: impossible: " <> show bad
+
+
+-- | See 'mkSomeSegments' (@payload@ is 'Style').
+mkInlineStyleSegments :: [(EntityRange, Style)] -> [(Int, Set Style)]
+mkInlineStyleSegments = mkSomeSegments fst snd
+
+-- | See 'mkSomeSegments' (@payload@ is 'Entity').
+mkEntitySegments :: [(EntityKey, EntityRange)] -> IntMap.IntMap Entity -> [(Int, Set Entity)]
+mkEntitySegments eranges entities = mkSomeSegments snd ((entities IntMap.!) . coerce . fst) eranges
+
+-- | Take two accessors and a list of things the things carry a range and a payload.  Ranges can
+-- overlap.  Compute a list of non-overlapping segments consisting of start offset and the set of
+-- all payloads active in this segment.
+mkSomeSegments :: (Ord payload, Show payload)
+               => (el -> EntityRange) -> (el -> payload) -> [el] -> [(Int, Set payload)]
+mkSomeSegments frange fpayload els = segments
+  where
+    segments =
+        mkSegments 0 []
+      . map (\((offset, len), s) -> (offset, (offset + len, s)))
+      . sortBy (compare `on` fst)
+      $ [(frange el, fpayload el) | el <- els]
+
+    -- FIXME: stack (2nd arg) should be @IntMap (Set style)@ (keyed by @offset@).
+    mkSegments _ [] [] = []  -- (stack will be emptied in the third case.)
+    mkSegments n stack ((offset, s): ss) | offset == n = mkSegments n (insertBy (compare `on` fst) s stack) ss
+    mkSegments n ((offset, _): stack) ss | offset == n = mkSegments n stack ss
+    mkSegments n stack ss                | offset > n  = (offset - n, Set.fromList $ snd <$> stack): mkSegments offset stack ss
+      where
+        offset = case (fst <$> stack, fst <$> ss) of
+            (a: _, b: _) -> min a b
+            (a: _, [])   -> a
+            ([],   b: _) -> b
+            ([],   [])   -> error "impossible"
+    mkSegments n stack ss = error $ "impossible: " <> show (n, stack, ss)
 
 
 -- | Javascript: `document.querySelectorAll('article span[data-offset-key="2vutk-0-1"]');`.  The
