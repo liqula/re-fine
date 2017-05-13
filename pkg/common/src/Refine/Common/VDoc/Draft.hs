@@ -43,6 +43,7 @@ import           Data.List (nub, sortBy, insertBy)
 import qualified Data.List as List
 import           Data.Map (Map)
 import qualified Data.Map as Map
+import           Data.Maybe (catMaybes)
 import           Data.Monoid ((<>))
 import           Data.Maybe (fromMaybe, maybeToList)
 import           Data.Set (Set)
@@ -495,21 +496,35 @@ data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom | MarkSelectorUnkno
   deriving (Eq, Show, Generic)
 
 -- | See also: #301
+{-# ANN getMarkSelectors ("HLint: ignore Use foldr" :: String) #-}
 getMarkSelectors :: RawContent -> [(ContributionID, MarkSelector, MarkSelector)]
-getMarkSelectors = undefined
-
-{-
-getMarkSelectors (rawContentToDoc -> Doc blocks) = map f sels
+getMarkSelectors = findSides . mconcat . fmap collectBlock . zip [0..] . view rawContentBlocks
   where
-    f (cid, SelectionState _ begin@(SelectionPoint bkbegin _) end@(SelectionPoint bkend _))
-        = (cid, MarkSelector MarkSelectorTop bkbegin (g begin), MarkSelector MarkSelectorBottom bkend (g end - 1))
+    collectBlock :: (Int, Block EntityKey) -> [(ContributionID, ((Int, Int), MarkSelector))]
+    collectBlock (bix, block) = catMaybes $ collectSegment <$> warmupSegments (mkInlineStyleSegments $ block ^. blockStyles)
+      where
+        warmupSegments :: [(Int, Set Style)] -> [(Int, Maybe Style)]
+        warmupSegments = f 0
+          where
+            f _   []                  = []
+            f six ((_, styles) : xs') = g six (Set.toList styles) xs'
 
-    g (SelectionPoint bk offset) = Set.findIndex offset $ offsets Map.! bk
+            g six' []                xs' = f (six' + 1) xs'
+            g six' (style : styles') xs' = (six', Just style) : g six' styles' xs'
 
-    -- | offset sets for each block key
-    offsets = (Set.singleton 0 <>) <$> Map.fromListWith (<>)
-            [ (bk, Set.singleton offs)
-            | (_, SelectionState _ start end) <- sels
-            , SelectionPoint bk offs <- [start, end]
-            ]
--}
+        collectSegment :: (Int, Maybe Style) -> Maybe (ContributionID, ((Int, Int), MarkSelector))
+        collectSegment (six, Just (Mark cid))
+          = Just (cid, ((bix, six), MarkSelector MarkSelectorUnknownSide (block ^?! blockKey . _Just) six))
+        collectSegment _
+          = Nothing
+
+    findSides :: [(ContributionID, ((Int, Int), MarkSelector))] -> [(ContributionID, MarkSelector, MarkSelector)]
+    findSides = fmap pickMinMax . List.groupBy ((==) `on` fst) . sortBy (compare `on` fst)
+
+    pickMinMax :: [(ContributionID, ((Int, Int), MarkSelector))] -> (ContributionID, MarkSelector, MarkSelector)
+    pickMinMax [] = error "impossible"
+    pickMinMax (arg@((cid, _) : _)) = (cid, top, bot)
+      where
+        marks = Map.fromList $ snd <$> arg
+        top   = case Map.findMin marks of (_, MarkSelector _ k o) -> MarkSelector MarkSelectorTop    k o
+        bot   = case Map.findMax marks of (_, MarkSelector _ k o) -> MarkSelector MarkSelectorBottom k o

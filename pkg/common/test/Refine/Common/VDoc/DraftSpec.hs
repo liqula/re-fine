@@ -91,3 +91,17 @@ spec = do
                        , (cid1, MarkSelector MarkSelectorTop block1 1, MarkSelector MarkSelectorBottom block1 1)
                        ]
       getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
+
+    -- (accurracy in the cases below would be nice, but it can probably wait.)
+
+    it "works (two overlapping contribs beginning in the same point)" $ do
+      pending
+
+    it "works (two overlapping contribs ending in the same point)" $ do
+      pending
+
+    it "works (two overlapping contribs beginning and ending in the same point)" $ do
+      pending
+
+    it "works (with entity)" $ do
+      pendingWith "do they also have spans?  can we somehow distinguish them away in the css selector?"
