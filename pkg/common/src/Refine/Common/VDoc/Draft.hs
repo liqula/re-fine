@@ -460,8 +460,8 @@ data MarkSelectorPos = MarkSelectorUnknownPos | MarkSelectorTop | MarkSelectorBo
   deriving (Eq, Show, Generic)
 
 -- | See also: #301
-getMarkSelectors :: [(ContributionID, SelectionState)] -> [(ContributionID, MarkSelector, MarkSelector)]
-getMarkSelectors sels = f <$> sels
+getMarkSelectors :: RawContent -> [(ContributionID, SelectionState)] -> [(ContributionID, MarkSelector, MarkSelector)]
+getMarkSelectors (RawContent _blocks _) sels = map f sels
   where
     f (cid, SelectionState _ begin@(SelectionPoint bkbegin _) end@(SelectionPoint bkend _))
         = (cid, MarkSelector MarkSelectorTop bkbegin (g begin), MarkSelector MarkSelectorBottom bkend (g end - 1))

@@ -26,7 +26,7 @@ import           Test.Aeson.GenericSpecs
 import           Test.Hspec
 import           Test.QuickCheck
 
-import Refine.Common.Test.Arbitrary ()
+import Refine.Common.Test.Arbitrary (initBlockKeys)
 import Refine.Common.Test.Samples ()  -- (just importing it so we know it compiles.)
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft
@@ -48,34 +48,39 @@ spec = do
         block1 = BlockKey "1"
 
     it "works (1)" $ do
-      let marks      = []
+      let rawContent = initBlockKeys $ mkRawContent [mkBlock "1234567890"]
+          marks      = []
           want       = []
-      getMarkSelectors marks `shouldBe` want
+      getMarkSelectors rawContent marks `shouldBe` want
 
     it "works (2)" $ do
-      let marks      = [(cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block0 4))]
+      let rawContent = initBlockKeys $ mkRawContent [mkBlock "1234567890"]
+          marks      = [(cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block0 4))]
           want       = [(cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 1)]
-      getMarkSelectors marks `shouldBe` want
+      getMarkSelectors rawContent marks `shouldBe` want
 
     it "works (2.5)" $ do
-      let marks      = [(cid0, SelectionState False (SelectionPoint block0 0) (SelectionPoint block0 4))]
+      let rawContent = initBlockKeys $ mkRawContent [mkBlock "1234567890"]
+          marks      = [(cid0, SelectionState False (SelectionPoint block0 0) (SelectionPoint block0 4))]
           want       = [(cid0, MarkSelector MarkSelectorTop block0 0, MarkSelector MarkSelectorBottom block0 0)]
-      getMarkSelectors marks `shouldBe` want
+      getMarkSelectors rawContent marks `shouldBe` want
 
     it "works (3)" $ do
-      let marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block0 4))
+      let rawContent = initBlockKeys $ mkRawContent [mkBlock "1234567890"]
+          marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block0 4))
                        , (cid1, SelectionState True (SelectionPoint block0 3) (SelectionPoint block0 7))
                        ]
           want       = [ (cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 2)
                        , (cid1, MarkSelector MarkSelectorTop block0 2, MarkSelector MarkSelectorBottom block0 3)
                        ]
-      getMarkSelectors marks `shouldBe` want
+      getMarkSelectors rawContent marks `shouldBe` want
 
     it "works (4)" $ do
-      let marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block1 3))
+      let rawContent = initBlockKeys $ mkRawContent [mkBlock "1234567890", mkBlock "asdf"]
+          marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block1 3))
                        , (cid1, SelectionState True (SelectionPoint block1 1) (SelectionPoint block1 2))
                        ]
           want       = [ (cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block1 2)
                        , (cid1, MarkSelector MarkSelectorTop block1 1, MarkSelector MarkSelectorBottom block1 1)
                        ]
-      getMarkSelectors marks `shouldBe` want
+      getMarkSelectors rawContent marks `shouldBe` want
