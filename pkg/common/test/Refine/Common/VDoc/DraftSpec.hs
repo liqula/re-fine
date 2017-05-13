@@ -22,6 +22,7 @@
 
 module Refine.Common.VDoc.DraftSpec where
 
+import           Control.Lens ((&), (.~))
 import           Test.Aeson.GenericSpecs
 import           Test.Hspec
 import           Test.QuickCheck
@@ -63,6 +64,12 @@ spec = do
       let rawContent = initBlockKeys $ mkRawContent [mkBlock "1234567890"]
           marks      = [(cid0, SelectionState False (SelectionPoint block0 0) (SelectionPoint block0 4))]
           want       = [(cid0, MarkSelector MarkSelectorTop block0 0, MarkSelector MarkSelectorBottom block0 0)]
+      getMarkSelectors rawContent marks `shouldBe` want
+
+    it "works (2.7)" $ do
+      let rawContent = initBlockKeys $ mkRawContent [mkBlock "1234567890" & blockStyles .~ [((1, 2), Bold)]]
+          marks      = [(cid0, SelectionState False (SelectionPoint block0 0) (SelectionPoint block0 4))]
+          want       = [(cid0, MarkSelector MarkSelectorTop block0 0, MarkSelector MarkSelectorBottom block0 2)]
       getMarkSelectors rawContent marks `shouldBe` want
 
     it "works (3)" $ do
