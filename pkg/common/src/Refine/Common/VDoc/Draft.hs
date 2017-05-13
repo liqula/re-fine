@@ -70,8 +70,8 @@ data RawContent = RawContent
 -- | typical rangekey values are 'Int' and 'Entity'
 data Block rangeKey = Block
   { _blockText         :: ST
-  , _blockEntityRanges :: [(rangeKey, EntityRange)]
-  , _blockStyles       :: [(EntityRange, Style)]
+  , _blockEntityRanges :: [(rangeKey, EntityRange)]  -- ^ entity ranges for entities must not overlap!
+  , _blockStyles       :: [(EntityRange, Style)]     -- ^ entity ranges for styles are allowed to overlap.
   , _blockType         :: BlockType
   , _blockDepth        :: Int
   , _blockKey          :: Maybe BlockKey  -- ^ FIXME: many function rely on this being defined.

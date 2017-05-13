@@ -107,7 +107,13 @@ initBlockKeys = rawContentBlocks %~ zipWith (\k -> blockKey .~ (Just . BlockKey 
 -- optimized for run-time, but for readability.  if you want to use it in production, check if you
 -- want to improve on that first.
 sanitizeRawContent :: RawContent -> RawContent
-sanitizeRawContent = mergeOverlaps . deleteDanglingEntityRefs . deleteDanglingEntities . deleteBadRanges . boundDepth . removeIllegalChars
+sanitizeRawContent = deleteDanglingEntityRefs
+                   . deleteDanglingEntities
+                   . deleteOverlappingEntities
+                   . mergeOverlappingStyles
+                   . deleteBadRanges
+                   . boundDepth
+                   . removeIllegalChars
   where
     removeIllegalChars (RawContent bs es) = RawContent ((blockText %~ ST.filter ok) <$> bs) es
       where
@@ -142,17 +148,37 @@ sanitizeRawContent = mergeOverlaps . deleteDanglingEntityRefs . deleteDanglingEn
         entityKeys :: [EntityKey]
         entityKeys = fst <$> mconcat (view blockEntityRanges <$> bs)
 
-    -- if two ranges overlap for the same (Eq) thing, they will merge into one range.  (FIXME: this
-    -- works for styles, but entities must not overlap so we should filter them instead of merging
-    -- them.)
-    mergeOverlaps :: RawContent -> RawContent
-    mergeOverlaps  (RawContent bs es) = RawContent ((blockStyles %~ goStyles) . (blockEntityRanges %~ goEntities) <$> bs) es
+    deleteOverlappingEntities :: RawContent -> RawContent
+    deleteOverlappingEntities  (RawContent bs es) = RawContent ((blockEntityRanges %~ goEntities) <$> bs) es
+      where
+        goEntities :: (Eq a, Ord a) => [(a, EntityRange)] -> [(a, EntityRange)]
+        goEntities = go _2 _1
+
+        go :: forall a payload. (Eq payload, Ord payload) => Lens' a EntityRange -> Lens' a payload -> [a] -> [a]
+        go range payload = sortR
+                         . mconcat
+                         . fmap (goGroup . sortR)
+                         . sortGroupP
+          where
+            sortR      = List.sortBy (compare `on` view range)
+            sortGroupP = List.groupBy ((==) `on` view payload)
+                       . List.sortBy (compare `on` view payload)
+
+            goGroup [] = []
+            goGroup [x] = [x]
+            goGroup (x@(view range -> (o, l)) : x'@(view range -> (o', l')) : xs)
+              | o + l == o' = goGroup ((x & range .~ (o, l + l')) : xs)
+              | o + l >  o' = goGroup (x' : xs)
+              | otherwise   = x : goGroup (x' : xs)
+
+    -- if two style ranges overlap for the same (Eq) thing, they will merge into one range.  note
+    -- that this code is implemented to also work for entities, but entities are not allowed to
+    -- overlap, and touching entities are not allowed to merge.
+    mergeOverlappingStyles :: RawContent -> RawContent
+    mergeOverlappingStyles (RawContent bs es) = RawContent ((blockStyles %~ goStyles) <$> bs) es
       where
         goStyles :: (Eq a, Ord a) => [(EntityRange, a)] -> [(EntityRange, a)]
         goStyles = go _1 _2
-
-        goEntities :: (Eq a, Ord a) => [(a, EntityRange)] -> [(a, EntityRange)]
-        goEntities = go _2 _1
 
         go :: forall a payload. (Eq payload, Ord payload) => Lens' a EntityRange -> Lens' a payload -> [a] -> [a]
         go range payload = sortR
