@@ -12,15 +12,15 @@ module Refine.Common.VDoc.OT where
 
 import           Control.Arrow
 import           Data.Function
-import           Data.List
 import qualified Data.IntMap as IntMap
+import           Data.List
 import qualified Data.Set as Set
 import qualified Data.Text as ST
 import           Data.String.Conversions
 import qualified Generics.SOP as SOP
 import           GHC.Generics (Generic)
 import           Data.Aeson
---import           Data.Coerce
+import           Data.Coerce
 
 import Refine.Common.OT
 import Refine.Common.VDoc.Draft (RawContent)
@@ -80,11 +80,26 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
         segment [] text = [LineElem mempty text]
         segment ((len, s): ss) text = LineElem s (ST.take len text): segment ss (ST.drop len text)
 
+        segments :: [(Int, Set.Set Entity)]
+        segments = mkSomeSegments fst snd
+                 $ ((\(r, s) -> (r, Entity (Right s)))                             <$> styles)
+                <> ((\(e, r) -> (r, Entity (Left (entities IntMap.! (coerce e))))) <$> eranges)
+
+mkInlineStyleSegments :: [(Draft.EntityRange, Draft.Style)] -> [(Int, Set.Set Draft.Style)]
+mkInlineStyleSegments = mkSomeSegments fst snd
+
+mkEntitySegments :: [(Draft.EntityKey, Draft.EntityRange)] -> IntMap.IntMap Draft.Entity -> [(Int, Set.Set Draft.Entity)]
+mkEntitySegments eranges entities = mkSomeSegments snd ((entities IntMap.!) . coerce . fst) eranges
+
+mkSomeSegments :: (Ord payload, Show payload)
+               => (el -> Draft.EntityRange) -> (el -> payload) -> [el] -> [(Int, Set.Set payload)]
+mkSomeSegments frange fpayload els = segments
+  where
         segments =
               mkSegments 0 []
             . map (\((offset, len), s) -> (offset, (offset + len, s)))
             . sortBy (compare `on` fst)
-            $ [(r, Entity . Left $ entities IntMap.! k) | (Draft.EntityKey k, r) <- eranges] <> [(r, Entity $ Right s) | (r, s) <- styles]
+            $ [(frange el, fpayload el) | el <- els]
 
         -- TODO: stack (2nd arg) should be @IntMap (Set style)@ (keyed by @offset@).
         mkSegments _ [] [] = []  -- (stack will be emptied in the third case.)
