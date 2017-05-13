@@ -46,7 +46,7 @@ data LineElem = LineElem (Set.Set Entity) ST
 newtype Entity = Entity { unEntity :: Either Draft.Entity Draft.Style }
    deriving (Show, Eq, Ord, Generic)
 
----------------------------------------- 
+----------------------------------------
 
 data EditSource a =
     InitialEdit
