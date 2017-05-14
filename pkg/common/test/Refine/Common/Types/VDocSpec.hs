@@ -191,6 +191,20 @@ spec = do
 
       check `mapM_` [ (i, j) | i <- [0..3], j <- [0..4] ]
 
+    it "works when ranges start and/or end on the same point" $ do
+      let cid0 = ContribIDNote (ID 13)
+          cid1 = ContribIDNote (ID 35)
+          block0 = BlockKey "0"
+
+          rawContent = initBlockKeys $ mkRawContent [mkBlock "1234567890"]
+          marks s1 e1 s2 e2 = [ (cid0, SelectionState False (SelectionPoint block0 s1) (SelectionPoint block0 e1))
+                              , (cid1, SelectionState False (SelectionPoint block0 s2) (SelectionPoint block0 e2))
+                              ]
+          rawContent' = RawContent mempty mempty
+      addMarksToRawContent (marks 3 4 2 4) rawContent `shouldNotBe` rawContent'
+      addMarksToRawContent (marks 2 4 3 4) rawContent `shouldNotBe` rawContent'
+      addMarksToRawContent (marks 2 4 2 4) rawContent `shouldNotBe` rawContent'
+
     it "is idempotent (together with 'deleteMarksFromBlock')" . property $
       \(RawContentWithSelections rawContent (zip (ContribIDEdit <$> [0..]) -> selections)) -> do
         let blocks   = rawContent ^. rawContentBlocks
