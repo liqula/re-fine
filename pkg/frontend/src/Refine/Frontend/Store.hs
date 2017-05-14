@@ -61,6 +61,7 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Console
 import           Refine.Frontend.Translation.Store (translationsUpdate)
 import           Refine.Frontend.Types
+import           Refine.Frontend.Util
 
 
 instance StoreData GlobalState where
@@ -395,7 +396,7 @@ getRangeAction beforeState afterState = assert (has _DocumentStateView beforeSta
       -> Just . SetRange <$> do
       topOffset    <- liftIO js_getRangeTopOffset
       bottomOffset <- liftIO js_getRangeBottomOffset
-      scrollOffset <- liftIO js_getRangeScrollOffset
+      scrollOffset <- liftIO js_getScrollOffset
       let doctop = scrollOffset + if sel ^. selectionIsBackward then topOffset else bottomOffset
 
       pure Range
@@ -413,17 +414,6 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "getSelection().getRangeAt(0).endContainer.parentElement.getBoundingClientRect().bottom"
   js_getRangeBottomOffset :: IO Int
-
--- an earlier implementation had two fallbacks:
---
--- ```javascript
---    typeof(target.pageYOffset) === 'number' && target.pageYOffset                 ||
---    document.body                           && document.body.scrollTop            ||
---    document.documentElement                && document.documentElement.scrollTop;
--- ```
-foreign import javascript unsafe
-  "(function() { return pageYOffset; })()"
-  js_getRangeScrollOffset :: IO Int
 
 removeAllRanges :: MonadIO m => m ()
 removeAllRanges = liftIO js_removeAllRanges
