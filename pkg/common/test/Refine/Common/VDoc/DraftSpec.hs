@@ -92,16 +92,35 @@ spec = do
                        ]
       getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
-    -- (accurracy in the cases below would be nice, but it can probably wait.)
-
     it "works (two overlapping contribs beginning in the same point)" $ do
-      pending
+      let rawContent = initBlockKeys $ mkRawContent [mkBlock "1234567890"]
+          marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block0 3))
+                       , (cid1, SelectionState True (SelectionPoint block0 2) (SelectionPoint block0 4))
+                       ]
+          want       = [ (cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 1)
+                       , (cid1, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 2)
+                       ]
+      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (two overlapping contribs ending in the same point)" $ do
-      pending
+      let rawContent = initBlockKeys $ mkRawContent [mkBlock "1234567890"]
+          marks      = [ (cid0, SelectionState False (SelectionPoint block0 3) (SelectionPoint block0 4))
+                       , (cid1, SelectionState True (SelectionPoint block0 2) (SelectionPoint block0 4))
+                       ]
+          want       = [ (cid0, MarkSelector MarkSelectorTop block0 2, MarkSelector MarkSelectorBottom block0 2)
+                       , (cid1, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 2)
+                       ]
+      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (two overlapping contribs beginning and ending in the same point)" $ do
-      pending
+      let rawContent = initBlockKeys $ mkRawContent [mkBlock "1234567890"]
+          marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block0 4))
+                       , (cid1, SelectionState True (SelectionPoint block0 2) (SelectionPoint block0 4))
+                       ]
+          want       = [ (cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 1)
+                       , (cid1, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 1)
+                       ]
+      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (with entity)" $ do
       pendingWith "do they also have spans?  can we somehow distinguish them away in the css selector?"
