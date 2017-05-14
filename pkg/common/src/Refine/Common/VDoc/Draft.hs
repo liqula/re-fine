@@ -32,21 +32,23 @@ import           Control.Monad (foldM)
 import           Control.Monad.State
 import           Data.Aeson
 import           Data.Aeson.Types (Parser)
+import           Data.Coerce (coerce)
 import           Data.Foldable (toList)
+import           Data.Function (on)
 import           Data.Functor.Infix ((<$$>))
 import qualified Data.HashMap.Lazy as HashMap
 import           Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
-import qualified Data.Set as Set
-import           Data.List (nub)
+import           Data.List (nub, sortBy, insertBy)
 import qualified Data.List as List
 import           Data.Map (Map)
 import qualified Data.Map as Map
+import           Data.Maybe (catMaybes, fromMaybe, maybeToList)
 import           Data.Monoid ((<>))
-import           Data.Maybe (fromMaybe, maybeToList)
+import           Data.Set (Set)
+import qualified Data.Set as Set
 import           Data.String.Conversions
 import qualified Data.Text as ST
-import           Data.Typeable (Typeable)
 import           GHC.Generics hiding (to)
 import           Web.HttpApiData (toUrlPiece, parseUrlPiece)
 
@@ -67,8 +69,8 @@ data RawContent = RawContent
 -- | typical rangekey values are 'Int' and 'Entity'
 data Block rangeKey = Block
   { _blockText         :: ST
-  , _blockEntityRanges :: [(rangeKey, EntityRange)]
-  , _blockStyles       :: [(EntityRange, Style)]
+  , _blockEntityRanges :: [(rangeKey, EntityRange)]  -- ^ entity ranges for entities must not overlap!
+  , _blockStyles       :: [(EntityRange, Style)]     -- ^ entity ranges for styles are allowed to overlap.
   , _blockType         :: BlockType
   , _blockDepth        :: Int
   , _blockKey          :: Maybe BlockKey  -- ^ FIXME: many function rely on this being defined.
@@ -353,18 +355,15 @@ selectionStateToChunkRange (RawContent bs _) (SelectionState _ s e) = ChunkRange
 
 rawContentFromCompositeVDoc :: CompositeVDoc -> RawContent
 rawContentFromCompositeVDoc (CompositeVDoc _ _ vers edits notes discussions) =
-  rawContentFromVDocVersion vers & rawContentBlocks %~ f
+  addMarksToRawContent marks rawContent
   where
-    -- 'convertHack' will go away when 'ChunkRange' goes away.
-    convertHack = chunkRangeToSelectionState (rawContentFromVDocVersion vers)
-    f = addMarksToBlocks (convertHack . view editRange <$> edits)
-      . addMarksToBlocks (convertHack . view noteRange <$> notes)
-      . addMarksToBlocks (convertHack . view (compositeDiscussion . discussionRange) <$> discussions)
-      . fmap deleteMarksFromBlock  -- (this shouldn't be doing anything, the raw content value has
-                                   -- just been created.  but it may be necessary somewhere else,
-                                   -- after vdoc version has been refactored away, so we keep it as
-                                   -- a reminder.)
+    rawContent = rawContentFromVDocVersion vers
+    convertHack l (k, v) = (contribID k, chunkRangeToSelectionState rawContent $ v ^. l)
 
+    marks :: [(ContributionID, SelectionState)]
+    marks = (convertHack editRange                               <$> Map.toList edits)
+         <> (convertHack noteRange                               <$> Map.toList notes)
+         <> (convertHack (compositeDiscussion . discussionRange) <$> Map.toList discussions)
 
 rawContentFromVDocVersion :: VDocVersion -> RawContent
 rawContentFromVDocVersion (VDocVersion st) = case eitherDecode $ cs st of
@@ -375,32 +374,36 @@ rawContentToVDocVersion :: RawContent -> VDocVersion
 rawContentToVDocVersion = VDocVersion . cs . encode
 
 
+-- * marks
+
+addMarksToRawContent :: [(ContributionID, SelectionState)] -> RawContent -> RawContent
+addMarksToRawContent marks = rawContentBlocks %~ addMarksToBlocks marks
+
 deleteMarksFromBlock :: Block EntityKey -> Block EntityKey
 deleteMarksFromBlock = blockStyles %~ List.filter ((`elem` [Bold, Italic, Underline, Code]) . snd)
 
--- | See also: #301
-addMarksToBlocks :: forall a. (Typeable a, IsContribution a) => Map (ID a) SelectionState -> [Block EntityKey] -> [Block EntityKey]
+addMarksToBlocks :: [(ContributionID, SelectionState)] -> [Block EntityKey] -> [Block EntityKey]
 addMarksToBlocks m bs = case (addMarksToBlock (warmupSelectionStates m) `mapM` bs) `runState` [] of
   (bs', []) -> bs'
   bad -> error $ "addMarksToBlocks: impossible: " <> show bad
 
-type AddMarksState a = State [SoloSelectionPoint a]
+type AddMarksState = State [SoloSelectionPoint]
 
 -- | 'SelectionPoint' that carries extra information needed for 'addMarksToBlocks'.
-data SoloSelectionPoint a = SoloSelectionPoint
+data SoloSelectionPoint = SoloSelectionPoint
   { soloSelectionPointPoint   :: SelectionPoint
-  , soloSelectionPointID      :: ID a
+  , soloSelectionPointID      :: ContributionID
   , soloSelectionPointIsStart :: Bool
   }
   deriving (Eq, Show)
 
-warmupSelectionStates :: forall a. (Typeable a) => Map (ID a) SelectionState -> Map BlockKey [SoloSelectionPoint a]
-warmupSelectionStates = aggr . mconcat . fmap trans . Map.toList
+warmupSelectionStates :: [(ContributionID, SelectionState)] -> Map BlockKey [SoloSelectionPoint]
+warmupSelectionStates = aggr . mconcat . fmap trans
   where
     aggr :: (Ord k) => [(k, v)] -> Map k [v]
     aggr = Map.fromListWith (<>) . map (second pure)
 
-    trans :: (ID a, SelectionState) -> [(BlockKey, SoloSelectionPoint a)]
+    trans :: (ContributionID, SelectionState) -> [(BlockKey, SoloSelectionPoint)]
     trans (i, SelectionState _ p1 p2) =
       [ (p1 ^. selectionBlock, SoloSelectionPoint p1 i True)
       , (p2 ^. selectionBlock, SoloSelectionPoint p2 i False)
@@ -410,13 +413,12 @@ warmupSelectionStates = aggr . mconcat . fmap trans . Map.toList
 -- starting point, then I go through this sorted list and a stack of active ranges is maintained
 -- during it. If I would have more time I would think of the performance of these two alternative
 -- approaches or how these could be tuned if necessary.  [divipp]
-addMarksToBlock :: forall a. (Typeable a, IsContribution a)
-                => Map BlockKey [SoloSelectionPoint a] -> Block EntityKey -> AddMarksState a (Block EntityKey)
+addMarksToBlock :: Map BlockKey [SoloSelectionPoint] -> Block EntityKey -> AddMarksState (Block EntityKey)
 addMarksToBlock pointmap block = f (fromMaybe [] $ Map.lookup (block ^?! blockKey . _Just) pointmap) block
   where
-    f :: [SoloSelectionPoint a] -> Block EntityKey -> AddMarksState a (Block EntityKey)
+    f :: [SoloSelectionPoint] -> Block EntityKey -> AddMarksState (Block EntityKey)
     f pointlist blk = do
-      previousOpenPoints :: [SoloSelectionPoint a] <- get
+      previousOpenPoints :: [SoloSelectionPoint] <- get
       let (newOpenPoints, newClosePoints) = List.partition soloSelectionPointIsStart pointlist
 
           blocklen :: Int
@@ -432,11 +434,10 @@ addMarksToBlock pointmap block = f (fromMaybe [] $ Map.lookup (block ^?! blockKe
              )
       blk & blockStyles %~ (inlineStyles <>) & pure
 
-addMarkToBlock :: forall a. (Typeable a, IsContribution a)
-               => Int -> Bool -> [SoloSelectionPoint a] -> SoloSelectionPoint a -> (EntityRange, Style)
+addMarkToBlock :: Int -> Bool -> [SoloSelectionPoint] -> SoloSelectionPoint -> (EntityRange, Style)
 addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (start >= 0 && end >= 0) ((start, end), style)
   where
-    style = Mark . contribID . soloSelectionPointID $ thisPoint
+    style = Mark . soloSelectionPointID $ thisPoint
 
     start = if openedInOtherBlock
       then 0
@@ -448,29 +449,83 @@ addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (st
       bad  -> error $ "addMarkToBlock: impossible: " <> show bad
 
 
--- * docks
+-- | See 'mkSomeSegments' (@payload@ is 'Style').
+mkInlineStyleSegments :: [(EntityRange, Style)] -> [(Int, Set Style)]
+mkInlineStyleSegments = mkSomeSegments fst snd
+
+-- | See 'mkSomeSegments' (@payload@ is 'Entity').
+mkEntitySegments :: [(EntityKey, EntityRange)] -> IntMap.IntMap Entity -> [(Int, Set Entity)]
+mkEntitySegments eranges entities = mkSomeSegments snd ((entities IntMap.!) . coerce . fst) eranges
+
+-- | Take two accessors and a list of things carrying a range and a payload each.  Ranges can
+-- overlap.  Compute a list of non-overlapping segments, starting at @offset == 0@, consisting of
+-- length and the set of all payloads active in this segment.
+--
+-- NOTE: since this function does have access to the block length, the last segment will be
+-- contained in the output *iff* the end of some range coincides with the end of the block.  (ranges
+-- must not point beyong the end of the block.)
+mkSomeSegments :: (Ord payload, Show payload)
+               => (el -> EntityRange) -> (el -> payload) -> [el] -> [(Int, Set payload)]
+mkSomeSegments frange fpayload els = segments
+  where
+    segments =
+        mkSegments 0 []
+      . map (\((offset, len), s) -> (offset, (offset + len, s)))
+      . sortBy (compare `on` fst)
+      $ [(frange el, fpayload el) | el <- els]
+
+    -- FIXME: stack (2nd arg) should be @IntMap (Set style)@ (keyed by @offset@).
+    mkSegments _ [] [] = []  -- (stack will be emptied in the third case.)
+    mkSegments n stack ((offset, s): ss) | offset == n = mkSegments n (insertBy (compare `on` fst) s stack) ss
+    mkSegments n ((offset, _): stack) ss | offset == n = mkSegments n stack ss
+    mkSegments n stack ss                | offset > n  = (offset - n, Set.fromList $ snd <$> stack): mkSegments offset stack ss
+      where
+        offset = case (fst <$> stack, fst <$> ss) of
+            (a: _, b: _) -> min a b
+            (a: _, [])   -> a
+            ([],   b: _) -> b
+            ([],   [])   -> error "impossible"
+    mkSegments n stack ss = error $ "impossible: " <> show (n, stack, ss)
+
 
 -- | Javascript: `document.querySelectorAll('article span[data-offset-key="2vutk-0-1"]');`.  The
 -- offset-key is constructed from block key, a '0' literal, and the number of left siblings of the
 -- span the selector refers to.
-data MarkSelector = MarkSelector MarkSelectorPos BlockKey Int
+data MarkSelector = MarkSelector MarkSelectorSide BlockKey Int
   deriving (Eq, Show, Generic)
 
-data MarkSelectorPos = MarkSelectorUnknownPos | MarkSelectorTop | MarkSelectorBottom
+data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom | MarkSelectorUnknownSide
   deriving (Eq, Show, Generic)
 
--- | See also: #301
-getMarkSelectors :: [(ContributionID, SelectionState)] -> [(ContributionID, MarkSelector, MarkSelector)]
-getMarkSelectors sels = f <$> sels
+{-# ANN getMarkSelectors ("HLint: ignore Use foldr" :: String) #-}
+getMarkSelectors :: RawContent -> [(ContributionID, MarkSelector, MarkSelector)]
+getMarkSelectors = findSides . mconcat . fmap collectBlock . zip [0..] . view rawContentBlocks
   where
-    f (cid, SelectionState _ begin@(SelectionPoint bkbegin _) end@(SelectionPoint bkend _))
-        = (cid, MarkSelector MarkSelectorTop bkbegin (g begin), MarkSelector MarkSelectorBottom bkend (g end - 1))
+    collectBlock :: (Int, Block EntityKey) -> [(ContributionID, ((Int, Int), MarkSelector))]
+    collectBlock (bix, block) = catMaybes $ collectSegment <$> warmupSegments (mkInlineStyleSegments $ block ^. blockStyles)
+      where
+        warmupSegments :: [(Int, Set Style)] -> [(Int, Maybe Style)]
+        warmupSegments = f 0
+          where
+            f _   []                  = []
+            f six ((_, styles) : xs') = g six (Set.toList styles) xs'
 
-    g (SelectionPoint bk offset) = Set.findIndex offset $ offsets Map.! bk
+            g six' []                xs' = f (six' + 1) xs'
+            g six' (style : styles') xs' = (six', Just style) : g six' styles' xs'
 
-    -- | offset sets for each block key
-    offsets = (Set.singleton 0 <>) <$> Map.fromListWith (<>)
-            [ (bk, Set.singleton offs)
-            | (_, SelectionState _ start end) <- sels
-            , SelectionPoint bk offs <- [start, end]
-            ]
+        collectSegment :: (Int, Maybe Style) -> Maybe (ContributionID, ((Int, Int), MarkSelector))
+        collectSegment (six, Just (Mark cid))
+          = Just (cid, ((bix, six), MarkSelector MarkSelectorUnknownSide (block ^?! blockKey . _Just) six))
+        collectSegment _
+          = Nothing
+
+    findSides :: [(ContributionID, ((Int, Int), MarkSelector))] -> [(ContributionID, MarkSelector, MarkSelector)]
+    findSides = fmap pickMinMax . List.groupBy ((==) `on` fst) . sortBy (compare `on` fst)
+
+    pickMinMax :: [(ContributionID, ((Int, Int), MarkSelector))] -> (ContributionID, MarkSelector, MarkSelector)
+    pickMinMax [] = error "impossible"
+    pickMinMax (arg@((cid, _) : _)) = (cid, top, bot)
+      where
+        marks = Map.fromList $ snd <$> arg
+        top   = case Map.findMin marks of (_, MarkSelector _ k o) -> MarkSelector MarkSelectorTop    k o
+        bot   = case Map.findMax marks of (_, MarkSelector _ k o) -> MarkSelector MarkSelectorBottom k o

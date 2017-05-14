@@ -12,15 +12,15 @@ module Refine.Common.VDoc.OT where
 
 import           Control.Arrow
 import           Data.Function
-import           Data.List
 import qualified Data.IntMap as IntMap
+import           Data.List
 import qualified Data.Set as Set
-import qualified Data.Text as Text
+import qualified Data.Text as ST
 import           Data.String.Conversions
 import qualified Generics.SOP as SOP
 import           GHC.Generics (Generic)
 import           Data.Aeson
---import           Data.Coerce
+import           Data.Coerce
 
 import Refine.Common.OT
 import Refine.Common.VDoc.Draft (RawContent)
@@ -46,7 +46,7 @@ data LineElem = LineElem (Set.Set Entity) ST
 newtype Entity = Entity { unEntity :: Either Draft.Entity Draft.Style }
    deriving (Show, Eq, Ord, Generic)
 
----------------------------------------- 
+----------------------------------------
 
 data EditSource a =
     InitialEdit
@@ -68,36 +68,20 @@ xxxxxxxxxxxxxxxxxxxxxx converted to line elements:
  xxx [xx](www.1)[XXX](www.1)[x](www.1) xxxxx
 -}
 
--- | See also: #301
 rawContentToDoc :: Draft.RawContent -> Doc
 rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
   where
-    -- see also: 'Refine.Common.VDoc.Draft.addMarksToBlock'.
     mkBlock :: Draft.Block Draft.EntityKey -> Block
     mkBlock (Draft.Block txt eranges styles ty depth _key) = Block ty (segment segments txt) depth
       where
         segment [] "" = []
         segment [] text = [LineElem mempty text]
-        segment ((len, s): ss) text = LineElem s (Text.take len text): segment ss (Text.drop len text)
+        segment ((len, s): ss) text = LineElem s (ST.take len text): segment ss (ST.drop len text)
 
-        segments =
-              mkSegments 0 []
-            . map (\((offset, len), s) -> (offset, (offset + len, s)))
-            . sortBy (compare `on` fst)
-            $ [(r, Entity . Left $ entities IntMap.! k) | (Draft.EntityKey k, r) <- eranges] <> [(r, Entity $ Right s) | (r, s) <- styles]
-
-        -- TODO: stack (2nd arg) should be @IntMap (Set style)@ (keyed by @offset@).
-        mkSegments _ [] [] = []  -- (stack will be emptied in the third case.)
-        mkSegments n stack ((offset, s): ss) | offset == n = mkSegments n (insertBy (compare `on` fst) s stack) ss
-        mkSegments n ((offset, _): stack) ss | offset == n = mkSegments n stack ss
-        mkSegments n stack ss                | offset > n  = (offset - n, Set.fromList $ snd <$> stack): mkSegments offset stack ss
-          where
-            offset = case (fst <$> stack, fst <$> ss) of
-                (a: _, b: _) -> min a b
-                (a: _, [])   -> a
-                ([],   b: _) -> b
-                ([],   [])   -> error "impossible"
-        mkSegments n stack ss = error $ "impossible: " <> show (n, stack, ss)
+        segments :: [(Int, Set.Set Entity)]
+        segments = Draft.mkSomeSegments fst snd
+                 $ ((\(r, s) -> (r, Entity (Right s)))                           <$> styles)
+                <> ((\(e, r) -> (r, Entity (Left (entities IntMap.! coerce e)))) <$> eranges)
 
 docToRawContent :: Doc -> Draft.RawContent
 docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
@@ -114,7 +98,7 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
         Nothing
       where
         ranges = mkRanges 0 mempty
-            $ [(len, s) | LineElem s txt <- es, let len = Text.length txt, len > 0]
+            $ [(len, s) | LineElem s txt <- es, let len = ST.length txt, len > 0]
             <> [(0, mempty)]  -- this is to avoid one more case in mkRanges below when we're done.
 
         mkRanges _ _ [] = []
