@@ -458,9 +458,13 @@ mkInlineStyleSegments = mkSomeSegments fst snd
 mkEntitySegments :: [(EntityKey, EntityRange)] -> IntMap.IntMap Entity -> [(Int, Set Entity)]
 mkEntitySegments eranges entities = mkSomeSegments snd ((entities IntMap.!) . coerce . fst) eranges
 
--- | Take two accessors and a list of things the things carry a range and a payload.  Ranges can
--- overlap.  Compute a list of non-overlapping segments consisting of start offset and the set of
--- all payloads active in this segment.
+-- | Take two accessors and a list of things carrying a range and a payload each.  Ranges can
+-- overlap.  Compute a list of non-overlapping segments, starting at @offset == 0@, consisting of
+-- length and the set of all payloads active in this segment.
+--
+-- NOTE: since this function does have access to the block length, the last segment will be
+-- contained in the output *iff* the end of some range coincides with the end of the block.  (ranges
+-- must not point beyong the end of the block.)
 mkSomeSegments :: (Ord payload, Show payload)
                => (el -> EntityRange) -> (el -> payload) -> [el] -> [(Int, Set payload)]
 mkSomeSegments frange fpayload els = segments

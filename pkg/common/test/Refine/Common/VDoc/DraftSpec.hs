@@ -23,6 +23,7 @@
 module Refine.Common.VDoc.DraftSpec where
 
 import           Control.Lens ((&), (.~))
+import qualified Data.Set as Set
 import           Test.Aeson.GenericSpecs
 import           Test.Hspec
 import           Test.QuickCheck
@@ -41,6 +42,11 @@ spec = do
   describe "rawContentToVDocVersion, rawContentFromVDocVersion" $ do
     it "rawContentFromVDocVersion . rawContentToVDocVersion == id" . property $ \(rawContent :: RawContent) -> do
       rawContentFromVDocVersion (rawContentToVDocVersion rawContent) `shouldBe` rawContent
+
+  describe "mkSomeSegments" $ do
+    it "works" $ do
+      mkSomeSegments fst snd [((1, 3), 'o'), ((2, 4), 'x')]
+        `shouldBe` [(1, Set.empty), (1, Set.fromList "o"), (2, Set.fromList "ox"), (2, Set.fromList "x")]
 
   describe "getMarkSelectors" $ do
     let cid0 = ContribIDNote (ID 13)
