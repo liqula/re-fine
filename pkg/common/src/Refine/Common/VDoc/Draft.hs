@@ -382,7 +382,6 @@ addMarksToRawContent marks = rawContentBlocks %~ addMarksToBlocks marks
 deleteMarksFromBlock :: Block EntityKey -> Block EntityKey
 deleteMarksFromBlock = blockStyles %~ List.filter ((`elem` [Bold, Italic, Underline, Code]) . snd)
 
--- | See also: #301
 addMarksToBlocks :: [(ContributionID, SelectionState)] -> [Block EntityKey] -> [Block EntityKey]
 addMarksToBlocks m bs = case (addMarksToBlock (warmupSelectionStates m) `mapM` bs) `runState` [] of
   (bs', []) -> bs'
@@ -498,7 +497,6 @@ data MarkSelector = MarkSelector MarkSelectorSide BlockKey Int
 data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom | MarkSelectorUnknownSide
   deriving (Eq, Show, Generic)
 
--- | See also: #301
 {-# ANN getMarkSelectors ("HLint: ignore Use foldr" :: String) #-}
 getMarkSelectors :: RawContent -> [(ContributionID, MarkSelector, MarkSelector)]
 getMarkSelectors = findSides . mconcat . fmap collectBlock . zip [0..] . view rawContentBlocks
