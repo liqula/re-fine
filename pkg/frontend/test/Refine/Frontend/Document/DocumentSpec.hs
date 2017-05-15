@@ -24,7 +24,7 @@
 module Refine.Frontend.Document.DocumentSpec
 where
 
-import Control.Lens ((^.), (&), (.~))
+import Control.Lens ((^.), (&), (.~), (^?!), _Just)
 import Data.Aeson
 import Data.String.Conversions
 import GHCJS.Types
@@ -41,8 +41,11 @@ import Refine.Frontend.Document.FFI
 import Refine.Frontend.Document.Store
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
+import Refine.Frontend.Store
+import Refine.Frontend.Store.Types
 import Refine.Frontend.Test.Enzyme
 import Refine.Frontend.ThirdPartyViews
+import Refine.Frontend.Test.Store
 
 
 spec :: Spec
@@ -121,6 +124,83 @@ spec = do
       -- retrieve rawcontent and check inline styles against literal.
       -- see also: https://github.com/facebook/draft-js/issues/325#issuecomment-273915121
 
+
+    describe "componentDidMount" $ do
+      let test :: HasCallStack => Expectation
+          test = do
+            reactFluxWorkAroundThreadDelay 0.5
+            resetState (emptyGlobalState & gsDevState .~ Just (DevState []))
+            -- FIXME: without the call to 'reactFluxWorkAroundThreadDelay' above, this fails.  why?!
+            -- FIXME: resetState here is taking more than 0.1 seconds to stabilize.  why?!
+            -- (both these are left-overs from when this was still a test on the mark_ component.  try again!)
+
+            storeShouldEventuallyBe (^?! gsDevState . _Just . devStateTrace) []
+
+            -- let cvdoc = ...
+            -- executeAction $ OpenDocument cvdoc
+            -- _ <- mount $ document_ (... cvdoc)
+            -- if that works, try skipping the delay above.  or reducing it.
+
+            pending
+            storeShouldEventuallyContain (^?! gsDevState . _Just . devStateTrace)
+              [ContributionAction (AddMarkPosition (ContribIDNote (ID 77)) (MarkPosition 0 0))]
+
+      it "dispatches ScheduleAddMarkPosition only once" $ test
+
+
+    describe "mouse-over" $ do
+      context "no mouse-over" $ do
+        it "does not highlight anything" $ do
+          wrapper <- shallow $ document_ emptyDocumentProps
+          is wrapper (StringSelector ".o-mark--hover") `shouldReturn` False
+
+      context "mouse-over on mark" $ do
+        it "highlights the correct mark" $ do
+          pending
+
+        it "highlights one associated bubble" $ do
+          pending
+
+        it "highlights two associated bubbles" $ do
+          pending
+
+        it "does not highlight the other marks" $ do
+          pending
+
+        it "does not highlight other bubbles" $ do
+          pending
+
+      context "mouse-over on bubble" $ do
+        it "highlights the bubble" $ do
+          pending
+
+        it "highlights associated mark" $ do
+          pending
+
+        it "highlights associated bubble" $ do
+          pending
+
+        it "does not highlight the other marks" $ do
+          pending
+
+        it "does not highlight other bubbles" $ do
+          pending
+
+      it "inserts the id of the current mark into the state on mouseEnter and removes it again on mouseLeave" $ do
+        pending
+
+        {- the old test on rfMark_ looked like this:
+        pendingWith "fails very sporadically"
+
+        wrapper <- mount $ rfMark_ theProps mempty
+        _ <- simulate wrapper MouseEnter
+        storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) $ Just (cnid 77)
+        _ <- simulate wrapper MouseLeave
+        storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) Nothing
+        -}
+
+
+-- * helpers
 
 foreign import javascript unsafe
     "refine_test$testConvertFromToRaw($1)"
