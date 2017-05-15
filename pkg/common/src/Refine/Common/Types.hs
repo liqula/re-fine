@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 module Refine.Common.Types (module R) where
 
 import Refine.Common.Types.Chunk        as R

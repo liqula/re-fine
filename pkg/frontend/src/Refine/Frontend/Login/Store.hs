@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 module Refine.Frontend.Login.Store where
 
 import Control.Lens ((&), (.~))

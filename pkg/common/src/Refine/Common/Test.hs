@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE FlexibleInstances   #-}

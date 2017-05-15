@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns          #-}
 {-# LANGUAGE CPP                   #-}
 {-# LANGUAGE DeriveGeneric         #-}

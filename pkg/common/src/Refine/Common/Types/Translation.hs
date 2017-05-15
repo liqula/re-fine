@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}

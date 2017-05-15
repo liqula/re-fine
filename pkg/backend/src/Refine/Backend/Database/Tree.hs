@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 module Refine.Backend.Database.Tree where
 
 import Control.Arrow ((&&&), first)

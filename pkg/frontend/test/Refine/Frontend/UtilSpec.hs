@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 module Refine.Frontend.UtilSpec where
 
 import Test.Hspec

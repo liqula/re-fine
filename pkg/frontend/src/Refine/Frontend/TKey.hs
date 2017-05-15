@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 module Refine.Frontend.TKey where
 
 import Refine.Common.Types.Translation

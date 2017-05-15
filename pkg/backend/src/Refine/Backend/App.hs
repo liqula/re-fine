@@ -1,4 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude          #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}

@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE LambdaCase #-}
 
 module Refine.Backend.Database.TreeSpec where

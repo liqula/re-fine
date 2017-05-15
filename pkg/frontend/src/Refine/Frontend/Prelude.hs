@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 module Refine.Frontend.Prelude (module P) where
 
 import Data.JSString as P

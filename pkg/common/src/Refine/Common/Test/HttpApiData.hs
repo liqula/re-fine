@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE GADTs                     #-}
 
 module Refine.Common.Test.HttpApiData where

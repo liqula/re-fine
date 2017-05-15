@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 module Refine.Frontend.Test.Enzyme.Class.Internal where
 
 import Data.JSString (pack)

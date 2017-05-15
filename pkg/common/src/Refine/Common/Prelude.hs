@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 module Refine.Common.Prelude (module P) where
 
 import Data.Aeson as P

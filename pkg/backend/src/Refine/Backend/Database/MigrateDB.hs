@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 module Refine.Backend.Database.MigrateDB where
 
 import Control.Monad.Except

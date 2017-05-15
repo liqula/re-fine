@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 -- FUTUREWORK: release this file as a library
 
 {-# LANGUAGE TypeFamilies               #-}
