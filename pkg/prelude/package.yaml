@@ -19,19 +19,27 @@ dependencies:
   - aeson
   - base
   - basic-sop
+  - bytestring
   - containers
+  - data-default
   - deepseq
+  - functor-infix
   - generics-sop
   - http-api-data
   - json-sop
   - lens
+  - monad-control
   - mtl
   - natural-transformation
   - process
   - servant
+  - stm
   - string-conversions
   - template-haskell
+  - text
   - time
+  - transformers
+  - unordered-containers
 
 library:
   source-dirs: src

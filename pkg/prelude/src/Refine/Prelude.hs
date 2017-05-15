@@ -15,8 +15,11 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Prelude
-  ( -- * generic json
-    gtoJSONDef
+  ( -- * things we need often enough
+    module P
+
+    -- * generic json
+  , gtoJSONDef
   , gparseJSONDef
 
     -- * time
@@ -57,25 +60,50 @@ module Refine.Prelude
   , Recursion(..), recursion
   ) where
 
-import           Control.Lens
-import           Control.Monad (foldM)
-import           Control.Monad.Except (MonadError(..))
-import           Data.Char (isSpace)
-import           Data.Function (on)
-#if __GLASGOW_HASKELL__ >= 800
-import           Data.List (replicate, sortBy)
-#else
-import           Data.List (sortBy)
-#endif
-#if __GLASGOW_HASKELL__ >= 800
-import           Data.Monoid ((<>))
-#endif
+import Control.Applicative as P
+import Control.Arrow as P ((&&&), (***), first, second)
+import Control.Category as P
+import Control.Exception as P (SomeException(..), ErrorCall(ErrorCall), throwIO, try, catch, assert)
+import Control.Lens as P (Iso', Prism', Lens', Getter, (&), (^.), (^?), (^?!), (.~), (%~), _1, _2, _3, at, to, has, _Just, makeLenses, makePrisms, view, set, iso, prism', lengthOf, folded, filtered)
+import Control.Monad as P ((>=>), (<=<), mapM, mapM_, forM, forM_, void, foldM, join, when, unless)
+import Control.Monad.Except as P (MonadError(..), ExceptT, runExceptT, throwError)
+import Control.Monad.IO.Class as P (MonadIO, liftIO)
+import Control.Monad.Reader.Class as P (MonadReader, ask, asks)
+import Control.Monad.State.Class as P (MonadState, state, modify, get, gets)
+import Control.Monad.STM as P
+import Control.Monad.Trans.Class as P
+import Control.Monad.Trans.Control as P
+import Control.Monad.Trans.Identity as P
+import Control.Monad.Trans.State as P (StateT, runStateT)
+import Control.Natural as P (($$), unwrapNT)
+import Data.Char as P (isSpace, toUpper, toLower)
+import Data.Coerce as P (coerce)
+import Data.Data as P (Data)
+import Data.Default as P (Default(def))
+import Data.Either as P (either)
+import Data.Function as P (on)
+import Data.Functor.Infix as P ((<$$>))
+import Data.List as P ((\\), foldl', sort, nub, sortBy, insertBy, replicate)
+import Data.Maybe as P (catMaybes, fromMaybe, fromJust, isJust, isNothing, maybeToList, listToMaybe)
+import Data.Monoid as P
+import Data.Proxy as P
+import Data.String as P
+import Data.String.Conversions as P
+import Data.Time as P
+import Data.Typeable as P (Typeable, typeOf)
+import Data.Void as P
+import GHC.Generics as P (Generic)
+import GHC.Stack as P (HasCallStack)
+import Prelude as P hiding ((.), id)
+import Text.Read as P (readEither, readMaybe)
+import Web.HttpApiData as P (ToHttpApiData, FromHttpApiData, toUrlPiece, parseUrlPiece)
+import Data.IntMap.Strict as P (IntMap)
+import Data.Map.Strict as P (Map)
+import Data.Set as P (Set)
+
 import           Data.Ord
 import qualified Data.Set as Set
-import           Data.Time
 import           Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
-import           Data.Void
-import qualified GHC.Generics as GHC
 
 import Refine.Prelude.Generic
 import Refine.Prelude.TH
@@ -86,7 +114,7 @@ import Refine.Prelude.TH
 -- * time
 
 newtype Timestamp = Timestamp { _unTimestamp :: UTCTime }
-  deriving (Eq, Ord, GHC.Generic)
+  deriving (Eq, Ord, Generic)
 
 makeRefineType ''Timestamp
 
@@ -127,7 +155,7 @@ data Timespan =
   | TimespanMins  Integer
   | TimespanHours Integer
   | TimespanDays  Integer
-  deriving (Eq, Ord, Show, Read, GHC.Generic)
+  deriving (Eq, Ord, Show, Read, Generic)
 
 makeRefineType ''Timespan
 
@@ -259,3 +287,65 @@ recursion f = go
       Run  y -> go y
       Fail e -> throwError e
       Halt r -> pure r
+
+
+{-
+
+-- prelude
+
+-- CPP-if(DDEBUG)
+import Debug.Trace as P
+
+
+-- common
+
+import Data.Aeson as P
+import Data.Aeson.Types as P
+import Generics.SOP as P
+import Generics.SOP.JSON as P
+import Generics.SOP.NFData as P
+import Refine.Prelude as P
+import Servant.API as P
+import Servant as P
+import Servant.Utils.Enter as P
+import Servant.Utils.Links as P (safeLink)
+
+
+-- backend
+
+import Database.Persist as P
+import Database.Persist.Sql as P
+import Database.Persist.Sqlite as P
+import Database.Persist.TH as P
+import Database.SQLite.Simple as P
+import Database.SQLite.Simple.FromRow as P
+import Data.Yaml as P
+import Network.HTTP.Types as P
+import Network.HTTP.Types.Status as P
+import Network.URI as P
+import Network.Wai as P
+import Network.Wai.Handler.Warp as P
+import Refine.Common.Prelude as P
+import Servant.Cookie.Session as P
+import Servant.Server.Internal as P
+import System.Directory as P
+import System.Environment as P
+import System.Exit as P
+import System.FilePath as P
+import System.IO as P
+import System.IO.Temp as P
+import System.Process as P
+
+
+-- frontend
+
+import Data.JSString as P
+import GHCJS.Foreign.Callback as P (Callback, asyncCallback)
+import GHCJS.Marshal as P
+import GHCJS.Marshal.Pure as P
+import GHCJS.Types as P
+import React.Flux.Addons.Servant as P
+import React.Flux as P
+import Refine.Common.Prelude as P
+
+-}

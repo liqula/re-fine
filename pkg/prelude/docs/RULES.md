@@ -85,6 +85,25 @@ tested -- commit your other changes first!):
 find . -name '*.hs' -exec perl -i -ne 'if (/^({-# LANGUAGE )(\S+)( #-})$/) { printf("$1%26.26s$3\n", $2."                          "); } else { print }' {} \;
 ```
 
+### qualified imports
+
+Re-exporting qualified imports together with their qualification is
+not supported by the GHC module system.  Here is a list of defaults to
+cut&paste into new modules:
+
+```haskell
+import qualified Data.ByteString as SBS
+import qualified Data.ByteString.Lazy as LBS
+import qualified Data.HashMap.Lazy as LHM
+import qualified Data.HashMap.Strict as SHM
+import qualified Data.IntMap as IntMap
+import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
+import qualified Data.Text as ST
+import qualified Data.Text.IO as ST
+import qualified Data.Text.Lazy as LT
+```
+
 
 ### module imports
 
