@@ -43,7 +43,7 @@ import           Data.List (nub, sortBy, insertBy)
 import qualified Data.List as List
 import           Data.Map (Map)
 import qualified Data.Map as Map
-import           Data.Maybe (catMaybes, fromMaybe, maybeToList)
+import           Data.Maybe (catMaybes, fromMaybe, fromJust, maybeToList)
 import           Data.Monoid ((<>))
 import           Data.Set (Set)
 import qualified Data.Set as Set
@@ -337,12 +337,18 @@ entityRangeIsEmpty (_, j) = j == 0
 -- backend :-).  The 'RawContent' is needed to convert block keys to block numbers and back.  This
 -- function isn't total, but all undefined values are internal errors`.
 chunkRangeToSelectionState :: RawContent -> ChunkRange -> SelectionState
-chunkRangeToSelectionState (RawContent bs _) (ChunkRange s e) = SelectionState False (trans s) (trans e)
+chunkRangeToSelectionState (RawContent bs _) (ChunkRange s e) = SelectionState False (maybe top trans s) (maybe bottom trans e)
   where
-    trans (Just (ChunkPoint (DataUID blocknum) offset)) = SelectionPoint blockkey offset
+    trans (ChunkPoint (DataUID blocknum) offset) = SelectionPoint blockkey offset
       where
         Just blockkey = (bs !! blocknum) ^. blockKey
-    trans bad = error $ "chunkRangeToSelectionState: impossibel: " <> show bad
+
+    top :: SelectionPoint
+    top = SelectionPoint (fromJust $ head bs ^. blockKey) 0
+
+    bottom :: SelectionPoint
+    bottom = SelectionPoint (fromJust $ last bs ^. blockKey) (ST.length $ last bs ^. blockText)
+
 
 -- | See 'chunkRangeToSelectionState'.
 selectionStateToChunkRange :: RawContent -> SelectionState -> ChunkRange
