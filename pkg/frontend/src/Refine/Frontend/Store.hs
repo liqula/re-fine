@@ -69,7 +69,9 @@ instance StoreData GlobalState where
     transform = loop . (:[])
       where
         -- FUTUREWORK: we don't need this loop trick, we can implement reDispatch much more
-        -- straight-forwardly as @forkIO . dispatchM@.  (change this only when switching to a future
+        -- straight-forwardly as @forkIO . dispatchM@.
+        --
+        -- (see also 'dispatchAndExec' below. change this only when switching to a future
         -- version of react-flux that has a monad-constraint-based interface.  then we'll have
         -- @MonadState GlobalState@ here and probably can get rid of the need for redispatch
         -- altogether, because it will be more easy to just apply a local state modification
@@ -352,12 +354,12 @@ reDispatchManyM :: MonadState [GlobalAction] m => [GlobalAction] -> m ()
 reDispatchManyM as = modify (<> as)
 
 dispatchAndExec :: MonadIO m => GlobalAction -> m ()
-dispatchAndExec a = liftIO . reactFluxWorkAroundForkIO $ do
+dispatchAndExec a = liftIO . void . forkIO $ do
   () <- executeAction `mapM_` dispatch a
   pure ()
 
 dispatchAndExecMany :: MonadIO m => [GlobalAction] -> m ()
-dispatchAndExecMany as = liftIO . reactFluxWorkAroundForkIO $ do
+dispatchAndExecMany as = liftIO . void . forkIO $ do
   () <- executeAction `mapM_` dispatchMany as
   pure ()
 
