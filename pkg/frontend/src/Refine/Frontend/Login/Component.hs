@@ -26,7 +26,7 @@ module Refine.Frontend.Login.Component where
 import           Control.Lens ((&), (.~), (^.), ASetter, to)
 import           Data.Default (def)
 import           Data.JSString (JSString)
-import qualified Data.Text as DT
+import qualified Data.Text as ST
 import           Data.String.Conversions (ST)
 import           GHC.Generics (Generic)
 import           GHCJS.Marshal (FromJSVal)
@@ -87,14 +87,14 @@ makeRefineType ''RegistrationForm
 -- the boolean" in `createChunkRangeErrors`, and I quite liked it, as it gives you more informative
 -- error messages when you need them.  See also: 'invalidRegistrationForm'.
 invalidLoginForm :: LoginForm -> Bool
-invalidLoginForm form = form ^. loginFormUsername . to DT.null || form ^. loginFormPassword . to DT.null
+invalidLoginForm form = form ^. loginFormUsername . to ST.null || form ^. loginFormPassword . to ST.null
 
 invalidRegistrationForm :: RegistrationForm -> Bool
 invalidRegistrationForm form =
   or [ form ^. registrationFormEmail1 /= form ^. registrationFormEmail2
-     , form ^. registrationFormUsername . to DT.null
-     , form ^. registrationFormEmail1 . to DT.null
-     , form ^. registrationFormPassword . to DT.null
+     , form ^. registrationFormUsername . to ST.null
+     , form ^. registrationFormEmail1 . to ST.null
+     , form ^. registrationFormPassword . to ST.null
      , form ^. registrationFormAgree . to not
      ]
 

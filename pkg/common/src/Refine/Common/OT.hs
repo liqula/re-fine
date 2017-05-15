@@ -14,12 +14,13 @@
 module Refine.Common.OT where
 
 import           Data.Monoid
+import           Data.String.Conversions (ST)
 import qualified Data.Set as Set
 import           Data.Function
 import           Data.List
 import           Control.Arrow
 import qualified Data.Algorithm.Patience as Diff
-import qualified Data.Text as Text
+import qualified Data.Text as ST
 import           GHC.Generics hiding (Rep)
 import           Data.Aeson
 import           Data.Coerce
@@ -323,10 +324,10 @@ instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit [a])
 
 ---------------------------------------- StrictText instance
 
-instance Editable Text.Text where
-    newtype EEdit Text.Text = EText {unEText :: EEdit String}
+instance Editable ST where
+    newtype EEdit ST = EText {unEText :: EEdit String}
         deriving (Generic, Show)
-    docCost = Text.length
+    docCost = ST.length
     eCost = eCost . unEText
 
     -- | Data.Algorithm.Patience.diff is used from the patience package
@@ -341,21 +342,21 @@ instance Editable Text.Text where
     -- diff (replicate 1000 'a') (replicate 1000 'b')
     -- diff (take 1000 ['a'..]) (take 1000 ['A'..])
     -- diff (take 1000 ['A'..]) (take 1000 ['a'..])
-    diff a b = f 0 $ Diff.diff (Text.unpack a) (Text.unpack b)
+    diff a b = f 0 $ Diff.diff (ST.unpack a) (ST.unpack b)
       where
         f !n (Diff.Both{}: es) = f (n+1) es
         f n (Diff.New c: es) = EText (InsertItem n c): f (n+1) es
         f n (Diff.Old{}: es) = EText (DeleteItem n): f n es
         f _ [] = []
-    ePatch e = Text.pack . ePatch (coerce e) . Text.unpack
-    patch e = Text.pack . patch (coerce e) . Text.unpack
-    eMerge d a b = coerce $ eMerge (Text.unpack d) (coerce a) (coerce b)
-    merge d a b = coerce $ merge (Text.unpack d) (coerce a) (coerce b)
-    eInverse d = coerce . eInverse (Text.unpack d) . coerce
-    inverse d = coerce . inverse (Text.unpack d) . coerce
+    ePatch e = ST.pack . ePatch (coerce e) . ST.unpack
+    patch e = ST.pack . patch (coerce e) . ST.unpack
+    eMerge d a b = coerce $ eMerge (ST.unpack d) (coerce a) (coerce b)
+    merge d a b = coerce $ merge (ST.unpack d) (coerce a) (coerce b)
+    eInverse d = coerce . eInverse (ST.unpack d) . coerce
+    inverse d = coerce . inverse (ST.unpack d) . coerce
 
-instance ToJSON (EEdit Text.Text)
-instance FromJSON (EEdit Text.Text)
+instance ToJSON (EEdit ST)
+instance FromJSON (EEdit ST)
 
 ---------------------------------------- Set instance
 

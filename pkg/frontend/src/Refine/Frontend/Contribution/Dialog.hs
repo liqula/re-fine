@@ -31,7 +31,7 @@ import           Data.JSString (JSString)
 import           Data.Maybe (isNothing)
 import qualified Data.Map.Strict as M
 import           Data.Monoid ((<>))
-import qualified Data.Text as DT
+import qualified Data.Text as ST
 import qualified Data.Tree as Tree
 import           React.Flux
 
@@ -364,7 +364,7 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
           elemString "Step 3: "
           span_ ["className" $= "bold"] "finish"
 
-      let notATextOrKind = 0 == DT.length (curState ^. commentInputStateText)
+      let notATextOrKind = 0 == ST.length (curState ^. commentInputStateText)
                         || isNothing (props ^. acpCommentKind)
         in iconButton_ $ def @IconButtonProps
           & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") L

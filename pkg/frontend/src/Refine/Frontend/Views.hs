@@ -31,7 +31,7 @@ module Refine.Frontend.Views
 import           Control.Lens ((^.), (^?), at, _Just)
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)
-import qualified Data.Tree as DT
+import qualified Data.Tree as ST
 import           React.Flux
 
 import           Refine.Common.Types
@@ -123,7 +123,7 @@ leftAside = mkView "LeftAside" $ \props ->
                                                  (props ^. asideHighlightedBubble)
                                                  (props ^. asideScreenState)
                                                )
-                                               (elemText (DT.rootLabel (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
+                                               (elemText (ST.rootLabel (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
                       (props ^. asideDiscussions)
         mconcat $ map (\n -> noteBubble_ (SpecialBubbleProps
                                            (ContribIDNote (n ^. noteID))
