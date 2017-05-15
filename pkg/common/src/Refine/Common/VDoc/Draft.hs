@@ -455,13 +455,9 @@ addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (st
       bad  -> error $ "addMarkToBlock: impossible: " <> show bad
 
 
--- | See 'mkSomeSegments' (@payload@ is 'Style').
+-- | See 'mkSomeSegments' (@payload@ is 'Style').  (See 'rawContentToDoc' for another use of 'mkSomeSegments'.)
 mkInlineStyleSegments :: [(EntityRange, Style)] -> [(Int, Set Style)]
 mkInlineStyleSegments = mkSomeSegments fst snd
-
--- | See 'mkSomeSegments' (@payload@ is 'Entity').
-mkEntitySegments :: [(EntityKey, EntityRange)] -> IntMap.IntMap Entity -> [(Int, Set Entity)]
-mkEntitySegments eranges entities = mkSomeSegments snd ((entities IntMap.!) . coerce . fst) eranges
 
 -- | Take two accessors and a list of things carrying a range and a payload each.  Ranges can
 -- overlap.  Compute a list of non-overlapping segments, starting at @offset == 0@, consisting of
