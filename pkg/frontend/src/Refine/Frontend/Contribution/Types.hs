@@ -46,17 +46,6 @@ newtype CommentInputState = CommentInputState
   } deriving (Show, Eq, Generic)
 
 
--- | Mark positions updates have experienced long cascades of changing values for the same
--- 'ContributionID'.  Now the 'ScheduleAddMarkPosition' handler will store new additions in a
--- separate `scheduled` map, and a 'DischargeAddMarkPositions' will be dispatched with a delay.  If
--- the 'DischargeAddMarkPositions' handler finds something in the `scheduled` map, it will add those
--- and remove them there; otherwise it will do nothing.
---
--- TODO: We should find out where the cascades actually come from and find a better fix: (1) the
--- instances of 'Eq', 'FromJSON', 'ToJSON' do not consider the '_markPositionsScheduled' field,
--- which is necessary for the 'DischargeAddMarkPositions' hack to work, but confusing; (2) we're
--- still receiving too many 'ScheduleAddMarkPosition' actions, and should rather figure out how to
--- only fire those that are necessary.
 newtype MarkPositions = MarkPositions { _markPositionsMap :: M.Map ContributionID MarkPosition }
   deriving (Show, Eq, Generic)
 
