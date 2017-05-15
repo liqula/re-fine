@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -41,7 +40,5 @@ module Refine.Frontend.Test.Enzyme.Class
  , lengthOfIO
  , consoleLogWrapper
  ) where
-
-import Refine.Frontend.Prelude
 
 import Refine.Frontend.Test.Enzyme.Class.Internal

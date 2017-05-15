@@ -25,14 +25,6 @@ module Refine.Backend.Test.AppRunner where
 
 import Refine.Backend.Prelude
 
-import Control.Category
-import Control.Lens
-import Control.Monad (void)
-import Control.Monad.Except
-import Control.Natural
-import Data.Default
-import Prelude hiding ((.), id)
-import System.Directory
 import Test.Hspec
 import Test.QuickCheck
 
@@ -46,7 +38,6 @@ import Refine.Backend.Server
 import Refine.Backend.Test.Util
 import Refine.Backend.Types
 import Refine.Backend.User
-import Refine.Prelude
 
 
 provideAppRunner :: ActionWith (AppM DB UH a -> IO a) -> IO ()

@@ -31,9 +31,6 @@ module Refine.Frontend.ThirdPartyViews
 
 import Refine.Frontend.Prelude
 
-import GHCJS.Types
-import React.Flux
-
 
 -- TODO: test that this doesn't crash because the foreign object is not loaded.  this has bitten us
 -- at least twice in the past.

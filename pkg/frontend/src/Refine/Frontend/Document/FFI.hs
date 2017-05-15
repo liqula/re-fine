@@ -61,12 +61,7 @@ module Refine.Frontend.Document.FFI
 
 import Refine.Frontend.Prelude
 
-import qualified Data.Aeson as Aeson
-import           Data.String.Conversions
-import           GHCJS.Types (JSString, JSVal)
-
 import qualified Refine.Common.VDoc.Draft as Draft
-import           Refine.Frontend.CS ()
 import           Refine.Frontend.Document.FFI.Types
 import           Refine.Prelude.Aeson (NoJSONRep(NoJSONRep))
 
@@ -75,7 +70,7 @@ import           Refine.Prelude.Aeson (NoJSONRep(NoJSONRep))
 
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#convertfromraw
 convertFromRaw :: Draft.RawContent -> ContentState
-convertFromRaw = js_convertFromRaw . cs . Aeson.encode
+convertFromRaw = js_convertFromRaw . cs . encode
 
 foreign import javascript unsafe
     "Draft.convertFromRaw(JSON.parse($1))"
@@ -83,7 +78,7 @@ foreign import javascript unsafe
 
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#converttoraw
 convertToRaw :: ContentState -> Draft.RawContent
-convertToRaw = either (error . ("convertToRaw: " <>)) id . Aeson.eitherDecode . cs . js_convertToRaw
+convertToRaw = either (error . ("convertToRaw: " <>)) id . eitherDecode . cs . js_convertToRaw
 
 foreign import javascript unsafe
     "JSON.stringify(Draft.convertToRaw($1))"

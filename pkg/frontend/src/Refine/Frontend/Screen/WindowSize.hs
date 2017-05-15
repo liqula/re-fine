@@ -25,11 +25,8 @@ module Refine.Frontend.Screen.WindowSize where
 
 import Refine.Frontend.Prelude
 
-import           Data.Monoid ((<>))
-import           React.Flux
-import           React.Flux.Outdated
+import           React.Flux.Outdated as RF
 import           GHCJS.Foreign.Callback (Callback, asyncCallback)
-import           GHCJS.Types (JSString)
 
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
@@ -56,7 +53,7 @@ windowSize = defineLifecycleView "WindowSize" () lifecycleConfig
    }
 
 windowSize_ :: WindowSizeProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-windowSize_ = view windowSize
+windowSize_ = RF.view windowSize
 
 setWindowSize :: IO ()
 setWindowSize = dispatchAndExec . ScreenAction . SetWindowWidth =<< js_getWindowWidth

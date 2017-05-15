@@ -23,10 +23,6 @@ module Refine.Common.Types.Process where
 
 import Refine.Common.Prelude
 
-import Control.Lens (Lens')
-import Data.String.Conversions (ST)
-import GHC.Generics
-
 import Refine.Common.Types.Prelude (ID(..), MetaID, miID, Create)
 import Refine.Common.Types.Group (Group, GroupRef)
 import Refine.Common.Types.VDoc (VDoc, CompositeVDoc)

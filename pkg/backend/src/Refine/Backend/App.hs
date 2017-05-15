@@ -1,5 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -10,6 +8,7 @@
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
@@ -29,13 +28,8 @@ module Refine.Backend.App
 
 import Refine.Backend.Prelude
 
-import Control.Monad.Except
-import Control.Monad.Reader
-import Control.Monad.State
-import Control.Natural
 import System.FilePath (FilePath)
 
-import Refine.Backend.Prelude
 import Refine.Backend.App.Comment     as App
 import Refine.Backend.App.Core        as App
 import Refine.Backend.App.Group       as App
@@ -46,7 +40,6 @@ import Refine.Backend.App.User        as App
 import Refine.Backend.App.VDoc        as App
 import Refine.Backend.Logger
 import Refine.Backend.Types (CsrfSecret)
-import Refine.Prelude
 
 
 runApp

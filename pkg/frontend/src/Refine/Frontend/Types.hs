@@ -25,13 +25,7 @@ module Refine.Frontend.Types where
 
 import Refine.Frontend.Prelude
 
-import Data.Char (toLower)
-import Data.JSString (JSString)
-import Data.String.Conversions
-import GHC.Generics (Generic)
-
 import Refine.Common.Types
-import Refine.Frontend.CS ()
 import Refine.Prelude.TH (makeRefineType)
 
 

@@ -27,11 +27,6 @@ module Refine.Frontend.Icon
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens ((^.), _1, _2)
-import           Data.Monoid ((<>))
-import           GHCJS.Types (JSString)
-import           React.Flux
-
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Style
 import           Refine.Frontend.Types

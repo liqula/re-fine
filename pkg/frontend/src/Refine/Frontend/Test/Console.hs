@@ -37,14 +37,6 @@ where
 
 import Refine.Frontend.Prelude
 
-import Control.Monad.IO.Class
-import Data.Aeson (ToJSON, encode)
-import Data.JSString ()  -- instance IsString JSString
-import Data.String.Conversions (ConvertibleStrings, cs, (<>), ST)
-import GHCJS.Types (JSVal, JSString)
-
-import Refine.Frontend.CS ()
-
 
 consoleLogJSStringM :: (Monad m) => JSString -> JSString -> m ()
 consoleLogJSStringM msg val = consoleLogJSString msg val `seq` pure ()

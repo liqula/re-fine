@@ -1,7 +1,4 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 module Refine.Frontend.Test.Enzyme.Class.Internal where
-
-import Refine.Frontend.Prelude
 
 import Data.JSString (pack)
 import GHCJS.Marshal.Pure

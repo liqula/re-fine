@@ -19,10 +19,6 @@ module Refine.Prelude
   ( -- * things we need often enough
     module P
 
-    -- * generic json
-  , gtoJSONDef
-  , gparseJSONDef
-
     -- * time
   , Timestamp(..), unTimestamp
   , timestampToEpoch
@@ -64,19 +60,20 @@ module Refine.Prelude
 import Control.Applicative as P
 import Control.Arrow as P ((&&&), (***), first, second)
 import Control.Category as P
-import Control.Exception as P (SomeException(..), ErrorCall(ErrorCall), throwIO, try, catch, assert)
-import Control.Lens as P (Iso', Prism', Lens', Getter, (&), (^.), (^?), (^?!), (.~), (%~), _1, _2, _3, at, to, has, _Just, makeLenses, makePrisms, view, set, iso, prism', lengthOf, folded, filtered)
-import Control.Monad as P ((>=>), (<=<), mapM, mapM_, forM, forM_, void, foldM, join, when, unless)
-import Control.Monad.Except as P (MonadError(..), ExceptT, runExceptT, throwError)
+import Control.Exception as P (SomeException(..), ErrorCall(ErrorCall), throwIO, try, catch, assert, mask, onException)
+import Control.Lens as P (Iso', Prism', Lens', Getter, (&), (^.), (^?), (^?!), (.~), (%~), (.=), (%=), _1, _2, _3, at, to, has, _Just, makeLenses, makePrisms, view, set, iso, prism', lengthOf, folded, filtered)
+import Control.Monad as P ((>=>), (<=<), mapM, mapM_, forM, forM_, void, foldM, join, when, unless, guard)
+import Control.Monad.Except as P (MonadError(..), Except, runExcept, ExceptT(..), runExceptT, throwError)
 import Control.Monad.IO.Class as P (MonadIO, liftIO)
-import Control.Monad.Reader.Class as P (MonadReader, ask, asks)
-import Control.Monad.State.Class as P (MonadState, state, modify, get, gets)
+import Control.Monad.Reader.Class as P (MonadReader(..), ask, asks)
+import Control.Monad.State.Class as P (MonadState(..), state, modify, get, gets)
 import Control.Monad.STM as P
 import Control.Monad.Trans.Class as P
 import Control.Monad.Trans.Control as P
 import Control.Monad.Trans.Identity as P
-import Control.Monad.Trans.State as P (StateT, runStateT)
-import Control.Natural as P (($$), unwrapNT)
+import Control.Monad.Trans.Reader as P (Reader, runReader, ReaderT(..), runReaderT)
+import Control.Monad.Trans.State as P (State, runState, StateT(..), runStateT, evalStateT)
+import Control.Natural as P (($$), (:~>)(NT), unwrapNT)
 import Data.Char as P (isSpace, toUpper, toLower)
 import Data.Coerce as P (coerce)
 import Data.Data as P (Data)
@@ -91,7 +88,7 @@ import Data.Proxy as P
 import Data.String as P
 import Data.String.Conversions as P
 import Data.Time as P
-import Data.Typeable as P (Typeable, typeOf)
+import Data.Typeable as P (Typeable, typeOf, typeRep)
 import Data.Void as P
 import GHC.Generics as P (Generic)
 import GHC.Stack as P (HasCallStack)
@@ -106,8 +103,10 @@ import           Data.Ord
 import qualified Data.Set as Set
 import           Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 
-import Refine.Prelude.Generic
-import Refine.Prelude.TH
+import Refine.Prelude.Aeson as P
+import Refine.Prelude.BuildInfo as P
+import Refine.Prelude.Generic as P
+import Refine.Prelude.TH as P hiding (typeOf)
 
 {-# ANN module "HLint: ignore Use cs" #-}
 

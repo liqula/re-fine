@@ -23,29 +23,16 @@
 
 module Refine.Backend.ServerSpec where
 
-import Refine.Backend.Prelude
+import Refine.Backend.Prelude hiding (Header)
 
-import           Control.Exception (throwIO, ErrorCall(ErrorCall))
-import           Control.Lens ((^.), (.~), (&), to)
-import           Control.Monad.IO.Class (liftIO)
-import           Control.Monad.Trans.Except (runExceptT)
-import           Control.Monad (void)
-import           Control.Natural (unwrapNT)
-import           Data.Aeson (FromJSON, ToJSON, decode, eitherDecode, encode)
 import qualified Data.ByteString as SBS
-import           Data.Default (def)
-import           Data.Proxy (Proxy(Proxy))
-import           Data.Typeable (Typeable, typeOf)
-import           Data.Map (elems)
-import           Data.String.Conversions (SBS, LBS, cs, (<>))
-import           Network.HTTP.Types.Status (Status(statusCode))
+import qualified Data.Map as Map
 import           Network.HTTP.Types (Method, Header, methodGet)
+import           Network.HTTP.Types.Status (Status(statusCode))
 import           Network.URI (URI, uriToString)
 import           Network.Wai (requestMethod, requestHeaders, defaultRequest)
 import           Network.Wai.Test (SRequest(..), SResponse(..))
 import qualified Network.Wai.Test as Wai
-import           Prelude hiding ((.))
-import           Servant.Utils.Links (safeLink)
 import           Test.Hspec
 
 import Refine.Backend.App as App
@@ -61,7 +48,6 @@ import Refine.Common.ChangeAPI
 import Refine.Common.Rest
 import Refine.Common.Types as Common
 import Refine.Common.VDoc.Draft
-import Refine.Prelude (getCurrentTimestamp)
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
@@ -118,17 +104,17 @@ sampleCreateVDoc = CreateVDoc
 respCode :: SResponse -> Int
 respCode = statusCode . simpleStatus
 
-get :: SBS -> Wai.Session SResponse
-get path = request methodGet path [] ""
+wget :: SBS -> Wai.Session SResponse
+wget path = request methodGet path [] ""
 
 post :: (ToJSON a) => SBS -> a -> Wai.Session SResponse
-post path json = request "POST" path [("Content-Type", "application/json")] (encode json)
+post path js = request "POST" path [("Content-Type", "application/json")] (encode js)
 
 postJSON :: forall a b . (Typeable a, ToJSON a, FromJSON b) => SBS -> a -> Wai.Session b
-postJSON path json = do
-  resp <- request "POST" path [("Content-Type", "application/json")] (encode json)
+postJSON path js = do
+  resp <- request "POST" path [("Content-Type", "application/json")] (encode js)
   liftIO $ case eitherDecode $ simpleBody resp of
-    Left err -> throwIO . ErrorCall $ unlines [cs path, show (typeOf json), show resp, show err]
+    Left err -> throwIO . ErrorCall $ unlines [cs path, show (typeOf js), show resp, show err]
     Right x  -> pure x
 
 -- | This is from hspec-wai, but we modified it to work on 'Wai.Session' directly.  'WaiSession'
@@ -188,27 +174,27 @@ specMockedLogin :: Spec
 specMockedLogin = around createDevModeTestSession $ do
   describe "sListVDocs" $ do
     it "returns a vdocs list with HTTP status 200" $ \sess -> do
-      resp :: SResponse <- runWai sess $ get listVDocsUri
+      resp :: SResponse <- runWai sess $ wget listVDocsUri
       respCode resp `shouldBe` 200
 
     it "yields the same vdocs list as the db" $ \sess -> do
-      vdocsRest :: SResponse <- runWai sess $ get listVDocsUri
+      vdocsRest :: SResponse <- runWai sess $ wget listVDocsUri
       vdocsDB   :: [VDoc]    <- runDB  sess   App.listVDocs
       decode (simpleBody vdocsRest) `shouldBe` Just vdocsDB
 
     it "if a vdoc is created, it shows in the output" $ \sess -> do
-      bef <- runWai sess $ get listVDocsUri
+      bef <- runWai sess $ wget listVDocsUri
       _   <- runDB  sess $ App.createVDoc sampleCreateVDoc
-      aft <- runWai sess $ get listVDocsUri
-      let check :: SResponse -> Int
-          check resp = either (\msg -> error $ unwords [show msg, cs $ simpleBody resp]) length
+      aft <- runWai sess $ wget listVDocsUri
+      let test :: SResponse -> Int
+          test resp = either (\msg -> error $ unwords [show msg, cs $ simpleBody resp]) length
                        $ eitherDecode @[VDoc] (simpleBody resp)
-      check aft `shouldBe` (check bef + 1)
+      test aft `shouldBe` (test bef + 1)
 
   describe "sGetVDoc" $ do
     it "retrieves a vdoc" $ \sess -> do
       vdoc <- runDB sess $ App.createVDoc sampleCreateVDoc
-      resp <- runWai sess . get $ getVDocUri (vdoc ^. vdocID)
+      resp <- runWai sess . wget $ getVDocUri (vdoc ^. vdocID)
       respCode resp `shouldBe` 200
 
   describe "sCreateVDoc" $ do
@@ -222,28 +208,28 @@ specMockedLogin = around createDevModeTestSession $ do
       runWai sess $ do
         un :: Username <- postJSON loginUri $ Login "username" "password"
         liftIO $ un `shouldBe` "username"
-        fe :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
-        fn :: Note          <- postJSON
-            (addNoteUri (fe ^. compositeVDoc . vdocHeadEdit))
+        fe_ :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
+        fn_ :: Note          <- postJSON
+            (addNoteUri (fe_ ^. compositeVDoc . vdocHeadEdit))
             (CreateNote "[note]" True (ChunkRange Nothing Nothing))
         liftIO $ do
-          be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
-          be ^. compositeVDocNotes . to elems `shouldContain` [fn]
+          be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe_ ^. compositeVDoc . vdocID)
+          be ^. compositeVDocNotes . to Map.elems `shouldContain` [fn_]
 
     it "stores note with non-trivial valid chunk range" $ \sess -> do
       runWai sess $ do
         un :: Username <- postJSON loginUri $ Login "username" "password"
         liftIO $ un `shouldBe` "username"
-        fe :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
+        fe_ :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
         let cp1 = ChunkPoint (DataUID 1) 0
             cp2 = ChunkPoint (DataUID 1) 1
-        fn :: Note <- postJSON
-          (addNoteUri (fe ^. compositeVDoc . vdocHeadEdit))
+        fn_ :: Note <- postJSON
+          (addNoteUri (fe_ ^. compositeVDoc . vdocHeadEdit))
           (CreateNote "[note]" True (ChunkRange (Just cp1) (Just cp2)))
 
         liftIO $ do
-          be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
-          be ^. compositeVDocNotes . to elems `shouldContain` [fn]
+          be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe_ ^. compositeVDoc . vdocID)
+          be ^. compositeVDocNotes . to Map.elems `shouldContain` [fn_]
 
     it "fails with error on non-trivial *invalid* chunk range" $ \sess -> do
       vdoc :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
@@ -268,15 +254,15 @@ specMockedLogin = around createDevModeTestSession $ do
       runWai sess $ do
         un :: Username <- postJSON loginUri $ Login "username" "password"
         liftIO $ un `shouldBe` "username"
-        fe :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
-        fn :: CompositeDiscussion <-
+        fe_ :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
+        fn_ :: CompositeDiscussion <-
           postJSON
-            (addDiscussionUri (fe ^. compositeVDoc . vdocHeadEdit))
+            (addDiscussionUri (fe_ ^. compositeVDoc . vdocHeadEdit))
             (CreateDiscussion "[discussion initial statement]" True (ChunkRange Nothing Nothing))
 
         liftIO $ do
-          be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
-          be ^. compositeVDocDiscussions . to elems `shouldContain` [fn]
+          be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe_ ^. compositeVDoc . vdocID)
+          be ^. compositeVDocDiscussions . to Map.elems `shouldContain` [fn_]
 
   describe "sAddStatement" $ do
     it "stores statement for given discussion" $ \_sess -> do
@@ -325,7 +311,7 @@ specMockedLogin = around createDevModeTestSession $ do
         pendingWith "applicableEdits is not implemented."
         (fe, fp) <- setup sess
         be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
-        be ^. compositeVDocEdits . to elems`shouldContain` [fp]
+        be ^. compositeVDocEdits . to Map.elems`shouldContain` [fp]
 
 specUserHandling :: Spec
 specUserHandling = around createTestSession $ do

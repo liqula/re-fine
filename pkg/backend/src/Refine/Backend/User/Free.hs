@@ -31,11 +31,7 @@ module Refine.Backend.User.Free (
 
 import Refine.Backend.Prelude
 
-import Control.Monad.Except
 import Control.Monad.Free
-import Control.Natural
-import Data.String.Conversions (ST)
-import Data.Time (NominalDiffTime)
 
 import Refine.Backend.User.Class
 import Refine.Backend.User.Core

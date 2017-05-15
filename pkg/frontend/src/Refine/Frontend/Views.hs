@@ -31,18 +31,14 @@ module Refine.Frontend.Views
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens ((^.), (^?), at, _Just)
 import qualified Data.Map.Strict as M
-import           Data.Maybe (fromJust)
 import qualified Data.Tree as ST
-import           React.Flux
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.QuickCreate
 import           Refine.Frontend.Contribution.Types as RS
-import           Refine.Frontend.CS ()
 import           Refine.Frontend.Document.Document
 import           Refine.Frontend.Document.Types (DocumentProps(DocumentProps))
 import           Refine.Frontend.Header.Heading (mainHeader_)

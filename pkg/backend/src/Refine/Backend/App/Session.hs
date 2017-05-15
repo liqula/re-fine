@@ -28,10 +28,6 @@ module Refine.Backend.App.Session where
 
 import Refine.Backend.Prelude
 
-import Control.Lens
-import Control.Monad.Except (throwError)
-import Control.Monad.State (gets)
-
 import Refine.Backend.App.Core
 import Refine.Backend.Types
 import Refine.Common.Types.Prelude (ID, User)

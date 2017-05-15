@@ -28,22 +28,16 @@ module Refine.Frontend.Contribution.Dialog where
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens (makeLenses, (^.), (^?), (&), (.~), at, _Just)
-import           Data.Default (def)
-import           Data.JSString (JSString)
-import           Data.Maybe (isNothing)
 import qualified Data.Map.Strict as M
-import           Data.Monoid ((<>))
 import qualified Data.Text as ST
 import qualified Data.Tree as Tree
-import           React.Flux
+import qualified React.Flux as RF
 
 import           Refine.Common.Types
 import           Refine.Frontend.Test.Console (gracefulError)
 import           Refine.Frontend.ThirdPartyViews (skylight_)
 import           Refine.Frontend.Contribution.Types
 import qualified Refine.Frontend.Colors as C
-import           Refine.Frontend.CS
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Screen.Types
@@ -117,8 +111,8 @@ showComment = mkView "ShowComment" $ \props ->
                     , StylePx "minHeight" 100
                     ]
   in skylight_ ["isVisible" &= True
-           , on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideCommentOverlay)
-           , on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentOverlay)
+           , RF.on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideCommentOverlay)
+           , RF.on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentOverlay)
            , "dialogStyles" @= ((props ^. contentStyle) <> extraStyles)
            , "overlayStyles" @= overlayStyles
            , "closeButtonStyle" @= [StylePx "top" 0, StylePx "bottom" 0]
@@ -282,8 +276,8 @@ addComment __ = mkView "AddComment" $ \props -> if not (props ^. acpVisible) the
                       , StylePx "height" 560
                       ]
     in skylight_ ["isVisible" &= True
-             , on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideCommentEditor)
-             , on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentEditor)
+             , RF.on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideCommentEditor)
+             , RF.on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentEditor)
              , "dialogStyles" @= (vdoc_overlay_content__add_comment <> extraStyles)
              , "overlayStyles" @= overlayStyles
              , "titleStyle" @= [StylePx "margin" 0]
@@ -357,7 +351,7 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
                                , StylePx "height" 240
                                ]
                   -- Update the current state with the current text in the textbox, sending no actions
-                  , onChange $ \evt state -> ([], Just $ state & commentInputStateText .~ target evt "value")
+                  , onChange $ \evt st -> ([], Just $ st & commentInputStateText .~ target evt "value")
                   ] mempty
 
       hr_ []

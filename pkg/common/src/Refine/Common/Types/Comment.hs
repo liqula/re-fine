@@ -28,7 +28,6 @@ import GHC.Generics (Generic)
 
 import Refine.Common.Types.Chunk
 import Refine.Common.Types.Prelude
-import Refine.Prelude.TH
 
 
 type CommentText = ST  -- FIXME: refactor VDocVersion to be more general and use that.

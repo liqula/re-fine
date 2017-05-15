@@ -24,8 +24,6 @@ module Refine.Backend.App.GroupSpec where
 
 import Refine.Backend.Prelude
 
-import Control.Lens
-import Control.Monad (join, void)
 import Test.Hspec
 
 import Refine.Backend.App.Core  as App

@@ -7,7 +7,6 @@ import Test.Hspec
 
 import Refine.Prelude ()
 import Refine.Frontend.Util (toClasses)
-import Refine.Frontend.CS ()
 
 
 spec :: Spec

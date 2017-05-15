@@ -26,14 +26,8 @@ module Refine.Frontend.Login.Component where
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens ((&), (.~), (^.), ASetter, to)
-import           Data.Default (def)
-import           Data.JSString (JSString)
+import           Control.Lens (ASetter)
 import qualified Data.Text as ST
-import           Data.String.Conversions (ST)
-import           GHC.Generics (Generic)
-import           GHCJS.Marshal (FromJSVal)
-import           React.Flux
 
 import           Refine.Common.Types.Prelude
 import           Refine.Frontend.Login.Types
@@ -42,7 +36,6 @@ import           Refine.Frontend.Style
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
 import           Refine.Prelude.TH (makeRefineType)
-import           Refine.Frontend.CS (elemCS)
 
 
 -- * Helper
@@ -55,7 +48,7 @@ inputFieldWithKey fieldId fieldType fieldPlaceholder fieldKey lens =
   input_ [ "id" $= fieldId
          , "type" $= fieldType
          , "placeholder" $= fieldPlaceholder
-         , onChange $ \evt state -> ([], Just (state & lens .~ target evt fieldKey))
+         , onChange $ \evt st -> ([], Just (st & lens .~ target evt fieldKey))
          ]
 
 inputField

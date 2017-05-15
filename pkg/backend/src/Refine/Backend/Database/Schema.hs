@@ -30,9 +30,7 @@ import Refine.Backend.Prelude
 import Control.Elim
 import Data.String.Conversions (ST)
 import Data.Text hiding (group)
-import Database.Persist
 import Database.Persist.Sql hiding (Statement)
-import Database.Persist.TH
 import Web.Users.Persistent (LoginId) -- Same as Refine.Backend.User.LoginId, but that produced an import cycle.
                                       -- "Refine.Backend.User.Types" could be introduced instead.
 

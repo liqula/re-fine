@@ -23,11 +23,8 @@
 
 module Refine.Frontend.IconSpec where
 
-import Refine.Frontend.Prelude
+import Refine.Frontend.Prelude hiding (S)
 
-import Control.Lens ((&), (.~))
-import Data.JSString (JSString)
-import Data.String.Conversions (cs)
 import Test.Hspec
 
 import qualified Refine.Frontend.Colors as Color

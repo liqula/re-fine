@@ -3,8 +3,6 @@ module Refine.Backend.Database.MigrateDB where
 
 import Refine.Backend.Prelude
 
-import Control.Monad.Except
-import Data.String.Conversions (ST)
 import Database.Persist.Sql
 
 import Refine.Backend.Database.Core

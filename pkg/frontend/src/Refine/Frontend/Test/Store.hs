@@ -27,9 +27,7 @@ module Refine.Frontend.Test.Store where
 import Refine.Frontend.Prelude
 
 import           Control.Concurrent
-import           Data.List
-import           GHC.Stack (HasCallStack)
-import           React.Flux
+import           Data.List (isInfixOf)
 import           Test.Hspec
 
 import           Refine.Frontend.Store

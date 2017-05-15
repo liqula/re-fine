@@ -24,7 +24,6 @@ import Refine.Common.Prelude
 import GHC.Generics (Generic)
 
 import Refine.Common.Types.Prelude
-import Refine.Prelude.TH
 
 
 data CreateVote = CreateVote

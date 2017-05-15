@@ -29,11 +29,6 @@ module Refine.Frontend.Contribution.Bubble
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens ((^.), to)
-import           Data.Monoid ((<>))
-import           Data.JSString
-import           Data.String.Conversions (cs)
-import           React.Flux hiding (callback)
 import           Web.HttpApiData (toUrlPiece)
 
 import           Refine.Common.Types.Contribution

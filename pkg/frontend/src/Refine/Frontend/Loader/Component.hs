@@ -25,10 +25,6 @@ module Refine.Frontend.Loader.Component (vdocLoader_, VDocLoaderProps(..)) where
 
 import Refine.Frontend.Prelude
 
-import           Data.Monoid ((<>))
-import           Data.String.Conversions (cs)
-import           GHC.Generics (Generic)
-import           React.Flux
 import           Web.HttpApiData (toUrlPiece)
 
 import           Refine.Common.Types

@@ -29,11 +29,6 @@ module Refine.Frontend.Header.UserLoginLogout where
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens ((&), (.~))
-import           Data.String.Conversions (cs)
-import           Data.Default (def)
-import           React.Flux
-
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types

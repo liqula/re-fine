@@ -28,34 +28,16 @@ where
 
 import Refine.Common.Prelude
 
-import           Control.Arrow (second)
-import           Control.Exception (assert)
-import           Control.Lens (makeLenses, view, set, (^.), (&), (%~), _Just, to, (^?!))
-import           Control.Monad (foldM)
-import           Control.Monad.State
-import           Data.Aeson
-import           Data.Aeson.Types (Parser)
 import           Data.Foldable (toList)
-import           Data.Function (on)
-import           Data.Functor.Infix ((<$$>))
 import qualified Data.HashMap.Lazy as HashMap
-import           Data.IntMap (IntMap)
 import qualified Data.IntMap as IntMap
-import           Data.List (nub, sortBy, insertBy)
 import qualified Data.List as List
-import           Data.Map (Map)
 import qualified Data.Map as Map
-import           Data.Maybe (catMaybes, fromMaybe, fromJust, maybeToList)
-import           Data.Monoid ((<>))
-import           Data.Set (Set)
 import qualified Data.Set as Set
-import           Data.String.Conversions
 import qualified Data.Text as ST
-import           GHC.Generics hiding (to)
 import           Web.HttpApiData (toUrlPiece, parseUrlPiece)
 
 import Refine.Common.Types
-import Refine.Prelude.TH hiding (typeOf)
 
 
 -- * data types
@@ -166,11 +148,11 @@ makeNFData ''BlockType
 
 instance ToJSON RawContent where
   toJSON (RawContent blocks entitymap) = object
-    [ "blocks"    .= blocks
-    , "entityMap" .= renderEntityMap entitymap
+    [ "blocks"    .:= blocks
+    , "entityMap" .:= renderEntityMap entitymap
     ]
     where
-      renderEntityMap m = object [ cs (show a) .= b | (a, b) <- IntMap.toList m ]
+      renderEntityMap m = object [ cs (show a) .:= b | (a, b) <- IntMap.toList m ]
 
 instance FromJSON RawContent where
   parseJSON = withObject "RawContent" $ \obj -> RawContent
@@ -184,16 +166,16 @@ instance FromJSON RawContent where
 
 instance ToJSON (Block EntityKey) where
   toJSON (Block content ranges styles ty depth key) = object $
-    [ "text"              .= content
-    , "entityRanges"      .= (renderRange <$> ranges)
-    , "inlineStyleRanges" .= (renderStyle <$> styles)
-    , "depth"             .= depth  -- ^ (if certain BlockType values force this field to be 0, move this field there.)
-    , "type"              .= ty
+    [ "text"              .:= content
+    , "entityRanges"      .:= (renderRange <$> ranges)
+    , "inlineStyleRanges" .:= (renderStyle <$> styles)
+    , "depth"             .:= depth  -- ^ (if certain BlockType values force this field to be 0, move this field there.)
+    , "type"              .:= ty
     ] <>
-    [ "key" .= k | k <- maybeToList key ]
+    [ "key" .:= k | k <- maybeToList key ]
     where
-      renderRange (k, (o, l)) = object ["key"   .= k, "length" .= l, "offset" .= o]
-      renderStyle ((o, l), s) = object ["style" .= s, "length" .= l, "offset" .= o]
+      renderRange (k, (o, l)) = object ["key"   .:= k, "length" .:= l, "offset" .:= o]
+      renderStyle ((o, l), s) = object ["style" .:= s, "length" .:= l, "offset" .:= o]
 
 instance FromJSON (Block EntityKey) where
   parseJSON = withObject "Block EntityKey" $ \obj -> Block
@@ -234,9 +216,9 @@ instance FromJSON BlockType where
 
 instance ToJSON Entity where
   toJSON (EntityLink url) = object
-    [ "type"            .= ("LINK" :: ST)
-    , "mutability"      .= ("MUTABLE" :: ST)
-    , "data"            .= object ["url" .= url]
+    [ "type"            .:= ("LINK" :: ST)
+    , "mutability"      .:= ("MUTABLE" :: ST)
+    , "data"            .:= object ["url" .:= url]
     ]
 
 instance FromJSON Entity where

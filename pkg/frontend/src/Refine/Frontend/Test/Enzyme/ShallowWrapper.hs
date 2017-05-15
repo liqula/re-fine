@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -29,8 +28,6 @@ module Refine.Frontend.Test.Enzyme.ShallowWrapper
   , shallowChild -- known as "shallow" in Enzyme
   , module R
   ) where
-
-import Refine.Frontend.Prelude
 
 import GHCJS.Marshal.Pure
 import GHCJS.Types (JSVal, nullRef)

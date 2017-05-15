@@ -23,8 +23,6 @@ module Refine.Common.Types.Role where
 
 import Refine.Common.Prelude
 
-import GHC.Generics
-
 import Refine.Prelude.TH (makeRefineType)
 
 

@@ -45,8 +45,6 @@ module Refine.Backend.User.Core
 import Refine.Backend.Prelude
 
 import Control.Lens (makeLenses)
-import Control.Monad.Except
-import Control.Natural
 import Database.Persist.Sql
 import GHC.Generics (Generic)
 import Web.Users.Types (CreateUserError(..), SessionId(..), PasswordPlain(..), User(..), makePassword)

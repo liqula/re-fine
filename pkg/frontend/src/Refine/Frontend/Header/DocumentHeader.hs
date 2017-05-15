@@ -27,12 +27,9 @@ module Refine.Frontend.Header.DocumentHeader where
 
 import Refine.Frontend.Prelude
 
-import           Data.String.Conversions
-import           Data.Text (split)
-import           React.Flux
+import qualified Data.Text as ST
 
 import           Refine.Common.Types
-import           Refine.Frontend.CS ()
 
 
 data DocumentHeaderProps = DocumentHeaderProps
@@ -68,7 +65,7 @@ instance UnoverlapAllEq Abstract
 documentAbstract :: View '[Abstract]
 documentAbstract = mkView "DocumentAbstract" $ \abstract ->
   div_ ["className" $= "c-vdoc-header__description"] $ do
-    let paragraphs = split (== '\n') . cs $ _unAbstract abstract
+    let paragraphs = ST.split (== '\n') . cs $ _unAbstract abstract
     div_ ["className" $= "c-vdoc-header__description"] . mconcat $ (p_ . elemText) <$> paragraphs
 
 documentAbstract_ :: Abstract -> ReactElementM eventHandler ()

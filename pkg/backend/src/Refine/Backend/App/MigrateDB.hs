@@ -26,9 +26,6 @@ module Refine.Backend.App.MigrateDB where
 
 import Refine.Backend.Prelude
 
-import Control.Lens
-import Data.Monoid ((<>))
-
 import Refine.Backend.Config
 import Refine.Backend.App.Core
 import Refine.Backend.Database.Core

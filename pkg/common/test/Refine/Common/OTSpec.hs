@@ -18,13 +18,10 @@ module Refine.Common.OTSpec where
 
 import Refine.Common.Prelude
 
-import           Data.Monoid
-import           Data.Typeable
 import qualified Data.Set as Set
-import           Control.Monad
-import           Test.QuickCheck
+import qualified Data.Text as ST
 import           Test.Hspec
-import qualified Data.Text as Text
+import           Test.QuickCheck
 
 import Refine.Common.OT
 import Refine.Common.Test.Arbitrary ()
@@ -210,8 +207,8 @@ instance (GenEdit a) => GenEdit [a] where
 
 ---------------------------------------- Strict text instance
 
-instance GenEdit Text.Text where
-    genEdit = fmap (map EText) . genEdit . Text.unpack
+instance GenEdit ST where
+    genEdit = fmap (map EText) . genEdit . ST.unpack
 
 
 ---------------------------------------- Set instance
@@ -282,7 +279,7 @@ spec = parallel $ do
     runTest $ allTests @(Set.Set [ADigit])
     runTest $ allTests @[Set.Set ADigit]
     runTest $ allTests @(Set.Set (Set.Set ADigit))
-    runTest $ allTests @Text.Text
+    runTest $ allTests @ST
     runTest $ allTests @Char
 
     runTest $ fastTests @[[ADigit]]

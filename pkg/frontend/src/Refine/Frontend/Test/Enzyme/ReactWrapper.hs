@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -28,8 +27,6 @@ module Refine.Frontend.Test.Enzyme.ReactWrapper
   -- * enzyme functions on ReactWrapper
   , module R
   ) where
-
-import Refine.Frontend.Prelude
 
 import GHCJS.Marshal.Pure
 import GHCJS.Types (JSVal, nullRef)

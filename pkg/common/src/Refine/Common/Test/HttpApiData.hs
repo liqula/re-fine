@@ -5,11 +5,8 @@ module Refine.Common.Test.HttpApiData where
 
 import Refine.Common.Prelude
 
-import Data.String.Conversions (cs)
-import Data.Typeable (Typeable, typeOf)
 import Test.Hspec
 import Test.QuickCheck
-import Web.HttpApiData
 
 import Refine.Common.Test.Arbitrary ()
 

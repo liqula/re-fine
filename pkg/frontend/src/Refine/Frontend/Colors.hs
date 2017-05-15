@@ -23,8 +23,6 @@
 
 module Refine.Frontend.Colors where
 
-import Refine.Frontend.Prelude
-
 import Refine.Frontend.Style
 
 {-

@@ -26,10 +26,7 @@ module Refine.Frontend.MainMenu.Component where
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens
-import           Data.Default (def)
 import           Data.Text.I18n (Locale(..))
-import           React.Flux
 
 import           Refine.Frontend.Header.UserLoginLogout (userLoginLogoutButton_)
 import           Refine.Frontend.Login.Types
@@ -39,7 +36,6 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
-import           Refine.Prelude()
 
 
 topMenuBarInMainMenu :: View '[TopMenuBarInMainMenuProps]

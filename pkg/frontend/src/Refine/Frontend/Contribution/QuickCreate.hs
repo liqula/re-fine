@@ -28,10 +28,6 @@ module Refine.Frontend.Contribution.QuickCreate where
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens ((^.), (&), (.~))
-import           Data.Default (def)
-import           React.Flux
-
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Icon
@@ -41,7 +37,6 @@ import Refine.Frontend.Screen.Types
 import Refine.Frontend.Store
 import Refine.Frontend.Store.Types
 import Refine.Frontend.Types
-import Refine.Prelude ()
 
 
 instance UnoverlapAllEq QuickCreateProps

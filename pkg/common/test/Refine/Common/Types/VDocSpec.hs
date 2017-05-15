@@ -25,13 +25,8 @@ module Refine.Common.Types.VDocSpec where
 
 import Refine.Common.Prelude
 
-import           Control.Exception (assert)
-import           Control.Lens ((^.), (%~), view, _1, _2, _3)
-import           Data.Functor.Infix ((<$$>))
-import           Data.List as List
-import           Data.Map as Map
-import           Data.String.Conversions
-import           Data.Typeable
+import qualified Data.List as List
+import qualified Data.Map as Map
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
@@ -45,7 +40,7 @@ import Refine.Common.VDoc.Draft
 rawContentToCompositeVDoc :: RawContentWithSelections -> CompositeVDoc
 rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
     = assert (length selections == length es + length ns + length ds)
-    $ CompositeVDoc un un vers (fromList es) (fromList ns) (fromList ds)
+    $ CompositeVDoc un un vers (Map.fromList es) (Map.fromList ns) (Map.fromList ds)
   where
     un = undefined
     vers = rawContentToVDocVersion rawContent
@@ -140,8 +135,8 @@ spec = do
     describe "adds inline styles at the correct offsets" $ do
       let rawContent = initBlockKeys $ mkRawContent [mkBlock "wef"]
 
-          check :: EntityRange -> Spec
-          check (i, j) = it (show (i, j)) $ do
+          test :: EntityRange -> Spec
+          test (i, j) = it (show (i, j)) $ do
             let marks = [(ContribIDEdit 3, SelectionState False p1 p2)]
                 p1 = SelectionPoint (BlockKey "0") i
                 p2 = SelectionPoint (BlockKey "0") j
@@ -154,13 +149,13 @@ spec = do
 
             have `shouldBe` List.filter (not . entityRangeIsEmpty) <$> want
 
-      check `mapM_` [ (i, j) | i <- [0..3], j <- [0..3], i < j ]
+      test `mapM_` [ (i, j) | i <- [0..3], j <- [0..3], i < j ]
 
     describe "adds inline styles at the correct offsets accross neighboring blocks" $ do
       let rawContent = initBlockKeys $ mkRawContent [mkBlock "wef", mkBlock "1234"]
 
-          check :: EntityRange -> Spec
-          check (i, j) = it (show (i, j)) $ do
+          test :: EntityRange -> Spec
+          test (i, j) = it (show (i, j)) $ do
             let marks = [(ContribIDNote 3, SelectionState False p1 p2)]
                 p1 = SelectionPoint (BlockKey "0") i
                 p2 = SelectionPoint (BlockKey "1") j
@@ -173,13 +168,13 @@ spec = do
 
             have `shouldBe` List.filter (not . entityRangeIsEmpty) <$> want
 
-      check `mapM_` [ (i, j) | i <- [0..3], j <- [0..4] ]
+      test `mapM_` [ (i, j) | i <- [0..3], j <- [0..4] ]
 
     describe "adds inline styles at the correct offsets accross distant blocks" $ do
       let rawContent = initBlockKeys $ mkRawContent [mkBlock "wef", mkBlock "", mkBlock "...", mkBlock "*", mkBlock "1234", mkBlock "????"]
 
-          check :: EntityRange -> Spec
-          check (i, j) = it (show (i, j)) $ do
+          test :: EntityRange -> Spec
+          test (i, j) = it (show (i, j)) $ do
             let marks = [(ContribIDNote 3, SelectionState False p1 p2)]
                 p1 = SelectionPoint (BlockKey "0") i
                 p2 = SelectionPoint (BlockKey "4") j
@@ -192,7 +187,7 @@ spec = do
 
             have `shouldBe` List.filter (not . entityRangeIsEmpty) <$> want
 
-      check `mapM_` [ (i, j) | i <- [0..3], j <- [0..4] ]
+      test `mapM_` [ (i, j) | i <- [0..3], j <- [0..4] ]
 
     it "works when ranges start and/or end on the same point" $ do
       let cid0 = ContribIDNote (ID 13)

@@ -29,13 +29,7 @@ module Refine.Frontend.Document.Document
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens ((^?), (^.), (.~), (&), has, view)
-import           Data.Aeson
-import           Data.Aeson.Types (Pair)
-import           Data.String.Conversions
 import qualified Data.Text as ST
-import           GHCJS.Types
-import           React.Flux
 import qualified React.Flux.Outdated as Outdated
 
 import           Refine.Common.Types
@@ -93,7 +87,7 @@ documentStyleMap (Just rawContent) = object . mconcat $ go <$> marks
     marks = map snd . mconcat $ view blockStyles <$> (rawContent ^. rawContentBlocks)
 
     go :: Style -> [Pair]
-    go s@(Mark cid) = [markToST s .= mksty cid]
+    go s@(Mark cid) = [markToST s .:= mksty cid]
     go _ = []
 
     mksty :: ContributionID -> Value
@@ -104,7 +98,7 @@ documentStyleMap (Just rawContent) = object . mconcat $ go <$> marks
     mksty ContribIDHighlightMark  = bg 255 255 0         0.3
 
     bg :: Int -> Int -> Int -> Double -> Value
-    bg r g b t = object ["background" .= String s]
+    bg r g b t = object ["background" .:= String s]
       where
         s = "rgba(" <> ST.intercalate ", " ((cs . show <$> [r, g, b]) <> [cs . show $ t]) <> ")"
 

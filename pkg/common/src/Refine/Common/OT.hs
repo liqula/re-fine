@@ -16,17 +16,10 @@ module Refine.Common.OT where
 
 import Refine.Common.Prelude
 
-import           Data.Monoid
-import           Data.String.Conversions (ST)
 import qualified Data.Set as Set
-import           Data.Function
 import           Data.List
-import           Control.Arrow
 import qualified Data.Algorithm.Patience as Diff
 import qualified Data.Text as ST
-import           GHC.Generics hiding (Rep)
-import           Data.Aeson
-import           Data.Coerce
 
 ----------------------------------------------------------------------------------------------
 
@@ -300,9 +293,9 @@ instance Editable a => Editable [a] where
     eMerge _ (EditItem i _) (DeleteItem i') | i == i' = ([DeleteItem i], [])      -- information lost!
     eMerge d (DeleteItem i) (EditItem i' x) | i == i' = (InsertItem i (d !! i): editItem i x, [])
     eMerge _ (DeleteItem i) (DeleteItem i') | i == i' = ([], [])
-    eMerge _ a b = (modify 0 a b, modify 1 b a)
+    eMerge _ a b = (mutate 0 a b, mutate 1 b a)
       where
-        modify l e = \case
+        mutate l e = \case
             InsertItem i x -> [InsertItem (di l i) x]
             DeleteItem i   -> [DeleteItem (di 1 i)  ]
             EditItem   i x -> [EditItem   (di 1 i) x]

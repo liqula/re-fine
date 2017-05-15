@@ -25,8 +25,6 @@ module Refine.Frontend.ViewsSpec where
 
 import Refine.Frontend.Prelude
 
-import           Data.String.Conversions
-import           React.Flux
 import           Test.Hspec
 
 import           Refine.Frontend.Test.Enzyme
