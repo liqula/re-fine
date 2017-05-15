@@ -416,4 +416,3 @@ instance (ToJSON a, ToJSON (EEdit a)) => ToJSON (EEdit (Set.Set a))
 instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit (Set.Set a))
 
 ---------------------------------------- FUTUREWORK: Map instance
-
