@@ -46,9 +46,9 @@ import           Refine.Common.Rest (ApiError(..))
 import           Refine.Common.Test.Samples
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
-import           Refine.Frontend.Document.Store (documentStateUpdate, editorStateToVDocVersion)
-import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Document.FFI (getSelection, traceContentInEditorState, traceEditorState)
+import           Refine.Frontend.Document.Store (setMarkPositions, documentStateUpdate, editorStateToVDocVersion)
+import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Login.Store (loginStateUpdate)
@@ -103,6 +103,10 @@ transformGlobalState = transf
         -- other effects
         case action of
             DocumentAction (DocumentUpdate dstate@DocumentStateView{}) -> do
+                liftIO $ do
+                  (\rc -> dispatchAndExec . ContributionAction =<< setMarkPositions rc)
+                    `mapM_` (dstate ^? documentStateContent)
+
                 mRangeEvent <- getRangeAction (state ^. gsDocumentState) dstate
                 case mRangeEvent of
                     Nothing -> pure ()
