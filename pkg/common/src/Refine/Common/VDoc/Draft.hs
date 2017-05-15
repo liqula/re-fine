@@ -32,7 +32,6 @@ import           Control.Monad (foldM)
 import           Control.Monad.State
 import           Data.Aeson
 import           Data.Aeson.Types (Parser)
-import           Data.Coerce (coerce)
 import           Data.Foldable (toList)
 import           Data.Function (on)
 import           Data.Functor.Infix ((<$$>))
