@@ -24,6 +24,8 @@
 
 module Refine.Frontend.MainMenu.Component where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens
 import           Data.Default (def)
 import           Data.Text.I18n (Locale(..))

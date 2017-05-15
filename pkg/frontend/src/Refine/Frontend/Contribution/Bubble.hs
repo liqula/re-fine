@@ -27,6 +27,8 @@ module Refine.Frontend.Contribution.Bubble
   , editBubble_
   ) where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((^.), to)
 import           Data.Monoid ((<>))
 import           Data.JSString

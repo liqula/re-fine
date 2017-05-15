@@ -23,6 +23,8 @@
 
 module Refine.Frontend.Screen.WindowSize where
 
+import Refine.Frontend.Prelude
+
 import           Data.Monoid ((<>))
 import           React.Flux
 import           React.Flux.Outdated

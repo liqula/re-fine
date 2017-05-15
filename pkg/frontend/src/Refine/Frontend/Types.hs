@@ -23,6 +23,8 @@
 
 module Refine.Frontend.Types where
 
+import Refine.Frontend.Prelude
+
 import Data.Char (toLower)
 import Data.JSString (JSString)
 import Data.String.Conversions

@@ -24,6 +24,8 @@
 
 module Refine.Frontend.Header.ToolbarSpec where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens((^.))
 import           Test.Hspec
 

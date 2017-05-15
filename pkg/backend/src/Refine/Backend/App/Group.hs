@@ -25,6 +25,8 @@
 
 module Refine.Backend.App.Group where
 
+import Refine.Backend.Prelude
+
 import Control.Lens ((^.))
 
 import Refine.Backend.App.Core

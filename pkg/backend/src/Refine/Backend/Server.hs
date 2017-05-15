@@ -33,6 +33,8 @@ module Refine.Backend.Server
   , refineApi
   ) where
 
+import Refine.Backend.Prelude
+
 import           Control.Category
 import           Control.Lens ((^.), iso, prism', to)
 import           Control.Monad.Except

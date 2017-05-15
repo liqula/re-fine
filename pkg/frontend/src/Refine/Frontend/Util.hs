@@ -28,6 +28,8 @@
 module Refine.Frontend.Util
 where
 
+import Refine.Frontend.Prelude
+
 import qualified Data.JSString as JSS
 import           Data.String.Conversions
 import           GHCJS.Marshal

@@ -1,6 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude          #-}
 module Refine.Frontend.MainMenu.Store where
 
+import Refine.Frontend.Prelude
+
 import Control.Lens ((&), (.~))
 import Data.String.Conversions (cs)
 

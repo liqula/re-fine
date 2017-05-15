@@ -12,6 +12,8 @@
 
 module Refine.Common.Types.Translation where
 
+import Refine.Common.Prelude
+
 import Control.Lens (Getter, makeLenses, to)
 import Data.String.Conversions (ConvertibleStrings, ST, cs)
 import Data.String (IsString(..))

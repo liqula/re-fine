@@ -27,6 +27,8 @@ module Refine.Frontend.Document.Document
   , defaultEditorProps
   ) where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((^?), (^.), (.~), (&), has, view)
 import           Data.Aeson
 import           Data.Aeson.Types (Pair)

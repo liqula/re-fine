@@ -23,6 +23,8 @@
 
 module Refine.Common.VDoc.DraftSpec where
 
+import Refine.Common.Prelude
+
 import           Control.Lens ((&), (.~))
 import qualified Data.Set as Set
 import           Test.Aeson.GenericSpecs

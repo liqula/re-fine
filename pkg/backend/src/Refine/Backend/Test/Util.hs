@@ -24,6 +24,8 @@
 module Refine.Backend.Test.Util
 where
 
+import Refine.Backend.Prelude
+
 import           System.IO.Temp (withSystemTempDirectory)
 import           System.Directory (withCurrentDirectory)
 import           Data.Time.Format (parseTimeOrError, defaultTimeLocale)

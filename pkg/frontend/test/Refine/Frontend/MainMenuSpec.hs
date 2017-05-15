@@ -23,6 +23,8 @@
 
 module Refine.Frontend.MainMenuSpec where
 
+import Refine.Frontend.Prelude
+
 import           Test.Hspec
 
 import           Refine.Frontend.Login.Types

@@ -26,6 +26,8 @@ module Refine.Frontend.Screen.Store
   ( screenStateUpdate
   ) where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((&), (%~))
 
 import Refine.Frontend.Screen.Types

@@ -23,6 +23,8 @@
 
 module Refine.Frontend.Contribution.DialogSpec where
 
+import Refine.Frontend.Prelude
+
 import           Test.Hspec
 
 import           Refine.Frontend.Contribution.Dialog

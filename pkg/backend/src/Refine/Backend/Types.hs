@@ -23,6 +23,8 @@
 
 module Refine.Backend.Types where
 
+import Refine.Backend.Prelude
+
 import Control.Lens (makeLenses)
 import Data.String.Conversions (ST, cs)
 

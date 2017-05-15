@@ -5,6 +5,8 @@
 
 module Refine.Backend.Database.Field where
 
+import Refine.Backend.Prelude
+
 import Control.Monad ((<=<))
 import Data.Aeson
 import Data.Proxy

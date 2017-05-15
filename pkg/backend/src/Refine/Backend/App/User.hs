@@ -26,6 +26,8 @@
 
 module Refine.Backend.App.User where
 
+import Refine.Backend.Prelude
+
 import           Control.Lens ((^.), view)
 import           Control.Monad (void)
 import           Control.Monad.State (gets)

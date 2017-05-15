@@ -29,6 +29,8 @@
 module Refine.Backend.App.Allow where
 
 
+import Refine.Backend.Prelude
+
 import           Control.Lens ((^.))
 import           Control.Monad.Except (throwError)
 import           Control.Monad (join, unless)

@@ -25,6 +25,8 @@ module Refine.Frontend.Icon
   ( icon_, iconButton_
   ) where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((^.), _1, _2)
 import           Data.Monoid ((<>))
 import           GHCJS.Types (JSString)

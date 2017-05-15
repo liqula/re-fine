@@ -23,6 +23,8 @@
 
 module Refine.Common.Types.VDocSpec where
 
+import Refine.Common.Prelude
+
 import           Control.Exception (assert)
 import           Control.Lens ((^.), (%~), view, _1, _2, _3)
 import           Data.Functor.Infix ((<$$>))

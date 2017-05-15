@@ -24,6 +24,8 @@
 
 module Refine.Frontend.Contribution.Types where
 
+import Refine.Frontend.Prelude
+
 import           Control.DeepSeq
 import           Control.Lens (makeLenses)
 import           Data.Aeson (toJSON, parseJSON, object, (.=), withObject)

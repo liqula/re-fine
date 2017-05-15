@@ -15,6 +15,8 @@
 
 module Refine.Common.Test (module P) where
 
+import Refine.Common.Prelude
+
 import Test.Hspec as P
 import Test.QuickCheck as P
 import Test.QuickCheck.Instances as P ()

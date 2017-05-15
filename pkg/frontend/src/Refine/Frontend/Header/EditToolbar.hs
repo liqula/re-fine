@@ -24,6 +24,8 @@
 
 module Refine.Frontend.Header.EditToolbar where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens
 import           Data.Default (def)
 import           React.Flux

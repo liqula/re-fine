@@ -24,6 +24,8 @@
 
 module Refine.Frontend.Test.Store where
 
+import Refine.Frontend.Prelude
+
 import           Control.Concurrent
 import           Data.List
 import           GHC.Stack (HasCallStack)

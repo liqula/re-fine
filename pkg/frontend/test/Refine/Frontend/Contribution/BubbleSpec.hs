@@ -24,6 +24,8 @@
 
 module Refine.Frontend.Contribution.BubbleSpec where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((^.), (&), (.~))
 import           Data.Int (Int64)
 import           Test.Hspec

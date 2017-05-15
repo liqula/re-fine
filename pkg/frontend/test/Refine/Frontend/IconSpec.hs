@@ -23,6 +23,8 @@
 
 module Refine.Frontend.IconSpec where
 
+import Refine.Frontend.Prelude
+
 import Control.Lens ((&), (.~))
 import Data.JSString (JSString)
 import Data.String.Conversions (cs)

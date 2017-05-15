@@ -23,6 +23,8 @@
 
 module Refine.Backend.ServerSpec where
 
+import Refine.Backend.Prelude
+
 import           Control.Exception (throwIO, ErrorCall(ErrorCall))
 import           Control.Lens ((^.), (.~), (&), to)
 import           Control.Monad.IO.Class (liftIO)

@@ -5,6 +5,8 @@
 
 module Refine.Common.Types.Group where
 
+import Refine.Common.Prelude
+
 import Control.Lens (Lens')
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)

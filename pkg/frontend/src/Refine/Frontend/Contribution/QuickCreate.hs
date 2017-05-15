@@ -26,6 +26,8 @@
 
 module Refine.Frontend.Contribution.QuickCreate where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((^.), (&), (.~))
 import           Data.Default (def)
 import           React.Flux

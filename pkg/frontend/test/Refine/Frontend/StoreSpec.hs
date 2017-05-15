@@ -25,6 +25,8 @@
 
 module Refine.Frontend.StoreSpec where
 
+import Refine.Frontend.Prelude
+
 import Control.Lens ((^.))
 import Data.Aeson (encode)
 import React.Flux (transform)

@@ -26,6 +26,8 @@
 module Refine.Common.VDoc.Draft
 where
 
+import Refine.Common.Prelude
+
 import           Control.Arrow (second)
 import           Control.Exception (assert)
 import           Control.Lens (makeLenses, view, set, (^.), (&), (%~), _Just, to, (^?!))

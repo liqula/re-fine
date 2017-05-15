@@ -15,6 +15,8 @@
 
 module Refine.Common.Test.Arbitrary where
 
+import Refine.Common.Prelude
+
 import           Control.Arrow (first, second)
 import           Control.Lens (Lens', (^.), (^?!), (.~), (%~), (&), _Just, view, _1, _2)
 import           Control.Monad.State

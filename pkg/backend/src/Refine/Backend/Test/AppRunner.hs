@@ -23,6 +23,8 @@
 
 module Refine.Backend.Test.AppRunner where
 
+import Refine.Backend.Prelude
+
 import Control.Category
 import Control.Lens
 import Control.Monad (void)

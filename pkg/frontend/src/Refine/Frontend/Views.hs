@@ -29,6 +29,8 @@ module Refine.Frontend.Views
   , mainScreen_
   ) where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((^.), (^?), at, _Just)
 import qualified Data.Map.Strict as M
 import           Data.Maybe (fromJust)

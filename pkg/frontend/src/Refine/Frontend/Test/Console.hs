@@ -35,6 +35,8 @@ module Refine.Frontend.Test.Console
   )
 where
 
+import Refine.Frontend.Prelude
+
 import Control.Monad.IO.Class
 import Data.Aeson (ToJSON, encode)
 import Data.JSString ()  -- instance IsString JSString

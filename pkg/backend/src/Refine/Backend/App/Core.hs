@@ -50,6 +50,8 @@ module Refine.Backend.App.Core (
   , appLog
   ) where
 
+import Refine.Backend.Prelude
+
 import Control.Exception (SomeException, try)
 import Control.Lens (makeLenses, view)
 import Control.Monad.Except

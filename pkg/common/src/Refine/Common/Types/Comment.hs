@@ -19,6 +19,8 @@
 
 module Refine.Common.Types.Comment where
 
+import Refine.Common.Prelude
+
 import Control.Lens (Lens')
 import Data.String.Conversions (ST)
 import Data.Tree (Tree)

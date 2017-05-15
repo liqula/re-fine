@@ -42,4 +42,6 @@ module Refine.Frontend.Test.Enzyme.Class
  , consoleLogWrapper
  ) where
 
+import Refine.Frontend.Prelude
+
 import Refine.Frontend.Test.Enzyme.Class.Internal

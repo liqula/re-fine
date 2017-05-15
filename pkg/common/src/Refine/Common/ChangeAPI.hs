@@ -23,6 +23,8 @@
 -- "Refine.Common.Types.Group".
 module Refine.Common.ChangeAPI where
 
+import Refine.Common.Prelude
+
 import GHC.Generics
 
 import Refine.Common.Types.Role

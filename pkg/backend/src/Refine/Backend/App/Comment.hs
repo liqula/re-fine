@@ -25,6 +25,8 @@
 
 module Refine.Backend.App.Comment where
 
+import Refine.Backend.Prelude
+
 import Control.Lens ((^.))
 
 import Refine.Common.Types.Comment

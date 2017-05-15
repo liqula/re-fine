@@ -42,6 +42,8 @@ module Refine.Backend.User.Core
   , makePassword
   ) where
 
+import Refine.Backend.Prelude
+
 import Control.Lens (makeLenses)
 import Control.Monad.Except
 import Control.Natural

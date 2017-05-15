@@ -23,6 +23,8 @@
 
 module Refine.Frontend.Screen.Calculations where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((^.))
 
 import           Refine.Frontend.Types

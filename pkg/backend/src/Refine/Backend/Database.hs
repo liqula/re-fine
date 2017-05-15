@@ -31,6 +31,8 @@ module Refine.Backend.Database
   , createDBNat
   ) where
 
+import Refine.Backend.Prelude
+
 import Control.Exception
 import Control.Lens ((^.))
 import Control.Monad.Except

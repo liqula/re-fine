@@ -26,6 +26,8 @@ module Refine.Frontend.Header.Store
   ( headerStateUpdate
   ) where
 
+import Refine.Frontend.Prelude
+
 import Control.Lens ((&), (%~))
 
 import Refine.Frontend.Header.Types

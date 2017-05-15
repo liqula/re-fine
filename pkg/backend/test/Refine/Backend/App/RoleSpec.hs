@@ -22,6 +22,8 @@
 {-# LANGUAGE ViewPatterns               #-}
 module Refine.Backend.App.RoleSpec where
 
+import Refine.Backend.Prelude
+
 import Control.Lens
 import Control.Monad (join, forM_)
 import Data.List (sort, nub, (\\))

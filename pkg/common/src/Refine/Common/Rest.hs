@@ -20,6 +20,8 @@
 module Refine.Common.Rest where
 
 
+import Refine.Common.Prelude
+
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 import Servant.API

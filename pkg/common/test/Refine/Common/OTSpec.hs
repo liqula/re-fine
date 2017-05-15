@@ -16,6 +16,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans       #-}
 module Refine.Common.OTSpec where
 
+import Refine.Common.Prelude
+
 import           Data.Monoid
 import           Data.Typeable
 import qualified Data.Set as Set

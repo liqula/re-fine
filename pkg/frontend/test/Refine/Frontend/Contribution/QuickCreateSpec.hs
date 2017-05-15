@@ -23,6 +23,8 @@
 
 module Refine.Frontend.Contribution.QuickCreateSpec where
 
+import Refine.Frontend.Prelude
+
 import Test.Hspec
 
 import           Refine.Common.Types

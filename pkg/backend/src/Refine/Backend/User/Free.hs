@@ -29,6 +29,8 @@ module Refine.Backend.User.Free (
   , mockLogin
   ) where
 
+import Refine.Backend.Prelude
+
 import Control.Monad.Except
 import Control.Monad.Free
 import Control.Natural

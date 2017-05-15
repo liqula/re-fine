@@ -26,6 +26,8 @@
 
 module Refine.Frontend.Contribution.Dialog where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens (makeLenses, (^.), (^?), (&), (.~), at, _Just)
 import           Data.Default (def)
 import           Data.JSString (JSString)

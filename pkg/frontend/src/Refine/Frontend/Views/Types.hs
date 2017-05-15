@@ -24,6 +24,8 @@
 
 module Refine.Frontend.Views.Types where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens (makeLenses)
 import           React.Flux (UnoverlapAllEq)
 

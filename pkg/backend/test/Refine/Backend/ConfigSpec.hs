@@ -23,6 +23,8 @@
 
 module Refine.Backend.ConfigSpec where
 
+import Refine.Backend.Prelude
+
 import qualified Data.Aeson as Aeson
 import           Test.Hspec
 

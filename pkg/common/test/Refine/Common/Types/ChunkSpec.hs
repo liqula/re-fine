@@ -21,6 +21,8 @@
 
 module Refine.Common.Types.ChunkSpec where
 
+import Refine.Common.Prelude
+
 import           Control.Lens
 import           Control.Monad
 import           Test.Hspec

@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude          #-}
 module Refine.Backend.Prelude (module P) where
 
+import Refine.Backend.Prelude
 import Database.Persist as P hiding (get, insertBy)
 import Database.Persist.Sql as P hiding (get, insertBy)
 import Database.Persist.Sqlite as P hiding (get, insertBy)

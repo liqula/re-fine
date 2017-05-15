@@ -6,6 +6,8 @@
 
 module Refine.Backend.Config where
 
+import Refine.Backend.Prelude
+
 import           Control.Exception (throwIO, ErrorCall(ErrorCall))
 import           Control.Lens (makeLenses, makePrisms, (&), (^.))
 import           Data.Aeson (FromJSON, ToJSON, object, withObject, (.=), (.:))

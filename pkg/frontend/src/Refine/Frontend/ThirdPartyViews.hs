@@ -29,6 +29,8 @@ module Refine.Frontend.ThirdPartyViews
   , editor_
   ) where
 
+import Refine.Frontend.Prelude
+
 import GHCJS.Types
 import React.Flux
 

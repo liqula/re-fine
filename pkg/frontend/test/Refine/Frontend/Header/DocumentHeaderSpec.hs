@@ -24,6 +24,8 @@
 
 module Refine.Frontend.Header.DocumentHeaderSpec where
 
+import Refine.Frontend.Prelude
+
 import Test.Hspec
 
 import Refine.Common.Types

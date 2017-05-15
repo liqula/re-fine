@@ -24,6 +24,8 @@
 
 module Refine.Frontend.Login.Component where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((&), (.~), (^.), ASetter, to)
 import           Data.Default (def)
 import           Data.JSString (JSString)

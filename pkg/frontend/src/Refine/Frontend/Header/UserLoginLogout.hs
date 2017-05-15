@@ -27,6 +27,8 @@
 
 module Refine.Frontend.Header.UserLoginLogout where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((&), (.~))
 import           Data.String.Conversions (cs)
 import           Data.Default (def)

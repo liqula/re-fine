@@ -25,6 +25,8 @@
 module Refine.Frontend.Document.DocumentSpec
 where
 
+import Refine.Frontend.Prelude
+
 import Control.Lens ((^.), (&), (.~), (^?!), _Just)
 import Data.Aeson
 import Data.String.Conversions

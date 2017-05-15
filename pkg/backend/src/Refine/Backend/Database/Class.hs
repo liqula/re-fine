@@ -7,6 +7,8 @@
 
 module Refine.Backend.Database.Class where
 
+import Refine.Backend.Prelude
+
 import Control.Lens ((^.))
 import Data.Typeable (Typeable)
 

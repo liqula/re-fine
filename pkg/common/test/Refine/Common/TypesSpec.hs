@@ -22,6 +22,8 @@
 
 module Refine.Common.TypesSpec where
 
+import Refine.Common.Prelude
+
 import           Data.Map (Map)
 import           Test.Aeson.GenericSpecs
 import           Test.Hspec

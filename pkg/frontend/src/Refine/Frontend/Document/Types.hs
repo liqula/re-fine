@@ -23,6 +23,8 @@
 
 module Refine.Frontend.Document.Types where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens (makeLenses)
 import           GHC.Generics (Generic)
 import           React.Flux (UnoverlapAllEq)

@@ -19,6 +19,8 @@
 
 module Refine.Common.Types.Vote where
 
+import Refine.Common.Prelude
+
 import GHC.Generics (Generic)
 
 import Refine.Common.Types.Prelude

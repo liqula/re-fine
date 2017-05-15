@@ -9,6 +9,8 @@
 
 module Refine.Backend.Database.Types where
 
+import Refine.Backend.Prelude
+
 import GHC.Generics
 import Data.Coerce (coerce)
 import Data.Aeson

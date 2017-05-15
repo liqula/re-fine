@@ -25,6 +25,8 @@
 
 module Refine.Backend.Database.Schema where
 
+import Refine.Backend.Prelude
+
 import Control.Elim
 import Data.String.Conversions (ST)
 import Data.Text hiding (group)

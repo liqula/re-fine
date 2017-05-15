@@ -43,6 +43,8 @@ module Refine.Backend.App.Process
   , Refine.Backend.App.Process.removeProcess
   ) where
 
+import Refine.Backend.Prelude
+
 import Control.Lens ((^.), to)
 
 import Refine.Backend.App.Core

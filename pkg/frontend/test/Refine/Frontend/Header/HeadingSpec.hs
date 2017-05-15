@@ -25,6 +25,8 @@
 
 module Refine.Frontend.Header.HeadingSpec where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((^.), (&), (.~))
 import qualified Data.Map.Strict as M
 import           Test.Hspec

@@ -23,6 +23,8 @@
 
 module Refine.Frontend.Contribution.Store where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((&), (%~), (.~))
 import qualified Data.Map.Strict as M
 

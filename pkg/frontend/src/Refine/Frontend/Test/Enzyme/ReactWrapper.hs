@@ -29,6 +29,8 @@ module Refine.Frontend.Test.Enzyme.ReactWrapper
   , module R
   ) where
 
+import Refine.Frontend.Prelude
+
 import GHCJS.Marshal.Pure
 import GHCJS.Types (JSVal, nullRef)
 import React.Flux

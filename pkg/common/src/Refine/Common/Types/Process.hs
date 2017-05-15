@@ -21,6 +21,8 @@
 {-# LANGUAGE ViewPatterns               #-}
 module Refine.Common.Types.Process where
 
+import Refine.Common.Prelude
+
 import Control.Lens (Lens')
 import Data.String.Conversions (ST)
 import GHC.Generics

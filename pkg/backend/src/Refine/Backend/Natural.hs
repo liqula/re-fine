@@ -21,6 +21,8 @@
 
 module Refine.Backend.Natural (cnToSn, natThrowError, (.), ($$)) where
 
+import Refine.Backend.Prelude
+
 import Control.Category ((.))
 import Control.Monad.Except (ExceptT, runExceptT)
 import Control.Natural (($$))

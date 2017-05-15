@@ -26,6 +26,8 @@
 
 module Refine.Backend.App.Session where
 
+import Refine.Backend.Prelude
+
 import Control.Lens
 import Control.Monad.Except (throwError)
 import Control.Monad.State (gets)

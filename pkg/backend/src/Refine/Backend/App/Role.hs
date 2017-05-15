@@ -25,6 +25,8 @@
 
 module Refine.Backend.App.Role where
 
+import Refine.Backend.Prelude
+
 import Control.Lens ((^.))
 import Control.Monad (when, unless)
 

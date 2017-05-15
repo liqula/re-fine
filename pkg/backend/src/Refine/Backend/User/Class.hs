@@ -4,6 +4,8 @@
 
 module Refine.Backend.User.Class where
 
+import Refine.Backend.Prelude
+
 import Data.String.Conversions (ST)
 import Data.Time (NominalDiffTime)
 import Web.Users.Types (PasswordPlain, SessionId, User, CreateUserError)

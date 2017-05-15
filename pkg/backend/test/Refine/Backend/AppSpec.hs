@@ -23,6 +23,8 @@
 
 module Refine.Backend.AppSpec where
 
+import Refine.Backend.Prelude
+
 import           Control.Category ((.))
 import           Control.Lens hiding (elements)
 import           Control.Monad.Trans.Identity

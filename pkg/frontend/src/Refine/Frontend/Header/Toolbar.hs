@@ -24,6 +24,8 @@
 
 module Refine.Frontend.Header.Toolbar where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens hiding (children)
 import           Data.Default (def)
 import           Data.String.Conversions

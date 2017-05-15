@@ -3,6 +3,8 @@
 
 module Refine.Backend.Database.TreeSpec where
 
+import Refine.Backend.Prelude
+
 import           Data.List
 import           Data.Tree
 import           Test.Hspec

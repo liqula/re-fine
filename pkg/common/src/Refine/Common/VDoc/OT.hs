@@ -11,6 +11,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans       #-}   -- FIXME: elim this
 module Refine.Common.VDoc.OT where
 
+import Refine.Common.Prelude
+
 import           Control.Arrow
 import           Data.Function
 import qualified Data.IntMap as IntMap

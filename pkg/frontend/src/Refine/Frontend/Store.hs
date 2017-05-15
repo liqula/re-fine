@@ -27,6 +27,8 @@
 
 module Refine.Frontend.Store where
 
+import Refine.Frontend.Prelude
+
 import           Control.Concurrent (forkIO, yield, threadDelay)
 import           Control.Exception (assert)
 import           Control.Lens (Lens', _Just, (&), (^.), (.~), (^?), (^?!), (%~), has)

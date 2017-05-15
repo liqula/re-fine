@@ -27,6 +27,8 @@
 
 module Refine.Backend.Database.Entity where
 
+import Refine.Backend.Prelude
+
 import Control.Lens ((^.), to, view)
 import Control.Monad ((>=>), forM, forM_, void)
 import Control.Monad.Reader (ask)

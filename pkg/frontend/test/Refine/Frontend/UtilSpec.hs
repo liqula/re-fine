@@ -1,6 +1,8 @@
 {-# LANGUAGE NoImplicitPrelude          #-}
 module Refine.Frontend.UtilSpec where
 
+import Refine.Frontend.Prelude
+
 import Test.Hspec
 
 import Refine.Prelude ()

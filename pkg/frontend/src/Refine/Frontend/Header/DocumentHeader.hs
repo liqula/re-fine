@@ -25,6 +25,8 @@
 
 module Refine.Frontend.Header.DocumentHeader where
 
+import Refine.Frontend.Prelude
+
 import           Data.String.Conversions
 import           Data.Text (split)
 import           React.Flux

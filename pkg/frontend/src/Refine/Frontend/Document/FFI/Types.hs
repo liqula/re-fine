@@ -29,6 +29,8 @@ module Refine.Frontend.Document.FFI.Types
   , updateEditorState
   ) where
 
+import Refine.Frontend.Prelude
+
 import           GHC.Generics (Generic)
 import           GHCJS.Marshal (FromJSVal, ToJSVal)
 import           GHCJS.Types (JSVal)

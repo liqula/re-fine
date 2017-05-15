@@ -23,6 +23,8 @@
 
 module Refine.Frontend.Rest where
 
+import Refine.Frontend.Prelude
+
 import           Data.Proxy
 import           React.Flux.Addons.Servant
 import           Refine.Common.Rest

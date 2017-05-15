@@ -21,6 +21,8 @@
 
 module Refine.Common.Types.Chunk where
 
+import Refine.Common.Prelude
+
 import           Data.Functor.Infix ((<$$>))
 import           Control.DeepSeq
 import           Control.Lens (_1, (%~))

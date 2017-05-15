@@ -29,6 +29,8 @@ module Refine.Frontend.Document.Store
   , setMarkPositions
   ) where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((&), (%~), view)
 import           Control.Monad.IO.Class (MonadIO, liftIO)
 

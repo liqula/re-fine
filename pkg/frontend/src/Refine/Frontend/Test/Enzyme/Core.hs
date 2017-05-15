@@ -27,6 +27,8 @@ module Refine.Frontend.Test.Enzyme.Core
 , EnzymeSelector(..)
 ) where
 
+import Refine.Frontend.Prelude
+
 import Data.Aeson (encode, object, (.=))
 import Data.Aeson.Types (ToJSON, toJSON)
 import Data.Char (toLower)

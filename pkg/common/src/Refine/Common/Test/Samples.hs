@@ -23,6 +23,8 @@
 
 module Refine.Common.Test.Samples where
 
+import Refine.Common.Prelude
+
 import Data.Aeson
 import Data.IntMap (fromList)
 import Data.String.Conversions

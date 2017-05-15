@@ -4,6 +4,8 @@
 
 module Refine.Common.Allow where
 
+import Refine.Common.Prelude
+
 import Refine.Common.Types
 
 

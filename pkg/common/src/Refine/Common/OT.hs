@@ -14,6 +14,8 @@
 -- | FUTUREWORK: release this file as a library
 module Refine.Common.OT where
 
+import Refine.Common.Prelude
+
 import           Data.Monoid
 import           Data.String.Conversions (ST)
 import qualified Data.Set as Set

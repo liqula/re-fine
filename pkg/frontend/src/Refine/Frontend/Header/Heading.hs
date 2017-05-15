@@ -27,6 +27,8 @@ module Refine.Frontend.Header.Heading
   , mainHeader, mainHeader_
   ) where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((^.), has)
 import           Control.Monad (unless)
 import           GHC.Generics

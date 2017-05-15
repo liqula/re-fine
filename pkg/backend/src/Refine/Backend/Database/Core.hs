@@ -23,6 +23,8 @@
 
 module Refine.Backend.Database.Core where
 
+import Refine.Backend.Prelude
+
 import Control.Lens
 import Control.Monad.Except
 import Control.Monad.Reader

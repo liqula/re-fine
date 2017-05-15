@@ -50,6 +50,8 @@ module Refine.Frontend.Icon.Types
   , IconButtonPropsOnClick(..)
   ) where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens (makeLenses)
 import           Data.Default (Default(def))
 import           Data.Typeable (Typeable)

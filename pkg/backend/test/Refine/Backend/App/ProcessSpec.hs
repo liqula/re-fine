@@ -22,6 +22,8 @@
 {-# LANGUAGE ViewPatterns               #-}
 module Refine.Backend.App.ProcessSpec where
 
+import Refine.Backend.Prelude
+
 import Control.Lens
 import Control.Monad (join)
 import Test.Hspec

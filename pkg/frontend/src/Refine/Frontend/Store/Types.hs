@@ -23,6 +23,8 @@
 
 module Refine.Frontend.Store.Types where
 
+import Refine.Frontend.Prelude
+
 import           Data.String.Conversions (ST)
 import           Data.Text.I18n
 import           GHC.Generics (Generic)

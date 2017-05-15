@@ -28,6 +28,8 @@ module Refine.Frontend.Style
   , IsStyle(..)
   ) where
 
+import Refine.Frontend.Prelude
+
 import           Data.Aeson ((.=), object)
 import           Data.Aeson.Types (ToJSON, toJSON)
 import           Data.String.Conversions

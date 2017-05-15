@@ -59,6 +59,8 @@ module Refine.Frontend.Document.FFI
   , getMarkSelectorBound
   ) where
 
+import Refine.Frontend.Prelude
+
 import qualified Data.Aeson as Aeson
 import           Data.String.Conversions
 import           GHCJS.Types (JSString, JSVal)

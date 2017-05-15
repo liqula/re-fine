@@ -23,6 +23,8 @@
 
 module Refine.Frontend.Header.Types where
 
+import Refine.Frontend.Prelude
+
 import GHC.Generics (Generic)
 
 import Refine.Common.Types (EditKind)

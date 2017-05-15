@@ -19,6 +19,8 @@
 
 module Refine.Common.Types.Contribution where
 
+import Refine.Common.Prelude
+
 import Data.String.Conversions (ST, cs, (<>))
 import Data.Int
 import GHC.Generics (Generic)

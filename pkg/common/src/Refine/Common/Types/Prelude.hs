@@ -21,6 +21,8 @@
 
 module Refine.Common.Types.Prelude where
 
+import Refine.Common.Prelude
+
 import           Control.Lens
 import           Data.Aeson
 import           Data.Aeson.Types

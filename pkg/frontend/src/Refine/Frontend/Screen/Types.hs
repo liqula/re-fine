@@ -23,6 +23,8 @@
 
 module Refine.Frontend.Screen.Types where
 
+import Refine.Frontend.Prelude
+
 import GHC.Generics (Generic)
 
 import Refine.Prelude.TH (makeRefineType)

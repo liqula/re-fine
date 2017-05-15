@@ -27,6 +27,8 @@ module Refine.Backend.App
   , runApp
   ) where
 
+import Refine.Backend.Prelude
+
 import Control.Monad.Except
 import Control.Monad.Reader
 import Control.Monad.State

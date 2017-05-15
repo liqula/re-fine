@@ -28,6 +28,8 @@
 -- library.
 module Refine.Backend.User.MigrateDB where
 
+import Refine.Backend.Prelude
+
 import Data.String.Conversions (ST)
 import Web.Users.Persistent.Definitions (migrateAll)
 

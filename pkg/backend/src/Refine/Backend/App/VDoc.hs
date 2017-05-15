@@ -28,6 +28,8 @@
 
 module Refine.Backend.App.VDoc where
 
+import Refine.Backend.Prelude
+
 import           Control.Arrow ((&&&))
 import           Control.Lens ((^.), (^?), view, has)
 import           Control.Monad ((<=<), mapM)
