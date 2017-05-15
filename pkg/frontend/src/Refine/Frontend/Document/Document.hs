@@ -37,15 +37,12 @@ import qualified React.Flux.Outdated as Outdated
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
-import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
+import           Refine.Frontend.Document.Store
 import           Refine.Frontend.Document.Types
-import           Refine.Frontend.Screen.Calculations
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.ThirdPartyViews (editor_)
-import           Refine.Frontend.Types
-import           Refine.Frontend.Util
 
 
 document :: Outdated.ReactView DocumentProps
@@ -68,26 +65,8 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
   , Outdated.lComponentDidMount = Just $ \getPropsAndState _ldom _setState -> do
       props <- Outdated.lGetProps getPropsAndState
       ()    <- Outdated.lGetState getPropsAndState  -- (just to show there's nothing there)
-
-      case props ^? dpDocumentState . documentStateContent of
-        Nothing -> pure ()  -- FIXME: do we need to position bubbles in edit mode?  how can we
-                            -- efficiently keep 'RawContent' and 'EditorState' in sync?
-        Just rawContent -> do
-          let marks :: [(ContributionID, MarkSelector, MarkSelector)]
-              marks = getMarkSelectors rawContent
-
-              getPos :: (ContributionID, MarkSelector, MarkSelector) -> IO (ContributionID, MarkPosition)
-              getPos (cid, top, bot) = do
-                topOffset    <- OffsetFromViewportTop  <$> getMarkSelectorBound top
-                bottomOffset <- OffsetFromViewportTop  <$> getMarkSelectorBound bot
-                scrollOffset <- ScrollOffsetOfViewport <$> js_getScrollOffset
-                let markPosition = MarkPosition
-                      { _markPositionTop    = offsetFromDocumentTop topOffset    scrollOffset
-                      , _markPositionBottom = offsetFromDocumentTop bottomOffset scrollOffset
-                      }
-                pure (cid, markPosition)
-
-          dispatchAndExec . ContributionAction . SetMarkPositions =<< (getPos `mapM` marks)
+      (\rc -> dispatchAndExec . ContributionAction =<< setMarkPositions rc)
+          `mapM_` (props ^? dpDocumentState . documentStateContent)
   }
 
 document_ :: DocumentProps -> ReactElementM eventHandler ()
