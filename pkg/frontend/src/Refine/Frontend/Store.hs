@@ -29,6 +29,7 @@ module Refine.Frontend.Store where
 import           Control.Concurrent (forkIO, yield, threadDelay)
 import           Control.Exception (assert)
 import           Control.Lens (Lens', _Just, (&), (^.), (.~), (^?), (^?!), (%~), has)
+import           Control.Monad ((<=<))
 import           Control.Monad.IO.Class
 import           Control.Monad.State.Class (MonadState, modify)
 import           Control.Monad.Trans.State (StateT, runStateT)
@@ -103,9 +104,7 @@ transformGlobalState = transf
         -- other effects
         case action of
             DocumentAction (DocumentUpdate dstate@DocumentStateView{}) -> do
-                liftIO $ do
-                  (\rc -> dispatchAndExec . ContributionAction =<< setMarkPositions rc)
-                    `mapM_` (dstate ^? documentStateContent)
+                (dispatchAndExec . ContributionAction <=< setMarkPositions) `mapM_` (dstate ^? documentStateContent)
 
                 mRangeEvent <- getRangeAction (state ^. gsDocumentState) dstate
                 case mRangeEvent of

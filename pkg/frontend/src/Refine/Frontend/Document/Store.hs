@@ -29,6 +29,7 @@ module Refine.Frontend.Document.Store
   ) where
 
 import           Control.Lens ((&), (%~))
+import           Control.Monad.IO.Class (MonadIO, liftIO)
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
@@ -82,8 +83,8 @@ editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFrom
 
 
 -- | construct a 'SetMarkPositions' action.
-setMarkPositions :: RawContent -> IO ContributionAction
-setMarkPositions rawContent = do
+setMarkPositions :: MonadIO m => RawContent -> m ContributionAction
+setMarkPositions rawContent = liftIO $ do
     let marks :: [(ContributionID, MarkSelector, MarkSelector)]
         marks = getMarkSelectors rawContent
 
