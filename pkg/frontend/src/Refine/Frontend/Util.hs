@@ -53,6 +53,17 @@ foreign import javascript unsafe
   "$1 === $2"
   (===) :: JSVal -> JSVal -> Bool
 
+-- an earlier implementation had two fallbacks:
+--
+-- ```javascript
+--    typeof(target.pageYOffset) === 'number' && target.pageYOffset                 ||
+--    document.body                           && document.body.scrollTop            ||
+--    document.documentElement                && document.documentElement.scrollTop;
+-- ```
+foreign import javascript unsafe
+  "(function() { return pageYOffset; })()"
+  js_getScrollOffset :: IO Int
+
 
 deriving instance FromJSVal (NoJSONRep JSVal)
 deriving instance ToJSVal (NoJSONRep JSVal)

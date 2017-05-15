@@ -74,6 +74,13 @@ data DocumentProps = DocumentProps
 
 instance UnoverlapAllEq DocumentProps
 
+emptyDocumentProps :: DocumentProps
+emptyDocumentProps = DocumentProps
+  { _dpDocumentState     = emptyDocumentState
+  , _dpContributionState = emptyContributionState
+  , _dpToolbarStatus     = ToolbarExtensionClosed
+  }
+
 makeRefineType ''DocumentAction
 makeRefineType ''DocumentState
 makeLenses ''DocumentProps

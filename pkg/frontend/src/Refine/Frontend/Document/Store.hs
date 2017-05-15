@@ -25,16 +25,22 @@ module Refine.Frontend.Document.Store
   ( documentStateUpdate
   , editorStateToVDocVersion
   , editorStateFromVDocVersion
+  , setMarkPositions
   ) where
 
-import           Control.Lens ((&), (%~))
+import           Control.Lens ((&), (%~), view)
+import           Control.Monad.IO.Class (MonadIO, liftIO)
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
+import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
+import           Refine.Frontend.Screen.Calculations
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Types
+import           Refine.Frontend.Util
 
 
 documentStateUpdate :: GlobalAction -> Maybe CompositeVDoc -> DocumentState -> DocumentState
@@ -74,3 +80,23 @@ editorStateToVDocVersion = rawContentToVDocVersion . convertToRaw . getCurrentCo
 
 editorStateFromVDocVersion :: VDocVersion -> EditorState
 editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
+
+
+-- | construct a 'SetMarkPositions' action.
+setMarkPositions :: MonadIO m => DocumentState -> m ContributionAction
+setMarkPositions (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
+    let marks :: [(ContributionID, MarkSelector, MarkSelector)]
+        marks = getMarkSelectors rawContent
+
+        getPos :: (ContributionID, MarkSelector, MarkSelector) -> IO (ContributionID, MarkPosition)
+        getPos (cid, top, bot) = do
+          topOffset    <- OffsetFromViewportTop  <$> getMarkSelectorBound top
+          bottomOffset <- OffsetFromViewportTop  <$> getMarkSelectorBound bot
+          scrollOffset <- ScrollOffsetOfViewport <$> js_getScrollOffset
+          let markPosition = MarkPosition
+                { _markPositionTop    = offsetFromDocumentTop topOffset    scrollOffset
+                , _markPositionBottom = offsetFromDocumentTop bottomOffset scrollOffset
+                }
+          pure (cid, markPosition)
+
+    SetMarkPositions <$> (getPos `mapM` marks)

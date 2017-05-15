@@ -53,6 +53,9 @@ module Refine.Frontend.Document.FFI
 
     -- * selections
   , getSelection
+
+    -- * marks
+  , getMarkSelectorBound
   ) where
 
 import qualified Data.Aeson as Aeson
@@ -221,3 +224,21 @@ foreign import javascript unsafe
 foreign import javascript unsafe
     "$1.getEndOffset()"
     js_ES_getSelectionEndOffset :: JSVal -> Int
+
+
+-- * marks
+
+getMarkSelectorBound :: Draft.MarkSelector -> IO Int
+getMarkSelectorBound mark@(Draft.MarkSelector side _ _) = js_getBoundingBox (renderSide side) (renderMarkSelector mark)
+  where
+    renderSide Draft.MarkSelectorTop = "top"
+    renderSide Draft.MarkSelectorBottom = "bottom"
+    renderSide Draft.MarkSelectorUnknownSide = error $ "getMarkSelectorBound: mark with bad side: " <> show mark
+
+    renderMarkSelector :: Draft.MarkSelector -> JSString
+    renderMarkSelector (Draft.MarkSelector _ (Draft.BlockKey b) i) =
+      "article span[data-offset-key=\"" <> cs b <> "-0-" <> cs (show i) <> "\""
+
+foreign import javascript unsafe
+    "document.querySelector($2).getBoundingClientRect()[$1]"
+     js_getBoundingBox :: JSString -> JSString -> IO Int

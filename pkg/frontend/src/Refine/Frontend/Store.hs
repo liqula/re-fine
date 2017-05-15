@@ -46,9 +46,9 @@ import           Refine.Common.Rest (ApiError(..))
 import           Refine.Common.Test.Samples
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
-import           Refine.Frontend.Document.Store (documentStateUpdate, editorStateToVDocVersion)
-import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Document.FFI (getSelection, traceContentInEditorState, traceEditorState)
+import           Refine.Frontend.Document.Store (setMarkPositions, documentStateUpdate, editorStateToVDocVersion)
+import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Login.Store (loginStateUpdate)
@@ -61,6 +61,7 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Console
 import           Refine.Frontend.Translation.Store (translationsUpdate)
 import           Refine.Frontend.Types
+import           Refine.Frontend.Util
 
 
 instance StoreData GlobalState where
@@ -68,7 +69,9 @@ instance StoreData GlobalState where
     transform = loop . (:[])
       where
         -- FUTUREWORK: we don't need this loop trick, we can implement reDispatch much more
-        -- straight-forwardly as @forkIO . dispatchM@.  (change this only when switching to a future
+        -- straight-forwardly as @forkIO . dispatchM@.
+        --
+        -- (see also 'dispatchAndExec' below. change this only when switching to a future
         -- version of react-flux that has a monad-constraint-based interface.  then we'll have
         -- @MonadState GlobalState@ here and probably can get rid of the need for redispatch
         -- altogether, because it will be more easy to just apply a local state modification
@@ -99,7 +102,10 @@ transformGlobalState = transf
 
         -- other effects
         case action of
-            DocumentAction (DocumentUpdate dstate@DocumentStateView{}) -> do
+            DocumentAction (DocumentUpdate dstate) -> do
+              dispatchAndExec . ContributionAction =<< setMarkPositions dstate
+
+              when (has _DocumentStateView dstate) $ do
                 mRangeEvent <- getRangeAction (state ^. gsDocumentState) dstate
                 case mRangeEvent of
                     Nothing -> pure ()
@@ -351,12 +357,12 @@ reDispatchManyM :: MonadState [GlobalAction] m => [GlobalAction] -> m ()
 reDispatchManyM as = modify (<> as)
 
 dispatchAndExec :: MonadIO m => GlobalAction -> m ()
-dispatchAndExec a = liftIO . reactFluxWorkAroundForkIO $ do
+dispatchAndExec a = liftIO . void . forkIO $ do
   () <- executeAction `mapM_` dispatch a
   pure ()
 
 dispatchAndExecMany :: MonadIO m => [GlobalAction] -> m ()
-dispatchAndExecMany as = liftIO . reactFluxWorkAroundForkIO $ do
+dispatchAndExecMany as = liftIO . void . forkIO $ do
   () <- executeAction `mapM_` dispatchMany as
   pure ()
 
@@ -395,7 +401,7 @@ getRangeAction beforeState afterState = assert (has _DocumentStateView beforeSta
       -> Just . SetRange <$> do
       topOffset    <- liftIO js_getRangeTopOffset
       bottomOffset <- liftIO js_getRangeBottomOffset
-      scrollOffset <- liftIO js_getRangeScrollOffset
+      scrollOffset <- liftIO js_getScrollOffset
       let doctop = scrollOffset + if sel ^. selectionIsBackward then topOffset else bottomOffset
 
       pure Range
@@ -413,17 +419,6 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "getSelection().getRangeAt(0).endContainer.parentElement.getBoundingClientRect().bottom"
   js_getRangeBottomOffset :: IO Int
-
--- an earlier implementation had two fallbacks:
---
--- ```javascript
---    typeof(target.pageYOffset) === 'number' && target.pageYOffset                 ||
---    document.body                           && document.body.scrollTop            ||
---    document.documentElement                && document.documentElement.scrollTop;
--- ```
-foreign import javascript unsafe
-  "(function() { return pageYOffset; })()"
-  js_getRangeScrollOffset :: IO Int
 
 removeAllRanges :: MonadIO m => m ()
 removeAllRanges = liftIO js_removeAllRanges
