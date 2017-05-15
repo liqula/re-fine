@@ -28,7 +28,7 @@ module Refine.Frontend.Document.Store
   , setMarkPositions
   ) where
 
-import           Control.Lens ((&), (%~))
+import           Control.Lens ((&), (%~), view)
 import           Control.Monad.IO.Class (MonadIO, liftIO)
 
 import           Refine.Common.Types
@@ -83,8 +83,8 @@ editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFrom
 
 
 -- | construct a 'SetMarkPositions' action.
-setMarkPositions :: MonadIO m => RawContent -> m ContributionAction
-setMarkPositions rawContent = liftIO $ do
+setMarkPositions :: MonadIO m => DocumentState -> m ContributionAction
+setMarkPositions (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
     let marks :: [(ContributionID, MarkSelector, MarkSelector)]
         marks = getMarkSelectors rawContent
 

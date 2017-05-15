@@ -27,7 +27,6 @@ module Refine.Frontend.Document.Document
   ) where
 
 import           Control.Lens ((^?), (^.), (.~), (&), has, view)
-import           Control.Monad ((<=<))
 import           Data.Aeson
 import           Data.Aeson.Types (Pair)
 import           Data.String.Conversions
@@ -66,7 +65,7 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
   , Outdated.lComponentDidMount = Just $ \getPropsAndState _ldom _setState -> do
       props <- Outdated.lGetProps getPropsAndState
       ()    <- Outdated.lGetState getPropsAndState  -- (just to show there's nothing there)
-      (dispatchAndExec . ContributionAction <=< setMarkPositions) `mapM_` (props ^? dpDocumentState . documentStateContent)
+      dispatchAndExec . ContributionAction =<< setMarkPositions (props ^. dpDocumentState)
   }
 
 document_ :: DocumentProps -> ReactElementM eventHandler ()
