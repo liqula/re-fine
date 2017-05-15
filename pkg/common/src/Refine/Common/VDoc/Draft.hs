@@ -32,7 +32,6 @@ import           Control.Monad (foldM)
 import           Control.Monad.State
 import           Data.Aeson
 import           Data.Aeson.Types (Parser)
-import           Data.Coerce (coerce)
 import           Data.Foldable (toList)
 import           Data.Function (on)
 import           Data.Functor.Infix ((<$$>))
@@ -43,7 +42,7 @@ import           Data.List (nub, sortBy, insertBy)
 import qualified Data.List as List
 import           Data.Map (Map)
 import qualified Data.Map as Map
-import           Data.Maybe (catMaybes, fromMaybe, maybeToList)
+import           Data.Maybe (catMaybes, fromMaybe, fromJust, maybeToList)
 import           Data.Monoid ((<>))
 import           Data.Set (Set)
 import qualified Data.Set as Set
@@ -337,12 +336,18 @@ entityRangeIsEmpty (_, j) = j == 0
 -- backend :-).  The 'RawContent' is needed to convert block keys to block numbers and back.  This
 -- function isn't total, but all undefined values are internal errors`.
 chunkRangeToSelectionState :: RawContent -> ChunkRange -> SelectionState
-chunkRangeToSelectionState (RawContent bs _) (ChunkRange s e) = SelectionState False (trans s) (trans e)
+chunkRangeToSelectionState (RawContent bs _) (ChunkRange s e) = SelectionState False (maybe top trans s) (maybe bottom trans e)
   where
-    trans (Just (ChunkPoint (DataUID blocknum) offset)) = SelectionPoint blockkey offset
+    trans (ChunkPoint (DataUID blocknum) offset) = SelectionPoint blockkey offset
       where
         Just blockkey = (bs !! blocknum) ^. blockKey
-    trans bad = error $ "chunkRangeToSelectionState: impossibel: " <> show bad
+
+    top :: SelectionPoint
+    top = SelectionPoint (fromJust $ head bs ^. blockKey) 0
+
+    bottom :: SelectionPoint
+    bottom = SelectionPoint (fromJust $ last bs ^. blockKey) (ST.length $ last bs ^. blockText)
+
 
 -- | See 'chunkRangeToSelectionState'.
 selectionStateToChunkRange :: RawContent -> SelectionState -> ChunkRange
@@ -449,13 +454,9 @@ addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (st
       bad  -> error $ "addMarkToBlock: impossible: " <> show bad
 
 
--- | See 'mkSomeSegments' (@payload@ is 'Style').
+-- | See 'mkSomeSegments' (@payload@ is 'Style').  (See 'rawContentToDoc' for another use of 'mkSomeSegments'.)
 mkInlineStyleSegments :: [(EntityRange, Style)] -> [(Int, Set Style)]
 mkInlineStyleSegments = mkSomeSegments fst snd
-
--- | See 'mkSomeSegments' (@payload@ is 'Entity').
-mkEntitySegments :: [(EntityKey, EntityRange)] -> IntMap.IntMap Entity -> [(Int, Set Entity)]
-mkEntitySegments eranges entities = mkSomeSegments snd ((entities IntMap.!) . coerce . fst) eranges
 
 -- | Take two accessors and a list of things carrying a range and a payload each.  Ranges can
 -- overlap.  Compute a list of non-overlapping segments, starting at @offset == 0@, consisting of
@@ -504,17 +505,15 @@ getMarkSelectors = findSides . mconcat . fmap collectBlock . zip [0..] . view ra
     collectBlock :: (Int, Block EntityKey) -> [(ContributionID, ((Int, Int), MarkSelector))]
     collectBlock (bix, block) = catMaybes $ collectSegment <$> warmupSegments (mkInlineStyleSegments $ block ^. blockStyles)
       where
-        warmupSegments :: [(Int, Set Style)] -> [(Int, Maybe Style)]
-        warmupSegments = f 0
-          where
-            f _   []                  = []
-            f six ((_, styles) : xs') = g six (Set.toList styles) xs'
+        warmupSegments :: [(Int, Set Style)] -> [(Int, Style)]
+        warmupSegments segs
+          = [ (six, style)
+            | (six, (_, styles)) <- zip [0..] segs
+            , style <- Set.toList styles
+            ]
 
-            g six' []                xs' = f (six' + 1) xs'
-            g six' (style : styles') xs' = (six', Just style) : g six' styles' xs'
-
-        collectSegment :: (Int, Maybe Style) -> Maybe (ContributionID, ((Int, Int), MarkSelector))
-        collectSegment (six, Just (Mark cid))
+        collectSegment :: (Int, Style) -> Maybe (ContributionID, ((Int, Int), MarkSelector))
+        collectSegment (six, Mark cid)
           = Just (cid, ((bix, six), MarkSelector MarkSelectorUnknownSide (block ^?! blockKey . _Just) six))
         collectSegment _
           = Nothing
