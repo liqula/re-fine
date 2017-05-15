@@ -22,16 +22,13 @@
 
 module Refine.Frontend.Contribution.Store where
 
-import           Control.Lens ((&), (%~))
+import           Control.Lens ((&), (%~), (.~))
 import qualified Data.Map.Strict as M
-import           Data.Maybe (isJust)
-import           Data.Monoid ((<>))
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Test.Console (gracefulError)
 import           Refine.Frontend.Types
 
 
@@ -110,11 +107,5 @@ quickCreateShowStateUpdate action state = case action of
       QuickCreateBlocked   -> QuickCreateNotShown
 
 markPositionsUpdate :: ContributionAction -> MarkPositions -> MarkPositions
-markPositionsUpdate action state = case action of
-  AddMarkPosition cid newMarkPosition
-    -> let upd oldValue = Just newMarkPosition &
-              if isJust oldValue
-                then gracefulError ("mark position registered twice for contribID" <> show cid)
-                else id
-       in state & markPositionsMap %~ M.alter upd cid
-  _ -> state
+markPositionsUpdate (SetMarkPositions positions) = markPositionsMap .~ M.fromList positions
+markPositionsUpdate _ = id

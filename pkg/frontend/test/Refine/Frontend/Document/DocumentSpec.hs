@@ -143,9 +143,9 @@ spec = do
 
             pending
             storeShouldEventuallyContain (^?! gsDevState . _Just . devStateTrace)
-              [ContributionAction (AddMarkPosition (ContribIDNote (ID 77)) (MarkPosition 0 0))]
+              [ContributionAction (SetMarkPositions [(ContribIDNote (ID 77), MarkPosition 0 0)])]
 
-      it "dispatches ScheduleAddMarkPosition only once" test
+      it "dispatches SetMarkPositions only once" test
 
 
     describe "mouse-over" $ do

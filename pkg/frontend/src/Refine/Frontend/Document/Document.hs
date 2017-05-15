@@ -27,7 +27,6 @@ module Refine.Frontend.Document.Document
   ) where
 
 import           Control.Lens ((^?), (^.), (.~), (&), has, view)
-import           Control.Monad (forM_)
 import           Data.Aeson
 import           Data.Aeson.Types (Pair)
 import           Data.String.Conversions
@@ -74,19 +73,21 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
         Nothing -> pure ()  -- FIXME: do we need to position bubbles in edit mode?  how can we
                             -- efficiently keep 'RawContent' and 'EditorState' in sync?
         Just rawContent -> do
-          let marks :: [(ContributionID, MarkSelector, MarkSelector)] = getMarkSelectors rawContent
+          let marks :: [(ContributionID, MarkSelector, MarkSelector)]
+              marks = getMarkSelectors rawContent
 
-          -- FIXME: turn 'MarkPosition' into 'MarkPositions' (containing a list instead of just one
-          -- element), and only throw one action per mount (instead of one per mark).
-          forM_ marks $ \(cid, top, bot) -> do
-            topOffset    <- OffsetFromViewportTop  <$> getMarkSelectorBound top
-            bottomOffset <- OffsetFromViewportTop  <$> getMarkSelectorBound bot
-            scrollOffset <- ScrollOffsetOfViewport <$> js_getScrollOffset
-            let markPosition = MarkPosition
-                  { _markPositionTop    = offsetFromDocumentTop topOffset    scrollOffset
-                  , _markPositionBottom = offsetFromDocumentTop bottomOffset scrollOffset
-                  }
-            dispatchAndExec . ContributionAction $ AddMarkPosition cid markPosition
+              getPos :: (ContributionID, MarkSelector, MarkSelector) -> IO (ContributionID, MarkPosition)
+              getPos (cid, top, bot) = do
+                topOffset    <- OffsetFromViewportTop  <$> getMarkSelectorBound top
+                bottomOffset <- OffsetFromViewportTop  <$> getMarkSelectorBound bot
+                scrollOffset <- ScrollOffsetOfViewport <$> js_getScrollOffset
+                let markPosition = MarkPosition
+                      { _markPositionTop    = offsetFromDocumentTop topOffset    scrollOffset
+                      , _markPositionBottom = offsetFromDocumentTop bottomOffset scrollOffset
+                      }
+                pure (cid, markPosition)
+
+          dispatchAndExec . ContributionAction . SetMarkPositions =<< (getPos `mapM` marks)
   }
 
 document_ :: DocumentProps -> ReactElementM eventHandler ()
