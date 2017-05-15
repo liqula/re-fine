@@ -507,13 +507,11 @@ getMarkSelectors = findSides . mconcat . fmap collectBlock . zip [0..] . view ra
     collectBlock (bix, block) = catMaybes $ collectSegment <$> warmupSegments (mkInlineStyleSegments $ block ^. blockStyles)
       where
         warmupSegments :: [(Int, Set Style)] -> [(Int, Style)]
-        warmupSegments = f 0
-          where
-            f _   []                  = []
-            f six ((_, styles) : xs') = g six (Set.toList styles) xs'
-
-            g six' []                xs' = f (six' + 1) xs'
-            g six' (style : styles') xs' = (six', style) : g six' styles' xs'
+        warmupSegments segs
+          = [ (six, style)
+            | (six, (_, styles)) <- zip [0..] segs
+            , style <- Set.toList styles
+            ]
 
         collectSegment :: (Int, Style) -> Maybe (ContributionID, ((Int, Int), MarkSelector))
         collectSegment (six, Mark cid)
