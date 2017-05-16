@@ -59,7 +59,9 @@ data ContributionID =
   | ContribIDQuestion (ID Question)
   | ContribIDDiscussion (ID Discussion)
   | ContribIDEdit (ID Edit)
-  | ContribIDHighlightMark
+  | ContribIDHighlightMark  -- ^ current selection (FUTUREWORK: rename to
+                            -- 'ContribIDCurrentSelection'; or better yet remove from this type
+                            -- altogether).
   deriving (Eq, Ord, Show, Read, Generic)
 
 -- | In the frontend, for replacing the browser selection range with a mark when an editor overlay
