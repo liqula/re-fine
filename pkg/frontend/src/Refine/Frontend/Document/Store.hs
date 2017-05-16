@@ -73,6 +73,17 @@ documentStateUpdate (AddNote _) (Just cvdoc) _state
 documentStateUpdate (AddEdit _) (Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
+documentStateUpdate (ContributionAction (SetRange (view rangeSelectionState -> sel))) _ ((^? documentStateContent) -> Just rc)
+  = mkDocumentStateView
+  . addMarksToRawContent [(ContribIDHighlightMark, chunkRangeToSelectionState rc sel)]
+  . deleteMarksFromRawContentIf (== ContribIDHighlightMark)
+  $ rc
+
+documentStateUpdate (ContributionAction ClearRange) _ ((^? documentStateContent) -> Just rc)
+  = mkDocumentStateView
+  . deleteMarksFromRawContentIf (== ContribIDHighlightMark)
+  $ rc
+
 documentStateUpdate _ _ st
   = st
 

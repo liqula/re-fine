@@ -104,15 +104,14 @@ transformGlobalState = transf
             Nothing -> pure ()
             Just rangeEvent -> do
               reDispatchM $ ContributionAction rangeEvent
-              -- TODO: call 'removeAllRanges' here and handle highlighting of the current
-              -- selection ourselves.  (we may want to only do that in read-only mode, or
-              -- draft may get confused and kill its own selection as well.)
-
               when (st ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithRange) $ do
                 -- (if the comment editor (or dialog) is started via the toolbar
                 -- extension, this is where it should be started.  assume that this can
                 -- only happen if rangeEvent is SetRange, not ClearRange.)
                 reDispatchM $ ContributionAction ShowCommentEditor
+
+        ContributionAction (SetRange _) -> removeAllRanges
+        ContributionAction ClearRange   -> removeAllRanges
 
         ShowNotImplementedYet -> do
             liftIO $ windowAlertST "not implemented yet."
