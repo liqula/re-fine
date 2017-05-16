@@ -83,7 +83,7 @@ spec = do
           checkNumRanges
               mExpected
               (RawContentWithSelections
-                (rawContentBlocks %~ fmap deleteMarksFromBlock         -> rawContent)
+                (deleteMarksFromRawContentIf (const True)              -> rawContent)
                 (nub . List.filter (not . selectionIsEmpty rawContent) -> selections)) = do
 
             let rawContent' = rawContentFromCompositeVDoc

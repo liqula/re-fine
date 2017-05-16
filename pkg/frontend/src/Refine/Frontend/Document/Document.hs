@@ -34,6 +34,7 @@ import qualified React.Flux.Outdated as Outdated
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
+import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Store
 import           Refine.Frontend.Document.Types
@@ -42,21 +43,34 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.ThirdPartyViews (editor_)
 
 
+-- | Note on draft vs. readOnly vs. selection events: in readOnly mode, draft's onChange event is not
+-- fired at all, not even for selection updates.  (There is a hack based on handleBeforeInput, but
+-- it only inhibits new characters, not backspace, delete, cut&paste, ...  See
+-- https://github.com/facebook/draft-js/issues/690#issuecomment-282824570 for details.)  Our
+-- approach is to listen to onMouseEnd, onTouchUp, on the surrounding article_ tag, and recovering
+-- the draft coordinates (block keys, block offsets) in 'getDraftSelectionStateViaBrowser'.
 document :: Outdated.ReactView DocumentProps
 document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
   { Outdated.lRender = \() props -> liftViewToStateHandler $ do
+      let dstate = props ^. dpDocumentState
+
+          sendMouseUpIfReadOnly :: [SomeStoreAction]
+          sendMouseUpIfReadOnly =
+            mconcat [ dispatch $ ContributionAction RequestSetRange | has _DocumentStateView dstate ]
+
       article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
                , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
+               , onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
+               , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
                ] $ do
-        let dstate = props ^. dpDocumentState
         editor_
           [ "editorState" &= (dstate ^. documentStateVal)
           , "customStyleMap" &= documentStyleMap (dstate ^? documentStateContent)
-          , setReadOnly (has _DocumentStateView dstate)
+          , "readOnly" &= has _DocumentStateView dstate
           , onChange $ \evt ->
               let dstate' :: DocumentState
                   dstate' = dstate & documentStateVal .~ updateEditorState evt
-              in dispatch . DocumentAction . DocumentUpdate $ dstate'
+              in dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetMarkPositions]
           ] mempty
 
   , Outdated.lComponentDidMount = Just $ \getPropsAndState _ldom _setState -> do
@@ -67,16 +81,6 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
 
 document_ :: DocumentProps -> ReactElementM eventHandler ()
 document_ props = Outdated.view document props mempty
-
-
--- | in read-only mode, onchange is not fired even on selection.
--- https://github.com/facebook/draft-js/issues/690#issuecomment-282824570
-setReadOnly :: forall handler. Bool -> PropertyOrHandler handler
-setReadOnly ro = "handleBeforeInput" &= js_setReadOnly ro
-
-foreign import javascript unsafe
-  "function() { return $1 ? 'handled' : 'unhandled'; }"
-  js_setReadOnly :: Bool -> JSVal
 
 
 documentStyleMap :: Maybe RawContent -> Value
