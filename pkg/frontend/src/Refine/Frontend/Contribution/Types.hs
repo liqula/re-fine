@@ -81,6 +81,7 @@ data ContributionAction =
   | HideCommentEditor
   | SetCommentKind CommentKind
   | SubmitComment ST (Maybe CommentKind)
+  | RequestSetMarkPositions
   | SetMarkPositions [(ContributionID, MarkPosition)]  -- ^ see 'MarkPositions'
   | HighlightMarkAndBubble ContributionID
   | UnhighlightMarkAndBubble

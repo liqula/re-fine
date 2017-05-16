@@ -95,8 +95,8 @@ transformGlobalState = transf
 
       -- other effects
       case action of
-        DocumentAction (DocumentUpdate dstate) -> do
-          dispatchAndExec . ContributionAction =<< setMarkPositions dstate
+        ContributionAction RequestSetMarkPositions -> do
+          dispatchAndExec . ContributionAction =<< setMarkPositions (st ^. gsDocumentState)
 
         ContributionAction RequestSetRange -> do
           mRangeEvent <- getRangeAction (st ^. gsDocumentState)
@@ -231,12 +231,12 @@ emitBackendCallsFor action st = case action of
           addDiscussion (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
                      (C.CreateDiscussion text True (st ^. gsChunkRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right discussion) -> dispatchM $ AddDiscussion discussion
+            (Right discussion) -> dispatchManyM [AddDiscussion discussion, ContributionAction RequestSetMarkPositions]
         Just CommentKindNote ->
           addNote (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
                      (C.CreateNote text True (st ^. gsChunkRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right note) -> dispatchM $ AddNote note
+            (Right note) -> dispatchManyM [AddNote note, ContributionAction RequestSetMarkPositions]
         Nothing -> pure ()
 
     DocumentAction DocumentSave -> case st ^. gsDocumentState of
@@ -255,7 +255,7 @@ emitBackendCallsFor action st = case action of
 
         addEdit eid cedit $ \case
           Left rsp   -> ajaxFail rsp Nothing
-          Right edit -> dispatchM $ AddEdit edit
+          Right edit -> dispatchManyM [AddEdit edit, ContributionAction RequestSetMarkPositions]
 
       bad -> let msg = "DocumentAction DocumentEditSave: "
                     <> "not in editor state or content cannot be converted to html."

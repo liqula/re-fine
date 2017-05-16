@@ -70,7 +70,7 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
           , onChange $ \evt ->
               let dstate' :: DocumentState
                   dstate' = dstate & documentStateVal .~ updateEditorState evt
-              in dispatch . DocumentAction . DocumentUpdate $ dstate'
+              in dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetMarkPositions]
           ] mempty
 
   , Outdated.lComponentDidMount = Just $ \getPropsAndState _ldom _setState -> do
