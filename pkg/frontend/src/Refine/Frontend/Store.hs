@@ -39,7 +39,7 @@ import           Refine.Common.Rest (ApiError(..))
 import           Refine.Common.Test.Samples
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
-import           Refine.Frontend.Document.FFI (getSelection, traceContentInEditorState, traceEditorState)
+import           Refine.Frontend.Document.FFI (traceContentInEditorState, traceEditorState)
 import           Refine.Frontend.Document.Store (setMarkPositions, documentStateUpdate, editorStateToVDocVersion)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
@@ -98,8 +98,8 @@ transformGlobalState = transf
             DocumentAction (DocumentUpdate dstate) -> do
               dispatchAndExec . ContributionAction =<< setMarkPositions dstate
 
-              when (has _DocumentStateView dstate) $ do
-                mRangeEvent <- getRangeAction (st ^. gsDocumentState) dstate
+            ContributionAction RequestSetRange -> do
+                mRangeEvent <- getRangeAction (st ^. gsDocumentState)
                 case mRangeEvent of
                     Nothing -> pure ()
                     Just rangeEvent -> do
@@ -374,36 +374,40 @@ gsChunkRange f gs = outof <$> f (into gs)
     outof :: C.ChunkRange -> GlobalState
     outof r = gs & gsContributionState . csCurrentRange . _Just . rangeSelectionState .~ r
 
--- | See also: 'Range' type.
+-- | See also: 'Range' type.  Empty selection (start point == end point) counts as no selection, and
+-- triggers a 'ClearRange' action to be emitted.  Only call this in `readOnly` mode.
 --
--- Note that draft does not delete a selection if you single-click, but it creates an empty
--- selection, i.e. one where the start and the end point are identical.  In this case we emit a
--- 'ClearRange' action.
---
--- (This has to have IO because we look at the DOM for the position data.)
-getRangeAction :: MonadIO m => DocumentState -> DocumentState -> m (Maybe ContributionAction)
-getRangeAction beforeState afterState = assert (has _DocumentStateView beforeState) $ do
-  let beforeSelection = getSelection (beforeState ^. documentStateVal)
-      afterSelection  = getSelection (afterState ^. documentStateVal)
-  case (beforeSelection == afterSelection, afterSelection) of
-    (True,  _)
-      -> pure Nothing
-    (False, selectionIsEmpty (beforeState ^?! documentStateContent :: RawContent) -> True)
-      -> pure $ Just ClearRange
-    (False, sel)
-      -> Just . SetRange <$> do
+-- IO is needed for (1) going via the selection state in the browser api (@getSelection (dstate
+-- ^. documentStateVal)@ would be nicer, but draft does not store selections in readOnly mode.), and
+-- for (2) for looking at the DOM for the position data.
+getRangeAction :: MonadIO m => DocumentState -> m (Maybe ContributionAction)
+getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
+  sel <- getDraftSelectionStateViaBrowser
+  if selectionIsEmpty (dstate ^?! documentStateContent) sel
+    then pure $ Just ClearRange
+    else Just . SetRange <$> do
       topOffset    <- liftIO js_getRangeTopOffset
       bottomOffset <- liftIO js_getRangeBottomOffset
       scrollOffset <- liftIO js_getScrollOffset
       let doctop = scrollOffset + if sel ^. selectionIsBackward then topOffset else bottomOffset
 
       pure Range
-        { _rangeSelectionState = selectionStateToChunkRange (beforeState ^?! documentStateContent) sel
+        { _rangeSelectionState = selectionStateToChunkRange (dstate ^?! documentStateContent) sel
         , _rangeDocTopOffset   = OffsetFromDocumentTop  doctop
         , _rangeTopOffset      = OffsetFromViewportTop  topOffset
         , _rangeBottomOffset   = OffsetFromViewportTop  bottomOffset
         , _rangeScrollOffset   = ScrollOffsetOfViewport scrollOffset
         }
+
+
+getDraftSelectionStateViaBrowser :: MonadIO m => m SelectionState
+getDraftSelectionStateViaBrowser = liftIO $ either err pure . eitherDecode . cs =<< js_getDraftSelectionStateViaBrowser
+  where
+    err = throwIO . ErrorCall . ("getSelectionStateFromBrowser: impossible: " <>) . show
+
+foreign import javascript unsafe
+  "JSON.stringify(refine$getDraftSelectionStateViaBrowser())"
+  js_getDraftSelectionStateViaBrowser :: IO JSString
 
 foreign import javascript unsafe
   "getSelection().getRangeAt(0).startContainer.parentElement.getBoundingClientRect().top"
