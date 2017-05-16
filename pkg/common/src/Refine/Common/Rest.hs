@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -19,13 +20,10 @@
 module Refine.Common.Rest where
 
 
-import Data.String.Conversions (ST)
-import GHC.Generics (Generic)
-import Servant.API
+import Refine.Common.Prelude
 
 import Refine.Common.Types
 import Refine.Common.ChangeAPI
-import Refine.Prelude.TH
 
 
 data ApiError

@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -27,6 +28,8 @@ module Refine.Frontend.Document.FFI.Types
   , mkEditorState
   , updateEditorState
   ) where
+
+import Refine.Frontend.Prelude
 
 import           GHC.Generics (Generic)
 import           GHCJS.Marshal (FromJSVal, ToJSVal)

@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -24,10 +25,7 @@ module Refine.Frontend.Icon
   ( icon_, iconButton_
   ) where
 
-import           Control.Lens ((^.), _1, _2)
-import           Data.Monoid ((<>))
-import           GHCJS.Types (JSString)
-import           React.Flux
+import Refine.Frontend.Prelude
 
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Style

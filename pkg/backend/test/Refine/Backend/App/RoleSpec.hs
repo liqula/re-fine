@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -21,9 +22,8 @@
 {-# LANGUAGE ViewPatterns               #-}
 module Refine.Backend.App.RoleSpec where
 
-import Control.Lens
-import Control.Monad (join, forM_)
-import Data.List (sort, nub, (\\))
+import Refine.Backend.Prelude
+
 import Test.Hspec
 import Test.QuickCheck
 

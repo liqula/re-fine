@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -28,8 +29,7 @@ module Refine.Frontend.ThirdPartyViews
   , editor_
   ) where
 
-import GHCJS.Types
-import React.Flux
+import Refine.Frontend.Prelude
 
 
 -- TODO: test that this doesn't crash because the foreign object is not loaded.  this has bitten us

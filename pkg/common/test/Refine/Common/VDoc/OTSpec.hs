@@ -1,7 +1,10 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# OPTIONS_GHC -fno-warn-orphans       #-}
 module Refine.Common.VDoc.OTSpec where
+
+import Refine.Common.Prelude hiding (from)
 
 import qualified Data.Set as Set
 import           Test.QuickCheck

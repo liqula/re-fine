@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DataKinds                  #-}
@@ -41,6 +42,8 @@ module Refine.Backend.App.Process
   , Refine.Backend.App.Process.changeProcess
   , Refine.Backend.App.Process.removeProcess
   ) where
+
+import Refine.Backend.Prelude
 
 import Control.Lens ((^.), to)
 

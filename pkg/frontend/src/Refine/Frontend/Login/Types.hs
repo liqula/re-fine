@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -20,6 +21,8 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 module Refine.Frontend.Login.Types where
+
+import Refine.Frontend.Prelude
 
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)

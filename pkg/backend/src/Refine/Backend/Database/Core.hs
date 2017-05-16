@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -22,14 +23,10 @@
 
 module Refine.Backend.Database.Core where
 
-import Control.Lens
-import Control.Monad.Except
-import Control.Monad.Reader
-import Data.String.Conversions (ST)
-import Database.Persist.Sql hiding (Filter)
-import GHC.Generics (Generic)
+import Refine.Backend.Prelude
 
-import Refine.Prelude (HasCurrentTime(..))
+import Database.Persist.Sql hiding (Filter)
+
 import Refine.Common.Types.Prelude (ID(..), User)
 import Refine.Prelude.TH (makeRefineType)
 
@@ -38,7 +35,7 @@ type SQLM = ReaderT SqlBackend IO
 
 data DBContext = DBContext
   { _dbLoggedInUser :: Maybe (ID User)
-  , _dbFilters      :: Filters
+  , _dbFilters      :: XFilters
   }
 
 -- FIXME: follow the structure as in "Refine.Backend.User.*" (here as well as in "...DocRepo").
@@ -74,9 +71,9 @@ instance HasCurrentTime DB where
 -- by default (which we probably never want), and it does not let you specify a page number.  The
 -- next step (if we want pagination and not, say, filtering by full-text search), could be @data
 -- Filter = Paginate PageNum PageLength | Sort@.
-newtype Filter = Limit Int
+newtype XFilter = Limit Int
 
-type Filters = [Filter]
+type XFilters = [XFilter]
 
 makeRefineType ''DBError
 

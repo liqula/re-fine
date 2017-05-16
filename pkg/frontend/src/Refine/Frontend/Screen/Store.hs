@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -25,33 +26,35 @@ module Refine.Frontend.Screen.Store
   ( screenStateUpdate
   ) where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((&), (%~))
 
 import Refine.Frontend.Screen.Types
 
 screenStateUpdate :: ScreenAction -> ScreenState -> ScreenState
-screenStateUpdate action state = state
+screenStateUpdate action st = st
   & ssHeaderHeight         %~ headerHeightUpdate action
   & ssWindowWidth          %~ windowWidthUpdate action
   & ssWindowSize           %~ windowSizeUpdate action
 
 
 headerHeightUpdate :: ScreenAction -> Int -> Int
-headerHeightUpdate action state = case action of
+headerHeightUpdate action st = case action of
     AddHeaderHeight height -> height
-    _ -> state
+    _ -> st
 
 
 windowWidthUpdate :: ScreenAction -> Int -> Int
-windowWidthUpdate action state = case action of
+windowWidthUpdate action st = case action of
     SetWindowWidth width -> width
-    _ -> state
+    _ -> st
 
 
 windowSizeUpdate :: ScreenAction -> WindowSize -> WindowSize
-windowSizeUpdate action state = case action of
+windowSizeUpdate action st = case action of
   SetWindowWidth width -> toSize width
-  _ -> state
+  _ -> st
 
 
 toSize :: Int -> WindowSize

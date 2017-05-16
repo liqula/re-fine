@@ -1,17 +1,15 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE TypeApplications     #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Backend.Database.Field where
 
+import Refine.Backend.Prelude
+
 import Control.Monad ((<=<))
-import Data.Aeson
-import Data.Proxy
-import Data.String.Conversions (LBS, ST, cs)
-import Database.Persist
 import Database.Persist.Sql
 
-import Refine.Prelude (Timestamp(..))
 import Refine.Backend.Database.Types (MetaInfoID(..), RawContentEdit(..))
 import Refine.Common.Types.Prelude (UserInfo)
 import Refine.Common.Types.Chunk

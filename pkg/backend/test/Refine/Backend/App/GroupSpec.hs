@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -21,8 +22,8 @@
 {-# LANGUAGE ViewPatterns               #-}
 module Refine.Backend.App.GroupSpec where
 
-import Control.Lens
-import Control.Monad (join, void)
+import Refine.Backend.Prelude
+
 import Test.Hspec
 
 import Refine.Backend.App.Core  as App

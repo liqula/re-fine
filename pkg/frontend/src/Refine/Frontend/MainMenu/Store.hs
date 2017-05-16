@@ -1,29 +1,29 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 module Refine.Frontend.MainMenu.Store where
 
-import Control.Lens ((&), (.~))
-import Data.String.Conversions (cs)
+import Refine.Frontend.Prelude
 
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Store.Types (GlobalAction(..))
 
 
 mainMenuUpdate :: GlobalAction -> MainMenuState -> MainMenuState
-mainMenuUpdate (MainMenuAction MainMenuActionClose) state = state
+mainMenuUpdate (MainMenuAction MainMenuActionClose) st = st
   & mmState                    .~ MainMenuClosed
   & mmErrors . mmeLogin        .~ Nothing
   & mmErrors . mmeRegistration .~ Nothing
 
-mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) state = state
+mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) st = st
   & mmState .~ MainMenuOpen tab
 
-mainMenuUpdate (MainMenuAction (MainMenuActionLoginError e)) state = state
+mainMenuUpdate (MainMenuAction (MainMenuActionLoginError e)) st = st
   & mmErrors . mmeLogin .~ Just e
 
-mainMenuUpdate (MainMenuAction (MainMenuActionRegistrationError e)) state = state
+mainMenuUpdate (MainMenuAction (MainMenuActionRegistrationError e)) st = st
   & mmErrors . mmeRegistration .~ Just (cs $ show e)
 
-mainMenuUpdate (MainMenuAction MainMenuActionClearErrors) state = state
+mainMenuUpdate (MainMenuAction MainMenuActionClearErrors) st = st
   & mmErrors . mmeLogin        .~ Nothing
   & mmErrors . mmeRegistration .~ Nothing
 
-mainMenuUpdate _ state = state
+mainMenuUpdate _ st = st

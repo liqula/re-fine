@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -21,8 +22,8 @@
 {-# LANGUAGE ViewPatterns               #-}
 module Refine.Backend.App.ProcessSpec where
 
-import Control.Lens
-import Control.Monad (join)
+import Refine.Backend.Prelude
+
 import Test.Hspec
 
 import Refine.Backend.App.Core    as App

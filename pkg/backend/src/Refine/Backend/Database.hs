@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -30,15 +31,11 @@ module Refine.Backend.Database
   , createDBNat
   ) where
 
-import Control.Exception
+import Refine.Backend.Prelude
+
 import Control.Lens ((^.))
-import Control.Monad.Except
 import Control.Monad.Logger
-import Control.Monad.Reader
-import Control.Monad.Trans.Control
-import Control.Natural
 import Data.Pool (withResource)
-import Data.String.Conversions (cs)
 import Database.Persist.Sqlite (SqlBackend, createSqlitePool, runSqlPool, persistBackend, getStmtConn, connBegin, connRollback, connCommit)
 import Web.Users.Persistent as UserDB
 
@@ -87,8 +84,8 @@ createDBNat cfg = do
                        runInIO $ pure ()
         , dbRun    = \r -> control $ \runInIO -> mask $ \restore -> do
                              onException
-                               (restore . runInIO $ runReaderT r conn)
-                               (restore $ connRollback conn' getter)
+                               (restore (runInIO $ runReaderT r conn))
+                               (restore (connRollback conn' getter))
         , dbCommit = do control $ \runInIO -> mask $ \restore -> do
                           restore $ connCommit conn' getter
                           runInIO $ pure ()

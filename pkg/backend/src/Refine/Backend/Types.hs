@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -21,6 +22,8 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Backend.Types where
+
+import Refine.Backend.Prelude
 
 import Control.Lens (makeLenses)
 import Data.String.Conversions (ST, cs)

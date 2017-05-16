@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -22,8 +23,8 @@
 
 module Refine.Frontend.Rest where
 
-import           Data.Proxy
-import           React.Flux.Addons.Servant
+import Refine.Frontend.Prelude
+
 import           Refine.Common.Rest
 import           Refine.Common.Types
 

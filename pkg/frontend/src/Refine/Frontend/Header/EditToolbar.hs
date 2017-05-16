@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -23,9 +24,7 @@
 
 module Refine.Frontend.Header.EditToolbar where
 
-import           Control.Lens
-import           Data.Default (def)
-import           React.Flux
+import Refine.Frontend.Prelude
 
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types

@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -20,9 +21,9 @@
 
 module Refine.Common.Types.VDoc where
 
+import Refine.Common.Prelude
+
 import           Control.Lens (Lens')
-import           Data.Map as Map
-import           Data.String.Conversions (ST)
 import           GHC.Generics (Generic)
 
 import Refine.Common.Types.Chunk

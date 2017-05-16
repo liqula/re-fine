@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -22,8 +23,8 @@
 
 module Refine.Frontend.ViewsSpec where
 
-import           Data.String.Conversions
-import           React.Flux
+import Refine.Frontend.Prelude
+
 import           Test.Hspec
 
 import           Refine.Frontend.Test.Enzyme

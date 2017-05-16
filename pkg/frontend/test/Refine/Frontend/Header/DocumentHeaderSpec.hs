@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -22,6 +23,8 @@
 
 
 module Refine.Frontend.Header.DocumentHeaderSpec where
+
+import Refine.Frontend.Prelude
 
 import Test.Hspec
 

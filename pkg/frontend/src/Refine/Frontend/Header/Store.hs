@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -25,6 +26,8 @@ module Refine.Frontend.Header.Store
   ( headerStateUpdate
   ) where
 
+import Refine.Frontend.Prelude
+
 import Control.Lens ((&), (%~))
 
 import Refine.Frontend.Header.Types
@@ -32,12 +35,12 @@ import Refine.Frontend.Store.Types
 
 
 headerStateUpdate :: GlobalAction -> HeaderState -> HeaderState
-headerStateUpdate action state = state
+headerStateUpdate action st = st
   & hsToolbarExtensionStatus %~ toolbarExtensionUpdate action
 
 
 toolbarExtensionUpdate :: GlobalAction -> ToolbarExtensionStatus -> ToolbarExtensionStatus
-toolbarExtensionUpdate action state = case (state, action) of
+toolbarExtensionUpdate action st = case (st, action) of
     (ToolbarExtensionClosed,               HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithoutRange
     (CommentToolbarExtensionWithoutRange,  HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
     (CommentToolbarExtensionWithRange,     HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
@@ -56,4 +59,4 @@ toolbarExtensionUpdate action state = case (state, action) of
 
     (_,                                    HeaderAction CloseToolbarExtension)         -> ToolbarExtensionClosed
 
-    _ -> state
+    _ -> st

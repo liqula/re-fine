@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -26,11 +27,8 @@ module Refine.Frontend.Contribution.Bubble
   , editBubble_
   ) where
 
-import           Control.Lens ((^.), to)
-import           Data.Monoid ((<>))
-import           Data.JSString
-import           Data.String.Conversions (cs)
-import           React.Flux hiding (callback)
+import Refine.Frontend.Prelude
+
 import           Web.HttpApiData (toUrlPiece)
 
 import           Refine.Common.Types.Contribution

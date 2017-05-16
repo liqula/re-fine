@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -26,10 +27,7 @@
 
 module Refine.Frontend.Header.UserLoginLogout where
 
-import           Control.Lens ((&), (.~))
-import           Data.String.Conversions (cs)
-import           Data.Default (def)
-import           React.Flux
+import Refine.Frontend.Prelude
 
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Icon

@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -28,18 +29,16 @@ module Refine.Frontend.Views
   , mainScreen_
   ) where
 
-import           Control.Lens ((^.), (^?), at, _Just)
+import Refine.Frontend.Prelude
+
 import qualified Data.Map.Strict as M
-import           Data.Maybe (fromJust)
-import qualified Data.Tree as DT
-import           React.Flux
+import qualified Data.Tree as ST
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.QuickCreate
 import           Refine.Frontend.Contribution.Types as RS
-import           Refine.Frontend.CS ()
 import           Refine.Frontend.Document.Document
 import           Refine.Frontend.Document.Types (DocumentProps(DocumentProps))
 import           Refine.Frontend.Header.Heading (mainHeader_)
@@ -123,7 +122,7 @@ leftAside = mkView "LeftAside" $ \props ->
                                                  (props ^. asideHighlightedBubble)
                                                  (props ^. asideScreenState)
                                                )
-                                               (elemText (DT.rootLabel (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
+                                               (elemText (ST.rootLabel (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
                       (props ^. asideDiscussions)
         mconcat $ map (\n -> noteBubble_ (SpecialBubbleProps
                                            (ContribIDNote (n ^. noteID))

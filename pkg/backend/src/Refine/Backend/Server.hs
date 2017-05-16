@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DataKinds                  #-}
@@ -32,21 +33,14 @@ module Refine.Backend.Server
   , refineApi
   ) where
 
-import           Control.Category
-import           Control.Lens ((^.), iso, prism', to)
-import           Control.Monad.Except
-import qualified Control.Natural as CN
-import           Control.Natural (($$))
-import           Data.Aeson (encode)
-import           Data.String.Conversions (SBS, cs)
-import           Data.Monoid ((<>))
+import Refine.Backend.Prelude as P
+
 import           Debug.Trace (trace)  -- (please keep this until we have better logging)
 import           Network.Wai.Handler.Warp as Warp
-import           Prelude hiding ((.), id)
-import           Servant
 import qualified Servant.Cookie.Session as SCS
 import           Servant.Cookie.Session (serveAction)
 import           Servant.Server.Internal (responseServantErr)
+import qualified Servant.Utils.Enter
 import           Servant.Utils.StaticFiles (serveDirectory)
 import           System.Directory (canonicalizePath, createDirectoryIfMissing)
 import           System.FilePath (dropFileName)
@@ -62,7 +56,6 @@ import Refine.Backend.User
 import Refine.Common.Allow
 import Refine.Common.Rest
 import Refine.Common.Types.VDoc (Edit)
-import Refine.Prelude (leftToError)
 
 
 -- * Constants
@@ -86,7 +79,7 @@ createDataDirectories cfg = do
 
 data Backend db uh = Backend
   { backendServer :: Application
-  , backendRunApp :: AppM db uh CN.:~> ExceptT AppError IO
+  , backendRunApp :: AppM db uh P.:~> ExceptT AppError IO
   }
 
 type MonadRefine db uh =
@@ -177,7 +170,7 @@ mkServerApp cfg dbNat dbRunner uh = do
               (Nat appIO)
               (toServantError . cnToSn app)
               refineApi
-              (Just (Servant.serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
+              (Just (P.serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
 
   pure $ Backend srvApp app
 
@@ -185,7 +178,7 @@ maybeServeDirectory :: Maybe FilePath -> Server Raw
 maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) serveDirectory
 
 {-# ANN toServantError ("HLint: ignore Use errorDoNotUseTrace" :: String) #-}
-toServantError :: (Monad m) => ExceptT AppError m :~> ExceptT ServantErr m
+toServantError :: (Monad m) => ExceptT AppError m Servant.Utils.Enter.:~> ExceptT ServantErr m
 toServantError = Nat ((lift . runExceptT) >=> leftToError fromAppError)
   where
     -- FIXME: some (many?) of these shouldn't be err500.

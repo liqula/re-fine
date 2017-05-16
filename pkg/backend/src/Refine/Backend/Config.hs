@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE DeriveAnyClass     #-}
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE OverloadedStrings  #-}
@@ -5,19 +6,10 @@
 
 module Refine.Backend.Config where
 
-import           Control.Exception (throwIO, ErrorCall(ErrorCall))
-import           Control.Lens (makeLenses, makePrisms, (&), (^.))
-import           Data.Aeson (FromJSON, ToJSON, object, withObject, (.=), (.:))
-import           Data.Default (Default(..))
-import           Data.Maybe (isNothing)
-import           Data.String.Conversions (ST, cs, (<>))
-import qualified Data.Yaml as Yaml
-import           Data.Yaml (encode)
-import           GHC.Generics
-import           Network.Wai.Handler.Warp as Warp
-import           Text.Read (readMaybe)
+import Refine.Backend.Prelude
 
-import           Refine.Prelude (Timespan(..))
+import qualified Data.Yaml as Yaml
+import           Network.Wai.Handler.Warp as Warp
 
 
 -- FIXME: once we know what we need where, we can refactor this type into a tree of records, and
@@ -70,8 +62,8 @@ data WarpSettings = WarpSettings
 
 instance ToJSON WarpSettings where
   toJSON (WarpSettings port host) = object
-    [ "_warpSettingsPort" .= port
-    , "_warpSettingsHost" .= show host
+    [ "_warpSettingsPort" .:= port
+    , "_warpSettingsHost" .:= show host
     ]
 
 instance FromJSON WarpSettings where
@@ -125,7 +117,7 @@ explainConfig :: Config -> String -> Bool -> String
 explainConfig cfg intro mentionServerConf = unlines $
   [ intro <> ":"
   , "------------------------------"
-  , cs (encode cfg)
+  , cs (Yaml.encode cfg)
   , "------------------------------"
   , ""
   ] <>

@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeFamilies               #-}
 
@@ -6,18 +7,14 @@ module Refine.Backend.User.UH
   , uhIO
   ) where
 
-import Control.Lens (view)
-import Control.Monad.Reader
-import Control.Monad.Except
-import Control.Natural
-import Data.String.Conversions (ST)
-import Data.Time (NominalDiffTime)
+import Refine.Backend.Prelude
+
 import Web.Users.Persistent as Users
 import Web.Users.Types      as Users
 
-import Refine.Backend.User.Core
+import           Refine.Backend.User.Core
 import qualified Refine.Backend.User.Class as C
-import Refine.Common.Types.Prelude (Username)
+import           Refine.Common.Types.Prelude (Username)
 
 
 newtype UH a = UH { unUH :: ReaderT UserHandleContext (ExceptT UserHandleError IO) a }

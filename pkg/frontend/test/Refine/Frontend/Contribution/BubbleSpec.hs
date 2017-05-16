@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -22,6 +23,8 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.Contribution.BubbleSpec where
+
+import Refine.Frontend.Prelude
 
 import           Control.Lens ((^.), (&), (.~))
 import           Data.Int (Int64)

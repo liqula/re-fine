@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -25,9 +26,7 @@
 
 module Refine.Backend.App.Session where
 
-import Control.Lens
-import Control.Monad.Except (throwError)
-import Control.Monad.State (gets)
+import Refine.Backend.Prelude
 
 import Refine.Backend.App.Core
 import Refine.Backend.Types

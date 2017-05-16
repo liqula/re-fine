@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -23,6 +24,8 @@
 module Refine.Backend.Test.Util
 where
 
+import Refine.Backend.Prelude
+
 import           System.IO.Temp (withSystemTempDirectory)
 import           System.Directory (withCurrentDirectory)
 import           Data.Time.Format (parseTimeOrError, defaultTimeLocale)
@@ -47,7 +50,7 @@ sampleID :: ID a
 sampleID = ID 1
 
 sampleTime :: Timestamp
-sampleTime = Timestamp $ parseTimeOrError True defaultTimeLocale "%Y-%m-%d %H:%M:%S %Z" "2017-04-06 08:44:40 CEST" 
+sampleTime = Timestamp $ parseTimeOrError True defaultTimeLocale "%Y-%m-%d %H:%M:%S %Z" "2017-04-06 08:44:40 CEST"
 
 sampleUserInfo :: UserInfo
 sampleUserInfo = Anonymous

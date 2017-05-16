@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -17,6 +18,8 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Common.Types.Contribution where
+
+import Refine.Common.Prelude
 
 import Data.String.Conversions (ST, cs, (<>))
 import Data.Int

@@ -1,7 +1,10 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE TypeFamilies    #-}
 
 module Refine.Backend.User.Class where
+
+import Refine.Backend.Prelude
 
 import Data.String.Conversions (ST)
 import Data.Time (NominalDiffTime)

@@ -1,8 +1,10 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE LambdaCase #-}
 
 module Refine.Backend.Database.TreeSpec where
 
-import           Data.List
+import Refine.Backend.Prelude
+
 import           Data.Tree
 import           Test.Hspec
 import           Test.QuickCheck
@@ -51,7 +53,7 @@ parentCodings :: (Ord a) => Tree a -> (a -> Maybe a)
 parentCodings tree a = Map.lookup a (childrenMap tree)
   where
     childrenMap (Node _ []) = Map.empty
-    childrenMap (Node x cs) =
-      Map.fromList ((rootLabel <$> cs) `zip` repeat x)
+    childrenMap (Node x children) =
+      Map.fromList ((rootLabel <$> children) `zip` repeat x)
       `Map.union`
-      Map.unions (childrenMap <$> cs)
+      Map.unions (childrenMap <$> children)

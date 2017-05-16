@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -27,18 +28,14 @@
 module Refine.Frontend.Util
 where
 
+import Refine.Frontend.Prelude
+
 import qualified Data.JSString as JSS
-import           Data.String.Conversions
-import           GHCJS.Marshal
-import           GHCJS.Types (JSVal)
-import           React.Flux
 
-import           Refine.Frontend.CS ()
 import           Refine.Frontend.Types
-import           Refine.Prelude.Aeson (NoJSONRep(..))
 
 
-toClasses :: (ConvertibleStrings s JSS.JSString, ConvertibleStrings JSS.JSString s) => [s] -> s
+toClasses :: (ConvertibleStrings s JSString, ConvertibleStrings JSString s) => [s] -> s
 toClasses = cs . JSS.unwords . filter (not . JSS.null) . fmap cs
 
 attrToProp :: Attr -> forall handler. PropertyOrHandler handler

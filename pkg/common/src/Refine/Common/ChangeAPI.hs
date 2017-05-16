@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -22,7 +23,7 @@
 -- "Refine.Common.Types.Group".
 module Refine.Common.ChangeAPI where
 
-import GHC.Generics
+import Refine.Common.Prelude
 
 import Refine.Common.Types.Role
 import Refine.Common.Types.Group

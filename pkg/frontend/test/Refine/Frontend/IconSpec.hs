@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -22,9 +23,8 @@
 
 module Refine.Frontend.IconSpec where
 
-import Control.Lens ((&), (.~))
-import Data.JSString (JSString)
-import Data.String.Conversions (cs)
+import Refine.Frontend.Prelude hiding (S)
+
 import Test.Hspec
 
 import qualified Refine.Frontend.Colors as Color

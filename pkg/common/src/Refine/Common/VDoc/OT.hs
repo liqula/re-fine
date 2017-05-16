@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE PatternSynonyms            #-}
@@ -10,22 +11,18 @@
 {-# OPTIONS_GHC -fno-warn-orphans       #-}   -- FIXME: elim this
 module Refine.Common.VDoc.OT where
 
-import           Control.Arrow
-import           Data.Function
+import Refine.Common.Prelude hiding (Rep, to, from)
+
 import qualified Data.IntMap as IntMap
 import           Data.List
 import qualified Data.Set as Set
 import qualified Data.Text as ST
-import           Data.String.Conversions
 import qualified Generics.SOP as SOP
-import           GHC.Generics (Generic)
-import           Data.Aeson
-import           Data.Coerce
 
-import Refine.Common.OT
-import Refine.Common.VDoc.Draft (RawContent)
+import           Refine.Common.OT
+import           Refine.Common.VDoc.Draft (RawContent)
 import qualified Refine.Common.VDoc.Draft as Draft
-import Refine.Prelude.TH (makeJSON)
+import           Refine.Prelude.TH (makeJSON)
 
 ---------------------------------------- auxiliary document data type
 
@@ -127,7 +124,9 @@ simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
 
 ------------------------------------------------------- auxiliary definitions
 
-class Representable a where
+class Representable a where  -- FUTUREWORK: this name clashes with Refine.Common.Prelude.  what
+                             -- about Rep => Representation, to => fromRep, from => toRep?  would be
+                             -- clearer anyway.
   type Rep a
   to   :: Rep a -> a
   from :: a -> Rep a

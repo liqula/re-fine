@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -20,6 +21,8 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Common.TypesSpec where
+
+import Refine.Common.Prelude
 
 import           Data.Map (Map)
 import           Test.Aeson.GenericSpecs

@@ -88,6 +88,7 @@ library
       Refine.Frontend.MainMenu.Component
       Refine.Frontend.MainMenu.Store
       Refine.Frontend.MainMenu.Types
+      Refine.Frontend.Prelude
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store

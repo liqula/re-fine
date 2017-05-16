@@ -1,7 +1,10 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE DeriveGeneric   #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Refine.Frontend.MainMenu.Types where
+
+import Refine.Frontend.Prelude
 
 import GHC.Generics (Generic)
 import React.Flux (UnoverlapAllEq)

@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -27,7 +28,8 @@
 -- library.
 module Refine.Backend.User.MigrateDB where
 
-import Data.String.Conversions (ST)
+import Refine.Backend.Prelude
+
 import Web.Users.Persistent.Definitions (migrateAll)
 
 import Refine.Backend.Database.Core

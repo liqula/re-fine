@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -24,6 +25,8 @@
 
 module Refine.Frontend.Header.HeadingSpec where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((^.), (&), (.~))
 import qualified Data.Map.Strict as M
 import           Test.Hspec
@@ -34,7 +37,7 @@ import           Refine.Frontend.Header.Heading
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Test.Enzyme
+import           Refine.Frontend.Test.Enzyme as EZ
 import           Refine.Frontend.Test.Store
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 
@@ -48,24 +51,24 @@ spec = do
         lengthOfIO (find wrapper (StringSelector ".c-mainmenu__menu-button")) `shouldReturn` (1 :: Int)
         lengthOfIO (find wrapper (StringSelector ".c-mainmenu__icon-bar")) `shouldReturn` (3 :: Int)
         label <- find wrapper (StringSelector ".c-mainmenu__menu-button-label")
-        lengthOf label `shouldReturn` (1 :: Int)
+        EZ.lengthOf label `shouldReturn` (1 :: Int)
         text label `shouldReturn` "MENU"
 
       it "does not render with sticky css class" $ do
         wrapper <- shallow (topMenuBar_ (TopMenuBarProps False UserLoggedOut))
         label <- find wrapper (StringSelector ".c-mainmenu--toolbar-combined")  -- (it's called combined, though, not sticky)
-        lengthOf label `shouldReturn` (0 :: Int)
+        EZ.lengthOf label `shouldReturn` (0 :: Int)
 
     context "sticky" $ do
       it "does not render the label" $ do
         wrapper <- shallow (topMenuBar_ (TopMenuBarProps True UserLoggedOut))
         label <- find wrapper (StringSelector ".c-mainmenu__menu-button-label")
-        lengthOf label `shouldReturn` (0 :: Int)
+        EZ.lengthOf label `shouldReturn` (0 :: Int)
 
       it "renders with sticky css class" $ do
         wrapper <- shallow (topMenuBar_ (TopMenuBarProps True UserLoggedOut))
         label <- find wrapper (StringSelector ".c-mainmenu--toolbar-combined")  -- (it's called combined, though, not sticky)
-        lengthOf label `shouldReturn` (1 :: Int)
+        EZ.lengthOf label `shouldReturn` (1 :: Int)
 
   describe "The mainHeader_ component" $ do
     it "sets the header height to a nonzero value" $ do

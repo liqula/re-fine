@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE FlexibleInstances   #-}
@@ -13,6 +14,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Common.Test.Arbitrary where
+
+import Refine.Common.Prelude hiding (Generic, to)
 
 import           Control.Arrow (first, second)
 import           Control.Lens (Lens', (^.), (^?!), (.~), (%~), (&), _Just, view, _1, _2)

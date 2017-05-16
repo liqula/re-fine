@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
@@ -8,9 +9,9 @@
 
 module Refine.Backend.Database.Types where
 
-import GHC.Generics
+import Refine.Backend.Prelude
+
 import Data.Coerce (coerce)
-import Data.Aeson
 
 import           Refine.Common.Types
 import           Refine.Prelude.TH (makeRefineType)

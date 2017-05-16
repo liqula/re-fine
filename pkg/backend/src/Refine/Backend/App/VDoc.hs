@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE AllowAmbiguousTypes        #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE ConstraintKinds            #-}
@@ -26,6 +27,8 @@
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
 module Refine.Backend.App.VDoc where
+
+import Refine.Backend.Prelude
 
 import           Control.Arrow ((&&&))
 import           Control.Lens ((^.), (^?), view, has)

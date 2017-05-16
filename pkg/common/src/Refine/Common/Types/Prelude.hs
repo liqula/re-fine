@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -20,17 +21,9 @@
 
 module Refine.Common.Types.Prelude where
 
-import           Control.Lens
-import           Data.Aeson
-import           Data.Aeson.Types
-import           Data.Int
-import           Data.String.Conversions (ST, cs)
-import           GHC.Generics (Generic)
-import           Text.Read
-import           Web.HttpApiData
+import Refine.Common.Prelude as P
 
-import Refine.Prelude (Timestamp)
-import Refine.Prelude.TH
+import Data.Int
 
 
 -- * ID
@@ -49,7 +42,7 @@ instance FromHttpApiData (ID a) where
   parseUrlPiece = either (Left . cs) (Right . ID) . (readEither :: String -> Either String Int64) . cs
 
 instance (ToJSON a) => ToJSONKey (ID a) where
-  toJSONKey = ToJSONKeyValue (Data.Aeson.Types.Number . fromIntegral . _unID) toEncoding
+  toJSONKey = ToJSONKeyValue (P.Number . fromIntegral . _unID) toEncoding
 
 instance (FromJSON a) => FromJSONKey (ID a)
 

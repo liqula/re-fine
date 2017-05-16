@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -18,6 +19,8 @@
 
 module Refine.Common.Types.Comment where
 
+import Refine.Common.Prelude
+
 import Control.Lens (Lens')
 import Data.String.Conversions (ST)
 import Data.Tree (Tree)
@@ -25,7 +28,6 @@ import GHC.Generics (Generic)
 
 import Refine.Common.Types.Chunk
 import Refine.Common.Types.Prelude
-import Refine.Prelude.TH
 
 
 type CommentText = ST  -- FIXME: refactor VDocVersion to be more general and use that.

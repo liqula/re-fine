@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -22,13 +23,9 @@
 
 module Refine.Frontend.Types where
 
-import Data.Char (toLower)
-import Data.JSString (JSString)
-import Data.String.Conversions
-import GHC.Generics (Generic)
+import Refine.Frontend.Prelude
 
 import Refine.Common.Types
-import Refine.Frontend.CS ()
 import Refine.Prelude.TH (makeRefineType)
 
 

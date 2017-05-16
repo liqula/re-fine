@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -16,6 +17,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
@@ -26,12 +28,7 @@ module Refine.Frontend.Test.Enzyme.Core
 , EnzymeSelector(..)
 ) where
 
-import Data.Aeson (encode, object, (.=))
-import Data.Aeson.Types (ToJSON, toJSON)
-import Data.Char (toLower)
-import Data.String.Conversions
-import GHCJS.Marshal.Pure
-import React.Flux.Internal (toJSString)
+import Refine.Frontend.Prelude
 
 
 -- | StringSelector can be a CSS class, tag, id, prop (e.g. "[foo=3]"),
@@ -47,7 +44,7 @@ data EnzymeSelector =
 -- 'js_exec_with_object', and 'execWithSelector' as a special case of 'execWith1Arg'.
 instance PToJSVal EnzymeSelector where
   pToJSVal (StringSelector str) = pToJSVal str
-  pToJSVal (PropertySelector p) = pToJSVal . toJSString . cs $ encode p
+  pToJSVal (PropertySelector p) = pToJSVal . cs @LBS @JSString $ encode p
 
 data EventType =
     MouseEnter
@@ -63,4 +60,4 @@ data Prop where
   Prop :: forall a. (ToJSON a) => ST -> a -> Prop
 
 instance {-# OVERLAPPING #-} ToJSON [Prop] where
-  toJSON = object . fmap (\(Prop k v) -> k .= v)
+  toJSON = object . fmap (\(Prop k v) -> k .:= v)

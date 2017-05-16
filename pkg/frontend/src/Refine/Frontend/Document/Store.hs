@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -28,8 +29,9 @@ module Refine.Frontend.Document.Store
   , setMarkPositions
   ) where
 
+import Refine.Frontend.Prelude
+
 import           Control.Lens ((&), (%~), view)
-import           Control.Monad.IO.Class (MonadIO, liftIO)
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
@@ -56,11 +58,11 @@ documentStateUpdate (HeaderAction (StartEdit kind)) _ (DocumentStateView _ estat
 documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _state
   = state'
 
-documentStateUpdate (DocumentAction DocumentToggleBold) _ state
-  = state & documentStateVal %~ documentToggleBold
+documentStateUpdate (DocumentAction DocumentToggleBold) _ st
+  = st & documentStateVal %~ documentToggleBold
 
-documentStateUpdate (DocumentAction DocumentToggleItalic) _ state
-  = state & documentStateVal %~ documentToggleItalic
+documentStateUpdate (DocumentAction DocumentToggleItalic) _ st
+  = st & documentStateVal %~ documentToggleItalic
 
 documentStateUpdate (AddDiscussion _) (Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
@@ -71,8 +73,8 @@ documentStateUpdate (AddNote _) (Just cvdoc) _state
 documentStateUpdate (AddEdit _) (Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate _ _ state
-  = state
+documentStateUpdate _ _ st
+  = st
 
 
 editorStateToVDocVersion :: EditorState -> VDocVersion

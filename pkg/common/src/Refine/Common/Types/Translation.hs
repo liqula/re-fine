@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
@@ -11,11 +12,12 @@
 
 module Refine.Common.Types.Translation where
 
+import Refine.Common.Prelude
+
 import Control.Lens (Getter, makeLenses, to)
 import Data.String.Conversions (ConvertibleStrings, ST, cs)
 import Data.String (IsString(..))
 import Data.Text.I18n as I18n (Locale(..), L10n, Msgid(..), Context)
-import Data.Aeson.Types
 import GHC.Generics (Generic)
 
 import Refine.Prelude.Aeson (NoJSONRep(..))

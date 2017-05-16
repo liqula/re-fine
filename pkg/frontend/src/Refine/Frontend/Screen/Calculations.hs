@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -22,14 +23,14 @@
 
 module Refine.Frontend.Screen.Calculations where
 
-import           Control.Lens ((^.))
+import Refine.Frontend.Prelude
 
 import           Refine.Frontend.Types
 import           Refine.Frontend.Screen.Types
 
 
 offsetIntoText :: OffsetFromDocumentTop -> ScreenState -> Int
-offsetIntoText (OffsetFromDocumentTop topOffset) state = topOffset - state ^. ssHeaderHeight - 80
+offsetIntoText (OffsetFromDocumentTop topOffset) st = topOffset - st ^. ssHeaderHeight - 80
 
 offsetFromDocumentTop :: OffsetFromViewportTop -> ScrollOffsetOfViewport -> OffsetFromDocumentTop
 offsetFromDocumentTop (OffsetFromViewportTop v) (ScrollOffsetOfViewport d) = OffsetFromDocumentTop (v + d)

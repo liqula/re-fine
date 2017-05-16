@@ -1,6 +1,9 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Refine.Frontend.Translation.Store (translationsUpdate) where
+
+import Refine.Frontend.Prelude
 
 import Data.String.Conversions (cs)
 import Data.Text.I18n

@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -27,9 +28,7 @@ module Refine.Frontend.Style
   , IsStyle(..)
   ) where
 
-import           Data.Aeson ((.=), object)
-import           Data.Aeson.Types (ToJSON, toJSON)
-import           Data.String.Conversions
+import Refine.Frontend.Prelude
 
 
 -- | 'Style' constructor takes a ToJSON value; the other constructors take values of concrete types.
@@ -66,31 +65,31 @@ data Style =
 
 instance {-# OVERLAPPING #-} ToJSON [Style] where
   toJSON = object . fmap (\case
-    StyleInt         k v -> k .= vshow v
-    StyleDouble      k v -> k .= vshow v
-    StyleST          k v -> k .= v
-    StyleRem         k v -> k .= (vshow v <> "rem")
+    StyleInt         k v -> k .:= vshow v
+    StyleDouble      k v -> k .:= vshow v
+    StyleST          k v -> k .:= v
+    StyleRem         k v -> k .:= (vshow v <> "rem")
 
-    -- StyleIdent      k v -> k .= v
-    -- StyleFunc       k v e -> k .= [v, e]  -- (probably not)
-    -- StyleDeg        k v -> k .= v
-    -- StyleRad        k v -> k .= v
-    -- StyleGrad       k v -> k .= v
-    -- StyleCword      k v -> k .= v
-    -- StyleHz         k v -> k .= v
-    -- StyleKHz        k v -> k .= v
-    StyleEm         k v -> k .= (vshow v <> "em")  -- TODO: only add unit of measure if /= 0
-    StyleEx         k v -> k .= (vshow v <> "ex")
-    StylePx         k v -> k .= (vshow v <> "px")
-    StyleIn         k v -> k .= (vshow v <> "in")
-    StyleCm         k v -> k .= (vshow v <> "cm")
-    StyleMm         k v -> k .= (vshow v <> "mm")
-    StylePc         k v -> k .= (vshow v <> "pc")
-    StylePt         k v -> k .= (vshow v <> "pt")
-    StylePercentage k v -> k .= (vshow v <> "%")
-    -- StyleMs         k v -> k .= v
-    -- StyleS          k v -> k .= v
-    -- StyleUri        k v -> k .= v
+    -- StyleIdent      k v -> k .:= v
+    -- StyleFunc       k v e -> k .:= [v, e]  -- (probably not)
+    -- StyleDeg        k v -> k .:= v
+    -- StyleRad        k v -> k .:= v
+    -- StyleGrad       k v -> k .:= v
+    -- StyleCword      k v -> k .:= v
+    -- StyleHz         k v -> k .:= v
+    -- StyleKHz        k v -> k .:= v
+    StyleEm         k v -> k .:= (vshow v <> "em")  -- TODO: only add unit of measure if /= 0
+    StyleEx         k v -> k .:= (vshow v <> "ex")
+    StylePx         k v -> k .:= (vshow v <> "px")
+    StyleIn         k v -> k .:= (vshow v <> "in")
+    StyleCm         k v -> k .:= (vshow v <> "cm")
+    StyleMm         k v -> k .:= (vshow v <> "mm")
+    StylePc         k v -> k .:= (vshow v <> "pc")
+    StylePt         k v -> k .:= (vshow v <> "pt")
+    StylePercentage k v -> k .:= (vshow v <> "%")
+    -- StyleMs         k v -> k .:= v
+    -- StyleS          k v -> k .:= v
+    -- StyleUri        k v -> k .:= v
     )
 
 

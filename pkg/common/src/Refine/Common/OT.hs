@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
@@ -13,16 +14,12 @@
 -- | FUTUREWORK: release this file as a library
 module Refine.Common.OT where
 
-import           Data.Monoid
+import Refine.Common.Prelude
+
 import qualified Data.Set as Set
-import           Data.Function
 import           Data.List
-import           Control.Arrow
 import qualified Data.Algorithm.Patience as Diff
-import qualified Data.Text as Text
-import           GHC.Generics hiding (Rep)
-import           Data.Aeson
-import           Data.Coerce
+import qualified Data.Text as ST
 
 ----------------------------------------------------------------------------------------------
 
@@ -296,9 +293,9 @@ instance Editable a => Editable [a] where
     eMerge _ (EditItem i _) (DeleteItem i') | i == i' = ([DeleteItem i], [])      -- information lost!
     eMerge d (DeleteItem i) (EditItem i' x) | i == i' = (InsertItem i (d !! i): editItem i x, [])
     eMerge _ (DeleteItem i) (DeleteItem i') | i == i' = ([], [])
-    eMerge _ a b = (modify 0 a b, modify 1 b a)
+    eMerge _ a b = (mutate 0 a b, mutate 1 b a)
       where
-        modify l e = \case
+        mutate l e = \case
             InsertItem i x -> [InsertItem (di l i) x]
             DeleteItem i   -> [DeleteItem (di 1 i)  ]
             EditItem   i x -> [EditItem   (di 1 i) x]
@@ -323,10 +320,10 @@ instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit [a])
 
 ---------------------------------------- StrictText instance
 
-instance Editable Text.Text where
-    newtype EEdit Text.Text = EText {unEText :: EEdit String}
+instance Editable ST where
+    newtype EEdit ST = EText {unEText :: EEdit String}
         deriving (Generic, Show)
-    docCost = Text.length
+    docCost = ST.length
     eCost = eCost . unEText
 
     -- | Data.Algorithm.Patience.diff is used from the patience package
@@ -341,21 +338,21 @@ instance Editable Text.Text where
     -- diff (replicate 1000 'a') (replicate 1000 'b')
     -- diff (take 1000 ['a'..]) (take 1000 ['A'..])
     -- diff (take 1000 ['A'..]) (take 1000 ['a'..])
-    diff a b = f 0 $ Diff.diff (Text.unpack a) (Text.unpack b)
+    diff a b = f 0 $ Diff.diff (ST.unpack a) (ST.unpack b)
       where
         f !n (Diff.Both{}: es) = f (n+1) es
         f n (Diff.New c: es) = EText (InsertItem n c): f (n+1) es
         f n (Diff.Old{}: es) = EText (DeleteItem n): f n es
         f _ [] = []
-    ePatch e = Text.pack . ePatch (coerce e) . Text.unpack
-    patch e = Text.pack . patch (coerce e) . Text.unpack
-    eMerge d a b = coerce $ eMerge (Text.unpack d) (coerce a) (coerce b)
-    merge d a b = coerce $ merge (Text.unpack d) (coerce a) (coerce b)
-    eInverse d = coerce . eInverse (Text.unpack d) . coerce
-    inverse d = coerce . inverse (Text.unpack d) . coerce
+    ePatch e = ST.pack . ePatch (coerce e) . ST.unpack
+    patch e = ST.pack . patch (coerce e) . ST.unpack
+    eMerge d a b = coerce $ eMerge (ST.unpack d) (coerce a) (coerce b)
+    merge d a b = coerce $ merge (ST.unpack d) (coerce a) (coerce b)
+    eInverse d = coerce . eInverse (ST.unpack d) . coerce
+    inverse d = coerce . inverse (ST.unpack d) . coerce
 
-instance ToJSON (EEdit Text.Text)
-instance FromJSON (EEdit Text.Text)
+instance ToJSON (EEdit ST)
+instance FromJSON (EEdit ST)
 
 ---------------------------------------- Set instance
 
@@ -416,4 +413,3 @@ instance (ToJSON a, ToJSON (EEdit a)) => ToJSON (EEdit (Set.Set a))
 instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit (Set.Set a))
 
 ---------------------------------------- FUTUREWORK: Map instance
-

@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -22,7 +23,8 @@
 
 module Refine.Frontend.Contribution.Store where
 
-import           Control.Lens ((&), (%~), (.~))
+import Refine.Frontend.Prelude
+
 import qualified Data.Map.Strict as M
 
 import           Refine.Common.Types
@@ -35,16 +37,16 @@ import           Refine.Frontend.Types
 contributionStateUpdate :: GlobalAction -> ContributionState -> ContributionState
 contributionStateUpdate a = localAction a . globalAction a
   where
-    localAction (ContributionAction action) state = state
+    localAction (ContributionAction action) st = st
       & csCurrentRange             %~ currentRangeUpdate action
       & csCommentKind              %~ commentKindUpdate action
       & csDisplayedContributionID  %~ displayedContributionUpdate action
       & csCommentEditorVisible     %~ commentEditorVisibleUpdate action
       & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
       & csMarkPositions            %~ markPositionsUpdate action
-    localAction _ state = state
+    localAction _ st = st
 
-    globalAction action state = state
+    globalAction action st = st
       & csQuickCreateShowState     %~ quickCreateShowStateUpdate action
 
 
@@ -55,16 +57,16 @@ currentRangeUpdate action = case action of
   _ -> id
 
 commentKindUpdate :: ContributionAction -> Maybe CommentKind -> Maybe CommentKind
-commentKindUpdate action state = case action of
+commentKindUpdate action st = case action of
   (SetCommentKind k) -> Just k
   HideCommentEditor  -> Nothing  -- when closing the comment editor, reset the choice
-  _ -> state
+  _ -> st
 
 displayedContributionUpdate :: ContributionAction -> Maybe ContributionID -> Maybe ContributionID
-displayedContributionUpdate action state = case action of
+displayedContributionUpdate action st = case action of
   ShowContributionDialog contributionId -> Just contributionId
   HideCommentOverlay                    -> Nothing
-  _ -> state
+  _ -> st
 
 commentEditorVisibleUpdate :: ContributionAction -> Bool -> Bool
 commentEditorVisibleUpdate = \case
@@ -73,13 +75,13 @@ commentEditorVisibleUpdate = \case
   _ -> id
 
 highlightedMarkAndBubbleUpdate :: ContributionAction -> Maybe ContributionID -> Maybe ContributionID
-highlightedMarkAndBubbleUpdate action state = case action of
+highlightedMarkAndBubbleUpdate action st = case action of
   (HighlightMarkAndBubble dataChunkId) -> Just dataChunkId
   UnhighlightMarkAndBubble             -> Nothing
-  _ -> state
+  _ -> st
 
 quickCreateShowStateUpdate :: GlobalAction -> QuickCreateShowState -> QuickCreateShowState
-quickCreateShowStateUpdate action state = case action of
+quickCreateShowStateUpdate action st = case action of
   ContributionAction (SetRange _)               -> somethingWasSelected
   ContributionAction ClearRange                 -> selectionWasRemoved
   HeaderAction ToggleCommentToolbarExtension    -> toolbarWasToggled
@@ -89,19 +91,19 @@ quickCreateShowStateUpdate action state = case action of
                                                                         -- quick create buttons are
                                                                         -- never triggered.)
   HeaderAction CloseToolbarExtension            -> toolbarWasToggled
-  _ -> state
+  _ -> st
   where
-    somethingWasSelected = case state of
+    somethingWasSelected = case st of
       QuickCreateShown     -> QuickCreateShown
       QuickCreateNotShown  -> QuickCreateShown
       QuickCreateBlocked   -> QuickCreateBlocked
 
-    selectionWasRemoved = case state of
+    selectionWasRemoved = case st of
       QuickCreateShown     -> QuickCreateNotShown
       QuickCreateNotShown  -> QuickCreateNotShown
       QuickCreateBlocked   -> QuickCreateBlocked
 
-    toolbarWasToggled = case state of
+    toolbarWasToggled = case st of
       QuickCreateShown     -> QuickCreateNotShown
       QuickCreateNotShown  -> QuickCreateNotShown
       QuickCreateBlocked   -> QuickCreateNotShown

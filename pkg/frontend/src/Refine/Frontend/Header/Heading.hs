@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -26,14 +27,11 @@ module Refine.Frontend.Header.Heading
   , mainHeader, mainHeader_
   ) where
 
-import           Control.Lens ((^.), has)
-import           Control.Monad (unless)
-import           GHC.Generics
-import           GHCJS.Types (JSVal)
-import           GHCJS.Marshal.Pure
-import           React.Flux
-import           React.Flux.Internal (HandlerArg(HandlerArg))
-import           React.Flux.Outdated (ReactView, LifecycleViewConfig(..), LDOM(..), lifecycleConfig, defineLifecycleView, view)
+import Refine.Frontend.Prelude
+
+import qualified React.Flux as RF
+import qualified React.Flux.Internal as RF
+import qualified React.Flux.Outdated as RF
 
 import           Refine.Common.Types
 import           Refine.Frontend.Document.Types
@@ -81,13 +79,13 @@ topMenuBar_ !props = view_ topMenuBar "TopMenuBar_" props
 
 -- | extract the new state from event.
 currentToolbarStickyState :: Event -> Bool
-currentToolbarStickyState (evtHandlerArg -> HandlerArg j) = pFromJSVal j
+currentToolbarStickyState (evtHandlerArg -> RF.HandlerArg j) = pFromJSVal j
 
-mainHeader :: ReactView GlobalState
-mainHeader = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
+mainHeader :: RF.ReactView GlobalState
+mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
      -- the render function inside a Lifecycle view does not update the children passed to it when the state changes
      -- (see react-flux issue #29), therefore we move everything inside the Lifecylce view.
-   { lRender = \_state rs ->
+   { RF.lRender = \_state rs ->
         case rs ^. gsVDoc of
           Nothing -> error "mainHeader may only be invoked after a VDoc has been loaded!"
           Just vdoc ->
@@ -98,22 +96,22 @@ mainHeader = defineLifecycleView "HeaderSizeCapture" () lifecycleConfig
                 topMenuBar_ (TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser))
                 documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
                 div_ ["className" $= "c-fulltoolbar"] $ do
-                    sticky_ [on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
+                    sticky_ [RF.on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
                         if has _DocumentStateView $ rs ^. gsDocumentState
                           then toolbar_
                           else editToolbar_
                         commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
                         editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
 
-   , lComponentDidMount = Just $ \_propsandstate ldom _ -> calcHeaderHeight ldom
+   , RF.lComponentDidMount = Just $ \_propsandstate ldom _ -> calcHeaderHeight ldom
    }
 
 mainHeader_ :: GlobalState -> ReactElementM eventHandler ()
-mainHeader_ props = view mainHeader props mempty
+mainHeader_ props = RF.view mainHeader props mempty
 
-calcHeaderHeight :: LDOM -> IO ()
+calcHeaderHeight :: RF.LDOM -> IO ()
 calcHeaderHeight ldom = do
-   this <- lThis ldom
+   this <- RF.lThis ldom
    dispatchAndExec . ScreenAction . AddHeaderHeight =<< js_getBoundingClientRectHeight this
 
 foreign import javascript unsafe

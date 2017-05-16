@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveAnyClass             #-}
@@ -23,17 +24,11 @@
 
 module Refine.Frontend.Contribution.Types where
 
+import Refine.Frontend.Prelude
+
 import           Control.DeepSeq
-import           Control.Lens (makeLenses)
-import           Data.Aeson (toJSON, parseJSON, object, (.=), withObject)
-import           Data.Aeson.Types (FromJSON, ToJSON, Value, Parser)
 import qualified Data.HashMap.Strict as HashMap
-import qualified Data.Map.Strict as M
-import           Data.String.Conversions
-import           GHC.Generics (Generic)
-import           GHCJS.Types
-import           Text.Read (readMaybe)
-import           React.Flux (UnoverlapAllEq)
+import qualified Data.Map.Strict as Map
 
 import Refine.Common.Types
 import Refine.Frontend.Screen.Types
@@ -46,7 +41,7 @@ newtype CommentInputState = CommentInputState
   } deriving (Show, Eq, Generic)
 
 
-newtype MarkPositions = MarkPositions { _markPositionsMap :: M.Map ContributionID MarkPosition }
+newtype MarkPositions = MarkPositions { _markPositionsMap :: Map.Map ContributionID MarkPosition }
   deriving (Show, Eq, Generic)
 
 instance Monoid MarkPositions where
@@ -64,12 +59,12 @@ data MarkPosition = MarkPosition
 -- (2) implement the orphan instances in terms of this function, not via lists;
 -- (3) same for @mapFromValue@.
 -- (4) rename to @map{From,To}JSON@.
-mapToValue :: (Show k, ToJSON v) => M.Map k v -> Value
-mapToValue = object . fmap (\(k, v) -> (cs . show) k .= v) . M.toList
+mapToValue :: (Show k, ToJSON v) => Map.Map k v -> Value
+mapToValue = object . fmap (\(k, v) -> (cs . show) k .:= v) . Map.toList
 
-mapFromValue :: (Ord k, Read k, FromJSON v) => Value -> Parser (M.Map k v)
+mapFromValue :: (Ord k, Read k, FromJSON v) => Value -> Parser (Map.Map k v)
 mapFromValue = withObject "MarkPositions"
-  $ fmap M.fromList
+  $ fmap Map.fromList
   . mapM (\(k, v) -> (,) <$> maybe (fail "could not parse key.") pure (readMaybe (cs k))
                          <*> parseJSON v)
   . HashMap.toList

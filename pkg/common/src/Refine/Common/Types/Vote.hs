@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -18,10 +19,11 @@
 
 module Refine.Common.Types.Vote where
 
+import Refine.Common.Prelude
+
 import GHC.Generics (Generic)
 
 import Refine.Common.Types.Prelude
-import Refine.Prelude.TH
 
 
 data CreateVote = CreateVote

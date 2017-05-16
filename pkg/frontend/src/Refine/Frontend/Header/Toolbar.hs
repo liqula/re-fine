@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -23,10 +24,7 @@
 
 module Refine.Frontend.Header.Toolbar where
 
-import           Control.Lens hiding (children)
-import           Data.Default (def)
-import           Data.String.Conversions
-import           React.Flux
+import Refine.Frontend.Prelude
 
 import           Refine.Common.Types ( EditKind(..) )
 import           Refine.Frontend.Header.Types

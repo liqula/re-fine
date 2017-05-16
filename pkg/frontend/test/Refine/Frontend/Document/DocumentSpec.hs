@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -24,10 +25,8 @@
 module Refine.Frontend.Document.DocumentSpec
 where
 
-import Control.Lens ((^.), (&), (.~), (^?!), _Just)
-import Data.Aeson
-import Data.String.Conversions
-import GHCJS.Types
+import Refine.Frontend.Prelude hiding (property)
+
 import Test.Hspec
 import Test.QuickCheck
 

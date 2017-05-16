@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -22,15 +23,9 @@
 
 module Refine.Backend.AppSpec where
 
-import           Control.Category ((.))
-import           Control.Lens hiding (elements)
-import           Control.Monad.Trans.Identity
-import           Control.Monad.State
+import Refine.Backend.Prelude hiding (assert, check)
+
 import qualified Data.Map as Map
-import           Data.Map (Map)
-import           Data.Monoid (mconcat)
-import           Data.String.Conversions (ConvertibleStrings, cs)
-import           Prelude hiding ((.))
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic

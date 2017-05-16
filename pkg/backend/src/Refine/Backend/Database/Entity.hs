@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -26,15 +27,9 @@
 
 module Refine.Backend.Database.Entity where
 
-import Control.Lens ((^.), to, view)
-import Control.Monad ((>=>), forM, forM_, void)
-import Control.Monad.Reader (ask)
-import Data.Functor.Infix ((<$$>))
-import Data.Maybe (fromMaybe)
-import Data.List ((\\))
-import Data.String.Conversions (ST)
-import Data.Typeable
-import Database.Persist
+import Refine.Backend.Prelude as P hiding (get)
+
+import Database.Persist (get)
 import Database.Persist.Sql (SqlBackend)
 import Lentil.Core (entityLens)
 import Lentil.Types as L
@@ -116,7 +111,7 @@ getEntityRep eid = do
 --   * foreignKeyField S.PCEdit    (Entity pcid (S.PC pid cid)) == pid
 foreignKeyField
   :: ToBackendKey SqlBackend (S.EntityRep a)
-  => (b -> Key (S.EntityRep a)) -> Database.Persist.Entity b -> ID a
+  => (b -> Key (S.EntityRep a)) -> P.Entity b -> ID a
 foreignKeyField column = S.keyToId . column . entityVal
 
 -- NOTES: How to handle associations? What to update, what to keep?
@@ -180,7 +175,7 @@ addConnection
     => (Key (S.EntityRep a) -> Key (S.EntityRep b) -> record) -> ID a -> ID b -> DB ()
 addConnection t rid mid = void . liftDB . insert $ t (S.idToKey rid) (S.idToKey mid)
 
-getMetaInfo :: HasMetaInfo a => ID a -> DB (Database.Persist.Entity (S.EntityRep MetaInfo))
+getMetaInfo :: HasMetaInfo a => ID a -> DB (P.Entity (S.EntityRep MetaInfo))
 getMetaInfo ida = fromMaybe (error "no meta info for ...") <$> do
   liftDB . getBy $ S.UniMetaInfo (metaInfoType ida)
 

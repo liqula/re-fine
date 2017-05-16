@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -27,12 +28,14 @@
 module Refine.Frontend.CS
 where
 
+import Refine.Common.Prelude
+
+import React.Flux
+
 import qualified Data.JSString as JSS
 import           Data.String (fromString)
-import           Data.String.Conversions
 import qualified Data.Text as ST
 import qualified Data.Text.Lazy as LT
-import           React.Flux
 
 import Refine.Common.Types.Translation (TKey)
 

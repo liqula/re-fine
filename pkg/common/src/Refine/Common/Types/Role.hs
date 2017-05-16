@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -20,7 +21,7 @@
 
 module Refine.Common.Types.Role where
 
-import GHC.Generics
+import Refine.Common.Prelude
 
 import Refine.Prelude.TH (makeRefineType)
 

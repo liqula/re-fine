@@ -1,12 +1,12 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE GADTs                     #-}
 
 module Refine.Common.Test.HttpApiData where
 
-import Data.String.Conversions (cs)
-import Data.Typeable (Typeable, typeOf)
+import Refine.Common.Prelude
+
 import Test.Hspec
 import Test.QuickCheck
-import Web.HttpApiData
 
 import Refine.Common.Test.Arbitrary ()
 

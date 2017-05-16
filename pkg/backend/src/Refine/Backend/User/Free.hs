@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -28,11 +29,9 @@ module Refine.Backend.User.Free (
   , mockLogin
   ) where
 
-import Control.Monad.Except
+import Refine.Backend.Prelude
+
 import Control.Monad.Free
-import Control.Natural
-import Data.String.Conversions (ST)
-import Data.Time (NominalDiffTime)
 
 import Refine.Backend.User.Class
 import Refine.Backend.User.Core

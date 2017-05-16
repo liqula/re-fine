@@ -1,7 +1,9 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 module Refine.Backend.Database.Tree where
 
+import Refine.Backend.Prelude
+
 import Control.Arrow ((&&&), first)
-import Data.Maybe
 import Data.Tree (Tree)
 import qualified Data.Tree       as Tree
 import qualified Data.Map.Strict as Map

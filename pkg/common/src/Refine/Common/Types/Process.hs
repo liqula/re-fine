@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -20,9 +21,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 module Refine.Common.Types.Process where
 
-import Control.Lens (Lens')
-import Data.String.Conversions (ST)
-import GHC.Generics
+import Refine.Common.Prelude
 
 import Refine.Common.Types.Prelude (ID(..), MetaID, miID, Create)
 import Refine.Common.Types.Group (Group, GroupRef)

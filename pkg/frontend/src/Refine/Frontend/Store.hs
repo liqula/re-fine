@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DataKinds                  #-}
@@ -26,18 +27,10 @@
 
 module Refine.Frontend.Store where
 
+import Refine.Frontend.Prelude
+
 import           Control.Concurrent (forkIO, yield, threadDelay)
-import           Control.Exception (assert)
-import           Control.Lens (Lens', _Just, (&), (^.), (.~), (^?), (^?!), (%~), has)
-import           Control.Monad.IO.Class
-import           Control.Monad.State.Class (MonadState, modify)
-import           Control.Monad.Trans.State (StateT, runStateT)
-import           Control.Monad (void, when)
-import           Data.Aeson (eitherDecode, Value(String))
 import qualified Data.Map.Strict as M
-import           Data.Maybe (fromMaybe)
-import           Data.String.Conversions
-import           React.Flux
 
 import           Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as C
@@ -78,10 +71,10 @@ instance StoreData GlobalState where
         -- instead.  which raises the question whether we want to keep the separation between the
         -- pure state update and effects.)
         loop :: [GlobalAction] -> GlobalState -> IO GlobalState
-        loop [] state = pure state
-        loop (action : actions) state = do
-          (state', actions') <- runStateT (transformGlobalState @Transform action state) []
-          loop (actions <> actions') state'
+        loop [] st = pure st
+        loop (action : actions) st = do
+          (st', actions') <- runStateT (transformGlobalState @Transform action st) []
+          loop (actions <> actions') st'
 
 type MonadTransform m = (Functor m, Applicative m, Monad m, MonadIO m, MonadState [GlobalAction] m)
 type Transform = StateT [GlobalAction] IO
@@ -91,14 +84,14 @@ transformGlobalState :: forall m. MonadTransform m => GlobalAction -> GlobalStat
 transformGlobalState = transf
   where
     transf :: GlobalAction -> GlobalState -> m GlobalState
-    transf (ResetState s) _ = pure s  -- for testing only!
-    transf action state = do
-        consoleLogGlobalStateBefore weAreInDevMode action state
+    transf (ResetState st) _ = pure st  -- for testing only!
+    transf action st = do
+        consoleLogGlobalStateBefore weAreInDevMode action st
 
-        let state' = pureTransform action state
+        let st' = pureTransform action st
 
         -- ajax
-        liftIO $ emitBackendCallsFor action state
+        liftIO $ emitBackendCallsFor action st
 
         -- other effects
         case action of
@@ -106,7 +99,7 @@ transformGlobalState = transf
               dispatchAndExec . ContributionAction =<< setMarkPositions dstate
 
               when (has _DocumentStateView dstate) $ do
-                mRangeEvent <- getRangeAction (state ^. gsDocumentState) dstate
+                mRangeEvent <- getRangeAction (st ^. gsDocumentState) dstate
                 case mRangeEvent of
                     Nothing -> pure ()
                     Just rangeEvent -> do
@@ -115,7 +108,7 @@ transformGlobalState = transf
                         -- selection ourselves.  (we may want to only do that in read-only mode, or
                         -- draft may get confused and kill its own selection as well.)
 
-                        when (state ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithRange) $ do
+                        when (st ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithRange) $ do
                           -- (if the comment editor (or dialog) is started via the toolbar
                           -- extension, this is where it should be started.  assume that this can
                           -- only happen if rangeEvent is SetRange, not ClearRange.)
@@ -126,17 +119,17 @@ transformGlobalState = transf
 
             _ -> pure ()
 
-        consoleLogGlobalStateAfter weAreInDevMode (state' /= state) state'
-        pure state'
+        consoleLogGlobalStateAfter weAreInDevMode (st' /= st) st'
+        pure st'
 
     pureTransform :: GlobalAction -> GlobalState -> GlobalState
-    pureTransform action state = state'
-      where state' = state
+    pureTransform action st = st'
+      where st' = st
               & gsVDoc                %~ vdocUpdate action
               & gsVDocList            %~ vdocListUpdate action
               & gsContributionState   %~ contributionStateUpdate action
               & gsHeaderState         %~ headerStateUpdate action
-              & gsDocumentState       %~ documentStateUpdate action (state' ^. gsVDoc)
+              & gsDocumentState       %~ documentStateUpdate action (st' ^. gsVDoc)
               & gsScreenState         %~ maybe id screenStateUpdate (action ^? _ScreenAction)
               & gsLoginState          %~ loginStateUpdate action
               & gsMainMenuState       %~ mainMenuUpdate action
@@ -147,11 +140,11 @@ transformGlobalState = transf
 
 consoleLogGlobalStateBefore :: forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
 consoleLogGlobalStateBefore False _ _ = pure ()
-consoleLogGlobalStateBefore True action state = liftIO $ do
+consoleLogGlobalStateBefore True action st = liftIO $ do
   consoleLogJSStringM "" "\n"
-  consoleLogJSONM "Old state: " state
-  traceEditorState (state ^. gsDocumentState . documentStateVal)
-  traceContentInEditorState (state ^. gsDocumentState . documentStateVal)
+  consoleLogJSONM "Old state: " st
+  traceEditorState (st ^. gsDocumentState . documentStateVal)
+  traceContentInEditorState (st ^. gsDocumentState . documentStateVal)
   consoleLogJSONM "Action: " action
   -- consoleLogJSStringM "Action: " (cs $ show action)
 
@@ -159,10 +152,10 @@ consoleLogGlobalStateAfter :: forall m. MonadTransform m => Bool -> Bool -> Glob
 consoleLogGlobalStateAfter False _ _ = pure ()
 consoleLogGlobalStateAfter True False _ = do
   consoleLogJSONM "New state: " (String "[UNCHANGED]" :: Value)
-consoleLogGlobalStateAfter True True state = liftIO $ do
-  consoleLogJSONM "New state: " state
-  traceEditorState (state ^. gsDocumentState . documentStateVal)
-  traceContentInEditorState (state ^. gsDocumentState . documentStateVal)
+consoleLogGlobalStateAfter True True st = liftIO $ do
+  consoleLogJSONM "New state: " st
+  traceEditorState (st ^. gsDocumentState . documentStateVal)
+  traceContentInEditorState (st ^. gsDocumentState . documentStateVal)
 
 
 -- * pure updates
@@ -192,15 +185,15 @@ vdocUpdate action (Just vdoc) = Just $ case action of
 
 
 vdocListUpdate :: GlobalAction -> Maybe [C.ID C.VDoc] -> Maybe [C.ID C.VDoc]
-vdocListUpdate action state = case action of
+vdocListUpdate action st = case action of
     LoadedDocumentList list -> Just list
-    _ -> state
+    _ -> st
 
 
 toolbarStickyUpdate :: GlobalAction -> Bool -> Bool
-toolbarStickyUpdate action state = case action of
-  ToolbarStickyStateChange state' -> state'
-  _                               -> state
+toolbarStickyUpdate action st = case action of
+  ToolbarStickyStateChange st' -> st'
+  _                            -> st
 
 
 -- | Only touches the 'DevState' if it is 'Just'.  In production, 'gsDevState' should always be
@@ -216,7 +209,7 @@ devStateUpdate action (Just devstate) = Just $ upd action devstate
 -- * ajax
 
 emitBackendCallsFor :: GlobalAction -> GlobalState -> IO ()
-emitBackendCallsFor action state = case action of
+emitBackendCallsFor action st = case action of
 
     -- documents
 
@@ -235,26 +228,26 @@ emitBackendCallsFor action state = case action of
     ContributionAction (SubmitComment text kind) -> do
       case kind of
         Just CommentKindDiscussion ->
-          addDiscussion (state ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
-                     (C.CreateDiscussion text True (state ^. gsChunkRange)) $ \case
+          addDiscussion (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
+                     (C.CreateDiscussion text True (st ^. gsChunkRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right discussion) -> dispatchM $ AddDiscussion discussion
         Just CommentKindNote ->
-          addNote (state ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
-                     (C.CreateNote text True (state ^. gsChunkRange)) $ \case
+          addNote (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
+                     (C.CreateNote text True (st ^. gsChunkRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right note) -> dispatchM $ AddNote note
         Nothing -> pure ()
 
-    DocumentAction DocumentSave -> case state ^. gsDocumentState of
+    DocumentAction DocumentSave -> case st ^. gsDocumentState of
       dstate@(DocumentStateEdit _ kind) -> do
         let eid :: C.ID C.Edit
-            eid = state ^?! gsVDoc . _Just . C.compositeVDocEditID
+            eid = st ^?! gsVDoc . _Just . C.compositeVDocEditID
 
             cedit :: C.Create C.Edit
             cedit = C.CreateEdit
                   { C._createEditDesc  = "..."                          -- TODO: #233
-                  , C._createEditRange = state ^. gsChunkRange
+                  , C._createEditRange = st ^. gsChunkRange
                   , C._createEditVDoc  = editorStateToVDocVersion (dstate ^. documentStateVal)
                   , C._createEditKind  = kind
                   , C._createEditMotiv = "..."                          -- TODO: #233

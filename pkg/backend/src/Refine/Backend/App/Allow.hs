@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE AllowAmbiguousTypes        #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE ConstraintKinds            #-}
@@ -27,6 +28,8 @@
 
 module Refine.Backend.App.Allow where
 
+
+import Refine.Backend.Prelude
 
 import           Control.Lens ((^.))
 import           Control.Monad.Except (throwError)

@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -22,10 +23,8 @@
 
 module Refine.Frontend.Loader.Component (vdocLoader_, VDocLoaderProps(..)) where
 
-import           Data.Monoid ((<>))
-import           Data.String.Conversions (cs)
-import           GHC.Generics (Generic)
-import           React.Flux
+import Refine.Frontend.Prelude
+
 import           Web.HttpApiData (toUrlPiece)
 
 import           Refine.Common.Types

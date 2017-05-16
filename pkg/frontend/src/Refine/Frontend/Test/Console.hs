@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -34,13 +35,7 @@ module Refine.Frontend.Test.Console
   )
 where
 
-import Control.Monad.IO.Class
-import Data.Aeson (ToJSON, encode)
-import Data.JSString ()  -- instance IsString JSString
-import Data.String.Conversions (ConvertibleStrings, cs, (<>), ST)
-import GHCJS.Types (JSVal, JSString)
-
-import Refine.Frontend.CS ()
+import Refine.Frontend.Prelude
 
 
 consoleLogJSStringM :: (Monad m) => JSString -> JSString -> m ()

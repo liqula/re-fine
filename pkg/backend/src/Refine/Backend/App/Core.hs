@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DataKinds                  #-}
@@ -49,14 +50,8 @@ module Refine.Backend.App.Core (
   , appLog
   ) where
 
-import Control.Exception (SomeException, try)
-import Control.Lens (makeLenses, view)
-import Control.Monad.Except
-import Control.Monad.Reader
-import Control.Monad.State
-import Control.Natural
-import Data.String.Conversions (ST)
-import GHC.Generics (Generic)
+import Refine.Backend.Prelude
+
 import System.FilePath (FilePath)
 
 import Refine.Backend.Database
@@ -145,7 +140,7 @@ makeRefineType ''AppError
 appIO :: IO a -> AppM db uh a
 appIO = AppM . liftIO
 
-dbWithFilters :: Filters -> db a -> AppM db uh a
+dbWithFilters :: XFilters -> db a -> AppM db uh a
 dbWithFilters fltrs m = AppM $ do
   mu      <- user <$> gets (view appUserState)
   mkNatDB <- view appMkDBNat

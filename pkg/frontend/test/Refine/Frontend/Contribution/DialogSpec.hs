@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -21,6 +22,8 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.Contribution.DialogSpec where
+
+import Refine.Frontend.Prelude
 
 import           Test.Hspec
 

@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -20,10 +21,11 @@
 
 module Refine.Common.Types.Chunk where
 
+import Refine.Common.Prelude
+
 import           Data.Functor.Infix ((<$$>))
 import           Control.DeepSeq
 import           Control.Lens (_1, (%~))
-import           Data.Aeson
 import qualified Generics.SOP        as SOP
 import qualified Generics.SOP.NFData as SOP
 import           GHC.Generics (Generic)
@@ -80,7 +82,7 @@ instance SOP.Generic ChunkPoint
 instance SOP.HasDatatypeInfo ChunkPoint
 instance NFData   ChunkPoint where rnf       = SOP.grnf
 instance ToJSON   ChunkPoint where
-  toJSON (ChunkPoint node offset) = object ["node" .= node, "offset" .= offset]
+  toJSON (ChunkPoint node offset) = object ["node" .:= node, "offset" .:= offset]
 instance FromJSON ChunkPoint where
   parseJSON = withObject "ChunkPoint" (\v -> ChunkPoint <$> v .: "node" <*> v .: "offset")
 

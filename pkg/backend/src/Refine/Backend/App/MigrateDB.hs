@@ -1,3 +1,4 @@
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -23,8 +24,7 @@
 
 module Refine.Backend.App.MigrateDB where
 
-import Control.Lens
-import Data.Monoid ((<>))
+import Refine.Backend.Prelude
 
 import Refine.Backend.Config
 import Refine.Backend.App.Core
