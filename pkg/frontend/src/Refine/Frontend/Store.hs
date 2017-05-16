@@ -86,41 +86,41 @@ transformGlobalState = transf
     transf :: GlobalAction -> GlobalState -> m GlobalState
     transf (ResetState st) _ = pure st  -- for testing only!
     transf action st = do
-        consoleLogGlobalStateBefore weAreInDevMode action st
+      consoleLogGlobalStateBefore weAreInDevMode action st
 
-        let st' = pureTransform action st
+      let st' = pureTransform action st
 
-        -- ajax
-        liftIO $ emitBackendCallsFor action st
+      -- ajax
+      liftIO $ emitBackendCallsFor action st
 
-        -- other effects
-        case action of
-            DocumentAction (DocumentUpdate dstate) -> do
-              dispatchAndExec . ContributionAction =<< setMarkPositions dstate
+      -- other effects
+      case action of
+        DocumentAction (DocumentUpdate dstate) -> do
+          dispatchAndExec . ContributionAction =<< setMarkPositions dstate
 
-            ContributionAction RequestSetRange -> do
-                mRangeEvent <- getRangeAction (st ^. gsDocumentState)
-                case mRangeEvent of
-                    Nothing -> pure ()
-                    Just rangeEvent -> do
-                        reDispatchM $ ContributionAction rangeEvent
-                        -- TODO: call 'removeAllRanges' here and handle highlighting of the current
-                        -- selection ourselves.  (we may want to only do that in read-only mode, or
-                        -- draft may get confused and kill its own selection as well.)
+        ContributionAction RequestSetRange -> do
+          mRangeEvent <- getRangeAction (st ^. gsDocumentState)
+          case mRangeEvent of
+            Nothing -> pure ()
+            Just rangeEvent -> do
+              reDispatchM $ ContributionAction rangeEvent
+              -- TODO: call 'removeAllRanges' here and handle highlighting of the current
+              -- selection ourselves.  (we may want to only do that in read-only mode, or
+              -- draft may get confused and kill its own selection as well.)
 
-                        when (st ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithRange) $ do
-                          -- (if the comment editor (or dialog) is started via the toolbar
-                          -- extension, this is where it should be started.  assume that this can
-                          -- only happen if rangeEvent is SetRange, not ClearRange.)
-                          reDispatchM $ ContributionAction ShowCommentEditor
+              when (st ^. gsHeaderState . hsToolbarExtensionStatus == CommentToolbarExtensionWithRange) $ do
+                -- (if the comment editor (or dialog) is started via the toolbar
+                -- extension, this is where it should be started.  assume that this can
+                -- only happen if rangeEvent is SetRange, not ClearRange.)
+                reDispatchM $ ContributionAction ShowCommentEditor
 
-            ShowNotImplementedYet -> do
-                liftIO $ windowAlertST "not implemented yet."
+        ShowNotImplementedYet -> do
+            liftIO $ windowAlertST "not implemented yet."
 
-            _ -> pure ()
+        _ -> pure ()
 
-        consoleLogGlobalStateAfter weAreInDevMode (st' /= st) st'
-        pure st'
+      consoleLogGlobalStateAfter weAreInDevMode (st' /= st) st'
+      pure st'
 
     pureTransform :: GlobalAction -> GlobalState -> GlobalState
     pureTransform action st = st'
