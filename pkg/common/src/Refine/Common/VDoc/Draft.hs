@@ -366,11 +366,24 @@ rawContentToVDocVersion = VDocVersion . cs . encode
 
 -- * marks
 
-addMarksToRawContent :: [(ContributionID, SelectionState)] -> RawContent -> RawContent
-addMarksToRawContent marks = rawContentBlocks %~ addMarksToBlocks marks
+deleteMarksFromRawContent :: RawContent -> RawContent
+deleteMarksFromRawContent = deleteMarksFromRawContentIf (const True)
+
+deleteMarksFromRawContentIf :: (ContributionID -> Bool) -> RawContent -> RawContent
+deleteMarksFromRawContentIf p = rawContentBlocks %~ map (deleteMarksFromBlockIf p)
 
 deleteMarksFromBlock :: Block EntityKey -> Block EntityKey
-deleteMarksFromBlock = blockStyles %~ List.filter ((`elem` [Bold, Italic, Underline, Code]) . snd)
+deleteMarksFromBlock = deleteMarksFromBlockIf (const True)
+
+deleteMarksFromBlockIf :: (ContributionID -> Bool) -> Block EntityKey -> Block EntityKey
+deleteMarksFromBlockIf p = blockStyles %~ List.filter (p' . snd)
+  where
+    p' (Mark cid) = not (p cid)
+    p' _          = True
+
+
+addMarksToRawContent :: [(ContributionID, SelectionState)] -> RawContent -> RawContent
+addMarksToRawContent marks = rawContentBlocks %~ addMarksToBlocks marks
 
 addMarksToBlocks :: [(ContributionID, SelectionState)] -> [Block EntityKey] -> [Block EntityKey]
 addMarksToBlocks m bs = case (addMarksToBlock (warmupSelectionStates m) `mapM` bs) `runState` [] of
@@ -500,6 +513,8 @@ getMarkSelectors = findSides . mconcat . fmap collectBlock . zip [0..] . view ra
         collectSegment :: (Int, Style) -> Maybe (ContributionID, ((Int, Int), MarkSelector))
         collectSegment (six, Mark cid)
           = Just (cid, ((bix, six), MarkSelector MarkSelectorUnknownSide (block ^?! blockKey . _Just) six))
+            -- (note that this case keeps track of 'ContribIDHighlightMark' positions, even though
+            -- that's not needed for anything.)
         collectSegment _
           = Nothing
 
