@@ -17,12 +17,14 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.Colors where
 
+import Refine.Frontend.Prelude
 import Refine.Frontend.Style
 
 {-
@@ -33,24 +35,29 @@ $lightred: rgb(219, 204, 221); //used for COMMENT (!)
 $lightblue: rgb(215, 233, 255); //used for DISCUSSION
 -}
 
+-- | FIXME: (1) translate scss/0-settings/_settings.colors.scss into this type.  (2) make two types:
+-- one that describes the color, and one that describes its meaning, whose values are associated
+-- with values of the former.
 data Color =
     DisabledText
   | VDocComment
   | VDocNote
   | VDocQuestion
   | VDocDiscussion
+  | VDocRollover
   | White
   | OverlayBackdrop
 
+instance ConvertibleStrings Color ST where
+  convertString DisabledText    = "rgb(169, 169, 169)" -- dark grey
+  convertString VDocComment     = "rgb(219, 204, 221)" -- lightred
+  convertString VDocNote        = "rgb(219, 204, 221)" -- lightred
+  convertString VDocQuestion    = "rgb(220, 229, 211)" -- lightgreen
+  convertString VDocDiscussion  = "rgb(215, 233, 255)" -- lightblue
+  convertString VDocRollover    = "rgb(255, 89, 0)"    -- $signal-orange
+  convertString White           = "rgb(255, 255, 255)"
+  convertString OverlayBackdrop = "rgba(255, 255, 255, .8)"
+
+
 instance IsStyle Color where
-  mkStyle c DisabledText    = StyleST c "rgb(169,169,169)" -- dark grey
-  mkStyle c VDocComment     = StyleST c "rgb(219, 204, 221)" -- lightred
-  mkStyle c VDocNote        = StyleST c "rgb(219, 204, 221)" -- lightred
-  mkStyle c VDocQuestion    = StyleST c "rgb(220, 229, 211)" -- lightgreen
-  mkStyle c VDocDiscussion  = StyleST c "rgb(215, 233, 255)" -- lightblue
-  mkStyle c White           = StyleST c "rgb(255, 255, 255)"
-  mkStyle c OverlayBackdrop = StyleST c "rgba(255, 255, 255, .8)"
-
-
--- FUTUREWORK: make two types: one that describes the color, and one that describes its meaning,
--- whose values are associated with values of the former.
+  mkStyle c = StyleST c . cs

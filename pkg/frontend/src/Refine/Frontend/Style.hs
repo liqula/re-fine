@@ -23,6 +23,8 @@
 
 
 -- | see also: #211
+-- FIXME: how do we represent this?  @[OldStyle.StyleST "border-bottom" "2px solid", OldStylemkStyle
+-- "border-bottom" Color.VDocRollover]@ these types need more work...
 module Refine.Frontend.Style
   ( Style(..), styleCS
   , IsStyle(..)
