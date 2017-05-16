@@ -421,7 +421,7 @@ removeAllRanges :: MonadIO m => m ()
 removeAllRanges = liftIO js_removeAllRanges
 
 foreign import javascript unsafe
-  "window.getSelection().removeAllRanges();"
+  "window.getSelection().removeAllRanges()"
   js_removeAllRanges :: IO ()
 
 
