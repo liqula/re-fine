@@ -37,7 +37,10 @@ import qualified Data.Set as Set
 import qualified Data.Text as ST
 import           Web.HttpApiData (toUrlPiece, parseUrlPiece)
 
-import Refine.Common.Types
+import Refine.Common.Types.Chunk
+import Refine.Common.Types.Contribution
+import Refine.Common.Types.VDoc
+import Refine.Common.Types.Comment
 
 
 -- * data types
