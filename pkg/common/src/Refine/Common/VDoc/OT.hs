@@ -11,9 +11,10 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -fno-warn-orphans       #-}   -- FIXME: elim this
+{-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}   -- pattern completeness checker has problems with pattern synonyms
 module Refine.Common.VDoc.OT where
 
-import Refine.Common.Prelude hiding (Rep, to, from)
+import Refine.Common.Prelude
 
 import qualified Data.IntMap as IntMap
 import           Data.List
@@ -25,26 +26,31 @@ import           Control.DeepSeq
 import           Refine.Common.OT
 import           Refine.Common.VDoc.Draft (RawContent)
 import qualified Refine.Common.VDoc.Draft as Draft
-import           Refine.Prelude.TH (makeJSON)
 
 ---------------------------------------- auxiliary document data type
 
-newtype Doc = Doc [Block]
-   deriving (Show, Eq, Generic)
+type Doc = [Block]
 
 -- | (third constructor arg is depth)
-data Block = Block Draft.BlockType [LineElem] Int
-   deriving (Show, Eq, Generic)
+type Block = ((Atom Draft.BlockType, [LineElem]), Atom Int)
+
+pattern Block :: Draft.BlockType -> [LineElem] -> Int -> Block
+pattern Block a b c = ((Atom a, b), Atom c)
 
 -- | A segment of an inline style, consisting of 'EntityRange' and 'Style'.
 --
 -- FIXME: (Set Entity) should be (Maybe String, Bool, Bool), it is not allowed to have two links on
 -- the same character.
-data LineElem = LineElem (Set.Set Entity) ST
-   deriving (Show, Eq, Generic)
+type LineElem = (Set (Atom Entity), ST)
 
-newtype Entity = Entity { unEntity :: Either Draft.Entity Draft.Style }
-   deriving (Show, Eq, Ord, Generic)
+-- | TUNING: (Set.mapMonotonic unAtom) and (Set.mapMonotonic Atom) should be (coerce)
+--   but GHC can't see that (Ord (Atom a)) is the same as (Ord a)
+pattern LineElem :: Set Entity -> ST -> LineElem
+pattern LineElem a b <- (Set.mapMonotonic unAtom -> a, b)
+  where LineElem a b = (Set.mapMonotonic Atom a, b)
+
+
+type Entity = Either Draft.Entity Draft.Style
 
 ----------------------------------------
 
@@ -56,20 +62,8 @@ data EditSource a =
 
 ---------------------------------------- conversion functions
 
-{- ranges
-  ------            bold
-     --------       italic
-xxxxxxxxxxxxxxxxxxxxxx converted to line elements:
-  ---               bold
-     ---            bold + italic
-        -----       italic
-
- xxx [xxXXXx](www.1) xxxxx
- xxx [xx](www.1)[XXX](www.1)[x](www.1) xxxxx
--}
-
 rawContentToDoc :: Draft.RawContent -> Doc
-rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
+rawContentToDoc (Draft.RawContent blocks entities) = mkBlock <$> blocks
   where
     mkBlock :: Draft.Block Draft.EntityKey -> Block
     mkBlock (Draft.Block txt eranges styles ty depth _key) = Block ty (segment segments txt) depth
@@ -78,21 +72,21 @@ rawContentToDoc (Draft.RawContent blocks entities) = Doc $ mkBlock <$> blocks
         segment [] text = [LineElem mempty text]
         segment ((len, s): ss) text = LineElem s (ST.take len text): segment ss (ST.drop len text)
 
-        segments :: [(Int, Set.Set Entity)]
+        segments :: [(Int, Set Entity)]
         segments = Draft.mkSomeSegments fst snd
-                 $ ((\(r, s) -> (r, Entity (Right s)))                           <$> styles)
-                <> ((\(e, r) -> (r, Entity (Left (entities IntMap.! coerce e)))) <$> eranges)
+                 $ (second Right <$> styles)
+                <> ((\(e, r) -> (r, Left (entities IntMap.! coerce e))) <$> eranges)
 
 docToRawContent :: Doc -> Draft.RawContent
-docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
+docToRawContent blocks = Draft.mkRawContent $ mkBlock <$> blocks
   where
     getText (LineElem _ txt) = txt
 
     mkBlock :: Block -> Draft.Block Draft.Entity
     mkBlock (Block ty es d) = Draft.Block
         (mconcat $ map getText es)
-        [(e, r) | (r, unEntity -> Left e) <- ranges]
-        [(r, s) | (r, unEntity -> Right s) <- ranges]
+        [(e, r) | (r, Left e) <- ranges]
+        [(r, s) | (r, Right s) <- ranges]
         ty
         d
         Nothing
@@ -113,7 +107,8 @@ docToRawContent (Doc blocks) = Draft.mkRawContent $ mkBlock <$> blocks
 
 -- | Block canonicalization: remove empty line elems; merge neighboring line elems with same attr set.
 simplifyDoc :: Doc -> Doc
-simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
+simplifyDoc [] = [Block Draft.NormalText [] 0]
+simplifyDoc blocks = simplifyBlock <$> blocks
   where
     simplifyBlock (Block a b d) = Block a (map joinElems . groupBy ((==) `on` attrs) $ filter notNull b) d
 
@@ -125,204 +120,27 @@ simplifyDoc (Doc blocks) = Doc $ simplifyBlock <$> blocks
     notNull (LineElem _ "") = False
     notNull _ = True
 
-------------------------------------------------------- auxiliary definitions
-
-class Representable a where  -- FUTUREWORK: this name clashes with Refine.Common.Prelude.  what
-                             -- about Rep => Representation, to => fromRep, from => toRep?  would be
-                             -- clearer anyway.
-  type Rep a
-  to   :: Rep a -> a
-  from :: a -> Rep a
-
 ---------------------------------------- Editable instances
 -- FUTUREWORK: make these instances smarter
-
-
-instance Representable Draft.BlockType where
-    type Rep Draft.BlockType = Atom Draft.BlockType
-    to = unAtom
-    from = Atom
-
-instance Editable Draft.BlockType where
-    newtype EEdit Draft.BlockType
-        = EBlockType {unEBlockType :: EEdit (Atom Draft.BlockType)}
-      deriving (Generic, Show, Eq, NFData)
-
-    docCost = docCost . from
-    eCost = eCost . unEBlockType
-
-    -- FIXME & TUNING: use coerce like in Editable Text instance (ghc doesn't accept it here unfortunately)
-    diff a b = map EBlockType $ diff (from a) (from b)
-    ePatch e = to . ePatch (unEBlockType e) . from
-    patch e = to . patch (unEBlockType <$> e) . from
-    eMerge d a b = map EBlockType *** map EBlockType $ eMerge (from d) (unEBlockType a) (unEBlockType b)
-    merge d a b = map EBlockType *** map EBlockType $ merge (from d) (unEBlockType <$> a) (unEBlockType <$> b)
-    eInverse d = map EBlockType . eInverse (from d) . unEBlockType
-    inverse d = map EBlockType . inverse (from d) . map unEBlockType
-
-instance ToJSON (EEdit Draft.BlockType)
-instance FromJSON (EEdit Draft.BlockType)
-instance SOP.Generic (EEdit Draft.BlockType)
-instance SOP.HasDatatypeInfo (EEdit Draft.BlockType)
-
-----------------------
-
-instance Representable Entity where
-    type Rep Entity = Atom Entity
-    to = unAtom
-    from = Atom
-
-instance Editable Entity where
-    newtype EEdit Entity
-        = EEntity {unEEntity :: EEdit (Atom Entity)}
-      deriving (Generic, Show, Eq, NFData)
-
-    docCost = docCost . from
-    eCost = eCost . unEEntity
-
-    diff a b = map EEntity $ diff (from a) (from b)
-    ePatch e = to . ePatch (unEEntity e) . from
-    patch e = to . patch (unEEntity <$> e) . from
-    eMerge d a b = map EEntity *** map EEntity $ eMerge (from d) (unEEntity a) (unEEntity b)
-    merge d a b = map EEntity *** map EEntity $ merge (from d) (unEEntity <$> a) (unEEntity <$> b)
-    eInverse d = map EEntity . eInverse (from d) . unEEntity
-    inverse d = map EEntity . inverse (from d) . map unEEntity
-
-instance ToJSON (EEdit Entity)
-instance FromJSON (EEdit Entity)
-instance SOP.Generic (EEdit Entity)
-instance SOP.HasDatatypeInfo (EEdit Entity)
-
-----------------------
-
-instance Representable LineElem where
-    type Rep LineElem = (Set.Set Entity, ST)
-    to (a, b) = LineElem a b
-    from (LineElem a b) = (a, b)
-
-instance Editable LineElem where
-    newtype EEdit LineElem
-        = ELineElem {unELineElem :: EEdit (Rep LineElem)}
-        -- FUTUREWORK: detect and be able to merge joining and splitting of 'LineElem's
-      deriving (Generic, Show, Eq, NFData)
-
-    docCost = docCost . from
-    eCost = eCost . unELineElem
-
-    diff a b = map ELineElem $ diff (from a) (from b)
-    ePatch e = to . ePatch (unELineElem e) . from
-    patch e = to . patch (unELineElem <$> e) . from
-    eMerge d a b = map ELineElem *** map ELineElem $ eMerge (from d) (unELineElem a) (unELineElem b)
-    merge d a b = map ELineElem *** map ELineElem $ merge (from d) (unELineElem <$> a) (unELineElem <$> b)
-    eInverse d = map ELineElem . eInverse (from d) . unELineElem
-    inverse d = map ELineElem . inverse (from d) . map unELineElem
-
-instance ToJSON (EEdit LineElem)
-instance FromJSON (EEdit LineElem)
-instance SOP.Generic (EEdit LineElem)
-instance SOP.HasDatatypeInfo (EEdit LineElem)
-
-----------------------
-
-instance Representable Block where
-    type Rep Block = ((Draft.BlockType, [LineElem]), Atom Int)
-    to ((a, b), Atom d) = Block a b d
-    from (Block a b d) = ((a, b), Atom d)
-
-instance Editable Block where
-    newtype EEdit Block
-        = EBlock {unEBlock :: EEdit (Rep Block)}
-        -- FUTUREWORK: detect and be able to merge joining and splitting of 'Block's
-      deriving (Generic, Show, Eq, NFData)
-
-    docCost = docCost . from
-    eCost = eCost . unEBlock
-
-    diff a b = map EBlock $ diff (from a) (from b)
-    ePatch e = to . ePatch (unEBlock e) . from
-    patch e = to . patch (unEBlock <$> e) . from
-    eMerge d a b = map EBlock *** map EBlock $ eMerge (from d) (unEBlock a) (unEBlock b)
-    merge d a b = map EBlock *** map EBlock $ merge (from d) (unEBlock <$> a) (unEBlock <$> b)
-    eInverse d = map EBlock . eInverse (from d) . unEBlock
-    inverse d = map EBlock . inverse (from d) . map unEBlock
-
-instance ToJSON (EEdit Block)
-instance FromJSON (EEdit Block)
-instance SOP.Generic (EEdit Block)
-instance SOP.HasDatatypeInfo (EEdit Block)
-
-----------------------
-
-instance Representable Doc where
-    type Rep Doc = [Block]
-    to = Doc
-    from (Doc a) = a
-
-instance Editable Doc where
-    newtype EEdit Doc
-        = EDoc {unEDoc :: EEdit (Rep Doc)}
-      deriving (Generic, Show, Eq, NFData)
-
-    docCost = docCost . from
-    eCost = eCost . unEDoc
-
-    diff a b = map EDoc $ diff (from a) (from b)
-    ePatch e = to . ePatch (unEDoc e) . from
-    patch e = to . patch (unEDoc <$> e) . from
-    eMerge d a b = map EDoc *** map EDoc $ eMerge (from d) (unEDoc a) (unEDoc b)
-    merge d a b = map EDoc *** map EDoc $ merge (from d) (unEDoc <$> a) (unEDoc <$> b)
-    eInverse d = map EDoc . eInverse (from d) . unEDoc
-    inverse d = map EDoc . inverse (from d) . map unEDoc
-
-instance ToJSON (EEdit Doc)
-instance FromJSON (EEdit Doc)
-instance SOP.Generic (EEdit Doc)
-instance SOP.HasDatatypeInfo (EEdit Doc)
-
-----------------------
-
-instance Representable RawContent where
-    type Rep RawContent = Doc
-    to = docToRawContent
-    from = rawContentToDoc
 
 instance Editable RawContent where
     newtype EEdit RawContent
         = ERawContent {unERawContent :: EEdit Doc}
       deriving (Generic, Show, Eq, NFData)
 
-    docCost = docCost . from
+    docCost = docCost . rawContentToDoc
     eCost = eCost . unERawContent
 
-    diff a b = map ERawContent $ diff (from a) (from b)
-    ePatch e = to . ePatch (unERawContent e) . from
-    patch e = to . patch (unERawContent <$> e) . from
-    eMerge d a b = map ERawContent *** map ERawContent $ eMerge (from d) (unERawContent a) (unERawContent b)
-    merge d a b = map ERawContent *** map ERawContent $ merge (from d) (unERawContent <$> a) (unERawContent <$> b)
-    eInverse d = map ERawContent . eInverse (from d) . unERawContent
-    inverse d = map ERawContent . inverse (from d) . map unERawContent
+    diff a b = coerce $ diff (rawContentToDoc a) (rawContentToDoc b)
+    ePatch e = docToRawContent . ePatch (coerce e) . rawContentToDoc
+    patch e = docToRawContent . patch (coerce e) . rawContentToDoc
+    eMerge d a b = coerce $ eMerge (rawContentToDoc d) (coerce a) (coerce b)
+    merge d a b = coerce $ merge (rawContentToDoc d) (coerce a) (coerce b)
+    eInverse d = coerce . eInverse (rawContentToDoc d) . coerce
+    inverse d = coerce . inverse (rawContentToDoc d) . coerce
 
 instance ToJSON (EEdit RawContent)
 instance FromJSON (EEdit RawContent)
 instance SOP.Generic (EEdit RawContent)
 instance SOP.HasDatatypeInfo (EEdit RawContent)
 
-instance SOP.Generic Doc
-instance SOP.Generic Block
-instance SOP.Generic LineElem
-instance SOP.Generic Entity
-
-instance SOP.HasDatatypeInfo Doc
-instance SOP.HasDatatypeInfo Block
-instance SOP.HasDatatypeInfo LineElem
-instance SOP.HasDatatypeInfo Entity
-
-instance NFData Entity where rnf = grnf
-instance NFData LineElem where rnf = grnf
-instance NFData Block where rnf = grnf
-instance NFData Doc where rnf = grnf
-
-makeJSON ''Doc
-makeJSON ''Block
-makeJSON ''LineElem
-makeJSON ''Entity

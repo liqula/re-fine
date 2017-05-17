@@ -211,7 +211,7 @@ instance (NFData (EEdit a), NFData (EEdit b), NFData a, NFData b) => NFData (EEd
 ---------------------------------------- (Bounded, Enum) instance
 
 newtype Atom a = Atom { unAtom :: a }
-  deriving (Eq, Ord, Bounded, Enum)
+  deriving (Eq, Ord, Bounded, Enum, NFData, ToJSON, FromJSON)
 
 instance Show a => Show (Atom a) where show = show . unAtom
 
