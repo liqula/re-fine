@@ -80,6 +80,8 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
               in dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetMarkPositions]
           ] mempty
 
+  , Outdated.lComponentWillReceiveProps = Just workAroundDraftIssue999
+
   , Outdated.lComponentDidMount = Just $ \getPropsAndState _ldom _setState -> do
       props <- Outdated.lGetProps getPropsAndState
       ()    <- Outdated.lGetState getPropsAndState  -- (just to show there's nothing there)
@@ -123,6 +125,10 @@ mkDocumentStyleMap mactive (Just rawContent) = object . mconcat $ go <$> marks
     shade :: ID a -> Int
     shade _ = 0
 
+documentStyleMapChanged :: DocumentProps -> DocumentProps -> Bool
+documentStyleMapChanged oldProps newProps = oldProps ^. f /= newProps ^. f
+  where f = dpContributionState . csHighlightedMarkAndBubble
+
 
 -- | FIXME: this should be delivered from where the instance ToJSON Style is defined, and that
 -- instance should be defined in terms of this.
@@ -137,3 +143,23 @@ emptyEditorProps = ["editorState" &= createEmpty]
 
 defaultEditorProps :: ConvertibleStrings s JSString => s -> [PropertyOrHandler handler]
 defaultEditorProps txt = ["editorState" &= (createWithContent . createFromText . cs) txt]
+
+
+-- * work-arounds
+
+-- | https://github.com/facebook/draft-js/issues/999#issuecomment-301822709b
+workAroundDraftIssue999 :: Outdated.LPropsAndState DocumentProps ()
+                        -> Outdated.LDOM
+                        -> Outdated.LSetStateFn ()
+                        -> DocumentProps
+                        -> IO ()
+workAroundDraftIssue999 getPropsAndState _ldom _setState newProps = do
+  let jiggleEditorState :: EditorState -> EditorState
+      jiggleEditorState es = setCurrentContent es
+                           . convertFromRaw . jiggleRawContent . convertToRaw
+                           $ getCurrentContent es
+
+  oldProps <- Outdated.lGetProps getPropsAndState
+  when (documentStyleMapChanged oldProps newProps) $ do
+    let dstate' = (newProps ^. dpDocumentState) & documentStateVal %~ jiggleEditorState
+    dispatchAndExec . DocumentAction $ DocumentUpdate dstate'
