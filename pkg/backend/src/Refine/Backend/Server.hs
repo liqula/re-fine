@@ -55,7 +55,7 @@ import Refine.Backend.Types
 import Refine.Backend.User
 import Refine.Common.Allow
 import Refine.Common.Rest
-import Refine.Common.Types.VDoc (Edit)
+import Refine.Common.Types.Core (Edit)
 
 
 -- * Constants

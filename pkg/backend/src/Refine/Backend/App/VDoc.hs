@@ -42,7 +42,6 @@ import           Refine.Common.Allow
 import           Refine.Common.Types
 import qualified Refine.Common.OT as OT
 import           Refine.Common.VDoc.Draft (rawContentFromVDocVersion)
-import           Refine.Common.VDoc.OT (EditSource(..))
 
 
 listVDocs :: App [VDoc]

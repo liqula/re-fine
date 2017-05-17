@@ -32,7 +32,6 @@ import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
 
 import Refine.Common.Types
-import Refine.Common.VDoc.Draft
 
 
 instance Arbitrary L10 where

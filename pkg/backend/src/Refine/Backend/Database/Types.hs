@@ -15,9 +15,7 @@ import Data.Coerce (coerce)
 
 import           Refine.Common.Types
 import           Refine.Prelude.TH (makeRefineType)
-import           Refine.Common.VDoc.Draft (RawContent)
 import qualified Refine.Common.OT as OT
-import           Refine.Common.VDoc.OT ()
 
 
 type family CreateDB a = b | b -> a

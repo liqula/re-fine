@@ -28,7 +28,6 @@ import Refine.Common.Prelude
 import qualified Data.IntMap as IntMap
 
 import Refine.Common.Types
-import Refine.Common.VDoc.Draft
 import Refine.Prelude (Timestamp(..))
 
 

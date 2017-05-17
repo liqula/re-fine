@@ -62,7 +62,7 @@ module Refine.Frontend.Document.FFI
 
 import Refine.Frontend.Prelude
 
-import qualified Refine.Common.VDoc.Draft as Draft
+import qualified Refine.Common.Types.Core as Draft
 import           Refine.Frontend.Document.FFI.Types
 import           Refine.Prelude.Aeson (NoJSONRep(NoJSONRep))
 

@@ -15,7 +15,7 @@ import Refine.Common.Types.Prelude (UserInfo)
 import Refine.Common.Types.Chunk
 import Refine.Common.Types.Process
 import Refine.Common.Types.Role (Role(..))
-import Refine.Common.Types.VDoc
+import Refine.Common.Types.Core
 
 
 instance PersistField Timestamp where
