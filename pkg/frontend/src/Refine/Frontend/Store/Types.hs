@@ -83,7 +83,7 @@ emptyDevState = DevState []
 data GlobalAction =
     -- documents
     LoadDocumentList
-  | LoadedDocumentList [ID VDoc]
+  | RegisterDocumentList [ID VDoc]
   | LoadDocument (ID VDoc)
   | OpenDocument CompositeVDoc
 
