@@ -10,6 +10,7 @@
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE UndecidableInstances       #-}
 
 -- | FUTUREWORK: release this file as a library
 module Refine.Common.OT where
@@ -20,6 +21,8 @@ import qualified Data.Set as Set
 import           Data.List
 import qualified Data.Algorithm.Patience as Diff
 import qualified Data.Text as ST
+import qualified Generics.SOP as SOP
+import           Control.DeepSeq
 
 ----------------------------------------------------------------------------------------------
 
@@ -100,8 +103,10 @@ instance Editable () where
     eInverse _ _ = error "impossible"
 
 instance Show (EEdit ()) where show _ = error "impossible"
+instance Eq (EEdit ()) where _ == _ = error "impossible"
 instance ToJSON (EEdit ()) where toJSON _ = error "impossible"
 instance FromJSON (EEdit ()) where parseJSON _ = error "impossible"
+instance NFData (EEdit ()) where rnf _ = error "impossible"
 
 ---------------------------------------- (,) instance
 
@@ -140,8 +145,13 @@ instance (Editable a, Editable b) => Editable (a, b) where
         EditSecond e -> editSecond $ inverse b e
 
 deriving instance (Show (EEdit a), Show (EEdit b)) => Show (EEdit (a, b))
+deriving instance (Eq (EEdit a), Eq (EEdit b)) => Eq (EEdit (a, b))
 instance (ToJSON (EEdit a), ToJSON (EEdit b)) => ToJSON (EEdit (a, b))
 instance (FromJSON (EEdit a), FromJSON (EEdit b)) => FromJSON (EEdit (a, b))
+
+instance SOP.Generic (EEdit (a, b))
+instance SOP.HasDatatypeInfo (EEdit (a, b))
+instance (NFData (EEdit a), NFData (EEdit b)) => NFData (EEdit (a, b)) where rnf = grnf
 
 ---------------------------------------- Either instance
 
@@ -190,8 +200,13 @@ instance (Editable a, Editable b) => Editable (Either a b) where
     eInverse Right{} EditLeft{} = error "impossible"
 
 deriving instance (Show a, Show (EEdit a), Show b, Show (EEdit b)) => Show (EEdit (Either a b))
+deriving instance (Eq a, Eq (EEdit a), Eq b, Eq (EEdit b)) => Eq (EEdit (Either a b))
 instance (ToJSON (EEdit a), ToJSON (EEdit b), ToJSON a, ToJSON b) => ToJSON (EEdit (Either a b))
 instance (FromJSON (EEdit a), FromJSON (EEdit b), FromJSON a, FromJSON b) => FromJSON (EEdit (Either a b))
+
+instance SOP.Generic (EEdit (Either a b))
+instance SOP.HasDatatypeInfo (EEdit (Either a b))
+instance (NFData (EEdit a), NFData (EEdit b), NFData a, NFData b) => NFData (EEdit (Either a b)) where rnf = grnf
 
 ---------------------------------------- (Bounded, Enum) instance
 
@@ -202,7 +217,7 @@ instance Show a => Show (Atom a) where show = show . unAtom
 
 instance (Eq a) => Editable (Atom a) where
     newtype EEdit (Atom a) = EAtom a
-      deriving (Generic, Show)
+      deriving (Generic, Show, Eq, NFData)
 
     eCost _ = 1
     docCost _ = 1
@@ -219,7 +234,7 @@ instance (FromJSON a) => FromJSON (EEdit (Atom a))
 
 instance Editable Char where
     newtype EEdit Char = EChar {unEChar :: EEdit (Atom Char)}
-        deriving (Generic, Show)
+        deriving (Generic, Show, Eq, NFData)
     docCost = docCost . Atom
     eCost = eCost . unEChar
     diff a b = map EChar $ diff (Atom a) (Atom b)
@@ -229,6 +244,8 @@ instance Editable Char where
 
 instance ToJSON (EEdit Char)
 instance FromJSON (EEdit Char)
+instance SOP.Generic (EEdit Char)
+instance SOP.HasDatatypeInfo (EEdit Char)
 
 ---------------------------------------- List instance
 
@@ -241,9 +258,9 @@ instance Editable a => Editable [a] where
     docCost = (+1) . sum . map docCost
 
     data EEdit [a]
-        = DeleteItem Int    -- TUNING: DeleteRange Int{-offset-} Int{-length-}
-        | InsertItem Int a  -- TUNING: InsertItems Int{-offset-} [a]{-elems-}
-        | EditItem Int (Edit a)
+        = DeleteItem !Int    -- TUNING: DeleteRange Int{-offset-} Int{-length-}
+        | InsertItem !Int a  -- TUNING: InsertItems Int{-offset-} [a]{-elems-}
+        | EditItem !Int (Edit a)
         -- FUTUREWORK: detect swapping/moving and duplication of items
         --  MoveItem Int Int     -- needed for expressing .....
         --  DuplicateItem Int
@@ -315,14 +332,18 @@ instance Editable a => Editable [a] where
         InsertItem i _ -> [DeleteItem i]
 
 deriving instance (Show a, Show (EEdit a)) => Show (EEdit [a])
+deriving instance (Eq a, Eq (EEdit a)) => Eq (EEdit [a])
 instance (ToJSON a, ToJSON (EEdit a)) => ToJSON (EEdit [a])
 instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit [a])
+instance SOP.Generic (EEdit [a])
+instance SOP.HasDatatypeInfo (EEdit [a])
+instance (NFData a, NFData (EEdit a)) => NFData (EEdit [a]) where rnf = grnf
 
 ---------------------------------------- StrictText instance
 
 instance Editable ST where
     newtype EEdit ST = EText {unEText :: EEdit String}
-        deriving (Generic, Show)
+        deriving (Generic, Show, Eq)
     docCost = ST.length
     eCost = eCost . unEText
 
@@ -353,18 +374,21 @@ instance Editable ST where
 
 instance ToJSON (EEdit ST)
 instance FromJSON (EEdit ST)
+instance SOP.Generic (EEdit ST)
+instance SOP.HasDatatypeInfo (EEdit ST)
+instance NFData (EEdit ST) where rnf = grnf
 
 ---------------------------------------- Set instance
 
-editElem :: a -> Edit a -> Edit (Set.Set a)
+editElem :: a -> Edit a -> Edit (Set a)
 editElem _ [] = []
 editElem i p  = [EditElem i p]
 
-instance (Editable a, Ord a) => Editable (Set.Set a) where
+instance (Editable a, Ord a, Eq (EEdit a)) => Editable (Set a) where
 
     docCost = (+1) . sum . map docCost . Set.elems
 
-    data EEdit (Set.Set a)
+    data EEdit (Set a)
         = DeleteElem a
         | InsertElem a          -- it is not valid to insert an elem which is already in the set
         | EditElem a (Edit a)   -- it is not valid to edit such that the result is already in the set
@@ -401,15 +425,12 @@ instance (Editable a, Ord a) => Editable (Set.Set a) where
         DeleteElem x -> [InsertElem x]
         InsertElem x -> [DeleteElem x]
 
-deriving instance (Show a, Show (EEdit a)) => Show (EEdit (Set.Set a))
-
-instance (Eq a, Editable a) => Eq (EEdit (Set.Set a)) where
-    InsertElem a == InsertElem b = a == b
-    DeleteElem a == DeleteElem b = a == b
-    EditElem a ea == EditElem b eb = a == b && patch ea a == patch eb b
-    _ == _ = False
-
-instance (ToJSON a, ToJSON (EEdit a)) => ToJSON (EEdit (Set.Set a))
-instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit (Set.Set a))
+deriving instance (Show a, Show (EEdit a)) => Show (EEdit (Set a))
+deriving instance (Eq a, Eq (EEdit a)) => Eq (EEdit (Set a))
+instance (ToJSON a, ToJSON (EEdit a)) => ToJSON (EEdit (Set a))
+instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit (Set a))
+instance SOP.Generic (EEdit (Set a))
+instance SOP.HasDatatypeInfo (EEdit (Set a))
+instance (NFData a, NFData (EEdit a)) => NFData (EEdit (Set a)) where rnf = grnf
 
 ---------------------------------------- FUTUREWORK: Map instance

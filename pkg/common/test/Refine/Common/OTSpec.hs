@@ -213,7 +213,7 @@ instance GenEdit ST where
 
 ---------------------------------------- Set instance
 
-instance (GenEdit a, Ord a, HasEnoughInhabitants a) => GenEdit (Set.Set a) where
+instance (GenEdit a, Ord a, HasEnoughInhabitants a, Eq (EEdit a)) => GenEdit (Set.Set a) where
     genEdit d = oneof
         [ pure []
         , do

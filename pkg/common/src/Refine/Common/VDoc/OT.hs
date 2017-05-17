@@ -7,7 +7,9 @@
 {-# LANGUAGE ViewPatterns               #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -fno-warn-orphans       #-}   -- FIXME: elim this
 module Refine.Common.VDoc.OT where
 
@@ -18,6 +20,7 @@ import           Data.List
 import qualified Data.Set as Set
 import qualified Data.Text as ST
 import qualified Generics.SOP as SOP
+import           Control.DeepSeq
 
 import           Refine.Common.OT
 import           Refine.Common.VDoc.Draft (RawContent)
@@ -157,8 +160,14 @@ instance Editable Draft.BlockType where
     eInverse d = map EBlockType . eInverse (from d) . unEBlockType
     inverse d = map EBlockType . inverse (from d) . map unEBlockType
 
+-- this cannot be derived (GHC bug?)
+instance Eq (EEdit Draft.BlockType) where EBlockType a == EBlockType b = a == b
+instance NFData (EEdit Draft.BlockType) where rnf = grnf
+
 instance ToJSON (EEdit Draft.BlockType)
 instance FromJSON (EEdit Draft.BlockType)
+instance SOP.Generic (EEdit Draft.BlockType)
+instance SOP.HasDatatypeInfo (EEdit Draft.BlockType)
 
 ----------------------
 
@@ -183,8 +192,14 @@ instance Editable Entity where
     eInverse d = map EEntity . eInverse (from d) . unEEntity
     inverse d = map EEntity . inverse (from d) . map unEEntity
 
+-- this cannot be derived (GHC bug?)
+instance Eq (EEdit Entity) where EEntity a == EEntity b = a == b
+instance NFData (EEdit Entity) where rnf = grnf
+
 instance ToJSON (EEdit Entity)
 instance FromJSON (EEdit Entity)
+instance SOP.Generic (EEdit Entity)
+instance SOP.HasDatatypeInfo (EEdit Entity)
 
 ----------------------
 
@@ -197,7 +212,7 @@ instance Editable LineElem where
     newtype EEdit LineElem
         = ELineElem {unELineElem :: EEdit (Rep LineElem)}
         -- FUTUREWORK: detect and be able to merge joining and splitting of 'LineElem's
-      deriving (Generic, Show)
+      deriving (Generic, Show, Eq, NFData)
 
     docCost = docCost . from
     eCost = eCost . unELineElem
@@ -212,6 +227,8 @@ instance Editable LineElem where
 
 instance ToJSON (EEdit LineElem)
 instance FromJSON (EEdit LineElem)
+instance SOP.Generic (EEdit LineElem)
+instance SOP.HasDatatypeInfo (EEdit LineElem)
 
 ----------------------
 
@@ -224,7 +241,7 @@ instance Editable Block where
     newtype EEdit Block
         = EBlock {unEBlock :: EEdit (Rep Block)}
         -- FUTUREWORK: detect and be able to merge joining and splitting of 'Block's
-      deriving (Generic, Show)
+      deriving (Generic, Show, Eq, NFData)
 
     docCost = docCost . from
     eCost = eCost . unEBlock
@@ -239,6 +256,8 @@ instance Editable Block where
 
 instance ToJSON (EEdit Block)
 instance FromJSON (EEdit Block)
+instance SOP.Generic (EEdit Block)
+instance SOP.HasDatatypeInfo (EEdit Block)
 
 ----------------------
 
@@ -250,7 +269,7 @@ instance Representable Doc where
 instance Editable Doc where
     newtype EEdit Doc
         = EDoc {unEDoc :: EEdit (Rep Doc)}
-      deriving (Generic, Show)
+      deriving (Generic, Show, Eq, NFData)
 
     docCost = docCost . from
     eCost = eCost . unEDoc
@@ -265,6 +284,8 @@ instance Editable Doc where
 
 instance ToJSON (EEdit Doc)
 instance FromJSON (EEdit Doc)
+instance SOP.Generic (EEdit Doc)
+instance SOP.HasDatatypeInfo (EEdit Doc)
 
 ----------------------
 
@@ -289,8 +310,14 @@ instance Editable RawContent where
     eInverse d = map ERawContent . eInverse (from d) . unERawContent
     inverse d = map ERawContent . inverse (from d) . map unERawContent
 
+-- this cannot be derived (GHC bug?)
+instance Eq (EEdit RawContent) where ERawContent a == ERawContent b = a == b
+instance NFData (EEdit RawContent) where rnf = grnf
+
 instance ToJSON (EEdit RawContent)
 instance FromJSON (EEdit RawContent)
+instance SOP.Generic (EEdit RawContent)
+instance SOP.HasDatatypeInfo (EEdit RawContent)
 
 instance SOP.Generic Doc
 instance SOP.Generic Block
@@ -301,6 +328,11 @@ instance SOP.HasDatatypeInfo Doc
 instance SOP.HasDatatypeInfo Block
 instance SOP.HasDatatypeInfo LineElem
 instance SOP.HasDatatypeInfo Entity
+
+instance NFData Entity where rnf = grnf
+instance NFData LineElem where rnf = grnf
+instance NFData Block where rnf = grnf
+instance NFData Doc where rnf = grnf
 
 makeJSON ''Doc
 makeJSON ''Block
