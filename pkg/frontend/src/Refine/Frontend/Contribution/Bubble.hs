@@ -117,7 +117,7 @@ noteBubble_ !props children = view_ (noteBubble children) (specialBubbleKey prop
 
 editBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
 editBubble children = mkView "EditBubble" $ \(SpecialBubbleProps dataChunkId markPosition highlight screenState) ->
-  bubble_ (BubbleProps dataChunkId "right" ("icon-Edit", "dark") markPosition highlight [] screenState)
+  bubble_ (BubbleProps dataChunkId "right" ("icon-Edit", "dark") markPosition highlight [ShowContributionDialog dataChunkId] screenState)
     children
 
 editBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
