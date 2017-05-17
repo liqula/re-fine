@@ -145,8 +145,8 @@ instance Representable Draft.BlockType where
 
 instance Editable Draft.BlockType where
     newtype EEdit Draft.BlockType
-        = EBlockType {unEBlockType :: EEdit (Rep Draft.BlockType)}
-      deriving (Generic, Show)
+        = EBlockType {unEBlockType :: EEdit (Atom Draft.BlockType)}
+      deriving (Generic, Show, Eq, NFData)
 
     docCost = docCost . from
     eCost = eCost . unEBlockType
@@ -159,10 +159,6 @@ instance Editable Draft.BlockType where
     merge d a b = map EBlockType *** map EBlockType $ merge (from d) (unEBlockType <$> a) (unEBlockType <$> b)
     eInverse d = map EBlockType . eInverse (from d) . unEBlockType
     inverse d = map EBlockType . inverse (from d) . map unEBlockType
-
--- this cannot be derived (GHC bug?)
-instance Eq (EEdit Draft.BlockType) where EBlockType a == EBlockType b = a == b
-instance NFData (EEdit Draft.BlockType) where rnf = grnf
 
 instance ToJSON (EEdit Draft.BlockType)
 instance FromJSON (EEdit Draft.BlockType)
@@ -178,8 +174,8 @@ instance Representable Entity where
 
 instance Editable Entity where
     newtype EEdit Entity
-        = EEntity {unEEntity :: EEdit (Rep Entity)}
-      deriving (Generic, Show)
+        = EEntity {unEEntity :: EEdit (Atom Entity)}
+      deriving (Generic, Show, Eq, NFData)
 
     docCost = docCost . from
     eCost = eCost . unEEntity
@@ -191,10 +187,6 @@ instance Editable Entity where
     merge d a b = map EEntity *** map EEntity $ merge (from d) (unEEntity <$> a) (unEEntity <$> b)
     eInverse d = map EEntity . eInverse (from d) . unEEntity
     inverse d = map EEntity . inverse (from d) . map unEEntity
-
--- this cannot be derived (GHC bug?)
-instance Eq (EEdit Entity) where EEntity a == EEntity b = a == b
-instance NFData (EEdit Entity) where rnf = grnf
 
 instance ToJSON (EEdit Entity)
 instance FromJSON (EEdit Entity)
@@ -296,8 +288,8 @@ instance Representable RawContent where
 
 instance Editable RawContent where
     newtype EEdit RawContent
-        = ERawContent {unERawContent :: EEdit (Rep RawContent)}
-      deriving (Generic, Show)
+        = ERawContent {unERawContent :: EEdit Doc}
+      deriving (Generic, Show, Eq, NFData)
 
     docCost = docCost . from
     eCost = eCost . unERawContent
@@ -309,10 +301,6 @@ instance Editable RawContent where
     merge d a b = map ERawContent *** map ERawContent $ merge (from d) (unERawContent <$> a) (unERawContent <$> b)
     eInverse d = map ERawContent . eInverse (from d) . unERawContent
     inverse d = map ERawContent . inverse (from d) . map unERawContent
-
--- this cannot be derived (GHC bug?)
-instance Eq (EEdit RawContent) where ERawContent a == ERawContent b = a == b
-instance NFData (EEdit RawContent) where rnf = grnf
 
 instance ToJSON (EEdit RawContent)
 instance FromJSON (EEdit RawContent)
