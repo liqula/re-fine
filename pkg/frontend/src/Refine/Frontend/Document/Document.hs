@@ -92,10 +92,6 @@ document_ :: DocumentProps -> ReactElementM eventHandler ()
 document_ props = Outdated.view document props mempty
 
 
--- | FIXME: refactor @Mark ContributionID@ to @Mark (Set ContributionID)@: we need to compute an
--- individual style for each segment, depending on the set of contributions ids in it.
---
--- TODO: editor component is not updated when highlighting changes.
 mkDocumentStyleMap :: Maybe ContributionID -> Maybe RawContent -> Value
 mkDocumentStyleMap _ Nothing = object []
 mkDocumentStyleMap mactive (Just rawContent) = object . mconcat $ go <$> marks
