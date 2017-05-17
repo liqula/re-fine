@@ -46,7 +46,7 @@ spec = do
       context "gsVDocList" $ do
         it "integrates the loaded document list into the store" $ do
           let list = [ID 3]
-          result <- transform (LoadedDocumentList list) emptyGlobalState
+          result <- transform (RegisterDocumentList list) emptyGlobalState
           result ^. gsVDocList `shouldBe` Just list
 
       context "gsScreenState" $ do

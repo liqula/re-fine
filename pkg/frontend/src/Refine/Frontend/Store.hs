@@ -184,9 +184,8 @@ vdocUpdate action (Just vdoc) = Just $ case action of
 
 
 vdocListUpdate :: GlobalAction -> Maybe [C.ID C.VDoc] -> Maybe [C.ID C.VDoc]
-vdocListUpdate action st = case action of
-    LoadedDocumentList list -> Just list
-    _ -> st
+vdocListUpdate (RegisterDocumentList vdocs) _  = Just vdocs
+vdocListUpdate _                            st = st
 
 
 toolbarStickyUpdate :: GlobalAction -> Bool -> Bool
@@ -215,7 +214,7 @@ emitBackendCallsFor action st = case action of
     LoadDocumentList -> do
         listVDocs $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right loadedVDocs) -> dispatchM $ LoadedDocumentList ((^. C.vdocID) <$> loadedVDocs)
+            (Right loadedVDocs) -> dispatchM $ RegisterDocumentList ((^. C.vdocID) <$> loadedVDocs)
     LoadDocument auid -> do
         getVDoc auid $ \case
             (Left rsp) -> ajaxFail rsp Nothing

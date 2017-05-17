@@ -140,7 +140,7 @@ spec = do
     it "shows the span's text in grey when it is disabled" $ do
       wrapper <- shallow $ iconButton_ (iconButtonTestProps & iconButtonPropsDisabled .~ True)
       span1 <- find wrapper (StringSelector "span")
-      is span1 (PropertySelector [Prop "style" [mkStyle "color" Color.DisabledText]]) `shouldReturn` True
+      is span1 (PropertySelector [Prop "style" [mkStyle "color" Color.DisabledTextColor]]) `shouldReturn` True
 
     it "shows a pointer mouse cursor when it is not disabled" $ do
       wrapper <- shallow $ iconButton_ iconButtonTestProps

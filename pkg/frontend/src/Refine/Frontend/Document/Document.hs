@@ -34,6 +34,7 @@ import qualified React.Flux.Outdated as Outdated
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
+import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Store
@@ -58,6 +59,12 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
           sendMouseUpIfReadOnly =
             mconcat [ dispatch $ ContributionAction RequestSetRange | has _DocumentStateView dstate ]
 
+          documentStyleMap :: Value
+          documentStyleMap = mkDocumentStyleMap active rawContent
+            where
+              active     = props ^. dpContributionState . csHighlightedMarkAndBubble
+              rawContent = dstate ^? documentStateContent
+
       article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
                , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
                , onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
@@ -65,13 +72,15 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
                ] $ do
         editor_
           [ "editorState" &= (dstate ^. documentStateVal)
-          , "customStyleMap" &= documentStyleMap (dstate ^? documentStateContent)
+          , "customStyleMap" &= documentStyleMap
           , "readOnly" &= has _DocumentStateView dstate
           , onChange $ \evt ->
               let dstate' :: DocumentState
                   dstate' = dstate & documentStateVal .~ updateEditorState evt
               in dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetMarkPositions]
           ] mempty
+
+  , Outdated.lComponentWillReceiveProps = Just workAroundDraftIssue999
 
   , Outdated.lComponentDidMount = Just $ \getPropsAndState _ldom _setState -> do
       props <- Outdated.lGetProps getPropsAndState
@@ -83,31 +92,42 @@ document_ :: DocumentProps -> ReactElementM eventHandler ()
 document_ props = Outdated.view document props mempty
 
 
-documentStyleMap :: Maybe RawContent -> Value
-documentStyleMap Nothing = object []
-documentStyleMap (Just rawContent) = object . mconcat $ go <$> marks
+-- | FIXME: refactor @Mark ContributionID@ to @Mark (Set ContributionID)@: we need to compute an
+-- individual style for each segment, depending on the set of contributions ids in it.
+--
+-- TODO: editor component is not updated when highlighting changes.
+mkDocumentStyleMap :: Maybe ContributionID -> Maybe RawContent -> Value
+mkDocumentStyleMap _ Nothing = object []
+mkDocumentStyleMap mactive (Just rawContent) = object . mconcat $ go <$> marks
   where
     marks :: [Style]
     marks = map snd . mconcat $ view blockStyles <$> (rawContent ^. rawContentBlocks)
 
     go :: Style -> [Pair]
-    go s@(Mark cid) = [markToST s .:= mksty cid]
+    go s@(Mark cid) = [markToST s .:= object (mouseover cid <> mksty cid)]
     go _ = []
 
-    mksty :: ContributionID -> Value
+    mouseover :: ContributionID -> [Pair]
+    mouseover cid = ["border-bottom" .:= String ("2px solid " <> cs Color.VDocRollover) | mactive == Just cid]
+
+    mksty :: ContributionID -> [Pair]
     mksty (ContribIDNote i)       = bg   0 255 (shade i) 0.3
     mksty (ContribIDQuestion i)   = bg   0 255 (shade i) 0.3
     mksty (ContribIDDiscussion i) = bg   0 255 (shade i) 0.3
     mksty (ContribIDEdit i)       = bg 255   0 (shade i) 0.3
     mksty ContribIDHighlightMark  = bg 255 255 0         0.3
 
-    bg :: Int -> Int -> Int -> Double -> Value
-    bg r g b t = object ["background" .:= String s]
+    bg :: Int -> Int -> Int -> Double -> [Pair]
+    bg r g b t = ["background" .:= String s]
       where
         s = "rgba(" <> ST.intercalate ", " ((cs . show <$> [r, g, b]) <> [cs . show $ t]) <> ")"
 
     shade :: ID a -> Int
     shade _ = 0
+
+documentStyleMapChanged :: DocumentProps -> DocumentProps -> Bool
+documentStyleMapChanged oldProps newProps = oldProps ^. f /= newProps ^. f
+  where f = dpContributionState . csHighlightedMarkAndBubble
 
 
 -- | FIXME: this should be delivered from where the instance ToJSON Style is defined, and that
@@ -123,3 +143,23 @@ emptyEditorProps = ["editorState" &= createEmpty]
 
 defaultEditorProps :: ConvertibleStrings s JSString => s -> [PropertyOrHandler handler]
 defaultEditorProps txt = ["editorState" &= (createWithContent . createFromText . cs) txt]
+
+
+-- * work-arounds
+
+-- | https://github.com/facebook/draft-js/issues/999#issuecomment-301822709b
+workAroundDraftIssue999 :: Outdated.LPropsAndState DocumentProps ()
+                        -> Outdated.LDOM
+                        -> Outdated.LSetStateFn ()
+                        -> DocumentProps
+                        -> IO ()
+workAroundDraftIssue999 getPropsAndState _ldom _setState newProps = do
+  let jiggleEditorState :: EditorState -> EditorState
+      jiggleEditorState es = setCurrentContent es
+                           . convertFromRaw . jiggleRawContent . convertToRaw
+                           $ getCurrentContent es
+
+  oldProps <- Outdated.lGetProps getPropsAndState
+  when (documentStyleMapChanged oldProps newProps) $ do
+    let dstate' = (newProps ^. dpDocumentState) & documentStateVal %~ jiggleEditorState
+    dispatchAndExec . DocumentAction $ DocumentUpdate dstate'

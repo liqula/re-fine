@@ -38,6 +38,7 @@ module Refine.Frontend.Document.FFI
   , createEmpty
   , createWithContent
   , getCurrentContent
+  , setCurrentContent
   , traceEditorState
   , traceContentState
   , traceContentInEditorState
@@ -118,6 +119,13 @@ getCurrentContent = js_ES_getCurrentContent
 foreign import javascript unsafe
     "$1.getCurrentContent()"
     js_ES_getCurrentContent :: EditorState -> ContentState
+
+setCurrentContent :: EditorState -> ContentState -> EditorState
+setCurrentContent = js_ES_setCurrentContent
+
+foreign import javascript unsafe
+    "Draft.EditorState.set($1, { currentContent: $2 })"
+    js_ES_setCurrentContent :: EditorState -> ContentState -> EditorState
 
 
 -- * logging

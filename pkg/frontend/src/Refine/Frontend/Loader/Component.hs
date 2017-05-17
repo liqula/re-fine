@@ -45,11 +45,14 @@ instance UnoverlapAllEq VDocLoaderProps
 vdocLoader :: View '[VDocLoaderProps]
 vdocLoader = mkView "VDocLoader" $ \props -> do
   h1_ "Load a VDoc"
+  br_ []
   button_ [ "id" $= "add-vdoc-to-backend"
           , onClick $ \_ _ -> RS.dispatch RS.AddDemoDocument
           ] $
           elemString "Load generated document via backend"
+  br_ []
   vdocListLoader_ props
+  br_ []
 
   div_ $ do
     br_ [] >> br_ [] >> br_ [] >> hr_ []
@@ -64,13 +67,8 @@ vdocLoader_ !props = view_ vdocLoader "vdocLoader_" props
 
 vdocListLoader :: View '[VDocLoaderProps]
 vdocListLoader = mkView "VDocListLoader" $ \case
-  VDocLoaderProps Nothing
-            -> button_ [ "id" $= "load-vdoc-list-from-server"
-                      , onClick $ \_ _ -> RS.dispatch RS.LoadDocumentList
-                      ] $
-                      elemString "Load list of documents from server"
-  VDocLoaderProps (Just list)
-            -> div_ $ toButton `mapM_` list
+  VDocLoaderProps Nothing     -> mempty
+  VDocLoaderProps (Just list) -> div_ $ toButton `mapM_` list
 
 toButton :: ID VDoc -> ReactElementM [SomeStoreAction] ()
 toButton li = button_
