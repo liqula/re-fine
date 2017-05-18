@@ -46,6 +46,8 @@ instance GenEdit RawContent where
 spec :: Spec
 spec = parallel $ do
 
+    runTest $ allTests @RawContent
+
     -- if this take too long to run on a regular basis, just activate for debugging or deep-tests:
     -- runTest $ allTests @RawContent
 
