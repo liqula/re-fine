@@ -258,9 +258,21 @@ createEdit rid me ce = do
     (ce ^. createEditRange)
     (ce ^. createEditKind)
     (ce ^. createEditMotiv)
+    me
 
 getEdit :: ID Edit -> DB Edit
-getEdit = getMetaEntity $ \mid -> S.editElim $ \desc cr _ _ -> Edit mid desc cr
+getEdit eid = do
+  src <- getEditSource eid
+  getMetaEntity (\mid -> S.editElim $ \desc cr _ _ kind motiv -> Edit mid desc cr kind motiv src) eid
+
+getEditSource :: ID Edit -> DB (EditSource (ID Edit))
+getEditSource eid = do
+  parents <- entityVal <$$> liftDB (selectList [S.ParentChildChild ==. S.idToKey eid] [])
+  pure $ case parents of
+    [] -> InitialEdit
+    [S.ParentChild parent (RawContentEdit edit) _] -> EditOfEdit edit $ S.keyToId parent
+    [S.ParentChild parent1 _ _, S.ParentChild parent2 _ _] -> MergeOfEdits (S.keyToId parent1) (S.keyToId parent2)
+    _ -> error "impossible"
 
 getVersion :: ID Edit -> DB VDocVersion
 getVersion pid = S.editElim (\_ _ vdoc _ _ _ -> vdoc) <$> getEntityRep pid

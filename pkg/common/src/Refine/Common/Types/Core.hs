@@ -95,7 +95,7 @@ data EditSource a =
     InitialEdit
   | EditOfEdit (OT.Edit RawContent) a
   | MergeOfEdits a a
-  deriving (Show, Functor)
+  deriving (Eq, Ord, Show, Read, Generic, Functor)
 
 data Edit = Edit
   { _editMetaID :: MetaID Edit
@@ -103,6 +103,7 @@ data Edit = Edit
   , _editRange  :: ChunkRange
   , _editKind   :: EditKind
   , _editMotiv  :: ST  -- (list of paragraphs)
+  , _editSource :: EditSource (ID Edit)
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -458,6 +459,8 @@ instance FromJSON (EEdit RawContent)
 instance SOP.Generic (EEdit RawContent)
 instance SOP.HasDatatypeInfo (EEdit RawContent)
 
+instance Ord (EEdit RawContent) where compare _ _ = error "undefined: compare @(EEdit RawContent)"
+instance Read (EEdit RawContent) where readsPrec _ _ = error "undefined: read @(EEdit RawContent)"
 
 -- ** helper functions for Editable RawContent instance
 
@@ -564,6 +567,7 @@ makeRefineType ''SelectionState
 makeRefineType ''SelectionPoint
 makeRefineType ''VDoc
 makeRefineType ''CreateVDoc
+makeRefineType ''EditSource
 makeRefineType ''Edit
 makeRefineType ''CreateEdit
 makeRefineType ''EditKind
