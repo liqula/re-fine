@@ -108,7 +108,7 @@ mkDocumentStyleMap mactive (Just rawContent) = object . mconcat $ go <$> marks
     mksty (ContribIDNote i)       = bg   0 255 (shade i) 0.3
     mksty (ContribIDQuestion i)   = bg   0 255 (shade i) 0.3
     mksty (ContribIDDiscussion i) = bg   0 255 (shade i) 0.3
-    mksty (ContribIDEdit i)       = bg 255   0 (shade i) 0.3
+    mksty (ContribIDEdit i)       = bg   0 255 (shade i) 0.3
     mksty ContribIDHighlightMark  = bg 255 255 0         0.3
 
     bg :: Int -> Int -> Int -> Double -> [Pair]
