@@ -6,7 +6,7 @@
     "build": "npm install && NODE_ENV=production webpack -p --config webpack.prod.config.js"
   },
   "dependencies": {
-    "draft-js": "0.10.0",
+    "draft-js": "https://github.com/liqula/draft-js.git#8138d2151cba5ef8dcfac6e924a096d64c6f4266",
     "draft-js-export-html": "0.5.2",
     "google-closure-compiler-js": "20170218.0.0",
     "gridle": "2.0.48",

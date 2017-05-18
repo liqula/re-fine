@@ -89,7 +89,8 @@ spec = do
       let doc :: String = "1243/asdf_#$%^"
       wrapper <- mount $ editor_ (defaultEditorProps doc) mempty
       contents :: String <- cs <$> html wrapper
-      contents `shouldContain` "class=\"public-DraftEditor-content\""
+      contents `shouldContain` "<div"
+      contents `shouldContain` "public-DraftEditor-content"
       contents `shouldContain` doc
 
 
