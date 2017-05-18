@@ -107,6 +107,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                       document_ $ DocumentProps (rs ^. RS.gsDocumentState)
                                                 (rs ^. RS.gsContributionState)
                                                 (rs ^. gsHeaderState . hsToolbarExtensionStatus)
+                                                vdoc
                       rightAside_ asideProps
 
 mainScreen_ :: GlobalState -> ReactElementM eventHandler ()

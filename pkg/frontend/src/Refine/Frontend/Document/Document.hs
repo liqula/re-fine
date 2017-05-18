@@ -29,11 +29,13 @@ module Refine.Frontend.Document.Document
 
 import Refine.Frontend.Prelude
 
+import           Control.Lens (ix)
 import qualified Data.Text as ST
 import qualified React.Flux.Outdated as Outdated
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
+import           Refine.Common.VDoc.OT (showEditAsRawContent)
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
@@ -65,13 +67,24 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
               active     = props ^. dpContributionState . csHighlightedMarkAndBubble
               rawContent = dstate ^? documentStateContent
 
+          diffs :: Maybe RawContent
+          diffs = case props ^. dpContributionState . csDisplayedContributionID of
+            Just (ContribIDEdit eid) -> case props ^? dpCompositeVDoc . compositeVDocEdits . ix eid of
+                Just edit -> case edit ^. editSource of
+                    InitialEdit -> error "impossible"
+                    MergeOfEdits{} -> error "not implemented"
+                    EditOfEdit otedit _ -> showEditAsRawContent otedit <$> (dstate ^? documentStateContent)
+                Nothing -> error "impossible"
+            Just _  -> Nothing
+            Nothing -> Nothing
+
       article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
                , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
                , onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
                , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
                ] $ do
         editor_
-          [ "editorState" &= (dstate ^. documentStateVal)
+          [ "editorState" &= maybe (dstate ^. documentStateVal) (createWithContent . convertFromRaw) diffs
           , "customStyleMap" &= documentStyleMap
           , "readOnly" &= has _DocumentStateView dstate
           , onChange $ \evt ->
