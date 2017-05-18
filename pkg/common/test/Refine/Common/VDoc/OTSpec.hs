@@ -55,3 +55,27 @@ spec = parallel $ do
     it "RawContent <-> Doc conversion" . property $ \d -> do
       let clear = sanitizeRawContent . resetBlockKeys
       (clear . docToRawContent . rawContentToDoc) d `shouldBe` clear d
+
+
+    describe "### showEditAsRawContent" $ do
+      let styleAdded = Bold  -- TODO: CustomStyleAdded
+          styleDeleted = Bold  -- TODO: CustomStyleDeleted
+          showEditAsRawContent = undefined  -- TODO
+
+      it "shows added text with custom style 'ADDED'." $ do
+        let edit = []  -- TODO
+            rc   = mkRawContent [mkBlock "some text or other"]
+            rc'  = mkRawContent [mkBlock "some text and/or other" & blockStyles .~ [((10, 4), styleAdded)]]
+        showEditAsRawContent edit rc `shouldBe` rc'
+
+      it "shows deleted text with custom style 'DELETED'." $ do
+        let edit = []  -- TODO
+            rc   = mkRawContent [mkBlock "some text or other"]
+            rc'  = mkRawContent [mkBlock "some text or other" & blockStyles .~ [((4, 12), styleDeleted)]]
+        showEditAsRawContent edit rc `shouldBe` rc'
+
+      it "shows deleted block with custom style 'DELETED'." $ do
+        let edit = [ERawContent {unERawContent = DeleteItem 0}]
+            rc   = mkRawContent [mkBlock "some text or other"]
+            rc'  = mkRawContent [mkBlock "some text or other" & blockStyles .~ [((0, 18), styleDeleted)]]
+        showEditAsRawContent edit rc `shouldBe` rc'
