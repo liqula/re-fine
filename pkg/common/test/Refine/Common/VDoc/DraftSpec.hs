@@ -27,7 +27,6 @@ import Refine.Common.Prelude
 
 import           Control.Lens ((&), (.~))
 import qualified Data.Set as Set
-import qualified Data.Text as ST
 import           Test.Aeson.GenericSpecs
 import           Test.Hspec
 import           Test.QuickCheck
@@ -134,20 +133,3 @@ spec = do
 
     it "works (with entity)" $ do
       pendingWith "do they also have spans?  can we somehow distinguish them away in the css selector?"
-
-  describe "jiggleRawContent" $ do
-    let repair = rawContentBlocks %~ map (blockText %~ stripEndSpaceOnly)
-        stripEndSpaceOnly "" = ""
-        stripEndSpaceOnly s  = if ST.last s == ' ' then stripEndSpaceOnly (ST.init s) else s
-
-    it "changes input" $ do
-      let rawContent = initBlockKeys $ mkRawContent [mkBlock "1234567890"]
-      jiggleRawContent rawContent `shouldNotBe` rawContent
-
-    it "change only involves trailing whitespace" $ do
-      let rawContent = initBlockKeys $ mkRawContent [mkBlock "1234567890"]
-      repair (jiggleRawContent rawContent) `shouldBe` rawContent
-
-    it "(previous tests run as properties)" . property $ \rawContent -> do
-      jiggleRawContent rawContent `shouldNotBe` rawContent
-      repair (jiggleRawContent rawContent) `shouldBe` repair rawContent

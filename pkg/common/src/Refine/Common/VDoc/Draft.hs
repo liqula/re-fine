@@ -496,7 +496,6 @@ data MarkSelector = MarkSelector MarkSelectorSide BlockKey Int
 data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom | MarkSelectorUnknownSide
   deriving (Eq, Show, Generic)
 
-{-# ANN getMarkSelectors ("HLint: ignore Use foldr" :: String) #-}
 getMarkSelectors :: RawContent -> [(ContributionID, MarkSelector, MarkSelector)]
 getMarkSelectors = findSides . mconcat . fmap collectBlock . zip [0..] . view rawContentBlocks
   where
@@ -523,22 +522,8 @@ getMarkSelectors = findSides . mconcat . fmap collectBlock . zip [0..] . view ra
 
     pickMinMax :: [(ContributionID, ((Int, Int), MarkSelector))] -> (ContributionID, MarkSelector, MarkSelector)
     pickMinMax [] = error "impossible"
-    pickMinMax (arg@((cid, _) : _)) = (cid, top, bot)
+    pickMinMax arg@((cid, _) : _) = (cid, top, bot)
       where
         marks = Map.fromList $ snd <$> arg
         top   = case Map.findMin marks of (_, MarkSelector _ k o) -> MarkSelector MarkSelectorTop    k o
         bot   = case Map.findMax marks of (_, MarkSelector _ k o) -> MarkSelector MarkSelectorBottom k o
-
-
--- * work-arounds
-
--- | A change in inlineStyleMaps does not register in draft as a props change, so we change
--- the text using trailing whitespace.
--- https://github.com/facebook/draft-js/issues/999#issuecomment-301822709b
-jiggleRawContent :: RawContent -> RawContent
-jiggleRawContent (RawContent [] _)        = error "impossible"
-jiggleRawContent (RawContent (b : bs) es) = RawContent ((b & blockText %~ upd) : bs) es
-  where
-    upd :: ST -> ST
-    upd "" = " "
-    upd s = if ST.last s == ' ' then ST.init s else s <> " "

@@ -139,11 +139,13 @@ transformGlobalState = transf
 
 consoleLogGlobalStateBefore :: forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
 consoleLogGlobalStateBefore False _ _ = pure ()
-consoleLogGlobalStateBefore True action st = liftIO $ do
+consoleLogGlobalStateBefore True action _st = liftIO $ do
   consoleLogJSStringM "" "\n"
-  consoleLogJSONM "Old state: " st
-  traceEditorState (st ^. gsDocumentState . documentStateVal)
-  traceContentInEditorState (st ^. gsDocumentState . documentStateVal)
+  -- (do not show old state initially; it should still be in the logs from the last call to
+  -- 'transformGlobalState' (except for with the first action, but we usually do not debug that).
+  -- consoleLogJSONM "Old state: " st
+  -- traceEditorState (st ^. gsDocumentState . documentStateVal)
+  -- traceContentInEditorState (st ^. gsDocumentState . documentStateVal)
   consoleLogJSONM "Action: " action
   -- consoleLogJSStringM "Action: " (cs $ show action)
 
