@@ -31,8 +31,14 @@ showEditAsRawContent (fmap unERawContent -> edits) (rawContentToDoc -> doc) = do
 
     -- TODO: show blocktype and depth changes
     patchBlock :: DocBlock -> Edit DocBlock -> DocBlock
-    patchBlock ((btype, elems), depth) es
-        = ((btype, patchLineElems elems [e | EditFirst es' <- es, EditSecond es'' <- es', e <- es'']), depth)
+    patchBlock ((btype, elems), depth) es = (if null bpatch && null dpatch then id else markBlock StyleChanged)
+          (( patch bpatch btype
+           , patchLineElems elems [e | EditFirst es' <- es, EditSecond es'' <- es', e <- es''])
+          , patch dpatch depth
+          )
+      where
+        bpatch = [e | EditFirst es' <- es, EditFirst es'' <- es', e <- es'']
+        dpatch = [e | EditSecond es' <- es, e <- es']
 
     patchLineElems :: [LineElem] -> Edit [LineElem] -> [LineElem]
     patchLineElems bs [] = bs
@@ -42,12 +48,18 @@ showEditAsRawContent (fmap unERawContent -> edits) (rawContentToDoc -> doc) = do
         EditItem i edit -> patchLineElems (take i bs <> (ls <> drop (i+1) bs)) $ incIdx i (length ls - 1) <$> es
           where ls = patchLineElem (bs !! i) edit
 
-    -- TODO: show attribute changes
     patchLineElem :: LineElem -> Edit LineElem -> [LineElem]
-    patchLineElem (as, text) es
+    patchLineElem le es
+        = patchLineElemText (patchLineElemStyle le [e | EditFirst es' <- es, e <- es']) [e | EditSecond es' <- es, e <- es']
+
+    patchLineElemStyle :: LineElem -> Edit (Set (Atom EntityStyle)) -> LineElem
+    patchLineElemStyle le [] = le
+    patchLineElemStyle (as, text) e = markElem StyleChanged (patch e as, text)
+
+    patchLineElemText :: LineElem -> Edit ST -> [LineElem]
+    patchLineElemText (as, text) es
         = [ (as <> marks, text')
-          | (marks, text') <- compress $ patchText ((,) mempty <$> cs text)
-                                                   [unEText e | EditSecond es' <- es, e <- es']
+          | (marks, text') <- compress $ patchText ((,) mempty <$> cs text) [unEText e | e <- es]
           ]
 
     patchText :: [(Set (Atom EntityStyle), Char)] -> Edit String -> [(Set (Atom EntityStyle), Char)]
