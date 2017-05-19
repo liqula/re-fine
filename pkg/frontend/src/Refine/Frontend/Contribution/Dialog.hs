@@ -265,14 +265,15 @@ data AddCommentProps = AddCommentProps
 makeLenses ''AddCommentProps
 
 
-addComment :: Translations -> View '[AddCommentProps]
-addComment __ = mkView "AddComment" $ \props -> if not (props ^. acpVisible) then mempty else
-    let top = case props ^. acpRange of
+addContributionDialogFrame :: Bool -> ST -> Maybe Range -> Int -> ReactElementM ViewEventHandler () -> ReactElementM ViewEventHandler ()
+addContributionDialogFrame False _ _ _ _ = pure ()
+addContributionDialogFrame True title mrange windowWidth child =
+    let top = case mrange of
               Nothing -> 30
               Just range -> (range ^. rangeBottomOffset . unOffsetFromViewportTop)
                           + (range ^. rangeScrollOffset . unScrollOffsetOfViewport)
         extraStyles = [ StylePx "top" (top + 5)
-                      , StylePx "left" (leftFor (props ^. acpWindowWidth))
+                      , StylePx "left" (leftFor windowWidth)
                       , StylePx "height" 560
                       ]
     in skylight_ ["isVisible" &= True
@@ -292,11 +293,19 @@ addComment __ = mkView "AddComment" $ \props -> if not (props ^. acpVisible) the
                          , StyleRem "marginLeft" 1
                          , StyleST "fontWeight" "bold"
                          ]
-            ] (elemText $ __ add_a_comment)
+            ] (elemText title)
 
       hr_ []
 
-      commentInput_ props
+      child
+
+addComment :: Translations -> View '[AddCommentProps]
+addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame
+  (props ^. acpVisible)
+  (__ add_a_comment)
+  (props ^. acpRange)
+  (props ^. acpWindowWidth)
+  (commentInput_ props)
 
 addComment_ :: Translations -> AddCommentProps -> ReactElementM eventHandler ()
 addComment_ __ !props = view_ (addComment __) "addComment_" props
