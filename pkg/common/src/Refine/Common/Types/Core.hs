@@ -240,6 +240,10 @@ data Style =
   | Code
     -- custom styles
   | Mark ContributionID
+    -- styles for visual diff
+  | StyleAdded
+  | StyleDeleted
+  | StyleChanged
   deriving (Show, Eq, Ord, Generic)
 
 -- | each block has a unique blocktype
@@ -425,6 +429,9 @@ instance ToJSON Style where
   toJSON Underline    = "UNDERLINE"
   toJSON Code         = "CODE"
   toJSON (Mark cid)   = String $ "MARK__" <> toUrlPiece cid
+  toJSON StyleAdded   = "ADDED"
+  toJSON StyleDeleted = "DELETED"
+  toJSON StyleChanged = "CHANGED"
 
 instance FromJSON Style where
   parseJSON (String "BOLD")                 = pure Bold
@@ -433,6 +440,9 @@ instance FromJSON Style where
   parseJSON (String "CODE")                 = pure Code
   parseJSON (String (ST.splitAt 6 -> ("MARK__", parseUrlPiece -> Right cid)))
                                             = pure $ Mark cid
+  parseJSON (String "ADDED")                = pure StyleAdded
+  parseJSON (String "DELETED")              = pure StyleDeleted
+  parseJSON (String "CHANGED")              = pure StyleChanged
   parseJSON bad = fail $ "Style: no parse for " <> show bad
 
 

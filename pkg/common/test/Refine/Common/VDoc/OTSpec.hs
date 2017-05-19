@@ -16,6 +16,7 @@ import           Test.Hspec
 import Refine.Common.OTSpec hiding (spec)
 import Refine.Common.Test.Arbitrary
 import Refine.Common.OT
+import Refine.Common.VDoc.OT
 import Refine.Common.Types.Core
 import Refine.Common.VDoc.Draft
 
@@ -59,25 +60,30 @@ spec = parallel $ do
       (clear . docToRawContent . rawContentToDoc) d `shouldBe` clear d
 
 
-    describe "### showEditAsRawContent" $ do
-      let styleAdded = Bold  -- TODO: CustomStyleAdded
-          styleDeleted = Bold  -- TODO: CustomStyleDeleted
-          showEditAsRawContent = undefined  -- TODO
+    describe "showEditAsRawContent" $ do
+      let styleAdded = StyleAdded
+          styleDeleted = StyleDeleted
+          --styleChanged = StyleChanged
 
       it "shows added text with custom style 'ADDED'." $ do
-        let edit = []  -- TODO
+        let edit = [ERawContent $ EditItem 0 [EditFirst [EditSecond [EditItem 0 [EditSecond
+                        [ EText (InsertItem 10 'a')
+                        , EText (InsertItem 11 'n')
+                        , EText (InsertItem 12 'd')
+                        , EText (InsertItem 13 '/')]]]]]]
             rc   = mkRawContent [mkBlock "some text or other"]
             rc'  = mkRawContent [mkBlock "some text and/or other" & blockStyles .~ [((10, 4), styleAdded)]]
         showEditAsRawContent edit rc `shouldBe` rc'
 
       it "shows deleted text with custom style 'DELETED'." $ do
-        let edit = []  -- TODO
+        let edit = diff rc rc'
             rc   = mkRawContent [mkBlock "some text or other"]
             rc'  = mkRawContent [mkBlock "some text or other" & blockStyles .~ [((4, 12), styleDeleted)]]
-        showEditAsRawContent edit rc `shouldBe` rc'
+        patch edit rc `shouldBe` rc'
+        -- TODO: showEditAsRawContent edit rc `shouldBe` rc'
 
       it "shows deleted block with custom style 'DELETED'." $ do
-        let edit = [ERawContent {unERawContent = DeleteItem 0}]
+        let edit = [ERawContent $ DeleteItem 0]
             rc   = mkRawContent [mkBlock "some text or other"]
             rc'  = mkRawContent [mkBlock "some text or other" & blockStyles .~ [((0, 18), styleDeleted)]]
         showEditAsRawContent edit rc `shouldBe` rc'
