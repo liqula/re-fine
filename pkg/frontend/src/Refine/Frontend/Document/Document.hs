@@ -64,7 +64,7 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
           documentStyleMap = mkDocumentStyleMap active rawContent
             where
               active     = props ^. dpContributionState . csHighlightedMarkAndBubble
-              rawContent = dstate ^? documentStateContent
+              rawContent = diffs <|> (dstate ^? documentStateContent)
 
           diffs :: Maybe RawContent
           diffs = case props ^. dpContributionState . csDisplayedContributionID of
@@ -111,10 +111,10 @@ mkDocumentStyleMap mactive (Just rawContent) = object . mconcat $ go <$> marks
     marks = map snd . mconcat $ view blockStyles <$> (rawContent ^. rawContentBlocks)
 
     go :: Style -> [Pair]
-    go s@(Mark cid) = [markToST s .:= object (mouseover cid <> mksty cid)]
-    go StyleDeleted = bg 255 0   0 0.3
-    go StyleAdded   = bg 0   255 0 0.3
-    go StyleChanged = bg 255 255 0 0.3
+    go s@(Mark cid)   = [styleToST s .:= object (mouseover cid <> mksty cid)]
+    go s@StyleDeleted = [styleToST s .:= object (bg 255 0   0 0.3)]
+    go s@StyleAdded   = [styleToST s .:= object (bg 0   255 0 0.3)]
+    go s@StyleChanged = [styleToST s .:= object (bg 255 255 0 0.3)]
     go _ = []
 
     mouseover :: ContributionID -> [Pair]
@@ -138,8 +138,8 @@ mkDocumentStyleMap mactive (Just rawContent) = object . mconcat $ go <$> marks
 
 -- | FIXME: this should be delivered from where the instance ToJSON Style is defined, and that
 -- instance should be defined in terms of this.
-markToST :: Style -> ST
-markToST s = case toJSON s of
+styleToST :: Style -> ST
+styleToST s = case toJSON s of
   String txt -> txt
   _ -> error "impossible."
 
