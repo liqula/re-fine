@@ -116,13 +116,6 @@ emptyContributionState = ContributionState
   }
 
 
-data MarkProps = MarkProps
-  { _markPropsAttrs                 :: [Attr]
-  , _markPropsContributionID        :: ContributionID
-  , _markPropsHighlightedMark       :: Maybe ContributionID
-  , _markPropsDisplayedContribution :: Maybe ContributionID
-  }
-  deriving (Eq)
 
 data BubbleProps = BubbleProps
   { _bubblePropsContributionId    :: ContributionID
@@ -187,7 +180,6 @@ makeRefineType ''ContributionAction
 makeRefineType ''ContributionState
 makeRefineType ''CommentKind
 
-makeLenses ''MarkProps
 makeLenses ''BubbleProps
 makeLenses ''SpecialBubbleProps
 makeLenses ''QuickCreateProps
