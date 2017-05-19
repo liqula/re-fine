@@ -29,6 +29,7 @@ import qualified Data.Map.Strict as M
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
+import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
@@ -41,13 +42,13 @@ contributionStateUpdate a = localAction a . globalAction a
       & csCurrentRange             %~ currentRangeUpdate action
       & csCommentKind              %~ commentKindUpdate action
       & csDisplayedContributionID  %~ displayedContributionUpdate action
-      & csCommentEditorVisible     %~ commentEditorVisibleUpdate action
       & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
       & csMarkPositions            %~ markPositionsUpdate action
     localAction _ st = st
 
     globalAction action st = st
       & csQuickCreateShowState     %~ quickCreateShowStateUpdate action
+      & csActiveDialog             %~ activeDialogUpdate action
 
 
 currentRangeUpdate :: ContributionAction -> Maybe Range -> Maybe Range
@@ -70,10 +71,12 @@ displayedContributionUpdate action st = case action of
   HideCommentOverlay  -> Nothing
   _ -> st
 
-commentEditorVisibleUpdate :: ContributionAction -> Bool -> Bool
-commentEditorVisibleUpdate = \case
-  ShowCommentEditor -> const True
-  HideCommentEditor -> const False
+activeDialogUpdate :: GlobalAction -> Maybe ActiveDialog -> Maybe ActiveDialog
+activeDialogUpdate = \case
+  ContributionAction ShowCommentEditor   -> const $ Just ActiveDialogComment
+  ContributionAction HideCommentEditor   -> const Nothing
+  DocumentAction RequestDocumentSave     -> const $ Just ActiveDialogEdit
+  DocumentAction DocumentSave            -> const Nothing
   _ -> id
 
 highlightedMarkAndBubbleUpdate :: ContributionAction -> Maybe ContributionID -> Maybe ContributionID

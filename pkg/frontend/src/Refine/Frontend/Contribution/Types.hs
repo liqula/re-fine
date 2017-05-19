@@ -95,7 +95,7 @@ data ContributionState = ContributionState
   { _csCurrentRange             :: Maybe Range
   , _csCommentKind              :: Maybe CommentKind
   , _csDisplayedContributionID  :: Maybe ContributionID
-  , _csCommentEditorVisible     :: Bool  -- ^ (the comment or edit dialog, that is.  not the vdoc editor.)
+  , _csActiveDialog             :: Maybe ActiveDialog
   , _csHighlightedMarkAndBubble :: Maybe ContributionID
   , _csQuickCreateShowState     :: QuickCreateShowState
   , _csMarkPositions            :: MarkPositions
@@ -107,12 +107,15 @@ data CommentKind =
   | CommentKindDiscussion
   deriving (Show, Eq, Generic)
 
+data ActiveDialog = ActiveDialogComment | ActiveDialogEdit
+  deriving (Show, Eq, Generic)
+
 emptyContributionState :: ContributionState
 emptyContributionState = ContributionState
   { _csCurrentRange             = Nothing
   , _csCommentKind              = Nothing
   , _csDisplayedContributionID  = Nothing
-  , _csCommentEditorVisible     = False
+  , _csActiveDialog             = Nothing
   , _csHighlightedMarkAndBubble = Nothing
   , _csQuickCreateShowState     = QuickCreateNotShown
   , _csMarkPositions            = mempty
@@ -240,6 +243,7 @@ makeRefineType ''CommentInputState
 makeRefineType ''ContributionAction
 makeRefineType ''ContributionState
 makeRefineType ''CommentKind
+makeRefineType ''ActiveDialog
 
 makeLenses ''BubbleProps
 makeLenses ''SpecialBubbleProps

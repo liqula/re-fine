@@ -26,7 +26,6 @@ module Refine.Frontend.Header.EditToolbar where
 
 import Refine.Frontend.Prelude
 
-import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
@@ -89,9 +88,7 @@ editToolbar = mkView "EditToolbar" $ do
             & iconButtonPropsListKey      .~ "save"
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True
-            & iconButtonPropsOnClick      .~ [ DocumentAction DocumentSave
-                                             , ContributionAction ClearRange
-                                             ]
+            & iconButtonPropsOnClick      .~ [DocumentAction RequestDocumentSave]
 
 editToolbar_ :: ReactElementM eventHandler ()
 editToolbar_ = view_ editToolbar "editToolbar_"

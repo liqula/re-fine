@@ -11,11 +11,9 @@
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
@@ -38,6 +36,7 @@ import           Refine.Frontend.Test.Console (gracefulError)
 import           Refine.Frontend.ThirdPartyViews (skylight_)
 import           Refine.Frontend.Contribution.Types
 import qualified Refine.Frontend.Colors as C
+import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Screen.Types
@@ -335,3 +334,25 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
 
 commentInput_ :: AddContributionProps CommentKind -> ReactElementM eventHandler ()
 commentInput_ !props = view_ commentInput "commentInput_" props
+
+
+addEdit :: View '[AddContributionProps EditKind]
+addEdit = mkView "AddEdit" $ \props -> addContributionDialogFrame
+  (props ^. acpVisible)
+  "add an edit"
+  (props ^. acpRange)
+  (props ^. acpWindowWidth) $ do
+    elemText "nothing here yet..."
+    iconButton_ $ def @IconButtonProps
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL
+            & iconButtonPropsElementName  .~ "btn-index"
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXL
+            & iconButtonPropsListKey      .~ "save"
+            & iconButtonPropsLabel        .~ "save"
+            & iconButtonPropsAlignRight   .~ True
+            & iconButtonPropsOnClick      .~ [ DocumentAction DocumentSave
+                                             , ContributionAction ClearRange
+                                             ]
+
+addEdit_ :: AddContributionProps EditKind -> ReactElementM eventHandler ()
+addEdit_ = view_ addEdit "addEdit_"
