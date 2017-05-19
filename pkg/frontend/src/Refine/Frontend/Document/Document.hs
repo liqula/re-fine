@@ -119,7 +119,7 @@ mkDocumentStyleMap mactive (Just rawContent) = object . mconcat $ go <$> marks
     go _ = []
 
     mouseover :: ContributionID -> [Pair]
-    mouseover cid = ["border-bottom" .:= String ("2px solid " <> cs Color.VDocRollover) | mactive == Just cid]
+    mouseover cid = ["borderBottom" .:= String ("2px solid " <> cs Color.VDocRollover) | mactive == Just cid]
 
     mksty :: ContributionID -> [Pair]
     mksty (ContribIDNote i)       = bg   0 255 (shade i) 0.3
