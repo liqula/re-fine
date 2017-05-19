@@ -88,32 +88,18 @@ overlayStyles =
   , mkStyle "backgroundColor" C.OverlayBackdrop
   ]
 
-data CommentDisplayProps = CommentDisplayProps
-  { _commentText  :: CommentText
-  , _iconStyle    :: IconDescription
-  , _userName     :: JSString
-  , _creationDate :: JSString
-  , _contentStyle :: [Style]
-  , _topOffset    :: OffsetFromDocumentTop
-  , _windowWidth  :: Int
-  }
-  deriving (Eq)
-
-makeLenses ''CommentDisplayProps
-
-instance UnoverlapAllEq CommentDisplayProps
 
 showComment :: View '[CommentDisplayProps]
 showComment = mkView "ShowComment" $ \props ->
-  let extraStyles = [ StylePx "top" (props ^. topOffset . unOffsetFromDocumentTop + 5)
-                    , StylePx "left" (leftFor (props ^. windowWidth))
+  let extraStyles = [ StylePx "top" (props ^. cdpTopOffset . unOffsetFromDocumentTop + 5)
+                    , StylePx "left" (leftFor (props ^. cdpWindowWidth))
                     , StyleST "height" ""
                     , StylePx "minHeight" 100
                     ]
   in skylight_ ["isVisible" &= True
            , RF.on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideCommentOverlay)
            , RF.on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentOverlay)
-           , "dialogStyles" @= ((props ^. contentStyle) <> extraStyles)
+           , "dialogStyles" @= ((props ^. cdpContentStyle) <> extraStyles)
            , "overlayStyles" @= overlayStyles
            , "closeButtonStyle" @= [StylePx "top" 0, StylePx "bottom" 0]
            , "titleStyle" @= [StylePx "margin" 0]
@@ -121,16 +107,16 @@ showComment = mkView "ShowComment" $ \props ->
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
         div_ ["style" @= [StylePercentage "marginLeft" 96]] $ do             -- FIXME: How to do this properly?
-          icon_ (IconProps "c-vdoc-overlay-content" False (props ^. iconStyle) XL)
+          icon_ (IconProps "c-vdoc-overlay-content" False (props ^. cdpIconStyle) XL)
 
-        div_ ["className" $= "c-vdoc-overlay-content__copy"] $ elemText (props ^. commentText)
+        div_ ["className" $= "c-vdoc-overlay-content__copy"] $ elemText (props ^. cdpCommentText)
 
         -- edit/comment user meta data -->
         div_ ["className" $= "c-vdoc-overlay-meta"] $ do
             span_ ["className" $= "c-vdoc-overlay-meta__user-avatar"] $ do
                 icon_ (IconProps "c-vdoc-overlay-meta" False ("icon-User", "bright") M)
-            span_ ["className" $= "c-vdoc-overlay-meta__user"] $ elemCS (props ^. userName)
-            span_ ["className" $= "c-vdoc-overlay-meta__date"] $ elemCS (props ^. creationDate) -- or what is this?
+            span_ ["className" $= "c-vdoc-overlay-meta__user"] $ elemCS (props ^. cdpUserName)
+            span_ ["className" $= "c-vdoc-overlay-meta__date"] $ elemCS (props ^. cdpCreationDate) -- or what is this?
         -- END: edit/comment user meta data -->
 
         -- vote buttons -->
@@ -148,15 +134,6 @@ showComment = mkView "ShowComment" $ \props ->
 showComment_ :: CommentDisplayProps -> ReactElementM eventHandler ()
 showComment_ !props = view_ showComment "showComment_" props
 
-
-data ShowNoteProps =
-    ShowNotePropsJust
-      { _snpNote        :: Note
-      , _snpTop         :: OffsetFromDocumentTop
-      , _snpWindowWidth :: Int
-      }
-  | ShowNotePropsNothing
-  deriving (Eq)
 
 showNoteProps :: M.Map (ID Note) Note -> GlobalState -> ShowNoteProps
 showNoteProps notes rs = case (maybeNote, maybeOffset) of
@@ -176,8 +153,6 @@ showNoteProps notes rs = case (maybeNote, maybeOffset) of
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
 
-instance UnoverlapAllEq ShowNoteProps
-
 showNote :: View '[ShowNoteProps]
 showNote = mkView "ShowNote" $ \case
   ShowNotePropsNothing -> mempty
@@ -192,15 +167,6 @@ showNote = mkView "ShowNote" $ \case
 showNote_ :: ShowNoteProps -> ReactElementM eventHandler ()
 showNote_ !props = view_ showNote "showNote_" props
 
-
-data ShowDiscussionProps =
-    ShowDiscussionPropsJust
-      { _sdpNote        :: CompositeDiscussion
-      , _sdpTop         :: OffsetFromDocumentTop
-      , _sdpWindowWidth :: Int
-      }
-    | ShowDiscussionPropsNothing
-  deriving (Eq)
 
 showDiscussionProps :: M.Map (ID Discussion) CompositeDiscussion -> GlobalState -> ShowDiscussionProps
 showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
@@ -220,8 +186,6 @@ showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
 
-instance UnoverlapAllEq ShowDiscussionProps
-
 showDiscussion :: View '[ShowDiscussionProps]
 showDiscussion = mkView "ShowDiscussion" $ \case
   ShowDiscussionPropsNothing -> mempty
@@ -236,12 +200,11 @@ showDiscussion = mkView "ShowDiscussion" $ \case
 showDiscussion_ :: ShowDiscussionProps -> ReactElementM eventHandler ()
 showDiscussion_ !props = view_ showDiscussion "showDiscussion_" props
 
-instance UnoverlapAllEq (Maybe CompositeQuestion)
 
-showQuestion :: View '[Maybe CompositeQuestion]
+showQuestion :: View '[ShowQuestionProps]
 showQuestion = mkView "ShowQuestion" $ \case
-  Nothing -> mempty
-  Just question ->
+  ShowQuestionProps Nothing -> mempty
+  ShowQuestionProps (Just question) ->
     let overlayStyle1 = [mkStyle "backgroundColor" C.VDocQuestion]
         commentText1  = (question ^. compositeQuestion . questionText)
         iconStyle1    = ("icon-Question", "dark")
@@ -250,19 +213,8 @@ showQuestion = mkView "ShowQuestion" $ \case
     in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
                                          overlayStyle1 (OffsetFromDocumentTop 0) 800)
 
-showQuestion_ :: Maybe CompositeQuestion -> ReactElementM eventHandler ()
-showQuestion_ !question = view_ showQuestion "showQuestion_" question
-
-
-data AddCommentProps = AddCommentProps
-  { _acpVisible       :: Bool
-  , _acpRange         :: Maybe Range
-  , _acpCommentKind   :: Maybe CommentKind
-  , _acpWindowWidth   :: Int
-  }
-  deriving (Eq)
-
-makeLenses ''AddCommentProps
+showQuestion_ :: ShowQuestionProps -> ReactElementM eventHandler ()
+showQuestion_ !props = view_ showQuestion "showQuestion_" props
 
 
 addContributionDialogFrame :: Bool -> ST -> Maybe Range -> Int -> ReactElementM ViewEventHandler () -> ReactElementM ViewEventHandler ()
@@ -310,8 +262,6 @@ addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame
 addComment_ :: Translations -> AddCommentProps -> ReactElementM eventHandler ()
 addComment_ __ !props = view_ (addComment __) "addComment_" props
 
-
-instance UnoverlapAllEq AddCommentProps
 
 commentInput :: View '[AddCommentProps]
 commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState props ->

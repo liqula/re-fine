@@ -30,8 +30,9 @@ import           Control.DeepSeq
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as Map
 
-import Refine.Common.Types
+import Refine.Common.Types hiding (Style)
 import Refine.Frontend.Screen.Types
+import Refine.Frontend.Style
 import Refine.Frontend.Types
 import Refine.Prelude.TH (makeRefineType)
 
@@ -69,6 +70,8 @@ mapFromValue = withObject "MarkPositions"
                          <*> parseJSON v)
   . HashMap.toList
 
+
+-- * Contribution
 
 -- | TODO: give record selectors to all fields.
 data ContributionAction =
@@ -116,6 +119,7 @@ emptyContributionState = ContributionState
   }
 
 
+-- * Bubble
 
 data BubbleProps = BubbleProps
   { _bubblePropsContributionId    :: ContributionID
@@ -140,6 +144,9 @@ data SpecialBubbleProps = SpecialBubbleProps
 
 instance UnoverlapAllEq SpecialBubbleProps
 
+
+-- * QuickCreate
+
 data QuickCreateProps = QuickCreateProps
   { _quickCreateSide        :: QuickCreateSide
   , _quickCreateShowState   :: QuickCreateShowState
@@ -160,6 +167,59 @@ data QuickCreateShowState =
   | QuickCreateNotShown  -- ^ will be visible when user selects a range
   | QuickCreateBlocked   -- ^ will not be shown even if user selects a range
   deriving (Show, Eq, Generic)
+
+
+-- * Dialog
+
+data CommentDisplayProps = CommentDisplayProps
+  { _cdpCommentText  :: CommentText
+  , _cdpIconStyle    :: IconDescription
+  , _cdpUserName     :: JSString
+  , _cdpCreationDate :: JSString
+  , _cdpContentStyle :: [Style]
+  , _cdpTopOffset    :: OffsetFromDocumentTop
+  , _cdpWindowWidth  :: Int
+  }
+  deriving (Eq)
+
+instance UnoverlapAllEq CommentDisplayProps
+
+data ShowNoteProps =
+    ShowNotePropsJust
+      { _snpNote        :: Note
+      , _snpTop         :: OffsetFromDocumentTop
+      , _snpWindowWidth :: Int
+      }
+  | ShowNotePropsNothing
+  deriving (Eq)
+
+instance UnoverlapAllEq ShowNoteProps
+
+data ShowDiscussionProps =
+    ShowDiscussionPropsJust
+      { _sdpNote        :: CompositeDiscussion
+      , _sdpTop         :: OffsetFromDocumentTop
+      , _sdpWindowWidth :: Int
+      }
+    | ShowDiscussionPropsNothing
+  deriving (Eq)
+
+instance UnoverlapAllEq ShowDiscussionProps
+
+newtype ShowQuestionProps = ShowQuestionProps (Maybe CompositeQuestion)
+  deriving (Eq)
+
+instance UnoverlapAllEq ShowQuestionProps
+
+data AddCommentProps = AddCommentProps
+  { _acpVisible       :: Bool
+  , _acpRange         :: Maybe Range
+  , _acpCommentKind   :: Maybe CommentKind
+  , _acpWindowWidth   :: Int
+  }
+  deriving (Eq)
+
+instance UnoverlapAllEq AddCommentProps
 
 
 -- * boilerplate
@@ -186,3 +246,6 @@ makeLenses ''QuickCreateProps
 
 makeRefineType ''QuickCreateSide
 makeRefineType ''QuickCreateShowState
+
+makeLenses ''CommentDisplayProps
+makeLenses ''AddCommentProps
