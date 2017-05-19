@@ -226,7 +226,6 @@ addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (st
 mkInlineStyleSegments :: [(EntityRange, Style)] -> [(Int, Set Style)]
 mkInlineStyleSegments = mkSomeSegments fst snd
 
-{-# ANN getMarkSelectors ("HLint: ignore Use foldr" :: String) #-}
 getMarkSelectors :: RawContent -> [(ContributionID, MarkSelector, MarkSelector)]
 getMarkSelectors = findSides . mconcat . fmap collectBlock . zip [0..] . view rawContentBlocks
   where
