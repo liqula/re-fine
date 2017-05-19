@@ -211,15 +211,16 @@ newtype ShowQuestionProps = ShowQuestionProps (Maybe CompositeQuestion)
 
 instance UnoverlapAllEq ShowQuestionProps
 
-data AddCommentProps = AddCommentProps
+data AddContributionProps kind = AddContributionProps
   { _acpVisible       :: Bool
   , _acpRange         :: Maybe Range
-  , _acpCommentKind   :: Maybe CommentKind
+  , _acpKind          :: Maybe kind
   , _acpWindowWidth   :: Int
   }
   deriving (Eq)
 
-instance UnoverlapAllEq AddCommentProps
+instance UnoverlapAllEq (AddContributionProps CommentKind)
+instance UnoverlapAllEq (AddContributionProps EditKind)
 
 
 -- * boilerplate
@@ -248,4 +249,4 @@ makeRefineType ''QuickCreateSide
 makeRefineType ''QuickCreateShowState
 
 makeLenses ''CommentDisplayProps
-makeLenses ''AddCommentProps
+makeLenses ''AddContributionProps

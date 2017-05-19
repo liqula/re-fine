@@ -251,7 +251,7 @@ addContributionDialogFrame True title mrange windowWidth child =
 
       child
 
-addComment :: Translations -> View '[AddCommentProps]
+addComment :: Translations -> View '[AddContributionProps CommentKind]
 addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame
   (props ^. acpVisible)
   (__ add_a_comment)
@@ -259,11 +259,11 @@ addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame
   (props ^. acpWindowWidth)
   (commentInput_ props)
 
-addComment_ :: Translations -> AddCommentProps -> ReactElementM eventHandler ()
+addComment_ :: Translations -> AddContributionProps CommentKind -> ReactElementM eventHandler ()
 addComment_ __ !props = view_ (addComment __) "addComment_" props
 
 
-commentInput :: View '[AddCommentProps]
+commentInput :: View '[AddContributionProps CommentKind]
 commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState props ->
     div_ $ do
       div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
@@ -271,7 +271,7 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
           elemString "Step 1: "
           span_ ["className" $= "bold"] "Select a type for your comment:"
 
-      let checkAcpKind k = if props ^. acpCommentKind == Just k then "RO" else "dark"
+      let checkAcpKind k = if props ^. acpKind == Just k then "RO" else "dark"
 
       div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do  -- RENAME: annotation => comment
         iconButton_ $ def @IconButtonProps
@@ -321,17 +321,17 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
           span_ ["className" $= "bold"] "finish"
 
       let notATextOrKind = 0 == ST.length (curState ^. commentInputStateText)
-                        || isNothing (props ^. acpCommentKind)
+                        || isNothing (props ^. acpKind)
         in iconButton_ $ def @IconButtonProps
           & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") L
           & iconButtonPropsElementName  .~ "submit"
           & iconButtonPropsLabel        .~ "submit"
           & iconButtonPropsDisabled     .~ notATextOrKind
           & iconButtonPropsOnClick      .~
-                [ ContributionAction $ SubmitComment (curState ^. commentInputStateText) (props ^. acpCommentKind)
+                [ ContributionAction $ SubmitComment (curState ^. commentInputStateText) (props ^. acpKind)
                 , ContributionAction ClearRange
                 , ContributionAction HideCommentEditor
                 ]
 
-commentInput_ :: AddCommentProps -> ReactElementM eventHandler ()
+commentInput_ :: AddContributionProps CommentKind -> ReactElementM eventHandler ()
 commentInput_ !props = view_ commentInput "commentInput_" props

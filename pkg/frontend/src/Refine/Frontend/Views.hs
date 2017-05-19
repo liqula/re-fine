@@ -86,7 +86,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           -- components that are only temporarily visible:
           showNote_ $ showNoteProps (vdoc ^. compositeVDocNotes) rs
           showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocDiscussions) rs
-          addComment_ __ $ AddCommentProps
+          addComment_ __ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csCommentEditorVisible)
                               (rs ^. RS.gsContributionState . RS.csCurrentRange)
                               (rs ^. RS.gsContributionState . RS.csCommentKind)
