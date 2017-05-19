@@ -76,11 +76,25 @@ spec = parallel $ do
         showEditAsRawContent edit rc `shouldBe` rc'
 
       it "shows deleted text with custom style 'DELETED'." $ do
-        let edit = diff rc rc'
+        let -- FIXME: edit rc $ mkRawContent [mkBlock "someer"]
+            -- this doesn't work now because the cost of deleting chars is more than
+            -- the cost of deleting the block and adding a new one
+            edit = [ERawContent $ EditItem 0 [EditFirst [EditSecond [EditItem 0 [EditSecond
+                        [ EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)]]]]]]
             rc   = mkRawContent [mkBlock "some text or other"]
             rc'  = mkRawContent [mkBlock "some text or other" & blockStyles .~ [((4, 12), styleDeleted)]]
-        patch edit rc `shouldBe` rc'
-        -- TODO: showEditAsRawContent edit rc `shouldBe` rc'
+        showEditAsRawContent edit rc `shouldBe` rc'
 
       it "shows deleted block with custom style 'DELETED'." $ do
         let edit = [ERawContent $ DeleteItem 0]
