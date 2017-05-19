@@ -34,7 +34,6 @@ import qualified Data.Text as ST
 import qualified React.Flux.Outdated as Outdated
 
 import           Refine.Common.Types
-import           Refine.Common.VDoc.Draft
 import           Refine.Common.VDoc.OT (showEditAsRawContent)
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Contribution.Types
