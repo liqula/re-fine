@@ -4,6 +4,8 @@ var HtmlWebpackPlugin = require("html-webpack-plugin");
 
 var IS_DEV = require('isdev');
 
+process.traceDeprecation = true;
+
 module.exports = {
     entry: [
         "./jsbits/hookup",

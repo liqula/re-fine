@@ -27,7 +27,10 @@
         var getKeyFromBlock = function(node) {
             /* <div data-block="true" data-editor="c3ddk" data-offset-key="5n4ph-0-0">... */
             if (node.attributes['data-block'] && node.attributes['data-block'].value  === 'true') {
-                var [key, x, y] = node.attributes['data-offset-key'].value.split('-');
+                var attrs = node.attributes['data-offset-key'].value.split('-');
+                var key = attrs[0];
+                var x = attrs[1];
+                var y = attrs[2];
                 if (x !== '0' || y !== '0') {
                     console.log(node, node.attributes['data-offset-key']);
                     throw "unexpected block key value";
