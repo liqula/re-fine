@@ -41,7 +41,7 @@ import qualified Refine.Backend.Database.Class as DB
 import           Refine.Common.Allow
 import           Refine.Common.Types
 import qualified Refine.Common.OT as OT
-import           Refine.Common.VDoc.Draft (rawContentFromVDocVersion)
+import           Refine.Common.VDoc.Draft (rawContentFromVDocVersion, deleteMarksFromRawContent)
 
 
 listVDocs :: App [VDoc]
@@ -102,7 +102,10 @@ addEdit baseeid edit = do
   db $ do
     rid <- DB.vdocOfEdit baseeid
     olddoc <- rawContentFromVDocVersion <$> DB.getVersion baseeid
-    childEdit <- DB.createEdit rid (EditOfEdit (OT.diff olddoc (rawContentFromVDocVersion $ edit ^. createEditVDoc)) baseeid) edit
+    childEdit <- DB.createEdit rid (EditOfEdit (
+        OT.diff (deleteMarksFromRawContent olddoc)
+                (deleteMarksFromRawContent . rawContentFromVDocVersion $ edit ^. createEditVDoc)
+        ) baseeid) edit
     pure childEdit
 
 

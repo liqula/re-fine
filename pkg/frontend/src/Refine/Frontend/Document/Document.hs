@@ -35,6 +35,7 @@ import qualified React.Flux.Outdated as Outdated
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.OT (showEditAsRawContent)
+import           Refine.Common.VDoc.Draft (deleteMarksFromRawContent)
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
@@ -43,7 +44,6 @@ import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.ThirdPartyViews (editor_)
-
 
 -- | Note on draft vs. readOnly vs. selection events: in readOnly mode, draft's onChange event is not
 -- fired at all, not even for selection updates.  (There is a hack based on handleBeforeInput, but
@@ -72,7 +72,8 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
                 Just edit -> case edit ^. editSource of
                     InitialEdit -> error "impossible"
                     MergeOfEdits{} -> error "not implemented"
-                    EditOfEdit otedit _ -> showEditAsRawContent otedit <$> (dstate ^? documentStateContent)
+                    EditOfEdit otedit _ -> showEditAsRawContent otedit . deleteMarksFromRawContent
+                                             <$> (dstate ^? documentStateContent)
                 Nothing -> error "impossible"
             Just _  -> Nothing
             Nothing -> Nothing
@@ -111,6 +112,9 @@ mkDocumentStyleMap mactive (Just rawContent) = object . mconcat $ go <$> marks
 
     go :: Style -> [Pair]
     go s@(Mark cid) = [markToST s .:= object (mouseover cid <> mksty cid)]
+    go StyleDeleted = bg 255 0   0 0.3
+    go StyleAdded   = bg 0   255 0 0.3
+    go StyleChanged = bg 255 255 0 0.3
     go _ = []
 
     mouseover :: ContributionID -> [Pair]
