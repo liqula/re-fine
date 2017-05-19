@@ -68,7 +68,7 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
 
           diffs :: Maybe RawContent
           diffs = case props ^. dpContributionState . csDisplayedContributionID of
-            Just (ContribIDEdit eid) -> case props ^? dpCompositeVDoc . compositeVDocEdits . ix eid of
+            Just (ContribIDEdit eid) -> case props ^? dpCompositeVDoc . ix eid of
                 Just edit -> case edit ^. editSource of
                     InitialEdit -> error "impossible"
                     MergeOfEdits{} -> error "not implemented"

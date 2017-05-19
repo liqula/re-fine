@@ -72,7 +72,7 @@ data DocumentProps = DocumentProps
   { _dpDocumentState     :: DocumentState
   , _dpContributionState :: ContributionState
   , _dpToolbarStatus     :: ToolbarExtensionStatus
-  , _dpCompositeVDoc     :: CompositeVDoc   -- TODO: this is too much, reduce
+  , _dpCompositeVDoc     :: Map (ID Edit) Edit   -- FIXME: if this is too much, reduce
   }
   deriving (Show, Eq, Generic)
 
@@ -83,7 +83,7 @@ emptyDocumentProps = DocumentProps
   { _dpDocumentState     = emptyDocumentState
   , _dpContributionState = emptyContributionState
   , _dpToolbarStatus     = ToolbarExtensionClosed
-  , _dpCompositeVDoc     = undefined -- TODO: emptyCompositeVDoc
+  , _dpCompositeVDoc     = mempty
   }
 
 makeRefineType ''DocumentAction
