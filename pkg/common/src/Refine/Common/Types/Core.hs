@@ -93,7 +93,7 @@ data EditSource a =
     InitialEdit
   | EditOfEdit (OT.Edit RawContent) a
   | MergeOfEdits a a
-  deriving (Eq, Ord, Show, Read, Generic, Functor)
+  deriving (Eq, Show, Generic, Functor)
 
 data Edit = Edit
   { _editMetaID :: MetaID Edit
@@ -103,7 +103,7 @@ data Edit = Edit
   , _editMotiv  :: ST  -- (list of paragraphs)
   , _editSource :: EditSource (ID Edit)
   }
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Show, Generic)
 
 data CreateEdit = CreateEdit
   { _createEditDesc  :: ST
@@ -166,7 +166,7 @@ data Contribution =
   | ContribDiscussion Discussion
   | ContribEdit Edit
   | ContribHighlightMark ChunkRange
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Show, Generic)
 
 -- | For places where we need heterogeneous lists of different 'ID's, we can use this type.
 --
@@ -466,9 +466,6 @@ instance ToJSON (EEdit RawContent)
 instance FromJSON (EEdit RawContent)
 instance SOP.Generic (EEdit RawContent)
 instance SOP.HasDatatypeInfo (EEdit RawContent)
-
-instance Ord (EEdit RawContent) where compare _ _ = error "undefined: compare @(EEdit RawContent)"
-instance Read (EEdit RawContent) where readsPrec _ _ = error "undefined: read @(EEdit RawContent)"
 
 
 -- ** helper functions for Editable RawContent instance
