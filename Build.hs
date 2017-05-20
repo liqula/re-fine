@@ -72,6 +72,7 @@ main = shakeArgs refineOptions $ do
     command_ [] "stack" ["exec", "--", "hlint", "--version"]
     command_ [] "stack" ["install", "hspec-discover", "--resolver", resolver]
     command_ [] "stack" ["exec", "--", "which", "hspec-discover"]
+    command_ [] "stack" ["install", "happy", "--resolver", resolver]  -- (needed for pretty-show package)
 
     command_ [Cwd pkgPrelude]  "stack" ["setup"]
     command_ [Cwd pkgCommon]   "stack" ["setup"]

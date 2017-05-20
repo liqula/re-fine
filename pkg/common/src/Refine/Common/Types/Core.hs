@@ -100,7 +100,6 @@ data Edit = Edit
   , _editDesc   :: ST
   , _editRange  :: ChunkRange
   , _editKind   :: EditKind
-  , _editMotiv  :: ST  -- (list of paragraphs)
   , _editSource :: EditSource (ID Edit)
   }
   deriving (Eq, Show, Generic)
@@ -110,14 +109,10 @@ data CreateEdit = CreateEdit
   , _createEditRange :: ChunkRange
   , _createEditVDoc  :: VDocVersion
   , _createEditKind  :: EditKind
-  , _createEditMotiv :: ST
   }
   deriving (Eq, Ord, Show, Generic)
 
 data EditKind = Grammar | Phrasing | Meaning | Initial
-  deriving (Eq, Ord, Show, Read, Generic)
-
-data ConflictResolution = ConflictResolution
   deriving (Eq, Ord, Show, Read, Generic)
 
 
@@ -577,7 +572,6 @@ makeRefineType ''EditSource
 makeRefineType ''Edit
 makeRefineType ''CreateEdit
 makeRefineType ''EditKind
-makeRefineType ''ConflictResolution
 makeRefineType ''Title
 makeRefineType ''Abstract
 makeRefineType ''VDocVersion

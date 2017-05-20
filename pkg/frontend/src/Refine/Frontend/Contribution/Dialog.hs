@@ -11,11 +11,9 @@
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
@@ -38,6 +36,8 @@ import           Refine.Frontend.Test.Console (gracefulError)
 import           Refine.Frontend.ThirdPartyViews (skylight_)
 import           Refine.Frontend.Contribution.Types
 import qualified Refine.Frontend.Colors as C
+import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Header.Toolbar
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Screen.Types
@@ -88,32 +88,18 @@ overlayStyles =
   , mkStyle "backgroundColor" C.OverlayBackdrop
   ]
 
-data CommentDisplayProps = CommentDisplayProps
-  { _commentText  :: CommentText
-  , _iconStyle    :: IconDescription
-  , _userName     :: JSString
-  , _creationDate :: JSString
-  , _contentStyle :: [Style]
-  , _topOffset    :: OffsetFromDocumentTop
-  , _windowWidth  :: Int
-  }
-  deriving (Eq)
-
-makeLenses ''CommentDisplayProps
-
-instance UnoverlapAllEq CommentDisplayProps
 
 showComment :: View '[CommentDisplayProps]
 showComment = mkView "ShowComment" $ \props ->
-  let extraStyles = [ StylePx "top" (props ^. topOffset . unOffsetFromDocumentTop + 5)
-                    , StylePx "left" (leftFor (props ^. windowWidth))
+  let extraStyles = [ StylePx "top" (props ^. cdpTopOffset . unOffsetFromDocumentTop + 5)
+                    , StylePx "left" (leftFor (props ^. cdpWindowWidth))
                     , StyleST "height" ""
                     , StylePx "minHeight" 100
                     ]
   in skylight_ ["isVisible" &= True
            , RF.on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideCommentOverlay)
            , RF.on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentOverlay)
-           , "dialogStyles" @= ((props ^. contentStyle) <> extraStyles)
+           , "dialogStyles" @= ((props ^. cdpContentStyle) <> extraStyles)
            , "overlayStyles" @= overlayStyles
            , "closeButtonStyle" @= [StylePx "top" 0, StylePx "bottom" 0]
            , "titleStyle" @= [StylePx "margin" 0]
@@ -121,16 +107,16 @@ showComment = mkView "ShowComment" $ \props ->
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
         div_ ["style" @= [StylePercentage "marginLeft" 96]] $ do             -- FIXME: How to do this properly?
-          icon_ (IconProps "c-vdoc-overlay-content" False (props ^. iconStyle) XL)
+          icon_ (IconProps "c-vdoc-overlay-content" False (props ^. cdpIconStyle) XL)
 
-        div_ ["className" $= "c-vdoc-overlay-content__copy"] $ elemText (props ^. commentText)
+        div_ ["className" $= "c-vdoc-overlay-content__copy"] $ elemText (props ^. cdpCommentText)
 
         -- edit/comment user meta data -->
         div_ ["className" $= "c-vdoc-overlay-meta"] $ do
             span_ ["className" $= "c-vdoc-overlay-meta__user-avatar"] $ do
                 icon_ (IconProps "c-vdoc-overlay-meta" False ("icon-User", "bright") M)
-            span_ ["className" $= "c-vdoc-overlay-meta__user"] $ elemCS (props ^. userName)
-            span_ ["className" $= "c-vdoc-overlay-meta__date"] $ elemCS (props ^. creationDate) -- or what is this?
+            span_ ["className" $= "c-vdoc-overlay-meta__user"] $ elemCS (props ^. cdpUserName)
+            span_ ["className" $= "c-vdoc-overlay-meta__date"] $ elemCS (props ^. cdpCreationDate) -- or what is this?
         -- END: edit/comment user meta data -->
 
         -- vote buttons -->
@@ -148,15 +134,6 @@ showComment = mkView "ShowComment" $ \props ->
 showComment_ :: CommentDisplayProps -> ReactElementM eventHandler ()
 showComment_ !props = view_ showComment "showComment_" props
 
-
-data ShowNoteProps =
-    ShowNotePropsJust
-      { _snpNote        :: Note
-      , _snpTop         :: OffsetFromDocumentTop
-      , _snpWindowWidth :: Int
-      }
-  | ShowNotePropsNothing
-  deriving (Eq)
 
 showNoteProps :: M.Map (ID Note) Note -> GlobalState -> ShowNoteProps
 showNoteProps notes rs = case (maybeNote, maybeOffset) of
@@ -176,8 +153,6 @@ showNoteProps notes rs = case (maybeNote, maybeOffset) of
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
 
-instance UnoverlapAllEq ShowNoteProps
-
 showNote :: View '[ShowNoteProps]
 showNote = mkView "ShowNote" $ \case
   ShowNotePropsNothing -> mempty
@@ -192,15 +167,6 @@ showNote = mkView "ShowNote" $ \case
 showNote_ :: ShowNoteProps -> ReactElementM eventHandler ()
 showNote_ !props = view_ showNote "showNote_" props
 
-
-data ShowDiscussionProps =
-    ShowDiscussionPropsJust
-      { _sdpNote        :: CompositeDiscussion
-      , _sdpTop         :: OffsetFromDocumentTop
-      , _sdpWindowWidth :: Int
-      }
-    | ShowDiscussionPropsNothing
-  deriving (Eq)
 
 showDiscussionProps :: M.Map (ID Discussion) CompositeDiscussion -> GlobalState -> ShowDiscussionProps
 showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
@@ -220,8 +186,6 @@ showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
 
-instance UnoverlapAllEq ShowDiscussionProps
-
 showDiscussion :: View '[ShowDiscussionProps]
 showDiscussion = mkView "ShowDiscussion" $ \case
   ShowDiscussionPropsNothing -> mempty
@@ -236,12 +200,11 @@ showDiscussion = mkView "ShowDiscussion" $ \case
 showDiscussion_ :: ShowDiscussionProps -> ReactElementM eventHandler ()
 showDiscussion_ !props = view_ showDiscussion "showDiscussion_" props
 
-instance UnoverlapAllEq (Maybe CompositeQuestion)
 
-showQuestion :: View '[Maybe CompositeQuestion]
+showQuestion :: View '[ShowQuestionProps]
 showQuestion = mkView "ShowQuestion" $ \case
-  Nothing -> mempty
-  Just question ->
+  ShowQuestionProps Nothing -> mempty
+  ShowQuestionProps (Just question) ->
     let overlayStyle1 = [mkStyle "backgroundColor" C.VDocQuestion]
         commentText1  = (question ^. compositeQuestion . questionText)
         iconStyle1    = ("icon-Question", "dark")
@@ -250,29 +213,19 @@ showQuestion = mkView "ShowQuestion" $ \case
     in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
                                          overlayStyle1 (OffsetFromDocumentTop 0) 800)
 
-showQuestion_ :: Maybe CompositeQuestion -> ReactElementM eventHandler ()
-showQuestion_ !question = view_ showQuestion "showQuestion_" question
+showQuestion_ :: ShowQuestionProps -> ReactElementM eventHandler ()
+showQuestion_ !props = view_ showQuestion "showQuestion_" props
 
 
-data AddCommentProps = AddCommentProps
-  { _acpVisible       :: Bool
-  , _acpRange         :: Maybe Range
-  , _acpCommentKind   :: Maybe CommentKind
-  , _acpWindowWidth   :: Int
-  }
-  deriving (Eq)
-
-makeLenses ''AddCommentProps
-
-
-addComment :: Translations -> View '[AddCommentProps]
-addComment __ = mkView "AddComment" $ \props -> if not (props ^. acpVisible) then mempty else
-    let top = case props ^. acpRange of
+addContributionDialogFrame :: Bool -> ST -> Maybe Range -> Int -> ReactElementM ViewEventHandler () -> ReactElementM ViewEventHandler ()
+addContributionDialogFrame False _ _ _ _ = pure ()
+addContributionDialogFrame True title mrange windowWidth child =
+    let top = case mrange of
               Nothing -> 30
               Just range -> (range ^. rangeBottomOffset . unOffsetFromViewportTop)
                           + (range ^. rangeScrollOffset . unScrollOffsetOfViewport)
         extraStyles = [ StylePx "top" (top + 5)
-                      , StylePx "left" (leftFor (props ^. acpWindowWidth))
+                      , StylePx "left" (leftFor windowWidth)
                       , StylePx "height" 560
                       ]
     in skylight_ ["isVisible" &= True
@@ -292,27 +245,55 @@ addComment __ = mkView "AddComment" $ \props -> if not (props ^. acpVisible) the
                          , StyleRem "marginLeft" 1
                          , StyleST "fontWeight" "bold"
                          ]
-            ] (elemText $ __ add_a_comment)
+            ] (elemText title)
 
       hr_ []
 
-      commentInput_ props
+      child
 
-addComment_ :: Translations -> AddCommentProps -> ReactElementM eventHandler ()
+addComment :: Translations -> View '[AddContributionProps CommentKind]
+addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame
+  (props ^. acpVisible)
+  (__ add_a_comment)
+  (props ^. acpRange)
+  (props ^. acpWindowWidth)
+  (commentInput_ props)
+
+addComment_ :: Translations -> AddContributionProps CommentKind -> ReactElementM eventHandler ()
 addComment_ __ !props = view_ (addComment __) "addComment_" props
 
 
-instance UnoverlapAllEq AddCommentProps
+contributionDialogTextForm :: Int -> ST -> ReactElementM (StatefulViewEventHandler AddContributionFormState) ()
+contributionDialogTextForm stepNumber promptText = do
+  div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
+    p_ $ do
+      elemString $ "Step " <> show stepNumber <> ": "
+      span_ ["className" $= "bold"] $ do
+        elemText promptText
 
-commentInput :: View '[AddCommentProps]
-commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState props ->
+  form_ [ "target" $= "#"
+        , "action" $= "POST"] $ do
+    textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
+              , "className" $= "o-wysiwyg o-form-input__textarea"
+              , "style" @= [ StyleST "resize" "none"
+                           , StylePx "width" 600
+                           , StylePx "height" 240
+                           ]
+              -- Update the current state with the current text in the textbox, sending no actions
+              , onChange $ \evt st -> ([], Just $ st & addContributionFormState .~ target evt "value")
+              ]
+      mempty
+
+
+commentInput :: View '[AddContributionProps CommentKind]
+commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \curState props ->
     div_ $ do
       div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
         p_ $ do
           elemString "Step 1: "
           span_ ["className" $= "bold"] "Select a type for your comment:"
 
-      let checkAcpKind k = if props ^. acpCommentKind == Just k then "RO" else "dark"
+      let checkAcpKind k = if props ^. acpKind == Just k then "RO" else "dark"
 
       div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do  -- RENAME: annotation => comment
         iconButton_ $ def @IconButtonProps
@@ -337,22 +318,7 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
 
       hr_ []
 
-      div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
-        p_ $ do
-          elemString "Step 2: "
-          span_ ["className" $= "bold"] "enter your comment:"
-
-      form_ [ "target" $= "#"
-           , "action" $= "POST"] $ do
-        textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
-                  , "className" $= "o-wysiwyg o-form-input__textarea"
-                  , "style" @= [ StyleST "resize" "none"
-                               , StylePx "width" 600
-                               , StylePx "height" 240
-                               ]
-                  -- Update the current state with the current text in the textbox, sending no actions
-                  , onChange $ \evt st -> ([], Just $ st & commentInputStateText .~ target evt "value")
-                  ] mempty
+      contributionDialogTextForm 2 "enter your comment:"
 
       hr_ []
 
@@ -361,18 +327,73 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
           elemString "Step 3: "
           span_ ["className" $= "bold"] "finish"
 
-      let notATextOrKind = 0 == ST.length (curState ^. commentInputStateText)
-                        || isNothing (props ^. acpCommentKind)
+      let notATextOrKind = 0 == ST.length (curState ^. addContributionFormState)
+                        || isNothing (props ^. acpKind)
         in iconButton_ $ def @IconButtonProps
           & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") L
           & iconButtonPropsElementName  .~ "submit"
           & iconButtonPropsLabel        .~ "submit"
           & iconButtonPropsDisabled     .~ notATextOrKind
           & iconButtonPropsOnClick      .~
-                [ ContributionAction $ SubmitComment (curState ^. commentInputStateText) (props ^. acpCommentKind)
+                [ ContributionAction $ SubmitComment (curState ^. addContributionFormState) (props ^. acpKind)
                 , ContributionAction ClearRange
                 , ContributionAction HideCommentEditor
                 ]
 
-commentInput_ :: AddCommentProps -> ReactElementM eventHandler ()
+commentInput_ :: AddContributionProps CommentKind -> ReactElementM eventHandler ()
 commentInput_ !props = view_ commentInput "commentInput_" props
+
+
+addEdit :: View '[AddContributionProps EditKind]
+addEdit = mkView "AddEdit" $ \props -> addContributionDialogFrame
+  (props ^. acpVisible)
+  "add an edit"
+  (props ^. acpRange)
+  (props ^. acpWindowWidth)
+  (editInput_ props)
+
+addEdit_ :: AddContributionProps EditKind -> ReactElementM eventHandler ()
+addEdit_ = view_ addEdit "addEdit_"
+
+
+-- | FUTUREWORK: there is *some* code sharing between 'editInput_' and 'commentInput_', but there may be
+-- room for more.
+--
+-- FUTUREWORK: kind change is a nice example of local signals between two components.  how is this
+-- handled in react?  should we have a second global store here that is just shared between
+-- 'editInput' and and 'editKindForm'?
+editInput :: View '[AddContributionProps EditKind]
+editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState props -> do
+
+    p_ $ do
+      elemString "Step 1: "
+      span_ ["className" $= "bold"] "Type of this edit:"
+      liftViewToStateHandler $ editKindForm_ (DocumentAction . DocumentUpdateEditKind) (EditKindFormProps $ props ^. acpKind)
+
+    hr_ []
+
+    contributionDialogTextForm 2 "describe your motivation for this edit:"
+
+    hr_ []
+
+    iconButton_ $ def @IconButtonProps
+            & iconButtonPropsListKey      .~ "save"
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXL
+            & iconButtonPropsElementName  .~ "btn-index"
+            & iconButtonPropsLabel        .~ "save"
+            & iconButtonPropsAlignRight   .~ True
+            & iconButtonPropsOnClick      .~ [ DocumentAction $ DocumentSave (curState ^. addContributionFormState)
+                                             , ContributionAction ClearRange
+                                             ]
+
+    iconButton_ $ def @IconButtonProps
+            & iconButtonPropsListKey      .~ "cancel"
+            & iconButtonPropsIconProps    .~ IconProps "c-mainmenu-header" True ("icon-Close", "dark") XXL
+            & iconButtonPropsElementName  .~ "btn-index"
+            & iconButtonPropsLabel        .~ "cancel"
+            & iconButtonPropsAlignRight   .~ True
+            & iconButtonPropsOnClick      .~ [DocumentAction DocumentCancelSave]
+
+
+editInput_ :: AddContributionProps EditKind -> ReactElementM eventHandler ()
+editInput_ !props = view_ editInput "editInput_" props

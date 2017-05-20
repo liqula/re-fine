@@ -30,14 +30,15 @@ import           Control.DeepSeq
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as Map
 
-import Refine.Common.Types
+import Refine.Common.Types hiding (Style)
 import Refine.Frontend.Screen.Types
+import Refine.Frontend.Style
 import Refine.Frontend.Types
 import Refine.Prelude.TH (makeRefineType)
 
 
-newtype CommentInputState = CommentInputState
-  { _commentInputStateText :: ST
+newtype AddContributionFormState = AddContributionFormState
+  { _addContributionFormState :: ST
   } deriving (Show, Eq, Generic)
 
 
@@ -70,6 +71,8 @@ mapFromValue = withObject "MarkPositions"
   . HashMap.toList
 
 
+-- * Contribution
+
 -- | TODO: give record selectors to all fields.
 data ContributionAction =
     RequestSetRange -- TODO: move this to 'DocumentAction'
@@ -92,7 +95,7 @@ data ContributionState = ContributionState
   { _csCurrentRange             :: Maybe Range
   , _csCommentKind              :: Maybe CommentKind
   , _csDisplayedContributionID  :: Maybe ContributionID
-  , _csCommentEditorVisible     :: Bool  -- ^ (the comment or edit dialog, that is.  not the vdoc editor.)
+  , _csActiveDialog             :: Maybe ActiveDialog
   , _csHighlightedMarkAndBubble :: Maybe ContributionID
   , _csQuickCreateShowState     :: QuickCreateShowState
   , _csMarkPositions            :: MarkPositions
@@ -104,25 +107,22 @@ data CommentKind =
   | CommentKindDiscussion
   deriving (Show, Eq, Generic)
 
+data ActiveDialog = ActiveDialogComment | ActiveDialogEdit
+  deriving (Show, Eq, Generic)
+
 emptyContributionState :: ContributionState
 emptyContributionState = ContributionState
   { _csCurrentRange             = Nothing
   , _csCommentKind              = Nothing
   , _csDisplayedContributionID  = Nothing
-  , _csCommentEditorVisible     = False
+  , _csActiveDialog             = Nothing
   , _csHighlightedMarkAndBubble = Nothing
   , _csQuickCreateShowState     = QuickCreateNotShown
   , _csMarkPositions            = mempty
   }
 
 
-data MarkProps = MarkProps
-  { _markPropsAttrs                 :: [Attr]
-  , _markPropsContributionID        :: ContributionID
-  , _markPropsHighlightedMark       :: Maybe ContributionID
-  , _markPropsDisplayedContribution :: Maybe ContributionID
-  }
-  deriving (Eq)
+-- * Bubble
 
 data BubbleProps = BubbleProps
   { _bubblePropsContributionId    :: ContributionID
@@ -147,6 +147,9 @@ data SpecialBubbleProps = SpecialBubbleProps
 
 instance UnoverlapAllEq SpecialBubbleProps
 
+
+-- * QuickCreate
+
 data QuickCreateProps = QuickCreateProps
   { _quickCreateSide        :: QuickCreateSide
   , _quickCreateShowState   :: QuickCreateShowState
@@ -169,6 +172,60 @@ data QuickCreateShowState =
   deriving (Show, Eq, Generic)
 
 
+-- * Dialog
+
+data CommentDisplayProps = CommentDisplayProps
+  { _cdpCommentText  :: CommentText
+  , _cdpIconStyle    :: IconDescription
+  , _cdpUserName     :: JSString
+  , _cdpCreationDate :: JSString
+  , _cdpContentStyle :: [Style]
+  , _cdpTopOffset    :: OffsetFromDocumentTop
+  , _cdpWindowWidth  :: Int
+  }
+  deriving (Eq)
+
+instance UnoverlapAllEq CommentDisplayProps
+
+data ShowNoteProps =
+    ShowNotePropsJust
+      { _snpNote        :: Note
+      , _snpTop         :: OffsetFromDocumentTop
+      , _snpWindowWidth :: Int
+      }
+  | ShowNotePropsNothing
+  deriving (Eq)
+
+instance UnoverlapAllEq ShowNoteProps
+
+data ShowDiscussionProps =
+    ShowDiscussionPropsJust
+      { _sdpNote        :: CompositeDiscussion
+      , _sdpTop         :: OffsetFromDocumentTop
+      , _sdpWindowWidth :: Int
+      }
+    | ShowDiscussionPropsNothing
+  deriving (Eq)
+
+instance UnoverlapAllEq ShowDiscussionProps
+
+newtype ShowQuestionProps = ShowQuestionProps (Maybe CompositeQuestion)
+  deriving (Eq)
+
+instance UnoverlapAllEq ShowQuestionProps
+
+data AddContributionProps kind = AddContributionProps
+  { _acpVisible       :: Bool
+  , _acpRange         :: Maybe Range
+  , _acpKind          :: Maybe kind
+  , _acpWindowWidth   :: Int
+  }
+  deriving (Eq)
+
+instance UnoverlapAllEq (AddContributionProps CommentKind)
+instance UnoverlapAllEq (AddContributionProps EditKind)
+
+
 -- * boilerplate
 
 makeRefineType ''MarkPosition
@@ -182,15 +239,18 @@ instance ToJSON MarkPositions where
 instance FromJSON MarkPositions where
   parseJSON = fmap MarkPositions . mapFromValue
 
-makeRefineType ''CommentInputState
+makeRefineType ''AddContributionFormState
 makeRefineType ''ContributionAction
 makeRefineType ''ContributionState
 makeRefineType ''CommentKind
+makeRefineType ''ActiveDialog
 
-makeLenses ''MarkProps
 makeLenses ''BubbleProps
 makeLenses ''SpecialBubbleProps
 makeLenses ''QuickCreateProps
 
 makeRefineType ''QuickCreateSide
 makeRefineType ''QuickCreateShowState
+
+makeLenses ''CommentDisplayProps
+makeLenses ''AddContributionProps

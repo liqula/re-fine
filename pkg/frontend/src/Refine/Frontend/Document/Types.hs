@@ -39,7 +39,10 @@ import           Refine.Prelude.TH (makeRefineType)
 
 data DocumentAction =
     DocumentUpdate DocumentState
-  | DocumentSave
+  | DocumentUpdateEditKind EditKind
+  | RequestDocumentSave
+  | DocumentSave ST
+  | DocumentCancelSave
   | DocumentToggleBold
   | DocumentToggleItalic
   deriving (Show, Eq, Generic)
@@ -48,10 +51,10 @@ data DocumentAction =
 -- other stuff, see #233.
 data DocumentState =
     DocumentStateView
-      { _documentStateContent  :: RawContent  -- ^ in read-only mode, change to the content is
+      { _documentStateVal      :: EditorState
+      , _documentStateContent  :: RawContent  -- ^ in read-only mode, change to the content is
                                               -- driven by haskell, so we keep the haskell
                                               -- representation around.
-      , _documentStateVal      :: EditorState
       }
   | DocumentStateEdit
       { _documentStateVal      :: EditorState
@@ -60,7 +63,7 @@ data DocumentState =
   deriving (Show, Eq, Generic)
 
 mkDocumentStateView :: RawContent -> DocumentState
-mkDocumentStateView c = DocumentStateView c' e
+mkDocumentStateView c = DocumentStateView e c'
   where
     e  = createWithContent $ convertFromRaw c
     c' = convertToRaw $ getCurrentContent e

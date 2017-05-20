@@ -63,7 +63,6 @@ Edit
     editVDoc    VDocVersion
     repository  VDocId
     kind        EditKind
-    motivation  ST
 
 Note
     text        Text

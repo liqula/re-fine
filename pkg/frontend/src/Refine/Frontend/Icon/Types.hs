@@ -52,12 +52,6 @@ module Refine.Frontend.Icon.Types
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens (makeLenses)
-import           Data.Default (Default(def))
-import           Data.Typeable (Typeable)
-import           GHCJS.Types (JSString)
-import           React.Flux (Event, MouseEvent, ViewEventHandler, UnoverlapAllEq)
-
 import           Refine.Frontend.CS ()
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Store (dispatchMany)

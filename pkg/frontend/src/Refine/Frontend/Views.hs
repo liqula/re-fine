@@ -41,7 +41,7 @@ import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.QuickCreate
 import           Refine.Frontend.Contribution.Types as RS
 import           Refine.Frontend.Document.Document
-import           Refine.Frontend.Document.Types (DocumentProps(DocumentProps))
+import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Heading (mainHeader_)
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component
@@ -86,10 +86,15 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           -- components that are only temporarily visible:
           showNote_ $ showNoteProps (vdoc ^. compositeVDocNotes) rs
           showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocDiscussions) rs
-          addComment_ __ $ AddCommentProps
-                              (rs ^. RS.gsContributionState . RS.csCommentEditorVisible)
+          addComment_ __ $ AddContributionProps
+                              (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogComment)
                               (rs ^. RS.gsContributionState . RS.csCurrentRange)
                               (rs ^. RS.gsContributionState . RS.csCommentKind)
+                              (rs ^. RS.gsScreenState . SC.ssWindowWidth)
+          addEdit_ $ AddContributionProps
+                              (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogEdit)
+                              (rs ^. RS.gsContributionState . RS.csCurrentRange)
+                              (rs ^? RS.gsDocumentState . documentStateEditKind)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
 
           main_ ["role" $= "main"] $ do
