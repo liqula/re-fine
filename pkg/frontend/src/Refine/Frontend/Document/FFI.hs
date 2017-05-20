@@ -55,6 +55,7 @@ module Refine.Frontend.Document.FFI
 
     -- * selections
   , getSelection
+  , forceSelection
 
     -- * marks
   , getMarkSelectorBound
@@ -230,6 +231,15 @@ foreign import javascript unsafe
 foreign import javascript unsafe
     "$1.getEndOffset()"
     js_ES_getSelectionEndOffset :: JSVal -> Int
+
+
+-- | https://draftjs.org/docs/api-reference-editor-state.html#forceselection
+forceSelection :: EditorState -> Draft.SelectionState -> EditorState
+forceSelection es (cs . encode -> sel) = js_ES_forceSelection es sel
+
+foreign import javascript unsafe
+    "refine$setSelectionState($1, JSON.parse($2))"
+    js_ES_forceSelection :: EditorState -> JSString -> EditorState
 
 
 -- * marks
