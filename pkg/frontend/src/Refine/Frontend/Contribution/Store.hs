@@ -76,7 +76,7 @@ activeDialogUpdate = \case
   ContributionAction ShowCommentEditor   -> const $ Just ActiveDialogComment
   ContributionAction HideCommentEditor   -> const Nothing
   DocumentAction RequestDocumentSave     -> const $ Just ActiveDialogEdit
-  DocumentAction DocumentSave            -> const Nothing
+  DocumentAction (DocumentSave _)        -> const Nothing
   _ -> id
 
 highlightedMarkAndBubbleUpdate :: ContributionAction -> Maybe ContributionID -> Maybe ContributionID

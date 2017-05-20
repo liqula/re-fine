@@ -37,8 +37,8 @@ import Refine.Frontend.Types
 import Refine.Prelude.TH (makeRefineType)
 
 
-newtype CommentInputState = CommentInputState
-  { _commentInputStateText :: ST
+newtype AddContributionFormState = AddContributionFormState
+  { _addContributionFormState :: ST
   } deriving (Show, Eq, Generic)
 
 
@@ -239,7 +239,7 @@ instance ToJSON MarkPositions where
 instance FromJSON MarkPositions where
   parseJSON = fmap MarkPositions . mapFromValue
 
-makeRefineType ''CommentInputState
+makeRefineType ''AddContributionFormState
 makeRefineType ''ContributionAction
 makeRefineType ''ContributionState
 makeRefineType ''CommentKind

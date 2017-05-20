@@ -239,14 +239,14 @@ emitBackendCallsFor action st = case action of
             (Right note) -> dispatchManyM [AddNote note, ContributionAction RequestSetMarkPositions]
         Nothing -> pure ()
 
-    DocumentAction DocumentSave -> case st ^. gsDocumentState of
+    DocumentAction (DocumentSave desc) -> case st ^. gsDocumentState of
       dstate@(DocumentStateEdit _ kind) -> do
         let eid :: C.ID C.Edit
             eid = st ^?! gsVDoc . _Just . C.compositeVDocEditID
 
             cedit :: C.Create C.Edit
             cedit = C.CreateEdit
-                  { C._createEditDesc  = "..."                          -- TODO: #233
+                  { C._createEditDesc  = desc
                   , C._createEditRange = st ^. gsChunkRange
                   , C._createEditVDoc  = editorStateToVDocVersion (dstate ^. documentStateVal)
                   , C._createEditKind  = kind

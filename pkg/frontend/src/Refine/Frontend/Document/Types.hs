@@ -40,7 +40,7 @@ import           Refine.Prelude.TH (makeRefineType)
 data DocumentAction =
     DocumentUpdate DocumentState
   | RequestDocumentSave
-  | DocumentSave
+  | DocumentSave ST
   | DocumentToggleBold
   | DocumentToggleItalic
   deriving (Show, Eq, Generic)

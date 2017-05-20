@@ -263,7 +263,7 @@ addComment_ __ !props = view_ (addComment __) "addComment_" props
 
 
 commentInput :: View '[AddContributionProps CommentKind]
-commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState props ->
+commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \curState props ->
     div_ $ do
       div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
         p_ $ do
@@ -309,7 +309,7 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
                                , StylePx "height" 240
                                ]
                   -- Update the current state with the current text in the textbox, sending no actions
-                  , onChange $ \evt st -> ([], Just $ st & commentInputStateText .~ target evt "value")
+                  , onChange $ \evt st -> ([], Just $ st & addContributionFormState .~ target evt "value")
                   ] mempty
 
       hr_ []
@@ -319,7 +319,7 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
           elemString "Step 3: "
           span_ ["className" $= "bold"] "finish"
 
-      let notATextOrKind = 0 == ST.length (curState ^. commentInputStateText)
+      let notATextOrKind = 0 == ST.length (curState ^. addContributionFormState)
                         || isNothing (props ^. acpKind)
         in iconButton_ $ def @IconButtonProps
           & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") L
@@ -327,7 +327,7 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState "") $ \curState 
           & iconButtonPropsLabel        .~ "submit"
           & iconButtonPropsDisabled     .~ notATextOrKind
           & iconButtonPropsOnClick      .~
-                [ ContributionAction $ SubmitComment (curState ^. commentInputStateText) (props ^. acpKind)
+                [ ContributionAction $ SubmitComment (curState ^. addContributionFormState) (props ^. acpKind)
                 , ContributionAction ClearRange
                 , ContributionAction HideCommentEditor
                 ]
@@ -341,8 +341,37 @@ addEdit = mkView "AddEdit" $ \props -> addContributionDialogFrame
   (props ^. acpVisible)
   "add an edit"
   (props ^. acpRange)
-  (props ^. acpWindowWidth) $ do
-    elemText "nothing here yet..."
+  (props ^. acpWindowWidth)
+  (editInput_ props)
+
+addEdit_ :: AddContributionProps EditKind -> ReactElementM eventHandler ()
+addEdit_ = view_ addEdit "addEdit_"
+
+
+editInput :: View '[AddContributionProps EditKind]
+editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState _props -> do
+
+    hr_ []
+
+    div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
+      p_ $ do
+        elemString "Step 2: "
+        span_ ["className" $= "bold"] "describe your motivation for this edit:"
+
+    form_ [ "target" $= "#"
+          , "action" $= "POST"] $ do
+      textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
+                , "className" $= "o-wysiwyg o-form-input__textarea"
+                , "style" @= [ StyleST "resize" "none"
+                             , StylePx "width" 600
+                             , StylePx "height" 240
+                             ]
+                -- Update the current state with the current text in the textbox, sending no actions
+                , onChange $ \evt st -> ([], Just $ st & addContributionFormState .~ target evt "value")
+                ] mempty
+
+    hr_ []
+
     iconButton_ $ def @IconButtonProps
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL
             & iconButtonPropsElementName  .~ "btn-index"
@@ -350,9 +379,10 @@ addEdit = mkView "AddEdit" $ \props -> addContributionDialogFrame
             & iconButtonPropsListKey      .~ "save"
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True
-            & iconButtonPropsOnClick      .~ [ DocumentAction DocumentSave
+            & iconButtonPropsOnClick      .~ [ DocumentAction $ DocumentSave (curState ^. addContributionFormState)
                                              , ContributionAction ClearRange
                                              ]
 
-addEdit_ :: AddContributionProps EditKind -> ReactElementM eventHandler ()
-addEdit_ = view_ addEdit "addEdit_"
+
+editInput_ :: AddContributionProps EditKind -> ReactElementM eventHandler ()
+editInput_ !props = view_ editInput "editInput_" props

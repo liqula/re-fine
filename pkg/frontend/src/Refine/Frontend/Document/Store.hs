@@ -49,7 +49,7 @@ documentStateUpdate :: GlobalAction -> Maybe CompositeVDoc -> DocumentState -> D
 documentStateUpdate (OpenDocument cvdoc) _ _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (DocumentAction DocumentSave) (Just cvdoc) _state
+documentStateUpdate (DocumentAction (DocumentSave _)) (Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- FIXME: store last state before edit in DocumentStateEdit, and restore it from there?
 
 documentStateUpdate (HeaderAction (StartEdit kind)) _ (DocumentStateView _ estate)
