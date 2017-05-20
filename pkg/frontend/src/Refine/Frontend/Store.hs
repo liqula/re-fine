@@ -250,7 +250,6 @@ emitBackendCallsFor action st = case action of
                   , C._createEditRange = st ^. gsChunkRange
                   , C._createEditVDoc  = editorStateToVDocVersion (dstate ^. documentStateVal)
                   , C._createEditKind  = kind
-                  , C._createEditMotiv = "..."                          -- TODO: #233
                   }
 
         addEdit eid cedit $ \case

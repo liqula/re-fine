@@ -297,8 +297,7 @@ specMockedLogin = around createDevModeTestSession $ do
                 "new edit"
                 (ChunkRange Nothing Nothing)
                 (rawContentToVDocVersion $ mkRawContent [mkBlock "[new vdoc version]"])
-                Grammar
-                "no motivation")
+                Grammar)
           pure (fc, fe)
 
     context "on edit without ranges" $ do
