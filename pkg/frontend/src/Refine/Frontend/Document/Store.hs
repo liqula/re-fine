@@ -45,15 +45,17 @@ import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
 
-documentStateUpdate :: GlobalAction -> Maybe CompositeVDoc -> DocumentState -> DocumentState
+documentStateUpdate :: GlobalAction -> GlobalState -> DocumentState -> DocumentState
 documentStateUpdate (OpenDocument cvdoc) _ _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (DocumentAction (DocumentSave _)) (Just cvdoc) _state
+documentStateUpdate (DocumentAction (DocumentSave _)) (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- FIXME: store last state before edit in DocumentStateEdit, and restore it from there?
 
-documentStateUpdate (HeaderAction (StartEdit kind)) _ (DocumentStateView estate _)
-  = DocumentStateEdit estate kind
+documentStateUpdate (HeaderAction (StartEdit kind)) gs (DocumentStateView estate _)
+  = let sel = chunkRangeToSelectionState (convertToRaw $ getCurrentContent estate)  -- FIXME: #312
+            $ gs ^?! gsContributionState . csCurrentRange . _Just . rangeSelectionState
+    in DocumentStateEdit (forceSelection estate sel) kind
 
 documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _state
   = state'
@@ -67,16 +69,16 @@ documentStateUpdate (DocumentAction DocumentToggleBold) _ st
 documentStateUpdate (DocumentAction DocumentToggleItalic) _ st
   = st & documentStateVal %~ documentToggleItalic
 
-documentStateUpdate (AddDiscussion _) (Just cvdoc) _state
+documentStateUpdate (AddDiscussion _) (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (AddNote _) (Just cvdoc) _state
+documentStateUpdate (AddNote _) (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (AddEdit _) (Just cvdoc) _state
+documentStateUpdate (AddEdit _) (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (DocumentAction DocumentCancelSave) (Just cvdoc) _state
+documentStateUpdate (DocumentAction DocumentCancelSave) (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
 documentStateUpdate (ContributionAction (SetRange (view rangeSelectionState -> sel))) _ ((^? documentStateContent) -> Just rc)

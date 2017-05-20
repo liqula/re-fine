@@ -7,6 +7,16 @@
         );
     };
 
+    target.refine$setSelectionState = function(es, sel) {
+        var sel2 = {
+            anchorKey:    sel._selectionStart._selectionBlock,
+            anchorOffset: sel._selectionStart._selectionOffset,
+            focusKey:     sel._selectionEnd._selectionBlock,
+            focusOffset:  sel._selectionEnd._selectionOffset
+        }
+        return Draft.EditorState.forceSelection(es, Draft.SelectionState.createEmpty().merge(sel2));
+    };
+
     target.refine$getDraftSelectionStateViaBrowser = function() {
         var leftSiblingLength = function(node) {
             if (node === null) {
