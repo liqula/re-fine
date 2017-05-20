@@ -38,7 +38,6 @@ import Refine.Backend.User
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Test.Samples (sampleVDocVersion)
 import Refine.Common.Types
-import Refine.Common.VDoc.Draft
 
 
 data Cmd where

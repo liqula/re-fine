@@ -28,251 +28,21 @@ where
 
 import Refine.Common.Prelude
 
-import           Data.Foldable (toList)
-import qualified Data.HashMap.Lazy as HashMap
-import qualified Data.IntMap as IntMap
 import qualified Data.List as List
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text as ST
-import           Web.HttpApiData (toUrlPiece, parseUrlPiece)
 
-import Refine.Common.Types
-
-
--- * data types
-
--- | Haskell representation of the javascript @RawDraftContentState@.
--- https://draftjs.org/docs/api-reference-data-conversion.html#content
-data RawContent = RawContent
-  { _rawContentBlocks    :: [Block EntityKey]  -- ^ FIXME: use Data.List.NonEmpty from semigroups.
-  , _rawContentEntityMap :: IntMap Entity  -- ^ for performance, do not use @Map EntityKey Entity@ here.
-  }
-  deriving (Eq, Show, Generic)
-
--- | typical rangekey values are 'Int' and 'Entity'
-data Block rangeKey = Block
-  { _blockText         :: ST
-  , _blockEntityRanges :: [(rangeKey, EntityRange)]  -- ^ entity ranges for entities must not overlap!
-  , _blockStyles       :: [(EntityRange, Style)]     -- ^ entity ranges for styles are allowed to overlap.
-  , _blockType         :: BlockType
-  , _blockDepth        :: Int
-  , _blockKey          :: Maybe BlockKey  -- ^ FIXME: many function rely on this being defined.
-                                          -- make this an index and either store '()' or 'BlockKey'.
-  }
-  deriving (Eq, Show, Functor, Foldable, Generic)
-
--- | `key` attribute of the 'Block'.  'SelectionState' uses this to refer to blocks.  If in doubt
--- leave it 'Nothing'.
-newtype BlockKey = BlockKey ST
-  deriving (Eq, Ord, Show, ToJSON, FromJSON, Generic)
-
--- | key into 'rawContentEntityMap'.
-newtype EntityKey = EntityKey { _unEntityKey :: Int }
-  deriving (Eq, Ord, Show, ToJSON, FromJSON, Generic)
-
-type EntityRange = (Int, Int)
-
--- | an entity's range may span across multiple blocks
-newtype Entity =
-    EntityLink ST  -- ^ url
---  | ...
-  deriving (Show, Eq, Ord, Generic)
-
--- | a style's range should fit into a single block.
---
--- NOTE: 'Mark' could be an entity if it weren't for the fact that we need overlaps (see
--- https://github.com/facebook/draft-js/issues/212).
-data Style =
-    Bold
-  | Italic
-  | Underline
-  | Code
-    -- custom styles
-  | Mark ContributionID
-  deriving (Show, Eq, Ord, Generic)
-
--- | each block has a unique blocktype
-data BlockType =
-    NormalText
-  | Header1
-  | Header2
-  | Header3
-  | BulletPoint
-  | EnumPoint
-  deriving (Show, Eq, Generic, Bounded, Enum)
-
-
--- | https://draftjs.org/docs/api-reference-selection-state.html
-data SelectionState
-  = SelectionState
-      { _selectionIsBackward :: Bool
-      , _selectionStart      :: SelectionPoint
-      , _selectionEnd        :: SelectionPoint
-      }
-  deriving (Eq, Ord, Show, Generic)
-
-data SelectionPoint
-  = SelectionPoint
-      { _selectionBlock  :: BlockKey
-      , _selectionOffset :: Int
-      }
-  deriving (Eq, Ord, Show, Generic)
-
-
--- * instances
-
-makeLenses ''RawContent
-makeLenses ''Block
-makeLenses ''BlockKey
-makeLenses ''EntityKey
-makeLenses ''Entity
-makeLenses ''Style
-makeLenses ''BlockType
-
-makeSOPGeneric ''RawContent
-makeSOPGeneric ''Block
-makeSOPGeneric ''BlockKey
-makeSOPGeneric ''EntityKey
-makeSOPGeneric ''Entity
-makeSOPGeneric ''Style
-makeSOPGeneric ''BlockType
-
-makeNFData ''RawContent
-makeNFData ''Block
-makeNFData ''BlockKey
-makeNFData ''EntityKey
-makeNFData ''Entity
-makeNFData ''Style
-makeNFData ''BlockType
-
-instance ToJSON RawContent where
-  toJSON (RawContent blocks entitymap) = object
-    [ "blocks"    .:= blocks
-    , "entityMap" .:= renderEntityMap entitymap
-    ]
-    where
-      renderEntityMap m = object [ cs (show a) .:= b | (a, b) <- IntMap.toList m ]
-
-instance FromJSON RawContent where
-  parseJSON = withObject "RawContent" $ \obj -> RawContent
-    <$> obj .: "blocks"
-    <*> (parseEntityMap =<< obj .: "entityMap")
-    where
-      parseEntityMap = withObject "parseEntityMap" $ foldM f mempty . HashMap.toList
-        where
-          f :: IntMap Entity -> (ST, Value) -> Parser (IntMap Entity)
-          f m (read . cs -> k, v) = (\e -> IntMap.insert k e m) <$> parseJSON v
-
-instance ToJSON (Block EntityKey) where
-  toJSON (Block content ranges styles ty depth key) = object $
-    [ "text"              .:= content
-    , "entityRanges"      .:= (renderRange <$> ranges)
-    , "inlineStyleRanges" .:= (renderStyle <$> styles)
-    , "depth"             .:= depth  -- ^ (if certain BlockType values force this field to be 0, move this field there.)
-    , "type"              .:= ty
-    ] <>
-    [ "key" .:= k | k <- maybeToList key ]
-    where
-      renderRange (k, (o, l)) = object ["key"   .:= k, "length" .:= l, "offset" .:= o]
-      renderStyle ((o, l), s) = object ["style" .:= s, "length" .:= l, "offset" .:= o]
-
-instance FromJSON (Block EntityKey) where
-  parseJSON = withObject "Block EntityKey" $ \obj -> Block
-    <$> obj .: "text"
-    <*> (mapM parseRange =<< (obj .: "entityRanges"))
-    <*> (mapM parseStyle =<< (obj .: "inlineStyleRanges"))
-    <*> obj .: "type"
-    <*> (round <$> (obj .: "depth" :: Parser Double))
-    <*> obj .:? "key"
-    where
-      parseRange = withObject "Block EntityKey: entityRanges" $ \obj -> do
-        k <- obj .: "key"
-        l <- obj .: "length"
-        o <- obj .: "offset"
-        pure (k, (o, l))
-      parseStyle = withObject "Block EntityKey: inlineStyleRanges" $ \obj -> do
-        s <- obj .: "style"
-        l <- obj .: "length"
-        o <- obj .: "offset"
-        pure ((o, l), s)
-
-instance ToJSON BlockType where
-  toJSON NormalText  = "unstyled"
-  toJSON Header1     = "header-one"
-  toJSON Header2     = "header-two"
-  toJSON Header3     = "header-three"
-  toJSON BulletPoint = "unordered-list-item"
-  toJSON EnumPoint   = "ordered-list-item"
-
-instance FromJSON BlockType where
-  parseJSON (String "unstyled")            = pure NormalText
-  parseJSON (String "header-one")          = pure Header1
-  parseJSON (String "header-two")          = pure Header2
-  parseJSON (String "header-three")        = pure Header3
-  parseJSON (String "unordered-list-item") = pure BulletPoint
-  parseJSON (String "ordered-list-item")   = pure EnumPoint
-  parseJSON bad = fail $ "BlockType: no parse for " <> show bad
-
-instance ToJSON Entity where
-  toJSON (EntityLink url) = object
-    [ "type"            .:= ("LINK" :: ST)
-    , "mutability"      .:= ("MUTABLE" :: ST)
-    , "data"            .:= object ["url" .:= url]
-    ]
-
-instance FromJSON Entity where
-  parseJSON = withObject "Entity" $ \obj -> do
-    ty :: ST <- obj .: "type"
-    case ty of
-      "LINK" -> let parseData = withObject "LINK data" (.: "url")
-                in EntityLink <$> (parseData =<< obj .: "data")
-      bad -> fail $ "Entity: no parse for " <> show bad
-
-instance ToJSON Style where
-  toJSON Bold         = "BOLD"
-  toJSON Italic       = "ITALIC"
-  toJSON Underline    = "UNDERLINE"
-  toJSON Code         = "CODE"
-  toJSON (Mark cid)   = String $ "MARK__" <> toUrlPiece cid
-
-instance FromJSON Style where
-  parseJSON (String "BOLD")                 = pure Bold
-  parseJSON (String "ITALIC")               = pure Italic
-  parseJSON (String "UNDERLINE")            = pure Underline
-  parseJSON (String "CODE")                 = pure Code
-  parseJSON (String (ST.splitAt 6 -> ("MARK__", parseUrlPiece -> Right cid)))
-                                            = pure $ Mark cid
-  parseJSON bad = fail $ "Style: no parse for " <> show bad
-
-makeRefineType ''SelectionState
-makeRefineType ''SelectionPoint
+import Refine.Common.Types.Core
+import Refine.Common.Types.Chunk
+import Refine.Common.Types.Contribution
+import Refine.Common.Types.Comment
 
 
 -- * functions
 
--- | Note: empty block list is illegal.  For once it will make draft crash in 'stateFromContent'.
-mkRawContent :: [Block Entity] -> RawContent
-mkRawContent [] = mkRawContent [emptyBlock]
-mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
-  where
-    -- FUTUREWORK: it is possible to do just one traversal to collect and index entities
-    -- https://www.reddit.com/r/haskell/comments/610sa1/applicative_sorting/
-    entities = zip [0..] . nub $ concatMap toList bs
-
-    index :: Entity -> EntityKey
-    index e = EntityKey . fromMaybe (error "mkRawContent: impossible") $ Map.lookup e em
-
-    em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
-
 emptyRawContent :: RawContent
 emptyRawContent = mkRawContent [emptyBlock]
-
-mkBlock :: ST -> Block rangeKey
-mkBlock t = Block t [] [] NormalText 0 Nothing
-
-emptyBlock :: Block rangeKey
-emptyBlock = mkBlock mempty
 
 resetBlockKeys :: RawContent -> RawContent
 resetBlockKeys (RawContent bs es) = RawContent (set blockKey Nothing <$> bs) es
@@ -318,8 +88,7 @@ entityRangeIsEmpty (_, j) = j == 0
 -- * vdoc
 
 -- | The 'DataUID' values are actually block numbers (yes, this is cheating, but it works for the
--- backend :-).  The 'RawContent' is needed to convert block keys to block numbers and back.  This
--- function isn't total, but all undefined values are internal errors`.
+-- backend :-).  The 'RawContent' is needed to convert block keys to block numbers and back.
 chunkRangeToSelectionState :: RawContent -> ChunkRange -> SelectionState
 chunkRangeToSelectionState (RawContent bs _) (ChunkRange s e) = SelectionState False (maybe top trans s) (maybe bottom trans e)
   where
@@ -455,46 +224,6 @@ addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (st
 -- | See 'mkSomeSegments' (@payload@ is 'Style').  (See 'rawContentToDoc' for another use of 'mkSomeSegments'.)
 mkInlineStyleSegments :: [(EntityRange, Style)] -> [(Int, Set Style)]
 mkInlineStyleSegments = mkSomeSegments fst snd
-
--- | Take two accessors and a list of things carrying a range and a payload each.  Ranges can
--- overlap.  Compute a list of non-overlapping segments, starting at @offset == 0@, consisting of
--- length and the set of all payloads active in this segment.
---
--- NOTE: since this function does have access to the block length, the last segment will be
--- contained in the output *iff* the end of some range coincides with the end of the block.  (ranges
--- must not point beyong the end of the block.)
-mkSomeSegments :: (Ord payload, Show payload)
-               => (el -> EntityRange) -> (el -> payload) -> [el] -> [(Int, Set payload)]
-mkSomeSegments frange fpayload els = segments
-  where
-    segments =
-        mkSegments 0 []
-      . map (\((offset, len), s) -> (offset, (offset + len, s)))
-      . sortBy (compare `on` fst)
-      $ [(frange el, fpayload el) | el <- els]
-
-    -- FIXME: stack (2nd arg) should be @IntMap (Set style)@ (keyed by @offset@).
-    mkSegments _ [] [] = []  -- (stack will be emptied in the third case.)
-    mkSegments n stack ((offset, s): ss) | offset == n = mkSegments n (insertBy (compare `on` fst) s stack) ss
-    mkSegments n ((offset, _): stack) ss | offset == n = mkSegments n stack ss
-    mkSegments n stack ss                | offset > n  = (offset - n, Set.fromList $ snd <$> stack): mkSegments offset stack ss
-      where
-        offset = case (fst <$> stack, fst <$> ss) of
-            (a: _, b: _) -> min a b
-            (a: _, [])   -> a
-            ([],   b: _) -> b
-            ([],   [])   -> error "impossible"
-    mkSegments n stack ss = error $ "impossible: " <> show (n, stack, ss)
-
-
--- | Javascript: `document.querySelectorAll('article span[data-offset-key="2vutk-0-1"]');`.  The
--- offset-key is constructed from block key, a '0' literal, and the number of left siblings of the
--- span the selector refers to.
-data MarkSelector = MarkSelector MarkSelectorSide BlockKey Int
-  deriving (Eq, Show, Generic)
-
-data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom | MarkSelectorUnknownSide
-  deriving (Eq, Show, Generic)
 
 getMarkSelectors :: RawContent -> [(ContributionID, MarkSelector, MarkSelector)]
 getMarkSelectors = findSides . mconcat . fmap collectBlock . zip [0..] . view rawContentBlocks

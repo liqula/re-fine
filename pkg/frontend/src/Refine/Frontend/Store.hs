@@ -389,7 +389,7 @@ getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
       topOffset    <- liftIO js_getRangeTopOffset
       bottomOffset <- liftIO js_getRangeBottomOffset
       scrollOffset <- liftIO js_getScrollOffset
-      let doctop = scrollOffset + if sel ^. selectionIsBackward then topOffset else bottomOffset
+      let doctop = scrollOffset + if sel ^. C.selectionIsBackward then topOffset else bottomOffset
 
       pure Range
         { _rangeSelectionState = selectionStateToChunkRange (dstate ^?! documentStateContent) sel
@@ -400,7 +400,7 @@ getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
         }
 
 
-getDraftSelectionStateViaBrowser :: MonadIO m => m SelectionState
+getDraftSelectionStateViaBrowser :: MonadIO m => m C.SelectionState
 getDraftSelectionStateViaBrowser = liftIO $ either err pure . eitherDecode . cs =<< js_getDraftSelectionStateViaBrowser
   where
     err = throwIO . ErrorCall . ("getSelectionStateFromBrowser: impossible: " <>) . show

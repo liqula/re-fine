@@ -39,7 +39,7 @@ import Refine.Common.Types.Chunk (ChunkRange(..))
 import Refine.Common.Types.Prelude hiding (MetaInfo)
 import Refine.Common.Types.Process (CollaborativeEditPhase)
 import Refine.Common.Types.Role (Role)
-import Refine.Common.Types.VDoc (Abstract, EditKind, Title, VDocVersion)
+import Refine.Common.Types.Core (Abstract, EditKind, Title, VDocVersion)
 import Refine.Backend.Database.Field()
 import Refine.Backend.Database.Types (MetaInfoID, RawContentEdit)
 

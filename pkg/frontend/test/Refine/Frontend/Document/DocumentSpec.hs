@@ -100,6 +100,7 @@ spec = do
           (DocumentStateEdit (editorStateFromVDocVersion $ rawContentToVDocVersion c) Grammar)
           emptyContributionState
           EditToolbarExtension
+          Nothing
 
     it "renders with empty content" $ do
       wrapper <- shallow $ document_ (mkTestProps emptyRawContent)

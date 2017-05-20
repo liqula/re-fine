@@ -25,7 +25,7 @@ import Refine.Common.Prelude
 
 import Refine.Common.Types.Prelude (ID(..), MetaID, miID, Create)
 import Refine.Common.Types.Group (Group, GroupRef)
-import Refine.Common.Types.VDoc (VDoc, CompositeVDoc)
+import Refine.Common.Types.Core (VDoc, CompositeVDoc)
 import Refine.Prelude.TH (makeRefineType)
 
 

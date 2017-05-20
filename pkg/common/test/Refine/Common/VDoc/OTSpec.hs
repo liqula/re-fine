@@ -1,86 +1,99 @@
 {-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE OverloadedStrings          #-}
 {-# OPTIONS_GHC -fno-warn-orphans       #-}
+{-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}   -- pattern completeness checker has problems with pattern synonyms
 module Refine.Common.VDoc.OTSpec where
 
-import Refine.Common.Prelude hiding (from)
+import Refine.Common.Prelude
 
-import qualified Data.Set as Set
+import           Data.List (groupBy)
 import           Test.QuickCheck
 import           Test.Hspec
 
 import Refine.Common.OTSpec hiding (spec)
 import Refine.Common.Test.Arbitrary
+import Refine.Common.OT
 import Refine.Common.VDoc.OT
-import qualified Refine.Common.VDoc.Draft as Draft
+import Refine.Common.Types.Core
+import Refine.Common.VDoc.Draft
 
 
----------------------------------------- Editable instances
--- FUTUREWORK: make these instances smarter
+-- | Block canonicalization: remove empty line elems; merge neighboring line elems with same attr set.
+simplifyDoc :: OTDoc -> OTDoc
+simplifyDoc [] = [DocBlock NormalText [] 0]
+simplifyDoc blocks = simplifyBlock <$> blocks
+  where
+    simplifyBlock (DocBlock a b d) = DocBlock a (map joinElems . groupBy ((==) `on` attrs) $ filter notNull b) d
 
-instance GenEdit Draft.BlockType where
-    genEdit d = map EBlockType <$> genEdit (from d)
+    attrs (LineElem x _) = x
+    txt   (LineElem _ x) = x
 
-----------------------
+    joinElems xs = LineElem (attrs $ head xs) . mconcat $ map txt xs
 
-instance Arbitrary Entity where
-    arbitrary = garbitrary
+    notNull (LineElem _ "") = False
+    notNull _ = True
 
-instance HasEnoughInhabitants Entity where numOfInhabitants _ = Nothing
+-- do not insert more than 5 elems into an EntityStyle set
+instance HasEnoughInhabitants (Atom EntityStyle) where numOfInhabitants _ = Just 5
 
-instance GenEdit Entity where
-    genEdit d = map EEntity <$> genEdit (from d)
-
-----------------------
-
-instance Arbitrary LineElem where
-    arbitrary = LineElem <$> attrs <*> arbitrary
-      where
-        attrs = Set.fromList <$> do
-            n <- elements [0..10]
-            vectorOf n arbitrary
-
-instance GenEdit LineElem where
-    genEdit d = map ELineElem <$> genEdit (from d)
-
-----------------------
-
-instance Arbitrary Block where
-    arbitrary = garbitrary
-
-instance GenEdit Block where
-    genEdit d = map EBlock <$> genEdit (from d)
-
-----------------------
-
-instance Arbitrary Doc where
-    arbitrary = Doc <$> ((:) <$> arbitrary <*> arbitrary)  -- RawContent block list must not be empty!
-
-instance GenEdit Doc where
-    genEdit d = map EDoc <$> genEdit (from d)
-
-----------------------
-
-instance GenEdit Draft.RawContent where
-    genEdit d = map ERawContent <$> genEdit (from d)
+instance GenEdit RawContent where
+    genEdit d = map ERawContent <$> genEdit (rawContentToDoc d)
 
 --------------------------------------------------------- tests
 
 spec :: Spec
 spec = parallel $ do
-    runTest $ allTests @Draft.BlockType
-    runTest $ allTests @Entity
-    runTest $ allTests @LineElem
-    runTest $ allTests @Block
 
-    -- these take too long to run on a regular basis, just activate for debugging or deep-tests:
-    -- runTest $ fastTests @Doc
-    -- runTest $ fastTests @Draft.RawContent
+    runTest $ allTests @RawContent
+
+    -- if this take too long to run on a regular basis, just activate for debugging or deep-tests:
+    -- runTest $ allTests @RawContent
 
     it "Doc <-> RawContent conversion" . property $ \d ->
       rawContentToDoc (docToRawContent d) `shouldBe` simplifyDoc d
 
     it "RawContent <-> Doc conversion" . property $ \d -> do
-      let clear = sanitizeRawContent . Draft.resetBlockKeys
+      let clear = sanitizeRawContent . resetBlockKeys
       (clear . docToRawContent . rawContentToDoc) d `shouldBe` clear d
+
+
+    describe "showEditAsRawContent" $ do
+      it "shows added text with custom style 'ADDED'." $ do
+        let edit = [ERawContent $ EditItem 0 [EditFirst [EditSecond [EditItem 0 [EditSecond
+                        [ EText (InsertItem 10 'a')
+                        , EText (InsertItem 11 'n')
+                        , EText (InsertItem 12 'd')
+                        , EText (InsertItem 13 '/')]]]]]]
+            rc   = mkRawContent [mkBlock "some text or other"]
+            rc'  = mkRawContent [mkBlock "some text and/or other" & blockStyles .~ [((10, 4), StyleAdded)]]
+        showEditAsRawContent edit rc `shouldBe` rc'
+
+      it "shows deleted text with custom style 'DELETED'." $ do
+        let -- FIXME: edit rc $ mkRawContent [mkBlock "someer"]
+            -- this doesn't work now because the cost of deleting chars is more than
+            -- the cost of deleting the block and adding a new one
+            edit = [ERawContent $ EditItem 0 [EditFirst [EditSecond [EditItem 0 [EditSecond
+                        [ EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)
+                        , EText (DeleteItem 4)]]]]]]
+            rc   = mkRawContent [mkBlock "some text or other"]
+            rc'  = mkRawContent [mkBlock "some text or other" & blockStyles .~ [((4, 12), StyleDeleted)]]
+        showEditAsRawContent edit rc `shouldBe` rc'
+
+      it "shows deleted block with custom style 'DELETED'." $ do
+        let edit = [ERawContent $ DeleteItem 0]
+            rc   = mkRawContent [mkBlock "some text or other"]
+            rc'  = mkRawContent [mkBlock "some text or other" & blockStyles .~ [((0, 18), StyleDeleted)]]
+        showEditAsRawContent edit rc `shouldBe` rc'

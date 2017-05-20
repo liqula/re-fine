@@ -213,7 +213,7 @@ instance GenEdit ST where
 
 ---------------------------------------- Set instance
 
-instance (GenEdit a, Ord a, HasEnoughInhabitants a) => GenEdit (Set.Set a) where
+instance (GenEdit a, Ord a, HasEnoughInhabitants a, Eq (EEdit a)) => GenEdit (Set.Set a) where
     genEdit d = oneof
         [ pure []
         , do
@@ -243,8 +243,6 @@ class HasEnoughInhabitants a where
 hasMoreInhabitantsThan :: (HasEnoughInhabitants a) => Proxy a -> Int -> Bool
 hasMoreInhabitantsThan p n = maybe True (n <) $ numOfInhabitants p
 
-instance (Enum a, Bounded a) => HasEnoughInhabitants (Atom a)
-
 instance HasEnoughInhabitants [a] where numOfInhabitants _ = Nothing
 instance HasEnoughInhabitants a => HasEnoughInhabitants (Set.Set a) where
     numOfInhabitants _ = do
@@ -261,6 +259,8 @@ instance Arbitrary Digit where
     arbitrary = elements [minBound..]
 
 type ADigit = Atom Digit
+
+instance HasEnoughInhabitants ADigit
 
 spec :: Spec
 spec = parallel $ do

@@ -72,6 +72,7 @@ data DocumentProps = DocumentProps
   { _dpDocumentState     :: DocumentState
   , _dpContributionState :: ContributionState
   , _dpToolbarStatus     :: ToolbarExtensionStatus
+  , _dpDiffEdit          :: Maybe Edit
   }
   deriving (Show, Eq, Generic)
 
@@ -82,6 +83,7 @@ emptyDocumentProps = DocumentProps
   { _dpDocumentState     = emptyDocumentState
   , _dpContributionState = emptyContributionState
   , _dpToolbarStatus     = ToolbarExtensionClosed
+  , _dpDiffEdit          = Nothing
   }
 
 makeRefineType ''DocumentAction

@@ -64,8 +64,10 @@ commentKindUpdate action st = case action of
 
 displayedContributionUpdate :: ContributionAction -> Maybe ContributionID -> Maybe ContributionID
 displayedContributionUpdate action st = case action of
-  ShowContributionDialog contributionId -> Just contributionId
-  HideCommentOverlay                    -> Nothing
+  ShowContributionDialog cid'
+    | st == Just cid' -> Nothing
+    | otherwise       -> Just cid'
+  HideCommentOverlay  -> Nothing
   _ -> st
 
 commentEditorVisibleUpdate :: ContributionAction -> Bool -> Bool

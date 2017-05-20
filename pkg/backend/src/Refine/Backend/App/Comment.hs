@@ -31,7 +31,7 @@ import Control.Lens ((^.))
 
 import Refine.Common.Types.Comment
 import Refine.Common.Types.Prelude
-import Refine.Common.Types.VDoc
+import Refine.Common.Types.Core
 import Refine.Prelude ((<@>))
 
 import Refine.Backend.App.Core

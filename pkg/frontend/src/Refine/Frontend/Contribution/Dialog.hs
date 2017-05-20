@@ -33,7 +33,7 @@ import qualified Data.Text as ST
 import qualified Data.Tree as Tree
 import qualified React.Flux as RF
 
-import           Refine.Common.Types
+import           Refine.Common.Types hiding (Style)
 import           Refine.Frontend.Test.Console (gracefulError)
 import           Refine.Frontend.ThirdPartyViews (skylight_)
 import           Refine.Frontend.Contribution.Types

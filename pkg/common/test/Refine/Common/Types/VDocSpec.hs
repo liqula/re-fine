@@ -42,7 +42,7 @@ rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
     = assert (length selections == length es + length ns + length ds)
     $ CompositeVDoc un un vers (Map.fromList es) (Map.fromList ns) (Map.fromList ds)
   where
-    un = undefined
+    un = assert False undefined
     vers = rawContentToVDocVersion rawContent
 
     (es, ns, ds) = rotate ([], [], []) 0 selections
@@ -55,7 +55,7 @@ rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
     rotate contribs i (sel : sels) = rotate (upd contribs) (i + 1) sels
       where
         upd = case i `mod` 3 of
-          0 -> _1 %~ (build (Proxy :: Proxy Edit)       i (\r -> Edit un un r un un) sel :)
+          0 -> _1 %~ (build (Proxy :: Proxy Edit)       i (\r -> Edit un un r un un un) sel :)
           1 -> _2 %~ (build (Proxy :: Proxy Note)       i (Note un un un) sel :)
           2 -> _3 %~ (build (Proxy :: Proxy Discussion) i (\r -> CompositeDiscussion (Discussion un un r) un) sel :)
           _ -> error "rawContentToCompositeVDoc: impossible."
