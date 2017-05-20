@@ -377,10 +377,9 @@ editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState
     hr_ []
 
     iconButton_ $ def @IconButtonProps
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL
-            & iconButtonPropsElementName  .~ "btn-index"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXL
             & iconButtonPropsListKey      .~ "save"
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXL
+            & iconButtonPropsElementName  .~ "btn-index"
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True
             & iconButtonPropsOnClick      .~ [ DocumentAction $ DocumentSave (curState ^. addContributionFormState)
