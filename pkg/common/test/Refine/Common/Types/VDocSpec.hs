@@ -42,7 +42,7 @@ rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
     = assert (length selections == length es + length ns + length ds)
     $ CompositeVDoc un un vers (Map.fromList es) (Map.fromList ns) (Map.fromList ds)
   where
-    un = undefined
+    un = assert False undefined
     vers = rawContentToVDocVersion rawContent
 
     (es, ns, ds) = rotate ([], [], []) 0 selections
