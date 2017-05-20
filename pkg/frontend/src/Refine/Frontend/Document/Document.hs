@@ -29,7 +29,6 @@ module Refine.Frontend.Document.Document
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens (ix)
 import qualified Data.Text as ST
 import qualified React.Flux.Outdated as Outdated
 
@@ -72,16 +71,13 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
           rawContent = rawContentDiffView <|> (dstate ^? documentStateContent)
 
           rawContentDiffView :: Maybe RawContent
-          rawContentDiffView = case props ^. dpContributionState . csDisplayedContributionID of
-            Just (ContribIDEdit eid) -> case props ^? dpCompositeVDoc . ix eid of
-                Just edit -> case edit ^. editSource of
-                    InitialEdit -> error "impossible"
-                    MergeOfEdits{} -> error "not implemented"
-                    EditOfEdit otedit _ -> showEditAsRawContent otedit . deleteMarksFromRawContent
-                                             <$> (dstate ^? documentStateContent)
-                Nothing -> error "impossible"
-            Just _  -> Nothing
-            Nothing -> Nothing
+          rawContentDiffView = diffit =<< (props ^? dpDiffEdit . _Just . editSource)
+            where
+              diffit InitialEdit           = error "impossible"
+              diffit MergeOfEdits{}        = error "not implemented"
+              diffit (EditOfEdit otedit _) = showEditAsRawContent otedit
+                                           . deleteMarksFromRawContent  -- (edit inline styles do not work in combination with marks.)
+                                         <$> (dstate ^? documentStateContent)
 
       article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
                , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
