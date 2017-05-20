@@ -61,10 +61,6 @@ spec = parallel $ do
 
 
     describe "showEditAsRawContent" $ do
-      let styleAdded = StyleAdded
-          styleDeleted = StyleDeleted
-          --styleChanged = StyleChanged
-
       it "shows added text with custom style 'ADDED'." $ do
         let edit = [ERawContent $ EditItem 0 [EditFirst [EditSecond [EditItem 0 [EditSecond
                         [ EText (InsertItem 10 'a')
@@ -72,7 +68,7 @@ spec = parallel $ do
                         , EText (InsertItem 12 'd')
                         , EText (InsertItem 13 '/')]]]]]]
             rc   = mkRawContent [mkBlock "some text or other"]
-            rc'  = mkRawContent [mkBlock "some text and/or other" & blockStyles .~ [((10, 4), styleAdded)]]
+            rc'  = mkRawContent [mkBlock "some text and/or other" & blockStyles .~ [((10, 4), StyleAdded)]]
         showEditAsRawContent edit rc `shouldBe` rc'
 
       it "shows deleted text with custom style 'DELETED'." $ do
@@ -93,11 +89,11 @@ spec = parallel $ do
                         , EText (DeleteItem 4)
                         , EText (DeleteItem 4)]]]]]]
             rc   = mkRawContent [mkBlock "some text or other"]
-            rc'  = mkRawContent [mkBlock "some text or other" & blockStyles .~ [((4, 12), styleDeleted)]]
+            rc'  = mkRawContent [mkBlock "some text or other" & blockStyles .~ [((4, 12), StyleDeleted)]]
         showEditAsRawContent edit rc `shouldBe` rc'
 
       it "shows deleted block with custom style 'DELETED'." $ do
         let edit = [ERawContent $ DeleteItem 0]
             rc   = mkRawContent [mkBlock "some text or other"]
-            rc'  = mkRawContent [mkBlock "some text or other" & blockStyles .~ [((0, 18), styleDeleted)]]
+            rc'  = mkRawContent [mkBlock "some text or other" & blockStyles .~ [((0, 18), StyleDeleted)]]
         showEditAsRawContent edit rc `shouldBe` rc'

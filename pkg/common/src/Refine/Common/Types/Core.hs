@@ -26,21 +26,20 @@
 {-# OPTIONS_GHC -fno-warn-orphans       #-}   -- FIXME: elim this
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}   -- pattern completeness checker has problems with pattern synonyms
 
-{-
-This module is huge because we have the following cyclic dependency:
-
-        data Edit
-    --> data EditSource
-    --> associated data type OT.EEdit RawContent
-    --> instance OT.Edit RawContent
-    --> data RawConent, and lots of conversion functions
-    --> data ContributionID
-    --> data Edit
--}
+-- | This module is huge because we have the following cyclic dependency:
+--
+--         data Edit
+--     --> data EditSource
+--     --> associated data type OT.EEdit RawContent
+--     --> instance OT.Edit RawContent
+--     --> data RawConent, and lots of conversion functions
+--     --> data ContributionID
+--     --> data Edit
 module Refine.Common.Types.Core where
 
 import Refine.Common.Prelude
 
+import           Control.DeepSeq
 import           Data.Int
 import           Data.Foldable (toList)
 import qualified Data.HashMap.Lazy as HashMap
@@ -49,21 +48,20 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text as ST
 import           Data.String.Conversions (ST, cs, (<>))
-import           GHC.Generics (Generic)
 import qualified Generics.SOP as SOP
-import           Control.DeepSeq
-import           Web.HttpApiData (toUrlPiece, parseUrlPiece, ToHttpApiData(..), FromHttpApiData(..))
+import           GHC.Generics (Generic)
 import           Text.Read (readEither)
+import           Web.HttpApiData (toUrlPiece, parseUrlPiece, ToHttpApiData(..), FromHttpApiData(..))
 
-import           Refine.Prelude.TH (makeRefineType)
+import qualified Refine.Common.OT as OT
+import           Refine.Common.OT hiding (Edit)
 import           Refine.Common.Types.Chunk
 import           Refine.Common.Types.Comment
 import           Refine.Common.Types.Prelude
-import qualified Refine.Common.OT as OT
-import           Refine.Common.OT hiding (Edit)
+import           Refine.Prelude.TH (makeRefineType)
 
 
--- * VDoc related data types
+-- * VDoc
 
 data VDoc = VDoc
   { _vdocMetaID   :: MetaID VDoc
@@ -73,8 +71,8 @@ data VDoc = VDoc
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
--- the name clashes in the record selectors are really annoying...
--- makes me understand why peop nle were so fond of OO when they invented it
+-- | the name clashes in the record selectors are really annoying...
+-- makes me understand why people were so fond of OO when they invented it
 data CreateVDoc = CreateVDoc
   { _createVDocTitle       :: Title
   , _createVDocAbstract    :: Abstract
@@ -154,7 +152,7 @@ data CompositeVDoc = CompositeVDoc
   deriving (Eq, Show, Generic)
 
 
--- * Contribution related data types
+-- * Contribution
 
 -- | Type to define terminology (it's ok if it is not used anywhere else in the code).  This is just a
 -- list of everything that is deemed a 'Contribution'.
@@ -190,7 +188,7 @@ data ContributionID =
 data HighlightMark
 
 
--- * RawContent related data types
+-- * RawContent
 
 -- | Haskell representation of the javascript @RawDraftContentState@.
 -- https://draftjs.org/docs/api-reference-data-conversion.html#content
@@ -284,7 +282,7 @@ data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom | MarkSelectorUnkno
   deriving (Eq, Show, Generic)
 
 
--- * OT.Edit RawContent realted data types
+-- * OT.Edit RawContent
 
 type OTDoc = [DocBlock]
 
@@ -472,6 +470,7 @@ instance SOP.HasDatatypeInfo (EEdit RawContent)
 instance Ord (EEdit RawContent) where compare _ _ = error "undefined: compare @(EEdit RawContent)"
 instance Read (EEdit RawContent) where readsPrec _ _ = error "undefined: read @(EEdit RawContent)"
 
+
 -- ** helper functions for Editable RawContent instance
 
 rawContentToDoc :: RawContent -> OTDoc
@@ -614,7 +613,7 @@ makeNFData ''BlockType
 deriving instance NFData (EEdit RawContent)
 
 
--- * Auxiliary definitions
+-- * helper lenses
 
 vdocID :: Lens' VDoc (ID VDoc)
 vdocID = vdocMetaID . miID

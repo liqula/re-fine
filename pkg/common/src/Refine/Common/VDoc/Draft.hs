@@ -88,8 +88,7 @@ entityRangeIsEmpty (_, j) = j == 0
 -- * vdoc
 
 -- | The 'DataUID' values are actually block numbers (yes, this is cheating, but it works for the
--- backend :-).  The 'RawContent' is needed to convert block keys to block numbers and back.  This
--- function isn't total, but all undefined values are internal errors`.
+-- backend :-).  The 'RawContent' is needed to convert block keys to block numbers and back.
 chunkRangeToSelectionState :: RawContent -> ChunkRange -> SelectionState
 chunkRangeToSelectionState (RawContent bs _) (ChunkRange s e) = SelectionState False (maybe top trans s) (maybe bottom trans e)
   where

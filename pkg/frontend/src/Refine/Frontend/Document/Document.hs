@@ -60,14 +60,19 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
           sendMouseUpIfReadOnly =
             mconcat [ dispatch $ ContributionAction RequestSetRange | has _DocumentStateView dstate ]
 
+          editorState :: EditorState
+          editorState = maybe (dstate ^. documentStateVal) (createWithContent . convertFromRaw) rawContentDiffView
+
           documentStyleMap :: Value
           documentStyleMap = mkDocumentStyleMap active rawContent
             where
-              active     = props ^. dpContributionState . csHighlightedMarkAndBubble
-              rawContent = diffs <|> (dstate ^? documentStateContent)
+              active = props ^. dpContributionState . csHighlightedMarkAndBubble
 
-          diffs :: Maybe RawContent
-          diffs = case props ^. dpContributionState . csDisplayedContributionID of
+          rawContent :: Maybe RawContent
+          rawContent = rawContentDiffView <|> (dstate ^? documentStateContent)
+
+          rawContentDiffView :: Maybe RawContent
+          rawContentDiffView = case props ^. dpContributionState . csDisplayedContributionID of
             Just (ContribIDEdit eid) -> case props ^? dpCompositeVDoc . ix eid of
                 Just edit -> case edit ^. editSource of
                     InitialEdit -> error "impossible"
@@ -84,7 +89,7 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
                , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
                ] $ do
         editor_
-          [ "editorState" &= maybe (dstate ^. documentStateVal) (createWithContent . convertFromRaw) diffs
+          [ "editorState" &= editorState
           , "customStyleMap" &= documentStyleMap
           , "readOnly" &= has _DocumentStateView dstate
           , onChange $ \evt ->

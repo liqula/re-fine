@@ -33,7 +33,8 @@ showEditAsRawContent (fmap unERawContent -> edits) (rawContentToDoc -> doc) = do
     patchBlock :: DocBlock -> Edit DocBlock -> DocBlock
     patchBlock ((btype, elems), depth) es = (if null bpatch && null dpatch then id else markBlock StyleChanged)
           (( patch bpatch btype
-           , patchLineElems elems [e | EditFirst es' <- es, EditSecond es'' <- es', e <- es''])
+           , patchLineElems elems [e | EditFirst es' <- es, EditSecond es'' <- es', e <- es'']
+           )
           , patch dpatch depth
           )
       where
