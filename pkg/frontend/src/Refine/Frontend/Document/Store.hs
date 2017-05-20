@@ -58,6 +58,9 @@ documentStateUpdate (HeaderAction (StartEdit kind)) _ (DocumentStateView estate 
 documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _state
   = state'
 
+documentStateUpdate (DocumentAction (DocumentUpdateEditKind kind)) _ st
+  = st & documentStateEditKind .~ kind
+
 documentStateUpdate (DocumentAction DocumentToggleBold) _ st
   = st & documentStateVal %~ documentToggleBold
 

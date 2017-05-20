@@ -37,6 +37,7 @@ import           Refine.Frontend.ThirdPartyViews (skylight_)
 import           Refine.Frontend.Contribution.Types
 import qualified Refine.Frontend.Colors as C
 import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Header.Toolbar
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Screen.Types
@@ -355,8 +356,21 @@ addEdit_ :: AddContributionProps EditKind -> ReactElementM eventHandler ()
 addEdit_ = view_ addEdit "addEdit_"
 
 
+-- | FUTUREWORK: there is *some* code sharing between 'editInput_' and 'commentInput_', but there may be
+-- room for more.
+--
+-- FUTUREWORK: kind change is a nice example of local signals between two components.  how is this
+-- handled in react?  should we have a second global store here that is just shared between
+-- 'editInput' and and 'editKindForm'?
 editInput :: View '[AddContributionProps EditKind]
 editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState _props -> do
+
+    p_ $ do
+      elemString "Step 1: "
+      span_ ["className" $= "bold"] "Type of this edit:"
+      liftViewToStateHandler $ editKindForm_ (DocumentAction . DocumentUpdateEditKind)
+
+    hr_ []
 
     contributionDialogTextForm 2 "describe your motivation for this edit:"
 
@@ -372,7 +386,6 @@ editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState
             & iconButtonPropsOnClick      .~ [ DocumentAction $ DocumentSave (curState ^. addContributionFormState)
                                              , ContributionAction ClearRange
                                              ]
-
 
 editInput_ :: AddContributionProps EditKind -> ReactElementM eventHandler ()
 editInput_ !props = view_ editInput "editInput_" props

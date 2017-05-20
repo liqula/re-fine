@@ -39,6 +39,7 @@ import           Refine.Prelude.TH (makeRefineType)
 
 data DocumentAction =
     DocumentUpdate DocumentState
+  | DocumentUpdateEditKind EditKind
   | RequestDocumentSave
   | DocumentSave ST
   | DocumentToggleBold
