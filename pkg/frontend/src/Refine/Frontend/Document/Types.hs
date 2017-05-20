@@ -42,6 +42,7 @@ data DocumentAction =
   | DocumentUpdateEditKind EditKind
   | RequestDocumentSave
   | DocumentSave ST
+  | DocumentCancelSave
   | DocumentToggleBold
   | DocumentToggleItalic
   deriving (Show, Eq, Generic)
