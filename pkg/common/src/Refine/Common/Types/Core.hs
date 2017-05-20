@@ -115,9 +115,6 @@ data CreateEdit = CreateEdit
 data EditKind = Grammar | Phrasing | Meaning | Initial
   deriving (Eq, Ord, Show, Read, Generic)
 
-data ConflictResolution = ConflictResolution
-  deriving (Eq, Ord, Show, Read, Generic)
-
 
 -- ** create types, instances
 
@@ -575,7 +572,6 @@ makeRefineType ''EditSource
 makeRefineType ''Edit
 makeRefineType ''CreateEdit
 makeRefineType ''EditKind
-makeRefineType ''ConflictResolution
 makeRefineType ''Title
 makeRefineType ''Abstract
 makeRefineType ''VDocVersion
