@@ -154,6 +154,7 @@ main = shakeArgs refineOptions $ do
 
   phony "hlint" $ do
     need ["hlint-prelude", "hlint-common", "hlint-backend", "hlint-frontend"]
+    command_ [] "./scripts/style-check.hs" ["pkg"]
 
 
   phony "clean-prelude" $ do
