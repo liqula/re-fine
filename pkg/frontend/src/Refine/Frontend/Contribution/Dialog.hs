@@ -262,6 +262,28 @@ addComment_ :: Translations -> AddContributionProps CommentKind -> ReactElementM
 addComment_ __ !props = view_ (addComment __) "addComment_" props
 
 
+contributionDialogTextForm :: Int -> ST -> ReactElementM (StatefulViewEventHandler AddContributionFormState) ()
+contributionDialogTextForm stepNumber promptText = do
+  div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
+    p_ $ do
+      elemString $ "Step " <> show stepNumber <> ": "
+      span_ ["className" $= "bold"] $ do
+        elemText promptText
+
+  form_ [ "target" $= "#"
+        , "action" $= "POST"] $ do
+    textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
+              , "className" $= "o-wysiwyg o-form-input__textarea"
+              , "style" @= [ StyleST "resize" "none"
+                           , StylePx "width" 600
+                           , StylePx "height" 240
+                           ]
+              -- Update the current state with the current text in the textbox, sending no actions
+              , onChange $ \evt st -> ([], Just $ st & addContributionFormState .~ target evt "value")
+              ]
+      mempty
+
+
 commentInput :: View '[AddContributionProps CommentKind]
 commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \curState props ->
     div_ $ do
@@ -295,22 +317,7 @@ commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \cu
 
       hr_ []
 
-      div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
-        p_ $ do
-          elemString "Step 2: "
-          span_ ["className" $= "bold"] "enter your comment:"
-
-      form_ [ "target" $= "#"
-           , "action" $= "POST"] $ do
-        textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
-                  , "className" $= "o-wysiwyg o-form-input__textarea"
-                  , "style" @= [ StyleST "resize" "none"
-                               , StylePx "width" 600
-                               , StylePx "height" 240
-                               ]
-                  -- Update the current state with the current text in the textbox, sending no actions
-                  , onChange $ \evt st -> ([], Just $ st & addContributionFormState .~ target evt "value")
-                  ] mempty
+      contributionDialogTextForm 2 "enter your comment:"
 
       hr_ []
 
@@ -351,24 +358,7 @@ addEdit_ = view_ addEdit "addEdit_"
 editInput :: View '[AddContributionProps EditKind]
 editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState _props -> do
 
-    hr_ []
-
-    div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
-      p_ $ do
-        elemString "Step 2: "
-        span_ ["className" $= "bold"] "describe your motivation for this edit:"
-
-    form_ [ "target" $= "#"
-          , "action" $= "POST"] $ do
-      textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
-                , "className" $= "o-wysiwyg o-form-input__textarea"
-                , "style" @= [ StyleST "resize" "none"
-                             , StylePx "width" 600
-                             , StylePx "height" 240
-                             ]
-                -- Update the current state with the current text in the textbox, sending no actions
-                , onChange $ \evt st -> ([], Just $ st & addContributionFormState .~ target evt "value")
-                ] mempty
+    contributionDialogTextForm 2 "describe your motivation for this edit:"
 
     hr_ []
 
