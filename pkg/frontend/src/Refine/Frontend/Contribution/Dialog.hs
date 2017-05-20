@@ -363,12 +363,12 @@ addEdit_ = view_ addEdit "addEdit_"
 -- handled in react?  should we have a second global store here that is just shared between
 -- 'editInput' and and 'editKindForm'?
 editInput :: View '[AddContributionProps EditKind]
-editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState _props -> do
+editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState props -> do
 
     p_ $ do
       elemString "Step 1: "
       span_ ["className" $= "bold"] "Type of this edit:"
-      liftViewToStateHandler $ editKindForm_ (DocumentAction . DocumentUpdateEditKind)
+      liftViewToStateHandler $ editKindForm_ (DocumentAction . DocumentUpdateEditKind) (EditKindFormProps $ props ^. acpKind)
 
     hr_ []
 
