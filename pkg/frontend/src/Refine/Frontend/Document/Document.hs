@@ -31,6 +31,7 @@ import Refine.Frontend.Prelude
 
 import qualified Data.Text as ST
 import qualified React.Flux.Outdated as Outdated
+import           Text.Show.Pretty (ppShow)
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.OT (showEditAsRawContent)
@@ -93,6 +94,17 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
                   dstate' = dstate & documentStateVal .~ updateEditorState evt
               in dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetMarkPositions]
           ] mempty
+
+        -- when showing an edit, show meta info dump for debugging.  FIXME: this information should
+        -- be accessible elsewhere in the app.
+        case rawContentDiffView of
+          Nothing -> pure ()
+          Just _ -> pre_ [ "style" @= object [ "background"   .:= String "rgb(255, 100, 150)"
+                                             , "border"       .:= String "6px dashed black"
+                                             , "padding"      .:= String "20px"
+                                             ]
+                         ] $ do
+                      elemString . ppShow $ props ^? dpDiffEdit
 
   , Outdated.lComponentDidMount = Just $ \getPropsAndState _ldom _setState -> do
       props <- Outdated.lGetProps getPropsAndState

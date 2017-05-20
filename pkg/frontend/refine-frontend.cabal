@@ -46,6 +46,7 @@ library
     , json-sop
     , lens
     , mtl
+    , pretty-show
     , QuickCheck
     , quickcheck-instances
     , react-hs
