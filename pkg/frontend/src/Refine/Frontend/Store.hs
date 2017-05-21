@@ -440,15 +440,19 @@ foreign import javascript unsafe
 
 #else
 
+{-# ANN js_getDraftSelectionStateViaBrowser ("HLint: ignore Use camelCase" :: String) #-}
 js_getDraftSelectionStateViaBrowser :: JSVal
 js_getDraftSelectionStateViaBrowser = assert False undefined
 
+{-# ANN js_getRangeTopOffset ("HLint: ignore Use camelCase" :: String) #-}
 js_getRangeTopOffset :: JSVal
 js_getRangeTopOffset = assert False undefined
 
+{-# ANN js_getRangeBottomOffset ("HLint: ignore Use camelCase" :: String) #-}
 js_getRangeBottomOffset :: JSVal
 js_getRangeBottomOffset = assert False undefined
 
+{-# ANN js_removeAllRanges ("HLint: ignore Use camelCase" :: String) #-}
 js_removeAllRanges :: JSVal
 js_removeAllRanges = assert False undefined
 

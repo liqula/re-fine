@@ -212,6 +212,7 @@ foreign import javascript unsafe
 
 #else
 
+{-# ANN js_testConvertFromToRaw ("HLint: ignore Use camelCase" :: String) #-}
 js_testConvertFromToRaw :: JSVal
 js_testConvertFromToRaw = assert False undefined
 

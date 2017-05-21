@@ -256,66 +256,87 @@ foreign import javascript unsafe
 
 #else
 
+{-# ANN js_convertFromRaw ("HLint: ignore Use camelCase" :: String) #-}
 js_convertFromRaw :: JSVal
 js_convertFromRaw = assert False undefined
 
+{-# ANN js_convertToRaw ("HLint: ignore Use camelCase" :: String) #-}
 js_convertToRaw :: JSVal
 js_convertToRaw = assert False undefined
 
+{-# ANN js_convertFromHtml ("HLint: ignore Use camelCase" :: String) #-}
 js_convertFromHtml :: JSVal
 js_convertFromHtml = assert False undefined
 
+{-# ANN js_ES_createEmpty ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_createEmpty :: JSVal
 js_ES_createEmpty = assert False undefined
 
+{-# ANN js_ES_createWithContent ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_createWithContent :: JSVal
 js_ES_createWithContent = assert False undefined
 
+{-# ANN js_ES_getCurrentContent ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getCurrentContent :: JSVal
 js_ES_getCurrentContent = assert False undefined
 
+{-# ANN js_ES_setCurrentContent ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_setCurrentContent :: JSVal
 js_ES_setCurrentContent = assert False undefined
 
+{-# ANN js_ES_traceEditorState ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_traceEditorState :: JSVal
 js_ES_traceEditorState = assert False undefined
 
+{-# ANN js_ES_traceContentState ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_traceContentState :: JSVal
 js_ES_traceContentState = assert False undefined
 
+{-# ANN js_ES_traceContentInEditorState ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_traceContentInEditorState :: JSVal
 js_ES_traceContentInEditorState = assert False undefined
 
+{-# ANN js_CS_createFromText ("HLint: ignore Use camelCase" :: String) #-}
 js_CS_createFromText :: JSVal
 js_CS_createFromText = assert False undefined
 
+{-# ANN js_Draft_stateToHTML ("HLint: ignore Use camelCase" :: String) #-}
 js_Draft_stateToHTML :: JSVal
 js_Draft_stateToHTML = assert False undefined
 
+{-# ANN js_ES_toggleInlineStyle ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_toggleInlineStyle :: JSVal
 js_ES_toggleInlineStyle = assert False undefined
 
+{-# ANN js_ES_getSelection ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelection :: JSVal
 js_ES_getSelection = assert False undefined
 
+{-# ANN js_ES_getSelectionIsBackward ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelectionIsBackward :: JSVal
 js_ES_getSelectionIsBackward = assert False undefined
 
+{-# ANN js_ES_getSelectionStartKey ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelectionStartKey :: JSVal
 js_ES_getSelectionStartKey = assert False undefined
 
+{-# ANN js_ES_getSelectionStartOffset ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelectionStartOffset :: JSVal
 js_ES_getSelectionStartOffset = assert False undefined
 
+{-# ANN js_ES_getSelectionEndKey ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelectionEndKey :: JSVal
 js_ES_getSelectionEndKey = assert False undefined
 
+{-# ANN js_ES_getSelectionEndOffset ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelectionEndOffset :: JSVal
 js_ES_getSelectionEndOffset = assert False undefined
 
+{-# ANN js_ES_forceSelection ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_forceSelection :: JSVal
 js_ES_forceSelection = assert False undefined
 
+{-# ANN js_getBoundingBox ("HLint: ignore Use camelCase" :: String) #-}
 js_getBoundingBox :: JSVal
 js_getBoundingBox = assert False undefined
 

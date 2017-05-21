@@ -110,18 +110,23 @@ foreign import javascript unsafe
 
 #else
 
+{-# ANN js_consoleLogJSString ("HLint: ignore Use camelCase" :: String) #-}
 js_consoleLogJSString :: JSVal
 js_consoleLogJSString = assert False undefined
 
+{-# ANN js_consoleLogJSVal ("HLint: ignore Use camelCase" :: String) #-}
 js_consoleLogJSVal :: JSVal
 js_consoleLogJSVal = assert False undefined
 
+{-# ANN js_consoleLogJSON ("HLint: ignore Use camelCase" :: String) #-}
 js_consoleLogJSON :: JSVal
 js_consoleLogJSON = assert False undefined
 
+{-# ANN js_devMode ("HLint: ignore Use camelCase" :: String) #-}
 js_devMode :: JSVal
 js_devMode = assert False undefined
 
+{-# ANN js_alert ("HLint: ignore Use camelCase" :: String) #-}
 js_alert :: JSVal
 js_alert = assert False undefined
 

@@ -74,6 +74,7 @@ foreign import javascript unsafe
 
 #else
 
+{-# ANN js_shallow ("HLint: ignore Use camelCase" :: String) #-}
 js_shallow :: JSVal
 js_shallow = assert False undefined
 

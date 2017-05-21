@@ -73,12 +73,15 @@ foreign import javascript unsafe
 
 #else
 
+{-# ANN (===) ("HLint: ignore Use camelCase" :: String) #-}
 (===) :: JSVal
 (===) = assert False undefined
 
+{-# ANN (!==) ("HLint: ignore Use camelCase" :: String) #-}
 (!==) :: JSVal
 (!==) = assert False undefined
 
+{-# ANN js_getScrollOffset ("HLint: ignore Use camelCase" :: String) #-}
 js_getScrollOffset :: JSVal
 js_getScrollOffset = assert False undefined
 

@@ -196,18 +196,23 @@ foreign import javascript unsafe
 
 #else
 
+{-# ANN js_exec ("HLint: ignore Use camelCase" :: String) #-}
 js_exec :: JSVal
 js_exec = assert False undefined
 
+{-# ANN js_attr ("HLint: ignore Use camelCase" :: String) #-}
 js_attr :: JSVal
 js_attr = assert False undefined
 
+{-# ANN js_exec_with_1_arg ("HLint: ignore Use camelCase" :: String) #-}
 js_exec_with_1_arg :: JSVal
 js_exec_with_1_arg = assert False undefined
 
+{-# ANN js_exec_with_object ("HLint: ignore Use camelCase" :: String) #-}
 js_exec_with_object :: JSVal
 js_exec_with_object = assert False undefined
 
+{-# ANN js_console_log_jsval ("HLint: ignore Use camelCase" :: String) #-}
 js_console_log_jsval :: JSVal
 js_console_log_jsval = assert False undefined
 

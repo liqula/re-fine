@@ -82,6 +82,7 @@ foreign import javascript unsafe
 
 #else
 
+{-# ANN js_mount ("HLint: ignore Use camelCase" :: String) #-}
 js_mount :: JSVal
 js_mount = assert False undefined
 
