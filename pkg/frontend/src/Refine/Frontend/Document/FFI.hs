@@ -66,7 +66,6 @@ import Refine.Frontend.Prelude
 
 import qualified Refine.Common.Types.Core as Draft
 import           Refine.Frontend.Document.FFI.Types
-import           Refine.Prelude.Aeson (NoJSONRep(NoJSONRep))
 
 
 -- * https://draftjs.org/docs/api-reference-data-conversion.html
