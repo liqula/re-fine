@@ -80,15 +80,15 @@ foreign import javascript unsafe
 #else
 
 {-# ANN js_getWindowWidth ("HLint: ignore Use camelCase" :: String) #-}
-js_getWindowWidth :: JSVal
+js_getWindowWidth :: IO Int
 js_getWindowWidth = assert False undefined
 
 {-# ANN js_windowAddEventListener ("HLint: ignore Use camelCase" :: String) #-}
-js_windowAddEventListener :: JSVal
+js_windowAddEventListener :: JSString -> Callback (IO ()) -> IO ()
 js_windowAddEventListener = assert False undefined
 
 {-# ANN js_windowRemoveEventListener ("HLint: ignore Use camelCase" :: String) #-}
-js_windowRemoveEventListener :: JSVal
+js_windowRemoveEventListener :: JSString -> Callback (IO ()) -> IO ()
 js_windowRemoveEventListener = assert False undefined
 
 #endif

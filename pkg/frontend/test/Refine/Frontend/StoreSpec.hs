@@ -84,7 +84,7 @@ foreign import javascript unsafe
 #else
 
 {-# ANN js_reproduce_issue_242 ("HLint: ignore Use camelCase" :: String) #-}
-js_reproduce_issue_242 :: JSVal
+js_reproduce_issue_242 :: IO Int
 js_reproduce_issue_242 = assert False undefined
 
 #endif

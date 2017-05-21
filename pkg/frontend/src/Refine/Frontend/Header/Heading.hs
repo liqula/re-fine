@@ -124,7 +124,7 @@ foreign import javascript unsafe
 #else
 
 {-# ANN js_getBoundingClientRectHeight ("HLint: ignore Use camelCase" :: String) #-}
-js_getBoundingClientRectHeight :: JSVal
+js_getBoundingClientRectHeight :: JSVal -> IO Int
 js_getBoundingClientRectHeight = assert False undefined
 
 #endif

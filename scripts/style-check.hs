@@ -317,7 +317,7 @@ pFun = (A.<?> "pFun") $ do
   fun  <- pNotSpace
   typ  <- pLine True
   _ <- A.option "" pSpace
-  pure (fun, decl <> str <> "\n" <> sp1 <> fun <> ST.stripEnd typ)
+  pure (fun <> typ, decl <> str <> "\n" <> sp1 <> fun <> ST.stripEnd typ)
 
 pIf :: A.Parser ()
 pIf = (A.<?> "pIf") $ do
@@ -379,9 +379,10 @@ renderFFIBlocks = mconcat . fmap rBlock
     rFunGHCJS (_, ffi) = ffi <> "\n"
 
     rFunGHC :: (ST, ST) -> ST
-    rFunGHC (fname, _) = "{-# ANN " <> fname <> " (\"HLint: ignore Use camelCase\" :: String) #-}\n"
-                      <> fname <> " :: JSVal\n"
-                      <> fname <> " = assert False undefined\n"
+    rFunGHC (fname, _) = "{-# ANN " <> fname' <> " (\"HLint: ignore Use camelCase\" :: String) #-}\n"
+                      <> fname <> "\n"
+                      <> fname' <> " = assert False undefined\n"
+      where fname' = ST.takeWhile (not . isSpace) fname
 
 
 -- * git
