@@ -74,8 +74,15 @@ spec = do
     it "read" $ do
       print (read "123.123" :: Int) `shouldThrow` anyException
 
-
+#ifdef __GHCJS__
 
 foreign import javascript unsafe
   "123.456"
   js_reproduce_issue_242 :: IO Int
+
+#else
+
+js_reproduce_issue_242 :: JSVal
+js_reproduce_issue_242 = assert False undefined
+
+#endif

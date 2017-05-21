@@ -46,6 +46,11 @@ lookupAttrs _ [] = Nothing
 lookupAttrs wantedKey (Attr key value : _) | key == wantedKey = Just value
 lookupAttrs wantedKey (_ : as) = lookupAttrs wantedKey as
 
+deriving instance FromJSVal (NoJSONRep JSVal)
+deriving instance ToJSVal (NoJSONRep JSVal)
+
+#ifdef __GHCJS__
+
 foreign import javascript unsafe
   "$1 === $2"
   (===) :: JSVal -> JSVal -> Bool
@@ -65,6 +70,15 @@ foreign import javascript unsafe
   "(function() { return pageYOffset; })()"
   js_getScrollOffset :: IO Int
 
+#else
 
-deriving instance FromJSVal (NoJSONRep JSVal)
-deriving instance ToJSVal (NoJSONRep JSVal)
+(===) :: JSVal
+(===) = assert False undefined
+
+(!==) :: JSVal
+(!==) = assert False undefined
+
+js_getScrollOffset :: JSVal
+js_getScrollOffset = assert False undefined
+
+#endif

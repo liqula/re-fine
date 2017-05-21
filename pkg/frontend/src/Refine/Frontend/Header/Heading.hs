@@ -114,6 +114,15 @@ calcHeaderHeight ldom = do
    this <- RF.lThis ldom
    dispatchAndExec . ScreenAction . AddHeaderHeight =<< js_getBoundingClientRectHeight this
 
+#ifdef __GHCJS__
+
 foreign import javascript unsafe
   "Math.floor($1.getBoundingClientRect().height)"
   js_getBoundingClientRectHeight :: JSVal -> IO Int
+
+#else
+
+js_getBoundingClientRectHeight :: JSVal
+js_getBoundingClientRectHeight = assert False undefined
+
+#endif

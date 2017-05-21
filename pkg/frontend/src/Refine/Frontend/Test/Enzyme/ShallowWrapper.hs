@@ -65,6 +65,15 @@ shallowChild = exec "shallow"
 
 -- * Helper functions.
 
+#ifdef __GHCJS__
+
 foreign import javascript unsafe
   "enzyme.shallow($1)"
   js_shallow :: ReactElementRef -> IO JSVal
+
+#else
+
+js_shallow :: JSVal
+js_shallow = assert False undefined
+
+#endif

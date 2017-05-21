@@ -163,6 +163,8 @@ attr name wrapper = pFromJSVal <$> js_attr (pack name) (unWrap wrapper)
 
 -- * The actual JavaScript calls
 
+#ifdef __GHCJS__
+
 foreign import javascript unsafe
   "$2[$1]()"
   js_exec :: JSString -> JSVal -> IO JSVal
@@ -189,3 +191,22 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "console.log($1, $2);"
   js_console_log_jsval :: JSString -> JSVal -> IO ()
+
+#else
+
+js_exec :: JSVal
+js_exec = assert False undefined
+
+js_attr :: JSVal
+js_attr = assert False undefined
+
+js_exec_with_1_arg :: JSVal
+js_exec_with_1_arg = assert False undefined
+
+js_exec_with_object :: JSVal
+js_exec_with_object = assert False undefined
+
+js_console_log_jsval :: JSVal
+js_console_log_jsval = assert False undefined
+
+#endif

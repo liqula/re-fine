@@ -58,6 +58,8 @@ windowSize_ = RF.view windowSize
 setWindowSize :: IO ()
 setWindowSize = dispatchAndExec . ScreenAction . SetWindowWidth =<< js_getWindowWidth
 
+#ifdef __GHCJS__
+
 -- the internet says we should check window.innerWidth and document.documentElement.clientWidth first,
 -- and we should get the body via document.getElementsByTagName('body')[0]
 -- but Tom does not do that either -- so?!
@@ -73,3 +75,16 @@ foreign import javascript unsafe
 foreign import javascript unsafe
     "window.removeEventListener($1, $2)"
     js_windowRemoveEventListener :: JSString -> Callback (IO ()) -> IO ()
+
+#else
+
+js_getWindowWidth :: JSVal
+js_getWindowWidth = assert False undefined
+
+js_windowAddEventListener :: JSVal
+js_windowAddEventListener = assert False undefined
+
+js_windowRemoveEventListener :: JSVal
+js_windowRemoveEventListener = assert False undefined
+
+#endif

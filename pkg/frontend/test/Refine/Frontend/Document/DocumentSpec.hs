@@ -203,6 +203,15 @@ spec = do
 
 -- * helpers
 
+#ifdef __GHCJS__
+
 foreign import javascript unsafe
     "refine_test$testConvertFromToRaw($1)"
     js_testConvertFromToRaw :: JSString -> Bool
+
+#else
+
+js_testConvertFromToRaw :: JSVal
+js_testConvertFromToRaw = assert False undefined
+
+#endif

@@ -54,18 +54,8 @@ consoleLogJSONAsStringM msg val = consoleLogJSONAsString msg val `seq` pure ()
 consoleLogJSString :: JSString -> JSString -> ()
 consoleLogJSString = if js_devMode then js_consoleLogJSString else \_ _ -> ()
 
-foreign import javascript unsafe
-  "console.log($1, $2)"
-  js_consoleLogJSString :: JSString -> JSString -> ()
-
-
 consoleLogJSVal :: JSString -> JSVal -> ()
 consoleLogJSVal = if js_devMode then js_consoleLogJSVal else \_ _ -> ()
-
-foreign import javascript unsafe
-  "console.log($1, $2)"
-  js_consoleLogJSVal :: JSString -> JSVal -> ()
-
 
 -- | Write a 'ToJSON' instance to stdout (node) or the console (browser).  If you have a choice, use
 -- 'js_consoleLogJSON' which is more efficient.  (No idea if there are char encoding issues here.  But
@@ -76,18 +66,8 @@ consoleLogJSON = if js_devMode then \str -> js_consoleLogJSON str . cs . encode 
 consoleLogJSONAsString :: ConvertibleStrings s JSString => JSString -> s -> ()
 consoleLogJSONAsString = if js_devMode then \str -> js_consoleLogJSON str . cs else \_ _ -> ()
 
-foreign import javascript unsafe
-  "console.log($1, JSON.parse($2))"
-  js_consoleLogJSON :: JSString -> JSString -> ()
-
-
 weAreInDevMode :: Bool
 weAreInDevMode = js_devMode
-
-foreign import javascript unsafe
-  "process.env.NODE_ENV === 'development' ? true : false"
-  js_devMode :: Bool
-
 
 -- | Log a recoverable error and stay in business.
 --
@@ -105,6 +85,43 @@ windowAlert = liftIO . js_alert . cs
 windowAlertST :: MonadIO m => ST -> m ()
 windowAlertST = windowAlert
 
+#ifdef __GHCJS__
+
+foreign import javascript unsafe
+  "console.log($1, $2)"
+  js_consoleLogJSString :: JSString -> JSString -> ()
+
+foreign import javascript unsafe
+  "console.log($1, $2)"
+  js_consoleLogJSVal :: JSString -> JSVal -> ()
+
+foreign import javascript unsafe
+  "console.log($1, JSON.parse($2))"
+  js_consoleLogJSON :: JSString -> JSString -> ()
+
+foreign import javascript unsafe
+  "process.env.NODE_ENV === 'development' ? true : false"
+  js_devMode :: Bool
+
 foreign import javascript unsafe
   "window.alert($1)"
   js_alert :: JSString -> IO ()
+
+#else
+
+js_consoleLogJSString :: JSVal
+js_consoleLogJSString = assert False undefined
+
+js_consoleLogJSVal :: JSVal
+js_consoleLogJSVal = assert False undefined
+
+js_consoleLogJSON :: JSVal
+js_consoleLogJSON = assert False undefined
+
+js_devMode :: JSVal
+js_devMode = assert False undefined
+
+js_alert :: JSVal
+js_alert = assert False undefined
+
+#endif

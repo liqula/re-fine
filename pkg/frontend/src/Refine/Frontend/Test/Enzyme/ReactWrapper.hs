@@ -73,6 +73,15 @@ mount comp = do
 
 -- * Helper functions
 
+#ifdef __GHCJS__
+
 foreign import javascript unsafe
   "enzyme.mount($1)"
   js_mount :: ReactElementRef -> IO JSVal
+
+#else
+
+js_mount :: JSVal
+js_mount = assert False undefined
+
+#endif
