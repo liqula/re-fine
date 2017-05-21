@@ -442,18 +442,18 @@ foreign import javascript unsafe
 
 {-# ANN js_getDraftSelectionStateViaBrowser ("HLint: ignore Use camelCase" :: String) #-}
 js_getDraftSelectionStateViaBrowser :: IO JSString
-js_getDraftSelectionStateViaBrowser = assert False undefined
+js_getDraftSelectionStateViaBrowser = error "javascript FFI not available in GHC"
 
 {-# ANN js_getRangeTopOffset ("HLint: ignore Use camelCase" :: String) #-}
 js_getRangeTopOffset :: IO Int
-js_getRangeTopOffset = assert False undefined
+js_getRangeTopOffset = error "javascript FFI not available in GHC"
 
 {-# ANN js_getRangeBottomOffset ("HLint: ignore Use camelCase" :: String) #-}
 js_getRangeBottomOffset :: IO Int
-js_getRangeBottomOffset = assert False undefined
+js_getRangeBottomOffset = error "javascript FFI not available in GHC"
 
 {-# ANN js_removeAllRanges ("HLint: ignore Use camelCase" :: String) #-}
 js_removeAllRanges :: IO ()
-js_removeAllRanges = assert False undefined
+js_removeAllRanges = error "javascript FFI not available in GHC"
 
 #endif

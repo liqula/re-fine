@@ -75,14 +75,14 @@ foreign import javascript unsafe
 
 {-# ANN (===) ("HLint: ignore Use camelCase" :: String) #-}
 (===) :: JSVal -> JSVal -> Bool
-(===) = assert False undefined
+(===) = error "javascript FFI not available in GHC"
 
 {-# ANN (!==) ("HLint: ignore Use camelCase" :: String) #-}
 (!==) :: JSVal -> JSVal -> Bool
-(!==) = assert False undefined
+(!==) = error "javascript FFI not available in GHC"
 
 {-# ANN js_getScrollOffset ("HLint: ignore Use camelCase" :: String) #-}
 js_getScrollOffset :: IO Int
-js_getScrollOffset = assert False undefined
+js_getScrollOffset = error "javascript FFI not available in GHC"
 
 #endif

@@ -214,6 +214,6 @@ foreign import javascript unsafe
 
 {-# ANN js_testConvertFromToRaw ("HLint: ignore Use camelCase" :: String) #-}
 js_testConvertFromToRaw :: JSString -> Bool
-js_testConvertFromToRaw = assert False undefined
+js_testConvertFromToRaw = error "javascript FFI not available in GHC"
 
 #endif

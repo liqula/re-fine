@@ -85,6 +85,6 @@ foreign import javascript unsafe
 
 {-# ANN js_reproduce_issue_242 ("HLint: ignore Use camelCase" :: String) #-}
 js_reproduce_issue_242 :: IO Int
-js_reproduce_issue_242 = assert False undefined
+js_reproduce_issue_242 = error "javascript FFI not available in GHC"
 
 #endif

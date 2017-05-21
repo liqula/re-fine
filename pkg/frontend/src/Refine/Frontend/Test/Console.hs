@@ -112,22 +112,22 @@ foreign import javascript unsafe
 
 {-# ANN js_consoleLogJSString ("HLint: ignore Use camelCase" :: String) #-}
 js_consoleLogJSString :: JSString -> JSString -> ()
-js_consoleLogJSString = assert False undefined
+js_consoleLogJSString = error "javascript FFI not available in GHC"
 
 {-# ANN js_consoleLogJSVal ("HLint: ignore Use camelCase" :: String) #-}
 js_consoleLogJSVal :: JSString -> JSVal -> ()
-js_consoleLogJSVal = assert False undefined
+js_consoleLogJSVal = error "javascript FFI not available in GHC"
 
 {-# ANN js_consoleLogJSON ("HLint: ignore Use camelCase" :: String) #-}
 js_consoleLogJSON :: JSString -> JSString -> ()
-js_consoleLogJSON = assert False undefined
+js_consoleLogJSON = error "javascript FFI not available in GHC"
 
 {-# ANN js_devMode ("HLint: ignore Use camelCase" :: String) #-}
 js_devMode :: Bool
-js_devMode = assert False undefined
+js_devMode = error "javascript FFI not available in GHC"
 
 {-# ANN js_alert ("HLint: ignore Use camelCase" :: String) #-}
 js_alert :: JSString -> IO ()
-js_alert = assert False undefined
+js_alert = error "javascript FFI not available in GHC"
 
 #endif

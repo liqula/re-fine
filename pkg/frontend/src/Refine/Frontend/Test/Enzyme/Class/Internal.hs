@@ -198,22 +198,22 @@ foreign import javascript unsafe
 
 {-# ANN js_exec ("HLint: ignore Use camelCase" :: String) #-}
 js_exec :: JSString -> JSVal -> IO JSVal
-js_exec = assert False undefined
+js_exec = error "javascript FFI not available in GHC"
 
 {-# ANN js_attr ("HLint: ignore Use camelCase" :: String) #-}
 js_attr :: JSString -> JSVal -> IO JSVal
-js_attr = assert False undefined
+js_attr = error "javascript FFI not available in GHC"
 
 {-# ANN js_exec_with_1_arg ("HLint: ignore Use camelCase" :: String) #-}
 js_exec_with_1_arg :: JSString -> JSVal -> JSVal -> IO JSVal
-js_exec_with_1_arg = assert False undefined
+js_exec_with_1_arg = error "javascript FFI not available in GHC"
 
 {-# ANN js_exec_with_object ("HLint: ignore Use camelCase" :: String) #-}
 js_exec_with_object :: JSString -> JSVal -> JSVal -> IO JSVal
-js_exec_with_object = assert False undefined
+js_exec_with_object = error "javascript FFI not available in GHC"
 
 {-# ANN js_console_log_jsval ("HLint: ignore Use camelCase" :: String) #-}
 js_console_log_jsval :: JSString -> JSVal -> IO ()
-js_console_log_jsval = assert False undefined
+js_console_log_jsval = error "javascript FFI not available in GHC"
 
 #endif

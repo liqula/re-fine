@@ -258,86 +258,86 @@ foreign import javascript unsafe
 
 {-# ANN js_convertFromRaw ("HLint: ignore Use camelCase" :: String) #-}
 js_convertFromRaw :: JSString -> ContentState
-js_convertFromRaw = assert False undefined
+js_convertFromRaw = error "javascript FFI not available in GHC"
 
 {-# ANN js_convertToRaw ("HLint: ignore Use camelCase" :: String) #-}
 js_convertToRaw :: ContentState -> JSString
-js_convertToRaw = assert False undefined
+js_convertToRaw = error "javascript FFI not available in GHC"
 
 {-# ANN js_convertFromHtml ("HLint: ignore Use camelCase" :: String) #-}
 js_convertFromHtml :: JSString -> ContentState
-js_convertFromHtml = assert False undefined
+js_convertFromHtml = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_createEmpty ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_createEmpty :: EditorState
-js_ES_createEmpty = assert False undefined
+js_ES_createEmpty = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_createWithContent ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_createWithContent :: ContentState -> EditorState
-js_ES_createWithContent = assert False undefined
+js_ES_createWithContent = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_getCurrentContent ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getCurrentContent :: EditorState -> ContentState
-js_ES_getCurrentContent = assert False undefined
+js_ES_getCurrentContent = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_setCurrentContent ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_setCurrentContent :: EditorState -> ContentState -> EditorState
-js_ES_setCurrentContent = assert False undefined
+js_ES_setCurrentContent = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_traceEditorState ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_traceEditorState :: EditorState -> IO ()
-js_ES_traceEditorState = assert False undefined
+js_ES_traceEditorState = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_traceContentState ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_traceContentState :: ContentState -> IO ()
-js_ES_traceContentState = assert False undefined
+js_ES_traceContentState = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_traceContentInEditorState ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_traceContentInEditorState :: EditorState -> IO ()
-js_ES_traceContentInEditorState = assert False undefined
+js_ES_traceContentInEditorState = error "javascript FFI not available in GHC"
 
 {-# ANN js_CS_createFromText ("HLint: ignore Use camelCase" :: String) #-}
 js_CS_createFromText :: JSString -> ContentState
-js_CS_createFromText = assert False undefined
+js_CS_createFromText = error "javascript FFI not available in GHC"
 
 {-# ANN js_Draft_stateToHTML ("HLint: ignore Use camelCase" :: String) #-}
 js_Draft_stateToHTML :: ContentState -> JSString
-js_Draft_stateToHTML = assert False undefined
+js_Draft_stateToHTML = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_toggleInlineStyle ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_toggleInlineStyle :: EditorState -> JSString -> EditorState
-js_ES_toggleInlineStyle = assert False undefined
+js_ES_toggleInlineStyle = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_getSelection ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelection :: EditorState -> JSVal
-js_ES_getSelection = assert False undefined
+js_ES_getSelection = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_getSelectionIsBackward ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelectionIsBackward :: JSVal -> Bool
-js_ES_getSelectionIsBackward = assert False undefined
+js_ES_getSelectionIsBackward = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_getSelectionStartKey ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelectionStartKey :: JSVal -> JSString
-js_ES_getSelectionStartKey = assert False undefined
+js_ES_getSelectionStartKey = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_getSelectionStartOffset ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelectionStartOffset :: JSVal -> Int
-js_ES_getSelectionStartOffset = assert False undefined
+js_ES_getSelectionStartOffset = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_getSelectionEndKey ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelectionEndKey :: JSVal -> JSString
-js_ES_getSelectionEndKey = assert False undefined
+js_ES_getSelectionEndKey = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_getSelectionEndOffset ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelectionEndOffset :: JSVal -> Int
-js_ES_getSelectionEndOffset = assert False undefined
+js_ES_getSelectionEndOffset = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_forceSelection ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_forceSelection :: EditorState -> JSString -> EditorState
-js_ES_forceSelection = assert False undefined
+js_ES_forceSelection = error "javascript FFI not available in GHC"
 
 {-# ANN js_getBoundingBox ("HLint: ignore Use camelCase" :: String) #-}
 js_getBoundingBox :: JSString -> JSString -> IO Int
-js_getBoundingBox = assert False undefined
+js_getBoundingBox = error "javascript FFI not available in GHC"
 
 #endif

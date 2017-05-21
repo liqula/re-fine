@@ -76,6 +76,6 @@ foreign import javascript unsafe
 
 {-# ANN js_shallow ("HLint: ignore Use camelCase" :: String) #-}
 js_shallow :: ReactElementRef -> IO JSVal
-js_shallow = assert False undefined
+js_shallow = error "javascript FFI not available in GHC"
 
 #endif

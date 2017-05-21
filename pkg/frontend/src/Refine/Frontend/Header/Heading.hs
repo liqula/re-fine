@@ -125,6 +125,6 @@ foreign import javascript unsafe
 
 {-# ANN js_getBoundingClientRectHeight ("HLint: ignore Use camelCase" :: String) #-}
 js_getBoundingClientRectHeight :: JSVal -> IO Int
-js_getBoundingClientRectHeight = assert False undefined
+js_getBoundingClientRectHeight = error "javascript FFI not available in GHC"
 
 #endif

@@ -84,6 +84,6 @@ foreign import javascript unsafe
 
 {-# ANN js_mount ("HLint: ignore Use camelCase" :: String) #-}
 js_mount :: ReactElementRef -> IO JSVal
-js_mount = assert False undefined
+js_mount = error "javascript FFI not available in GHC"
 
 #endif

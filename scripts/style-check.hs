@@ -381,7 +381,7 @@ renderFFIBlocks = mconcat . fmap rBlock
     rFunGHC :: (ST, ST) -> ST
     rFunGHC (fname, _) = "{-# ANN " <> fname' <> " (\"HLint: ignore Use camelCase\" :: String) #-}\n"
                       <> fname <> "\n"
-                      <> fname' <> " = assert False undefined\n"
+                      <> fname' <> " = error \"javascript FFI not available in GHC\"\n"
       where fname' = ST.takeWhile (not . isSpace) fname
 
 

@@ -81,14 +81,14 @@ foreign import javascript unsafe
 
 {-# ANN js_getWindowWidth ("HLint: ignore Use camelCase" :: String) #-}
 js_getWindowWidth :: IO Int
-js_getWindowWidth = assert False undefined
+js_getWindowWidth = error "javascript FFI not available in GHC"
 
 {-# ANN js_windowAddEventListener ("HLint: ignore Use camelCase" :: String) #-}
 js_windowAddEventListener :: JSString -> Callback (IO ()) -> IO ()
-js_windowAddEventListener = assert False undefined
+js_windowAddEventListener = error "javascript FFI not available in GHC"
 
 {-# ANN js_windowRemoveEventListener ("HLint: ignore Use camelCase" :: String) #-}
 js_windowRemoveEventListener :: JSString -> Callback (IO ()) -> IO ()
-js_windowRemoveEventListener = assert False undefined
+js_windowRemoveEventListener = error "javascript FFI not available in GHC"
 
 #endif
