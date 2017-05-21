@@ -78,12 +78,15 @@ failOnChangedFiles = do
 
   gs <- filter interesting <$> gitStatus
 
-  unless (null gs) $ do
-    echo ".../scripts/style-check.hs has made changes to the code, which means this version contains style rule violations."
-    echo "please re-run the script locally and commit the changes, or open an issue complaining about the style rules."
-    echo "NOTE: always run this script on a clean working copy!"
-    echo . ST.unlines $ cs . show <$> gs
-    exit $ ExitFailure 1
+  if null gs
+    then do
+      echo ".../scripts/style-check.hs: all clear."
+    else do
+      echo ".../scripts/style-check.hs has made changes to the code, which means this version contains style rule violations."
+      echo "please re-run the script locally and commit the changes, or open an issue complaining about the style rules."
+      echo "NOTE: always run this script on a clean working copy!"
+      echo . ST.unlines $ cs . show <$> gs
+      exit $ ExitFailure 1
 
 
 -- * rules
