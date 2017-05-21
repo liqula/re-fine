@@ -58,14 +58,13 @@ windowSize_ = RF.view windowSize
 setWindowSize :: IO ()
 setWindowSize = dispatchAndExec . ScreenAction . SetWindowWidth =<< js_getWindowWidth
 
-foreign import javascript unsafe
 -- the internet says we should check window.innerWidth and document.documentElement.clientWidth first,
 -- and we should get the body via document.getElementsByTagName('body')[0]
 -- but Tom does not do that either -- so?!
 -- (In my Chrome, they are all available and contain the same values anyway...)
+foreign import javascript unsafe
   "document.body.clientWidth"
   js_getWindowWidth :: IO Int
-
 
 foreign import javascript unsafe
     "window.addEventListener($1, $2)"
