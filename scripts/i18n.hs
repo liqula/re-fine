@@ -78,7 +78,7 @@ main = do
   args <- getArgs
   case args of
     [sourceTree, transModuleFile, transModuleName, poDir]
-      -> main' (fromString sourceTree) (fromString transModuleFile) (cs transModuleName) (fromString poDir)
+      -> main' (cs sourceTree) (cs transModuleFile) (cs transModuleName) (cs poDir)
     _ -> usage $ ExitFailure 1
 
 
@@ -115,7 +115,7 @@ matchTKeys line = case mrSubList res of
     res = line =~ ("__ (\\w\\w\\w+)" :: SBS)
 
 unitTestMatchTKeys :: IO ()
-unitTestMatchTKeys = sequence_ $
+unitTestMatchTKeys = sequence_
   [ ($ pure ()) . assert $ matchTKeys "(__ some_keyIWU)" == ["some_keyIWU"]
   , ($ pure ()) . assert $ matchTKeys "..  (__ some_keyIWU) .. (__ WER) ..." == ["some_keyIWU", "WER"]
   , ($ pure ()) . assert $ matchTKeys "            ] (elemText $ __ add_a_comment)" == ["add_a_comment"]
@@ -195,7 +195,7 @@ readPoFile = s0 . ST.lines
 
 parseLoc :: ST -> (FilePath, Int)
 parseLoc line = case mrSubList ((cs line :: SBS) =~ ("^#: (.+):(.+)$" :: SBS) :: MatchResult SBS) of
-  [fromString . cs -> sourceFile, read . cs -> sourceLine] -> (sourceFile, sourceLine)
+  [cs -> sourceFile, read . cs -> sourceLine] -> (sourceFile, sourceLine)
   bad   -> error $ "parseLoc: parse error: " <> show (line, bad)
 
 createPoFile :: TKeyCallsWithTrans -> ST
