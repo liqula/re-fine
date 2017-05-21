@@ -1,5 +1,6 @@
 #!/usr/bin/env stack
 {- stack --resolver lts-7.15 --install-ghc runghc
+    --package executable-path
     --package string-conversions
     --package system-filepath
     --package temporary
@@ -44,7 +45,9 @@ import           Filesystem.Path.CurrentOS hiding (empty, null)
 import qualified GHC.IO
 import           Prelude hiding (FilePath)
 import           System.Directory
+import qualified System.FilePath
 import           System.Environment
+import           System.Environment.Executable
 import           System.Exit
 import           System.IO.Temp
 import           Text.Read (readMaybe)
@@ -56,6 +59,7 @@ import           Turtle hiding (f)
 -- when it is done.
 main :: IO ()
 main = sh $ do
+  setProperCurrentDirectory
   fixTrailingWhitespace =<< getSourceFiles
   failOnChangedFiles
 
@@ -173,3 +177,25 @@ echoShow = echo . cs . show
 
 echoCS :: (MonadIO m, ConvertibleStrings s ST) => s -> m ()
 echoCS = echo . cs
+
+
+-- * should go to a separate packge
+
+setProperCurrentDirectory :: MonadIO m => m ()
+setProperCurrentDirectory = liftIO $ do
+  progName <- getProgName
+
+  let setdir ((</> "..") . cs . System.FilePath.takeDirectory -> workingDir) = do
+        putStrLn $ progName <> ": setting working directory to " <> show workingDir
+        setCurrentDirectory (cs workingDir)
+
+      setdiri = do
+        wd <- getCurrentDirectory
+        when (System.FilePath.takeFileName wd == "scripts") $ setCurrentDirectory ".."
+        putStr "running interactively; wd: "
+        putStrLn =<< getCurrentDirectory
+
+  getScriptPath >>= \case
+    Executable wd -> setdir wd
+    RunGHC wd     -> setdir wd
+    Interactive   -> setdiri
