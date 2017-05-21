@@ -61,7 +61,7 @@ import           Turtle hiding (f, o, x)
 
 
 verbose :: Bool
-verbose = True
+verbose = False
 
 -- | run this on a clean working copy (no un-commited changes; untracked and ignored files are
 -- allowed).  it reports *and fixes* style violations and lets you examine and commit the changes
@@ -70,8 +70,8 @@ main :: IO ()
 main = sh $ do
   when verbose . liftIO $ hspec testWrapJsFFI
   setProperCurrentDirectory
-  fixTrailingWhitespace =<< getSourceFiles ["prelude", "common", "backend", "frontend"]
-  wrapJsFFI =<< getSourceFiles ["frontend"]
+  () <- fixTrailingWhitespace =<< getSourceFiles ["prelude", "common", "backend", "frontend"]
+  () <- wrapJsFFI =<< getSourceFiles ["frontend"]
   failOnChangedFiles
 
 getSourceFiles :: MonadIO m => [FilePath] -> m [FilePath]
@@ -84,7 +84,7 @@ failOnChangedFiles = do
       interesting (GitStatus _ Ignored _)   = False
       interesting _                         = True
 
-  gs <- filter interesting <$> gitStatus
+  gs <- mconcat <$> (filter interesting <$> gitStatus) `fold` Fold.list
 
   if null gs
     then do
