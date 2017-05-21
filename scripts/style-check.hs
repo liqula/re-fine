@@ -379,7 +379,9 @@ renderFFIBlocks = mconcat . fmap rBlock
     rFunGHCJS (_, ffi) = ffi <> "\n"
 
     rFunGHC :: (ST, ST) -> ST
-    rFunGHC (fname, _) = fname <> " :: JSVal\n" <> fname <> " = assert False undefined\n"
+    rFunGHC (fname, _) = "{-# ANN " <> fname <> " (\"HLint: ignore Use camelCase\" :: String) #-}\n"
+                      <> fname <> " :: JSVal\n"
+                      <> fname <> " = assert False undefined\n"
 
 
 -- * git
