@@ -296,7 +296,7 @@ pFFIBlock :: A.Parser FFIBlock
 pFFIBlock = FFIBlock <$> pOptionalBracket pIf pRest (A.many1 pFun)
 
 pNonFFIBlock :: A.Parser FFIBlock
-pNonFFIBlock = NonFFIBlock . cs <$> pMany1Till A.anyChar (A.lookAhead $ void pIfDefGHCJS <|> void pDeclHead <|> void A.endOfInput)
+pNonFFIBlock = NonFFIBlock . cs <$> pMany1Till A.anyChar (A.lookAhead $ void (pIfDefGHCJS >> pSpace >> pDeclHead) <|> void pDeclHead <|> void A.endOfInput)
 
 
 pIfDefGHCJS :: A.Parser ST
