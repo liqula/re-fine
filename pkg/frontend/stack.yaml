@@ -2,6 +2,9 @@ resolver:
   name: stack-snapshot
   location: ../../stack-snapshot.yaml
 
+# START __GHCJS__
+# see also: stack-no-js.yaml
+
 compiler: ghcjs-0.2.1.9008011_ghc-8.0.2
 compiler-check: match-exact
 
@@ -25,6 +28,8 @@ setup-info:
         url: http://ghcjs.tolysz.org/ghc-8.0-2016-12-18-lts-7.13-9007013.tar.gz
         sha1: 530c4ee5e19e2874e128431c7ad421e336df0303
 
+# END __GHCJS__
+
 packages:
 - '.'
 - location: '../common'
@@ -33,7 +38,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/liqula/react-hs
-    commit: c6963f4a575531e58ed8d7230c39855a618480c4
+    commit: 3b77a36f3ed869ba37e870f40729017a3e0d5764
   extra-dep: true
   subdirs:
   - react-hs

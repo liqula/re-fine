@@ -1,5 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -10,6 +10,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
@@ -203,6 +204,16 @@ spec = do
 
 -- * helpers
 
+#ifdef __GHCJS__
+
 foreign import javascript unsafe
     "refine_test$testConvertFromToRaw($1)"
     js_testConvertFromToRaw :: JSString -> Bool
+
+#else
+
+{-# ANN js_testConvertFromToRaw ("HLint: ignore Use camelCase" :: String) #-}
+js_testConvertFromToRaw :: JSString -> Bool
+js_testConvertFromToRaw = error "javascript FFI not available in GHC"
+
+#endif

@@ -1,5 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -10,6 +10,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
@@ -58,14 +59,15 @@ windowSize_ = RF.view windowSize
 setWindowSize :: IO ()
 setWindowSize = dispatchAndExec . ScreenAction . SetWindowWidth =<< js_getWindowWidth
 
-foreign import javascript unsafe
+#ifdef __GHCJS__
+
 -- the internet says we should check window.innerWidth and document.documentElement.clientWidth first,
 -- and we should get the body via document.getElementsByTagName('body')[0]
 -- but Tom does not do that either -- so?!
 -- (In my Chrome, they are all available and contain the same values anyway...)
+foreign import javascript unsafe
   "document.body.clientWidth"
   js_getWindowWidth :: IO Int
-
 
 foreign import javascript unsafe
     "window.addEventListener($1, $2)"
@@ -74,3 +76,19 @@ foreign import javascript unsafe
 foreign import javascript unsafe
     "window.removeEventListener($1, $2)"
     js_windowRemoveEventListener :: JSString -> Callback (IO ()) -> IO ()
+
+#else
+
+{-# ANN js_getWindowWidth ("HLint: ignore Use camelCase" :: String) #-}
+js_getWindowWidth :: IO Int
+js_getWindowWidth = error "javascript FFI not available in GHC"
+
+{-# ANN js_windowAddEventListener ("HLint: ignore Use camelCase" :: String) #-}
+js_windowAddEventListener :: JSString -> Callback (IO ()) -> IO ()
+js_windowAddEventListener = error "javascript FFI not available in GHC"
+
+{-# ANN js_windowRemoveEventListener ("HLint: ignore Use camelCase" :: String) #-}
+js_windowRemoveEventListener :: JSString -> Callback (IO ()) -> IO ()
+js_windowRemoveEventListener = error "javascript FFI not available in GHC"
+
+#endif

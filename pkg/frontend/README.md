@@ -4,6 +4,10 @@ This application is based on react-flux.
 
 ## Building
 
+### For running in ghc (not ghcjs)
+
+See comments in stack-no-js.yaml.  This is mostly for type-checking.
+
 ### For the first time
 
 1. Install Node.js >= 6.x.x

@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -65,6 +66,16 @@ shallowChild = exec "shallow"
 
 -- * Helper functions.
 
+#ifdef __GHCJS__
+
 foreign import javascript unsafe
   "enzyme.shallow($1)"
   js_shallow :: ReactElementRef -> IO JSVal
+
+#else
+
+{-# ANN js_shallow ("HLint: ignore Use camelCase" :: String) #-}
+js_shallow :: ReactElementRef -> IO JSVal
+js_shallow = error "javascript FFI not available in GHC"
+
+#endif

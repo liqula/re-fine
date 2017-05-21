@@ -1,5 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -10,6 +10,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
@@ -54,18 +55,8 @@ consoleLogJSONAsStringM msg val = consoleLogJSONAsString msg val `seq` pure ()
 consoleLogJSString :: JSString -> JSString -> ()
 consoleLogJSString = if js_devMode then js_consoleLogJSString else \_ _ -> ()
 
-foreign import javascript unsafe
-  "console.log($1, $2)"
-  js_consoleLogJSString :: JSString -> JSString -> ()
-
-
 consoleLogJSVal :: JSString -> JSVal -> ()
 consoleLogJSVal = if js_devMode then js_consoleLogJSVal else \_ _ -> ()
-
-foreign import javascript unsafe
-  "console.log($1, $2)"
-  js_consoleLogJSVal :: JSString -> JSVal -> ()
-
 
 -- | Write a 'ToJSON' instance to stdout (node) or the console (browser).  If you have a choice, use
 -- 'js_consoleLogJSON' which is more efficient.  (No idea if there are char encoding issues here.  But
@@ -76,18 +67,8 @@ consoleLogJSON = if js_devMode then \str -> js_consoleLogJSON str . cs . encode 
 consoleLogJSONAsString :: ConvertibleStrings s JSString => JSString -> s -> ()
 consoleLogJSONAsString = if js_devMode then \str -> js_consoleLogJSON str . cs else \_ _ -> ()
 
-foreign import javascript unsafe
-  "console.log($1, JSON.parse($2))"
-  js_consoleLogJSON :: JSString -> JSString -> ()
-
-
 weAreInDevMode :: Bool
 weAreInDevMode = js_devMode
-
-foreign import javascript unsafe
-  "process.env.NODE_ENV === 'development' ? true : false"
-  js_devMode :: Bool
-
 
 -- | Log a recoverable error and stay in business.
 --
@@ -105,6 +86,48 @@ windowAlert = liftIO . js_alert . cs
 windowAlertST :: MonadIO m => ST -> m ()
 windowAlertST = windowAlert
 
+#ifdef __GHCJS__
+
+foreign import javascript unsafe
+  "console.log($1, $2)"
+  js_consoleLogJSString :: JSString -> JSString -> ()
+
+foreign import javascript unsafe
+  "console.log($1, $2)"
+  js_consoleLogJSVal :: JSString -> JSVal -> ()
+
+foreign import javascript unsafe
+  "console.log($1, JSON.parse($2))"
+  js_consoleLogJSON :: JSString -> JSString -> ()
+
+foreign import javascript unsafe
+  "process.env.NODE_ENV === 'development' ? true : false"
+  js_devMode :: Bool
+
 foreign import javascript unsafe
   "window.alert($1)"
   js_alert :: JSString -> IO ()
+
+#else
+
+{-# ANN js_consoleLogJSString ("HLint: ignore Use camelCase" :: String) #-}
+js_consoleLogJSString :: JSString -> JSString -> ()
+js_consoleLogJSString = error "javascript FFI not available in GHC"
+
+{-# ANN js_consoleLogJSVal ("HLint: ignore Use camelCase" :: String) #-}
+js_consoleLogJSVal :: JSString -> JSVal -> ()
+js_consoleLogJSVal = error "javascript FFI not available in GHC"
+
+{-# ANN js_consoleLogJSON ("HLint: ignore Use camelCase" :: String) #-}
+js_consoleLogJSON :: JSString -> JSString -> ()
+js_consoleLogJSON = error "javascript FFI not available in GHC"
+
+{-# ANN js_devMode ("HLint: ignore Use camelCase" :: String) #-}
+js_devMode :: Bool
+js_devMode = error "javascript FFI not available in GHC"
+
+{-# ANN js_alert ("HLint: ignore Use camelCase" :: String) #-}
+js_alert :: JSString -> IO ()
+js_alert = error "javascript FFI not available in GHC"
+
+#endif

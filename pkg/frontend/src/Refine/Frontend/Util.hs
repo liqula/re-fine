@@ -1,5 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -10,6 +10,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
@@ -46,9 +47,18 @@ lookupAttrs _ [] = Nothing
 lookupAttrs wantedKey (Attr key value : _) | key == wantedKey = Just value
 lookupAttrs wantedKey (_ : as) = lookupAttrs wantedKey as
 
+deriving instance FromJSVal (NoJSONRep JSVal)
+deriving instance ToJSVal (NoJSONRep JSVal)
+
+#ifdef __GHCJS__
+
 foreign import javascript unsafe
   "$1 === $2"
   (===) :: JSVal -> JSVal -> Bool
+
+foreign import javascript unsafe
+  "$1 !== $2"
+  (!==) :: JSVal -> JSVal -> Bool
 
 -- an earlier implementation had two fallbacks:
 --
@@ -61,6 +71,18 @@ foreign import javascript unsafe
   "(function() { return pageYOffset; })()"
   js_getScrollOffset :: IO Int
 
+#else
 
-deriving instance FromJSVal (NoJSONRep JSVal)
-deriving instance ToJSVal (NoJSONRep JSVal)
+{-# ANN (===) ("HLint: ignore Use camelCase" :: String) #-}
+(===) :: JSVal -> JSVal -> Bool
+(===) = error "javascript FFI not available in GHC"
+
+{-# ANN (!==) ("HLint: ignore Use camelCase" :: String) #-}
+(!==) :: JSVal -> JSVal -> Bool
+(!==) = error "javascript FFI not available in GHC"
+
+{-# ANN js_getScrollOffset ("HLint: ignore Use camelCase" :: String) #-}
+js_getScrollOffset :: IO Int
+js_getScrollOffset = error "javascript FFI not available in GHC"
+
+#endif

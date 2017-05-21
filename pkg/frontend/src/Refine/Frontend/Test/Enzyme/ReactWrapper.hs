@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -73,6 +74,16 @@ mount comp = do
 
 -- * Helper functions
 
+#ifdef __GHCJS__
+
 foreign import javascript unsafe
   "enzyme.mount($1)"
   js_mount :: ReactElementRef -> IO JSVal
+
+#else
+
+{-# ANN js_mount ("HLint: ignore Use camelCase" :: String) #-}
+js_mount :: ReactElementRef -> IO JSVal
+js_mount = error "javascript FFI not available in GHC"
+
+#endif

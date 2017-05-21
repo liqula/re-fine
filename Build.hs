@@ -46,14 +46,16 @@ stackBuildOptimal package = do
   command_ [Cwd package] "stack" ["setup"]
   command_ [Cwd package] "stack" ["build", "--split-objs", "--ghc-options", "-O2"]
 
-hlintPackage :: FilePath -> Action ()
-hlintPackage package = do
+hlintPath :: FilePath -> Action ()
+hlintPath path = do
   command_ [] "stack"
     [ "exec", "--", "hlint"
     , "--hint=" <> pkgPrelude <> "/HLint.hs"
-    , "./" <> package <> "/src"
-    , "./" <> package <> "/test"
+    , "./" <> path
     ]
+
+hlintPackage :: FilePath -> Action ()
+hlintPackage package = hlintPath `mapM_` ((package <>) <$> ["/src", "/test"])
 
 
 -- * main
@@ -154,6 +156,7 @@ main = shakeArgs refineOptions $ do
 
   phony "hlint" $ do
     need ["hlint-prelude", "hlint-common", "hlint-backend", "hlint-frontend"]
+    hlintPath "./scripts"
     command_ [] "./scripts/style-check.hs" ["pkg"]
 
 

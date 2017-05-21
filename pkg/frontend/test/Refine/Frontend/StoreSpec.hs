@@ -1,5 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -10,6 +10,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
@@ -74,8 +75,16 @@ spec = do
     it "read" $ do
       print (read "123.123" :: Int) `shouldThrow` anyException
 
-
+#ifdef __GHCJS__
 
 foreign import javascript unsafe
   "123.456"
   js_reproduce_issue_242 :: IO Int
+
+#else
+
+{-# ANN js_reproduce_issue_242 ("HLint: ignore Use camelCase" :: String) #-}
+js_reproduce_issue_242 :: IO Int
+js_reproduce_issue_242 = error "javascript FFI not available in GHC"
+
+#endif

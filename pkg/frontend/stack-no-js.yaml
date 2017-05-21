@@ -1,0 +1,37 @@
+# this is the stack.yaml file for running the frontend in ghci.  many
+# things won't work (ffi functions are all replaced by 'undefined'
+# stubs), but the type checker should be able to help you with less
+# lag than ghcjs.
+#
+# to get going, try this:
+#
+# stack --stack-yaml=stack-no-js.yaml test --fast
+# stack --stack-yaml=stack-no-js.yaml exec -- ghci -isrc -itest -i../common/src -i../prelude/src test/Main.hs
+#
+# to update this file after changing stack.yaml, try replacing the yaml code below with the output of this:
+#
+# perl -ne 'if (/# START __GHCJS__/) { $dont = 1; }; unless ($dont) { print $_; }; if (/# END __GHCJS__/) { $dont = 0; }' stack.yaml
+
+resolver:
+  name: stack-snapshot
+  location: ../../stack-snapshot.yaml
+
+
+packages:
+- '.'
+- location: '../common'
+  extra-dep: true
+- location: '../prelude'
+  extra-dep: true
+- location:
+    git: https://github.com/liqula/react-hs
+    commit: 3b77a36f3ed869ba37e870f40729017a3e0d5764
+  extra-dep: true
+  subdirs:
+  - react-hs
+  - react-hs-servant
+
+extra-deps:
+- react-hs-0.0.1
+- react-hs-servant-0.0.1
+- refine-common-0.0.0.0

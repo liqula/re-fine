@@ -1,6 +1,6 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE ConstraintKinds            #-}
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -11,6 +11,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
@@ -404,25 +405,8 @@ getDraftSelectionStateViaBrowser = liftIO $ either err pure . eitherDecode . cs 
   where
     err = throwIO . ErrorCall . ("getSelectionStateFromBrowser: impossible: " <>) . show
 
-foreign import javascript unsafe
-  "JSON.stringify(refine$getDraftSelectionStateViaBrowser())"
-  js_getDraftSelectionStateViaBrowser :: IO JSString
-
-foreign import javascript unsafe
-  "getSelection().getRangeAt(0).startContainer.parentElement.getBoundingClientRect().top"
-  js_getRangeTopOffset :: IO Int
-
-foreign import javascript unsafe
-  "getSelection().getRangeAt(0).endContainer.parentElement.getBoundingClientRect().bottom"
-  js_getRangeBottomOffset :: IO Int
-
 removeAllRanges :: MonadIO m => m ()
 removeAllRanges = liftIO js_removeAllRanges
-
-foreign import javascript unsafe
-  "window.getSelection().removeAllRanges()"
-  js_removeAllRanges :: IO ()
-
 
 -- * work-arounds for known bugs.
 
@@ -435,3 +419,41 @@ reactFluxWorkAroundForkIO action = void . forkIO $ yield >> action
 -- for details and status.  Try to increase microseconds if you still experience race conditions.
 reactFluxWorkAroundThreadDelay :: Double -> IO ()
 reactFluxWorkAroundThreadDelay seconds = threadDelay . round $ seconds * 1000 * 1000
+
+#ifdef __GHCJS__
+
+foreign import javascript unsafe
+  "JSON.stringify(refine$getDraftSelectionStateViaBrowser())"
+  js_getDraftSelectionStateViaBrowser :: IO JSString
+
+foreign import javascript unsafe
+  "getSelection().getRangeAt(0).startContainer.parentElement.getBoundingClientRect().top"
+  js_getRangeTopOffset :: IO Int
+
+foreign import javascript unsafe
+  "getSelection().getRangeAt(0).endContainer.parentElement.getBoundingClientRect().bottom"
+  js_getRangeBottomOffset :: IO Int
+
+foreign import javascript unsafe
+  "window.getSelection().removeAllRanges()"
+  js_removeAllRanges :: IO ()
+
+#else
+
+{-# ANN js_getDraftSelectionStateViaBrowser ("HLint: ignore Use camelCase" :: String) #-}
+js_getDraftSelectionStateViaBrowser :: IO JSString
+js_getDraftSelectionStateViaBrowser = error "javascript FFI not available in GHC"
+
+{-# ANN js_getRangeTopOffset ("HLint: ignore Use camelCase" :: String) #-}
+js_getRangeTopOffset :: IO Int
+js_getRangeTopOffset = error "javascript FFI not available in GHC"
+
+{-# ANN js_getRangeBottomOffset ("HLint: ignore Use camelCase" :: String) #-}
+js_getRangeBottomOffset :: IO Int
+js_getRangeBottomOffset = error "javascript FFI not available in GHC"
+
+{-# ANN js_removeAllRanges ("HLint: ignore Use camelCase" :: String) #-}
+js_removeAllRanges :: IO ()
+js_removeAllRanges = error "javascript FFI not available in GHC"
+
+#endif

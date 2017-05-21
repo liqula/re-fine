@@ -1,5 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -10,6 +10,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
@@ -114,6 +115,16 @@ calcHeaderHeight ldom = do
    this <- RF.lThis ldom
    dispatchAndExec . ScreenAction . AddHeaderHeight =<< js_getBoundingClientRectHeight this
 
+#ifdef __GHCJS__
+
 foreign import javascript unsafe
   "Math.floor($1.getBoundingClientRect().height)"
   js_getBoundingClientRectHeight :: JSVal -> IO Int
+
+#else
+
+{-# ANN js_getBoundingClientRectHeight ("HLint: ignore Use camelCase" :: String) #-}
+js_getBoundingClientRectHeight :: JSVal -> IO Int
+js_getBoundingClientRectHeight = error "javascript FFI not available in GHC"
+
+#endif

@@ -31,6 +31,12 @@ library
   ghc-options: -j -Wall -Wno-redundant-constraints
   if flag(ghc-warn-error)
       ghc-options: -Werror
+
+  if impl(ghcjs)
+    build-depends: ghcjs-base
+  if !impl(ghcjs)
+    build-depends: ghcjs-base-stub
+
   build-depends:
       aeson
     , base >= 4.7 && < 5
@@ -39,7 +45,6 @@ library
     , data-default
     , deepseq
     , functor-infix
-    , ghcjs-base
     , hspec
     , http-api-data
     , i18n
@@ -121,6 +126,12 @@ executable refine-frontend
   ghc-options: -j -Wall -Wno-redundant-constraints
   if flag(ghc-warn-error)
       ghc-options: -Werror
+
+  if impl(ghcjs)
+    build-depends: ghcjs-base
+  if !impl(ghcjs)
+    build-depends: ghcjs-base-stub
+
   cpp-options: -DGHCJS_BROWSER
   build-depends:
       base >= 4.7 && < 5
@@ -136,13 +147,18 @@ test-suite spec
   ghc-options: -j -Wall -Wno-redundant-constraints -threaded -rtsopts -with-rtsopts=-N
   if flag(ghc-warn-error)
       ghc-options: -Werror
+
+  if impl(ghcjs)
+    build-depends: ghcjs-base
+  if !impl(ghcjs)
+    build-depends: ghcjs-base-stub
+
   build-depends:
       aeson
     , base >= 4.7 && < 5
     , basic-sop
     , containers
     , deepseq
-    , ghcjs-base
     , hspec
     , hspec-core
     , http-api-data

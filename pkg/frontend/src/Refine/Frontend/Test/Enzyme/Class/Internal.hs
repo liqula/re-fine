@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP                        #-}
+
 module Refine.Frontend.Test.Enzyme.Class.Internal where
 
 import Data.JSString (pack)
@@ -163,6 +165,8 @@ attr name wrapper = pFromJSVal <$> js_attr (pack name) (unWrap wrapper)
 
 -- * The actual JavaScript calls
 
+#ifdef __GHCJS__
+
 foreign import javascript unsafe
   "$2[$1]()"
   js_exec :: JSString -> JSVal -> IO JSVal
@@ -189,3 +193,27 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "console.log($1, $2);"
   js_console_log_jsval :: JSString -> JSVal -> IO ()
+
+#else
+
+{-# ANN js_exec ("HLint: ignore Use camelCase" :: String) #-}
+js_exec :: JSString -> JSVal -> IO JSVal
+js_exec = error "javascript FFI not available in GHC"
+
+{-# ANN js_attr ("HLint: ignore Use camelCase" :: String) #-}
+js_attr :: JSString -> JSVal -> IO JSVal
+js_attr = error "javascript FFI not available in GHC"
+
+{-# ANN js_exec_with_1_arg ("HLint: ignore Use camelCase" :: String) #-}
+js_exec_with_1_arg :: JSString -> JSVal -> JSVal -> IO JSVal
+js_exec_with_1_arg = error "javascript FFI not available in GHC"
+
+{-# ANN js_exec_with_object ("HLint: ignore Use camelCase" :: String) #-}
+js_exec_with_object :: JSString -> JSVal -> JSVal -> IO JSVal
+js_exec_with_object = error "javascript FFI not available in GHC"
+
+{-# ANN js_console_log_jsval ("HLint: ignore Use camelCase" :: String) #-}
+js_console_log_jsval :: JSString -> JSVal -> IO ()
+js_console_log_jsval = error "javascript FFI not available in GHC"
+
+#endif
