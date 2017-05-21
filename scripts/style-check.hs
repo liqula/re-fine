@@ -54,6 +54,9 @@ import           Text.Read (readMaybe)
 import           Turtle hiding (f)
 
 
+verbose :: Bool
+verbose = False
+
 -- | run this on a clean working copy (no un-commited changes; untracked and ignored files are
 -- allowed).  it reports *and fixes* style violations and lets you examine and commit the changes
 -- when it is done.
@@ -149,6 +152,7 @@ filterExt ext = filter ((== Just ext) . extension)
 
 transformFile :: ([ST] -> [ST]) -> FilePath -> Shell ()
 transformFile trans file = do
+  debugLog (cs file <> "..." :: ST)
   contents :: [ST] <- input file `fold` Fold.list
   let contents' :: [ST] = trans contents
   when (contents' /= contents) . liftIO $ do
@@ -199,3 +203,6 @@ setProperCurrentDirectory = liftIO $ do
     Executable wd -> setdir wd
     RunGHC wd     -> setdir wd
     Interactive   -> setdiri
+
+debugLog :: MonadIO m => ConvertibleStrings s ST => s -> m ()
+debugLog = when verbose . liftIO . sh . echo . cs
