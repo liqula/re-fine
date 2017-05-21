@@ -50,6 +50,10 @@ foreign import javascript unsafe
   "$1 === $2"
   (===) :: JSVal -> JSVal -> Bool
 
+foreign import javascript unsafe
+  "$1 !== $2"
+  (!==) :: JSVal -> JSVal -> Bool
+
 -- an earlier implementation had two fallbacks:
 --
 -- ```javascript
