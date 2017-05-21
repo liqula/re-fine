@@ -5,38 +5,8 @@
     --package temporary
     --package turtle
 
-    --
-
-    -Wall -fno-warn-orphans -fno-warn-unused-imports
-
-    -XBangPatterns
-    -XDeriveDataTypeable
-    -XExistentialQuantification
-    -XFlexibleContexts
-    -XFlexibleContexts
-    -XFlexibleInstances
-    -XGeneralizedNewtypeDeriving
-    -XLambdaCase
-    -XMultiParamTypeClasses
-    -XNoImplicitPrelude
-    -XOverloadedStrings
-    -XPackageImports
-    -XRecordWildCards
-    -XScopedTypeVariables
-    -XStandaloneDeriving
-    -XTupleSections
-    -XTypeApplications
-    -XTypeSynonymInstances
-    -XTypeFamilies
-    -XViewPatterns
-
 -}
 
--- for use in ghci, construct the following lines using the -X block above and the following perl
--- command line:
---
--- perl -ne '/^(\s+)-X(.+)$/ && print "{-# LANGUAGE $2 #-}\n"'
---
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE ExistentialQuantification #-}
@@ -57,6 +27,8 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
+
+{-# OPTIONS_GHC -Wall -fno-warn-orphans -fno-warn-unused-imports #-}
 
 import           Control.Exception (assert)
 import qualified Control.Foldl as Fold
