@@ -2,6 +2,9 @@ resolver:
   name: stack-snapshot
   location: ../../stack-snapshot.yaml
 
+# START __GHCJS__
+# see also: stack-no-js.yaml
+
 compiler: ghcjs-0.2.1.9008011_ghc-8.0.2
 compiler-check: match-exact
 
@@ -24,6 +27,8 @@ setup-info:
       ghcjs-0.2.1.9007013_ghc-8.0.1:
         url: http://ghcjs.tolysz.org/ghc-8.0-2016-12-18-lts-7.13-9007013.tar.gz
         sha1: 530c4ee5e19e2874e128431c7ad421e336df0303
+
+# END __GHCJS__
 
 packages:
 - '.'
