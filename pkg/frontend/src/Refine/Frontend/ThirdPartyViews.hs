@@ -39,28 +39,60 @@ import Refine.Frontend.Prelude
 sticky_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 sticky_ = foreignClass js_sticky
 
-foreign import javascript unsafe "Sticky.Sticky" js_sticky :: JSVal
-
-
 stickyContainer_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 stickyContainer_ = foreignClass js_stickyContainer
-
-foreign import javascript unsafe "Sticky.StickyContainer" js_stickyContainer :: JSVal
-
 
 skylight_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 skylight_ = foreignClass js_skylight
 
-foreign import javascript unsafe "Skylight.SkyLightStateless" js_skylight :: JSVal
-
-
 hammer_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 hammer_ = foreignClass js_hammer
-
-foreign import javascript unsafe "Hammer" js_hammer :: JSVal
-
 
 editor_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 editor_ = foreignClass js_editor
 
-foreign import javascript unsafe "Draft.Editor" js_editor :: JSVal
+#ifdef __GHCJS__
+
+foreign import javascript unsafe
+  "Sticky.Sticky"
+  js_sticky :: JSVal
+
+foreign import javascript unsafe
+  "Sticky.StickyContainer"
+  js_stickyContainer :: JSVal
+
+foreign import javascript unsafe
+  "Skylight.SkyLightStateless"
+  js_skylight :: JSVal
+
+foreign import javascript unsafe
+  "Hammer"
+  js_hammer :: JSVal
+
+foreign import javascript unsafe
+  "Draft.Editor"
+  js_editor :: JSVal
+
+#else
+
+{-# ANN js_sticky ("HLint: ignore Use camelCase" :: String) #-}
+js_sticky :: JSVal
+js_sticky = error "javascript FFI not available in GHC"
+
+{-# ANN js_stickyContainer ("HLint: ignore Use camelCase" :: String) #-}
+js_stickyContainer :: JSVal
+js_stickyContainer = error "javascript FFI not available in GHC"
+
+{-# ANN js_skylight ("HLint: ignore Use camelCase" :: String) #-}
+js_skylight :: JSVal
+js_skylight = error "javascript FFI not available in GHC"
+
+{-# ANN js_hammer ("HLint: ignore Use camelCase" :: String) #-}
+js_hammer :: JSVal
+js_hammer = error "javascript FFI not available in GHC"
+
+{-# ANN js_editor ("HLint: ignore Use camelCase" :: String) #-}
+js_editor :: JSVal
+js_editor = error "javascript FFI not available in GHC"
+
+#endif
