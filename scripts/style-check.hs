@@ -205,7 +205,7 @@ testWrapJsFFI = describe "wrapJsFFI" $ do
           ]
 
         i3 :: ST
-        i3 = ST.unlines $
+        i3 = ST.unlines
           [ "module Some where"
           , ""
           , "import Some.Other"
@@ -240,7 +240,7 @@ testWrapJsFFI = describe "wrapJsFFI" $ do
             ]
 
         i4 :: ST
-        i4 = ST.unlines $
+        i4 = ST.unlines
           [ "module Some where"
           , ""
           , "import Some.Other"
