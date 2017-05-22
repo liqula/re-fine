@@ -365,8 +365,7 @@ addEdit_ = view_ addEdit "addEdit_"
 -- 'editInput' and and 'editKindForm'?
 editInput :: View '[AddContributionProps EditKind]
 editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState props -> do
-
-    p_ $ do
+    div_ $ do
       elemString "Step 1: "
       span_ ["className" $= "bold"] "Type of this edit:"
       liftViewToStateHandler $ editKindForm_ (DocumentAction . DocumentUpdateEditKind) (EditKindFormProps $ props ^. acpKind)
