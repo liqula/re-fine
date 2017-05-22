@@ -145,8 +145,6 @@ lengthOfIO :: EnzymeWrapper w => IO w -> IO Int
 lengthOfIO wrapper = lengthOf =<< wrapper
 
 
-{-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
-
 -- * Preparations for the evaluation of functions in JavaScript
 
 execWithSelector :: (PFromJSVal a, EnzymeWrapper w) => String -> w -> EnzymeSelector -> IO a

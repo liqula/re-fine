@@ -39,8 +39,6 @@ import Refine.Frontend.Test.Enzyme.Core as R
 import Refine.Frontend.Test.Enzyme.Class.Internal
 
 
-{-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
-
 -- * The ReactWrapper type.
 
 newtype ReactWrapper = ReactWrapper { _unReactWrapper :: JSVal }
