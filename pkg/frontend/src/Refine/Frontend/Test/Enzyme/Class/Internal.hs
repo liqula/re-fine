@@ -149,6 +149,7 @@ lengthOfIO wrapper = lengthOf =<< wrapper
 
 execWithSelector :: (PFromJSVal a, EnzymeWrapper w) => String -> w -> EnzymeSelector -> IO a
 execWithSelector func wrapper es@(PropertySelector _) = pFromJSVal <$> js_exec_with_object (pack func) (unWrap wrapper) (pToJSVal es)
+execWithSelector func wrapper es@(StyleSelector _) = pFromJSVal <$> js_exec_with_object (pack func) (unWrap wrapper) (pToJSVal es)
 execWithSelector f w e = execWith1Arg f w e
 
 execWith1Arg :: (PFromJSVal a, PToJSVal b, EnzymeWrapper w) => String -> w -> b -> IO a

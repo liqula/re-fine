@@ -182,7 +182,7 @@ spec = do
 
     it "always renders the position that is passed to it" $ do
       wrapper <- shallow (iconButton_ theProps)
-      is wrapper (PropertySelector [Prop "style" (declsToJSON [decl "top" (Px 377)])]) `shouldReturn` True
+      is wrapper (StyleSelector [decl "top" (Px 377)]) `shouldReturn` True
 
     it "never renders the right-alignment flag" $ do
       wrapper <- shallow (iconButton_ theProps)
