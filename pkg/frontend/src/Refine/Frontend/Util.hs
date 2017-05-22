@@ -33,19 +33,9 @@ import Refine.Frontend.Prelude
 
 import qualified Data.JSString as JSS
 
-import           Refine.Frontend.Types
-
 
 toClasses :: (ConvertibleStrings s JSString, ConvertibleStrings JSString s) => [s] -> s
 toClasses = cs . JSS.unwords . filter (not . JSS.null) . fmap cs
-
-attrToProp :: Attr -> forall handler. PropertyOrHandler handler
-attrToProp (Attr key value) = cs key $= cs value
-
-lookupAttrs :: ST -> [Attr] -> Maybe ST
-lookupAttrs _ [] = Nothing
-lookupAttrs wantedKey (Attr key value : _) | key == wantedKey = Just value
-lookupAttrs wantedKey (_ : as) = lookupAttrs wantedKey as
 
 deriving instance FromJSVal (NoJSONRep JSVal)
 deriving instance ToJSVal (NoJSONRep JSVal)
