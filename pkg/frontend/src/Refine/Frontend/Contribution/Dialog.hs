@@ -100,14 +100,14 @@ showComment = mkView "ShowComment" $ \props ->
   in skylight_ ["isVisible" &= True
            , RF.on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideCommentOverlay)
            , RF.on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentOverlay)
-           , "dialogStyles" @= declsToJSON ((props ^. cdpContentStyle) <> extraStyles)
-           , "overlayStyles" @= declsToJSON overlayStyles
-           , "closeButtonStyle" @= declsToJSON [decl "top" (Px 0), decl "bottom" (Px 0)]
-           , "titleStyle" @= declsToJSON [decl "margin" (Px 0)]
+           , "dialogStyles" @@= ((props ^. cdpContentStyle) <> extraStyles)
+           , "overlayStyles" @@= overlayStyles
+           , "closeButtonStyle" @@= [decl "top" (Px 0), decl "bottom" (Px 0)]
+           , "titleStyle" @@= [decl "margin" (Px 0)]
            ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
-        div_ [style [decl "marginLeft" (Percentage 96)]] $ do             -- FIXME: How to do this properly?
+        div_ ["style" @@= [decl "marginLeft" (Percentage 96)]] $ do             -- FIXME: How to do this properly?
           icon_ (IconProps "c-vdoc-overlay-content" False (props ^. cdpIconStyle) XL)
 
         div_ ["className" $= "c-vdoc-overlay-content__copy"] $ elemText (props ^. cdpCommentText)
@@ -130,7 +130,7 @@ showComment = mkView "ShowComment" $ \props ->
                 icon_ (IconProps "c-vdoc-overlay-votes" True ("icon-Vote_negative", "dark") XL)
         -- END: vote buttons -->
 
-        div_ [style [decl "marginBottom" (Px 20)]] "" -- make some space for the close button
+        div_ ["style" @@= [decl "marginBottom" (Px 20)]] "" -- make some space for the close button
 
 showComment_ :: CommentDisplayProps -> ReactElementM eventHandler ()
 showComment_ !props = view_ showComment "showComment_" props
@@ -232,15 +232,16 @@ addContributionDialogFrame True title mrange windowWidth child =
     in skylight_ ["isVisible" &= True
              , RF.on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideCommentEditor)
              , RF.on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentEditor)
-             , "dialogStyles" @= declsToJSON (vdoc_overlay_content__add_comment <> extraStyles)
-             , "overlayStyles" @= declsToJSON overlayStyles
-             , "titleStyle" @= declsToJSON [decl "margin" (Px 0)]
+             , "dialogStyles" @@= (vdoc_overlay_content__add_comment <> extraStyles)
+             , "overlayStyles" @@= overlayStyles
+             , "titleStyle" @@= [decl "margin" (Px 0)]
              ]  $ do
 
       icon_ (IconProps "c-vdoc-overlay-content" False ("icon-New_Comment", "dark") XL)
 
       span_ [ "className" $= "c-vdoc-overlay-content__title"
-            , style [ decl "fontSize" (Rem 1.125)
+            , "style" @@=
+                    [ decl "fontSize" (Rem 1.125)
                     , decl "lineHeight" (Mm 1.15)
                     , decl "marginBottom" (Rem 0.875)
                     , decl "marginLeft" (Rem 1)
@@ -276,7 +277,8 @@ contributionDialogTextForm stepNumber promptText = do
         , "action" $= "POST"] $ do
     textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
               , "className" $= "o-wysiwyg o-form-input__textarea"
-              , style [ decl "resize" (Ident "none")
+              , "style" @@=
+                      [ decl "resize" (Ident "none")
                       , decl "width" (Px 600)
                       , decl "height" (Px 240)
                       ]
@@ -306,7 +308,7 @@ commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \cu
           & iconButtonPropsLabel        .~ "add a node"
           & iconButtonPropsOnClick      .~ [ContributionAction $ SetCommentKind CommentKindNote]
 
-        span_ [style [decl "marginRight" (Rem 1)]] mempty
+        span_ ["style" @@= [decl "marginRight" (Rem 1)]] mempty
 
         iconButton_ $ def @IconButtonProps
           & iconButtonPropsListKey      .~ "discussion"

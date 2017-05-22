@@ -79,7 +79,7 @@ renderBubble children props topOffset = do
                     , contribKind
                     , ("o-snippet--hover", Just (props ^. bubblePropsContributionId) == props ^. bubblePropsHighlightedBubble)
                     ]
-       , style [decl "top" (Px $ offsetIntoText topOffset (props ^. bubblePropsScreenState))]
+       , "style" @@= [decl "top" (Px $ offsetIntoText topOffset (props ^. bubblePropsScreenState))]
        , onClick      $ mkClickHandler (props ^. bubblePropsClickActions)
        , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble $ props ^. bubblePropsContributionId]
        , onMouseLeave $ mkClickHandler [UnhighlightMarkAndBubble]

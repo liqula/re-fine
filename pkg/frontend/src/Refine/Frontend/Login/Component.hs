@@ -117,7 +117,7 @@ loginStyles = defaultStyles
 
 login :: FormError -> View '[]
 login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState ->
-  div_ [style loginStyles] $ do
+  div_ ["style" @@= loginStyles] $ do
     h1_ "Login"
 
     form_ [ "target" $= "#"
@@ -147,7 +147,7 @@ logoutStyles = defaultStyles
 
 logout :: View '[]
 logout = mkView "Logout" $ do
-  div_ [style logoutStyles] $ do
+  div_ ["style" @@= logoutStyles] $ do
     p_ "Profile page"
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
@@ -170,7 +170,7 @@ registrationStyles = defaultStyles
 
 registration :: FormError -> View '[]
 registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "" False errors) $ \curState -> do
-  div_ [style registrationStyles] $ do
+  div_ ["style" @@= registrationStyles] $ do
     h1_ "Registration"
 
     form_ [ "target" $= "#"

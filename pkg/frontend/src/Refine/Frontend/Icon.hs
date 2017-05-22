@@ -93,12 +93,12 @@ iconButtonPropsToStyles props = alpos <> curpoint
 iconButton :: IconButtonPropsOnClick onclick => View '[IconButtonPropsWithHandler onclick]
 iconButton = mkView "IconButton" $ \props -> do
     div_ ([ "className" $= iconButtonPropsToClasses props
-          , style (iconButtonPropsToStyles props)
+          , "style" @@= iconButtonPropsToStyles props
           ] <> [onClick $ mkClickHandler props | not (props ^. iconButtonPropsDisabled)]
          ) $ do
         icon_ $ props ^. iconButtonPropsIconProps
         span_ [ "className" $= (props ^. iconButtonPropsIconProps . iconPropsBlockName <> "__button-label")
-              , style [decl "color" Color.DisabledTextColor | props ^. iconButtonPropsDisabled]
+              , "style" @@= [decl "color" Color.DisabledTextColor | props ^. iconButtonPropsDisabled]
               ] $
             elemJSString (props ^. iconButtonPropsLabel)
 

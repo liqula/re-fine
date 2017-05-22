@@ -38,19 +38,18 @@ import Language.Css.Pretty
 import Language.Css.Syntax
 
 
--- | Variant of 'React.Flux.Combinators.style' with language-css types instead of 'JSString'.
-style :: [Decl] -> PropertyOrHandler handler
-style = ("style" @=) . declsToJSON
-
-declsToJSON :: [Decl] -> Data.Aeson.Value
-declsToJSON = object . map (\(Decl _mprio n a) -> (cs (prettyPrint n) .:= prettyPrint a))
-
-
 decl :: ToExpr e => Prop -> e -> Decl
 decl p e = Decl Nothing p (expr e)
 
 instance IsString Prop where
   fromString = Ident
+
+-- | Like '(@=)', but for css rather than json.
+(@@=) :: forall handler. JSString -> [Decl] -> PropertyOrHandler handler
+(@@=) k v = k @= declsToJSON v
+
+declsToJSON :: [Decl] -> Data.Aeson.Value
+declsToJSON = object . map (\(Decl _mprio n a) -> (cs (prettyPrint n) .:= prettyPrint a))
 
 
 newtype Rem = Rem Double
