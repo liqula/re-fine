@@ -306,7 +306,7 @@ commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \cu
           & iconButtonPropsLabel        .~ "add a node"
           & iconButtonPropsOnClick      .~ [ContributionAction $ SetCommentKind CommentKindNote]
 
-        span_ [style [decl "marginRight" (Ident "1rem")]] mempty
+        span_ [style [decl "marginRight" (Rem 1)]] mempty
 
         iconButton_ $ def @IconButtonProps
           & iconButtonPropsListKey      .~ "discussion"

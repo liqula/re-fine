@@ -57,7 +57,7 @@ newtype Rem = Rem Double
   deriving (Eq, Show)
 
 instance ToExpr Rem where
-  expr v = expr $ VString (show v <> "rem")  -- FIXME: is this how you do it?
+  expr (Rem d) = expr (Em d)  -- FIXME: #317
 
 
 toClasses :: (ConvertibleStrings s JSString, ConvertibleStrings JSString s) => [s] -> s
