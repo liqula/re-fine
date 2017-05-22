@@ -27,18 +27,27 @@ module Refine.Frontend.Colors where
 
 import Refine.Frontend.Prelude
 
+import Data.List (intercalate)
+
 import qualified Language.Css.Build as Css
-import qualified Language.Css.Pretty as Css
 import qualified Language.Css.Syntax as Css
 
-data RGB =
-    RGB Int Int Int
-  | RGBA Css.Expr Double
+
+data RGBA = RGBA Int Int Int Double
   deriving (Eq, Show)
 
-instance Css.ToExpr RGB where
-  expr (RGB r g b)  = Css.expr (Css.Crgb r g b)
-  expr (RGBA color a) = Css.expr (Css.VString ("rgba(" <> Css.prettyPrint color <> ", " <> show a <> ")"))
+instance Css.ToExpr RGBA where
+  expr (RGBA r g b a) = Css.expr $ Css.Ident ("rgba(" <> intercalate ", " [show r, show g, show b, show a] <> ")")
+
+rgb :: Int -> Int -> Int -> RGBA
+rgb r g b = RGBA r g b 1
+
+opacity :: ToRGBA a => a -> Double -> RGBA
+opacity (toRGBA -> RGBA r g b a) a' = RGBA r g b (a * a')
+
+
+class ToRGBA a where
+  toRGBA :: a -> RGBA
 
 
 data SimpleColor =
@@ -77,38 +86,41 @@ data SimpleColor =
   deriving (Eq, Show)
 
 instance Css.ToExpr SimpleColor where
+  expr = Css.expr . toRGBA
+
+instance ToRGBA SimpleColor where
   -- main color scheme blue
-  expr SCBlue01       = Css.expr $ RGB 32 49 67
-  expr SCBlue02       = Css.expr $ RGB 59 67 87
-  expr SCBlue03       = Css.expr $ RGB 84 99 122
-  expr SCBlue04       = Css.expr $ RGB 100 126 149
-  expr SCBlue05       = Css.expr $ RGB 179 188 199
-  expr SCBlue06       = Css.expr $ RGB 210 217 223
-  expr SCBlue07       = Css.expr $ RGB 234 236 239
-  expr SCBlue08       = Css.expr $ RGB 246 247 249
+  toRGBA SCBlue01       = RGBA 32 49 67 1
+  toRGBA SCBlue02       = RGBA 59 67 87 1
+  toRGBA SCBlue03       = RGBA 84 99 122 1
+  toRGBA SCBlue04       = RGBA 100 126 149 1
+  toRGBA SCBlue05       = RGBA 179 188 199 1
+  toRGBA SCBlue06       = RGBA 210 217 223 1
+  toRGBA SCBlue07       = RGBA 234 236 239 1
+  toRGBA SCBlue08       = RGBA 246 247 249 1
 
   -- signal color
-  expr SCSignalYellow = Css.expr $ RGB 224 255 18
-  expr SCSignalOrange = Css.expr $ RGB 255 89 0
+  toRGBA SCSignalYellow = RGBA 224 255 18 1
+  toRGBA SCSignalOrange = RGBA 255 89 0 1
 
   -- voting and ranking
-  expr SCRed01        = Css.expr $ RGB 200 55 20
-  expr SCRed02        = Css.expr $ RGB 226 155 140
-  expr SCGreen01      = Css.expr $ RGB 120 200 50
-  expr SCGreen02      = Css.expr $ RGB 188 226 155
-  expr SCOrange01     = Css.expr $ RGB 231 181 0
-  expr SCOrange02     = Css.expr $ RGB 239 213 129
+  toRGBA SCRed01        = RGBA 200 55 20 1
+  toRGBA SCRed02        = RGBA 226 155 140 1
+  toRGBA SCGreen01      = RGBA 120 200 50 1
+  toRGBA SCGreen02      = RGBA 188 226 155 1
+  toRGBA SCOrange01     = RGBA 231 181 0 1
+  toRGBA SCOrange02     = RGBA 239 213 129 1
 
   -- comment
-  expr SCLightYellow  = Css.expr $ RGB 237 237 192
-  expr SCLightGreen   = Css.expr $ RGB 220 229 211
-  expr SCLightRed     = Css.expr $ RGB 219 204 221
-  expr SCLightBlue    = Css.expr $ RGB 215 233 255
+  toRGBA SCLightYellow  = RGBA 237 237 192 1
+  toRGBA SCLightGreen   = RGBA 220 229 211 1
+  toRGBA SCLightRed     = RGBA 219 204 221 1
+  toRGBA SCLightBlue    = RGBA 215 233 255 1
 
   -- helpers
-  expr SCWhite        = Css.expr $ RGB 255 255 255
-  expr SCBlack        = Css.expr $ RGB 0 0 0
-  expr SCDarkGrey     = Css.expr $ RGB 169 169 169
+  toRGBA SCWhite        = RGBA 255 255 255 1
+  toRGBA SCBlack        = RGBA 0 0 0 1
+  toRGBA SCDarkGrey     = RGBA 169 169 169 1
 
 
 data Color =
@@ -178,66 +190,69 @@ data Color =
   deriving (Eq, Show)
 
 instance Css.ToExpr Color where
+  expr = Css.expr . toRGBA
+
+instance ToRGBA Color where
   -- typography
-  expr TextColor = Css.expr SCBlack
-  expr DisabledTextColor = Css.expr SCDarkGrey
-  expr HeadlineColor = Css.expr SCBlue01
-  expr LinkColor = Css.expr SCBlue04
-  expr ActiveColor = Css.expr SCSignalOrange
+  toRGBA TextColor = toRGBA SCBlack
+  toRGBA DisabledTextColor = toRGBA SCDarkGrey
+  toRGBA HeadlineColor = toRGBA SCBlue01
+  toRGBA LinkColor = toRGBA SCBlue04
+  toRGBA ActiveColor = toRGBA SCSignalOrange
 
   -- mainmenu
-  expr MainmenuBg = Css.expr SCBlue01
-  expr MainmenuMainbuttonColor = Css.expr SCBlue06
-  expr MainmenuMainbuttonCombinedColor = Css.expr SCBlue02
-  expr MainmenuContentBg = Css.expr SCBlue05
-  expr MainmenuContentColor = Css.expr SCBlue06
+  toRGBA MainmenuBg = toRGBA SCBlue01
+  toRGBA MainmenuMainbuttonColor = toRGBA SCBlue06
+  toRGBA MainmenuMainbuttonCombinedColor = toRGBA SCBlue02
+  toRGBA MainmenuContentBg = toRGBA SCBlue05
+  toRGBA MainmenuContentColor = toRGBA SCBlue06
 
   -- footer
-  expr FooterBg = Css.expr MainmenuBg
-  expr FooterContentColor = Css.expr SCBlue06
+  toRGBA FooterBg = toRGBA MainmenuBg
+  toRGBA FooterContentColor = toRGBA SCBlue06
 
   -- vdoc header
-  expr VDocHeaderBg = Css.expr SCBlue07
-  expr VDocToolbarBg = Css.expr SCBlue06
-  expr VDocToolbarExtensionBg = Css.expr SCBlue04
+  toRGBA VDocHeaderBg = toRGBA SCBlue07
+  toRGBA VDocToolbarBg = toRGBA SCBlue06
+  toRGBA VDocToolbarExtensionBg = toRGBA SCBlue04
 
   -- icons
-  expr DefaultIconBg = Css.expr SCBlue02
-  expr FallbackAvatarBg = Css.expr SCBlue01
-  expr IconRollover = Css.expr SCSignalOrange
-  expr IconDark = Css.expr SCBlue01
-  expr IconBright = Css.expr SCBlue06
-  expr IconBgActive = Css.expr SCSignalYellow
+  toRGBA DefaultIconBg = toRGBA SCBlue02
+  toRGBA FallbackAvatarBg = toRGBA SCBlue01
+  toRGBA IconRollover = toRGBA SCSignalOrange
+  toRGBA IconDark = toRGBA SCBlue01
+  toRGBA IconBright = toRGBA SCBlue06
+  toRGBA IconBgActive = toRGBA SCSignalYellow
 
   -- comments & edits etc.
-  expr VDocComment = Css.expr SCLightRed
-  expr VDocCommentMark = Css.expr $ RGBA (Css.expr VDocComment) 0.5
-  expr VDocCommentRo = Css.expr SCSignalOrange
+  toRGBA VDocComment = toRGBA SCLightRed
+  toRGBA VDocCommentMark = opacity VDocComment 0.5
+  toRGBA VDocCommentRo = toRGBA SCSignalOrange
 
-  expr VDocNote = Css.expr SCLightYellow
-  expr VDocNoteMark = Css.expr $ RGBA (Css.expr VDocNote) 00.5
-  expr VDocNoteRo = Css.expr SCSignalOrange
+  toRGBA VDocNote = toRGBA SCLightYellow
+  toRGBA VDocNoteMark = opacity VDocNote 0.5
+  toRGBA VDocNoteRo = toRGBA SCSignalOrange
 
-  expr VDocQuestion = Css.expr SCLightGreen
-  expr VDocQuestionMark = Css.expr $ RGBA (Css.expr VDocQuestion) 0.5
-  expr VDocQuestionRo = Css.expr SCSignalOrange
+  toRGBA VDocQuestion = toRGBA SCLightGreen
+  toRGBA VDocQuestionMark = opacity VDocQuestion 0.5
+  toRGBA VDocQuestionRo = toRGBA SCSignalOrange
 
-  expr VDocDiscussion = Css.expr SCLightBlue
-  expr VDocDiscussionMark = Css.expr $ RGBA (Css.expr VDocDiscussion) 0.8
-  expr VDocDiscussionRo = Css.expr SCSignalOrange
+  toRGBA VDocDiscussion = toRGBA SCLightBlue
+  toRGBA VDocDiscussionMark = opacity VDocDiscussion 0.8
+  toRGBA VDocDiscussionRo = toRGBA SCSignalOrange
 
-  expr VDocEdit = Css.expr SCBlue06
-  expr VDocEditMark = Css.expr $ RGBA (Css.expr VDocEdit) 0.7
-  expr VDocEditRo = Css.expr SCSignalYellow
+  toRGBA VDocEdit = toRGBA SCBlue06
+  toRGBA VDocEditMark = opacity VDocEdit 0.7
+  toRGBA VDocEditRo = toRGBA SCSignalYellow
 
-  expr VDocEditByme = Css.expr SCSignalYellow
-  expr VDocEditBymeMark = Css.expr $ RGBA (Css.expr VDocEditByme) 0.5
-  expr VDocEditBymeRo = Css.expr SCSignalOrange
+  toRGBA VDocEditByme = toRGBA SCSignalYellow
+  toRGBA VDocEditBymeMark = opacity VDocEditByme 0.5
+  toRGBA VDocEditBymeRo = toRGBA SCSignalOrange
 
   -- maybe we get away with a single ro color ...
-  expr VDocRollover = Css.expr SCSignalOrange
+  toRGBA VDocRollover = toRGBA SCSignalOrange
 
   -- overlay elements
-  expr OverlayContent = Css.expr TextColor
-  expr OverlayMeta = Css.expr SCBlue03
-  expr OverlayBackdrop = Css.expr $ RGBA (Css.expr SCWhite) 0.8
+  toRGBA OverlayContent = toRGBA TextColor
+  toRGBA OverlayMeta = toRGBA SCBlue03
+  toRGBA OverlayBackdrop = opacity SCWhite 0.8

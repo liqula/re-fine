@@ -143,7 +143,7 @@ mkDocumentStyleMap mactive (Just rawContent) = object . mconcat $ go <$> marks
     mkMarkSty ContribIDHighlightMark  = bg 255 255 0 0.3
 
     bg :: Int -> Int -> Int -> Double -> [Decl]
-    bg r g b a = [decl "background" (Color.RGBA (expr $ Color.RGB r g b) a)]
+    bg r g b a = ["background" `decl` Color.RGBA r g b a]
 
 
 -- | FIXME: this should be delivered from where the instance ToJSON Style is defined, and that
