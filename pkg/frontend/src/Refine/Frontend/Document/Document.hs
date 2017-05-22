@@ -32,6 +32,8 @@ import Refine.Frontend.Prelude
 import qualified Data.Text as ST
 import qualified React.Flux.Outdated as Outdated
 import           Text.Show.Pretty (ppShow)
+import           Language.Css.Build (expr)
+import           Language.Css.Pretty (prettyPrint)
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.OT (showEditAsRawContent)
@@ -131,7 +133,7 @@ mkDocumentStyleMap mactive (Just rawContent) = object . mconcat $ go <$> marks
     go _ = []
 
     mouseover :: ContributionID -> [Pair]
-    mouseover cid = ["borderBottom" .:= String ("2px solid " <> cs Color.VDocRollover) | mactive == Just cid]
+    mouseover cid = ["borderBottom" .:= String ("2px solid " <> (cs . prettyPrint . expr $ Color.VDocRollover)) | mactive == Just cid]
 
     mksty :: ContributionID -> [Pair]
     mksty (ContribIDNote i)       = bg   0 255 (shade i) 0.3

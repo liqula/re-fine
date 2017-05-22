@@ -28,6 +28,7 @@ import Refine.Frontend.Prelude
 
 import           Control.Lens ((^.), (&), (.~))
 import           Data.Int (Int64)
+import           Language.Css.Syntax
 import           Test.Hspec
 
 import           Refine.Common.Types
@@ -35,10 +36,10 @@ import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Style
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Test.Store
 import           Refine.Frontend.Types
+import           Refine.Frontend.Util
 
 
 cnid :: Int64 -> ContributionID
@@ -67,7 +68,7 @@ spec = do
 
     it "renders the top style with the correct value" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      is wrapper (PropertySelector [Prop "style" [StylePx "top" 145]]) `shouldReturn` True
+      is wrapper (PropertySelector [Prop "style" (declsToJSON [decl "top" (Px 145)])]) `shouldReturn` True
 
     it "has a child with the icon-bg class" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty

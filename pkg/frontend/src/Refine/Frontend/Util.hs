@@ -31,7 +31,33 @@ where
 
 import Refine.Frontend.Prelude
 
+import qualified Data.Aeson
 import qualified Data.JSString as JSS
+import Language.Css.Build
+import Language.Css.Pretty
+import Language.Css.Syntax
+
+
+-- | Variant of 'React.Flux.Combinators.style' with language-css types instead of 'JSString'.
+style :: [Decl] -> PropertyOrHandler handler
+style = ("style" @=) . declsToJSON
+
+declsToJSON :: [Decl] -> Data.Aeson.Value
+declsToJSON = object . map (\(Decl _mprio n a) -> (cs (prettyPrint n) .:= prettyPrint a))
+
+
+decl :: ToExpr e => Prop -> e -> Decl
+decl p e = Decl Nothing p (expr e)
+
+instance IsString Prop where
+  fromString = Ident
+
+
+newtype Rem = Rem Double
+  deriving (Eq, Show)
+
+instance ToExpr Rem where
+  expr v = expr $ VString (show v <> "rem")  -- FIXME: is this how you do it?
 
 
 toClasses :: (ConvertibleStrings s JSString, ConvertibleStrings JSString s) => [s] -> s

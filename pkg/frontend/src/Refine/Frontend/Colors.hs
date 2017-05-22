@@ -26,17 +26,19 @@
 module Refine.Frontend.Colors where
 
 import Refine.Frontend.Prelude
-import Refine.Frontend.Style
 
+import qualified Language.Css.Build as Css
+import qualified Language.Css.Pretty as Css
+import qualified Language.Css.Syntax as Css
 
 data RGB =
     RGB Int Int Int
-  | RGBA JSString Double
+  | RGBA Css.Expr Double
   deriving (Eq, Show)
 
-instance ConvertibleStrings RGB JSString where
-  convertString (RGB r g b) = "rgb(" <> cs (show r) <> ", " <> cs (show g) <> ", " <> cs (show b) <> ")"
-  convertString (RGBA s a)  = "rgba(" <> s <> ", " <> cs (show a) <> ")"
+instance Css.ToExpr RGB where
+  expr (RGB r g b)  = Css.expr (Css.Crgb r g b)
+  expr (RGBA color a) = Css.expr (Css.VString ("rgba(" <> Css.prettyPrint color <> ", " <> show a <> ")"))
 
 
 data SimpleColor =
@@ -74,39 +76,39 @@ data SimpleColor =
   | SCDarkGrey
   deriving (Eq, Show)
 
-instance ConvertibleStrings SimpleColor JSString where
+instance Css.ToExpr SimpleColor where
   -- main color scheme blue
-  convertString SCBlue01       = cs $ RGB 32 49 67
-  convertString SCBlue02       = cs $ RGB 59 67 87
-  convertString SCBlue03       = cs $ RGB 84 99 122
-  convertString SCBlue04       = cs $ RGB 100 126 149
-  convertString SCBlue05       = cs $ RGB 179 188 199
-  convertString SCBlue06       = cs $ RGB 210 217 223
-  convertString SCBlue07       = cs $ RGB 234 236 239
-  convertString SCBlue08       = cs $ RGB 246 247 249
+  expr SCBlue01       = Css.expr $ RGB 32 49 67
+  expr SCBlue02       = Css.expr $ RGB 59 67 87
+  expr SCBlue03       = Css.expr $ RGB 84 99 122
+  expr SCBlue04       = Css.expr $ RGB 100 126 149
+  expr SCBlue05       = Css.expr $ RGB 179 188 199
+  expr SCBlue06       = Css.expr $ RGB 210 217 223
+  expr SCBlue07       = Css.expr $ RGB 234 236 239
+  expr SCBlue08       = Css.expr $ RGB 246 247 249
 
   -- signal color
-  convertString SCSignalYellow = cs $ RGB 224 255 18
-  convertString SCSignalOrange = cs $ RGB 255 89 0
+  expr SCSignalYellow = Css.expr $ RGB 224 255 18
+  expr SCSignalOrange = Css.expr $ RGB 255 89 0
 
   -- voting and ranking
-  convertString SCRed01        = cs $ RGB 200 55 20
-  convertString SCRed02        = cs $ RGB 226 155 140
-  convertString SCGreen01      = cs $ RGB 120 200 50
-  convertString SCGreen02      = cs $ RGB 188 226 155
-  convertString SCOrange01     = cs $ RGB 231 181 0
-  convertString SCOrange02     = cs $ RGB 239 213 129
+  expr SCRed01        = Css.expr $ RGB 200 55 20
+  expr SCRed02        = Css.expr $ RGB 226 155 140
+  expr SCGreen01      = Css.expr $ RGB 120 200 50
+  expr SCGreen02      = Css.expr $ RGB 188 226 155
+  expr SCOrange01     = Css.expr $ RGB 231 181 0
+  expr SCOrange02     = Css.expr $ RGB 239 213 129
 
   -- comment
-  convertString SCLightYellow  = cs $ RGB 237 237 192
-  convertString SCLightGreen   = cs $ RGB 220 229 211
-  convertString SCLightRed     = cs $ RGB 219 204 221
-  convertString SCLightBlue    = cs $ RGB 215 233 255
+  expr SCLightYellow  = Css.expr $ RGB 237 237 192
+  expr SCLightGreen   = Css.expr $ RGB 220 229 211
+  expr SCLightRed     = Css.expr $ RGB 219 204 221
+  expr SCLightBlue    = Css.expr $ RGB 215 233 255
 
   -- helpers
-  convertString SCWhite        = cs $ RGB 255 255 255
-  convertString SCBlack        = cs $ RGB 0 0 0
-  convertString SCDarkGrey     = cs $ RGB 169 169 169
+  expr SCWhite        = Css.expr $ RGB 255 255 255
+  expr SCBlack        = Css.expr $ RGB 0 0 0
+  expr SCDarkGrey     = Css.expr $ RGB 169 169 169
 
 
 data Color =
@@ -175,74 +177,67 @@ data Color =
   | OverlayBackdrop
   deriving (Eq, Show)
 
-instance ConvertibleStrings Color JSString where
+instance Css.ToExpr Color where
   -- typography
-  convertString TextColor = cs SCBlack
-  convertString DisabledTextColor = cs SCDarkGrey
-  convertString HeadlineColor = cs SCBlue01
-  convertString LinkColor = cs SCBlue04
-  convertString ActiveColor = cs SCSignalOrange
+  expr TextColor = Css.expr SCBlack
+  expr DisabledTextColor = Css.expr SCDarkGrey
+  expr HeadlineColor = Css.expr SCBlue01
+  expr LinkColor = Css.expr SCBlue04
+  expr ActiveColor = Css.expr SCSignalOrange
 
   -- mainmenu
-  convertString MainmenuBg = cs SCBlue01
-  convertString MainmenuMainbuttonColor = cs SCBlue06
-  convertString MainmenuMainbuttonCombinedColor = cs SCBlue02
-  convertString MainmenuContentBg = cs SCBlue05
-  convertString MainmenuContentColor = cs SCBlue06
+  expr MainmenuBg = Css.expr SCBlue01
+  expr MainmenuMainbuttonColor = Css.expr SCBlue06
+  expr MainmenuMainbuttonCombinedColor = Css.expr SCBlue02
+  expr MainmenuContentBg = Css.expr SCBlue05
+  expr MainmenuContentColor = Css.expr SCBlue06
 
   -- footer
-  convertString FooterBg = cs MainmenuBg
-  convertString FooterContentColor = cs SCBlue06
+  expr FooterBg = Css.expr MainmenuBg
+  expr FooterContentColor = Css.expr SCBlue06
 
   -- vdoc header
-  convertString VDocHeaderBg = cs SCBlue07
-  convertString VDocToolbarBg = cs SCBlue06
-  convertString VDocToolbarExtensionBg = cs SCBlue04
+  expr VDocHeaderBg = Css.expr SCBlue07
+  expr VDocToolbarBg = Css.expr SCBlue06
+  expr VDocToolbarExtensionBg = Css.expr SCBlue04
 
   -- icons
-  convertString DefaultIconBg = cs SCBlue02
-  convertString FallbackAvatarBg = cs SCBlue01
-  convertString IconRollover = cs SCSignalOrange
-  convertString IconDark = cs SCBlue01
-  convertString IconBright = cs SCBlue06
-  convertString IconBgActive = cs SCSignalYellow
+  expr DefaultIconBg = Css.expr SCBlue02
+  expr FallbackAvatarBg = Css.expr SCBlue01
+  expr IconRollover = Css.expr SCSignalOrange
+  expr IconDark = Css.expr SCBlue01
+  expr IconBright = Css.expr SCBlue06
+  expr IconBgActive = Css.expr SCSignalYellow
 
   -- comments & edits etc.
-  convertString VDocComment = cs SCLightRed
-  convertString VDocCommentMark = cs $ RGBA (cs VDocComment) 0.5
-  convertString VDocCommentRo = cs SCSignalOrange
+  expr VDocComment = Css.expr SCLightRed
+  expr VDocCommentMark = Css.expr $ RGBA (Css.expr VDocComment) 0.5
+  expr VDocCommentRo = Css.expr SCSignalOrange
 
-  convertString VDocNote = cs SCLightYellow
-  convertString VDocNoteMark = cs $ RGBA (cs VDocNote) 00.5
-  convertString VDocNoteRo = cs SCSignalOrange
+  expr VDocNote = Css.expr SCLightYellow
+  expr VDocNoteMark = Css.expr $ RGBA (Css.expr VDocNote) 00.5
+  expr VDocNoteRo = Css.expr SCSignalOrange
 
-  convertString VDocQuestion = cs SCLightGreen
-  convertString VDocQuestionMark = cs $ RGBA (cs VDocQuestion) 0.5
-  convertString VDocQuestionRo = cs SCSignalOrange
+  expr VDocQuestion = Css.expr SCLightGreen
+  expr VDocQuestionMark = Css.expr $ RGBA (Css.expr VDocQuestion) 0.5
+  expr VDocQuestionRo = Css.expr SCSignalOrange
 
-  convertString VDocDiscussion = cs SCLightBlue
-  convertString VDocDiscussionMark = cs $ RGBA (cs VDocDiscussion) 0.8
-  convertString VDocDiscussionRo = cs SCSignalOrange
+  expr VDocDiscussion = Css.expr SCLightBlue
+  expr VDocDiscussionMark = Css.expr $ RGBA (Css.expr VDocDiscussion) 0.8
+  expr VDocDiscussionRo = Css.expr SCSignalOrange
 
-  convertString VDocEdit = cs SCBlue06
-  convertString VDocEditMark = cs $ RGBA (cs VDocEdit) 0.7
-  convertString VDocEditRo = cs SCSignalYellow
+  expr VDocEdit = Css.expr SCBlue06
+  expr VDocEditMark = Css.expr $ RGBA (Css.expr VDocEdit) 0.7
+  expr VDocEditRo = Css.expr SCSignalYellow
 
-  convertString VDocEditByme = cs SCSignalYellow
-  convertString VDocEditBymeMark = cs $ RGBA (cs VDocEditByme) 0.5
-  convertString VDocEditBymeRo = cs SCSignalOrange
+  expr VDocEditByme = Css.expr SCSignalYellow
+  expr VDocEditBymeMark = Css.expr $ RGBA (Css.expr VDocEditByme) 0.5
+  expr VDocEditBymeRo = Css.expr SCSignalOrange
 
   -- maybe we get away with a single ro color ...
-  convertString VDocRollover = cs SCSignalOrange
+  expr VDocRollover = Css.expr SCSignalOrange
 
   -- overlay elements
-  convertString OverlayContent = cs TextColor
-  convertString OverlayMeta = cs SCBlue03
-  convertString OverlayBackdrop = cs $ RGBA (cs SCWhite) 0.8
-
-
-instance IsStyle Color where
-  mkStyle c = StyleST c . cs
-
-instance ConvertibleStrings Color ST where
-  convertString = cs @JSString @ST . cs @Color @JSString
+  expr OverlayContent = Css.expr TextColor
+  expr OverlayMeta = Css.expr SCBlue03
+  expr OverlayBackdrop = Css.expr $ RGBA (Css.expr SCWhite) 0.8

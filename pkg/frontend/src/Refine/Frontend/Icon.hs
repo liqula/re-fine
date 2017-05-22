@@ -17,6 +17,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
@@ -26,9 +27,9 @@ module Refine.Frontend.Icon
   ) where
 
 import Refine.Frontend.Prelude
+import Language.Css.Syntax
 
 import qualified Refine.Frontend.Colors as Color
-import           Refine.Frontend.Style
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 import           Refine.Frontend.Icon.Types
@@ -73,13 +74,13 @@ iconButtonPropsToClasses props = toClasses $
     bemName = beName <> emConnector <> props ^. iconButtonPropsModuleName
     alignmentClass = [ iprops ^. iconPropsBlockName <> "--align-right" | props ^. iconButtonPropsAlignRight ]
 
-iconButtonPropsToStyles :: IconButtonPropsWithHandler onclick -> [Style]
+iconButtonPropsToStyles :: IconButtonPropsWithHandler onclick -> [Decl]
 iconButtonPropsToStyles props = alpos <> curpoint
   where
     alpos = case props ^. iconButtonPropsPosition of
-              Just pos  -> [StylePx "top" pos]
+              Just pos  -> [decl "top" pos]
               Nothing   -> []
-    curpoint = [StyleST "cursor" "pointer" | not (props ^. iconButtonPropsDisabled)]
+    curpoint = [decl "cursor" (Ident "pointer") | not (props ^. iconButtonPropsDisabled)]
 
 {- TODO we currently ignore touch device handling because there are some issues with
  - browsers emitting tap events on click and we don't know how to handle these properly.
@@ -92,12 +93,12 @@ iconButtonPropsToStyles props = alpos <> curpoint
 iconButton :: IconButtonPropsOnClick onclick => View '[IconButtonPropsWithHandler onclick]
 iconButton = mkView "IconButton" $ \props -> do
     div_ ([ "className" $= iconButtonPropsToClasses props
-          , "style" @= iconButtonPropsToStyles props
+          , style (iconButtonPropsToStyles props)
           ] <> [onClick $ mkClickHandler props | not (props ^. iconButtonPropsDisabled)]
          ) $ do
         icon_ $ props ^. iconButtonPropsIconProps
         span_ [ "className" $= (props ^. iconButtonPropsIconProps . iconPropsBlockName <> "__button-label")
-              , "style" @= [mkStyle "color" Color.DisabledTextColor | props ^. iconButtonPropsDisabled]
+              , style [decl "color" Color.DisabledTextColor | props ^. iconButtonPropsDisabled]
               ] $
             elemJSString (props ^. iconButtonPropsLabel)
 
