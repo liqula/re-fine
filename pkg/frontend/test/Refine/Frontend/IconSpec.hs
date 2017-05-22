@@ -124,11 +124,11 @@ spec = do
 
     it "renders the position when it receives a position value" $ do
       wrapper <- shallow $ iconButton_ (iconButtonTestProps & iconButtonPropsPosition .~ Just 101)
-      is wrapper (PropertySelector [Prop "style" (declsToJSON [decl @Int "top" 101])]) `shouldReturn` True
+      is wrapper (StyleSelector [decl "top" (Px 101)]) `shouldReturn` True
 
     it "does not render the position when it receives no position value" $ do
       wrapper <- shallow $ iconButton_ iconButtonTestProps
-      is wrapper (PropertySelector [Prop "style" (declsToJSON [])]) `shouldReturn` True
+      is wrapper (StyleSelector []) `shouldReturn` True
 
     it "renders an Icon" $ do
       wrapper <- shallow $ iconButton_ iconButtonTestProps
@@ -142,11 +142,11 @@ spec = do
     it "shows the span's text in grey when it is disabled" $ do
       wrapper <- shallow $ iconButton_ (iconButtonTestProps & iconButtonPropsDisabled .~ True)
       span1 <- find wrapper (StringSelector "span")
-      is span1 (PropertySelector [Prop "style" (declsToJSON [decl "color" Color.DisabledTextColor])]) `shouldReturn` True
+      is span1 (StyleSelector [decl "color" Color.DisabledTextColor]) `shouldReturn` True
 
     it "shows a pointer mouse cursor when it is not disabled" $ do
       wrapper <- shallow $ iconButton_ iconButtonTestProps
-      is wrapper (PropertySelector [Prop "style" (declsToJSON [decl "cursor" (Ident "pointer")])]) `shouldReturn` True
+      is wrapper (StyleSelector [decl "cursor" (Ident "pointer")]) `shouldReturn` True
 
     it "displays the label as passed to it" $ do
       wrapper <- shallow $ iconButton_ iconButtonTestProps
@@ -182,7 +182,7 @@ spec = do
 
     it "### always renders the position that is passed to it" $ do
       wrapper <- shallow (iconButton_ theProps)
-      is wrapper (StyleSelector [decl @Int "top" 377]) `shouldReturn` True
+      is wrapper (StyleSelector [decl "top" (Px 377)]) `shouldReturn` True
 
     it "never renders the right-alignment flag" $ do
       wrapper <- shallow (iconButton_ theProps)

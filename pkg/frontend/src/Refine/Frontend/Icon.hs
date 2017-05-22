@@ -78,7 +78,7 @@ iconButtonPropsToStyles :: IconButtonPropsWithHandler onclick -> [Decl]
 iconButtonPropsToStyles props = alpos <> curpoint
   where
     alpos = case props ^. iconButtonPropsPosition of
-              Just pos  -> [decl "top" pos]
+              Just pos  -> [decl "top" (Px pos)]
               Nothing   -> []
     curpoint = [decl "cursor" (Ident "pointer") | not (props ^. iconButtonPropsDisabled)]
 

@@ -66,7 +66,7 @@ dialogStyles = [ -- Style "display" ("block" :: String)
                 , decl "marginTop" (Px 0)
                 , decl @Int "zIndex" 6050
 
-                , decl "position" (VString "absolute")
+                , decl "position" (Ident "absolute")
                 ]
 
 -- RENAME: addCommentDialogStyles
@@ -92,9 +92,9 @@ overlayStyles =
 
 showComment :: View '[CommentDisplayProps]
 showComment = mkView "ShowComment" $ \props ->
-  let extraStyles = [ decl "top" (props ^. cdpTopOffset . unOffsetFromDocumentTop + 5)
+  let extraStyles = [ decl "top" (Px $ props ^. cdpTopOffset . unOffsetFromDocumentTop + 5)
                     , decl "left" (Px . leftFor $ props ^. cdpWindowWidth)
-                    , decl @Ident "height" ""  -- TODO: is this the same as @decl "height" (Px 0)@?
+                    , decl "height" (Px 0)
                     , decl "minHeight" (Px 100)
                     ]
   in skylight_ ["isVisible" &= True
@@ -225,7 +225,7 @@ addContributionDialogFrame True title mrange windowWidth child =
               Nothing -> 30
               Just range -> (range ^. rangeBottomOffset . unOffsetFromViewportTop)
                           + (range ^. rangeScrollOffset . unScrollOffsetOfViewport)
-        extraStyles = [ decl @Int "top" (top + 5)  -- TODO: is this the same as @decl "top" (Px $ top + 5)@?
+        extraStyles = [ decl "top" (Px $ top + 5)
                       , decl "left" (Px $ leftFor windowWidth)
                       , decl "height" (Px 560)
                       ]
@@ -241,7 +241,7 @@ addContributionDialogFrame True title mrange windowWidth child =
 
       span_ [ "className" $= "c-vdoc-overlay-content__title"
             , style [ decl "fontSize" (Rem 1.125)
-                    , decl @Double "lineHeight" 1.15  -- FIXME: why no unit here?
+                    , decl "lineHeight" (Mm 1.15)
                     , decl "marginBottom" (Rem 0.875)
                     , decl "marginLeft" (Rem 1)
                     , decl "fontWeight" (Ident "bold")
@@ -306,7 +306,7 @@ commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \cu
           & iconButtonPropsLabel        .~ "add a node"
           & iconButtonPropsOnClick      .~ [ContributionAction $ SetCommentKind CommentKindNote]
 
-        span_ [style [decl "marginRight" (VString "1rem")]] ""
+        span_ [style [decl "marginRight" (Ident "1rem")]] mempty
 
         iconButton_ $ def @IconButtonProps
           & iconButtonPropsListKey      .~ "discussion"
