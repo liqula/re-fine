@@ -28,7 +28,6 @@ import Refine.Frontend.Prelude
 
 import           Control.Lens ((^.), (&), (.~))
 import           Data.Int (Int64)
-import           Language.Css.Syntax
 import           Test.Hspec
 
 import           Refine.Common.Types
@@ -66,9 +65,9 @@ spec = do
       wrapper <- shallow $ bubble_ bubbleProps mempty
       is wrapper (StringSelector ".o-snippet") `shouldReturn` True
 
-    it "renders the top style with the correct value" $ do
+    it "### renders the top style with the correct value" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      is wrapper (StyleSelector [decl "top" (Px 145)]) `shouldReturn` True
+      is wrapper (StyleSelector [decl @Int "top" 145]) `shouldReturn` True
 
     it "has a child with the icon-bg class" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty

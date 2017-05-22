@@ -180,9 +180,9 @@ spec = do
 
     let theProps = iconButtonTestProps & iconButtonPropsPosition .~ Just 377
 
-    it "always renders the position that is passed to it" $ do
+    it "### always renders the position that is passed to it" $ do
       wrapper <- shallow (iconButton_ theProps)
-      is wrapper (StyleSelector [decl "top" (Px 377)]) `shouldReturn` True
+      is wrapper (StyleSelector [decl @Int "top" 377]) `shouldReturn` True
 
     it "never renders the right-alignment flag" $ do
       wrapper <- shallow (iconButton_ theProps)
