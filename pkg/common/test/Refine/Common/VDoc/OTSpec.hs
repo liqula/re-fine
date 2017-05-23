@@ -1,10 +1,13 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+
 {-# OPTIONS_GHC -fno-warn-orphans       #-}
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}   -- pattern completeness checker has problems with pattern synonyms
+
 module Refine.Common.VDoc.OTSpec where
 
 import Refine.Common.Prelude
