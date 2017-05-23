@@ -28,6 +28,8 @@ where
 
 import Refine.Frontend.Prelude hiding (property)
 
+import Data.List.NonEmpty (NonEmpty((:|)))
+import qualified Data.List.NonEmpty as NEL
 import Test.Hspec
 import Test.QuickCheck
 
@@ -52,7 +54,7 @@ spec :: Spec
 spec = do
   describe "Samples" $ do
     it "work" $ do
-      (rawContentFromVDocVersion sampleVDocVersion ^. rawContentBlocks) `shouldNotBe` []
+      (rawContentFromVDocVersion sampleVDocVersion ^. rawContentBlocks) `shouldNotBe` (emptyBlock :| [])
 
   describe "convertToRaw, convertFromRaw" $ do
     it "are isomorphic" . property $ \(sanitizeRawContent -> rawContent) -> do
@@ -67,7 +69,7 @@ spec = do
               , (EntityLink "http://www.example.com", (3,1))
               ]]
           rawContent' = (resetBlockKeys . convertToRaw . convertFromRaw) rawContent
-      head (rawContent' ^. rawContentBlocks) ^. blockEntityRanges `shouldBe` [(EntityKey {_unEntityKey = 0},(0,4))]
+      NEL.head (rawContent' ^. rawContentBlocks) ^. blockEntityRanges `shouldBe` [(EntityKey {_unEntityKey = 0},(0,4))]
 
     it "regression.3" $ do
       let rawContent = mkRawContent [mkBlock "rF" & blockEntityRanges .~ [(EntityLink "http://www.example.com", (0,2))]]
@@ -77,7 +79,7 @@ spec = do
     it "regression.2" $ do
       let rawContent = mkRawContent [mkBlock "rF" & blockStyles .~ [((0,1),Italic),((1,1),Italic),((1,1),Italic),((0,1),Bold)]]
           rawContent' = (resetBlockKeys . convertToRaw . convertFromRaw) rawContent
-      head (rawContent' ^. rawContentBlocks) ^. blockStyles `shouldBe` [((0,2),Italic),((0,1),Bold)]
+      NEL.head (rawContent' ^. rawContentBlocks) ^. blockStyles `shouldBe` [((0,2),Italic),((0,1),Bold)]
 
     it "regression.1" $ do
       let rawContent = mkRawContent [mkBlock "rF" & blockStyles .~ [((0,1),Italic)]]
@@ -112,7 +114,7 @@ spec = do
       lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` 1
 
     it "document_ mounts" $ do
-      let rawContent = RawContent [Block "asdf_1234-#$!&" [] [] NormalText 0 (Just (BlockKey "0"))] mempty
+      let rawContent = RawContent (Block "asdf_1234-#$!&" [] [] NormalText 0 (Just (BlockKey "0")) :| []) mempty
       wrapper <- mount $ document_ (mkTestProps rawContent)
       contents :: String <- cs <$> html wrapper
       contents `shouldContain` "<article "

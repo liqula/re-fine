@@ -26,6 +26,8 @@ module Refine.Common.Types.VDocSpec where
 import Refine.Common.Prelude
 
 import qualified Data.List as List
+import           Data.List.NonEmpty (NonEmpty((:|)))
+import qualified Data.List.NonEmpty as NEL
 import qualified Data.Map as Map
 import           Test.Hspec
 import           Test.QuickCheck
@@ -93,7 +95,7 @@ spec = do
                 numInlineStyles = length . mconcat . inlineStyles
 
                 inlineStyles :: RawContent -> [[(EntityRange, Style)]]
-                inlineStyles = fmap (view blockStyles) . view rawContentBlocks
+                inlineStyles = fmap (view blockStyles) . NEL.toList . view rawContentBlocks
 
             numInlineStyles rawContent' `shouldSatisfy` (>= numInlineStyles rawContent + length selections)
             let sanitize = (sort <$>) . (fst <$$>)
@@ -105,9 +107,9 @@ spec = do
       it "example 1" $ do
         let given = RawContentWithSelections
                (RawContent
-                 [ Block ":" [] [] Header2 0 (Just (BlockKey "0"))
-                 , Block "r" [] [] Header2 0 (Just (BlockKey "1"))
-                 ]
+                 ( Block ":" [] [] Header2 0 (Just (BlockKey "0")) :|
+                 [ Block "r" [] [] Header2 0 (Just (BlockKey "1"))
+                 ])
                  mempty)
                [ SelectionState True (SelectionPoint (BlockKey "0") 0) (SelectionPoint (BlockKey "1") 0)
                , SelectionState False (SelectionPoint (BlockKey "0") 0) (SelectionPoint (BlockKey "1") 0)
@@ -118,8 +120,7 @@ spec = do
       it "example 2" $ do
         let given = RawContentWithSelections
                (RawContent
-                 [ Block "asdf_1234-#$!&" [] [] NormalText 0 (Just (BlockKey "0"))
-                 ]
+                 (Block "asdf_1234-#$!&" [] [] NormalText 0 (Just (BlockKey "0")) :| [])
                  mempty)
                [ SelectionState False (SelectionPoint (BlockKey "0") 3) (SelectionPoint (BlockKey "0") 9)
                , SelectionState False (SelectionPoint (BlockKey "0") 6) (SelectionPoint (BlockKey "0") 12)
@@ -142,7 +143,7 @@ spec = do
                 p2 = SelectionPoint (BlockKey "0") j
 
                 have :: [[EntityRange]]
-                have = fst <$$> view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks)
+                have = NEL.toList $ fst <$$> view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks)
 
                 want :: [[EntityRange]]
                 want = [[(i, j - i)]]
@@ -161,7 +162,7 @@ spec = do
                 p2 = SelectionPoint (BlockKey "1") j
 
                 have :: [[EntityRange]]
-                have = fst <$$> view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks)
+                have = NEL.toList $ fst <$$> view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks)
 
                 want :: [[EntityRange]]
                 want = [[(i, 3)], [(0, j)]]
@@ -180,7 +181,7 @@ spec = do
                 p2 = SelectionPoint (BlockKey "4") j
 
                 have :: [[EntityRange]]
-                have = fst <$$> view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks)
+                have = NEL.toList $ fst <$$> view blockStyles <$> addMarksToBlocks marks (rawContent ^. rawContentBlocks)
 
                 want :: [[EntityRange]]
                 want = [[(i, 3)], [], [(0, 3)], [(0, 1)], [(0, j)], []]
@@ -198,7 +199,7 @@ spec = do
           marks s1 e1 s2 e2 = [ (cid0, SelectionState False (SelectionPoint block0 s1) (SelectionPoint block0 e1))
                               , (cid1, SelectionState False (SelectionPoint block0 s2) (SelectionPoint block0 e2))
                               ]
-          rawContent' = RawContent mempty mempty
+          rawContent' = RawContent (emptyBlock :| []) mempty
       addMarksToRawContent (marks 3 4 2 4) rawContent `shouldNotBe` rawContent'
       addMarksToRawContent (marks 2 4 3 4) rawContent `shouldNotBe` rawContent'
       addMarksToRawContent (marks 2 4 2 4) rawContent `shouldNotBe` rawContent'

@@ -29,6 +29,7 @@ module Refine.Frontend.Document.Document
 
 import Refine.Frontend.Prelude
 
+import qualified Data.List.NonEmpty as NEL
 import qualified React.Flux.Outdated as Outdated
 import           Text.Show.Pretty (ppShow)
 import           Language.Css.Build hiding (s)
@@ -123,7 +124,7 @@ mkDocumentStyleMap _ Nothing = object []
 mkDocumentStyleMap mactive (Just rawContent) = object . mconcat $ go <$> marks
   where
     marks :: [Style]
-    marks = map snd . mconcat $ view blockStyles <$> (rawContent ^. rawContentBlocks)
+    marks = fmap snd . mconcat $ view blockStyles <$> (rawContent ^. rawContentBlocks . to NEL.toList)
 
     go :: Style -> [Pair]
     go s@(Mark cid)   = [styleToST s .:= declsToJSON (mouseover cid <> mkMarkSty cid)]

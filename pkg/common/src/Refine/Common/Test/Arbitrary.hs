@@ -24,6 +24,7 @@ import           Data.Function (on)
 import qualified Data.IntMap as IntMap
 import           Data.List (sort)
 import qualified Data.List as List
+import qualified Data.List.NonEmpty as NEL
 import           Data.String.Conversions (cs)
 import qualified Data.Text as ST
 import qualified Data.Text.I18n as I18n
@@ -96,10 +97,10 @@ gshrink = List.map to . shrinkSOP . from
 
 instance Arbitrary RawContent where
   arbitrary = initBlockKeys . sanitizeRawContent . mkRawContent <$> arbitrary
-  shrink    = fmap sanitizeRawContent . filter ((/= []) . view rawContentBlocks) <$> gshrink
+  shrink    = fmap sanitizeRawContent <$> gshrink
 
 initBlockKeys :: RawContent -> RawContent
-initBlockKeys = rawContentBlocks %~ zipWith (\k -> blockKey .~ (Just . BlockKey . cs . show $ k)) [(0 :: Int)..]
+initBlockKeys = rawContentBlocks %~ NEL.zipWith (\k -> blockKey .~ (Just . BlockKey . cs . show $ k)) (NEL.fromList [(0 :: Int)..])
 
 -- | These are the sanity conditions imposed on 'ContentState' by the draft library.  Everything
 -- that does not meet these conditions will be silently removed from the input.
@@ -148,7 +149,7 @@ sanitizeRawContent = deleteDanglingEntityRefs
     deleteDanglingEntities (RawContent bs es) = RawContent bs $ IntMap.filterWithKey (\k _ -> EntityKey k `elem` entityKeys) es
       where
         entityKeys :: [EntityKey]
-        entityKeys = fst <$> mconcat (view blockEntityRanges <$> bs)
+        entityKeys = fst <$> mconcat (view blockEntityRanges <$> NEL.toList bs)
 
     deleteOverlappingEntities :: RawContent -> RawContent
     deleteOverlappingEntities  (RawContent bs es) = RawContent ((blockEntityRanges %~ goEntities) <$> bs) es
@@ -258,23 +259,11 @@ instance Arbitrary RawContentWithSelections where
     ss <- replicateM 11 $ arbitrarySoundSelectionState rc
     pure $ RawContentWithSelections rc ss
 
-makeNonEmpty :: RawContent -> RawContent
-makeNonEmpty = rawContentBlocks %~ (b:)
-  where
-    b = Block
-      { _blockText         = "wefwef"
-      , _blockEntityRanges = []
-      , _blockStyles       = []
-      , _blockType         = minBound
-      , _blockDepth        = 0
-      , _blockKey          = Nothing
-      }
-
 arbitrarySoundSelectionState :: RawContent -> Gen SelectionState
 arbitrarySoundSelectionState (RawContent bs _) = do
   let arbpoint = do
-        i <- choose (0, length bs - 1)
-        let b = bs !! i
+        i <- choose (0, NEL.length bs - 1)
+        let b = bs NEL.!! i
             blockkey = b ^?! blockKey . _Just
         offset <- choose (0, max 0 (ST.length (b ^. blockText) - 1))
         pure ( (i, offset)  -- this is used to tell which is start and which is end.
