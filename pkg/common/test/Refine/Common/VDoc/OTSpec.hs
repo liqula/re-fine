@@ -51,7 +51,7 @@ spec :: Spec
 spec = parallel $ do
 
     -- See #310
-    -- runTest $ allTests @RawContent
+    -- runTest' (RunTestConfig Nothing (Just 10)) $ allTests @RawContent
 
     it "Doc <-> RawContent conversion" . property $ \d ->
       rawContentToDoc (docToRawContent d) `shouldBe` simplifyDoc d
