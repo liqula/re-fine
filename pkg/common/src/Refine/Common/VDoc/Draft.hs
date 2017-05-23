@@ -29,6 +29,8 @@ where
 import Refine.Common.Prelude
 
 import qualified Data.List as List
+import           Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NEL
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text as ST
@@ -57,7 +59,7 @@ resetBlockKeys (RawContent bs es) = RawContent (set blockKey Nothing <$> bs) es
 selectionIsEmpty :: RawContent -> SelectionState -> Bool
 selectionIsEmpty (RawContent bs _) ss@(SelectionState _ s e) = s == e || multiLineCase
   where
-    multiLineCase = case selectedBlocks ss bs of
+    multiLineCase = case selectedBlocks ss (NEL.toList bs) of
       []        -> True
       [_]       -> assert (s /= e) False
       (b : bs') -> and [ ST.length (b ^. blockText) == (s ^. selectionOffset)
@@ -94,18 +96,18 @@ chunkRangeToSelectionState (RawContent bs _) (ChunkRange s e) = SelectionState F
   where
     trans (ChunkPoint (DataUID blocknum) offset) = SelectionPoint blockkey offset
       where
-        Just blockkey = (bs !! blocknum) ^. blockKey
+        Just blockkey = (bs NEL.!! blocknum) ^. blockKey
 
     top :: SelectionPoint
-    top = SelectionPoint (fromJust $ head bs ^. blockKey) 0
+    top = SelectionPoint (fromJust $ NEL.head bs ^. blockKey) 0
 
     bottom :: SelectionPoint
-    bottom = SelectionPoint (fromJust $ last bs ^. blockKey) (ST.length $ last bs ^. blockText)
+    bottom = SelectionPoint (fromJust $ NEL.last bs ^. blockKey) (ST.length $ NEL.last bs ^. blockText)
 
 
 -- | See 'chunkRangeToSelectionState'.
 selectionStateToChunkRange :: RawContent -> SelectionState -> ChunkRange
-selectionStateToChunkRange (RawContent bs _) (SelectionState _ s e) = ChunkRange (trans s) (trans e)
+selectionStateToChunkRange (RawContent (NEL.toList -> bs) _) (SelectionState _ s e) = ChunkRange (trans s) (trans e)
   where
     trans (SelectionPoint blockkey offset) = Just (ChunkPoint (DataUID blocknum) offset)
       where
@@ -139,7 +141,7 @@ deleteMarksFromRawContent :: RawContent -> RawContent
 deleteMarksFromRawContent = deleteMarksFromRawContentIf (const True)
 
 deleteMarksFromRawContentIf :: (ContributionID -> Bool) -> RawContent -> RawContent
-deleteMarksFromRawContentIf p = rawContentBlocks %~ map (deleteMarksFromBlockIf p)
+deleteMarksFromRawContentIf p = rawContentBlocks %~ fmap (deleteMarksFromBlockIf p)
 
 deleteMarksFromBlock :: Block EntityKey -> Block EntityKey
 deleteMarksFromBlock = deleteMarksFromBlockIf (const True)
@@ -154,7 +156,7 @@ deleteMarksFromBlockIf p = blockStyles %~ List.filter (p' . snd)
 addMarksToRawContent :: [(ContributionID, SelectionState)] -> RawContent -> RawContent
 addMarksToRawContent marks = rawContentBlocks %~ addMarksToBlocks marks
 
-addMarksToBlocks :: [(ContributionID, SelectionState)] -> [Block EntityKey] -> [Block EntityKey]
+addMarksToBlocks :: [(ContributionID, SelectionState)] -> NonEmpty (Block EntityKey) -> NonEmpty (Block EntityKey)
 addMarksToBlocks m bs = case (addMarksToBlock (warmupSelectionStates m) `mapM` bs) `runState` [] of
   (bs', []) -> bs'
   bad -> error $ "addMarksToBlocks: impossible: " <> show bad
@@ -226,7 +228,7 @@ mkInlineStyleSegments :: [(EntityRange, Style)] -> [(Int, Set Style)]
 mkInlineStyleSegments = mkSomeSegments fst snd
 
 getMarkSelectors :: RawContent -> [(ContributionID, MarkSelector, MarkSelector)]
-getMarkSelectors = findSides . mconcat . fmap collectBlock . zip [0..] . view rawContentBlocks
+getMarkSelectors = findSides . mconcat . fmap collectBlock . zip [0..] . NEL.toList . view rawContentBlocks
   where
     collectBlock :: (Int, Block EntityKey) -> [(ContributionID, ((Int, Int), MarkSelector))]
     collectBlock (bix, block) = catMaybes $ collectSegment <$> warmupSegments (mkInlineStyleSegments $ block ^. blockStyles)

@@ -44,6 +44,7 @@ import           Data.Int
 import           Data.Foldable (toList)
 import qualified Data.HashMap.Lazy as HashMap
 import qualified Data.IntMap as IntMap
+import           Data.List.NonEmpty (NonEmpty((:|)))
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text as ST
@@ -188,7 +189,7 @@ data HighlightMark
 -- | Haskell representation of the javascript @RawDraftContentState@.
 -- https://draftjs.org/docs/api-reference-data-conversion.html#content
 data RawContent = RawContent
-  { _rawContentBlocks    :: [Block EntityKey]  -- ^ FIXME: use Data.List.NonEmpty from semigroups.
+  { _rawContentBlocks    :: NonEmpty (Block EntityKey)
   , _rawContentEntityMap :: IntMap Entity  -- ^ for performance, do not use @Map EntityKey Entity@ here.
   }
   deriving (Eq, Show, Generic)
@@ -466,7 +467,7 @@ instance SOP.HasDatatypeInfo (EEdit RawContent)
 -- ** helper functions for Editable RawContent instance
 
 rawContentToDoc :: RawContent -> OTDoc
-rawContentToDoc (RawContent blocks entities) = mkDocBlock <$> blocks
+rawContentToDoc (RawContent (block :| blocks) entities) = mkDocBlock <$> (block : blocks)
   where
     mkDocBlock :: Block EntityKey -> DocBlock
     mkDocBlock (Block txt eranges styles ty depth _key) = DocBlock ty (segment segments txt) depth
@@ -487,7 +488,7 @@ docToRawContent blocks = mkRawContent $ mkDocBlock <$> blocks
 
     mkDocBlock :: DocBlock -> Block Entity
     mkDocBlock (DocBlock ty es d) = Block
-        (mconcat $ map getText es)
+        (mconcat $ fmap getText es)
         [(e, r) | (r, Left e) <- ranges]
         [(r, s) | (r, Right s) <- ranges]
         ty
@@ -505,18 +506,23 @@ docToRawContent blocks = mkRawContent $ mkDocBlock <$> blocks
            <> -- jump to the next segment (aka line element)
               mkRanges (n + len)
                         (  [(offset, sty) | (offset, sty) <- acc, sty `Set.member` s]
-                        <> [(n, sty) | sty <- Set.elems s, sty `notElem` map snd acc])
+                        <> [(n, sty) | sty <- Set.elems s, sty `notElem` fmap snd acc])
                         ss
 
 
 -- | Note: empty block list is illegal.  For once it will make draft crash in 'stateFromContent'.
 mkRawContent :: [Block Entity] -> RawContent
 mkRawContent [] = mkRawContent [emptyBlock]
-mkRawContent bs = RawContent (index <$$> bs) (IntMap.fromList entities)
+mkRawContent bsl = RawContent bsnl (IntMap.fromList entities)
   where
+    bsnl = case index <$$> bsl of
+      []       -> emptyBlock :| []
+      (b : bs) -> b          :| bs
+
     -- FUTUREWORK: it is possible to do just one traversal to collect and index entities
     -- https://www.reddit.com/r/haskell/comments/610sa1/applicative_sorting/
-    entities = zip [0..] . nub $ concatMap toList bs
+    entities :: [(Int, Entity)]
+    entities = zip [0..] . nub $ concatMap toList bsl
 
     index :: Entity -> EntityKey
     index e = EntityKey . fromMaybe (error "mkRawContent: impossible") $ Map.lookup e em
@@ -542,7 +548,7 @@ mkSomeSegments frange fpayload els = segments
   where
     segments =
         mkSegments 0 []
-      . map (\((offset, len), s) -> (offset, (offset + len, s)))
+      . fmap (\((offset, len), s) -> (offset, (offset + len, s)))
       . sortBy (compare `on` fst)
       $ [(frange el, fpayload el) | el <- els]
 
