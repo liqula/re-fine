@@ -18,13 +18,14 @@ module Refine.Common.Test.Arbitrary where
 import Refine.Common.Prelude hiding (Generic, to)
 
 import           Control.Arrow (first, second)
-import           Control.Lens (Lens', (^.), (^?!), (.~), (%~), (&), _Just, view, _1, _2)
+import           Control.DeepSeq
 import           Control.Monad.State
 import           Data.Function (on)
 import qualified Data.IntMap as IntMap
 import           Data.List (sort)
 import qualified Data.List as List
 import qualified Data.List.NonEmpty as NEL
+import qualified Data.Set as Set
 import           Data.String.Conversions (cs)
 import qualified Data.Text as ST
 import qualified Data.Text.I18n as I18n
@@ -144,12 +145,15 @@ sanitizeRawContent = deleteDanglingEntityRefs
     deleteDanglingEntityRefs (RawContent bs es) = RawContent (sieve <$> bs) es
       where
         sieve :: Block EntityKey -> Block EntityKey
-        sieve b = b & blockEntityRanges %~ filter (\(EntityKey k, _) -> k `elem` IntMap.keys es)
+        sieve b = b & blockEntityRanges %~ filter (\(EntityKey k, _) -> k `IntMap.member` es)
 
-    deleteDanglingEntities (RawContent bs es) = RawContent bs $ IntMap.filterWithKey (\k _ -> EntityKey k `elem` entityKeys) es
+    deleteDanglingEntities (RawContent bs es) = entityKeys `deepseq` RawContent bs (go es)
       where
-        entityKeys :: [EntityKey]
-        entityKeys = fst <$> mconcat (view blockEntityRanges <$> NEL.toList bs)
+        go :: IntMap a -> IntMap a
+        go = IntMap.filterWithKey (\k _ -> k `Set.member` entityKeys)
+
+        entityKeys :: Set Int
+        entityKeys = Set.fromList $ coerce . fst <$> mconcat (view blockEntityRanges <$> NEL.toList bs)
 
     deleteOverlappingEntities :: RawContent -> RawContent
     deleteOverlappingEntities  (RawContent bs es) = RawContent ((blockEntityRanges %~ goEntities) <$> bs) es
@@ -157,6 +161,11 @@ sanitizeRawContent = deleteDanglingEntityRefs
         goEntities :: (Eq a, Ord a) => [(a, EntityRange)] -> [(a, EntityRange)]
         goEntities = go _2 _1
 
+        -- TUNING: we could try folding the groups into a payload-keyed map.  that would avoid the
+        -- multiple sort steps, but i'm skeptical about the impact on overall test suite run times
+        -- changing the entityKeys type in deleteDanglingEntities above from list to set didn't have
+        -- any effect that could be measured by just running the test suite and looking at the
+        -- clock.  ~fisx
         go :: forall a payload. (Eq payload, Ord payload) => Lens' a EntityRange -> Lens' a payload -> [a] -> [a]
         go range payload = sortR
                          . mconcat
