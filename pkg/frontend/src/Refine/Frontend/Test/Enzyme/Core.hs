@@ -30,6 +30,10 @@ module Refine.Frontend.Test.Enzyme.Core
 
 import Refine.Frontend.Prelude
 
+import Language.Css.Syntax hiding (Prop)
+
+import Refine.Frontend.Util
+
 
 -- | StringSelector can be a CSS class, tag, id, prop (e.g. "[foo=3]"),
 --   component display name. (TODO should this be refined? Enhance? Be checked?)
@@ -38,6 +42,7 @@ import Refine.Frontend.Prelude
 data EnzymeSelector =
     StringSelector String
   | PropertySelector [Prop]
+  | StyleSelector [Decl]
 --  | ComponentSelector
 
 -- | TODO: 'PropertySelector' should be translated to js array, then we could get rid of
@@ -45,6 +50,7 @@ data EnzymeSelector =
 instance PToJSVal EnzymeSelector where
   pToJSVal (StringSelector str) = pToJSVal str
   pToJSVal (PropertySelector p) = pToJSVal . cs @LBS @JSString $ encode p
+  pToJSVal (StyleSelector dcls) = pToJSVal . cs @LBS @JSString $ encode (object ["style" .:= declsToJSON dcls])
 
 data EventType =
     MouseEnter

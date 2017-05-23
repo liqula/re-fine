@@ -30,16 +30,17 @@ module Refine.Frontend.Contribution.Bubble
 import Refine.Frontend.Prelude
 
 import           Web.HttpApiData (toUrlPiece)
+import           Language.Css.Syntax
 
 import           Refine.Common.Types.Core
 import           Refine.Frontend.Contribution.Types
+import           Refine.Frontend.Icon
+import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Screen.Calculations
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Style
 import           Refine.Frontend.Types
-import           Refine.Frontend.Icon
-import           Refine.Frontend.Icon.Types
+import           Refine.Frontend.Util
 
 
 mkClickHandler :: [ContributionAction] -> Event -> MouseEvent -> [SomeStoreAction]
@@ -78,7 +79,7 @@ renderBubble children props topOffset = do
                     , contribKind
                     , ("o-snippet--hover", Just (props ^. bubblePropsContributionId) == props ^. bubblePropsHighlightedBubble)
                     ]
-       , "style" @= [StylePx "top" (offsetIntoText topOffset (props ^. bubblePropsScreenState))]
+       , "style" @@= [decl "top" (Px $ offsetIntoText topOffset (props ^. bubblePropsScreenState))]
        , onClick      $ mkClickHandler (props ^. bubblePropsClickActions)
        , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble $ props ^. bubblePropsContributionId]
        , onMouseLeave $ mkClickHandler [UnhighlightMarkAndBubble]

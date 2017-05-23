@@ -31,21 +31,36 @@ where
 
 import Refine.Frontend.Prelude
 
+import qualified Data.Aeson
 import qualified Data.JSString as JSS
+import Language.Css.Build
+import Language.Css.Pretty
+import Language.Css.Syntax
 
-import           Refine.Frontend.Types
+
+decl :: ToExpr e => Prop -> e -> Decl
+decl p e = Decl Nothing p (expr e)
+
+instance IsString Prop where
+  fromString = Ident
+
+-- | Like '(@=)', but for css rather than json.
+(@@=) :: forall handler. JSString -> [Decl] -> PropertyOrHandler handler
+(@@=) k v = k @= declsToJSON v
+
+declsToJSON :: [Decl] -> Data.Aeson.Value
+declsToJSON = object . map (\(Decl _mprio n a) -> (cs (prettyPrint n) .:= prettyPrint a))
+
+
+newtype Rem = Rem Double
+  deriving (Eq, Show)
+
+instance ToExpr Rem where
+  expr (Rem d) = expr (Em d)  -- FIXME: #317
 
 
 toClasses :: (ConvertibleStrings s JSString, ConvertibleStrings JSString s) => [s] -> s
 toClasses = cs . JSS.unwords . filter (not . JSS.null) . fmap cs
-
-attrToProp :: Attr -> forall handler. PropertyOrHandler handler
-attrToProp (Attr key value) = cs key $= cs value
-
-lookupAttrs :: ST -> [Attr] -> Maybe ST
-lookupAttrs _ [] = Nothing
-lookupAttrs wantedKey (Attr key value : _) | key == wantedKey = Just value
-lookupAttrs wantedKey (_ : as) = lookupAttrs wantedKey as
 
 deriving instance FromJSVal (NoJSONRep JSVal)
 deriving instance ToJSVal (NoJSONRep JSVal)

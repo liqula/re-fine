@@ -29,10 +29,10 @@ import Refine.Frontend.Prelude
 import           Control.DeepSeq
 import qualified Data.HashMap.Strict as HashMap
 import qualified Data.Map.Strict as Map
+import           Language.Css.Syntax hiding (Value)
 
-import Refine.Common.Types hiding (Style)
+import Refine.Common.Types
 import Refine.Frontend.Screen.Types
-import Refine.Frontend.Style
 import Refine.Frontend.Types
 import Refine.Prelude.TH (makeRefineType)
 
@@ -179,7 +179,7 @@ data CommentDisplayProps = CommentDisplayProps
   , _cdpIconStyle    :: IconDescription
   , _cdpUserName     :: JSString
   , _cdpCreationDate :: JSString
-  , _cdpContentStyle :: [Style]
+  , _cdpContentStyle :: [Decl]
   , _cdpTopOffset    :: OffsetFromDocumentTop
   , _cdpWindowWidth  :: Int
   }

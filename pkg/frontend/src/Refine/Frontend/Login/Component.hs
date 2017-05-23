@@ -28,13 +28,15 @@ import Refine.Frontend.Prelude
 
 import           Control.Lens (ASetter)
 import qualified Data.Text as ST
+import           Language.Css.Syntax
 
 import           Refine.Common.Types.Prelude
-import           Refine.Frontend.Login.Types
-import qualified Refine.Frontend.Store.Types as RS
-import           Refine.Frontend.Style
+import qualified Refine.Frontend.Colors as Colors
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
+import           Refine.Frontend.Login.Types
+import qualified Refine.Frontend.Store.Types as RS
+import           Refine.Frontend.Util
 import           Refine.Prelude.TH (makeRefineType)
 
 
@@ -99,23 +101,23 @@ loginOrLogout_ = \case
   UserLoggedOut  -> login_
   UserLoggedIn _ -> const logout_
 
-defaultStyles :: [Style]
+defaultStyles :: [Decl]
 defaultStyles =
-  [ StyleST "position" "absolute"
-  , StyleInt "zIndex" 100000
-  , StyleST "color" "black"
-  , StyleST "backgroundColor" "white"
+  [ decl "position" (Ident "absolute")
+  , decl @Int "zIndex" 100000
+  , decl "color" (Ident "black")
+  , decl "backgroundColor" Colors.SCWhite
   ]
 
 
 -- * Login
 
-loginStyles :: [Style]
+loginStyles :: [Decl]
 loginStyles = defaultStyles
 
 login :: FormError -> View '[]
 login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState ->
-  div_ ["style" @= loginStyles] $ do
+  div_ ["style" @@= loginStyles] $ do
     h1_ "Login"
 
     form_ [ "target" $= "#"
@@ -140,12 +142,12 @@ login_ !errors = view_ (login errors) "login_"
 
 -- * Logout
 
-logoutStyles :: [Style]
+logoutStyles :: [Decl]
 logoutStyles = defaultStyles
 
 logout :: View '[]
 logout = mkView "Logout" $ do
-  div_ ["style" @= logoutStyles] $ do
+  div_ ["style" @@= logoutStyles] $ do
     p_ "Profile page"
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
@@ -163,12 +165,12 @@ logout_ = view_ logout "logout_"
 
 -- * Registration
 
-registrationStyles :: [Style]
+registrationStyles :: [Decl]
 registrationStyles = defaultStyles
 
 registration :: FormError -> View '[]
 registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "" False errors) $ \curState -> do
-  div_ ["style" @= registrationStyles] $ do
+  div_ ["style" @@= registrationStyles] $ do
     h1_ "Registration"
 
     form_ [ "target" $= "#"

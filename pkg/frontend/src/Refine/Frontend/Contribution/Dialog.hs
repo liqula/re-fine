@@ -29,6 +29,7 @@ import Refine.Frontend.Prelude
 import qualified Data.Map.Strict as M
 import qualified Data.Text as ST
 import qualified Data.Tree as Tree
+import           Language.Css.Syntax
 import qualified React.Flux as RF
 
 import           Refine.Common.Types hiding (Style)
@@ -43,9 +44,9 @@ import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Style
 import           Refine.Frontend.TKey
 import           Refine.Frontend.Types
+import           Refine.Frontend.Util
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
@@ -55,58 +56,58 @@ dialogWidth = 640
 leftFor :: Int -> Int
 leftFor windowWidth = (windowWidth - dialogWidth) `quot` 2
 
-dialogStyles :: [Style]
+dialogStyles :: [Decl]
 dialogStyles = [ -- Style "display" ("block" :: String)
                  -- Style "minHeight" ("200px" :: String)
                  -- Style "padding" ("3rem 1.0rem 1.0rem" :: String)
 
-                  StylePx "width" dialogWidth
-                , StylePx "marginLeft" 0
-                , StylePx "marginTop" 0
-                , StyleInt "zIndex" 6050
+                  decl "width" (Px dialogWidth)
+                , decl "marginLeft" (Px 0)
+                , decl "marginTop" (Px 0)
+                , decl @Int "zIndex" 6050
 
-                , StyleST "position" "absolute"
+                , decl "position" (Ident "absolute")
                 ]
 
 -- RENAME: addCommentDialogStyles
-vdoc_overlay_content__add_comment :: [Style]
-vdoc_overlay_content__add_comment = [mkStyle "backgroundColor" C.VDocComment] <> dialogStyles
+vdoc_overlay_content__add_comment :: [Decl]
+vdoc_overlay_content__add_comment = [decl "backgroundColor" C.VDocComment] <> dialogStyles
 
 -- is vdoc_overlay_content__comment in CSS
 
 -- RENAME: showNoteDialogStyles
-vdoc_overlay_content__note :: [Style]
-vdoc_overlay_content__note = [mkStyle "backgroundColor" C.VDocNote] <> dialogStyles
+vdoc_overlay_content__note :: [Decl]
+vdoc_overlay_content__note = [decl "backgroundColor" C.VDocNote] <> dialogStyles
 
 -- RENAME: showDiscussionDialogStyles
-vdoc_overlay_content__discussion :: [Style]
-vdoc_overlay_content__discussion = [mkStyle "backgroundColor" C.VDocDiscussion] <> dialogStyles
+vdoc_overlay_content__discussion :: [Decl]
+vdoc_overlay_content__discussion = [decl "backgroundColor" C.VDocDiscussion] <> dialogStyles
 
-overlayStyles :: [Style]
+overlayStyles :: [Decl]
 overlayStyles =
-  [ StyleInt "zIndex" 6010
-  , mkStyle "backgroundColor" C.OverlayBackdrop
+  [ decl @Int "zIndex" 6010
+  , decl "backgroundColor" C.OverlayBackdrop
   ]
 
 
 showComment :: View '[CommentDisplayProps]
 showComment = mkView "ShowComment" $ \props ->
-  let extraStyles = [ StylePx "top" (props ^. cdpTopOffset . unOffsetFromDocumentTop + 5)
-                    , StylePx "left" (leftFor (props ^. cdpWindowWidth))
-                    , StyleST "height" ""
-                    , StylePx "minHeight" 100
+  let extraStyles = [ decl "top" (Px $ props ^. cdpTopOffset . unOffsetFromDocumentTop + 5)
+                    , decl "left" (Px . leftFor $ props ^. cdpWindowWidth)
+                    , decl "height" (Px 0)
+                    , decl "minHeight" (Px 100)
                     ]
   in skylight_ ["isVisible" &= True
            , RF.on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideCommentOverlay)
            , RF.on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentOverlay)
-           , "dialogStyles" @= ((props ^. cdpContentStyle) <> extraStyles)
-           , "overlayStyles" @= overlayStyles
-           , "closeButtonStyle" @= [StylePx "top" 0, StylePx "bottom" 0]
-           , "titleStyle" @= [StylePx "margin" 0]
+           , "dialogStyles" @@= ((props ^. cdpContentStyle) <> extraStyles)
+           , "overlayStyles" @@= overlayStyles
+           , "closeButtonStyle" @@= [decl "top" (Px 0), decl "bottom" (Px 0)]
+           , "titleStyle" @@= [decl "margin" (Px 0)]
            ] $ do
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
-        div_ ["style" @= [StylePercentage "marginLeft" 96]] $ do             -- FIXME: How to do this properly?
+        div_ ["style" @@= [decl "marginLeft" (Percentage 96)]] $ do             -- FIXME: How to do this properly?
           icon_ (IconProps "c-vdoc-overlay-content" False (props ^. cdpIconStyle) XL)
 
         div_ ["className" $= "c-vdoc-overlay-content__copy"] $ elemText (props ^. cdpCommentText)
@@ -129,7 +130,7 @@ showComment = mkView "ShowComment" $ \props ->
                 icon_ (IconProps "c-vdoc-overlay-votes" True ("icon-Vote_negative", "dark") XL)
         -- END: vote buttons -->
 
-        div_ ["style" @= [StylePx "marginBottom" 20]] "" -- make some space for the close button
+        div_ ["style" @@= [decl "marginBottom" (Px 20)]] "" -- make some space for the close button
 
 showComment_ :: CommentDisplayProps -> ReactElementM eventHandler ()
 showComment_ !props = view_ showComment "showComment_" props
@@ -205,7 +206,7 @@ showQuestion :: View '[ShowQuestionProps]
 showQuestion = mkView "ShowQuestion" $ \case
   ShowQuestionProps Nothing -> mempty
   ShowQuestionProps (Just question) ->
-    let overlayStyle1 = [mkStyle "backgroundColor" C.VDocQuestion]
+    let overlayStyle1 = [decl "backgroundColor" C.VDocQuestion]
         commentText1  = (question ^. compositeQuestion . questionText)
         iconStyle1    = ("icon-Question", "dark")
         userName1     = "meisterkaiser"
@@ -224,27 +225,28 @@ addContributionDialogFrame True title mrange windowWidth child =
               Nothing -> 30
               Just range -> (range ^. rangeBottomOffset . unOffsetFromViewportTop)
                           + (range ^. rangeScrollOffset . unScrollOffsetOfViewport)
-        extraStyles = [ StylePx "top" (top + 5)
-                      , StylePx "left" (leftFor windowWidth)
-                      , StylePx "height" 560
+        extraStyles = [ decl "top" (Px $ top + 5)
+                      , decl "left" (Px $ leftFor windowWidth)
+                      , decl "height" (Px 560)
                       ]
     in skylight_ ["isVisible" &= True
              , RF.on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideCommentEditor)
              , RF.on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentEditor)
-             , "dialogStyles" @= (vdoc_overlay_content__add_comment <> extraStyles)
-             , "overlayStyles" @= overlayStyles
-             , "titleStyle" @= [StylePx "margin" 0]
+             , "dialogStyles" @@= (vdoc_overlay_content__add_comment <> extraStyles)
+             , "overlayStyles" @@= overlayStyles
+             , "titleStyle" @@= [decl "margin" (Px 0)]
              ]  $ do
 
       icon_ (IconProps "c-vdoc-overlay-content" False ("icon-New_Comment", "dark") XL)
 
       span_ [ "className" $= "c-vdoc-overlay-content__title"
-            , "style" @= [ StyleRem "fontSize" 1.125
-                         , StyleDouble "lineHeight" 1.15
-                         , StyleRem "marginBottom" 0.875
-                         , StyleRem "marginLeft" 1
-                         , StyleST "fontWeight" "bold"
-                         ]
+            , "style" @@=
+                    [ decl "fontSize" (Rem 1.125)
+                    , decl "lineHeight" (Mm 1.15)
+                    , decl "marginBottom" (Rem 0.875)
+                    , decl "marginLeft" (Rem 1)
+                    , decl "fontWeight" (Ident "bold")
+                    ]
             ] (elemText title)
 
       hr_ []
@@ -275,10 +277,11 @@ contributionDialogTextForm stepNumber promptText = do
         , "action" $= "POST"] $ do
     textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
               , "className" $= "o-wysiwyg o-form-input__textarea"
-              , "style" @= [ StyleST "resize" "none"
-                           , StylePx "width" 600
-                           , StylePx "height" 240
-                           ]
+              , "style" @@=
+                      [ decl "resize" (Ident "none")
+                      , decl "width" (Px 600)
+                      , decl "height" (Px 240)
+                      ]
               -- Update the current state with the current text in the textbox, sending no actions
               , onChange $ \evt st -> ([], Just $ st & addContributionFormState .~ target evt "value")
               ]
@@ -305,7 +308,7 @@ commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \cu
           & iconButtonPropsLabel        .~ "add a node"
           & iconButtonPropsOnClick      .~ [ContributionAction $ SetCommentKind CommentKindNote]
 
-        span_ ["style" @= [StyleRem "marginRight" 1]] ""
+        span_ ["style" @@= [decl "marginRight" (Rem 1)]] mempty
 
         iconButton_ $ def @IconButtonProps
           & iconButtonPropsListKey      .~ "discussion"
@@ -364,8 +367,7 @@ addEdit_ = view_ addEdit "addEdit_"
 -- 'editInput' and and 'editKindForm'?
 editInput :: View '[AddContributionProps EditKind]
 editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState props -> do
-
-    p_ $ do
+    div_ $ do
       elemString "Step 1: "
       span_ ["className" $= "bold"] "Type of this edit:"
       liftViewToStateHandler $ editKindForm_ (DocumentAction . DocumentUpdateEditKind) (EditKindFormProps $ props ^. acpKind)

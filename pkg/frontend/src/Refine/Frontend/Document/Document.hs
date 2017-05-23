@@ -29,9 +29,10 @@ module Refine.Frontend.Document.Document
 
 import Refine.Frontend.Prelude
 
-import qualified Data.Text as ST
 import qualified React.Flux.Outdated as Outdated
 import           Text.Show.Pretty (ppShow)
+import           Language.Css.Build hiding (s)
+import           Language.Css.Syntax hiding (Value)
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.OT (showEditAsRawContent)
@@ -44,6 +45,7 @@ import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.ThirdPartyViews (editor_)
+import           Refine.Frontend.Util
 
 -- | Note on draft vs. readOnly vs. selection events: in readOnly mode, draft's onChange event is not
 -- fired at all, not even for selection updates.  (There is a hack based on handleBeforeInput, but
@@ -124,29 +126,24 @@ mkDocumentStyleMap mactive (Just rawContent) = object . mconcat $ go <$> marks
     marks = map snd . mconcat $ view blockStyles <$> (rawContent ^. rawContentBlocks)
 
     go :: Style -> [Pair]
-    go s@(Mark cid)   = [styleToST s .:= object (mouseover cid <> mksty cid)]
-    go s@StyleDeleted = [styleToST s .:= object (bg 255 0   0 0.3)]
-    go s@StyleAdded   = [styleToST s .:= object (bg 0   255 0 0.3)]
-    go s@StyleChanged = [styleToST s .:= object (bg 255 255 0 0.3)]
+    go s@(Mark cid)   = [styleToST s .:= declsToJSON (mouseover cid <> mkMarkSty cid)]
+    go s@StyleDeleted = [styleToST s .:= declsToJSON (bg 255 0   0 0.3)]
+    go s@StyleAdded   = [styleToST s .:= declsToJSON (bg 0   255 0 0.3)]
+    go s@StyleChanged = [styleToST s .:= declsToJSON (bg 255 255 0 0.3)]
     go _ = []
 
-    mouseover :: ContributionID -> [Pair]
-    mouseover cid = ["borderBottom" .:= String ("2px solid " <> cs Color.VDocRollover) | mactive == Just cid]
+    mouseover :: ContributionID -> [Decl]
+    mouseover cid = [decl "borderBottom" [expr $ Px 2, expr $ Ident "solid", expr Color.VDocRollover] | mactive == Just cid]
 
-    mksty :: ContributionID -> [Pair]
-    mksty (ContribIDNote i)       = bg   0 255 (shade i) 0.3
-    mksty (ContribIDQuestion i)   = bg   0 255 (shade i) 0.3
-    mksty (ContribIDDiscussion i) = bg   0 255 (shade i) 0.3
-    mksty (ContribIDEdit i)       = bg   0 255 (shade i) 0.3
-    mksty ContribIDHighlightMark  = bg 255 255 0         0.3
+    mkMarkSty :: ContributionID -> [Decl]
+    mkMarkSty (ContribIDNote _)       = bg   0 255 0 0.3
+    mkMarkSty (ContribIDQuestion _)   = bg   0 255 0 0.3
+    mkMarkSty (ContribIDDiscussion _) = bg   0 255 0 0.3
+    mkMarkSty (ContribIDEdit _)       = bg   0 255 0 0.3
+    mkMarkSty ContribIDHighlightMark  = bg 255 255 0 0.3
 
-    bg :: Int -> Int -> Int -> Double -> [Pair]
-    bg r g b t = ["background" .:= String s]
-      where
-        s = "rgba(" <> ST.intercalate ", " ((cs . show <$> [r, g, b]) <> [cs . show $ t]) <> ")"
-
-    shade :: ID a -> Int
-    shade _ = 0
+    bg :: Int -> Int -> Int -> Double -> [Decl]
+    bg r g b a = ["background" `decl` Color.RGBA r g b a]
 
 
 -- | FIXME: this should be delivered from where the instance ToJSON Style is defined, and that

@@ -47,8 +47,6 @@ instance PFromJSVal ShallowWrapper where pFromJSVal = ShallowWrapper
 instance EnzymeWrapper ShallowWrapper where unWrap = _unShallowWrapper
 
 
-{-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
-
 -- * Functions that only exist for ShallowWrapper.
 
 shallow :: ReactElementM eventHandler () -> IO ShallowWrapper

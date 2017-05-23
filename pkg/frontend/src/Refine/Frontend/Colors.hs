@@ -26,17 +26,28 @@
 module Refine.Frontend.Colors where
 
 import Refine.Frontend.Prelude
-import Refine.Frontend.Style
+
+import Data.List (intercalate)
+
+import qualified Language.Css.Build as Css
+import qualified Language.Css.Syntax as Css
 
 
-data RGB =
-    RGB Int Int Int
-  | RGBA JSString Double
+data RGBA = RGBA Int Int Int Double
   deriving (Eq, Show)
 
-instance ConvertibleStrings RGB JSString where
-  convertString (RGB r g b) = "rgb(" <> cs (show r) <> ", " <> cs (show g) <> ", " <> cs (show b) <> ")"
-  convertString (RGBA s a)  = "rgba(" <> s <> ", " <> cs (show a) <> ")"
+instance Css.ToExpr RGBA where
+  expr (RGBA r g b a) = Css.expr $ Css.Ident ("rgba(" <> intercalate ", " [show r, show g, show b, show a] <> ")")
+
+rgb :: Int -> Int -> Int -> RGBA
+rgb r g b = RGBA r g b 1
+
+opacity :: ToRGBA a => a -> Double -> RGBA
+opacity (toRGBA -> RGBA r g b a) a' = RGBA r g b (a * a')
+
+
+class ToRGBA a where
+  toRGBA :: a -> RGBA
 
 
 data SimpleColor =
@@ -74,39 +85,42 @@ data SimpleColor =
   | SCDarkGrey
   deriving (Eq, Show)
 
-instance ConvertibleStrings SimpleColor JSString where
+instance Css.ToExpr SimpleColor where
+  expr = Css.expr . toRGBA
+
+instance ToRGBA SimpleColor where
   -- main color scheme blue
-  convertString SCBlue01       = cs $ RGB 32 49 67
-  convertString SCBlue02       = cs $ RGB 59 67 87
-  convertString SCBlue03       = cs $ RGB 84 99 122
-  convertString SCBlue04       = cs $ RGB 100 126 149
-  convertString SCBlue05       = cs $ RGB 179 188 199
-  convertString SCBlue06       = cs $ RGB 210 217 223
-  convertString SCBlue07       = cs $ RGB 234 236 239
-  convertString SCBlue08       = cs $ RGB 246 247 249
+  toRGBA SCBlue01       = RGBA 32 49 67 1
+  toRGBA SCBlue02       = RGBA 59 67 87 1
+  toRGBA SCBlue03       = RGBA 84 99 122 1
+  toRGBA SCBlue04       = RGBA 100 126 149 1
+  toRGBA SCBlue05       = RGBA 179 188 199 1
+  toRGBA SCBlue06       = RGBA 210 217 223 1
+  toRGBA SCBlue07       = RGBA 234 236 239 1
+  toRGBA SCBlue08       = RGBA 246 247 249 1
 
   -- signal color
-  convertString SCSignalYellow = cs $ RGB 224 255 18
-  convertString SCSignalOrange = cs $ RGB 255 89 0
+  toRGBA SCSignalYellow = RGBA 224 255 18 1
+  toRGBA SCSignalOrange = RGBA 255 89 0 1
 
   -- voting and ranking
-  convertString SCRed01        = cs $ RGB 200 55 20
-  convertString SCRed02        = cs $ RGB 226 155 140
-  convertString SCGreen01      = cs $ RGB 120 200 50
-  convertString SCGreen02      = cs $ RGB 188 226 155
-  convertString SCOrange01     = cs $ RGB 231 181 0
-  convertString SCOrange02     = cs $ RGB 239 213 129
+  toRGBA SCRed01        = RGBA 200 55 20 1
+  toRGBA SCRed02        = RGBA 226 155 140 1
+  toRGBA SCGreen01      = RGBA 120 200 50 1
+  toRGBA SCGreen02      = RGBA 188 226 155 1
+  toRGBA SCOrange01     = RGBA 231 181 0 1
+  toRGBA SCOrange02     = RGBA 239 213 129 1
 
   -- comment
-  convertString SCLightYellow  = cs $ RGB 237 237 192
-  convertString SCLightGreen   = cs $ RGB 220 229 211
-  convertString SCLightRed     = cs $ RGB 219 204 221
-  convertString SCLightBlue    = cs $ RGB 215 233 255
+  toRGBA SCLightYellow  = RGBA 237 237 192 1
+  toRGBA SCLightGreen   = RGBA 220 229 211 1
+  toRGBA SCLightRed     = RGBA 219 204 221 1
+  toRGBA SCLightBlue    = RGBA 215 233 255 1
 
   -- helpers
-  convertString SCWhite        = cs $ RGB 255 255 255
-  convertString SCBlack        = cs $ RGB 0 0 0
-  convertString SCDarkGrey     = cs $ RGB 169 169 169
+  toRGBA SCWhite        = RGBA 255 255 255 1
+  toRGBA SCBlack        = RGBA 0 0 0 1
+  toRGBA SCDarkGrey     = RGBA 169 169 169 1
 
 
 data Color =
@@ -175,74 +189,70 @@ data Color =
   | OverlayBackdrop
   deriving (Eq, Show)
 
-instance ConvertibleStrings Color JSString where
+instance Css.ToExpr Color where
+  expr = Css.expr . toRGBA
+
+instance ToRGBA Color where
   -- typography
-  convertString TextColor = cs SCBlack
-  convertString DisabledTextColor = cs SCDarkGrey
-  convertString HeadlineColor = cs SCBlue01
-  convertString LinkColor = cs SCBlue04
-  convertString ActiveColor = cs SCSignalOrange
+  toRGBA TextColor = toRGBA SCBlack
+  toRGBA DisabledTextColor = toRGBA SCDarkGrey
+  toRGBA HeadlineColor = toRGBA SCBlue01
+  toRGBA LinkColor = toRGBA SCBlue04
+  toRGBA ActiveColor = toRGBA SCSignalOrange
 
   -- mainmenu
-  convertString MainmenuBg = cs SCBlue01
-  convertString MainmenuMainbuttonColor = cs SCBlue06
-  convertString MainmenuMainbuttonCombinedColor = cs SCBlue02
-  convertString MainmenuContentBg = cs SCBlue05
-  convertString MainmenuContentColor = cs SCBlue06
+  toRGBA MainmenuBg = toRGBA SCBlue01
+  toRGBA MainmenuMainbuttonColor = toRGBA SCBlue06
+  toRGBA MainmenuMainbuttonCombinedColor = toRGBA SCBlue02
+  toRGBA MainmenuContentBg = toRGBA SCBlue05
+  toRGBA MainmenuContentColor = toRGBA SCBlue06
 
   -- footer
-  convertString FooterBg = cs MainmenuBg
-  convertString FooterContentColor = cs SCBlue06
+  toRGBA FooterBg = toRGBA MainmenuBg
+  toRGBA FooterContentColor = toRGBA SCBlue06
 
   -- vdoc header
-  convertString VDocHeaderBg = cs SCBlue07
-  convertString VDocToolbarBg = cs SCBlue06
-  convertString VDocToolbarExtensionBg = cs SCBlue04
+  toRGBA VDocHeaderBg = toRGBA SCBlue07
+  toRGBA VDocToolbarBg = toRGBA SCBlue06
+  toRGBA VDocToolbarExtensionBg = toRGBA SCBlue04
 
   -- icons
-  convertString DefaultIconBg = cs SCBlue02
-  convertString FallbackAvatarBg = cs SCBlue01
-  convertString IconRollover = cs SCSignalOrange
-  convertString IconDark = cs SCBlue01
-  convertString IconBright = cs SCBlue06
-  convertString IconBgActive = cs SCSignalYellow
+  toRGBA DefaultIconBg = toRGBA SCBlue02
+  toRGBA FallbackAvatarBg = toRGBA SCBlue01
+  toRGBA IconRollover = toRGBA SCSignalOrange
+  toRGBA IconDark = toRGBA SCBlue01
+  toRGBA IconBright = toRGBA SCBlue06
+  toRGBA IconBgActive = toRGBA SCSignalYellow
 
   -- comments & edits etc.
-  convertString VDocComment = cs SCLightRed
-  convertString VDocCommentMark = cs $ RGBA (cs VDocComment) 0.5
-  convertString VDocCommentRo = cs SCSignalOrange
+  toRGBA VDocComment = toRGBA SCLightRed
+  toRGBA VDocCommentMark = opacity VDocComment 0.5
+  toRGBA VDocCommentRo = toRGBA SCSignalOrange
 
-  convertString VDocNote = cs SCLightYellow
-  convertString VDocNoteMark = cs $ RGBA (cs VDocNote) 00.5
-  convertString VDocNoteRo = cs SCSignalOrange
+  toRGBA VDocNote = toRGBA SCLightYellow
+  toRGBA VDocNoteMark = opacity VDocNote 0.5
+  toRGBA VDocNoteRo = toRGBA SCSignalOrange
 
-  convertString VDocQuestion = cs SCLightGreen
-  convertString VDocQuestionMark = cs $ RGBA (cs VDocQuestion) 0.5
-  convertString VDocQuestionRo = cs SCSignalOrange
+  toRGBA VDocQuestion = toRGBA SCLightGreen
+  toRGBA VDocQuestionMark = opacity VDocQuestion 0.5
+  toRGBA VDocQuestionRo = toRGBA SCSignalOrange
 
-  convertString VDocDiscussion = cs SCLightBlue
-  convertString VDocDiscussionMark = cs $ RGBA (cs VDocDiscussion) 0.8
-  convertString VDocDiscussionRo = cs SCSignalOrange
+  toRGBA VDocDiscussion = toRGBA SCLightBlue
+  toRGBA VDocDiscussionMark = opacity VDocDiscussion 0.8
+  toRGBA VDocDiscussionRo = toRGBA SCSignalOrange
 
-  convertString VDocEdit = cs SCBlue06
-  convertString VDocEditMark = cs $ RGBA (cs VDocEdit) 0.7
-  convertString VDocEditRo = cs SCSignalYellow
+  toRGBA VDocEdit = toRGBA SCBlue06
+  toRGBA VDocEditMark = opacity VDocEdit 0.7
+  toRGBA VDocEditRo = toRGBA SCSignalYellow
 
-  convertString VDocEditByme = cs SCSignalYellow
-  convertString VDocEditBymeMark = cs $ RGBA (cs VDocEditByme) 0.5
-  convertString VDocEditBymeRo = cs SCSignalOrange
+  toRGBA VDocEditByme = toRGBA SCSignalYellow
+  toRGBA VDocEditBymeMark = opacity VDocEditByme 0.5
+  toRGBA VDocEditBymeRo = toRGBA SCSignalOrange
 
   -- maybe we get away with a single ro color ...
-  convertString VDocRollover = cs SCSignalOrange
+  toRGBA VDocRollover = toRGBA SCSignalOrange
 
   -- overlay elements
-  convertString OverlayContent = cs TextColor
-  convertString OverlayMeta = cs SCBlue03
-  convertString OverlayBackdrop = cs $ RGBA (cs SCWhite) 0.8
-
-
-instance IsStyle Color where
-  mkStyle c = StyleST c . cs
-
-instance ConvertibleStrings Color ST where
-  convertString = cs @JSString @ST . cs @Color @JSString
+  toRGBA OverlayContent = toRGBA TextColor
+  toRGBA OverlayMeta = toRGBA SCBlue03
+  toRGBA OverlayBackdrop = opacity SCWhite 0.8

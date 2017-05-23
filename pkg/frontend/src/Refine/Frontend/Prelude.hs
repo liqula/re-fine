@@ -7,7 +7,7 @@ import GHCJS.Marshal as P
 import GHCJS.Marshal.Pure as P
 import GHCJS.Types as P
 import React.Flux.Addons.Servant as P
-import React.Flux as P hiding (on, embed_)
+import React.Flux as P hiding (on, embed_, style)
 
 import Refine.Common.Prelude as P
 import Refine.Frontend.CS as P

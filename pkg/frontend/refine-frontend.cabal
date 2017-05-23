@@ -49,6 +49,7 @@ library
     , http-api-data
     , i18n
     , json-sop
+    , language-css
     , lens
     , mtl
     , pretty-show
@@ -102,7 +103,6 @@ library
       Refine.Frontend.Screen.WindowSize
       Refine.Frontend.Store
       Refine.Frontend.Store.Types
-      Refine.Frontend.Style
       Refine.Frontend.Test.Console
       Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Enzyme.Class
@@ -164,6 +164,7 @@ test-suite spec
     , http-api-data
     , i18n
     , json-sop
+    , language-css
     , lens
     , QuickCheck
     , quickcheck-instances
