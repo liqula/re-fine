@@ -33,13 +33,19 @@ class (Editable d, Arbitrary d, Eq d, Show d, Show (EEdit d)) => GenEdit d where
     genEdit :: d -> Gen (Edit d)
 
 runTest :: forall d. (Typeable d, GenEdit d) => [(String, d -> Gen Property)] -> Spec
-runTest = runTest' 1
+runTest = runTest' $ RunTestConfig Nothing Nothing
 
-runTest' :: forall d. (Typeable d, GenEdit d) => Int -> [(String, d -> Gen Property)] -> Spec
-runTest' scaleFactor tests
+data RunTestConfig = RunTestConfig
+  { _runTestConfigRescale    :: Maybe Int
+  , _runTestConfigMaxSuccess :: Maybe Int
+  }
+  deriving (Eq, Ord, Show)
+
+runTest' :: forall d. (Typeable d, GenEdit d) => RunTestConfig -> [(String, d -> Gen Property)] -> Spec
+runTest' (RunTestConfig mrescale _mmaxsuccess) tests
     = describe ("Editable instance for " <> show (typeRep (Proxy :: Proxy d)))
     . forM_ tests $ \(name, test) -> it name
-    $ property (scale (`div` scaleFactor) <$> test) -- quickCheckWith stdArgs { maxSuccess = num }
+    $ property (scale (`div` fromMaybe 1 mrescale) <$> test) -- quickCheckWith stdArgs { maxSuccess = num }
 
 ---------------------
 
