@@ -42,10 +42,11 @@ data RunTestConfig = RunTestConfig
   deriving (Eq, Ord, Show)
 
 runTest' :: forall d. (Typeable d, GenEdit d) => RunTestConfig -> [(String, d -> Gen Property)] -> Spec
-runTest' (RunTestConfig mrescale _mmaxsuccess) tests
+runTest' (RunTestConfig mrescale mmaxsuccess) tests
     = describe ("Editable instance for " <> show (typeRep (Proxy :: Proxy d)))
     . forM_ tests $ \(name, test) -> it name
-    $ property (scale (`div` fromMaybe 1 mrescale) <$> test) -- quickCheckWith stdArgs { maxSuccess = num }
+    . quickCheckWith (maybe stdArgs (\ms -> stdArgs { maxSuccess = ms }) mmaxsuccess)
+    $ property (scale (`div` fromMaybe 1 mrescale) <$> test)
 
 ---------------------
 
