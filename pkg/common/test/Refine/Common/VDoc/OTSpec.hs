@@ -50,9 +50,6 @@ spec = parallel $ do
     -- See #310
     -- runTest $ allTests @RawContent
 
-    -- if this take too long to run on a regular basis, just activate for debugging or deep-tests:
-    -- runTest $ allTests @RawContent
-
     it "Doc <-> RawContent conversion" . property $ \d ->
       rawContentToDoc (docToRawContent d) `shouldBe` simplifyDoc d
 
