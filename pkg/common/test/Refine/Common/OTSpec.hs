@@ -44,9 +44,16 @@ data RunTestConfig = RunTestConfig
 runTest' :: forall d. (Typeable d, GenEdit d) => RunTestConfig -> [(String, d -> Gen Property)] -> Spec
 runTest' (RunTestConfig mrescale mmaxsuccess) tests
     = describe ("Editable instance for " <> show (typeRep (Proxy :: Proxy d)))
-    . forM_ tests $ \(name, test) -> it name
-    . quickCheckWith (maybe stdArgs (\ms -> stdArgs { maxSuccess = ms }) mmaxsuccess)
+    . forM_ tests $ \(name, test) -> itWith mmaxsuccess name
     $ property (scale (`div` fromMaybe 1 mrescale) <$> test)
+  where
+    itWith Nothing           name p = it name p
+    itWith (Just maxsuccess) name p = it name $ do
+      result <- quickCheckWithResult (stdArgs { maxSuccess = maxsuccess, chatty = False }) p
+      result `shouldSatisfy` \case
+        Test.QuickCheck.Success _ _ _ -> True
+        _ -> False  -- arguably in this case we could have nicer failure reporting, but at least the
+                    -- information is all there.
 
 ---------------------
 
