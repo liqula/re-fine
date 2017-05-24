@@ -23,16 +23,20 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.Icon
-  ( icon_, iconButton_
+  ( IconButtonProps
+  , icon_, iconButton_
+  , IconButtonPropsOnClick(..)
+  , defaultIconButtonProps
   ) where
 
 import Refine.Frontend.Prelude
 import Language.Css.Syntax
 
 import qualified Refine.Frontend.Colors as Color
-import           Refine.Frontend.Types
-import           Refine.Frontend.Util
 import           Refine.Frontend.Icon.Types
+import           Refine.Frontend.Store (dispatchMany)
+import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Util
 
 
 -- * icon
@@ -109,7 +113,36 @@ iconButton = mkView "IconButton" $ \props -> do
 iconButton_ :: IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick -> ReactElementM eventHandler ()
 iconButton_ !props = view_ iconButton ("iconButton_" <> props ^. iconButtonPropsListKey) props
 
+
+-- * events
+
 mkClickHandler :: IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick -> Event -> MouseEvent -> ViewEventHandler
 mkClickHandler props evt mevt =
   (if props ^. iconButtonPropsClickPropag then () else stopPropagation evt) `seq`
   runIconButtonPropsOnClick evt mevt (props ^. iconButtonPropsOnClick)
+
+class (Typeable onclick, Eq onclick) => IconButtonPropsOnClick onclick where  -- TODO: rename to ButtonOnClick
+  runIconButtonPropsOnClick :: Event -> MouseEvent -> onclick -> ViewEventHandler
+      -- TODO: what do i need the default for again?
+  defaultOnClick            :: onclick  -- ^ @instance Default [GlobalAction]@ would lead to overlaps.
+
+instance IconButtonPropsOnClick [GlobalAction] where
+  runIconButtonPropsOnClick _ _ = dispatchMany
+  defaultOnClick                = mempty
+
+defaultIconButtonProps :: IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick
+defaultIconButtonProps = IconButtonProps
+    { _iconButtonPropsListKey      = ""
+    , _iconButtonPropsIconProps    = def
+    , _iconButtonPropsElementName  = ""
+    , _iconButtonPropsModuleName   = ""
+    , _iconButtonPropsLabel        = ""
+    , _iconButtonPropsDisabled     = False
+    , _iconButtonPropsPosition     = Nothing
+    , _iconButtonPropsAlignRight   = False
+    , _iconButtonPropsOnClick      = defaultOnClick
+    , _iconButtonPropsClickPropag  = True  -- Iff 'False', call 'stopPropagation'.  See 'mkClickHandler'.
+    , _iconButtonPropsExtraClasses = []
+    }
+
+type IconButtonProps = IconButtonPropsWithHandler [GlobalAction]

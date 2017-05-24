@@ -26,27 +26,10 @@ module Refine.Frontend.Types where
 import Refine.Frontend.Prelude
 
 import Refine.Common.Types
-import Refine.Prelude.TH (makeRefineType)
 
-
-class CssClass a where
-  showCssClass :: a -> JSString
 
 -- | FIXME: use React.Flux.Outdated.ReactViewKey instead (slightly more sophisticated).
 type ReactListKey = JSString
-
-data IconSize
-  = S
-  | M
-  | L
-  | XL
-  | XXL
-  deriving (Eq, Show)
-
-instance CssClass IconSize where
-  showCssClass = ("iconsize-" <>) . cs . fmap toLower . show
-
-type IconDescription = (JSString, JSString)
 
 
 -- | `viewport` is the browser window (the visible part of the `document`, or `page`).  See

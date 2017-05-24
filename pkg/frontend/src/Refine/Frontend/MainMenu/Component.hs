@@ -33,7 +33,6 @@ import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Login.Component
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
 
@@ -47,7 +46,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
         div_ ["className" $= "c-mainmenu-content__header"] $ do
             let iprops activeTab = IconProps "c-mainmenu-content" (menuTab == activeTab) ("icon-User", "dark") XXL
 
-            iconButton_ $ def @IconButtonProps
+            iconButton_ $ defaultIconButtonProps @[GlobalAction]
               & iconButtonPropsListKey      .~ "login"
               & iconButtonPropsIconProps    .~ iprops MainMenuLogin
               & iconButtonPropsElementName  .~ "section-button"
@@ -56,7 +55,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               -- not translated from prototype2016:
               -- button attribute data-section="dashboard"
 
-            iconButton_ $ def @IconButtonProps
+            iconButton_ $ defaultIconButtonProps @[GlobalAction]
               & iconButtonPropsListKey      .~ "register"
               & iconButtonPropsIconProps    .~ iprops MainMenuRegistration
               & iconButtonPropsElementName  .~ "section-button"

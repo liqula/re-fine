@@ -40,7 +40,7 @@ editToolbar = mkView "EditToolbar" $ do
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          let editButton = def @IconButtonProps
+          let editButton = defaultIconButtonProps @[GlobalAction]
                 & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL
                 & iconButtonPropsElementName  .~ "btn-index"
 

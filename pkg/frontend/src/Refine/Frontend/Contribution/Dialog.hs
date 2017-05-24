@@ -299,7 +299,7 @@ commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \cu
       let checkAcpKind k = if props ^. acpKind == Just k then "RO" else "dark"
 
       div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do  -- RENAME: annotation => comment
-        iconButton_ $ def @IconButtonProps
+        iconButton_ $ defaultIconButtonProps @[GlobalAction]
           & iconButtonPropsListKey      .~ "note"
           & iconButtonPropsIconProps . iconPropsBlockName .~ "c-vdoc-overlay-content"
           & iconButtonPropsIconProps . iconPropsDesc      .~ ("icon-Note", checkAcpKind CommentKindNote)
@@ -310,7 +310,7 @@ commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \cu
 
         span_ ["style" @@= [decl "marginRight" (Rem 1)]] mempty
 
-        iconButton_ $ def @IconButtonProps
+        iconButton_ $ defaultIconButtonProps @[GlobalAction]
           & iconButtonPropsListKey      .~ "discussion"
           & iconButtonPropsIconProps . iconPropsBlockName .~ "c-vdoc-overlay-content"
           & iconButtonPropsIconProps . iconPropsDesc      .~ ("icon-Discussion", checkAcpKind CommentKindDiscussion)
@@ -332,7 +332,7 @@ commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \cu
 
       let notATextOrKind = 0 == ST.length (curState ^. addContributionFormState)
                         || isNothing (props ^. acpKind)
-        in iconButton_ $ def @IconButtonProps
+        in iconButton_ $ defaultIconButtonProps @[GlobalAction]
           & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") L
           & iconButtonPropsElementName  .~ "submit"
           & iconButtonPropsLabel        .~ "submit"
@@ -378,7 +378,7 @@ editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState
 
     hr_ []
 
-    iconButton_ $ def @IconButtonProps
+    iconButton_ $ defaultIconButtonProps @[GlobalAction]
             & iconButtonPropsListKey      .~ "save"
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXL
             & iconButtonPropsElementName  .~ "btn-index"
@@ -388,7 +388,7 @@ editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState
                                              , ContributionAction ClearRange
                                              ]
 
-    iconButton_ $ def @IconButtonProps
+    iconButton_ $ defaultIconButtonProps @[GlobalAction]
             & iconButtonPropsListKey      .~ "cancel"
             & iconButtonPropsIconProps    .~ IconProps "c-mainmenu-header" True ("icon-Close", "dark") XXL
             & iconButtonPropsElementName  .~ "btn-index"

@@ -46,7 +46,7 @@ userLoginLogoutButton_ :: CurrentUser -> ReactElementM eventHandler ()
 userLoginLogoutButton_ !currentUser = view_ userLoginLogoutButton "userLoginLogoutButton_" currentUser
 
 loginLogoutProps :: IconButtonProps
-loginLogoutProps = def
+loginLogoutProps = defaultIconButtonProps
   & iconButtonPropsListKey .~ "logInOut"
   & iconButtonPropsIconProps .~ (def
       & iconPropsBlockName .~ "c-mainmenu-content"

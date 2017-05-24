@@ -26,6 +26,7 @@
 module Refine.Frontend.Icon.Types
   ( ReactListKey
   , IconSize(..)
+  , CssClass(..)
   , IconDescription
 
   , IconProps(..)
@@ -34,7 +35,7 @@ module Refine.Frontend.Icon.Types
   , iconPropsDesc
   , iconPropsSize
 
-  , IconButtonPropsWithHandler(..), IconButtonProps
+  , IconButtonPropsWithHandler(..)
   , iconButtonPropsListKey
   , iconButtonPropsIconProps
   , iconButtonPropsElementName
@@ -46,16 +47,30 @@ module Refine.Frontend.Icon.Types
   , iconButtonPropsOnClick
   , iconButtonPropsClickPropag
   , iconButtonPropsExtraClasses
-
-  , IconButtonPropsOnClick(..)
   ) where
 
 import Refine.Frontend.Prelude
 
 import           Refine.Frontend.CS ()
-import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Store (dispatchMany)
 import           Refine.Frontend.Types
+
+
+-- * css
+
+data IconSize
+  = S
+  | M
+  | L
+  | XL
+  | XXL
+  deriving (Eq, Show)
+
+
+class CssClass a where  -- TODO: remove; use @css :: a -> [Decl]@ instead.
+  showCssClass :: a -> JSString
+
+instance CssClass IconSize where
+  showCssClass = ("iconsize-" <>) . cs . fmap toLower . show
 
 
 -- * icon
@@ -68,6 +83,8 @@ data IconProps = IconProps
   }
   deriving (Eq)
 
+type IconDescription = (JSString, JSString)
+
 instance UnoverlapAllEq IconProps
 makeLenses ''IconProps
 
@@ -78,6 +95,9 @@ instance Default IconProps where
     , _iconPropsDesc      = ("", "")
     , _iconPropsSize      = L
     }
+
+
+-- * icon button
 
 data IconButtonPropsWithHandler onclick = IconButtonProps
   { _iconButtonPropsListKey      :: ReactListKey  -- (this is not morally part of the props, but it's convenient to keep it here.)
@@ -96,28 +116,3 @@ data IconButtonPropsWithHandler onclick = IconButtonProps
 
 instance UnoverlapAllEq (IconButtonPropsWithHandler onclick)
 makeLenses ''IconButtonPropsWithHandler
-
-instance IconButtonPropsOnClick onclick => Default (IconButtonPropsWithHandler onclick) where
-  def = IconButtonProps
-    { _iconButtonPropsListKey      = ""
-    , _iconButtonPropsIconProps    = def
-    , _iconButtonPropsElementName  = ""
-    , _iconButtonPropsModuleName   = ""
-    , _iconButtonPropsLabel        = ""
-    , _iconButtonPropsDisabled     = False
-    , _iconButtonPropsPosition     = Nothing
-    , _iconButtonPropsAlignRight   = False
-    , _iconButtonPropsOnClick      = defaultOnClick
-    , _iconButtonPropsClickPropag  = True  -- Iff 'False', call 'stopPropagation'.  See 'mkClickHandler'.
-    , _iconButtonPropsExtraClasses = []
-    }
-
-class (Typeable onclick, Eq onclick) => IconButtonPropsOnClick onclick where
-  runIconButtonPropsOnClick :: Event -> MouseEvent -> onclick -> ViewEventHandler
-  defaultOnClick            :: onclick  -- ^ @instance Default [GlobalAction]@ would lead to overlaps.
-
-type IconButtonProps = IconButtonPropsWithHandler [GlobalAction]
-
-instance IconButtonPropsOnClick [GlobalAction] where
-  runIconButtonPropsOnClick _ _ = dispatchMany
-  defaultOnClick                = mempty
