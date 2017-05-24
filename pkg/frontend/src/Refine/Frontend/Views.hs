@@ -54,12 +54,14 @@ import           Refine.Frontend.Store as RS
 import           Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Views.Types
+import qualified Refine.Frontend.Workbench
 
 
 -- | The controller view and also the top level of the Refine app.  This controller view registers
 -- with the store and will be re-rendered whenever the store changes.
 refineApp :: View '[]
 refineApp = mkControllerView @'[StoreArg GlobalState] "RefineApp" $ \gs ->
+  if False {- set conditional to 'True' to switch to workbench. -} then Refine.Frontend.Workbench.workbench_ gs else
   case gs ^. gsVDoc of
     Nothing -> vdocLoader_ (VDocLoaderProps $ gs ^. gsVDocList)  -- (this is just some scaffolding that will be replaced by more app once we get there.)
     Just _ -> case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
