@@ -69,7 +69,7 @@ toolbar = mkView "Toolbar" $ do
 
           iconButton_ $ toolbarButton
             & iconButtonPropsListKey      .~ "all-comments"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" False ("icon-Comment", "dark") XXLarge
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Comment", "dark") XXLarge
             & iconButtonPropsElementName  .~ "all-annotations"   -- RENAME: annotation => comment
             & iconButtonPropsLabel        .~ "all comments"
             & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
@@ -83,7 +83,7 @@ toolbar = mkView "Toolbar" $ do
 
           iconButton_ $ toolbarButton
             & iconButtonPropsListKey      .~ "read-only"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Reader", "bright") XXLarge
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Reader", "dark") XXLarge
             & iconButtonPropsElementName  .~ "btn-read-mode"
             & iconButtonPropsLabel        .~ "read mode"
             & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
