@@ -30,6 +30,7 @@ module Refine.Frontend.Header.Heading
 
 import Refine.Frontend.Prelude
 
+import           Language.Css.Syntax
 import qualified React.Flux as RF
 import qualified React.Flux.Internal as RF
 import qualified React.Flux.Outdated as RF
@@ -48,6 +49,7 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.ThirdPartyViews (sticky_)
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Screen.Types
+import           Refine.Frontend.Util
 
 
 data TopMenuBarProps = TopMenuBarProps
@@ -59,11 +61,14 @@ instance UnoverlapAllEq TopMenuBarProps
 
 topMenuBar :: View '[TopMenuBarProps]
 topMenuBar = mkView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
-  span_ [classNamesAny [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]] $ do
-    button_ ["aria-controls" $= "bs-navbar"
+  div_ [ classNamesAny [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]
+       , "style" @@= [decl "pointerEvents" (Ident "none")]
+       ] $ do
+    button_ [ "aria-controls" $= "bs-navbar"
             , "aria-expanded" $= "false"
             , "className" $= "c-mainmenu__menu-button"
             , "type" $= "button"
+            , "style" @@= [decl "pointerEvents" (Ident "all")]
             , onClick $ \_ _ -> dispatch . MainMenuAction $ MainMenuActionOpen defaultMainMenuTab
             ] $ do
       span_ ["className" $= "sr-only"] "Navigation an/aus"

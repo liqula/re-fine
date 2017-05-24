@@ -63,6 +63,7 @@ ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
       divSty = [ decl "direction" (Ident "ltr")
                , decl "width" (sizePx $ props ^. ibSize)
                , decl "textAlign" (Ident "center")
+               , decl "pointerEvents" (Ident "all")
                ] <>
                (if props ^. ibAlign == AlignRight
                  then [ decl "marginLeft" (Ident "auto")
