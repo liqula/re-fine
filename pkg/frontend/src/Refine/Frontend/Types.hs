@@ -32,8 +32,8 @@ import Refine.Prelude.TH (makeRefineType)
 class CssClass a where
   showCssClass :: a -> JSString
 
--- | TODO: this is React.Flux.Outdated.ReactViewKey
-type ReactListKey = JSString  -- do not move this to Frontend.Types, importing this here creates a cycle.
+-- | FIXME: use React.Flux.Outdated.ReactViewKey instead (slightly more sophisticated).
+type ReactListKey = JSString
 
 data IconSize
   = S
