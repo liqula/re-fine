@@ -39,6 +39,8 @@ data CurrentUser
   | UserLoggedOut
   deriving (Show, Eq, Generic)
 
+instance UnoverlapAllEq CurrentUser
+
 newtype LoginState = LoginState
   { _lsCurrentUser :: CurrentUser
   }

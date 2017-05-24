@@ -30,7 +30,6 @@ import           Refine.Common.Types ( EditKind(..) )
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Icon
-import           Refine.Frontend.Icon.Types
 
 toolbar :: View '[]
 toolbar = mkView "Toolbar" $ do

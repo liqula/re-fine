@@ -28,7 +28,6 @@ import Refine.Frontend.Prelude
 
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Icon
-import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Store.Types
 
 editToolbar :: View '[]

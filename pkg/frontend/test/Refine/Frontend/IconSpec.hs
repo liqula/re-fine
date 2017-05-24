@@ -31,7 +31,6 @@ import Language.Css.Syntax hiding (S)
 
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Icon
-import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Util
 

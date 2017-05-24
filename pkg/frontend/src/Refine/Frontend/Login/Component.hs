@@ -33,7 +33,6 @@ import           Language.Css.Syntax
 import           Refine.Common.Types.Prelude
 import qualified Refine.Frontend.Colors as Colors
 import           Refine.Frontend.Icon
-import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.Util

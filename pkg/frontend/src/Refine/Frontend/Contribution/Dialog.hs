@@ -40,7 +40,6 @@ import qualified Refine.Frontend.Colors as C
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Toolbar
 import           Refine.Frontend.Icon
-import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types

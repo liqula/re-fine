@@ -25,8 +25,30 @@
 
 module Refine.Frontend.Icon.Types
   ( ReactListKey
+
+  , Align(..)
+  , IbuttonProps(..)
+  , ibEnabled
+  , ibSize
+  , ibListKey
+  , ibAlign
+  , ibClickPropag
+  , ibLabel
+  , ibOnClick
+  , ibPosition
+  , ibDarkBackground
+  , ibImage
+
   , IconSize(..)
+  , sizePx
+
   , IconDescription
+
+  , BackgroundImageState(..)
+  , BackgroundImage(..)
+  , backgroundImageName
+  , backgroundImageState
+  , iconCssClass
 
   , IconProps(..)
   , iconPropsBlockName
@@ -48,13 +70,36 @@ module Refine.Frontend.Icon.Types
   , iconButtonPropsExtraClasses
   ) where
 
-import Refine.Frontend.Prelude hiding (S)
+import Refine.Frontend.Prelude hiding (S, fn)
 
 import Language.Css.Syntax hiding (S)
+import Language.Css.Build hiding (ex, s)
 
 import           Refine.Frontend.CS ()
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
+
+
+-- * icon buttons
+
+data Align = AlignRight | AlignLeft
+  deriving (Eq, Show, Generic)
+
+data IbuttonProps onclick = IbuttonProps
+  { _ibListKey          :: ReactListKey  -- ^ this is not morally part of the props, but it's convenient to keep it here.
+  , _ibLabel            :: ST
+  , _ibDarkBackground   :: Bool
+  , _ibImage            :: ST
+  , _ibOnClick          :: onclick
+  , _ibClickPropag      :: Bool
+  , _ibEnabled          :: Bool
+  , _ibSize             :: IconSize
+  , _ibAlign            :: Align
+  , _ibPosition         :: Maybe Int
+  }
+  deriving (Eq, Show, Generic)
+
+instance UnoverlapAllEq (IbuttonProps onclick)
 
 
 -- * icon sizes
@@ -66,18 +111,17 @@ data IconSize
   | XXLarge
   deriving (Eq, Show)
 
+sizePx :: IconSize -> Px
+sizePx Medium  = Px 14
+sizePx Large   = Px 20
+sizePx XLarge  = Px 26
+sizePx XXLarge = Px 32
 
 instance Css IconSize where
-  css = f . \case
-    Medium  -> 14
-    Large   -> 20
-    XLarge  -> 26
-    XXLarge -> 32
-    where
-      f i = [ decl "backgroundSize" (Percentage 100)
-            , decl "width" (Px i)
-            , decl "height" (Px i)
-            ]
+  css s = [ decl "backgroundSize" (Percentage 100)
+          , decl "width" (sizePx s)
+          , decl "height" (sizePx s)
+          ]
 
 
 -- * background images
@@ -108,10 +152,20 @@ iconCssClass (BackgroundImage fn st) = mconcat ["icon-", cs fn, "_", renderState
       renderState BisBright = "bright"
       renderState BisDark   = "dark"
 
+
+-- * TH instances
+
 makeLenses ''BackgroundImage
+makeLenses ''IbuttonProps
 
 
--- * icon
+-- * outdated
+
+-- FUTUREWORK: the rest of this module should be removed and everything ported to the ibutton_
+-- component above.  this may take a few more steps, though.
+
+
+-- ** icon
 
 data IconProps = IconProps
   { _iconPropsBlockName :: JSString
@@ -135,7 +189,7 @@ instance Default IconProps where
     }
 
 
--- * icon button
+-- ** icon button
 
 data IconButtonPropsWithHandler onclick = IconButtonProps
   { _iconButtonPropsListKey      :: ReactListKey  -- (this is not morally part of the props, but it's convenient to keep it here.)

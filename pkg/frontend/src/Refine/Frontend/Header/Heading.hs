@@ -41,7 +41,7 @@ import           Refine.Frontend.Header.EditToolbar ( editToolbar_ )
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_ )
 import           Refine.Frontend.Header.Types
-import           Refine.Frontend.Header.UserLoginLogout (userLoginLogoutButton_)
+import           Refine.Frontend.Header.UserLoginLogout
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
@@ -72,7 +72,7 @@ topMenuBar = mkView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
     unless sticky $
       span_ ["className" $= "c-mainmenu__menu-button-label"] "MENU"
-    userLoginLogoutButton_ currentUser
+    loginStatusButton_ (not sticky) currentUser
 
 topMenuBar_ :: TopMenuBarProps -> ReactElementM eventHandler ()
 topMenuBar_ !props = view_ topMenuBar "TopMenuBar_" props

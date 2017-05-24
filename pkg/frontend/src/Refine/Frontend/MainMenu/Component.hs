@@ -28,13 +28,12 @@ import Refine.Frontend.Prelude
 
 import           Data.Text.I18n (Locale(..))
 
-import           Refine.Frontend.Header.UserLoginLogout (userLoginLogoutButton_)
+import           Refine.Frontend.Header.UserLoginLogout
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Login.Component
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Icon
-import           Refine.Frontend.Icon.Types
 
 
 topMenuBarInMainMenu :: View '[TopMenuBarInMainMenuProps]
@@ -127,7 +126,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               -- button attribute data-section="help"
               }
 
-            userLoginLogoutButton_ currentUser
+            loginStatusButton_ True currentUser
 
             iconButton_ IconButtonProps
               { _iconButtonPropsListKey = "close"

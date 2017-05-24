@@ -126,6 +126,7 @@ instance ToRGBA SimpleColor where
 data Color =
     -- typography
     TextColor
+  | TextColorOnDark
   | DisabledTextColor
   | HeadlineColor
   | LinkColor
@@ -195,6 +196,7 @@ instance Css.ToExpr Color where
 instance ToRGBA Color where
   -- typography
   toRGBA TextColor = toRGBA SCBlack
+  toRGBA TextColorOnDark = toRGBA SCBlue06
   toRGBA DisabledTextColor = toRGBA SCDarkGrey
   toRGBA HeadlineColor = toRGBA SCBlue01
   toRGBA LinkColor = toRGBA SCBlue04
