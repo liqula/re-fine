@@ -27,9 +27,17 @@ module Refine.Frontend.Icon
   , icon_, iconButton_
   , IconButtonPropsOnClick(..)
   , defaultIconButtonProps
+
+  , BackgroundImageState(..)
+  , BackgroundImage(..)
+  , backgroundImageName
+  , backgroundImageState
+  , iconCssClass
   ) where
 
-import Refine.Frontend.Prelude
+import Refine.Frontend.Prelude hiding (fn)
+
+import Language.Css.Build hiding (ex)
 import Language.Css.Syntax
 
 import qualified Refine.Frontend.Colors as Color

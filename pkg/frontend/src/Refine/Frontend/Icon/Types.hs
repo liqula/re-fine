@@ -57,7 +57,7 @@ import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
 
--- * css
+-- * icon sizes
 
 data IconSize
   = Medium
@@ -78,6 +78,37 @@ instance Css IconSize where
             , decl "width" (Px i)
             , decl "height" (Px i)
             ]
+
+
+-- * background images
+
+data BackgroundImageState = BisRO | BisBright | BisDark
+  deriving (Eq, Show, Generic)
+
+data BackgroundImage = BackgroundImage
+  { _backgroundImageName  :: ST
+  , _backgroundImageState :: BackgroundImageState
+  }
+  deriving (Eq, Show, Generic)
+
+-- FIXME: this instance does not work, since webpack loads all images into the bundle and replaces
+-- the paths with data-urls in the css class, but not in the inline-styles here.  use 'iconCssClass'
+-- instead for now.
+instance Css BackgroundImage where
+  css bimg = [decl "backgroundImage" ex]
+    where
+      ex = Func "url" (expr $ Ident fp)
+      fp = "\"../images/" <> cs (iconCssClass bimg) <> ".svg\""
+
+-- | work-around for @instance Css BackgroundImage@.
+iconCssClass :: BackgroundImage -> JSString
+iconCssClass (BackgroundImage fn st) = mconcat ["icon-", cs fn, "_", renderState st]
+    where
+      renderState BisRO     = "RO"
+      renderState BisBright = "bright"
+      renderState BisDark   = "dark"
+
+makeLenses ''BackgroundImage
 
 
 -- * icon
