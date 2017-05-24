@@ -61,6 +61,14 @@ newtype Rem = Rem Double
 instance ToExpr Rem where
   expr (Rem d) = expr (Ident (show d <> "rem"))  -- FIXME: #317
 
+instance Num Px where  -- FIXME: #317  (also, Px should be a newtype)
+  Px i + Px k = Px (i + k)
+  Px i - Px k = Px (i - k)
+  Px i * Px k = Px (i * k)
+  abs (Px i) = Px (abs i)
+  signum (Px i) = Px (signum i)
+  fromInteger = Px . fromInteger
+
 
 toClasses :: (ConvertibleStrings s JSString, ConvertibleStrings JSString s) => [s] -> s
 toClasses = cs . JSS.unwords . filter (not . JSS.null) . fmap cs

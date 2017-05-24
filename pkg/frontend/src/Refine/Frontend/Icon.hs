@@ -73,7 +73,7 @@ ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
 
       iconSty :: [Decl]
       iconSty = [ decl "cursor" (Ident "pointer")
-                , decl "borderRadius" (Percentage 95)
+                , decl "borderRadius" (Percentage 100)
                 ] <> css (props ^. ibSize)
 
       bg :: BackgroundImage
