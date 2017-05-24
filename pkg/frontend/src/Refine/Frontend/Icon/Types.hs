@@ -26,7 +26,6 @@
 module Refine.Frontend.Icon.Types
   ( ReactListKey
   , IconSize(..)
-  , CssClass(..)
   , IconDescription
 
   , IconProps(..)
@@ -49,10 +48,13 @@ module Refine.Frontend.Icon.Types
   , iconButtonPropsExtraClasses
   ) where
 
-import Refine.Frontend.Prelude
+import Refine.Frontend.Prelude hiding (S)
+
+import Language.Css.Syntax hiding (S)
 
 import           Refine.Frontend.CS ()
 import           Refine.Frontend.Types
+import           Refine.Frontend.Util
 
 
 -- * css
@@ -66,11 +68,18 @@ data IconSize
   deriving (Eq, Show)
 
 
-class CssClass a where  -- TODO: remove; use @css :: a -> [Decl]@ instead.
-  showCssClass :: a -> JSString
-
-instance CssClass IconSize where
-  showCssClass = ("iconsize-" <>) . cs . fmap toLower . show
+instance Css IconSize where
+  css = f . \case
+    S   -> 9
+    M   -> 14
+    L   -> 20
+    XL  -> 26
+    XXL -> 32
+    where
+      f i = [ decl "backgroundSize" (Percentage 100)
+            , decl "width" (Px i)
+            , decl "height" (Px i)
+            ]
 
 
 -- * icon

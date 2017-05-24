@@ -91,13 +91,6 @@ spec = do
       lengthOfIO (find wrapper (StringSelector ".Image_striped")) `shouldReturn` (1 :: Int)
       lengthOfIO (find wrapper (StringSelector ".Image_RO")) `shouldReturn` (0 :: Int)
 
-    it "annotates the iconsize class with the correct size (XXL)" $ do
-      wrapper <- shallow . icon_ $ iconProps XXL
-      lengthOfIO (find wrapper (StringSelector ".iconsize-xxl")) `shouldReturn` (1 :: Int)
-    it "annotates the iconsize class with the correct size (M)" $ do
-      wrapper <- shallow . icon_ $ iconProps M
-      lengthOfIO (find wrapper (StringSelector ".iconsize-m")) `shouldReturn` (1 :: Int)
-
   describe "iconButton_ component" $ do
     it "renders the block name with the button element" $ do
       wrapper <- shallow $ iconButton_

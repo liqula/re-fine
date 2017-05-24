@@ -38,6 +38,9 @@ import Language.Css.Pretty
 import Language.Css.Syntax
 
 
+class Css a where
+  css :: a -> [Decl]
+
 decl :: ToExpr e => Prop -> e -> Decl
 decl p e = Decl Nothing p (expr e)
 
