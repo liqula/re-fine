@@ -43,7 +43,26 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
 
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
         div_ ["className" $= "c-mainmenu-content__header"] $ do
-            let iprops activeTab = IconProps "c-mainmenu-content" (menuTab == activeTab) ("icon-User", "dark") XXLarge
+            let iprops thisTab = IconProps "c-mainmenu-content" (menuTab == thisTab) ("icon-User", "dark") XXLarge
+
+            iconButton_ IconButtonProps
+              { _iconButtonPropsListKey = "close"
+              , _iconButtonPropsIconProps = IconProps
+                  { _iconPropsBlockName = "c-mainmenu-header"
+                  , _iconPropsHighlight = True
+                  , _iconPropsDesc      = ("icon-Close", "bright")
+                  , _iconPropsSize      = XXLarge
+                  }
+              , _iconButtonPropsElementName  = "section-button"
+              , _iconButtonPropsModuleName   = ""
+              , _iconButtonPropsLabel        = ""
+              , _iconButtonPropsDisabled     = False
+              , _iconButtonPropsPosition     = Nothing
+              , _iconButtonPropsAlignRight   = False
+              , _iconButtonPropsOnClick      = [MainMenuAction MainMenuActionClose]
+              , _iconButtonPropsClickPropag  = True
+              , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-close"]
+              }
 
             iconButton_ $ defaultIconButtonProps @[GlobalAction]
               & iconButtonPropsListKey      .~ "login"
@@ -51,8 +70,6 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               & iconButtonPropsElementName  .~ "section-button"
               & iconButtonPropsModuleName   .~ "active"
               & iconButtonPropsOnClick      .~ [MainMenuAction $ MainMenuActionOpen MainMenuLogin]
-              -- not translated from prototype2016:
-              -- button attribute data-section="dashboard"
 
             iconButton_ $ defaultIconButtonProps @[GlobalAction]
               & iconButtonPropsListKey      .~ "register"
@@ -61,15 +78,12 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               & iconButtonPropsModuleName   .~ "active"
               & iconButtonPropsOnClick      .~ [MainMenuAction $ MainMenuActionOpen MainMenuRegistration]
               & iconButtonPropsExtraClasses .~ ["c-mainmenu-content__btn-dashboard"]
-              -- not translated from prototype2016:
-              -- button attribute data-section="dashboard"
 
-            -- TODO: Change language button should not be in the main menu
             iconButton_ IconButtonProps
               { _iconButtonPropsListKey = "locale-EN"
               , _iconButtonPropsIconProps = IconProps
                   { _iconPropsBlockName = "c-mainmenu-content"
-                  , _iconPropsHighlight = False
+                  , _iconPropsHighlight = True
                   , _iconPropsDesc      = ("icon-Group", "dark")
                   , _iconPropsSize      = XXLarge
                   }
@@ -84,12 +98,11 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-membership"]
               }
 
-            -- TODO: Change language button should not be in the main menu
             iconButton_ IconButtonProps
               { _iconButtonPropsListKey = "locale-DE"
               , _iconButtonPropsIconProps = IconProps
                   { _iconPropsBlockName = "c-mainmenu-content"
-                  , _iconPropsHighlight = False
+                  , _iconPropsHighlight = True
                   , _iconPropsDesc      = ("icon-Group", "dark")
                   , _iconPropsSize      = XXLarge
                   }
@@ -103,7 +116,6 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               , _iconButtonPropsClickPropag  = True
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-membership"]
               }
-
 
             iconButton_ IconButtonProps
               { _iconButtonPropsListKey = "help"
@@ -122,46 +134,22 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
               , _iconButtonPropsOnClick      = [] :: [GlobalAction]
               , _iconButtonPropsClickPropag  = True
               , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-help"]
-              -- not translated from prototype2016:
-              -- button attribute data-section="help"
               }
 
             loginStatusButton_ True currentUser
-
-            iconButton_ IconButtonProps
-              { _iconButtonPropsListKey = "close"
-              , _iconButtonPropsIconProps = IconProps
-                  { _iconPropsBlockName = "c-mainmenu-header"
-                  , _iconPropsHighlight = True
-                  , _iconPropsDesc      = ("icon-Close", "dark")
-                  , _iconPropsSize      = XXLarge
-                  }
-              , _iconButtonPropsElementName  = "section-button"
-              , _iconButtonPropsModuleName   = ""
-              , _iconButtonPropsLabel        = ""
-              , _iconButtonPropsDisabled     = False
-              , _iconButtonPropsPosition     = Nothing
-              , _iconButtonPropsAlignRight   = False
-              , _iconButtonPropsOnClick      = [MainMenuAction MainMenuActionClose]
-              , _iconButtonPropsClickPropag  = True
-              , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-close"]
-              -- not translated from prototype2016:
-              -- n/a
-              }
-
 
 topMenuBarInMainMenu_ :: TopMenuBarInMainMenuProps -> ReactElementM eventHandler ()
 topMenuBarInMainMenu_ !props = view_ topMenuBarInMainMenu "topMenuBarInMainMenu_" props
 
 
 mainMenu :: View '[MainMenuProps]
-mainMenu = mkView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUser) ->
+mainMenu = mkView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUser) -> do
   div_ $ do
     topMenuBarInMainMenu_ (TopMenuBarInMainMenuProps menuTab currentUser)
+  div_ $ do
     case menuTab of
       MainMenuLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
       MainMenuRegistration -> registration_  (menuErrors ^. mmeRegistration)
-
 
 mainMenu_ :: MainMenuTab -> MainMenuErrors -> CurrentUser -> ReactElementM eventHandler ()
 mainMenu_ mt me cu = view_ mainMenu "mainMenu_" (MainMenuProps mt me cu)
