@@ -86,23 +86,21 @@ mainHeader :: RF.ReactView GlobalState
 mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
      -- the render function inside a Lifecycle view does not update the children passed to it when the state changes
      -- (see react-flux issue #29), therefore we move everything inside the Lifecylce view.
-   { RF.lRender = \_state rs ->
-        case rs ^. gsVDoc of
-          Nothing -> error "mainHeader may only be invoked after a VDoc has been loaded!"
-          Just vdoc ->
-            div_ ["className" $= "c-fullheader"] $ do
-                -- the following need to be siblings because of the z-index handling
-                div_ ["className" $= "c-mainmenu__bg"] "" -- "role" $= "navigation"
-                --header_ ["role" $= "banner"] $ do
-                topMenuBar_ (TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser))
-                documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
-                div_ ["className" $= "c-fulltoolbar"] $ do
-                    sticky_ [RF.on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
-                        if has _DocumentStateView $ rs ^. gsDocumentState
-                          then toolbar_
-                          else editToolbar_
-                        commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
-                        editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
+   { RF.lRender = \() rs -> do
+      let vdoc = rs ^?! gsVDoc . _Just
+      div_ ["className" $= "c-fullheader"] $ do
+          -- the following need to be siblings because of the z-index handling
+          div_ ["className" $= "c-mainmenu__bg" {-, "role" $= "navigation" -}] mempty
+          {- header_ ["role" $= "banner"] $ do -}
+          topMenuBar_ (TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser))
+          documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
+          div_ ["className" $= "c-fulltoolbar"] $ do
+            sticky_ [RF.on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
+              if has _DocumentStateView $ rs ^. gsDocumentState
+                then toolbar_
+                else editToolbar_
+              commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
+              editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
 
    , RF.lComponentDidMount = Just $ \_propsandstate ldom _ -> calcHeaderHeight ldom
    }
