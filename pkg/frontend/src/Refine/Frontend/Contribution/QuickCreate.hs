@@ -47,7 +47,7 @@ quickCreate = mkView "QuickCreateButton" $ \props ->
         (Just range, QuickCreateShown) ->
             iconButton_ $ defaultIconButtonProps @QuickCreateSide
               & iconButtonPropsIconProps    .~ IconProps (renderQuickCreateSide (props ^. quickCreateSide))
-                                                         True ("icon-New_Comment", "bright") XXL
+                                                         True ("icon-New_Comment", "bright") XXLarge
               & iconButtonPropsPosition     .~ Just (mkQuickCreateOffset range (props ^. quickCreateScreenState))
               & iconButtonPropsOnClick      .~ (props ^. quickCreateSide)
         _ -> mempty

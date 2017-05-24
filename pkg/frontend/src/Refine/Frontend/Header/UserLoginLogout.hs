@@ -51,7 +51,7 @@ loginLogoutProps = defaultIconButtonProps
   & iconButtonPropsIconProps .~ (def
       & iconPropsBlockName .~ "c-mainmenu-content"
       & iconPropsDesc      .~ ("icon-Login", "bright")
-      & iconPropsSize      .~ XXL
+      & iconPropsSize      .~ XXLarge
       )
   & iconButtonPropsElementName  .~ "section-button"
   & iconButtonPropsExtraClasses .~ ["c-mainmenu-content__btn-help"]

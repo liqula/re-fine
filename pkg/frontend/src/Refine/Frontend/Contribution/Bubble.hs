@@ -85,7 +85,7 @@ renderBubble children props topOffset = do
        , onMouseLeave $ mkClickHandler [UnhighlightMarkAndBubble]
        ] $ do
     div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> props ^. bubblePropsIconSide)] $ do  -- RENAME: snippet => bubble
-      icon_ (IconProps "o-snippet" False (props ^. bubblePropsIconStyle) M)  -- RENAME: snippet => bubble
+      icon_ (IconProps "o-snippet" False (props ^. bubblePropsIconStyle) Medium)  -- RENAME: snippet => bubble
     div_ ["className" $= "o-snippet__content"]  -- RENAME: snippet => bubble
       children
 

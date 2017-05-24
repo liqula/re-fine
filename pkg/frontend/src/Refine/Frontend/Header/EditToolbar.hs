@@ -41,7 +41,7 @@ editToolbar = mkView "EditToolbar" $ do
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
           let editButton = defaultIconButtonProps @[GlobalAction]
-                & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL
+                & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXLarge
                 & iconButtonPropsElementName  .~ "btn-index"
 
           iconButton_ $ editButton
@@ -84,7 +84,7 @@ editToolbar = mkView "EditToolbar" $ do
             & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
           iconButton_ $ editButton
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXL
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
             & iconButtonPropsListKey      .~ "save"
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True

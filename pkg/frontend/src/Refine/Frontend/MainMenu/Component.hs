@@ -44,7 +44,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
 
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
         div_ ["className" $= "c-mainmenu-content__header"] $ do
-            let iprops activeTab = IconProps "c-mainmenu-content" (menuTab == activeTab) ("icon-User", "dark") XXL
+            let iprops activeTab = IconProps "c-mainmenu-content" (menuTab == activeTab) ("icon-User", "dark") XXLarge
 
             iconButton_ $ defaultIconButtonProps @[GlobalAction]
               & iconButtonPropsListKey      .~ "login"
@@ -72,7 +72,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
                   { _iconPropsBlockName = "c-mainmenu-content"
                   , _iconPropsHighlight = False
                   , _iconPropsDesc      = ("icon-Group", "dark")
-                  , _iconPropsSize      = XXL
+                  , _iconPropsSize      = XXLarge
                   }
               , _iconButtonPropsElementName  = "section-button"
               , _iconButtonPropsModuleName   = ""
@@ -92,7 +92,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
                   { _iconPropsBlockName = "c-mainmenu-content"
                   , _iconPropsHighlight = False
                   , _iconPropsDesc      = ("icon-Group", "dark")
-                  , _iconPropsSize      = XXL
+                  , _iconPropsSize      = XXLarge
                   }
               , _iconButtonPropsElementName  = "section-button"
               , _iconButtonPropsModuleName   = ""
@@ -112,7 +112,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
                   { _iconPropsBlockName = "c-mainmenu-content"
                   , _iconPropsHighlight = False
                   , _iconPropsDesc      = ("icon-Help", "dark")
-                  , _iconPropsSize      = XXL
+                  , _iconPropsSize      = XXLarge
                   }
               , _iconButtonPropsElementName  = "section-button"
               , _iconButtonPropsModuleName   = ""
@@ -135,7 +135,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
                   { _iconPropsBlockName = "c-mainmenu-header"
                   , _iconPropsHighlight = True
                   , _iconPropsDesc      = ("icon-Close", "dark")
-                  , _iconPropsSize      = XXL
+                  , _iconPropsSize      = XXLarge
                   }
               , _iconButtonPropsElementName  = "section-button"
               , _iconButtonPropsModuleName   = ""

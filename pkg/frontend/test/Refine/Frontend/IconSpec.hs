@@ -38,7 +38,7 @@ import           Refine.Frontend.Util
 
 iconButtonTestProps :: IconButtonProps
 iconButtonTestProps =
-    IconButtonProps "key" (iconProps M) element module1 label1 False Nothing False [] True []
+    IconButtonProps "key" (iconProps Medium) element module1 label1 False Nothing False [] True []
   where
     element :: JSString
     element = "the-element-name"
@@ -61,29 +61,29 @@ spec = do
           { _iconPropsBlockName = "blockname"
           , _iconPropsHighlight = True
           , _iconPropsDesc      = ("desc1", "desc2")
-          , _iconPropsSize      = S
+          , _iconPropsSize      = Medium
           }
       contents :: String <- cs <$> html wrapper
       contents `shouldContain` "<div "
 
     it "annotates the block together with the icon module" $ do
-      wrapper <- shallow . icon_ $ iconProps XXL
+      wrapper <- shallow . icon_ $ iconProps XXLarge
       lengthOfIO (find wrapper (StringSelector ".the-block-name__icon")) `shouldReturn` (1 :: Int)
 
     it "annotates the highlight class if True is passed" $ do
-      wrapper <- shallow . icon_ $ iconProps XXL
+      wrapper <- shallow . icon_ $ iconProps XXLarge
       lengthOfIO (find wrapper (StringSelector ".o-icon-highlight")) `shouldReturn` (1 :: Int)
 
     it "does not annotate the highlight class if False is passed" $ do
-      wrapper <- shallow $ icon_ (IconProps "the-block-name" False ("Image", "striped") XXL)
+      wrapper <- shallow $ icon_ (IconProps "the-block-name" False ("Image", "striped") XXLarge)
       lengthOfIO (find wrapper (StringSelector ".o-icon-highlight")) `shouldReturn` (0 :: Int)
 
     it "annotates the icon image class that is passed" $ do
-      wrapper <- shallow . icon_ $ iconProps XXL
+      wrapper <- shallow . icon_ $ iconProps XXLarge
       lengthOfIO (find wrapper (StringSelector ".Image_striped")) `shouldReturn` (1 :: Int)
 
     it "annotates the RO icon image when the mouse has entered the icon and the normal one when it left again" $ do
-      wrapper <- shallow . icon_ $ iconProps XXL
+      wrapper <- shallow . icon_ $ iconProps XXLarge
       simulate wrapper MouseEnter
       lengthOfIO (find wrapper (StringSelector ".Image_striped")) `shouldReturn` (0 :: Int)
       lengthOfIO (find wrapper (StringSelector ".Image_RO")) `shouldReturn` (1 :: Int)

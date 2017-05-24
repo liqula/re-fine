@@ -130,7 +130,7 @@ login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState ->
       inputField "login-password" "password" "Password" loginFormPassword >> br_ []
 
       iconButton_ $ defaultIconButtonProps @[RS.GlobalAction]
-        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L
+        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") Large
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "submit"
         & iconButtonPropsDisabled     .~ invalidLoginForm curState
@@ -153,7 +153,7 @@ logout = mkView "Logout" $ do
           , "action" $= "POST" ] $ do
 
       iconButton_ $ defaultIconButtonProps @[RS.GlobalAction]
-        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L
+        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") Large
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "logout"
         & iconButtonPropsDisabled     .~ False
@@ -188,7 +188,7 @@ registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "
       "I agree with the terms of use." >> br_ []
 
       iconButton_ $ defaultIconButtonProps @[RS.GlobalAction]
-        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L
+        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") Large
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "submit"
         & iconButtonPropsDisabled     .~ invalidRegistrationForm curState

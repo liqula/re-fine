@@ -60,21 +60,19 @@ import           Refine.Frontend.Util
 -- * css
 
 data IconSize
-  = S
-  | M
-  | L
-  | XL
-  | XXL
+  = Medium
+  | Large
+  | XLarge
+  | XXLarge
   deriving (Eq, Show)
 
 
 instance Css IconSize where
   css = f . \case
-    S   -> 9
-    M   -> 14
-    L   -> 20
-    XL  -> 26
-    XXL -> 32
+    Medium  -> 14
+    Large   -> 20
+    XLarge  -> 26
+    XXLarge -> 32
     where
       f i = [ decl "backgroundSize" (Percentage 100)
             , decl "width" (Px i)
@@ -102,7 +100,7 @@ instance Default IconProps where
     { _iconPropsBlockName = ""
     , _iconPropsHighlight = False
     , _iconPropsDesc      = ("", "")
-    , _iconPropsSize      = L
+    , _iconPropsSize      = Large
     }
 
 
