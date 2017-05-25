@@ -133,7 +133,7 @@ mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuEr
       let tabButton :: Int -> MainMenuSubTabLogin -> ReactElementM eventHandler ()
           tabButton key this = div_ ["style" @@= [decl "margin-left" (Px 40)]] $ do
             ibutton_ $ emptyIbuttonProps "00_joker" [MainMenuAction . MainMenuActionOpen . MainMenuLogin $ this]
-              & ibListKey .~ (cs $ show key)
+              & ibListKey .~ cs (show key)
               & ibDarkBackground .~ False
               & ibHighlightWhen .~ (if currentTab == this then HighlightAlways else HighlightOnMouseOver)
               & ibLabel .~ (case this of
