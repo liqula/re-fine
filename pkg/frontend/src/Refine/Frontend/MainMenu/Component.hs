@@ -116,10 +116,10 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUser) -
            , "style" @@= tabStyles
            ] $ do
         case menuTab of
-          MainMenuProcess                          -> "[MainMenuProcess]"
-          MainMenuGroup                            -> "[MainMenuGroup]"
-          MainMenuHelp                             -> "[MainMenuHelp]"
-          MainMenuLogin subtab                     -> mainMenuLoginTab_ subtab menuErrors currentUser
+          MainMenuProcess      -> "[MainMenuProcess]"
+          MainMenuGroup        -> "[MainMenuGroup]"
+          MainMenuHelp         -> "[MainMenuHelp]"
+          MainMenuLogin subtab -> mainMenuLoginTab_ subtab menuErrors currentUser
       div_ [ "className" $= "gr-2" ] $ do
         pure ()
 
