@@ -40,102 +40,49 @@ topMenuBarInMainMenu :: View '[TopMenuBarInMainMenuProps]
 topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps menuTab currentUser) ->
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
-      div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
-        div_ ["className" $= "c-mainmenu-content__header"] $ do
-            let iprops thisTab = IconProps "c-mainmenu-content" (menuTab == thisTab) ("icon-User", "dark") XXLarge
+      div_ ["className" $= "c-mainmenu-content__header"] $ do
+        div_ ["className" $= "gr-2"] $ do
+          ibutton_ $ emptyIbuttonProps "Close" [MainMenuAction MainMenuActionClose]
+            & ibListKey .~ "1"
+            & ibDarkBackground .~ True
+            & ibSize .~ XXLarge
+            & ibLabel .~ mempty
 
-            iconButton_ IconButtonProps
-              { _iconButtonPropsListKey = "close"
-              , _iconButtonPropsIconProps = IconProps
-                  { _iconPropsBlockName = "c-mainmenu-header"
-                  , _iconPropsHighlight = True
-                  , _iconPropsDesc      = ("icon-Close", "bright")
-                  , _iconPropsSize      = XXLarge
-                  }
-              , _iconButtonPropsElementName  = "section-button"
-              , _iconButtonPropsModuleName   = ""
-              , _iconButtonPropsLabel        = ""
-              , _iconButtonPropsDisabled     = False
-              , _iconButtonPropsPosition     = Nothing
-              , _iconButtonPropsAlignRight   = False
-              , _iconButtonPropsOnClick      = [MainMenuAction MainMenuActionClose]
-              , _iconButtonPropsClickPropag  = True
-              , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-close"]
-              }
+        div_ ["className" $= "gr-20"] $ do
+          ibutton_ $ emptyIbuttonProps "Process" []
+            & ibListKey .~ "2"
+            & ibDarkBackground .~ True
+            & ibSize .~ XXLarge
+            & ibLabel .~ mempty
 
-            iconButton_ $ defaultIconButtonProps @[GlobalAction]
-              & iconButtonPropsListKey      .~ "login"
-              & iconButtonPropsIconProps    .~ iprops MainMenuLogin
-              & iconButtonPropsElementName  .~ "section-button"
-              & iconButtonPropsModuleName   .~ "active"
-              & iconButtonPropsOnClick      .~ [MainMenuAction $ MainMenuActionOpen MainMenuLogin]
+          ibutton_ $ emptyIbuttonProps "Group" []
+            & ibListKey .~ "3"
+            & ibDarkBackground .~ True
+            & ibSize .~ XXLarge
+            & ibLabel .~ mempty
 
-            iconButton_ $ defaultIconButtonProps @[GlobalAction]
-              & iconButtonPropsListKey      .~ "register"
-              & iconButtonPropsIconProps    .~ iprops MainMenuRegistration
-              & iconButtonPropsElementName  .~ "section-button"
-              & iconButtonPropsModuleName   .~ "active"
-              & iconButtonPropsOnClick      .~ [MainMenuAction $ MainMenuActionOpen MainMenuRegistration]
-              & iconButtonPropsExtraClasses .~ ["c-mainmenu-content__btn-dashboard"]
+          ibutton_ $ emptyIbuttonProps "Help" []
+            & ibListKey .~ "4"
+            & ibDarkBackground .~ True
+            & ibSize .~ XXLarge
+            & ibLabel .~ mempty
 
-            iconButton_ IconButtonProps
-              { _iconButtonPropsListKey = "locale-EN"
-              , _iconButtonPropsIconProps = IconProps
-                  { _iconPropsBlockName = "c-mainmenu-content"
-                  , _iconPropsHighlight = True
-                  , _iconPropsDesc      = ("icon-Group", "dark")
-                  , _iconPropsSize      = XXLarge
-                  }
-              , _iconButtonPropsElementName  = "section-button"
-              , _iconButtonPropsModuleName   = ""
-              , _iconButtonPropsLabel        = "EN"
-              , _iconButtonPropsDisabled     = False
-              , _iconButtonPropsPosition     = Nothing
-              , _iconButtonPropsAlignRight   = False
-              , _iconButtonPropsOnClick      = [LoadTranslations $ Locale "en_GB"]
-              , _iconButtonPropsClickPropag  = True
-              , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-membership"]
-              }
+          ibutton_ $ emptyIbuttonProps "00_joker" []
+            & ibListKey .~ "5"
+            & ibDarkBackground .~ True
+            & ibSize .~ XXLarge
+            & ibLabel .~ mempty
 
-            iconButton_ IconButtonProps
-              { _iconButtonPropsListKey = "locale-DE"
-              , _iconButtonPropsIconProps = IconProps
-                  { _iconPropsBlockName = "c-mainmenu-content"
-                  , _iconPropsHighlight = True
-                  , _iconPropsDesc      = ("icon-Group", "dark")
-                  , _iconPropsSize      = XXLarge
-                  }
-              , _iconButtonPropsElementName  = "section-button"
-              , _iconButtonPropsModuleName   = ""
-              , _iconButtonPropsLabel        = "DE"
-              , _iconButtonPropsDisabled     = False
-              , _iconButtonPropsPosition     = Nothing
-              , _iconButtonPropsAlignRight   = False
-              , _iconButtonPropsOnClick      = [LoadTranslations $ Locale "de_DE"]
-              , _iconButtonPropsClickPropag  = True
-              , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-membership"]
-              }
+          -- search
 
-            iconButton_ IconButtonProps
-              { _iconButtonPropsListKey = "help"
-              , _iconButtonPropsIconProps = IconProps
-                  { _iconPropsBlockName = "c-mainmenu-content"
-                  , _iconPropsHighlight = False
-                  , _iconPropsDesc      = ("icon-Help", "dark")
-                  , _iconPropsSize      = XXLarge
-                  }
-              , _iconButtonPropsElementName  = "section-button"
-              , _iconButtonPropsModuleName   = ""
-              , _iconButtonPropsLabel        = ""
-              , _iconButtonPropsDisabled     = False
-              , _iconButtonPropsPosition     = Nothing
-              , _iconButtonPropsAlignRight   = False
-              , _iconButtonPropsOnClick      = [] :: [GlobalAction]
-              , _iconButtonPropsClickPropag  = True
-              , _iconButtonPropsExtraClasses = ["c-mainmenu-content__btn-help"]
-              }
+          loginStatusButton_ True currentUser
 
-            loginStatusButton_ True currentUser
+        div_ ["className" $= "gr-2"] $ do
+          ibutton_ $ emptyIbuttonProps "00_joker" []
+            & ibListKey .~ "7"
+            & ibDarkBackground .~ True
+            & ibSize .~ XXLarge
+            & ibLabel .~ mempty
 
 topMenuBarInMainMenu_ :: TopMenuBarInMainMenuProps -> ReactElementM eventHandler ()
 topMenuBarInMainMenu_ !props = view_ topMenuBarInMainMenu "topMenuBarInMainMenu_" props
@@ -145,7 +92,7 @@ mainMenu :: View '[MainMenuProps]
 mainMenu = mkView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUser) -> do
   div_ $ do
     topMenuBarInMainMenu_ (TopMenuBarInMainMenuProps menuTab currentUser)
-  div_ $ do
+  div_ ["className" $= "gr-20 gr-center"] $ do
     case menuTab of
       MainMenuLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
       MainMenuRegistration -> registration_  (menuErrors ^. mmeRegistration)
