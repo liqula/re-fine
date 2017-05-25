@@ -40,18 +40,18 @@ import           Refine.Prelude ()
 import           Refine.Prelude.TH (makeRefineType)
 import qualified Refine.Prelude.BuildInfo as BuildInfo
 
-import           Language.Css.Syntax
 import           Language.Css.Build
+import           Language.Css.Syntax
+import           Refine.Frontend.Colors as Color
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
+import           Refine.Frontend.Login.Component
+import           Refine.Frontend.Login.Status
+import           Refine.Frontend.Login.Types
+import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
-import           Refine.Frontend.Colors as Color
 import           Refine.Frontend.Util
-import           Refine.Frontend.Store
-import           Refine.Frontend.Login.Types
-import           Refine.Frontend.Login.Component
-import           Refine.Frontend.Header.UserLoginLogout
 
 
 -- * workbench component

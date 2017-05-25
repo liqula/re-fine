@@ -23,7 +23,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Header.UserLoginLogout where
+module Refine.Frontend.Login.Status where
 
 import Refine.Frontend.Prelude
 

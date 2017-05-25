@@ -28,12 +28,12 @@ import Refine.Frontend.Prelude
 
 import           Data.Text.I18n (Locale(..))
 
-import           Refine.Frontend.Header.UserLoginLogout
-import           Refine.Frontend.Login.Types
+import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Component
+import           Refine.Frontend.Login.Status
+import           Refine.Frontend.Login.Types
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Icon
 
 
 topMenuBarInMainMenu :: View '[TopMenuBarInMainMenuProps]

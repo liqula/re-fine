@@ -42,13 +42,13 @@ import           Refine.Frontend.Header.EditToolbar ( editToolbar_ )
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_ )
 import           Refine.Frontend.Header.Types
-import           Refine.Frontend.Header.UserLoginLogout
+import           Refine.Frontend.Login.Status
 import           Refine.Frontend.Login.Types
+import           Refine.Frontend.MainMenu.Types
+import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.ThirdPartyViews (sticky_)
-import           Refine.Frontend.MainMenu.Types
-import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Util
 
 
