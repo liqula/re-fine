@@ -76,7 +76,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
 
       -- search
 
-      loginStatusButton_ True currentUser
+      loginStatusButton_ False True currentUser
 
     div_ ["className" $= "gr-2"] $ do
       ibutton_ $ emptyIbuttonProps "00_joker" [ShowNotImplementedYet]
@@ -113,6 +113,8 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUser) -
           MainMenuHelp                             -> "[MainMenuHelp]"
           MainMenuLogin MainMenuSubTabLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
           MainMenuLogin MainMenuSubTabRegistration -> registration_  (menuErrors ^. mmeRegistration)
+      div_ [ "className" $= "gr-2" ] $ do
+        pure ()
 
 mainMenu_ :: MainMenuTab -> MainMenuErrors -> CurrentUser -> ReactElementM eventHandler ()
 mainMenu_ mt me cu = view_ mainMenu "mainMenu_" (MainMenuProps mt me cu)

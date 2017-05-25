@@ -33,10 +33,10 @@ import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Store.Types
 
 
-loginStatusButton_ :: Bool -> CurrentUser -> ReactElementM handler ()
-loginStatusButton_ darkBackground cu = ibutton_ $ emptyIbuttonProps "Login" onclick
+loginStatusButton_ :: Bool -> Bool -> CurrentUser -> ReactElementM handler ()
+loginStatusButton_ showLabel darkBackground cu = ibutton_ $ emptyIbuttonProps "Login" onclick
   & ibDarkBackground .~ darkBackground
-  & ibLabel .~ mkLabel cu
+  & ibLabel .~ (if showLabel then mkLabel cu else mempty)
   & ibSize .~ XXLarge
   & ibAlign .~ AlignRight
   where

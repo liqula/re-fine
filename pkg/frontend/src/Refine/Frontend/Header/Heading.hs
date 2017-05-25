@@ -77,7 +77,7 @@ topMenuBar = mkView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
     unless sticky $
       span_ ["className" $= "c-mainmenu__menu-button-label"] "MENU"
-    loginStatusButton_ (not sticky) currentUser
+    loginStatusButton_ True (not sticky) currentUser
 
 topMenuBar_ :: TopMenuBarProps -> ReactElementM eventHandler ()
 topMenuBar_ !props = view_ topMenuBar "TopMenuBar_" props
