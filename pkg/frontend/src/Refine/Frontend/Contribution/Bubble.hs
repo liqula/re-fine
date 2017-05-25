@@ -25,6 +25,8 @@ module Refine.Frontend.Contribution.Bubble
   , questionBubble_
   , discussionBubble_
   , editBubble_
+
+  , stackComponents, StackOrNot(..)
   ) where
 
 import Refine.Frontend.Prelude
@@ -121,3 +123,39 @@ editBubble children = mkView "EditBubble" $ \(SpecialBubbleProps dataChunkId mar
 
 editBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
 editBubble_ !props children = view_ (editBubble children) (specialBubbleKey props) props
+
+
+-- * stacking
+
+data StackOrNot a = Stack [a] | NoStack a
+  deriving (Eq, Ord, Show, Generic)
+
+-- | given a list of abstract components together with their absolute position and height, group all
+-- overlapping components into stacks, and leave all others single.
+stackComponents :: forall pos height comp. (pos ~ Int, height ~ Int)
+                => (comp -> pos) -> (comp -> height)
+                -> [comp] -> [StackOrNot comp]
+stackComponents getPos getHeight comps = assert (all (\c -> getPos c >= 0 && getHeight c >= 1) comps)
+                                       . go 0 [] . sortBy (compare `on` getPos)
+                                       $ comps
+  where
+    go _ [] []
+      = []
+
+    -- start a new pile if the old one is empty.
+    go usedHeight [] (x : xs)
+      = go (updateUsedHeight usedHeight x) [x] xs
+
+    -- if the next one *does* overlap with the (non-empty) pile, add it.
+    go usedHeight overlapping@(_:_) (x : xs) | getPos x <= usedHeight
+      = go (updateUsedHeight usedHeight x) (x : overlapping) xs
+
+    -- if the next one *does not* overlap with the (non-empty) pile, emit a new 'StackOrNot'
+    go usedHeight overlapping@(_:_) xs
+      = save overlapping : go usedHeight [] xs
+
+    updateUsedHeight old x = max old (getPos x + getHeight x)
+
+    save cps@(_:_:_) = Stack (reverse cps)
+    save [cp]        = NoStack cp
+    save []          = error "impossible"
