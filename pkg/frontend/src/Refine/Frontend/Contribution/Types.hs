@@ -87,6 +87,7 @@ data ContributionAction =
   | SubmitComment ST (Maybe CommentKind)
   | RequestSetMarkPositions
   | SetMarkPositions [(ContributionID, MarkPosition)]  -- ^ see 'MarkPositions'
+  | SetBubblePositioning BubblePositioning
   | HighlightMarkAndBubble ContributionID
   | UnhighlightMarkAndBubble
   | SetBubbleFilter (Maybe (Set ContributionID))
@@ -101,8 +102,12 @@ data ContributionState = ContributionState
   , _csHighlightedMarkAndBubble :: Maybe ContributionID
   , _csQuickCreateShowState     :: QuickCreateShowState
   , _csMarkPositions            :: MarkPositions
+  , _csBubblePositioning        :: BubblePositioning
   , _csBubbleFilter             :: Maybe (Set ContributionID)  -- ^ 'Nothing' means show everything.
   } deriving (Show, Eq, Generic)
+
+data BubblePositioning = BubblePositioningAbsolute | BubblePositioningEvenlySpaced
+  deriving (Show, Eq, Generic)
 
 data CommentKind =
     CommentKindNote
@@ -122,6 +127,7 @@ emptyContributionState = ContributionState
   , _csHighlightedMarkAndBubble = Nothing
   , _csQuickCreateShowState     = QuickCreateNotShown
   , _csMarkPositions            = mempty
+  , _csBubblePositioning        = BubblePositioningAbsolute
   , _csBubbleFilter             = Nothing
   }
 
@@ -246,6 +252,7 @@ instance FromJSON MarkPositions where
 makeRefineType ''AddContributionFormState
 makeRefineType ''ContributionAction
 makeRefineType ''ContributionState
+makeRefineType ''BubblePositioning
 makeRefineType ''CommentKind
 makeRefineType ''ActiveDialog
 
