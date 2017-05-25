@@ -1,30 +1,34 @@
 #!/usr/bin/env stack
-{- stack --resolver lts-7.15 --install-ghc runghc
+{- stack --resolver lts-8.11 --install-ghc runghc
     --package foldl
     --package regex-posix
     --package string-conversions
     --package system-filepath
     --package turtle
 
-    --
-
-    -XBangPatterns
-    -XDeriveDataTypeable
-    -XExistentialQuantification
-    -XGeneralizedNewtypeDeriving
-    -XLambdaCase
-    -XNoImplicitPrelude
-    -XOverloadedStrings
-    -XPackageImports
-    -XRecordWildCards
-    -XScopedTypeVariables
-    -XStandaloneDeriving
-    -XTupleSections
-    -XViewPatterns
-
-    -Wall
-
 -}
+
+{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PackageImports #-}
+{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE ViewPatterns #-}
+
+{-# OPTIONS_GHC -Wall -fno-warn-orphans -fno-warn-unused-imports #-}
 
 import           Control.Exception (assert)
 import qualified Control.Foldl as Fold
@@ -209,3 +213,24 @@ createPoFile = ST.unlines . fmap go . Map.toAscList
 
     showLoc :: (FilePath, Int) -> ST
     showLoc (sourcePath, sourceLine) = cs $ "#: " <> encodeString sourcePath <> ":" <> show sourceLine
+
+
+-- * should go into separate package
+
+instance ConvertibleStrings ST Filesystem.Path.CurrentOS.FilePath where
+  convertString = Filesystem.Path.CurrentOS.fromText
+
+instance ConvertibleStrings Filesystem.Path.CurrentOS.FilePath ST where
+  convertString = either (error . show) id . Filesystem.Path.CurrentOS.toText
+
+instance ConvertibleStrings String Filesystem.Path.CurrentOS.FilePath where
+  convertString = cs @ST . cs
+
+instance ConvertibleStrings Filesystem.Path.CurrentOS.FilePath String where
+  convertString = cs @ST . cs
+
+instance ConvertibleStrings SBS Filesystem.Path.CurrentOS.FilePath where
+  convertString = cs @ST . cs
+
+instance ConvertibleStrings Filesystem.Path.CurrentOS.FilePath SBS where
+  convertString = cs @ST . cs
