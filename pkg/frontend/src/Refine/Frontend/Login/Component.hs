@@ -103,7 +103,7 @@ loginOrLogout_ = \case
 defaultStyles :: [Decl]
 defaultStyles =
   [ decl "position" (Ident "absolute")
-  , decl @Int "zIndex" 100000
+  , zindex ZIxLoginTab
   , decl "color" (Ident "black")
   , decl "backgroundColor" Colors.SCWhite
   ]
