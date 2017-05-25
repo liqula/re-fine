@@ -105,7 +105,7 @@ tabStyles =
   , decl "backgroundColor" Colors.SCWhite
   ]
 
-mainMenu :: View '[MainMenuProps]
+mainMenu :: View '[MainMenuProps MainMenuTab]
 mainMenu = mkView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUser) -> do
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
@@ -119,10 +119,19 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUser) -
           MainMenuProcess                          -> "[MainMenuProcess]"
           MainMenuGroup                            -> "[MainMenuGroup]"
           MainMenuHelp                             -> "[MainMenuHelp]"
-          MainMenuLogin MainMenuSubTabLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
-          MainMenuLogin MainMenuSubTabRegistration -> registration_  (menuErrors ^. mmeRegistration)
+          MainMenuLogin subtab                     -> mainMenuLoginTab_ subtab menuErrors currentUser
       div_ [ "className" $= "gr-2" ] $ do
         pure ()
 
 mainMenu_ :: MainMenuTab -> MainMenuErrors -> CurrentUser -> ReactElementM eventHandler ()
 mainMenu_ mt me cu = view_ mainMenu "mainMenu_" (MainMenuProps mt me cu)
+
+
+mainMenuLoginTab :: View '[MainMenuProps MainMenuSubTabLogin]
+mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps menuTab menuErrors currentUser) -> do
+        case menuTab of
+          MainMenuSubTabLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
+          MainMenuSubTabRegistration -> registration_  (menuErrors ^. mmeRegistration)
+
+mainMenuLoginTab_ :: MainMenuSubTabLogin -> MainMenuErrors -> CurrentUser -> ReactElementM eventHandler ()
+mainMenuLoginTab_ mt me cu = view_ mainMenuLoginTab "mainMenuLoginTab_" (MainMenuProps mt me cu)

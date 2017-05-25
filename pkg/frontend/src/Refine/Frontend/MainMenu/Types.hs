@@ -65,8 +65,8 @@ defaultMainMenuTab = MainMenuProcess
 data MainMenuSubTabLogin = MainMenuSubTabLogin | MainMenuSubTabRegistration
   deriving (Eq, Show, Generic)
 
-data MainMenuProps = MainMenuProps
-  { _mmpMainMenuTab    :: MainMenuTab
+data MainMenuProps tab = MainMenuProps
+  { _mmpMainMenuTab    :: tab
   , _mmpMainMenuErrors :: MainMenuErrors
   , _mmpCurrentUser    :: CurrentUser
   }
@@ -78,7 +78,7 @@ data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
   }
   deriving (Eq)
 
-instance UnoverlapAllEq MainMenuProps
+instance UnoverlapAllEq (MainMenuProps tab)
 instance UnoverlapAllEq TopMenuBarInMainMenuProps
 
 makeRefineType ''MainMenuAction
