@@ -40,7 +40,7 @@ loginStatusButton_ darkBackground cu = ibutton_ $ emptyIbuttonProps "Login" oncl
   & ibSize .~ XXLarge
   & ibAlign .~ AlignRight
   where
-    onclick = [MainMenuAction $ MainMenuActionOpen MainMenuLogin]
+    onclick = [MainMenuAction $ MainMenuActionOpen (MainMenuLogin MainMenuSubTabLogin)]
 
     mkLabel UserLoggedOut    = "login"
     mkLabel (UserLoggedIn n) = "I am " <> n

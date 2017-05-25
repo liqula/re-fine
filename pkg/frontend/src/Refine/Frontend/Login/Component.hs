@@ -31,7 +31,6 @@ import qualified Data.Text as ST
 import           Language.Css.Syntax
 
 import           Refine.Common.Types.Prelude
-import qualified Refine.Frontend.Colors as Colors
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Store.Types as RS
@@ -101,12 +100,7 @@ loginOrLogout_ = \case
   UserLoggedIn _ -> const logout_
 
 defaultStyles :: [Decl]
-defaultStyles =
-  [ decl "position" (Ident "absolute")
-  , zindex ZIxLoginTab
-  , decl "color" (Ident "black")
-  , decl "backgroundColor" Colors.SCWhite
-  ]
+defaultStyles = []
 
 
 -- * Login

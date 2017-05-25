@@ -53,12 +53,17 @@ data MainMenu
   deriving (Eq, Show, Generic)
 
 data MainMenuTab
-  = MainMenuLogin
-  | MainMenuRegistration
+  = MainMenuProcess
+  | MainMenuGroup
+  | MainMenuHelp
+  | MainMenuLogin MainMenuSubTabLogin
   deriving (Eq, Show, Generic)
 
 defaultMainMenuTab :: MainMenuTab
-defaultMainMenuTab = MainMenuLogin
+defaultMainMenuTab = MainMenuProcess
+
+data MainMenuSubTabLogin = MainMenuSubTabLogin | MainMenuSubTabRegistration
+  deriving (Eq, Show, Generic)
 
 data MainMenuProps = MainMenuProps
   { _mmpMainMenuTab    :: MainMenuTab
@@ -81,3 +86,4 @@ makeRefineType ''MainMenuErrors
 makeRefineType ''MainMenuState
 makeRefineType ''MainMenu
 makeRefineType ''MainMenuTab
+makeRefineType ''MainMenuSubTabLogin
