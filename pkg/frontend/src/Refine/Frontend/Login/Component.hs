@@ -31,6 +31,7 @@ import qualified Data.Text as ST
 import           Language.Css.Syntax
 
 import           Refine.Common.Types.Prelude
+import           Refine.Frontend.Colors as Color
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Store.Types as RS
@@ -40,12 +41,20 @@ import           Refine.Prelude.TH (makeRefineType)
 
 -- * Helper
 
+inputFieldStyles :: [Decl]
+inputFieldStyles =
+  [ decl "borderRadius" (Px 5)
+  , decl "margin" (Px 12)
+  , decl "backgroundColor" Color.SCBlue08
+  ]
+
 inputFieldWithKey
   :: (FromJSVal c)
   => JSString -> JSString -> JSString -> JSString -> ASetter s a b c
   -> ReactElementM (s -> ([t], Maybe a)) ()
 inputFieldWithKey fieldId fieldType fieldPlaceholder fieldKey lens =
   input_ [ "id" $= fieldId
+         , "style" @@= inputFieldStyles
          , "type" $= fieldType
          , "placeholder" $= fieldPlaceholder
          , onChange $ \evt st -> ([], Just (st & lens .~ target evt fieldKey))

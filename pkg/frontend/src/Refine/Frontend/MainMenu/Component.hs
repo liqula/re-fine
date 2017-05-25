@@ -101,8 +101,9 @@ tabStyles :: [Decl]
 tabStyles =
   [ decl "position" (Ident "absolute")
   , zindex ZIxLoginTab
-  , decl "color" (Ident "black")
-  , decl "backgroundColor" Colors.SCWhite
+  , decl "backgroundColor" Colors.SCBlue06
+  , decl "padding" (Px 50)
+  , decl "borderRadius" (Px 12)
   ]
 
 mainMenu :: View '[MainMenuProps MainMenuTab]
@@ -130,7 +131,7 @@ mainMenu_ mt me cu = view_ mainMenu "mainMenu_" (MainMenuProps mt me cu)
 mainMenuLoginTab :: View '[MainMenuProps MainMenuSubTabLogin]
 mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
       let tabButton :: Int -> MainMenuSubTabLogin -> ReactElementM eventHandler ()
-          tabButton key this = do
+          tabButton key this = div_ ["style" @@= [decl "margin-left" (Px 40)]] $ do
             ibutton_ $ emptyIbuttonProps "00_joker" [MainMenuAction . MainMenuActionOpen . MainMenuLogin $ this]
               & ibListKey .~ (cs $ show key)
               & ibDarkBackground .~ False
