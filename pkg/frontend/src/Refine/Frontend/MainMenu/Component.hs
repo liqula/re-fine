@@ -79,7 +79,12 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
 
       -- search
 
-      loginStatusButton_ False True currentUser
+      loginStatusButton_
+        ( (ibDarkBackground .~ True)
+        . (ibLabel .~ mempty)
+        . (ibHighlightWhen .~ case currentTab of MainMenuLogin _ -> HighlightAlways; _ -> HighlightOnMouseOver)
+        )
+        currentUser
 
     div_ ["className" $= "gr-2"] $ do
       ibutton_ $ emptyIbuttonProps "00_joker" [ShowNotImplementedYet]

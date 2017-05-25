@@ -33,12 +33,12 @@ import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Store.Types
 
 
-loginStatusButton_ :: Bool -> Bool -> CurrentUser -> ReactElementM handler ()
-loginStatusButton_ showLabel darkBackground cu = ibutton_ $ emptyIbuttonProps "Login" onclick
-  & ibDarkBackground .~ darkBackground
-  & ibLabel .~ (if showLabel then mkLabel cu else mempty)
+loginStatusButton_ :: (forall onclick. IbuttonProps onclick -> IbuttonProps onclick) -> CurrentUser -> ReactElementM handler ()
+loginStatusButton_ tweak cu = ibutton_ $ emptyIbuttonProps "Login" onclick
+  & ibLabel .~ mkLabel cu
   & ibSize .~ XXLarge
   & ibAlign .~ AlignRight
+  & tweak
   where
     onclick = [MainMenuAction $ MainMenuActionOpen (MainMenuLogin MainMenuSubTabLogin)]
 
