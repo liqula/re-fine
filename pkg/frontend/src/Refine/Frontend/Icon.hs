@@ -81,10 +81,11 @@ ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
       bg :: BackgroundImage
       bg = BackgroundImage (props ^. ibImage) imageState
         where
-          imageState
-            | mouseIsOver && props ^. ibEnabled = BisRO
-            | props ^. ibDarkBackground         = BisBright
-            | otherwise                         = BisDark
+          imageState = case props ^. ibHighlightWhen of
+            HighlightAlways      | props ^. ibEnabled                -> BisRO
+            HighlightOnMouseOver | mouseIsOver && props ^. ibEnabled -> BisRO
+            _                    | props ^. ibDarkBackground         -> BisBright
+            _                                                        -> BisDark
 
       spanSty :: [Decl]
       spanSty = [ decl "cursor" (Ident "pointer")
@@ -111,12 +112,12 @@ emptyIbuttonProps img onclick = IbuttonProps
   , _ibLabel            = "[label]"
   , _ibDarkBackground   = False
   , _ibImage            = img
+  , _ibHighlightWhen    = HighlightOnMouseOver
   , _ibOnClick          = onclick
   , _ibClickPropag      = True
   , _ibEnabled          = True
   , _ibSize             = Large
   , _ibAlign            = AlignLeft
-  , _ibPosition         = Nothing
   }
 
 

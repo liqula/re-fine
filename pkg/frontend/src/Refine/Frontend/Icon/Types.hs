@@ -27,6 +27,7 @@ module Refine.Frontend.Icon.Types
   ( ReactListKey
 
   , Align(..)
+  , HighlightWhen(..)
   , IbuttonProps(..)
   , ibEnabled
   , ibSize
@@ -34,8 +35,8 @@ module Refine.Frontend.Icon.Types
   , ibAlign
   , ibClickPropag
   , ibLabel
+  , ibHighlightWhen
   , ibOnClick
-  , ibPosition
   , ibDarkBackground
   , ibImage
 
@@ -85,17 +86,20 @@ import           Refine.Frontend.Util
 data Align = AlignRight | AlignLeft
   deriving (Eq, Show, Generic)
 
+data HighlightWhen = HighlightNever | HighlightOnMouseOver | HighlightAlways
+  deriving (Eq, Show, Generic)
+
 data IbuttonProps onclick = IbuttonProps
   { _ibListKey          :: ReactListKey  -- ^ this is not morally part of the props, but it's convenient to keep it here.
   , _ibLabel            :: ST
   , _ibDarkBackground   :: Bool
   , _ibImage            :: ST
+  , _ibHighlightWhen    :: HighlightWhen  -- ^ when to switch to @_RO.svg@ variant.
   , _ibOnClick          :: onclick
   , _ibClickPropag      :: Bool
   , _ibEnabled          :: Bool
   , _ibSize             :: IconSize
   , _ibAlign            :: Align
-  , _ibPosition         :: Maybe Int
   }
   deriving (Eq, Show, Generic)
 

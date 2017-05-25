@@ -40,7 +40,7 @@ import           Refine.Frontend.Util
 
 
 topMenuBarInMainMenu :: View '[TopMenuBarInMainMenuProps]
-topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps _currentTab currentUser) ->
+topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps currentTab currentUser) ->
   div_ ["className" $= "c-mainmenu-content__header"] $ do
     div_ ["className" $= "gr-2"] $ do
       ibutton_ $ emptyIbuttonProps "Close" [MainMenuAction MainMenuActionClose]
@@ -53,18 +53,21 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
       ibutton_ $ emptyIbuttonProps "Process" [MainMenuAction $ MainMenuActionOpen MainMenuProcess]
         & ibListKey .~ "2"
         & ibDarkBackground .~ True
+        & ibHighlightWhen .~ (if currentTab == MainMenuProcess then HighlightAlways else HighlightOnMouseOver)
         & ibSize .~ XXLarge
         & ibLabel .~ mempty
 
       ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction $ MainMenuActionOpen MainMenuGroup]
         & ibListKey .~ "3"
         & ibDarkBackground .~ True
+        & ibHighlightWhen .~ (if currentTab == MainMenuGroup then HighlightAlways else HighlightOnMouseOver)
         & ibSize .~ XXLarge
         & ibLabel .~ mempty
 
       ibutton_ $ emptyIbuttonProps "Help" [MainMenuAction $ MainMenuActionOpen MainMenuHelp]
         & ibListKey .~ "4"
         & ibDarkBackground .~ True
+        & ibHighlightWhen .~ (if currentTab == MainMenuHelp then HighlightAlways else HighlightOnMouseOver)
         & ibSize .~ XXLarge
         & ibLabel .~ mempty
 
