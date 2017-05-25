@@ -69,6 +69,52 @@ instance Num Px where  -- FIXME: #317  (also, Px should be a newtype)
   signum (Px i) = Px (signum i)
   fromInteger = Px . fromInteger
 
+instance Enum Px where
+  fromEnum (Px i) = i
+  toEnum = Px
+
+instance Ord Px where
+  compare (Px i) (Px j) = compare i j
+
+
+{- | FIXME: move all of the css z-index handling here.  currently, grep shows this:
+
+pkg/frontend/scss/0-settings/_settings.components.scss:3:// z-index
+pkg/frontend/scss/2-generic/_generic.pagelayout.scss:37:            z-index: -1;
+pkg/frontend/scss/2-generic/_generic.pagelayout.scss:41:            z-index: -1;
+pkg/frontend/scss/4-components/_components.mainmenu-content.scss:23:    z-index: $always-on-top;
+pkg/frontend/scss/4-components/_components.mainmenu.scss:19:    z-index: $mainmenu-button-index;
+pkg/frontend/scss/4-components/_components.mainmenu.scss:20:    //z-index: $always-on-top;
+pkg/frontend/scss/4-components/_components.mainmenu.scss:28:        z-index: $mainmenu-bg2-index;
+pkg/frontend/scss/4-components/_components.mainmenu.scss:52:        z-index: $always-on-top;
+pkg/frontend/scss/4-components/_components.vdoc-header.scss:42:            z-index: 100;
+pkg/frontend/scss/4-components/_components.vdoc-toolbar-extension.scss:39:        z-index: 100200;
+pkg/frontend/scss/4-components/_components.vdoc-toolbar.scss:14:    //z-index: $vdoc-toolbar-index;
+pkg/frontend/scss/4-components/_components.vdoc-toolbar.scss:50:                z-index: -1;
+pkg/frontend/scss/4-components/_components.vdoc-toolbar.scss:83:        z-index: $toolbar-icons-index;
+pkg/frontend/scss/5-overrides/_overrides.debug.scss:8:    z-index: $always-on-top + 100;
+pkg/frontend/scss/main.scss:20:  z-index: $fullheader-index;
+pkg/frontend/scss/main.scss:25:  z-index: $toolbar-index;
+
+once these are removed, we can do this:
+
+instance ToExpr ZIndex where expr = expr . fromEnum
+
+-}
+data ZIndex =
+    ZIxDialog
+  | ZIxOverlay
+  | ZIxLoginTab
+  deriving (Eq, Ord, Enum, Show)
+
+instance ToExpr ZIndex where
+  expr ZIxDialog   = expr @Int 6050
+  expr ZIxOverlay  = expr @Int 6010
+  expr ZIxLoginTab = expr @Int 100000
+
+zindex :: ZIndex -> Decl
+zindex = decl "zIndex"
+
 
 toClasses :: (ConvertibleStrings s JSString, ConvertibleStrings JSString s) => [s] -> s
 toClasses = cs . JSS.unwords . filter (not . JSS.null) . fmap cs

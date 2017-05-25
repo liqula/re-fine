@@ -1,14 +1,23 @@
-// FIXME: we should generate this file, and only have to add icons to
-// the resp. folder in order to have the css classes.
+// auto-generated like this:
+//
+// ls ../../images | sort | perl -ne '/^(.*)\.svg/; print ".icon-$1 {\n  background-image: url(\"../images/$1.svg\");\n}\n"'
+//
+// FIXME: #320
+//
+// special cases:
+// - Note_lightred.svg
+// - Private_note_ligthyellow.svg
+// - Question_lightgreen.svg
+// - Save_dark.svg is missing
 
-// search: (^.*).svg
-// replace: .icon-$1 {\n  background-image: url("../images/$1.svg");\n}
-
-.icon-_dark {
-  background-image: url("../images/_dark.svg");
+.icon-00_joker_bright {
+  background-image: url("../images/00_joker_bright.svg");
 }
-.icon-Arrow_down_RO {
-  background-image: url("../images/Arrow_down_RO.svg");
+.icon-00_joker_dark {
+  background-image: url("../images/00_joker_dark.svg");
+}
+.icon-00_joker_RO {
+  background-image: url("../images/00_joker_RO.svg");
 }
 .icon-Arrow_down_bright {
   background-image: url("../images/Arrow_down_bright.svg");
@@ -16,8 +25,8 @@
 .icon-Arrow_down_dark {
   background-image: url("../images/Arrow_down_dark.svg");
 }
-.icon-Arrow_left_RO {
-  background-image: url("../images/Arrow_left_RO.svg");
+.icon-Arrow_down_RO {
+  background-image: url("../images/Arrow_down_RO.svg");
 }
 .icon-Arrow_left_bright {
   background-image: url("../images/Arrow_left_bright.svg");
@@ -25,8 +34,8 @@
 .icon-Arrow_left_dark {
   background-image: url("../images/Arrow_left_dark.svg");
 }
-.icon-Arrow_right_RO {
-  background-image: url("../images/Arrow_right_RO.svg");
+.icon-Arrow_left_RO {
+  background-image: url("../images/Arrow_left_RO.svg");
 }
 .icon-Arrow_right_bright {
   background-image: url("../images/Arrow_right_bright.svg");
@@ -34,8 +43,8 @@
 .icon-Arrow_right_dark {
   background-image: url("../images/Arrow_right_dark.svg");
 }
-.icon-Arrow_up_RO {
-  background-image: url("../images/Arrow_up_RO.svg");
+.icon-Arrow_right_RO {
+  background-image: url("../images/Arrow_right_RO.svg");
 }
 .icon-Arrow_up_bright {
   background-image: url("../images/Arrow_up_bright.svg");
@@ -43,8 +52,98 @@
 .icon-Arrow_up_dark {
   background-image: url("../images/Arrow_up_dark.svg");
 }
-.icon-Close_RO {
-  background-image: url("../images/Close_RO.svg");
+.icon-Arrow_up_RO {
+  background-image: url("../images/Arrow_up_RO.svg");
+}
+.icon-cat_art_bright {
+  background-image: url("../images/cat_art_bright.svg");
+}
+.icon-cat_art_dark {
+  background-image: url("../images/cat_art_dark.svg");
+}
+.icon-cat_art_RO {
+  background-image: url("../images/cat_art_RO.svg");
+}
+.icon-cat_business_bright {
+  background-image: url("../images/cat_business_bright.svg");
+}
+.icon-cat_business_dark {
+  background-image: url("../images/cat_business_dark.svg");
+}
+.icon-cat_business_RO {
+  background-image: url("../images/cat_business_RO.svg");
+}
+.icon-cat_fitness_bright {
+  background-image: url("../images/cat_fitness_bright.svg");
+}
+.icon-cat_fitness_dark {
+  background-image: url("../images/cat_fitness_dark.svg");
+}
+.icon-cat_fitness_RO {
+  background-image: url("../images/cat_fitness_RO.svg");
+}
+.icon-cat_flowers_bright {
+  background-image: url("../images/cat_flowers_bright.svg");
+}
+.icon-cat_flowers_dark {
+  background-image: url("../images/cat_flowers_dark.svg");
+}
+.icon-cat_flowers_RO {
+  background-image: url("../images/cat_flowers_RO.svg");
+}
+.icon-cat_party_bright {
+  background-image: url("../images/cat_party_bright.svg");
+}
+.icon-cat_party_dark {
+  background-image: url("../images/cat_party_dark.svg");
+}
+.icon-cat_party_RO {
+  background-image: url("../images/cat_party_RO.svg");
+}
+.icon-cat_photo_bright {
+  background-image: url("../images/cat_photo_bright.svg");
+}
+.icon-cat_photo_dark {
+  background-image: url("../images/cat_photo_dark.svg");
+}
+.icon-cat_photo_RO {
+  background-image: url("../images/cat_photo_RO.svg");
+}
+.icon-cat_rollerdisco_bright {
+  background-image: url("../images/cat_rollerdisco_bright.svg");
+}
+.icon-cat_rollerdisco_dark {
+  background-image: url("../images/cat_rollerdisco_dark.svg");
+}
+.icon-cat_rollerdisco_RO {
+  background-image: url("../images/cat_rollerdisco_RO.svg");
+}
+.icon-cat_romantic_bright {
+  background-image: url("../images/cat_romantic_bright.svg");
+}
+.icon-cat_romantic_dark {
+  background-image: url("../images/cat_romantic_dark.svg");
+}
+.icon-cat_romantic_RO {
+  background-image: url("../images/cat_romantic_RO.svg");
+}
+.icon-cat_sailing_bright {
+  background-image: url("../images/cat_sailing_bright.svg");
+}
+.icon-cat_sailing_dark {
+  background-image: url("../images/cat_sailing_dark.svg");
+}
+.icon-cat_sailing_RO {
+  background-image: url("../images/cat_sailing_RO.svg");
+}
+.icon-cat_work_bright {
+  background-image: url("../images/cat_work_bright.svg");
+}
+.icon-cat_work_dark {
+  background-image: url("../images/cat_work_dark.svg");
+}
+.icon-cat_work_RO {
+  background-image: url("../images/cat_work_RO.svg");
 }
 .icon-Close_bright {
   background-image: url("../images/Close_bright.svg");
@@ -52,8 +151,8 @@
 .icon-Close_dark {
   background-image: url("../images/Close_dark.svg");
 }
-.icon-Comment_RO {
-  background-image: url("../images/Comment_RO.svg");
+.icon-Close_RO {
+  background-image: url("../images/Close_RO.svg");
 }
 .icon-Comment_bright {
   background-image: url("../images/Comment_bright.svg");
@@ -61,8 +160,8 @@
 .icon-Comment_dark {
   background-image: url("../images/Comment_dark.svg");
 }
-.icon-Discussion_RO {
-  background-image: url("../images/Discussion_RO.svg");
+.icon-Comment_RO {
+  background-image: url("../images/Comment_RO.svg");
 }
 .icon-Discussion_bright {
   background-image: url("../images/Discussion_bright.svg");
@@ -73,8 +172,8 @@
 .icon-Discussion_lightblue {
   background-image: url("../images/Discussion_lightblue.svg");
 }
-.icon-Edit_RO {
-  background-image: url("../images/Edit_RO.svg");
+.icon-Discussion_RO {
+  background-image: url("../images/Discussion_RO.svg");
 }
 .icon-Edit_bright {
   background-image: url("../images/Edit_bright.svg");
@@ -82,8 +181,8 @@
 .icon-Edit_dark {
   background-image: url("../images/Edit_dark.svg");
 }
-.icon-Edit_view_RO {
-  background-image: url("../images/Edit_view_RO.svg");
+.icon-Edit_RO {
+  background-image: url("../images/Edit_RO.svg");
 }
 .icon-Edit_view_bright {
   background-image: url("../images/Edit_view_bright.svg");
@@ -91,8 +190,8 @@
 .icon-Edit_view_dark {
   background-image: url("../images/Edit_view_dark.svg");
 }
-.icon-FAQ_RO {
-  background-image: url("../images/FAQ_RO.svg");
+.icon-Edit_view_RO {
+  background-image: url("../images/Edit_view_RO.svg");
 }
 .icon-FAQ_bright {
   background-image: url("../images/FAQ_bright.svg");
@@ -100,8 +199,8 @@
 .icon-FAQ_dark {
   background-image: url("../images/FAQ_dark.svg");
 }
-.icon-Filter_RO {
-  background-image: url("../images/Filter_RO.svg");
+.icon-FAQ_RO {
+  background-image: url("../images/FAQ_RO.svg");
 }
 .icon-Filter_bright {
   background-image: url("../images/Filter_bright.svg");
@@ -109,8 +208,8 @@
 .icon-Filter_dark {
   background-image: url("../images/Filter_dark.svg");
 }
-.icon-Group_RO {
-  background-image: url("../images/Group_RO.svg");
+.icon-Filter_RO {
+  background-image: url("../images/Filter_RO.svg");
 }
 .icon-Group_bright {
   background-image: url("../images/Group_bright.svg");
@@ -118,8 +217,8 @@
 .icon-Group_dark {
   background-image: url("../images/Group_dark.svg");
 }
-.icon-Help_RO {
-  background-image: url("../images/Help_RO.svg");
+.icon-Group_RO {
+  background-image: url("../images/Group_RO.svg");
 }
 .icon-Help_bright {
   background-image: url("../images/Help_bright.svg");
@@ -127,8 +226,8 @@
 .icon-Help_dark {
   background-image: url("../images/Help_dark.svg");
 }
-.icon-Idea_RO {
-  background-image: url("../images/Idea_RO.svg");
+.icon-Help_RO {
+  background-image: url("../images/Help_RO.svg");
 }
 .icon-Idea_bright {
   background-image: url("../images/Idea_bright.svg");
@@ -136,9 +235,8 @@
 .icon-Idea_dark {
   background-image: url("../images/Idea_dark.svg");
 }
-
-.icon-Index_desktop_RO {
-  background-image: url("../images/Index_desktop_RO.svg");
+.icon-Idea_RO {
+  background-image: url("../images/Idea_RO.svg");
 }
 .icon-Index_desktop_bright {
   background-image: url("../images/Index_desktop_bright.svg");
@@ -146,18 +244,17 @@
 .icon-Index_desktop_dark {
   background-image: url("../images/Index_desktop_dark.svg");
 }
-.icon-Index_mobile_RO {
-  background-image: url("../images/Index_mobile_RO.svg");
+.icon-Index_desktop_RO {
+  background-image: url("../images/Index_desktop_RO.svg");
 }
 .icon-Index_mobile_bright {
   background-image: url("../images/Index_mobile_bright.svg");
 }
-
 .icon-Index_mobile_dark {
   background-image: url("../images/Index_mobile_dark.svg");
 }
-.icon-Info_RO {
-  background-image: url("../images/Info_RO.svg");
+.icon-Index_mobile_RO {
+  background-image: url("../images/Index_mobile_RO.svg");
 }
 .icon-Info_bright {
   background-image: url("../images/Info_bright.svg");
@@ -165,18 +262,17 @@
 .icon-Info_dark {
   background-image: url("../images/Info_dark.svg");
 }
-.icon-Login_RO {
-  background-image: url("../images/Login_RO.svg");
+.icon-Info_RO {
+  background-image: url("../images/Info_RO.svg");
 }
 .icon-Login_bright {
   background-image: url("../images/Login_bright.svg");
 }
-
 .icon-Login_dark {
   background-image: url("../images/Login_dark.svg");
 }
-.icon-New_Comment_RO {
-  background-image: url("../images/New_Comment_RO.svg");
+.icon-Login_RO {
+  background-image: url("../images/Login_RO.svg");
 }
 .icon-New_Comment_bright {
   background-image: url("../images/New_Comment_bright.svg");
@@ -184,18 +280,17 @@
 .icon-New_Comment_dark {
   background-image: url("../images/New_Comment_dark.svg");
 }
-.icon-New_Edit_RO {
-  background-image: url("../images/New_Edit_RO.svg");
+.icon-New_Comment_RO {
+  background-image: url("../images/New_Comment_RO.svg");
 }
 .icon-New_Edit_bright {
   background-image: url("../images/New_Edit_bright.svg");
 }
-
 .icon-New_Edit_dark {
   background-image: url("../images/New_Edit_dark.svg");
 }
-.icon-Next_Phase_RO {
-  background-image: url("../images/Next_Phase_RO.svg");
+.icon-New_Edit_RO {
+  background-image: url("../images/New_Edit_RO.svg");
 }
 .icon-Next_Phase_bright {
   background-image: url("../images/Next_Phase_bright.svg");
@@ -203,21 +298,20 @@
 .icon-Next_Phase_dark {
   background-image: url("../images/Next_Phase_dark.svg");
 }
-.icon-Note_RO {
-  background-image: url("../images/Note_RO.svg");
+.icon-Next_Phase_RO {
+  background-image: url("../images/Next_Phase_RO.svg");
 }
 .icon-Note_bright {
   background-image: url("../images/Note_bright.svg");
 }
-
 .icon-Note_dark {
   background-image: url("../images/Note_dark.svg");
 }
 .icon-Note_lightred {
   background-image: url("../images/Note_lightred.svg");
 }
-.icon-Play_RO {
-  background-image: url("../images/Play_RO.svg");
+.icon-Note_RO {
+  background-image: url("../images/Note_RO.svg");
 }
 .icon-Play_bright {
   background-image: url("../images/Play_bright.svg");
@@ -225,18 +319,17 @@
 .icon-Play_dark {
   background-image: url("../images/Play_dark.svg");
 }
-.icon-Plus_RO {
-  background-image: url("../images/Plus_RO.svg");
+.icon-Play_RO {
+  background-image: url("../images/Play_RO.svg");
 }
-
 .icon-Plus_bright {
   background-image: url("../images/Plus_bright.svg");
 }
 .icon-Plus_dark {
   background-image: url("../images/Plus_dark.svg");
 }
-.icon-Private_lock_RO {
-  background-image: url("../images/Private_lock_RO.svg");
+.icon-Plus_RO {
+  background-image: url("../images/Plus_RO.svg");
 }
 .icon-Private_lock_dark {
   background-image: url("../images/Private_lock_dark.svg");
@@ -244,10 +337,9 @@
 .icon-Private_lock_light {
   background-image: url("../images/Private_lock_light.svg");
 }
-.icon-Private_note_RO {
-  background-image: url("../images/Private_note_RO.svg");
+.icon-Private_lock_RO {
+  background-image: url("../images/Private_lock_RO.svg");
 }
-
 .icon-Private_note_bright {
   background-image: url("../images/Private_note_bright.svg");
 }
@@ -257,8 +349,8 @@
 .icon-Private_note_ligthyellow {
   background-image: url("../images/Private_note_ligthyellow.svg");
 }
-.icon-Process_RO {
-  background-image: url("../images/Process_RO.svg");
+.icon-Private_note_RO {
+  background-image: url("../images/Private_note_RO.svg");
 }
 .icon-Process_bright {
   background-image: url("../images/Process_bright.svg");
@@ -266,9 +358,8 @@
 .icon-Process_dark {
   background-image: url("../images/Process_dark.svg");
 }
-
-.icon-Question_RO {
-  background-image: url("../images/Question_RO.svg");
+.icon-Process_RO {
+  background-image: url("../images/Process_RO.svg");
 }
 .icon-Question_bright {
   background-image: url("../images/Question_bright.svg");
@@ -279,18 +370,17 @@
 .icon-Question_lightgreen {
   background-image: url("../images/Question_lightgreen.svg");
 }
-.icon-Reader_RO {
-  background-image: url("../images/Reader_RO.svg");
+.icon-Question_RO {
+  background-image: url("../images/Question_RO.svg");
 }
 .icon-Reader_bright {
   background-image: url("../images/Reader_bright.svg");
 }
-
 .icon-Reader_dark {
   background-image: url("../images/Reader_dark.svg");
 }
-.icon-Reason_RO {
-  background-image: url("../images/Reason_RO.svg");
+.icon-Reader_RO {
+  background-image: url("../images/Reader_RO.svg");
 }
 .icon-Reason_bright {
   background-image: url("../images/Reason_bright.svg");
@@ -298,15 +388,14 @@
 .icon-Reason_dark {
   background-image: url("../images/Reason_dark.svg");
 }
-.icon-Save_RO {
-  background-image: url("../images/Save_RO.svg");
+.icon-Reason_RO {
+  background-image: url("../images/Reason_RO.svg");
 }
 .icon-Save_bright {
   background-image: url("../images/Save_bright.svg");
 }
-
-.icon-Search_RO {
-  background-image: url("../images/Search_RO.svg");
+.icon-Save_RO {
+  background-image: url("../images/Save_RO.svg");
 }
 .icon-Search_bright {
   background-image: url("../images/Search_bright.svg");
@@ -314,8 +403,8 @@
 .icon-Search_dark {
   background-image: url("../images/Search_dark.svg");
 }
-.icon-Share_RO {
-  background-image: url("../images/Share_RO.svg");
+.icon-Search_RO {
+  background-image: url("../images/Search_RO.svg");
 }
 .icon-Share_bright {
   background-image: url("../images/Share_bright.svg");
@@ -323,9 +412,8 @@
 .icon-Share_dark {
   background-image: url("../images/Share_dark.svg");
 }
-
-.icon-Sort_RO {
-  background-image: url("../images/Sort_RO.svg");
+.icon-Share_RO {
+  background-image: url("../images/Share_RO.svg");
 }
 .icon-Sort_bright {
   background-image: url("../images/Sort_bright.svg");
@@ -333,8 +421,8 @@
 .icon-Sort_dark {
   background-image: url("../images/Sort_dark.svg");
 }
-.icon-User_RO {
-  background-image: url("../images/User_RO.svg");
+.icon-Sort_RO {
+  background-image: url("../images/Sort_RO.svg");
 }
 .icon-User_bright {
   background-image: url("../images/User_bright.svg");
@@ -342,15 +430,8 @@
 .icon-User_dark {
   background-image: url("../images/User_dark.svg");
 }
-
-.icon-User_me_bright {
-  background-image: url("../images/User_me_bright.svg");
-}
-.icon-User_me_dark {
-  background-image: url("../images/User_me_dark.svg");
-}
-.icon-Vote_negative_RO {
-  background-image: url("../images/Vote_negative_RO.svg");
+.icon-User_RO {
+  background-image: url("../images/User_RO.svg");
 }
 .icon-Vote_negative_bright {
   background-image: url("../images/Vote_negative_bright.svg");
@@ -358,18 +439,17 @@
 .icon-Vote_negative_dark {
   background-image: url("../images/Vote_negative_dark.svg");
 }
-.icon-Vote_neutral_RO {
-  background-image: url("../images/Vote_neutral_RO.svg");
+.icon-Vote_negative_RO {
+  background-image: url("../images/Vote_negative_RO.svg");
 }
-
 .icon-Vote_neutral_bright {
   background-image: url("../images/Vote_neutral_bright.svg");
 }
 .icon-Vote_neutral_dark {
   background-image: url("../images/Vote_neutral_dark.svg");
 }
-.icon-Vote_positive_RO {
-  background-image: url("../images/Vote_positive_RO.svg");
+.icon-Vote_neutral_RO {
+  background-image: url("../images/Vote_neutral_RO.svg");
 }
 .icon-Vote_positive_bright {
   background-image: url("../images/Vote_positive_bright.svg");
@@ -377,98 +457,6 @@
 .icon-Vote_positive_dark {
   background-image: url("../images/Vote_positive_dark.svg");
 }
-.icon-cat_art_RO {
-  background-image: url("../images/cat_art_RO.svg");
-}
-
-.icon-cat_art_bright {
-  background-image: url("../images/cat_art_bright.svg");
-}
-.icon-cat_art_dark {
-  background-image: url("../images/cat_art_dark.svg");
-}
-.icon-cat_business_RO {
-  background-image: url("../images/cat_business_RO.svg");
-}
-.icon-cat_business_bright {
-  background-image: url("../images/cat_business_bright.svg");
-}
-.icon-cat_business_dark {
-  background-image: url("../images/cat_business_dark.svg");
-}
-.icon-cat_fitness_RO {
-  background-image: url("../images/cat_fitness_RO.svg");
-}
-
-.icon-cat_fitness_bright {
-  background-image: url("../images/cat_fitness_bright.svg");
-}
-.icon-cat_fitness_dark {
-  background-image: url("../images/cat_fitness_dark.svg");
-}
-.icon-cat_flowers_RO {
-  background-image: url("../images/cat_flowers_RO.svg");
-}
-.icon-cat_flowers_bright {
-  background-image: url("../images/cat_flowers_bright.svg");
-}
-.icon-cat_flowers_dark {
-  background-image: url("../images/cat_flowers_dark.svg");
-}
-.icon-cat_party_RO {
-  background-image: url("../images/cat_party_RO.svg");
-}
-
-.icon-cat_party_bright {
-  background-image: url("../images/cat_party_bright.svg");
-}
-.icon-cat_party_dark {
-  background-image: url("../images/cat_party_dark.svg");
-}
-.icon-cat_photo_RO {
-  background-image: url("../images/cat_photo_RO.svg");
-}
-.icon-cat_photo_bright {
-  background-image: url("../images/cat_photo_bright.svg");
-}
-.icon-cat_photo_dark {
-  background-image: url("../images/cat_photo_dark.svg");
-}
-.icon-cat_rollerdisco_RO {
-  background-image: url("../images/cat_rollerdisco_RO.svg");
-}
-
-.icon-cat_rollerdisco_bright {
-  background-image: url("../images/cat_rollerdisco_bright.svg");
-}
-.icon-cat_rollerdisco_dark {
-  background-image: url("../images/cat_rollerdisco_dark.svg");
-}
-.icon-cat_romantic_RO {
-  background-image: url("../images/cat_romantic_RO.svg");
-}
-.icon-cat_romantic_bright {
-  background-image: url("../images/cat_romantic_bright.svg");
-}
-.icon-cat_romantic_dark {
-  background-image: url("../images/cat_romantic_dark.svg");
-}
-.icon-cat_sailing_RO {
-  background-image: url("../images/cat_sailing_RO.svg");
-}
-
-.icon-cat_sailing_bright {
-  background-image: url("../images/cat_sailing_bright.svg");
-}
-.icon-cat_sailing_dark {
-  background-image: url("../images/cat_sailing_dark.svg");
-}
-.icon-cat_work_RO {
-  background-image: url("../images/cat_work_RO.svg");
-}
-.icon-cat_work_bright {
-  background-image: url("../images/cat_work_bright.svg");
-}
-.icon-cat_work_dark {
-  background-image: url("../images/cat_work_dark.svg");
+.icon-Vote_positive_RO {
+  background-image: url("../images/Vote_positive_RO.svg");
 }

@@ -27,6 +27,7 @@ module Refine.Frontend.Icon.Types
   ( ReactListKey
 
   , Align(..)
+  , HighlightWhen(..)
   , IbuttonProps(..)
   , ibEnabled
   , ibSize
@@ -34,13 +35,13 @@ module Refine.Frontend.Icon.Types
   , ibAlign
   , ibClickPropag
   , ibLabel
+  , ibHighlightWhen
   , ibOnClick
-  , ibPosition
   , ibDarkBackground
   , ibImage
 
   , IconSize(..)
-  , sizePx
+  , sizePx, sizeInt
 
   , IconDescription
 
@@ -85,17 +86,20 @@ import           Refine.Frontend.Util
 data Align = AlignRight | AlignLeft
   deriving (Eq, Show, Generic)
 
+data HighlightWhen = HighlightNever | HighlightOnMouseOver | HighlightAlways
+  deriving (Eq, Show, Generic)
+
 data IbuttonProps onclick = IbuttonProps
   { _ibListKey          :: ReactListKey  -- ^ this is not morally part of the props, but it's convenient to keep it here.
   , _ibLabel            :: ST
   , _ibDarkBackground   :: Bool
   , _ibImage            :: ST
+  , _ibHighlightWhen    :: HighlightWhen  -- ^ when to switch to @_RO.svg@ variant.
   , _ibOnClick          :: onclick
   , _ibClickPropag      :: Bool
   , _ibEnabled          :: Bool
   , _ibSize             :: IconSize
   , _ibAlign            :: Align
-  , _ibPosition         :: Maybe Int
   }
   deriving (Eq, Show, Generic)
 
@@ -112,10 +116,13 @@ data IconSize
   deriving (Eq, Show)
 
 sizePx :: IconSize -> Px
-sizePx Medium  = Px 14
-sizePx Large   = Px 20
-sizePx XLarge  = Px 26
-sizePx XXLarge = Px 32
+sizePx = Px . sizeInt
+
+sizeInt :: IconSize -> Int
+sizeInt Medium  = 14
+sizeInt Large   = 20
+sizeInt XLarge  = 26
+sizeInt XXLarge = 32
 
 instance Css IconSize where
   css s = [ decl "backgroundSize" (Percentage 100)

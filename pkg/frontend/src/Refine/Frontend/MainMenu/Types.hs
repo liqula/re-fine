@@ -53,15 +53,20 @@ data MainMenu
   deriving (Eq, Show, Generic)
 
 data MainMenuTab
-  = MainMenuLogin
-  | MainMenuRegistration
+  = MainMenuProcess
+  | MainMenuGroup
+  | MainMenuHelp
+  | MainMenuLogin MainMenuSubTabLogin
   deriving (Eq, Show, Generic)
 
 defaultMainMenuTab :: MainMenuTab
-defaultMainMenuTab = MainMenuLogin
+defaultMainMenuTab = MainMenuProcess
 
-data MainMenuProps = MainMenuProps
-  { _mmpMainMenuTab    :: MainMenuTab
+data MainMenuSubTabLogin = MainMenuSubTabLogin | MainMenuSubTabRegistration
+  deriving (Eq, Show, Generic)
+
+data MainMenuProps tab = MainMenuProps
+  { _mmpMainMenuTab    :: tab
   , _mmpMainMenuErrors :: MainMenuErrors
   , _mmpCurrentUser    :: CurrentUser
   }
@@ -73,7 +78,7 @@ data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
   }
   deriving (Eq)
 
-instance UnoverlapAllEq MainMenuProps
+instance UnoverlapAllEq (MainMenuProps tab)
 instance UnoverlapAllEq TopMenuBarInMainMenuProps
 
 makeRefineType ''MainMenuAction
@@ -81,3 +86,4 @@ makeRefineType ''MainMenuErrors
 makeRefineType ''MainMenuState
 makeRefineType ''MainMenu
 makeRefineType ''MainMenuTab
+makeRefineType ''MainMenuSubTabLogin

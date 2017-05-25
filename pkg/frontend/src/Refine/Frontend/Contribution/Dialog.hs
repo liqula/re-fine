@@ -63,7 +63,7 @@ dialogStyles = [ -- Style "display" ("block" :: String)
                   decl "width" (Px dialogWidth)
                 , decl "marginLeft" (Px 0)
                 , decl "marginTop" (Px 0)
-                , decl @Int "zIndex" 6050
+                , zindex ZIxDialog
 
                 , decl "position" (Ident "absolute")
                 ]
@@ -84,7 +84,7 @@ vdoc_overlay_content__discussion = [decl "backgroundColor" C.VDocDiscussion] <> 
 
 overlayStyles :: [Decl]
 overlayStyles =
-  [ decl @Int "zIndex" 6010
+  [ zindex ZIxOverlay
   , decl "backgroundColor" C.OverlayBackdrop
   ]
 

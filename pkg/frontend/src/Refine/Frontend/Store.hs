@@ -282,7 +282,7 @@ emitBackendCallsFor action st = case action of
 
         (Right _user) -> do
           dispatchManyM
-            [ MainMenuAction $ MainMenuActionOpen MainMenuLogin
+            [ MainMenuAction $ MainMenuActionOpen (MainMenuLogin MainMenuSubTabLogin)
             , MainMenuAction MainMenuActionClearErrors
             ]
 
