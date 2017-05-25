@@ -62,14 +62,16 @@ ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
       divSty :: [Decl]
       divSty = [ decl "direction" (Ident "ltr")
                , decl "width" (sizePx $ props ^. ibSize)
+               , decl "float" (Ident (case props ^. ibAlign of AlignLeft -> "left"; AlignRight -> "right"))
                , decl "textAlign" (Ident "center")
                , decl "pointerEvents" (Ident "all")
                ] <>
-               (if props ^. ibAlign == AlignRight
+               (-- the float style above only works in main menu, not in the menu bar in the main screen.
+                if props ^. ibAlign == AlignRight
                  then [ decl "marginLeft" (Ident "auto")
                       , decl "marginRight" (Percentage 10)
                       ]
-                 else [])
+                 else [decl "margin" (Px $ sizeInt (props ^. ibSize) `div` 5)])
 
       iconSty :: [Decl]
       iconSty = [ decl "cursor" (Ident "pointer")
