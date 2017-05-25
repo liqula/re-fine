@@ -83,7 +83,7 @@ renderBubble children props topOffset = do
        , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble $ props ^. bubblePropsContributionId]
        , onMouseLeave $ mkClickHandler [UnhighlightMarkAndBubble]
        ] $ do
-    div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> props ^. bubblePropsIconSide)] $ do  -- RENAME: snippet => bubble
+    div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> show (props ^. bubblePropsIconSide))] $ do  -- RENAME: snippet => bubble
       icon_ (IconProps "o-snippet" False (props ^. bubblePropsIconStyle) Medium)  -- RENAME: snippet => bubble
     div_ ["className" $= "o-snippet__content"]  -- RENAME: snippet => bubble
       children
@@ -91,7 +91,7 @@ renderBubble children props topOffset = do
 
 discussionBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
 discussionBubble children = mkView "DiscussionBubble" $ \(SpecialBubbleProps contributionID markPosition highlight screenState) ->
-  bubble_ (BubbleProps contributionID "left" ("icon-Discussion", "bright") markPosition highlight
+  bubble_ (BubbleProps contributionID BubbleLeft ("icon-Discussion", "bright") markPosition highlight
                        [ShowContributionDialog contributionID] screenState)
     children
 
@@ -100,7 +100,7 @@ discussionBubble_ !props children = view_ (discussionBubble children) (specialBu
 
 questionBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
 questionBubble children = mkView "QuestionBubble" $ \(SpecialBubbleProps dataChunkId markPosition highlight screenState) ->
-  bubble_ (BubbleProps dataChunkId "left" ("icon-Question", "dark") markPosition highlight [] screenState)
+  bubble_ (BubbleProps dataChunkId BubbleLeft ("icon-Question", "dark") markPosition highlight [] screenState)
     children
 
 questionBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
@@ -108,7 +108,7 @@ questionBubble_ !props children = view_ (questionBubble children) (specialBubble
 
 noteBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
 noteBubble children = mkView "NoteBubble" $ \(SpecialBubbleProps contributionID markPosition highlight screenState) ->
-  bubble_ (BubbleProps contributionID "left" ("icon-Note", "dark") markPosition highlight
+  bubble_ (BubbleProps contributionID BubbleLeft ("icon-Note", "dark") markPosition highlight
                        [ShowContributionDialog contributionID] screenState)
     children
 
@@ -117,7 +117,7 @@ noteBubble_ !props children = view_ (noteBubble children) (specialBubbleKey prop
 
 editBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
 editBubble children = mkView "EditBubble" $ \(SpecialBubbleProps dataChunkId markPosition highlight screenState) ->
-  bubble_ (BubbleProps dataChunkId "right" ("icon-Edit", "dark") markPosition highlight [ShowContributionDialog dataChunkId] screenState)
+  bubble_ (BubbleProps dataChunkId BubbleRight ("icon-Edit", "dark") markPosition highlight [ShowContributionDialog dataChunkId] screenState)
     children
 
 editBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()

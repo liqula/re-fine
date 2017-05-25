@@ -49,7 +49,7 @@ cnid = ContribIDNote . ID
 spec :: Spec
 spec = do
   let contributionId = cnid 99
-      iconSide = "the-icon-side"
+      iconSide = BubbleLeft
       iconStyle = ("the-icon-name", "the-icon-style")
       markPosition = Just (MarkPosition (OffsetFromDocumentTop (140 + 180)) (OffsetFromDocumentTop (160 + 180)))
       highlight = Nothing
@@ -76,7 +76,7 @@ spec = do
 
     it "has a child with the icon-bg + side class" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
-      lengthOfIO (find wrapper (StringSelector ".o-snippet__icon-bg--the-icon-side")) `shouldReturn` 1
+      lengthOfIO (find wrapper (StringSelector ".o-snippet__icon-bg--left")) `shouldReturn` 1
 
     it "has a child with the content class" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty

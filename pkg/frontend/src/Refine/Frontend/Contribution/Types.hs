@@ -136,7 +136,7 @@ emptyContributionState = ContributionState
 
 data BubbleProps = BubbleProps
   { _bubblePropsContributionId    :: ContributionID
-  , _bubblePropsIconSide          :: String  -- FIXME: either "left" or "right", make this a custom boolean!
+  , _bubblePropsIconSide          :: BubbleSide
   , _bubblePropsIconStyle         :: IconDescription
   , _bubblePropsMarkPosition      :: Maybe MarkPosition
   , _bubblePropsHighlightedBubble :: Maybe ContributionID
@@ -144,6 +144,13 @@ data BubbleProps = BubbleProps
   , _bubblePropsScreenState       :: ScreenState
   }
   deriving (Eq)
+
+data BubbleSide = BubbleLeft | BubbleRight
+  deriving (Eq)
+
+instance Show BubbleSide where
+  show BubbleLeft = "left"
+  show BubbleRight = "right"
 
 instance UnoverlapAllEq BubbleProps
 
