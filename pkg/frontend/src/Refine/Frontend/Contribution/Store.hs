@@ -44,6 +44,7 @@ contributionStateUpdate a = localAction a . globalAction a
       & csDisplayedContributionID  %~ displayedContributionUpdate action
       & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
       & csMarkPositions            %~ markPositionsUpdate action
+      & csBubbleFilter             %~ bubbleFilterUpdate action
     localAction _ st = st
 
     globalAction action st = st
@@ -117,3 +118,7 @@ quickCreateShowStateUpdate action st = case action of
 markPositionsUpdate :: ContributionAction -> MarkPositions -> MarkPositions
 markPositionsUpdate (SetMarkPositions positions) = markPositionsMap .~ M.fromList positions
 markPositionsUpdate _ = id
+
+bubbleFilterUpdate :: ContributionAction -> Maybe (Set ContributionID) -> Maybe (Set ContributionID)
+bubbleFilterUpdate (SetBubbleFilter f) _ = f
+bubbleFilterUpdate _ st = st

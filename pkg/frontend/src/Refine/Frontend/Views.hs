@@ -32,7 +32,8 @@ module Refine.Frontend.Views
 import Refine.Frontend.Prelude
 
 import           Control.Lens (ix)
-import qualified Data.Map.Strict as M
+import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
 import qualified Data.Tree as ST
 
 import           Refine.Common.Types
@@ -107,10 +108,16 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                                      (rs ^. gsContributionState . csCurrentRange)
                                      (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
-                                     (M.elems (vdoc ^. compositeVDocDiscussions))
-                                     (M.elems (vdoc ^. compositeVDocNotes))
-                                     (M.elems (vdoc ^. compositeVDocEdits))
+                                     (fltr (vdoc ^. compositeVDocDiscussions))
+                                     (fltr (vdoc ^. compositeVDocNotes))
+                                     (fltr (vdoc ^. compositeVDocEdits))
                                      (rs ^. gsContributionState . csQuickCreateShowState)
+
+                          fltr :: IsContribution c => Map (ID c) b -> [b]
+                          fltr = maybe Map.elems go (rs ^. gsContributionState . csBubbleFilter)
+                            where
+                              go allowed = fmap snd . filter ((`Set.member` allowed) . contribID . fst) . Map.toList
+
                       leftAside_ asideProps
                       document_ $ DocumentProps (rs ^. RS.gsDocumentState)
                                                 (rs ^. RS.gsContributionState)

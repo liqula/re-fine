@@ -89,6 +89,7 @@ data ContributionAction =
   | SetMarkPositions [(ContributionID, MarkPosition)]  -- ^ see 'MarkPositions'
   | HighlightMarkAndBubble ContributionID
   | UnhighlightMarkAndBubble
+  | SetBubbleFilter (Maybe (Set ContributionID))
   deriving (Show, Eq, Generic)
 
 
@@ -100,6 +101,7 @@ data ContributionState = ContributionState
   , _csHighlightedMarkAndBubble :: Maybe ContributionID
   , _csQuickCreateShowState     :: QuickCreateShowState
   , _csMarkPositions            :: MarkPositions
+  , _csBubbleFilter             :: Maybe (Set ContributionID)  -- ^ 'Nothing' means show everything.
   } deriving (Show, Eq, Generic)
 
 data CommentKind =
@@ -120,6 +122,7 @@ emptyContributionState = ContributionState
   , _csHighlightedMarkAndBubble = Nothing
   , _csQuickCreateShowState     = QuickCreateNotShown
   , _csMarkPositions            = mempty
+  , _csBubbleFilter             = Nothing
   }
 
 
