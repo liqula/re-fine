@@ -35,7 +35,6 @@ import           Language.Css.Syntax
 import           Refine.Common.Types.Core
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Icon
-import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Screen.Calculations
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
@@ -85,7 +84,7 @@ renderBubble children props topOffset = do
        , onMouseLeave $ mkClickHandler [UnhighlightMarkAndBubble]
        ] $ do
     div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> props ^. bubblePropsIconSide)] $ do  -- RENAME: snippet => bubble
-      icon_ (IconProps "o-snippet" False (props ^. bubblePropsIconStyle) M)  -- RENAME: snippet => bubble
+      icon_ (IconProps "o-snippet" False (props ^. bubblePropsIconStyle) Medium)  -- RENAME: snippet => bubble
     div_ ["className" $= "o-snippet__content"]  -- RENAME: snippet => bubble
       children
 

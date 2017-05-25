@@ -40,7 +40,6 @@ import qualified Refine.Frontend.Colors as C
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Toolbar
 import           Refine.Frontend.Icon
-import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
@@ -108,14 +107,14 @@ showComment = mkView "ShowComment" $ \props ->
     -- div_ ["className" $= "c-vdoc-overlay-content c-vdoc-overlay-content--comment"] $ do
 
         div_ ["style" @@= [decl "marginLeft" (Percentage 96)]] $ do             -- FIXME: How to do this properly?
-          icon_ (IconProps "c-vdoc-overlay-content" False (props ^. cdpIconStyle) XL)
+          icon_ (IconProps "c-vdoc-overlay-content" False (props ^. cdpIconStyle) XLarge)
 
         div_ ["className" $= "c-vdoc-overlay-content__copy"] $ elemText (props ^. cdpCommentText)
 
         -- edit/comment user meta data -->
         div_ ["className" $= "c-vdoc-overlay-meta"] $ do
             span_ ["className" $= "c-vdoc-overlay-meta__user-avatar"] $ do
-                icon_ (IconProps "c-vdoc-overlay-meta" False ("icon-User", "bright") M)
+                icon_ (IconProps "c-vdoc-overlay-meta" False ("icon-User", "bright") Medium)
             span_ ["className" $= "c-vdoc-overlay-meta__user"] $ elemCS (props ^. cdpUserName)
             span_ ["className" $= "c-vdoc-overlay-meta__date"] $ elemCS (props ^. cdpCreationDate) -- or what is this?
         -- END: edit/comment user meta data -->
@@ -124,10 +123,10 @@ showComment = mkView "ShowComment" $ \props ->
         div_ ["className" $= "c-vdoc-overlay-votes"] $ do
 
             button_ ["className" $= "c-vdoc-overlay-votes__button c-vdoc-overlay-votes__btn-vote-up"] $ do
-                icon_ (IconProps "c-vdoc-overlay-votes" True ("icon-Vote_positive", "dark") XL)
+                icon_ (IconProps "c-vdoc-overlay-votes" True ("icon-Vote_positive", "dark") XLarge)
 
             button_ ["className" $= "c-vdoc-overlay-votes__button c-vdoc-overlay-votes__btn-vote-down"] $ do
-                icon_ (IconProps "c-vdoc-overlay-votes" True ("icon-Vote_negative", "dark") XL)
+                icon_ (IconProps "c-vdoc-overlay-votes" True ("icon-Vote_negative", "dark") XLarge)
         -- END: vote buttons -->
 
         div_ ["style" @@= [decl "marginBottom" (Px 20)]] "" -- make some space for the close button
@@ -237,7 +236,7 @@ addContributionDialogFrame True title mrange windowWidth child =
              , "titleStyle" @@= [decl "margin" (Px 0)]
              ]  $ do
 
-      icon_ (IconProps "c-vdoc-overlay-content" False ("icon-New_Comment", "dark") XL)
+      icon_ (IconProps "c-vdoc-overlay-content" False ("icon-New_Comment", "dark") XLarge)
 
       span_ [ "className" $= "c-vdoc-overlay-content__title"
             , "style" @@=
@@ -299,7 +298,7 @@ commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \cu
       let checkAcpKind k = if props ^. acpKind == Just k then "RO" else "dark"
 
       div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do  -- RENAME: annotation => comment
-        iconButton_ $ def @IconButtonProps
+        iconButton_ $ defaultIconButtonProps @[GlobalAction]
           & iconButtonPropsListKey      .~ "note"
           & iconButtonPropsIconProps . iconPropsBlockName .~ "c-vdoc-overlay-content"
           & iconButtonPropsIconProps . iconPropsDesc      .~ ("icon-Note", checkAcpKind CommentKindNote)
@@ -310,7 +309,7 @@ commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \cu
 
         span_ ["style" @@= [decl "marginRight" (Rem 1)]] mempty
 
-        iconButton_ $ def @IconButtonProps
+        iconButton_ $ defaultIconButtonProps @[GlobalAction]
           & iconButtonPropsListKey      .~ "discussion"
           & iconButtonPropsIconProps . iconPropsBlockName .~ "c-vdoc-overlay-content"
           & iconButtonPropsIconProps . iconPropsDesc      .~ ("icon-Discussion", checkAcpKind CommentKindDiscussion)
@@ -332,8 +331,8 @@ commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \cu
 
       let notATextOrKind = 0 == ST.length (curState ^. addContributionFormState)
                         || isNothing (props ^. acpKind)
-        in iconButton_ $ def @IconButtonProps
-          & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") L
+        in iconButton_ $ defaultIconButtonProps @[GlobalAction]
+          & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") Large
           & iconButtonPropsElementName  .~ "submit"
           & iconButtonPropsLabel        .~ "submit"
           & iconButtonPropsDisabled     .~ notATextOrKind
@@ -378,9 +377,9 @@ editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState
 
     hr_ []
 
-    iconButton_ $ def @IconButtonProps
+    iconButton_ $ defaultIconButtonProps @[GlobalAction]
             & iconButtonPropsListKey      .~ "save"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXL
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
             & iconButtonPropsElementName  .~ "btn-index"
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True
@@ -388,9 +387,9 @@ editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState
                                              , ContributionAction ClearRange
                                              ]
 
-    iconButton_ $ def @IconButtonProps
+    iconButton_ $ defaultIconButtonProps @[GlobalAction]
             & iconButtonPropsListKey      .~ "cancel"
-            & iconButtonPropsIconProps    .~ IconProps "c-mainmenu-header" True ("icon-Close", "dark") XXL
+            & iconButtonPropsIconProps    .~ IconProps "c-mainmenu-header" True ("icon-Close", "dark") XXLarge
             & iconButtonPropsElementName  .~ "btn-index"
             & iconButtonPropsLabel        .~ "cancel"
             & iconButtonPropsAlignRight   .~ True

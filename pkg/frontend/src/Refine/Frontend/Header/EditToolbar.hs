@@ -28,7 +28,6 @@ import Refine.Frontend.Prelude
 
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Icon
-import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Store.Types
 
 editToolbar :: View '[]
@@ -40,8 +39,8 @@ editToolbar = mkView "EditToolbar" $ do
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          let editButton = def @IconButtonProps
-                & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXL
+          let editButton = defaultIconButtonProps @[GlobalAction]
+                & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXLarge
                 & iconButtonPropsElementName  .~ "btn-index"
 
           iconButton_ $ editButton
@@ -84,7 +83,7 @@ editToolbar = mkView "EditToolbar" $ do
             & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
           iconButton_ $ editButton
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXL
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
             & iconButtonPropsListKey      .~ "save"
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True

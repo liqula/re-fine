@@ -33,7 +33,6 @@ import           Language.Css.Syntax
 import           Refine.Common.Types.Prelude
 import qualified Refine.Frontend.Colors as Colors
 import           Refine.Frontend.Icon
-import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.Util
@@ -129,8 +128,8 @@ login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState ->
       inputField "login-username" "text"     "Username" loginFormUsername >> br_ []
       inputField "login-password" "password" "Password" loginFormPassword >> br_ []
 
-      iconButton_ $ def @IconButtonProps
-        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L
+      iconButton_ $ defaultIconButtonProps @[RS.GlobalAction]
+        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") Large
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "submit"
         & iconButtonPropsDisabled     .~ invalidLoginForm curState
@@ -152,8 +151,8 @@ logout = mkView "Logout" $ do
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 
-      iconButton_ $ def @IconButtonProps
-        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L
+      iconButton_ $ defaultIconButtonProps @[RS.GlobalAction]
+        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") Large
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "logout"
         & iconButtonPropsDisabled     .~ False
@@ -187,8 +186,8 @@ registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "
       inputFieldWithKey "registration-agree" "checkbox" "" "checked" registrationFormAgree
       "I agree with the terms of use." >> br_ []
 
-      iconButton_ $ def @IconButtonProps
-        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") L
+      iconButton_ $ defaultIconButtonProps @[RS.GlobalAction]
+        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") Large
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "submit"
         & iconButtonPropsDisabled     .~ invalidRegistrationForm curState

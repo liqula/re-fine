@@ -66,7 +66,7 @@ spec = do
       wrapper <- shallow $ bubble_ bubbleProps mempty
       is wrapper (StringSelector ".o-snippet") `shouldReturn` True
 
-    it "### renders the top style with the correct value" $ do
+    it "renders the top style with the correct value" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
       is wrapper (StyleSelector [decl "top" (Px 145)]) `shouldReturn` True
 

@@ -31,7 +31,6 @@ import Refine.Frontend.Prelude
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Icon
-import Refine.Frontend.Icon.Types
 import Refine.Frontend.Screen.Calculations
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Store
@@ -45,9 +44,9 @@ quickCreate :: View '[QuickCreateProps]
 quickCreate = mkView "QuickCreateButton" $ \props ->
     case (props ^. quickCreateRange, props ^. quickCreateShowState) of
         (Just range, QuickCreateShown) ->
-            iconButton_ $ def @(IconButtonPropsWithHandler QuickCreateSide)
+            iconButton_ $ defaultIconButtonProps @QuickCreateSide
               & iconButtonPropsIconProps    .~ IconProps (renderQuickCreateSide (props ^. quickCreateSide))
-                                                         True ("icon-New_Comment", "bright") XXL
+                                                         True ("icon-New_Comment", "bright") XXLarge
               & iconButtonPropsPosition     .~ Just (mkQuickCreateOffset range (props ^. quickCreateScreenState))
               & iconButtonPropsOnClick      .~ (props ^. quickCreateSide)
         _ -> mempty

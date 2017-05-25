@@ -30,7 +30,6 @@ import           Refine.Common.Types ( EditKind(..) )
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Icon
-import           Refine.Frontend.Icon.Types
 
 toolbar :: View '[]
 toolbar = mkView "Toolbar" $ do
@@ -39,11 +38,11 @@ toolbar = mkView "Toolbar" $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
         div_ ["className" $= "c-vdoc-toolbar__content"] $ do
 
-          let toolbarButton = def @IconButtonProps
+          let toolbarButton = defaultIconButtonProps @[GlobalAction]
 
           iconButton_ $ toolbarButton
             & iconButtonPropsListKey      .~ "index"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Index_desktop", "dark") XXL
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Index_desktop", "dark") XXLarge
             & iconButtonPropsElementName  .~ "btn-index"
             & iconButtonPropsLabel        .~ "index"
             & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
@@ -52,7 +51,7 @@ toolbar = mkView "Toolbar" $ do
 
           iconButton_ $ toolbarButton
             & iconButtonPropsListKey      .~ "new-comment"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Comment", "dark") XXL
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Comment", "dark") XXLarge
             & iconButtonPropsElementName  .~ "btn-add-annotation"  -- RENAME
             & iconButtonPropsLabel        .~ "new comment"
             & iconButtonPropsOnClick      .~ [HeaderAction ToggleCommentToolbarExtension]
@@ -60,7 +59,7 @@ toolbar = mkView "Toolbar" $ do
 
           iconButton_ $ toolbarButton
             & iconButtonPropsListKey      .~ "new-edit"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXL
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXLarge
             & iconButtonPropsElementName  .~ "bt-add-modification"  -- RENAME: edit
             & iconButtonPropsLabel        .~ "new edit"
             & iconButtonPropsOnClick      .~ [HeaderAction ToggleEditToolbarExtension]
@@ -70,21 +69,21 @@ toolbar = mkView "Toolbar" $ do
 
           iconButton_ $ toolbarButton
             & iconButtonPropsListKey      .~ "all-comments"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" False ("icon-Comment", "dark") XXL
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Comment", "dark") XXLarge
             & iconButtonPropsElementName  .~ "all-annotations"   -- RENAME: annotation => comment
             & iconButtonPropsLabel        .~ "all comments"
             & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
           iconButton_ $ toolbarButton
             & iconButtonPropsListKey      .~ "all-edits"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Edit_view", "dark") XXL
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Edit_view", "dark") XXLarge
             & iconButtonPropsElementName  .~ "all-modifications"  -- RENAME: edit
             & iconButtonPropsLabel        .~ "all edits"
             & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
           iconButton_ $ toolbarButton
             & iconButtonPropsListKey      .~ "read-only"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Reader", "bright") XXL
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Reader", "dark") XXLarge
             & iconButtonPropsElementName  .~ "btn-read-mode"
             & iconButtonPropsLabel        .~ "read mode"
             & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
@@ -106,16 +105,16 @@ commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
   (CommentToolbarExtensionProps CommentToolbarExtensionWithRange) -> frame $ do
     div_ "Please select the text you would like to comment on"
   (CommentToolbarExtensionProps CommentToolbarExtensionWithoutRange) -> frame $ do
-    iconButton_ $ def @IconButtonProps
+    iconButton_ $ defaultIconButtonProps @[GlobalAction]
       & iconButtonPropsListKey      .~ "comment-range"
-      & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L
+      & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") Large
       & iconButtonPropsElementName  .~ "btn-new-ann-text" -- RENAME: ann => comment
       & iconButtonPropsLabel        .~ "text-specific comment"
       & iconButtonPropsOnClick      .~ [HeaderAction StartTextSpecificComment]
       & iconButtonPropsClickPropag  .~ False
-    iconButton_ $ def @IconButtonProps
+    iconButton_ $ defaultIconButtonProps @[GlobalAction]
       & iconButtonPropsListKey      .~ "comment-all"
-      & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") L
+      & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") Large
       & iconButtonPropsElementName  .~ "btn-new-ann-doc"  -- RENAME: ann => comment
       & iconButtonPropsLabel        .~ "general comment"
       & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
@@ -171,8 +170,8 @@ editKindForm onSelect = mkView "EditKindForm" $ \(EditKindFormProps mactive) -> 
   where
     editButton :: Maybe EditKind -> EditKind -> ReactElementM eventHandler ()
     editButton mactive kind =
-      let size = if Just kind == mactive then XXL else L in
-      iconButton_ $ def @IconButtonProps
+      let size = if Just kind == mactive then XXLarge else Large in
+      iconButton_ $ defaultIconButtonProps @[GlobalAction]
         & iconButtonPropsListKey      .~ cs (show kind)
         & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") size
         & iconButtonPropsElementName  .~ "btn-new-mod-text" -- RENAME: mod => edit

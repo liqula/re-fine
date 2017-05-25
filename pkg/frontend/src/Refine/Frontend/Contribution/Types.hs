@@ -34,6 +34,7 @@ import           Language.Css.Syntax hiding (Value)
 import Refine.Common.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
+import Refine.Frontend.Icon.Types
 import Refine.Prelude.TH (makeRefineType)
 
 

@@ -85,11 +85,11 @@ library
       Refine.Frontend.Header.Store
       Refine.Frontend.Header.Toolbar
       Refine.Frontend.Header.Types
-      Refine.Frontend.Header.UserLoginLogout
       Refine.Frontend.Icon
       Refine.Frontend.Icon.Types
       Refine.Frontend.Loader.Component
       Refine.Frontend.Login.Component
+      Refine.Frontend.Login.Status
       Refine.Frontend.Login.Store
       Refine.Frontend.Login.Types
       Refine.Frontend.MainMenu.Component
@@ -118,6 +118,7 @@ library
       Refine.Frontend.Util
       Refine.Frontend.Views
       Refine.Frontend.Views.Types
+      Refine.Frontend.Workbench
   default-language: Haskell2010
 
 executable refine-frontend

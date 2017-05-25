@@ -17,39 +17,30 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
-module Refine.Frontend.Login.Types where
+
+module Refine.Frontend.Login.Status where
 
 import Refine.Frontend.Prelude
 
-import Data.String.Conversions (ST)
-import GHC.Generics (Generic)
+import Refine.Frontend.Icon
+import Refine.Frontend.Login.Types
+import Refine.Frontend.MainMenu.Types
+import Refine.Frontend.Store.Types
 
-import Refine.Common.Types.Prelude (Username)
-import Refine.Prelude.TH (makeRefineType)
 
+loginStatusButton_ :: Bool -> CurrentUser -> ReactElementM handler ()
+loginStatusButton_ darkBackground cu = ibutton_ $ emptyIbuttonProps "Login" onclick
+  & ibDarkBackground .~ darkBackground
+  & ibLabel .~ mkLabel cu
+  & ibSize .~ XXLarge
+  & ibAlign .~ AlignRight
+  where
+    onclick = [MainMenuAction $ MainMenuActionOpen MainMenuLogin]
 
--- | FormError can be Nothing or Just an error string.
-type FormError = Maybe ST
-
-data CurrentUser
-  = UserLoggedIn Username
-  | UserLoggedOut
-  deriving (Show, Eq, Generic)
-
-instance UnoverlapAllEq CurrentUser
-
-newtype LoginState = LoginState
-  { _lsCurrentUser :: CurrentUser
-  }
-  deriving (Show, Eq, Generic)
-
-emptyLoginState :: LoginState
-emptyLoginState = LoginState
-  { _lsCurrentUser = UserLoggedOut
-  }
-
-makeRefineType ''CurrentUser
-makeRefineType ''LoginState
+    mkLabel UserLoggedOut    = "login"
+    mkLabel (UserLoggedIn n) = "I am " <> n

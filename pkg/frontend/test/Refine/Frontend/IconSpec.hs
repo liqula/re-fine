@@ -31,14 +31,13 @@ import Language.Css.Syntax hiding (S)
 
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Icon
-import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Util
 
 
 iconButtonTestProps :: IconButtonProps
 iconButtonTestProps =
-    IconButtonProps "key" (iconProps M) element module1 label1 False Nothing False [] True []
+    IconButtonProps "key" (iconProps Medium) element module1 label1 False Nothing False [] True []
   where
     element :: JSString
     element = "the-element-name"
@@ -61,42 +60,35 @@ spec = do
           { _iconPropsBlockName = "blockname"
           , _iconPropsHighlight = True
           , _iconPropsDesc      = ("desc1", "desc2")
-          , _iconPropsSize      = S
+          , _iconPropsSize      = Medium
           }
       contents :: String <- cs <$> html wrapper
       contents `shouldContain` "<div "
 
     it "annotates the block together with the icon module" $ do
-      wrapper <- shallow . icon_ $ iconProps XXL
+      wrapper <- shallow . icon_ $ iconProps XXLarge
       lengthOfIO (find wrapper (StringSelector ".the-block-name__icon")) `shouldReturn` (1 :: Int)
 
     it "annotates the highlight class if True is passed" $ do
-      wrapper <- shallow . icon_ $ iconProps XXL
+      wrapper <- shallow . icon_ $ iconProps XXLarge
       lengthOfIO (find wrapper (StringSelector ".o-icon-highlight")) `shouldReturn` (1 :: Int)
 
     it "does not annotate the highlight class if False is passed" $ do
-      wrapper <- shallow $ icon_ (IconProps "the-block-name" False ("Image", "striped") XXL)
+      wrapper <- shallow $ icon_ (IconProps "the-block-name" False ("Image", "striped") XXLarge)
       lengthOfIO (find wrapper (StringSelector ".o-icon-highlight")) `shouldReturn` (0 :: Int)
 
     it "annotates the icon image class that is passed" $ do
-      wrapper <- shallow . icon_ $ iconProps XXL
+      wrapper <- shallow . icon_ $ iconProps XXLarge
       lengthOfIO (find wrapper (StringSelector ".Image_striped")) `shouldReturn` (1 :: Int)
 
     it "annotates the RO icon image when the mouse has entered the icon and the normal one when it left again" $ do
-      wrapper <- shallow . icon_ $ iconProps XXL
+      wrapper <- shallow . icon_ $ iconProps XXLarge
       simulate wrapper MouseEnter
       lengthOfIO (find wrapper (StringSelector ".Image_striped")) `shouldReturn` (0 :: Int)
       lengthOfIO (find wrapper (StringSelector ".Image_RO")) `shouldReturn` (1 :: Int)
       simulate wrapper MouseLeave
       lengthOfIO (find wrapper (StringSelector ".Image_striped")) `shouldReturn` (1 :: Int)
       lengthOfIO (find wrapper (StringSelector ".Image_RO")) `shouldReturn` (0 :: Int)
-
-    it "annotates the iconsize class with the correct size (XXL)" $ do
-      wrapper <- shallow . icon_ $ iconProps XXL
-      lengthOfIO (find wrapper (StringSelector ".iconsize-xxl")) `shouldReturn` (1 :: Int)
-    it "annotates the iconsize class with the correct size (M)" $ do
-      wrapper <- shallow . icon_ $ iconProps M
-      lengthOfIO (find wrapper (StringSelector ".iconsize-m")) `shouldReturn` (1 :: Int)
 
   describe "iconButton_ component" $ do
     it "renders the block name with the button element" $ do
@@ -180,7 +172,7 @@ spec = do
 
     let theProps = iconButtonTestProps & iconButtonPropsPosition .~ Just 377
 
-    it "### always renders the position that is passed to it" $ do
+    it "always renders the position that is passed to it" $ do
       wrapper <- shallow (iconButton_ theProps)
       is wrapper (StyleSelector [decl "top" (Px 377)]) `shouldReturn` True
 

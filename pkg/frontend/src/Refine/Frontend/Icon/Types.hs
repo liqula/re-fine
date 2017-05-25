@@ -25,8 +25,30 @@
 
 module Refine.Frontend.Icon.Types
   ( ReactListKey
+
+  , Align(..)
+  , IbuttonProps(..)
+  , ibEnabled
+  , ibSize
+  , ibListKey
+  , ibAlign
+  , ibClickPropag
+  , ibLabel
+  , ibOnClick
+  , ibPosition
+  , ibDarkBackground
+  , ibImage
+
   , IconSize(..)
+  , sizePx
+
   , IconDescription
+
+  , BackgroundImageState(..)
+  , BackgroundImage(..)
+  , backgroundImageName
+  , backgroundImageState
+  , iconCssClass
 
   , IconProps(..)
   , iconPropsBlockName
@@ -34,7 +56,7 @@ module Refine.Frontend.Icon.Types
   , iconPropsDesc
   , iconPropsSize
 
-  , IconButtonPropsWithHandler(..), IconButtonProps
+  , IconButtonPropsWithHandler(..)
   , iconButtonPropsListKey
   , iconButtonPropsIconProps
   , iconButtonPropsElementName
@@ -46,19 +68,104 @@ module Refine.Frontend.Icon.Types
   , iconButtonPropsOnClick
   , iconButtonPropsClickPropag
   , iconButtonPropsExtraClasses
-
-  , IconButtonPropsOnClick(..)
   ) where
 
-import Refine.Frontend.Prelude
+import Refine.Frontend.Prelude hiding (S, fn)
+
+import Language.Css.Syntax hiding (S)
+import Language.Css.Build hiding (ex, s)
 
 import           Refine.Frontend.CS ()
-import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Store (dispatchMany)
 import           Refine.Frontend.Types
+import           Refine.Frontend.Util
 
 
--- * icon
+-- * icon buttons
+
+data Align = AlignRight | AlignLeft
+  deriving (Eq, Show, Generic)
+
+data IbuttonProps onclick = IbuttonProps
+  { _ibListKey          :: ReactListKey  -- ^ this is not morally part of the props, but it's convenient to keep it here.
+  , _ibLabel            :: ST
+  , _ibDarkBackground   :: Bool
+  , _ibImage            :: ST
+  , _ibOnClick          :: onclick
+  , _ibClickPropag      :: Bool
+  , _ibEnabled          :: Bool
+  , _ibSize             :: IconSize
+  , _ibAlign            :: Align
+  , _ibPosition         :: Maybe Int
+  }
+  deriving (Eq, Show, Generic)
+
+instance UnoverlapAllEq (IbuttonProps onclick)
+
+
+-- * icon sizes
+
+data IconSize
+  = Medium
+  | Large
+  | XLarge
+  | XXLarge
+  deriving (Eq, Show)
+
+sizePx :: IconSize -> Px
+sizePx Medium  = Px 14
+sizePx Large   = Px 20
+sizePx XLarge  = Px 26
+sizePx XXLarge = Px 32
+
+instance Css IconSize where
+  css s = [ decl "backgroundSize" (Percentage 100)
+          , decl "width" (sizePx s)
+          , decl "height" (sizePx s)
+          ]
+
+
+-- * background images
+
+data BackgroundImageState = BisRO | BisBright | BisDark
+  deriving (Eq, Show, Generic)
+
+data BackgroundImage = BackgroundImage
+  { _backgroundImageName  :: ST
+  , _backgroundImageState :: BackgroundImageState
+  }
+  deriving (Eq, Show, Generic)
+
+-- FIXME: this instance does not work, since webpack loads all images into the bundle and replaces
+-- the paths with data-urls in the css class, but not in the inline-styles here.  use 'iconCssClass'
+-- instead for now.
+instance Css BackgroundImage where
+  css bimg = [decl "backgroundImage" ex]
+    where
+      ex = Func "url" (expr $ Ident fp)
+      fp = "\"../images/" <> cs (iconCssClass bimg) <> ".svg\""
+
+-- | work-around for @instance Css BackgroundImage@.
+iconCssClass :: BackgroundImage -> JSString
+iconCssClass (BackgroundImage fn st) = mconcat ["icon-", cs fn, "_", renderState st]
+    where
+      renderState BisRO     = "RO"
+      renderState BisBright = "bright"
+      renderState BisDark   = "dark"
+
+
+-- * TH instances
+
+makeLenses ''BackgroundImage
+makeLenses ''IbuttonProps
+
+
+-- * outdated
+
+-- FUTUREWORK: the rest of this module should be removed and everything ported to the ibutton_
+-- component above.  this may take a few more steps, though.
+
+
+-- ** icon
 
 data IconProps = IconProps
   { _iconPropsBlockName :: JSString
@@ -68,6 +175,8 @@ data IconProps = IconProps
   }
   deriving (Eq)
 
+type IconDescription = (JSString, JSString)
+
 instance UnoverlapAllEq IconProps
 makeLenses ''IconProps
 
@@ -76,8 +185,11 @@ instance Default IconProps where
     { _iconPropsBlockName = ""
     , _iconPropsHighlight = False
     , _iconPropsDesc      = ("", "")
-    , _iconPropsSize      = L
+    , _iconPropsSize      = Large
     }
+
+
+-- ** icon button
 
 data IconButtonPropsWithHandler onclick = IconButtonProps
   { _iconButtonPropsListKey      :: ReactListKey  -- (this is not morally part of the props, but it's convenient to keep it here.)
@@ -96,28 +208,3 @@ data IconButtonPropsWithHandler onclick = IconButtonProps
 
 instance UnoverlapAllEq (IconButtonPropsWithHandler onclick)
 makeLenses ''IconButtonPropsWithHandler
-
-instance IconButtonPropsOnClick onclick => Default (IconButtonPropsWithHandler onclick) where
-  def = IconButtonProps
-    { _iconButtonPropsListKey      = ""
-    , _iconButtonPropsIconProps    = def
-    , _iconButtonPropsElementName  = ""
-    , _iconButtonPropsModuleName   = ""
-    , _iconButtonPropsLabel        = ""
-    , _iconButtonPropsDisabled     = False
-    , _iconButtonPropsPosition     = Nothing
-    , _iconButtonPropsAlignRight   = False
-    , _iconButtonPropsOnClick      = defaultOnClick
-    , _iconButtonPropsClickPropag  = True  -- Iff 'False', call 'stopPropagation'.  See 'mkClickHandler'.
-    , _iconButtonPropsExtraClasses = []
-    }
-
-class (Typeable onclick, Eq onclick) => IconButtonPropsOnClick onclick where
-  runIconButtonPropsOnClick :: Event -> MouseEvent -> onclick -> ViewEventHandler
-  defaultOnClick            :: onclick  -- ^ @instance Default [GlobalAction]@ would lead to overlaps.
-
-type IconButtonProps = IconButtonPropsWithHandler [GlobalAction]
-
-instance IconButtonPropsOnClick [GlobalAction] where
-  runIconButtonPropsOnClick _ _ = dispatchMany
-  defaultOnClick                = mempty
