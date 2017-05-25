@@ -69,6 +69,13 @@ instance Num Px where  -- FIXME: #317  (also, Px should be a newtype)
   signum (Px i) = Px (signum i)
   fromInteger = Px . fromInteger
 
+instance Enum Px where
+  fromEnum (Px i) = i
+  toEnum = Px
+
+instance Ord Px where
+  compare (Px i) (Px j) = compare i j
+
 
 {- | FIXME: move all of the css z-index handling here.  currently, grep shows this:
 

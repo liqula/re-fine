@@ -40,7 +40,7 @@ module Refine.Frontend.Icon.Types
   , ibImage
 
   , IconSize(..)
-  , sizePx
+  , sizePx, sizeInt
 
   , IconDescription
 
@@ -112,10 +112,13 @@ data IconSize
   deriving (Eq, Show)
 
 sizePx :: IconSize -> Px
-sizePx Medium  = Px 14
-sizePx Large   = Px 20
-sizePx XLarge  = Px 26
-sizePx XXLarge = Px 32
+sizePx = Px . sizeInt
+
+sizeInt :: IconSize -> Int
+sizeInt Medium  = 14
+sizeInt Large   = 20
+sizeInt XLarge  = 26
+sizeInt XXLarge = 32
 
 instance Css IconSize where
   css s = [ decl "backgroundSize" (Percentage 100)
