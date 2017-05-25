@@ -5,12 +5,20 @@
 // FIXME: #320
 //
 // special cases:
-// - _dark.svg (can be used as template for now, even though it would be good to have something with more contrast)
 // - Note_lightred.svg
 // - Private_note_ligthyellow.svg
 // - Question_lightgreen.svg
 // - Save_dark.svg is missing
 
+.icon-00_joker_bright {
+  background-image: url("../images/00_joker_bright.svg");
+}
+.icon-00_joker_dark {
+  background-image: url("../images/00_joker_dark.svg");
+}
+.icon-00_joker_RO {
+  background-image: url("../images/00_joker_RO.svg");
+}
 .icon-Arrow_down_bright {
   background-image: url("../images/Arrow_down_bright.svg");
 }
@@ -154,9 +162,6 @@
 }
 .icon-Comment_RO {
   background-image: url("../images/Comment_RO.svg");
-}
-.icon-_dark {
-  background-image: url("../images/_dark.svg");
 }
 .icon-Discussion_bright {
   background-image: url("../images/Discussion_bright.svg");
