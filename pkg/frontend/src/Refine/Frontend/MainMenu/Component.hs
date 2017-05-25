@@ -40,7 +40,6 @@ topMenuBarInMainMenu :: View '[TopMenuBarInMainMenuProps]
 topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps menuTab currentUser) ->
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
-
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
         div_ ["className" $= "c-mainmenu-content__header"] $ do
             let iprops thisTab = IconProps "c-mainmenu-content" (menuTab == thisTab) ("icon-User", "dark") XXLarge
