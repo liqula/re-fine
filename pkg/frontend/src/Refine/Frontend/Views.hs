@@ -111,6 +111,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                                      (fltr (vdoc ^. compositeVDocDiscussions))
                                      (fltr (vdoc ^. compositeVDocNotes))
                                      (fltr (vdoc ^. compositeVDocEdits))
+                                     (rs ^. gsContributionState . csBubblePositioning)
                                      (rs ^. gsContributionState . csQuickCreateShowState)
 
                           fltr :: IsContribution c => Map (ID c) b -> [b]
@@ -136,7 +137,9 @@ leftAside = mkView "LeftAside" $ \props ->
     aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
         mconcat $ map (\d -> discussionBubble_ (SpecialBubbleProps
                                                  (ContribIDDiscussion (d ^. compositeDiscussion . discussionID))
-                                                 (lookupPosition props $ ContribIDDiscussion (d ^. compositeDiscussion . discussionID))
+                                                 (if props ^. asideBubblePositioning == BubblePositioningAbsolute
+                                                   then lookupPosition props $ ContribIDDiscussion (d ^. compositeDiscussion . discussionID)
+                                                   else Nothing)
                                                  (props ^. asideHighlightedBubble)
                                                  (props ^. asideScreenState)
                                                )
@@ -144,7 +147,9 @@ leftAside = mkView "LeftAside" $ \props ->
                       (props ^. asideDiscussions)
         mconcat $ map (\n -> noteBubble_ (SpecialBubbleProps
                                            (ContribIDNote (n ^. noteID))
-                                           (lookupPosition props $ ContribIDNote (n ^. noteID))
+                                           (if props ^. asideBubblePositioning == BubblePositioningAbsolute
+                                             then lookupPosition props $ ContribIDNote (n ^. noteID)
+                                             else Nothing)
                                            (_asideHighlightedBubble props)
                                            (_asideScreenState props)
                                          )
@@ -164,7 +169,9 @@ rightAside = mkView "RightAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: modifications => edit
     mconcat $ map (\e -> editBubble_ (SpecialBubbleProps
                                        (ContribIDEdit (e ^. editID))
-                                       (lookupPosition props $ ContribIDEdit (e ^. editID))
+                                       (if props ^. asideBubblePositioning == BubblePositioningAbsolute
+                                         then lookupPosition props $ ContribIDEdit (e ^. editID)
+                                         else Nothing)
                                        (props ^. asideHighlightedBubble)
                                        (props ^. asideScreenState)
                                      )

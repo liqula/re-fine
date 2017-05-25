@@ -36,9 +36,9 @@ import           Refine.Common.Types.Core
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Screen.Calculations
+import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
 
@@ -47,12 +47,7 @@ mkClickHandler actions _ _ = dispatchMany $ ContributionAction <$> actions
 
 bubble :: ReactElementM [SomeStoreAction] () -> View '[BubbleProps]
 bubble children = mkView "Bubble" $ \props ->
-  case props ^. bubblePropsMarkPosition of
-    Nothing -> renderBubble children props 0
-        -- FIXME: should be mempty, and the contents should be accessible elsewhere.  but this is
-        -- good for testing, especially stacks.
-        -- FIXME: 'OffsetFromDocumentTop' should be part of the props, not a separate parameter.
-    Just (MarkPosition topOffset _) -> renderBubble children props topOffset
+  renderBubble children props (props ^. bubblePropsMarkPosition)
 
 bubble_ :: BubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
 bubble_ !props children = view_ (bubble children) (bubbleKey props) props
@@ -64,8 +59,12 @@ bubbleKey props = "bubble_" <> props ^. bubblePropsContributionId . to (cs . toU
 specialBubbleKey :: SpecialBubbleProps -> JSString
 specialBubbleKey props = "bubble_" <> props ^. specialBubblePropsContributionId . to (cs . toUrlPiece)
 
-renderBubble :: ReactElementM [SomeStoreAction] () -> BubbleProps -> OffsetFromDocumentTop -> ReactElementM [SomeStoreAction] ()
-renderBubble children props topOffset = do
+rendermpos :: Maybe MarkPosition -> ScreenState -> [Decl]
+rendermpos Nothing                        _  = [decl "margin-top" (Px 20)]
+rendermpos (Just (MarkPosition offset _)) st = [decl "top" (Px $ offsetIntoText offset st)]
+
+renderBubble :: ReactElementM [SomeStoreAction] () -> BubbleProps -> Maybe MarkPosition -> ReactElementM [SomeStoreAction] ()
+renderBubble children props mpos = do
   let contribKind = case props ^. bubblePropsContributionId of
           ContribIDNote _         -> ("o-snippet--note",       True)
           ContribIDQuestion _     -> ("o-snippet--question",   True)
@@ -78,7 +77,7 @@ renderBubble children props topOffset = do
                     , contribKind
                     , ("o-snippet--hover", Just (props ^. bubblePropsContributionId) == props ^. bubblePropsHighlightedBubble)
                     ]
-       , "style" @@= [decl "top" (Px $ offsetIntoText topOffset (props ^. bubblePropsScreenState))]
+       , "style" @@= rendermpos mpos (props ^. bubblePropsScreenState)
        , onClick      $ mkClickHandler (props ^. bubblePropsClickActions)
        , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble $ props ^. bubblePropsContributionId]
        , onMouseLeave $ mkClickHandler [UnhighlightMarkAndBubble]
