@@ -106,16 +106,16 @@ tabStyles =
   ]
 
 mainMenu :: View '[MainMenuProps MainMenuTab]
-mainMenu = mkView "MainMenu" $ \(MainMenuProps menuTab menuErrors currentUser) -> do
+mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
-      topMenuBarInMainMenu_ (TopMenuBarInMainMenuProps menuTab currentUser)
+      topMenuBarInMainMenu_ (TopMenuBarInMainMenuProps currentTab currentUser)
       div_ [ "className" $= "gr-2" ] $ do
         pure ()
       div_ [ "className" $= "gr-20"
            , "style" @@= tabStyles
            ] $ do
-        case menuTab of
+        case currentTab of
           MainMenuProcess      -> "[MainMenuProcess]"
           MainMenuGroup        -> "[MainMenuGroup]"
           MainMenuHelp         -> "[MainMenuHelp]"
@@ -128,8 +128,25 @@ mainMenu_ mt me cu = view_ mainMenu "mainMenu_" (MainMenuProps mt me cu)
 
 
 mainMenuLoginTab :: View '[MainMenuProps MainMenuSubTabLogin]
-mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps menuTab menuErrors currentUser) -> do
-        case menuTab of
+mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
+      let tabButton :: Int -> MainMenuSubTabLogin -> ReactElementM eventHandler ()
+          tabButton key this = do
+            ibutton_ $ emptyIbuttonProps "00_joker" [MainMenuAction . MainMenuActionOpen . MainMenuLogin $ this]
+              & ibListKey .~ (cs $ show key)
+              & ibDarkBackground .~ False
+              & ibHighlightWhen .~ (if currentTab == this then HighlightAlways else HighlightOnMouseOver)
+              & ibLabel .~ (case this of
+                             MainMenuSubTabLogin        -> "login"
+                             MainMenuSubTabRegistration -> "register")
+
+      div_ $ do
+        tabButton 0 MainMenuSubTabLogin
+        tabButton 1 MainMenuSubTabRegistration
+
+      br_ [] >> br_ [] >> br_ [] >> hr_ []
+
+      div_ $ do
+        case currentTab of
           MainMenuSubTabLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
           MainMenuSubTabRegistration -> registration_  (menuErrors ^. mmeRegistration)
 
