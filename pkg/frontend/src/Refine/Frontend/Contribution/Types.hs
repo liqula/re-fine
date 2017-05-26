@@ -28,6 +28,7 @@ import Refine.Frontend.Prelude
 
 import           Control.DeepSeq
 import qualified Data.HashMap.Strict as HashMap
+import           Data.List.NonEmpty (NonEmpty((:|)))
 import qualified Data.Map.Strict as Map
 import           Language.Css.Syntax hiding (Value)
 
@@ -134,8 +135,15 @@ emptyContributionState = ContributionState
 
 -- * Bubble
 
+data StackOrNot a = Stack (NonEmpty a) | NoStack a
+  deriving (Eq, Ord, Show, Generic)
+
+stackHead :: StackOrNot a -> a
+stackHead (Stack (x :| _)) = x
+stackHead (NoStack x)      = x
+
 data BubbleProps = BubbleProps
-  { _bubblePropsContributionId    :: ContributionID
+  { _bubblePropsContributionIds   :: StackOrNot ContributionID
   , _bubblePropsIconSide          :: BubbleSide
   , _bubblePropsIconStyle         :: IconDescription
   , _bubblePropsMarkPosition      :: Maybe MarkPosition
