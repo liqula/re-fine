@@ -59,10 +59,6 @@ spec = do
       bubbleProps = BubbleProps contributionId iconSide iconStyle markPosition highlight actions screenState
 
   describe "The bubble_ component" $ do
-    it "renders the data-contribution-id that was passed to it" $ do
-      wrapper <- shallow $ bubble_ bubbleProps mempty
-      is wrapper (PropertySelector [Prop "data-contribution-id" ("n99" :: String)]) `shouldReturn` True
-
     it "renders the o-snippet class" $ do
       wrapper <- shallow $ bubble_ bubbleProps mempty
       is wrapper (StringSelector ".o-snippet") `shouldReturn` True

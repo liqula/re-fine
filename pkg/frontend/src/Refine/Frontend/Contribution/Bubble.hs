@@ -55,8 +55,7 @@ bubble children = mkView "Bubble" $ \props -> do
           ContribIDDiscussion _   -> ("o-snippet--discussion", True)
           ContribIDEdit _         -> ("o-snippet--edit",       True)
           ContribIDHighlightMark  -> ("", False)
-  div_ ["data-contribution-id" $= cs (toUrlPiece $ props ^. bubblePropsContributionId)
-       , classNamesAny
+  div_ [ classNamesAny
                     [ ("o-snippet", True)  -- RENAME: snippet => bubble
                     , contribKind
                     , ("o-snippet--hover", Just (props ^. bubblePropsContributionId) == props ^. bubblePropsHighlightedBubble)
