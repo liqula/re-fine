@@ -153,7 +153,7 @@ data BubbleProps = BubbleProps
   { _bubblePropsContributionIds   :: StackOrNot ContributionID
   , _bubblePropsIconSide          :: BubbleSide
   , _bubblePropsIconStyle         :: IconDescription
-  , _bubblePropsMarkPosition      :: Maybe MarkPosition
+  , _bubblePropsVerticalOffset    :: Maybe OffsetFromDocumentTop  -- ^ 'Nothing' means 'BubblePositioningEvenlySpaced'
   , _bubblePropsHighlight         :: Bool
   , _bubblePropsClickActions      :: [ContributionAction]
   , _bubblePropsScreenState       :: ScreenState
@@ -171,7 +171,7 @@ instance UnoverlapAllEq BubbleProps
 
 data SpecialBubbleProps = SpecialBubbleProps
   { _specialBubblePropsContributionId    :: ContributionID
-  , _specialBubblePropsMarkPosition      :: Maybe MarkPosition
+  , _specialBubblePropsMarkPosition      :: Maybe OffsetFromDocumentTop  -- ^ 'Nothing' means 'BubblePositioningEvenlySpaced'
   , _specialBubblePropsHighlight         :: Bool
   , _specialBubblePropsScreenState       :: ScreenState
   }

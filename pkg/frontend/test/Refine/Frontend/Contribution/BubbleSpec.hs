@@ -54,11 +54,11 @@ spec = do
   let contributionId = cnid 99
       iconSide = BubbleLeft
       iconStyle = ("the-icon-name", "the-icon-style")
-      markPosition = Just (MarkPosition (OffsetFromDocumentTop (140 + 180)) (OffsetFromDocumentTop (160 + 180)))
+      offset = Just (OffsetFromDocumentTop (140 + 180))
       highlight = False
       actions = []
       screenState = ScreenState 95 0 Desktop
-      bubbleProps = BubbleProps (NoStack contributionId) iconSide iconStyle markPosition highlight actions screenState
+      bubbleProps = BubbleProps (NoStack contributionId) iconSide iconStyle offset highlight actions screenState
 
   describe "The bubble_ component" $ do
     it "renders the o-snippet class" $ do

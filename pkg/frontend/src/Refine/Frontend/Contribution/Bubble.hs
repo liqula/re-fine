@@ -43,6 +43,7 @@ import           Refine.Frontend.Screen.Calculations
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
 
@@ -71,7 +72,7 @@ bubble children = mkView "Bubble" $ \props -> do
       bubbleStyles :: [Decl]
       bubbleStyles
           = either (const []) id bubbleKind
-         <> verticalPosition (props ^. bubblePropsMarkPosition) (props ^. bubblePropsScreenState)
+         <> verticalPosition (props ^. bubblePropsVerticalOffset) (props ^. bubblePropsScreenState)
 
       -- it is not ok to have more than one "style" or "className" attribute in this list.
       attrs =
@@ -99,9 +100,9 @@ bubbleKey props = "bubble_" <> props ^. bubblePropsContributionIds . to (cs . to
 specialBubbleKey :: SpecialBubbleProps -> JSString
 specialBubbleKey props = "bubble_" <> props ^. specialBubblePropsContributionId . to (cs . toUrlPiece)
 
-verticalPosition :: Maybe MarkPosition -> ScreenState -> [Decl]
-verticalPosition Nothing                        _  = [decl "margin-top" (Px 20)]
-verticalPosition (Just (MarkPosition offset _)) st = [decl "top" (Px $ offsetIntoText offset st)]
+verticalPosition :: Maybe OffsetFromDocumentTop -> ScreenState -> [Decl]
+verticalPosition Nothing       _  = [decl "margin-top" (Px 20)]
+verticalPosition (Just offset) st = [decl "top" (Px $ offsetIntoText offset st)]
 
 
 discussionBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]

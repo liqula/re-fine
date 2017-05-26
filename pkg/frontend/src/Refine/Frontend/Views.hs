@@ -53,6 +53,7 @@ import qualified Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import           Refine.Frontend.Store as RS
 import           Refine.Frontend.Store.Types as RS
+import           Refine.Frontend.Types
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Views.Types
 import qualified Refine.Frontend.Workbench
@@ -168,14 +169,15 @@ rightAside_ !props = view_ rightAside "rightAside_" props
 
 -- * helpers
 
-lookupPosition :: AsideProps -> ContributionID -> Maybe MarkPosition
-lookupPosition props cid = props ^? asideMarkPositions . markPositionsMap . at cid . _Just
+-- | All contributions need to be positioned.  The default is '0' (beginning of the article).
+lookupPosition :: AsideProps -> ContributionID -> OffsetFromDocumentTop
+lookupPosition props cid = fromMaybe 0 $ props ^? asideMarkPositions . markPositionsMap . at cid . _Just . markPositionTop
 
 mkSpecialBubbleProps :: IsContribution c => AsideProps -> ID c -> SpecialBubbleProps
 mkSpecialBubbleProps props (contribID -> cid) = SpecialBubbleProps cid markpos highlight screen
   where
     markpos = if props ^. asideBubblePositioning == BubblePositioningAbsolute
-                then lookupPosition props cid
+                then Just $ lookupPosition props cid
                 else Nothing
     highlight = cid `elem` (props ^. asideHighlighteds)
     screen    = props ^. asideScreenState
