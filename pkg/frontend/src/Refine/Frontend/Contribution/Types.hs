@@ -149,6 +149,12 @@ stackToList :: StackOrNot a -> [a]
 stackToList (Stack (x :| xs)) = x : xs
 stackToList (NoStack x)       = [x]
 
+data ProtoBubble = ProtoBubble
+  { _protoBubbleContributionID :: ContributionID
+  , _protoBubbleMarkPosition   :: MarkPosition
+  , _protoBubbleChild          :: ReactElementM ViewEventHandler ()
+  }
+
 data BubbleProps = BubbleProps
   { _bubblePropsContributionIds   :: StackOrNot ContributionID
   , _bubblePropsIconSide          :: BubbleSide
@@ -278,6 +284,7 @@ makeRefineType ''BubblePositioning
 makeRefineType ''CommentKind
 makeRefineType ''ActiveDialog
 
+makeLenses ''ProtoBubble
 makeLenses ''BubbleProps
 makeLenses ''SpecialBubbleProps
 makeLenses ''QuickCreateProps

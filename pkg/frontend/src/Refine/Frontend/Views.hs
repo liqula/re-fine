@@ -154,11 +154,14 @@ leftAside_ !props = view_ leftAside "leftAside_" props
 rightAside :: View '[AsideProps]
 rightAside = mkView "RightAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: modifications => edit
-    let stacks :: [StackOrNot Edit]
-        stacks = stackComponents (topPos . view editID) (const 81) (props ^. asideEdits)
-          where topPos = view unOffsetFromDocumentTop . lookupPosition props . contribID
+    let stacks :: [StackOrNot ProtoBubble]
+        stacks = stackComponents getTop getHeight (editToProtoBubble props <$> (props ^. asideEdits))
+          where
+            getTop    = view (protoBubbleMarkPosition . markPositionTop . unOffsetFromDocumentTop)
+            getHeight = const (constantBubbleHeight ^. unOffsetFromDocumentTop)
+              -- (we could use 'markPositionBottom' here, but that's awkward and yields the same result.)
 
-    editStackBubble props `mapM_` stacks
+    stackBubble props `mapM_` stacks
 
     quickCreate_ $ QuickCreateProps QuickCreateEdit
       (props ^. asideQuickCreateShow)
@@ -171,24 +174,35 @@ rightAside_ !props = view_ rightAside "rightAside_" props
 
 -- * helpers
 
+-- | FUTUREWORK: it would be nice to get around this, but as long as it's true, it makes things a
+-- lot easier...
+constantBubbleHeight :: OffsetFromDocumentTop
+constantBubbleHeight = 81
+
 -- | All contributions need to be positioned.  The default is '0' (beginning of the article).
-lookupPosition :: AsideProps -> ContributionID -> OffsetFromDocumentTop
-lookupPosition props cid = fromMaybe 0 $ props ^? asideMarkPositions . markPositionsMap . at cid . _Just . markPositionTop
+lookupPosition :: AsideProps -> ContributionID -> MarkPosition
+lookupPosition props cid = fromMaybe (MarkPosition 0 constantBubbleHeight)
+                         $ props ^? asideMarkPositions . markPositionsMap . at cid . _Just
 
 mkSpecialBubbleProps :: IsContribution c => AsideProps -> ID c -> SpecialBubbleProps
 mkSpecialBubbleProps props (contribID -> cid) = SpecialBubbleProps cid markpos highlight screen
   where
     markpos = if props ^. asideBubblePositioning == BubblePositioningAbsolute
-                then Just $ lookupPosition props cid
+                then Just $ lookupPosition props cid ^. markPositionTop
                 else Nothing
     highlight = cid `elem` (props ^. asideHighlighteds)
     screen    = props ^. asideScreenState
 
-editStackBubble :: AsideProps -> StackOrNot Edit -> ReactElementM ViewEventHandler ()
-editStackBubble aprops bstack = bubble_ props children
+
+editToProtoBubble :: AsideProps -> Edit -> ProtoBubble
+editToProtoBubble aprops e = ProtoBubble cid (lookupPosition aprops cid) (elemText (e ^. editDesc))
+  where cid = contribID $ e ^. editID
+
+stackBubble :: AsideProps -> StackOrNot ProtoBubble -> ReactElementM ViewEventHandler ()
+stackBubble aprops bstack = bubble_ props children
   where
     bstack' :: StackOrNot ContributionID
-    bstack' = contribID . view editID <$> bstack
+    bstack' = view protoBubbleContributionID <$> bstack
 
     props = BubbleProps
       { _bubblePropsContributionIds   = bstack'
@@ -201,7 +215,7 @@ editStackBubble aprops bstack = bubble_ props children
       }
 
     voffset = if aprops ^. asideBubblePositioning == BubblePositioningAbsolute
-                then Just $ lookupPosition aprops (stackToHead bstack')
+                then Just $ stackToHead bstack ^. protoBubbleMarkPosition . markPositionTop
                 else Nothing
 
     highlight = not . Set.null $ Set.intersection shots hits
@@ -209,4 +223,4 @@ editStackBubble aprops bstack = bubble_ props children
         hits  = Set.fromList (aprops ^. asideHighlighteds)
         shots = Set.fromList (stackToList bstack')
 
-    children = elemText (stackToHead bstack ^. editDesc)
+    children = stackToHead bstack ^. protoBubbleChild
