@@ -135,17 +135,17 @@ mainScreen_ !rs = view_ mainScreen "mainScreen_" rs
 
 leftAside :: View '[AsideProps]
 leftAside = mkView "LeftAside" $ \props ->
-    aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
-        mconcat $ map (\d -> discussionBubble_ (mkSpecialBubbleProps props (d ^. compositeDiscussion . discussionID))
-                                               (elemText (ST.rootLabel (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
-                      (props ^. asideDiscussions)
-        mconcat $ map (\n -> noteBubble_ (mkSpecialBubbleProps props (n ^. noteID))
-                                         (elemText (n ^. noteText)))
-                      (props ^. asideNotes)
-        quickCreate_ $ QuickCreateProps QuickCreateComment
-            (props ^. asideQuickCreateShow)
-            (props ^. asideCurrentRange)
-            (props ^. asideScreenState)
+  aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
+    mconcat $ map (\d -> discussionBubble_ (mkSpecialBubbleProps props (d ^. compositeDiscussion . discussionID))
+                                           (elemText (ST.rootLabel (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
+                  (props ^. asideDiscussions)
+    mconcat $ map (\n -> noteBubble_ (mkSpecialBubbleProps props (n ^. noteID))
+                                     (elemText (n ^. noteText)))
+                  (props ^. asideNotes)
+    quickCreate_ $ QuickCreateProps QuickCreateComment
+        (props ^. asideQuickCreateShow)
+        (props ^. asideCurrentRange)
+        (props ^. asideScreenState)
 
 leftAside_ :: AsideProps -> ReactElementM eventHandler ()
 leftAside_ !props = view_ leftAside "leftAside_" props
