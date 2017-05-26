@@ -154,9 +154,11 @@ leftAside_ !props = view_ leftAside "leftAside_" props
 rightAside :: View '[AsideProps]
 rightAside = mkView "RightAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: modifications => edit
-    mconcat $ map (\e -> editBubble_ (mkSpecialBubbleProps props (e ^. editID))
-                                     (elemText (e ^. editDesc)))
-                  (props ^. asideEdits)
+    let stacks :: [StackOrNot Edit]
+        stacks = stackComponents (topPos . view editID) (const 81) (props ^. asideEdits)
+          where topPos = view unOffsetFromDocumentTop . lookupPosition props . contribID
+
+    editStackBubble props `mapM_` stacks
 
     quickCreate_ $ QuickCreateProps QuickCreateEdit
       (props ^. asideQuickCreateShow)
@@ -181,3 +183,30 @@ mkSpecialBubbleProps props (contribID -> cid) = SpecialBubbleProps cid markpos h
                 else Nothing
     highlight = cid `elem` (props ^. asideHighlighteds)
     screen    = props ^. asideScreenState
+
+editStackBubble :: AsideProps -> StackOrNot Edit -> ReactElementM ViewEventHandler ()
+editStackBubble aprops bstack = bubble_ props children
+  where
+    bstack' :: StackOrNot ContributionID
+    bstack' = contribID . view editID <$> bstack
+
+    props = BubbleProps
+      { _bubblePropsContributionIds   = bstack'
+      , _bubblePropsIconSide          = BubbleRight
+      , _bubblePropsIconStyle         = ("icon-Edit", "dark")
+      , _bubblePropsVerticalOffset    = voffset
+      , _bubblePropsHighlight         = highlight
+      , _bubblePropsClickActions      = []
+      , _bubblePropsScreenState       = aprops ^. asideScreenState
+      }
+
+    voffset = if aprops ^. asideBubblePositioning == BubblePositioningAbsolute
+                then Just $ lookupPosition aprops (stackToHead bstack')
+                else Nothing
+
+    highlight = not . Set.null $ Set.intersection shots hits
+      where
+        hits  = Set.fromList (aprops ^. asideHighlighteds)
+        shots = Set.fromList (stackToList bstack')
+
+    children = elemText (stackToHead bstack ^. editDesc)

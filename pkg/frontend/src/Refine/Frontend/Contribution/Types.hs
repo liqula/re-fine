@@ -135,7 +135,7 @@ emptyContributionState = ContributionState
 -- * Bubble
 
 data StackOrNot a = Stack (NonEmpty a) | NoStack a
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Ord, Show, Generic, Functor)
 
 stackToHead :: StackOrNot a -> a
 stackToHead (Stack (x :| _)) = x
