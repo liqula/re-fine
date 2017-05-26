@@ -38,7 +38,7 @@ import           Refine.Frontend.Types (Range)
 data AsideProps = AsideProps
   { _asideMarkPositions     :: MarkPositions
   , _asideCurrentRange      :: Maybe Range
-  , _asideHighlightedBubble :: Maybe ContributionID
+  , _asideHighlighteds      :: [ContributionID]
   , _asideScreenState       :: ScreenState
   , _asideDiscussions       :: [CompositeDiscussion]
   , _asideNotes             :: [Note]

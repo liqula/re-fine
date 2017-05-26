@@ -62,23 +62,15 @@ bubble children = mkView "Bubble" $ \props -> do
           NoStack ContribIDHighlightMark    -> "style" @@= []  -- this is an internal error.
           Stack _                           -> "style" @@= bubbleStackStyles
 
-      showMouseOver = classNamesAny [("o-snippet--hover", isit)]
-        where
-          isit = case (props ^. bubblePropsHighlightedBubble, props ^. bubblePropsContributionIds) of
-            (Nothing,  _)            -> False
-            (Just cid, NoStack cid') -> cid == cid'
-            (Just cid, Stack cids')  -> cid `elem` cids'
-
       attrs =
        [ "className" $= "o-snippet"  -- RENAME: snippet => bubble
        , bubbleKind
-       , showMouseOver
+       , classNamesAny [("o-snippet--hover", props ^. bubblePropsHighlight)]
        , verticalPosition (props ^. bubblePropsMarkPosition) (props ^. bubblePropsScreenState)
 
        , onClick      $ mkClickHandler (props ^. bubblePropsClickActions)
-       , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble . stackHead $ props ^. bubblePropsContributionIds]
-                                           -- TODO: send the entire list, not just the head.
-       , onMouseLeave $ mkClickHandler [UnhighlightMarkAndBubble]
+       , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble . stackToList $ props ^. bubblePropsContributionIds]
+       , onMouseLeave $ mkClickHandler [HighlightMarkAndBubble []]
        ]
 
   div_ attrs $ do
@@ -92,7 +84,7 @@ bubble_ !props children = view_ (bubble children) (bubbleKey props) props
   -- (there is React.Flux.Internal.childrenPassedToView, but doing it by hand is easier to understand.)
 
 bubbleKey :: BubbleProps -> JSString
-bubbleKey props = "bubble_" <> props ^. bubblePropsContributionIds . to (cs . toUrlPiece . stackHead)
+bubbleKey props = "bubble_" <> props ^. bubblePropsContributionIds . to (cs . toUrlPiece . stackToHead)
 
 specialBubbleKey :: SpecialBubbleProps -> JSString
 specialBubbleKey props = "bubble_" <> props ^. specialBubblePropsContributionId . to (cs . toUrlPiece)

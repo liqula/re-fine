@@ -172,10 +172,10 @@ lookupPosition :: AsideProps -> ContributionID -> Maybe MarkPosition
 lookupPosition props cid = props ^? asideMarkPositions . markPositionsMap . at cid . _Just
 
 mkSpecialBubbleProps :: IsContribution c => AsideProps -> ID c -> SpecialBubbleProps
-mkSpecialBubbleProps props (contribID -> cid) = SpecialBubbleProps cid markpos hb sst
+mkSpecialBubbleProps props (contribID -> cid) = SpecialBubbleProps cid markpos highlight screen
   where
     markpos = if props ^. asideBubblePositioning == BubblePositioningAbsolute
                 then lookupPosition props cid
                 else Nothing
-    hb = props ^. asideHighlightedBubble
-    sst = props ^. asideScreenState
+    highlight = cid `elem` (props ^. asideHighlighteds)
+    screen    = props ^. asideScreenState

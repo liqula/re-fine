@@ -55,7 +55,7 @@ spec = do
       iconSide = BubbleLeft
       iconStyle = ("the-icon-name", "the-icon-style")
       markPosition = Just (MarkPosition (OffsetFromDocumentTop (140 + 180)) (OffsetFromDocumentTop (160 + 180)))
-      highlight = Nothing
+      highlight = False
       actions = []
       screenState = ScreenState 95 0 Desktop
       bubbleProps = BubbleProps (NoStack contributionId) iconSide iconStyle markPosition highlight actions screenState
@@ -85,25 +85,25 @@ spec = do
       wrapper <- shallow $ bubble_ bubbleProps mempty
       is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` False
 
-    it "does not render the hover class when the highlighted bubble does not match the current one" $ do
-      wrapper <- shallow $ bubble_ (bubbleProps & bubblePropsHighlightedBubble .~ Just (cnid 101)) mempty
+    it "does not render the hover class when the highlight flag is off" $ do
+      wrapper <- shallow $ bubble_ (bubbleProps & bubblePropsHighlight .~ False) mempty
       is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` False
 
-    it "renders the hover class when the highlighted bubble matches the current one" $ do
-      wrapper <- shallow $ bubble_ (bubbleProps & bubblePropsHighlightedBubble .~ Just (cnid 99)) mempty
+    it "renders the hover class when the highlight flag is on" $ do
+      wrapper <- shallow $ bubble_ (bubbleProps & bubblePropsHighlight .~ True) mempty
       is wrapper (StringSelector ".o-snippet--hover") `shouldReturn` True
 
     it "inserts the id of the current bubble into the state on mouseEnter and removes it again on mouseLeave" $ do
       pendingWith "race condition, this only sporadically fails!"
 
       wrapper <- mount $ bubble_ bubbleProps mempty
-      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) Nothing
+      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) []
 
       _ <- simulate wrapper MouseEnter
-      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) $ Just (cnid 99)
+      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) [cnid 99]
 
       _ <- simulate wrapper MouseLeave
-      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) Nothing
+      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) []
 
   describe "tablet and mobile" $ do
     it "works" $ do

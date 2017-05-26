@@ -89,8 +89,7 @@ data ContributionAction =
   | RequestSetMarkPositions
   | SetMarkPositions [(ContributionID, MarkPosition)]  -- ^ see 'MarkPositions'
   | SetBubblePositioning BubblePositioning
-  | HighlightMarkAndBubble ContributionID
-  | UnhighlightMarkAndBubble
+  | HighlightMarkAndBubble [ContributionID]
   | SetBubbleFilter (Maybe (Set ContributionID))
   deriving (Show, Eq, Generic)
 
@@ -100,7 +99,7 @@ data ContributionState = ContributionState
   , _csCommentKind              :: Maybe CommentKind
   , _csDisplayedContributionID  :: Maybe ContributionID
   , _csActiveDialog             :: Maybe ActiveDialog
-  , _csHighlightedMarkAndBubble :: Maybe ContributionID
+  , _csHighlightedMarkAndBubble :: [ContributionID]
   , _csQuickCreateShowState     :: QuickCreateShowState
   , _csMarkPositions            :: MarkPositions
   , _csBubblePositioning        :: BubblePositioning
@@ -125,7 +124,7 @@ emptyContributionState = ContributionState
   , _csCommentKind              = Nothing
   , _csDisplayedContributionID  = Nothing
   , _csActiveDialog             = Nothing
-  , _csHighlightedMarkAndBubble = Nothing
+  , _csHighlightedMarkAndBubble = []
   , _csQuickCreateShowState     = QuickCreateNotShown
   , _csMarkPositions            = mempty
   , _csBubblePositioning        = BubblePositioningAbsolute
@@ -138,16 +137,24 @@ emptyContributionState = ContributionState
 data StackOrNot a = Stack (NonEmpty a) | NoStack a
   deriving (Eq, Ord, Show, Generic)
 
-stackHead :: StackOrNot a -> a
-stackHead (Stack (x :| _)) = x
-stackHead (NoStack x)      = x
+stackToHead :: StackOrNot a -> a
+stackToHead (Stack (x :| _)) = x
+stackToHead (NoStack x)      = x
+
+stackToNonEmptyList :: StackOrNot a -> NonEmpty a
+stackToNonEmptyList (Stack l)   = l
+stackToNonEmptyList (NoStack x) = x :| []
+
+stackToList :: StackOrNot a -> [a]
+stackToList (Stack (x :| xs)) = x : xs
+stackToList (NoStack x)       = [x]
 
 data BubbleProps = BubbleProps
   { _bubblePropsContributionIds   :: StackOrNot ContributionID
   , _bubblePropsIconSide          :: BubbleSide
   , _bubblePropsIconStyle         :: IconDescription
   , _bubblePropsMarkPosition      :: Maybe MarkPosition
-  , _bubblePropsHighlightedBubble :: Maybe ContributionID
+  , _bubblePropsHighlight         :: Bool
   , _bubblePropsClickActions      :: [ContributionAction]
   , _bubblePropsScreenState       :: ScreenState
   }
@@ -165,7 +172,7 @@ instance UnoverlapAllEq BubbleProps
 data SpecialBubbleProps = SpecialBubbleProps
   { _specialBubblePropsContributionId    :: ContributionID
   , _specialBubblePropsMarkPosition      :: Maybe MarkPosition
-  , _specialBubblePropsHighlightedBubble :: Maybe ContributionID
+  , _specialBubblePropsHighlight         :: Bool
   , _specialBubblePropsScreenState       :: ScreenState
   }
   deriving (Eq)

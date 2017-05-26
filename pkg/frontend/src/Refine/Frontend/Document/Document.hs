@@ -119,9 +119,9 @@ document_ :: DocumentProps -> ReactElementM eventHandler ()
 document_ props = Outdated.view document props mempty
 
 
-mkDocumentStyleMap :: Maybe ContributionID -> Maybe RawContent -> Value
+mkDocumentStyleMap :: [ContributionID] -> Maybe RawContent -> Value
 mkDocumentStyleMap _ Nothing = object []
-mkDocumentStyleMap mactive (Just rawContent) = object . mconcat $ go <$> marks
+mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
   where
     marks :: [Style]
     marks = fmap snd . mconcat $ view blockStyles <$> (rawContent ^. rawContentBlocks . to NEL.toList)
@@ -134,7 +134,7 @@ mkDocumentStyleMap mactive (Just rawContent) = object . mconcat $ go <$> marks
     go _ = []
 
     mouseover :: ContributionID -> [Decl]
-    mouseover cid = [decl "borderBottom" [expr $ Px 2, expr $ Ident "solid", expr Color.VDocRollover] | mactive == Just cid]
+    mouseover cid = [decl "borderBottom" [expr $ Px 2, expr $ Ident "solid", expr Color.VDocRollover] | cid `elem` actives]
 
     mkMarkSty :: ContributionID -> [Decl]
     mkMarkSty (ContribIDNote _)       = bg   0 255 0 0.3
