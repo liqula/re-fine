@@ -48,8 +48,28 @@ mkClickHandler :: [ContributionAction] -> Event -> MouseEvent -> [SomeStoreActio
 mkClickHandler actions _ _ = dispatchMany $ ContributionAction <$> actions
 
 bubble :: ReactElementM [SomeStoreAction] () -> View '[BubbleProps]
-bubble children = mkView "Bubble" $ \props ->
-  renderBubble children props (props ^. bubblePropsMarkPosition)
+bubble children = mkView "Bubble" $ \props -> do
+  let contribKind = case props ^. bubblePropsContributionId of
+          ContribIDNote _         -> ("o-snippet--note",       True)
+          ContribIDQuestion _     -> ("o-snippet--question",   True)
+          ContribIDDiscussion _   -> ("o-snippet--discussion", True)
+          ContribIDEdit _         -> ("o-snippet--edit",       True)
+          ContribIDHighlightMark  -> ("", False)
+  div_ ["data-contribution-id" $= cs (toUrlPiece $ props ^. bubblePropsContributionId)
+       , classNamesAny
+                    [ ("o-snippet", True)  -- RENAME: snippet => bubble
+                    , contribKind
+                    , ("o-snippet--hover", Just (props ^. bubblePropsContributionId) == props ^. bubblePropsHighlightedBubble)
+                    ]
+       , "style" @@= rendermpos (props ^. bubblePropsMarkPosition) (props ^. bubblePropsScreenState)
+       , onClick      $ mkClickHandler (props ^. bubblePropsClickActions)
+       , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble $ props ^. bubblePropsContributionId]
+       , onMouseLeave $ mkClickHandler [UnhighlightMarkAndBubble]
+       ] $ do
+    div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> show (props ^. bubblePropsIconSide))] $ do  -- RENAME: snippet => bubble
+      icon_ (IconProps "o-snippet" False (props ^. bubblePropsIconStyle) Medium)  -- RENAME: snippet => bubble
+    div_ ["className" $= "o-snippet__content"]  -- RENAME: snippet => bubble
+      children
 
 bubble_ :: BubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
 bubble_ !props children = view_ (bubble children) (bubbleKey props) props
@@ -64,30 +84,6 @@ specialBubbleKey props = "bubble_" <> props ^. specialBubblePropsContributionId 
 rendermpos :: Maybe MarkPosition -> ScreenState -> [Decl]
 rendermpos Nothing                        _  = [decl "margin-top" (Px 20)]
 rendermpos (Just (MarkPosition offset _)) st = [decl "top" (Px $ offsetIntoText offset st)]
-
-renderBubble :: ReactElementM [SomeStoreAction] () -> BubbleProps -> Maybe MarkPosition -> ReactElementM [SomeStoreAction] ()
-renderBubble children props mpos = do
-  let contribKind = case props ^. bubblePropsContributionId of
-          ContribIDNote _         -> ("o-snippet--note",       True)
-          ContribIDQuestion _     -> ("o-snippet--question",   True)
-          ContribIDDiscussion _   -> ("o-snippet--discussion", True)
-          ContribIDEdit _         -> ("o-snippet--edit",       True)
-          ContribIDHighlightMark  -> ("", False)
-  div_ ["data-contribution-id" $= cs (toUrlPiece $ props ^. bubblePropsContributionId)
-       , classNamesAny
-                    [ ("o-snippet", True)  -- RENAME: snippet => bubble
-                    , contribKind
-                    , ("o-snippet--hover", Just (props ^. bubblePropsContributionId) == props ^. bubblePropsHighlightedBubble)
-                    ]
-       , "style" @@= rendermpos mpos (props ^. bubblePropsScreenState)
-       , onClick      $ mkClickHandler (props ^. bubblePropsClickActions)
-       , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble $ props ^. bubblePropsContributionId]
-       , onMouseLeave $ mkClickHandler [UnhighlightMarkAndBubble]
-       ] $ do
-    div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> show (props ^. bubblePropsIconSide))] $ do  -- RENAME: snippet => bubble
-      icon_ (IconProps "o-snippet" False (props ^. bubblePropsIconStyle) Medium)  -- RENAME: snippet => bubble
-    div_ ["className" $= "o-snippet__content"]  -- RENAME: snippet => bubble
-      children
 
 
 discussionBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
