@@ -91,7 +91,7 @@ toolbar = mkView "Toolbar" $ do
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Reader", "dark") XXLarge
             & iconButtonPropsElementName  .~ "btn-read-mode"
             & iconButtonPropsLabel        .~ "read mode"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [HeaderAction ToggleReadOnly]
             & iconButtonPropsAlignRight   .~ True
 
 toolbar_ :: ReactElementM eventHandler ()

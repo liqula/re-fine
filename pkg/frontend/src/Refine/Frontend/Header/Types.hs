@@ -37,6 +37,7 @@ data HeaderAction =
   | ToggleEditToolbarExtension
   | StartEdit EditKind
   | CloseToolbarExtension
+  | ToggleReadOnly
   deriving (Show, Eq, Generic)
 
 data ToolbarExtensionStatus =
@@ -46,12 +47,13 @@ data ToolbarExtensionStatus =
   | EditToolbarExtension
   deriving (Show, Eq, Generic)
 
-newtype HeaderState = HeaderState
-  { _hsToolbarExtensionStatus :: ToolbarExtensionStatus
+data HeaderState = HeaderState
+  { _hsReadOnly               :: Bool
+  , _hsToolbarExtensionStatus :: ToolbarExtensionStatus
   } deriving (Show, Eq, Generic)
 
 emptyHeaderState :: HeaderState
-emptyHeaderState = HeaderState ToolbarExtensionClosed
+emptyHeaderState = HeaderState False ToolbarExtensionClosed
 
 
 makeRefineType ''HeaderAction

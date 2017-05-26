@@ -36,8 +36,12 @@ import Refine.Frontend.Store.Types
 
 headerStateUpdate :: GlobalAction -> HeaderState -> HeaderState
 headerStateUpdate action st = st
+  & hsReadOnly               %~ readOnlyUpdate action
   & hsToolbarExtensionStatus %~ toolbarExtensionUpdate action
 
+readOnlyUpdate :: GlobalAction -> Bool -> Bool
+readOnlyUpdate (HeaderAction ToggleReadOnly) = not
+readOnlyUpdate _                             = id
 
 toolbarExtensionUpdate :: GlobalAction -> ToolbarExtensionStatus -> ToolbarExtensionStatus
 toolbarExtensionUpdate action st = case (st, action) of
