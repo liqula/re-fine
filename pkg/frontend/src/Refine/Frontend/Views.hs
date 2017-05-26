@@ -135,12 +135,10 @@ mainScreen_ !rs = view_ mainScreen "mainScreen_" rs
 leftAside :: View '[AsideProps]
 leftAside = mkView "LeftAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
-    mconcat $ map (\d -> discussionBubble_ (mkSpecialBubbleProps props (d ^. compositeDiscussion . discussionID))
-                                           (elemText (ST.rootLabel (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
-                  (props ^. asideDiscussions)
-    mconcat $ map (\n -> noteBubble_ (mkSpecialBubbleProps props (n ^. noteID))
-                                     (elemText (n ^. noteText)))
-                  (props ^. asideNotes)
+    let protos = (noteToProtoBubble props <$> (props ^. asideNotes))
+              <> (discussionToProtoBubble props <$> (props ^. asideDiscussions))
+    stackBubble props `mapM_` stackProtoBubbles protos
+
     quickCreate_ $ QuickCreateProps QuickCreateComment
         (props ^. asideQuickCreateShow)
         (props ^. asideCurrentRange)
@@ -171,19 +169,19 @@ lookupPosition :: AsideProps -> ContributionID -> MarkPosition
 lookupPosition props cid = fromMaybe (MarkPosition 0 constantBubbleHeight)
                          $ props ^? asideMarkPositions . markPositionsMap . at cid . _Just
 
-mkSpecialBubbleProps :: IsContribution c => AsideProps -> ID c -> SpecialBubbleProps
-mkSpecialBubbleProps props (contribID -> cid) = SpecialBubbleProps cid markpos highlight screen
-  where
-    markpos = if props ^. asideBubblePositioning == BubblePositioningAbsolute
-                then Just $ lookupPosition props cid ^. markPositionTop
-                else Nothing
-    highlight = cid `elem` (props ^. asideHighlighteds)
-    screen    = props ^. asideScreenState
-
-
 editToProtoBubble :: AsideProps -> Edit -> ProtoBubble
 editToProtoBubble aprops e = ProtoBubble cid (lookupPosition aprops cid) (elemText (e ^. editDesc))
   where cid = contribID $ e ^. editID
+
+noteToProtoBubble :: AsideProps -> Note -> ProtoBubble
+noteToProtoBubble aprops n = ProtoBubble cid (lookupPosition aprops cid) (elemText (n ^. noteText))
+  where cid = contribID $ n ^. noteID
+
+discussionToProtoBubble :: AsideProps -> CompositeDiscussion -> ProtoBubble
+discussionToProtoBubble aprops d = ProtoBubble cid (lookupPosition aprops cid) child
+  where
+    cid = contribID $ d ^. compositeDiscussion . discussionID
+    child = elemText (ST.rootLabel (d ^. compositeDiscussionTree) ^. statementText)
 
 stackBubble :: AsideProps -> StackOrNot ProtoBubble -> ReactElementM ViewEventHandler ()
 stackBubble aprops bstack = bubble_ props children
@@ -193,11 +191,11 @@ stackBubble aprops bstack = bubble_ props children
 
     props = BubbleProps
       { _bubblePropsContributionIds   = bstack'
-      , _bubblePropsIconSide          = BubbleRight
-      , _bubblePropsIconStyle         = ("icon-Edit", "dark")
+      , _bubblePropsIconSide          = BubbleRight  -- TODO
+      , _bubblePropsIconStyle         = ("icon-Edit", "dark")  -- TODO
       , _bubblePropsVerticalOffset    = voffset
       , _bubblePropsHighlight         = highlight
-      , _bubblePropsClickActions      = []
+      , _bubblePropsClickActions      = []  -- TODO
       , _bubblePropsScreenState       = aprops ^. asideScreenState
       }
 
