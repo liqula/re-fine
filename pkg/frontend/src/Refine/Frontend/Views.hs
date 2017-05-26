@@ -53,7 +53,6 @@ import qualified Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import           Refine.Frontend.Store as RS
 import           Refine.Frontend.Store.Types as RS
-import           Refine.Frontend.Types
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Views.Types
 import qualified Refine.Frontend.Workbench
@@ -154,14 +153,7 @@ leftAside_ !props = view_ leftAside "leftAside_" props
 rightAside :: View '[AsideProps]
 rightAside = mkView "RightAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: modifications => edit
-    let stacks :: [StackOrNot ProtoBubble]
-        stacks = stackComponents getTop getHeight (editToProtoBubble props <$> (props ^. asideEdits))
-          where
-            getTop    = view (protoBubbleMarkPosition . markPositionTop . unOffsetFromDocumentTop)
-            getHeight = const (constantBubbleHeight ^. unOffsetFromDocumentTop)
-              -- (we could use 'markPositionBottom' here, but that's awkward and yields the same result.)
-
-    stackBubble props `mapM_` stacks
+    stackBubble props `mapM_` (stackProtoBubbles $ editToProtoBubble props <$> (props ^. asideEdits))
 
     quickCreate_ $ QuickCreateProps QuickCreateEdit
       (props ^. asideQuickCreateShow)
@@ -173,11 +165,6 @@ rightAside_ !props = view_ rightAside "rightAside_" props
 
 
 -- * helpers
-
--- | FUTUREWORK: it would be nice to get around this, but as long as it's true, it makes things a
--- lot easier...
-constantBubbleHeight :: OffsetFromDocumentTop
-constantBubbleHeight = 81
 
 -- | All contributions need to be positioned.  The default is '0' (beginning of the article).
 lookupPosition :: AsideProps -> ContributionID -> MarkPosition

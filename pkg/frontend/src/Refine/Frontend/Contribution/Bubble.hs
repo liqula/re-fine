@@ -26,7 +26,9 @@ module Refine.Frontend.Contribution.Bubble
   , discussionBubble_
   , editBubble_
 
+  , stackProtoBubbles
   , stackComponents, StackOrNot(..)
+  , constantBubbleHeight
   ) where
 
 import Refine.Frontend.Prelude
@@ -142,6 +144,18 @@ editBubble_ !props children = view_ (editBubble children) (specialBubbleKey prop
 
 
 -- * stacking
+
+-- | FUTUREWORK: it would be nice to get around this, but as long as it's true, it makes things a
+-- lot easier...
+constantBubbleHeight :: OffsetFromDocumentTop
+constantBubbleHeight = 81
+
+stackProtoBubbles :: [ProtoBubble] -> [StackOrNot ProtoBubble]
+stackProtoBubbles = stackComponents getTop getHeight
+  where
+    getTop    = view (protoBubbleMarkPosition . markPositionTop . unOffsetFromDocumentTop)
+    getHeight = const (constantBubbleHeight ^. unOffsetFromDocumentTop)
+        -- (we could use 'markPositionBottom' here, but that's awkward and yields the same result.)
 
 -- | given a list of abstract components together with their absolute position and height, group all
 -- overlapping components into stacks, and leave all others single.
