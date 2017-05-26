@@ -151,7 +151,7 @@ leftAside_ !props = view_ leftAside "leftAside_" props
 rightAside :: View '[AsideProps]
 rightAside = mkView "RightAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: modifications => edit
-    stackBubble BubbleRight props `mapM_` (stackProtoBubbles $ editToProtoBubble props <$> (props ^. asideEdits))
+    stackBubble BubbleRight props `mapM_` stackProtoBubbles (editToProtoBubble props <$> (props ^. asideEdits))
 
     quickCreate_ $ QuickCreateProps QuickCreateEdit
       (props ^. asideQuickCreateShow)
