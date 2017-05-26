@@ -21,11 +21,6 @@
 
 module Refine.Frontend.Contribution.Bubble
   ( bubble_
-  , noteBubble_
-  , questionBubble_
-  , discussionBubble_
-  , editBubble_
-
   , stackProtoBubbles
   , stackComponents, StackOrNot(..)
   , constantBubbleHeight
@@ -65,6 +60,18 @@ bubble children = mkView "Bubble" $ \props -> do
           NoStack ContribIDHighlightMark    -> error "internal error."
           Stack _                           -> Right bubbleStackStyles
 
+      iconSty = case props ^. bubblePropsContributionIds of
+          NoStack (ContribIDNote _)         -> ("icon-Note", "dark")
+          NoStack (ContribIDQuestion _)     -> ("icon-Question", "dark")
+          NoStack (ContribIDDiscussion _)   -> ("icon-Discussion", "bright")
+          NoStack (ContribIDEdit _)         -> ("icon-Edit", "dark")
+          NoStack ContribIDHighlightMark    -> error "internal error."
+          Stack _                           -> ("icon-Stack", "dark")
+
+      clickActions = case props ^. bubblePropsContributionIds of
+          NoStack cid -> [ShowContributionDialog cid]
+          Stack _     -> []  -- TODO
+
       bubbleClasses :: [JSString]
       bubbleClasses
           = "o-snippet"  -- RENAME: snippet => bubble
@@ -81,14 +88,14 @@ bubble children = mkView "Bubble" $ \props -> do
        [ "style" @@= bubbleStyles
        , "className" $= toClasses bubbleClasses
 
-       , onClick      $ mkClickHandler (props ^. bubblePropsClickActions)
+       , onClick      $ mkClickHandler clickActions
        , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble . stackToList $ props ^. bubblePropsContributionIds]
        , onMouseLeave $ mkClickHandler [HighlightMarkAndBubble []]
        ]
 
   div_ attrs $ do
     div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> show (props ^. bubblePropsIconSide))] $ do  -- RENAME: snippet => bubble
-      icon_ (IconProps "o-snippet" False (props ^. bubblePropsIconStyle) Medium)  -- RENAME: snippet => bubble
+      icon_ (IconProps "o-snippet" False iconSty Medium)  -- RENAME: snippet => bubble
     div_ ["className" $= "o-snippet__content"]  -- RENAME: snippet => bubble
       children
 
@@ -99,48 +106,9 @@ bubble_ !props children = view_ (bubble children) (bubbleKey props) props
 bubbleKey :: BubbleProps -> JSString
 bubbleKey props = "bubble_" <> props ^. bubblePropsContributionIds . to (cs . toUrlPiece . stackToHead)
 
-specialBubbleKey :: SpecialBubbleProps -> JSString
-specialBubbleKey props = "bubble_" <> props ^. specialBubblePropsContributionId . to (cs . toUrlPiece)
-
 verticalPosition :: Maybe OffsetFromDocumentTop -> ScreenState -> [Decl]
 verticalPosition Nothing       _  = [decl "margin-top" (Px 20)]
 verticalPosition (Just offset) st = [decl "top" (Px $ offsetIntoText offset st)]
-
-
-discussionBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
-discussionBubble children = mkView "DiscussionBubble" $ \(SpecialBubbleProps cid markPosition highlight screenState) ->
-  bubble_ (BubbleProps (NoStack cid) BubbleLeft ("icon-Discussion", "bright") markPosition highlight
-                       [ShowContributionDialog cid] screenState)
-    children
-
-discussionBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
-discussionBubble_ !props children = view_ (discussionBubble children) (specialBubbleKey props) props
-
-questionBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
-questionBubble children = mkView "QuestionBubble" $ \(SpecialBubbleProps cid markPosition highlight screenState) ->
-  bubble_ (BubbleProps (NoStack cid) BubbleLeft ("icon-Question", "dark") markPosition highlight [] screenState)
-    children
-
-questionBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
-questionBubble_ !props children = view_ (questionBubble children) (specialBubbleKey props) props
-
-noteBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
-noteBubble children = mkView "NoteBubble" $ \(SpecialBubbleProps cid markPosition highlight screenState) ->
-  bubble_ (BubbleProps (NoStack cid) BubbleLeft ("icon-Note", "dark") markPosition highlight
-                       [ShowContributionDialog cid] screenState)
-    children
-
-noteBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
-noteBubble_ !props children = view_ (noteBubble children) (specialBubbleKey props) props
-
-editBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
-editBubble children = mkView "EditBubble" $ \(SpecialBubbleProps cid markPosition highlight screenState) ->
-  bubble_ (BubbleProps (NoStack cid) BubbleRight ("icon-Edit", "dark") markPosition highlight
-                       [ShowContributionDialog cid] screenState)
-    children
-
-editBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
-editBubble_ !props children = view_ (editBubble children) (specialBubbleKey props) props
 
 
 -- * stacking

@@ -137,7 +137,7 @@ leftAside = mkView "LeftAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
     let protos = (noteToProtoBubble props <$> (props ^. asideNotes))
               <> (discussionToProtoBubble props <$> (props ^. asideDiscussions))
-    stackBubble props `mapM_` stackProtoBubbles protos
+    stackBubble BubbleLeft props `mapM_` stackProtoBubbles protos
 
     quickCreate_ $ QuickCreateProps QuickCreateComment
         (props ^. asideQuickCreateShow)
@@ -151,7 +151,7 @@ leftAside_ !props = view_ leftAside "leftAside_" props
 rightAside :: View '[AsideProps]
 rightAside = mkView "RightAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: modifications => edit
-    stackBubble props `mapM_` (stackProtoBubbles $ editToProtoBubble props <$> (props ^. asideEdits))
+    stackBubble BubbleRight props `mapM_` (stackProtoBubbles $ editToProtoBubble props <$> (props ^. asideEdits))
 
     quickCreate_ $ QuickCreateProps QuickCreateEdit
       (props ^. asideQuickCreateShow)
@@ -183,19 +183,17 @@ discussionToProtoBubble aprops d = ProtoBubble cid (lookupPosition aprops cid) c
     cid = contribID $ d ^. compositeDiscussion . discussionID
     child = elemText (ST.rootLabel (d ^. compositeDiscussionTree) ^. statementText)
 
-stackBubble :: AsideProps -> StackOrNot ProtoBubble -> ReactElementM ViewEventHandler ()
-stackBubble aprops bstack = bubble_ props children
+stackBubble :: BubbleSide -> AsideProps -> StackOrNot ProtoBubble -> ReactElementM ViewEventHandler ()
+stackBubble bubbleSide aprops bstack = bubble_ props children
   where
     bstack' :: StackOrNot ContributionID
     bstack' = view protoBubbleContributionID <$> bstack
 
     props = BubbleProps
       { _bubblePropsContributionIds   = bstack'
-      , _bubblePropsIconSide          = BubbleRight  -- TODO
-      , _bubblePropsIconStyle         = ("icon-Edit", "dark")  -- TODO
+      , _bubblePropsIconSide          = bubbleSide
       , _bubblePropsVerticalOffset    = voffset
       , _bubblePropsHighlight         = highlight
-      , _bubblePropsClickActions      = []  -- TODO
       , _bubblePropsScreenState       = aprops ^. asideScreenState
       }
 

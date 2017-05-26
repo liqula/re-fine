@@ -158,10 +158,8 @@ data ProtoBubble = ProtoBubble
 data BubbleProps = BubbleProps
   { _bubblePropsContributionIds   :: StackOrNot ContributionID
   , _bubblePropsIconSide          :: BubbleSide
-  , _bubblePropsIconStyle         :: IconDescription
   , _bubblePropsVerticalOffset    :: Maybe OffsetFromDocumentTop  -- ^ 'Nothing' means 'BubblePositioningEvenlySpaced'
   , _bubblePropsHighlight         :: Bool
-  , _bubblePropsClickActions      :: [ContributionAction]
   , _bubblePropsScreenState       :: ScreenState
   }
   deriving (Eq)
@@ -174,16 +172,6 @@ instance Show BubbleSide where
   show BubbleRight = "right"
 
 instance UnoverlapAllEq BubbleProps
-
-data SpecialBubbleProps = SpecialBubbleProps
-  { _specialBubblePropsContributionId    :: ContributionID
-  , _specialBubblePropsMarkPosition      :: Maybe OffsetFromDocumentTop  -- ^ 'Nothing' means 'BubblePositioningEvenlySpaced'
-  , _specialBubblePropsHighlight         :: Bool
-  , _specialBubblePropsScreenState       :: ScreenState
-  }
-  deriving (Eq)
-
-instance UnoverlapAllEq SpecialBubbleProps
 
 
 -- * QuickCreate
@@ -286,7 +274,6 @@ makeRefineType ''ActiveDialog
 
 makeLenses ''ProtoBubble
 makeLenses ''BubbleProps
-makeLenses ''SpecialBubbleProps
 makeLenses ''QuickCreateProps
 
 makeRefineType ''QuickCreateSide
