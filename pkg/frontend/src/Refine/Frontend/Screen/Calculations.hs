@@ -29,6 +29,9 @@ import           Refine.Frontend.Types
 import           Refine.Frontend.Screen.Types
 
 
+-- | This is the *actual* offset from page top (i think), and should perhaps be typed
+-- 'OffsetFromHtmlTop'; and 'OffsetFromDocumentTop' then probably means 'OffsetFromArticleTop'.
+-- None of this code is terribly easy to understand...  :(
 offsetIntoText :: OffsetFromDocumentTop -> ScreenState -> Int
 offsetIntoText (OffsetFromDocumentTop topOffset) st = topOffset - st ^. ssHeaderHeight - 80
 

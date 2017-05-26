@@ -44,6 +44,8 @@ contributionStateUpdate a = localAction a . globalAction a
       & csDisplayedContributionID  %~ displayedContributionUpdate action
       & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
       & csMarkPositions            %~ markPositionsUpdate action
+      & csBubblePositioning        %~ bubblePositioningUpdate action
+      & csBubbleFilter             %~ bubbleFilterUpdate action
     localAction _ st = st
 
     globalAction action st = st
@@ -80,11 +82,9 @@ activeDialogUpdate = \case
   DocumentAction DocumentCancelSave      -> const Nothing
   _ -> id
 
-highlightedMarkAndBubbleUpdate :: ContributionAction -> Maybe ContributionID -> Maybe ContributionID
-highlightedMarkAndBubbleUpdate action st = case action of
-  (HighlightMarkAndBubble dataChunkId) -> Just dataChunkId
-  UnhighlightMarkAndBubble             -> Nothing
-  _ -> st
+highlightedMarkAndBubbleUpdate :: ContributionAction -> [ContributionID] -> [ContributionID]
+highlightedMarkAndBubbleUpdate (HighlightMarkAndBubble cids) _    = cids
+highlightedMarkAndBubbleUpdate _                             cids = cids
 
 quickCreateShowStateUpdate :: GlobalAction -> QuickCreateShowState -> QuickCreateShowState
 quickCreateShowStateUpdate action st = case action of
@@ -117,3 +117,11 @@ quickCreateShowStateUpdate action st = case action of
 markPositionsUpdate :: ContributionAction -> MarkPositions -> MarkPositions
 markPositionsUpdate (SetMarkPositions positions) = markPositionsMap .~ M.fromList positions
 markPositionsUpdate _ = id
+
+bubblePositioningUpdate :: ContributionAction -> BubblePositioning -> BubblePositioning
+bubblePositioningUpdate (SetBubblePositioning strategy) _ = strategy
+bubblePositioningUpdate _ st = st
+
+bubbleFilterUpdate :: ContributionAction -> Maybe (Set ContributionID) -> Maybe (Set ContributionID)
+bubbleFilterUpdate (SetBubbleFilter f) _ = f
+bubbleFilterUpdate _ st = st

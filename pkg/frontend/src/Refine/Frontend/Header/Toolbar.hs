@@ -27,9 +27,10 @@ module Refine.Frontend.Header.Toolbar where
 import Refine.Frontend.Prelude
 
 import           Refine.Common.Types ( EditKind(..) )
+import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Header.Types
-import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Icon
+import           Refine.Frontend.Store.Types
 
 toolbar :: View '[]
 toolbar = mkView "Toolbar" $ do
@@ -72,21 +73,25 @@ toolbar = mkView "Toolbar" $ do
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Comment", "dark") XXLarge
             & iconButtonPropsElementName  .~ "all-annotations"   -- RENAME: annotation => comment
             & iconButtonPropsLabel        .~ "all comments"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ (ContributionAction <$> [ SetBubbleFilter Nothing
+                                                                     , SetBubblePositioning BubblePositioningAbsolute
+                                                                     ])
 
           iconButton_ $ toolbarButton
             & iconButtonPropsListKey      .~ "all-edits"
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Edit_view", "dark") XXLarge
             & iconButtonPropsElementName  .~ "all-modifications"  -- RENAME: edit
             & iconButtonPropsLabel        .~ "all edits"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ (ContributionAction <$> [ SetBubbleFilter Nothing
+                                                                     , SetBubblePositioning BubblePositioningAbsolute
+                                                                     ])
 
           iconButton_ $ toolbarButton
             & iconButtonPropsListKey      .~ "read-only"
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Reader", "dark") XXLarge
             & iconButtonPropsElementName  .~ "btn-read-mode"
             & iconButtonPropsLabel        .~ "read mode"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [HeaderAction ToggleReadOnly]
             & iconButtonPropsAlignRight   .~ True
 
 toolbar_ :: ReactElementM eventHandler ()

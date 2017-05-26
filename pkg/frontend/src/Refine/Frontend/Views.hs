@@ -32,7 +32,8 @@ module Refine.Frontend.Views
 import Refine.Frontend.Prelude
 
 import           Control.Lens (ix)
-import qualified Data.Map.Strict as M
+import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
 import qualified Data.Tree as ST
 
 import           Refine.Common.Types
@@ -107,10 +108,19 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                                      (rs ^. gsContributionState . csCurrentRange)
                                      (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
-                                     (M.elems (vdoc ^. compositeVDocDiscussions))
-                                     (M.elems (vdoc ^. compositeVDocNotes))
-                                     (M.elems (vdoc ^. compositeVDocEdits))
+                                     (fltr (vdoc ^. compositeVDocDiscussions))
+                                     (fltr (vdoc ^. compositeVDocNotes))
+                                     (fltr (vdoc ^. compositeVDocEdits))
+                                     (rs ^. gsContributionState . csBubblePositioning)
                                      (rs ^. gsContributionState . csQuickCreateShowState)
+
+                          fltr :: IsContribution c => Map (ID c) b -> [b]
+                          fltr = if rs ^. gsHeaderState . hsReadOnly
+                              then mempty
+                              else maybe Map.elems go (rs ^. gsContributionState . csBubbleFilter)
+                            where
+                              go allowed = fmap snd . filter ((`Set.member` allowed) . contribID . fst) . Map.toList
+
                       leftAside_ asideProps
                       document_ $ DocumentProps (rs ^. RS.gsDocumentState)
                                                 (rs ^. RS.gsContributionState)
@@ -126,27 +136,16 @@ mainScreen_ !rs = view_ mainScreen "mainScreen_" rs
 
 leftAside :: View '[AsideProps]
 leftAside = mkView "LeftAside" $ \props ->
-    aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
-        mconcat $ map (\d -> discussionBubble_ (SpecialBubbleProps
-                                                 (ContribIDDiscussion (d ^. compositeDiscussion . discussionID))
-                                                 (lookupPosition props $ ContribIDDiscussion (d ^. compositeDiscussion . discussionID))
-                                                 (props ^. asideHighlightedBubble)
-                                                 (props ^. asideScreenState)
-                                               )
-                                               (elemText (ST.rootLabel (d ^. compositeDiscussionTree) ^. statementText))) -- we always have one stmt
-                      (props ^. asideDiscussions)
-        mconcat $ map (\n -> noteBubble_ (SpecialBubbleProps
-                                           (ContribIDNote (n ^. noteID))
-                                           (lookupPosition props $ ContribIDNote (n ^. noteID))
-                                           (_asideHighlightedBubble props)
-                                           (_asideScreenState props)
-                                         )
-                                         (elemText (n ^. noteText)))
-                      (props ^. asideNotes)
-        quickCreate_ $ QuickCreateProps QuickCreateComment
-            (props ^. asideQuickCreateShow)
-            (props ^. asideCurrentRange)
-            (props ^. asideScreenState)
+  aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
+    let protos = maybeStackProtoBubbles (props ^. asideBubblePositioning)
+               $ (noteToProtoBubble props <$> (props ^. asideNotes))
+              <> (discussionToProtoBubble props <$> (props ^. asideDiscussions))
+    stackBubble BubbleLeft props `mapM_` protos
+
+    quickCreate_ $ QuickCreateProps QuickCreateComment
+        (props ^. asideQuickCreateShow)
+        (props ^. asideCurrentRange)
+        (props ^. asideScreenState)
 
 leftAside_ :: AsideProps -> ReactElementM eventHandler ()
 leftAside_ !props = view_ leftAside "leftAside_" props
@@ -155,14 +154,9 @@ leftAside_ !props = view_ leftAside "leftAside_" props
 rightAside :: View '[AsideProps]
 rightAside = mkView "RightAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: modifications => edit
-    mconcat $ map (\e -> editBubble_ (SpecialBubbleProps
-                                       (ContribIDEdit (e ^. editID))
-                                       (lookupPosition props $ ContribIDEdit (e ^. editID))
-                                       (props ^. asideHighlightedBubble)
-                                       (props ^. asideScreenState)
-                                     )
-                                     (elemText (e ^. editDesc)))
-                  (props ^. asideEdits)
+    let protos = maybeStackProtoBubbles (props ^. asideBubblePositioning)
+                  (editToProtoBubble props <$> (props ^. asideEdits))
+    stackBubble BubbleRight props `mapM_` protos
 
     quickCreate_ $ QuickCreateProps QuickCreateEdit
       (props ^. asideQuickCreateShow)
@@ -175,5 +169,46 @@ rightAside_ !props = view_ rightAside "rightAside_" props
 
 -- * helpers
 
-lookupPosition :: AsideProps -> ContributionID -> Maybe MarkPosition
-lookupPosition props cid = props ^? asideMarkPositions . markPositionsMap . at cid . _Just
+-- | All contributions need to be positioned.  The default is '0' (beginning of the article).
+lookupPosition :: AsideProps -> ContributionID -> MarkPosition
+lookupPosition props cid = fromMaybe (MarkPosition 0 constantBubbleHeight)
+                         $ props ^? asideMarkPositions . markPositionsMap . at cid . _Just
+
+editToProtoBubble :: AsideProps -> Edit -> ProtoBubble
+editToProtoBubble aprops e = ProtoBubble cid (lookupPosition aprops cid) (elemText (e ^. editDesc))
+  where cid = contribID $ e ^. editID
+
+noteToProtoBubble :: AsideProps -> Note -> ProtoBubble
+noteToProtoBubble aprops n = ProtoBubble cid (lookupPosition aprops cid) (elemText (n ^. noteText))
+  where cid = contribID $ n ^. noteID
+
+discussionToProtoBubble :: AsideProps -> CompositeDiscussion -> ProtoBubble
+discussionToProtoBubble aprops d = ProtoBubble cid (lookupPosition aprops cid) child
+  where
+    cid = contribID $ d ^. compositeDiscussion . discussionID
+    child = elemText (ST.rootLabel (d ^. compositeDiscussionTree) ^. statementText)
+
+stackBubble :: BubbleSide -> AsideProps -> StackOrNot ProtoBubble -> ReactElementM ViewEventHandler ()
+stackBubble bubbleSide aprops bstack = bubble_ props children
+  where
+    bstack' :: StackOrNot ContributionID
+    bstack' = view protoBubbleContributionID <$> bstack
+
+    props = BubbleProps
+      { _bubblePropsContributionIds   = bstack'
+      , _bubblePropsIconSide          = bubbleSide
+      , _bubblePropsVerticalOffset    = voffset
+      , _bubblePropsHighlight         = highlight
+      , _bubblePropsScreenState       = aprops ^. asideScreenState
+      }
+
+    voffset = if aprops ^. asideBubblePositioning == BubblePositioningAbsolute
+                then Just $ stackToHead bstack ^. protoBubbleMarkPosition . markPositionTop
+                else Nothing
+
+    highlight = not . Set.null $ Set.intersection shots hits
+      where
+        hits  = Set.fromList (aprops ^. asideHighlighteds)
+        shots = Set.fromList (stackToList bstack')
+
+    children = stackToHead bstack ^. protoBubbleChild

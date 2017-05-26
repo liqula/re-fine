@@ -28,6 +28,7 @@ import Refine.Frontend.Prelude
 
 import           Control.DeepSeq
 import qualified Data.HashMap.Strict as HashMap
+import           Data.List.NonEmpty (NonEmpty((:|)))
 import qualified Data.Map.Strict as Map
 import           Language.Css.Syntax hiding (Value)
 
@@ -87,8 +88,9 @@ data ContributionAction =
   | SubmitComment ST (Maybe CommentKind)
   | RequestSetMarkPositions
   | SetMarkPositions [(ContributionID, MarkPosition)]  -- ^ see 'MarkPositions'
-  | HighlightMarkAndBubble ContributionID
-  | UnhighlightMarkAndBubble
+  | SetBubblePositioning BubblePositioning
+  | HighlightMarkAndBubble [ContributionID]
+  | SetBubbleFilter (Maybe (Set ContributionID))
   deriving (Show, Eq, Generic)
 
 
@@ -97,10 +99,15 @@ data ContributionState = ContributionState
   , _csCommentKind              :: Maybe CommentKind
   , _csDisplayedContributionID  :: Maybe ContributionID
   , _csActiveDialog             :: Maybe ActiveDialog
-  , _csHighlightedMarkAndBubble :: Maybe ContributionID
+  , _csHighlightedMarkAndBubble :: [ContributionID]
   , _csQuickCreateShowState     :: QuickCreateShowState
   , _csMarkPositions            :: MarkPositions
+  , _csBubblePositioning        :: BubblePositioning
+  , _csBubbleFilter             :: Maybe (Set ContributionID)  -- ^ 'Nothing' means show everything.
   } deriving (Show, Eq, Generic)
+
+data BubblePositioning = BubblePositioningAbsolute | BubblePositioningEvenlySpaced
+  deriving (Show, Eq, Generic)
 
 data CommentKind =
     CommentKindNote
@@ -117,36 +124,54 @@ emptyContributionState = ContributionState
   , _csCommentKind              = Nothing
   , _csDisplayedContributionID  = Nothing
   , _csActiveDialog             = Nothing
-  , _csHighlightedMarkAndBubble = Nothing
+  , _csHighlightedMarkAndBubble = []
   , _csQuickCreateShowState     = QuickCreateNotShown
   , _csMarkPositions            = mempty
+  , _csBubblePositioning        = BubblePositioningAbsolute
+  , _csBubbleFilter             = Nothing
   }
 
 
 -- * Bubble
 
+data StackOrNot a = Stack (NonEmpty a) | NoStack a
+  deriving (Eq, Ord, Show, Generic, Functor)
+
+stackToHead :: StackOrNot a -> a
+stackToHead (Stack (x :| _)) = x
+stackToHead (NoStack x)      = x
+
+stackToNonEmptyList :: StackOrNot a -> NonEmpty a
+stackToNonEmptyList (Stack l)   = l
+stackToNonEmptyList (NoStack x) = x :| []
+
+stackToList :: StackOrNot a -> [a]
+stackToList (Stack (x :| xs)) = x : xs
+stackToList (NoStack x)       = [x]
+
+data ProtoBubble = ProtoBubble
+  { _protoBubbleContributionID :: ContributionID
+  , _protoBubbleMarkPosition   :: MarkPosition
+  , _protoBubbleChild          :: ReactElementM ViewEventHandler ()
+  }
+
 data BubbleProps = BubbleProps
-  { _bubblePropsContributionId    :: ContributionID
-  , _bubblePropsIconSide          :: String  -- FIXME: either "left" or "right", make this a custom boolean!
-  , _bubblePropsIconStyle         :: IconDescription
-  , _bubblePropsMarkPosition      :: Maybe MarkPosition
-  , _bubblePropsHighlightedBubble :: Maybe ContributionID
-  , _bubblePropsClickActions      :: [ContributionAction]
+  { _bubblePropsContributionIds   :: StackOrNot ContributionID
+  , _bubblePropsIconSide          :: BubbleSide
+  , _bubblePropsVerticalOffset    :: Maybe OffsetFromDocumentTop  -- ^ 'Nothing' means 'BubblePositioningEvenlySpaced'
+  , _bubblePropsHighlight         :: Bool
   , _bubblePropsScreenState       :: ScreenState
   }
   deriving (Eq)
 
-instance UnoverlapAllEq BubbleProps
-
-data SpecialBubbleProps = SpecialBubbleProps
-  { _specialBubblePropsContributionId    :: ContributionID
-  , _specialBubblePropsMarkPosition      :: Maybe MarkPosition
-  , _specialBubblePropsHighlightedBubble :: Maybe ContributionID
-  , _specialBubblePropsScreenState       :: ScreenState
-  }
+data BubbleSide = BubbleLeft | BubbleRight
   deriving (Eq)
 
-instance UnoverlapAllEq SpecialBubbleProps
+instance Show BubbleSide where
+  show BubbleLeft = "left"
+  show BubbleRight = "right"
+
+instance UnoverlapAllEq BubbleProps
 
 
 -- * QuickCreate
@@ -243,11 +268,12 @@ instance FromJSON MarkPositions where
 makeRefineType ''AddContributionFormState
 makeRefineType ''ContributionAction
 makeRefineType ''ContributionState
+makeRefineType ''BubblePositioning
 makeRefineType ''CommentKind
 makeRefineType ''ActiveDialog
 
+makeLenses ''ProtoBubble
 makeLenses ''BubbleProps
-makeLenses ''SpecialBubbleProps
 makeLenses ''QuickCreateProps
 
 makeRefineType ''QuickCreateSide

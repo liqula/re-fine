@@ -42,6 +42,31 @@ instance Css.ToExpr RGBA where
 rgb :: Int -> Int -> Int -> RGBA
 rgb r g b = RGBA r g b 1
 
+rgbFromHex :: ST -> RGBA
+rgbFromHex num = f $ toLower <$> cs num
+  where
+    f ('#' : xs) = f xs
+    f [r1, r2, g1, g2, b1, b2] = rgb (h r1 r2) (h g1 g2) (h b1 b2)
+    f _   = error $ "rgbFromHex: bad input: " <> show num
+    h x1 x2 = 16 * q x1 + q x2
+    q '0' = 0
+    q '1' = 1
+    q '2' = 2
+    q '3' = 3
+    q '4' = 4
+    q '5' = 5
+    q '6' = 6
+    q '7' = 7
+    q '8' = 8
+    q '9' = 9
+    q 'a' = 10
+    q 'b' = 11
+    q 'c' = 12
+    q 'd' = 13
+    q 'e' = 14
+    q 'f' = 15
+    q _   = error $ "rgbFromHex: bad input: " <> show num
+
 opacity :: ToRGBA a => a -> Double -> RGBA
 opacity (toRGBA -> RGBA r g b a) a' = RGBA r g b (a * a')
 

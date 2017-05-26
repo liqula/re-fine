@@ -21,21 +21,25 @@
 
 module Refine.Frontend.Contribution.Bubble
   ( bubble_
-  , noteBubble_
-  , questionBubble_
-  , discussionBubble_
-  , editBubble_
+  , maybeStackProtoBubbles
+  , stackProtoBubbles
+  , stackComponents, StackOrNot(..)
+  , constantBubbleHeight
   ) where
 
 import Refine.Frontend.Prelude
 
-import           Web.HttpApiData (toUrlPiece)
+import qualified Data.List.NonEmpty as NEL
+import           Data.List.NonEmpty (NonEmpty((:|)))
+import qualified Data.Set as Set
 import           Language.Css.Syntax
+import           Web.HttpApiData (toUrlPiece)
 
 import           Refine.Common.Types.Core
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Screen.Calculations
+import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
@@ -45,80 +49,115 @@ import           Refine.Frontend.Util
 mkClickHandler :: [ContributionAction] -> Event -> MouseEvent -> [SomeStoreAction]
 mkClickHandler actions _ _ = dispatchMany $ ContributionAction <$> actions
 
+bubbleStackStyles :: [Decl]
+bubbleStackStyles = [decl "border" (Ident "3px dotted black")]  -- TODO: style this!
+
 bubble :: ReactElementM [SomeStoreAction] () -> View '[BubbleProps]
-bubble children = mkView "Bubble" $ \props ->
-  case props ^. bubblePropsMarkPosition of
-    Nothing -> renderBubble children props 0
-        -- FIXME: should be mempty, and the contents should be accessible elsewhere.  but this is
-        -- good for testing, especially stacks.
-        -- FIXME: 'OffsetFromDocumentTop' should be part of the props, not a separate parameter.
-    Just (MarkPosition topOffset _) -> renderBubble children props topOffset
+bubble children = mkView "Bubble" $ \props -> do
+  let bubbleKind = case props ^. bubblePropsContributionIds of
+          NoStack (ContribIDNote _)         -> Left "o-snippet--note"
+          NoStack (ContribIDQuestion _)     -> Left "o-snippet--question"
+          NoStack (ContribIDDiscussion _)   -> Left "o-snippet--discussion"
+          NoStack (ContribIDEdit _)         -> Left "o-snippet--edit"
+          NoStack ContribIDHighlightMark    -> error "internal error."
+          Stack _                           -> Right bubbleStackStyles
+
+      iconSty = case props ^. bubblePropsContributionIds of
+          NoStack (ContribIDNote _)         -> ("icon-Note", "dark")
+          NoStack (ContribIDQuestion _)     -> ("icon-Question", "dark")
+          NoStack (ContribIDDiscussion _)   -> ("icon-Discussion", "bright")
+          NoStack (ContribIDEdit _)         -> ("icon-Edit", "dark")
+          NoStack ContribIDHighlightMark    -> error "internal error."
+          Stack _                           -> ("icon-Stack", "dark")
+
+      clickActions = case props ^. bubblePropsContributionIds of
+          NoStack cid
+            -> [ShowContributionDialog cid]
+          Stack (cid :| cids)
+            -> [SetBubbleFilter . Just . Set.fromList $ cid : cids, SetBubblePositioning BubblePositioningEvenlySpaced]
+
+      bubbleClasses :: [JSString]
+      bubbleClasses
+          = "o-snippet"  -- RENAME: snippet => bubble
+          : either (:[]) (const []) bubbleKind
+         <> ["o-snippet--hover" | props ^. bubblePropsHighlight]
+
+      bubbleStyles :: [Decl]
+      bubbleStyles
+          = either (const []) id bubbleKind
+         <> verticalPosition (props ^. bubblePropsVerticalOffset) (props ^. bubblePropsScreenState)
+
+      -- it is not ok to have more than one "style" or "className" attribute in this list.
+      attrs =
+       [ "style" @@= bubbleStyles
+       , "className" $= toClasses bubbleClasses
+
+       , onClick      $ mkClickHandler clickActions
+       , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble . stackToList $ props ^. bubblePropsContributionIds]
+       , onMouseLeave $ mkClickHandler [HighlightMarkAndBubble []]
+       ]
+
+  div_ attrs $ do
+    div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> show (props ^. bubblePropsIconSide))] $ do  -- RENAME: snippet => bubble
+      icon_ (IconProps "o-snippet" False iconSty Medium)  -- RENAME: snippet => bubble
+    div_ ["className" $= "o-snippet__content"]  -- RENAME: snippet => bubble
+      children
 
 bubble_ :: BubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
 bubble_ !props children = view_ (bubble children) (bubbleKey props) props
   -- (there is React.Flux.Internal.childrenPassedToView, but doing it by hand is easier to understand.)
 
 bubbleKey :: BubbleProps -> JSString
-bubbleKey props = "bubble_" <> props ^. bubblePropsContributionId . to (cs . toUrlPiece)
+bubbleKey props = "bubble_" <> props ^. bubblePropsContributionIds . to (cs . toUrlPiece . stackToHead)
 
-specialBubbleKey :: SpecialBubbleProps -> JSString
-specialBubbleKey props = "bubble_" <> props ^. specialBubblePropsContributionId . to (cs . toUrlPiece)
-
-renderBubble :: ReactElementM [SomeStoreAction] () -> BubbleProps -> OffsetFromDocumentTop -> ReactElementM [SomeStoreAction] ()
-renderBubble children props topOffset = do
-  let contribKind = case props ^. bubblePropsContributionId of
-          ContribIDNote _         -> ("o-snippet--note",       True)
-          ContribIDQuestion _     -> ("o-snippet--question",   True)
-          ContribIDDiscussion _   -> ("o-snippet--discussion", True)
-          ContribIDEdit _         -> ("o-snippet--edit",       True)
-          ContribIDHighlightMark  -> ("", False)
-  div_ ["data-contribution-id" $= cs (toUrlPiece $ props ^. bubblePropsContributionId)
-       , classNamesAny
-                    [ ("o-snippet", True)  -- RENAME: snippet => bubble
-                    , contribKind
-                    , ("o-snippet--hover", Just (props ^. bubblePropsContributionId) == props ^. bubblePropsHighlightedBubble)
-                    ]
-       , "style" @@= [decl "top" (Px $ offsetIntoText topOffset (props ^. bubblePropsScreenState))]
-       , onClick      $ mkClickHandler (props ^. bubblePropsClickActions)
-       , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble $ props ^. bubblePropsContributionId]
-       , onMouseLeave $ mkClickHandler [UnhighlightMarkAndBubble]
-       ] $ do
-    div_ ["className" $= cs ("o-snippet__icon-bg o-snippet__icon-bg--" <> props ^. bubblePropsIconSide)] $ do  -- RENAME: snippet => bubble
-      icon_ (IconProps "o-snippet" False (props ^. bubblePropsIconStyle) Medium)  -- RENAME: snippet => bubble
-    div_ ["className" $= "o-snippet__content"]  -- RENAME: snippet => bubble
-      children
+verticalPosition :: Maybe OffsetFromDocumentTop -> ScreenState -> [Decl]
+verticalPosition Nothing       _  = [decl "margin-top" (Px 20)]
+verticalPosition (Just offset) st = [decl "top" (Px $ offsetIntoText offset st)]
 
 
-discussionBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
-discussionBubble children = mkView "DiscussionBubble" $ \(SpecialBubbleProps contributionID markPosition highlight screenState) ->
-  bubble_ (BubbleProps contributionID "left" ("icon-Discussion", "bright") markPosition highlight
-                       [ShowContributionDialog contributionID] screenState)
-    children
+-- * stacking
 
-discussionBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
-discussionBubble_ !props children = view_ (discussionBubble children) (specialBubbleKey props) props
+-- | FUTUREWORK: it would be nice to get around this, but as long as it's true, it makes things a
+-- lot easier...
+constantBubbleHeight :: OffsetFromDocumentTop
+constantBubbleHeight = 81
 
-questionBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
-questionBubble children = mkView "QuestionBubble" $ \(SpecialBubbleProps dataChunkId markPosition highlight screenState) ->
-  bubble_ (BubbleProps dataChunkId "left" ("icon-Question", "dark") markPosition highlight [] screenState)
-    children
+maybeStackProtoBubbles :: BubblePositioning -> [ProtoBubble] -> [StackOrNot ProtoBubble]
+maybeStackProtoBubbles BubblePositioningAbsolute     = stackProtoBubbles
+maybeStackProtoBubbles BubblePositioningEvenlySpaced = fmap NoStack
 
-questionBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
-questionBubble_ !props children = view_ (questionBubble children) (specialBubbleKey props) props
+stackProtoBubbles :: [ProtoBubble] -> [StackOrNot ProtoBubble]
+stackProtoBubbles = stackComponents getTop getHeight
+  where
+    getTop    = view (protoBubbleMarkPosition . markPositionTop . unOffsetFromDocumentTop)
+    getHeight = const (constantBubbleHeight ^. unOffsetFromDocumentTop)
+        -- (we could use 'markPositionBottom' here, but that's awkward and yields the same result.)
 
-noteBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
-noteBubble children = mkView "NoteBubble" $ \(SpecialBubbleProps contributionID markPosition highlight screenState) ->
-  bubble_ (BubbleProps contributionID "left" ("icon-Note", "dark") markPosition highlight
-                       [ShowContributionDialog contributionID] screenState)
-    children
+-- | given a list of abstract components together with their absolute position and height, group all
+-- overlapping components into stacks, and leave all others single.
+stackComponents :: forall pos height comp. (pos ~ Int, height ~ Int)
+                => (comp -> pos) -> (comp -> height)
+                -> [comp] -> [StackOrNot comp]
+stackComponents getPos getHeight comps = assert (all (\c -> getPos c >= 0 && getHeight c >= 1) comps)
+                                       . go 0 [] . sortBy (compare `on` getPos)
+                                       $ comps
+  where
+    go _ [] []
+      = []
 
-noteBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
-noteBubble_ !props children = view_ (noteBubble children) (specialBubbleKey props) props
+    -- start a new pile if the old one is empty.
+    go usedHeight [] (x : xs)
+      = go (updateUsedHeight usedHeight x) [x] xs
 
-editBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
-editBubble children = mkView "EditBubble" $ \(SpecialBubbleProps dataChunkId markPosition highlight screenState) ->
-  bubble_ (BubbleProps dataChunkId "right" ("icon-Edit", "dark") markPosition highlight [ShowContributionDialog dataChunkId] screenState)
-    children
+    -- if the next one *does* overlap with the (non-empty) pile, add it.
+    go usedHeight overlapping@(_:_) (x : xs) | getPos x <= usedHeight
+      = go (updateUsedHeight usedHeight x) (x : overlapping) xs
 
-editBubble_ :: SpecialBubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
-editBubble_ !props children = view_ (editBubble children) (specialBubbleKey props) props
+    -- if the next one *does not* overlap with the (non-empty) pile, emit a new 'StackOrNot'
+    go usedHeight (overlapping : overlappings) xs
+      = save (overlapping :| overlappings) : go usedHeight [] xs
+
+    updateUsedHeight old x = max old (getPos x + getHeight x)
+
+    save cps@(_ :| (_:_)) = Stack (NEL.reverse cps)
+    save (cp :| _)        = NoStack cp
