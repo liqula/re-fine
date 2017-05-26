@@ -55,18 +55,28 @@ bubbleStackStyles = [decl "border" (Ident "3px dotted black")]  -- TODO: style t
 bubble :: ReactElementM [SomeStoreAction] () -> View '[BubbleProps]
 bubble children = mkView "Bubble" $ \props -> do
   let bubbleKind = case props ^. bubblePropsContributionIds of
-          NoStack (ContribIDNote _)         -> "className" $= "o-snippet--note"
-          NoStack (ContribIDQuestion _)     -> "className" $= "o-snippet--question"
-          NoStack (ContribIDDiscussion _)   -> "className" $= "o-snippet--discussion"
-          NoStack (ContribIDEdit _)         -> "className" $= "o-snippet--edit"
-          NoStack ContribIDHighlightMark    -> "style" @@= []  -- this is an internal error.
-          Stack _                           -> "style" @@= bubbleStackStyles
+          NoStack (ContribIDNote _)         -> Left "o-snippet--note"
+          NoStack (ContribIDQuestion _)     -> Left "o-snippet--question"
+          NoStack (ContribIDDiscussion _)   -> Left "o-snippet--discussion"
+          NoStack (ContribIDEdit _)         -> Left "o-snippet--edit"
+          NoStack ContribIDHighlightMark    -> error "internal error."
+          Stack _                           -> Right bubbleStackStyles
 
+      bubbleClasses :: [JSString]
+      bubbleClasses
+          = "o-snippet"  -- RENAME: snippet => bubble
+          : either (:[]) (const []) bubbleKind
+         <> ["o-snippet--hover" | props ^. bubblePropsHighlight]
+
+      bubbleStyles :: [Decl]
+      bubbleStyles
+          = either (const []) id bubbleKind
+         <> verticalPosition (props ^. bubblePropsMarkPosition) (props ^. bubblePropsScreenState)
+
+      -- it is not ok to have more than one "style" or "className" attribute in this list.
       attrs =
-       [ "className" $= "o-snippet"  -- RENAME: snippet => bubble
-       , bubbleKind
-       , classNamesAny [("o-snippet--hover", props ^. bubblePropsHighlight)]
-       , verticalPosition (props ^. bubblePropsMarkPosition) (props ^. bubblePropsScreenState)
+       [ "style" @@= bubbleStyles
+       , "className" $= toClasses bubbleClasses
 
        , onClick      $ mkClickHandler (props ^. bubblePropsClickActions)
        , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble . stackToList $ props ^. bubblePropsContributionIds]
@@ -89,9 +99,9 @@ bubbleKey props = "bubble_" <> props ^. bubblePropsContributionIds . to (cs . to
 specialBubbleKey :: SpecialBubbleProps -> JSString
 specialBubbleKey props = "bubble_" <> props ^. specialBubblePropsContributionId . to (cs . toUrlPiece)
 
-verticalPosition :: Maybe MarkPosition -> ScreenState -> PropertyOrHandler handler
-verticalPosition Nothing                        _  = "style" @@= [decl "margin-top" (Px 20)]
-verticalPosition (Just (MarkPosition offset _)) st = "style" @@= [decl "top" (Px $ offsetIntoText offset st)]
+verticalPosition :: Maybe MarkPosition -> ScreenState -> [Decl]
+verticalPosition Nothing                        _  = [decl "margin-top" (Px 20)]
+verticalPosition (Just (MarkPosition offset _)) st = [decl "top" (Px $ offsetIntoText offset st)]
 
 
 discussionBubble :: ReactElementM [SomeStoreAction] () -> View '[SpecialBubbleProps]
