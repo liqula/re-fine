@@ -21,6 +21,7 @@
 
 module Refine.Frontend.Contribution.Bubble
   ( bubble_
+  , maybeStackProtoBubbles
   , stackProtoBubbles
   , stackComponents, StackOrNot(..)
   , constantBubbleHeight
@@ -30,6 +31,7 @@ import Refine.Frontend.Prelude
 
 import qualified Data.List.NonEmpty as NEL
 import           Data.List.NonEmpty (NonEmpty((:|)))
+import qualified Data.Set as Set
 import           Language.Css.Syntax
 import           Web.HttpApiData (toUrlPiece)
 
@@ -69,8 +71,10 @@ bubble children = mkView "Bubble" $ \props -> do
           Stack _                           -> ("icon-Stack", "dark")
 
       clickActions = case props ^. bubblePropsContributionIds of
-          NoStack cid -> [ShowContributionDialog cid]
-          Stack _     -> []  -- TODO
+          NoStack cid
+            -> [ShowContributionDialog cid]
+          Stack (cid :| cids)
+            -> [SetBubbleFilter . Just . Set.fromList $ cid : cids, SetBubblePositioning BubblePositioningEvenlySpaced]
 
       bubbleClasses :: [JSString]
       bubbleClasses
@@ -117,6 +121,10 @@ verticalPosition (Just offset) st = [decl "top" (Px $ offsetIntoText offset st)]
 -- lot easier...
 constantBubbleHeight :: OffsetFromDocumentTop
 constantBubbleHeight = 81
+
+maybeStackProtoBubbles :: BubblePositioning -> [ProtoBubble] -> [StackOrNot ProtoBubble]
+maybeStackProtoBubbles BubblePositioningAbsolute     = stackProtoBubbles
+maybeStackProtoBubbles BubblePositioningEvenlySpaced = fmap NoStack
 
 stackProtoBubbles :: [ProtoBubble] -> [StackOrNot ProtoBubble]
 stackProtoBubbles = stackComponents getTop getHeight

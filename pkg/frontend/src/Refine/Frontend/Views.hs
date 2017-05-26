@@ -135,9 +135,10 @@ mainScreen_ !rs = view_ mainScreen "mainScreen_" rs
 leftAside :: View '[AsideProps]
 leftAside = mkView "LeftAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
-    let protos = (noteToProtoBubble props <$> (props ^. asideNotes))
+    let protos = maybeStackProtoBubbles (props ^. asideBubblePositioning)
+               $ (noteToProtoBubble props <$> (props ^. asideNotes))
               <> (discussionToProtoBubble props <$> (props ^. asideDiscussions))
-    stackBubble BubbleLeft props `mapM_` stackProtoBubbles protos
+    stackBubble BubbleLeft props `mapM_` protos
 
     quickCreate_ $ QuickCreateProps QuickCreateComment
         (props ^. asideQuickCreateShow)
@@ -151,7 +152,9 @@ leftAside_ !props = view_ leftAside "leftAside_" props
 rightAside :: View '[AsideProps]
 rightAside = mkView "RightAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: modifications => edit
-    stackBubble BubbleRight props `mapM_` stackProtoBubbles (editToProtoBubble props <$> (props ^. asideEdits))
+    let protos = maybeStackProtoBubbles (props ^. asideBubblePositioning)
+                  (editToProtoBubble props <$> (props ^. asideEdits))
+    stackBubble BubbleRight props `mapM_` protos
 
     quickCreate_ $ QuickCreateProps QuickCreateEdit
       (props ^. asideQuickCreateShow)
