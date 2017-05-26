@@ -116,8 +116,8 @@ zindex :: ZIndex -> Decl
 zindex = decl "zIndex"
 
 
-toClasses :: (ConvertibleStrings s JSString, ConvertibleStrings JSString s) => [s] -> s
-toClasses = cs . JSS.unwords . filter (not . JSS.null) . fmap cs
+toClasses :: (ConvertibleStrings s JSString) => [s] -> JSString
+toClasses = JSS.unwords . filter (not . JSS.null) . fmap cs
 
 deriving instance FromJSVal (NoJSONRep JSVal)
 deriving instance ToJSVal (NoJSONRep JSVal)
