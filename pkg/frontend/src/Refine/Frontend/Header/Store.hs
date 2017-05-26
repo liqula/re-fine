@@ -47,7 +47,7 @@ toolbarExtensionUpdate action st = case (st, action) of
     (EditToolbarExtension,                 HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithoutRange
 
     (CommentToolbarExtensionWithoutRange,  HeaderAction StartTextSpecificComment)      -> CommentToolbarExtensionWithRange
-    (_,                                    HeaderAction StartTextSpecificComment)      -> error "text-specific comment cannot start when toolbar extension is closed or in selection mode"
+    (_,                                    HeaderAction StartTextSpecificComment)      -> bad1
 
     (ToolbarExtensionClosed,               HeaderAction ToggleEditToolbarExtension)    -> EditToolbarExtension
     (CommentToolbarExtensionWithoutRange,  HeaderAction ToggleEditToolbarExtension)    -> EditToolbarExtension
@@ -55,8 +55,11 @@ toolbarExtensionUpdate action st = case (st, action) of
     (EditToolbarExtension,                 HeaderAction ToggleEditToolbarExtension)    -> ToolbarExtensionClosed
 
     (EditToolbarExtension,                 HeaderAction (StartEdit _))                 -> ToolbarExtensionClosed
-    (_,                                    HeaderAction (StartEdit _))                 -> error "edit cannot start when toolbar extension is closed or in comment mode"
+    (_,                                    HeaderAction (StartEdit _))                 -> bad2
 
     (_,                                    HeaderAction CloseToolbarExtension)         -> ToolbarExtensionClosed
 
     _ -> st
+  where
+    bad1 = error "text-specific comment cannot start when toolbar extension is closed or in selection mode"
+    bad2 = error "edit cannot start when toolbar extension is closed or in comment mode"
