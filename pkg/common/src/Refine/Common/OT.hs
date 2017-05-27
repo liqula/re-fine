@@ -18,6 +18,8 @@ module Refine.Common.OT where
 import Refine.Common.Prelude
 
 import qualified Data.Set as Set
+import           Data.Sequence (Seq)
+import qualified Data.Sequence as Seq
 import           Data.List
 import qualified Data.Algorithm.Patience as Diff
 import qualified Data.Text as ST
@@ -339,6 +341,75 @@ instance SOP.Generic (EEdit [a])
 instance SOP.HasDatatypeInfo (EEdit [a])
 instance (NFData a, NFData (EEdit a)) => NFData (EEdit [a]) where rnf = grnf
 
+---------------------------------------- Sequence instance
+
+editSItem :: Int -> Edit a -> Edit (Seq a)
+editSItem _ [] = []
+editSItem i p  = [EditSItem i p]
+
+instance Editable a => Editable (Seq a) where
+
+    docCost = foldr (\e n -> docCost e + n) 1
+
+    data EEdit (Seq a)
+        = DeleteSItem !Int    -- TUNING: DeleteSRange Int{-offset-} Int{-length-}
+        | InsertSItem !Int a  -- TUNING: InsertSItems Int{-offset-} [a]{-elems-}
+        | EditSItem !Int (Edit a)
+        -- FUTUREWORK: detect swapping/moving and duplication of items
+        --  MoveItem Int Int     -- needed for expressing .....
+        --  DuplicateItem Int
+            deriving (Generic)
+
+    eCost = \case
+        InsertSItem _ d -> 1 + docCost d
+        DeleteSItem _   -> 1
+        EditSItem _ p   -> 1 + cost p
+
+    ePatch (DeleteSItem i  ) (Seq.splitAt i -> (as, Seq.viewl -> _ Seq.:< bs)) = as <> bs
+    ePatch (InsertSItem i x) (Seq.splitAt i -> (as, bs)) = as <> Seq.singleton x <> bs
+    ePatch (EditSItem   i x) (Seq.splitAt i -> (as, Seq.viewl -> b Seq.:< bs))
+        = as <> Seq.singleton (patch x b) <> bs
+
+    diff (foldr (:) [] -> s1) (foldr (:) [] -> s2) = f <$> diff s1 s2
+      where
+        f = \case
+            DeleteItem i   -> DeleteSItem i
+            InsertItem i x -> InsertSItem i x
+            EditItem i e   -> EditSItem i e
+
+    eMerge d (EditSItem i x) (EditSItem i' y) | i == i' = editSItem i *** editSItem i $ merge (Seq.index d i) x y
+    eMerge _ (EditSItem i _) (DeleteSItem i') | i == i' = ([DeleteSItem i], [])      -- information lost!
+    eMerge d (DeleteSItem i) (EditSItem i' x) | i == i' = (InsertSItem i (Seq.index d i): editSItem i x, [])
+    eMerge _ (DeleteSItem i) (DeleteSItem i') | i == i' = ([], [])
+    eMerge _ a b = (mutate 0 a b, mutate 1 b a)
+      where
+        mutate l e = \case
+            InsertSItem i x -> [InsertSItem (di l i) x]
+            DeleteSItem i   -> [DeleteSItem (di 1 i)  ]
+            EditSItem   i x -> [EditSItem   (di 1 i) x]
+          where
+            di k i = case e of
+                InsertSItem j _ | j==i      -> i+k
+                                | j<i       -> i+1
+                                | otherwise -> i
+                DeleteSItem j   | j==i      -> i
+                                | j<i       -> i-1
+                                | otherwise -> i
+                EditSItem{}     -> i
+
+    eInverse d = \case
+        EditSItem i x   -> editSItem i $ inverse (Seq.index d i) x
+        DeleteSItem i   -> [InsertSItem i (Seq.index d i)]
+        InsertSItem i _ -> [DeleteSItem i]
+
+deriving instance (Show a, Show (EEdit a)) => Show (EEdit (Seq a))
+deriving instance (Eq a, Eq (EEdit a)) => Eq (EEdit (Seq a))
+instance (ToJSON a, ToJSON (EEdit a)) => ToJSON (EEdit (Seq a))
+instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit (Seq a))
+instance SOP.Generic (EEdit (Seq a))
+instance SOP.HasDatatypeInfo (EEdit (Seq a))
+instance (NFData a, NFData (EEdit a)) => NFData (EEdit (Seq a)) where rnf = grnf
+
 ---------------------------------------- StrictText instance
 
 instance Editable ST where
@@ -432,5 +503,79 @@ instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit (Set a))
 instance SOP.Generic (EEdit (Set a))
 instance SOP.HasDatatypeInfo (EEdit (Set a))
 instance (NFData a, NFData (EEdit a)) => NFData (EEdit (Set a)) where rnf = grnf
+
+---------------------------------------- Segment instance
+
+class Splitable a where
+    -- type SplitIndex a
+    splitItem :: Int{-SplitIndex a-} -> a -> (a, a)
+    splitLength :: a -> Int{-SplitIndex a-}
+
+class Joinable a where
+    joinItems  :: a -> a -> a
+
+newtype Segments a b = Segments [(a, b)]        -- TUNING: use Seq insted of []
+    deriving (Eq, Show, Generic)
+
+instance (Editable a, Editable b, Splitable b, Eq a, Joinable b) => Editable (Segments a b) where
+
+    docCost (Segments xs) = sum [ docCost a + docCost b | (a, b) <- xs ]
+
+    data EEdit (Segments a b)
+        = SegmentListEdit (EEdit [(a, b)])
+        | JoinItems !Int            -- TUNING: JoinRange !Int !Int
+        | SplitItem !Int !Int{-(SplitIndex a)-}
+            deriving (Generic)
+
+    eCost = \case
+        SegmentListEdit x -> eCost x
+        JoinItems _   -> 1
+        SplitItem _ _ -> 1
+
+    ePatch (SegmentListEdit e) (Segments xs)
+        = Segments $ ePatch e xs
+    ePatch (JoinItems i) (Segments (splitAt i -> (as, (a1, b1): (a2, b2): bs)))
+        | a1 == a2  = Segments $ as <> ((a1, joinItems b1 b2): bs)
+        | otherwise = error "impossible"
+    ePatch (SplitItem i j) (Segments (splitAt i -> (as, (a, splitItem j -> (b1, b2)): bs)))
+        = Segments $ as <> ((a, b1): (a, b2): bs)
+
+    diff (Segments s1) (Segments s2) = SegmentListEdit <$> diff s1 s2
+
+    eMerge (Segments d) (SegmentListEdit e1) (SegmentListEdit e2)
+        = fmap SegmentListEdit *** fmap SegmentListEdit $ eMerge d e1 e2
+{-
+    eMerge _ (EditItem i _) (DeleteItem i') | i == i' = ([DeleteItem i], [])      -- information lost!
+    eMerge d (DeleteItem i) (EditItem i' x) | i == i' = (InsertItem i (d !! i): editItem i x, [])
+    eMerge _ (DeleteItem i) (DeleteItem i') | i == i' = ([], [])
+-}
+    eMerge _ a b = (mutate 0 a b, mutate 1 b a)
+      where
+        mutate l e = \case
+            SegmentListEdit (InsertItem i x) -> [SegmentListEdit $ InsertItem (di l i) x]
+            SegmentListEdit (DeleteItem i)   -> [SegmentListEdit $ DeleteItem (di 1 i)  ]
+            SegmentListEdit (EditItem   i x) -> [SegmentListEdit $ EditItem   (di 1 i) x]
+          where
+            di k i = case e of
+                SegmentListEdit (InsertItem j _) | j==i      -> i+k
+                                                 | j<i       -> i+1
+                                                 | otherwise -> i
+                SegmentListEdit (DeleteItem j)   | j==i      -> i
+                                                 | j<i       -> i-1
+                                                 | otherwise -> i
+                SegmentListEdit EditItem{}       -> i
+
+    eInverse (Segments d) = \case
+        SegmentListEdit e -> SegmentListEdit <$> eInverse d e
+        JoinItems i   -> [SplitItem i . splitLength . snd $ d !! i]
+        SplitItem i _ -> [JoinItems i]
+
+deriving instance (Show a, Show (EEdit a), Show b, Show (EEdit b)) => Show (EEdit (Segments a b))
+deriving instance (Eq a, Eq (EEdit a), Eq b, Eq (EEdit b)) => Eq (EEdit (Segments a b))
+instance (ToJSON a, ToJSON (EEdit a), ToJSON b, ToJSON (EEdit b)) => ToJSON (EEdit (Segments a b))
+instance (FromJSON a, FromJSON (EEdit a), FromJSON b, FromJSON (EEdit b)) => FromJSON (EEdit (Segments a b))
+instance SOP.Generic (EEdit (Segments a b))
+instance SOP.HasDatatypeInfo (EEdit (Segments a b))
+instance (NFData a, NFData (EEdit a), NFData b, NFData (EEdit b)) => NFData (EEdit (Segments a b)) where rnf = grnf
 
 ---------------------------------------- FUTUREWORK: Map instance
