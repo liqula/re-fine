@@ -43,15 +43,19 @@ simplifyDoc blocks = simplifyBlock <$> blocks
 instance HasEnoughInhabitants (Atom EntityStyle) where numOfInhabitants _ = Just 5
 
 instance GenEdit RawContent where
-    genEdit d = map ERawContent <$> genEdit (rawContentToDoc d)
+    genEdit d = (map ERawContent <$> genEdit (rawContentToDoc d)) `suchThat` \edit -> isValidRawContent (patch edit d)
+      where
+        isValidRawContent rc = sanitizeRawContent rc == rc
 
 --------------------------------------------------------- tests
 
 spec :: Spec
 spec = parallel $ do
 
-    -- See #310
-    -- runTest' (RunTestConfig Nothing (Just 10)) $ allTests @RawContent
+    -- if this take too long to run on a regular basis, just activate for debugging or deep-tests
+    describe "OT @RawContent" $ do
+      -- See #310
+      -- runTest $ allTests @RawContent
 
     it "Doc <-> RawContent conversion" . property $ \d ->
       rawContentToDoc (docToRawContent d) `shouldBe` simplifyDoc d
