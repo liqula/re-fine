@@ -116,7 +116,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
 
                           fltr :: IsContribution c => Map (ID c) b -> [b]
                           fltr = if rs ^. gsHeaderState . hsReadOnly
-                              then mempty
+                              then const mempty
                               else maybe Map.elems go (rs ^. gsContributionState . csBubbleFilter)
                             where
                               go allowed = fmap snd . filter ((`Set.member` allowed) . contribID . fst) . Map.toList
