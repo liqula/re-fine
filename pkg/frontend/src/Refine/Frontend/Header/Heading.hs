@@ -38,6 +38,7 @@ import qualified React.Flux.Outdated as RF
 import           Refine.Common.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DocumentHeader ( documentHeader_, DocumentHeaderProps(..) )
+import           Refine.Frontend.Header.DiffToolbar ( diffToolbar_ )
 import           Refine.Frontend.Header.EditToolbar ( editToolbar_ )
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_ )
@@ -104,7 +105,7 @@ mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
             sticky_ [RF.on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
               case rs ^. gsDocumentState of
                 DocumentStateView {} -> toolbar_
-                DocumentStateDiff {} -> toolbar_
+                DocumentStateDiff {} -> diffToolbar_
                 DocumentStateEdit {} -> editToolbar_
               commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
               editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
