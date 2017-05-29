@@ -109,6 +109,7 @@ commentToolbarExtension :: View '[CommentToolbarExtensionProps]
 commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
   (CommentToolbarExtensionProps CommentToolbarExtensionWithRange) -> frame $ do
     div_ "Please select the text you would like to comment on"
+
   (CommentToolbarExtensionProps CommentToolbarExtensionWithoutRange) -> frame $ do
     iconButton_ $ defaultIconButtonProps @[GlobalAction]
       & iconButtonPropsListKey      .~ "comment-range"
@@ -117,12 +118,16 @@ commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
       & iconButtonPropsLabel        .~ "text-specific comment"
       & iconButtonPropsOnClick      .~ [HeaderAction StartTextSpecificComment]
       & iconButtonPropsClickPropag  .~ False
+
+    div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+
     iconButton_ $ defaultIconButtonProps @[GlobalAction]
       & iconButtonPropsListKey      .~ "comment-all"
       & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") Large
       & iconButtonPropsElementName  .~ "btn-new-ann-doc"  -- RENAME: ann => comment
       & iconButtonPropsLabel        .~ "general comment"
       & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+
   (CommentToolbarExtensionProps _) -> mempty
   where
     frame :: ReactElementM eventHandler () -> ReactElementM eventHandler ()
