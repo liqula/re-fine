@@ -11,6 +11,7 @@
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE UndecidableInstances       #-}
+{-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 
 -- | FUTUREWORK: release this file as a library
 module Refine.Common.OT where
@@ -25,6 +26,7 @@ import qualified Data.Algorithm.Patience as Diff
 import qualified Data.Text as ST
 import qualified Generics.SOP as SOP
 import           Control.DeepSeq
+import           Test.QuickCheck (Arbitrary)
 
 ----------------------------------------------------------------------------------------------
 
@@ -510,14 +512,34 @@ class Splitable a where
     -- type SplitIndex a
     splitItem :: Int{-SplitIndex a-} -> a -> (a, a)
     splitLength :: a -> Int{-SplitIndex a-}
-
-class Joinable a where
     joinItems  :: a -> a -> a
 
-newtype Segments a b = Segments [(a, b)]        -- TUNING: use Seq insted of []
-    deriving (Eq, Show, Generic)
+instance Splitable [a] where
+    splitItem = splitAt
+    splitLength = length
+    joinItems = (<>)
 
-instance (Editable a, Editable b, Splitable b, Eq a, Joinable b) => Editable (Segments a b) where
+instance Splitable (Seq a) where
+    splitItem = Seq.splitAt
+    splitLength = Seq.length
+    joinItems = (<>)
+
+instance Splitable ST where
+    splitItem = ST.splitAt
+    splitLength = ST.length
+    joinItems = (<>)
+
+instance Splitable (Segments a b) where
+    splitItem i (Segments a) = coerce $ splitAt i a
+    splitLength (Segments a) = length a
+    joinItems (Segments a) (Segments b) = Segments $ a <> b
+
+----------
+
+newtype Segments a b = Segments [(a, b)]        -- TUNING: use Seq insted of []
+    deriving (Eq, Show, Generic, Arbitrary)
+
+instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) where
 
     docCost (Segments xs) = sum [ docCost a + docCost b | (a, b) <- xs ]
 
@@ -536,7 +558,7 @@ instance (Editable a, Editable b, Splitable b, Eq a, Joinable b) => Editable (Se
         = Segments $ ePatch e xs
     ePatch (JoinItems i) (Segments (splitAt i -> (as, (a1, b1): (a2, b2): bs)))
         | a1 == a2  = Segments $ as <> ((a1, joinItems b1 b2): bs)
-        | otherwise = error "impossible"
+        | otherwise = error "impossible: items are not joinable"
     ePatch (SplitItem i j) (Segments (splitAt i -> (as, (a, splitItem j -> (b1, b2)): bs)))
         = Segments $ as <> ((a, b1): (a, b2): bs)
 
@@ -544,26 +566,76 @@ instance (Editable a, Editable b, Splitable b, Eq a, Joinable b) => Editable (Se
 
     eMerge (Segments d) (SegmentListEdit e1) (SegmentListEdit e2)
         = fmap SegmentListEdit *** fmap SegmentListEdit $ eMerge d e1 e2
-{-
-    eMerge _ (EditItem i _) (DeleteItem i') | i == i' = ([DeleteItem i], [])      -- information lost!
-    eMerge d (DeleteItem i) (EditItem i' x) | i == i' = (InsertItem i (d !! i): editItem i x, [])
-    eMerge _ (DeleteItem i) (DeleteItem i') | i == i' = ([], [])
+
+    eMerge d a@(JoinItems i) b@(SegmentListEdit (InsertItem i' _))
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(SegmentListEdit (InsertItem i' _)) b@(JoinItems i)
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(JoinItems i) b@(SegmentListEdit (DeleteItem i'))
+        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(SegmentListEdit (DeleteItem i')) b@(JoinItems i)
+        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(JoinItems i) b@(SegmentListEdit (EditItem i' _))
+        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(SegmentListEdit (EditItem i' _)) b@(JoinItems i)
+        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(JoinItems i) b@(SplitItem i' _)
+        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(SplitItem i' _) b@(JoinItems i)
+        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(JoinItems i) b@(JoinItems i')
+        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+        | i'+1 == i = secondWins d a b   -- TODO: improve
+{- solved better in the last function alternative
+    eMerge d a@(SplitItem i _) b@(SegmentListEdit (InsertItem i' _))
+        | i' == i+1 = secondWins d a b
+    eMerge d a@(SegmentListEdit (InsertItem i' _)) b@(SplitItem i _)
+        | i' == i+1 = secondWins d a b
 -}
+    eMerge d a@(SplitItem i _) b@(SegmentListEdit (DeleteItem i'))
+        | i' == i   = secondWins d a b   -- TODO: improve
+    eMerge d a@(SegmentListEdit (DeleteItem i')) b@(SplitItem i _)
+        | i' == i   = secondWins d a b   -- TODO: improve
+    eMerge d a@(SplitItem i _) b@(SegmentListEdit (EditItem i' _))
+        | i' == i   = secondWins d a b   -- TODO: improve
+    eMerge d a@(SegmentListEdit (EditItem i' _)) b@(SplitItem i _)
+        | i' == i   = secondWins d a b   -- TODO: improve
+    eMerge d a@(SplitItem i _) b@(SplitItem i' _)
+        | i' == i   = secondWins d a b   -- TODO: improve
+
+{- TODO: uncomment and fix bugs in this code
     eMerge _ a b = (mutate 0 a b, mutate 1 b a)
       where
         mutate l e = \case
             SegmentListEdit (InsertItem i x) -> [SegmentListEdit $ InsertItem (di l i) x]
             SegmentListEdit (DeleteItem i)   -> [SegmentListEdit $ DeleteItem (di 1 i)  ]
             SegmentListEdit (EditItem   i x) -> [SegmentListEdit $ EditItem   (di 1 i) x]
+            JoinItems i                      -> [JoinItems (di 1 i)]
+            SplitItem i x                    -> [SplitItem (di 1 i) x]
           where
             di k i = case e of
-                SegmentListEdit (InsertItem j _) | j==i      -> i+k
-                                                 | j<i       -> i+1
-                                                 | otherwise -> i
-                SegmentListEdit (DeleteItem j)   | j==i      -> i
-                                                 | j<i       -> i-1
+                SegmentListEdit (InsertItem j _) | j<i       -> i+1
+                                                 | j>i       -> i
+                                                 | otherwise -> i+k
+                SegmentListEdit (DeleteItem j)   | j<i       -> i-1
+                                                 | j>i       -> i
                                                  | otherwise -> i
                 SegmentListEdit EditItem{}       -> i
+                JoinItems j                      | j<i       -> i-1
+                                                 | j>i+1     -> i
+                                                 | otherwise -> error "impossible"
+                SplitItem j _                    | j<i       -> i+1
+                                                 | j>i       -> i
+                                                 | otherwise -> i+k
+-}
+    eMerge d a b = secondWins d a b
 
     eInverse (Segments d) = \case
         SegmentListEdit e -> SegmentListEdit <$> eInverse d e

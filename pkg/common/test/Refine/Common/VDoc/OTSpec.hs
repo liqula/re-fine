@@ -52,10 +52,8 @@ instance GenEdit RawContent where
 spec :: Spec
 spec = parallel $ do
 
-    -- if this take too long to run on a regular basis, just activate for debugging or deep-tests
-    describe "OT @RawContent" $ do
-      -- See #310
-      -- runTest $ allTests @RawContent
+    -- pendingWith "#310"
+    -- runTest $ allTests @RawContent
 
     it "Doc <-> RawContent conversion" . property $ \d ->
       rawContentToDoc (docToRawContent d) `shouldBe` simplifyDoc d

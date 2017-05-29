@@ -20,12 +20,14 @@ import Refine.Common.Prelude
 
 import qualified Data.Set as Set
 import qualified Data.Text as ST
+import           Data.Sequence (Seq)
 import           Test.Hspec
 import           Test.QuickCheck
 
 import Refine.Common.OT
 import Refine.Common.Test.Arbitrary ()
 
+{-# ANN module "HLint: ignore Reduce duplication" #-}
 ---------------------------------------- quickcheck laws
 
 -- | Auxiliary class needed for testing only
@@ -207,16 +209,37 @@ instance (GenEdit a) => GenEdit [a] where
         [ pure []
         , do
             c <- genEdit d
-            ch <- arbitrary
             let d' = patch c d
                 n = length d'
             oneof $
-                    [pure $ c <> [InsertItem i ch] | i <- [0..n]]
+                    [do
+                        ch <- arbitrary
+                        pure $ c <> [InsertItem i ch] | i <- [0..n]]
                  <> [pure $ c <> [DeleteItem i] | i <- [0..n-1]]
                  <> [ do
                         cx <- genEdit x
                         pure $ c <> [EditItem i cx]
                     | (i, x) <- zip [0..] d']
+        ]
+
+---------------------------------------- Seq instance
+
+instance (GenEdit a) => GenEdit (Seq a) where
+    genEdit d = oneof
+        [ pure []
+        , do
+            c <- genEdit d
+            let d' = patch c d
+                n = length d'
+            oneof $
+                    [do
+                        ch <- arbitrary
+                        pure $ c <> [InsertSItem i ch] | i <- [0..n]]
+                 <> [pure $ c <> [DeleteSItem i] | i <- [0..n-1]]
+                 <> [ do
+                        cx <- genEdit x
+                        pure $ c <> [EditSItem i cx]
+                    | (i, x) <- zip [0..] $ foldr (:) [] d']
         ]
 
 ---------------------------------------- Strict text instance
@@ -227,7 +250,7 @@ instance GenEdit ST where
 
 ---------------------------------------- Set instance
 
-instance (GenEdit a, Ord a, HasEnoughInhabitants a, Eq (EEdit a)) => GenEdit (Set.Set a) where
+instance (GenEdit a, Ord a, HasEnoughInhabitants a, Eq (EEdit a)) => GenEdit (Set a) where
     genEdit d = oneof
         [ pure []
         , do
@@ -258,11 +281,37 @@ hasMoreInhabitantsThan :: (HasEnoughInhabitants a) => Proxy a -> Int -> Bool
 hasMoreInhabitantsThan p n = maybe True (n <) $ numOfInhabitants p
 
 instance HasEnoughInhabitants [a] where numOfInhabitants _ = Nothing
-instance HasEnoughInhabitants a => HasEnoughInhabitants (Set.Set a) where
+instance HasEnoughInhabitants a => HasEnoughInhabitants (Set a) where
     numOfInhabitants _ = do
         n <- numOfInhabitants (Proxy :: Proxy a)
         guard (n < 10)  -- to prevent overflow
         pure $ 2^n
+
+---------------------------------------- Segments instance
+
+instance (GenEdit a, GenEdit b, Splitable b) => GenEdit (Segments a b) where
+    genEdit d = oneof
+        [ pure []
+        , do
+            c <- genEdit d
+            let (Segments d') = patch c d
+                n = length d'
+            oneof $
+                    [do
+                        ch <- arbitrary
+                        pure $ c <> [SegmentListEdit $ InsertItem i ch] | i <- [0..n]]
+                 <> [pure $ c <> [SegmentListEdit $ DeleteItem i] | i <- [0..n-1]]
+                 <> [ do
+                        cx <- genEdit x
+                        pure $ c <> [SegmentListEdit $ EditItem i cx]
+                    | (i, x) <- zip [0..] d']
+                 <> [ pure $ c <> [SegmentListEdit $ EditItem i [EditFirst $ diff x y] | x /= y] <> [JoinItems i]
+                    | (i, (x, _), (y, _)) <- zip3 [0..] d' (drop 1 d')]
+                 <> [do
+                        j <- choose (0, splitLength x)
+                        pure $ c <> [SplitItem i j]
+                    | (i, (_, x)) <- zip [0..] d']
+        ]
 
 ---------------------- data type used for testing
 
@@ -289,12 +338,16 @@ spec = parallel $ do
     runTest $ allTests @[ADigit]
     runTest $ allTests @[(ADigit, ADigit)]
     runTest $ allTests @([ADigit], [ADigit])
-    runTest $ allTests @(Set.Set ADigit)
-    runTest $ allTests @(Set.Set [ADigit])
-    runTest $ allTests @[Set.Set ADigit]
-    runTest $ allTests @(Set.Set (Set.Set ADigit))
+    runTest $ allTests @(Seq ADigit)
+    runTest $ allTests @(Seq (ADigit, ADigit))
+    runTest $ allTests @(Seq ADigit, Seq ADigit)
+    runTest $ allTests @(Set ADigit)
+    runTest $ allTests @(Set [ADigit])
+    runTest $ allTests @[Set ADigit]
+    runTest $ allTests @(Set (Set ADigit))
     runTest $ allTests @ST
     runTest $ allTests @Char
+    runTest $ allTests @(Segments ADigit ST)
 
     runTest $ fastTests @[[ADigit]]
 
