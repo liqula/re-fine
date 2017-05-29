@@ -40,7 +40,7 @@ diffToolbar = mkView "DiffToolbar" $ do
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          ibutton_ $ emptyIbuttonProps "Close" [ContributionAction HideCommentOverlay]
+          ibutton_ $ emptyIbuttonProps "Close" [ContributionAction HideContributionDialog]
             & ibListKey .~ "0"
             & ibLabel .~ "back"
             & ibSize .~ XXLarge

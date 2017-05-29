@@ -81,7 +81,7 @@ data ContributionAction =
   | SetRange Range  -- ^ FIXME: move this to 'DocumentAction'
   | ClearRange      -- ^ FIXME: move this to 'DocumentAction'
   | ShowContributionDialog ContributionID
-  | HideCommentOverlay  -- ^ FIXME: rename to 'HideContributionDialog'
+  | HideContributionDialog
   | ShowCommentEditor
   | HideCommentEditor
   | SetCommentKind CommentKind

@@ -70,7 +70,7 @@ displayedContributionUpdate action st = case action of
   ShowContributionDialog cid'
     | st == Just cid' -> Nothing
     | otherwise       -> Just cid'
-  HideCommentOverlay  -> Nothing
+  HideContributionDialog -> Nothing
   _ -> st
 
 activeDialogUpdate :: GlobalAction -> Maybe ActiveDialog -> Maybe ActiveDialog

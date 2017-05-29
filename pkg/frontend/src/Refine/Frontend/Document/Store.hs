@@ -67,7 +67,7 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _
                     (DocumentStateDiff e r _)
   = DocumentStateView e r
 
-documentStateUpdate (ContributionAction HideCommentOverlay)
+documentStateUpdate (ContributionAction HideContributionDialog)
                     _
                     (DocumentStateDiff e r _)
   = DocumentStateView e r
