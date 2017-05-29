@@ -54,6 +54,7 @@ documentHeader_ !props = view_ documentHeader "DocumentHeader_" props
 
 instance UnoverlapAllEq Title
 
+
 documentTitle :: View '[Title]
 documentTitle = mkView "DocumentTitle" $ h1_ . cs . _unTitle
 
@@ -61,6 +62,7 @@ documentTitle_ :: Title -> ReactElementM eventHandler ()
 documentTitle_ !title = view_ documentTitle "DocumentTitle_" title
 
 instance UnoverlapAllEq Abstract
+
 
 documentAbstract :: View '[Abstract]
 documentAbstract = mkView "DocumentAbstract" $ \abstract ->
@@ -79,7 +81,6 @@ phases = mkView "Phases" $ do
     div_ ["className" $= "c-vdoc-header__phase c-vdoc-header__phase--active"] "Text Collaboration"
     div_ ["className" $= "c-vdoc-header__phase"] "Vote"
     div_ ["className" $= "c-vdoc-header__phase"] "Result"
-
 
 phases_ :: ReactElementM eventHandler ()
 phases_ = view_ phases "Phases_"
