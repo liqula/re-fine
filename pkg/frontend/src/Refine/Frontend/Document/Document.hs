@@ -75,7 +75,7 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
           rawContent = rawContentDiffView <|> (dstate ^? documentStateContent)
 
           rawContentDiffView :: Maybe RawContent
-          rawContentDiffView = diffit =<< (props ^? dpDiffEdit . _Just . editSource)
+          rawContentDiffView = diffit =<< (props ^? dpDocumentState . documentStateDiff . editSource)
             where
               diffit InitialEdit           = error "impossible"
               diffit MergeOfEdits{}        = error "not implemented"
@@ -107,7 +107,7 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
                                              , "padding"      .:= String "20px"
                                              ]
                          ] $ do
-                      elemString . ppShow $ props ^? dpDiffEdit
+                      elemString . ppShow $ props ^? dpDocumentState . documentStateDiff
 
   , Outdated.lComponentDidMount = Just $ \getPropsAndState _ldom _setState -> do
       props <- Outdated.lGetProps getPropsAndState

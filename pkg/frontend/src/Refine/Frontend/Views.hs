@@ -31,7 +31,6 @@ module Refine.Frontend.Views
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens (ix)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Tree as ST
@@ -125,9 +124,6 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                       document_ $ DocumentProps (rs ^. RS.gsDocumentState)
                                                 (rs ^. RS.gsContributionState)
                                                 (rs ^. gsHeaderState . hsToolbarExtensionStatus)
-                                                (case rs ^. RS.gsContributionState . csDisplayedContributionID of
-                                                  Just (ContribIDEdit eid) -> Just $ vdoc ^?! compositeVDocEdits . ix eid
-                                                  _ -> Nothing)
                       rightAside_ asideProps
 
 mainScreen_ :: GlobalState -> ReactElementM eventHandler ()

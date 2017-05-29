@@ -102,9 +102,10 @@ mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
           documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
           div_ ["className" $= "c-fulltoolbar"] $ do
             sticky_ [RF.on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
-              if has _DocumentStateView $ rs ^. gsDocumentState
-                then toolbar_
-                else editToolbar_
+              case rs ^. gsDocumentState of
+                DocumentStateView {} -> toolbar_
+                DocumentStateDiff {} -> toolbar_
+                DocumentStateEdit {} -> editToolbar_
               commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
               editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
 
