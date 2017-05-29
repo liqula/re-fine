@@ -155,7 +155,7 @@ icon = mkStatefulView "Icon" False $ \mouseIsOver props -> do
                          , if props ^. iconPropsHighlight then "o-icon-highlight" else ""
                          , props ^. iconPropsDesc . _1 <> "_" <> highlightStyle
                          ]
-       , "style" @@= css (props ^. iconPropsSize)
+       , "style" @@= (css (props ^. iconPropsSize) <> [decl "marginRight" (Px 15)])
        , onMouseEnter $ \_ _ _ -> ([], Just True)
        , onMouseLeave $ \_ _ _ -> ([], Just False)
        ] mempty

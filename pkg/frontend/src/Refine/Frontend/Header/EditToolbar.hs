@@ -39,50 +39,50 @@ editToolbar = mkView "EditToolbar" $ do
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          let editButton = defaultIconButtonProps @[GlobalAction]
-                & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-", "dark") XXLarge
+          let editButton icon = defaultIconButtonProps @[GlobalAction]
+                & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-" <> icon, "dark") XXLarge
                 & iconButtonPropsElementName  .~ "btn-index"
 
-          iconButton_ $ editButton
+          iconButton_ $ editButton "Edit_toolbar_h1"
             & iconButtonPropsListKey      .~ "h1"
             & iconButtonPropsLabel        .~ "header 1"
             & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
-          iconButton_ $ editButton
+          iconButton_ $ editButton "Edit_toolbar_h2"
             & iconButtonPropsListKey      .~ "h2"
             & iconButtonPropsLabel        .~ "header 2"
             & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
-          iconButton_ $ editButton
+          iconButton_ $ editButton "Edit_toolbar_h3"
             & iconButtonPropsListKey      .~ "h3"
             & iconButtonPropsLabel        .~ "header 3"
             & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          iconButton_ $ editButton
+          iconButton_ $ editButton "Edit_toolbar_bold"
             & iconButtonPropsListKey      .~ "bold"
             & iconButtonPropsLabel        .~ "bold"
             & iconButtonPropsOnClick      .~ [DocumentAction DocumentToggleBold]
 
-          iconButton_ $ editButton
+          iconButton_ $ editButton "Edit_toolbar_italic"
             & iconButtonPropsListKey      .~ "italic"
             & iconButtonPropsLabel        .~ "italic"
             & iconButtonPropsOnClick      .~ [DocumentAction DocumentToggleItalic]
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          iconButton_ $ editButton
+          iconButton_ $ editButton "Edit_toolbar_bullets"
             & iconButtonPropsListKey      .~ "bullets"
             & iconButtonPropsLabel        .~ "bullets"
             & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
-          iconButton_ $ editButton
+          iconButton_ $ editButton "Edit_toolbar_numbers"
             & iconButtonPropsListKey      .~ "numbers"
             & iconButtonPropsLabel        .~ "numbers"
             & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
-          iconButton_ $ editButton
+          iconButton_ $ editButton mempty
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
             & iconButtonPropsListKey      .~ "save"
             & iconButtonPropsLabel        .~ "save"
