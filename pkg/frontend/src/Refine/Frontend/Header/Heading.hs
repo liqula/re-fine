@@ -36,8 +36,9 @@ import qualified React.Flux.Internal as RF
 import qualified React.Flux.Outdated as RF
 
 import           Refine.Common.Types
+import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
-import           Refine.Frontend.Header.DocumentHeader ( documentHeader_, DocumentHeaderProps(..) )
+import           Refine.Frontend.Header.DocumentHeader
 import           Refine.Frontend.Header.DiffToolbar ( diffToolbar_ )
 import           Refine.Frontend.Header.EditToolbar ( editToolbar_ )
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
@@ -100,7 +101,21 @@ mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
           div_ ["className" $= "c-mainmenu__bg" {-, "role" $= "navigation" -}] mempty
           {- header_ ["role" $= "banner"] $ do -}
           topMenuBar_ (TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser))
-          documentHeader_ $ DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle) (vdoc ^. compositeVDoc . vdocAbstract)
+
+          documentHeader_ $ do
+            let doc = DocumentHeaderProps
+                  (vdoc ^. compositeVDoc . vdocTitle)
+                  (vdoc ^. compositeVDoc . vdocAbstract)
+
+                edit = DocumentHeaderProps
+                  (vdoc ^. compositeVDoc . vdocTitle)
+                  (editDescToAbstract vdoc (rs ^?! gsContributionState . csDisplayedContributionID . _Just))
+
+            case rs ^. gsDocumentState of
+                DocumentStateView {} -> doc
+                DocumentStateDiff {} -> edit
+                DocumentStateEdit {} -> doc
+
           div_ ["className" $= "c-fulltoolbar"] $ do
             sticky_ [RF.on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
               case rs ^. gsDocumentState of

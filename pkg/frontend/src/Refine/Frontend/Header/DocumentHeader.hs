@@ -27,6 +27,7 @@ module Refine.Frontend.Header.DocumentHeader where
 
 import Refine.Frontend.Prelude
 
+import           Control.Lens (ix)
 import qualified Data.Text as ST
 
 import           Refine.Common.Types
@@ -84,3 +85,10 @@ phases = mkView "Phases" $ do
 
 phases_ :: ReactElementM eventHandler ()
 phases_ = view_ phases "Phases_"
+
+
+editDescToAbstract :: CompositeVDoc -> ContributionID -> Abstract
+editDescToAbstract vdoc (ContribIDEdit eid) = Abstract $
+  "Edit Request:\n" <>
+  (vdoc ^?! compositeVDocEdits . ix eid . editDesc)
+editDescToAbstract _ _ = error "internal error."
