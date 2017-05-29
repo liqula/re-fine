@@ -1,6 +1,6 @@
 // auto-generated like this:
 //
-// ls ../../images | sort | perl -ne '/^(.*)\.svg/; print ".icon-$1 {\n  background-image: url(\"../images/$1.svg\");\n}\n"'
+// ls ../../images/ | grep '.svg$' | sort | perl -ne '/^(.*)\.svg/; print ".icon-$1 {\n  background-image: url(\"../images/$1.svg\");\n}\n"'
 //
 // FIXME: #320
 //
@@ -183,6 +183,78 @@
 }
 .icon-Edit_RO {
   background-image: url("../images/Edit_RO.svg");
+}
+.icon-Edit_toolbar_bold_bright {
+  background-image: url("../images/Edit_toolbar_bold_bright.svg");
+}
+.icon-Edit_toolbar_bold_dark {
+  background-image: url("../images/Edit_toolbar_bold_dark.svg");
+}
+.icon-Edit_toolbar_bold_RO {
+  background-image: url("../images/Edit_toolbar_bold_RO.svg");
+}
+.icon-Edit_toolbar_bullets_bright {
+  background-image: url("../images/Edit_toolbar_bullets_bright.svg");
+}
+.icon-Edit_toolbar_bullets_dark {
+  background-image: url("../images/Edit_toolbar_bullets_dark.svg");
+}
+.icon-Edit_toolbar_bullets_RO {
+  background-image: url("../images/Edit_toolbar_bullets_RO.svg");
+}
+.icon-Edit_toolbar_h1_bright {
+  background-image: url("../images/Edit_toolbar_h1_bright.svg");
+}
+.icon-Edit_toolbar_h1_dark {
+  background-image: url("../images/Edit_toolbar_h1_dark.svg");
+}
+.icon-Edit_toolbar_h1_RO {
+  background-image: url("../images/Edit_toolbar_h1_RO.svg");
+}
+.icon-Edit_toolbar_h2_bright {
+  background-image: url("../images/Edit_toolbar_h2_bright.svg");
+}
+.icon-Edit_toolbar_h2_dark {
+  background-image: url("../images/Edit_toolbar_h2_dark.svg");
+}
+.icon-Edit_toolbar_h2_RO {
+  background-image: url("../images/Edit_toolbar_h2_RO.svg");
+}
+.icon-Edit_toolbar_h3_bright {
+  background-image: url("../images/Edit_toolbar_h3_bright.svg");
+}
+.icon-Edit_toolbar_h3_dark {
+  background-image: url("../images/Edit_toolbar_h3_dark.svg");
+}
+.icon-Edit_toolbar_h3_RO {
+  background-image: url("../images/Edit_toolbar_h3_RO.svg");
+}
+.icon-Edit_toolbar_italic_bright {
+  background-image: url("../images/Edit_toolbar_italic_bright.svg");
+}
+.icon-Edit_toolbar_italic_dark {
+  background-image: url("../images/Edit_toolbar_italic_dark.svg");
+}
+.icon-Edit_toolbar_italic_RO {
+  background-image: url("../images/Edit_toolbar_italic_RO.svg");
+}
+.icon-Edit_toolbar_numbers_bright {
+  background-image: url("../images/Edit_toolbar_numbers_bright.svg");
+}
+.icon-Edit_toolbar_numbers_dark {
+  background-image: url("../images/Edit_toolbar_numbers_dark.svg");
+}
+.icon-Edit_toolbar_numbers_RO {
+  background-image: url("../images/Edit_toolbar_numbers_RO.svg");
+}
+.icon-Edit_toolbar_save_bright {
+  background-image: url("../images/Edit_toolbar_save_bright.svg");
+}
+.icon-Edit_toolbar_save_dark {
+  background-image: url("../images/Edit_toolbar_save_dark.svg");
+}
+.icon-Edit_toolbar_save_RO {
+  background-image: url("../images/Edit_toolbar_save_RO.svg");
 }
 .icon-Edit_view_bright {
   background-image: url("../images/Edit_view_bright.svg");
