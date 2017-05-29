@@ -114,6 +114,8 @@ transformGlobalState = transf
         ContributionAction (SetRange _) -> removeAllRanges
         ContributionAction ClearRange   -> removeAllRanges
 
+        HeaderAction ScrollToPageTop -> liftIO js_scrollToPageTop
+
         ShowNotImplementedYet -> do
             liftIO $ windowAlertST "not implemented yet."
 
@@ -422,6 +424,16 @@ reactFluxWorkAroundThreadDelay seconds = threadDelay . round $ seconds * 1000 * 
 
 #ifdef __GHCJS__
 
+-- FUTUREWORK: to make this smoother, check out
+-- https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView (but
+-- https://bugs.chromium.org/p/chromium/issues/detail?id=648446);
+-- https://github.com/bySabi/react-scrollchor;
+-- https://stackoverflow.com/questions/30495062/how-can-i-scroll-a-div-to-be-visible-in-reactjs#30497101;
+-- https://github.com/sitepoint-editors/smooth-scrolling
+foreign import javascript unsafe
+  "scrollBy(0, -pageYOffset)"
+  js_scrollToPageTop :: IO ()
+
 foreign import javascript unsafe
   "JSON.stringify(refine$getDraftSelectionStateViaBrowser())"
   js_getDraftSelectionStateViaBrowser :: IO JSString
@@ -439,6 +451,10 @@ foreign import javascript unsafe
   js_removeAllRanges :: IO ()
 
 #else
+
+{-# ANN js_scrollToPageTop ("HLint: ignore Use camelCase" :: String) #-}
+js_scrollToPageTop :: IO ()
+js_scrollToPageTop = error "javascript FFI not available in GHC"
 
 {-# ANN js_getDraftSelectionStateViaBrowser ("HLint: ignore Use camelCase" :: String) #-}
 js_getDraftSelectionStateViaBrowser :: IO JSString

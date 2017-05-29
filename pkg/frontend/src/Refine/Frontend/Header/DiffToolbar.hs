@@ -27,6 +27,7 @@ module Refine.Frontend.Header.DiffToolbar where
 import Refine.Frontend.Prelude
 
 import Refine.Frontend.Contribution.Types
+import Refine.Frontend.Header.Types
 import Refine.Frontend.Icon
 import Refine.Frontend.Store.Types
 
@@ -57,7 +58,7 @@ diffToolbar = mkView "DiffToolbar" $ do
             & ibLabel .~ "down"
             & ibSize .~ XXLarge
 
-          ibutton_ $ emptyIbuttonProps "Arrow_up" [ShowNotImplementedYet]
+          ibutton_ $ emptyIbuttonProps "Arrow_up" [HeaderAction ScrollToPageTop]
             & ibListKey .~ "3"
             & ibLabel .~ "motivation"
             & ibSize .~ XXLarge

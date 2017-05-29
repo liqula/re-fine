@@ -38,6 +38,8 @@ data HeaderAction =
   | StartEdit EditKind
   | CloseToolbarExtension
   | ToggleReadOnly
+  | ScrollToPageTop
+  -- ScrollToDocumentTop
   deriving (Show, Eq, Generic)
 
 data ToolbarExtensionStatus =
