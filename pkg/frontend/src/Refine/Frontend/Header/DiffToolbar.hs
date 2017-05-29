@@ -47,24 +47,24 @@ diffToolbar = mkView "DiffToolbar" $ do
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          ibutton_ $ emptyIbuttonProps "Vote_positive" []
+          ibutton_ $ emptyIbuttonProps "Vote_positive" [ShowNotImplementedYet]
             & ibListKey .~ "1"
             & ibLabel .~ "up"
             & ibSize .~ XXLarge
 
-          ibutton_ $ emptyIbuttonProps "Vote_negative" []
+          ibutton_ $ emptyIbuttonProps "Vote_negative" [ShowNotImplementedYet]
             & ibListKey .~ "2"
             & ibLabel .~ "down"
             & ibSize .~ XXLarge
 
-          ibutton_ $ emptyIbuttonProps "Arrow_up" []
+          ibutton_ $ emptyIbuttonProps "Arrow_up" [ShowNotImplementedYet]
             & ibListKey .~ "3"
             & ibLabel .~ "motivation"
             & ibSize .~ XXLarge
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          ibutton_ $ emptyIbuttonProps "Diff_details" []
+          ibutton_ $ emptyIbuttonProps "Diff_details" [ShowNotImplementedYet]
             & ibListKey .~ "4"
             & ibLabel .~ "details"
             & ibSize .~ XXLarge
