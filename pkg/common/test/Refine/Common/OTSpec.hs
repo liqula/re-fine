@@ -383,6 +383,7 @@ spec = parallel $ do
     runTest $ allTests @NonEmptyST
     runTest $ allTests @Char
     runTest $ allTests @(Segments ADigit ST)
+    runTest $ allTests @(Segments ADigit NonEmptyST)
 
     runTest $ fastTests @[[ADigit]]
 
@@ -395,6 +396,7 @@ spec = parallel $ do
     testSplitable $ Proxy @ST
     testSplitable $ Proxy @NonEmptyST
     testSplitable $ Proxy @(Segments ADigit ST)
+    testSplitable $ Proxy @(Segments ADigit NonEmptyST)
 
 -- | running in ghci8 on a lenovo t420s with no attempt at optimizing, @n = 1000@: @(2.88 secs,
 -- 2,382,007,256 bytes)@.  this should be our baseline from which to improve.
