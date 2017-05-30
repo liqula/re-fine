@@ -62,27 +62,27 @@ spec = do
       sanitizeRawContent (f rawContent) `shouldBe` sanitizeRawContent rawContent
 
     it "regression.4" $ do
-      let rawContent = mkRawContent [mkBlock "rF.." & blockEntityRanges .~
+      let rawContent = mkRawContent . (:| []) $ mkBlock "rF.." & blockEntityRanges .~
               [ (EntityLink "http://www.example.com", (0,1))
               , (EntityLink "http://www.example.com", (1,1))
               , (EntityLink "http://www.example.com", (2,1))
               , (EntityLink "http://www.example.com", (3,1))
-              ]]
+              ]
           rawContent' = (resetBlockKeys . convertToRaw . convertFromRaw) rawContent
       NEL.head (rawContent' ^. rawContentBlocks) ^. blockEntityRanges `shouldBe` [(EntityKey {_unEntityKey = 0},(0,4))]
 
     it "regression.3" $ do
-      let rawContent = mkRawContent [mkBlock "rF" & blockEntityRanges .~ [(EntityLink "http://www.example.com", (0,2))]]
+      let rawContent = mkRawContent . (:| []) $  mkBlock "rF" & blockEntityRanges .~ [(EntityLink "http://www.example.com", (0,2))]
           rawContent' = (resetBlockKeys . convertToRaw . convertFromRaw) rawContent
       rawContent' `shouldBe` rawContent
 
     it "regression.2" $ do
-      let rawContent = mkRawContent [mkBlock "rF" & blockStyles .~ [((0,1),Italic),((1,1),Italic),((1,1),Italic),((0,1),Bold)]]
+      let rawContent = mkRawContent . (:| []) $ mkBlock "rF" & blockStyles .~ [((0,1),Italic),((1,1),Italic),((1,1),Italic),((0,1),Bold)]
           rawContent' = (resetBlockKeys . convertToRaw . convertFromRaw) rawContent
       NEL.head (rawContent' ^. rawContentBlocks) ^. blockStyles `shouldBe` [((0,2),Italic),((0,1),Bold)]
 
     it "regression.1" $ do
-      let rawContent = mkRawContent [mkBlock "rF" & blockStyles .~ [((0,1),Italic)]]
+      let rawContent = mkRawContent . (:| []) $ mkBlock "rF" & blockStyles .~ [((0,1),Italic)]
       decode (encode rawContent) `shouldBe` Just rawContent
       (resetBlockKeys . convertToRaw . convertFromRaw) rawContent `shouldBe` rawContent
 

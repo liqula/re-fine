@@ -7,6 +7,7 @@ module Refine.Common.VDoc.OT where
 
 import           Data.List (groupBy)
 import qualified Data.Set as Set
+import qualified Data.List.NonEmpty as NEL
 
 import           Refine.Common.Prelude
 import           Refine.Common.OT
@@ -16,15 +17,16 @@ pattern DocBlock' :: Atom BlockType -> Atom Int -> [LineElem] -> DocBlock
 pattern DocBlock' a b c = ((a, b), Segments c)
 
 showEditAsRawContent :: Edit RawContent -> RawContent -> RawContent
-showEditAsRawContent (fmap unERawContent -> edits) (rawContentToDoc -> doc) = docToRawContent $ patchBlocks doc edits
+showEditAsRawContent edits
+    = docToRawContent . NEL.fromList . patchBlocks (coerce edits) . NEL.toList . rawContentToDoc
   where
     -- TUNING: compress/rearrange the elementary edits first or use a vector instead of lists?
-    patchBlocks :: [DocBlock] -> Edit [DocBlock] -> [DocBlock]
-    patchBlocks bs [] = bs
-    patchBlocks bs (e:es) = case e of
-        DeleteItem i    -> patchBlocks (take i bs <> (markBlock StyleDeleted (bs !! i): drop (i+1) bs))  $ incIdx i 1 <$> es
-        InsertItem i x  -> patchBlocks (take i bs <> (markBlock StyleAdded x: drop i bs)) es
-        EditItem i edit -> patchBlocks (take i bs <> (patchBlock (bs !! i) edit: drop (i+1) bs)) es
+    patchBlocks :: Edit [DocBlock] -> [DocBlock] -> [DocBlock]
+    patchBlocks [] bs = bs
+    patchBlocks (e:es) bs = case e of
+        DeleteItem i    -> patchBlocks (incIdx i 1 <$> es) $ take i bs <> (markBlock StyleDeleted (bs !! i): drop (i+1) bs)
+        InsertItem i x  -> patchBlocks es $ take i bs <> (markBlock StyleAdded x: drop i bs)
+        EditItem i edit -> patchBlocks es $ take i bs <> (patchBlock (bs !! i) edit: drop (i+1) bs)
 
     patchBlock :: DocBlock -> Edit DocBlock -> DocBlock
     patchBlock (DocBlock' btype depth elems) es = (if null bpatch && null dpatch then id else markBlock StyleChanged)

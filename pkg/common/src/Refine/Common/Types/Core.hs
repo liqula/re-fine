@@ -47,7 +47,7 @@ import           Data.Int
 import           Data.Foldable (toList)
 import qualified Data.HashMap.Lazy as HashMap
 import qualified Data.IntMap as IntMap
-import           Data.List.NonEmpty (NonEmpty((:|)))
+import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text as ST
@@ -283,7 +283,7 @@ data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom | MarkSelectorUnkno
 
 -- * OT.Edit RawContent
 
-type OTDoc = [DocBlock]
+type OTDoc = NonEmpty DocBlock
 
 -- | (third constructor arg is depth)
 type DocBlock = ((Atom BlockType, Atom Int), LineElems)
@@ -471,7 +471,7 @@ instance SOP.HasDatatypeInfo (EEdit RawContent)
 -- ** helper functions for Editable RawContent instance
 
 rawContentToDoc :: RawContent -> OTDoc
-rawContentToDoc (RawContent (block :| blocks) entities) = mkDocBlock <$> (block : blocks)
+rawContentToDoc (RawContent blocks entities) = mkDocBlock <$> blocks
   where
     mkDocBlock :: Block EntityKey -> DocBlock
     mkDocBlock (Block txt eranges styles ty depth _key) = DocBlock ty depth (segment segments txt)
@@ -517,14 +517,9 @@ docToRawContent blocks = mkRawContent $ mkDocBlock <$> blocks
 
 
 -- | Note: empty block list is illegal.  For once it will make draft crash in 'stateFromContent'.
-mkRawContent :: [Block Entity] -> RawContent
-mkRawContent [] = mkRawContent [emptyBlock]
-mkRawContent bsl = RawContent bsnl (IntMap.fromList entities)
+mkRawContent :: NonEmpty (Block Entity) -> RawContent
+mkRawContent bsl = RawContent (index <$$> bsl) (IntMap.fromList entities)
   where
-    bsnl = case index <$$> bsl of
-      []       -> emptyBlock :| []
-      (b : bs) -> b          :| bs
-
     -- FUTUREWORK: it is possible to do just one traversal to collect and index entities
     -- https://www.reddit.com/r/haskell/comments/610sa1/applicative_sorting/
     entities :: [(Int, Entity)]

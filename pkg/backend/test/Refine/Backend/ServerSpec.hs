@@ -27,6 +27,7 @@ import Refine.Backend.Prelude hiding (Header)
 
 import qualified Data.ByteString as SBS
 import qualified Data.Map as Map
+import           Data.List.NonEmpty (NonEmpty((:|)))
 import           Network.HTTP.Types (Method, Header, methodGet)
 import           Network.HTTP.Types.Status (Status(statusCode))
 import           Network.URI (URI, uriToString)
@@ -99,7 +100,7 @@ sampleCreateVDoc :: CreateVDoc
 sampleCreateVDoc = CreateVDoc
   (Title "[title]")
   (Abstract "[abstract]")
-  (rawContentToVDocVersion $ mkRawContent [mkBlock "[versioned content]"])
+  (rawContentToVDocVersion . mkRawContent $ mkBlock "[versioned content]" :| [])
 
 respCode :: SResponse -> Int
 respCode = statusCode . simpleStatus
@@ -296,7 +297,7 @@ specMockedLogin = around createDevModeTestSession $ do
               (CreateEdit
                 "new edit"
                 (ChunkRange Nothing Nothing)
-                (rawContentToVDocVersion $ mkRawContent [mkBlock "[new vdoc version]"])
+                (rawContentToVDocVersion . mkRawContent $ mkBlock "[new vdoc version]" :| [])
                 Grammar)
           pure (fc, fe)
 
@@ -304,7 +305,7 @@ specMockedLogin = around createDevModeTestSession $ do
       it "stores an edit and returns its version" $ \sess -> do
         (_, fp) <- setup sess
         be' :: VDocVersion <- runDB sess . db . getVersion $ fp ^. editID
-        be' `shouldBe` rawContentToVDocVersion (mkRawContent [mkBlock "[new vdoc version]"])
+        be' `shouldBe` rawContentToVDocVersion (mkRawContent $ mkBlock "[new vdoc version]" :| [])
 
       it "stores an edit and returns it in the list of edits applicable to its base" $ \sess -> do
         pendingWith "applicableEdits is not implemented."
