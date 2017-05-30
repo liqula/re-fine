@@ -508,6 +508,11 @@ instance (NFData a, NFData (EEdit a)) => NFData (EEdit (Set a)) where rnf = grnf
 
 ---------------------------------------- Segment instance
 
+{- | split laws:
+
+    uncurry joinItems (splitItem i a) == a       -- i = 0, 1, 2, ..., splitLength a
+    splitItem (splitLength a) (joinItems a b) == (a, b)
+-}
 class Splitable a where
     -- type SplitIndex a
     splitItem :: Int{-SplitIndex a-} -> a -> (a, a)

@@ -313,6 +313,22 @@ instance (GenEdit a, GenEdit b, Splitable b) => GenEdit (Segments a b) where
                     | (i, (_, x)) <- zip [0..] d']
         ]
 
+---------------------- test Splitable type class laws
+
+testSplitable :: forall d. (Typeable d, Splitable d, Eq d, Arbitrary d, Show d) => Proxy d -> Spec
+testSplitable d
+    = describe ("Splitable instance for " <> show (typeRep d)) $ do
+        it "join . split == id" $ property join_split
+        it "split . join == id" $ property split_join
+  where
+    join_split :: d -> Gen Bool
+    join_split a = do
+        i <- choose (0, splitLength a)
+        pure $ uncurry joinItems (splitItem i a) == a
+
+    split_join :: d -> d -> Bool
+    split_join a b = splitItem (splitLength a) (joinItems a b) == (a, b)
+
 ---------------------- data type used for testing
 
 data Digit = D1 | D2 | D3 | D4 | D5
@@ -354,6 +370,10 @@ spec = parallel $ do
     -- these take too long to run on a regular basis, just activate for debugging or deep-tests:
     -- runTest' 500 $ allTests @[[ADigit]]
 
+    testSplitable $ Proxy @[ADigit]
+    testSplitable $ Proxy @(Seq ADigit)
+    testSplitable $ Proxy @ST
+    testSplitable $ Proxy @(Segments ADigit ST)
 
 -- | running in ghci8 on a lenovo t420s with no attempt at optimizing, @n = 1000@: @(2.88 secs,
 -- 2,382,007,256 bytes)@.  this should be our baseline from which to improve.
