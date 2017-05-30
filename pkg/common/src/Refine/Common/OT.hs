@@ -23,6 +23,7 @@ import qualified Data.Set as Set
 import           Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
 import           Data.List
+import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Algorithm.Patience as Diff
 import qualified Data.Text as ST
@@ -346,6 +347,33 @@ instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit [a])
 instance SOP.Generic (EEdit [a])
 instance SOP.HasDatatypeInfo (EEdit [a])
 instance (NFData a, NFData (EEdit a)) => NFData (EEdit [a]) where rnf = grnf
+
+---------------------------------------- non-empty List instance
+
+instance Editable a => Editable (NonEmpty a) where
+
+    docCost = docCost . NEL.toList
+
+    newtype EEdit (NonEmpty a) = ENonEmpty {unENonEmpty :: EEdit [a]}
+        deriving (Generic)
+
+    eCost = eCost . unENonEmpty
+    diff a b = coerce $ diff (NEL.toList a) (NEL.toList b)
+    ePatch e = NEL.fromList . ePatch (coerce e) . NEL.toList
+    patch e = NEL.fromList . patch (coerce e) . NEL.toList
+    -- FIXME: make sure that the result is non-empty
+    eMerge d a b = coerce $ eMerge (NEL.toList d) (coerce a) (coerce b)
+    merge d a b = coerce $ merge (NEL.toList d) (coerce a) (coerce b)
+    eInverse d = coerce . eInverse (NEL.toList d) . coerce
+    inverse d = coerce . inverse (NEL.toList d) . coerce
+
+deriving instance (Show a, Show (EEdit a)) => Show (EEdit (NonEmpty a))
+deriving instance (Eq a, Eq (EEdit a)) => Eq (EEdit (NonEmpty a))
+instance (ToJSON a, ToJSON (EEdit a)) => ToJSON (EEdit (NonEmpty a))
+instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit (NonEmpty a))
+instance SOP.Generic (EEdit (NonEmpty a))
+instance SOP.HasDatatypeInfo (EEdit (NonEmpty a))
+instance (NFData a, NFData (EEdit a)) => NFData (EEdit (NonEmpty a)) where rnf = grnf
 
 ---------------------------------------- Sequence instance
 

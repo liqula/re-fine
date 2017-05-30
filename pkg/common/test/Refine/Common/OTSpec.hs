@@ -20,6 +20,7 @@ import Refine.Common.Prelude
 
 import qualified Data.Set as Set
 import qualified Data.Text as ST
+import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NEL
 import           Data.Sequence (Seq)
 import           Test.Hspec
@@ -223,6 +224,13 @@ instance (GenEdit a) => GenEdit [a] where
                     | (i, x) <- zip [0..] d']
         ]
 
+---------------------------------------- non-empty list instance
+
+instance GenEdit a => GenEdit (NonEmpty a) where
+    genEdit (NEL.toList -> s) = do
+        e <- genEdit s `suchThat` \e -> not $ null (patch e s)
+        pure $ coerce e
+
 ---------------------------------------- Seq instance
 
 instance (GenEdit a) => GenEdit (Seq a) where
@@ -372,6 +380,9 @@ spec = parallel $ do
     runTest $ allTests @[ADigit]
     runTest $ allTests @[(ADigit, ADigit)]
     runTest $ allTests @([ADigit], [ADigit])
+    runTest $ allTests @(NonEmpty ADigit)
+    runTest $ allTests @(NonEmpty (ADigit, ADigit))
+    runTest $ allTests @(NonEmpty ADigit, NonEmpty ADigit)
     runTest $ allTests @(Seq ADigit)
     runTest $ allTests @(Seq (ADigit, ADigit))
     runTest $ allTests @(Seq ADigit, Seq ADigit)
