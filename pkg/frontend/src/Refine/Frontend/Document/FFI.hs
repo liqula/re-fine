@@ -166,92 +166,95 @@ getMarkSelectorBound mark@(Draft.MarkSelector side _ _) = js_getBoundingBox (ren
     renderMarkSelector (Draft.MarkSelector _ (Draft.BlockKey b) i) =
       "article span[data-offset-key=\"" <> cs b <> "-0-" <> cs (show i) <> "\""
 
+
+-- * foreign
+
 #ifdef __GHCJS__
 
 foreign import javascript unsafe
-    "Draft.convertFromRaw(JSON.parse($1))"
-    js_convertFromRaw :: JSString -> ContentState
+  "Draft.convertFromRaw(JSON.parse($1))"
+  js_convertFromRaw :: JSString -> ContentState
 
 foreign import javascript unsafe
-    "JSON.stringify(Draft.convertToRaw($1))"
-    js_convertToRaw :: ContentState -> JSString
+  "JSON.stringify(Draft.convertToRaw($1))"
+  js_convertToRaw :: ContentState -> JSString
 
 foreign import javascript unsafe
-    "refine$editorContentFromHtml($1)"
-    js_convertFromHtml :: JSString -> ContentState
+  "refine$editorContentFromHtml($1)"
+  js_convertFromHtml :: JSString -> ContentState
 
 foreign import javascript unsafe
-    "Draft.EditorState.createEmpty()"
-    js_ES_createEmpty :: EditorState
+  "Draft.EditorState.createEmpty()"
+  js_ES_createEmpty :: EditorState
 
 foreign import javascript unsafe
-    "Draft.EditorState.createWithContent($1)"
-    js_ES_createWithContent :: ContentState -> EditorState
+  "Draft.EditorState.createWithContent($1)"
+  js_ES_createWithContent :: ContentState -> EditorState
 
 foreign import javascript unsafe
-    "$1.getCurrentContent()"
-    js_ES_getCurrentContent :: EditorState -> ContentState
+  "$1.getCurrentContent()"
+  js_ES_getCurrentContent :: EditorState -> ContentState
 
 foreign import javascript unsafe
-    "Draft.EditorState.set($1, { currentContent: $2 })"
-    js_ES_setCurrentContent :: EditorState -> ContentState -> EditorState
+  "Draft.EditorState.set($1, { currentContent: $2 })"
+  js_ES_setCurrentContent :: EditorState -> ContentState -> EditorState
 
 foreign import javascript unsafe
-    "console.log('traceEditorState', $1)"
-    js_ES_traceEditorState :: EditorState -> IO ()
+  "console.log('traceEditorState', $1)"
+  js_ES_traceEditorState :: EditorState -> IO ()
 
 foreign import javascript unsafe
-    "console.log('traceContentState', Draft.convertToRaw($1))"
-    js_ES_traceContentState :: ContentState -> IO ()
+  "console.log('traceContentState', Draft.convertToRaw($1))"
+  js_ES_traceContentState :: ContentState -> IO ()
 
 foreign import javascript unsafe
-    "console.log('traceContentInEditorState', Draft.convertToRaw($1.getCurrentContent()))"
-    js_ES_traceContentInEditorState :: EditorState -> IO ()
+  "console.log('traceContentInEditorState', Draft.convertToRaw($1.getCurrentContent()))"
+  js_ES_traceContentInEditorState :: EditorState -> IO ()
 
 foreign import javascript unsafe
-    "Draft.ContentState.createFromText($1)"
-    js_CS_createFromText :: JSString -> ContentState
+  "Draft.ContentState.createFromText($1)"
+  js_CS_createFromText :: JSString -> ContentState
 
 foreign import javascript unsafe
-    "DraftStateToHTML($1)"
-    js_Draft_stateToHTML :: ContentState -> JSString
+  "DraftStateToHTML($1)"
+  js_Draft_stateToHTML :: ContentState -> JSString
 
 -- | https://draftjs.org/docs/api-reference-rich-utils.html#content
 foreign import javascript unsafe
-    "Draft.RichUtils.toggleInlineStyle($1,$2)"
-    js_ES_toggleInlineStyle :: EditorState -> JSString -> EditorState
+  "Draft.RichUtils.toggleInlineStyle($1,$2)"
+  js_ES_toggleInlineStyle :: EditorState -> JSString -> EditorState
 
 foreign import javascript unsafe
-    "$1.getSelection()"
-    js_ES_getSelection :: EditorState -> JSVal
+  "$1.getSelection()"
+  js_ES_getSelection :: EditorState -> JSVal
 
 foreign import javascript unsafe
-    "$1.getIsBackward()"
-    js_ES_getSelectionIsBackward :: JSVal -> Bool
+  "$1.getIsBackward()"
+  js_ES_getSelectionIsBackward :: JSVal -> Bool
 
 foreign import javascript unsafe
-    "$1.getStartKey()"
-    js_ES_getSelectionStartKey :: JSVal -> JSString
+  "$1.getStartKey()"
+  js_ES_getSelectionStartKey :: JSVal -> JSString
 
 foreign import javascript unsafe
-    "$1.getStartOffset()"
-    js_ES_getSelectionStartOffset :: JSVal -> Int
+  "$1.getStartOffset()"
+  js_ES_getSelectionStartOffset :: JSVal -> Int
 
 foreign import javascript unsafe
-    "$1.getEndKey()"
-    js_ES_getSelectionEndKey :: JSVal -> JSString
+  "$1.getEndKey()"
+  js_ES_getSelectionEndKey :: JSVal -> JSString
 
 foreign import javascript unsafe
-    "$1.getEndOffset()"
-    js_ES_getSelectionEndOffset :: JSVal -> Int
+  "$1.getEndOffset()"
+  js_ES_getSelectionEndOffset :: JSVal -> Int
 
 foreign import javascript unsafe
-    "refine$setSelectionState($1, JSON.parse($2))"
-    js_ES_forceSelection :: EditorState -> JSString -> EditorState
+  "refine$setSelectionState($1, JSON.parse($2))"
+  js_ES_forceSelection :: EditorState -> JSString -> EditorState
 
 foreign import javascript unsafe
-    "document.querySelector($2).getBoundingClientRect()[$1]"
-     js_getBoundingBox :: JSString -> JSString -> IO Int
+  "document.querySelector($2).getBoundingClientRect()[$1]"
+  js_getBoundingBox :: JSString -> JSString -> IO Int
 
 #else
 

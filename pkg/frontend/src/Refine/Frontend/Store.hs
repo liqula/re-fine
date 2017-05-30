@@ -405,10 +405,11 @@ getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
 getDraftSelectionStateViaBrowser :: MonadIO m => m C.SelectionState
 getDraftSelectionStateViaBrowser = liftIO $ either err pure . eitherDecode . cs =<< js_getDraftSelectionStateViaBrowser
   where
-    err = throwIO . ErrorCall . ("getSelectionStateFromBrowser: impossible: " <>) . show
+    err = throwIO . ErrorCall . ("getSelectionStateViaBrowser: impossible: " <>) . show
 
 removeAllRanges :: MonadIO m => m ()
 removeAllRanges = liftIO js_removeAllRanges
+
 
 -- * work-arounds for known bugs.
 
@@ -421,6 +422,9 @@ reactFluxWorkAroundForkIO action = void . forkIO $ yield >> action
 -- for details and status.  Try to increase microseconds if you still experience race conditions.
 reactFluxWorkAroundThreadDelay :: Double -> IO ()
 reactFluxWorkAroundThreadDelay seconds = threadDelay . round $ seconds * 1000 * 1000
+
+
+-- * foreign
 
 #ifdef __GHCJS__
 

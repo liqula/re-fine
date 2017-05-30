@@ -17,7 +17,7 @@
         return Draft.EditorState.forceSelection(es, Draft.SelectionState.createEmpty().merge(sel2));
     };
 
-    target.refine$getDraftSelectionStateViaBrowser = function() {
+    target.refine$getDraftSelectionStateViaBrowser = (function() {
         var leftSiblingLength = function(node) {
             if (node === null) {
                 return 0;
@@ -72,15 +72,17 @@
             return iterate(container.parentElement, offset + leftSiblingLength(container.previousSibling));
         };
 
-        var sel        = getSelection();
-        var range      = sel.getRangeAt(0);
-        var backward   = sel.anchorNode !== range.startContainer;
-        var startpoint = mkPoint(range.startContainer, range.startOffset);
-        var endpoint   = mkPoint(range.endContainer, range.endOffset);
+        return function() {
+            var sel        = getSelection();
+            var range      = sel.getRangeAt(0);
+            var backward   = sel.anchorNode !== range.startContainer;
+            var startpoint = mkPoint(range.startContainer, range.startOffset);
+            var endpoint   = mkPoint(range.endContainer, range.endOffset);
 
-        return { "_selectionIsBackward": backward,
-                 "_selectionStart": startpoint,
-                 "_selectionEnd": endpoint
-               };
-    };
+            return { "_selectionIsBackward": backward,
+                     "_selectionStart": startpoint,
+                     "_selectionEnd": endpoint
+                   };
+        };
+    })();
 })((typeof global === 'undefined') ? window : global);
