@@ -249,6 +249,13 @@ instance GenEdit ST where
     genEdit = fmap (map EText) . genEdit . ST.unpack
 
 
+---------------------------------------- non-empty Strict text instance
+
+instance GenEdit NonEmptyST where
+    genEdit (NonEmptyST s) = do
+        e <- genEdit s `suchThat` \e -> not $ ST.null (patch e s)
+        pure $ coerce e
+
 ---------------------------------------- Set instance
 
 instance (GenEdit a, Ord a, HasEnoughInhabitants a, Eq (EEdit a)) => GenEdit (Set a) where
@@ -373,6 +380,7 @@ spec = parallel $ do
     runTest $ allTests @[Set ADigit]
     runTest $ allTests @(Set (Set ADigit))
     runTest $ allTests @ST
+    runTest $ allTests @NonEmptyST
     runTest $ allTests @Char
     runTest $ allTests @(Segments ADigit ST)
 
@@ -385,6 +393,7 @@ spec = parallel $ do
     testSplitable $ Proxy @(NEL.NonEmpty ADigit)
     testSplitable $ Proxy @(Seq ADigit)
     testSplitable $ Proxy @ST
+    testSplitable $ Proxy @NonEmptyST
     testSplitable $ Proxy @(Segments ADigit ST)
 
 -- | running in ghci8 on a lenovo t420s with no attempt at optimizing, @n = 1000@: @(2.88 secs,

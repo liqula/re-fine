@@ -29,6 +29,7 @@ import qualified Data.Semigroup as Semigroup
 import qualified Generics.SOP as SOP
 import           Control.DeepSeq
 import           Test.QuickCheck (Arbitrary)
+import           Test.QuickCheck.Instances ()
 
 ----------------------------------------------------------------------------------------------
 
@@ -453,6 +454,48 @@ instance SOP.Generic (EEdit ST)
 instance SOP.HasDatatypeInfo (EEdit ST)
 instance NFData (EEdit ST) where rnf = grnf
 
+---------------------------------------- non-empty StrictText instance
+
+newtype NonEmptyST = NonEmptyST {unNonEmptyST :: ST}
+    deriving (Eq, Ord, Show, Read, NFData, ToJSON, FromJSON, Generic, Monoid)
+
+instance Editable NonEmptyST where
+    newtype EEdit NonEmptyST = NEText {unNEText :: EEdit String}
+        deriving (Generic, Show, Eq)
+    docCost = ST.length . unNonEmptyST
+    eCost = eCost . unNEText
+
+    -- | Data.Algorithm.Patience.diff is used from the patience package
+    --
+    -- Possible alternatives:
+    --
+    -- Data.Algorithm.Diff.getDiff from the Diff package
+    -- Data.Algorithm.Diff.Gestalt.diff from the diff-gestalt package
+    --
+    -- Data.Algorithm.Patience.diff is the fastest and most stable according to these benchmarks:
+    --
+    -- diff (replicate 1000 'a') (replicate 1000 'b')
+    -- diff (take 1000 ['a'..]) (take 1000 ['A'..])
+    -- diff (take 1000 ['A'..]) (take 1000 ['a'..])
+    diff (NonEmptyST a) (NonEmptyST b) = f 0 $ Diff.diff (ST.unpack a) (ST.unpack b)
+      where
+        f !n (Diff.Both{}: es) = f (n+1) es
+        f n (Diff.New c: es) = NEText (InsertItem n c): f (n+1) es
+        f n (Diff.Old{}: es) = NEText (DeleteItem n): f n es
+        f _ [] = []
+    ePatch e = NonEmptyST . ST.pack . ePatch (coerce e) . ST.unpack . unNonEmptyST
+    patch e = NonEmptyST . ST.pack . patch (coerce e) . ST.unpack . unNonEmptyST
+    eMerge d a b = coerce $ eMerge (ST.unpack $ unNonEmptyST d) (coerce a) (coerce b)
+    merge d a b = coerce $ merge (ST.unpack $ unNonEmptyST d) (coerce a) (coerce b)
+    eInverse d = coerce . eInverse (ST.unpack $ unNonEmptyST d) . coerce
+    inverse d = coerce . inverse (ST.unpack $ unNonEmptyST d) . coerce
+
+instance ToJSON (EEdit NonEmptyST)
+instance FromJSON (EEdit NonEmptyST)
+instance SOP.Generic (EEdit NonEmptyST)
+instance SOP.HasDatatypeInfo (EEdit NonEmptyST)
+instance NFData (EEdit NonEmptyST) where rnf = grnf
+
 ---------------------------------------- Set instance
 
 editElem :: a -> Edit a -> Edit (Set a)
@@ -548,6 +591,12 @@ instance Splitable ST where
     joinItems = (<>)
     splitLength = ST.length
     maxSplitIndex = ST.length
+
+instance Splitable NonEmptyST where
+    splitItem i = coerce . ST.splitAt (i + 1) . unNonEmptyST
+    joinItems = (<>)
+    splitLength = (+(-1)) . ST.length . unNonEmptyST
+    maxSplitIndex = (+(-2)). ST.length . unNonEmptyST
 
 instance Splitable (Segments a b) where
     splitItem i (Segments a) = coerce $ splitAt i a

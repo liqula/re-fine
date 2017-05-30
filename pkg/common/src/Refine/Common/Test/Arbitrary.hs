@@ -283,3 +283,6 @@ arbitrarySoundSelectionState (RawContent bs _) = do
   isback <- arbitrary
   let [start, end] = snd <$> sort [anchor, point]
   pure $ SelectionState isback start end
+
+instance Arbitrary NonEmptyST where
+  arbitrary = NonEmptyST . ST.pack . NEL.toList <$> arbitrary

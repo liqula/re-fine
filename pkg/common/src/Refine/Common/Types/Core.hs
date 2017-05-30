@@ -35,7 +35,10 @@
 --     --> data RawConent, and lots of conversion functions
 --     --> data ContributionID
 --     --> data Edit
-module Refine.Common.Types.Core where
+module Refine.Common.Types.Core
+    ( module Refine.Common.Types.Core
+    , NonEmptyST(..)
+    ) where
 
 import Refine.Common.Prelude
 
