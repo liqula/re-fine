@@ -22,8 +22,10 @@ import qualified Data.Set as Set
 import           Data.Sequence (Seq)
 import qualified Data.Sequence as Seq
 import           Data.List
+import qualified Data.List.NonEmpty as NEL
 import qualified Data.Algorithm.Patience as Diff
 import qualified Data.Text as ST
+import qualified Data.Semigroup as Semigroup
 import qualified Generics.SOP as SOP
 import           Control.DeepSeq
 import           Test.QuickCheck (Arbitrary)
@@ -510,34 +512,48 @@ instance (NFData a, NFData (EEdit a)) => NFData (EEdit (Set a)) where rnf = grnf
 
 {- | split laws:
 
-    uncurry joinItems (splitItem i a) == a       -- i = 0, 1, 2, ..., splitLength a
+    splitLength a >= 0
+    maxSplitIndex a >= -1
+    uncurry joinItems (splitItem i a) == a       -- i = 0, 1, 2, ..., maxSplitIndex a
     splitItem (splitLength a) (joinItems a b) == (a, b)
 -}
 class Splitable a where
     -- type SplitIndex a
     splitItem :: Int{-SplitIndex a-} -> a -> (a, a)
-    splitLength :: a -> Int{-SplitIndex a-}
     joinItems  :: a -> a -> a
+
+    splitLength :: a -> Int{-SplitIndex a-}
+    maxSplitIndex :: a -> Int{-SplitIndex a-}
 
 instance Splitable [a] where
     splitItem = splitAt
-    splitLength = length
     joinItems = (<>)
+    splitLength = length
+    maxSplitIndex = length
+
+instance Splitable (NEL.NonEmpty a) where
+    splitItem i = (NEL.fromList *** NEL.fromList) . NEL.splitAt (i+1)
+    joinItems = (Semigroup.<>)
+    splitLength l = length l - 1
+    maxSplitIndex l = length l - 2
 
 instance Splitable (Seq a) where
     splitItem = Seq.splitAt
-    splitLength = Seq.length
     joinItems = (<>)
+    splitLength = Seq.length
+    maxSplitIndex = Seq.length
 
 instance Splitable ST where
     splitItem = ST.splitAt
-    splitLength = ST.length
     joinItems = (<>)
+    splitLength = ST.length
+    maxSplitIndex = ST.length
 
 instance Splitable (Segments a b) where
     splitItem i (Segments a) = coerce $ splitAt i a
-    splitLength (Segments a) = length a
     joinItems (Segments a) (Segments b) = Segments $ a <> b
+    splitLength (Segments a) = length a
+    maxSplitIndex (Segments a) = length a
 
 ----------
 

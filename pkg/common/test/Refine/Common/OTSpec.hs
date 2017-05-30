@@ -20,6 +20,7 @@ import Refine.Common.Prelude
 
 import qualified Data.Set as Set
 import qualified Data.Text as ST
+import qualified Data.List.NonEmpty as NEL
 import           Data.Sequence (Seq)
 import           Test.Hspec
 import           Test.QuickCheck
@@ -316,15 +317,25 @@ instance (GenEdit a, GenEdit b, Splitable b) => GenEdit (Segments a b) where
 ---------------------- test Splitable type class laws
 
 testSplitable :: forall d. (Typeable d, Splitable d, Eq d, Arbitrary d, Show d) => Proxy d -> Spec
-testSplitable d
-    = describe ("Splitable instance for " <> show (typeRep d)) $ do
+testSplitable p
+    = describe ("Splitable instance for " <> show (typeRep p)) $ do
+        it "splitLength >= 0"   $ property test_splitLength
+        it "maxSplitIndex >= -1"   $ property test_maxSplitIndex
         it "join . split == id" $ property join_split
         it "split . join == id" $ property split_join
   where
+    test_splitLength :: d -> Bool
+    test_splitLength d = splitLength d >= 0
+
+    test_maxSplitIndex :: d -> Bool
+    test_maxSplitIndex d = maxSplitIndex d >= (-1)
+
     join_split :: d -> Gen Bool
-    join_split a = do
-        i <- choose (0, splitLength a)
-        pure $ uncurry joinItems (splitItem i a) == a
+    join_split a = case maxSplitIndex a of
+        -1 -> pure True
+        ms -> do
+            i <- choose (0, ms)
+            pure $ uncurry joinItems (splitItem i a) == a
 
     split_join :: d -> d -> Bool
     split_join a b = splitItem (splitLength a) (joinItems a b) == (a, b)
@@ -371,6 +382,7 @@ spec = parallel $ do
     -- runTest' 500 $ allTests @[[ADigit]]
 
     testSplitable $ Proxy @[ADigit]
+    testSplitable $ Proxy @(NEL.NonEmpty ADigit)
     testSplitable $ Proxy @(Seq ADigit)
     testSplitable $ Proxy @ST
     testSplitable $ Proxy @(Segments ADigit ST)
