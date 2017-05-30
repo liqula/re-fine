@@ -299,12 +299,12 @@ pattern DocBlock a b c = ((Atom a, Atom b), Segments c)
     [< style set A >< style set B >< style set C >][              ][                 ]
     Entity1                                        Entity2         Entity3
 -}
-type LineElems = Segments (Set (Atom EntityStyle)) ST
-type LineElem = (Set (Atom EntityStyle), ST)
+type LineElems = Segments (Set (Atom EntityStyle)) NonEmptyST
+type LineElem = (Set (Atom EntityStyle), NonEmptyST)
 
 -- | TUNING: (Set.mapMonotonic unAtom) and (Set.mapMonotonic Atom) should be (coerce)
 --   but GHC can't see that (Ord (Atom a)) is the same as (Ord a)
-pattern LineElem :: Set EntityStyle -> ST -> LineElem
+pattern LineElem :: Set EntityStyle -> NonEmptyST -> LineElem
 pattern LineElem a b <- (Set.mapMonotonic unAtom -> a, b)
   where LineElem a b = (Set.mapMonotonic Atom a, b)
 
@@ -477,8 +477,10 @@ rawContentToDoc (RawContent (block :| blocks) entities) = mkDocBlock <$> (block 
     mkDocBlock (Block txt eranges styles ty depth _key) = DocBlock ty depth (segment segments txt)
       where
         segment [] "" = []
-        segment [] text = [LineElem mempty text]
-        segment ((len, s): ss) text = LineElem s (ST.take len text): segment ss (ST.drop len text)
+        segment [] text = [LineElem mempty $ NonEmptyST text]
+        segment ((len, s): ss) text
+            | len > 0 = LineElem s (NonEmptyST $ ST.take len text): segment ss (ST.drop len text)
+            | otherwise = error "segment text length is 0"
 
         segments :: [(Int, Set EntityStyle)]
         segments = mkSomeSegments fst snd
@@ -488,7 +490,7 @@ rawContentToDoc (RawContent (block :| blocks) entities) = mkDocBlock <$> (block 
 docToRawContent :: OTDoc -> RawContent
 docToRawContent blocks = mkRawContent $ mkDocBlock <$> blocks
   where
-    getText (LineElem _ txt) = txt
+    getText (LineElem _ (NonEmptyST txt)) = txt
 
     mkDocBlock :: DocBlock -> Block Entity
     mkDocBlock (DocBlock ty d es) = Block
@@ -500,7 +502,7 @@ docToRawContent blocks = mkRawContent $ mkDocBlock <$> blocks
         Nothing
       where
         ranges = mkRanges 0 mempty
-            $ [(len, s) | LineElem s txt <- es, let len = ST.length txt, len > 0]
+            $ [(len, s) | LineElem s (NonEmptyST txt) <- es, let len = ST.length txt]
             <> [(0, mempty)]  -- this is to avoid one more case in mkRanges below when we're done.
 
         mkRanges _ _ [] = []

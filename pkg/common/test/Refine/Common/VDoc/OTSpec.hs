@@ -29,15 +29,12 @@ simplifyDoc :: OTDoc -> OTDoc
 simplifyDoc [] = [DocBlock NormalText 0 []]
 simplifyDoc blocks = simplifyBlock <$> blocks
   where
-    simplifyBlock (DocBlock a d b) = DocBlock a d (map joinElems . groupBy ((==) `on` attrs) $ filter notNull b)
+    simplifyBlock (DocBlock a d b) = DocBlock a d (map joinElems $ groupBy ((==) `on` attrs) b)
 
     attrs (LineElem x _) = x
     txt   (LineElem _ x) = x
 
     joinElems xs = LineElem (attrs $ head xs) . mconcat $ map txt xs
-
-    notNull (LineElem _ "") = False
-    notNull _ = True
 
 -- do not insert more than 5 elems into an EntityStyle set
 instance HasEnoughInhabitants (Atom EntityStyle) where numOfInhabitants _ = Just 5
@@ -66,10 +63,10 @@ spec = parallel $ do
     describe "showEditAsRawContent" $ do
       it "shows added text with custom style 'ADDED'." $ do
         let edit = [ERawContent $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond
-                        [ EText (InsertItem 10 'a')
-                        , EText (InsertItem 11 'n')
-                        , EText (InsertItem 12 'd')
-                        , EText (InsertItem 13 '/')]]]]]
+                        [ NEText (InsertItem 10 'a')
+                        , NEText (InsertItem 11 'n')
+                        , NEText (InsertItem 12 'd')
+                        , NEText (InsertItem 13 '/')]]]]]
             rc   = mkRawContent [mkBlock "some text or other"]
             rc'  = mkRawContent [mkBlock "some text and/or other" & blockStyles .~ [((10, 4), StyleAdded)]]
         showEditAsRawContent edit rc `shouldBe` rc'
@@ -79,18 +76,18 @@ spec = parallel $ do
             -- this doesn't work now because the cost of deleting chars is more than
             -- the cost of deleting the block and adding a new one
             edit = [ERawContent $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond
-                        [ EText (DeleteItem 4)
-                        , EText (DeleteItem 4)
-                        , EText (DeleteItem 4)
-                        , EText (DeleteItem 4)
-                        , EText (DeleteItem 4)
-                        , EText (DeleteItem 4)
-                        , EText (DeleteItem 4)
-                        , EText (DeleteItem 4)
-                        , EText (DeleteItem 4)
-                        , EText (DeleteItem 4)
-                        , EText (DeleteItem 4)
-                        , EText (DeleteItem 4)]]]]]
+                        [ NEText (DeleteItem 4)
+                        , NEText (DeleteItem 4)
+                        , NEText (DeleteItem 4)
+                        , NEText (DeleteItem 4)
+                        , NEText (DeleteItem 4)
+                        , NEText (DeleteItem 4)
+                        , NEText (DeleteItem 4)
+                        , NEText (DeleteItem 4)
+                        , NEText (DeleteItem 4)
+                        , NEText (DeleteItem 4)
+                        , NEText (DeleteItem 4)
+                        , NEText (DeleteItem 4)]]]]]
             rc   = mkRawContent [mkBlock "some text or other"]
             rc'  = mkRawContent [mkBlock "some text or other" & blockStyles .~ [((4, 12), StyleDeleted)]]
         showEditAsRawContent edit rc `shouldBe` rc'

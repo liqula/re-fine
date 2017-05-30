@@ -59,10 +59,10 @@ showEditAsRawContent (fmap unERawContent -> edits) (rawContentToDoc -> doc) = do
     patchLineElemStyle le [] = le
     patchLineElemStyle (as, text) e = markElem StyleChanged (patch e as, text)
 
-    patchLineElemText :: LineElem -> Edit ST -> [LineElem]
+    patchLineElemText :: LineElem -> Edit NonEmptyST -> [LineElem]
     patchLineElemText (as, text) es
         = [ (as <> marks, text')
-          | (marks, text') <- compress $ patchText ((,) mempty <$> cs text) [unEText e | e <- es]
+          | (marks, text') <- compress $ patchText ((,) mempty <$> cs text) [unNEText e | e <- es]
           ]
 
     patchText :: [(Set (Atom EntityStyle), Char)] -> Edit String -> [(Set (Atom EntityStyle), Char)]
@@ -76,7 +76,7 @@ showEditAsRawContent (fmap unERawContent -> edits) (rawContentToDoc -> doc) = do
     patchChar a _ = markElem StyleChanged a
 
     compress :: [(Set (Atom EntityStyle), Char)] -> [LineElem]
-    compress = fmap (\xs -> (fst (head xs), cs (snd <$> xs))) . groupBy ((==) `on` fst)
+    compress = fmap (\xs -> (fst (head xs), NonEmptyST $ cs (snd <$> xs))) . groupBy ((==) `on` fst)
 
     incIdx i k = \case
         DeleteItem j   | j >= i    -> DeleteItem $ j + k
