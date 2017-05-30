@@ -96,6 +96,7 @@ library
       Refine.Frontend.MainMenu.Component
       Refine.Frontend.MainMenu.Store
       Refine.Frontend.MainMenu.Types
+      Refine.Frontend.Orphans
       Refine.Frontend.Prelude
       Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
@@ -181,6 +182,7 @@ test-suite spec
     , unordered-containers
   other-modules:
       -- (echo '      Spec'; (find test -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \;)) | sort
+      AllModules
       Main
       Refine.Frontend.Contribution.BubbleSpec
       Refine.Frontend.Contribution.DialogSpec
@@ -191,6 +193,7 @@ test-suite spec
       Refine.Frontend.Header.ToolbarSpec
       Refine.Frontend.IconSpec
       Refine.Frontend.MainMenuSpec
+      Refine.Frontend.OrphansSpec
       Refine.Frontend.StoreSpec
       Refine.Frontend.UtilSpec
       Refine.Frontend.ViewsSpec

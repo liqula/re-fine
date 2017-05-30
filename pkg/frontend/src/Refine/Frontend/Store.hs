@@ -40,7 +40,7 @@ import           Refine.Common.Rest (ApiError(..))
 import           Refine.Common.Test.Samples
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
-import           Refine.Frontend.Document.FFI (traceContentInEditorState, traceEditorState)
+import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Store (setMarkPositions, documentStateUpdate, editorStateToVDocVersion)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
@@ -384,10 +384,14 @@ gsChunkRange f gs = outof <$> f (into gs)
 -- for (2) for looking at the DOM for the position data.
 getRangeAction :: MonadIO m => DocumentState -> m (Maybe ContributionAction)
 getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
-  sel <- getDraftSelectionStateViaBrowser
-  if selectionIsEmpty (dstate ^?! documentStateContent) sel
-    then pure $ Just ClearRange
-    else Just . SetRange <$> do
+  esel :: Either String C.SelectionState <- runExceptT getDraftSelectionStateViaBrowser
+  case esel of
+    Left err -> do
+      consoleLogJSONM "getRangeSelection: error" err
+      pure $ Just ClearRange
+    Right sel | selectionIsEmpty (dstate ^?! documentStateContent) sel -> do
+      pure $ Just ClearRange
+    Right sel -> Just . SetRange <$> do
       topOffset    <- liftIO js_getRangeTopOffset
       bottomOffset <- liftIO js_getRangeBottomOffset
       scrollOffset <- liftIO js_getScrollOffset
@@ -400,12 +404,6 @@ getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
         , _rangeBottomOffset   = OffsetFromViewportTop  bottomOffset
         , _rangeScrollOffset   = ScrollOffsetOfViewport scrollOffset
         }
-
-
-getDraftSelectionStateViaBrowser :: MonadIO m => m C.SelectionState
-getDraftSelectionStateViaBrowser = liftIO $ either err pure . eitherDecode . cs =<< js_getDraftSelectionStateViaBrowser
-  where
-    err = throwIO . ErrorCall . ("getSelectionStateViaBrowser: impossible: " <>) . show
 
 removeAllRanges :: MonadIO m => m ()
 removeAllRanges = liftIO js_removeAllRanges
@@ -439,10 +437,6 @@ foreign import javascript unsafe
   js_scrollToPageTop :: IO ()
 
 foreign import javascript unsafe
-  "JSON.stringify(refine$getDraftSelectionStateViaBrowser())"
-  js_getDraftSelectionStateViaBrowser :: IO JSString
-
-foreign import javascript unsafe
   "getSelection().getRangeAt(0).startContainer.parentElement.getBoundingClientRect().top"
   js_getRangeTopOffset :: IO Int
 
@@ -459,10 +453,6 @@ foreign import javascript unsafe
 {-# ANN js_scrollToPageTop ("HLint: ignore Use camelCase" :: String) #-}
 js_scrollToPageTop :: IO ()
 js_scrollToPageTop = error "javascript FFI not available in GHC"
-
-{-# ANN js_getDraftSelectionStateViaBrowser ("HLint: ignore Use camelCase" :: String) #-}
-js_getDraftSelectionStateViaBrowser :: IO JSString
-js_getDraftSelectionStateViaBrowser = error "javascript FFI not available in GHC"
 
 {-# ANN js_getRangeTopOffset ("HLint: ignore Use camelCase" :: String) #-}
 js_getRangeTopOffset :: IO Int

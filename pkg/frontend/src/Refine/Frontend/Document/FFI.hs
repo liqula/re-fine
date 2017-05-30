@@ -57,12 +57,14 @@ module Refine.Frontend.Document.FFI
     -- * selections
   , getSelection
   , forceSelection
+  , getDraftSelectionStateViaBrowser
 
     -- * marks
   , getMarkSelectorBound
   ) where
 
 import Refine.Frontend.Prelude
+import Refine.Frontend.Orphans ()
 
 import qualified Refine.Common.Types.Core as Draft
 import           Refine.Frontend.Document.FFI.Types
@@ -153,6 +155,16 @@ getSelection (js_ES_getSelection -> sel) =
 forceSelection :: EditorState -> Draft.SelectionState -> EditorState
 forceSelection es (cs . encode -> sel) = js_ES_forceSelection es sel
 
+getDraftSelectionStateViaBrowser :: (MonadIO m, MonadError String m) => m Draft.SelectionState
+getDraftSelectionStateViaBrowser = do
+  v :: Maybe (Either JSString Draft.SelectionState)
+    <- liftIO (js_getDraftSelectionStateViaBrowser >>= fromJSVal)
+  case v of
+    Just (Right r) -> pure r
+    Just (Left e)  -> throwError (cs e)
+    Nothing        -> throwError "internal error: no parse!"
+
+
 -- * marks
 
 getMarkSelectorBound :: Draft.MarkSelector -> IO Int
@@ -170,6 +182,10 @@ getMarkSelectorBound mark@(Draft.MarkSelector side _ _) = js_getBoundingBox (ren
 -- * foreign
 
 #ifdef __GHCJS__
+
+foreign import javascript unsafe
+  "refine$getDraftSelectionStateViaBrowser()"
+  js_getDraftSelectionStateViaBrowser :: IO JSVal
 
 foreign import javascript unsafe
   "Draft.convertFromRaw(JSON.parse($1))"
@@ -257,6 +273,10 @@ foreign import javascript unsafe
   js_getBoundingBox :: JSString -> JSString -> IO Int
 
 #else
+
+{-# ANN js_getDraftSelectionStateViaBrowser ("HLint: ignore Use camelCase" :: String) #-}
+js_getDraftSelectionStateViaBrowser :: IO JSVal
+js_getDraftSelectionStateViaBrowser = error "javascript FFI not available in GHC"
 
 {-# ANN js_convertFromRaw ("HLint: ignore Use camelCase" :: String) #-}
 js_convertFromRaw :: JSString -> ContentState

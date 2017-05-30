@@ -63,8 +63,8 @@
 
             // block key found - return with current offset.
             return {
-                "_selectionBlock": blockkey,
-                "_selectionOffset": offset
+                _selectionBlock: blockkey,
+                _selectionOffset: offset
             };
         };
 
@@ -73,16 +73,21 @@
         };
 
         return function() {
-            var sel        = getSelection();
+          try {
+            var sel        = getSelection(); if (!sel.anchorNode || !sel.focusNode) { return { Left: "no selection" }; }
             var range      = sel.getRangeAt(0);
             var backward   = sel.anchorNode !== range.startContainer;
             var startpoint = mkPoint(range.startContainer, range.startOffset);
             var endpoint   = mkPoint(range.endContainer, range.endOffset);
 
-            return { "_selectionIsBackward": backward,
-                     "_selectionStart": startpoint,
-                     "_selectionEnd": endpoint
+            return { Right: { _selectionIsBackward: backward,
+                              _selectionStart: startpoint,
+                              _selectionEnd: endpoint
+                            }
                    };
+          } catch(e) {
+              return ({ Left: JSON.stringify(e) });
+          };
         };
     })();
 })((typeof global === 'undefined') ? window : global);
