@@ -26,10 +26,10 @@ import Refine.Common.VDoc.Draft
 
 -- | Block canonicalization: remove empty line elems; merge neighboring line elems with same attr set.
 simplifyDoc :: OTDoc -> OTDoc
-simplifyDoc [] = [DocBlock NormalText [] 0]
+simplifyDoc [] = [DocBlock NormalText 0 []]
 simplifyDoc blocks = simplifyBlock <$> blocks
   where
-    simplifyBlock (DocBlock a b d) = DocBlock a (map joinElems . groupBy ((==) `on` attrs) $ filter notNull b) d
+    simplifyBlock (DocBlock a d b) = DocBlock a d (map joinElems . groupBy ((==) `on` attrs) $ filter notNull b)
 
     attrs (LineElem x _) = x
     txt   (LineElem _ x) = x
@@ -65,11 +65,11 @@ spec = parallel $ do
 
     describe "showEditAsRawContent" $ do
       it "shows added text with custom style 'ADDED'." $ do
-        let edit = [ERawContent $ EditItem 0 [EditFirst [EditSecond [EditItem 0 [EditSecond
+        let edit = [ERawContent $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond
                         [ EText (InsertItem 10 'a')
                         , EText (InsertItem 11 'n')
                         , EText (InsertItem 12 'd')
-                        , EText (InsertItem 13 '/')]]]]]]
+                        , EText (InsertItem 13 '/')]]]]]
             rc   = mkRawContent [mkBlock "some text or other"]
             rc'  = mkRawContent [mkBlock "some text and/or other" & blockStyles .~ [((10, 4), StyleAdded)]]
         showEditAsRawContent edit rc `shouldBe` rc'
@@ -78,7 +78,7 @@ spec = parallel $ do
         let -- FIXME: edit rc $ mkRawContent [mkBlock "someer"]
             -- this doesn't work now because the cost of deleting chars is more than
             -- the cost of deleting the block and adding a new one
-            edit = [ERawContent $ EditItem 0 [EditFirst [EditSecond [EditItem 0 [EditSecond
+            edit = [ERawContent $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond
                         [ EText (DeleteItem 4)
                         , EText (DeleteItem 4)
                         , EText (DeleteItem 4)
@@ -90,7 +90,7 @@ spec = parallel $ do
                         , EText (DeleteItem 4)
                         , EText (DeleteItem 4)
                         , EText (DeleteItem 4)
-                        , EText (DeleteItem 4)]]]]]]
+                        , EText (DeleteItem 4)]]]]]
             rc   = mkRawContent [mkBlock "some text or other"]
             rc'  = mkRawContent [mkBlock "some text or other" & blockStyles .~ [((4, 12), StyleDeleted)]]
         showEditAsRawContent edit rc `shouldBe` rc'

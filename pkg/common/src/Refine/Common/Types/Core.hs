@@ -283,10 +283,10 @@ data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom | MarkSelectorUnkno
 type OTDoc = [DocBlock]
 
 -- | (third constructor arg is depth)
-type DocBlock = ((Atom BlockType, [LineElem]), Atom Int)
+type DocBlock = ((Atom BlockType, Atom Int), LineElems)
 
-pattern DocBlock :: BlockType -> [LineElem] -> Int -> DocBlock
-pattern DocBlock a b c = ((Atom a, b), Atom c)
+pattern DocBlock :: BlockType -> Int -> [LineElem] -> DocBlock
+pattern DocBlock a b c = ((Atom a, Atom b), Segments c)
 
 -- | A segment of an inline style, consisting of 'EntityRange' and 'Style'.
 --
@@ -296,6 +296,7 @@ pattern DocBlock a b c = ((Atom a, b), Atom c)
     [< style set A >< style set B >< style set C >][              ][                 ]
     Entity1                                        Entity2         Entity3
 -}
+type LineElems = Segments (Set (Atom EntityStyle)) ST
 type LineElem = (Set (Atom EntityStyle), ST)
 
 -- | TUNING: (Set.mapMonotonic unAtom) and (Set.mapMonotonic Atom) should be (coerce)
@@ -470,7 +471,7 @@ rawContentToDoc :: RawContent -> OTDoc
 rawContentToDoc (RawContent (block :| blocks) entities) = mkDocBlock <$> (block : blocks)
   where
     mkDocBlock :: Block EntityKey -> DocBlock
-    mkDocBlock (Block txt eranges styles ty depth _key) = DocBlock ty (segment segments txt) depth
+    mkDocBlock (Block txt eranges styles ty depth _key) = DocBlock ty depth (segment segments txt)
       where
         segment [] "" = []
         segment [] text = [LineElem mempty text]
@@ -487,7 +488,7 @@ docToRawContent blocks = mkRawContent $ mkDocBlock <$> blocks
     getText (LineElem _ txt) = txt
 
     mkDocBlock :: DocBlock -> Block Entity
-    mkDocBlock (DocBlock ty es d) = Block
+    mkDocBlock (DocBlock ty d es) = Block
         (mconcat $ fmap getText es)
         [(e, r) | (r, Left e) <- ranges]
         [(r, s) | (r, Right s) <- ranges]

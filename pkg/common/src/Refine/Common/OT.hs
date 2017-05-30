@@ -537,7 +537,7 @@ instance Splitable (Segments a b) where
 ----------
 
 newtype Segments a b = Segments [(a, b)]        -- TUNING: use Seq insted of []
-    deriving (Eq, Show, Generic, Arbitrary)
+    deriving (Eq, Show, Generic, Arbitrary, ToJSON, FromJSON, NFData)
 
 instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) where
 
