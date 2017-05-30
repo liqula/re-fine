@@ -97,8 +97,8 @@ showComment = mkView "ShowComment" $ \props ->
                     , decl "minHeight" (Px 100)
                     ]
   in skylight_ ["isVisible" &= True
-           , RF.on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideCommentOverlay)
-           , RF.on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentOverlay)
+           , RF.on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideContributionDialog)
+           , RF.on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideContributionDialog)
            , "dialogStyles" @@= ((props ^. cdpContentStyle) <> extraStyles)
            , "overlayStyles" @@= overlayStyles
            , "closeButtonStyle" @@= [decl "top" (Px 0), decl "bottom" (Px 0)]

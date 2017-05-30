@@ -77,11 +77,11 @@ mapFromValue = withObject "MarkPositions"
 
 -- | TODO: give record selectors to all fields.
 data ContributionAction =
-    RequestSetRange -- TODO: move this to 'DocumentAction'
-  | SetRange Range  -- TODO: move this to 'DocumentAction'
-  | ClearRange      -- TODO: move this to 'DocumentAction'
+    RequestSetRange -- ^ FIXME: move this to 'DocumentAction'
+  | SetRange Range  -- ^ FIXME: move this to 'DocumentAction'
+  | ClearRange      -- ^ FIXME: move this to 'DocumentAction'
   | ShowContributionDialog ContributionID
-  | HideCommentOverlay
+  | HideContributionDialog
   | ShowCommentEditor
   | HideCommentEditor
   | SetCommentKind CommentKind

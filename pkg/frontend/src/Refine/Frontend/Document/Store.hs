@@ -31,7 +31,7 @@ module Refine.Frontend.Document.Store
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens ((&), (%~), view)
+import           Control.Lens (ix)
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
@@ -56,6 +56,21 @@ documentStateUpdate (HeaderAction (StartEdit kind)) gs (DocumentStateView estate
   = let sel = chunkRangeToSelectionState (convertToRaw $ getCurrentContent estate)  -- FIXME: #312
             $ gs ^?! gsContributionState . csCurrentRange . _Just . rangeSelectionState
     in DocumentStateEdit (forceSelection estate sel) kind
+
+documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
+                    (view gsVDoc -> Just cvdoc)
+                    (DocumentStateView e r)
+  = DocumentStateDiff e r $ cvdoc ^?! compositeVDocEdits . ix eid
+
+documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
+                    _
+                    (DocumentStateDiff e r _)
+  = DocumentStateView e r
+
+documentStateUpdate (ContributionAction HideContributionDialog)
+                    _
+                    (DocumentStateDiff e r _)
+  = DocumentStateView e r
 
 documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _state
   = state'

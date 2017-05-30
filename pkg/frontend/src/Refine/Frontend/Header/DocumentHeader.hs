@@ -27,6 +27,7 @@ module Refine.Frontend.Header.DocumentHeader where
 
 import Refine.Frontend.Prelude
 
+import           Control.Lens (ix)
 import qualified Data.Text as ST
 
 import           Refine.Common.Types
@@ -54,6 +55,7 @@ documentHeader_ !props = view_ documentHeader "DocumentHeader_" props
 
 instance UnoverlapAllEq Title
 
+
 documentTitle :: View '[Title]
 documentTitle = mkView "DocumentTitle" $ h1_ . cs . _unTitle
 
@@ -61,6 +63,7 @@ documentTitle_ :: Title -> ReactElementM eventHandler ()
 documentTitle_ !title = view_ documentTitle "DocumentTitle_" title
 
 instance UnoverlapAllEq Abstract
+
 
 documentAbstract :: View '[Abstract]
 documentAbstract = mkView "DocumentAbstract" $ \abstract ->
@@ -80,6 +83,12 @@ phases = mkView "Phases" $ do
     div_ ["className" $= "c-vdoc-header__phase"] "Vote"
     div_ ["className" $= "c-vdoc-header__phase"] "Result"
 
-
 phases_ :: ReactElementM eventHandler ()
 phases_ = view_ phases "Phases_"
+
+
+editDescToAbstract :: CompositeVDoc -> ContributionID -> Abstract
+editDescToAbstract vdoc (ContribIDEdit eid) = Abstract $
+  "Edit Request:\n" <>
+  (vdoc ^?! compositeVDocEdits . ix eid . editDesc)
+editDescToAbstract _ _ = error "internal error."

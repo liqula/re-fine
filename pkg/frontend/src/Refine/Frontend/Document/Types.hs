@@ -47,14 +47,17 @@ data DocumentAction =
   | DocumentToggleItalic
   deriving (Show, Eq, Generic)
 
--- | FIXME: 'documentStateEditKind' will fan out into a 'EditInfo' record containing 'EditKind' and
--- other stuff, see #233.
 data DocumentState =
     DocumentStateView
       { _documentStateVal      :: EditorState
       , _documentStateContent  :: RawContent  -- ^ in read-only mode, change to the content is
                                               -- driven by haskell, so we keep the haskell
                                               -- representation around.
+      }
+  | DocumentStateDiff
+      { _documentStateVal      :: EditorState
+      , _documentStateContent  :: RawContent
+      , _documentStateDiff     :: Edit
       }
   | DocumentStateEdit
       { _documentStateVal      :: EditorState
@@ -75,7 +78,6 @@ data DocumentProps = DocumentProps
   { _dpDocumentState     :: DocumentState
   , _dpContributionState :: ContributionState
   , _dpToolbarStatus     :: ToolbarExtensionStatus
-  , _dpDiffEdit          :: Maybe Edit
   }
   deriving (Show, Eq, Generic)
 
@@ -86,7 +88,6 @@ emptyDocumentProps = DocumentProps
   { _dpDocumentState     = emptyDocumentState
   , _dpContributionState = emptyContributionState
   , _dpToolbarStatus     = ToolbarExtensionClosed
-  , _dpDiffEdit          = Nothing
   }
 
 makeRefineType ''DocumentAction
