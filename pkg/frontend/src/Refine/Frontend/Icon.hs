@@ -205,7 +205,8 @@ iconButton = mkView "IconButton" $ \props -> do
          ) $ do
         icon_ $ props ^. iconButtonPropsIconProps
         span_ [ "className" $= (props ^. iconButtonPropsIconProps . iconPropsBlockName <> "__button-label")
-              , "style" @@= [decl "color" Color.DisabledTextColor | props ^. iconButtonPropsDisabled]
+              , "style" @@= ([decl "color" Color.DisabledTextColor | props ^. iconButtonPropsDisabled] <>
+                             [decl "marginRight" (Px 15)])
               ] $
             elemJSString (props ^. iconButtonPropsLabel)
 
