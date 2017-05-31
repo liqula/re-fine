@@ -286,13 +286,6 @@ makeLenses ''AddContributionProps
 
 -- * helpers
 
-scrollToDialogBox :: MonadIO m => ContributionState -> ContributionID -> m ()
-scrollToDialogBox st = liftIO . js_scrollToPx . dialogBoxOffset st
-
-dialogBoxOffset :: ContributionState -> ContributionID -> Int
-dialogBoxOffset st cid = maybe 0 (+ tweakScrollTarget) $
-  st ^? csMarkPositions . markPositionsMap . at cid . _Just . markPositionBottom . unOffsetFromDocumentTop
-
 scrollToCurrentSelection :: MonadIO m => ContributionState -> m ()
 scrollToCurrentSelection = liftIO . js_scrollToPx . currentSelectionOffset
 

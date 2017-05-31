@@ -114,7 +114,6 @@ transformGlobalState = transf
         ContributionAction (SetRange _) -> removeAllRanges
         ContributionAction ClearRange   -> removeAllRanges
 
-        ContributionAction (ShowContributionDialog cid) -> scrollToDialogBox (st ^. gsContributionState) cid
         ContributionAction ShowCommentEditor            -> scrollToCurrentSelection (st ^. gsContributionState)
         DocumentAction RequestDocumentSave              -> scrollToCurrentSelection (st ^. gsContributionState)
 
