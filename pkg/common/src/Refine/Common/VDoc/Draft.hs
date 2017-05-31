@@ -86,6 +86,16 @@ selectedBlocks (SelectionState _ (SelectionPoint sk _) (SelectionPoint ek _)) = 
 entityRangeIsEmpty :: EntityRange -> Bool
 entityRangeIsEmpty (_, j) = j == 0
 
+-- | This is a work-around for until we change 'SelectionState' to carry @Maybe 'SelectionPoint'@s,
+-- then 'Nothing' means beginning / end of document, resp.
+selectEverything :: RawContent -> SelectionState
+selectEverything (RawContent bs _) = SelectionState False (SelectionPoint sb so) (SelectionPoint eb eo)
+  where
+    sb = NEL.head bs ^?! blockKey . _Just
+    so = 0
+    eb = NEL.last bs ^?! blockKey . _Just
+    eo = NEL.last bs ^. blockText . to ST.length
+
 
 -- * vdoc
 
