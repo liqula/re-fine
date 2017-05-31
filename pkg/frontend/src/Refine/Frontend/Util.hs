@@ -143,6 +143,21 @@ foreign import javascript unsafe
   "(function() { return pageYOffset; })()"
   js_getScrollOffset :: IO Int
 
+-- FUTUREWORK: to make this smoother, check out
+-- https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView (but
+-- https://bugs.chromium.org/p/chromium/issues/detail?id=648446);
+-- https://github.com/bySabi/react-scrollchor;
+-- https://stackoverflow.com/questions/30495062/how-can-i-scroll-a-div-to-be-visible-in-reactjs#30497101;
+-- https://github.com/sitepoint-editors/smooth-scrolling
+foreign import javascript unsafe
+  "scrollBy(0, -pageYOffset)"
+  js_scrollToPageTop :: IO ()
+
+-- see js_scrollToPageTop
+foreign import javascript unsafe
+  "scrollBy(0, $1-pageYOffset)"
+  js_scrollToPx :: Int -> IO ()
+
 #else
 
 {-# ANN (===) ("HLint: ignore Use camelCase" :: String) #-}
@@ -156,5 +171,13 @@ foreign import javascript unsafe
 {-# ANN js_getScrollOffset ("HLint: ignore Use camelCase" :: String) #-}
 js_getScrollOffset :: IO Int
 js_getScrollOffset = error "javascript FFI not available in GHC"
+
+{-# ANN js_scrollToPageTop ("HLint: ignore Use camelCase" :: String) #-}
+js_scrollToPageTop :: IO ()
+js_scrollToPageTop = error "javascript FFI not available in GHC"
+
+{-# ANN js_scrollToPx ("HLint: ignore Use camelCase" :: String) #-}
+js_scrollToPx :: Int -> IO ()
+js_scrollToPx = error "javascript FFI not available in GHC"
 
 #endif
