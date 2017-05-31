@@ -73,21 +73,21 @@
         };
 
         return function() {
-          try {
-            var sel        = getSelection(); if (!sel.anchorNode || !sel.focusNode) { return { Left: "no selection" }; }
-            var range      = sel.getRangeAt(0);
-            var backward   = sel.anchorNode !== range.startContainer;
-            var startpoint = mkPoint(range.startContainer, range.startOffset);
-            var endpoint   = mkPoint(range.endContainer, range.endOffset);
+            try {
+                var sel        = getSelection(); if (!sel.anchorNode || !sel.focusNode) { return { Left: "no selection" }; }
+                var range      = sel.getRangeAt(0);
+                var backward   = sel.anchorNode !== range.startContainer;
+                var startpoint = mkPoint(range.startContainer, range.startOffset);
+                var endpoint   = mkPoint(range.endContainer, range.endOffset);
 
-            return { Right: { _selectionIsBackward: backward,
-                              _selectionStart: startpoint,
-                              _selectionEnd: endpoint
-                            }
-                   };
-          } catch(e) {
-              return ({ Left: JSON.stringify(e) });
-          };
+                return { Right: { _selectionIsBackward: backward,
+                                  _selectionStart: startpoint,
+                                  _selectionEnd: endpoint
+                                }
+                       };
+            } catch(e) {
+                return ({ Left: JSON.stringify(e) });
+            };
         };
     })();
 })((typeof global === 'undefined') ? window : global);
