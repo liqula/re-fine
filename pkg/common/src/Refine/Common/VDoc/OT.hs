@@ -13,8 +13,8 @@ import           Refine.Common.Prelude
 import           Refine.Common.OT
 import           Refine.Common.Types.Core hiding (Edit)
 
-pattern DocBlock' :: Atom BlockType -> Atom BlockDepth -> [LineElem] -> DocBlock
-pattern DocBlock' a b c = ((a, b), Segments c)
+pattern DocBlock' :: Atom BlockType -> Atom BlockDepth -> NonEditable (Maybe BlockKey) -> [LineElem] -> DocBlock
+pattern DocBlock' t d k ls = (((t, d), k), Segments ls)
 
 type Styles = Set (Atom Style)
 
@@ -31,14 +31,16 @@ showEditAsRawContent edits
         EditItem i edit -> patchBlocks es $ take i bs <> (patchBlock (bs !! i) edit: drop (i+1) bs)
 
     patchBlock :: DocBlock -> Edit DocBlock -> DocBlock
-    patchBlock (DocBlock' btype depth elems) es = (if null bpatch && null dpatch then id else markBlock StyleChanged)
+    patchBlock (DocBlock' btype depth key elems) es = (if null bpatch && null dpatch then id else markBlock StyleChanged)
         $ DocBlock'
             (patch bpatch btype)
             (patch dpatch depth)
+            key
             (patchLineElems [e | EditSecond es' <- es, e <- es'] elems)
       where
-        bpatch = [e | EditFirst es' <- es, EditFirst  es'' <- es', e <- es'']
-        dpatch = [e | EditFirst es' <- es, EditSecond es'' <- es', e <- es'']
+        bdpatch = [e | EditFirst es' <- es, EditFirst es'' <- es', e <- es'']
+        bpatch = [e | EditFirst  es' <- bdpatch, e <- es']
+        dpatch = [e | EditSecond es' <- bdpatch, e <- es']
 
     patchLineElems :: Edit LineElems -> [LineElem] -> [LineElem]
     patchLineElems [] bs = bs
@@ -107,7 +109,7 @@ showEditAsRawContent edits
         SplitItem j x | j >= i    -> SplitItem (j + k) x
                       | otherwise -> SplitItem j x
 
-    markBlock sty (DocBlock btype depth elems) = DocBlock btype depth (markElem sty <$> elems)
+    markBlock sty (DocBlock btype depth key elems) = DocBlock btype depth key (markElem sty <$> elems)
 
     markElem :: Style -> (EntityStyles, a) -> (EntityStyles, a)
     markElem = first . second . addStyle

@@ -30,7 +30,7 @@ makeJoinEdits :: OTDoc -> Edit OTDoc
 makeJoinEdits blocks = concat . zipWith simplifyBlock [0..] $ NEL.toList blocks
   where
     simplifyBlock :: Int -> DocBlock -> Edit OTDoc
-    simplifyBlock i (DocBlock _ _ ls) = map ENonEmpty . editItem i . editSecond $ case ls of
+    simplifyBlock i (DocBlock _ _ _ ls) = map ENonEmpty . editItem i . editSecond $ case ls of
         []  -> []
         [_] -> []
         (es, _): xs -> go 0 es xs
@@ -60,7 +60,7 @@ spec :: Spec
 spec = parallel $ do
 
     -- pendingWith "#310"
-    runTest $ allTests @RawContent  -- this is fast enough now and has better error message than runTest'
+    --runTest $ allTests @RawContent  -- this is fast enough now and has better error message than runTest'
 
     it "Doc <-> RawContent conversion" . property $ \d ->
       rawContentToDoc (docToRawContent d) `shouldBe` d

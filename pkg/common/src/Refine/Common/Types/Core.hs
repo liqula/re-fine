@@ -291,10 +291,10 @@ data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom | MarkSelectorUnkno
 type OTDoc = NonEmpty DocBlock
 
 -- | (third constructor arg is depth)
-type DocBlock = ((Atom BlockType, Atom BlockDepth), LineElems)
+type DocBlock = (((Atom BlockType, Atom BlockDepth), NonEditable (Maybe BlockKey)), LineElems)
 
-pattern DocBlock :: BlockType -> BlockDepth -> [LineElem] -> DocBlock
-pattern DocBlock a b c = ((Atom a, Atom b), Segments c)
+pattern DocBlock :: BlockType -> BlockDepth -> Maybe BlockKey -> [LineElem] -> DocBlock
+pattern DocBlock t d k ls = (((Atom t, Atom d), NonEditable k), Segments ls)
 
 -- | An integer between 0 and 36
 -- (ok, the upper bound of 36 for depth is arbitrarily introduced here.  don't know about draft.)
@@ -509,7 +509,7 @@ rawContentToDoc :: RawContent -> OTDoc
 rawContentToDoc (RawContent blocks entities) = mkDocBlock <$> blocks
   where
     mkDocBlock :: Block EntityKey -> DocBlock
-    mkDocBlock (Block txt eranges styles ty depth _key) = DocBlock ty (BlockDepth depth) (segment segments txt)
+    mkDocBlock (Block txt eranges styles ty depth key) = DocBlock ty (BlockDepth depth) key (segment segments txt)
       where
         segment [] "" = []
         segment [] text = [LineElem mempty $ NonEmptyST text]
@@ -533,13 +533,13 @@ docToRawContent blocks = mkRawContent $ mkDocBlock <$> blocks
     getText (LineElem _ (NonEmptyST txt)) = txt
 
     mkDocBlock :: DocBlock -> Block Entity
-    mkDocBlock (DocBlock ty (BlockDepth d) es) = Block
+    mkDocBlock (DocBlock ty (BlockDepth d) key es) = Block
         (mconcat $ fmap getText es)
         [(e, r) | (r, Left e) <- ranges]
         [(r, s) | (r, Right s) <- ranges]
         ty
         d
-        Nothing
+        key
       where
         ranges = mkRanges 0 mempty
             $ [(len, s) | LineElem s (NonEmptyST txt) <- es, let len = ST.length txt]
