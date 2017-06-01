@@ -22,7 +22,7 @@ import           Control.DeepSeq
 import           Control.Monad.State
 import           Data.Function (on)
 import qualified Data.IntMap as IntMap
-import           Data.List (sort)
+import           Data.List (sort, groupBy)
 import qualified Data.List as List
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Set as Set
@@ -34,6 +34,7 @@ import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
 
 import Refine.Common.Types
+import Refine.Common.OT (Splitable(..), Segments(..))
 
 
 instance Arbitrary L10 where
@@ -286,3 +287,7 @@ arbitrarySoundSelectionState (RawContent bs _) = do
 
 instance Arbitrary NonEmptyST where
   arbitrary = NonEmptyST . ST.pack . NEL.toList <$> arbitrary
+
+instance (Arbitrary a, Arbitrary b, Eq a, Splitable b) => Arbitrary (Segments a b) where
+  arbitrary = Segments . map (\xs -> (fst (head xs), foldr1 joinItems $ snd <$> xs)) . groupBy ((==) `on` fst)
+        <$> arbitrary

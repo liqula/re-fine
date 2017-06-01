@@ -292,12 +292,7 @@ type DocBlock = ((Atom BlockType, Atom Int), LineElems)
 pattern DocBlock :: BlockType -> Int -> [LineElem] -> DocBlock
 pattern DocBlock a b c = ((Atom a, Atom b), Segments c)
 
--- | A segment of an inline style, consisting of 'EntityRange' and 'Style'.
---
--- FIXME: Entities are not joinable but styles are joinable -- OT should take care of this
-{- a better representation could be style blocks inside entity blocks:
-    [< style set A >< style set B >< style set C >][              ][                 ]
-    Entity1                                        Entity2         Entity3
+{- | A segment of an inline style, consisting of 'EntityRange' and 'Style'.
 -}
 type LineElems = Segments EntityStyles NonEmptyST
 type LineElem = (EntityStyles, NonEmptyST)
@@ -454,19 +449,27 @@ instance FromJSON Style where
 
 instance Editable RawContent where
     newtype EEdit RawContent
-        = ERawContent {unERawContent :: EEdit OTDoc}
+        = ERawContent {unERawContent :: OT.Edit OTDoc}
       deriving (Generic, Show, Eq)
 
     docCost = docCost . rawContentToDoc
-    eCost = eCost . unERawContent
+    eCost = cost . unERawContent
 
-    diff a b = coerce $ diff (rawContentToDoc a) (rawContentToDoc b)
-    ePatch e = docToRawContent . ePatch (coerce e) . rawContentToDoc
-    patch e = docToRawContent . patch (coerce e) . rawContentToDoc
-    eMerge d a b = coerce $ eMerge (rawContentToDoc d) (coerce a) (coerce b)
-    merge d a b = coerce $ merge (rawContentToDoc d) (coerce a) (coerce b)
-    eInverse d = coerce . eInverse (rawContentToDoc d) . coerce
-    inverse d = coerce . inverse (rawContentToDoc d) . coerce
+    -- FUTUREWORK: smarter diff producing smaller elementary patches
+    diff a b = [ERawContent $ diff (rawContentToDoc a) (rawContentToDoc b)]
+
+    ePatch e = docToRawContent . patch (coerce e) . rawContentToDoc
+--  TUNING: define patch
+--    patch e = docToRawContent . patch (coerce e) . rawContentToDoc
+
+--  FIXME: define eMerge
+--    eMerge d a b = coerce $ eMerge (rawContentToDoc d) (coerce a) (coerce b)
+--  TUNING: define merge
+--    merge d a b = coerce $ merge (rawContentToDoc d) (coerce a) (coerce b)
+
+    eInverse d = pure . coerce . inverse (rawContentToDoc d) . coerce
+--  TUNING: define inverse
+--    inverse d = coerce . inverse (rawContentToDoc d) . coerce
 
 instance ToJSON (EEdit RawContent)
 instance FromJSON (EEdit RawContent)

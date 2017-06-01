@@ -20,7 +20,7 @@ type Styles = Set (Atom Style)
 
 showEditAsRawContent :: Edit RawContent -> RawContent -> RawContent
 showEditAsRawContent edits
-    = docToRawContent . NEL.fromList . patchBlocks (coerce edits) . NEL.toList . rawContentToDoc
+    = docToRawContent . NEL.fromList . patchBlocks (concat (coerce edits :: [Edit [DocBlock]])) . NEL.toList . rawContentToDoc
   where
     -- TUNING: compress/rearrange the elementary edits first or use a vector instead of lists?
     patchBlocks :: Edit [DocBlock] -> [DocBlock] -> [DocBlock]

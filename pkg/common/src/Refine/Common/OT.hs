@@ -30,7 +30,6 @@ import qualified Data.Text as ST
 import qualified Data.Semigroup as Semigroup
 import qualified Generics.SOP as SOP
 import           Control.DeepSeq
-import           Test.QuickCheck (Arbitrary)
 import           Test.QuickCheck.Instances ()
 
 ----------------------------------------------------------------------------------------------
@@ -642,8 +641,8 @@ instance Splitable (Segments a b) where
 
 ----------
 
-newtype Segments a b = Segments [(a, b)]        -- TUNING: use Seq insted of []
-    deriving (Eq, Show, Generic, Arbitrary, ToJSON, FromJSON, NFData)
+newtype Segments a{-attribute-} b = Segments [(a, b)]        -- TUNING: use Seq instead of []
+    deriving (Eq, Show, Generic, ToJSON, FromJSON, NFData)
 
 instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) where
 
