@@ -58,7 +58,7 @@ class Editable d where
     ePatch :: EEdit d -> d -> d
 
     patch :: Edit d -> d -> d
-    patch = foldr (flip (.) . ePatch) id    -- FIXME: TUNING: use foldl
+    patch = flip $ foldl (flip ePatch)
 
     -- | assume second happend later in case of conflicts
     -- FUTUREWORK: measure information lost during merge

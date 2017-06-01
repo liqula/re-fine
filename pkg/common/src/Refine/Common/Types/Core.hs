@@ -472,8 +472,7 @@ instance Editable RawContent where
     diff a b = eRawContent $ diff (rawContentToDoc a) (rawContentToDoc b)
 
     ePatch e = docToRawContent . patch (coerce e) . rawContentToDoc
---  TUNING: define patch
---    patch e = docToRawContent . patch (coerce e) . rawContentToDoc
+    patch e = docToRawContent . patch (concat (coerce e :: [OT.Edit OTDoc])) . rawContentToDoc
 
 {-
             d
@@ -493,8 +492,10 @@ instance Editable RawContent where
 --    merge d a b = coerce $ merge (rawContentToDoc d) (coerce a) (coerce b)
 
     eInverse d = pure . coerce . inverse (rawContentToDoc d) . coerce
---  TUNING: define inverse
---    inverse d = coerce . inverse (rawContentToDoc d) . coerce
+    inverse d es = coerce $ f [] (rawContentToDoc d) (coerce es)
+      where
+        f acc _ [] = acc
+        f acc doc (x: xs) = f (inverse doc x: acc) (patch x doc) xs
 
 eRawContent :: OT.Edit OTDoc -> OT.Edit RawContent
 eRawContent [] = []
