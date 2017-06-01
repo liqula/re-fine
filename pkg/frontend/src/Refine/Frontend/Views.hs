@@ -80,18 +80,17 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                                 -- FIXME: I think this could be done more nicely.
 
       sendMouseUpIfReadOnly :: [SomeStoreAction]
-      sendMouseUpIfReadOnly = mconcat [ dispatch $ ContributionAction RequestSetRange | has _DocumentStateView (rs ^. gsDocumentState) ]
+      sendMouseUpIfReadOnly = dispatchMany [ContributionAction RequestSetRange | has _DocumentStateView (rs ^. gsDocumentState)]
 
       mainAttrs :: [PropertyOrHandler ViewEventHandler]
       mainAttrs =
         [ onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
         , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
-        ]
+        ] <> case rs ^. gsHeaderState . hsToolbarExtensionStatus of
+              HT.ToolbarExtensionClosed -> []
+              _ -> [onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseToolbarExtension)]
 
-  div_ (mainAttrs <> case rs ^. gsHeaderState . hsToolbarExtensionStatus of
-    HT.ToolbarExtensionClosed -> []
-    _ -> [ onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseToolbarExtension)
-         ]) $ do
+  div_ mainAttrs $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
       stickyContainer_ [] $ do
           mainHeader_ rs
