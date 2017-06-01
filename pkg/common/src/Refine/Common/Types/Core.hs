@@ -49,6 +49,7 @@ import qualified Data.HashMap.Lazy as HashMap
 import qualified Data.IntMap as IntMap
 import           Data.Either (isLeft)
 import           Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NEL
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text as ST
@@ -483,8 +484,11 @@ instance Editable RawContent where
             | makeJoinEdits
             d''
 -}
---  FIXME: define eMerge
---    eMerge d a b = coerce $ merge (rawContentToDoc d) (coerce a) (coerce b)
+    eMerge d a b = coerce ([a' <> e], [b' <> e])
+      where
+        doc = rawContentToDoc d
+        e = makeJoinEdits $ patch (coerce a <> a') doc
+        (a', b') = merge doc (coerce a) (coerce b)
 --  TUNING: define merge
 --    merge d a b = coerce $ merge (rawContentToDoc d) (coerce a) (coerce b)
 
@@ -554,6 +558,21 @@ docToRawContent blocks = mkRawContent $ mkDocBlock <$> blocks
                         (  [(offset, sty) | (offset, sty) <- acc, sty `Set.member` s]
                         <> [(n, sty) | sty <- Set.elems s, sty `notElem` fmap snd acc])
                         ss
+
+-- | Block canonicalization: merge neighboring line elems with same attr set.
+makeJoinEdits :: OTDoc -> OT.Edit OTDoc
+makeJoinEdits blocks = concat . zipWith simplifyBlock [0..] $ NEL.toList blocks
+  where
+    simplifyBlock :: Int -> DocBlock -> OT.Edit OTDoc
+    simplifyBlock i (DocBlock _ _ _ ls) = map ENonEmpty . editItem i . editSecond $ case ls of
+        []  -> []
+        [_] -> []
+        (es, _): xs -> go 0 es xs
+
+    go _ _ [] = []
+    go i p ((es, _): ls)
+        | p == es = JoinItems i: go i es ls
+        | otherwise = go (i+1) es ls
 
 
 -- | Note: empty block list is illegal.  For once it will make draft crash in 'stateFromContent'.

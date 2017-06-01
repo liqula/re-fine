@@ -13,7 +13,6 @@ module Refine.Common.VDoc.OTSpec where
 import Refine.Common.Prelude
 
 import           Data.List.NonEmpty (NonEmpty((:|)))
-import qualified Data.List.NonEmpty as NEL
 import           Test.QuickCheck
 import           Test.Hspec
 
@@ -22,21 +21,6 @@ import Refine.Common.OT
 import Refine.Common.VDoc.OT
 import Refine.Common.Types.Core hiding (Edit)
 
-
--- | Block canonicalization: merge neighboring line elems with same attr set.
-makeJoinEdits :: OTDoc -> Edit OTDoc
-makeJoinEdits blocks = concat . zipWith simplifyBlock [0..] $ NEL.toList blocks
-  where
-    simplifyBlock :: Int -> DocBlock -> Edit OTDoc
-    simplifyBlock i (DocBlock _ _ _ ls) = map ENonEmpty . editItem i . editSecond $ case ls of
-        []  -> []
-        [_] -> []
-        (es, _): xs -> go 0 es xs
-
-    go _ _ [] = []
-    go i p ((es, _): ls)
-        | p == es = JoinItems i: go i es ls
-        | otherwise = go (i+1) es ls
 
 -- do not insert more than 4 elems into a Style set
 instance HasEnoughInhabitants (Atom Style) where numOfInhabitants _ = Just 4
