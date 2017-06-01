@@ -30,6 +30,7 @@ import qualified Data.Text as ST
 import qualified Data.Semigroup as Semigroup
 import qualified Generics.SOP as SOP
 import           Control.DeepSeq
+import           Test.QuickCheck (Arbitrary)
 import           Test.QuickCheck.Instances ()
 
 ----------------------------------------------------------------------------------------------
@@ -223,7 +224,31 @@ instance SOP.Generic (EEdit (Either a b))
 instance SOP.HasDatatypeInfo (EEdit (Either a b))
 instance (NFData (EEdit a), NFData (EEdit b), NFData a, NFData b) => NFData (EEdit (Either a b)) where rnf = grnf
 
----------------------------------------- (Bounded, Enum) instance
+---------------------------------------- atomic data (cannot be replaced or edited)
+
+newtype NonEditable a = NonEditable { unNonEditable :: a }
+  deriving (Eq, Ord, Bounded, Enum, NFData, ToJSON, FromJSON, Arbitrary)
+
+instance Show a => Show (NonEditable a) where show = show . unNonEditable
+
+instance (Eq a) => Editable (NonEditable a) where
+    data EEdit (NonEditable a)
+      deriving (Generic)
+
+    docCost _    = 1
+    eCost _      = error "impossible"
+    ePatch _ _   = error "impossible"
+    diff _ _     = []
+    eMerge _ _ _ = error "impossible"
+    eInverse _ _ = error "impossible"
+
+instance Show (EEdit (NonEditable a)) where show _ = error "impossible"
+instance Eq (EEdit (NonEditable a)) where _ == _ = error "impossible"
+instance ToJSON (EEdit (NonEditable a)) where toJSON _ = error "impossible"
+instance FromJSON (EEdit (NonEditable a)) where parseJSON _ = error "impossible"
+instance NFData (EEdit (NonEditable a)) where rnf _ = error "impossible"
+
+---------------------------------------- atomic data (can be replaced but cannot be edited)
 
 newtype Atom a = Atom { unAtom :: a }
   deriving (Eq, Ord, Bounded, Enum, NFData, ToJSON, FromJSON)

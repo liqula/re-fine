@@ -169,6 +169,11 @@ test_diff d = do
 instance GenEdit () where
     genEdit _ = pure []
 
+---------------------------------------- NonEditable instance
+
+instance (Eq a, Show a, Arbitrary a) => GenEdit (NonEditable a) where
+    genEdit _ = pure []
+
 ---------------------------------------- (,) instance
 
 instance (GenEdit a, GenEdit b) => GenEdit (a, b) where
@@ -371,6 +376,7 @@ instance HasEnoughInhabitants ADigit
 spec :: Spec
 spec = parallel $ do
     runTest $ allTests @()
+    runTest $ allTests @(NonEditable Char)
     runTest $ allTests @ADigit
     runTest $ allTests @(ADigit, ADigit)
     runTest $ allTests @(ADigit, (ADigit, ADigit))

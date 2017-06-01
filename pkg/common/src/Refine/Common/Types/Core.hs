@@ -194,7 +194,7 @@ data HighlightMark
 -- https://draftjs.org/docs/api-reference-data-conversion.html#content
 --
 -- FIXME: make this type abstract.
--- if we construct a value here instead of by calling 'mkRawContent', it may be non-canonical, and 
+-- if we construct a value here instead of by calling 'mkRawContent', it may be non-canonical, and
 --              that may lead to strange artifacts in the diff.
 data RawContent = RawContent
   { _rawContentBlocks    :: NonEmpty (Block EntityKey)
