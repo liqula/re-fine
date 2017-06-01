@@ -142,7 +142,7 @@ test_diamond_left_join d = do
 test_inverse :: GenEdit d => d -> Gen Property
 test_inverse d = do
     a <- genEdit d
-    failPrint a $ equalEdit (a <> inverse d a) mempty d
+    failPrint (a, inverse d a) $ equalEdit (a <> inverse d a) mempty d
 
 test_inverse_inverse :: GenEdit d => d -> Gen Property
 test_inverse_inverse d = do
@@ -174,8 +174,8 @@ instance GenEdit () where
 instance (GenEdit a, GenEdit b) => GenEdit (a, b) where
     genEdit (a, b) = oneof
         [ pure []
-        , pure . EditFirst  <$> genEdit a
-        , pure . EditSecond <$> genEdit b
+        , editFirst  <$> genEdit a
+        , editSecond <$> genEdit b
         ]
 
 ---------------------------------------- Either instance
@@ -184,12 +184,12 @@ instance (GenEdit a, GenEdit b) => GenEdit (Either a b) where
     genEdit = \case
         Left a -> oneof
             [ pure []
-            , pure . EditLeft  <$> genEdit a
+            , editLeft  <$> genEdit a
             , pure . SetEither <$> arbitrary
             ]
         Right b -> oneof
             [ pure []
-            , pure . EditRight <$> genEdit b
+            , editRight <$> genEdit b
             , pure . SetEither <$> arbitrary
             ]
 
@@ -221,7 +221,7 @@ instance (GenEdit a) => GenEdit [a] where
                  <> [pure $ c <> [DeleteItem i] | i <- [0..n-1]]
                  <> [ do
                         cx <- genEdit x
-                        pure $ c <> [EditItem i cx]
+                        pure $ c <> editItem i cx
                     | (i, x) <- zip [0..] d']
         ]
 
@@ -229,7 +229,7 @@ instance (GenEdit a) => GenEdit [a] where
 
 instance GenEdit a => GenEdit (NonEmpty a) where
     genEdit (NEL.toList -> s) = do
-        e <- genEdit s `suchThat` \e -> not $ null (patch e s)
+        e <- genEdit s `suchThat` (all (not . null) . scanl (flip ePatch) s)
         pure $ coerce e
 
 ---------------------------------------- Seq instance
@@ -248,7 +248,7 @@ instance (GenEdit a) => GenEdit (Seq a) where
                  <> [pure $ c <> [DeleteSItem i] | i <- [0..n-1]]
                  <> [ do
                         cx <- genEdit x
-                        pure $ c <> [EditSItem i cx]
+                        pure $ c <> editSItem i cx
                     | (i, x) <- zip [0..] $ foldr (:) [] d']
         ]
 
@@ -280,7 +280,7 @@ instance (GenEdit a, Ord a, HasEnoughInhabitants a, Eq (EEdit a)) => GenEdit (Se
                  <> [ pure $ c <> [DeleteElem x] | x <- Set.elems d']
                  <> [ do
                         cx <- genEdit x `suchThat` \cx -> patch cx x `Set.notMember` d'
-                        pure $ c <> [EditElem x cx]
+                        pure $ c <> editElem x cx
                     | hasSpace d', x <- Set.elems d']
         ]
       where
