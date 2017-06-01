@@ -18,11 +18,9 @@ import           Test.QuickCheck
 import           Test.Hspec
 
 import Refine.Common.OTSpec hiding (spec)
-import Refine.Common.Test.Arbitrary
 import Refine.Common.OT
 import Refine.Common.VDoc.OT
 import Refine.Common.Types.Core hiding (Edit)
-import Refine.Common.VDoc.Draft
 
 
 -- | Block canonicalization: merge neighboring line elems with same attr set.
@@ -63,10 +61,8 @@ spec = parallel $ do
     it "Doc <-> RawContent conversion" . property $ \d ->
       rawContentToDoc (docToRawContent d) `shouldBe` d
 
-    -- TODO: review
     it "RawContent <-> Doc conversion" . property $ \d -> do
-      let clear = sanitizeRawContent . resetBlockKeys
-      (clear . docToRawContent . rawContentToDoc) d `shouldBe` clear d
+      docToRawContent (rawContentToDoc d) `shouldBe` d
 
 
     describe "showEditAsRawContent" $ do
