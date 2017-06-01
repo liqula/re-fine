@@ -69,7 +69,14 @@ class Editable d where
     -- >>> a >< b = (a x b, b x a)
     --
     -- with 'a' having precedence
-    merge :: d -> Edit d -> Edit d -> (Edit d, Edit d)
+    --
+    -- TUNING: return also the resulting document d'
+    --
+    --           d
+    --       e1 / \ e2
+    --      e1' \ / e2'
+    --           d'
+    merge :: d -> {-e1-}Edit d -> {-e2-}Edit d -> ({-e1'-}Edit d, {-e2'-}Edit d)
     merge _ [] b = (b, [])
     merge _ b [] = ([], b)
     merge d (a0: a1) (b0: b1) = (b0a0a1 <> b1a0b0a1b0a0, a0b0b1 <> a1b0a0b1a0b0)
@@ -641,7 +648,7 @@ instance Splitable (Segments a b) where
 
 ----------
 
-newtype Segments a{-attribute-} b = Segments [(a, b)]        -- TUNING: use Seq instead of []
+newtype Segments attribute elem = Segments [(attribute, elem)]        -- TUNING: use Seq instead of []
     deriving (Eq, Show, Generic, ToJSON, FromJSON, NFData)
 
 instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) where

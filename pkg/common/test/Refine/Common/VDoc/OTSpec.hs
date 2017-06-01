@@ -57,7 +57,7 @@ spec :: Spec
 spec = parallel $ do
 
     -- pendingWith "#310"
-    -- runTest $ allTests @RawContent
+    -- runTest' (RunTestConfig Nothing (Just 10)) $ allTests @RawContent
 
     it "Doc <-> RawContent conversion" . property $ \d ->
       rawContentToDoc (docToRawContent d) `shouldBe` d

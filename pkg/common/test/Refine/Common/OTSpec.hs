@@ -34,7 +34,7 @@ import Refine.Common.Test.Arbitrary ()
 
 -- | Auxiliary class needed for testing only
 class (Editable d, Arbitrary d, Eq d, Show d, Show (EEdit d)) => GenEdit d where
-    -- TUNING: return the pached structure too
+    -- TUNING: return the edited structure too
     genEdit :: d -> Gen (Edit d)
 
 runTest :: forall d. (Typeable d, GenEdit d) => [(String, d -> Gen Property)] -> Spec

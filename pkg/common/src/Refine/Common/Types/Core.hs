@@ -192,6 +192,10 @@ data HighlightMark
 
 -- | Haskell representation of the javascript @RawDraftContentState@.
 -- https://draftjs.org/docs/api-reference-data-conversion.html#content
+--
+-- FIXME: make this type abstract.
+-- if we construct a value here instead of by calling 'mkRawContent', it may be non-canonical, and 
+--              that may lead to strange artifacts in the diff.
 data RawContent = RawContent
   { _rawContentBlocks    :: NonEmpty (Block EntityKey)
   , _rawContentEntityMap :: IntMap Entity  -- ^ for performance, do not use @Map EntityKey Entity@ here.
@@ -447,8 +451,11 @@ instance FromJSON Style where
 
 -- ** Editable RawContent instance
 
+-- | The Editable instance maintain the
+-- assumption that neighbouring elements have different entities or styles.
 instance Editable RawContent where
     newtype EEdit RawContent
+        -- TODO: doc
         = ERawContent {unERawContent :: OT.Edit OTDoc}
       deriving (Generic, Show, Eq)
 
@@ -462,8 +469,17 @@ instance Editable RawContent where
 --  TUNING: define patch
 --    patch e = docToRawContent . patch (coerce e) . rawContentToDoc
 
+{-
+            d
+        e1 / \ e2
+          d1 d2
+           \ /
+            d'
+            | makeJoinEdits
+            d''
+-}
 --  FIXME: define eMerge
---    eMerge d a b = coerce $ eMerge (rawContentToDoc d) (coerce a) (coerce b)
+--    eMerge d a b = coerce $ merge (rawContentToDoc d) (coerce a) (coerce b)
 --  TUNING: define merge
 --    merge d a b = coerce $ merge (rawContentToDoc d) (coerce a) (coerce b)
 
@@ -479,6 +495,7 @@ instance SOP.HasDatatypeInfo (EEdit RawContent)
 
 -- ** helper functions for Editable RawContent instance
 
+-- | TODO: accept non-canonical RawContent (with unjoined line elements)
 rawContentToDoc :: RawContent -> OTDoc
 rawContentToDoc (RawContent blocks entities) = mkDocBlock <$> blocks
   where
