@@ -47,6 +47,7 @@ import           Data.Int
 import           Data.Foldable (toList)
 import qualified Data.HashMap.Lazy as HashMap
 import qualified Data.IntMap as IntMap
+import           Data.Either (isLeft)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -294,23 +295,28 @@ pattern DocBlock a b c = ((Atom a, Atom b), Segments c)
 -- | A segment of an inline style, consisting of 'EntityRange' and 'Style'.
 --
 -- FIXME: Entities are not joinable but styles are joinable -- OT should take care of this
--- FIXME: Entities may not overlap but styles may overlap -- OT should take care of this too
 {- a better representation could be style blocks inside entity blocks:
     [< style set A >< style set B >< style set C >][              ][                 ]
     Entity1                                        Entity2         Entity3
 -}
-type LineElems = Segments (Set (Atom EntityStyle)) NonEmptyST
-type LineElem = (Set (Atom EntityStyle), NonEmptyST)
+type LineElems = Segments EntityStyles NonEmptyST
+type LineElem = (EntityStyles, NonEmptyST)
+
+type EntityStyles = (Atom (Maybe Entity), Set (Atom Style))
 
 -- | TUNING: (Set.mapMonotonic unAtom) and (Set.mapMonotonic Atom) should be (coerce)
 --   but GHC can't see that (Ord (Atom a)) is the same as (Ord a)
-pattern LineElem :: Set EntityStyle -> NonEmptyST -> LineElem
-pattern LineElem a b <- (Set.mapMonotonic unAtom -> a, b)
-  where LineElem a b = (Set.mapMonotonic Atom a, b)
+pattern LineElem :: Set (Either Entity Style) -> NonEmptyST -> LineElem
+pattern LineElem a b <- (makeEntityStyleSet -> a, b)
+  where LineElem a b = ((Atom (mb $ Set.toList s1), Set.mapMonotonic (\(Right sty) -> Atom sty) s2), b)
+          where
+            (s1, s2) = Set.partition isLeft a
+            mb [] = Nothing
+            mb [Left x] = Just x
+            mb _ = error "overlapping entities"
 
-
-type EntityStyle = Either Entity Style
-
+makeEntityStyleSet :: EntityStyles -> Set (Either Entity Style)
+makeEntityStyleSet (Atom e, s) = maybe mempty (Set.singleton . Left) e <> Set.mapMonotonic (Right . unAtom) s
 
 -- * Instances
 
@@ -482,7 +488,7 @@ rawContentToDoc (RawContent blocks entities) = mkDocBlock <$> blocks
             | len > 0 = LineElem s (NonEmptyST $ ST.take len text): segment ss (ST.drop len text)
             | otherwise = error "segment text length is 0"
 
-        segments :: [(Int, Set EntityStyle)]
+        segments :: [(Int, Set (Either Entity Style))]
         segments = mkSomeSegments fst snd
                  $ (second Right <$> styles)
                 <> ((\(e, r) -> (r, Left (entities IntMap.! coerce e))) <$> eranges)

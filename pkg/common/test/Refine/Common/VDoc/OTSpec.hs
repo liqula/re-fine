@@ -36,8 +36,8 @@ simplifyDoc blocks = simplifyBlock <$> blocks
 
     joinElems xs = LineElem (attrs $ head xs) . mconcat $ map txt xs
 
--- do not insert more than 5 elems into an EntityStyle set
-instance HasEnoughInhabitants (Atom EntityStyle) where numOfInhabitants _ = Just 5
+-- do not insert more than 4 elems into a Style set
+instance HasEnoughInhabitants (Atom Style) where numOfInhabitants _ = Just 4
 
 instance GenEdit RawContent where
     genEdit d = (map ERawContent <$> genEdit (rawContentToDoc d)) `suchThat` \edit -> isValidRawContent (patch edit d)

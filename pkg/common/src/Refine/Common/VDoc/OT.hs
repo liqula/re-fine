@@ -16,6 +16,8 @@ import           Refine.Common.Types.Core hiding (Edit)
 pattern DocBlock' :: Atom BlockType -> Atom Int -> [LineElem] -> DocBlock
 pattern DocBlock' a b c = ((a, b), Segments c)
 
+type Styles = Set (Atom Style)
+
 showEditAsRawContent :: Edit RawContent -> RawContent -> RawContent
 showEditAsRawContent edits
     = docToRawContent . NEL.fromList . patchBlocks (coerce edits) . NEL.toList . rawContentToDoc
@@ -46,38 +48,48 @@ showEditAsRawContent edits
         = patchLineElems es $ take i bs <> (markElem StyleAdded x: drop i bs)
     patchLineElems (SegmentListEdit (EditItem i edit): es) bs
         = patchLineElems (incIdx' i (length ls - 1) <$> es) $ take i bs <> (ls <> drop (i+1) bs)
-      where ls = patchLineElem (bs !! i) edit
+      where ls = patchLineElem edit (bs !! i)
     patchLineElems (JoinItems i: es) (splitAt i -> (as, (a1, b1): (a2, b2): bs))
         | a1 /= a2 = error "impossible: items are not joinable"
         | otherwise = patchLineElems es $ as <> (markElem StyleChanged (a1, joinItems b1 b2): bs)
     patchLineElems (SplitItem i j: es) (splitAt i -> (as, (a, splitItem j -> (b1, b2)): bs))
         = patchLineElems es $ as <> (markElem StyleChanged (a, b1): markElem StyleChanged (a, b2): bs)
 
-    patchLineElem :: LineElem -> Edit LineElem -> [LineElem]
-    patchLineElem le es
-        = patchLineElemText (patchLineElemStyle le [e | EditFirst es' <- es, e <- es']) [e | EditSecond es' <- es, e <- es']
+    patchLineElem :: Edit LineElem -> LineElem -> [LineElem]
+    patchLineElem es
+        = patchLineElemText [e | EditSecond es' <- es, e <- es']
+        . patchLineElemEntityStyle [e | EditFirst es' <- es, e <- es']
 
-    patchLineElemStyle :: LineElem -> Edit (Set (Atom EntityStyle)) -> LineElem
-    patchLineElemStyle le [] = le
-    patchLineElemStyle (as, text) e = markElem StyleChanged (patch e as, text)
+    patchLineElemEntityStyle :: Edit EntityStyles -> LineElem -> LineElem
+    patchLineElemEntityStyle es
+        = patchLineElemEntity [e | EditFirst  es' <- es, e <- es']
+        . patchLineElemStyle  [e | EditSecond es' <- es, e <- es']
 
-    patchLineElemText :: LineElem -> Edit NonEmptyST -> [LineElem]
-    patchLineElemText (as, text) es
-        = [ (as <> marks, text')
-          | (marks, text') <- compress $ patchText ((,) mempty <$> cs text) [unNEText e | e <- es]
+    patchLineElemEntity :: Edit (Atom (Maybe Entity)) -> LineElem -> LineElem
+    patchLineElemEntity [] le = le
+    patchLineElemEntity e ((ent, ss), text) = markElem StyleChanged ((patch e ent, ss), text)
+
+    patchLineElemStyle :: Edit (Set (Atom Style)) -> LineElem -> LineElem
+    patchLineElemStyle [] le = le
+    patchLineElemStyle e ((ent, ss), text) = markElem StyleChanged ((ent, patch e ss), text)
+
+    patchLineElemText :: Edit NonEmptyST -> LineElem -> [LineElem]
+    patchLineElemText es ((ent, as), text)
+        = [ ((ent, as <> marks), text')
+          | (marks, text') <- compress $ patchText ((,) noStyle <$> cs text) [unNEText e | e <- es]
           ]
 
-    patchText :: [(Set (Atom EntityStyle), Char)] -> Edit String -> [(Set (Atom EntityStyle), Char)]
+    patchText :: [(Styles, Char)] -> Edit String -> [(Styles, Char)]
     patchText bs [] = bs
     patchText bs (e:es) = case e of
-        DeleteItem i    -> patchText (take i bs <> (markElem StyleDeleted (bs !! i): drop (i+1) bs)) $ incIdx i 1 <$> es
-        InsertItem i x  -> patchText (take i bs <> (markElem StyleAdded (mempty, x): drop i bs)) es
+        DeleteItem i    -> patchText (take i bs <> (markStyle StyleDeleted (bs !! i): drop (i+1) bs)) $ incIdx i 1 <$> es
+        InsertItem i x  -> patchText (take i bs <> (markStyle StyleAdded (noStyle, x): drop i bs)) es
         EditItem i edit -> patchText (take i bs <> (foldl patchChar (bs !! i) edit: drop (i+1) bs)) es
 
-    patchChar :: (Set (Atom EntityStyle), Char) -> EEdit Char -> (Set (Atom EntityStyle), Char)
-    patchChar a _ = markElem StyleChanged a
+    patchChar :: (Styles, Char) -> EEdit Char -> (Styles, Char)
+    patchChar a _ = markStyle StyleChanged a
 
-    compress :: [(Set (Atom EntityStyle), Char)] -> [LineElem]
+    compress :: [(Styles, Char)] -> [(Styles, NonEmptyST)]
     compress = fmap (\xs -> (fst (head xs), NonEmptyST $ cs (snd <$> xs))) . groupBy ((==) `on` fst)
 
     incIdx i k = \case
@@ -97,5 +109,13 @@ showEditAsRawContent edits
 
     markBlock sty (DocBlock btype depth elems) = DocBlock btype depth (markElem sty <$> elems)
 
-    markElem :: Style -> (Set (Atom EntityStyle), a) -> (Set (Atom EntityStyle), a)
-    markElem sty = first (Set.singleton (Atom (Right sty)) <>)
+    markElem :: Style -> (EntityStyles, a) -> (EntityStyles, a)
+    markElem = first . second . addStyle
+
+    markStyle :: Style -> (Styles, a) -> (Styles, a)
+    markStyle = first . addStyle
+
+    addStyle sty = (Set.singleton (Atom sty) <>)
+
+    noStyle :: Styles
+    noStyle = mempty
