@@ -102,7 +102,7 @@ instance Arbitrary BlockDepth where
   arbitrary = BlockDepth <$> choose (0, 36)
 
 instance Arbitrary RawContent where
-  arbitrary = initBlockKeys . docToRawContent <$> arbitrary
+  arbitrary = initBlockKeys . docToRawContent <$> scale (`div` 3) arbitrary
   shrink    = fmap (docToRawContent . rawContentToDoc) <$> gshrink
 
 {- alternative implementation
@@ -112,6 +112,10 @@ instance Arbitrary RawContent where
 -}
 initBlockKeys :: RawContent -> RawContent
 initBlockKeys = rawContentBlocks %~ NEL.zipWith (\k -> blockKey .~ (Just . BlockKey . cs . show $ k)) (NEL.fromList [(0 :: Int)..])
+
+legalChar :: Char -> Bool
+legalChar = (`notElem` ['\\'])  -- (occurrances of '\\' shift ranges around in the test suite.)
+  -- more conservatively, we could test against this: (`elem` (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ " "))
 
 -- | These are the sanity conditions imposed on 'ContentState' by the draft library.  Everything
 -- that does not meet these conditions will be silently removed from the input.
@@ -129,11 +133,8 @@ sanitizeRawContent = deleteDanglingEntityRefs
                    . boundDepth
                    . removeIllegalChars
   where
-    removeIllegalChars (RawContent bs es) = RawContent ((blockText %~ ST.filter ok) <$> bs) es
-      where
-        ok :: Char -> Bool
-        ok = (`notElem` ['\\'])  -- (occurrances of '\\' shift ranges around in the test suite.)
-          -- more conservatively, we could test against this: (`elem` (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ " "))
+    removeIllegalChars :: RawContent -> RawContent
+    removeIllegalChars (RawContent bs es) = RawContent ((blockText %~ ST.filter legalChar) <$> bs) es
 
     boundDepth (RawContent bs es) = RawContent ((blockDepth %~ (min 36 . max 0)) <$> bs) es
       -- (ok, the upper bound of 36 for depth is arbitrarily introduced here.  don't know about draft.)
@@ -295,7 +296,8 @@ arbitrarySoundSelectionState (RawContent bs _) = do
   pure $ SelectionState isback start end
 
 instance Arbitrary NonEmptyST where
-  arbitrary = NonEmptyST . ST.pack . NEL.toList <$> arbitrary
+  -- HACK: legalChar is needed for the Arbitrary instance of OTDoc
+  arbitrary = NonEmptyST . ST.pack <$> scale (`div` 2) (listOf1 $ arbitrary `suchThat` legalChar)
 
 instance (Arbitrary a, Arbitrary b, Eq a, Splitable b) => Arbitrary (Segments a b) where
   arbitrary = Segments . map (\xs -> (fst (head xs), foldr1 joinItems $ snd <$> xs)) . groupBy ((==) `on` fst)

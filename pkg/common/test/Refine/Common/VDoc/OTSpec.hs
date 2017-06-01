@@ -44,23 +44,21 @@ makeJoinEdits blocks = concat . zipWith simplifyBlock [0..] $ NEL.toList blocks
 instance HasEnoughInhabitants (Atom Style) where numOfInhabitants _ = Just 4
 
 instance GenEdit RawContent where
-    genEdit d = oneof
-        [ pure []
-        , do
+    genEdit d = sizedEdit $ do
             c <- genEdit d
             let doc = rawContentToDoc $ patch c d  -- TUNING: eliminate rawContentToDoc
             e <- genEdit doc
             let doc' = patch e doc
             pure $ c <> eRawContent (e <> makeJoinEdits doc')
-        ]
 
 --------------------------------------------------------- tests
 
 spec :: Spec
 spec = parallel $ do
 
-    -- FIXME: instead of using runTest' here, define better Arbitrary instances using scale
-    runTest' (RunTestConfig Nothing (Just 5)) $ allTests @RawContent
+    runTest $ fastTests @RawContent
+    -- TUNING: speed up diff on RawContent to be able to use runTest
+    runTest' (RunTestConfig (Just 2) (Just 10)) $ hardTests @RawContent
 
     it "Doc <-> RawContent conversion" . property $ \d ->
       rawContentToDoc (docToRawContent d) `shouldBe` d

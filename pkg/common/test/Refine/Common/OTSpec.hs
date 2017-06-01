@@ -176,10 +176,14 @@ instance (Eq a, Show a, Arbitrary a) => GenEdit (NonEditable a) where
 
 ---------------------------------------- (,) instance
 
+sizedEdit :: Gen [a] -> Gen [a]
+sizedEdit m = sized $ \case
+    0 -> pure []
+    _ -> oneof [pure [], scale (`div` 2) m]
+
 instance (GenEdit a, GenEdit b) => GenEdit (a, b) where
-    genEdit (a, b) = oneof
-        [ pure []
-        , editFirst  <$> genEdit a
+    genEdit (a, b) = sizedEdit $ oneof
+        [ editFirst  <$> genEdit a
         , editSecond <$> genEdit b
         ]
 
@@ -187,21 +191,19 @@ instance (GenEdit a, GenEdit b) => GenEdit (a, b) where
 
 instance (GenEdit a, GenEdit b) => GenEdit (Either a b) where
     genEdit = \case
-        Left a -> oneof
-            [ pure []
-            , editLeft  <$> genEdit a
+        Left a -> sizedEdit $ oneof
+            [ editLeft <$> genEdit a
             , pure . SetEither <$> arbitrary
             ]
-        Right b -> oneof
-            [ pure []
-            , editRight <$> genEdit b
+        Right b -> sizedEdit $ oneof
+            [ editRight <$> genEdit b
             , pure . SetEither <$> arbitrary
             ]
 
 ---------------------------------------- (Bounded, Enum) instance
 
 instance (Eq a, Show a, Arbitrary a) => GenEdit (Atom a) where
-    genEdit _ = fmap EAtom <$> listOf arbitrary
+    genEdit _ = fmap EAtom <$> listOf (scale (`div` 2) arbitrary)
 
 ---------------------------------------- Char instance (via Atom Char)
 
@@ -211,9 +213,7 @@ instance GenEdit Char where
 ---------------------------------------- List instance
 
 instance (GenEdit a) => GenEdit [a] where
-    genEdit d = oneof
-        [ pure []
-        , do
+    genEdit d = sizedEdit $ do
             c <- genEdit d
             let d' = patch c d
                 n = length d'
@@ -226,7 +226,6 @@ instance (GenEdit a) => GenEdit [a] where
                         cx <- genEdit x
                         pure $ c <> editItem i cx
                     | (i, x) <- zip [0..] d']
-        ]
 
 ---------------------------------------- non-empty list instance
 
@@ -238,9 +237,7 @@ instance GenEdit a => GenEdit (NonEmpty a) where
 ---------------------------------------- Seq instance
 
 instance (GenEdit a) => GenEdit (Seq a) where
-    genEdit d = oneof
-        [ pure []
-        , do
+    genEdit d = sizedEdit $ do
             c <- genEdit d
             let d' = patch c d
                 n = length d'
@@ -253,7 +250,6 @@ instance (GenEdit a) => GenEdit (Seq a) where
                         cx <- genEdit x
                         pure $ c <> editSItem i cx
                     | (i, x) <- zip [0..] $ foldr (:) [] d']
-        ]
 
 ---------------------------------------- Strict text instance
 
@@ -265,15 +261,13 @@ instance GenEdit ST where
 
 instance GenEdit NonEmptyST where
     genEdit (NonEmptyST s) = do
-        e <- genEdit s `suchThat` \e -> not $ ST.null (patch e s)
+        e <- genEdit s `suchThat` (all (not . ST.null) . scanl (flip ePatch) s)
         pure $ coerce e
 
 ---------------------------------------- Set instance
 
 instance (GenEdit a, Ord a, HasEnoughInhabitants a, Eq (EEdit a)) => GenEdit (Set a) where
-    genEdit d = oneof
-        [ pure []
-        , do
+    genEdit d = sizedEdit $ do
             c <- genEdit d
             let d' = patch c d
             oneof $
@@ -285,7 +279,6 @@ instance (GenEdit a, Ord a, HasEnoughInhabitants a, Eq (EEdit a)) => GenEdit (Se
                         cx <- genEdit x `suchThat` \cx -> patch cx x `Set.notMember` d'
                         pure $ c <> editElem x cx
                     | hasSpace d', x <- Set.elems d']
-        ]
       where
         hasSpace s = hasMoreInhabitantsThan (Proxy :: Proxy a) (Set.size s)
 
@@ -310,9 +303,7 @@ instance HasEnoughInhabitants a => HasEnoughInhabitants (Set a) where
 ---------------------------------------- Segments instance
 
 instance (GenEdit a, GenEdit b, Splitable b) => GenEdit (Segments a b) where
-    genEdit d = oneof
-        [ pure []
-        , do
+    genEdit d = sizedEdit $ do
             c <- genEdit d
             let (Segments d') = patch c d
                 n = length d'
@@ -331,7 +322,6 @@ instance (GenEdit a, GenEdit b, Splitable b) => GenEdit (Segments a b) where
                         j <- choose (0, splitLength x)
                         pure $ c <> [SplitItem i j]
                     | (i, (_, x)) <- zip [0..] d']
-        ]
 
 ---------------------- test Splitable type class laws
 
