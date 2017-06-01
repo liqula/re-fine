@@ -59,10 +59,6 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
   { Outdated.lRender = \() props -> liftViewToStateHandler $ do
       let dstate = props ^. dpDocumentState
 
-          sendMouseUpIfReadOnly :: [SomeStoreAction]
-          sendMouseUpIfReadOnly =
-            mconcat [ dispatch $ ContributionAction RequestSetRange | has _DocumentStateView dstate ]
-
           editorState :: EditorState
           editorState = maybe (dstate ^. documentStateVal) (createWithContent . convertFromRaw) rawContentDiffView
 
@@ -85,8 +81,6 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
 
       article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
                , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
-               , onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
-               , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
                ] $ do
         editor_
           [ "editorState" &= editorState
