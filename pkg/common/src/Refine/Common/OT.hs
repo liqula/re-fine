@@ -671,8 +671,10 @@ instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) 
     ePatch (JoinItems i) (Segments (splitAt i -> (as, (a1, b1): (a2, b2): bs)))
         | a1 == a2  = Segments $ as <> ((a1, joinItems b1 b2): bs)
         | otherwise = error "impossible: items are not joinable"
+    ePatch (JoinItems i) (Segments s) = error $ "ePatch @Segments (JoinItems " <> show i <> ") " <> show (length s)
     ePatch (SplitItem i j) (Segments (splitAt i -> (as, (a, splitItem j -> (b1, b2)): bs)))
         = Segments $ as <> ((a, b1): (a, b2): bs)
+    ePatch (SplitItem i j) (Segments s) = error $ "ePatch @Segments (SplitItem " <> show i <> " " <> show j <> ") " <> show (length s)
 
     diff (Segments s1) (Segments s2) = SegmentListEdit <$> diff s1 s2
 
