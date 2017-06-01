@@ -30,7 +30,10 @@ makeJoinEdits :: OTDoc -> Edit OTDoc
 makeJoinEdits blocks = concat . zipWith simplifyBlock [0..] $ NEL.toList blocks
   where
     simplifyBlock :: Int -> DocBlock -> Edit OTDoc
-    simplifyBlock i (DocBlock _ _ ls) = map ENonEmpty . editItem i . editSecond $ go 0 (Atom Nothing, mempty) ls
+    simplifyBlock i (DocBlock _ _ ls) = map ENonEmpty . editItem i . editSecond $ case ls of
+        []  -> []
+        [_] -> []
+        (es, _): xs -> go 0 es xs
 
     go _ _ [] = []
     go i p ((es, _): ls)
@@ -48,7 +51,7 @@ instance GenEdit RawContent where
             let doc = rawContentToDoc $ patch c d  -- TUNING: eliminate rawContentToDoc
             e <- genEdit doc
             let doc' = patch e doc
-            pure $ c <> [ERawContent $ e <> makeJoinEdits doc']
+            pure $ c <> eRawContent (e <> makeJoinEdits doc')
         ]
 
 --------------------------------------------------------- tests
@@ -57,7 +60,7 @@ spec :: Spec
 spec = parallel $ do
 
     -- pendingWith "#310"
-    -- runTest' (RunTestConfig Nothing (Just 10)) $ allTests @RawContent
+    runTest $ allTests @RawContent  -- this is fast enough now and has better error message than runTest'
 
     it "Doc <-> RawContent conversion" . property $ \d ->
       rawContentToDoc (docToRawContent d) `shouldBe` d
@@ -70,11 +73,11 @@ spec = parallel $ do
 
     describe "showEditAsRawContent" $ do
       it "shows added text with custom style 'ADDED'." $ do
-        let edit = [ERawContent [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond
+        let edit = eRawContent [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond
                         [ NEText (InsertItem 10 'a')
                         , NEText (InsertItem 11 'n')
                         , NEText (InsertItem 12 'd')
-                        , NEText (InsertItem 13 '/')]]]]]]
+                        , NEText (InsertItem 13 '/')]]]]]
             rc   = mkRawContent $ mkBlock "some text or other" :| []
             rc'  = mkRawContent $ (mkBlock "some text and/or other" & blockStyles .~ [((10, 4), StyleAdded)]) :| []
         showEditAsRawContent edit rc `shouldBe` rc'
@@ -83,7 +86,7 @@ spec = parallel $ do
         let -- FIXME: edit rc . mkRawContent $ mkBlock "someer" :| []
             -- this doesn't work now because the cost of deleting chars is more than
             -- the cost of deleting the block and adding a new one
-            edit = [ERawContent [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond
+            edit = eRawContent [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond
                         [ NEText (DeleteItem 4)
                         , NEText (DeleteItem 4)
                         , NEText (DeleteItem 4)
@@ -95,13 +98,13 @@ spec = parallel $ do
                         , NEText (DeleteItem 4)
                         , NEText (DeleteItem 4)
                         , NEText (DeleteItem 4)
-                        , NEText (DeleteItem 4)]]]]]]
+                        , NEText (DeleteItem 4)]]]]]
             rc   = mkRawContent $ mkBlock "some text or other" :| []
             rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [((4, 12), StyleDeleted)]) :| []
         showEditAsRawContent edit rc `shouldBe` rc'
 
       it "shows deleted block with custom style 'DELETED'." $ do
-        let edit = [ERawContent [ENonEmpty $ DeleteItem 0]]
+        let edit = eRawContent [ENonEmpty $ DeleteItem 0]
             rc   = mkRawContent $ mkBlock "some text or other" :| []
             rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [((0, 18), StyleDeleted)]) :| []
         showEditAsRawContent edit rc `shouldBe` rc'

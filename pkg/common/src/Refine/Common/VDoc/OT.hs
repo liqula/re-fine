@@ -13,7 +13,7 @@ import           Refine.Common.Prelude
 import           Refine.Common.OT
 import           Refine.Common.Types.Core hiding (Edit)
 
-pattern DocBlock' :: Atom BlockType -> Atom Int -> [LineElem] -> DocBlock
+pattern DocBlock' :: Atom BlockType -> Atom BlockDepth -> [LineElem] -> DocBlock
 pattern DocBlock' a b c = ((a, b), Segments c)
 
 type Styles = Set (Atom Style)

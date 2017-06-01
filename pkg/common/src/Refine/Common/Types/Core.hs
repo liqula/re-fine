@@ -291,10 +291,15 @@ data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom | MarkSelectorUnkno
 type OTDoc = NonEmpty DocBlock
 
 -- | (third constructor arg is depth)
-type DocBlock = ((Atom BlockType, Atom Int), LineElems)
+type DocBlock = ((Atom BlockType, Atom BlockDepth), LineElems)
 
-pattern DocBlock :: BlockType -> Int -> [LineElem] -> DocBlock
+pattern DocBlock :: BlockType -> BlockDepth -> [LineElem] -> DocBlock
 pattern DocBlock a b c = ((Atom a, Atom b), Segments c)
+
+-- | An integer between 0 and 36
+-- (ok, the upper bound of 36 for depth is arbitrarily introduced here.  don't know about draft.)
+newtype BlockDepth = BlockDepth {unBlockDepth :: Int}
+  deriving (Eq, Ord, Show, Read, ToJSON, FromJSON, Generic, NFData)
 
 {- | A segment of an inline style, consisting of 'EntityRange' and 'Style'.
 -}
@@ -463,7 +468,7 @@ instance Editable RawContent where
     eCost = cost . unERawContent
 
     -- FUTUREWORK: smarter diff producing smaller elementary patches
-    diff a b = [ERawContent $ diff (rawContentToDoc a) (rawContentToDoc b)]
+    diff a b = eRawContent $ diff (rawContentToDoc a) (rawContentToDoc b)
 
     ePatch e = docToRawContent . patch (coerce e) . rawContentToDoc
 --  TUNING: define patch
@@ -487,6 +492,10 @@ instance Editable RawContent where
 --  TUNING: define inverse
 --    inverse d = coerce . inverse (rawContentToDoc d) . coerce
 
+eRawContent :: OT.Edit OTDoc -> OT.Edit RawContent
+eRawContent [] = []
+eRawContent e  = [ERawContent e]
+
 instance ToJSON (EEdit RawContent)
 instance FromJSON (EEdit RawContent)
 instance SOP.Generic (EEdit RawContent)
@@ -500,13 +509,18 @@ rawContentToDoc :: RawContent -> OTDoc
 rawContentToDoc (RawContent blocks entities) = mkDocBlock <$> blocks
   where
     mkDocBlock :: Block EntityKey -> DocBlock
-    mkDocBlock (Block txt eranges styles ty depth _key) = DocBlock ty depth (segment segments txt)
+    mkDocBlock (Block txt eranges styles ty depth _key) = DocBlock ty (BlockDepth depth) (segment segments txt)
       where
         segment [] "" = []
         segment [] text = [LineElem mempty $ NonEmptyST text]
         segment ((len, s): ss) text
-            | len > 0 = LineElem s (NonEmptyST $ ST.take len text): segment ss (ST.drop len text)
+            | len > 0 = LineElem s (NonEmptyST $ ST.take len text) `add` segment ss (ST.drop len text)
             | otherwise = error "segment text length is 0"
+
+        e `add` [] = [e]
+        e@(at1, x) `add` ls@((at2, y): ls')
+            | at1 == at2 = (at1, x <> y): ls'
+            | otherwise  = e: ls
 
         segments :: [(Int, Set (Either Entity Style))]
         segments = mkSomeSegments fst snd
@@ -519,7 +533,7 @@ docToRawContent blocks = mkRawContent $ mkDocBlock <$> blocks
     getText (LineElem _ (NonEmptyST txt)) = txt
 
     mkDocBlock :: DocBlock -> Block Entity
-    mkDocBlock (DocBlock ty d es) = Block
+    mkDocBlock (DocBlock ty (BlockDepth d) es) = Block
         (mconcat $ fmap getText es)
         [(e, r) | (r, Left e) <- ranges]
         [(r, s) | (r, Right s) <- ranges]

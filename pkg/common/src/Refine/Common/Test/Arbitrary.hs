@@ -97,6 +97,10 @@ gshrink = List.map to . shrinkSOP . from
     mkFn f = Fn (f . unI)
 
 
+-- (ok, the upper bound of 36 for depth is arbitrarily introduced here.  don't know about draft.)
+instance Arbitrary BlockDepth where
+  arbitrary = BlockDepth <$> choose (0, 36)
+
 instance Arbitrary RawContent where
   arbitrary = initBlockKeys . sanitizeRawContent . mkRawContent <$> arbitrary
   shrink    = fmap sanitizeRawContent <$> gshrink
