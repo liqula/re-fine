@@ -59,8 +59,8 @@ instance GenEdit RawContent where
 spec :: Spec
 spec = parallel $ do
 
-    -- pendingWith "#310"
-    --runTest $ allTests @RawContent  -- this is fast enough now and has better error message than runTest'
+    -- FIXME: instead of using runTest' here, define better Arbitrary instances using scale
+    runTest' (RunTestConfig Nothing (Just 5)) $ allTests @RawContent
 
     it "Doc <-> RawContent conversion" . property $ \d ->
       rawContentToDoc (docToRawContent d) `shouldBe` d

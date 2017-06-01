@@ -102,9 +102,14 @@ instance Arbitrary BlockDepth where
   arbitrary = BlockDepth <$> choose (0, 36)
 
 instance Arbitrary RawContent where
+  arbitrary = initBlockKeys . docToRawContent <$> arbitrary
+  shrink    = fmap (docToRawContent . rawContentToDoc) <$> gshrink
+
+{- alternative implementation
+instance Arbitrary RawContent where
   arbitrary = initBlockKeys . sanitizeRawContent . mkRawContent <$> arbitrary
   shrink    = fmap sanitizeRawContent <$> gshrink
-
+-}
 initBlockKeys :: RawContent -> RawContent
 initBlockKeys = rawContentBlocks %~ NEL.zipWith (\k -> blockKey .~ (Just . BlockKey . cs . show $ k)) (NEL.fromList [(0 :: Int)..])
 

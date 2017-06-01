@@ -203,8 +203,6 @@ instance (GenEdit a, GenEdit b) => GenEdit (Either a b) where
 instance (Eq a, Show a, Arbitrary a) => GenEdit (Atom a) where
     genEdit _ = fmap EAtom <$> listOf arbitrary
 
-deriving instance Arbitrary a => Arbitrary (Atom a)
-
 ---------------------------------------- Char instance (via Atom Char)
 
 instance GenEdit Char where
