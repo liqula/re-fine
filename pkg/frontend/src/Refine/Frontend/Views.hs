@@ -34,6 +34,7 @@ import Refine.Frontend.Prelude
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Tree as ST
+import           Language.Css.Syntax
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Bubble
@@ -55,6 +56,7 @@ import           Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Views.Types
 import qualified Refine.Frontend.Workbench
+import           Refine.Frontend.Util
 
 
 -- | The controller view and also the top level of the Refine app.  This controller view registers
@@ -77,10 +79,18 @@ mainScreen = mkView "MainScreen" $ \rs -> do
       __ :: Translations = rs ^. RS.gsTranslations . unTrans
                                 -- FIXME: I think this could be done more nicely.
 
-  div_ (case rs ^. gsHeaderState . hsToolbarExtensionStatus of
-    HT.ToolbarExtensionClosed -> []
-    _ -> [ onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseToolbarExtension)
-         ]) $ do
+      sendMouseUpIfReadOnly :: [SomeStoreAction]
+      sendMouseUpIfReadOnly = dispatchMany [ContributionAction RequestSetRange | has _DocumentStateView (rs ^. gsDocumentState)]
+
+      mainAttrs :: [PropertyOrHandler ViewEventHandler]
+      mainAttrs =
+        [ onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
+        , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
+        ] <> case rs ^. gsHeaderState . hsToolbarExtensionStatus of
+              HT.ToolbarExtensionClosed -> []
+              _ -> [onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseToolbarExtension)]
+
+  div_ mainAttrs $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
       stickyContainer_ [] $ do
           mainHeader_ rs
@@ -125,6 +135,11 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                                                 (rs ^. RS.gsContributionState)
                                                 (rs ^. gsHeaderState . hsToolbarExtensionStatus)
                       rightAside_ asideProps
+
+          -- append an empty page to the botton.  (helps with legitimate attempts to scroll beyond
+          -- the end of the document, e.g. when moving dialogs into the center of the screen before
+          -- they have been rendered.)
+          div_ ["style" @@= [decl "margin-bottom" (Px 800)]] $ pure ()
 
 mainScreen_ :: GlobalState -> ReactElementM eventHandler ()
 mainScreen_ !rs = view_ mainScreen "mainScreen_" rs

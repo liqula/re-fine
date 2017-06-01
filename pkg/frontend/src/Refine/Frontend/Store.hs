@@ -40,7 +40,7 @@ import           Refine.Common.Rest (ApiError(..))
 import           Refine.Common.Test.Samples
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
-import           Refine.Frontend.Document.FFI (traceContentInEditorState, traceEditorState)
+import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Store (setMarkPositions, documentStateUpdate, editorStateToVDocVersion)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
@@ -113,6 +113,9 @@ transformGlobalState = transf
 
         ContributionAction (SetRange _) -> removeAllRanges
         ContributionAction ClearRange   -> removeAllRanges
+
+        ContributionAction ShowCommentEditor            -> scrollToCurrentSelection (st ^. gsContributionState)
+        DocumentAction RequestDocumentSave              -> scrollToCurrentSelection (st ^. gsContributionState)
 
         HeaderAction ScrollToPageTop -> liftIO js_scrollToPageTop
 
@@ -384,10 +387,14 @@ gsChunkRange f gs = outof <$> f (into gs)
 -- for (2) for looking at the DOM for the position data.
 getRangeAction :: MonadIO m => DocumentState -> m (Maybe ContributionAction)
 getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
-  sel <- getDraftSelectionStateViaBrowser
-  if selectionIsEmpty (dstate ^?! documentStateContent) sel
-    then pure $ Just ClearRange
-    else Just . SetRange <$> do
+  esel :: Either String C.SelectionState <- runExceptT getDraftSelectionStateViaBrowser
+  case esel of
+    Left err -> do
+      consoleLogJSONM "getRangeSelection: error" err
+      pure $ Just ClearRange
+    Right sel | selectionIsEmpty (dstate ^?! documentStateContent) sel -> do
+      pure $ Just ClearRange
+    Right sel -> Just . SetRange <$> do
       topOffset    <- liftIO js_getRangeTopOffset
       bottomOffset <- liftIO js_getRangeBottomOffset
       scrollOffset <- liftIO js_getScrollOffset
@@ -401,14 +408,9 @@ getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
         , _rangeScrollOffset   = ScrollOffsetOfViewport scrollOffset
         }
 
-
-getDraftSelectionStateViaBrowser :: MonadIO m => m C.SelectionState
-getDraftSelectionStateViaBrowser = liftIO $ either err pure . eitherDecode . cs =<< js_getDraftSelectionStateViaBrowser
-  where
-    err = throwIO . ErrorCall . ("getSelectionStateFromBrowser: impossible: " <>) . show
-
 removeAllRanges :: MonadIO m => m ()
 removeAllRanges = liftIO js_removeAllRanges
+
 
 -- * work-arounds for known bugs.
 
@@ -422,21 +424,10 @@ reactFluxWorkAroundForkIO action = void . forkIO $ yield >> action
 reactFluxWorkAroundThreadDelay :: Double -> IO ()
 reactFluxWorkAroundThreadDelay seconds = threadDelay . round $ seconds * 1000 * 1000
 
+
+-- * foreign
+
 #ifdef __GHCJS__
-
--- FUTUREWORK: to make this smoother, check out
--- https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView (but
--- https://bugs.chromium.org/p/chromium/issues/detail?id=648446);
--- https://github.com/bySabi/react-scrollchor;
--- https://stackoverflow.com/questions/30495062/how-can-i-scroll-a-div-to-be-visible-in-reactjs#30497101;
--- https://github.com/sitepoint-editors/smooth-scrolling
-foreign import javascript unsafe
-  "scrollBy(0, -pageYOffset)"
-  js_scrollToPageTop :: IO ()
-
-foreign import javascript unsafe
-  "JSON.stringify(refine$getDraftSelectionStateViaBrowser())"
-  js_getDraftSelectionStateViaBrowser :: IO JSString
 
 foreign import javascript unsafe
   "getSelection().getRangeAt(0).startContainer.parentElement.getBoundingClientRect().top"
@@ -451,14 +442,6 @@ foreign import javascript unsafe
   js_removeAllRanges :: IO ()
 
 #else
-
-{-# ANN js_scrollToPageTop ("HLint: ignore Use camelCase" :: String) #-}
-js_scrollToPageTop :: IO ()
-js_scrollToPageTop = error "javascript FFI not available in GHC"
-
-{-# ANN js_getDraftSelectionStateViaBrowser ("HLint: ignore Use camelCase" :: String) #-}
-js_getDraftSelectionStateViaBrowser :: IO JSString
-js_getDraftSelectionStateViaBrowser = error "javascript FFI not available in GHC"
 
 {-# ANN js_getRangeTopOffset ("HLint: ignore Use camelCase" :: String) #-}
 js_getRangeTopOffset :: IO Int

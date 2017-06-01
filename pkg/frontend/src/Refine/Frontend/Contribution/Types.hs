@@ -33,9 +33,10 @@ import qualified Data.Map.Strict as Map
 import           Language.Css.Syntax hiding (Value)
 
 import Refine.Common.Types
+import Refine.Frontend.Icon.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
-import Refine.Frontend.Icon.Types
+import Refine.Frontend.Util
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -281,3 +282,20 @@ makeRefineType ''QuickCreateShowState
 
 makeLenses ''CommentDisplayProps
 makeLenses ''AddContributionProps
+
+
+-- * helpers
+
+scrollToCurrentSelection :: MonadIO m => ContributionState -> m ()
+scrollToCurrentSelection = liftIO . js_scrollToPx . currentSelectionOffset
+
+currentSelectionOffset :: ContributionState -> Int
+currentSelectionOffset st = fromMaybe 0 $ do
+  range <- st ^? csCurrentRange . _Just
+  pure $ (range ^. rangeBottomOffset . unOffsetFromViewportTop)
+       + (range ^. rangeScrollOffset . unScrollOffsetOfViewport)
+       + tweakScrollTarget
+
+-- | FUTUREWORK: come up with a more robust way to move the dialog box into the center of the view.
+tweakScrollTarget :: Int
+tweakScrollTarget = -170
