@@ -314,14 +314,14 @@ instance (GenEdit a, GenEdit b, Splitable b) => GenEdit (Segments a b) where
                  <> [pure $ c <> [SegmentListEdit $ DeleteItem i] | i <- [0..n-1]]
                  <> [ do
                         cx <- genEdit x
-                        pure $ c <> [SegmentListEdit $ EditItem i cx]
+                        pure $ c <> (SegmentListEdit <$> editItem i cx)
                     | (i, x) <- zip [0..] d']
-                 <> [ pure $ c <> [SegmentListEdit $ EditItem i [EditFirst $ diff x y] | x /= y] <> [JoinItems i]
+                 <> [ pure $ c <> (SegmentListEdit <$> editItem i (editFirst $ diff x y)) <> [JoinItems i]
                     | (i, (x, _), (y, _)) <- zip3 [0..] d' (drop 1 d')]
                  <> [do
-                        j <- choose (0, splitLength x)
+                        j <- choose (0, jmax)
                         pure $ c <> [SplitItem i j]
-                    | (i, (_, x)) <- zip [0..] d', splitLength x >= 0]
+                    | (i, (_, x)) <- zip [0..] d', let jmax = maxSplitIndex x, jmax >= 0]
 
 ---------------------- test Splitable type class laws
 
