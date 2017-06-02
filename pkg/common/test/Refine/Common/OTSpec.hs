@@ -321,7 +321,7 @@ instance (GenEdit a, GenEdit b, Splitable b) => GenEdit (Segments a b) where
                  <> [do
                         j <- choose (0, splitLength x)
                         pure $ c <> [SplitItem i j]
-                    | (i, (_, x)) <- zip [0..] d']
+                    | (i, (_, x)) <- zip [0..] d', splitLength x >= 0]
 
 ---------------------- test Splitable type class laws
 
