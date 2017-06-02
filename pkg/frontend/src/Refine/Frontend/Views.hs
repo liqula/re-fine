@@ -79,18 +79,10 @@ mainScreen = mkView "MainScreen" $ \rs -> do
       __ :: Translations = rs ^. RS.gsTranslations . unTrans
                                 -- FIXME: I think this could be done more nicely.
 
-      sendMouseUpIfReadOnly :: [SomeStoreAction]
-      sendMouseUpIfReadOnly = dispatchMany [ContributionAction RequestSetRange | has _DocumentStateView (rs ^. gsDocumentState)]
-
-      mainAttrs :: [PropertyOrHandler ViewEventHandler]
-      mainAttrs =
-        [ onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
-        , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
-        ] <> case rs ^. gsHeaderState . hsToolbarExtensionStatus of
-              HT.ToolbarExtensionClosed -> []
-              _ -> [onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseToolbarExtension)]
-
-  div_ mainAttrs $ do
+  div_ (case rs ^. gsHeaderState . hsToolbarExtensionStatus of
+    HT.ToolbarExtensionClosed -> []
+    _ -> [ onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseToolbarExtension)
+         ]) $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
       stickyContainer_ [] $ do
           mainHeader_ rs
