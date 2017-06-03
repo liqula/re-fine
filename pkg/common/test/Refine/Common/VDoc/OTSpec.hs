@@ -20,7 +20,7 @@ import Refine.Common.OTSpec hiding (spec)
 import Refine.Common.OT
 import Refine.Common.VDoc.OT
 import Refine.Common.Types.Core hiding (Edit)
-
+import Refine.Common.Test.Arbitrary (initBlockKeys)
 
 -- do not insert more than 4 elems into a Style set
 instance HasEnoughInhabitants (Atom Style) where numOfInhabitants _ = Just 4
@@ -49,8 +49,8 @@ spec = parallel $ do
       docToRawContent (rawContentToDoc d) `shouldBe` d
 
 
-    describe "showEditAsRawContent" $ do
-      it "shows added text with custom style 'ADDED'." $ do
+    describe "showEditAsRawContent & docEditRanges" $ do
+      describe "added text with custom style 'ADDED'." $ do
         let edit = eRawContent [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond
                         [ NEText (InsertItem 10 'a')
                         , NEText (InsertItem 11 'n')
@@ -58,9 +58,11 @@ spec = parallel $ do
                         , NEText (InsertItem 13 '/')]]]]]
             rc   = mkRawContent $ mkBlock "some text or other" :| []
             rc'  = mkRawContent $ (mkBlock "some text and/or other" & blockStyles .~ [((10, 4), StyleAdded)]) :| []
-        showEditAsRawContent edit rc `shouldBe` rc'
+            ranges = [SelectionState False (SelectionPoint (BlockKey "0") 10) (SelectionPoint (BlockKey "0") 10)]
+        it "show diff" $ showEditAsRawContent edit rc `shouldBe` rc'
+        it "ranges" $ docEditRanges edit (initBlockKeys rc) `shouldBe` ranges
 
-      it "shows deleted text with custom style 'DELETED'." $ do
+      describe "deleted text with custom style 'DELETED'." $ do
         let -- FIXME: edit rc . mkRawContent $ mkBlock "someer" :| []
             -- this doesn't work now because the cost of deleting chars is more than
             -- the cost of deleting the block and adding a new one
@@ -79,10 +81,14 @@ spec = parallel $ do
                         , NEText (DeleteItem 4)]]]]]
             rc   = mkRawContent $ mkBlock "some text or other" :| []
             rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [((4, 12), StyleDeleted)]) :| []
-        showEditAsRawContent edit rc `shouldBe` rc'
+            ranges = [SelectionState False (SelectionPoint (BlockKey "0") 4) (SelectionPoint (BlockKey "0") 16)]
+        it "show diff" $ showEditAsRawContent edit rc `shouldBe` rc'
+        it "ranges" $ docEditRanges edit (initBlockKeys rc) `shouldBe` ranges
 
-      it "shows deleted block with custom style 'DELETED'." $ do
+      describe "deleted block with custom style 'DELETED'." $ do
         let edit = eRawContent [ENonEmpty $ DeleteItem 0]
             rc   = mkRawContent $ mkBlock "some text or other" :| []
             rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [((0, 18), StyleDeleted)]) :| []
-        showEditAsRawContent edit rc `shouldBe` rc'
+            ranges = [SelectionState False (SelectionPoint (BlockKey "0") 0) (SelectionPoint (BlockKey "0") 18)]
+        it "show diff" $ showEditAsRawContent edit rc `shouldBe` rc'
+        it "ranges" $ docEditRanges edit (initBlockKeys rc) `shouldBe` ranges
