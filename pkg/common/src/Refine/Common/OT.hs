@@ -392,8 +392,14 @@ instance Editable a => Editable (NonEmpty a) where
     diff a b = coerce $ diff (NEL.toList a) (NEL.toList b)
     ePatch e = NEL.fromList . ePatch (coerce e) . NEL.toList
     patch e = NEL.fromList . patch (coerce e) . NEL.toList
-    -- FIXME: make sure that the result is non-empty
-    eMerge d a b = coerce $ eMerge (NEL.toList d) (coerce a) (coerce b)
+
+    eMerge d a b
+        | not . null $ patch (coerce a: a') xs = coerce (a', b')
+        | otherwise = secondWins d a b  -- TODO: be smarter
+      where
+        (a', b') = eMerge xs (coerce a) (coerce b)
+        xs = NEL.toList d
+
     merge d a b = coerce $ merge (NEL.toList d) (coerce a) (coerce b)
     eInverse d = coerce . eInverse (NEL.toList d) . coerce
     inverse d = coerce . inverse (NEL.toList d) . coerce
