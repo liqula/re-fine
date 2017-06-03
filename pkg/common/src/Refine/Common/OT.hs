@@ -413,7 +413,6 @@ instance Editable a => Editable (NonEmpty a) where
         (a', b') = eMerge xs (coerce a) (coerce b)
         xs = NEL.toList d
 
-    merge d a b = coerce $ merge (NEL.toList d) (coerce a) (coerce b)
     eInverse d = coerce . eInverse (NEL.toList d) . coerce
     inverse d = coerce . inverse (NEL.toList d) . coerce
 
