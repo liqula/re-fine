@@ -162,7 +162,6 @@ runCmd (AddEditToHead v cedit) = do
   lift . check $
     (edit                 == edit') &&
     (edit ^. editDesc     == cedit ^. createEditDesc) &&
-    (edit ^. editRange    == cedit ^. createEditRange) &&
     (edit ^. editKind     == cedit ^. createEditKind)
 
 
@@ -189,4 +188,4 @@ sampleProgram = do
 -- * loud samples
 
 sampleCreateEdit1 :: CreateEdit
-sampleCreateEdit1 = CreateEdit {_createEditDesc = "...", _createEditRange = ChunkRange {_chunkRangeBegin = Nothing, _chunkRangeEnd = Nothing}, _createEditVDoc = sampleVDocVersion, _createEditKind = Grammar}
+sampleCreateEdit1 = CreateEdit {_createEditDesc = "...", _createEditVDoc = sampleVDocVersion, _createEditKind = Grammar}

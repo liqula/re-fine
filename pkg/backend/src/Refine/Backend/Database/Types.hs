@@ -15,6 +15,7 @@ import Data.Coerce (coerce)
 
 import           Refine.Common.Types
 import           Refine.Prelude.TH (makeRefineType)
+import           Data.List.NonEmpty (NonEmpty)
 import qualified Refine.Common.OT as OT
 
 
@@ -68,6 +69,9 @@ instance HasMetaInfo Edit        where metaInfoType = MetaEdit
 
 newtype RawContentEdit = RawContentEdit {unRawContentEdit :: OT.Edit RawContent}
   deriving (ToJSON, FromJSON, Monoid)
+
+newtype SelectionStates = SelectionStates {unSelectionStates :: NonEmpty SelectionState}
+  deriving (ToJSON, FromJSON)
 
 makeRefineType ''CreateDBCollabEditProcess
 makeRefineType ''MetaInfoID

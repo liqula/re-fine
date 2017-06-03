@@ -1,5 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE TypeApplications     #-}
+{-# LANGUAGE TypeApplications           #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -7,10 +7,10 @@ module Refine.Backend.Database.Field where
 
 import Refine.Backend.Prelude
 
-import Control.Monad ((<=<))
-import Database.Persist.Sql
+import           Control.Monad ((<=<))
+import           Database.Persist.Sql
 
-import Refine.Backend.Database.Types (MetaInfoID(..), RawContentEdit(..))
+import Refine.Backend.Database.Types (MetaInfoID(..), RawContentEdit(..), SelectionStates(..))
 import Refine.Common.Types.Prelude (UserInfo)
 import Refine.Common.Types.Chunk
 import Refine.Common.Types.Process
@@ -113,4 +113,18 @@ instance PersistField RawContentEdit where
   fromPersistValue = fromPersistJSONValue
 
 instance PersistFieldSql RawContentEdit where
+  sqlType _ = sqlType (Proxy :: Proxy ST)
+
+instance PersistField SelectionState where
+  toPersistValue   = toPersistJSONValue
+  fromPersistValue = fromPersistJSONValue
+
+instance PersistFieldSql SelectionState where
+  sqlType _ = sqlType (Proxy :: Proxy ST)
+
+instance PersistField SelectionStates where
+  toPersistValue   = toPersistJSONValue
+  fromPersistValue = fromPersistJSONValue
+
+instance PersistFieldSql SelectionStates where
   sqlType _ = sqlType (Proxy :: Proxy ST)

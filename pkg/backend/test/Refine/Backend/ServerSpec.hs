@@ -296,7 +296,6 @@ specMockedLogin = around createDevModeTestSession $ do
               (addEditUri (fc ^. compositeVDoc . vdocHeadEdit))
               (CreateEdit
                 "new edit"
-                (ChunkRange Nothing Nothing)
                 (rawContentToVDocVersion . mkRawContent $ mkBlock "[new vdoc version]" :| [])
                 Grammar)
           pure (fc, fe)

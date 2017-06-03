@@ -29,10 +29,11 @@ module Refine.Backend.Database.Entity where
 
 import Refine.Backend.Prelude as P hiding (get)
 
-import Database.Persist (get)
-import Database.Persist.Sql (SqlBackend)
-import Lentil.Core (entityLens)
-import Lentil.Types as L
+import qualified Data.List.NonEmpty as NEL
+import           Database.Persist (get)
+import           Database.Persist.Sql (SqlBackend)
+import           Lentil.Core (entityLens)
+import           Lentil.Types as L
 
 import qualified Refine.Backend.Database.Class as C
 import           Refine.Backend.Database.Core
@@ -41,6 +42,8 @@ import           Refine.Backend.Database.Types
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
+import           Refine.Common.VDoc.Draft (rawContentFromVDocVersion)
+import           Refine.Common.VDoc.OT (docEditRanges)
 import           Refine.Prelude (nothingToError, Timestamp, getCurrentTimestamp)
 
 -- FIXME: Generate this as the part of the lentil library.
@@ -216,10 +219,9 @@ createVDoc pv vdoc = do
         Nothing -- hack: use a dummy key which will be replaced by a proper one before createVDoc returns
   mid <- createMetaID svdoc
   e <- createEdit (mid ^. miID) InitialEdit CreateEdit
-    { _createEditDesc  = "" -- FIXME
-    , _createEditRange = ChunkRange Nothing Nothing  -- QUESTION: is this ok?
-    , _createEditVDoc  = vdoc
-    , _createEditKind  = Initial
+    { _createEditDesc   = "" -- FIXME
+    , _createEditVDoc   = vdoc
+    , _createEditKind   = Initial
     }
   let e' = S.idToKey (e ^. editMetaID . miID) :: Key S.Edit
   liftDB $ update (S.idToKey $ mid ^. miID) [S.VDocHeadId =. Just e']
@@ -237,9 +239,20 @@ getEditIDs vid = liftDB $ S.keyToId . entityKey <$$> selectList [S.EditRepositor
 
 createEdit :: ID VDoc -> EditSource (ID Edit) -> CreateEdit -> DB Edit
 createEdit rid me ce = do
+  sels <- case me of
+    InitialEdit{} ->
+      pure [] -- FIXME
+    EditOfEdit edit parent -> do
+      doc <- rawContentFromVDocVersion <$> getVersion parent
+      pure $ docEditRanges edit doc
+    MergeOfEdits{} -> error "not implemented"
+  let sels' = NEL.fromList $
+         if null sels
+         then [SelectionState False (SelectionPoint (BlockKey "") 0) (SelectionPoint (BlockKey "") 0)]  -- FIXME
+         else sels
   mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
-            (ce ^. createEditRange)
+            (SelectionStates sels')
             (ce ^. createEditVDoc)
             (S.idToKey rid)
             (ce ^. createEditKind)
@@ -253,14 +266,14 @@ createEdit rid me ce = do
   pure $ Edit
     mid
     (ce ^. createEditDesc)
-    (ce ^. createEditRange)
+    sels'
     (ce ^. createEditKind)
     me
 
 getEdit :: ID Edit -> DB Edit
 getEdit eid = do
   src <- getEditSource eid
-  getMetaEntity (\mid -> S.editElim $ \desc cr _ _ kind -> Edit mid desc cr kind src) eid
+  getMetaEntity (\mid -> S.editElim $ \desc (SelectionStates cr) _ _ kind -> Edit mid desc cr kind src) eid
 
 getEditSource :: ID Edit -> DB (EditSource (ID Edit))
 getEditSource eid = do

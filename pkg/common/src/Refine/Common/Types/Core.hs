@@ -104,7 +104,7 @@ data EditSource a =
 data Edit = Edit
   { _editMetaID :: MetaID Edit
   , _editDesc   :: ST
-  , _editRange  :: ChunkRange
+  , _editRanges :: NonEmpty SelectionState
   , _editKind   :: EditKind
   , _editSource :: EditSource (ID Edit)
   }
@@ -112,7 +112,6 @@ data Edit = Edit
 
 data CreateEdit = CreateEdit
   { _createEditDesc  :: ST
-  , _createEditRange :: ChunkRange
   , _createEditVDoc  :: VDocVersion
   , _createEditKind  :: EditKind
   }
