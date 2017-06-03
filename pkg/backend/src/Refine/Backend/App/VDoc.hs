@@ -102,7 +102,7 @@ addEdit baseeid edit = do
   db $ do
     rid <- DB.vdocOfEdit baseeid
     olddoc <- rawContentFromVDocVersion <$> DB.getVersion baseeid
-    childEdit <- DB.createEdit rid (EditOfEdit (
+    childEdit <- DB.createEdit rid (EditOfEdit (fromMaybe (error "can't diff documents!") $
         OT.diff (deleteMarksFromRawContent olddoc)
                 (deleteMarksFromRawContent . rawContentFromVDocVersion $ edit ^. createEditVDoc)
         ) baseeid) edit

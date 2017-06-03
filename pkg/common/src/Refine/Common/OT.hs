@@ -53,7 +53,7 @@ class Editable d where
     cost :: Edit d -> Int
     cost = sum . map eCost
 
-    diff   :: d -> d -> Edit d
+    diff :: d -> d -> Maybe (Edit d)
 
     ePatch :: EEdit d -> d -> d
 
@@ -114,7 +114,7 @@ instance Editable () where
     docCost _    = 1
     eCost _      = error "impossible"
     ePatch _ _   = error "impossible"
-    diff _ _     = []
+    diff _ _     = Just []
     eMerge _ _ _ = error "impossible"
     eInverse _ _ = error "impossible"
 
@@ -149,7 +149,7 @@ instance (Editable a, Editable b) => Editable (a, b) where
     ePatch (EditFirst  e) (a, b) = (patch e a, b)
     ePatch (EditSecond e) (a, b) = (a, patch e b)
 
-    diff (a, b) (c, d) = editFirst (diff a c) <> editSecond (diff b d)
+    diff (a, b) (c, d) = (<>) <$> (editFirst <$> diff a c) <*> (editSecond <$> diff b d)
 
     eMerge _ (EditFirst ea) (EditSecond eb) = (editSecond eb, editFirst ea)
     eMerge _ (EditSecond eb) (EditFirst ea) = (editFirst ea, editSecond eb)
@@ -201,9 +201,9 @@ instance (Editable a, Editable b) => Editable (Either a b) where
     ePatch EditLeft{} Right{} = error "impossible"
     ePatch EditRight{} Left{} = error "impossible"
 
-    diff (Left  a) (Left  a') = editLeft  $ diff a a'
-    diff (Right b) (Right b') = editRight $ diff b b'
-    diff _ x = [SetEither x]
+    diff (Left  a) (Left  a') = editLeft  <$> diff a a'
+    diff (Right b) (Right b') = editRight <$> diff b b'
+    diff _ x = Just [SetEither x]
 
     eMerge (Left  a) (EditLeft  ea) (EditLeft  ea') = editLeft  *** editLeft  $ merge a ea ea'
     eMerge (Right b) (EditRight eb) (EditRight eb') = editRight *** editRight $ merge b eb eb'
@@ -238,7 +238,9 @@ instance (Eq a) => Editable (NonEditable a) where
     docCost _    = 1
     eCost _      = error "impossible"
     ePatch _ _   = error "impossible"
-    diff _ _     = []
+    diff a b
+        | a == b    = Just []
+        | otherwise = Nothing
     eMerge _ _ _ = error "impossible"
     eInverse _ _ = error "impossible"
 
@@ -262,7 +264,7 @@ instance (Eq a) => Editable (Atom a) where
     eCost _ = 1
     docCost _ = 1
 
-    diff (Atom a) (Atom b) = [EAtom b | a /= b]
+    diff (Atom a) (Atom b) = Just [EAtom b | a /= b]
     ePatch (EAtom a) _ = Atom a
     eMerge _ EAtom{} b@EAtom{} = ([b], mempty)
     eInverse (Atom d) EAtom{} = [EAtom d]
@@ -277,7 +279,7 @@ instance Editable Char where
         deriving (Generic, Show, Eq, NFData)
     docCost = docCost . Atom
     eCost = eCost . unEChar
-    diff a b = map EChar $ diff (Atom a) (Atom b)
+    diff a b = coerce $ diff (Atom a) (Atom b)
     ePatch e = unAtom . ePatch (unEChar e) . Atom
     eMerge d a b = coerce $ eMerge (Atom d) (unEChar a) (unEChar b)
     eInverse d = coerce . eInverse (Atom d) . unEChar
@@ -315,7 +317,7 @@ instance Editable a => Editable [a] where
     ePatch (InsertItem i x) xs = take i xs <> (x: drop i xs)
     ePatch (EditItem   i x) xs = take i xs <> (patch x (xs !! i): drop (i+1) xs)
 
-    diff s1 s2 = snd . snd $ triangle !! (length s1 + lenS2) !! lenS2
+    diff s1 s2 = Just . snd . snd $ triangle !! (length s1 + lenS2) !! lenS2
       where
         triangle = scanl ff [(error "impossible", mk [])] $ zip (revInits $ reverse s1) s2''
 
@@ -326,10 +328,10 @@ instance Editable a => Editable [a] where
         ff es'@((_, e): es) (xs, ye)
             = (e, mk [DeleteItem lenS2] `add` e): zipWith4 gg xs s2' es' es <> [(error "impossible", ye)]
           where
-            gg x (n, y) (fo, f1) (_, f2) = (,) f2 $ if null dxy then fo else
-                minimumBy (compare `on` fst)
-                    [ mk (editItem n dxy) `add` fo
-                    , mk [InsertItem n y] `add` f1
+            gg x (n, y) (fo, f1) (_, f2) = (,) f2 $ if maybe False null dxy then fo else
+                minimumBy (compare `on` fst) $
+                    [ mk (editItem n edit) `add` fo | edit <- maybeToList dxy] <>
+                    [ mk [InsertItem n y] `add` f1
                     , mk [DeleteItem n]   `add` f2
                     ]
               where
@@ -381,6 +383,9 @@ instance (NFData a, NFData (EEdit a)) => NFData (EEdit [a]) where rnf = grnf
 
 ---------------------------------------- non-empty List instance
 
+allEdit :: Editable d => (d -> Bool) -> d -> Edit d -> Bool
+allEdit p x = all p . scanl (flip ePatch) x
+
 instance Editable a => Editable (NonEmpty a) where
 
     docCost = docCost . NEL.toList
@@ -389,13 +394,21 @@ instance Editable a => Editable (NonEmpty a) where
         deriving (Generic)
 
     eCost = eCost . unENonEmpty
-    diff a b = coerce $ diff (NEL.toList a) (NEL.toList b)
+
+    diff a b
+        | maybe True (allEdit (not . null) a') e = coerce e
+        | otherwise = Nothing   -- FIXME: be smarter
+      where
+        e = diff a' (NEL.toList b)
+        a' = NEL.toList a
+
     ePatch e = NEL.fromList . ePatch (coerce e) . NEL.toList
     patch e = NEL.fromList . patch (coerce e) . NEL.toList
 
     eMerge d a b
-        | not . null $ patch (coerce a: a') xs = coerce (a', b')
-        | otherwise = secondWins d a b  -- TODO: be smarter
+        | allEdit (not . null) (ePatch (coerce a) xs) a' && allEdit (not . null) (ePatch (coerce b) xs) b'
+            = coerce (a', b')
+        | otherwise = secondWins d a b  -- FUTUREWORK: be smarter
       where
         (a', b') = eMerge xs (coerce a) (coerce b)
         xs = NEL.toList d
@@ -441,7 +454,7 @@ instance Editable a => Editable (Seq a) where
     ePatch (EditSItem   i x) (Seq.splitAt i -> (as, Seq.viewl -> b Seq.:< bs))
         = as <> Seq.singleton (patch x b) <> bs
 
-    diff (foldr (:) [] -> s1) (foldr (:) [] -> s2) = f <$> diff s1 s2
+    diff (foldr (:) [] -> s1) (foldr (:) [] -> s2) = f <$$> diff s1 s2
       where
         f = \case
             DeleteItem i   -> DeleteSItem i
@@ -501,7 +514,7 @@ instance Editable ST where
     -- diff (replicate 1000 'a') (replicate 1000 'b')
     -- diff (take 1000 ['a'..]) (take 1000 ['A'..])
     -- diff (take 1000 ['A'..]) (take 1000 ['a'..])
-    diff a b = f 0 $ Diff.diff (ST.unpack a) (ST.unpack b)
+    diff a b = Just . f 0 $ Diff.diff (ST.unpack a) (ST.unpack b)
       where
         f !n (Diff.Both{}: es) = f (n+1) es
         f n (Diff.New c: es) = EText (InsertItem n c): f (n+1) es
@@ -550,7 +563,7 @@ instance Editable NonEmptyST where
     -- diff (replicate 1000 'a') (replicate 1000 'b')
     -- diff (take 1000 ['a'..]) (take 1000 ['A'..])
     -- diff (take 1000 ['A'..]) (take 1000 ['a'..])
-    diff (NonEmptyST a) (NonEmptyST b) = f 0 $ Diff.diff (ST.unpack a) (ST.unpack b)
+    diff (NonEmptyST a) (NonEmptyST b) = Just . f 0 $ Diff.diff (ST.unpack a) (ST.unpack b)
       where
         f !n (Diff.Both{}: es) = f (n+1) es
         f n (Diff.New c: es) = NEText (InsertItem n c): f (n+1) es
@@ -594,8 +607,8 @@ instance (Editable a, Ord a, Eq (EEdit a)) => Editable (Set a) where
     ePatch (InsertElem x) = Set.insert x
     ePatch (EditElem x e) = Set.insert (patch e x) . Set.delete x
 
-    diff a b = [DeleteElem x | x <- Set.elems $ Set.difference a b]
-            <> [InsertElem x | x <- Set.elems $ Set.difference b a]
+    diff a b = Just $ [DeleteElem x | x <- Set.elems $ Set.difference a b]
+                   <> [InsertElem x | x <- Set.elems $ Set.difference b a]
 
     eMerge _ a b | a == b = ([], [])
     eMerge d a@(EditElem i x) b@(EditElem i' y) | i == i'
@@ -707,7 +720,7 @@ instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) 
         = Segments $ as <> ((a, b1): (a, b2): bs)
     ePatch (SplitItem i j) (Segments s) = error $ "ePatch @Segments (SplitItem " <> show i <> " " <> show j <> ") " <> show (length s)
 
-    diff (Segments s1) (Segments s2) = SegmentListEdit <$> diff s1 s2
+    diff (Segments s1) (Segments s2) = SegmentListEdit <$$> diff s1 s2
 
     eMerge (Segments d) (SegmentListEdit e1) (SegmentListEdit e2)
         = fmap SegmentListEdit *** fmap SegmentListEdit $ eMerge d e1 e2

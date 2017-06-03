@@ -76,6 +76,7 @@ fastTests =
 hardTests :: GenEdit d => [(String, d -> Gen Property)]
 hardTests =
     [ (,) "diff" test_diff
+    , (,) "diff (2)" test_diff2
     ]
 
 allTests :: GenEdit d => [(String, d -> Gen Property)]
@@ -162,7 +163,13 @@ test_diff :: GenEdit d => d -> Gen Property
 test_diff d = do
     p <- genEdit d
     let p' = diff d (patch p d)
-    failPrint (p, patch p d, p', patch p' d) $ equalEdit p p' d
+    failPrint (p, patch p d, p') $ maybe True (\pp -> equalEdit p pp d) p'
+
+test_diff2 :: GenEdit d => d -> Gen Property
+test_diff2 d = do
+    d' <- arbitrary
+    let p' = diff d d'
+    failPrint (d', p') $ maybe True (\pp -> patch pp d == d') p'
 
 ---------------------------------------- () instance
 
@@ -231,7 +238,7 @@ instance (GenEdit a) => GenEdit [a] where
 
 instance GenEdit a => GenEdit (NonEmpty a) where
     genEdit (NEL.toList -> s) = do
-        e <- genEdit s `suchThat` (all (not . null) . scanl (flip ePatch) s)
+        e <- genEdit s `suchThat` allEdit (not . null) s
         pure $ coerce e
 
 ---------------------------------------- Seq instance
@@ -261,7 +268,7 @@ instance GenEdit ST where
 
 instance GenEdit NonEmptyST where
     genEdit (NonEmptyST s) = do
-        e <- genEdit s `suchThat` (all (not . ST.null) . scanl (flip ePatch) s)
+        e <- genEdit s `suchThat` allEdit (not . ST.null) s
         pure $ coerce e
 
 ---------------------------------------- Set instance
@@ -316,8 +323,8 @@ instance (GenEdit a, GenEdit b, Splitable b) => GenEdit (Segments a b) where
                         cx <- genEdit x
                         pure $ c <> (SegmentListEdit <$> editItem i cx)
                     | (i, x) <- zip [0..] d']
-                 <> [ pure $ c <> (SegmentListEdit <$> editItem i (editFirst $ diff x y)) <> [JoinItems i]
-                    | (i, (x, _), (y, _)) <- zip3 [0..] d' (drop 1 d')]
+                 <> [ pure $ c <> (SegmentListEdit <$> editItem i (editFirst di)) <> [JoinItems i]
+                    | (i, (x, _), (y, _)) <- zip3 [0..] d' (drop 1 d'), di <- maybeToList $ diff x y]
                  <> [do
                         j <- choose (0, jmax)
                         pure $ c <> [SplitItem i j]

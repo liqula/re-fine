@@ -469,7 +469,7 @@ instance Editable RawContent where
     eCost = cost . unERawContent
 
     -- FUTUREWORK: smarter diff producing smaller elementary patches
-    diff a b = eRawContent $ diff (rawContentToDoc a) (rawContentToDoc b)
+    diff a b = eRawContent <$> diff (rawContentToDoc a) (rawContentToDoc b)
 
     ePatch e = docToRawContent . patch (coerce e) . rawContentToDoc
     patch e = docToRawContent . patch (concat (coerce e :: [OT.Edit OTDoc])) . rawContentToDoc
