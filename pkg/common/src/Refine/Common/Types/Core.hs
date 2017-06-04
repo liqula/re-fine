@@ -194,9 +194,8 @@ data HighlightMark
 -- | Haskell representation of the javascript @RawDraftContentState@.
 -- https://draftjs.org/docs/api-reference-data-conversion.html#content
 --
--- FIXME: make this type abstract.
--- if we construct a value here instead of by calling 'mkRawContent', it may be non-canonical, and
---              that may lead to strange artifacts in the diff.
+-- FIXME: make this type abstract.  if we construct a value here instead of by calling
+-- 'mkRawContent', it may be non-canonical, and that may lead to strange artifacts in the diff.
 data RawContent = RawContent
   { _rawContentBlocks    :: NonEmpty (Block EntityKey)
   , _rawContentEntityMap :: IntMap Entity  -- ^ for performance, do not use @Map EntityKey Entity@ here.
@@ -474,7 +473,7 @@ instance Editable RawContent where
     ePatch e = docToRawContent . patch (coerce e) . rawContentToDoc
     patch e = docToRawContent . patch (concat (coerce e :: [OT.Edit OTDoc])) . rawContentToDoc
 
-{-
+    {-
             d
         e1 / \ e2
           d1 d2
@@ -482,14 +481,15 @@ instance Editable RawContent where
             d'
             | makeJoinEdits
             d''
--}
+    -}
     eMerge d a b = coerce ([a' <> e], [b' <> e])
       where
         doc = rawContentToDoc d
         e = makeJoinEdits $ patch (coerce a <> a') doc
         (a', b') = merge doc (coerce a) (coerce b)
---  TUNING: define merge
---    merge d a b = coerce $ merge (rawContentToDoc d) (coerce a) (coerce b)
+
+    -- TUNING: implement better-than-default merge
+    -- merge d a b = coerce $ merge (rawContentToDoc d) (coerce a) (coerce b)
 
     eInverse d = pure . coerce . inverse (rawContentToDoc d) . coerce
     inverse d es = coerce $ f [] (rawContentToDoc d) (coerce es)

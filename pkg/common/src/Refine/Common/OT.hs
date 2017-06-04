@@ -12,6 +12,7 @@
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE UndecidableInstances       #-}
+
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 
 -- | FUTUREWORK: release this file as a library
@@ -691,7 +692,7 @@ instance Splitable (Segments a b) where
 
 ----------
 
-newtype Segments attribute elem = Segments [(attribute, elem)]        -- TUNING: use Seq instead of []
+newtype Segments attribute elem = Segments [(attribute, elem)]  -- TUNING: use Seq instead of []
     deriving (Eq, Show, Generic, ToJSON, FromJSON, NFData)
 
 instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) where
@@ -701,7 +702,7 @@ instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) 
     data EEdit (Segments a b)
         = SegmentListEdit (EEdit [(a, b)])
         | JoinItems !Int            -- TUNING: JoinRange !Int !Int
-        | SplitItem !Int !Int{-(SplitIndex a)-}
+        | SplitItem !Int !Int {- (SplitIndex a) -}
             deriving (Generic)
 
     eCost = \case
