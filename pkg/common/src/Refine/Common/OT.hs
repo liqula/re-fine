@@ -34,6 +34,7 @@ import           Control.DeepSeq
 import           Test.QuickCheck (Arbitrary)
 import           Test.QuickCheck.Instances ()
 
+{-# ANN module ("HLint: ignore Use cs" :: String) #-}
 ----------------------------------------------------------------------------------------------
 
 -- | @[a, b, c]@ means first a, then b, then c
@@ -544,6 +545,10 @@ instance NFData (EEdit ST) where rnf = grnf
 
 newtype NonEmptyST = NonEmptyST {unNonEmptyST :: ST}
     deriving (Eq, Ord, Show, Read, NFData, ToJSON, FromJSON, Generic, Monoid)
+
+instance IsString NonEmptyST where
+    fromString [] = error "fromString @NonEmptyST []"
+    fromString s = NonEmptyST $ fromString s
 
 instance ConvertibleStrings NonEmptyST [Char] where convertString = convertString . unNonEmptyST
 {-
