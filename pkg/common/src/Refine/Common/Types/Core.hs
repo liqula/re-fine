@@ -533,7 +533,7 @@ rawContentToDoc (RawContent blocks entities) = mkDocBlock <$> blocks
                 <> ((\(e, r) -> (r, Left (entities IntMap.! coerce e))) <$> eranges)
 
 docToRawContent :: OTDoc -> RawContent
-docToRawContent blocks = mkRawContent $ mkDocBlock <$> blocks
+docToRawContent blocks = mkRawContentInternal $ mkDocBlock <$> blocks
   where
     getText (LineElem _ (NonEmptyST txt)) = txt
 
@@ -576,9 +576,22 @@ makeJoinEdits blocks = concat . zipWith simplifyBlock [0..] $ NEL.toList blocks
         | otherwise = go (i+1) es ls
 
 
--- | Note: empty block list is illegal.  For once it will make draft crash in 'stateFromContent'.
+-- | Canonicalize a 'RawContent' value.  A value is canonicalized if no two entities that have the
+-- same 'Entity' value touch.
+--
+-- TUNING: this is the trivial implementation; there is probably something more efficient.
+canonicalizeRawContent :: RawContent -> RawContent
+canonicalizeRawContent = docToRawContent . rawContentToDoc
+
+-- | Construct a 'RawContent' value and canonicalize it.
 mkRawContent :: NonEmpty (Block Entity) -> RawContent
-mkRawContent bsl = RawContent (index <$$> bsl) (IntMap.fromList entities)
+mkRawContent = canonicalizeRawContent . mkRawContentInternal
+
+-- | Construct a 'RawContent' value *without* canonicalizing it.
+--
+-- Note: empty block list is illegal.  For once it will make draft crash in 'stateFromContent'.
+mkRawContentInternal :: NonEmpty (Block Entity) -> RawContent
+mkRawContentInternal bsl = RawContent (index <$$> bsl) (IntMap.fromList entities)
   where
     -- FUTUREWORK: it is possible to do just one traversal to collect and index entities
     -- https://www.reddit.com/r/haskell/comments/610sa1/applicative_sorting/
@@ -586,7 +599,7 @@ mkRawContent bsl = RawContent (index <$$> bsl) (IntMap.fromList entities)
     entities = zip [0..] . nub $ concatMap toList bsl
 
     index :: Entity -> EntityKey
-    index e = EntityKey . fromMaybe (error "mkRawContent: impossible") $ Map.lookup e em
+    index e = EntityKey . fromMaybe (error "mkRawContentInternal: impossible") $ Map.lookup e em
 
     em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
 

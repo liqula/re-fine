@@ -79,7 +79,7 @@ spec = do
     it "regression.2" $ do
       let rawContent = mkRawContent . (:| []) $ mkBlock "rF" & blockStyles .~ [((0,1),Italic),((1,1),Italic),((1,1),Italic),((0,1),Bold)]
           rawContent' = (resetBlockKeys . convertToRaw . convertFromRaw) rawContent
-      NEL.head (rawContent' ^. rawContentBlocks) ^. blockStyles `shouldBe` [((0,2),Italic),((0,1),Bold)]
+      NEL.head (rawContent' ^. rawContentBlocks) ^. blockStyles `shouldBe` [((0,1),Bold),((0,2),Italic)]
 
     it "regression.1" $ do
       let rawContent = mkRawContent . (:| []) $ mkBlock "rF" & blockStyles .~ [((0,1),Italic)]
