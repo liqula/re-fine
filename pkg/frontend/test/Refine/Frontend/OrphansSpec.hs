@@ -39,7 +39,7 @@ import Refine.Common.Types
 spec :: Spec
 spec = do
   -- this test also helps in understanding what the generic jsval instances do.
-  describe "### instances FromJSVal, ToJSVal of SelectionState" $ do
+  describe "instances FromJSVal, ToJSVal of SelectionState" $ do
     let chk :: Either JSString SelectionState -> JSVal -> Expectation
         chk v j = do
           j' <- toJSVal v
