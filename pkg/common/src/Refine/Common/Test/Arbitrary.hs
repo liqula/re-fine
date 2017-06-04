@@ -21,6 +21,7 @@ import           Control.Arrow (first, second)
 import           Control.DeepSeq
 import           Control.Monad.State
 import           Data.Function (on)
+import           Data.Functor.Infix ((<$$>))
 import qualified Data.IntMap as IntMap
 import           Data.List (sort, groupBy)
 import qualified Data.List as List
@@ -102,14 +103,10 @@ instance Arbitrary BlockDepth where
   arbitrary = BlockDepth <$> choose (0, 36)
 
 instance Arbitrary RawContent where
-  arbitrary = initBlockKeys . docToRawContent <$> scale (`div` 3) arbitrary
-  shrink    = fmap (docToRawContent . rawContentToDoc) <$> gshrink
+  arbitrary = initBlockKeys . docToRawContent . NEL.fromList <$> listOf1 (scale (`div` 3) arbitrary)
+       -- alternative implementation: @initBlockKeys . sanitizeRawContent . mkRawContent <$> arbitrary@
+  shrink    = canonicalizeRawContent <$$> gshrink
 
-{- alternative implementation
-instance Arbitrary RawContent where
-  arbitrary = initBlockKeys . sanitizeRawContent . mkRawContent <$> arbitrary
-  shrink    = fmap sanitizeRawContent <$> gshrink
--}
 initBlockKeys :: RawContent -> RawContent
 initBlockKeys = rawContentBlocks %~ NEL.zipWith (\k -> blockKey .~ (Just . BlockKey . cs . show $ k)) (NEL.fromList [(0 :: Int)..])
 
