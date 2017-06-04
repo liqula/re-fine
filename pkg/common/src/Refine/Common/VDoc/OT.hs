@@ -2,10 +2,11 @@
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE ViewPatterns               #-}
+{-# LANGUAGE OverloadedStrings          #-}
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 module Refine.Common.VDoc.OT where
 
-import           Data.List (groupBy)
+import           Data.List (groupBy, inits, tails)
 import qualified Data.Set as Set
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Text as ST
@@ -127,6 +128,7 @@ showEditAsDoc edits
     noStyle :: Styles
     noStyle = mempty
 
+
 -- Auxiliary types used only in docEditRanges
 type SelRange = (SelPoint, SelPoint)
 type SelPoint = ((Int, Maybe BlockKey), (Int, OffsetPos))
@@ -176,3 +178,57 @@ docEditRanges edits
     toSelState (((_, Just k1), (o1, _)), ((_, Just k2), (o2, _)))
         = [SelectionState False (SelectionPoint k1 o1) (SelectionPoint k2 o2)]
     toSelState _ = []
+
+
+-- | Take a document in diff mode, a number of blocks to keep preceeding and succeeding each changed
+-- block, resp., and returns with all sequences of blocks far away from any change replaced by a
+-- single block reading `...`.
+hideUnchangedParts :: RawContent -> Int -> Int -> RawContent
+hideUnchangedParts (NEL.toList . rawContentToDoc -> doc) blocksbefore blocksafter
+    = docToRawContent
+    . NEL.fromList
+    . concatMap showRegion
+    . groupBy ((==) `on` fst)
+    $ zip displayedLines doc
+  where
+    showRegion bs@((True, _): _) = snd <$> bs
+    showRegion ((False, _): _) = [dotDotDot]
+    showRegion _ = error "impossible"
+
+    dotDotDot = DocBlock NormalText (BlockDepth 0) Nothing [((Atom Nothing, mempty), "...")]
+
+    {- example run
+    blocksbefore = 2
+    blocksafter  = 1
+    changedLines =  -#----##
+
+                    -
+                    -#
+                    -#-         # |
+                    -#--        # #
+                     #---       # |
+                      ----      | |
+                       ---#     # |
+                        --##    # |
+                         -##    # #
+                          ##    # #
+                           #
+    -}
+    displayedLines :: [Bool]
+    displayedLines
+        = drop (blocksbefore + 1)
+        $ or <$> (take window (inits changedLines) <> (take window <$> tails changedLines))
+      where
+        window = blocksbefore + 1 + blocksafter
+
+    changedLines :: [Bool]
+    changedLines = lineChanged <$> doc
+
+    lineChanged :: DocBlock -> Bool
+    lineChanged (DocBlock _ _ _ elems) = any elemChanged elems
+
+    elemChanged :: LineElem -> Bool
+    elemChanged ((_, ss), _)
+        =  Atom StyleAdded   `Set.member` ss
+        || Atom StyleDeleted `Set.member` ss
+        || Atom StyleChanged `Set.member` ss
