@@ -163,13 +163,13 @@ test_diff :: GenEdit d => d -> Gen Property
 test_diff d = do
     p <- genEdit d
     let p' = diff d (patch p d)
-    failPrint (p, patch p d, p') $ maybe True (\pp -> equalEdit p pp d) p'
+    failPrint (p, patch p d, p') $ either (const True) (\pp -> equalEdit p pp d) p'
 
 test_diff2 :: GenEdit d => d -> Gen Property
 test_diff2 d = do
     d' <- arbitrary
     let p' = diff d d'
-    failPrint (d', p') $ maybe True (\pp -> patch pp d == d') p'
+    failPrint (d', p') $ either (const True) (\pp -> patch pp d == d') p'
 
 ---------------------------------------- () instance
 
@@ -238,7 +238,7 @@ instance (GenEdit a) => GenEdit [a] where
 
 instance GenEdit a => GenEdit (NonEmpty a) where
     genEdit (NEL.toList -> s) = do
-        e <- genEdit s `suchThat` allEdit (not . null) s
+        e <- genEdit s `suchThat` maintainsNonEmpty s
         pure $ coerce e
 
 ---------------------------------------- Seq instance
@@ -268,7 +268,7 @@ instance GenEdit ST where
 
 instance GenEdit NonEmptyST where
     genEdit (NonEmptyST s) = do
-        e <- genEdit s `suchThat` allEdit (not . ST.null) s
+        e <- genEdit s `suchThat` maintainsInvariant (not . ST.null) s
         pure $ coerce e
 
 ---------------------------------------- Set instance
@@ -324,7 +324,7 @@ instance (GenEdit a, GenEdit b, Splitable b) => GenEdit (Segments a b) where
                         pure $ c <> (SegmentListEdit <$> editItem i cx)
                     | (i, x) <- zip [0..] d']
                  <> [ pure $ c <> (SegmentListEdit <$> editItem i (editFirst di)) <> [JoinItems i]
-                    | (i, (x, _), (y, _)) <- zip3 [0..] d' (drop 1 d'), di <- maybeToList $ diff x y]
+                    | (i, (x, _), (y, _)) <- zip3 [0..] d' (drop 1 d'), di <- either (const []) (:[]) $ diff x y]
                  <> [do
                         j <- choose (0, jmax)
                         pure $ c <> [SplitItem i j]
@@ -414,4 +414,4 @@ spec = parallel $ do
 -- | running in ghci8 on a lenovo t420s with no attempt at optimizing, @n = 1000@: @(2.88 secs,
 -- 2,382,007,256 bytes)@.  this should be our baseline from which to improve.
 simplePerformanceBenchmark :: IO ()
-simplePerformanceBenchmark = let n = 1000 in print $ diff (take n ['a'..]) (take n ['A'..])
+simplePerformanceBenchmark = let n = 1000 in print (diff (take n ['a'..]) (take n ['A'..]) :: Either String (Edit String))
