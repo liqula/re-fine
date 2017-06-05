@@ -3,17 +3,15 @@
 module Main where
 
 import Test.Hspec
+import Spec (spec)
+import AllModules ()
 
 #ifdef __GHCJS__
 import React.Flux
 
 import Refine.Frontend.Store.Types
 import Refine.Frontend.Test.Store
-import Spec (spec)
-#else
-import AllModules ()
 #endif
-
 
 main :: IO ()
 main = do
@@ -21,9 +19,5 @@ main = do
   registerInitialStore emptyGlobalState
   hspec $ before (resetState emptyGlobalState) spec
 #else
-  putStrLn "built with GHC -- not running the test suite."
-
-spec :: Spec
-spec = it "type-checks!" $ do
-  pendingWith "built with GHC -- sensei can check for type errors, but then it'll crash here."
+  hspec spec
 #endif
