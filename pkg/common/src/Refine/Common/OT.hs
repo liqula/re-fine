@@ -34,7 +34,6 @@ import           Control.DeepSeq
 import           Test.QuickCheck (Arbitrary)
 import           Test.QuickCheck.Instances ()
 
-{-# ANN module ("HLint: ignore Use cs" :: String) #-}
 ----------------------------------------------------------------------------------------------
 
 -- | @[a, b, c]@ means first a, then b, then c
@@ -548,15 +547,15 @@ newtype NonEmptyST = NonEmptyST {unNonEmptyST :: ST}
 
 instance IsString NonEmptyST where
     fromString [] = error "fromString @NonEmptyST []"
-    fromString s = NonEmptyST $ fromString s
+    fromString s = NonEmptyST $ cs s
 
 instance ConvertibleStrings NonEmptyST [Char] where convertString = convertString . unNonEmptyST
-{-
+
 instance ConvertibleStrings [Char] NonEmptyST
   where
     convertString [] = error "convertString @String @NonEmptyST []"
     convertString s = NonEmptyST $ convertString s
--}
+
 instance Editable NonEmptyST where
     newtype EEdit NonEmptyST = NEText {unNEText :: EEdit String}
         deriving (Generic, Show, Eq)
