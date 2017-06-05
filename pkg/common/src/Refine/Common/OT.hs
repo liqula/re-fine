@@ -731,6 +731,10 @@ instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) 
 
     eMerge (Segments d) (SegmentListEdit e1) (SegmentListEdit e2)
         = fmap SegmentListEdit *** fmap SegmentListEdit $ eMerge d e1 e2
+    eMerge d a b
+        = secondWins d a b
+
+{- FIXME: uncomment and fix bugs in this code
 
     eMerge d a@(JoinItems i) b@(SegmentListEdit (InsertItem i' _))
         | i' == i+1 = secondWins d a b   -- TODO: improve
@@ -758,12 +762,14 @@ instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) 
         | i' == i   = secondWins d a b   -- TODO: improve
         | i' == i+1 = secondWins d a b   -- TODO: improve
         | i'+1 == i = secondWins d a b   -- TODO: improve
+
 {- solved better in the last function alternative
     eMerge d a@(SplitItem i _) b@(SegmentListEdit (InsertItem i' _))
         | i' == i+1 = secondWins d a b
     eMerge d a@(SegmentListEdit (InsertItem i' _)) b@(SplitItem i _)
         | i' == i+1 = secondWins d a b
 -}
+
     eMerge d a@(SplitItem i _) b@(SegmentListEdit (DeleteItem i'))
         | i' == i   = secondWins d a b   -- TODO: improve
     eMerge d a@(SegmentListEdit (DeleteItem i')) b@(SplitItem i _)
@@ -775,7 +781,6 @@ instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) 
     eMerge d a@(SplitItem i _) b@(SplitItem i' _)
         | i' == i   = secondWins d a b   -- TODO: improve
 
-{- TODO: uncomment and fix bugs in this code
     eMerge _ a b = (mutate 0 a b, mutate 1 b a)
       where
         mutate l e = \case
@@ -800,7 +805,8 @@ instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) 
                                                  | j>i       -> i
                                                  | otherwise -> i+k
 -}
-    eMerge d a b = secondWins d a b
+
+    -- TUNING: better-than-default merge
 
     eInverse (Segments d) = \case
         SegmentListEdit e -> SegmentListEdit <$> eInverse d e
