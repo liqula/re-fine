@@ -335,10 +335,10 @@ instance (GenEdit a, GenEdit b, Splitable b) => GenEdit (Segments a b) where
 testSplitable :: forall d. (Typeable d, Splitable d, Eq d, Arbitrary d, Show d) => Proxy d -> Spec
 testSplitable p
     = describe ("Splitable instance for " <> show (typeRep p)) $ do
-        it "splitLength >= 0"   $ property test_splitLength
-        it "maxSplitIndex >= -1"   $ property test_maxSplitIndex
-        it "join . split == id" $ property join_split
-        it "split . join == id" $ property split_join
+        it "splitLength >= 0"    $ property test_splitLength
+        it "maxSplitIndex >= -1" $ property test_maxSplitIndex
+        it "join . split == id"  $ property join_split
+        it "split . join == id"  $ property split_join
   where
     test_splitLength :: d -> Bool
     test_splitLength d = splitLength d >= 0

@@ -301,8 +301,6 @@ pattern DocBlock t d k ls = (((Atom t, Atom d), NonEditable k), Segments ls)
 newtype BlockDepth = BlockDepth {unBlockDepth :: Int}
   deriving (Eq, Ord, Show, Read, ToJSON, FromJSON, Generic, NFData)
 
-{- | A segment of an inline style, consisting of 'EntityRange' and 'Style'.
--}
 type LineElems = Segments EntityStyles NonEmptyST
 type LineElem = (EntityStyles, NonEmptyST)
 
@@ -456,8 +454,7 @@ instance FromJSON Style where
 
 -- ** Editable RawContent instance
 
--- | The Editable instance maintain the
--- assumption that neighbouring elements have different entities or styles.
+-- | assumption: neighbouring elements have different entities or styles.
 instance Editable RawContent where
     newtype EEdit RawContent
         -- TODO: doc
@@ -509,7 +506,8 @@ instance SOP.HasDatatypeInfo (EEdit RawContent)
 
 -- ** helper functions for Editable RawContent instance
 
--- | TODO: accept non-canonical RawContent (with unjoined line elements)
+-- | @'docToRawContent' . 'rawContentToDoc' == id@ iff 'RawContent' is canonicalized (see
+-- 'canonicalizeRawContent').
 rawContentToDoc :: RawContent -> OTDoc
 rawContentToDoc (RawContent blocks entities) = mkDocBlock <$> blocks
   where
