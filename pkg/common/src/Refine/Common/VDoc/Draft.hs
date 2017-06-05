@@ -130,7 +130,7 @@ rawContentFromCompositeVDoc (CompositeVDoc _ _ vers edits notes discussions) =
     convertHack l (k, v) = (contribID k, chunkRangeToSelectionState rawContent $ v ^. l)
 
     marks :: [(ContributionID, SelectionState)]
-    marks = ((contribID *** NEL.head . (^. editRanges))          <$> Map.toList edits)
+    marks = [(contribID k, s) | (k, e) <- Map.toList edits, s <- NEL.toList $ e ^. editRanges]
          <> (convertHack noteRange                               <$> Map.toList notes)
          <> (convertHack (compositeDiscussion . discussionRange) <$> Map.toList discussions)
 
