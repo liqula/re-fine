@@ -413,5 +413,8 @@ spec = parallel $ do
 
 -- | running in ghci8 on a lenovo t420s with no attempt at optimizing, @n = 1000@: @(2.88 secs,
 -- 2,382,007,256 bytes)@.  this should be our baseline from which to improve.
+--
+-- more data points (same setup):
+-- - Mon Jun  5 12:08:03 CEST 2017, commit 2968d504760e: @(10.90 secs, 3,919,324,968 bytes)@  (regression!)
 simplePerformanceBenchmark :: IO ()
 simplePerformanceBenchmark = let n = 1000 in print (diff (take n ['a'..]) (take n ['A'..]) :: Either String (Edit String))
