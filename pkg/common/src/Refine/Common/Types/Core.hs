@@ -457,7 +457,16 @@ instance FromJSON Style where
 -- | assumption: neighbouring elements have different entities or styles.
 instance Editable RawContent where
     newtype EEdit RawContent
-        -- TODO: doc
+        {-
+        Each elementary edit on RawContent should keep the invariant that neighbouring line elems
+        has different styles/entity.
+        To achieve this, an elementary edit on RawContent is a list of elementary edits on OTDoc.
+
+        Example:
+            Document: "*bold* normal"
+            Edit: ERawConent [<change style of line elem #1 to normal>, <join line elems #1 and #2>]
+        Without the join, the invariant would not hold.
+        -}
         = ERawContent {unERawContent :: OT.Edit OTDoc}
       deriving (Generic, Show, Eq)
 
