@@ -62,7 +62,7 @@ class Editable d where
     ePatch :: EEdit d -> d -> d
 
     patch :: Edit d -> d -> d
-    patch = flip $ foldl (flip ePatch)
+    patch = flip $ foldl' (flip ePatch)
 
     -- | assume second happend later in case of conflicts
     -- FUTUREWORK: measure information lost during merge
