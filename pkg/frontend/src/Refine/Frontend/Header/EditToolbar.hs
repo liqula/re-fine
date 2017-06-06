@@ -29,6 +29,7 @@ import Refine.Frontend.Prelude
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Store.Types
+import           Refine.Common.Types (BlockType(..))
 
 editToolbar :: View '[]
 editToolbar = mkView "EditToolbar" $ do
@@ -46,17 +47,17 @@ editToolbar = mkView "EditToolbar" $ do
           iconButton_ $ editButton "Edit_toolbar_h1"
             & iconButtonPropsListKey      .~ "h1"
             & iconButtonPropsLabel        .~ "header 1"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType Header1]
 
           iconButton_ $ editButton "Edit_toolbar_h2"
             & iconButtonPropsListKey      .~ "h2"
             & iconButtonPropsLabel        .~ "header 2"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType Header2]
 
           iconButton_ $ editButton "Edit_toolbar_h3"
             & iconButtonPropsListKey      .~ "h3"
             & iconButtonPropsLabel        .~ "header 3"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType Header3]
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
@@ -75,12 +76,12 @@ editToolbar = mkView "EditToolbar" $ do
           iconButton_ $ editButton "Edit_toolbar_bullets"
             & iconButtonPropsListKey      .~ "bullets"
             & iconButtonPropsLabel        .~ "bullets"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType BulletPoint]
 
           iconButton_ $ editButton "Edit_toolbar_numbers"
             & iconButtonPropsListKey      .~ "numbers"
             & iconButtonPropsLabel        .~ "numbers"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType EnumPoint]
 
           iconButton_ $ editButton mempty
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge

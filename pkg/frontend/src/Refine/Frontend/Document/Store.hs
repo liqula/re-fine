@@ -79,6 +79,9 @@ documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _state
 documentStateUpdate (DocumentAction (DocumentUpdateEditKind kind)) _ st
   = st & documentStateEditKind .~ kind
 
+documentStateUpdate (DocumentAction (DocumentToggleBlockType bt)) _ st
+  = st & documentStateVal %~ documentToggleBlockType bt
+
 documentStateUpdate (DocumentAction DocumentToggleBold) _ st
   = st & documentStateVal %~ documentToggleBold
 

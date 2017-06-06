@@ -46,6 +46,7 @@ data DocumentAction =
   | DocumentToggleBold
   | DocumentToggleItalic
   | ToggleCollapseDiff
+  | DocumentToggleBlockType BlockType
   deriving (Show, Eq, Generic)
 
 data DocumentState =

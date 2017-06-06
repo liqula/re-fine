@@ -54,6 +54,7 @@ module Refine.Frontend.Document.FFI
     -- * editor state actions
   , documentToggleBold
   , documentToggleItalic
+  , documentToggleBlockType
 
     -- * selections
   , getSelection
@@ -141,6 +142,12 @@ documentToggleBold st = js_ES_toggleInlineStyle st "BOLD"
 -- | toggle italic style on current selection
 documentToggleItalic :: EditorState -> EditorState
 documentToggleItalic st = js_ES_toggleInlineStyle st "ITALIC"
+
+-- | toggle italic style on current selection
+documentToggleBlockType :: Draft.BlockType -> EditorState -> EditorState
+documentToggleBlockType bt st = js_ES_toggleBlockType st $ case toJSON bt of
+    String s -> cs s
+    _ -> error "impossible"
 
 -- * selections
 
@@ -243,6 +250,11 @@ foreign import javascript unsafe
   "Draft.RichUtils.toggleInlineStyle($1,$2)"
   js_ES_toggleInlineStyle :: EditorState -> JSString -> EditorState
 
+-- | https://draftjs.org/docs/api-reference-rich-utils.html#content
+foreign import javascript unsafe
+  "Draft.RichUtils.toggleBlockType($1,$2)"
+  js_ES_toggleBlockType :: EditorState -> JSString -> EditorState
+
 foreign import javascript unsafe
   "$1.getSelection()"
   js_ES_getSelection :: EditorState -> JSVal
@@ -332,6 +344,10 @@ js_Draft_stateToHTML = error "javascript FFI not available in GHC"
 {-# ANN js_ES_toggleInlineStyle ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_toggleInlineStyle :: EditorState -> JSString -> EditorState
 js_ES_toggleInlineStyle = error "javascript FFI not available in GHC"
+
+{-# ANN js_ES_toggleBlockType ("HLint: ignore Use camelCase" :: String) #-}
+js_ES_toggleBlockType :: EditorState -> JSString -> EditorState
+js_ES_toggleBlockType = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_getSelection ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelection :: EditorState -> JSVal
