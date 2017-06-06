@@ -52,8 +52,7 @@ module Refine.Frontend.Document.FFI
   , stateToHTML
 
     -- * editor state actions
-  , documentToggleBold
-  , documentToggleItalic
+  , documentToggleStyle
   , documentToggleBlockType
 
     -- * selections
@@ -133,15 +132,10 @@ stateToHTML = js_Draft_stateToHTML
 
 -- | toggle bold style on current selection
 --
--- FIXME: replace this by @documentToggleStyle :: Draft.Style -> EditorState -> EditorState@, and
--- replace 'DocumentToggleBold', 'DocumentToggleItalic' etc by @DocumentToggleStyle Draft.Style@.
--- (i tried this before, but there was no effect any more.  perhaps i got the encoding wrong?)
-documentToggleBold :: EditorState -> EditorState
-documentToggleBold st = js_ES_toggleInlineStyle st "BOLD"
-
--- | toggle italic style on current selection
-documentToggleItalic :: EditorState -> EditorState
-documentToggleItalic st = js_ES_toggleInlineStyle st "ITALIC"
+documentToggleStyle :: Draft.Style -> EditorState -> EditorState
+documentToggleStyle sty st = js_ES_toggleInlineStyle st $ case toJSON sty of
+    String s -> cs s
+    _ -> error "impossible"
 
 -- | toggle italic style on current selection
 documentToggleBlockType :: Draft.BlockType -> EditorState -> EditorState

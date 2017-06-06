@@ -82,11 +82,8 @@ documentStateUpdate (DocumentAction (DocumentUpdateEditKind kind)) _ st
 documentStateUpdate (DocumentAction (DocumentToggleBlockType bt)) _ st
   = st & documentStateVal %~ documentToggleBlockType bt
 
-documentStateUpdate (DocumentAction DocumentToggleBold) _ st
-  = st & documentStateVal %~ documentToggleBold
-
-documentStateUpdate (DocumentAction DocumentToggleItalic) _ st
-  = st & documentStateVal %~ documentToggleItalic
+documentStateUpdate (DocumentAction (DocumentToggleStyle s)) _ st
+  = st & documentStateVal %~ documentToggleStyle s
 
 documentStateUpdate (AddDiscussion _) (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc

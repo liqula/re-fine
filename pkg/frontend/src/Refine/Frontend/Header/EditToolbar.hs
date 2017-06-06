@@ -29,7 +29,7 @@ import Refine.Frontend.Prelude
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Store.Types
-import           Refine.Common.Types (BlockType(..))
+import           Refine.Common.Types (BlockType(..), Style(..))
 
 editToolbar :: View '[]
 editToolbar = mkView "EditToolbar" $ do
@@ -64,12 +64,12 @@ editToolbar = mkView "EditToolbar" $ do
           iconButton_ $ editButton "Edit_toolbar_bold"
             & iconButtonPropsListKey      .~ "bold"
             & iconButtonPropsLabel        .~ "bold"
-            & iconButtonPropsOnClick      .~ [DocumentAction DocumentToggleBold]
+            & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleStyle Bold]
 
           iconButton_ $ editButton "Edit_toolbar_italic"
             & iconButtonPropsListKey      .~ "italic"
             & iconButtonPropsLabel        .~ "italic"
-            & iconButtonPropsOnClick      .~ [DocumentAction DocumentToggleItalic]
+            & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleStyle Italic]
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
