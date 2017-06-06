@@ -279,10 +279,10 @@ data SelectionPoint
 -- offset-key is constructed from block key, a '0' literal, and the number of left siblings of the
 -- span the selector refers to.
 data MarkSelector = MarkSelector MarkSelectorSide BlockKey Int
-  deriving (Eq, Show, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
-data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom | MarkSelectorUnknownSide
-  deriving (Eq, Show, Generic)
+data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom
+  deriving (Eq, Ord, Show, Generic)
 
 
 -- * OT.Edit RawContent

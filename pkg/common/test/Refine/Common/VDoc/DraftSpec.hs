@@ -82,6 +82,26 @@ spec = do
           want       = [(cid0, MarkSelector MarkSelectorTop block0 0, MarkSelector MarkSelectorBottom block0 2)]
       getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
+    it "works (one contrib in two parts)" $ do
+      let rawContent = initBlockKeys . mkRawContent $ mkBlock "1234567890" :| []
+          marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block0 3))
+                       , (cid0, SelectionState False (SelectionPoint block0 4) (SelectionPoint block0 7))
+                       ]
+          want       = [ (cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 1)
+                       , (cid0, MarkSelector MarkSelectorTop block0 3, MarkSelector MarkSelectorBottom block0 3)
+                       ]
+      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
+
+    it "works (one contrib in two parts spanning two blocks)" $ do
+      let rawContent = initBlockKeys . mkRawContent $ NEL.fromList [mkBlock "1234567890", mkBlock "asdf"]
+          marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block1 1))
+                       , (cid0, SelectionState False (SelectionPoint block1 2) (SelectionPoint block1 3))
+                       ]
+          want       = [ (cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block1 0)
+                       , (cid0, MarkSelector MarkSelectorTop block1 2, MarkSelector MarkSelectorBottom block1 2)
+                       ]
+      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
+
     it "works (two overlapping contribs)" $ do
       let rawContent = initBlockKeys . mkRawContent $ mkBlock "1234567890" :| []
           marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block0 4))

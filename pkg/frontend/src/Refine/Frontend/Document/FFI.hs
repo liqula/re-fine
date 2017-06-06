@@ -172,7 +172,6 @@ getMarkSelectorBound mark@(Draft.MarkSelector side _ _) = js_getBoundingBox (ren
   where
     renderSide Draft.MarkSelectorTop = "top"
     renderSide Draft.MarkSelectorBottom = "bottom"
-    renderSide Draft.MarkSelectorUnknownSide = error $ "getMarkSelectorBound: mark with bad side: " <> show mark
 
     renderMarkSelector :: Draft.MarkSelector -> JSString
     renderMarkSelector (Draft.MarkSelector _ (Draft.BlockKey b) i) =
