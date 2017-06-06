@@ -45,6 +45,7 @@ data DocumentAction =
   | DocumentCancelSave
   | DocumentToggleStyle Style
   | DocumentToggleBlockType BlockType
+  | DocumentToggleLink
   | ToggleCollapseDiff
   deriving (Show, Eq, Generic)
 

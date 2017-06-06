@@ -54,6 +54,7 @@ module Refine.Frontend.Document.FFI
     -- * editor state actions
   , documentToggleStyle
   , documentToggleBlockType
+  , documentToggleLink
 
     -- * selections
   , getSelection
@@ -143,6 +144,14 @@ documentToggleBlockType bt st = js_ES_toggleBlockType st $ case toJSON bt of
     String s -> cs s
     _ -> error "impossible"
 
+-- TODO: remove links if selection contains link
+documentToggleLink :: EditorState -> EditorState
+documentToggleLink st = js_ES_toggleLink st' (js_ES_getSelection st') entitykey
+  where
+    st' = setCurrentContent st content
+    entitykey = js_ES_getLastCreatedEntityKey content
+    content = js_ES_createLink (getCurrentContent st) "http://www.example.com" -- TODO: replace example link
+
 -- * selections
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#getselection
@@ -208,7 +217,7 @@ foreign import javascript unsafe
   js_ES_createEmpty :: EditorState
 
 foreign import javascript unsafe
-  "Draft.EditorState.createWithContent($1)"
+  "Draft.EditorState.createWithContent($1, refine$decorator)"
   js_ES_createWithContent :: ContentState -> EditorState
 
 foreign import javascript unsafe
@@ -218,6 +227,14 @@ foreign import javascript unsafe
 foreign import javascript unsafe
   "Draft.EditorState.set($1, { currentContent: $2 })"
   js_ES_setCurrentContent :: EditorState -> ContentState -> EditorState
+
+foreign import javascript unsafe
+  "$1.createEntity('LINK', 'MUTABLE', { url: $2 })"
+  js_ES_createLink :: ContentState -> JSString -> ContentState
+
+foreign import javascript unsafe
+  "$1.getLastCreatedEntityKey()"
+  js_ES_getLastCreatedEntityKey :: ContentState -> JSString
 
 foreign import javascript unsafe
   "console.log('traceEditorState', $1)"
@@ -245,6 +262,10 @@ foreign import javascript unsafe
   js_ES_toggleInlineStyle :: EditorState -> JSString -> EditorState
 
 -- | https://draftjs.org/docs/api-reference-rich-utils.html#content
+foreign import javascript unsafe
+  "Draft.RichUtils.toggleLink($1,$2,$3)"
+  js_ES_toggleLink :: EditorState -> JSVal{-SelectionState-} -> JSString -> EditorState
+
 foreign import javascript unsafe
   "Draft.RichUtils.toggleBlockType($1,$2)"
   js_ES_toggleBlockType :: EditorState -> JSString -> EditorState
@@ -315,6 +336,14 @@ js_ES_getCurrentContent = error "javascript FFI not available in GHC"
 js_ES_setCurrentContent :: EditorState -> ContentState -> EditorState
 js_ES_setCurrentContent = error "javascript FFI not available in GHC"
 
+{-# ANN js_ES_createLink ("HLint: ignore Use camelCase" :: String) #-}
+js_ES_createLink :: ContentState -> JSString -> ContentState
+js_ES_createLink = error "javascript FFI not available in GHC"
+
+{-# ANN js_ES_getLastCreatedEntityKey ("HLint: ignore Use camelCase" :: String) #-}
+js_ES_getLastCreatedEntityKey :: ContentState -> JSString
+js_ES_getLastCreatedEntityKey = error "javascript FFI not available in GHC"
+
 {-# ANN js_ES_traceEditorState ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_traceEditorState :: EditorState -> IO ()
 js_ES_traceEditorState = error "javascript FFI not available in GHC"
@@ -338,6 +367,10 @@ js_Draft_stateToHTML = error "javascript FFI not available in GHC"
 {-# ANN js_ES_toggleInlineStyle ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_toggleInlineStyle :: EditorState -> JSString -> EditorState
 js_ES_toggleInlineStyle = error "javascript FFI not available in GHC"
+
+{-# ANN js_ES_toggleLink ("HLint: ignore Use camelCase" :: String) #-}
+js_ES_toggleLink :: EditorState -> JSVal{-SelectionState-} -> JSString -> EditorState
+js_ES_toggleLink = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_toggleBlockType ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_toggleBlockType :: EditorState -> JSString -> EditorState

@@ -83,6 +83,13 @@ editToolbar = mkView "EditToolbar" $ do
             & iconButtonPropsLabel        .~ "numbers"
             & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType EnumPoint]
 
+          div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+
+          iconButton_ $ editButton "Edit_toolbar_link"
+            & iconButtonPropsListKey      .~ "link"
+            & iconButtonPropsLabel        .~ "link"
+            & iconButtonPropsOnClick      .~ [DocumentAction DocumentToggleLink]
+
           iconButton_ $ editButton mempty
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
             & iconButtonPropsListKey      .~ "save"
