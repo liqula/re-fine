@@ -61,16 +61,16 @@ documentStateUpdate (HeaderAction (StartEdit kind)) gs (DocumentStateView estate
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     (view gsVDoc -> Just cvdoc)
                     (DocumentStateView e r)
-  = DocumentStateDiff e r $ cvdoc ^?! compositeVDocEdits . ix eid
+  = DocumentStateDiff e r (cvdoc ^?! compositeVDocEdits . ix eid) True
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
                     _
-                    (DocumentStateDiff e r _)
+                    (DocumentStateDiff e r _ _)
   = DocumentStateView e r
 
 documentStateUpdate (ContributionAction HideContributionDialog)
                     _
-                    (DocumentStateDiff e r _)
+                    (DocumentStateDiff e r _ _)
   = DocumentStateView e r
 
 documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _state
@@ -107,6 +107,9 @@ documentStateUpdate (ContributionAction ClearRange) _ ((^? documentStateContent)
   = mkDocumentStateView
   . deleteMarksFromRawContentIf (== ContribIDHighlightMark)
   $ rc
+
+documentStateUpdate (DocumentAction ToggleCollapseDiff) _ st | has _DocumentStateDiff st
+  = st & documentStateDiffCollapsed %~ not
 
 documentStateUpdate _ _ st
   = st

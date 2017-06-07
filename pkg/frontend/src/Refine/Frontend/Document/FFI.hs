@@ -38,6 +38,7 @@ module Refine.Frontend.Document.FFI
     -- * https://draftjs.org/docs/api-reference-editor-state.html
   , createEmpty
   , createWithContent
+  , createWithRawContent
   , getCurrentContent
   , setCurrentContent
   , traceEditorState
@@ -93,6 +94,9 @@ createEmpty = js_ES_createEmpty
 -- | https://draftjs.org/docs/api-reference-editor-state.html#createwithcontent
 createWithContent :: ContentState -> EditorState
 createWithContent = js_ES_createWithContent
+
+createWithRawContent :: Draft.RawContent -> EditorState
+createWithRawContent = createWithContent . convertFromRaw
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#getcurrentcontent
 getCurrentContent :: EditorState -> ContentState

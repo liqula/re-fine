@@ -545,13 +545,17 @@ instance NFData (EEdit ST) where rnf = grnf
 newtype NonEmptyST = NonEmptyST {unNonEmptyST :: ST}
     deriving (Eq, Ord, Show, Read, NFData, ToJSON, FromJSON, Generic, Monoid)
 
+instance IsString NonEmptyST where
+    fromString [] = error "fromString @NonEmptyST []"
+    fromString s = NonEmptyST $ cs s
+
 instance ConvertibleStrings NonEmptyST [Char] where convertString = convertString . unNonEmptyST
-{-
+
 instance ConvertibleStrings [Char] NonEmptyST
   where
     convertString [] = error "convertString @String @NonEmptyST []"
     convertString s = NonEmptyST $ convertString s
--}
+
 instance Editable NonEmptyST where
     newtype EEdit NonEmptyST = NEText {unNEText :: EEdit String}
         deriving (Generic, Show, Eq)

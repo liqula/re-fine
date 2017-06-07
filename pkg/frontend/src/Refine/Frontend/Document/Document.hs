@@ -36,7 +36,7 @@ import           Language.Css.Build hiding (s)
 import           Language.Css.Syntax hiding (Value)
 
 import           Refine.Common.Types
-import           Refine.Common.VDoc.OT (showEditAsRawContent)
+import           Refine.Common.VDoc.OT (showEditAsRawContent, hideUnchangedParts)
 import           Refine.Common.VDoc.Draft (deleteMarksFromRawContent)
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Contribution.Types
@@ -75,8 +75,14 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
           rawContent = rawContentDiffView <|> (dstate ^? documentStateContent)
 
           rawContentDiffView :: Maybe RawContent
-          rawContentDiffView = diffit =<< (props ^? dpDocumentState . documentStateDiff . editSource)
+          rawContentDiffView
+              = fmap mcollapse
+              $ diffit =<< (props ^? dpDocumentState . documentStateDiff . editSource)
             where
+              mcollapse rc = if props ^? dpDocumentState . documentStateDiffCollapsed == Just True
+                then hideUnchangedParts rc 0 0  -- FUTUREWORK: make these numbers adjustable by the user
+                else rc
+
               diffit InitialEdit           = error "impossible"
               diffit MergeOfEdits{}        = error "not implemented"
               diffit (EditOfEdit otedit _) = showEditAsRawContent otedit

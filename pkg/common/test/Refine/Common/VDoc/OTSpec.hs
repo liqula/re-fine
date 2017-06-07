@@ -13,6 +13,9 @@ module Refine.Common.VDoc.OTSpec where
 import Refine.Common.Prelude
 
 import           Data.List.NonEmpty (NonEmpty((:|)))
+import qualified Data.List.NonEmpty as NEL
+import qualified Data.Set as Set
+import           Data.Char (isUpper)
 import           Test.QuickCheck
 import           Test.Hspec
 
@@ -21,6 +24,8 @@ import Refine.Common.OT
 import Refine.Common.VDoc.OT
 import Refine.Common.Types.Core hiding (Edit)
 import Refine.Common.Test.Arbitrary (initBlockKeys)
+
+{-# ANN module ("HLint: ignore Use cs" :: String) #-}
 
 -- do not insert more than 4 elems into a Style set
 instance HasEnoughInhabitants (Atom Style) where numOfInhabitants _ = Just 4
@@ -92,3 +97,14 @@ spec = parallel $ do
             ranges = [SelectionState False (SelectionPoint (BlockKey "0") 0) (SelectionPoint (BlockKey "0") 18)]
         it "show diff" $ showEditAsRawContent edit rc `shouldBe` rc'
         it "ranges" $ docEditRanges edit (initBlockKeys rc) `shouldBe` ranges
+
+      it "hideUnchangedParts" $ do
+        let toRC = docToRawContent . NEL.fromList . map toBlock
+            toBlock '.' = DocBlock NormalText (BlockDepth 0) Nothing [((Atom Nothing, mempty), "...")]
+            toBlock c   = DocBlock NormalText (BlockDepth 0) Nothing
+                            [((Atom Nothing, Set.fromList [Atom StyleChanged | isUpper c]), fromString [c])]
+        hideUnchangedParts (toRC "aBcdefGH") 0 0 `shouldBe` toRC ".B.GH"
+        hideUnchangedParts (toRC "aBcdefGH") 1 1 `shouldBe` toRC "aBc.fGH"
+        hideUnchangedParts (toRC "aBcdefGH") 2 1 `shouldBe` toRC "aBc.efGH"
+        hideUnchangedParts (toRC "aBcdefGH") 1 2 `shouldBe` toRC "aBcd.fGH"
+        hideUnchangedParts (toRC "aBcdefGH") 2 2 `shouldBe` toRC "aBcdefGH"

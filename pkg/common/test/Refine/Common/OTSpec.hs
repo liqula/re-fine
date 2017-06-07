@@ -29,7 +29,6 @@ import           Test.QuickCheck
 import Refine.Common.OT
 import Refine.Common.Test.Arbitrary ()
 
-{-# ANN module "HLint: ignore Reduce duplication" #-}
 ---------------------------------------- quickcheck laws
 
 -- | Auxiliary class needed for testing only
