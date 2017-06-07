@@ -226,8 +226,7 @@ addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (st
       else soloSelectionPointPoint thisPoint ^. selectionOffset
 
     end = case List.filter ((== soloSelectionPointID thisPoint) . soloSelectionPointID) newClosePoints of
-      []   -> blocklen
-      sps  -> minimum [e | sp <- sps, let e = soloSelectionPointPoint sp ^. selectionOffset - start, e >= 0]
+      sps -> minimum $ blocklen : [e | sp <- sps, let e = soloSelectionPointPoint sp ^. selectionOffset - start, e >= 0]
 
 
 -- | See 'mkSomeSegments' (@payload@ is 'Style').  (See 'rawContentToDoc' for another use of 'mkSomeSegments'.)
