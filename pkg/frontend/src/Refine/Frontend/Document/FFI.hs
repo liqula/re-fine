@@ -132,17 +132,12 @@ stateToHTML = js_Draft_stateToHTML
 -- * editor state actions
 
 -- | toggle bold style on current selection
---
 documentToggleStyle :: Draft.Style -> EditorState -> EditorState
-documentToggleStyle sty st = js_ES_toggleInlineStyle st $ case toJSON sty of
-    String s -> cs s
-    _ -> error "impossible"
+documentToggleStyle sty st = js_ES_toggleInlineStyle st (cs $ Draft.styleToST sty)
 
 -- | toggle italic style on current selection
 documentToggleBlockType :: Draft.BlockType -> EditorState -> EditorState
-documentToggleBlockType bt st = js_ES_toggleBlockType st $ case toJSON bt of
-    String s -> cs s
-    _ -> error "impossible"
+documentToggleBlockType bt st = js_ES_toggleBlockType st (cs $ Draft.blockTypeToST bt)
 
 -- TODO: remove links if selection contains link
 documentToggleLink :: EditorState -> EditorState
