@@ -102,10 +102,16 @@ addEdit baseeid edit = do
   db $ do
     rid <- DB.vdocOfEdit baseeid
     olddoc <- rawContentFromVDocVersion <$> DB.getVersion baseeid
-    childEdit <- DB.createEdit rid (EditOfEdit (
+    dff <- either error pure $
+            -- error reporting is not great:
+            -- - this is an internal error, and it may be possible to rule it out on the type level.
+            -- - this should be an 'AppError', but it happens in the DB monad.
+            -- - since we 'error' out sloppily, the backend console says 'SQLite3 returned ErrorError
+            --   while attempting to perform step.' and the frontend says 'Error in $: Failed
+            --   reading: not a valid json value'.
         OT.diff (deleteMarksFromRawContent olddoc)
                 (deleteMarksFromRawContent . rawContentFromVDocVersion $ edit ^. createEditVDoc)
-        ) baseeid) edit
+    childEdit <- DB.createEdit rid (EditOfEdit dff baseeid) edit
     pure childEdit
 
 

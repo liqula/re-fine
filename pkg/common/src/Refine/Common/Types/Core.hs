@@ -35,7 +35,10 @@
 --     --> data RawConent, and lots of conversion functions
 --     --> data ContributionID
 --     --> data Edit
-module Refine.Common.Types.Core where
+module Refine.Common.Types.Core
+    ( module Refine.Common.Types.Core
+    , NonEmptyST(..)
+    ) where
 
 import Refine.Common.Prelude
 
@@ -44,7 +47,9 @@ import           Data.Int
 import           Data.Foldable (toList)
 import qualified Data.HashMap.Lazy as HashMap
 import qualified Data.IntMap as IntMap
-import           Data.List.NonEmpty (NonEmpty((:|)))
+import           Data.Either (isLeft)
+import           Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NEL
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text as ST
@@ -188,6 +193,9 @@ data HighlightMark
 
 -- | Haskell representation of the javascript @RawDraftContentState@.
 -- https://draftjs.org/docs/api-reference-data-conversion.html#content
+--
+-- FIXME: make this type abstract.  if we construct a value here instead of by calling
+-- 'mkRawContent', it may be non-canonical, and that may lead to strange artifacts in the diff.
 data RawContent = RawContent
   { _rawContentBlocks    :: NonEmpty (Block EntityKey)
   , _rawContentEntityMap :: IntMap Entity  -- ^ for performance, do not use @Map EntityKey Entity@ here.
@@ -280,33 +288,37 @@ data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom | MarkSelectorUnkno
 
 -- * OT.Edit RawContent
 
-type OTDoc = [DocBlock]
+type OTDoc = NonEmpty DocBlock
 
 -- | (third constructor arg is depth)
-type DocBlock = ((Atom BlockType, [LineElem]), Atom Int)
+type DocBlock = (((Atom BlockType, Atom BlockDepth), NonEditable (Maybe BlockKey)), LineElems)
 
-pattern DocBlock :: BlockType -> [LineElem] -> Int -> DocBlock
-pattern DocBlock a b c = ((Atom a, b), Atom c)
+pattern DocBlock :: BlockType -> BlockDepth -> Maybe BlockKey -> [LineElem] -> DocBlock
+pattern DocBlock t d k ls = (((Atom t, Atom d), NonEditable k), Segments ls)
 
--- | A segment of an inline style, consisting of 'EntityRange' and 'Style'.
---
--- FIXME: Entities are not joinable but styles are joinable -- OT should take care of this
--- FIXME: Entities may not overlap but styles may overlap -- OT should take care of this too
-{- a better representation could be style blocks inside entity blocks:
-    [< style set A >< style set B >< style set C >][              ][                 ]
-    Entity1                                        Entity2         Entity3
--}
-type LineElem = (Set (Atom EntityStyle), ST)
+-- | An integer between 0 and 36
+-- (ok, the upper bound of 36 for depth is arbitrarily introduced here.  don't know about draft.)
+newtype BlockDepth = BlockDepth {unBlockDepth :: Int}
+  deriving (Eq, Ord, Show, Read, ToJSON, FromJSON, Generic, NFData)
+
+type LineElems = Segments EntityStyles NonEmptyST
+type LineElem = (EntityStyles, NonEmptyST)
+
+type EntityStyles = (Atom (Maybe Entity), Set (Atom Style))
 
 -- | TUNING: (Set.mapMonotonic unAtom) and (Set.mapMonotonic Atom) should be (coerce)
 --   but GHC can't see that (Ord (Atom a)) is the same as (Ord a)
-pattern LineElem :: Set EntityStyle -> ST -> LineElem
-pattern LineElem a b <- (Set.mapMonotonic unAtom -> a, b)
-  where LineElem a b = (Set.mapMonotonic Atom a, b)
+pattern LineElem :: Set (Either Entity Style) -> NonEmptyST -> LineElem
+pattern LineElem a b <- (makeEntityStyleSet -> a, b)
+  where LineElem a b = ((Atom (mb $ Set.toList s1), Set.mapMonotonic (\(Right sty) -> Atom sty) s2), b)
+          where
+            (s1, s2) = Set.partition isLeft a
+            mb [] = Nothing
+            mb [Left x] = Just x
+            mb _ = error "overlapping entities"
 
-
-type EntityStyle = Either Entity Style
-
+makeEntityStyleSet :: EntityStyles -> Set (Either Entity Style)
+makeEntityStyleSet (Atom e, s) = maybe mempty (Set.singleton . Left) e <> Set.mapMonotonic (Right . unAtom) s
 
 -- * Instances
 
@@ -442,21 +454,58 @@ instance FromJSON Style where
 
 -- ** Editable RawContent instance
 
+-- | assumption: neighbouring elements have different entities or styles.
 instance Editable RawContent where
     newtype EEdit RawContent
-        = ERawContent {unERawContent :: EEdit OTDoc}
+        {-
+        Each elementary edit on RawContent should keep the invariant that neighbouring line elems
+        has different styles/entity.
+        To achieve this, an elementary edit on RawContent is a list of elementary edits on OTDoc.
+
+        Example:
+            Document: "*bold* normal"
+            Edit: ERawConent [<change style of line elem #1 to normal>, <join line elems #1 and #2>]
+        Without the join, the invariant would not hold.
+        -}
+        = ERawContent {unERawContent :: OT.Edit OTDoc}
       deriving (Generic, Show, Eq)
 
     docCost = docCost . rawContentToDoc
-    eCost = eCost . unERawContent
+    eCost = cost . unERawContent
 
-    diff a b = coerce $ diff (rawContentToDoc a) (rawContentToDoc b)
-    ePatch e = docToRawContent . ePatch (coerce e) . rawContentToDoc
-    patch e = docToRawContent . patch (coerce e) . rawContentToDoc
-    eMerge d a b = coerce $ eMerge (rawContentToDoc d) (coerce a) (coerce b)
-    merge d a b = coerce $ merge (rawContentToDoc d) (coerce a) (coerce b)
-    eInverse d = coerce . eInverse (rawContentToDoc d) . coerce
-    inverse d = coerce . inverse (rawContentToDoc d) . coerce
+    -- FUTUREWORK: smarter diff producing smaller elementary patches
+    diff a b = eRawContent <$> diff (rawContentToDoc a) (rawContentToDoc b)
+
+    ePatch e = docToRawContent . patch (coerce e) . rawContentToDoc
+    patch e = docToRawContent . patch (concat (coerce e :: [OT.Edit OTDoc])) . rawContentToDoc
+
+    {-
+            d
+        e1 / \ e2
+          d1 d2
+           \ /
+            d'
+            | makeJoinEdits
+            d''
+    -}
+    eMerge d a b = coerce ([a' <> e], [b' <> e])
+      where
+        doc = rawContentToDoc d
+        e = makeJoinEdits $ patch (coerce a <> a') doc
+        (a', b') = merge doc (coerce a) (coerce b)
+
+    -- TUNING: implement better-than-default merge
+    -- merge d a b = coerce $ merge (rawContentToDoc d) (coerce a) (coerce b)
+
+    eInverse d = pure . coerce . inverse (rawContentToDoc d) . coerce
+    inverse d es = coerce $ f [] (rawContentToDoc d) (coerce es)
+      where
+        f acc _ [] = acc
+        f acc doc (x: xs) = f (inverse doc x: acc) (patch x doc) xs
+
+eRawContent :: OT.Edit OTDoc -> OT.Edit RawContent
+eRawContent [] = []
+eRawContent e  = [ERawContent e]
 
 instance ToJSON (EEdit RawContent)
 instance FromJSON (EEdit RawContent)
@@ -466,37 +515,46 @@ instance SOP.HasDatatypeInfo (EEdit RawContent)
 
 -- ** helper functions for Editable RawContent instance
 
+-- | @'docToRawContent' . 'rawContentToDoc' == id@ iff 'RawContent' is canonicalized (see
+-- 'canonicalizeRawContent').
 rawContentToDoc :: RawContent -> OTDoc
-rawContentToDoc (RawContent (block :| blocks) entities) = mkDocBlock <$> (block : blocks)
+rawContentToDoc (RawContent blocks entities) = mkDocBlock <$> blocks
   where
     mkDocBlock :: Block EntityKey -> DocBlock
-    mkDocBlock (Block txt eranges styles ty depth _key) = DocBlock ty (segment segments txt) depth
+    mkDocBlock (Block txt eranges styles ty depth key) = DocBlock ty (BlockDepth depth) key (segment segments txt)
       where
         segment [] "" = []
-        segment [] text = [LineElem mempty text]
-        segment ((len, s): ss) text = LineElem s (ST.take len text): segment ss (ST.drop len text)
+        segment [] text = [LineElem mempty $ NonEmptyST text]
+        segment ((len, s): ss) text
+            | len > 0 = LineElem s (NonEmptyST $ ST.take len text) `add` segment ss (ST.drop len text)
+            | otherwise = error "segment text length is 0"
 
-        segments :: [(Int, Set EntityStyle)]
+        e `add` [] = [e]
+        e@(at1, x) `add` ls@((at2, y): ls')
+            | at1 == at2 = (at1, x <> y): ls'
+            | otherwise  = e: ls
+
+        segments :: [(Int, Set (Either Entity Style))]
         segments = mkSomeSegments fst snd
                  $ (second Right <$> styles)
                 <> ((\(e, r) -> (r, Left (entities IntMap.! coerce e))) <$> eranges)
 
 docToRawContent :: OTDoc -> RawContent
-docToRawContent blocks = mkRawContent $ mkDocBlock <$> blocks
+docToRawContent blocks = mkRawContentInternal $ mkDocBlock <$> blocks
   where
-    getText (LineElem _ txt) = txt
+    getText (LineElem _ (NonEmptyST txt)) = txt
 
     mkDocBlock :: DocBlock -> Block Entity
-    mkDocBlock (DocBlock ty es d) = Block
+    mkDocBlock (DocBlock ty (BlockDepth d) key es) = Block
         (mconcat $ fmap getText es)
         [(e, r) | (r, Left e) <- ranges]
         [(r, s) | (r, Right s) <- ranges]
         ty
         d
-        Nothing
+        key
       where
         ranges = mkRanges 0 mempty
-            $ [(len, s) | LineElem s txt <- es, let len = ST.length txt, len > 0]
+            $ [(len, s) | LineElem s (NonEmptyST txt) <- es, let len = ST.length txt]
             <> [(0, mempty)]  -- this is to avoid one more case in mkRanges below when we're done.
 
         mkRanges _ _ [] = []
@@ -509,23 +567,46 @@ docToRawContent blocks = mkRawContent $ mkDocBlock <$> blocks
                         <> [(n, sty) | sty <- Set.elems s, sty `notElem` fmap snd acc])
                         ss
 
-
--- | Note: empty block list is illegal.  For once it will make draft crash in 'stateFromContent'.
-mkRawContent :: [Block Entity] -> RawContent
-mkRawContent [] = mkRawContent [emptyBlock]
-mkRawContent bsl = RawContent bsnl (IntMap.fromList entities)
+-- | Block canonicalization: merge neighboring line elems with same attr set.
+makeJoinEdits :: OTDoc -> OT.Edit OTDoc
+makeJoinEdits blocks = concat . zipWith simplifyBlock [0..] $ NEL.toList blocks
   where
-    bsnl = case index <$$> bsl of
-      []       -> emptyBlock :| []
-      (b : bs) -> b          :| bs
+    simplifyBlock :: Int -> DocBlock -> OT.Edit OTDoc
+    simplifyBlock i (DocBlock _ _ _ ls) = map ENonEmpty . editItem i . editSecond $ case ls of
+        []  -> []
+        [_] -> []
+        (es, _): xs -> go 0 es xs
 
+    go _ _ [] = []
+    go i p ((es, _): ls)
+        | p == es = JoinItems i: go i es ls
+        | otherwise = go (i+1) es ls
+
+
+-- | Canonicalize a 'RawContent' value.  A value is canonicalized if no two entities that have the
+-- same 'Entity' value touch.
+--
+-- TUNING: this is the trivial implementation; there is probably something more efficient.
+canonicalizeRawContent :: RawContent -> RawContent
+canonicalizeRawContent = docToRawContent . rawContentToDoc
+
+-- | Construct a 'RawContent' value and canonicalize it.
+mkRawContent :: NonEmpty (Block Entity) -> RawContent
+mkRawContent = canonicalizeRawContent . mkRawContentInternal
+
+-- | Construct a 'RawContent' value *without* canonicalizing it.
+--
+-- Note: empty block list is illegal.  For once it will make draft crash in 'stateFromContent'.
+mkRawContentInternal :: NonEmpty (Block Entity) -> RawContent
+mkRawContentInternal bsl = RawContent (index <$$> bsl) (IntMap.fromList entities)
+  where
     -- FUTUREWORK: it is possible to do just one traversal to collect and index entities
     -- https://www.reddit.com/r/haskell/comments/610sa1/applicative_sorting/
     entities :: [(Int, Entity)]
     entities = zip [0..] . nub $ concatMap toList bsl
 
     index :: Entity -> EntityKey
-    index e = EntityKey . fromMaybe (error "mkRawContent: impossible") $ Map.lookup e em
+    index e = EntityKey . fromMaybe (error "mkRawContentInternal: impossible") $ Map.lookup e em
 
     em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
 

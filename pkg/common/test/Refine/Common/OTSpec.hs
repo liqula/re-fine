@@ -20,16 +20,21 @@ import Refine.Common.Prelude
 
 import qualified Data.Set as Set
 import qualified Data.Text as ST
+import           Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NEL
+import           Data.Sequence (Seq)
 import           Test.Hspec
 import           Test.QuickCheck
 
 import Refine.Common.OT
 import Refine.Common.Test.Arbitrary ()
 
+{-# ANN module "HLint: ignore Reduce duplication" #-}
 ---------------------------------------- quickcheck laws
 
 -- | Auxiliary class needed for testing only
 class (Editable d, Arbitrary d, Eq d, Show d, Show (EEdit d)) => GenEdit d where
+    -- TUNING: return the edited structure too
     genEdit :: d -> Gen (Edit d)
 
 runTest :: forall d. (Typeable d, GenEdit d) => [(String, d -> Gen Property)] -> Spec
@@ -71,6 +76,7 @@ fastTests =
 hardTests :: GenEdit d => [(String, d -> Gen Property)]
 hardTests =
     [ (,) "diff" test_diff
+    , (,) "diff (2)" test_diff2
     ]
 
 allTests :: GenEdit d => [(String, d -> Gen Property)]
@@ -137,7 +143,7 @@ test_diamond_left_join d = do
 test_inverse :: GenEdit d => d -> Gen Property
 test_inverse d = do
     a <- genEdit d
-    failPrint a $ equalEdit (a <> inverse d a) mempty d
+    failPrint (a, inverse d a) $ equalEdit (a <> inverse d a) mempty d
 
 test_inverse_inverse :: GenEdit d => d -> Gen Property
 test_inverse_inverse d = do
@@ -157,43 +163,54 @@ test_diff :: GenEdit d => d -> Gen Property
 test_diff d = do
     p <- genEdit d
     let p' = diff d (patch p d)
-    failPrint (p, patch p d, p', patch p' d) $ equalEdit p p' d
+    failPrint (p, patch p d, p') $ either (const True) (\pp -> equalEdit p pp d) p'
+
+test_diff2 :: GenEdit d => d -> Gen Property
+test_diff2 d = do
+    d' <- arbitrary
+    let p' = diff d d'
+    failPrint (d', p') $ either (const True) (\pp -> patch pp d == d') p'
 
 ---------------------------------------- () instance
 
 instance GenEdit () where
     genEdit _ = pure []
 
+---------------------------------------- NonEditable instance
+
+instance (Eq a, Show a, Arbitrary a) => GenEdit (NonEditable a) where
+    genEdit _ = pure []
+
 ---------------------------------------- (,) instance
 
+sizedEdit :: Gen [a] -> Gen [a]
+sizedEdit m = sized $ \case
+    0 -> pure []
+    _ -> oneof [pure [], scale (`div` 2) m]
+
 instance (GenEdit a, GenEdit b) => GenEdit (a, b) where
-    genEdit (a, b) = oneof
-        [ pure []
-        , pure . EditFirst  <$> genEdit a
-        , pure . EditSecond <$> genEdit b
+    genEdit (a, b) = sizedEdit $ oneof
+        [ editFirst  <$> genEdit a
+        , editSecond <$> genEdit b
         ]
 
 ---------------------------------------- Either instance
 
 instance (GenEdit a, GenEdit b) => GenEdit (Either a b) where
     genEdit = \case
-        Left a -> oneof
-            [ pure []
-            , pure . EditLeft  <$> genEdit a
+        Left a -> sizedEdit $ oneof
+            [ editLeft <$> genEdit a
             , pure . SetEither <$> arbitrary
             ]
-        Right b -> oneof
-            [ pure []
-            , pure . EditRight <$> genEdit b
+        Right b -> sizedEdit $ oneof
+            [ editRight <$> genEdit b
             , pure . SetEither <$> arbitrary
             ]
 
 ---------------------------------------- (Bounded, Enum) instance
 
 instance (Eq a, Show a, Arbitrary a) => GenEdit (Atom a) where
-    genEdit _ = fmap EAtom <$> listOf arbitrary
-
-deriving instance Arbitrary a => Arbitrary (Atom a)
+    genEdit _ = fmap EAtom <$> listOf (scale (`div` 2) arbitrary)
 
 ---------------------------------------- Char instance (via Atom Char)
 
@@ -203,21 +220,43 @@ instance GenEdit Char where
 ---------------------------------------- List instance
 
 instance (GenEdit a) => GenEdit [a] where
-    genEdit d = oneof
-        [ pure []
-        , do
+    genEdit d = sizedEdit $ do
             c <- genEdit d
-            ch <- arbitrary
             let d' = patch c d
                 n = length d'
             oneof $
-                    [pure $ c <> [InsertItem i ch] | i <- [0..n]]
+                    [do
+                        ch <- arbitrary
+                        pure $ c <> [InsertItem i ch] | i <- [0..n]]
                  <> [pure $ c <> [DeleteItem i] | i <- [0..n-1]]
                  <> [ do
                         cx <- genEdit x
-                        pure $ c <> [EditItem i cx]
+                        pure $ c <> editItem i cx
                     | (i, x) <- zip [0..] d']
-        ]
+
+---------------------------------------- non-empty list instance
+
+instance GenEdit a => GenEdit (NonEmpty a) where
+    genEdit (NEL.toList -> s) = do
+        e <- genEdit s `suchThat` maintainsNonEmpty s
+        pure $ coerce e
+
+---------------------------------------- Seq instance
+
+instance (GenEdit a) => GenEdit (Seq a) where
+    genEdit d = sizedEdit $ do
+            c <- genEdit d
+            let d' = patch c d
+                n = length d'
+            oneof $
+                    [do
+                        ch <- arbitrary
+                        pure $ c <> [InsertSItem i ch] | i <- [0..n]]
+                 <> [pure $ c <> [DeleteSItem i] | i <- [0..n-1]]
+                 <> [ do
+                        cx <- genEdit x
+                        pure $ c <> editSItem i cx
+                    | (i, x) <- zip [0..] $ foldr (:) [] d']
 
 ---------------------------------------- Strict text instance
 
@@ -225,12 +264,17 @@ instance GenEdit ST where
     genEdit = fmap (map EText) . genEdit . ST.unpack
 
 
+---------------------------------------- non-empty Strict text instance
+
+instance GenEdit NonEmptyST where
+    genEdit (NonEmptyST s) = do
+        e <- genEdit s `suchThat` maintainsInvariant (not . ST.null) s
+        pure $ coerce e
+
 ---------------------------------------- Set instance
 
-instance (GenEdit a, Ord a, HasEnoughInhabitants a, Eq (EEdit a)) => GenEdit (Set.Set a) where
-    genEdit d = oneof
-        [ pure []
-        , do
+instance (GenEdit a, Ord a, HasEnoughInhabitants a, Eq (EEdit a)) => GenEdit (Set a) where
+    genEdit d = sizedEdit $ do
             c <- genEdit d
             let d' = patch c d
             oneof $
@@ -240,9 +284,8 @@ instance (GenEdit a, Ord a, HasEnoughInhabitants a, Eq (EEdit a)) => GenEdit (Se
                  <> [ pure $ c <> [DeleteElem x] | x <- Set.elems d']
                  <> [ do
                         cx <- genEdit x `suchThat` \cx -> patch cx x `Set.notMember` d'
-                        pure $ c <> [EditElem x cx]
+                        pure $ c <> editElem x cx
                     | hasSpace d', x <- Set.elems d']
-        ]
       where
         hasSpace s = hasMoreInhabitantsThan (Proxy :: Proxy a) (Set.size s)
 
@@ -258,11 +301,60 @@ hasMoreInhabitantsThan :: (HasEnoughInhabitants a) => Proxy a -> Int -> Bool
 hasMoreInhabitantsThan p n = maybe True (n <) $ numOfInhabitants p
 
 instance HasEnoughInhabitants [a] where numOfInhabitants _ = Nothing
-instance HasEnoughInhabitants a => HasEnoughInhabitants (Set.Set a) where
+instance HasEnoughInhabitants a => HasEnoughInhabitants (Set a) where
     numOfInhabitants _ = do
         n <- numOfInhabitants (Proxy :: Proxy a)
         guard (n < 10)  -- to prevent overflow
         pure $ 2^n
+
+---------------------------------------- Segments instance
+
+instance (GenEdit a, GenEdit b, Splitable b) => GenEdit (Segments a b) where
+    genEdit d = sizedEdit $ do
+            c <- genEdit d
+            let (Segments d') = patch c d
+                n = length d'
+            oneof $
+                    [do
+                        ch <- arbitrary
+                        pure $ c <> [SegmentListEdit $ InsertItem i ch] | i <- [0..n]]
+                 <> [pure $ c <> [SegmentListEdit $ DeleteItem i] | i <- [0..n-1]]
+                 <> [ do
+                        cx <- genEdit x
+                        pure $ c <> (SegmentListEdit <$> editItem i cx)
+                    | (i, x) <- zip [0..] d']
+                 <> [ pure $ c <> (SegmentListEdit <$> editItem i (editFirst di)) <> [JoinItems i]
+                    | (i, (x, _), (y, _)) <- zip3 [0..] d' (drop 1 d'), di <- either (const []) (:[]) $ diff x y]
+                 <> [do
+                        j <- choose (0, jmax)
+                        pure $ c <> [SplitItem i j]
+                    | (i, (_, x)) <- zip [0..] d', let jmax = maxSplitIndex x, jmax >= 0]
+
+---------------------- test Splitable type class laws
+
+testSplitable :: forall d. (Typeable d, Splitable d, Eq d, Arbitrary d, Show d) => Proxy d -> Spec
+testSplitable p
+    = describe ("Splitable instance for " <> show (typeRep p)) $ do
+        it "splitLength >= 0"    $ property test_splitLength
+        it "maxSplitIndex >= -1" $ property test_maxSplitIndex
+        it "join . split == id"  $ property join_split
+        it "split . join == id"  $ property split_join
+  where
+    test_splitLength :: d -> Bool
+    test_splitLength d = splitLength d >= 0
+
+    test_maxSplitIndex :: d -> Bool
+    test_maxSplitIndex d = maxSplitIndex d >= (-1)
+
+    join_split :: d -> Gen Bool
+    join_split a = case maxSplitIndex a of
+        -1 -> pure True
+        ms -> do
+            i <- choose (0, ms)
+            pure $ uncurry joinItems (splitItem i a) == a
+
+    split_join :: d -> d -> Bool
+    split_join a b = splitItem (splitLength a) (joinItems a b) == (a, b)
 
 ---------------------- data type used for testing
 
@@ -279,6 +371,7 @@ instance HasEnoughInhabitants ADigit
 spec :: Spec
 spec = parallel $ do
     runTest $ allTests @()
+    runTest $ allTests @(NonEditable Char)
     runTest $ allTests @ADigit
     runTest $ allTests @(ADigit, ADigit)
     runTest $ allTests @(ADigit, (ADigit, ADigit))
@@ -289,20 +382,42 @@ spec = parallel $ do
     runTest $ allTests @[ADigit]
     runTest $ allTests @[(ADigit, ADigit)]
     runTest $ allTests @([ADigit], [ADigit])
-    runTest $ allTests @(Set.Set ADigit)
-    runTest $ allTests @(Set.Set [ADigit])
-    runTest $ allTests @[Set.Set ADigit]
-    runTest $ allTests @(Set.Set (Set.Set ADigit))
+    runTest $ allTests @(NonEmpty ADigit)
+    runTest $ allTests @(NonEmpty (ADigit, ADigit))
+    runTest $ allTests @(NonEmpty ADigit, NonEmpty ADigit)
+    runTest $ allTests @(Seq ADigit)
+    runTest $ allTests @(Seq (ADigit, ADigit))
+    runTest $ allTests @(Seq ADigit, Seq ADigit)
+    runTest $ allTests @(Set ADigit)
+    runTest $ allTests @(Set [ADigit])
+    runTest $ allTests @[Set ADigit]
+    runTest $ allTests @(Set (Set ADigit))
     runTest $ allTests @ST
+    runTest $ allTests @NonEmptyST
     runTest $ allTests @Char
+    runTest $ allTests @(Segments ADigit ST)
+    runTest $ allTests @(Segments ADigit NonEmptyST)
 
     runTest $ fastTests @[[ADigit]]
 
     -- these take too long to run on a regular basis, just activate for debugging or deep-tests:
     -- runTest' 500 $ allTests @[[ADigit]]
 
+    testSplitable $ Proxy @[ADigit]
+    testSplitable $ Proxy @(NEL.NonEmpty ADigit)
+    testSplitable $ Proxy @(Seq ADigit)
+    testSplitable $ Proxy @ST
+    testSplitable $ Proxy @NonEmptyST
+    testSplitable $ Proxy @(Segments ADigit ST)
+    testSplitable $ Proxy @(Segments ADigit NonEmptyST)
 
 -- | running in ghci8 on a lenovo t420s with no attempt at optimizing, @n = 1000@: @(2.88 secs,
 -- 2,382,007,256 bytes)@.  this should be our baseline from which to improve.
+--
+-- more data points (same setup):
+-- - Mon Jun  5 12:08:03 CEST 2017, commit 2968d504760e: @(10.90 secs, 3,919,324,968 bytes)@
+-- This is a regression, most probably caused by changing the type signature of 'diff'.
+-- FUTUREWORK:
+--    re-write diff from scratch, adding the ability to detect line swaps + make it faster (divip has some ideas)
 simplePerformanceBenchmark :: IO ()
-simplePerformanceBenchmark = let n = 1000 in print $ diff (take n ['a'..]) (take n ['A'..])
+simplePerformanceBenchmark = let n = 1000 in print (diff (take n ['a'..]) (take n ['A'..]) :: Either String (Edit String))

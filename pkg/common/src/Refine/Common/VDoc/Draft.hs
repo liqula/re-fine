@@ -29,7 +29,7 @@ where
 import Refine.Common.Prelude
 
 import qualified Data.List as List
-import           Data.List.NonEmpty (NonEmpty)
+import           Data.List.NonEmpty (NonEmpty(..))
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Map as Map
 import qualified Data.Set as Set
@@ -44,7 +44,7 @@ import Refine.Common.Types.Comment
 -- * functions
 
 emptyRawContent :: RawContent
-emptyRawContent = mkRawContent [emptyBlock]
+emptyRawContent = mkRawContent $ emptyBlock :| []
 
 resetBlockKeys :: RawContent -> RawContent
 resetBlockKeys (RawContent bs es) = RawContent (set blockKey Nothing <$> bs) es

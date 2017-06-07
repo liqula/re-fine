@@ -21,8 +21,9 @@ import           Control.Arrow (first, second)
 import           Control.DeepSeq
 import           Control.Monad.State
 import           Data.Function (on)
+import           Data.Functor.Infix ((<$$>))
 import qualified Data.IntMap as IntMap
-import           Data.List (sort)
+import           Data.List (sort, groupBy)
 import qualified Data.List as List
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Set as Set
@@ -34,6 +35,7 @@ import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
 
 import Refine.Common.Types
+import Refine.Common.OT (Splitable(..), Segments(..))
 
 
 instance Arbitrary L10 where
@@ -96,12 +98,21 @@ gshrink = List.map to . shrinkSOP . from
     mkFn f = Fn (f . unI)
 
 
+-- (the upper bound of 36 for depth is arbitrarily introduced here.  don't know about draft.)
+instance Arbitrary BlockDepth where
+  arbitrary = BlockDepth <$> choose (0, 36)
+
 instance Arbitrary RawContent where
-  arbitrary = initBlockKeys . sanitizeRawContent . mkRawContent <$> arbitrary
-  shrink    = fmap sanitizeRawContent <$> gshrink
+  arbitrary = initBlockKeys . docToRawContent . NEL.fromList <$> listOf1 (scale (`div` 3) arbitrary)
+       -- alternative implementation: @initBlockKeys . sanitizeRawContent . mkRawContent <$> arbitrary@
+  shrink    = canonicalizeRawContent <$$> gshrink
 
 initBlockKeys :: RawContent -> RawContent
 initBlockKeys = rawContentBlocks %~ NEL.zipWith (\k -> blockKey .~ (Just . BlockKey . cs . show $ k)) (NEL.fromList [(0 :: Int)..])
+
+legalChar :: Char -> Bool
+legalChar = (`notElem` ['\\'])  -- (occurrances of '\\' shift ranges around in the test suite.)
+  -- more conservatively, we could test against this: (`elem` (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ " "))
 
 -- | These are the sanity conditions imposed on 'ContentState' by the draft library.  Everything
 -- that does not meet these conditions will be silently removed from the input.
@@ -119,11 +130,8 @@ sanitizeRawContent = deleteDanglingEntityRefs
                    . boundDepth
                    . removeIllegalChars
   where
-    removeIllegalChars (RawContent bs es) = RawContent ((blockText %~ ST.filter ok) <$> bs) es
-      where
-        ok :: Char -> Bool
-        ok = (`notElem` ['\\'])  -- (occurrances of '\\' shift ranges around in the test suite.)
-          -- more conservatively, we could test against this: (`elem` (['a'..'z'] ++ ['A'..'Z'] ++ ['0'..'9'] ++ " "))
+    removeIllegalChars :: RawContent -> RawContent
+    removeIllegalChars (RawContent bs es) = RawContent ((blockText %~ ST.filter legalChar) <$> bs) es
 
     boundDepth (RawContent bs es) = RawContent ((blockDepth %~ (min 36 . max 0)) <$> bs) es
       -- (ok, the upper bound of 36 for depth is arbitrarily introduced here.  don't know about draft.)
@@ -283,3 +291,11 @@ arbitrarySoundSelectionState (RawContent bs _) = do
   isback <- arbitrary
   let [start, end] = snd <$> sort [anchor, point]
   pure $ SelectionState isback start end
+
+instance Arbitrary NonEmptyST where
+  -- HACK: legalChar is needed for the Arbitrary instance of OTDoc
+  arbitrary = NonEmptyST . ST.pack <$> scale (`div` 2) (listOf1 $ arbitrary `suchThat` legalChar)
+
+instance (Arbitrary a, Arbitrary b, Eq a, Splitable b) => Arbitrary (Segments a b) where
+  arbitrary = Segments . map (\xs -> (fst (head xs), foldr1 joinItems $ snd <$> xs)) . groupBy ((==) `on` fst)
+        <$> arbitrary

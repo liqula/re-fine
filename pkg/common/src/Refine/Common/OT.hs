@@ -10,7 +10,10 @@
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE UndecidableInstances       #-}
+
+{-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 
 -- | FUTUREWORK: release this file as a library
 module Refine.Common.OT where
@@ -18,11 +21,18 @@ module Refine.Common.OT where
 import Refine.Common.Prelude
 
 import qualified Data.Set as Set
+import           Data.Sequence (Seq)
+import qualified Data.Sequence as Seq
 import           Data.List
+import           Data.List.NonEmpty (NonEmpty)
+import qualified Data.List.NonEmpty as NEL
 import qualified Data.Algorithm.Patience as Diff
 import qualified Data.Text as ST
+import qualified Data.Semigroup as Semigroup
 import qualified Generics.SOP as SOP
 import           Control.DeepSeq
+import           Test.QuickCheck (Arbitrary)
+import           Test.QuickCheck.Instances ()
 
 ----------------------------------------------------------------------------------------------
 
@@ -44,12 +54,15 @@ class Editable d where
     cost :: Edit d -> Int
     cost = sum . map eCost
 
-    diff   :: d -> d -> Edit d
+    -- | diffs may fail, e.g. in the case where a 'NonEmpty' ends up empty.  those failures *should*
+    -- always be internal to the types exposed to the application (ie., caught and resolved before,
+    -- say, a 'RawContent' is returned).
+    diff :: MonadError String m => d -> d -> m (Edit d)
 
     ePatch :: EEdit d -> d -> d
 
     patch :: Edit d -> d -> d
-    patch = foldr (flip (.) . ePatch) id    -- FIXME: TUNING: use foldl
+    patch = flip $ foldl' (flip ePatch)
 
     -- | assume second happend later in case of conflicts
     -- FUTUREWORK: measure information lost during merge
@@ -61,7 +74,14 @@ class Editable d where
     -- >>> a >< b = (a x b, b x a)
     --
     -- with 'a' having precedence
-    merge :: d -> Edit d -> Edit d -> (Edit d, Edit d)
+    --
+    -- TUNING: return also the resulting document d'
+    --
+    --           d
+    --       e1 / \ e2
+    --      e1' \ / e2'
+    --           d'
+    merge :: d -> {-e1-}Edit d -> {-e2-}Edit d -> ({-e1'-}Edit d, {-e2'-}Edit d)
     merge _ [] b = (b, [])
     merge _ b [] = ([], b)
     merge d (a0: a1) (b0: b1) = (b0a0a1 <> b1a0b0a1b0a0, a0b0b1 <> a1b0a0b1a0b0)
@@ -98,7 +118,7 @@ instance Editable () where
     docCost _    = 1
     eCost _      = error "impossible"
     ePatch _ _   = error "impossible"
-    diff _ _     = []
+    diff _ _     = pure []
     eMerge _ _ _ = error "impossible"
     eInverse _ _ = error "impossible"
 
@@ -133,7 +153,7 @@ instance (Editable a, Editable b) => Editable (a, b) where
     ePatch (EditFirst  e) (a, b) = (patch e a, b)
     ePatch (EditSecond e) (a, b) = (a, patch e b)
 
-    diff (a, b) (c, d) = editFirst (diff a c) <> editSecond (diff b d)
+    diff (a, b) (c, d) = (<>) <$> (editFirst <$> diff a c) <*> (editSecond <$> diff b d)
 
     eMerge _ (EditFirst ea) (EditSecond eb) = (editSecond eb, editFirst ea)
     eMerge _ (EditSecond eb) (EditFirst ea) = (editFirst ea, editSecond eb)
@@ -185,9 +205,9 @@ instance (Editable a, Editable b) => Editable (Either a b) where
     ePatch EditLeft{} Right{} = error "impossible"
     ePatch EditRight{} Left{} = error "impossible"
 
-    diff (Left  a) (Left  a') = editLeft  $ diff a a'
-    diff (Right b) (Right b') = editRight $ diff b b'
-    diff _ x = [SetEither x]
+    diff (Left  a) (Left  a') = editLeft  <$> diff a a'
+    diff (Right b) (Right b') = editRight <$> diff b b'
+    diff _ x = pure [SetEither x]
 
     eMerge (Left  a) (EditLeft  ea) (EditLeft  ea') = editLeft  *** editLeft  $ merge a ea ea'
     eMerge (Right b) (EditRight eb) (EditRight eb') = editRight *** editRight $ merge b eb eb'
@@ -208,10 +228,36 @@ instance SOP.Generic (EEdit (Either a b))
 instance SOP.HasDatatypeInfo (EEdit (Either a b))
 instance (NFData (EEdit a), NFData (EEdit b), NFData a, NFData b) => NFData (EEdit (Either a b)) where rnf = grnf
 
----------------------------------------- (Bounded, Enum) instance
+---------------------------------------- atomic data (cannot be replaced or edited)
+
+newtype NonEditable a = NonEditable { unNonEditable :: a }
+  deriving (Eq, Ord, Bounded, Enum, NFData, ToJSON, FromJSON, Arbitrary)
+
+instance Show a => Show (NonEditable a) where show = show . unNonEditable
+
+instance (Eq a) => Editable (NonEditable a) where
+    data EEdit (NonEditable a)
+      deriving (Generic)
+
+    docCost _    = 1
+    eCost _      = error "impossible"
+    ePatch _ _   = error "impossible"
+    diff a b
+        | a == b    = pure []
+        | otherwise = throwError "non-equal NonEditable pair"
+    eMerge _ _ _ = error "impossible"
+    eInverse _ _ = error "impossible"
+
+instance Show (EEdit (NonEditable a)) where show _ = error "impossible"
+instance Eq (EEdit (NonEditable a)) where _ == _ = error "impossible"
+instance ToJSON (EEdit (NonEditable a)) where toJSON _ = error "impossible"
+instance FromJSON (EEdit (NonEditable a)) where parseJSON _ = error "impossible"
+instance NFData (EEdit (NonEditable a)) where rnf _ = error "impossible"
+
+---------------------------------------- atomic data (can be replaced but cannot be edited)
 
 newtype Atom a = Atom { unAtom :: a }
-  deriving (Eq, Ord, Bounded, Enum, NFData, ToJSON, FromJSON)
+  deriving (Eq, Ord, Bounded, Enum, NFData, ToJSON, FromJSON, Arbitrary)
 
 instance Show a => Show (Atom a) where show = show . unAtom
 
@@ -222,7 +268,7 @@ instance (Eq a) => Editable (Atom a) where
     eCost _ = 1
     docCost _ = 1
 
-    diff (Atom a) (Atom b) = [EAtom b | a /= b]
+    diff (Atom a) (Atom b) = pure [EAtom b | a /= b]
     ePatch (EAtom a) _ = Atom a
     eMerge _ EAtom{} b@EAtom{} = ([b], mempty)
     eInverse (Atom d) EAtom{} = [EAtom d]
@@ -237,7 +283,7 @@ instance Editable Char where
         deriving (Generic, Show, Eq, NFData)
     docCost = docCost . Atom
     eCost = eCost . unEChar
-    diff a b = map EChar $ diff (Atom a) (Atom b)
+    diff a b = coerce <$> diff (Atom a) (Atom b)
     ePatch e = unAtom . ePatch (unEChar e) . Atom
     eMerge d a b = coerce $ eMerge (Atom d) (unEChar a) (unEChar b)
     eInverse d = coerce . eInverse (Atom d) . unEChar
@@ -275,7 +321,7 @@ instance Editable a => Editable [a] where
     ePatch (InsertItem i x) xs = take i xs <> (x: drop i xs)
     ePatch (EditItem   i x) xs = take i xs <> (patch x (xs !! i): drop (i+1) xs)
 
-    diff s1 s2 = snd . snd $ triangle !! (length s1 + lenS2) !! lenS2
+    diff s1 s2 = pure . snd . snd $ triangle !! (length s1 + lenS2) !! lenS2
       where
         triangle = scanl ff [(error "impossible", mk [])] $ zip (revInits $ reverse s1) s2''
 
@@ -286,10 +332,11 @@ instance Editable a => Editable [a] where
         ff es'@((_, e): es) (xs, ye)
             = (e, mk [DeleteItem lenS2] `add` e): zipWith4 gg xs s2' es' es <> [(error "impossible", ye)]
           where
-            gg x (n, y) (fo, f1) (_, f2) = (,) f2 $ if null dxy then fo else
-                minimumBy (compare `on` fst)
-                    [ mk (editItem n dxy) `add` fo
-                    , mk [InsertItem n y] `add` f1
+            gg :: (x ~ (Int, Edit [a]), v ~ (x, x)) => a -> (Int, a) -> v -> v -> v
+            gg x (n, y) (fo, f1) (_, f2) = (,) f2 $ if either (const False) null dxy then fo else
+                minimumBy (compare `on` fst) $
+                    [ mk (editItem n edit) `add` fo | edit <- either (const []) (:[]) dxy] <>
+                    [ mk [InsertItem n y] `add` f1
                     , mk [DeleteItem n]   `add` f2
                     ]
               where
@@ -339,6 +386,121 @@ instance SOP.Generic (EEdit [a])
 instance SOP.HasDatatypeInfo (EEdit [a])
 instance (NFData a, NFData (EEdit a)) => NFData (EEdit [a]) where rnf = grnf
 
+---------------------------------------- non-empty List instance
+
+-- | Given an editable and an edit, apply all elementary patches and return predicate on result.
+-- Example: 'maintainsNonEmpty'.
+maintainsInvariant :: Editable d => (d -> Bool) -> d -> Edit d -> Bool
+maintainsInvariant p x = all p . scanl (flip ePatch) x
+
+maintainsNonEmpty :: Editable a => [a] -> Edit [a] -> Bool
+maintainsNonEmpty = maintainsInvariant (not . null)
+
+instance Editable a => Editable (NonEmpty a) where
+
+    docCost = docCost . NEL.toList
+
+    newtype EEdit (NonEmpty a) = ENonEmpty {unENonEmpty :: EEdit [a]}
+        deriving (Generic)
+
+    eCost = eCost . unENonEmpty
+
+    diff (NEL.toList -> a) (NEL.toList -> b) = do
+      e <- diff a b
+      unless (maintainsNonEmpty a e) $ throwError "NonEmpty: edit makes list empty"
+      pure $ coerce e
+
+    ePatch e = NEL.fromList . ePatch (coerce e) . NEL.toList
+    patch e = NEL.fromList . patch (coerce e) . NEL.toList
+
+    eMerge d a b
+        | maintainsNonEmpty (ePatch (coerce a) xs) a' && maintainsNonEmpty (ePatch (coerce b) xs) b'
+            = coerce (a', b')
+        | otherwise = secondWins d a b  -- FUTUREWORK: be smarter
+      where
+        (a', b') = eMerge xs (coerce a) (coerce b)
+        xs = NEL.toList d
+
+    eInverse d = coerce . eInverse (NEL.toList d) . coerce
+    inverse d = coerce . inverse (NEL.toList d) . coerce
+
+deriving instance (Show a, Show (EEdit a)) => Show (EEdit (NonEmpty a))
+deriving instance (Eq a, Eq (EEdit a)) => Eq (EEdit (NonEmpty a))
+instance (ToJSON a, ToJSON (EEdit a)) => ToJSON (EEdit (NonEmpty a))
+instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit (NonEmpty a))
+instance SOP.Generic (EEdit (NonEmpty a))
+instance SOP.HasDatatypeInfo (EEdit (NonEmpty a))
+instance (NFData a, NFData (EEdit a)) => NFData (EEdit (NonEmpty a)) where rnf = grnf
+
+---------------------------------------- Sequence instance
+
+editSItem :: Int -> Edit a -> Edit (Seq a)
+editSItem _ [] = []
+editSItem i p  = [EditSItem i p]
+
+instance Editable a => Editable (Seq a) where
+
+    docCost = foldr (\e n -> docCost e + n) 1
+
+    data EEdit (Seq a)
+        = DeleteSItem !Int    -- TUNING: DeleteSRange Int{-offset-} Int{-length-}
+        | InsertSItem !Int a  -- TUNING: InsertSItems Int{-offset-} [a]{-elems-}
+        | EditSItem !Int (Edit a)
+        -- FUTUREWORK: detect swapping/moving and duplication of items
+        --  MoveItem Int Int     -- needed for expressing .....
+        --  DuplicateItem Int
+            deriving (Generic)
+
+    eCost = \case
+        InsertSItem _ d -> 1 + docCost d
+        DeleteSItem _   -> 1
+        EditSItem _ p   -> 1 + cost p
+
+    ePatch (DeleteSItem i  ) (Seq.splitAt i -> (as, Seq.viewl -> _ Seq.:< bs)) = as <> bs
+    ePatch (InsertSItem i x) (Seq.splitAt i -> (as, bs)) = as <> Seq.singleton x <> bs
+    ePatch (EditSItem   i x) (Seq.splitAt i -> (as, Seq.viewl -> b Seq.:< bs))
+        = as <> Seq.singleton (patch x b) <> bs
+
+    diff (foldr (:) [] -> s1) (foldr (:) [] -> s2) = f <$$> diff s1 s2
+      where
+        f = \case
+            DeleteItem i   -> DeleteSItem i
+            InsertItem i x -> InsertSItem i x
+            EditItem i e   -> EditSItem i e
+
+    eMerge d (EditSItem i x) (EditSItem i' y) | i == i' = editSItem i *** editSItem i $ merge (Seq.index d i) x y
+    eMerge _ (EditSItem i _) (DeleteSItem i') | i == i' = ([DeleteSItem i], [])      -- information lost!
+    eMerge d (DeleteSItem i) (EditSItem i' x) | i == i' = (InsertSItem i (Seq.index d i): editSItem i x, [])
+    eMerge _ (DeleteSItem i) (DeleteSItem i') | i == i' = ([], [])
+    eMerge _ a b = (mutate 0 a b, mutate 1 b a)
+      where
+        mutate l e = \case
+            InsertSItem i x -> [InsertSItem (di l i) x]
+            DeleteSItem i   -> [DeleteSItem (di 1 i)  ]
+            EditSItem   i x -> [EditSItem   (di 1 i) x]
+          where
+            di k i = case e of
+                InsertSItem j _ | j==i      -> i+k
+                                | j<i       -> i+1
+                                | otherwise -> i
+                DeleteSItem j   | j==i      -> i
+                                | j<i       -> i-1
+                                | otherwise -> i
+                EditSItem{}     -> i
+
+    eInverse d = \case
+        EditSItem i x   -> editSItem i $ inverse (Seq.index d i) x
+        DeleteSItem i   -> [InsertSItem i (Seq.index d i)]
+        InsertSItem i _ -> [DeleteSItem i]
+
+deriving instance (Show a, Show (EEdit a)) => Show (EEdit (Seq a))
+deriving instance (Eq a, Eq (EEdit a)) => Eq (EEdit (Seq a))
+instance (ToJSON a, ToJSON (EEdit a)) => ToJSON (EEdit (Seq a))
+instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit (Seq a))
+instance SOP.Generic (EEdit (Seq a))
+instance SOP.HasDatatypeInfo (EEdit (Seq a))
+instance (NFData a, NFData (EEdit a)) => NFData (EEdit (Seq a)) where rnf = grnf
+
 ---------------------------------------- StrictText instance
 
 instance Editable ST where
@@ -359,7 +521,7 @@ instance Editable ST where
     -- diff (replicate 1000 'a') (replicate 1000 'b')
     -- diff (take 1000 ['a'..]) (take 1000 ['A'..])
     -- diff (take 1000 ['A'..]) (take 1000 ['a'..])
-    diff a b = f 0 $ Diff.diff (ST.unpack a) (ST.unpack b)
+    diff a b = pure . f 0 $ Diff.diff (ST.unpack a) (ST.unpack b)
       where
         f !n (Diff.Both{}: es) = f (n+1) es
         f n (Diff.New c: es) = EText (InsertItem n c): f (n+1) es
@@ -377,6 +539,55 @@ instance FromJSON (EEdit ST)
 instance SOP.Generic (EEdit ST)
 instance SOP.HasDatatypeInfo (EEdit ST)
 instance NFData (EEdit ST) where rnf = grnf
+
+---------------------------------------- non-empty StrictText instance
+
+newtype NonEmptyST = NonEmptyST {unNonEmptyST :: ST}
+    deriving (Eq, Ord, Show, Read, NFData, ToJSON, FromJSON, Generic, Monoid)
+
+instance ConvertibleStrings NonEmptyST [Char] where convertString = convertString . unNonEmptyST
+{-
+instance ConvertibleStrings [Char] NonEmptyST
+  where
+    convertString [] = error "convertString @String @NonEmptyST []"
+    convertString s = NonEmptyST $ convertString s
+-}
+instance Editable NonEmptyST where
+    newtype EEdit NonEmptyST = NEText {unNEText :: EEdit String}
+        deriving (Generic, Show, Eq)
+    docCost = ST.length . unNonEmptyST
+    eCost = eCost . unNEText
+
+    -- | Data.Algorithm.Patience.diff is used from the patience package
+    --
+    -- Possible alternatives:
+    --
+    -- Data.Algorithm.Diff.getDiff from the Diff package
+    -- Data.Algorithm.Diff.Gestalt.diff from the diff-gestalt package
+    --
+    -- Data.Algorithm.Patience.diff is the fastest and most stable according to these benchmarks:
+    --
+    -- diff (replicate 1000 'a') (replicate 1000 'b')
+    -- diff (take 1000 ['a'..]) (take 1000 ['A'..])
+    -- diff (take 1000 ['A'..]) (take 1000 ['a'..])
+    diff (NonEmptyST a) (NonEmptyST b) = pure . f 0 $ Diff.diff (ST.unpack a) (ST.unpack b)
+      where
+        f !n (Diff.Both{}: es) = f (n+1) es
+        f n (Diff.New c: es) = NEText (InsertItem n c): f (n+1) es
+        f n (Diff.Old{}: es) = NEText (DeleteItem n): f n es
+        f _ [] = []
+    ePatch e = NonEmptyST . ST.pack . ePatch (coerce e) . ST.unpack . unNonEmptyST
+    patch e = NonEmptyST . ST.pack . patch (coerce e) . ST.unpack . unNonEmptyST
+    eMerge d a b = coerce $ eMerge (ST.unpack $ unNonEmptyST d) (coerce a) (coerce b)
+    merge d a b = coerce $ merge (ST.unpack $ unNonEmptyST d) (coerce a) (coerce b)
+    eInverse d = coerce . eInverse (ST.unpack $ unNonEmptyST d) . coerce
+    inverse d = coerce . inverse (ST.unpack $ unNonEmptyST d) . coerce
+
+instance ToJSON (EEdit NonEmptyST)
+instance FromJSON (EEdit NonEmptyST)
+instance SOP.Generic (EEdit NonEmptyST)
+instance SOP.HasDatatypeInfo (EEdit NonEmptyST)
+instance NFData (EEdit NonEmptyST) where rnf = grnf
 
 ---------------------------------------- Set instance
 
@@ -403,8 +614,8 @@ instance (Editable a, Ord a, Eq (EEdit a)) => Editable (Set a) where
     ePatch (InsertElem x) = Set.insert x
     ePatch (EditElem x e) = Set.insert (patch e x) . Set.delete x
 
-    diff a b = [DeleteElem x | x <- Set.elems $ Set.difference a b]
-            <> [InsertElem x | x <- Set.elems $ Set.difference b a]
+    diff a b = pure $ [DeleteElem x | x <- Set.elems $ Set.difference a b]
+                   <> [InsertElem x | x <- Set.elems $ Set.difference b a]
 
     eMerge _ a b | a == b = ([], [])
     eMerge d a@(EditElem i x) b@(EditElem i' y) | i == i'
@@ -432,5 +643,182 @@ instance (FromJSON a, FromJSON (EEdit a)) => FromJSON (EEdit (Set a))
 instance SOP.Generic (EEdit (Set a))
 instance SOP.HasDatatypeInfo (EEdit (Set a))
 instance (NFData a, NFData (EEdit a)) => NFData (EEdit (Set a)) where rnf = grnf
+
+---------------------------------------- Segment instance
+
+{- | split laws:
+
+    splitLength a >= 0
+    maxSplitIndex a >= -1
+    uncurry joinItems (splitItem i a) == a       -- i = 0, 1, 2, ..., maxSplitIndex a
+    splitItem (splitLength a) (joinItems a b) == (a, b)
+-}
+class Splitable a where
+    -- type SplitIndex a
+    splitItem :: Int{-SplitIndex a-} -> a -> (a, a)
+    joinItems  :: a -> a -> a
+
+    splitLength :: a -> Int{-SplitIndex a-}
+    maxSplitIndex :: a -> Int{-SplitIndex a-}
+
+instance Splitable [a] where
+    splitItem = splitAt
+    joinItems = (<>)
+    splitLength = length
+    maxSplitIndex = length
+
+instance Splitable (NEL.NonEmpty a) where
+    splitItem i = (NEL.fromList *** NEL.fromList) . NEL.splitAt (i+1)
+    joinItems = (Semigroup.<>)
+    splitLength l = length l - 1
+    maxSplitIndex l = length l - 2
+
+instance Splitable (Seq a) where
+    splitItem = Seq.splitAt
+    joinItems = (<>)
+    splitLength = Seq.length
+    maxSplitIndex = Seq.length
+
+instance Splitable ST where
+    splitItem = ST.splitAt
+    joinItems = (<>)
+    splitLength = ST.length
+    maxSplitIndex = ST.length
+
+instance Splitable NonEmptyST where
+    splitItem i = coerce . ST.splitAt (i + 1) . unNonEmptyST
+    joinItems = (<>)
+    splitLength = (+(-1)) . ST.length . unNonEmptyST
+    maxSplitIndex = (+(-2)). ST.length . unNonEmptyST
+
+instance Splitable (Segments a b) where
+    splitItem i (Segments a) = coerce $ splitAt i a
+    joinItems (Segments a) (Segments b) = Segments $ a <> b
+    splitLength (Segments a) = length a
+    maxSplitIndex (Segments a) = length a
+
+----------
+
+newtype Segments attribute elem = Segments [(attribute, elem)]  -- TUNING: use Seq instead of []
+    deriving (Eq, Show, Generic, ToJSON, FromJSON, NFData)
+
+instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) where
+
+    docCost (Segments xs) = sum [ docCost a + docCost b | (a, b) <- xs ]
+
+    data EEdit (Segments a b)
+        = SegmentListEdit (EEdit [(a, b)])
+        | JoinItems !Int            -- TUNING: JoinRange !Int !Int
+        | SplitItem !Int !Int {- (SplitIndex a) -}
+            deriving (Generic)
+
+    eCost = \case
+        SegmentListEdit x -> eCost x
+        JoinItems _   -> 1
+        SplitItem _ _ -> 1
+
+    ePatch (SegmentListEdit e) (Segments xs)
+        = Segments $ ePatch e xs
+    ePatch (JoinItems i) (Segments (splitAt i -> (as, (a1, b1): (a2, b2): bs)))
+        | a1 == a2  = Segments $ as <> ((a1, joinItems b1 b2): bs)
+        | otherwise = error "impossible: items are not joinable"
+    ePatch (JoinItems i) (Segments s) = error $ "ePatch @Segments (JoinItems " <> show i <> ") " <> show (length s)
+    ePatch (SplitItem i j) (Segments (splitAt i -> (as, (a, splitItem j -> (b1, b2)): bs)))
+        = Segments $ as <> ((a, b1): (a, b2): bs)
+    ePatch (SplitItem i j) (Segments s) = error $ "ePatch @Segments (SplitItem " <> show i <> " " <> show j <> ") " <> show (length s)
+
+    diff (Segments s1) (Segments s2) = SegmentListEdit <$$> diff s1 s2
+
+    eMerge (Segments d) (SegmentListEdit e1) (SegmentListEdit e2)
+        = fmap SegmentListEdit *** fmap SegmentListEdit $ eMerge d e1 e2
+    eMerge d a b
+        = secondWins d a b
+
+{- FIXME: uncomment and fix bugs in this code
+
+    eMerge d a@(JoinItems i) b@(SegmentListEdit (InsertItem i' _))
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(SegmentListEdit (InsertItem i' _)) b@(JoinItems i)
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(JoinItems i) b@(SegmentListEdit (DeleteItem i'))
+        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(SegmentListEdit (DeleteItem i')) b@(JoinItems i)
+        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(JoinItems i) b@(SegmentListEdit (EditItem i' _))
+        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(SegmentListEdit (EditItem i' _)) b@(JoinItems i)
+        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(JoinItems i) b@(SplitItem i' _)
+        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(SplitItem i' _) b@(JoinItems i)
+        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+    eMerge d a@(JoinItems i) b@(JoinItems i')
+        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i+1 = secondWins d a b   -- TODO: improve
+        | i'+1 == i = secondWins d a b   -- TODO: improve
+
+{- solved better in the last function alternative
+    eMerge d a@(SplitItem i _) b@(SegmentListEdit (InsertItem i' _))
+        | i' == i+1 = secondWins d a b
+    eMerge d a@(SegmentListEdit (InsertItem i' _)) b@(SplitItem i _)
+        | i' == i+1 = secondWins d a b
+-}
+
+    eMerge d a@(SplitItem i _) b@(SegmentListEdit (DeleteItem i'))
+        | i' == i   = secondWins d a b   -- TODO: improve
+    eMerge d a@(SegmentListEdit (DeleteItem i')) b@(SplitItem i _)
+        | i' == i   = secondWins d a b   -- TODO: improve
+    eMerge d a@(SplitItem i _) b@(SegmentListEdit (EditItem i' _))
+        | i' == i   = secondWins d a b   -- TODO: improve
+    eMerge d a@(SegmentListEdit (EditItem i' _)) b@(SplitItem i _)
+        | i' == i   = secondWins d a b   -- TODO: improve
+    eMerge d a@(SplitItem i _) b@(SplitItem i' _)
+        | i' == i   = secondWins d a b   -- TODO: improve
+
+    eMerge _ a b = (mutate 0 a b, mutate 1 b a)
+      where
+        mutate l e = \case
+            SegmentListEdit (InsertItem i x) -> [SegmentListEdit $ InsertItem (di l i) x]
+            SegmentListEdit (DeleteItem i)   -> [SegmentListEdit $ DeleteItem (di 1 i)  ]
+            SegmentListEdit (EditItem   i x) -> [SegmentListEdit $ EditItem   (di 1 i) x]
+            JoinItems i                      -> [JoinItems (di 1 i)]
+            SplitItem i x                    -> [SplitItem (di 1 i) x]
+          where
+            di k i = case e of
+                SegmentListEdit (InsertItem j _) | j<i       -> i+1
+                                                 | j>i       -> i
+                                                 | otherwise -> i+k
+                SegmentListEdit (DeleteItem j)   | j<i       -> i-1
+                                                 | j>i       -> i
+                                                 | otherwise -> i
+                SegmentListEdit EditItem{}       -> i
+                JoinItems j                      | j<i       -> i-1
+                                                 | j>i+1     -> i
+                                                 | otherwise -> error "impossible"
+                SplitItem j _                    | j<i       -> i+1
+                                                 | j>i       -> i
+                                                 | otherwise -> i+k
+-}
+
+    -- TUNING: better-than-default merge
+
+    eInverse (Segments d) = \case
+        SegmentListEdit e -> SegmentListEdit <$> eInverse d e
+        JoinItems i   -> [SplitItem i . splitLength . snd $ d !! i]
+        SplitItem i _ -> [JoinItems i]
+
+deriving instance (Show a, Show (EEdit a), Show b, Show (EEdit b)) => Show (EEdit (Segments a b))
+deriving instance (Eq a, Eq (EEdit a), Eq b, Eq (EEdit b)) => Eq (EEdit (Segments a b))
+instance (ToJSON a, ToJSON (EEdit a), ToJSON b, ToJSON (EEdit b)) => ToJSON (EEdit (Segments a b))
+instance (FromJSON a, FromJSON (EEdit a), FromJSON b, FromJSON (EEdit b)) => FromJSON (EEdit (Segments a b))
+instance SOP.Generic (EEdit (Segments a b))
+instance SOP.HasDatatypeInfo (EEdit (Segments a b))
+instance (NFData a, NFData (EEdit a), NFData b, NFData (EEdit b)) => NFData (EEdit (Segments a b)) where rnf = grnf
 
 ---------------------------------------- FUTUREWORK: Map instance
