@@ -106,7 +106,7 @@ import           Data.Time.Clock.POSIX (utcTimeToPOSIXSeconds)
 import Refine.Prelude.Aeson as P
 import Refine.Prelude.BuildInfo as P
 import Refine.Prelude.Generic as P
-import Refine.Prelude.TH as P hiding (typeOf)
+import Refine.Prelude.TH as P
 
 {-# ANN module "HLint: ignore Use cs" #-}
 
