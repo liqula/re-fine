@@ -45,6 +45,7 @@ data DocumentAction =
   | DocumentCancelSave
   | DocumentToggleBold
   | DocumentToggleItalic
+  | ToggleCollapseDiff
   deriving (Show, Eq, Generic)
 
 data DocumentState =
@@ -55,9 +56,10 @@ data DocumentState =
                                               -- representation around.
       }
   | DocumentStateDiff
-      { _documentStateVal      :: EditorState
-      , _documentStateContent  :: RawContent
-      , _documentStateDiff     :: Edit
+      { _documentStateVal           :: EditorState
+      , _documentStateContent       :: RawContent
+      , _documentStateDiff          :: Edit
+      , _documentStateDiffCollapsed :: Bool
       }
   | DocumentStateEdit
       { _documentStateVal      :: EditorState

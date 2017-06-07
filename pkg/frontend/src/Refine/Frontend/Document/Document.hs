@@ -76,9 +76,13 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
 
           rawContentDiffView :: Maybe RawContent
           rawContentDiffView
-              = fmap (\rc -> hideUnchangedParts rc 1 1) --FUTUREWORK: make these numbers adjustable by the user
+              = fmap mcollapse
               $ diffit =<< (props ^? dpDocumentState . documentStateDiff . editSource)
             where
+              mcollapse rc = if props ^? dpDocumentState . documentStateDiffCollapsed == Just True
+                then hideUnchangedParts rc 0 0  -- FUTUREWORK: make these numbers adjustable by the user
+                else rc
+
               diffit InitialEdit           = error "impossible"
               diffit MergeOfEdits{}        = error "not implemented"
               diffit (EditOfEdit otedit _) = showEditAsRawContent otedit

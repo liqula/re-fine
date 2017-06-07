@@ -27,6 +27,7 @@ module Refine.Frontend.Header.DiffToolbar where
 import Refine.Frontend.Prelude
 
 import Refine.Frontend.Contribution.Types
+import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Icon
 import Refine.Frontend.Store.Types
@@ -61,6 +62,11 @@ diffToolbar = mkView "DiffToolbar" $ do
           ibutton_ $ emptyIbuttonProps "Arrow_up" [HeaderAction ScrollToPageTop]
             & ibListKey .~ "3"
             & ibLabel .~ "motivation"
+            & ibSize .~ XXLarge
+
+          ibutton_ $ emptyIbuttonProps "Toggle_collapse_diff" [DocumentAction ToggleCollapseDiff]
+            & ibListKey .~ "4"
+            & ibLabel .~ "collapse"  -- FIXME: change label based on collapse state.
             & ibSize .~ XXLarge
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
