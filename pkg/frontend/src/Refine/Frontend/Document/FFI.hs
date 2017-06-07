@@ -212,7 +212,7 @@ foreign import javascript unsafe
   js_ES_createEmpty :: EditorState
 
 foreign import javascript unsafe
-  "Draft.EditorState.createWithContent($1, refine$decorator)"
+  "Draft.EditorState.createWithContent($1, refine$linkDecorator)"
   js_ES_createWithContent :: ContentState -> EditorState
 
 foreign import javascript unsafe

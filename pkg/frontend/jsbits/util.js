@@ -1,7 +1,7 @@
 (function(target) {
 
     // https://github.com/facebook/draft-js/blob/master/examples/draft-0-10-0/link/link.html
-    target.refine$decorator = new Draft.CompositeDecorator([
+    target.refine$linkDecorator = new Draft.CompositeDecorator([
         {
           strategy:
               function (contentBlock, callback, contentState) {
