@@ -54,13 +54,13 @@ spec = parallel $ do
       docToRawContent (rawContentToDoc d) `shouldBe` d
 
 
-    describe "showEditAsRawContent & docEditRanges" $ do
+    describe "showEditAsRawContent" $ do
       describe "added text with custom style 'ADDED'." $ do
-        let edit = eRawContent [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond
-                        [ NEText (InsertItem 10 'a')
-                        , NEText (InsertItem 11 'n')
-                        , NEText (InsertItem 12 'd')
-                        , NEText (InsertItem 13 '/')]]]]]
+        let edit = eRawContent [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond $ coerce
+                        [ InsertItem 10 'a'
+                        , InsertItem 11 'n'
+                        , InsertItem 12 'd'
+                        , InsertItem 13 '/']]]]]
             rc   = mkRawContent $ mkBlock "some text or other" :| []
             rc'  = mkRawContent $ (mkBlock "some text and/or other" & blockStyles .~ [((10, 4), StyleAdded)]) :| []
             ranges = [SelectionState False (SelectionPoint (BlockKey "0") 10) (SelectionPoint (BlockKey "0") 10)]
@@ -72,18 +72,7 @@ spec = parallel $ do
             -- this doesn't work now because the cost of deleting chars is more than
             -- the cost of deleting the block and adding a new one
             edit = eRawContent [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond
-                        [ NEText (DeleteItem 4)
-                        , NEText (DeleteItem 4)
-                        , NEText (DeleteItem 4)
-                        , NEText (DeleteItem 4)
-                        , NEText (DeleteItem 4)
-                        , NEText (DeleteItem 4)
-                        , NEText (DeleteItem 4)
-                        , NEText (DeleteItem 4)
-                        , NEText (DeleteItem 4)
-                        , NEText (DeleteItem 4)
-                        , NEText (DeleteItem 4)
-                        , NEText (DeleteItem 4)]]]]]
+                        . coerce $ deleteRange 4 12]]]]
             rc   = mkRawContent $ mkBlock "some text or other" :| []
             rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [((4, 12), StyleDeleted)]) :| []
             ranges = [SelectionState False (SelectionPoint (BlockKey "0") 4) (SelectionPoint (BlockKey "0") 16)]
@@ -91,7 +80,7 @@ spec = parallel $ do
         it "ranges" $ docEditRanges edit (initBlockKeys rc) `shouldBe` ranges
 
       describe "deleted block with custom style 'DELETED'." $ do
-        let edit = eRawContent [ENonEmpty $ DeleteItem 0]
+        let edit = eRawContent $ ENonEmpty <$> deleteRange 0 1
             rc   = mkRawContent $ mkBlock "some text or other" :| []
             rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [((0, 18), StyleDeleted)]) :| []
             ranges = [SelectionState False (SelectionPoint (BlockKey "0") 0) (SelectionPoint (BlockKey "0") 18)]
