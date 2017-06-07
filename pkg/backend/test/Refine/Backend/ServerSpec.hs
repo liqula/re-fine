@@ -49,6 +49,7 @@ import Refine.Common.ChangeAPI
 import Refine.Common.Rest
 import Refine.Common.Types as Common
 import Refine.Common.VDoc.Draft
+import Refine.Common.Test.Arbitrary (initBlockKeys)
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
@@ -100,7 +101,7 @@ sampleCreateVDoc :: CreateVDoc
 sampleCreateVDoc = CreateVDoc
   (Title "[title]")
   (Abstract "[abstract]")
-  (rawContentToVDocVersion . mkRawContent $ mkBlock "[versioned content]" :| [])
+  (rawContentToVDocVersion . initBlockKeys . mkRawContent $ mkBlock "[versioned content]" :| [])
 
 respCode :: SResponse -> Int
 respCode = statusCode . simpleStatus
@@ -270,6 +271,7 @@ specMockedLogin = around createDevModeTestSession $ do
       pendingWith "this test case shouldn't be too hard to write, and should be working already."
 
   describe "sAddEdit" $ do
+    let samplevdoc = rawContentToVDocVersion . initBlockKeys . mkRawContent $ mkBlock "[new vdoc version]" :| []
     let setup sess = runWai sess $ do
           let group = UniversalGroup
           _l :: Username <- postJSON loginUri (Login devModeUser devModePass)
@@ -296,7 +298,7 @@ specMockedLogin = around createDevModeTestSession $ do
               (addEditUri (fc ^. compositeVDoc . vdocHeadEdit))
               (CreateEdit
                 "new edit"
-                (rawContentToVDocVersion . mkRawContent $ mkBlock "[new vdoc version]" :| [])
+                samplevdoc
                 Grammar)
           pure (fc, fe)
 
@@ -304,7 +306,7 @@ specMockedLogin = around createDevModeTestSession $ do
       it "stores an edit and returns its version" $ \sess -> do
         (_, fp) <- setup sess
         be' :: VDocVersion <- runDB sess . db . getVersion $ fp ^. editID
-        be' `shouldBe` rawContentToVDocVersion (mkRawContent $ mkBlock "[new vdoc version]" :| [])
+        be' `shouldBe` samplevdoc
 
       it "stores an edit and returns it in the list of edits applicable to its base" $ \sess -> do
         pendingWith "applicableEdits is not implemented."

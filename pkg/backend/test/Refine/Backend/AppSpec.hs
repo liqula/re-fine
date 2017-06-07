@@ -38,6 +38,7 @@ import Refine.Backend.User
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Test.Samples (sampleVDocVersion)
 import Refine.Common.Types
+import Refine.Common.VDoc.Draft
 
 
 data Cmd where
@@ -175,7 +176,7 @@ arbitraryCreateVDoc =
   CreateVDoc
     <$> (Title <$> word)
     <*> (Abstract . mconcat <$> listOf word)
-    <*> (VDocVersion . cs . show <$> arbitrary @RawContent)
+    <*> (rawContentToVDocVersion <$> arbitrary @RawContent)
 
 sampleProgram :: Gen [Cmd]
 sampleProgram = do
