@@ -25,6 +25,8 @@ import Refine.Common.VDoc.OT
 import Refine.Common.Types.Core hiding (Edit)
 import Refine.Common.Test.Arbitrary (initBlockKeys)
 
+{-# ANN module ("HLint: ignore Use cs" :: String) #-}
+
 -- do not insert more than 4 elems into a Style set
 instance HasEnoughInhabitants (Atom Style) where numOfInhabitants _ = Just 4
 
