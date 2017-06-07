@@ -219,7 +219,7 @@ createVDoc pv vdoc = do
         Nothing -- hack: use a dummy key which will be replaced by a proper one before createVDoc returns
   mid <- createMetaID svdoc
   e <- createEdit (mid ^. miID) InitialEdit CreateEdit
-    { _createEditDesc   = "" -- FIXME
+    { _createEditDesc   = "initial document version"
     , _createEditVDoc   = vdoc
     , _createEditKind   = Initial
     }
