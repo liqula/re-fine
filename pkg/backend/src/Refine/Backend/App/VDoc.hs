@@ -98,7 +98,6 @@ addEdit baseeid edit = do
   -- assertPerms baseeid [Create]  -- TODO: http://zb2/re-fine/re-fine/issues/286
     -- (note that the user must have create permission on the *base
     -- edit*, not the edit about to get created.)
-  -- TODO: validateCreateChunkRange baseeid (edit ^. createEditRange)
   db $ do
     rid <- DB.vdocOfEdit baseeid
     olddoc <- rawContentFromVDocVersion <$> DB.getVersion baseeid
