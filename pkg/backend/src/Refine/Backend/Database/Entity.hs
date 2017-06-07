@@ -42,7 +42,7 @@ import           Refine.Backend.Database.Types
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
-import           Refine.Common.VDoc.Draft (rawContentFromVDocVersion)
+import           Refine.Common.VDoc.Draft (rawContentFromVDocVersion, selectEverything)
 import           Refine.Common.VDoc.OT (docEditRanges)
 import           Refine.Prelude (nothingToError, Timestamp, getCurrentTimestamp)
 
@@ -241,15 +241,17 @@ createEdit :: ID VDoc -> EditSource (ID Edit) -> CreateEdit -> DB Edit
 createEdit rid me ce = do
   sels <- case me of
     InitialEdit{} ->
-      pure [] -- FIXME
+      pure []
     EditOfEdit edit parent -> do
       doc <- rawContentFromVDocVersion <$> getVersion parent
       pure $ docEditRanges edit doc
     MergeOfEdits{} -> error "not implemented"
   let sels' = NEL.fromList $
          if null sels
-         then [SelectionState False (SelectionPoint (BlockKey "") 0) (SelectionPoint (BlockKey "") 0)]  -- FIXME
+         then [selectEverything rc]
          else sels
+      rc = fromMaybe e . decode . cs $ ce ^. createEditVDoc . unVDocVersion
+        where e = error "Invalid VDocVersion in CreateEdit!"  -- #312 should elimiate the possibility of this
   mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
             (SelectionStates sels')
