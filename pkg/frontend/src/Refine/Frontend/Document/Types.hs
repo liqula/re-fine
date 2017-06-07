@@ -43,8 +43,9 @@ data DocumentAction =
   | RequestDocumentSave
   | DocumentSave ST
   | DocumentCancelSave
-  | DocumentToggleBold
-  | DocumentToggleItalic
+  | DocumentToggleStyle Style
+  | DocumentToggleBlockType BlockType
+  | DocumentToggleLink
   | ToggleCollapseDiff
   deriving (Show, Eq, Generic)
 

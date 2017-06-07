@@ -1,4 +1,33 @@
 (function(target) {
+
+    // https://github.com/facebook/draft-js/blob/master/examples/draft-0-10-0/link/link.html
+    target.refine$linkDecorator = new Draft.CompositeDecorator([
+        {
+          strategy:
+              function (contentBlock, callback, contentState) {
+                contentBlock.findEntityRanges(
+                  (character) => {
+                    const entityKey = character.getEntity();
+                    return (
+                      entityKey !== null &&
+                      contentState.getEntity(entityKey).getType() === 'LINK'
+                    );
+                  },
+                  callback
+                );
+              },
+          component:
+              (props) => {
+                const {url} = props.contentState.getEntity(props.entityKey).getData();
+                return React.createElement(
+                    'a',
+                    { href: url, style: { color: '#3b5998', textDecoration: 'underline' } },
+                    props.children
+                );
+              },
+        },
+      ]);
+
     target.refine$editorContentFromHtml = function(html) {
         const blocksFromHTML = Draft.convertFromHTML(html);
         return Draft.ContentState.createFromBlockArray(

@@ -29,6 +29,7 @@ import Refine.Frontend.Prelude
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Store.Types
+import           Refine.Common.Types (BlockType(..), Style(..))
 
 editToolbar :: View '[]
 editToolbar = mkView "EditToolbar" $ do
@@ -46,41 +47,48 @@ editToolbar = mkView "EditToolbar" $ do
           iconButton_ $ editButton "Edit_toolbar_h1"
             & iconButtonPropsListKey      .~ "h1"
             & iconButtonPropsLabel        .~ "header 1"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType Header1]
 
           iconButton_ $ editButton "Edit_toolbar_h2"
             & iconButtonPropsListKey      .~ "h2"
             & iconButtonPropsLabel        .~ "header 2"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType Header2]
 
           iconButton_ $ editButton "Edit_toolbar_h3"
             & iconButtonPropsListKey      .~ "h3"
             & iconButtonPropsLabel        .~ "header 3"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType Header3]
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
           iconButton_ $ editButton "Edit_toolbar_bold"
             & iconButtonPropsListKey      .~ "bold"
             & iconButtonPropsLabel        .~ "bold"
-            & iconButtonPropsOnClick      .~ [DocumentAction DocumentToggleBold]
+            & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleStyle Bold]
 
           iconButton_ $ editButton "Edit_toolbar_italic"
             & iconButtonPropsListKey      .~ "italic"
             & iconButtonPropsLabel        .~ "italic"
-            & iconButtonPropsOnClick      .~ [DocumentAction DocumentToggleItalic]
+            & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleStyle Italic]
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
           iconButton_ $ editButton "Edit_toolbar_bullets"
             & iconButtonPropsListKey      .~ "bullets"
             & iconButtonPropsLabel        .~ "bullets"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType BulletPoint]
 
           iconButton_ $ editButton "Edit_toolbar_numbers"
             & iconButtonPropsListKey      .~ "numbers"
             & iconButtonPropsLabel        .~ "numbers"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+            & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType EnumPoint]
+
+          div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+
+          iconButton_ $ editButton "Edit_toolbar_link"
+            & iconButtonPropsListKey      .~ "link"
+            & iconButtonPropsLabel        .~ "link"
+            & iconButtonPropsOnClick      .~ [DocumentAction DocumentToggleLink]
 
           iconButton_ $ editButton mempty
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge

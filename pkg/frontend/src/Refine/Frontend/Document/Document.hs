@@ -153,14 +153,6 @@ mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
     bg r g b a = ["background" `decl` Color.RGBA r g b a]
 
 
--- | FIXME: this should be delivered from where the instance ToJSON Style is defined, and that
--- instance should be defined in terms of this.
-styleToST :: Style -> ST
-styleToST s = case toJSON s of
-  String txt -> txt
-  _ -> error "impossible."
-
-
 emptyEditorProps :: [PropertyOrHandler handler]
 emptyEditorProps = ["editorState" &= createEmpty]
 

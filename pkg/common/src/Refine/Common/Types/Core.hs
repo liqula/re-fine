@@ -396,21 +396,30 @@ instance FromJSON (Block EntityKey) where
         o <- obj .: "offset"
         pure ((o, l), s)
 
+blockTypeToST :: BlockType -> ST
+blockTypeToST = \case
+  NormalText  -> "unstyled"
+  Header1     -> "header-one"
+  Header2     -> "header-two"
+  Header3     -> "header-three"
+  BulletPoint -> "unordered-list-item"
+  EnumPoint   -> "ordered-list-item"
+
+blockTypeFromST :: ST -> Maybe BlockType
+blockTypeFromST = \case
+  "unstyled"            -> Just NormalText
+  "header-one"          -> Just Header1
+  "header-two"          -> Just Header2
+  "header-three"        -> Just Header3
+  "unordered-list-item" -> Just BulletPoint
+  "ordered-list-item"   -> Just EnumPoint
+  _                     -> Nothing
+
 instance ToJSON BlockType where
-  toJSON NormalText  = "unstyled"
-  toJSON Header1     = "header-one"
-  toJSON Header2     = "header-two"
-  toJSON Header3     = "header-three"
-  toJSON BulletPoint = "unordered-list-item"
-  toJSON EnumPoint   = "ordered-list-item"
+  toJSON = String . blockTypeToST
 
 instance FromJSON BlockType where
-  parseJSON (String "unstyled")            = pure NormalText
-  parseJSON (String "header-one")          = pure Header1
-  parseJSON (String "header-two")          = pure Header2
-  parseJSON (String "header-three")        = pure Header3
-  parseJSON (String "unordered-list-item") = pure BulletPoint
-  parseJSON (String "ordered-list-item")   = pure EnumPoint
+  parseJSON (String (blockTypeFromST -> Just bt)) = pure bt
   parseJSON bad = fail $ "BlockType: no parse for " <> show bad
 
 instance ToJSON Entity where
@@ -428,26 +437,34 @@ instance FromJSON Entity where
                 in EntityLink <$> (parseData =<< obj .: "data")
       bad -> fail $ "Entity: no parse for " <> show bad
 
+styleToST :: Style -> ST
+styleToST = \case
+  Bold         -> "BOLD"
+  Italic       -> "ITALIC"
+  Underline    -> "UNDERLINE"
+  Code         -> "CODE"
+  (Mark cid)   -> "MARK__" <> toUrlPiece cid
+  StyleAdded   -> "ADDED"
+  StyleDeleted -> "DELETED"
+  StyleChanged -> "CHANGED"
+
+styleFromST :: ST -> Maybe Style
+styleFromST = \case
+  "BOLD"                                                   -> Just Bold
+  "ITALIC"                                                 -> Just Italic
+  "UNDERLINE"                                              -> Just Underline
+  "CODE"                                                   -> Just Code
+  (ST.splitAt 6 -> ("MARK__", parseUrlPiece -> Right cid)) -> Just $ Mark cid
+  "ADDED"                                                  -> Just StyleAdded
+  "DELETED"                                                -> Just StyleDeleted
+  "CHANGED"                                                -> Just StyleChanged
+  _                                                        -> Nothing
+
 instance ToJSON Style where
-  toJSON Bold         = "BOLD"
-  toJSON Italic       = "ITALIC"
-  toJSON Underline    = "UNDERLINE"
-  toJSON Code         = "CODE"
-  toJSON (Mark cid)   = String $ "MARK__" <> toUrlPiece cid
-  toJSON StyleAdded   = "ADDED"
-  toJSON StyleDeleted = "DELETED"
-  toJSON StyleChanged = "CHANGED"
+  toJSON = String . styleToST
 
 instance FromJSON Style where
-  parseJSON (String "BOLD")                 = pure Bold
-  parseJSON (String "ITALIC")               = pure Italic
-  parseJSON (String "UNDERLINE")            = pure Underline
-  parseJSON (String "CODE")                 = pure Code
-  parseJSON (String (ST.splitAt 6 -> ("MARK__", parseUrlPiece -> Right cid)))
-                                            = pure $ Mark cid
-  parseJSON (String "ADDED")                = pure StyleAdded
-  parseJSON (String "DELETED")              = pure StyleDeleted
-  parseJSON (String "CHANGED")              = pure StyleChanged
+  parseJSON (String (styleFromST -> Just s)) = pure s
   parseJSON bad = fail $ "Style: no parse for " <> show bad
 
 
