@@ -32,6 +32,7 @@ import Refine.Backend.Database (DB)
 import Refine.Backend.Test.AppRunner (provideAppRunner)
 import Refine.Backend.User (UH)
 import Refine.Common.Types
+import Refine.Common.Test.Samples
 
 
 type AppRunner a = AppM DB UH a -> IO a
@@ -40,7 +41,7 @@ spec :: Spec
 spec = do
   describe "CollaborativeEdit" . around provideAppRunner $ do
     let crproc = CreateCollabEditProcess CollaborativeEditOnlyPhase UniversalGroup crvdoc
-        crvdoc = CreateVDoc title (Abstract mempty) (VDocVersion mempty)
+        crvdoc = CreateVDoc title (Abstract mempty) sampleVDocVersion
         title  = Title "fnorgh"
 
     it "create works" $ \(runner :: AppRunner (IO ())) -> do

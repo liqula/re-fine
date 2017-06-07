@@ -57,14 +57,16 @@ rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
     rotate contribs i (sel : sels) = rotate (upd contribs) (i + 1) sels
       where
         upd = case i `mod` 3 of
-          0 -> _1 %~ (build (Proxy :: Proxy Edit)       i (\r -> Edit un un r un un) sel :)
-          1 -> _2 %~ (build (Proxy :: Proxy Note)       i (Note un un un) sel :)
-          2 -> _3 %~ (build (Proxy :: Proxy Discussion) i (\r -> CompositeDiscussion (Discussion un un r) un) sel :)
+          0 -> _1 %~ (build  (Proxy :: Proxy Edit)       i (\r -> Edit un un (r :| []) un un) sel :)
+          1 -> _2 %~ (build' (Proxy :: Proxy Note)       i (Note un un un) sel :)
+          2 -> _3 %~ (build' (Proxy :: Proxy Discussion) i (\r -> CompositeDiscussion (Discussion un un r) un) sel :)
           _ -> error "rawContentToCompositeVDoc: impossible."
 
-    build :: Proxy a -> Int -> (ChunkRange -> b) -> SelectionState -> (ID a, b)
-    build Proxy i cons sel = (ID $ fromIntegral i, cons $ selectionStateToChunkRange rawContent sel)
+    build' :: Proxy a -> Int -> (ChunkRange -> b) -> SelectionState -> (ID a, b)
+    build' p i cons = build p i (cons . selectionStateToChunkRange rawContent)
 
+    build :: Proxy a -> Int -> (SelectionState -> b) -> SelectionState -> (ID a, b)
+    build Proxy i cons sel = (ID $ fromIntegral i, cons sel)
 
 mark1 :: Style
 mark1 = Mark (ContribIDEdit (ID 0))

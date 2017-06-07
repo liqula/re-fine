@@ -8,6 +8,7 @@ module Refine.Common.VDoc.OT where
 import           Data.List (groupBy)
 import qualified Data.Set as Set
 import qualified Data.List.NonEmpty as NEL
+import qualified Data.Text as ST
 
 import           Refine.Common.Prelude
 import           Refine.Common.OT
@@ -20,7 +21,11 @@ type Styles = Set (Atom Style)
 
 showEditAsRawContent :: Edit RawContent -> RawContent -> RawContent
 showEditAsRawContent edits
-    = docToRawContent . NEL.fromList . patchBlocks (concat (coerce edits :: [Edit [DocBlock]])) . NEL.toList . rawContentToDoc
+    = docToRawContent . showEditAsDoc (concat (coerce edits :: [Edit OTDoc])) . rawContentToDoc
+
+showEditAsDoc :: Edit OTDoc -> OTDoc -> OTDoc
+showEditAsDoc edits
+    = NEL.fromList . patchBlocks (coerce edits) . NEL.toList
   where
     -- TUNING: compress/rearrange the elementary edits first or use a vector instead of lists?
     patchBlocks :: Edit [DocBlock] -> [DocBlock] -> [DocBlock]
@@ -121,3 +126,53 @@ showEditAsRawContent edits
 
     noStyle :: Styles
     noStyle = mempty
+
+-- Auxiliary types used only in docEditRanges
+type SelRange = (SelPoint, SelPoint)
+type SelPoint = ((Int, Maybe BlockKey), (Int, OffsetPos))
+type OffsetPos = (Bool{-begin-}, Bool{-end-})
+
+docEditRanges :: Edit RawContent -> RawContent -> [SelectionState]
+docEditRanges edits
+    = concatMap toSelState
+    . foldr addRange []
+    . concat . zipWith blockRanges [(0::Int)..]
+    . NEL.toList . showEditAsDoc (concat (coerce edits :: [Edit OTDoc])) . rawContentToDoc
+  where
+    blockRanges :: Int -> DocBlock -> [SelRange]
+    blockRanges col (DocBlock _ _ key elems) = concat $ zipWith3 elemRanges offs' (tail offs') elems
+      where
+        offs :: [Int]
+        offs = scanl (+) 0 $ elemLength <$> elems
+
+        offs' :: [(Int, OffsetPos)]
+        offs' = zip offs . zip (True: repeat False) $ replicate (length offs - 1) False <> [True]
+
+        elemRanges :: (Int, OffsetPos) -> (Int, OffsetPos) -> LineElem -> [SelRange]
+        elemRanges beg end ((_, ss), _) =
+            [ (((col, key), beg), ((col, key), end))
+            |  Atom StyleAdded   `Set.member` ss
+            || Atom StyleDeleted `Set.member` ss
+            || Atom StyleChanged `Set.member` ss
+            ]
+
+    elemLength :: LineElem -> Int
+    elemLength ((_, ss), NonEmptyST txt)
+        | Atom StyleAdded `Set.member` ss = 0
+        | otherwise = ST.length txt
+
+    addRange :: SelRange -> [SelRange] -> [SelRange]
+    addRange x [] = [x]
+    addRange r@(beg, e) rs@((b, end): rs')
+        | e `nextTo` b = (beg, end): rs'
+        | otherwise = r: rs
+
+    nextTo :: SelPoint -> SelPoint -> Bool
+    a `nextTo` b | a == b = True
+    ((i, _), (_, (_, True))) `nextTo` ((j, _), (_, (True, _))) | j == i+1 = True
+    _ `nextTo` _ = False
+
+    toSelState :: SelRange -> [SelectionState]
+    toSelState (((_, Just k1), (o1, _)), ((_, Just k2), (o2, _)))
+        = [SelectionState False (SelectionPoint k1 o1) (SelectionPoint k2 o2)]
+    toSelState _ = []

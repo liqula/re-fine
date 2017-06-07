@@ -104,7 +104,7 @@ data EditSource a =
 data Edit = Edit
   { _editMetaID :: MetaID Edit
   , _editDesc   :: ST
-  , _editRange  :: ChunkRange
+  , _editRanges :: NonEmpty SelectionState
   , _editKind   :: EditKind
   , _editSource :: EditSource (ID Edit)
   }
@@ -112,7 +112,6 @@ data Edit = Edit
 
 data CreateEdit = CreateEdit
   { _createEditDesc  :: ST
-  , _createEditRange :: ChunkRange
   , _createEditVDoc  :: VDocVersion
   , _createEditKind  :: EditKind
   }
@@ -280,10 +279,10 @@ data SelectionPoint
 -- offset-key is constructed from block key, a '0' literal, and the number of left siblings of the
 -- span the selector refers to.
 data MarkSelector = MarkSelector MarkSelectorSide BlockKey Int
-  deriving (Eq, Show, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
-data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom | MarkSelectorUnknownSide
-  deriving (Eq, Show, Generic)
+data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom
+  deriving (Eq, Ord, Show, Generic)
 
 
 -- * OT.Edit RawContent

@@ -253,7 +253,6 @@ emitBackendCallsFor action st = case action of
             cedit :: C.Create C.Edit
             cedit = C.CreateEdit
                   { C._createEditDesc  = desc
-                  , C._createEditRange = st ^. gsChunkRange
                   , C._createEditVDoc  = editorStateToVDocVersion (dstate ^. documentStateVal)
                   , C._createEditKind  = kind
                   }

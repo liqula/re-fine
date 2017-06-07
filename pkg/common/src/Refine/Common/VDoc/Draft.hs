@@ -130,7 +130,7 @@ rawContentFromCompositeVDoc (CompositeVDoc _ _ vers edits notes discussions) =
     convertHack l (k, v) = (contribID k, chunkRangeToSelectionState rawContent $ v ^. l)
 
     marks :: [(ContributionID, SelectionState)]
-    marks = (convertHack editRange                               <$> Map.toList edits)
+    marks = [(contribID k, s) | (k, e) <- Map.toList edits, s <- NEL.toList $ e ^. editRanges]
          <> (convertHack noteRange                               <$> Map.toList notes)
          <> (convertHack (compositeDiscussion . discussionRange) <$> Map.toList discussions)
 
@@ -226,43 +226,50 @@ addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (st
       else soloSelectionPointPoint thisPoint ^. selectionOffset
 
     end = case List.filter ((== soloSelectionPointID thisPoint) . soloSelectionPointID) newClosePoints of
-      []   -> blocklen
-      [sp] -> soloSelectionPointPoint sp ^. selectionOffset - start
-      bad  -> error $ "addMarkToBlock: impossible: " <> show bad
+      sps -> minimum $ blocklen : [e | sp <- sps, let e = soloSelectionPointPoint sp ^. selectionOffset - start, e >= 0]
 
 
 -- | See 'mkSomeSegments' (@payload@ is 'Style').  (See 'rawContentToDoc' for another use of 'mkSomeSegments'.)
 mkInlineStyleSegments :: [(EntityRange, Style)] -> [(Int, Set Style)]
 mkInlineStyleSegments = mkSomeSegments fst snd
 
+data BlockId = BlockId Int BlockKey
+    deriving (Eq, Ord)
+
+data SegId = SegId Int Bool{-last segment-}
+    deriving (Eq, Ord)
+
 getMarkSelectors :: RawContent -> [(ContributionID, MarkSelector, MarkSelector)]
-getMarkSelectors = findSides . mconcat . fmap collectBlock . zip [0..] . NEL.toList . view rawContentBlocks
+getMarkSelectors
+    = concatMap createRanges
+    . List.groupBy ((==) `on` fst) . sort
+    . mconcat
+    . zipWith collectBlock [0..]
+    . NEL.toList . view rawContentBlocks
   where
-    collectBlock :: (Int, Block EntityKey) -> [(ContributionID, ((Int, Int), MarkSelector))]
-    collectBlock (bix, block) = catMaybes $ collectSegment <$> warmupSegments (mkInlineStyleSegments $ block ^. blockStyles)
-      where
-        warmupSegments :: [(Int, Set Style)] -> [(Int, Style)]
-        warmupSegments segs
-          = [ (six, style)
-            | (six, (_, styles)) <- zip [0..] segs
-            , style <- Set.toList styles
-            ]
+    collectBlock :: Int -> Block EntityKey -> [(ContributionID, ((BlockId, SegId), (BlockId, SegId)))]
+    collectBlock bix block
+      = [ (cid, ((bid, six), (bid, six)))
+        | (six, (_, styles)) <- addSegIds . mkInlineStyleSegments $ block ^. blockStyles
+        , Mark cid <- Set.toList styles
+        -- (note that this case keeps track of 'ContribIDHighlightMark' positions, even though
+        -- that's not needed for anything.)
+        , let bid = BlockId bix $ block ^?! blockKey . _Just
+        ]
 
-        collectSegment :: (Int, Style) -> Maybe (ContributionID, ((Int, Int), MarkSelector))
-        collectSegment (six, Mark cid)
-          = Just (cid, ((bix, six), MarkSelector MarkSelectorUnknownSide (block ^?! blockKey . _Just) six))
-            -- (note that this case keeps track of 'ContribIDHighlightMark' positions, even though
-            -- that's not needed for anything.)
-        collectSegment _
-          = Nothing
+    addSegIds :: [a] -> [(SegId, a)]
+    addSegIds as = zip (zipWith SegId [0..] $ replicate (length as - 1) False <> [True]) as
 
-    findSides :: [(ContributionID, ((Int, Int), MarkSelector))] -> [(ContributionID, MarkSelector, MarkSelector)]
-    findSides = fmap pickMinMax . List.groupBy ((==) `on` fst) . sortBy (compare `on` fst)
+    createRanges :: [(ContributionID, ((BlockId, SegId), (BlockId, SegId)))] -> [(ContributionID, MarkSelector, MarkSelector)]
+    createRanges [] = error "impossible"
+    createRanges arg@((cid, _) : _) =
+        [ (cid, MarkSelector MarkSelectorTop k1 o1, MarkSelector MarkSelectorBottom k2 o2)
+        | ((BlockId _ k1, SegId o1 _), (BlockId _ k2, SegId o2 _)) <- foldr addSelector [] $ snd <$> arg]
 
-    pickMinMax :: [(ContributionID, ((Int, Int), MarkSelector))] -> (ContributionID, MarkSelector, MarkSelector)
-    pickMinMax [] = error "impossible"
-    pickMinMax arg@((cid, _) : _) = (cid, top, bot)
-      where
-        marks = Map.fromList $ snd <$> arg
-        top   = case Map.findMin marks of (_, MarkSelector _ k o) -> MarkSelector MarkSelectorTop    k o
-        bot   = case Map.findMax marks of (_, MarkSelector _ k o) -> MarkSelector MarkSelectorBottom k o
+    addSelector (b1, e1) ((b2, e2): ss) | e1 `nextTo` b2 = (b1, e2): ss
+    addSelector s ss = s: ss
+
+    nextTo :: (BlockId, SegId) -> (BlockId, SegId) -> Bool
+    nextTo (BlockId i _, SegId j isend) (BlockId i' _, SegId j' _)
+        =  i == i' && j+1 == j'
+        || i+1 == i' && isend && j' == 0

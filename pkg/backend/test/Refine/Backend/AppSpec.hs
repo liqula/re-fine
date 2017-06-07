@@ -38,6 +38,7 @@ import Refine.Backend.User
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Test.Samples (sampleVDocVersion)
 import Refine.Common.Types
+import Refine.Common.VDoc.Draft
 
 
 data Cmd where
@@ -162,7 +163,6 @@ runCmd (AddEditToHead v cedit) = do
   lift . check $
     (edit                 == edit') &&
     (edit ^. editDesc     == cedit ^. createEditDesc) &&
-    (edit ^. editRange    == cedit ^. createEditRange) &&
     (edit ^. editKind     == cedit ^. createEditKind)
 
 
@@ -176,7 +176,7 @@ arbitraryCreateVDoc =
   CreateVDoc
     <$> (Title <$> word)
     <*> (Abstract . mconcat <$> listOf word)
-    <*> (VDocVersion . cs . show <$> arbitrary @RawContent)
+    <*> (rawContentToVDocVersion <$> arbitrary @RawContent)
 
 sampleProgram :: Gen [Cmd]
 sampleProgram = do
@@ -189,4 +189,4 @@ sampleProgram = do
 -- * loud samples
 
 sampleCreateEdit1 :: CreateEdit
-sampleCreateEdit1 = CreateEdit {_createEditDesc = "...", _createEditRange = ChunkRange {_chunkRangeBegin = Nothing, _chunkRangeEnd = Nothing}, _createEditVDoc = sampleVDocVersion, _createEditKind = Grammar}
+sampleCreateEdit1 = CreateEdit {_createEditDesc = "...", _createEditVDoc = sampleVDocVersion, _createEditKind = Grammar}
