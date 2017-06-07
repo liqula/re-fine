@@ -32,7 +32,8 @@ showEditAsDoc edits
     patchBlocks :: Edit [DocBlock] -> [DocBlock] -> [DocBlock]
     patchBlocks [] bs = bs
     patchBlocks (e:es) bs = case e of
-        DeleteItem i    -> patchBlocks (incIdx i 1 <$> es) $ take i bs <> (markBlock StyleDeleted (bs !! i): drop (i+1) bs)
+        DeleteRange i l -> patchBlocks (incIdx i l <$> es)
+                         $ take i bs <> (markBlock StyleDeleted <$> take l (drop i bs)) <> drop (i+l) bs
         InsertItem i x  -> patchBlocks es $ take i bs <> (markBlock StyleAdded x: drop i bs)
         EditItem i edit -> patchBlocks es $ take i bs <> (patchBlock (bs !! i) edit: drop (i+1) bs)
 
@@ -50,8 +51,8 @@ showEditAsDoc edits
 
     patchLineElems :: Edit LineElems -> [LineElem] -> [LineElem]
     patchLineElems [] bs = bs
-    patchLineElems (SegmentListEdit (DeleteItem i): es) bs
-        = patchLineElems (incIdx' i 1 <$> es) $ take i bs <> (markElem StyleDeleted (bs !! i): drop (i+1) bs)
+    patchLineElems (SegmentListEdit (DeleteRange i l): es) bs
+        = patchLineElems (incIdx' i l <$> es) $ take i bs <> (markElem StyleDeleted <$> take l (drop i bs)) <> drop (i+l) bs
     patchLineElems (SegmentListEdit (InsertItem i x): es) bs
         = patchLineElems es $ take i bs <> (markElem StyleAdded x: drop i bs)
     patchLineElems (SegmentListEdit (EditItem i edit): es) bs
@@ -84,13 +85,14 @@ showEditAsDoc edits
     patchLineElemText :: Edit NonEmptyST -> LineElem -> [LineElem]
     patchLineElemText es ((ent, as), text)
         = [ ((ent, as <> marks), text')
-          | (marks, text') <- compress $ patchText ((,) noStyle <$> cs text) [unNEText e | e <- es]
+          | (marks, text') <- compress $ patchText ((,) noStyle <$> cs text) (coerce es)
           ]
 
     patchText :: [(Styles, Char)] -> Edit String -> [(Styles, Char)]
     patchText bs [] = bs
     patchText bs (e:es) = case e of
-        DeleteItem i    -> patchText (take i bs <> (markStyle StyleDeleted (bs !! i): drop (i+1) bs)) $ incIdx i 1 <$> es
+        DeleteRange i l -> patchText (take i bs <> (markStyle StyleDeleted <$> take l (drop i bs)) <> drop (i+l) bs)
+                                   $ incIdx i l <$> es
         InsertItem i x  -> patchText (take i bs <> (markStyle StyleAdded (noStyle, x): drop i bs)) es
         EditItem i edit -> patchText (take i bs <> (foldl patchChar (bs !! i) edit: drop (i+1) bs)) es
 
@@ -101,8 +103,8 @@ showEditAsDoc edits
     compress = fmap (\xs -> (fst (head xs), NonEmptyST $ cs (snd <$> xs))) . groupBy ((==) `on` fst)
 
     incIdx i k = \case
-        DeleteItem j   | j >= i    -> DeleteItem $ j + k
-                       | otherwise -> DeleteItem j
+        DeleteRange j l | j >= i    -> DeleteRange (j + k) l
+                        | otherwise -> DeleteRange j l
         InsertItem j x | j >= i    -> InsertItem (j + k) x
                        | otherwise -> InsertItem j x
         EditItem j x   | j >= i    -> EditItem (j + k) x

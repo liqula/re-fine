@@ -299,12 +299,25 @@ editItem :: Int -> Edit a -> Edit [a]
 editItem _ [] = []
 editItem i p  = [EditItem i p]
 
+deleteRange :: Int -> Int -> Edit [a]
+deleteRange _ 0 = []
+deleteRange i j = [DeleteRange i j]
+
+addListEdit :: EEdit [a] -> Edit [a] -> Edit [a]
+addListEdit (DeleteRange i j) (DeleteRange i' j': es) | i == i' = DeleteRange i (j+j'): es
+addListEdit e es = e: es
+
+appendListEdit :: Edit [a] -> Edit [a] -> Edit [a]
+appendListEdit [] es = es
+appendListEdit [e] es = addListEdit e es
+appendListEdit (e: es) es' = e: appendListEdit es es'
+
 instance Editable a => Editable [a] where
 
     docCost = (+1) . sum . map docCost
 
     data EEdit [a]
-        = DeleteItem !Int    -- TUNING: DeleteRange Int{-offset-} Int{-length-}
+        = DeleteRange !Int{-offset, >=0-} !Int{-length, >0-}
         | InsertItem !Int a  -- TUNING: InsertItems Int{-offset-} [a]{-elems-}
         | EditItem !Int (Edit a)
         -- FUTUREWORK: detect swapping/moving and duplication of items
@@ -314,10 +327,10 @@ instance Editable a => Editable [a] where
 
     eCost = \case
         InsertItem _ d -> 1 + docCost d
-        DeleteItem _   -> 1
+        DeleteRange{}  -> 1
         EditItem _ p   -> 1 + cost p
 
-    ePatch (DeleteItem i  ) xs = take i xs <> drop (i+1) xs
+    ePatch (DeleteRange i l) xs = take i xs <> drop (i+l) xs
     ePatch (InsertItem i x) xs = take i xs <> (x: drop i xs)
     ePatch (EditItem   i x) xs = take i xs <> (patch x (xs !! i): drop (i+1) xs)
 
@@ -330,14 +343,14 @@ instance Editable a => Editable [a] where
         s2'' = tail $ scanl (flip add) (mk []) [mk [InsertItem n y] | ~(n, y) <- s2']
 
         ff es'@((_, e): es) (xs, ye)
-            = (e, mk [DeleteItem lenS2] `add` e): zipWith4 gg xs s2' es' es <> [(error "impossible", ye)]
+            = (e, mk (deleteRange lenS2 1) `add` e): zipWith4 gg xs s2' es' es <> [(error "impossible", ye)]
           where
             gg :: (x ~ (Int, Edit [a]), v ~ (x, x)) => a -> (Int, a) -> v -> v -> v
             gg x (n, y) (fo, f1) (_, f2) = (,) f2 $ if either (const False) null dxy then fo else
                 minimumBy (compare `on` fst) $
                     [ mk (editItem n edit) `add` fo | edit <- either (const []) (:[]) dxy] <>
                     [ mk [InsertItem n y] `add` f1
-                    , mk [DeleteItem n]   `add` f2
+                    , mk (deleteRange n 1) `add` f2
                     ]
               where
                 dxy = diff x y
@@ -346,7 +359,7 @@ instance Editable a => Editable [a] where
         lenS2 = length s2
 
         mk x = (cost x, x)
-        (ca, a) `add` (cb, b) = (ca + cb, a <> b)
+        (ca, a) `add` (cb, b) = (ca + cb, a `appendListEdit` b)
 
         revInits :: [a] -> [[a]]
         revInits = f []
@@ -354,29 +367,39 @@ instance Editable a => Editable [a] where
             f acc xs = acc: f (head xs: acc) (tail xs)
 
     eMerge d (EditItem i x) (EditItem i' y) | i == i' = editItem i *** editItem i $ merge (d !! i) x y
-    eMerge _ (EditItem i _) (DeleteItem i') | i == i' = ([DeleteItem i], [])      -- information lost!
-    eMerge d (DeleteItem i) (EditItem i' x) | i == i' = (InsertItem i (d !! i): editItem i x, [])
-    eMerge _ (DeleteItem i) (DeleteItem i') | i == i' = ([], [])
+    eMerge _ (EditItem i _) (DeleteRange i' l) | i >= i' && i < i'+l = ([DeleteRange i' l], [])      -- information lost!
+    eMerge d (DeleteRange i' l) (EditItem i x) | i >= i' && i < i'+l
+        = ( InsertItem i' (d !! i): editItem i' x
+          , deleteRange i' (max 0 $ i - i') <> deleteRange (i'+1) (max 0 $ l - (i - i') - 1)
+          )
+    eMerge _ (DeleteRange i l) (DeleteRange i' l')
+        |  i' >= i && i' < i+l
+        || i >= i' && i < i'+l'
+        = (deleteRange a . max 0 $ b - a - l, deleteRange a . max 0 $ b - a - l')
+      where
+        a = min i i'
+        b = max (i + l) (i' + l')
     eMerge _ a b = (mutate 0 a b, mutate 1 b a)
       where
         mutate l e = \case
             InsertItem i x -> [InsertItem (di l i) x]
-            DeleteItem i   -> [DeleteItem (di 1 i)  ]
+            DeleteRange i len -> case e of
+                InsertItem j _ | j > i && j < i + len -> [DeleteRange i (j - i), DeleteRange (i+1) (len - (j - i))]
+                _ -> [DeleteRange (di 1 i) len]
             EditItem   i x -> [EditItem   (di 1 i) x]
           where
             di k i = case e of
                 InsertItem j _ | j==i      -> i+k
                                | j<i       -> i+1
                                | otherwise -> i
-                DeleteItem j   | j==i      -> i
-                               | j<i       -> i-1
-                               | otherwise -> i
+                DeleteRange j len | j>=i      -> i
+                                  | otherwise -> max j $ i-len
                 EditItem{}     -> i
 
     eInverse d = \case
         EditItem i x   -> editItem i $ inverse (d !! i) x
-        DeleteItem i   -> [InsertItem i (d !! i)]
-        InsertItem i _ -> [DeleteItem i]
+        DeleteRange i l -> InsertItem i <$> (reverse . take l $ drop i d)
+        InsertItem i _ -> deleteRange i 1
 
 deriving instance (Show a, Show (EEdit a)) => Show (EEdit [a])
 deriving instance (Eq a, Eq (EEdit a)) => Eq (EEdit [a])
@@ -461,12 +484,12 @@ instance Editable a => Editable (Seq a) where
     ePatch (EditSItem   i x) (Seq.splitAt i -> (as, Seq.viewl -> b Seq.:< bs))
         = as <> Seq.singleton (patch x b) <> bs
 
-    diff (foldr (:) [] -> s1) (foldr (:) [] -> s2) = f <$$> diff s1 s2
+    diff (foldr (:) [] -> s1) (foldr (:) [] -> s2) = concatMap f <$> diff s1 s2
       where
         f = \case
-            DeleteItem i   -> DeleteSItem i
-            InsertItem i x -> InsertSItem i x
-            EditItem i e   -> EditSItem i e
+            DeleteRange i l -> replicate l (DeleteSItem i)
+            InsertItem i x -> [InsertSItem i x]
+            EditItem i e   -> [EditSItem i e]
 
     eMerge d (EditSItem i x) (EditSItem i' y) | i == i' = editSItem i *** editSItem i $ merge (Seq.index d i) x y
     eMerge _ (EditSItem i _) (DeleteSItem i') | i == i' = ([DeleteSItem i], [])      -- information lost!
@@ -521,11 +544,11 @@ instance Editable ST where
     -- diff (replicate 1000 'a') (replicate 1000 'b')
     -- diff (take 1000 ['a'..]) (take 1000 ['A'..])
     -- diff (take 1000 ['A'..]) (take 1000 ['a'..])
-    diff a b = pure . f 0 $ Diff.diff (ST.unpack a) (ST.unpack b)
+    diff a b = pure . coerce . f 0 $ Diff.diff (ST.unpack a) (ST.unpack b)
       where
         f !n (Diff.Both{}: es) = f (n+1) es
-        f n (Diff.New c: es) = EText (InsertItem n c): f (n+1) es
-        f n (Diff.Old{}: es) = EText (DeleteItem n): f n es
+        f n (Diff.New c: es) = InsertItem n c: f (n+1) es
+        f n (Diff.Old{}: es) = DeleteRange n 1 `addListEdit` f n es
         f _ [] = []
     ePatch e = ST.pack . ePatch (coerce e) . ST.unpack
     patch e = ST.pack . patch (coerce e) . ST.unpack
@@ -557,35 +580,33 @@ instance ConvertibleStrings [Char] NonEmptyST
     convertString s = NonEmptyST $ convertString s
 
 instance Editable NonEmptyST where
-    newtype EEdit NonEmptyST = NEText {unNEText :: EEdit String}
+    newtype EEdit NonEmptyST = NEText {unNEText :: EEdit ST}
         deriving (Generic, Show, Eq)
+
     docCost = ST.length . unNonEmptyST
+
     eCost = eCost . unNEText
 
-    -- | Data.Algorithm.Patience.diff is used from the patience package
-    --
-    -- Possible alternatives:
-    --
-    -- Data.Algorithm.Diff.getDiff from the Diff package
-    -- Data.Algorithm.Diff.Gestalt.diff from the diff-gestalt package
-    --
-    -- Data.Algorithm.Patience.diff is the fastest and most stable according to these benchmarks:
-    --
-    -- diff (replicate 1000 'a') (replicate 1000 'b')
-    -- diff (take 1000 ['a'..]) (take 1000 ['A'..])
-    -- diff (take 1000 ['A'..]) (take 1000 ['a'..])
-    diff (NonEmptyST a) (NonEmptyST b) = pure . f 0 $ Diff.diff (ST.unpack a) (ST.unpack b)
+    diff (NonEmptyST a) (NonEmptyST b)
+        | either (const True) (maintainsInvariant (not . ST.null) a) e = either throwError (pure . coerce) e
+        | otherwise = throwError "diff @NonEmptyST"   -- FIXME: be smarter
       where
-        f !n (Diff.Both{}: es) = f (n+1) es
-        f n (Diff.New c: es) = NEText (InsertItem n c): f (n+1) es
-        f n (Diff.Old{}: es) = NEText (DeleteItem n): f n es
-        f _ [] = []
-    ePatch e = NonEmptyST . ST.pack . ePatch (coerce e) . ST.unpack . unNonEmptyST
-    patch e = NonEmptyST . ST.pack . patch (coerce e) . ST.unpack . unNonEmptyST
-    eMerge d a b = coerce $ eMerge (ST.unpack $ unNonEmptyST d) (coerce a) (coerce b)
-    merge d a b = coerce $ merge (ST.unpack $ unNonEmptyST d) (coerce a) (coerce b)
-    eInverse d = coerce . eInverse (ST.unpack $ unNonEmptyST d) . coerce
-    inverse d = coerce . inverse (ST.unpack $ unNonEmptyST d) . coerce
+        e = diff a b
+
+    ePatch e = NonEmptyST . ePatch (coerce e) . unNonEmptyST
+    patch e = NonEmptyST . patch (coerce e) . unNonEmptyST
+
+    eMerge d a b
+        | maintainsInvariant (not . ST.null) (ePatch (coerce a) xs) a' &&
+          maintainsInvariant (not . ST.null) (ePatch (coerce b) xs) b'
+            = coerce (a', b')
+        | otherwise = secondWins d a b  -- FUTUREWORK: be smarter
+      where
+        (a', b') = eMerge xs (coerce a) (coerce b)
+        xs = unNonEmptyST d
+
+    eInverse d = coerce . eInverse (unNonEmptyST d) . coerce
+    inverse d = coerce . inverse (unNonEmptyST d) . coerce
 
 instance ToJSON (EEdit NonEmptyST)
 instance FromJSON (EEdit NonEmptyST)
@@ -744,12 +765,14 @@ instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) 
         | i' == i+1 = secondWins d a b   -- TODO: improve
     eMerge d a@(SegmentListEdit (InsertItem i' _)) b@(JoinItems i)
         | i' == i+1 = secondWins d a b   -- TODO: improve
+{- TODO
     eMerge d a@(JoinItems i) b@(SegmentListEdit (DeleteItem i'))
         | i' == i   = secondWins d a b   -- TODO: improve
         | i' == i+1 = secondWins d a b   -- TODO: improve
     eMerge d a@(SegmentListEdit (DeleteItem i')) b@(JoinItems i)
         | i' == i   = secondWins d a b   -- TODO: improve
         | i' == i+1 = secondWins d a b   -- TODO: improve
+-}
     eMerge d a@(JoinItems i) b@(SegmentListEdit (EditItem i' _))
         | i' == i   = secondWins d a b   -- TODO: improve
         | i' == i+1 = secondWins d a b   -- TODO: improve
@@ -773,11 +796,16 @@ instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) 
     eMerge d a@(SegmentListEdit (InsertItem i' _)) b@(SplitItem i _)
         | i' == i+1 = secondWins d a b
 -}
+<<<<<<< HEAD
 
+=======
+{- TODO
+>>>>>>> 98fd21d... tuning: DeleteItem -> DeleteRange; fix Editable NonEmptyST instance
     eMerge d a@(SplitItem i _) b@(SegmentListEdit (DeleteItem i'))
         | i' == i   = secondWins d a b   -- TODO: improve
     eMerge d a@(SegmentListEdit (DeleteItem i')) b@(SplitItem i _)
         | i' == i   = secondWins d a b   -- TODO: improve
+-}
     eMerge d a@(SplitItem i _) b@(SegmentListEdit (EditItem i' _))
         | i' == i   = secondWins d a b   -- TODO: improve
     eMerge d a@(SegmentListEdit (EditItem i' _)) b@(SplitItem i _)

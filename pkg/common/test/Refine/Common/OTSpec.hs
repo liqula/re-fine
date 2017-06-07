@@ -224,10 +224,14 @@ instance (GenEdit a) => GenEdit [a] where
             let d' = patch c d
                 n = length d'
             oneof $
-                    [do
+                    [ do
                         ch <- arbitrary
-                        pure $ c <> [InsertItem i ch] | i <- [0..n]]
-                 <> [pure $ c <> [DeleteItem i] | i <- [0..n-1]]
+                        pure $ c <> [InsertItem i ch]
+                    | i <- [0..n]]
+                 <> [ do
+                        l <- choose (1, n-i)
+                        pure $ c `appendListEdit` deleteRange i l
+                    | i <- [0..n-1]]
                  <> [ do
                         cx <- genEdit x
                         pure $ c <> editItem i cx
@@ -314,10 +318,14 @@ instance (GenEdit a, GenEdit b, Splitable b) => GenEdit (Segments a b) where
             let (Segments d') = patch c d
                 n = length d'
             oneof $
-                    [do
+                    [ do
                         ch <- arbitrary
-                        pure $ c <> [SegmentListEdit $ InsertItem i ch] | i <- [0..n]]
-                 <> [pure $ c <> [SegmentListEdit $ DeleteItem i] | i <- [0..n-1]]
+                        pure $ c <> [SegmentListEdit $ InsertItem i ch]
+                    | i <- [0..n]]
+                 <> [ do
+                        l <- choose (1, n-i)
+                        pure $ c <> (SegmentListEdit <$> deleteRange i l)
+                    | i <- [0..n-1]]
                  <> [ do
                         cx <- genEdit x
                         pure $ c <> (SegmentListEdit <$> editItem i cx)
