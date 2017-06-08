@@ -107,6 +107,8 @@ type SAddDiscussion
 type SAddStatement
   = "r" :> "statement" :> "reply" :> Capture "onstatementid" (ID Statement) :> ReqBody '[JSON] (Create Statement)
     :> Post '[JSON] CompositeDiscussion
+      -- FIXME: should be @"r" :> "statement" :> Capture "onstatementid" (ID Statement) :> "reply" ...@
+      -- to be consistent with 'SSimpleVoteOnStatement', see #277.
 
 type SCreateUser
   = "r" :> "user" :> "create" :> ReqBody '[JSON] CreateUser
