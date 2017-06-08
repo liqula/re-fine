@@ -18,7 +18,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 -- FIXME: rename to Refine.Prelude.MakeInstances
-module Refine.Prelude.TH where
+module Refine.Prelude.TH (makeRefineType, makeSOPGeneric, makeJSON, makeNFData) where
 
 import Control.Lens (makeLenses, makePrisms)
 import Control.DeepSeq (NFData(..))
@@ -91,8 +91,8 @@ makeNFData t = do
         [ FunD rnfN [ Clause [] (NormalB (VarE grnfN)) []] ]
     ]
 
--- FIXME: Support parametric types, with more than one parameter.
--- FIXME: rename to makeInstances
+-- FIXME: Support parametric types with more than one parameter.
+-- FIXME: rename to makeAllInstances
 makeRefineType :: Name -> Q [Dec]
 makeRefineType t = do
   l <- makeLenses t

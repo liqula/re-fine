@@ -1,8 +1,9 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE PatternSynonyms            #-}
-{-# LANGUAGE ViewPatterns               #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE PatternSynonyms            #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE ViewPatterns               #-}
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 module Refine.Common.VDoc.OT where
 
@@ -15,7 +16,7 @@ import           Refine.Common.Prelude
 import           Refine.Common.OT
 import           Refine.Common.Types.Core hiding (Edit)
 
-pattern DocBlock' :: Atom BlockType -> Atom BlockDepth -> NonEditable (Maybe BlockKey) -> [LineElem] -> DocBlock
+pattern DocBlock' :: Atom BlockType -> Atom BlockDepth -> NonEditable BlockKey -> [LineElem] -> DocBlock
 pattern DocBlock' t d k ls = (((t, d), k), Segments ls)
 
 type Styles = Set (Atom Style)
@@ -133,7 +134,7 @@ showEditAsDoc edits
 
 -- Auxiliary types used only in docEditRanges
 type SelRange = (SelPoint, SelPoint)
-type SelPoint = ((Int, Maybe BlockKey), (Int, OffsetPos))
+type SelPoint = ((Int, BlockKey), (Int, OffsetPos))
 type OffsetPos = (Bool{-begin-}, Bool{-end-})
 
 docEditRanges :: Edit RawContent -> RawContent -> [SelectionState]
@@ -177,9 +178,8 @@ docEditRanges edits
     _ `nextTo` _ = False
 
     toSelState :: SelRange -> [SelectionState]
-    toSelState (((_, Just k1), (o1, _)), ((_, Just k2), (o2, _)))
+    toSelState (((_, k1), (o1, _)), ((_, k2), (o2, _)))
         = [SelectionState False (SelectionPoint k1 o1) (SelectionPoint k2 o2)]
-    toSelState _ = []
 
 
 -- | Take a document in diff mode, a number of blocks to keep preceeding and succeeding each changed
@@ -194,10 +194,12 @@ hideUnchangedParts (NEL.toList . rawContentToDoc -> doc) blocksbefore blocksafte
     $ zip displayedLines doc
   where
     showRegion bs@((True, _): _) = snd <$> bs
-    showRegion ((False, _): _) = [dotDotDot]
+    showRegion ((False, blockKeyFromDocBlock -> bk): _) = [dotDotDot (bk <> BlockKey "_...")]
     showRegion _ = error "impossible"
 
-    dotDotDot = DocBlock NormalText (BlockDepth 0) Nothing [((Atom Nothing, mempty), "...")]
+    blockKeyFromDocBlock = unNonEditable . snd . fst :: DocBlock -> BlockKey
+
+    dotDotDot bk = DocBlock NormalText (BlockDepth 0) bk [((Atom Nothing, mempty), "...")]
 
     {- example run
     blocksbefore = 2

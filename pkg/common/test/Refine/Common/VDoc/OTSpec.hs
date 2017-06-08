@@ -19,11 +19,11 @@ import           Data.Char (isUpper)
 import           Test.QuickCheck
 import           Test.Hspec
 
-import Refine.Common.OTSpec hiding (spec)
 import Refine.Common.OT
-import Refine.Common.VDoc.OT
+import Refine.Common.OTSpec hiding (spec)
+import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Types.Core hiding (Edit)
-import Refine.Common.Test.Arbitrary (initBlockKeys)
+import Refine.Common.VDoc.OT
 
 {-# ANN module ("HLint: ignore Use cs" :: String) #-}
 
@@ -65,7 +65,7 @@ spec = parallel $ do
             rc'  = mkRawContent $ (mkBlock "some text and/or other" & blockStyles .~ [((10, 4), StyleAdded)]) :| []
             ranges = [SelectionState False (SelectionPoint (BlockKey "0") 10) (SelectionPoint (BlockKey "0") 10)]
         it "show diff" $ showEditAsRawContent edit rc `shouldBe` rc'
-        it "ranges" $ docEditRanges edit (initBlockKeys rc) `shouldBe` ranges
+        it "ranges" $ docEditRanges edit rc `shouldBe` ranges
 
       describe "deleted text with custom style 'DELETED'." $ do
         let -- FIXME: edit rc . mkRawContent $ mkBlock "someer" :| []
@@ -77,7 +77,7 @@ spec = parallel $ do
             rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [((4, 12), StyleDeleted)]) :| []
             ranges = [SelectionState False (SelectionPoint (BlockKey "0") 4) (SelectionPoint (BlockKey "0") 16)]
         it "show diff" $ showEditAsRawContent edit rc `shouldBe` rc'
-        it "ranges" $ docEditRanges edit (initBlockKeys rc) `shouldBe` ranges
+        it "ranges" $ docEditRanges edit rc `shouldBe` ranges
 
       describe "deleted block with custom style 'DELETED'." $ do
         let edit = eRawContent $ ENonEmpty <$> deleteRange 0 1
@@ -85,15 +85,16 @@ spec = parallel $ do
             rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [((0, 18), StyleDeleted)]) :| []
             ranges = [SelectionState False (SelectionPoint (BlockKey "0") 0) (SelectionPoint (BlockKey "0") 18)]
         it "show diff" $ showEditAsRawContent edit rc `shouldBe` rc'
-        it "ranges" $ docEditRanges edit (initBlockKeys rc) `shouldBe` ranges
+        it "ranges" $ docEditRanges edit rc `shouldBe` ranges
 
       it "hideUnchangedParts" $ do
         let toRC = docToRawContent . NEL.fromList . map toBlock
-            toBlock '.' = DocBlock NormalText (BlockDepth 0) Nothing [((Atom Nothing, mempty), "...")]
-            toBlock c   = DocBlock NormalText (BlockDepth 0) Nothing
+            wipeBlockKeys = rawContentBlocks %~ fmap (blockKey .~ BlockKey "0")
+            toBlock '.' = DocBlock NormalText (BlockDepth 0) (BlockKey "0") [((Atom Nothing, mempty), "...")]
+            toBlock c   = DocBlock NormalText (BlockDepth 0) (BlockKey "0")
                             [((Atom Nothing, Set.fromList [Atom StyleChanged | isUpper c]), fromString [c])]
-        hideUnchangedParts (toRC "aBcdefGH") 0 0 `shouldBe` toRC ".B.GH"
-        hideUnchangedParts (toRC "aBcdefGH") 1 1 `shouldBe` toRC "aBc.fGH"
-        hideUnchangedParts (toRC "aBcdefGH") 2 1 `shouldBe` toRC "aBc.efGH"
-        hideUnchangedParts (toRC "aBcdefGH") 1 2 `shouldBe` toRC "aBcd.fGH"
-        hideUnchangedParts (toRC "aBcdefGH") 2 2 `shouldBe` toRC "aBcdefGH"
+        wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 0 0) `shouldBe` wipeBlockKeys (toRC ".B.GH")
+        wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 1 1) `shouldBe` wipeBlockKeys (toRC "aBc.fGH")
+        wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 2 1) `shouldBe` wipeBlockKeys (toRC "aBc.efGH")
+        wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 1 2) `shouldBe` wipeBlockKeys (toRC "aBcd.fGH")
+        wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 2 2) `shouldBe` wipeBlockKeys (toRC "aBcdefGH")

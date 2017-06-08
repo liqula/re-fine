@@ -20,6 +20,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
@@ -44,7 +45,6 @@ import Refine.Common.Prelude
 
 import           Control.DeepSeq
 import           Data.Int
-import           Data.Foldable (toList)
 import qualified Data.HashMap.Lazy as HashMap
 import qualified Data.IntMap as IntMap
 import           Data.Either (isLeft)
@@ -55,6 +55,7 @@ import qualified Data.Set as Set
 import qualified Data.Text as ST
 import           Data.String.Conversions (ST, cs, (<>))
 import qualified Generics.SOP as SOP
+import qualified Generics.SOP.NFData as SOP
 import           GHC.Generics (Generic)
 import           Text.Read (readEither)
 import           Web.HttpApiData (toUrlPiece, parseUrlPiece, ToHttpApiData(..), FromHttpApiData(..))
@@ -196,27 +197,26 @@ data HighlightMark
 -- FIXME: make this type abstract.  if we construct a value here instead of by calling
 -- 'mkRawContent', it may be non-canonical, and that may lead to strange artifacts in the diff.
 data RawContent = RawContent
-  { _rawContentBlocks    :: NonEmpty (Block EntityKey)
+  { _rawContentBlocks    :: NonEmpty (Block EntityKey BlockKey)
   , _rawContentEntityMap :: IntMap Entity  -- ^ for performance, do not use @Map EntityKey Entity@ here.
   }
   deriving (Eq, Show, Generic)
 
 -- | typical rangekey values are 'Int' and 'Entity'
-data Block rangeKey = Block
+data Block rangeKey blockKey = Block
   { _blockText         :: ST
   , _blockEntityRanges :: [(rangeKey, EntityRange)]  -- ^ entity ranges for entities must not overlap!
   , _blockStyles       :: [(EntityRange, Style)]     -- ^ entity ranges for styles are allowed to overlap.
   , _blockType         :: BlockType
   , _blockDepth        :: Int
-  , _blockKey          :: Maybe BlockKey  -- ^ FIXME: many function rely on this being defined.
-                                          -- make this an index and either store '()' or 'BlockKey'.
+  , _blockKey          :: blockKey  -- ^ 'BlockKey' or, if not available, '()'.
   }
-  deriving (Eq, Show, Functor, Foldable, Generic)
+  deriving (Eq, Show, Functor, Generic)
 
 -- | `key` attribute of the 'Block'.  'SelectionState' uses this to refer to blocks.  If in doubt
 -- leave it 'Nothing'.
 newtype BlockKey = BlockKey ST
-  deriving (Eq, Ord, Show, ToJSON, FromJSON, Generic)
+  deriving (Eq, Ord, Show, ToJSON, FromJSON, Generic, Monoid)
 
 -- | key into 'rawContentEntityMap'.
 newtype EntityKey = EntityKey { _unEntityKey :: Int }
@@ -290,9 +290,9 @@ data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom
 type OTDoc = NonEmpty DocBlock
 
 -- | (third constructor arg is depth)
-type DocBlock = (((Atom BlockType, Atom BlockDepth), NonEditable (Maybe BlockKey)), LineElems)
+type DocBlock = (((Atom BlockType, Atom BlockDepth), NonEditable BlockKey), LineElems)
 
-pattern DocBlock :: BlockType -> BlockDepth -> Maybe BlockKey -> [LineElem] -> DocBlock
+pattern DocBlock :: BlockType -> BlockDepth -> BlockKey -> [LineElem] -> DocBlock
 pattern DocBlock t d k ls = (((Atom t, Atom d), NonEditable k), Segments ls)
 
 -- | An integer between 0 and 36
@@ -363,7 +363,7 @@ instance FromJSON RawContent where
           f :: IntMap Entity -> (ST, Value) -> Parser (IntMap Entity)
           f m (read . cs -> k, v) = (\e -> IntMap.insert k e m) <$> parseJSON v
 
-instance ToJSON (Block EntityKey) where
+instance (Typeable blockKey, ToJSON blockKey) => ToJSON (Block EntityKey blockKey) where
   toJSON (Block content ranges styles ty depth key) = object $
     [ "text"              .:= content
     , "entityRanges"      .:= (renderRange <$> ranges)
@@ -371,19 +371,19 @@ instance ToJSON (Block EntityKey) where
     , "depth"             .:= depth  -- ^ (if certain BlockType values force this field to be 0, move this field there.)
     , "type"              .:= ty
     ] <>
-    [ "key" .:= k | k <- maybeToList key ]
+    [ "key" .:= key | typeOf key == typeOf (undefined :: BlockKey) ]
     where
       renderRange (k, (o, l)) = object ["key"   .:= k, "length" .:= l, "offset" .:= o]
       renderStyle ((o, l), s) = object ["style" .:= s, "length" .:= l, "offset" .:= o]
 
-instance FromJSON (Block EntityKey) where
+instance FromJSON (Block EntityKey BlockKey) where
   parseJSON = withObject "Block EntityKey" $ \obj -> Block
     <$> obj .: "text"
     <*> (mapM parseRange =<< (obj .: "entityRanges"))
     <*> (mapM parseStyle =<< (obj .: "inlineStyleRanges"))
     <*> obj .: "type"
     <*> (round <$> (obj .: "depth" :: Parser Double))
-    <*> obj .:? "key"
+    <*> obj .: "key"
     where
       parseRange = withObject "Block EntityKey: entityRanges" $ \obj -> do
         k <- obj .: "key"
@@ -536,7 +536,7 @@ instance SOP.HasDatatypeInfo (EEdit RawContent)
 rawContentToDoc :: RawContent -> OTDoc
 rawContentToDoc (RawContent blocks entities) = mkDocBlock <$> blocks
   where
-    mkDocBlock :: Block EntityKey -> DocBlock
+    mkDocBlock :: Block EntityKey BlockKey -> DocBlock
     mkDocBlock (Block txt eranges styles ty depth key) = DocBlock ty (BlockDepth depth) key (segment segments txt)
       where
         segment [] "" = []
@@ -560,7 +560,7 @@ docToRawContent blocks = mkRawContentInternal $ mkDocBlock <$> blocks
   where
     getText (LineElem _ (NonEmptyST txt)) = txt
 
-    mkDocBlock :: DocBlock -> Block Entity
+    mkDocBlock :: DocBlock -> Block Entity BlockKey
     mkDocBlock (DocBlock ty (BlockDepth d) key es) = Block
         (mconcat $ fmap getText es)
         [(e, r) | (r, Left e) <- ranges]
@@ -607,29 +607,36 @@ canonicalizeRawContent :: RawContent -> RawContent
 canonicalizeRawContent = docToRawContent . rawContentToDoc
 
 -- | Construct a 'RawContent' value and canonicalize it.
-mkRawContent :: NonEmpty (Block Entity) -> RawContent
-mkRawContent = canonicalizeRawContent . mkRawContentInternal
+mkRawContent :: NonEmpty (Block Entity ()) -> RawContent
+mkRawContent = canonicalizeRawContent . mkRawContentInternal . initBlockKeys
 
--- | Construct a 'RawContent' value *without* canonicalizing it.
+initBlockKeys :: NonEmpty (Block ek bk) -> NonEmpty (Block ek BlockKey)
+initBlockKeys = NEL.zipWith (\k b -> b { _blockKey = BlockKey . cs . show $ k }) (NEL.fromList [(0 :: Int)..])
+
+-- | Construct a 'RawContent' value *without* canonicalizing it.  (The implementation would be much
+-- nicer if we had 'Foldable' on 'Block' and lenses, but with the second type parameter, the
+-- 'Foldable' instance is a little weird, and TemplateHaskell forces us to define those further down
+-- in this module.)
 --
 -- Note: empty block list is illegal.  For once it will make draft crash in 'stateFromContent'.
-mkRawContentInternal :: NonEmpty (Block Entity) -> RawContent
-mkRawContentInternal bsl = RawContent (index <$$> bsl) (IntMap.fromList entities)
+mkRawContentInternal :: NonEmpty (Block Entity BlockKey) -> RawContent
+mkRawContentInternal bsl = RawContent (index <$> bsl) (IntMap.fromList entities)
   where
     -- FUTUREWORK: it is possible to do just one traversal to collect and index entities
     -- https://www.reddit.com/r/haskell/comments/610sa1/applicative_sorting/
     entities :: [(Int, Entity)]
-    entities = zip [0..] . nub $ concatMap toList bsl
+    entities = zip [0..] . nub $ concatMap (fmap fst . _blockEntityRanges) bsl
 
-    index :: Entity -> EntityKey
-    index e = EntityKey . fromMaybe (error "mkRawContentInternal: impossible") $ Map.lookup e em
+    index :: Block Entity BlockKey -> Block EntityKey BlockKey
+    index b = b { _blockEntityRanges = _blockEntityRanges b & (fmap . first $
+                    \e -> EntityKey . fromMaybe (error "mkRawContentInternal: impossible") $ Map.lookup e em) }
 
     em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
 
-mkBlock :: ST -> Block rangeKey
-mkBlock t = Block t [] [] NormalText 0 Nothing
+mkBlock :: ST -> Block rangeKey ()
+mkBlock t = Block t [] [] NormalText 0 ()
 
-emptyBlock :: Block rangeKey
+emptyBlock :: Block rangeKey ()
 emptyBlock = mkBlock mempty
 
 -- | Take two accessors and a list of things carrying a range and a payload each.  Ranges can
@@ -688,7 +695,6 @@ makeLenses ''Style
 makeLenses ''BlockType
 
 makeSOPGeneric ''RawContent
-makeSOPGeneric ''Block
 makeSOPGeneric ''BlockKey
 makeSOPGeneric ''EntityKey
 makeSOPGeneric ''Entity
@@ -696,12 +702,16 @@ makeSOPGeneric ''Style
 makeSOPGeneric ''BlockType
 
 makeNFData ''RawContent
-makeNFData ''Block
 makeNFData ''BlockKey
 makeNFData ''EntityKey
 makeNFData ''Entity
 makeNFData ''Style
 makeNFData ''BlockType
+
+-- 'BlockKey' has more than one type parameter and doesn't work with "Refine.Prelude.TH".
+instance SOP.Generic (Block a b)
+instance SOP.HasDatatypeInfo (Block a b)
+instance (NFData a, NFData b) => NFData (Block a b) where rnf = SOP.grnf
 
 -- | It cannot moved further up, needs instance NFData BlockType
 deriving instance NFData (EEdit RawContent)

@@ -109,8 +109,8 @@ spec = do
       it "example 1" $ do
         let given = RawContentWithSelections
                (RawContent
-                 ( Block ":" [] [] Header2 0 (Just (BlockKey "0")) :|
-                 [ Block "r" [] [] Header2 0 (Just (BlockKey "1"))
+                 ( Block ":" [] [] Header2 0 (BlockKey "0") :|
+                 [ Block "r" [] [] Header2 0 (BlockKey "1")
                  ])
                  mempty)
                [ SelectionState True (SelectionPoint (BlockKey "0") 0) (SelectionPoint (BlockKey "1") 0)
@@ -122,7 +122,7 @@ spec = do
       it "example 2" $ do
         let given = RawContentWithSelections
                (RawContent
-                 (Block "asdf_1234-#$!&" [] [] NormalText 0 (Just (BlockKey "0")) :| [])
+                 (Block "asdf_1234-#$!&" [] [] NormalText 0 (BlockKey "0") :| [])
                  mempty)
                [ SelectionState False (SelectionPoint (BlockKey "0") 3) (SelectionPoint (BlockKey "0") 9)
                , SelectionState False (SelectionPoint (BlockKey "0") 6) (SelectionPoint (BlockKey "0") 12)
@@ -136,7 +136,7 @@ spec = do
 
   describe "addMarksToBlocks" $ do
     describe "adds inline styles at the correct offsets" $ do
-      let rawContent = initBlockKeys . mkRawContent $ mkBlock "wef" :| []
+      let rawContent = mkRawContent $ mkBlock "wef" :| []
 
           test :: EntityRange -> Spec
           test (i, j) = it (show (i, j)) $ do
@@ -155,7 +155,7 @@ spec = do
       test `mapM_` [ (i, j) | i <- [0..3], j <- [0..3], i < j ]
 
     describe "adds inline styles at the correct offsets accross neighboring blocks" $ do
-      let rawContent = initBlockKeys . mkRawContent $ NEL.fromList [mkBlock "wef", mkBlock "1234"]
+      let rawContent = mkRawContent $ NEL.fromList [mkBlock "wef", mkBlock "1234"]
 
           test :: EntityRange -> Spec
           test (i, j) = it (show (i, j)) $ do
@@ -174,7 +174,7 @@ spec = do
       test `mapM_` [ (i, j) | i <- [0..3], j <- [0..4] ]
 
     describe "adds inline styles at the correct offsets accross distant blocks" $ do
-      let rawContent = initBlockKeys . mkRawContent $ NEL.fromList
+      let rawContent = mkRawContent $ NEL.fromList
             [mkBlock "wef", mkBlock "", mkBlock "...", mkBlock "*", mkBlock "1234", mkBlock "????"]
 
           test :: EntityRange -> Spec
@@ -198,11 +198,11 @@ spec = do
           cid1 = ContribIDNote (ID 35)
           block0 = BlockKey "0"
 
-          rawContent = initBlockKeys . mkRawContent $ mkBlock "1234567890" :| []
+          rawContent = mkRawContent $ mkBlock "1234567890" :| []
           marks s1 e1 s2 e2 = [ (cid0, SelectionState False (SelectionPoint block0 s1) (SelectionPoint block0 e1))
                               , (cid1, SelectionState False (SelectionPoint block0 s2) (SelectionPoint block0 e2))
                               ]
-          rawContent' = RawContent (emptyBlock :| []) mempty
+          rawContent' = RawContent (initBlockKeys $ emptyBlock :| []) mempty
       addMarksToRawContent (marks 3 4 2 4) rawContent `shouldNotBe` rawContent'
       addMarksToRawContent (marks 2 4 3 4) rawContent `shouldNotBe` rawContent'
       addMarksToRawContent (marks 2 4 2 4) rawContent `shouldNotBe` rawContent'
@@ -216,7 +216,7 @@ spec = do
 
   describe "selectionIsEmpty" $ do
     it "works" $ do
-      let rawContent = initBlockKeys . mkRawContent $ NEL.fromList
+      let rawContent = mkRawContent $ NEL.fromList
             [mkBlock "wef", mkBlock "", mkBlock "...", mkBlock "*", mkBlock "1234", mkBlock "????"]
           mksel :: Int -> Int -> Int -> Int -> SelectionState
           mksel sk so ek eo = SelectionState False
