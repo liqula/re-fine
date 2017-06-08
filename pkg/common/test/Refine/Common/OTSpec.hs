@@ -188,10 +188,10 @@ sizedEdit m = sized $ \case
     _ -> oneof [pure [], scale (`div` 2) m]
 
 instance (GenEdit a, GenEdit b) => GenEdit (a, b) where
-    genEdit (a, b) = sizedEdit $ oneof
-        [ editFirst  <$> genEdit a
-        , editSecond <$> genEdit b
-        ]
+    genEdit (a, b) = do
+      let fst_ = editFirst  <$> genEdit a
+          snd_ = editSecond <$> genEdit b
+      sizedEdit $ oneof [fst_, snd_, (<>) <$> fst_ <*> snd_]
 
 ---------------------------------------- Either instance
 
