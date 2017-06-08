@@ -103,12 +103,9 @@ instance Arbitrary BlockDepth where
   arbitrary = BlockDepth <$> choose (0, 36)
 
 instance Arbitrary RawContent where
-  arbitrary = initBlockKeys . docToRawContent . NEL.fromList <$> listOf1 (scale (`div` 3) arbitrary)
+  arbitrary = (rawContentBlocks %~ initBlockKeys) . docToRawContent . NEL.fromList <$> listOf1 (scale (`div` 3) arbitrary)
        -- alternative implementation: @initBlockKeys . sanitizeRawContent . mkRawContent <$> arbitrary@
   shrink    = canonicalizeRawContent <$$> gshrink
-
-initBlockKeys :: RawContent -> RawContent
-initBlockKeys = rawContentBlocks %~ NEL.zipWith (\k -> blockKey .~ (Just . BlockKey . cs . show $ k)) (NEL.fromList [(0 :: Int)..])
 
 legalChar :: Char -> Bool
 legalChar = (`notElem` ['\\'])  -- (occurrances of '\\' shift ranges around in the test suite.)
@@ -138,11 +135,11 @@ sanitizeRawContent = deleteDanglingEntityRefs
 
     deleteBadRanges (RawContent bs es) = RawContent (sieve <$> bs) es
       where
-        sieve :: Block EntityKey -> Block EntityKey
+        sieve :: Block EntityKey BlockKey -> Block EntityKey BlockKey
         sieve b = b & blockEntityRanges %~ filter (good b . snd)
                     & blockStyles       %~ filter (good b . fst)
 
-        good :: Block EntityKey -> (Int, Int) -> Bool
+        good :: Block EntityKey BlockKey -> (Int, Int) -> Bool
         good b (offset, len) = let ml = ST.length (b ^. blockText) in and
           [ offset >= 0
           , offset < ml
@@ -152,7 +149,7 @@ sanitizeRawContent = deleteDanglingEntityRefs
 
     deleteDanglingEntityRefs (RawContent bs es) = RawContent (sieve <$> bs) es
       where
-        sieve :: Block EntityKey -> Block EntityKey
+        sieve :: Block EntityKey BlockKey -> Block EntityKey BlockKey
         sieve b = b & blockEntityRanges %~ filter (\(EntityKey k, _) -> k `IntMap.member` es)
 
     deleteDanglingEntities (RawContent bs es) = entityKeys `deepseq` RawContent bs (go es)
@@ -223,7 +220,7 @@ sanitizeRawContent = deleteDanglingEntityRefs
                 l'' = max (o + l) (o' + l') - o''
 
 
-instance (Generic a, Arbitrary a) => Arbitrary (Block a) where
+instance (Generic a, Arbitrary a, Generic b, Arbitrary b) => Arbitrary (Block a b) where
   arbitrary = do
     b <- garbitrary
     let ml = ST.length (b ^. blockText)
@@ -281,7 +278,7 @@ arbitrarySoundSelectionState (RawContent bs _) = do
   let arbpoint = do
         i <- choose (0, NEL.length bs - 1)
         let b = bs NEL.!! i
-            blockkey = b ^?! blockKey . _Just
+            blockkey = b ^. blockKey
         offset <- choose (0, max 0 (ST.length (b ^. blockText) - 1))
         pure ( (i, offset)  -- this is used to tell which is start and which is end.
              , SelectionPoint blockkey offset

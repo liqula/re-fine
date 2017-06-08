@@ -54,12 +54,14 @@ spec :: Spec
 spec = do
   describe "Samples" $ do
     it "work" $ do
-      (rawContentFromVDocVersion sampleVDocVersion ^. rawContentBlocks) `shouldNotBe` (emptyBlock :| [])
+      rawContentFromVDocVersion sampleVDocVersion `shouldNotBe` emptyRawContent
 
   describe "convertToRaw, convertFromRaw" $ do
     it "are isomorphic" . property $ \(sanitizeRawContent -> rawContent) -> do
       let f = convertToRaw . convertFromRaw
       sanitizeRawContent (f rawContent) `shouldBe` sanitizeRawContent rawContent
+
+    let sanitizeRCHack = (rawContentBlocks %~ initBlockKeys) . convertToRaw . convertFromRaw
 
     it "regression.4" $ do
       let rawContent = mkRawContent . (:| []) $ mkBlock "rF.." & blockEntityRanges .~
@@ -68,23 +70,24 @@ spec = do
               , (EntityLink "http://www.example.com", (2,1))
               , (EntityLink "http://www.example.com", (3,1))
               ]
-          rawContent' = (resetBlockKeys . convertToRaw . convertFromRaw) rawContent
+          rawContent' = sanitizeRCHack rawContent
       NEL.head (rawContent' ^. rawContentBlocks) ^. blockEntityRanges `shouldBe` [(EntityKey {_unEntityKey = 0},(0,4))]
 
     it "regression.3" $ do
       let rawContent = mkRawContent . (:| []) $  mkBlock "rF" & blockEntityRanges .~ [(EntityLink "http://www.example.com", (0,2))]
-          rawContent' = (resetBlockKeys . convertToRaw . convertFromRaw) rawContent
+          rawContent' = sanitizeRCHack rawContent
       rawContent' `shouldBe` rawContent
 
     it "regression.2" $ do
       let rawContent = mkRawContent . (:| []) $ mkBlock "rF" & blockStyles .~ [((0,1),Italic),((1,1),Italic),((1,1),Italic),((0,1),Bold)]
-          rawContent' = (resetBlockKeys . convertToRaw . convertFromRaw) rawContent
+          rawContent' = sanitizeRCHack rawContent
       NEL.head (rawContent' ^. rawContentBlocks) ^. blockStyles `shouldBe` [((0,1),Bold),((0,2),Italic)]
 
     it "regression.1" $ do
       let rawContent = mkRawContent . (:| []) $ mkBlock "rF" & blockStyles .~ [((0,1),Italic)]
+          rawContent' = sanitizeRCHack rawContent
       decode (encode rawContent) `shouldBe` Just rawContent
-      (resetBlockKeys . convertToRaw . convertFromRaw) rawContent `shouldBe` rawContent
+      rawContent' `shouldBe` rawContent
 
 
   describe "Draft" $ do
@@ -113,7 +116,7 @@ spec = do
       lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` 1
 
     it "document_ mounts" $ do
-      let rawContent = RawContent (Block "asdf_1234-#$!&" [] [] NormalText 0 (Just (BlockKey "0")) :| []) mempty
+      let rawContent = RawContent (Block "asdf_1234-#$!&" [] [] NormalText 0 (BlockKey "0") :| []) mempty
       wrapper <- mount $ document_ (mkTestProps rawContent)
       contents :: String <- cs <$> html wrapper
       contents `shouldContain` "<article "

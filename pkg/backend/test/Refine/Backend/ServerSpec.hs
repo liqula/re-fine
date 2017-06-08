@@ -49,7 +49,6 @@ import Refine.Common.ChangeAPI
 import Refine.Common.Rest
 import Refine.Common.Types as Common
 import Refine.Common.VDoc.Draft
-import Refine.Common.Test.Arbitrary (initBlockKeys)
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
@@ -101,7 +100,7 @@ sampleCreateVDoc :: CreateVDoc
 sampleCreateVDoc = CreateVDoc
   (Title "[title]")
   (Abstract "[abstract]")
-  (rawContentToVDocVersion . initBlockKeys . mkRawContent $ mkBlock "[versioned content]" :| [])
+  (rawContentToVDocVersion . mkRawContent $ mkBlock "[versioned content]" :| [])
 
 respCode :: SResponse -> Int
 respCode = statusCode . simpleStatus
@@ -271,7 +270,7 @@ specMockedLogin = around createDevModeTestSession $ do
       pendingWith "this test case shouldn't be too hard to write, and should be working already."
 
   describe "sAddEdit" $ do
-    let samplevdoc = rawContentToVDocVersion . initBlockKeys . mkRawContent $ mkBlock "[new vdoc version]" :| []
+    let samplevdoc = rawContentToVDocVersion . mkRawContent $ mkBlock "[new vdoc version]" :| []
     let setup sess = runWai sess $ do
           let group = UniversalGroup
           _l :: Username <- postJSON loginUri (Login devModeUser devModePass)

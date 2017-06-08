@@ -46,9 +46,6 @@ import Refine.Common.Types.Comment
 emptyRawContent :: RawContent
 emptyRawContent = mkRawContent $ emptyBlock :| []
 
-resetBlockKeys :: RawContent -> RawContent
-resetBlockKeys (RawContent bs es) = RawContent (set blockKey Nothing <$> bs) es
-
 -- | Two points worth nothing here:
 --
 -- (1) 'SelectionState' is always defined, even if nothing is selected.  If `window.getSelection()`
@@ -73,14 +70,14 @@ selectionIsEmpty (RawContent bs _) ss@(SelectionState _ s e) = s == e || multiLi
 -- >>>
 -- >>> takeWhileAndOneMore p [] = []
 -- >>> takeWhileAndOneMore p (x : xs) = x : if p x then takeWhile1 p xs else []
-selectedBlocks :: SelectionState -> [Block EntityKey] -> [Block EntityKey]
+selectedBlocks :: SelectionState -> [Block EntityKey BlockKey] -> [Block EntityKey BlockKey]
 selectedBlocks (SelectionState _ (SelectionPoint sk _) (SelectionPoint ek _)) = f
   where
     f [] = []
-    f (b:bs) = if b ^. blockKey == Just sk then b : g bs else f bs
+    f (b:bs) = if b ^. blockKey == sk then b : g bs else f bs
 
     g [] = []
-    g (b:bs) = if b ^. blockKey == Just ek then [b] else b : g bs
+    g (b:bs) = if b ^. blockKey == ek then [b] else b : g bs
 
 -- | Like 'selectionIsEmpty', but much simpler!
 entityRangeIsEmpty :: EntityRange -> Bool
@@ -89,9 +86,9 @@ entityRangeIsEmpty (_, j) = j == 0
 selectEverything :: RawContent -> SelectionState
 selectEverything (RawContent bs _) = SelectionState False (SelectionPoint sb so) (SelectionPoint eb eo)
   where
-    sb = NEL.head bs ^?! blockKey . _Just
+    sb = NEL.head bs ^. blockKey
     so = 0
-    eb = NEL.last bs ^?! blockKey . _Just
+    eb = NEL.last bs ^. blockKey
     eo = NEL.last bs ^. blockText . to ST.length
 
 
@@ -102,24 +99,22 @@ selectEverything (RawContent bs _) = SelectionState False (SelectionPoint sb so)
 chunkRangeToSelectionState :: RawContent -> ChunkRange -> SelectionState
 chunkRangeToSelectionState (RawContent bs _) (ChunkRange s e) = SelectionState False (maybe top trans s) (maybe bottom trans e)
   where
-    trans (ChunkPoint (DataUID blocknum) offset) = SelectionPoint blockkey offset
-      where
-        Just blockkey = (bs NEL.!! blocknum) ^. blockKey
+    trans (ChunkPoint (DataUID blocknum) offset) = SelectionPoint ((bs NEL.!! blocknum) ^. blockKey) offset
 
     top :: SelectionPoint
-    top = SelectionPoint (fromJust $ NEL.head bs ^. blockKey) 0
+    top = SelectionPoint (NEL.head bs ^. blockKey) 0
 
     bottom :: SelectionPoint
-    bottom = SelectionPoint (fromJust $ NEL.last bs ^. blockKey) (ST.length $ NEL.last bs ^. blockText)
+    bottom = SelectionPoint (NEL.last bs ^. blockKey) (ST.length $ NEL.last bs ^. blockText)
 
 
 -- | See 'chunkRangeToSelectionState'.
 selectionStateToChunkRange :: RawContent -> SelectionState -> ChunkRange
 selectionStateToChunkRange (RawContent (NEL.toList -> bs) _) (SelectionState _ s e) = ChunkRange (trans s) (trans e)
   where
-    trans (SelectionPoint blockkey offset) = Just (ChunkPoint (DataUID blocknum) offset)
+    trans (SelectionPoint bk offset) = Just (ChunkPoint (DataUID blocknum) offset)
       where
-        [(blocknum, _)] = filter (\(_, b) -> b ^. blockKey == Just blockkey) $ zip [0..] bs
+        [(blocknum, _)] = filter (\(_, b) -> b ^. blockKey == bk) $ zip [0..] bs
 
 
 rawContentFromCompositeVDoc :: CompositeVDoc -> RawContent
@@ -151,10 +146,10 @@ deleteMarksFromRawContent = deleteMarksFromRawContentIf (const True)
 deleteMarksFromRawContentIf :: (ContributionID -> Bool) -> RawContent -> RawContent
 deleteMarksFromRawContentIf p = rawContentBlocks %~ fmap (deleteMarksFromBlockIf p)
 
-deleteMarksFromBlock :: Block EntityKey -> Block EntityKey
+deleteMarksFromBlock :: Block EntityKey BlockKey -> Block EntityKey BlockKey
 deleteMarksFromBlock = deleteMarksFromBlockIf (const True)
 
-deleteMarksFromBlockIf :: (ContributionID -> Bool) -> Block EntityKey -> Block EntityKey
+deleteMarksFromBlockIf :: (ContributionID -> Bool) -> Block EntityKey BlockKey -> Block EntityKey BlockKey
 deleteMarksFromBlockIf p = blockStyles %~ List.filter (p' . snd)
   where
     p' (Mark cid) = not (p cid)
@@ -164,7 +159,7 @@ deleteMarksFromBlockIf p = blockStyles %~ List.filter (p' . snd)
 addMarksToRawContent :: [(ContributionID, SelectionState)] -> RawContent -> RawContent
 addMarksToRawContent marks = rawContentBlocks %~ addMarksToBlocks marks
 
-addMarksToBlocks :: [(ContributionID, SelectionState)] -> NonEmpty (Block EntityKey) -> NonEmpty (Block EntityKey)
+addMarksToBlocks :: [(ContributionID, SelectionState)] -> NonEmpty (Block EntityKey BlockKey) -> NonEmpty (Block EntityKey BlockKey)
 addMarksToBlocks m bs = case (addMarksToBlock (warmupSelectionStates m) `mapM` bs) `runState` [] of
   (bs', []) -> bs'
   bad -> error $ "addMarksToBlocks: impossible: " <> show bad
@@ -195,10 +190,10 @@ warmupSelectionStates = aggr . mconcat . fmap trans
 -- starting point, then I go through this sorted list and a stack of active ranges is maintained
 -- during it. If I would have more time I would think of the performance of these two alternative
 -- approaches or how these could be tuned if necessary.  [divipp]
-addMarksToBlock :: Map BlockKey [SoloSelectionPoint] -> Block EntityKey -> AddMarksState (Block EntityKey)
-addMarksToBlock pointmap block = f (fromMaybe [] $ Map.lookup (block ^?! blockKey . _Just) pointmap) block
+addMarksToBlock :: Map BlockKey [SoloSelectionPoint] -> Block EntityKey BlockKey -> AddMarksState (Block EntityKey BlockKey)
+addMarksToBlock pointmap block = f (fromMaybe [] $ Map.lookup (block ^. blockKey) pointmap) block
   where
-    f :: [SoloSelectionPoint] -> Block EntityKey -> AddMarksState (Block EntityKey)
+    f :: [SoloSelectionPoint] -> Block EntityKey BlockKey -> AddMarksState (Block EntityKey BlockKey)
     f pointlist blk = do
       previousOpenPoints :: [SoloSelectionPoint] <- get
       let (newOpenPoints, newClosePoints) = List.partition soloSelectionPointIsStart pointlist
@@ -247,14 +242,14 @@ getMarkSelectors
     . zipWith collectBlock [0..]
     . NEL.toList . view rawContentBlocks
   where
-    collectBlock :: Int -> Block EntityKey -> [(ContributionID, ((BlockId, SegId), (BlockId, SegId)))]
+    collectBlock :: Int -> Block EntityKey BlockKey -> [(ContributionID, ((BlockId, SegId), (BlockId, SegId)))]
     collectBlock bix block
       = [ (cid, ((bid, six), (bid, six)))
         | (six, (_, styles)) <- addSegIds . mkInlineStyleSegments $ block ^. blockStyles
         , Mark cid <- Set.toList styles
         -- (note that this case keeps track of 'ContribIDHighlightMark' positions, even though
         -- that's not needed for anything.)
-        , let bid = BlockId bix $ block ^?! blockKey . _Just
+        , let bid = BlockId bix $ block ^. blockKey
         ]
 
     addSegIds :: [a] -> [(SegId, a)]
