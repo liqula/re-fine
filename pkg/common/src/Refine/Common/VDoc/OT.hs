@@ -138,11 +138,21 @@ type SelPoint = ((Int, BlockKey), (Int, OffsetPos))
 type OffsetPos = (Bool{-begin-}, Bool{-end-})
 
 docEditRanges :: Edit RawContent -> RawContent -> [SelectionState]
-docEditRanges edits
+docEditRanges edits = docRanges elemChanged . showEditAsDoc (concat (coerce edits :: [Edit OTDoc])) . rawContentToDoc
+
+elemChanged :: LineElem -> Bool
+elemChanged ((_, ss), _)
+    =  Atom StyleAdded   `Set.member` ss
+    || Atom StyleDeleted `Set.member` ss
+    || Atom StyleChanged `Set.member` ss
+
+-- Refactoring: unify with Draft.getSelectors
+docRanges :: (LineElem -> Bool) -> OTDoc -> [SelectionState]
+docRanges includeelem
     = concatMap toSelState
     . foldr addRange []
     . concat . zipWith blockRanges [(0::Int)..]
-    . NEL.toList . showEditAsDoc (concat (coerce edits :: [Edit OTDoc])) . rawContentToDoc
+    . NEL.toList
   where
     blockRanges :: Int -> DocBlock -> [SelRange]
     blockRanges col (DocBlock _ _ key elems) = concat $ zipWith3 elemRanges offs' (tail offs') elems
@@ -154,12 +164,8 @@ docEditRanges edits
         offs' = zip offs . zip (True: repeat False) $ replicate (length offs - 1) False <> [True]
 
         elemRanges :: (Int, OffsetPos) -> (Int, OffsetPos) -> LineElem -> [SelRange]
-        elemRanges beg end ((_, ss), _) =
-            [ (((col, key), beg), ((col, key), end))
-            |  Atom StyleAdded   `Set.member` ss
-            || Atom StyleDeleted `Set.member` ss
-            || Atom StyleChanged `Set.member` ss
-            ]
+        elemRanges beg end le =
+            [ (((col, key), beg), ((col, key), end)) | includeelem le]
 
     elemLength :: LineElem -> Int
     elemLength ((_, ss), NonEmptyST txt)
@@ -230,9 +236,3 @@ hideUnchangedParts (NEL.toList . rawContentToDoc -> doc) blocksbefore blocksafte
 
     lineChanged :: DocBlock -> Bool
     lineChanged (DocBlock _ _ _ elems) = any elemChanged elems
-
-    elemChanged :: LineElem -> Bool
-    elemChanged ((_, ss), _)
-        =  Atom StyleAdded   `Set.member` ss
-        || Atom StyleDeleted `Set.member` ss
-        || Atom StyleChanged `Set.member` ss

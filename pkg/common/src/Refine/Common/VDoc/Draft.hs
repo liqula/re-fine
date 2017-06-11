@@ -22,6 +22,7 @@
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
+{-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 
 module Refine.Common.VDoc.Draft
 where
@@ -236,29 +237,33 @@ data SegId = SegId Int Bool{-last segment-}
 
 getMarkSelectors :: RawContent -> [(ContributionID, MarkSelector, MarkSelector)]
 getMarkSelectors
+    = getSelectors $ \(_, ss) -> [cid | Atom (Mark cid) <- Set.toList ss]
+
+getSelectors :: forall a . Ord a => (EntityStyles -> [a]) -> RawContent -> [(a, MarkSelector, MarkSelector)]
+getSelectors collect
     = concatMap createRanges
     . List.groupBy ((==) `on` fst) . sort
     . mconcat
     . zipWith collectBlock [0..]
-    . NEL.toList . view rawContentBlocks
+    . NEL.toList . rawContentToDoc
   where
-    collectBlock :: Int -> Block EntityKey BlockKey -> [(ContributionID, ((BlockId, SegId), (BlockId, SegId)))]
-    collectBlock bix block
-      = [ (cid, ((bid, six), (bid, six)))
-        | (six, (_, styles)) <- addSegIds . mkInlineStyleSegments $ block ^. blockStyles
-        , Mark cid <- Set.toList styles
+    collectBlock :: Int -> DocBlock -> [(a, ((BlockId, SegId), (BlockId, SegId)))]
+    collectBlock bix (DocBlock _ _ key elems)
+      = [ (a, ((bid, six), (bid, six)))
+        | (six, (styles, _)) <- addSegIds elems
+        , a <- collect styles
         -- (note that this case keeps track of 'ContribIDHighlightMark' positions, even though
         -- that's not needed for anything.)
-        , let bid = BlockId bix $ block ^. blockKey
+        , let bid = BlockId bix key
         ]
 
-    addSegIds :: [a] -> [(SegId, a)]
+    addSegIds :: [b] -> [(SegId, b)]
     addSegIds as = zip (zipWith SegId [0..] $ replicate (length as - 1) False <> [True]) as
 
-    createRanges :: [(ContributionID, ((BlockId, SegId), (BlockId, SegId)))] -> [(ContributionID, MarkSelector, MarkSelector)]
+    createRanges :: [(a, ((BlockId, SegId), (BlockId, SegId)))] -> [(a, MarkSelector, MarkSelector)]
     createRanges [] = error "impossible"
-    createRanges arg@((cid, _) : _) =
-        [ (cid, MarkSelector MarkSelectorTop k1 o1, MarkSelector MarkSelectorBottom k2 o2)
+    createRanges arg@((a, _) : _) =
+        [ (a, MarkSelector MarkSelectorTop k1 o1, MarkSelector MarkSelectorBottom k2 o2)
         | ((BlockId _ k1, SegId o1 _), (BlockId _ k2, SegId o2 _)) <- foldr addSelector [] $ snd <$> arg]
 
     addSelector (b1, e1) ((b2, e2): ss) | e1 `nextTo` b2 = (b1, e2): ss

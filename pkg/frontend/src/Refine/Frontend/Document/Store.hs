@@ -35,6 +35,7 @@ import           Control.Lens (ix)
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
+import           Refine.Common.VDoc.OT (docRanges)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
@@ -143,3 +144,21 @@ setMarkPositions (convertToRaw . getCurrentContent . view documentStateVal -> ra
           pure (cid, markPosition)
 
     SetMarkPositions <$> (getPos `mapM` marks)
+
+documentToggleLink :: EditorState -> EditorState
+documentToggleLink st
+    | selectionIsEmpty rc sel = st
+-- TODO    | not (null ([sel] `intersectSelections` linkranges)) = documentRemoveLink st
+    | otherwise = documentAddLink link st
+  where
+    _linkranges = docRanges (\((Atom l, _), _) -> isLink l) (rawContentToDoc rc)
+    sel = getSelection st
+    rc = convertToRaw $ getCurrentContent st
+
+    isLink (Just (EntityLink _)) = True
+    isLink _ = False
+
+    link = "http://www.example.com"  -- TODO
+
+-- TODO
+-- intersectSelections :: [SelectionState] -> [SelectionState] -> [SelectionState]
