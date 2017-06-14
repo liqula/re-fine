@@ -83,9 +83,9 @@ selectedBlocks :: SelectionState -> [Block EntityKey BlockKey] -> [Block EntityK
 selectedBlocks (SelectionState _ (SelectionPoint sk _) (SelectionPoint ek _)) = f
   where
     f [] = []
-    f (b:bs) = if b ^. blockKey == sk then b : g bs else f bs
+    f (b:bs) = if b ^. blockKey == sk then g (b: bs) else f bs
 
-    g [] = []
+    g [] = error "impossible"
     g (b:bs) = if b ^. blockKey == ek then [b] else b : g bs
 
 -- | Like 'selectionIsEmpty', but much simpler!
