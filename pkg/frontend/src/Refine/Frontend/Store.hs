@@ -63,7 +63,9 @@ instance StoreData GlobalState where
     transform = loop . (:[])
       where
         -- FUTUREWORK: we don't need this loop trick, we can implement reDispatch much more
-        -- straight-forwardly as @forkIO . dispatchM@.
+        -- straight-forwardly as @forkIO . dispatchM@.  EXCEPT: if we process action A, then throw
+        -- action B concurrently outside of processing action A, then throw action C from inside of
+        -- processing A; which of B and C wins the race for the next lock?  needs more thinking!
         --
         -- (see also 'dispatchAndExec' below. change this only when switching to a future
         -- version of react-flux that has a monad-constraint-based interface.  then we'll have
