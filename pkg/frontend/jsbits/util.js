@@ -6,7 +6,7 @@
           strategy:
               function (contentBlock, callback, contentState) {
                 contentBlock.findEntityRanges(
-                  (character) => {
+                  function (character) {
                     const entityKey = character.getEntity();
                     return (
                       entityKey !== null &&
@@ -17,7 +17,7 @@
                 );
               },
           component:
-              (props) => {
+              function (props) {
                 const {url} = props.contentState.getEntity(props.entityKey).getData();
                 return React.createElement(
                     'a',
