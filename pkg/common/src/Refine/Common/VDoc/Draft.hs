@@ -88,6 +88,20 @@ selectedBlocks (SelectionState _ (SelectionPoint sk _) (SelectionPoint ek _)) = 
     g [] = error "impossible"
     g (b:bs) = if b ^. blockKey == ek then [b] else b : g bs
 
+doSelectionsOverlap :: RawContent -> SelectionState -> SelectionState -> Bool
+doSelectionsOverlap rc (SelectionState _ b1 e1) (SelectionState _ b2 e2)
+    = not $ e2' <= b1' || e1' <= b2'
+  where
+    b1' = getPosition rc b1
+    b2' = getPosition rc b2
+    e1' = getPosition rc e1
+    e2' = getPosition rc e2
+
+getPosition :: RawContent -> SelectionPoint -> (Int, Int)
+getPosition (RawContent bs _) (SelectionPoint bk col)
+    = ( head{-empty is impossible-} [i | (i, b) <- zip [0..] (NEL.toList bs), b ^. blockKey == bk]
+      , col)
+
 -- | Like 'selectionIsEmpty', but much simpler!
 entityRangeIsEmpty :: EntityRange -> Bool
 entityRangeIsEmpty (_, j) = j == 0

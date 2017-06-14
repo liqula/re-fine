@@ -148,10 +148,10 @@ setMarkPositions (convertToRaw . getCurrentContent . view documentStateVal -> ra
 documentToggleLink :: EditorState -> EditorState
 documentToggleLink st
     | selectionIsEmpty rc sel = st
--- TODO    | not (null ([sel] `intersectSelections` linkranges)) = documentRemoveLink st
+    | any (doSelectionsOverlap rc sel) linkranges = documentRemoveLink st
     | otherwise = documentAddLink (cs link) st
   where
-    _linkranges = docRanges (\((Atom l, _), _) -> isLink l) (rawContentToDoc rc)
+    linkranges = docRanges (\((Atom l, _), _) -> isLink l) (rawContentToDoc rc)
     sel = getSelection st
     rc = convertToRaw $ getCurrentContent st
 
@@ -159,6 +159,3 @@ documentToggleLink st
     isLink _ = False
 
     link = selectionText rc sel
-
--- TODO
--- intersectSelections :: [SelectionState] -> [SelectionState] -> [SelectionState]
