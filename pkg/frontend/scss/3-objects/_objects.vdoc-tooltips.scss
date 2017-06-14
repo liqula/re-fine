@@ -16,6 +16,17 @@
     bottom: 150%;
     left: 50%;
     margin-left: -50%;
+
+    // tooltips are covered by the header.  setting z-index here does
+    // not help, because article (and all the usual text in it must be
+    // covered by the header, and we can't have a dom tree of which
+    // parts are over and other parts are under separate dom tree (or
+    // so it seems).
+    //
+    // one solution would be to implement tooltips like we implemented
+    // bubbles.  this has the drawback that it is much less
+    // light-weight, and the benefit that it works :).  more
+    // investigation needed.
 }
 
 .tooltip .tooltiptext::after {

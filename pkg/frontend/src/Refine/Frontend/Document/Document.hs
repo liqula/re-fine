@@ -90,6 +90,7 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
                                          <$> (dstate ^? documentStateContent)
 
       article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
+               , "style" @@= [zindex ZIxArticle, decl "overflow" (Ident "visible")]
                , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
                , onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
                , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
