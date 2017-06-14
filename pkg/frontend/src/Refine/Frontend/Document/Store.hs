@@ -149,7 +149,7 @@ documentToggleLink :: EditorState -> EditorState
 documentToggleLink st
     | selectionIsEmpty rc sel = st
 -- TODO    | not (null ([sel] `intersectSelections` linkranges)) = documentRemoveLink st
-    | otherwise = documentAddLink link st
+    | otherwise = documentAddLink (cs link) st
   where
     _linkranges = docRanges (\((Atom l, _), _) -> isLink l) (rawContentToDoc rc)
     sel = getSelection st
@@ -158,7 +158,7 @@ documentToggleLink st
     isLink (Just (EntityLink _)) = True
     isLink _ = False
 
-    link = "http://www.example.com"  -- TODO
+    link = selectionText rc sel
 
 -- TODO
 -- intersectSelections :: [SelectionState] -> [SelectionState] -> [SelectionState]

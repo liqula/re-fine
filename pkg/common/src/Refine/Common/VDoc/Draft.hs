@@ -65,6 +65,14 @@ selectionIsEmpty (RawContent bs _) ss@(SelectionState _ s e) = s == e || multiLi
                        , all (ST.null . view blockText) (init bs')
                        ]
 
+selectionText :: RawContent -> SelectionState -> ST
+selectionText (RawContent bs _) ss@(SelectionState _ s e) = case selectedBlocks ss (NEL.toList bs) of
+      []        -> ""
+      [b]       -> ST.drop (s ^. selectionOffset) . ST.take (e ^. selectionOffset) $ b ^. blockText
+      (b : bs') -> ST.concat $
+                         ST.drop (s ^. selectionOffset) (b ^. blockText)
+                       : (((^. blockText) <$> init bs') <> [ST.take (e ^. selectionOffset) (last bs' ^. blockText)])
+
 -- | alternative implementation (it would be interesting to benchmark both):
 --
 -- >>> takeWhile1 ((/= Just ek) . (^. blockKey)) . dropWhile ((/= Just sk) . (^. blockKey))
