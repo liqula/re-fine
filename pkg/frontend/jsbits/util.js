@@ -21,7 +21,12 @@
                 const {url} = props.contentState.getEntity(props.entityKey).getData();
                 return React.createElement(
                     'a',
-                    { href: url, style: { color: '#3b5998', textDecoration: 'underline' } },
+                    { className: "tooltip", href: url, style: { color: '#3b5998', textDecoration: 'underline' } },
+                    React.createElement(
+                        "span",
+                        { className: "tooltiptext" },
+                        url
+                    ),
                     props.children
                 );
               },
