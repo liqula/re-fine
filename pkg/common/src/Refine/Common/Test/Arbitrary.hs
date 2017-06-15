@@ -34,8 +34,9 @@ import           Generics.SOP
 import           Test.QuickCheck
 import           Test.QuickCheck.Instances ()
 
-import Refine.Common.Types
 import Refine.Common.OT (Splitable(..), Segments(..))
+import Refine.Common.Types
+import Refine.Common.VDoc.Draft
 
 
 instance Arbitrary L10 where
@@ -55,13 +56,19 @@ instance Arbitrary DataUID where
   arbitrary = DataUID <$> arbitrary
 
 instance Arbitrary ContributionID where
-  arbitrary = oneof
-    [ ContribIDNote <$> arbitrary
-    , ContribIDQuestion <$> arbitrary
-    , ContribIDDiscussion <$> arbitrary
-    , ContribIDEdit <$> arbitrary
-    , pure ContribIDHighlightMark
-    ]
+  arbitrary = arbitraryContribIDConstructor <*> arbitrary
+
+instance {-# OVERLAPPING #-} Arbitrary (Int -> ContributionID) where
+  arbitrary = arbitraryContribIDConstructor
+
+arbitraryContribIDConstructor :: Gen (Int -> ContributionID)
+arbitraryContribIDConstructor = elements
+  [ ContribIDNote       . ID . fromIntegral . abs
+  , ContribIDQuestion   . ID . fromIntegral . abs
+  , ContribIDDiscussion . ID . fromIntegral . abs
+  , ContribIDEdit       . ID . fromIntegral . abs
+  , const ContribIDHighlightMark
+  ]
 
 maxListOf :: Int -> Gen a -> Gen [a]
 maxListOf n g = List.take n <$> listOf g
@@ -264,6 +271,7 @@ instance Arbitrary SelectionPoint where
   arbitrary = garbitrary
   shrink    = gshrink
 
+
 data RawContentWithSelections = RawContentWithSelections RawContent [SelectionState]
   deriving (Eq, Show)
 
@@ -296,3 +304,15 @@ instance Arbitrary NonEmptyST where
 instance (Arbitrary a, Arbitrary b, Eq a, Splitable b) => Arbitrary (Segments a b) where
   arbitrary = Segments . map (\xs -> (fst (head xs), foldr1 joinItems $ snd <$> xs)) . groupBy ((==) `on` fst)
         <$> arbitrary
+
+
+data RawContentWithMarks = RawContentWithMarks RawContent [(ContributionID, SelectionState)]
+  deriving (Eq, Show)
+
+instance Arbitrary RawContentWithMarks where
+  arbitrary = do
+    RawContentWithSelections rc (filter (not . selectionIsEmpty rc) -> sels) <- arbitrary
+    unnumbereds <- vectorOf (length sels) (arbitrary @(Int -> ContributionID))
+    let numberit sel unnumbered i = (unnumbered i, sel)
+        contribs = zipWith3 numberit sels unnumbereds [0..]
+    pure $ RawContentWithMarks (addMarksToRawContent contribs rc) contribs

@@ -92,17 +92,34 @@ spec = do
 
 
   describe "selectors" $ do
-
-    -- TODO: (1.) qc properties: create rawcontent with styles and entties, and run
-    -- js_getBoundingBox on them.  this establishes that all selectors have an existing element.
-    -- (2.) same thing, but call a test foreign function that returns the text content, and make
-    -- sure that every selector finds the *correct* (not just *any*) segment(s).
-
     describe "getEntitySelectors" $ do
-      it "works" pending
+      it "works" . property $ \(RawContentWithSelections _rc _sels) -> do
+        pending
 
     describe "getMarkSelectors" $ do
-      it "works" pending
+      it "works (within RawContent)" . property $ \(RawContentWithMarks rc contribs) -> do
+        let msels :: [(ContributionID, MarkSelector, MarkSelector)]
+            msels = getMarkSelectors rc
+        sort ((\(cid, _, _) -> cid) <$> msels) `shouldBe` sort (fst <$> contribs)
+
+      it "works (between RawContent and DOM)" . property $ \(RawContentWithMarks rc contribs) -> do
+        let msels :: [(ContributionID, MarkSelector, MarkSelector)]
+            msels = getMarkSelectors rc
+
+        -- render the document component and retrieve the contents of the marks via the browser
+        -- selection api (not draft/react, since 'MarkSelector' is referencing DOM nodes).
+
+        _ <- mount $ document_ DocumentProps
+          { _dpDocumentState     = mkDocumentStateView rc
+          , _dpContributionState = emptyContributionState
+          , _dpToolbarStatus     = ToolbarExtensionClosed
+          }
+
+        length msels `shouldBe` length contribs
+        forM_ (zip (sort contribs) (sort msels)) $ \((cid, sel), (cid', beginpoint, endpoint)) -> do
+          cid `shouldBe` cid'
+          have <- js_getRawContentBetweenElems (cs $ renderMarkSelector beginpoint) (cs $ renderMarkSelector endpoint)
+          cs have `shouldBe` selectionText rc sel
 
 
   describe "Draft" $ do
@@ -229,10 +246,18 @@ foreign import javascript safe
     "refine_test$testConvertFromToRaw($1)"
     js_testConvertFromToRaw :: JSString -> Bool
 
+foreign import javascript safe
+    "refine$getRawContentBetweenElems($1, $2)"
+    js_getRawContentBetweenElems :: JSString {- begin MarkSelector -} -> JSString {- end MarkSelector -} -> IO JSString
+
 #else
 
 {-# ANN js_testConvertFromToRaw ("HLint: ignore Use camelCase" :: String) #-}
 js_testConvertFromToRaw :: JSString -> Bool
 js_testConvertFromToRaw = error "javascript FFI not available in GHC"
+
+{-# ANN js_getRawContentBetweenElems ("HLint: ignore Use camelCase" :: String) #-}
+js_getRawContentBetweenElems :: JSString {- begin MarkSelector -} -> JSString {- end MarkSelector -} -> IO JSString
+js_getRawContentBetweenElems = error "javascript FFI not available in GHC"
 
 #endif

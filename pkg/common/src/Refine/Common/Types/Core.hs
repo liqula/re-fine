@@ -284,6 +284,9 @@ data SelectionPoint
 -- every span and resets on every decorator.  'getEntitySelectors', 'getMarkSelectors',
 -- 'getSelectors' depend on this behavior.  See the resp. tests in pkg/frontend.
 --
+-- See also: node_modules/draft-js/lib/DraftOffsetKey.js,
+-- node_modules/draft-js/lib/DraftEditorContents.react.js
+--
 -- FIXME: rename this to 'DraftBlockSegmentSelector'?
 data MarkSelector = MarkSelector MarkSelectorSide BlockKey Int Int
   deriving (Eq, Ord, Show, Generic)

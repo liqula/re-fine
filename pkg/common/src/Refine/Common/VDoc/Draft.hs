@@ -268,6 +268,8 @@ getEntitySelectors = error "not implemented"
 getMarkSelectors :: RawContent -> [(ContributionID, MarkSelector, MarkSelector)]
 getMarkSelectors
     = getSelectors $ \(_, ss) -> [(IsStyle, cid) | Atom (Mark cid) <- Set.toList ss]
+        -- (note that this keeps track of 'ContribIDHighlightMark' positions, even though that's not
+        -- needed for anything.)
 
 getSelectors :: forall a . Ord a => (EntityStyles -> [(IsEntityOrStyle, a)]) -> RawContent -> [(a, MarkSelector, MarkSelector)]
 getSelectors collect
@@ -282,8 +284,6 @@ getSelectors collect
       = [ (a, ((bid, six), (bid, six)))
         | (six, (styles, _)) <- addSegIds elems
         , a <- collect styles
-        -- (note that this case keeps track of 'ContribIDHighlightMark' positions, even though
-        -- that's not needed for anything.)
         , let bid = BlockId bix key
         ]
 
