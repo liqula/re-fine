@@ -33,10 +33,9 @@ import Refine.Frontend.Prelude
 import           Control.Concurrent (forkIO, yield, threadDelay)
 import qualified Data.Map.Strict as M
 
-import           Refine.Common.Types (CompositeVDoc(..), Atom(..), Entity(..), rawContentToDoc)
+import           Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as C
 import           Refine.Common.VDoc.Draft
-import           Refine.Common.VDoc.OT (docRanges)
 import           Refine.Common.Rest (ApiError(..))
 import           Refine.Common.Test.Samples
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
@@ -119,20 +118,6 @@ transformGlobalState = transf
 
         ContributionAction ShowCommentEditor            -> scrollToCurrentSelection (st ^. gsContributionState)
         DocumentAction RequestDocumentSave              -> scrollToCurrentSelection (st ^. gsContributionState)
-
-        DocumentAction DocumentToggleLink -> do
-            let es = st ^. gsDocumentState . documentStateVal
-                sel = getSelection es
-                rc = convertToRaw $ getCurrentContent es
-                linkranges = docRanges (\((Atom l, _), _) -> isLink l) (rawContentToDoc rc)
-                  where
-                    isLink (Just (EntityLink _)) = True
-                    isLink _ = False
-            if selectionIsEmpty rc sel
-              then pure ()
-              else reDispatchM $ if any (doSelectionsOverlap rc sel) linkranges
-                      then DocumentAction DocumentRemoveLink
-                      else HeaderAction . OpenEditToolbarLinkEditor . cs $ selectionText rc sel
 
         HeaderAction ScrollToPageTop -> liftIO js_scrollToPageTop
 

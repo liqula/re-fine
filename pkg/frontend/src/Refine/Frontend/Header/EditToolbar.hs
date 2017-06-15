@@ -26,13 +26,37 @@ module Refine.Frontend.Header.EditToolbar where
 
 import Refine.Frontend.Prelude
 
+import           Refine.Common.Types (BlockType(..), Style(..), Atom(..), Entity(..), rawContentToDoc)
+import           Refine.Common.VDoc.OT (docRanges)
+import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Store.Types
-import           Refine.Common.Types (BlockType(..), Style(..))
+import           Refine.Frontend.Header.Types
 
-editToolbar :: View '[]
-editToolbar = mkView "EditToolbar" $ do
+data EditToolbarProps
+    = LinkButtonDisabled
+    | LinkButtonDeletes
+    | LinkButtonAdds ST
+
+mkEditToolbarProps :: GlobalState -> EditToolbarProps
+mkEditToolbarProps st
+    | selectionIsEmpty rc sel = LinkButtonDisabled
+    | any (doSelectionsOverlap rc sel) linkranges = LinkButtonDeletes
+    | otherwise = LinkButtonAdds . cs $ selectionText rc sel
+  where
+    es = st ^. gsDocumentState . documentStateVal
+    sel = getSelection es
+    rc = convertToRaw $ getCurrentContent es
+    linkranges = docRanges (\((Atom l, _), _) -> isLink l) (rawContentToDoc rc)
+      where
+        isLink (Just (EntityLink _)) = True
+        isLink _ = False
+
+
+editToolbar :: EditToolbarProps -> View '[]
+editToolbar ep = mkView "EditToolbar" $ do
   header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
@@ -87,8 +111,16 @@ editToolbar = mkView "EditToolbar" $ do
 
           iconButton_ $ editButton "Edit_toolbar_link"
             & iconButtonPropsListKey      .~ "link"
-            & iconButtonPropsLabel        .~ "link"
-            & iconButtonPropsOnClick      .~ [DocumentAction DocumentToggleLink]
+            & iconButtonPropsLabel        .~ case ep of
+                LinkButtonDeletes  -> "delete link"
+                _                  -> "add link"
+            & iconButtonPropsOnClick      .~ case ep of
+                LinkButtonDisabled -> error "impossible"
+                LinkButtonDeletes  -> [DocumentAction DocumentRemoveLink]
+                LinkButtonAdds l   -> [HeaderAction $ OpenEditToolbarLinkEditor l]
+            & iconButtonPropsDisabled     .~ case ep of
+                LinkButtonDisabled -> True
+                _                  -> False
 
           iconButton_ $ editButton mempty
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
@@ -97,5 +129,5 @@ editToolbar = mkView "EditToolbar" $ do
             & iconButtonPropsAlignRight   .~ True
             & iconButtonPropsOnClick      .~ [DocumentAction RequestDocumentSave]
 
-editToolbar_ :: ReactElementM eventHandler ()
-editToolbar_ = view_ editToolbar "editToolbar_"
+editToolbar_ :: EditToolbarProps -> ReactElementM eventHandler ()
+editToolbar_ ep = view_ (editToolbar ep) "editToolbar_"

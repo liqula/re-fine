@@ -45,7 +45,6 @@ data DocumentAction =
   | DocumentCancelSave
   | DocumentToggleStyle Style
   | DocumentToggleBlockType BlockType
-  | DocumentToggleLink -- spawns either DocumentRemoveLink or OpenEditToolbarLinkEditor
   | DocumentRemoveLink
   | DocumentCreateLink ST
   | ToggleCollapseDiff

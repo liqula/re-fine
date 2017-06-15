@@ -40,7 +40,7 @@ import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DocumentHeader
 import           Refine.Frontend.Header.DiffToolbar ( diffToolbar_ )
-import           Refine.Frontend.Header.EditToolbar ( editToolbar_ )
+import           Refine.Frontend.Header.EditToolbar ( editToolbar_, mkEditToolbarProps )
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_ )
 import           Refine.Frontend.Header.Types
@@ -121,7 +121,7 @@ mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
               case rs ^. gsDocumentState of
                 DocumentStateView {} -> toolbar_
                 DocumentStateDiff {} -> diffToolbar_
-                DocumentStateEdit {} -> editToolbar_
+                DocumentStateEdit {} -> editToolbar_ (mkEditToolbarProps rs)
               commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
               editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
 
