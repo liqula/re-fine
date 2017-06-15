@@ -80,7 +80,8 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                                 -- FIXME: I think this could be done more nicely.
 
   div_ (case rs ^. gsHeaderState . hsToolbarExtensionStatus of
-    HT.ToolbarExtensionClosed -> []
+    HT.ToolbarExtensionClosed  -> []
+    HT.EditToolbarLinkEditor{} -> []
     _ -> [ onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseToolbarExtension)
          ]) $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty

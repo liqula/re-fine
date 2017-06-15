@@ -24,13 +24,16 @@
 
 module Refine.Frontend.Header.Toolbar where
 
-import Refine.Frontend.Prelude
+import           Refine.Frontend.Prelude
+import           Language.Css.Syntax
 
 import           Refine.Common.Types ( EditKind(..) )
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Header.Types
-import           Refine.Frontend.Icon
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Icon
+import           Refine.Frontend.Util
 
 toolbar :: View '[]
 toolbar = mkView "Toolbar" $ do
@@ -156,6 +159,7 @@ instance UnoverlapAllEq EditToolbarExtensionProps
 editToolbarExtension :: View '[EditToolbarExtensionProps]
 editToolbarExtension = mkView "EditToolbarExtension" $ \case
   (EditToolbarExtensionProps EditToolbarExtension) -> editKindForm_ (HeaderAction . StartEdit) (EditKindFormProps Nothing)
+  (EditToolbarExtensionProps (EditToolbarLinkEditor link)) -> editLinkInput_ link
   (EditToolbarExtensionProps _) -> mempty
 
 editToolbarExtension_ :: EditToolbarExtensionProps -> ReactElementM handler ()
@@ -191,3 +195,52 @@ editKindForm onSelect = mkView "EditKindForm" $ \(EditKindFormProps mactive) -> 
 
 editKindForm_ :: (EditKind -> GlobalAction) -> EditKindFormProps -> ReactElementM ViewEventHandler ()
 editKindForm_ onSelect = view_ (editKindForm onSelect) "editToolbarExtension_"
+
+
+linkToolbarTextForm :: ST -> ReactElementM (StatefulViewEventHandler AddLinkFormState) ()
+linkToolbarTextForm link = do
+  form_ [ "target" $= "#"
+        , "action" $= "POST"] $ do
+    textarea_ [ "className" $= "o-wysiwyg"
+              , "style" @@=
+                      [ decl "resize" (Ident "none")
+                      , decl "width" (Px 600)
+                      , decl "height" (Px 20)
+                      ]
+              , "placeholder" $= "url"
+              -- Update the current state with the current text in the textbox, sending no actions
+              , onChange $ \evt st -> ([], Just $ st & addLinkFormState .~ target evt "value")
+              ]
+      $ elemText link
+
+
+editLinkInput :: ST -> View '[]
+editLinkInput link = mkStatefulView "EditLinkInput" (AddLinkFormState link) $ \curState -> do
+    div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
+      div_ ["className" $= "grid-wrapper"] $ do
+        div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
+          div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
+          div_ ["className" $= "c-vdoc-toolbar-extension__modification c-vdoc-toolbar-extension--expanded"] $ do  -- (RENAME: Edit)
+
+              linkToolbarTextForm link
+
+              iconButton_ $ defaultIconButtonProps @[GlobalAction]
+                & iconButtonPropsListKey      .~ "add-link"
+                & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
+                & iconButtonPropsElementName  .~ "btn-index"
+                & iconButtonPropsLabel        .~ "add link"
+                & iconButtonPropsAlignRight   .~ True
+                & iconButtonPropsOnClick      .~ [ DocumentAction . DocumentCreateLink $ curState ^. addLinkFormState
+                                                 , HeaderAction CloseToolbarExtension
+                                                 ]
+
+              iconButton_ $ defaultIconButtonProps @[GlobalAction]
+                & iconButtonPropsListKey      .~ "cancel"
+                & iconButtonPropsIconProps    .~ IconProps "c-mainmenu-header" True ("icon-Close", "dark") XXLarge
+                & iconButtonPropsElementName  .~ "btn-index"
+                & iconButtonPropsLabel        .~ "cancel"
+                & iconButtonPropsAlignRight   .~ True
+                & iconButtonPropsOnClick      .~ [HeaderAction CloseToolbarExtension]
+
+editLinkInput_ :: ST -> ReactElementM eventHandler ()
+editLinkInput_ link = view_ (editLinkInput link) "editLinkInput_"

@@ -40,6 +40,7 @@ data HeaderAction =
   | ToggleReadOnly
   | ScrollToPageTop
   -- ScrollToDocumentTop
+  | OpenEditToolbarLinkEditor ST
   deriving (Show, Eq, Generic)
 
 data ToolbarExtensionStatus =
@@ -47,6 +48,7 @@ data ToolbarExtensionStatus =
   | CommentToolbarExtensionWithoutRange
   | CommentToolbarExtensionWithRange
   | EditToolbarExtension
+  | EditToolbarLinkEditor ST
   deriving (Show, Eq, Generic)
 
 data HeaderState = HeaderState
@@ -57,7 +59,12 @@ data HeaderState = HeaderState
 emptyHeaderState :: HeaderState
 emptyHeaderState = HeaderState False ToolbarExtensionClosed
 
+newtype AddLinkFormState = AddLinkFormState
+  { _addLinkFormState :: ST
+  } deriving (Show, Eq, Generic)
+
 
 makeRefineType ''HeaderAction
 makeRefineType ''ToolbarExtensionStatus
 makeRefineType ''HeaderState
+makeRefineType ''AddLinkFormState

@@ -35,7 +35,6 @@ import           Control.Lens (ix)
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
-import           Refine.Common.VDoc.OT (docRanges)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
@@ -86,8 +85,11 @@ documentStateUpdate (DocumentAction (DocumentToggleBlockType bt)) _ st
 documentStateUpdate (DocumentAction (DocumentToggleStyle s)) _ st
   = st & documentStateVal %~ documentToggleStyle s
 
-documentStateUpdate (DocumentAction DocumentToggleLink) _ st
-  = st & documentStateVal %~ documentToggleLink
+documentStateUpdate (DocumentAction DocumentRemoveLink) _ st
+  = st & documentStateVal %~ documentRemoveLink
+
+documentStateUpdate (DocumentAction (DocumentCreateLink link)) _ st
+  = st & documentStateVal %~ documentAddLink (cs link)
 
 documentStateUpdate (AddDiscussion _) (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
@@ -144,18 +146,3 @@ setMarkPositions (convertToRaw . getCurrentContent . view documentStateVal -> ra
           pure (cid, markPosition)
 
     SetMarkPositions <$> (getPos `mapM` marks)
-
-documentToggleLink :: EditorState -> EditorState
-documentToggleLink st
-    | selectionIsEmpty rc sel = st
-    | any (doSelectionsOverlap rc sel) linkranges = documentRemoveLink st
-    | otherwise = documentAddLink (cs link) st
-  where
-    linkranges = docRanges (\((Atom l, _), _) -> isLink l) (rawContentToDoc rc)
-    sel = getSelection st
-    rc = convertToRaw $ getCurrentContent st
-
-    isLink (Just (EntityLink _)) = True
-    isLink _ = False
-
-    link = selectionText rc sel
