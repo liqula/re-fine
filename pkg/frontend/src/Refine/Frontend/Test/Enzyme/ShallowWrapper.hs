@@ -66,7 +66,7 @@ shallowChild = exec "shallow"
 
 #ifdef __GHCJS__
 
-foreign import javascript unsafe
+foreign import javascript safe
   "enzyme.shallow($1)"
   js_shallow :: ReactElementRef -> IO JSVal
 

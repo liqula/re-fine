@@ -54,23 +54,23 @@ editor_ = foreignClass js_editor
 
 #ifdef __GHCJS__
 
-foreign import javascript unsafe
+foreign import javascript safe
   "Sticky.Sticky"
   js_sticky :: JSVal
 
-foreign import javascript unsafe
+foreign import javascript safe
   "Sticky.StickyContainer"
   js_stickyContainer :: JSVal
 
-foreign import javascript unsafe
+foreign import javascript safe
   "Skylight.SkyLightStateless"
   js_skylight :: JSVal
 
-foreign import javascript unsafe
+foreign import javascript safe
   "Hammer"
   js_hammer :: JSVal
 
-foreign import javascript unsafe
+foreign import javascript safe
   "Draft.Editor"
   js_editor :: JSVal
 

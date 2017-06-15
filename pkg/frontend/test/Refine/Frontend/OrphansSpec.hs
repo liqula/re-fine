@@ -77,7 +77,7 @@ getDraftSelectionStateViaBrowser_4 = Right (SelectionState True (SelectionPoint 
 
 #ifdef __GHCJS__
 
-foreign import javascript unsafe
+foreign import javascript safe
   "if ($3) { console.log($1); console.log($2); } $r = JSON.stringify([$1, $2])"
   js_chk :: JSVal -> JSVal -> Bool -> JSString
 

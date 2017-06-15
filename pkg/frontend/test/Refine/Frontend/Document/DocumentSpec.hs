@@ -210,7 +210,7 @@ spec = do
 
 #ifdef __GHCJS__
 
-foreign import javascript unsafe
+foreign import javascript safe
     "refine_test$testConvertFromToRaw($1)"
     js_testConvertFromToRaw :: JSString -> Bool
 

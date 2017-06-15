@@ -138,7 +138,7 @@ calcHeaderHeight ldom = do
 
 #ifdef __GHCJS__
 
-foreign import javascript unsafe
+foreign import javascript safe
   "Math.floor($1.getBoundingClientRect().height)"
   js_getBoundingClientRectHeight :: JSVal -> IO Int
 

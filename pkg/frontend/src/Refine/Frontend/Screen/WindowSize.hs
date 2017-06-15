@@ -65,15 +65,15 @@ setWindowSize = dispatchAndExec . ScreenAction . SetWindowWidth =<< js_getWindow
 -- and we should get the body via document.getElementsByTagName('body')[0]
 -- but Tom does not do that either -- so?!
 -- (In my Chrome, they are all available and contain the same values anyway...)
-foreign import javascript unsafe
+foreign import javascript safe
   "document.body.clientWidth"
   js_getWindowWidth :: IO Int
 
-foreign import javascript unsafe
+foreign import javascript safe
     "window.addEventListener($1, $2)"
     js_windowAddEventListener :: JSString -> Callback (IO ()) -> IO ()
 
-foreign import javascript unsafe
+foreign import javascript safe
     "window.removeEventListener($1, $2)"
     js_windowRemoveEventListener :: JSString -> Callback (IO ()) -> IO ()
 

@@ -428,15 +428,15 @@ reactFluxWorkAroundThreadDelay seconds = threadDelay . round $ seconds * 1000 * 
 
 #ifdef __GHCJS__
 
-foreign import javascript unsafe
+foreign import javascript safe
   "getSelection().getRangeAt(0).startContainer.parentElement.getBoundingClientRect().top"
   js_getRangeTopOffset :: IO Int
 
-foreign import javascript unsafe
+foreign import javascript safe
   "getSelection().getRangeAt(0).endContainer.parentElement.getBoundingClientRect().bottom"
   js_getRangeBottomOffset :: IO Int
 
-foreign import javascript unsafe
+foreign import javascript safe
   "window.getSelection().removeAllRanges()"
   js_removeAllRanges :: IO ()
 

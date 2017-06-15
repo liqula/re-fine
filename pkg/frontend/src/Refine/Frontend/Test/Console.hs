@@ -88,23 +88,23 @@ windowAlertST = windowAlert
 
 #ifdef __GHCJS__
 
-foreign import javascript unsafe
+foreign import javascript safe
   "console.log($1, $2)"
   js_consoleLogJSString :: JSString -> JSString -> ()
 
-foreign import javascript unsafe
+foreign import javascript safe
   "console.log($1, $2)"
   js_consoleLogJSVal :: JSString -> JSVal -> ()
 
-foreign import javascript unsafe
+foreign import javascript safe
   "console.log($1, JSON.parse($2))"
   js_consoleLogJSON :: JSString -> JSString -> ()
 
-foreign import javascript unsafe
+foreign import javascript safe
   "process.env.NODE_ENV === 'development' ? true : false"
   js_devMode :: Bool
 
-foreign import javascript unsafe
+foreign import javascript safe
   "window.alert($1)"
   js_alert :: JSString -> IO ()
 
