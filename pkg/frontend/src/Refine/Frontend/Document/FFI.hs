@@ -271,7 +271,7 @@ foreign import javascript safe
   "Draft.RichUtils.toggleLink($1,$2,$3)"
   js_ES_toggleLink :: EditorState -> JSVal{-SelectionState-} -> JSString{-EntityKey-} -> EditorState
 
-foreign import javascript unsafe
+foreign import javascript safe
   "Draft.RichUtils.toggleLink($1,$2,null)"
   js_ES_removeLink :: EditorState -> JSVal{-SelectionState-} -> EditorState
 
