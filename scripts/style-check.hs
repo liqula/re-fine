@@ -68,7 +68,7 @@ verbose = False
 -- when it is done.
 main :: IO ()
 main = sh $ do
-  when verbose . liftIO $ hspec testWrapJsFFI
+  liftIO $ hspec testWrapJsFFI
   setProperCurrentDirectory
   () <- fixTrailingWhitespace =<< getSourceFiles ["prelude", "common", "backend", "frontend"]
   () <- wrapJsFFI =<< getSourceFiles ["frontend"]
@@ -126,10 +126,12 @@ data FFIBlock = FFIBlock [(ST, ST)] | NonFFIBlock ST
 testWrapJsFFI :: Spec
 testWrapJsFFI = describe "wrapJsFFI" $ do
   it "works" $ do
+    A.parseOnly pDeclHead "foreign import javascript safe\n"
+      `shouldBe` Right "foreign import javascript safe\n"
     A.parseOnly pDeclHead "foreign import javascript unsafe\n"
       `shouldBe` Right "foreign import javascript unsafe\n"
-    A.parseOnly pFun "foreign import javascript unsafe\n  \"$1\"\n  js_fun :: JSVal -> String\n\n"
-      `shouldBe` Right ("js_fun", "foreign import javascript unsafe\n  \"$1\"\n  js_fun :: JSVal -> String")
+    A.parseOnly pFun "foreign import javascript safe\n  \"$1\"\n  js_fun :: JSVal -> String\n\n"
+      `shouldBe` Right ("js_fun :: JSVal -> String", "foreign import javascript safe\n  \"$1\"\n  js_fun :: JSVal -> String")
 
     A.parseOnly (pMany1Till (A.char 'a') (A.char '*')) "*"
       `shouldBe` Left "Failed reading: pMany1Till: empty output list"
@@ -144,8 +146,8 @@ testWrapJsFFI = describe "wrapJsFFI" $ do
       `shouldBe` Right '*'
 
 
-    A.parseOnly pFFIBlock "foreign import javascript unsafe\n  \"$1\"\n  js_fun :: JSVal -> String\n\n"
-      `shouldBe` Right (FFIBlock [("js_fun", "foreign import javascript unsafe\n  \"$1\"\n  js_fun :: JSVal -> String")])
+    A.parseOnly pFFIBlock "foreign import javascript safe\n  \"$1\"\n  js_fun :: JSVal -> String\n\n"
+      `shouldBe` Right (FFIBlock [("js_fun :: JSVal -> String", "foreign import javascript safe\n  \"$1\"\n  js_fun :: JSVal -> String")])
 
     A.parseOnly pNonFFIBlock ""
       `shouldBe` Left "Failed reading: pMany1Till: empty output list"
@@ -160,9 +162,9 @@ testWrapJsFFI = describe "wrapJsFFI" $ do
                  [ "-- ..."
                  , "--"
                  , "-- aufn awfme"
-                 , "foreign import javascript unsafe\n  \"$1\"\n  js_fun :: JSVal -> String"
+                 , "foreign import javascript safe\n  \"$1\"\n  js_fun :: JSVal -> String"
                  ])
-      `shouldBe` Right "-- ...\n--\n-- aufn awfme\nforeign import javascript unsafe\n"
+      `shouldBe` Right "-- ...\n--\n-- aufn awfme\nforeign import javascript safe\n"
 
     let i1 :: ST
         i1 = ST.unlines
@@ -170,18 +172,18 @@ testWrapJsFFI = describe "wrapJsFFI" $ do
           , ""
           , "import Some.Other"
           , ""
-          , "foreign import javascript unsafe\n  \"$1\"\n  js_fun :: JSVal -> String"
-          , "foreign import javascript unsafe\n  \"$1\"\n  js_foon :: JSVal -> String"
+          , "foreign import javascript safe\n  \"$1\"\n  js_fun :: JSVal -> String"
+          , "foreign import javascript safe\n  \"$1\"\n  js_foon :: JSVal -> String"
           , ""
-          , "foreign import javascript unsafe\n  \"$1\"\n  js_fawn :: JSVal -> String"
+          , "foreign import javascript safe\n  \"$1\"\n  js_fawn :: JSVal -> String"
           , ""
           ]
 
         r1 = [ NonFFIBlock "module Some where\n\nimport Some.Other\n\n"
              , FFIBlock
-               [ ("js_fun", "foreign import javascript unsafe\n  \"$1\"\n  js_fun :: JSVal -> String")
-               , ("js_foon", "foreign import javascript unsafe\n  \"$1\"\n  js_foon :: JSVal -> String")
-               , ("js_fawn", "foreign import javascript unsafe\n  \"$1\"\n  js_fawn :: JSVal -> String")
+               [ ("js_fun :: JSVal -> String", "foreign import javascript safe\n  \"$1\"\n  js_fun :: JSVal -> String")
+               , ("js_foon :: JSVal -> String", "foreign import javascript safe\n  \"$1\"\n  js_foon :: JSVal -> String")
+               , ("js_fawn :: JSVal -> String", "foreign import javascript safe\n  \"$1\"\n  js_fawn :: JSVal -> String")
                ]
              ]
 
@@ -193,10 +195,10 @@ testWrapJsFFI = describe "wrapJsFFI" $ do
           , ""
           , "#ifdef __GHCJS__"
           , ""
-          , "foreign import javascript unsafe\n  \"$1\"\n  js_fun :: JSVal -> String"
-          , "foreign import javascript unsafe\n  \"$1\"\n  js_foon :: JSVal -> String"
+          , "foreign import javascript safe\n  \"$1\"\n  js_fun :: JSVal -> String"
+          , "foreign import javascript safe\n  \"$1\"\n  js_foon :: JSVal -> String"
           , ""
-          , "foreign import javascript unsafe\n  \"$1\"\n  js_fawn :: JSVal -> String"
+          , "foreign import javascript safe\n  \"$1\"\n  js_fawn :: JSVal -> String"
           ] <> noise1 <>
           [ "#else"
           ] <> noise2 <>
@@ -214,11 +216,11 @@ testWrapJsFFI = describe "wrapJsFFI" $ do
           , ""
           , "-- ..."
           , "-- aufn awfme"
-          , "foreign import javascript unsafe\n  \"$1\"\n  js_fun :: JSVal -> String"
+          , "foreign import javascript safe\n  \"$1\"\n  js_fun :: JSVal -> String"
           , "-- ***"
-          , "foreign import javascript unsafe\n  \"$1\"\n  js_foon :: JSVal -> String"
+          , "foreign import javascript safe\n  \"$1\"\n  js_foon :: JSVal -> String"
           , ""
-          , "foreign import javascript unsafe\n  \"$1\"\n  js_fawn :: JSVal -> String"
+          , "foreign import javascript safe\n  \"$1\"\n  js_fawn :: JSVal -> String"
           , "#else"
           , "#endif"
           , ""
@@ -226,16 +228,16 @@ testWrapJsFFI = describe "wrapJsFFI" $ do
 
         r2 = [ NonFFIBlock "module Some where\n\nimport Some.Other\n\n"
              , FFIBlock
-               [ ("js_fun", ST.intercalate "\n"
+               [ ("js_fun :: JSVal -> String", ST.intercalate "\n"
                    [ "-- ..."
                    , "-- aufn awfme"
-                   , "foreign import javascript unsafe\n  \"$1\"\n  js_fun :: JSVal -> String"
+                   , "foreign import javascript safe\n  \"$1\"\n  js_fun :: JSVal -> String"
                    ])
-               , ("js_foon", ST.intercalate "\n"
+               , ("js_foon :: JSVal -> String", ST.intercalate "\n"
                    [ "-- ***"
-                   , "foreign import javascript unsafe\n  \"$1\"\n  js_foon :: JSVal -> String"
+                   , "foreign import javascript safe\n  \"$1\"\n  js_foon :: JSVal -> String"
                    ])
-               , ("js_fawn", "foreign import javascript unsafe\n  \"$1\"\n  js_fawn :: JSVal -> String")
+               , ("js_fawn :: JSVal -> String", "foreign import javascript safe\n  \"$1\"\n  js_fawn :: JSVal -> String")
                ]
             ]
 
@@ -248,33 +250,33 @@ testWrapJsFFI = describe "wrapJsFFI" $ do
           , "-- ..."
           , "--"
           , "-- aufn awfme"
-          , "foreign import javascript unsafe\n  \"$1\"\n  js_fun :: JSVal -> String"
+          , "foreign import javascript safe\n  \"$1\"\n  js_fun :: JSVal -> String"
           , ""
           , "someNormalFun :: Bool"
           , "someNormalFun = _"
           , "-- ***"
-          , "foreign import javascript unsafe\n  \"$1\"\n  js_foon :: JSVal -> String"
+          , "foreign import javascript safe\n  \"$1\"\n  js_foon :: JSVal -> String"
           , ""
-          , "foreign import javascript unsafe\n  \"$1\"\n  (===) :: JSVal -> String"
+          , "foreign import javascript safe\n  \"$1\"\n  (===) :: JSVal -> String"
           , ""
           ]
 
         r3 = [ NonFFIBlock "module Some where\n\nimport Some.Other\n\n"
              , FFIBlock
-                 [ ("js_fun", ST.intercalate "\n"
+                 [ ("js_fun :: JSVal -> String", ST.intercalate "\n"
                      [ "-- ..."
                      , "--"
                      , "-- aufn awfme"
-                     , "foreign import javascript unsafe\n  \"$1\"\n  js_fun :: JSVal -> String"
+                     , "foreign import javascript safe\n  \"$1\"\n  js_fun :: JSVal -> String"
                      ])
                  ]
              , NonFFIBlock "someNormalFun :: Bool\nsomeNormalFun = _\n"
              , FFIBlock
-                 [ ("js_foon", ST.intercalate "\n"
+                 [ ("js_foon :: JSVal -> String", ST.intercalate "\n"
                      [ "-- ***"
-                     , "foreign import javascript unsafe\n  \"$1\"\n  js_foon :: JSVal -> String"
+                     , "foreign import javascript safe\n  \"$1\"\n  js_foon :: JSVal -> String"
                      ])
-                 , ("(===)", "foreign import javascript unsafe\n  \"$1\"\n  (===) :: JSVal -> String")
+                 , ("(===) :: JSVal -> String", "foreign import javascript safe\n  \"$1\"\n  (===) :: JSVal -> String")
                  ]
              ]
      in do

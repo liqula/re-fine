@@ -157,7 +157,7 @@ main = shakeArgs refineOptions $ do
   phony "hlint" $ do
     need ["hlint-prelude", "hlint-common", "hlint-backend", "hlint-frontend"]
     hlintPath "./scripts"
-    command_ [] "./scripts/style-check.hs" ["pkg"]
+    command_ [] "./scripts/style-check.hs" []
 
 
   phony "clean-prelude" $ do
