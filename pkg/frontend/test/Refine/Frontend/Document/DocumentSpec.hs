@@ -56,6 +56,7 @@ spec = do
     it "work" $ do
       rawContentFromVDocVersion sampleVDocVersion `shouldNotBe` emptyRawContent
 
+
   describe "convertToRaw, convertFromRaw" $ do
     it "are isomorphic" . property $ \(sanitizeRawContent -> rawContent) -> do
       let f = convertToRaw . convertFromRaw
@@ -88,6 +89,20 @@ spec = do
           rawContent' = sanitizeRCHack rawContent
       decode (encode rawContent) `shouldBe` Just rawContent
       rawContent' `shouldBe` rawContent
+
+
+  describe "selectors" $ do
+
+    -- TODO: (1.) qc properties: create rawcontent with styles and entties, and run
+    -- js_getBoundingBox on them.  this establishes that all selectors have an existing element.
+    -- (2.) same thing, but call a test foreign function that returns the text content, and make
+    -- sure that every selector finds the *correct* (not just *any*) segment(s).
+
+    describe "getEntitySelectors" $ do
+      it "works" pending
+
+    describe "getMarkSelectors" $ do
+      it "works" pending
 
 
   describe "Draft" $ do

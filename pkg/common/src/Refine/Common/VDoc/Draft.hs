@@ -254,11 +254,14 @@ addMarkToBlock blocklen openedInOtherBlock newClosePoints thisPoint = assert (st
 mkInlineStyleSegments :: [(EntityRange, Style)] -> [(Int, Set Style)]
 mkInlineStyleSegments = mkSomeSegments fst snd
 
-data BlockId = BlockId Int BlockKey
+data BlockId = BlockId Int{-block index-} BlockKey
     deriving (Eq, Ord)
 
 data SegId = SegId Int Bool{-last segment-}
     deriving (Eq, Ord)
+
+getEntitySelectors :: RawContent -> [(EntityKey, MarkSelector, MarkSelector)]
+getEntitySelectors = error "not implemented"
 
 getMarkSelectors :: RawContent -> [(ContributionID, MarkSelector, MarkSelector)]
 getMarkSelectors
