@@ -207,7 +207,7 @@ test-suite spec
 -- `stack bench` seems not to work with ghcjs
 --
 -- to run the benchmark, first build it with `stack bench`
--- then run `node .stack-work/dist/..../build/bench/bench.jsexe/all.js`
+-- then run "node `stack path --dist-dir`/build/bench/bench.jsexe/all.js"
 benchmark bench
   type: exitcode-stdio-1.0
   main-is: Main.hs
@@ -219,7 +219,7 @@ benchmark bench
 
   build-depends:
       base >= 4.7 && < 5
---    , criterion
+--    , criterion  -- (see bench/Main.hs)
     , time
     , refine-frontend
   js-sources:
