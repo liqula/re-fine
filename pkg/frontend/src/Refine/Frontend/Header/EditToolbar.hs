@@ -112,8 +112,9 @@ editToolbar ep = mkView "EditToolbar" $ do
           iconButton_ $ editButton "Edit_toolbar_link"
             & iconButtonPropsListKey      .~ "link"
             & iconButtonPropsLabel        .~ case ep of
+                LinkButtonDisabled -> "links"
                 LinkButtonDeletes  -> "delete link"
-                _                  -> "add link"
+                LinkButtonAdds _   -> "add link"
             & iconButtonPropsOnClick      .~ case ep of
                 LinkButtonDisabled -> error "impossible"
                 LinkButtonDeletes  -> [DocumentAction DocumentRemoveLink]
