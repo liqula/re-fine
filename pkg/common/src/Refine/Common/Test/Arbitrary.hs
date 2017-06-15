@@ -20,6 +20,7 @@ import Refine.Common.Prelude hiding (Generic, to)
 import           Control.Arrow (first, second)
 import           Control.DeepSeq
 import           Control.Monad.State
+import           Control.Lens (each)
 import           Data.Function (on)
 import           Data.Functor.Infix ((<$$>))
 import qualified Data.IntMap as IntMap
@@ -57,9 +58,6 @@ instance Arbitrary DataUID where
 
 instance Arbitrary ContributionID where
   arbitrary = arbitraryContribIDConstructor <*> arbitrary
-
-instance {-# OVERLAPPING #-} Arbitrary (Int -> ContributionID) where
-  arbitrary = arbitraryContribIDConstructor
 
 arbitraryContribIDConstructor :: Gen (Int -> ContributionID)
 arbitraryContribIDConstructor = elements
@@ -312,7 +310,11 @@ data RawContentWithMarks = RawContentWithMarks RawContent [(ContributionID, Sele
 instance Arbitrary RawContentWithMarks where
   arbitrary = do
     RawContentWithSelections rc (filter (not . selectionIsEmpty rc) -> sels) <- arbitrary
-    unnumbereds <- vectorOf (length sels) (arbitrary @(Int -> ContributionID))
+    unnumbereds <- vectorOf (length sels) arbitraryContribIDConstructor
     let numberit sel unnumbered i = (unnumbered i, sel)
         contribs = zipWith3 numberit sels unnumbereds [0..]
-    pure $ RawContentWithMarks (addMarksToRawContent contribs rc) contribs
+    pure $ RawContentWithMarks (addMarksToRawContent contribs $ deleteAllMarks rc) contribs
+   where
+    deleteAllMarks r = r & rawContentBlocks . each . blockStyles %~ filter (not . isMark . snd)
+    isMark Mark{} = True
+    isMark _ = False
