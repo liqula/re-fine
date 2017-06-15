@@ -291,6 +291,14 @@ data MarkSelector = MarkSelector MarkSelectorSide BlockKey Int Int
 data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom
   deriving (Eq, Ord, Show, Generic)
 
+renderMarkSelector :: MarkSelector -> ST
+renderMarkSelector (MarkSelector _ (BlockKey b) k i) =
+  "article span[data-offset-key=\"" <> b <> "-" <> cs (show k) <> "-" <> cs (show i) <> "\"]"
+
+renderMarkSelectorSide :: MarkSelectorSide -> ST
+renderMarkSelectorSide MarkSelectorTop    = "top"
+renderMarkSelectorSide MarkSelectorBottom = "bottom"
+
 
 -- * OT.Edit RawContent
 
