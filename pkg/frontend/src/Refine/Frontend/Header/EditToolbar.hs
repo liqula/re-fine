@@ -109,19 +109,34 @@ editToolbar ep = mkView "EditToolbar" $ do
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          iconButton_ $ editButton "Edit_toolbar_link"
-            & iconButtonPropsListKey      .~ "link"
-            & iconButtonPropsLabel        .~ case ep of
-                LinkButtonDisabled -> "links"
-                LinkButtonDeletes  -> "delete link"
-                LinkButtonAdds _   -> "add link"
-            & iconButtonPropsOnClick      .~ case ep of
-                LinkButtonDisabled -> error "impossible"
+          let props :: IbuttonProps [GlobalAction]
+              props = emptyIbuttonProps "Edit_toolbar_link" onclick
+                & ibListKey      .~ "link"
+                & ibLabel        .~ case ep of
+                    LinkButtonDisabled -> "links"
+                    LinkButtonDeletes  -> "delete link"
+                    LinkButtonAdds _   -> "add link"
+                & ibEnabled      .~ case ep of
+                    LinkButtonDisabled -> False
+                    _                  -> True
+                & ibSize         .~ XXLarge
+
+              onclick = case ep of
+                LinkButtonDisabled -> []
                 LinkButtonDeletes  -> [DocumentAction DocumentRemoveLink]
                 LinkButtonAdds l   -> [HeaderAction $ OpenEditToolbarLinkEditor l]
-            & iconButtonPropsDisabled     .~ case ep of
-                LinkButtonDisabled -> True
-                _                  -> False
+
+           in ibutton_ props
+
+
+          -- TODO: icon should be grayed out when disabled.
+
+          -- TODO: "add" action is not fired on click when enabled.  (this is true even before i
+          -- switched to the new ibutton_ component.  is this caused by the fact that ep is not
+          -- re-computed on selection state change, perhaps?  but then why does the layout change?)
+
+          -- TODO: style link edit toolbar extension a little.
+
 
           iconButton_ $ editButton mempty
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
