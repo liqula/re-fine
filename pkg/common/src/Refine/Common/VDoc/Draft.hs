@@ -47,33 +47,36 @@ import Refine.Common.Types.Comment
 emptyRawContent :: RawContent
 emptyRawContent = mkRawContent $ emptyBlock :| []
 
--- | Two points worth nothing here:
+-- | Collect all characters (non-newline whitespace is treates no different from letters) between
+-- two selection points.
+--
+-- Two points worth nothing here:
 --
 -- (1) 'SelectionState' is always defined, even if nothing is selected.  If `window.getSelection()`
 -- yields nothing, the selection state value in the editor state contains the empty selection (start
 -- point == end point).
 --
 -- (2) Since blocks can be empty, empty selections can range over many lines.
-selectionIsEmpty :: RawContent -> SelectionState -> Bool
-selectionIsEmpty (RawContent bs _) ss@(SelectionState _ s e) = s == e || multiLineCase
-  where
-    multiLineCase = case selectedBlocks ss (NEL.toList bs) of
-      []        -> True
-      [_]       -> assert (s /= e) False
-      (b : bs') -> and [ ST.length (b ^. blockText) == (s ^. selectionOffset)
-                       , e ^. selectionOffset == 0
-                       , all (ST.null . view blockText) (init bs')
-                       ]
-
-selectionText :: RawContent -> SelectionState -> ST
-selectionText (RawContent bs _) ss@(SelectionState _ s e) = case selectedBlocks ss (NEL.toList bs) of
+selectionText :: BlockBoundary -> RawContent -> SelectionState -> ST
+selectionText blockBoundary (RawContent bs _) ss@(SelectionState _ s e) = case selectedBlocks ss (NEL.toList bs) of
       []        -> ""
       [b]       -> ST.drop (s ^. selectionOffset) . ST.take (e ^. selectionOffset) $ b ^. blockText
-      (b : bs') -> ST.concat $
+      (b : bs') -> combine $
                          ST.drop (s ^. selectionOffset) (b ^. blockText)
                        : (((^. blockText) <$> init bs') <> [ST.take (e ^. selectionOffset) (last bs' ^. blockText)])
+  where
+    combine = case blockBoundary of
+      BlockBoundaryIsNewline -> ST.intercalate "\n"
+      BlockBoundaryIsEmpty   -> ST.concat
 
--- | alternative implementation (it would be interesting to benchmark both):
+-- | Check if 'selectionText' yields nothing (block bounderiers are treated as empty).
+selectionIsEmpty :: RawContent -> SelectionState -> Bool
+selectionIsEmpty rc = ST.null . selectionText BlockBoundaryIsEmpty rc
+
+data BlockBoundary = BlockBoundaryIsNewline | BlockBoundaryIsEmpty
+  deriving (Eq, Show)
+
+-- | alternative implementation for 'selectedBlocks' (it would be interesting to benchmark both):
 --
 -- >>> takeWhile1 ((/= Just ek) . (^. blockKey)) . dropWhile ((/= Just sk) . (^. blockKey))
 -- >>>

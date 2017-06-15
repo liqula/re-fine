@@ -28,11 +28,12 @@ import Refine.Common.Prelude
 import qualified Data.Set as Set
 import           Data.List.NonEmpty (NonEmpty((:|)))
 import qualified Data.List.NonEmpty as NEL
+import qualified Data.Text as ST
 import           Test.Aeson.GenericSpecs
 import           Test.Hspec
 import           Test.QuickCheck
 
-import Refine.Common.Test.Arbitrary ()
+import Refine.Common.Test.Arbitrary
 import Refine.Common.Test.Samples ()  -- (just importing it so we know it compiles.)
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft
@@ -46,6 +47,23 @@ spec = do
   describe "rawContentToVDocVersion, rawContentFromVDocVersion" $ do
     it "rawContentFromVDocVersion . rawContentToVDocVersion == id" . property $ \(rawContent :: RawContent) -> do
       rawContentFromVDocVersion (rawContentToVDocVersion rawContent) `shouldBe` rawContent
+
+  describe "selectionText" $ do
+    let -- old implementation that has been refactored away.  we keep it to check if the new code
+        -- still has the same meaning.
+        selectionIsEmptyAlternative :: RawContent -> SelectionState -> Bool
+        selectionIsEmptyAlternative (RawContent bs _) ss@(SelectionState _ s e) = s == e || multiLineCase
+          where
+            multiLineCase = case selectedBlocks ss (NEL.toList bs) of
+              []        -> True
+              [_]       -> assert (s /= e) False
+              (b : bs') -> and [ ST.length (b ^. blockText) == (s ^. selectionOffset)
+                               , e ^. selectionOffset == 0
+                               , all (ST.null . view blockText) (init bs')
+                               ]
+
+    it "works" . property $ \(RawContentWithSelections rc sels) -> do
+      (selectionIsEmpty rc <$> sels) `shouldBe` (selectionIsEmptyAlternative rc <$> sels)
 
   describe "mkSomeSegments" $ do
     it "works" $ do
