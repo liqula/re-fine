@@ -140,7 +140,12 @@ documentToggleStyle sty st = js_ES_toggleInlineStyle st (cs $ Draft.styleToST st
 documentToggleBlockType :: Draft.BlockType -> EditorState -> EditorState
 documentToggleBlockType bt st = js_ES_toggleBlockType st (cs $ Draft.blockTypeToST bt)
 
--- Turn the current selection to a link with the given url
+-- | Turn the current selection to a link with the given url
+--
+-- FUTUREWORK: this module should be about concepts known to draft.js, which excludes @LINK@.
+-- 'documentAddLink' should be replaced by the more general @documentAddEntity@ that all the
+-- arguments to the @createEntity@ method.  (Same with 'documentRemoveLink' and the foreign
+-- functions below.)
 documentAddLink :: String -> EditorState -> EditorState
 documentAddLink link st = js_ES_toggleLink st' (js_ES_getSelection st') entitykey
   where
@@ -148,7 +153,7 @@ documentAddLink link st = js_ES_toggleLink st' (js_ES_getSelection st') entityke
     entitykey = js_ES_getLastCreatedEntityKey content
     content = js_ES_createLink (getCurrentContent st) (cs link)
 
--- Remove links in the current selection
+-- | Remove links in the current selection
 documentRemoveLink :: EditorState -> EditorState
 documentRemoveLink st = js_ES_removeLink st (js_ES_getSelection st)
 
