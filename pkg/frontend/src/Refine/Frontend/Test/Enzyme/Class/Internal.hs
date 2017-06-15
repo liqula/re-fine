@@ -166,15 +166,15 @@ attr name wrapper = pFromJSVal <$> js_attr (pack name) (unWrap wrapper)
 
 #ifdef __GHCJS__
 
-foreign import javascript unsafe
+foreign import javascript safe
   "$2[$1]()"
   js_exec :: JSString -> JSVal -> IO JSVal
 
-foreign import javascript unsafe
+foreign import javascript safe
   "$2[$1]"
   js_attr :: JSString -> JSVal -> IO JSVal
 
-foreign import javascript unsafe
+foreign import javascript safe
   "$2[$1]($3)"
   js_exec_with_1_arg :: JSString -> JSVal -> JSVal -> IO JSVal
 
@@ -183,13 +183,13 @@ foreign import javascript unsafe
 -- good enough to write useful tests.)
 --
 -- TODO: should the third argument be 'JSString'?  or should we remove this entirely?
-foreign import javascript unsafe
+foreign import javascript safe
   "$2[$1](JSON.parse($3))"
   js_exec_with_object :: JSString -> JSVal -> JSVal -> IO JSVal
 
 -- | Write a 'JSVal' to stdout (node) or the console (browser). Should only be used for logging wrapped JavaScript objects.
 -- The first parameter can be used to briefly describe the log output.
-foreign import javascript unsafe
+foreign import javascript safe
   "console.log($1, $2);"
   js_console_log_jsval :: JSString -> JSVal -> IO ()
 

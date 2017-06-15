@@ -124,11 +124,11 @@ deriving instance ToJSVal (NoJSONRep JSVal)
 
 #ifdef __GHCJS__
 
-foreign import javascript unsafe
+foreign import javascript safe
   "$1 === $2"
   (===) :: JSVal -> JSVal -> Bool
 
-foreign import javascript unsafe
+foreign import javascript safe
   "$1 !== $2"
   (!==) :: JSVal -> JSVal -> Bool
 
@@ -139,8 +139,8 @@ foreign import javascript unsafe
 --    document.body                           && document.body.scrollTop            ||
 --    document.documentElement                && document.documentElement.scrollTop;
 -- ```
-foreign import javascript unsafe
-  "(function() { return pageYOffset; })()"
+foreign import javascript safe
+  "$r = pageYOffset"
   js_getScrollOffset :: IO Int
 
 -- FUTUREWORK: to make this smoother, check out
@@ -149,12 +149,12 @@ foreign import javascript unsafe
 -- https://github.com/bySabi/react-scrollchor;
 -- https://stackoverflow.com/questions/30495062/how-can-i-scroll-a-div-to-be-visible-in-reactjs#30497101;
 -- https://github.com/sitepoint-editors/smooth-scrolling
-foreign import javascript unsafe
+foreign import javascript safe
   "scrollBy(0, -pageYOffset)"
   js_scrollToPageTop :: IO ()
 
 -- see js_scrollToPageTop
-foreign import javascript unsafe
+foreign import javascript safe
   "scrollBy(0, $1-pageYOffset)"
   js_scrollToPx :: Int -> IO ()
 

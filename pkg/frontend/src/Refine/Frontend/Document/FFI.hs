@@ -191,109 +191,109 @@ getMarkSelectorBound mark@(Draft.MarkSelector side _ _) = js_getBoundingBox (ren
 
 #ifdef __GHCJS__
 
-foreign import javascript unsafe
+foreign import javascript safe
   "refine$getDraftSelectionStateViaBrowser()"
   js_getDraftSelectionStateViaBrowser :: IO JSVal
 
-foreign import javascript unsafe
+foreign import javascript safe
   "Draft.convertFromRaw(JSON.parse($1))"
   js_convertFromRaw :: JSString -> ContentState
 
-foreign import javascript unsafe
+foreign import javascript safe
   "JSON.stringify(Draft.convertToRaw($1))"
   js_convertToRaw :: ContentState -> JSString
 
-foreign import javascript unsafe
+foreign import javascript safe
   "refine$editorContentFromHtml($1)"
   js_convertFromHtml :: JSString -> ContentState
 
-foreign import javascript unsafe
+foreign import javascript safe
   "Draft.EditorState.createEmpty()"
   js_ES_createEmpty :: EditorState
 
-foreign import javascript unsafe
+foreign import javascript safe
   "Draft.EditorState.createWithContent($1, refine$linkDecorator)"
   js_ES_createWithContent :: ContentState -> EditorState
 
-foreign import javascript unsafe
+foreign import javascript safe
   "$1.getCurrentContent()"
   js_ES_getCurrentContent :: EditorState -> ContentState
 
-foreign import javascript unsafe
+foreign import javascript safe
   "Draft.EditorState.set($1, { currentContent: $2 })"
   js_ES_setCurrentContent :: EditorState -> ContentState -> EditorState
 
-foreign import javascript unsafe
+foreign import javascript safe
   "$1.createEntity('LINK', 'MUTABLE', { url: $2 })"
   js_ES_createLink :: ContentState -> JSString -> ContentState
 
-foreign import javascript unsafe
+foreign import javascript safe
   "$1.getLastCreatedEntityKey()"
   js_ES_getLastCreatedEntityKey :: ContentState -> JSString
 
-foreign import javascript unsafe
+foreign import javascript safe
   "console.log('traceEditorState', $1)"
   js_ES_traceEditorState :: EditorState -> IO ()
 
-foreign import javascript unsafe
+foreign import javascript safe
   "console.log('traceContentState', Draft.convertToRaw($1))"
   js_ES_traceContentState :: ContentState -> IO ()
 
-foreign import javascript unsafe
+foreign import javascript safe
   "console.log('traceContentInEditorState', Draft.convertToRaw($1.getCurrentContent()))"
   js_ES_traceContentInEditorState :: EditorState -> IO ()
 
-foreign import javascript unsafe
+foreign import javascript safe
   "Draft.ContentState.createFromText($1)"
   js_CS_createFromText :: JSString -> ContentState
 
-foreign import javascript unsafe
+foreign import javascript safe
   "DraftStateToHTML($1)"
   js_Draft_stateToHTML :: ContentState -> JSString
 
 -- | https://draftjs.org/docs/api-reference-rich-utils.html#content
-foreign import javascript unsafe
+foreign import javascript safe
   "Draft.RichUtils.toggleInlineStyle($1,$2)"
   js_ES_toggleInlineStyle :: EditorState -> JSString -> EditorState
 
 -- | https://draftjs.org/docs/api-reference-rich-utils.html#content
-foreign import javascript unsafe
+foreign import javascript safe
   "Draft.RichUtils.toggleLink($1,$2,$3)"
   js_ES_toggleLink :: EditorState -> JSVal{-SelectionState-} -> JSString -> EditorState
 
-foreign import javascript unsafe
+foreign import javascript safe
   "Draft.RichUtils.toggleBlockType($1,$2)"
   js_ES_toggleBlockType :: EditorState -> JSString -> EditorState
 
-foreign import javascript unsafe
+foreign import javascript safe
   "$1.getSelection()"
   js_ES_getSelection :: EditorState -> JSVal
 
-foreign import javascript unsafe
+foreign import javascript safe
   "$1.getIsBackward()"
   js_ES_getSelectionIsBackward :: JSVal -> Bool
 
-foreign import javascript unsafe
+foreign import javascript safe
   "$1.getStartKey()"
   js_ES_getSelectionStartKey :: JSVal -> JSString
 
-foreign import javascript unsafe
+foreign import javascript safe
   "$1.getStartOffset()"
   js_ES_getSelectionStartOffset :: JSVal -> Int
 
-foreign import javascript unsafe
+foreign import javascript safe
   "$1.getEndKey()"
   js_ES_getSelectionEndKey :: JSVal -> JSString
 
-foreign import javascript unsafe
+foreign import javascript safe
   "$1.getEndOffset()"
   js_ES_getSelectionEndOffset :: JSVal -> Int
 
-foreign import javascript unsafe
+foreign import javascript safe
   "refine$setSelectionState($1, JSON.parse($2))"
   js_ES_forceSelection :: EditorState -> JSString -> EditorState
 
-foreign import javascript unsafe
+foreign import javascript safe
   "document.querySelector($2).getBoundingClientRect()[$1]"
   js_getBoundingBox :: JSString -> JSString -> IO Int
 

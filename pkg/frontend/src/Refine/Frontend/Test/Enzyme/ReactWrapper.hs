@@ -74,7 +74,7 @@ mount comp = do
 
 #ifdef __GHCJS__
 
-foreign import javascript unsafe
+foreign import javascript safe
   "enzyme.mount($1)"
   js_mount :: ReactElementRef -> IO JSVal
 

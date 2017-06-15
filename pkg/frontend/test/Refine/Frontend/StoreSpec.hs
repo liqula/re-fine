@@ -77,7 +77,7 @@ spec = do
 
 #ifdef __GHCJS__
 
-foreign import javascript unsafe
+foreign import javascript safe
   "123.456"
   js_reproduce_issue_242 :: IO Int
 
