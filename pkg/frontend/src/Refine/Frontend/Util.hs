@@ -140,7 +140,7 @@ foreign import javascript unsafe
 --    document.documentElement                && document.documentElement.scrollTop;
 -- ```
 foreign import javascript unsafe
-  "(function() { return pageYOffset; })()"
+  "$r = pageYOffset"
   js_getScrollOffset :: IO Int
 
 -- FUTUREWORK: to make this smoother, check out
