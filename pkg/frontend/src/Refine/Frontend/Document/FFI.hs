@@ -194,7 +194,7 @@ getMarkSelectorBound mark@(Draft.MarkSelector side _ _) = js_getBoundingBox (ren
 
     renderMarkSelector :: Draft.MarkSelector -> JSString
     renderMarkSelector (Draft.MarkSelector _ (Draft.BlockKey b) i) =
-      "article span[data-offset-key=\"" <> cs b <> "-0-" <> cs (show i) <> "\""
+      "article span[data-offset-key=\"" <> cs b <> "-0-" <> cs (show i) <> "\"]"
 
 
 -- * foreign
