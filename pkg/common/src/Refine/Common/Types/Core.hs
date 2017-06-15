@@ -278,10 +278,14 @@ data SelectionPoint
 
 
 -- | Javascript: `document.querySelectorAll('article span[data-offset-key="2vutk-0-1"]');`.  The
--- offset-key is constructed from block key, a '0' literal, and the number of left siblings of the
--- span the selector refers to.
--- FIXME: rename this to Selector
-data MarkSelector = MarkSelector MarkSelectorSide BlockKey Int{-number of siblings-}
+-- offset-key is constructed from block key and two 'Int's.
+--
+-- The first 'Int' increments every time a decorator is encountered; the second one increments on
+-- every span and resets on every decorator.  'getEntitySelectors', 'getMarkSelectors',
+-- 'getSelectors' depend on this behavior.  See the resp. tests in pkg/frontend.
+--
+-- FIXME: rename this to 'DraftBlockSegmentSelector'?
+data MarkSelector = MarkSelector MarkSelectorSide BlockKey Int Int
   deriving (Eq, Ord, Show, Generic)
 
 data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom

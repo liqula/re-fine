@@ -260,22 +260,24 @@ data BlockId = BlockId Int{-block index-} BlockKey
 data SegId = SegId Int Bool{-last segment-}
     deriving (Eq, Ord)
 
+data IsEntityOrStyle = IsEntity | IsStyle
+
 getEntitySelectors :: RawContent -> [(EntityKey, MarkSelector, MarkSelector)]
 getEntitySelectors = error "not implemented"
 
 getMarkSelectors :: RawContent -> [(ContributionID, MarkSelector, MarkSelector)]
 getMarkSelectors
-    = getSelectors $ \(_, ss) -> [cid | Atom (Mark cid) <- Set.toList ss]
+    = getSelectors $ \(_, ss) -> [(IsStyle, cid) | Atom (Mark cid) <- Set.toList ss]
 
-getSelectors :: forall a . Ord a => (EntityStyles -> [a]) -> RawContent -> [(a, MarkSelector, MarkSelector)]
+getSelectors :: forall a . Ord a => (EntityStyles -> [(IsEntityOrStyle, a)]) -> RawContent -> [(a, MarkSelector, MarkSelector)]
 getSelectors collect
     = concatMap createRanges
-    . List.groupBy ((==) `on` fst) . sort
+    . List.groupBy ((==) `on` (snd . fst)) . List.sortBy (compare `on` (snd . fst))
     . mconcat
     . zipWith collectBlock [0..]
     . NEL.toList . rawContentToDoc
   where
-    collectBlock :: Int -> DocBlock -> [(a, ((BlockId, SegId), (BlockId, SegId)))]
+    collectBlock :: Int -> DocBlock -> [((IsEntityOrStyle, a), ((BlockId, SegId), (BlockId, SegId)))]
     collectBlock bix (DocBlock _ _ key elems)
       = [ (a, ((bid, six), (bid, six)))
         | (six, (styles, _)) <- addSegIds elems
@@ -288,10 +290,10 @@ getSelectors collect
     addSegIds :: [b] -> [(SegId, b)]
     addSegIds as = zip (zipWith SegId [0..] $ replicate (length as - 1) False <> [True]) as
 
-    createRanges :: [(a, ((BlockId, SegId), (BlockId, SegId)))] -> [(a, MarkSelector, MarkSelector)]
+    createRanges :: [((IsEntityOrStyle, a), ((BlockId, SegId), (BlockId, SegId)))] -> [(a, MarkSelector, MarkSelector)]
     createRanges [] = error "impossible"
-    createRanges arg@((a, _) : _) =
-        [ (a, MarkSelector MarkSelectorTop k1 o1, MarkSelector MarkSelectorBottom k2 o2)
+    createRanges arg@(((_, a), _) : _) =
+        [ (a, MarkSelector MarkSelectorTop k1 0 o1, MarkSelector MarkSelectorBottom k2 0 o2)  -- TODO: the '0' literal are wrong.
         | ((BlockId _ k1, SegId o1 _), (BlockId _ k2, SegId o2 _)) <- foldr addSelector [] $ snd <$> arg]
 
     addSelector (b1, e1) ((b2, e2): ss) | e1 `nextTo` b2 = (b1, e2): ss

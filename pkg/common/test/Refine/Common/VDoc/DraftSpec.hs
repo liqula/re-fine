@@ -85,19 +85,19 @@ spec = do
     it "works (single contrib spanning the entire block)" $ do
       let rawContent = mkRawContent $ mkBlock "1234567890" :| []
           marks      = [(cid0, SelectionState False (SelectionPoint block0 0) (SelectionPoint block0 4))]
-          want       = [(cid0, MarkSelector MarkSelectorTop block0 0, MarkSelector MarkSelectorBottom block0 0)]
+          want       = [(cid0, MarkSelector MarkSelectorTop block0 0 0, MarkSelector MarkSelectorBottom block0 0 0)]
       getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (single contrib spanning part of the block)" $ do
       let rawContent = mkRawContent $ mkBlock "1234567890" :| []
           marks      = [(cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block0 4))]
-          want       = [(cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 1)]
+          want       = [(cid0, MarkSelector MarkSelectorTop block0 0 1, MarkSelector MarkSelectorBottom block0 0 1)]
       getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (single contrib spanning the entire block, with an extra block style flying around)" $ do
       let rawContent = mkRawContent $ NEL.fromList [mkBlock "1234567890" & blockStyles .~ [((1, 2), Bold)]]
           marks      = [(cid0, SelectionState False (SelectionPoint block0 0) (SelectionPoint block0 4))]
-          want       = [(cid0, MarkSelector MarkSelectorTop block0 0, MarkSelector MarkSelectorBottom block0 2)]
+          want       = [(cid0, MarkSelector MarkSelectorTop block0 0 0, MarkSelector MarkSelectorBottom block0 0 2)]
       getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (one contrib in two parts)" $ do
@@ -105,8 +105,8 @@ spec = do
           marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block0 3))
                        , (cid0, SelectionState False (SelectionPoint block0 4) (SelectionPoint block0 7))
                        ]
-          want       = [ (cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 1)
-                       , (cid0, MarkSelector MarkSelectorTop block0 3, MarkSelector MarkSelectorBottom block0 3)
+          want       = [ (cid0, MarkSelector MarkSelectorTop block0 0 1, MarkSelector MarkSelectorBottom block0 0 1)
+                       , (cid0, MarkSelector MarkSelectorTop block0 0 3, MarkSelector MarkSelectorBottom block0 0 3)
                        ]
       getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
@@ -115,8 +115,8 @@ spec = do
           marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block1 1))
                        , (cid0, SelectionState False (SelectionPoint block1 2) (SelectionPoint block1 3))
                        ]
-          want       = [ (cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block1 0)
-                       , (cid0, MarkSelector MarkSelectorTop block1 2, MarkSelector MarkSelectorBottom block1 2)
+          want       = [ (cid0, MarkSelector MarkSelectorTop block0 0 1, MarkSelector MarkSelectorBottom block1 0 0)
+                       , (cid0, MarkSelector MarkSelectorTop block1 0 2, MarkSelector MarkSelectorBottom block1 0 2)
                        ]
       getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
@@ -125,8 +125,8 @@ spec = do
           marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block0 4))
                        , (cid1, SelectionState True (SelectionPoint block0 3) (SelectionPoint block0 7))
                        ]
-          want       = [ (cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 2)
-                       , (cid1, MarkSelector MarkSelectorTop block0 2, MarkSelector MarkSelectorBottom block0 3)
+          want       = [ (cid0, MarkSelector MarkSelectorTop block0 0 1, MarkSelector MarkSelectorBottom block0 0 2)
+                       , (cid1, MarkSelector MarkSelectorTop block0 0 2, MarkSelector MarkSelectorBottom block0 0 3)
                        ]
       getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
@@ -135,8 +135,8 @@ spec = do
           marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block1 3))
                        , (cid1, SelectionState True (SelectionPoint block1 1) (SelectionPoint block1 2))
                        ]
-          want       = [ (cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block1 2)
-                       , (cid1, MarkSelector MarkSelectorTop block1 1, MarkSelector MarkSelectorBottom block1 1)
+          want       = [ (cid0, MarkSelector MarkSelectorTop block0 0 1, MarkSelector MarkSelectorBottom block1 0 2)
+                       , (cid1, MarkSelector MarkSelectorTop block1 0 1, MarkSelector MarkSelectorBottom block1 0 1)
                        ]
       getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
@@ -145,8 +145,8 @@ spec = do
           marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block0 3))
                        , (cid1, SelectionState True (SelectionPoint block0 2) (SelectionPoint block0 4))
                        ]
-          want       = [ (cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 1)
-                       , (cid1, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 2)
+          want       = [ (cid0, MarkSelector MarkSelectorTop block0 0 1, MarkSelector MarkSelectorBottom block0 0 1)
+                       , (cid1, MarkSelector MarkSelectorTop block0 0 1, MarkSelector MarkSelectorBottom block0 0 2)
                        ]
       getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
@@ -155,8 +155,8 @@ spec = do
           marks      = [ (cid0, SelectionState False (SelectionPoint block0 3) (SelectionPoint block0 4))
                        , (cid1, SelectionState True (SelectionPoint block0 2) (SelectionPoint block0 4))
                        ]
-          want       = [ (cid0, MarkSelector MarkSelectorTop block0 2, MarkSelector MarkSelectorBottom block0 2)
-                       , (cid1, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 2)
+          want       = [ (cid0, MarkSelector MarkSelectorTop block0 0 2, MarkSelector MarkSelectorBottom block0 0 2)
+                       , (cid1, MarkSelector MarkSelectorTop block0 0 1, MarkSelector MarkSelectorBottom block0 0 2)
                        ]
       getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
@@ -165,8 +165,8 @@ spec = do
           marks      = [ (cid0, SelectionState False (SelectionPoint block0 2) (SelectionPoint block0 4))
                        , (cid1, SelectionState True (SelectionPoint block0 2) (SelectionPoint block0 4))
                        ]
-          want       = [ (cid0, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 1)
-                       , (cid1, MarkSelector MarkSelectorTop block0 1, MarkSelector MarkSelectorBottom block0 1)
+          want       = [ (cid0, MarkSelector MarkSelectorTop block0 0 1, MarkSelector MarkSelectorBottom block0 0 1)
+                       , (cid1, MarkSelector MarkSelectorTop block0 0 1, MarkSelector MarkSelectorBottom block0 0 1)
                        ]
       getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 

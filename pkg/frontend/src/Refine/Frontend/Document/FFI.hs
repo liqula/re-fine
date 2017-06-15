@@ -187,14 +187,14 @@ getDraftSelectionStateViaBrowser = do
 -- * marks
 
 getMarkSelectorBound :: Draft.MarkSelector -> IO Int
-getMarkSelectorBound mark@(Draft.MarkSelector side _ _) = js_getBoundingBox (renderSide side) (renderMarkSelector mark)
+getMarkSelectorBound mark@(Draft.MarkSelector side _ _ _) = js_getBoundingBox (renderSide side) (renderMarkSelector mark)
   where
     renderSide Draft.MarkSelectorTop = "top"
     renderSide Draft.MarkSelectorBottom = "bottom"
 
     renderMarkSelector :: Draft.MarkSelector -> JSString
-    renderMarkSelector (Draft.MarkSelector _ (Draft.BlockKey b) i) =
-      "article span[data-offset-key=\"" <> cs b <> "-0-" <> cs (show i) <> "\"]"
+    renderMarkSelector (Draft.MarkSelector _ (Draft.BlockKey b) k i) =
+      "article span[data-offset-key=\"" <> cs b <> "-" <> cs (show k) <> "-" <> cs (show i) <> "\"]"
 
 
 -- * foreign
