@@ -74,9 +74,9 @@ ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
                  else [decl "margin" (Px $ sizeInt (props ^. ibSize) `div` 5)])
 
       iconSty :: [Decl]
-      iconSty = [ decl "cursor" (Ident "pointer")
-                , decl "borderRadius" (Percentage 100)
-                ] <> css (props ^. ibSize)
+      iconSty = [decl "borderRadius" (Percentage 100)]
+             <> [decl "cursor" (Ident "pointer") | props ^. ibEnabled]
+             <> css (props ^. ibSize)
 
       bg :: BackgroundImage
       bg = BackgroundImage (props ^. ibImage) imageState
@@ -88,11 +88,11 @@ ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
             _                                                        -> BisDark
 
       spanSty :: [Decl]
-      spanSty = [ decl "cursor" (Ident "pointer")
-                , decl "color" textColor
+      spanSty = [ decl "color" textColor
                 , decl "fontSize" (Rem 0.75)
                 , decl "marginTop" (Rem 0.3125)
                 ]
+             <> [decl "cursor" (Ident "pointer") | props ^. ibEnabled]
         where
           textColor
             | not (props ^. ibEnabled)  = Color.DisabledTextColor
