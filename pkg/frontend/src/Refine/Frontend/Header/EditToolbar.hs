@@ -128,16 +128,6 @@ editToolbar ep = mkView "EditToolbar" $ do
 
            in ibutton_ props
 
-
-          -- TODO: icon should be grayed out when disabled.
-
-          -- TODO: "add" action is not fired on click when enabled.  (this is true even before i
-          -- switched to the new ibutton_ component.  is this caused by the fact that ep is not
-          -- re-computed on selection state change, perhaps?  but then why does the layout change?)
-
-          -- TODO: style link edit toolbar extension a little.
-
-
           iconButton_ $ editButton mempty
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
             & iconButtonPropsListKey      .~ "save"

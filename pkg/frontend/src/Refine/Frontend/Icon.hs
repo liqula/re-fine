@@ -49,6 +49,7 @@ import           Refine.Frontend.Util
 
 -- * icons buttons
 
+-- | FIXME: ibutton must not contain divs, so we can use it inside spans.
 ibutton :: IbuttonOnClick onclick => View '[IbuttonProps onclick]
 ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
   let onMsOvr :: [PropertyOrHandler (StatefulViewEventHandler Bool)]
@@ -73,6 +74,7 @@ ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
                       ]
                  else [decl "margin" (Px $ sizeInt (props ^. ibSize) `div` 5)])
 
+      -- FUTUREWORK: do we want to have grayed-out images for all buttons?
       iconSty :: [Decl]
       iconSty = [decl "borderRadius" (Percentage 100)]
              <> [decl "cursor" (Ident "pointer") | props ^. ibEnabled]

@@ -275,7 +275,7 @@ contributionDialogTextForm stepNumber promptText = do
   form_ [ "target" $= "#"
         , "action" $= "POST"] $ do
     textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
-              , "className" $= "o-wysiwyg o-form-input__textarea"
+              , "className" $= "o-form-input__textarea"
               , "style" @@=
                       [ decl "resize" (Ident "none")
                       , decl "width" (Px 600)

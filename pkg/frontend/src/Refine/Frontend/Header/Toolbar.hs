@@ -171,6 +171,10 @@ newtype EditKindFormProps = EditKindFormProps (Maybe EditKind)
 
 instance UnoverlapAllEq EditKindFormProps
 
+
+-- FIXME: some of the rest of this module should probably go to EditToolbar.hs?
+
+
 -- | FIXME: this component should be moved closer to "Refine.Frontend.Contribution.Dialog".  (not
 -- sure about the structure in general.  perhaps more code shuffling is indicated at some point.)
 editKindForm :: (EditKind -> GlobalAction) -> View '[EditKindFormProps]
