@@ -70,10 +70,14 @@ getDraftSelectionStateViaBrowser_2 :: Either JSString SelectionState
 getDraftSelectionStateViaBrowser_2 = Left "some unknown error" :: Either JSString SelectionState
 
 getDraftSelectionStateViaBrowser_3 :: Either JSString SelectionState
-getDraftSelectionStateViaBrowser_3 = Right (SelectionState False (SelectionPoint (BlockKey "block1") 3) (SelectionPoint (BlockKey "block1") 3))
+getDraftSelectionStateViaBrowser_3 = Right . toSelection $ Range
+  (toSelectionPoint (Position (BlockIndex 1 (BlockKey "block1")) 3))  -- TODO: not sure about the block indices here?
+  (toSelectionPoint (Position (BlockIndex 1 (BlockKey "block1")) 3))  -- TODO: not sure about the block indices here?
 
 getDraftSelectionStateViaBrowser_4 :: Either JSString SelectionState
-getDraftSelectionStateViaBrowser_4 = Right (SelectionState True (SelectionPoint (BlockKey "fj6g6") 266) (SelectionPoint (BlockKey "fj6g6") 360))
+getDraftSelectionStateViaBrowser_4 = Right . toSelection $ Range
+  (toSelectionPoint (Position (BlockIndex 0 (BlockKey "fj6g6")) 266))  -- TODO: not sure about the block indices here?
+  (toSelectionPoint (Position (BlockIndex 0 (BlockKey "fj6g6")) 360))  -- TODO: not sure about the block indices here?
 
 #ifdef __GHCJS__
 
@@ -90,11 +94,11 @@ foreign import javascript safe
   js_getDraftSelectionStateViaBrowser_2 :: JSVal
 
 foreign import javascript safe
-  "{ Right: { _selectionIsBackward: false, _selectionStart: {_selectionBlock: 'block1', _selectionOffset: 3}, _selectionEnd: {_selectionBlock: 'block1', _selectionOffset: 3} } }"
+  "{ Right: { _selectionIsBackward: false, _selectionStart: {_blockIndex: 'block1', _columnIndex: 3}, _selectionEnd: {_blockIndex: 'block1', _columnIndex: 3} } }"
   js_getDraftSelectionStateViaBrowser_3 :: JSVal
 
 foreign import javascript safe
-  "{Right:{_selectionIsBackward:true,_selectionStart:{_selectionBlock:\"fj6g6\",_selectionOffset:266},_selectionEnd:{_selectionBlock:\"fj6g6\",_selectionOffset:360}}}"
+  "{Right:{_selectionIsBackward:true,_selectionStart:{_blockIndex:\"fj6g6\",_columnIndex:266},_selectionEnd:{_blockIndex:\"fj6g6\",_columnIndex:360}}}"
   js_getDraftSelectionStateViaBrowser_4 :: JSVal
 
 #else

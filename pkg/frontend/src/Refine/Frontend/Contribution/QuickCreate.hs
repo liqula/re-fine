@@ -65,17 +65,17 @@ instance IconButtonPropsOnClick QuickCreateSide where
   defaultOnClick = QuickCreateComment
 
 
-mkQuickCreateOffset :: Range -> ScreenState -> Int
+mkQuickCreateOffset :: SelectionStateWithPx -> ScreenState -> Int
 mkQuickCreateOffset range screenState =
     mkQuickCreateRangeTop range screenState +
     mkQuickCreateRangePos range
 
 -- | This is the offset from the bottom of the toolbar.
-mkQuickCreateRangeTop :: Range -> ScreenState -> Int
+mkQuickCreateRangeTop :: SelectionStateWithPx -> ScreenState -> Int
 mkQuickCreateRangeTop range = offsetIntoText
     (offsetFromDocumentTop (range ^. rangeTopOffset) (range ^. rangeScrollOffset))
 
-mkQuickCreateRangePos :: Range -> Int
+mkQuickCreateRangePos :: SelectionStateWithPx -> Int
 mkQuickCreateRangePos range = if useIdealCenter then idealCenter else edgePosition
   where
     offsetFromTop   = range ^. rangeDocTopOffset

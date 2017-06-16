@@ -217,7 +217,9 @@ showQuestion_ :: ShowQuestionProps -> ReactElementM eventHandler ()
 showQuestion_ !props = view_ showQuestion "showQuestion_" props
 
 
-addContributionDialogFrame :: Bool -> ST -> Maybe Range -> Int -> ReactElementM ViewEventHandler () -> ReactElementM ViewEventHandler ()
+addContributionDialogFrame
+    :: Bool -> ST -> Maybe SelectionStateWithPx -> Int
+    -> ReactElementM ViewEventHandler () -> ReactElementM ViewEventHandler ()
 addContributionDialogFrame False _ _ _ _ = pure ()
 addContributionDialogFrame True title mrange windowWidth child =
     let top = case mrange of

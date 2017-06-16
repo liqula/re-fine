@@ -33,7 +33,7 @@ import Refine.Frontend.Prelude
 import           Control.Concurrent (forkIO, yield, threadDelay)
 import qualified Data.Map.Strict as M
 
-import           Refine.Common.Types (CompositeVDoc(..))
+import           Refine.Common.Types (CompositeVDoc(..), Range(..), Position)
 import qualified Refine.Common.Types as C
 import           Refine.Common.VDoc.Draft
 import           Refine.Common.Rest (ApiError(..))
@@ -369,15 +369,15 @@ dispatchAndExecMany as = liftIO . void . forkIO $ do
 
 -- FIXME: move this section to somewhere in Document.* modules, together with the Range type.
 
-gsChunkRange :: Lens' GlobalState C.ChunkRange
+gsChunkRange :: Lens' GlobalState (Range Position)
 gsChunkRange f gs = outof <$> f (into gs)
   where
-    into :: GlobalState -> C.ChunkRange
-    into s = fromMaybe (C.ChunkRange Nothing Nothing)
-               (s ^? gsContributionState . csCurrentRange . _Just . rangeSelectionState)
+    into :: GlobalState -> Range Position
+    into s = fromMaybe (selectEverything $ s  ^?! gsDocumentState . documentStateContent)
+               (s ^? gsContributionState . csCurrentRange . _Just . rangeSelectionState . C.selectionRange)
 
-    outof :: C.ChunkRange -> GlobalState
-    outof r = gs & gsContributionState . csCurrentRange . _Just . rangeSelectionState .~ r
+    outof :: C.Range Position -> GlobalState
+    outof r = gs & gsContributionState . csCurrentRange . _Just . rangeSelectionState . C.selectionRange .~ r
 
 -- | See also: 'Range' type.  Empty selection (start point == end point) counts as no selection, and
 -- triggers a 'ClearRange' action to be emitted.  Only call this in `readOnly` mode.
@@ -392,7 +392,9 @@ getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
     Left err -> do
       consoleLogJSONM "getRangeSelection: error" err
       pure $ Just ClearRange
-    Right sel | selectionIsEmpty (dstate ^?! documentStateContent) sel -> do
+    Right sel | selectionIsEmpty (dstate ^?! documentStateContent)
+              . C._selectionRange
+              $ C.fromSelectionState (dstate ^?! documentStateContent) sel -> do
       pure $ Just ClearRange
     Right sel -> Just . SetRange <$> do
       topOffset    <- liftIO js_getRangeTopOffset
@@ -400,8 +402,8 @@ getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
       scrollOffset <- liftIO js_getScrollOffset
       let doctop = scrollOffset + if sel ^. C.selectionIsBackward then topOffset else bottomOffset
 
-      pure Range
-        { _rangeSelectionState = selectionStateToChunkRange (dstate ^?! documentStateContent) sel
+      pure SelectionStateWithPx
+        { _rangeSelectionState = C.fromSelectionState (dstate ^?! documentStateContent) sel
         , _rangeDocTopOffset   = OffsetFromDocumentTop  doctop
         , _rangeTopOffset      = OffsetFromViewportTop  topOffset
         , _rangeBottomOffset   = OffsetFromViewportTop  bottomOffset

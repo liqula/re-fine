@@ -116,5 +116,5 @@ addEdit baseeid edit = do
 
 -- | Throw an error if chunk range does not fit 'VDocVersion' identified by edit.
 -- FIXME: for RawContent this still needs to be implemented.
-validateCreateChunkRange :: ID Edit -> ChunkRange -> App ()
+validateCreateChunkRange :: ID Edit -> Range Position -> App ()
 validateCreateChunkRange _ _ = pure ()  -- throwError AppVDocVersionError

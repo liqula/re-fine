@@ -30,6 +30,7 @@ import Refine.Frontend.Prelude hiding (property)
 
 import Data.List.NonEmpty (NonEmpty((:|)))
 import qualified Data.List.NonEmpty as NEL
+import qualified Data.Map as Map
 import Test.Hspec
 import Test.QuickCheck
 
@@ -49,7 +50,6 @@ import Refine.Frontend.Test.Enzyme
 import Refine.Frontend.ThirdPartyViews
 import Refine.Frontend.Test.Store
 
-
 spec :: Spec
 spec = do
   describe "Samples" $ do
@@ -66,26 +66,26 @@ spec = do
 
     it "regression.4" $ do
       let rawContent = mkRawContent . (:| []) $ mkBlock "rF.." & blockEntityRanges .~
-              [ (EntityLink "http://www.example.com", (0,1))
-              , (EntityLink "http://www.example.com", (1,1))
-              , (EntityLink "http://www.example.com", (2,1))
-              , (EntityLink "http://www.example.com", (3,1))
+              [ (EntityLink "http://www.example.com", EntityRange 0 1)
+              , (EntityLink "http://www.example.com", EntityRange 1 1)
+              , (EntityLink "http://www.example.com", EntityRange 2 1)
+              , (EntityLink "http://www.example.com", EntityRange 3 1)
               ]
           rawContent' = sanitizeRCHack rawContent
-      NEL.head (rawContent' ^. rawContentBlocks) ^. blockEntityRanges `shouldBe` [(EntityKey {_unEntityKey = 0},(0,4))]
+      NEL.head (rawContent' ^. rawContentBlocks) ^. blockEntityRanges `shouldBe` [(EntityKey {_unEntityKey = 0}, EntityRange 0 4)]
 
     it "regression.3" $ do
-      let rawContent = mkRawContent . (:| []) $  mkBlock "rF" & blockEntityRanges .~ [(EntityLink "http://www.example.com", (0,2))]
+      let rawContent = mkRawContent . (:| []) $  mkBlock "rF" & blockEntityRanges .~ [(EntityLink "http://www.example.com", EntityRange 0 2)]
           rawContent' = sanitizeRCHack rawContent
       rawContent' `shouldBe` rawContent
 
     it "regression.2" $ do
-      let rawContent = mkRawContent . (:| []) $ mkBlock "rF" & blockStyles .~ [((0,1),Italic),((1,1),Italic),((1,1),Italic),((0,1),Bold)]
+      let rawContent = mkRawContent . (:| []) $ mkBlock "rF" & blockStyles .~ [(EntityRange 0 1, Italic), (EntityRange 1 1,Italic), (EntityRange 1 1, Italic), (EntityRange 0 1, Bold)]
           rawContent' = sanitizeRCHack rawContent
-      NEL.head (rawContent' ^. rawContentBlocks) ^. blockStyles `shouldBe` [((0,1),Bold),((0,2),Italic)]
+      NEL.head (rawContent' ^. rawContentBlocks) ^. blockStyles `shouldBe` [(EntityRange 0 1, Bold), (EntityRange 0 2, Italic)]
 
     it "regression.1" $ do
-      let rawContent = mkRawContent . (:| []) $ mkBlock "rF" & blockStyles .~ [((0,1),Italic)]
+      let rawContent = mkRawContent . (:| []) $ mkBlock "rF" & blockStyles .~ [(EntityRange 0 1, Italic)]
           rawContent' = sanitizeRCHack rawContent
       decode (encode rawContent) `shouldBe` Just rawContent
       rawContent' `shouldBe` rawContent
@@ -97,14 +97,14 @@ spec = do
         pending
 
     describe "getMarkSelectors" $ do
-      it "works (within RawContent)" . property $ \(RawContentWithMarks rc contribs) -> do
+      it "works (between RawContent and DOM)" . property $ \rc -> do
         let msels :: [(ContributionID, MarkSelector, MarkSelector)]
             msels = getMarkSelectors rc
-        sort ((\(cid, _, _) -> cid) <$> msels) `shouldBe` sort (fst <$> contribs)
 
-      it "works (between RawContent and DOM)" . property $ \(RawContentWithMarks rc contribs) -> do
-        let msels :: [(ContributionID, MarkSelector, MarkSelector)]
-            msels = getMarkSelectors rc
+            RawContentSeparateStyles _ stys = separateStyles rc
+            contribs = [ (cid, r)
+                       | (Right (Mark cid), rs) <- Map.toList stys
+                       , r <- unRanges rs]
 
         -- render the document component and retrieve the contents of the marks via the browser
         -- selection api (not draft/react, since 'MarkSelector' is referencing DOM nodes).
@@ -119,7 +119,7 @@ spec = do
         forM_ (zip (sort contribs) (sort msels)) $ \((cid, sel), (cid', beginpoint, endpoint)) -> do
           cid `shouldBe` cid'
           have <- js_getRawContentBetweenElems (cs $ renderMarkSelector beginpoint) (cs $ renderMarkSelector endpoint)
-          cs have `shouldBe` selectionText rc sel
+          cs have `shouldBe` selectionText BlockBoundaryIsNewline rc (styleRangeToSelectionState rc sel)
 
 
   describe "Draft" $ do

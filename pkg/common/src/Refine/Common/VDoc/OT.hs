@@ -132,13 +132,19 @@ showEditAsDoc edits
     noStyle = mempty
 
 
--- Auxiliary types used only in docEditRanges
-type SelRange = (SelPoint, SelPoint)
-type SelPoint = ((Int, BlockKey), (Int, OffsetPos))
-type OffsetPos = (Bool{-begin-}, Bool{-end-})
-
-docEditRanges :: Edit RawContent -> RawContent -> [SelectionState]
-docEditRanges edits = docRanges elemChanged . showEditAsDoc (concat (coerce edits :: [Edit OTDoc])) . rawContentToDoc
+docEditRanges :: Edit RawContent -> RawContent -> Ranges Position
+docEditRanges edits rc
+    = mconcat
+    . map snd
+    . docRanges True elemLength (\x -> [() | elemChanged x])
+    . docToRawContent
+    . showEditAsDoc (concat (coerce edits :: [Edit OTDoc]))
+    $ rawContentToDoc rc
+  where
+    elemLength :: LineElem -> Int
+    elemLength ((_, ss), NonEmptyST txt)
+        | Atom StyleAdded `Set.member` ss = 0
+        | otherwise = ST.length txt
 
 elemChanged :: LineElem -> Bool
 elemChanged ((_, ss), _)
@@ -147,46 +153,31 @@ elemChanged ((_, ss), _)
     || Atom StyleChanged `Set.member` ss
 
 -- Refactoring: unify with Draft.getSelectors
-docRanges :: (LineElem -> Bool) -> OTDoc -> [SelectionState]
-docRanges includeelem
-    = concatMap toSelState
-    . foldr addRange []
+docRanges :: forall a . Ord a => Bool -> (LineElem -> Int) -> (LineElem -> [a]) -> RawContent -> [(a, Ranges Position)]
+docRanges allowemptyranges elemlength includeelem rc
+    = map mkRanges
+    . groupBy ((==) `on` fst) . sortBy (compare `on` fst)
     . concat . zipWith blockRanges [(0::Int)..]
     . NEL.toList
+    $ rawContentToDoc rc
   where
-    blockRanges :: Int -> DocBlock -> [SelRange]
-    blockRanges col (DocBlock _ _ key elems) = concat $ zipWith3 elemRanges offs' (tail offs') elems
+    blockRanges :: Int -> DocBlock -> [(a, Range Position)]
+    blockRanges r (DocBlock _ _ key elems) = concat $ zipWith3 elemRanges offs (tail offs) elems
       where
+        bi = BlockIndex r key
+
         offs :: [Int]
-        offs = scanl (+) 0 $ elemLength <$> elems
+        offs = scanl (+) 0 $ elemlength <$> elems
 
-        offs' :: [(Int, OffsetPos)]
-        offs' = zip offs . zip (True: repeat False) $ replicate (length offs - 1) False <> [True]
-
-        elemRanges :: (Int, OffsetPos) -> (Int, OffsetPos) -> LineElem -> [SelRange]
+        elemRanges :: Int -> Int -> LineElem -> [(a, Range Position)]
         elemRanges beg end le =
-            [ (((col, key), beg), ((col, key), end)) | includeelem le]
+            [ (a, RangeInner x y) | a <- includeelem le]
+          where
+            x = Position bi beg
+            y = Position bi end
 
-    elemLength :: LineElem -> Int
-    elemLength ((_, ss), NonEmptyST txt)
-        | Atom StyleAdded `Set.member` ss = 0
-        | otherwise = ST.length txt
-
-    addRange :: SelRange -> [SelRange] -> [SelRange]
-    addRange x [] = [x]
-    addRange r@(beg, e) rs@((b, end): rs')
-        | e `nextTo` b = (beg, end): rs'
-        | otherwise = r: rs
-
-    nextTo :: SelPoint -> SelPoint -> Bool
-    a `nextTo` b | a == b = True
-    ((i, _), (_, (_, True))) `nextTo` ((j, _), (_, (True, _))) | j == i+1 = True
-    _ `nextTo` _ = False
-
-    toSelState :: SelRange -> [SelectionState]
-    toSelState (((_, k1), (o1, _)), ((_, k2), (o2, _)))
-        = [SelectionState False (SelectionPoint k1 o1) (SelectionPoint k2 o2)]
-
+    mkRanges xs@((a, _): _) = (a, mconcat $ rangesFromRange allowemptyranges . snd <$> xs)
+    mkRanges _ = error "impossible"
 
 -- | Take a document in diff mode, a number of blocks to keep preceeding and succeeding each changed
 -- block, resp., and returns with all sequences of blocks far away from any change replaced by a

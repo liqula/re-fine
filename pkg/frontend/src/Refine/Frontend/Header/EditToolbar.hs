@@ -26,7 +26,7 @@ module Refine.Frontend.Header.EditToolbar where
 
 import Refine.Frontend.Prelude
 
-import           Refine.Common.Types (BlockType(..), Style(..), Atom(..), Entity(..), rawContentToDoc)
+import           Refine.Common.Types
 import           Refine.Common.VDoc.OT (docRanges)
 import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Document.Types
@@ -43,13 +43,14 @@ data EditToolbarProps
 mkEditToolbarProps :: GlobalState -> EditToolbarProps
 mkEditToolbarProps st
     | selectionIsEmpty rc sel = LinkButtonDisabled
-    | any (doSelectionsOverlap rc sel) linkranges = LinkButtonDeletes
+    | any (doRangesOverlap sel) linkranges = LinkButtonDeletes
     | otherwise = LinkButtonAdds . cs $ selectionText BlockBoundaryIsEmpty rc sel
   where
     es = st ^. gsDocumentState . documentStateVal
-    sel = getSelection es
+    sel = _selectionRange . fromSelectionState rc $ getSelection es
     rc = convertToRaw $ getCurrentContent es
-    linkranges = docRanges (\((Atom l, _), _) -> isLink l) (rawContentToDoc rc)
+    linkranges = map (styleRangeToSelectionState rc) . unRanges . mconcat . map (rangesToStyleRanges rc . snd)
+        $ docRanges False lineElemLength (\((Atom l, _), _) -> [() | isLink l]) rc
       where
         isLink (Just (EntityLink _)) = True
         isLink _ = False

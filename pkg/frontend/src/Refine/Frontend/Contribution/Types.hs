@@ -76,11 +76,10 @@ mapFromValue = withObject "MarkPositions"
 
 -- * Contribution
 
--- | TODO: give record selectors to all fields.
 data ContributionAction =
-    RequestSetRange -- ^ FIXME: move this to 'DocumentAction'
-  | SetRange Range  -- ^ FIXME: move this to 'DocumentAction'
-  | ClearRange      -- ^ FIXME: move this to 'DocumentAction'
+    RequestSetRange
+  | SetRange SelectionStateWithPx
+  | ClearRange
   | ShowContributionDialog ContributionID
   | HideContributionDialog
   | ShowCommentEditor
@@ -96,7 +95,7 @@ data ContributionAction =
 
 
 data ContributionState = ContributionState
-  { _csCurrentRange             :: Maybe Range
+  { _csCurrentRange             :: Maybe SelectionStateWithPx
   , _csCommentKind              :: Maybe CommentKind
   , _csDisplayedContributionID  :: Maybe ContributionID
   , _csActiveDialog             :: Maybe ActiveDialog
@@ -180,7 +179,7 @@ instance UnoverlapAllEq BubbleProps
 data QuickCreateProps = QuickCreateProps
   { _quickCreateSide        :: QuickCreateSide
   , _quickCreateShowState   :: QuickCreateShowState
-  , _quickCreateRange       :: Maybe Range
+  , _quickCreateRange       :: Maybe SelectionStateWithPx
   , _quickCreateScreenState :: ScreenState
   }
   deriving (Show, Eq)
@@ -243,7 +242,7 @@ instance UnoverlapAllEq ShowQuestionProps
 
 data AddContributionProps kind = AddContributionProps
   { _acpVisible       :: Bool
-  , _acpRange         :: Maybe Range
+  , _acpRange         :: Maybe SelectionStateWithPx
   , _acpKind          :: Maybe kind
   , _acpWindowWidth   :: Int
   }

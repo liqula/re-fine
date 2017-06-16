@@ -37,6 +37,7 @@ import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
+import           Refine.Frontend.Document.FFI.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Screen.Calculations
@@ -53,9 +54,8 @@ documentStateUpdate (DocumentAction (DocumentSave _)) (view gsVDoc -> Just cvdoc
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- FIXME: store last state before edit in DocumentStateEdit, and restore it from there?
 
 documentStateUpdate (HeaderAction (StartEdit kind)) gs (DocumentStateView estate rc)
-  = let sel = fromMaybe (selectEverything rc)
-            $ chunkRangeToSelectionState (convertToRaw $ getCurrentContent estate)  -- FIXME: #312
-          <$> gs ^? gsContributionState . csCurrentRange . _Just . rangeSelectionState
+  = let sel = toSelectionState . fromMaybe (toSelection $ selectEverything rc)
+            $ gs ^? gsContributionState . csCurrentRange . _Just . rangeSelectionState
     in DocumentStateEdit (forceSelection estate sel) kind
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
@@ -103,9 +103,9 @@ documentStateUpdate (AddEdit _) (view gsVDoc -> Just cvdoc) _state
 documentStateUpdate (DocumentAction DocumentCancelSave) (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (ContributionAction (SetRange (view rangeSelectionState -> sel))) _ ((^? documentStateContent) -> Just rc)
+documentStateUpdate (ContributionAction (SetRange range)) _ ((^? documentStateContent) -> Just rc)
   = mkDocumentStateView
-  . addMarksToRawContent [(ContribIDHighlightMark, chunkRangeToSelectionState rc sel)]
+  . addMarksToRawContent [(ContribIDHighlightMark, range ^. rangeSelectionState . selectionRange)]
   . deleteMarksFromRawContentIf (== ContribIDHighlightMark)
   $ rc
 
@@ -127,7 +127,6 @@ editorStateToVDocVersion = rawContentToVDocVersion . convertToRaw . getCurrentCo
 editorStateFromVDocVersion :: VDocVersion -> EditorState
 editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
 
-
 -- | construct a 'SetMarkPositions' action.
 setMarkPositions :: MonadIO m => DocumentState -> m ContributionAction
 setMarkPositions (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
@@ -136,8 +135,8 @@ setMarkPositions (convertToRaw . getCurrentContent . view documentStateVal -> ra
 
         getPos :: (ContributionID, MarkSelector, MarkSelector) -> IO (ContributionID, MarkPosition)
         getPos (cid, top, bot) = do
-          topOffset    <- OffsetFromViewportTop  <$> getMarkSelectorBound top
-          bottomOffset <- OffsetFromViewportTop  <$> getMarkSelectorBound bot
+          topOffset    <- OffsetFromViewportTop  <$> getMarkSelectorBound MarkSelectorTop    top
+          bottomOffset <- OffsetFromViewportTop  <$> getMarkSelectorBound MarkSelectorBottom bot
           scrollOffset <- ScrollOffsetOfViewport <$> js_getScrollOffset
           let markPosition = MarkPosition
                 { _markPositionTop    = offsetFromDocumentTop topOffset    scrollOffset

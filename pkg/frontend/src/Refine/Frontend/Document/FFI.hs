@@ -162,13 +162,12 @@ documentRemoveLink st = js_ES_removeLink st (js_ES_getSelection st)
 -- | https://draftjs.org/docs/api-reference-editor-state.html#getselection
 --
 -- Draft never actually nulls this field.  There is always have a selection, but start and end point
--- may be identical.  See 'selectionIsEmpty', 'getRangeAction' for context.
+-- may be identical.  See 'isEmptyRange', 'getRangeAction' for context.
 getSelection :: EditorState -> Draft.SelectionState
 getSelection (js_ES_getSelection -> sel) =
-  Draft.SelectionState
-    (js_ES_getSelectionIsBackward sel)
-    (Draft.SelectionPoint (Draft.BlockKey . cs $ js_ES_getSelectionStartKey sel) (js_ES_getSelectionStartOffset sel))
-    (Draft.SelectionPoint (Draft.BlockKey . cs $ js_ES_getSelectionEndKey sel)   (js_ES_getSelectionEndOffset sel))
+  (if js_ES_getSelectionIsBackward sel then Draft.toBackwardSelection else Draft.toSelection) $ Draft.Range
+    (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionStartKey sel) (js_ES_getSelectionStartOffset sel))
+    (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionEndKey sel)   (js_ES_getSelectionEndOffset sel))
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#forceselection
 forceSelection :: EditorState -> Draft.SelectionState -> EditorState
@@ -186,9 +185,9 @@ getDraftSelectionStateViaBrowser = do
 
 -- * marks
 
-getMarkSelectorBound :: Draft.MarkSelector -> IO Int
-getMarkSelectorBound mark@(Draft.MarkSelector side _ _ _) =
-  js_getBoundingBox (cs $ Draft.renderMarkSelectorSide side) (cs $ Draft.renderMarkSelector mark)
+getMarkSelectorBound :: MarkSelectorSide -> Draft.MarkSelector -> IO Int
+getMarkSelectorBound side mark =
+  js_getBoundingBox (cs $ renderMarkSelectorSide side) (cs $ Draft.renderMarkSelector mark)
 
 
 -- * foreign

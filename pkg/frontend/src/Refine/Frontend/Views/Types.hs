@@ -32,12 +32,12 @@ import           React.Flux (UnoverlapAllEq)
 import           Refine.Common.Types (ContributionID, CompositeDiscussion, Note, Edit)
 import           Refine.Frontend.Contribution.Types (MarkPositions, BubblePositioning, QuickCreateShowState)
 import           Refine.Frontend.Screen.Types (ScreenState)
-import           Refine.Frontend.Types (Range)
+import           Refine.Frontend.Types (SelectionStateWithPx)
 
 
 data AsideProps = AsideProps
   { _asideMarkPositions     :: MarkPositions
-  , _asideCurrentRange      :: Maybe Range
+  , _asideCurrentRange      :: Maybe SelectionStateWithPx
   , _asideHighlighteds      :: [ContributionID]
   , _asideScreenState       :: ScreenState
   , _asideDiscussions       :: [CompositeDiscussion]

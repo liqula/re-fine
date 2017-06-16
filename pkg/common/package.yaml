@@ -33,6 +33,7 @@ dependencies:
   - natural-transformation
   - patience
   - QuickCheck
+  - checkers
   - quickcheck-instances
   - refine-prelude
   - servant
@@ -58,9 +59,10 @@ tests:
       - blaze-html
       - blaze-markup
       - hspec
-      - hspec-core
       - hspec-golden-aeson
 #      - lens-properties
       - QuickCheck
+      - checkers
+      - hspec-checkers
       - quickcheck-instances
       - xml-html-qq

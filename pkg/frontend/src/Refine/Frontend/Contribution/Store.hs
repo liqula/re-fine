@@ -53,7 +53,7 @@ contributionStateUpdate a = localAction a . globalAction a
       & csActiveDialog             %~ activeDialogUpdate action
 
 
-currentRangeUpdate :: ContributionAction -> Maybe Range -> Maybe Range
+currentRangeUpdate :: ContributionAction -> Maybe SelectionStateWithPx -> Maybe SelectionStateWithPx
 currentRangeUpdate action = case action of
   SetRange range -> const (Just range)
   ClearRange     -> const Nothing

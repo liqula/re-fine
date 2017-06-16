@@ -210,9 +210,11 @@ specMockedLogin = around createDevModeTestSession $ do
         un :: Username <- postJSON loginUri $ Login "username" "password"
         liftIO $ un `shouldBe` "username"
         fe_ :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
+        let cp1 = Position (BlockIndex 0 $ BlockKey "0") 0
+            cp2 = Position (BlockIndex 0 $ BlockKey "0") 1
         fn_ :: Note          <- postJSON
             (addNoteUri (fe_ ^. compositeVDoc . vdocHeadEdit))
-            (CreateNote "[note]" True (ChunkRange Nothing Nothing))
+            (CreateNote "[note]" True (Range cp1 cp2))
         liftIO $ do
           be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe_ ^. compositeVDoc . vdocID)
           be ^. compositeVDocNotes . to Map.elems `shouldContain` [fn_]
@@ -222,11 +224,11 @@ specMockedLogin = around createDevModeTestSession $ do
         un :: Username <- postJSON loginUri $ Login "username" "password"
         liftIO $ un `shouldBe` "username"
         fe_ :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
-        let cp1 = ChunkPoint (DataUID 1) 0
-            cp2 = ChunkPoint (DataUID 1) 1
+        let cp1 = Position (BlockIndex 1 $ BlockKey "1") 0
+            cp2 = Position (BlockIndex 1 $ BlockKey "1") 1
         fn_ :: Note <- postJSON
           (addNoteUri (fe_ ^. compositeVDoc . vdocHeadEdit))
-          (CreateNote "[note]" True (ChunkRange (Just cp1) (Just cp2)))
+          (CreateNote "[note]" True (Range cp1 cp2))
 
         liftIO $ do
           be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe_ ^. compositeVDoc . vdocID)
@@ -235,12 +237,12 @@ specMockedLogin = around createDevModeTestSession $ do
     it "fails with error on non-trivial *invalid* chunk range" $ \sess -> do
       vdoc :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
       resp :: SResponse <- runWai sess $
-        let cp1, cp2 :: ChunkPoint
-            cp1 = ChunkPoint (DataUID 1) 0
-            cp2 = ChunkPoint (DataUID 100) 100
+        let cp1, cp2 :: Position
+            cp1 = Position (BlockIndex 1 $ BlockKey "1") 0
+            cp2 = Position (BlockIndex 100 $ BlockKey "100") 100
         in post
           (addNoteUri (vdoc ^. compositeVDoc . vdocHeadEdit))
-          (CreateNote "[note]" True (ChunkRange (Just cp1) (Just cp2)))
+          (CreateNote "[note]" True (Range cp1 cp2))
 
       pendingWith "'validateCreateChunkRange' is not implemented yet."
 
@@ -256,10 +258,12 @@ specMockedLogin = around createDevModeTestSession $ do
         un :: Username <- postJSON loginUri $ Login "username" "password"
         liftIO $ un `shouldBe` "username"
         fe_ :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
+        let cp1 = Position (BlockIndex 0 $ BlockKey "1") 0
+            cp2 = Position (BlockIndex 0 $ BlockKey "1") 1
         fn_ :: CompositeDiscussion <-
           postJSON
             (addDiscussionUri (fe_ ^. compositeVDoc . vdocHeadEdit))
-            (CreateDiscussion "[discussion initial statement]" True (ChunkRange Nothing Nothing))
+            (CreateDiscussion "[discussion initial statement]" True (Range cp1 cp2))
 
         liftIO $ do
           be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe_ ^. compositeVDoc . vdocID)

@@ -23,7 +23,6 @@ module Refine.Prelude.TH (makeRefineType, makeSOPGeneric, makeJSON, makeNFData) 
 import Control.Lens (makeLenses, makePrisms)
 import Control.DeepSeq (NFData(..))
 import Data.Aeson (FromJSON(..), ToJSON(..))
-import Data.Maybe (listToMaybe)
 import Data.Monoid ((<>))
 import Language.Haskell.TH
 import Generics.SOP
@@ -43,17 +42,16 @@ typeVarName :: TyVarBndr -> Name
 typeVarName (PlainTV name)        = name
 typeVarName (KindedTV name _kind) = name
 
-firstTypeParam :: Dec -> Maybe Name
-firstTypeParam (DataD _ _ vars _ _ _)    = listToMaybe $ map typeVarName vars
-firstTypeParam (NewtypeD _ _ vars _ _ _) = listToMaybe $ map typeVarName vars
-firstTypeParam dec = error $ "firstTypeParam got invalid Dec " <> show dec
+typeParams :: Dec -> [Name]
+typeParams (DataD _ _ vars _ _ _)    = map typeVarName vars
+typeParams (NewtypeD _ _ vars _ _ _) = map typeVarName vars
+typeParams dec = error $ "typeParams got invalid Dec " <> show dec
 
-typeOf :: Name -> Q (Type, Maybe Type)
+typeOf :: Name -> Q (Type, [Type])
 typeOf t = do
   (TyConI dec) <- reify t
-  pure $ case firstTypeParam dec of
-    Nothing -> (ConT t, Nothing)
-    Just p  -> (AppT (ConT t) (VarT p), Just (VarT p))
+  let tps = VarT <$> typeParams dec
+  pure (foldl AppT (ConT t) tps, tps)
 
 
 makeSOPGeneric :: Name -> Q [Dec]
@@ -74,9 +72,9 @@ makeJSON t = do
       fromJSONC = ConT ''FromJSON
   (t', mtp) <- typeOf t
   pure
-    [ mkInstanceD (maybe [] (\tp -> [AppT toJSONC tp]) mtp) (AppT toJSONC t')
+    [ mkInstanceD (AppT toJSONC <$> mtp) (AppT toJSONC t')
         [ FunD toJSONN [ Clause [] (NormalB (VarE gtoJSONDefN)) []] ]
-    , mkInstanceD (maybe [] (\tp -> [AppT fromJSONC tp]) mtp) (AppT fromJSONC t')
+    , mkInstanceD (AppT fromJSONC <$> mtp) (AppT fromJSONC t')
         [ FunD parseJSONN [ Clause [] (NormalB (VarE gparseJSONDefN)) []] ]
     ]
 
@@ -87,7 +85,7 @@ makeNFData t = do
   let nfdataC = ConT ''NFData
   (t', mtp) <- typeOf t
   pure
-    [ mkInstanceD (maybe [] (\tp -> [AppT nfdataC tp]) mtp) (AppT (ConT (''NFData)) t')
+    [ mkInstanceD (AppT nfdataC <$> mtp) (AppT (ConT (''NFData)) t')
         [ FunD rnfN [ Clause [] (NormalB (VarE grnfN)) []] ]
     ]
 

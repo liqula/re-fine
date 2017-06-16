@@ -15,26 +15,26 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Common.Types.ChunkSpec where
+module Refine.Common.Types.CoreSpec where
 
 import Refine.Common.Prelude
 
 import           Test.Hspec
-import           Test.QuickCheck
-import           Test.QuickCheck.Instances ()
+import           Test.QuickCheck.Classes
+import           Test.QuickCheck.Utils
 
-import           Refine.Common.Test.Arbitrary
-import           Refine.Common.Types.Core
-import           Refine.Common.VDoc.Draft
-
+import Refine.Common.Types.Core
+import Refine.Common.Test.Arbitrary
 
 spec :: Spec
-spec = do
-  describe "SelectionState vs. ChunkRange" $ do
-    it "are isomorphic (except for backwards flag)" . property $
-      \(RawContentWithSelections c ss) -> forM_ ss $ \s -> do
-        chunkRangeToSelectionState c (selectionStateToChunkRange c s) `shouldBe` (s & selectionIsBackward .~ False)
+spec = parallel $ do
+  testBatch $ monoid (mempty :: Ranges Int)
+
+  describe "intersectionRanges" $ do
+    it "associative" $ isAssociative (intersectionRanges :: Ranges Int -> Ranges Int -> Ranges Int)
+    it "commutative" $ isCommutable (intersectionRanges :: Ranges Int -> Ranges Int -> Ranges Int)

@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE PackageImports      #-}
 {-# LANGUAGE Rank2Types          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections       #-}
@@ -19,7 +20,7 @@ import Refine.Common.Prelude
 
 import Test.Hspec as P
 import Test.QuickCheck as P
-import Test.QuickCheck.Instances as P ()
+import "quickcheck-instances" Test.QuickCheck.Instances as P ()
 import Test.QuickCheck.Monadic as P
 
 import Refine.Common.Test.Arbitrary as P
