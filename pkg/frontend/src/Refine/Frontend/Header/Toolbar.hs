@@ -200,12 +200,14 @@ editKindForm_ onSelect = view_ (editKindForm onSelect) "editToolbarExtension_"
 linkToolbarTextForm :: ST -> ReactElementM (StatefulViewEventHandler AddLinkFormState) ()
 linkToolbarTextForm link = do
   form_ [ "target" $= "#"
-        , "action" $= "POST"] $ do
-    textarea_ [ "className" $= "o-wysiwyg"
-              , "style" @@=
+        , "action" $= "POST"
+        , "style"  @@= [decl "width" (Percentage 80)]
+        ] $ do
+    textarea_ [ "style" @@=
                       [ decl "resize" (Ident "none")
-                      , decl "width" (Px 600)
-                      , decl "height" (Px 20)
+                      , decl "width" (Percentage 100)
+                      , decl "height" (Rem 1.2)
+                      , decl "vertical-align" (Ident "middle")
                       ]
               , "placeholder" $= "url"
               -- Update the current state with the current text in the textbox, sending no actions
@@ -222,25 +224,28 @@ editLinkInput link = mkStatefulView "EditLinkInput" (AddLinkFormState link) $ \c
           div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
           div_ ["className" $= "c-vdoc-toolbar-extension__modification c-vdoc-toolbar-extension--expanded"] $ do  -- (RENAME: Edit)
 
+            span_ ["style" @@= [decl "margin-right" (Px 20)]] $
+              let props :: IbuttonProps [GlobalAction]
+                  props = emptyIbuttonProps "Save" onclick
+                    & ibListKey        .~ "add-link"
+                    & ibSize           .~ Large
+                    & ibDarkBackground .~ True
+                  onclick = [ DocumentAction . DocumentCreateLink $ curState ^. addLinkFormState
+                            , HeaderAction CloseToolbarExtension
+                            ]
+               in ibutton_ props
+
+            span_ ["style" @@= [decl "margin-right" (Px 20)]] $
+              let props :: IbuttonProps [GlobalAction]
+                  props = emptyIbuttonProps "Close" onclick
+                    & ibListKey        .~ "cancel"
+                    & ibSize           .~ Large
+                    & ibDarkBackground .~ True
+                  onclick = [HeaderAction CloseToolbarExtension]
+               in ibutton_ props
+
+            span_ ["style" @@= [decl "margin-right" (Px 20), decl "width" (Percentage 100)]] $
               linkToolbarTextForm link
-
-              iconButton_ $ defaultIconButtonProps @[GlobalAction]
-                & iconButtonPropsListKey      .~ "add-link"
-                & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
-                & iconButtonPropsElementName  .~ "btn-index"
-                & iconButtonPropsLabel        .~ "add link"
-                & iconButtonPropsAlignRight   .~ True
-                & iconButtonPropsOnClick      .~ [ DocumentAction . DocumentCreateLink $ curState ^. addLinkFormState
-                                                 , HeaderAction CloseToolbarExtension
-                                                 ]
-
-              iconButton_ $ defaultIconButtonProps @[GlobalAction]
-                & iconButtonPropsListKey      .~ "cancel"
-                & iconButtonPropsIconProps    .~ IconProps "c-mainmenu-header" True ("icon-Close", "dark") XXLarge
-                & iconButtonPropsElementName  .~ "btn-index"
-                & iconButtonPropsLabel        .~ "cancel"
-                & iconButtonPropsAlignRight   .~ True
-                & iconButtonPropsOnClick      .~ [HeaderAction CloseToolbarExtension]
 
 editLinkInput_ :: ST -> ReactElementM eventHandler ()
 editLinkInput_ link = view_ (editLinkInput link) "editLinkInput_"
