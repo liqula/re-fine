@@ -59,7 +59,7 @@ data Mode = Generate | Run
 {- The old code (Aeson.encode/decode in Haskell, JSON.parse/stringify on js) seems to be even slightly
 faster in one direction, but slower by a factor of almost 2 in the other.
 
-via JSString (with JSON.parse on js side):
+commit a66c9e038d572964 -- via JSString (with JSON.parse on js side):
 ... >>> convertFromRaw: 40.348s
 ... >>> convertToRaw: 86.806s
 ... >>> convertFromRaw: 41.804s
@@ -67,7 +67,7 @@ via JSString (with JSON.parse on js side):
 ... >>> convertFromRaw: 40.762s
 ... >>> convertToRaw: 89.273s
 
-via JSVal:
+commit 10231a0d61215cc3 -- via JSVal:
 ... >>> convertFromRaw: 42.391s
 ... >>> convertToRaw: 48.564s
 ... >>> convertFromRaw: 42.208s

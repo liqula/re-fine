@@ -65,22 +65,28 @@ module Refine.Frontend.Document.FFI
   , getMarkSelectorBound
   ) where
 
-import Refine.Frontend.Prelude
-import Refine.Frontend.Orphans ()
+import System.IO.Unsafe (unsafePerformIO)
 
 import qualified Refine.Common.Types.Core as Draft
 import           Refine.Frontend.Document.FFI.Types
+import           Refine.Frontend.Orphans ()
+import           Refine.Frontend.Prelude
 
 
 -- * https://draftjs.org/docs/api-reference-data-conversion.html
 
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#convertfromraw
+--
+-- See also: 'convertToRaw'.
 convertFromRaw :: Draft.RawContent -> ContentState
-convertFromRaw = js_convertFromRaw . cs . encode
+convertFromRaw = js_convertFromRaw . unsafePerformIO . toJSVal
 
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#converttoraw
+--
+-- The internal call to 'unsafePerformIO' is ok iff 'fromJSVal' is actually pure (and just doesn't
+-- care to show it in the type).
 convertToRaw :: ContentState -> Draft.RawContent
-convertToRaw = either (error . ("convertToRaw: " <>)) id . eitherDecode . cs . js_convertToRaw
+convertToRaw = fromMaybe (error "convertToRaw") . unsafePerformIO . fromJSVal . js_convertToRaw
 
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#convertfromhtml
 convertFromHtml :: JSString -> ContentState
@@ -196,12 +202,12 @@ foreign import javascript safe
   js_getDraftSelectionStateViaBrowser :: IO JSVal
 
 foreign import javascript safe
-  "Draft.convertFromRaw(JSON.parse($1))"
-  js_convertFromRaw :: JSString -> ContentState
+  "Draft.convertFromRaw($1)"
+  js_convertFromRaw :: JSVal -> ContentState
 
 foreign import javascript safe
-  "JSON.stringify(Draft.convertToRaw($1))"
-  js_convertToRaw :: ContentState -> JSString
+  "Draft.convertToRaw($1)"
+  js_convertToRaw :: ContentState -> JSVal
 
 foreign import javascript safe
   "refine$editorContentFromHtml($1)"
@@ -304,11 +310,11 @@ js_getDraftSelectionStateViaBrowser :: IO JSVal
 js_getDraftSelectionStateViaBrowser = error "javascript FFI not available in GHC"
 
 {-# ANN js_convertFromRaw ("HLint: ignore Use camelCase" :: String) #-}
-js_convertFromRaw :: JSString -> ContentState
+js_convertFromRaw :: JSVal -> ContentState
 js_convertFromRaw = error "javascript FFI not available in GHC"
 
 {-# ANN js_convertToRaw ("HLint: ignore Use camelCase" :: String) #-}
-js_convertToRaw :: ContentState -> JSString
+js_convertToRaw :: ContentState -> JSVal
 js_convertToRaw = error "javascript FFI not available in GHC"
 
 {-# ANN js_convertFromHtml ("HLint: ignore Use camelCase" :: String) #-}
