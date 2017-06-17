@@ -219,9 +219,16 @@ benchmark bench
 
   build-depends:
       base >= 4.7 && < 5
---    , criterion  -- (see bench/Main.hs)
-    , time
+    , aeson
+    , bytestring
+    , containers
+    , deepseq
+    , QuickCheck
+    , refine-common
     , refine-frontend
+    , string-conversions
+    , time
+    , utf8-string
   js-sources:
       jsbits/hookup.js
       jsbits/util.js
