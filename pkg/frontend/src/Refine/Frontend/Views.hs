@@ -93,12 +93,12 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocDiscussions) rs
           addComment_ __ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogComment)
-                              (rs ^. RS.gsContributionState . RS.csCurrentRange)
+                              (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
                               (rs ^. RS.gsContributionState . RS.csCommentKind)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
           addEdit_ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogEdit)
-                              (rs ^. RS.gsContributionState . RS.csCurrentRange)
+                              (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
                               (rs ^? RS.gsDocumentState . documentStateEditKind)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
 
@@ -107,7 +107,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       let asideProps = AsideProps
                                      (rs ^. gsContributionState . csMarkPositions)
-                                     (rs ^. gsContributionState . csCurrentRange)
+                                     (rs ^. gsContributionState . csCurrentSelectionWithPx)
                                      (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
                                      (fltr (vdoc ^. compositeVDocDiscussions))

@@ -236,12 +236,12 @@ emitBackendCallsFor action st = case action of
       case kind of
         Just CommentKindDiscussion ->
           addDiscussion (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
-                     (C.CreateDiscussion text True (st ^. gsChunkRange . C.selectionRange)) $ \case
+                     (C.CreateDiscussion text True (st ^. gsCurrentSelection . C.selectionRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right discussion) -> dispatchManyM [AddDiscussion discussion, ContributionAction RequestSetMarkPositions]
         Just CommentKindNote ->
           addNote (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
-                     (C.CreateNote text True (st ^. gsChunkRange . C.selectionRange)) $ \case
+                     (C.CreateNote text True (st ^. gsCurrentSelection . C.selectionRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right note) -> dispatchManyM [AddNote note, ContributionAction RequestSetMarkPositions]
         Nothing -> pure ()

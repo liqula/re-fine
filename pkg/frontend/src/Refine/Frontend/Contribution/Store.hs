@@ -39,7 +39,7 @@ contributionStateUpdate :: GlobalAction -> ContributionState -> ContributionStat
 contributionStateUpdate a = localAction a . globalAction a
   where
     localAction (ContributionAction action) st = st
-      & csCurrentRange             %~ currentRangeUpdate action
+      & csCurrentSelectionWithPx   %~ currentRangeUpdate action
       & csCommentKind              %~ commentKindUpdate action
       & csDisplayedContributionID  %~ displayedContributionUpdate action
       & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action

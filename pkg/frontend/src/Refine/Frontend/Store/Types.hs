@@ -123,13 +123,12 @@ makeRefineType ''GlobalAction
 
 instance UnoverlapAllEq GlobalState
 
--- TODO: rename to gsCurrentSelection
-gsChunkRange :: Lens' GlobalState (Selection Position)
-gsChunkRange f gs = outof <$> f (into gs)
+gsCurrentSelection :: Lens' GlobalState (Selection Position)
+gsCurrentSelection f gs = outof <$> f (into gs)
   where
     into :: GlobalState -> Selection Position
     into s = fromMaybe (toSelection . maximumRange $ s ^?! gsDocumentState . documentStateContent)
-               (s ^? gsContributionState . csCurrentRange . _Just . rangeSelectionState)
+               (s ^? gsContributionState . csCurrentSelectionWithPx . _Just . rangeSelectionState)
 
     outof :: Selection Position -> GlobalState
-    outof r = gs & gsContributionState . csCurrentRange . _Just . rangeSelectionState .~ r
+    outof r = gs & gsContributionState . csCurrentSelectionWithPx . _Just . rangeSelectionState .~ r

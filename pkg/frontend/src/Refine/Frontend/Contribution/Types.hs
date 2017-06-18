@@ -95,7 +95,7 @@ data ContributionAction =
 
 
 data ContributionState = ContributionState
-  { _csCurrentRange             :: Maybe SelectionStateWithPx  -- TODO: rename to csCurrentSelectionWithPx
+  { _csCurrentSelectionWithPx   :: Maybe SelectionStateWithPx
   , _csCommentKind              :: Maybe CommentKind
   , _csDisplayedContributionID  :: Maybe ContributionID
   , _csActiveDialog             :: Maybe ActiveDialog
@@ -120,7 +120,7 @@ data ActiveDialog = ActiveDialogComment | ActiveDialogEdit
 
 emptyContributionState :: ContributionState
 emptyContributionState = ContributionState
-  { _csCurrentRange             = Nothing
+  { _csCurrentSelectionWithPx   = Nothing
   , _csCommentKind              = Nothing
   , _csDisplayedContributionID  = Nothing
   , _csActiveDialog             = Nothing
@@ -290,9 +290,9 @@ scrollToCurrentSelection = liftIO . js_scrollToPx . currentSelectionOffset
 
 currentSelectionOffset :: ContributionState -> Int
 currentSelectionOffset st = fromMaybe 0 $ do
-  range <- st ^? csCurrentRange . _Just
-  pure $ (range ^. rangeBottomOffset . unOffsetFromViewportTop)
-       + (range ^. rangeScrollOffset . unScrollOffsetOfViewport)
+  sel <- st ^? csCurrentSelectionWithPx . _Just
+  pure $ (sel ^. rangeBottomOffset . unOffsetFromViewportTop)
+       + (sel ^. rangeScrollOffset . unScrollOffsetOfViewport)
        + tweakScrollTarget
 
 -- | FUTUREWORK: come up with a more robust way to move the dialog box into the center of the view.

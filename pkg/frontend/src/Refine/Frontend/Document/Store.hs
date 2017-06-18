@@ -54,7 +54,7 @@ documentStateUpdate (DocumentAction (DocumentSave _)) (view gsVDoc -> Just cvdoc
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- FIXME: store last state before edit in DocumentStateEdit, and restore it from there?
 
 documentStateUpdate (HeaderAction (StartEdit kind)) gs (DocumentStateView estate _)
-  = DocumentStateEdit (forceSelection estate (toSelectionState $ gs ^. gsChunkRange)) kind
+  = DocumentStateEdit (forceSelection estate (toSelectionState $ gs ^. gsCurrentSelection)) kind
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     (view gsVDoc -> Just cvdoc)
