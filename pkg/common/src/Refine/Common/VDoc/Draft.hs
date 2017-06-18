@@ -142,7 +142,7 @@ addMarksToRawContent marks rc = joinStyles . RawContentSeparateStyles txts $ fol
         r = rangesFromRange False $ toStylePosition rc <$> range
 
 -- TODO: change type to   RawContent -> [(ContributionID, Ranges LeafSelector)]
--- separateStyles could be used
+-- TUNING: implement this using 'separateStyles'?
 getLeafSelectors :: RawContent -> [(ContributionID, LeafSelector, LeafSelector)]
 getLeafSelectors rc
     = concatMap f

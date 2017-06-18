@@ -204,7 +204,7 @@ data IconButtonPropsWithHandler onclick = IconButtonProps
   , _iconButtonPropsElementName  :: JSString
   , _iconButtonPropsModuleName   :: JSString
   , _iconButtonPropsLabel        :: JSString
-  , _iconButtonPropsDisabled     :: Bool  -- TODO: make this 'enabled'
+  , _iconButtonPropsDisabled     :: Bool  -- FIXME: make this 'enabled'
   , _iconButtonPropsPosition     :: Maybe Int
   , _iconButtonPropsAlignRight   :: Bool
   , _iconButtonPropsOnClick      :: onclick

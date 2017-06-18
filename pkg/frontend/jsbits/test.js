@@ -25,6 +25,6 @@ global.refine$getRawContentBetweenElems = function($1, $2) {
 
     console.log('!!!', $1, $2, begin, end);
 
-    // TODO: travers the tom between these two elems and collect all text.  return that.
+    // FIXME: traverse the dom between these two elems and collect all text.  return that.
 
 };

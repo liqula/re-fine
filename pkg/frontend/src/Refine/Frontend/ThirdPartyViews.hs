@@ -33,7 +33,7 @@ module Refine.Frontend.ThirdPartyViews
 import Refine.Frontend.Prelude
 
 
--- TODO: test that this doesn't crash because the foreign object is not loaded.  this has bitten us
+-- FIXME: test that this doesn't crash because the foreign object is not loaded.  this has bitten us
 -- at least twice in the past.
 
 

@@ -50,7 +50,7 @@ mkClickHandler :: [ContributionAction] -> Event -> MouseEvent -> [SomeStoreActio
 mkClickHandler actions _ _ = dispatchMany $ ContributionAction <$> actions
 
 bubbleStackStyles :: [Decl]
-bubbleStackStyles = [decl "border" (Ident "3px dotted black")]  -- TODO: style this!
+bubbleStackStyles = [decl "border" (Ident "3px dotted black")]
 
 bubble :: ReactElementM [SomeStoreAction] () -> View '[BubbleProps]
 bubble children = mkView "Bubble" $ \props -> do

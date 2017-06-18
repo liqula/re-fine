@@ -191,8 +191,8 @@ iconButtonPropsToStyles props = alpos <> curpoint
               Nothing   -> []
     curpoint = [decl "cursor" (Ident "pointer") | not (props ^. iconButtonPropsDisabled)]
 
-{- TODO we currently ignore touch device handling because there are some issues with
- - browsers emitting tap events on click and we don't know how to handle these properly.
+{- FIXME: we currently ignore touch device handling because there are some issues with
+   browsers emitting tap events on click and we don't know how to handle these properly.
 
     import Refine.Frontend.ThirdPartyViews (hammer_)
     let bprops = props ^. iconButtonProps
@@ -212,7 +212,7 @@ iconButton = mkView "IconButton" $ \props -> do
               ] $
             elemJSString (props ^. iconButtonPropsLabel)
 
-        -- TODO: i think the span_ node should be a child of the icon_ node so that the css info on
+        -- FIXME: i think the span_ node should be a child of the icon_ node so that the css info on
         -- the latter can apply (e.g. "bright" vs. "dark").  a more aggressive refactoring may be a
         -- better idea, though.  this part of the code base is a bit brittle and confusing.
 
@@ -227,9 +227,9 @@ mkClickHandler props evt mevt =
   (if props ^. iconButtonPropsClickPropag then () else stopPropagation evt) `seq`
   runIconButtonPropsOnClick evt mevt (props ^. iconButtonPropsOnClick)
 
-class (Typeable onclick, Eq onclick) => IconButtonPropsOnClick onclick where  -- TODO: rename to ButtonOnClick
+class (Typeable onclick, Eq onclick) => IconButtonPropsOnClick onclick where  -- FIXME: rename to ButtonOnClick
   runIconButtonPropsOnClick :: Event -> MouseEvent -> onclick -> ViewEventHandler
-      -- TODO: what do i need the default for again?
+      -- FIXME: what do i need the default for again?
   defaultOnClick            :: onclick  -- ^ @instance Default [GlobalAction]@ would lead to overlaps.
 
 instance IconButtonPropsOnClick [GlobalAction] where
