@@ -103,7 +103,7 @@ documentStateUpdate (DocumentAction DocumentCancelSave) (view gsVDoc -> Just cvd
 
 documentStateUpdate (ContributionAction (SetRange range)) _ ((^? documentStateContent) -> Just rc)
   = mkDocumentStateView
-  . addMarksToRawContent [(ContribIDHighlightMark, range ^. rangeSelectionState . selectionRange)]
+  . addMarksToRawContent [(ContribIDHighlightMark, range ^. sstSelectionState . selectionRange)]
   . deleteMarksFromRawContentIf (== ContribIDHighlightMark)
   $ rc
 

@@ -128,7 +128,7 @@ gsCurrentSelection f gs = outof <$> f (into gs)
   where
     into :: GlobalState -> Selection Position
     into s = fromMaybe (toSelection . maximumRange $ s ^?! gsDocumentState . documentStateContent)
-               (s ^? gsContributionState . csCurrentSelectionWithPx . _Just . rangeSelectionState)
+               (s ^? gsContributionState . csCurrentSelectionWithPx . _Just . sstSelectionState)
 
     outof :: Selection Position -> GlobalState
-    outof r = gs & gsContributionState . csCurrentSelectionWithPx . _Just . rangeSelectionState .~ r
+    outof r = gs & gsContributionState . csCurrentSelectionWithPx . _Just . sstSelectionState .~ r

@@ -291,8 +291,8 @@ scrollToCurrentSelection = liftIO . js_scrollToPx . currentSelectionOffset
 currentSelectionOffset :: ContributionState -> Int
 currentSelectionOffset st = fromMaybe 0 $ do
   sel <- st ^? csCurrentSelectionWithPx . _Just
-  pure $ (sel ^. rangeBottomOffset . unOffsetFromViewportTop)
-       + (sel ^. rangeScrollOffset . unScrollOffsetOfViewport)
+  pure $ (sel ^. sstBottomOffset . unOffsetFromViewportTop)
+       + (sel ^. sstScrollOffset . unScrollOffsetOfViewport)
        + tweakScrollTarget
 
 -- | FUTUREWORK: come up with a more robust way to move the dialog box into the center of the view.

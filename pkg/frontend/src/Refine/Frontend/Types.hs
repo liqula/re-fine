@@ -68,11 +68,11 @@ makeRefineType ''OffsetFromDocumentTop
 -- never changes block keys for lines once they have one *and* we never store rawcontent values that
 -- are *not* already decorated with block keys by draft, *then* we're good.
 data SelectionStateWithPx = SelectionStateWithPx
-    { _rangeSelectionState :: Selection Position
-    , _rangeDocTopOffset   :: OffsetFromDocumentTop
-    , _rangeTopOffset      :: OffsetFromViewportTop
-    , _rangeBottomOffset   :: OffsetFromViewportTop
-    , _rangeScrollOffset   :: ScrollOffsetOfViewport
+    { _sstSelectionState :: Selection Position
+    , _sstDocTopOffset   :: OffsetFromDocumentTop
+    , _sstTopOffset      :: OffsetFromViewportTop
+    , _sstBottomOffset   :: OffsetFromViewportTop
+    , _sstScrollOffset   :: ScrollOffsetOfViewport
     }
     deriving (Show, Eq, Generic)
 

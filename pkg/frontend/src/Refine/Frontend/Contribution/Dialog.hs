@@ -224,8 +224,8 @@ addContributionDialogFrame False _ _ _ _ = pure ()
 addContributionDialogFrame True title mrange windowWidth child =
     let top = case mrange of
               Nothing -> 30
-              Just range -> (range ^. rangeBottomOffset . unOffsetFromViewportTop)
-                          + (range ^. rangeScrollOffset . unScrollOffsetOfViewport)
+              Just range -> (range ^. sstBottomOffset . unOffsetFromViewportTop)
+                          + (range ^. sstScrollOffset . unScrollOffsetOfViewport)
         extraStyles = [ decl "top" (Px $ top + 5)
                       , decl "left" (Px $ leftFor windowWidth)
                       , decl "height" (Px 560)

@@ -393,11 +393,11 @@ getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
       let doctop = scrollOffset + if sel ^. C.selectionIsBackward then topOffset else bottomOffset
 
       pure SelectionStateWithPx
-        { _rangeSelectionState = C.fromSelectionState (dstate ^?! documentStateContent) sel
-        , _rangeDocTopOffset   = OffsetFromDocumentTop  doctop
-        , _rangeTopOffset      = OffsetFromViewportTop  topOffset
-        , _rangeBottomOffset   = OffsetFromViewportTop  bottomOffset
-        , _rangeScrollOffset   = ScrollOffsetOfViewport scrollOffset
+        { _sstSelectionState = C.fromSelectionState (dstate ^?! documentStateContent) sel
+        , _sstDocTopOffset   = OffsetFromDocumentTop  doctop
+        , _sstTopOffset      = OffsetFromViewportTop  topOffset
+        , _sstBottomOffset   = OffsetFromViewportTop  bottomOffset
+        , _sstScrollOffset   = ScrollOffsetOfViewport scrollOffset
         }
 
 removeAllRanges :: MonadIO m => m ()
