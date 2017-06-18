@@ -373,7 +373,7 @@ gsChunkRange :: Lens' GlobalState (Range Position)
 gsChunkRange f gs = outof <$> f (into gs)
   where
     into :: GlobalState -> Range Position
-    into s = fromMaybe (selectEverything $ s  ^?! gsDocumentState . documentStateContent)
+    into s = fromMaybe (maximumRange $ s ^?! gsDocumentState . documentStateContent)
                (s ^? gsContributionState . csCurrentRange . _Just . rangeSelectionState . C.selectionRange)
 
     outof :: C.Range Position -> GlobalState

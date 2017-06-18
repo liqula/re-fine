@@ -44,7 +44,7 @@ mkEditToolbarProps :: GlobalState -> EditToolbarProps
 mkEditToolbarProps st
     | selectionIsEmpty rc sel = LinkButtonDisabled
     | any (doRangesOverlap sel) linkranges = LinkButtonDeletes
-    | otherwise = LinkButtonAdds . cs $ selectionText BlockBoundaryIsEmpty rc sel
+    | otherwise = LinkButtonAdds . cs $ rangeText BlockBoundaryIsEmpty rc sel
   where
     es = st ^. gsDocumentState . documentStateVal
     sel = _selectionRange . fromSelectionState rc $ getSelection es

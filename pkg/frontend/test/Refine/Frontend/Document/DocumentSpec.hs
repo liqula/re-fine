@@ -120,7 +120,7 @@ spec = do
         forM_ (zip (sort contribs) (sort msels)) $ \((cid, sel), (cid', beginpoint, endpoint)) -> do
           cid `shouldBe` cid'
           have <- js_getRawContentBetweenElems (cs $ renderLeafSelector beginpoint) (cs $ renderLeafSelector endpoint)
-          cs have `shouldBe` selectionText BlockBoundaryIsNewline rc (fromStyleRange rc sel)
+          cs have `shouldBe` rangeText BlockBoundaryIsNewline rc (fromStyleRange rc sel)
 
 
   describe "Draft" $ do

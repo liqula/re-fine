@@ -58,8 +58,8 @@ emptyRawContent = mkRawContent $ emptyBlock :| []
 --
 -- (2) Since blocks can be empty, empty selections can range over many lines.
 -- TODO: rename to rangeText
-selectionText :: BlockBoundary -> RawContent -> Range Position -> ST
-selectionText blockBoundary (RawContent bs _) ss@(Range s e) = case selectedBlocks ss (NEL.toList bs) of
+rangeText :: BlockBoundary -> RawContent -> Range Position -> ST
+rangeText blockBoundary (RawContent bs _) ss@(Range s e) = case selectedBlocks ss (NEL.toList bs) of
       []        -> ""
       [b]       -> ST.drop (s ^. columnIndex) . ST.take (e ^. columnIndex) $ b ^. blockText
       (b : bs') -> combine $
@@ -78,15 +78,15 @@ selectedBlocks (Range a b)
     = drop (positionBlockIndex a) . take (positionBlockIndex b + 1)
 
 -- | TODO: rename to maximumRange
-selectEverything :: RawContent -> Range Position
-selectEverything (RawContent bs _) = RangeInner (Position sb so) (Position eb eo)
+maximumRange :: RawContent -> Range Position
+maximumRange (RawContent bs _) = RangeInner (Position sb so) (Position eb eo)
   where
     sb = BlockIndex 0 $ NEL.head bs ^. blockKey
     so = 0
     eb = BlockIndex (NEL.length bs - 1) $ NEL.last bs ^. blockKey
     eo = NEL.last bs ^. blockText . to ST.length
 
--- | Check if 'selectionText' yields nothing (block bounderiers are treated as empty).
+-- | Check if 'rangeText' yields nothing (block bounderiers are treated as empty).
 -- TODO: rename
 selectionIsEmpty :: RawContent -> Range Position -> Bool
 selectionIsEmpty rc = isEmptyRange . fmap (toStylePosition rc)
