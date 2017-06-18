@@ -382,7 +382,7 @@ getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
     Left err -> do
       consoleLogJSONM "getRangeSelection: error" err
       pure $ Just ClearRange
-    Right sel | selectionIsEmpty (dstate ^?! documentStateContent)
+    Right sel | rangeIsEmpty (dstate ^?! documentStateContent)
               . C._selectionRange
               $ C.fromSelectionState (dstate ^?! documentStateContent) sel -> do
       pure $ Just ClearRange

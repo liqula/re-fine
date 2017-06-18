@@ -76,7 +76,6 @@ selectedBlocks :: Range Position -> [Block EntityKey BlockKey] -> [Block EntityK
 selectedBlocks (Range a b)
     = drop (positionBlockIndex a) . take (positionBlockIndex b + 1)
 
--- | TODO: rename to maximumRange
 maximumRange :: RawContent -> Range Position
 maximumRange (RawContent bs _) = RangeInner (Position sb so) (Position eb eo)
   where
@@ -86,9 +85,8 @@ maximumRange (RawContent bs _) = RangeInner (Position sb so) (Position eb eo)
     eo = NEL.last bs ^. blockText . to ST.length
 
 -- | Check if 'rangeText' yields nothing (block bounderiers are treated as empty).
--- TODO: rename
-selectionIsEmpty :: RawContent -> Range Position -> Bool
-selectionIsEmpty rc = isEmptyRange . fmap (toStylePosition rc)
+rangeIsEmpty :: RawContent -> Range Position -> Bool
+rangeIsEmpty rc = isEmptyRange . fmap (toStylePosition rc)
 
 
 -- * vdoc

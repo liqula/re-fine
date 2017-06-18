@@ -42,7 +42,7 @@ data EditToolbarProps
 
 mkEditToolbarProps :: GlobalState -> EditToolbarProps
 mkEditToolbarProps st
-    | selectionIsEmpty rc sel = LinkButtonDisabled
+    | rangeIsEmpty rc sel = LinkButtonDisabled
     | any (doRangesOverlap sel) linkranges = LinkButtonDeletes
     | otherwise = LinkButtonAdds . cs $ rangeText BlockBoundaryIsEmpty rc sel
   where
