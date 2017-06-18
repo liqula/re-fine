@@ -50,7 +50,7 @@ spec = do
           fromJSVal j `shouldReturn` Just v
 
           -- j' and j translate back to the same v
-          fromJSVal j' `shouldReturn` Just v  -- (shouldn't be too surprising, but teh equality test
+          fromJSVal j' `shouldReturn` Just v  -- (shouldn't be too surprising, but the equality test
                                               -- above is a little iffy...)
 
         verbose :: Bool
