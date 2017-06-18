@@ -73,7 +73,7 @@ spec = do
     -- FUTUREWORK: Use the Cmd dsl for this test
     it "Create/login/logout" $ \(runner :: AppM DB UH () -> IO ()) -> do
 
-      pendingWith "TODO: #291"
+      pendingWith "FIXME: #291"
 
       forceEval . runner $ do
         void $ App.createUser (CreateUser "user" "user@example.com" "password")

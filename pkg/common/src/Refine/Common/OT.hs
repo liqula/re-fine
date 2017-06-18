@@ -766,7 +766,7 @@ instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) 
         | i' == i+1 = secondWins d a b
     eMerge d a@(SegmentListEdit (InsertItem i' _)) b@(JoinItems i)
         | i' == i+1 = secondWins d a b
-{- TODO
+{-
     eMerge d a@(JoinItems i) b@(SegmentListEdit (DeleteItem i'))
         | i' == i   = secondWins d a b
         | i' == i+1 = secondWins d a b
@@ -797,8 +797,6 @@ instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) 
     eMerge d a@(SegmentListEdit (InsertItem i' _)) b@(SplitItem i _)
         | i' == i+1 = secondWins d a b
 -
-- TODO
-
     eMerge d a@(SplitItem i _) b@(SegmentListEdit (DeleteItem i'))
         | i' == i   = secondWins d a b
     eMerge d a@(SegmentListEdit (DeleteItem i')) b@(SplitItem i _)
