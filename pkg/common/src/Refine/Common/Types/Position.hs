@@ -235,12 +235,3 @@ makeRefineType ''Ranges
 makeRefineType ''Selection
 makeRefineType ''BlockIndex
 makeRefineType ''BlockKey
-
--- TODO: remove if not used
--- TODO: rename to selectionBegin
-selectionStart :: Lens' (Selection a) a
-selectionStart = selectionRange . rangeBegin
-
--- TODO: remove if not used
-selectionEnd :: Lens' (Selection a) a
-selectionEnd = selectionRange . rangeEnd
