@@ -56,7 +56,8 @@ spec = do
         verbose :: Bool
         verbose = False
 
-    it "are inverses" $ do
+    it "### are inverses" $ do
+      pending
       chk getDraftSelectionStateViaBrowser_1 js_getDraftSelectionStateViaBrowser_1
       chk getDraftSelectionStateViaBrowser_2 js_getDraftSelectionStateViaBrowser_2
       chk getDraftSelectionStateViaBrowser_3 js_getDraftSelectionStateViaBrowser_3
