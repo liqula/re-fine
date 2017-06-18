@@ -33,7 +33,7 @@ import Refine.Frontend.Prelude
 import           Control.Concurrent (forkIO, yield, threadDelay)
 import qualified Data.Map.Strict as M
 
-import           Refine.Common.Types (CompositeVDoc(..), Range(..), Position)
+import           Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as C
 import           Refine.Common.VDoc.Draft
 import           Refine.Common.Rest (ApiError(..))
@@ -236,12 +236,12 @@ emitBackendCallsFor action st = case action of
       case kind of
         Just CommentKindDiscussion ->
           addDiscussion (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
-                     (C.CreateDiscussion text True (st ^. gsChunkRange)) $ \case
+                     (C.CreateDiscussion text True (st ^. gsChunkRange . C.selectionRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right discussion) -> dispatchManyM [AddDiscussion discussion, ContributionAction RequestSetMarkPositions]
         Just CommentKindNote ->
           addNote (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
-                     (C.CreateNote text True (st ^. gsChunkRange)) $ \case
+                     (C.CreateNote text True (st ^. gsChunkRange . C.selectionRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right note) -> dispatchManyM [AddNote note, ContributionAction RequestSetMarkPositions]
         Nothing -> pure ()
@@ -368,16 +368,6 @@ dispatchAndExecMany as = liftIO . void . forkIO $ do
 -- * ranges and selections
 
 -- FIXME: move this section to somewhere in Document.* modules, together with the Range type.
-
-gsChunkRange :: Lens' GlobalState (Range Position)
-gsChunkRange f gs = outof <$> f (into gs)
-  where
-    into :: GlobalState -> Range Position
-    into s = fromMaybe (maximumRange $ s ^?! gsDocumentState . documentStateContent)
-               (s ^? gsContributionState . csCurrentRange . _Just . rangeSelectionState . C.selectionRange)
-
-    outof :: C.Range Position -> GlobalState
-    outof r = gs & gsContributionState . csCurrentRange . _Just . rangeSelectionState . C.selectionRange .~ r
 
 -- | See also: 'Range' type.  Empty selection (start point == end point) counts as no selection, and
 -- triggers a 'ClearRange' action to be emitted.  Only call this in `readOnly` mode.

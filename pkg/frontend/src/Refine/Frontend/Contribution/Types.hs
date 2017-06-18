@@ -95,7 +95,7 @@ data ContributionAction =
 
 
 data ContributionState = ContributionState
-  { _csCurrentRange             :: Maybe SelectionStateWithPx
+  { _csCurrentRange             :: Maybe SelectionStateWithPx  -- TODO: rename to csCurrentSelectionWithPx
   , _csCommentKind              :: Maybe CommentKind
   , _csDisplayedContributionID  :: Maybe ContributionID
   , _csActiveDialog             :: Maybe ActiveDialog

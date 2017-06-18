@@ -31,12 +31,14 @@ import           GHC.Generics (Generic)
 import           React.Flux (UnoverlapAllEq)
 
 import Refine.Common.Types
+import Refine.Common.VDoc.Draft
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Login.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
+import Refine.Frontend.Types
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -120,3 +122,14 @@ makeRefineType ''DevState
 makeRefineType ''GlobalAction
 
 instance UnoverlapAllEq GlobalState
+
+-- TODO: rename to gsCurrentSelection
+gsChunkRange :: Lens' GlobalState (Selection Position)
+gsChunkRange f gs = outof <$> f (into gs)
+  where
+    into :: GlobalState -> Selection Position
+    into s = fromMaybe (toSelection . maximumRange $ s ^?! gsDocumentState . documentStateContent)
+               (s ^? gsContributionState . csCurrentRange . _Just . rangeSelectionState)
+
+    outof :: Selection Position -> GlobalState
+    outof r = gs & gsContributionState . csCurrentRange . _Just . rangeSelectionState .~ r
