@@ -26,7 +26,7 @@ module Refine.Frontend.Document.Store
   ( documentStateUpdate
   , editorStateToVDocVersion
   , editorStateFromVDocVersion
-  , setMarkPositions
+  , setAllVertialSpanBounds
   ) where
 
 import Refine.Frontend.Prelude
@@ -125,21 +125,21 @@ editorStateToVDocVersion = rawContentToVDocVersion . convertToRaw . getCurrentCo
 editorStateFromVDocVersion :: VDocVersion -> EditorState
 editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
 
--- | construct a 'SetMarkPositions' action.
-setMarkPositions :: MonadIO m => DocumentState -> m ContributionAction
-setMarkPositions (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
+-- | construct a 'SetAllVertialSpanBounds' action.
+setAllVertialSpanBounds :: MonadIO m => DocumentState -> m ContributionAction
+setAllVertialSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
     let marks :: [(ContributionID, LeafSelector, LeafSelector)]
         marks = getLeafSelectors rawContent
 
-        getPos :: (ContributionID, LeafSelector, LeafSelector) -> IO (ContributionID, MarkPosition)
+        getPos :: (ContributionID, LeafSelector, LeafSelector) -> IO (ContributionID, VertialSpanBounds)
         getPos (cid, top, bot) = do
           topOffset    <- OffsetFromViewportTop  <$> getLeafSelectorBound LeafSelectorTop    top
           bottomOffset <- OffsetFromViewportTop  <$> getLeafSelectorBound LeafSelectorBottom bot
           scrollOffset <- ScrollOffsetOfViewport <$> js_getScrollOffset
-          let markPosition = MarkPosition
-                { _markPositionTop    = offsetFromDocumentTop topOffset    scrollOffset
-                , _markPositionBottom = offsetFromDocumentTop bottomOffset scrollOffset
+          let vertialSpanBounds = VertialSpanBounds
+                { _vertialSpanBoundsTop    = offsetFromDocumentTop topOffset    scrollOffset
+                , _vertialSpanBoundsBottom = offsetFromDocumentTop bottomOffset scrollOffset
                 }
-          pure (cid, markPosition)
+          pure (cid, vertialSpanBounds)
 
-    SetMarkPositions <$> (getPos `mapM` marks)
+    SetAllVertialSpanBounds <$> (getPos `mapM` marks)

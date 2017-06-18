@@ -129,9 +129,9 @@ maybeStackProtoBubbles BubblePositioningEvenlySpaced = fmap NoStack
 stackProtoBubbles :: [ProtoBubble] -> [StackOrNot ProtoBubble]
 stackProtoBubbles = stackComponents getTop getHeight
   where
-    getTop    = view (protoBubbleMarkPosition . markPositionTop . unOffsetFromDocumentTop)
+    getTop    = view (protoBubbleVertialSpanBounds . vertialSpanBoundsTop . unOffsetFromDocumentTop)
     getHeight = const (constantBubbleHeight ^. unOffsetFromDocumentTop)
-        -- (we could use 'markPositionBottom' here, but that's awkward and yields the same result.)
+        -- (we could use 'vertialSpanBoundsBottom' here, but that's awkward and yields the same result.)
 
 -- | given a list of abstract components together with their absolute position and height, group all
 -- overlapping components into stacks, and leave all others single.

@@ -106,7 +106,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       let asideProps = AsideProps
-                                     (rs ^. gsContributionState . csMarkPositions)
+                                     (rs ^. gsContributionState . csAllVertialSpanBounds)
                                      (rs ^. gsContributionState . csCurrentSelectionWithPx)
                                      (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
@@ -174,9 +174,9 @@ rightAside_ !props = view_ rightAside "rightAside_" props
 -- * helpers
 
 -- | All contributions need to be positioned.  The default is '0' (beginning of the article).
-lookupPosition :: AsideProps -> ContributionID -> MarkPosition
-lookupPosition props cid = fromMaybe (MarkPosition 0 constantBubbleHeight)
-                         $ props ^? asideMarkPositions . markPositionsMap . at cid . _Just
+lookupPosition :: AsideProps -> ContributionID -> VertialSpanBounds
+lookupPosition props cid = fromMaybe (VertialSpanBounds 0 constantBubbleHeight)
+                         $ props ^? asideAllVertialSpanBounds . allVertialSpanBounds . at cid . _Just
 
 editToProtoBubble :: AsideProps -> Edit -> ProtoBubble
 editToProtoBubble aprops e = ProtoBubble cid (lookupPosition aprops cid) (elemText (e ^. editDesc))
@@ -207,7 +207,7 @@ stackBubble bubbleSide aprops bstack = bubble_ props children
       }
 
     voffset = if aprops ^. asideBubblePositioning == BubblePositioningAbsolute
-                then Just $ stackToHead bstack ^. protoBubbleMarkPosition . markPositionTop
+                then Just $ stackToHead bstack ^. protoBubbleVertialSpanBounds . vertialSpanBoundsTop
                 else Nothing
 
     highlight = not . Set.null $ Set.intersection shots hits

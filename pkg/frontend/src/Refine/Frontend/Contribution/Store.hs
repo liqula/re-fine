@@ -43,7 +43,7 @@ contributionStateUpdate a = localAction a . globalAction a
       & csCommentKind              %~ commentKindUpdate action
       & csDisplayedContributionID  %~ displayedContributionUpdate action
       & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
-      & csMarkPositions            %~ markPositionsUpdate action
+      & csAllVertialSpanBounds     %~ allVertialSpanBoundsUpdate action
       & csBubblePositioning        %~ bubblePositioningUpdate action
       & csBubbleFilter             %~ bubbleFilterUpdate action
     localAction _ st = st
@@ -114,9 +114,9 @@ quickCreateShowStateUpdate action st = case action of
       QuickCreateNotShown  -> QuickCreateNotShown
       QuickCreateBlocked   -> QuickCreateNotShown
 
-markPositionsUpdate :: ContributionAction -> MarkPositions -> MarkPositions
-markPositionsUpdate (SetMarkPositions positions) = markPositionsMap .~ M.fromList positions
-markPositionsUpdate _ = id
+allVertialSpanBoundsUpdate :: ContributionAction -> AllVertialSpanBounds -> AllVertialSpanBounds
+allVertialSpanBoundsUpdate (SetAllVertialSpanBounds positions) = allVertialSpanBounds .~ M.fromList positions
+allVertialSpanBoundsUpdate _ = id
 
 bubblePositioningUpdate :: ContributionAction -> BubblePositioning -> BubblePositioning
 bubblePositioningUpdate (SetBubblePositioning strategy) _ = strategy

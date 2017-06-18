@@ -102,7 +102,7 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
           , onChange $ \evt ->
               let dstate' :: DocumentState
                   dstate' = dstate & documentStateVal .~ updateEditorState evt
-              in dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetMarkPositions]
+              in dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetAllVertialSpanBounds]
               -- TODO: when clicking on a button in the edit toolbar and this handler triggers, the button click is not actioned.
               -- if we leave the handler in and dispatch [], it's all good (except that this event
               -- is missing).  does that mean that actions are sometimes swallowed?
@@ -123,7 +123,7 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
   , Outdated.lComponentDidMount = Just $ \getPropsAndState _ldom _setState -> do
       props <- Outdated.lGetProps getPropsAndState
       ()    <- Outdated.lGetState getPropsAndState  -- (just to show there's nothing there)
-      dispatchAndExec . ContributionAction =<< setMarkPositions (props ^. dpDocumentState)
+      dispatchAndExec . ContributionAction =<< setAllVertialSpanBounds (props ^. dpDocumentState)
   }
 
 document_ :: DocumentProps -> ReactElementM eventHandler ()

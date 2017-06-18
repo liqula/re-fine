@@ -147,8 +147,8 @@ showNoteProps notes rs = case (maybeNote, maybeOffset) of
     maybeNote = (`M.lookup` notes) =<< maybeNoteID
     maybeOffset = do
       nid <- maybeNoteID
-      rs ^? gsContributionState . csMarkPositions . markPositionsMap
-          . at (ContribIDNote nid) . _Just . markPositionBottom
+      rs ^? gsContributionState . csAllVertialSpanBounds . allVertialSpanBounds
+          . at (ContribIDNote nid) . _Just . vertialSpanBoundsBottom
 
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
@@ -180,8 +180,8 @@ showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
     maybeDiscussion = (`M.lookup` discussions) =<< maybeDiscussionID
     maybeOffset = do
       did <- maybeDiscussionID
-      rs ^? gsContributionState . csMarkPositions . markPositionsMap
-          . at (ContribIDDiscussion did) . _Just . markPositionBottom
+      rs ^? gsContributionState . csAllVertialSpanBounds . allVertialSpanBounds
+          . at (ContribIDDiscussion did) . _Just . vertialSpanBoundsBottom
 
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 

@@ -45,16 +45,12 @@ newtype AddContributionFormState = AddContributionFormState
   } deriving (Show, Eq, Generic)
 
 
-newtype MarkPositions = MarkPositions { _markPositionsMap :: Map.Map ContributionID MarkPosition }
-  deriving (Show, Eq, Generic)
+newtype AllVertialSpanBounds = AllVertialSpanBounds { _allVertialSpanBounds :: Map.Map ContributionID VertialSpanBounds }
+  deriving (Show, Eq, Generic, Monoid)
 
-instance Monoid MarkPositions where
-  mempty = MarkPositions mempty
-  mappend (MarkPositions m) (MarkPositions m') = MarkPositions (m <> m')
-
-data MarkPosition = MarkPosition
-  { _markPositionTop    :: OffsetFromDocumentTop
-  , _markPositionBottom :: OffsetFromDocumentTop
+data VertialSpanBounds = VertialSpanBounds
+  { _vertialSpanBoundsTop    :: OffsetFromDocumentTop
+  , _vertialSpanBoundsBottom :: OffsetFromDocumentTop
   }
   deriving (Eq, Show, Generic)
 
@@ -67,7 +63,7 @@ mapToValue :: (Show k, ToJSON v) => Map.Map k v -> Value
 mapToValue = object . fmap (\(k, v) -> (cs . show) k .:= v) . Map.toList
 
 mapFromValue :: (Ord k, Read k, FromJSON v) => Value -> Parser (Map.Map k v)
-mapFromValue = withObject "MarkPositions"
+mapFromValue = withObject "AllVertialSpanBounds"
   $ fmap Map.fromList
   . mapM (\(k, v) -> (,) <$> maybe (fail "could not parse key.") pure (readMaybe (cs k))
                          <*> parseJSON v)
@@ -86,8 +82,8 @@ data ContributionAction =
   | HideCommentEditor
   | SetCommentKind CommentKind
   | SubmitComment ST (Maybe CommentKind)
-  | RequestSetMarkPositions
-  | SetMarkPositions [(ContributionID, MarkPosition)]  -- ^ see 'MarkPositions'
+  | RequestSetAllVertialSpanBounds
+  | SetAllVertialSpanBounds [(ContributionID, VertialSpanBounds)]  -- ^ see 'AllVertialSpanBounds'
   | SetBubblePositioning BubblePositioning
   | HighlightMarkAndBubble [ContributionID]
   | SetBubbleFilter (Maybe (Set ContributionID))
@@ -101,7 +97,7 @@ data ContributionState = ContributionState
   , _csActiveDialog             :: Maybe ActiveDialog
   , _csHighlightedMarkAndBubble :: [ContributionID]
   , _csQuickCreateShowState     :: QuickCreateShowState
-  , _csMarkPositions            :: MarkPositions
+  , _csAllVertialSpanBounds     :: AllVertialSpanBounds
   , _csBubblePositioning        :: BubblePositioning
   , _csBubbleFilter             :: Maybe (Set ContributionID)  -- ^ 'Nothing' means show everything.
   } deriving (Show, Eq, Generic)
@@ -126,7 +122,7 @@ emptyContributionState = ContributionState
   , _csActiveDialog             = Nothing
   , _csHighlightedMarkAndBubble = []
   , _csQuickCreateShowState     = QuickCreateNotShown
-  , _csMarkPositions            = mempty
+  , _csAllVertialSpanBounds     = mempty
   , _csBubblePositioning        = BubblePositioningAbsolute
   , _csBubbleFilter             = Nothing
   }
@@ -150,9 +146,9 @@ stackToList (Stack (x :| xs)) = x : xs
 stackToList (NoStack x)       = [x]
 
 data ProtoBubble = ProtoBubble
-  { _protoBubbleContributionID :: ContributionID
-  , _protoBubbleMarkPosition   :: MarkPosition
-  , _protoBubbleChild          :: ReactElementM ViewEventHandler ()
+  { _protoBubbleContributionID    :: ContributionID
+  , _protoBubbleVertialSpanBounds :: VertialSpanBounds
+  , _protoBubbleChild             :: ReactElementM ViewEventHandler ()
   }
 
 data BubbleProps = BubbleProps
@@ -254,16 +250,16 @@ instance UnoverlapAllEq (AddContributionProps EditKind)
 
 -- * boilerplate
 
-makeRefineType ''MarkPosition
-makeLenses ''MarkPositions
+makeRefineType ''VertialSpanBounds
+makeLenses ''AllVertialSpanBounds
 
-deriving instance NFData MarkPositions
+deriving instance NFData AllVertialSpanBounds
 
-instance ToJSON MarkPositions where
-  toJSON = mapToValue . _markPositionsMap
+instance ToJSON AllVertialSpanBounds where
+  toJSON = mapToValue . _allVertialSpanBounds
 
-instance FromJSON MarkPositions where
-  parseJSON = fmap MarkPositions . mapFromValue
+instance FromJSON AllVertialSpanBounds where
+  parseJSON = fmap AllVertialSpanBounds . mapFromValue
 
 makeRefineType ''AddContributionFormState
 makeRefineType ''ContributionAction

@@ -41,7 +41,7 @@ import           Refine.Common.Test.Samples
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
-import           Refine.Frontend.Document.Store (setMarkPositions, documentStateUpdate, editorStateToVDocVersion)
+import           Refine.Frontend.Document.Store (setAllVertialSpanBounds, documentStateUpdate, editorStateToVDocVersion)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
@@ -98,8 +98,8 @@ transformGlobalState = transf
 
       -- other effects
       case action of
-        ContributionAction RequestSetMarkPositions -> do
-          dispatchAndExec . ContributionAction =<< setMarkPositions (st ^. gsDocumentState)
+        ContributionAction RequestSetAllVertialSpanBounds -> do
+          dispatchAndExec . ContributionAction =<< setAllVertialSpanBounds (st ^. gsDocumentState)
 
         ContributionAction RequestSetRange -> do
           mRangeEvent <- getRangeAction (st ^. gsDocumentState)
@@ -238,12 +238,12 @@ emitBackendCallsFor action st = case action of
           addDiscussion (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
                      (C.CreateDiscussion text True (st ^. gsCurrentSelection . C.selectionRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right discussion) -> dispatchManyM [AddDiscussion discussion, ContributionAction RequestSetMarkPositions]
+            (Right discussion) -> dispatchManyM [AddDiscussion discussion, ContributionAction RequestSetAllVertialSpanBounds]
         Just CommentKindNote ->
           addNote (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
                      (C.CreateNote text True (st ^. gsCurrentSelection . C.selectionRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right note) -> dispatchManyM [AddNote note, ContributionAction RequestSetMarkPositions]
+            (Right note) -> dispatchManyM [AddNote note, ContributionAction RequestSetAllVertialSpanBounds]
         Nothing -> pure ()
 
     DocumentAction (DocumentSave desc) -> case st ^. gsDocumentState of
@@ -260,7 +260,7 @@ emitBackendCallsFor action st = case action of
 
         addEdit eid cedit $ \case
           Left rsp   -> ajaxFail rsp Nothing
-          Right edit -> dispatchManyM [AddEdit edit, ContributionAction RequestSetMarkPositions]
+          Right edit -> dispatchManyM [AddEdit edit, ContributionAction RequestSetAllVertialSpanBounds]
 
       bad -> let msg = "DocumentAction DocumentEditSave: "
                     <> "not in editor state or content cannot be converted to html."
