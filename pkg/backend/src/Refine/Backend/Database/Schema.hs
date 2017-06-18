@@ -40,7 +40,7 @@ import Refine.Common.Types.Process (CollaborativeEditPhase)
 import Refine.Common.Types.Role (Role)
 import Refine.Common.Types.Core (Abstract, EditKind, Title, VDocVersion)
 import Refine.Backend.Database.Field()
-import Refine.Backend.Database.Types (MetaInfoID, RawContentEdit, SelectionStates, RangePosition)
+import Refine.Backend.Database.Types (MetaInfoID, RawContentEdit, RangePositions, RangePosition)
 
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
 MetaInfo
@@ -58,7 +58,7 @@ VDoc
 
 Edit
     desc        Text
-    range       SelectionStates
+    range       RangePositions
     editVDoc    VDocVersion
     repository  VDocId
     kind        EditKind

@@ -254,7 +254,7 @@ createEdit rid me ce = do
         where e = error "Invalid VDocVersion in CreateEdit!"  -- #312 should elimiate the possibility of this
   mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
-            (SelectionStates sels')
+            (RangePositions sels')
             (ce ^. createEditVDoc)
             (S.idToKey rid)
             (ce ^. createEditKind)
@@ -275,7 +275,7 @@ createEdit rid me ce = do
 getEdit :: ID Edit -> DB Edit
 getEdit eid = do
   src <- getEditSource eid
-  getMetaEntity (\mid -> S.editElim $ \desc (SelectionStates cr) _ _ kind -> Edit mid desc cr kind src) eid
+  getMetaEntity (\mid -> S.editElim $ \desc (RangePositions cr) _ _ kind -> Edit mid desc cr kind src) eid
 
 getEditSource :: ID Edit -> DB (EditSource (ID Edit))
 getEditSource eid = do

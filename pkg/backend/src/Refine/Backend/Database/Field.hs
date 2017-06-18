@@ -10,7 +10,7 @@ import Refine.Backend.Prelude
 import           Control.Monad ((<=<))
 import           Database.Persist.Sql
 
-import Refine.Backend.Database.Types (MetaInfoID(..), RawContentEdit(..), SelectionStates(..), RangePosition(..))
+import Refine.Backend.Database.Types (MetaInfoID(..), RawContentEdit(..), RangePositions(..), RangePosition(..))
 import Refine.Common.Types.Prelude (UserInfo)
 import Refine.Common.Types.Process
 import Refine.Common.Types.Role (Role(..))
@@ -114,9 +114,9 @@ instance PersistField RawContentEdit where
 instance PersistFieldSql RawContentEdit where
   sqlType _ = sqlType (Proxy :: Proxy ST)
 
-instance PersistField SelectionStates where
+instance PersistField RangePositions where
   toPersistValue   = toPersistJSONValue
   fromPersistValue = fromPersistJSONValue
 
-instance PersistFieldSql SelectionStates where
+instance PersistFieldSql RangePositions where
   sqlType _ = sqlType (Proxy :: Proxy ST)
