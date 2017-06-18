@@ -27,8 +27,8 @@ module Refine.Frontend.Document.FFI.Types
   , ContentState(..)
   , mkEditorState
   , updateEditorState
-  , MarkSelectorSide(..)
-  , renderMarkSelectorSide
+  , LeafSelectorSide(..)
+  , renderLeafSelectorSide
   ) where
 
 import Refine.Frontend.Prelude
@@ -95,9 +95,9 @@ updateEditorState :: Event -> EditorState
 updateEditorState (evtHandlerArg -> HandlerArg evt) = EditorState $ NoJSONRep evt
 
 
-data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom
+data LeafSelectorSide = LeafSelectorTop | LeafSelectorBottom
   deriving (Eq, Ord, Show, Generic)
 
-renderMarkSelectorSide :: MarkSelectorSide -> ST
-renderMarkSelectorSide MarkSelectorTop    = "top"
-renderMarkSelectorSide MarkSelectorBottom = "bottom"
+renderLeafSelectorSide :: LeafSelectorSide -> ST
+renderLeafSelectorSide LeafSelectorTop    = "top"
+renderLeafSelectorSide LeafSelectorBottom = "bottom"

@@ -96,11 +96,11 @@ spec = do
       it "works" . property $ \(RawContentWithSelections _rc _sels) -> do
         pending
 
-    describe "getMarkSelectors" $ do
+    describe "getLeafSelectors" $ do
       it "### works (between RawContent and DOM)" . property $ \rc -> do
         pending
-        let msels :: [(ContributionID, MarkSelector, MarkSelector)]
-            msels = getMarkSelectors rc
+        let msels :: [(ContributionID, LeafSelector, LeafSelector)]
+            msels = getLeafSelectors rc
 
             RawContentSeparateStyles _ stys = separateStyles rc
             contribs = [ (cid, r)
@@ -108,7 +108,7 @@ spec = do
                        , r <- unRanges rs]
 
         -- render the document component and retrieve the contents of the marks via the browser
-        -- selection api (not draft/react, since 'MarkSelector' is referencing DOM nodes).
+        -- selection api (not draft/react, since 'LeafSelector' is referencing DOM nodes).
 
         _ <- mount $ document_ DocumentProps
           { _dpDocumentState     = mkDocumentStateView rc
@@ -119,7 +119,7 @@ spec = do
         length msels `shouldBe` length contribs
         forM_ (zip (sort contribs) (sort msels)) $ \((cid, sel), (cid', beginpoint, endpoint)) -> do
           cid `shouldBe` cid'
-          have <- js_getRawContentBetweenElems (cs $ renderMarkSelector beginpoint) (cs $ renderMarkSelector endpoint)
+          have <- js_getRawContentBetweenElems (cs $ renderLeafSelector beginpoint) (cs $ renderLeafSelector endpoint)
           cs have `shouldBe` selectionText BlockBoundaryIsNewline rc (fromStyleRange rc sel)
 
 
@@ -249,7 +249,7 @@ foreign import javascript safe
 
 foreign import javascript safe
     "refine$getRawContentBetweenElems($1, $2)"
-    js_getRawContentBetweenElems :: JSString {- begin MarkSelector -} -> JSString {- end MarkSelector -} -> IO JSString
+    js_getRawContentBetweenElems :: JSString {- begin LeafSelector -} -> JSString {- end LeafSelector -} -> IO JSString
 
 #else
 
@@ -258,7 +258,7 @@ js_testConvertFromToRaw :: JSString -> Bool
 js_testConvertFromToRaw = error "javascript FFI not available in GHC"
 
 {-# ANN js_getRawContentBetweenElems ("HLint: ignore Use camelCase" :: String) #-}
-js_getRawContentBetweenElems :: JSString {- begin MarkSelector -} -> JSString {- end MarkSelector -} -> IO JSString
+js_getRawContentBetweenElems :: JSString {- begin LeafSelector -} -> JSString {- end LeafSelector -} -> IO JSString
 js_getRawContentBetweenElems = error "javascript FFI not available in GHC"
 
 #endif

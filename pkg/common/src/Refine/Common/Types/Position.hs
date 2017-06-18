@@ -208,7 +208,7 @@ rangesClosure rs = case unRanges rs of
 -- offset-key is constructed from block key and two 'Int's.
 --
 -- The first 'Int' increments every time a decorator is encountered; the second one increments on
--- every span and resets on every decorator.  'getEntitySelectors', 'getMarkSelectors',
+-- every span and resets on every decorator.  'getEntitySelectors', 'getLeafSelectors',
 -- 'getSelectors' depend on this behavior.  See the resp. tests in pkg/frontend.
 --
 -- See also: node_modules/draft-js/lib/DraftOffsetKey.js,
@@ -221,12 +221,11 @@ data LeafIndex = LeafIndex
     }
   deriving (Eq, Ord, Show, Generic)
 
--- TODO: rename this to 'LeafSelector'
--- use only when interfacing with Draft
-type MarkSelector = GPosition BlockKey LeafIndex
+-- | Use only when interfacing with Draft
+type LeafSelector = GPosition BlockKey LeafIndex
 
-renderMarkSelector :: MarkSelector -> ST
-renderMarkSelector (Position (BlockKey b) (LeafIndex k i)) =
+renderLeafSelector :: LeafSelector -> ST
+renderLeafSelector (Position (BlockKey b) (LeafIndex k i)) =
   "article span[data-offset-key=\"" <> b <> "-" <> cs (show k) <> "-" <> cs (show i) <> "\"]"
 
 

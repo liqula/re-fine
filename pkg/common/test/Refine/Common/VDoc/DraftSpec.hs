@@ -61,7 +61,7 @@ spec = do
       mkSomeSegments fst snd [(EntityRange 1 3, 'o'), (EntityRange 2 4, 'x')]
         `shouldBe` [(1, Set.empty), (1, Set.fromList "o"), (2, Set.fromList "ox"), (2, Set.fromList "x")]
 
-  describe "getMarkSelectors" $ do
+  describe "getLeafSelectors" $ do
     let cid0 = ContribIDNote (ID 13)
         cid1 = ContribIDNote (ID 35)
         block0 = BlockIndex 0 $ BlockKey "0"
@@ -71,25 +71,25 @@ spec = do
       let rawContent = mkRawContent $ mkBlock "1234567890" :| []
           marks      = []
           want       = []
-      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
+      getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (single contrib spanning the entire block)" $ do
       let rawContent = mkRawContent $ mkBlock "1234567890" :| []
           marks      = [(cid0, Range (Position block0 0) (Position block0 4))]
           want       = [(cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 0), Position (block0 ^. blockIndexKey) (LeafIndex 0 0))]
-      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
+      getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (single contrib spanning part of the block)" $ do
       let rawContent = mkRawContent $ mkBlock "1234567890" :| []
           marks      = [(cid0, Range (Position block0 2) (Position block0 4))]
           want       = [(cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 1))]
-      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
+      getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (single contrib spanning the entire block, with an extra block style flying around)" $ do
       let rawContent = mkRawContent $ NEL.fromList [mkBlock "1234567890" & blockStyles .~ [(EntityRange 1 2, Bold)]]
           marks      = [(cid0, Range (Position block0 0) (Position block0 4))]
           want       = [(cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 0), Position (block0 ^. blockIndexKey) (LeafIndex 0 2))]
-      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
+      getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (one contrib in two parts)" $ do
       let rawContent = mkRawContent $ mkBlock "1234567890" :| []
@@ -99,7 +99,7 @@ spec = do
           want       = [ (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 1))
                        , (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 3), Position (block0 ^. blockIndexKey) (LeafIndex 0 3))
                        ]
-      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
+      getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (one contrib in two parts spanning two blocks)" $ do
       let rawContent = mkRawContent $ NEL.fromList [mkBlock "1234567890", mkBlock "asdf"]
@@ -109,7 +109,7 @@ spec = do
           want       = [ (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block1 ^. blockIndexKey) (LeafIndex 0 0))
                        , (cid0, Position (block1 ^. blockIndexKey) (LeafIndex 0 2), Position (block1 ^. blockIndexKey) (LeafIndex 0 2))
                        ]
-      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
+      getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (two overlapping contribs)" $ do
       let rawContent = mkRawContent $ mkBlock "1234567890" :| []
@@ -119,7 +119,7 @@ spec = do
           want       = [ (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 2))
                        , (cid1, Position (block0 ^. blockIndexKey) (LeafIndex 0 2), Position (block0 ^. blockIndexKey) (LeafIndex 0 3))
                        ]
-      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
+      getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (two overlapping contribs spanning two blocks)" $ do
       let rawContent = mkRawContent $ NEL.fromList [mkBlock "1234567890", mkBlock "asdf"]
@@ -129,7 +129,7 @@ spec = do
           want       = [ (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block1 ^. blockIndexKey) (LeafIndex 0 2))
                        , (cid1, Position (block1 ^. blockIndexKey) (LeafIndex 0 1), Position (block1 ^. blockIndexKey) (LeafIndex 0 1))
                        ]
-      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
+      getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (two overlapping contribs beginning in the same point)" $ do
       let rawContent = mkRawContent $ mkBlock "1234567890" :| []
@@ -139,7 +139,7 @@ spec = do
           want       = [ (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 1))
                        , (cid1, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 2))
                        ]
-      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
+      getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (two overlapping contribs ending in the same point)" $ do
       let rawContent = mkRawContent $ mkBlock "1234567890" :| []
@@ -149,7 +149,7 @@ spec = do
           want       = [ (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 2), Position (block0 ^. blockIndexKey) (LeafIndex 0 2))
                        , (cid1, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 2))
                        ]
-      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
+      getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (two overlapping contribs beginning and ending in the same point)" $ do
       let rawContent = mkRawContent $ mkBlock "1234567890" :| []
@@ -159,7 +159,7 @@ spec = do
           want       = [ (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 1))
                        , (cid1, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 1))
                        ]
-      getMarkSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
+      getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (with entity)" $ do
       pendingWith "do they also have spans?  can we somehow distinguish them away in the css selector?"

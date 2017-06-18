@@ -130,13 +130,13 @@ editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFrom
 -- | construct a 'SetMarkPositions' action.
 setMarkPositions :: MonadIO m => DocumentState -> m ContributionAction
 setMarkPositions (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
-    let marks :: [(ContributionID, MarkSelector, MarkSelector)]
-        marks = getMarkSelectors rawContent
+    let marks :: [(ContributionID, LeafSelector, LeafSelector)]
+        marks = getLeafSelectors rawContent
 
-        getPos :: (ContributionID, MarkSelector, MarkSelector) -> IO (ContributionID, MarkPosition)
+        getPos :: (ContributionID, LeafSelector, LeafSelector) -> IO (ContributionID, MarkPosition)
         getPos (cid, top, bot) = do
-          topOffset    <- OffsetFromViewportTop  <$> getMarkSelectorBound MarkSelectorTop    top
-          bottomOffset <- OffsetFromViewportTop  <$> getMarkSelectorBound MarkSelectorBottom bot
+          topOffset    <- OffsetFromViewportTop  <$> getLeafSelectorBound LeafSelectorTop    top
+          bottomOffset <- OffsetFromViewportTop  <$> getLeafSelectorBound LeafSelectorBottom bot
           scrollOffset <- ScrollOffsetOfViewport <$> js_getScrollOffset
           let markPosition = MarkPosition
                 { _markPositionTop    = offsetFromDocumentTop topOffset    scrollOffset

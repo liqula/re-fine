@@ -144,16 +144,16 @@ addMarksToRawContent marks rc = joinStyles . RawContentSeparateStyles txts $ fol
         key = Right $ Mark cid
         r = rangesFromRange False $ toStylePosition rc <$> range
 
--- FIXME: change type to   RawContent -> [(ContributionID, Ranges MarkSelector)]
+-- TODO: change type to   RawContent -> [(ContributionID, Ranges LeafSelector)]
 -- separateStyles could be used
-getMarkSelectors :: RawContent -> [(ContributionID, MarkSelector, MarkSelector)]
-getMarkSelectors rc
+getLeafSelectors :: RawContent -> [(ContributionID, LeafSelector, LeafSelector)]
+getLeafSelectors rc
     = concatMap f
     $ docRanges False lineElemLength (\((_, ss), _) -> [cid | Atom (Mark cid) <- Set.toList ss]) rc
         -- (note that this keeps track of 'ContribIDHighlightMark' positions, even though that's not
         -- needed for anything.)
   where
-    f (cid, rs) = [(cid, a, b) | Range a b <- styleRangeToMarkSelectors rc <$> unRanges (toStyleRanges rc rs)]
+    f (cid, rs) = [(cid, a, b) | Range a b <- styleRangeToLeafSelectors rc <$> unRanges (toStyleRanges rc rs)]
 
 ---------------------- separate style representation
 

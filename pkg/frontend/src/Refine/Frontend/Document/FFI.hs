@@ -63,7 +63,7 @@ module Refine.Frontend.Document.FFI
   , getDraftSelectionStateViaBrowser
 
     -- * marks
-  , getMarkSelectorBound
+  , getLeafSelectorBound
   ) where
 
 import Refine.Frontend.Prelude
@@ -185,9 +185,9 @@ getDraftSelectionStateViaBrowser = do
 
 -- * marks
 
-getMarkSelectorBound :: MarkSelectorSide -> Draft.MarkSelector -> IO Int
-getMarkSelectorBound side mark =
-  js_getBoundingBox (cs $ renderMarkSelectorSide side) (cs $ Draft.renderMarkSelector mark)
+getLeafSelectorBound :: LeafSelectorSide -> Draft.LeafSelector -> IO Int
+getLeafSelectorBound side mark =
+  js_getBoundingBox (cs $ renderLeafSelectorSide side) (cs $ Draft.renderLeafSelector mark)
 
 
 -- * foreign

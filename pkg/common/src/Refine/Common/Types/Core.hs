@@ -769,9 +769,8 @@ fromStyleRange :: RawContent -> Range StylePosition -> Range Position
 fromStyleRange rc (Range a b) | a < b = RangeInner (last $ stylePositions rc a) (basePosition b)
 
 -- TUNING: speed this up by adding an index structure to RawContent
--- TODO: rename
-toMarkSelector :: Bool -> RawContent -> Position -> (MarkSelector, Int)
-toMarkSelector top rc (Position (BlockIndex i key) col) = (Position key (LeafIndex dec_ sp_), col - beg)
+toLeafSelector :: Bool -> RawContent -> Position -> (LeafSelector, Int)
+toLeafSelector top rc (Position (BlockIndex i key) col) = (Position key (LeafIndex dec_ sp_), col - beg)
   where
     DocBlock _ _ _ es_ = rawContentToDoc rc NEL.!! i
 
@@ -789,12 +788,11 @@ toMarkSelector top rc (Position (BlockIndex i key) col) = (Position key (LeafInd
 
 -- The range cannot be empty
 -- this computes the minimal selection range
--- TODO: rename
-styleRangeToMarkSelectors :: RawContent -> Range StylePosition -> Range MarkSelector
-styleRangeToMarkSelectors rc (Range a b) | a < b = RangeInner a' b'
+styleRangeToLeafSelectors :: RawContent -> Range StylePosition -> Range LeafSelector
+styleRangeToLeafSelectors rc (Range a b) | a < b = RangeInner a' b'
   where
-    (a', 0) = toMarkSelector True rc . last $ stylePositions rc a
-    (b', _) = toMarkSelector False rc $ basePosition b
+    (a', 0) = toLeafSelector True rc . last $ stylePositions rc a
+    (b', _) = toLeafSelector False rc $ basePosition b
 
 lineElemLength :: LineElem -> Int
 lineElemLength (_, NonEmptyST txt) = ST.length txt
