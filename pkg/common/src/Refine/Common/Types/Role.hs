@@ -33,7 +33,7 @@ import Refine.Prelude.TH (makeRefineType)
 -- Certain 'Role' constructors grant the power to assign 'Role's to other users (this happens at run
 -- time in the UI).
 --
--- TODO: (1) I think #262 is mostly fixed by now, but I (fisx) want to check that again; (2) Should
+-- FIXME: (1) I think #262 is mostly fixed by now, but I (fisx) want to check that again; (2) Should
 -- we (can we?) collapse 'ProcessInitiator' and 'GroupInitiator' into a single role 'Initiator'?
 data Role
   = ReadOnly

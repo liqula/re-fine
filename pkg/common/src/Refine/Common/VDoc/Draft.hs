@@ -57,7 +57,6 @@ emptyRawContent = mkRawContent $ emptyBlock :| []
 -- point == end point).
 --
 -- (2) Since blocks can be empty, empty selections can range over many lines.
--- TODO: rename to rangeText
 rangeText :: BlockBoundary -> RawContent -> Range Position -> ST
 rangeText blockBoundary (RawContent bs _) ss@(Range s e) = case selectedBlocks ss (NEL.toList bs) of
       []        -> ""
