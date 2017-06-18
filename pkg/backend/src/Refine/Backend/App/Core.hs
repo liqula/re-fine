@@ -90,7 +90,7 @@ makeLenses ''AppState
 -- | Application monad handles
 -- * database connection
 -- * event logging
--- TODO:
+-- FIXME:
 -- * user authentication (login)
 -- * user authorization (groups)
 -- * use one db connection in one run, commit the result at the end.

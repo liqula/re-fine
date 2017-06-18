@@ -320,7 +320,7 @@ vdocOfEdit pid = S.editElim (\_ _ _ vid _ -> S.keyToId vid) <$> getEntityRep pid
 
 -- * Note
 
--- TODO: Use the _lid
+-- FIXME: Use the @_lid@ argument
 toNote :: MetaID Note -> ST -> Bool -> RangePosition -> LoginId -> Note
 toNote nid desc public range _lid = Note nid desc public (unRangePosition range)
 
@@ -342,7 +342,7 @@ getNote = getMetaEntity (S.noteElim . toNote)
 
 -- * Question
 
--- TODO: User lid
+-- FIXME: user the @_lid@ argument
 toQuestion :: MetaID Question -> ST -> Bool -> Bool -> RangePosition -> LoginId -> Question
 toQuestion qid text answ pblc range _lid = Question qid text answ pblc (unRangePosition range)
 
@@ -365,7 +365,7 @@ getQuestion = getMetaEntity (S.questionElim . toQuestion)
 
 -- * Discussion
 
--- TODO: Login ID
+-- FIXME: user the @_lid@ argument
 toDiscussion :: MetaID Discussion -> Bool -> RangePosition -> LoginId -> Discussion
 toDiscussion did pblc range _lid = Discussion did pblc (unRangePosition range)
 
@@ -613,7 +613,7 @@ instance C.StoreProcessData DB CollaborativeEdit where
     let key = pdata ^. collaborativeEditID . to S.idToKey
     deleteWhere [S.ProcessOfCollabEditCollabEdit ==. key]
     delete key
-    error "TODO: also remove VDoc and all its contents from the various tables.  see #273."
+    error "FIXME: also remove VDoc and all its contents from the various tables.  see #273."
 
 instance C.StoreProcessData DB Aula where
   processDataGroupID = pure . view createAulaProcessGroupID
