@@ -755,9 +755,8 @@ toStylePosition rc p_@(Position (BlockIndex i_ _) col)
     len b = ST.length $ b ^. blockText
 
 -- TUNING: speed this up
--- TODO: rename to 'toStyleRanges'
-rangesToStyleRanges :: RawContent -> Ranges Position -> Ranges StylePosition
-rangesToStyleRanges rc rs = mconcat $ (rangesFromRange False . fmap (toStylePosition rc)) <$> unRanges rs
+toStyleRanges :: RawContent -> Ranges Position -> Ranges StylePosition
+toStyleRanges rc rs = mconcat $ (rangesFromRange False . fmap (toStylePosition rc)) <$> unRanges rs
 
 -- all positions which maps to the same style position
 stylePositions :: RawContent -> StylePosition -> [Position]
@@ -766,9 +765,8 @@ stylePositions rc (StylePosition p@(Position (BlockIndex i _) _) m)
 
 -- The range cannot be empty
 -- this computes the minimal selection range
--- TODO: rename to 'fromStyleRange'
-styleRangeToSelectionState :: RawContent -> Range StylePosition -> Range Position
-styleRangeToSelectionState rc (Range a b) | a < b = RangeInner (last $ stylePositions rc a) (basePosition b)
+fromStyleRange :: RawContent -> Range StylePosition -> Range Position
+fromStyleRange rc (Range a b) | a < b = RangeInner (last $ stylePositions rc a) (basePosition b)
 
 -- TUNING: speed this up by adding an index structure to RawContent
 -- TODO: rename

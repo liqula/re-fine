@@ -49,7 +49,7 @@ mkEditToolbarProps st
     es = st ^. gsDocumentState . documentStateVal
     sel = _selectionRange . fromSelectionState rc $ getSelection es
     rc = convertToRaw $ getCurrentContent es
-    linkranges = map (styleRangeToSelectionState rc) . unRanges . mconcat . map (rangesToStyleRanges rc . snd)
+    linkranges = fmap (fromStyleRange rc) . unRanges . mconcat . fmap (toStyleRanges rc . snd)
         $ docRanges False lineElemLength (\((Atom l, _), _) -> [() | isLink l]) rc
       where
         isLink (Just (EntityLink _)) = True

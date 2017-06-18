@@ -153,7 +153,7 @@ getMarkSelectors rc
         -- (note that this keeps track of 'ContribIDHighlightMark' positions, even though that's not
         -- needed for anything.)
   where
-    f (cid, rs) = [(cid, a, b) | Range a b <- styleRangeToMarkSelectors rc <$> unRanges (rangesToStyleRanges rc rs)]
+    f (cid, rs) = [(cid, a, b) | Range a b <- styleRangeToMarkSelectors rc <$> unRanges (toStyleRanges rc rs)]
 
 ---------------------- separate style representation
 
@@ -169,7 +169,7 @@ data SeparateBlock = SeparateBlock BlockKey BlockType BlockDepth ST
 separateStyles :: RawContent -> RawContentSeparateStyles
 separateStyles rc = RawContentSeparateStyles
     { documentText  = mkSeparateBlock <$> (rc ^. rawContentBlocks)
-    , documentMarks = rangesToStyleRanges rc <$> Map.fromList (docRanges False lineElemLength f rc)
+    , documentMarks = toStyleRanges rc <$> Map.fromList (docRanges False lineElemLength f rc)
     }
   where
     mkSeparateBlock :: Block EntityKey BlockKey -> SeparateBlock
