@@ -770,7 +770,7 @@ fromStyleRange rc (Range a b) | a < b = RangeInner (last $ stylePositions rc a) 
 
 -- TUNING: speed this up by adding an index structure to RawContent
 toLeafSelector :: Bool -> RawContent -> Position -> (LeafSelector, Int)
-toLeafSelector top rc (Position (BlockIndex i key) col) = (Position key (LeafIndex dec_ sp_), col - beg)
+toLeafSelector top rc (Position (BlockIndex i key) col) = (Position key (SpanIndex dec_ sp_), col - beg)
   where
     DocBlock _ _ _ es_ = rawContentToDoc rc NEL.!! i
 

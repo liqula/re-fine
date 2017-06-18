@@ -76,19 +76,19 @@ spec = do
     it "works (single contrib spanning the entire block)" $ do
       let rawContent = mkRawContent $ mkBlock "1234567890" :| []
           marks      = [(cid0, Range (Position block0 0) (Position block0 4))]
-          want       = [(cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 0), Position (block0 ^. blockIndexKey) (LeafIndex 0 0))]
+          want       = [(cid0, Position (block0 ^. blockIndexKey) (SpanIndex 0 0), Position (block0 ^. blockIndexKey) (SpanIndex 0 0))]
       getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (single contrib spanning part of the block)" $ do
       let rawContent = mkRawContent $ mkBlock "1234567890" :| []
           marks      = [(cid0, Range (Position block0 2) (Position block0 4))]
-          want       = [(cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 1))]
+          want       = [(cid0, Position (block0 ^. blockIndexKey) (SpanIndex 0 1), Position (block0 ^. blockIndexKey) (SpanIndex 0 1))]
       getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (single contrib spanning the entire block, with an extra block style flying around)" $ do
       let rawContent = mkRawContent $ NEL.fromList [mkBlock "1234567890" & blockStyles .~ [(EntityRange 1 2, Bold)]]
           marks      = [(cid0, Range (Position block0 0) (Position block0 4))]
-          want       = [(cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 0), Position (block0 ^. blockIndexKey) (LeafIndex 0 2))]
+          want       = [(cid0, Position (block0 ^. blockIndexKey) (SpanIndex 0 0), Position (block0 ^. blockIndexKey) (SpanIndex 0 2))]
       getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
     it "works (one contrib in two parts)" $ do
@@ -96,8 +96,8 @@ spec = do
           marks      = [ (cid0, Range (Position block0 2) (Position block0 3))
                        , (cid0, Range (Position block0 4) (Position block0 7))
                        ]
-          want       = [ (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 1))
-                       , (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 3), Position (block0 ^. blockIndexKey) (LeafIndex 0 3))
+          want       = [ (cid0, Position (block0 ^. blockIndexKey) (SpanIndex 0 1), Position (block0 ^. blockIndexKey) (SpanIndex 0 1))
+                       , (cid0, Position (block0 ^. blockIndexKey) (SpanIndex 0 3), Position (block0 ^. blockIndexKey) (SpanIndex 0 3))
                        ]
       getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
@@ -106,8 +106,8 @@ spec = do
           marks      = [ (cid0, Range (Position block0 2) (Position block1 1))
                        , (cid0, Range (Position block1 2) (Position block1 3))
                        ]
-          want       = [ (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block1 ^. blockIndexKey) (LeafIndex 0 0))
-                       , (cid0, Position (block1 ^. blockIndexKey) (LeafIndex 0 2), Position (block1 ^. blockIndexKey) (LeafIndex 0 2))
+          want       = [ (cid0, Position (block0 ^. blockIndexKey) (SpanIndex 0 1), Position (block1 ^. blockIndexKey) (SpanIndex 0 0))
+                       , (cid0, Position (block1 ^. blockIndexKey) (SpanIndex 0 2), Position (block1 ^. blockIndexKey) (SpanIndex 0 2))
                        ]
       getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
@@ -116,8 +116,8 @@ spec = do
           marks      = [ (cid0, Range (Position block0 2) (Position block0 4))
                        , (cid1, Range (Position block0 3) (Position block0 7))
                        ]
-          want       = [ (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 2))
-                       , (cid1, Position (block0 ^. blockIndexKey) (LeafIndex 0 2), Position (block0 ^. blockIndexKey) (LeafIndex 0 3))
+          want       = [ (cid0, Position (block0 ^. blockIndexKey) (SpanIndex 0 1), Position (block0 ^. blockIndexKey) (SpanIndex 0 2))
+                       , (cid1, Position (block0 ^. blockIndexKey) (SpanIndex 0 2), Position (block0 ^. blockIndexKey) (SpanIndex 0 3))
                        ]
       getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
@@ -126,8 +126,8 @@ spec = do
           marks      = [ (cid0, Range (Position block0 2) (Position block1 3))
                        , (cid1, Range (Position block1 1) (Position block1 2))
                        ]
-          want       = [ (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block1 ^. blockIndexKey) (LeafIndex 0 2))
-                       , (cid1, Position (block1 ^. blockIndexKey) (LeafIndex 0 1), Position (block1 ^. blockIndexKey) (LeafIndex 0 1))
+          want       = [ (cid0, Position (block0 ^. blockIndexKey) (SpanIndex 0 1), Position (block1 ^. blockIndexKey) (SpanIndex 0 2))
+                       , (cid1, Position (block1 ^. blockIndexKey) (SpanIndex 0 1), Position (block1 ^. blockIndexKey) (SpanIndex 0 1))
                        ]
       getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
@@ -136,8 +136,8 @@ spec = do
           marks      = [ (cid0, Range (Position block0 2) (Position block0 3))
                        , (cid1, Range (Position block0 2) (Position block0 4))
                        ]
-          want       = [ (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 1))
-                       , (cid1, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 2))
+          want       = [ (cid0, Position (block0 ^. blockIndexKey) (SpanIndex 0 1), Position (block0 ^. blockIndexKey) (SpanIndex 0 1))
+                       , (cid1, Position (block0 ^. blockIndexKey) (SpanIndex 0 1), Position (block0 ^. blockIndexKey) (SpanIndex 0 2))
                        ]
       getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
@@ -146,8 +146,8 @@ spec = do
           marks      = [ (cid0, Range (Position block0 3) (Position block0 4))
                        , (cid1, Range (Position block0 2) (Position block0 4))
                        ]
-          want       = [ (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 2), Position (block0 ^. blockIndexKey) (LeafIndex 0 2))
-                       , (cid1, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 2))
+          want       = [ (cid0, Position (block0 ^. blockIndexKey) (SpanIndex 0 2), Position (block0 ^. blockIndexKey) (SpanIndex 0 2))
+                       , (cid1, Position (block0 ^. blockIndexKey) (SpanIndex 0 1), Position (block0 ^. blockIndexKey) (SpanIndex 0 2))
                        ]
       getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 
@@ -156,8 +156,8 @@ spec = do
           marks      = [ (cid0, Range (Position block0 2) (Position block0 4))
                        , (cid1, Range (Position block0 2) (Position block0 4))
                        ]
-          want       = [ (cid0, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 1))
-                       , (cid1, Position (block0 ^. blockIndexKey) (LeafIndex 0 1), Position (block0 ^. blockIndexKey) (LeafIndex 0 1))
+          want       = [ (cid0, Position (block0 ^. blockIndexKey) (SpanIndex 0 1), Position (block0 ^. blockIndexKey) (SpanIndex 0 1))
+                       , (cid1, Position (block0 ^. blockIndexKey) (SpanIndex 0 1), Position (block0 ^. blockIndexKey) (SpanIndex 0 1))
                        ]
       getLeafSelectors (addMarksToRawContent marks rawContent) `shouldBe` want
 

@@ -204,7 +204,9 @@ rangesClosure rs = case unRanges rs of
     xs -> Just $ RangeInner (_rangeBegin $ head xs) (_rangeEnd $ last xs)
 
 
--- | Javascript: `document.querySelectorAll('article span[data-offset-key="2vutk-0-1"]');`.  The
+-- | Use only when interfacing with Draft
+--
+-- Javascript: `document.querySelectorAll('article span[data-offset-key="2vutk-0-1"]');`.  The
 -- offset-key is constructed from block key and two 'Int's.
 --
 -- The first 'Int' increments every time a decorator is encountered; the second one increments on
@@ -213,19 +215,17 @@ rangesClosure rs = case unRanges rs of
 --
 -- See also: node_modules/draft-js/lib/DraftOffsetKey.js,
 -- node_modules/draft-js/lib/DraftEditorContents.react.js
---
--- TODO: rename to SpanIndex
-data LeafIndex = LeafIndex
+type LeafSelector = GPosition BlockKey SpanIndex
+
+-- | See 'LeafSelector'.
+data SpanIndex = SpanIndex
     { decoratorIndex :: Int
     , leafIndex      :: Int
     }
   deriving (Eq, Ord, Show, Generic)
 
--- | Use only when interfacing with Draft
-type LeafSelector = GPosition BlockKey LeafIndex
-
 renderLeafSelector :: LeafSelector -> ST
-renderLeafSelector (Position (BlockKey b) (LeafIndex k i)) =
+renderLeafSelector (Position (BlockKey b) (SpanIndex k i)) =
   "article span[data-offset-key=\"" <> b <> "-" <> cs (show k) <> "-" <> cs (show i) <> "\"]"
 
 
