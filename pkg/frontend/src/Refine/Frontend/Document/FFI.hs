@@ -56,6 +56,8 @@ module Refine.Frontend.Document.FFI
   , documentToggleBlockType
   , documentAddLink
   , documentRemoveLink
+  , documentUndo
+  , documentRedo
 
     -- * selections
   , getSelection
@@ -162,6 +164,12 @@ documentAddLink link st = js_ES_toggleLink st' (js_ES_getSelection st') entityke
 -- | Remove links in the current selection
 documentRemoveLink :: EditorState -> EditorState
 documentRemoveLink st = js_ES_removeLink st (js_ES_getSelection st)
+
+documentUndo :: EditorState -> EditorState
+documentUndo = js_ES_undo
+
+documentRedo :: EditorState -> EditorState
+documentRedo = js_ES_redo
 
 -- * selections
 
@@ -282,6 +290,14 @@ foreign import javascript safe
   js_ES_removeLink :: EditorState -> JSVal{-SelectionState-} -> EditorState
 
 foreign import javascript safe
+  "Draft.EditorState.undo($1)"
+  js_ES_undo :: EditorState -> EditorState
+
+foreign import javascript safe
+  "Draft.EditorState.redo($1)"
+  js_ES_redo :: EditorState -> EditorState
+
+foreign import javascript safe
   "Draft.RichUtils.toggleBlockType($1,$2)"
   js_ES_toggleBlockType :: EditorState -> JSString -> EditorState
 
@@ -390,6 +406,14 @@ js_ES_toggleLink = error "javascript FFI not available in GHC"
 {-# ANN js_ES_removeLink ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_removeLink :: EditorState -> JSVal{-SelectionState-} -> EditorState
 js_ES_removeLink = error "javascript FFI not available in GHC"
+
+{-# ANN js_ES_undo ("HLint: ignore Use camelCase" :: String) #-}
+js_ES_undo :: EditorState -> EditorState
+js_ES_undo = error "javascript FFI not available in GHC"
+
+{-# ANN js_ES_redo ("HLint: ignore Use camelCase" :: String) #-}
+js_ES_redo :: EditorState -> EditorState
+js_ES_redo = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_toggleBlockType ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_toggleBlockType :: EditorState -> JSString -> EditorState

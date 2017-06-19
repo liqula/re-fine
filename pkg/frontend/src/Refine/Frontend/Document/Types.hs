@@ -48,6 +48,8 @@ data DocumentAction =
   | DocumentRemoveLink
   | DocumentCreateLink ST
   | ToggleCollapseDiff
+  | DocumentUndo
+  | DocumentRedo
   deriving (Show, Eq, Generic)
 
 data DocumentState =

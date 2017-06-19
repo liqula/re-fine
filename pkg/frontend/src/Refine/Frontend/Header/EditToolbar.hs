@@ -129,6 +129,18 @@ editToolbar ep = mkView "EditToolbar" $ do
 
            in ibutton_ props
 
+          div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+
+          iconButton_ $ editButton "Edit_toolbar_undo"
+            & iconButtonPropsListKey      .~ "undo"
+            & iconButtonPropsLabel        .~ "undo"
+            & iconButtonPropsOnClick      .~ [DocumentAction DocumentUndo]
+
+          iconButton_ $ editButton "Edit_toolbar_redo"
+            & iconButtonPropsListKey      .~ "redo"
+            & iconButtonPropsLabel        .~ "redo"
+            & iconButtonPropsOnClick      .~ [DocumentAction DocumentRedo]
+
           iconButton_ $ editButton mempty
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
             & iconButtonPropsListKey      .~ "save"
