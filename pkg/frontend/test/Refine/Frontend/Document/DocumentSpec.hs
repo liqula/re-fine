@@ -98,7 +98,8 @@ spec = do
         pending
 
     describe "getLeafSelectors" $ do
-      it "### works (between RawContent and DOM)" . property $ \rc -> do
+      it "works (between RawContent and DOM)" . property $ \rc -> do
+        pendingWith "#370"
         let msels :: [(ContributionID, Range LeafSelector)]
             msels = Map.toList (getLeafSelectors rc) >>= \(cid, rs) -> (,) cid <$> unRanges rs
 
