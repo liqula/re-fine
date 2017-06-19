@@ -109,7 +109,7 @@ instance Arbitrary BlockDepth where
 instance Arbitrary RawContent where
   arbitrary = (rawContentBlocks %~ initBlockKeys) . docToRawContent . NEL.fromList <$> listOf1 (scale (`div` 3) arbitrary)
        -- alternative implementation: @initBlockKeys . sanitizeRawContent . mkRawContent <$> arbitrary@
-  shrink    = canonicalizeRawContent <$$> gshrink
+  shrink    = canonicalizeRawContent . sanitizeRawContent <$$> gshrink
 
 legalChar :: Char -> Bool
 legalChar = (`notElem` ['\\'])  -- (occurrances of '\\' shift ranges around in the test suite.)
