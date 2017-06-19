@@ -258,6 +258,8 @@ documentWithoutCb_ :: DocumentProps -> ReactElementM eventHandler ()
 documentWithoutCb_ prps = Outdated.view documentWithoutCb prps mempty
 
 
+-- * ffi
+
 #ifdef __GHCJS__
 
 foreign import javascript safe
