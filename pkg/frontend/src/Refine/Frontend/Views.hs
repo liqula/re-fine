@@ -126,7 +126,6 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                       leftAside_ asideProps
                       document_ $ DocumentProps (rs ^. RS.gsDocumentState)
                                                 (rs ^. RS.gsContributionState)
-                                                (rs ^. gsHeaderState . hsToolbarExtensionStatus)
                       rightAside_ asideProps
 
           -- append an empty page to the botton.  (helps with legitimate attempts to scroll beyond

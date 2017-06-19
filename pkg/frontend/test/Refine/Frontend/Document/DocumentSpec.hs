@@ -44,7 +44,6 @@ import Refine.Frontend.Document.Document
 import Refine.Frontend.Document.FFI
 import Refine.Frontend.Document.Store
 import Refine.Frontend.Document.Types
-import Refine.Frontend.Header.Types
 import Refine.Frontend.Store
 import Refine.Frontend.Store.Types
 import Refine.Frontend.Test.Enzyme
@@ -114,7 +113,6 @@ spec = do
         _ <- mount $ documentWithoutCb_ DocumentProps
           { _dpDocumentState     = mkDocumentStateView rc
           , _dpContributionState = emptyContributionState
-          , _dpToolbarStatus     = ToolbarExtensionClosed
           }
 
         length msels `shouldBe` length contribs
@@ -152,7 +150,6 @@ spec = do
         mkTestProps c = DocumentProps
           (DocumentStateEdit (editorStateFromVDocVersion $ rawContentToVDocVersion c) Grammar)
           emptyContributionState
-          EditToolbarExtension
 
     it "renders with empty content" $ do
       wrapper <- shallow $ document_ (mkTestProps emptyRawContent)

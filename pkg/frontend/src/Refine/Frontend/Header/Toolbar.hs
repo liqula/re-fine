@@ -66,7 +66,7 @@ toolbar = mkView "Toolbar" $ do
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXLarge
             & iconButtonPropsElementName  .~ "bt-add-modification"  -- RENAME: edit
             & iconButtonPropsLabel        .~ "new edit"
-            & iconButtonPropsOnClick      .~ [HeaderAction ToggleEditToolbarExtension]
+            & iconButtonPropsOnClick      .~ [HeaderAction $ StartEdit Initial]
             & iconButtonPropsClickPropag  .~ False
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
@@ -156,24 +156,14 @@ newtype EditToolbarExtensionProps = EditToolbarExtensionProps
 
 instance UnoverlapAllEq EditToolbarExtensionProps
 
-editToolbarExtension :: View '[EditToolbarExtensionProps]
-editToolbarExtension = mkView "EditToolbarExtension" $ \case
-  (EditToolbarExtensionProps EditToolbarExtension) -> editKindForm_ (HeaderAction . StartEdit) (EditKindFormProps Nothing)
-  (EditToolbarExtensionProps (EditToolbarLinkEditor link)) -> editLinkInput_ link
-  (EditToolbarExtensionProps _) -> mempty
 
-editToolbarExtension_ :: EditToolbarExtensionProps -> ReactElementM handler ()
-editToolbarExtension_ !props = view_ editToolbarExtension "editToolbarExtension_" props
+-- FIXME: some of the rest of this module should probably go to EditToolbar.hs?
 
 
 newtype EditKindFormProps = EditKindFormProps (Maybe EditKind)
   deriving (Eq)
 
 instance UnoverlapAllEq EditKindFormProps
-
-
--- FIXME: some of the rest of this module should probably go to EditToolbar.hs?
-
 
 -- | FIXME: this component should be moved closer to "Refine.Frontend.Contribution.Dialog".  (not
 -- sure about the structure in general.  perhaps more code shuffling is indicated at some point.)

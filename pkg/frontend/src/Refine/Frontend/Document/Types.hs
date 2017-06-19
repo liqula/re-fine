@@ -33,7 +33,6 @@ import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
-import           Refine.Frontend.Header.Types
 import           Refine.Prelude.TH (makeRefineType)
 
 
@@ -83,7 +82,6 @@ emptyDocumentState = mkDocumentStateView emptyRawContent
 data DocumentProps = DocumentProps
   { _dpDocumentState     :: DocumentState
   , _dpContributionState :: ContributionState
-  , _dpToolbarStatus     :: ToolbarExtensionStatus
   }
   deriving (Show, Eq, Generic)
 
@@ -93,7 +91,6 @@ emptyDocumentProps :: DocumentProps
 emptyDocumentProps = DocumentProps
   { _dpDocumentState     = emptyDocumentState
   , _dpContributionState = emptyContributionState
-  , _dpToolbarStatus     = ToolbarExtensionClosed
   }
 
 makeRefineType ''DocumentAction

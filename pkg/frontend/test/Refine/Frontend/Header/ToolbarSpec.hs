@@ -77,21 +77,3 @@ spec = do
       annotation <- find wrapper (StringSelector ".c-vdoc-toolbar-extension__annotation")
       EZ.lengthOf annotation `shouldReturn` (1 :: Int)
       EZ.lengthOfIO (find annotation (StringSelector "IconButton")) `shouldReturn` (2 :: Int)
-
-  describe "The editToolbarExtension_ component" $ do
-    it "renders an element with the toolbar extension class" $ do
-      pendingWith "we need to enable the editToolbarExtension first"
-      wrapper <- shallow . editToolbarExtension_ $ EditToolbarExtensionProps EditToolbarExtension
-      EZ.lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension")) `shouldReturn` (1 :: Int)
-
-    it "contains a pointer element" $ do
-      pendingWith "we need to enable the editToolbarExtension first"
-      wrapper <- shallow . editToolbarExtension_ $ EditToolbarExtensionProps EditToolbarExtension
-      EZ.lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar-extension__pointer")) `shouldReturn` (1 :: Int)
-
-    it "contains a modification section with 1 normal icon button" $ do
-      pendingWith "we need to enable the editToolbarExtension first"
-      wrapper <- shallow . editToolbarExtension_ $ EditToolbarExtensionProps EditToolbarExtension
-      modification <- find wrapper (StringSelector ".c-vdoc-toolbar-extension__modification")
-      EZ.lengthOf modification `shouldReturn` (1 :: Int)
-      EZ.lengthOfIO (find modification (StringSelector "IconButton")) `shouldReturn` (1 :: Int)
