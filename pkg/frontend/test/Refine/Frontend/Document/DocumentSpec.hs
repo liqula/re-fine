@@ -33,6 +33,7 @@ import qualified Data.List.NonEmpty as NEL
 import qualified Data.Map as Map
 import Test.Hspec
 import Test.QuickCheck
+import React.Flux.Outdated as Outdated
 
 import Refine.Common.Test.Arbitrary
 import Refine.Common.Test.Samples
@@ -109,7 +110,7 @@ spec = do
         -- render the document component and retrieve the contents of the marks via the browser
         -- selection api (not draft/react, since 'LeafSelector' is referencing DOM nodes).
 
-        _ <- mount $ document_ DocumentProps
+        _ <- mount $ documentWithoutCb_ DocumentProps
           { _dpDocumentState     = mkDocumentStateView rc
           , _dpContributionState = emptyContributionState
           , _dpToolbarStatus     = ToolbarExtensionClosed
@@ -247,6 +248,15 @@ spec = do
 
 
 -- * helpers
+
+documentWithoutCb :: Outdated.ReactView DocumentProps
+documentWithoutCb = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig { Outdated.lRender = documentRender }
+
+-- | For the test cases we run here, we want to avoid crashes in the @lComponentDidMount@ callback,
+-- so we define this slightly sloppy document component.
+documentWithoutCb_ :: DocumentProps -> ReactElementM eventHandler ()
+documentWithoutCb_ prps = Outdated.view documentWithoutCb prps mempty
+
 
 #ifdef __GHCJS__
 

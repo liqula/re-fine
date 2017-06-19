@@ -25,6 +25,9 @@ module Refine.Frontend.Document.Document
   , document_
   , emptyEditorProps
   , defaultEditorProps
+
+    -- * for testing only
+  , documentRender
   ) where
 
 import Refine.Frontend.Prelude
@@ -56,7 +59,12 @@ import           Refine.Frontend.Util
 -- the draft coordinates (block keys, block offsets) in 'getDraftSelectionStateViaBrowser'.
 document :: Outdated.ReactView DocumentProps
 document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
-  { Outdated.lRender = \() props -> liftViewToStateHandler $ do
+  { Outdated.lRender = documentRender
+  , Outdated.lComponentDidMount = Just documentComponentDidMount
+  }
+
+documentRender :: () -> DocumentProps -> ReactElementM (StatefulViewEventHandler st) ()
+documentRender() props = liftViewToStateHandler $ do
       let dstate = props ^. dpDocumentState
 
           sendMouseUpIfReadOnly :: [SomeStoreAction]
@@ -120,11 +128,11 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
                          ] $ do
                       elemString . ppShow $ props ^? dpDocumentState . documentStateDiff
 
-  , Outdated.lComponentDidMount = Just $ \getPropsAndState _ldom _setState -> do
+documentComponentDidMount :: Outdated.LPropsAndState DocumentProps () -> _ldom -> _setState -> IO ()
+documentComponentDidMount getPropsAndState _ldom _setState = do
       props <- Outdated.lGetProps getPropsAndState
       ()    <- Outdated.lGetState getPropsAndState  -- (just to show there's nothing there)
       dispatchAndExec . ContributionAction =<< setAllVertialSpanBounds (props ^. dpDocumentState)
-  }
 
 document_ :: DocumentProps -> ReactElementM eventHandler ()
 document_ props = Outdated.view document props mempty
