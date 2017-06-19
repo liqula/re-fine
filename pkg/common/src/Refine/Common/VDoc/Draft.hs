@@ -141,16 +141,19 @@ addMarksToRawContent marks rc = joinStyles . RawContentSeparateStyles txts $ fol
         key = Right $ Mark cid
         r = rangesFromRange False $ toStylePosition rc <$> range
 
--- TODO: change type to   RawContent -> [(ContributionID, Ranges LeafSelector)]
--- TUNING: implement this using 'separateStyles'?
-getLeafSelectors :: RawContent -> [(ContributionID, LeafSelector, LeafSelector)]
+getLeafSelectors :: RawContent -> Map ContributionID (Ranges LeafSelector)
 getLeafSelectors rc
-    = concatMap f
-    $ docRanges False lineElemLength (\((_, ss), _) -> [cid | Atom (Mark cid) <- Set.toList ss]) rc
-        -- (note that this keeps track of 'ContribIDHighlightMark' positions, even though that's not
-        -- needed for anything.)
+    = fmap (RangesInner . map (styleRangeToLeafSelectors rc) . unRanges)
+    . mapFilterKey f
+    $ documentMarks (separateStyles rc)
   where
-    f (cid, rs) = [(cid, a, b) | Range a b <- styleRangeToLeafSelectors rc <$> unRanges (toStyleRanges rc rs)]
+    f (Right (Mark cid)) = Just cid
+    f _ = Nothing
+
+-- the function should be strictly monotonic on Just values
+mapFilterKey :: (Ord k, Ord l) => (k -> Maybe l) -> Map k a -> Map l a
+mapFilterKey f = Map.mapKeysMonotonic (fromJust . f) . Map.filterWithKey (\k _ -> isJust $ f k)
+
 
 ---------------------- separate style representation
 

@@ -32,6 +32,7 @@ module Refine.Frontend.Document.Store
 import Refine.Frontend.Prelude
 
 import           Control.Lens (ix)
+import qualified Data.Map as Map
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
@@ -128,11 +129,11 @@ editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFrom
 -- | construct a 'SetAllVertialSpanBounds' action.
 setAllVertialSpanBounds :: MonadIO m => DocumentState -> m ContributionAction
 setAllVertialSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
-    let marks :: [(ContributionID, LeafSelector, LeafSelector)]
+    let marks :: Map ContributionID (Ranges LeafSelector)
         marks = getLeafSelectors rawContent
 
-        getPos :: (ContributionID, LeafSelector, LeafSelector) -> IO (ContributionID, VertialSpanBounds)
-        getPos (cid, top, bot) = do
+        getPos :: (ContributionID, Ranges LeafSelector) -> IO [(ContributionID, VertialSpanBounds)]
+        getPos (cid, rs) = forM (unRanges rs) $ \(Range top bot) -> do
           topOffset    <- OffsetFromViewportTop  <$> getLeafSelectorBound LeafSelectorTop    top
           bottomOffset <- OffsetFromViewportTop  <$> getLeafSelectorBound LeafSelectorBottom bot
           scrollOffset <- ScrollOffsetOfViewport <$> js_getScrollOffset
@@ -142,4 +143,4 @@ setAllVertialSpanBounds (convertToRaw . getCurrentContent . view documentStateVa
                 }
           pure (cid, vertialSpanBounds)
 
-    SetAllVertialSpanBounds <$> (getPos `mapM` marks)
+    SetAllVertialSpanBounds . concat <$> (getPos `mapM` Map.toList marks)

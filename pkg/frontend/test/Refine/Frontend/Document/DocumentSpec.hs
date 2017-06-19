@@ -99,8 +99,8 @@ spec = do
     describe "getLeafSelectors" $ do
       it "### works (between RawContent and DOM)" . property $ \rc -> do
         pending
-        let msels :: [(ContributionID, LeafSelector, LeafSelector)]
-            msels = getLeafSelectors rc
+        let msels :: [(ContributionID, Range LeafSelector)]
+            msels = Map.toList (getLeafSelectors rc) >>= \(cid, rs) -> (,) cid <$> unRanges rs
 
             RawContentSeparateStyles _ stys = separateStyles rc
             contribs = [ (cid, r)
@@ -117,7 +117,7 @@ spec = do
           }
 
         length msels `shouldBe` length contribs
-        forM_ (zip (sort contribs) (sort msels)) $ \((cid, sel), (cid', beginpoint, endpoint)) -> do
+        forM_ (zip (sort contribs) (sort msels)) $ \((cid, sel), (cid', Range beginpoint endpoint)) -> do
           cid `shouldBe` cid'
           have <- js_getRawContentBetweenElems (cs $ renderLeafSelector beginpoint) (cs $ renderLeafSelector endpoint)
           cs have `shouldBe` rangeText BlockBoundaryIsNewline rc (fromStyleRange rc sel)
