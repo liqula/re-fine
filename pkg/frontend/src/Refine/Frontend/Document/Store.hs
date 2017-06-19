@@ -90,6 +90,12 @@ documentStateUpdate (DocumentAction DocumentRemoveLink) _ st
 documentStateUpdate (DocumentAction (DocumentCreateLink link)) _ st
   = st & documentStateVal %~ documentAddLink (cs link)
 
+documentStateUpdate (DocumentAction DocumentUndo) _ st
+  = st & documentStateVal %~ documentUndo
+
+documentStateUpdate (DocumentAction DocumentRedo) _ st
+  = st & documentStateVal %~ documentRedo
+
 documentStateUpdate (AddDiscussion _) (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
