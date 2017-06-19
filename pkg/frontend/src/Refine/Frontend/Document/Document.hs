@@ -111,10 +111,15 @@ documentRender() props = liftViewToStateHandler $ do
           let dstate' :: DocumentState
               dstate' = dstate & documentStateVal .~ updateEditorState evt
           in dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetAllVertialSpanBounds]
-          -- TODO: when clicking on a button in the edit toolbar and this handler triggers, the button click is not actioned.
-          -- if we leave the handler in and dispatch [], it's all good (except that this event
-          -- is missing).  does that mean that actions are sometimes swallowed?
-          -- this can be reproduced may times in a row, by creating new selections.  i think that's a new thing, didn't happen a while ago.
+          -- TODO: #371
+          --
+          -- when clicking on a button in the edit toolbar and this handler triggers, the button
+          -- click is not actioned.  if we leave the handler in and dispatch [], it's all good
+          -- (except that this event is missing).  does that mean that actions are sometimes
+          -- swallowed?
+          --
+          -- this can be reproduced may times in a row, by creating new selections.  i think that's
+          -- a new thing, didn't happen a while ago.
       ] mempty
 
     -- when showing an edit, show meta info dump for debugging.  FIXME: this information should
