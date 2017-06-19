@@ -131,6 +131,11 @@ spec = do
         -- function with future changes of the haskell type.
         pending
 
+    describe "forceSelection" $ do
+      it "works" $ do
+        -- see 'getDraftSelectionStateViaBrowser' test above.
+        pending
+
 
   describe "Draft" $ do
     it "editor_ mounts" $ do

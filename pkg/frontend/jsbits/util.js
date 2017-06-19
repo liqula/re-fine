@@ -43,10 +43,10 @@
 
     target.refine$setSelectionState = function(es, sel) {
         var sel2 = {
-            anchorKey:    sel._selectionStart._selectionBlock,
-            anchorOffset: sel._selectionStart._selectionOffset,
-            focusKey:     sel._selectionEnd._selectionBlock,
-            focusOffset:  sel._selectionEnd._selectionOffset
+            anchorKey:    sel._selectionRange._rangeBegin._blockIndex,
+            anchorOffset: sel._selectionRange._rangeBegin._columnIndex,
+            focusKey:     sel._selectionRange._rangeEnd._blockIndex,
+            focusOffset:  sel._selectionRange._rangeEnd._columnIndex
         }
         return Draft.EditorState.forceSelection(es, Draft.SelectionState.createEmpty().merge(sel2));
     };
