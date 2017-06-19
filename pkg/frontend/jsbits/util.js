@@ -97,8 +97,8 @@
 
             // block key found - return with current offset.
             return {
-                _selectionBlock: blockkey,
-                _selectionOffset: offset
+                _blockIndex: blockkey,
+                _columnIndex: offset
             };
         };
 
@@ -115,8 +115,10 @@
                 var endpoint   = mkPoint(range.endContainer, range.endOffset);
 
                 return { Right: { _selectionIsBackward: backward,
-                                  _selectionStart: startpoint,
-                                  _selectionEnd: endpoint
+                                  _selectionRange: {
+                                      _rangeBegin: startpoint,
+                                      _rangeEnd: endpoint
+                                  }
                                 }
                        };
             } catch(e) {

@@ -161,6 +161,10 @@ documentRemoveLink st = js_ES_removeLink st (js_ES_getSelection st)
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#getselection
 --
+-- The selection state in js cannot be interpreted as json, instead we need to call some methods to
+-- get to the data we need.  Therefore, we do not use 'FromJSVal' or 'FromJSON' to decode it, but
+-- this strange cascade of ffi calls.
+--
 -- Draft never actually nulls this field.  There is always have a selection, but start and end point
 -- may be identical.  See 'isEmptyRange', 'getRangeAction' for context.
 getSelection :: EditorState -> Draft.SelectionState
@@ -173,6 +177,9 @@ getSelection (js_ES_getSelection -> sel) = Draft.SelectionState .
 forceSelection :: EditorState -> Draft.SelectionState -> EditorState
 forceSelection es (cs . encode -> sel) = js_ES_forceSelection es sel
 
+-- | The shape of the selection object is determined by the generic aeson instances of the haskell
+-- type.  If that changes, you need to adjust the test cases in "Refine.Frontend.OrphansSpec" and
+-- @refine$getDraftSelectionStateViaBrowser@ in js.
 getDraftSelectionStateViaBrowser :: (MonadIO m, MonadError String m) => m Draft.SelectionState
 getDraftSelectionStateViaBrowser = do
   v :: Maybe (Either JSString Draft.SelectionState)
