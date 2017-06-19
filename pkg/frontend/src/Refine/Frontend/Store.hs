@@ -390,7 +390,7 @@ getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
       topOffset    <- liftIO js_getRangeTopOffset
       bottomOffset <- liftIO js_getRangeBottomOffset
       scrollOffset <- liftIO js_getScrollOffset
-      let doctop = scrollOffset + if sel ^. C.selectionIsBackward then topOffset else bottomOffset
+      let doctop = scrollOffset + if sel ^. C.unSelectionState . C.selectionIsBackward then topOffset else bottomOffset
 
       pure SelectionStateWithPx
         { _sstSelectionState = C.fromSelectionState (dstate ^?! documentStateContent) sel

@@ -727,7 +727,7 @@ fromSelectionPoint rc (Position k r) = Position (BlockIndex i k) r
         _ -> error "impossible"
 
 fromSelectionState :: RawContent -> SelectionState -> Selection Position
-fromSelectionState = fmap . fromSelectionPoint
+fromSelectionState rc (SelectionState sel) = fromSelectionPoint rc <$> sel
 
 -- TUNING: speed this up by adding an index structure to RawContent
 toStylePosition :: RawContent -> Position -> StylePosition

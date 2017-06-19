@@ -150,10 +150,11 @@ toBackwardSelection = Selection True
 
 -- | https://draftjs.org/docs/api-reference-selection-state.html
 -- use only when interfacing with Draft
-type SelectionState = Selection SelectionPoint
+newtype SelectionState = SelectionState { _unSelectionState :: Selection SelectionPoint }
+  deriving (Eq, Ord, Show, Generic)
 
 toSelectionState :: Selection Position -> SelectionState
-toSelectionState = fmap toSelectionPoint
+toSelectionState = SelectionState . fmap toSelectionPoint
 
 
 -- * Ranges
@@ -235,3 +236,4 @@ makeRefineType ''Ranges
 makeRefineType ''Selection
 makeRefineType ''BlockIndex
 makeRefineType ''BlockKey
+makeRefineType ''SelectionState

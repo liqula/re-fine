@@ -71,12 +71,12 @@ getDraftSelectionStateViaBrowser_2 :: Either JSString SelectionState
 getDraftSelectionStateViaBrowser_2 = Left "some unknown error" :: Either JSString SelectionState
 
 getDraftSelectionStateViaBrowser_3 :: Either JSString SelectionState
-getDraftSelectionStateViaBrowser_3 = Right . toSelection $ Range
+getDraftSelectionStateViaBrowser_3 = Right . SelectionState . toSelection $ Range
   (toSelectionPoint (Position (BlockIndex 1 (BlockKey "block1")) 3))  -- TODO: not sure about the block indices here?
   (toSelectionPoint (Position (BlockIndex 1 (BlockKey "block1")) 3))  -- TODO: not sure about the block indices here?
 
 getDraftSelectionStateViaBrowser_4 :: Either JSString SelectionState
-getDraftSelectionStateViaBrowser_4 = Right . toSelection $ Range
+getDraftSelectionStateViaBrowser_4 = Right . SelectionState . toSelection $ Range
   (toSelectionPoint (Position (BlockIndex 0 (BlockKey "fj6g6")) 266))  -- TODO: not sure about the block indices here?
   (toSelectionPoint (Position (BlockIndex 0 (BlockKey "fj6g6")) 360))  -- TODO: not sure about the block indices here?
 

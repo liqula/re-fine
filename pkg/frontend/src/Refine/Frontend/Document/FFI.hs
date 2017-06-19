@@ -164,7 +164,7 @@ documentRemoveLink st = js_ES_removeLink st (js_ES_getSelection st)
 -- Draft never actually nulls this field.  There is always have a selection, but start and end point
 -- may be identical.  See 'isEmptyRange', 'getRangeAction' for context.
 getSelection :: EditorState -> Draft.SelectionState
-getSelection (js_ES_getSelection -> sel) =
+getSelection (js_ES_getSelection -> sel) = Draft.SelectionState .
   (if js_ES_getSelectionIsBackward sel then Draft.toBackwardSelection else Draft.toSelection) $ Draft.Range
     (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionStartKey sel) (js_ES_getSelectionStartOffset sel))
     (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionEndKey sel)   (js_ES_getSelectionEndOffset sel))
