@@ -65,74 +65,74 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
 
 documentRender :: () -> DocumentProps -> ReactElementM (StatefulViewEventHandler st) ()
 documentRender() props = liftViewToStateHandler $ do
-      let dstate = props ^. dpDocumentState
+  let dstate = props ^. dpDocumentState
 
-          sendMouseUpIfReadOnly :: [SomeStoreAction]
-          sendMouseUpIfReadOnly =
-            mconcat [ dispatch $ ContributionAction RequestSetRange | has _DocumentStateView dstate ]
+      sendMouseUpIfReadOnly :: [SomeStoreAction]
+      sendMouseUpIfReadOnly =
+        mconcat [ dispatch $ ContributionAction RequestSetRange | has _DocumentStateView dstate ]
 
-          editorState :: EditorState
-          editorState = maybe (dstate ^. documentStateVal) (createWithContent . convertFromRaw) rawContentDiffView
+      editorState :: EditorState
+      editorState = maybe (dstate ^. documentStateVal) (createWithContent . convertFromRaw) rawContentDiffView
 
-          documentStyleMap :: Value
-          documentStyleMap = mkDocumentStyleMap active rawContent
-            where
-              active = props ^. dpContributionState . csHighlightedMarkAndBubble
+      documentStyleMap :: Value
+      documentStyleMap = mkDocumentStyleMap active rawContent
+        where
+          active = props ^. dpContributionState . csHighlightedMarkAndBubble
 
-          rawContent :: Maybe RawContent
-          rawContent = rawContentDiffView <|> (dstate ^? documentStateContent)
+      rawContent :: Maybe RawContent
+      rawContent = rawContentDiffView <|> (dstate ^? documentStateContent)
 
-          rawContentDiffView :: Maybe RawContent
-          rawContentDiffView
-              = fmap mcollapse
-              $ diffit =<< (props ^? dpDocumentState . documentStateDiff . editSource)
-            where
-              mcollapse rc = if props ^? dpDocumentState . documentStateDiffCollapsed == Just True
-                then hideUnchangedParts rc 0 0  -- FUTUREWORK: make these numbers adjustable by the user
-                else rc
+      rawContentDiffView :: Maybe RawContent
+      rawContentDiffView
+          = fmap mcollapse
+          $ diffit =<< (props ^? dpDocumentState . documentStateDiff . editSource)
+        where
+          mcollapse rc = if props ^? dpDocumentState . documentStateDiffCollapsed == Just True
+            then hideUnchangedParts rc 0 0  -- FUTUREWORK: make these numbers adjustable by the user
+            else rc
 
-              diffit InitialEdit           = error "impossible"
-              diffit MergeOfEdits{}        = error "not implemented"
-              diffit (EditOfEdit otedit _) = showEditAsRawContent otedit
-                                           . deleteMarksFromRawContent  -- (edit inline styles do not work in combination with marks.)
-                                         <$> (dstate ^? documentStateContent)
+          diffit InitialEdit           = error "impossible"
+          diffit MergeOfEdits{}        = error "not implemented"
+          diffit (EditOfEdit otedit _) = showEditAsRawContent otedit
+                                       . deleteMarksFromRawContent  -- (edit inline styles do not work in combination with marks.)
+                                     <$> (dstate ^? documentStateContent)
 
-      article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
-               , "style" @@= [zindex ZIxArticle, decl "overflow" (Ident "visible")]
-               , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
-               , onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
-               , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
-               ] $ do
-        editor_
-          [ "editorState" &= editorState
-          , "customStyleMap" &= documentStyleMap
-          , "readOnly" &= has _DocumentStateView dstate
-          , onChange $ \evt ->
-              let dstate' :: DocumentState
-                  dstate' = dstate & documentStateVal .~ updateEditorState evt
-              in dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetAllVertialSpanBounds]
-              -- TODO: when clicking on a button in the edit toolbar and this handler triggers, the button click is not actioned.
-              -- if we leave the handler in and dispatch [], it's all good (except that this event
-              -- is missing).  does that mean that actions are sometimes swallowed?
-              -- this can be reproduced may times in a row, by creating new selections.  i think that's a new thing, didn't happen a while ago.
-          ] mempty
+  article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
+           , "style" @@= [zindex ZIxArticle, decl "overflow" (Ident "visible")]
+           , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
+           , onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
+           , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
+           ] $ do
+    editor_
+      [ "editorState" &= editorState
+      , "customStyleMap" &= documentStyleMap
+      , "readOnly" &= has _DocumentStateView dstate
+      , onChange $ \evt ->
+          let dstate' :: DocumentState
+              dstate' = dstate & documentStateVal .~ updateEditorState evt
+          in dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetAllVertialSpanBounds]
+          -- TODO: when clicking on a button in the edit toolbar and this handler triggers, the button click is not actioned.
+          -- if we leave the handler in and dispatch [], it's all good (except that this event
+          -- is missing).  does that mean that actions are sometimes swallowed?
+          -- this can be reproduced may times in a row, by creating new selections.  i think that's a new thing, didn't happen a while ago.
+      ] mempty
 
-        -- when showing an edit, show meta info dump for debugging.  FIXME: this information should
-        -- be accessible elsewhere in the app.
-        case rawContentDiffView of
-          Nothing -> pure ()
-          Just _ -> pre_ [ "style" @= object [ "background"   .:= String "rgb(255, 100, 150)"
-                                             , "border"       .:= String "6px dashed black"
-                                             , "padding"      .:= String "20px"
-                                             ]
-                         ] $ do
-                      elemString . ppShow $ props ^? dpDocumentState . documentStateDiff
+    -- when showing an edit, show meta info dump for debugging.  FIXME: this information should
+    -- be accessible elsewhere in the app.
+    case rawContentDiffView of
+      Nothing -> pure ()
+      Just _ -> pre_ [ "style" @= object [ "background"   .:= String "rgb(255, 100, 150)"
+                                         , "border"       .:= String "6px dashed black"
+                                         , "padding"      .:= String "20px"
+                                         ]
+                     ] $ do
+                  elemString . ppShow $ props ^? dpDocumentState . documentStateDiff
 
 documentComponentDidMount :: Outdated.LPropsAndState DocumentProps () -> _ldom -> _setState -> IO ()
 documentComponentDidMount getPropsAndState _ldom _setState = do
-      props <- Outdated.lGetProps getPropsAndState
-      ()    <- Outdated.lGetState getPropsAndState  -- (just to show there's nothing there)
-      dispatchAndExec . ContributionAction =<< setAllVertialSpanBounds (props ^. dpDocumentState)
+  props <- Outdated.lGetProps getPropsAndState
+  ()    <- Outdated.lGetState getPropsAndState  -- (just to show there's nothing there)
+  dispatchAndExec . ContributionAction =<< setAllVertialSpanBounds (props ^. dpDocumentState)
 
 document_ :: DocumentProps -> ReactElementM eventHandler ()
 document_ props = Outdated.view document props mempty
