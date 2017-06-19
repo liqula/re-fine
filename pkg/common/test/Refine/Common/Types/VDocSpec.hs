@@ -85,8 +85,8 @@ spec = do
             [mkBlock "wef", mkBlock "", mkBlock "...", mkBlock "*", mkBlock "1234", mkBlock "????"]
           mksel :: Int -> Int -> Int -> Int -> Range StylePosition
           mksel sk so ek eo = toStylePosition rawContent . fromSelectionPoint rawContent <$> Range
-            (Position (BlockKey . cs . show $ sk) so)
-            (Position (BlockKey . cs . show $ ek) eo)
+            (Position (BlockKey . cs . ('b':) . show $ sk) so)
+            (Position (BlockKey . cs . ('b':) . show $ ek) eo)
 
       mksel 0 0 0 0 `shouldSatisfy`    isEmptyRange
       mksel 0 2 0 2 `shouldSatisfy`    isEmptyRange

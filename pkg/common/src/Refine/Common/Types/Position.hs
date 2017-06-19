@@ -225,9 +225,10 @@ data SpanIndex = SpanIndex
     }
   deriving (Eq, Ord, Show, Generic)
 
+-- | FUTUREWORK: @article span[...@ didn't work.  why?!
 renderLeafSelector :: LeafSelector -> ST
 renderLeafSelector (Position (BlockKey b) (SpanIndex k i)) =
-  "article span[data-offset-key=\"" <> b <> "-" <> cs (show k) <> "-" <> cs (show i) <> "\"]"
+  "span[data-offset-key=\"" <> b <> "-" <> cs (show k) <> "-" <> cs (show i) <> "\"]"
 
 
 makeRefineType ''GPosition

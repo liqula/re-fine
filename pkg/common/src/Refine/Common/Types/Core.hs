@@ -585,8 +585,9 @@ canonicalizeRawContent = docToRawContent . rawContentToDoc
 mkRawContent :: NonEmpty (Block Entity ()) -> RawContent
 mkRawContent = canonicalizeRawContent . mkRawContentInternal . initBlockKeys
 
+-- | block keys should start with an alpha letter, apparently starting with digits break `document.querySelector`
 initBlockKeys :: Ord ek => NonEmpty (Block ek bk) -> NonEmpty (Block ek BlockKey)
-initBlockKeys = NEL.zipWith (\k b -> b { _blockKey = BlockKey . cs . show $ k }) (NEL.fromList [(0 :: Int)..])
+initBlockKeys = NEL.zipWith (\k b -> b { _blockKey = BlockKey . cs . ('b':) . show $ k }) (NEL.fromList [(0 :: Int)..])
 
 -- | Construct a 'RawContent' value *without* canonicalizing it.  (The implementation would be much
 -- nicer if we had 'Foldable' on 'Block' and lenses, but with the second type parameter, the

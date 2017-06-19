@@ -65,8 +65,8 @@ spec = do
   describe "getLeafSelectors" $ do
     let cid0 = ContribIDNote (ID 13)
         cid1 = ContribIDNote (ID 35)
-        block0 = BlockIndex 0 $ BlockKey "0"
-        block1 = BlockIndex 1 $ BlockKey "1"
+        block0 = BlockIndex 0 $ BlockKey "b0"
+        block1 = BlockIndex 1 $ BlockKey "b1"
 
     it "works (no contribs)" $ do
       let rawContent = mkRawContent $ mkBlock "1234567890" :| []
