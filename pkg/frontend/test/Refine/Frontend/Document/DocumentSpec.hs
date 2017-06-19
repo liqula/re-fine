@@ -122,6 +122,14 @@ spec = do
           have <- js_getRawContentBetweenElems (cs $ renderLeafSelector beginpoint) (cs $ renderLeafSelector endpoint)
           cs have `shouldBe` rangeText BlockBoundaryIsNewline rc (fromStyleRange rc sel)
 
+    describe "getDraftSelectionStateViaBrowser" $ do
+      it "works" $ do
+        -- To complement the corresponding tests in OrphanSpec, we should create a selection in the
+        -- browser, call 'getDraftSelectionStateViaBrowser', and make sure the result is the
+        -- expected 'SelectionState' value.  This would protect us from failing to re-align the js
+        -- function with future changes of the haskell type.
+        pending
+
 
   describe "Draft" $ do
     it "editor_ mounts" $ do
