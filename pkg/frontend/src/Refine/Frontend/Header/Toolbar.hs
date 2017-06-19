@@ -24,13 +24,16 @@
 
 module Refine.Frontend.Header.Toolbar where
 
-import Refine.Frontend.Prelude
+import           Refine.Frontend.Prelude
+import           Language.Css.Syntax
 
 import           Refine.Common.Types ( EditKind(..) )
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Header.Types
-import           Refine.Frontend.Icon
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Icon
+import           Refine.Frontend.Util
 
 toolbar :: View '[]
 toolbar = mkView "Toolbar" $ do
@@ -156,6 +159,7 @@ instance UnoverlapAllEq EditToolbarExtensionProps
 editToolbarExtension :: View '[EditToolbarExtensionProps]
 editToolbarExtension = mkView "EditToolbarExtension" $ \case
   (EditToolbarExtensionProps EditToolbarExtension) -> editKindForm_ (HeaderAction . StartEdit) (EditKindFormProps Nothing)
+  (EditToolbarExtensionProps (EditToolbarLinkEditor link)) -> editLinkInput_ link
   (EditToolbarExtensionProps _) -> mempty
 
 editToolbarExtension_ :: EditToolbarExtensionProps -> ReactElementM handler ()
@@ -166,6 +170,10 @@ newtype EditKindFormProps = EditKindFormProps (Maybe EditKind)
   deriving (Eq)
 
 instance UnoverlapAllEq EditKindFormProps
+
+
+-- FIXME: some of the rest of this module should probably go to EditToolbar.hs?
+
 
 -- | FIXME: this component should be moved closer to "Refine.Frontend.Contribution.Dialog".  (not
 -- sure about the structure in general.  perhaps more code shuffling is indicated at some point.)
@@ -191,3 +199,57 @@ editKindForm onSelect = mkView "EditKindForm" $ \(EditKindFormProps mactive) -> 
 
 editKindForm_ :: (EditKind -> GlobalAction) -> EditKindFormProps -> ReactElementM ViewEventHandler ()
 editKindForm_ onSelect = view_ (editKindForm onSelect) "editToolbarExtension_"
+
+
+linkToolbarTextForm :: ST -> ReactElementM (StatefulViewEventHandler AddLinkFormState) ()
+linkToolbarTextForm link = do
+  form_ [ "target" $= "#"
+        , "action" $= "POST"
+        , "style"  @@= [decl "width" (Percentage 80)]
+        ] $ do
+    textarea_ [ "style" @@=
+                      [ decl "resize" (Ident "none")
+                      , decl "width" (Percentage 100)
+                      , decl "height" (Rem 1.2)
+                      , decl "vertical-align" (Ident "middle")
+                      ]
+              , "placeholder" $= "url"
+              -- Update the current state with the current text in the textbox, sending no actions
+              , onChange $ \evt st -> ([], Just $ st & addLinkFormState .~ target evt "value")
+              ]
+      $ elemText link
+
+
+editLinkInput :: ST -> View '[]
+editLinkInput link = mkStatefulView "EditLinkInput" (AddLinkFormState link) $ \curState -> do
+    div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
+      div_ ["className" $= "grid-wrapper"] $ do
+        div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
+          div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
+          div_ ["className" $= "c-vdoc-toolbar-extension__modification c-vdoc-toolbar-extension--expanded"] $ do  -- (RENAME: Edit)
+
+            span_ ["style" @@= [decl "margin-right" (Px 20)]] $
+              let props :: IbuttonProps [GlobalAction]
+                  props = emptyIbuttonProps "Save" onclick
+                    & ibListKey        .~ "add-link"
+                    & ibSize           .~ Large
+                    & ibDarkBackground .~ True
+                  onclick = [ DocumentAction . DocumentCreateLink $ curState ^. addLinkFormState
+                            , HeaderAction CloseToolbarExtension
+                            ]
+               in ibutton_ props
+
+            span_ ["style" @@= [decl "margin-right" (Px 20)]] $
+              let props :: IbuttonProps [GlobalAction]
+                  props = emptyIbuttonProps "Close" onclick
+                    & ibListKey        .~ "cancel"
+                    & ibSize           .~ Large
+                    & ibDarkBackground .~ True
+                  onclick = [HeaderAction CloseToolbarExtension]
+               in ibutton_ props
+
+            span_ ["style" @@= [decl "margin-right" (Px 20), decl "width" (Percentage 100)]] $
+              linkToolbarTextForm link
+
+editLinkInput_ :: ST -> ReactElementM eventHandler ()
+editLinkInput_ link = view_ (editLinkInput link) "editLinkInput_"

@@ -32,6 +32,7 @@ import           GHCJS.Foreign.Callback (Callback, asyncCallback)
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Test.Console (weAreInDevMode)
 
 
 newtype WindowSizeProps = WindowSizeProps
@@ -42,8 +43,9 @@ newtype WindowSizeProps = WindowSizeProps
 windowSize :: ReactView WindowSizeProps
 windowSize = defineLifecycleView "WindowSize" () lifecycleConfig
    { lRender = \_state (WindowSizeProps size) ->
-         -- TODO debug output; remove in production
-         span_ ["className" $= "layout-indicator"] . elemString $ "layout: " <> show size
+       if weAreInDevMode
+         then span_ ["className" $= "layout-indicator"] . elemString $ "layout: " <> show size
+         else pure ()
    , lComponentDidMount = Just $ \_ _ _ -> do
            cb <- asyncCallback setWindowSize
            js_windowAddEventListener "resize" cb

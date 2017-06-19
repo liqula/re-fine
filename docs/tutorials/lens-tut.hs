@@ -148,7 +148,7 @@ instance (ArrowApply cat, Monad f, Traversable f) => Category (GPLens cat f) whe
       (uncurry (curry m' . curry m))
 
 {-
-TODO: Define a simple category that operates on a simple database
+excercise for the reader: Define a simple category that operates on a simple database
 and manipulates the database via lenses.
 
 With this approach we can have Lenses from a type with keys for the
@@ -442,4 +442,3 @@ testSQLIO = do
   runNT persist $ do
     createSchema
     testSQL
-

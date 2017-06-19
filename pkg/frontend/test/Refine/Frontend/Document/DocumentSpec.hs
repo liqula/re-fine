@@ -30,8 +30,10 @@ import Refine.Frontend.Prelude hiding (property)
 
 import Data.List.NonEmpty (NonEmpty((:|)))
 import qualified Data.List.NonEmpty as NEL
+import qualified Data.Map as Map
 import Test.Hspec
 import Test.QuickCheck
+import React.Flux.Outdated as Outdated
 
 import Refine.Common.Test.Arbitrary
 import Refine.Common.Test.Samples
@@ -49,12 +51,12 @@ import Refine.Frontend.Test.Enzyme
 import Refine.Frontend.ThirdPartyViews
 import Refine.Frontend.Test.Store
 
-
 spec :: Spec
 spec = do
   describe "Samples" $ do
     it "work" $ do
       rawContentFromVDocVersion sampleVDocVersion `shouldNotBe` emptyRawContent
+
 
   describe "convertToRaw, convertFromRaw" $ do
     it "are isomorphic" . property $ \(sanitizeRawContent -> rawContent) -> do
@@ -65,29 +67,69 @@ spec = do
 
     it "regression.4" $ do
       let rawContent = mkRawContent . (:| []) $ mkBlock "rF.." & blockEntityRanges .~
-              [ (EntityLink "http://www.example.com", (0,1))
-              , (EntityLink "http://www.example.com", (1,1))
-              , (EntityLink "http://www.example.com", (2,1))
-              , (EntityLink "http://www.example.com", (3,1))
+              [ (EntityLink "http://www.example.com", EntityRange 0 1)
+              , (EntityLink "http://www.example.com", EntityRange 1 1)
+              , (EntityLink "http://www.example.com", EntityRange 2 1)
+              , (EntityLink "http://www.example.com", EntityRange 3 1)
               ]
           rawContent' = sanitizeRCHack rawContent
-      NEL.head (rawContent' ^. rawContentBlocks) ^. blockEntityRanges `shouldBe` [(EntityKey {_unEntityKey = 0},(0,4))]
+      NEL.head (rawContent' ^. rawContentBlocks) ^. blockEntityRanges `shouldBe` [(EntityKey {_unEntityKey = 0}, EntityRange 0 4)]
 
     it "regression.3" $ do
-      let rawContent = mkRawContent . (:| []) $  mkBlock "rF" & blockEntityRanges .~ [(EntityLink "http://www.example.com", (0,2))]
+      let rawContent = mkRawContent . (:| []) $  mkBlock "rF" & blockEntityRanges .~ [(EntityLink "http://www.example.com", EntityRange 0 2)]
           rawContent' = sanitizeRCHack rawContent
       rawContent' `shouldBe` rawContent
 
     it "regression.2" $ do
-      let rawContent = mkRawContent . (:| []) $ mkBlock "rF" & blockStyles .~ [((0,1),Italic),((1,1),Italic),((1,1),Italic),((0,1),Bold)]
+      let rawContent = mkRawContent . (:| []) $ mkBlock "rF" & blockStyles .~ [(EntityRange 0 1, Italic), (EntityRange 1 1,Italic), (EntityRange 1 1, Italic), (EntityRange 0 1, Bold)]
           rawContent' = sanitizeRCHack rawContent
-      NEL.head (rawContent' ^. rawContentBlocks) ^. blockStyles `shouldBe` [((0,1),Bold),((0,2),Italic)]
+      NEL.head (rawContent' ^. rawContentBlocks) ^. blockStyles `shouldBe` [(EntityRange 0 1, Bold), (EntityRange 0 2, Italic)]
 
     it "regression.1" $ do
-      let rawContent = mkRawContent . (:| []) $ mkBlock "rF" & blockStyles .~ [((0,1),Italic)]
+      let rawContent = mkRawContent . (:| []) $ mkBlock "rF" & blockStyles .~ [(EntityRange 0 1, Italic)]
           rawContent' = sanitizeRCHack rawContent
       decode (encode rawContent) `shouldBe` Just rawContent
       rawContent' `shouldBe` rawContent
+
+
+  describe "selectors" $ do
+    describe "getEntitySelectors" $ do
+      it "works" . property $ \(RawContentWithSelections _rc _sels) -> do
+        pending
+
+    describe "getLeafSelectors" $ do
+      it "works (between RawContent and DOM)" . property $ \rc -> do
+        pendingWith "#370"
+        let msels :: [(ContributionID, Range LeafSelector)]
+            msels = Map.toList (getLeafSelectors rc) >>= \(cid, rs) -> (,) cid <$> unRanges rs
+
+            RawContentSeparateStyles _ stys = separateStyles rc
+            contribs = [ (cid, r)
+                       | (Right (Mark cid), rs) <- Map.toList stys
+                       , r <- unRanges rs]
+
+        -- render the document component and retrieve the contents of the marks via the browser
+        -- selection api (not draft/react, since 'LeafSelector' is referencing DOM nodes).
+
+        _ <- mount $ documentWithoutCb_ DocumentProps
+          { _dpDocumentState     = mkDocumentStateView rc
+          , _dpContributionState = emptyContributionState
+          , _dpToolbarStatus     = ToolbarExtensionClosed
+          }
+
+        length msels `shouldBe` length contribs
+        forM_ (zip (sort contribs) (sort msels)) $ \((cid, sel), (cid', Range beginpoint endpoint)) -> do
+          cid `shouldBe` cid'
+          have <- js_getRawContentBetweenElems (cs $ renderLeafSelector beginpoint) (cs $ renderLeafSelector endpoint)
+          cs have `shouldBe` rangeText BlockBoundaryIsNewline rc (fromStyleRange rc sel)
+
+    describe "getDraftSelectionStateViaBrowser" $ do
+      it "works" $ do
+        -- To complement the corresponding tests in OrphanSpec, we should create a selection in the
+        -- browser, call 'getDraftSelectionStateViaBrowser', and make sure the result is the
+        -- expected 'SelectionState' value.  This would protect us from failing to re-align the js
+        -- function with future changes of the haskell type.
+        pending
 
 
   describe "Draft" $ do
@@ -149,9 +191,9 @@ spec = do
 
             pending
             storeShouldEventuallyContain (^?! gsDevState . _Just . devStateTrace)
-              [ContributionAction (SetMarkPositions [(ContribIDNote (ID 77), MarkPosition 0 0)])]
+              [ContributionAction (SetAllVertialSpanBounds [(ContribIDNote (ID 77), VertialSpanBounds 0 0)])]
 
-      it "dispatches SetMarkPositions only once" test
+      it "dispatches SetAllVertialSpanBounds only once" test
 
 
     describe "mouse-over" $ do
@@ -208,16 +250,35 @@ spec = do
 
 -- * helpers
 
+documentWithoutCb :: Outdated.ReactView DocumentProps
+documentWithoutCb = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig { Outdated.lRender = documentRender }
+
+-- | For the test cases we run here, we want to avoid crashes in the @lComponentDidMount@ callback,
+-- so we define this slightly sloppy document component.
+documentWithoutCb_ :: DocumentProps -> ReactElementM eventHandler ()
+documentWithoutCb_ prps = Outdated.view documentWithoutCb prps mempty
+
+
+-- * ffi
+
 #ifdef __GHCJS__
 
 foreign import javascript safe
     "refine_test$testConvertFromToRaw($1)"
     js_testConvertFromToRaw :: JSString -> Bool
 
+foreign import javascript safe
+    "refine$getRawContentBetweenElems($1, $2)"
+    js_getRawContentBetweenElems :: JSString {- begin LeafSelector -} -> JSString {- end LeafSelector -} -> IO JSString
+
 #else
 
 {-# ANN js_testConvertFromToRaw ("HLint: ignore Use camelCase" :: String) #-}
 js_testConvertFromToRaw :: JSString -> Bool
 js_testConvertFromToRaw = error "javascript FFI not available in GHC"
+
+{-# ANN js_getRawContentBetweenElems ("HLint: ignore Use camelCase" :: String) #-}
+js_getRawContentBetweenElems :: JSString {- begin LeafSelector -} -> JSString {- end LeafSelector -} -> IO JSString
+js_getRawContentBetweenElems = error "javascript FFI not available in GHC"
 
 #endif

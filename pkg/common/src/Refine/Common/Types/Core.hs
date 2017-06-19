@@ -38,7 +38,10 @@
 --     --> data Edit
 module Refine.Common.Types.Core
     ( module Refine.Common.Types.Core
+    , module Refine.Common.Types.Position
     , NonEmptyST(..)
+    , Segments(..)
+    , Atom(..)
     ) where
 
 import Refine.Common.Prelude
@@ -55,14 +58,13 @@ import qualified Data.Set as Set
 import qualified Data.Text as ST
 import           Data.String.Conversions (ST, cs, (<>))
 import qualified Generics.SOP as SOP
-import qualified Generics.SOP.NFData as SOP
 import           GHC.Generics (Generic)
 import           Text.Read (readEither)
 import           Web.HttpApiData (toUrlPiece, parseUrlPiece, ToHttpApiData(..), FromHttpApiData(..))
 
+import           Refine.Common.Types.Position
 import qualified Refine.Common.OT as OT
 import           Refine.Common.OT hiding (Edit)
-import           Refine.Common.Types.Chunk
 import           Refine.Common.Types.Comment
 import           Refine.Common.Types.Prelude
 import           Refine.Prelude.TH (makeRefineType)
@@ -105,7 +107,7 @@ data EditSource a =
 data Edit = Edit
   { _editMetaID :: MetaID Edit
   , _editDesc   :: ST
-  , _editRanges :: NonEmpty SelectionState
+  , _editRanges :: NonEmpty (Range Position) -- ^ could be @(Ranges Position)@ if empty is ok.
   , _editKind   :: EditKind
   , _editSource :: EditSource (ID Edit)
   }
@@ -124,7 +126,7 @@ data EditKind = Grammar | Phrasing | Meaning | Initial
 
 -- ** create types, instances
 
-type instance Create VDoc  = CreateVDoc
+type instance Create VDoc = CreateVDoc
 type instance Create Edit = CreateEdit
 
 
@@ -166,7 +168,7 @@ data Contribution =
   | ContribQuestion Question
   | ContribDiscussion Discussion
   | ContribEdit Edit
-  | ContribHighlightMark ChunkRange
+  | ContribHighlightMark (Range Position)
   deriving (Eq, Show, Generic)
 
 -- | For places where we need heterogeneous lists of different 'ID's, we can use this type.
@@ -203,26 +205,26 @@ data RawContent = RawContent
   deriving (Eq, Show, Generic)
 
 -- | typical rangekey values are 'Int' and 'Entity'
-data Block rangeKey blockKey = Block
-  { _blockText         :: ST
-  , _blockEntityRanges :: [(rangeKey, EntityRange)]  -- ^ entity ranges for entities must not overlap!
-  , _blockStyles       :: [(EntityRange, Style)]     -- ^ entity ranges for styles are allowed to overlap.
-  , _blockType         :: BlockType
-  , _blockDepth        :: Int
-  , _blockKey          :: blockKey  -- ^ 'BlockKey' or, if not available, '()'.
+data Block rangeKey blockKey = Block'
+  { _blockText'         :: ST
+  , _blockEntityRanges' :: Set (rangeKey, EntityRange)  -- ^ entity ranges for entities must not overlap!
+  , _blockStyles'       :: Set (EntityRange, Style)     -- ^ entity ranges for styles are allowed to overlap.
+  , _blockType'         :: BlockType
+  , _blockDepth'        :: Int
+  , _blockKey'          :: blockKey  -- ^ 'BlockKey' or, if not available, '()'.
   }
   deriving (Eq, Show, Functor, Generic)
 
--- | `key` attribute of the 'Block'.  'SelectionState' uses this to refer to blocks.  If in doubt
--- leave it 'Nothing'.
-newtype BlockKey = BlockKey ST
-  deriving (Eq, Ord, Show, ToJSON, FromJSON, Generic, Monoid)
+pattern Block
+    :: Ord rangeKey => () =>
+    ST -> [(rangeKey, EntityRange)] -> [(EntityRange, Style)] -> BlockType -> Int -> blockKey -> Block rangeKey blockKey
+pattern Block{_blockText, _blockEntityRanges, _blockStyles, _blockType, _blockDepth, _blockKey}
+            <- Block' _blockText (Set.toList -> _blockEntityRanges) (Set.toList -> _blockStyles) _blockType _blockDepth _blockKey
+  where Block t r s ty d k =  Block' t (Set.fromList r) (Set.fromList s) ty d k
 
 -- | key into 'rawContentEntityMap'.
 newtype EntityKey = EntityKey { _unEntityKey :: Int }
-  deriving (Eq, Ord, Show, ToJSON, FromJSON, Generic)
-
-type EntityRange = (Int, Int)
+  deriving (Eq, Ord, Show, Read, Generic)
 
 -- | an entity's range may span across multiple blocks
 newtype Entity =
@@ -256,33 +258,6 @@ data BlockType =
   | BulletPoint
   | EnumPoint
   deriving (Show, Eq, Generic, Bounded, Enum)
-
-
--- | https://draftjs.org/docs/api-reference-selection-state.html
-data SelectionState
-  = SelectionState
-      { _selectionIsBackward :: Bool
-      , _selectionStart      :: SelectionPoint
-      , _selectionEnd        :: SelectionPoint
-      }
-  deriving (Eq, Ord, Show, Generic)
-
-data SelectionPoint
-  = SelectionPoint
-      { _selectionBlock  :: BlockKey
-      , _selectionOffset :: Int
-      }
-  deriving (Eq, Ord, Show, Generic)
-
-
--- | Javascript: `document.querySelectorAll('article span[data-offset-key="2vutk-0-1"]');`.  The
--- offset-key is constructed from block key, a '0' literal, and the number of left siblings of the
--- span the selector refers to.
-data MarkSelector = MarkSelector MarkSelectorSide BlockKey Int
-  deriving (Eq, Ord, Show, Generic)
-
-data MarkSelectorSide = MarkSelectorTop | MarkSelectorBottom
-  deriving (Eq, Ord, Show, Generic)
 
 
 -- * OT.Edit RawContent
@@ -373,8 +348,8 @@ instance (Typeable blockKey, ToJSON blockKey) => ToJSON (Block EntityKey blockKe
     ] <>
     [ "key" .:= key | typeOf key == typeOf (undefined :: BlockKey) ]
     where
-      renderRange (k, (o, l)) = object ["key"   .:= k, "length" .:= l, "offset" .:= o]
-      renderStyle ((o, l), s) = object ["style" .:= s, "length" .:= l, "offset" .:= o]
+      renderRange (k, EntityRange o l) = object ["key"   .:= k, "length" .:= l, "offset" .:= o]
+      renderStyle (EntityRange o l, s) = object ["style" .:= s, "length" .:= l, "offset" .:= o]
 
 instance FromJSON (Block EntityKey BlockKey) where
   parseJSON = withObject "Block EntityKey" $ \obj -> Block
@@ -389,12 +364,12 @@ instance FromJSON (Block EntityKey BlockKey) where
         k <- obj .: "key"
         l <- obj .: "length"
         o <- obj .: "offset"
-        pure (k, (o, l))
+        pure (k, EntityRange o l)
       parseStyle = withObject "Block EntityKey: inlineStyleRanges" $ \obj -> do
         s <- obj .: "style"
         l <- obj .: "length"
         o <- obj .: "offset"
-        pure ((o, l), s)
+        pure (EntityRange o l, s)
 
 blockTypeToST :: BlockType -> ST
 blockTypeToST = \case
@@ -576,7 +551,7 @@ docToRawContent blocks = mkRawContentInternal $ mkDocBlock <$> blocks
         mkRanges _ _ [] = []
         mkRanges n acc ((len, s): ss)
             = -- construct all non-empty ranges that are closed in s
-              [((offset, l), sty) | (offset, sty) <- acc, sty `Set.notMember` s, let l = n - offset, l > 0]
+              [(EntityRange offset l, sty) | (offset, sty) <- acc, sty `Set.notMember` s, let l = n - offset, l > 0]
            <> -- jump to the next segment (aka line element)
               mkRanges (n + len)
                         (  [(offset, sty) | (offset, sty) <- acc, sty `Set.member` s]
@@ -610,8 +585,9 @@ canonicalizeRawContent = docToRawContent . rawContentToDoc
 mkRawContent :: NonEmpty (Block Entity ()) -> RawContent
 mkRawContent = canonicalizeRawContent . mkRawContentInternal . initBlockKeys
 
-initBlockKeys :: NonEmpty (Block ek bk) -> NonEmpty (Block ek BlockKey)
-initBlockKeys = NEL.zipWith (\k b -> b { _blockKey = BlockKey . cs . show $ k }) (NEL.fromList [(0 :: Int)..])
+-- | block keys should start with an alpha letter, apparently starting with digits break `document.querySelector`
+initBlockKeys :: Ord ek => NonEmpty (Block ek bk) -> NonEmpty (Block ek BlockKey)
+initBlockKeys = NEL.zipWith (\k b -> b { _blockKey = BlockKey . cs . ('b':) . show $ k }) (NEL.fromList [(0 :: Int)..])
 
 -- | Construct a 'RawContent' value *without* canonicalizing it.  (The implementation would be much
 -- nicer if we had 'Foldable' on 'Block' and lenses, but with the second type parameter, the
@@ -628,15 +604,15 @@ mkRawContentInternal bsl = RawContent (index <$> bsl) (IntMap.fromList entities)
     entities = zip [0..] . nub $ concatMap (fmap fst . _blockEntityRanges) bsl
 
     index :: Block Entity BlockKey -> Block EntityKey BlockKey
-    index b = b { _blockEntityRanges = _blockEntityRanges b & (fmap . first $
+    index b = b { _blockEntityRanges' = _blockEntityRanges' b & (Set.map . first $
                     \e -> EntityKey . fromMaybe (error "mkRawContentInternal: impossible") $ Map.lookup e em) }
 
     em = Map.fromList $ (\(a, b) -> (b, a)) <$> entities
 
-mkBlock :: ST -> Block rangeKey ()
+mkBlock :: Ord rangeKey => ST -> Block rangeKey ()
 mkBlock t = Block t [] [] NormalText 0 ()
 
-emptyBlock :: Block rangeKey ()
+emptyBlock :: Ord rangeKey => Block rangeKey ()
 emptyBlock = mkBlock mempty
 
 -- | Take two accessors and a list of things carrying a range and a payload each.  Ranges can
@@ -652,7 +628,7 @@ mkSomeSegments frange fpayload els = segments
   where
     segments =
         mkSegments 0 []
-      . fmap (\((offset, len), s) -> (offset, (offset + len, s)))
+      . fmap (\(EntityRange offset len, s) -> (offset, (offset + len, s)))
       . sortBy (compare `on` fst)
       $ [(frange el, fpayload el) | el <- els]
 
@@ -672,10 +648,9 @@ mkSomeSegments frange fpayload els = segments
 
 -- * Derived instances
 
+makeRefineType ''EntityKey
 makeRefineType ''CompositeVDoc
 makeRefineType ''ContributionID
-makeRefineType ''SelectionState
-makeRefineType ''SelectionPoint
 makeRefineType ''VDoc
 makeRefineType ''CreateVDoc
 makeRefineType ''EditSource
@@ -688,30 +663,21 @@ makeRefineType ''VDocVersion
 
 makeLenses ''RawContent
 makeLenses ''Block
-makeLenses ''BlockKey
-makeLenses ''EntityKey
 makeLenses ''Entity
 makeLenses ''Style
 makeLenses ''BlockType
 
 makeSOPGeneric ''RawContent
-makeSOPGeneric ''BlockKey
-makeSOPGeneric ''EntityKey
+makeSOPGeneric ''Block
 makeSOPGeneric ''Entity
 makeSOPGeneric ''Style
 makeSOPGeneric ''BlockType
 
 makeNFData ''RawContent
-makeNFData ''BlockKey
-makeNFData ''EntityKey
+makeNFData ''Block
 makeNFData ''Entity
 makeNFData ''Style
 makeNFData ''BlockType
-
--- 'BlockKey' has more than one type parameter and doesn't work with "Refine.Prelude.TH".
-instance SOP.Generic (Block a b)
-instance SOP.HasDatatypeInfo (Block a b)
-instance (NFData a, NFData b) => NFData (Block a b) where rnf = SOP.grnf
 
 -- | It cannot moved further up, needs instance NFData BlockType
 deriving instance NFData (EEdit RawContent)
@@ -724,3 +690,110 @@ vdocID = vdocMetaID . miID
 
 editID :: Lens' Edit (ID Edit)
 editID = editMetaID . miID
+
+blockText :: Lens' (Block rangeKey blockKey) ST
+blockText = blockText'
+
+blockEntityRanges :: Ord rangeKey => Lens' (Block rangeKey blockKey) [(rangeKey, EntityRange)]
+blockEntityRanges = blockEntityRanges' . iso Set.toList Set.fromList
+
+blockStyles :: Lens' (Block rangeKey blockKey) [(EntityRange, Style)]
+blockStyles = blockStyles' . iso Set.toList Set.fromList
+
+blockType :: Lens' (Block rangeKey blockKey) BlockType
+blockType = blockType'
+
+blockDepth :: Lens' (Block rangeKey blockKey) Int
+blockDepth = blockDepth'
+
+blockKey :: Lens' (Block rangeKey blockKey) blockKey
+blockKey = blockKey'
+
+-- * helper functions
+
+-- TUNING: speed this up by adding an index structure to RawContent
+mkBlockIndex :: RawContent -> Int -> BlockIndex
+mkBlockIndex rc i = BlockIndex i $ ((rc ^. rawContentBlocks) NEL.!! i) ^. blockKey
+
+-- TUNING: speed this up by choosing a better representation for RawContent
+-- getBlock :: RawContent -> BlockIndex -> Block
+-- getBlock rc (BlockIndex i _) = (rc ^. rawContentBlocks) NEL.!! i
+
+-- TUNING: speed this up by adding an index structure to RawContent
+fromSelectionPoint :: RawContent -> SelectionPoint -> Position
+fromSelectionPoint rc (Position k r) = Position (BlockIndex i k) r
+  where
+    i = case [i' | (i', b) <- zip [0..] . NEL.toList $ rc ^. rawContentBlocks, b ^. blockKey == k] of
+        i': _ -> i'
+        _ -> error "impossible"
+
+fromSelectionState :: RawContent -> SelectionState -> Selection Position
+fromSelectionState rc (SelectionState sel) = fromSelectionPoint rc <$> sel
+
+-- TUNING: speed this up by adding an index structure to RawContent
+toStylePosition :: RawContent -> Position -> StylePosition
+toStylePosition rc p_@(Position (BlockIndex i_ _) col)
+    | col == 0   = g (f (-1) $ b_: bs_) p_ rev
+    | col == lb_ = StylePosition p_ $ f 0 bs_
+    | otherwise  = StylePosition p_ 0
+  where
+    (rev, b_: bs_) = focusList (NEL.toList $ rc ^. rawContentBlocks) !! i_
+    lb_ = len b_
+
+    f m [] = m
+    f m (b: bs)
+        | len b == 0 = f (m+1) bs
+        | otherwise  = m+1
+
+    g m p [] = StylePosition p m
+    g m (Position (BlockIndex i _) _) (b: bs)
+        | lb == 0 = g (m+1) p' bs
+        | otherwise = StylePosition p' (m+1)
+      where
+        lb = len b
+        p' = Position (BlockIndex (i-1) $ b ^. blockKey) lb
+
+    len b = ST.length $ b ^. blockText
+
+-- TUNING: speed this up
+toStyleRanges :: RawContent -> Ranges Position -> Ranges StylePosition
+toStyleRanges rc rs = mconcat $ (rangesFromRange False . fmap (toStylePosition rc)) <$> unRanges rs
+
+-- all positions which maps to the same style position
+stylePositions :: RawContent -> StylePosition -> [Position]
+stylePositions rc (StylePosition p@(Position (BlockIndex i _) _) m)
+    = p: [Position (mkBlockIndex rc j) 0 | j <- [i+1..i+m]]
+
+-- The range cannot be empty
+-- this computes the minimal selection range
+fromStyleRange :: RawContent -> Range StylePosition -> Range Position
+fromStyleRange rc (Range a b) | a < b = RangeInner (last $ stylePositions rc a) (basePosition b)
+
+-- TUNING: speed this up by adding an index structure to RawContent
+toLeafSelector :: Bool -> RawContent -> Position -> (LeafSelector, Int)
+toLeafSelector top rc (Position (BlockIndex i key) col) = (Position key (SpanIndex dec_ sp_), col - beg)
+  where
+    DocBlock _ _ _ es_ = rawContentToDoc rc NEL.!! i
+
+    (((beg, _), (dec_, sp_)): _)
+        = dropWhile (cmp top . fst) . zip (zip lengths $ tail lengths) $ mkSelectors 0 0 es_
+
+    cmp True  (_, e) = col >= e
+    cmp False (_, e) = col >  e
+
+    lengths = scanl (+) 0 $ (ST.length . unNonEmptyST . snd <$> es_) <> [0]
+
+    mkSelectors _ _ [] = []
+    mkSelectors dec sp (((Atom me, _), _): es) = (dec, sp):
+        if isJust me then mkSelectors (dec+1) 0 es else mkSelectors dec (sp+1) es
+
+-- The range cannot be empty
+-- this computes the minimal selection range
+styleRangeToLeafSelectors :: RawContent -> Range StylePosition -> Range LeafSelector
+styleRangeToLeafSelectors rc (Range a b) | a < b = RangeInner a' b'
+  where
+    (a', 0) = toLeafSelector True rc . last $ stylePositions rc a
+    (b', _) = toLeafSelector False rc $ basePosition b
+
+lineElemLength :: LineElem -> Int
+lineElemLength (_, NonEmptyST txt) = ST.length txt

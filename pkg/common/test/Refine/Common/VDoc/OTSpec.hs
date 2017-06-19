@@ -55,6 +55,8 @@ spec = parallel $ do
 
 
     describe "showEditAsRawContent" $ do
+      let block0 = BlockIndex 0 $ BlockKey "0"
+
       describe "added text with custom style 'ADDED'." $ do
         let edit = eRawContent [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond $ coerce
                         [ InsertItem 10 'a'
@@ -62,8 +64,8 @@ spec = parallel $ do
                         , InsertItem 12 'd'
                         , InsertItem 13 '/']]]]]
             rc   = mkRawContent $ mkBlock "some text or other" :| []
-            rc'  = mkRawContent $ (mkBlock "some text and/or other" & blockStyles .~ [((10, 4), StyleAdded)]) :| []
-            ranges = [SelectionState False (SelectionPoint (BlockKey "0") 10) (SelectionPoint (BlockKey "0") 10)]
+            rc'  = mkRawContent $ (mkBlock "some text and/or other" & blockStyles .~ [(EntityRange 10 4, StyleAdded)]) :| []
+            ranges = mconcat $ rangesFromRange True <$> [Range (Position block0 10) (Position block0 10)]
         it "show diff" $ showEditAsRawContent edit rc `shouldBe` rc'
         it "ranges" $ docEditRanges edit rc `shouldBe` ranges
 
@@ -74,24 +76,24 @@ spec = parallel $ do
             edit = eRawContent [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond
                         . coerce $ deleteRange 4 12]]]]
             rc   = mkRawContent $ mkBlock "some text or other" :| []
-            rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [((4, 12), StyleDeleted)]) :| []
-            ranges = [SelectionState False (SelectionPoint (BlockKey "0") 4) (SelectionPoint (BlockKey "0") 16)]
+            rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [(EntityRange 4 12, StyleDeleted)]) :| []
+            ranges = mconcat $ rangesFromRange False <$> [Range (Position block0 4) (Position block0 16)]
         it "show diff" $ showEditAsRawContent edit rc `shouldBe` rc'
         it "ranges" $ docEditRanges edit rc `shouldBe` ranges
 
       describe "deleted block with custom style 'DELETED'." $ do
         let edit = eRawContent $ ENonEmpty <$> deleteRange 0 1
             rc   = mkRawContent $ mkBlock "some text or other" :| []
-            rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [((0, 18), StyleDeleted)]) :| []
-            ranges = [SelectionState False (SelectionPoint (BlockKey "0") 0) (SelectionPoint (BlockKey "0") 18)]
+            rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [(EntityRange 0 18, StyleDeleted)]) :| []
+            ranges = mconcat $ rangesFromRange False <$> [Range (Position block0 0) (Position block0 18)]
         it "show diff" $ showEditAsRawContent edit rc `shouldBe` rc'
         it "ranges" $ docEditRanges edit rc `shouldBe` ranges
 
       it "hideUnchangedParts" $ do
         let toRC = docToRawContent . NEL.fromList . map toBlock
             wipeBlockKeys = rawContentBlocks %~ fmap (blockKey .~ BlockKey "0")
-            toBlock '.' = DocBlock NormalText (BlockDepth 0) (BlockKey "0") [((Atom Nothing, mempty), "...")]
-            toBlock c   = DocBlock NormalText (BlockDepth 0) (BlockKey "0")
+            toBlock '.' = DocBlock NormalText (BlockDepth 0) (block0 ^. blockIndexKey) [((Atom Nothing, mempty), "...")]
+            toBlock c   = DocBlock NormalText (BlockDepth 0) (block0 ^. blockIndexKey)
                             [((Atom Nothing, Set.fromList [Atom StyleChanged | isUpper c]), fromString [c])]
         wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 0 0) `shouldBe` wipeBlockKeys (toRC ".B.GH")
         wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 1 1) `shouldBe` wipeBlockKeys (toRC "aBc.fGH")

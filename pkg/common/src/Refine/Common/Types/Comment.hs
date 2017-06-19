@@ -26,8 +26,8 @@ import Data.String.Conversions (ST)
 import Data.Tree (Tree)
 import GHC.Generics (Generic)
 
-import Refine.Common.Types.Chunk
 import Refine.Common.Types.Prelude
+import Refine.Common.Types.Position
 
 
 type CommentText = ST  -- FIXME: refactor VDocVersion to be more general and use that.
@@ -35,44 +35,44 @@ type CommentText = ST  -- FIXME: refactor VDocVersion to be more general and use
 data CreateNote = CreateNote
   { _createNoteText   :: CommentText
   , _createNotePublic :: Bool
-  , _createNoteRange  :: ChunkRange
+  , _createNoteRange  :: Range Position
   }
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 data Note = Note
   { _noteMetaID :: MetaID Note
   , _noteText   :: CommentText
   , _notePublic :: Bool
-  , _noteRange  :: ChunkRange
+  , _noteRange  :: Range Position
   }
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 data CreateQuestion = CreateQuestion
   { _createQuestionText   :: ST
   , _createQuestionPublic :: Bool
-  , _createQuestionRange  :: ChunkRange
+  , _createQuestionRange  :: Range Position
   }
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 data Question = Question
   { _questionMetaID   :: MetaID Question
   , _questionText     :: ST
   , _questionAnswered :: Bool -- ^ if the asker is happy, she can mark it as answered.
   , _questionPublic   :: Bool
-  , _questionRange    :: ChunkRange
+  , _questionRange    :: Range Position
   }
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 data CompositeQuestion = CompositeQuestion
   { _compositeQuestion        :: Question
   , _compositeQuestionAnswers :: [Answer]
   }
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 newtype CreateAnswer = CreateAnswer
   { _createAnswerText :: CommentText
   }
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 data Answer = Answer
   { _answerMetaID   :: MetaID Answer
@@ -84,22 +84,22 @@ data Answer = Answer
 data CreateDiscussion = CreateDiscussion
   { _createDiscussionStatementText :: CommentText
   , _createDiscussionPublic        :: Bool
-  , _createDiscussionRange         :: ChunkRange
+  , _createDiscussionRange         :: Range Position
   }
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 data Discussion = Discussion
   { _discussionMetaID :: MetaID Discussion
   , _discussionPublic :: Bool
-  , _discussionRange  :: ChunkRange
+  , _discussionRange  :: Range Position
   }
-  deriving (Eq, Ord, Show, Read, Generic)
+  deriving (Eq, Ord, Show, Generic)
 
 data CompositeDiscussion = CompositeDiscussion
   { _compositeDiscussion     :: Discussion
   , _compositeDiscussionTree :: Tree Statement
   }
-  deriving (Eq, Show, Read, Generic)
+  deriving (Eq, Show, Generic)
 
 newtype CreateStatement = CreateStatement
   { _createStatementText :: CommentText
@@ -117,7 +117,7 @@ data Comment =
     CommentNote Note
   | CommentDiscussion CompositeDiscussion
   | CommentQuestion CompositeQuestion
-  deriving (Eq, Show, Read, Generic)
+  deriving (Eq, Show, Generic)
 
 -- * create types
 

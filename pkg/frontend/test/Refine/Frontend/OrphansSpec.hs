@@ -38,10 +38,17 @@ import Refine.Common.Types
 
 spec :: Spec
 spec = do
-  -- this test also helps in understanding what the generic jsval instances do.
+  -- This test also helps in understanding what the generic jsval instances do.  Note that the data
+  -- does not have to be consistent with any actual 'RawContent' value.  We're just interested in
+  -- the integrity of the value when translating back and forth between haskell and js.
+  --
+  -- See also: tests for 'Refine.Frontend.Document.FFI.getDraftSelectionStateViaBrowser'.
   describe "instances FromJSVal, ToJSVal of SelectionState" $ do
     let chk :: Either JSString SelectionState -> JSVal -> Expectation
         chk v j = do
+          when verbose $ do
+            print $ either (const "Left") encode v
+
           j' <- toJSVal v
           -- j' == j
           case decode . cs $ js_chk j' j verbose of Just (a :: Value, b :: Value) -> a `shouldBe` b
@@ -50,7 +57,7 @@ spec = do
           fromJSVal j `shouldReturn` Just v
 
           -- j' and j translate back to the same v
-          fromJSVal j' `shouldReturn` Just v  -- (shouldn't be too surprising, but teh equality test
+          fromJSVal j' `shouldReturn` Just v  -- (shouldn't be too surprising, but the equality test
                                               -- above is a little iffy...)
 
         verbose :: Bool
@@ -70,15 +77,19 @@ getDraftSelectionStateViaBrowser_2 :: Either JSString SelectionState
 getDraftSelectionStateViaBrowser_2 = Left "some unknown error" :: Either JSString SelectionState
 
 getDraftSelectionStateViaBrowser_3 :: Either JSString SelectionState
-getDraftSelectionStateViaBrowser_3 = Right (SelectionState False (SelectionPoint (BlockKey "block1") 3) (SelectionPoint (BlockKey "block1") 3))
+getDraftSelectionStateViaBrowser_3 = Right . SelectionState . toSelection $ Range
+  (Position (BlockKey "block1") 3)
+  (Position (BlockKey "block1") 3)
 
 getDraftSelectionStateViaBrowser_4 :: Either JSString SelectionState
-getDraftSelectionStateViaBrowser_4 = Right (SelectionState True (SelectionPoint (BlockKey "fj6g6") 266) (SelectionPoint (BlockKey "fj6g6") 360))
+getDraftSelectionStateViaBrowser_4 = Right . SelectionState . toBackwardSelection $ Range
+  (Position (BlockKey "fj6g6") 266)
+  (Position (BlockKey "fj6g6") 360)
 
 #ifdef __GHCJS__
 
 foreign import javascript safe
-  "if ($3) { console.log($1); console.log($2); } $r = JSON.stringify([$1, $2])"
+  "if ($3) { console.log(JSON.stringify($1)); console.log(JSON.stringify($2)); } $r = JSON.stringify([$1, $2])"
   js_chk :: JSVal -> JSVal -> Bool -> JSString
 
 foreign import javascript safe
@@ -90,11 +101,25 @@ foreign import javascript safe
   js_getDraftSelectionStateViaBrowser_2 :: JSVal
 
 foreign import javascript safe
-  "{ Right: { _selectionIsBackward: false, _selectionStart: {_selectionBlock: 'block1', _selectionOffset: 3}, _selectionEnd: {_selectionBlock: 'block1', _selectionOffset: 3} } }"
+  "{ Right: \
+       { _selectionIsBackward: false \
+       , _selectionRange: \
+           { _rangeBegin: { _blockIndex: 'block1', _columnIndex: 3 } \
+           , _rangeEnd: { _blockIndex: 'block1', _columnIndex: 3 } \
+           } \
+       } \
+   }"
   js_getDraftSelectionStateViaBrowser_3 :: JSVal
 
 foreign import javascript safe
-  "{Right:{_selectionIsBackward:true,_selectionStart:{_selectionBlock:\"fj6g6\",_selectionOffset:266},_selectionEnd:{_selectionBlock:\"fj6g6\",_selectionOffset:360}}}"
+  "{ Right: \
+       { _selectionIsBackward: true \
+       , _selectionRange: \
+           { _rangeBegin: { _blockIndex: 'fj6g6', _columnIndex: 266 } \
+           , _rangeEnd: { _blockIndex: 'fj6g6', _columnIndex: 360 } \
+           } \
+       } \
+   }"
   js_getDraftSelectionStateViaBrowser_4 :: JSVal
 
 #else

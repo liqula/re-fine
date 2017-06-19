@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleInstances   #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE OverloadedStrings   #-}
+{-# LANGUAGE PackageImports      #-}
 {-# LANGUAGE Rank2Types          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TupleSections       #-}
@@ -12,6 +13,7 @@
 {-# LANGUAGE ViewPatterns        #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}   -- pattern completeness checker has problems with pattern synonyms
 
 module Refine.Common.Test.Arbitrary where
 
@@ -23,7 +25,7 @@ import           Control.Monad.State
 import           Data.Function (on)
 import           Data.Functor.Infix ((<$$>))
 import qualified Data.IntMap as IntMap
-import           Data.List (sort, groupBy)
+import           Data.List (groupBy)
 import qualified Data.List as List
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Set as Set
@@ -31,11 +33,13 @@ import           Data.String.Conversions (cs)
 import qualified Data.Text as ST
 import qualified Data.Text.I18n as I18n
 import           Generics.SOP
+import           Test.Hspec
 import           Test.QuickCheck
-import           Test.QuickCheck.Instances ()
+import           Test.QuickCheck.Checkers
+import "quickcheck-instances" Test.QuickCheck.Instances ()
 
-import Refine.Common.Types
 import Refine.Common.OT (Splitable(..), Segments(..))
+import Refine.Common.Types
 
 
 instance Arbitrary L10 where
@@ -51,17 +55,17 @@ instance Arbitrary I18n.Msgid where
 instance Arbitrary (ID a) where
   arbitrary = ID <$> arbitrary
 
-instance Arbitrary DataUID where
-  arbitrary = DataUID <$> arbitrary
-
 instance Arbitrary ContributionID where
-  arbitrary = oneof
-    [ ContribIDNote <$> arbitrary
-    , ContribIDQuestion <$> arbitrary
-    , ContribIDDiscussion <$> arbitrary
-    , ContribIDEdit <$> arbitrary
-    , pure ContribIDHighlightMark
-    ]
+  arbitrary = arbitraryContribIDConstructor <*> arbitrary
+
+arbitraryContribIDConstructor :: Gen (Int -> ContributionID)
+arbitraryContribIDConstructor = elements
+  [ ContribIDNote       . ID . fromIntegral . abs
+  , ContribIDQuestion   . ID . fromIntegral . abs
+  , ContribIDDiscussion . ID . fromIntegral . abs
+  , ContribIDEdit       . ID . fromIntegral . abs
+  , const ContribIDHighlightMark
+  ]
 
 maxListOf :: Int -> Gen a -> Gen [a]
 maxListOf n g = List.take n <$> listOf g
@@ -105,7 +109,7 @@ instance Arbitrary BlockDepth where
 instance Arbitrary RawContent where
   arbitrary = (rawContentBlocks %~ initBlockKeys) . docToRawContent . NEL.fromList <$> listOf1 (scale (`div` 3) arbitrary)
        -- alternative implementation: @initBlockKeys . sanitizeRawContent . mkRawContent <$> arbitrary@
-  shrink    = canonicalizeRawContent <$$> gshrink
+  shrink    = canonicalizeRawContent . sanitizeRawContent <$$> gshrink
 
 legalChar :: Char -> Bool
 legalChar = (`notElem` ['\\'])  -- (occurrances of '\\' shift ranges around in the test suite.)
@@ -139,8 +143,8 @@ sanitizeRawContent = deleteDanglingEntityRefs
         sieve b = b & blockEntityRanges %~ filter (good b . snd)
                     & blockStyles       %~ filter (good b . fst)
 
-        good :: Block EntityKey BlockKey -> (Int, Int) -> Bool
-        good b (offset, len) = let ml = ST.length (b ^. blockText) in and
+        good :: Block EntityKey BlockKey -> EntityRange -> Bool
+        good b (EntityRange offset len) = let ml = ST.length (b ^. blockText) in and
           [ offset >= 0
           , offset < ml
           , len > 0  -- (ranges must be non-empty, i think)
@@ -183,8 +187,8 @@ sanitizeRawContent = deleteDanglingEntityRefs
 
             goGroup [] = []
             goGroup [x] = [x]
-            goGroup (x@(view range -> (o, l)) : x'@(view range -> (o', l')) : xs)
-              | o + l == o' = goGroup ((x & range .~ (o, l + l')) : xs)
+            goGroup (x@(view range -> EntityRange o l) : x'@(view range -> EntityRange o' l') : xs)
+              | o + l == o' = goGroup ((x & range .~ EntityRange o (l + l')) : xs)
               | o + l >  o' = goGroup (x' : xs)
               | otherwise   = x : goGroup (x' : xs)
 
@@ -209,22 +213,21 @@ sanitizeRawContent = deleteDanglingEntityRefs
 
             goGroup [] = []
             goGroup [x] = [x]
-            goGroup (x@(view range -> (o, l)) : x'@(view range -> (o', l')) : xs)
+            goGroup (x@(view range -> EntityRange o l) : x'@(view range -> EntityRange o' l') : xs)
               = if o + l >= o'
                   then goGroup ((x & range .~ merge (o, l) (o', l')) : xs)
                   else x : goGroup (x' : xs)
 
-            merge (o, l) (o', l') = (o'', l'')
+            merge (o, l) (o', l') = EntityRange o'' l''
               where
                 o'' = min o o'
                 l'' = max (o + l) (o' + l') - o''
 
-
-instance (Generic a, Arbitrary a, Generic b, Arbitrary b) => Arbitrary (Block a b) where
+instance (Generic a, Arbitrary a, Ord a, Generic b, Arbitrary b) => Arbitrary (Block a b) where
   arbitrary = do
     b <- garbitrary
     let ml = ST.length (b ^. blockText)
-        fixrange (off, len) = (off', len')
+        fixrange (EntityRange off len) = EntityRange off' len'
           where
             off' = min (abs off) (abs (ml - 1))
             len' = min (abs len) (abs (ml - off'))
@@ -256,15 +259,24 @@ instance Arbitrary BlockType where
   arbitrary = garbitrary
   shrink    = gshrink
 
-instance Arbitrary SelectionState where
+instance (Arbitrary a, Arbitrary b) => Arbitrary (GPosition a b) where
+  arbitrary = Position <$> arbitrary <*> arbitrary
+  shrink    = gshrink
+
+instance (Arbitrary a, Ord a) => Arbitrary (Range a) where
+  arbitrary = do
+    a <- arbitrary
+    b <- arbitrary
+    pure $ Range a b
+  shrink = reorder <$$> gshrink
+    where
+      reorder (Range a b) = Range a b -- note that Range is a smart constructor
+
+instance (Arbitrary a, Ord a) => Arbitrary (Selection a) where
   arbitrary = garbitrary
   shrink    = gshrink
 
-instance Arbitrary SelectionPoint where
-  arbitrary = garbitrary
-  shrink    = gshrink
-
-data RawContentWithSelections = RawContentWithSelections RawContent [SelectionState]
+data RawContentWithSelections = RawContentWithSelections RawContent [Selection Position]
   deriving (Eq, Show)
 
 instance Arbitrary RawContentWithSelections where
@@ -273,21 +285,20 @@ instance Arbitrary RawContentWithSelections where
     ss <- replicateM 11 $ arbitrarySoundSelectionState rc
     pure $ RawContentWithSelections rc ss
 
-arbitrarySoundSelectionState :: RawContent -> Gen SelectionState
-arbitrarySoundSelectionState (RawContent bs _) = do
-  let arbpoint = do
-        i <- choose (0, NEL.length bs - 1)
-        let b = bs NEL.!! i
-            blockkey = b ^. blockKey
-        offset <- choose (0, max 0 (ST.length (b ^. blockText) - 1))
-        pure ( (i, offset)  -- this is used to tell which is start and which is end.
-             , SelectionPoint blockkey offset
-             )
-  anchor <- arbpoint
-  point  <- arbpoint
-  isback <- arbitrary
-  let [start, end] = snd <$> sort [anchor, point]
-  pure $ SelectionState isback start end
+arbitrarySoundPosition :: RawContent -> Gen Position
+arbitrarySoundPosition (RawContent bs _) = do
+    i <- choose (0, NEL.length bs - 1)
+    let b = bs NEL.!! i
+        blockkey = b ^. blockKey
+    offset <- choose (0, max 0 (ST.length (b ^. blockText) - 1))
+    pure $ Position (BlockIndex i blockkey) offset
+
+-- the range may be empty
+arbitrarySoundRange :: RawContent -> Gen (Range Position)
+arbitrarySoundRange rc = Range <$> arbitrarySoundPosition rc <*> arbitrarySoundPosition rc
+
+arbitrarySoundSelectionState :: RawContent -> Gen (Selection Position)
+arbitrarySoundSelectionState rc = Selection <$> arbitrary <*> arbitrarySoundRange rc
 
 instance Arbitrary NonEmptyST where
   -- HACK: legalChar is needed for the Arbitrary instance of OTDoc
@@ -296,3 +307,26 @@ instance Arbitrary NonEmptyST where
 instance (Arbitrary a, Arbitrary b, Eq a, Splitable b) => Arbitrary (Segments a b) where
   arbitrary = Segments . map (\xs -> (fst (head xs), foldr1 joinItems $ snd <$> xs)) . groupBy ((==) `on` fst)
         <$> arbitrary
+
+instance (Ord a, EqProp a) => EqProp (Range a) where Range a b =-= Range c d = a =-= c .&. b =-= d
+
+instance (Arbitrary a, Ord a) => Arbitrary (Ranges a) where
+  arbitrary = sized $ \case
+    0 -> pure mempty
+    _ -> oneof
+            [ pure mempty
+            , do
+                r <- arbitrary
+                rs <- scale (`div` 2) arbitrary
+                pure $ r <> rs
+            ]
+
+instance (Ord a, EqProp a) => EqProp (Ranges a) where (=-=) = (=-=) `on` unRanges
+
+
+-- | Allows to insert a 'TestBatch' into a Spec.
+--
+-- hilariously, there is a package just for these two lines:
+-- https://hackage.haskell.org/package/hspec-checkers-0.1.0.2
+testBatch :: TestBatch -> Spec
+testBatch (batchName, tests) = describe ("laws for: " <> batchName) $ mapM_ (uncurry it) tests

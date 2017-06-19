@@ -54,7 +54,8 @@ module Refine.Frontend.Document.FFI
     -- * editor state actions
   , documentToggleStyle
   , documentToggleBlockType
-  , documentToggleLink
+  , documentAddLink
+  , documentRemoveLink
 
     -- * selections
   , getSelection
@@ -62,7 +63,7 @@ module Refine.Frontend.Document.FFI
   , getDraftSelectionStateViaBrowser
 
     -- * marks
-  , getMarkSelectorBound
+  , getLeafSelectorBound
   ) where
 
 import System.IO.Unsafe (unsafePerformIO)
@@ -145,31 +146,46 @@ documentToggleStyle sty st = js_ES_toggleInlineStyle st (cs $ Draft.styleToST st
 documentToggleBlockType :: Draft.BlockType -> EditorState -> EditorState
 documentToggleBlockType bt st = js_ES_toggleBlockType st (cs $ Draft.blockTypeToST bt)
 
--- TODO: remove links if selection contains link
-documentToggleLink :: EditorState -> EditorState
-documentToggleLink st = js_ES_toggleLink st' (js_ES_getSelection st') entitykey
+-- | Turn the current selection to a link with the given url
+--
+-- FUTUREWORK: this module should be about concepts known to draft.js, which excludes @LINK@.
+-- 'documentAddLink' should be replaced by the more general @documentAddEntity@ that all the
+-- arguments to the @createEntity@ method.  (Same with 'documentRemoveLink' and the foreign
+-- functions below.)
+documentAddLink :: String -> EditorState -> EditorState
+documentAddLink link st = js_ES_toggleLink st' (js_ES_getSelection st') entitykey
   where
     st' = setCurrentContent st content
     entitykey = js_ES_getLastCreatedEntityKey content
-    content = js_ES_createLink (getCurrentContent st) "http://www.example.com" -- TODO: replace example link
+    content = js_ES_createLink (getCurrentContent st) (cs link)
+
+-- | Remove links in the current selection
+documentRemoveLink :: EditorState -> EditorState
+documentRemoveLink st = js_ES_removeLink st (js_ES_getSelection st)
 
 -- * selections
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#getselection
 --
+-- The selection state in js cannot be interpreted as json, instead we need to call some methods to
+-- get to the data we need.  Therefore, we do not use 'FromJSVal' or 'FromJSON' to decode it, but
+-- this strange cascade of ffi calls.
+--
 -- Draft never actually nulls this field.  There is always have a selection, but start and end point
--- may be identical.  See 'selectionIsEmpty', 'getRangeAction' for context.
+-- may be identical.  See 'isEmptyRange', 'getRangeAction' for context.
 getSelection :: EditorState -> Draft.SelectionState
-getSelection (js_ES_getSelection -> sel) =
-  Draft.SelectionState
-    (js_ES_getSelectionIsBackward sel)
-    (Draft.SelectionPoint (Draft.BlockKey . cs $ js_ES_getSelectionStartKey sel) (js_ES_getSelectionStartOffset sel))
-    (Draft.SelectionPoint (Draft.BlockKey . cs $ js_ES_getSelectionEndKey sel)   (js_ES_getSelectionEndOffset sel))
+getSelection (js_ES_getSelection -> sel) = Draft.SelectionState .
+  (if js_ES_getSelectionIsBackward sel then Draft.toBackwardSelection else Draft.toSelection) $ Draft.Range
+    (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionStartKey sel) (js_ES_getSelectionStartOffset sel))
+    (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionEndKey sel)   (js_ES_getSelectionEndOffset sel))
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#forceselection
 forceSelection :: EditorState -> Draft.SelectionState -> EditorState
 forceSelection es (cs . encode -> sel) = js_ES_forceSelection es sel
 
+-- | The shape of the selection object is determined by the generic aeson instances of the haskell
+-- type.  If that changes, you need to adjust the test cases in "Refine.Frontend.OrphansSpec" and
+-- @refine$getDraftSelectionStateViaBrowser@ in js.
 getDraftSelectionStateViaBrowser :: (MonadIO m, MonadError String m) => m Draft.SelectionState
 getDraftSelectionStateViaBrowser = do
   v :: Maybe (Either JSString Draft.SelectionState)
@@ -182,15 +198,9 @@ getDraftSelectionStateViaBrowser = do
 
 -- * marks
 
-getMarkSelectorBound :: Draft.MarkSelector -> IO Int
-getMarkSelectorBound mark@(Draft.MarkSelector side _ _) = js_getBoundingBox (renderSide side) (renderMarkSelector mark)
-  where
-    renderSide Draft.MarkSelectorTop = "top"
-    renderSide Draft.MarkSelectorBottom = "bottom"
-
-    renderMarkSelector :: Draft.MarkSelector -> JSString
-    renderMarkSelector (Draft.MarkSelector _ (Draft.BlockKey b) i) =
-      "article span[data-offset-key=\"" <> cs b <> "-0-" <> cs (show i) <> "\""
+getLeafSelectorBound :: LeafSelectorSide -> Draft.LeafSelector -> IO Int
+getLeafSelectorBound side mark =
+  js_getBoundingBox (cs $ renderLeafSelectorSide side) (cs $ Draft.renderLeafSelector mark)
 
 
 -- * foreign
@@ -214,7 +224,7 @@ foreign import javascript safe
   js_convertFromHtml :: JSString -> ContentState
 
 foreign import javascript safe
-  "Draft.EditorState.createEmpty()"
+  "Draft.EditorState.createEmpty(refine$linkDecorator)"
   js_ES_createEmpty :: EditorState
 
 foreign import javascript safe
@@ -265,7 +275,11 @@ foreign import javascript safe
 -- | https://draftjs.org/docs/api-reference-rich-utils.html#content
 foreign import javascript safe
   "Draft.RichUtils.toggleLink($1,$2,$3)"
-  js_ES_toggleLink :: EditorState -> JSVal{-SelectionState-} -> JSString -> EditorState
+  js_ES_toggleLink :: EditorState -> JSVal{-SelectionState-} -> JSString{-EntityKey-} -> EditorState
+
+foreign import javascript safe
+  "Draft.RichUtils.toggleLink($1,$2,null)"
+  js_ES_removeLink :: EditorState -> JSVal{-SelectionState-} -> EditorState
 
 foreign import javascript safe
   "Draft.RichUtils.toggleBlockType($1,$2)"
@@ -370,8 +384,12 @@ js_ES_toggleInlineStyle :: EditorState -> JSString -> EditorState
 js_ES_toggleInlineStyle = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_toggleLink ("HLint: ignore Use camelCase" :: String) #-}
-js_ES_toggleLink :: EditorState -> JSVal{-SelectionState-} -> JSString -> EditorState
+js_ES_toggleLink :: EditorState -> JSVal{-SelectionState-} -> JSString{-EntityKey-} -> EditorState
 js_ES_toggleLink = error "javascript FFI not available in GHC"
+
+{-# ANN js_ES_removeLink ("HLint: ignore Use camelCase" :: String) #-}
+js_ES_removeLink :: EditorState -> JSVal{-SelectionState-} -> EditorState
+js_ES_removeLink = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_toggleBlockType ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_toggleBlockType :: EditorState -> JSString -> EditorState

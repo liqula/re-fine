@@ -105,12 +105,14 @@ data ZIndex =
     ZIxDialog
   | ZIxOverlay
   | ZIxLoginTab
+  | ZIxArticle
   deriving (Eq, Ord, Enum, Show)
 
 instance ToExpr ZIndex where
   expr ZIxDialog   = expr @Int 6050
   expr ZIxOverlay  = expr @Int 6010
   expr ZIxLoginTab = expr @Int 100000
+  expr ZIxArticle  = expr @Int 2000  -- ^ must be lower than 4000 to cover @.c-fulltoolbar@
 
 zindex :: ZIndex -> Decl
 zindex = decl "zIndex"

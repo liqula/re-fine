@@ -49,6 +49,7 @@ import           Refine.Frontend.Util
 
 -- * icons buttons
 
+-- | FIXME: ibutton must not contain divs, so we can use it inside spans.
 ibutton :: IbuttonOnClick onclick => View '[IbuttonProps onclick]
 ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
   let onMsOvr :: [PropertyOrHandler (StatefulViewEventHandler Bool)]
@@ -73,10 +74,11 @@ ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
                       ]
                  else [decl "margin" (Px $ sizeInt (props ^. ibSize) `div` 5)])
 
+      -- FUTUREWORK: do we want to have grayed-out images for all buttons?
       iconSty :: [Decl]
-      iconSty = [ decl "cursor" (Ident "pointer")
-                , decl "borderRadius" (Percentage 100)
-                ] <> css (props ^. ibSize)
+      iconSty = [decl "borderRadius" (Percentage 100)]
+             <> [decl "cursor" (Ident "pointer") | props ^. ibEnabled]
+             <> css (props ^. ibSize)
 
       bg :: BackgroundImage
       bg = BackgroundImage (props ^. ibImage) imageState
@@ -88,11 +90,11 @@ ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
             _                                                        -> BisDark
 
       spanSty :: [Decl]
-      spanSty = [ decl "cursor" (Ident "pointer")
-                , decl "color" textColor
+      spanSty = [ decl "color" textColor
                 , decl "fontSize" (Rem 0.75)
                 , decl "marginTop" (Rem 0.3125)
                 ]
+             <> [decl "cursor" (Ident "pointer") | props ^. ibEnabled]
         where
           textColor
             | not (props ^. ibEnabled)  = Color.DisabledTextColor
@@ -109,7 +111,7 @@ ibutton_ props = view_ ibutton ("Ibutton_" <> props ^. ibListKey) props
 emptyIbuttonProps :: forall onclick. onclick ~ [GlobalAction] => ST -> onclick -> IbuttonProps onclick
 emptyIbuttonProps img onclick = IbuttonProps
   { _ibListKey          = "0"
-  , _ibLabel            = "[label]"
+  , _ibLabel            = mempty
   , _ibDarkBackground   = False
   , _ibImage            = img
   , _ibHighlightWhen    = HighlightOnMouseOver
@@ -189,8 +191,8 @@ iconButtonPropsToStyles props = alpos <> curpoint
               Nothing   -> []
     curpoint = [decl "cursor" (Ident "pointer") | not (props ^. iconButtonPropsDisabled)]
 
-{- TODO we currently ignore touch device handling because there are some issues with
- - browsers emitting tap events on click and we don't know how to handle these properly.
+{- FIXME: we currently ignore touch device handling because there are some issues with
+   browsers emitting tap events on click and we don't know how to handle these properly.
 
     import Refine.Frontend.ThirdPartyViews (hammer_)
     let bprops = props ^. iconButtonProps
@@ -210,7 +212,7 @@ iconButton = mkView "IconButton" $ \props -> do
               ] $
             elemJSString (props ^. iconButtonPropsLabel)
 
-        -- TODO: i think the span_ node should be a child of the icon_ node so that the css info on
+        -- FIXME: i think the span_ node should be a child of the icon_ node so that the css info on
         -- the latter can apply (e.g. "bright" vs. "dark").  a more aggressive refactoring may be a
         -- better idea, though.  this part of the code base is a bit brittle and confusing.
 
@@ -225,9 +227,9 @@ mkClickHandler props evt mevt =
   (if props ^. iconButtonPropsClickPropag then () else stopPropagation evt) `seq`
   runIconButtonPropsOnClick evt mevt (props ^. iconButtonPropsOnClick)
 
-class (Typeable onclick, Eq onclick) => IconButtonPropsOnClick onclick where  -- TODO: rename to ButtonOnClick
+class (Typeable onclick, Eq onclick) => IconButtonPropsOnClick onclick where  -- FIXME: rename to ButtonOnClick
   runIconButtonPropsOnClick :: Event -> MouseEvent -> onclick -> ViewEventHandler
-      -- TODO: what do i need the default for again?
+      -- FIXME: what do i need the default for again?
   defaultOnClick            :: onclick  -- ^ @instance Default [GlobalAction]@ would lead to overlaps.
 
 instance IconButtonPropsOnClick [GlobalAction] where

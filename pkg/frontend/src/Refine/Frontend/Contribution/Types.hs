@@ -1,15 +1,15 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE DeriveAnyClass             #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
 {-# LANGUAGE ExplicitForAll             #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
@@ -45,16 +45,12 @@ newtype AddContributionFormState = AddContributionFormState
   } deriving (Show, Eq, Generic)
 
 
-newtype MarkPositions = MarkPositions { _markPositionsMap :: Map.Map ContributionID MarkPosition }
-  deriving (Show, Eq, Generic)
+newtype AllVertialSpanBounds = AllVertialSpanBounds { _allVertialSpanBounds :: Map.Map ContributionID VertialSpanBounds }
+  deriving (Show, Eq, Generic, Monoid)
 
-instance Monoid MarkPositions where
-  mempty = MarkPositions mempty
-  mappend (MarkPositions m) (MarkPositions m') = MarkPositions (m <> m')
-
-data MarkPosition = MarkPosition
-  { _markPositionTop    :: OffsetFromDocumentTop
-  , _markPositionBottom :: OffsetFromDocumentTop
+data VertialSpanBounds = VertialSpanBounds
+  { _vertialSpanBoundsTop    :: OffsetFromDocumentTop
+  , _vertialSpanBoundsBottom :: OffsetFromDocumentTop
   }
   deriving (Eq, Show, Generic)
 
@@ -67,7 +63,7 @@ mapToValue :: (Show k, ToJSON v) => Map.Map k v -> Value
 mapToValue = object . fmap (\(k, v) -> (cs . show) k .:= v) . Map.toList
 
 mapFromValue :: (Ord k, Read k, FromJSON v) => Value -> Parser (Map.Map k v)
-mapFromValue = withObject "MarkPositions"
+mapFromValue = withObject "AllVertialSpanBounds"
   $ fmap Map.fromList
   . mapM (\(k, v) -> (,) <$> maybe (fail "could not parse key.") pure (readMaybe (cs k))
                          <*> parseJSON v)
@@ -76,19 +72,18 @@ mapFromValue = withObject "MarkPositions"
 
 -- * Contribution
 
--- | TODO: give record selectors to all fields.
 data ContributionAction =
-    RequestSetRange -- ^ FIXME: move this to 'DocumentAction'
-  | SetRange Range  -- ^ FIXME: move this to 'DocumentAction'
-  | ClearRange      -- ^ FIXME: move this to 'DocumentAction'
+    RequestSetRange
+  | SetRange SelectionStateWithPx
+  | ClearRange
   | ShowContributionDialog ContributionID
   | HideContributionDialog
   | ShowCommentEditor
   | HideCommentEditor
   | SetCommentKind CommentKind
   | SubmitComment ST (Maybe CommentKind)
-  | RequestSetMarkPositions
-  | SetMarkPositions [(ContributionID, MarkPosition)]  -- ^ see 'MarkPositions'
+  | RequestSetAllVertialSpanBounds
+  | SetAllVertialSpanBounds [(ContributionID, VertialSpanBounds)]  -- ^ see 'AllVertialSpanBounds'
   | SetBubblePositioning BubblePositioning
   | HighlightMarkAndBubble [ContributionID]
   | SetBubbleFilter (Maybe (Set ContributionID))
@@ -96,13 +91,13 @@ data ContributionAction =
 
 
 data ContributionState = ContributionState
-  { _csCurrentRange             :: Maybe Range
+  { _csCurrentSelectionWithPx   :: Maybe SelectionStateWithPx
   , _csCommentKind              :: Maybe CommentKind
   , _csDisplayedContributionID  :: Maybe ContributionID
   , _csActiveDialog             :: Maybe ActiveDialog
   , _csHighlightedMarkAndBubble :: [ContributionID]
   , _csQuickCreateShowState     :: QuickCreateShowState
-  , _csMarkPositions            :: MarkPositions
+  , _csAllVertialSpanBounds     :: AllVertialSpanBounds
   , _csBubblePositioning        :: BubblePositioning
   , _csBubbleFilter             :: Maybe (Set ContributionID)  -- ^ 'Nothing' means show everything.
   } deriving (Show, Eq, Generic)
@@ -121,13 +116,13 @@ data ActiveDialog = ActiveDialogComment | ActiveDialogEdit
 
 emptyContributionState :: ContributionState
 emptyContributionState = ContributionState
-  { _csCurrentRange             = Nothing
+  { _csCurrentSelectionWithPx   = Nothing
   , _csCommentKind              = Nothing
   , _csDisplayedContributionID  = Nothing
   , _csActiveDialog             = Nothing
   , _csHighlightedMarkAndBubble = []
   , _csQuickCreateShowState     = QuickCreateNotShown
-  , _csMarkPositions            = mempty
+  , _csAllVertialSpanBounds     = mempty
   , _csBubblePositioning        = BubblePositioningAbsolute
   , _csBubbleFilter             = Nothing
   }
@@ -151,9 +146,9 @@ stackToList (Stack (x :| xs)) = x : xs
 stackToList (NoStack x)       = [x]
 
 data ProtoBubble = ProtoBubble
-  { _protoBubbleContributionID :: ContributionID
-  , _protoBubbleMarkPosition   :: MarkPosition
-  , _protoBubbleChild          :: ReactElementM ViewEventHandler ()
+  { _protoBubbleContributionID    :: ContributionID
+  , _protoBubbleVertialSpanBounds :: VertialSpanBounds
+  , _protoBubbleChild             :: ReactElementM ViewEventHandler ()
   }
 
 data BubbleProps = BubbleProps
@@ -180,7 +175,7 @@ instance UnoverlapAllEq BubbleProps
 data QuickCreateProps = QuickCreateProps
   { _quickCreateSide        :: QuickCreateSide
   , _quickCreateShowState   :: QuickCreateShowState
-  , _quickCreateRange       :: Maybe Range
+  , _quickCreateRange       :: Maybe SelectionStateWithPx
   , _quickCreateScreenState :: ScreenState
   }
   deriving (Show, Eq)
@@ -243,7 +238,7 @@ instance UnoverlapAllEq ShowQuestionProps
 
 data AddContributionProps kind = AddContributionProps
   { _acpVisible       :: Bool
-  , _acpRange         :: Maybe Range
+  , _acpRange         :: Maybe SelectionStateWithPx
   , _acpKind          :: Maybe kind
   , _acpWindowWidth   :: Int
   }
@@ -255,16 +250,16 @@ instance UnoverlapAllEq (AddContributionProps EditKind)
 
 -- * boilerplate
 
-makeRefineType ''MarkPosition
-makeLenses ''MarkPositions
+makeRefineType ''VertialSpanBounds
+makeLenses ''AllVertialSpanBounds
 
-deriving instance NFData MarkPositions
+deriving instance NFData AllVertialSpanBounds
 
-instance ToJSON MarkPositions where
-  toJSON = mapToValue . _markPositionsMap
+instance ToJSON AllVertialSpanBounds where
+  toJSON = mapToValue . _allVertialSpanBounds
 
-instance FromJSON MarkPositions where
-  parseJSON = fmap MarkPositions . mapFromValue
+instance FromJSON AllVertialSpanBounds where
+  parseJSON = fmap AllVertialSpanBounds . mapFromValue
 
 makeRefineType ''AddContributionFormState
 makeRefineType ''ContributionAction
@@ -291,9 +286,9 @@ scrollToCurrentSelection = liftIO . js_scrollToPx . currentSelectionOffset
 
 currentSelectionOffset :: ContributionState -> Int
 currentSelectionOffset st = fromMaybe 0 $ do
-  range <- st ^? csCurrentRange . _Just
-  pure $ (range ^. rangeBottomOffset . unOffsetFromViewportTop)
-       + (range ^. rangeScrollOffset . unScrollOffsetOfViewport)
+  sel <- st ^? csCurrentSelectionWithPx . _Just
+  pure $ (sel ^. sstBottomOffset . unOffsetFromViewportTop)
+       + (sel ^. sstScrollOffset . unScrollOffsetOfViewport)
        + tweakScrollTarget
 
 -- | FUTUREWORK: come up with a more robust way to move the dialog box into the center of the view.

@@ -42,7 +42,7 @@ import           Refine.Backend.Database.Types
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
-import           Refine.Common.VDoc.Draft (rawContentFromVDocVersion, selectEverything)
+import           Refine.Common.VDoc.Draft (rawContentFromVDocVersion, maximumRange)
 import           Refine.Common.VDoc.OT (docEditRanges)
 import           Refine.Prelude (nothingToError, Timestamp, getCurrentTimestamp)
 
@@ -244,17 +244,17 @@ createEdit rid me ce = do
       pure []
     EditOfEdit edit parent -> do
       doc <- rawContentFromVDocVersion <$> getVersion parent
-      pure $ docEditRanges edit doc
+      pure . unRanges $ docEditRanges edit doc
     MergeOfEdits{} -> error "not implemented"
   let sels' = NEL.fromList $
          if null sels
-         then [selectEverything rc]
+         then [maximumRange rc]
          else sels
       rc = fromMaybe e . decode . cs $ ce ^. createEditVDoc . unVDocVersion
         where e = error "Invalid VDocVersion in CreateEdit!"  -- #312 should elimiate the possibility of this
   mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
-            (SelectionStates sels')
+            (RangePositions sels')
             (ce ^. createEditVDoc)
             (S.idToKey rid)
             (ce ^. createEditKind)
@@ -275,7 +275,7 @@ createEdit rid me ce = do
 getEdit :: ID Edit -> DB Edit
 getEdit eid = do
   src <- getEditSource eid
-  getMetaEntity (\mid -> S.editElim $ \desc (SelectionStates cr) _ _ kind -> Edit mid desc cr kind src) eid
+  getMetaEntity (\mid -> S.editElim $ \desc (RangePositions cr) _ _ kind -> Edit mid desc cr kind src) eid
 
 getEditSource :: ID Edit -> DB (EditSource (ID Edit))
 getEditSource eid = do
@@ -320,9 +320,9 @@ vdocOfEdit pid = S.editElim (\_ _ _ vid _ -> S.keyToId vid) <$> getEntityRep pid
 
 -- * Note
 
--- TODO: Use the _lid
-toNote :: MetaID Note -> ST -> Bool -> ChunkRange -> LoginId -> Note
-toNote nid desc public range _lid = Note nid desc public range
+-- FIXME: Use the @_lid@ argument
+toNote :: MetaID Note -> ST -> Bool -> RangePosition -> LoginId -> Note
+toNote nid desc public range _lid = Note nid desc public (unRangePosition range)
 
 createNote :: ID Edit -> Create Note -> DB Note
 createNote pid note = do
@@ -330,7 +330,7 @@ createNote pid note = do
   let snote = S.Note
           (note ^. createNoteText)
           (note ^. createNotePublic)
-          (note ^. createNoteRange)
+          (RangePosition $ note ^. createNoteRange)
           (fromUserID userId)
   mid <- createMetaID snote
   addConnection S.PN pid (mid ^. miID)
@@ -342,9 +342,9 @@ getNote = getMetaEntity (S.noteElim . toNote)
 
 -- * Question
 
--- TODO: User lid
-toQuestion :: MetaID Question -> ST -> Bool -> Bool -> ChunkRange -> LoginId -> Question
-toQuestion qid text answ pblc range _lid = Question qid text answ pblc range
+-- FIXME: user the @_lid@ argument
+toQuestion :: MetaID Question -> ST -> Bool -> Bool -> RangePosition -> LoginId -> Question
+toQuestion qid text answ pblc range _lid = Question qid text answ pblc (unRangePosition range)
 
 createQuestion :: ID Edit -> Create Question -> DB Question
 createQuestion pid question = do
@@ -353,7 +353,7 @@ createQuestion pid question = do
           (question ^. createQuestionText)
           False -- Not answered
           (question ^. createQuestionPublic)
-          (question ^. createQuestionRange)
+          (RangePosition $ question ^. createQuestionRange)
           (fromUserID userId)
   mid <- createMetaID squestion
   addConnection S.PQ pid (mid ^. miID)
@@ -365,9 +365,9 @@ getQuestion = getMetaEntity (S.questionElim . toQuestion)
 
 -- * Discussion
 
--- TODO: Login ID
-toDiscussion :: MetaID Discussion -> Bool -> ChunkRange -> LoginId -> Discussion
-toDiscussion did pblc range _lid = Discussion did pblc range
+-- FIXME: user the @_lid@ argument
+toDiscussion :: MetaID Discussion -> Bool -> RangePosition -> LoginId -> Discussion
+toDiscussion did pblc range _lid = Discussion did pblc (unRangePosition range)
 
 saveStatement :: ID Discussion -> S.Statement -> DB Statement
 saveStatement did sstatement = do
@@ -380,7 +380,7 @@ createDiscussion pid disc = do
   userId <- dbUser
   let sdiscussion = S.Discussion
           (disc ^. createDiscussionPublic)
-          (disc ^. createDiscussionRange)
+          (RangePosition $ disc ^. createDiscussionRange)
           (fromUserID userId)
   mid <- createMetaID sdiscussion
   addConnection S.PD pid (mid ^. miID)
@@ -613,7 +613,7 @@ instance C.StoreProcessData DB CollaborativeEdit where
     let key = pdata ^. collaborativeEditID . to S.idToKey
     deleteWhere [S.ProcessOfCollabEditCollabEdit ==. key]
     delete key
-    error "TODO: also remove VDoc and all its contents from the various tables.  see #273."
+    error "FIXME: also remove VDoc and all its contents from the various tables.  see #273."
 
 instance C.StoreProcessData DB Aula where
   processDataGroupID = pure . view createAulaProcessGroupID

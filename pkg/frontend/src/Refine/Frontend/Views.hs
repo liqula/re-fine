@@ -80,7 +80,8 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                                 -- FIXME: I think this could be done more nicely.
 
   div_ (case rs ^. gsHeaderState . hsToolbarExtensionStatus of
-    HT.ToolbarExtensionClosed -> []
+    HT.ToolbarExtensionClosed  -> []
+    HT.EditToolbarLinkEditor{} -> []
     _ -> [ onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseToolbarExtension)
          ]) $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
@@ -92,12 +93,12 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocDiscussions) rs
           addComment_ __ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogComment)
-                              (rs ^. RS.gsContributionState . RS.csCurrentRange)
+                              (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
                               (rs ^. RS.gsContributionState . RS.csCommentKind)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
           addEdit_ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogEdit)
-                              (rs ^. RS.gsContributionState . RS.csCurrentRange)
+                              (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
                               (rs ^? RS.gsDocumentState . documentStateEditKind)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
 
@@ -105,8 +106,8 @@ mainScreen = mkView "MainScreen" $ \rs -> do
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       let asideProps = AsideProps
-                                     (rs ^. gsContributionState . csMarkPositions)
-                                     (rs ^. gsContributionState . csCurrentRange)
+                                     (rs ^. gsContributionState . csAllVertialSpanBounds)
+                                     (rs ^. gsContributionState . csCurrentSelectionWithPx)
                                      (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
                                      (fltr (vdoc ^. compositeVDocDiscussions))
@@ -173,9 +174,9 @@ rightAside_ !props = view_ rightAside "rightAside_" props
 -- * helpers
 
 -- | All contributions need to be positioned.  The default is '0' (beginning of the article).
-lookupPosition :: AsideProps -> ContributionID -> MarkPosition
-lookupPosition props cid = fromMaybe (MarkPosition 0 constantBubbleHeight)
-                         $ props ^? asideMarkPositions . markPositionsMap . at cid . _Just
+lookupPosition :: AsideProps -> ContributionID -> VertialSpanBounds
+lookupPosition props cid = fromMaybe (VertialSpanBounds 0 constantBubbleHeight)
+                         $ props ^? asideAllVertialSpanBounds . allVertialSpanBounds . at cid . _Just
 
 editToProtoBubble :: AsideProps -> Edit -> ProtoBubble
 editToProtoBubble aprops e = ProtoBubble cid (lookupPosition aprops cid) (elemText (e ^. editDesc))
@@ -206,7 +207,7 @@ stackBubble bubbleSide aprops bstack = bubble_ props children
       }
 
     voffset = if aprops ^. asideBubblePositioning == BubblePositioningAbsolute
-                then Just $ stackToHead bstack ^. protoBubbleMarkPosition . markPositionTop
+                then Just $ stackToHead bstack ^. protoBubbleVertialSpanBounds . vertialSpanBoundsTop
                 else Nothing
 
     highlight = not . Set.null $ Set.intersection shots hits

@@ -41,7 +41,7 @@ import           Refine.Common.Test.Samples
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
-import           Refine.Frontend.Document.Store (setMarkPositions, documentStateUpdate, editorStateToVDocVersion)
+import           Refine.Frontend.Document.Store (setAllVertialSpanBounds, documentStateUpdate, editorStateToVDocVersion)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
@@ -63,7 +63,9 @@ instance StoreData GlobalState where
     transform = loop . (:[])
       where
         -- FUTUREWORK: we don't need this loop trick, we can implement reDispatch much more
-        -- straight-forwardly as @forkIO . dispatchM@.
+        -- straight-forwardly as @forkIO . dispatchM@.  EXCEPT: if we process action A, then throw
+        -- action B concurrently outside of processing action A, then throw action C from inside of
+        -- processing A; which of B and C wins the race for the next lock?  needs more thinking!
         --
         -- (see also 'dispatchAndExec' below. change this only when switching to a future
         -- version of react-flux that has a monad-constraint-based interface.  then we'll have
@@ -96,8 +98,8 @@ transformGlobalState = transf
 
       -- other effects
       case action of
-        ContributionAction RequestSetMarkPositions -> do
-          dispatchAndExec . ContributionAction =<< setMarkPositions (st ^. gsDocumentState)
+        ContributionAction RequestSetAllVertialSpanBounds -> do
+          dispatchAndExec . ContributionAction =<< setAllVertialSpanBounds (st ^. gsDocumentState)
 
         ContributionAction RequestSetRange -> do
           mRangeEvent <- getRangeAction (st ^. gsDocumentState)
@@ -141,7 +143,6 @@ transformGlobalState = transf
               & gsToolbarSticky       %~ toolbarStickyUpdate action
               & gsTranslations        %~ translationsUpdate action
               & gsDevState            %~ devStateUpdate action
-
 
 consoleLogGlobalStateBefore :: forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
 consoleLogGlobalStateBefore False _ _ = pure ()
@@ -235,14 +236,14 @@ emitBackendCallsFor action st = case action of
       case kind of
         Just CommentKindDiscussion ->
           addDiscussion (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
-                     (C.CreateDiscussion text True (st ^. gsChunkRange)) $ \case
+                     (C.CreateDiscussion text True (st ^. gsCurrentSelection . C.selectionRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right discussion) -> dispatchManyM [AddDiscussion discussion, ContributionAction RequestSetMarkPositions]
+            (Right discussion) -> dispatchManyM [AddDiscussion discussion, ContributionAction RequestSetAllVertialSpanBounds]
         Just CommentKindNote ->
           addNote (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
-                     (C.CreateNote text True (st ^. gsChunkRange)) $ \case
+                     (C.CreateNote text True (st ^. gsCurrentSelection . C.selectionRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right note) -> dispatchManyM [AddNote note, ContributionAction RequestSetMarkPositions]
+            (Right note) -> dispatchManyM [AddNote note, ContributionAction RequestSetAllVertialSpanBounds]
         Nothing -> pure ()
 
     DocumentAction (DocumentSave desc) -> case st ^. gsDocumentState of
@@ -259,7 +260,7 @@ emitBackendCallsFor action st = case action of
 
         addEdit eid cedit $ \case
           Left rsp   -> ajaxFail rsp Nothing
-          Right edit -> dispatchManyM [AddEdit edit, ContributionAction RequestSetMarkPositions]
+          Right edit -> dispatchManyM [AddEdit edit, ContributionAction RequestSetAllVertialSpanBounds]
 
       bad -> let msg = "DocumentAction DocumentEditSave: "
                     <> "not in editor state or content cannot be converted to html."
@@ -368,16 +369,6 @@ dispatchAndExecMany as = liftIO . void . forkIO $ do
 
 -- FIXME: move this section to somewhere in Document.* modules, together with the Range type.
 
-gsChunkRange :: Lens' GlobalState C.ChunkRange
-gsChunkRange f gs = outof <$> f (into gs)
-  where
-    into :: GlobalState -> C.ChunkRange
-    into s = fromMaybe (C.ChunkRange Nothing Nothing)
-               (s ^? gsContributionState . csCurrentRange . _Just . rangeSelectionState)
-
-    outof :: C.ChunkRange -> GlobalState
-    outof r = gs & gsContributionState . csCurrentRange . _Just . rangeSelectionState .~ r
-
 -- | See also: 'Range' type.  Empty selection (start point == end point) counts as no selection, and
 -- triggers a 'ClearRange' action to be emitted.  Only call this in `readOnly` mode.
 --
@@ -391,20 +382,22 @@ getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
     Left err -> do
       consoleLogJSONM "getRangeSelection: error" err
       pure $ Just ClearRange
-    Right sel | selectionIsEmpty (dstate ^?! documentStateContent) sel -> do
+    Right sel | rangeIsEmpty (dstate ^?! documentStateContent)
+              . C._selectionRange
+              $ C.fromSelectionState (dstate ^?! documentStateContent) sel -> do
       pure $ Just ClearRange
     Right sel -> Just . SetRange <$> do
       topOffset    <- liftIO js_getRangeTopOffset
       bottomOffset <- liftIO js_getRangeBottomOffset
       scrollOffset <- liftIO js_getScrollOffset
-      let doctop = scrollOffset + if sel ^. C.selectionIsBackward then topOffset else bottomOffset
+      let doctop = scrollOffset + if sel ^. C.unSelectionState . C.selectionIsBackward then topOffset else bottomOffset
 
-      pure Range
-        { _rangeSelectionState = selectionStateToChunkRange (dstate ^?! documentStateContent) sel
-        , _rangeDocTopOffset   = OffsetFromDocumentTop  doctop
-        , _rangeTopOffset      = OffsetFromViewportTop  topOffset
-        , _rangeBottomOffset   = OffsetFromViewportTop  bottomOffset
-        , _rangeScrollOffset   = ScrollOffsetOfViewport scrollOffset
+      pure SelectionStateWithPx
+        { _sstSelectionState = C.fromSelectionState (dstate ^?! documentStateContent) sel
+        , _sstDocTopOffset   = OffsetFromDocumentTop  doctop
+        , _sstTopOffset      = OffsetFromViewportTop  topOffset
+        , _sstBottomOffset   = OffsetFromViewportTop  bottomOffset
+        , _sstScrollOffset   = ScrollOffsetOfViewport scrollOffset
         }
 
 removeAllRanges :: MonadIO m => m ()

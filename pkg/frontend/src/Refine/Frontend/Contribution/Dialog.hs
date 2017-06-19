@@ -147,8 +147,8 @@ showNoteProps notes rs = case (maybeNote, maybeOffset) of
     maybeNote = (`M.lookup` notes) =<< maybeNoteID
     maybeOffset = do
       nid <- maybeNoteID
-      rs ^? gsContributionState . csMarkPositions . markPositionsMap
-          . at (ContribIDNote nid) . _Just . markPositionBottom
+      rs ^? gsContributionState . csAllVertialSpanBounds . allVertialSpanBounds
+          . at (ContribIDNote nid) . _Just . vertialSpanBoundsBottom
 
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
@@ -180,8 +180,8 @@ showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
     maybeDiscussion = (`M.lookup` discussions) =<< maybeDiscussionID
     maybeOffset = do
       did <- maybeDiscussionID
-      rs ^? gsContributionState . csMarkPositions . markPositionsMap
-          . at (ContribIDDiscussion did) . _Just . markPositionBottom
+      rs ^? gsContributionState . csAllVertialSpanBounds . allVertialSpanBounds
+          . at (ContribIDDiscussion did) . _Just . vertialSpanBoundsBottom
 
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
@@ -217,13 +217,15 @@ showQuestion_ :: ShowQuestionProps -> ReactElementM eventHandler ()
 showQuestion_ !props = view_ showQuestion "showQuestion_" props
 
 
-addContributionDialogFrame :: Bool -> ST -> Maybe Range -> Int -> ReactElementM ViewEventHandler () -> ReactElementM ViewEventHandler ()
+addContributionDialogFrame
+    :: Bool -> ST -> Maybe SelectionStateWithPx -> Int
+    -> ReactElementM ViewEventHandler () -> ReactElementM ViewEventHandler ()
 addContributionDialogFrame False _ _ _ _ = pure ()
 addContributionDialogFrame True title mrange windowWidth child =
     let top = case mrange of
               Nothing -> 30
-              Just range -> (range ^. rangeBottomOffset . unOffsetFromViewportTop)
-                          + (range ^. rangeScrollOffset . unScrollOffsetOfViewport)
+              Just range -> (range ^. sstBottomOffset . unOffsetFromViewportTop)
+                          + (range ^. sstScrollOffset . unScrollOffsetOfViewport)
         extraStyles = [ decl "top" (Px $ top + 5)
                       , decl "left" (Px $ leftFor windowWidth)
                       , decl "height" (Px 560)
@@ -275,7 +277,7 @@ contributionDialogTextForm stepNumber promptText = do
   form_ [ "target" $= "#"
         , "action" $= "POST"] $ do
     textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
-              , "className" $= "o-wysiwyg o-form-input__textarea"
+              , "className" $= "o-form-input__textarea"
               , "style" @@=
                       [ decl "resize" (Ident "none")
                       , decl "width" (Px 600)

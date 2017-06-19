@@ -44,6 +44,7 @@ module Refine.Prelude
   , justIf
   , justIfP
   , toEnumMay
+  , focusList
   , ordNub
   , joinE
   , (<..>)
@@ -232,6 +233,14 @@ toEnumMay :: forall a. (Enum a, Bounded a) => Int -> Maybe a
 toEnumMay i = if i >= 0 && i <= fromEnum (maxBound :: a)
     then Just $ toEnum i
     else Nothing
+
+-- focusList "abc" = [("","abc"),("a","bc"),("ba","c"),("cba","")]
+focusList :: [a] -> [([a], [a])]
+focusList = f []
+  where
+    f r xs = (r, xs): case xs of
+        [] -> []
+        y: ys -> f (y:r) ys
 
 ordNub :: Ord a => [a] -> [a]
 ordNub = Set.toList . Set.fromList

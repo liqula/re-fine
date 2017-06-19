@@ -27,21 +27,21 @@ import Refine.Frontend.Prelude
 
 import Test.Hspec
 
-import           Refine.Common.Types
 import           Refine.Frontend.Contribution.QuickCreate
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Types
 
 
-rangeTopFor :: Int -> Int -> Range
+rangeTopFor :: Int -> Int -> SelectionStateWithPx
 rangeTopFor topOffset = rangeFor 0 topOffset 0
 
-rangePosFor :: Int -> Int -> Range
+rangePosFor :: Int -> Int -> SelectionStateWithPx
 rangePosFor topOffset bottomOffset = rangeFor 0 topOffset bottomOffset 0
 
-rangeFor :: Int -> Int -> Int -> Int -> Range
+rangeFor :: Int -> Int -> Int -> Int -> SelectionStateWithPx
 rangeFor docTopOffset topOffset bottomOffset scrollOffset =
-  Range (ChunkRange Nothing Nothing)
+  SelectionStateWithPx
+      (error "QuickCreateSpec.rangeFor does not give you a range, just the pixel fields.")
       (OffsetFromDocumentTop docTopOffset)
       (OffsetFromViewportTop topOffset)
       (OffsetFromViewportTop bottomOffset)

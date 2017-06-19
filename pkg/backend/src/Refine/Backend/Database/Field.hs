@@ -10,9 +10,8 @@ import Refine.Backend.Prelude
 import           Control.Monad ((<=<))
 import           Database.Persist.Sql
 
-import Refine.Backend.Database.Types (MetaInfoID(..), RawContentEdit(..), SelectionStates(..))
+import Refine.Backend.Database.Types (MetaInfoID(..), RawContentEdit(..), RangePositions(..), RangePosition(..))
 import Refine.Common.Types.Prelude (UserInfo)
-import Refine.Common.Types.Chunk
 import Refine.Common.Types.Process
 import Refine.Common.Types.Role (Role(..))
 import Refine.Common.Types.Core
@@ -66,11 +65,11 @@ toPersistJSONValue = toPersistValue . cs @LBS @ST . encode
 fromPersistJSONValue :: (FromJSON a) => PersistValue -> Either ST a
 fromPersistJSONValue = (either (Left . cs) Right . eitherDecode . cs) <=< fromPersistValue @ST
 
-instance PersistField ChunkRange where
+instance PersistField RangePosition where
   toPersistValue   = toPersistJSONValue
   fromPersistValue = fromPersistJSONValue
 
-instance PersistFieldSql ChunkRange where
+instance PersistFieldSql RangePosition where
   sqlType _ = sqlType (Proxy :: Proxy ST)
 
 instance PersistField EditKind where
@@ -115,16 +114,9 @@ instance PersistField RawContentEdit where
 instance PersistFieldSql RawContentEdit where
   sqlType _ = sqlType (Proxy :: Proxy ST)
 
-instance PersistField SelectionState where
+instance PersistField RangePositions where
   toPersistValue   = toPersistJSONValue
   fromPersistValue = fromPersistJSONValue
 
-instance PersistFieldSql SelectionState where
-  sqlType _ = sqlType (Proxy :: Proxy ST)
-
-instance PersistField SelectionStates where
-  toPersistValue   = toPersistJSONValue
-  fromPersistValue = fromPersistJSONValue
-
-instance PersistFieldSql SelectionStates where
+instance PersistFieldSql RangePositions where
   sqlType _ = sqlType (Proxy :: Proxy ST)

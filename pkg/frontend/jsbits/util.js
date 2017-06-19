@@ -6,7 +6,7 @@
           strategy:
               function (contentBlock, callback, contentState) {
                 contentBlock.findEntityRanges(
-                  (character) => {
+                  function (character) {
                     const entityKey = character.getEntity();
                     return (
                       entityKey !== null &&
@@ -17,11 +17,16 @@
                 );
               },
           component:
-              (props) => {
+              function (props) {
                 const {url} = props.contentState.getEntity(props.entityKey).getData();
                 return React.createElement(
                     'a',
-                    { href: url, style: { color: '#3b5998', textDecoration: 'underline' } },
+                    { className: "tooltip", href: url, style: { color: '#3b5998', textDecoration: 'underline' } },
+                    React.createElement(
+                        "span",
+                        { className: "tooltiptext" },
+                        url
+                    ),
                     props.children
                 );
               },
@@ -92,8 +97,8 @@
 
             // block key found - return with current offset.
             return {
-                _selectionBlock: blockkey,
-                _selectionOffset: offset
+                _blockIndex: blockkey,
+                _columnIndex: offset
             };
         };
 
@@ -110,8 +115,10 @@
                 var endpoint   = mkPoint(range.endContainer, range.endOffset);
 
                 return { Right: { _selectionIsBackward: backward,
-                                  _selectionStart: startpoint,
-                                  _selectionEnd: endpoint
+                                  _selectionRange: {
+                                      _rangeBegin: startpoint,
+                                      _rangeEnd: endpoint
+                                  }
                                 }
                        };
             } catch(e) {

@@ -50,36 +50,30 @@ makeRefineType ''ScrollOffsetOfViewport
 makeRefineType ''OffsetFromDocumentTop
 
 
--- | 'Range' contains the 'SelectionState' from draftjs, plus some measurements about the window
--- scroll state and size.
+-- | 'Range' contains a position range representing a 'SelectionState' from draftjs (without the
+-- direction), plus some measurements about the window scroll state and size.
 --
--- Some thoughts on the applicability of 'SelectionState':
+-- Some thoughts on the applicability of @Range Position@:
 --
 -- a selection state is only valid wrt. a specific RawContent, as the block keys are used to
--- identify locations in the dom.  this means that if the content changes during edits, teh
+-- identify locations in the dom.  this means that if the content changes during edits, the
 -- selection state may get outdated.
 --
 -- when creating comments, the text remains read-only during creation of a comment, so the selection
 -- will be valid on submit.  good, no issue here.
 --
 -- when creating edits, the selection state applies to the previous version, so we're fine, too.
--- BUT: as long as we convert selection state to chunk range to store it in the (outdated) backend,
--- we need to get the conversion right.
 --
--- so we need to store the chunkrange in Range for now instead of the SelectionState, and replace it
--- with SelectionState once ChunkRange and the Chunk module get completely removed from
--- refine-common.
---
--- CAVEAT: we make some assumptions here about the block keys being stable: *iff* the editor never
--- changes block keys for lines once they have one *and* we never store rawcontent values that are
--- *not* already decorated with block keys by draft, *then* we're good.
-data Range = Range
-    { _rangeSelectionState :: ChunkRange
-    , _rangeDocTopOffset   :: OffsetFromDocumentTop
-    , _rangeTopOffset      :: OffsetFromViewportTop
-    , _rangeBottomOffset   :: OffsetFromViewportTop
-    , _rangeScrollOffset   :: ScrollOffsetOfViewport
+-- CAVEAT: we make some further assumptions here about the block keys being stable: *iff* the editor
+-- never changes block keys for lines once they have one *and* we never store rawcontent values that
+-- are *not* already decorated with block keys by draft, *then* we're good.
+data SelectionStateWithPx = SelectionStateWithPx
+    { _sstSelectionState :: Selection Position
+    , _sstDocTopOffset   :: OffsetFromDocumentTop
+    , _sstTopOffset      :: OffsetFromViewportTop
+    , _sstBottomOffset   :: OffsetFromViewportTop
+    , _sstScrollOffset   :: ScrollOffsetOfViewport
     }
     deriving (Show, Eq, Generic)
 
-makeRefineType ''Range
+makeRefineType ''SelectionStateWithPx

@@ -70,7 +70,7 @@ getVDocVersion eid = do
   appLog "getVDocVersion"
   db $ DB.getVersion eid
 
-getCompositeVDoc :: ID VDoc -> App CompositeVDoc  -- TODO: take an edit id here, and implement getHeadCompositeVDoc in terms of that.
+getCompositeVDoc :: ID VDoc -> App CompositeVDoc  -- FUTUREWORK: take an edit id here, and implement getHeadCompositeVDoc in terms of that.
 getCompositeVDoc vid = do
   appLog "getCompositeVDoc"
   vdoc     <- db $ DB.getVDoc vid
@@ -95,7 +95,7 @@ addEdit
   => ID Edit -> Create Edit -> AppM db uh Edit
 addEdit baseeid edit = do
   appLog "addEdit"
-  -- assertPerms baseeid [Create]  -- TODO: http://zb2/re-fine/re-fine/issues/286
+  -- assertPerms baseeid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/286
     -- (note that the user must have create permission on the *base
     -- edit*, not the edit about to get created.)
   db $ do
@@ -116,5 +116,5 @@ addEdit baseeid edit = do
 
 -- | Throw an error if chunk range does not fit 'VDocVersion' identified by edit.
 -- FIXME: for RawContent this still needs to be implemented.
-validateCreateChunkRange :: ID Edit -> ChunkRange -> App ()
+validateCreateChunkRange :: ID Edit -> Range Position -> App ()
 validateCreateChunkRange _ _ = pure ()  -- throwError AppVDocVersionError

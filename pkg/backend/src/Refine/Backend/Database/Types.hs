@@ -70,7 +70,10 @@ instance HasMetaInfo Edit        where metaInfoType = MetaEdit
 newtype RawContentEdit = RawContentEdit {unRawContentEdit :: OT.Edit RawContent}
   deriving (ToJSON, FromJSON, Monoid)
 
-newtype SelectionStates = SelectionStates {unSelectionStates :: NonEmpty SelectionState}
+newtype RangePositions = RangePositions {unSelectionStates :: NonEmpty (Range Position)}
+  deriving (ToJSON, FromJSON)
+
+newtype RangePosition = RangePosition {unRangePosition :: Range Position}
   deriving (ToJSON, FromJSON)
 
 makeRefineType ''CreateDBCollabEditProcess

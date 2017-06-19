@@ -26,17 +26,19 @@ module Refine.Frontend.Document.Store
   ( documentStateUpdate
   , editorStateToVDocVersion
   , editorStateFromVDocVersion
-  , setMarkPositions
+  , setAllVertialSpanBounds
   ) where
 
 import Refine.Frontend.Prelude
 
 import           Control.Lens (ix)
+import qualified Data.Map as Map
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
+import           Refine.Frontend.Document.FFI.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Screen.Calculations
@@ -52,11 +54,8 @@ documentStateUpdate (OpenDocument cvdoc) _ _state
 documentStateUpdate (DocumentAction (DocumentSave _)) (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- FIXME: store last state before edit in DocumentStateEdit, and restore it from there?
 
-documentStateUpdate (HeaderAction (StartEdit kind)) gs (DocumentStateView estate rc)
-  = let sel = fromMaybe (selectEverything rc)
-            $ chunkRangeToSelectionState (convertToRaw $ getCurrentContent estate)  -- FIXME: #312
-          <$> gs ^? gsContributionState . csCurrentRange . _Just . rangeSelectionState
-    in DocumentStateEdit (forceSelection estate sel) kind
+documentStateUpdate (HeaderAction (StartEdit kind)) gs (DocumentStateView estate _)
+  = DocumentStateEdit (forceSelection estate (toSelectionState $ gs ^. gsCurrentSelection)) kind
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     (view gsVDoc -> Just cvdoc)
@@ -85,8 +84,11 @@ documentStateUpdate (DocumentAction (DocumentToggleBlockType bt)) _ st
 documentStateUpdate (DocumentAction (DocumentToggleStyle s)) _ st
   = st & documentStateVal %~ documentToggleStyle s
 
-documentStateUpdate (DocumentAction DocumentToggleLink) _ st
-  = st & documentStateVal %~ documentToggleLink
+documentStateUpdate (DocumentAction DocumentRemoveLink) _ st
+  = st & documentStateVal %~ documentRemoveLink
+
+documentStateUpdate (DocumentAction (DocumentCreateLink link)) _ st
+  = st & documentStateVal %~ documentAddLink (cs link)
 
 documentStateUpdate (AddDiscussion _) (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
@@ -100,9 +102,9 @@ documentStateUpdate (AddEdit _) (view gsVDoc -> Just cvdoc) _state
 documentStateUpdate (DocumentAction DocumentCancelSave) (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (ContributionAction (SetRange (view rangeSelectionState -> sel))) _ ((^? documentStateContent) -> Just rc)
+documentStateUpdate (ContributionAction (SetRange range)) _ ((^? documentStateContent) -> Just rc)
   = mkDocumentStateView
-  . addMarksToRawContent [(ContribIDHighlightMark, chunkRangeToSelectionState rc sel)]
+  . addMarksToRawContent [(ContribIDHighlightMark, range ^. sstSelectionState . selectionRange)]
   . deleteMarksFromRawContentIf (== ContribIDHighlightMark)
   $ rc
 
@@ -124,22 +126,21 @@ editorStateToVDocVersion = rawContentToVDocVersion . convertToRaw . getCurrentCo
 editorStateFromVDocVersion :: VDocVersion -> EditorState
 editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
 
+-- | construct a 'SetAllVertialSpanBounds' action.
+setAllVertialSpanBounds :: MonadIO m => DocumentState -> m ContributionAction
+setAllVertialSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
+    let marks :: Map ContributionID (Ranges LeafSelector)
+        marks = getLeafSelectors rawContent
 
--- | construct a 'SetMarkPositions' action.
-setMarkPositions :: MonadIO m => DocumentState -> m ContributionAction
-setMarkPositions (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
-    let marks :: [(ContributionID, MarkSelector, MarkSelector)]
-        marks = getMarkSelectors rawContent
-
-        getPos :: (ContributionID, MarkSelector, MarkSelector) -> IO (ContributionID, MarkPosition)
-        getPos (cid, top, bot) = do
-          topOffset    <- OffsetFromViewportTop  <$> getMarkSelectorBound top
-          bottomOffset <- OffsetFromViewportTop  <$> getMarkSelectorBound bot
+        getPos :: (ContributionID, Ranges LeafSelector) -> IO [(ContributionID, VertialSpanBounds)]
+        getPos (cid, rs) = forM (unRanges rs) $ \(Range top bot) -> do
+          topOffset    <- OffsetFromViewportTop  <$> getLeafSelectorBound LeafSelectorTop    top
+          bottomOffset <- OffsetFromViewportTop  <$> getLeafSelectorBound LeafSelectorBottom bot
           scrollOffset <- ScrollOffsetOfViewport <$> js_getScrollOffset
-          let markPosition = MarkPosition
-                { _markPositionTop    = offsetFromDocumentTop topOffset    scrollOffset
-                , _markPositionBottom = offsetFromDocumentTop bottomOffset scrollOffset
+          let vertialSpanBounds = VertialSpanBounds
+                { _vertialSpanBoundsTop    = offsetFromDocumentTop topOffset    scrollOffset
+                , _vertialSpanBoundsBottom = offsetFromDocumentTop bottomOffset scrollOffset
                 }
-          pure (cid, markPosition)
+          pure (cid, vertialSpanBounds)
 
-    SetMarkPositions <$> (getPos `mapM` marks)
+    SetAllVertialSpanBounds . concat <$> (getPos `mapM` Map.toList marks)

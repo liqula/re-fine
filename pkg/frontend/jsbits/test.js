@@ -18,3 +18,13 @@ global.window = document.defaultView;
 global.window.navigator = { userAgent: 'node.js' };
 
 global.enzyme = require('enzyme');
+
+global.refine$getRawContentBetweenElems = function($1, $2) {
+    var begin = document.querySelector($1);
+    var end = document.querySelector($2);
+
+    console.log('!!!', $1, $2, begin, end);
+
+    // FIXME: traverse the dom between these two elems and collect all text.  return that.
+
+};

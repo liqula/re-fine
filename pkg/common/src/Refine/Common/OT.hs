@@ -6,6 +6,7 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE ViewPatterns               #-}
 {-# LANGUAGE PatternSynonyms            #-}
+{-# LANGUAGE PackageImports             #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE BangPatterns               #-}
@@ -32,7 +33,7 @@ import qualified Data.Semigroup as Semigroup
 import qualified Generics.SOP as SOP
 import           Control.DeepSeq
 import           Test.QuickCheck (Arbitrary)
-import           Test.QuickCheck.Instances ()
+import "quickcheck-instances" Test.QuickCheck.Instances ()
 
 ----------------------------------------------------------------------------------------------
 
@@ -762,56 +763,51 @@ instance (Editable a, Editable b, Splitable b, Eq a) => Editable (Segments a b) 
 {- FIXME: uncomment and fix bugs in this code
 
     eMerge d a@(JoinItems i) b@(SegmentListEdit (InsertItem i' _))
-        | i' == i+1 = secondWins d a b   -- TODO: improve
+        | i' == i+1 = secondWins d a b
     eMerge d a@(SegmentListEdit (InsertItem i' _)) b@(JoinItems i)
-        | i' == i+1 = secondWins d a b   -- TODO: improve
-{- TODO
+        | i' == i+1 = secondWins d a b
+{-
     eMerge d a@(JoinItems i) b@(SegmentListEdit (DeleteItem i'))
-        | i' == i   = secondWins d a b   -- TODO: improve
-        | i' == i+1 = secondWins d a b   -- TODO: improve
+        | i' == i   = secondWins d a b
+        | i' == i+1 = secondWins d a b
     eMerge d a@(SegmentListEdit (DeleteItem i')) b@(JoinItems i)
-        | i' == i   = secondWins d a b   -- TODO: improve
-        | i' == i+1 = secondWins d a b   -- TODO: improve
+        | i' == i   = secondWins d a b
+        | i' == i+1 = secondWins d a b
 -}
     eMerge d a@(JoinItems i) b@(SegmentListEdit (EditItem i' _))
-        | i' == i   = secondWins d a b   -- TODO: improve
-        | i' == i+1 = secondWins d a b   -- TODO: improve
+        | i' == i   = secondWins d a b
+        | i' == i+1 = secondWins d a b
     eMerge d a@(SegmentListEdit (EditItem i' _)) b@(JoinItems i)
-        | i' == i   = secondWins d a b   -- TODO: improve
-        | i' == i+1 = secondWins d a b   -- TODO: improve
+        | i' == i   = secondWins d a b
+        | i' == i+1 = secondWins d a b
     eMerge d a@(JoinItems i) b@(SplitItem i' _)
-        | i' == i   = secondWins d a b   -- TODO: improve
-        | i' == i+1 = secondWins d a b   -- TODO: improve
+        | i' == i   = secondWins d a b
+        | i' == i+1 = secondWins d a b
     eMerge d a@(SplitItem i' _) b@(JoinItems i)
-        | i' == i   = secondWins d a b   -- TODO: improve
-        | i' == i+1 = secondWins d a b   -- TODO: improve
+        | i' == i   = secondWins d a b
+        | i' == i+1 = secondWins d a b
     eMerge d a@(JoinItems i) b@(JoinItems i')
-        | i' == i   = secondWins d a b   -- TODO: improve
-        | i' == i+1 = secondWins d a b   -- TODO: improve
-        | i'+1 == i = secondWins d a b   -- TODO: improve
+        | i' == i   = secondWins d a b
+        | i' == i+1 = secondWins d a b
+        | i'+1 == i = secondWins d a b
 
-{- solved better in the last function alternative
+- solved better in the last function alternative
     eMerge d a@(SplitItem i _) b@(SegmentListEdit (InsertItem i' _))
         | i' == i+1 = secondWins d a b
     eMerge d a@(SegmentListEdit (InsertItem i' _)) b@(SplitItem i _)
         | i' == i+1 = secondWins d a b
--}
-<<<<<<< HEAD
-
-=======
-{- TODO
->>>>>>> 98fd21d... tuning: DeleteItem -> DeleteRange; fix Editable NonEmptyST instance
+-
     eMerge d a@(SplitItem i _) b@(SegmentListEdit (DeleteItem i'))
-        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i   = secondWins d a b
     eMerge d a@(SegmentListEdit (DeleteItem i')) b@(SplitItem i _)
-        | i' == i   = secondWins d a b   -- TODO: improve
--}
+        | i' == i   = secondWins d a b
+-
     eMerge d a@(SplitItem i _) b@(SegmentListEdit (EditItem i' _))
-        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i   = secondWins d a b
     eMerge d a@(SegmentListEdit (EditItem i' _)) b@(SplitItem i _)
-        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i   = secondWins d a b
     eMerge d a@(SplitItem i _) b@(SplitItem i' _)
-        | i' == i   = secondWins d a b   -- TODO: improve
+        | i' == i   = secondWins d a b
 
     eMerge _ a b = (mutate 0 a b, mutate 1 b a)
       where
