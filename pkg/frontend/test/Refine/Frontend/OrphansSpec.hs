@@ -111,7 +111,6 @@ foreign import javascript safe
    }"
   js_getDraftSelectionStateViaBrowser_3 :: JSVal
 
-
 foreign import javascript safe
   "{ Right: \
        { _selectionIsBackward: true \

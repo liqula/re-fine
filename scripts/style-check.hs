@@ -57,7 +57,7 @@ import           System.Exit
 import           System.IO.Temp
 import           Test.Hspec
 import           Text.Read (readMaybe)
-import           Turtle hiding (f, o, x)
+import           Turtle hiding (f, o, x, s, d, e)
 
 
 verbose :: Bool
@@ -144,6 +144,22 @@ testWrapJsFFI = describe "wrapJsFFI" $ do
       `shouldBe` Right '*'
     A.parseOnly (pOptionalBracket (A.char '[') (A.char ']') (A.char '*')) "*"
       `shouldBe` Right '*'
+
+
+    A.parseOnly pMultiLineString "\"woeifj\""
+      `shouldBe` Right "\"woeifj\""
+
+    A.parseOnly pMultiLineString "\"woe\nifj\""
+      `shouldBe` Right "\"woe\nifj\""
+
+    A.parseOnly pMultiLineString "\"woe \\\nifj\""
+      `shouldBe` Right "\"woe \\\nifj\""
+
+    A.parseOnly pMultiLineString "\"woe \\\n  \\\"ifj\""
+      `shouldBe` Right "\"woe \\\n  \\\"ifj\""
+
+    A.parseOnly pMultiLineString "\"woe \\\n\\\"ifj\""
+      `shouldBe` Right "\"woe \\\n\\\"ifj\""
 
 
     A.parseOnly pFFIBlock "foreign import javascript safe\n  \"$1\"\n  js_fun :: JSVal -> String\n\n"
@@ -314,8 +330,8 @@ pDeclHead = do
 pFun :: A.Parser (ST, ST)
 pFun = (A.<?> "pFun") $ do
   decl <- pDeclHead
-  str  <- (<>) <$> pSpace <*> pLine True
-  sp1  <- pSpace
+  str  <- (<>) <$> pSpace <*> pMultiLineString
+  sp1  <- A.char '\n' >> pSpace
   fun  <- pNotSpace
   typ  <- pLine True
   _ <- A.option "" pSpace
@@ -351,6 +367,20 @@ pNotSpace = cs <$> A.many1 (A.satisfy (not . isSpace))
 pLine :: Bool -> A.Parser ST
 pLine consumeNewline = (cs <$> A.many1 (A.satisfy (/= '\n')) <* (newl <|> (A.endOfInput >> pure '\n'))) <|> (newl >> pure "")
   where newl = (if consumeNewline then id else A.lookAhead) $ A.char '\n'
+
+pMultiLineString :: A.Parser ST
+pMultiLineString = (A.<?> "pMultiLineString") $ do
+  o <- A.string "\""
+  s <- (cs . mconcat <$> A.many1 (someChars <|> someEscapedChar)) <|> pure ""
+  c <- A.string "\""
+  pure $ o <> s <> c
+  where
+    someChars = do
+      cs <$> A.many1 (A.satisfy (not . (`elem` ("\\\"" :: String))))
+    someEscapedChar = do
+      c <- A.string "\\"
+      d <- A.anyChar
+      pure $ c <> cs [d]
 
 pOptionalBracket :: A.Parser open -> A.Parser close -> A.Parser body -> A.Parser body
 pOptionalBracket open close body = do
