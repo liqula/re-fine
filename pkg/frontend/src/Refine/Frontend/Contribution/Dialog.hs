@@ -389,14 +389,5 @@ editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState
                                              , ContributionAction ClearRange
                                              ]
 
-    iconButton_ $ defaultIconButtonProps @[GlobalAction]
-            & iconButtonPropsListKey      .~ "cancel"
-            & iconButtonPropsIconProps    .~ IconProps "c-mainmenu-header" True ("icon-Close", "dark") XXLarge
-            & iconButtonPropsElementName  .~ "btn-index"
-            & iconButtonPropsLabel        .~ "cancel"
-            & iconButtonPropsAlignRight   .~ True
-            & iconButtonPropsOnClick      .~ [DocumentAction DocumentCancelSave]
-
-
 editInput_ :: AddContributionProps EditKind -> ReactElementM eventHandler ()
 editInput_ !props = view_ editInput "editInput_" props
