@@ -48,18 +48,9 @@ toolbarExtensionUpdate action st = case (st, action) of
     (ToolbarExtensionClosed,               HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithoutRange
     (CommentToolbarExtensionWithoutRange,  HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
     (CommentToolbarExtensionWithRange,     HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
-    (EditToolbarExtension,                 HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithoutRange
 
     (CommentToolbarExtensionWithoutRange,  HeaderAction StartTextSpecificComment)      -> CommentToolbarExtensionWithRange
     (_,                                    HeaderAction StartTextSpecificComment)      -> bad1
-
-    (ToolbarExtensionClosed,               HeaderAction ToggleEditToolbarExtension)    -> EditToolbarExtension
-    (CommentToolbarExtensionWithoutRange,  HeaderAction ToggleEditToolbarExtension)    -> EditToolbarExtension
-    (CommentToolbarExtensionWithRange,     HeaderAction ToggleEditToolbarExtension)    -> EditToolbarExtension
-    (EditToolbarExtension,                 HeaderAction ToggleEditToolbarExtension)    -> ToolbarExtensionClosed
-
-    (EditToolbarExtension,                 HeaderAction (StartEdit _))                 -> ToolbarExtensionClosed
-    (_,                                    HeaderAction (StartEdit _))                 -> bad2
 
     (ToolbarExtensionClosed,               HeaderAction (OpenEditToolbarLinkEditor l)) -> EditToolbarLinkEditor l
     (_,                                    HeaderAction (OpenEditToolbarLinkEditor _)) -> bad3
@@ -69,5 +60,4 @@ toolbarExtensionUpdate action st = case (st, action) of
     _ -> st
   where
     bad1 = error "text-specific comment cannot start when toolbar extension is closed or in selection mode"
-    bad2 = error "edit cannot start when toolbar extension is closed or in comment mode"
     bad3 = error "link editor can be opened only in edit toolbar extension closed mode"

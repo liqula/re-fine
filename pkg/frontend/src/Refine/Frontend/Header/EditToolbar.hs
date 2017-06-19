@@ -63,11 +63,19 @@ editToolbar ep = mkView "EditToolbar" $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
         div_ ["className" $= "c-vdoc-toolbar__content"] $ do
 
-          div_ ["className" $= "c-vdoc-toolbar__separator"] ""
-
           let editButton icon = defaultIconButtonProps @[GlobalAction]
                 & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-" <> icon, "dark") XXLarge
                 & iconButtonPropsElementName  .~ "btn-index"
+
+          let props :: IbuttonProps [GlobalAction]
+              props = emptyIbuttonProps "Close" [DocumentAction DocumentCancelSave]
+                & ibListKey      .~ "cancel"
+                & ibLabel        .~ "cancel"
+                & ibEnabled      .~ True
+                & ibSize         .~ XXLarge
+           in ibutton_ props
+
+          div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
           iconButton_ $ editButton "Edit_toolbar_h1"
             & iconButtonPropsListKey      .~ "h1"
@@ -141,12 +149,15 @@ editToolbar ep = mkView "EditToolbar" $ do
             & iconButtonPropsLabel        .~ "redo"
             & iconButtonPropsOnClick      .~ [DocumentAction DocumentRedo]
 
-          iconButton_ $ editButton mempty
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
-            & iconButtonPropsListKey      .~ "save"
-            & iconButtonPropsLabel        .~ "save"
-            & iconButtonPropsAlignRight   .~ True
-            & iconButtonPropsOnClick      .~ [DocumentAction RequestDocumentSave]
+          div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+
+          let props :: IbuttonProps [GlobalAction]
+              props = emptyIbuttonProps "Save" [DocumentAction RequestDocumentSave]
+                & ibListKey      .~ "save"
+                & ibLabel        .~ "save"
+                & ibEnabled      .~ True
+                & ibSize         .~ XXLarge
+           in ibutton_ props
 
 editToolbar_ :: EditToolbarProps -> ReactElementM eventHandler ()
 editToolbar_ ep = view_ (editToolbar ep) "editToolbar_"
