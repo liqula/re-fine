@@ -313,6 +313,24 @@ emitBackendCallsFor action st = case action of
             ]
 
 
+    -- voting
+
+    ContributionAction (ToggleVoteOnContribution eid vote) -> do
+      let updateVotesInCVDoc :: IO ViewEventHandler
+          updateVotesInCVDoc = dispatchM $ LoadDocument (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocID)
+            -- TUNING: this is outrageously expensive, but we don't
+            -- have a generic way to incrementally update the
+            -- composite vdoc here.  if we got rid of the NFData
+            -- constraint on actions, we could define `UpdateCVDoc ::
+            -- (CompositeVDoc -> CompositeVDoc) -> GlobalAction`.
+
+      case st ^. gsLoginState . lsCurrentUser of
+        UserLoggedOut       -> pure ()
+        UserLoggedIn _uname -> sPutSimpleVoteOnEdit eid vote $ \case
+          Left msg -> ajaxFail msg Nothing
+          Right () -> updateVotesInCVDoc
+
+
     -- testing & dev
 
     AddDemoDocument -> do

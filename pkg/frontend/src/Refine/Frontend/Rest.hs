@@ -66,3 +66,12 @@ logout = request cfg (Proxy :: Proxy SLogout)
 
 getTranslations :: GetTranslations -> HandleResponse L10 -> IO ()
 getTranslations = request cfg (Proxy :: Proxy SGetTranslations)
+
+sPutSimpleVoteOnEdit ::  ID Edit -> Vote -> HandleResponse () -> IO ()
+sPutSimpleVoteOnEdit = request cfg (Proxy :: Proxy SPutSimpleVoteOnEdit)
+
+sDeleteSimpleVoteOnEdit ::  ID Edit -> HandleResponse () -> IO ()
+sDeleteSimpleVoteOnEdit = request cfg (Proxy :: Proxy SDeleteSimpleVoteOnEdit)
+
+sGetSimpleVotesOnEdit ::  ID Edit -> HandleResponse VoteCount -> IO ()
+sGetSimpleVotesOnEdit = request cfg (Proxy :: Proxy SGetSimpleVotesOnEdit)
