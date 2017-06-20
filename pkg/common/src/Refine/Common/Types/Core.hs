@@ -162,7 +162,7 @@ compositeVDocEdit :: Getter CompositeVDoc Edit
 compositeVDocEdit f vdoc = outof <$> f (into vdoc)
   where
     into :: CompositeVDoc -> Edit
-    into vdoc_ = fromMaybe (error "compositeVDocEdit")
+    into vdoc_ = fromMaybe (error "compositeVDocEdit")  -- TODO: if you try to view an edit (in diff view), this error happens.  why?
               $ Map.lookup (_compositeVDocEditID vdoc_) (_compositeVDocEdits vdoc_)
 
     outof :: Edit -> CompositeVDoc
