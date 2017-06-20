@@ -170,6 +170,7 @@ spec :: Spec
 spec = do -- FUTUREWORK: mark this as 'parallel' (needs some work)
   specMockedLogin
   specUserHandling
+  specVoting
 
 specMockedLogin :: Spec
 specMockedLogin = around createDevModeTestSession $ do
@@ -377,3 +378,28 @@ specUserHandling = around createTestSession $ do
           resp <- runWai sess $ doCreate >> doLogout
           respCode resp `shouldBe` 200
           checkCookie resp
+
+specVoting :: Spec
+specVoting = around createTestSession $ do
+  describe "SPutSimpleVoteOnEdit" $ do
+    context "if current user *HAS NOT* voted on the edit before" $ do
+      it "adds the current user's vote (and does nothing else)" $ \_ -> do
+        pending
+
+    context "if current user *HAS* voted on the edit before" $ do
+      it "adds the current user's vote (and does nothing else)" $ \_ -> do
+        pending
+
+  describe "SDeleteSimpleVoteOnEdit" $ do
+    context "if there is such a vote" $ do
+      it "removes that vote (and does nothing else)" $ \_ -> do
+        pending
+
+    context "if there is no such vote" $ do
+      it "does nothing" $ \_ -> do
+        pending
+
+  describe "SGetSimpleVotesOnEdit" $ do
+    context "with two Yeays and one Nay" $ do
+      it "returns (2, 1)" $ \_ -> do
+        pending
