@@ -47,6 +47,7 @@ module Refine.Common.Types.Core
 import Refine.Common.Prelude
 
 import           Control.DeepSeq
+import           Control.Lens (Getter)
 import           Data.Int
 import qualified Data.HashMap.Lazy as HashMap
 import qualified Data.IntMap as IntMap
@@ -155,6 +156,17 @@ data CompositeVDoc = CompositeVDoc
   , _compositeVDocDiscussions :: Map (ID Discussion) CompositeDiscussion
   }
   deriving (Eq, Show, Generic)
+
+-- | Assumption: _compositeVDocEditID references only edits that exist in _compositeVDocEdits.
+compositeVDocEdit :: Getter CompositeVDoc Edit
+compositeVDocEdit f vdoc = outof <$> f (into vdoc)
+  where
+    into :: CompositeVDoc -> Edit
+    into vdoc_ = fromMaybe (error "compositeVDocEdit")
+              $ Map.lookup (_compositeVDocEditID vdoc_) (_compositeVDocEdits vdoc_)
+
+    outof :: Edit -> CompositeVDoc
+    outof edit = vdoc { _compositeVDocEditID = _miID . _editMetaID $ edit }
 
 
 -- * Contribution
