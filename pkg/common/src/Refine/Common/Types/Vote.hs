@@ -24,17 +24,12 @@ import Refine.Common.Prelude
 
 import GHC.Generics (Generic)
 
-import Refine.Common.Types.Prelude
-
 
 data Vote = Yeay | Nay
   deriving (Eq, Ord, Show, Generic)
 
 type Votes = Map Vote Int
 
--- * create types
-
-type instance Create Vote = Vote
 
 makeRefineType ''Vote
 
