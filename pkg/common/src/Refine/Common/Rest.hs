@@ -70,8 +70,7 @@ type RefineAPI =
   :<|> SAddProcess
   :<|> SChangeProcess
   :<|> SRemoveProcess
-  :<|> SAddSimpleVoteOnEdit
-  :<|> SUpdateSimpleVoteOnEdit
+  :<|> SPutSimpleVoteOnEdit
   :<|> SDeleteSimpleVoteOnEdit
   :<|> SGetSimpleVotesOnEdit
 
@@ -112,7 +111,7 @@ type SAddStatement
   = "r" :> "statement" :> "reply" :> Capture "onstatementid" (ID Statement) :> ReqBody '[JSON] (Create Statement)
     :> Post '[JSON] CompositeDiscussion
       -- FIXME: should be @"r" :> "statement" :> Capture "onstatementid" (ID Statement) :> "reply" ...@
-      -- to be consistent with 'SAddSimpleVoteOnEdit' etc.
+      -- to be consistent with 'SPutSimpleVoteOnEdit' etc.
 
 type SCreateUser
   = "r" :> "user" :> "create" :> ReqBody '[JSON] CreateUser
@@ -157,10 +156,7 @@ type SRemoveProcess
     :> Post '[JSON] ()
 
 
-type SAddSimpleVoteOnEdit
-  = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> "vote" :> Capture "vote" Vote :> Post '[JSON] ()
-
-type SUpdateSimpleVoteOnEdit
+type SPutSimpleVoteOnEdit
   = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> "vote" :> Capture "vote" Vote :> Put '[JSON] ()
 
 -- | delete *my* vote on an edit
