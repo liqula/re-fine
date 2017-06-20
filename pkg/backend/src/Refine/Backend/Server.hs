@@ -108,6 +108,11 @@ refineApi =
   :<|> Refine.Backend.App.addProcess
   :<|> Refine.Backend.App.changeProcess
   :<|> Refine.Backend.App.removeProcess
+  :<|> Refine.Backend.App.addSimpleVoteOnEdit
+  :<|> Refine.Backend.App.updateSimpleVoteOnEdit
+  :<|> Refine.Backend.App.deleteSimpleVoteOnEdit
+  :<|> Refine.Backend.App.getSimpleVotesOnEdit
+
 
 startBackend :: Config -> IO ()
 startBackend cfg =

@@ -315,6 +315,9 @@ getEditChildren parent = do
   liftDB $ do
     foreignKeyField S.parentChildChild <$$> selectList [S.ParentChildParent ==. S.idToKey parent] opts
 
+updateVotes :: ID Edit -> (Votes -> Votes) -> DB ()
+updateVotes = undefined
+
 -- * Repo and edit
 
 vdocOfEdit :: ID Edit -> DB (ID VDoc)

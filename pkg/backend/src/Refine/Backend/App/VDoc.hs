@@ -118,3 +118,18 @@ addEdit baseeid edit = do
 -- FIXME: for RawContent this still needs to be implemented.
 validateCreateChunkRange :: ID Edit -> Range Position -> App ()
 validateCreateChunkRange _ _ = pure ()  -- throwError AppVDocVersionError
+
+withCurrentUser :: (ID User -> AppM db uh a) -> AppM db uh a
+withCurrentUser = undefined
+
+addSimpleVoteOnEdit :: (MonadApp db uh) => ID Edit -> Vote -> AppM db uh ()
+addSimpleVoteOnEdit eid v = withCurrentUser $ \user -> db . DB.updateVotes eid $ Map.insert user v 
+
+updateSimpleVoteOnEdit :: ID Edit -> Vote -> AppM db uh ()
+updateSimpleVoteOnEdit = undefined
+
+deleteSimpleVoteOnEdit :: ID Edit -> AppM db uh ()
+deleteSimpleVoteOnEdit = undefined
+
+getSimpleVotesOnEdit :: ID Edit -> AppM db uh VoteCount
+getSimpleVotesOnEdit = undefined

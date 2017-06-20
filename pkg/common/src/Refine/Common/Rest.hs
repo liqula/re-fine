@@ -70,6 +70,10 @@ type RefineAPI =
   :<|> SAddProcess
   :<|> SChangeProcess
   :<|> SRemoveProcess
+  :<|> SAddSimpleVoteOnEdit
+  :<|> SUpdateSimpleVoteOnEdit
+  :<|> SDeleteSimpleVoteOnEdit
+  :<|> SGetSimpleVotesOnEdit
 
 
 type SListVDocs
@@ -165,7 +169,7 @@ type SDeleteSimpleVoteOnEdit
 
 -- | get *all* votes on an edit
 type SGetSimpleVotesOnEdit
-  = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> "vote" :> Get '[JSON] Votes
+  = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> "vote" :> Get '[JSON] VoteCount
 
 
 makeRefineType ''ApiError

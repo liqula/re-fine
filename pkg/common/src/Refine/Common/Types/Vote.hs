@@ -24,11 +24,14 @@ import Refine.Common.Prelude
 
 import GHC.Generics (Generic)
 
+import Refine.Common.Types.Prelude (ID, User)
 
 data Vote = Yeay | Nay
   deriving (Eq, Ord, Show, Generic)
 
-type Votes = Map Vote Int
+type Votes = Map (ID User) Vote
+
+type VoteCount = Map Vote Int
 
 
 makeRefineType ''Vote
@@ -44,3 +47,12 @@ instance FromJSONKey Vote where
         "yeay"  -> pure Yeay
         "nay"   -> pure Nay
         _       -> fail $ "Cannot parse key into Vote: " <> cs t
+
+instance ToHttpApiData Vote where
+  toUrlPiece Yeay  = "yeay"
+  toUrlPiece Nay   = "nay"
+
+instance FromHttpApiData Vote where
+  parseUrlPiece "yeay" = Right Yeay
+  parseUrlPiece "nay"  = Right Nay
+  parseUrlPiece bad    = Left . cs $ "FromHttpApiData @Vote: no parse: " <> show bad
