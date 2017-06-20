@@ -10,7 +10,7 @@ import Refine.Backend.Prelude
 import           Control.Monad ((<=<))
 import           Database.Persist.Sql
 
-import Refine.Backend.Database.Types (MetaInfoID(..), RawContentEdit(..), RangePositions(..), RangePosition(..))
+import Refine.Backend.Database.Types
 import Refine.Common.Types.Prelude (UserInfo)
 import Refine.Common.Types.Process
 import Refine.Common.Types.Role (Role(..))
@@ -119,4 +119,11 @@ instance PersistField RangePositions where
   fromPersistValue = fromPersistJSONValue
 
 instance PersistFieldSql RangePositions where
+  sqlType _ = sqlType (Proxy :: Proxy ST)
+
+instance PersistField DBVotes where
+  toPersistValue   = toPersistJSONValue
+  fromPersistValue = fromPersistJSONValue
+
+instance PersistFieldSql DBVotes where
   sqlType _ = sqlType (Proxy :: Proxy ST)

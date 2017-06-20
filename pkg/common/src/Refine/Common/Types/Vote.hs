@@ -16,6 +16,7 @@
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
+{-# LANGUAGE LambdaCase                 #-}
 
 module Refine.Common.Types.Vote where
 
@@ -26,20 +27,25 @@ import GHC.Generics (Generic)
 import Refine.Common.Types.Prelude
 
 
-data CreateVote = CreateVote
-  deriving (Eq, Ord, Show, Read, Generic)
+data Vote = Yeay | Nay
+  deriving (Eq, Ord, Show, Generic)
 
-data Vote = Vote
-  deriving (Eq, Ord, Show, Read, Generic)
-
-data VoteValue = VoteValue
-  deriving (Eq, Ord, Show, Read, Generic)
-
+type Votes = Map Vote Int
 
 -- * create types
 
-type instance Create Vote = CreateVote
+type instance Create Vote = Vote
 
-makeRefineType ''CreateVote
 makeRefineType ''Vote
-makeRefineType ''VoteValue
+
+-- to be able to use Vote as Map key
+instance ToJSONKey Vote where
+  toJSONKey = toJSONKeyText $ \case
+    Yeay -> "yeay"
+    Nay  -> "nay"
+
+instance FromJSONKey Vote where
+  fromJSONKey = FromJSONKeyTextParser $ \t -> case t of
+        "yeay"  -> pure Yeay
+        "nay"   -> pure Nay
+        _       -> fail $ "Cannot parse key into Vote: " <> cs t

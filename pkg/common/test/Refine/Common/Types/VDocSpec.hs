@@ -57,7 +57,7 @@ rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
     rotate contribs i (sel : sels) = rotate (upd contribs) (i + 1) sels
       where
         upd = case i `mod` 3 of
-          0 -> _1 %~ (build (Proxy :: Proxy Edit)       i (\r -> Edit un un (r :| []) un un) sel :)
+          0 -> _1 %~ (build (Proxy :: Proxy Edit)       i (\r -> Edit un un (r :| []) un un mempty) sel :)
           1 -> _2 %~ (build (Proxy :: Proxy Note)       i (Note un un un) sel :)
           2 -> _3 %~ (build (Proxy :: Proxy Discussion) i (\r -> CompositeDiscussion (Discussion un un r) un) sel :)
           _ -> error "rawContentToCompositeVDoc: impossible."

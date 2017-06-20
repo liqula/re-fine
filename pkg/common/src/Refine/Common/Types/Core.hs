@@ -63,6 +63,7 @@ import           Text.Read (readEither)
 import           Web.HttpApiData (toUrlPiece, parseUrlPiece, ToHttpApiData(..), FromHttpApiData(..))
 
 import           Refine.Common.Types.Position
+import           Refine.Common.Types.Vote
 import qualified Refine.Common.OT as OT
 import           Refine.Common.OT hiding (Edit)
 import           Refine.Common.Types.Comment
@@ -110,6 +111,7 @@ data Edit = Edit
   , _editRanges :: NonEmpty (Range Position) -- ^ could be @(Ranges Position)@ if empty is ok.
   , _editKind   :: EditKind
   , _editSource :: EditSource (ID Edit)
+  , _editVotes  :: Votes
   }
   deriving (Eq, Show, Generic)
 
