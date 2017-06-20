@@ -26,6 +26,12 @@ packages:
     git: https://github.com/zerobuzz/servant-cookie-session.git
     commit: 7186ca8c53778822b45bd5d3d71945add778770f
   extra-dep: true
+- location:
+    git: https://github.com/liqula/wai
+    commit: a03fb995396e06ef3c24205c0f021ca29d15d5e5
+  extra-dep: true
+  subdirs:
+  - wai-extra
 
 extra-deps:
 - lens-properties-4.11
