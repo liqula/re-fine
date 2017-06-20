@@ -37,6 +37,7 @@ import qualified Data.Map as Map
 import           Data.Maybe (catMaybes)
 
 import           Refine.Backend.App.Core
+import           Refine.Backend.App.User (currentUser)
 import qualified Refine.Backend.Database.Class as DB
 import           Refine.Common.Allow
 import           Refine.Common.Types
@@ -119,17 +120,18 @@ addEdit baseeid edit = do
 validateCreateChunkRange :: ID Edit -> Range Position -> App ()
 validateCreateChunkRange _ _ = pure ()  -- throwError AppVDocVersionError
 
-withCurrentUser :: (ID User -> AppM db uh a) -> AppM db uh a
-withCurrentUser = undefined
+withCurrentUser :: (MonadApp db uh) => (ID User -> AppM db uh ()) -> AppM db uh ()
+withCurrentUser f = do
+  mu <- currentUser
+  case mu of
+    Just u -> f u
+    Nothing -> pure ()
 
-addSimpleVoteOnEdit :: (MonadApp db uh) => ID Edit -> Vote -> AppM db uh ()
-addSimpleVoteOnEdit eid v = withCurrentUser $ \user -> db . DB.updateVotes eid $ Map.insert user v 
+putSimpleVoteOnEdit :: (MonadApp db uh) => ID Edit -> Vote -> AppM db uh ()
+putSimpleVoteOnEdit eid v = withCurrentUser $ \user -> db . DB.updateVotes eid $ Map.insert user v 
 
-updateSimpleVoteOnEdit :: ID Edit -> Vote -> AppM db uh ()
-updateSimpleVoteOnEdit = undefined
+deleteSimpleVoteOnEdit :: (MonadApp db uh) => ID Edit -> AppM db uh ()
+deleteSimpleVoteOnEdit eid = withCurrentUser $ \user -> db . DB.updateVotes eid $ Map.delete user
 
-deleteSimpleVoteOnEdit :: ID Edit -> AppM db uh ()
-deleteSimpleVoteOnEdit = undefined
-
-getSimpleVotesOnEdit :: ID Edit -> AppM db uh VoteCount
-getSimpleVotesOnEdit = undefined
+getSimpleVotesOnEdit :: (MonadApp db uh) => ID Edit -> AppM db uh VoteCount
+getSimpleVotesOnEdit eid = db $ DB.getVoteCount eid

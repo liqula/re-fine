@@ -316,7 +316,11 @@ getEditChildren parent = do
     foreignKeyField S.parentChildChild <$$> selectList [S.ParentChildParent ==. S.idToKey parent] opts
 
 updateVotes :: ID Edit -> (Votes -> Votes) -> DB ()
-updateVotes = undefined
+updateVotes pid = undefined
+
+getVoteCount :: ID Edit -> DB VoteCount
+getVoteCount eid = do
+  getMetaEntity (\_ -> S.editElim $ \_ _ _ _ _ (DBVotes vs) -> votesToCount vs) eid
 
 -- * Repo and edit
 
