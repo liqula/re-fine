@@ -64,7 +64,7 @@ newtype AddLinkFormState = AddLinkFormState
 
 data DiffToolbarProps = DiffToolbarProps
   { _diffToolbarPropsEditID :: ID Edit
-  , _diffToolbarPropsVotes  :: Votes
+  , _diffToolbarPropsVotes  :: VoteCount
   } deriving (Show, Eq, Generic)
 
 instance UnoverlapAllEq DiffToolbarProps

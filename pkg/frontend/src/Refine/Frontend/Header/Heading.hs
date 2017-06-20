@@ -120,7 +120,8 @@ mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
             sticky_ [RF.on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
               case rs ^. gsDocumentState of
                 DocumentStateView {} -> toolbar_
-                DocumentStateDiff {} -> diffToolbar_ (DiffToolbarProps (vdoc ^. compositeVDocEditID) (vdoc ^. compositeVDocEdit . editVotes))
+                DocumentStateDiff {} -> diffToolbar_ (DiffToolbarProps (vdoc ^. compositeVDocEditID)
+                                                                       (vdoc ^. compositeVDocEdit . editVotes . to votesToCount))
                 DocumentStateEdit {} -> editToolbar_ (mkEditToolbarProps rs)
               commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
 
