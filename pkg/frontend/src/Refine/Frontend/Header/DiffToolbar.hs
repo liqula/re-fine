@@ -26,6 +26,9 @@ module Refine.Frontend.Header.DiffToolbar where
 
 import Refine.Frontend.Prelude
 
+import Control.Lens (ix)
+
+import Refine.Common.Types
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
@@ -33,8 +36,8 @@ import Refine.Frontend.Icon
 import Refine.Frontend.Store.Types
 
 
-diffToolbar :: View '[]
-diffToolbar = mkView "DiffToolbar" $ do
+diffToolbar :: View '[DiffToolbarProps]
+diffToolbar = mkView "DiffToolbar" $ \props -> do
   header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
       div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
@@ -49,14 +52,22 @@ diffToolbar = mkView "DiffToolbar" $ do
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          ibutton_ $ emptyIbuttonProps "Vote_positive" [ShowNotImplementedYet]
+          let voteButtonLabel :: Vote -> ST
+              voteButtonLabel = \case
+                Yeay -> "up ("   <> count Yeay <> ")"
+                Nay  -> "down (" <> count Nay  <> ")"
+                where
+                  count v = cs . show $ vs ^?! ix v
+                  vs = props ^. diffToolbarPropsVotes
+
+          ibutton_ $ emptyIbuttonProps "Vote_positive" [ContributionAction $ ToggleVoteOnContribution (props ^. diffToolbarPropsEditID) Yeay]
             & ibListKey .~ "1"
-            & ibLabel .~ "up"
+            & ibLabel .~ voteButtonLabel Yeay
             & ibSize .~ XXLarge
 
-          ibutton_ $ emptyIbuttonProps "Vote_negative" [ShowNotImplementedYet]
+          ibutton_ $ emptyIbuttonProps "Vote_negative" [ContributionAction $ ToggleVoteOnContribution (props ^. diffToolbarPropsEditID) Nay]
             & ibListKey .~ "2"
-            & ibLabel .~ "down"
+            & ibLabel .~ voteButtonLabel Nay
             & ibSize .~ XXLarge
 
           ibutton_ $ emptyIbuttonProps "Arrow_up" [HeaderAction ScrollToPageTop]
@@ -76,5 +87,5 @@ diffToolbar = mkView "DiffToolbar" $ do
             & ibLabel .~ "details"
             & ibSize .~ XXLarge
 
-diffToolbar_ :: ReactElementM eventHandler ()
+diffToolbar_ :: DiffToolbarProps -> ReactElementM eventHandler ()
 diffToolbar_ = view_ diffToolbar "diffToolbar_"

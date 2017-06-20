@@ -27,7 +27,7 @@ import Refine.Frontend.Prelude
 
 import GHC.Generics (Generic)
 
-import Refine.Common.Types (EditKind)
+import Refine.Common.Types
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -62,7 +62,16 @@ newtype AddLinkFormState = AddLinkFormState
   } deriving (Show, Eq, Generic)
 
 
+data DiffToolbarProps = DiffToolbarProps
+  { _diffToolbarPropsEditID :: ID Edit
+  , _diffToolbarPropsVotes  :: Votes
+  } deriving (Show, Eq, Generic)
+
+instance UnoverlapAllEq DiffToolbarProps
+
+
 makeRefineType ''HeaderAction
 makeRefineType ''ToolbarExtensionStatus
 makeRefineType ''HeaderState
 makeRefineType ''AddLinkFormState
+makeRefineType ''DiffToolbarProps

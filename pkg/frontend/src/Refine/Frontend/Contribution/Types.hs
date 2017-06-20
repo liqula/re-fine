@@ -87,6 +87,7 @@ data ContributionAction =
   | SetBubblePositioning BubblePositioning
   | HighlightMarkAndBubble [ContributionID]
   | SetBubbleFilter (Maybe (Set ContributionID))
+  | ToggleVoteOnContribution (ID Edit) Vote
   deriving (Show, Eq, Generic)
 
 
