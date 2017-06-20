@@ -108,7 +108,7 @@ type SAddStatement
   = "r" :> "statement" :> "reply" :> Capture "onstatementid" (ID Statement) :> ReqBody '[JSON] (Create Statement)
     :> Post '[JSON] CompositeDiscussion
       -- FIXME: should be @"r" :> "statement" :> Capture "onstatementid" (ID Statement) :> "reply" ...@
-      -- to be consistent with 'SSimpleVoteOnStatement', see #277.
+      -- to be consistent with 'SAddSimpleVoteOnEdit' etc.
 
 type SCreateUser
   = "r" :> "user" :> "create" :> ReqBody '[JSON] CreateUser
@@ -151,6 +151,22 @@ type SChangeProcess
 type SRemoveProcess
   = "r" :> "process" :> "remove" :> ReqBody '[JSON] RemoveProcess
     :> Post '[JSON] ()
+
+
+type SAddSimpleVoteOnEdit
+  = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> "vote" :> Capture "vote" Vote :> Post '[JSON] ()
+
+type SUpdateSimpleVoteOnEdit
+  = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> "vote" :> Capture "vote" Vote :> Put '[JSON] ()
+
+-- | delete *my* vote on an edit
+type SDeleteSimpleVoteOnEdit
+  = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> "vote" :> Delete '[JSON] ()
+
+-- | get *all* votes on an edit
+type SGetSimpleVotesOnEdit
+  = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> "vote" :> Get '[JSON] Votes
+
 
 makeRefineType ''ApiError
 makeRefineType ''ApiErrorCreateUser
