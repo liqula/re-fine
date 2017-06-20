@@ -229,13 +229,6 @@ emitBackendCallsFor action st = case action of
             (Left rsp) -> ajaxFail rsp Nothing
             (Right loadedVDoc) -> dispatchM $ OpenDocument loadedVDoc
 
-          -- TUNING: some calls to this action are outrageously
-          -- expensive, but we don't have a generic way to
-          -- incrementally update the composite vdoc here.  if we got
-          -- rid of the NFData constraint on actions, we could define
-          -- `UpdateCVDoc :: (CompositeVDoc -> CompositeVDoc) ->
-          -- GlobalAction`.
-
 
     -- contributions
 
@@ -247,7 +240,7 @@ emitBackendCallsFor action st = case action of
             (Left rsp) -> ajaxFail rsp Nothing
             (Right discussion) -> dispatchManyM [ AddDiscussion discussion
                                                 , ContributionAction RequestSetAllVertialSpanBounds
-                                                , LoadDocument (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocID)
+                                                , reloadCompositeVDoc st
                                                 ]
         Just CommentKindNote ->
           addNote (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
@@ -255,7 +248,7 @@ emitBackendCallsFor action st = case action of
             (Left rsp) -> ajaxFail rsp Nothing
             (Right note) -> dispatchManyM [ AddNote note
                                           , ContributionAction RequestSetAllVertialSpanBounds
-                                          , LoadDocument (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocID)
+                                          , reloadCompositeVDoc st
                                           ]
         Nothing -> pure ()
 
@@ -275,7 +268,7 @@ emitBackendCallsFor action st = case action of
           Left rsp   -> ajaxFail rsp Nothing
           Right edit -> dispatchManyM [ AddEdit edit
                                       , ContributionAction RequestSetAllVertialSpanBounds
-                                      , LoadDocument (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocID)
+                                      , reloadCompositeVDoc st
                                       ]
 
       bad -> let msg = "DocumentAction DocumentEditSave: "
@@ -332,14 +325,11 @@ emitBackendCallsFor action st = case action of
     -- voting
 
     ContributionAction (ToggleVoteOnContribution eid vote) -> do
-      let updateVotesInCVDoc :: IO ViewEventHandler
-          updateVotesInCVDoc = dispatchM $ LoadDocument (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocID)
-
       case st ^. gsLoginState . lsCurrentUser of
         UserLoggedOut       -> pure ()
         UserLoggedIn _uname -> sPutSimpleVoteOnEdit eid vote $ \case
           Left msg -> ajaxFail msg Nothing
-          Right () -> updateVotesInCVDoc
+          Right () -> dispatchM $ reloadCompositeVDoc st
 
 
     -- testing & dev
@@ -354,6 +344,14 @@ emitBackendCallsFor action st = case action of
 
     _ -> pure ()
 
+
+-- | TUNING: the calls to this action are usually outrageously
+-- expensive, but we don't have a generic way to incrementally update
+-- the composite vdoc here.  if we got rid of the NFData constraint on
+-- actions, we could define @UpdateCVDoc :: (CompositeVDoc ->
+-- CompositeVDoc) -> GlobalAction@.
+reloadCompositeVDoc :: GlobalState -> GlobalAction
+reloadCompositeVDoc st = LoadDocument (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocID)
 
 ajaxFail :: (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
 ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of
