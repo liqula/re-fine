@@ -128,7 +128,7 @@ withCurrentUser f = do
     Nothing -> pure ()
 
 putSimpleVoteOnEdit :: (MonadApp db uh) => ID Edit -> Vote -> AppM db uh ()
-putSimpleVoteOnEdit eid v = withCurrentUser $ \user -> db . DB.updateVotes eid $ Map.insert user v 
+putSimpleVoteOnEdit eid v = withCurrentUser $ \user -> db . DB.updateVotes eid $ Map.insert user v
 
 deleteSimpleVoteOnEdit :: (MonadApp db uh) => ID Edit -> AppM db uh ()
 deleteSimpleVoteOnEdit eid = withCurrentUser $ \user -> db . DB.updateVotes eid $ Map.delete user
