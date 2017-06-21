@@ -104,6 +104,7 @@ instance Database DB where
   getVDoc            = Entity.getVDoc
   vdocOfEdit         = Entity.vdocOfEdit
   getEditIDs         = Entity.getEditIDs
+  moveVDocHead       = Entity.moveVDocHead
 
   -- * Edit
   createEdit         = Entity.createEdit
