@@ -168,10 +168,27 @@ withCurrentUser f = do
     Nothing -> throwError AppUnauthorized
 
 putSimpleVoteOnEdit :: (MonadApp db uh) => ID Edit -> Vote -> AppM db uh ()
-putSimpleVoteOnEdit eid v = withCurrentUser $ \user -> db . DB.updateVotes eid $ Map.insert user v
+putSimpleVoteOnEdit eid v = withCurrentUser $ \user -> changeSimpleVoteOnEdit eid $ Map.insert user v
 
 deleteSimpleVoteOnEdit :: (MonadApp db uh) => ID Edit -> AppM db uh ()
-deleteSimpleVoteOnEdit eid = withCurrentUser $ \user -> db . DB.updateVotes eid $ Map.delete user
+deleteSimpleVoteOnEdit eid = withCurrentUser $ changeSimpleVoteOnEdit eid . Map.delete
+
+atLeastOneUpvote :: VoteCount -> Bool
+atLeastOneUpvote vc = fromMaybe 0 (Map.lookup Yeay vc) >= 1
+
+rebasePossible :: (Monad db, DB.Database db) => ID Edit -> db Bool
+rebasePossible eid = do
+  vd <- (^. vdocHeadEdit) <$> (DB.vdocOfEdit eid >>= DB.getVDoc)
+  ed <- DB.getEdit eid
+  pure $ vd `elem` (snd <$> (ed ^. editSource . unEditSource))
+
+changeSimpleVoteOnEdit :: (MonadApp db uh) => ID Edit -> (Votes -> Votes) -> AppM db uh ()
+changeSimpleVoteOnEdit eid f = do
+  mkrebase <- db $ do
+    DB.updateVotes eid f
+    vs <- DB.getVoteCount eid
+    if atLeastOneUpvote vs then rebasePossible eid else pure False
+  when mkrebase $ rebaseHeadToEdit eid
 
 getSimpleVotesOnEdit :: (MonadApp db uh) => ID Edit -> AppM db uh VoteCount
 getSimpleVotesOnEdit eid = db $ DB.getVoteCount eid
