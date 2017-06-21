@@ -21,3 +21,17 @@ spec = do
       toClasses @JSString ["class-name-1", "class-name-2"] `shouldBe` "class-name-1 class-name-2"
     it "ignores empty strings" $ do
       toClasses @String ["", "class-name-1", "", "class-name-2", ""] `shouldBe` "class-name-1 class-name-2"
+
+  describe "HasCallStack (not really about this application, but interesting.)" $ do
+    it "works" $ do
+      crash `shouldThrow` anyException  -- look at the thrown error to see why this is cool.
+
+
+crash :: HasCallStack => IO Int
+crash = crash'
+
+crash' :: HasCallStack => IO Int
+crash' = crash''
+
+crash'' :: HasCallStack => IO Int
+crash'' = error "wef"

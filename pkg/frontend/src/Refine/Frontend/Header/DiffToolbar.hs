@@ -36,7 +36,7 @@ import Refine.Frontend.Icon
 import Refine.Frontend.Store.Types
 
 
-diffToolbar :: View '[DiffToolbarProps]
+diffToolbar :: HasCallStack => View '[DiffToolbarProps]
 diffToolbar = mkView "DiffToolbar" $ \props -> do
   header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
     div_ ["className" $= "grid-wrapper"] $ do

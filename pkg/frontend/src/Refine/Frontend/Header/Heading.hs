@@ -90,12 +90,20 @@ topMenuBar_ !props = view_ topMenuBar "TopMenuBar_" props
 currentToolbarStickyState :: Event -> Bool
 currentToolbarStickyState (evtHandlerArg -> RF.HandlerArg j) = pFromJSVal j
 
-mainHeader :: RF.ReactView GlobalState
+mainHeader :: HasCallStack => RF.ReactView GlobalState
 mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
      -- the render function inside a Lifecycle view does not update the children passed to it when the state changes
      -- (see react-flux issue #29), therefore we move everything inside the Lifecylce view.
-   { RF.lRender = \() rs -> do
-      let vdoc = rs ^?! gsVDoc . _Just
+   { RF.lRender = mainHeaderRender
+   , RF.lComponentDidMount = Just mainHeaderlComponentDidMount
+   }
+
+mainHeaderlComponentDidMount :: HasCallStack => a -> RF.LDOM -> b -> IO ()
+mainHeaderlComponentDidMount _propsandstate ldom _ = calcHeaderHeight ldom
+
+mainHeaderRender :: HasCallStack => () -> GlobalState -> ReactElementM (StatefulViewEventHandler a) ()
+mainHeaderRender () rs = do
+      let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsVDoc . _Just
       div_ ["className" $= "c-fullheader"] $ do
           -- the following need to be siblings because of the z-index handling
           div_ ["className" $= "c-mainmenu__bg" {-, "role" $= "navigation" -}] mempty
@@ -126,8 +134,6 @@ mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
                 DocumentStateEdit {} -> editToolbar_ (mkEditToolbarProps rs)
               commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
 
-   , RF.lComponentDidMount = Just $ \_propsandstate ldom _ -> calcHeaderHeight ldom
-   }
 
 mainHeader_ :: GlobalState -> ReactElementM eventHandler ()
 mainHeader_ props = RF.view mainHeader props mempty

@@ -47,7 +47,7 @@ import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
 
-documentStateUpdate :: GlobalAction -> GlobalState -> DocumentState -> DocumentState
+documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> DocumentState -> DocumentState
 documentStateUpdate (OpenDocument cvdoc) _ _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 

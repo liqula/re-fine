@@ -123,7 +123,7 @@ makeRefineType ''GlobalAction
 
 instance UnoverlapAllEq GlobalState
 
-gsCurrentSelection :: Lens' GlobalState (Selection Position)
+gsCurrentSelection :: HasCallStack => Lens' GlobalState (Selection Position)
 gsCurrentSelection f gs = outof <$> f (into gs)
   where
     into :: GlobalState -> Selection Position

@@ -215,7 +215,7 @@ devStateUpdate action (Just devstate) = Just $ upd action devstate
 
 -- * ajax
 
-emitBackendCallsFor :: GlobalAction -> GlobalState -> IO ()
+emitBackendCallsFor :: HasCallStack => GlobalAction -> GlobalState -> IO ()
 emitBackendCallsFor action st = case action of
 
     -- documents
