@@ -209,6 +209,7 @@ toApiError = \case
   AppL10ParseErrors e    -> ApiL10ParseErrors e
   AppUnauthorized        -> ApiUnauthorized
   AppMergeError{}        -> ApiMergeError
+  AppRebaseError{}       -> ApiRebaseError
 
 -- | so we don't have to export backend types to the frontend.
 createUserErrorToApiError :: CreateUserError -> ApiErrorCreateUser
@@ -233,6 +234,7 @@ appServantErr = \case
   AppL10ParseErrors _      -> err500
   AppUnauthorized          -> err403
   AppMergeError{}          -> err500
+  AppRebaseError{}         -> err500
 
 dbServantErr :: DBError -> ServantErr
 dbServantErr = \case

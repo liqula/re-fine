@@ -137,7 +137,7 @@ spec = do
     it "rebase one edit to two other edits" $ \(runner :: AppM DB UH () -> IO ()) -> do
       runner $ do
         (vid, [eid1, _, _]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"], ["abX", "def"]]
-        App.rebaseToEdit eid1
+        App.rebaseHeadToEdit eid1
         d <- App.getVDoc vid
         let hid = d ^. vdocHeadEdit
         appIO $ hid `shouldBe` eid1

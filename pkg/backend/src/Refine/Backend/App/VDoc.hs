@@ -143,8 +143,8 @@ addMerge eid1 eid2 = do
           $ CreateEdit "merge" (rawContentToVDocVersion newdoc) EKMerge
       _ -> pure Nothing
 
-rebaseToEdit :: (MonadApp db uh) => ID Edit -> AppM db uh ()
-rebaseToEdit eid = do
+rebaseHeadToEdit :: (MonadApp db uh) => ID Edit -> AppM db uh ()
+rebaseHeadToEdit eid = do
   appLog $ "rebase to " <> show eid
   ch <- db $ do
     rid <- DB.vdocOfEdit eid
@@ -152,7 +152,7 @@ rebaseToEdit eid = do
     DB.moveVDocHead rid eid
     let hid = vdoc ^. vdocHeadEdit
     DB.getEditChildren hid
-  -- assert $ eid `elem` ch
+  when (eid `notElem` ch) . throwError $ AppRebaseError eid
   forM_ (filter (/= eid) ch) $ addMerge eid
 
 -- | Throw an error if chunk range does not fit 'VDocVersion' identified by edit.

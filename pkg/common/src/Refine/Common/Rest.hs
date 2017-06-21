@@ -40,6 +40,7 @@ data ApiError
   | ApiL10ParseErrors [ST]
   | ApiUnauthorized
   | ApiMergeError
+  | ApiRebaseError
   deriving (Eq, Show, Generic)
 
 data ApiErrorCreateUser
