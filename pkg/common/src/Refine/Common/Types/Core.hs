@@ -63,6 +63,7 @@ import           Text.Read (readEither)
 import           Web.HttpApiData (toUrlPiece, parseUrlPiece, ToHttpApiData(..), FromHttpApiData(..))
 
 import           Refine.Common.Types.Position
+import           Refine.Common.Types.Vote
 import qualified Refine.Common.OT as OT
 import           Refine.Common.OT hiding (Edit)
 import           Refine.Common.Types.Comment
@@ -110,6 +111,7 @@ data Edit = Edit
   , _editRanges :: NonEmpty (Range Position) -- ^ could be @(Ranges Position)@ if empty is ok.
   , _editKind   :: EditKind
   , _editSource :: EditSource (ID Edit)
+  , _editVotes  :: Votes
   }
   deriving (Eq, Show, Generic)
 
@@ -132,25 +134,17 @@ type instance Create Edit = CreateEdit
 
 -- ** composites
 
--- | Packaged vdoc ready for use by client.
---
--- - morally we have three phases in working on a document: (1) add comments and edits, (2) merge a
---   bunch of edits and (3) create a new version.
---
--- - what follows from this:
---     - there are no edits on edits that we need to display
---     - it's ok to only display edits on head, not on any other version
---     - same for comments: comments collect on head, then then are discarded in (2), (3).
---
--- - if we try to consider comments, edits, ... on other versions than head, we are in trouble.
+-- | Packaged vdoc ready for use by client.  "Applicable
+-- contributions" fields only contain contributions made to (or
+-- rebased to) "this version".  (More info can easily be added,
+-- though.)
 data CompositeVDoc = CompositeVDoc
-  { _compositeVDoc            :: VDoc
-  , _compositeVDocEditID      :: ID Edit
-  , _compositeVDocVersion     :: VDocVersion
-  , _compositeVDocEdits       :: Map (ID Edit) Edit
-  , _compositeVDocNotes       :: Map (ID Note) Note
-  -- , _compositeVDocQuestions   :: [Question]  -- will be due in #99
-  , _compositeVDocDiscussions :: Map (ID Discussion) CompositeDiscussion
+  { _compositeVDoc                      :: VDoc
+  , _compositeVDocThisEdit              :: Edit
+  , _compositeVDocThisVersion           :: VDocVersion
+  , _compositeVDocApplicableEdits       :: Map (ID Edit) Edit
+  , _compositeVDocApplicableNotes       :: Map (ID Note) Note
+  , _compositeVDocApplicableDiscussions :: Map (ID Discussion) CompositeDiscussion
   }
   deriving (Eq, Show, Generic)
 
@@ -690,6 +684,9 @@ vdocID = vdocMetaID . miID
 
 editID :: Lens' Edit (ID Edit)
 editID = editMetaID . miID
+
+compositeVDocThisEditID :: Lens' CompositeVDoc (ID Edit)
+compositeVDocThisEditID = compositeVDocThisEdit . editID
 
 blockText :: Lens' (Block rangeKey blockKey) ST
 blockText = blockText'

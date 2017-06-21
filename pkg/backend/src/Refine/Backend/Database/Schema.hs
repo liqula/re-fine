@@ -40,7 +40,7 @@ import Refine.Common.Types.Process (CollaborativeEditPhase)
 import Refine.Common.Types.Role (Role)
 import Refine.Common.Types.Core (Abstract, EditKind, Title, VDocVersion)
 import Refine.Backend.Database.Field()
-import Refine.Backend.Database.Types (MetaInfoID, RawContentEdit, RangePositions, RangePosition)
+import Refine.Backend.Database.Types
 
 share [mkPersist sqlSettings, mkMigrate "migrateRefine"] [persistLowerCase|
 MetaInfo
@@ -62,6 +62,7 @@ Edit
     editVDoc    VDocVersion
     repository  VDocId
     kind        EditKind
+    votes       DBVotes
 
 Note
     text        Text
@@ -88,10 +89,6 @@ Discussion
 Statement
     text        Text
     parent      StatementId Maybe
-
-Vote
-    value       Text
-    owner       LoginId
 
 -- Groups
 
@@ -163,11 +160,6 @@ PN
     edit       EditId
     note        NoteId
     UniPN edit note
-
-PV
-    edit       EditId
-    vote        VoteId
-    UniPV edit vote
 |]
 
 
@@ -200,7 +192,6 @@ makeElim ''Question
 makeElim ''Answer
 makeElim ''Discussion
 makeElim ''Statement
-makeElim ''Vote
 
 makeElim ''Group
 makeElim ''SubGroup
@@ -212,4 +203,3 @@ makeElim ''PN
 makeElim ''PQ
 makeElim ''PD
 makeElim ''DS
-makeElim ''PV

@@ -176,17 +176,17 @@ vdocUpdate action Nothing = case action of
 vdocUpdate action (Just vdoc) = Just $ case action of
     AddDiscussion discussion
       -> vdoc
-          & C.compositeVDocDiscussions
+          & C.compositeVDocApplicableDiscussions
               %~ M.insert (discussion ^. C.compositeDiscussion . C.discussionID) discussion
 
     AddNote note
       -> vdoc
-          & C.compositeVDocNotes
+          & C.compositeVDocApplicableNotes
               %~ M.insert (note ^. C.noteID) note
 
     AddEdit edit
       -> vdoc
-          & C.compositeVDocEdits
+          & C.compositeVDocApplicableEdits
               %~ M.insert (edit ^. C.editID) edit
 
     _ -> vdoc
@@ -215,7 +215,7 @@ devStateUpdate action (Just devstate) = Just $ upd action devstate
 
 -- * ajax
 
-emitBackendCallsFor :: GlobalAction -> GlobalState -> IO ()
+emitBackendCallsFor :: HasCallStack => GlobalAction -> GlobalState -> IO ()
 emitBackendCallsFor action st = case action of
 
     -- documents
@@ -238,18 +238,24 @@ emitBackendCallsFor action st = case action of
           addDiscussion (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
                      (C.CreateDiscussion text True (st ^. gsCurrentSelection . C.selectionRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right discussion) -> dispatchManyM [AddDiscussion discussion, ContributionAction RequestSetAllVertialSpanBounds]
+            (Right discussion) -> dispatchManyM [ AddDiscussion discussion
+                                                , ContributionAction RequestSetAllVertialSpanBounds
+                                                , reloadCompositeVDoc st
+                                                ]
         Just CommentKindNote ->
           addNote (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
                      (C.CreateNote text True (st ^. gsCurrentSelection . C.selectionRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right note) -> dispatchManyM [AddNote note, ContributionAction RequestSetAllVertialSpanBounds]
+            (Right note) -> dispatchManyM [ AddNote note
+                                          , ContributionAction RequestSetAllVertialSpanBounds
+                                          , reloadCompositeVDoc st
+                                          ]
         Nothing -> pure ()
 
     DocumentAction (DocumentSave desc) -> case st ^. gsDocumentState of
       dstate@(DocumentStateEdit _ kind) -> do
         let eid :: C.ID C.Edit
-            eid = st ^?! gsVDoc . _Just . C.compositeVDocEditID
+            eid = st ^?! gsVDoc . _Just . C.compositeVDocThisEditID
 
             cedit :: C.Create C.Edit
             cedit = C.CreateEdit
@@ -260,7 +266,10 @@ emitBackendCallsFor action st = case action of
 
         addEdit eid cedit $ \case
           Left rsp   -> ajaxFail rsp Nothing
-          Right edit -> dispatchManyM [AddEdit edit, ContributionAction RequestSetAllVertialSpanBounds]
+          Right edit -> dispatchManyM [ AddEdit edit
+                                      , ContributionAction RequestSetAllVertialSpanBounds
+                                      , reloadCompositeVDoc st
+                                      ]
 
       bad -> let msg = "DocumentAction DocumentEditSave: "
                     <> "not in editor state or content cannot be converted to html."
@@ -313,6 +322,16 @@ emitBackendCallsFor action st = case action of
             ]
 
 
+    -- voting
+
+    ContributionAction (ToggleVoteOnContribution eid vote) -> do
+      case st ^. gsLoginState . lsCurrentUser of
+        UserLoggedOut       -> dispatchAndExec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
+        UserLoggedIn _uname -> sPutSimpleVoteOnEdit eid vote $ \case
+          Left msg -> ajaxFail msg Nothing
+          Right () -> dispatchM $ reloadCompositeVDoc st
+
+
     -- testing & dev
 
     AddDemoDocument -> do
@@ -325,6 +344,14 @@ emitBackendCallsFor action st = case action of
 
     _ -> pure ()
 
+
+-- | TUNING: the calls to this action are usually outrageously
+-- expensive, but we don't have a generic way to incrementally update
+-- the composite vdoc here.  if we got rid of the NFData constraint on
+-- actions, we could define @UpdateCVDoc :: (CompositeVDoc ->
+-- CompositeVDoc) -> GlobalAction@.
+reloadCompositeVDoc :: GlobalState -> GlobalAction
+reloadCompositeVDoc st = LoadDocument (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocID)
 
 ajaxFail :: (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
 ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of

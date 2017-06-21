@@ -70,6 +70,9 @@ type RefineAPI =
   :<|> SAddProcess
   :<|> SChangeProcess
   :<|> SRemoveProcess
+  :<|> SPutSimpleVoteOnEdit
+  :<|> SDeleteSimpleVoteOnEdit
+  :<|> SGetSimpleVotesOnEdit
 
 
 type SListVDocs
@@ -108,7 +111,7 @@ type SAddStatement
   = "r" :> "statement" :> "reply" :> Capture "onstatementid" (ID Statement) :> ReqBody '[JSON] (Create Statement)
     :> Post '[JSON] CompositeDiscussion
       -- FIXME: should be @"r" :> "statement" :> Capture "onstatementid" (ID Statement) :> "reply" ...@
-      -- to be consistent with 'SSimpleVoteOnStatement', see #277.
+      -- to be consistent with 'SPutSimpleVoteOnEdit' etc.
 
 type SCreateUser
   = "r" :> "user" :> "create" :> ReqBody '[JSON] CreateUser
@@ -151,6 +154,19 @@ type SChangeProcess
 type SRemoveProcess
   = "r" :> "process" :> "remove" :> ReqBody '[JSON] RemoveProcess
     :> Post '[JSON] ()
+
+
+type SPutSimpleVoteOnEdit
+  = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> "vote" :> Capture "vote" Vote :> Put '[JSON] ()
+
+-- | delete *my* vote on an edit
+type SDeleteSimpleVoteOnEdit
+  = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> "vote" :> Delete '[JSON] ()
+
+-- | get *all* votes on an edit
+type SGetSimpleVotesOnEdit
+  = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> "vote" :> Get '[JSON] VoteCount
+
 
 makeRefineType ''ApiError
 makeRefineType ''ApiErrorCreateUser

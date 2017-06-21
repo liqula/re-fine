@@ -87,8 +87,8 @@ phases_ :: ReactElementM eventHandler ()
 phases_ = view_ phases "Phases_"
 
 
-editDescToAbstract :: CompositeVDoc -> ContributionID -> Abstract
+editDescToAbstract :: HasCallStack => CompositeVDoc -> ContributionID -> Abstract
 editDescToAbstract vdoc (ContribIDEdit eid) = Abstract $
   "Edit Request:\n" <>
-  (vdoc ^?! compositeVDocEdits . ix eid . editDesc)
+  (vdoc ^?! compositeVDocApplicableEdits . ix eid . editDesc)
 editDescToAbstract _ _ = error "internal error."

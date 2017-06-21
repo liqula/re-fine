@@ -47,7 +47,7 @@ import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
 
-documentStateUpdate :: GlobalAction -> GlobalState -> DocumentState -> DocumentState
+documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> DocumentState -> DocumentState
 documentStateUpdate (OpenDocument cvdoc) _ _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
@@ -60,7 +60,7 @@ documentStateUpdate (HeaderAction (StartEdit kind)) gs (DocumentStateView estate
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     (view gsVDoc -> Just cvdoc)
                     (DocumentStateView e r)
-  = DocumentStateDiff e r (cvdoc ^?! compositeVDocEdits . ix eid) True
+  = DocumentStateDiff e r (cvdoc ^?! compositeVDocApplicableEdits . ix eid) True
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
                     _

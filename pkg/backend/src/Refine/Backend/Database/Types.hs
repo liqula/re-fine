@@ -76,5 +76,8 @@ newtype RangePositions = RangePositions {unSelectionStates :: NonEmpty (Range Po
 newtype RangePosition = RangePosition {unRangePosition :: Range Position}
   deriving (ToJSON, FromJSON)
 
+newtype DBVotes = DBVotes {unDBVotes :: Votes}
+  deriving (ToJSON, FromJSON)
+
 makeRefineType ''CreateDBCollabEditProcess
 makeRefineType ''MetaInfoID

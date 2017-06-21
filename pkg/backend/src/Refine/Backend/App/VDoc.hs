@@ -37,6 +37,7 @@ import qualified Data.Map as Map
 import           Data.Maybe (catMaybes)
 
 import           Refine.Backend.App.Core
+import           Refine.Backend.App.User (currentUser)
 import qualified Refine.Backend.Database.Class as DB
 import           Refine.Common.Allow
 import           Refine.Common.Types
@@ -51,7 +52,7 @@ listVDocs = do
 
 -- | Create 'VDoc' and return the corresponding 'CompositeVDoc'.
 createVDocGetComposite :: Create VDoc -> App CompositeVDoc
-createVDocGetComposite = (getCompositeVDoc . view vdocID) <=< createVDoc
+createVDocGetComposite = (getCompositeVDocOnHead . view vdocID) <=< createVDoc
 
 -- | Creates a 'VDoc'.  See also: 'createVDocGetComposite'.
 createVDoc :: Create VDoc -> App VDoc
@@ -70,20 +71,28 @@ getVDocVersion eid = do
   appLog "getVDocVersion"
   db $ DB.getVersion eid
 
-getCompositeVDoc :: ID VDoc -> App CompositeVDoc  -- FUTUREWORK: take an edit id here, and implement getHeadCompositeVDoc in terms of that.
-getCompositeVDoc vid = do
+getCompositeVDocOnHead :: ID VDoc -> App CompositeVDoc
+getCompositeVDocOnHead vid = do
+  vdoc <- db $ DB.getVDoc vid
+  getCompositeVDoc' vdoc (vdoc ^. vdocHeadEdit)
+
+getCompositeVDoc :: ID VDoc -> ID Edit -> App CompositeVDoc
+getCompositeVDoc vdocid editid = do
+  vdoc <- db $ DB.getVDoc vdocid
+  getCompositeVDoc' vdoc editid
+
+getCompositeVDoc' :: VDoc -> ID Edit -> App CompositeVDoc
+getCompositeVDoc' vdoc editid = do
   appLog "getCompositeVDoc"
-  vdoc     <- db $ DB.getVDoc vid
-  let headid = vdoc ^. vdocHeadEdit
-  comments <- db $ DB.editComments headid
+  edit <- db $ DB.getEdit editid
+  comments <- db $ DB.editComments editid
   let commentNotes       = catMaybes $ (^? _CommentNote)       <$> filter (has _CommentNote)       comments
       commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
-
-  edits <- db $ mapM DB.getEdit =<< DB.getEditChildren headid
-  version <- db $ DB.getVersion headid
+  edits <- db $ mapM DB.getEdit =<< DB.getEditChildren editid
+  version <- db $ DB.getVersion editid
   pure $
     CompositeVDoc
-      vdoc headid version
+      vdoc edit version
       (toMap editID edits)
       (toMap noteID commentNotes)
       (toMap (compositeDiscussion . discussionID) commentDiscussions)
@@ -118,3 +127,19 @@ addEdit baseeid edit = do
 -- FIXME: for RawContent this still needs to be implemented.
 validateCreateChunkRange :: ID Edit -> Range Position -> App ()
 validateCreateChunkRange _ _ = pure ()  -- throwError AppVDocVersionError
+
+withCurrentUser :: (MonadApp db uh) => (ID User -> AppM db uh ()) -> AppM db uh ()
+withCurrentUser f = do
+  mu <- currentUser
+  case mu of
+    Just u -> f u
+    Nothing -> throwError AppUnauthorized
+
+putSimpleVoteOnEdit :: (MonadApp db uh) => ID Edit -> Vote -> AppM db uh ()
+putSimpleVoteOnEdit eid v = withCurrentUser $ \user -> db . DB.updateVotes eid $ Map.insert user v
+
+deleteSimpleVoteOnEdit :: (MonadApp db uh) => ID Edit -> AppM db uh ()
+deleteSimpleVoteOnEdit eid = withCurrentUser $ \user -> db . DB.updateVotes eid $ Map.delete user
+
+getSimpleVotesOnEdit :: (MonadApp db uh) => ID Edit -> AppM db uh VoteCount
+getSimpleVotesOnEdit eid = db $ DB.getVoteCount eid

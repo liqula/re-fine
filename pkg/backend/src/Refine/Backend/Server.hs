@@ -90,7 +90,7 @@ type MonadRefine db uh =
 refineApi :: MonadRefine db uh => ServerT RefineAPI (AppM db uh)
 refineApi =
        Refine.Backend.App.listVDocs
-  :<|> Refine.Backend.App.getCompositeVDoc
+  :<|> Refine.Backend.App.getCompositeVDocOnHead
   :<|> Refine.Backend.App.createVDocGetComposite
   :<|> Refine.Backend.App.addEdit
   :<|> Refine.Backend.App.addNote
@@ -108,6 +108,10 @@ refineApi =
   :<|> Refine.Backend.App.addProcess
   :<|> Refine.Backend.App.changeProcess
   :<|> Refine.Backend.App.removeProcess
+  :<|> Refine.Backend.App.putSimpleVoteOnEdit
+  :<|> Refine.Backend.App.deleteSimpleVoteOnEdit
+  :<|> Refine.Backend.App.getSimpleVotesOnEdit
+
 
 startBackend :: Config -> IO ()
 startBackend cfg =

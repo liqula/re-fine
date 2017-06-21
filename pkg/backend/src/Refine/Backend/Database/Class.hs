@@ -37,6 +37,8 @@ class Database db where
   editNotes          :: ID Edit -> db [ID Note]
   editQuestions      :: ID Edit -> db [ID Question]
   editDiscussions    :: ID Edit -> db [ID Discussion]
+  updateVotes        :: ID Edit -> (Votes -> Votes) -> db ()
+  getVoteCount       :: ID Edit -> db VoteCount
 
   -- FIXME: This information should come from DocRepo.
   getEditChildren    :: ID Edit -> db [ID Edit]

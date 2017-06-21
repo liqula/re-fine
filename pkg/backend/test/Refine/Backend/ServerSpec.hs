@@ -25,10 +25,11 @@ module Refine.Backend.ServerSpec where
 
 import Refine.Backend.Prelude hiding (Header)
 
+import           Control.Concurrent.MVar
 import qualified Data.ByteString as SBS
 import qualified Data.Map as Map
 import           Data.List.NonEmpty (NonEmpty((:|)))
-import           Network.HTTP.Types (Method, Header, methodGet)
+import           Network.HTTP.Types (Method, Header, methodGet, methodPut, methodDelete)
 import           Network.HTTP.Types.Status (Status(statusCode))
 import           Network.URI (URI, uriToString)
 import           Network.Wai (requestMethod, requestHeaders, defaultRequest)
@@ -55,12 +56,23 @@ import Refine.Common.VDoc.Draft
 
 -- * machine room
 
-runWai :: Backend db uh -> Wai.Session a -> IO a
-runWai sess m = Wai.runSession m (backendServer sess)
+data TestBackend uh = TestBackend
+  { _testBackend      :: Backend DB uh
+  , _testBackendState :: MVar Wai.ClientState
+  }
+
+makeLenses ''TestBackend
+
+runWai :: TestBackend uh -> Wai.Session a -> IO a
+runWai sess m = do
+  st <- takeMVar (sess ^. testBackendState)
+  (a, st') <- Wai.runSessionWith st m (backendServer (sess ^. testBackend))
+  putMVar (sess ^. testBackendState) st'
+  pure a
 
 -- | Call 'runWai' and throw an error if the expected type cannot be read, discard the
 -- response, keep only the body.
-runWaiJSON :: FromJSON a => Backend db uh -> Wai.Session SResponse -> IO a
+runWaiJSON :: FromJSON a => TestBackend uh -> Wai.Session SResponse -> IO a
 runWaiJSON sess m = do
   resp <- runWai sess m
   case eitherDecode $ simpleBody resp of
@@ -68,12 +80,41 @@ runWaiJSON sess m = do
     Right x  -> pure x
 
 -- | Call 'runDB'' and crash on 'Left'.
-runDB :: Backend DB uh -> AppM DB uh a -> IO a
+runDB :: TestBackend uh -> AppM DB uh a -> IO a
 runDB sess = errorOnLeft . runDB' sess
 
 -- | Call an 'App' action.
-runDB' :: Backend DB uh -> AppM DB uh a -> IO (Either AppError a)
-runDB' sess = runExceptT . unwrapNT (backendRunApp sess)
+--
+-- FIXME: This does not share session state with the rest api
+-- interface in @backendServer (sess ^. testBackend)@.  the functions
+-- to establish that are *almost* done, but to finish them we need to
+-- understand how servant-cookie-session uses vault to store data in
+-- cookies, and either emulate that or (preferably) call the
+-- resp. functions.
+runDB' :: TestBackend uh -> AppM DB uh a -> IO (Either AppError a)
+runDB' sess = runExceptT . unwrapNT (backendRunApp (sess ^. testBackend))
+{-
+  ... $ do
+    storeAppState sess
+    action
+    recoverAppState sess
+  where
+    storeAppState :: TestBackend uh -> AppM db uh ()
+    storeAppState sess = do
+      st :: AppState <- appIO $ parseCookies <$> readMVar (sess ^. testBackendState)
+      State.put st
+      where
+        parseCookies :: Wai.ClientState -> AppState
+        parseCookies _ = _  -- AppState Nothing UserLoggedOut
+
+    recoverAppState :: TestBackend uh -> AppM db uh ()
+    recoverAppState sess = do
+      st' :: AppState <- State.get
+      appIO $ putMVar (sess ^. testBackendState) (resetCookies st')
+      where
+        resetCookies :: AppState -> Wai.ClientState
+        resetCookies _ = _  -- Wai.ClientState mempty
+-}
 
 errorOnLeft :: Show e => IO (Either e a) -> IO a
 errorOnLeft action = either (throwIO . ErrorCall . show') pure =<< action
@@ -81,15 +122,18 @@ errorOnLeft action = either (throwIO . ErrorCall . show') pure =<< action
     show' x = "errorOnLeft: " <> show x
 
 
-createDevModeTestSession :: ActionWith (Backend DB FreeUH) -> IO ()
+-- | Create session via 'mkDevModeBackend' (using 'MockUH_'), and
+-- create universal group before running the action.
+createDevModeTestSession :: ActionWith (TestBackend FreeUH) -> IO ()
 createDevModeTestSession action = withTempCurrentDirectory $ do
   backend :: Backend DB FreeUH <- mkDevModeBackend (def & cfgShouldLog .~ False) mockLogin
   (natThrowError . backendRunApp backend) $$ initializeDB
-  action backend
+  action . TestBackend backend =<< newMVar Wai.initState
 
-createTestSession :: ActionWith (Backend DB UH) -> IO ()
+-- | Create session via 'mkProdBackend' (using 'UH').
+createTestSession :: ActionWith (TestBackend UH) -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
-  void $ action =<< mkProdBackend (def & cfgShouldLog .~ False)
+  void $ action =<< (TestBackend <$> mkProdBackend (def & cfgShouldLog .~ False) <*> newMVar Wai.initState)
 
 
 -- * test helpers
@@ -108,6 +152,12 @@ respCode = statusCode . simpleStatus
 wget :: SBS -> Wai.Session SResponse
 wget path = request methodGet path [] ""
 
+wput :: SBS -> Wai.Session SResponse
+wput path = request methodPut path [] ""
+
+wdel :: SBS -> Wai.Session SResponse
+wdel path = request methodDelete path [] ""
+
 post :: (ToJSON a) => SBS -> a -> Wai.Session SResponse
 post path js = request "POST" path [("Content-Type", "application/json")] (encode js)
 
@@ -124,6 +174,22 @@ request :: Method -> SBS -> [Header] -> LBS -> Wai.Session SResponse
 request method path headers body = Wai.srequest $ SRequest req body
   where
     req = Wai.setPath defaultRequest {requestMethod = method, requestHeaders = headers} path
+
+
+addUserAndLogin :: TestBackend uh -> Username -> IO ()
+addUserAndLogin sess username = runWai sess $ do
+  void . post createUserUri $ CreateUser username (username <> "@email.com") "password"
+  void . post loginUri $ Login username "password"
+
+mkEdit :: TestBackend uh -> IO (ID Edit)
+mkEdit sess = do
+  fe :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
+  pure $ fe ^. compositeVDocThisEditID
+
+mkUserAndEdit :: TestBackend uh -> IO (ID Edit)
+mkUserAndEdit sess = do
+  addUserAndLogin sess "username"
+  mkEdit sess
 
 
 -- * endpoints
@@ -164,12 +230,23 @@ addProcessUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAd
 changeRoleUri :: SBS
 changeRoleUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SChangeRole)
 
+putVoteUri :: ID Edit -> Vote -> SBS
+putVoteUri eid v = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SPutSimpleVoteOnEdit) eid v
+
+deleteVoteUri :: ID Edit ->  SBS
+deleteVoteUri eid = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SDeleteSimpleVoteOnEdit) eid
+
+getVotesUri :: ID Edit -> SBS
+getVotesUri eid = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetSimpleVotesOnEdit) eid
+
+
 -- * test cases
 
 spec :: Spec
 spec = do -- FUTUREWORK: mark this as 'parallel' (needs some work)
   specMockedLogin
   specUserHandling
+  specVoting
 
 specMockedLogin :: Spec
 specMockedLogin = around createDevModeTestSession $ do
@@ -201,7 +278,7 @@ specMockedLogin = around createDevModeTestSession $ do
   describe "sCreateVDoc" $ do
     it "stores a vdoc in the db" $ \sess -> do
       fe :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
-      be :: CompositeVDoc <- runDB  sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
+      be :: CompositeVDoc <- runDB  sess $ getCompositeVDocOnHead (fe ^. compositeVDoc . vdocID)
       fe `shouldBe` be
 
   describe "sAddNote" $ do
@@ -216,8 +293,8 @@ specMockedLogin = around createDevModeTestSession $ do
             (addNoteUri (fe_ ^. compositeVDoc . vdocHeadEdit))
             (CreateNote "[note]" True (Range cp1 cp2))
         liftIO $ do
-          be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe_ ^. compositeVDoc . vdocID)
-          be ^. compositeVDocNotes . to Map.elems `shouldContain` [fn_]
+          be :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (fe_ ^. compositeVDoc . vdocID)
+          be ^. compositeVDocApplicableNotes . to Map.elems `shouldContain` [fn_]
 
     it "stores note with non-trivial valid chunk range" $ \sess -> do
       runWai sess $ do
@@ -231,8 +308,8 @@ specMockedLogin = around createDevModeTestSession $ do
           (CreateNote "[note]" True (Range cp1 cp2))
 
         liftIO $ do
-          be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe_ ^. compositeVDoc . vdocID)
-          be ^. compositeVDocNotes . to Map.elems `shouldContain` [fn_]
+          be :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (fe_ ^. compositeVDoc . vdocID)
+          be ^. compositeVDocApplicableNotes . to Map.elems `shouldContain` [fn_]
 
     it "fails with error on non-trivial *invalid* chunk range" $ \sess -> do
       vdoc :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
@@ -249,8 +326,8 @@ specMockedLogin = around createDevModeTestSession $ do
       respCode resp `shouldBe` 409
       cs (simpleBody resp) `shouldContain` ("ChunkRangeBadDataUID" :: String)
 
-      vdoc' :: CompositeVDoc <- runDB sess $ getCompositeVDoc (vdoc ^. compositeVDoc . vdocID)
-      vdoc' ^. compositeVDocNotes `shouldBe` mempty
+      vdoc' :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (vdoc ^. compositeVDoc . vdocID)
+      vdoc' ^. compositeVDocApplicableNotes `shouldBe` mempty
 
   describe "sAddDiscussion" $ do
     it "stores discussion with no ranges" $ \sess -> do
@@ -266,8 +343,8 @@ specMockedLogin = around createDevModeTestSession $ do
             (CreateDiscussion "[discussion initial statement]" True (Range cp1 cp2))
 
         liftIO $ do
-          be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe_ ^. compositeVDoc . vdocID)
-          be ^. compositeVDocDiscussions . to Map.elems `shouldContain` [fn_]
+          be :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (fe_ ^. compositeVDoc . vdocID)
+          be ^. compositeVDocApplicableDiscussions . to Map.elems `shouldContain` [fn_]
 
   describe "sAddStatement" $ do
     it "stores statement for given discussion" $ \_sess -> do
@@ -314,8 +391,8 @@ specMockedLogin = around createDevModeTestSession $ do
       it "stores an edit and returns it in the list of edits applicable to its base" $ \sess -> do
         pendingWith "applicableEdits is not implemented."
         (fe, fp) <- setup sess
-        be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
-        be ^. compositeVDocEdits . to Map.elems`shouldContain` [fp]
+        be :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (fe ^. compositeVDoc . vdocID)
+        be ^. compositeVDocApplicableEdits . to Map.elems`shouldContain` [fp]
 
 specUserHandling :: Spec
 specUserHandling = around createTestSession $ do
@@ -333,7 +410,7 @@ specUserHandling = around createTestSession $ do
     describe "create" $ do
       it "works" $ \sess -> do
 
-        pendingWith "#291"
+        pendingWith "#291 (this happens probabilistically, do not un-pend just because it worked a few times for you!)"
 
         timeBefore <- getCurrentTimestamp
         u :: User <- runWaiJSON sess doCreate
@@ -350,16 +427,20 @@ specUserHandling = around createTestSession $ do
       context "with valid credentials" $ do
         it "works (and returns the cookie)" $ \sess -> do
 
-          pendingWith "#291"
+          pendingWith "#291 (this happens probabilistically, do not un-pend just because it worked a few times for you!)"
 
           resp <- runWai sess $ doCreate >> doLogin (Login userName userPass)
           respCode resp `shouldBe` 200
           checkCookie resp
 
+          pendingWith "see fixme in runDB'"
+          user <- runDB sess App.currentUser
+          user `shouldSatisfy` isJust
+
       context "with invalid credentials" $ do
         it "works (and returns the cookie)" $ \sess -> do
 
-          pendingWith "#291"
+          pendingWith "#291 (this happens probabilistically, do not un-pend just because it worked a few times for you!)"
 
           resp <- runWai sess $ doCreate >> doLogin (Login userName "")
           respCode resp `shouldBe` 404
@@ -377,3 +458,69 @@ specUserHandling = around createTestSession $ do
           resp <- runWai sess $ doCreate >> doLogout
           respCode resp `shouldBe` 200
           checkCookie resp
+
+specVoting :: Spec
+specVoting = around createTestSession $ do
+  describe "SPutSimpleVoteOnEdit" $ do
+    context "user is not logged in" $ do
+      it "request is rejected" $ \sess -> do
+        eid <- mkUserAndEdit sess
+        _ <- runWai sess $ post logoutUri ()
+        resp <- runWai sess . wput $ putVoteUri eid Yeay
+        respCode resp `shouldSatisfy` (>= 400)
+
+    context "if current user *HAS NOT* voted on the edit before" $ do
+      it "adds the current user's vote (and does nothing else)" $ \sess -> do
+        eid <- mkUserAndEdit sess
+        resp :: SResponse <- runWai sess . wput $ putVoteUri eid Yeay
+        respCode resp `shouldBe` 200
+        -- votes <- runDB sess $ App.getSimpleVotesOnEdit eid  -- see FIXME at 'runDB''
+        votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
+        votes `shouldBe` Map.fromList [(Yeay, 1)]
+
+    context "if current user *HAS* voted on the edit before" $ do
+      it "adds the current user's vote (and does nothing else)" $ \sess -> do
+        eid <- mkUserAndEdit sess
+        _ <- runWai sess . wput $ putVoteUri eid Yeay
+        resp :: SResponse <- runWai sess . wput $ putVoteUri eid Nay
+        respCode resp `shouldBe` 200
+        votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
+        votes `shouldBe` Map.fromList [(Nay, 1)]
+
+  describe "SDeleteSimpleVoteOnEdit" $ do
+    context "user is not logged in" $ do
+      it "request is rejected" $ \sess -> do
+        eid <- mkUserAndEdit sess
+        _ <- runWai sess $ post logoutUri ()
+        resp <- runWai sess . wdel $ deleteVoteUri eid
+        respCode resp `shouldSatisfy` (>= 400)
+
+    context "if there is such a vote" $ do
+      it "removes that vote (and does nothing else)" $ \sess -> do
+        eid <- mkUserAndEdit sess
+        _ <- runWai sess . wput $ putVoteUri eid Yeay
+        resp :: SResponse <- runWai sess . wdel $ deleteVoteUri eid
+        respCode resp `shouldBe` 200
+        votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
+        votes `shouldBe` Map.fromList []
+
+    context "if there is no such vote" $ do
+      it "does nothing" $ \sess -> do
+        eid <- mkUserAndEdit sess
+        resp :: SResponse <- runWai sess . wdel $ deleteVoteUri eid
+        respCode resp `shouldBe` 200
+        votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
+        votes `shouldBe` Map.fromList []
+
+  describe "SGetSimpleVotesOnEdit" $ do
+    context "with two Yeays and one Nay" $ do
+      it "returns (2, 1)" $ \sess -> do
+        eid <- mkEdit sess
+        addUserAndLogin sess "userA"
+        _ <- runWai sess . wput $ putVoteUri eid Yeay
+        addUserAndLogin sess "userB"
+        _ <- runWai sess . wput $ putVoteUri eid Yeay
+        addUserAndLogin sess "userC"
+        _ <- runWai sess . wput $ putVoteUri eid Nay
+        votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
+        votes `shouldBe` Map.fromList [(Yeay, 2), (Nay, 1)]

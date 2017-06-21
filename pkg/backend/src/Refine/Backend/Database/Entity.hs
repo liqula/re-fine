@@ -258,6 +258,7 @@ createEdit rid me ce = do
             (ce ^. createEditVDoc)
             (S.idToKey rid)
             (ce ^. createEditKind)
+            (DBVotes mempty)
   liftDB $ case me of
     InitialEdit -> pure ()
     EditOfEdit edit parent -> do
@@ -271,11 +272,12 @@ createEdit rid me ce = do
     sels'
     (ce ^. createEditKind)
     me
+    mempty
 
 getEdit :: ID Edit -> DB Edit
 getEdit eid = do
   src <- getEditSource eid
-  getMetaEntity (\mid -> S.editElim $ \desc (RangePositions cr) _ _ kind -> Edit mid desc cr kind src) eid
+  getMetaEntity (\mid -> S.editElim $ \desc (RangePositions cr) _ _ kind (DBVotes vs) -> Edit mid desc cr kind src vs) eid
 
 getEditSource :: ID Edit -> DB (EditSource (ID Edit))
 getEditSource eid = do
@@ -287,7 +289,7 @@ getEditSource eid = do
     _ -> error "impossible"
 
 getVersion :: ID Edit -> DB VDocVersion
-getVersion pid = S.editElim (\_ _ vdoc _ _ -> vdoc) <$> getEntityRep pid
+getVersion pid = S.editElim (\_ _ vdoc _ _ _ -> vdoc) <$> getEntityRep pid
 
 editNotes :: ID Edit -> DB [ID Note]
 editNotes pid = do
@@ -313,10 +315,22 @@ getEditChildren parent = do
   liftDB $ do
     foreignKeyField S.parentChildChild <$$> selectList [S.ParentChildParent ==. S.idToKey parent] opts
 
+updateVotes :: ID Edit -> (Votes -> Votes) -> DB ()
+updateVotes eid f = do
+  vs <- getVotes eid
+  liftDB $ update (S.idToKey eid) [ S.EditVotes =. DBVotes (f vs) ]
+
+getVotes :: ID Edit -> DB Votes
+getVotes eid = do
+  getMetaEntity (\_ -> S.editElim $ \_ _ _ _ _ (DBVotes vs) -> vs) eid
+
+getVoteCount :: ID Edit -> DB VoteCount
+getVoteCount = fmap votesToCount . getVotes
+
 -- * Repo and edit
 
 vdocOfEdit :: ID Edit -> DB (ID VDoc)
-vdocOfEdit pid = S.editElim (\_ _ _ vid _ -> S.keyToId vid) <$> getEntityRep pid
+vdocOfEdit pid = S.editElim (\_ _ _ vid _ _ -> S.keyToId vid) <$> getEntityRep pid
 
 -- * Note
 

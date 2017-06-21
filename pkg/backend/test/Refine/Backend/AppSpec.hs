@@ -62,7 +62,7 @@ isActiveUser :: AppUserState -> Bool
 isActiveUser (UserLoggedIn _ _) = True
 isActiveUser UserLoggedOut      = False
 
--- Parallel run is not an option here, it could make fail the build at the cleanup stage.
+-- Parallel run is not an option here, it could make the build fail at the cleanup stage.
 spec :: Spec
 spec = do
   describe "VDoc" . around provideAppRunner $ do
@@ -155,11 +155,11 @@ runCmd (GetVDoc v cv) = do
 
 runCmd (AddEditToHead v cedit) = do
   Just vid <- gets . view $ vdocMap . at v
-  cvdoc <- lift . lift $ App.getCompositeVDoc vid
-  let eid = cvdoc ^. compositeVDocEditID
+  cvdoc <- lift . lift $ App.getCompositeVDocOnHead vid
+  let eid = cvdoc ^. compositeVDocThisEditID
   edit   :: Edit          <- lift . lift $ App.addEdit eid cedit
-  cvdoc' :: CompositeVDoc <- lift . lift $ App.getCompositeVDoc vid
-  let edit' = cvdoc' ^?! compositeVDocEdits . at (edit ^. editID) . _Just
+  cvdoc' :: CompositeVDoc <- lift . lift $ App.getCompositeVDocOnHead vid
+  let edit' = cvdoc' ^?! compositeVDocApplicableEdits . at (edit ^. editID) . _Just
   lift . check $
     (edit                 == edit') &&
     (edit ^. editDesc     == cedit ^. createEditDesc) &&

@@ -113,6 +113,8 @@ instance Database DB where
   editQuestions      = Entity.editQuestions
   editDiscussions    = Entity.editDiscussions
   getEditChildren    = Entity.getEditChildren
+  updateVotes        = Entity.updateVotes
+  getVoteCount       = Entity.getVoteCount
 
   -- * Note
   createNote         = Entity.createNote
