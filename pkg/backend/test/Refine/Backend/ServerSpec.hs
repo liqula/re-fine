@@ -176,6 +176,22 @@ request method path headers body = Wai.srequest $ SRequest req body
     req = Wai.setPath defaultRequest {requestMethod = method, requestHeaders = headers} path
 
 
+addUserAndLogin :: TestBackend uh -> Username -> IO ()
+addUserAndLogin sess username = runWai sess $ do
+  void . post createUserUri $ CreateUser username (username <> "@email.com") "password"
+  void . post loginUri $ Login username "password"
+
+mkEdit :: TestBackend uh -> IO (ID Edit)
+mkEdit sess = do
+  fe :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
+  pure $ fe ^. compositeVDocEditID
+
+mkUserAndEdit :: TestBackend uh -> IO (ID Edit)
+mkUserAndEdit sess = do
+  addUserAndLogin sess "username"
+  mkEdit sess
+
+
 -- * endpoints
 
 uriStr :: URI -> SBS
@@ -222,6 +238,7 @@ deleteVoteUri eid = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy
 
 getVotesUri :: ID Edit -> SBS
 getVotesUri eid = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetSimpleVotesOnEdit) eid
+
 
 -- * test cases
 
@@ -444,19 +461,6 @@ specUserHandling = around createTestSession $ do
 
 specVoting :: Spec
 specVoting = around createTestSession $ do
-
-  let addUserAndLogin sess username = runWai sess $ do
-        void . post createUserUri $ CreateUser username (username <> "@email.com") "password"
-        void . post loginUri $ Login username "password"
-
-      mkEdit sess = do
-        fe :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
-        pure $ fe ^. compositeVDocEditID
-
-      mkUserAndEdit sess = do
-        addUserAndLogin sess "username"
-        mkEdit sess
-
   describe "SPutSimpleVoteOnEdit" $ do
     context "user is not logged in" $ do
       it "request is rejected" $ \sess -> do
