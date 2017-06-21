@@ -147,19 +147,23 @@ setAllVertialSpanBounds (convertToRaw . getCurrentContent . view documentStateVa
         marks = getLeafSelectors rawContent
 
         getPos :: (ContributionID, Ranges LeafSelector) -> IO [(ContributionID, VertialSpanBounds)]
-        getPos (cid, rs) = forM (unRanges rs) $ \(Range top bot) -> do
-          assertLeafSelector `mapM_` [top, bot]
-            -- (FIXME: this assertion should be compiled away in
-            -- production.  write a few assert functions that can do
-            -- that, and use one of those.)
-          topOffset    <- OffsetFromViewportTop  <$> getLeafSelectorBound LeafSelectorTop    top
-          bottomOffset <- OffsetFromViewportTop  <$> getLeafSelectorBound LeafSelectorBottom bot
-          scrollOffset <- ScrollOffsetOfViewport <$> js_getScrollOffset
-          let vertialSpanBounds = VertialSpanBounds
-                { _vertialSpanBoundsTop    = offsetFromDocumentTop topOffset    scrollOffset
-                , _vertialSpanBoundsBottom = offsetFromDocumentTop bottomOffset scrollOffset
-                }
-          pure (cid, vertialSpanBounds)
+        getPos (cid, rs) = fmap catMaybes . forM (unRanges rs) $ \(Range top bot) -> do
+          mb <- getLeafSelectorBound LeafSelectorTop top
+          case mb of
+            Nothing -> pure Nothing
+            Just _ -> Just <$> do
+              assertLeafSelector `mapM_` [top, bot]
+              -- (FIXME: this assertion should be compiled away in
+              -- production.  write a few assert functions that can do
+              -- that, and use one of those.)
+              topOffset    <- OffsetFromViewportTop  . fromJust <$> getLeafSelectorBound LeafSelectorTop    top
+              bottomOffset <- OffsetFromViewportTop  . fromJust <$> getLeafSelectorBound LeafSelectorBottom bot
+              scrollOffset <- ScrollOffsetOfViewport            <$> js_getScrollOffset
+              let vertialSpanBounds = VertialSpanBounds
+                    { _vertialSpanBoundsTop    = offsetFromDocumentTop topOffset    scrollOffset
+                    , _vertialSpanBoundsBottom = offsetFromDocumentTop bottomOffset scrollOffset
+                    }
+              pure (cid, vertialSpanBounds)
 
     SetAllVertialSpanBounds . concat <$> (getPos `mapM` Map.toList marks)
 
