@@ -410,7 +410,7 @@ specUserHandling = around createTestSession $ do
     describe "create" $ do
       it "works" $ \sess -> do
 
-        pendingWith "#291"
+        pendingWith "#291 (this happens probabilistically, do not un-pend just because it worked a few times for you!)"
 
         timeBefore <- getCurrentTimestamp
         u :: User <- runWaiJSON sess doCreate
@@ -427,7 +427,7 @@ specUserHandling = around createTestSession $ do
       context "with valid credentials" $ do
         it "works (and returns the cookie)" $ \sess -> do
 
-          -- see "#291"
+          pendingWith "#291 (this happens probabilistically, do not un-pend just because it worked a few times for you!)"
 
           resp <- runWai sess $ doCreate >> doLogin (Login userName userPass)
           respCode resp `shouldBe` 200
@@ -440,7 +440,7 @@ specUserHandling = around createTestSession $ do
       context "with invalid credentials" $ do
         it "works (and returns the cookie)" $ \sess -> do
 
-          pendingWith "#291"
+          pendingWith "#291 (this happens probabilistically, do not un-pend just because it worked a few times for you!)"
 
           resp <- runWai sess $ doCreate >> doLogin (Login userName "")
           respCode resp `shouldBe` 404
