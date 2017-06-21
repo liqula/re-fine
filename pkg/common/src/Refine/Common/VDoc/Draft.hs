@@ -102,7 +102,7 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base vers edits notes discussions) 
     marks = [ (contribID k, s)
             | (k, e) <- Map.toList edits
             , (diff, b) <- e ^. editSource . unEditSource
-            , b == base
+            , b == base ^. editID
             , s <- unRanges $ docEditRanges diff rawContent]
          <> (convertHack noteRange                               <$> Map.toList notes)
          <> (convertHack (compositeDiscussion . discussionRange) <$> Map.toList discussions)
