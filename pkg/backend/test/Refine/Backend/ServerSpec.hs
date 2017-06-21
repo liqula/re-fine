@@ -457,6 +457,13 @@ specVoting = around createTestSession $ do
         mkEdit sess
 
   describe "SPutSimpleVoteOnEdit" $ do
+    context "user is not logged in" $ do
+      it "request is rejected" $ \sess -> do
+        eid <- mkUserAndEdit sess
+        _ <- runWai sess $ post logoutUri ()
+        resp <- runWai sess . wput $ putVoteUri eid Yeay
+        respCode resp `shouldSatisfy` (>= 400)
+
     context "if current user *HAS NOT* voted on the edit before" $ do
       it "adds the current user's vote (and does nothing else)" $ \sess -> do
         eid <- mkUserAndEdit sess
@@ -476,6 +483,13 @@ specVoting = around createTestSession $ do
         votes `shouldBe` Map.fromList [(Nay, 1)]
 
   describe "SDeleteSimpleVoteOnEdit" $ do
+    context "user is not logged in" $ do
+      it "request is rejected" $ \sess -> do
+        eid <- mkUserAndEdit sess
+        _ <- runWai sess $ post logoutUri ()
+        resp <- runWai sess . wdel $ deleteVoteUri eid
+        respCode resp `shouldSatisfy` (>= 400)
+
     context "if there is such a vote" $ do
       it "removes that vote (and does nothing else)" $ \sess -> do
         eid <- mkUserAndEdit sess
