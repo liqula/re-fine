@@ -26,6 +26,7 @@ module Refine.Backend.AppSpec where
 import Refine.Backend.Prelude hiding (assert, check)
 
 import qualified Data.Map as Map
+import qualified Data.List.NonEmpty as NEL
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic
@@ -115,6 +116,34 @@ spec = do
             , AddEditToHead 0 sampleCreateEdit1
             ]
       runner . runIdentityT $ runProgram program `evalStateT` initVDocs
+
+  describe "### merging" . around provideAppRunner $ do
+    let vdoc = rawContentToVDocVersion . mkRawContent . NEL.fromList . map mkBlock
+
+    it "merge two edits" $ \(runner :: AppM DB UH () -> IO ()) -> do
+      runner $ do
+        doc <- App.createVDoc . CreateVDoc (Title "title...") (Abstract "abstract...") $ vdoc ["abc", "def"]
+        let eid = doc ^. vdocHeadEdit
+        eid1 <- fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc ["a.c", "def"]) Meaning
+        eid2 <- fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc ["abc", "d.f"]) Meaning
+        eidm <- fmap (^. editID) $ App.addMerge eid1 eid2
+        doc' <- App.getVDocVersion eidm
+        appIO $ doc' `shouldBe` vdoc ["a.c","d.f"]
+
+    it "rebase one edit to another" $ \(runner :: AppM DB UH () -> IO ()) -> do
+      runner $ do
+        doc <- App.createVDoc . CreateVDoc (Title "title...") (Abstract "abstract...") $ vdoc ["abc", "def"]
+        let eid = doc ^. vdocHeadEdit
+            vid = doc ^. vdocID
+        eid1 <- fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc ["a.c", "def"]) Meaning
+        eid2 <- fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc ["abc", "d.f"]) Meaning
+        App.rebaseToEdit eid1
+        d <- App.getVDoc vid
+        let hid = d ^. vdocHeadEdit
+        appIO $ hid `shouldBe` eid1
+        doc' <- App.getVDocVersion hid
+        appIO $ doc' `shouldBe` vdoc ["a.c","def"]
+
 
 -- * Program Runner interface
 

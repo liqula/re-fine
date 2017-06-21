@@ -154,7 +154,7 @@ rebaseToEdit eid = do
     let hid = vdoc ^. vdocHeadEdit
     DB.getEditChildren hid
   -- assert $ eid `elem` ch
-  forM_ ch $ addMerge eid
+  forM_ (filter (/= eid) ch) $ addMerge eid
 
 -- | Throw an error if chunk range does not fit 'VDocVersion' identified by edit.
 -- FIXME: for RawContent this still needs to be implemented.
