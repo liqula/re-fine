@@ -76,6 +76,15 @@ mkDocumentStateView c = DocumentStateView e c'
     e  = createWithContent $ convertFromRaw c
     c' = convertToRaw $ getCurrentContent e
 
+refreshDocumentStateView :: RawContent -> DocumentState -> DocumentState
+refreshDocumentStateView c = \case
+  DocumentStateView _ _                -> DocumentStateView e c'
+  DocumentStateDiff _ _ edit collapsed -> DocumentStateDiff e c' edit collapsed
+  DocumentStateEdit _ kind             -> DocumentStateEdit e kind
+  where
+    e  = createWithContent $ convertFromRaw c
+    c' = convertToRaw $ getCurrentContent e
+
 emptyDocumentState :: HasCallStack => DocumentState
 emptyDocumentState = mkDocumentStateView emptyRawContent
 
