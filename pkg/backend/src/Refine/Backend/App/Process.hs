@@ -68,7 +68,7 @@ addProcessCollabEdit aice = do
       , _createDBCollabEditProcessGroupID = gid
       , _createDBCollabEditProcessVDocID  = vdoc ^. vdocID
       }
-  cvdoc <- getCompositeVDoc (vdoc ^. vdocID)
+  cvdoc <- getCompositeVDocOnHead (vdoc ^. vdocID)
   pure (process, cvdoc)
 
 -- | FIXME: currently, 'changeProcess' allows to overwrite the process data completely, but we

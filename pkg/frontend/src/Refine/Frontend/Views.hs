@@ -89,8 +89,8 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           mainHeader_ rs
 
           -- components that are only temporarily visible:
-          showNote_ $ showNoteProps (vdoc ^. compositeVDocNotes) rs
-          showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocDiscussions) rs
+          showNote_ $ showNoteProps (vdoc ^. compositeVDocApplicableNotes) rs
+          showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocApplicableDiscussions) rs
           addComment_ __ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogComment)
                               (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
@@ -110,9 +110,9 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                                      (rs ^. gsContributionState . csCurrentSelectionWithPx)
                                      (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
-                                     (fltr (vdoc ^. compositeVDocDiscussions))
-                                     (fltr (vdoc ^. compositeVDocNotes))
-                                     (fltr (vdoc ^. compositeVDocEdits))
+                                     (fltr (vdoc ^. compositeVDocApplicableDiscussions))
+                                     (fltr (vdoc ^. compositeVDocApplicableNotes))
+                                     (fltr (vdoc ^. compositeVDocApplicableEdits))
                                      (rs ^. gsContributionState . csBubblePositioning)
                                      (rs ^. gsContributionState . csQuickCreateShowState)
 

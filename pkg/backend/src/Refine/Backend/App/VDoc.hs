@@ -52,7 +52,7 @@ listVDocs = do
 
 -- | Create 'VDoc' and return the corresponding 'CompositeVDoc'.
 createVDocGetComposite :: Create VDoc -> App CompositeVDoc
-createVDocGetComposite = (getCompositeVDoc . view vdocID) <=< createVDoc
+createVDocGetComposite = (getCompositeVDocOnHead . view vdocID) <=< createVDoc
 
 -- | Creates a 'VDoc'.  See also: 'createVDocGetComposite'.
 createVDoc :: Create VDoc -> App VDoc
@@ -71,20 +71,28 @@ getVDocVersion eid = do
   appLog "getVDocVersion"
   db $ DB.getVersion eid
 
-getCompositeVDoc :: ID VDoc -> App CompositeVDoc  -- FUTUREWORK: take an edit id here, and implement getHeadCompositeVDoc in terms of that.
-getCompositeVDoc vid = do
+getCompositeVDocOnHead :: ID VDoc -> App CompositeVDoc
+getCompositeVDocOnHead vid = do
+  vdoc <- db $ DB.getVDoc vid
+  getCompositeVDoc' vdoc (vdoc ^. vdocHeadEdit)
+
+getCompositeVDoc :: ID VDoc -> ID Edit -> App CompositeVDoc
+getCompositeVDoc vdocid editid = do
+  vdoc <- db $ DB.getVDoc vdocid
+  getCompositeVDoc' vdoc editid
+
+getCompositeVDoc' :: VDoc -> ID Edit -> App CompositeVDoc
+getCompositeVDoc' vdoc editid = do
   appLog "getCompositeVDoc"
-  vdoc     <- db $ DB.getVDoc vid
-  let headid = vdoc ^. vdocHeadEdit
-  comments <- db $ DB.editComments headid
+  edit <- db $ DB.getEdit editid
+  comments <- db $ DB.editComments editid
   let commentNotes       = catMaybes $ (^? _CommentNote)       <$> filter (has _CommentNote)       comments
       commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
-
-  edits <- db $ mapM DB.getEdit =<< DB.getEditChildren headid
-  version <- db $ DB.getVersion headid
+  edits <- db $ mapM DB.getEdit =<< DB.getEditChildren editid
+  version <- db $ DB.getVersion editid
   pure $
     CompositeVDoc
-      vdoc headid version
+      vdoc edit version
       (toMap editID edits)
       (toMap noteID commentNotes)
       (toMap (compositeDiscussion . discussionID) commentDiscussions)

@@ -47,7 +47,6 @@ module Refine.Common.Types.Core
 import Refine.Common.Prelude
 
 import           Control.DeepSeq
-import           Control.Lens (Getter)
 import           Data.Int
 import qualified Data.HashMap.Lazy as HashMap
 import qualified Data.IntMap as IntMap
@@ -135,38 +134,19 @@ type instance Create Edit = CreateEdit
 
 -- ** composites
 
--- | Packaged vdoc ready for use by client.
---
--- - morally we have three phases in working on a document: (1) add comments and edits, (2) merge a
---   bunch of edits and (3) create a new version.
---
--- - what follows from this:
---     - there are no edits on edits that we need to display
---     - it's ok to only display edits on head, not on any other version
---     - same for comments: comments collect on head, then then are discarded in (2), (3).
---
--- - if we try to consider comments, edits, ... on other versions than head, we are in trouble.
+-- | Packaged vdoc ready for use by client.  "Applicable
+-- contributions" fields only contain contributions made to (or
+-- rebased to) "this version".  (More info can easily be added,
+-- though.)
 data CompositeVDoc = CompositeVDoc
-  { _compositeVDoc            :: VDoc
-  , _compositeVDocEditID      :: ID Edit
-  , _compositeVDocVersion     :: VDocVersion
-  , _compositeVDocEdits       :: Map (ID Edit) Edit
-  , _compositeVDocNotes       :: Map (ID Note) Note
-  -- , _compositeVDocQuestions   :: [Question]  -- will be due in #99
-  , _compositeVDocDiscussions :: Map (ID Discussion) CompositeDiscussion
+  { _compositeVDoc                      :: VDoc
+  , _compositeVDocThisEdit              :: Edit
+  , _compositeVDocThisVersion           :: VDocVersion
+  , _compositeVDocApplicableEdits       :: Map (ID Edit) Edit
+  , _compositeVDocApplicableNotes       :: Map (ID Note) Note
+  , _compositeVDocApplicableDiscussions :: Map (ID Discussion) CompositeDiscussion
   }
   deriving (Eq, Show, Generic)
-
--- | Assumption: _compositeVDocEditID references only edits that exist in _compositeVDocEdits.
-compositeVDocEdit :: Getter CompositeVDoc Edit
-compositeVDocEdit f vdoc = outof <$> f (into vdoc)
-  where
-    into :: CompositeVDoc -> Edit
-    into vdoc_ = fromMaybe (error "compositeVDocEdit")  -- TODO: if you try to view an edit (in diff view), this error happens.  why?
-              $ Map.lookup (_compositeVDocEditID vdoc_) (_compositeVDocEdits vdoc_)
-
-    outof :: Edit -> CompositeVDoc
-    outof edit = vdoc { _compositeVDocEditID = _miID . _editMetaID $ edit }
 
 
 -- * Contribution
@@ -704,6 +684,9 @@ vdocID = vdocMetaID . miID
 
 editID :: Lens' Edit (ID Edit)
 editID = editMetaID . miID
+
+compositeVDocThisEditID :: Lens' CompositeVDoc (ID Edit)
+compositeVDocThisEditID = compositeVDocThisEdit . editID
 
 blockText :: Lens' (Block rangeKey blockKey) ST
 blockText = blockText'

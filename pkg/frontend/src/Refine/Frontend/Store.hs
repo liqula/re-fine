@@ -176,17 +176,17 @@ vdocUpdate action Nothing = case action of
 vdocUpdate action (Just vdoc) = Just $ case action of
     AddDiscussion discussion
       -> vdoc
-          & C.compositeVDocDiscussions
+          & C.compositeVDocApplicableDiscussions
               %~ M.insert (discussion ^. C.compositeDiscussion . C.discussionID) discussion
 
     AddNote note
       -> vdoc
-          & C.compositeVDocNotes
+          & C.compositeVDocApplicableNotes
               %~ M.insert (note ^. C.noteID) note
 
     AddEdit edit
       -> vdoc
-          & C.compositeVDocEdits
+          & C.compositeVDocApplicableEdits
               %~ M.insert (edit ^. C.editID) edit
 
     _ -> vdoc
@@ -255,7 +255,7 @@ emitBackendCallsFor action st = case action of
     DocumentAction (DocumentSave desc) -> case st ^. gsDocumentState of
       dstate@(DocumentStateEdit _ kind) -> do
         let eid :: C.ID C.Edit
-            eid = st ^?! gsVDoc . _Just . C.compositeVDocEditID
+            eid = st ^?! gsVDoc . _Just . C.compositeVDocThisEditID
 
             cedit :: C.Create C.Edit
             cedit = C.CreateEdit

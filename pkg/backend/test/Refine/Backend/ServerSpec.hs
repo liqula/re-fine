@@ -184,7 +184,7 @@ addUserAndLogin sess username = runWai sess $ do
 mkEdit :: TestBackend uh -> IO (ID Edit)
 mkEdit sess = do
   fe :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
-  pure $ fe ^. compositeVDocEditID
+  pure $ fe ^. compositeVDocThisEditID
 
 mkUserAndEdit :: TestBackend uh -> IO (ID Edit)
 mkUserAndEdit sess = do
@@ -278,7 +278,7 @@ specMockedLogin = around createDevModeTestSession $ do
   describe "sCreateVDoc" $ do
     it "stores a vdoc in the db" $ \sess -> do
       fe :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
-      be :: CompositeVDoc <- runDB  sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
+      be :: CompositeVDoc <- runDB  sess $ getCompositeVDocOnHead (fe ^. compositeVDoc . vdocID)
       fe `shouldBe` be
 
   describe "sAddNote" $ do
@@ -293,8 +293,8 @@ specMockedLogin = around createDevModeTestSession $ do
             (addNoteUri (fe_ ^. compositeVDoc . vdocHeadEdit))
             (CreateNote "[note]" True (Range cp1 cp2))
         liftIO $ do
-          be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe_ ^. compositeVDoc . vdocID)
-          be ^. compositeVDocNotes . to Map.elems `shouldContain` [fn_]
+          be :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (fe_ ^. compositeVDoc . vdocID)
+          be ^. compositeVDocApplicableNotes . to Map.elems `shouldContain` [fn_]
 
     it "stores note with non-trivial valid chunk range" $ \sess -> do
       runWai sess $ do
@@ -308,8 +308,8 @@ specMockedLogin = around createDevModeTestSession $ do
           (CreateNote "[note]" True (Range cp1 cp2))
 
         liftIO $ do
-          be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe_ ^. compositeVDoc . vdocID)
-          be ^. compositeVDocNotes . to Map.elems `shouldContain` [fn_]
+          be :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (fe_ ^. compositeVDoc . vdocID)
+          be ^. compositeVDocApplicableNotes . to Map.elems `shouldContain` [fn_]
 
     it "fails with error on non-trivial *invalid* chunk range" $ \sess -> do
       vdoc :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
@@ -326,8 +326,8 @@ specMockedLogin = around createDevModeTestSession $ do
       respCode resp `shouldBe` 409
       cs (simpleBody resp) `shouldContain` ("ChunkRangeBadDataUID" :: String)
 
-      vdoc' :: CompositeVDoc <- runDB sess $ getCompositeVDoc (vdoc ^. compositeVDoc . vdocID)
-      vdoc' ^. compositeVDocNotes `shouldBe` mempty
+      vdoc' :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (vdoc ^. compositeVDoc . vdocID)
+      vdoc' ^. compositeVDocApplicableNotes `shouldBe` mempty
 
   describe "sAddDiscussion" $ do
     it "stores discussion with no ranges" $ \sess -> do
@@ -343,8 +343,8 @@ specMockedLogin = around createDevModeTestSession $ do
             (CreateDiscussion "[discussion initial statement]" True (Range cp1 cp2))
 
         liftIO $ do
-          be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe_ ^. compositeVDoc . vdocID)
-          be ^. compositeVDocDiscussions . to Map.elems `shouldContain` [fn_]
+          be :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (fe_ ^. compositeVDoc . vdocID)
+          be ^. compositeVDocApplicableDiscussions . to Map.elems `shouldContain` [fn_]
 
   describe "sAddStatement" $ do
     it "stores statement for given discussion" $ \_sess -> do
@@ -391,8 +391,8 @@ specMockedLogin = around createDevModeTestSession $ do
       it "stores an edit and returns it in the list of edits applicable to its base" $ \sess -> do
         pendingWith "applicableEdits is not implemented."
         (fe, fp) <- setup sess
-        be :: CompositeVDoc <- runDB sess $ getCompositeVDoc (fe ^. compositeVDoc . vdocID)
-        be ^. compositeVDocEdits . to Map.elems`shouldContain` [fp]
+        be :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (fe ^. compositeVDoc . vdocID)
+        be ^. compositeVDocApplicableEdits . to Map.elems`shouldContain` [fp]
 
 specUserHandling :: Spec
 specUserHandling = around createTestSession $ do

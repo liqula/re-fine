@@ -90,7 +90,7 @@ type MonadRefine db uh =
 refineApi :: MonadRefine db uh => ServerT RefineAPI (AppM db uh)
 refineApi =
        Refine.Backend.App.listVDocs
-  :<|> Refine.Backend.App.getCompositeVDoc
+  :<|> Refine.Backend.App.getCompositeVDocOnHead
   :<|> Refine.Backend.App.createVDocGetComposite
   :<|> Refine.Backend.App.addEdit
   :<|> Refine.Backend.App.addNote
