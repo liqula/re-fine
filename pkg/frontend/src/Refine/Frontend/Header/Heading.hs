@@ -103,37 +103,36 @@ mainHeaderlComponentDidMount _propsandstate ldom _ = calcHeaderHeight ldom
 
 mainHeaderRender :: HasCallStack => () -> GlobalState -> ReactElementM (StatefulViewEventHandler a) ()
 mainHeaderRender () rs = do
-      let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsVDoc . _Just
-      div_ ["className" $= "c-fullheader"] $ do
-          -- the following need to be siblings because of the z-index handling
-          div_ ["className" $= "c-mainmenu__bg" {-, "role" $= "navigation" -}] mempty
-          {- header_ ["role" $= "banner"] $ do -}
-          topMenuBar_ (TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser))
+  let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsVDoc . _Just
+  div_ ["className" $= "c-fullheader"] $ do
+      -- the following need to be siblings because of the z-index handling
+      div_ ["className" $= "c-mainmenu__bg" {-, "role" $= "navigation" -}] mempty
+      {- header_ ["role" $= "banner"] $ do -}
+      topMenuBar_ (TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser))
 
-          documentHeader_ $ do
-            let doc = DocumentHeaderProps
-                  (vdoc ^. compositeVDoc . vdocTitle)
-                  (vdoc ^. compositeVDoc . vdocAbstract)
+      documentHeader_ $ do
+        let doc = DocumentHeaderProps
+              (vdoc ^. compositeVDoc . vdocTitle)
+              (vdoc ^. compositeVDoc . vdocAbstract)
 
-                edit = DocumentHeaderProps
-                  (vdoc ^. compositeVDoc . vdocTitle)
-                  (editDescToAbstract vdoc (rs ^?! gsContributionState . csDisplayedContributionID . _Just))
+            edit = DocumentHeaderProps
+              (vdoc ^. compositeVDoc . vdocTitle)
+              (editDescToAbstract vdoc (rs ^?! gsContributionState . csDisplayedContributionID . _Just))
 
-            case rs ^. gsDocumentState of
-                DocumentStateView {} -> doc
-                DocumentStateDiff {} -> edit
-                DocumentStateEdit {} -> doc
+        case rs ^. gsDocumentState of
+            DocumentStateView {} -> doc
+            DocumentStateDiff {} -> edit
+            DocumentStateEdit {} -> doc
 
-          div_ ["className" $= "c-fulltoolbar"] $ do
-            sticky_ [RF.on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
-              case rs ^. gsDocumentState of
-                DocumentStateView {} -> toolbar_
-                DocumentStateDiff {} -> diffToolbar_ $ DiffToolbarProps
-                  (vdoc ^. compositeVDocThisEditID)
-                  (vdoc ^. compositeVDocThisEdit . editVotes . to votesToCount)
-                DocumentStateEdit {} -> editToolbar_ (mkEditToolbarProps rs)
-              commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
-
+      div_ ["className" $= "c-fulltoolbar"] $ do
+        sticky_ [RF.on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
+          case rs ^. gsDocumentState of
+            DocumentStateView {} -> toolbar_
+            DocumentStateDiff {} -> diffToolbar_ $ DiffToolbarProps
+              (vdoc ^. compositeVDocThisEditID)
+              (vdoc ^. compositeVDocThisEdit . editVotes . to votesToCount)
+            DocumentStateEdit {} -> editToolbar_ (mkEditToolbarProps rs)
+          commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
 
 mainHeader_ :: GlobalState -> ReactElementM eventHandler ()
 mainHeader_ props = RF.view mainHeader props mempty
