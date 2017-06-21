@@ -90,10 +90,6 @@ Statement
     text        Text
     parent      StatementId Maybe
 
-Vote
-    value       Text
-    owner       LoginId
-
 -- Groups
 
 Group
@@ -164,11 +160,6 @@ PN
     edit       EditId
     note        NoteId
     UniPN edit note
-
-PV
-    edit       EditId
-    vote        VoteId
-    UniPV edit vote
 |]
 
 
@@ -201,7 +192,6 @@ makeElim ''Question
 makeElim ''Answer
 makeElim ''Discussion
 makeElim ''Statement
-makeElim ''Vote
 
 makeElim ''Group
 makeElim ''SubGroup
@@ -213,4 +203,3 @@ makeElim ''PN
 makeElim ''PQ
 makeElim ''PD
 makeElim ''DS
-makeElim ''PV
