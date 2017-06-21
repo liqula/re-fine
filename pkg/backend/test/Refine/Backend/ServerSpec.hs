@@ -416,6 +416,7 @@ specUserHandling = around createTestSession $ do
           respCode resp `shouldBe` 200
           checkCookie resp
 
+          pendingWith "see fixme in runDB'"
           user <- runDB sess App.currentUser
           user `shouldSatisfy` isJust
 
@@ -445,7 +446,7 @@ specVoting :: Spec
 specVoting = around createTestSession $ do
 
   let addUserAndLogin sess username = runWai sess $ do
-        void . post createUserUri $ CreateUser username "mail@email.com" "password"
+        void . post createUserUri $ CreateUser username (username <> "@email.com") "password"
         void . post loginUri $ Login username "password"
 
       mkEdit sess = do
