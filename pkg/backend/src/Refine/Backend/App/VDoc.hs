@@ -119,7 +119,7 @@ addEdit baseeid edit = do
             --   reading: not a valid json value'.
         OT.diff (deleteMarksFromRawContent olddoc)
                 (deleteMarksFromRawContent . rawContentFromVDocVersion $ edit ^. createEditVDoc)
-    childEdit <- DB.createEdit rid (EditOfEdit dff baseeid) edit
+    childEdit <- DB.createEdit rid (EditSource [(dff, baseeid)]) edit
     pure childEdit
 
 

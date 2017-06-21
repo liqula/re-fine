@@ -39,7 +39,7 @@ import qualified Data.Text as ST
 import Refine.Common.Types.Core
 import Refine.Common.Types.Contribution
 import Refine.Common.Types.Comment
-import Refine.Common.VDoc.OT (docRanges)
+import Refine.Common.VDoc.OT (docRanges, docEditRanges)
 
 
 -- * functions
@@ -92,14 +92,18 @@ rangeIsEmpty rc = isEmptyRange . fmap (toStylePosition rc)
 -- * vdoc
 
 rawContentFromCompositeVDoc :: CompositeVDoc -> RawContent
-rawContentFromCompositeVDoc (CompositeVDoc _ _ vers edits notes discussions) =
+rawContentFromCompositeVDoc (CompositeVDoc _ base vers edits notes discussions) =
   addMarksToRawContent marks rawContent
   where
     rawContent = rawContentFromVDocVersion vers
     convertHack l (k, v) = (contribID k, v ^. l)
 
     marks :: [(ContributionID, Range Position)]
-    marks = [(contribID k, s) | (k, e) <- Map.toList edits, s <- NEL.toList $ e ^. editRanges]
+    marks = [ (contribID k, s)
+            | (k, e) <- Map.toList edits
+            , (diff, b) <- e ^. editSource . unEditSource
+            , b == base
+            , s <- unRanges $ docEditRanges diff rawContent]
          <> (convertHack noteRange                               <$> Map.toList notes)
          <> (convertHack (compositeDiscussion . discussionRange) <$> Map.toList discussions)
 
@@ -129,6 +133,7 @@ deleteMarksFromBlockIf p = blockStyles %~ List.filter (p' . snd)
     p' (Mark cid) = not (p cid)
     p' _          = True
 
+-- FIXME: change type :: Map ContributionID (Ranges StylePosition) -> RawContent -> RawContent
 addMarksToRawContent :: [(ContributionID, Range Position)] -> RawContent -> RawContent
 addMarksToRawContent marks rc = joinStyles . RawContentSeparateStyles txts $ foldl' addStyle stys marks
   where

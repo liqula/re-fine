@@ -99,16 +99,12 @@ newtype Abstract = Abstract { _unAbstract :: ST }
 newtype VDocVersion = VDocVersion { _unVDocVersion :: ST }
   deriving (Eq, Ord, Show, Generic, Monoid)
 
-data EditSource a =
-    InitialEdit
-  | EditOfEdit (OT.Edit RawContent) a
-  | MergeOfEdits a a
-  deriving (Eq, Show, Generic, Functor)
+newtype EditSource a = EditSource { _unEditSource :: [(OT.Edit RawContent, a)] }
+  deriving (Eq, Show, Generic, Functor, Monoid)
 
 data Edit = Edit
   { _editMetaID :: MetaID Edit
   , _editDesc   :: ST
-  , _editRanges :: NonEmpty (Range Position) -- ^ could be @(Ranges Position)@ if empty is ok.
   , _editKind   :: EditKind
   , _editSource :: EditSource (ID Edit)
   , _editVotes  :: Votes

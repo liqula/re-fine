@@ -58,7 +58,6 @@ VDoc
 
 Edit
     desc        Text
-    range       RangePositions
     editVDoc    VDocVersion
     repository  VDocId
     kind        EditKind
