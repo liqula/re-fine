@@ -26,7 +26,7 @@ module Refine.Frontend.Header.DiffToolbar where
 
 import Refine.Frontend.Prelude
 
-import Control.Lens (ix)
+import qualified Data.Map as Map
 
 import Refine.Common.Types
 import Refine.Frontend.Contribution.Types
@@ -57,7 +57,7 @@ diffToolbar = mkView "DiffToolbar" $ \props -> do
                 Yeay -> "up ("   <> count Yeay <> ")"
                 Nay  -> "down (" <> count Nay  <> ")"
                 where
-                  count v = cs . show $ vs ^?! ix v
+                  count v = cs . show . fromMaybe 0 $ Map.lookup v vs
                   vs = props ^. diffToolbarPropsVotes
 
           ibutton_ $ emptyIbuttonProps "Vote_positive" [ContributionAction $ ToggleVoteOnContribution (props ^. diffToolbarPropsEditID) Yeay]
