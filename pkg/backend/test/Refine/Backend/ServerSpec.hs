@@ -26,7 +26,6 @@ module Refine.Backend.ServerSpec where
 import Refine.Backend.Prelude hiding (Header)
 
 import           Control.Concurrent.MVar
-import qualified Control.Monad.State as State
 import qualified Data.ByteString as SBS
 import qualified Data.Map as Map
 import           Data.List.NonEmpty (NonEmpty((:|)))
