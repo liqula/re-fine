@@ -25,7 +25,6 @@ import Refine.Common.Prelude
 import Refine.Common.Types
 import Refine.Common.ChangeAPI
 
-
 data ApiError
   = ApiUnknownError ST
   | ApiVDocVersionError
@@ -40,6 +39,8 @@ data ApiError
   | ApiUserHandleError ST
   | ApiL10ParseErrors [ST]
   | ApiUnauthorized
+  | ApiMergeError
+  | ApiRebaseError
   deriving (Eq, Show, Generic)
 
 data ApiErrorCreateUser

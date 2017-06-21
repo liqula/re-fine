@@ -26,6 +26,7 @@ class Database db where
   createVDoc         :: Create VDoc -> VDocVersion -> db VDoc
   getVDoc            :: ID VDoc -> db VDoc
   vdocOfEdit         :: ID Edit -> db (ID VDoc)
+  moveVDocHead       :: ID VDoc -> ID Edit -> db ()
 
   -- Repo
   getEditIDs         :: ID VDoc -> db [ID Edit]
@@ -39,8 +40,6 @@ class Database db where
   editDiscussions    :: ID Edit -> db [ID Discussion]
   updateVotes        :: ID Edit -> (Votes -> Votes) -> db ()
   getVoteCount       :: ID Edit -> db VoteCount
-
-  -- FIXME: This information should come from DocRepo.
   getEditChildren    :: ID Edit -> db [ID Edit]
 
   -- Note

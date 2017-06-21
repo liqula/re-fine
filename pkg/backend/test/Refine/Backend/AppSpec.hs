@@ -26,6 +26,7 @@ module Refine.Backend.AppSpec where
 import Refine.Backend.Prelude hiding (assert, check)
 
 import qualified Data.Map as Map
+import qualified Data.List.NonEmpty as NEL
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Monadic
@@ -115,6 +116,40 @@ spec = do
             , AddEditToHead 0 sampleCreateEdit1
             ]
       runner . runIdentityT $ runProgram program `evalStateT` initVDocs
+
+  describe "merging" . around provideAppRunner $ do
+    let vdoc = rawContentToVDocVersion . mkRawContent . NEL.fromList . map mkBlock
+
+        docWithEdits v0 vs = do
+          doc <- App.createVDoc . CreateVDoc (Title "title...") (Abstract "abstract...") $ vdoc v0
+          let eid = doc ^. vdocHeadEdit
+              vid = doc ^. vdocID
+          es <- forM vs $ \v -> fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc v) Meaning
+          pure (vid, es)
+
+    it "merge two edits" $ \(runner :: AppM DB UH () -> IO ()) -> do
+      runner $ do
+        (_, [eid1, eid2]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"]]
+        eidm <- (^. editID) <$> App.addMerge eid1 eid2
+        doc' <- App.getVDocVersion eidm
+        appIO $ doc' `shouldBe` vdoc ["a.c","d.f"]
+
+    it "rebase one edit to two other edits" $ \(runner :: AppM DB UH () -> IO ()) -> do
+      runner $ do
+        (vid, [eid1, _, _]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"], ["abX", "def"]]
+        App.rebaseHeadToEdit eid1
+        d <- App.getVDoc vid
+        let hid = d ^. vdocHeadEdit
+        appIO $ hid `shouldBe` eid1
+        cv <- App.getCompositeVDoc vid hid
+        appIO $ cv ^. compositeVDocThisVersion `shouldBe` vdoc ["a.c", "def"]
+        appIO $ Map.size (cv ^. compositeVDocApplicableEdits) `shouldBe` 2
+        let [ee0, ee1] = Map.keys $ cv ^. compositeVDocApplicableEdits
+        docA <- App.getVDocVersion ee0
+        appIO $ docA `shouldBe` vdoc ["a.c","d.f"]
+        docB <- App.getVDocVersion ee1
+        appIO $ docB `shouldBe` vdoc ["aX.","def"]   -- FIXME: the merge result is strange
+
 
 -- * Program Runner interface
 

@@ -91,9 +91,9 @@ documentRender() props = liftViewToStateHandler $ do
             then hideUnchangedParts rc 0 0  -- FUTUREWORK: make these numbers adjustable by the user
             else rc
 
-          diffit InitialEdit           = error "impossible"
-          diffit MergeOfEdits{}        = error "not implemented"
-          diffit (EditOfEdit otedit _) = showEditAsRawContent otedit
+          -- FIXME: show the relevant diff
+          diffit (EditSource []) = Nothing
+          diffit (EditSource ((otedit, _): _)) = showEditAsRawContent otedit
                                        . deleteMarksFromRawContent  -- (edit inline styles do not work in combination with marks.)
                                      <$> (dstate ^? documentStateContent)
 

@@ -42,7 +42,7 @@ import qualified Refine.Backend.Database.Class as DB
 import           Refine.Common.Allow
 import           Refine.Common.Types
 import qualified Refine.Common.OT as OT
-import           Refine.Common.VDoc.Draft (rawContentFromVDocVersion, deleteMarksFromRawContent)
+import           Refine.Common.VDoc.Draft
 
 
 listVDocs :: App [VDoc]
@@ -119,9 +119,41 @@ addEdit baseeid edit = do
             --   reading: not a valid json value'.
         OT.diff (deleteMarksFromRawContent olddoc)
                 (deleteMarksFromRawContent . rawContentFromVDocVersion $ edit ^. createEditVDoc)
-    childEdit <- DB.createEdit rid (EditOfEdit dff baseeid) edit
-    pure childEdit
+    DB.createEdit rid (EditSource [(dff, baseeid)]) edit
 
+addMerge :: (MonadApp db uh) => ID Edit -> ID Edit -> AppM db uh Edit
+addMerge eid1 eid2 = do
+  appLog $ "merge " <> show eid1 <> " with " <> show eid2
+  (maybe (throwError $ AppMergeError eid1 eid2) pure =<<) . db $ do
+    rid <- DB.vdocOfEdit eid1
+    -- rid' <- DB.vdocOfEdit eid2
+    -- assert $ rid' == rid
+    edit1 <- DB.getEdit eid1
+    edit2 <- DB.getEdit eid2
+    case [ (d1, e1, e2)
+         | (e1, d1) <- edit1 ^. editSource . unEditSource
+         , (e2, d2) <- edit2 ^. editSource . unEditSource
+         , d1 == d2
+         ] of
+      [(d, e1, e2)] -> Just <$> do
+        doc  <- rawContentFromVDocVersion <$> DB.getVersion d
+        let (diff1, diff2) = OT.merge doc e1 e2
+            newdoc = OT.patch (e1 <> diff1) doc
+        DB.createEdit rid (EditSource [(diff1, eid1), (diff2, eid2)])
+          $ CreateEdit "merge" (rawContentToVDocVersion newdoc) EKMerge
+      _ -> pure Nothing
+
+rebaseHeadToEdit :: (MonadApp db uh) => ID Edit -> AppM db uh ()
+rebaseHeadToEdit eid = do
+  appLog $ "rebase to " <> show eid
+  ch <- db $ do
+    rid <- DB.vdocOfEdit eid
+    vdoc <- DB.getVDoc rid
+    DB.moveVDocHead rid eid
+    let hid = vdoc ^. vdocHeadEdit
+    DB.getEditChildren hid
+  when (eid `notElem` ch) . throwError $ AppRebaseError eid
+  forM_ (filter (/= eid) ch) $ addMerge eid
 
 -- | Throw an error if chunk range does not fit 'VDocVersion' identified by edit.
 -- FIXME: for RawContent this still needs to be implemented.
@@ -136,10 +168,27 @@ withCurrentUser f = do
     Nothing -> throwError AppUnauthorized
 
 putSimpleVoteOnEdit :: (MonadApp db uh) => ID Edit -> Vote -> AppM db uh ()
-putSimpleVoteOnEdit eid v = withCurrentUser $ \user -> db . DB.updateVotes eid $ Map.insert user v
+putSimpleVoteOnEdit eid v = withCurrentUser $ \user -> changeSimpleVoteOnEdit eid $ Map.insert user v
 
 deleteSimpleVoteOnEdit :: (MonadApp db uh) => ID Edit -> AppM db uh ()
-deleteSimpleVoteOnEdit eid = withCurrentUser $ \user -> db . DB.updateVotes eid $ Map.delete user
+deleteSimpleVoteOnEdit eid = withCurrentUser $ changeSimpleVoteOnEdit eid . Map.delete
+
+atLeastOneUpvote :: VoteCount -> Bool
+atLeastOneUpvote vc = fromMaybe 0 (Map.lookup Yeay vc) >= 1
+
+rebasePossible :: (Monad db, DB.Database db) => ID Edit -> db Bool
+rebasePossible eid = do
+  vd <- (^. vdocHeadEdit) <$> (DB.vdocOfEdit eid >>= DB.getVDoc)
+  ed <- DB.getEdit eid
+  pure $ vd `elem` (snd <$> (ed ^. editSource . unEditSource))
+
+changeSimpleVoteOnEdit :: (MonadApp db uh) => ID Edit -> (Votes -> Votes) -> AppM db uh ()
+changeSimpleVoteOnEdit eid f = do
+  mkrebase <- db $ do
+    DB.updateVotes eid f
+    vs <- DB.getVoteCount eid
+    if atLeastOneUpvote vs then rebasePossible eid else pure False
+  when mkrebase $ rebaseHeadToEdit eid
 
 getSimpleVotesOnEdit :: (MonadApp db uh) => ID Edit -> AppM db uh VoteCount
 getSimpleVotesOnEdit eid = db $ DB.getVoteCount eid

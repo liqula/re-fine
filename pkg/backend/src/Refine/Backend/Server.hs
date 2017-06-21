@@ -193,6 +193,7 @@ toServantError = Nat ((lift . runExceptT) >=> leftToError fromAppError)
     traceShow' :: (Show a) => a -> b -> b
     traceShow' a = trace ("toServantError: " <> show a)
 
+-- FIXME: review this; is this really needed?
 toApiError :: AppError -> ApiError
 toApiError = \case
   AppUnknownError e      -> ApiUnknownError e
@@ -207,6 +208,8 @@ toApiError = \case
   AppUserHandleError e   -> ApiUserHandleError . cs $ show e
   AppL10ParseErrors e    -> ApiL10ParseErrors e
   AppUnauthorized        -> ApiUnauthorized
+  AppMergeError{}        -> ApiMergeError
+  AppRebaseError{}       -> ApiRebaseError
 
 -- | so we don't have to export backend types to the frontend.
 createUserErrorToApiError :: CreateUserError -> ApiErrorCreateUser
@@ -230,6 +233,8 @@ appServantErr = \case
   AppUserHandleError _     -> err500
   AppL10ParseErrors _      -> err500
   AppUnauthorized          -> err403
+  AppMergeError{}          -> err500
+  AppRebaseError{}         -> err500
 
 dbServantErr :: DBError -> ServantErr
 dbServantErr = \case

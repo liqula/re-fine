@@ -29,7 +29,6 @@ module Refine.Backend.Database.Entity where
 
 import Refine.Backend.Prelude as P hiding (get)
 
-import qualified Data.List.NonEmpty as NEL
 import           Database.Persist (get)
 import           Database.Persist.Sql (SqlBackend)
 import           Lentil.Core (entityLens)
@@ -42,8 +41,6 @@ import           Refine.Backend.Database.Types
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
-import           Refine.Common.VDoc.Draft (rawContentFromVDocVersion, maximumRange)
-import           Refine.Common.VDoc.OT (docEditRanges)
 import           Refine.Prelude (nothingToError, Timestamp, getCurrentTimestamp)
 
 -- FIXME: Generate this as the part of the lentil library.
@@ -124,6 +121,11 @@ updateVDoc :: ID VDoc -> VDoc -> DB ()
 updateVDoc vid vdoc = do
   record <- vDocToRecord vdoc
   liftDB $ replace (S.idToKey vid) record
+  modifyMetaID vid
+
+moveVDocHead :: ID VDoc -> ID Edit -> DB ()
+moveVDocHead vid eid = do
+  liftDB $ update (S.idToKey vid) [S.VDocHeadId =. Just (S.idToKey eid)]
   modifyMetaID vid
 
 vdocDBLens :: EntityLens' DB (ID VDoc) VDoc
@@ -218,7 +220,7 @@ createVDoc pv vdoc = do
         (pv ^. createVDocAbstract)
         Nothing -- hack: use a dummy key which will be replaced by a proper one before createVDoc returns
   mid <- createMetaID svdoc
-  e <- createEdit (mid ^. miID) InitialEdit CreateEdit
+  e <- createEdit (mid ^. miID) mempty CreateEdit
     { _createEditDesc   = "initial document version"
     , _createEditVDoc   = vdoc
     , _createEditKind   = Initial
@@ -239,37 +241,17 @@ getEditIDs vid = liftDB $ S.keyToId . entityKey <$$> selectList [S.EditRepositor
 
 createEdit :: ID VDoc -> EditSource (ID Edit) -> CreateEdit -> DB Edit
 createEdit rid me ce = do
-  sels <- case me of
-    InitialEdit{} ->
-      pure []
-    EditOfEdit edit parent -> do
-      doc <- rawContentFromVDocVersion <$> getVersion parent
-      pure . unRanges $ docEditRanges edit doc
-    MergeOfEdits{} -> error "not implemented"
-  let sels' = NEL.fromList $
-         if null sels
-         then [maximumRange rc]
-         else sels
-      rc = fromMaybe e . decode . cs $ ce ^. createEditVDoc . unVDocVersion
-        where e = error "Invalid VDocVersion in CreateEdit!"  -- #312 should elimiate the possibility of this
   mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
-            (RangePositions sels')
             (ce ^. createEditVDoc)
             (S.idToKey rid)
             (ce ^. createEditKind)
             (DBVotes mempty)
-  liftDB $ case me of
-    InitialEdit -> pure ()
-    EditOfEdit edit parent -> do
-      void . insert $ S.ParentChild (S.idToKey parent) (RawContentEdit edit) (S.idToKey $ mid ^. miID)
-    MergeOfEdits parent1 parent2 -> do
-      void . insert $ S.ParentChild (S.idToKey parent1) mempty (S.idToKey $ mid ^. miID)
-      void . insert $ S.ParentChild (S.idToKey parent2) mempty (S.idToKey $ mid ^. miID)
+  liftDB . forM_ (_unEditSource me) $ \(edit, parent) ->
+      insert $ S.ParentChild (S.idToKey parent) (RawContentEdit edit) (S.idToKey $ mid ^. miID)
   pure $ Edit
     mid
     (ce ^. createEditDesc)
-    sels'
     (ce ^. createEditKind)
     me
     mempty
@@ -277,19 +259,15 @@ createEdit rid me ce = do
 getEdit :: ID Edit -> DB Edit
 getEdit eid = do
   src <- getEditSource eid
-  getMetaEntity (\mid -> S.editElim $ \desc (RangePositions cr) _ _ kind (DBVotes vs) -> Edit mid desc cr kind src vs) eid
+  getMetaEntity (\mid -> S.editElim $ \desc _ _ kind (DBVotes vs) -> Edit mid desc kind src vs) eid
 
 getEditSource :: ID Edit -> DB (EditSource (ID Edit))
 getEditSource eid = do
   parents <- entityVal <$$> liftDB (selectList [S.ParentChildChild ==. S.idToKey eid] [])
-  pure $ case parents of
-    [] -> InitialEdit
-    [S.ParentChild parent (RawContentEdit edit) _] -> EditOfEdit edit $ S.keyToId parent
-    [S.ParentChild parent1 _ _, S.ParentChild parent2 _ _] -> MergeOfEdits (S.keyToId parent1) (S.keyToId parent2)
-    _ -> error "impossible"
+  pure $ EditSource [(edit, S.keyToId parent) | S.ParentChild parent (RawContentEdit edit) _ <- parents]
 
 getVersion :: ID Edit -> DB VDocVersion
-getVersion pid = S.editElim (\_ _ vdoc _ _ _ -> vdoc) <$> getEntityRep pid
+getVersion pid = S.editElim (\_ vdoc _ _ _ -> vdoc) <$> getEntityRep pid
 
 editNotes :: ID Edit -> DB [ID Note]
 editNotes pid = do
@@ -322,7 +300,7 @@ updateVotes eid f = do
 
 getVotes :: ID Edit -> DB Votes
 getVotes eid = do
-  getMetaEntity (\_ -> S.editElim $ \_ _ _ _ _ (DBVotes vs) -> vs) eid
+  getMetaEntity (\_ -> S.editElim $ \_ _ _ _ (DBVotes vs) -> vs) eid
 
 getVoteCount :: ID Edit -> DB VoteCount
 getVoteCount = fmap votesToCount . getVotes
@@ -330,7 +308,7 @@ getVoteCount = fmap votesToCount . getVotes
 -- * Repo and edit
 
 vdocOfEdit :: ID Edit -> DB (ID VDoc)
-vdocOfEdit pid = S.editElim (\_ _ _ vid _ _ -> S.keyToId vid) <$> getEntityRep pid
+vdocOfEdit pid = S.editElim (\_ _ vid _ _ -> S.keyToId vid) <$> getEntityRep pid
 
 -- * Note
 
