@@ -414,7 +414,7 @@ specUserHandling = around createTestSession $ do
           respCode resp `shouldBe` 200
           checkCookie resp
 
-          user <- runDB sess $ App.currentUser
+          user <- runDB sess App.currentUser
           user `shouldSatisfy` isJust
 
       context "with invalid credentials" $ do
@@ -458,37 +458,37 @@ specVoting = around createTestSession $ do
     context "if current user *HAS NOT* voted on the edit before" $ do
       it "adds the current user's vote (and does nothing else)" $ \sess -> do
         eid <- mkUserAndEdit sess
-        resp :: SResponse <- runWai sess $ wput $ putVoteUri eid Yeay
+        resp :: SResponse <- runWai sess . wput $ putVoteUri eid Yeay
         respCode resp `shouldBe` 200
         -- votes <- runDB sess $ App.getSimpleVotesOnEdit eid  -- see FIXME at 'runDB''
-        votes :: VoteCount <- runWaiJSON sess $ wget $ getVotesUri eid
+        votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
         votes `shouldBe` Map.fromList [(Yeay, 1)]
 
     context "if current user *HAS* voted on the edit before" $ do
       it "adds the current user's vote (and does nothing else)" $ \sess -> do
         eid <- mkUserAndEdit sess
-        _ <- runWai sess $ wput $ putVoteUri eid Yeay
-        resp :: SResponse <- runWai sess $ wput $ putVoteUri eid Nay
+        _ <- runWai sess . wput $ putVoteUri eid Yeay
+        resp :: SResponse <- runWai sess . wput $ putVoteUri eid Nay
         respCode resp `shouldBe` 200
-        votes :: VoteCount <- runWaiJSON sess $ wget $ getVotesUri eid
+        votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
         votes `shouldBe` Map.fromList [(Nay, 1)]
 
   describe "SDeleteSimpleVoteOnEdit" $ do
     context "if there is such a vote" $ do
       it "removes that vote (and does nothing else)" $ \sess -> do
         eid <- mkUserAndEdit sess
-        _ <- runWai sess $ wput $ putVoteUri eid Yeay
-        resp :: SResponse <- runWai sess $ wput $ deleteVoteUri eid
+        _ <- runWai sess . wput $ putVoteUri eid Yeay
+        resp :: SResponse <- runWai sess . wput $ deleteVoteUri eid
         respCode resp `shouldBe` 200
-        votes :: VoteCount <- runWaiJSON sess $ wget $ getVotesUri eid
+        votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
         votes `shouldBe` Map.fromList []
 
     context "if there is no such vote" $ do
       it "does nothing" $ \sess -> do
         eid <- mkUserAndEdit sess
-        resp :: SResponse <- runWai sess $ wput $ deleteVoteUri eid
+        resp :: SResponse <- runWai sess . wput $ deleteVoteUri eid
         respCode resp `shouldBe` 200
-        votes :: VoteCount <- runWaiJSON sess $ wget $ getVotesUri eid
+        votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
         votes `shouldBe` Map.fromList []
 
   describe "SGetSimpleVotesOnEdit" $ do
@@ -496,10 +496,10 @@ specVoting = around createTestSession $ do
       it "returns (2, 1)" $ \sess -> do
         eid <- mkEdit sess
         addUserAndLogin sess "userA"
-        _ <- runWai sess $ wput $ putVoteUri eid Yeay
+        _ <- runWai sess . wput $ putVoteUri eid Yeay
         addUserAndLogin sess "userB"
-        _ <- runWai sess $ wput $ putVoteUri eid Yeay
+        _ <- runWai sess . wput $ putVoteUri eid Yeay
         addUserAndLogin sess "userC"
-        _ <- runWai sess $ wput $ putVoteUri eid Nay
-        votes :: VoteCount <- runWaiJSON sess $ wget $ getVotesUri eid
+        _ <- runWai sess . wput $ putVoteUri eid Nay
+        votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
         votes `shouldBe` Map.fromList [(Yeay, 2), (Nay, 1)]
