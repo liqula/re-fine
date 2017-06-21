@@ -125,7 +125,7 @@ withCurrentUser f = do
   mu <- currentUser
   case mu of
     Just u -> f u
-    Nothing -> pure ()
+    Nothing -> throwError AppUnauthorized
 
 putSimpleVoteOnEdit :: (MonadApp db uh) => ID Edit -> Vote -> AppM db uh ()
 putSimpleVoteOnEdit eid v = withCurrentUser $ \user -> db . DB.updateVotes eid $ Map.insert user v
