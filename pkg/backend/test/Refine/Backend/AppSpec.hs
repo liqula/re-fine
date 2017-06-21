@@ -117,45 +117,26 @@ spec = do
             ]
       runner . runIdentityT $ runProgram program `evalStateT` initVDocs
 
-  describe "### merging" . around provideAppRunner $ do
+  describe "merging" . around provideAppRunner $ do
     let vdoc = rawContentToVDocVersion . mkRawContent . NEL.fromList . map mkBlock
+
+        docWithEdits v0 vs = do
+          doc <- App.createVDoc . CreateVDoc (Title "title...") (Abstract "abstract...") $ vdoc v0
+          let eid = doc ^. vdocHeadEdit
+              vid = doc ^. vdocID
+          es <- forM vs $ \v -> fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc v) Meaning
+          pure (vid, es)
 
     it "merge two edits" $ \(runner :: AppM DB UH () -> IO ()) -> do
       runner $ do
-        doc <- App.createVDoc . CreateVDoc (Title "title...") (Abstract "abstract...") $ vdoc ["abc", "def"]
-        let eid = doc ^. vdocHeadEdit
-        eid1 <- fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc ["a.c", "def"]) Meaning
-        eid2 <- fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc ["abc", "d.f"]) Meaning
-        eidm <- fmap (^. editID) $ App.addMerge eid1 eid2
+        (_, [eid1, eid2]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"]]
+        eidm <- (^. editID) <$> App.addMerge eid1 eid2
         doc' <- App.getVDocVersion eidm
-        appIO $ doc' `shouldBe` vdoc ["a.c","d.f"]
-
-    it "rebase one edit to another" $ \(runner :: AppM DB UH () -> IO ()) -> do
-      runner $ do
-        doc <- App.createVDoc . CreateVDoc (Title "title...") (Abstract "abstract...") $ vdoc ["abc", "def"]
-        let eid = doc ^. vdocHeadEdit
-            vid = doc ^. vdocID
-        eid1 <- fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc ["a.c", "def"]) Meaning
-        eid2 <- fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc ["abc", "d.f"]) Meaning
-        App.rebaseToEdit eid1
-        d <- App.getVDoc vid
-        let hid = d ^. vdocHeadEdit
-        appIO $ hid `shouldBe` eid1
-        cv <- App.getCompositeVDoc vid hid
-        appIO $ cv ^. compositeVDocThisVersion `shouldBe` vdoc ["a.c", "def"]
-        appIO $ Map.size (cv ^. compositeVDocApplicableEdits) `shouldBe` 1
-        let ee = head . Map.keys $ cv ^. compositeVDocApplicableEdits
-        doc' <- App.getVDocVersion ee
         appIO $ doc' `shouldBe` vdoc ["a.c","d.f"]
 
     it "rebase one edit to two other edits" $ \(runner :: AppM DB UH () -> IO ()) -> do
       runner $ do
-        doc <- App.createVDoc . CreateVDoc (Title "title...") (Abstract "abstract...") $ vdoc ["abc", "def"]
-        let eid = doc ^. vdocHeadEdit
-            vid = doc ^. vdocID
-        eid1 <- fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc ["a.c", "def"]) Meaning
-        eid2 <- fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc ["abc", "d.f"]) Meaning
-        eid3 <- fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc ["abX", "def"]) Meaning
+        (vid, [eid1, _, _]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"], ["abX", "def"]]
         App.rebaseToEdit eid1
         d <- App.getVDoc vid
         let hid = d ^. vdocHeadEdit
@@ -163,10 +144,10 @@ spec = do
         cv <- App.getCompositeVDoc vid hid
         appIO $ cv ^. compositeVDocThisVersion `shouldBe` vdoc ["a.c", "def"]
         appIO $ Map.size (cv ^. compositeVDocApplicableEdits) `shouldBe` 2
-        let ee = Map.keys $ cv ^. compositeVDocApplicableEdits
-        docA <- App.getVDocVersion $ ee !! 0
+        let [ee0, ee1] = Map.keys $ cv ^. compositeVDocApplicableEdits
+        docA <- App.getVDocVersion ee0
         appIO $ docA `shouldBe` vdoc ["a.c","d.f"]
-        docB <- App.getVDocVersion $ ee !! 1
+        docB <- App.getVDocVersion ee1
         appIO $ docB `shouldBe` vdoc ["aX.","def"]   -- FIXME: the merge result is strange
 
 

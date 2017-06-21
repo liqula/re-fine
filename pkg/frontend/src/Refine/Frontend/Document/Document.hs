@@ -91,7 +91,7 @@ documentRender() props = liftViewToStateHandler $ do
             then hideUnchangedParts rc 0 0  -- FUTUREWORK: make these numbers adjustable by the user
             else rc
 
-          -- TODO: show the relevant diff
+          -- FIXME: show the relevant diff
           diffit (EditSource []) = Nothing
           diffit (EditSource ((otedit, _): _)) = showEditAsRawContent otedit
                                        . deleteMarksFromRawContent  -- (edit inline styles do not work in combination with marks.)

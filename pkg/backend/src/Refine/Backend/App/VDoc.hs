@@ -124,8 +124,7 @@ addEdit baseeid edit = do
 addMerge :: (MonadApp db uh) => ID Edit -> ID Edit -> AppM db uh Edit
 addMerge eid1 eid2 = do
   appLog $ "merge " <> show eid1 <> " with " <> show eid2
-    -- TODO: add custom error constructor
-  (maybe (throwError $ AppUnknownError "edits could not be merged") pure =<<) . db $ do
+  (maybe (throwError $ AppMergeError eid1 eid2) pure =<<) . db $ do
     rid <- DB.vdocOfEdit eid1
     -- rid' <- DB.vdocOfEdit eid2
     -- assert $ rid' == rid
