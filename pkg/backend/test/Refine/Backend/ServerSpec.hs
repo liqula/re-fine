@@ -29,7 +29,7 @@ import           Control.Concurrent.MVar
 import qualified Data.ByteString as SBS
 import qualified Data.Map as Map
 import           Data.List.NonEmpty (NonEmpty((:|)))
-import           Network.HTTP.Types (Method, Header, methodGet, methodPut)
+import           Network.HTTP.Types (Method, Header, methodGet, methodPut, methodDelete)
 import           Network.HTTP.Types.Status (Status(statusCode))
 import           Network.URI (URI, uriToString)
 import           Network.Wai (requestMethod, requestHeaders, defaultRequest)
@@ -154,6 +154,9 @@ wget path = request methodGet path [] ""
 
 wput :: SBS -> Wai.Session SResponse
 wput path = request methodPut path [] ""
+
+wdel :: SBS -> Wai.Session SResponse
+wdel path = request methodDelete path [] ""
 
 post :: (ToJSON a) => SBS -> a -> Wai.Session SResponse
 post path js = request "POST" path [("Content-Type", "application/json")] (encode js)
@@ -477,7 +480,7 @@ specVoting = around createTestSession $ do
       it "removes that vote (and does nothing else)" $ \sess -> do
         eid <- mkUserAndEdit sess
         _ <- runWai sess . wput $ putVoteUri eid Yeay
-        resp :: SResponse <- runWai sess . wput $ deleteVoteUri eid
+        resp :: SResponse <- runWai sess . wdel $ deleteVoteUri eid
         respCode resp `shouldBe` 200
         votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
         votes `shouldBe` Map.fromList []
@@ -485,7 +488,7 @@ specVoting = around createTestSession $ do
     context "if there is no such vote" $ do
       it "does nothing" $ \sess -> do
         eid <- mkUserAndEdit sess
-        resp :: SResponse <- runWai sess . wput $ deleteVoteUri eid
+        resp :: SResponse <- runWai sess . wdel $ deleteVoteUri eid
         respCode resp `shouldBe` 200
         votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
         votes `shouldBe` Map.fromList []
