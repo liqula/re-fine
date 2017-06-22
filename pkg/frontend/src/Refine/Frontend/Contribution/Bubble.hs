@@ -111,7 +111,7 @@ bubbleKey :: HasCallStack => BubbleProps -> JSString
 bubbleKey props = "bubble_" <> props ^. bubblePropsContributionIds . to (cs . toUrlPiece . stackToHead)
 
 verticalPosition :: HasCallStack => Maybe OffsetFromDocumentTop -> ScreenState -> [Decl]
-verticalPosition Nothing       _  = [decl "margin-top" (Px 20), decl "position" (Ident "relative")]
+verticalPosition Nothing       _  = [decl "marginTop" (Px 20), decl "position" (Ident "relative")]
 verticalPosition (Just offset) st = [decl "top" (Px $ offsetIntoText offset st), decl "position" (Ident "absolute")]
 
 
