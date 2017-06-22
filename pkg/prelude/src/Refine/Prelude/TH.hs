@@ -18,7 +18,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 -- FIXME: rename to Refine.Prelude.MakeInstances
-module Refine.Prelude.TH (makeRefineType, makeSOPGeneric, makeJSON, makeNFData) where
+module Refine.Prelude.TH (makeRefineType, makeRefineType', makeSOPGeneric, makeJSON, makeNFData) where
 
 import Control.Lens (makeLenses, makePrisms)
 import Control.DeepSeq (NFData(..))
@@ -47,15 +47,22 @@ typeParams (DataD _ _ vars _ _ _)    = map typeVarName vars
 typeParams (NewtypeD _ _ vars _ _ _) = map typeVarName vars
 typeParams dec = error $ "typeParams got invalid Dec " <> show dec
 
-typeOf :: Name -> Q (Type, [Type])
-typeOf t = do
-  (TyConI dec) <- reify t
-  let tps = VarT <$> typeParams dec
-  pure (foldl AppT (ConT t) tps, tps)
+unApp :: Type -> (Type, [Type])
+unApp (AppT x y) = (++[y]) <$> unApp x
+unApp n = (n, [])
 
+typeOf :: Type -> Q (Type, [Type])
+typeOf t_ = do
+  let (ConT t, vs) = unApp t_
+  TyConI dec <- reify t
+  let tps = VarT <$> drop (length vs) (typeParams dec)
+  pure (foldl AppT t_ tps, tps)
 
 makeSOPGeneric :: Name -> Q [Dec]
-makeSOPGeneric t = do
+makeSOPGeneric = makeSOPGeneric' . ConT
+
+makeSOPGeneric' :: Type -> Q [Dec]
+makeSOPGeneric' t = do
   (t', _mtp) <- typeOf t
   pure
     [ mkInstanceD [] (AppT (ConT (''Generic)) t') []
@@ -63,7 +70,10 @@ makeSOPGeneric t = do
     ]
 
 makeJSON :: Name -> Q [Dec]
-makeJSON t = do
+makeJSON = makeJSON' . ConT
+
+makeJSON' :: Type -> Q [Dec]
+makeJSON' t = do
   (VarE toJSONN)        <- [|Data.Aeson.toJSON|]
   (VarE gtoJSONDefN)    <- [|Refine.Prelude.Generic.gtoJSONDef|]
   (VarE parseJSONN)     <- [|Data.Aeson.parseJSON|]
@@ -79,7 +89,10 @@ makeJSON t = do
     ]
 
 makeNFData :: Name -> Q [Dec]
-makeNFData t = do
+makeNFData = makeNFData' . ConT
+
+makeNFData' :: Type -> Q [Dec]
+makeNFData' t = do
   (VarE rnfN)  <- [|Control.DeepSeq.rnf|]
   (VarE grnfN) <- [|Generics.SOP.NFData.grnf|]
   let nfdataC = ConT ''NFData
@@ -89,8 +102,7 @@ makeNFData t = do
         [ FunD rnfN [ Clause [] (NormalB (VarE grnfN)) []] ]
     ]
 
--- FIXME: Support parametric types with more than one parameter.
--- FIXME: rename to makeAllInstances
+-- FIXME: rename to makeInstances
 makeRefineType :: Name -> Q [Dec]
 makeRefineType t = do
   l <- makeLenses t
@@ -99,3 +111,12 @@ makeRefineType t = do
   n <- makeNFData t
   s <- makeSOPGeneric t
   pure $ concat [l, p, s, j, n]
+
+-- FIXME: rename to makeInstances'
+makeRefineType' :: Q Type -> Q [Dec]
+makeRefineType' qt = do
+  t <- qt
+  j <- makeJSON' t
+  n <- makeNFData' t
+  s <- makeSOPGeneric' t
+  pure $ concat [s, j, n]
