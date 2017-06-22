@@ -28,7 +28,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/liqula/wai
-    commit: a03fb995396e06ef3c24205c0f021ca29d15d5e5
+    commit: ed575fb2f0aa9fba37c32e93bebff2566e9a2dd4
   extra-dep: true
   subdirs:
   - wai-extra

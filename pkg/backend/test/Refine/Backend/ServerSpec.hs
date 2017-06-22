@@ -58,7 +58,7 @@ import Refine.Common.VDoc.Draft
 
 data TestBackend uh = TestBackend
   { _testBackend      :: Backend DB uh
-  , _testBackendState :: MVar Wai.ClientState
+  , _testBackendState :: MVar Wai.ClientCookies
   }
 
 makeLenses ''TestBackend
@@ -128,12 +128,12 @@ createDevModeTestSession :: ActionWith (TestBackend FreeUH) -> IO ()
 createDevModeTestSession action = withTempCurrentDirectory $ do
   backend :: Backend DB FreeUH <- mkDevModeBackend (def & cfgShouldLog .~ False) mockLogin
   (natThrowError . backendRunApp backend) $$ initializeDB
-  action . TestBackend backend =<< newMVar Wai.initState
+  action . TestBackend backend =<< newMVar mempty
 
 -- | Create session via 'mkProdBackend' (using 'UH').
 createTestSession :: ActionWith (TestBackend UH) -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
-  void $ action =<< (TestBackend <$> mkProdBackend (def & cfgShouldLog .~ False) <*> newMVar Wai.initState)
+  void $ action =<< (TestBackend <$> mkProdBackend (def & cfgShouldLog .~ False) <*> newMVar mempty)
 
 
 -- * test helpers
