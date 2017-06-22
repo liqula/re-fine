@@ -133,7 +133,7 @@ data AppError
   | AppUserHandleError UserHandleError
   | AppL10ParseErrors [ST]
   | AppUnauthorized
-  | AppMergeError (ID Edit) (ID Edit)
+  | AppMergeError (ID Edit) (ID Edit) (ID Edit)
   | AppRebaseError (ID Edit)
   deriving (Show, Generic)
 

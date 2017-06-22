@@ -125,18 +125,22 @@ spec = do
           let eid = doc ^. vdocHeadEdit
               vid = doc ^. vdocID
           es <- forM vs $ \v -> fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc v) Meaning
-          pure (vid, es)
+          pure (vid, eid, es)
+
+        addUserAndLogin username = do
+          _ <- App.createUser $ CreateUser username (username <> "@email.com") "password"
+          login $ Login username "password"
 
     it "merge two edits" $ \(runner :: AppM DB UH () -> IO ()) -> do
       runner $ do
-        (_, [eid1, eid2]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"]]
-        eidm <- (^. editID) <$> App.addMerge eid1 eid2
+        (_, base, [eid1, eid2]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"]]
+        eidm <- (^. editID) <$> App.addMerge base eid1 eid2
         doc' <- App.getVDocVersion eidm
         appIO $ doc' `shouldBe` vdoc ["a.c","d.f"]
 
     it "rebase one edit to two other edits" $ \(runner :: AppM DB UH () -> IO ()) -> do
       runner $ do
-        (vid, [eid1, _, _]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"], ["abX", "def"]]
+        (vid, _, [eid1, _, _]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"], ["abX", "def"]]
         App.rebaseHeadToEdit eid1
         d <- App.getVDoc vid
         let hid = d ^. vdocHeadEdit
@@ -149,6 +153,14 @@ spec = do
         appIO $ docA `shouldBe` vdoc ["a.c","d.f"]
         docB <- App.getVDocVersion ee1
         appIO $ docB `shouldBe` vdoc ["aX.","def"]   -- FIXME: the merge result is strange
+
+    it "upvoting an edit triggers rebase" $ \(runner :: AppM DB UH () -> IO ()) -> runner $ do
+        (vid, _, [eid]) <- docWithEdits ["abc", "def"] [["a.c", "def"]]
+        void $ addUserAndLogin "user"
+        putSimpleVoteOnEdit eid Yeay
+        d <- App.getVDoc vid
+        let hid = d ^. vdocHeadEdit
+        appIO $ hid `shouldBe` eid
 
 
 -- * Program Runner interface
