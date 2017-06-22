@@ -53,8 +53,12 @@ import           Refine.Frontend.Util
 -- trigger thunk evaluation loops.  use old state whenever it is
 -- enough.
 documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> GlobalState -> DocumentState -> DocumentState
-documentStateUpdate (OpenDocument cvdoc) _oldgs _newgs st
-  = refreshDocumentStateView (rawContentFromCompositeVDoc cvdoc) st
+documentStateUpdate (OpenDocument cvdoc) oldgs _newgs st
+  = let eidChanged = Just newID /= mOldID
+          where
+            newID  = cvdoc ^. compositeVDocThisEditID
+            mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
+    in refreshDocumentStateView eidChanged (rawContentFromCompositeVDoc cvdoc) st
 
 documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- FIXME: store last state before edit in DocumentStateEdit, and restore it from there?
