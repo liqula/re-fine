@@ -35,6 +35,7 @@ import           Network.URI (URI, uriToString)
 import           Network.Wai (requestMethod, requestHeaders, defaultRequest)
 import           Network.Wai.Test (SRequest(..), SResponse(..))
 import qualified Network.Wai.Test as Wai
+import qualified Network.Wai.Test.Internal as Wai
 import           Test.Hspec
 
 import Refine.Backend.App as App
@@ -58,7 +59,7 @@ import Refine.Common.VDoc.Draft
 
 data TestBackend uh = TestBackend
   { _testBackend      :: Backend DB uh
-  , _testBackendState :: MVar Wai.ClientCookies
+  , _testBackendState :: MVar Wai.ClientState
   }
 
 makeLenses ''TestBackend
@@ -128,12 +129,12 @@ createDevModeTestSession :: ActionWith (TestBackend FreeUH) -> IO ()
 createDevModeTestSession action = withTempCurrentDirectory $ do
   backend :: Backend DB FreeUH <- mkDevModeBackend (def & cfgShouldLog .~ False) mockLogin
   (natThrowError . backendRunApp backend) $$ initializeDB
-  action . TestBackend backend =<< newMVar mempty
+  action . TestBackend backend =<< newMVar Wai.initState
 
 -- | Create session via 'mkProdBackend' (using 'UH').
 createTestSession :: ActionWith (TestBackend UH) -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
-  void $ action =<< (TestBackend <$> mkProdBackend (def & cfgShouldLog .~ False) <*> newMVar mempty)
+  void $ action =<< (TestBackend <$> mkProdBackend (def & cfgShouldLog .~ False) <*> newMVar Wai.initState)
 
 
 -- * test helpers
