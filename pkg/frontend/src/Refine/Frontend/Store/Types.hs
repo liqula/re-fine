@@ -127,7 +127,7 @@ gsCurrentSelection :: HasCallStack => Lens' GlobalState (Selection Position)
 gsCurrentSelection f gs = outof <$> f (into gs)
   where
     into :: GlobalState -> Selection Position
-    into s = fromMaybe (toSelection . maximumRange $ s ^?! gsDocumentState . documentStateContent)
+    into s = fromMaybe (toSelection . minimumRange $ s ^?! gsDocumentState . documentStateContent)
                (s ^? gsContributionState . csCurrentSelectionWithPx . _Just . sstSelectionState)
 
     outof :: Selection Position -> GlobalState
