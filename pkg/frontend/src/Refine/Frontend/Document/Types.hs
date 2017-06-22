@@ -76,6 +76,22 @@ mkDocumentStateView c = DocumentStateView e c'
     e  = createWithContent $ convertFromRaw c
     c' = convertToRaw $ getCurrentContent e
 
+-- | The boolean 'eidChanged' indicates whether the edit currently in
+-- focus has changed and the context (like the edit that we diff
+-- against) does not apply any more.  If true, always switch to view
+-- mode; otherwise, stay in whichever mode we are.
+refreshDocumentStateView :: Bool -> RawContent -> DocumentState -> DocumentState
+refreshDocumentStateView eidChanged c = if eidChanged then viewMode else sameMode
+  where
+    viewMode _ = DocumentStateView e c
+
+    sameMode = \case
+      DocumentStateView _ _                -> DocumentStateView e c
+      DocumentStateDiff _ _ edit collapsed -> DocumentStateDiff e c edit collapsed
+      DocumentStateEdit _ kind             -> DocumentStateEdit e kind
+
+    e  = createWithContent $ convertFromRaw c
+
 emptyDocumentState :: HasCallStack => DocumentState
 emptyDocumentState = mkDocumentStateView emptyRawContent
 

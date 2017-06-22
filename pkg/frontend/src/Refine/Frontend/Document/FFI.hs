@@ -18,6 +18,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
@@ -206,10 +207,13 @@ getDraftSelectionStateViaBrowser = do
 
 -- * marks
 
-getLeafSelectorBound :: HasCallStack => LeafSelectorSide -> Draft.LeafSelector -> IO Int
+-- | (There are legitimate reasons why a 'LeafSelector' will come up
+-- empty in the DOM, e.g. in collapsed diff view it may be far away
+-- from any changes and hidden behind the "..." marker.)
+getLeafSelectorBound :: HasCallStack => LeafSelectorSide -> Draft.LeafSelector -> IO (Maybe Int)
 getLeafSelectorBound side mark =
-  js_getBoundingBox (cs $ renderLeafSelectorSide side) (cs $ Draft.renderLeafSelector mark)
-
+  (Just <$> js_getBoundingBox (cs $ renderLeafSelectorSide side) (cs $ Draft.renderLeafSelector mark))
+  `catch` \(JSException _ _) -> pure Nothing
 
 -- * foreign
 

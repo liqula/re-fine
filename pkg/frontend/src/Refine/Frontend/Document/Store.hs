@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE CPP                        #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE DeriveGeneric              #-}
@@ -52,8 +53,12 @@ import           Refine.Frontend.Util
 -- trigger thunk evaluation loops.  use old state whenever it is
 -- enough.
 documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> GlobalState -> DocumentState -> DocumentState
-documentStateUpdate (OpenDocument cvdoc) _oldgs _newgs _state
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
+documentStateUpdate (OpenDocument cvdoc) oldgs _newgs st
+  = let eidChanged = Just newID /= mOldID
+          where
+            newID  = cvdoc ^. compositeVDocThisEditID
+            mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
+    in refreshDocumentStateView eidChanged (rawContentFromCompositeVDoc cvdoc) st
 
 documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- FIXME: store last state before edit in DocumentStateEdit, and restore it from there?
@@ -140,20 +145,47 @@ editorStateFromVDocVersion :: HasCallStack => VDocVersion -> EditorState
 editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
 
 -- | construct a 'SetAllVertialSpanBounds' action.
-setAllVertialSpanBounds :: HasCallStack => MonadIO m => DocumentState -> m ContributionAction
+setAllVertialSpanBounds :: (HasCallStack, MonadIO m) => DocumentState -> m ContributionAction
 setAllVertialSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
     let marks :: Map ContributionID (Ranges LeafSelector)
         marks = getLeafSelectors rawContent
 
         getPos :: (ContributionID, Ranges LeafSelector) -> IO [(ContributionID, VertialSpanBounds)]
-        getPos (cid, rs) = forM (unRanges rs) $ \(Range top bot) -> do
-          topOffset    <- OffsetFromViewportTop  <$> getLeafSelectorBound LeafSelectorTop    top
-          bottomOffset <- OffsetFromViewportTop  <$> getLeafSelectorBound LeafSelectorBottom bot
-          scrollOffset <- ScrollOffsetOfViewport <$> js_getScrollOffset
-          let vertialSpanBounds = VertialSpanBounds
-                { _vertialSpanBoundsTop    = offsetFromDocumentTop topOffset    scrollOffset
-                , _vertialSpanBoundsBottom = offsetFromDocumentTop bottomOffset scrollOffset
-                }
-          pure (cid, vertialSpanBounds)
+        getPos (cid, rs) = fmap catMaybes . forM (unRanges rs) $ \(Range top bot) -> do
+          mb <- getLeafSelectorBound LeafSelectorTop top
+          case mb of
+            Nothing -> pure Nothing
+            Just _ -> Just <$> do
+              assertLeafSelector `mapM_` [top, bot]
+              -- (FIXME: this assertion should be compiled away in
+              -- production.  write a few assert functions that can do
+              -- that, and use one of those.)
+              topOffset    <- OffsetFromViewportTop  . fromJust <$> getLeafSelectorBound LeafSelectorTop    top
+              bottomOffset <- OffsetFromViewportTop  . fromJust <$> getLeafSelectorBound LeafSelectorBottom bot
+              scrollOffset <- ScrollOffsetOfViewport            <$> js_getScrollOffset
+              let vertialSpanBounds = VertialSpanBounds
+                    { _vertialSpanBoundsTop    = offsetFromDocumentTop topOffset    scrollOffset
+                    , _vertialSpanBoundsBottom = offsetFromDocumentTop bottomOffset scrollOffset
+                    }
+              pure (cid, vertialSpanBounds)
 
     SetAllVertialSpanBounds . concat <$> (getPos `mapM` Map.toList marks)
+
+assertLeafSelector :: HasCallStack => LeafSelector -> IO ()
+assertLeafSelector sel = void (getLeafSelectorBound LeafSelectorTop sel) `catch` \(JSException _ msg) -> do
+  htmlContent <- js_assertLeafSelectorDebug
+  throwIO . ErrorCall . unlines $ [msg, show sel, cs htmlContent]
+
+#ifdef __GHCJS__
+
+foreign import javascript safe
+  "$r = document.querySelector('article').innerHTML"
+  js_assertLeafSelectorDebug :: IO JSString
+
+#else
+
+{-# ANN js_assertLeafSelectorDebug ("HLint: ignore Use camelCase" :: String) #-}
+js_assertLeafSelectorDebug :: IO JSString
+js_assertLeafSelectorDebug = error "javascript FFI not available in GHC"
+
+#endif
