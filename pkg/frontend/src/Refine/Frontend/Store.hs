@@ -235,7 +235,8 @@ emitBackendCallsFor action st = case action of
     ContributionAction (SubmitComment text kind) -> do
       case kind of
         Just CommentKindDiscussion ->
-          addDiscussion (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
+          addDiscussion (fromMaybe (error "emitBackendCallsFor.SubmitComment") $
+                         st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
                      (C.CreateDiscussion text True (st ^. gsCurrentSelection . C.selectionRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right discussion) -> dispatchManyM [ AddDiscussion discussion
@@ -243,7 +244,8 @@ emitBackendCallsFor action st = case action of
                                                 , reloadCompositeVDoc st
                                                 ]
         Just CommentKindNote ->
-          addNote (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
+          addNote (fromMaybe (error "emitBackendCallsFor.SubmitComment") $
+                    st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
                      (C.CreateNote text True (st ^. gsCurrentSelection . C.selectionRange)) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right note) -> dispatchManyM [ AddNote note
@@ -255,7 +257,7 @@ emitBackendCallsFor action st = case action of
     DocumentAction (DocumentSave desc) -> case st ^. gsDocumentState of
       dstate@(DocumentStateEdit _ kind) -> do
         let eid :: C.ID C.Edit
-            eid = st ^?! gsVDoc . _Just . C.compositeVDocThisEditID
+            Just eid = st ^? gsVDoc . _Just . C.compositeVDocThisEditID
 
             cedit :: C.Create C.Edit
             cedit = C.CreateEdit
@@ -351,7 +353,8 @@ emitBackendCallsFor action st = case action of
 -- actions, we could define @UpdateCVDoc :: (CompositeVDoc ->
 -- CompositeVDoc) -> GlobalAction@.
 reloadCompositeVDoc :: HasCallStack => GlobalState -> GlobalAction
-reloadCompositeVDoc st = LoadDocument (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocID)
+reloadCompositeVDoc st = LoadDocument (fromMaybe (error "reloadCompositeVDoc") $
+                                       st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocID)
 
 ajaxFail :: HasCallStack => (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
 ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of
@@ -405,13 +408,14 @@ dispatchAndExecMany as = liftIO . void . forkIO $ do
 getRangeAction :: HasCallStack => (HasCallStack, MonadIO m) => DocumentState -> m (Maybe ContributionAction)
 getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
   esel :: Either String C.SelectionState <- runExceptT getDraftSelectionStateViaBrowser
+  let rc :: C.RawContent
+      Just rc = dstate ^? documentStateContent
+
   case esel of
     Left err -> do
       consoleLogJSONM "getRangeSelection: error" err
       pure $ Just ClearRange
-    Right sel | rangeIsEmpty (dstate ^?! documentStateContent)
-              . C._selectionRange
-              $ C.fromSelectionState (dstate ^?! documentStateContent) sel -> do
+    Right sel | rangeIsEmpty rc . C._selectionRange $ C.fromSelectionState rc sel -> do
       pure $ Just ClearRange
     Right sel -> Just . SetRange <$> do
       topOffset    <- liftIO js_getRangeTopOffset
@@ -420,7 +424,7 @@ getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
       let doctop = scrollOffset + if sel ^. C.unSelectionState . C.selectionIsBackward then topOffset else bottomOffset
 
       pure SelectionStateWithPx
-        { _sstSelectionState = C.fromSelectionState (dstate ^?! documentStateContent) sel
+        { _sstSelectionState = C.fromSelectionState rc sel
         , _sstDocTopOffset   = OffsetFromDocumentTop  doctop
         , _sstTopOffset      = OffsetFromViewportTop  topOffset
         , _sstBottomOffset   = OffsetFromViewportTop  bottomOffset

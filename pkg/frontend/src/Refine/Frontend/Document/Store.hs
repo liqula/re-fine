@@ -70,7 +70,8 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit e
                     _oldgs
                     (view gsVDoc -> Just cvdoc)
                     (DocumentStateView e r)
-  = DocumentStateDiff e r (cvdoc ^?! compositeVDocApplicableEdits . ix eid) True
+  = DocumentStateDiff e r (fromMaybe (error "documentStateUpdate: show contrib dialog") $
+                           cvdoc ^? compositeVDocApplicableEdits . ix eid) True
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
                     _oldgs

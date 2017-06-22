@@ -117,7 +117,8 @@ mainHeaderRender () rs = do
 
             edit = DocumentHeaderProps
               (vdoc ^. compositeVDoc . vdocTitle)
-              (editDescToAbstract vdoc (rs ^?! gsContributionState . csDisplayedContributionID . _Just))
+              (editDescToAbstract vdoc (fromMaybe (error "mainHeaderRender") $
+                                        rs ^? gsContributionState . csDisplayedContributionID . _Just))
 
         case rs ^. gsDocumentState of
             DocumentStateView {} -> doc
