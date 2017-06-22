@@ -128,7 +128,7 @@ spec = do
           pure (vid, es)
 
         addUserAndLogin username = do
-          App.createUser $ CreateUser username (username <> "@email.com") "password"
+          _ <- App.createUser $ CreateUser username (username <> "@email.com") "password"
           login $ Login username "password"
 
     it "merge two edits" $ \(runner :: AppM DB UH () -> IO ()) -> do

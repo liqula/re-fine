@@ -128,9 +128,9 @@ mainHeaderRender () rs = do
         sticky_ [RF.on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
           case rs ^. gsDocumentState of
             DocumentStateView {} -> toolbar_
-            DocumentStateDiff {} -> diffToolbar_ $ DiffToolbarProps
-              (vdoc ^. compositeVDocThisEditID)
-              (vdoc ^. compositeVDocThisEdit . editVotes . to votesToCount)
+            DocumentStateDiff _ _ edit _ -> diffToolbar_ $ DiffToolbarProps
+              (edit ^. editID)
+              (edit ^. editVotes . to votesToCount)
             DocumentStateEdit {} -> editToolbar_ (mkEditToolbarProps rs)
           commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
 
