@@ -233,25 +233,25 @@ emitBackendCallsFor action st = case action of
     -- contributions
 
     ContributionAction (SubmitComment text kind) -> do
+      let headEdit = fromMaybe (error "emitBackendCallsFor.SubmitComment")
+                   $ st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit
+          range    = fromMaybe (minimumRange (fromMaybe (error "perhaps we should make documentStateContent a proper lens?") $
+                                              st ^? gsDocumentState . documentStateContent))
+                   $ st ^? gsCurrentSelection . _Just . C.selectionRange
+          handle a = dispatchManyM [ a
+                                   , ContributionAction RequestSetAllVertialSpanBounds
+                                   , reloadCompositeVDoc st
+                                   ]
+
       case kind of
         Just CommentKindDiscussion ->
-          addDiscussion (fromMaybe (error "emitBackendCallsFor.SubmitComment") $
-                         st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
-                     (C.CreateDiscussion text True (st ^. gsCurrentSelection . C.selectionRange)) $ \case
+          addDiscussion headEdit (C.CreateDiscussion text True range) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right discussion) -> dispatchManyM [ AddDiscussion discussion
-                                                , ContributionAction RequestSetAllVertialSpanBounds
-                                                , reloadCompositeVDoc st
-                                                ]
+            (Right discussion) -> handle $ AddDiscussion discussion
         Just CommentKindNote ->
-          addNote (fromMaybe (error "emitBackendCallsFor.SubmitComment") $
-                    st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit)
-                     (C.CreateNote text True (st ^. gsCurrentSelection . C.selectionRange)) $ \case
+          addNote headEdit (C.CreateNote text True range) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right note) -> dispatchManyM [ AddNote note
-                                          , ContributionAction RequestSetAllVertialSpanBounds
-                                          , reloadCompositeVDoc st
-                                          ]
+            (Right note) -> handle $ AddNote note
         Nothing -> pure ()
 
     DocumentAction (DocumentSave desc) -> case st ^. gsDocumentState of

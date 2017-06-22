@@ -25,13 +25,13 @@ module Refine.Frontend.Store.Types where
 
 import Refine.Frontend.Prelude
 
+import           Control.Lens (Getter)
 import           Data.String.Conversions (ST)
 import           Data.Text.I18n
 import           GHC.Generics (Generic)
 import           React.Flux (UnoverlapAllEq)
 
 import Refine.Common.Types
-import Refine.Common.VDoc.Draft
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
@@ -123,13 +123,5 @@ makeRefineType ''GlobalAction
 
 instance UnoverlapAllEq GlobalState
 
-gsCurrentSelection :: HasCallStack => Lens' GlobalState (Selection Position)
-gsCurrentSelection f gs = outof <$> f (into gs)
-  where
-    into :: GlobalState -> Selection Position
-    into s = fromMaybe (toSelection . minimumRange . fromMaybe (error "gsCurrentSelection") $
-                         s ^? gsDocumentState . documentStateContent)
-               (s ^? gsContributionState . csCurrentSelectionWithPx . _Just . sstSelectionState)
-
-    outof :: Selection Position -> GlobalState
-    outof r = gs & gsContributionState . csCurrentSelectionWithPx . _Just . sstSelectionState .~ r
+gsCurrentSelection :: HasCallStack => Getter GlobalState (Maybe (Selection Position))
+gsCurrentSelection = to (^? gsContributionState . csCurrentSelectionWithPx . _Just . sstSelectionState)
