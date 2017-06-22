@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -10,6 +9,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
@@ -20,7 +20,6 @@
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
-
 
 module Refine.Frontend.Document.Store
   ( documentStateUpdate
@@ -47,93 +46,101 @@ import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
 
-documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> DocumentState -> DocumentState
-documentStateUpdate (OpenDocument cvdoc) _ _state
+-- | We pass two global states into this function, the one before the
+-- pure update and the one after.  Using the one after is (was?)
+-- sometimes necessary, but it's a bit dangerous because it can
+-- trigger thunk evaluation loops.  use old state whenever it is
+-- enough.
+documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> GlobalState -> DocumentState -> DocumentState
+documentStateUpdate (OpenDocument cvdoc) _oldgs _newgs _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (DocumentAction (DocumentSave _)) (view gsVDoc -> Just cvdoc) _state
+documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- FIXME: store last state before edit in DocumentStateEdit, and restore it from there?
 
-documentStateUpdate (HeaderAction (StartEdit kind)) gs (DocumentStateView estate _)
-  = DocumentStateEdit (forceSelection estate (toSelectionState $ gs ^. gsCurrentSelection)) kind
+documentStateUpdate (HeaderAction (StartEdit kind)) oldgs _ (DocumentStateView estate _)
+  = DocumentStateEdit (forceSelection estate (toSelectionState $ oldgs ^. gsCurrentSelection)) kind
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
+                    _oldgs
                     (view gsVDoc -> Just cvdoc)
                     (DocumentStateView e r)
   = DocumentStateDiff e r (cvdoc ^?! compositeVDocApplicableEdits . ix eid) True
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
-                    _
+                    _oldgs
+                    _newgs
                     (DocumentStateDiff e r _ _)
   = DocumentStateView e r
 
 documentStateUpdate (ContributionAction HideContributionDialog)
-                    _
+                    _oldgs
+                    _newgs
                     (DocumentStateDiff e r _ _)
   = DocumentStateView e r
 
-documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _state
+documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _ _state
   = state'
 
-documentStateUpdate (DocumentAction (DocumentUpdateEditKind kind)) _ st
+documentStateUpdate (DocumentAction (DocumentUpdateEditKind kind)) _ _ st
   = st & documentStateEditKind .~ kind
 
-documentStateUpdate (DocumentAction (DocumentToggleBlockType bt)) _ st
+documentStateUpdate (DocumentAction (DocumentToggleBlockType bt)) _ _ st
   = st & documentStateVal %~ documentToggleBlockType bt
 
-documentStateUpdate (DocumentAction (DocumentToggleStyle s)) _ st
+documentStateUpdate (DocumentAction (DocumentToggleStyle s)) _ _ st
   = st & documentStateVal %~ documentToggleStyle s
 
-documentStateUpdate (DocumentAction DocumentRemoveLink) _ st
+documentStateUpdate (DocumentAction DocumentRemoveLink) _ _ st
   = st & documentStateVal %~ documentRemoveLink
 
-documentStateUpdate (DocumentAction (DocumentCreateLink link)) _ st
+documentStateUpdate (DocumentAction (DocumentCreateLink link)) _ _ st
   = st & documentStateVal %~ documentAddLink (cs link)
 
-documentStateUpdate (DocumentAction DocumentUndo) _ st
+documentStateUpdate (DocumentAction DocumentUndo) _ _ st
   = st & documentStateVal %~ documentUndo
 
-documentStateUpdate (DocumentAction DocumentRedo) _ st
+documentStateUpdate (DocumentAction DocumentRedo) _ _ st
   = st & documentStateVal %~ documentRedo
 
-documentStateUpdate (AddDiscussion _) (view gsVDoc -> Just cvdoc) _state
+documentStateUpdate (AddDiscussion _) _ (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (AddNote _) (view gsVDoc -> Just cvdoc) _state
+documentStateUpdate (AddNote _) _ (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (AddEdit _) (view gsVDoc -> Just cvdoc) _state
+documentStateUpdate (AddEdit _) _ (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (DocumentAction DocumentCancelSave) (view gsVDoc -> Just cvdoc) _state
+documentStateUpdate (DocumentAction DocumentCancelSave) _ (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (ContributionAction (SetRange range)) _ ((^? documentStateContent) -> Just rc)
+documentStateUpdate (ContributionAction (SetRange range)) _ _ ((^? documentStateContent) -> Just rc)
   = mkDocumentStateView
   . addMarksToRawContent [(ContribIDHighlightMark, range ^. sstSelectionState . selectionRange)]
   . deleteMarksFromRawContentIf (== ContribIDHighlightMark)
   $ rc
 
-documentStateUpdate (ContributionAction ClearRange) _ ((^? documentStateContent) -> Just rc)
+documentStateUpdate (ContributionAction ClearRange) _ _ ((^? documentStateContent) -> Just rc)
   = mkDocumentStateView
   . deleteMarksFromRawContentIf (== ContribIDHighlightMark)
   $ rc
 
-documentStateUpdate (DocumentAction ToggleCollapseDiff) _ st | has _DocumentStateDiff st
+documentStateUpdate (DocumentAction ToggleCollapseDiff) _ _ st | has _DocumentStateDiff st
   = st & documentStateDiffCollapsed %~ not
 
-documentStateUpdate _ _ st
+documentStateUpdate _ _ _ st
   = st
 
 
-editorStateToVDocVersion :: EditorState -> VDocVersion
+editorStateToVDocVersion :: HasCallStack => EditorState -> VDocVersion
 editorStateToVDocVersion = rawContentToVDocVersion . convertToRaw . getCurrentContent
 
-editorStateFromVDocVersion :: VDocVersion -> EditorState
+editorStateFromVDocVersion :: HasCallStack => VDocVersion -> EditorState
 editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
 
 -- | construct a 'SetAllVertialSpanBounds' action.
-setAllVertialSpanBounds :: MonadIO m => DocumentState -> m ContributionAction
+setAllVertialSpanBounds :: HasCallStack => MonadIO m => DocumentState -> m ContributionAction
 setAllVertialSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
     let marks :: Map ContributionID (Ranges LeafSelector)
         marks = getLeafSelectors rawContent

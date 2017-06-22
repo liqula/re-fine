@@ -88,16 +88,16 @@ newtype ContentState = ContentState (NoJSONRep JSVal)
 makeRefineType ''EditorState
 makeRefineType ''ContentState
 
-mkEditorState :: JSVal -> EditorState
+mkEditorState :: HasCallStack => JSVal -> EditorState
 mkEditorState = EditorState . NoJSONRep
 
-updateEditorState :: Event -> EditorState
+updateEditorState :: HasCallStack => Event -> EditorState
 updateEditorState (evtHandlerArg -> HandlerArg evt) = EditorState $ NoJSONRep evt
 
 
 data LeafSelectorSide = LeafSelectorTop | LeafSelectorBottom
   deriving (Eq, Ord, Show, Generic)
 
-renderLeafSelectorSide :: LeafSelectorSide -> ST
+renderLeafSelectorSide :: HasCallStack => LeafSelectorSide -> ST
 renderLeafSelectorSide LeafSelectorTop    = "top"
 renderLeafSelectorSide LeafSelectorBottom = "bottom"

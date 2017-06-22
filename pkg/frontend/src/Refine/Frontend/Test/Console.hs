@@ -39,35 +39,35 @@ where
 import Refine.Frontend.Prelude
 
 
-consoleLogJSStringM :: (Monad m) => JSString -> JSString -> m ()
+consoleLogJSStringM :: HasCallStack => (Monad m) => JSString -> JSString -> m ()
 consoleLogJSStringM msg val = consoleLogJSString msg val `seq` pure ()
 
-consoleLogJSValM :: (Monad m) => JSString -> JSVal -> m ()
+consoleLogJSValM :: HasCallStack => (Monad m) => JSString -> JSVal -> m ()
 consoleLogJSValM msg val = consoleLogJSVal msg val `seq` pure ()
 
-consoleLogJSONM :: (Monad m, ToJSON a) => JSString -> a -> m ()
+consoleLogJSONM :: HasCallStack => (Monad m, ToJSON a) => JSString -> a -> m ()
 consoleLogJSONM msg val = consoleLogJSON msg val `seq` pure ()
 
-consoleLogJSONAsStringM :: (Monad m, ConvertibleStrings s JSString) => JSString -> s -> m ()
+consoleLogJSONAsStringM :: HasCallStack => (Monad m, ConvertibleStrings s JSString) => JSString -> s -> m ()
 consoleLogJSONAsStringM msg val = consoleLogJSONAsString msg val `seq` pure ()
 
 
-consoleLogJSString :: JSString -> JSString -> ()
+consoleLogJSString :: HasCallStack => JSString -> JSString -> ()
 consoleLogJSString = if js_devMode then js_consoleLogJSString else \_ _ -> ()
 
-consoleLogJSVal :: JSString -> JSVal -> ()
+consoleLogJSVal :: HasCallStack => JSString -> JSVal -> ()
 consoleLogJSVal = if js_devMode then js_consoleLogJSVal else \_ _ -> ()
 
 -- | Write a 'ToJSON' instance to stdout (node) or the console (browser).  If you have a choice, use
 -- 'js_consoleLogJSON' which is more efficient.  (No idea if there are char encoding issues here.  But
 -- it's probably safe to use it for development.)
-consoleLogJSON :: ToJSON a => JSString -> a -> ()
+consoleLogJSON :: HasCallStack => ToJSON a => JSString -> a -> ()
 consoleLogJSON = if js_devMode then \str -> js_consoleLogJSON str . cs . encode else \_ _ -> ()
 
-consoleLogJSONAsString :: ConvertibleStrings s JSString => JSString -> s -> ()
+consoleLogJSONAsString :: HasCallStack => ConvertibleStrings s JSString => JSString -> s -> ()
 consoleLogJSONAsString = if js_devMode then \str -> js_consoleLogJSON str . cs else \_ _ -> ()
 
-weAreInDevMode :: Bool
+weAreInDevMode :: HasCallStack => Bool
 weAreInDevMode = js_devMode
 
 -- | Log a recoverable error and stay in business.
@@ -76,14 +76,14 @@ weAreInDevMode = js_devMode
 -- server side as well.  we could have an end-point that just receives frontend errors and logs.
 -- This probably needs log levels to be useful and sufficiently non-invasive.
 {-# ANN gracefulError ("HLint: ignore Use errorDoNotUseTrace" :: String) #-}
-gracefulError :: ConvertibleStrings s JSString => s -> a -> a
+gracefulError :: HasCallStack => ConvertibleStrings s JSString => s -> a -> a
 gracefulError msg = consoleLogJSString ("\n\n\n***** " <> cs msg <> "\n\n\n") `seq` id
 
 
-windowAlert :: (MonadIO m, ConvertibleStrings s JSString) => s -> m ()
+windowAlert :: HasCallStack => (MonadIO m, ConvertibleStrings s JSString) => s -> m ()
 windowAlert = liftIO . js_alert . cs
 
-windowAlertST :: MonadIO m => ST -> m ()
+windowAlertST :: HasCallStack => MonadIO m => ST -> m ()
 windowAlertST = windowAlert
 
 #ifdef __GHCJS__

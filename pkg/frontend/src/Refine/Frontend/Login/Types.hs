@@ -46,7 +46,7 @@ newtype LoginState = LoginState
   }
   deriving (Show, Eq, Generic)
 
-emptyLoginState :: LoginState
+emptyLoginState :: HasCallStack => LoginState
 emptyLoginState = LoginState
   { _lsCurrentUser = UserLoggedOut
   }

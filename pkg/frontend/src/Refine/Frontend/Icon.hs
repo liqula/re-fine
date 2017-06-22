@@ -50,7 +50,7 @@ import           Refine.Frontend.Util
 -- * icons buttons
 
 -- | FIXME: ibutton must not contain divs, so we can use it inside spans.
-ibutton :: IbuttonOnClick onclick => View '[IbuttonProps onclick]
+ibutton :: HasCallStack => IbuttonOnClick onclick => View '[IbuttonProps onclick]
 ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
   let onMsOvr :: [PropertyOrHandler (StatefulViewEventHandler Bool)]
       onMsOvr = [ onMouseEnter $ \_ _ _ -> ([], Just True)
@@ -105,10 +105,10 @@ ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
     div_  ["style" @@= iconSty, "className" $= iconCssClass bg] $ pure ()
     span_ ["style" @@= spanSty] $ elemText (props ^. ibLabel)
 
-ibutton_ :: IbuttonOnClick onclick => IbuttonProps onclick -> ReactElementM eventHandler ()
+ibutton_ :: HasCallStack => IbuttonOnClick onclick => IbuttonProps onclick -> ReactElementM eventHandler ()
 ibutton_ props = view_ ibutton ("Ibutton_" <> props ^. ibListKey) props
 
-emptyIbuttonProps :: forall onclick. onclick ~ [GlobalAction] => ST -> onclick -> IbuttonProps onclick
+emptyIbuttonProps :: HasCallStack => forall onclick. onclick ~ [GlobalAction] => ST -> onclick -> IbuttonProps onclick
 emptyIbuttonProps img onclick = IbuttonProps
   { _ibListKey          = "0"
   , _ibLabel            = mempty
@@ -131,7 +131,7 @@ class (Typeable onclick, Eq onclick) => IbuttonOnClick onclick where
 instance IbuttonOnClick [GlobalAction] where
   runIbuttonOnClick _ _ = dispatchMany
 
-mkIbuttonClickHandler :: IbuttonOnClick onclick => IbuttonProps onclick -> Event -> MouseEvent -> ViewEventHandler
+mkIbuttonClickHandler :: HasCallStack => IbuttonOnClick onclick => IbuttonProps onclick -> Event -> MouseEvent -> ViewEventHandler
 mkIbuttonClickHandler props evt mevt = propag `seq` handle
   where
     propag = if props ^. ibClickPropag then () else stopPropagation evt
@@ -146,7 +146,7 @@ mkIbuttonClickHandler props evt mevt = propag `seq` handle
 
 -- ** icon
 
-icon :: View '[IconProps]
+icon :: HasCallStack => View '[IconProps]
 icon = mkStatefulView "Icon" False $ \mouseIsOver props -> do
   let
     highlightStyle = if mouseIsOver && (props ^. iconPropsHighlight)
@@ -162,13 +162,13 @@ icon = mkStatefulView "Icon" False $ \mouseIsOver props -> do
        , onMouseLeave $ \_ _ _ -> ([], Just False)
        ] mempty
 
-icon_ :: IconProps -> ReactElementM eventHandler ()
+icon_ :: HasCallStack => IconProps -> ReactElementM eventHandler ()
 icon_ !props = view_ icon "Icon_" props
 
 
 -- ** icon button
 
-iconButtonPropsToClasses :: IconButtonPropsWithHandler onclick -> JSString
+iconButtonPropsToClasses :: HasCallStack => IconButtonPropsWithHandler onclick -> JSString
 iconButtonPropsToClasses props = toClasses $
   [ iprops ^. iconPropsBlockName <> "__button"
   , beName  -- for the vdoc-toolbar
@@ -183,7 +183,7 @@ iconButtonPropsToClasses props = toClasses $
     bemName = beName <> emConnector <> props ^. iconButtonPropsModuleName
     alignmentClass = [ iprops ^. iconPropsBlockName <> "--align-right" | props ^. iconButtonPropsAlignRight ]
 
-iconButtonPropsToStyles :: IconButtonPropsWithHandler onclick -> [Decl]
+iconButtonPropsToStyles :: HasCallStack => IconButtonPropsWithHandler onclick -> [Decl]
 iconButtonPropsToStyles props = alpos <> curpoint
   where
     alpos = case props ^. iconButtonPropsPosition of
@@ -199,7 +199,7 @@ iconButtonPropsToStyles props = alpos <> curpoint
     hammer_ [on "onTap" $ bprops ^. clickHandler | not (bprops ^. disabled)] $ do
 -}
 
-iconButton :: IconButtonPropsOnClick onclick => View '[IconButtonPropsWithHandler onclick]
+iconButton :: HasCallStack => IconButtonPropsOnClick onclick => View '[IconButtonPropsWithHandler onclick]
 iconButton = mkView "IconButton" $ \props -> do
     div_ ([ "className" $= iconButtonPropsToClasses props
           , "style" @@= iconButtonPropsToStyles props
@@ -216,13 +216,13 @@ iconButton = mkView "IconButton" $ \props -> do
         -- the latter can apply (e.g. "bright" vs. "dark").  a more aggressive refactoring may be a
         -- better idea, though.  this part of the code base is a bit brittle and confusing.
 
-iconButton_ :: IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick -> ReactElementM eventHandler ()
+iconButton_ :: HasCallStack => IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick -> ReactElementM eventHandler ()
 iconButton_ !props = view_ iconButton ("iconButton_" <> props ^. iconButtonPropsListKey) props
 
 
 -- ** events
 
-mkClickHandler :: IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick -> Event -> MouseEvent -> ViewEventHandler
+mkClickHandler :: HasCallStack => IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick -> Event -> MouseEvent -> ViewEventHandler
 mkClickHandler props evt mevt =
   (if props ^. iconButtonPropsClickPropag then () else stopPropagation evt) `seq`
   runIconButtonPropsOnClick evt mevt (props ^. iconButtonPropsOnClick)
@@ -236,7 +236,7 @@ instance IconButtonPropsOnClick [GlobalAction] where
   runIconButtonPropsOnClick _ _ = dispatchMany
   defaultOnClick                = mempty
 
-defaultIconButtonProps :: IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick
+defaultIconButtonProps :: HasCallStack => IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick
 defaultIconButtonProps = IconButtonProps
     { _iconButtonPropsListKey      = ""
     , _iconButtonPropsIconProps    = def

@@ -40,7 +40,7 @@ newtype WindowSizeProps = WindowSizeProps
   }
   deriving (Eq)
 
-windowSize :: ReactView WindowSizeProps
+windowSize :: HasCallStack => ReactView WindowSizeProps
 windowSize = defineLifecycleView "WindowSize" () lifecycleConfig
    { lRender = \_state (WindowSizeProps size) ->
        if weAreInDevMode
@@ -55,10 +55,10 @@ windowSize = defineLifecycleView "WindowSize" () lifecycleConfig
            js_windowRemoveEventListener "resize" cb
    }
 
-windowSize_ :: WindowSizeProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+windowSize_ :: HasCallStack => WindowSizeProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 windowSize_ = RF.view windowSize
 
-setWindowSize :: IO ()
+setWindowSize :: HasCallStack => IO ()
 setWindowSize = dispatchAndExec . ScreenAction . SetWindowWidth =<< js_getWindowWidth
 
 #ifdef __GHCJS__

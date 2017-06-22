@@ -35,7 +35,7 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
 
 
-contributionStateUpdate :: GlobalAction -> ContributionState -> ContributionState
+contributionStateUpdate :: HasCallStack => GlobalAction -> ContributionState -> ContributionState
 contributionStateUpdate a = localAction a . globalAction a
   where
     localAction (ContributionAction action) st = st
@@ -53,19 +53,19 @@ contributionStateUpdate a = localAction a . globalAction a
       & csActiveDialog             %~ activeDialogUpdate action
 
 
-currentRangeUpdate :: ContributionAction -> Maybe SelectionStateWithPx -> Maybe SelectionStateWithPx
+currentRangeUpdate :: HasCallStack => ContributionAction -> Maybe SelectionStateWithPx -> Maybe SelectionStateWithPx
 currentRangeUpdate action = case action of
   SetRange range -> const (Just range)
   ClearRange     -> const Nothing
   _ -> id
 
-commentKindUpdate :: ContributionAction -> Maybe CommentKind -> Maybe CommentKind
+commentKindUpdate :: HasCallStack => ContributionAction -> Maybe CommentKind -> Maybe CommentKind
 commentKindUpdate action st = case action of
   (SetCommentKind k) -> Just k
   HideCommentEditor  -> Nothing  -- when closing the comment editor, reset the choice
   _ -> st
 
-displayedContributionUpdate :: ContributionAction -> Maybe ContributionID -> Maybe ContributionID
+displayedContributionUpdate :: HasCallStack => ContributionAction -> Maybe ContributionID -> Maybe ContributionID
 displayedContributionUpdate action st = case action of
   ShowContributionDialog cid'
     | st == Just cid' -> Nothing
@@ -73,7 +73,7 @@ displayedContributionUpdate action st = case action of
   HideContributionDialog -> Nothing
   _ -> st
 
-activeDialogUpdate :: GlobalAction -> Maybe ActiveDialog -> Maybe ActiveDialog
+activeDialogUpdate :: HasCallStack => GlobalAction -> Maybe ActiveDialog -> Maybe ActiveDialog
 activeDialogUpdate = \case
   ContributionAction ShowCommentEditor   -> const $ Just ActiveDialogComment
   ContributionAction HideCommentEditor   -> const Nothing
@@ -82,11 +82,11 @@ activeDialogUpdate = \case
   DocumentAction DocumentCancelSave      -> const Nothing
   _ -> id
 
-highlightedMarkAndBubbleUpdate :: ContributionAction -> [ContributionID] -> [ContributionID]
+highlightedMarkAndBubbleUpdate :: HasCallStack => ContributionAction -> [ContributionID] -> [ContributionID]
 highlightedMarkAndBubbleUpdate (HighlightMarkAndBubble cids) _    = cids
 highlightedMarkAndBubbleUpdate _                             cids = cids
 
-quickCreateShowStateUpdate :: GlobalAction -> QuickCreateShowState -> QuickCreateShowState
+quickCreateShowStateUpdate :: HasCallStack => GlobalAction -> QuickCreateShowState -> QuickCreateShowState
 quickCreateShowStateUpdate action st = case action of
   ContributionAction (SetRange _)               -> somethingWasSelected
   ContributionAction ClearRange                 -> selectionWasRemoved
@@ -113,14 +113,14 @@ quickCreateShowStateUpdate action st = case action of
       QuickCreateNotShown  -> QuickCreateNotShown
       QuickCreateBlocked   -> QuickCreateNotShown
 
-allVertialSpanBoundsUpdate :: ContributionAction -> AllVertialSpanBounds -> AllVertialSpanBounds
+allVertialSpanBoundsUpdate :: HasCallStack => ContributionAction -> AllVertialSpanBounds -> AllVertialSpanBounds
 allVertialSpanBoundsUpdate (SetAllVertialSpanBounds positions) = allVertialSpanBounds .~ M.fromList positions
 allVertialSpanBoundsUpdate _ = id
 
-bubblePositioningUpdate :: ContributionAction -> BubblePositioning -> BubblePositioning
+bubblePositioningUpdate :: HasCallStack => ContributionAction -> BubblePositioning -> BubblePositioning
 bubblePositioningUpdate (SetBubblePositioning strategy) _ = strategy
 bubblePositioningUpdate _ st = st
 
-bubbleFilterUpdate :: ContributionAction -> Maybe (Set ContributionID) -> Maybe (Set ContributionID)
+bubbleFilterUpdate :: HasCallStack => ContributionAction -> Maybe (Set ContributionID) -> Maybe (Set ContributionID)
 bubbleFilterUpdate (SetBubbleFilter f) _ = f
 bubbleFilterUpdate _ st = st

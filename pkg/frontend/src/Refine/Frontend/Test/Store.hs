@@ -34,15 +34,15 @@ import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 
 
-tryRounds :: Int
+tryRounds :: HasCallStack => Int
 tryRounds = 10
 
-tryDelay :: Int
+tryDelay :: HasCallStack => Int
 tryDelay = 500000
 
 -- | Morally, @storeShouldEventuallySatisfy f (== a) === storeShouldEventuallyBe f a@, but the error
 -- message here shows the desired value.
-storeShouldEventuallyBe :: forall s a. (HasCallStack, StoreData s, Eq a, Show a) => (s -> a) -> a -> Expectation
+storeShouldEventuallyBe :: HasCallStack => forall s a. (HasCallStack, StoreData s, Eq a, Show a) => (s -> a) -> a -> Expectation
 storeShouldEventuallyBe fun a = go tryRounds
   where
     go r = do
@@ -53,7 +53,7 @@ storeShouldEventuallyBe fun a = go tryRounds
 
 -- | Morally, @storeShouldEventuallySatisfy f (isInfixOf as) === storeShouldEventuallyContain f as@,
 -- but the error message here shows the desired value.
-storeShouldEventuallyContain :: forall s a. (HasCallStack, StoreData s, Eq a, Show a) => (s -> [a]) -> [a] -> Expectation
+storeShouldEventuallyContain :: HasCallStack => forall s a. (HasCallStack, StoreData s, Eq a, Show a) => (s -> [a]) -> [a] -> Expectation
 storeShouldEventuallyContain fun sublist = go tryRounds
   where
     go r = do
@@ -62,7 +62,7 @@ storeShouldEventuallyContain fun sublist = go tryRounds
         then a' `shouldContain` sublist
         else threadDelay tryDelay >> go (r - 1)
 
-storeShouldEventuallySatisfy :: forall s a. (HasCallStack, StoreData s, Show a) => (s -> a) -> (a -> Bool) -> Expectation
+storeShouldEventuallySatisfy :: HasCallStack => forall s a. (HasCallStack, StoreData s, Show a) => (s -> a) -> (a -> Bool) -> Expectation
 storeShouldEventuallySatisfy fun predicate = go tryRounds
   where
     go r = do
@@ -73,7 +73,7 @@ storeShouldEventuallySatisfy fun predicate = go tryRounds
 
 
 -- | Send a 'ResetState' action and wait for it to materialize.
-resetState :: GlobalState -> Expectation
+resetState :: HasCallStack => GlobalState -> Expectation
 resetState s = do
   dispatchAndExec $ ResetState s
   storeShouldEventuallyBe id s

@@ -42,7 +42,7 @@ makeRefineType ''VDocLoaderProps
 instance UnoverlapAllEq VDocLoaderProps
 
 
-vdocLoader :: View '[VDocLoaderProps]
+vdocLoader :: HasCallStack => View '[VDocLoaderProps]
 vdocLoader = mkView "VDocLoader" $ \props -> do
   h1_ "Load a VDoc"
   br_ []
@@ -62,20 +62,20 @@ vdocLoader = mkView "VDocLoader" $ \props -> do
       elemString $ "build timestamp: " <> show BuildInfo.gitBuildTimestamp
       "\n"
 
-vdocLoader_ :: VDocLoaderProps -> ReactElementM eventHandler ()
+vdocLoader_ :: HasCallStack => VDocLoaderProps -> ReactElementM eventHandler ()
 vdocLoader_ !props = view_ vdocLoader "vdocLoader_" props
 
-vdocListLoader :: View '[VDocLoaderProps]
+vdocListLoader :: HasCallStack => View '[VDocLoaderProps]
 vdocListLoader = mkView "VDocListLoader" $ \case
   VDocLoaderProps Nothing     -> mempty
   VDocLoaderProps (Just list) -> div_ $ toButton `mapM_` list
 
-toButton :: ID VDoc -> ReactElementM [SomeStoreAction] ()
+toButton :: HasCallStack => ID VDoc -> ReactElementM [SomeStoreAction] ()
 toButton li = button_
   [ "id" $= cs ("load-vdoc-list" <> show (_unID li))
   , onClick $ \_ _ -> RS.dispatch . RS.LoadDocument $ li
   ]
   (elemText $ toUrlPiece li)
 
-vdocListLoader_ :: VDocLoaderProps -> ReactElementM eventHandler ()
+vdocListLoader_ :: HasCallStack => VDocLoaderProps -> ReactElementM eventHandler ()
 vdocListLoader_ !props = view_ vdocListLoader "vdocListLoader_" props

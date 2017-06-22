@@ -41,7 +41,7 @@ import           Refine.Prelude.TH (makeRefineType)
 
 -- * Helper
 
-inputFieldStyles :: [Decl]
+inputFieldStyles :: HasCallStack => [Decl]
 inputFieldStyles =
   [ decl "borderRadius" (Px 5)
   , decl "margin" (Px 12)
@@ -91,10 +91,10 @@ makeRefineType ''RegistrationForm
 -- | FIXME: I used the pattern "return a list of errors, and then check if that list is null to get
 -- the boolean" in `createChunkRangeErrors`, and I quite liked it, as it gives you more informative
 -- error messages when you need them.  See also: 'invalidRegistrationForm'.
-invalidLoginForm :: LoginForm -> Bool
+invalidLoginForm :: HasCallStack => LoginForm -> Bool
 invalidLoginForm form = form ^. loginFormUsername . to ST.null || form ^. loginFormPassword . to ST.null
 
-invalidRegistrationForm :: RegistrationForm -> Bool
+invalidRegistrationForm :: HasCallStack => RegistrationForm -> Bool
 invalidRegistrationForm form =
   or [ form ^. registrationFormEmail1 /= form ^. registrationFormEmail2
      , form ^. registrationFormUsername . to ST.null
@@ -103,21 +103,21 @@ invalidRegistrationForm form =
      , form ^. registrationFormAgree . to not
      ]
 
-loginOrLogout_ :: CurrentUser -> FormError -> ReactElementM eventHandler ()
+loginOrLogout_ :: HasCallStack => CurrentUser -> FormError -> ReactElementM eventHandler ()
 loginOrLogout_ = \case
   UserLoggedOut  -> login_
   UserLoggedIn _ -> const logout_
 
-defaultStyles :: [Decl]
+defaultStyles :: HasCallStack => [Decl]
 defaultStyles = []
 
 
 -- * Login
 
-loginStyles :: [Decl]
+loginStyles :: HasCallStack => [Decl]
 loginStyles = defaultStyles
 
-login :: FormError -> View '[]
+login :: HasCallStack => FormError -> View '[]
 login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState ->
   div_ ["style" @@= loginStyles] $ do
     h1_ "Login"
@@ -138,16 +138,16 @@ login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState ->
         & iconButtonPropsDisabled     .~ invalidLoginForm curState
         & iconButtonPropsOnClick      .~ [RS.Login . (Login <$> _loginFormUsername <*> _loginFormPassword) $ curState]
 
-login_ :: FormError -> ReactElementM eventHandler ()
+login_ :: HasCallStack => FormError -> ReactElementM eventHandler ()
 login_ !errors = view_ (login errors) "login_"
 
 
 -- * Logout
 
-logoutStyles :: [Decl]
+logoutStyles :: HasCallStack => [Decl]
 logoutStyles = defaultStyles
 
-logout :: View '[]
+logout :: HasCallStack => View '[]
 logout = mkView "Logout" $ do
   div_ ["style" @@= logoutStyles] $ do
     p_ "Profile page"
@@ -161,16 +161,16 @@ logout = mkView "Logout" $ do
         & iconButtonPropsDisabled     .~ False
         & iconButtonPropsOnClick      .~ [RS.Logout]
 
-logout_ :: ReactElementM eventHandler ()
+logout_ :: HasCallStack => ReactElementM eventHandler ()
 logout_ = view_ logout "logout_"
 
 
 -- * Registration
 
-registrationStyles :: [Decl]
+registrationStyles :: HasCallStack => [Decl]
 registrationStyles = defaultStyles
 
-registration :: FormError -> View '[]
+registration :: HasCallStack => FormError -> View '[]
 registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "" False errors) $ \curState -> do
   div_ ["style" @@= registrationStyles] $ do
     h1_ "Registration"
@@ -200,5 +200,5 @@ registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "
                                                             <*> _registrationFormPassword)
                                               $ curState]
 
-registration_ :: FormError -> ReactElementM eventHandler ()
+registration_ :: HasCallStack => FormError -> ReactElementM eventHandler ()
 registration_ !errors = view_ (registration errors) "registration_"

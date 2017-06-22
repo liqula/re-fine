@@ -44,7 +44,7 @@ data ScreenState = ScreenState
   , _ssWindowSize             :: WindowSize
   } deriving (Show, Eq, Generic)
 
-emptyScreenState :: ScreenState
+emptyScreenState :: HasCallStack => ScreenState
 emptyScreenState = ScreenState 0 0 Desktop
 
 

@@ -54,7 +54,7 @@ data HeaderState = HeaderState
   , _hsToolbarExtensionStatus :: ToolbarExtensionStatus
   } deriving (Show, Eq, Generic)
 
-emptyHeaderState :: HeaderState
+emptyHeaderState :: HasCallStack => HeaderState
 emptyHeaderState = HeaderState False ToolbarExtensionClosed
 
 newtype AddLinkFormState = AddLinkFormState

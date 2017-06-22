@@ -57,13 +57,13 @@ import           Refine.Frontend.Util
 -- https://github.com/facebook/draft-js/issues/690#issuecomment-282824570 for details.)  Our
 -- approach is to listen to onMouseEnd, onTouchUp, on the surrounding article_ tag, and recovering
 -- the draft coordinates (block keys, block offsets) in 'getDraftSelectionStateViaBrowser'.
-document :: Outdated.ReactView DocumentProps
+document :: HasCallStack => Outdated.ReactView DocumentProps
 document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
   { Outdated.lRender = documentRender
   , Outdated.lComponentDidMount = Just documentComponentDidMount
   }
 
-documentRender :: () -> DocumentProps -> ReactElementM (StatefulViewEventHandler st) ()
+documentRender :: HasCallStack => () -> DocumentProps -> ReactElementM (StatefulViewEventHandler st) ()
 documentRender() props = liftViewToStateHandler $ do
   let dstate = props ^. dpDocumentState
 
@@ -133,17 +133,17 @@ documentRender() props = liftViewToStateHandler $ do
                      ] $ do
                   elemString . ppShow $ props ^? dpDocumentState . documentStateDiff
 
-documentComponentDidMount :: Outdated.LPropsAndState DocumentProps () -> _ldom -> _setState -> IO ()
+documentComponentDidMount :: HasCallStack => Outdated.LPropsAndState DocumentProps () -> _ldom -> _setState -> IO ()
 documentComponentDidMount getPropsAndState _ldom _setState = do
   props <- Outdated.lGetProps getPropsAndState
   ()    <- Outdated.lGetState getPropsAndState  -- (just to show there's nothing there)
   dispatchAndExec . ContributionAction =<< setAllVertialSpanBounds (props ^. dpDocumentState)
 
-document_ :: DocumentProps -> ReactElementM eventHandler ()
+document_ :: HasCallStack => DocumentProps -> ReactElementM eventHandler ()
 document_ props = Outdated.view document props mempty
 
 
-mkDocumentStyleMap :: [ContributionID] -> Maybe RawContent -> Value
+mkDocumentStyleMap :: HasCallStack => [ContributionID] -> Maybe RawContent -> Value
 mkDocumentStyleMap _ Nothing = object []
 mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
   where
@@ -171,8 +171,8 @@ mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
     bg r g b a = ["background" `decl` Color.RGBA r g b a]
 
 
-emptyEditorProps :: [PropertyOrHandler handler]
+emptyEditorProps :: HasCallStack => [PropertyOrHandler handler]
 emptyEditorProps = ["editorState" &= createEmpty]
 
-defaultEditorProps :: ConvertibleStrings s JSString => s -> [PropertyOrHandler handler]
+defaultEditorProps :: HasCallStack => ConvertibleStrings s JSString => s -> [PropertyOrHandler handler]
 defaultEditorProps txt = ["editorState" &= (createWithContent . createFromText . cs) txt]

@@ -81,71 +81,71 @@ import           Refine.Frontend.Prelude
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#convertfromraw
 --
 -- See also: 'convertToRaw'.
-convertFromRaw :: Draft.RawContent -> ContentState
+convertFromRaw :: HasCallStack => Draft.RawContent -> ContentState
 convertFromRaw = js_convertFromRaw . unsafePerformIO . toJSVal
 
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#converttoraw
 --
 -- The internal call to 'unsafePerformIO' is ok iff 'fromJSVal' is actually pure (and just doesn't
 -- care to show it in the type).
-convertToRaw :: ContentState -> Draft.RawContent
+convertToRaw :: HasCallStack => ContentState -> Draft.RawContent
 convertToRaw = fromMaybe (error "convertToRaw") . unsafePerformIO . fromJSVal . js_convertToRaw
 
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#convertfromhtml
-convertFromHtml :: JSString -> ContentState
+convertFromHtml :: HasCallStack => JSString -> ContentState
 convertFromHtml = js_convertFromHtml
 
 -- * https://draftjs.org/docs/api-reference-editor-state.html
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#createempty
-createEmpty :: EditorState
+createEmpty :: HasCallStack => EditorState
 createEmpty = js_ES_createEmpty
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#createwithcontent
-createWithContent :: ContentState -> EditorState
+createWithContent :: HasCallStack => ContentState -> EditorState
 createWithContent = js_ES_createWithContent
 
-createWithRawContent :: Draft.RawContent -> EditorState
+createWithRawContent :: HasCallStack => Draft.RawContent -> EditorState
 createWithRawContent = createWithContent . convertFromRaw
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#getcurrentcontent
-getCurrentContent :: EditorState -> ContentState
+getCurrentContent :: HasCallStack => EditorState -> ContentState
 getCurrentContent = js_ES_getCurrentContent
 
-setCurrentContent :: EditorState -> ContentState -> EditorState
+setCurrentContent :: HasCallStack => EditorState -> ContentState -> EditorState
 setCurrentContent = js_ES_setCurrentContent
 
 -- * logging
 
-traceEditorState :: EditorState -> IO ()
+traceEditorState :: HasCallStack => EditorState -> IO ()
 traceEditorState s = do () <- js_ES_traceEditorState s; pure ()
 
-traceContentState :: ContentState -> IO ()
+traceContentState :: HasCallStack => ContentState -> IO ()
 traceContentState s = do () <- js_ES_traceContentState s; pure ()
 
-traceContentInEditorState :: EditorState -> IO ()
+traceContentInEditorState :: HasCallStack => EditorState -> IO ()
 traceContentInEditorState s = do () <- js_ES_traceContentInEditorState s; pure ()
 
 -- * https://draftjs.org/docs/api-reference-content-state.html
 
 -- | https://draftjs.org/docs/api-reference-content-state.html#createfromtext
-createFromText :: JSString -> ContentState
+createFromText :: HasCallStack => JSString -> ContentState
 createFromText = js_CS_createFromText
 
 -- * contrib
 
 -- | https://github.com/sstur/draft-js-export-html
-stateToHTML :: ContentState -> JSString
+stateToHTML :: HasCallStack => ContentState -> JSString
 stateToHTML = js_Draft_stateToHTML
 
 -- * editor state actions
 
 -- | toggle bold style on current selection
-documentToggleStyle :: Draft.Style -> EditorState -> EditorState
+documentToggleStyle :: HasCallStack => Draft.Style -> EditorState -> EditorState
 documentToggleStyle sty st = js_ES_toggleInlineStyle st (cs $ Draft.styleToST sty)
 
 -- | toggle italic style on current selection
-documentToggleBlockType :: Draft.BlockType -> EditorState -> EditorState
+documentToggleBlockType :: HasCallStack => Draft.BlockType -> EditorState -> EditorState
 documentToggleBlockType bt st = js_ES_toggleBlockType st (cs $ Draft.blockTypeToST bt)
 
 -- | Turn the current selection to a link with the given url
@@ -154,7 +154,7 @@ documentToggleBlockType bt st = js_ES_toggleBlockType st (cs $ Draft.blockTypeTo
 -- 'documentAddLink' should be replaced by the more general @documentAddEntity@ that all the
 -- arguments to the @createEntity@ method.  (Same with 'documentRemoveLink' and the foreign
 -- functions below.)
-documentAddLink :: String -> EditorState -> EditorState
+documentAddLink :: HasCallStack => String -> EditorState -> EditorState
 documentAddLink link st = js_ES_toggleLink st' (js_ES_getSelection st') entitykey
   where
     st' = setCurrentContent st content
@@ -162,13 +162,13 @@ documentAddLink link st = js_ES_toggleLink st' (js_ES_getSelection st') entityke
     content = js_ES_createLink (getCurrentContent st) (cs link)
 
 -- | Remove links in the current selection
-documentRemoveLink :: EditorState -> EditorState
+documentRemoveLink :: HasCallStack => EditorState -> EditorState
 documentRemoveLink st = js_ES_removeLink st (js_ES_getSelection st)
 
-documentUndo :: EditorState -> EditorState
+documentUndo :: HasCallStack => EditorState -> EditorState
 documentUndo = js_ES_undo
 
-documentRedo :: EditorState -> EditorState
+documentRedo :: HasCallStack => EditorState -> EditorState
 documentRedo = js_ES_redo
 
 -- * selections
@@ -181,20 +181,20 @@ documentRedo = js_ES_redo
 --
 -- Draft never actually nulls this field.  There is always have a selection, but start and end point
 -- may be identical.  See 'isEmptyRange', 'getRangeAction' for context.
-getSelection :: EditorState -> Draft.SelectionState
+getSelection :: HasCallStack => EditorState -> Draft.SelectionState
 getSelection (js_ES_getSelection -> sel) = Draft.SelectionState .
   (if js_ES_getSelectionIsBackward sel then Draft.toBackwardSelection else Draft.toSelection) $ Draft.Range
     (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionStartKey sel) (js_ES_getSelectionStartOffset sel))
     (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionEndKey sel)   (js_ES_getSelectionEndOffset sel))
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#forceselection
-forceSelection :: EditorState -> Draft.SelectionState -> EditorState
+forceSelection :: HasCallStack => EditorState -> Draft.SelectionState -> EditorState
 forceSelection es (cs . encode -> sel) = js_ES_forceSelection es sel
 
 -- | The shape of the selection object is determined by the generic aeson instances of the haskell
 -- type.  If that changes, you need to adjust the test cases in "Refine.Frontend.OrphansSpec" and
 -- @refine$getDraftSelectionStateViaBrowser@ in js.
-getDraftSelectionStateViaBrowser :: (MonadIO m, MonadError String m) => m Draft.SelectionState
+getDraftSelectionStateViaBrowser :: HasCallStack => (MonadIO m, MonadError String m) => m Draft.SelectionState
 getDraftSelectionStateViaBrowser = do
   v :: Maybe (Either JSString Draft.SelectionState)
     <- liftIO (js_getDraftSelectionStateViaBrowser >>= fromJSVal)
@@ -206,7 +206,7 @@ getDraftSelectionStateViaBrowser = do
 
 -- * marks
 
-getLeafSelectorBound :: LeafSelectorSide -> Draft.LeafSelector -> IO Int
+getLeafSelectorBound :: HasCallStack => LeafSelectorSide -> Draft.LeafSelector -> IO Int
 getLeafSelectorBound side mark =
   js_getBoundingBox (cs $ renderLeafSelectorSide side) (cs $ Draft.renderLeafSelector mark)
 

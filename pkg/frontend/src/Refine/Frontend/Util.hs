@@ -41,17 +41,17 @@ import Language.Css.Syntax
 class Css a where
   css :: a -> [Decl]
 
-decl :: ToExpr e => Prop -> e -> Decl
+decl :: HasCallStack => ToExpr e => Prop -> e -> Decl
 decl p e = Decl Nothing p (expr e)
 
 instance IsString Prop where
   fromString = Ident
 
 -- | Like '(@=)', but for css rather than json.
-(@@=) :: forall handler. JSString -> [Decl] -> PropertyOrHandler handler
+(@@=) :: HasCallStack => forall handler. JSString -> [Decl] -> PropertyOrHandler handler
 (@@=) k v = k @= declsToJSON v
 
-declsToJSON :: [Decl] -> Data.Aeson.Value
+declsToJSON :: HasCallStack => [Decl] -> Data.Aeson.Value
 declsToJSON = object . map (\(Decl _mprio n a) -> (cs (prettyPrint n) .:= prettyPrint a))
 
 
@@ -114,11 +114,11 @@ instance ToExpr ZIndex where
   expr ZIxLoginTab = expr @Int 100000
   expr ZIxArticle  = expr @Int 2000  -- ^ must be lower than 4000 to cover @.c-fulltoolbar@
 
-zindex :: ZIndex -> Decl
+zindex :: HasCallStack => ZIndex -> Decl
 zindex = decl "zIndex"
 
 
-toClasses :: (ConvertibleStrings s JSString) => [s] -> JSString
+toClasses :: HasCallStack => (ConvertibleStrings s JSString) => [s] -> JSString
 toClasses = JSS.unwords . filter (not . JSS.null) . fmap cs
 
 deriving instance FromJSVal (NoJSONRep JSVal)

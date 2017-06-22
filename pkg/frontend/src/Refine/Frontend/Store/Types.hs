@@ -59,7 +59,7 @@ data GlobalState = GlobalState
   , _gsDevState                   :: Maybe DevState  -- ^ for development & testing, see 'devStateUpdate'.
   } deriving (Show, Eq, Generic)
 
-emptyGlobalState :: GlobalState
+emptyGlobalState :: HasCallStack => GlobalState
 emptyGlobalState = GlobalState
   { _gsVDoc                       = Nothing
   , _gsVDocList                   = Nothing
@@ -79,7 +79,7 @@ newtype DevState = DevState
   }
   deriving (Show, Eq, Generic)
 
-emptyDevState :: DevState
+emptyDevState :: HasCallStack => DevState
 emptyDevState = DevState []
 
 data GlobalAction =

@@ -35,7 +35,7 @@ import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Util
 
-toolbar :: View '[]
+toolbar :: HasCallStack => View '[]
 toolbar = mkView "Toolbar" $ do
   header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
@@ -97,7 +97,7 @@ toolbar = mkView "Toolbar" $ do
             & iconButtonPropsOnClick      .~ [HeaderAction ToggleReadOnly]
             & iconButtonPropsAlignRight   .~ True
 
-toolbar_ :: ReactElementM eventHandler ()
+toolbar_ :: HasCallStack => ReactElementM eventHandler ()
 toolbar_ = view_ toolbar "toolbar_"
 
 
@@ -108,7 +108,7 @@ newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
 
 instance UnoverlapAllEq CommentToolbarExtensionProps
 
-commentToolbarExtension :: View '[CommentToolbarExtensionProps]
+commentToolbarExtension :: HasCallStack => View '[CommentToolbarExtensionProps]
 commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
   (CommentToolbarExtensionProps CommentToolbarExtensionWithRange) -> frame $ do
     div_ "Please select the text you would like to comment on"
@@ -145,7 +145,7 @@ commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
             children
 
 
-commentToolbarExtension_ :: CommentToolbarExtensionProps -> ReactElementM eventHandler ()
+commentToolbarExtension_ :: HasCallStack => CommentToolbarExtensionProps -> ReactElementM eventHandler ()
 commentToolbarExtension_ !props = view_ commentToolbarExtension "commentToolbarExtension_" props
 
 
@@ -167,7 +167,7 @@ instance UnoverlapAllEq EditKindFormProps
 
 -- | FIXME: this component should be moved closer to "Refine.Frontend.Contribution.Dialog".  (not
 -- sure about the structure in general.  perhaps more code shuffling is indicated at some point.)
-editKindForm :: (EditKind -> GlobalAction) -> View '[EditKindFormProps]
+editKindForm :: HasCallStack => (EditKind -> GlobalAction) -> View '[EditKindFormProps]
 editKindForm onSelect = mkView "EditKindForm" $ \(EditKindFormProps mactive) -> do
     div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
       div_ ["className" $= "grid-wrapper"] $ do
@@ -187,11 +187,11 @@ editKindForm onSelect = mkView "EditKindForm" $ \(EditKindFormProps mactive) -> 
         & iconButtonPropsOnClick      .~ [onSelect kind]
         & iconButtonPropsClickPropag  .~ False
 
-editKindForm_ :: (EditKind -> GlobalAction) -> EditKindFormProps -> ReactElementM ViewEventHandler ()
+editKindForm_ :: HasCallStack => (EditKind -> GlobalAction) -> EditKindFormProps -> ReactElementM ViewEventHandler ()
 editKindForm_ onSelect = view_ (editKindForm onSelect) "editToolbarExtension_"
 
 
-linkToolbarTextForm :: ST -> ReactElementM (StatefulViewEventHandler AddLinkFormState) ()
+linkToolbarTextForm :: HasCallStack => ST -> ReactElementM (StatefulViewEventHandler AddLinkFormState) ()
 linkToolbarTextForm link = do
   form_ [ "target" $= "#"
         , "action" $= "POST"
@@ -210,7 +210,7 @@ linkToolbarTextForm link = do
       $ elemText link
 
 
-editLinkInput :: ST -> View '[]
+editLinkInput :: HasCallStack => ST -> View '[]
 editLinkInput link = mkStatefulView "EditLinkInput" (AddLinkFormState link) $ \curState -> do
     div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
       div_ ["className" $= "grid-wrapper"] $ do
@@ -241,5 +241,5 @@ editLinkInput link = mkStatefulView "EditLinkInput" (AddLinkFormState link) $ \c
             span_ ["style" @@= [decl "margin-right" (Px 20), decl "width" (Percentage 100)]] $
               linkToolbarTextForm link
 
-editLinkInput_ :: ST -> ReactElementM eventHandler ()
+editLinkInput_ :: HasCallStack => ST -> ReactElementM eventHandler ()
 editLinkInput_ link = view_ (editLinkInput link) "editLinkInput_"

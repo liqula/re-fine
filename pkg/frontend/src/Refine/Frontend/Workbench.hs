@@ -56,7 +56,7 @@ import           Refine.Frontend.Util
 
 -- * workbench component
 
-workbench :: View '[GlobalState]
+workbench :: HasCallStack => View '[GlobalState]
 workbench = mkView "Workbench" $ \_gs -> do
   br_ [] >> br_ [] >> br_ [] >> hr_ []
 
@@ -65,11 +65,11 @@ workbench = mkView "Workbench" $ \_gs -> do
   br_ [] >> br_ [] >> br_ [] >> hr_ []
   pure ()
 
-workbench_ :: GlobalState -> ReactElementM eventHandler ()
+workbench_ :: HasCallStack => GlobalState -> ReactElementM eventHandler ()
 workbench_ = view_ workbench "Workbench_"
 
 
-draftBox_ :: ReactElementM handler () -> ReactElementM handler ()
+draftBox_ :: HasCallStack => ReactElementM handler () -> ReactElementM handler ()
 draftBox_ = div_ ["style" @@= styles]
   where
     styles = [ decl "border" [Ident "dashed", Ident "black", Ident "2px"]

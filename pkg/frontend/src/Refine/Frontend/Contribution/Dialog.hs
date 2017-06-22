@@ -49,13 +49,13 @@ import           Refine.Frontend.Util
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
-dialogWidth :: Int
+dialogWidth :: HasCallStack => Int
 dialogWidth = 640
 
-leftFor :: Int -> Int
+leftFor :: HasCallStack => Int -> Int
 leftFor windowWidth = (windowWidth - dialogWidth) `quot` 2
 
-dialogStyles :: [Decl]
+dialogStyles :: HasCallStack => [Decl]
 dialogStyles = [ -- Style "display" ("block" :: String)
                  -- Style "minHeight" ("200px" :: String)
                  -- Style "padding" ("3rem 1.0rem 1.0rem" :: String)
@@ -69,27 +69,27 @@ dialogStyles = [ -- Style "display" ("block" :: String)
                 ]
 
 -- RENAME: addCommentDialogStyles
-vdoc_overlay_content__add_comment :: [Decl]
+vdoc_overlay_content__add_comment :: HasCallStack => [Decl]
 vdoc_overlay_content__add_comment = [decl "backgroundColor" C.VDocComment] <> dialogStyles
 
 -- is vdoc_overlay_content__comment in CSS
 
 -- RENAME: showNoteDialogStyles
-vdoc_overlay_content__note :: [Decl]
+vdoc_overlay_content__note :: HasCallStack => [Decl]
 vdoc_overlay_content__note = [decl "backgroundColor" C.VDocNote] <> dialogStyles
 
 -- RENAME: showDiscussionDialogStyles
-vdoc_overlay_content__discussion :: [Decl]
+vdoc_overlay_content__discussion :: HasCallStack => [Decl]
 vdoc_overlay_content__discussion = [decl "backgroundColor" C.VDocDiscussion] <> dialogStyles
 
-overlayStyles :: [Decl]
+overlayStyles :: HasCallStack => [Decl]
 overlayStyles =
   [ zindex ZIxOverlay
   , decl "backgroundColor" C.OverlayBackdrop
   ]
 
 
-showComment :: View '[CommentDisplayProps]
+showComment :: HasCallStack => View '[CommentDisplayProps]
 showComment = mkView "ShowComment" $ \props ->
   let extraStyles = [ decl "top" (Px $ props ^. cdpTopOffset . unOffsetFromDocumentTop + 5)
                     , decl "left" (Px . leftFor $ props ^. cdpWindowWidth)
@@ -131,11 +131,11 @@ showComment = mkView "ShowComment" $ \props ->
 
         div_ ["style" @@= [decl "marginBottom" (Px 20)]] "" -- make some space for the close button
 
-showComment_ :: CommentDisplayProps -> ReactElementM eventHandler ()
+showComment_ :: HasCallStack => CommentDisplayProps -> ReactElementM eventHandler ()
 showComment_ !props = view_ showComment "showComment_" props
 
 
-showNoteProps :: M.Map (ID Note) Note -> GlobalState -> ShowNoteProps
+showNoteProps :: HasCallStack => M.Map (ID Note) Note -> GlobalState -> ShowNoteProps
 showNoteProps notes rs = case (maybeNote, maybeOffset) of
   (Just note, Just offset) -> ShowNotePropsJust note offset (rs ^. gsScreenState . ssWindowWidth)
   (Just note, Nothing)     -> err "note" note "offset" ShowNotePropsNothing
@@ -153,7 +153,7 @@ showNoteProps notes rs = case (maybeNote, maybeOffset) of
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
 
-showNote :: View '[ShowNoteProps]
+showNote :: HasCallStack => View '[ShowNoteProps]
 showNote = mkView "ShowNote" $ \case
   ShowNotePropsNothing -> mempty
   ShowNotePropsJust note top windowWidth1 ->
@@ -164,11 +164,11 @@ showNote = mkView "ShowNote" $ \case
     in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
                                          vdoc_overlay_content__note top windowWidth1)
 
-showNote_ :: ShowNoteProps -> ReactElementM eventHandler ()
+showNote_ :: HasCallStack => ShowNoteProps -> ReactElementM eventHandler ()
 showNote_ !props = view_ showNote "showNote_" props
 
 
-showDiscussionProps :: M.Map (ID Discussion) CompositeDiscussion -> GlobalState -> ShowDiscussionProps
+showDiscussionProps :: HasCallStack => M.Map (ID Discussion) CompositeDiscussion -> GlobalState -> ShowDiscussionProps
 showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
   (Just discussion, Just offset) -> ShowDiscussionPropsJust discussion offset (rs ^. gsScreenState . ssWindowWidth)
   (Just discussion, Nothing)     -> err "discussion" discussion "offset" ShowDiscussionPropsNothing
@@ -186,7 +186,7 @@ showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
 
-showDiscussion :: View '[ShowDiscussionProps]
+showDiscussion :: HasCallStack => View '[ShowDiscussionProps]
 showDiscussion = mkView "ShowDiscussion" $ \case
   ShowDiscussionPropsNothing -> mempty
   ShowDiscussionPropsJust discussion top windowWidth1 ->
@@ -197,11 +197,11 @@ showDiscussion = mkView "ShowDiscussion" $ \case
     in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
                                          vdoc_overlay_content__discussion top windowWidth1)
 
-showDiscussion_ :: ShowDiscussionProps -> ReactElementM eventHandler ()
+showDiscussion_ :: HasCallStack => ShowDiscussionProps -> ReactElementM eventHandler ()
 showDiscussion_ !props = view_ showDiscussion "showDiscussion_" props
 
 
-showQuestion :: View '[ShowQuestionProps]
+showQuestion :: HasCallStack => View '[ShowQuestionProps]
 showQuestion = mkView "ShowQuestion" $ \case
   ShowQuestionProps Nothing -> mempty
   ShowQuestionProps (Just question) ->
@@ -213,7 +213,7 @@ showQuestion = mkView "ShowQuestion" $ \case
     in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
                                          overlayStyle1 (OffsetFromDocumentTop 0) 800)
 
-showQuestion_ :: ShowQuestionProps -> ReactElementM eventHandler ()
+showQuestion_ :: HasCallStack => ShowQuestionProps -> ReactElementM eventHandler ()
 showQuestion_ !props = view_ showQuestion "showQuestion_" props
 
 
@@ -254,7 +254,7 @@ addContributionDialogFrame True title mrange windowWidth child =
 
       child
 
-addComment :: Translations -> View '[AddContributionProps CommentKind]
+addComment :: HasCallStack => Translations -> View '[AddContributionProps CommentKind]
 addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame
   (props ^. acpVisible)
   (__ add_a_comment)
@@ -262,11 +262,11 @@ addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame
   (props ^. acpWindowWidth)
   (commentInput_ props)
 
-addComment_ :: Translations -> AddContributionProps CommentKind -> ReactElementM eventHandler ()
+addComment_ :: HasCallStack => Translations -> AddContributionProps CommentKind -> ReactElementM eventHandler ()
 addComment_ __ !props = view_ (addComment __) "addComment_" props
 
 
-contributionDialogTextForm :: Int -> ST -> ReactElementM (StatefulViewEventHandler AddContributionFormState) ()
+contributionDialogTextForm :: HasCallStack => Int -> ST -> ReactElementM (StatefulViewEventHandler AddContributionFormState) ()
 contributionDialogTextForm stepNumber promptText = do
   div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
     p_ $ do
@@ -289,7 +289,7 @@ contributionDialogTextForm stepNumber promptText = do
       mempty
 
 
-commentInput :: View '[AddContributionProps CommentKind]
+commentInput :: HasCallStack => View '[AddContributionProps CommentKind]
 commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \curState props ->
     div_ $ do
       div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
@@ -344,11 +344,11 @@ commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \cu
                 , ContributionAction HideCommentEditor
                 ]
 
-commentInput_ :: AddContributionProps CommentKind -> ReactElementM eventHandler ()
+commentInput_ :: HasCallStack => AddContributionProps CommentKind -> ReactElementM eventHandler ()
 commentInput_ !props = view_ commentInput "commentInput_" props
 
 
-addEdit :: View '[AddContributionProps EditKind]
+addEdit :: HasCallStack => View '[AddContributionProps EditKind]
 addEdit = mkView "AddEdit" $ \props -> addContributionDialogFrame
   (props ^. acpVisible)
   "add an edit"
@@ -356,7 +356,7 @@ addEdit = mkView "AddEdit" $ \props -> addContributionDialogFrame
   (props ^. acpWindowWidth)
   (editInput_ props)
 
-addEdit_ :: AddContributionProps EditKind -> ReactElementM eventHandler ()
+addEdit_ :: HasCallStack => AddContributionProps EditKind -> ReactElementM eventHandler ()
 addEdit_ = view_ addEdit "addEdit_"
 
 
@@ -366,7 +366,7 @@ addEdit_ = view_ addEdit "addEdit_"
 -- FUTUREWORK: kind change is a nice example of local signals between two components.  how is this
 -- handled in react?  should we have a second global store here that is just shared between
 -- 'editInput' and and 'editKindForm'?
-editInput :: View '[AddContributionProps EditKind]
+editInput :: HasCallStack => View '[AddContributionProps EditKind]
 editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState props -> do
     div_ $ do
       elemString "Step 1: "
@@ -389,5 +389,5 @@ editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState
                                              , ContributionAction ClearRange
                                              ]
 
-editInput_ :: AddContributionProps EditKind -> ReactElementM eventHandler ()
+editInput_ :: HasCallStack => AddContributionProps EditKind -> ReactElementM eventHandler ()
 editInput_ !props = view_ editInput "editInput_" props

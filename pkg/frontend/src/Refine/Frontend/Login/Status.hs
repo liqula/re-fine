@@ -33,7 +33,7 @@ import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Store.Types
 
 
-loginStatusButton_ :: (forall onclick. IbuttonProps onclick -> IbuttonProps onclick) -> CurrentUser -> ReactElementM handler ()
+loginStatusButton_ :: HasCallStack => (forall onclick. IbuttonProps onclick -> IbuttonProps onclick) -> CurrentUser -> ReactElementM handler ()
 loginStatusButton_ tweak cu = ibutton_ $ emptyIbuttonProps "Login" onclick
   & ibLabel .~ mkLabel cu
   & ibSize .~ XXLarge

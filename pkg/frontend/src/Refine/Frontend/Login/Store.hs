@@ -7,6 +7,6 @@ import Refine.Frontend.Login.Types
 import Refine.Frontend.Store.Types (GlobalAction(..))
 
 
-loginStateUpdate :: GlobalAction -> LoginState -> LoginState
+loginStateUpdate :: HasCallStack => GlobalAction -> LoginState -> LoginState
 loginStateUpdate (ChangeCurrentUser user) = lsCurrentUser .~ user
 loginStateUpdate _                        = id

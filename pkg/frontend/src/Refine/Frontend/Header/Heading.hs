@@ -62,7 +62,7 @@ data TopMenuBarProps = TopMenuBarProps
 
 instance UnoverlapAllEq TopMenuBarProps
 
-topMenuBar :: View '[TopMenuBarProps]
+topMenuBar :: HasCallStack => View '[TopMenuBarProps]
 topMenuBar = mkView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
   div_ [ classNamesAny [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]
        , "style" @@= [decl "pointerEvents" (Ident "none")]
@@ -82,12 +82,12 @@ topMenuBar = mkView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
       span_ ["className" $= "c-mainmenu__menu-button-label"] "MENU"
     loginStatusButton_ (ibDarkBackground .~ not sticky) currentUser
 
-topMenuBar_ :: TopMenuBarProps -> ReactElementM eventHandler ()
+topMenuBar_ :: HasCallStack => TopMenuBarProps -> ReactElementM eventHandler ()
 topMenuBar_ !props = view_ topMenuBar "TopMenuBar_" props
 
 
 -- | extract the new state from event.
-currentToolbarStickyState :: Event -> Bool
+currentToolbarStickyState :: HasCallStack => Event -> Bool
 currentToolbarStickyState (evtHandlerArg -> RF.HandlerArg j) = pFromJSVal j
 
 mainHeader :: HasCallStack => RF.ReactView GlobalState
@@ -134,10 +134,10 @@ mainHeaderRender () rs = do
             DocumentStateEdit {} -> editToolbar_ (mkEditToolbarProps rs)
           commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
 
-mainHeader_ :: GlobalState -> ReactElementM eventHandler ()
+mainHeader_ :: HasCallStack => GlobalState -> ReactElementM eventHandler ()
 mainHeader_ props = RF.view mainHeader props mempty
 
-calcHeaderHeight :: RF.LDOM -> IO ()
+calcHeaderHeight :: HasCallStack => RF.LDOM -> IO ()
 calcHeaderHeight ldom = do
    this <- RF.lThis ldom
    dispatchAndExec . ScreenAction . AddHeaderHeight =<< js_getBoundingClientRectHeight this
