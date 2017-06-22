@@ -83,15 +83,14 @@ mkDocumentStateView c = DocumentStateView e c'
 refreshDocumentStateView :: Bool -> RawContent -> DocumentState -> DocumentState
 refreshDocumentStateView eidChanged c = if eidChanged then viewMode else sameMode
   where
-    viewMode _ = DocumentStateView e c'
+    viewMode _ = DocumentStateView e c
 
     sameMode = \case
-      DocumentStateView _ _                -> DocumentStateView e c'
-      DocumentStateDiff _ _ edit collapsed -> DocumentStateDiff e c' edit collapsed
+      DocumentStateView _ _                -> DocumentStateView e c
+      DocumentStateDiff _ _ edit collapsed -> DocumentStateDiff e c edit collapsed
       DocumentStateEdit _ kind             -> DocumentStateEdit e kind
 
     e  = createWithContent $ convertFromRaw c
-    c' = convertToRaw $ getCurrentContent e
 
 emptyDocumentState :: HasCallStack => DocumentState
 emptyDocumentState = mkDocumentStateView emptyRawContent
