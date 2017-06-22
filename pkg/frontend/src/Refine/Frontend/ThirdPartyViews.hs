@@ -37,19 +37,19 @@ import Refine.Frontend.Prelude
 -- at least twice in the past.
 
 
-sticky_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+sticky_ :: HasCallStack => [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 sticky_ = foreignClass js_sticky
 
-stickyContainer_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+stickyContainer_ :: HasCallStack => [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 stickyContainer_ = foreignClass js_stickyContainer
 
-skylight_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+skylight_ :: HasCallStack => [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 skylight_ = foreignClass js_skylight
 
-hammer_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+hammer_ :: HasCallStack => [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 hammer_ = foreignClass js_hammer
 
-editor_ :: [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+editor_ :: HasCallStack => [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 editor_ = foreignClass js_editor
 
 #ifdef __GHCJS__

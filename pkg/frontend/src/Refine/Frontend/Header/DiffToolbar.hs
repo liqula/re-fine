@@ -87,5 +87,5 @@ diffToolbar = mkView "DiffToolbar" $ \props -> do
             & ibLabel .~ "details"
             & ibSize .~ XXLarge
 
-diffToolbar_ :: DiffToolbarProps -> ReactElementM eventHandler ()
+diffToolbar_ :: HasCallStack => DiffToolbarProps -> ReactElementM eventHandler ()
 diffToolbar_ = view_ diffToolbar "diffToolbar_"

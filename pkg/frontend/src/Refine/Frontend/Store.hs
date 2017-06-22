@@ -83,7 +83,7 @@ type MonadTransform m = (Functor m, Applicative m, Monad m, MonadIO m, MonadStat
 type Transform = StateT [GlobalAction] IO
 
 -- | FUTUREWORK: have more fine-grained constraints on 'm'.
-transformGlobalState :: forall m. MonadTransform m => GlobalAction -> GlobalState -> m GlobalState
+transformGlobalState :: forall m. (HasCallStack, MonadTransform m) => GlobalAction -> GlobalState -> m GlobalState
 transformGlobalState = transf
   where
     transf :: GlobalAction -> GlobalState -> m GlobalState
@@ -144,7 +144,7 @@ transformGlobalState = transf
               & gsTranslations        %~ translationsUpdate action
               & gsDevState            %~ devStateUpdate action
 
-consoleLogGlobalStateBefore :: forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
+consoleLogGlobalStateBefore :: HasCallStack => forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
 consoleLogGlobalStateBefore False _ _ = pure ()
 consoleLogGlobalStateBefore True action _st = liftIO $ do
   consoleLogJSStringM "" "\n"
@@ -156,7 +156,7 @@ consoleLogGlobalStateBefore True action _st = liftIO $ do
   consoleLogJSONM "Action: " action
   -- consoleLogJSStringM "Action: " (cs $ show action)
 
-consoleLogGlobalStateAfter :: forall m. MonadTransform m => Bool -> Bool -> GlobalState -> m ()
+consoleLogGlobalStateAfter :: HasCallStack => forall m. MonadTransform m => Bool -> Bool -> GlobalState -> m ()
 consoleLogGlobalStateAfter False _ _ = pure ()
 consoleLogGlobalStateAfter True False _ = do
   consoleLogJSONM "New state: " (String "[UNCHANGED]" :: Value)
@@ -168,7 +168,7 @@ consoleLogGlobalStateAfter True True st = liftIO $ do
 
 -- * pure updates
 
-vdocUpdate :: GlobalAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
+vdocUpdate :: HasCallStack => GlobalAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate action Nothing = case action of
     OpenDocument newvdoc -> Just newvdoc
     _ -> Nothing
@@ -192,12 +192,12 @@ vdocUpdate action (Just vdoc) = Just $ case action of
     _ -> vdoc
 
 
-vdocListUpdate :: GlobalAction -> Maybe [C.ID C.VDoc] -> Maybe [C.ID C.VDoc]
+vdocListUpdate :: HasCallStack => GlobalAction -> Maybe [C.ID C.VDoc] -> Maybe [C.ID C.VDoc]
 vdocListUpdate (RegisterDocumentList vdocs) _  = Just vdocs
 vdocListUpdate _                            st = st
 
 
-toolbarStickyUpdate :: GlobalAction -> Bool -> Bool
+toolbarStickyUpdate :: HasCallStack => GlobalAction -> Bool -> Bool
 toolbarStickyUpdate action st = case action of
   ToolbarStickyStateChange st' -> st'
   _                            -> st
@@ -206,7 +206,7 @@ toolbarStickyUpdate action st = case action of
 -- | Only touches the 'DevState' if it is 'Just'.  In production, 'gsDevState' should always be
 -- 'Nothing'.  Use 'weAreInDevMode' to decide whether you want to initialize it, or, when writing
 -- test cases, initialize it unconditionally (See `test/Refine/Frontend/Contribution/MarkSpec.hs`).
-devStateUpdate :: GlobalAction -> Maybe DevState -> Maybe DevState
+devStateUpdate :: HasCallStack => GlobalAction -> Maybe DevState -> Maybe DevState
 devStateUpdate _ Nothing = Nothing
 devStateUpdate action (Just devstate) = Just $ upd action devstate
   where
@@ -350,10 +350,10 @@ emitBackendCallsFor action st = case action of
 -- the composite vdoc here.  if we got rid of the NFData constraint on
 -- actions, we could define @UpdateCVDoc :: (CompositeVDoc ->
 -- CompositeVDoc) -> GlobalAction@.
-reloadCompositeVDoc :: GlobalState -> GlobalAction
+reloadCompositeVDoc :: HasCallStack => GlobalState -> GlobalAction
 reloadCompositeVDoc st = LoadDocument (st ^?! gsVDoc . _Just . C.compositeVDoc . C.vdocID)
 
-ajaxFail :: (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
+ajaxFail :: HasCallStack => (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
 ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of
   (Right err, Just onApiError) -> dispatchManyM (onApiError err)
   (Right err, Nothing)         -> windowAlert ("Unexpected error from server: " <> show (code, err))     >> pure []
@@ -363,30 +363,30 @@ ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of
 -- * triggering actions
 
 -- FIXME: return a single some-action, not a list?
-dispatch :: GlobalAction -> ViewEventHandler
+dispatch :: HasCallStack => GlobalAction -> ViewEventHandler
 dispatch a = [someStoreAction @GlobalState a]
 
-dispatchMany :: [GlobalAction] -> ViewEventHandler
+dispatchMany :: HasCallStack => [GlobalAction] -> ViewEventHandler
 dispatchMany = mconcat . fmap dispatch
 
-dispatchM :: Monad m => GlobalAction -> m ViewEventHandler
+dispatchM :: HasCallStack => Monad m => GlobalAction -> m ViewEventHandler
 dispatchM = pure . dispatch
 
-dispatchManyM :: Monad m => [GlobalAction] -> m ViewEventHandler
+dispatchManyM :: HasCallStack => Monad m => [GlobalAction] -> m ViewEventHandler
 dispatchManyM = pure . dispatchMany
 
-reDispatchM :: MonadState [GlobalAction] m => GlobalAction -> m ()
+reDispatchM :: HasCallStack => MonadState [GlobalAction] m => GlobalAction -> m ()
 reDispatchM a = reDispatchManyM [a]
 
-reDispatchManyM :: MonadState [GlobalAction] m => [GlobalAction] -> m ()
+reDispatchManyM :: HasCallStack => MonadState [GlobalAction] m => [GlobalAction] -> m ()
 reDispatchManyM as = modify (<> as)
 
-dispatchAndExec :: MonadIO m => GlobalAction -> m ()
+dispatchAndExec :: HasCallStack => MonadIO m => GlobalAction -> m ()
 dispatchAndExec a = liftIO . void . forkIO $ do
   () <- executeAction `mapM_` dispatch a
   pure ()
 
-dispatchAndExecMany :: MonadIO m => [GlobalAction] -> m ()
+dispatchAndExecMany :: HasCallStack => MonadIO m => [GlobalAction] -> m ()
 dispatchAndExecMany as = liftIO . void . forkIO $ do
   () <- executeAction `mapM_` dispatchMany as
   pure ()
@@ -402,7 +402,7 @@ dispatchAndExecMany as = liftIO . void . forkIO $ do
 -- IO is needed for (1) going via the selection state in the browser api (@getSelection (dstate
 -- ^. documentStateVal)@ would be nicer, but draft does not store selections in readOnly mode.), and
 -- for (2) for looking at the DOM for the position data.
-getRangeAction :: MonadIO m => DocumentState -> m (Maybe ContributionAction)
+getRangeAction :: HasCallStack => (HasCallStack, MonadIO m) => DocumentState -> m (Maybe ContributionAction)
 getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
   esel :: Either String C.SelectionState <- runExceptT getDraftSelectionStateViaBrowser
   case esel of
@@ -427,7 +427,7 @@ getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
         , _sstScrollOffset   = ScrollOffsetOfViewport scrollOffset
         }
 
-removeAllRanges :: MonadIO m => m ()
+removeAllRanges :: HasCallStack => MonadIO m => m ()
 removeAllRanges = liftIO js_removeAllRanges
 
 
@@ -435,12 +435,12 @@ removeAllRanges = liftIO js_removeAllRanges
 
 -- | See https://bitbucket.org/wuzzeb/react-flux/issues/28/triggering-re-render-after-store-update
 -- for details and status.
-reactFluxWorkAroundForkIO :: IO () -> IO ()
+reactFluxWorkAroundForkIO :: HasCallStack => IO () -> IO ()
 reactFluxWorkAroundForkIO action = void . forkIO $ yield >> action
 
 -- | See https://bitbucket.org/wuzzeb/react-flux/issues/28/triggering-re-render-after-store-update
 -- for details and status.  Try to increase microseconds if you still experience race conditions.
-reactFluxWorkAroundThreadDelay :: Double -> IO ()
+reactFluxWorkAroundThreadDelay :: HasCallStack => Double -> IO ()
 reactFluxWorkAroundThreadDelay seconds = threadDelay . round $ seconds * 1000 * 1000
 
 

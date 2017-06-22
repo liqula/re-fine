@@ -12,9 +12,9 @@ import Refine.Common.Types.Translation
 import Refine.Frontend.Store.Types
 
 
-translationsUpdate :: GlobalAction -> Trans -> Trans
+translationsUpdate :: HasCallStack => GlobalAction -> Trans -> Trans
 translationsUpdate (ChangeTranslations l10) t = updateTrans t $ newTranslations l10
 translationsUpdate _                        t = t
 
-newTranslations :: L10 -> Translations
+newTranslations :: HasCallStack => L10 -> Translations
 newTranslations (L10 ld l) = cs . localize ld l . gettext . _unTKey

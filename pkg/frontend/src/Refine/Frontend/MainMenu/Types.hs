@@ -29,7 +29,7 @@ data MainMenuErrors = MainMenuErrors
   }
   deriving (Eq, Show, Generic)
 
-defaultMainMenuErrors :: MainMenuErrors
+defaultMainMenuErrors :: HasCallStack => MainMenuErrors
 defaultMainMenuErrors = MainMenuErrors
   { _mmeLogin        = Nothing
   , _mmeRegistration = Nothing
@@ -41,7 +41,7 @@ data MainMenuState = MainMenuState
   }
   deriving (Eq, Show, Generic)
 
-emptyMainMenuState :: MainMenuState
+emptyMainMenuState :: HasCallStack => MainMenuState
 emptyMainMenuState = MainMenuState
   { _mmState  = MainMenuClosed
   , _mmErrors = defaultMainMenuErrors
@@ -59,7 +59,7 @@ data MainMenuTab
   | MainMenuLogin MainMenuSubTabLogin
   deriving (Eq, Show, Generic)
 
-defaultMainMenuTab :: MainMenuTab
+defaultMainMenuTab :: HasCallStack => MainMenuTab
 defaultMainMenuTab = MainMenuProcess
 
 data MainMenuSubTabLogin = MainMenuSubTabLogin | MainMenuSubTabRegistration

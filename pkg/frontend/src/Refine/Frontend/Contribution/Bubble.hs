@@ -46,13 +46,13 @@ import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
 
-mkClickHandler :: [ContributionAction] -> Event -> MouseEvent -> [SomeStoreAction]
+mkClickHandler :: HasCallStack => [ContributionAction] -> Event -> MouseEvent -> [SomeStoreAction]
 mkClickHandler actions _ _ = dispatchMany $ ContributionAction <$> actions
 
-bubbleStackStyles :: [Decl]
+bubbleStackStyles :: HasCallStack => [Decl]
 bubbleStackStyles = [decl "border" (Ident "3px dotted black")]
 
-bubble :: ReactElementM [SomeStoreAction] () -> View '[BubbleProps]
+bubble :: HasCallStack => ReactElementM [SomeStoreAction] () -> View '[BubbleProps]
 bubble children = mkView "Bubble" $ \props -> do
   let bubbleKind = case props ^. bubblePropsContributionIds of
           NoStack (ContribIDNote _)         -> Left "o-snippet--note"
@@ -103,14 +103,14 @@ bubble children = mkView "Bubble" $ \props -> do
     div_ ["className" $= "o-snippet__content"]  -- RENAME: snippet => bubble
       children
 
-bubble_ :: BubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
+bubble_ :: HasCallStack => BubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
 bubble_ !props children = view_ (bubble children) (bubbleKey props) props
   -- (there is React.Flux.Internal.childrenPassedToView, but doing it by hand is easier to understand.)
 
-bubbleKey :: BubbleProps -> JSString
+bubbleKey :: HasCallStack => BubbleProps -> JSString
 bubbleKey props = "bubble_" <> props ^. bubblePropsContributionIds . to (cs . toUrlPiece . stackToHead)
 
-verticalPosition :: Maybe OffsetFromDocumentTop -> ScreenState -> [Decl]
+verticalPosition :: HasCallStack => Maybe OffsetFromDocumentTop -> ScreenState -> [Decl]
 verticalPosition Nothing       _  = [decl "margin-top" (Px 20), decl "position" (Ident "relative")]
 verticalPosition (Just offset) st = [decl "top" (Px $ offsetIntoText offset st), decl "position" (Ident "absolute")]
 
@@ -119,14 +119,14 @@ verticalPosition (Just offset) st = [decl "top" (Px $ offsetIntoText offset st),
 
 -- | FUTUREWORK: it would be nice to get around this, but as long as it's true, it makes things a
 -- lot easier...
-constantBubbleHeight :: OffsetFromDocumentTop
+constantBubbleHeight :: HasCallStack => OffsetFromDocumentTop
 constantBubbleHeight = 81
 
-maybeStackProtoBubbles :: BubblePositioning -> [ProtoBubble] -> [StackOrNot ProtoBubble]
+maybeStackProtoBubbles :: HasCallStack => BubblePositioning -> [ProtoBubble] -> [StackOrNot ProtoBubble]
 maybeStackProtoBubbles BubblePositioningAbsolute     = stackProtoBubbles
 maybeStackProtoBubbles BubblePositioningEvenlySpaced = fmap NoStack
 
-stackProtoBubbles :: [ProtoBubble] -> [StackOrNot ProtoBubble]
+stackProtoBubbles :: HasCallStack => [ProtoBubble] -> [StackOrNot ProtoBubble]
 stackProtoBubbles = stackComponents getTop getHeight
   where
     getTop    = view (protoBubbleVertialSpanBounds . vertialSpanBoundsTop . unOffsetFromDocumentTop)
@@ -135,7 +135,7 @@ stackProtoBubbles = stackComponents getTop getHeight
 
 -- | given a list of abstract components together with their absolute position and height, group all
 -- overlapping components into stacks, and leave all others single.
-stackComponents :: forall pos height comp. (pos ~ Int, height ~ Int)
+stackComponents :: HasCallStack => forall pos height comp. (pos ~ Int, height ~ Int)
                 => (comp -> pos) -> (comp -> height)
                 -> [comp] -> [StackOrNot comp]
 stackComponents getPos getHeight comps = assert (all (\c -> getPos c >= 0 && getHeight c >= 1) comps)

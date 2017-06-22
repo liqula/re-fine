@@ -39,7 +39,7 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Util
 
 
-topMenuBarInMainMenu :: View '[TopMenuBarInMainMenuProps]
+topMenuBarInMainMenu :: HasCallStack => View '[TopMenuBarInMainMenuProps]
 topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuProps currentTab currentUser) ->
   div_ ["className" $= "c-mainmenu-content__header"] $ do
     div_ ["className" $= "gr-2"] $ do
@@ -93,11 +93,11 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
         & ibSize .~ XXLarge
         & ibLabel .~ mempty
 
-topMenuBarInMainMenu_ :: TopMenuBarInMainMenuProps -> ReactElementM eventHandler ()
+topMenuBarInMainMenu_ :: HasCallStack => TopMenuBarInMainMenuProps -> ReactElementM eventHandler ()
 topMenuBarInMainMenu_ !props = view_ topMenuBarInMainMenu "topMenuBarInMainMenu_" props
 
 
-tabStyles :: [Decl]
+tabStyles :: HasCallStack => [Decl]
 tabStyles =
   [ decl "position" (Ident "absolute")
   , zindex ZIxLoginTab
@@ -106,7 +106,7 @@ tabStyles =
   , decl "borderRadius" (Px 12)
   ]
 
-mainMenu :: View '[MainMenuProps MainMenuTab]
+mainMenu :: HasCallStack => View '[MainMenuProps MainMenuTab]
 mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
@@ -124,11 +124,11 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
       div_ [ "className" $= "gr-2" ] $ do
         pure ()
 
-mainMenu_ :: MainMenuTab -> MainMenuErrors -> CurrentUser -> ReactElementM eventHandler ()
+mainMenu_ :: HasCallStack => MainMenuTab -> MainMenuErrors -> CurrentUser -> ReactElementM eventHandler ()
 mainMenu_ mt me cu = view_ mainMenu "mainMenu_" (MainMenuProps mt me cu)
 
 
-mainMenuLoginTab :: View '[MainMenuProps MainMenuSubTabLogin]
+mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]
 mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
       let tabButton :: Int -> MainMenuSubTabLogin -> ReactElementM eventHandler ()
           tabButton key this = div_ ["style" @@= [decl "margin-left" (Px 40)]] $ do
@@ -151,5 +151,5 @@ mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuEr
           MainMenuSubTabLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
           MainMenuSubTabRegistration -> registration_  (menuErrors ^. mmeRegistration)
 
-mainMenuLoginTab_ :: MainMenuSubTabLogin -> MainMenuErrors -> CurrentUser -> ReactElementM eventHandler ()
+mainMenuLoginTab_ :: HasCallStack => MainMenuSubTabLogin -> MainMenuErrors -> CurrentUser -> ReactElementM eventHandler ()
 mainMenuLoginTab_ mt me cu = view_ mainMenuLoginTab "mainMenuLoginTab_" (MainMenuProps mt me cu)

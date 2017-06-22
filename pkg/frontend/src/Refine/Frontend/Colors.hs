@@ -39,10 +39,10 @@ data RGBA = RGBA Int Int Int Double
 instance Css.ToExpr RGBA where
   expr (RGBA r g b a) = Css.expr $ Css.Ident ("rgba(" <> intercalate ", " [show r, show g, show b, show a] <> ")")
 
-rgb :: Int -> Int -> Int -> RGBA
+rgb :: HasCallStack => Int -> Int -> Int -> RGBA
 rgb r g b = RGBA r g b 1
 
-rgbFromHex :: ST -> RGBA
+rgbFromHex :: HasCallStack => ST -> RGBA
 rgbFromHex num = f $ toLower <$> cs num
   where
     f ('#' : xs) = f xs
@@ -67,7 +67,7 @@ rgbFromHex num = f $ toLower <$> cs num
     q 'f' = 15
     q _   = error $ "rgbFromHex: bad input: " <> show num
 
-opacity :: ToRGBA a => a -> Double -> RGBA
+opacity :: HasCallStack => ToRGBA a => a -> Double -> RGBA
 opacity (toRGBA -> RGBA r g b a) a' = RGBA r g b (a * a')
 
 

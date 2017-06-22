@@ -61,7 +61,7 @@ import           Refine.Frontend.Util
 
 -- | The controller view and also the top level of the Refine app.  This controller view registers
 -- with the store and will be re-rendered whenever the store changes.
-refineApp :: View '[]
+refineApp :: HasCallStack => View '[]
 refineApp = mkControllerView @'[StoreArg GlobalState] "RefineApp" $ \gs ->
   if False {- set conditional to 'True' to switch to workbench. -} then Refine.Frontend.Workbench.workbench_ gs else
   case gs ^. gsVDoc of
@@ -72,7 +72,7 @@ refineApp = mkControllerView @'[StoreArg GlobalState] "RefineApp" $ \gs ->
                             (gs ^. gsMainMenuState . mmErrors)
                             (gs ^. gsLoginState . lsCurrentUser)
 
-mainScreen :: View '[GlobalState]
+mainScreen :: HasCallStack => View '[GlobalState]
 mainScreen = mkView "MainScreen" $ \rs -> do
   let vdoc = fromJust (rs ^. gsVDoc) -- FIXME: improve this!  (introduce a custom props type with a CompositeVDoc *not* wrapped in a 'Maybe')
 
@@ -133,11 +133,11 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           -- they have been rendered.)
           div_ ["style" @@= [decl "margin-bottom" (Px 800)]] $ pure ()
 
-mainScreen_ :: GlobalState -> ReactElementM eventHandler ()
+mainScreen_ :: HasCallStack => GlobalState -> ReactElementM eventHandler ()
 mainScreen_ !rs = view_ mainScreen "mainScreen_" rs
 
 
-leftAside :: View '[AsideProps]
+leftAside :: HasCallStack => View '[AsideProps]
 leftAside = mkView "LeftAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
     let protos = maybeStackProtoBubbles (props ^. asideBubblePositioning)
@@ -150,11 +150,11 @@ leftAside = mkView "LeftAside" $ \props ->
         (props ^. asideCurrentRange)
         (props ^. asideScreenState)
 
-leftAside_ :: AsideProps -> ReactElementM eventHandler ()
+leftAside_ :: HasCallStack => AsideProps -> ReactElementM eventHandler ()
 leftAside_ !props = view_ leftAside "leftAside_" props
 
 
-rightAside :: View '[AsideProps]
+rightAside :: HasCallStack => View '[AsideProps]
 rightAside = mkView "RightAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: modifications => edit
     let protos = maybeStackProtoBubbles (props ^. asideBubblePositioning)
@@ -166,32 +166,32 @@ rightAside = mkView "RightAside" $ \props ->
       (props ^. asideCurrentRange)
       (props ^. asideScreenState)
 
-rightAside_ :: AsideProps -> ReactElementM eventHandler ()
+rightAside_ :: HasCallStack => AsideProps -> ReactElementM eventHandler ()
 rightAside_ !props = view_ rightAside "rightAside_" props
 
 
 -- * helpers
 
 -- | All contributions need to be positioned.  The default is '0' (beginning of the article).
-lookupPosition :: AsideProps -> ContributionID -> VertialSpanBounds
+lookupPosition :: HasCallStack => AsideProps -> ContributionID -> VertialSpanBounds
 lookupPosition props cid = fromMaybe (VertialSpanBounds 0 constantBubbleHeight)
                          $ props ^? asideAllVertialSpanBounds . allVertialSpanBounds . at cid . _Just
 
-editToProtoBubble :: AsideProps -> Edit -> ProtoBubble
+editToProtoBubble :: HasCallStack => AsideProps -> Edit -> ProtoBubble
 editToProtoBubble aprops e = ProtoBubble cid (lookupPosition aprops cid) (elemText (e ^. editDesc))
   where cid = contribID $ e ^. editID
 
-noteToProtoBubble :: AsideProps -> Note -> ProtoBubble
+noteToProtoBubble :: HasCallStack => AsideProps -> Note -> ProtoBubble
 noteToProtoBubble aprops n = ProtoBubble cid (lookupPosition aprops cid) (elemText (n ^. noteText))
   where cid = contribID $ n ^. noteID
 
-discussionToProtoBubble :: AsideProps -> CompositeDiscussion -> ProtoBubble
+discussionToProtoBubble :: HasCallStack => AsideProps -> CompositeDiscussion -> ProtoBubble
 discussionToProtoBubble aprops d = ProtoBubble cid (lookupPosition aprops cid) child
   where
     cid = contribID $ d ^. compositeDiscussion . discussionID
     child = elemText (ST.rootLabel (d ^. compositeDiscussionTree) ^. statementText)
 
-stackBubble :: BubbleSide -> AsideProps -> StackOrNot ProtoBubble -> ReactElementM ViewEventHandler ()
+stackBubble :: HasCallStack => BubbleSide -> AsideProps -> StackOrNot ProtoBubble -> ReactElementM ViewEventHandler ()
 stackBubble bubbleSide aprops bstack = bubble_ props children
   where
     bstack' :: StackOrNot ContributionID

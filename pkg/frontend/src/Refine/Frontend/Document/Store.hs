@@ -126,14 +126,14 @@ documentStateUpdate _ _ st
   = st
 
 
-editorStateToVDocVersion :: EditorState -> VDocVersion
+editorStateToVDocVersion :: HasCallStack => EditorState -> VDocVersion
 editorStateToVDocVersion = rawContentToVDocVersion . convertToRaw . getCurrentContent
 
-editorStateFromVDocVersion :: VDocVersion -> EditorState
+editorStateFromVDocVersion :: HasCallStack => VDocVersion -> EditorState
 editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
 
 -- | construct a 'SetAllVertialSpanBounds' action.
-setAllVertialSpanBounds :: MonadIO m => DocumentState -> m ContributionAction
+setAllVertialSpanBounds :: HasCallStack => MonadIO m => DocumentState -> m ContributionAction
 setAllVertialSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
     let marks :: Map ContributionID (Ranges LeafSelector)
         marks = getLeafSelectors rawContent

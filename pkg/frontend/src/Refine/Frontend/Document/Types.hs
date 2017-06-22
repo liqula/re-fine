@@ -70,13 +70,13 @@ data DocumentState =
       }
   deriving (Show, Eq, Generic)
 
-mkDocumentStateView :: RawContent -> DocumentState
+mkDocumentStateView :: HasCallStack => RawContent -> DocumentState
 mkDocumentStateView c = DocumentStateView e c'
   where
     e  = createWithContent $ convertFromRaw c
     c' = convertToRaw $ getCurrentContent e
 
-emptyDocumentState :: DocumentState
+emptyDocumentState :: HasCallStack => DocumentState
 emptyDocumentState = mkDocumentStateView emptyRawContent
 
 data DocumentProps = DocumentProps
@@ -87,7 +87,7 @@ data DocumentProps = DocumentProps
 
 instance UnoverlapAllEq DocumentProps
 
-emptyDocumentProps :: DocumentProps
+emptyDocumentProps :: HasCallStack => DocumentProps
 emptyDocumentProps = DocumentProps
   { _dpDocumentState     = emptyDocumentState
   , _dpContributionState = emptyContributionState

@@ -34,16 +34,16 @@ import Refine.Frontend.Header.Types
 import Refine.Frontend.Store.Types
 
 
-headerStateUpdate :: GlobalAction -> HeaderState -> HeaderState
+headerStateUpdate :: HasCallStack => GlobalAction -> HeaderState -> HeaderState
 headerStateUpdate action st = st
   & hsReadOnly               %~ readOnlyUpdate action
   & hsToolbarExtensionStatus %~ toolbarExtensionUpdate action
 
-readOnlyUpdate :: GlobalAction -> Bool -> Bool
+readOnlyUpdate :: HasCallStack => GlobalAction -> Bool -> Bool
 readOnlyUpdate (HeaderAction ToggleReadOnly) = not
 readOnlyUpdate _                             = id
 
-toolbarExtensionUpdate :: GlobalAction -> ToolbarExtensionStatus -> ToolbarExtensionStatus
+toolbarExtensionUpdate :: HasCallStack => GlobalAction -> ToolbarExtensionStatus -> ToolbarExtensionStatus
 toolbarExtensionUpdate action st = case (st, action) of
     (ToolbarExtensionClosed,               HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithoutRange
     (CommentToolbarExtensionWithoutRange,  HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed

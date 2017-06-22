@@ -7,7 +7,7 @@ import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Store.Types (GlobalAction(..))
 
 
-mainMenuUpdate :: GlobalAction -> MainMenuState -> MainMenuState
+mainMenuUpdate :: HasCallStack => GlobalAction -> MainMenuState -> MainMenuState
 mainMenuUpdate (MainMenuAction MainMenuActionClose) st = st
   & mmState                    .~ MainMenuClosed
   & mmErrors . mmeLogin        .~ Nothing

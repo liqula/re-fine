@@ -59,10 +59,10 @@ data VertialSpanBounds = VertialSpanBounds
 -- (2) implement the orphan instances in terms of this function, not via lists;
 -- (3) same for @mapFromValue@.
 -- (4) rename to @map{From,To}JSON@.
-mapToValue :: (Show k, ToJSON v) => Map.Map k v -> Value
+mapToValue :: HasCallStack => (Show k, ToJSON v) => Map.Map k v -> Value
 mapToValue = object . fmap (\(k, v) -> (cs . show) k .:= v) . Map.toList
 
-mapFromValue :: (Ord k, Read k, FromJSON v) => Value -> Parser (Map.Map k v)
+mapFromValue :: HasCallStack => (Ord k, Read k, FromJSON v) => Value -> Parser (Map.Map k v)
 mapFromValue = withObject "AllVertialSpanBounds"
   $ fmap Map.fromList
   . mapM (\(k, v) -> (,) <$> maybe (fail "could not parse key.") pure (readMaybe (cs k))
@@ -115,7 +115,7 @@ data CommentKind =
 data ActiveDialog = ActiveDialogComment | ActiveDialogEdit
   deriving (Show, Eq, Generic)
 
-emptyContributionState :: ContributionState
+emptyContributionState :: HasCallStack => ContributionState
 emptyContributionState = ContributionState
   { _csCurrentSelectionWithPx   = Nothing
   , _csCommentKind              = Nothing
@@ -134,15 +134,15 @@ emptyContributionState = ContributionState
 data StackOrNot a = Stack (NonEmpty a) | NoStack a
   deriving (Eq, Ord, Show, Generic, Functor)
 
-stackToHead :: StackOrNot a -> a
+stackToHead :: HasCallStack => StackOrNot a -> a
 stackToHead (Stack (x :| _)) = x
 stackToHead (NoStack x)      = x
 
-stackToNonEmptyList :: StackOrNot a -> NonEmpty a
+stackToNonEmptyList :: HasCallStack => StackOrNot a -> NonEmpty a
 stackToNonEmptyList (Stack l)   = l
 stackToNonEmptyList (NoStack x) = x :| []
 
-stackToList :: StackOrNot a -> [a]
+stackToList :: HasCallStack => StackOrNot a -> [a]
 stackToList (Stack (x :| xs)) = x : xs
 stackToList (NoStack x)       = [x]
 
@@ -184,7 +184,7 @@ data QuickCreateProps = QuickCreateProps
 data QuickCreateSide = QuickCreateComment | QuickCreateEdit
   deriving (Show, Eq, Generic)
 
-renderQuickCreateSide :: QuickCreateSide -> JSString
+renderQuickCreateSide :: HasCallStack => QuickCreateSide -> JSString
 renderQuickCreateSide QuickCreateComment = "o-add-annotation"
 renderQuickCreateSide QuickCreateEdit    = "o-add-modification"
 
@@ -282,10 +282,10 @@ makeLenses ''AddContributionProps
 
 -- * helpers
 
-scrollToCurrentSelection :: MonadIO m => ContributionState -> m ()
+scrollToCurrentSelection :: HasCallStack => MonadIO m => ContributionState -> m ()
 scrollToCurrentSelection = liftIO . js_scrollToPx . currentSelectionOffset
 
-currentSelectionOffset :: ContributionState -> Int
+currentSelectionOffset :: HasCallStack => ContributionState -> Int
 currentSelectionOffset st = fromMaybe 0 $ do
   sel <- st ^? csCurrentSelectionWithPx . _Just
   pure $ (sel ^. sstBottomOffset . unOffsetFromViewportTop)
@@ -293,5 +293,5 @@ currentSelectionOffset st = fromMaybe 0 $ do
        + tweakScrollTarget
 
 -- | FUTUREWORK: come up with a more robust way to move the dialog box into the center of the view.
-tweakScrollTarget :: Int
+tweakScrollTarget :: HasCallStack => Int
 tweakScrollTarget = -170

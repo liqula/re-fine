@@ -115,10 +115,10 @@ data IconSize
   | XXLarge
   deriving (Eq, Show)
 
-sizePx :: IconSize -> Px
+sizePx :: HasCallStack => IconSize -> Px
 sizePx = Px . sizeInt
 
-sizeInt :: IconSize -> Int
+sizeInt :: HasCallStack => IconSize -> Int
 sizeInt Medium  = 14
 sizeInt Large   = 20
 sizeInt XLarge  = 26
@@ -152,7 +152,7 @@ instance Css BackgroundImage where
       fp = "\"../images/" <> cs (iconCssClass bimg) <> ".svg\""
 
 -- | work-around for @instance Css BackgroundImage@.
-iconCssClass :: BackgroundImage -> JSString
+iconCssClass :: HasCallStack => BackgroundImage -> JSString
 iconCssClass (BackgroundImage fn st) = mconcat ["icon-", cs fn, "_", renderState st]
     where
       renderState BisRO     = "RO"

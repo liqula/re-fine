@@ -41,7 +41,7 @@ data DocumentHeaderProps = DocumentHeaderProps
 
 instance UnoverlapAllEq DocumentHeaderProps
 
-documentHeader :: View '[DocumentHeaderProps]
+documentHeader :: HasCallStack => View '[DocumentHeaderProps]
 documentHeader = mkView "DocumentHeader" $ \props ->
   div_ ["className" $= "row row-align-middle c-vdoc-header"] $ do
       div_ ["className" $= "grid-wrapper"] $ do
@@ -50,32 +50,32 @@ documentHeader = mkView "DocumentHeader" $ \props ->
               documentAbstract_ $ _headerAbstract props
               phases_
 
-documentHeader_ :: DocumentHeaderProps -> ReactElementM eventHandler ()
+documentHeader_ :: HasCallStack => DocumentHeaderProps -> ReactElementM eventHandler ()
 documentHeader_ !props = view_ documentHeader "DocumentHeader_" props
 
 instance UnoverlapAllEq Title
 
 
-documentTitle :: View '[Title]
+documentTitle :: HasCallStack => View '[Title]
 documentTitle = mkView "DocumentTitle" $ h1_ . cs . _unTitle
 
-documentTitle_ :: Title -> ReactElementM eventHandler ()
+documentTitle_ :: HasCallStack => Title -> ReactElementM eventHandler ()
 documentTitle_ !title = view_ documentTitle "DocumentTitle_" title
 
 instance UnoverlapAllEq Abstract
 
 
-documentAbstract :: View '[Abstract]
+documentAbstract :: HasCallStack => View '[Abstract]
 documentAbstract = mkView "DocumentAbstract" $ \abstract ->
   div_ ["className" $= "c-vdoc-header__description"] $ do
     let paragraphs = ST.split (== '\n') . cs $ _unAbstract abstract
     div_ ["className" $= "c-vdoc-header__description"] . mconcat $ (p_ . elemText) <$> paragraphs
 
-documentAbstract_ :: Abstract -> ReactElementM eventHandler ()
+documentAbstract_ :: HasCallStack => Abstract -> ReactElementM eventHandler ()
 documentAbstract_ !abstract = view_ documentAbstract "DocumentAbstract_" abstract
 
 
-phases :: View '[]
+phases :: HasCallStack => View '[]
 phases = mkView "Phases" $ do
   div_ ["className" $= "c-vdoc-header__phases"] $ do
     h5_ "Phases"
@@ -83,7 +83,7 @@ phases = mkView "Phases" $ do
     div_ ["className" $= "c-vdoc-header__phase"] "Vote"
     div_ ["className" $= "c-vdoc-header__phase"] "Result"
 
-phases_ :: ReactElementM eventHandler ()
+phases_ :: HasCallStack => ReactElementM eventHandler ()
 phases_ = view_ phases "Phases_"
 
 

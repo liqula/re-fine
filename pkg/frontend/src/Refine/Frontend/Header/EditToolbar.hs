@@ -40,7 +40,7 @@ data EditToolbarProps
     | LinkButtonDeletes
     | LinkButtonAdds ST
 
-mkEditToolbarProps :: GlobalState -> EditToolbarProps
+mkEditToolbarProps :: HasCallStack => GlobalState -> EditToolbarProps
 mkEditToolbarProps st
     | rangeIsEmpty rc sel = LinkButtonDisabled
     | any (doRangesOverlap sel) linkranges = LinkButtonDeletes
@@ -56,7 +56,7 @@ mkEditToolbarProps st
         isLink _ = False
 
 
-editToolbar :: EditToolbarProps -> View '[]
+editToolbar :: HasCallStack => EditToolbarProps -> View '[]
 editToolbar ep = mkView "EditToolbar" $ do
   header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
@@ -159,5 +159,5 @@ editToolbar ep = mkView "EditToolbar" $ do
                 & ibSize         .~ XXLarge
            in ibutton_ props
 
-editToolbar_ :: EditToolbarProps -> ReactElementM eventHandler ()
+editToolbar_ :: HasCallStack => EditToolbarProps -> ReactElementM eventHandler ()
 editToolbar_ ep = view_ (editToolbar ep) "editToolbar_"

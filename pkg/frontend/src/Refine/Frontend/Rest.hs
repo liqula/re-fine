@@ -29,49 +29,49 @@ import           Refine.Common.Rest
 import           Refine.Common.Types
 
 
-cfg :: ApiRequestConfig RefineAPI
+cfg :: HasCallStack => ApiRequestConfig RefineAPI
 cfg = ApiRequestConfig "" NoTimeout
 
 
 -- | obtain a list of all vdocs stored in the backend with auid, title.
-listVDocs :: HandleResponse [VDoc] -> IO ()
+listVDocs :: HasCallStack => HandleResponse [VDoc] -> IO ()
 listVDocs = request cfg (Proxy :: Proxy SListVDocs)
 
 -- | look up a vdoc by its auid.
-getVDoc :: ID VDoc -> HandleResponse CompositeVDoc -> IO ()
+getVDoc :: HasCallStack => ID VDoc -> HandleResponse CompositeVDoc -> IO ()
 getVDoc = request cfg (Proxy :: Proxy SGetVDoc)
 
 -- | create a new vdoc.
-createVDoc :: Create VDoc -> HandleResponse CompositeVDoc -> IO ()
+createVDoc :: HasCallStack => Create VDoc -> HandleResponse CompositeVDoc -> IO ()
 createVDoc = request cfg (Proxy :: Proxy SCreateVDoc)
 
-addDiscussion :: ID Edit -> Create Discussion -> HandleResponse CompositeDiscussion -> IO ()
+addDiscussion :: HasCallStack => ID Edit -> Create Discussion -> HandleResponse CompositeDiscussion -> IO ()
 addDiscussion = request cfg (Proxy :: Proxy SAddDiscussion)
 
-addNote :: ID Edit -> Create Note -> HandleResponse Note -> IO ()
+addNote :: HasCallStack => ID Edit -> Create Note -> HandleResponse Note -> IO ()
 addNote = request cfg (Proxy :: Proxy SAddNote)
 
 -- | create a new edit given a base edit and chunk range, new contents.
-addEdit :: ID Edit -> Create Edit -> HandleResponse Edit -> IO ()
+addEdit :: HasCallStack => ID Edit -> Create Edit -> HandleResponse Edit -> IO ()
 addEdit = request cfg (Proxy :: Proxy SAddEdit)
 
-createUser :: CreateUser -> HandleResponse User -> IO ()
+createUser :: HasCallStack => CreateUser -> HandleResponse User -> IO ()
 createUser = request cfg (Proxy :: Proxy SCreateUser)
 
-login :: Login -> HandleResponse Username -> IO ()
+login :: HasCallStack => Login -> HandleResponse Username -> IO ()
 login = request cfg (Proxy :: Proxy SLogin)
 
-logout :: HandleResponse () -> IO ()
+logout :: HasCallStack => HandleResponse () -> IO ()
 logout = request cfg (Proxy :: Proxy SLogout)
 
-getTranslations :: GetTranslations -> HandleResponse L10 -> IO ()
+getTranslations :: HasCallStack => GetTranslations -> HandleResponse L10 -> IO ()
 getTranslations = request cfg (Proxy :: Proxy SGetTranslations)
 
-sPutSimpleVoteOnEdit ::  ID Edit -> Vote -> HandleResponse () -> IO ()
+sPutSimpleVoteOnEdit :: HasCallStack =>  ID Edit -> Vote -> HandleResponse () -> IO ()
 sPutSimpleVoteOnEdit = request cfg (Proxy :: Proxy SPutSimpleVoteOnEdit)
 
-sDeleteSimpleVoteOnEdit ::  ID Edit -> HandleResponse () -> IO ()
+sDeleteSimpleVoteOnEdit :: HasCallStack =>  ID Edit -> HandleResponse () -> IO ()
 sDeleteSimpleVoteOnEdit = request cfg (Proxy :: Proxy SDeleteSimpleVoteOnEdit)
 
-sGetSimpleVotesOnEdit ::  ID Edit -> HandleResponse VoteCount -> IO ()
+sGetSimpleVotesOnEdit :: HasCallStack =>  ID Edit -> HandleResponse VoteCount -> IO ()
 sGetSimpleVotesOnEdit = request cfg (Proxy :: Proxy SGetSimpleVotesOnEdit)

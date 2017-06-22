@@ -41,7 +41,7 @@ import Refine.Frontend.Types
 
 instance UnoverlapAllEq QuickCreateProps
 
-quickCreate :: View '[QuickCreateProps]
+quickCreate :: HasCallStack => View '[QuickCreateProps]
 quickCreate = mkView "QuickCreateButton" $ \props ->
     case (props ^. quickCreateRange, props ^. quickCreateShowState) of
         (Just range, QuickCreateShown) ->
@@ -55,7 +55,7 @@ quickCreate = mkView "QuickCreateButton" $ \props ->
 --    ann.addEventListener('mousedown', quickCreateOverlay);
 --    Hammer.on(ann, 'tap', quickCreateOverlay);
 
-quickCreate_ :: QuickCreateProps -> ReactElementM eventHandler ()
+quickCreate_ :: HasCallStack => QuickCreateProps -> ReactElementM eventHandler ()
 quickCreate_ !props = view_ quickCreate "quickCreate_" props
 
 
@@ -66,17 +66,17 @@ instance IconButtonPropsOnClick QuickCreateSide where
   defaultOnClick = QuickCreateComment
 
 
-mkQuickCreateOffset :: SelectionStateWithPx -> ScreenState -> Int
+mkQuickCreateOffset :: HasCallStack => SelectionStateWithPx -> ScreenState -> Int
 mkQuickCreateOffset range screenState =
     mkQuickCreateRangeTop range screenState +
     mkQuickCreateRangePos range
 
 -- | This is the offset from the bottom of the toolbar.
-mkQuickCreateRangeTop :: SelectionStateWithPx -> ScreenState -> Int
+mkQuickCreateRangeTop :: HasCallStack => SelectionStateWithPx -> ScreenState -> Int
 mkQuickCreateRangeTop range = offsetIntoText
     (offsetFromDocumentTop (range ^. sstTopOffset) (range ^. sstScrollOffset))
 
-mkQuickCreateRangePos :: SelectionStateWithPx -> Int
+mkQuickCreateRangePos :: HasCallStack => SelectionStateWithPx -> Int
 mkQuickCreateRangePos range = if useIdealCenter then idealCenter else edgePosition
   where
     offsetFromTop   = range ^. sstDocTopOffset
