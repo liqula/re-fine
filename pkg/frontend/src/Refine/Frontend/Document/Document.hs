@@ -34,7 +34,6 @@ import Refine.Frontend.Prelude
 
 import qualified Data.List.NonEmpty as NEL
 import qualified React.Flux.Outdated as Outdated
-import           Text.Show.Pretty (ppShow)
 import           Language.Css.Build hiding (s)
 import           Language.Css.Syntax hiding (Value)
 
@@ -121,17 +120,6 @@ documentRender() props = liftViewToStateHandler $ do
           -- this can be reproduced may times in a row, by creating new selections.  i think that's
           -- a new thing, didn't happen a while ago.
       ] mempty
-
-    -- when showing an edit, show meta info dump for debugging.  FIXME: this information should
-    -- be accessible elsewhere in the app.
-    case rawContentDiffView of
-      Nothing -> pure ()
-      Just _ -> pre_ [ "style" @= object [ "background"   .:= String "rgb(255, 100, 150)"
-                                         , "border"       .:= String "6px dashed black"
-                                         , "padding"      .:= String "20px"
-                                         ]
-                     ] $ do
-                  elemString . ppShow $ props ^? dpDocumentState . documentStateDiff
 
 documentComponentDidMount :: HasCallStack => Outdated.LPropsAndState DocumentProps () -> _ldom -> _setState -> IO ()
 documentComponentDidMount getPropsAndState _ldom _setState = do

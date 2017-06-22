@@ -36,7 +36,6 @@ import qualified React.Flux.Internal as RF
 import qualified React.Flux.Outdated as RF
 
 import           Refine.Common.Types
-import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DocumentHeader
 import           Refine.Frontend.Header.DiffToolbar ( diffToolbar_ )
@@ -115,14 +114,14 @@ mainHeaderRender () rs = do
               (vdoc ^. compositeVDoc . vdocTitle)
               (vdoc ^. compositeVDoc . vdocAbstract)
 
-            edit = DocumentHeaderProps
+            edit eid = DocumentHeaderProps
               (vdoc ^. compositeVDoc . vdocTitle)
-              (editDescToAbstract vdoc (rs ^?! gsContributionState . csDisplayedContributionID . _Just))
+              (editDescToAbstract vdoc (ContribIDEdit eid))
 
         case rs ^. gsDocumentState of
-            DocumentStateView {} -> doc
-            DocumentStateDiff {} -> edit
-            DocumentStateEdit {} -> doc
+            DocumentStateView {}        -> doc
+            DocumentStateDiff _ _ eid _ -> edit (eid ^. editID)
+            DocumentStateEdit {}        -> doc
 
       div_ ["className" $= "c-fulltoolbar"] $ do
         sticky_ [RF.on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do

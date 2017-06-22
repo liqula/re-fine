@@ -84,6 +84,12 @@ maximumRange (RawContent bs _) = RangeInner (Position sb so) (Position eb eo)
     eb = BlockIndex (NEL.length bs - 1) $ NEL.last bs ^. blockKey
     eo = NEL.last bs ^. blockText . to ST.length
 
+minimumRange :: RawContent -> Range Position
+minimumRange (RawContent bs _) = RangeInner (Position sb so) (Position sb so)
+  where
+    sb = BlockIndex 0 $ NEL.head bs ^. blockKey
+    so = 0
+
 -- | Check if 'rangeText' yields nothing (block bounderiers are treated as empty).
 rangeIsEmpty :: RawContent -> Range Position -> Bool
 rangeIsEmpty rc = isEmptyRange . fmap (toStylePosition rc)
