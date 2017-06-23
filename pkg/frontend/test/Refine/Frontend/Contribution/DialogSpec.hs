@@ -45,9 +45,9 @@ spec = do
       lengthOfIO (find wrapper (StringSelector ".icon-Discussion_RO"))   `shouldReturn` 0
 
     it "renders highlighted note and dark discussion icons when Note has been selected" $ do
-      wrapper <- mount commentInput_
+      _wrapper <- mount commentInput_
       pendingWith "FIXME: find button and simulate click."
 
     it "renders dark note and highlighted discussion icons when Discussion has been selected" $ do
-      wrapper <- mount commentInput_
+      _wrapper <- mount commentInput_
       pendingWith "FIXME: find button and simulate click."
