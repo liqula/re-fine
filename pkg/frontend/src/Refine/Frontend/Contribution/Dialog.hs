@@ -405,6 +405,7 @@ editInput einfo = mkStatefulView "EditInput" (EditInputState einfo Nothing) $
             & iconButtonPropsElementName  .~ "btn-index"
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True
+            & iconButtonPropsDisabled     .~ (ST.null desc || isNothing mkind)
             & iconButtonPropsOnClick      .~ [ DocumentAction $ DocumentSave (EditInfo desc (fromJust mkind))
                                              , ContributionAction ClearRange
                                              ]
