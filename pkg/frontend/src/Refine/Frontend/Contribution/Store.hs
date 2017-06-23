@@ -40,7 +40,6 @@ contributionStateUpdate a = localAction a . globalAction a
   where
     localAction (ContributionAction action) st = st
       & csCurrentSelectionWithPx   %~ currentRangeUpdate action
-      & csCommentKind              %~ commentKindUpdate action
       & csDisplayedContributionID  %~ displayedContributionUpdate action
       & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
       & csAllVertialSpanBounds     %~ allVertialSpanBoundsUpdate action
@@ -58,12 +57,6 @@ currentRangeUpdate action = case action of
   SetRange range -> const (Just range)
   ClearRange     -> const Nothing
   _ -> id
-
-commentKindUpdate :: HasCallStack => ContributionAction -> Maybe CommentKind -> Maybe CommentKind
-commentKindUpdate action st = case action of
-  (SetCommentKind k) -> Just k
-  HideCommentEditor  -> Nothing  -- when closing the comment editor, reset the choice
-  _ -> st
 
 displayedContributionUpdate :: HasCallStack => ContributionAction -> Maybe ContributionID -> Maybe ContributionID
 displayedContributionUpdate action st = case action of
@@ -92,7 +85,7 @@ quickCreateShowStateUpdate action st = case action of
   ContributionAction ClearRange                 -> selectionWasRemoved
   HeaderAction ToggleCommentToolbarExtension    -> toolbarWasToggled
   HeaderAction StartTextSpecificComment         -> QuickCreateBlocked
-  HeaderAction (StartEdit _)                    -> QuickCreateNotShown  -- (article is hidden, so
+  HeaderAction StartEdit                        -> QuickCreateNotShown  -- (article is hidden, so
                                                                         -- quick create buttons are
                                                                         -- never triggered.)
   HeaderAction CloseToolbarExtension            -> toolbarWasToggled

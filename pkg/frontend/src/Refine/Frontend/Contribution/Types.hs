@@ -21,6 +21,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.Contribution.Types where
 
@@ -38,11 +39,6 @@ import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
 import Refine.Frontend.Util
 import Refine.Prelude.TH (makeRefineType)
-
-
-newtype AddContributionFormState = AddContributionFormState
-  { _addContributionFormState :: ST
-  } deriving (Show, Eq, Generic)
 
 
 newtype AllVertialSpanBounds = AllVertialSpanBounds { _allVertialSpanBounds :: Map.Map ContributionID VertialSpanBounds }
@@ -80,8 +76,7 @@ data ContributionAction =
   | HideContributionDialog
   | ShowCommentEditor
   | HideCommentEditor
-  | SetCommentKind CommentKind
-  | SubmitComment ST (Maybe CommentKind)
+  | SubmitComment (CommentInfo CommentKind)
   | RequestSetAllVertialSpanBounds
   | SetAllVertialSpanBounds [(ContributionID, VertialSpanBounds)]  -- ^ see 'AllVertialSpanBounds'
   | SetBubblePositioning BubblePositioning
@@ -93,7 +88,6 @@ data ContributionAction =
 
 data ContributionState = ContributionState
   { _csCurrentSelectionWithPx   :: Maybe SelectionStateWithPx
-  , _csCommentKind              :: Maybe CommentKind
   , _csDisplayedContributionID  :: Maybe ContributionID
   , _csActiveDialog             :: Maybe ActiveDialog
   , _csHighlightedMarkAndBubble :: [ContributionID]
@@ -106,10 +100,33 @@ data ContributionState = ContributionState
 data BubblePositioning = BubblePositioningAbsolute | BubblePositioningEvenlySpaced
   deriving (Show, Eq, Generic)
 
+-- | The state of 'commentInput_' consists of the 'CommentInfo'
+-- entered by the user, plus two mouse-over booleans for the
+-- 'CommentKind' toggle buttons.
+data CommentInputState = CommentInputState
+  { _commentInputStateData                :: CommentInfo (Maybe CommentKind)
+  , _commentInputStateMouseOverNote       :: Bool
+  , _commentInputStateMouseOverDiscussion :: Bool
+  }
+  deriving (Show, Eq, Generic)
+
+data CommentInfo kind = CommentInfo { _commentInfoDesc :: ST, _commentInfoKind :: kind }
+  deriving (Show, Eq, Generic)
+
 data CommentKind =
     CommentKindNote
   -- | CommentKindQuestion
   | CommentKindDiscussion
+  deriving (Show, Eq, Generic)
+
+-- | Like 'CommentInputState', but for 'editInput_'.
+data EditInputState = EditInputState
+  { _editInputStateData      :: EditInfo (Maybe EditKind)
+  , _editInputStateMouseOver :: Maybe EditKind
+  }
+  deriving (Show, Eq, Generic)
+
+data EditInfo kind = EditInfo { _editInfoDesc :: ST, _editInfoKind :: kind }
   deriving (Show, Eq, Generic)
 
 data ActiveDialog = ActiveDialogComment | ActiveDialogEdit
@@ -118,7 +135,6 @@ data ActiveDialog = ActiveDialogComment | ActiveDialogEdit
 emptyContributionState :: HasCallStack => ContributionState
 emptyContributionState = ContributionState
   { _csCurrentSelectionWithPx   = Nothing
-  , _csCommentKind              = Nothing
   , _csDisplayedContributionID  = Nothing
   , _csActiveDialog             = Nothing
   , _csHighlightedMarkAndBubble = []
@@ -237,19 +253,20 @@ newtype ShowQuestionProps = ShowQuestionProps (Maybe CompositeQuestion)
 
 instance UnoverlapAllEq ShowQuestionProps
 
-data AddContributionProps kind = AddContributionProps
+data AddContributionProps st = AddContributionProps
   { _acpVisible       :: Bool
   , _acpRange         :: Maybe SelectionStateWithPx
-  , _acpKind          :: Maybe kind
+  , _acpLocalState    :: st
   , _acpWindowWidth   :: Int
   }
   deriving (Eq)
 
-instance UnoverlapAllEq (AddContributionProps CommentKind)
-instance UnoverlapAllEq (AddContributionProps EditKind)
+instance UnoverlapAllEq (AddContributionProps ())
+instance UnoverlapAllEq (AddContributionProps (Maybe EditKind))
+instance UnoverlapAllEq (AddContributionProps (EditInfo (Maybe EditKind)))
 
 
--- * boilerplate
+-- * instances
 
 makeRefineType ''VertialSpanBounds
 makeLenses ''AllVertialSpanBounds
@@ -262,10 +279,20 @@ instance ToJSON AllVertialSpanBounds where
 instance FromJSON AllVertialSpanBounds where
   parseJSON = fmap AllVertialSpanBounds . mapFromValue
 
-makeRefineType ''AddContributionFormState
 makeRefineType ''ContributionAction
 makeRefineType ''ContributionState
 makeRefineType ''BubblePositioning
+
+makeRefineType ''CommentInputState
+makeLenses ''CommentInfo
+makeRefineType' [t| CommentInfo CommentKind |]
+makeRefineType' [t| CommentInfo (Maybe CommentKind) |]
+
+makeRefineType ''EditInputState
+makeLenses ''EditInfo
+makeRefineType' [t| EditInfo EditKind |]
+makeRefineType' [t| EditInfo (Maybe EditKind) |]
+
 makeRefineType ''CommentKind
 makeRefineType ''ActiveDialog
 
@@ -278,6 +305,12 @@ makeRefineType ''QuickCreateShowState
 
 makeLenses ''CommentDisplayProps
 makeLenses ''AddContributionProps
+
+instance IbuttonOnClick CommentKind (StatefulViewEventHandler CommentInputState) where
+  runIbuttonOnClick _evt _mevt ckind st = (mempty, Just $ st & commentInputStateData . commentInfoKind .~ Just ckind)
+
+instance IbuttonOnClick EditKind (StatefulViewEventHandler EditInputState) where
+  runIbuttonOnClick _evt _mevt ekind st = (mempty, Just $ st & editInputStateData . editInfoKind .~ Just ekind)
 
 
 -- * helpers

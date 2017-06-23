@@ -22,10 +22,13 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Refine.Frontend.Icon
   ( module Refine.Frontend.Icon.Types
 
   , ibutton_
+  , sibutton_
   , emptyIbuttonProps
   , IbuttonOnClick(..)
 
@@ -49,17 +52,40 @@ import           Refine.Frontend.Util
 
 -- * icons buttons
 
--- | FIXME: ibutton must not contain divs, so we can use it inside spans.
-ibutton :: HasCallStack => IbuttonOnClick onclick => View '[IbuttonProps onclick]
-ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
-  let onMsOvr :: [PropertyOrHandler (StatefulViewEventHandler Bool)]
-      onMsOvr = [ onMouseEnter $ \_ _ _ -> ([], Just True)
-                , onMouseLeave $ \_ _ _ -> ([], Just False)
+ibutton :: forall onclick. (HasCallStack, IbuttonOnClick onclick ViewEventHandler)
+        => View '[IbuttonProps onclick]
+ibutton = mkStatefulView "Ibutton" False (sibutton_ id)
+
+-- | (implemented in terms of 'sibutton_'.)
+--
+-- FIXME: there are two kinds of highlight: "mouse-over" and
+-- "selected".  we should distinguish those more cleanly and expose a
+-- nicer interface to the application.
+ibutton_ :: forall onclick handler. (HasCallStack, IbuttonOnClick onclick ViewEventHandler)
+         => IbuttonProps onclick -> ReactElementM handler ()
+ibutton_ props = view_ ibutton ("Ibutton_" <> props ^. ibListKey) props
+
+
+-- | A variant of 'ibutton_' that inherits the local state from the
+-- caller.
+--
+-- This is not going through the hoops of `mkStatefulView`, because
+-- that would insulate the local state from the state the calling
+-- component wants to share with this button.  Instead, render the
+-- 'ReactElement' directlyk.
+sibutton_ :: forall onclick st handler.
+                  (HasCallStack, IbuttonOnClick onclick handler, handler ~ StatefulViewEventHandler st)
+               => Lens' st Bool -> st -> IbuttonProps onclick -> ReactElementM handler ()
+sibutton_ mouseIsOver st props = do
+  let onMsOvr :: [PropertyOrHandler handler]
+      onMsOvr = [ onMouseEnter $ \_ _ s -> ([], Just $ s & mouseIsOver .~ True)
+                , onMouseLeave $ \_ _ s -> ([], Just $ s & mouseIsOver .~ False)
                 ]
 
-      onClk :: [PropertyOrHandler (StatefulViewEventHandler Bool)]
-      onClk = [onClick $ \evt mevt _ -> (mkIbuttonClickHandler props evt mevt, Nothing) | props ^. ibEnabled]
+      onClk :: [PropertyOrHandler handler]
+      onClk = [onClick $ \evt mevt -> mkIbuttonClickHandler props evt mevt | props ^. ibEnabled]
 
+      -- FIXME: ibutton must not contain divs, so we can use it inside spans.
       divSty :: [Decl]
       divSty = [ decl "direction" (Ident "ltr")
                , decl "width" (sizePx $ props ^. ibSize)
@@ -84,10 +110,10 @@ ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
       bg = BackgroundImage (props ^. ibImage) imageState
         where
           imageState = case props ^. ibHighlightWhen of
-            HighlightAlways      | props ^. ibEnabled                -> BisRO
-            HighlightOnMouseOver | mouseIsOver && props ^. ibEnabled -> BisRO
-            _                    | props ^. ibDarkBackground         -> BisBright
-            _                                                        -> BisDark
+            HighlightAlways      | props ^. ibEnabled                      -> BisRO
+            HighlightOnMouseOver | st ^. mouseIsOver && props ^. ibEnabled -> BisRO
+            _                    | props ^. ibDarkBackground               -> BisBright
+            _                                                              -> BisDark
 
       spanSty :: [Decl]
       spanSty = [ decl "color" textColor
@@ -105,10 +131,8 @@ ibutton = mkStatefulView "Ibutton" False $ \mouseIsOver props -> do
     div_  ["style" @@= iconSty, "className" $= iconCssClass bg] $ pure ()
     span_ ["style" @@= spanSty] $ elemText (props ^. ibLabel)
 
-ibutton_ :: HasCallStack => IbuttonOnClick onclick => IbuttonProps onclick -> ReactElementM eventHandler ()
-ibutton_ props = view_ ibutton ("Ibutton_" <> props ^. ibListKey) props
 
-emptyIbuttonProps :: HasCallStack => forall onclick. onclick ~ [GlobalAction] => ST -> onclick -> IbuttonProps onclick
+emptyIbuttonProps :: HasCallStack => forall onclick. ST -> onclick -> IbuttonProps onclick
 emptyIbuttonProps img onclick = IbuttonProps
   { _ibListKey          = "0"
   , _ibLabel            = mempty
@@ -125,13 +149,19 @@ emptyIbuttonProps img onclick = IbuttonProps
 
 -- * events
 
-class (Typeable onclick, Eq onclick) => IbuttonOnClick onclick where
-  runIbuttonOnClick :: Event -> MouseEvent -> onclick -> ViewEventHandler
-
-instance IbuttonOnClick [GlobalAction] where
+instance IbuttonOnClick [GlobalAction] ViewEventHandler where
   runIbuttonOnClick _ _ = dispatchMany
 
-mkIbuttonClickHandler :: HasCallStack => IbuttonOnClick onclick => IbuttonProps onclick -> Event -> MouseEvent -> ViewEventHandler
+instance {-# OVERLAPPABLE #-} IbuttonOnClick action ViewEventHandler => IbuttonOnClick action (StatefulViewEventHandler st) where
+  runIbuttonOnClick evt mevt onclick _st = (runIbuttonOnClick evt mevt onclick, Nothing)
+
+instance IbuttonOnClick action (StatefulViewEventHandler st) => IbuttonOnClick action (StatefulViewEventHandler (IbuttonState st)) where
+  runIbuttonOnClick evt mevt onclick (IbuttonState mo st) =
+    case runIbuttonOnClick evt mevt onclick st of
+      (action, mupd) -> (action, IbuttonState mo <$> mupd)
+
+-- | Handle stopPropagation etc., then run the 'runIbuttonOnClick' from the matching instance.
+mkIbuttonClickHandler :: HasCallStack => IbuttonOnClick onclick handler => IbuttonProps onclick -> Event -> MouseEvent -> handler
 mkIbuttonClickHandler props evt mevt = propag `seq` handle
   where
     propag = if props ^. ibClickPropag then () else stopPropagation evt
