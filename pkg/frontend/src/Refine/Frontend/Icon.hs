@@ -132,7 +132,7 @@ sibutton_ mouseIsOver st props = do
     span_ ["style" @@= spanSty] $ elemText (props ^. ibLabel)
 
 
-emptyIbuttonProps :: HasCallStack => forall onclick. onclick ~ [GlobalAction] => ST -> onclick -> IbuttonProps onclick
+emptyIbuttonProps :: HasCallStack => forall onclick. ST -> onclick -> IbuttonProps onclick
 emptyIbuttonProps img onclick = IbuttonProps
   { _ibListKey          = "0"
   , _ibLabel            = mempty
