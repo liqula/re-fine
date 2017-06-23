@@ -91,6 +91,68 @@ overlayStyles =
   ]
 
 
+-- * elements / components used for all contribution kinds
+
+addContributionDialogFrame
+    :: Bool -> ST -> Maybe SelectionStateWithPx -> Int
+    -> ReactElementM ViewEventHandler () -> ReactElementM ViewEventHandler ()
+addContributionDialogFrame False _ _ _ _ = pure ()
+addContributionDialogFrame True title mrange windowWidth child =
+    let top = case mrange of
+              Nothing -> 30
+              Just range -> (range ^. sstBottomOffset . unOffsetFromViewportTop)
+                          + (range ^. sstScrollOffset . unScrollOffsetOfViewport)
+        extraStyles = [ decl "top" (Px $ top + 5)
+                      , decl "left" (Px $ leftFor windowWidth)
+                      , decl "height" (Px 560)
+                      ]
+    in skylight_ ["isVisible" &= True
+             , RF.on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideCommentEditor)
+             , RF.on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentEditor)
+             , "dialogStyles" @@= (vdoc_overlay_content__add_comment <> extraStyles)
+             , "overlayStyles" @@= overlayStyles
+             , "titleStyle" @@= [decl "margin" (Px 0)]
+             ]  $ do
+
+      icon_ (IconProps "c-vdoc-overlay-content" False ("icon-New_Comment", "dark") XLarge)
+
+      span_ [ "className" $= "c-vdoc-overlay-content__title"
+            , "style" @@=
+                    [ decl "fontSize" (Rem 1.125)
+                    , decl "lineHeight" (Mm 1.15)
+                    , decl "marginBottom" (Rem 0.875)
+                    , decl "marginLeft" (Rem 1)
+                    , decl "fontWeight" (Ident "bold")
+                    ]
+            ] (elemText title)
+
+      hr_ []
+
+      child
+
+contributionDialogTextForm :: HasCallStack => Lens' st ST -> Int -> ST -> ReactElementM (StatefulViewEventHandler st) ()
+contributionDialogTextForm stateLens stepNumber promptText = do
+  div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
+    p_ $ do
+      elemString $ "Step " <> show stepNumber <> ": "
+      span_ ["className" $= "bold"] $ do
+        elemText promptText
+
+  form_ [ "target" $= "#"
+        , "action" $= "POST"] $ do
+    textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
+              , "className" $= "o-form-input__textarea"
+              , "style" @@=
+                      [ decl "resize" (Ident "none")
+                      , decl "width" (Px 600)
+                      , decl "height" (Px 240)
+                      ]
+              -- Update the current state with the current text in the textbox, sending no actions
+              , onChange $ \evt st -> ([], Just $ st & stateLens .~ target evt "value")
+              ]
+      mempty
+
+
 -- * comments
 
 showComment :: HasCallStack => View '[CommentDisplayProps]
@@ -221,43 +283,6 @@ showQuestion_ :: HasCallStack => ShowQuestionProps -> ReactElementM eventHandler
 showQuestion_ !props = view_ showQuestion "showQuestion_" props
 
 
-addContributionDialogFrame
-    :: Bool -> ST -> Maybe SelectionStateWithPx -> Int
-    -> ReactElementM ViewEventHandler () -> ReactElementM ViewEventHandler ()
-addContributionDialogFrame False _ _ _ _ = pure ()
-addContributionDialogFrame True title mrange windowWidth child =
-    let top = case mrange of
-              Nothing -> 30
-              Just range -> (range ^. sstBottomOffset . unOffsetFromViewportTop)
-                          + (range ^. sstScrollOffset . unScrollOffsetOfViewport)
-        extraStyles = [ decl "top" (Px $ top + 5)
-                      , decl "left" (Px $ leftFor windowWidth)
-                      , decl "height" (Px 560)
-                      ]
-    in skylight_ ["isVisible" &= True
-             , RF.on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideCommentEditor)
-             , RF.on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentEditor)
-             , "dialogStyles" @@= (vdoc_overlay_content__add_comment <> extraStyles)
-             , "overlayStyles" @@= overlayStyles
-             , "titleStyle" @@= [decl "margin" (Px 0)]
-             ]  $ do
-
-      icon_ (IconProps "c-vdoc-overlay-content" False ("icon-New_Comment", "dark") XLarge)
-
-      span_ [ "className" $= "c-vdoc-overlay-content__title"
-            , "style" @@=
-                    [ decl "fontSize" (Rem 1.125)
-                    , decl "lineHeight" (Mm 1.15)
-                    , decl "marginBottom" (Rem 0.875)
-                    , decl "marginLeft" (Rem 1)
-                    , decl "fontWeight" (Ident "bold")
-                    ]
-            ] (elemText title)
-
-      hr_ []
-
-      child
-
 addComment :: HasCallStack => Translations -> View '[AddContributionProps ()]
 addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame
   (props ^. acpVisible)
@@ -268,30 +293,6 @@ addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame
 
 addComment_ :: HasCallStack => Translations -> AddContributionProps () -> ReactElementM eventHandler ()
 addComment_ __ !props = view_ (addComment __) "addComment_" props
-
-
--- | TODO: move to its own section "contribution component fragments" or something
-contributionDialogTextForm :: HasCallStack => Lens' st ST -> Int -> ST -> ReactElementM (StatefulViewEventHandler st) ()
-contributionDialogTextForm stateLens stepNumber promptText = do
-  div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
-    p_ $ do
-      elemString $ "Step " <> show stepNumber <> ": "
-      span_ ["className" $= "bold"] $ do
-        elemText promptText
-
-  form_ [ "target" $= "#"
-        , "action" $= "POST"] $ do
-    textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
-              , "className" $= "o-form-input__textarea"
-              , "style" @@=
-                      [ decl "resize" (Ident "none")
-                      , decl "width" (Px 600)
-                      , decl "height" (Px 240)
-                      ]
-              -- Update the current state with the current text in the textbox, sending no actions
-              , onChange $ \evt st -> ([], Just $ st & stateLens .~ target evt "value")
-              ]
-      mempty
 
 
 commentInput :: HasCallStack => View '[]
