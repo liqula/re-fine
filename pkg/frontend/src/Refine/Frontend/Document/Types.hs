@@ -38,9 +38,9 @@ import           Refine.Prelude.TH (makeRefineType)
 
 data DocumentAction =
     DocumentUpdate DocumentState
-  | DocumentUpdateEditKind EditKind
+  | DocumentUpdateEditInfo (EditInfo (Maybe EditKind))
   | RequestDocumentSave
-  | DocumentSave ST
+  | DocumentSave (EditInfo EditKind)
   | DocumentCancelSave
   | DocumentToggleStyle Style
   | DocumentToggleBlockType BlockType
@@ -66,7 +66,7 @@ data DocumentState =
       }
   | DocumentStateEdit
       { _documentStateVal      :: EditorState
-      , _documentStateEditKind :: EditKind
+      , _documentStateEditInfo :: EditInfo (Maybe EditKind)  -- ^ 'editInput_' dialog state lives here between close / re-open.
       }
   deriving (Show, Eq, Generic)
 

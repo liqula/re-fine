@@ -28,7 +28,6 @@ module Refine.Frontend.Contribution.QuickCreate where
 
 import Refine.Frontend.Prelude
 
-import Refine.Common.Types
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Icon
@@ -62,7 +61,7 @@ quickCreate_ !props = view_ quickCreate "quickCreate_" props
 instance IconButtonPropsOnClick QuickCreateSide where
   runIconButtonPropsOnClick _ _ = dispatch . \case
     QuickCreateComment -> ContributionAction ShowCommentEditor
-    QuickCreateEdit    -> HeaderAction (StartEdit Initial)
+    QuickCreateEdit    -> HeaderAction StartEdit
   defaultOnClick = QuickCreateComment
 
 

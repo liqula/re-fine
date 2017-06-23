@@ -85,7 +85,7 @@ quickCreateShowStateUpdate action st = case action of
   ContributionAction ClearRange                 -> selectionWasRemoved
   HeaderAction ToggleCommentToolbarExtension    -> toolbarWasToggled
   HeaderAction StartTextSpecificComment         -> QuickCreateBlocked
-  HeaderAction (StartEdit _)                    -> QuickCreateNotShown  -- (article is hidden, so
+  HeaderAction StartEdit                        -> QuickCreateNotShown  -- (article is hidden, so
                                                                         -- quick create buttons are
                                                                         -- never triggered.)
   HeaderAction CloseToolbarExtension            -> toolbarWasToggled

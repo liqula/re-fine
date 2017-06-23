@@ -119,6 +119,16 @@ data CommentKind =
   | CommentKindDiscussion
   deriving (Show, Eq, Generic)
 
+-- | Like 'CommentInputState', but for 'editInput_'.
+data EditInputState = EditInputState
+  { _editInputStateData      :: EditInfo (Maybe EditKind)
+  , _editInputStateMouseOver :: Maybe EditKind
+  }
+  deriving (Show, Eq, Generic)
+
+data EditInfo kind = EditInfo { _editInfoDesc :: ST, _editInfoKind :: kind }
+  deriving (Show, Eq, Generic)
+
 data ActiveDialog = ActiveDialogComment | ActiveDialogEdit
   deriving (Show, Eq, Generic)
 
@@ -243,17 +253,17 @@ newtype ShowQuestionProps = ShowQuestionProps (Maybe CompositeQuestion)
 
 instance UnoverlapAllEq ShowQuestionProps
 
-data AddContributionProps kind = AddContributionProps
+data AddContributionProps st = AddContributionProps
   { _acpVisible       :: Bool
   , _acpRange         :: Maybe SelectionStateWithPx
-  , _acpKind          :: kind
+  , _acpLocalState    :: st
   , _acpWindowWidth   :: Int
   }
   deriving (Eq)
 
 instance UnoverlapAllEq (AddContributionProps ())
 instance UnoverlapAllEq (AddContributionProps (Maybe EditKind))
-instance UnoverlapAllEq (Maybe EditKind)
+instance UnoverlapAllEq (AddContributionProps (EditInfo (Maybe EditKind)))
 
 
 -- * instances
@@ -274,10 +284,14 @@ makeRefineType ''ContributionState
 makeRefineType ''BubblePositioning
 
 makeRefineType ''CommentInputState
-
 makeLenses ''CommentInfo
 makeRefineType' [t| CommentInfo CommentKind |]
 makeRefineType' [t| CommentInfo (Maybe CommentKind) |]
+
+makeRefineType ''EditInputState
+makeLenses ''EditInfo
+makeRefineType' [t| EditInfo EditKind |]
+makeRefineType' [t| EditInfo (Maybe EditKind) |]
 
 makeRefineType ''CommentKind
 makeRefineType ''ActiveDialog
@@ -294,6 +308,9 @@ makeLenses ''AddContributionProps
 
 instance IbuttonOnClick CommentKind (StatefulViewEventHandler CommentInputState) where
   runIbuttonOnClick _evt _mevt ckind st = (mempty, Just $ st & commentInputStateData . commentInfoKind .~ Just ckind)
+
+instance IbuttonOnClick EditKind (StatefulViewEventHandler EditInputState) where
+  runIbuttonOnClick _evt _mevt ekind st = (mempty, Just $ st & editInputStateData . editInfoKind .~ Just ekind)
 
 
 -- * helpers

@@ -99,7 +99,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           addEdit_ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogEdit)
                               (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
-                              (rs ^? RS.gsDocumentState . documentStateEditKind)
+                              (rs ^?! RS.gsDocumentState . documentStateEditInfo)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
 
           main_ ["role" $= "main"] $ do

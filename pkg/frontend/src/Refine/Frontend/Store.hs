@@ -253,16 +253,15 @@ emitBackendCallsFor action st = case action of
             (Left rsp) -> ajaxFail rsp Nothing
             (Right note) -> handle $ AddNote note
 
-    DocumentAction (DocumentSave desc) -> case st ^. gsDocumentState of
-      dstate@(DocumentStateEdit _ kind) -> do
+    DocumentAction (DocumentSave info) -> do
         let eid :: C.ID C.Edit
             Just eid = st ^? gsVDoc . _Just . C.compositeVDocThisEditID
 
             cedit :: C.Create C.Edit
             cedit = C.CreateEdit
-                  { C._createEditDesc  = desc
-                  , C._createEditVDoc  = editorStateToVDocVersion (dstate ^. documentStateVal)
-                  , C._createEditKind  = kind
+                  { C._createEditDesc  = info ^. editInfoDesc
+                  , C._createEditVDoc  = editorStateToVDocVersion (st ^. gsDocumentState . documentStateVal)
+                  , C._createEditKind  = info ^. editInfoKind
                   }
 
         addEdit eid cedit $ \case
@@ -271,11 +270,6 @@ emitBackendCallsFor action st = case action of
                                       , ContributionAction RequestSetAllVertialSpanBounds
                                       , reloadCompositeVDoc st
                                       ]
-
-      bad -> let msg = "DocumentAction DocumentEditSave: "
-                    <> "not in editor state or content cannot be converted to html."
-                    <> show bad
-             in gracefulError msg $ pure ()
 
 
     -- i18n

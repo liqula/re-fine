@@ -364,15 +364,15 @@ commentInput_ = view_ commentInput "commentInput_"
 -- the props value via a global action and keep going with the local
 -- state.
 
-addEdit :: HasCallStack => View '[AddContributionProps (Maybe EditKind)]
+addEdit :: HasCallStack => View '[AddContributionProps (EditInfo (Maybe EditKind))]
 addEdit = mkView "AddEdit" $ \props -> addContributionDialogFrame
   (props ^. acpVisible)
   "add an edit"
   (props ^. acpRange)
   (props ^. acpWindowWidth)
-  (editInput_ (props ^. acpKind))
+  (editInput_ (props ^. acpLocalState))
 
-addEdit_ :: HasCallStack => AddContributionProps (Maybe EditKind) -> ReactElementM eventHandler ()
+addEdit_ :: HasCallStack => AddContributionProps (EditInfo (Maybe EditKind)) -> ReactElementM eventHandler ()
 addEdit_ = view_ addEdit "addEdit_"
 
 
@@ -382,59 +382,72 @@ addEdit_ = view_ addEdit "addEdit_"
 -- FUTUREWORK: kind change is a nice example of local signals between two components.  how is this
 -- handled in react?  should we have a second global store here that is just shared between
 -- 'editInput' and and 'editKindForm'?
-editInput :: HasCallStack => View '[Maybe EditKind]
-editInput = mkStatefulView "EditInput" "" $ \curState mkind -> do
+editInput :: HasCallStack => EditInfo (Maybe EditKind) -> View '[]
+editInput einfo = mkStatefulView "EditInput" (EditInputState einfo Nothing) $
+  \st@(EditInputState (EditInfo desc mkind) _) -> do
     div_ $ do
       elemString "Step 1: "
       span_ ["className" $= "bold"] "Type of this edit:"
-      liftViewToStateHandler $ editKindForm_ (DocumentAction . DocumentUpdateEditKind) (EditKindFormProps mkind)
+      div_ $ editKindForm_ st
 
     hr_ []
 
-    contributionDialogTextForm id 2 "describe your motivation for this edit:"
+    contributionDialogTextForm (editInputStateData . editInfoDesc) 2 "describe your motivation for this edit:"
 
     hr_ []
 
+    -- FIXME: make new button, like in 'commentInput_' above.  we
+    -- don't have to save this in global state until the 'editInput_'
+    -- dialog is closed again without save or cancel.
     iconButton_ $ defaultIconButtonProps @[GlobalAction]
             & iconButtonPropsListKey      .~ "save"
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
             & iconButtonPropsElementName  .~ "btn-index"
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True
-            & iconButtonPropsOnClick      .~ [ DocumentAction $ DocumentSave curState
+            & iconButtonPropsOnClick      .~ [ DocumentAction $ DocumentSave (EditInfo desc (fromJust mkind))
                                              , ContributionAction ClearRange
                                              ]
 
-editInput_ :: HasCallStack => Maybe EditKind -> ReactElementM eventHandler ()
-editInput_ = view_ editInput "editInput_"
+editInput_ :: HasCallStack => EditInfo (Maybe EditKind) -> ReactElementM eventHandler ()
+editInput_ st = view_ (editInput st) "editInput_"
 
 
-newtype EditKindFormProps = EditKindFormProps (Maybe EditKind)
-  deriving (Eq)
-
-instance UnoverlapAllEq EditKindFormProps
-
--- | FIXME: this component should be moved closer to "Refine.Frontend.Contribution.Dialog".  (not
--- sure about the structure in general.  perhaps more code shuffling is indicated at some point.)
-editKindForm :: HasCallStack => (EditKind -> GlobalAction) -> View '[EditKindFormProps]
-editKindForm onSelect = mkView "EditKindForm" $ \(EditKindFormProps mactive) -> do
-    div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
-      div_ ["className" $= "grid-wrapper"] $ do
-        div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
-          div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
-          div_ ["className" $= "c-vdoc-toolbar-extension__modification c-vdoc-toolbar-extension--expanded"] $ do  -- (RENAME: Edit)
-            editButton mactive `mapM_` [Grammar, Phrasing, Meaning]
+-- | (FUTUREWORK: somewhere in here, there is a radio button widget
+-- that works with any Bounded/Enum type...)
+editKindForm_ :: HasCallStack => EditInputState -> ReactElementM (StatefulViewEventHandler EditInputState) ()
+editKindForm_ st = do
+  div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
+    div_ ["className" $= "grid-wrapper"] $ do
+      div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
+        div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] $ do
+          pure ()
+        div_ ["className" $= "c-vdoc-toolbar-extension__modification c-vdoc-toolbar-extension--expanded"] $ do  -- (RENAME: Edit)
+          forM_ [Grammar, Phrasing, Meaning] $ \ekind -> do
+            sibutton_ (mouseIsOver ekind) st (props ekind)
+            div_ ["className" $= "c-vdoc-toolbar__separator"] ""
   where
-    editButton :: Maybe EditKind -> EditKind -> ReactElementM eventHandler ()
-    editButton mactive kind =
-      let size = if Just kind == mactive then XXLarge else Large in
-      iconButton_ $ defaultIconButtonProps @[GlobalAction]
-        & iconButtonPropsListKey      .~ cs (show kind)
-        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") size
-        & iconButtonPropsElementName  .~ "btn-new-mod-text" -- RENAME: mod => edit
-        & iconButtonPropsLabel        .~ cs (show kind)
-        & iconButtonPropsOnClick      .~ [onSelect kind]  -- FIXME: update this in local state, not in global store (see 'commentInput_')
-        & iconButtonPropsClickPropag  .~ False
+    mouseIsOver :: EditKind -> Lens' EditInputState Bool
+    mouseIsOver ekind f (wide :: EditInputState) = outof <$> f into
+      where
+        outof :: Bool -> EditInputState
+        outof True  = wide & editInputStateMouseOver .~ Just ekind
+        outof False = wide & editInputStateMouseOver .~ Nothing
 
-editKindForm_ :: HasCallStack => (EditKind -> GlobalAction) -> EditKindFormProps -> ReactElementM ViewEventHandler ()
-editKindForm_ onSelect = view_ (editKindForm onSelect) "editToolbarExtension_"
+        into :: Bool
+        into = wide ^. editInputStateMouseOver == Just ekind
+
+    props :: EditKind -> IbuttonProps EditKind
+    props ekind = emptyIbuttonProps "New_Edit" ekind
+      & ibListKey       .~ cs (l ekind)
+      & ibHighlightWhen .~ highlightWhen
+      & ibLabel         .~ cs (l ekind)
+      & ibEnabled       .~ True
+      & ibSize          .~ Large
+      where
+        l = fmap toLower . show
+
+        highlightWhen :: HighlightWhen
+        highlightWhen = if st ^. editInputStateData . editInfoKind == Just ekind
+          then HighlightAlways
+          else HighlightOnMouseOver

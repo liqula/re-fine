@@ -34,7 +34,7 @@ import Refine.Prelude.TH (makeRefineType)
 data HeaderAction =
     ToggleCommentToolbarExtension
   | StartTextSpecificComment
-  | StartEdit EditKind
+  | StartEdit
   | CloseToolbarExtension
   | ToggleReadOnly
   | ScrollToPageTop

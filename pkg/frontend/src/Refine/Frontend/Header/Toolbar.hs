@@ -27,7 +27,6 @@ module Refine.Frontend.Header.Toolbar where
 import           Refine.Frontend.Prelude
 import           Language.Css.Syntax
 
-import           Refine.Common.Types ( EditKind(..) )
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Store.Types
@@ -66,7 +65,7 @@ toolbar = mkView "Toolbar" $ do
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXLarge
             & iconButtonPropsElementName  .~ "bt-add-modification"  -- RENAME: edit
             & iconButtonPropsLabel        .~ "new edit"
-            & iconButtonPropsOnClick      .~ [HeaderAction $ StartEdit Initial]
+            & iconButtonPropsOnClick      .~ [HeaderAction StartEdit]
             & iconButtonPropsClickPropag  .~ False
 
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""

@@ -148,7 +148,7 @@ spec = do
   describe "Document" $ do
     let mkTestProps :: RawContent -> DocumentProps
         mkTestProps c = DocumentProps
-          (DocumentStateEdit (editorStateFromVDocVersion $ rawContentToVDocVersion c) Grammar)
+          (DocumentStateEdit (editorStateFromVDocVersion $ rawContentToVDocVersion c) (EditInfo "" Nothing))
           emptyContributionState
 
     it "renders with empty content" $ do
