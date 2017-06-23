@@ -157,40 +157,6 @@ newtype EditToolbarExtensionProps = EditToolbarExtensionProps
 instance UnoverlapAllEq EditToolbarExtensionProps
 
 
--- FIXME: some of the rest of this module should probably go to EditToolbar.hs?
-
-
-newtype EditKindFormProps = EditKindFormProps (Maybe EditKind)
-  deriving (Eq)
-
-instance UnoverlapAllEq EditKindFormProps
-
--- | FIXME: this component should be moved closer to "Refine.Frontend.Contribution.Dialog".  (not
--- sure about the structure in general.  perhaps more code shuffling is indicated at some point.)
-editKindForm :: HasCallStack => (EditKind -> GlobalAction) -> View '[EditKindFormProps]
-editKindForm onSelect = mkView "EditKindForm" $ \(EditKindFormProps mactive) -> do
-    div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
-      div_ ["className" $= "grid-wrapper"] $ do
-        div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
-          div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
-          div_ ["className" $= "c-vdoc-toolbar-extension__modification c-vdoc-toolbar-extension--expanded"] $ do  -- (RENAME: Edit)
-            editButton mactive `mapM_` [Grammar, Phrasing, Meaning]
-  where
-    editButton :: Maybe EditKind -> EditKind -> ReactElementM eventHandler ()
-    editButton mactive kind =
-      let size = if Just kind == mactive then XXLarge else Large in
-      iconButton_ $ defaultIconButtonProps @[GlobalAction]
-        & iconButtonPropsListKey      .~ cs (show kind)
-        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") size
-        & iconButtonPropsElementName  .~ "btn-new-mod-text" -- RENAME: mod => edit
-        & iconButtonPropsLabel        .~ cs (show kind)
-        & iconButtonPropsOnClick      .~ [onSelect kind]
-        & iconButtonPropsClickPropag  .~ False
-
-editKindForm_ :: HasCallStack => (EditKind -> GlobalAction) -> EditKindFormProps -> ReactElementM ViewEventHandler ()
-editKindForm_ onSelect = view_ (editKindForm onSelect) "editToolbarExtension_"
-
-
 linkToolbarTextForm :: HasCallStack => ST -> ReactElementM (StatefulViewEventHandler AddLinkFormState) ()
 linkToolbarTextForm link = do
   form_ [ "target" $= "#"
