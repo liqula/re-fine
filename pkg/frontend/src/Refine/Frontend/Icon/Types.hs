@@ -29,16 +29,21 @@ module Refine.Frontend.Icon.Types
   , Align(..)
   , HighlightWhen(..)
   , IbuttonProps(..)
-  , ibEnabled
-  , ibSize
   , ibListKey
-  , ibAlign
-  , ibClickPropag
   , ibLabel
-  , ibHighlightWhen
-  , ibOnClick
   , ibDarkBackground
   , ibImage
+  , ibHighlightWhen
+  , ibOnClick
+  , ibClickPropag
+  , ibEnabled
+  , ibSize
+  , ibAlign
+  , IbuttonState(..)
+  , ibuttonMouseOver
+  , ibuttonState
+
+  , IbuttonOnClick(..)
 
   , IconSize(..)
   , sizePx, sizeInt
@@ -105,6 +110,12 @@ data IbuttonProps onclick = IbuttonProps
 
 instance UnoverlapAllEq (IbuttonProps onclick)
 
+data IbuttonState st = IbuttonState { _ibuttonMouseOver :: Bool, _ibuttonState :: st }
+  deriving (Eq, Ord, Generic)
+
+class (Typeable onclick, Eq onclick) => IbuttonOnClick onclick handler where
+  runIbuttonOnClick :: Event -> MouseEvent -> onclick -> handler
+
 
 -- * icon sizes
 
@@ -164,6 +175,7 @@ iconCssClass (BackgroundImage fn st) = mconcat ["icon-", cs fn, "_", renderState
 
 makeLenses ''BackgroundImage
 makeLenses ''IbuttonProps
+makeRefineType ''IbuttonState
 
 
 -- * outdated
