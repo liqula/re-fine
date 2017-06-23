@@ -48,6 +48,9 @@ import           Refine.Frontend.Util
 
 {-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
+
+-- * styles
+
 dialogWidth :: HasCallStack => Int
 dialogWidth = 640
 
@@ -87,6 +90,8 @@ overlayStyles =
   , decl "backgroundColor" C.OverlayBackdrop
   ]
 
+
+-- * comments
 
 showComment :: HasCallStack => View '[CommentDisplayProps]
 showComment = mkView "ShowComment" $ \props ->
@@ -346,6 +351,8 @@ commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \cu
 commentInput_ :: HasCallStack => AddContributionProps CommentKind -> ReactElementM eventHandler ()
 commentInput_ !props = view_ commentInput "commentInput_" props
 
+
+-- * edits
 
 addEdit :: HasCallStack => View '[AddContributionProps EditKind]
 addEdit = mkView "AddEdit" $ \props -> addContributionDialogFrame
