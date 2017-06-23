@@ -94,7 +94,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           addComment_ __ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogComment)
                               (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
-                              (rs ^. RS.gsContributionState . RS.csCommentKind)
+                              ()
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
           addEdit_ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogEdit)

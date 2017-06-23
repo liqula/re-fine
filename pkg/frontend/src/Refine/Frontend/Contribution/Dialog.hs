@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -10,6 +9,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
@@ -258,20 +258,21 @@ addContributionDialogFrame True title mrange windowWidth child =
 
       child
 
-addComment :: HasCallStack => Translations -> View '[AddContributionProps CommentKind]
+addComment :: HasCallStack => Translations -> View '[AddContributionProps ()]
 addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame
   (props ^. acpVisible)
   (__ add_a_comment)
   (props ^. acpRange)
   (props ^. acpWindowWidth)
-  (commentInput_ props)
+  commentInput_
 
-addComment_ :: HasCallStack => Translations -> AddContributionProps CommentKind -> ReactElementM eventHandler ()
+addComment_ :: HasCallStack => Translations -> AddContributionProps () -> ReactElementM eventHandler ()
 addComment_ __ !props = view_ (addComment __) "addComment_" props
 
 
-contributionDialogTextForm :: HasCallStack => Int -> ST -> ReactElementM (StatefulViewEventHandler AddContributionFormState) ()
-contributionDialogTextForm stepNumber promptText = do
+-- | TODO: move to its own section "contribution component fragments" or something
+contributionDialogTextForm :: HasCallStack => Lens' st ST -> Int -> ST -> ReactElementM (StatefulViewEventHandler st) ()
+contributionDialogTextForm stateLens stepNumber promptText = do
   div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
     p_ $ do
       elemString $ "Step " <> show stepNumber <> ": "
@@ -288,45 +289,48 @@ contributionDialogTextForm stepNumber promptText = do
                       , decl "height" (Px 240)
                       ]
               -- Update the current state with the current text in the textbox, sending no actions
-              , onChange $ \evt st -> ([], Just $ st & addContributionFormState .~ target evt "value")
+              , onChange $ \evt st -> ([], Just $ st & stateLens .~ target evt "value")
               ]
       mempty
 
 
-commentInput :: HasCallStack => View '[AddContributionProps CommentKind]
-commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \curState props ->
+commentInput :: HasCallStack => View '[]
+commentInput = mkStatefulView "CommentInput" (CommentInputState (CommentInfo "" Nothing) False False) $ \st ->
+  do
+    let smkind = st ^? commentInputStateData . commentInfoKind . _Just
+    let stext  = st ^. commentInputStateData . commentInfoDesc
+
     div_ $ do
       div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
         p_ $ do
           elemString "Step 1: "
           span_ ["className" $= "bold"] "Select a type for your comment:"
 
-      let checkAcpKind k = if props ^. acpKind == Just k then "RO" else "dark"
-
       div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do  -- RENAME: annotation => comment
-        iconButton_ $ defaultIconButtonProps @[GlobalAction]
-          & iconButtonPropsListKey      .~ "note"
-          & iconButtonPropsIconProps . iconPropsBlockName .~ "c-vdoc-overlay-content"
-          & iconButtonPropsIconProps . iconPropsDesc      .~ ("icon-Note", checkAcpKind CommentKindNote)
-          & iconButtonPropsElementName  .~ "category"  -- RENAME: category => kind
-          & iconButtonPropsModuleName   .~ "comment"
-          & iconButtonPropsLabel        .~ "add a node"
-          & iconButtonPropsOnClick      .~ [ContributionAction $ SetCommentKind CommentKindNote]
+        let props :: CommentKind -> IbuttonProps CommentKind
+            props ckind = emptyIbuttonProps (img ckind) ckind
+              & ibListKey       .~ l ckind
+              & ibHighlightWhen .~ highlightWhen ckind
+              & ibLabel         .~ l ckind
+              & ibEnabled       .~ True
+              & ibSize          .~ Large
+              where
+                l CommentKindNote       = "note"
+                l CommentKindDiscussion = "discussion"
 
-        span_ ["style" @@= [decl "marginRight" (Rem 1)]] mempty
+                img CommentKindNote       = "Note"
+                img CommentKindDiscussion = "Discussion"
 
-        iconButton_ $ defaultIconButtonProps @[GlobalAction]
-          & iconButtonPropsListKey      .~ "discussion"
-          & iconButtonPropsIconProps . iconPropsBlockName .~ "c-vdoc-overlay-content"
-          & iconButtonPropsIconProps . iconPropsDesc      .~ ("icon-Discussion", checkAcpKind CommentKindDiscussion)
-          & iconButtonPropsElementName  .~ "category"
-          & iconButtonPropsModuleName   .~ "discussion"  -- RENAME: category => kind
-          & iconButtonPropsLabel        .~ "start a discussion"
-          & iconButtonPropsOnClick      .~ [ContributionAction $ SetCommentKind CommentKindDiscussion]
+                highlightWhen k
+                  | smkind == Just k = HighlightAlways
+                  | otherwise        = HighlightOnMouseOver
+
+        sibutton_ commentInputStateMouseOverNote       st $ props CommentKindNote
+        sibutton_ commentInputStateMouseOverDiscussion st $ props CommentKindDiscussion
 
       hr_ []
 
-      contributionDialogTextForm 2 "enter your comment:"
+      contributionDialogTextForm (commentInputStateData . commentInfoDesc) 2 "enter your comment:"
 
       hr_ []
 
@@ -335,34 +339,42 @@ commentInput = mkStatefulView "CommentInput" (AddContributionFormState "") $ \cu
           elemString "Step 3: "
           span_ ["className" $= "bold"] "finish"
 
-      let notATextOrKind = 0 == ST.length (curState ^. addContributionFormState)
-                        || isNothing (props ^. acpKind)
+      let notATextOrKind = ST.null stext || isNothing smkind
         in iconButton_ $ defaultIconButtonProps @[GlobalAction]
           & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") Large
           & iconButtonPropsElementName  .~ "submit"
           & iconButtonPropsLabel        .~ "submit"
           & iconButtonPropsDisabled     .~ notATextOrKind
           & iconButtonPropsOnClick      .~
-                [ ContributionAction $ SubmitComment (curState ^. addContributionFormState) (props ^. acpKind)
+                [ ContributionAction $ SubmitComment (CommentInfo stext (fromJust smkind))
                 , ContributionAction ClearRange
                 , ContributionAction HideCommentEditor
                 ]
 
-commentInput_ :: HasCallStack => AddContributionProps CommentKind -> ReactElementM eventHandler ()
-commentInput_ !props = view_ commentInput "commentInput_" props
+commentInput_ :: HasCallStack => ReactElementM eventHandler ()
+commentInput_ = view_ commentInput "commentInput_"
 
 
 -- * edits
 
-addEdit :: HasCallStack => View '[AddContributionProps EditKind]
+-- FIXME: add meta button that allows to open an close the edit
+-- dialog.  for now, the description is local and the edit kind is
+-- global.  we want the state to be completely local and then stashed
+-- globally when the dialog is closed.
+
+-- FIXME: is it a good thing that the local state is lost whenever the
+-- props change?  (something about people trying to compute the
+-- initial state from props, perhaps?)
+
+addEdit :: HasCallStack => View '[AddContributionProps (Maybe EditKind)]
 addEdit = mkView "AddEdit" $ \props -> addContributionDialogFrame
   (props ^. acpVisible)
   "add an edit"
   (props ^. acpRange)
   (props ^. acpWindowWidth)
-  (editInput_ props)
+  (editInput_ (props ^. acpKind))
 
-addEdit_ :: HasCallStack => AddContributionProps EditKind -> ReactElementM eventHandler ()
+addEdit_ :: HasCallStack => AddContributionProps (Maybe EditKind) -> ReactElementM eventHandler ()
 addEdit_ = view_ addEdit "addEdit_"
 
 
@@ -372,16 +384,16 @@ addEdit_ = view_ addEdit "addEdit_"
 -- FUTUREWORK: kind change is a nice example of local signals between two components.  how is this
 -- handled in react?  should we have a second global store here that is just shared between
 -- 'editInput' and and 'editKindForm'?
-editInput :: HasCallStack => View '[AddContributionProps EditKind]
-editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState props -> do
+editInput :: HasCallStack => View '[Maybe EditKind]
+editInput = mkStatefulView "EditInput" "" $ \curState mkind -> do
     div_ $ do
       elemString "Step 1: "
       span_ ["className" $= "bold"] "Type of this edit:"
-      liftViewToStateHandler $ editKindForm_ (DocumentAction . DocumentUpdateEditKind) (EditKindFormProps $ props ^. acpKind)
+      liftViewToStateHandler $ editKindForm_ (DocumentAction . DocumentUpdateEditKind) (EditKindFormProps mkind)
 
     hr_ []
 
-    contributionDialogTextForm 2 "describe your motivation for this edit:"
+    contributionDialogTextForm id 2 "describe your motivation for this edit:"
 
     hr_ []
 
@@ -391,12 +403,12 @@ editInput = mkStatefulView "EditInput" (AddContributionFormState "") $ \curState
             & iconButtonPropsElementName  .~ "btn-index"
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True
-            & iconButtonPropsOnClick      .~ [ DocumentAction $ DocumentSave (curState ^. addContributionFormState)
+            & iconButtonPropsOnClick      .~ [ DocumentAction $ DocumentSave curState
                                              , ContributionAction ClearRange
                                              ]
 
-editInput_ :: HasCallStack => AddContributionProps EditKind -> ReactElementM eventHandler ()
-editInput_ !props = view_ editInput "editInput_" props
+editInput_ :: HasCallStack => Maybe EditKind -> ReactElementM eventHandler ()
+editInput_ = view_ editInput "editInput_"
 
 
 newtype EditKindFormProps = EditKindFormProps (Maybe EditKind)

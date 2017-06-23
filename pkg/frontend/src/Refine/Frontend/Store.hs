@@ -232,7 +232,7 @@ emitBackendCallsFor action st = case action of
 
     -- contributions
 
-    ContributionAction (SubmitComment text kind) -> do
+    ContributionAction (SubmitComment (CommentInfo text kind)) -> do
       let headEdit = fromMaybe (error "emitBackendCallsFor.SubmitComment")
                    $ st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit
           range    = fromMaybe (minimumRange (fromMaybe (error "perhaps we should make documentStateContent a proper lens?") $
@@ -244,15 +244,14 @@ emitBackendCallsFor action st = case action of
                                    ]
 
       case kind of
-        Just CommentKindDiscussion ->
+        CommentKindDiscussion ->
           addDiscussion headEdit (C.CreateDiscussion text True range) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right discussion) -> handle $ AddDiscussion discussion
-        Just CommentKindNote ->
+        CommentKindNote ->
           addNote headEdit (C.CreateNote text True range) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right note) -> handle $ AddNote note
-        Nothing -> pure ()
 
     DocumentAction (DocumentSave desc) -> case st ^. gsDocumentState of
       dstate@(DocumentStateEdit _ kind) -> do
