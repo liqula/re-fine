@@ -356,14 +356,12 @@ commentInput_ = view_ commentInput "commentInput_"
 
 -- * edits
 
--- FIXME: add meta button that allows to open an close the edit
--- dialog.  for now, the description is local and the edit kind is
--- global.  we want the state to be completely local and then stashed
--- globally when the dialog is closed.
-
 -- FIXME: is it a good thing that the local state is lost whenever the
 -- props change?  (something about people trying to compute the
 -- initial state from props, perhaps?)
+-- to put it in another way: often it would be nice if we could change
+-- the props value via a global action and keep going with the local
+-- state.
 
 addEdit :: HasCallStack => View '[AddContributionProps (Maybe EditKind)]
 addEdit = mkView "AddEdit" $ \props -> addContributionDialogFrame
@@ -434,7 +432,7 @@ editKindForm onSelect = mkView "EditKindForm" $ \(EditKindFormProps mactive) -> 
         & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-New_Edit", "dark") size
         & iconButtonPropsElementName  .~ "btn-new-mod-text" -- RENAME: mod => edit
         & iconButtonPropsLabel        .~ cs (show kind)
-        & iconButtonPropsOnClick      .~ [onSelect kind]
+        & iconButtonPropsOnClick      .~ [onSelect kind]  -- FIXME: update this in local state, not in global store (see 'commentInput_')
         & iconButtonPropsClickPropag  .~ False
 
 editKindForm_ :: HasCallStack => (EditKind -> GlobalAction) -> EditKindFormProps -> ReactElementM ViewEventHandler ()
