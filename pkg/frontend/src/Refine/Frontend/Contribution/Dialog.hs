@@ -339,14 +339,13 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState (CommentInfo "" 
           elemString "Step 3: "
           span_ ["className" $= "bold"] "finish"
 
-      let notATextOrKind = ST.null stext || isNothing smkind
-        in iconButton_ $ defaultIconButtonProps @[GlobalAction]
+      iconButton_ $ defaultIconButtonProps @[GlobalAction]
           & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") Large
           & iconButtonPropsElementName  .~ "submit"
           & iconButtonPropsLabel        .~ "submit"
-          & iconButtonPropsDisabled     .~ notATextOrKind
+          & iconButtonPropsDisabled     .~ (ST.null stext || isNothing smkind)
           & iconButtonPropsOnClick      .~
-                [ ContributionAction $ SubmitComment (CommentInfo stext (fromJust smkind))
+                [ ContributionAction $ SubmitComment (CommentInfo stext (fromJust smkind))  -- (button is disabled in the Nothing case)
                 , ContributionAction ClearRange
                 , ContributionAction HideCommentEditor
                 ]
