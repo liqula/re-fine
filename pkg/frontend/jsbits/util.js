@@ -18,7 +18,7 @@
               },
           component:
               function (props) {
-                const {url} = props.contentState.getEntity(props.entityKey).getData();
+                var url = props.contentState.getEntity(props.entityKey).getData();
                 return React.createElement(
                     'a',
                     { className: "tooltip", href: url, style: { color: '#3b5998', textDecoration: 'underline' } },
