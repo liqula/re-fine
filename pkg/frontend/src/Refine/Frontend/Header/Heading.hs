@@ -40,8 +40,8 @@ import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DocumentHeader
 import           Refine.Frontend.Header.DiffToolbar ( diffToolbar_ )
 import           Refine.Frontend.Header.EditToolbar ( editToolbar_, mkEditToolbarProps )
-import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..),
-                                                  toolbar_, commentToolbarExtension_ )
+import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
+                                                  toolbar_, commentToolbarExtension_, editToolbarExtension_ )
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Status
@@ -132,6 +132,7 @@ mainHeaderRender () rs = do
               (edit ^. editVotes . to votesToCount)
             DocumentStateEdit {} -> editToolbar_ (mkEditToolbarProps rs)
           commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
+          editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
 
 mainHeader_ :: HasCallStack => GlobalState -> ReactElementM eventHandler ()
 mainHeader_ props = RF.view mainHeader props mempty

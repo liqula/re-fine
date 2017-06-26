@@ -145,7 +145,16 @@ commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
 
 
 commentToolbarExtension_ :: HasCallStack => CommentToolbarExtensionProps -> ReactElementM eventHandler ()
-commentToolbarExtension_ !props = view_ commentToolbarExtension "commentToolbarExtension_" props
+commentToolbarExtension_ = view_ commentToolbarExtension "commentToolbarExtension_"
+
+
+editToolbarExtension :: View '[EditToolbarExtensionProps]
+editToolbarExtension = mkView "EditToolbarExtension" $ \case
+  (EditToolbarExtensionProps (EditToolbarLinkEditor link)) -> editLinkInput_ link
+  (EditToolbarExtensionProps _) -> mempty
+
+editToolbarExtension_ :: EditToolbarExtensionProps -> ReactElementM handler ()
+editToolbarExtension_ = view_ editToolbarExtension "editToolbarExtension_"
 
 
 newtype EditToolbarExtensionProps = EditToolbarExtensionProps
