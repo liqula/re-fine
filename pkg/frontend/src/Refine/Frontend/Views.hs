@@ -88,16 +88,16 @@ mainScreen = mkView "MainScreen" $ \rs -> do
       stickyContainer_ [] $ do
           mainHeader_ rs
 
-          -- components that are only temporarily visible:
-          showNote_ $ showNoteProps (vdoc ^. compositeVDocApplicableNotes) rs
-          showDiscussion_ $ showDiscussionProps (vdoc ^. compositeVDocApplicableDiscussions) rs
-          addComment_ __ $ AddContributionProps
-                              (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogComment)
+          -- components that are visible only sometimes:
+          showNote_ `mapM_` showNoteProps (vdoc ^. compositeVDocApplicableNotes) rs
+          showDiscussion_ `mapM_` showDiscussionProps (vdoc ^. compositeVDocApplicableDiscussions) rs
+          when (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogComment) $ do
+            addComment_ __ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
                               ()
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
-          addEdit_ $ AddContributionProps
-                              (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogEdit)
+          when (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogEdit) $ do
+            addEdit_ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
                               (fromMaybe (error "rs ^? RS.gsDocumentState . documentStateEditInfo") $
                                rs ^? RS.gsDocumentState . documentStateEditInfo)
