@@ -115,7 +115,7 @@ spec = do
             [ AddVDoc (CreateVDoc (Title "title...") (Abstract "abstract...") sampleVDocVersion)
             , AddEditToHead 0 sampleCreateEdit1
             ]
-      runner . runIdentityT $ runProgram program `evalStateT` initVDocs
+      forceEval . runner . runIdentityT $ runProgram program `evalStateT` initVDocs
 
   describe "merging" . around provideAppRunner $ do
     let vdoc = rawContentToVDocVersion . mkRawContent . NEL.fromList . map mkBlock
@@ -132,14 +132,14 @@ spec = do
           login $ Login username "password"
 
     it "merge two edits" $ \(runner :: AppM DB UH () -> IO ()) -> do
-      runner $ do
+      forceEval . runner $ do
         (_, base, [eid1, eid2]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"]]
         eidm <- (^. editID) <$> App.addMerge base eid1 eid2
         doc' <- App.getVDocVersion eidm
         appIO $ doc' `shouldBe` vdoc ["a.c","d.f"]
 
     it "rebase one edit to two other edits" $ \(runner :: AppM DB UH () -> IO ()) -> do
-      runner $ do
+      forceEval . runner $ do
         (vid, _, [eid1, _, _]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"], ["abX", "def"]]
         App.rebaseHeadToEdit eid1
         d <- App.getVDoc vid
@@ -154,7 +154,7 @@ spec = do
         docB <- App.getVDocVersion ee1
         appIO $ docB `shouldBe` vdoc ["aX.","def"]   -- FIXME: the merge result is strange
 
-    it "upvoting an edit triggers rebase" $ \(runner :: AppM DB UH () -> IO ()) -> runner $ do
+    it "upvoting an edit triggers rebase" $ \(runner :: AppM DB UH () -> IO ()) -> forceEval . runner $ do
         (vid, _, [eid]) <- docWithEdits ["abc", "def"] [["a.c", "def"]]
         void $ addUserAndLogin "user"
         putSimpleVoteOnEdit eid Yeay

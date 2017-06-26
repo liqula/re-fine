@@ -41,6 +41,7 @@ withTempCurrentDirectory action = withSystemTempDirectory "refine.tmp" (`withCur
 -- that there are two different units: the one that is returned by 'm' and pattern-matched, and the
 -- one that is returned from 'forceEval'.  This way, even if outside the call to 'forceEval' the
 -- unit is not matched and thus forced, the unit of the 'm' argument is still forced.
+-- See issue #389
 forceEval :: Monad m => m () -> m ()
 forceEval m = do
   () <- m
