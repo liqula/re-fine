@@ -182,10 +182,11 @@ addUserAndLogin sess username = runWai sess $ do
   void . post createUserUri $ CreateUser username (username <> "@email.com") "password"
   void . post loginUri $ Login username "password"
 
+mkCVDoc :: TestBackend uh -> CreateVDoc -> IO CompositeVDoc
+mkCVDoc sess vdoc = runWai sess $ postJSON createVDocUri vdoc
+
 mkEdit :: TestBackend uh -> IO (ID Edit)
-mkEdit sess = do
-  fe :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
-  pure $ fe ^. compositeVDocThisEditID
+mkEdit = fmap (^. compositeVDocThisEditID) . (`mkCVDoc` sampleCreateVDoc)
 
 mkUserAndEdit :: TestBackend uh -> IO (ID Edit)
 mkUserAndEdit sess = do
@@ -525,3 +526,34 @@ specVoting = around createTestSession $ do
         _ <- runWai sess . wput $ putVoteUri eid Nay
         votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
         votes `shouldBe` Map.fromList [(Yeay, 2), (Nay, 1)]
+
+  describe "merging and rebasing" $ do
+    it "works if two edits are present and one is merged" $ \sess -> do
+      addUserAndLogin sess "userA"
+
+      let blocks = mkBlock <$> ["first line", "second line", "third line"]
+          vdoc ~(b:bs) = rawContentToVDocVersion . mkRawContent $ b :| bs
+
+      cvdoc <- mkCVDoc sess $ CreateVDoc (Title "[title]") (Abstract "[abstract]") (vdoc blocks)
+
+      let ce1 :: CreateEdit = CreateEdit "description" (vdoc [head blocks, blocks !! 1]) Grammar
+          ce2 :: CreateEdit = CreateEdit "description" (vdoc [head blocks, blocks !! 2]) Grammar
+
+      (e1,  e2) <- runWai sess $ do
+        [e1_, e2_] <- postJSON (addEditUri (cvdoc ^. compositeVDoc . vdocHeadEdit)) `mapM` [ce1, ce2]
+        pure (e1_, e2_)
+
+      resp <- runWai sess . wput $ putVoteUri (e1 ^. editID) Yeay
+      respCode resp `shouldSatisfy` (< 400)
+
+      -- composite vdoc should point to e1
+      cvdoc' :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (cvdoc ^. compositeVDoc . vdocID)
+      cvdoc' ^. compositeVDocThisEdit . editID `shouldBe` e1 ^. editID
+
+      -- e2 should be re-based onto e1
+      let rebasedEdits = Map.elems (cvdoc' ^. compositeVDocApplicableEdits)
+      length rebasedEdits `shouldBe` 1
+      head rebasedEdits ^. editID   `shouldNotBe` e2 ^. editID  -- (rebase is immutable)
+      head rebasedEdits ^. editDesc `shouldBe` "merge"
+      head rebasedEdits ^. editKind `shouldBe` EKMerge
+      -- (compare versions, too?  that will probably break once we get fancier merge heuristics, though.)
