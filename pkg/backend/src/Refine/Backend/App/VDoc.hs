@@ -127,7 +127,7 @@ addMerge base eid1 eid2 = do
   (either throwError pure =<<) . db $ do
     rid <- DB.vdocOfEdit eid1
     rid' <- DB.vdocOfEdit eid2
-    if rid' == rid then pure . Left $ AppMergeError base eid1 eid2 (cs $ show rid' <> " /= " <> show rid) else do
+    if rid' /= rid then pure . Left $ AppMergeError base eid1 eid2 (cs $ show rid' <> " /= " <> show rid) else do
       edit1 <- DB.getEdit eid1
       edit2 <- DB.getEdit eid2
       case ( [e | (e, d) <- edit1 ^. editSource . unEditSource, d == base]
