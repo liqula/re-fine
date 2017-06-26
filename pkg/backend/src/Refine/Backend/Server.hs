@@ -208,7 +208,7 @@ toApiError = \case
   AppUserHandleError e   -> ApiUserHandleError . cs $ show e
   AppL10ParseErrors e    -> ApiL10ParseErrors e
   AppUnauthorized        -> ApiUnauthorized
-  AppMergeError{}        -> ApiMergeError
+  AppMergeError base e1 e2 s -> ApiMergeError $ cs (show (base, e1, e2)) <> ": " <> s
   AppRebaseError{}       -> ApiRebaseError
 
 -- | so we don't have to export backend types to the frontend.

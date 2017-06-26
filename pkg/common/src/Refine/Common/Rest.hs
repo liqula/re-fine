@@ -39,7 +39,7 @@ data ApiError
   | ApiUserHandleError ST
   | ApiL10ParseErrors [ST]
   | ApiUnauthorized
-  | ApiMergeError
+  | ApiMergeError ST
   | ApiRebaseError
   deriving (Eq, Show, Generic)
 

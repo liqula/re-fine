@@ -124,22 +124,22 @@ addEdit baseeid edit = do
 addMerge :: (MonadApp db uh) => ID Edit -> ID Edit -> ID Edit -> AppM db uh Edit
 addMerge base eid1 eid2 = do
   appLog $ "merge " <> show eid1 <> " with " <> show eid2 <> " based on " <> show base
-  (maybe (throwError $ AppMergeError base eid1 eid2) pure =<<) . db $ do
+  (either throwError pure =<<) . db $ do
     rid <- DB.vdocOfEdit eid1
     rid' <- DB.vdocOfEdit eid2
-    if rid' == rid then pure Nothing else do
+    if rid' == rid then pure . Left $ AppMergeError base eid1 eid2 (cs $ show rid' <> " /= " <> show rid) else do
       edit1 <- DB.getEdit eid1
       edit2 <- DB.getEdit eid2
       case ( [e | (e, d) <- edit1 ^. editSource . unEditSource, d == base]
            , [e | (e, d) <- edit2 ^. editSource . unEditSource, d == base]
            ) of
-        ([e1], [e2]) -> Just <$> do
+        ([e1], [e2]) -> Right <$> do
           doc  <- rawContentFromVDocVersion <$> DB.getVersion base
           let (diff1, diff2) = OT.merge doc e1 e2
               newdoc = OT.patch (e1 <> diff1) doc
           DB.createEdit rid (EditSource [(diff1, eid1), (diff2, eid2)])
             $ CreateEdit "merge" (rawContentToVDocVersion newdoc) EKMerge
-        _ -> pure Nothing
+        res -> pure . Left $ AppMergeError base eid1 eid2 (cs $ show res)
 
 rebaseHeadToEdit :: (MonadApp db uh) => ID Edit -> AppM db uh ()
 rebaseHeadToEdit eid = do
