@@ -63,10 +63,9 @@ setWindowSize = dispatchAndExec . ScreenAction . SetWindowWidth =<< js_getWindow
 
 #ifdef __GHCJS__
 
--- the internet says we should check window.innerWidth and document.documentElement.clientWidth first,
--- and we should get the body via document.getElementsByTagName('body')[0]
--- but Tom does not do that either -- so?!
--- (In my Chrome, they are all available and contain the same values anyway...)
+-- (in case this didn't work: the internet says we should check window.innerWidth and
+-- document.documentElement.clientWidth first, and we should get the body via
+-- document.getElementsByTagName('body')[0])
 foreign import javascript safe
   "document.body.clientWidth"
   js_getWindowWidth :: IO Int

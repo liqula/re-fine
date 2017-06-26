@@ -180,8 +180,8 @@ spec = do
           test = do
             reactFluxWorkAroundThreadDelay 0.5
             resetState (emptyGlobalState & gsDevState .~ Just (DevState []))
-            -- FIXME: without the call to 'reactFluxWorkAroundThreadDelay' above, this fails.  why?!
-            -- FIXME: resetState here is taking more than 0.1 seconds to stabilize.  why?!
+            -- FIXME: without the call to 'reactFluxWorkAroundThreadDelay' above, this fails.
+            -- FIXME: resetState here is taking more than 0.1 seconds to stabilize.
             -- (both these are left-overs from when this was still a test on the mark_ component.  try again!)
 
             storeShouldEventuallyBe (^?! gsDevState . _Just . devStateTrace) []

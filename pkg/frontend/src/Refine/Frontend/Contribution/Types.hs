@@ -227,23 +227,21 @@ data CommentDisplayProps = CommentDisplayProps
 instance UnoverlapAllEq CommentDisplayProps
 
 data ShowNoteProps =
-    ShowNotePropsJust
+    ShowNoteProps
       { _snpNote        :: Note
       , _snpTop         :: OffsetFromDocumentTop
       , _snpWindowWidth :: Int
       }
-  | ShowNotePropsNothing
   deriving (Eq)
 
 instance UnoverlapAllEq ShowNoteProps
 
 data ShowDiscussionProps =
-    ShowDiscussionPropsJust
+    ShowDiscussionProps
       { _sdpNote        :: CompositeDiscussion
       , _sdpTop         :: OffsetFromDocumentTop
       , _sdpWindowWidth :: Int
       }
-    | ShowDiscussionPropsNothing
   deriving (Eq)
 
 instance UnoverlapAllEq ShowDiscussionProps
@@ -254,8 +252,7 @@ newtype ShowQuestionProps = ShowQuestionProps (Maybe CompositeQuestion)
 instance UnoverlapAllEq ShowQuestionProps
 
 data AddContributionProps st = AddContributionProps
-  { _acpVisible       :: Bool
-  , _acpRange         :: Maybe SelectionStateWithPx
+  { _acpRange         :: Maybe SelectionStateWithPx
   , _acpLocalState    :: st
   , _acpWindowWidth   :: Int
   }

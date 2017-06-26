@@ -94,10 +94,9 @@ overlayStyles =
 -- * elements / components used for all contribution kinds
 
 addContributionDialogFrame
-    :: Bool -> ST -> Maybe SelectionStateWithPx -> Int
+    :: ST -> Maybe SelectionStateWithPx -> Int
     -> ReactElementM ViewEventHandler () -> ReactElementM ViewEventHandler ()
-addContributionDialogFrame False _ _ _ _ = pure ()
-addContributionDialogFrame True title mrange windowWidth child =
+addContributionDialogFrame title mrange windowWidth child =
     let top = case mrange of
               Nothing -> 30
               Just range -> (range ^. sstBottomOffset . unOffsetFromViewportTop)
@@ -201,12 +200,12 @@ showComment_ :: HasCallStack => CommentDisplayProps -> ReactElementM eventHandle
 showComment_ !props = view_ showComment "showComment_" props
 
 
-showNoteProps :: HasCallStack => M.Map (ID Note) Note -> GlobalState -> ShowNoteProps
+showNoteProps :: HasCallStack => M.Map (ID Note) Note -> GlobalState -> Maybe ShowNoteProps
 showNoteProps notes rs = case (maybeNote, maybeOffset) of
-  (Just note, Just offset) -> ShowNotePropsJust note offset (rs ^. gsScreenState . ssWindowWidth)
-  (Just note, Nothing)     -> err "note" note "offset" ShowNotePropsNothing
-  (Nothing,   Just offset) -> err "offset" offset "note" ShowNotePropsNothing
-  _                        -> ShowNotePropsNothing
+  (Just note, Just offset) -> Just $ ShowNoteProps note offset (rs ^. gsScreenState . ssWindowWidth)
+  (Just note, Nothing)     -> err "note" note "offset" Nothing
+  (Nothing,   Just offset) -> err "offset" offset "note" Nothing
+  _                        -> Nothing
   where
     maybeContribID = rs ^. gsContributionState . csDisplayedContributionID
     maybeNoteID :: Maybe (ID Note) = getNoteID =<< maybeContribID
@@ -221,8 +220,7 @@ showNoteProps notes rs = case (maybeNote, maybeOffset) of
 
 showNote :: HasCallStack => View '[ShowNoteProps]
 showNote = mkView "ShowNote" $ \case
-  ShowNotePropsNothing -> mempty
-  ShowNotePropsJust note top windowWidth1 ->
+  ShowNoteProps note top windowWidth1 ->
     let commentText1  = (note ^. noteText)
         iconStyle1    = ("icon-Note", "dark")
         userName1     = "meisterkaiser"
@@ -231,15 +229,15 @@ showNote = mkView "ShowNote" $ \case
                                          vdoc_overlay_content__note top windowWidth1)
 
 showNote_ :: HasCallStack => ShowNoteProps -> ReactElementM eventHandler ()
-showNote_ !props = view_ showNote "showNote_" props
+showNote_ = view_ showNote "showNote_"
 
 
-showDiscussionProps :: HasCallStack => M.Map (ID Discussion) CompositeDiscussion -> GlobalState -> ShowDiscussionProps
+showDiscussionProps :: HasCallStack => M.Map (ID Discussion) CompositeDiscussion -> GlobalState -> Maybe ShowDiscussionProps
 showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
-  (Just discussion, Just offset) -> ShowDiscussionPropsJust discussion offset (rs ^. gsScreenState . ssWindowWidth)
-  (Just discussion, Nothing)     -> err "discussion" discussion "offset" ShowDiscussionPropsNothing
-  (Nothing,         Just offset) -> err "offset" offset "discussion" ShowDiscussionPropsNothing
-  _                              -> ShowDiscussionPropsNothing
+  (Just discussion, Just offset) -> Just $ ShowDiscussionProps discussion offset (rs ^. gsScreenState . ssWindowWidth)
+  (Just discussion, Nothing)     -> err "discussion" discussion "offset" Nothing
+  (Nothing,         Just offset) -> err "offset" offset "discussion" Nothing
+  _                              -> Nothing
   where
     maybeContribID = rs ^. gsContributionState . csDisplayedContributionID
     maybeDiscussionID :: Maybe (ID Discussion) = getDiscussionID =<< maybeContribID
@@ -254,8 +252,7 @@ showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
 
 showDiscussion :: HasCallStack => View '[ShowDiscussionProps]
 showDiscussion = mkView "ShowDiscussion" $ \case
-  ShowDiscussionPropsNothing -> mempty
-  ShowDiscussionPropsJust discussion top windowWidth1 ->
+  ShowDiscussionProps discussion top windowWidth1 ->
     let commentText1  = (Tree.rootLabel (discussion ^. compositeDiscussionTree) ^. statementText)
         iconStyle1    = ("icon-Discussion", "dark")
         userName1     = "meisterkaiser"
@@ -264,7 +261,7 @@ showDiscussion = mkView "ShowDiscussion" $ \case
                                          vdoc_overlay_content__discussion top windowWidth1)
 
 showDiscussion_ :: HasCallStack => ShowDiscussionProps -> ReactElementM eventHandler ()
-showDiscussion_ !props = view_ showDiscussion "showDiscussion_" props
+showDiscussion_ = view_ showDiscussion "showDiscussion_"
 
 
 showQuestion :: HasCallStack => View '[ShowQuestionProps]
@@ -280,19 +277,18 @@ showQuestion = mkView "ShowQuestion" $ \case
                                          overlayStyle1 (OffsetFromDocumentTop 0) 800)
 
 showQuestion_ :: HasCallStack => ShowQuestionProps -> ReactElementM eventHandler ()
-showQuestion_ !props = view_ showQuestion "showQuestion_" props
+showQuestion_ = view_ showQuestion "showQuestion_"
 
 
 addComment :: HasCallStack => Translations -> View '[AddContributionProps ()]
 addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame
-  (props ^. acpVisible)
   (__ add_a_comment)
   (props ^. acpRange)
   (props ^. acpWindowWidth)
   commentInput_
 
 addComment_ :: HasCallStack => Translations -> AddContributionProps () -> ReactElementM eventHandler ()
-addComment_ __ !props = view_ (addComment __) "addComment_" props
+addComment_ __ = view_ (addComment __) "addComment_"
 
 
 commentInput :: HasCallStack => View '[]
@@ -366,7 +362,6 @@ commentInput_ = view_ commentInput "commentInput_"
 
 addEdit :: HasCallStack => View '[AddContributionProps (EditInfo (Maybe EditKind))]
 addEdit = mkView "AddEdit" $ \props -> addContributionDialogFrame
-  (props ^. acpVisible)
   "add an edit"
   (props ^. acpRange)
   (props ^. acpWindowWidth)
