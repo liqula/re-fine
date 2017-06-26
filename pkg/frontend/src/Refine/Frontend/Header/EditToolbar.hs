@@ -56,8 +56,8 @@ mkEditToolbarProps st
         isLink _ = False
 
 
-editToolbar :: HasCallStack => EditToolbarProps -> View '[]
-editToolbar ep = mkView "EditToolbar" $ do
+editToolbar_ :: HasCallStack => EditToolbarProps -> ReactElementM eventHandler ()
+editToolbar_ ep = do
   let editButton icon = defaultIconButtonProps @[GlobalAction]
         & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-" <> icon, "dark") XXLarge
         & iconButtonPropsElementName  .~ "btn-index"
@@ -153,6 +153,3 @@ editToolbar ep = mkView "EditToolbar" $ do
         & ibEnabled      .~ True
         & ibSize         .~ XXLarge
    in ibutton_ props
-
-editToolbar_ :: HasCallStack => EditToolbarProps -> ReactElementM eventHandler ()
-editToolbar_ ep = view_ (editToolbar ep) "editToolbar_"

@@ -36,8 +36,8 @@ import Refine.Frontend.Icon
 import Refine.Frontend.Store.Types
 
 
-diffToolbar :: HasCallStack => View '[DiffToolbarProps]
-diffToolbar = mkView "DiffToolbar" $ \props -> do
+diffToolbar_ :: HasCallStack => DiffToolbarProps -> ReactElementM eventHandler ()
+diffToolbar_ props = do
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
   ibutton_ $ emptyIbuttonProps "Close" [ContributionAction HideContributionDialog]
@@ -81,6 +81,3 @@ diffToolbar = mkView "DiffToolbar" $ \props -> do
     & ibListKey .~ "4"
     & ibLabel .~ "details"
     & ibSize .~ XXLarge
-
-diffToolbar_ :: HasCallStack => DiffToolbarProps -> ReactElementM eventHandler ()
-diffToolbar_ = view_ diffToolbar "diffToolbar_"
