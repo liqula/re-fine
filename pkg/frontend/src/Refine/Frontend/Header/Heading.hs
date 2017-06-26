@@ -66,6 +66,11 @@ topMenuBar = mkView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
   div_ [ classNamesAny [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]
        , "style" @@= [decl "pointerEvents" (Ident "none")]
        ] $ do
+    topMenuBarLeft_ sticky
+    topMenuBarRight_ sticky currentUser
+
+topMenuBarLeft_ :: Bool -> ReactElementM ViewEventHandler ()
+topMenuBarLeft_ sticky = do
     button_ [ "aria-controls" $= "bs-navbar"
             , "aria-expanded" $= "false"
             , "className" $= "c-mainmenu__menu-button"
@@ -79,10 +84,13 @@ topMenuBar = mkView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
     unless sticky $
       span_ ["className" $= "c-mainmenu__menu-button-label"] "MENU"
+
+topMenuBarRight_ :: Bool -> CurrentUser -> ReactElementM eventHandler ()
+topMenuBarRight_ sticky currentUser = do
     loginStatusButton_ (ibDarkBackground .~ not sticky) currentUser
 
 topMenuBar_ :: HasCallStack => TopMenuBarProps -> ReactElementM eventHandler ()
-topMenuBar_ !props = view_ topMenuBar "TopMenuBar_" props
+topMenuBar_ = view_ topMenuBar "TopMenuBar_"
 
 
 -- | extract the new state from event.
@@ -103,13 +111,13 @@ mainHeaderlComponentDidMount _propsandstate ldom _ = calcHeaderHeight ldom
 mainHeaderRender :: HasCallStack => () -> GlobalState -> ReactElementM (StatefulViewEventHandler a) ()
 mainHeaderRender () rs = do
   let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsVDoc . _Just
-  div_ ["className" $= "c-fullheader"] $ do
-      -- the following need to be siblings because of the z-index handling
-      div_ ["className" $= "c-mainmenu__bg" {-, "role" $= "navigation" -}] mempty
-      {- header_ ["role" $= "banner"] $ do -}
-      topMenuBar_ (TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser))
+      mainMenuPart_ = do
+        -- in the past, the following needed to be siblings because of the z-index handling.  not sure that's still the case.
+        div_ ["className" $= "c-mainmenu__bg" {-, "role" $= "navigation" -}] mempty
+        {- header_ ["role" $= "banner"] $ do -}
+        topMenuBar_ (TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser))
 
-      documentHeader_ $ do
+      headerPart_ = documentHeader_ $ do
         let doc = DocumentHeaderProps
               (vdoc ^. compositeVDoc . vdocTitle)
               (vdoc ^. compositeVDoc . vdocAbstract)
@@ -123,7 +131,7 @@ mainHeaderRender () rs = do
             DocumentStateDiff _ _ eid _ -> edit (eid ^. editID)
             DocumentStateEdit {}        -> doc
 
-      div_ ["className" $= "c-fulltoolbar"] $ do
+      toolbarPart_ = div_ ["className" $= "c-fulltoolbar"] $ do
         sticky_ [RF.on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
           case rs ^. gsDocumentState of
             DocumentStateView {} -> toolbar_
@@ -133,6 +141,11 @@ mainHeaderRender () rs = do
             DocumentStateEdit {} -> editToolbar_ (mkEditToolbarProps rs)
           commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
           editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
+
+  div_ ["className" $= "c-fullheader"] $ do
+      mainMenuPart_
+      headerPart_
+      toolbarPart_
 
 mainHeader_ :: HasCallStack => GlobalState -> ReactElementM eventHandler ()
 mainHeader_ props = RF.view mainHeader props mempty
