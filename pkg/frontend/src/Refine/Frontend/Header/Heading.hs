@@ -62,6 +62,9 @@ topMenuBar = mkView "TopMenuBar" $ \props ->
     topMenuBarLeft_ props
     topMenuBarRight_ props
 
+topMenuBar_ :: HasCallStack => TopMenuBarProps -> ReactElementM eventHandler ()
+topMenuBar_ = view_ topMenuBar "TopMenuBar_"
+
 topMenuBarLeft :: View '[TopMenuBarProps]
 topMenuBarLeft = mkView "TopMenuBarLeft" $ \(TopMenuBarProps sticky _currentUser) -> do
     button_ [ "aria-controls" $= "bs-navbar"
@@ -85,8 +88,6 @@ topMenuBarRight_ :: TopMenuBarProps -> ReactElementM eventHandler ()
 topMenuBarRight_ (TopMenuBarProps sticky cu) = do
     loginStatusButton_ (ibDarkBackground .~ not sticky) cu
 
-topMenuBar_ :: HasCallStack => TopMenuBarProps -> ReactElementM eventHandler ()
-topMenuBar_ = view_ topMenuBar "TopMenuBar_"
 
 toolbarWrapper_ :: ReactElementM eventHandler () -> ReactElementM eventHandler ()
 toolbarWrapper_ toolbarItems_ = do
@@ -112,7 +113,7 @@ mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
 mainHeaderlComponentDidMount :: HasCallStack => a -> RF.LDOM -> b -> IO ()
 mainHeaderlComponentDidMount _propsandstate ldom _ = calcHeaderHeight ldom
 
-mainHeaderRender :: HasCallStack => () -> GlobalState -> ReactElementM (StatefulViewEventHandler a) ()
+mainHeaderRender :: HasCallStack => () -> GlobalState -> ReactElementM (StatefulViewEventHandler ()) ()
 mainHeaderRender () rs = do
   let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsVDoc . _Just
       props = TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser)
