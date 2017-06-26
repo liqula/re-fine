@@ -34,13 +34,8 @@ import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Util
 
-toolbar :: HasCallStack => View '[]
-toolbar = mkView "Toolbar" $ do
-  header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
-    div_ ["className" $= "grid-wrapper"] $ do
-      div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
-        div_ ["className" $= "c-vdoc-toolbar__content"] $ do
-
+toolbar_ :: HasCallStack => ReactElementM eventHandler ()
+toolbar_ = do
           let toolbarButton = defaultIconButtonProps @[GlobalAction]
 
           iconButton_ $ toolbarButton
@@ -95,9 +90,6 @@ toolbar = mkView "Toolbar" $ do
             & iconButtonPropsLabel        .~ "read mode"
             & iconButtonPropsOnClick      .~ [HeaderAction ToggleReadOnly]
             & iconButtonPropsAlignRight   .~ True
-
-toolbar_ :: HasCallStack => ReactElementM eventHandler ()
-toolbar_ = view_ toolbar "toolbar_"
 
 
 newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps

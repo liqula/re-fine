@@ -38,11 +38,6 @@ import Refine.Frontend.Store.Types
 
 diffToolbar :: HasCallStack => View '[DiffToolbarProps]
 diffToolbar = mkView "DiffToolbar" $ \props -> do
-  header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
-    div_ ["className" $= "grid-wrapper"] $ do
-      div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
-        div_ ["className" $= "c-vdoc-toolbar__content"] $ do
-
           div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
           ibutton_ $ emptyIbuttonProps "Close" [ContributionAction HideContributionDialog]

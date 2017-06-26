@@ -55,15 +55,15 @@ import           Refine.Frontend.Util
 
 
 topMenuBar :: HasCallStack => View '[TopMenuBarProps]
-topMenuBar = mkView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
-  div_ [ classNamesAny [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]
+topMenuBar = mkView "TopMenuBar" $ \props ->
+  div_ [ classNamesAny [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", props ^. isSticky)]
        , "style" @@= [decl "pointerEvents" (Ident "none")]
        ] $ do
-    topMenuBarLeft_ sticky
-    topMenuBarRight_ sticky currentUser
+    topMenuBarLeft_ props
+    topMenuBarRight_ props
 
-topMenuBarLeft_ :: Bool -> ReactElementM ViewEventHandler ()
-topMenuBarLeft_ sticky = do
+topMenuBarLeft :: View '[TopMenuBarProps]
+topMenuBarLeft = mkView "TopMenuBarLeft" $ \(TopMenuBarProps sticky _currentUser) -> do
     button_ [ "aria-controls" $= "bs-navbar"
             , "aria-expanded" $= "false"
             , "className" $= "c-mainmenu__menu-button"
@@ -78,12 +78,23 @@ topMenuBarLeft_ sticky = do
     unless sticky $
       span_ ["className" $= "c-mainmenu__menu-button-label"] "MENU"
 
-topMenuBarRight_ :: Bool -> CurrentUser -> ReactElementM eventHandler ()
-topMenuBarRight_ sticky currentUser = do
-    loginStatusButton_ (ibDarkBackground .~ not sticky) currentUser
+topMenuBarLeft_ :: TopMenuBarProps -> ReactElementM eventHandler ()
+topMenuBarLeft_ = view_ topMenuBarLeft "TopMenuBarLeft_"
+
+topMenuBarRight_ :: TopMenuBarProps -> ReactElementM eventHandler ()
+topMenuBarRight_ (TopMenuBarProps sticky cu) = do
+    loginStatusButton_ (ibDarkBackground .~ not sticky) cu
 
 topMenuBar_ :: HasCallStack => TopMenuBarProps -> ReactElementM eventHandler ()
 topMenuBar_ = view_ topMenuBar "TopMenuBar_"
+
+toolbarWrapper_ :: ReactElementM eventHandler () -> ReactElementM eventHandler ()
+toolbarWrapper_ toolbarItems_ = do
+  header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
+    div_ ["className" $= "grid-wrapper"] $ do
+      div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
+        div_ ["className" $= "c-vdoc-toolbar__content"] $ do
+          toolbarItems_
 
 
 -- | extract the new state from event.
@@ -104,11 +115,13 @@ mainHeaderlComponentDidMount _propsandstate ldom _ = calcHeaderHeight ldom
 mainHeaderRender :: HasCallStack => () -> GlobalState -> ReactElementM (StatefulViewEventHandler a) ()
 mainHeaderRender () rs = do
   let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsVDoc . _Just
+      props = TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser)
+
       mainMenuPart_ = do
         -- in the past, the following needed to be siblings because of the z-index handling.  not sure that's still the case.
         div_ ["className" $= "c-mainmenu__bg" {-, "role" $= "navigation" -}] mempty
         {- header_ ["role" $= "banner"] $ do -}
-        topMenuBar_ (TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser))
+        topMenuBar_ props
 
       headerPart_ = documentHeader_ $ do
         let doc = DocumentHeaderProps
@@ -125,8 +138,8 @@ mainHeaderRender () rs = do
             DocumentStateEdit {}        -> doc
 
       toolbarPart_ = div_ ["className" $= "c-fulltoolbar"] $ do
-        sticky_ [RF.on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
-          case rs ^. gsDocumentState of
+        sticky_ [RF.on "onStickyStateChange" $ \e () -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
+          toolbarWrapper_ $ case rs ^. gsDocumentState of
             DocumentStateView {} -> toolbar_
             DocumentStateDiff _ _ edit _ -> diffToolbar_ $ DiffToolbarProps
               (edit ^. editID)
