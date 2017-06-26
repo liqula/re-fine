@@ -27,6 +27,7 @@ import Refine.Backend.Prelude
 
 import Test.Hspec
 import Test.QuickCheck
+import Control.Exception.Base (evaluate)
 
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB
@@ -66,7 +67,7 @@ createAppRunner = do
   (dbRunner, dbNat, userHandler) <- createDBNat cfg
   let logger = Logger . const $ pure ()
       runner :: forall b . AppM DB UH b -> IO b
-      runner m = (natThrowError . runApp
+      runner m = ((natThrowError . runApp
                                     dbNat
                                     dbRunner
                                     (uhNat userHandler)
@@ -74,7 +75,7 @@ createAppRunner = do
                                     (cfg ^. cfgCsrfSecret . to CsrfSecret)
                                     (cfg ^. cfgSessionLength)
                                     poRoot
-                                    id) $$ m
+                                    id) $$ m) >>= evaluate -- without evaluate we have issue #389
 
   void $ runner (migrateDB cfg >> initializeDB)
   pure (runner, testDb)

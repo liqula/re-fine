@@ -34,7 +34,6 @@ import           Test.QuickCheck.Monadic
 import Refine.Backend.App as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
-import Refine.Backend.Test.Util (forceEval)
 import Refine.Backend.User
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Test.Samples (sampleVDocVersion)
@@ -76,12 +75,12 @@ spec = do
 
       pendingWith "FIXME: #291"
 
-      forceEval . runner $ do
+      runner $ do
         void $ App.createUser (CreateUser "user" "user@example.com" "password")
         userState0 <- gets (view appUserState)
         appIO $ userState0 `shouldBe` UserLoggedOut
 
-      forceEval . runner $ do
+      runner $ do
         void $ App.login (Login "user" "password")
         userState1 <- gets (view appUserState)
         appIO $ userState1 `shouldSatisfy` isActiveUser
@@ -92,7 +91,7 @@ spec = do
 
   describe "Database handling" . around provideAppRunner $ do
     it "db (or dbWithFilters) can be called twice inside the same AppM" $ \(runner :: AppM DB UH () -> IO ()) -> do
-      forceEval . runner $ do
+      runner $ do
         void $ do
           let createGroup1 = CreateGroup "group1" "desc1" [] [] False
               createGroup2 = CreateGroup "group2" "desc2" [] [] False
@@ -115,7 +114,7 @@ spec = do
             [ AddVDoc (CreateVDoc (Title "title...") (Abstract "abstract...") sampleVDocVersion)
             , AddEditToHead 0 sampleCreateEdit1
             ]
-      forceEval . runner . runIdentityT $ runProgram program `evalStateT` initVDocs
+      runner . runIdentityT $ runProgram program `evalStateT` initVDocs
 
   describe "merging" . around provideAppRunner $ do
     let vdoc = rawContentToVDocVersion . mkRawContent . NEL.fromList . map mkBlock
@@ -132,14 +131,14 @@ spec = do
           login $ Login username "password"
 
     it "merge two edits" $ \(runner :: AppM DB UH () -> IO ()) -> do
-      forceEval . runner $ do
+      runner $ do
         (_, base, [eid1, eid2]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"]]
         eidm <- (^. editID) <$> App.addMerge base eid1 eid2
         doc' <- App.getVDocVersion eidm
         appIO $ doc' `shouldBe` vdoc ["a.c","d.f"]
 
     it "rebase one edit to two other edits" $ \(runner :: AppM DB UH () -> IO ()) -> do
-      forceEval . runner $ do
+      runner $ do
         (vid, _, [eid1, _, _]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"], ["abX", "def"]]
         App.rebaseHeadToEdit eid1
         d <- App.getVDoc vid
@@ -154,7 +153,7 @@ spec = do
         docB <- App.getVDocVersion ee1
         appIO $ docB `shouldBe` vdoc ["aX.","def"]   -- FIXME: the merge result is strange
 
-    it "upvoting an edit triggers rebase" $ \(runner :: AppM DB UH () -> IO ()) -> forceEval . runner $ do
+    it "upvoting an edit triggers rebase" $ \(runner :: AppM DB UH () -> IO ()) -> runner $ do
         (vid, _, [eid]) <- docWithEdits ["abc", "def"] [["a.c", "def"]]
         void $ addUserAndLogin "user"
         putSimpleVoteOnEdit eid Yeay
