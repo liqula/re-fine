@@ -536,8 +536,8 @@ specVoting = around createTestSession $ do
 
       cvdoc <- mkCVDoc sess $ CreateVDoc (Title "[title]") (Abstract "[abstract]") (vdoc blocks)
 
-      let ce1 :: CreateEdit = CreateEdit "description" (vdoc [blocks !! 0, blocks !! 2]) Grammar
-          ce2 :: CreateEdit = CreateEdit "description" (vdoc [blocks !! 0, blocks !! 3]) Grammar
+      let ce1 :: CreateEdit = CreateEdit "description" (vdoc [head blocks, blocks !! 2]) Grammar
+          ce2 :: CreateEdit = CreateEdit "description" (vdoc [head blocks, blocks !! 3]) Grammar
 
       (e1,  e2) <- runWai sess $ do
         [e1_, e2_] <- postJSON (addEditUri (cvdoc ^. compositeVDoc . vdocHeadEdit)) `mapM` [ce1, ce2]
