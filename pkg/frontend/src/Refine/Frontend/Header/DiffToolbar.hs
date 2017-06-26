@@ -38,49 +38,49 @@ import Refine.Frontend.Store.Types
 
 diffToolbar :: HasCallStack => View '[DiffToolbarProps]
 diffToolbar = mkView "DiffToolbar" $ \props -> do
-          div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          ibutton_ $ emptyIbuttonProps "Close" [ContributionAction HideContributionDialog]
-            & ibListKey .~ "0"
-            & ibLabel .~ "back"
-            & ibSize .~ XXLarge
+  ibutton_ $ emptyIbuttonProps "Close" [ContributionAction HideContributionDialog]
+    & ibListKey .~ "0"
+    & ibLabel .~ "back"
+    & ibSize .~ XXLarge
 
-          div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          let voteButtonLabel :: Vote -> ST
-              voteButtonLabel = \case
-                Yeay -> "up ("   <> count Yeay <> ")"
-                Nay  -> "down (" <> count Nay  <> ")"
-                where
-                  count v = cs . show . fromMaybe 0 $ Map.lookup v vs
-                  vs = props ^. diffToolbarPropsVotes
+  let voteButtonLabel :: Vote -> ST
+      voteButtonLabel = \case
+        Yeay -> "up ("   <> count Yeay <> ")"
+        Nay  -> "down (" <> count Nay  <> ")"
+        where
+          count v = cs . show . fromMaybe 0 $ Map.lookup v vs
+          vs = props ^. diffToolbarPropsVotes
 
-          ibutton_ $ emptyIbuttonProps "Vote_positive" [ContributionAction $ ToggleVoteOnContribution (props ^. diffToolbarPropsEditID) Yeay]
-            & ibListKey .~ "1"
-            & ibLabel .~ voteButtonLabel Yeay
-            & ibSize .~ XXLarge
+  ibutton_ $ emptyIbuttonProps "Vote_positive" [ContributionAction $ ToggleVoteOnContribution (props ^. diffToolbarPropsEditID) Yeay]
+    & ibListKey .~ "1"
+    & ibLabel .~ voteButtonLabel Yeay
+    & ibSize .~ XXLarge
 
-          ibutton_ $ emptyIbuttonProps "Vote_negative" [ContributionAction $ ToggleVoteOnContribution (props ^. diffToolbarPropsEditID) Nay]
-            & ibListKey .~ "2"
-            & ibLabel .~ voteButtonLabel Nay
-            & ibSize .~ XXLarge
+  ibutton_ $ emptyIbuttonProps "Vote_negative" [ContributionAction $ ToggleVoteOnContribution (props ^. diffToolbarPropsEditID) Nay]
+    & ibListKey .~ "2"
+    & ibLabel .~ voteButtonLabel Nay
+    & ibSize .~ XXLarge
 
-          ibutton_ $ emptyIbuttonProps "Arrow_up" [HeaderAction ScrollToPageTop]
-            & ibListKey .~ "3"
-            & ibLabel .~ "motivation"
-            & ibSize .~ XXLarge
+  ibutton_ $ emptyIbuttonProps "Arrow_up" [HeaderAction ScrollToPageTop]
+    & ibListKey .~ "3"
+    & ibLabel .~ "motivation"
+    & ibSize .~ XXLarge
 
-          ibutton_ $ emptyIbuttonProps "Toggle_collapse_diff" [DocumentAction ToggleCollapseDiff]
-            & ibListKey .~ "4"
-            & ibLabel .~ "collapse"  -- FIXME: change label based on collapse state.
-            & ibSize .~ XXLarge
+  ibutton_ $ emptyIbuttonProps "Toggle_collapse_diff" [DocumentAction ToggleCollapseDiff]
+    & ibListKey .~ "4"
+    & ibLabel .~ "collapse"  -- FIXME: change label based on collapse state.
+    & ibSize .~ XXLarge
 
-          div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          ibutton_ $ emptyIbuttonProps "Diff_details" [ShowNotImplementedYet]
-            & ibListKey .~ "4"
-            & ibLabel .~ "details"
-            & ibSize .~ XXLarge
+  ibutton_ $ emptyIbuttonProps "Diff_details" [ShowNotImplementedYet]
+    & ibListKey .~ "4"
+    & ibLabel .~ "details"
+    & ibSize .~ XXLarge
 
 diffToolbar_ :: HasCallStack => DiffToolbarProps -> ReactElementM eventHandler ()
 diffToolbar_ = view_ diffToolbar "diffToolbar_"

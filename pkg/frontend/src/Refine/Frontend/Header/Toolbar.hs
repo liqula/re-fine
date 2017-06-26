@@ -36,60 +36,60 @@ import           Refine.Frontend.Util
 
 toolbar_ :: HasCallStack => ReactElementM eventHandler ()
 toolbar_ = do
-          let toolbarButton = defaultIconButtonProps @[GlobalAction]
+  let toolbarButton = defaultIconButtonProps @[GlobalAction]
 
-          iconButton_ $ toolbarButton
-            & iconButtonPropsListKey      .~ "index"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Index_desktop", "dark") XXLarge
-            & iconButtonPropsElementName  .~ "btn-index"
-            & iconButtonPropsLabel        .~ "index"
-            & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+  iconButton_ $ toolbarButton
+    & iconButtonPropsListKey      .~ "index"
+    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Index_desktop", "dark") XXLarge
+    & iconButtonPropsElementName  .~ "btn-index"
+    & iconButtonPropsLabel        .~ "index"
+    & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
 
-          div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          iconButton_ $ toolbarButton
-            & iconButtonPropsListKey      .~ "new-comment"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Comment", "dark") XXLarge
-            & iconButtonPropsElementName  .~ "btn-add-annotation"  -- RENAME
-            & iconButtonPropsLabel        .~ "new comment"
-            & iconButtonPropsOnClick      .~ [HeaderAction ToggleCommentToolbarExtension]
-            & iconButtonPropsClickPropag  .~ False
+  iconButton_ $ toolbarButton
+    & iconButtonPropsListKey      .~ "new-comment"
+    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Comment", "dark") XXLarge
+    & iconButtonPropsElementName  .~ "btn-add-annotation"  -- RENAME
+    & iconButtonPropsLabel        .~ "new comment"
+    & iconButtonPropsOnClick      .~ [HeaderAction ToggleCommentToolbarExtension]
+    & iconButtonPropsClickPropag  .~ False
 
-          iconButton_ $ toolbarButton
-            & iconButtonPropsListKey      .~ "new-edit"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXLarge
-            & iconButtonPropsElementName  .~ "bt-add-modification"  -- RENAME: edit
-            & iconButtonPropsLabel        .~ "new edit"
-            & iconButtonPropsOnClick      .~ [HeaderAction StartEdit]
-            & iconButtonPropsClickPropag  .~ False
+  iconButton_ $ toolbarButton
+    & iconButtonPropsListKey      .~ "new-edit"
+    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXLarge
+    & iconButtonPropsElementName  .~ "bt-add-modification"  -- RENAME: edit
+    & iconButtonPropsLabel        .~ "new edit"
+    & iconButtonPropsOnClick      .~ [HeaderAction StartEdit]
+    & iconButtonPropsClickPropag  .~ False
 
-          div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-          iconButton_ $ toolbarButton
-            & iconButtonPropsListKey      .~ "all-comments"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Comment", "dark") XXLarge
-            & iconButtonPropsElementName  .~ "all-annotations"   -- RENAME: annotation => comment
-            & iconButtonPropsLabel        .~ "all comments"
-            & iconButtonPropsOnClick      .~ (ContributionAction <$> [ SetBubbleFilter Nothing
-                                                                     , SetBubblePositioning BubblePositioningAbsolute
-                                                                     ])
+  iconButton_ $ toolbarButton
+    & iconButtonPropsListKey      .~ "all-comments"
+    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Comment", "dark") XXLarge
+    & iconButtonPropsElementName  .~ "all-annotations"   -- RENAME: annotation => comment
+    & iconButtonPropsLabel        .~ "all comments"
+    & iconButtonPropsOnClick      .~ (ContributionAction <$> [ SetBubbleFilter Nothing
+                                                             , SetBubblePositioning BubblePositioningAbsolute
+                                                             ])
 
-          iconButton_ $ toolbarButton
-            & iconButtonPropsListKey      .~ "all-edits"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Edit_view", "dark") XXLarge
-            & iconButtonPropsElementName  .~ "all-modifications"  -- RENAME: edit
-            & iconButtonPropsLabel        .~ "all edits"
-            & iconButtonPropsOnClick      .~ (ContributionAction <$> [ SetBubbleFilter Nothing
-                                                                     , SetBubblePositioning BubblePositioningAbsolute
-                                                                     ])
+  iconButton_ $ toolbarButton
+    & iconButtonPropsListKey      .~ "all-edits"
+    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Edit_view", "dark") XXLarge
+    & iconButtonPropsElementName  .~ "all-modifications"  -- RENAME: edit
+    & iconButtonPropsLabel        .~ "all edits"
+    & iconButtonPropsOnClick      .~ (ContributionAction <$> [ SetBubbleFilter Nothing
+                                                             , SetBubblePositioning BubblePositioningAbsolute
+                                                             ])
 
-          iconButton_ $ toolbarButton
-            & iconButtonPropsListKey      .~ "read-only"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Reader", "dark") XXLarge
-            & iconButtonPropsElementName  .~ "btn-read-mode"
-            & iconButtonPropsLabel        .~ "read mode"
-            & iconButtonPropsOnClick      .~ [HeaderAction ToggleReadOnly]
-            & iconButtonPropsAlignRight   .~ True
+  iconButton_ $ toolbarButton
+    & iconButtonPropsListKey      .~ "read-only"
+    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Reader", "dark") XXLarge
+    & iconButtonPropsElementName  .~ "btn-read-mode"
+    & iconButtonPropsLabel        .~ "read mode"
+    & iconButtonPropsOnClick      .~ [HeaderAction ToggleReadOnly]
+    & iconButtonPropsAlignRight   .~ True
 
 
 newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
