@@ -336,16 +336,22 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState (CommentInfo "" 
           elemString "Step 3: "
           span_ ["className" $= "bold"] "finish"
 
+      let enableOrDisable props = if ST.null stext || isNothing smkind
+            then props
+              & iconButtonPropsDisabled     .~ True
+            else props
+              & iconButtonPropsDisabled     .~ False
+              & iconButtonPropsOnClick      .~
+                    [ ContributionAction $ SubmitComment (CommentInfo stext (fromJust smkind))
+                    , ContributionAction ClearRange
+                    , ContributionAction HideCommentEditor
+                    ]
+
       iconButton_ $ defaultIconButtonProps @[GlobalAction]
           & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" False ("icon-Share", "dark") Large
           & iconButtonPropsElementName  .~ "submit"
           & iconButtonPropsLabel        .~ "submit"
-          & iconButtonPropsDisabled     .~ (ST.null stext || isNothing smkind)
-          & iconButtonPropsOnClick      .~
-                [ ContributionAction $ SubmitComment (CommentInfo stext (fromJust smkind))  -- (button is disabled in the Nothing case)
-                , ContributionAction ClearRange
-                , ContributionAction HideCommentEditor
-                ]
+          & enableOrDisable
 
 commentInput_ :: HasCallStack => ReactElementM eventHandler ()
 commentInput_ = view_ commentInput "commentInput_"
@@ -391,6 +397,15 @@ editInput einfo = mkStatefulView "EditInput" (EditInputState einfo Nothing) $
 
     hr_ []
 
+    let enableOrDisable props = if ST.null desc || isNothing mkind
+          then props
+            & iconButtonPropsDisabled     .~ True
+          else props
+            & iconButtonPropsDisabled     .~ False
+            & iconButtonPropsOnClick      .~ [ DocumentAction $ DocumentSave (EditInfo desc (fromJust mkind))
+                                             , ContributionAction ClearRange
+                                             ]
+
     -- FIXME: make new button, like in 'commentInput_' above.  we
     -- don't have to save this in global state until the 'editInput_'
     -- dialog is closed again without save or cancel.
@@ -400,10 +415,7 @@ editInput einfo = mkStatefulView "EditInput" (EditInputState einfo Nothing) $
             & iconButtonPropsElementName  .~ "btn-index"
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True
-            & iconButtonPropsDisabled     .~ (ST.null desc || isNothing mkind)
-            & iconButtonPropsOnClick      .~ [ DocumentAction $ DocumentSave (EditInfo desc (fromJust mkind))
-                                             , ContributionAction ClearRange
-                                             ]
+            & enableOrDisable
 
 editInput_ :: HasCallStack => EditInfo (Maybe EditKind) -> ReactElementM eventHandler ()
 editInput_ st = view_ (editInput st) "editInput_"

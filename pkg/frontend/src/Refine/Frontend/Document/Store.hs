@@ -163,8 +163,11 @@ setAllVertialSpanBounds (convertToRaw . getCurrentContent . view documentStateVa
               -- (FIXME: this assertion should be compiled away in
               -- production.  write a few assert functions that can do
               -- that, and use one of those.)
-              topOffset    <- OffsetFromViewportTop  . fromJust <$> getLeafSelectorBound LeafSelectorTop    top
-              bottomOffset <- OffsetFromViewportTop  . fromJust <$> getLeafSelectorBound LeafSelectorBottom bot
+
+              let fromJust_ = fromMaybe (error "setAllVerticalSpanBounds: internal error.")
+
+              topOffset    <- OffsetFromViewportTop  . fromJust_ <$> getLeafSelectorBound LeafSelectorTop    top
+              bottomOffset <- OffsetFromViewportTop  . fromJust_ <$> getLeafSelectorBound LeafSelectorBottom bot
               scrollOffset <- ScrollOffsetOfViewport            <$> js_getScrollOffset
               let vertialSpanBounds = VertialSpanBounds
                     { _vertialSpanBoundsTop    = offsetFromDocumentTop topOffset    scrollOffset
