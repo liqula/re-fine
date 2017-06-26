@@ -53,11 +53,10 @@ toolbarExtensionUpdate action st = case (st, action) of
     (_,                                    HeaderAction StartTextSpecificComment)      -> bad1
 
     (ToolbarExtensionClosed,               HeaderAction (OpenEditToolbarLinkEditor l)) -> EditToolbarLinkEditor l
-    (_,                                    HeaderAction (OpenEditToolbarLinkEditor _)) -> bad3
+    (_,                                    HeaderAction (OpenEditToolbarLinkEditor _)) -> ToolbarExtensionClosed
 
     (_,                                    HeaderAction CloseToolbarExtension)         -> ToolbarExtensionClosed
 
     _ -> st
   where
-    bad1 = error "text-specific comment cannot start when toolbar extension is closed or in selection mode"
-    bad3 = error "link editor can be opened only in edit toolbar extension closed mode"
+    bad1 = error $ "text-specific comment cannot start when toolbar extension is closed or in selection mode: " <> show (action, st)
