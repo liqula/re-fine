@@ -528,7 +528,7 @@ specVoting = around createTestSession $ do
         votes `shouldBe` Map.fromList [(Yeay, 2), (Nay, 1)]
 
   describe "merging and rebasing" $ do
-    it "works if two edits are present and one is merged" $ \sess -> do
+    it "### works if two edits are present and one is merged" $ \sess -> do
       addUserAndLogin sess "userA"
 
       let blocks = mkBlock <$> ["first line", "second line", "third line"]
@@ -536,24 +536,24 @@ specVoting = around createTestSession $ do
 
       cvdoc <- mkCVDoc sess $ CreateVDoc (Title "[title]") (Abstract "[abstract]") (vdoc blocks)
 
-      let ce1 :: CreateEdit = CreateEdit "description" (vdoc [head blocks, blocks !! 2]) Grammar
-          ce2 :: CreateEdit = CreateEdit "description" (vdoc [head blocks, blocks !! 3]) Grammar
+      let ce1 :: CreateEdit = CreateEdit "description" (vdoc [head blocks, blocks !! 1]) Grammar
+          ce2 :: CreateEdit = CreateEdit "description" (vdoc [head blocks, blocks !! 2]) Grammar
 
       (e1,  e2) <- runWai sess $ do
         [e1_, e2_] <- postJSON (addEditUri (cvdoc ^. compositeVDoc . vdocHeadEdit)) `mapM` [ce1, ce2]
         pure (e1_, e2_)
 
-      resp <- runWai sess . wput $ putVoteUri e1 Yeay
+      resp <- runWai sess . wput $ putVoteUri (e1 ^. editID) Yeay
       respCode resp `shouldSatisfy` (< 400)
 
       -- composite vdoc should point to e1
       cvdoc' :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (cvdoc ^. compositeVDoc . vdocID)
-      cvdoc' ^. compositeVDocThisEdit . editID `shouldBe` e1
+      cvdoc' ^. compositeVDocThisEdit . editID `shouldBe` e1 ^. editID
 
       -- e2 should be re-based onto e1
       let rebasedEdits = Map.elems (cvdoc' ^. compositeVDocApplicableEdits)
       length rebasedEdits `shouldBe` 1
-      head rebasedEdits ^. editID   `shouldNotBe` e2  -- (rebase is immutable)
+      head rebasedEdits ^. editID   `shouldNotBe` e2 ^. editID  -- (rebase is immutable)
       head rebasedEdits ^. editDesc `shouldBe` ce2 ^. createEditDesc
       head rebasedEdits ^. editKind `shouldBe` ce2 ^. createEditKind
       -- (compare versions, too?  that will probably break once we get fancier merge heuristics, though.)
