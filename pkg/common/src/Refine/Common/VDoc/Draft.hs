@@ -162,7 +162,7 @@ getLeafSelectors rc
     f _ = Nothing
 
 -- the function should be strictly monotonic on Just values
-mapFilterKey :: (Ord k, Ord l) => (k -> Maybe l) -> Map k a -> Map l a
+mapFilterKey :: (HasCallStack, Ord k, Ord l) => (k -> Maybe l) -> Map k a -> Map l a
 mapFilterKey f = Map.mapKeysMonotonic (fromJust . f) . Map.filterWithKey (\k _ -> isJust $ f k)
 
 
