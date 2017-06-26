@@ -54,13 +54,6 @@ import           Refine.Frontend.ThirdPartyViews (sticky_)
 import           Refine.Frontend.Util
 
 
-data TopMenuBarProps = TopMenuBarProps
- { _isSticky    :: Bool
- , _currentUser :: CurrentUser
- } deriving (Eq, Generic)
-
-instance UnoverlapAllEq TopMenuBarProps
-
 topMenuBar :: HasCallStack => View '[TopMenuBarProps]
 topMenuBar = mkView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
   div_ [ classNamesAny [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]
