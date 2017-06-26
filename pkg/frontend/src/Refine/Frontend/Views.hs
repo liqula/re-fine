@@ -187,7 +187,7 @@ discussionToProtoBubble aprops d = ProtoBubble cid (lookupPosition aprops cid) c
     cid = contribID $ d ^. compositeDiscussion . discussionID
     child = elemText (ST.rootLabel (d ^. compositeDiscussionTree) ^. statementText)
 
-stackBubble :: HasCallStack => BubbleSide -> AsideProps -> StackOrNot ProtoBubble -> ReactElementM ViewEventHandler ()
+stackBubble :: HasCallStack => BubbleSide -> AsideProps -> StackOrNot ProtoBubble -> ReactElementM 'EventHandlerCode ()
 stackBubble bubbleSide aprops bstack = bubble_ props children
   where
     bstack' :: StackOrNot ContributionID

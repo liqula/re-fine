@@ -47,7 +47,7 @@ vdocLoader = mkView "VDocLoader" $ \props -> do
   h1_ "Load a VDoc"
   br_ []
   button_ [ "id" $= "add-vdoc-to-backend"
-          , onClick $ \_ _ -> RS.dispatch RS.AddDemoDocument
+          , onClick $ \_ _ -> simpleHandler $ RS.dispatch RS.AddDemoDocument
           ] $
           elemString "Load generated document via backend"
   br_ []
@@ -70,10 +70,10 @@ vdocListLoader = mkView "VDocListLoader" $ \case
   VDocLoaderProps Nothing     -> mempty
   VDocLoaderProps (Just list) -> div_ $ toButton `mapM_` list
 
-toButton :: HasCallStack => ID VDoc -> ReactElementM [SomeStoreAction] ()
+toButton :: HasCallStack => ID VDoc -> ReactElementM 'EventHandlerCode ()
 toButton li = button_
   [ "id" $= cs ("load-vdoc-list" <> show (_unID li))
-  , onClick $ \_ _ -> RS.dispatch . RS.LoadDocument $ li
+  , onClick $ \_ _ -> simpleHandler . RS.dispatch . RS.LoadDocument $ li
   ]
   (elemText $ toUrlPiece li)
 

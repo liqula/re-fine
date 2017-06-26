@@ -52,7 +52,7 @@ import           Refine.Frontend.Util
 
 -- * icons buttons
 
-ibutton :: forall onclick. (HasCallStack, IbuttonOnClick onclick ViewEventHandler)
+ibutton :: forall onclick. (HasCallStack, IbuttonOnClick onclick 'EventHandlerCode)
         => View '[IbuttonProps onclick]
 ibutton = mkStatefulView "Ibutton" False (sibutton_ id)
 
@@ -61,7 +61,7 @@ ibutton = mkStatefulView "Ibutton" False (sibutton_ id)
 -- FIXME: there are two kinds of highlight: "mouse-over" and
 -- "selected".  we should distinguish those more cleanly and expose a
 -- nicer interface to the application.
-ibutton_ :: forall onclick handler. (HasCallStack, IbuttonOnClick onclick ViewEventHandler)
+ibutton_ :: forall onclick handler. (HasCallStack, IbuttonOnClick onclick 'EventHandlerCode)
          => IbuttonProps onclick -> ReactElementM handler ()
 ibutton_ props = view_ ibutton ("Ibutton_" <> props ^. ibListKey) props
 
@@ -73,16 +73,16 @@ ibutton_ props = view_ ibutton ("Ibutton_" <> props ^. ibListKey) props
 -- that would insulate the local state from the state the calling
 -- component wants to share with this button.  Instead, render the
 -- 'ReactElement' directlyk.
-sibutton_ :: forall onclick st handler.
-                  (HasCallStack, IbuttonOnClick onclick handler, handler ~ StatefulViewEventHandler st)
+sibutton_ :: forall onclick st (handler :: EventHandlerCode *).
+                  (HasCallStack, IbuttonOnClick onclick handler, handler ~ 'StatefulEventHandlerCode st)
                => Lens' st Bool -> st -> IbuttonProps onclick -> ReactElementM handler ()
 sibutton_ mouseIsOver st props = do
-  let onMsOvr :: [PropertyOrHandler handler]
-      onMsOvr = [ onMouseEnter $ \_ _ s -> ([], Just $ s & mouseIsOver .~ True)
-                , onMouseLeave $ \_ _ s -> ([], Just $ s & mouseIsOver .~ False)
+  let --TODO onMsOvr :: [PropertyOrHandler handler]
+      onMsOvr = [ onMouseEnter $ \_ _ -> simpleHandler $ \s -> ([], Just $ s & mouseIsOver .~ True)
+                , onMouseLeave $ \_ _ -> simpleHandler $ \s -> ([], Just $ s & mouseIsOver .~ False)
                 ]
 
-      onClk :: [PropertyOrHandler handler]
+      --TODO onClk :: [PropertyOrHandler handler]
       onClk = [onClick $ \evt mevt -> mkIbuttonClickHandler props evt mevt | props ^. ibEnabled]
 
       -- FIXME: ibutton must not contain divs, so we can use it inside spans.
@@ -149,22 +149,22 @@ emptyIbuttonProps img onclick = IbuttonProps
 
 -- * events
 
-instance IbuttonOnClick [GlobalAction] ViewEventHandler where
+instance IbuttonOnClick [GlobalAction] 'EventHandlerCode where
   runIbuttonOnClick _ _ = dispatchMany
 
-instance {-# OVERLAPPABLE #-} IbuttonOnClick action ViewEventHandler => IbuttonOnClick action (StatefulViewEventHandler st) where
+instance {-# OVERLAPPABLE #-} IbuttonOnClick action 'EventHandlerCode => IbuttonOnClick action ('StatefulEventHandlerCode st) where
   runIbuttonOnClick evt mevt onclick _st = (runIbuttonOnClick evt mevt onclick, Nothing)
 
-instance IbuttonOnClick action (StatefulViewEventHandler st) => IbuttonOnClick action (StatefulViewEventHandler (IbuttonState st)) where
+instance IbuttonOnClick action ('StatefulEventHandlerCode st) => IbuttonOnClick action ('StatefulEventHandlerCode (IbuttonState st)) where
   runIbuttonOnClick evt mevt onclick (IbuttonState mo st) =
     case runIbuttonOnClick evt mevt onclick st of
       (action, mupd) -> (action, IbuttonState mo <$> mupd)
 
 -- | Handle stopPropagation etc., then run the 'runIbuttonOnClick' from the matching instance.
-mkIbuttonClickHandler :: HasCallStack => IbuttonOnClick onclick handler => IbuttonProps onclick -> Event -> MouseEvent -> handler
-mkIbuttonClickHandler props evt mevt = propag `seq` handle
+mkIbuttonClickHandler :: HasCallStack => IbuttonOnClick onclick handler => IbuttonProps onclick -> Event -> MouseEvent -> (EventHandlerType handler, [EventModification])
+mkIbuttonClickHandler props evt mevt = propag handle
   where
-    propag = if props ^. ibClickPropag then () else stopPropagation evt
+    propag = if props ^. ibClickPropag then simpleHandler else stopPropagation
     handle = runIbuttonOnClick evt mevt (props ^. ibOnClick)
 
 
@@ -188,8 +188,8 @@ icon = mkStatefulView "Icon" False $ \mouseIsOver props -> do
                          , props ^. iconPropsDesc . _1 <> "_" <> highlightStyle
                          ]
        , "style" @@= (css (props ^. iconPropsSize) <> [decl "marginRight" (Px 15)])
-       , onMouseEnter $ \_ _ _ -> ([], Just True)
-       , onMouseLeave $ \_ _ _ -> ([], Just False)
+       , onMouseEnter $ \_ _ -> simpleHandler $ \_ -> ([], Just True)
+       , onMouseLeave $ \_ _ -> simpleHandler $ \_ -> ([], Just False)
        ] mempty
 
 icon_ :: HasCallStack => IconProps -> ReactElementM eventHandler ()
@@ -252,9 +252,9 @@ iconButton_ !props = view_ iconButton ("iconButton_" <> props ^. iconButtonProps
 
 -- ** events
 
-mkClickHandler :: HasCallStack => IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick -> Event -> MouseEvent -> ViewEventHandler
+mkClickHandler :: HasCallStack => IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick -> Event -> MouseEvent -> (ViewEventHandler, [EventModification])
 mkClickHandler props evt mevt =
-  (if props ^. iconButtonPropsClickPropag then () else stopPropagation evt) `seq`
+  (if props ^. iconButtonPropsClickPropag then simpleHandler else stopPropagation) $
   runIconButtonPropsOnClick evt mevt (props ^. iconButtonPropsOnClick)
 
 class (Typeable onclick, Eq onclick) => IconButtonPropsOnClick onclick where  -- FIXME: rename to ButtonOnClick

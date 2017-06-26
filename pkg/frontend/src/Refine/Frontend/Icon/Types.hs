@@ -114,7 +114,7 @@ data IbuttonState st = IbuttonState { _ibuttonMouseOver :: Bool, _ibuttonState :
   deriving (Eq, Ord, Generic)
 
 class (Typeable onclick, Eq onclick) => IbuttonOnClick onclick handler where
-  runIbuttonOnClick :: Event -> MouseEvent -> onclick -> handler
+  runIbuttonOnClick :: Event -> MouseEvent -> onclick -> EventHandlerType handler
 
 
 -- * icon sizes

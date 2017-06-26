@@ -62,13 +62,13 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
   , Outdated.lComponentDidMount = Just documentComponentDidMount
   }
 
-documentRender :: HasCallStack => () -> DocumentProps -> ReactElementM (StatefulViewEventHandler st) ()
+documentRender :: HasCallStack => () -> DocumentProps -> ReactElementM ('StatefulEventHandlerCode st) ()
 documentRender() props = liftViewToStateHandler $ do
   let dstate = props ^. dpDocumentState
 
-      sendMouseUpIfReadOnly :: [SomeStoreAction]
+      sendMouseUpIfReadOnly :: HandlerWithEventModifications 'EventHandlerCode
       sendMouseUpIfReadOnly =
-        mconcat [ dispatch $ ContributionAction RequestSetRange | has _DocumentStateView dstate ]
+        simpleHandler $ mconcat [ dispatch $ ContributionAction RequestSetRange | has _DocumentStateView dstate ]
 
       editorState :: EditorState
       editorState = maybe (dstate ^. documentStateVal) (createWithContent . convertFromRaw) rawContentDiffView
@@ -109,7 +109,7 @@ documentRender() props = liftViewToStateHandler $ do
       , onChange $ \evt ->
           let dstate' :: DocumentState
               dstate' = dstate & documentStateVal .~ updateEditorState evt
-          in dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetAllVerticalSpanBounds]
+          in simpleHandler $ dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetAllVerticalSpanBounds]
           -- TODO: #371
           --
           -- when clicking on a button in the edit toolbar and this handler triggers, the button

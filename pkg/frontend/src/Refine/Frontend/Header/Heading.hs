@@ -74,7 +74,7 @@ topMenuBarLeft = mkView "TopMenuBarLeft" $ \(TopMenuBarProps sticky _currentUser
             , "className" $= "c-mainmenu__menu-button"
             , "type" $= "button"
             , "style" @@= [decl "pointerEvents" (Ident "all")]
-            , onClick $ \_ _ -> dispatch . MainMenuAction $ MainMenuActionOpen defaultMainMenuTab
+            , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction $ MainMenuActionOpen defaultMainMenuTab
             ] $ do
       span_ ["className" $= "sr-only"] "Navigation an/aus"
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
@@ -117,7 +117,7 @@ mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
 mainHeaderlComponentDidMount :: HasCallStack => a -> RF.LDOM -> b -> IO ()
 mainHeaderlComponentDidMount _propsandstate ldom _ = calcHeaderHeight ldom
 
-mainHeaderRender :: HasCallStack => () -> GlobalState -> ReactElementM (StatefulViewEventHandler ()) ()
+mainHeaderRender :: HasCallStack => () -> GlobalState -> ReactElementM ('StatefulEventHandlerCode ()) ()
 mainHeaderRender () rs = do
   let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsVDoc . _Just
       props = TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser)
@@ -143,7 +143,7 @@ mainHeaderRender () rs = do
             DocumentStateEdit {}        -> doc
 
       toolbarPart_ = div_ ["className" $= "c-fulltoolbar"] $ do
-        sticky_ [RF.on "onStickyStateChange" $ \e () -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
+        sticky_ [RF.on "onStickyStateChange" $ \e -> simpleHandler $ \() -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
           toolbarWrapper_ $ case rs ^. gsDocumentState of
             DocumentStateView {} -> toolbar_
             DocumentStateDiff _ _ edit _ -> diffToolbar_ $ DiffToolbarProps

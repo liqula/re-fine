@@ -164,7 +164,7 @@ stackToList (NoStack x)       = [x]
 data ProtoBubble = ProtoBubble
   { _protoBubbleContributionID     :: ContributionID
   , _protoBubbleVerticalSpanBounds :: VerticalSpanBounds
-  , _protoBubbleChild              :: ReactElementM ViewEventHandler ()
+  , _protoBubbleChild              :: ReactElementM 'EventHandlerCode ()
   }
 
 data BubbleProps = BubbleProps
@@ -282,10 +282,10 @@ instance ToJSON AllVerticalSpanBounds where
 instance FromJSON AllVerticalSpanBounds where
   parseJSON = fmap AllVerticalSpanBounds . mapFromValue
 
-instance IbuttonOnClick CommentKind (StatefulViewEventHandler CommentInputState) where
+instance IbuttonOnClick CommentKind ('StatefulEventHandlerCode CommentInputState) where
   runIbuttonOnClick _evt _mevt ckind st = (mempty, Just $ st & commentInputStateData . commentInfoKind .~ Just ckind)
 
-instance IbuttonOnClick EditKind (StatefulViewEventHandler EditInputState) where
+instance IbuttonOnClick EditKind ('StatefulEventHandlerCode EditInputState) where
   runIbuttonOnClick _evt _mevt ekind st = (mempty, Just $ st & editInputStateData . editInfoKind .~ Just ekind)
 
 
