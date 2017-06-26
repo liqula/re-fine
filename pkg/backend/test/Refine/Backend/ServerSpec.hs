@@ -528,7 +528,7 @@ specVoting = around createTestSession $ do
         votes `shouldBe` Map.fromList [(Yeay, 2), (Nay, 1)]
 
   describe "merging and rebasing" $ do
-    it "### works if two edits are present and one is merged" $ \sess -> do
+    it "works if two edits are present and one is merged" $ \sess -> do
       addUserAndLogin sess "userA"
 
       let blocks = mkBlock <$> ["first line", "second line", "third line"]
@@ -554,6 +554,6 @@ specVoting = around createTestSession $ do
       let rebasedEdits = Map.elems (cvdoc' ^. compositeVDocApplicableEdits)
       length rebasedEdits `shouldBe` 1
       head rebasedEdits ^. editID   `shouldNotBe` e2 ^. editID  -- (rebase is immutable)
-      head rebasedEdits ^. editDesc `shouldBe` ce2 ^. createEditDesc
-      head rebasedEdits ^. editKind `shouldBe` ce2 ^. createEditKind
+      head rebasedEdits ^. editDesc `shouldBe` "merge"
+      head rebasedEdits ^. editKind `shouldBe` EKMerge
       -- (compare versions, too?  that will probably break once we get fancier merge heuristics, though.)
