@@ -36,7 +36,6 @@ import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.Util
-import           Refine.Prelude.TH (makeRefineType)
 
 
 -- * Helper
@@ -75,8 +74,6 @@ data LoginForm = LoginForm
   , _loginFormErrors   :: FormError
   } deriving (Eq, Generic, Show)
 
-makeRefineType ''LoginForm
-
 data RegistrationForm = RegistrationForm
   { _registrationFormUsername  :: ST
   , _registrationFormEmail1    :: ST
@@ -86,7 +83,7 @@ data RegistrationForm = RegistrationForm
   , _registrationFormErrors    :: FormError
   } deriving (Eq, Generic, Show)
 
-makeRefineType ''RegistrationForm
+makeRefineTypes [''LoginForm, ''RegistrationForm]
 
 -- | FIXME: I used the pattern "return a list of errors, and then check if that list is null to get
 -- the boolean" in `createChunkRangeErrors`, and I quite liked it, as it gives you more informative

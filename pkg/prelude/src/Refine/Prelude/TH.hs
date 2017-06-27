@@ -18,7 +18,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 -- FIXME: rename to Refine.Prelude.MakeInstances
-module Refine.Prelude.TH (makeRefineType, makeRefineType', makeSOPGeneric, makeJSON, makeNFData) where
+module Refine.Prelude.TH (makeRefineType, makeRefineTypes, makeRefineType', makeSOPGeneric, makeJSON, makeNFData) where
 
 import Control.Lens (makeLenses, makePrisms)
 import Control.DeepSeq (NFData(..))
@@ -111,6 +111,9 @@ makeRefineType t = do
   n <- makeNFData t
   s <- makeSOPGeneric t
   pure $ concat [l, p, s, j, n]
+
+makeRefineTypes :: [Name] -> Q [Dec]
+makeRefineTypes ns = concat <$> mapM makeRefineType ns
 
 -- FIXME: rename to makeInstances'
 makeRefineType' :: Q Type -> Q [Dec]

@@ -28,7 +28,6 @@ import Refine.Frontend.Prelude
 import GHC.Generics (Generic)
 
 import Refine.Common.Types
-import Refine.Prelude.TH (makeRefineType)
 
 
 data HeaderAction =
@@ -70,8 +69,4 @@ data DiffToolbarProps = DiffToolbarProps
 instance UnoverlapAllEq DiffToolbarProps
 
 
-makeRefineType ''HeaderAction
-makeRefineType ''ToolbarExtensionStatus
-makeRefineType ''HeaderState
-makeRefineType ''AddLinkFormState
-makeRefineType ''DiffToolbarProps
+makeRefineTypes [''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState, ''DiffToolbarProps]

@@ -68,7 +68,6 @@ import qualified Refine.Common.OT as OT
 import           Refine.Common.OT hiding (Edit)
 import           Refine.Common.Types.Comment
 import           Refine.Common.Types.Prelude
-import           Refine.Prelude.TH (makeRefineType)
 
 
 -- * VDoc
@@ -638,18 +637,7 @@ mkSomeSegments frange fpayload els = segments
 
 -- * Derived instances
 
-makeRefineType ''EntityKey
-makeRefineType ''CompositeVDoc
-makeRefineType ''ContributionID
-makeRefineType ''VDoc
-makeRefineType ''CreateVDoc
-makeRefineType ''EditSource
-makeRefineType ''Edit
-makeRefineType ''CreateEdit
-makeRefineType ''EditKind
-makeRefineType ''Title
-makeRefineType ''Abstract
-makeRefineType ''VDocVersion
+makeRefineTypes [''EntityKey, ''CompositeVDoc, ''ContributionID, ''VDoc, ''CreateVDoc, ''EditSource, ''Edit, ''CreateEdit, ''EditKind, ''Title, ''Abstract, ''VDocVersion]
 
 makeLenses ''RawContent
 makeLenses ''Block

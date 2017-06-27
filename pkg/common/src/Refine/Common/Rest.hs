@@ -169,5 +169,4 @@ type SGetSimpleVotesOnEdit
   = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> "vote" :> Get '[JSON] VoteCount
 
 
-makeRefineType ''ApiError
-makeRefineType ''ApiErrorCreateUser
+makeRefineTypes [''ApiError, ''ApiErrorCreateUser]

@@ -12,7 +12,6 @@ import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 
 import Refine.Common.Types.Prelude
-import Refine.Prelude.TH (makeRefineType)
 
 
 data CreateGroup = CreateGroup
@@ -55,9 +54,7 @@ type instance Create Group = CreateGroup
 data GroupRef = GroupRef (ID Group) | UniversalGroup
   deriving (Eq, Show, Generic)
 
-makeRefineType ''CreateGroup
-makeRefineType ''Group
-makeRefineType ''GroupRef
+makeRefineTypes [''CreateGroup, ''Group, ''GroupRef]
 
 groupID :: Lens' Group (ID Group)
 groupID = groupMetaID . miID

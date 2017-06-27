@@ -129,19 +129,7 @@ type instance Create Statement  = CreateStatement
 
 -- * Refine types
 
-makeRefineType ''CreateNote
-makeRefineType ''Note
-makeRefineType ''CreateQuestion
-makeRefineType ''Question
-makeRefineType ''CompositeQuestion
-makeRefineType ''CreateAnswer
-makeRefineType ''Answer
-makeRefineType ''CreateDiscussion
-makeRefineType ''Discussion
-makeRefineType ''CompositeDiscussion
-makeRefineType ''CreateStatement
-makeRefineType ''Statement
-makeRefineType ''Comment
+makeRefineTypes [''CreateNote, ''Note, ''CreateQuestion, ''Question, ''CompositeQuestion, ''CreateAnswer, ''Answer, ''CreateDiscussion, ''Discussion, ''CompositeDiscussion, ''CreateStatement, ''Statement, ''Comment]
 
 -- * Lenses
 

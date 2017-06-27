@@ -33,7 +33,6 @@ import           Data.String.Conversions (ST, cs, (<>))
 import           GHC.Generics (Generic)
 
 import           Refine.Common.Prelude
-import           Refine.Prelude.TH (makeRefineType)
 
 
 -- * Position
@@ -231,10 +230,4 @@ renderLeafSelector (Position (BlockKey b) (SpanIndex k i)) =
   "span[data-offset-key=\"" <> b <> "-" <> cs (show k) <> "-" <> cs (show i) <> "\"]"
 
 
-makeRefineType ''GPosition
-makeRefineType ''Range
-makeRefineType ''Ranges
-makeRefineType ''Selection
-makeRefineType ''BlockIndex
-makeRefineType ''BlockKey
-makeRefineType ''SelectionState
+makeRefineTypes [''GPosition, ''Range, ''Ranges, ''Selection, ''BlockIndex, ''BlockKey, ''SelectionState]

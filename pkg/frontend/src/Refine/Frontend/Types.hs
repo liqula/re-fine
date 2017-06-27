@@ -45,10 +45,6 @@ newtype ScrollOffsetOfViewport = ScrollOffsetOfViewport { _unScrollOffsetOfViewp
 newtype OffsetFromDocumentTop = OffsetFromDocumentTop { _unOffsetFromDocumentTop :: Int }
   deriving (Show, Generic, Eq, Ord, Num)
 
-makeRefineType ''OffsetFromViewportTop
-makeRefineType ''ScrollOffsetOfViewport
-makeRefineType ''OffsetFromDocumentTop
-
 
 -- | 'Range' contains a position range representing a 'SelectionState' from draftjs (without the
 -- direction), plus some measurements about the window scroll state and size.
@@ -76,4 +72,4 @@ data SelectionStateWithPx = SelectionStateWithPx
     }
     deriving (Show, Eq, Generic)
 
-makeRefineType ''SelectionStateWithPx
+makeRefineTypes [''OffsetFromViewportTop, ''ScrollOffsetOfViewport, ''OffsetFromDocumentTop, ''SelectionStateWithPx]

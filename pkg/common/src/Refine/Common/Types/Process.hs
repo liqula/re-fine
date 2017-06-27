@@ -26,7 +26,6 @@ import Refine.Common.Prelude
 import Refine.Common.Types.Prelude (ID(..), MetaID, miID, Create)
 import Refine.Common.Types.Group (Group, GroupRef)
 import Refine.Common.Types.Core (VDoc, CompositeVDoc)
-import Refine.Prelude.TH (makeRefineType)
 
 
 -- * general
@@ -132,15 +131,7 @@ type instance Create (Process Aula) = CreateAulaProcess
 
 -- * boilerplate
 
-makeRefineType ''Process
-makeRefineType ''AddProcess
-makeRefineType ''CreatedProcess
-makeRefineType ''RemoveProcess
-makeRefineType ''CollaborativeEdit
-makeRefineType ''CollaborativeEditPhase
-makeRefineType ''CreateCollabEditProcess
-makeRefineType ''Aula
-makeRefineType ''CreateAulaProcess
+makeRefineTypes [''Process, ''AddProcess, ''CreatedProcess, ''RemoveProcess, ''CollaborativeEdit, ''CollaborativeEditPhase, ''CreateCollabEditProcess, ''Aula, ''CreateAulaProcess]
 
 processID :: Lens' (Process a) (ID (Process a))
 processID = processMetaID . miID
