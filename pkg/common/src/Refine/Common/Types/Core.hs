@@ -637,25 +637,10 @@ mkSomeSegments frange fpayload els = segments
 
 -- * Derived instances
 
-makeRefineTypes [''EntityKey, ''CompositeVDoc, ''ContributionID, ''VDoc, ''CreateVDoc, ''EditSource, ''Edit, ''CreateEdit, ''EditKind, ''Title, ''Abstract, ''VDocVersion]
-
-makeLenses ''RawContent
-makeLenses ''Block
-makeLenses ''Entity
-makeLenses ''Style
-makeLenses ''BlockType
-
-makeSOPGeneric ''RawContent
-makeSOPGeneric ''Block
-makeSOPGeneric ''Entity
-makeSOPGeneric ''Style
-makeSOPGeneric ''BlockType
-
-makeNFData ''RawContent
-makeNFData ''Block
-makeNFData ''Entity
-makeNFData ''Style
-makeNFData ''BlockType
+deriveClasses
+  [ ([''RawContent, ''Block, ''Entity, ''Style, ''BlockType], [''NFData, ''SOP.Generic, ''Lens'])
+  , ([''EntityKey, ''CompositeVDoc, ''ContributionID, ''VDoc, ''CreateVDoc, ''EditSource, ''Edit, ''CreateEdit, ''EditKind, ''Title, ''Abstract, ''VDocVersion], allClass)
+  ]
 
 -- | It cannot moved further up, needs instance NFData BlockType
 deriving instance NFData (EEdit RawContent)
