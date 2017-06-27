@@ -41,7 +41,7 @@ import           Refine.Common.Test.Samples
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
-import           Refine.Frontend.Document.Store (setAllVertialSpanBounds, documentStateUpdate, editorStateToVDocVersion)
+import           Refine.Frontend.Document.Store (setAllVerticalSpanBounds, documentStateUpdate, editorStateToVDocVersion)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
@@ -98,8 +98,8 @@ transformGlobalState = transf
 
       -- other effects
       case action of
-        ContributionAction RequestSetAllVertialSpanBounds -> do
-          dispatchAndExec . ContributionAction =<< setAllVertialSpanBounds (st ^. gsDocumentState)
+        ContributionAction RequestSetAllVerticalSpanBounds -> do
+          dispatchAndExec . ContributionAction =<< setAllVerticalSpanBounds (st ^. gsDocumentState)
 
         ContributionAction RequestSetRange -> do
           mRangeEvent <- getRangeAction (st ^. gsDocumentState)
@@ -246,7 +246,7 @@ emitBackendCallsFor action st = case action of
                                               st ^? gsDocumentState . documentStateContent))
                    $ st ^? gsCurrentSelection . _Just . C.selectionRange
           handle a = dispatchManyM [ a
-                                   , ContributionAction RequestSetAllVertialSpanBounds
+                                   , ContributionAction RequestSetAllVerticalSpanBounds
                                    , reloadCompositeVDoc st
                                    ]
 
@@ -274,7 +274,7 @@ emitBackendCallsFor action st = case action of
         addEdit eid cedit $ \case
           Left rsp   -> ajaxFail rsp Nothing
           Right edit -> dispatchManyM [ AddEdit edit
-                                      , ContributionAction RequestSetAllVertialSpanBounds
+                                      , ContributionAction RequestSetAllVerticalSpanBounds
                                       , reloadCompositeVDoc st
                                       ]
 

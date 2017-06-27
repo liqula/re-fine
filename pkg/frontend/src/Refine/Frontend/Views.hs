@@ -102,7 +102,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       let asideProps = AsideProps
-                                     (rs ^. gsContributionState . csAllVertialSpanBounds)
+                                     (rs ^. gsContributionState . csAllVerticalSpanBounds)
                                      (rs ^. gsContributionState . csCurrentSelectionWithPx)
                                      (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
@@ -169,9 +169,9 @@ rightAside_ !props = view_ rightAside "rightAside_" props
 -- * helpers
 
 -- | All contributions need to be positioned.  The default is '0' (beginning of the article).
-lookupPosition :: HasCallStack => AsideProps -> ContributionID -> VertialSpanBounds
-lookupPosition props cid = fromMaybe (VertialSpanBounds 0 constantBubbleHeight)
-                         $ props ^? asideAllVertialSpanBounds . allVertialSpanBounds . at cid . _Just
+lookupPosition :: HasCallStack => AsideProps -> ContributionID -> VerticalSpanBounds
+lookupPosition props cid = fromMaybe (VerticalSpanBounds 0 constantBubbleHeight)
+                         $ props ^? asideAllVerticalSpanBounds . allVerticalSpanBounds . at cid . _Just
 
 editToProtoBubble :: HasCallStack => AsideProps -> Edit -> ProtoBubble
 editToProtoBubble aprops e = ProtoBubble cid (lookupPosition aprops cid) (elemText (e ^. editDesc))
@@ -202,7 +202,7 @@ stackBubble bubbleSide aprops bstack = bubble_ props children
       }
 
     voffset = if aprops ^. asideBubblePositioning == BubblePositioningAbsolute
-                then Just $ stackToHead bstack ^. protoBubbleVertialSpanBounds . vertialSpanBoundsTop
+                then Just $ stackToHead bstack ^. protoBubbleVerticalSpanBounds . verticalSpanBoundsTop
                 else Nothing
 
     highlight = not . Set.null $ Set.intersection shots hits

@@ -40,12 +40,12 @@ import Refine.Frontend.Types
 import Refine.Frontend.Util
 
 
-newtype AllVertialSpanBounds = AllVertialSpanBounds { _allVertialSpanBounds :: Map.Map ContributionID VertialSpanBounds }
+newtype AllVerticalSpanBounds = AllVerticalSpanBounds { _allVerticalSpanBounds :: Map.Map ContributionID VerticalSpanBounds }
   deriving (Show, Eq, Generic, Monoid)
 
-data VertialSpanBounds = VertialSpanBounds
-  { _vertialSpanBoundsTop    :: OffsetFromDocumentTop
-  , _vertialSpanBoundsBottom :: OffsetFromDocumentTop
+data VerticalSpanBounds = VerticalSpanBounds
+  { _verticalSpanBoundsTop    :: OffsetFromDocumentTop
+  , _verticalSpanBoundsBottom :: OffsetFromDocumentTop
   }
   deriving (Eq, Show, Generic)
 
@@ -58,7 +58,7 @@ mapToValue :: HasCallStack => (Show k, ToJSON v) => Map.Map k v -> Value
 mapToValue = object . fmap (\(k, v) -> (cs . show) k .:= v) . Map.toList
 
 mapFromValue :: HasCallStack => (Ord k, Read k, FromJSON v) => Value -> Parser (Map.Map k v)
-mapFromValue = withObject "AllVertialSpanBounds"
+mapFromValue = withObject "AllVerticalSpanBounds"
   $ fmap Map.fromList
   . mapM (\(k, v) -> (,) <$> maybe (fail "could not parse key.") pure (readMaybe (cs k))
                          <*> parseJSON v)
@@ -76,8 +76,8 @@ data ContributionAction =
   | ShowCommentEditor
   | HideCommentEditor
   | SubmitComment (CommentInfo CommentKind)
-  | RequestSetAllVertialSpanBounds
-  | SetAllVertialSpanBounds [(ContributionID, VertialSpanBounds)]  -- ^ see 'AllVertialSpanBounds'
+  | RequestSetAllVerticalSpanBounds
+  | SetAllVerticalSpanBounds [(ContributionID, VerticalSpanBounds)]  -- ^ see 'AllVerticalSpanBounds'
   | SetBubblePositioning BubblePositioning
   | HighlightMarkAndBubble [ContributionID]
   | SetBubbleFilter (Maybe (Set ContributionID))
@@ -91,7 +91,7 @@ data ContributionState = ContributionState
   , _csActiveDialog             :: Maybe ActiveDialog
   , _csHighlightedMarkAndBubble :: [ContributionID]
   , _csQuickCreateShowState     :: QuickCreateShowState
-  , _csAllVertialSpanBounds     :: AllVertialSpanBounds
+  , _csAllVerticalSpanBounds    :: AllVerticalSpanBounds
   , _csBubblePositioning        :: BubblePositioning
   , _csBubbleFilter             :: Maybe (Set ContributionID)  -- ^ 'Nothing' means show everything.
   } deriving (Show, Eq, Generic)
@@ -138,7 +138,7 @@ emptyContributionState = ContributionState
   , _csActiveDialog             = Nothing
   , _csHighlightedMarkAndBubble = []
   , _csQuickCreateShowState     = QuickCreateNotShown
-  , _csAllVertialSpanBounds     = mempty
+  , _csAllVerticalSpanBounds    = mempty
   , _csBubblePositioning        = BubblePositioningAbsolute
   , _csBubbleFilter             = Nothing
   }
@@ -162,9 +162,9 @@ stackToList (Stack (x :| xs)) = x : xs
 stackToList (NoStack x)       = [x]
 
 data ProtoBubble = ProtoBubble
-  { _protoBubbleContributionID    :: ContributionID
-  , _protoBubbleVertialSpanBounds :: VertialSpanBounds
-  , _protoBubbleChild             :: ReactElementM ViewEventHandler ()
+  { _protoBubbleContributionID     :: ContributionID
+  , _protoBubbleVerticalSpanBounds :: VerticalSpanBounds
+  , _protoBubbleChild              :: ReactElementM ViewEventHandler ()
   }
 
 data BubbleProps = BubbleProps
@@ -265,8 +265,8 @@ instance UnoverlapAllEq (AddContributionProps (EditInfo (Maybe EditKind)))
 -- * instances
 
 deriveClasses
-  [ ([''VertialSpanBounds, ''ContributionAction, ''ContributionState, ''BubblePositioning, ''CommentInputState, ''EditInputState, ''CommentKind, ''ActiveDialog, ''QuickCreateSide, ''QuickCreateShowState], allClass)
-  , ([''AllVertialSpanBounds, ''CommentInfo, ''EditInfo, ''ProtoBubble, ''BubbleProps, ''QuickCreateProps, ''CommentDisplayProps, ''AddContributionProps], [''Lens'])
+  [ ([''VerticalSpanBounds, ''ContributionAction, ''ContributionState, ''BubblePositioning, ''CommentInputState, ''EditInputState, ''CommentKind, ''ActiveDialog, ''QuickCreateSide, ''QuickCreateShowState], allClass)
+  , ([''AllVerticalSpanBounds, ''CommentInfo, ''EditInfo, ''ProtoBubble, ''BubbleProps, ''QuickCreateProps, ''CommentDisplayProps, ''AddContributionProps], [''Lens'])
   ]
 
 makeRefineType' [t| CommentInfo CommentKind |]
@@ -274,13 +274,13 @@ makeRefineType' [t| CommentInfo (Maybe CommentKind) |]
 makeRefineType' [t| EditInfo EditKind |]
 makeRefineType' [t| EditInfo (Maybe EditKind) |]
 
-deriving instance NFData AllVertialSpanBounds
+deriving instance NFData AllVerticalSpanBounds
 
-instance ToJSON AllVertialSpanBounds where
-  toJSON = mapToValue . _allVertialSpanBounds
+instance ToJSON AllVerticalSpanBounds where
+  toJSON = mapToValue . _allVerticalSpanBounds
 
-instance FromJSON AllVertialSpanBounds where
-  parseJSON = fmap AllVertialSpanBounds . mapFromValue
+instance FromJSON AllVerticalSpanBounds where
+  parseJSON = fmap AllVerticalSpanBounds . mapFromValue
 
 instance IbuttonOnClick CommentKind (StatefulViewEventHandler CommentInputState) where
   runIbuttonOnClick _evt _mevt ckind st = (mempty, Just $ st & commentInputStateData . commentInfoKind .~ Just ckind)

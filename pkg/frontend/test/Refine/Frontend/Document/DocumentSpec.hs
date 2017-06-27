@@ -193,9 +193,9 @@ spec = do
 
             pending
             storeShouldEventuallyContain (^?! gsDevState . _Just . devStateTrace)
-              [ContributionAction (SetAllVertialSpanBounds [(ContribIDNote (ID 77), VertialSpanBounds 0 0)])]
+              [ContributionAction (SetAllVerticalSpanBounds [(ContribIDNote (ID 77), VerticalSpanBounds 0 0)])]
 
-      it "dispatches SetAllVertialSpanBounds only once" test
+      it "dispatches SetAllVerticalSpanBounds only once" test
 
 
     describe "mouse-over" $ do

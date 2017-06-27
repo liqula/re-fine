@@ -42,7 +42,7 @@ contributionStateUpdate a = localAction a . globalAction a
       & csCurrentSelectionWithPx   %~ currentRangeUpdate action
       & csDisplayedContributionID  %~ displayedContributionUpdate action
       & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
-      & csAllVertialSpanBounds     %~ allVertialSpanBoundsUpdate action
+      & csAllVerticalSpanBounds    %~ allVerticalSpanBoundsUpdate action
       & csBubblePositioning        %~ bubblePositioningUpdate action
       & csBubbleFilter             %~ bubbleFilterUpdate action
     localAction _ st = st
@@ -106,9 +106,9 @@ quickCreateShowStateUpdate action st = case action of
       QuickCreateNotShown  -> QuickCreateNotShown
       QuickCreateBlocked   -> QuickCreateNotShown
 
-allVertialSpanBoundsUpdate :: HasCallStack => ContributionAction -> AllVertialSpanBounds -> AllVertialSpanBounds
-allVertialSpanBoundsUpdate (SetAllVertialSpanBounds positions) = allVertialSpanBounds .~ M.fromList positions
-allVertialSpanBoundsUpdate _ = id
+allVerticalSpanBoundsUpdate :: HasCallStack => ContributionAction -> AllVerticalSpanBounds -> AllVerticalSpanBounds
+allVerticalSpanBoundsUpdate (SetAllVerticalSpanBounds positions) = allVerticalSpanBounds .~ M.fromList positions
+allVerticalSpanBoundsUpdate _ = id
 
 bubblePositioningUpdate :: HasCallStack => ContributionAction -> BubblePositioning -> BubblePositioning
 bubblePositioningUpdate (SetBubblePositioning strategy) _ = strategy
