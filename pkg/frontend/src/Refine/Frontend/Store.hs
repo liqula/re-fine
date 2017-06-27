@@ -146,24 +146,31 @@ transformGlobalState = transf
 
 consoleLogGlobalStateBefore :: HasCallStack => forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
 consoleLogGlobalStateBefore False _ _ = pure ()
-consoleLogGlobalStateBefore True action _st = liftIO $ do
-  consoleLogJSStringM "" "\n"
-  -- (do not show old state initially; it should still be in the logs from the last call to
-  -- 'transformGlobalState' (except for with the first action, but we usually do not debug that).
-  -- consoleLogJSONM "Old state: " st
-  -- traceEditorState (st ^. gsDocumentState . documentStateVal)
-  -- traceContentInEditorState (st ^. gsDocumentState . documentStateVal)
-  consoleLogJSONM "Action: " action
-  -- consoleLogJSStringM "Action: " (cs $ show action)
+consoleLogGlobalStateBefore True action _st = do
+  liftIO $ consoleLogJSStringM "" "\n"
+  consoleLogGlobalAction action
 
 consoleLogGlobalStateAfter :: HasCallStack => forall m. MonadTransform m => Bool -> Bool -> GlobalState -> m ()
-consoleLogGlobalStateAfter False _ _ = pure ()
-consoleLogGlobalStateAfter True False _ = do
+consoleLogGlobalStateAfter False = \_ _ -> pure ()
+consoleLogGlobalStateAfter True  = consoleLogGlobalState
+
+consoleLogGlobalState :: HasCallStack => forall m. MonadTransform m => Bool {- changed -} -> GlobalState -> m ()
+consoleLogGlobalState False _ = do
   consoleLogJSONM "New state: " (String "[UNCHANGED]" :: Value)
-consoleLogGlobalStateAfter True True st = liftIO $ do
+consoleLogGlobalState True st = liftIO $ do
   consoleLogJSONM "New state: " st
   traceEditorState (st ^. gsDocumentState . documentStateVal)
   traceContentInEditorState (st ^. gsDocumentState . documentStateVal)
+
+consoleLogGlobalAction :: HasCallStack => forall m. MonadTransform m => GlobalAction -> m ()
+consoleLogGlobalAction action@(show -> shown) = do
+  let consolewidth = 80
+  if length shown <= consolewidth
+    then do
+      consoleLogJSStringM "Action: " (cs shown)
+    else do
+      consoleLogJSStringM "Action: " (cs $ take consolewidth shown)
+      consoleLogJSONM "Action: " action
 
 
 -- * pure updates
