@@ -18,6 +18,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
@@ -32,9 +33,9 @@ module Refine.Frontend.Header.Heading
 import Refine.Frontend.Prelude
 
 import           Language.Css.Syntax
-import qualified React.Flux as RF
-import qualified React.Flux.Internal as RF
-import qualified React.Flux.Outdated as RF
+import           React.Flux as RF
+import           React.Flux.Internal as RF
+import           React.Flux.Outdated as RF
 
 import           Refine.Common.Types
 import           Refine.Frontend.Document.Types
