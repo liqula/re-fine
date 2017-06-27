@@ -26,6 +26,7 @@ module Refine.Frontend.Header.Heading
   ( TopMenuBarProps(..)
   , topMenuBar, topMenuBar_
   , mainHeader, mainHeader_
+  , toolbarWrapper_
   ) where
 
 import Refine.Frontend.Prelude
