@@ -46,7 +46,7 @@ spec = do
   describe "The topMenuBar_ component" $ do
     context "not sticky" $ do
       it "renders its elements" $ do
-        wrapper <- shallow (topMenuBar_ (TopMenuBarProps False UserLoggedOut))
+        wrapper <- mount (topMenuBar_ (TopMenuBarProps False UserLoggedOut))
         lengthOfIO (find wrapper (StringSelector ".c-mainmenu")) `shouldReturn` 1
         lengthOfIO (find wrapper (StringSelector ".c-mainmenu__menu-button")) `shouldReturn` 1
         lengthOfIO (find wrapper (StringSelector ".c-mainmenu__icon-bar")) `shouldReturn` 3
