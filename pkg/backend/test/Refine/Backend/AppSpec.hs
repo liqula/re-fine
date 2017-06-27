@@ -154,6 +154,9 @@ spec = do
         appIO $ docB `shouldBe` vdoc ["aX.","def"]   -- FIXME: the merge result is strange
 
     it "upvoting an edit triggers rebase" $ \(runner :: AppM DB UH () -> IO ()) -> runner $ do
+
+        appIO $ pendingWith "#291 (probably)"
+
         (vid, _, [eid]) <- docWithEdits ["abc", "def"] [["a.c", "def"]]
         void $ addUserAndLogin "user"
         putSimpleVoteOnEdit eid Yeay
