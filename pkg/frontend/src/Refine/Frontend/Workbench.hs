@@ -37,7 +37,6 @@ import           Refine.Common.Types
 import qualified Refine.Frontend.Store as RS
 import qualified Refine.Frontend.Store.Types as RS
 import           Refine.Prelude ()
-import           Refine.Prelude.TH (makeRefineType)
 import qualified Refine.Prelude.BuildInfo as BuildInfo
 
 import           Language.Css.Build

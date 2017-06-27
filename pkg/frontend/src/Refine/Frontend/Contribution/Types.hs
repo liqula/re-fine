@@ -38,7 +38,6 @@ import Refine.Frontend.Icon.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
 import Refine.Frontend.Util
-import Refine.Prelude.TH (makeRefineType)
 
 
 newtype AllVertialSpanBounds = AllVertialSpanBounds { _allVertialSpanBounds :: Map.Map ContributionID VertialSpanBounds }
@@ -265,8 +264,15 @@ instance UnoverlapAllEq (AddContributionProps (EditInfo (Maybe EditKind)))
 
 -- * instances
 
-makeRefineType ''VertialSpanBounds
-makeLenses ''AllVertialSpanBounds
+deriveClasses
+  [ ([''VertialSpanBounds, ''ContributionAction, ''ContributionState, ''BubblePositioning, ''CommentInputState, ''EditInputState, ''CommentKind, ''ActiveDialog, ''QuickCreateSide, ''QuickCreateShowState], allClass)
+  , ([''AllVertialSpanBounds, ''CommentInfo, ''EditInfo, ''ProtoBubble, ''BubbleProps, ''QuickCreateProps, ''CommentDisplayProps, ''AddContributionProps], [''Lens'])
+  ]
+
+makeRefineType' [t| CommentInfo CommentKind |]
+makeRefineType' [t| CommentInfo (Maybe CommentKind) |]
+makeRefineType' [t| EditInfo EditKind |]
+makeRefineType' [t| EditInfo (Maybe EditKind) |]
 
 deriving instance NFData AllVertialSpanBounds
 
@@ -275,33 +281,6 @@ instance ToJSON AllVertialSpanBounds where
 
 instance FromJSON AllVertialSpanBounds where
   parseJSON = fmap AllVertialSpanBounds . mapFromValue
-
-makeRefineType ''ContributionAction
-makeRefineType ''ContributionState
-makeRefineType ''BubblePositioning
-
-makeRefineType ''CommentInputState
-makeLenses ''CommentInfo
-makeRefineType' [t| CommentInfo CommentKind |]
-makeRefineType' [t| CommentInfo (Maybe CommentKind) |]
-
-makeRefineType ''EditInputState
-makeLenses ''EditInfo
-makeRefineType' [t| EditInfo EditKind |]
-makeRefineType' [t| EditInfo (Maybe EditKind) |]
-
-makeRefineType ''CommentKind
-makeRefineType ''ActiveDialog
-
-makeLenses ''ProtoBubble
-makeLenses ''BubbleProps
-makeLenses ''QuickCreateProps
-
-makeRefineType ''QuickCreateSide
-makeRefineType ''QuickCreateShowState
-
-makeLenses ''CommentDisplayProps
-makeLenses ''AddContributionProps
 
 instance IbuttonOnClick CommentKind (StatefulViewEventHandler CommentInputState) where
   runIbuttonOnClick _evt _mevt ckind st = (mempty, Just $ st & commentInputStateData . commentInfoKind .~ Just ckind)

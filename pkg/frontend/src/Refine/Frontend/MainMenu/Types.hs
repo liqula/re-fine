@@ -12,7 +12,6 @@ import React.Flux (UnoverlapAllEq)
 import Refine.Common.Rest (ApiErrorCreateUser)
 import Refine.Common.Types.Prelude (Username)
 import Refine.Frontend.Login.Types
-import Refine.Prelude.TH (makeRefineType)
 
 
 data MainMenuAction
@@ -81,9 +80,4 @@ data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
 instance UnoverlapAllEq (MainMenuProps tab)
 instance UnoverlapAllEq TopMenuBarInMainMenuProps
 
-makeRefineType ''MainMenuAction
-makeRefineType ''MainMenuErrors
-makeRefineType ''MainMenuState
-makeRefineType ''MainMenu
-makeRefineType ''MainMenuTab
-makeRefineType ''MainMenuSubTabLogin
+makeRefineTypes [''MainMenuAction, ''MainMenuErrors, ''MainMenuState, ''MainMenu, ''MainMenuTab, ''MainMenuSubTabLogin]

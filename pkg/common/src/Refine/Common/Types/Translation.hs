@@ -21,7 +21,6 @@ import Data.Text.I18n as I18n (Locale(..), L10n, Msgid(..), Context)
 import GHC.Generics (Generic)
 
 import Refine.Prelude.Aeson (NoJSONRep(..))
-import Refine.Prelude.TH (makeRefineType)
 
 newtype GetTranslations = GetTranslations Locale
   deriving (Eq, Generic, Show)
@@ -94,8 +93,4 @@ unTrans = to f  where f (Trans _ (NoJSONRep t)) = t
 
 
 makeLenses ''TKey
-makeRefineType ''Locale
-makeRefineType ''Msgid
-makeRefineType ''L10
-makeRefineType ''GetTranslations
-makeRefineType ''Trans  -- FIXME: Trans should be an abstract type.  we need to be more restrictive than that.
+makeRefineTypes [''Locale, ''Msgid, ''L10, ''GetTranslations, ''Trans]  -- FIXME: Trans should be an abstract type.  we need to be more restrictive than that.

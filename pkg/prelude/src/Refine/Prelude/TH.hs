@@ -18,9 +18,9 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 -- FIXME: rename to Refine.Prelude.MakeInstances
-module Refine.Prelude.TH (makeRefineType, makeRefineType', makeSOPGeneric, makeJSON, makeNFData) where
+module Refine.Prelude.TH (makeRefineType, makeRefineTypes, makeRefineType', deriveClasses, allClass) where
 
-import Control.Lens (makeLenses, makePrisms)
+import Control.Lens (makeLenses, makePrisms, Lens, Lens')
 import Control.DeepSeq (NFData(..))
 import Data.Aeson (FromJSON(..), ToJSON(..))
 import Data.Monoid ((<>))
@@ -102,16 +102,6 @@ makeNFData' t = do
         [ FunD rnfN [ Clause [] (NormalB (VarE grnfN)) []] ]
     ]
 
--- FIXME: rename to makeInstances
-makeRefineType :: Name -> Q [Dec]
-makeRefineType t = do
-  l <- makeLenses t
-  p <- makePrisms t
-  j <- makeJSON t
-  n <- makeNFData t
-  s <- makeSOPGeneric t
-  pure $ concat [l, p, s, j, n]
-
 -- FIXME: rename to makeInstances'
 makeRefineType' :: Q Type -> Q [Dec]
 makeRefineType' qt = do
@@ -120,3 +110,25 @@ makeRefineType' qt = do
   n <- makeNFData' t
   s <- makeSOPGeneric' t
   pure $ concat [s, j, n]
+
+deriveClass :: Name -> [Name] -> Q [Dec]
+deriveClass cl ns
+  | cl == ''NFData   = concat <$> mapM makeNFData ns
+  | cl == ''FromJSON = concat <$> mapM makeJSON ns
+  | cl == ''Lens
+  || cl == ''Lens'    = concat <$> sequence ((makeLenses <$> ns) <> (makePrisms <$> ns))
+  | cl == ''Generic  = concat <$> mapM makeSOPGeneric ns
+  | otherwise = error $ "class " <> show cl <> " is not known by deriveClass"
+
+deriveClasses :: [([Name], [Name])] -> Q [Dec]
+deriveClasses xs = concat <$> sequence [deriveClass c ns | (ns, cs) <- xs, c <- cs]
+
+allClass :: [Name]
+allClass = [''Lens, ''FromJSON, ''NFData, ''Generic]
+
+makeRefineTypes :: [Name] -> Q [Dec]
+makeRefineTypes ns = deriveClasses [(ns, allClass)]
+
+-- FIXME: rename to makeInstances
+makeRefineType :: Name -> Q [Dec]
+makeRefineType = makeRefineTypes . (:[])

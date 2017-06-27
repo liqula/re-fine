@@ -101,12 +101,7 @@ data MetaID a = MetaID
 
 -- * make refine types
 
-makeRefineType ''CreateUser
-makeRefineType ''User
-makeRefineType ''Login
-makeRefineType ''UserInfo
-makeRefineType ''MetaInfo
-makeRefineType ''MetaID
+makeRefineTypes [''CreateUser, ''User, ''Login, ''UserInfo, ''MetaInfo, ''MetaID]
 
 userID :: Lens' User (ID User)
 userID = userMetaID . miID

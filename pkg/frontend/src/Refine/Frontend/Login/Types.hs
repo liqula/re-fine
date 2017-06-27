@@ -28,7 +28,6 @@ import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 
 import Refine.Common.Types.Prelude (Username)
-import Refine.Prelude.TH (makeRefineType)
 
 
 -- | FormError can be Nothing or Just an error string.
@@ -51,5 +50,4 @@ emptyLoginState = LoginState
   { _lsCurrentUser = UserLoggedOut
   }
 
-makeRefineType ''CurrentUser
-makeRefineType ''LoginState
+makeRefineTypes [''CurrentUser, ''LoginState]

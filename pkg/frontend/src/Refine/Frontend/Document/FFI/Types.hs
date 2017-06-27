@@ -41,7 +41,6 @@ import           React.Flux.Internal (HandlerArg(HandlerArg))
 
 import           Refine.Frontend.Util ((===))
 import           Refine.Prelude.Aeson (NoJSONRep(NoJSONRep))
-import           Refine.Prelude.TH (makeRefineType)
 
 
 -- | Javascript representation of editor state.  It looks something like this:
@@ -85,8 +84,7 @@ instance Eq EditorState where
 newtype ContentState = ContentState (NoJSONRep JSVal)
   deriving (Show, Generic, ToJSVal, FromJSVal)
 
-makeRefineType ''EditorState
-makeRefineType ''ContentState
+makeRefineTypes [''EditorState, ''ContentState]
 
 mkEditorState :: HasCallStack => JSVal -> EditorState
 mkEditorState = EditorState . NoJSONRep

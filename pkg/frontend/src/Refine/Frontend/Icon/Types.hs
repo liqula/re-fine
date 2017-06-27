@@ -171,13 +171,6 @@ iconCssClass (BackgroundImage fn st) = mconcat ["icon-", cs fn, "_", renderState
       renderState BisDark   = "dark"
 
 
--- * TH instances
-
-makeLenses ''BackgroundImage
-makeLenses ''IbuttonProps
-makeRefineType ''IbuttonState
-
-
 -- * outdated
 
 -- FUTUREWORK: the rest of this module should be removed and everything ported to the ibutton_
@@ -197,7 +190,6 @@ data IconProps = IconProps
 type IconDescription = (JSString, JSString)
 
 instance UnoverlapAllEq IconProps
-makeLenses ''IconProps
 
 instance Default IconProps where
   def = IconProps
@@ -226,4 +218,11 @@ data IconButtonPropsWithHandler onclick = IconButtonProps
   deriving (Eq)
 
 instance UnoverlapAllEq (IconButtonPropsWithHandler onclick)
-makeLenses ''IconButtonPropsWithHandler
+
+
+-- * TH instances
+
+deriveClasses
+  [ ([''IbuttonState], allClass)
+  , ([''IconProps, ''BackgroundImage, ''IbuttonProps, ''IconButtonPropsWithHandler], [''Lens'])
+  ]

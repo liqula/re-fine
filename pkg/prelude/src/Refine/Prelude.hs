@@ -117,8 +117,6 @@ import Refine.Prelude.TH as P
 newtype Timestamp = Timestamp { _unTimestamp :: UTCTime }
   deriving (Eq, Ord, Generic)
 
-makeRefineType ''Timestamp
-
 timestampToEpoch :: Timestamp -> Integer
 timestampToEpoch = round . utcTimeToPOSIXSeconds . _unTimestamp
 
@@ -158,7 +156,7 @@ data Timespan =
   | TimespanDays  Integer
   deriving (Eq, Ord, Show, Read, Generic)
 
-makeRefineType ''Timespan
+deriveClasses [([''Timestamp, ''Timespan], allClass)]
 
 showTimespan :: Timespan -> String
 showTimespan (TimespanUs    i) = show i <> "us"

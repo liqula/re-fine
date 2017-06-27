@@ -68,7 +68,6 @@ import qualified Refine.Common.OT as OT
 import           Refine.Common.OT hiding (Edit)
 import           Refine.Common.Types.Comment
 import           Refine.Common.Types.Prelude
-import           Refine.Prelude.TH (makeRefineType)
 
 
 -- * VDoc
@@ -638,36 +637,10 @@ mkSomeSegments frange fpayload els = segments
 
 -- * Derived instances
 
-makeRefineType ''EntityKey
-makeRefineType ''CompositeVDoc
-makeRefineType ''ContributionID
-makeRefineType ''VDoc
-makeRefineType ''CreateVDoc
-makeRefineType ''EditSource
-makeRefineType ''Edit
-makeRefineType ''CreateEdit
-makeRefineType ''EditKind
-makeRefineType ''Title
-makeRefineType ''Abstract
-makeRefineType ''VDocVersion
-
-makeLenses ''RawContent
-makeLenses ''Block
-makeLenses ''Entity
-makeLenses ''Style
-makeLenses ''BlockType
-
-makeSOPGeneric ''RawContent
-makeSOPGeneric ''Block
-makeSOPGeneric ''Entity
-makeSOPGeneric ''Style
-makeSOPGeneric ''BlockType
-
-makeNFData ''RawContent
-makeNFData ''Block
-makeNFData ''Entity
-makeNFData ''Style
-makeNFData ''BlockType
+deriveClasses
+  [ ([''RawContent, ''Block, ''Entity, ''Style, ''BlockType], [''NFData, ''SOP.Generic, ''Lens'])
+  , ([''EntityKey, ''CompositeVDoc, ''ContributionID, ''VDoc, ''CreateVDoc, ''EditSource, ''Edit, ''CreateEdit, ''EditKind, ''Title, ''Abstract, ''VDocVersion], allClass)
+  ]
 
 -- | It cannot moved further up, needs instance NFData BlockType
 deriving instance NFData (EEdit RawContent)

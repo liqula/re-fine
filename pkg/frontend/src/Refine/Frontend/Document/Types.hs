@@ -25,7 +25,6 @@ module Refine.Frontend.Document.Types where
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens (makeLenses)
 import           GHC.Generics (Generic)
 import           React.Flux (UnoverlapAllEq)
 
@@ -33,7 +32,6 @@ import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
-import           Refine.Prelude.TH (makeRefineType)
 
 
 data DocumentAction =
@@ -109,6 +107,7 @@ emptyDocumentProps = DocumentProps
   , _dpContributionState = emptyContributionState
   }
 
-makeRefineType ''DocumentAction
-makeRefineType ''DocumentState
-makeLenses ''DocumentProps
+deriveClasses
+  [ ([''DocumentAction, ''DocumentState], allClass)
+  , ([''DocumentProps], [''Lens'])
+  ]

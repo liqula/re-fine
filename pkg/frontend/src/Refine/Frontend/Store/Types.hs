@@ -39,7 +39,6 @@ import Refine.Frontend.Login.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
-import Refine.Prelude.TH (makeRefineType)
 
 
 data GlobalState = GlobalState
@@ -117,9 +116,7 @@ data GlobalAction =
   | ShowNotImplementedYet
   deriving (Show, Eq, Generic)
 
-makeRefineType ''GlobalState
-makeRefineType ''DevState
-makeRefineType ''GlobalAction
+makeRefineTypes [''GlobalState, ''DevState, ''GlobalAction]
 
 instance UnoverlapAllEq GlobalState
 

@@ -29,7 +29,6 @@ import Refine.Common.Types.Role
 import Refine.Common.Types.Group
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.Process
-import Refine.Prelude.TH (makeRefineType)
 
 
 data ChangeSubGroup
@@ -55,6 +54,4 @@ data ChangeProcess
 
 -- * Refine types
 
-makeRefineType ''ChangeSubGroup
-makeRefineType ''ChangeRole
-makeRefineType ''ChangeProcess
+makeRefineTypes [''ChangeSubGroup, ''ChangeRole, ''ChangeProcess]

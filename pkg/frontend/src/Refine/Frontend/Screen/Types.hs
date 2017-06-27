@@ -27,8 +27,6 @@ import Refine.Frontend.Prelude
 
 import GHC.Generics (Generic)
 
-import Refine.Prelude.TH (makeRefineType)
-
 
 data ScreenAction =
     AddHeaderHeight Int
@@ -48,6 +46,4 @@ emptyScreenState :: HasCallStack => ScreenState
 emptyScreenState = ScreenState 0 0 Desktop
 
 
-makeRefineType ''ScreenState
-makeRefineType ''ScreenAction
-makeRefineType ''WindowSize
+makeRefineTypes [''ScreenState, ''ScreenAction, ''WindowSize]

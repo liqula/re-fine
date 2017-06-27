@@ -23,8 +23,6 @@ module Refine.Common.Types.Role where
 
 import Refine.Common.Prelude
 
-import Refine.Prelude.TH (makeRefineType)
-
 
 -- | The 'Process' type determines the list of assignable roles (essentially just badges the user can
 -- present to gain certain permissions) and what permissions the user gains by carrying what role.
@@ -52,5 +50,4 @@ data Perm
   | Delete
   deriving (Eq, Ord, Show, Generic)
 
-makeRefineType ''Role
-makeRefineType ''Perm
+makeRefineTypes [''Role, ''Perm]
