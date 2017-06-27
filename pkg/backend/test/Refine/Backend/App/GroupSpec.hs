@@ -30,7 +30,6 @@ import Refine.Backend.App.Core  as App
 import Refine.Backend.App.Group as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
-import Refine.Backend.Test.Util (forceEval)
 import Refine.Backend.User
 import Refine.Common.Types.Group
 import Refine.Common.Types.Prelude (ID(..))
@@ -122,7 +121,7 @@ spec = do
     -- will be restricted to an inconsistent type.
 
     it "remove group" $ \runner -> do
-      (forceEval . runner $ do
+      runner (do
           group <- App.addGroup (CreateGroup "title" "desc" [] [] False)
           ()    <- App.removeGroup (group ^. groupID)
           void $ App.getGroup (group ^. groupID))
@@ -130,7 +129,7 @@ spec = do
        anyException
 
     it "non-existing group" $ \runner -> do
-      (forceEval . runner $ do
+      runner (do
           (Group _gid _title _desc _parents _children _universal) <- App.getGroup (ID 100000000)
           pure ())
        `shouldThrow`
