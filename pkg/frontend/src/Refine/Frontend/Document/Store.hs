@@ -55,10 +55,9 @@ import           Refine.Frontend.Util
 documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> GlobalState -> DocumentState -> DocumentState
 documentStateUpdate (OpenDocument cvdoc) oldgs _newgs st
   = let eidChanged = Just newID /= mOldID
-          where
-            newID  = cvdoc ^. compositeVDocThisEditID
-            mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
-    in refreshDocumentStateView eidChanged (rawContentFromCompositeVDoc cvdoc) st
+        newID  = cvdoc ^. compositeVDocThisEditID
+        mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
+    in refreshDocumentStateView eidChanged (rawContentFromCompositeVDoc cvdoc) (editFromCompositeVDoc cvdoc) st
 
 documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- FIXME: store last state before edit in DocumentStateEdit, and restore it from there?
@@ -72,8 +71,7 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit e
                     _oldgs
                     (view gsVDoc -> Just cvdoc)
                     (DocumentStateView e r)
-  = DocumentStateDiff e r (fromMaybe (error "documentStateUpdate: show contrib dialog") $
-                           cvdoc ^? compositeVDocApplicableEdits . ix eid) True
+  = DocumentStateDiff e r (editFromCompositeVDoc cvdoc eid) True
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
                     _oldgs
@@ -140,6 +138,10 @@ documentStateUpdate (DocumentAction ToggleCollapseDiff) _ _ st | has _DocumentSt
 documentStateUpdate _ _ _ st
   = st
 
+
+editFromCompositeVDoc :: CompositeVDoc -> ID Edit -> Edit
+editFromCompositeVDoc cvdoc eid = fromMaybe (error $ "editFromCompositeVDoc " <> show eid) $
+                           cvdoc ^? compositeVDocApplicableEdits . ix eid
 
 editorStateToVDocVersion :: HasCallStack => EditorState -> VDocVersion
 editorStateToVDocVersion = rawContentToVDocVersion . convertToRaw . getCurrentContent
