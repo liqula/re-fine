@@ -23,7 +23,8 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.ThirdPartyViews
-  ( sticky_
+  ( ThirdPartyView
+  , sticky_
   , stickyContainer_
   , skylight_
   , hammer_
@@ -33,23 +34,21 @@ module Refine.Frontend.ThirdPartyViews
 import Refine.Frontend.Prelude
 
 
--- FIXME: test that this doesn't crash because the foreign object is not loaded.  this has bitten us
--- at least twice in the past.
+type ThirdPartyView eventHandler = [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 
-
-sticky_ :: HasCallStack => [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+sticky_ :: HasCallStack => ThirdPartyView eventHandler
 sticky_ = foreignClass js_sticky
 
-stickyContainer_ :: HasCallStack => [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+stickyContainer_ :: HasCallStack => ThirdPartyView eventHandler
 stickyContainer_ = foreignClass js_stickyContainer
 
-skylight_ :: HasCallStack => [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+skylight_ :: HasCallStack => ThirdPartyView eventHandler
 skylight_ = foreignClass js_skylight
 
-hammer_ :: HasCallStack => [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+hammer_ :: HasCallStack => ThirdPartyView eventHandler
 hammer_ = foreignClass js_hammer
 
-editor_ :: HasCallStack => [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
+editor_ :: HasCallStack => ThirdPartyView eventHandler
 editor_ = foreignClass js_editor
 
 #ifdef __GHCJS__
