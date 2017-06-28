@@ -26,7 +26,7 @@ module Refine.Frontend.Document.Store
   ( documentStateUpdate
   , editorStateToVDocVersion
   , editorStateFromVDocVersion
-  , setAllVertialSpanBounds
+  , setAllVerticalSpanBounds
   ) where
 
 import Refine.Frontend.Prelude
@@ -147,13 +147,13 @@ editorStateToVDocVersion = rawContentToVDocVersion . convertToRaw . getCurrentCo
 editorStateFromVDocVersion :: HasCallStack => VDocVersion -> EditorState
 editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
 
--- | construct a 'SetAllVertialSpanBounds' action.
-setAllVertialSpanBounds :: (HasCallStack, MonadIO m) => DocumentState -> m ContributionAction
-setAllVertialSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
+-- | construct a 'SetAllVerticalSpanBounds' action.
+setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState -> m ContributionAction
+setAllVerticalSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
     let marks :: Map ContributionID (Ranges LeafSelector)
         marks = getLeafSelectors rawContent
 
-        getPos :: (ContributionID, Ranges LeafSelector) -> IO [(ContributionID, VertialSpanBounds)]
+        getPos :: (ContributionID, Ranges LeafSelector) -> IO [(ContributionID, VerticalSpanBounds)]
         getPos (cid, rs) = fmap catMaybes . forM (unRanges rs) $ \(Range top bot) -> do
           mb <- getLeafSelectorBound LeafSelectorTop top
           case mb of
@@ -169,13 +169,13 @@ setAllVertialSpanBounds (convertToRaw . getCurrentContent . view documentStateVa
               topOffset    <- OffsetFromViewportTop  . fromJust_ <$> getLeafSelectorBound LeafSelectorTop    top
               bottomOffset <- OffsetFromViewportTop  . fromJust_ <$> getLeafSelectorBound LeafSelectorBottom bot
               scrollOffset <- ScrollOffsetOfViewport            <$> js_getScrollOffset
-              let vertialSpanBounds = VertialSpanBounds
-                    { _vertialSpanBoundsTop    = offsetFromDocumentTop topOffset    scrollOffset
-                    , _vertialSpanBoundsBottom = offsetFromDocumentTop bottomOffset scrollOffset
+              let verticalSpanBounds = VerticalSpanBounds
+                    { _verticalSpanBoundsTop    = offsetFromDocumentTop topOffset    scrollOffset
+                    , _verticalSpanBoundsBottom = offsetFromDocumentTop bottomOffset scrollOffset
                     }
-              pure (cid, vertialSpanBounds)
+              pure (cid, verticalSpanBounds)
 
-    SetAllVertialSpanBounds . concat <$> (getPos `mapM` Map.toList marks)
+    SetAllVerticalSpanBounds . concat <$> (getPos `mapM` Map.toList marks)
 
 assertLeafSelector :: HasCallStack => LeafSelector -> IO ()
 assertLeafSelector sel = void (getLeafSelectorBound LeafSelectorTop sel) `catch` \(JSException _ msg) -> do

@@ -195,6 +195,7 @@ test-suite spec
       Refine.Frontend.MainMenuSpec
       Refine.Frontend.OrphansSpec
       Refine.Frontend.StoreSpec
+      Refine.Frontend.ThirdPartyViewsSpec
       Refine.Frontend.UtilSpec
       Refine.Frontend.ViewsSpec
       Spec

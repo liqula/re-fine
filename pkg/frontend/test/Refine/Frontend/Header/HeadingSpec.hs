@@ -46,29 +46,29 @@ spec = do
   describe "The topMenuBar_ component" $ do
     context "not sticky" $ do
       it "renders its elements" $ do
-        wrapper <- shallow (topMenuBar_ (TopMenuBarProps False UserLoggedOut))
-        lengthOfIO (find wrapper (StringSelector ".c-mainmenu")) `shouldReturn` (1 :: Int)
-        lengthOfIO (find wrapper (StringSelector ".c-mainmenu__menu-button")) `shouldReturn` (1 :: Int)
-        lengthOfIO (find wrapper (StringSelector ".c-mainmenu__icon-bar")) `shouldReturn` (3 :: Int)
+        wrapper <- mount (topMenuBar_ (TopMenuBarProps False UserLoggedOut))
+        lengthOfIO (find wrapper (StringSelector ".c-mainmenu")) `shouldReturn` 1
+        lengthOfIO (find wrapper (StringSelector ".c-mainmenu__menu-button")) `shouldReturn` 1
+        lengthOfIO (find wrapper (StringSelector ".c-mainmenu__icon-bar")) `shouldReturn` 3
         label <- find wrapper (StringSelector ".c-mainmenu__menu-button-label")
-        EZ.lengthOf label `shouldReturn` (1 :: Int)
+        EZ.lengthOf label `shouldReturn` 1
         text label `shouldReturn` "MENU"
 
       it "does not render with sticky css class" $ do
         wrapper <- shallow (topMenuBar_ (TopMenuBarProps False UserLoggedOut))
         label <- find wrapper (StringSelector ".c-mainmenu--toolbar-combined")  -- (it's called combined, though, not sticky)
-        EZ.lengthOf label `shouldReturn` (0 :: Int)
+        EZ.lengthOf label `shouldReturn` 0
 
     context "sticky" $ do
       it "does not render the label" $ do
         wrapper <- shallow (topMenuBar_ (TopMenuBarProps True UserLoggedOut))
         label <- find wrapper (StringSelector ".c-mainmenu__menu-button-label")
-        EZ.lengthOf label `shouldReturn` (0 :: Int)
+        EZ.lengthOf label `shouldReturn` 0
 
       it "renders with sticky css class" $ do
         wrapper <- shallow (topMenuBar_ (TopMenuBarProps True UserLoggedOut))
         label <- find wrapper (StringSelector ".c-mainmenu--toolbar-combined")  -- (it's called combined, though, not sticky)
-        EZ.lengthOf label `shouldReturn` (1 :: Int)
+        EZ.lengthOf label `shouldReturn` 1
 
   describe "The mainHeader_ component" $ do
     it "sets the header height to a nonzero value" $ do

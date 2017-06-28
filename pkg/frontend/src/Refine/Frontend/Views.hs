@@ -51,7 +51,6 @@ import           Refine.Frontend.MainMenu.Component (mainMenu_)
 import           Refine.Frontend.MainMenu.Types
 import qualified Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
-import           Refine.Frontend.Store as RS
 import           Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Views.Types
@@ -79,11 +78,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
       __ :: Translations = rs ^. RS.gsTranslations . unTrans
                                 -- FIXME: I think this could be done more nicely.
 
-  div_ (case rs ^. gsHeaderState . hsToolbarExtensionStatus of
-    HT.ToolbarExtensionClosed  -> []
-    HT.EditToolbarLinkEditor{} -> []
-    _ -> [ onClick $ \_ _ -> RS.dispatch (RS.HeaderAction HT.CloseToolbarExtension)
-         ]) $ do
+  div_ $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
       stickyContainer_ [] $ do
           mainHeader_ rs
@@ -107,7 +102,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       let asideProps = AsideProps
-                                     (rs ^. gsContributionState . csAllVertialSpanBounds)
+                                     (rs ^. gsContributionState . csAllVerticalSpanBounds)
                                      (rs ^. gsContributionState . csCurrentSelectionWithPx)
                                      (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
@@ -174,9 +169,9 @@ rightAside_ !props = view_ rightAside "rightAside_" props
 -- * helpers
 
 -- | All contributions need to be positioned.  The default is '0' (beginning of the article).
-lookupPosition :: HasCallStack => AsideProps -> ContributionID -> VertialSpanBounds
-lookupPosition props cid = fromMaybe (VertialSpanBounds 0 constantBubbleHeight)
-                         $ props ^? asideAllVertialSpanBounds . allVertialSpanBounds . at cid . _Just
+lookupPosition :: HasCallStack => AsideProps -> ContributionID -> VerticalSpanBounds
+lookupPosition props cid = fromMaybe (VerticalSpanBounds 0 constantBubbleHeight)
+                         $ props ^? asideAllVerticalSpanBounds . allVerticalSpanBounds . at cid . _Just
 
 editToProtoBubble :: HasCallStack => AsideProps -> Edit -> ProtoBubble
 editToProtoBubble aprops e = ProtoBubble cid (lookupPosition aprops cid) (elemText (e ^. editDesc))
@@ -207,7 +202,7 @@ stackBubble bubbleSide aprops bstack = bubble_ props children
       }
 
     voffset = if aprops ^. asideBubblePositioning == BubblePositioningAbsolute
-                then Just $ stackToHead bstack ^. protoBubbleVertialSpanBounds . vertialSpanBoundsTop
+                then Just $ stackToHead bstack ^. protoBubbleVerticalSpanBounds . verticalSpanBoundsTop
                 else Nothing
 
     highlight = not . Set.null $ Set.intersection shots hits

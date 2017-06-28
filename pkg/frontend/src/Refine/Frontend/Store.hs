@@ -41,7 +41,7 @@ import           Refine.Common.Test.Samples
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
-import           Refine.Frontend.Document.Store (setAllVertialSpanBounds, documentStateUpdate, editorStateToVDocVersion)
+import           Refine.Frontend.Document.Store (setAllVerticalSpanBounds, documentStateUpdate, editorStateToVDocVersion)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
@@ -98,8 +98,8 @@ transformGlobalState = transf
 
       -- other effects
       case action of
-        ContributionAction RequestSetAllVertialSpanBounds -> do
-          dispatchAndExec . ContributionAction =<< setAllVertialSpanBounds (st ^. gsDocumentState)
+        ContributionAction RequestSetAllVerticalSpanBounds -> do
+          dispatchAndExec . ContributionAction =<< setAllVerticalSpanBounds (st ^. gsDocumentState)
 
         ContributionAction RequestSetRange -> do
           mRangeEvent <- getRangeAction (st ^. gsDocumentState)
@@ -146,24 +146,31 @@ transformGlobalState = transf
 
 consoleLogGlobalStateBefore :: HasCallStack => forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
 consoleLogGlobalStateBefore False _ _ = pure ()
-consoleLogGlobalStateBefore True action _st = liftIO $ do
-  consoleLogJSStringM "" "\n"
-  -- (do not show old state initially; it should still be in the logs from the last call to
-  -- 'transformGlobalState' (except for with the first action, but we usually do not debug that).
-  -- consoleLogJSONM "Old state: " st
-  -- traceEditorState (st ^. gsDocumentState . documentStateVal)
-  -- traceContentInEditorState (st ^. gsDocumentState . documentStateVal)
-  consoleLogJSONM "Action: " action
-  -- consoleLogJSStringM "Action: " (cs $ show action)
+consoleLogGlobalStateBefore True action _st = do
+  liftIO $ consoleLogJSStringM "" "\n"
+  consoleLogGlobalAction action
 
 consoleLogGlobalStateAfter :: HasCallStack => forall m. MonadTransform m => Bool -> Bool -> GlobalState -> m ()
-consoleLogGlobalStateAfter False _ _ = pure ()
-consoleLogGlobalStateAfter True False _ = do
+consoleLogGlobalStateAfter False = \_ _ -> pure ()
+consoleLogGlobalStateAfter True  = consoleLogGlobalState
+
+consoleLogGlobalState :: HasCallStack => forall m. MonadTransform m => Bool {- changed -} -> GlobalState -> m ()
+consoleLogGlobalState False _ = do
   consoleLogJSONM "New state: " (String "[UNCHANGED]" :: Value)
-consoleLogGlobalStateAfter True True st = liftIO $ do
+consoleLogGlobalState True st = liftIO $ do
   consoleLogJSONM "New state: " st
   traceEditorState (st ^. gsDocumentState . documentStateVal)
   traceContentInEditorState (st ^. gsDocumentState . documentStateVal)
+
+consoleLogGlobalAction :: HasCallStack => forall m. MonadTransform m => GlobalAction -> m ()
+consoleLogGlobalAction action@(show -> shown) = do
+  let consolewidth = 80
+  if length shown <= consolewidth
+    then do
+      consoleLogJSStringM "Action: " (cs shown)
+    else do
+      consoleLogJSStringM "Action: " (cs $ take consolewidth shown)
+      consoleLogJSONM "Action: " action
 
 
 -- * pure updates
@@ -239,7 +246,7 @@ emitBackendCallsFor action st = case action of
                                               st ^? gsDocumentState . documentStateContent))
                    $ st ^? gsCurrentSelection . _Just . C.selectionRange
           handle a = dispatchManyM [ a
-                                   , ContributionAction RequestSetAllVertialSpanBounds
+                                   , ContributionAction RequestSetAllVerticalSpanBounds
                                    , reloadCompositeVDoc st
                                    ]
 
@@ -267,7 +274,7 @@ emitBackendCallsFor action st = case action of
         addEdit eid cedit $ \case
           Left rsp   -> ajaxFail rsp Nothing
           Right edit -> dispatchManyM [ AddEdit edit
-                                      , ContributionAction RequestSetAllVertialSpanBounds
+                                      , ContributionAction RequestSetAllVerticalSpanBounds
                                       , reloadCompositeVDoc st
                                       ]
 

@@ -28,6 +28,7 @@ import Refine.Frontend.Prelude
 import GHC.Generics (Generic)
 
 import Refine.Common.Types
+import Refine.Frontend.Login.Types
 
 
 data HeaderAction =
@@ -61,6 +62,14 @@ newtype AddLinkFormState = AddLinkFormState
   } deriving (Show, Eq, Generic)
 
 
+data TopMenuBarProps = TopMenuBarProps
+ { _isSticky    :: Bool
+ , _currentUser :: CurrentUser
+ } deriving (Eq, Generic)
+
+instance UnoverlapAllEq TopMenuBarProps
+
+
 data DiffToolbarProps = DiffToolbarProps
   { _diffToolbarPropsEditID :: ID Edit
   , _diffToolbarPropsVotes  :: VoteCount
@@ -69,4 +78,4 @@ data DiffToolbarProps = DiffToolbarProps
 instance UnoverlapAllEq DiffToolbarProps
 
 
-makeRefineTypes [''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState, ''DiffToolbarProps]
+makeRefineTypes [''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState, ''DiffToolbarProps, ''TopMenuBarProps]

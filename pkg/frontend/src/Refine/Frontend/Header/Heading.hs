@@ -18,6 +18,7 @@
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
@@ -26,22 +27,23 @@ module Refine.Frontend.Header.Heading
   ( TopMenuBarProps(..)
   , topMenuBar, topMenuBar_
   , mainHeader, mainHeader_
+  , toolbarWrapper_
   ) where
 
 import Refine.Frontend.Prelude
 
 import           Language.Css.Syntax
-import qualified React.Flux as RF
-import qualified React.Flux.Internal as RF
-import qualified React.Flux.Outdated as RF
+import           React.Flux as RF
+import           React.Flux.Internal as RF
+import           React.Flux.Outdated as RF
 
 import           Refine.Common.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DocumentHeader
 import           Refine.Frontend.Header.DiffToolbar ( diffToolbar_ )
 import           Refine.Frontend.Header.EditToolbar ( editToolbar_, mkEditToolbarProps )
-import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..),
-                                                  toolbar_, commentToolbarExtension_ )
+import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
+                                                  toolbar_, commentToolbarExtension_, editToolbarExtension_ )
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Status
@@ -54,18 +56,19 @@ import           Refine.Frontend.ThirdPartyViews (sticky_)
 import           Refine.Frontend.Util
 
 
-data TopMenuBarProps = TopMenuBarProps
- { _isSticky    :: Bool
- , _currentUser :: CurrentUser
- } deriving (Eq, Generic)
-
-instance UnoverlapAllEq TopMenuBarProps
-
 topMenuBar :: HasCallStack => View '[TopMenuBarProps]
-topMenuBar = mkView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
-  div_ [ classNamesAny [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", sticky)]
+topMenuBar = mkView "TopMenuBar" $ \props ->
+  div_ [ classNamesAny [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", props ^. isSticky)]
        , "style" @@= [decl "pointerEvents" (Ident "none")]
        ] $ do
+    topMenuBarLeft_ props
+    topMenuBarRight_ props
+
+topMenuBar_ :: HasCallStack => TopMenuBarProps -> ReactElementM eventHandler ()
+topMenuBar_ = view_ topMenuBar "TopMenuBar_"
+
+topMenuBarLeft :: View '[TopMenuBarProps]
+topMenuBarLeft = mkView "TopMenuBarLeft" $ \(TopMenuBarProps sticky _currentUser) -> do
     button_ [ "aria-controls" $= "bs-navbar"
             , "aria-expanded" $= "false"
             , "className" $= "c-mainmenu__menu-button"
@@ -79,10 +82,24 @@ topMenuBar = mkView "TopMenuBar" $ \(TopMenuBarProps sticky currentUser) ->
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
     unless sticky $
       span_ ["className" $= "c-mainmenu__menu-button-label"] "MENU"
-    loginStatusButton_ (ibDarkBackground .~ not sticky) currentUser
 
-topMenuBar_ :: HasCallStack => TopMenuBarProps -> ReactElementM eventHandler ()
-topMenuBar_ !props = view_ topMenuBar "TopMenuBar_" props
+topMenuBarLeft_ :: TopMenuBarProps -> ReactElementM eventHandler ()
+topMenuBarLeft_ = view_ topMenuBarLeft "TopMenuBarLeft_"
+
+topMenuBarRight_ :: TopMenuBarProps -> ReactElementM eventHandler ()
+topMenuBarRight_ (TopMenuBarProps sticky cu) = do
+    loginStatusButton_ (ibDarkBackground .~ not sticky) cu
+
+
+-- | Note that if @toolbarItems_@ is a component ('View') rather than a 'ReactElementM', css styling
+-- mysteriously breaks.
+toolbarWrapper_ :: ReactElementM eventHandler () -> ReactElementM eventHandler ()
+toolbarWrapper_ toolbarItems_ = do
+  header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
+    div_ ["className" $= "grid-wrapper"] $ do
+      div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
+        div_ ["className" $= "c-vdoc-toolbar__content"] $ do
+          toolbarItems_
 
 
 -- | extract the new state from event.
@@ -100,16 +117,18 @@ mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
 mainHeaderlComponentDidMount :: HasCallStack => a -> RF.LDOM -> b -> IO ()
 mainHeaderlComponentDidMount _propsandstate ldom _ = calcHeaderHeight ldom
 
-mainHeaderRender :: HasCallStack => () -> GlobalState -> ReactElementM (StatefulViewEventHandler a) ()
+mainHeaderRender :: HasCallStack => () -> GlobalState -> ReactElementM (StatefulViewEventHandler ()) ()
 mainHeaderRender () rs = do
   let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsVDoc . _Just
-  div_ ["className" $= "c-fullheader"] $ do
-      -- the following need to be siblings because of the z-index handling
-      div_ ["className" $= "c-mainmenu__bg" {-, "role" $= "navigation" -}] mempty
-      {- header_ ["role" $= "banner"] $ do -}
-      topMenuBar_ (TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser))
+      props = TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser)
 
-      documentHeader_ $ do
+      mainMenuPart_ = do
+        -- in the past, the following needed to be siblings because of the z-index handling.  not sure that's still the case.
+        div_ ["className" $= "c-mainmenu__bg" {-, "role" $= "navigation" -}] mempty
+        {- header_ ["role" $= "banner"] $ do -}
+        topMenuBar_ props
+
+      headerPart_ = documentHeader_ $ do
         let doc = DocumentHeaderProps
               (vdoc ^. compositeVDoc . vdocTitle)
               (vdoc ^. compositeVDoc . vdocAbstract)
@@ -123,15 +142,21 @@ mainHeaderRender () rs = do
             DocumentStateDiff _ _ eid _ -> edit (eid ^. editID)
             DocumentStateEdit {}        -> doc
 
-      div_ ["className" $= "c-fulltoolbar"] $ do
-        sticky_ [RF.on "onStickyStateChange" $ \e _ -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
-          case rs ^. gsDocumentState of
+      toolbarPart_ = div_ ["className" $= "c-fulltoolbar"] $ do
+        sticky_ [RF.on "onStickyStateChange" $ \e () -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
+          toolbarWrapper_ $ case rs ^. gsDocumentState of
             DocumentStateView {} -> toolbar_
             DocumentStateDiff _ _ edit _ -> diffToolbar_ $ DiffToolbarProps
               (edit ^. editID)
               (edit ^. editVotes . to votesToCount)
             DocumentStateEdit {} -> editToolbar_ (mkEditToolbarProps rs)
           commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
+          editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
+
+  div_ ["className" $= "c-fullheader"] $ do
+      mainMenuPart_
+      headerPart_
+      toolbarPart_
 
 mainHeader_ :: HasCallStack => GlobalState -> ReactElementM eventHandler ()
 mainHeader_ props = RF.view mainHeader props mempty

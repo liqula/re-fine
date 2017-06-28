@@ -109,7 +109,7 @@ documentRender() props = liftViewToStateHandler $ do
       , onChange $ \evt ->
           let dstate' :: DocumentState
               dstate' = dstate & documentStateVal .~ updateEditorState evt
-          in dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetAllVertialSpanBounds]
+          in dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetAllVerticalSpanBounds]
           -- TODO: #371
           --
           -- when clicking on a button in the edit toolbar and this handler triggers, the button
@@ -125,7 +125,7 @@ documentComponentDidMount :: HasCallStack => Outdated.LPropsAndState DocumentPro
 documentComponentDidMount getPropsAndState _ldom _setState = do
   props <- Outdated.lGetProps getPropsAndState
   ()    <- Outdated.lGetState getPropsAndState  -- (just to show there's nothing there)
-  dispatchAndExec . ContributionAction =<< setAllVertialSpanBounds (props ^. dpDocumentState)
+  dispatchAndExec . ContributionAction =<< setAllVerticalSpanBounds (props ^. dpDocumentState)
 
 document_ :: HasCallStack => DocumentProps -> ReactElementM eventHandler ()
 document_ props = Outdated.view document props mempty
