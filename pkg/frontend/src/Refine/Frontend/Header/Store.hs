@@ -28,8 +28,7 @@ module Refine.Frontend.Header.Store
 
 import Refine.Frontend.Prelude
 
-import Control.Lens ((&), (%~))
-
+import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Store.Types
 
@@ -46,7 +45,9 @@ readOnlyUpdate _                             = id
 toolbarExtensionUpdate :: HasCallStack => GlobalAction -> ToolbarExtensionStatus -> ToolbarExtensionStatus
 toolbarExtensionUpdate action st = case (st, action) of
     (ToolbarExtensionClosed,               HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithoutRange
+    (CommentToolbarExtensionWithoutRange,  ContributionAction ShowCommentEditor)       -> ToolbarExtensionClosed
     (CommentToolbarExtensionWithoutRange,  HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
+    (CommentToolbarExtensionWithRange,     ContributionAction ShowCommentEditor)       -> ToolbarExtensionClosed
     (CommentToolbarExtensionWithRange,     HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
 
     (CommentToolbarExtensionWithoutRange,  HeaderAction StartTextSpecificComment)      -> CommentToolbarExtensionWithRange

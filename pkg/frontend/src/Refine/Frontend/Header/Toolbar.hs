@@ -120,7 +120,7 @@ commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
       & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar-extension" True ("icon-Comment", "dark") Large
       & iconButtonPropsElementName  .~ "btn-new-ann-doc"  -- RENAME: ann => comment
       & iconButtonPropsLabel        .~ "general comment"
-      & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+      & iconButtonPropsOnClick      .~ [ContributionAction ShowCommentEditor]
 
   (CommentToolbarExtensionProps _) -> mempty
   where
