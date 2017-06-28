@@ -78,4 +78,11 @@ data DiffToolbarProps = DiffToolbarProps
 instance UnoverlapAllEq DiffToolbarProps
 
 
+data EditToolbarProps
+    = LinkButtonDisabled
+    | LinkButtonDeletes
+    | LinkButtonAdds ST
+  deriving (Eq, Show)
+
+
 makeRefineTypes [''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState, ''DiffToolbarProps, ''TopMenuBarProps]

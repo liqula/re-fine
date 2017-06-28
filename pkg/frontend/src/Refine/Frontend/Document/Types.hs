@@ -30,6 +30,7 @@ import           React.Flux (UnoverlapAllEq)
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
+import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 
@@ -68,6 +69,14 @@ data DocumentState =
       }
   deriving (Show, Eq, Generic)
 
+data WipedDocumentState =
+    WipedDocumentStateView
+  | WipedDocumentStateDiff
+      { _wipedDocumentStateDiff          :: Edit
+      }
+  | WipedDocumentStateEdit EditToolbarProps
+  deriving (Show, Eq)
+
 mkDocumentStateView :: HasCallStack => RawContent -> DocumentState
 mkDocumentStateView c = DocumentStateView e c'
   where
@@ -86,7 +95,7 @@ refreshDocumentStateView eidChanged c = if eidChanged then viewMode else sameMod
     sameMode = \case
       DocumentStateView _ _                -> DocumentStateView e c
       DocumentStateDiff _ _ edit collapsed -> DocumentStateDiff e c edit collapsed
-      DocumentStateEdit _ kind             -> DocumentStateEdit e kind
+      DocumentStateEdit e' kind            -> DocumentStateEdit e' kind
 
     e  = createWithContent $ convertFromRaw c
 

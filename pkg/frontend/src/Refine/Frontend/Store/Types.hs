@@ -41,7 +41,9 @@ import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
 
 
-data GlobalState = GlobalState
+type GlobalState = GlobalState_ DocumentState
+
+data GlobalState_ a = GlobalState
   { _gsVDoc                       :: Maybe CompositeVDoc  -- ^ FIXME: this should be split up into
                                                           -- its 'gsDocumentState' part and its
                                                           -- 'gsContributionState' part.
@@ -49,14 +51,14 @@ data GlobalState = GlobalState
                                                       -- 'GlobalState' constructor.
   , _gsContributionState          :: ContributionState
   , _gsHeaderState                :: HeaderState
-  , _gsDocumentState              :: DocumentState
+  , _gsDocumentState              :: a
   , _gsScreenState                :: ScreenState
   , _gsMainMenuState              :: MainMenuState
   , _gsLoginState                 :: LoginState
   , _gsToolbarSticky              :: Bool
   , _gsTranslations               :: Trans
   , _gsDevState                   :: Maybe DevState  -- ^ for development & testing, see 'devStateUpdate'.
-  } deriving (Show, Eq, Generic)
+  } deriving (Show, Eq, Generic, Functor)
 
 emptyGlobalState :: HasCallStack => GlobalState
 emptyGlobalState = GlobalState
@@ -72,6 +74,8 @@ emptyGlobalState = GlobalState
   , _gsTranslations               = emptyTrans
   , _gsDevState                   = Nothing
   }
+
+type MainHeaderProps = GlobalState_ WipedDocumentState
 
 newtype DevState = DevState
   { _devStateTrace :: [GlobalAction]
@@ -116,7 +120,7 @@ data GlobalAction =
   | ShowNotImplementedYet
   deriving (Show, Eq, Generic)
 
-makeRefineTypes [''GlobalState, ''DevState, ''GlobalAction]
+makeRefineTypes [''GlobalState_, ''DevState, ''GlobalAction]
 
 instance UnoverlapAllEq GlobalState
 

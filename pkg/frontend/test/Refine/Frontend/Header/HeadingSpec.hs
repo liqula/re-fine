@@ -84,5 +84,5 @@ spec = do
           gs = emptyGlobalState & gsVDoc .~ Just newVDoc
 
       resetState gs
-      _wrapper <- mount (stickyContainer_ [] $ mainHeader_ gs)
-      storeShouldEventuallySatisfy (^. gsScreenState . ssHeaderHeight) (> 0)
+      _wrapper <- mount (stickyContainer_ [] . mainHeader_ $ mkMainHeaderProps gs)
+      storeShouldEventuallySatisfy ((^. gsScreenState . ssHeaderHeight) :: GlobalState -> Int) (> 0)
