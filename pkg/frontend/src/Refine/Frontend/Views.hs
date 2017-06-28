@@ -49,13 +49,14 @@ import           Refine.Frontend.Loader.Component
 import           Refine.Frontend.Login.Types as LG
 import           Refine.Frontend.MainMenu.Component (mainMenu_)
 import           Refine.Frontend.MainMenu.Types
-import qualified Refine.Frontend.Screen.Types as SC
+import           Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import           Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
+import           Refine.Frontend.Types
+import           Refine.Frontend.Util
 import           Refine.Frontend.Views.Types
 import qualified Refine.Frontend.Workbench
-import           Refine.Frontend.Util
 
 
 -- | The controller view and also the top level of the Refine app.  This controller view registers
@@ -103,6 +104,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       let asideProps = AsideProps
                                      (rs ^. gsContributionState . csAllVerticalSpanBounds)
+                                     (OffsetFromDocumentTop $ rs ^. gsScreenState . ssHeaderHeight + fixedHeaderHeight + 15)
                                      (rs ^. gsContributionState . csCurrentSelectionWithPx)
                                      (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
@@ -170,7 +172,7 @@ rightAside_ !props = view_ rightAside "rightAside_" props
 
 -- | All contributions need to be positioned.  The default is '0' (beginning of the article).
 lookupPosition :: HasCallStack => AsideProps -> ContributionID -> VerticalSpanBounds
-lookupPosition props cid = fromMaybe (VerticalSpanBounds 0 constantBubbleHeight)
+lookupPosition props cid = fromMaybe (VerticalSpanBounds (props ^. asideMinimumSpanYPos) constantBubbleHeight)
                          $ props ^? asideAllVerticalSpanBounds . allVerticalSpanBounds . at cid . _Just
 
 editToProtoBubble :: HasCallStack => AsideProps -> Edit -> ProtoBubble

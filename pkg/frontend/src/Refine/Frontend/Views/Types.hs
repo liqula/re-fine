@@ -32,11 +32,12 @@ import           React.Flux (UnoverlapAllEq)
 import           Refine.Common.Types (ContributionID, CompositeDiscussion, Note, Edit)
 import           Refine.Frontend.Contribution.Types (AllVerticalSpanBounds, BubblePositioning, QuickCreateShowState)
 import           Refine.Frontend.Screen.Types (ScreenState)
-import           Refine.Frontend.Types (SelectionStateWithPx)
+import           Refine.Frontend.Types
 
 
 data AsideProps = AsideProps
   { _asideAllVerticalSpanBounds :: AllVerticalSpanBounds
+  , _asideMinimumSpanYPos       :: OffsetFromDocumentTop
   , _asideCurrentRange          :: Maybe SelectionStateWithPx
   , _asideHighlighteds          :: [ContributionID]
   , _asideScreenState           :: ScreenState
