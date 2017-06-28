@@ -91,6 +91,8 @@ topMenuBarRight_ (TopMenuBarProps sticky cu) = do
     loginStatusButton_ (ibDarkBackground .~ not sticky) cu
 
 
+-- | Note that if @toolbarItems_@ is a component ('View') rather than a 'ReactElementM', css styling
+-- mysteriously breaks.
 toolbarWrapper_ :: ReactElementM eventHandler () -> ReactElementM eventHandler ()
 toolbarWrapper_ toolbarItems_ = do
   header_ ["className" $= "row row-align-middle c-vdoc-toolbar"] $ do
