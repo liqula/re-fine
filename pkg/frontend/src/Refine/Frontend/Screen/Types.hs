@@ -37,13 +37,17 @@ data WindowSize = Desktop | Tablet | Mobile
   deriving (Show, Eq, Generic)
 
 data ScreenState = ScreenState
-  { _ssHeaderHeight           :: Int
+  { _ssHeaderHeight           :: Int  -- ^ without toolbar
   , _ssWindowWidth            :: Int
   , _ssWindowSize             :: WindowSize
   } deriving (Show, Eq, Generic)
 
 emptyScreenState :: HasCallStack => ScreenState
 emptyScreenState = ScreenState 0 0 Desktop
+
+-- | (should we measure this?)
+fixedHeaderHeight :: Int
+fixedHeaderHeight = 80
 
 
 makeRefineTypes [''ScreenState, ''ScreenAction, ''WindowSize]
