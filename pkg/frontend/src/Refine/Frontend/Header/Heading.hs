@@ -28,6 +28,7 @@ module Refine.Frontend.Header.Heading
   , topMenuBar, topMenuBar_
   , mainHeader, mainHeader_
   , toolbarWrapper_
+  , mkMainHeaderProps
   ) where
 
 import Refine.Frontend.Prelude
@@ -41,7 +42,7 @@ import           Refine.Common.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DocumentHeader
 import           Refine.Frontend.Header.DiffToolbar ( diffToolbar_ )
-import           Refine.Frontend.Header.EditToolbar ( editToolbar_, mkEditToolbarProps )
+import           Refine.Frontend.Header.EditToolbar ( editToolbar_, wipeDocumentState )
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_ )
 import           Refine.Frontend.Header.Types
@@ -74,7 +75,7 @@ topMenuBarLeft = mkView "TopMenuBarLeft" $ \(TopMenuBarProps sticky _currentUser
             , "className" $= "c-mainmenu__menu-button"
             , "type" $= "button"
             , "style" @@= [decl "pointerEvents" (Ident "all")]
-            , onClick $ \_ _ -> dispatch . MainMenuAction $ MainMenuActionOpen defaultMainMenuTab
+            , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction $ MainMenuActionOpen defaultMainMenuTab
             ] $ do
       span_ ["className" $= "sr-only"] "Navigation an/aus"
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
@@ -106,7 +107,7 @@ toolbarWrapper_ toolbarItems_ = do
 currentToolbarStickyState :: HasCallStack => Event -> Bool
 currentToolbarStickyState (evtHandlerArg -> RF.HandlerArg j) = pFromJSVal j
 
-mainHeader :: HasCallStack => RF.ReactView GlobalState
+mainHeader :: HasCallStack => RF.ReactView MainHeaderProps
 mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
      -- the render function inside a Lifecycle view does not update the children passed to it when the state changes
      -- (see react-flux issue #29), therefore we move everything inside the Lifecylce view.
@@ -117,7 +118,7 @@ mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
 mainHeaderlComponentDidMount :: HasCallStack => a -> RF.LDOM -> b -> IO ()
 mainHeaderlComponentDidMount _propsandstate ldom _ = calcHeaderHeight ldom
 
-mainHeaderRender :: HasCallStack => () -> GlobalState -> ReactElementM (StatefulViewEventHandler ()) ()
+mainHeaderRender :: HasCallStack => () -> MainHeaderProps -> ReactElementM ('StatefulEventHandlerCode ()) ()
 mainHeaderRender () rs = do
   let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsVDoc . _Just
       props = TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser)
@@ -138,18 +139,18 @@ mainHeaderRender () rs = do
               (editDescToAbstract vdoc (ContribIDEdit eid))
 
         case rs ^. gsDocumentState of
-            DocumentStateView {}        -> doc
-            DocumentStateDiff _ _ eid _ -> edit (eid ^. editID)
-            DocumentStateEdit {}        -> doc
+            WipedDocumentStateView     -> doc
+            WipedDocumentStateDiff eid -> edit (eid ^. editID)
+            WipedDocumentStateEdit{}   -> doc
 
       toolbarPart_ = div_ ["className" $= "c-fulltoolbar"] $ do
-        sticky_ [RF.on "onStickyStateChange" $ \e () -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
+        sticky_ [RF.on "onStickyStateChange" $ \e -> simpleHandler $ \() -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
           toolbarWrapper_ $ case rs ^. gsDocumentState of
-            DocumentStateView {} -> toolbar_
-            DocumentStateDiff _ _ edit _ -> diffToolbar_ $ DiffToolbarProps
+            WipedDocumentStateView -> toolbar_
+            WipedDocumentStateDiff edit -> diffToolbar_ $ DiffToolbarProps
               (edit ^. editID)
               (edit ^. editVotes . to votesToCount)
-            DocumentStateEdit {} -> editToolbar_ (mkEditToolbarProps rs)
+            WipedDocumentStateEdit eprops -> editToolbar_ eprops
           commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
           editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
 
@@ -158,7 +159,10 @@ mainHeaderRender () rs = do
       headerPart_
       toolbarPart_
 
-mainHeader_ :: HasCallStack => GlobalState -> ReactElementM eventHandler ()
+mkMainHeaderProps :: GlobalState -> MainHeaderProps
+mkMainHeaderProps = fmap wipeDocumentState
+
+mainHeader_ :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
 mainHeader_ props = RF.view mainHeader props mempty
 
 calcHeaderHeight :: HasCallStack => RF.LDOM -> IO ()

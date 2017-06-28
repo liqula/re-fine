@@ -46,13 +46,13 @@ import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
 
-mkClickHandler :: HasCallStack => [ContributionAction] -> Event -> MouseEvent -> [SomeStoreAction]
-mkClickHandler actions _ _ = dispatchMany $ ContributionAction <$> actions
+mkClickHandler :: HasCallStack => [ContributionAction] -> Event -> MouseEvent -> (ViewEventHandler, [EventModification])
+mkClickHandler actions _ _ = simpleHandler . dispatchMany $ ContributionAction <$> actions
 
 bubbleStackStyles :: HasCallStack => [Decl]
 bubbleStackStyles = [decl "border" (Ident "3px dotted black")]
 
-bubble :: HasCallStack => ReactElementM [SomeStoreAction] () -> View '[BubbleProps]
+bubble :: HasCallStack => ReactElementM 'EventHandlerCode () -> View '[BubbleProps]
 bubble children = mkView "Bubble" $ \props -> do
   let bubbleKind = case props ^. bubblePropsContributionIds of
           NoStack (ContribIDNote _)         -> Left "o-snippet--note"
@@ -103,7 +103,7 @@ bubble children = mkView "Bubble" $ \props -> do
     div_ ["className" $= "o-snippet__content"]  -- RENAME: snippet => bubble
       children
 
-bubble_ :: HasCallStack => BubbleProps -> ReactElementM [SomeStoreAction] () -> ReactElementM [SomeStoreAction] ()
+bubble_ :: HasCallStack => BubbleProps -> ReactElementM 'EventHandlerCode () -> ReactElementM 'EventHandlerCode ()
 bubble_ !props children = view_ (bubble children) (bubbleKey props) props
   -- (there is React.Flux.Internal.childrenPassedToView, but doing it by hand is easier to understand.)
 

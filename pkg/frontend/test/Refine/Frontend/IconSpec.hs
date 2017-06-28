@@ -82,7 +82,7 @@ spec = do
       lengthOfIO (find wrapper (StringSelector ".Image_striped")) `shouldReturn` (1 :: Int)
 
     it "annotates the RO icon image when the mouse has entered the icon and the normal one when it left again" $ do
-      wrapper <- shallow . icon_ $ iconProps XXLarge
+      wrapper <- mount . icon_ $ iconProps XXLarge
       simulate wrapper MouseEnter
       lengthOfIO (find wrapper (StringSelector ".Image_striped")) `shouldReturn` (0 :: Int)
       lengthOfIO (find wrapper (StringSelector ".Image_RO")) `shouldReturn` (1 :: Int)

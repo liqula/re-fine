@@ -95,13 +95,13 @@ spec = do
       pendingWith "race condition, this only sporadically fails!"
 
       wrapper <- mount $ bubble_ bubbleProps mempty
-      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) []
+      storeShouldEventuallyBe ((^. gsContributionState . csHighlightedMarkAndBubble) :: GlobalState -> [ContributionID]) []
 
       _ <- simulate wrapper MouseEnter
-      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) [cnid 99]
+      storeShouldEventuallyBe ((^. gsContributionState . csHighlightedMarkAndBubble) :: GlobalState -> [ContributionID]) [cnid 99]
 
       _ <- simulate wrapper MouseLeave
-      storeShouldEventuallyBe (^. gsContributionState . csHighlightedMarkAndBubble) []
+      storeShouldEventuallyBe ((^. gsContributionState . csHighlightedMarkAndBubble) :: GlobalState -> [ContributionID]) []
 
   describe "tablet and mobile" $ do
     it "works" $ do

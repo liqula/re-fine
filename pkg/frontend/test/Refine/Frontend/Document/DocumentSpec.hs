@@ -184,7 +184,7 @@ spec = do
             -- FIXME: resetState here is taking more than 0.1 seconds to stabilize.
             -- (both these are left-overs from when this was still a test on the mark_ component.  try again!)
 
-            storeShouldEventuallyBe (^?! gsDevState . _Just . devStateTrace) []
+            storeShouldEventuallyBe ((^?! gsDevState . _Just . devStateTrace) :: GlobalState -> [GlobalAction]) []
 
             -- let cvdoc = ...
             -- executeAction $ OpenDocument cvdoc
@@ -192,7 +192,7 @@ spec = do
             -- if that works, try skipping the delay above.  or reducing it.
 
             pending
-            storeShouldEventuallyContain (^?! gsDevState . _Just . devStateTrace)
+            storeShouldEventuallyContain ((^?! gsDevState . _Just . devStateTrace) :: GlobalState -> [GlobalAction])
               [ContributionAction (SetAllVerticalSpanBounds [(ContribIDNote (ID 77), VerticalSpanBounds 0 0)])]
 
       it "dispatches SetAllVerticalSpanBounds only once" test

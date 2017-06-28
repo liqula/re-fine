@@ -43,7 +43,7 @@ import           Refine.Frontend.Contribution.QuickCreate
 import           Refine.Frontend.Contribution.Types as RS
 import           Refine.Frontend.Document.Document
 import           Refine.Frontend.Document.Types
-import           Refine.Frontend.Header.Heading (mainHeader_)
+import           Refine.Frontend.Header.Heading
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Loader.Component
 import           Refine.Frontend.Login.Types as LG
@@ -81,7 +81,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
   div_ $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
       stickyContainer_ [] $ do
-          mainHeader_ rs
+          mainHeader_ $ mkMainHeaderProps rs
 
           -- components that are visible only sometimes:
           showNote_ `mapM_` showNoteProps (vdoc ^. compositeVDocApplicableNotes) rs
@@ -187,7 +187,7 @@ discussionToProtoBubble aprops d = ProtoBubble cid (lookupPosition aprops cid) c
     cid = contribID $ d ^. compositeDiscussion . discussionID
     child = elemText (ST.rootLabel (d ^. compositeDiscussionTree) ^. statementText)
 
-stackBubble :: HasCallStack => BubbleSide -> AsideProps -> StackOrNot ProtoBubble -> ReactElementM ViewEventHandler ()
+stackBubble :: HasCallStack => BubbleSide -> AsideProps -> StackOrNot ProtoBubble -> ReactElementM 'EventHandlerCode ()
 stackBubble bubbleSide aprops bstack = bubble_ props children
   where
     bstack' :: StackOrNot ContributionID

@@ -49,20 +49,20 @@ inputFieldStyles =
 
 inputFieldWithKey
   :: (FromJSVal c)
-  => JSString -> JSString -> JSString -> JSString -> ASetter s a b c
-  -> ReactElementM (s -> ([t], Maybe a)) ()
+  => JSString -> JSString -> JSString -> JSString -> ASetter s s b c
+  -> ReactElementM ('StatefulEventHandlerCode s) ()
 inputFieldWithKey fieldId fieldType fieldPlaceholder fieldKey lens =
   input_ [ "id" $= fieldId
          , "style" @@= inputFieldStyles
          , "type" $= fieldType
          , "placeholder" $= fieldPlaceholder
-         , onChange $ \evt st -> ([], Just (st & lens .~ target evt fieldKey))
+         , onChange $ \evt -> simpleHandler $ \st -> ([], Just (st & lens .~ target evt fieldKey))
          ]
 
 inputField
   :: (FromJSVal c)
-  => JSString -> JSString -> JSString -> ASetter s a b c
-  -> ReactElementM (s -> ([t], Maybe a)) ()
+  => JSString -> JSString -> JSString -> ASetter s s b c
+  -> ReactElementM ('StatefulEventHandlerCode s) ()
 inputField i t p = inputFieldWithKey i t p "value"
 
 

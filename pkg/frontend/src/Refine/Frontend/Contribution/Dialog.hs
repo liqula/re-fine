@@ -95,7 +95,7 @@ overlayStyles =
 
 addContributionDialogFrame
     :: ST -> Maybe SelectionStateWithPx -> Int
-    -> ReactElementM ViewEventHandler () -> ReactElementM ViewEventHandler ()
+    -> ReactElementM 'EventHandlerCode () -> ReactElementM 'EventHandlerCode ()
 addContributionDialogFrame title mrange windowWidth child =
     let top = case mrange of
               Nothing -> 30
@@ -106,8 +106,8 @@ addContributionDialogFrame title mrange windowWidth child =
                       , decl "height" (Px 560)
                       ]
     in skylight_ ["isVisible" &= True
-             , RF.on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideCommentEditor)
-             , RF.on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideCommentEditor)
+             , RF.on "onCloseClicked"   $ \_ -> simpleHandler $ dispatch (ContributionAction HideCommentEditor)
+             , RF.on "onOverlayClicked" $ \_ -> simpleHandler $ dispatch (ContributionAction HideCommentEditor)
              , "dialogStyles" @@= (vdoc_overlay_content__add_comment <> extraStyles)
              , "overlayStyles" @@= overlayStyles
              , "titleStyle" @@= [decl "margin" (Px 0)]
@@ -129,7 +129,7 @@ addContributionDialogFrame title mrange windowWidth child =
 
       child
 
-contributionDialogTextForm :: HasCallStack => Lens' st ST -> Int -> ST -> ReactElementM (StatefulViewEventHandler st) ()
+contributionDialogTextForm :: HasCallStack => Lens' st ST -> Int -> ST -> ReactElementM ('StatefulEventHandlerCode st) ()
 contributionDialogTextForm stateLens stepNumber promptText = do
   div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
     p_ $ do
@@ -147,7 +147,7 @@ contributionDialogTextForm stateLens stepNumber promptText = do
                       , decl "height" (Px 240)
                       ]
               -- Update the current state with the current text in the textbox, sending no actions
-              , onChange $ \evt st -> ([], Just $ st & stateLens .~ target evt "value")
+              , onChange $ \evt -> simpleHandler $ \st -> ([], Just $ st & stateLens .~ target evt "value")
               ]
       mempty
 
@@ -162,8 +162,8 @@ showComment = mkView "ShowComment" $ \props ->
                     , decl "minHeight" (Px 100)
                     ]
   in skylight_ ["isVisible" &= True
-           , RF.on "onCloseClicked"   $ \_ -> dispatch (ContributionAction HideContributionDialog)
-           , RF.on "onOverlayClicked" $ \_ -> dispatch (ContributionAction HideContributionDialog)
+           , RF.on "onCloseClicked"   $ \_ -> simpleHandler $ dispatch (ContributionAction HideContributionDialog)
+           , RF.on "onOverlayClicked" $ \_ -> simpleHandler $ dispatch (ContributionAction HideContributionDialog)
            , "dialogStyles" @@= ((props ^. cdpContentStyle) <> extraStyles)
            , "overlayStyles" @@= overlayStyles
            , "closeButtonStyle" @@= [decl "top" (Px 0), decl "bottom" (Px 0)]
@@ -423,7 +423,7 @@ editInput_ st = view_ (editInput st) "editInput_"
 
 -- | (FUTUREWORK: somewhere in here, there is a radio button widget
 -- that works with any Bounded/Enum type...)
-editKindForm_ :: HasCallStack => EditInputState -> ReactElementM (StatefulViewEventHandler EditInputState) ()
+editKindForm_ :: HasCallStack => EditInputState -> ReactElementM ('StatefulEventHandlerCode EditInputState) ()
 editKindForm_ st = do
   div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
     div_ ["className" $= "grid-wrapper"] $ do

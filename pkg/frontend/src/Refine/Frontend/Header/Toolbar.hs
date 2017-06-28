@@ -157,7 +157,7 @@ newtype EditToolbarExtensionProps = EditToolbarExtensionProps
 instance UnoverlapAllEq EditToolbarExtensionProps
 
 
-linkToolbarTextForm :: HasCallStack => ST -> ReactElementM (StatefulViewEventHandler AddLinkFormState) ()
+linkToolbarTextForm :: HasCallStack => ST -> ReactElementM ('StatefulEventHandlerCode AddLinkFormState) ()
 linkToolbarTextForm link = do
   form_ [ "target" $= "#"
         , "action" $= "POST"
@@ -171,7 +171,7 @@ linkToolbarTextForm link = do
                       ]
               , "placeholder" $= "url"
               -- Update the current state with the current text in the textbox, sending no actions
-              , onChange $ \evt st -> ([], Just $ st & addLinkFormState .~ target evt "value")
+              , onChange $ \evt -> simpleHandler $ \st -> ([], Just $ st & addLinkFormState .~ target evt "value")
               ]
       $ elemText link
 

@@ -83,19 +83,19 @@ instance ConvertibleStrings LBS JSS.JSString where
   convertString = JSS.pack . ST.unpack . cs
 
 
-instance ConvertibleStrings String (ReactElementM handler ()) where
+instance ConvertibleStrings String (ReactElementM_ handler ()) where
   convertString = fromString
 
-instance ConvertibleStrings ST (ReactElementM handler ()) where
+instance ConvertibleStrings ST (ReactElementM_ handler ()) where
   convertString = fromString . cs
 
-instance ConvertibleStrings LT (ReactElementM handler ()) where
+instance ConvertibleStrings LT (ReactElementM_ handler ()) where
   convertString = fromString . cs
 
-instance ConvertibleStrings LBS (ReactElementM handler ()) where
+instance ConvertibleStrings LBS (ReactElementM_ handler ()) where
   convertString = fromString . cs
 
-instance ConvertibleStrings JSS.JSString (ReactElementM handler ()) where
+instance ConvertibleStrings JSS.JSString (ReactElementM_ handler ()) where
   convertString = fromString . cs
 
 
@@ -103,7 +103,7 @@ instance ConvertibleStrings JSS.JSString (ReactElementM handler ()) where
 
 -- | The return type of the result monad type needs to be fixed to '()', because usually on the call
 -- site there is no reason for the type checker to assume that.
-elemCS :: HasCallStack => ConvertibleStrings s (ReactElementM handler ()) => s -> ReactElementM handler ()
+elemCS :: HasCallStack => ConvertibleStrings s (ReactElementM_ handler ()) => s -> ReactElementM_ handler ()
 elemCS = cs
 
 -- | this is a sub-type of TranslationsCS that makes the type checker not trip over the constraints.

@@ -35,18 +35,13 @@ import           Refine.Frontend.Icon
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Header.Types
 
-data EditToolbarProps
-    = LinkButtonDisabled
-    | LinkButtonDeletes
-    | LinkButtonAdds ST
 
-mkEditToolbarProps :: HasCallStack => GlobalState -> EditToolbarProps
-mkEditToolbarProps st
+mkEditToolbarProps :: HasCallStack => EditorState -> EditToolbarProps
+mkEditToolbarProps es
     | rangeIsEmpty rc sel = LinkButtonDisabled
     | any (doRangesOverlap sel) linkranges = LinkButtonDeletes
     | otherwise = LinkButtonAdds . cs $ rangeText BlockBoundaryIsEmpty rc sel
   where
-    es = st ^. gsDocumentState . documentStateVal
     sel = _selectionRange . fromSelectionState rc $ getSelection es
     rc = convertToRaw $ getCurrentContent es
     linkranges = fmap (fromStyleRange rc) . unRanges . mconcat . fmap (toStyleRanges rc . snd)
@@ -55,6 +50,11 @@ mkEditToolbarProps st
         isLink (Just (EntityLink _)) = True
         isLink _ = False
 
+wipeDocumentState :: DocumentState -> WipedDocumentState
+wipeDocumentState = \case
+  DocumentStateView{}          -> WipedDocumentStateView
+  DocumentStateDiff _ _ edit _ -> WipedDocumentStateDiff edit
+  DocumentStateEdit es _       -> WipedDocumentStateEdit $ mkEditToolbarProps es
 
 editToolbar_ :: HasCallStack => EditToolbarProps -> ReactElementM eventHandler ()
 editToolbar_ ep = do
