@@ -58,7 +58,11 @@ data GlobalState_ a = GlobalState
   , _gsToolbarSticky              :: Bool
   , _gsTranslations               :: Trans
   , _gsDevState                   :: Maybe DevState  -- ^ for development & testing, see 'devStateUpdate'.
+  , _gsServerCache                :: ServerCache
   } deriving (Show, Eq, Generic, Functor)
+
+data ServerCache = ServerCache
+  deriving (Show, Eq, Generic)
 
 emptyGlobalState :: HasCallStack => GlobalState
 emptyGlobalState = GlobalState
@@ -73,6 +77,7 @@ emptyGlobalState = GlobalState
   , _gsToolbarSticky              = False
   , _gsTranslations               = emptyTrans
   , _gsDevState                   = Nothing
+  , _gsServerCache                = ServerCache
   }
 
 type MainHeaderProps = GlobalState_ WipedDocumentState
@@ -120,7 +125,7 @@ data GlobalAction =
   | ShowNotImplementedYet
   deriving (Show, Eq, Generic)
 
-makeRefineTypes [''GlobalState_, ''DevState, ''GlobalAction]
+makeRefineTypes [''ServerCache, ''GlobalState_, ''DevState, ''GlobalAction]
 
 instance UnoverlapAllEq GlobalState
 
