@@ -109,9 +109,9 @@ data Edit = Edit
   , _editVDoc         :: ID VDoc
   , _editVDocVersion  :: VDocVersion     -- FIXME: is it OK to store this in edit (consider serialization)?
   , _editVotes        :: Votes
-  , _editChildren     :: [ID Edit]                                            -- FIXME: use Set
-  , _editNotes'       :: [ID Note]       -- FIXME: rename to editNotes        -- FIXME: use Set
-  , _editDiscussions' :: [ID Discussion] -- FIXME: rename to editDiscussions  -- FIXME: use Set
+  , _editChildren     :: Set (ID Edit)
+  , _editNotes'       :: Set (ID Note)
+  , _editDiscussions' :: Set (ID Discussion)
   }
   deriving (Eq, Show, Generic)
 

@@ -26,9 +26,10 @@ module Refine.Frontend.Store.Types where
 import Refine.Frontend.Prelude
 
 import           Control.Lens (Getter, lens)
+import qualified Data.Map as Map
+import qualified Data.Set as Set
 import           Data.String.Conversions (ST)
 import           Data.Text.I18n
-import qualified Data.Map as Map
 import           GHC.Generics (Generic)
 import           React.Flux (UnoverlapAllEq)
 
@@ -162,8 +163,8 @@ gsVDoc = lens getCompositeVDoc setCompositeVDoc
       where
         edit = (sc ^. scEdits) Map.! eid
 
-        mkMap :: Lens' ServerCache (Map (ID a) a) -> Lens' Edit [ID a] -> Map (ID a) a
-        mkMap x y = Map.filterWithKey (\k _ -> k `elem` (edit ^. y)) $ sc ^. x
+        mkMap :: Lens' ServerCache (Map (ID a) a) -> Lens' Edit (Set (ID a)) -> Map (ID a) a
+        mkMap x y = Map.filterWithKey (\k _ -> k `Set.member` (edit ^. y)) $ sc ^. x
 
         mkCompositeDiscussion :: Discussion -> CompositeDiscussion
         mkCompositeDiscussion d = CompositeDiscussion d (error "undefined mkCompositeDiscussion") -- FIXME: make discussion tree

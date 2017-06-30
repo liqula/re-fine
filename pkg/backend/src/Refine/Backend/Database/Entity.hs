@@ -31,6 +31,7 @@ import Refine.Backend.Prelude as P hiding (get)
 
 import           Database.Persist (get)
 import           Database.Persist.Sql (SqlBackend)
+import qualified Data.Set as Set
 import           Lentil.Core (entityLens)
 import           Lentil.Types as L
 
@@ -254,10 +255,12 @@ createEdit rid me ce = do
 getEdit :: ID Edit -> DB Edit
 getEdit eid = do
   src         <- getEditSource eid
-  notes       <- editNotes eid
-  discussions <- editDiscussions eid
-  children    <- getEditChildren eid
-  getMetaEntity (\mid -> S.editElim $ \desc d vdoc kind (DBVotes vs) -> Edit mid desc kind src (S.keyToId vdoc) d vs children notes discussions) eid
+  notes       <- Set.fromList <$> editNotes eid
+  discussions <- Set.fromList <$> editDiscussions eid
+  children    <- Set.fromList <$> getEditChildren eid
+  getMetaEntity (\mid -> S.editElim $
+                  \desc d vdoc kind (DBVotes vs) ->
+                    Edit mid desc kind src (S.keyToId vdoc) d vs children notes discussions) eid
 
 getEditSource :: ID Edit -> DB (EditSource (ID Edit))
 getEditSource eid = do

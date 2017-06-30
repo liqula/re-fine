@@ -28,6 +28,7 @@ import Refine.Common.Prelude
 
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 import           Test.Hspec
 import           Test.QuickCheck
 import "quickcheck-instances" Test.QuickCheck.Instances ()
@@ -45,7 +46,10 @@ un = undefined
 rawContentToCompositeVDoc :: RawContentWithSelections -> CompositeVDoc
 rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
     = assert (length selections == length es + length ns + length ds)
-    $ CompositeVDoc un (Edit sampleMetaID un un un (sampleMetaID ^. miID) vers un (fst <$> es) (fst <$> ns) (fst <$> ds)) (Map.fromList es) (Map.fromList ns) (Map.fromList ds)
+    $ CompositeVDoc un
+                    (Edit sampleMetaID un un un (sampleMetaID ^. miID) vers un
+                          (Set.fromList $ fst <$> es) (Set.fromList $ fst <$> ns) (Set.fromList $ fst <$> ds))
+                    (Map.fromList es) (Map.fromList ns) (Map.fromList ds)
   where
     vers = rawContentToVDocVersion rawContent
 
