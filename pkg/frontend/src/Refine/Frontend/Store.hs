@@ -232,8 +232,10 @@ emitBackendCallsFor action st = case action of
     LoadDocument auid -> do
         getVDoc auid $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right loadedVDoc) -> dispatchM $ OpenDocument loadedVDoc
-
+            (Right loadedVDoc) -> dispatchManyM
+                                   [ OpenDocument loadedVDoc
+                                   , ContributionAction RequestSetAllVerticalSpanBounds
+                                   ]
 
     -- contributions
 
