@@ -102,12 +102,16 @@ newtype EditSource a = EditSource { _unEditSource :: [(OT.Edit RawContent, a)] }
   deriving (Eq, Show, Generic, Functor, Monoid)
 
 data Edit = Edit
-  { _editMetaID      :: MetaID Edit
-  , _editDesc        :: ST
-  , _editKind        :: EditKind
-  , _editSource      :: EditSource (ID Edit)
-  , _editVDocVersion :: VDocVersion
-  , _editVotes       :: Votes
+  { _editMetaID       :: MetaID Edit
+  , _editDesc         :: ST
+  , _editKind         :: EditKind
+  , _editSource       :: EditSource (ID Edit)
+  , _editVDoc         :: ID VDoc
+  , _editVDocVersion  :: VDocVersion
+  , _editVotes        :: Votes
+  , _editChildren     :: [ID Edit]
+  , _editNotes'       :: [ID Note]       -- FIXME: rename to editNotes
+  , _editDiscussions' :: [ID Discussion] -- FIXME: rename to editDiscussions
   }
   deriving (Eq, Show, Generic)
 

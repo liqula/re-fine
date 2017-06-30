@@ -249,18 +249,15 @@ createEdit rid me ce = do
             (DBVotes mempty)
   liftDB . forM_ (_unEditSource me) $ \(edit, parent) ->
       insert $ S.ParentChild (S.idToKey parent) (RawContentEdit edit) (S.idToKey $ mid ^. miID)
-  pure $ Edit
-    mid
-    (ce ^. createEditDesc)
-    (ce ^. createEditKind)
-    me
-    (ce ^. createEditVDoc)
-    mempty
+  getEdit $ mid ^. miID
 
 getEdit :: ID Edit -> DB Edit
 getEdit eid = do
-  src <- getEditSource eid
-  getMetaEntity (\mid -> S.editElim $ \desc d _ kind (DBVotes vs) -> Edit mid desc kind src d vs) eid
+  src         <- getEditSource eid
+  notes       <- editNotes eid
+  discussions <- editDiscussions eid
+  children    <- getEditChildren eid
+  getMetaEntity (\mid -> S.editElim $ \desc d vdoc kind (DBVotes vs) -> Edit mid desc kind src (S.keyToId vdoc) d vs children notes discussions) eid
 
 getEditSource :: ID Edit -> DB (EditSource (ID Edit))
 getEditSource eid = do
