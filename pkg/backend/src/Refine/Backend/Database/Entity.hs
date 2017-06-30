@@ -254,12 +254,13 @@ createEdit rid me ce = do
     (ce ^. createEditDesc)
     (ce ^. createEditKind)
     me
+    (ce ^. createEditVDoc)
     mempty
 
 getEdit :: ID Edit -> DB Edit
 getEdit eid = do
   src <- getEditSource eid
-  getMetaEntity (\mid -> S.editElim $ \desc _ _ kind (DBVotes vs) -> Edit mid desc kind src vs) eid
+  getMetaEntity (\mid -> S.editElim $ \desc d _ kind (DBVotes vs) -> Edit mid desc kind src d vs) eid
 
 getEditSource :: ID Edit -> DB (EditSource (ID Edit))
 getEditSource eid = do
