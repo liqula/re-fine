@@ -76,8 +76,7 @@ spec = do
 
       let newVDoc :: CompositeVDoc
           newVDoc = CompositeVDoc (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1))
-                                  (Edit (MetaID (ID 1) undefined) undefined undefined undefined undefined undefined)
-                                  sampleVDocVersion
+                                  (Edit (MetaID (ID 1) undefined) undefined undefined undefined sampleVDocVersion undefined)
                                   M.empty M.empty M.empty
 
           gs :: GlobalState

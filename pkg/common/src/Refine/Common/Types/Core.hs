@@ -137,7 +137,6 @@ type instance Create Edit = CreateEdit
 data CompositeVDoc = CompositeVDoc
   { _compositeVDoc                      :: VDoc
   , _compositeVDocThisEdit              :: Edit
-  , _compositeVDocThisVersion           :: VDocVersion
   , _compositeVDocApplicableEdits       :: Map (ID Edit) Edit
   , _compositeVDocApplicableNotes       :: Map (ID Note) Note
   , _compositeVDocApplicableDiscussions :: Map (ID Discussion) CompositeDiscussion
@@ -657,6 +656,9 @@ editID = editMetaID . miID
 
 compositeVDocThisEditID :: Lens' CompositeVDoc (ID Edit)
 compositeVDocThisEditID = compositeVDocThisEdit . editID
+
+compositeVDocThisVersion :: Lens' CompositeVDoc VDocVersion
+compositeVDocThisVersion = compositeVDocThisEdit . editVDocVersion
 
 blockText :: Lens' (Block rangeKey blockKey) ST
 blockText = blockText'

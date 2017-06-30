@@ -89,10 +89,9 @@ getCompositeVDoc' vdoc editid = do
   let commentNotes       = catMaybes $ (^? _CommentNote)       <$> filter (has _CommentNote)       comments
       commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
   edits <- db $ mapM DB.getEdit =<< DB.getEditChildren editid
-  version <- db $ DB.getVersion editid
   pure $
     CompositeVDoc
-      vdoc edit version
+      vdoc edit
       (toMap editID edits)
       (toMap noteID commentNotes)
       (toMap (compositeDiscussion . discussionID) commentDiscussions)

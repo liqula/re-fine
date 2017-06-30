@@ -45,7 +45,7 @@ un = undefined
 rawContentToCompositeVDoc :: RawContentWithSelections -> CompositeVDoc
 rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
     = assert (length selections == length es + length ns + length ds)
-    $ CompositeVDoc un (Edit sampleMetaID un un un un un) vers (Map.fromList es) (Map.fromList ns) (Map.fromList ds)
+    $ CompositeVDoc un (Edit sampleMetaID un un un vers un) (Map.fromList es) (Map.fromList ns) (Map.fromList ds)
   where
     vers = rawContentToVDocVersion rawContent
 

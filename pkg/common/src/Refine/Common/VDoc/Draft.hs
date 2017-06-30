@@ -98,10 +98,10 @@ rangeIsEmpty rc = isEmptyRange . fmap (toStylePosition rc)
 -- * vdoc
 
 rawContentFromCompositeVDoc :: CompositeVDoc -> RawContent
-rawContentFromCompositeVDoc (CompositeVDoc _ base vers edits notes discussions) =
+rawContentFromCompositeVDoc (CompositeVDoc _ base edits notes discussions) =
   addMarksToRawContent marks rawContent
   where
-    rawContent = rawContentFromVDocVersion vers
+    rawContent = rawContentFromVDocVersion $ base ^. editVDocVersion
     convertHack l (k, v) = (contribID k, v ^. l)
 
     marks :: [(ContributionID, Range Position)]
