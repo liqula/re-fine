@@ -33,6 +33,7 @@ import           GHC.Generics (Generic)
 import           React.Flux (UnoverlapAllEq)
 
 import Refine.Common.Types
+import Refine.Common.VDoc.Draft (rawContentFromCompositeVDoc)
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
@@ -42,7 +43,7 @@ import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
 
 
-type GlobalState = GlobalState_ (DocumentState_ (ID Edit))
+type GlobalState = GlobalState_ GlobalDocumentState
 
 data GlobalState_ a = GlobalState
   { _gsEdit                       :: Maybe (ID Edit)
@@ -135,6 +136,13 @@ data GlobalAction =
   deriving (Show, Eq, Generic)
 
 makeRefineTypes [''ServerCache, ''GlobalState_, ''DevState, ''GlobalAction]
+
+getDocumentState :: GlobalState -> DocumentState
+getDocumentState gs@(view gsVDoc -> Just cvdoc)
+  = mapDocumentState
+      (const $ rawContentFromCompositeVDoc cvdoc)
+      ((gs ^. gsServerCache . scEdits) Map.!)
+  $ gs ^. gsDocumentState
 
 gsVDoc :: Lens' (GlobalState_ a) (Maybe CompositeVDoc)
 gsVDoc = lens getCompositeVDoc setCompositeVDoc

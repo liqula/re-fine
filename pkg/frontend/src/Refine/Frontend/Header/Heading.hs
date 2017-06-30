@@ -162,7 +162,7 @@ mainHeaderRender () rs = do
       toolbarPart_
 
 mkMainHeaderProps :: GlobalState -> MainHeaderProps
-mkMainHeaderProps gs = fmap (wipeDocumentState . fmap ((gs ^. gsServerCache . scEdits) Map.!)) gs
+mkMainHeaderProps gs = fmap (const . wipeDocumentState $ getDocumentState gs) gs
 
 mainHeader_ :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
 mainHeader_ props = RF.view mainHeader props mempty

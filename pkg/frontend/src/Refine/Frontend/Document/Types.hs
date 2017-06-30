@@ -36,7 +36,7 @@ import           Refine.Frontend.Document.FFI
 
 
 data DocumentAction =
-    DocumentUpdate (DocumentState_ (ID Edit))
+    DocumentUpdate GlobalDocumentState
   | DocumentUpdateEditInfo (EditInfo (Maybe EditKind))
   | RequestDocumentSave
   | DocumentSave (EditInfo EditKind)
@@ -50,17 +50,15 @@ data DocumentAction =
   | DocumentRedo
   deriving (Show, Eq, Generic)
 
-data DocumentState_ e =
+data DocumentState_ rawcontent edit =
     DocumentStateView
       { _documentStateVal      :: EditorState
-      , _documentStateContent  :: RawContent  -- ^ in read-only mode, change to the content is
-                                              -- driven by haskell, so we keep the haskell
-                                              -- representation around.
+      , _documentStateContent  :: rawcontent
       }
   | DocumentStateDiff
       { _documentStateVal           :: EditorState
-      , _documentStateContent       :: RawContent
-      , _documentStateDiff          :: e
+      , _documentStateContent       :: rawcontent
+      , _documentStateDiff          :: edit
       , _documentStateDiffCollapsed :: Bool
       }
   | DocumentStateEdit
@@ -69,7 +67,14 @@ data DocumentState_ e =
       }
   deriving (Show, Eq, Generic, Functor)
 
-type DocumentState = DocumentState_ Edit
+mapDocumentState :: (a -> a') -> (b -> b') -> DocumentState_ a b -> DocumentState_ a' b'
+mapDocumentState f g = \case
+  DocumentStateView x a -> DocumentStateView x (f a)
+  DocumentStateDiff x a e y -> DocumentStateDiff x (f a) (g e) y
+  DocumentStateEdit x y -> DocumentStateEdit x y
+
+type DocumentState = DocumentState_ RawContent Edit
+type GlobalDocumentState = DocumentState_ () (ID Edit)
 
 data WipedDocumentState =
     WipedDocumentStateView
@@ -79,8 +84,14 @@ data WipedDocumentState =
   | WipedDocumentStateEdit EditToolbarProps
   deriving (Show, Eq)
 
-mkDocumentStateView :: HasCallStack => RawContent -> DocumentState_ a
-mkDocumentStateView c = DocumentStateView e c'
+globalDocumentState :: HasCallStack => DocumentState -> GlobalDocumentState
+globalDocumentState = mapDocumentState (const ()) (^. editID)
+
+mkDocumentStateView :: HasCallStack => RawContent -> GlobalDocumentState
+mkDocumentStateView = globalDocumentState . mkDocumentStateView_
+
+mkDocumentStateView_ :: HasCallStack => RawContent -> DocumentState
+mkDocumentStateView_ c = DocumentStateView e c'
   where
     e  = createWithContent $ convertFromRaw c
     c' = convertToRaw $ getCurrentContent e
@@ -89,19 +100,19 @@ mkDocumentStateView c = DocumentStateView e c'
 -- focus has changed and the context (like the edit that we diff
 -- against) does not apply any more.  If true, always switch to view
 -- mode; otherwise, stay in whichever mode we are.
-refreshDocumentStateView :: Bool -> RawContent -> DocumentState_ (ID Edit) -> DocumentState_ (ID Edit)
+refreshDocumentStateView :: Bool -> RawContent -> GlobalDocumentState -> GlobalDocumentState
 refreshDocumentStateView eidChanged c = if eidChanged then viewMode else sameMode
   where
-    viewMode _ = DocumentStateView e c
+    viewMode _ = DocumentStateView e ()
 
     sameMode = \case
-      DocumentStateView _ _                -> DocumentStateView e c
-      DocumentStateDiff _ _ edit collapsed -> DocumentStateDiff e c edit collapsed
+      DocumentStateView _ _                -> DocumentStateView e ()
+      DocumentStateDiff _ _ edit collapsed -> DocumentStateDiff e () edit collapsed
       DocumentStateEdit _ kind             -> DocumentStateEdit e kind
 
     e  = createWithContent $ convertFromRaw c
 
-emptyDocumentState :: HasCallStack => DocumentState_ a
+emptyDocumentState :: HasCallStack => GlobalDocumentState
 emptyDocumentState = mkDocumentStateView emptyRawContent
 
 data DocumentProps = DocumentProps
@@ -114,7 +125,7 @@ instance UnoverlapAllEq DocumentProps
 
 emptyDocumentProps :: HasCallStack => DocumentProps
 emptyDocumentProps = DocumentProps
-  { _dpDocumentState     = emptyDocumentState
+  { _dpDocumentState     = mkDocumentStateView_ emptyRawContent
   , _dpContributionState = emptyContributionState
   }
 

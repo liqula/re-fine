@@ -102,7 +102,7 @@ transformGlobalState = transf
           dispatchAndExec . ContributionAction =<< setAllVerticalSpanBounds (st ^. gsDocumentState)
 
         ContributionAction RequestSetRange -> do
-          mRangeEvent <- getRangeAction (st ^. gsDocumentState)
+          mRangeEvent <- getRangeAction $ getDocumentState st
           case mRangeEvent of
             Nothing -> pure ()
             Just rangeEvent -> do
@@ -243,7 +243,7 @@ emitBackendCallsFor action st = case action of
       let headEdit = fromMaybe (error "emitBackendCallsFor.SubmitComment")
                    $ st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit
           range    = fromMaybe (minimumRange (fromMaybe (error "perhaps we should make documentStateContent a proper lens?") $
-                                              st ^? gsDocumentState . documentStateContent))
+                                              st ^? to getDocumentState . documentStateContent))
                    $ st ^? gsCurrentSelection . _Just . C.selectionRange
           handle a = dispatchManyM [ a
                                    , ContributionAction RequestSetAllVerticalSpanBounds
@@ -405,7 +405,7 @@ dispatchAndExecMany as = liftIO . void . forkIO $ do
 -- IO is needed for (1) going via the selection state in the browser api (@getSelection (dstate
 -- ^. documentStateVal)@ would be nicer, but draft does not store selections in readOnly mode.), and
 -- for (2) for looking at the DOM for the position data.
-getRangeAction :: HasCallStack => (HasCallStack, MonadIO m) => DocumentState_ a -> m (Maybe ContributionAction)
+getRangeAction :: HasCallStack => (HasCallStack, MonadIO m) => DocumentState -> m (Maybe ContributionAction)
 getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
   esel :: Either String C.SelectionState <- runExceptT getDraftSelectionStateViaBrowser
   let rc :: C.RawContent

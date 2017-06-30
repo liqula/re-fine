@@ -52,7 +52,7 @@ import           Refine.Frontend.Util
 -- sometimes necessary, but it's a bit dangerous because it can
 -- trigger thunk evaluation loops.  use old state whenever it is
 -- enough.
-documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> GlobalState -> DocumentState_ (ID Edit) -> DocumentState_ (ID Edit)
+documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> GlobalState -> GlobalDocumentState -> GlobalDocumentState
 documentStateUpdate (OpenDocument cvdoc) oldgs _newgs st
   = let eidChanged = Just newID /= mOldID
         newID  = cvdoc ^. compositeVDocThisEditID
@@ -121,16 +121,16 @@ documentStateUpdate (AddEdit _) _ (view gsVDoc -> Just cvdoc) _state
 documentStateUpdate (DocumentAction DocumentCancelSave) _ (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (ContributionAction (SetRange range)) _ _ ((^? documentStateContent) -> Just rc)
+documentStateUpdate (ContributionAction (SetRange range)) _ (view gsVDoc -> Just cvdoc) _
   = mkDocumentStateView
   . addMarksToRawContent [(ContribIDHighlightMark, range ^. sstSelectionState . selectionRange)]
   . deleteMarksFromRawContentIf (== ContribIDHighlightMark)
-  $ rc
+  $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (ContributionAction ClearRange) _ _ ((^? documentStateContent) -> Just rc)
+documentStateUpdate (ContributionAction ClearRange) _ (view gsVDoc -> Just cvdoc) _
   = mkDocumentStateView
   . deleteMarksFromRawContentIf (== ContribIDHighlightMark)
-  $ rc
+  $ rawContentFromCompositeVDoc cvdoc
 
 documentStateUpdate (DocumentAction ToggleCollapseDiff) _ _ st | has _DocumentStateDiff st
   = st & documentStateDiffCollapsed %~ not
@@ -150,7 +150,7 @@ editorStateFromVDocVersion :: HasCallStack => VDocVersion -> EditorState
 editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
 
 -- | construct a 'SetAllVerticalSpanBounds' action.
-setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a -> m ContributionAction
+setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a b -> m ContributionAction
 setAllVerticalSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
     let marks :: Map ContributionID (Ranges LeafSelector)
         marks = getLeafSelectors rawContent
