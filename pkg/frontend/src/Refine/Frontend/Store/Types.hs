@@ -25,9 +25,10 @@ module Refine.Frontend.Store.Types where
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens (Getter)
+import           Control.Lens (Getter, lens)
 import           Data.String.Conversions (ST)
 import           Data.Text.I18n
+import qualified Data.Map as Map
 import           GHC.Generics (Generic)
 import           React.Flux (UnoverlapAllEq)
 
@@ -44,9 +45,7 @@ import Refine.Frontend.Types
 type GlobalState = GlobalState_ DocumentState
 
 data GlobalState_ a = GlobalState
-  { _gsVDoc                       :: Maybe CompositeVDoc  -- ^ FIXME: this should be split up into
-                                                          -- its 'gsDocumentState' part and its
-                                                          -- 'gsContributionState' part.
+  { _gsEdit                       :: Maybe (ID Edit)
   , _gsVDocList                   :: Maybe [ID VDoc]  -- ^ FIXME: this should be live in it's own
                                                       -- 'GlobalState' constructor.
   , _gsContributionState          :: ContributionState
@@ -73,7 +72,7 @@ data ServerCache = ServerCache
 
 emptyGlobalState :: HasCallStack => GlobalState
 emptyGlobalState = GlobalState
-  { _gsVDoc                       = Nothing
+  { _gsEdit                       = Nothing
   , _gsVDocList                   = Nothing
   , _gsContributionState          = emptyContributionState
   , _gsHeaderState                = emptyHeaderState
@@ -136,6 +135,46 @@ data GlobalAction =
   deriving (Show, Eq, Generic)
 
 makeRefineTypes [''ServerCache, ''GlobalState_, ''DevState, ''GlobalAction]
+
+gsVDoc :: Lens' (GlobalState_ a) (Maybe CompositeVDoc)
+gsVDoc = lens getCompositeVDoc setCompositeVDoc
+  where
+    getCompositeVDoc :: GlobalState_ a -> Maybe CompositeVDoc
+    getCompositeVDoc gs = mkCompositeVDoc (gs ^. gsServerCache) <$> (gs ^. gsEdit)
+
+    mkCompositeVDoc :: ServerCache -> ID Edit -> CompositeVDoc
+    mkCompositeVDoc sc eid = CompositeVDoc
+      ((sc ^. scVDocs) Map.! (edit ^. editVDoc))
+      edit
+      (mkMap scEdits editChildren)
+      (mkMap scNotes editNotes')
+      (mkCompositeDiscussion <$> mkMap scDiscussions editDiscussions')
+      where
+        edit = (sc ^. scEdits) Map.! eid
+
+        mkMap :: Lens' ServerCache (Map (ID a) a) -> Lens' Edit [ID a] -> Map (ID a) a
+        mkMap x y = Map.filterWithKey (\k _ -> k `elem` (edit ^. y)) $ sc ^. x
+
+        mkCompositeDiscussion :: Discussion -> CompositeDiscussion
+        mkCompositeDiscussion d = CompositeDiscussion d (error "undefined mkCompositeDiscussion") -- FIXME: make discussion tree
+          --  <*> (fmap (buildTree _statementParent (^. statementID)) . mapM getStatement =<< statementsOfDiscussion did)
+
+    setCompositeVDoc :: GlobalState_ a -> Maybe CompositeVDoc -> GlobalState_ a
+    setCompositeVDoc gs Nothing = gs & gsEdit .~ Nothing
+    setCompositeVDoc gs (Just cvd) = gs
+      & gsEdit .~ Just (cvd ^. compositeVDocThisEdit . editID)
+      & gsServerCache %~ updateCache
+      where
+        updateCache sc = sc
+          & scVDocs       %~ uncurry Map.insert (mkItem vdocID $ cvd ^. compositeVDoc)
+          & scEdits       %~ uncurry Map.insert (mkItem editID $ cvd ^. compositeVDocThisEdit)
+          & scEdits       %~ ((cvd ^. compositeVDocApplicableEdits) <>)
+          & scNotes       %~ ((cvd ^. compositeVDocApplicableNotes) <>)
+          & scDiscussions %~ (fmap (^. compositeDiscussion) (cvd ^. compositeVDocApplicableDiscussions) <>)  -- FIXME: update discussion tree
+
+        mkItem :: Lens' a (ID a) -> a -> (ID a, a)
+        mkItem k x = (x ^. k, x)
+
 
 instance UnoverlapAllEq GlobalState
 
