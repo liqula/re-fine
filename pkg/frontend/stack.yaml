@@ -38,7 +38,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/liqula/react-hs
-    commit: bb22fd571f6121a44717401ad37f16220e63189d
+    commit: 82f03d5071742ee6e69cd536f6b996e2f0f4fdd7
   extra-dep: true
   subdirs:
   - react-hs
