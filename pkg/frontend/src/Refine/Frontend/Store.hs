@@ -75,9 +75,9 @@ instance StoreData GlobalState where
         -- pure state update and effects.)
         loop :: [GlobalAction] -> GlobalState -> IO GlobalState
         loop [] st = pure st
-        loop (action : actions) st = do
-          (st', actions') <- runStateT (transformGlobalState @Transform action st) []
-          loop (actions <> actions') st'
+        loop (act : acts) st = do
+          (st', acts') <- runStateT (transformGlobalState @Transform act st) []
+          loop (acts <> acts') st'
 
 type MonadTransform m = (Functor m, Applicative m, Monad m, MonadIO m, MonadState [GlobalAction] m)
 type Transform = StateT [GlobalAction] IO
@@ -88,16 +88,16 @@ transformGlobalState = transf
   where
     transf :: GlobalAction -> GlobalState -> m GlobalState
     transf (ResetState st) _ = pure st  -- for testing only!
-    transf action st = do
-      consoleLogGlobalStateBefore weAreInDevMode action st
+    transf act st = do
+      consoleLogGlobalStateBefore weAreInDevMode act st
 
-      let st' = pureTransform action st
+      let st' = pureTransform act st
 
       -- ajax
-      liftIO $ emitBackendCallsFor action st
+      liftIO $ emitBackendCallsFor act st
 
       -- other effects
-      case action of
+      case act of
         ContributionAction RequestSetAllVerticalSpanBounds -> do
           dispatchAndExec . ContributionAction =<< setAllVerticalSpanBounds (st ^. gsDocumentState)
 
@@ -130,25 +130,25 @@ transformGlobalState = transf
       pure st'
 
     pureTransform :: GlobalAction -> GlobalState -> GlobalState
-    pureTransform action st = st'
+    pureTransform act st = st'
       where st' = st
-              & gsVDoc                %~ vdocUpdate action
-              & gsVDocList            %~ vdocListUpdate action
-              & gsContributionState   %~ contributionStateUpdate action
-              & gsHeaderState         %~ headerStateUpdate action
-              & gsDocumentState       %~ documentStateUpdate action st st'
-              & gsScreenState         %~ maybe id screenStateUpdate (action ^? _ScreenAction)
-              & gsLoginState          %~ loginStateUpdate action
-              & gsMainMenuState       %~ mainMenuUpdate action
-              & gsToolbarSticky       %~ toolbarStickyUpdate action
-              & gsTranslations        %~ translationsUpdate action
-              & gsDevState            %~ devStateUpdate action
+              & gsVDoc                %~ vdocUpdate act
+              & gsVDocList            %~ vdocListUpdate act
+              & gsContributionState   %~ contributionStateUpdate act
+              & gsHeaderState         %~ headerStateUpdate act
+              & gsDocumentState       %~ documentStateUpdate act st st'
+              & gsScreenState         %~ maybe id screenStateUpdate (act ^? _ScreenAction)
+              & gsLoginState          %~ loginStateUpdate act
+              & gsMainMenuState       %~ mainMenuUpdate act
+              & gsToolbarSticky       %~ toolbarStickyUpdate act
+              & gsTranslations        %~ translationsUpdate act
+              & gsDevState            %~ devStateUpdate act
 
 consoleLogGlobalStateBefore :: HasCallStack => forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
 consoleLogGlobalStateBefore False _ _ = pure ()
-consoleLogGlobalStateBefore True action _st = do
+consoleLogGlobalStateBefore True act _st = do
   liftIO $ consoleLogJSStringM "" "\n"
-  consoleLogGlobalAction action
+  consoleLogGlobalAction act
 
 consoleLogGlobalStateAfter :: HasCallStack => forall m. MonadTransform m => Bool -> Bool -> GlobalState -> m ()
 consoleLogGlobalStateAfter False = \_ _ -> pure ()
@@ -163,21 +163,21 @@ consoleLogGlobalState True st = liftIO $ do
   traceContentInEditorState (st ^. gsDocumentState . documentStateVal)
 
 consoleLogGlobalAction :: HasCallStack => forall m. MonadTransform m => GlobalAction -> m ()
-consoleLogGlobalAction action@(show -> shown) = do
+consoleLogGlobalAction act@(show -> shown) = do
   let consolewidth = 80
   if length shown <= consolewidth
     then do
       consoleLogJSStringM "Action: " (cs shown)
     else do
       consoleLogJSStringM "Action: " (cs $ take consolewidth shown)
-      consoleLogJSONM "Action: " action
+      consoleLogJSONM "Action: " act
 
 
 -- * pure updates
 
 vdocUpdate :: HasCallStack => GlobalAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
 vdocUpdate (OpenDocument newvdoc) _ = Just newvdoc
-vdocUpdate action (Just vdoc) = Just $ case action of
+vdocUpdate act (Just vdoc) = Just $ case act of
     AddDiscussion discussion
       -> vdoc
           & C.compositeVDocApplicableDiscussions
@@ -203,7 +203,7 @@ vdocListUpdate _                            st = st
 
 
 toolbarStickyUpdate :: HasCallStack => GlobalAction -> Bool -> Bool
-toolbarStickyUpdate action st = case action of
+toolbarStickyUpdate act st = case act of
   ToolbarStickyStateChange st' -> st'
   _                            -> st
 
@@ -213,7 +213,7 @@ toolbarStickyUpdate action st = case action of
 -- test cases, initialize it unconditionally (See `test/Refine/Frontend/Contribution/MarkSpec.hs`).
 devStateUpdate :: HasCallStack => GlobalAction -> Maybe DevState -> Maybe DevState
 devStateUpdate _ Nothing = Nothing
-devStateUpdate action (Just devstate) = Just $ upd action devstate
+devStateUpdate act (Just devstate) = Just $ upd act devstate
   where
     upd a (DevState as) = DevState $ a : as
 
@@ -221,7 +221,7 @@ devStateUpdate action (Just devstate) = Just $ upd action devstate
 -- * ajax
 
 emitBackendCallsFor :: HasCallStack => GlobalAction -> GlobalState -> IO ()
-emitBackendCallsFor action st = case action of
+emitBackendCallsFor act st = case act of
 
     -- documents
 
@@ -367,7 +367,7 @@ ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of
 
 -- FIXME: return a single some-action, not a list?
 dispatch :: HasCallStack => GlobalAction -> ViewEventHandler
-dispatch a = [someStoreAction @GlobalState a]
+dispatch a = [action @GlobalState a]
 
 dispatchMany :: HasCallStack => [GlobalAction] -> ViewEventHandler
 dispatchMany = mconcat . fmap dispatch
@@ -440,7 +440,7 @@ removeAllRanges = liftIO js_removeAllRanges
 -- | See https://bitbucket.org/wuzzeb/react-flux/issues/28/triggering-re-render-after-store-update
 -- for details and status.
 reactFluxWorkAroundForkIO :: HasCallStack => IO () -> IO ()
-reactFluxWorkAroundForkIO action = void . forkIO $ yield >> action
+reactFluxWorkAroundForkIO act = void . forkIO $ yield >> act
 
 -- | See https://bitbucket.org/wuzzeb/react-flux/issues/28/triggering-re-render-after-store-update
 -- for details and status.  Try to increase microseconds if you still experience race conditions.

@@ -33,8 +33,6 @@ module Refine.Frontend.Header.Heading
 
 import Refine.Frontend.Prelude
 
-import qualified Data.Map as Map
-
 import           Language.Css.Syntax
 import           React.Flux as RF
 import           React.Flux.Internal as RF

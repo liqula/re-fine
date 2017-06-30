@@ -158,7 +158,7 @@ instance {-# OVERLAPPABLE #-} IbuttonOnClick action 'EventHandlerCode => Ibutton
 instance IbuttonOnClick action ('StatefulEventHandlerCode st) => IbuttonOnClick action ('StatefulEventHandlerCode (IbuttonState st)) where
   runIbuttonOnClick evt mevt onclick (IbuttonState mo st) =
     case runIbuttonOnClick evt mevt onclick st of
-      (action, mupd) -> (action, IbuttonState mo <$> mupd)
+      (act, mupd) -> (act, IbuttonState mo <$> mupd)
 
 -- | Handle stopPropagation etc., then run the 'runIbuttonOnClick' from the matching instance.
 mkIbuttonClickHandler :: HasCallStack => IbuttonOnClick onclick handler => IbuttonProps onclick -> Event -> MouseEvent -> (EventHandlerType handler, [EventModification])

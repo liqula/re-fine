@@ -38,28 +38,28 @@ import           Refine.Frontend.Types
 contributionStateUpdate :: HasCallStack => GlobalAction -> ContributionState -> ContributionState
 contributionStateUpdate a = localAction a . globalAction a
   where
-    localAction (ContributionAction action) st = st
-      & csCurrentSelectionWithPx   %~ currentRangeUpdate action
-      & csDisplayedContributionID  %~ displayedContributionUpdate action
-      & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate action
-      & csAllVerticalSpanBounds    %~ allVerticalSpanBoundsUpdate action
-      & csBubblePositioning        %~ bubblePositioningUpdate action
-      & csBubbleFilter             %~ bubbleFilterUpdate action
+    localAction (ContributionAction act) st = st
+      & csCurrentSelectionWithPx   %~ currentRangeUpdate act
+      & csDisplayedContributionID  %~ displayedContributionUpdate act
+      & csHighlightedMarkAndBubble %~ highlightedMarkAndBubbleUpdate act
+      & csAllVerticalSpanBounds    %~ allVerticalSpanBoundsUpdate act
+      & csBubblePositioning        %~ bubblePositioningUpdate act
+      & csBubbleFilter             %~ bubbleFilterUpdate act
     localAction _ st = st
 
-    globalAction action st = st
-      & csQuickCreateShowState     %~ quickCreateShowStateUpdate action
-      & csActiveDialog             %~ activeDialogUpdate action
+    globalAction act st = st
+      & csQuickCreateShowState     %~ quickCreateShowStateUpdate act
+      & csActiveDialog             %~ activeDialogUpdate act
 
 
 currentRangeUpdate :: HasCallStack => ContributionAction -> Maybe SelectionStateWithPx -> Maybe SelectionStateWithPx
-currentRangeUpdate action = case action of
+currentRangeUpdate act = case act of
   SetRange range -> const (Just range)
   ClearRange     -> const Nothing
   _ -> id
 
 displayedContributionUpdate :: HasCallStack => ContributionAction -> Maybe ContributionID -> Maybe ContributionID
-displayedContributionUpdate action st = case action of
+displayedContributionUpdate act st = case act of
   ShowContributionDialog cid'
     | st == Just cid' -> Nothing
     | otherwise       -> Just cid'
@@ -80,7 +80,7 @@ highlightedMarkAndBubbleUpdate (HighlightMarkAndBubble cids) _    = cids
 highlightedMarkAndBubbleUpdate _                             cids = cids
 
 quickCreateShowStateUpdate :: HasCallStack => GlobalAction -> QuickCreateShowState -> QuickCreateShowState
-quickCreateShowStateUpdate action st = case action of
+quickCreateShowStateUpdate act st = case act of
   ContributionAction (SetRange _)               -> somethingWasSelected
   ContributionAction ClearRange                 -> selectionWasRemoved
   HeaderAction ToggleCommentToolbarExtension    -> toolbarWasToggled

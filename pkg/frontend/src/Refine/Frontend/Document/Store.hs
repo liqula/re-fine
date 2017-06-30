@@ -31,7 +31,6 @@ module Refine.Frontend.Document.Store
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens (ix)
 import qualified Data.Map as Map
 
 import           Refine.Common.Types
@@ -138,10 +137,6 @@ documentStateUpdate (DocumentAction ToggleCollapseDiff) _ _ st | has _DocumentSt
 documentStateUpdate _ _ _ st
   = st
 
-
-editFromCompositeVDoc :: CompositeVDoc -> ID Edit -> Edit
-editFromCompositeVDoc cvdoc eid = fromMaybe (error $ "editFromCompositeVDoc " <> show eid) $
-                           cvdoc ^? compositeVDocApplicableEdits . ix eid
 
 editorStateToVDocVersion :: HasCallStack => EditorState -> VDocVersion
 editorStateToVDocVersion = rawContentToVDocVersion . convertToRaw . getCurrentContent

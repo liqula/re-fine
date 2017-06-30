@@ -143,6 +143,8 @@ getDocumentState gs@(view gsVDoc -> Just cvdoc)
       (const $ rawContentFromCompositeVDoc cvdoc)
       ((gs ^. gsServerCache . scEdits) Map.!)
   $ gs ^. gsDocumentState
+getDocumentState _
+  = error "getDocumentState: no gsVDoc"
 
 gsVDoc :: Lens' (GlobalState_ a) (Maybe CompositeVDoc)
 gsVDoc = lens getCompositeVDoc setCompositeVDoc
