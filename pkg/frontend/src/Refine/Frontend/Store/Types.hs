@@ -62,6 +62,13 @@ data GlobalState_ a = GlobalState
   } deriving (Show, Eq, Generic, Functor)
 
 data ServerCache = ServerCache
+  { _scVDocs       :: Map (ID VDoc)       VDoc
+  , _scEdits       :: Map (ID Edit)       Edit
+  , _scNotes       :: Map (ID Note)       Note
+  , _scDiscussions :: Map (ID Discussion) Discussion
+  , _scUsers       :: Map (ID User)       User
+  , _scGroups      :: Map (ID Group)      Group
+  }
   deriving (Show, Eq, Generic)
 
 emptyGlobalState :: HasCallStack => GlobalState
@@ -77,8 +84,11 @@ emptyGlobalState = GlobalState
   , _gsToolbarSticky              = False
   , _gsTranslations               = emptyTrans
   , _gsDevState                   = Nothing
-  , _gsServerCache                = ServerCache
+  , _gsServerCache                = emptyServerCache
   }
+
+emptyServerCache :: ServerCache
+emptyServerCache = ServerCache mempty mempty mempty mempty mempty mempty
 
 type MainHeaderProps = GlobalState_ WipedDocumentState
 
