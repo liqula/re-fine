@@ -122,7 +122,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                               go allowed = fmap snd . filter ((`Set.member` allowed) . contribID . fst) . Map.toList
 
                       leftAside_ asideProps
-                      document_ $ DocumentProps (rs ^. RS.gsDocumentState)
+                      document_ $ DocumentProps (fmap ((rs ^. gsServerCache . scEdits) Map.!) $ rs ^. RS.gsDocumentState)
                                                 (rs ^. RS.gsContributionState)
                       rightAside_ asideProps
 

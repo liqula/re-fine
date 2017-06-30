@@ -33,6 +33,8 @@ module Refine.Frontend.Header.Heading
 
 import Refine.Frontend.Prelude
 
+import qualified Data.Map as Map
+
 import           Language.Css.Syntax
 import           React.Flux as RF
 import           React.Flux.Internal as RF
@@ -160,7 +162,7 @@ mainHeaderRender () rs = do
       toolbarPart_
 
 mkMainHeaderProps :: GlobalState -> MainHeaderProps
-mkMainHeaderProps = fmap wipeDocumentState
+mkMainHeaderProps gs = fmap (wipeDocumentState . fmap ((gs ^. gsServerCache . scEdits) Map.!)) gs
 
 mainHeader_ :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
 mainHeader_ props = RF.view mainHeader props mempty

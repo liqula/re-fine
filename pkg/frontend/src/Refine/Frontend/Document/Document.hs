@@ -107,8 +107,8 @@ documentRender() props = liftViewToStateHandler $ do
       , "customStyleMap" &= documentStyleMap
       , "readOnly" &= has _DocumentStateView dstate
       , onChange $ \evt ->
-          let dstate' :: DocumentState
-              dstate' = dstate & documentStateVal .~ updateEditorState evt
+          let dstate' :: DocumentState_ (ID Edit)
+              dstate' = (^. editID) <$> (dstate & documentStateVal .~ updateEditorState evt)
           in simpleHandler $ dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetAllVerticalSpanBounds]
           -- TODO: #371
           --

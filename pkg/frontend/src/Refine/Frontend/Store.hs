@@ -405,7 +405,7 @@ dispatchAndExecMany as = liftIO . void . forkIO $ do
 -- IO is needed for (1) going via the selection state in the browser api (@getSelection (dstate
 -- ^. documentStateVal)@ would be nicer, but draft does not store selections in readOnly mode.), and
 -- for (2) for looking at the DOM for the position data.
-getRangeAction :: HasCallStack => (HasCallStack, MonadIO m) => DocumentState -> m (Maybe ContributionAction)
+getRangeAction :: HasCallStack => (HasCallStack, MonadIO m) => DocumentState_ a -> m (Maybe ContributionAction)
 getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
   esel :: Either String C.SelectionState <- runExceptT getDraftSelectionStateViaBrowser
   let rc :: C.RawContent

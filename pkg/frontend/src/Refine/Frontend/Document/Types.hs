@@ -36,7 +36,7 @@ import           Refine.Frontend.Document.FFI
 
 
 data DocumentAction =
-    DocumentUpdate DocumentState
+    DocumentUpdate (DocumentState_ (ID Edit))
   | DocumentUpdateEditInfo (EditInfo (Maybe EditKind))
   | RequestDocumentSave
   | DocumentSave (EditInfo EditKind)
@@ -50,7 +50,7 @@ data DocumentAction =
   | DocumentRedo
   deriving (Show, Eq, Generic)
 
-data DocumentState =
+data DocumentState_ e =
     DocumentStateView
       { _documentStateVal      :: EditorState
       , _documentStateContent  :: RawContent  -- ^ in read-only mode, change to the content is
@@ -60,14 +60,16 @@ data DocumentState =
   | DocumentStateDiff
       { _documentStateVal           :: EditorState
       , _documentStateContent       :: RawContent
-      , _documentStateDiff          :: Edit
+      , _documentStateDiff          :: e
       , _documentStateDiffCollapsed :: Bool
       }
   | DocumentStateEdit
       { _documentStateVal      :: EditorState
       , _documentStateEditInfo :: EditInfo (Maybe EditKind)  -- ^ 'editInput_' dialog state lives here between close / re-open.
       }
-  deriving (Show, Eq, Generic)
+  deriving (Show, Eq, Generic, Functor)
+
+type DocumentState = DocumentState_ Edit
 
 data WipedDocumentState =
     WipedDocumentStateView
@@ -77,7 +79,7 @@ data WipedDocumentState =
   | WipedDocumentStateEdit EditToolbarProps
   deriving (Show, Eq)
 
-mkDocumentStateView :: HasCallStack => RawContent -> DocumentState
+mkDocumentStateView :: HasCallStack => RawContent -> DocumentState_ a
 mkDocumentStateView c = DocumentStateView e c'
   where
     e  = createWithContent $ convertFromRaw c
@@ -87,19 +89,19 @@ mkDocumentStateView c = DocumentStateView e c'
 -- focus has changed and the context (like the edit that we diff
 -- against) does not apply any more.  If true, always switch to view
 -- mode; otherwise, stay in whichever mode we are.
-refreshDocumentStateView :: Bool -> RawContent -> (ID Edit -> Edit) -> DocumentState -> DocumentState
-refreshDocumentStateView eidChanged c getEdit = if eidChanged then viewMode else sameMode
+refreshDocumentStateView :: Bool -> RawContent -> DocumentState_ (ID Edit) -> DocumentState_ (ID Edit)
+refreshDocumentStateView eidChanged c = if eidChanged then viewMode else sameMode
   where
     viewMode _ = DocumentStateView e c
 
     sameMode = \case
       DocumentStateView _ _                -> DocumentStateView e c
-      DocumentStateDiff _ _ edit collapsed -> DocumentStateDiff e c (getEdit $ edit ^. editID) collapsed
+      DocumentStateDiff _ _ edit collapsed -> DocumentStateDiff e c edit collapsed
       DocumentStateEdit _ kind             -> DocumentStateEdit e kind
 
     e  = createWithContent $ convertFromRaw c
 
-emptyDocumentState :: HasCallStack => DocumentState
+emptyDocumentState :: HasCallStack => DocumentState_ a
 emptyDocumentState = mkDocumentStateView emptyRawContent
 
 data DocumentProps = DocumentProps
@@ -117,6 +119,6 @@ emptyDocumentProps = DocumentProps
   }
 
 deriveClasses
-  [ ([''DocumentAction, ''DocumentState], allClass)
+  [ ([''DocumentAction, ''DocumentState_], allClass)
   , ([''DocumentProps], [''Lens'])
   ]

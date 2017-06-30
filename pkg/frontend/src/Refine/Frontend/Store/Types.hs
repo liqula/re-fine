@@ -42,7 +42,7 @@ import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
 
 
-type GlobalState = GlobalState_ DocumentState
+type GlobalState = GlobalState_ (DocumentState_ (ID Edit))
 
 data GlobalState_ a = GlobalState
   { _gsEdit                       :: Maybe (ID Edit)

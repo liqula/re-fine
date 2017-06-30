@@ -52,12 +52,12 @@ import           Refine.Frontend.Util
 -- sometimes necessary, but it's a bit dangerous because it can
 -- trigger thunk evaluation loops.  use old state whenever it is
 -- enough.
-documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> GlobalState -> DocumentState -> DocumentState
+documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> GlobalState -> DocumentState_ (ID Edit) -> DocumentState_ (ID Edit)
 documentStateUpdate (OpenDocument cvdoc) oldgs _newgs st
   = let eidChanged = Just newID /= mOldID
         newID  = cvdoc ^. compositeVDocThisEditID
         mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
-    in refreshDocumentStateView eidChanged (rawContentFromCompositeVDoc cvdoc) (editFromCompositeVDoc cvdoc) st
+    in refreshDocumentStateView eidChanged (rawContentFromCompositeVDoc cvdoc) st
 
 documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- FIXME: store last state before edit in DocumentStateEdit, and restore it from there?
@@ -69,9 +69,9 @@ documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     _oldgs
-                    (view gsVDoc -> Just cvdoc)
+                    _newgs
                     (DocumentStateView e r)
-  = DocumentStateDiff e r (editFromCompositeVDoc cvdoc eid) True
+  = DocumentStateDiff e r eid True
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
                     _oldgs
@@ -150,7 +150,7 @@ editorStateFromVDocVersion :: HasCallStack => VDocVersion -> EditorState
 editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
 
 -- | construct a 'SetAllVerticalSpanBounds' action.
-setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState -> m ContributionAction
+setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a -> m ContributionAction
 setAllVerticalSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
     let marks :: Map ContributionID (Ranges LeafSelector)
         marks = getLeafSelectors rawContent
