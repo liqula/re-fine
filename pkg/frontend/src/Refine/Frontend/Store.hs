@@ -176,10 +176,7 @@ consoleLogGlobalAction action@(show -> shown) = do
 -- * pure updates
 
 vdocUpdate :: HasCallStack => GlobalAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
-vdocUpdate action Nothing = case action of
-    OpenDocument newvdoc -> Just newvdoc
-    _ -> Nothing
-
+vdocUpdate (OpenDocument newvdoc) _ = Just newvdoc
 vdocUpdate action (Just vdoc) = Just $ case action of
     AddDiscussion discussion
       -> vdoc
@@ -197,6 +194,7 @@ vdocUpdate action (Just vdoc) = Just $ case action of
               %~ M.insert (edit ^. C.editID) edit
 
     _ -> vdoc
+vdocUpdate _ Nothing = Nothing
 
 
 vdocListUpdate :: HasCallStack => GlobalAction -> Maybe [C.ID C.VDoc] -> Maybe [C.ID C.VDoc]
