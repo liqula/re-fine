@@ -6,9 +6,8 @@
     "build": "npm install && NODE_ENV=production webpack -p --config webpack.prod.config.js"
   },
   "dependencies": {
-    "draft-js": "https://github.com/liqula/draft-js.git#8138d2151cba5ef8dcfac6e924a096d64c6f4266",
     "draft-js-export-html": "0.5.2",
-    "google-closure-compiler-js": "20170218.0.0",
+    "draft-js": "https://github.com/liqula/draft-js.git#8138d2151cba5ef8dcfac6e924a096d64c6f4266",
     "gridle": "2.0.48",
     "react": "15.6.1",
     "react-dom": "15.6.1",
@@ -26,6 +25,7 @@
     "css-loader": "0.28.1",
     "enzyme": "2.8.2",
     "file-loader": "0.11.1",
+    "google-closure-compiler-js": "20170218.0.0",
     "html-webpack-plugin": "2.28.0",
     "isdev": "1.0.1",
     "jsdom": "9.8.3",
