@@ -163,6 +163,8 @@ gsVDoc = lens getCompositeVDoc setCompositeVDoc
       where
         edit = (sc ^. scEdits) Map.! eid
 
+        -- TUNING: this go through y and construct x from that, this way we don't have to touch the
+        -- elements of x we want to throw out.
         mkMap :: Lens' ServerCache (Map (ID a) a) -> Lens' Edit (Set (ID a)) -> Map (ID a) a
         mkMap x y = Map.filterWithKey (\k _ -> k `Set.member` (edit ^. y)) $ sc ^. x
 
