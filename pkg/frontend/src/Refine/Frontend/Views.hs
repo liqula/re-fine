@@ -183,11 +183,11 @@ noteToProtoBubble :: HasCallStack => AsideProps -> Note -> ProtoBubble
 noteToProtoBubble aprops n = ProtoBubble cid (lookupPosition aprops cid) (elemText (n ^. noteText))
   where cid = contribID $ n ^. noteID
 
-discussionToProtoBubble :: HasCallStack => AsideProps -> CompositeDiscussion -> ProtoBubble
+discussionToProtoBubble :: HasCallStack => AsideProps -> Discussion -> ProtoBubble
 discussionToProtoBubble aprops d = ProtoBubble cid (lookupPosition aprops cid) child
   where
-    cid = contribID $ d ^. compositeDiscussion . discussionID
-    child = elemText (ST.rootLabel (d ^. compositeDiscussionTree) ^. statementText)
+    cid = contribID $ d ^. discussionID
+    child = elemText (ST.rootLabel (d ^. discussionTree) ^. statementText)
 
 stackBubble :: HasCallStack => BubbleSide -> AsideProps -> StackOrNot ProtoBubble -> ReactElementM 'EventHandlerCode ()
 stackBubble bubbleSide aprops bstack = bubble_ props children

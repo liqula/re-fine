@@ -39,6 +39,7 @@ import qualified Refine.Backend.Database.Class as C
 import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
 import           Refine.Backend.Database.Types
+import           Refine.Backend.Database.Tree
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
@@ -358,10 +359,6 @@ getQuestion = getMetaEntity (S.questionElim . toQuestion)
 
 -- * Discussion
 
--- FIXME: user the @_lid@ argument
-toDiscussion :: MetaID Discussion -> Bool -> RangePosition -> LoginId -> Discussion
-toDiscussion did pblc range _lid = Discussion did pblc (unRangePosition range)
-
 saveStatement :: ID Discussion -> S.Statement -> DB Statement
 saveStatement did sstatement = do
   mid <- createMetaID sstatement
@@ -381,10 +378,16 @@ createDiscussion pid disc = do
           (disc ^. createDiscussionStatementText)
           Nothing -- Top level node
   void $ saveStatement (mid ^. miID) sstatement
-  pure $ S.discussionElim (toDiscussion mid) sdiscussion
+  getDiscussion $ mid ^. miID
 
 getDiscussion :: ID Discussion -> DB Discussion
-getDiscussion = getMetaEntity (S.discussionElim . toDiscussion)
+getDiscussion did = do
+  (mid, d) <- getMetaEntity (,) did
+  s <- statementsOfDiscussion did
+  t <- buildTree (^. statementParent) (^. statementID) <$> mapM getStatement s
+  -- FIXME: use the @_lid@ argument
+  pure $ S.discussionElim (\pblc range _lid -> Discussion mid pblc (unRangePosition range) t) d
+
 
 statementsOfDiscussion :: ID Discussion -> DB [ID Statement]
 statementsOfDiscussion did = do

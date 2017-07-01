@@ -111,7 +111,7 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base edits notes discussions) =
             , b == base ^. editID
             , s <- unRanges $ docEditRanges diff rawContent]
          <> (convertHack noteRange                               <$> Map.toList notes)
-         <> (convertHack (compositeDiscussion . discussionRange) <$> Map.toList discussions)
+         <> (convertHack discussionRange <$> Map.toList discussions)
 
 rawContentFromVDocVersion :: VDocVersion -> RawContent
 rawContentFromVDocVersion (VDocVersion st) = case eitherDecode $ cs st of

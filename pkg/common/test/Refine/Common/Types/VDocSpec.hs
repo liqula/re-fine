@@ -55,17 +55,17 @@ rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
 
     (es, ns, ds) = rotate ([], [], []) 0 selections
 
-    rotate :: ([(ID Edit, Edit)], [(ID Note, Note)], [(ID Discussion, CompositeDiscussion)])
+    rotate :: ([(ID Edit, Edit)], [(ID Note, Note)], [(ID Discussion, Discussion)])
            -> Int
            -> [Selection Position]
-           -> ([(ID Edit, Edit)], [(ID Note, Note)], [(ID Discussion, CompositeDiscussion)])
+           -> ([(ID Edit, Edit)], [(ID Note, Note)], [(ID Discussion, Discussion)])
     rotate contribs _ []           = contribs
     rotate contribs i (sel : sels) = rotate (upd contribs) (i + 1) sels
       where
         upd = case i `mod` 3 of
           0 -> _1 %~ (build (Proxy :: Proxy Edit)       i (\_ -> Edit un un un mempty un un un un un un) sel :)
           1 -> _2 %~ (build (Proxy :: Proxy Note)       i (Note un un un) sel :)
-          2 -> _3 %~ (build (Proxy :: Proxy Discussion) i (\r -> CompositeDiscussion (Discussion un un r) un) sel :)
+          2 -> _3 %~ (build (Proxy :: Proxy Discussion) i (\r -> Discussion un un r un) sel :)
           _ -> error "rawContentToCompositeVDoc: impossible."
 
     build :: Proxy a -> Int -> (Range Position -> b) -> Selection Position -> (ID a, b)

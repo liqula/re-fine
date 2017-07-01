@@ -106,11 +106,11 @@ type SAddAnswer
 
 type SAddDiscussion
   = "r" :> "discussion" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Discussion)
-    :> Post '[JSON] CompositeDiscussion
+    :> Post '[JSON] Discussion
 
 type SAddStatement
   = "r" :> "statement" :> "reply" :> Capture "onstatementid" (ID Statement) :> ReqBody '[JSON] (Create Statement)
-    :> Post '[JSON] CompositeDiscussion
+    :> Post '[JSON] Discussion
       -- FIXME: should be @"r" :> "statement" :> Capture "onstatementid" (ID Statement) :> "reply" ...@
       -- to be consistent with 'SPutSimpleVoteOnEdit' etc.
 

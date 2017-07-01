@@ -9,10 +9,8 @@ module Refine.Backend.Database.Class where
 
 import Refine.Backend.Prelude
 
-import Control.Lens ((^.))
 import Data.Typeable (Typeable)
 
-import Refine.Backend.Database.Tree
 import Refine.Backend.Database.Types
 import Refine.Common.Types
 
@@ -124,20 +122,13 @@ compositeQuestion
 compositeQuestion qid =
   CompositeQuestion <$> getQuestion qid <*> answersOfQuestion qid
 
-compositeDiscussion
-  :: (Monad db, Database db)
-  => ID Discussion -> db CompositeDiscussion
-compositeDiscussion did = CompositeDiscussion
-  <$> getDiscussion did
-  <*> (fmap (buildTree _statementParent (^. statementID)) . mapM getStatement =<< statementsOfDiscussion did)
-
 editComments
   :: (Monad db, Database db)
   => ID Edit -> db [Comment]
 editComments pid = do
   notes       <- mapM getNote =<< editNotes pid
   questions   <- mapM Refine.Backend.Database.Class.compositeQuestion =<< editQuestions pid
-  discussions <- mapM Refine.Backend.Database.Class.compositeDiscussion =<< editDiscussions pid
+  discussions <- mapM getDiscussion =<< editDiscussions pid
   pure $ concat
     [ CommentNote       <$> notes
     , CommentQuestion   <$> questions

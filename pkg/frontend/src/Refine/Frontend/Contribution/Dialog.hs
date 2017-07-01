@@ -232,7 +232,7 @@ showNote_ :: HasCallStack => ShowNoteProps -> ReactElementM eventHandler ()
 showNote_ = view_ showNote "showNote_"
 
 
-showDiscussionProps :: HasCallStack => M.Map (ID Discussion) CompositeDiscussion -> GlobalState -> Maybe ShowDiscussionProps
+showDiscussionProps :: HasCallStack => M.Map (ID Discussion) Discussion -> GlobalState -> Maybe ShowDiscussionProps
 showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
   (Just discussion, Just offset) -> Just $ ShowDiscussionProps discussion offset (rs ^. gsScreenState . ssWindowWidth)
   (Just discussion, Nothing)     -> err "discussion" discussion "offset" Nothing
@@ -253,7 +253,7 @@ showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
 showDiscussion :: HasCallStack => View '[ShowDiscussionProps]
 showDiscussion = mkView "ShowDiscussion" $ \case
   ShowDiscussionProps discussion top windowWidth1 ->
-    let commentText1  = (Tree.rootLabel (discussion ^. compositeDiscussionTree) ^. statementText)
+    let commentText1  = (Tree.rootLabel (discussion ^. discussionTree) ^. statementText)
         iconStyle1    = ("icon-Discussion", "dark")
         userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"

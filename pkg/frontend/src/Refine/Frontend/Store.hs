@@ -182,7 +182,7 @@ vdocUpdate act (Just vdoc) = Just $ case act of
     AddDiscussion discussion
       -> vdoc
           & C.compositeVDocApplicableDiscussions
-              %~ M.insert (discussion ^. C.compositeDiscussion . C.discussionID) discussion
+              %~ M.insert (discussion ^. C.discussionID) discussion
 
     AddNote note
       -> vdoc

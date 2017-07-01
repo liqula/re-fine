@@ -143,7 +143,7 @@ data CompositeVDoc = CompositeVDoc
   , _compositeVDocThisEdit              :: Edit
   , _compositeVDocApplicableEdits       :: Map (ID Edit) Edit
   , _compositeVDocApplicableNotes       :: Map (ID Note) Note
-  , _compositeVDocApplicableDiscussions :: Map (ID Discussion) CompositeDiscussion
+  , _compositeVDocApplicableDiscussions :: Map (ID Discussion) Discussion
   }
   deriving (Eq, Show, Generic)
 

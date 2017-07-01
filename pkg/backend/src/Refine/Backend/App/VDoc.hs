@@ -94,7 +94,7 @@ getCompositeVDoc' vdoc editid = do
       vdoc edit
       (toMap editID edits)
       (toMap noteID commentNotes)
-      (toMap (compositeDiscussion . discussionID) commentDiscussions)
+      (toMap discussionID commentDiscussions)
   where
     toMap selector = Map.fromList . fmap (view selector &&& id)
 

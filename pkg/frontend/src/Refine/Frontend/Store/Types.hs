@@ -116,7 +116,7 @@ data GlobalAction =
   | ToolbarStickyStateChange Bool
   | MainMenuAction MainMenuAction
   | AddNote Note
-  | AddDiscussion CompositeDiscussion
+  | AddDiscussion Discussion
   | AddEdit Edit
   | SaveSelect ST ST
 
@@ -159,7 +159,7 @@ gsVDoc = lens getCompositeVDoc setCompositeVDoc
       edit
       (mkMap scEdits editChildren)
       (mkMap scNotes editNotes')
-      (mkCompositeDiscussion <$> mkMap scDiscussions editDiscussions')
+      (mkMap scDiscussions editDiscussions')
       where
         edit = (sc ^. scEdits) Map.! eid
 
@@ -167,10 +167,6 @@ gsVDoc = lens getCompositeVDoc setCompositeVDoc
         -- elements of x we want to throw out.
         mkMap :: Lens' ServerCache (Map (ID a) a) -> Lens' Edit (Set (ID a)) -> Map (ID a) a
         mkMap x y = Map.filterWithKey (\k _ -> k `Set.member` (edit ^. y)) $ sc ^. x
-
-        mkCompositeDiscussion :: Discussion -> CompositeDiscussion
-        mkCompositeDiscussion d = CompositeDiscussion d (error "undefined mkCompositeDiscussion") -- FIXME: make discussion tree
-          --  <*> (fmap (buildTree _statementParent (^. statementID)) . mapM getStatement =<< statementsOfDiscussion did)
 
     setCompositeVDoc :: GlobalState_ a -> Maybe CompositeVDoc -> GlobalState_ a
     setCompositeVDoc gs Nothing = gs & gsEdit .~ Nothing
@@ -183,7 +179,7 @@ gsVDoc = lens getCompositeVDoc setCompositeVDoc
           & scEdits       %~ uncurry Map.insert (mkItem editID $ cvd ^. compositeVDocThisEdit)
           & scEdits       %~ ((cvd ^. compositeVDocApplicableEdits) <>)
           & scNotes       %~ ((cvd ^. compositeVDocApplicableNotes) <>)
-          & scDiscussions %~ (fmap (^. compositeDiscussion) (cvd ^. compositeVDocApplicableDiscussions) <>)  -- FIXME: update discussion tree
+          & scDiscussions %~ ((cvd ^. compositeVDocApplicableDiscussions) <>)
 
         mkItem :: Lens' a (ID a) -> a -> (ID a, a)
         mkItem k x = (x ^. k, x)
