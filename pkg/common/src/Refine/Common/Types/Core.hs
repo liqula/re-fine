@@ -116,10 +116,10 @@ data Edit = Edit
   deriving (Eq, Show, Generic)
 
 data CreateEdit = CreateEdit
-  { _createEditDesc  :: ST
+  { _createEditDesc        :: ST
   -- _createEditVDoc :: ID VDoc      -- FIXME: add this
-  , _createEditVDoc  :: VDocVersion  -- FIXME: rename to createEditVDocVersion
-  , _createEditKind  :: EditKind
+  , _createEditVDocVersion :: VDocVersion
+  , _createEditKind        :: EditKind
   }
   deriving (Eq, Ord, Show, Generic)
 

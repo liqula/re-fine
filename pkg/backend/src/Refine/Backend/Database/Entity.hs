@@ -222,9 +222,9 @@ createVDoc pv vdoc = do
         Nothing -- hack: use a dummy key which will be replaced by a proper one before createVDoc returns
   mid <- createMetaID svdoc
   e <- createEdit (mid ^. miID) mempty CreateEdit
-    { _createEditDesc   = "initial document version"
-    , _createEditVDoc   = vdoc
-    , _createEditKind   = Initial
+    { _createEditDesc        = "initial document version"
+    , _createEditVDocVersion = vdoc
+    , _createEditKind        = Initial
     }
   let e' = S.idToKey (e ^. editMetaID . miID) :: Key S.Edit
   liftDB $ update (S.idToKey $ mid ^. miID) [S.VDocHeadId =. Just e']
@@ -244,7 +244,7 @@ createEdit :: ID VDoc -> EditSource (ID Edit) -> CreateEdit -> DB Edit
 createEdit rid me ce = do
   mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
-            (ce ^. createEditVDoc)
+            (ce ^. createEditVDocVersion)
             (S.idToKey rid)
             (ce ^. createEditKind)
             (DBVotes mempty)

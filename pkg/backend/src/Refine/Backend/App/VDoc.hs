@@ -117,7 +117,7 @@ addEdit baseeid edit = do
             --   while attempting to perform step.' and the frontend says 'Error in $: Failed
             --   reading: not a valid json value'.
         OT.diff (deleteMarksFromRawContent olddoc)
-                (deleteMarksFromRawContent . rawContentFromVDocVersion $ edit ^. createEditVDoc)
+                (deleteMarksFromRawContent . rawContentFromVDocVersion $ edit ^. createEditVDocVersion)
     DB.createEdit rid (EditSource [(dff, baseeid)]) edit
 
 addMerge :: (MonadApp db uh) => ID Edit -> ID Edit -> ID Edit -> AppM db uh Edit

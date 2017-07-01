@@ -267,9 +267,9 @@ emitBackendCallsFor act st = case act of
 
             cedit :: C.Create C.Edit
             cedit = C.CreateEdit
-                  { C._createEditDesc  = info ^. editInfoDesc
-                  , C._createEditVDoc  = editorStateToVDocVersion (st ^. gsDocumentState . documentStateVal)
-                  , C._createEditKind  = info ^. editInfoKind
+                  { C._createEditDesc        = info ^. editInfoDesc
+                  , C._createEditVDocVersion = editorStateToVDocVersion (st ^. gsDocumentState . documentStateVal)
+                  , C._createEditKind        = info ^. editInfoKind
                   }
 
         addEdit eid cedit $ \case
