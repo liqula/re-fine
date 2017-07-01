@@ -117,7 +117,6 @@ data Edit = Edit
 
 data CreateEdit = CreateEdit
   { _createEditDesc        :: ST
-  -- _createEditVDoc :: ID VDoc      -- FIXME: add this
   , _createEditVDocVersion :: VDocVersion
   , _createEditKind        :: EditKind
   }
