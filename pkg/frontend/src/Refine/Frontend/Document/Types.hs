@@ -73,7 +73,10 @@ mapDocumentState f g = \case
   DocumentStateDiff x a e y -> DocumentStateDiff x (f a) (g e) y
   DocumentStateEdit x y -> DocumentStateEdit x y
 
+-- | The document state variant for 'DocumentProps'.
 type DocumentState = DocumentState_ RawContent Edit
+
+-- | The document state for 'GlobalState'.
 type GlobalDocumentState = DocumentState_ () (ID Edit)
 
 data WipedDocumentState =

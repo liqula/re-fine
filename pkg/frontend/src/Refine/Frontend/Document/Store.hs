@@ -59,7 +59,7 @@ documentStateUpdate (OpenDocument cvdoc) oldgs _newgs st
     in refreshDocumentStateView eidChanged (rawContentFromCompositeVDoc cvdoc) st
 
 documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) _state
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- FIXME: store last state before edit in DocumentStateEdit, and restore it from there?
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
 documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _)
   = DocumentStateEdit
