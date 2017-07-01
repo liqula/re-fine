@@ -163,8 +163,9 @@ consoleLogGlobalState True st = liftIO $ do
   traceContentInEditorState (st ^. gsDocumentState . documentStateVal)
 
 consoleLogGlobalAction :: HasCallStack => forall m. MonadTransform m => GlobalAction -> m ()
-consoleLogGlobalAction act@(show -> shown) = do
+consoleLogGlobalAction act = do
   let consolewidth = 80
+      shown = show act
   if length shown <= consolewidth
     then do
       consoleLogJSStringM "Action: " (cs shown)
@@ -405,7 +406,7 @@ dispatchAndExecMany as = liftIO . void . forkIO $ do
 -- IO is needed for (1) going via the selection state in the browser api (@getSelection (dstate
 -- ^. documentStateVal)@ would be nicer, but draft does not store selections in readOnly mode.), and
 -- for (2) for looking at the DOM for the position data.
-getRangeAction :: HasCallStack => (HasCallStack, MonadIO m) => DocumentState -> m (Maybe ContributionAction)
+getRangeAction :: (HasCallStack, MonadIO m) => DocumentState -> m (Maybe ContributionAction)
 getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
   esel :: Either String C.SelectionState <- runExceptT getDraftSelectionStateViaBrowser
   let rc :: C.RawContent
