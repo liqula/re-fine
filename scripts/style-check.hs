@@ -68,6 +68,7 @@ verbose = False
 -- when it is done.
 main :: IO ()
 main = sh $ do
+  assertWorkingCopyClean
   liftIO $ hspec testWrapJsFFI
   setProperCurrentDirectory
   () <- fixTrailingWhitespace =<< getSourceFiles ["prelude", "common", "backend", "frontend"]
@@ -78,14 +79,23 @@ getSourceFiles :: MonadIO m => [FilePath] -> m [FilePath]
 getSourceFiles packages = filterExt "hs" <$> getAllFiles roots
   where roots = [ "pkg" </> pkg </> topic | pkg <- packages, topic <- ["src", "test"] ]
 
-failOnChangedFiles :: Shell ()
-failOnChangedFiles = do
+dirtyFiles :: Shell [GitStatus]
+dirtyFiles = do
   let interesting (GitStatus _ Untracked _) = False
       interesting (GitStatus _ Ignored _)   = False
       interesting _                         = True
+  mconcat <$> (filter interesting <$> gitStatus) `fold` Fold.list
 
-  gs <- mconcat <$> (filter interesting <$> gitStatus) `fold` Fold.list
+assertWorkingCopyClean :: Shell ()
+assertWorkingCopyClean = do
+  gs <- dirtyFiles
+  unless (null gs) $ do
+    echo "this script can only be run on a clean working copy!"
+    exit $ ExitFailure 1
 
+failOnChangedFiles :: Shell ()
+failOnChangedFiles = do
+  gs <- dirtyFiles
   if null gs
     then do
       echo ".../scripts/style-check.hs: all clear."
