@@ -83,9 +83,10 @@ main = do
   args <- getArgs
   case args of
     [sourceTree, transModuleFile, transModuleName, poDir]
-      -> main' (cs sourceTree) (cs transModuleFile) (cs transModuleName) (cs poDir)
+       -> main' (cs sourceTree) (cs transModuleFile) (cs transModuleName) (cs poDir)
+    [] -> main' "pkg/frontend/src/" "pkg/frontend/src/Refine/Frontend/TKey.hs" "Refine.Frontend.TKey" "po/"
     _ -> usage $ ExitFailure 1
-
+  sh yellIfChanged
 
 main' :: FilePath -> FilePath -> ST -> FilePath -> IO ()
 main' sourceTree transModuleFile transModuleName poDir = do
@@ -94,6 +95,16 @@ main' sourceTree transModuleFile transModuleName poDir = do
   ST.writeFile (Path.encodeString transModuleFile) $ createTransModule transModuleName tKeyCalls
   ST.writeFile (Path.encodeString $ poDir </> "template.pot") $ createPotFile tKeyCalls
   updatePoFilesIO poDir tKeyCalls
+
+yellIfChanged :: Shell ()
+yellIfChanged = do
+  dirty <- dirtyFiles
+  unless (null dirty) $ do
+    echo "\n"
+    echo "NOTE: ./scripts/i18n.hs has updated the translation tables."
+    echo "If this happens in the ci and you get an error, run ./scripts/i18n.hs without"
+    echo "arguments and review / commit the resulting changes."
+    echo "\n"
 
 
 -- * collect
