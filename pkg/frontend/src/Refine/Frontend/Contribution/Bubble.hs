@@ -104,7 +104,7 @@ bubble children = mkView "Bubble" $ \props -> do
       children
 
 bubble_ :: HasCallStack => BubbleProps -> ReactElementM 'EventHandlerCode () -> ReactElementM 'EventHandlerCode ()
-bubble_ !props children = view_ (bubble children) (bubbleKey props) props
+bubble_ props children = view_ (bubble children) (bubbleKey props) props
   -- (there is React.Flux.Internal.childrenPassedToView, but doing it by hand is easier to understand.)
 
 bubbleKey :: HasCallStack => BubbleProps -> JSString

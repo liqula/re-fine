@@ -136,7 +136,7 @@ login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState ->
         & iconButtonPropsOnClick      .~ [RS.Login . (Login <$> _loginFormUsername <*> _loginFormPassword) $ curState]
 
 login_ :: HasCallStack => FormError -> ReactElementM eventHandler ()
-login_ !errors = view_ (login errors) "login_"
+login_ errors = view_ (login errors) "login_"
 
 
 -- * Logout
@@ -198,4 +198,4 @@ registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "
                                               $ curState]
 
 registration_ :: HasCallStack => FormError -> ReactElementM eventHandler ()
-registration_ !errors = view_ (registration errors) "registration_"
+registration_ errors = view_ (registration errors) "registration_"

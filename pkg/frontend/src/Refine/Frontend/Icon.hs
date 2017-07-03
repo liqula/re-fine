@@ -193,7 +193,7 @@ icon = mkStatefulView "Icon" False $ \mouseIsOver props -> do
        ] mempty
 
 icon_ :: HasCallStack => IconProps -> ReactElementM eventHandler ()
-icon_ !props = view_ icon "Icon_" props
+icon_ = view_ icon "Icon_"
 
 
 -- ** icon button
@@ -247,7 +247,7 @@ iconButton = mkView "IconButton" $ \props -> do
         -- better idea, though.  this part of the code base is a bit brittle and confusing.
 
 iconButton_ :: HasCallStack => IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick -> ReactElementM eventHandler ()
-iconButton_ !props = view_ iconButton ("iconButton_" <> props ^. iconButtonPropsListKey) props
+iconButton_ props = view_ iconButton ("iconButton_" <> props ^. iconButtonPropsListKey) props
 
 
 -- ** events
