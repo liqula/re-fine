@@ -141,7 +141,8 @@ mainHeaderRender () rs = do
             WipedDocumentStateEdit{}   -> doc
 
       toolbarPart_ = div_ ["className" $= "c-fulltoolbar"] $ do
-        sticky_ [RF.on "onStickyStateChange" $ \e -> simpleHandler $ \() -> (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
+        sticky_ [RF.on "onStickyStateChange" $ \e -> simpleHandler $ \() ->
+                    (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
           toolbarWrapper_ $ case rs ^. gsDocumentState of
             WipedDocumentStateView -> toolbar_
             WipedDocumentStateDiff edit -> diffToolbar_ $ DiffToolbarProps
