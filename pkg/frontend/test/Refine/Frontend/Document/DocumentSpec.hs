@@ -111,7 +111,7 @@ spec = do
         -- selection api (not draft/react, since 'LeafSelector' is referencing DOM nodes).
 
         _ <- mount $ documentWithoutCb_ DocumentProps
-          { _dpDocumentState     = mkDocumentStateView rc
+          { _dpDocumentState     = mkDocumentStateView_ rc
           , _dpContributionState = emptyContributionState
           }
 

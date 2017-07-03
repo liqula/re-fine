@@ -92,12 +92,7 @@ data Discussion = Discussion
   { _discussionMetaID :: MetaID Discussion
   , _discussionPublic :: Bool
   , _discussionRange  :: Range Position
-  }
-  deriving (Eq, Ord, Show, Generic)
-
-data CompositeDiscussion = CompositeDiscussion
-  { _compositeDiscussion     :: Discussion
-  , _compositeDiscussionTree :: Tree Statement
+  , _discussionTree   :: Tree Statement
   }
   deriving (Eq, Show, Generic)
 
@@ -115,7 +110,7 @@ data Statement = Statement
 
 data Comment =
     CommentNote Note
-  | CommentDiscussion CompositeDiscussion
+  | CommentDiscussion Discussion
   | CommentQuestion CompositeQuestion
   deriving (Eq, Show, Generic)
 
@@ -129,7 +124,7 @@ type instance Create Statement  = CreateStatement
 
 -- * Refine types
 
-makeRefineTypes [''CreateNote, ''Note, ''CreateQuestion, ''Question, ''CompositeQuestion, ''CreateAnswer, ''Answer, ''CreateDiscussion, ''Discussion, ''CompositeDiscussion, ''CreateStatement, ''Statement, ''Comment]
+makeRefineTypes [''CreateNote, ''Note, ''CreateQuestion, ''Question, ''CompositeQuestion, ''CreateAnswer, ''Answer, ''CreateDiscussion, ''Discussion, ''CreateStatement, ''Statement, ''Comment]
 
 -- * Lenses
 

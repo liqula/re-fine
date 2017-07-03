@@ -131,7 +131,7 @@ mainMenu_ mt me cu = view_ mainMenu "mainMenu_" (MainMenuProps mt me cu)
 mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]
 mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
       let tabButton :: Int -> MainMenuSubTabLogin -> ReactElementM eventHandler ()
-          tabButton key this = div_ ["style" @@= [decl "margin-left" (Px 40)]] $ do
+          tabButton key this = div_ ["style" @@= [decl "marginLeft" (Px 40)]] $ do
             ibutton_ $ emptyIbuttonProps "00_joker" [MainMenuAction . MainMenuActionOpen . MainMenuLogin $ this]
               & ibListKey .~ cs (show key)
               & ibDarkBackground .~ False

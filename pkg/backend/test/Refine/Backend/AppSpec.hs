@@ -238,4 +238,4 @@ sampleProgram = do
 -- * loud samples
 
 sampleCreateEdit1 :: CreateEdit
-sampleCreateEdit1 = CreateEdit {_createEditDesc = "...", _createEditVDoc = sampleVDocVersion, _createEditKind = Grammar}
+sampleCreateEdit1 = CreateEdit {_createEditDesc = "...", _createEditVDocVersion = sampleVDocVersion, _createEditKind = Grammar}

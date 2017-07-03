@@ -237,7 +237,7 @@ instance UnoverlapAllEq ShowNoteProps
 
 data ShowDiscussionProps =
     ShowDiscussionProps
-      { _sdpNote        :: CompositeDiscussion
+      { _sdpNote        :: Discussion
       , _sdpTop         :: OffsetFromDocumentTop
       , _sdpWindowWidth :: Int
       }

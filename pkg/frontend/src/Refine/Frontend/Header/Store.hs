@@ -34,16 +34,16 @@ import Refine.Frontend.Store.Types
 
 
 headerStateUpdate :: HasCallStack => GlobalAction -> HeaderState -> HeaderState
-headerStateUpdate action st = st
-  & hsReadOnly               %~ readOnlyUpdate action
-  & hsToolbarExtensionStatus %~ toolbarExtensionUpdate action
+headerStateUpdate act st = st
+  & hsReadOnly               %~ readOnlyUpdate act
+  & hsToolbarExtensionStatus %~ toolbarExtensionUpdate act
 
 readOnlyUpdate :: HasCallStack => GlobalAction -> Bool -> Bool
 readOnlyUpdate (HeaderAction ToggleReadOnly) = not
 readOnlyUpdate _                             = id
 
 toolbarExtensionUpdate :: HasCallStack => GlobalAction -> ToolbarExtensionStatus -> ToolbarExtensionStatus
-toolbarExtensionUpdate action st = case (st, action) of
+toolbarExtensionUpdate act st = case (st, act) of
     (ToolbarExtensionClosed,               HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithoutRange
     (CommentToolbarExtensionWithoutRange,  ContributionAction ShowCommentEditor)       -> ToolbarExtensionClosed
     (CommentToolbarExtensionWithoutRange,  HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed
@@ -60,4 +60,4 @@ toolbarExtensionUpdate action st = case (st, action) of
 
     _ -> st
   where
-    bad1 = error $ "text-specific comment cannot start when toolbar extension is closed or in selection mode: " <> show (action, st)
+    bad1 = error $ "text-specific comment cannot start when toolbar extension is closed or in selection mode: " <> show (act, st)

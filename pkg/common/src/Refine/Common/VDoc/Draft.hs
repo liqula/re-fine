@@ -98,10 +98,10 @@ rangeIsEmpty rc = isEmptyRange . fmap (toStylePosition rc)
 -- * vdoc
 
 rawContentFromCompositeVDoc :: CompositeVDoc -> RawContent
-rawContentFromCompositeVDoc (CompositeVDoc _ base vers edits notes discussions) =
+rawContentFromCompositeVDoc (CompositeVDoc _ base edits notes discussions) =
   addMarksToRawContent marks rawContent
   where
-    rawContent = rawContentFromVDocVersion vers
+    rawContent = rawContentFromVDocVersion $ base ^. editVDocVersion
     convertHack l (k, v) = (contribID k, v ^. l)
 
     marks :: [(ContributionID, Range Position)]
@@ -111,7 +111,7 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base vers edits notes discussions) 
             , b == base ^. editID
             , s <- unRanges $ docEditRanges diff rawContent]
          <> (convertHack noteRange                               <$> Map.toList notes)
-         <> (convertHack (compositeDiscussion . discussionRange) <$> Map.toList discussions)
+         <> (convertHack discussionRange <$> Map.toList discussions)
 
 rawContentFromVDocVersion :: VDocVersion -> RawContent
 rawContentFromVDocVersion (VDocVersion st) = case eitherDecode $ cs st of

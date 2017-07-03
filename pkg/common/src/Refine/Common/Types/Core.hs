@@ -102,18 +102,23 @@ newtype EditSource a = EditSource { _unEditSource :: [(OT.Edit RawContent, a)] }
   deriving (Eq, Show, Generic, Functor, Monoid)
 
 data Edit = Edit
-  { _editMetaID :: MetaID Edit
-  , _editDesc   :: ST
-  , _editKind   :: EditKind
-  , _editSource :: EditSource (ID Edit)
-  , _editVotes  :: Votes
+  { _editMetaID       :: MetaID Edit
+  , _editDesc         :: ST
+  , _editKind         :: EditKind
+  , _editSource       :: EditSource (ID Edit)
+  , _editVDoc         :: ID VDoc
+  , _editVDocVersion  :: VDocVersion     -- FIXME: is it OK to store this in edit (consider serialization)?
+  , _editVotes        :: Votes
+  , _editChildren     :: Set (ID Edit)
+  , _editNotes'       :: Set (ID Note)
+  , _editDiscussions' :: Set (ID Discussion)
   }
   deriving (Eq, Show, Generic)
 
 data CreateEdit = CreateEdit
-  { _createEditDesc  :: ST
-  , _createEditVDoc  :: VDocVersion
-  , _createEditKind  :: EditKind
+  { _createEditDesc        :: ST
+  , _createEditVDocVersion :: VDocVersion
+  , _createEditKind        :: EditKind
   }
   deriving (Eq, Ord, Show, Generic)
 
@@ -136,10 +141,9 @@ type instance Create Edit = CreateEdit
 data CompositeVDoc = CompositeVDoc
   { _compositeVDoc                      :: VDoc
   , _compositeVDocThisEdit              :: Edit
-  , _compositeVDocThisVersion           :: VDocVersion
   , _compositeVDocApplicableEdits       :: Map (ID Edit) Edit
   , _compositeVDocApplicableNotes       :: Map (ID Note) Note
-  , _compositeVDocApplicableDiscussions :: Map (ID Discussion) CompositeDiscussion
+  , _compositeVDocApplicableDiscussions :: Map (ID Discussion) Discussion
   }
   deriving (Eq, Show, Generic)
 
@@ -656,6 +660,9 @@ editID = editMetaID . miID
 
 compositeVDocThisEditID :: Lens' CompositeVDoc (ID Edit)
 compositeVDocThisEditID = compositeVDocThisEdit . editID
+
+compositeVDocThisVersion :: Lens' CompositeVDoc VDocVersion
+compositeVDocThisVersion = compositeVDocThisEdit . editVDocVersion
 
 blockText :: Lens' (Block rangeKey blockKey) ST
 blockText = blockText'

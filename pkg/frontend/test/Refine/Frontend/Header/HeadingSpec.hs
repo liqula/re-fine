@@ -28,7 +28,6 @@ module Refine.Frontend.Header.HeadingSpec where
 import Refine.Frontend.Prelude
 
 import           Control.Lens ((^.), (&), (.~))
-import qualified Data.Map.Strict as M
 import           Test.Hspec
 
 import           Refine.Common.Test.Samples (sampleVDocVersion, sampleMetaID)
@@ -75,10 +74,12 @@ spec = do
       pendingWith "#201, #221"  -- (i actually think this may fail because we fail to handle actions in Enzyme.ReactWrapper.mount.)
 
       let newVDoc :: CompositeVDoc
-          newVDoc = CompositeVDoc (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1))
-                                  (Edit (MetaID (ID 1) undefined) undefined undefined undefined undefined)
-                                  sampleVDocVersion
-                                  M.empty M.empty M.empty
+          newVDoc = CompositeVDoc
+            (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1))
+            (Edit (MetaID 1 un) un un un (sampleMetaID ^. miID) sampleVDocVersion un mempty mempty mempty)
+            mempty mempty mempty
+            where
+              un = undefined
 
           gs :: GlobalState
           gs = emptyGlobalState & gsVDoc .~ Just newVDoc

@@ -33,26 +33,26 @@ import           Control.Lens ((&), (%~))
 import Refine.Frontend.Screen.Types
 
 screenStateUpdate :: HasCallStack => ScreenAction -> ScreenState -> ScreenState
-screenStateUpdate action st = st
-  & ssHeaderHeight         %~ headerHeightUpdate action
-  & ssWindowWidth          %~ windowWidthUpdate action
-  & ssWindowSize           %~ windowSizeUpdate action
+screenStateUpdate act st = st
+  & ssHeaderHeight         %~ headerHeightUpdate act
+  & ssWindowWidth          %~ windowWidthUpdate act
+  & ssWindowSize           %~ windowSizeUpdate act
 
 
 headerHeightUpdate :: HasCallStack => ScreenAction -> Int -> Int
-headerHeightUpdate action st = case action of
+headerHeightUpdate act st = case act of
     AddHeaderHeight height -> height
     _ -> st
 
 
 windowWidthUpdate :: HasCallStack => ScreenAction -> Int -> Int
-windowWidthUpdate action st = case action of
+windowWidthUpdate act st = case act of
     SetWindowWidth width -> width
     _ -> st
 
 
 windowSizeUpdate :: HasCallStack => ScreenAction -> WindowSize -> WindowSize
-windowSizeUpdate action st = case action of
+windowSizeUpdate act st = case act of
   SetWindowWidth width -> toSize width
   _ -> st
 

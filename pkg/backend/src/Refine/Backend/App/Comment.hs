@@ -56,17 +56,17 @@ addAnswer qid answer = do
   appLog "addAnswer"
   db $ DB.createAnswer qid answer
 
-addDiscussion :: ID Edit -> Create Discussion -> App CompositeDiscussion
+addDiscussion :: ID Edit -> Create Discussion -> App Discussion
 addDiscussion pid discussion = do
   appLog "addDiscussion"
   validateCreateChunkRange pid (discussion ^. createDiscussionRange)
   db $ do
     dscn <- DB.createDiscussion pid discussion
-    DB.compositeDiscussion (dscn ^. discussionID)
+    DB.getDiscussion (dscn ^. discussionID)
 
-addStatement :: ID Statement -> Create Statement -> App CompositeDiscussion
+addStatement :: ID Statement -> Create Statement -> App Discussion
 addStatement sid statement = do
   appLog "addStatement"
   db $ do
     _ <- DB.createStatement sid statement
-    DB.compositeDiscussion =<< DB.discussionOfStatement sid
+    DB.getDiscussion =<< DB.discussionOfStatement sid

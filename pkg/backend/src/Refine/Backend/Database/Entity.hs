@@ -31,6 +31,7 @@ import Refine.Backend.Prelude as P hiding (get)
 
 import           Database.Persist (get)
 import           Database.Persist.Sql (SqlBackend)
+import qualified Data.Set as Set
 import           Lentil.Core (entityLens)
 import           Lentil.Types as L
 
@@ -38,6 +39,7 @@ import qualified Refine.Backend.Database.Class as C
 import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
 import           Refine.Backend.Database.Types
+import           Refine.Backend.Database.Tree
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
@@ -221,9 +223,9 @@ createVDoc pv vdoc = do
         Nothing -- hack: use a dummy key which will be replaced by a proper one before createVDoc returns
   mid <- createMetaID svdoc
   e <- createEdit (mid ^. miID) mempty CreateEdit
-    { _createEditDesc   = "initial document version"
-    , _createEditVDoc   = vdoc
-    , _createEditKind   = Initial
+    { _createEditDesc        = "initial document version"
+    , _createEditVDocVersion = vdoc
+    , _createEditKind        = Initial
     }
   let e' = S.idToKey (e ^. editMetaID . miID) :: Key S.Edit
   liftDB $ update (S.idToKey $ mid ^. miID) [S.VDocHeadId =. Just e']
@@ -243,23 +245,23 @@ createEdit :: ID VDoc -> EditSource (ID Edit) -> CreateEdit -> DB Edit
 createEdit rid me ce = do
   mid <- createMetaID $ S.Edit
             (ce ^. createEditDesc)
-            (ce ^. createEditVDoc)
+            (ce ^. createEditVDocVersion)
             (S.idToKey rid)
             (ce ^. createEditKind)
             (DBVotes mempty)
   liftDB . forM_ (_unEditSource me) $ \(edit, parent) ->
       insert $ S.ParentChild (S.idToKey parent) (RawContentEdit edit) (S.idToKey $ mid ^. miID)
-  pure $ Edit
-    mid
-    (ce ^. createEditDesc)
-    (ce ^. createEditKind)
-    me
-    mempty
+  getEdit $ mid ^. miID
 
 getEdit :: ID Edit -> DB Edit
 getEdit eid = do
-  src <- getEditSource eid
-  getMetaEntity (\mid -> S.editElim $ \desc _ _ kind (DBVotes vs) -> Edit mid desc kind src vs) eid
+  src         <- getEditSource eid
+  notes       <- Set.fromList <$> editNotes eid
+  discussions <- Set.fromList <$> editDiscussions eid
+  children    <- Set.fromList <$> getEditChildren eid
+  getMetaEntity (\mid -> S.editElim $
+                  \desc d vdoc kind (DBVotes vs) ->
+                    Edit mid desc kind src (S.keyToId vdoc) d vs children notes discussions) eid
 
 getEditSource :: ID Edit -> DB (EditSource (ID Edit))
 getEditSource eid = do
@@ -357,10 +359,6 @@ getQuestion = getMetaEntity (S.questionElim . toQuestion)
 
 -- * Discussion
 
--- FIXME: user the @_lid@ argument
-toDiscussion :: MetaID Discussion -> Bool -> RangePosition -> LoginId -> Discussion
-toDiscussion did pblc range _lid = Discussion did pblc (unRangePosition range)
-
 saveStatement :: ID Discussion -> S.Statement -> DB Statement
 saveStatement did sstatement = do
   mid <- createMetaID sstatement
@@ -380,10 +378,16 @@ createDiscussion pid disc = do
           (disc ^. createDiscussionStatementText)
           Nothing -- Top level node
   void $ saveStatement (mid ^. miID) sstatement
-  pure $ S.discussionElim (toDiscussion mid) sdiscussion
+  getDiscussion $ mid ^. miID
 
 getDiscussion :: ID Discussion -> DB Discussion
-getDiscussion = getMetaEntity (S.discussionElim . toDiscussion)
+getDiscussion did = do
+  (mid, d) <- getMetaEntity (,) did
+  s <- statementsOfDiscussion did
+  t <- buildTree (^. statementParent) (^. statementID) <$> mapM getStatement s
+  -- FIXME: use the @_lid@ argument
+  pure $ S.discussionElim (\pblc range _lid -> Discussion mid pblc (unRangePosition range) t) d
+
 
 statementsOfDiscussion :: ID Discussion -> DB [ID Statement]
 statementsOfDiscussion did = do

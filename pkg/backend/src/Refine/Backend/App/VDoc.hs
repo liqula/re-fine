@@ -89,13 +89,12 @@ getCompositeVDoc' vdoc editid = do
   let commentNotes       = catMaybes $ (^? _CommentNote)       <$> filter (has _CommentNote)       comments
       commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
   edits <- db $ mapM DB.getEdit =<< DB.getEditChildren editid
-  version <- db $ DB.getVersion editid
   pure $
     CompositeVDoc
-      vdoc edit version
+      vdoc edit
       (toMap editID edits)
       (toMap noteID commentNotes)
-      (toMap (compositeDiscussion . discussionID) commentDiscussions)
+      (toMap discussionID commentDiscussions)
   where
     toMap selector = Map.fromList . fmap (view selector &&& id)
 
@@ -118,7 +117,7 @@ addEdit baseeid edit = do
             --   while attempting to perform step.' and the frontend says 'Error in $: Failed
             --   reading: not a valid json value'.
         OT.diff (deleteMarksFromRawContent olddoc)
-                (deleteMarksFromRawContent . rawContentFromVDocVersion $ edit ^. createEditVDoc)
+                (deleteMarksFromRawContent . rawContentFromVDocVersion $ edit ^. createEditVDocVersion)
     DB.createEdit rid (EditSource [(dff, baseeid)]) edit
 
 addMerge :: (MonadApp db uh) => ID Edit -> ID Edit -> ID Edit -> AppM db uh Edit

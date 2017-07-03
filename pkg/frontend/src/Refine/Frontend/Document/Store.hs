@@ -31,7 +31,6 @@ module Refine.Frontend.Document.Store
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens (ix)
 import qualified Data.Map as Map
 
 import           Refine.Common.Types
@@ -52,15 +51,15 @@ import           Refine.Frontend.Util
 -- sometimes necessary, but it's a bit dangerous because it can
 -- trigger thunk evaluation loops.  use old state whenever it is
 -- enough.
-documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> GlobalState -> DocumentState -> DocumentState
+documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> GlobalState -> GlobalDocumentState -> GlobalDocumentState
 documentStateUpdate (OpenDocument cvdoc) oldgs _newgs st
   = let eidChanged = Just newID /= mOldID
         newID  = cvdoc ^. compositeVDocThisEditID
         mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
-    in refreshDocumentStateView eidChanged (rawContentFromCompositeVDoc cvdoc) (editFromCompositeVDoc cvdoc) st
+    in refreshDocumentStateView eidChanged (rawContentFromCompositeVDoc cvdoc) st
 
 documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) _state
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- FIXME: store last state before edit in DocumentStateEdit, and restore it from there?
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
 documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _)
   = DocumentStateEdit
@@ -69,9 +68,9 @@ documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     _oldgs
-                    (view gsVDoc -> Just cvdoc)
+                    _newgs
                     (DocumentStateView e r)
-  = DocumentStateDiff e r (editFromCompositeVDoc cvdoc eid) True
+  = DocumentStateDiff e r eid True
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
                     _oldgs
@@ -121,16 +120,16 @@ documentStateUpdate (AddEdit _) _ (view gsVDoc -> Just cvdoc) _state
 documentStateUpdate (DocumentAction DocumentCancelSave) _ (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (ContributionAction (SetRange range)) _ _ ((^? documentStateContent) -> Just rc)
+documentStateUpdate (ContributionAction (SetRange range)) _ (view gsVDoc -> Just cvdoc) _
   = mkDocumentStateView
   . addMarksToRawContent [(ContribIDHighlightMark, range ^. sstSelectionState . selectionRange)]
   . deleteMarksFromRawContentIf (== ContribIDHighlightMark)
-  $ rc
+  $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (ContributionAction ClearRange) _ _ ((^? documentStateContent) -> Just rc)
+documentStateUpdate (ContributionAction ClearRange) _ (view gsVDoc -> Just cvdoc) _
   = mkDocumentStateView
   . deleteMarksFromRawContentIf (== ContribIDHighlightMark)
-  $ rc
+  $ rawContentFromCompositeVDoc cvdoc
 
 documentStateUpdate (DocumentAction ToggleCollapseDiff) _ _ st | has _DocumentStateDiff st
   = st & documentStateDiffCollapsed %~ not
@@ -139,10 +138,6 @@ documentStateUpdate _ _ _ st
   = st
 
 
-editFromCompositeVDoc :: CompositeVDoc -> ID Edit -> Edit
-editFromCompositeVDoc cvdoc eid = fromMaybe (error $ "editFromCompositeVDoc " <> show eid) $
-                           cvdoc ^? compositeVDocApplicableEdits . ix eid
-
 editorStateToVDocVersion :: HasCallStack => EditorState -> VDocVersion
 editorStateToVDocVersion = rawContentToVDocVersion . convertToRaw . getCurrentContent
 
@@ -150,7 +145,7 @@ editorStateFromVDocVersion :: HasCallStack => VDocVersion -> EditorState
 editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
 
 -- | construct a 'SetAllVerticalSpanBounds' action.
-setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState -> m ContributionAction
+setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a b -> m ContributionAction
 setAllVerticalSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
     let marks :: Map ContributionID (Ranges LeafSelector)
         marks = getLeafSelectors rawContent

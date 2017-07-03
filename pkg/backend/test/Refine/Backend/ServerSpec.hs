@@ -339,7 +339,7 @@ specMockedLogin = around createDevModeTestSession $ do
         fe_ :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
         let cp1 = Position (BlockIndex 0 $ BlockKey "1") 0
             cp2 = Position (BlockIndex 0 $ BlockKey "1") 1
-        fn_ :: CompositeDiscussion <-
+        fn_ :: Discussion <-
           postJSON
             (addDiscussionUri (fe_ ^. compositeVDoc . vdocHeadEdit))
             (CreateDiscussion "[discussion initial statement]" True (Range cp1 cp2))
