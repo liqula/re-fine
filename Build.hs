@@ -66,7 +66,8 @@ main = shakeArgs refineOptions $ do
 
   phony "test-all" $ do
     need ["setup"]
-    need ["test", "hlint"]
+    need ["test"]
+    need ["hlint"]
 
   phony "setup" $ do
     let resolver = "lts-8.11"
