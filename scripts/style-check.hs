@@ -79,20 +79,6 @@ getSourceFiles :: MonadIO m => [FilePath] -> m [FilePath]
 getSourceFiles packages = filterExt "hs" <$> getAllFiles roots
   where roots = [ "pkg" </> pkg </> topic | pkg <- packages, topic <- ["src", "test"] ]
 
-dirtyFiles :: Shell [GitStatus]
-dirtyFiles = do
-  let interesting (GitStatus _ Untracked _) = False
-      interesting (GitStatus _ Ignored _)   = False
-      interesting _                         = True
-  mconcat <$> (filter interesting <$> gitStatus) `fold` Fold.list
-
-assertWorkingCopyClean :: Shell ()
-assertWorkingCopyClean = do
-  gs <- dirtyFiles
-  unless (null gs) $ do
-    echo "this script can only be run on a clean working copy!"
-    exit $ ExitFailure 1
-
 failOnChangedFiles :: Shell ()
 failOnChangedFiles = do
   gs <- dirtyFiles
@@ -429,8 +415,22 @@ renderFFIBlocks = mconcat . fmap rBlock
 
 -- * git
 
+dirtyFiles :: Shell [GitStatus]
+dirtyFiles = do
+  let interesting (GitStatus _ Untracked _) = False
+      interesting (GitStatus _ Ignored _)   = False
+      interesting _                         = True
+  mconcat <$> (filter interesting <$> gitStatus) `fold` Fold.list
+
+assertWorkingCopyClean :: Shell ()
+assertWorkingCopyClean = do
+  gs <- dirtyFiles
+  unless (null gs) $ do
+    echo "this script can only be run on a clean working copy!"
+    exit $ ExitFailure 1
+
 gitStatus :: Shell [GitStatus]
-gitStatus = fmap parse . ST.lines <$> inshell "git status --porcelain ." empty
+gitStatus = fmap parse . ST.lines <$> inshell "git status --porcelain ." Turtle.empty
   where
     parse :: ST -> GitStatus
     parse line = GitStatus (parseCode ix) (parseCode wt) (cs file)

@@ -1,5 +1,5 @@
 #!/usr/bin/env stack
-{- stack --resolver lts-8.11 --install-ghc runghc
+{- stack --resolver lts-7.15 --install-ghc runghc
     --package foldl
     --package regex-posix
     --package string-conversions
@@ -38,7 +38,7 @@ import qualified Data.Map as Map
 import           Data.String.Conversions
 import qualified Data.Text as ST
 import qualified Data.Text.IO as ST
-import           Filesystem.Path.CurrentOS
+import qualified Filesystem.Path.CurrentOS as Path
 import           Prelude hiding (FilePath)
 import           System.Environment
 import           System.Exit
@@ -78,6 +78,7 @@ transModDeps = ["Refine.Common.Types.Translation", "Data.Text"]
 
 main :: IO ()
 main = do
+  sh assertWorkingCopyClean
   unitTestMatchTKeys
   args <- getArgs
   case args of
@@ -90,8 +91,8 @@ main' :: FilePath -> FilePath -> ST -> FilePath -> IO ()
 main' sourceTree transModuleFile transModuleName poDir = do
   sourceFiles <- filter ((== Just "hs") . extension) <$> (lstree sourceTree `fold` Fold.list)
   tKeyCalls   <- mkTKeyCalls . mconcat <$> (getTKeyCallsIO `mapM` sourceFiles)
-  ST.writeFile (encodeString transModuleFile) $ createTransModule transModuleName tKeyCalls
-  ST.writeFile (encodeString $ poDir </> "template.pot") $ createPotFile tKeyCalls
+  ST.writeFile (Path.encodeString transModuleFile) $ createTransModule transModuleName tKeyCalls
+  ST.writeFile (Path.encodeString $ poDir </> "template.pot") $ createPotFile tKeyCalls
   updatePoFilesIO poDir tKeyCalls
 
 
@@ -101,7 +102,7 @@ data TKeyCall = TKeyCall FilePath Int ST
   deriving (Eq, Show)
 
 getTKeyCallsIO :: FilePath -> IO [TKeyCall]
-getTKeyCallsIO filepath = getTKeyCalls filepath <$> ST.readFile (encodeString filepath)
+getTKeyCallsIO filepath = getTKeyCalls filepath <$> ST.readFile (Path.encodeString filepath)
 
 getTKeyCalls :: FilePath -> ST -> [TKeyCall]
 getTKeyCalls filepath = mconcat . fmap (uncurry go) . zip [1..] . ST.lines
@@ -161,7 +162,7 @@ updatePoFilesIO poDir tKeyCalls =
   mapM_ (`updatePoFileIO` tKeyCalls) . filter ((== Just "po") . extension) =<< (lstree poDir `fold` Fold.list)
 
 updatePoFileIO :: FilePath -> TKeyCalls -> IO ()
-updatePoFileIO (encodeString -> poFile) tKeyCalls = do
+updatePoFileIO (Path.encodeString -> poFile) tKeyCalls = do
   !poContent <- (`updatePoFile` tKeyCalls) <$> ST.readFile poFile
   ST.writeFile poFile poContent
 
@@ -212,25 +213,79 @@ createPoFile = ST.unlines . fmap go . Map.toAscList
       ]
 
     showLoc :: (FilePath, Int) -> ST
-    showLoc (sourcePath, sourceLine) = cs $ "#: " <> encodeString sourcePath <> ":" <> show sourceLine
+    showLoc (sourcePath, sourceLine) = cs $ "#: " <> Path.encodeString sourcePath <> ":" <> show sourceLine
 
 
 -- * should go into separate package
 
-instance ConvertibleStrings ST Filesystem.Path.CurrentOS.FilePath where
-  convertString = Filesystem.Path.CurrentOS.fromText
+instance ConvertibleStrings ST Path.FilePath where
+  convertString = Path.fromText
 
-instance ConvertibleStrings Filesystem.Path.CurrentOS.FilePath ST where
-  convertString = either (error . show) id . Filesystem.Path.CurrentOS.toText
+instance ConvertibleStrings Path.FilePath ST where
+  convertString = either (error . show) id . Path.toText
 
-instance ConvertibleStrings String Filesystem.Path.CurrentOS.FilePath where
+instance ConvertibleStrings String Path.FilePath where
   convertString = cs @ST . cs
 
-instance ConvertibleStrings Filesystem.Path.CurrentOS.FilePath String where
+instance ConvertibleStrings Path.FilePath String where
   convertString = cs @ST . cs
 
-instance ConvertibleStrings SBS Filesystem.Path.CurrentOS.FilePath where
+instance ConvertibleStrings SBS Path.FilePath where
   convertString = cs @ST . cs
 
-instance ConvertibleStrings Filesystem.Path.CurrentOS.FilePath SBS where
+instance ConvertibleStrings Path.FilePath SBS where
   convertString = cs @ST . cs
+
+
+-- * git (section copied from ./style-check.hs, keep in sync manually)
+
+dirtyFiles :: Shell [GitStatus]
+dirtyFiles = do
+  let interesting (GitStatus _ Untracked _) = False
+      interesting (GitStatus _ Ignored _)   = False
+      interesting _                         = True
+  mconcat <$> (filter interesting <$> gitStatus) `fold` Fold.list
+
+assertWorkingCopyClean :: Shell ()
+assertWorkingCopyClean = do
+  gs <- dirtyFiles
+  unless (null gs) $ do
+    echo "this script can only be run on a clean working copy!"
+    exit $ ExitFailure 1
+
+gitStatus :: Shell [GitStatus]
+gitStatus = fmap parse . ST.lines <$> inshell "git status --porcelain ." Turtle.empty
+  where
+    parse :: ST -> GitStatus
+    parse line = GitStatus (parseCode ix) (parseCode wt) (cs file)
+      where
+        ix   = ST.take 1               line
+        wt   = ST.take 1 . ST.drop 1 $ line
+        file =             ST.drop 3   line
+
+    parseCode :: ST -> GitStatusCode
+    parseCode " " = Unmodified
+    parseCode "M" = Modified
+    parseCode "A" = Added
+    parseCode "D" = Deleted
+    parseCode "R" = Renamed
+    parseCode "C" = Copied
+    parseCode "U" = UpdatedButUnmerged
+    parseCode "?" = Untracked
+    parseCode "!" = Ignored
+    parseCode bad = error $ "gitStatus: could not parse status code " <> show bad
+
+data GitStatus = GitStatus GitStatusCode GitStatusCode FilePath
+  deriving (Eq, Show, Ord)
+
+data GitStatusCode =
+    Unmodified
+  | Modified
+  | Added
+  | Deleted
+  | Renamed
+  | Copied
+  | UpdatedButUnmerged
+  | Untracked
+  | Ignored
+  deriving (Eq, Show, Ord)
