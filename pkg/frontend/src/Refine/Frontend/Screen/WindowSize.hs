@@ -22,7 +22,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Frontend.Screen.WindowSize where
+module Refine.Frontend.Screen.WindowSize (WindowSizeProps(..), windowSize_) where
 
 import Refine.Frontend.Prelude
 
@@ -46,14 +46,21 @@ windowSize = defineLifecycleView "WindowSize" () lifecycleConfig
        if weAreInDevMode
          then span_ ["className" $= "layout-indicator"] . elemString $ "layout: " <> show size
          else pure ()
-   , lComponentDidMount = Just $ \_ _ _ -> do
-           cb <- asyncCallback setWindowSize
-           js_windowAddEventListener "resize" cb
-           setWindowSize
-   , lComponentWillUnmount = Just $ \_ _ -> do
-           cb <- asyncCallback setWindowSize
-           js_windowRemoveEventListener "resize" cb
+   , lComponentDidMount = Just $ \_ _ _ -> didMountOrUpdate
+   , lComponentDidUpdate = Just $ \_ _ _ _ _ -> didMountOrUpdate
+   , lComponentWillUnmount = Just $ \_ _ -> willUnmount
    }
+
+didMountOrUpdate :: IO ()
+didMountOrUpdate = do
+  cb <- asyncCallback setWindowSize
+  js_windowAddEventListener "resize" cb
+  setWindowSize
+
+willUnmount :: IO ()
+willUnmount = do
+  cb <- asyncCallback setWindowSize
+  js_windowRemoveEventListener "resize" cb
 
 windowSize_ :: HasCallStack => WindowSizeProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
 windowSize_ = RF.view windowSize

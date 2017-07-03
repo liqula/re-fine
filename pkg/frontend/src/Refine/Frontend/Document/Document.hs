@@ -59,7 +59,8 @@ import           Refine.Frontend.Util
 document :: HasCallStack => Outdated.ReactView DocumentProps
 document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
   { Outdated.lRender = documentRender
-  , Outdated.lComponentDidMount = Just documentComponentDidMount
+  , Outdated.lComponentDidMount = Just $ \this _ _ -> documentComponentDidMountOrUpdate this
+  , Outdated.lComponentDidUpdate = Just $ \this _ _ _ _ -> documentComponentDidMountOrUpdate this
   }
 
 documentRender :: HasCallStack => () -> DocumentProps -> ReactElementM ('StatefulEventHandlerCode st) ()
@@ -121,8 +122,8 @@ documentRender() props = liftViewToStateHandler $ do
           -- a new thing, didn't happen a while ago.
       ] mempty
 
-documentComponentDidMount :: HasCallStack => Outdated.LPropsAndState DocumentProps () -> _ldom -> _setState -> IO ()
-documentComponentDidMount getPropsAndState _ldom _setState = do
+documentComponentDidMountOrUpdate :: HasCallStack => Outdated.LPropsAndState DocumentProps () -> IO ()
+documentComponentDidMountOrUpdate getPropsAndState = do
   props <- Outdated.lGetProps getPropsAndState
   ()    <- Outdated.lGetState getPropsAndState  -- (just to show there's nothing there)
   dispatchAndExec . ContributionAction =<< setAllVerticalSpanBounds (props ^. dpDocumentState)
