@@ -112,11 +112,8 @@ mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
      -- the render function inside a Lifecycle view does not update the children passed to it when the state changes
      -- (see react-flux issue #29), therefore we move everything inside the Lifecylce view.
    { RF.lRender = mainHeaderRender
-   , RF.lComponentDidMount = Just mainHeaderlComponentDidMount
+   , RF.lComponentDidUpdate = Just $ \_ dom _ _ _ -> calcHeaderHeight ldom
    }
-
-mainHeaderlComponentDidMount :: HasCallStack => a -> RF.LDOM -> b -> IO ()
-mainHeaderlComponentDidMount _propsandstate ldom _ = calcHeaderHeight ldom
 
 mainHeaderRender :: HasCallStack => () -> MainHeaderProps -> ReactElementM ('StatefulEventHandlerCode ()) ()
 mainHeaderRender () rs = do
