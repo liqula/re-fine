@@ -111,7 +111,9 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                                      (fltr (vdoc ^. compositeVDocApplicableDiscussions))
                                      (fltr (vdoc ^. compositeVDocApplicableNotes))
                                      (fltr (vdoc ^. compositeVDocApplicableEdits))
-                                     (rs ^. gsContributionState . csBubblePositioning)
+                                     (case rs ^. gsDocumentState of
+                                        DocumentStateDiff{} -> BubblePositioningEvenlySpaced
+                                        _ -> rs ^. gsContributionState . csBubblePositioning)
                                      (rs ^. gsContributionState . csQuickCreateShowState)
 
                           fltr :: IsContribution c => Map (ID c) b -> [b]
