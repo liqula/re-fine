@@ -703,7 +703,7 @@ fromSelectionState rc (SelectionState sel) = fromSelectionPoint rc <$> sel
 
 -- previous and next positions, the given one is also in the list
 surroundingPositions :: RawContent -> Position -> ([Position]{-previous, reversed-}, [Position]{-next-})
-surroundingPositions rc p_@(Position (BlockIndex i _) col)
+surroundingPositions rc (Position (BlockIndex i _) col)
   = ( [ Position (mkBlockIndex rc r) c
       | (r, l) <- zip [i, i-1..] $ col: prev
       , c <- [l, l-1..0]

@@ -102,7 +102,18 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base edits notes discussions) =
   addMarksToRawContent marks rawContent
   where
     rawContent = rawContentFromVDocVersion $ base ^. editVDocVersion
-    convertHack l (k, v) = (contribID k, v ^. l)
+    convertHack l (k, v) = (contribID k, extendRange $ v ^. l)
+
+    extendRange r@(Range x y)
+      | x' == y'  = fromStyleRange rawContent
+                  $ Range (next . fst $ surroundingStylePositions rawContent x')
+                          (next . snd $ surroundingStylePositions rawContent y')
+      | otherwise = r
+      where
+        x' = toStylePosition rawContent x
+        y' = toStylePosition rawContent y
+        next (_: z: _) = z
+        next zs = head zs
 
     marks :: [(ContributionID, Range Position)]
     marks = [ (contribID k, s)
@@ -110,7 +121,7 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base edits notes discussions) =
             , (diff, b) <- e ^. editSource . unEditSource
             , b == base ^. editID
             , s <- unRanges $ docEditRanges diff rawContent]
-         <> (convertHack noteRange                               <$> Map.toList notes)
+         <> (convertHack noteRange       <$> Map.toList notes)
          <> (convertHack discussionRange <$> Map.toList discussions)
 
 rawContentFromVDocVersion :: VDocVersion -> RawContent
