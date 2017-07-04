@@ -47,10 +47,12 @@ module Refine.Common.Types.Core
 import Refine.Common.Prelude
 
 import           Control.DeepSeq
+import           Control.Lens (both)
 import           Data.Int
 import qualified Data.HashMap.Lazy as HashMap
 import qualified Data.IntMap as IntMap
 import           Data.Either (isLeft)
+import           Data.List (group)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Map as Map
@@ -688,10 +690,6 @@ blockKey = blockKey'
 mkBlockIndex :: RawContent -> Int -> BlockIndex
 mkBlockIndex rc i = BlockIndex i $ ((rc ^. rawContentBlocks) NEL.!! i) ^. blockKey
 
--- TUNING: speed this up by choosing a better representation for RawContent
--- getBlock :: RawContent -> BlockIndex -> Block
--- getBlock rc (BlockIndex i _) = (rc ^. rawContentBlocks) NEL.!! i
-
 -- TUNING: speed this up by adding an index structure to RawContent
 fromSelectionPoint :: RawContent -> SelectionPoint -> Position
 fromSelectionPoint rc (Position k r) = Position (BlockIndex i k) r
@@ -702,6 +700,22 @@ fromSelectionPoint rc (Position k r) = Position (BlockIndex i k) r
 
 fromSelectionState :: RawContent -> SelectionState -> Selection Position
 fromSelectionState rc (SelectionState sel) = fromSelectionPoint rc <$> sel
+
+-- previous and next positions, the given one is also in the list
+surroundingPositions :: RawContent -> Position -> ([Position]{-previous, reversed-}, [Position]{-next-})
+surroundingPositions rc p_@(Position (BlockIndex i _) col)
+  = ( [ Position (mkBlockIndex rc r) c
+      | (r, l) <- zip [i, i-1..] $ col: prev
+      , c <- [l, l-1..0]
+      ]
+    , [ Position (mkBlockIndex rc r) c
+      | (r, l) <- zip [i..] $ col: next
+      , c <- [0..l]
+      ]
+    )
+  where
+    (prev, _: next) = focusList (len <$> NEL.toList (rc ^. rawContentBlocks)) !! i
+    len b = ST.length $ b ^. blockText
 
 -- TUNING: speed this up by adding an index structure to RawContent
 toStylePosition :: RawContent -> Position -> StylePosition
@@ -727,6 +741,11 @@ toStylePosition rc p_@(Position (BlockIndex i_ _) col)
         p' = Position (BlockIndex (i-1) $ b ^. blockKey) lb
 
     len b = ST.length $ b ^. blockText
+
+surroundingStylePositions :: RawContent -> StylePosition -> ([StylePosition]{-previous, reversed-}, [StylePosition]{-next-})
+surroundingStylePositions rc sp
+  = surroundingPositions rc (basePosition sp)
+  & both %~ fmap head . group . fmap (toStylePosition rc)
 
 -- TUNING: speed this up
 toStyleRanges :: RawContent -> Ranges Position -> Ranges StylePosition
