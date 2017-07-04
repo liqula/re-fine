@@ -74,7 +74,7 @@ data BlockBoundary = BlockBoundaryIsNewline | BlockBoundaryIsEmpty
 
 selectedBlocks :: Range Position -> [Block EntityKey BlockKey] -> [Block EntityKey BlockKey]
 selectedBlocks (Range a b)
-    = drop (positionBlockIndex a) . take (positionBlockIndex b + 1)
+    = drop (a ^. rowIndex) . take ((b ^. rowIndex) + 1)
 
 maximumRange :: RawContent -> Range Position
 maximumRange (RawContent bs _) = RangeInner (Position sb so) (Position eb eo)

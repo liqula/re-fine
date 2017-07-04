@@ -11,6 +11,7 @@ import           Data.List (groupBy, inits, tails)
 import qualified Data.Set as Set
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Text as ST
+import           Control.Lens (ALens', mapped, cloneLens)
 
 import           Refine.Common.Prelude
 import           Refine.Common.OT
@@ -130,6 +131,96 @@ showEditAsDoc edits
 
     noStyle :: Styles
     noStyle = mempty
+
+
+transformRange :: Edit OTDoc -> OTDoc -> Range Position -> Range Position
+transformRange edits doc
+    = patchFold patchBlocks (coerce edits) (NEL.toList doc)
+  where
+    patchFold :: Editable d => (d -> a -> EEdit d -> a) -> Edit d -> d -> a -> a
+    patchFold f es d a = snd $ foldl (\(d', a') e -> (ePatch e d', f d' a' e)) (d, a) es
+
+    patchBlocks :: [DocBlock] -> Range Position -> EEdit [DocBlock] -> Range Position
+    patchBlocks bs r@(Range x y) = \case
+        e@(DeleteRange i l) -> Range (delIdx' True bs bs' i l x) (delIdx' False bs bs' i l y)
+          where bs' = ePatch e bs
+        InsertItem i _ -> r & mapped . rowIndex %~ incIdx True i 1
+        EditItem i es -> case bs !! i of
+          (_, elems) -> patchFold patchLineElems [e | EditSecond es' <- es, e <- es'] elems r
+
+    patchLineElems :: LineElems -> Range Position -> EEdit LineElems -> Range Position
+    patchLineElems (Segments (map (cs . unNonEmptyST . snd) -> bs)) r = \case
+      SegmentListEdit (DeleteRange i l) ->
+        r & mapped . columnIndex %~ delIdx (length . concat $ take i bs) (length . concat . take l $ drop i bs)
+      SegmentListEdit (InsertItem i x) ->
+        incRange columnIndex (length . concat $ take i bs) (len x) r
+      SegmentListEdit (EditItem i es) ->
+        patchFold (patchText . sum $ length <$> take i bs) [coerce e | EditSecond es' <- es, e <- es'] (bs !! i) r
+      JoinItems{} -> r
+      SplitItem{} -> r
+
+    len = ST.length . unNonEmptyST . snd
+
+    patchText :: Int -> String -> Range Position -> EEdit String -> Range Position
+    patchText offs _ r = \case
+        DeleteRange i l -> r & mapped . columnIndex %~ delIdx (i + offs) l
+        InsertItem i _ -> incRange columnIndex (i + offs) 1 r
+        EditItem{} -> r
+
+    {-
+    document with selection: __###__
+    if we insert a char at position 2:   ___###__  (or maybe  __####__)
+    if we insert a char at position 5:   __###___  (or maybe  __####__)
+
+    document with selection: __(___\n)____
+    if we insert a line __ after the first one:  __(___\n__\n)____   or maybe: __(___\n__)\n____
+
+    document with selection: __(___)\n____
+    if we insert a line __ after the first one:  __(___)\n__\n____
+    -}
+    incIdx :: Bool -> Int -> Int -> Int -> Int
+    incIdx isbegin i k r
+      | r > i || r == i && isbegin = r + k
+      | otherwise = r
+
+    incRange :: ALens' Position Int -> Int -> Int -> Range Position -> Range Position
+    incRange le i k (Range x y)
+      | x' > y'   = Range y' y'
+      | otherwise = Range x' y'
+      where
+        x' = x & cloneLens le %~ incIdx True i k
+        y' = y & cloneLens le %~ incIdx False i k
+
+    delIdx :: Int -> Int -> Int -> Int
+    delIdx i k r
+      | r <= i     = r
+      | i + k <= r = r - k
+      | otherwise  = i
+
+    {-
+    document: _
+    selection: #
+    ___
+    __##
+    ##
+    ###___   -- if this is deleted, the end positon moves to the end of the previous line
+
+
+    ___####____   -- if this is deleted, the end positon moves to the end of the previous line, but it does not exists, so it has to go to (0,0)
+    -}
+    delIdx' :: Bool -> [DocBlock] -> [DocBlock] -> Int -> Int -> Position -> Position
+    delIdx' isbegin _before after i k (Position (BlockIndex r _) c) = Position (mkBI r') c'
+      where
+        r1 = delIdx i k r
+        r2 = delIdx i k (r+1)
+        (r', c')
+           | r2 == r1 + 1 = (r1, c)
+           | r2 == r1 && isbegin = (r1, 0)
+           | r2 == r1 && not isbegin = endPos $ r1 - 1
+        endPos x
+          | x < 0 = (0, 0)  -- see the documentation at delIdx'
+          | otherwise = (,) x $ case after !! x of DocBlock _ _ _ txt -> sum $ len <$> txt
+        mkBI x = BlockIndex x $ case after !! x of DocBlock _ _ key _ -> key
 
 
 docEditRanges :: Edit RawContent -> RawContent -> Ranges Position
