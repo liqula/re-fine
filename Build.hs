@@ -66,7 +66,8 @@ main = shakeArgs refineOptions $ do
 
   phony "test-all" $ do
     need ["setup"]
-    need ["test", "hlint"]
+    need ["test"]
+    need ["hlint"]
 
   phony "setup" $ do
     let resolver = "lts-8.11"
@@ -122,12 +123,7 @@ main = shakeArgs refineOptions $ do
     command_ [Cwd pkgFrontend] "npm" ["prune"]  -- remove unused dependencies
 
   phony "build-frontend-trans" $ do
-    command_ [] "./scripts/i18n.hs"
-      [ "pkg/frontend/src/"
-      , "pkg/frontend/src/Refine/Frontend/TKey.hs"
-      , "Refine.Frontend.TKey"
-      , "po/"
-      ]
+    command_ [] "./scripts/i18n.hs" []
 
   phony "build" $ do
     -- for building everything, we only need to go to backend and frontend.  prelude and common are
@@ -136,9 +132,9 @@ main = shakeArgs refineOptions $ do
     need ["build-backend", "build-frontend"]
 
   phony "build-optimal" $ do
-    need ["clean"]
+    need ["clean", "hlint"]
     stackBuildOptimal pkgBackend
-    need ["build-frontend-npm", "build-frontend-trans"]
+    need ["build-frontend-npm"]
     stackBuildOptimal pkgFrontend
     command_ [Cwd pkgFrontend] "make" ["optimize"]
 
@@ -157,6 +153,7 @@ main = shakeArgs refineOptions $ do
   phony "hlint" $ do
     need ["hlint-prelude", "hlint-common", "hlint-backend", "hlint-frontend"]
     hlintPath "./scripts"
+    need ["build-frontend-trans"]
     command_ [] "./scripts/style-check.hs" []
 
 

@@ -51,7 +51,7 @@ documentHeader = mkView "DocumentHeader" $ \props ->
               phases_
 
 documentHeader_ :: HasCallStack => DocumentHeaderProps -> ReactElementM eventHandler ()
-documentHeader_ !props = view_ documentHeader "DocumentHeader_" props
+documentHeader_ = view_ documentHeader "DocumentHeader_"
 
 instance UnoverlapAllEq Title
 
@@ -60,7 +60,7 @@ documentTitle :: HasCallStack => View '[Title]
 documentTitle = mkView "DocumentTitle" $ h1_ . cs . _unTitle
 
 documentTitle_ :: HasCallStack => Title -> ReactElementM eventHandler ()
-documentTitle_ !title = view_ documentTitle "DocumentTitle_" title
+documentTitle_ = view_ documentTitle "DocumentTitle_"
 
 instance UnoverlapAllEq Abstract
 
@@ -72,7 +72,7 @@ documentAbstract = mkView "DocumentAbstract" $ \abstract ->
     div_ ["className" $= "c-vdoc-header__description"] . mconcat $ (p_ . elemText) <$> paragraphs
 
 documentAbstract_ :: HasCallStack => Abstract -> ReactElementM eventHandler ()
-documentAbstract_ !abstract = view_ documentAbstract "DocumentAbstract_" abstract
+documentAbstract_ = view_ documentAbstract "DocumentAbstract_"
 
 
 phases :: HasCallStack => View '[]

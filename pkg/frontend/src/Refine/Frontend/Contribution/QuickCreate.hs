@@ -55,7 +55,7 @@ quickCreate = mkView "QuickCreateButton" $ \props ->
 --    Hammer.on(ann, 'tap', quickCreateOverlay);
 
 quickCreate_ :: HasCallStack => QuickCreateProps -> ReactElementM eventHandler ()
-quickCreate_ !props = view_ quickCreate "quickCreate_" props
+quickCreate_ = view_ quickCreate "quickCreate_"
 
 
 instance IconButtonPropsOnClick QuickCreateSide where

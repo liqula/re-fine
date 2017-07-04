@@ -33,7 +33,6 @@ import qualified Refine.Frontend.Colors as Colors
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Component
 import           Refine.Frontend.Login.Status
-import           Refine.Frontend.Login.Types
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Util
@@ -94,7 +93,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
         & ibLabel .~ mempty
 
 topMenuBarInMainMenu_ :: HasCallStack => TopMenuBarInMainMenuProps -> ReactElementM eventHandler ()
-topMenuBarInMainMenu_ !props = view_ topMenuBarInMainMenu "topMenuBarInMainMenu_" props
+topMenuBarInMainMenu_ = view_ topMenuBarInMainMenu "topMenuBarInMainMenu_"
 
 
 tabStyles :: HasCallStack => [Decl]
@@ -120,12 +119,12 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
           MainMenuProcess      -> "[MainMenuProcess]"
           MainMenuGroup        -> "[MainMenuGroup]"
           MainMenuHelp         -> "[MainMenuHelp]"
-          MainMenuLogin subtab -> mainMenuLoginTab_ subtab menuErrors currentUser
+          MainMenuLogin subtab -> mainMenuLoginTab_ (MainMenuProps subtab menuErrors currentUser)
       div_ [ "className" $= "gr-2" ] $ do
         pure ()
 
-mainMenu_ :: HasCallStack => MainMenuTab -> MainMenuErrors -> CurrentUser -> ReactElementM eventHandler ()
-mainMenu_ mt me cu = view_ mainMenu "mainMenu_" (MainMenuProps mt me cu)
+mainMenu_ :: HasCallStack => MainMenuProps MainMenuTab -> ReactElementM eventHandler ()
+mainMenu_ = view_ mainMenu "mainMenu_"
 
 
 mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]
@@ -151,5 +150,5 @@ mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuEr
           MainMenuSubTabLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
           MainMenuSubTabRegistration -> registration_  (menuErrors ^. mmeRegistration)
 
-mainMenuLoginTab_ :: HasCallStack => MainMenuSubTabLogin -> MainMenuErrors -> CurrentUser -> ReactElementM eventHandler ()
-mainMenuLoginTab_ mt me cu = view_ mainMenuLoginTab "mainMenuLoginTab_" (MainMenuProps mt me cu)
+mainMenuLoginTab_ :: HasCallStack => MainMenuProps MainMenuSubTabLogin -> ReactElementM eventHandler ()
+mainMenuLoginTab_ = view_ mainMenuLoginTab "mainMenuLoginTab_"

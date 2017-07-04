@@ -68,7 +68,8 @@ refineApp = mkControllerView @'[StoreArg GlobalState] "RefineApp" $ \gs ->
     Nothing -> vdocLoader_ (VDocLoaderProps $ gs ^. gsVDocList)  -- (this is just some scaffolding that will be replaced by more app once we get there.)
     Just _ -> case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
       Nothing  -> mainScreen_ gs
-      Just tab -> mainMenu_ tab
+      Just tab -> mainMenu_ $ MainMenuProps
+                            tab
                             (gs ^. gsMainMenuState . mmErrors)
                             (gs ^. gsLoginState . lsCurrentUser)
 
@@ -134,7 +135,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           div_ ["style" @@= [decl "margin-bottom" (Px 800)]] $ pure ()
 
 mainScreen_ :: HasCallStack => GlobalState -> ReactElementM eventHandler ()
-mainScreen_ !rs = view_ mainScreen "mainScreen_" rs
+mainScreen_ = view_ mainScreen "mainScreen_"
 
 
 leftAside :: HasCallStack => View '[AsideProps]
@@ -151,7 +152,7 @@ leftAside = mkView "LeftAside" $ \props ->
         (props ^. asideScreenState)
 
 leftAside_ :: HasCallStack => AsideProps -> ReactElementM eventHandler ()
-leftAside_ !props = view_ leftAside "leftAside_" props
+leftAside_ = view_ leftAside "leftAside_"
 
 
 rightAside :: HasCallStack => View '[AsideProps]
@@ -167,7 +168,7 @@ rightAside = mkView "RightAside" $ \props ->
       (props ^. asideScreenState)
 
 rightAside_ :: HasCallStack => AsideProps -> ReactElementM eventHandler ()
-rightAside_ !props = view_ rightAside "rightAside_" props
+rightAside_ = view_ rightAside "rightAside_"
 
 
 -- * helpers

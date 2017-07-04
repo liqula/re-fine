@@ -63,7 +63,7 @@ vdocLoader = mkView "VDocLoader" $ \props -> do
       "\n"
 
 vdocLoader_ :: HasCallStack => VDocLoaderProps -> ReactElementM eventHandler ()
-vdocLoader_ !props = view_ vdocLoader "vdocLoader_" props
+vdocLoader_  = view_ vdocLoader "vdocLoader_"
 
 vdocListLoader :: HasCallStack => View '[VDocLoaderProps]
 vdocListLoader = mkView "VDocListLoader" $ \case
@@ -78,4 +78,4 @@ toButton li = button_
   (elemText $ toUrlPiece li)
 
 vdocListLoader_ :: HasCallStack => VDocLoaderProps -> ReactElementM eventHandler ()
-vdocListLoader_ !props = view_ vdocListLoader "vdocListLoader_" props
+vdocListLoader_ = view_ vdocListLoader "vdocListLoader_"

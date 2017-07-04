@@ -197,7 +197,7 @@ showComment = mkView "ShowComment" $ \props ->
         div_ ["style" @@= [decl "marginBottom" (Px 20)]] "" -- make some space for the close button
 
 showComment_ :: HasCallStack => CommentDisplayProps -> ReactElementM eventHandler ()
-showComment_ !props = view_ showComment "showComment_" props
+showComment_ = view_ showComment "showComment_"
 
 
 showNoteProps :: HasCallStack => M.Map (ID Note) Note -> GlobalState -> Maybe ShowNoteProps
