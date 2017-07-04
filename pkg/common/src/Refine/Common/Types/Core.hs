@@ -709,12 +709,12 @@ surroundingPositions rc (Position (BlockIndex i _) col)
       , c <- [l, l-1..0]
       ]
     , [ Position (mkBlockIndex rc r) c
-      | (r, l) <- zip [i..] $ col: next
-      , c <- [0..l]
+      | (r, cs') <- zip [i..] $ [col..this]: [[0..l] | l <- next]
+      , c <- cs'
       ]
     )
   where
-    (prev, _: next) = focusList (len <$> NEL.toList (rc ^. rawContentBlocks)) !! i
+    (prev, this: next) = focusList (len <$> NEL.toList (rc ^. rawContentBlocks)) !! i
     len b = ST.length $ b ^. blockText
 
 -- TUNING: speed this up by adding an index structure to RawContent

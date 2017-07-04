@@ -41,7 +41,6 @@ import Refine.Common.Types.Contribution
 import Refine.Common.Types.Comment
 import Refine.Common.VDoc.OT (docRanges, docEditRanges)
 
-
 -- * functions
 
 emptyRawContent :: RawContent
@@ -104,14 +103,13 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base edits notes discussions) =
     rawContent = rawContentFromVDocVersion $ base ^. editVDocVersion
     convertHack l (k, v) = (contribID k, extendRange $ v ^. l)
 
-    extendRange r@(Range x y)
-      | x' == y'  = fromStyleRange rawContent
-                  $ Range (next . fst $ surroundingStylePositions rawContent x')
-                          (next . snd $ surroundingStylePositions rawContent y')
+    extendRange r
+      | x == y    = fromStyleRange rawContent
+                  . uncurry Range . (next *** next) $ surroundingStylePositions rawContent x
       | otherwise = r
       where
-        x' = toStylePosition rawContent x
-        y' = toStylePosition rawContent y
+        Range x y = toStylePosition rawContent <$> r
+
         next (_: z: _) = z
         next zs = head zs
 
