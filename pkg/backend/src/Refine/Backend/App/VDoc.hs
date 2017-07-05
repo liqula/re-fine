@@ -163,11 +163,8 @@ rebaseHeadToEdit eid = do
     forM_ (Set.toList $ base ^. editNotes') $ \nid -> do
       n <- DB.getNote nid
       DB.createNote eid . CreateNote (n ^. noteText) (n ^. notePublic) . trRange $ n ^. noteRange
-{-
-  forM_ (Set.toList $ edit1 ^. editDiscussions') $ \did -> do
-    d <- DB.getDiscussion did
-    DB.createDiscussion eid . CreateDiscussion (n ^. noteText) ...
--}
+
+    forM_ (Set.toList $ base ^. editDiscussions') $ \did -> DB.rebaseDiscussion eid did trRange
 
 -- | Throw an error if chunk range does not fit 'VDocVersion' identified by edit.
 -- FIXME: for RawContent this still needs to be implemented.
