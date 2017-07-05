@@ -756,10 +756,12 @@ stylePositions :: RawContent -> StylePosition -> [Position]
 stylePositions rc (StylePosition p@(Position (BlockIndex i _) _) m)
     = p: [Position (mkBlockIndex rc j) 0 | j <- [i+1..i+m]]
 
--- The range cannot be empty
 -- this computes the minimal selection range
 fromStyleRange :: RawContent -> Range StylePosition -> Range Position
-fromStyleRange rc (Range a b) | a < b = RangeInner (last $ stylePositions rc a) (basePosition b)
+fromStyleRange rc (Range a b)
+  | a < b = RangeInner (last $ stylePositions rc a) (basePosition b)
+  | a == b = RangeInner (basePosition a) (basePosition a)
+  | otherwise = error "range invariant failed"
 
 -- TUNING: speed this up by adding an index structure to RawContent
 toLeafSelector :: Bool -> RawContent -> Position -> (LeafSelector, Int)
