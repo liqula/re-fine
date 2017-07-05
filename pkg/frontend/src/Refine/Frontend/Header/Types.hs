@@ -73,6 +73,7 @@ instance UnoverlapAllEq TopMenuBarProps
 data DiffToolbarProps = DiffToolbarProps
   { _diffToolbarPropsEditID :: ID Edit
   , _diffToolbarPropsVotes  :: VoteCount
+  , _diffToolbarCollapsed   :: Bool
   } deriving (Show, Eq, Generic)
 
 instance UnoverlapAllEq DiffToolbarProps
