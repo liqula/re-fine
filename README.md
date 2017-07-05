@@ -69,3 +69,48 @@ translation key:
 4. run `./build build-frontend-trans`.
 
 Search the frontend code for `__` for examples.
+
+
+## acceptance tests.
+
+There are two programs in ./accept: accept.hs and selenium.hs.  The
+simplest way to run them should be this:
+
+```
+export SELENIUM_HUB_PORT=4444
+export SELENIUM_NODE_PORT=5555
+export REFINE_APP_PORT=8086  # must be available
+export REFINE_RUN_APP=True  # toggles whether to run selenium from inside accept (True), or assume it's already running (False)
+./build accept
+```
+
+If you want to watch the browser while it is happening, set `DISPLAY`
+to your X server (or do nothing if X is already available in your
+shell).  If you set `DISPLAY` to a server that is not available (say,
+':7'), a headless X server will be started there.
+
+Building the server takes almost literally forever.  If you want to
+write tests and re-run them with a shorter feedback loop without
+re-building the backend, you can try this (after having run the
+above):
+
+```haskell
+cd ./accept
+stack exec -- selenium start
+stack exec -- selenium status
+export REFINE_RUN_APP=False
+stack exec -- accept
+...  # (edit accept.hs)
+stack build --fast
+stack exec -- accept --match='###'  # only run test cases whose description contains ###
+...  # (repeat)
+```
+
+At the time of writing this, the test cases are all included in
+accept.hs.  This may change in the future, and tests may fan out into
+sub-modules.
+
+`accept` and `selenium` need to be compiled (as opposed to run as a
+stack-script inside runghc) because of some subtleties in the way
+processIds and kill signals are propagated into and out of child
+processes.  At least i couldn't get it to work as a script.

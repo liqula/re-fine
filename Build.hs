@@ -96,6 +96,14 @@ main = shakeArgs refineOptions $ do
     need ["build-frontend-npm"]
     stackTest pkgFrontend
 
+  phony "accept" $ do
+    need ["build-frontend", "build-backend"]
+    command_ [Cwd pkgFrontend] "npm" ["run", "build"]
+    command_ [Cwd "accept"] "stack" ["build", "--fast"]
+    command_ [Cwd "accept"] "stack" ["exec", "--", "selenium", "install"]
+    command_ [Cwd "accept"] "stack" ["exec", "--", "selenium", "clean"]
+    command_ [Cwd "accept"] "stack" ["exec", "--", "accept"]
+
   phony "test" $ do
     -- for building everything, we only need to go to backend and frontend.  prelude and common are
     -- compiled in both (two different compilers), and tested (as non-extra deps in stack.yaml) in

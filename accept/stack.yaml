@@ -1,0 +1,5 @@
+resolver: lts-8.18
+# see https://github.com/liqula/react-hs/blob/ac4a871d50976353406edff203507bc66d8960b1/react-hs/test/spec/stack.yaml#L2
+
+extra-deps:
+- daemons-0.2.1

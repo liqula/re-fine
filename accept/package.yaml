@@ -1,0 +1,56 @@
+name:                accept
+version:             0.0.0.0
+synopsis:            'Fake package to acceptance-test interplay betweee refine-frontend, refine-backend, refine-common.'
+description:         Please see README.md
+homepage:            https://github.com/fisx/refine
+license:             AGPL
+license-file:        LICENSE
+author:
+  - Matthias Fischmann <mf@zerobuzz.net>
+maintainer:          mf@zerobuzz.net
+copyright:           2017-2022 zerobuzz.net
+category:            Web
+
+ghc-options: -j -threaded -Wall -Werror -Wno-redundant-constraints -Wno-orphans
+
+executables:
+  selenium:
+    main: selenium.hs
+    dependencies:
+      - async
+      - base
+      - bytestring
+      - daemons
+      - directory
+      - filepath
+      - foldl
+      - lens
+      - managed
+      - process
+      - string-conversions
+      - system-filepath
+      - temporary
+      - text
+      - turtle
+      - unix
+      - wreq
+      - yaml
+
+  accept:
+    main: accept.hs
+    dependencies:
+      - aeson
+      - base
+      - containers
+      - hspec
+      - hspec-core
+      - hspec-webdriver
+      - lens
+      - process
+      - QuickCheck
+      - quickcheck-instances
+      - string-conversions
+      - text
+      - time
+      - unordered-containers
+      - webdriver
