@@ -137,18 +137,19 @@ mainHeaderRender () rs = do
               (editDescToAbstract vdoc (ContribIDEdit eid))
 
         case rs ^. gsDocumentState of
-            WipedDocumentStateView     -> doc
-            WipedDocumentStateDiff eid -> edit (eid ^. editID)
-            WipedDocumentStateEdit{}   -> doc
+            WipedDocumentStateView       -> doc
+            WipedDocumentStateDiff eid _ -> edit (eid ^. editID)
+            WipedDocumentStateEdit{}     -> doc
 
       toolbarPart_ = div_ ["className" $= "c-fulltoolbar"] $ do
         sticky_ [RF.on "onStickyStateChange" $ \e -> simpleHandler $ \() ->
                     (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
           toolbarWrapper_ $ case rs ^. gsDocumentState of
             WipedDocumentStateView -> toolbar_
-            WipedDocumentStateDiff edit -> diffToolbar_ $ DiffToolbarProps
+            WipedDocumentStateDiff edit collapsed -> diffToolbar_ $ DiffToolbarProps
               (edit ^. editID)
               (edit ^. editVotes . to votesToCount)
+              collapsed
             WipedDocumentStateEdit eprops -> editToolbar_ eprops
           commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
           editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)

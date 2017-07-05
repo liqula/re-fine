@@ -83,6 +83,7 @@ data WipedDocumentState =
     WipedDocumentStateView
   | WipedDocumentStateDiff
       { _wipedDocumentStateDiff          :: Edit
+      , _wipedDocumentStateDiffCollapsed :: Bool
       }
   | WipedDocumentStateEdit EditToolbarProps
   deriving (Show, Eq)

@@ -72,12 +72,12 @@ diffToolbar_ props = do
 
   ibutton_ $ emptyIbuttonProps "Toggle_collapse_diff" [DocumentAction ToggleCollapseDiff]
     & ibListKey .~ "4"
-    & ibLabel .~ "collapse"  -- FIXME: change label based on collapse state.
+    & ibLabel .~ (if props ^. diffToolbarCollapsed then "expand" else "collapse")
     & ibSize .~ XXLarge
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
   ibutton_ $ emptyIbuttonProps "Diff_details" [ShowNotImplementedYet]
-    & ibListKey .~ "4"
+    & ibListKey .~ "5"
     & ibLabel .~ "details"
     & ibSize .~ XXLarge
