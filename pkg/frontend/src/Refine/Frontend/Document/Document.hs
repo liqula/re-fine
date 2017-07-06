@@ -43,7 +43,6 @@ import           Refine.Common.VDoc.Draft (deleteMarksFromRawContent)
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
-import           Refine.Frontend.Document.Store
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
@@ -123,10 +122,8 @@ documentRender() props = liftViewToStateHandler $ do
       ] mempty
 
 documentComponentDidMountOrUpdate :: HasCallStack => Outdated.LPropsAndState DocumentProps () -> IO ()
-documentComponentDidMountOrUpdate getPropsAndState = do
-  props <- Outdated.lGetProps getPropsAndState
-  ()    <- Outdated.lGetState getPropsAndState  -- (just to show there's nothing there)
-  dispatchAndExec . ContributionAction =<< setAllVerticalSpanBounds (props ^. dpDocumentState)
+documentComponentDidMountOrUpdate _getPropsAndState = do
+  dispatchAndExec . ContributionAction $ RequestSetAllVerticalSpanBounds
 
 document_ :: HasCallStack => DocumentProps -> ReactElementM eventHandler ()
 document_ props = Outdated.view document props mempty
