@@ -45,11 +45,11 @@ showEditAsDoc edits
             (patch bpatch btype)
             (patch dpatch depth)
             key
-            (patchLineElems [e | EditSecond es' <- es, e <- es'] elems)
+            (patchLineElems [e | EditSecond e <- es] elems)
       where
-        bdpatch = [e | EditFirst es' <- es, EditFirst es'' <- es', e <- es'']
-        bpatch = [e | EditFirst  es' <- bdpatch, e <- es']
-        dpatch = [e | EditSecond es' <- bdpatch, e <- es']
+        bdpatch = [e | EditFirst (EditFirst e) <- es]
+        bpatch = [e | EditFirst  e <- bdpatch]
+        dpatch = [e | EditSecond e <- bdpatch]
 
     patchLineElems :: Edit LineElems -> [LineElem] -> [LineElem]
     patchLineElems [] bs = bs
@@ -68,13 +68,13 @@ showEditAsDoc edits
 
     patchLineElem :: Edit LineElem -> LineElem -> [LineElem]
     patchLineElem es
-        = patchLineElemText [e | EditSecond es' <- es, e <- es']
-        . patchLineElemEntityStyle [e | EditFirst es' <- es, e <- es']
+        = patchLineElemText [e | EditSecond e <- es]
+        . patchLineElemEntityStyle [e | EditFirst e <- es]
 
     patchLineElemEntityStyle :: Edit EntityStyles -> LineElem -> LineElem
     patchLineElemEntityStyle es
-        = patchLineElemEntity [e | EditFirst  es' <- es, e <- es']
-        . patchLineElemStyle  [e | EditSecond es' <- es, e <- es']
+        = patchLineElemEntity [e | EditFirst  e <- es]
+        . patchLineElemStyle  [e | EditSecond e <- es]
 
     patchLineElemEntity :: Edit (Atom (Maybe Entity)) -> LineElem -> LineElem
     patchLineElemEntity [] le = le
@@ -146,7 +146,7 @@ transformRange edits doc
           where bs' = ePatch e bs
         InsertItem i _ -> r & mapped . rowIndex %~ incIdx True i 1
         EditItem i es -> case bs !! i of
-          (_, elems) -> patchFold patchLineElems [e | EditSecond es' <- es, e <- es'] elems r
+          (_, elems) -> patchFold patchLineElems [e | EditSecond e <- es] elems r
 
     patchLineElems :: LineElems -> Range Position -> EEdit LineElems -> Range Position
     patchLineElems (Segments (map (cs . unNonEmptyST . snd) -> bs)) r = \case
@@ -155,7 +155,7 @@ transformRange edits doc
       SegmentListEdit (InsertItem i x) ->
         incRange columnIndex (length . concat $ take i bs) (len x) r
       SegmentListEdit (EditItem i es) ->
-        patchFold (patchText . sum $ length <$> take i bs) [coerce e | EditSecond es' <- es, e <- es'] (bs !! i) r
+        patchFold (patchText . sum $ length <$> take i bs) [coerce e | EditSecond e <- es] (bs !! i) r
       JoinItems{} -> r
       SplitItem{} -> r
 

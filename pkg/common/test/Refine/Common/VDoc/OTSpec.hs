@@ -59,11 +59,11 @@ spec = parallel $ do
       let block0 = BlockIndex 0 $ BlockKey "0"
 
       describe "added text with custom style 'ADDED'." $ do
-        let edit = eRawContent [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond $ coerce
+        let edit = eRawContent [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit . EditItem 0 . editSecond $ coerce
                         [ InsertItem 10 'a'
                         , InsertItem 11 'n'
                         , InsertItem 12 'd'
-                        , InsertItem 13 '/']]]]]
+                        , InsertItem 13 '/']]]
             rc   = mkRawContent $ mkBlock "some text or other" :| []
             rc'  = mkRawContent $ (mkBlock "some text and/or other" & blockStyles .~ [(EntityRange 10 4, StyleAdded)]) :| []
             ranges = mconcat $ rangesFromRange True <$> [Range (Position block0 10) (Position block0 10)]
@@ -74,8 +74,8 @@ spec = parallel $ do
         let -- FIXME: edit rc . mkRawContent $ mkBlock "someer" :| []
             -- this doesn't work now because the cost of deleting chars is more than
             -- the cost of deleting the block and adding a new one
-            edit = eRawContent [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond
-                        . coerce $ deleteRange 4 12]]]]
+            edit = eRawContent [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit . EditItem 0 . editSecond
+                        . coerce $ deleteRange 4 12]]
             rc   = mkRawContent $ mkBlock "some text or other" :| []
             rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [(EntityRange 4 12, StyleDeleted)]) :| []
             ranges = mconcat $ rangesFromRange False <$> [Range (Position block0 4) (Position block0 16)]
@@ -138,7 +138,7 @@ spec = parallel $ do
         transformRange edit (mkRC "aa\naa\naa\naa") (Range (pos 0 1) (pos 1 1)) `shouldBe` Range (pos' 0 2 0) (pos' 0 2 0)
 
       it "insert line elem" $ do
-        let edit = [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit . InsertItem 1 . head $ mkLE "aaa"]]]
+        let edit = [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit . InsertItem 1 . head $ mkLE "aaa"]]
         transformRange edit (mkRC "AAaa\na") (Range (pos 0 1) (pos 0 3)) `shouldBe` Range (pos 0 1) (pos 0 6)
         transformRange edit (mkRC "AAaa\na") (Range (pos 0 2) (pos 0 3)) `shouldBe` Range (pos 0 5) (pos 0 6)
         transformRange edit (mkRC "AAaa\na") (Range (pos 0 3) (pos 0 3)) `shouldBe` Range (pos 0 6) (pos 0 6)
@@ -146,7 +146,7 @@ spec = parallel $ do
         transformRange edit (mkRC "AAaa\na") (Range (pos 0 1) (pos 0 1)) `shouldBe` Range (pos 0 1) (pos 0 1)
 
       it "delete line elems" $ do
-        let edit = [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ DeleteRange 1 1]]]
+        let edit = [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit $ DeleteRange 1 1]]
             doc = mkRC "AaaA"
         map (transformRange edit doc) [Range (pos 0 x) (pos 0 y) | x <- [0..4], y <- [x..4]] `shouldBe`
           [ Range (pos 0 0) (pos 0 0)
@@ -171,9 +171,9 @@ spec = parallel $ do
           ]
 
       it "insert characters" $ do
-        let edit = [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 1 [EditSecond
+        let edit = [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit . EditItem 1 $ editSecond
                         [ NEText . EText $ InsertItem 1 'a'
-                        , NEText . EText $ InsertItem 2 'a']]]]]
+                        , NEText . EText $ InsertItem 2 'a']]]
             doc = mkRC "AaaA"
         map (transformRange edit doc) [Range (pos 0 x) (pos 0 y) | x <- [1..3], y <- [x..3]] `shouldBe`
           [ Range (pos 0 1) (pos 0 1)
@@ -187,8 +187,8 @@ spec = parallel $ do
           ]
 
       it "delete characters" $ do
-        let edit = [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 1 [EditSecond
-                        [ NEText . EText $ DeleteRange 1 1 ]]]]]
+        let edit = [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit . EditItem 1 $ editSecond
+                        [ NEText . EText $ DeleteRange 1 1 ]]]
             doc = mkRC "AaaaA"
         map (transformRange edit doc) [Range (pos 0 x) (pos 0 y) | x <- [1..4], y <- [x..4]] `shouldBe`
           [ Range (pos 0 1) (pos 0 1)
@@ -207,8 +207,8 @@ spec = parallel $ do
           ]
 
       it "edit characters" $ do
-        let edit = [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 1 [EditSecond
-                        [ NEText . EText $ EditItem 1 [EChar $ EAtom 'x'] ]]]]]
+        let edit = [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit . EditItem 1 $ editSecond
+                        [ NEText . EText $ EditItem 1 [EChar $ EAtom 'x'] ]]]
             doc = mkRC "AaaaA"
         map (transformRange edit doc) [Range (pos 0 x) (pos 0 y) | x <- [1..4], y <- [x..4]] `shouldBe`
           [ Range (pos 0 1) (pos 0 1)
