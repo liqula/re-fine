@@ -175,12 +175,10 @@ instance (NFData (EEdit a), NFData (EEdit b)) => NFData (EEdit (a, b)) where rnf
 ---------------------------------------- Either instance
 
 editLeft :: Edit a -> Edit (Either a b)
-editLeft [] = []
-editLeft e  = [EditLeft e]
+editLeft = fmap EditLeft
 
 editRight :: Edit b -> Edit (Either a b)
-editRight [] = []
-editRight e  = [EditRight e]
+editRight = fmap EditRight
 
 instance (Editable a, Editable b) => Editable (Either a b) where
 
@@ -188,18 +186,18 @@ instance (Editable a, Editable b) => Editable (Either a b) where
     docCost (Right b) = 1 + docCost b
 
     data EEdit (Either a b)
-        = EditLeft  (Edit a)
-        | EditRight (Edit b)
+        = EditLeft  (EEdit a)
+        | EditRight (EEdit b)
         | SetEither (Either a b)
             deriving (Generic)
 
     eCost = \case
-        EditLeft  e -> 1 + cost e
-        EditRight e -> 1 + cost e
+        EditLeft  e -> 1 + eCost e
+        EditRight e -> 1 + eCost e
         SetEither x -> 1 + either docCost docCost x
 
-    ePatch (EditLeft  e) (Left  a) = Left  (patch e a)
-    ePatch (EditRight e) (Right b) = Right (patch e b)
+    ePatch (EditLeft  e) (Left  a) = Left  (ePatch e a)
+    ePatch (EditRight e) (Right b) = Right (ePatch e b)
     ePatch (SetEither x) _         = x
     ePatch EditLeft{} Right{} = error "impossible"
     ePatch EditRight{} Left{} = error "impossible"
@@ -208,12 +206,12 @@ instance (Editable a, Editable b) => Editable (Either a b) where
     diff (Right b) (Right b') = editRight <$> diff b b'
     diff _ x = pure [SetEither x]
 
-    eMerge (Left  a) (EditLeft  ea) (EditLeft  ea') = editLeft  *** editLeft  $ merge a ea ea'
-    eMerge (Right b) (EditRight eb) (EditRight eb') = editRight *** editRight $ merge b eb eb'
+    eMerge (Left  a) (EditLeft  ea) (EditLeft  ea') = editLeft  *** editLeft  $ eMerge a ea ea'
+    eMerge (Right b) (EditRight eb) (EditRight eb') = editRight *** editRight $ eMerge b eb eb'
     eMerge d a b = secondWins d a b
 
-    eInverse (Left  a) (EditLeft  e) = editLeft  $ inverse a e
-    eInverse (Right b) (EditRight e) = editRight $ inverse b e
+    eInverse (Left  a) (EditLeft  e) = editLeft  $ eInverse a e
+    eInverse (Right b) (EditRight e) = editRight $ eInverse b e
     eInverse x         (SetEither _) = [SetEither x]
     eInverse Left{} EditRight{} = error "impossible"
     eInverse Right{} EditLeft{} = error "impossible"
