@@ -55,7 +55,7 @@ spec = parallel $ do
       docToRawContent (rawContentToDoc d) `shouldBe` d
 
 
-    describe "showEditAsRawContent" $ do
+    describe "### showEditAsRawContent" $ do
       let block0 = BlockIndex 0 $ BlockKey "0"
 
       describe "added text with custom style 'ADDED'." $ do

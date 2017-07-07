@@ -252,7 +252,7 @@ data BlockType =
   | Header3
   | BulletPoint
   | EnumPoint
-  deriving (Show, Eq, Generic, Bounded, Enum)
+  deriving (Show, Eq, Ord, Generic, Bounded, Enum)
 
 
 -- * OT.Edit RawContent

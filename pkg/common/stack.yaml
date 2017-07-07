@@ -15,6 +15,7 @@ packages:
 
 extra-deps:
 - lens-properties-4.11
+- fingertree-tf-0.1.0.0
 
 flags: {}
 

@@ -21,6 +21,7 @@ dependencies:
   - basic-sop
   - containers
   - deepseq
+  - fingertree-tf
   - functor-infix
   - generics-sop
   - hspec
@@ -29,6 +30,7 @@ dependencies:
   - i18n
   - json-sop
   - lens
+  - monoid-extras
   - mtl
   - natural-transformation
   - patience
