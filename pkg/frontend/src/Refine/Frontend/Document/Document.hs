@@ -38,8 +38,7 @@ import           Language.Css.Build hiding (s)
 import           Language.Css.Syntax hiding (Value)
 
 import           Refine.Common.Types
-import           Refine.Common.VDoc.OT (showEditAsRawContent, hideUnchangedParts)
-import           Refine.Common.VDoc.Draft (deleteMarksFromRawContent)
+import           Refine.Common.VDoc.OT (showEditAsRawContentWithMarks, hideUnchangedParts)
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
@@ -92,9 +91,8 @@ documentRender() props = liftViewToStateHandler $ do
 
           -- FIXME: show the relevant diff
           diffit (EditSource []) = Nothing
-          diffit (EditSource ((otedit, _): _)) = showEditAsRawContent otedit
-                                       . deleteMarksFromRawContent  -- (edit inline styles do not work in combination with marks.)
-                                     <$> (dstate ^? documentStateContent)
+          diffit (EditSource ((otedit, _): _))
+            = showEditAsRawContentWithMarks otedit <$> (dstate ^? documentStateContent)
 
   article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
            , "style" @@= [zindex ZIxArticle, decl "overflow" (Ident "visible")]

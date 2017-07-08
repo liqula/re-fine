@@ -6,6 +6,7 @@
 {-# LANGUAGE ViewPatterns               #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE TypeSynonymInstances       #-}
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 module Refine.Common.VDoc.OT where
@@ -13,10 +14,11 @@ module Refine.Common.VDoc.OT where
 import           Data.List
 import           Data.Maybe
 import           Data.Foldable
-import           Data.FingerTree
+import           Data.FingerTree hiding (reverse, null)
 import qualified Data.FingerTree as FingerTree
 import qualified Data.Monoid.Split as Split
 import qualified Data.Set as Set
+import qualified Data.Map as Map
 import qualified Data.IntMap as IntMap
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Text as ST
@@ -25,11 +27,6 @@ import qualified Data.Algorithm.Patience as Diff
 import           Refine.Common.Prelude hiding (fromList)
 import           Refine.Common.OT
 import           Refine.Common.Types.Core hiding (Edit)
-
-
-showEditAsRawContent :: Edit RawContent -> RawContent -> RawContent
-showEditAsRawContent edit doc
-  = toRawContent . decorateEdit $ fromEditRawContent doc edit
 
 {-
   Old design: Adding style patches to a sequence of patches needs repeting rebase:
@@ -65,11 +62,73 @@ showEditAsRawContent edit doc
 
 -}
 
+---------- utils
+
 type Seq = FingerTree
 
 mapMaybeSeq :: Measured b => (a -> Maybe b) -> Seq a -> Seq b
 mapMaybeSeq f = fromList . mapMaybe f . toList
 
+splits :: Measured a => (Measure a -> Bool) -> Seq a -> [Seq a]
+splits p (split p -> (d1, d2)) = d1: case viewl d2 of
+  EmptyL -> []
+  x :< xs -> mapHead (x <|) $ splits p xs
+  where
+    mapHead f (x: xs) = f x: xs
+    mapHead _ _ = error "impossible"
+
+splitMeasures :: Measured a => (Measure a -> Bool) -> Seq a -> [Measure a]
+splitMeasures p = scanl1 (<>) . map measure . splits p
+
+splitsAt :: (Measured a, Ord b) => (Measure a -> b) -> [b] -> Seq a -> [Seq a]
+splitsAt f bs_ = reverse . g (reverse bs_)
+  where
+  g [] d = [d]
+  g (b: bs) (split ((> b) . f) -> (d1, d2)) = d2: g bs d1
+
+instance Measured Char where
+  type Measure Char = Sum Int
+  measure _ = Sum 1
+
+instance Measured ST where
+  type Measure ST = Sum Int
+  measure = Sum . ST.length
+
+everyNth :: Int -> [a] -> [[a]]
+everyNth _ [] = []
+everyNth i xs = take i xs: everyNth i (drop i xs)
+
+
+---------- ChangeSet, ChangeMap
+
+newtype ChangeSet a = ChangeSet {unChangeSet :: Set a}
+  deriving (Eq, Ord, Show)
+
+instance Ord a => Monoid (ChangeSet a) where
+  mempty = ChangeSet mempty
+  ChangeSet a `mappend` ChangeSet b
+    | Set.null a = ChangeSet b     -- optimization for better sharing
+    | Set.null b = ChangeSet a     -- optimization for better sharing
+    | otherwise = ChangeSet $ Set.difference a b <> Set.difference b a
+
+newtype ChangeMap a = ChangeMap {unChangeMap :: Map a Int}
+  deriving (Eq, Ord, Show)
+
+instance Ord a => Monoid (ChangeMap a) where
+  mempty = ChangeMap mempty
+  ChangeMap a `mappend` ChangeMap b
+    | Map.null a = ChangeMap b     -- optimization for better sharing
+    | Map.null b = ChangeMap a     -- optimization for better sharing
+    | otherwise = ChangeMap $ Map.unionWith (+) a b
+
+toChangeSet :: Ord a => ChangeMap a -> ChangeSet a
+toChangeSet = ChangeSet . Map.keysSet . Map.filter odd . unChangeMap
+
+toChangeMap :: ChangeSet a -> ChangeMap a
+toChangeMap = ChangeMap . Map.fromSet (const 1) . unChangeSet
+
+
+---------- EditPiece
 
 data EditPiece a
   = EPCopy   a
@@ -129,16 +188,7 @@ compressEdit' = fromList . map (fmap fromList . g) . groupBy ((==) `on` changeTy
     EPInsert{}: _ -> EPInsert [x | EPInsert x <- xs]
 
 
-newtype ChangeSet a = ChangeSet {unChangeSet :: Set a}
-  deriving (Eq, Ord, Show)
-
-instance Ord a => Monoid (ChangeSet a) where
-  mempty = ChangeSet mempty
-  ChangeSet a `mappend` ChangeSet b = ChangeSet $ Set.difference a b <> Set.difference b a
-
-singletonChange :: a -> ChangeSet a
-singletonChange = ChangeSet . Set.singleton
-
+-------- DocPiece
 
 data DocPiece_ a
   = DocPiece (ChangeSet EStyle){-set of style *changes*-} a    -- _____s______s______
@@ -147,29 +197,29 @@ data DocPiece_ a
 
 type EStyle = Either Entity Style
 
-instance Measured Char where
-  type Measure Char = Sum Int
-  measure _ = Sum 1
-
 instance (Measured a, Measure a ~ Sum Int) => Measured (DocPiece_ a) where
   type Measure (DocPiece_ a) = DocMeasure
   measure = \case
-    DocPiece s c     -> DocMeasure mempty mempty (Split.M $ measure c) s
+    DocPiece s c     -> DocMeasure mempty mempty (Split.M $ measure c) (toChangeMap s)
     NewBlock key _ _ -> DocMeasure (Sum 1) (Last $ Just key) Split.split mempty
 
 data DocMeasure = DocMeasure
   { rowMeasure   :: Sum Int                -- row index + 1
   , keyMeasure   :: Last BlockKey          -- last blockkey
   , charMeasure  :: Split.Split (Sum Int)  -- column index + sum of non-newline chars before the last newline
-  , styleMeasure :: ChangeSet EStyle       -- toggled styles
+  , styleMeasure :: ChangeMap EStyle       -- styles toggles
   }
 
 instance Monoid DocMeasure where
   mempty = DocMeasure mempty mempty mempty mempty
   DocMeasure a b c d `mappend` DocMeasure a' b' c' d' = DocMeasure (a <> a') (b <> b') (c <> c') (d <> d')
 
-measureChars :: DocMeasure -> Int
-measureChars = getSum . Split.unsplit . charMeasure
+-- toggled styles
+styleSet :: DocMeasure -> ChangeSet EStyle
+styleSet = toChangeSet . styleMeasure
+
+measureStylePositions :: DocMeasure -> Int
+measureStylePositions = getSum . Split.unsplit . charMeasure
 
 measurePosition :: DocMeasure -> Position
 measurePosition (DocMeasure r k c _)
@@ -179,6 +229,9 @@ measurePosition (DocMeasure r k c _)
     getCol (_ Split.:| x) = x
 
 type DocPiece = DocPiece_ Char -- TUNING: NonEmptyST
+
+
+--------- NewDoc
 
 type NewDoc = Seq DocPiece
 
@@ -195,36 +248,51 @@ splitAtPosition = split . positionPredicate
 lastPosition :: NewDoc -> Position
 lastPosition = measurePosition . measure
 
-firstDocPiece :: NewDoc -> Maybe (NewDoc, ChangeSet EStyle, Char, NewDoc)
-firstDocPiece (split ((>= 1) . measureChars) -> (d1, viewl -> DocPiece s c :< d2)) = Just (d1, s, c, d2)
-firstDocPiece _ = Nothing
-
-firstNewBlock :: NewDoc -> Maybe (NewDoc, BlockKey, BlockDepth, BlockType, NewDoc)
-firstNewBlock (split ((>= 1) . rowMeasure) -> (d1, viewl -> NewBlock k d ty :< d2)) = Just (d1, k, d, ty, d2)
-firstNewBlock _ = Nothing
-
 toggleStyle :: ChangeSet EStyle -> NewDoc -> NewDoc
 toggleStyle sty d
   | Set.null $ unChangeSet sty = d  -- this line is an optimization
-  | otherwise = maybe d (\(d1, s, c, d2) -> d1 <> (DocPiece (sty <> s) c <| d2)) $ firstDocPiece d
+  | (d1, viewl -> DocPiece s c :< d2) <- split ((>= 1) . measureStylePositions) d
+      = d1 <> (DocPiece (sty <> s) c <| d2)
+  | otherwise = d
 
 changeStyle :: (Set EStyle -> Set EStyle) -> NewDoc -> NewDoc -> NewDoc
-changeStyle fun d@(styleMeasure . measure -> c@(ChangeSet sty)) d' = d <> toggleStyle (c <> ChangeSet (fun sty)) d'
+changeStyle fun d@(styleSet . measure -> c@(ChangeSet sty)) d' = d <> toggleStyle (c <> ChangeSet (fun sty)) d'
 
 -- close all styles in first doc
 glue :: NewDoc -> NewDoc -> NewDoc
 glue = changeStyle $ const mempty
 
-docLines :: NewDoc -> [NewDoc]
-docLines = filter (not . FingerTree.null) . f mempty
-  where
-   f acc (firstNewBlock -> Just (d1, k, d, ty, d2)) = (acc <> d1): f (singleton $ NewBlock k d ty) d2
-   f acc d = [acc <> d]
+filterStyle :: (EStyle -> Bool) -> NewDoc -> NewDoc
+filterStyle p = fmap' $ \case
+    DocPiece (ChangeSet s) c -> DocPiece (ChangeSet $ Set.filter p s) c
+    x -> x
 
+docStyles :: NewDoc -> Set EStyle
+docStyles = Map.keysSet . Map.filter (> 0) . unChangeMap . styleMeasure . measure
+
+getStyleRanges :: NewDoc -> EStyle -> Ranges Position
+getStyleRanges doc sty
+  = RangesInner [Range a b | [a, b] <- everyNth 2 $ splitPositions (Map.member sty . unChangeMap . styleMeasure) doc]
+
+addStyleRanges :: EStyle -> Ranges Position -> NewDoc -> NewDoc
+addStyleRanges s rs
+  = mconcat
+  . mapTail (toggleStyle . ChangeSet $ Set.singleton s)
+  . splitsAt measurePosition [p | Range a b <- unRanges rs, p <- [a, b]]
+  where
+  mapTail f (x: xs) = x: map f xs
+  mapTail _ _ = error "impossible"
+
+splitPositions :: (DocMeasure -> Bool) -> NewDoc -> [Position]
+splitPositions p = map measurePosition . splitMeasures p
+
+docLines :: NewDoc -> [NewDoc]
+docLines = splits ((>= 1) . rowMeasure)
+
+
+------- NewDocEdit
 
 type NewDocEdit = SeqEdit DocPiece
-
-type DocEditPiece = EditPiece DocPiece
 
 splitAtOldPosition :: Position -> NewDocEdit -> (NewDocEdit, NewDocEdit)
 splitAtOldPosition p = split (positionPredicate p . fst)
@@ -245,7 +313,7 @@ transformRange_ edit (Range p1 p2)
     range a b | b < a     = Range a a
               | otherwise = Range a b
 
-    (edit1, split ((>= 1) . measureChars . snd) -> (newlines, _)) = splitAtOldPosition p1 edit
+    (edit1, split ((>= 1) . measureStylePositions . snd) -> (newlines, _)) = splitAtOldPosition p1 edit
     edit2 = fst $ splitAtOldPosition p2 edit
 
 -- FIXME: highlight style and block changes better
@@ -281,7 +349,8 @@ fromRawContent (RawContent blocks entitymap) = foldl glue mempty . map fromBlock
     splitCol i = split $ (> i) . (^. columnIndex) . measurePosition
 
 toRawContent :: NewDoc -> RawContent
-toRawContent (docLines -> dls) = mkRawContentInternal . NEL.fromList $ zipWith toBlock (scanl (<>) mempty $ styleMeasure . measure <$> dls) dls
+toRawContent (docLines -> (FingerTree.null -> True): dls)
+  = mkRawContentInternal . NEL.fromList $ zipWith toBlock (scanl (<>) mempty $ styleSet . measure <$> dls) dls
   where
     toBlock :: ChangeSet EStyle -> NewDoc -> Block Entity BlockKey
     toBlock css@(ChangeSet sty_) nd@(toList -> NewBlock key (BlockDepth depth) btype: d)
@@ -294,7 +363,7 @@ toRawContent (docLines -> dls) = mkRawContentInternal . NEL.fromList $ zipWith t
           key
       where
         ss = mkRanges ((,) 0 <$> Set.toList sty_) . zip [0..]
-           $ [s | DocPiece (ChangeSet s) _ <- d] <> [unChangeSet $ css <> styleMeasure (measure nd)]
+           $ [s | DocPiece (ChangeSet s) _ <- d] <> [unChangeSet $ css <> styleSet (measure nd)]
 
         mkRanges _ [] = []
         mkRanges acc ((i, s): xs) =
@@ -317,8 +386,27 @@ fromEditRawContent rc edit
 transformRange :: Edit OTDoc -> OTDoc -> Range Position -> Range Position
 transformRange edit doc = transformRange_ $ fromEditRawContent (docToRawContent doc) (coerce [edit])
 
-transformEditRange :: RawContent -> Edit RawContent -> Range Position -> Range Position
-transformEditRange rc edit = transformRange_ . fullEdit $ fromEditRawContent rc edit
+showEditAsRawContentWithMarks :: Edit RawContent -> RawContent -> RawContent
+showEditAsRawContentWithMarks edit (fromRawContent -> doc)
+  = toRawContent $ foldr (uncurry addStyleRanges) (decorateEdit dedit) transformedMarks
+  where
+    dedit = fromEditRawContent (toRawContent $ filterStyle (not . isMark) doc) edit
+
+    transformedMarks =
+      [ (s, RangesInner $ transformEditRange <$> unRanges (getStyleRanges doc s))
+      | s <- Set.toList $ docStyles doc
+      , isMark s
+      ]
+
+    transformEditRange = transformRange_ . fullEdit $ dedit
+
+    isMark = either (const False) (has _Mark)
+
+
+showEditAsRawContent :: Edit RawContent -> RawContent -> RawContent
+showEditAsRawContent edit doc
+  = toRawContent . decorateEdit $ fromEditRawContent doc edit
+
 
 docEditRanges :: Edit RawContent -> RawContent -> Ranges Position
 docEditRanges edits rc
