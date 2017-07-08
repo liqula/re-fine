@@ -28,6 +28,7 @@ packages:
   extra-dep: true
 
 extra-deps:
+- fingertree-tf-0.1.0.0
 - lens-properties-4.11
 - wai-extra-3.0.20.0
   # LTS Haskell 8.19:            3.0.19.1

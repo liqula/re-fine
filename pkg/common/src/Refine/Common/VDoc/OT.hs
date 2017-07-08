@@ -7,40 +7,32 @@
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE DeriveFunctor              #-}
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Refine.Common.VDoc.OT where
 
-import           Data.List (groupBy, inits, tails)
-import           Data.Foldable (toList)
+import           Data.List
+import           Data.Maybe
+import           Data.Foldable
 import           Data.FingerTree
-import           Data.Monoid.Cut
+import qualified Data.FingerTree as FingerTree
+import qualified Data.Monoid.Split as Split
 import qualified Data.Set as Set
-import qualified Data.Map as Map
 import qualified Data.IntMap as IntMap
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Text as ST
 import qualified Data.Algorithm.Patience as Diff
-import           Control.Lens (ALens', mapped, cloneLens)
 
-import           Refine.Common.Prelude
+import           Refine.Common.Prelude hiding (fromList)
 import           Refine.Common.OT
 import           Refine.Common.Types.Core hiding (Edit)
 
-pattern DocBlock' :: Atom BlockType -> Atom BlockDepth -> NonEditable BlockKey -> [LineElem] -> DocBlock
-pattern DocBlock' t d k ls = (((t, d), k), Segments ls)
-
-type Styles = Set (Atom Style)
 
 showEditAsRawContent :: Edit RawContent -> RawContent -> RawContent
-showEditAsRawContent edits
-    = docToRawContent . showEditAsDoc (concat (coerce edits :: [Edit OTDoc])) . rawContentToDoc
-
-showEditAsDoc :: Edit OTDoc -> OTDoc -> OTDoc
-showEditAsDoc edit doc
-  = rawContentToDoc . toRawContent . decorateEdit
-  $ fromEditRawContent (docToRawContent doc) (coerce [edit])
+showEditAsRawContent edit doc
+  = toRawContent . decorateEdit $ fromEditRawContent doc edit
 
 {-
-  Adding style patches to a sequence of patches needs repeting rebase:
+  Old design: Adding style patches to a sequence of patches needs repeting rebase:
 
      1      2      3
   * ---> * ---> * ---> *
@@ -57,7 +49,7 @@ showEditAsDoc edit doc
                        v
                        *
 
-  Patch normalization:
+  This is quadratic, but could be speeded up by patch normalization:
 
       Delete kills insert:
 
@@ -67,22 +59,17 @@ showEditAsDoc edit doc
 
         i2'c', i1'd'    -->  i1'd', i3'c'
 
-  Alternative patch representation which do not need normalization:
+  Instead of this, we use a patch representation which do not need normalization:
 
         i2'c', d0, i3'x'   -->  del: copy: ins c: copy: ins x
-
 
 -}
 
 type Seq = FingerTree
 
+mapMaybeSeq :: Measured b => (a -> Maybe b) -> Seq a -> Seq b
+mapMaybeSeq f = fromList . mapMaybe f . toList
 
---fmap f = mconcat . fmap (pure . f) . toList
---instance Applicative FingerTree
---instance Monad FingerTree
-
-filterMap :: Measured b => (a -> Maybe b) -> Seq a -> Seq b
-filterMap f = mconcat . map singleton . catMaybes . map f . toList
 
 data EditPiece a
   = EPCopy   a
@@ -103,13 +90,13 @@ idEdit :: Measured a => Seq a -> SeqEdit a
 idEdit = fmap' EPCopy
 
 editStart :: Measured a => SeqEdit a -> Seq a
-editStart = filterMap $ \case
+editStart = mapMaybeSeq $ \case
   EPCopy   a -> Just a
   EPDelete a -> Just a
   EPInsert _ -> Nothing
 
 editEnd :: Measured a => SeqEdit a -> Seq a
-editEnd = filterMap $ \case
+editEnd = mapMaybeSeq $ \case
   EPCopy   a -> Just a
   EPDelete _ -> Nothing
   EPInsert a -> Just a
@@ -120,14 +107,26 @@ reverseEdit = fmap' $ \case
   EPDelete a -> EPInsert a
   EPInsert a -> EPDelete a
 
---composeEdits :: Measured a => SeqEdit a -> SeqEdit a -> SeqEdit a
---composeEdits = error "TODO"
+fullEdit :: Measured a => SeqEdit a -> SeqEdit a
+fullEdit = fmap' $ \case
+  EPCopy   a -> EPCopy   a
+  EPDelete a -> EPCopy   a   -- deletion is kept
+  EPInsert a -> EPInsert a
 
---compressEdit :: SeqEdit a -> SeqEdit (Seq a)
---compressEdit = _
+compressEdit' :: Measured a => SeqEdit a -> SeqEdit (Seq a)
+compressEdit' = fromList . map (fmap fromList . g) . groupBy ((==) `on` changeType) . toList
+  where
+  changeType :: EditPiece a -> Int
+  changeType = \case
+    EPDelete{} -> -1
+    EPCopy{}   ->  0
+    EPInsert{} ->  1
 
---expandEdit :: SeqEdit (Seq a) -> SeqEdit a
---expandEdit = _
+  g :: [EditPiece a] -> EditPiece [a]
+  g xs = case xs of
+    EPDelete{}: _ -> EPDelete [x | EPDelete x <- xs]
+    EPCopy{}:   _ -> EPCopy   [x | EPCopy x   <- xs]
+    EPInsert{}: _ -> EPInsert [x | EPInsert x <- xs]
 
 
 newtype ChangeSet a = ChangeSet {unChangeSet :: Set a}
@@ -143,55 +142,93 @@ singletonChange = ChangeSet . Set.singleton
 
 data DocPiece_ a
   = DocPiece (ChangeSet EStyle){-set of style *changes*-} a    -- _____s______s______
-  | NewBlock BlockKey BlockDepth BlockType              -- like a newline
+  | NewBlock BlockKey BlockDepth BlockType                     -- similar to a newline but with more info
   deriving (Eq, Ord, Show)
 
 type EStyle = Either Entity Style
 
-instance Measured (DocPiece_ a) where
-  type Measure (DocPiece_ a) = DocPieceMonoid
+instance Measured Char where
+  type Measure Char = Sum Int
+  measure _ = Sum 1
+
+instance (Measured a, Measure a ~ Sum Int) => Measured (DocPiece_ a) where
+  type Measure (DocPiece_ a) = DocMeasure
   measure = \case
-    DocPiece s _     -> ((mempty,                   Uncut $ Sum 1), s)
-    NewBlock key _ _ -> (((Sum 1, Last $ Just key), cut),           mempty)
+    DocPiece s c     -> DocMeasure mempty mempty (Split.M $ measure c) s
+    NewBlock key _ _ -> DocMeasure (Sum 1) (Last $ Just key) Split.split mempty
 
-type DocPieceMonoid    = (PositionMonoid, StyleMonoid)
-type StyleMonoid       = ChangeSet EStyle
-type PositionMonoid    = (RowIndexMonoid, ColumnIndexMonoid)
-type RowIndexMonoid    = (Sum Int, Last BlockKey)
-type ColumnIndexMonoid = Cut (Sum Int)
+data DocMeasure = DocMeasure
+  { rowMeasure   :: Sum Int                -- row index + 1
+  , keyMeasure   :: Last BlockKey          -- last blockkey
+  , charMeasure  :: Split.Split (Sum Int)  -- column index + sum of non-newline chars before the last newline
+  , styleMeasure :: ChangeSet EStyle       -- toggled styles
+  }
 
-docPieceMonoidPosition :: DocPieceMonoid -> Position
-docPieceMonoidPosition (((r, k), c), _) = Position (BlockIndex (getSum r - 1) (g k)) (getCol c)
+instance Monoid DocMeasure where
+  mempty = DocMeasure mempty mempty mempty mempty
+  DocMeasure a b c d `mappend` DocMeasure a' b' c' d' = DocMeasure (a <> a') (b <> b') (c <> c') (d <> d')
+
+measureChars :: DocMeasure -> Int
+measureChars (DocMeasure _ _ c _) = getSum (Split.unsplit c)
+
+measurePosition :: DocMeasure -> Position
+measurePosition (DocMeasure r k c _)
+  = Position (BlockIndex (getSum r - 1) (fromMaybe (BlockKey "") $ getLast k)) (getSum $ getCol c)
   where
-    g = fromMaybe (BlockKey "") . getLast
-
-getCol :: ColumnIndexMonoid -> Int
-getCol (Uncut x) = getSum x
-getCol (_ :||: x) = getSum x
-
-remaining :: ColumnIndexMonoid -> Int
-remaining (Uncut x) = getSum x
-remaining (x :||: _) = getSum x
+    getCol (Split.M x) = x
+    getCol (_ Split.:| x) = x
 
 type DocPiece = DocPiece_ Char -- TUNING: NonEmptyST
 
 type NewDoc = Seq DocPiece
 
 isValidNewDoc :: NewDoc -> Bool
-isValidNewDoc d
-  =  Set.null (unChangeSet sty)   -- every style is closed
-  && isJust (getLast key)         -- there is at least one block in the document
-  where
-    (((_row, key), _col), sty) = measure d
+isValidNewDoc (viewl -> NewBlock{} :< _) = True   -- the first element should be a NewBlock
+isValidNewDoc _ = False
 
-positionPredicate :: Position -> DocPieceMonoid -> Bool
-positionPredicate p = (p >=) . docPieceMonoidPosition
+positionPredicate :: Position -> DocMeasure -> Bool
+positionPredicate p = (> p) . measurePosition
+
+positionPredicate' :: Position -> DocMeasure -> Bool
+positionPredicate' p = (>= p) . measurePosition
 
 splitAtPosition :: Position -> NewDoc -> (NewDoc, NewDoc)
 splitAtPosition = split . positionPredicate
 
 lastPosition :: NewDoc -> Position
-lastPosition = docPieceMonoidPosition . measure
+lastPosition = measurePosition . measure
+
+firstDocPiece :: NewDoc -> Maybe (NewDoc, ChangeSet EStyle, Char, NewDoc)
+firstDocPiece (split ((>= 1) . measureChars) -> (d1, viewl -> DocPiece s c :< d2)) = Just (d1, s, c, d2)
+firstDocPiece _ = Nothing
+
+firstNewBlock :: NewDoc -> Maybe (NewDoc, BlockKey, BlockDepth, BlockType, NewDoc)
+firstNewBlock (split ((>= 1) . (^. rowIndex) . measurePosition) -> (d1, viewl -> NewBlock k d ty :< d2)) = Just (d1, k, d, ty, d2)
+firstNewBlock _ = Nothing
+
+toggleStyle :: ChangeSet EStyle -> NewDoc -> NewDoc
+toggleStyle sty d
+  | Set.null $ unChangeSet sty = d  -- this line is an optimization
+  | otherwise = maybe d (\(d1, s, c, d2) -> (d1 |> DocPiece (sty <> s) c) <> d2) $ firstDocPiece d
+
+changeStyle :: (Set EStyle -> Set EStyle) -> NewDoc -> NewDoc -> NewDoc
+changeStyle fun d@(measure -> DocMeasure _ _ _ (ChangeSet sty)) d' = d <> toggleStyle (ChangeSet $ fun sty) d'
+
+addStyle :: Set EStyle -> NewDoc -> NewDoc -> NewDoc
+addStyle = changeStyle . Set.difference
+
+removeStyle :: Set EStyle -> NewDoc -> NewDoc -> NewDoc
+removeStyle = changeStyle . Set.intersection
+
+glue :: NewDoc -> NewDoc -> NewDoc
+glue = changeStyle id
+
+docLines :: NewDoc -> [NewDoc]
+docLines = filter (not . FingerTree.null) . f mempty
+  where
+   f acc (firstNewBlock -> Just (d1, k, d, ty, d2)) = (acc <> d1): f (singleton $ NewBlock k d ty) d2
+   f acc d = [acc <> d]
+
 
 type NewDocEdit = SeqEdit DocPiece
 
@@ -200,107 +237,65 @@ type DocEditPiece = EditPiece DocPiece
 splitAtOldPosition :: Position -> NewDocEdit -> (NewDocEdit, NewDocEdit)
 splitAtOldPosition p = split (positionPredicate p . fst)
 
+splitAtOldPosition' :: Position -> NewDocEdit -> (NewDocEdit, NewDocEdit)
+splitAtOldPosition' p = split (positionPredicate' p . fst)
+
 splitAtNewPosition :: Position -> NewDocEdit -> (NewDocEdit, NewDocEdit)
 splitAtNewPosition p = split (positionPredicate p . snd)
 
 lastOldPosition :: NewDocEdit -> Position
-lastOldPosition = docPieceMonoidPosition . fst . measure
+lastOldPosition = measurePosition . fst . measure
 
 lastNewPosition :: NewDocEdit -> Position
-lastNewPosition = docPieceMonoidPosition . snd . measure
+lastNewPosition = measurePosition . snd . measure
 
---concatMapEdit :: (DocEditPiece -> NewDocEdit) -> NewDocEdit -> NewDocEdit
---concatMapEdit = flip (>>=)
-
-transformRange' :: NewDocEdit -> Range Position -> Range Position
-transformRange' edit (Range p1 p2) = Range (lastNewPosition edit1) (lastNewPosition edit2)
+transformRange_ :: NewDocEdit -> Range Position -> Range Position
+transformRange_ edit (Range p1 p2)
+    = range (lastNewPosition $ edit1 <> newlines) (lastNewPosition edit2)
   where
-    (edit2, _) = splitAtOldPosition p2 edit
-    (edit1, _) = splitAtOldPosition p1 edit2
+    range a b | b < a     = Range a a
+              | otherwise = Range a b
 
--- TUNING
--- TODO: highlight style and block changes better
+    (edit1, split ((>= 1) . measureChars . snd) -> (newlines, _)) = splitAtOldPosition p1 edit
+    edit2 = fst $ splitAtOldPosition p2 edit
+
+-- FIXME: highlight style and block changes better
 decorateEdit :: NewDocEdit -> NewDoc
-decorateEdit = f mempty . map (fmap (mconcat . map singleton) . g) . groupBy ((==) `on` changeType) . toList
+decorateEdit = foldl f mempty . toList . compressEdit'
   where
-  changeType :: EditPiece a -> Int
-  changeType = \case
-    EPDelete{} -> -1
-    EPCopy{} -> 0
-    EPInsert{} -> 1
-
-  g :: [EditPiece a] -> EditPiece [a]
-  g xs = case xs of
-    EPDelete{}: _ -> EPDelete [x | EPDelete x <- xs]
-    EPCopy{}: _ -> EPCopy [x | EPCopy x <- xs]
-    EPInsert{}: _ -> EPInsert [x | EPInsert x <- xs]
-
-  f :: NewDoc -> [EditPiece NewDoc] -> NewDoc
+  f :: NewDoc -> EditPiece NewDoc -> NewDoc
   f d = \case
-    [] -> d
-    EPCopy   a: es -> f (removeStyle (Set.fromList [Right StyleDeleted, Right StyleAdded]) d a) es
-    EPDelete a: es -> f (addStyle (Set.singleton $ Right StyleDeleted) d a) es
-    EPInsert a: es -> f (addStyle (Set.singleton $ Right StyleAdded) d a) es
-
-addStyle :: Set EStyle -> NewDoc -> NewDoc -> NewDoc
-addStyle sty d d'
-    | Set.null sty' = d <> d'
-    | otherwise = d <> toggleStyle (ChangeSet sty') d'
-  where
-    (_, ChangeSet s) = measure d
-    sty' = Set.difference s sty
-
-removeStyle :: Set EStyle -> NewDoc -> NewDoc -> NewDoc
-removeStyle sty d d'
-    | Set.null sty' = d <> d'
-    | otherwise = d <> toggleStyle (ChangeSet sty') d'
-  where
-    (_, ChangeSet s) = measure d
-    sty' = Set.difference sty s
-
-toggleStyle :: ChangeSet EStyle -> NewDoc -> NewDoc
-toggleStyle sty d = case split (\((_, c), _) -> remaining c >= 1) d of
-  (d1, viewl -> DocPiece s c :< d) -> d1 <> (DocPiece (sty <> s) c <| d)
-  _ -> d
+    EPCopy   a -> removeStyle (Set.fromList [Right StyleDeleted, Right StyleAdded]) d a   -- copy
+    EPDelete a -> addStyle (Set.singleton $ Right StyleDeleted) d a                       -- copy
+    EPInsert a -> addStyle (Set.singleton $ Right StyleAdded) d a                         -- insert
 
 -------- interface with current design
 
 fromRawContent :: RawContent -> NewDoc
-fromRawContent (RawContent blocks entitymap) = mconcat{-TODO-} . map fromBlock $ NEL.toList blocks
+fromRawContent (RawContent blocks entitymap) = foldl glue mempty . map fromBlock $ NEL.toList blocks
   where
     fromBlock :: Block EntityKey BlockKey -> NewDoc
     fromBlock (Block' txt entities styles btype depth key)
-      = NewBlock key (BlockDepth depth) btype
-      <| flip (foldr $ uncurry addStyle)
-           (    (second Right <$> Set.toList styles)
-             <> [ (r, Left (entitymap IntMap.! _unEntityKey ek))
-                | (ek, r) <- Set.toList entities]
-           )
-           (mconcat . map (singleton . DocPiece mempty) $ cs txt)
+      =  NewBlock key (BlockDepth depth) btype
+      <| foldr (uncurry addStyle')
+               (fromList . map (DocPiece mempty) $ cs txt)
+               (    (second Right <$> Set.toList styles)
+                 <> [ (r, Left (entitymap IntMap.! _unEntityKey ek))
+                    | (ek, r) <- Set.toList entities]
+               )
+
+    addStyle' :: Range Int -> EStyle -> NewDoc -> NewDoc
+    addStyle' (Range x y) (Set.singleton -> s) (splitCol y -> (splitCol x -> (d1, d2), d3))
+      = removeStyle s (addStyle s d1 d2) d3
 
     splitCol :: Int -> NewDoc -> (NewDoc, NewDoc)
-    splitCol i = split $ \((_, c), _) -> getCol c >= i
-
-    flipStyle :: EStyle -> NewDoc -> NewDoc
-    flipStyle sty (viewl -> DocPiece s c :< d) = DocPiece (singletonChange sty <> s) c <| d
-
-    addStyle :: Range Int -> EStyle -> NewDoc -> NewDoc
-    addStyle (Range x y) sty (splitCol y -> (splitCol x -> (d1, d2), d3))
-      = d1 <> flipStyle sty d2 <> flipStyle sty d3
+    splitCol i = split $ (> i) . (^. columnIndex) . measurePosition
 
 toRawContent :: NewDoc -> RawContent
-toRawContent = mkRawContentInternal . NEL.fromList . map toBlock . docLines
+toRawContent (docLines -> dls) = mkRawContentInternal . NEL.fromList $ zipWith toBlock (scanl (<>) mempty $ styleMeasure . measure <$> dls) dls
   where
-    docLines :: NewDoc -> [NewDoc]
-    docLines d = case split (\(((c, _), _), _) -> c >= 1) d of
-      (toList -> [h], d') -> f h d'
-      where
-        f h d' = case split (\(((c, _), _), _) -> c >= 1) d' of
-          (viewr -> line :> h', d'') -> (h <| line): f h' d''
-          (viewr -> EmptyR , line) -> [h <| line]
-
-    toBlock :: NewDoc -> Block Entity BlockKey
-    toBlock (toList -> NewBlock key (BlockDepth depth) btype: d)
+    toBlock :: ChangeSet EStyle -> NewDoc -> Block Entity BlockKey
+    toBlock css@(ChangeSet sty_) nd@(toList -> NewBlock key (BlockDepth depth) btype: d)
       = Block'
           (cs [c | DocPiece _ c <- d])
           (Set.fromList [(e, r) | (r, Left e) <- ss])
@@ -309,123 +304,39 @@ toRawContent = mkRawContentInternal . NEL.fromList . map toBlock . docLines
           depth
           key
       where
-        ss = mkRanges mempty $ zip [0..] [s | DocPiece (ChangeSet s) _ <- d]
-        mkRanges [] [] = []
+        ss = mkRanges ((,) 0 <$> Set.toList sty_) . zip [0..]
+           $ [s | DocPiece (ChangeSet s) _ <- d] <> [unChangeSet $ css <> styleMeasure (measure nd)]
+
+        mkRanges _ [] = []
         mkRanges acc ((i, s): xs) =
-              [(Range beg i, sty) | (beg, sty) <- acc, sty `Set.member` s]
+              [(Range beg i, sty) | (beg, sty) <- acc, sty `Set.member` s, i > beg]
            <> mkRanges  (  [(beg, sty) | (beg, sty) <- acc, sty `Set.notMember` s]
                         <> [(i, sty) | sty <- Set.elems s, sty `notElem` fmap snd acc])
                         xs
 
+-- temporary hack
 -- this will not be needed in future when OTDoc is replaced by NewDoc
 fromEditRawContent :: RawContent -> Edit RawContent -> NewDocEdit
 fromEditRawContent rc edit
-  = f $ Diff.diff (toList $ fromRawContent rc) (toList . fromRawContent $ patch edit rc)
+  = fromList . map f $ Diff.diff (toList $ fromRawContent rc) (toList . fromRawContent $ patch edit rc)
   where
-    f :: [Diff.Item DocPiece] -> NewDocEdit
-    f (Diff.Both _ c: es) = EPCopy c <| f es
-    f (Diff.New c: es) = EPInsert c <| f es
-    f (Diff.Old c: es) = EPDelete c <| f es
-    f [] = mempty
+    f (Diff.Both c _) = EPCopy   c
+    f (Diff.New  c  ) = EPInsert c
+    f (Diff.Old  c  ) = EPDelete c
 
+-- FIXME: use RawContent instead of OTDoc
 transformRange :: Edit OTDoc -> OTDoc -> Range Position -> Range Position
-transformRange edits doc
-    = patchFold patchBlocks (NEL.toList doc) (coerce edits)
-  where
-    patchFold :: Editable d => (d -> a -> EEdit d -> a) -> d -> Edit d -> a -> a
-    patchFold f d es a = snd $ foldl (\(d', a') e -> (ePatch e d', f d' a' e)) (d, a) es
+transformRange edit doc = transformRange_ $ fromEditRawContent (docToRawContent doc) (coerce [edit])
 
-    patchBlocks :: [DocBlock] -> Range Position -> EEdit [DocBlock] -> Range Position
-    patchBlocks bs r@(Range x y) = \case
-        e@(DeleteRange i l) -> Range (delIdx' True bs bs' i l x) (delIdx' False bs bs' i l y)
-          where bs' = ePatch e bs
-        InsertItem i _ -> r & mapped . rowIndex %~ incIdx True i 1
-        EditItem i es -> case bs !! i of
-          (_, elems) -> patchFold patchLineElems elems [e | EditSecond e <- es] r
-
-    patchLineElems :: LineElems -> Range Position -> EEdit LineElems -> Range Position
-    patchLineElems (Segments (map (cs . unNonEmptyST . snd) -> bs)) r = \case
-      SegmentListEdit (DeleteRange i l) ->
-        r & mapped . columnIndex %~ delIdx (length . concat $ take i bs) (length . concat . take l $ drop i bs)
-      SegmentListEdit (InsertItem i x) ->
-        incRange columnIndex (length . concat $ take i bs) (len x) r
-      SegmentListEdit (EditItem i es) ->
-        patchFold (patchText . sum $ length <$> take i bs) (bs !! i) [coerce e | EditSecond e <- es] r
-      JoinItems{} -> r
-      SplitItem{} -> r
-
-    len = ST.length . unNonEmptyST . snd
-
-    patchText :: Int -> String -> Range Position -> EEdit String -> Range Position
-    patchText offs _ r = \case
-        DeleteRange i l -> r & mapped . columnIndex %~ delIdx (i + offs) l
-        InsertItem i _ -> incRange columnIndex (i + offs) 1 r
-        EditItem{} -> r
-
-    {-
-    document with selection: __###__
-    if we insert a char at position 2:   ___###__  (or maybe  __####__)
-    if we insert a char at position 5:   __###___  (or maybe  __####__)
-
-    document with selection: __(___\n)____
-    if we insert a line __ after the first one:  __(___\n__\n)____   or maybe: __(___\n__)\n____
-
-    document with selection: __(___)\n____
-    if we insert a line __ after the first one:  __(___)\n__\n____
-    -}
-    incIdx :: Bool -> Int -> Int -> Int -> Int
-    incIdx isbegin i k r
-      | r > i || r == i && isbegin = r + k
-      | otherwise = r
-
-    incRange :: ALens' Position Int -> Int -> Int -> Range Position -> Range Position
-    incRange le i k (Range x y)
-      | x' > y'   = Range y' y'
-      | otherwise = Range x' y'
-      where
-        x' = x & cloneLens le %~ incIdx True i k
-        y' = y & cloneLens le %~ incIdx False i k
-
-    delIdx :: Int -> Int -> Int -> Int
-    delIdx i k r
-      | r <= i     = r
-      | i + k <= r = r - k
-      | otherwise  = i
-
-    {-
-    document: _
-    selection: #
-    ___
-    __##
-    ##
-    ###___   -- if this is deleted, the end positon moves to the end of the previous line
-
-
-    ___####____   -- if this is deleted, the end positon moves to the end of the previous line, but it does not exists, so it has to go to (0,0)
-    -}
-    delIdx' :: Bool -> [DocBlock] -> [DocBlock] -> Int -> Int -> Position -> Position
-    delIdx' isbegin _before after i k (Position (BlockIndex r _) c) = Position (mkBI r') c'
-      where
-        r1 = delIdx i k r
-        r2 = delIdx i k (r+1)
-        (r', c')
-           | r2 == r1 + 1 = (r1, c)
-           | r2 == r1 && isbegin = (r1, 0)
-           | r2 == r1 && not isbegin = endPos $ r1 - 1
-        endPos x
-          | x < 0 = (0, 0)  -- see the documentation at delIdx'
-          | otherwise = (,) x $ case after !! x of DocBlock _ _ _ txt -> sum $ len <$> txt
-        mkBI x = BlockIndex x $ case after !! x of DocBlock _ _ key _ -> key
-
+transformEditRange :: RawContent -> Edit RawContent -> Range Position -> Range Position
+transformEditRange rc edit = transformRange_ . fullEdit $ fromEditRawContent rc edit
 
 docEditRanges :: Edit RawContent -> RawContent -> Ranges Position
 docEditRanges edits rc
     = mconcat
     . map snd
     . docRanges True elemLength (\x -> [() | elemChanged x])
-    . docToRawContent
-    . showEditAsDoc (concat (coerce edits :: [Edit OTDoc]))
-    $ rawContentToDoc rc
+    $ showEditAsRawContent edits rc
   where
     elemLength :: LineElem -> Int
     elemLength ((_, ss), NonEmptyST txt)

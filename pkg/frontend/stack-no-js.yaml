@@ -36,3 +36,4 @@ extra-deps:
 - react-hs-servant-0.0.1
 - refine-common-0.0.0.0
 - language-css-0.0.3
+- fingertree-tf-0.1.0.0
