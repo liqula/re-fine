@@ -169,7 +169,7 @@ instance Monoid DocMeasure where
   DocMeasure a b c d `mappend` DocMeasure a' b' c' d' = DocMeasure (a <> a') (b <> b') (c <> c') (d <> d')
 
 measureChars :: DocMeasure -> Int
-measureChars (DocMeasure _ _ c _) = getSum (Split.unsplit c)
+measureChars = getSum . Split.unsplit . charMeasure
 
 measurePosition :: DocMeasure -> Position
 measurePosition (DocMeasure r k c _)
@@ -189,9 +189,6 @@ isValidNewDoc _ = False
 positionPredicate :: Position -> DocMeasure -> Bool
 positionPredicate p = (> p) . measurePosition
 
-positionPredicate' :: Position -> DocMeasure -> Bool
-positionPredicate' p = (>= p) . measurePosition
-
 splitAtPosition :: Position -> NewDoc -> (NewDoc, NewDoc)
 splitAtPosition = split . positionPredicate
 
@@ -203,25 +200,20 @@ firstDocPiece (split ((>= 1) . measureChars) -> (d1, viewl -> DocPiece s c :< d2
 firstDocPiece _ = Nothing
 
 firstNewBlock :: NewDoc -> Maybe (NewDoc, BlockKey, BlockDepth, BlockType, NewDoc)
-firstNewBlock (split ((>= 1) . (^. rowIndex) . measurePosition) -> (d1, viewl -> NewBlock k d ty :< d2)) = Just (d1, k, d, ty, d2)
+firstNewBlock (split ((>= 1) . rowMeasure) -> (d1, viewl -> NewBlock k d ty :< d2)) = Just (d1, k, d, ty, d2)
 firstNewBlock _ = Nothing
 
 toggleStyle :: ChangeSet EStyle -> NewDoc -> NewDoc
 toggleStyle sty d
   | Set.null $ unChangeSet sty = d  -- this line is an optimization
-  | otherwise = maybe d (\(d1, s, c, d2) -> (d1 |> DocPiece (sty <> s) c) <> d2) $ firstDocPiece d
+  | otherwise = maybe d (\(d1, s, c, d2) -> d1 <> (DocPiece (sty <> s) c <| d2)) $ firstDocPiece d
 
 changeStyle :: (Set EStyle -> Set EStyle) -> NewDoc -> NewDoc -> NewDoc
-changeStyle fun d@(measure -> DocMeasure _ _ _ (ChangeSet sty)) d' = d <> toggleStyle (ChangeSet $ fun sty) d'
+changeStyle fun d@(styleMeasure . measure -> c@(ChangeSet sty)) d' = d <> toggleStyle (c <> ChangeSet (fun sty)) d'
 
-addStyle :: Set EStyle -> NewDoc -> NewDoc -> NewDoc
-addStyle = changeStyle . Set.difference
-
-removeStyle :: Set EStyle -> NewDoc -> NewDoc -> NewDoc
-removeStyle = changeStyle . Set.intersection
-
+-- close all styles in first doc
 glue :: NewDoc -> NewDoc -> NewDoc
-glue = changeStyle id
+glue = changeStyle $ const mempty
 
 docLines :: NewDoc -> [NewDoc]
 docLines = filter (not . FingerTree.null) . f mempty
@@ -236,9 +228,6 @@ type DocEditPiece = EditPiece DocPiece
 
 splitAtOldPosition :: Position -> NewDocEdit -> (NewDocEdit, NewDocEdit)
 splitAtOldPosition p = split (positionPredicate p . fst)
-
-splitAtOldPosition' :: Position -> NewDocEdit -> (NewDocEdit, NewDocEdit)
-splitAtOldPosition' p = split (positionPredicate' p . fst)
 
 splitAtNewPosition :: Position -> NewDocEdit -> (NewDocEdit, NewDocEdit)
 splitAtNewPosition p = split (positionPredicate p . snd)
@@ -265,9 +254,9 @@ decorateEdit = foldl f mempty . toList . compressEdit'
   where
   f :: NewDoc -> EditPiece NewDoc -> NewDoc
   f d = \case
-    EPCopy   a -> removeStyle (Set.fromList [Right StyleDeleted, Right StyleAdded]) d a   -- copy
-    EPDelete a -> addStyle (Set.singleton $ Right StyleDeleted) d a                       -- copy
-    EPInsert a -> addStyle (Set.singleton $ Right StyleAdded) d a                         -- insert
+    EPCopy   a -> changeStyle (Set.delete (Right StyleDeleted) . Set.delete (Right StyleAdded)) d a
+    EPDelete a -> changeStyle (Set.insert (Right StyleDeleted) . Set.delete (Right StyleAdded)) d a
+    EPInsert a -> changeStyle (Set.delete (Right StyleDeleted) . Set.insert (Right StyleAdded)) d a
 
 -------- interface with current design
 
@@ -285,8 +274,8 @@ fromRawContent (RawContent blocks entitymap) = foldl glue mempty . map fromBlock
                )
 
     addStyle' :: Range Int -> EStyle -> NewDoc -> NewDoc
-    addStyle' (Range x y) (Set.singleton -> s) (splitCol y -> (splitCol x -> (d1, d2), d3))
-      = removeStyle s (addStyle s d1 d2) d3
+    addStyle' (Range x y) s (splitCol y -> (splitCol x -> (d1, d2), d3))
+      = changeStyle (Set.delete s) (changeStyle (Set.insert s) d1 d2) d3
 
     splitCol :: Int -> NewDoc -> (NewDoc, NewDoc)
     splitCol i = split $ (> i) . (^. columnIndex) . measurePosition
