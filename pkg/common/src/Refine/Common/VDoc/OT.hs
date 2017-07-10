@@ -10,7 +10,42 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans -fno-warn-incomplete-patterns #-}
 
-module Refine.Common.VDoc.OT where
+module Refine.Common.VDoc.OT
+  ( ChangeSet(ChangeSet)
+  , ChangeMap(ChangeMap)
+  , DocMeasure(..)
+
+  , idEdit
+  , editStart
+  , editEnd
+  , reverseEdit
+  , fullEdit
+  , compressEdit
+
+  , measureStylePositions
+  , measurePosition
+  , isValidNewDoc
+
+  , splitAtPosition
+  , lastPosition
+  , splitAtOldPosition
+  , splitAtNewPosition
+  , lastOldPosition
+  , lastNewPosition
+  , transformRange
+  , decorateEdit
+
+  , fromRawContent
+  , toRawContent
+  , fromEditRawContent
+  , transformRangeOTDoc
+  , showEditAsRawContentWithMarks
+  , showEditAsRawContent
+  , docEditRanges
+  , elemChanged
+  , docRanges
+  , hideUnchangedParts
+  ) where
 
 import qualified Data.Algorithm.Patience as Diff
 import           Data.FingerTree hiding (reverse, null)
