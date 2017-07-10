@@ -10,6 +10,48 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans -fno-warn-incomplete-patterns #-}
 
+{- | "Refine.Common.OT" for 'RawContent'.
+
+We use 'NewDoc' as a representation of 'RawContent' based on finger trees
+<http://hackage.haskell.org/package/fingertree-tf>.  This is a generalisation of sequences, which
+give fast access to both ends of a list <http://hackage.haskell.org/package/sequence>.
+
+ChangeSets accumulate: a 'DocPiece' is styled with all styles in all change sets to the left in this
+document.  (more memory compact, and faster: if you delete a mark, you cut the doc at the pieces
+where the mark style changes and remove it there.  no other pieces of the doc need to be touched.)
+
+Old design: Adding style patches to a sequence of patches needs repeting rebase:
+
+     1      2      3
+  * ---> * ---> * ---> *
+         |
+      1s |
+         v  2'     3'
+         * ---> * ---> *
+                |
+            2's |
+                v  3''
+                * ---> *
+                       |
+                  3''s |
+                       v
+                       *
+
+This is quadratic, but could be speeded up by patch normalization:
+
+      Delete kills insert:
+
+        i0'c', d0, i0'd'  -->  i0'd'
+
+      Reordering of patches:
+
+        i2'c', i1'd'    -->  i1'd', i3'c'
+
+Instead of this, we use a patch representation which do not need normalization:
+
+        i2'c', d0, i3'x'   -->  del: copy: ins c: copy: ins x
+
+-}
 module Refine.Common.VDoc.OT
   ( ChangeSet(ChangeSet)
   , ChangeMap(ChangeMap)
@@ -63,45 +105,19 @@ import           Refine.Common.OT hiding (compressEdit)
 import           Refine.Common.Prelude hiding (fromList)
 import           Refine.Common.Types.Core hiding (Edit)
 
-{-
-  Old design: Adding style patches to a sequence of patches needs repeting rebase:
 
-     1      2      3
-  * ---> * ---> * ---> *
-         |
-      1s |
-         v  2'     3'
-         * ---> * ---> *
-                |
-            2's |
-                v  3''
-                * ---> *
-                       |
-                  3''s |
-                       v
-                       *
+-- * fingertree amendments
 
-  This is quadratic, but could be speeded up by patch normalization:
-
-      Delete kills insert:
-
-        i0'c', d0, i0'd'  -->  i0'd'
-
-      Reordering of patches:
-
-        i2'c', i1'd'    -->  i1'd', i3'c'
-
-  Instead of this, we use a patch representation which do not need normalization:
-
-        i2'c', d0, i3'x'   -->  del: copy: ins c: copy: ins x
-
--}
-
----------- utils
+-- FUTUREWORK: make this a patch to https://github.com/pavelchristof/fingertree-tf.
 
 mapMaybeFT :: Measured b => (a -> Maybe b) -> FingerTree a -> FingerTree b
 mapMaybeFT f = fromList . mapMaybe f . toList
 
+-- | Call 'split' on 'snd' repeatedly and return the list of 'fst's.  Termination: if 'snd' is
+-- empty, return empty list; if not, return at least the first 'splits' is run on its tail.
+--
+-- FIXME: if the boolean function on measure does not return 'True' on the first element of some
+-- intermediate 'FingerTree', the output is
 splits :: Measured a => (Measure a -> Bool) -> FingerTree a -> [FingerTree a]
 splits p (split p -> (d1, d2)) = d1: case viewl d2 of
   EmptyL -> []
@@ -110,26 +126,27 @@ splits p (split p -> (d1, d2)) = d1: case viewl d2 of
     mapHead f (x: xs) = f x: xs
     mapHead _ _ = error "impossible"
 
+-- | List of measures for all splits (accumulates).
 splitMeasures :: Measured a => (Measure a -> Bool) -> FingerTree a -> [Measure a]
 splitMeasures p = scanl1 (<>) . map measure . splits p
 
+-- | Take a @b@-valued function on measures (like for 'split') and a list of values of that
+-- function, and split a 'FingerTree' up into the points where those values are reached.  Function
+-- must be monotonous in @b@.
+--
+-- Example for @b@: 'Position'.  This function could also be used to e.g. split at all mark
+-- beginnings.
 splitsAt :: (Measured a, Ord b) => (Measure a -> b) -> [b] -> FingerTree a -> [FingerTree a]
 splitsAt f bs_ = reverse . g (reverse bs_)
   where
   g [] d = [d]
   g (b: bs) (split ((> b) . f) -> (d1, d2)) = d2: g bs d1
 
-instance Measured Char where
-  type Measure Char = Sum Int
-  measure _ = Sum 1
 
-instance Measured ST where
-  type Measure ST = Sum Int
-  measure = Sum . ST.length
+-- * ChangeSet, ChangeMap
 
-
----------- ChangeSet, ChangeMap
-
+-- | Keep track of styling in 'FingerTree's.  This is associated with every element in the finger
+-- tree.  Toggle @a@ in and out of the set with '(<>)'.
 newtype ChangeSet a = ChangeSet {unChangeSet :: Set a}
   deriving (Eq, Ord, Show)
 
@@ -140,6 +157,8 @@ instance Ord a => Monoid (ChangeSet a) where
     | Set.null b = ChangeSet a     -- optimization for better sharing
     | otherwise = ChangeSet $ Set.difference a b <> Set.difference b a
 
+-- | Like 'ChangeSet', but for 'Measure'.  Counting the number of toggles is necessary here to make
+-- the functions on measures monotonic.
 newtype ChangeMap a = ChangeMap {unChangeMap :: Map a Int}
   deriving (Eq, Ord, Show)
 
@@ -150,14 +169,18 @@ instance Ord a => Monoid (ChangeMap a) where
     | Map.null b = ChangeMap a     -- optimization for better sharing
     | otherwise = ChangeMap $ Map.unionWith (+) a b
 
+-- | @'toChangeSet' . 'toChangeMap' == 'id'@.  However, @'toChangeMap' . 'toChangeSet' /= 'id'@.
+-- The map contains strictly more information, namely the number of previous toggles as opposed to
+-- whether this number is even or odd.
 toChangeSet :: Ord a => ChangeMap a -> ChangeSet a
 toChangeSet = ChangeSet . Map.keysSet . Map.filter odd . unChangeMap
 
+-- | See 'toChangeMap'.
 toChangeMap :: ChangeSet a -> ChangeMap a
 toChangeMap = ChangeMap . Map.fromSet (const 1) . unChangeSet
 
 
----------- EditPiece
+-- * EditPiece (not 'Doc'-specific)
 
 data EditPiece a
   = EPCopy   a
@@ -222,14 +245,15 @@ compressEdit = fromList . map (fmap fromList . g) . groupBy ((==) `on` changeTyp
     EPInsert{}: _ -> EPInsert [x | EPInsert x <- xs]
 
 
--------- DocPiece
+-- * DocPiece
 
--- | TUNING: use 'NonEmptyST' (or @Either Char NonEmptyST@?  probably just 'NonEmptyST'...)
+-- | TUNING: use 'NonEmptyST' (or @Either Char NonEmptyST@?  probably just 'NonEmptyST'...)  This is
+-- probably important.
 type DocPiece = DocPiece_ Char
 
 data DocPiece_ a
   = DocPiece (ChangeSet EStyle) a           -- ^ consecutive chars in one 'Block' with the same styling.
-  | NewBlock BlockKey BlockDepth BlockType  -- ^ 'Block'.  similar to a newline but with more info
+  | NewBlock BlockKey BlockDepth BlockType  -- ^ boundary between 'Block's.  (like a newline, but with more info.)
   deriving (Eq, Ord, Show)
 
 type EStyle = Either Entity Style
@@ -240,21 +264,32 @@ instance (Measured a, Measure a ~ Sum Int) => Measured (DocPiece_ a) where
     DocPiece s c     -> DocMeasure mempty mempty (Split.M $ measure c) (toChangeMap s)
     NewBlock key _ _ -> DocMeasure (Sum 1) (Last $ Just key) Split.split mempty
 
+instance Measured Char where
+  type Measure Char = Sum Int
+  measure _ = Sum 1
+
+-- | See comment for 'DocPiece'.  We replace this by the corresponding instance for 'NonEmptyST'.
+instance Measured ST where
+  type Measure ST = Sum Int
+  measure = Sum . ST.length
+
+-- | Composite 'Monoid' covering everything we need for navigating a 'NewDoc'.
 data DocMeasure = DocMeasure
-  { rowMeasure   :: Sum Int                -- row index + 1
-  , keyMeasure   :: Last BlockKey          -- last blockkey
-  , charMeasure  :: Split.Split (Sum Int)  -- column index + sum of non-newline chars before the last newline
-  , styleMeasure :: ChangeMap EStyle       -- styles toggles
+  { rowMeasure   :: Sum Int                -- ^ row index + 1
+  , keyMeasure   :: Last BlockKey          -- ^ last blockkey
+  , charMeasure  :: Split.Split (Sum Int)  -- ^ column index + sum of non-newline chars before the last newline
+  , styleMeasure :: ChangeMap EStyle       -- ^ styles applicable to a given doc piece
   }
 
 instance Monoid DocMeasure where
   mempty = DocMeasure mempty mempty mempty mempty
   DocMeasure a b c d `mappend` DocMeasure a' b' c' d' = DocMeasure (a <> a') (b <> b') (c <> c') (d <> d')
 
--- toggled styles
+-- | 'ChangeMap' from 'DocMeasure', translated into a 'ChangeSet'.
 styleSet :: DocMeasure -> ChangeSet EStyle
 styleSet = toChangeSet . styleMeasure
 
+-- | Count non-newline characters.
 measureStylePositions :: DocMeasure -> Int
 measureStylePositions = getSum . Split.unsplit . charMeasure
 
@@ -266,12 +301,20 @@ measurePosition (DocMeasure r k c _)
     getCol (_ Split.:| x) = x
 
 
---------- NewDoc
+-- * NewDoc
 
+-- | Representation of 'RawContent' better suited for dealing with 'Edit's.  Blocks are prefixed
+-- with @'\n'@ and appended: @["oumpf", "", "boo"] => "\noumpf\n\nboo"@.
 type NewDoc = FingerTree DocPiece
 
+-- | Check for non-emptiness.  (Styles are not toggled off if they apply to the last char in a doc.
+-- This is the natural behavior given that closing a style range is done on the first char *after*
+-- the range (which does not exist in this case), and has no known drawbacks.  use 'syleSet' to
+-- observe open styles at the very end of the doc.
+--
+-- FIXME: return 'False' if style ranges overlap.  (did we forget other validity criteria?)
 isValidNewDoc :: NewDoc -> Bool
-isValidNewDoc (viewl -> NewBlock{} :< _) = True   -- the first element should be a NewBlock
+isValidNewDoc (viewl -> NewBlock{} :< _) = True
 isValidNewDoc _ = False
 
 positionPredicate :: Position -> DocMeasure -> Bool
@@ -296,14 +339,17 @@ mappendWithStyleChange fun d@(styleSet . measure -> c@(ChangeSet sty)) d' = d <>
 mappendNewDoc :: NewDoc -> NewDoc -> NewDoc
 mappendNewDoc = mappendWithStyleChange $ const mempty
 
+-- | used for e.g. filtering out all marks.
 filterStyle :: (EStyle -> Bool) -> NewDoc -> NewDoc
 filterStyle p = fmap' $ \case
     DocPiece (ChangeSet s) c -> DocPiece (ChangeSet $ Set.filter p s) c
     x -> x
 
+-- | all styles occurring anywhere in a 'NewDoc'.
 docStyles :: NewDoc -> Set EStyle
 docStyles = Map.keysSet . Map.filter (> 0) . unChangeMap . styleMeasure . measure
 
+-- | all ranges decorated with a given style.
 getStyleRanges :: NewDoc -> EStyle -> Ranges Position
 getStyleRanges doc sty
   = RangesInner [Range a b | [a, b] <- everyNth 2 $ splitPositions (Map.member sty . unChangeMap . styleMeasure) doc]
@@ -321,17 +367,22 @@ addStyleRanges s rs
   mapTail f (x: xs) = x: map f xs
   mapTail _ _ = error "impossible"
 
+-- | Like 'splitMeasures', but producing a 'Position' list.
 splitPositions :: (DocMeasure -> Bool) -> NewDoc -> [Position]
 splitPositions p = map measurePosition . splitMeasures p
 
+-- | Split up a 'NewDoc' into segments corresponding to 'Block's in 'RawContent'.
+-- @docBlocks "\noumph\n\n\nboo" == ["\noumph", "\n", "\n", "\nboo"]@
 docBlocks :: NewDoc -> [NewDoc]
 docBlocks ndoc = case splits ((>= 1) . rowMeasure) ndoc of
   (FingerTree.null -> True): v -> v
   bad -> error $ "docBlocks: invalid input: " <> show bad
 
 
-------- NewDocEdit
+-- * NewDocEdit
 
+-- | TUNING: @newtype NewDocEdit = NewDocEdit (FTEdit NewDoc)@, then all edits would always be
+-- compressed implicitly inside custom 'split' and 'mappend'.
 type NewDocEdit = FTEdit DocPiece
 
 splitAtOldPosition :: Position -> NewDocEdit -> (NewDocEdit, NewDocEdit)
@@ -356,7 +407,6 @@ transformRange edit (Range p1 p2)
     (edit1, split ((>= 1) . measureStylePositions . snd) -> (newlines, _)) = splitAtOldPosition p1 edit
     edit2 = fst $ splitAtOldPosition p2 edit
 
--- FIXME: highlight style and block changes better
 decorateEdit :: NewDocEdit -> NewDoc
 decorateEdit = foldl f mempty . toList . compressEdit
   where
@@ -366,7 +416,8 @@ decorateEdit = foldl f mempty . toList . compressEdit
     EPDelete a -> mappendWithStyleChange (Set.insert (Right StyleDeleted) . Set.delete (Right StyleAdded)) d a
     EPInsert a -> mappendWithStyleChange (Set.delete (Right StyleDeleted) . Set.insert (Right StyleAdded)) d a
 
--------- interface with current design
+
+-- * interfacing 'NewDoc' with other representations
 
 fromRawContent :: RawContent -> NewDoc
 fromRawContent (RawContent blocks entitymap) = foldl mappendNewDoc mempty . map fromBlock $ NEL.toList blocks
@@ -412,8 +463,10 @@ toRawContent (docBlocks -> dls)
                         <> [(i, sty) | sty <- Set.elems s, sty `notElem` fmap snd acc])
                         xs
 
--- temporary hack
--- this will not be needed in future when OTDoc is replaced by NewDoc
+-- | FIXME: remove when 'OTDoc' has been replaced by 'NewDoc'.
+--
+-- Forgets the edit value and re-computes the diff with a different algorithm (patience diff).  This
+-- is weird, but actually leads to nicer diff views in some cases.  (Anyway it's temporary.)
 fromEditRawContent :: RawContent -> Edit RawContent -> NewDocEdit
 fromEditRawContent rc edit
   = fromList . map f $ Diff.diff (toList $ fromRawContent rc) (toList . fromRawContent $ patch edit rc)
@@ -421,6 +474,9 @@ fromEditRawContent rc edit
     f (Diff.Both c _) = EPCopy   c
     f (Diff.New  c  ) = EPInsert c
     f (Diff.Old  c  ) = EPDelete c
+
+
+-- * 'OTDoc'
 
 transformRangeOTDoc :: Edit OTDoc -> OTDoc -> Range Position -> Range Position
 transformRangeOTDoc edit doc = transformRange $ fromEditRawContent (docToRawContent doc) (coerce [edit])
@@ -465,7 +521,7 @@ elemChanged ((_, ss), _)
     || Atom StyleDeleted `Set.member` ss
     || Atom StyleChanged `Set.member` ss
 
--- Refactoring: unify with Draft.getSelectors
+-- | TUNING: unify with Draft.getSelectors
 docRanges :: forall a . Ord a => Bool -> (LineElem -> Int) -> (LineElem -> [a]) -> RawContent -> [(a, Ranges Position)]
 docRanges allowemptyranges elemlength includeelem rc
     = map mkRanges
