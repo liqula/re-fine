@@ -10,48 +10,12 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans -fno-warn-incomplete-patterns #-}
 
-{- | "Refine.Common.OT" for 'RawContent'.
-
-We use 'NewDoc' as a representation of 'RawContent' based on finger trees
-<http://hackage.haskell.org/package/fingertree-tf>.  This is a generalisation of sequences, which
-give fast access to both ends of a list <http://hackage.haskell.org/package/sequence>.
-
-ChangeSets accumulate: a 'DocPiece' is styled with all styles in all change sets to the left in this
-document.  (more memory compact, and faster: if you delete a mark, you cut the doc at the pieces
-where the mark style changes and remove it there.  no other pieces of the doc need to be touched.)
-
-Old design: Adding style patches to a sequence of patches needs repeting rebase:
-
-     1      2      3
-  * ---> * ---> * ---> *
-         |
-      1s |
-         v  2'     3'
-         * ---> * ---> *
-                |
-            2's |
-                v  3''
-                * ---> *
-                       |
-                  3''s |
-                       v
-                       *
-
-This is quadratic, but could be speeded up by patch normalization:
-
-      Delete kills insert:
-
-        i0'c', d0, i0'd'  -->  i0'd'
-
-      Reordering of patches:
-
-        i2'c', i1'd'    -->  i1'd', i3'c'
-
-Instead of this, we use a patch representation which do not need normalization:
-
-        i2'c', d0, i3'x'   -->  del: copy: ins c: copy: ins x
-
--}
+-- | "Refine.Common.OT" for 'RawContent'.
+--
+-- We use 'NewDoc' as a representation of 'RawContent' based on finger trees
+-- <http://hackage.haskell.org/package/fingertree-tf>.  This is a generalisation of sequences, which
+-- give fast access to both ends of a list <http://hackage.haskell.org/package/sequence>, but uses
+-- the 'Measure' type family for more powerful indexing.
 module Refine.Common.VDoc.OT
   ( ChangeSet(ChangeSet)
   , ChangeMap(ChangeMap)
@@ -150,6 +114,11 @@ splitsAt f bs_ = reverse . g (reverse bs_)
 
 -- | Keep track of styling in 'FingerTree's.  This is associated with every element in the finger
 -- tree.  Toggle @a@ in and out of the set with '(<>)'.
+--
+-- ChangeSets accumulate: a 'DocPiece' is styled with all styles in all ChangeSets associated with
+-- 'DocPiece's to the left in this position.  (This is both more memory compact and faster: if you
+-- delete a mark, you cut the doc at the pieces where the mark style changes and remove it there.
+-- No other pieces of the doc need to be touched.)
 newtype ChangeSet a = ChangeSet {unChangeSet :: Set a}
   deriving (Eq, Ord, Show)
 
@@ -231,7 +200,9 @@ fullEdit = fmap' $ \case
   EPDelete a -> EPCopy   a
   EPInsert a -> EPInsert a
 
--- | helper (for performance).
+-- | Helper (for performance).  Group consecutive 'EditPiece' of the same kind (delete, copy,
+-- insert) in sub-fingertrees.  This allows e.g. to style them together in a more efficient way.
+-- See 'decorateEdit'.
 compressEdit :: Measured a => FTEdit a -> FTEdit (FingerTree a)
 compressEdit = fromList . map (fmap fromList . g) . groupBy ((==) `on` changeType) . toList
   where
