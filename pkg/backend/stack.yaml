@@ -18,7 +18,7 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/ekmett/lens.git
-    commit: 7d16b2b8715ce2123f1c4f5cb5330416d1967e9b
+    commit: ebafc111234580960ddd4b25c4ed3e52d1de556f
   extra-dep: true
   subdirs:
   - lens-properties  # the hackage version has outdated version bounds (we have transformers-0.5.2.0)
