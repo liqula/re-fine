@@ -90,6 +90,42 @@ spec = parallel $ do
         it "show diff" $ showEditAsRawContent edit rc `shouldBe` rc'
         it "ranges" $ docEditRanges edit rc `shouldBe` ranges
 
+      describe "change style to bold" $ do
+        let edit = eRawContent
+              [ ENonEmpty . EditItem 0 $ editSecond
+                [ SplitItem 0 8
+                , SplitItem 0 4
+                , SegmentListEdit $ EditItem 1
+                  [ EditFirst . EditSecond . InsertElem $ Atom Bold
+                  ]
+                ]
+              ]
+            rc   = mkRawContent $ mkBlock "some text or other" :| []
+            rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [(EntityRange 5 9, StyleChanged), (EntityRange 5 9, Bold)]) :| []
+            ranges = mconcat $ rangesFromRange True <$> [Range (Position block0 5) (Position block0 9)]
+        it "show diff" $ do
+          pending
+          showEditAsRawContent edit rc `shouldBe` rc'
+        it "ranges" $ do
+          pending
+          docEditRanges edit rc `shouldBe` ranges
+
+      describe "change block detph" $ do
+        let edit = eRawContent
+              [ ENonEmpty $ EditItem 0
+                [ EditFirst . EditFirst . EditSecond . EAtom . BlockDepth $ 1
+                ]
+              ]
+            rc   = mkRawContent $ mkBlock "some text or other" :| []
+            rc'  = mkRawContent $ (mkBlock "some text or other" & blockDepth' .~ 1 & blockStyles .~ [(EntityRange 0 18, StyleChanged)]) :| []
+            ranges = mconcat $ rangesFromRange True <$> [Range (Position block0 0) (Position block0 18)]
+        it "show diff" $ do
+          pending
+          showEditAsRawContent edit rc `shouldBe` rc'
+        it "ranges" $ do
+          pending
+          docEditRanges edit rc `shouldBe` ranges
+
       it "hideUnchangedParts" $ do
         let toRC = docToRawContent . NEL.fromList . map toBlock
             wipeBlockKeys = rawContentBlocks %~ fmap (blockKey .~ BlockKey "0")
