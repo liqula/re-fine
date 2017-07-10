@@ -162,7 +162,7 @@ spec = parallel $ do
       it "insert row" $ do
         let edit = [ENonEmpty . InsertItem 1 $ mkBl 10 "xyz"]
         transformRangeOTDoc edit (mkRC "a\nb") (Range (pos 0 0) (pos 0 0)) `shouldBe` Range (pos 0 0) (pos 0 0)
-        transformRangeOTDoc edit (mkRC "a\nb") (Range (pos 0 0) (pos 1 0)) `shouldBe` Range (pos 0 0) (pos' 2 1 0)
+        transformRangeOTDoc edit (mkRC "a\nb") (Range (pos 0 0) (pos 1 0)) `shouldBe` Range (pos 0 0) (pos' 1 10 3){- because transformRangeOTDoc transforms style position ranges -}
 
       it "delete rows" $ do
         let edit = [ENonEmpty $ DeleteRange 1 2]
