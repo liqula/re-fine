@@ -141,7 +141,7 @@ spec = parallel $ do
         wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 1 2) `shouldBe` wipeBlockKeys (toRC "aBcd.fGH")
         wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 2 2) `shouldBe` wipeBlockKeys (toRC "aBcdefGH")
 
-    describe "transformRange" $ do
+    describe "### transformRange" $ do
       let mkRC = NEL.fromList . zipWith mkBl [0..] . lines
           mkBl i = DocBlock NormalText (BlockDepth 0) (bKey i) . mkLE
           mkLE
