@@ -157,7 +157,7 @@ rebaseHeadToEdit eid = do
     edit <- DB.getEdit eid
     base <- DB.getEdit hid
     let diff = head [di | (di, d) <- edit ^. editSource . unEditSource, d == hid]
-        trRange = transformRange
+        trRange = transformRangeOTDoc
                   (concat (coerce diff :: [OT.Edit OTDoc]))
                   (rawContentToDoc . rawContentFromVDocVersion $ base ^. editVDocVersion)
     forM_ (Set.toList $ base ^. editNotes') $ \nid -> do
