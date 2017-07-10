@@ -119,38 +119,38 @@ spec = parallel $ do
           pos' r k = Position . BlockIndex r $ bKey k
 
       it "empty edit" $ do
-        transformRange [] (mkRC "aaa") (Range (pos 0 0) (pos 0 0)) `shouldBe` Range (pos 0 0) (pos 0 0)
+        transformRangeOTDoc [] (mkRC "aaa") (Range (pos 0 0) (pos 0 0)) `shouldBe` Range (pos 0 0) (pos 0 0)
       it "insert row" $ do
         let edit = [ENonEmpty . InsertItem 1 $ mkBl 10 "xyz"]
-        transformRange edit (mkRC "a\nb") (Range (pos 0 0) (pos 0 0)) `shouldBe` Range (pos 0 0) (pos 0 0)
-        transformRange edit (mkRC "a\nb") (Range (pos 0 0) (pos 1 0)) `shouldBe` Range (pos 0 0) (pos' 2 1 0)
+        transformRangeOTDoc edit (mkRC "a\nb") (Range (pos 0 0) (pos 0 0)) `shouldBe` Range (pos 0 0) (pos 0 0)
+        transformRangeOTDoc edit (mkRC "a\nb") (Range (pos 0 0) (pos 1 0)) `shouldBe` Range (pos 0 0) (pos' 2 1 0)
 
       it "delete rows" $ do
         let edit = [ENonEmpty $ DeleteRange 1 2]
-        transformRange edit (mkRC "aa\nbb\ncc\ndd") (Range (pos 0 1) (pos 3 1)) `shouldBe` Range (pos 0 1) (pos' 1 3 1)
-        transformRange edit (mkRC "aa\nbb\ncc\ndd") (Range (pos 1 1) (pos 3 1)) `shouldBe` Range (pos' 1 3 0) (pos' 1 3 1)
-        transformRange edit (mkRC "aa\nbb\ncc\ndd") (Range (pos 0 1) (pos 2 1)) `shouldBe` Range (pos 0 1) (pos 0 2)
+        transformRangeOTDoc edit (mkRC "aa\nbb\ncc\ndd") (Range (pos 0 1) (pos 3 1)) `shouldBe` Range (pos 0 1) (pos' 1 3 1)
+        transformRangeOTDoc edit (mkRC "aa\nbb\ncc\ndd") (Range (pos 1 1) (pos 3 1)) `shouldBe` Range (pos' 1 3 0) (pos' 1 3 1)
+        transformRangeOTDoc edit (mkRC "aa\nbb\ncc\ndd") (Range (pos 0 1) (pos 2 1)) `shouldBe` Range (pos 0 1) (pos 0 2)
 
       it "delete rows (2)" $ do
         let edit = [ENonEmpty $ DeleteRange 0 2]
-        transformRange edit (mkRC "aa\naa\naa\naa") (Range (pos 0 1) (pos 3 1)) `shouldBe` Range (pos' 0 2 0) (pos' 1 3 1)
-        transformRange edit (mkRC "aa\naa\naa\naa") (Range (pos 0 1) (pos 2 1)) `shouldBe` Range (pos' 0 2 0) (pos' 0 2 1)
-        transformRange edit (mkRC "aa\naa\naa\naa") (Range (pos 0 1) (pos 1 1)) `shouldBe` Range (pos' 0 2 0) (pos' 0 2 0)
+        transformRangeOTDoc edit (mkRC "aa\naa\naa\naa") (Range (pos 0 1) (pos 3 1)) `shouldBe` Range (pos' 0 2 0) (pos' 1 3 1)
+        transformRangeOTDoc edit (mkRC "aa\naa\naa\naa") (Range (pos 0 1) (pos 2 1)) `shouldBe` Range (pos' 0 2 0) (pos' 0 2 1)
+        transformRangeOTDoc edit (mkRC "aa\naa\naa\naa") (Range (pos 0 1) (pos 1 1)) `shouldBe` Range (pos' 0 2 0) (pos' 0 2 0)
 
       describe "insert line elem" $ do
         let edit = [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit . InsertItem 1 . head $ mkLE "bcd"]]
-        it "1" $ transformRange edit (mkRC "AAaa\na") (Range (pos 0 1) (pos 0 3)) `shouldBe` Range (pos 0 1) (pos 0 6)
-        it "2" $ transformRange edit (mkRC "AAaa\na") (Range (pos 0 2) (pos 0 3)) `shouldBe` Range (pos 0 2{-FIXME: 5-}) (pos 0 6)
-        it "3" $ transformRange edit (mkRC "AAaa\na") (Range (pos 0 3) (pos 0 3)) `shouldBe` Range (pos 0 6) (pos 0 6)
-        it "4" $ transformRange edit (mkRC "AAaa\na") (Range (pos 0 1) (pos 0 2)) `shouldBe` Range (pos 0 1) (pos 0 2)
-        it "5" $ transformRange edit (mkRC "AAaa\na") (Range (pos 0 1) (pos 0 1)) `shouldBe` Range (pos 0 1) (pos 0 1)
+        it "1" $ transformRangeOTDoc edit (mkRC "AAaa\na") (Range (pos 0 1) (pos 0 3)) `shouldBe` Range (pos 0 1) (pos 0 6)
+        it "2" $ transformRangeOTDoc edit (mkRC "AAaa\na") (Range (pos 0 2) (pos 0 3)) `shouldBe` Range (pos 0 2{-FIXME: 5-}) (pos 0 6)
+        it "3" $ transformRangeOTDoc edit (mkRC "AAaa\na") (Range (pos 0 3) (pos 0 3)) `shouldBe` Range (pos 0 6) (pos 0 6)
+        it "4" $ transformRangeOTDoc edit (mkRC "AAaa\na") (Range (pos 0 1) (pos 0 2)) `shouldBe` Range (pos 0 1) (pos 0 2)
+        it "5" $ transformRangeOTDoc edit (mkRC "AAaa\na") (Range (pos 0 1) (pos 0 1)) `shouldBe` Range (pos 0 1) (pos 0 1)
 
       let mkTests as = sequence_ . zipWith3 (\i a -> it (show i) . shouldBe a) [1::Int ..] as
 
       describe "delete line elems" $ do
         let edit = [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit $ DeleteRange 1 1]]
             doc = mkRC "AabB"
-        mkTests (map (transformRange edit doc) [Range (pos 0 x) (pos 0 y) | x <- [0..4], y <- [x..4]])
+        mkTests (map (transformRangeOTDoc edit doc) [Range (pos 0 x) (pos 0 y) | x <- [0..4], y <- [x..4]])
           [ Range (pos 0 0) (pos 0 0)
           , Range (pos 0 0) (pos 0 1)
           , Range (pos 0 0) (pos 0 1)
@@ -177,7 +177,7 @@ spec = parallel $ do
                         [ NEText . EText $ InsertItem 1 'c'
                         , NEText . EText $ InsertItem 2 'd']]]
             doc = mkRC "AabB"
-        mkTests (map (transformRange edit doc) [Range (pos 0 x) (pos 0 y) | x <- [1..3], y <- [x..3]])
+        mkTests (map (transformRangeOTDoc edit doc) [Range (pos 0 x) (pos 0 y) | x <- [1..3], y <- [x..3]])
           [ Range (pos 0 1) (pos 0 1)
           , Range (pos 0 1) (pos 0 4{-FIXME: 2-})
           , Range (pos 0 1) (pos 0 5)
@@ -192,7 +192,7 @@ spec = parallel $ do
         let edit = [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit . EditItem 1 $ editSecond
                         [ NEText . EText $ DeleteRange 1 1 ]]]
             doc = mkRC "AabcB"
-        mkTests (map (transformRange edit doc) [Range (pos 0 x) (pos 0 y) | x <- [1..4], y <- [x..4]])
+        mkTests (map (transformRangeOTDoc edit doc) [Range (pos 0 x) (pos 0 y) | x <- [1..4], y <- [x..4]])
           [ Range (pos 0 1) (pos 0 1)
           , Range (pos 0 1) (pos 0 2)
           , Range (pos 0 1) (pos 0 2)
@@ -212,7 +212,7 @@ spec = parallel $ do
         let edit = [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit . EditItem 1 $ editSecond
                         [ NEText . EText $ EditItem 1 [EChar $ EAtom 'x'] ]]]
             doc = mkRC "AabcA"
-        mkTests (map (transformRange edit doc) [Range (pos 0 x) (pos 0 y) | x <- [1..4], y <- [x..4]])
+        mkTests (map (transformRangeOTDoc edit doc) [Range (pos 0 x) (pos 0 y) | x <- [1..4], y <- [x..4]])
           [ Range (pos 0 1) (pos 0 1)
           , Range (pos 0 1) (pos 0 2)
           , Range (pos 0 1) (pos 0 3)

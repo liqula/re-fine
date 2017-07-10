@@ -1,31 +1,32 @@
+{-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE PatternSynonyms            #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE ViewPatterns               #-}
 {-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE DeriveFunctor              #-}
 {-# LANGUAGE TypeSynonymInstances       #-}
-{-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE ViewPatterns               #-}
+
+{-# OPTIONS_GHC -fno-warn-orphans -fno-warn-incomplete-patterns #-}
+
 module Refine.Common.VDoc.OT where
 
-import           Data.List
-import           Data.Maybe
-import           Data.Foldable
+import qualified Data.Algorithm.Patience as Diff
 import           Data.FingerTree hiding (reverse, null)
 import qualified Data.FingerTree as FingerTree
+import           Data.Foldable
+import qualified Data.IntMap as IntMap
+import           Data.List
+import qualified Data.List.NonEmpty as NEL
+import           Data.Maybe
+import qualified Data.Map as Map
 import qualified Data.Monoid.Split as Split
 import qualified Data.Set as Set
-import qualified Data.Map as Map
-import qualified Data.IntMap as IntMap
-import qualified Data.List.NonEmpty as NEL
 import qualified Data.Text as ST
-import qualified Data.Algorithm.Patience as Diff
 
-import           Refine.Common.Prelude hiding (fromList)
 import           Refine.Common.OT hiding (compressEdit)
+import           Refine.Common.Prelude hiding (fromList)
 import           Refine.Common.Types.Core hiding (Edit)
 
 {-
@@ -64,12 +65,10 @@ import           Refine.Common.Types.Core hiding (Edit)
 
 ---------- utils
 
-type Seq = FingerTree
+mapMaybeFT :: Measured b => (a -> Maybe b) -> FingerTree a -> FingerTree b
+mapMaybeFT f = fromList . mapMaybe f . toList
 
-mapMaybeSeq :: Measured b => (a -> Maybe b) -> Seq a -> Seq b
-mapMaybeSeq f = fromList . mapMaybe f . toList
-
-splits :: Measured a => (Measure a -> Bool) -> Seq a -> [Seq a]
+splits :: Measured a => (Measure a -> Bool) -> FingerTree a -> [FingerTree a]
 splits p (split p -> (d1, d2)) = d1: case viewl d2 of
   EmptyL -> []
   x :< xs -> mapHead (x <|) $ splits p xs
@@ -77,10 +76,10 @@ splits p (split p -> (d1, d2)) = d1: case viewl d2 of
     mapHead f (x: xs) = f x: xs
     mapHead _ _ = error "impossible"
 
-splitMeasures :: Measured a => (Measure a -> Bool) -> Seq a -> [Measure a]
+splitMeasures :: Measured a => (Measure a -> Bool) -> FingerTree a -> [Measure a]
 splitMeasures p = scanl1 (<>) . map measure . splits p
 
-splitsAt :: (Measured a, Ord b) => (Measure a -> b) -> [b] -> Seq a -> [Seq a]
+splitsAt :: (Measured a, Ord b) => (Measure a -> b) -> [b] -> FingerTree a -> [FingerTree a]
 splitsAt f bs_ = reverse . g (reverse bs_)
   where
   g [] d = [d]
@@ -133,42 +132,47 @@ data EditPiece a
   deriving (Eq, Ord, Show, Functor)
 
 instance Measured a => Measured (EditPiece a) where
-  type Measure (EditPiece a) = (Measure a, Measure a)
+  type Measure (EditPiece a) = (Measure a{- old -}, Measure a{- new -})
   measure = \case
     EPCopy a   -> (x, x) where x = measure a
     EPDelete a -> (measure a, mempty)
     EPInsert a -> (mempty, measure a)
 
-type SeqEdit a = Seq (EditPiece a)
+type FTEdit a = FingerTree (EditPiece a)
 
-idEdit :: Measured a => Seq a -> SeqEdit a
+-- | edit with same start and end object.
+idEdit :: Measured a => FingerTree a -> FTEdit a
 idEdit = fmap' EPCopy
 
-editStart :: Measured a => SeqEdit a -> Seq a
-editStart = mapMaybeSeq $ \case
+-- | document before edit.  names are motivated by cat theory: this is the start of the edit arrow.
+editStart :: Measured a => FTEdit a -> FingerTree a
+editStart = mapMaybeFT $ \case
   EPCopy   a -> Just a
   EPDelete a -> Just a
   EPInsert _ -> Nothing
 
-editEnd :: Measured a => SeqEdit a -> Seq a
-editEnd = mapMaybeSeq $ \case
+-- | document after edit.
+editEnd :: Measured a => FTEdit a -> FingerTree a
+editEnd = mapMaybeFT $ \case
   EPCopy   a -> Just a
   EPDelete _ -> Nothing
   EPInsert a -> Just a
 
-reverseEdit :: Measured a => SeqEdit a -> SeqEdit a
+reverseEdit :: Measured a => FTEdit a -> FTEdit a
 reverseEdit = fmap' $ \case
   EPCopy   a -> EPCopy   a
   EPDelete a -> EPInsert a
   EPInsert a -> EPDelete a
 
-fullEdit :: Measured a => SeqEdit a -> SeqEdit a
+-- | keep deleted parts of the doc.  used when transforming ranges to diff view.
+fullEdit :: Measured a => FTEdit a -> FTEdit a
 fullEdit = fmap' $ \case
   EPCopy   a -> EPCopy   a
-  EPDelete a -> EPCopy   a   -- deletion is kept
+  EPDelete a -> EPCopy   a
   EPInsert a -> EPInsert a
 
-compressEdit :: Measured a => SeqEdit a -> SeqEdit (Seq a)
+-- | helper (for performance).
+compressEdit :: Measured a => FTEdit a -> FTEdit (FingerTree a)
 compressEdit = fromList . map (fmap fromList . g) . groupBy ((==) `on` changeType) . toList
   where
   changeType :: EditPiece a -> Int
@@ -186,9 +190,12 @@ compressEdit = fromList . map (fmap fromList . g) . groupBy ((==) `on` changeTyp
 
 -------- DocPiece
 
+-- | TUNING: use 'NonEmptyST' (or @Either Char NonEmptyST@?  probably just 'NonEmptyST'...)
+type DocPiece = DocPiece_ Char
+
 data DocPiece_ a
-  = DocPiece (ChangeSet EStyle){-set of style *changes*-} a    -- _____s______s______
-  | NewBlock BlockKey BlockDepth BlockType                     -- similar to a newline but with more info
+  = DocPiece (ChangeSet EStyle) a           -- ^ consecutive chars in one 'Block' with the same styling.
+  | NewBlock BlockKey BlockDepth BlockType  -- ^ 'Block'.  similar to a newline but with more info
   deriving (Eq, Ord, Show)
 
 type EStyle = Either Entity Style
@@ -224,12 +231,10 @@ measurePosition (DocMeasure r k c _)
     getCol (Split.M x) = x
     getCol (_ Split.:| x) = x
 
-type DocPiece = DocPiece_ Char -- TUNING: NonEmptyST
-
 
 --------- NewDoc
 
-type NewDoc = Seq DocPiece
+type NewDoc = FingerTree DocPiece
 
 isValidNewDoc :: NewDoc -> Bool
 isValidNewDoc (viewl -> NewBlock{} :< _) = True   -- the first element should be a NewBlock
@@ -251,12 +256,11 @@ toggleStyle sty d
       = d1 <> (DocPiece (sty <> s) c <| d2)
   | otherwise = d
 
-changeStyle :: (Set EStyle -> Set EStyle) -> NewDoc -> NewDoc -> NewDoc
-changeStyle fun d@(styleSet . measure -> c@(ChangeSet sty)) d' = d <> toggleStyle (c <> ChangeSet (fun sty)) d'
+mappendWithStyleChange :: (Set EStyle -> Set EStyle) -> NewDoc -> NewDoc -> NewDoc
+mappendWithStyleChange fun d@(styleSet . measure -> c@(ChangeSet sty)) d' = d <> toggleStyle (c <> ChangeSet (fun sty)) d'
 
--- close all styles in first doc
-glue :: NewDoc -> NewDoc -> NewDoc
-glue = changeStyle $ const mempty
+mappendNewDoc :: NewDoc -> NewDoc -> NewDoc
+mappendNewDoc = mappendWithStyleChange $ const mempty
 
 filterStyle :: (EStyle -> Bool) -> NewDoc -> NewDoc
 filterStyle p = fmap' $ \case
@@ -294,7 +298,7 @@ docBlocks ndoc = case splits ((>= 1) . rowMeasure) ndoc of
 
 ------- NewDocEdit
 
-type NewDocEdit = SeqEdit DocPiece
+type NewDocEdit = FTEdit DocPiece
 
 splitAtOldPosition :: Position -> NewDocEdit -> (NewDocEdit, NewDocEdit)
 splitAtOldPosition p = split (positionPredicate p . fst)
@@ -308,8 +312,8 @@ lastOldPosition = measurePosition . fst . measure
 lastNewPosition :: NewDocEdit -> Position
 lastNewPosition = measurePosition . snd . measure
 
-transformRange_ :: NewDocEdit -> Range Position -> Range Position
-transformRange_ edit (Range p1 p2)
+transformRange :: NewDocEdit -> Range Position -> Range Position
+transformRange edit (Range p1 p2)
     = range (lastNewPosition $ edit1 <> newlines) (lastNewPosition edit2)
   where
     range a b | b < a     = Range a a
@@ -324,14 +328,14 @@ decorateEdit = foldl f mempty . toList . compressEdit
   where
   f :: NewDoc -> EditPiece NewDoc -> NewDoc
   f d = \case
-    EPCopy   a -> changeStyle (Set.delete (Right StyleDeleted) . Set.delete (Right StyleAdded)) d a
-    EPDelete a -> changeStyle (Set.insert (Right StyleDeleted) . Set.delete (Right StyleAdded)) d a
-    EPInsert a -> changeStyle (Set.delete (Right StyleDeleted) . Set.insert (Right StyleAdded)) d a
+    EPCopy   a -> mappendWithStyleChange (Set.delete (Right StyleDeleted) . Set.delete (Right StyleAdded)) d a
+    EPDelete a -> mappendWithStyleChange (Set.insert (Right StyleDeleted) . Set.delete (Right StyleAdded)) d a
+    EPInsert a -> mappendWithStyleChange (Set.delete (Right StyleDeleted) . Set.insert (Right StyleAdded)) d a
 
 -------- interface with current design
 
 fromRawContent :: RawContent -> NewDoc
-fromRawContent (RawContent blocks entitymap) = foldl glue mempty . map fromBlock $ NEL.toList blocks
+fromRawContent (RawContent blocks entitymap) = foldl mappendNewDoc mempty . map fromBlock $ NEL.toList blocks
   where
     fromBlock :: Block EntityKey BlockKey -> NewDoc
     fromBlock (Block' txt entities styles btype depth key)
@@ -345,7 +349,7 @@ fromRawContent (RawContent blocks entitymap) = foldl glue mempty . map fromBlock
 
     addStyle' :: Range Int -> EStyle -> NewDoc -> NewDoc
     addStyle' (Range x y) s (splitCol y -> (splitCol x -> (d1, d2), d3))
-      = changeStyle (Set.delete s) (changeStyle (Set.insert s) d1 d2) d3
+      = mappendWithStyleChange (Set.delete s) (mappendWithStyleChange (Set.insert s) d1 d2) d3
 
     splitCol :: Int -> NewDoc -> (NewDoc, NewDoc)
     splitCol i = split $ (> i) . (^. columnIndex) . measurePosition
@@ -384,9 +388,8 @@ fromEditRawContent rc edit
     f (Diff.New  c  ) = EPInsert c
     f (Diff.Old  c  ) = EPDelete c
 
--- FIXME: use RawContent instead of OTDoc
-transformRange :: Edit OTDoc -> OTDoc -> Range Position -> Range Position
-transformRange edit doc = transformRange_ $ fromEditRawContent (docToRawContent doc) (coerce [edit])
+transformRangeOTDoc :: Edit OTDoc -> OTDoc -> Range Position -> Range Position
+transformRangeOTDoc edit doc = transformRange $ fromEditRawContent (docToRawContent doc) (coerce [edit])
 
 showEditAsRawContentWithMarks :: Edit RawContent -> RawContent -> RawContent
 showEditAsRawContentWithMarks edit (fromRawContent -> doc)
@@ -400,7 +403,7 @@ showEditAsRawContentWithMarks edit (fromRawContent -> doc)
       , isMark s
       ]
 
-    transformEditRange = transformRange_ . fullEdit $ dedit
+    transformEditRange = transformRange . fullEdit $ dedit
 
     isMark = either (const False) (has _Mark)
 
