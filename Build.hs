@@ -71,11 +71,12 @@ main = shakeArgs refineOptions $ do
 
   phony "setup" $ do
     let resolver = "lts-8.11"
-    command_ [] "stack" ["install", "hlint", "--resolver", resolver]
-    command_ [] "stack" ["exec", "--", "hlint", "--version"]
-    command_ [] "stack" ["install", "hspec-discover", "--resolver", resolver]
-    command_ [] "stack" ["exec", "--", "which", "hspec-discover"]
-    command_ [] "stack" ["install", "happy", "--resolver", resolver]  -- (needed for pretty-show package)
+    -- command_ [] "stack" [resolver, "setup"]  -- (this is done in ./build, before we can fire up the shake code.)
+    command_ [] "stack" [resolver, "install", "hlint", "--resolver"]
+    command_ [] "stack" [resolver, "exec", "--", "hlint", "--version"]
+    command_ [] "stack" [resolver, "install", "hspec-discover", "--resolver"]
+    command_ [] "stack" [resolver, "exec", "--", "which", "hspec-discover"]
+    command_ [] "stack" [resolver, "install", "happy", "--resolver"]  -- (needed for pretty-show package)
 
     command_ [Cwd pkgPrelude]  "stack" ["setup"]
     command_ [Cwd pkgCommon]   "stack" ["setup"]
