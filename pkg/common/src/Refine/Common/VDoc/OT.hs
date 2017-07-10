@@ -25,7 +25,7 @@ import qualified Data.Text as ST
 import qualified Data.Algorithm.Patience as Diff
 
 import           Refine.Common.Prelude hiding (fromList)
-import           Refine.Common.OT
+import           Refine.Common.OT hiding (compressEdit)
 import           Refine.Common.Types.Core hiding (Edit)
 
 {-
@@ -93,10 +93,6 @@ instance Measured Char where
 instance Measured ST where
   type Measure ST = Sum Int
   measure = Sum . ST.length
-
-everyNth :: Int -> [a] -> [[a]]
-everyNth _ [] = []
-everyNth i xs = take i xs: everyNth i (drop i xs)
 
 
 ---------- ChangeSet, ChangeMap
@@ -172,8 +168,8 @@ fullEdit = fmap' $ \case
   EPDelete a -> EPCopy   a   -- deletion is kept
   EPInsert a -> EPInsert a
 
-compressEdit' :: Measured a => SeqEdit a -> SeqEdit (Seq a)
-compressEdit' = fromList . map (fmap fromList . g) . groupBy ((==) `on` changeType) . toList
+compressEdit :: Measured a => SeqEdit a -> SeqEdit (Seq a)
+compressEdit = fromList . map (fmap fromList . g) . groupBy ((==) `on` changeType) . toList
   where
   changeType :: EditPiece a -> Int
   changeType = \case
@@ -273,6 +269,10 @@ docStyles = Map.keysSet . Map.filter (> 0) . unChangeMap . styleMeasure . measur
 getStyleRanges :: NewDoc -> EStyle -> Ranges Position
 getStyleRanges doc sty
   = RangesInner [Range a b | [a, b] <- everyNth 2 $ splitPositions (Map.member sty . unChangeMap . styleMeasure) doc]
+  where
+    everyNth :: Int -> [a] -> [[a]]
+    everyNth _ [] = []
+    everyNth i xs = take i xs: everyNth i (drop i xs)
 
 addStyleRanges :: EStyle -> Ranges Position -> NewDoc -> NewDoc
 addStyleRanges s rs
@@ -286,8 +286,10 @@ addStyleRanges s rs
 splitPositions :: (DocMeasure -> Bool) -> NewDoc -> [Position]
 splitPositions p = map measurePosition . splitMeasures p
 
-docLines :: NewDoc -> [NewDoc]
-docLines = splits ((>= 1) . rowMeasure)
+docBlocks :: NewDoc -> [NewDoc]
+docBlocks ndoc = case splits ((>= 1) . rowMeasure) ndoc of
+  (FingerTree.null -> True): v -> v
+  bad -> error $ "docBlocks: invalid input: " <> show bad
 
 
 ------- NewDocEdit
@@ -318,7 +320,7 @@ transformRange_ edit (Range p1 p2)
 
 -- FIXME: highlight style and block changes better
 decorateEdit :: NewDocEdit -> NewDoc
-decorateEdit = foldl f mempty . toList . compressEdit'
+decorateEdit = foldl f mempty . toList . compressEdit
   where
   f :: NewDoc -> EditPiece NewDoc -> NewDoc
   f d = \case
@@ -349,7 +351,7 @@ fromRawContent (RawContent blocks entitymap) = foldl glue mempty . map fromBlock
     splitCol i = split $ (> i) . (^. columnIndex) . measurePosition
 
 toRawContent :: NewDoc -> RawContent
-toRawContent (docLines -> (FingerTree.null -> True): dls)
+toRawContent (docBlocks -> dls)
   = mkRawContentInternal . NEL.fromList $ zipWith toBlock (scanl (<>) mempty $ styleSet . measure <$> dls) dls
   where
     toBlock :: ChangeSet EStyle -> NewDoc -> Block Entity BlockKey
