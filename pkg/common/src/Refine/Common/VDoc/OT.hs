@@ -42,7 +42,6 @@ module Refine.Common.VDoc.OT
   , showEditAsRawContentWithMarks
   , showEditAsRawContent
   , docEditRanges
-  , elemChanged
   , docRanges
   , hideUnchangedParts
   ) where
