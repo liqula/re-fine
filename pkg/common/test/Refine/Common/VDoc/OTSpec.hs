@@ -54,6 +54,9 @@ spec = parallel $ do
     it "RawContent <-> Doc conversion" . property $ \d -> do
       docToRawContent (rawContentToDoc d) `shouldBe` d
 
+    it "RawContent <-> NewDoc conversion" . property $ \d -> do
+      toRawContent (fromRawContent d :: NewDoc) `shouldBe` d
+
 
     describe "showEditAsRawContent" $ do
       let block0 = BlockIndex 0 $ BlockKey "0"

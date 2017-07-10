@@ -86,6 +86,9 @@ module Refine.Common.VDoc.OT
   , docEditRanges
   , docRanges
   , hideUnchangedParts
+
+    -- for testing only:
+  , NewDoc
   ) where
 
 import qualified Data.Algorithm.Patience as Diff
