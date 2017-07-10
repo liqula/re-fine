@@ -104,13 +104,13 @@ spec = parallel $ do
             rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [(EntityRange 5 9, StyleChanged), (EntityRange 5 9, Bold)]) :| []
             ranges = mconcat $ rangesFromRange True <$> [Range (Position block0 5) (Position block0 9)]
         it "show diff" $ do
-          pending
+          pendingWith "#397"
           showEditAsRawContent edit rc `shouldBe` rc'
         it "ranges" $ do
-          pending
+          pendingWith "#397"
           docEditRanges edit rc `shouldBe` ranges
 
-      describe "change block detph" $ do
+      describe "change block depth" $ do
         let edit = eRawContent
               [ ENonEmpty $ EditItem 0
                 [ EditFirst . EditFirst . EditSecond . EAtom . BlockDepth $ 1
@@ -120,10 +120,10 @@ spec = parallel $ do
             rc'  = mkRawContent $ (mkBlock "some text or other" & blockDepth' .~ 1 & blockStyles .~ [(EntityRange 0 18, StyleChanged)]) :| []
             ranges = mconcat $ rangesFromRange True <$> [Range (Position block0 0) (Position block0 18)]
         it "show diff" $ do
-          pending
+          pendingWith "#397"
           showEditAsRawContent edit rc `shouldBe` rc'
         it "ranges" $ do
-          pending
+          pendingWith "#397"
           docEditRanges edit rc `shouldBe` ranges
 
       it "hideUnchangedParts" $ do
