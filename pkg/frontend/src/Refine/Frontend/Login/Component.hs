@@ -71,6 +71,7 @@ inputField i t p = inputFieldWithKey i t p "value"
 data LoginForm = LoginForm
   { _loginFormUsername :: ST
   , _loginFormPassword :: ST
+  , _loginFormErrors   :: FormError
   } deriving (Eq, Generic, Show)
 
 data RegistrationForm = RegistrationForm
@@ -79,24 +80,27 @@ data RegistrationForm = RegistrationForm
   , _registrationFormEmail2    :: ST
   , _registrationFormPassword  :: ST
   , _registrationFormAgree     :: Bool
+  , _registrationFormErrors    :: FormError
   } deriving (Eq, Generic, Show)
 
 makeRefineTypes [''LoginForm, ''RegistrationForm]
 
-validateLoginForm :: HasCallStack => LoginForm -> [ST]
-validateLoginForm form =
-  [ "no user name" | form ^. loginFormUsername . to ST.null ] <>
-  [ "no password" | form ^. loginFormPassword . to ST.null ]
+-- | FIXME: I used the pattern "return a list of errors, and then check if that list is null to get
+-- the boolean" in `createChunkRangeErrors`, and I quite liked it, as it gives you more informative
+-- error messages when you need them.  See also: 'invalidRegistrationForm'.
+invalidLoginForm :: HasCallStack => LoginForm -> Bool
+invalidLoginForm form = form ^. loginFormUsername . to ST.null || form ^. loginFormPassword . to ST.null
 
-validateRegistrationForm :: HasCallStack => RegistrationForm -> [ST]
-validateRegistrationForm form =
-  [ "email addresses do not match" | form ^. registrationFormEmail1 /= form ^. registrationFormEmail2 ] <>
-  [ "no user name" | form ^. registrationFormUsername . to ST.null ] <>
-  [ "no email address" | form ^. registrationFormEmail1 . to ST.null ] <>
-  [ "no password" | form ^. registrationFormPassword . to ST.null ] <>
-  [ "please agree to the terms & conditions" | form ^. registrationFormAgree . to not ]
+invalidRegistrationForm :: HasCallStack => RegistrationForm -> Bool
+invalidRegistrationForm form =
+  or [ form ^. registrationFormEmail1 /= form ^. registrationFormEmail2
+     , form ^. registrationFormUsername . to ST.null
+     , form ^. registrationFormEmail1 . to ST.null
+     , form ^. registrationFormPassword . to ST.null
+     , form ^. registrationFormAgree . to not
+     ]
 
-loginOrLogout_ :: HasCallStack => CurrentUser -> Maybe ST -> ReactElementM eventHandler ()
+loginOrLogout_ :: HasCallStack => CurrentUser -> FormError -> ReactElementM eventHandler ()
 loginOrLogout_ = \case
   UserLoggedOut  -> login_
   UserLoggedIn _ -> const logout_
@@ -110,29 +114,28 @@ defaultStyles = []
 loginStyles :: HasCallStack => [Decl]
 loginStyles = defaultStyles
 
-login :: HasCallStack => Maybe ST -> View '[]
-login errors = mkStatefulView "Login" (LoginForm "" "") $ \st@(LoginForm lname lpass) ->
+login :: HasCallStack => FormError -> View '[]
+login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState ->
   div_ ["style" @@= loginStyles] $ do
     h1_ "Login"
 
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 
-      let lerrors = validateLoginForm st
-      (p_ . elemCS) `mapM_` lerrors
-      (p_ . elemCS) `mapM_` errors
+      mapM_ (p_ . elemCS)
+        (curState ^. loginFormErrors)
 
       inputField "login-username" "text"     "Username" loginFormUsername >> br_ []
       inputField "login-password" "password" "Password" loginFormPassword >> br_ []
 
       iconButton_ $ defaultIconButtonProps @[RS.GlobalAction]
-        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Login", "dark") Large
+        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") Large
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "submit"
-        & iconButtonPropsDisabled     .~ not (null lerrors)
-        & iconButtonPropsOnClick      .~ [RS.Login $ Login lname lpass]
+        & iconButtonPropsDisabled     .~ invalidLoginForm curState
+        & iconButtonPropsOnClick      .~ [RS.Login . (Login <$> _loginFormUsername <*> _loginFormPassword) $ curState]
 
-login_ :: HasCallStack => Maybe ST -> ReactElementM eventHandler ()
+login_ :: HasCallStack => FormError -> ReactElementM eventHandler ()
 login_ errors = view_ (login errors) "login_"
 
 
@@ -149,7 +152,7 @@ logout = mkView "Logout" $ do
           , "action" $= "POST" ] $ do
 
       iconButton_ $ defaultIconButtonProps @[RS.GlobalAction]
-        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Logout", "dark") Large
+        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") Large
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "logout"
         & iconButtonPropsDisabled     .~ False
@@ -164,17 +167,16 @@ logout_ = view_ logout "logout_"
 registrationStyles :: HasCallStack => [Decl]
 registrationStyles = defaultStyles
 
-registration :: HasCallStack => Maybe ST -> View '[]
-registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "" False) $ \st -> do
+registration :: HasCallStack => FormError -> View '[]
+registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "" False errors) $ \curState -> do
   div_ ["style" @@= registrationStyles] $ do
     h1_ "Registration"
 
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 
-      let lerrors = validateRegistrationForm st
-      (p_ . elemCS) `mapM_` lerrors
-      (p_ . elemCS) `mapM_` errors
+      mapM_ (p_ . elemCS)
+        (curState ^. registrationFormErrors)
 
       inputField "registration-username"  "text"     "Username"    registrationFormUsername >> br_ []
       inputField "registration-email1"    "email"    "Email"       registrationFormEmail1   >> br_ []
@@ -185,15 +187,15 @@ registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "
       "I agree with the terms of use." >> br_ []
 
       iconButton_ $ defaultIconButtonProps @[RS.GlobalAction]
-        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Register_user", "dark") Large
+        & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") Large
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "submit"
-        & iconButtonPropsDisabled     .~ not (null lerrors)
+        & iconButtonPropsDisabled     .~ invalidRegistrationForm curState
         & iconButtonPropsOnClick      .~ [RS.CreateUser
                                               . (CreateUser <$> _registrationFormUsername
                                                             <*> _registrationFormEmail1
                                                             <*> _registrationFormPassword)
-                                              $ st]
+                                              $ curState]
 
-registration_ :: HasCallStack => Maybe ST -> ReactElementM eventHandler ()
+registration_ :: HasCallStack => FormError -> ReactElementM eventHandler ()
 registration_ errors = view_ (registration errors) "registration_"
