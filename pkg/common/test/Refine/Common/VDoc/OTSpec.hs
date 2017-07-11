@@ -54,7 +54,7 @@ spec = parallel $ do
     it "RawContent <-> Doc conversion" . property $ \d -> do
       docToRawContent (rawContentToDoc d) `shouldBe` d
 
-    it "RawContent <-> NewDoc conversion" . property $ \d -> do
+    it "### RawContent <-> NewDoc conversion" . property $ \d -> do
       toRawContent (fromRawContent d :: NewDoc) `shouldBe` d
 
 
@@ -141,7 +141,7 @@ spec = parallel $ do
         wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 1 2) `shouldBe` wipeBlockKeys (toRC "aBcd.fGH")
         wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 2 2) `shouldBe` wipeBlockKeys (toRC "aBcdefGH")
 
-    describe "### transformRange" $ do
+    describe "#### transformRange" $ do
       let mkRC = NEL.fromList . zipWith mkBl [0..] . lines
           mkBl i = DocBlock NormalText (BlockDepth 0) (bKey i) . mkLE
           mkLE
