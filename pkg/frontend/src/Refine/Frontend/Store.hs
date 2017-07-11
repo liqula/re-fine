@@ -344,9 +344,7 @@ emitBackendCallsFor act st = case act of
     -- voting
 
     ContributionAction (ToggleVoteOnContribution eid vote) -> do
-      case st ^. gsLoginState . lsCurrentUser of
-        UserLoggedOut       -> dispatchAndExec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
-        UserLoggedIn _uname -> sPutSimpleVoteOnEdit eid vote $ \case
+      sPutSimpleVoteOnEdit eid vote $ \case
           Left msg -> ajaxFail msg Nothing
           Right () -> dispatchM $ reloadCompositeVDoc st
 
