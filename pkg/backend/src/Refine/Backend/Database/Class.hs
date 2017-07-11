@@ -55,6 +55,7 @@ class Database db where
 
   -- Discussion
   createDiscussion   :: ID Edit    -> Create Discussion -> db Discussion
+  rebaseDiscussion   :: ID Edit -> ID Discussion -> (Range Position -> Range Position) -> db Discussion
   getDiscussion      :: ID Discussion -> db Discussion
   statementsOfDiscussion :: ID Discussion -> db [ID Statement]
   discussionOfStatement  :: ID Statement  -> db (ID Discussion)

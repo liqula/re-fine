@@ -132,38 +132,36 @@ instance NFData (EEdit ()) where rnf _ = error "impossible"
 ---------------------------------------- (,) instance
 
 editFirst :: Edit a -> Edit (a, b)
-editFirst [] = []
-editFirst e  = [EditFirst e]
+editFirst = fmap EditFirst
 
 editSecond :: Edit b -> Edit (a, b)
-editSecond [] = []
-editSecond e  = [EditSecond e]
+editSecond = fmap EditSecond
 
 instance (Editable a, Editable b) => Editable (a, b) where
 
     docCost (a, b) = 1 + docCost a + docCost b
 
     data EEdit (a, b)
-        = EditFirst  (Edit a)
-        | EditSecond (Edit b)
+        = EditFirst  (EEdit a)
+        | EditSecond (EEdit b)
             deriving (Generic)
     eCost = \case
-        EditFirst  e -> 1 + cost e
-        EditSecond e -> 1 + cost e
+        EditFirst  e -> 1 + eCost e
+        EditSecond e -> 1 + eCost e
 
-    ePatch (EditFirst  e) (a, b) = (patch e a, b)
-    ePatch (EditSecond e) (a, b) = (a, patch e b)
+    ePatch (EditFirst  e) (a, b) = (ePatch e a, b)
+    ePatch (EditSecond e) (a, b) = (a, ePatch e b)
 
     diff (a, b) (c, d) = (<>) <$> (editFirst <$> diff a c) <*> (editSecond <$> diff b d)
 
-    eMerge _ (EditFirst ea) (EditSecond eb) = (editSecond eb, editFirst ea)
-    eMerge _ (EditSecond eb) (EditFirst ea) = (editFirst ea, editSecond eb)
-    eMerge (a, _) (EditFirst e)  (EditFirst f)  = editFirst  *** editFirst  $ merge a e f
-    eMerge (_, b) (EditSecond e) (EditSecond f) = editSecond *** editSecond $ merge b e f
+    eMerge _ a@EditFirst{} b@EditSecond{} = ([b], [a])
+    eMerge _ a@EditSecond{} b@EditFirst{} = ([b], [a])
+    eMerge (a, _) (EditFirst e)  (EditFirst f)  = editFirst  *** editFirst  $ eMerge a e f
+    eMerge (_, b) (EditSecond e) (EditSecond f) = editSecond *** editSecond $ eMerge b e f
 
     eInverse (a, b) = \case
-        EditFirst  e -> editFirst  $ inverse a e
-        EditSecond e -> editSecond $ inverse b e
+        EditFirst  e -> editFirst  $ eInverse a e
+        EditSecond e -> editSecond $ eInverse b e
 
 deriving instance (Show (EEdit a), Show (EEdit b)) => Show (EEdit (a, b))
 deriving instance (Eq (EEdit a), Eq (EEdit b)) => Eq (EEdit (a, b))
@@ -177,12 +175,10 @@ instance (NFData (EEdit a), NFData (EEdit b)) => NFData (EEdit (a, b)) where rnf
 ---------------------------------------- Either instance
 
 editLeft :: Edit a -> Edit (Either a b)
-editLeft [] = []
-editLeft e  = [EditLeft e]
+editLeft = fmap EditLeft
 
 editRight :: Edit b -> Edit (Either a b)
-editRight [] = []
-editRight e  = [EditRight e]
+editRight = fmap EditRight
 
 instance (Editable a, Editable b) => Editable (Either a b) where
 
@@ -190,18 +186,18 @@ instance (Editable a, Editable b) => Editable (Either a b) where
     docCost (Right b) = 1 + docCost b
 
     data EEdit (Either a b)
-        = EditLeft  (Edit a)
-        | EditRight (Edit b)
+        = EditLeft  (EEdit a)
+        | EditRight (EEdit b)
         | SetEither (Either a b)
             deriving (Generic)
 
     eCost = \case
-        EditLeft  e -> 1 + cost e
-        EditRight e -> 1 + cost e
+        EditLeft  e -> 1 + eCost e
+        EditRight e -> 1 + eCost e
         SetEither x -> 1 + either docCost docCost x
 
-    ePatch (EditLeft  e) (Left  a) = Left  (patch e a)
-    ePatch (EditRight e) (Right b) = Right (patch e b)
+    ePatch (EditLeft  e) (Left  a) = Left  (ePatch e a)
+    ePatch (EditRight e) (Right b) = Right (ePatch e b)
     ePatch (SetEither x) _         = x
     ePatch EditLeft{} Right{} = error "impossible"
     ePatch EditRight{} Left{} = error "impossible"
@@ -210,12 +206,12 @@ instance (Editable a, Editable b) => Editable (Either a b) where
     diff (Right b) (Right b') = editRight <$> diff b b'
     diff _ x = pure [SetEither x]
 
-    eMerge (Left  a) (EditLeft  ea) (EditLeft  ea') = editLeft  *** editLeft  $ merge a ea ea'
-    eMerge (Right b) (EditRight eb) (EditRight eb') = editRight *** editRight $ merge b eb eb'
+    eMerge (Left  a) (EditLeft  ea) (EditLeft  ea') = editLeft  *** editLeft  $ eMerge a ea ea'
+    eMerge (Right b) (EditRight eb) (EditRight eb') = editRight *** editRight $ eMerge b eb eb'
     eMerge d a b = secondWins d a b
 
-    eInverse (Left  a) (EditLeft  e) = editLeft  $ inverse a e
-    eInverse (Right b) (EditRight e) = editRight $ inverse b e
+    eInverse (Left  a) (EditLeft  e) = editLeft  $ eInverse a e
+    eInverse (Right b) (EditRight e) = editRight $ eInverse b e
     eInverse x         (SetEither _) = [SetEither x]
     eInverse Left{} EditRight{} = error "impossible"
     eInverse Right{} EditLeft{} = error "impossible"

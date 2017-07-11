@@ -34,6 +34,7 @@ import           Control.Arrow ((&&&))
 import           Control.Lens ((^.), (^?), view, has)
 import           Control.Monad ((<=<), mapM)
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 import           Data.Maybe (catMaybes)
 
 import           Refine.Backend.App.Core
@@ -41,9 +42,10 @@ import           Refine.Backend.App.User (currentUser)
 import qualified Refine.Backend.Database.Class as DB
 import           Refine.Common.Allow
 import           Refine.Common.Types
+import           Refine.Common.Types.Core (OTDoc)
 import qualified Refine.Common.OT as OT
+import           Refine.Common.VDoc.OT
 import           Refine.Common.VDoc.Draft
-
 
 listVDocs :: App [VDoc]
 listVDocs = do
@@ -151,6 +153,18 @@ rebaseHeadToEdit eid = do
     (,) hid <$> DB.getEditChildren hid
   when (eid `notElem` ch) . throwError $ AppRebaseError eid
   forM_ (filter (/= eid) ch) $ addMerge hid eid
+  db $ do
+    edit <- DB.getEdit eid
+    base <- DB.getEdit hid
+    let diff = head [di | (di, d) <- edit ^. editSource . unEditSource, d == hid]
+        trRange = transformRangeOTDoc
+                  (concat (coerce diff :: [OT.Edit OTDoc]))
+                  (rawContentToDoc . rawContentFromVDocVersion $ base ^. editVDocVersion)
+    forM_ (Set.toList $ base ^. editNotes') $ \nid -> do
+      n <- DB.getNote nid
+      DB.createNote eid . CreateNote (n ^. noteText) (n ^. notePublic) . trRange $ n ^. noteRange
+
+    forM_ (Set.toList $ base ^. editDiscussions') $ \did -> DB.rebaseDiscussion eid did trRange
 
 -- | Throw an error if chunk range does not fit 'VDocVersion' identified by edit.
 -- FIXME: for RawContent this still needs to be implemented.

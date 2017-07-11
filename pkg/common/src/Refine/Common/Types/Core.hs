@@ -47,10 +47,12 @@ module Refine.Common.Types.Core
 import Refine.Common.Prelude
 
 import           Control.DeepSeq
+import           Control.Lens (both)
 import           Data.Int
 import qualified Data.HashMap.Lazy as HashMap
 import qualified Data.IntMap as IntMap
 import           Data.Either (isLeft)
+import           Data.List (group)
 import           Data.List.NonEmpty (NonEmpty)
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Map as Map
@@ -250,7 +252,7 @@ data BlockType =
   | Header3
   | BulletPoint
   | EnumPoint
-  deriving (Show, Eq, Generic, Bounded, Enum)
+  deriving (Show, Eq, Ord, Generic, Bounded, Enum)
 
 
 -- * OT.Edit RawContent
@@ -688,10 +690,6 @@ blockKey = blockKey'
 mkBlockIndex :: RawContent -> Int -> BlockIndex
 mkBlockIndex rc i = BlockIndex i $ ((rc ^. rawContentBlocks) NEL.!! i) ^. blockKey
 
--- TUNING: speed this up by choosing a better representation for RawContent
--- getBlock :: RawContent -> BlockIndex -> Block
--- getBlock rc (BlockIndex i _) = (rc ^. rawContentBlocks) NEL.!! i
-
 -- TUNING: speed this up by adding an index structure to RawContent
 fromSelectionPoint :: RawContent -> SelectionPoint -> Position
 fromSelectionPoint rc (Position k r) = Position (BlockIndex i k) r
@@ -702,6 +700,22 @@ fromSelectionPoint rc (Position k r) = Position (BlockIndex i k) r
 
 fromSelectionState :: RawContent -> SelectionState -> Selection Position
 fromSelectionState rc (SelectionState sel) = fromSelectionPoint rc <$> sel
+
+-- previous and next positions, the given one is also in the list
+surroundingPositions :: RawContent -> Position -> ([Position]{-previous, reversed-}, [Position]{-next-})
+surroundingPositions rc (Position (BlockIndex i _) col)
+  = ( [ Position (mkBlockIndex rc r) c
+      | (r, l) <- zip [i, i-1..] $ col: prev
+      , c <- [l, l-1..0]
+      ]
+    , [ Position (mkBlockIndex rc r) c
+      | (r, cs') <- zip [i..] $ [col..this]: [[0..l] | l <- next]
+      , c <- cs'
+      ]
+    )
+  where
+    (prev, this: next) = focusList (len <$> NEL.toList (rc ^. rawContentBlocks)) !! i
+    len b = ST.length $ b ^. blockText
 
 -- TUNING: speed this up by adding an index structure to RawContent
 toStylePosition :: RawContent -> Position -> StylePosition
@@ -728,6 +742,11 @@ toStylePosition rc p_@(Position (BlockIndex i_ _) col)
 
     len b = ST.length $ b ^. blockText
 
+surroundingStylePositions :: RawContent -> StylePosition -> ([StylePosition]{-previous, reversed-}, [StylePosition]{-next-})
+surroundingStylePositions rc sp
+  = surroundingPositions rc (basePosition sp)
+  & both %~ fmap head . group . fmap (toStylePosition rc)
+
 -- TUNING: speed this up
 toStyleRanges :: RawContent -> Ranges Position -> Ranges StylePosition
 toStyleRanges rc rs = mconcat $ (rangesFromRange False . fmap (toStylePosition rc)) <$> unRanges rs
@@ -737,10 +756,12 @@ stylePositions :: RawContent -> StylePosition -> [Position]
 stylePositions rc (StylePosition p@(Position (BlockIndex i _) _) m)
     = p: [Position (mkBlockIndex rc j) 0 | j <- [i+1..i+m]]
 
--- The range cannot be empty
 -- this computes the minimal selection range
 fromStyleRange :: RawContent -> Range StylePosition -> Range Position
-fromStyleRange rc (Range a b) | a < b = RangeInner (last $ stylePositions rc a) (basePosition b)
+fromStyleRange rc (Range a b)
+  | a < b = RangeInner (last $ stylePositions rc a) (basePosition b)
+  | a == b = RangeInner (basePosition a) (basePosition a)
+  | otherwise = error "range invariant failed"
 
 -- TUNING: speed this up by adding an index structure to RawContent
 toLeafSelector :: Bool -> RawContent -> Position -> (LeafSelector, Int)

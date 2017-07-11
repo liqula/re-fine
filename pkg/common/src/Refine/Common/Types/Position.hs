@@ -68,9 +68,6 @@ data BlockIndex = BlockIndex
 instance Eq BlockIndex where (==) = (==) `on` _blockIndexIndex
 instance Ord BlockIndex where compare = compare `on` _blockIndexIndex
 
-positionBlockIndex :: Position -> Int
-positionBlockIndex = _blockIndexIndex . _blockIndex
-
 -- | use only when interfacing with Draft; use Position otherwise
 type SelectionPoint = GPosition BlockKey Int
 
@@ -231,3 +228,7 @@ renderLeafSelector (Position (BlockKey b) (SpanIndex k i)) =
 
 
 makeRefineTypes [''GPosition, ''Range, ''Ranges, ''Selection, ''BlockIndex, ''BlockKey, ''SelectionState]
+
+-- counts from zero
+rowIndex :: Lens' Position Int
+rowIndex = blockIndex . blockIndexIndex

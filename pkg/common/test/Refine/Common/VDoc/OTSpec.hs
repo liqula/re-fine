@@ -12,10 +12,11 @@ module Refine.Common.VDoc.OTSpec where
 
 import Refine.Common.Prelude
 
+import           Data.List (groupBy)
+import           Data.Char
 import           Data.List.NonEmpty (NonEmpty((:|)))
 import qualified Data.List.NonEmpty as NEL
 import qualified Data.Set as Set
-import           Data.Char (isUpper)
 import           Test.QuickCheck
 import           Test.Hspec
 
@@ -53,16 +54,19 @@ spec = parallel $ do
     it "RawContent <-> Doc conversion" . property $ \d -> do
       docToRawContent (rawContentToDoc d) `shouldBe` d
 
+    it "RawContent <-> NewDoc conversion" . property $ \d -> do
+      toRawContent (fromRawContent d :: NewDoc) `shouldBe` d
+
 
     describe "showEditAsRawContent" $ do
       let block0 = BlockIndex 0 $ BlockKey "0"
 
       describe "added text with custom style 'ADDED'." $ do
-        let edit = eRawContent [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond $ coerce
+        let edit = eRawContent [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit . EditItem 0 . editSecond $ coerce
                         [ InsertItem 10 'a'
                         , InsertItem 11 'n'
                         , InsertItem 12 'd'
-                        , InsertItem 13 '/']]]]]
+                        , InsertItem 13 '/']]]
             rc   = mkRawContent $ mkBlock "some text or other" :| []
             rc'  = mkRawContent $ (mkBlock "some text and/or other" & blockStyles .~ [(EntityRange 10 4, StyleAdded)]) :| []
             ranges = mconcat $ rangesFromRange True <$> [Range (Position block0 10) (Position block0 10)]
@@ -73,8 +77,8 @@ spec = parallel $ do
         let -- FIXME: edit rc . mkRawContent $ mkBlock "someer" :| []
             -- this doesn't work now because the cost of deleting chars is more than
             -- the cost of deleting the block and adding a new one
-            edit = eRawContent [ENonEmpty $ EditItem 0 [EditSecond [SegmentListEdit $ EditItem 0 [EditSecond
-                        . coerce $ deleteRange 4 12]]]]
+            edit = eRawContent [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit . EditItem 0 . editSecond
+                        . coerce $ deleteRange 4 12]]
             rc   = mkRawContent $ mkBlock "some text or other" :| []
             rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [(EntityRange 4 12, StyleDeleted)]) :| []
             ranges = mconcat $ rangesFromRange False <$> [Range (Position block0 4) (Position block0 16)]
@@ -83,11 +87,47 @@ spec = parallel $ do
 
       describe "deleted block with custom style 'DELETED'." $ do
         let edit = eRawContent $ ENonEmpty <$> deleteRange 0 1
-            rc   = mkRawContent $ mkBlock "some text or other" :| []
-            rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [(EntityRange 0 18, StyleDeleted)]) :| []
+            rc   = mkRawContent $ mkBlock "some text or other" :| [mkBlock "x"]
+            rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [(EntityRange 0 18, StyleDeleted)]) :| [mkBlock "x"]
             ranges = mconcat $ rangesFromRange False <$> [Range (Position block0 0) (Position block0 18)]
         it "show diff" $ showEditAsRawContent edit rc `shouldBe` rc'
         it "ranges" $ docEditRanges edit rc `shouldBe` ranges
+
+      describe "change style to bold" $ do
+        let edit = eRawContent
+              [ ENonEmpty . EditItem 0 $ editSecond
+                [ SplitItem 0 8
+                , SplitItem 0 4
+                , SegmentListEdit $ EditItem 1
+                  [ EditFirst . EditSecond . InsertElem $ Atom Bold
+                  ]
+                ]
+              ]
+            rc   = mkRawContent $ mkBlock "some text or other" :| []
+            rc'  = mkRawContent $ (mkBlock "some text or other" & blockStyles .~ [(EntityRange 5 9, StyleChanged), (EntityRange 5 9, Bold)]) :| []
+            ranges = mconcat $ rangesFromRange True <$> [Range (Position block0 5) (Position block0 9)]
+        it "show diff" $ do
+          pendingWith "#397"
+          showEditAsRawContent edit rc `shouldBe` rc'
+        it "ranges" $ do
+          pendingWith "#397"
+          docEditRanges edit rc `shouldBe` ranges
+
+      describe "change block depth" $ do
+        let edit = eRawContent
+              [ ENonEmpty $ EditItem 0
+                [ EditFirst . EditFirst . EditSecond . EAtom . BlockDepth $ 1
+                ]
+              ]
+            rc   = mkRawContent $ mkBlock "some text or other" :| []
+            rc'  = mkRawContent $ (mkBlock "some text or other" & blockDepth' .~ 1 & blockStyles .~ [(EntityRange 0 18, StyleChanged)]) :| []
+            ranges = mconcat $ rangesFromRange True <$> [Range (Position block0 0) (Position block0 18)]
+        it "show diff" $ do
+          pendingWith "#397"
+          showEditAsRawContent edit rc `shouldBe` rc'
+        it "ranges" $ do
+          pendingWith "#397"
+          docEditRanges edit rc `shouldBe` ranges
 
       it "hideUnchangedParts" $ do
         let toRC = docToRawContent . NEL.fromList . map toBlock
@@ -100,3 +140,129 @@ spec = parallel $ do
         wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 2 1) `shouldBe` wipeBlockKeys (toRC "aBc.efGH")
         wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 1 2) `shouldBe` wipeBlockKeys (toRC "aBcd.fGH")
         wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 2 2) `shouldBe` wipeBlockKeys (toRC "aBcdefGH")
+
+    describe "transformRange" $ do
+      let mkRC = NEL.fromList . zipWith mkBl [0..] . lines
+          mkBl i = DocBlock NormalText (BlockDepth 0) (bKey i) . mkLE
+          mkLE
+            = map (fst . head &&& NonEmptyST . (cs :: String -> ST) . map snd)
+            . groupBy ((==) `on` fst)
+            . map mkChar
+          mkChar = \case
+            c | isLower c -> ((Atom Nothing, Set.fromList []), c)
+              | isUpper c -> ((Atom Nothing, Set.fromList [Atom Bold]), c)
+            _ -> error "mkChar"
+
+          bKey = BlockKey . cs . show
+          pos r = pos' r r
+          pos' r k = Position . BlockIndex r $ bKey k
+
+      it "empty edit" $ do
+        transformRangeOTDoc [] (mkRC "aaa") (Range (pos 0 0) (pos 0 0)) `shouldBe` Range (pos 0 0) (pos 0 0)
+      it "insert row" $ do
+        let edit = [ENonEmpty . InsertItem 1 $ mkBl 10 "xyz"]
+        transformRangeOTDoc edit (mkRC "a\nb") (Range (pos 0 0) (pos 0 0)) `shouldBe` Range (pos 0 0) (pos 0 0)
+        transformRangeOTDoc edit (mkRC "a\nb") (Range (pos 0 0) (pos 1 0)) `shouldBe` Range (pos 0 0) (pos' 1 10 3){- because transformRangeOTDoc transforms style position ranges -}
+
+      it "delete rows" $ do
+        let edit = [ENonEmpty $ DeleteRange 1 2]
+        transformRangeOTDoc edit (mkRC "aa\nbb\ncc\ndd") (Range (pos 0 1) (pos 3 1)) `shouldBe` Range (pos 0 1) (pos' 1 3 1)
+        transformRangeOTDoc edit (mkRC "aa\nbb\ncc\ndd") (Range (pos 1 1) (pos 3 1)) `shouldBe` Range (pos' 1 3 0) (pos' 1 3 1)
+        transformRangeOTDoc edit (mkRC "aa\nbb\ncc\ndd") (Range (pos 0 1) (pos 2 1)) `shouldBe` Range (pos 0 1) (pos 0 2)
+
+      it "delete rows (2)" $ do
+        let edit = [ENonEmpty $ DeleteRange 0 2]
+        transformRangeOTDoc edit (mkRC "aa\naa\naa\naa") (Range (pos 0 1) (pos 3 1)) `shouldBe` Range (pos' 0 2 0) (pos' 1 3 1)
+        transformRangeOTDoc edit (mkRC "aa\naa\naa\naa") (Range (pos 0 1) (pos 2 1)) `shouldBe` Range (pos' 0 2 0) (pos' 0 2 1)
+        transformRangeOTDoc edit (mkRC "aa\naa\naa\naa") (Range (pos 0 1) (pos 1 1)) `shouldBe` Range (pos' 0 2 0) (pos' 0 2 0)
+
+      describe "insert line elem" $ do
+        let edit = [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit . InsertItem 1 . head $ mkLE "bcd"]]
+        it "1" $ transformRangeOTDoc edit (mkRC "AAaa\na") (Range (pos 0 1) (pos 0 3)) `shouldBe` Range (pos 0 1) (pos 0 6)
+        it "2" $ transformRangeOTDoc edit (mkRC "AAaa\na") (Range (pos 0 2) (pos 0 3)) `shouldBe` Range (pos 0 2{-FIXME: 5-}) (pos 0 6)
+        it "3" $ transformRangeOTDoc edit (mkRC "AAaa\na") (Range (pos 0 3) (pos 0 3)) `shouldBe` Range (pos 0 6) (pos 0 6)
+        it "4" $ transformRangeOTDoc edit (mkRC "AAaa\na") (Range (pos 0 1) (pos 0 2)) `shouldBe` Range (pos 0 1) (pos 0 2)
+        it "5" $ transformRangeOTDoc edit (mkRC "AAaa\na") (Range (pos 0 1) (pos 0 1)) `shouldBe` Range (pos 0 1) (pos 0 1)
+
+      let mkTests as = sequence_ . zipWith3 (\i a -> it (show i) . shouldBe a) [1::Int ..] as
+
+      describe "delete line elems" $ do
+        let edit = [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit $ DeleteRange 1 1]]
+            doc = mkRC "AabB"
+        mkTests (map (transformRangeOTDoc edit doc) [Range (pos 0 x) (pos 0 y) | x <- [0..4], y <- [x..4]])
+          [ Range (pos 0 0) (pos 0 0)
+          , Range (pos 0 0) (pos 0 1)
+          , Range (pos 0 0) (pos 0 1)
+          , Range (pos 0 0) (pos 0 1)
+          , Range (pos 0 0) (pos 0 2)
+
+          , Range (pos 0 1) (pos 0 1)
+          , Range (pos 0 1) (pos 0 1)
+          , Range (pos 0 1) (pos 0 1)
+          , Range (pos 0 1) (pos 0 2)
+
+          , Range (pos 0 1) (pos 0 1)
+          , Range (pos 0 1) (pos 0 1)
+          , Range (pos 0 1) (pos 0 2)
+
+          , Range (pos 0 1) (pos 0 1)
+          , Range (pos 0 1) (pos 0 2)
+
+          , Range (pos 0 2) (pos 0 2)
+          ]
+
+      describe "insert characters" $ do
+        let edit = [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit . EditItem 1 $ editSecond
+                        [ NEText . EText $ InsertItem 1 'c'
+                        , NEText . EText $ InsertItem 2 'd']]]
+            doc = mkRC "AabB"
+        mkTests (map (transformRangeOTDoc edit doc) [Range (pos 0 x) (pos 0 y) | x <- [1..3], y <- [x..3]])
+          [ Range (pos 0 1) (pos 0 1)
+          , Range (pos 0 1) (pos 0 4{-FIXME: 2-})
+          , Range (pos 0 1) (pos 0 5)
+
+          , Range (pos 0 4) (pos 0 4) -- alternative solution: Range (pos 0 2) (pos 0 2)
+          , Range (pos 0 4) (pos 0 5)
+
+          , Range (pos 0 5) (pos 0 5)
+          ]
+
+      describe "delete characters" $ do
+        let edit = [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit . EditItem 1 $ editSecond
+                        [ NEText . EText $ DeleteRange 1 1 ]]]
+            doc = mkRC "AabcB"
+        mkTests (map (transformRangeOTDoc edit doc) [Range (pos 0 x) (pos 0 y) | x <- [1..4], y <- [x..4]])
+          [ Range (pos 0 1) (pos 0 1)
+          , Range (pos 0 1) (pos 0 2)
+          , Range (pos 0 1) (pos 0 2)
+          , Range (pos 0 1) (pos 0 3)
+
+          , Range (pos 0 2) (pos 0 2)
+          , Range (pos 0 2) (pos 0 2)
+          , Range (pos 0 2) (pos 0 3)
+
+          , Range (pos 0 2) (pos 0 2)
+          , Range (pos 0 2) (pos 0 3)
+
+          , Range (pos 0 3) (pos 0 3)
+          ]
+
+      describe "edit characters" $ do
+        let edit = [ENonEmpty . EditItem 0 $ editSecond [SegmentListEdit . EditItem 1 $ editSecond
+                        [ NEText . EText $ EditItem 1 [EChar $ EAtom 'x'] ]]]
+            doc = mkRC "AabcA"
+        mkTests (map (transformRangeOTDoc edit doc) [Range (pos 0 x) (pos 0 y) | x <- [1..4], y <- [x..4]])
+          [ Range (pos 0 1) (pos 0 1)
+          , Range (pos 0 1) (pos 0 2)
+          , Range (pos 0 1) (pos 0 3)
+          , Range (pos 0 1) (pos 0 4)
+
+          , Range (pos 0 2) (pos 0 2)
+          , Range (pos 0 2) (pos 0 3)
+          , Range (pos 0 2) (pos 0 4)
+
+          , Range (pos 0 3) (pos 0 3)
+          , Range (pos 0 3) (pos 0 4)
+
+          , Range (pos 0 4) (pos 0 4)
+          ]

@@ -41,7 +41,6 @@ import Refine.Common.Types.Contribution
 import Refine.Common.Types.Comment
 import Refine.Common.VDoc.OT (docRanges, docEditRanges)
 
-
 -- * functions
 
 emptyRawContent :: RawContent
@@ -74,7 +73,7 @@ data BlockBoundary = BlockBoundaryIsNewline | BlockBoundaryIsEmpty
 
 selectedBlocks :: Range Position -> [Block EntityKey BlockKey] -> [Block EntityKey BlockKey]
 selectedBlocks (Range a b)
-    = drop (positionBlockIndex a) . take (positionBlockIndex b + 1)
+    = drop (a ^. rowIndex) . take ((b ^. rowIndex) + 1)
 
 maximumRange :: RawContent -> Range Position
 maximumRange (RawContent bs _) = RangeInner (Position sb so) (Position eb eo)
@@ -102,7 +101,17 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base edits notes discussions) =
   addMarksToRawContent marks rawContent
   where
     rawContent = rawContentFromVDocVersion $ base ^. editVDocVersion
-    convertHack l (k, v) = (contribID k, v ^. l)
+    convertHack l (k, v) = (contribID k, extendRange $ v ^. l)
+
+    extendRange r
+      | x == y    = fromStyleRange rawContent
+                  . uncurry Range . (next *** next) $ surroundingStylePositions rawContent x
+      | otherwise = r
+      where
+        Range x y = toStylePosition rawContent <$> r
+
+        next (_: z: _) = z
+        next zs = head zs
 
     marks :: [(ContributionID, Range Position)]
     marks = [ (contribID k, s)
@@ -110,7 +119,7 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base edits notes discussions) =
             , (diff, b) <- e ^. editSource . unEditSource
             , b == base ^. editID
             , s <- unRanges $ docEditRanges diff rawContent]
-         <> (convertHack noteRange                               <$> Map.toList notes)
+         <> (convertHack noteRange       <$> Map.toList notes)
          <> (convertHack discussionRange <$> Map.toList discussions)
 
 rawContentFromVDocVersion :: VDocVersion -> RawContent

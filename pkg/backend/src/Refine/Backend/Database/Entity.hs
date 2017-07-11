@@ -380,6 +380,16 @@ createDiscussion pid disc = do
   void $ saveStatement (mid ^. miID) sstatement
   getDiscussion $ mid ^. miID
 
+rebaseDiscussion :: ID Edit -> ID Discussion -> (Range Position -> Range Position) -> DB Discussion
+rebaseDiscussion eid did tr = do
+  d <- getEntityRep did
+  let sdiscussion = S.discussionElim (\pblc (RangePosition r) -> S.Discussion pblc (RangePosition $ tr r)) d
+  mid <- createMetaID sdiscussion
+  addConnection S.PD eid (mid ^. miID)
+  sts <- statementsOfDiscussion did
+  forM_ sts $ \sid -> addConnection S.DS (mid ^. miID) sid
+  getDiscussion $ mid ^. miID
+
 getDiscussion :: ID Discussion -> DB Discussion
 getDiscussion did = do
   (mid, d) <- getMetaEntity (,) did

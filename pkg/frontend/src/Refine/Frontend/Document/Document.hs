@@ -38,12 +38,10 @@ import           Language.Css.Build hiding (s)
 import           Language.Css.Syntax hiding (Value)
 
 import           Refine.Common.Types
-import           Refine.Common.VDoc.OT (showEditAsRawContent, hideUnchangedParts)
-import           Refine.Common.VDoc.Draft (deleteMarksFromRawContent)
+import           Refine.Common.VDoc.OT (showEditAsRawContentWithMarks, hideUnchangedParts)
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
-import           Refine.Frontend.Document.Store
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
@@ -93,9 +91,8 @@ documentRender() props = liftViewToStateHandler $ do
 
           -- FIXME: show the relevant diff
           diffit (EditSource []) = Nothing
-          diffit (EditSource ((otedit, _): _)) = showEditAsRawContent otedit
-                                       . deleteMarksFromRawContent  -- (edit inline styles do not work in combination with marks.)
-                                     <$> (dstate ^? documentStateContent)
+          diffit (EditSource ((otedit, _): _))
+            = showEditAsRawContentWithMarks otedit <$> (dstate ^? documentStateContent)
 
   article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
            , "style" @@= [zindex ZIxArticle, decl "overflow" (Ident "visible")]
@@ -123,10 +120,8 @@ documentRender() props = liftViewToStateHandler $ do
       ] mempty
 
 documentComponentDidMountOrUpdate :: HasCallStack => Outdated.LPropsAndState DocumentProps () -> IO ()
-documentComponentDidMountOrUpdate getPropsAndState = do
-  props <- Outdated.lGetProps getPropsAndState
-  ()    <- Outdated.lGetState getPropsAndState  -- (just to show there's nothing there)
-  dispatchAndExec . ContributionAction =<< setAllVerticalSpanBounds (props ^. dpDocumentState)
+documentComponentDidMountOrUpdate _getPropsAndState = do
+  dispatchAndExec . ContributionAction $ RequestSetAllVerticalSpanBounds
 
 document_ :: HasCallStack => DocumentProps -> ReactElementM eventHandler ()
 document_ props = Outdated.view document props mempty

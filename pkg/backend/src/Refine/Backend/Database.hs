@@ -132,6 +132,7 @@ instance Database DB where
 
   -- * Discussion
   createDiscussion       = Entity.createDiscussion
+  rebaseDiscussion       = Entity.rebaseDiscussion
   getDiscussion          = Entity.getDiscussion
   statementsOfDiscussion = Entity.statementsOfDiscussion
   discussionOfStatement  = Entity.discussionOfStatement
