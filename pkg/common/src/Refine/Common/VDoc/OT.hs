@@ -92,7 +92,7 @@ import           Refine.Common.Types.Core hiding (Edit)
 -- The elements of the sequence should be measurable.
 -- The whole sequence should be measurable too and it should have the same type of measure as its elements.
 class (Monoid a, Measured (SeqElem a), Measured a, Measure a ~ Measure (SeqElem a))
-   => Sequence a where
+   => HasSplit a where
 
   -- | element type
   type SeqElem a
@@ -114,27 +114,27 @@ class (Monoid a, Measured (SeqElem a), Measured a, Measure a ~ Measure (SeqElem 
   viewr :: a -> Maybe (a, SeqElem a)
 
 -- | empty container
-pattern Empty :: Sequence a => a
+pattern Empty :: HasSplit a => a
 pattern Empty <- (viewl -> Nothing)
   where Empty = mempty
 
 infixr 7 :<
 
 -- | pattern synonym for viewl
-pattern (:<) :: Sequence a => SeqElem a -> a -> a
+pattern (:<) :: HasSplit a => SeqElem a -> a -> a
 pattern a :< as <- (viewl -> Just (a, as))
   where a :< as = singleton a <> as
 
 infixl 7 :>
 
 -- | pattern synonym for viewl
-pattern (:>) :: Sequence a => a -> SeqElem a -> a
+pattern (:>) :: HasSplit a => a -> SeqElem a -> a
 pattern as :> a <- (viewr -> Just (as, a))
   where as :> a = as <> singleton a
 
 
 -- | FingerTree is splittable sequence
-instance Measured a => Sequence (FingerTree a) where
+instance Measured a => HasSplit (FingerTree a) where
 
   type SeqElem (FingerTree a) = a
 
@@ -170,7 +170,7 @@ data STAccess b where
   STAccessByIndex :: STAccess Int
 
 -- 'ST' is a splittable sequence of 'Char's.
-instance Sequence ST where
+instance HasSplit ST where
 
   type SeqElem ST = Char
 
@@ -196,20 +196,20 @@ instance Sequence ST where
 -- empty, return empty list; if not, return at least the first 'splits' is run on its tail.
 --
 -- all elements in the result list's tail are non-empty
-splits :: (Sequence a, Ord b) => Access a b -> b -> a -> [a]
+splits :: (HasSplit a, Ord b) => Access a b -> b -> a -> [a]
 splits f b (split f b -> (d1, d2)) = d1: case d2 of
   Empty -> []
   x :< xs -> splits f b xs & _head %~ (x :<)
 
 -- | List of measures for all splits (accumulates).
-splitMeasures :: (Sequence a, Ord b) => Access a b -> b -> a -> [Measure a]
+splitMeasures :: (HasSplit a, Ord b) => Access a b -> b -> a -> [Measure a]
 splitMeasures f b = scanl1 (<>) . map measure . splits f b
 
 -- | Split a 'FingerTree' up into the given points
 --
 -- Example for @b@: 'Position'.  This function could also be used to e.g. split at all mark
 -- beginnings.
-splitsAt :: (Sequence a, Ord b) => Access a b -> [b] -> a -> [a]
+splitsAt :: (HasSplit a, Ord b) => Access a b -> [b] -> a -> [a]
 splitsAt f bs_ = reverse . g (reverse bs_)
   where
   g [] d = [d]
@@ -218,7 +218,7 @@ splitsAt f bs_ = reverse . g (reverse bs_)
 -- computes a function of the measure at a given split point
 --
 -- useful for conversion between different kind of positions
-reposition :: (Sequence a, Ord p1) => Access a p1 -> Getter (Measure a) p2 -> a -> p1 -> p2
+reposition :: (HasSplit a, Ord p1) => Access a p1 -> Getter (Measure a) p2 -> a -> p1 -> p2
 reposition f1 f2 t p1 = measure (fst $ split f1 p1 t) ^. f2
 
 
@@ -324,7 +324,7 @@ data SeqEditAccess a b where
   SeqEditAccessNew :: (Access a b ~ RelativeAccess a b) => LensAccess a b -> SeqEditAccess a b
 
 -- | A sequence of edits is a sequence if its elements are sequences themselves.
-instance (Sequence a) => Sequence (SeqEdit a) where
+instance (HasSplit a) => HasSplit (SeqEdit a) where
 
   type SeqElem (SeqEdit a) = SimpleEdit (SeqElem a)
 
@@ -362,12 +362,12 @@ instance (Sequence a) => Sequence (SeqEdit a) where
     as :> SEInsert (bs :> b) -> Just (SeqEdit $ joinToRight SEInsert bs as, SEInsert b)
 
 -- | helper function
-joinToLeft :: (Sequence m, Sequence t) => (t -> SeqElem m) -> t -> m -> m
+joinToLeft :: (HasSplit m, HasSplit t) => (t -> SeqElem m) -> t -> m -> m
 joinToLeft _ Empty b = b
 joinToLeft f a b = f a :< b
 
 -- | helper function
-joinToRight :: (Sequence m, Sequence t) => (t -> SeqElem m) -> t -> m -> m
+joinToRight :: (HasSplit m, HasSplit t) => (t -> SeqElem m) -> t -> m -> m
 joinToRight _ Empty b = b
 joinToRight f a b = b :> f a
 
@@ -413,12 +413,12 @@ fullEdit = foldMap (SeqEdit . singleton . f) . toList . unSeqEdit
       SEInsert a -> SEInsert a
 
 -- transform old positions to new ones
-transformOldToNew :: (Sequence a, Ord b, Access a b ~ RelativeAccess a b)
+transformOldToNew :: (HasSplit a, Ord b, Access a b ~ RelativeAccess a b)
   => LensAccess a b -> SeqEdit a -> b -> b
 transformOldToNew f = reposition (SeqEditAccessOld f) (to snd . cloneLens f)
 
 -- transform new positions to old ones
-transformNewToOld :: (Sequence a, Ord b, Access a b ~ RelativeAccess a b)
+transformNewToOld :: (HasSplit a, Ord b, Access a b ~ RelativeAccess a b)
   => LensAccess a b -> SeqEdit a -> b -> b
 transformNewToOld f = reposition (SeqEditAccessNew f) (to fst . cloneLens f)
 
@@ -526,7 +526,7 @@ instance Monoid NewDoc where
   NewDoc x `mappend` NewDoc y = NewDoc $ x <> y
 
 -- NewDoc is a splittable sequence of DocElems
-instance Sequence NewDoc where
+instance HasSplit NewDoc where
 
   type SeqElem NewDoc = DocElem
 
