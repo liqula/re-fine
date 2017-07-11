@@ -128,7 +128,7 @@ data GlobalAction =
   | CreateUser CreateUser
   | Login Login
   | Logout
-  | ChangeCurrentUser CurrentUser
+  | SetCurrentUser CurrentUser
 
     -- testing & dev
   | AddDemoDocument

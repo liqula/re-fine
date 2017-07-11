@@ -8,5 +8,5 @@ import Refine.Frontend.Store.Types (GlobalAction(..))
 
 
 loginStateUpdate :: HasCallStack => GlobalAction -> LoginState -> LoginState
-loginStateUpdate (ChangeCurrentUser user) = lsCurrentUser .~ user
-loginStateUpdate _                        = id
+loginStateUpdate (SetCurrentUser user) = lsCurrentUser .~ user
+loginStateUpdate _                     = id

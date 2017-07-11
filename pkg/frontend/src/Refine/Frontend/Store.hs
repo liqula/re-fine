@@ -311,7 +311,7 @@ emitBackendCallsFor act st = case act of
 
         (Right username) -> do
           dispatchManyM
-            [ ChangeCurrentUser $ UserLoggedIn username
+            [ SetCurrentUser $ UserLoggedIn username
             , MainMenuAction MainMenuActionClose
             ]
 
@@ -320,7 +320,7 @@ emitBackendCallsFor act st = case act of
         (Left rsp) -> ajaxFail rsp Nothing
         (Right ()) -> do
           dispatchManyM
-            [ ChangeCurrentUser UserLoggedOut
+            [ SetCurrentUser UserLoggedOut
             , MainMenuAction MainMenuActionClose
             ]
 
