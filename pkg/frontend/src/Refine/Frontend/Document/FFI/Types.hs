@@ -26,7 +26,6 @@ module Refine.Frontend.Document.FFI.Types
   ( EditorState(..)
   , ContentState(..)
   , mkEditorState
-  , updateEditorState
   , LeafSelectorSide(..)
   , renderLeafSelectorSide
   ) where
@@ -36,8 +35,6 @@ import Refine.Frontend.Prelude
 import           GHC.Generics (Generic)
 import           GHCJS.Marshal (FromJSVal, ToJSVal)
 import           GHCJS.Types (JSVal)
-import           React.Flux (Event, evtHandlerArg)
-import           React.Flux.Internal (HandlerArg(HandlerArg))
 
 import           Refine.Frontend.Util ((===))
 import           Refine.Prelude.Aeson (NoJSONRep(NoJSONRep))
@@ -88,9 +85,6 @@ makeRefineTypes [''EditorState, ''ContentState]
 
 mkEditorState :: HasCallStack => JSVal -> EditorState
 mkEditorState = EditorState . NoJSONRep
-
-updateEditorState :: HasCallStack => Event -> EditorState
-updateEditorState (evtHandlerArg -> HandlerArg evt) = EditorState $ NoJSONRep evt
 
 
 data LeafSelectorSide = LeafSelectorTop | LeafSelectorBottom

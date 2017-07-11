@@ -36,6 +36,7 @@ import qualified Data.List.NonEmpty as NEL
 import qualified React.Flux.Outdated as Outdated
 import           Language.Css.Build hiding (s)
 import           Language.Css.Syntax hiding (Value)
+import           React.Flux.Internal (HandlerArg(HandlerArg))
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.OT (showEditAsRawContentWithMarks, hideUnchangedParts)
@@ -104,20 +105,40 @@ documentRender() props = liftViewToStateHandler $ do
       [ "editorState" &= editorState
       , "customStyleMap" &= documentStyleMap
       , "readOnly" &= has _DocumentStateView dstate
-      , onChange $ \evt ->
-          let dstate' :: GlobalDocumentState
-              dstate' = globalDocumentState (dstate & documentStateVal .~ updateEditorState evt)
-          in simpleHandler $ dispatchMany [DocumentAction (DocumentUpdate dstate'), ContributionAction RequestSetAllVerticalSpanBounds]
-          -- TODO: #371
-          --
-          -- when clicking on a button in the edit toolbar and this handler triggers, the button
-          -- click is not actioned.  if we leave the handler in and dispatch [], it's all good
-          -- (except that this event is missing).  does that mean that actions are sometimes
-          -- swallowed?
-          --
-          -- this can be reproduced may times in a row, by creating new selections.  i think that's
-          -- a new thing, didn't happen a while ago.
+      , onChange $ editorOnChange dstate
       ] mempty
+
+-- | FIXME: We are cheating here: the event we get from draft.js is really not a 'HandlerArg' that
+-- can be parsed into an 'Event', but an 'EditorState'.  So if we attempt to access 'Event' fields
+-- like 'evtType', we will get ugly error messages.  As long as we stick to the 'evtHandlerArg' part
+-- of the structure, things should be fine.
+--
+-- TODO: what do we use the EditorState in DocumentState for?  can we just toss it, and get a fresh
+-- one when we need one?  from where?  i suspect that may be both faster and more robust.
+--
+-- hum.  i tried to use @boring = ((==) `on` convertToRaw . getCurrentContent) (dstate
+-- ^. documentStateVal) estate'@ to decide whether to dispatch actions or not, but that caused the
+-- selection state in the editorstate to snap back to outdated selection states.  so that's not a
+-- good solution.
+--
+-- TODO: #371
+--
+-- when clicking on a button in the edit toolbar and this handler triggers, the button
+-- click is not actioned.  if we leave the handler in and dispatch [], it's all good
+-- (except that this event is missing).  does that mean that actions are sometimes
+-- swallowed?
+--
+-- this can be reproduced may times in a row, by creating new selections.  i think that's
+-- a new thing, didn't happen a while ago.
+editorOnChange :: DocumentState -> Event -> (ViewEventHandler, [EventModification])
+editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) = simpleHandler $ dispatchMany updateActions
+  where
+    updateActions =
+      [ DocumentAction . DocumentUpdate
+          . globalDocumentState $ dstate & documentStateVal .~ estate'
+      , ContributionAction RequestSetAllVerticalSpanBounds
+      ]
+
 
 documentComponentDidMountOrUpdate :: HasCallStack => Outdated.LPropsAndState DocumentProps () -> IO ()
 documentComponentDidMountOrUpdate _getPropsAndState = do

@@ -29,7 +29,6 @@ module Refine.Frontend.Document.FFI
     EditorState
   , ContentState
   , mkEditorState
-  , updateEditorState
 
     -- * https://draftjs.org/docs/api-reference-data-conversion.html
   , convertFromRaw
