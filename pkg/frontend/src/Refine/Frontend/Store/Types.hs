@@ -56,6 +56,7 @@ data GlobalState_ a = GlobalState
   , _gsScreenState                :: ScreenState
   , _gsMainMenuState              :: MainMenuState
   , _gsLoginState                 :: LoginState
+  , _gsDispatchAfterLogin         :: [GlobalAction]
   , _gsToolbarSticky              :: Bool
   , _gsTranslations               :: Trans
   , _gsDevState                   :: Maybe DevState  -- ^ for development & testing, see 'devStateUpdate'.
@@ -82,6 +83,7 @@ emptyGlobalState = GlobalState
   , _gsScreenState                = emptyScreenState
   , _gsMainMenuState              = emptyMainMenuState
   , _gsLoginState                 = emptyLoginState
+  , _gsDispatchAfterLogin         = mempty
   , _gsToolbarSticky              = False
   , _gsTranslations               = emptyTrans
   , _gsDevState                   = Nothing
@@ -128,6 +130,8 @@ data GlobalAction =
   | CreateUser CreateUser
   | Login Login
   | Logout
+  | LoginGuardStash [GlobalAction]  -- ^ if logged in, dispatch actions directly.  otherwise, login first.
+  | LoginGuardPop  -- ^ dispatched this to trigger dispatch of the stashed actions after login.
   | SetCurrentUser CurrentUser
 
     -- testing & dev

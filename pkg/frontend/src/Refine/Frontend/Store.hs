@@ -121,6 +121,16 @@ transformGlobalState = transf
 
         HeaderAction ScrollToPageTop -> liftIO js_scrollToPageTop
 
+        LoginGuardStash actions -> do
+          case st ^. gsLoginState . lsCurrentUser of
+            UserLoggedOut  -> dispatchAndExec . MainMenuAction . MainMenuActionOpen . MainMenuLogin $ MainMenuSubTabLogin
+            UserLoggedIn _ -> dispatchAndExecMany actions
+
+        LoginGuardPop -> do
+          case st ^. gsLoginState . lsCurrentUser of
+            UserLoggedOut  -> error "LoginGuardPop before logged in!"
+            UserLoggedIn _ -> dispatchAndExecMany (st ^. gsDispatchAfterLogin)
+
         ShowNotImplementedYet -> do
             liftIO $ windowAlertST "not implemented yet."
 
@@ -139,6 +149,7 @@ transformGlobalState = transf
               & gsDocumentState       %~ documentStateUpdate act st st'
               & gsScreenState         %~ maybe id screenStateUpdate (act ^? _ScreenAction)
               & gsLoginState          %~ loginStateUpdate act
+              & gsDispatchAfterLogin  %~ dispatchAfterLoginUpdate act (st ^. gsLoginState)
               & gsMainMenuState       %~ mainMenuUpdate act
               & gsToolbarSticky       %~ toolbarStickyUpdate act
               & gsTranslations        %~ translationsUpdate act
@@ -217,6 +228,10 @@ devStateUpdate _ Nothing = Nothing
 devStateUpdate act (Just devstate) = Just $ upd act devstate
   where
     upd a (DevState as) = DevState $ a : as
+
+dispatchAfterLoginUpdate :: HasCallStack => GlobalAction -> LoginState -> [GlobalAction] -> [GlobalAction]
+dispatchAfterLoginUpdate (LoginGuardStash as) (LoginState UserLoggedOut) = (<> as)
+dispatchAfterLoginUpdate _ _ = id
 
 
 -- * ajax
@@ -313,6 +328,7 @@ emitBackendCallsFor act st = case act of
           dispatchManyM
             [ SetCurrentUser $ UserLoggedIn username
             , MainMenuAction MainMenuActionClose
+            , LoginGuardPop
             ]
 
     Logout -> do
