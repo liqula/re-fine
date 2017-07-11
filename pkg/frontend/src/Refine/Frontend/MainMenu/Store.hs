@@ -17,10 +17,10 @@ mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) st = st
   & mmState .~ MainMenuOpen tab
 
 mainMenuUpdate (MainMenuAction (MainMenuActionLoginError e)) st = st
-  & mmErrors . mmeLogin .~ Just e
+  & mmErrors . mmeLogin .~ (Just . cs . show $ e)
 
 mainMenuUpdate (MainMenuAction (MainMenuActionRegistrationError e)) st = st
-  & mmErrors . mmeRegistration .~ Just (cs $ show e)
+  & mmErrors . mmeRegistration .~ (Just . cs . show $ e)
 
 mainMenuUpdate (MainMenuAction MainMenuActionClearErrors) st = st
   & mmErrors . mmeLogin        .~ Nothing

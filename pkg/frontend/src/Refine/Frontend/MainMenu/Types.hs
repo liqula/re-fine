@@ -9,22 +9,21 @@ import Refine.Frontend.Prelude
 import GHC.Generics (Generic)
 import React.Flux (UnoverlapAllEq)
 
-import Refine.Common.Rest (ApiErrorCreateUser)
-import Refine.Common.Types.Prelude (Username)
+import Refine.Common.Rest (ApiError)
 import Refine.Frontend.Login.Types
 
 
 data MainMenuAction
   = MainMenuActionClose
   | MainMenuActionOpen MainMenuTab
-  | MainMenuActionLoginError        Username
-  | MainMenuActionRegistrationError ApiErrorCreateUser
+  | MainMenuActionLoginError ApiError
+  | MainMenuActionRegistrationError ApiError
   | MainMenuActionClearErrors
   deriving (Eq, Show, Generic)
 
 data MainMenuErrors = MainMenuErrors
-  { _mmeLogin        :: FormError
-  , _mmeRegistration :: FormError
+  { _mmeLogin        :: Maybe ST
+  , _mmeRegistration :: Maybe ST
   }
   deriving (Eq, Show, Generic)
 

@@ -294,8 +294,7 @@ emitBackendCallsFor act st = case act of
     CreateUser createUserData -> do
       createUser createUserData $ \case
         (Left rsp) -> ajaxFail rsp . Just $ \case
-          ApiUserCreationError u -> [MainMenuAction $ MainMenuActionRegistrationError u]
-          _                      -> []
+          err -> [MainMenuAction $ MainMenuActionRegistrationError err]
 
         (Right _user) -> do
           dispatchManyM
@@ -306,8 +305,7 @@ emitBackendCallsFor act st = case act of
     Login loginData -> do
       login loginData $ \case
         (Left rsp) -> ajaxFail rsp . Just $ \case
-          ApiUserNotFound e -> [MainMenuAction $ MainMenuActionLoginError e]
-          _                 -> []
+          err -> [MainMenuAction $ MainMenuActionLoginError err]
 
         (Right username) -> do
           dispatchManyM
