@@ -60,8 +60,8 @@ quickCreate_ = view_ quickCreate "quickCreate_"
 
 instance IconButtonPropsOnClick QuickCreateSide where
   runIconButtonPropsOnClick _ _ = dispatch . \case
-    QuickCreateComment -> ContributionAction ShowCommentEditor
-    QuickCreateEdit    -> HeaderAction StartEdit
+    QuickCreateComment -> LoginGuardStash [ContributionAction ShowCommentEditor]
+    QuickCreateEdit    -> LoginGuardStash [HeaderAction StartEdit]
   defaultOnClick = QuickCreateComment
 
 
