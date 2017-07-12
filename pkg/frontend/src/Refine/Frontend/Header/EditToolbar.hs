@@ -53,7 +53,7 @@ mkEditToolbarProps es
 wipeDocumentState :: DocumentState -> WipedDocumentState
 wipeDocumentState = \case
   DocumentStateView{}                 -> WipedDocumentStateView
-  DocumentStateDiff _ edit collapsed -> WipedDocumentStateDiff edit collapsed
+  DocumentStateDiff edit collapsed -> WipedDocumentStateDiff edit collapsed
   DocumentStateEdit _               -> WipedDocumentStateEdit undefined -- hm.... $ mkEditToolbarProps es
 
 editToolbar_ :: HasCallStack => EditToolbarProps -> ReactElementM eventHandler ()

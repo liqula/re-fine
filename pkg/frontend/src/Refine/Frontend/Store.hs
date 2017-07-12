@@ -256,8 +256,9 @@ emitBackendCallsFor act st = case act of
     ContributionAction (SubmitComment (CommentInfo text kind)) -> do
       let headEdit = fromMaybe (error "emitBackendCallsFor.SubmitComment")
                    $ st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit
-          range    = fromMaybe (minimumRange (fromMaybe (error "perhaps we should make documentStateContent a proper lens?") $
-                                              st ^? to getDocumentState . documentStateContent))
+          range    = fromMaybe -- (minimumRange (fromMaybe (error "perhaps we should make documentStateContent a proper lens?") $
+                               --                st ^? to getDocumentState . documentStateContent))
+                               undefined  -- we can use gsVDoc here *iff* the block keys do not get changed by draft.js unexpectedly.
                    $ st ^? gsCurrentSelection . _Just . C.selectionRange
           handle a = dispatchManyM [ a
                                    , ContributionAction RequestSetAllVerticalSpanBounds
@@ -422,7 +423,7 @@ getRangeAction :: (HasCallStack, MonadIO m) => DocumentState -> m (Maybe Contrib
 getRangeAction dstate = assert (has _DocumentStateView dstate) $ do
   esel :: Either String C.SelectionState <- runExceptT getDraftSelectionStateViaBrowser
   let rc :: C.RawContent
-      Just rc = dstate ^? documentStateContent
+      Just rc = undefined  -- us gsVDoc (block keys, see @SubmitComment@ handler above)  -- dstate ^? documentStateContent
 
   case esel of
     Left err -> do
