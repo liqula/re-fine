@@ -23,7 +23,9 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
--- | for more info, see also https://github.com/nikgraf/awesome-draft-js
+-- | some random draft.js resources: https://github.com/nikgraf/awesome-draft-js,
+-- https://github.com/draft-js-plugins/draft-js-plugins/blob/master/FAQ.md,
+-- https://cannibalcoder.com/2016/12/02/draft-js-pieces/
 module Refine.Frontend.Document.FFI
   ( -- * types
     EditorState
