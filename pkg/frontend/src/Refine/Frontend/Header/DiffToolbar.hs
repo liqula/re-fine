@@ -55,12 +55,14 @@ diffToolbar_ props = do
           count v = cs . show . fromMaybe 0 $ Map.lookup v vs
           vs = props ^. diffToolbarPropsVotes
 
-  ibutton_ $ emptyIbuttonProps "Vote_positive" [ContributionAction $ ToggleVoteOnContribution (props ^. diffToolbarPropsEditID) Yeay]
+      voteAction v = LoginGuardStash [ContributionAction $ ToggleVoteOnContribution (props ^. diffToolbarPropsEditID) v]
+
+  ibutton_ $ emptyIbuttonProps "Vote_positive" [voteAction Yeay]
     & ibListKey .~ "1"
     & ibLabel .~ voteButtonLabel Yeay
     & ibSize .~ XXLarge
 
-  ibutton_ $ emptyIbuttonProps "Vote_negative" [ContributionAction $ ToggleVoteOnContribution (props ^. diffToolbarPropsEditID) Nay]
+  ibutton_ $ emptyIbuttonProps "Vote_negative" [voteAction Nay]
     & ibListKey .~ "2"
     & ibLabel .~ voteButtonLabel Nay
     & ibSize .~ XXLarge

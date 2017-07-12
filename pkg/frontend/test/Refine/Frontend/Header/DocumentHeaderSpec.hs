@@ -41,8 +41,6 @@ spec = do
       lengthOfIO (find wrapper (StringSelector ".c-vdoc-header")) `shouldReturn` (1 :: Int)
       lengthOfIO (find wrapper (StringSelector "DocumentAbstract")) `shouldReturn` (1 :: Int)
       lengthOfIO (find wrapper (StringSelector "DocumentTitle")) `shouldReturn` (1 :: Int)
-      lengthOfIO (find wrapper (StringSelector "Phases")) `shouldReturn` (1 :: Int)
-
 
   describe "The documentTitle_ component" $ do
     it "renders the title" $ do
@@ -54,13 +52,3 @@ spec = do
     it "renders the abstract" $ do
       wrapper <- shallow $ documentAbstract_ (Abstract "The informative document abstract.")
       text wrapper `shouldReturn` "The informative document abstract."
-
-
-  describe "The phases_ component" $ do
-    it "renders its phases" $ do
-      wrapper <- shallow phases_
-      lengthOfIO (find wrapper (StringSelector ".c-vdoc-header__phase")) `shouldReturn` (3 :: Int)
-
-    it "has only one active phase" $ do
-      wrapper <- shallow phases_
-      lengthOfIO (find wrapper (StringSelector ".c-vdoc-header__phase--active")) `shouldReturn` (1 :: Int)

@@ -48,7 +48,7 @@ documentHeader = mkView "DocumentHeader" $ \props ->
           div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
               documentTitle_ $ _headerTitle props
               documentAbstract_ $ _headerAbstract props
-              phases_
+              -- phases_
 
 documentHeader_ :: HasCallStack => DocumentHeaderProps -> ReactElementM eventHandler ()
 documentHeader_ = view_ documentHeader "DocumentHeader_"
@@ -75,6 +75,7 @@ documentAbstract_ :: HasCallStack => Abstract -> ReactElementM eventHandler ()
 documentAbstract_ = view_ documentAbstract "DocumentAbstract_"
 
 
+{-
 phases :: HasCallStack => View '[]
 phases = mkView "Phases" $ do
   div_ ["className" $= "c-vdoc-header__phases"] $ do
@@ -85,6 +86,7 @@ phases = mkView "Phases" $ do
 
 phases_ :: HasCallStack => ReactElementM eventHandler ()
 phases_ = view_ phases "Phases_"
+-}
 
 
 editDescToAbstract :: HasCallStack => CompositeVDoc -> ContributionID -> Abstract

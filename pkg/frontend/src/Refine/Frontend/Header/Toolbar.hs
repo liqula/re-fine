@@ -52,7 +52,7 @@ toolbar_ = do
     & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Comment", "dark") XXLarge
     & iconButtonPropsElementName  .~ "btn-add-annotation"  -- RENAME
     & iconButtonPropsLabel        .~ "new comment"
-    & iconButtonPropsOnClick      .~ [HeaderAction ToggleCommentToolbarExtension]
+    & iconButtonPropsOnClick      .~ [LoginGuardStash [HeaderAction ToggleCommentToolbarExtension]]
     & iconButtonPropsClickPropag  .~ False
 
   iconButton_ $ toolbarButton
@@ -60,7 +60,7 @@ toolbar_ = do
     & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXLarge
     & iconButtonPropsElementName  .~ "bt-add-modification"  -- RENAME: edit
     & iconButtonPropsLabel        .~ "new edit"
-    & iconButtonPropsOnClick      .~ [HeaderAction StartEdit]
+    & iconButtonPropsOnClick      .~ [LoginGuardStash [HeaderAction StartEdit]]
     & iconButtonPropsClickPropag  .~ False
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
