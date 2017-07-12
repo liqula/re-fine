@@ -40,6 +40,8 @@ import Refine.Frontend.Types
 import Refine.Frontend.Util
 
 
+-- | Keep track of *all* 'MarkID' values, which includes 'ContributionID's and the current selection
+-- ("highlighted mark").  (Is the latter used in "Contribution.QuickCreate"?  Not sure right now..)
 newtype AllVerticalSpanBounds = AllVerticalSpanBounds { _allVerticalSpanBounds :: Map.Map MarkID VerticalSpanBounds }
   deriving (Show, Eq, Generic, Monoid)
 
