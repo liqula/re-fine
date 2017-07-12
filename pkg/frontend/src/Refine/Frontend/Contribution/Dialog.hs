@@ -213,7 +213,7 @@ showNoteProps notes rs = case (maybeNote, maybeOffset) of
     maybeOffset = do
       nid <- maybeNoteID
       rs ^? gsContributionState . csAllVerticalSpanBounds . allVerticalSpanBounds
-          . at (ContribIDNote nid) . _Just . verticalSpanBoundsBottom
+          . at (MarkContribution (ContribIDNote nid) 0) . _Just . verticalSpanBoundsBottom
 
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
@@ -245,7 +245,7 @@ showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
     maybeOffset = do
       did <- maybeDiscussionID
       rs ^? gsContributionState . csAllVerticalSpanBounds . allVerticalSpanBounds
-          . at (ContribIDDiscussion did) . _Just . verticalSpanBoundsBottom
+          . at (MarkContribution (ContribIDDiscussion did) 0) . _Just . verticalSpanBoundsBottom
 
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 

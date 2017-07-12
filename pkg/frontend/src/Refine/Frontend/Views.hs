@@ -159,7 +159,7 @@ rightAside :: HasCallStack => View '[AsideProps]
 rightAside = mkView "RightAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-modifications gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: modifications => edit
     let protos = maybeStackProtoBubbles (props ^. asideBubblePositioning)
-                  (editToProtoBubble props <$> (props ^. asideEdits))
+                  (editToProtoBubbles props =<< (props ^. asideEdits))
     stackBubble BubbleRight props `mapM_` protos
 
     quickCreate_ $ QuickCreateProps QuickCreateEdit
@@ -174,28 +174,40 @@ rightAside_ = view_ rightAside "rightAside_"
 -- * helpers
 
 -- | All contributions need to be positioned.  The default is '0' (beginning of the article).
-lookupPosition :: HasCallStack => AsideProps -> ContributionID -> VerticalSpanBounds
+lookupPosition :: HasCallStack => AsideProps -> MarkID -> VerticalSpanBounds
 lookupPosition props cid = fromMaybe (VerticalSpanBounds (props ^. asideMinimumSpanYPos) constantBubbleHeight)
                          $ props ^? asideAllVerticalSpanBounds . allVerticalSpanBounds . at cid . _Just
 
-editToProtoBubble :: HasCallStack => AsideProps -> Edit -> ProtoBubble
-editToProtoBubble aprops e = ProtoBubble cid (lookupPosition aprops cid) (elemText (e ^. editDesc))
+lookupPositions :: HasCallStack => AsideProps -> ContributionID -> [(VerticalSpanBounds, Int)]
+lookupPositions props cid = case
+  [ (p, i)
+  | (MarkContribution cid' i, p) <- Map.toList $ props ^. asideAllVerticalSpanBounds . allVerticalSpanBounds
+  , cid' == cid
+  ] of
+    [] -> [(VerticalSpanBounds (props ^. asideMinimumSpanYPos) constantBubbleHeight, 0)]
+    ps -> ps
+
+editToProtoBubbles :: HasCallStack => AsideProps -> Edit -> [ProtoBubble]
+editToProtoBubbles aprops e
+  = [ ProtoBubble (cid, i) pos $ elemText (e ^. editDesc)
+    | (pos, i) <- lookupPositions aprops cid
+    ]
   where cid = contribID $ e ^. editID
 
 noteToProtoBubble :: HasCallStack => AsideProps -> Note -> ProtoBubble
-noteToProtoBubble aprops n = ProtoBubble cid (lookupPosition aprops cid) (elemText (n ^. noteText))
-  where cid = contribID $ n ^. noteID
+noteToProtoBubble aprops n = ProtoBubble cid (lookupPosition aprops $ uncurry MarkContribution cid) (elemText (n ^. noteText))
+  where cid = (contribID $ n ^. noteID, 0)
 
 discussionToProtoBubble :: HasCallStack => AsideProps -> Discussion -> ProtoBubble
-discussionToProtoBubble aprops d = ProtoBubble cid (lookupPosition aprops cid) child
+discussionToProtoBubble aprops d = ProtoBubble cid (lookupPosition aprops $ uncurry MarkContribution cid) child
   where
-    cid = contribID $ d ^. discussionID
+    cid = (contribID $ d ^. discussionID, 0)
     child = elemText (ST.rootLabel (d ^. discussionTree) ^. statementText)
 
 stackBubble :: HasCallStack => BubbleSide -> AsideProps -> StackOrNot ProtoBubble -> ReactElementM 'EventHandlerCode ()
 stackBubble bubbleSide aprops bstack = bubble_ props children
   where
-    bstack' :: StackOrNot ContributionID
+    bstack' :: StackOrNot (ContributionID, Int)
     bstack' = view protoBubbleContributionID <$> bstack
 
     props = BubbleProps
@@ -212,7 +224,7 @@ stackBubble bubbleSide aprops bstack = bubble_ props children
 
     highlight = not . Set.null $ Set.intersection shots hits
       where
-        hits  = Set.fromList (aprops ^. asideHighlighteds)
-        shots = Set.fromList (stackToList bstack')
+        hits  = Set.fromList [cid | MarkContribution cid _ <- aprops ^. asideHighlighteds]
+        shots = Set.fromList (fst <$> stackToList bstack')
 
     children = stackToHead bstack ^. protoBubbleChild

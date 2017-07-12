@@ -43,15 +43,11 @@ instance IsContribution Discussion where
 instance IsContribution Edit where
   contribID = ContribIDEdit
 
-instance IsContribution HighlightMark where
-  contribID _ = ContribIDHighlightMark
-
 contributionIDToKindST :: ContributionID -> ST
 contributionIDToKindST (ContribIDNote _)       = "note"
 contributionIDToKindST (ContribIDQuestion _)   = "question"
 contributionIDToKindST (ContribIDDiscussion _) = "discussion"
 contributionIDToKindST (ContribIDEdit _)       = "edit"
-contributionIDToKindST ContribIDHighlightMark  = "highlight"
 
 
 -- This can probably solved with lenses, but we don't know how...
@@ -60,7 +56,6 @@ getNoteID (ContribIDNote i)       = Just i
 getNoteID (ContribIDQuestion _)   = Nothing
 getNoteID (ContribIDDiscussion _) = Nothing
 getNoteID (ContribIDEdit _)       = Nothing
-getNoteID  ContribIDHighlightMark = Nothing
 
 -- This can probably solved with lenses, but we don't know how...
 getDiscussionID :: ContributionID -> Maybe (ID Discussion)
@@ -68,4 +63,3 @@ getDiscussionID (ContribIDNote _)       = Nothing
 getDiscussionID (ContribIDQuestion _)   = Nothing
 getDiscussionID (ContribIDDiscussion i) = Just i
 getDiscussionID (ContribIDEdit _)       = Nothing
-getDiscussionID  ContribIDHighlightMark = Nothing

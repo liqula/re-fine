@@ -99,7 +99,7 @@ spec = do
     describe "getLeafSelectors" $ do
       it "works (between RawContent and DOM)" . property $ \rc -> do
         pendingWith "#370"
-        let msels :: [(ContributionID, Range LeafSelector)]
+        let msels :: [(MarkID, Range LeafSelector)]
             msels = Map.toList (getLeafSelectors rc) >>= \(cid, rs) -> (,) cid <$> unRanges rs
 
             RawContentSeparateStyles _ stys = separateStyles rc
@@ -193,7 +193,7 @@ spec = do
 
             pending
             storeShouldEventuallyContain ((^?! gsDevState . _Just . devStateTrace) :: GlobalState -> [GlobalAction])
-              [ContributionAction (SetAllVerticalSpanBounds [(ContribIDNote (ID 77), VerticalSpanBounds 0 0)])]
+              [ContributionAction (SetAllVerticalSpanBounds [(MarkContribution (ContribIDNote $ ID 77) 0, VerticalSpanBounds 0 0)])]
 
       it "dispatches SetAllVerticalSpanBounds only once" test
 

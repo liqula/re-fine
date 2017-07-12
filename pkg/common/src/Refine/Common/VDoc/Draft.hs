@@ -101,7 +101,8 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base edits notes discussions) =
   addMarksToRawContent marks rawContent
   where
     rawContent = rawContentFromVDocVersion $ base ^. editVDocVersion
-    convertHack l (k, v) = (contribID k, extendRange $ v ^. l)
+
+    convertHack l (k, v) = (MarkContribution (contribID k) 0, extendRange $ v ^. l)
 
     extendRange r
       | x == y    = fromStyleRange rawContent
@@ -113,14 +114,21 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base edits notes discussions) =
         next (_: z: _) = z
         next zs = head zs
 
-    marks :: [(ContributionID, Range Position)]
-    marks = [ (contribID k, s)
+    marks :: [(MarkID, Range Position)]
+    marks = [ (MarkContribution (contribID k) i, s)
             | (k, e) <- Map.toList edits
             , (diff, b) <- e ^. editSource . unEditSource
             , b == base ^. editID
-            , s <- unRanges $ docEditRanges diff rawContent]
+            , let rs = unRanges $ docEditRanges diff rawContent
+            , (i, s) <- zip (numberRanges rs) rs
+            ]
          <> (convertHack noteRange       <$> Map.toList notes)
          <> (convertHack discussionRange <$> Map.toList discussions)
+
+    numberRanges :: [Range Position] -> [Int]
+    numberRanges
+      = concatMap (\(i, rs) -> replicate (length rs) i)
+      . zip [0..] . List.groupBy ((==) `on` (^. rangeBegin . rowIndex))
 
 rawContentFromVDocVersion :: VDocVersion -> RawContent
 rawContentFromVDocVersion (VDocVersion st) = case eitherDecode $ cs st of
@@ -136,20 +144,20 @@ rawContentToVDocVersion = VDocVersion . cs . encode
 deleteMarksFromRawContent :: RawContent -> RawContent
 deleteMarksFromRawContent = deleteMarksFromRawContentIf (const True)
 
-deleteMarksFromRawContentIf :: (ContributionID -> Bool) -> RawContent -> RawContent
+deleteMarksFromRawContentIf :: (MarkID -> Bool) -> RawContent -> RawContent
 deleteMarksFromRawContentIf p = rawContentBlocks %~ fmap (deleteMarksFromBlockIf p)
 
 deleteMarksFromBlock :: Block EntityKey BlockKey -> Block EntityKey BlockKey
 deleteMarksFromBlock = deleteMarksFromBlockIf (const True)
 
-deleteMarksFromBlockIf :: (ContributionID -> Bool) -> Block EntityKey BlockKey -> Block EntityKey BlockKey
+deleteMarksFromBlockIf :: (MarkID -> Bool) -> Block EntityKey BlockKey -> Block EntityKey BlockKey
 deleteMarksFromBlockIf p = blockStyles %~ List.filter (p' . snd)
   where
-    p' (Mark cid) = not (p cid)
-    p' _          = True
+    p' (Mark m) = not (p m)
+    p' _ = True
 
 -- FIXME: change type :: Map ContributionID (Ranges StylePosition) -> RawContent -> RawContent
-addMarksToRawContent :: [(ContributionID, Range Position)] -> RawContent -> RawContent
+addMarksToRawContent :: [(MarkID, Range Position)] -> RawContent -> RawContent
 addMarksToRawContent marks rc = joinStyles . RawContentSeparateStyles txts $ foldl' addStyle stys marks
   where
     RawContentSeparateStyles txts stys = separateStyles rc
@@ -161,18 +169,18 @@ addMarksToRawContent marks rc = joinStyles . RawContentSeparateStyles txts $ fol
         key = Right $ Mark cid
         r = rangesFromRange False $ toStylePosition rc <$> range
 
-getLeafSelectors :: RawContent -> Map ContributionID (Ranges LeafSelector)
+getLeafSelectors :: RawContent -> Map MarkID (Ranges LeafSelector)
 getLeafSelectors rc
     = fmap (RangesInner . map (styleRangeToLeafSelectors rc) . unRanges)
-    . mapFilterKey f
+    . mapMaybeKey f
     $ documentMarks (separateStyles rc)
   where
-    f (Right (Mark cid)) = Just cid
+    f (Right (Mark m)) = Just m
     f _ = Nothing
 
 -- the function should be strictly monotonic on Just values
-mapFilterKey :: (HasCallStack, Ord k, Ord l) => (k -> Maybe l) -> Map k a -> Map l a
-mapFilterKey f = Map.mapKeysMonotonic (fromJust . f) . Map.filterWithKey (\k _ -> isJust $ f k)
+mapMaybeKey :: (HasCallStack, Ord k, Ord l) => (k -> Maybe l) -> Map k a -> Map l a
+mapMaybeKey f = Map.mapKeysMonotonic (fromJust . f) . Map.filterWithKey (\k _ -> isJust $ f k)
 
 
 ---------------------- separate style representation

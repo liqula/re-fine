@@ -40,7 +40,9 @@ import Refine.Frontend.Types
 import Refine.Frontend.Util
 
 
-newtype AllVerticalSpanBounds = AllVerticalSpanBounds { _allVerticalSpanBounds :: Map.Map ContributionID VerticalSpanBounds }
+-- | Keep track of *all* 'MarkID' values, which includes 'ContributionID's and the current selection
+-- ("highlighted mark").  (Is the latter used in "Contribution.QuickCreate"?  Not sure right now..)
+newtype AllVerticalSpanBounds = AllVerticalSpanBounds { _allVerticalSpanBounds :: Map.Map MarkID VerticalSpanBounds }
   deriving (Show, Eq, Generic, Monoid)
 
 data VerticalSpanBounds = VerticalSpanBounds
@@ -77,9 +79,9 @@ data ContributionAction =
   | HideCommentEditor
   | SubmitComment (CommentInfo CommentKind)
   | RequestSetAllVerticalSpanBounds
-  | SetAllVerticalSpanBounds [(ContributionID, VerticalSpanBounds)]  -- ^ see 'AllVerticalSpanBounds'
+  | SetAllVerticalSpanBounds [(MarkID, VerticalSpanBounds)]  -- ^ see 'AllVerticalSpanBounds'
   | SetBubblePositioning BubblePositioning
-  | HighlightMarkAndBubble [ContributionID]
+  | HighlightMarkAndBubble [MarkID]
   | SetBubbleFilter (Maybe (Set ContributionID))
   | ToggleVoteOnContribution (ID Edit) Vote
   deriving (Show, Eq, Generic)
@@ -89,7 +91,7 @@ data ContributionState = ContributionState
   { _csCurrentSelectionWithPx   :: Maybe SelectionStateWithPx
   , _csDisplayedContributionID  :: Maybe ContributionID
   , _csActiveDialog             :: Maybe ActiveDialog
-  , _csHighlightedMarkAndBubble :: [ContributionID]
+  , _csHighlightedMarkAndBubble :: [MarkID]
   , _csQuickCreateShowState     :: QuickCreateShowState
   , _csAllVerticalSpanBounds    :: AllVerticalSpanBounds
   , _csBubblePositioning        :: BubblePositioning
@@ -162,13 +164,13 @@ stackToList (Stack (x :| xs)) = x : xs
 stackToList (NoStack x)       = [x]
 
 data ProtoBubble = ProtoBubble
-  { _protoBubbleContributionID     :: ContributionID
+  { _protoBubbleContributionID     :: (ContributionID, Int)
   , _protoBubbleVerticalSpanBounds :: VerticalSpanBounds
   , _protoBubbleChild              :: ReactElementM 'EventHandlerCode ()
   }
 
 data BubbleProps = BubbleProps
-  { _bubblePropsContributionIds   :: StackOrNot ContributionID
+  { _bubblePropsContributionIds   :: StackOrNot (ContributionID, Int)
   , _bubblePropsIconSide          :: BubbleSide
   , _bubblePropsVerticalOffset    :: Maybe OffsetFromDocumentTop  -- ^ 'Nothing' means 'BubblePositioningEvenlySpaced'
   , _bubblePropsHighlight         :: Bool

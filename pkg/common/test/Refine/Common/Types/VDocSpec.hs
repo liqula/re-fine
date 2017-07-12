@@ -72,10 +72,10 @@ rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
     build Proxy i cons sel = (ID $ fromIntegral i, cons (sel ^. selectionRange))
 
 mark1 :: Style
-mark1 = Mark (ContribIDEdit (ID 0))
+mark1 = Mark $ MarkContribution (ContribIDEdit (ID 0)) 0
 
 mark2 :: Style
-mark2 = Mark (ContribIDNote (ID 1))
+mark2 = Mark $ MarkContribution (ContribIDNote (ID 1)) 0
 
 
 spec :: Spec

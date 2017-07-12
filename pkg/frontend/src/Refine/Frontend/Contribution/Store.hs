@@ -75,7 +75,7 @@ activeDialogUpdate = \case
   DocumentAction DocumentCancelSave      -> const Nothing
   _ -> id
 
-highlightedMarkAndBubbleUpdate :: HasCallStack => ContributionAction -> [ContributionID] -> [ContributionID]
+highlightedMarkAndBubbleUpdate :: HasCallStack => ContributionAction -> [MarkID] -> [MarkID]
 highlightedMarkAndBubbleUpdate (HighlightMarkAndBubble cids) _    = cids
 highlightedMarkAndBubbleUpdate _                             cids = cids
 

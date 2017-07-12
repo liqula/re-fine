@@ -156,7 +156,7 @@ document_ :: HasCallStack => DocumentProps -> ReactElementM eventHandler ()
 document_ props = Outdated.view document props mempty
 
 
-mkDocumentStyleMap :: HasCallStack => [ContributionID] -> Maybe RawContent -> Value
+mkDocumentStyleMap :: HasCallStack => [MarkID] -> Maybe RawContent -> Value
 mkDocumentStyleMap _ Nothing = object []
 mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
   where
@@ -170,15 +170,20 @@ mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
     go s@StyleChanged = [styleToST s .:= declsToJSON (bg 255 255 0 0.3)]
     go _ = []
 
-    mouseover :: ContributionID -> [Decl]
-    mouseover cid = [decl "borderBottom" [expr $ Px 2, expr $ Ident "solid", expr Color.VDocRollover] | cid `elem` actives]
+    mouseover :: MarkID -> [Decl]
+    mouseover cid = [decl "borderBottom" [expr $ Px 2, expr $ Ident "solid", expr Color.VDocRollover] | any (cid `matches`) actives]
 
-    mkMarkSty :: ContributionID -> [Decl]
-    mkMarkSty (ContribIDNote _)       = bg   0 255 0 0.3
-    mkMarkSty (ContribIDQuestion _)   = bg   0 255 0 0.3
-    mkMarkSty (ContribIDDiscussion _) = bg   0 255 0 0.3
-    mkMarkSty (ContribIDEdit _)       = bg   0 255 0 0.3
-    mkMarkSty ContribIDHighlightMark  = bg 255 255 0 0.3
+    matches :: MarkID -> MarkID -> Bool
+    matches (MarkContribution c _) (MarkContribution c' _) = c == c'
+    matches m m' = m == m'
+
+    mkMarkSty :: MarkID -> [Decl]
+    mkMarkSty MarkCurrentSelection  = bg 255 255 0 0.3
+    mkMarkSty (MarkContribution x _) = case x of
+      ContribIDNote _       -> bg   0 255 0 0.3
+      ContribIDQuestion _   -> bg   0 255 0 0.3
+      ContribIDDiscussion _ -> bg   0 255 0 0.3
+      ContribIDEdit _       -> bg   0 255 0 0.3
 
     bg :: Int -> Int -> Int -> Double -> [Decl]
     bg r g b a = ["background" `decl` Color.RGBA r g b a]
