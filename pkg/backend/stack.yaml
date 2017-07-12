@@ -17,12 +17,6 @@ packages:
     commit: 558fc65a4033577092214c5e2defd47805678b97
   extra-dep: true
 - location:
-    git: https://github.com/ekmett/lens.git
-    commit: ebafc111234580960ddd4b25c4ed3e52d1de556f
-  extra-dep: true
-  subdirs:
-  - lens-properties  # the hackage version has outdated version bounds (we have transformers-0.5.2.0)
-- location:
     git: https://github.com/zerobuzz/servant-cookie-session.git
     commit: 7186ca8c53778822b45bd5d3d71945add778770f
   extra-dep: true
