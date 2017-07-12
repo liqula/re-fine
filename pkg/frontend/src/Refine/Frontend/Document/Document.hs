@@ -116,11 +116,6 @@ documentRender() props = liftViewToStateHandler $ do
 -- TODO: what do we use the EditorState in DocumentState for?  can we just toss it, and get a fresh
 -- one when we need one?  from where?  i suspect that may be both faster and more robust.
 --
--- hum.  i tried to use @boring = ((==) `on` convertToRaw . getCurrentContent) (dstate
--- ^. documentStateVal) estate'@ to decide whether to dispatch actions or not, but that caused the
--- selection state in the editorstate to snap back to outdated selection states.  so that's not a
--- good solution.
---
 -- TODO: #371
 --
 -- when clicking on a button in the edit toolbar and this handler triggers, the button
@@ -131,8 +126,16 @@ documentRender() props = liftViewToStateHandler $ do
 -- this can be reproduced may times in a row, by creating new selections.  i think that's
 -- a new thing, didn't happen a while ago.
 editorOnChange :: DocumentState -> Event -> (ViewEventHandler, [EventModification])
-editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) = simpleHandler $ dispatchMany updateActions
+editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
+  simpleHandler $ if boring then [] else dispatchMany updateActions
   where
+    -- boring changes are those that do not show in RawContent or SelectionState.  we may have
+    -- missed something here; if it turns up just add it here.
+    boring = and
+      [ ((==) `on` convertToRaw . getCurrentContent) (dstate ^. documentStateVal) estate'
+      , ((==) `on` getSelection) (dstate ^. documentStateVal) estate'
+      ]
+
     updateActions =
       [ DocumentAction . DocumentUpdate
           . globalDocumentState $ dstate & documentStateVal .~ estate'
