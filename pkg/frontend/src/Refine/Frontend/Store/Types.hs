@@ -34,6 +34,7 @@ import           GHC.Generics (Generic)
 import           React.Flux (UnoverlapAllEq)
 
 import Refine.Common.Types
+import Refine.Common.VDoc.Draft (rawContentFromCompositeVDoc)
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
@@ -142,8 +143,11 @@ data GlobalAction =
 makeRefineTypes [''ServerCache, ''GlobalState_, ''DevState, ''GlobalAction]
 
 getDocumentState :: GlobalState -> DocumentState
-getDocumentState gs@(view gsVDoc -> Just _cvdoc)
-  = mapDocumentState ((gs ^. gsServerCache . scEdits) Map.!) $ gs ^. gsDocumentState
+getDocumentState gs@(view gsVDoc -> Just cvdoc)
+  = mapDocumentState
+      (const $ rawContentFromCompositeVDoc cvdoc)
+      ((gs ^. gsServerCache . scEdits) Map.!)
+  $ gs ^. gsDocumentState
 getDocumentState _
   = error "getDocumentState: no gsVDoc"
 

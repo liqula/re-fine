@@ -61,26 +61,26 @@ documentStateUpdate (OpenDocument cvdoc) oldgs _newgs st
 documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (HeaderAction StartEdit) _oldgs _ DocumentStateView
+documentStateUpdate (HeaderAction StartEdit) _oldgs _ (DocumentStateView _)
   = DocumentStateEdit (EditInfo "" Nothing)
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     _oldgs
                     _newgs
-                    DocumentStateView
-  = DocumentStateDiff eid True
+                    (DocumentStateView r)
+  = DocumentStateDiff r eid True
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
                     _oldgs
                     _newgs
-                    (DocumentStateDiff _ _)
-  = DocumentStateView
+                    (DocumentStateDiff r _ _)
+  = DocumentStateView r
 
 documentStateUpdate (ContributionAction HideContributionDialog)
                     _oldgs
                     _newgs
-                    (DocumentStateDiff _ _)
-  = DocumentStateView
+                    (DocumentStateDiff r _ _)
+  = DocumentStateView r
 
 documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _ _state
   = state'
@@ -149,7 +149,7 @@ editorStateFromVDocVersion :: HasCallStack => VDocVersion -> EditorState
 editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
 
 -- | construct a 'SetAllVerticalSpanBounds' action.
-setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ b -> m ContributionAction
+setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a b -> m ContributionAction
 setAllVerticalSpanBounds _ = liftIO $ do
     let marks :: Map ContributionID (Ranges LeafSelector)
         marks = getLeafSelectors undefined  -- RequestSetAllVerticalSpanBounds could carry a fresh

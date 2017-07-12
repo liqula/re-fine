@@ -80,10 +80,10 @@ documentRender() props = liftViewToStateHandler $ do
           active = props ^. dpContributionState . csHighlightedMarkAndBubble
 
       rawContent :: Maybe RawContent
-      rawContent = undefined  -- derive from editorState above?  rawContentDiffView <|> (dstate ^? documentStateContent)
+      rawContent = rawContentDiffView <|> (dstate ^? documentStateContent)
 
-      _rawContentDiffView :: Maybe RawContent
-      _rawContentDiffView
+      rawContentDiffView :: Maybe RawContent
+      rawContentDiffView
           = fmap mcollapse
           $ diffit =<< (props ^? dpDocumentState . documentStateDiff . editSource)
         where
@@ -94,7 +94,7 @@ documentRender() props = liftViewToStateHandler $ do
           -- FIXME: show the relevant diff
           diffit (EditSource []) = Nothing
           diffit (EditSource ((otedit, _): _))
-            = showEditAsRawContentWithMarks otedit <$> undefined -- (dstate ^? documentStateContent)
+            = showEditAsRawContentWithMarks otedit <$> (dstate ^? documentStateContent)
 
   article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
            , "style" @@= [zindex ZIxArticle, decl "overflow" (Ident "visible")]
@@ -102,7 +102,7 @@ documentRender() props = liftViewToStateHandler $ do
            , onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
            , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
            ] $ do
-    editor_
+    writeAndReturn $ editor_
       [ "editorState" &= editorState
       , "customStyleMap" &= documentStyleMap
       , "readOnly" &= has _DocumentStateView dstate
