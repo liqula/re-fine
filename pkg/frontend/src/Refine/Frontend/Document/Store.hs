@@ -56,39 +56,42 @@ documentStateUpdate (OpenDocument cvdoc) oldgs _newgs st
   = let eidChanged = Just newID /= mOldID
         newID  = cvdoc ^. compositeVDocThisEditID
         mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
-    in refreshDocumentStateView eidChanged (rawContentFromCompositeVDoc cvdoc) st
+    in refreshDocumentStateView eidChanged st
 
 documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _)
-  = DocumentStateEdit
-      (maybe estate (forceSelection estate . toSelectionState) $ oldgs ^. gsCurrentSelection)
-      (EditInfo "" Nothing)
+documentStateUpdate (HeaderAction StartEdit) _oldgs _ (DocumentStateView _)
+  = DocumentStateEdit (EditInfo "" Nothing)
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     _oldgs
                     _newgs
-                    (DocumentStateView e r)
-  = DocumentStateDiff e r eid True
+                    (DocumentStateView r)
+  = DocumentStateDiff r eid True
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
                     _oldgs
                     _newgs
-                    (DocumentStateDiff e r _ _)
-  = DocumentStateView e r
+                    (DocumentStateDiff r _ _)
+  = DocumentStateView r
 
 documentStateUpdate (ContributionAction HideContributionDialog)
                     _oldgs
                     _newgs
-                    (DocumentStateDiff e r _ _)
-  = DocumentStateView e r
+                    (DocumentStateDiff r _ _)
+  = DocumentStateView r
 
 documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _ _state
   = state'
 
 documentStateUpdate (DocumentAction (DocumentUpdateEditInfo info)) _ _ st
   = st & documentStateEditInfo .~ info
+
+{-
+
+hm, how do we do these?  write diffs in st, then on rendering, read them and send another action
+'FlushEditoStateUpdateQueue'?
 
 documentStateUpdate (DocumentAction (DocumentToggleBlockType bt)) _ _ st
   = st & documentStateVal %~ documentToggleBlockType bt
@@ -107,6 +110,7 @@ documentStateUpdate (DocumentAction DocumentUndo) _ _ st
 
 documentStateUpdate (DocumentAction DocumentRedo) _ _ st
   = st & documentStateVal %~ documentRedo
+-}
 
 documentStateUpdate (AddDiscussion _) _ (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
@@ -146,9 +150,11 @@ editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFrom
 
 -- | construct a 'SetAllVerticalSpanBounds' action.
 setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a b -> m ContributionAction
-setAllVerticalSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
+setAllVerticalSpanBounds _ = liftIO $ do
     let marks :: Map ContributionID (Ranges LeafSelector)
-        marks = getLeafSelectors rawContent
+        marks = getLeafSelectors undefined  -- RequestSetAllVerticalSpanBounds could carry a fresh
+                                            -- copy of EditorState?  no need to keep it in the
+                                            -- store?
 
         getPos :: (ContributionID, Ranges LeafSelector) -> IO [(ContributionID, VerticalSpanBounds)]
         getPos (cid, rs) = fmap catMaybes . forM (unRanges rs) $ \(Range top bot) -> do
