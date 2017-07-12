@@ -110,31 +110,25 @@ documentRender() props = liftViewToStateHandler $ do
       , onChange $ editorOnChange dstate
       ] mempty
 
--- | FIXME: We are cheating here: the event we get from draft.js is really not a 'HandlerArg' that
+-- | Handle editor change events.
+--
+-- Ignores boring changes.  Boring changes are those that do not show in 'RawContent' or
+-- 'SelectionState'.  We may have missed something here; if that's the case you will notice that the
+-- draft component will jump back to stale 'EditorState's (the ones that we neglected to register in
+-- 'GlobalState' after some other component updated it (e.g. the 'bold' button in the toolbar).
+-- Should be easy to fix once it happens.
+--
+-- Because both 'ContentState' and 'SelectionState' come from an immutable object, they can be
+-- compared as 'JSVal's with '(===)'.
+--
+-- FIXME: We are cheating here: the event we get from draft.js is really not a 'HandlerArg' that
 -- can be parsed into an 'Event', but an 'EditorState'.  So if we attempt to access 'Event' fields
 -- like 'evtType', we will get ugly error messages.  As long as we stick to the 'evtHandlerArg' part
 -- of the structure, things should be fine.
---
--- TODO: what do we use the EditorState in DocumentState for?  can we just toss it, and get a fresh
--- one when we need one?  from where?  i suspect that may be both faster and more robust.
---
--- TODO: #371
---
--- when clicking on a button in the edit toolbar and this handler triggers, the button
--- click is not actioned.  if we leave the handler in and dispatch [], it's all good
--- (except that this event is missing).  does that mean that actions are sometimes
--- swallowed?
---
--- this can be reproduced may times in a row, by creating new selections.  i think that's
--- a new thing, didn't happen a while ago.
 editorOnChange :: DocumentState -> Event -> (ViewEventHandler, [EventModification])
 editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
   simpleHandler $ if boring then [] else dispatchMany updateActions
   where
-    -- boring changes are those that do not show in RawContent or SelectionState.  we may have
-    -- missed something here; if it turns up just add it here.  because both 'ContentState' and
-    -- 'SelectionState' come from an immutable object, comparing the 'JSVal's with '(===)' should be
-    -- fine.
     boring = sameContent && sameSelection
       where
         sameContent = assert (if weAreInDevMode then slow == fast else True) fast
