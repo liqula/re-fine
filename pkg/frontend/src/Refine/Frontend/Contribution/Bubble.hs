@@ -55,26 +55,24 @@ bubbleStackStyles = [decl "border" (Ident "3px dotted black")]
 bubble :: HasCallStack => ReactElementM 'EventHandlerCode () -> View '[BubbleProps]
 bubble children = mkView "Bubble" $ \props -> do
   let bubbleKind = case props ^. bubblePropsContributionIds of
-          NoStack (ContribIDNote _)         -> Left "o-snippet--note"
-          NoStack (ContribIDQuestion _)     -> Left "o-snippet--question"
-          NoStack (ContribIDDiscussion _)   -> Left "o-snippet--discussion"
-          NoStack (ContribIDEdit _)         -> Left "o-snippet--edit"
-          NoStack ContribIDHighlightMark    -> error "internal error."
-          Stack _                           -> Right bubbleStackStyles
+          NoStack (ContribIDNote _, _)         -> Left "o-snippet--note"
+          NoStack (ContribIDQuestion _, _)     -> Left "o-snippet--question"
+          NoStack (ContribIDDiscussion _, _)   -> Left "o-snippet--discussion"
+          NoStack (ContribIDEdit _, _)         -> Left "o-snippet--edit"
+          Stack _                              -> Right bubbleStackStyles
 
       iconSty = case props ^. bubblePropsContributionIds of
-          NoStack (ContribIDNote _)         -> ("icon-Note", "dark")
-          NoStack (ContribIDQuestion _)     -> ("icon-Question", "dark")
-          NoStack (ContribIDDiscussion _)   -> ("icon-Discussion", "bright")
-          NoStack (ContribIDEdit _)         -> ("icon-Edit", "dark")
-          NoStack ContribIDHighlightMark    -> error "internal error."
-          Stack _                           -> ("icon-Stack", "dark")
+          NoStack (ContribIDNote _, _)         -> ("icon-Note", "dark")
+          NoStack (ContribIDQuestion _, _)     -> ("icon-Question", "dark")
+          NoStack (ContribIDDiscussion _, _)   -> ("icon-Discussion", "bright")
+          NoStack (ContribIDEdit _, _)         -> ("icon-Edit", "dark")
+          Stack _                              -> ("icon-Stack", "dark")
 
       clickActions = case props ^. bubblePropsContributionIds of
-          NoStack cid
+          NoStack (cid, _)
             -> [ShowContributionDialog cid]
           Stack (cid :| cids)
-            -> [SetBubbleFilter . Just . Set.fromList $ cid : cids, SetBubblePositioning BubblePositioningEvenlySpaced]
+            -> [SetBubbleFilter . Just . Set.fromList . fmap fst $ cid : cids, SetBubblePositioning BubblePositioningEvenlySpaced]
 
       bubbleClasses :: [JSString]
       bubbleClasses
@@ -93,7 +91,7 @@ bubble children = mkView "Bubble" $ \props -> do
        , "className" $= toClasses bubbleClasses
 
        , onClick      $ mkClickHandler clickActions
-       , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble . stackToList $ props ^. bubblePropsContributionIds]
+       , onMouseEnter $ mkClickHandler [HighlightMarkAndBubble . map (uncurry MarkContribution) . stackToList $ props ^. bubblePropsContributionIds]
        , onMouseLeave $ mkClickHandler [HighlightMarkAndBubble []]
        ]
 
@@ -108,7 +106,7 @@ bubble_ props children = view_ (bubble children) (bubbleKey props) props
   -- (there is React.Flux.Internal.childrenPassedToView, but doing it by hand is easier to understand.)
 
 bubbleKey :: HasCallStack => BubbleProps -> JSString
-bubbleKey props = "bubble_" <> props ^. bubblePropsContributionIds . to (cs . toUrlPiece . stackToHead)
+bubbleKey props = "bubble_" <> props ^. bubblePropsContributionIds . to (cs . toUrlPiece . uncurry MarkContribution . stackToHead)
 
 verticalPosition :: HasCallStack => Maybe OffsetFromDocumentTop -> ScreenState -> [Decl]
 verticalPosition Nothing       _  = [decl "marginTop" (Px 20), decl "position" (Ident "relative")]

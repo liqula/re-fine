@@ -64,8 +64,13 @@ arbitraryContribIDConstructor = elements
   , ContribIDQuestion   . ID . fromIntegral . abs
   , ContribIDDiscussion . ID . fromIntegral . abs
   , ContribIDEdit       . ID . fromIntegral . abs
-  , const ContribIDHighlightMark
   ]
+
+instance Arbitrary MarkID where
+  arbitrary = oneof
+    [ pure MarkCurrentSelection
+    , MarkContribution <$> arbitrary <*> pure 0
+    ]
 
 maxListOf :: Int -> Gen a -> Gen [a]
 maxListOf n g = List.take n <$> listOf g

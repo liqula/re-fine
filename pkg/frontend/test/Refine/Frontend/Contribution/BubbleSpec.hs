@@ -56,7 +56,7 @@ spec = do
       offset = Just (OffsetFromDocumentTop (140 + 180))
       highlight = False
       screenState = ScreenState 95 0 Desktop
-      bubbleProps = BubbleProps (NoStack contributionId) iconSide offset highlight screenState
+      bubbleProps = BubbleProps (NoStack (contributionId, 0)) iconSide offset highlight screenState
 
   describe "The bubble_ component" $ do
     it "renders the o-snippet class" $ do
@@ -95,13 +95,13 @@ spec = do
       pendingWith "race condition, this only sporadically fails!"
 
       wrapper <- mount $ bubble_ bubbleProps mempty
-      storeShouldEventuallyBe ((^. gsContributionState . csHighlightedMarkAndBubble) :: GlobalState -> [ContributionID]) []
+      storeShouldEventuallyBe ((^. gsContributionState . csHighlightedMarkAndBubble) :: GlobalState -> [MarkID]) []
 
       _ <- simulate wrapper MouseEnter
-      storeShouldEventuallyBe ((^. gsContributionState . csHighlightedMarkAndBubble) :: GlobalState -> [ContributionID]) [cnid 99]
+      storeShouldEventuallyBe ((^. gsContributionState . csHighlightedMarkAndBubble) :: GlobalState -> [MarkID]) [MarkContribution (cnid 99) 0]
 
       _ <- simulate wrapper MouseLeave
-      storeShouldEventuallyBe ((^. gsContributionState . csHighlightedMarkAndBubble) :: GlobalState -> [ContributionID]) []
+      storeShouldEventuallyBe ((^. gsContributionState . csHighlightedMarkAndBubble) :: GlobalState -> [MarkID]) []
 
   describe "tablet and mobile" $ do
     it "works" $ do

@@ -122,13 +122,13 @@ documentStateUpdate (DocumentAction DocumentCancelSave) _ (view gsVDoc -> Just c
 
 documentStateUpdate (ContributionAction (SetRange range)) _ (view gsVDoc -> Just cvdoc) _
   = mkDocumentStateView
-  . addMarksToRawContent [(ContribIDHighlightMark, range ^. sstSelectionState . selectionRange)]
-  . deleteMarksFromRawContentIf (== ContribIDHighlightMark)
+  . addMarksToRawContent [(MarkCurrentSelection, range ^. sstSelectionState . selectionRange)]
+  . deleteMarksFromRawContentIf (== MarkCurrentSelection)
   $ rawContentFromCompositeVDoc cvdoc
 
 documentStateUpdate (ContributionAction ClearRange) _ (view gsVDoc -> Just cvdoc) _
   = mkDocumentStateView
-  . deleteMarksFromRawContentIf (== ContribIDHighlightMark)
+  . deleteMarksFromRawContentIf (== MarkCurrentSelection)
   $ rawContentFromCompositeVDoc cvdoc
 
 documentStateUpdate (DocumentAction ToggleCollapseDiff) _ _ st | has _DocumentStateDiff st
@@ -147,10 +147,10 @@ editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFrom
 -- | construct a 'SetAllVerticalSpanBounds' action.
 setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a b -> m ContributionAction
 setAllVerticalSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
-    let marks :: Map ContributionID (Ranges LeafSelector)
+    let marks :: Map MarkID (Ranges LeafSelector)
         marks = getLeafSelectors rawContent
 
-        getPos :: (ContributionID, Ranges LeafSelector) -> IO [(ContributionID, VerticalSpanBounds)]
+        getPos :: (MarkID, Ranges LeafSelector) -> IO [(MarkID, VerticalSpanBounds)]
         getPos (cid, rs) = fmap catMaybes . forM (unRanges rs) $ \(Range top bot) -> do
           mb <- getLeafSelectorBound LeafSelectorTop top
           case mb of

@@ -48,7 +48,7 @@ import Refine.Common.Prelude
 
 import           Control.DeepSeq
 import           Control.Lens (both)
-import           Data.Int
+import           Data.Char
 import qualified Data.HashMap.Lazy as HashMap
 import qualified Data.IntMap as IntMap
 import           Data.Either (isLeft)
@@ -176,9 +176,6 @@ data ContributionID =
   | ContribIDQuestion (ID Question)
   | ContribIDDiscussion (ID Discussion)
   | ContribIDEdit (ID Edit)
-  | ContribIDHighlightMark  -- ^ current selection (FUTUREWORK: rename to
-                            -- 'ContribIDCurrentSelection'; or better yet remove from this type
-                            -- altogether).
   deriving (Eq, Ord, Show, Read, Generic)
 
 -- | In the frontend, for replacing the browser selection range with a mark when an editor overlay
@@ -237,12 +234,18 @@ data Style =
   | Underline
   | Code
     -- custom styles
-  | Mark ContributionID
+  | Mark MarkID
     -- styles for visual diff
   | StyleAdded
   | StyleDeleted
   | StyleChanged
   deriving (Show, Eq, Ord, Generic)
+
+-- | identifier for different marks in document
+data MarkID
+  = MarkCurrentSelection
+  | MarkContribution ContributionID Int -- the Int is used as the Bubble serial number per contribution; note that this is always 0 for notes and discussion (because they have just one range)
+  deriving (Show, Read, Eq, Ord, Generic)
 
 -- | each block has a unique blocktype
 data BlockType =
@@ -294,24 +297,34 @@ makeEntityStyleSet (Atom e, s) = maybe mempty (Set.singleton . Left) e <> Set.ma
 -- ** Contribution Http instances
 
 instance ToHttpApiData ContributionID where
-  toUrlPiece (ContribIDNote (ID i))       = "n" <> cs (show i)
-  toUrlPiece (ContribIDQuestion (ID i))   = "q" <> cs (show i)
-  toUrlPiece (ContribIDDiscussion (ID i)) = "d" <> cs (show i)
-  toUrlPiece (ContribIDEdit (ID i))       = "e" <> cs (show i)
-  toUrlPiece ContribIDHighlightMark       = "h"
+  toUrlPiece = \case
+    ContribIDNote (ID i)       -> "n" <> cs (show i)
+    ContribIDQuestion (ID i)   -> "q" <> cs (show i)
+    ContribIDDiscussion (ID i) -> "d" <> cs (show i)
+    ContribIDEdit (ID i)       -> "e" <> cs (show i)
 
 instance FromHttpApiData ContributionID where
-  parseUrlPiece piece = case ST.splitAt 1 piece of
-    (ks, is) -> do
-      let i = either (Left . cs) Right . (readEither :: String -> Either String Int64) . cs $ is
-      case ks of
-        "n" -> ContribIDNote . ID <$> i
-        "q" -> ContribIDQuestion . ID <$> i
-        "d" -> ContribIDDiscussion . ID <$> i
-        "e" -> ContribIDEdit . ID <$> i
-        "h" -> pure ContribIDHighlightMark
-        bad -> Left . cs $ "FromHttpApiData ContributionID: no parse: " <> show bad
+  parseUrlPiece (ST.splitAt 1 -> (ks, readEither . cs -> Right n))
+    | "n" <- ks = f ContribIDNote
+    | "q" <- ks = f ContribIDQuestion
+    | "d" <- ks = f ContribIDDiscussion
+    | "e" <- ks = f ContribIDEdit
+    where
+      f :: (ID a -> ContributionID) -> Either ST ContributionID
+      f c = pure . c $ ID n
+  parseUrlPiece bad = Left . cs $ "FromHttpApiData ContributionID: no parse: " <> show bad
 
+instance ToHttpApiData MarkID where
+  toUrlPiece = \case
+    MarkCurrentSelection -> "h"
+    MarkContribution cid n -> "n" <> cs (show n) <> toUrlPiece cid
+
+instance FromHttpApiData MarkID where
+  parseUrlPiece "h" = pure MarkCurrentSelection
+  parseUrlPiece (cs -> 'n': (span isDigit -> (readEither -> Right n, s))) = do
+    cid <- parseUrlPiece $ cs s
+    pure $ MarkContribution cid n
+  parseUrlPiece bad = Left . cs $ "FromHttpApiData MarkID: no parse: " <> show bad
 
 -- ** RawContent JSON instances
 
@@ -645,7 +658,7 @@ mkSomeSegments frange fpayload els = segments
 
 deriveClasses
   [ ([''RawContent, ''Block, ''Entity, ''Style, ''BlockType], [''NFData, ''SOP.Generic, ''Lens'])
-  , ([''EntityKey, ''CompositeVDoc, ''ContributionID, ''VDoc, ''CreateVDoc, ''EditSource, ''Edit, ''CreateEdit, ''EditKind, ''Title, ''Abstract, ''VDocVersion], allClass)
+  , ([''EntityKey, ''CompositeVDoc, ''ContributionID, ''MarkID, ''VDoc, ''CreateVDoc, ''EditSource, ''Edit, ''CreateEdit, ''EditKind, ''Title, ''Abstract, ''VDocVersion], allClass)
   ]
 
 -- | It cannot moved further up, needs instance NFData BlockType
