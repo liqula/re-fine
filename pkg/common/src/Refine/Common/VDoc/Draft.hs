@@ -172,16 +172,15 @@ addMarksToRawContent marks rc = joinStyles . RawContentSeparateStyles txts $ fol
 getLeafSelectors :: RawContent -> Map MarkID (Ranges LeafSelector)
 getLeafSelectors rc
     = fmap (RangesInner . map (styleRangeToLeafSelectors rc) . unRanges)
-    . mapFilterKey f
+    . mapMaybeKey f
     $ documentMarks (separateStyles rc)
   where
     f (Right (Mark m)) = Just m
     f _ = Nothing
 
 -- the function should be strictly monotonic on Just values
--- better name: mapMaybeKey
-mapFilterKey :: (HasCallStack, Ord k, Ord l) => (k -> Maybe l) -> Map k a -> Map l a
-mapFilterKey f = Map.mapKeysMonotonic (fromJust . f) . Map.filterWithKey (\k _ -> isJust $ f k)
+mapMaybeKey :: (HasCallStack, Ord k, Ord l) => (k -> Maybe l) -> Map k a -> Map l a
+mapMaybeKey f = Map.mapKeysMonotonic (fromJust . f) . Map.filterWithKey (\k _ -> isJust $ f k)
 
 
 ---------------------- separate style representation
