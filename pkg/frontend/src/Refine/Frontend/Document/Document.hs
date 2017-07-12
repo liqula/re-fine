@@ -171,7 +171,11 @@ mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
     go _ = []
 
     mouseover :: MarkID -> [Decl]
-    mouseover cid = [decl "borderBottom" [expr $ Px 2, expr $ Ident "solid", expr Color.VDocRollover] | cid `elem` actives]
+    mouseover cid = [decl "borderBottom" [expr $ Px 2, expr $ Ident "solid", expr Color.VDocRollover] | any (cid `matches`) actives]
+
+    matches :: MarkID -> MarkID -> Bool
+    matches (MarkContribution c _) (MarkContribution c' _) = c == c'
+    matches m m' = m == m'
 
     mkMarkSty :: MarkID -> [Decl]
     mkMarkSty MarkCurrentSelection  = bg 255 255 0 0.3

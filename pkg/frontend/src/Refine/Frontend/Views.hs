@@ -224,7 +224,7 @@ stackBubble bubbleSide aprops bstack = bubble_ props children
 
     highlight = not . Set.null $ Set.intersection shots hits
       where
-        hits  = Set.fromList [(cid, i) | MarkContribution cid i <- aprops ^. asideHighlighteds]
-        shots = Set.fromList (stackToList bstack')
+        hits  = Set.fromList [cid | MarkContribution cid _ <- aprops ^. asideHighlighteds]
+        shots = Set.fromList (fst <$> stackToList bstack')
 
     children = stackToHead bstack ^. protoBubbleChild
