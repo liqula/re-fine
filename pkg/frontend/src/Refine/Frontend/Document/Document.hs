@@ -131,12 +131,12 @@ editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
   where
     boring = sameContent && sameSelection
       where
-        sameContent = assert (if weAreInDevMode then slow == fast else True) fast
+        sameContent = assert (not weAreInDevMode || slow == fast) fast
           where
             fast = ((===) `on` (\(ContentState (NoJSONRep j)) -> j) . getCurrentContent) (dstate ^. documentStateVal) estate'
             slow = ((==) `on` convertToRaw . getCurrentContent) (dstate ^. documentStateVal) estate'
 
-        sameSelection = assert (if weAreInDevMode then slow == fast else True) fast
+        sameSelection = assert (not weAreInDevMode || slow == fast) fast
           where
             fast = ((===) `on` js_ES_getSelection) (dstate ^. documentStateVal) estate'
             slow = ((==) `on` getSelection) (dstate ^. documentStateVal) estate'
