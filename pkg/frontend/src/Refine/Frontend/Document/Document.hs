@@ -43,9 +43,11 @@ import           Refine.Common.VDoc.OT (showEditAsRawContentWithMarks, hideUncha
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
+import           Refine.Frontend.Document.FFI.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Test.Console (weAreInDevMode)
 import           Refine.Frontend.ThirdPartyViews (editor_)
 import           Refine.Frontend.Util
 
@@ -130,11 +132,20 @@ editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
   simpleHandler $ if boring then [] else dispatchMany updateActions
   where
     -- boring changes are those that do not show in RawContent or SelectionState.  we may have
-    -- missed something here; if it turns up just add it here.
-    boring = and
-      [ ((==) `on` convertToRaw . getCurrentContent) (dstate ^. documentStateVal) estate'
-      , ((==) `on` getSelection) (dstate ^. documentStateVal) estate'
-      ]
+    -- missed something here; if it turns up just add it here.  because both 'ContentState' and
+    -- 'SelectionState' come from an immutable object, comparing the 'JSVal's with '(===)' should be
+    -- fine.
+    boring = sameContent && sameSelection
+      where
+        sameContent = assert (if weAreInDevMode then slow == fast else True) fast
+          where
+            fast = ((===) `on` (\(ContentState (NoJSONRep j)) -> j) . getCurrentContent) (dstate ^. documentStateVal) estate'
+            slow = ((==) `on` convertToRaw . getCurrentContent) (dstate ^. documentStateVal) estate'
+
+        sameSelection = assert (if weAreInDevMode then slow == fast else True) fast
+          where
+            fast = ((===) `on` js_ES_getSelection) (dstate ^. documentStateVal) estate'
+            slow = ((==) `on` getSelection) (dstate ^. documentStateVal) estate'
 
     updateActions =
       [ DocumentAction . DocumentUpdate

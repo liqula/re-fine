@@ -62,7 +62,7 @@ module Refine.Frontend.Document.FFI
   , documentRedo
 
     -- * selections
-  , getSelection
+  , getSelection, js_ES_getSelection  -- the js is used for fast comparison.
   , forceSelection
   , getDraftSelectionStateViaBrowser
 
