@@ -50,25 +50,28 @@ data DocumentAction =
   | DocumentRedo
   deriving (Show, Eq, Generic)
 
-data DocumentState_ rawcontent edit =  -- TODO: do we ever need RawContent?  can we drop it entirely?  and take it from the component on demand?
+data DocumentState_ rawcontent edit =
     DocumentStateView
-      { _documentStateContent  :: rawcontent
+      { _documentStateVal      :: EditorState
+      , _documentStateContent  :: rawcontent
       }
   | DocumentStateDiff
-      { _documentStateContent       :: rawcontent
+      { _documentStateVal           :: EditorState
+      , _documentStateContent       :: rawcontent
       , _documentStateDiff          :: edit
       , _documentStateDiffCollapsed :: Bool
       }
   | DocumentStateEdit
-      { _documentStateEditInfo :: EditInfo (Maybe EditKind)  -- ^ 'editInput_' dialog state lives here between close / re-open.
+      { _documentStateVal      :: EditorState
+      , _documentStateEditInfo :: EditInfo (Maybe EditKind)  -- ^ 'editInput_' dialog state lives here between close / re-open.
       }
   deriving (Show, Eq, Generic, Functor)
 
 mapDocumentState :: (a -> a') -> (b -> b') -> DocumentState_ a b -> DocumentState_ a' b'
 mapDocumentState f g = \case
-  DocumentStateView a -> DocumentStateView (f a)
-  DocumentStateDiff a e y -> DocumentStateDiff (f a) (g e) y
-  DocumentStateEdit y -> DocumentStateEdit y
+  DocumentStateView x a -> DocumentStateView x (f a)
+  DocumentStateDiff x a e y -> DocumentStateDiff x (f a) (g e) y
+  DocumentStateEdit x y -> DocumentStateEdit x y
 
 -- | The document state variant for 'DocumentProps'.
 type DocumentState = DocumentState_ RawContent Edit
@@ -92,21 +95,26 @@ mkDocumentStateView :: HasCallStack => RawContent -> GlobalDocumentState
 mkDocumentStateView = globalDocumentState . mkDocumentStateView_
 
 mkDocumentStateView_ :: HasCallStack => RawContent -> DocumentState
-mkDocumentStateView_ = DocumentStateView . convertToRaw . getCurrentContent . createWithContent . convertFromRaw
+mkDocumentStateView_ c = DocumentStateView e c'
+  where
+    e  = createWithContent $ convertFromRaw c
+    c' = convertToRaw $ getCurrentContent e
 
 -- | The boolean 'eidChanged' indicates whether the edit currently in
 -- focus has changed and the context (like the edit that we diff
 -- against) does not apply any more.  If true, always switch to view
 -- mode; otherwise, stay in whichever mode we are.
-refreshDocumentStateView :: Bool -> GlobalDocumentState -> GlobalDocumentState
-refreshDocumentStateView eidChanged = if eidChanged then viewMode else sameMode
+refreshDocumentStateView :: Bool -> RawContent -> GlobalDocumentState -> GlobalDocumentState
+refreshDocumentStateView eidChanged c = if eidChanged then viewMode else sameMode
   where
-    viewMode _ = DocumentStateView ()
+    viewMode _ = DocumentStateView e ()
 
     sameMode = \case
-      DocumentStateView _                -> DocumentStateView ()
-      DocumentStateDiff _ edit collapsed -> DocumentStateDiff () edit collapsed
-      DocumentStateEdit kind             -> DocumentStateEdit kind
+      DocumentStateView _ _                -> DocumentStateView e ()
+      DocumentStateDiff _ _ edit collapsed -> DocumentStateDiff e () edit collapsed
+      DocumentStateEdit _ kind             -> DocumentStateEdit e kind
+
+    e  = createWithContent $ convertFromRaw c
 
 emptyDocumentState :: HasCallStack => GlobalDocumentState
 emptyDocumentState = mkDocumentStateView emptyRawContent

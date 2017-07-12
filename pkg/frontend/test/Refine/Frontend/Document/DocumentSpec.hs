@@ -42,6 +42,7 @@ import Refine.Common.VDoc.Draft
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Document
 import Refine.Frontend.Document.FFI
+import Refine.Frontend.Document.Store
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Store
 import Refine.Frontend.Store.Types
@@ -146,8 +147,8 @@ spec = do
 
   describe "Document" $ do
     let mkTestProps :: RawContent -> DocumentProps
-        mkTestProps _c = DocumentProps
-          (DocumentStateEdit (EditInfo "" Nothing))
+        mkTestProps c = DocumentProps
+          (DocumentStateEdit (editorStateFromVDocVersion $ rawContentToVDocVersion c) (EditInfo "" Nothing))
           emptyContributionState
 
     it "renders with empty content" $ do

@@ -41,7 +41,7 @@ import           Refine.Common.Test.Samples
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
-import           Refine.Frontend.Document.Store (setAllVerticalSpanBounds, documentStateUpdate)
+import           Refine.Frontend.Document.Store (setAllVerticalSpanBounds, documentStateUpdate, editorStateToVDocVersion)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
@@ -170,6 +170,8 @@ consoleLogGlobalState False _ = do
   consoleLogJSONM "New state: " (String "[UNCHANGED]" :: Value)
 consoleLogGlobalState True st = liftIO $ do
   consoleLogJSONM "New state: " st
+  traceEditorState (st ^. gsDocumentState . documentStateVal)
+  traceContentInEditorState (st ^. gsDocumentState . documentStateVal)
 
 consoleLogGlobalAction :: HasCallStack => forall m. MonadTransform m => GlobalAction -> m ()
 consoleLogGlobalAction act = do
@@ -281,7 +283,7 @@ emitBackendCallsFor act st = case act of
             cedit :: C.Create C.Edit
             cedit = C.CreateEdit
                   { C._createEditDesc        = info ^. editInfoDesc
-                  , C._createEditVDocVersion = undefined  -- DocumentSave can carry an EditorState version?
+                  , C._createEditVDocVersion = editorStateToVDocVersion (st ^. gsDocumentState . documentStateVal)
                   , C._createEditKind        = info ^. editInfoKind
                   }
 

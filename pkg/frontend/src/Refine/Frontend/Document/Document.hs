@@ -71,8 +71,7 @@ documentRender() props = liftViewToStateHandler $ do
         simpleHandler $ mconcat [ dispatch $ ContributionAction RequestSetRange | has _DocumentStateView dstate ]
 
       editorState :: EditorState
-      editorState = undefined  -- ok, here we really need to store *something* in GlobalState, but
-                               -- could we store the component rather than its state?
+      editorState = maybe (dstate ^. documentStateVal) (createWithContent . convertFromRaw) rawContentDiffView
 
       documentStyleMap :: Value
       documentStyleMap = mkDocumentStyleMap active rawContent
@@ -102,15 +101,12 @@ documentRender() props = liftViewToStateHandler $ do
            , onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
            , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
            ] $ do
-    writeAndReturn $ editor_
+    editor_
       [ "editorState" &= editorState
       , "customStyleMap" &= documentStyleMap
       , "readOnly" &= has _DocumentStateView dstate
       , onChange $ editorOnChange dstate
---      , onFocus $ ...  -- (block event, also print it.  is it triggered next to onChange, or solo?  does it help if we block this?)
---      , onBlur $ ...
       ] mempty
-
 
 -- | FIXME: We are cheating here: the event we get from draft.js is really not a 'HandlerArg' that
 -- can be parsed into an 'Event', but an 'EditorState'.  So if we attempt to access 'Event' fields
@@ -135,10 +131,12 @@ documentRender() props = liftViewToStateHandler $ do
 -- this can be reproduced may times in a row, by creating new selections.  i think that's
 -- a new thing, didn't happen a while ago.
 editorOnChange :: DocumentState -> Event -> (ViewEventHandler, [EventModification])
-editorOnChange _dstate (evtHandlerArg -> HandlerArg (mkEditorState -> _estate')) = simpleHandler $ dispatchMany updateActions
+editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) = simpleHandler $ dispatchMany updateActions
   where
     updateActions =
-      [ ContributionAction RequestSetAllVerticalSpanBounds
+      [ DocumentAction . DocumentUpdate
+          . globalDocumentState $ dstate & documentStateVal .~ estate'
+      , ContributionAction RequestSetAllVerticalSpanBounds
       ]
 
 
