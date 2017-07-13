@@ -79,9 +79,10 @@ diffToolbar_ props = do
     & ibLabel .~ "motivation"
     & ibSize .~ XXLarge
 
-  ibutton_ $ emptyIbuttonProps "Toggle_collapse_diff" [DocumentAction ToggleCollapseDiff]
+  let collapseOrExpand = if props ^. diffToolbarCollapsed then "expand" else "collapse"
+  ibutton_ $ emptyIbuttonProps ("Toggle_" <> collapseOrExpand <> "_diff") [DocumentAction ToggleCollapseDiff]
     & ibListKey .~ "4"
-    & ibLabel .~ (if props ^. diffToolbarCollapsed then "expand" else "collapse")
+    & ibLabel .~ collapseOrExpand
     & ibSize .~ XXLarge
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
