@@ -100,6 +100,31 @@ newtype Abstract = Abstract { _unAbstract :: ST }
 newtype VDocVersion = VDocVersion { _unVDocVersion :: ST }
   deriving (Eq, Ord, Show, Generic, Monoid)
 
+-- | List of parents tupled with the diff
+--
+-- The type parameter is instantiated by 'Edit' or 'ID Edit'
+--
+-- Invariant: the diffs should produce the same 'editVDocVersion'
+-- For example, if
+--   editSource e == EditSource [(d1, e1), (d2, e2)]
+-- then
+--   editVDocVersion e == patch d1 (editVDocVersion e1)
+-- end
+--   editVDocVersion e == patch d2 (editVDocVersion e2)
+--
+-- Possible length of source lists:
+--  0: the edit is an initial edit
+--  1: the edit is a modificiation of another edit
+--  2: the edit is a merge of two edits
+--
+-- It is OK to have longer source lists but we don't use that feature.
+--
+-- It is OK to have non-empty initial edits.
+--
+-- It is OK to have multiple initial edits in a VDoc, but we have always exactly one,
+-- because two initial edits cannot be merged because they have no common ancestors.
+-- So instead of having two initial edits one can have an empty initial edit and base the
+-- two edits on that.
 newtype EditSource a = EditSource { _unEditSource :: [(OT.Edit RawContent, a)] }
   deriving (Eq, Show, Generic, Functor, Monoid)
 
@@ -124,7 +149,7 @@ data CreateEdit = CreateEdit
   }
   deriving (Eq, Ord, Show, Generic)
 
-data EditKind = Grammar | Phrasing | Meaning | Initial | EKMerge
+data EditKind = Grammar | Phrasing | Meaning | Initial
   deriving (Eq, Ord, Show, Read, Generic, Bounded, Enum)
 
 
