@@ -56,7 +56,8 @@ data DocumentState_ rawcontent edit =
       , _documentStateContent  :: rawcontent
       }
   | DocumentStateDiff
-      { _documentStateVal           :: EditorState
+      { _documentStateDiffIndex     :: EditIndex
+      , _documentStateVal           :: EditorState
       , _documentStateContent       :: rawcontent
       , _documentStateDiff          :: edit
       , _documentStateDiffCollapsed :: Bool
@@ -70,7 +71,7 @@ data DocumentState_ rawcontent edit =
 mapDocumentState :: (a -> a') -> (b -> b') -> DocumentState_ a b -> DocumentState_ a' b'
 mapDocumentState f g = \case
   DocumentStateView x a -> DocumentStateView x (f a)
-  DocumentStateDiff x a e y -> DocumentStateDiff x (f a) (g e) y
+  DocumentStateDiff i x a e y -> DocumentStateDiff i x (f a) (g e) y
   DocumentStateEdit x y -> DocumentStateEdit x y
 
 -- | The document state variant for 'DocumentProps'.
@@ -82,7 +83,8 @@ type GlobalDocumentState = DocumentState_ () (ID Edit)
 data WipedDocumentState =
     WipedDocumentStateView
   | WipedDocumentStateDiff
-      { _wipedDocumentStateDiff          :: Edit
+      { _wpiedDocumentStateDiffIndex     :: EditIndex
+      , _wipedDocumentStateDiff          :: Edit
       , _wipedDocumentStateDiffCollapsed :: Bool
       }
   | WipedDocumentStateEdit EditToolbarProps
@@ -104,15 +106,15 @@ mkDocumentStateView_ c = DocumentStateView e c'
 -- focus has changed and the context (like the edit that we diff
 -- against) does not apply any more.  If true, always switch to view
 -- mode; otherwise, stay in whichever mode we are.
-refreshDocumentStateView :: Bool -> RawContent -> GlobalDocumentState -> GlobalDocumentState
-refreshDocumentStateView eidChanged c = if eidChanged then viewMode else sameMode
+refreshDocumentStateView :: Edit -> Bool -> RawContent -> GlobalDocumentState -> GlobalDocumentState
+refreshDocumentStateView ed eidChanged c = if eidChanged then viewMode else sameMode
   where
     viewMode _ = DocumentStateView e ()
 
     sameMode = \case
-      DocumentStateView _ _                -> DocumentStateView e ()
-      DocumentStateDiff _ _ edit collapsed -> DocumentStateDiff e () edit collapsed
-      DocumentStateEdit _ kind             -> DocumentStateEdit e kind
+      DocumentStateView _ _                  -> DocumentStateView e ()
+      DocumentStateDiff _ _ _ edit collapsed -> DocumentStateDiff (mkEditIndex ed edit) e () edit collapsed
+      DocumentStateEdit _ kind               -> DocumentStateEdit e kind
 
     e  = createWithContent $ convertFromRaw c
 

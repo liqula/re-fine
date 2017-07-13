@@ -138,7 +138,7 @@ mainHeaderRender () rs = do
 
         case rs ^. gsDocumentState of
             WipedDocumentStateView       -> doc
-            WipedDocumentStateDiff eid _ -> edit (eid ^. editID)
+            WipedDocumentStateDiff _ eid _ -> edit (eid ^. editID)
             WipedDocumentStateEdit{}     -> doc
 
       toolbarPart_ = div_ ["className" $= "c-fulltoolbar"] $ do
@@ -146,8 +146,9 @@ mainHeaderRender () rs = do
                     (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
           toolbarWrapper_ $ case rs ^. gsDocumentState of
             WipedDocumentStateView -> toolbar_
-            WipedDocumentStateDiff edit collapsed -> diffToolbar_ $ DiffToolbarProps
+            WipedDocumentStateDiff i edit collapsed -> diffToolbar_ $ DiffToolbarProps
               (edit ^. editID)
+              i
               (edit ^. editVotes . to votesToCount)
               collapsed
             WipedDocumentStateEdit eprops -> editToolbar_ eprops
