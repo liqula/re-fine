@@ -146,10 +146,13 @@ toBackwardSelection = Selection True
 
 -- | https://draftjs.org/docs/api-reference-selection-state.html
 -- use only when interfacing with Draft
-newtype SelectionState = SelectionState { _unSelectionState :: Selection SelectionPoint }
+data SelectionState = SelectionState
+  { _unSelectionState :: Selection SelectionPoint
+  , _selectionStateHasFocus :: Bool
+  }
   deriving (Eq, Ord, Show, Generic)
 
-toSelectionState :: Selection Position -> SelectionState
+toSelectionState :: Selection Position -> Bool -> SelectionState
 toSelectionState = SelectionState . fmap toSelectionPoint
 
 

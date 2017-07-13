@@ -184,10 +184,10 @@ documentRedo = js_ES_redo
 -- Draft never actually nulls this field.  There is always have a selection, but start and end point
 -- may be identical.  See 'isEmptyRange', 'getRangeAction' for context.
 getSelection :: HasCallStack => EditorState -> Draft.SelectionState
-getSelection (js_ES_getSelection -> sel) = Draft.SelectionState .
+getSelection (js_ES_getSelection -> sel) = Draft.SelectionState (
   (if js_ES_getSelectionIsBackward sel then Draft.toBackwardSelection else Draft.toSelection) $ Draft.Range
     (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionStartKey sel) (js_ES_getSelectionStartOffset sel))
-    (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionEndKey sel)   (js_ES_getSelectionEndOffset sel))
+    (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionEndKey sel)   (js_ES_getSelectionEndOffset sel))) (js_ES_getSelectionHasFocus sel)
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#forceselection
 forceSelection :: HasCallStack => EditorState -> Draft.SelectionState -> EditorState
@@ -311,6 +311,10 @@ foreign import javascript safe
   js_ES_getSelection :: EditorState -> JSVal
 
 foreign import javascript safe
+  "$1.getHasFocus()"
+  js_ES_getSelectionHasFocus :: JSVal -> Bool
+
+foreign import javascript safe
   "$1.getIsBackward()"
   js_ES_getSelectionIsBackward :: JSVal -> Bool
 
@@ -427,6 +431,10 @@ js_ES_toggleBlockType = error "javascript FFI not available in GHC"
 {-# ANN js_ES_getSelection ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelection :: EditorState -> JSVal
 js_ES_getSelection = error "javascript FFI not available in GHC"
+
+{-# ANN js_ES_getSelectionHasFocus ("HLint: ignore Use camelCase" :: String) #-}
+js_ES_getSelectionHasFocus :: JSVal -> Bool
+js_ES_getSelectionHasFocus = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_getSelectionIsBackward ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelectionIsBackward :: JSVal -> Bool

@@ -43,13 +43,12 @@ import           Refine.Common.VDoc.OT (showEditAsRawContentWithMarks, hideUncha
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
-import           Refine.Frontend.Document.FFI.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Test.Console (weAreInDevMode)
 import           Refine.Frontend.ThirdPartyViews (editor_)
 import           Refine.Frontend.Util
+
 
 -- | Note on draft vs. readOnly vs. selection events: in readOnly mode, draft's onChange event is not
 -- fired at all, not even for selection updates.  (There is a hack based on handleBeforeInput, but
@@ -127,26 +126,13 @@ documentRender() props = liftViewToStateHandler $ do
 -- of the structure, things should be fine.
 editorOnChange :: DocumentState -> Event -> (ViewEventHandler, [EventModification])
 editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
-  simpleHandler $ if boring then [] else dispatchMany updateActions
+  simpleHandler $ dispatchMany updateActions
   where
-    boring = sameContent && sameSelection
-      where
-        sameContent = assert (not weAreInDevMode || slow == fast) fast
-          where
-            fast = ((===) `on` (\(ContentState (NoJSONRep j)) -> j) . getCurrentContent) (dstate ^. documentStateVal) estate'
-            slow = ((==) `on` convertToRaw . getCurrentContent) (dstate ^. documentStateVal) estate'
-
-        sameSelection = assert (not weAreInDevMode || slow == fast) fast
-          where
-            fast = ((===) `on` js_ES_getSelection) (dstate ^. documentStateVal) estate'
-            slow = ((==) `on` getSelection) (dstate ^. documentStateVal) estate'
-
     updateActions =
       [ DocumentAction . DocumentUpdate
           . globalDocumentState $ dstate & documentStateVal .~ estate'
       , ContributionAction RequestSetAllVerticalSpanBounds
       ]
-
 
 documentComponentDidMountOrUpdate :: HasCallStack => Outdated.LPropsAndState DocumentProps () -> IO ()
 documentComponentDidMountOrUpdate _getPropsAndState = do
