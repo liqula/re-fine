@@ -43,6 +43,7 @@ import           Refine.Backend.Database.Tree
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
+import qualified Refine.Common.OT as OT
 import           Refine.Prelude (nothingToError, Timestamp, getCurrentTimestamp)
 
 -- FIXME: Generate this as the part of the lentil library.
@@ -253,6 +254,14 @@ createEdit rid me ce = do
       insert $ S.ParentChild (S.idToKey parent) (RawContentEdit edit) (S.idToKey $ mid ^. miID)
   getEdit $ mid ^. miID
 
+updateEdit :: ID Edit -> Create Edit -> DB ()
+updateEdit eid ce = do
+  liftDB $ update (S.idToKey eid)
+    [ S.EditEditVDoc =. (ce ^. createEditVDocVersion)
+    , S.EditDesc     =. (ce ^. createEditDesc)
+    , S.EditKind     =. (ce ^. createEditKind)
+    ]
+
 getEdit :: ID Edit -> DB Edit
 getEdit eid = do
   src         <- getEditSource eid
@@ -267,6 +276,14 @@ getEditSource :: ID Edit -> DB (EditSource (ID Edit))
 getEditSource eid = do
   parents <- entityVal <$$> liftDB (selectList [S.ParentChildChild ==. S.idToKey eid] [])
   pure $ EditSource [(edit, S.keyToId parent) | S.ParentChild parent (RawContentEdit edit) _ <- parents]
+
+updateEditSource :: ID Edit -> (ID Edit{-parent-} -> OT.Edit RawContent -> OT.Edit RawContent) -> DB ()
+updateEditSource eid f = do
+  parents <- entityVal <$$> liftDB (selectList [S.ParentChildChild ==. S.idToKey eid] [])
+  liftDB . forM_ parents $ \(S.ParentChild parent (RawContentEdit edit) _) -> do
+    upsertBy (S.UniPC parent $ S.idToKey eid)
+             (error "updateEditSource")
+             [ S.ParentChildEdit =. RawContentEdit (f (S.keyToId parent) edit) ]
 
 getVersion :: ID Edit -> DB VDocVersion
 getVersion pid = S.editElim (\_ vdoc _ _ _ -> vdoc) <$> getEntityRep pid

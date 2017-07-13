@@ -93,6 +93,7 @@ refineApi =
   :<|> Refine.Backend.App.getCompositeVDocOnHead
   :<|> Refine.Backend.App.createVDocGetComposite
   :<|> Refine.Backend.App.addEdit
+  :<|> Refine.Backend.App.updateEdit
   :<|> Refine.Backend.App.addNote
   :<|> Refine.Backend.App.addQuestion
   :<|> Refine.Backend.App.addAnswer

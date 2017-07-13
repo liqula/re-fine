@@ -58,6 +58,7 @@ type RefineAPI =
   :<|> SGetVDoc
   :<|> SCreateVDoc
   :<|> SAddEdit
+  :<|> SUpdateEdit
   :<|> SAddNote
   :<|> SAddQuestion
   :<|> SAddAnswer
@@ -92,6 +93,10 @@ type SCreateVDoc  -- FIXME: remove this, vdocs should only be created inside Col
 
 type SAddEdit
   = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Edit)
+    :> Post '[JSON] Edit
+
+type SUpdateEdit
+  = "r" :> "updateedit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Edit)
     :> Post '[JSON] Edit
 
 type SAddNote

@@ -47,6 +47,7 @@ import Refine.Backend.Natural
 import Refine.Backend.Server
 import Refine.Backend.Test.Util (withTempCurrentDirectory, sampleMetaID)
 import Refine.Backend.User
+import Refine.Common.OT hiding (Edit)
 import Refine.Common.ChangeAPI
 import Refine.Common.Rest
 import Refine.Common.Types as Common
@@ -210,6 +211,9 @@ createVDocUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SCr
 
 addEditUri :: ID Edit -> SBS
 addEditUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddEdit)
+
+updateEditUri :: ID Edit -> SBS
+updateEditUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SUpdateEdit)
 
 addNoteUri :: ID Edit -> SBS
 addNoteUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddNote)
@@ -395,6 +399,38 @@ specMockedLogin = around createDevModeTestSession $ do
         (fe, fp) <- setup sess
         be :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (fe ^. compositeVDoc . vdocID)
         be ^. compositeVDocApplicableEdits . to Map.elems`shouldContain` [fp]
+
+      it "updateEdit" $ \sess -> do
+        (_, fp) <- setup sess
+
+        let d = rawContentToVDocVersion . mkRawContent $ mkBlock "1234567890" :| []
+        _ :: Edit <- runWai sess $
+            postJSON
+              (updateEditUri (fp ^. editID))
+              (CreateEdit
+                "updated edit"
+                d
+                Meaning)
+
+        edit <- runDB sess . db . getEdit $ fp ^. editID
+        edit ^. editVDocVersion `shouldBe` d
+        edit ^. editKind `shouldBe` Meaning
+        edit ^. editDesc `shouldBe` "updated edit"
+        length (edit ^. editSource . unEditSource) `shouldBe` 1
+        fst (head $ edit ^. editSource . unEditSource) `shouldBe`
+          [ ERawContent
+            [ ENonEmpty $ EditItem 0
+              [ EditSecond (SegmentListEdit (InsertItem 0 ((Atom Nothing, mempty),NonEmptyST "[new vdoc version]")))
+              , EditSecond (SegmentListEdit (DeleteRange 1 1))
+              ]
+            ]
+          , ERawContent
+            [ ENonEmpty $ EditItem 0
+              [ EditSecond (SegmentListEdit (InsertItem 0 ((Atom Nothing, mempty),NonEmptyST "1234567890")))
+              , EditSecond (SegmentListEdit (DeleteRange 1 1))
+              ]
+            ]
+          ]
 
 specUserHandling :: Spec
 specUserHandling = around createTestSession $ do
