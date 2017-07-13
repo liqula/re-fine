@@ -43,6 +43,7 @@ diffToolbar_ props = do
 
   let EditIndex alledits thisedit = props ^. diffToolbarIndex
   span_ . fromString $ "Edit " <> show (thisedit + 1) <> " of " <> show alledits
+                       <> ", " <> show (props ^. diffToolbarEditKind)
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 

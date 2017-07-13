@@ -149,6 +149,7 @@ mainHeaderRender () rs = do
             WipedDocumentStateDiff i edit collapsed -> diffToolbar_ $ DiffToolbarProps
               (edit ^. editID)
               i
+              (edit ^. editKind)
               (edit ^. editVotes . to votesToCount)
               collapsed
             WipedDocumentStateEdit eprops -> editToolbar_ eprops
