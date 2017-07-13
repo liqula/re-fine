@@ -139,7 +139,7 @@ addMerge base eid1 eid2 = do
           let (diff1, diff2) = OT.merge doc e1 e2
               newdoc = OT.patch (e1 <> diff1) doc
           DB.createEdit rid (EditSource [(diff1, eid1), (diff2, eid2)])
-            $ CreateEdit (edit2 ^. editDesc) (rawContentToVDocVersion newdoc) EKMerge
+            $ CreateEdit (edit2 ^. editDesc) (rawContentToVDocVersion newdoc) (edit2 ^. editKind)
         res -> pure . Left $ AppMergeError base eid1 eid2 (cs $ show res)
 
 rebaseHeadToEdit :: (MonadApp db uh) => ID Edit -> AppM db uh ()

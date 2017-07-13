@@ -555,5 +555,5 @@ specVoting = around createTestSession $ do
       length rebasedEdits `shouldBe` 1
       head rebasedEdits ^. editID   `shouldNotBe` e2 ^. editID  -- (rebase is immutable)
       head rebasedEdits ^. editDesc `shouldBe` "description"
-      head rebasedEdits ^. editKind `shouldBe` EKMerge
+      head rebasedEdits ^. editKind `shouldBe` Grammar
       -- (compare versions, too?  that will probably break once we get fancier merge heuristics, though.)

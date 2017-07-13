@@ -149,7 +149,7 @@ data CreateEdit = CreateEdit
   }
   deriving (Eq, Ord, Show, Generic)
 
-data EditKind = Grammar | Phrasing | Meaning | Initial | EKMerge
+data EditKind = Grammar | Phrasing | Meaning | Initial
   deriving (Eq, Ord, Show, Read, Generic, Bounded, Enum)
 
 
