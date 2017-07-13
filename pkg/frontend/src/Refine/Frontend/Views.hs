@@ -111,11 +111,15 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                                      (rs ^. gsScreenState)
                                      (fltr (vdoc ^. compositeVDocApplicableDiscussions))
                                      (fltr (vdoc ^. compositeVDocApplicableNotes))
-                                     (fltr (vdoc ^. compositeVDocApplicableEdits))
+                                     (fltr . fltrThisEdit $ vdoc ^. compositeVDocApplicableEdits)
                                      (case rs ^. gsDocumentState of
                                         DocumentStateDiff{} -> BubblePositioningEvenlySpaced
                                         _ -> rs ^. gsContributionState . csBubblePositioning)
                                      (rs ^. gsContributionState . csQuickCreateShowState)
+
+                          fltrThisEdit = case rs ^. gsDocumentState of
+                            DocumentStateDiff _ _ _ eid _ -> Map.filter $ (/= eid) . (^. editID)
+                            _ -> id
 
                           fltr :: IsContribution c => Map (ID c) b -> [b]
                           fltr = if rs ^. gsHeaderState . hsReadOnly
