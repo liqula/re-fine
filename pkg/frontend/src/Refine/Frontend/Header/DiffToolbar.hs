@@ -36,8 +36,14 @@ import Refine.Frontend.Icon
 import Refine.Frontend.Store.Types
 
 
+{-# ANN module ("HLint: ignore Use cs" :: String) #-}  -- ANN diffToolbar  doesn't work
+
 diffToolbar_ :: HasCallStack => DiffToolbarProps -> ReactElementM eventHandler ()
 diffToolbar_ props = do
+
+  let EditIndex alledits thisedit = props ^. diffToolbarIndex
+  span_ . fromString $ "Edit " <> show (thisedit + 1) <> " of " <> show alledits
+
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
   ibutton_ $ emptyIbuttonProps "Close" [ContributionAction HideContributionDialog]

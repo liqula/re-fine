@@ -47,7 +47,7 @@ import Refine.Frontend.Types
 type GlobalState = GlobalState_ GlobalDocumentState
 
 data GlobalState_ a = GlobalState
-  { _gsEdit                       :: Maybe (ID Edit)
+  { _gsEditID                     :: Maybe (ID Edit)
   , _gsVDocList                   :: Maybe [ID VDoc]  -- ^ FIXME: this should be live in it's own
                                                       -- 'GlobalState' constructor.
   , _gsContributionState          :: ContributionState
@@ -75,7 +75,7 @@ data ServerCache = ServerCache
 
 emptyGlobalState :: HasCallStack => GlobalState
 emptyGlobalState = GlobalState
-  { _gsEdit                       = Nothing
+  { _gsEditID                     = Nothing
   , _gsVDocList                   = Nothing
   , _gsContributionState          = emptyContributionState
   , _gsHeaderState                = emptyHeaderState
@@ -151,31 +151,32 @@ getDocumentState gs@(view gsVDoc -> Just cvdoc)
 getDocumentState _
   = error "getDocumentState: no gsVDoc"
 
+gsEdit :: GlobalState_ a -> Maybe Edit
+gsEdit gs = ((gs ^. gsServerCache . scEdits) Map.!) <$> (gs ^. gsEditID)
+
 gsVDoc :: Lens' (GlobalState_ a) (Maybe CompositeVDoc)
 gsVDoc = lens getCompositeVDoc setCompositeVDoc
   where
     getCompositeVDoc :: GlobalState_ a -> Maybe CompositeVDoc
-    getCompositeVDoc gs = mkCompositeVDoc (gs ^. gsServerCache) <$> (gs ^. gsEdit)
+    getCompositeVDoc gs = mkCompositeVDoc (gs ^. gsServerCache) <$> gsEdit gs
 
-    mkCompositeVDoc :: ServerCache -> ID Edit -> CompositeVDoc
-    mkCompositeVDoc sc eid = CompositeVDoc
+    mkCompositeVDoc :: ServerCache -> Edit -> CompositeVDoc
+    mkCompositeVDoc sc edit = CompositeVDoc
       ((sc ^. scVDocs) Map.! (edit ^. editVDoc))
       edit
       (mkMap scEdits editChildren)
       (mkMap scNotes editNotes')
       (mkMap scDiscussions editDiscussions')
       where
-        edit = (sc ^. scEdits) Map.! eid
-
         -- TUNING: this go through y and construct x from that, this way we don't have to touch the
         -- elements of x we want to throw out.
         mkMap :: Lens' ServerCache (Map (ID a) a) -> Lens' Edit (Set (ID a)) -> Map (ID a) a
         mkMap x y = Map.filterWithKey (\k _ -> k `Set.member` (edit ^. y)) $ sc ^. x
 
     setCompositeVDoc :: GlobalState_ a -> Maybe CompositeVDoc -> GlobalState_ a
-    setCompositeVDoc gs Nothing = gs & gsEdit .~ Nothing
+    setCompositeVDoc gs Nothing = gs & gsEditID .~ Nothing
     setCompositeVDoc gs (Just cvd) = gs
-      & gsEdit .~ Just (cvd ^. compositeVDocThisEdit . editID)
+      & gsEditID .~ Just (cvd ^. compositeVDocThisEdit . editID)
       & gsServerCache %~ updateCache
       where
         updateCache sc = sc

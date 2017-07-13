@@ -25,7 +25,8 @@ module Refine.Frontend.Header.Types where
 
 import Refine.Frontend.Prelude
 
-import GHC.Generics (Generic)
+import qualified Data.Set as Set
+import           GHC.Generics (Generic)
 
 import Refine.Common.Types
 import Refine.Frontend.Login.Types
@@ -72,6 +73,7 @@ instance UnoverlapAllEq TopMenuBarProps
 
 data DiffToolbarProps = DiffToolbarProps
   { _diffToolbarPropsEditID :: ID Edit
+  , _diffToolbarIndex       :: EditIndex
   , _diffToolbarPropsVotes  :: VoteCount
   , _diffToolbarCollapsed   :: Bool
   } deriving (Show, Eq, Generic)
@@ -86,4 +88,16 @@ data EditToolbarProps
   deriving (Eq, Show)
 
 
-makeRefineTypes [''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState, ''DiffToolbarProps, ''TopMenuBarProps]
+data EditIndex = EditIndex
+  { _editIndexNumOfEdits :: Int
+  , _editIndex           :: Int  -- 0, 1, 2 ... editIndexNumOfEdits - 1
+  }
+  deriving (Show, Eq, Generic)
+
+mkEditIndex :: HasCallStack => Edit -> ID Edit -> EditIndex
+mkEditIndex e i = EditIndex (Set.size es) (fromMaybe (error "impossible") $ Set.lookupIndex i es)
+  where
+    es = e ^. editChildren
+
+
+makeRefineTypes [''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState, ''DiffToolbarProps, ''TopMenuBarProps, ''EditIndex]

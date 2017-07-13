@@ -56,7 +56,7 @@ documentStateUpdate (OpenDocument cvdoc) oldgs _newgs st
   = let eidChanged = Just newID /= mOldID
         newID  = cvdoc ^. compositeVDocThisEditID
         mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
-    in refreshDocumentStateView eidChanged (rawContentFromCompositeVDoc cvdoc) st
+    in refreshDocumentStateView (fromMaybe (error "impossible") $ gsEdit oldgs) eidChanged (rawContentFromCompositeVDoc cvdoc) st
 
 documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) _state
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
@@ -67,21 +67,21 @@ documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _
       (EditInfo "" Nothing)
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
-                    _oldgs
+                    oldgs
                     _newgs
                     (DocumentStateView e r)
-  = DocumentStateDiff e r eid True
+  = DocumentStateDiff (mkEditIndex (fromMaybe (error "impossible") $ gsEdit oldgs) eid) e r eid True
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
                     _oldgs
                     _newgs
-                    (DocumentStateDiff e r _ _)
+                    (DocumentStateDiff _ e r _ _)
   = DocumentStateView e r
 
 documentStateUpdate (ContributionAction HideContributionDialog)
                     _oldgs
                     _newgs
-                    (DocumentStateDiff e r _ _)
+                    (DocumentStateDiff _ e r _ _)
   = DocumentStateView e r
 
 documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _ _state
