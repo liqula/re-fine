@@ -66,7 +66,9 @@ windowSize_ :: HasCallStack => WindowSizeProps -> ReactElementM eventHandler () 
 windowSize_ = RF.view windowSize
 
 setWindowSize :: HasCallStack => IO ()
-setWindowSize = dispatchAndExec . ScreenAction . SetWindowWidth =<< js_getWindowWidth
+setWindowSize = do
+  w <- js_getWindowWidth
+  when (w /= (-1)) . dispatchAndExec . ScreenAction $ SetWindowWidth w
 
 #ifdef __GHCJS__
 
@@ -74,7 +76,7 @@ setWindowSize = dispatchAndExec . ScreenAction . SetWindowWidth =<< js_getWindow
 -- document.documentElement.clientWidth first, and we should get the body via
 -- document.getElementsByTagName('body')[0])
 foreign import javascript safe
-  "document.body.clientWidth"
+  "refine$documentBodyClientWidth()"
   js_getWindowWidth :: IO Int
 
 foreign import javascript safe

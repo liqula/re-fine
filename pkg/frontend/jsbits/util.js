@@ -33,6 +33,18 @@
         },
       ]);
 
+    var refine$previousDocumentBodyClientWidth = 0;
+
+    target.refine$documentBodyClientWidth = function() {
+	var current = document.body.clientWidth;
+	if (current === refine$previousDocumentBodyClientWidth) {
+	    return -1;
+	} else {
+	    refine$previousDocumentBodyClientWidth = current;
+	    return current;
+	}
+    };
+
     target.refine$editorContentFromHtml = function(html) {
         const blocksFromHTML = Draft.convertFromHTML(html);
         return Draft.ContentState.createFromBlockArray(
