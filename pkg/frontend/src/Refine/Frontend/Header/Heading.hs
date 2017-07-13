@@ -170,18 +170,19 @@ mainHeader_ props = RF.view mainHeader props mempty
 calcHeaderHeight :: HasCallStack => RF.LDOM -> IO ()
 calcHeaderHeight ldom = do
    this <- RF.lThis ldom
-   dispatchAndExec . ScreenAction . AddHeaderHeight =<< js_getBoundingClientRectHeight this
+   h <- js_getHeaderHeight this
+   when (h /= (-1)) . dispatchAndExec . ScreenAction $ AddHeaderHeight h
 
 #ifdef __GHCJS__
 
 foreign import javascript safe
-  "Math.floor($1.getBoundingClientRect().height)"
-  js_getBoundingClientRectHeight :: JSVal -> IO Int
+  "refine$getHeaderHeight($1)"
+  js_getHeaderHeight :: JSVal -> IO Int
 
 #else
 
-{-# ANN js_getBoundingClientRectHeight ("HLint: ignore Use camelCase" :: String) #-}
-js_getBoundingClientRectHeight :: JSVal -> IO Int
-js_getBoundingClientRectHeight = error "javascript FFI not available in GHC"
+{-# ANN js_getHeaderHeight ("HLint: ignore Use camelCase" :: String) #-}
+js_getHeaderHeight :: JSVal -> IO Int
+js_getHeaderHeight = error "javascript FFI not available in GHC"
 
 #endif

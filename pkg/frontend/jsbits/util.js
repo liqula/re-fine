@@ -45,6 +45,18 @@
 	}
     };
 
+    var refine$previousHeaderHeight = 0;
+
+    target.refine$getHeaderHeight = function(domThis) {
+	var current = Math.floor(domThis.getBoundingClientRect().height);
+	if (current === refine$previousHeaderHeight) {
+	    return -1;
+	} else {
+	    refine$previousHeaderHeight = current;
+	    return current;
+	}
+    };
+
     target.refine$editorContentFromHtml = function(html) {
         const blocksFromHTML = Draft.convertFromHTML(html);
         return Draft.ContentState.createFromBlockArray(
