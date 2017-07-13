@@ -131,7 +131,6 @@ editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
     updateActions =
       [ DocumentAction . DocumentUpdate
           . globalDocumentState $ dstate & documentStateVal .~ estate'
-      , ContributionAction RequestSetAllVerticalSpanBounds
       ]
 
 documentComponentDidMountOrUpdate :: HasCallStack => Outdated.LPropsAndState DocumentProps () -> IO ()
