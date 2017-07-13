@@ -188,10 +188,13 @@ lookupPositions props cid = case
     ps -> map snd . filter fst . computeDistance
         $ sortBy (compare `on` (^. verticalSpanBoundsTop) . fst) ps
   where
-    computeDistance xs = zip (True: zipWith (\top prevbottom -> top - prevbottom > 50{-distance in pixels-})
-                                            ((^. verticalSpanBoundsTop) . fst <$> tail xs)
-                                            ((^. verticalSpanBoundsBottom) . fst <$> xs)
-                             ) xs
+    computeDistance xs
+      = zip (True: zipWith (\top prevtop -> top - prevtop > 2 * constantBubbleHeight + 20{-pixel-})
+                           (tail tops)
+                           tops
+            ) xs
+      where
+        tops = (^. verticalSpanBoundsTop) . fst <$> xs
 
 editToProtoBubbles :: HasCallStack => AsideProps -> Edit -> [ProtoBubble]
 editToProtoBubbles aprops e
