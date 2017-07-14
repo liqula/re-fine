@@ -146,11 +146,7 @@ editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
 
     updateAction =
        DocumentAction . DocumentUpdate
-          . globalDocumentState $ dstate & documentStateVal .~ if oldfoc && not newfoc
-         then forceSelection estate' (getSelection estate') -- this should highlight the selection
-                                                            -- even after focus out, but probably
-                                                            -- this is not what we want
-         else estate'
+          . globalDocumentState $ dstate & documentStateVal .~ estate'
 
 
 documentComponentDidMountOrUpdate :: HasCallStack => Outdated.LPropsAndState DocumentProps () -> IO ()
