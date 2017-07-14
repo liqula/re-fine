@@ -35,7 +35,7 @@ module Refine.Frontend.Icon.Types
   , ibImage
   , ibHighlightWhen
   , ibOnClick
-  , ibClickPropag
+  , ibOnClickMods
   , ibEnabled
   , ibSize
   , ibAlign
@@ -72,7 +72,7 @@ module Refine.Frontend.Icon.Types
   , iconButtonPropsPosition
   , iconButtonPropsAlignRight
   , iconButtonPropsOnClick
-  , iconButtonPropsClickPropag
+  , iconButtonPropsOnClickMods
   , iconButtonPropsExtraClasses
   ) where
 
@@ -101,7 +101,7 @@ data IbuttonProps onclick = IbuttonProps
   , _ibImage            :: ST
   , _ibHighlightWhen    :: HighlightWhen  -- ^ when to switch to @_RO.svg@ variant.
   , _ibOnClick          :: onclick
-  , _ibClickPropag      :: Bool
+  , _ibOnClickMods      :: [EventModification]
   , _ibEnabled          :: Bool
   , _ibSize             :: IconSize
   , _ibAlign            :: Align
@@ -212,7 +212,7 @@ data IconButtonPropsWithHandler onclick = IconButtonProps
   , _iconButtonPropsPosition     :: Maybe Int
   , _iconButtonPropsAlignRight   :: Bool
   , _iconButtonPropsOnClick      :: onclick
-  , _iconButtonPropsClickPropag  :: Bool
+  , _iconButtonPropsOnClickMods  :: [EventModification]
   , _iconButtonPropsExtraClasses :: [JSString]
   }
   deriving (Eq)

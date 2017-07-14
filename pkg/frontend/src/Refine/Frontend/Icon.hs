@@ -140,7 +140,7 @@ emptyIbuttonProps img onclick = IbuttonProps
   , _ibImage            = img
   , _ibHighlightWhen    = HighlightOnMouseOver
   , _ibOnClick          = onclick
-  , _ibClickPropag      = True
+  , _ibOnClickMods      = []
   , _ibEnabled          = True
   , _ibSize             = Large
   , _ibAlign            = AlignLeft
@@ -161,10 +161,15 @@ instance IbuttonOnClick action ('StatefulEventHandlerCode st) => IbuttonOnClick 
       (act, mupd) -> (act, IbuttonState mo <$> mupd)
 
 -- | Handle stopPropagation etc., then run the 'runIbuttonOnClick' from the matching instance.
-mkIbuttonClickHandler :: HasCallStack => IbuttonOnClick onclick handler => IbuttonProps onclick -> Event -> MouseEvent -> (EventHandlerType handler, [EventModification])
+mkIbuttonClickHandler :: (HasCallStack, IbuttonOnClick onclick handler)
+                      => IbuttonProps onclick -> Event -> MouseEvent -> (EventHandlerType handler, [EventModification])
 mkIbuttonClickHandler props evt mevt = propag handle
   where
-    propag = if props ^. ibClickPropag then simpleHandler else stopPropagation
+    propag = case props ^. ibOnClickMods of
+     []                -> simpleHandler
+     [PreventDefault]  -> preventDefault
+     [StopPropagation] -> stopPropagation
+     bad               -> error $ "ibutton_: bad combination of click event mods: " <> show bad
     handle = runIbuttonOnClick evt mevt (props ^. ibOnClick)
 
 
@@ -254,7 +259,11 @@ iconButton_ props = view_ iconButton ("iconButton_" <> props ^. iconButtonPropsL
 
 mkClickHandler :: HasCallStack => IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick -> Event -> MouseEvent -> (ViewEventHandler, [EventModification])
 mkClickHandler props evt mevt =
-  (if props ^. iconButtonPropsClickPropag then simpleHandler else stopPropagation) $
+  (case props ^. iconButtonPropsOnClickMods of
+     []                -> simpleHandler
+     [PreventDefault]  -> preventDefault
+     [StopPropagation] -> stopPropagation
+     bad               -> error $ "ibutton_: bad combination of click event mods: " <> show bad) $
   runIconButtonPropsOnClick evt mevt (props ^. iconButtonPropsOnClick)
 
 class (Typeable onclick, Eq onclick) => IconButtonPropsOnClick onclick where  -- FIXME: rename to ButtonOnClick
@@ -277,7 +286,7 @@ defaultIconButtonProps = IconButtonProps
     , _iconButtonPropsPosition     = Nothing
     , _iconButtonPropsAlignRight   = False
     , _iconButtonPropsOnClick      = defaultOnClick
-    , _iconButtonPropsClickPropag  = True  -- Iff 'False', call 'stopPropagation'.  See 'mkClickHandler'.
+    , _iconButtonPropsOnClickMods  = []  -- See 'mkClickHandler'.
     , _iconButtonPropsExtraClasses = []
     }
 

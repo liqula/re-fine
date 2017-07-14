@@ -125,15 +125,6 @@ Question: What are the right EventModification values for onChange/onBlur?
 
 -- | Handle editor change events.
 --
--- Ignores boring changes.  Boring changes are those that do not show in 'RawContent' or
--- 'SelectionState'.  We may have missed something here; if that's the case you will notice that the
--- draft component will jump back to stale 'EditorState's (the ones that we neglected to register in
--- 'GlobalState' after some other component updated it (e.g. the 'bold' button in the toolbar).
--- Should be easy to fix once it happens.
---
--- Because both 'ContentState' and 'SelectionState' come from an immutable object, they can be
--- compared as 'JSVal's with '(===)'.
---
 -- FIXME: We are cheating here: the event we get from draft.js is really not a 'HandlerArg' that
 -- can be parsed into an 'Event', but an 'EditorState'.  So if we attempt to access 'Event' fields
 -- like 'evtType', we will get ugly error messages.  As long as we stick to the 'evtHandlerArg' part
@@ -151,15 +142,11 @@ editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
                                      -- not work if combined with the hack in the next line
          | not oldfoc && newfoc = [] -- if this is [StopPropagation] then there is an uncaught
                                      -- exception but focus in seems to have the right effect
-         | otherwise = error "nah..."
+         | otherwise = error "internal error: onChange event without ever obtaining focus."
 
     updateAction =
        DocumentAction . DocumentUpdate
-          . globalDocumentState $ dstate & documentStateVal .~ if oldfoc && not newfoc
-         then forceSelection estate' (getSelection estate') -- this should highlight the selection
-                                                            -- even after focus out, but probably
-                                                            -- this is not what we want
-         else estate'
+          . globalDocumentState $ dstate & documentStateVal .~ estate'
 
 
 documentComponentDidMountOrUpdate :: HasCallStack => Outdated.LPropsAndState DocumentProps () -> IO ()
