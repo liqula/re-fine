@@ -165,7 +165,7 @@ mkMainHeaderProps :: GlobalState -> MainHeaderProps
 mkMainHeaderProps gs = fmap (const . wipeDocumentState $ getDocumentState gs) gs
 
 mainHeader_ :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
-mainHeader_ props = RF.view mainHeader props mempty
+mainHeader_ props = RF.viewWithSKey mainHeader "mainHeader" props mempty
 
 calcHeaderHeight :: HasCallStack => RF.LDOM -> IO ()
 calcHeaderHeight ldom = do
