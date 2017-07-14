@@ -80,7 +80,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
       __ :: Translations = rs ^. RS.gsTranslations . unTrans
                                 -- FIXME: I think this could be done more nicely.
 
-  div_ $ do
+  div_ ["key" $= "maindiv" {-FIXME: seems not to work as expected, we still have a warning-}] $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
       stickyContainer_ [] $ do
           mainHeader_ $ mkMainHeaderProps rs
@@ -100,7 +100,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                                rs ^? RS.gsDocumentState . documentStateEditInfo)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
 
-          main_ ["role" $= "main"] $ do
+          main_ ["role" $= "main", "key" $= "main"] $ do
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       let asideProps = AsideProps

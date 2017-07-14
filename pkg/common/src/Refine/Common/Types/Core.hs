@@ -737,7 +737,7 @@ fromSelectionPoint rc (Position k r) = Position (BlockIndex i k) r
         _ -> error "impossible"
 
 fromSelectionState :: RawContent -> SelectionState -> Selection Position
-fromSelectionState rc (SelectionState sel) = fromSelectionPoint rc <$> sel
+fromSelectionState rc (SelectionState sel _) = fromSelectionPoint rc <$> sel
 
 -- previous and next positions, the given one is also in the list
 surroundingPositions :: RawContent -> Position -> ([Position]{-previous, reversed-}, [Position]{-next-})

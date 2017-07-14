@@ -77,12 +77,12 @@ getDraftSelectionStateViaBrowser_2 :: Either JSString SelectionState
 getDraftSelectionStateViaBrowser_2 = Left "some unknown error" :: Either JSString SelectionState
 
 getDraftSelectionStateViaBrowser_3 :: Either JSString SelectionState
-getDraftSelectionStateViaBrowser_3 = Right . SelectionState . toSelection $ Range
+getDraftSelectionStateViaBrowser_3 = Right . (`SelectionState` True) . toSelection $ Range
   (Position (BlockKey "block1") 3)
   (Position (BlockKey "block1") 3)
 
 getDraftSelectionStateViaBrowser_4 :: Either JSString SelectionState
-getDraftSelectionStateViaBrowser_4 = Right . SelectionState . toBackwardSelection $ Range
+getDraftSelectionStateViaBrowser_4 = Right . (`SelectionState` True) . toBackwardSelection $ Range
   (Position (BlockKey "fj6g6") 266)
   (Position (BlockKey "fj6g6") 360)
 
@@ -102,22 +102,28 @@ foreign import javascript safe
 
 foreign import javascript safe
   "{ Right: \
-       { _selectionIsBackward: false \
-       , _selectionRange: \
-           { _rangeBegin: { _blockIndex: 'block1', _columnIndex: 3 } \
-           , _rangeEnd: { _blockIndex: 'block1', _columnIndex: 3 } \
+       { _unSelectionState: \
+           { _selectionIsBackward: false \
+           , _selectionRange: \
+               { _rangeBegin: { _blockIndex: 'block1', _columnIndex: 3 } \
+               , _rangeEnd: { _blockIndex: 'block1', _columnIndex: 3 } \
+               } \
            } \
+       , _selectionStateHasFocus: true \
        } \
    }"
   js_getDraftSelectionStateViaBrowser_3 :: JSVal
 
 foreign import javascript safe
   "{ Right: \
-       { _selectionIsBackward: true \
-       , _selectionRange: \
-           { _rangeBegin: { _blockIndex: 'fj6g6', _columnIndex: 266 } \
-           , _rangeEnd: { _blockIndex: 'fj6g6', _columnIndex: 360 } \
+       { _unSelectionState: \
+           { _selectionIsBackward: true \
+           , _selectionRange: \
+               { _rangeBegin: { _blockIndex: 'fj6g6', _columnIndex: 266 } \
+               , _rangeEnd: { _blockIndex: 'fj6g6', _columnIndex: 360 } \
+               } \
            } \
+       , _selectionStateHasFocus: true \
        } \
    }"
   js_getDraftSelectionStateViaBrowser_4 :: JSVal

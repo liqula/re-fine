@@ -63,7 +63,7 @@ documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvd
 
 documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _)
   = DocumentStateEdit
-      (maybe estate (forceSelection estate . toSelectionState) $ oldgs ^. gsCurrentSelection)
+      (maybe estate (forceSelection estate . (`toSelectionState` True)) $ oldgs ^. gsCurrentSelection)
       (EditInfo "" Nothing)
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))

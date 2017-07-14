@@ -43,13 +43,12 @@ import           Refine.Common.VDoc.OT (showEditAsRawContentWithMarks, hideUncha
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
-import           Refine.Frontend.Document.FFI.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Test.Console (weAreInDevMode)
 import           Refine.Frontend.ThirdPartyViews (editor_)
 import           Refine.Frontend.Util
+
 
 -- | Note on draft vs. readOnly vs. selection events: in readOnly mode, draft's onChange event is not
 -- fired at all, not even for selection updates.  (There is a hack based on handleBeforeInput, but
@@ -108,6 +107,20 @@ documentRender() props = liftViewToStateHandler $ do
       , "customStyleMap" &= documentStyleMap
       , "readOnly" &= has _DocumentStateView dstate
       , onChange $ editorOnChange dstate
+{-
+It is also possible to install onBlur and onFocus events which receives
+proper Event values.
+
+Question: Can we be sure about the ordering of onChange+onBlur / onChange+onFocus events?
+
+Question: How can we reliably cancel onChange if onBlur/onFocus is fired too?
+          (Think about the order and state change of these events.)
+
+Question: What are the right EventModification values for onChange/onBlur?
+
+--      , onBlur
+--      , onFocus
+-}
       ] mempty
 
 -- | Handle editor change events.
@@ -127,25 +140,26 @@ documentRender() props = liftViewToStateHandler $ do
 -- of the structure, things should be fine.
 editorOnChange :: DocumentState -> Event -> (ViewEventHandler, [EventModification])
 editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
-  simpleHandler $ if boring then [] else dispatchMany updateActions
+  (dispatch updateAction, mods)
   where
-    boring = sameContent && sameSelection
-      where
-        sameContent = assert (not weAreInDevMode || slow == fast) fast
-          where
-            fast = ((===) `on` (\(ContentState (NoJSONRep j)) -> j) . getCurrentContent) (dstate ^. documentStateVal) estate'
-            slow = ((==) `on` convertToRaw . getCurrentContent) (dstate ^. documentStateVal) estate'
+    oldfoc = dstate ^. documentStateVal . to getSelection . selectionStateHasFocus
+    newfoc = estate' ^. to getSelection . selectionStateHasFocus
 
-        sameSelection = assert (not weAreInDevMode || slow == fast) fast
-          where
-            fast = ((===) `on` js_ES_getSelection) (dstate ^. documentStateVal) estate'
-            slow = ((==) `on` getSelection) (dstate ^. documentStateVal) estate'
+    mods | oldfoc && newfoc = []
+         | oldfoc && not newfoc = [] -- if this is [PreventDefault] then there is an uncaught
+                                     -- exception but focus out seems to have the right effect; does
+                                     -- not work if combined with the hack in the next line
+         | not oldfoc && newfoc = [] -- if this is [StopPropagation] then there is an uncaught
+                                     -- exception but focus in seems to have the right effect
+         | otherwise = error "nah..."
 
-    updateActions =
-      [ DocumentAction . DocumentUpdate
-          . globalDocumentState $ dstate & documentStateVal .~ estate'
-      , ContributionAction RequestSetAllVerticalSpanBounds
-      ]
+    updateAction =
+       DocumentAction . DocumentUpdate
+          . globalDocumentState $ dstate & documentStateVal .~ if oldfoc && not newfoc
+         then forceSelection estate' (getSelection estate') -- this should highlight the selection
+                                                            -- even after focus out, but probably
+                                                            -- this is not what we want
+         else estate'
 
 
 documentComponentDidMountOrUpdate :: HasCallStack => Outdated.LPropsAndState DocumentProps () -> IO ()
@@ -153,7 +167,7 @@ documentComponentDidMountOrUpdate _getPropsAndState = do
   dispatchAndExec . ContributionAction $ RequestSetAllVerticalSpanBounds
 
 document_ :: HasCallStack => DocumentProps -> ReactElementM eventHandler ()
-document_ props = Outdated.view document props mempty
+document_ props = Outdated.viewWithSKey document "document" props mempty
 
 
 mkDocumentStyleMap :: HasCallStack => [MarkID] -> Maybe RawContent -> Value

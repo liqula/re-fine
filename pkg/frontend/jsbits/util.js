@@ -33,22 +33,36 @@
         },
       ]);
 
+    var refine$previousDocumentBodyClientWidth = 0;
+
+    target.refine$documentBodyClientWidth = function() {
+	var current = document.body.clientWidth;
+	if (current === refine$previousDocumentBodyClientWidth) {
+	    return -1;
+	} else {
+	    refine$previousDocumentBodyClientWidth = current;
+	    return current;
+	}
+    };
+
+    var refine$previousHeaderHeight = 0;
+
+    target.refine$getHeaderHeight = function(domThis) {
+	var current = Math.floor(domThis.getBoundingClientRect().height);
+	if (current === refine$previousHeaderHeight) {
+	    return -1;
+	} else {
+	    refine$previousHeaderHeight = current;
+	    return current;
+	}
+    };
+
     target.refine$editorContentFromHtml = function(html) {
         const blocksFromHTML = Draft.convertFromHTML(html);
         return Draft.ContentState.createFromBlockArray(
             blocksFromHTML.contentBlocks,
             blocksFromHTML.entityMap
         );
-    };
-
-    target.refine$setSelectionState = function(es, sel) {
-        var sel2 = {
-            anchorKey:    sel._selectionRange._rangeBegin._blockIndex,
-            anchorOffset: sel._selectionRange._rangeBegin._columnIndex,
-            focusKey:     sel._selectionRange._rangeEnd._blockIndex,
-            focusOffset:  sel._selectionRange._rangeEnd._columnIndex
-        }
-        return Draft.EditorState.forceSelection(es, Draft.SelectionState.createEmpty().merge(sel2));
     };
 
     target.refine$getDraftSelectionStateViaBrowser = (function() {

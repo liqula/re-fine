@@ -184,14 +184,14 @@ documentRedo = js_ES_redo
 -- Draft never actually nulls this field.  There is always have a selection, but start and end point
 -- may be identical.  See 'isEmptyRange', 'getRangeAction' for context.
 getSelection :: HasCallStack => EditorState -> Draft.SelectionState
-getSelection (js_ES_getSelection -> sel) = Draft.SelectionState .
+getSelection (js_ES_getSelection -> sel) = Draft.SelectionState (
   (if js_ES_getSelectionIsBackward sel then Draft.toBackwardSelection else Draft.toSelection) $ Draft.Range
     (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionStartKey sel) (js_ES_getSelectionStartOffset sel))
-    (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionEndKey sel)   (js_ES_getSelectionEndOffset sel))
+    (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionEndKey sel)   (js_ES_getSelectionEndOffset sel))) (js_ES_getSelectionHasFocus sel)
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#forceselection
 forceSelection :: HasCallStack => EditorState -> Draft.SelectionState -> EditorState
-forceSelection es (cs . encode -> sel) = js_ES_forceSelection es sel
+forceSelection es = js_ES_forceSelection es . cs . encode
 
 -- | The shape of the selection object is determined by the generic aeson instances of the haskell
 -- type.  If that changes, you need to adjust the test cases in "Refine.Frontend.OrphansSpec" and
@@ -311,6 +311,10 @@ foreign import javascript safe
   js_ES_getSelection :: EditorState -> JSVal
 
 foreign import javascript safe
+  "$1.getHasFocus()"
+  js_ES_getSelectionHasFocus :: JSVal -> Bool
+
+foreign import javascript safe
   "$1.getIsBackward()"
   js_ES_getSelectionIsBackward :: JSVal -> Bool
 
@@ -331,7 +335,7 @@ foreign import javascript safe
   js_ES_getSelectionEndOffset :: JSVal -> Int
 
 foreign import javascript safe
-  "refine$setSelectionState($1, JSON.parse($2))"
+  "Draft.EditorState.forceSelection($1, Draft.SelectionState.createEmpty().merge(JSON.parse($2)))"
   js_ES_forceSelection :: EditorState -> JSString -> EditorState
 
 foreign import javascript safe
@@ -427,6 +431,10 @@ js_ES_toggleBlockType = error "javascript FFI not available in GHC"
 {-# ANN js_ES_getSelection ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelection :: EditorState -> JSVal
 js_ES_getSelection = error "javascript FFI not available in GHC"
+
+{-# ANN js_ES_getSelectionHasFocus ("HLint: ignore Use camelCase" :: String) #-}
+js_ES_getSelectionHasFocus :: JSVal -> Bool
+js_ES_getSelectionHasFocus = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_getSelectionIsBackward ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getSelectionIsBackward :: JSVal -> Bool
