@@ -155,6 +155,31 @@ data SelectionState = SelectionState
 toSelectionState :: Selection Position -> Bool -> SelectionState
 toSelectionState = SelectionState . fmap toSelectionPoint
 
+-- FIXME: anchor/focus is not begin/end
+instance ToJSON SelectionState where
+  toJSON (SelectionState (Selection back (Range (Position (BlockKey k) c) (Position (BlockKey k') c'))) focus) = object $
+    [ "anchorKey"         .:= k
+    , "anchorOffset"      .:= c
+    , "focusKey"          .:= k'
+    , "focusOffset"       .:= c'
+    , "hasFocus"          .:= focus
+    , "isBackward"        .:= back
+    ]
+
+-- FIXME: anchor/focus is not begin/end
+instance FromJSON SelectionState where
+  parseJSON = withObject "SelectionState" $ \obj ->
+    SelectionState
+    <$> (Selection <$> (obj .: "isBackward")
+         <*> (Range
+              <$> (Position
+                   <$> (BlockKey <$> (obj .: "anchorKey"))
+                   <*> (obj .: "anchorOffset"))
+              <*> (Position
+                   <$> (BlockKey <$> (obj .: "focusKey"))
+                   <*> (obj .: "focusOffset"))))
+    <*> (obj .: "hasFocus")
+
 
 -- * Ranges
 
@@ -230,7 +255,7 @@ renderLeafSelector (Position (BlockKey b) (SpanIndex k i)) =
   "span[data-offset-key=\"" <> b <> "-" <> cs (show k) <> "-" <> cs (show i) <> "\"]"
 
 
-makeRefineTypes [''GPosition, ''Range, ''Ranges, ''Selection, ''BlockIndex, ''BlockKey, ''SelectionState]
+deriveClasses [([''GPosition, ''Range, ''Ranges, ''Selection, ''BlockIndex, ''BlockKey], allClass), ([''SelectionState], [''Lens'])]
 
 -- counts from zero
 rowIndex :: Lens' Position Int
