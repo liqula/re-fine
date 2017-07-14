@@ -53,7 +53,7 @@ toolbar_ = do
     & iconButtonPropsElementName  .~ "btn-add-annotation"  -- RENAME
     & iconButtonPropsLabel        .~ "new comment"
     & iconButtonPropsOnClick      .~ [LoginGuardStash [HeaderAction ToggleCommentToolbarExtension]]
-    & iconButtonPropsClickPropag  .~ False
+    & iconButtonPropsOnClickMods  .~ [StopPropagation]
 
   iconButton_ $ toolbarButton
     & iconButtonPropsListKey      .~ "new-edit"
@@ -61,7 +61,7 @@ toolbar_ = do
     & iconButtonPropsElementName  .~ "bt-add-modification"  -- RENAME: edit
     & iconButtonPropsLabel        .~ "new edit"
     & iconButtonPropsOnClick      .~ [LoginGuardStash [HeaderAction StartEdit]]
-    & iconButtonPropsClickPropag  .~ False
+    & iconButtonPropsOnClickMods  .~ [StopPropagation]
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
@@ -70,6 +70,7 @@ toolbar_ = do
     & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Comment", "dark") XXLarge
     & iconButtonPropsElementName  .~ "all-annotations"   -- RENAME: annotation => comment
     & iconButtonPropsLabel        .~ "all comments"
+    & iconButtonPropsOnClickMods  .~ [StopPropagation]
     & iconButtonPropsOnClick      .~ (ContributionAction <$> [ SetBubbleFilter Nothing
                                                              , SetBubblePositioning BubblePositioningAbsolute
                                                              ])
@@ -79,6 +80,7 @@ toolbar_ = do
     & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Edit_view", "dark") XXLarge
     & iconButtonPropsElementName  .~ "all-modifications"  -- RENAME: edit
     & iconButtonPropsLabel        .~ "all edits"
+    & iconButtonPropsOnClickMods  .~ [StopPropagation]
     & iconButtonPropsOnClick      .~ (ContributionAction <$> [ SetBubbleFilter Nothing
                                                              , SetBubblePositioning BubblePositioningAbsolute
                                                              ])
@@ -89,6 +91,7 @@ toolbar_ = do
     & iconButtonPropsElementName  .~ "btn-read-mode"
     & iconButtonPropsLabel        .~ "read mode"
     & iconButtonPropsOnClick      .~ [HeaderAction ToggleReadOnly]
+    & iconButtonPropsOnClickMods  .~ [StopPropagation]
     & iconButtonPropsAlignRight   .~ True
 
 
@@ -111,7 +114,7 @@ commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
       & iconButtonPropsElementName  .~ "btn-new-ann-text" -- RENAME: ann => comment
       & iconButtonPropsLabel        .~ "text-specific comment"
       & iconButtonPropsOnClick      .~ [HeaderAction StartTextSpecificComment]
-      & iconButtonPropsClickPropag  .~ False
+      & iconButtonPropsOnClickMods  .~ [StopPropagation]
 
     div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
@@ -121,6 +124,7 @@ commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
       & iconButtonPropsElementName  .~ "btn-new-ann-doc"  -- RENAME: ann => comment
       & iconButtonPropsLabel        .~ "general comment"
       & iconButtonPropsOnClick      .~ [ContributionAction ShowCommentEditor]
+      & iconButtonPropsOnClickMods  .~ [StopPropagation]
 
   (CommentToolbarExtensionProps _) -> mempty
   where

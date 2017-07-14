@@ -254,7 +254,11 @@ iconButton_ props = view_ iconButton ("iconButton_" <> props ^. iconButtonPropsL
 
 mkClickHandler :: HasCallStack => IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick -> Event -> MouseEvent -> (ViewEventHandler, [EventModification])
 mkClickHandler props evt mevt =
-  (if props ^. iconButtonPropsClickPropag then simpleHandler else stopPropagation) $
+  (case props ^. iconButtonPropsOnClickMods of
+     []                -> simpleHandler
+     [PreventDefault]  -> preventDefault
+     [StopPropagation] -> stopPropagation
+     bad               -> error $ "ibutton_: bad combination of click event mods: " <> show bad) $
   runIconButtonPropsOnClick evt mevt (props ^. iconButtonPropsOnClick)
 
 class (Typeable onclick, Eq onclick) => IconButtonPropsOnClick onclick where  -- FIXME: rename to ButtonOnClick
@@ -277,7 +281,7 @@ defaultIconButtonProps = IconButtonProps
     , _iconButtonPropsPosition     = Nothing
     , _iconButtonPropsAlignRight   = False
     , _iconButtonPropsOnClick      = defaultOnClick
-    , _iconButtonPropsClickPropag  = True  -- Iff 'False', call 'stopPropagation'.  See 'mkClickHandler'.
+    , _iconButtonPropsOnClickMods  = []  -- See 'mkClickHandler'.
     , _iconButtonPropsExtraClasses = []
     }
 

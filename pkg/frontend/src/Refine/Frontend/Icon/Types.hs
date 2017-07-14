@@ -72,7 +72,7 @@ module Refine.Frontend.Icon.Types
   , iconButtonPropsPosition
   , iconButtonPropsAlignRight
   , iconButtonPropsOnClick
-  , iconButtonPropsClickPropag
+  , iconButtonPropsOnClickMods
   , iconButtonPropsExtraClasses
   ) where
 
@@ -212,7 +212,7 @@ data IconButtonPropsWithHandler onclick = IconButtonProps
   , _iconButtonPropsPosition     :: Maybe Int
   , _iconButtonPropsAlignRight   :: Bool
   , _iconButtonPropsOnClick      :: onclick
-  , _iconButtonPropsClickPropag  :: Bool
+  , _iconButtonPropsOnClickMods  :: [EventModification]
   , _iconButtonPropsExtraClasses :: [JSString]
   }
   deriving (Eq)

@@ -37,7 +37,7 @@ import           Refine.Frontend.Util
 
 iconButtonTestProps :: IconButtonProps
 iconButtonTestProps =
-    IconButtonProps "key" (iconProps Medium) element module1 label1 False Nothing False [] True []
+    IconButtonProps "key" (iconProps Medium) element module1 label1 False Nothing False [] [] []
   where
     element :: JSString
     element = "the-element-name"
