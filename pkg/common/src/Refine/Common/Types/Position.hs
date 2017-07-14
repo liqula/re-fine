@@ -157,7 +157,7 @@ toSelectionState = SelectionState . fmap toSelectionPoint
 
 -- FIXME: anchor/focus is not begin/end
 instance ToJSON SelectionState where
-  toJSON (SelectionState (Selection back (Range (Position (BlockKey k) c) (Position (BlockKey k') c'))) focus) = object $
+  toJSON (SelectionState (Selection back (Range (Position (BlockKey k) c) (Position (BlockKey k') c'))) focus) = object
     [ "anchorKey"         .:= k
     , "anchorOffset"      .:= c
     , "focusKey"          .:= k'

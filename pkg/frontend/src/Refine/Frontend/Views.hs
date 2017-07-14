@@ -80,7 +80,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
       __ :: Translations = rs ^. RS.gsTranslations . unTrans
                                 -- FIXME: I think this could be done more nicely.
 
-  div_ ["key" $= "maindiv"{-TODO: seems not to work as expected, we still have a warning-}] $ do
+  div_ ["key" $= "maindiv" {-FIXME: seems not to work as expected, we still have a warning-}] $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
       stickyContainer_ [] $ do
           mainHeader_ $ mkMainHeaderProps rs

@@ -142,18 +142,23 @@ editorOnChange :: DocumentState -> Event -> (ViewEventHandler, [EventModificatio
 editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
   (dispatch updateAction, mods)
   where
-    oldfoc = (dstate ^. documentStateVal . to getSelection . selectionStateHasFocus)
-    newfoc = (estate' ^. to getSelection . selectionStateHasFocus)
+    oldfoc = dstate ^. documentStateVal . to getSelection . selectionStateHasFocus
+    newfoc = estate' ^. to getSelection . selectionStateHasFocus
 
     mods | oldfoc && newfoc = []
-         | oldfoc && not newfoc = [] -- if this is [PreventDefault] then there is an uncaught exception but focus out seems to have the right effect; does not work if combined with the hack in the next line
-         | not oldfoc && newfoc = [] -- if this is [StopPropagation] then there is an uncaught exception but focus in seems to have the right effect
+         | oldfoc && not newfoc = [] -- if this is [PreventDefault] then there is an uncaught
+                                     -- exception but focus out seems to have the right effect; does
+                                     -- not work if combined with the hack in the next line
+         | not oldfoc && newfoc = [] -- if this is [StopPropagation] then there is an uncaught
+                                     -- exception but focus in seems to have the right effect
          | otherwise = error "nah..."
 
     updateAction =
        DocumentAction . DocumentUpdate
           . globalDocumentState $ dstate & documentStateVal .~ if oldfoc && not newfoc
-         then forceSelection estate' (getSelection estate') -- this should highlight the selection even after focus about, but probably this is not what we want
+         then forceSelection estate' (getSelection estate') -- this should highlight the selection
+                                                            -- even after focus out, but probably
+                                                            -- this is not what we want
          else estate'
 
 
