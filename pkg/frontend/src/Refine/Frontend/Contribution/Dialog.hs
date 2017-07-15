@@ -31,6 +31,8 @@ import qualified Data.Text as ST
 import qualified Data.Tree as Tree
 import           Language.Css.Syntax
 import qualified React.Flux as RF
+import           Data.IORef
+import           System.IO.Unsafe
 
 import           Refine.Common.Types hiding (Style)
 import           Refine.Frontend.Test.Console (gracefulError)
@@ -150,7 +152,6 @@ contributionDialogTextForm stateLens stepNumber promptText = do
               , onChange $ \evt -> simpleHandler $ \st -> ([], Just $ st & stateLens .~ target evt "value")
               ]
       mempty
-
 
 -- * comments
 
@@ -377,6 +378,33 @@ addEdit_ :: HasCallStack => AddContributionProps (EditInfo (Maybe EditKind)) -> 
 addEdit_ = view_ addEdit "addEdit_"
 
 
+-- TODO: generalize this to match mkStatefulView
+-- TODO: documentation
+-- TODO: move this to a separate module (or to react-hs)
+mkPersistentStatefulView
+    :: forall state .
+       (Typeable state, Typeable state, Eq state,
+        ViewProps '[] ('StatefulEventHandlerCode state))
+    => JSString -- ^ A name for this view, used only for debugging/console logging
+    -> LocalStateRef state -- ^ The initial state
+    -> (state -> ReactElementM ('StatefulEventHandlerCode state) ())
+    -> View '[]
+mkPersistentStatefulView name rst trans = unsafePerformIO $ do
+    st <- readIORef $ rst ^. unLocalStateRef
+    pure $ mkStatefulView name st mtrans
+  where
+    mtrans :: state -> ReactElementM_ (state -> ([SomeStoreAction], Maybe state)) ()
+    mtrans = transHandler tr . trans
+      where
+        tr :: (state -> ([SomeStoreAction], Maybe state)) -> state -> ([SomeStoreAction], Maybe state)
+        tr f = second (trSt <$>) . f
+
+    trSt :: state -> state
+    trSt st = unsafePerformIO $ do
+      writeIORef (rst ^. unLocalStateRef) st
+      readIORef (rst ^. unLocalStateRef)  -- this is needed, otherwise writeIORef is optimized out
+
+
 -- | FUTUREWORK: there is *some* code sharing between 'editInput_' and 'commentInput_', but there may be
 -- room for more.
 --
@@ -384,8 +412,8 @@ addEdit_ = view_ addEdit "addEdit_"
 -- handled in react?  should we have a second global store here that is just shared between
 -- 'editInput' and and 'editKindForm'?
 editInput :: HasCallStack => EditInfo (Maybe EditKind) -> View '[]
-editInput einfo = mkStatefulView "EditInput" (EditInputState einfo Nothing) $
-  \st@(EditInputState (EditInfo desc mkind) _) -> do
+editInput einfo = mkPersistentStatefulView "EditInput" (einfo ^. editInfoLocalStateRef) $
+  \st@(EditInputState (EditInfo desc mkind rst) _) -> do
     div_ $ do
       elemString "Step 1: "
       span_ ["className" $= "bold"] "Type of this edit:"
@@ -402,7 +430,7 @@ editInput einfo = mkStatefulView "EditInput" (EditInputState einfo Nothing) $
             & iconButtonPropsDisabled     .~ True
           else props
             & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [ DocumentAction $ DocumentSave (EditInfo desc (fromJust mkind))
+            & iconButtonPropsOnClick      .~ [ DocumentAction $ DocumentSave (EditInfo desc (fromJust mkind) rst)
                                              , ContributionAction ClearRange
                                              ]
 
