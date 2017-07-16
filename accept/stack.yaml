@@ -1,5 +1,13 @@
 resolver: lts-8.18
 # see https://github.com/liqula/react-hs/blob/ac4a871d50976353406edff203507bc66d8960b1/react-hs/test/spec/stack.yaml#L2
 
+packages:
+- '.'
+- location:
+    git: https://github.com/zerobuzz/hs-webdriver
+    commit: 53c9cd582ede151214522bd46136b5d39a5b7b52
+    # https://github.com/kallisti-dev/hs-webdriver/pull/130
+  extra-dep: false
+
 extra-deps:
 - daemons-0.2.1
