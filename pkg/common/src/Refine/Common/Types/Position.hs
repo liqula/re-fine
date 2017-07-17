@@ -56,7 +56,7 @@ type Position = GPosition BlockIndex Int
 
 -- | `key` attribute of the 'Block'.  'SelectionState' uses this to refer to blocks.  If in doubt
 -- leave it 'Nothing'.
-newtype BlockKey = BlockKey ST
+newtype BlockKey = BlockKey { _unBlockKey :: ST }
   deriving (Eq, Ord, Show, Generic, Monoid)
 
 -- | Semantically this is an Int, with a block key cached

@@ -65,6 +65,10 @@
         );
     };
 
+    target.refine$createSelectionState = function(beginBlock, beginOffset, endBlock, endOffset, backwards, hasFocus) {
+        return false;  // TODO
+    };
+
     target.refine$getDraftSelectionStateViaBrowser = (function() {
         var leftSiblingLength = function(node) {
             if (node === null) {
@@ -128,6 +132,8 @@
                 var startpoint = mkPoint(range.startContainer, range.startOffset);
                 var endpoint   = mkPoint(range.endContainer, range.endOffset);
 
+                // TODO: this doesn't work any more with the new custom from/tojson instances.
+                // do `return refine$createSelectionState(beginBlock, beginOffset, endBlock, endOffset, backwards, hasFocus);` instead.
                 return { Right: { _selectionIsBackward: backward,
                                   _selectionRange: {
                                       _rangeBegin: startpoint,
