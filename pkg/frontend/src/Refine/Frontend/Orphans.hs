@@ -5,6 +5,8 @@
 
 module Refine.Frontend.Orphans where
 
+import System.IO.Unsafe (unsafePerformIO)
+
 import Refine.Frontend.Prelude
 import Refine.Common.Types
 
@@ -21,14 +23,20 @@ instance (ToJSVal p) => ToJSVal (Selection p)
 instance (ToJSVal block, ToJSVal col) => ToJSVal (GPosition block col)
 instance ToJSVal BlockKey
 
-instance FromJSVal RawContent where
-  fromJSVal v = (>>= parseMaybe parseJSON) <$> fromJSVal v
+instance FromJSVal RawContent where fromJSVal = fromJSValViaJSON
+instance ToJSVal RawContent where toJSVal = toJSValViaJSON
 
-instance ToJSVal RawContent where
-  toJSVal = toJSVal . toJSON
+instance PFromJSVal RawContent where pFromJSVal = fromJust . unsafePerformIO . fromJSVal
+instance PToJSVal RawContent where pToJSVal = unsafePerformIO . toJSVal
 
-instance FromJSVal SelectionState where
-  fromJSVal v = (>>= parseMaybe parseJSON) <$> fromJSVal v
+instance FromJSVal SelectionState where fromJSVal = fromJSValViaJSON
+instance ToJSVal SelectionState where toJSVal = toJSValViaJSON
 
-instance ToJSVal SelectionState where
-  toJSVal = toJSVal . toJSON
+instance PFromJSVal SelectionState where pFromJSVal = fromJust . unsafePerformIO . fromJSVal
+instance PToJSVal SelectionState where pToJSVal = unsafePerformIO . toJSVal
+
+fromJSValViaJSON :: FromJSON v => JSVal -> IO (Maybe v)
+fromJSValViaJSON v = (>>= parseMaybe parseJSON) <$> fromJSVal v
+
+toJSValViaJSON :: ToJSON v => v -> IO JSVal
+toJSValViaJSON = toJSVal . toJSON

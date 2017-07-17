@@ -35,6 +35,7 @@ import Refine.Frontend.Prelude
 import           GHC.Generics (Generic)
 import           GHCJS.Marshal (FromJSVal, ToJSVal)
 import           GHCJS.Types (JSVal)
+import           System.IO.Unsafe (unsafePerformIO)
 
 import           Refine.Frontend.Util ((===))
 import           Refine.Prelude.Aeson (NoJSONRep(NoJSONRep))
@@ -75,11 +76,17 @@ import           Refine.Prelude.Aeson (NoJSONRep(NoJSONRep))
 newtype EditorState = EditorState (NoJSONRep JSVal)
   deriving (Show, Generic, ToJSVal, FromJSVal)
 
+instance PFromJSVal EditorState where pFromJSVal = fromJust . unsafePerformIO . fromJSVal
+instance PToJSVal EditorState where pToJSVal = unsafePerformIO . toJSVal
+
 instance Eq EditorState where
   EditorState (NoJSONRep js) == EditorState (NoJSONRep js') = js === js'
 
 newtype ContentState = ContentState (NoJSONRep JSVal)
   deriving (Show, Generic, ToJSVal, FromJSVal)
+
+instance PFromJSVal ContentState where pFromJSVal = fromJust . unsafePerformIO . fromJSVal
+instance PToJSVal ContentState where pToJSVal = unsafePerformIO . toJSVal
 
 makeRefineTypes [''EditorState, ''ContentState]
 
