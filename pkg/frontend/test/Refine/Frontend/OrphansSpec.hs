@@ -63,10 +63,16 @@ spec = do
         verbose :: Bool
         verbose = False
 
-    it "are inverses" $ do
+    it "are inverses (1)" $ do
       chk getDraftSelectionStateViaBrowser_1 js_getDraftSelectionStateViaBrowser_1
+
+    it "are inverses (2)" $ do
       chk getDraftSelectionStateViaBrowser_2 js_getDraftSelectionStateViaBrowser_2
+
+    it "are inverses (3)" $ do
       chk getDraftSelectionStateViaBrowser_3 js_getDraftSelectionStateViaBrowser_3
+
+    it "are inverses (4)" $ do
       chk getDraftSelectionStateViaBrowser_4 js_getDraftSelectionStateViaBrowser_4
 
 
@@ -101,31 +107,11 @@ foreign import javascript safe
   js_getDraftSelectionStateViaBrowser_2 :: JSVal
 
 foreign import javascript safe
-  "{ Right: \
-       { _unSelectionState: \
-           { _selectionIsBackward: false \
-           , _selectionRange: \
-               { _rangeBegin: { _blockIndex: 'block1', _columnIndex: 3 } \
-               , _rangeEnd: { _blockIndex: 'block1', _columnIndex: 3 } \
-               } \
-           } \
-       , _selectionStateHasFocus: true \
-       } \
-   }"
+  "{Right: {focusKey: 'block1', anchorKey: 'block1', isBackward: false, anchorOffset: 3, hasFocus: true, focusOffset: 3}}"
   js_getDraftSelectionStateViaBrowser_3 :: JSVal
 
 foreign import javascript safe
-  "{ Right: \
-       { _unSelectionState: \
-           { _selectionIsBackward: true \
-           , _selectionRange: \
-               { _rangeBegin: { _blockIndex: 'fj6g6', _columnIndex: 266 } \
-               , _rangeEnd: { _blockIndex: 'fj6g6', _columnIndex: 360 } \
-               } \
-           } \
-       , _selectionStateHasFocus: true \
-       } \
-   }"
+  "{Right: {focusKey: 'fj6g6', anchorKey: 'fj6g6', isBackward: true, anchorOffset: 360, hasFocus: true, focusOffset: 266}}"
   js_getDraftSelectionStateViaBrowser_4 :: JSVal
 
 #else

@@ -147,6 +147,9 @@ toBackwardSelection = Selection True
 
 -- | https://draftjs.org/docs/api-reference-selection-state.html
 -- use only when interfacing with Draft
+--
+-- The JSON representation uses anchor, focus rather than begin, end so the json value can be used
+-- directly in 'forceSelection'.
 data SelectionState = SelectionState
   { _unSelectionState :: Selection SelectionPoint
   , _selectionStateHasFocus :: Bool
@@ -156,30 +159,31 @@ data SelectionState = SelectionState
 toSelectionState :: Selection Position -> Bool -> SelectionState
 toSelectionState = SelectionState . fmap toSelectionPoint
 
--- FIXME: anchor/focus is not begin/end
 instance ToJSON SelectionState where
   toJSON (SelectionState (Selection back (Range (Position (BlockKey k) c) (Position (BlockKey k') c'))) focus) = object
-    [ "anchorKey"         .:= k
-    , "anchorOffset"      .:= c
-    , "focusKey"          .:= k'
-    , "focusOffset"       .:= c'
+    [ "anchorKey"         .:= if back then k' else k
+    , "anchorOffset"      .:= if back then c' else c
+    , "focusKey"          .:= if back then k else k'
+    , "focusOffset"       .:= if back then c else c'
     , "hasFocus"          .:= focus
     , "isBackward"        .:= back
     ]
 
--- FIXME: anchor/focus is not begin/end
 instance FromJSON SelectionState where
-  parseJSON = withObject "SelectionState" $ \obj ->
-    SelectionState
-    <$> (Selection <$> (obj .: "isBackward")
-         <*> (Range
-              <$> (Position
-                   <$> (BlockKey <$> (obj .: "anchorKey"))
-                   <*> (obj .: "anchorOffset"))
-              <*> (Position
-                   <$> (BlockKey <$> (obj .: "focusKey"))
-                   <*> (obj .: "focusOffset"))))
-    <*> (obj .: "hasFocus")
+  parseJSON = withObject "SelectionState" $ \obj -> do
+    back   <- obj .: "isBackward"
+    anchor <- Position
+              <$> (BlockKey <$> (obj .: "anchorKey"))
+              <*> (obj .: "anchorOffset")
+    focus  <- Position
+              <$> (BlockKey <$> (obj .: "focusKey"))
+              <*> (obj .: "focusOffset")
+    hasFoc <- obj .: "hasFocus"
+    pure $ SelectionState
+      (Selection back (if back
+                        then Range focus anchor
+                        else Range anchor focus))
+      hasFoc
 
 
 -- * Ranges

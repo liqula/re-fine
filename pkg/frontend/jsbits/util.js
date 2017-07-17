@@ -65,8 +65,17 @@
         );
     };
 
-    target.refine$createSelectionState = function(beginBlock, beginOffset, endBlock, endOffset, backwards, hasFocus) {
-        return false;  // TODO
+    target.refine$createSelectionState = function(beginBlockKey, beginOffset,
+                                                  endBlockKey, endOffset,
+                                                  backward, hasFocus) {
+        return {
+            "anchorKey"         : (backward ? endBlockKey   : beginBlockKey),
+            "anchorOffset"      : (backward ? endOffset     : beginOffset),
+            "focusKey"          : (backward ? beginBlockKey : endBlockKey),
+            "focusOffset"       : (backward ? beginOffset   : endOffset),
+            "isBackward"        : backward,
+            "hasFocus"          : hasFocus
+        };
     };
 
     target.refine$getDraftSelectionStateViaBrowser = (function() {
@@ -132,14 +141,9 @@
                 var startpoint = mkPoint(range.startContainer, range.startOffset);
                 var endpoint   = mkPoint(range.endContainer, range.endOffset);
 
-                // TODO: this doesn't work any more with the new custom from/tojson instances.
-                // do `return refine$createSelectionState(beginBlock, beginOffset, endBlock, endOffset, backwards, hasFocus);` instead.
-                return { Right: { _selectionIsBackward: backward,
-                                  _selectionRange: {
-                                      _rangeBegin: startpoint,
-                                      _rangeEnd: endpoint
-                                  }
-                                }
+                return { Right: refine$createSelectionState(startpoint._blockIndex, startpoint._columnIndex,
+                                                            endpoint._blockIndex, endpoint._columnIndex,
+                                                            backward, true)
                        };
             } catch(e) {
                 return ({ Left: JSON.stringify(e) });

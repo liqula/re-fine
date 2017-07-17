@@ -122,7 +122,6 @@ spec = do
           have <- js_getRawContentBetweenElems (cs $ renderLeafSelector beginpoint) (cs $ renderLeafSelector endpoint)
           cs have `shouldBe` rangeText BlockBoundaryIsNewline rc (fromStyleRange rc sel)
 
-{-
     describe "SelectionState" $ do
       checkJSValJSON (Proxy @SelectionState)
       it "refine$createSelectionState (called by refine$getDraftSelectionStateViaBrowser) cooperates with FromJSVal" . property $ \v -> do
@@ -134,7 +133,6 @@ spec = do
               (v ^. unSelectionState . selectionIsBackward)
               (v ^. selectionStateHasFocus)
         v' `shouldBe` Just v
--}
 
     describe "getDraftSelectionStateViaBrowser" $ do
       it "works" $ do
