@@ -71,13 +71,18 @@ main = sh $ do
   assertWorkingCopyClean
   liftIO $ hspec testWrapJsFFI
   setProperCurrentDirectory
-  () <- fixTrailingWhitespace =<< getSourceFiles ["prelude", "common", "backend", "frontend"]
-  () <- wrapJsFFI =<< getSourceFiles ["frontend"]
+  () <- fixWhitespace =<< getSourceFiles ["pkg/frontend/jsbits"] ["js"]
+  () <- fixWhitespace =<< getSourceFiles
+          [ "pkg" </> pkg </> topic | pkg <- ["prelude", "common", "backend", "frontend"]
+                                    , topic <- ["src", "test"] ]
+          ["hs"]
+  () <- wrapJsFFI =<< getSourceFiles
+          [ "pkg/frontend" </> topic | topic <- ["src", "test", "jsbits"] ]
+          ["hs"]
   failOnChangedFiles
 
-getSourceFiles :: MonadIO m => [FilePath] -> m [FilePath]
-getSourceFiles packages = filterExt "hs" <$> getAllFiles roots
-  where roots = [ "pkg" </> pkg </> topic | pkg <- packages, topic <- ["src", "test"] ]
+getSourceFiles :: MonadIO m => [FilePath] -> [ST] -> m [FilePath]
+getSourceFiles roots exts = filterExts exts <$> getAllFiles roots
 
 failOnChangedFiles :: Shell ()
 failOnChangedFiles = do
@@ -96,11 +101,21 @@ failOnChangedFiles = do
 -- * rules
 
 -- | both horizontally and vertically
-fixTrailingWhitespace :: [FilePath] -> Shell ()
-fixTrailingWhitespace files = do
-  let trans = fmap ST.stripEnd . reverse . dropEmptyLines . reverse
+fixWhitespace :: [FilePath] -> Shell ()
+fixWhitespace files = do
+  let trans = fmap (killTabs . ST.stripEnd) . reverse . dropEmptyLines . reverse
+
       dropEmptyLines ("" : xs@("" : _)) = dropEmptyLines xs
       dropEmptyLines xs                 = xs
+
+      killTabs s = case ST.breakOnAll "\t" s of
+                     [] -> s
+                     segments -> mconcat $ go <$> segments
+        where
+          go (befo, rest) = befo
+                        <> ST.replicate 8 " "
+                        <> ST.takeWhile (/= '\t') (ST.tail rest)
+
   transformFile trans `mapM_` files
 
 
@@ -478,8 +493,8 @@ getAllFiles roots = do
   paths <- fmap mconcat $ (\r -> lstree r `fold` Fold.list) `mapM` roots
   filterM (liftIO . doesFileExist . cs) paths
 
-filterExt :: ST -> [FilePath] -> [FilePath]
-filterExt ext = filter ((== Just ext) . extension)
+filterExts :: [ST] -> [FilePath] -> [FilePath]
+filterExts exts = filter ((`elem` (Just <$> exts)) . extension)
 
 transformFile :: ([ST] -> [ST]) -> FilePath -> Shell ()
 transformFile trans file = do

@@ -36,25 +36,25 @@
     var refine$previousDocumentBodyClientWidth = 0;
 
     target.refine$documentBodyClientWidth = function() {
-	var current = document.body.clientWidth;
-	if (current === refine$previousDocumentBodyClientWidth) {
-	    return -1;
-	} else {
-	    refine$previousDocumentBodyClientWidth = current;
-	    return current;
-	}
+        var current = document.body.clientWidth;
+        if (current === refine$previousDocumentBodyClientWidth) {
+            return -1;
+        } else {
+            refine$previousDocumentBodyClientWidth = current;
+            return current;
+        }
     };
 
     var refine$previousHeaderHeight = 0;
 
     target.refine$getHeaderHeight = function(domThis) {
-	var current = Math.floor(domThis.getBoundingClientRect().height);
-	if (current === refine$previousHeaderHeight) {
-	    return -1;
-	} else {
-	    refine$previousHeaderHeight = current;
-	    return current;
-	}
+        var current = Math.floor(domThis.getBoundingClientRect().height);
+        if (current === refine$previousHeaderHeight) {
+            return -1;
+        } else {
+            refine$previousHeaderHeight = current;
+            return current;
+        }
     };
 
     target.refine$editorContentFromHtml = function(html) {
