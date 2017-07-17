@@ -47,6 +47,7 @@ import Refine.Frontend.Document.Types
 import Refine.Frontend.Store
 import Refine.Frontend.Store.Types
 import Refine.Frontend.Test.Enzyme
+import Refine.Frontend.Test.Marshal
 import Refine.Frontend.ThirdPartyViews
 import Refine.Frontend.Test.Store
 
@@ -120,6 +121,8 @@ spec = do
           cid `shouldBe` cid'
           have <- js_getRawContentBetweenElems (cs $ renderLeafSelector beginpoint) (cs $ renderLeafSelector endpoint)
           cs have `shouldBe` rangeText BlockBoundaryIsNewline rc (fromStyleRange rc sel)
+
+    -- checkJSValJSON (Proxy @SelectionState)
 
     describe "getDraftSelectionStateViaBrowser" $ do
       it "works" $ do

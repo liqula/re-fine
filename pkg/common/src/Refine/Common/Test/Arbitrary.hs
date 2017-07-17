@@ -281,6 +281,10 @@ instance (Arbitrary a, Ord a) => Arbitrary (Selection a) where
   arbitrary = garbitrary
   shrink    = gshrink
 
+instance Arbitrary SelectionState where
+  arbitrary = garbitrary
+  shrink    = gshrink
+
 data RawContentWithSelections = RawContentWithSelections RawContent [Selection Position]
   deriving (Eq, Show)
 

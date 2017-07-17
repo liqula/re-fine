@@ -31,6 +31,7 @@ module Refine.Common.Types.Position where
 import           Data.Int
 import           Data.String.Conversions (ST, cs, (<>))
 import           GHC.Generics (Generic)
+import qualified Generics.SOP as SOP
 
 import           Refine.Common.Prelude
 
@@ -255,7 +256,9 @@ renderLeafSelector (Position (BlockKey b) (SpanIndex k i)) =
   "span[data-offset-key=\"" <> b <> "-" <> cs (show k) <> "-" <> cs (show i) <> "\"]"
 
 
-deriveClasses [([''GPosition, ''Range, ''Ranges, ''Selection, ''BlockIndex, ''BlockKey], allClass), ([''SelectionState], [''Lens'])]
+deriveClasses [ ([''GPosition, ''Range, ''Ranges, ''Selection, ''BlockIndex, ''BlockKey], allClass)
+              , ([''SelectionState], [''Lens', ''SOP.Generic])
+              ]
 
 -- counts from zero
 rowIndex :: Lens' Position Int
