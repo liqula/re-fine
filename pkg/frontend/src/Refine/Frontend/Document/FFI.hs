@@ -191,7 +191,7 @@ getSelection (js_ES_getSelection -> sel) = Draft.SelectionState (
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#forceselection
 forceSelection :: HasCallStack => EditorState -> Draft.SelectionState -> EditorState
-forceSelection es = js_ES_forceSelection es . cs . encode
+forceSelection es = js_ES_forceSelection es . unsafePerformIO . toJSVal
 
 -- | The shape of the selection object is determined by the generic aeson instances of the haskell
 -- type.  If that changes, you need to adjust the test cases in "Refine.Frontend.OrphansSpec" and
@@ -335,8 +335,8 @@ foreign import javascript safe
   js_ES_getSelectionEndOffset :: JSVal -> Int
 
 foreign import javascript safe
-  "Draft.EditorState.forceSelection($1, Draft.SelectionState.createEmpty().merge(JSON.parse($2)))"
-  js_ES_forceSelection :: EditorState -> JSString -> EditorState
+  "Draft.EditorState.forceSelection($1, Draft.SelectionState.createEmpty().merge($2))"
+  js_ES_forceSelection :: EditorState -> JSVal -> EditorState
 
 foreign import javascript safe
   "document.querySelector($2).getBoundingClientRect()[$1]"
@@ -457,7 +457,7 @@ js_ES_getSelectionEndOffset :: JSVal -> Int
 js_ES_getSelectionEndOffset = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_forceSelection ("HLint: ignore Use camelCase" :: String) #-}
-js_ES_forceSelection :: EditorState -> JSString -> EditorState
+js_ES_forceSelection :: EditorState -> JSVal -> EditorState
 js_ES_forceSelection = error "javascript FFI not available in GHC"
 
 {-# ANN js_getBoundingBox ("HLint: ignore Use camelCase" :: String) #-}
