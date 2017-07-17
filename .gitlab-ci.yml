@@ -1,8 +1,16 @@
+variables:
+  SELENIUM_HUB_PORT: "4444"
+  SELENIUM_NODE_PORT: "5555"
+  REFINE_APP_PORT: "8086"
+  REFINE_RUN_APP: "True"
+  DISPLAY: ":1"
+
 build:
   script:
     - time ./build setup && time ./build
       # (try `./build setup && ./build clean && ./build` here
       # if you suspect interference from earlier ci runs.)
+    - if ./scripts/run-accept-on-ci.sh ask; then time ./build accept; else true; fi
 
 # deploy_staging:
 #   stage: deploy

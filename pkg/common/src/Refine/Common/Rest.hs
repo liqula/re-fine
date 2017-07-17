@@ -51,6 +51,8 @@ data ApiErrorCreateUser
   deriving (Eq, Show, Generic)
 
 -- | The 'S' prefix in the handlers stands for "server" (see 'refineApi' for an explanation).
+--
+-- FUTUREWORK: use https://github.com/chpatrick/servant-generic#tldr
 type RefineAPI =
        SListVDocs
   :<|> SGetVDoc
