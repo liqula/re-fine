@@ -137,7 +137,7 @@ editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
     newfoc = estate' ^. to getSelection . selectionStateHasFocus
 
     mods | oldfoc && newfoc = []
-         | oldfoc && not newfoc = [PreventDefault] -- if this is [PreventDefault] then there is an uncaught
+         | oldfoc && not newfoc = [] -- if this is [PreventDefault] then there is an uncaught
                                      -- exception but focus out seems to have the right effect; does
                                      -- not work if combined with the hack in the next line
          | not oldfoc && newfoc = [] -- if this is [StopPropagation] then there is an uncaught
