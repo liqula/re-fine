@@ -31,7 +31,6 @@ import qualified Data.Set as Set
 import           Data.String.Conversions (ST)
 import           Data.Text.I18n
 import           GHC.Generics (Generic)
-import           React.Flux (UnoverlapAllEq)
 
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft (rawContentFromCompositeVDoc)
@@ -189,8 +188,6 @@ gsVDoc = lens getCompositeVDoc setCompositeVDoc
         mkItem :: Lens' a (ID a) -> a -> (ID a, a)
         mkItem k x = (x ^. k, x)
 
-
-instance UnoverlapAllEq GlobalState
 
 gsCurrentSelection :: HasCallStack => Getter GlobalState (Maybe (Selection Position))
 gsCurrentSelection = to (^? gsContributionState . csCurrentSelectionWithPx . _Just . sstSelectionState)

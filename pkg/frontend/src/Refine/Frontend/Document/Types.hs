@@ -26,7 +26,6 @@ module Refine.Frontend.Document.Types where
 import Refine.Frontend.Prelude
 
 import           GHC.Generics (Generic)
-import           React.Flux (UnoverlapAllEq)
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
@@ -126,8 +125,6 @@ data DocumentProps = DocumentProps
   , _dpContributionState :: ContributionState
   }
   deriving (Show, Eq, Generic)
-
-instance UnoverlapAllEq DocumentProps
 
 emptyDocumentProps :: HasCallStack => DocumentProps
 emptyDocumentProps = DocumentProps

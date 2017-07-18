@@ -68,8 +68,6 @@ data TopMenuBarProps = TopMenuBarProps
  , _currentUser :: CurrentUser
  } deriving (Eq, Generic)
 
-instance UnoverlapAllEq TopMenuBarProps
-
 
 data DiffToolbarProps = DiffToolbarProps
   { _diffToolbarPropsEditID :: ID Edit
@@ -78,8 +76,6 @@ data DiffToolbarProps = DiffToolbarProps
   , _diffToolbarPropsVotes  :: VoteCount
   , _diffToolbarCollapsed   :: Bool
   } deriving (Show, Eq, Generic)
-
-instance UnoverlapAllEq DiffToolbarProps
 
 
 data EditToolbarProps

@@ -39,8 +39,6 @@ data DocumentHeaderProps = DocumentHeaderProps
   }
   deriving (Eq)
 
-instance UnoverlapAllEq DocumentHeaderProps
-
 documentHeader :: HasCallStack => View '[DocumentHeaderProps]
 documentHeader = mkView "DocumentHeader" $ \props ->
   div_ ["className" $= "row row-align-middle c-vdoc-header"] $ do
@@ -53,16 +51,12 @@ documentHeader = mkView "DocumentHeader" $ \props ->
 documentHeader_ :: HasCallStack => DocumentHeaderProps -> ReactElementM eventHandler ()
 documentHeader_ = view_ documentHeader "DocumentHeader_"
 
-instance UnoverlapAllEq Title
-
 
 documentTitle :: HasCallStack => View '[Title]
 documentTitle = mkView "DocumentTitle" $ h1_ . cs . _unTitle
 
 documentTitle_ :: HasCallStack => Title -> ReactElementM eventHandler ()
 documentTitle_ = view_ documentTitle "DocumentTitle_"
-
-instance UnoverlapAllEq Abstract
 
 
 documentAbstract :: HasCallStack => View '[Abstract]

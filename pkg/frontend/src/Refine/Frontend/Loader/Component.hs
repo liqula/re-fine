@@ -39,7 +39,6 @@ newtype VDocLoaderProps = VDocLoaderProps (Maybe [ID VDoc])
   deriving (Eq, Show, Generic)
 
 makeRefineType ''VDocLoaderProps
-instance UnoverlapAllEq VDocLoaderProps
 
 
 vdocLoader :: HasCallStack => View '[VDocLoaderProps]

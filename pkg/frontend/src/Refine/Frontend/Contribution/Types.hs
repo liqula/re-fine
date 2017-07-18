@@ -216,8 +216,6 @@ instance Show BubbleSide where
   show BubbleLeft = "left"
   show BubbleRight = "right"
 
-instance UnoverlapAllEq BubbleProps
-
 
 -- * QuickCreate
 
@@ -256,8 +254,6 @@ data CommentDisplayProps = CommentDisplayProps
   }
   deriving (Eq)
 
-instance UnoverlapAllEq CommentDisplayProps
-
 data ShowNoteProps =
     ShowNoteProps
       { _snpNote        :: Note
@@ -265,8 +261,6 @@ data ShowNoteProps =
       , _snpWindowWidth :: Int
       }
   deriving (Eq)
-
-instance UnoverlapAllEq ShowNoteProps
 
 data ShowDiscussionProps =
     ShowDiscussionProps
@@ -276,12 +270,8 @@ data ShowDiscussionProps =
       }
   deriving (Eq)
 
-instance UnoverlapAllEq ShowDiscussionProps
-
 newtype ShowQuestionProps = ShowQuestionProps (Maybe CompositeQuestion)
   deriving (Eq)
-
-instance UnoverlapAllEq ShowQuestionProps
 
 data AddContributionProps st = AddContributionProps
   { _acpRange         :: Maybe SelectionStateWithPx
@@ -289,10 +279,6 @@ data AddContributionProps st = AddContributionProps
   , _acpWindowWidth   :: Int
   }
   deriving (Eq)
-
-instance UnoverlapAllEq (AddContributionProps ())
-instance UnoverlapAllEq (AddContributionProps (Maybe EditKind))
-instance UnoverlapAllEq (AddContributionProps (EditInfo (Maybe EditKind)))
 
 
 -- * instances

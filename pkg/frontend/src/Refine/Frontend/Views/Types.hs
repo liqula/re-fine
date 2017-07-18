@@ -27,7 +27,6 @@ module Refine.Frontend.Views.Types where
 import Refine.Frontend.Prelude
 
 import           Control.Lens (makeLenses)
-import           React.Flux (UnoverlapAllEq)
 
 import           Refine.Common.Types (MarkID, Discussion, Note, Edit)
 import           Refine.Frontend.Contribution.Types (AllVerticalSpanBounds, BubblePositioning, QuickCreateShowState)
@@ -50,4 +49,3 @@ data AsideProps = AsideProps
   deriving (Eq)
 
 makeLenses ''AsideProps
-instance UnoverlapAllEq AsideProps

@@ -100,8 +100,6 @@ newtype CommentToolbarExtensionProps = CommentToolbarExtensionProps
   }
   deriving (Eq)
 
-instance UnoverlapAllEq CommentToolbarExtensionProps
-
 commentToolbarExtension :: HasCallStack => View '[CommentToolbarExtensionProps]
 commentToolbarExtension = mkView "CommentToolbarExtension" $ \case
   (CommentToolbarExtensionProps CommentToolbarExtensionWithRange) -> frame $ do
@@ -157,8 +155,6 @@ newtype EditToolbarExtensionProps = EditToolbarExtensionProps
   { _etepStatus :: ToolbarExtensionStatus
   }
   deriving (Eq)
-
-instance UnoverlapAllEq EditToolbarExtensionProps
 
 
 linkToolbarTextForm :: HasCallStack => ST -> ReactElementM ('StatefulEventHandlerCode AddLinkFormState) ()
