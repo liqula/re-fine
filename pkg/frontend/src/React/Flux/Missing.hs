@@ -1,3 +1,4 @@
+{-# LANGUAGE AllowAmbiguousTypes        #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -18,6 +19,7 @@
 {-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
@@ -32,6 +34,7 @@ module React.Flux.Missing
 
 import Refine.Frontend.Prelude
 
+import           React.Flux.Internal
 import           Control.DeepSeq
 import           Data.IORef
 import           System.IO.Unsafe
@@ -77,25 +80,56 @@ deriveClasses
   ]
 
 
+------------------------------- vararg functions
+data VarArg (props :: [*]) e where
+  DNil :: e -> VarArg '[] e
+  DCons :: (a -> VarArg as e) -> VarArg (a ': as) e
+
+instance Functor (VarArg props) where
+  fmap f (DNil a) = DNil (f a)
+  fmap f (DCons g) = DCons (fmap f . g)
+-------------------------------
+
+
+-------------------------------
+-- (ViewPropsToElement props e) is isomorphic to (VarArg props (ReactElementM e ()))
+class ViewPropsToElementIso (props :: [*]) where
+  isoTo :: ViewPropsToElement props e -> VarArg props (ReactElementM e ())
+  isoFrom :: VarArg props (ReactElementM e ()) -> ViewPropsToElement props e
+
+instance ViewPropsToElementIso '[] where
+  isoTo = DNil
+  isoFrom (DNil x) = x
+
+instance ViewPropsToElementIso as => ViewPropsToElementIso (a ': as) where
+  isoTo f = DCons (isoTo . f)
+  isoFrom (DCons f) = isoFrom . f
+-------------------------------
+
+
 -- | like mkStatefulView but the component remembers its state when it is re-rendered
--- TODO: generalize this to match mkStatefulView
 mkPersistentStatefulView
-    :: forall state .
+    :: forall (state :: *) (props :: [*]).
        (Typeable state, Typeable state, Eq state,
-        ViewProps '[] ('StatefulEventHandlerCode state))
+        ViewProps props ('StatefulEventHandlerCode state), Typeable props, AllEq props, ViewPropsToElementIso props)
     => JSString -- ^ A name for this view, used only for debugging/console logging
-    -> LocalStateRef state -- ^ The initial state
-    -> (state -> ReactElementM ('StatefulEventHandlerCode state) ())
-    -> View '[]
+    -> LocalStateRef state -- ^ The reference of the initial state
+    -> (state -> ViewPropsToElement props ('StatefulEventHandlerCode state))
+    -> View props
+
 mkPersistentStatefulView name rst trans = unsafePerformIO $ do
     st <- readIORef $ rst ^. unLocalStateRef
     pure $ mkStatefulView name st mtrans
   where
-    mtrans :: state -> ReactElementM_ (state -> ([SomeStoreAction], Maybe state)) ()
-    mtrans = transHandler tr . trans
-      where
-        tr :: (state -> ([SomeStoreAction], Maybe state)) -> state -> ([SomeStoreAction], Maybe state)
-        tr f = second (trSt rst <$>) . f
+    mtrans :: state -> ViewPropsToElement props ('StatefulEventHandlerCode state)
+    mtrans
+      = isoFrom
+      . fmap transh
+      . (isoTo :: ViewPropsToElement props ('StatefulEventHandlerCode state) -> VarArg props (ReactElementM ('StatefulEventHandlerCode state) ()))
+      . trans
+
+    transh :: ReactElementM ('StatefulEventHandlerCode state) () -> ReactElementM ('StatefulEventHandlerCode state) ()
+    transh = transHandler (second (trSt rst <$>) .)
 
 {-# NOINLINE trSt #-}
 trSt :: LocalStateRef state -> state -> state
