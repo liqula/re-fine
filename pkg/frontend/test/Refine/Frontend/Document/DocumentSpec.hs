@@ -39,6 +39,7 @@ import Refine.Common.Test.Arbitrary
 import Refine.Common.Test.Samples
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft
+import React.Flux.Missing
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Document
 import Refine.Frontend.Document.FFI

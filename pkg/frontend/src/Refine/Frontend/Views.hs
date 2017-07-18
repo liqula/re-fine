@@ -37,6 +37,7 @@ import qualified Data.Tree as ST
 import           Language.Css.Syntax
 
 import           Refine.Common.Types
+import           React.Flux.Missing
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.QuickCreate

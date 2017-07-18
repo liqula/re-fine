@@ -31,10 +31,9 @@ import qualified Data.Text as ST
 import qualified Data.Tree as Tree
 import           Language.Css.Syntax
 import qualified React.Flux as RF
-import           Data.IORef
-import           System.IO.Unsafe
 
 import           Refine.Common.Types hiding (Style)
+import           React.Flux.Missing
 import           Refine.Frontend.Test.Console (gracefulError)
 import           Refine.Frontend.ThirdPartyViews (skylight_)
 import           Refine.Frontend.Contribution.Types
@@ -376,33 +375,6 @@ addEdit = mkView "AddEdit" $ \props -> addContributionDialogFrame
 
 addEdit_ :: HasCallStack => AddContributionProps (EditInfo (Maybe EditKind)) -> ReactElementM eventHandler ()
 addEdit_ = view_ addEdit "addEdit_"
-
-
--- TODO: generalize this to match mkStatefulView
--- TODO: documentation
--- TODO: move this to a separate module (or to react-hs)
-mkPersistentStatefulView
-    :: forall state .
-       (Typeable state, Typeable state, Eq state,
-        ViewProps '[] ('StatefulEventHandlerCode state))
-    => JSString -- ^ A name for this view, used only for debugging/console logging
-    -> LocalStateRef state -- ^ The initial state
-    -> (state -> ReactElementM ('StatefulEventHandlerCode state) ())
-    -> View '[]
-mkPersistentStatefulView name rst trans = unsafePerformIO $ do
-    st <- readIORef $ rst ^. unLocalStateRef
-    pure $ mkStatefulView name st mtrans
-  where
-    mtrans :: state -> ReactElementM_ (state -> ([SomeStoreAction], Maybe state)) ()
-    mtrans = transHandler tr . trans
-      where
-        tr :: (state -> ([SomeStoreAction], Maybe state)) -> state -> ([SomeStoreAction], Maybe state)
-        tr f = second (trSt <$>) . f
-
-    trSt :: state -> state
-    trSt st = unsafePerformIO $ do
-      writeIORef (rst ^. unLocalStateRef) st
-      readIORef (rst ^. unLocalStateRef)  -- this is needed, otherwise writeIORef is optimized out
 
 
 -- | FUTUREWORK: there is *some* code sharing between 'editInput_' and 'commentInput_', but there may be

@@ -34,6 +34,7 @@ import Refine.Frontend.Prelude
 import qualified Data.Map as Map
 
 import           Refine.Common.Types
+import           React.Flux.Missing
 import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI

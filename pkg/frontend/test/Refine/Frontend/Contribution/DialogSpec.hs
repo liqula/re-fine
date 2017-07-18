@@ -27,6 +27,7 @@ import Refine.Frontend.Prelude
 
 import           Test.Hspec
 
+import           React.Flux.Missing
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Test.Enzyme

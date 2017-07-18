@@ -31,11 +31,9 @@ import           Control.DeepSeq
 import qualified Data.HashMap.Strict as HashMap
 import           Data.List.NonEmpty (NonEmpty((:|)))
 import qualified Data.Map.Strict as Map
-import           Data.IORef
 import           Language.Css.Syntax hiding (Value)
-import           GHC.Generics (Generic(..), Rec0)
-import           System.IO.Unsafe
 
+import React.Flux.Missing
 import Refine.Common.Types
 import Refine.Frontend.Icon.Types
 import Refine.Frontend.Screen.Types
@@ -136,30 +134,6 @@ data EditInfo kind = EditInfo
   , _editInfoLocalStateRef :: LocalStateRef EditInputState
   }
   deriving (Show, Eq, Generic)
-
----------------------------------------
--- TODO: move this to a separate module (or to react-hs)
-newtype LocalStateRef a = LocalStateRef {_unLocalStateRef :: IORef a}
-  deriving (Eq)
-
--- TODO: documentation (how to use safely)
--- TODO: NOINLINE pragma
-newLocalStateRef :: a -> LocalStateRef a
-newLocalStateRef a = unsafePerformIO (LocalStateRef <$> newIORef a)
-
--- TODO: Get rid of these (should not be used)
-instance FromJSON (LocalStateRef a)
-instance ToJSON (LocalStateRef a)
-instance NFData (LocalStateRef a)
-instance Generic (LocalStateRef a) where
-  type Rep (LocalStateRef a) = Rec0 ()
-  from = error "from @LocalStateRef"
-  to = error "to @LocalStateRef"
-
-instance Show (LocalStateRef a) where
-  show _ = "LocalStateRef _"
----------------------------------------
-
 
 data ActiveDialog = ActiveDialogComment | ActiveDialogEdit
   deriving (Show, Eq, Generic)
@@ -285,7 +259,7 @@ data AddContributionProps st = AddContributionProps
 
 deriveClasses
   [ ([''VerticalSpanBounds, ''ContributionAction, ''ContributionState, ''BubblePositioning, ''CommentInputState, ''EditInputState, ''CommentKind, ''ActiveDialog, ''QuickCreateSide, ''QuickCreateShowState], allClass)
-  , ([''AllVerticalSpanBounds, ''CommentInfo, ''EditInfo, ''ProtoBubble, ''BubbleProps, ''QuickCreateProps, ''CommentDisplayProps, ''AddContributionProps, ''LocalStateRef], [''Lens'])
+  , ([''AllVerticalSpanBounds, ''CommentInfo, ''EditInfo, ''ProtoBubble, ''BubbleProps, ''QuickCreateProps, ''CommentDisplayProps, ''AddContributionProps], [''Lens'])
   ]
 
 makeRefineType' [t| CommentInfo CommentKind |]
