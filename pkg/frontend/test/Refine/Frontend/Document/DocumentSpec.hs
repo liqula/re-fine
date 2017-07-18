@@ -47,6 +47,7 @@ import Refine.Frontend.Document.Types
 import Refine.Frontend.Store
 import Refine.Frontend.Store.Types
 import Refine.Frontend.Test.Enzyme
+import Refine.Frontend.Test.Marshal
 import Refine.Frontend.ThirdPartyViews
 import Refine.Frontend.Test.Store
 
@@ -120,6 +121,18 @@ spec = do
           cid `shouldBe` cid'
           have <- js_getRawContentBetweenElems (cs $ renderLeafSelector beginpoint) (cs $ renderLeafSelector endpoint)
           cs have `shouldBe` rangeText BlockBoundaryIsNewline rc (fromStyleRange rc sel)
+
+    describe "SelectionState" $ do
+      checkJSValJSON (Proxy @SelectionState)
+      it "refine$createSelectionState (called by refine$getDraftSelectionStateViaBrowser) cooperates with FromJSVal" . property $ \v -> do
+        v' <- fromJSVal $ js_createSelectionState
+              (v ^. unSelectionState . selectionRange . rangeBegin . blockIndex . to (cs . _unBlockKey))
+              (v ^. unSelectionState . selectionRange . rangeBegin . columnIndex)
+              (v ^. unSelectionState . selectionRange . rangeEnd . blockIndex . to (cs . _unBlockKey))
+              (v ^. unSelectionState . selectionRange . rangeEnd . columnIndex)
+              (v ^. unSelectionState . selectionIsBackward)
+              (v ^. selectionStateHasFocus)
+        v' `shouldBe` Just v
 
     describe "getDraftSelectionStateViaBrowser" $ do
       it "works" $ do
@@ -273,6 +286,10 @@ foreign import javascript safe
     "refine$getRawContentBetweenElems($1, $2)"
     js_getRawContentBetweenElems :: JSString {- begin LeafSelector -} -> JSString {- end LeafSelector -} -> IO JSString
 
+foreign import javascript safe
+    "refine$createSelectionState($1, $2, $3, $4, $5, $6)"
+    js_createSelectionState :: JSString -> Int -> JSString -> Int -> Bool -> Bool -> JSVal
+
 #else
 
 {-# ANN js_testConvertFromToRaw ("HLint: ignore Use camelCase" :: String) #-}
@@ -282,5 +299,9 @@ js_testConvertFromToRaw = error "javascript FFI not available in GHC"
 {-# ANN js_getRawContentBetweenElems ("HLint: ignore Use camelCase" :: String) #-}
 js_getRawContentBetweenElems :: JSString {- begin LeafSelector -} -> JSString {- end LeafSelector -} -> IO JSString
 js_getRawContentBetweenElems = error "javascript FFI not available in GHC"
+
+{-# ANN js_createSelectionState ("HLint: ignore Use camelCase" :: String) #-}
+js_createSelectionState :: JSString -> Int -> JSString -> Int -> Bool -> Bool -> JSVal
+js_createSelectionState = error "javascript FFI not available in GHC"
 
 #endif
