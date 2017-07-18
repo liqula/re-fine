@@ -131,8 +131,8 @@ addContributionDialogFrame title mrange windowWidth child =
 
       child
 
-contributionDialogTextForm :: HasCallStack => Lens' st ST -> Int -> ST -> ReactElementM ('StatefulEventHandlerCode st) ()
-contributionDialogTextForm stateLens stepNumber promptText = do
+contributionDialogTextForm :: HasCallStack => Lens' st ST -> st -> Int -> ST -> ReactElementM ('StatefulEventHandlerCode st) ()
+contributionDialogTextForm stateLens st' stepNumber promptText = do
   div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
     p_ $ do
       elemString $ "Step " <> show stepNumber <> ": "
@@ -151,7 +151,7 @@ contributionDialogTextForm stateLens stepNumber promptText = do
               -- Update the current state with the current text in the textbox, sending no actions
               , onChange $ \evt -> simpleHandler $ \st -> ([], Just $ st & stateLens .~ target evt "value")
               ]
-      mempty
+      (elemText $ st' ^. stateLens)
 
 -- * comments
 
@@ -328,7 +328,7 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState (CommentInfo "" 
 
       hr_ []
 
-      contributionDialogTextForm (commentInputStateData . commentInfoDesc) 2 "enter your comment:"
+      contributionDialogTextForm (commentInputStateData . commentInfoDesc) st 2 "enter your comment:"
 
       hr_ []
 
@@ -421,7 +421,7 @@ editInput einfo = mkPersistentStatefulView "EditInput" (einfo ^. editInfoLocalSt
 
     hr_ []
 
-    contributionDialogTextForm (editInputStateData . editInfoDesc) 2 "describe your motivation for this edit:"
+    contributionDialogTextForm (editInputStateData . editInfoDesc) st 2 "describe your motivation for this edit:"
 
     hr_ []
 
