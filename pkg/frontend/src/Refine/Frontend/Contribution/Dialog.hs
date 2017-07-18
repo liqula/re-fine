@@ -281,19 +281,19 @@ showQuestion_ :: HasCallStack => ShowQuestionProps -> ReactElementM eventHandler
 showQuestion_ = view_ showQuestion "showQuestion_"
 
 
-addComment :: HasCallStack => Translations -> View '[AddContributionProps ()]
+addComment :: HasCallStack => Translations -> View '[AddContributionProps (LocalStateRef CommentInputState)]
 addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame
   (__ add_a_comment)
   (props ^. acpRange)
   (props ^. acpWindowWidth)
-  commentInput_
+  (commentInput_ $ props ^. acpLocalState)
 
-addComment_ :: HasCallStack => Translations -> AddContributionProps () -> ReactElementM eventHandler ()
+addComment_ :: HasCallStack => Translations -> AddContributionProps (LocalStateRef CommentInputState) -> ReactElementM eventHandler ()
 addComment_ __ = view_ (addComment __) "addComment_"
 
 
-commentInput :: HasCallStack => View '[]
-commentInput = mkStatefulView "CommentInput" (CommentInputState (CommentInfo "" Nothing) False False) $ \st ->
+commentInput :: HasCallStack => LocalStateRef CommentInputState -> View '[]
+commentInput lst = mkPersistentStatefulView "CommentInput" lst $ \st ->
   do
     let smkind = st ^? commentInputStateData . commentInfoKind . _Just
     let stext  = st ^. commentInputStateData . commentInfoDesc
@@ -354,8 +354,8 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState (CommentInfo "" 
           & iconButtonPropsLabel        .~ "submit"
           & enableOrDisable
 
-commentInput_ :: HasCallStack => ReactElementM eventHandler ()
-commentInput_ = view_ commentInput "commentInput_"
+commentInput_ :: HasCallStack => LocalStateRef CommentInputState -> ReactElementM eventHandler ()
+commentInput_ lst = view_ (commentInput lst) "commentInput_"
 
 
 -- * edits
