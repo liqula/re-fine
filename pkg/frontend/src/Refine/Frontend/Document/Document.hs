@@ -106,47 +106,42 @@ documentRender() props = liftViewToStateHandler $ do
       [ "editorState" &= editorState
       , "customStyleMap" &= documentStyleMap
       , "readOnly" &= has _DocumentStateView dstate
-      , onChange $ editorOnChange dstate
-{-
-It is also possible to install onBlur and onFocus events which receives
-proper Event values.
-
-Question: Can we be sure about the ordering of onChange+onBlur / onChange+onFocus events?
-
-Question: How can we reliably cancel onChange if onBlur/onFocus is fired too?
-          (Think about the order and state change of these events.)
-
-Question: What are the right EventModification values for onChange/onBlur?
-
---      , onBlur
---      , onFocus
--}
+      , onChange (editorOnChange dstate)
+      , onBlur editorOnBlur
+      , onFocus editorOnFocus
       ] mempty
 
+
 -- | Handle editor change events.
+--
+-- We do not need to know in which order the editor event handlers 'editorOnChange', 'editorOnBlur',
+-- 'editorOnFocus' are called.  (To decide whether the other two have been *or* will be called, we
+-- could look at the focus in the old and new editor state, resp., but we don't need that
+-- information.)
 --
 -- FIXME: We are cheating here: the event we get from draft.js is really not a 'HandlerArg' that
 -- can be parsed into an 'Event', but an 'EditorState'.  So if we attempt to access 'Event' fields
 -- like 'evtType', we will get ugly error messages.  As long as we stick to the 'evtHandlerArg' part
 -- of the structure, things should be fine.
-editorOnChange :: DocumentState -> Event -> (ViewEventHandler, [EventModification])
+--
+-- Note that the fact that we don't have an 'Event' here also means that we can't modify it.
+editorOnChange :: DocumentState -> Event -> EventHandlerTypeWithMods 'EventHandlerCode
 editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
-  (dispatch updateAction, mods)
+  simpleHandler $ dispatch updateAction
   where
-    oldfoc = dstate ^. documentStateVal . to getSelection . selectionStateHasFocus
-    newfoc = estate' ^. to getSelection . selectionStateHasFocus
+    updateAction = DocumentAction . DocumentUpdate . globalDocumentState $
+      dstate & documentStateVal .~ estate'
 
-    mods | oldfoc && newfoc = []
-         | oldfoc && not newfoc = [] -- if this is [PreventDefault] then there is an uncaught
-                                     -- exception but focus out seems to have the right effect; does
-                                     -- not work if combined with the hack in the next line
-         | not oldfoc && newfoc = [] -- if this is [StopPropagation] then there is an uncaught
-                                     -- exception but focus in seems to have the right effect
-         | otherwise = error "internal error: onChange event without ever obtaining focus."
+    (_isBlur, _isFocus) = (oldfoc && not newfoc, not oldfoc && newfoc)
+      where
+        oldfoc = dstate ^. documentStateVal . to getSelection . selectionStateHasFocus
+        newfoc = estate' ^. to getSelection . selectionStateHasFocus
 
-    updateAction =
-       DocumentAction . DocumentUpdate
-          . globalDocumentState $ dstate & documentStateVal .~ estate'
+editorOnBlur :: Event -> FocusEvent -> EventHandlerTypeWithMods 'EventHandlerCode
+editorOnBlur _ _ = ([], [])
+
+editorOnFocus :: Event -> FocusEvent -> EventHandlerTypeWithMods 'EventHandlerCode
+editorOnFocus _ _ = ([], [])
 
 
 documentComponentDidMountOrUpdate :: HasCallStack => Outdated.LPropsAndState DocumentProps () -> IO ()
