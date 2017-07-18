@@ -67,6 +67,7 @@ library
   exposed-modules:
       -- we can't have hspec, but at least we have bash and find and perl...  :)
       -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
+      React.Flux.Missing
       Refine.Frontend.Colors
       Refine.Frontend.Contribution.Bubble
       Refine.Frontend.Contribution.Dialog
