@@ -1,6 +1,7 @@
 module AllModules where
 
 -- find . ../src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "import $1 ()\n"' {} \; 2>&1 | grep -v AllModules | grep -v Main | sort
+import React.Flux.Missing ()
 import Refine.Frontend.Colors ()
 import Refine.Frontend.Contribution.Bubble ()
 import Refine.Frontend.Contribution.BubbleSpec ()
