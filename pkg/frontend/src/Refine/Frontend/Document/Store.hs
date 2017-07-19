@@ -69,6 +69,9 @@ documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _
   where
     einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) oldgs
 
+documentStateUpdate (HeaderAction StartEdit) _oldgs _newgs (DocumentStateDiff _ estate _ edit _)
+  = DocumentStateEdit estate (error "not implemented" edit)
+
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     oldgs
                     _newgs
