@@ -149,7 +149,7 @@ contributionDialogTextForm stateLens st' stepNumber promptText = do
                       ]
               -- Update the current state with the current text in the textbox, sending no actions
               , onChange $ \evt -> simpleHandler $ \st -> ([], Just $ st & stateLens .~ target evt "value")
-              , "value" $= st' ^. stateLens
+              , "value" $= cs (st' ^. stateLens)
               ]
       mempty
 
