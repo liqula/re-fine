@@ -32,8 +32,8 @@ packages:
   - react-hs-servant
 
 extra-deps:
-- react-hs-0.0.1
-- react-hs-servant-0.0.1
+- react-hs-0.1.0
+- react-hs-servant-0.1.0
 - refine-common-0.0.0.0
 - language-css-0.0.3
 - fingertree-tf-0.1.0.0
