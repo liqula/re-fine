@@ -33,6 +33,7 @@ import           Language.Css.Syntax
 import qualified React.Flux as RF
 
 import           Refine.Common.Types hiding (Style)
+import           React.Flux.Missing
 import           Refine.Frontend.Test.Console (gracefulError)
 import           Refine.Frontend.ThirdPartyViews (skylight_)
 import           Refine.Frontend.Contribution.Types
@@ -129,8 +130,8 @@ addContributionDialogFrame title mrange windowWidth child =
 
       child
 
-contributionDialogTextForm :: HasCallStack => Lens' st ST -> Int -> ST -> ReactElementM ('StatefulEventHandlerCode st) ()
-contributionDialogTextForm stateLens stepNumber promptText = do
+contributionDialogTextForm :: HasCallStack => Lens' st ST -> st -> Int -> ST -> ReactElementM ('StatefulEventHandlerCode st) ()
+contributionDialogTextForm stateLens st' stepNumber promptText = do
   div_ ["className" $= "c-vdoc-overlay-content__step-indicator"] $ do
     p_ $ do
       elemString $ "Step " <> show stepNumber <> ": "
@@ -148,6 +149,7 @@ contributionDialogTextForm stateLens stepNumber promptText = do
                       ]
               -- Update the current state with the current text in the textbox, sending no actions
               , onChange $ \evt -> simpleHandler $ \st -> ([], Just $ st & stateLens .~ target evt "value")
+              , "value" $= cs (st' ^. stateLens)
               ]
       mempty
 
@@ -280,19 +282,19 @@ showQuestion_ :: HasCallStack => ShowQuestionProps -> ReactElementM eventHandler
 showQuestion_ = view_ showQuestion "showQuestion_"
 
 
-addComment :: HasCallStack => Translations -> View '[AddContributionProps ()]
+addComment :: HasCallStack => Translations -> View '[AddContributionProps (LocalStateRef CommentInputState)]
 addComment __ = mkView "AddComment" $ \props -> addContributionDialogFrame
   (__ add_a_comment)
   (props ^. acpRange)
   (props ^. acpWindowWidth)
-  commentInput_
+  (commentInput_ $ props ^. acpLocalState)
 
-addComment_ :: HasCallStack => Translations -> AddContributionProps () -> ReactElementM eventHandler ()
+addComment_ :: HasCallStack => Translations -> AddContributionProps (LocalStateRef CommentInputState) -> ReactElementM eventHandler ()
 addComment_ __ = view_ (addComment __) "addComment_"
 
 
-commentInput :: HasCallStack => View '[]
-commentInput = mkStatefulView "CommentInput" (CommentInputState (CommentInfo "" Nothing) False False) $ \st ->
+commentInput :: HasCallStack => LocalStateRef CommentInputState -> View '[]
+commentInput lst = mkPersistentStatefulView "CommentInput" lst $ \st ->
   do
     let smkind = st ^? commentInputStateData . commentInfoKind . _Just
     let stext  = st ^. commentInputStateData . commentInfoDesc
@@ -327,7 +329,7 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState (CommentInfo "" 
 
       hr_ []
 
-      contributionDialogTextForm (commentInputStateData . commentInfoDesc) 2 "enter your comment:"
+      contributionDialogTextForm (commentInputStateData . commentInfoDesc) st 2 "enter your comment:"
 
       hr_ []
 
@@ -353,8 +355,8 @@ commentInput = mkStatefulView "CommentInput" (CommentInputState (CommentInfo "" 
           & iconButtonPropsLabel        .~ "submit"
           & enableOrDisable
 
-commentInput_ :: HasCallStack => ReactElementM eventHandler ()
-commentInput_ = view_ commentInput "commentInput_"
+commentInput_ :: HasCallStack => LocalStateRef CommentInputState -> ReactElementM eventHandler ()
+commentInput_ lst = view_ (commentInput lst) "commentInput_"
 
 
 -- * edits
@@ -384,8 +386,8 @@ addEdit_ = view_ addEdit "addEdit_"
 -- handled in react?  should we have a second global store here that is just shared between
 -- 'editInput' and and 'editKindForm'?
 editInput :: HasCallStack => EditInfo (Maybe EditKind) -> View '[]
-editInput einfo = mkStatefulView "EditInput" (EditInputState einfo Nothing) $
-  \st@(EditInputState (EditInfo desc mkind) _) -> do
+editInput einfo = mkPersistentStatefulView "EditInput" (einfo ^. editInfoLocalStateRef) $
+  \st@(EditInputState (EditInfo desc mkind rst) _) -> do
     div_ $ do
       elemString "Step 1: "
       span_ ["className" $= "bold"] "Type of this edit:"
@@ -393,7 +395,7 @@ editInput einfo = mkStatefulView "EditInput" (EditInputState einfo Nothing) $
 
     hr_ []
 
-    contributionDialogTextForm (editInputStateData . editInfoDesc) 2 "describe your motivation for this edit:"
+    contributionDialogTextForm (editInputStateData . editInfoDesc) st 2 "describe your motivation for this edit:"
 
     hr_ []
 
@@ -402,7 +404,7 @@ editInput einfo = mkStatefulView "EditInput" (EditInputState einfo Nothing) $
             & iconButtonPropsDisabled     .~ True
           else props
             & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [ DocumentAction $ DocumentSave (EditInfo desc (fromJust mkind))
+            & iconButtonPropsOnClick      .~ [ DocumentAction $ DocumentSave (EditInfo desc (fromJust mkind) rst)
                                              , ContributionAction ClearRange
                                              ]
 

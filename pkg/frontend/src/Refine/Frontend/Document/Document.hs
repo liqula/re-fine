@@ -67,7 +67,7 @@ documentRender :: HasCallStack => () -> DocumentProps -> ReactElementM ('Statefu
 documentRender() props = liftViewToStateHandler $ do
   let dstate = props ^. dpDocumentState
 
-      sendMouseUpIfReadOnly :: HandlerWithEventModifications 'EventHandlerCode
+      sendMouseUpIfReadOnly :: EventHandlerTypeWithMods 'EventHandlerCode
       sendMouseUpIfReadOnly =
         simpleHandler $ mconcat [ dispatch $ ContributionAction RequestSetRange | has _DocumentStateView dstate ]
 

@@ -88,17 +88,19 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           -- components that are visible only sometimes:
           showNote_ `mapM_` showNoteProps (vdoc ^. compositeVDocApplicableNotes) rs
           showDiscussion_ `mapM_` showDiscussionProps (vdoc ^. compositeVDocApplicableDiscussions) rs
-          when (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogComment) $ do
-            addComment_ __ $ AddContributionProps
+          case rs ^. RS.gsContributionState . RS.csActiveDialog of
+            Just (ActiveDialogComment lst) -> do
+              addComment_ __ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
-                              ()
+                              lst
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
-          when (rs ^. RS.gsContributionState . RS.csActiveDialog == Just ActiveDialogEdit) $ do
-            addEdit_ $ AddContributionProps
+            Just ActiveDialogEdit -> do
+              addEdit_ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
                               (fromMaybe (error "rs ^? RS.gsDocumentState . documentStateEditInfo") $
                                rs ^? RS.gsDocumentState . documentStateEditInfo)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
+            Nothing -> mempty
 
           main_ ["role" $= "main", "key" $= "main"] $ do
               div_ ["className" $= "grid-wrapper"] $ do

@@ -108,8 +108,6 @@ data IbuttonProps onclick = IbuttonProps
   }
   deriving (Eq, Show, Generic)
 
-instance UnoverlapAllEq (IbuttonProps onclick)
-
 data IbuttonState st = IbuttonState { _ibuttonMouseOver :: Bool, _ibuttonState :: st }
   deriving (Eq, Ord, Generic)
 
@@ -189,8 +187,6 @@ data IconProps = IconProps
 
 type IconDescription = (JSString, JSString)
 
-instance UnoverlapAllEq IconProps
-
 instance Default IconProps where
   def = IconProps
     { _iconPropsBlockName = ""
@@ -216,8 +212,6 @@ data IconButtonPropsWithHandler onclick = IconButtonProps
   , _iconButtonPropsExtraClasses :: [JSString]
   }
   deriving (Eq)
-
-instance UnoverlapAllEq (IconButtonPropsWithHandler onclick)
 
 
 -- * TH instances

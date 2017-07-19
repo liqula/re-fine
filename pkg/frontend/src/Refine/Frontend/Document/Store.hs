@@ -34,6 +34,7 @@ import Refine.Frontend.Prelude
 import qualified Data.Map as Map
 
 import           Refine.Common.Types
+import           React.Flux.Missing
 import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
@@ -64,7 +65,9 @@ documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvd
 documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _)
   = DocumentStateEdit
       (maybe estate (forceSelection estate . (`toSelectionState` True)) $ oldgs ^. gsCurrentSelection)
-      (EditInfo "" Nothing)
+      einfo
+  where
+    einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) oldgs
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     oldgs

@@ -33,6 +33,7 @@ import           Data.List.NonEmpty (NonEmpty((:|)))
 import qualified Data.Map.Strict as Map
 import           Language.Css.Syntax hiding (Value)
 
+import React.Flux.Missing
 import Refine.Common.Types
 import Refine.Frontend.Icon.Types
 import Refine.Frontend.Screen.Types
@@ -127,10 +128,18 @@ data EditInputState = EditInputState
   }
   deriving (Show, Eq, Generic)
 
-data EditInfo kind = EditInfo { _editInfoDesc :: ST, _editInfoKind :: kind }
+-- | FIXME: it's weird that there is are two 'editInfoDesc' values in here: one at @^. editInfoDesc@
+-- and one at @^. editInfoLocalStateRef . <deref> . editInputStateData . editInfoDesc'.  (In fact,
+-- it's an infinite tree?!  the knot is tied on creating the ref, but still.)  there may be a way to
+-- implement this that's easier to understand.
+data EditInfo kind = EditInfo
+  { _editInfoDesc :: ST
+  , _editInfoKind :: kind
+  , _editInfoLocalStateRef :: LocalStateRef EditInputState
+  }
   deriving (Show, Eq, Generic)
 
-data ActiveDialog = ActiveDialogComment | ActiveDialogEdit
+data ActiveDialog = ActiveDialogComment (LocalStateRef CommentInputState) | ActiveDialogEdit
   deriving (Show, Eq, Generic)
 
 emptyContributionState :: HasCallStack => ContributionState
@@ -185,8 +194,6 @@ instance Show BubbleSide where
   show BubbleLeft = "left"
   show BubbleRight = "right"
 
-instance UnoverlapAllEq BubbleProps
-
 
 -- * QuickCreate
 
@@ -225,8 +232,6 @@ data CommentDisplayProps = CommentDisplayProps
   }
   deriving (Eq)
 
-instance UnoverlapAllEq CommentDisplayProps
-
 data ShowNoteProps =
     ShowNoteProps
       { _snpNote        :: Note
@@ -234,8 +239,6 @@ data ShowNoteProps =
       , _snpWindowWidth :: Int
       }
   deriving (Eq)
-
-instance UnoverlapAllEq ShowNoteProps
 
 data ShowDiscussionProps =
     ShowDiscussionProps
@@ -245,12 +248,8 @@ data ShowDiscussionProps =
       }
   deriving (Eq)
 
-instance UnoverlapAllEq ShowDiscussionProps
-
 newtype ShowQuestionProps = ShowQuestionProps (Maybe CompositeQuestion)
   deriving (Eq)
-
-instance UnoverlapAllEq ShowQuestionProps
 
 data AddContributionProps st = AddContributionProps
   { _acpRange         :: Maybe SelectionStateWithPx
@@ -258,10 +257,6 @@ data AddContributionProps st = AddContributionProps
   , _acpWindowWidth   :: Int
   }
   deriving (Eq)
-
-instance UnoverlapAllEq (AddContributionProps ())
-instance UnoverlapAllEq (AddContributionProps (Maybe EditKind))
-instance UnoverlapAllEq (AddContributionProps (EditInfo (Maybe EditKind)))
 
 
 -- * instances

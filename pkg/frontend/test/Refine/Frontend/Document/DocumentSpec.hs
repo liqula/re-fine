@@ -39,6 +39,7 @@ import Refine.Common.Test.Arbitrary
 import Refine.Common.Test.Samples
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft
+import React.Flux.Missing
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Document
 import Refine.Frontend.Document.FFI
@@ -161,8 +162,10 @@ spec = do
   describe "Document" $ do
     let mkTestProps :: RawContent -> DocumentProps
         mkTestProps c = DocumentProps
-          (DocumentStateEdit (editorStateFromVDocVersion $ rawContentToVDocVersion c) (EditInfo "" Nothing))
+          (DocumentStateEdit (editorStateFromVDocVersion $ rawContentToVDocVersion c) einfo)
           emptyContributionState
+          where
+            einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) c
 
     it "renders with empty content" $ do
       wrapper <- shallow $ document_ (mkTestProps emptyRawContent)
