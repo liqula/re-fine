@@ -139,7 +139,7 @@ data EditInfo kind = EditInfo
   }
   deriving (Show, Eq, Generic)
 
-data ActiveDialog = ActiveDialogComment | ActiveDialogEdit
+data ActiveDialog = ActiveDialogComment (LocalStateRef CommentInputState) | ActiveDialogEdit
   deriving (Show, Eq, Generic)
 
 emptyContributionState :: HasCallStack => ContributionState

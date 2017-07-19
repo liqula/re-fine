@@ -26,6 +26,7 @@ module Refine.Frontend.Contribution.Store where
 import Refine.Frontend.Prelude
 
 import qualified Data.Map.Strict as M
+import           React.Flux.Missing
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
@@ -68,7 +69,8 @@ displayedContributionUpdate act st = case act of
 
 activeDialogUpdate :: HasCallStack => GlobalAction -> Maybe ActiveDialog -> Maybe ActiveDialog
 activeDialogUpdate = \case
-  ContributionAction ShowCommentEditor   -> const $ Just ActiveDialogComment
+  ContributionAction ShowCommentEditor   -> const . Just . ActiveDialogComment $ newLocalStateRef
+                                              (CommentInputState (CommentInfo "" Nothing) False False) ()
   ContributionAction HideCommentEditor   -> const Nothing
   DocumentAction RequestDocumentSave     -> const $ Just ActiveDialogEdit
   DocumentAction (DocumentSave _)        -> const Nothing
