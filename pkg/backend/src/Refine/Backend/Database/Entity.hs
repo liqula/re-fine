@@ -261,6 +261,7 @@ updateEdit eid ce = do
     , S.EditDesc     =. (ce ^. createEditDesc)
     , S.EditKind     =. (ce ^. createEditKind)
     ]
+  modifyMetaID eid
 
 getEdit :: ID Edit -> DB Edit
 getEdit eid = do
