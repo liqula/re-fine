@@ -432,6 +432,13 @@ specMockedLogin = around createDevModeTestSession $ do
             ]
           ]
 
+      it "update merged edit" $ \_sess -> do
+        pending
+
+      it "update edit modification time" $ \_sess -> do
+        -- check that modification time is updated on edit update
+        pending
+
 specUserHandling :: Spec
 specUserHandling = around createTestSession $ do
   describe "User handling" $ do
