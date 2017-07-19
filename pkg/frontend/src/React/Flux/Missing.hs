@@ -98,7 +98,7 @@ mkPersistentStatefulView
        --   type ViewPropsToElement props code = VarArg props (ReactElementM code)
        -- so the next line will not be needed
        , ViewPropsToElement props ('StatefulEventHandlerCode state)
-         ~ VarArg props (ReactElementM (('StatefulEventHandlerCode state)) ())
+         ~ VarArg props (ReactElementM ('StatefulEventHandlerCode state) ())
        )
     => JSString -- ^ A name for this view, used only for debugging/console logging
     -> LocalStateRef state -- ^ The reference of the initial state
