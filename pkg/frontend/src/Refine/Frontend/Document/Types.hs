@@ -64,6 +64,7 @@ data DocumentState_ rawcontent edit =
   | DocumentStateEdit
       { _documentStateVal      :: EditorState
       , _documentStateEditInfo :: EditInfo (Maybe EditKind)  -- ^ 'editInput_' dialog state lives here between close / re-open.
+      , _documentBaseEdit      :: Maybe (ID Edit)  -- ^ Just if we are updating and edit
       }
   deriving (Show, Eq, Generic, Functor)
 
@@ -71,7 +72,7 @@ mapDocumentState :: (a -> a') -> (b -> b') -> DocumentState_ a b -> DocumentStat
 mapDocumentState f g = \case
   DocumentStateView x a -> DocumentStateView x (f a)
   DocumentStateDiff i x a e y -> DocumentStateDiff i x (f a) (g e) y
-  DocumentStateEdit x y -> DocumentStateEdit x y
+  DocumentStateEdit x y be -> DocumentStateEdit x y be
 
 -- | The document state variant for 'DocumentProps'.
 type DocumentState = DocumentState_ RawContent Edit
@@ -113,7 +114,8 @@ refreshDocumentStateView ed eidChanged c = if eidChanged then viewMode else same
     sameMode = \case
       DocumentStateView _ _                  -> DocumentStateView e ()
       DocumentStateDiff _ _ _ edit collapsed -> DocumentStateDiff (mkEditIndex ed edit) e () edit collapsed
-      DocumentStateEdit _ kind               -> DocumentStateEdit e kind
+      DocumentStateEdit _ kind Nothing       -> DocumentStateEdit e kind Nothing
+      DocumentStateEdit _ _kind _            -> error "not implemented" -- TODO
 
     e  = createWithContent $ convertFromRaw c
 

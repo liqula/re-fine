@@ -287,7 +287,11 @@ emitBackendCallsFor act st = case act of
                   , C._createEditKind        = info ^. editInfoKind
                   }
 
-        addEdit eid cedit $ \case
+            addOrUpdate = case join $ st ^? gsDocumentState . documentBaseEdit of
+              Nothing -> addEdit eid
+              Just eid' -> updateEdit eid'
+
+        addOrUpdate cedit $ \case
           Left rsp   -> ajaxFail rsp Nothing
           Right edit -> dispatchManyM [ AddEdit edit
                                       , ContributionAction RequestSetAllVerticalSpanBounds

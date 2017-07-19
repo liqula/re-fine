@@ -59,18 +59,22 @@ documentStateUpdate (OpenDocument cvdoc) oldgs _newgs st
         mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
     in refreshDocumentStateView (fromMaybe (error "impossible") $ gsEdit oldgs) eidChanged (rawContentFromCompositeVDoc cvdoc) st
 
-documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) _state
+documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) DocumentStateEdit{}
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
 documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _)
   = DocumentStateEdit
       (maybe estate (forceSelection estate . (`toSelectionState` True)) $ oldgs ^. gsCurrentSelection)
       einfo
+      Nothing
   where
     einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) oldgs
 
-documentStateUpdate (HeaderAction StartEdit) _oldgs _newgs (DocumentStateDiff _ estate _ edit _)
-  = DocumentStateEdit estate (error "not implemented" edit)
+documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateDiff _ estate _ edit _)
+  = DocumentStateEdit estate{-TODO-} einfo (Just edit)
+  where
+    -- TODO: fill in with previous info
+    einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) oldgs
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     oldgs
