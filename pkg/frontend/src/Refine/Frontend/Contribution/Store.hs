@@ -67,10 +67,13 @@ displayedContributionUpdate act st = case act of
   HideContributionDialog -> Nothing
   _ -> st
 
+activeDialogUpdateForShowCommentEditor :: b{-to prevent let-floating-} -> Maybe ActiveDialog
+activeDialogUpdateForShowCommentEditor = Just . ActiveDialogComment .
+  newLocalStateRef (CommentInputState (CommentInfo "" Nothing) False False)
+
 activeDialogUpdate :: HasCallStack => GlobalAction -> Maybe ActiveDialog -> Maybe ActiveDialog
 activeDialogUpdate = \case
-  ContributionAction ShowCommentEditor   -> \old -> Just . ActiveDialogComment $ newLocalStateRef
-                                              (CommentInputState (CommentInfo "" Nothing) False False) old{-to prevent let-floating-}
+  ContributionAction ShowCommentEditor   -> activeDialogUpdateForShowCommentEditor
   ContributionAction HideCommentEditor   -> const Nothing
   DocumentAction RequestDocumentSave     -> const $ Just ActiveDialogEdit
   DocumentAction (DocumentSave _)        -> const Nothing

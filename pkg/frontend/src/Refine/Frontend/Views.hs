@@ -88,7 +88,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           -- components that are visible only sometimes:
           showNote_ `mapM_` showNoteProps (vdoc ^. compositeVDocApplicableNotes) rs
           showDiscussion_ `mapM_` showDiscussionProps (vdoc ^. compositeVDocApplicableDiscussions) rs
-          case (rs ^. RS.gsContributionState . RS.csActiveDialog) of
+          case rs ^. RS.gsContributionState . RS.csActiveDialog of
             Just (ActiveDialogComment lst) -> do
               addComment_ __ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
