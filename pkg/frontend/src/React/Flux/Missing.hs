@@ -55,8 +55,8 @@ deriveClasses [([''LocalStateRef], allClass)]
 -- Usually you need second one, so try to call newLocalStateRef as early as possible
 -- and share its result.
 --
--- The second parameter of newLocalStateRef can be used to prevent cse and let-floating
--- at the call side. Without this,
+-- The second parameter of newLocalStateRef can be used to prevent cse (common sub-expression
+-- elimination) and let-floating at the call side. Without this,
 --
 --     [newLocalStateRef 1 | i <- [1..10]]
 --
@@ -78,23 +78,24 @@ deriveClasses [([''LocalStateRef], allClass)]
 --
 --     (newLocalStateRef x 'l', newLocalStateRef x 'r')
 --
--- or use newLocalStateRefM
+-- or use 'newLocalStateRefM'.
 {-# NOINLINE newLocalStateRef #-}
 newLocalStateRef :: a -> b -> LocalStateRef a
 newLocalStateRef a _ = unsafePerformIO (LocalStateRef . NoJSONRep <$> newIORef a)
 
--- see newLocalStateRef
+-- | See 'newLocalStateRef'.
 {-# NOINLINE newLocalStateRefM #-}
 newLocalStateRefM :: Monad m => a -> m (LocalStateRef a)
 newLocalStateRefM a = pure $ newLocalStateRef a ()
 
-------------------------------- vararg functions
+
+-- * vararg functions with fmap
+
 type family VarArg (props :: [*]) e where
   VarArg '[] e = e
   VarArg (a ': as) e = a -> VarArg as e
 
-------------------------------- fmap over vararg functions
--- see https://stackoverflow.com/questions/45178068/fmap-over-variable-argument-function/
+-- | see https://stackoverflow.com/questions/45178068/fmap-over-variable-argument-function/
 mapVarArg :: forall props e e' . VarArgIso props => (e -> e') -> VarArg props e -> VarArg props e'
 mapVarArg f = Lens.under (Lens.from (varArgIso @props)) (fmap f)
 
@@ -114,9 +115,11 @@ instance VarArgIso as => VarArgIso (a ': as) where
 instance Functor (VarArgD props) where
   fmap f (DNil a)  = DNil (f a)
   fmap f (DCons g) = DCons (fmap f . g)
--------------------------------
 
--- | like mkStatefulView but the component remembers its state when it is re-rendered
+
+-- * views with persisent state
+
+-- | like 'mkStatefulView', but the component remembers its state when it is re-rendered
 mkPersistentStatefulView
     :: forall (state :: *) (props :: [*]).
        (Typeable state, Typeable state, Eq state,

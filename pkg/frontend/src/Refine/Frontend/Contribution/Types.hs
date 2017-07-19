@@ -128,6 +128,10 @@ data EditInputState = EditInputState
   }
   deriving (Show, Eq, Generic)
 
+-- | FIXME: it's weird that there is are two 'editInfoDesc' values in here: one at @^. editInfoDesc@
+-- and one at @^. editInfoLocalStateRef . <deref> . editInputStateData . editInfoDesc'.  (In fact,
+-- it's an infinite tree?!  the knot is tied on creating the ref, but still.)  there may be a way to
+-- implement this that's easier to understand.
 data EditInfo kind = EditInfo
   { _editInfoDesc :: ST
   , _editInfoKind :: kind
