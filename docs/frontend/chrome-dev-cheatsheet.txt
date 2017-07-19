@@ -1,0 +1,34 @@
+
+## console
+
+### special variables
+
+$0: dom element(s) selected via inspect or left-click in the elements pane.
+$$: dom element(s) under a css selector
+$x: dom element(s) under a xpath selector
+
+
+### misc
+
+Pretty-print ImmutableJS data structures in the chrome console:
+
+```javascript
+const installDevTools = require('immutable-devtools').default;
+const Immutable = require('immutable');
+installDevTools(Immutable);
+```
+
+
+## unorganized thoughts
+
+there is a "pause icon" that break-points at any exception.
+
+just editing the source in the browser console doesn't work.  the
+changes are ignored, at least in our app.  i didn't investigate why;
+it's certainly *supposed* to work.
+
+i should probably download this and fast-forward through it:
+https://www.youtube.com/watch?v=x8u0n4dT-WI
+
+- http://elijahmanor.com/7-chrome-tips-developers-designers-may-not-know/
+- https://developers.google.com/web/tools/chrome-devtools/
