@@ -36,6 +36,7 @@ import Refine.Frontend.Prelude
 
 import           React.Flux.Internal
 import           Control.DeepSeq
+import qualified Control.Lens as Lens
 import           Data.IORef
 import           System.IO.Unsafe
 import           GHC.Generics (Generic(..), Rec0)
@@ -79,39 +80,48 @@ deriveClasses
   [ ([''LocalStateRef], [''Lens'])
   ]
 
-
 ------------------------------- vararg functions
-data VarArg (props :: [*]) e where
-  DNil :: e -> VarArg '[] e
-  DCons :: (a -> VarArg as e) -> VarArg (a ': as) e
+type family VarArg (props :: [*]) e where
+  VarArg '[] e = e
+  VarArg (a ': as) e = a -> VarArg as e
 
-instance Functor (VarArg props) where
-  fmap f (DNil a) = DNil (f a)
+------------------------------- fmap over vararg functions
+-- see https://stackoverflow.com/questions/45178068/fmap-over-variable-argument-function/
+mapVarArg :: forall props e e' . VarArgIso props => (e -> e') -> VarArg props e -> VarArg props e'
+mapVarArg f = Lens.under (Lens.from (varArgIso @props)) (fmap f)
+
+data VarArgD (props :: [*]) e where
+  DNil  :: e -> VarArgD '[] e
+  DCons :: (a -> VarArgD as e) -> VarArgD (a ': as) e
+
+class VarArgIso (props :: [*]) where
+  varArgIso :: Lens.Iso (VarArg props e) (VarArg props e') (VarArgD props e) (VarArgD props e')
+
+instance VarArgIso '[] where
+  varArgIso = iso DNil (\(DNil x) -> x)
+
+instance VarArgIso as => VarArgIso (a ': as) where
+  varArgIso = iso (\f -> DCons ((^. varArgIso) . f)) (\(DCons f) -> ((^. Lens.from varArgIso) . f))
+
+instance Functor (VarArgD props) where
+  fmap f (DNil a)  = DNil (f a)
   fmap f (DCons g) = DCons (fmap f . g)
 -------------------------------
-
-
--------------------------------
--- (ViewPropsToElement props e) is isomorphic to (VarArg props (ReactElementM e ()))
-class ViewPropsToElementIso (props :: [*]) where
-  isoTo :: ViewPropsToElement props e -> VarArg props (ReactElementM e ())
-  isoFrom :: VarArg props (ReactElementM e ()) -> ViewPropsToElement props e
-
-instance ViewPropsToElementIso '[] where
-  isoTo = DNil
-  isoFrom (DNil x) = x
-
-instance ViewPropsToElementIso as => ViewPropsToElementIso (a ': as) where
-  isoTo f = DCons (isoTo . f)
-  isoFrom (DCons f) = isoFrom . f
--------------------------------
-
 
 -- | like mkStatefulView but the component remembers its state when it is re-rendered
 mkPersistentStatefulView
     :: forall (state :: *) (props :: [*]).
        (Typeable state, Typeable state, Eq state,
-        ViewProps props ('StatefulEventHandlerCode state), Typeable props, AllEq props, ViewPropsToElementIso props)
+        ViewProps props ('StatefulEventHandlerCode state), Typeable props, AllEq props
+       , VarArgIso props
+
+       -- FIXME (react-hs):
+       -- define
+       --   type ViewPropsToElement props code = VarArg props (ReactElementM code)
+       -- so the next line will not be needed
+       , ViewPropsToElement props ('StatefulEventHandlerCode state)
+         ~ VarArg props (ReactElementM (('StatefulEventHandlerCode state)) ())
+       )
     => JSString -- ^ A name for this view, used only for debugging/console logging
     -> LocalStateRef state -- ^ The reference of the initial state
     -> (state -> ViewPropsToElement props ('StatefulEventHandlerCode state))
@@ -122,11 +132,7 @@ mkPersistentStatefulView name rst trans = unsafePerformIO $ do
     pure $ mkStatefulView name st mtrans
   where
     mtrans :: state -> ViewPropsToElement props ('StatefulEventHandlerCode state)
-    mtrans
-      = isoFrom
-      . fmap transh
-      . (isoTo :: ViewPropsToElement props ('StatefulEventHandlerCode state) -> VarArg props (ReactElementM ('StatefulEventHandlerCode state) ()))
-      . trans
+    mtrans = mapVarArg @props transh . trans
 
     transh :: ReactElementM ('StatefulEventHandlerCode state) () -> ReactElementM ('StatefulEventHandlerCode state) ()
     transh = transHandler (second (trSt rst <$>) .)
