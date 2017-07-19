@@ -35,15 +35,14 @@ module React.Flux.Missing
 import Refine.Frontend.Prelude
 
 import           React.Flux.Internal
-import           Control.DeepSeq
 import qualified Control.Lens as Lens
 import           Data.IORef
 import           System.IO.Unsafe
-import           GHC.Generics (Generic(..), Rec0)
 
+newtype LocalStateRef a = LocalStateRef {_unLocalStateRef :: NoJSONRep (IORef a)}
+  deriving (Eq, Show, Generic)
 
-newtype LocalStateRef a = LocalStateRef {_unLocalStateRef :: IORef a}
-  deriving (Eq)
+deriveClasses [([''LocalStateRef], allClass)]
 
 -- | Note that newLocalStateRef breaks referential transparency:
 --
@@ -57,28 +56,7 @@ newtype LocalStateRef a = LocalStateRef {_unLocalStateRef :: IORef a}
 -- and share its result.
 {-# NOINLINE newLocalStateRef #-}
 newLocalStateRef :: a -> LocalStateRef a
-newLocalStateRef a = unsafePerformIO (LocalStateRef <$> newIORef a)
-
-instance NFData (LocalStateRef a) where rnf x = x `seq` ()
-
--- FIXME: remove dummy instance
-instance FromJSON (LocalStateRef a) where
-  parseJSON = error "parseJSON @LocalStateRef"
--- FIXME: remove dummy instance
-instance ToJSON (LocalStateRef a) where
-  toJSON = error "toJSON @LocalStateRef"
--- FIXME: remove dummy instance
-instance Generic (LocalStateRef a) where
-  type Rep (LocalStateRef a) = Rec0 ()
-  from = error "from @LocalStateRef"
-  to = error "to @LocalStateRef"
-
-instance Show (LocalStateRef a) where
-  show _ = "LocalStateRef _"
-
-deriveClasses
-  [ ([''LocalStateRef], [''Lens'])
-  ]
+newLocalStateRef a = unsafePerformIO (LocalStateRef . NoJSONRep <$> newIORef a)
 
 ------------------------------- vararg functions
 type family VarArg (props :: [*]) e where
@@ -128,7 +106,7 @@ mkPersistentStatefulView
     -> View props
 
 mkPersistentStatefulView name rst trans = unsafePerformIO $ do
-    st <- readIORef $ rst ^. unLocalStateRef
+    st <- readIORef $ rst ^. unLocalStateRef . unNoJSONRep
     pure $ mkStatefulView name st mtrans
   where
     mtrans :: state -> ViewPropsToElement props ('StatefulEventHandlerCode state)
@@ -140,5 +118,6 @@ mkPersistentStatefulView name rst trans = unsafePerformIO $ do
 {-# NOINLINE trSt #-}
 trSt :: LocalStateRef state -> state -> state
 trSt rst st = unsafePerformIO $ do
-  writeIORef (rst ^. unLocalStateRef) st
-  readIORef (rst ^. unLocalStateRef)  -- to be sure that writeIORef is not optimized out
+  let r = rst ^. unLocalStateRef . unNoJSONRep
+  writeIORef r st
+  readIORef r  -- to be sure that writeIORef is not optimized out
