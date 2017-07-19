@@ -26,9 +26,9 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module React.Flux.Missing
-  ( LocalStateRef(..)
-  , unLocalStateRef
+  ( LocalStateRef
   , newLocalStateRef
+  , newLocalStateRefM
   , mkPersistentStatefulView
   ) where
 
@@ -46,17 +46,47 @@ deriveClasses [([''LocalStateRef], allClass)]
 
 -- | Note that newLocalStateRef breaks referential transparency:
 --
--- (newLocalStateRef x, newLocalStateRef x)
+--     (newLocalStateRef x, newLocalStateRef x)
 --
 -- is not the same as
 --
--- let r = newLocalStateRef x in (r, r)
+--     let r = newLocalStateRef x in (r, r)
 --
 -- Usually you need second one, so try to call newLocalStateRef as early as possible
 -- and share its result.
+--
+-- The second parameter of newLocalStateRef can be used to prevent cse and let-floating
+-- at the call side. Without this,
+--
+--     [newLocalStateRef 1 | i <- [1..10]]
+--
+-- is likely to be simplified to
+--
+--     let r = newLocalStateRef 1 in [r | i <- [1..10]]
+--
+-- or
+--
+--     (newLocalStateRef x, newLocalStateRef x)
+--
+-- is likely to be simplified to
+--
+--     let r = newLocalStateRef x in (r, r)
+--
+-- The solution is:
+--
+--     [newLocalStateRef 1 i | i <- [1..10]]
+--
+--     (newLocalStateRef x 'l', newLocalStateRef x 'r')
+--
+-- or use newLocalStateRefM
 {-# NOINLINE newLocalStateRef #-}
-newLocalStateRef :: a -> LocalStateRef a
-newLocalStateRef a = unsafePerformIO (LocalStateRef . NoJSONRep <$> newIORef a)
+newLocalStateRef :: a -> b -> LocalStateRef a
+newLocalStateRef a _ = unsafePerformIO (LocalStateRef . NoJSONRep <$> newIORef a)
+
+-- see newLocalStateRef
+{-# NOINLINE newLocalStateRefM #-}
+newLocalStateRefM :: Monad m => a -> m (LocalStateRef a)
+newLocalStateRefM a = pure $ newLocalStateRef a ()
 
 ------------------------------- vararg functions
 type family VarArg (props :: [*]) e where

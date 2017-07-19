@@ -165,7 +165,7 @@ spec = do
           (DocumentStateEdit (editorStateFromVDocVersion $ rawContentToVDocVersion c) einfo)
           emptyContributionState
           where
-            einfo = EditInfo "" Nothing . newLocalStateRef $ EditInputState einfo Nothing
+            einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) c
 
     it "renders with empty content" $ do
       wrapper <- shallow $ document_ (mkTestProps emptyRawContent)

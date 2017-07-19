@@ -67,7 +67,7 @@ documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _
       (maybe estate (forceSelection estate . (`toSelectionState` True)) $ oldgs ^. gsCurrentSelection)
       einfo
   where
-    einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing)
+    einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) oldgs
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     oldgs
