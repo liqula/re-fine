@@ -70,7 +70,7 @@ instance HasMetaInfo Edit        where metaInfoType = MetaEdit
 newtype RawContentEdit = RawContentEdit {unRawContentEdit :: OT.Edit RawContent}
   deriving (ToJSON, FromJSON, Monoid)
 
-newtype RangePositions = RangePositions {unSelectionStates :: NonEmpty (Range Position)}
+newtype RangePositions = RangePositions {unRangePositions :: NonEmpty (Range Position)}
   deriving (ToJSON, FromJSON)
 
 newtype RangePosition = RangePosition {unRangePosition :: Range Position}
