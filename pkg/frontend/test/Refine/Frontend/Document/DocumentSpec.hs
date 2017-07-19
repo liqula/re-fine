@@ -162,7 +162,7 @@ spec = do
   describe "Document" $ do
     let mkTestProps :: RawContent -> DocumentProps
         mkTestProps c = DocumentProps
-          (DocumentStateEdit (editorStateFromVDocVersion $ rawContentToVDocVersion c) einfo)
+          (DocumentStateEdit (editorStateFromVDocVersion $ rawContentToVDocVersion c) einfo Nothing)
           emptyContributionState
           where
             einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) c

@@ -70,11 +70,18 @@ documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _
   where
     einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) oldgs
 
-documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateDiff _ estate _ edit _)
-  = DocumentStateEdit estate{-TODO-} einfo (Just edit)
+documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateDiff _ _ _ edit _)
+  = DocumentStateEdit
+      (createWithContent . convertFromRaw . rawContentFromVDocVersion $ ed ^. editVDocVersion)
+      einfo
+      (Just edit)
   where
-    -- TODO: fill in with previous info
-    einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) oldgs
+    Just ed = getEdit oldgs edit
+
+    einfo = EditInfo
+             (ed ^. editDesc)
+             (Just $ ed ^. editKind)
+             $ newLocalStateRef (EditInputState einfo Nothing) oldgs
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     oldgs

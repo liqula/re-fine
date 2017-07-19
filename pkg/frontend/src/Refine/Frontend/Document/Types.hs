@@ -115,7 +115,7 @@ refreshDocumentStateView ed eidChanged c = if eidChanged then viewMode else same
       DocumentStateView _ _                  -> DocumentStateView e ()
       DocumentStateDiff _ _ _ edit collapsed -> DocumentStateDiff (mkEditIndex ed edit) e () edit collapsed
       DocumentStateEdit _ kind Nothing       -> DocumentStateEdit e kind Nothing
-      DocumentStateEdit _ _kind _            -> error "not implemented" -- TODO
+      dst@(DocumentStateEdit _ _ Just{})     -> dst -- moving the head does not affect edit updates
 
     e  = createWithContent $ convertFromRaw c
 

@@ -153,6 +153,9 @@ getDocumentState _
 gsEdit :: GlobalState_ a -> Maybe Edit
 gsEdit gs = ((gs ^. gsServerCache . scEdits) Map.!) <$> (gs ^. gsEditID)
 
+getEdit :: GlobalState_ a -> ID Edit -> Maybe Edit
+getEdit gs eid = Map.lookup eid (gs ^. gsServerCache . scEdits)
+
 gsVDoc :: Lens' (GlobalState_ a) (Maybe CompositeVDoc)
 gsVDoc = lens getCompositeVDoc setCompositeVDoc
   where
