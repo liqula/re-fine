@@ -88,6 +88,6 @@ diffToolbar_ props = do
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
   ibutton_ $ emptyIbuttonProps "Diff_details" [ShowNotImplementedYet]
-    & ibListKey .~ "5"
+    & ibListKey .~ "6"
     & ibLabel .~ "details"
     & ibSize .~ XXLarge
