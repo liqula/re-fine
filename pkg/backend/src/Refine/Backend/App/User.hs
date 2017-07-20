@@ -90,7 +90,7 @@ createUser (CreateUser name email password) = do
               }
   loginId <- leftToError AppUserCreationError
              =<< userHandle (User.createUser user)
-  Refine.User <$> db (createMetaID_ $ User.toUserID loginId)
+  Refine.User <$> db (createMetaID_ $ User.toUserID loginId) <*> pure name <*> pure email
 
 doesUserExist :: ID Refine.User -> App Bool
 doesUserExist uid = do
