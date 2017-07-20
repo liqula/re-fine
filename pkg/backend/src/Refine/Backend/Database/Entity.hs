@@ -40,6 +40,7 @@ import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
 import           Refine.Backend.Database.Types
 import           Refine.Backend.Database.Tree
+import           Refine.Backend.User.Free (mockUserId)
 import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
@@ -175,6 +176,13 @@ createMetaID_ ida = do
   let meta = S.MetaInfo (metaInfoType ida) user time user time
   void . liftDB $ insert meta
   pure . MetaID ida $ S.metaInfoElim (const MetaInfo) meta
+
+addMockUserMetaInfo :: DB ()
+addMockUserMetaInfo = do
+  (_user, time) <- getUserAndTime
+  let user = UserID mockUserId
+      meta = S.MetaInfo (metaInfoType mockUserId) user time user time
+  void . liftDB $ insert meta
 
 addConnection
     :: (PersistEntityBackend record ~ BaseBackend SqlBackend, ToBackendKey SqlBackend record

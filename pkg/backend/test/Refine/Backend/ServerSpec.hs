@@ -290,8 +290,8 @@ specMockedLogin = around createDevModeTestSession $ do
   describe "sAddNote" $ do
     it "stores note with full-document chunk range" $ \sess -> do
       runWai sess $ do
-        un :: Username <- postJSON loginUri $ Login "username" "password"
-        liftIO $ un `shouldBe` "username"
+        un :: User <- postJSON loginUri $ Login "username" "password"
+        liftIO $ (un ^. userName) `shouldBe` "username"
         fe_ :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
         let cp1 = Position (BlockIndex 0 $ BlockKey "0") 0
             cp2 = Position (BlockIndex 0 $ BlockKey "0") 1
@@ -304,8 +304,8 @@ specMockedLogin = around createDevModeTestSession $ do
 
     it "stores note with non-trivial valid chunk range" $ \sess -> do
       runWai sess $ do
-        un :: Username <- postJSON loginUri $ Login "username" "password"
-        liftIO $ un `shouldBe` "username"
+        un :: User <- postJSON loginUri $ Login "username" "password"
+        liftIO $ (un ^. userName) `shouldBe` "username"
         fe_ :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
         let cp1 = Position (BlockIndex 1 $ BlockKey "1") 0
             cp2 = Position (BlockIndex 1 $ BlockKey "1") 1
@@ -338,8 +338,8 @@ specMockedLogin = around createDevModeTestSession $ do
   describe "sAddDiscussion" $ do
     it "stores discussion with no ranges" $ \sess -> do
       runWai sess $ do
-        un :: Username <- postJSON loginUri $ Login "username" "password"
-        liftIO $ un `shouldBe` "username"
+        un :: User <- postJSON loginUri $ Login "username" "password"
+        liftIO $ (un ^. userName) `shouldBe` "username"
         fe_ :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
         let cp1 = Position (BlockIndex 0 $ BlockKey "1") 0
             cp2 = Position (BlockIndex 0 $ BlockKey "1") 1
@@ -360,7 +360,7 @@ specMockedLogin = around createDevModeTestSession $ do
     let samplevdoc = rawContentToVDocVersion . mkRawContent $ mkBlock "[new vdoc version]" :| []
     let setup sess = runWai sess $ do
           let group = UniversalGroup
-          _l :: Username <- postJSON loginUri (Login devModeUser devModePass)
+          _l :: User <- postJSON loginUri (Login devModeUser devModePass)
           (CreatedCollabEditProcess _fp fc) :: CreatedProcess <-
             postJSON addProcessUri
               (AddCollabEditProcess CreateCollabEditProcess

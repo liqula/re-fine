@@ -26,16 +26,19 @@ module Refine.Backend.User.Free (
     FreeUH
   , freeUHNat
   , MockUH(..), MockUH_
+  , mockUserId
   , mockLogin
   ) where
 
 import Refine.Backend.Prelude
 
 import Control.Monad.Free
+import Web.Users.Types (Password(..))
 
-import Refine.Backend.User.Class
-import Refine.Backend.User.Core
-import Refine.Common.Types (ID(ID), Username)
+import           Refine.Backend.User.Class
+import           Refine.Backend.User.Core
+import qualified Refine.Common.Types as Refine (User(..))
+import           Refine.Common.Types (ID(ID), Username)
 
 
 -- FUTUREWORK: use "Freer" instead of "Free"
@@ -129,16 +132,18 @@ data MockUH m = MockUH
   , mockDestroySession  :: SessionId -> m ()
   }
 
+mockUserId :: ID Refine.User
+mockUserId = ID 0
+
 mockLogin :: Monad m => MockUH m
 mockLogin = MockUH
-  { mockCreateUser      = \_u -> pure . Right $ fromUserID userId
-  , mockGetUserById     = \_l -> pure . Just $ error "mockLogin: No user information available."
-  , mockGetUserIdByName = \_u -> pure . Just $ fromUserID userId
+  { mockCreateUser      = \_u -> pure . Right $ fromUserID mockUserId
+  , mockGetUserById     = \_l -> pure . Just $ User "mockuser" "mockuser@example.com" PasswordHidden True
+  , mockGetUserIdByName = \_u -> pure . Just $ fromUserID mockUserId
   , mockAuthUser        = mockAuthUserImpl
-  , mockVerifySession   = \_s -> pure . Just $ fromUserID userId
+  , mockVerifySession   = \_s -> pure . Just $ fromUserID mockUserId
   , mockDestroySession  = \_s -> pure ()
   }
   where
-    userId = ID 0
     mockAuthUserImpl _u "" _t = pure Nothing
     mockAuthUserImpl _u _p _t = pure . Just $ SessionId "mock-session"
