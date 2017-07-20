@@ -49,7 +49,7 @@ data DocumentAction =
   | DocumentRedo
   deriving (Show, Eq, Generic)
 
-data DocumentState_ rawcontent edit =
+data DocumentState_ editable{-() or Bool-} rawcontent edit =
     DocumentStateView
       { _documentStateVal      :: EditorState
       , _documentStateContent  :: rawcontent
@@ -60,7 +60,7 @@ data DocumentState_ rawcontent edit =
       , _documentStateContent       :: rawcontent
       , _documentStateDiff          :: edit
       , _documentStateDiffCollapsed :: Bool
-      , _documentStateDiffEditable  :: Bool
+      , _documentStateDiffEditable  :: editable -- derived in global state, so it is () there
       }
   | DocumentStateEdit
       { _documentStateVal      :: EditorState
@@ -69,17 +69,17 @@ data DocumentState_ rawcontent edit =
       }
   deriving (Show, Eq, Generic, Functor)
 
-mapDocumentState :: (a -> a') -> (b -> b') -> DocumentState_ a b -> DocumentState_ a' b'
-mapDocumentState f g = \case
+mapDocumentState :: (a -> a') -> (b -> b') -> (c -> c') -> DocumentState_ a b c -> DocumentState_ a' b' c'
+mapDocumentState h f g = \case
   DocumentStateView x a -> DocumentStateView x (f a)
-  DocumentStateDiff i x a e y ed -> DocumentStateDiff i x (f a) (g e) y ed
+  DocumentStateDiff i x a e y ed -> DocumentStateDiff i x (f a) (g e) y (h ed)
   DocumentStateEdit x y be -> DocumentStateEdit x y be
 
 -- | The document state variant for 'DocumentProps'.
-type DocumentState = DocumentState_ RawContent Edit
+type DocumentState = DocumentState_ Bool RawContent Edit
 
 -- | The document state for 'GlobalState'.
-type GlobalDocumentState = DocumentState_ () (ID Edit)
+type GlobalDocumentState = DocumentState_ () () (ID Edit)
 
 data WipedDocumentState =
     WipedDocumentStateView
@@ -93,7 +93,7 @@ data WipedDocumentState =
   deriving (Show, Eq)
 
 globalDocumentState :: HasCallStack => DocumentState -> GlobalDocumentState
-globalDocumentState = mapDocumentState (const ()) (^. editID)
+globalDocumentState = mapDocumentState (const ()) (const ()) (^. editID)
 
 mkDocumentStateView :: HasCallStack => RawContent -> GlobalDocumentState
 mkDocumentStateView = globalDocumentState . mkDocumentStateView_

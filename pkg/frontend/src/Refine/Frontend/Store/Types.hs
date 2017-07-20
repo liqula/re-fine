@@ -144,9 +144,17 @@ makeRefineTypes [''ServerCache, ''GlobalState_, ''DevState, ''GlobalAction]
 getDocumentState :: GlobalState -> DocumentState
 getDocumentState gs@(view gsVDoc -> Just cvdoc)
   = mapDocumentState
+      (const . fromMaybe False
+             $ (==) <$> (gs ^? gsLoginState . lsCurrentUser . loggedInUser . userID . to UserID)
+                    <*> ((^. editMetaID . miMeta . metaCreatedBy) <$> getEdit gs eid))
       (const $ rawContentFromCompositeVDoc cvdoc)
       ((gs ^. gsServerCache . scEdits) Map.!)
-  $ gs ^. gsDocumentState
+      dst
+  where
+    dst = gs ^. gsDocumentState
+    eid = case dst of
+      DocumentStateDiff _ _ _ i _ _ -> i
+      _ -> error "impossible"
 getDocumentState _
   = error "getDocumentState: no gsVDoc"
 

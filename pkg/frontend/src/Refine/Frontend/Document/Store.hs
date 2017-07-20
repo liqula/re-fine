@@ -41,7 +41,6 @@ import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.FFI.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
-import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Screen.Calculations
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
@@ -94,8 +93,7 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit e
       r
       eid
       True
-      . fromMaybe False $ (==) <$> (oldgs ^? gsLoginState . lsCurrentUser . loggedInUser . userID . to UserID)
-                               <*> ((^. editMetaID . miMeta . metaCreatedBy) <$> getEdit oldgs eid)
+      ()
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
                     _oldgs
@@ -170,7 +168,7 @@ editorStateFromVDocVersion :: HasCallStack => VDocVersion -> EditorState
 editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
 
 -- | construct a 'SetAllVerticalSpanBounds' action.
-setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a b -> m ContributionAction
+setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a b c -> m ContributionAction
 setAllVerticalSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
     let marks :: Map MarkID (Ranges LeafSelector)
         marks = getLeafSelectors rawContent
