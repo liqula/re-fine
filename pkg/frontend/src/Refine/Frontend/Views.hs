@@ -121,6 +121,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
 
                           fltrThisEdit = case rs ^. gsDocumentState of
                             DocumentStateDiff _ _ _ eid _ -> Map.filter $ (/= eid) . (^. editID)
+                            DocumentStateEdit{} -> const mempty
                             _ -> id
 
                           fltr :: IsContribution c => Map (ID c) b -> [b]
