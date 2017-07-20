@@ -166,3 +166,4 @@ instance Database DB where
   vDocProcess   = Entity.vDocProcess
 
   createMetaID_ = Entity.createMetaID_
+  getMetaID     = Entity.getMeta

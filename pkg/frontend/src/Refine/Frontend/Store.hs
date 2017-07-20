@@ -328,9 +328,9 @@ emitBackendCallsFor act st = case act of
           ApiUserNotFound e -> [MainMenuAction $ MainMenuActionLoginError e]
           _                 -> []
 
-        (Right username) -> do
+        (Right user) -> do
           dispatchManyM
-            [ SetCurrentUser $ UserLoggedIn username
+            [ SetCurrentUser $ UserLoggedIn user
             , MainMenuAction MainMenuActionClose
             , LoginGuardPop
             ]

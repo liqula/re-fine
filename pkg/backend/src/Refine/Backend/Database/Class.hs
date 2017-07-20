@@ -100,6 +100,7 @@ class Database db where
   vDocProcess :: ID VDoc -> db (ID (Process CollaborativeEdit))
 
   createMetaID_ :: HasMetaInfo a => ID a -> db (MetaID a)
+  getMetaID     :: HasMetaInfo a => ID a -> db (MetaID a)
 
 
 class StoreProcessData db c where

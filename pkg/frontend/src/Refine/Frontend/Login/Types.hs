@@ -27,19 +27,19 @@ import Refine.Frontend.Prelude
 import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 
-import Refine.Common.Types.Prelude (Username)
-
 
 -- | FormError can be Nothing or Just an error string.
 type FormError = Maybe ST
 
-data CurrentUser
-  = UserLoggedIn Username
+type CurrentUser = CurrentUser_ User
+
+data CurrentUser_ user{-ID User | User-}
+  = UserLoggedIn user
   | UserLoggedOut
-  deriving (Show, Eq, Generic)
+  deriving (Show, Eq, Generic, Functor)
 
 newtype LoginState = LoginState
-  { _lsCurrentUser :: CurrentUser
+  { _lsCurrentUser :: CurrentUser  -- FIXME: CurrentUser_ (ID User)
   }
   deriving (Show, Eq, Generic)
 
@@ -48,4 +48,4 @@ emptyLoginState = LoginState
   { _lsCurrentUser = UserLoggedOut
   }
 
-makeRefineTypes [''CurrentUser, ''LoginState]
+makeRefineTypes [''CurrentUser_, ''LoginState]

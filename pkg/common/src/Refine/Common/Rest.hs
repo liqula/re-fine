@@ -129,7 +129,7 @@ type SCreateUser
 -- inspires more trust into its security than what we cooked together ourselves here.
 type SLogin
   = "r" :> "user" :> "login" :> ReqBody '[JSON] Login
-    :> Post '[JSON] Username
+    :> Post '[JSON] User
 
 type SLogout
   = "r" :> "user" :> "logout"

@@ -27,6 +27,7 @@ module Refine.Frontend.Login.Status where
 
 import Refine.Frontend.Prelude
 
+import Refine.Common.Types (userName)
 import Refine.Frontend.Icon
 import Refine.Frontend.Login.Types
 import Refine.Frontend.MainMenu.Types
@@ -43,4 +44,4 @@ loginStatusButton_ tweak cu = ibutton_ $ emptyIbuttonProps "Login" onclick
     onclick = [MainMenuAction $ MainMenuActionOpen (MainMenuLogin MainMenuSubTabLogin)]
 
     mkLabel UserLoggedOut    = "login"
-    mkLabel (UserLoggedIn n) = "I am " <> n
+    mkLabel (UserLoggedIn n) = "I am " <> (n ^. userName)
