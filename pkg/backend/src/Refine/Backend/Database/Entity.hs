@@ -183,7 +183,7 @@ addConnection
 addConnection t rid mid = void . liftDB . insert $ t (S.idToKey rid) (S.idToKey mid)
 
 getMetaInfo :: HasMetaInfo a => ID a -> DB (P.Entity (S.EntityRep MetaInfo))
-getMetaInfo ida = fromMaybe (error "no meta info for ...") <$> do
+getMetaInfo ida = fromMaybe (error $ "no meta info for " <> show (metaInfoType ida)) <$> do
   liftDB . getBy $ S.UniMetaInfo (metaInfoType ida)
 
 modifyMetaID :: HasMetaInfo a => ID a -> DB ()
