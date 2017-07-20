@@ -34,7 +34,7 @@ type FormError = Maybe ST
 type CurrentUser = CurrentUser_ User
 
 data CurrentUser_ user{-ID User | User-}
-  = UserLoggedIn user
+  = UserLoggedIn {_loggedInUser :: user}
   | UserLoggedOut
   deriving (Show, Eq, Generic, Functor)
 

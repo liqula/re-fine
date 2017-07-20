@@ -60,6 +60,7 @@ data DocumentState_ rawcontent edit =
       , _documentStateContent       :: rawcontent
       , _documentStateDiff          :: edit
       , _documentStateDiffCollapsed :: Bool
+      , _documentStateDiffEditable  :: Bool
       }
   | DocumentStateEdit
       { _documentStateVal      :: EditorState
@@ -71,7 +72,7 @@ data DocumentState_ rawcontent edit =
 mapDocumentState :: (a -> a') -> (b -> b') -> DocumentState_ a b -> DocumentState_ a' b'
 mapDocumentState f g = \case
   DocumentStateView x a -> DocumentStateView x (f a)
-  DocumentStateDiff i x a e y -> DocumentStateDiff i x (f a) (g e) y
+  DocumentStateDiff i x a e y ed -> DocumentStateDiff i x (f a) (g e) y ed
   DocumentStateEdit x y be -> DocumentStateEdit x y be
 
 -- | The document state variant for 'DocumentProps'.
@@ -86,6 +87,7 @@ data WipedDocumentState =
       { _wpiedDocumentStateDiffIndex     :: EditIndex
       , _wipedDocumentStateDiff          :: Edit
       , _wipedDocumentStateDiffCollapsed :: Bool
+      , _wipedDocumentStateDiffEditable  :: Bool
       }
   | WipedDocumentStateEdit EditToolbarProps
   deriving (Show, Eq)
@@ -113,7 +115,7 @@ refreshDocumentStateView ed eidChanged c = if eidChanged then viewMode else same
 
     sameMode = \case
       DocumentStateView _ _                  -> DocumentStateView e ()
-      DocumentStateDiff _ _ _ edit collapsed -> DocumentStateDiff (mkEditIndex ed edit) e () edit collapsed
+      DocumentStateDiff _ _ _ edit collapsed editable -> DocumentStateDiff (mkEditIndex ed edit) e () edit collapsed editable
       DocumentStateEdit _ kind Nothing       -> DocumentStateEdit e kind Nothing
       dst@(DocumentStateEdit _ _ Just{})     -> dst -- moving the head does not affect edit updates
 

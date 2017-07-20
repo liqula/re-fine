@@ -442,14 +442,14 @@ specMockedLogin = around createDevModeTestSession $ do
 specUserHandling :: Spec
 specUserHandling = around createTestSession $ do
   describe "User handling" $ do
-    let doCreate = post createUserUri (CreateUser userName "mail@email.com" userPass)
+    let doCreate = post createUserUri (CreateUser username "mail@email.com" userPass)
         doLogin = post loginUri
         doLogout = post logoutUri ()
 
         checkCookie resp = simpleHeaders resp `shouldSatisfy`
             any (\(k, v) -> k == "Set-Cookie" && refineCookieName `SBS.isPrefixOf` v)
 
-        userName = "user"
+        username = "user"
         userPass = "password"
 
     describe "create" $ do
@@ -474,7 +474,7 @@ specUserHandling = around createTestSession $ do
 
           pendingWith "#291 (this happens probabilistically, do not un-pend just because it worked a few times for you!)"
 
-          resp <- runWai sess $ doCreate >> doLogin (Login userName userPass)
+          resp <- runWai sess $ doCreate >> doLogin (Login username userPass)
           respCode resp `shouldBe` 200
           checkCookie resp
 
@@ -487,14 +487,14 @@ specUserHandling = around createTestSession $ do
 
           pendingWith "#291 (this happens probabilistically, do not un-pend just because it worked a few times for you!)"
 
-          resp <- runWai sess $ doCreate >> doLogin (Login userName "")
+          resp <- runWai sess $ doCreate >> doLogin (Login username "")
           respCode resp `shouldBe` 404
           checkCookie resp
 
     describe "logout" $ do
       context "logged in" $ do
         it "works (and returns the cookie)" $ \sess -> do
-          resp <- runWai sess $ doCreate >> doLogin (Login userName userPass) >> doLogout
+          resp <- runWai sess $ doCreate >> doLogin (Login username userPass) >> doLogout
           respCode resp `shouldBe` 200
           checkCookie resp
 

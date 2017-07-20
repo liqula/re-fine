@@ -41,6 +41,7 @@ import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.FFI.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
+import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Screen.Calculations
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
@@ -70,7 +71,7 @@ documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _
   where
     einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) oldgs
 
-documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateDiff _ _ _ edit _)
+documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateDiff _ _ _ edit _ _)
   = DocumentStateEdit
       (createWithContent . convertFromRaw . rawContentFromVDocVersion $ ed ^. editVDocVersion)
       einfo
@@ -87,18 +88,25 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit e
                     oldgs
                     _newgs
                     (DocumentStateView e r)
-  = DocumentStateDiff (mkEditIndex (fromMaybe (error "impossible") $ gsEdit oldgs) eid) e r eid True
+  = DocumentStateDiff
+      (mkEditIndex (fromMaybe (error "impossible") $ gsEdit oldgs) eid)
+      e
+      r
+      eid
+      True
+      . fromMaybe False $ (==) <$> (oldgs ^? gsLoginState . lsCurrentUser . loggedInUser . userID . to UserID)
+                               <*> ((^. editMetaID . miMeta . metaCreatedBy) <$> getEdit oldgs eid)
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
                     _oldgs
                     _newgs
-                    (DocumentStateDiff _ e r _ _)
+                    (DocumentStateDiff _ e r _ _ _)
   = DocumentStateView e r
 
 documentStateUpdate (ContributionAction HideContributionDialog)
                     _oldgs
                     _newgs
-                    (DocumentStateDiff _ e r _ _)
+                    (DocumentStateDiff _ e r _ _ _)
   = DocumentStateView e r
 
 documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _ _state

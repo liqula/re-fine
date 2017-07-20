@@ -75,6 +75,7 @@ data DiffToolbarProps = DiffToolbarProps
   , _diffToolbarEditKind    :: EditKind
   , _diffToolbarPropsVotes  :: VoteCount
   , _diffToolbarCollapsed   :: Bool
+  , _diffToolbarEditable    :: Bool
   } deriving (Show, Eq, Generic)
 
 
