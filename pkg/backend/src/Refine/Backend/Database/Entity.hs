@@ -278,6 +278,7 @@ getEditSource eid = do
   parents <- entityVal <$$> liftDB (selectList [S.ParentChildChild ==. S.idToKey eid] [])
   pure $ EditSource [(edit, S.keyToId parent) | S.ParentChild parent (RawContentEdit edit) _ <- parents]
 
+-- | for each parent of an edit, update the diff between the edit and its parent
 updateEditSource :: ID Edit -> (ID Edit{-parent-} -> OT.Edit RawContent -> OT.Edit RawContent) -> DB ()
 updateEditSource eid f = do
   parents <- entityVal <$$> liftDB (selectList [S.ParentChildChild ==. S.idToKey eid] [])

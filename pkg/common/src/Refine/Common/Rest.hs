@@ -96,8 +96,8 @@ type SAddEdit
     :> Post '[JSON] Edit
 
 type SUpdateEdit
-  = "r" :> "updateedit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Edit)
-    :> Post '[JSON] Edit
+  = "r" :> "updateEdit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Edit)
+    :> Put '[JSON] Edit
 
 type SAddNote
   = "r" :> "note" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Note)
