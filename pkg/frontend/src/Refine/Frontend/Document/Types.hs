@@ -117,7 +117,7 @@ refreshDocumentStateView ed eidChanged c = if eidChanged then viewMode else same
       DocumentStateView _ _                  -> DocumentStateView e ()
       DocumentStateDiff _ _ _ edit collapsed editable -> DocumentStateDiff (mkEditIndex ed edit) e () edit collapsed editable
       DocumentStateEdit _ kind Nothing       -> DocumentStateEdit e kind Nothing
-      dst@(DocumentStateEdit _ _ Just{})     -> dst -- moving the head does not affect edit updates
+      dst@(DocumentStateEdit _ _ Just{})     -> dst -- FIXME: not sure about this
 
     e  = createWithContent $ convertFromRaw c
 
