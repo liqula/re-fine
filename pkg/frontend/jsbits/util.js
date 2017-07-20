@@ -3,35 +3,79 @@
     // https://github.com/facebook/draft-js/blob/master/examples/draft-0-10-0/link/link.html
     target.refine$linkDecorator = new Draft.CompositeDecorator([
         {
-          strategy:
-              function (contentBlock, callback, contentState) {
+            strategy:
+            function (contentBlock, callback, contentState) {
                 contentBlock.findEntityRanges(
-                  function (character) {
-                    const entityKey = character.getEntity();
-                    return (
-                      entityKey !== null &&
-                      contentState.getEntity(entityKey).getType() === 'LINK'
+                    function (character) {
+        	        		        const entityKey = character.getEntity();
+        	        		        return (
+        	        		            entityKey !== null && (contentState.getEntity(entityKey).getType() === 'LINK' || contentState.getEntity(entityKey).getType() === 'image')
+        	        		        );
+                    },
+                    callback
+                );
+            },
+            component:
+            function (props) {
+                const entity = props.contentState.getEntity(props.entityKey);
+                const data = entity.getData();
+                const type = entity.getType();
+        	        let elem;
+        	        if (type === 'image') {
+        	            const {src} = data;
+                    elem = React.createElement(
+        	        		        'img',
+        	        		        { src: src,
+        	        		          alt: src,
+        	        		          style: { marginLeft: 'auto',
+        	        		        			           marginRight: 'auto',
+        	        		        			           display: 'block'
+        	        		        			         }
+        	        		        }
                     );
-                  },
-                  callback
-                );
-              },
-          component:
-              function (props) {
-                var url = props.contentState.getEntity(props.entityKey).getData();
-                return React.createElement(
-                    'a',
-                    { className: "tooltip", href: url, style: { color: '#3b5998', textDecoration: 'underline' } },
-                    React.createElement(
-                        "span",
-                        { className: "tooltiptext" },
-                        url
-                    ),
-                    props.children
-                );
-              },
+        	        } else {
+                    elem = React.createElement(
+        	        		        'a',
+        	        		        { className: "tooltip", href: data, style: { color: '#3b5998', textDecoration: 'underline' } },
+        	        		        React.createElement(
+                            "span",
+                            { className: "tooltiptext" },
+                            data
+        	        		        ),
+        	        		        props.children
+                    );
+        	        }
+        	        return elem;
+            },
         },
-      ]);
+    ]);
+
+    target.refine$mediaBlockRenderer = function(block) {
+        // FIXME: currently block type is never 'atomic'
+        if (block.getType() === 'atomic') {
+            return {
+        	        component: function(props) {
+        	            const entity = props.contentState.getEntity(
+        	        		        props.block.getEntityAt(0)
+        	            );
+        	            const {src} = entity.getData();
+        	            const type = entity.getType();
+
+        	            let media;
+        	            if (type === 'audio') {
+        	        		        media = React.createElement('Audio', { src: src });
+        	            } else if (type === 'image') {
+        	        		        media = React.createElement('img', { src: src });
+        	            } else if (type === 'video') {
+        	        		        media = React.createElement('Video', { src: src });
+        	            }
+        	            return media;
+        	        },
+        	        editable: false,
+            };
+        }
+        return null;
+    };
 
     var refine$previousDocumentBodyClientWidth = 0;
 

@@ -244,9 +244,9 @@ newtype EntityKey = EntityKey { _unEntityKey :: Int }
   deriving (Eq, Ord, Show, Read, Generic)
 
 -- | an entity's range may span across multiple blocks
-newtype Entity =
+data Entity =
     EntityLink ST  -- ^ url
---  | ...
+  | EntityImage ST -- ^ url
   deriving (Show, Eq, Ord, Generic)
 
 -- | a style's range should fit into a single block.
@@ -436,6 +436,11 @@ instance ToJSON Entity where
     , "mutability"      .:= ("MUTABLE" :: ST)
     , "data"            .:= object ["url" .:= url]
     ]
+  toJSON (EntityImage url) = object
+    [ "type"            .:= ("image" :: ST)
+    , "mutability"      .:= ("IMMUTABLE" :: ST)
+    , "data"            .:= object ["src" .:= url]
+    ]
 
 instance FromJSON Entity where
   parseJSON = withObject "Entity" $ \obj -> do
@@ -443,6 +448,8 @@ instance FromJSON Entity where
     case ty of
       "LINK" -> let parseData = withObject "LINK data" (.: "url")
                 in EntityLink <$> (parseData =<< obj .: "data")
+      "image" -> let parseData = withObject "LINK data" (.: "src")
+                 in EntityImage <$> (parseData =<< obj .: "data")
       bad -> fail $ "Entity: no parse for " <> show bad
 
 styleToST :: Style -> ST

@@ -132,7 +132,7 @@ spec = parallel $ do
       it "hideUnchangedParts" $ do
         let toRC = docToRawContent . NEL.fromList . map toBlock
             wipeBlockKeys = rawContentBlocks %~ fmap (blockKey .~ BlockKey "0")
-            toBlock '.' = DocBlock NormalText (BlockDepth 0) (block0 ^. blockIndexKey) [((Atom Nothing, mempty), "...")]
+            toBlock '.' = DocBlock NormalText (BlockDepth 0) (block0 ^. blockIndexKey) [((Atom . Just $ EntityImage dotDotDotPngUri, mempty), "...")]
             toBlock c   = DocBlock NormalText (BlockDepth 0) (block0 ^. blockIndexKey)
                             [((Atom Nothing, Set.fromList [Atom StyleChanged | isUpper c]), fromString [c])]
         wipeBlockKeys (hideUnchangedParts (toRC "aBcdefGH") 0 0) `shouldBe` wipeBlockKeys (toRC ".B.GH")

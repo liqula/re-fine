@@ -60,6 +60,7 @@ module Refine.Common.VDoc.OT
 
     -- for testing only:
   , NewDoc
+  , dotDotDotPngUri
   ) where
 
 import qualified Data.Algorithm.Patience as Diff
@@ -821,6 +822,9 @@ docRanges allowemptyranges elemlength includeelem rc
     mkRanges xs@((a, _): _) = (a, mconcat $ rangesFromRange allowemptyranges . snd <$> xs)
     mkRanges _ = error "impossible"
 
+dotDotDotPngUri :: ST
+dotDotDotPngUri = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAUCAAAAAC/wNIYAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAAAmJLR0QA/4ePzL8AAAAHdElNRQfhBxUGEycEQ5FxAAAAMklEQVQoz2P8z4APMDGMSpMuzcLAwPDhBAODAwdWBsP///+PMzAwPP6PlUGZ3YyDN0IBgS0cFJRLTz8AAAAldEVYdGRhdGU6Y3JlYXRlADIwMTctMDctMjFUMDY6MTk6MzkrMDI6MDADqkr+AAAAJXRFWHRkYXRlOm1vZGlmeQAyMDE3LTA3LTIxVDA2OjE5OjM5KzAyOjAwcvfyQgAAAABJRU5ErkJggg=="
+
 -- | Take a document in diff mode, a number of blocks to keep preceeding and succeeding each changed
 -- block, resp., and returns with all sequences of blocks far away from any change replaced by a
 -- single block reading `...`.
@@ -838,7 +842,7 @@ hideUnchangedParts (NEL.toList . rawContentToDoc -> doc) blocksbefore blocksafte
 
     blockKeyFromDocBlock = unNonEditable . snd . fst :: DocBlock -> BlockKey
 
-    dotDotDot bk = DocBlock NormalText (BlockDepth 0) bk [((Atom Nothing, mempty), "...")]
+    dotDotDot bk = DocBlock NormalText (BlockDepth 0) bk [((Atom . Just $ EntityImage dotDotDotPngUri, mempty), "...")]
 
     {- example run
     blocksbefore = 2
