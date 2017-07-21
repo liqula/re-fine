@@ -7,10 +7,11 @@
             function (contentBlock, callback, contentState) {
                 contentBlock.findEntityRanges(
                     function (character) {
-                                                const entityKey = character.getEntity();
-                                                return (
-                                                    entityKey !== null && (contentState.getEntity(entityKey).getType() === 'LINK' || contentState.getEntity(entityKey).getType() === 'image')
-                                                );
+                        const entityKey = character.getEntity();
+                        return (
+                            entityKey !== null && (contentState.getEntity(entityKey).getType() === 'LINK' ||
+                                                   contentState.getEntity(entityKey).getType() === 'IMAGE')
+                        );
                     },
                     callback
                 );
@@ -20,32 +21,32 @@
                 const entity = props.contentState.getEntity(props.entityKey);
                 const data = entity.getData();
                 const type = entity.getType();
-                        let elem;
-                        if (type === 'image') {
-                            const {src} = data;
+                var elem;
+                if (type === 'IMAGE') {
+                    const src = data.data;
                     elem = React.createElement(
-                                                'img',
-                                                { src: src,
-                                                  alt: src,
-                                                  style: { marginLeft: 'auto',
-                                                                                   marginRight: 'auto',
-                                                                                   display: 'block'
-                                                                                 }
-                                                }
+                        'img',
+                        { src: src,
+                          alt: src,
+                          style: { marginLeft: 'auto',
+                                   marginRight: 'auto',
+                                   display: 'block'
+                                 }
+                        }
                     );
-                        } else {
+                } else {
                     elem = React.createElement(
-                                                'a',
-                                                { className: "tooltip", href: data, style: { color: '#3b5998', textDecoration: 'underline' } },
-                                                React.createElement(
+                        'a',
+                        { className: "tooltip", href: data, style: { color: '#3b5998', textDecoration: 'underline' } },
+                        React.createElement(
                             "span",
                             { className: "tooltiptext" },
                             data
-                                                ),
-                                                props.children
+                        ),
+                        props.children
                     );
-                        }
-                        return elem;
+                }
+                return elem;
             },
         },
     ]);

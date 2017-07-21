@@ -437,7 +437,7 @@ instance ToJSON Entity where
     , "data"            .:= object ["url" .:= url]
     ]
   toJSON (EntityImage url) = object
-    [ "type"            .:= ("image" :: ST)
+    [ "type"            .:= ("IMAGE" :: ST)
     , "mutability"      .:= ("IMMUTABLE" :: ST)
     , "data"            .:= object ["src" .:= url]
     ]
@@ -448,7 +448,7 @@ instance FromJSON Entity where
     case ty of
       "LINK" -> let parseData = withObject "LINK data" (.: "url")
                 in EntityLink <$> (parseData =<< obj .: "data")
-      "image" -> let parseData = withObject "LINK data" (.: "src")
+      "IMAGE" -> let parseData = withObject "LINK data" (.: "src")
                  in EntityImage <$> (parseData =<< obj .: "data")
       bad -> fail $ "Entity: no parse for " <> show bad
 
