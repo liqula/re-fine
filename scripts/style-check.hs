@@ -68,8 +68,10 @@ verbose = False
 -- when it is done.
 main :: IO ()
 main = sh $ do
+  liftIO . hspec $ do
+    testWrapJsFFI
+    testFixWhitespace
   assertWorkingCopyClean
-  liftIO $ hspec testWrapJsFFI
   setProperCurrentDirectory
   () <- fixWhitespace =<< getSourceFiles ["pkg/frontend/jsbits"] ["js"]
   () <- fixWhitespace =<< getSourceFiles
@@ -102,21 +104,25 @@ failOnChangedFiles = do
 
 -- | both horizontally and vertically
 fixWhitespace :: [FilePath] -> Shell ()
-fixWhitespace files = do
-  let trans = fmap (killTabs . ST.stripEnd) . reverse . dropEmptyLines . reverse
+fixWhitespace = mapM_ (transformFile fixWhitespaceTrans)
 
+fixWhitespaceTrans :: [ST] -> [ST]
+fixWhitespaceTrans = fmap (killTabs . ST.stripEnd) . reverse . dropEmptyLines . reverse
+  where
       dropEmptyLines ("" : xs@("" : _)) = dropEmptyLines xs
       dropEmptyLines xs                 = xs
 
-      killTabs s = case ST.breakOnAll "\t" s of
-                     [] -> s
-                     segments -> mconcat $ go <$> segments
-        where
-          go (befo, rest) = befo
-                        <> ST.replicate 8 " "
-                        <> ST.takeWhile (/= '\t') (ST.tail rest)
+      killTabs s = case ST.breakOn "\t" s of
+                     (_, "") -> s
+                     (x, y) -> x <> ST.replicate 8 " " <> killTabs (ST.tail y)
 
-  transformFile trans `mapM_` files
+testFixWhitespace :: Spec
+testFixWhitespace = it "works" $ do
+  fixWhitespaceTrans ["\t\t\t"] `shouldBe` [""]
+  fixWhitespaceTrans [" \t \t \t "] `shouldBe` [""]
+  fixWhitespaceTrans [".\t.\t.\t."] `shouldBe` [".        .        .        ."]
+  fixWhitespaceTrans [". \t \t \t ."] `shouldBe` ["." <> ST.replicate 28 " " <> "."]
+  fixWhitespaceTrans ["\t.\t.\t"] `shouldBe` ["        .        ."]
 
 
 wrapJsFFI :: [FilePath] -> Shell ()
