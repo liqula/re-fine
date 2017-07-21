@@ -37,6 +37,7 @@ import qualified Data.Tree as ST
 import           Language.Css.Syntax
 
 import           Refine.Common.Types
+import           Refine.Common.VDoc.Draft (deleteMarksFromRawContent)
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.QuickCreate
@@ -131,7 +132,10 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                               go allowed = fmap snd . filter ((`Set.member` allowed) . contribID . fst) . Map.toList
 
                       leftAside_ asideProps
-                      document_ $ DocumentProps (rs ^. to RS.getDocumentState)
+                      document_ $ DocumentProps ((if rs ^. gsHeaderState . hsReadOnly
+                                                  then mapDocumentState deleteMarksFromRawContent id
+                                                  else id)
+                                                 $ rs ^. to RS.getDocumentState)
                                                 (rs ^. RS.gsContributionState)
                       rightAside_ asideProps
 
