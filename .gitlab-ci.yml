@@ -7,7 +7,7 @@ variables:
 
 build:
   script:
-    - time ./build setup && time ./build
+    - if ./scripts/run-accept-on-ci.sh ask; then true; else export TEST_ARGS=--skip=@SLOW; fi; time ./build setup && time ./build
       # (try `./build setup && ./build clean && ./build` here
       # if you suspect interference from earlier ci runs.)
     - if ./scripts/run-accept-on-ci.sh ask; then time ./build accept; else true; fi

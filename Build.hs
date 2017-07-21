@@ -34,7 +34,7 @@ pkgPrelude  = "pkg/prelude"
 stackTest :: FilePath -> Action ()
 stackTest package = do
   command_ [Cwd package] "stack" ["setup"]
-  command_ [Cwd package] "stack" ["test", "--fast"]
+  command_ [Cwd package, Shell] "stack" ["test", "--fast", "--test-arguments=$TEST_ARGS"]
 
 stackBuildFast :: FilePath -> Action ()
 stackBuildFast package = do
