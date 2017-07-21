@@ -163,9 +163,15 @@ wdel path = request methodDelete path [] ""
 post :: (ToJSON a) => SBS -> a -> Wai.Session SResponse
 post path js = request "POST" path [("Content-Type", "application/json")] (encode js)
 
+putJSON :: forall a b . (Typeable a, ToJSON a, FromJSON b) => SBS -> a -> Wai.Session b
+putJSON = rqJSON "PUT"
+
 postJSON :: forall a b . (Typeable a, ToJSON a, FromJSON b) => SBS -> a -> Wai.Session b
-postJSON path js = do
-  resp <- request "POST" path [("Content-Type", "application/json")] (encode js)
+postJSON = rqJSON "POST"
+
+rqJSON :: forall a b . (Typeable a, ToJSON a, FromJSON b) => SBS -> SBS -> a -> Wai.Session b
+rqJSON method path js = do
+  resp <- request method path [("Content-Type", "application/json")] (encode js)
   liftIO $ case eitherDecode $ simpleBody resp of
     Left err -> throwIO . ErrorCall $ unlines [cs path, show (typeOf js), show resp, show err]
     Right x  -> pure x
@@ -356,7 +362,7 @@ specMockedLogin = around createDevModeTestSession $ do
     it "stores statement for given discussion" $ \_sess -> do
       pendingWith "this test case shouldn't be too hard to write, and should be working already."
 
-  describe "sAddEdit" $ do
+  describe "sAddEdit, sUpdateEdit" $ do
     let samplevdoc = rawContentToVDocVersion . mkRawContent $ mkBlock "[new vdoc version]" :| []
     let setup sess = runWai sess $ do
           let group = UniversalGroup
@@ -400,12 +406,13 @@ specMockedLogin = around createDevModeTestSession $ do
         be :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (fe ^. compositeVDoc . vdocID)
         be ^. compositeVDocApplicableEdits . to Map.elems`shouldContain` [fp]
 
-      it "updateEdit" $ \sess -> do
+    describe "sUpdateEdit" $ do
+      it "works" $ \sess -> do
         (_, fp) <- setup sess
 
         let d = rawContentToVDocVersion . mkRawContent $ mkBlock "1234567890" :| []
         _ :: Edit <- runWai sess $
-            postJSON
+            putJSON
               (updateEditUri (fp ^. editID))
               (CreateEdit
                 "updated edit"
