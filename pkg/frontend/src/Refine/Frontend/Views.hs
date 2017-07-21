@@ -134,7 +134,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
 
                       leftAside_ asideProps
                       document_ $ DocumentProps ((if rs ^. gsHeaderState . hsReadOnly
-                                                  then mapDocumentState deleteMarksFromRawContent id
+                                                  then mapDocumentState id deleteMarksFromRawContent id
                                                   else id)
                                                  $ rs ^. to RS.getDocumentState)
                                                 (rs ^. RS.gsContributionState)
