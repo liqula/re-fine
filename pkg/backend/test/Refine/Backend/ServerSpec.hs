@@ -47,6 +47,7 @@ import Refine.Backend.Natural
 import Refine.Backend.Server
 import Refine.Backend.Test.Util (withTempCurrentDirectory, sampleMetaID)
 import Refine.Backend.User
+import Refine.Common.OT hiding (Edit)
 import Refine.Common.ChangeAPI
 import Refine.Common.Rest
 import Refine.Common.Types as Common
@@ -162,9 +163,15 @@ wdel path = request methodDelete path [] ""
 post :: (ToJSON a) => SBS -> a -> Wai.Session SResponse
 post path js = request "POST" path [("Content-Type", "application/json")] (encode js)
 
+putJSON :: forall a b . (Typeable a, ToJSON a, FromJSON b) => SBS -> a -> Wai.Session b
+putJSON = rqJSON "PUT"
+
 postJSON :: forall a b . (Typeable a, ToJSON a, FromJSON b) => SBS -> a -> Wai.Session b
-postJSON path js = do
-  resp <- request "POST" path [("Content-Type", "application/json")] (encode js)
+postJSON = rqJSON "POST"
+
+rqJSON :: forall a b . (Typeable a, ToJSON a, FromJSON b) => SBS -> SBS -> a -> Wai.Session b
+rqJSON method path js = do
+  resp <- request method path [("Content-Type", "application/json")] (encode js)
   liftIO $ case eitherDecode $ simpleBody resp of
     Left err -> throwIO . ErrorCall $ unlines [cs path, show (typeOf js), show resp, show err]
     Right x  -> pure x
@@ -210,6 +217,9 @@ createVDocUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SCr
 
 addEditUri :: ID Edit -> SBS
 addEditUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddEdit)
+
+updateEditUri :: ID Edit -> SBS
+updateEditUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SUpdateEdit)
 
 addNoteUri :: ID Edit -> SBS
 addNoteUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddNote)
@@ -286,8 +296,8 @@ specMockedLogin = around createDevModeTestSession $ do
   describe "sAddNote" $ do
     it "stores note with full-document chunk range" $ \sess -> do
       runWai sess $ do
-        un :: Username <- postJSON loginUri $ Login "username" "password"
-        liftIO $ un `shouldBe` "username"
+        un :: User <- postJSON loginUri $ Login "username" "password"
+        liftIO $ (un ^. userName) `shouldBe` "username"
         fe_ :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
         let cp1 = Position (BlockIndex 0 $ BlockKey "0") 0
             cp2 = Position (BlockIndex 0 $ BlockKey "0") 1
@@ -300,8 +310,8 @@ specMockedLogin = around createDevModeTestSession $ do
 
     it "stores note with non-trivial valid chunk range" $ \sess -> do
       runWai sess $ do
-        un :: Username <- postJSON loginUri $ Login "username" "password"
-        liftIO $ un `shouldBe` "username"
+        un :: User <- postJSON loginUri $ Login "username" "password"
+        liftIO $ (un ^. userName) `shouldBe` "username"
         fe_ :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
         let cp1 = Position (BlockIndex 1 $ BlockKey "1") 0
             cp2 = Position (BlockIndex 1 $ BlockKey "1") 1
@@ -334,8 +344,8 @@ specMockedLogin = around createDevModeTestSession $ do
   describe "sAddDiscussion" $ do
     it "stores discussion with no ranges" $ \sess -> do
       runWai sess $ do
-        un :: Username <- postJSON loginUri $ Login "username" "password"
-        liftIO $ un `shouldBe` "username"
+        un :: User <- postJSON loginUri $ Login "username" "password"
+        liftIO $ (un ^. userName) `shouldBe` "username"
         fe_ :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
         let cp1 = Position (BlockIndex 0 $ BlockKey "1") 0
             cp2 = Position (BlockIndex 0 $ BlockKey "1") 1
@@ -352,11 +362,11 @@ specMockedLogin = around createDevModeTestSession $ do
     it "stores statement for given discussion" $ \_sess -> do
       pendingWith "this test case shouldn't be too hard to write, and should be working already."
 
-  describe "sAddEdit" $ do
+  describe "sAddEdit, sUpdateEdit" $ do
     let samplevdoc = rawContentToVDocVersion . mkRawContent $ mkBlock "[new vdoc version]" :| []
     let setup sess = runWai sess $ do
           let group = UniversalGroup
-          _l :: Username <- postJSON loginUri (Login devModeUser devModePass)
+          _l :: User <- postJSON loginUri (Login devModeUser devModePass)
           (CreatedCollabEditProcess _fp fc) :: CreatedProcess <-
             postJSON addProcessUri
               (AddCollabEditProcess CreateCollabEditProcess
@@ -396,17 +406,56 @@ specMockedLogin = around createDevModeTestSession $ do
         be :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (fe ^. compositeVDoc . vdocID)
         be ^. compositeVDocApplicableEdits . to Map.elems`shouldContain` [fp]
 
+    describe "sUpdateEdit" $ do
+      it "works" $ \sess -> do
+        (_, fp) <- setup sess
+
+        let d = rawContentToVDocVersion . mkRawContent $ mkBlock "1234567890" :| []
+        _ :: Edit <- runWai sess $
+            putJSON
+              (updateEditUri (fp ^. editID))
+              (CreateEdit
+                "updated edit"
+                d
+                Meaning)
+
+        edit <- runDB sess . db . getEdit $ fp ^. editID
+        edit ^. editVDocVersion `shouldBe` d
+        edit ^. editKind `shouldBe` Meaning
+        edit ^. editDesc `shouldBe` "updated edit"
+        length (edit ^. editSource . unEditSource) `shouldBe` 1
+        fst (head $ edit ^. editSource . unEditSource) `shouldBe`
+          [ ERawContent
+            [ ENonEmpty $ EditItem 0
+              [ EditSecond (SegmentListEdit (InsertItem 0 ((Atom Nothing, mempty),NonEmptyST "[new vdoc version]")))
+              , EditSecond (SegmentListEdit (DeleteRange 1 1))
+              ]
+            ]
+          , ERawContent
+            [ ENonEmpty $ EditItem 0
+              [ EditSecond (SegmentListEdit (InsertItem 0 ((Atom Nothing, mempty),NonEmptyST "1234567890")))
+              , EditSecond (SegmentListEdit (DeleteRange 1 1))
+              ]
+            ]
+          ]
+
+      it "update merged edit" $ \_sess -> do
+        pending
+
+      it "check that modification time is updated on edit update" $ \_sess -> do
+        pending
+
 specUserHandling :: Spec
 specUserHandling = around createTestSession $ do
   describe "User handling" $ do
-    let doCreate = post createUserUri (CreateUser userName "mail@email.com" userPass)
+    let doCreate = post createUserUri (CreateUser username "mail@email.com" userPass)
         doLogin = post loginUri
         doLogout = post logoutUri ()
 
         checkCookie resp = simpleHeaders resp `shouldSatisfy`
             any (\(k, v) -> k == "Set-Cookie" && refineCookieName `SBS.isPrefixOf` v)
 
-        userName = "user"
+        username = "user"
         userPass = "password"
 
     describe "create" $ do
@@ -431,7 +480,7 @@ specUserHandling = around createTestSession $ do
 
           pendingWith "#291 (this happens probabilistically, do not un-pend just because it worked a few times for you!)"
 
-          resp <- runWai sess $ doCreate >> doLogin (Login userName userPass)
+          resp <- runWai sess $ doCreate >> doLogin (Login username userPass)
           respCode resp `shouldBe` 200
           checkCookie resp
 
@@ -444,14 +493,14 @@ specUserHandling = around createTestSession $ do
 
           pendingWith "#291 (this happens probabilistically, do not un-pend just because it worked a few times for you!)"
 
-          resp <- runWai sess $ doCreate >> doLogin (Login userName "")
+          resp <- runWai sess $ doCreate >> doLogin (Login username "")
           respCode resp `shouldBe` 404
           checkCookie resp
 
     describe "logout" $ do
       context "logged in" $ do
         it "works (and returns the cookie)" $ \sess -> do
-          resp <- runWai sess $ doCreate >> doLogin (Login userName userPass) >> doLogout
+          resp <- runWai sess $ doCreate >> doLogin (Login username userPass) >> doLogout
           respCode resp `shouldBe` 200
           checkCookie resp
 

@@ -1,0 +1,14 @@
+// auto-generated like this:
+//
+// ./generate_icons_scss
+//
+// If you would like to modify the header, do that in _generic.icons.scss.header
+//
+// FIXME: #320
+//
+// special cases:
+// - Note_lightred.svg
+// - Private_note_ligthyellow.svg
+// - Question_lightgreen.svg
+// - Save_dark.svg is missing
+

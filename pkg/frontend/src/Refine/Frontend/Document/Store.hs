@@ -59,32 +59,52 @@ documentStateUpdate (OpenDocument cvdoc) oldgs _newgs st
         mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
     in refreshDocumentStateView (fromMaybe (error "impossible") $ gsEdit oldgs) eidChanged (rawContentFromCompositeVDoc cvdoc) st
 
-documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) _state
+documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) DocumentStateEdit{}
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
 documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _)
   = DocumentStateEdit
       (maybe estate (forceSelection estate . (`toSelectionState` True)) $ oldgs ^. gsCurrentSelection)
       einfo
+      Nothing
   where
     einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) oldgs
+
+documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateDiff _ _ _ edit _ _)
+  = DocumentStateEdit
+      (createWithContent . convertFromRaw . rawContentFromVDocVersion $ ed ^. editVDocVersion)
+      einfo
+      (Just edit)
+  where
+    Just ed = getEdit oldgs edit
+
+    einfo = EditInfo
+             (ed ^. editDesc)
+             (Just $ ed ^. editKind)
+             $ newLocalStateRef (EditInputState einfo Nothing) oldgs
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     oldgs
                     _newgs
                     (DocumentStateView e r)
-  = DocumentStateDiff (mkEditIndex (fromMaybe (error "impossible") $ gsEdit oldgs) eid) e r eid True
+  = DocumentStateDiff
+      (mkEditIndex (fromMaybe (error "impossible") $ gsEdit oldgs) eid)
+      e
+      r
+      eid
+      True
+      ()
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
                     _oldgs
                     _newgs
-                    (DocumentStateDiff _ e r _ _)
+                    (DocumentStateDiff _ e r _ _ _)
   = DocumentStateView e r
 
 documentStateUpdate (ContributionAction HideContributionDialog)
                     _oldgs
                     _newgs
-                    (DocumentStateDiff _ e r _ _)
+                    (DocumentStateDiff _ e r _ _ _)
   = DocumentStateView e r
 
 documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _ _state
@@ -148,7 +168,7 @@ editorStateFromVDocVersion :: HasCallStack => VDocVersion -> EditorState
 editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
 
 -- | construct a 'SetAllVerticalSpanBounds' action.
-setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a b -> m ContributionAction
+setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a b c -> m ContributionAction
 setAllVerticalSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
     let marks :: Map MarkID (Ranges LeafSelector)
         marks = getLeafSelectors rawContent

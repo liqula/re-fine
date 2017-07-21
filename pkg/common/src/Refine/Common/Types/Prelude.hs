@@ -62,8 +62,10 @@ data CreateUser = CreateUser
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
-newtype User = User
+data User = User
   { _userMetaID :: MetaID User -- ^ The primary key is used to identify the user.
+  , _userName   :: Username
+  , _userEmail  :: Email
   }
   deriving (Eq, Ord, Show, Read, Generic)
 

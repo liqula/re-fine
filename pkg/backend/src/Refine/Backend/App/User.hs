@@ -39,7 +39,7 @@ import Refine.Backend.App.Session
 import Refine.Backend.Types
 import Refine.Backend.User as User
 import Refine.Backend.User.Core as User (User(..))
-import Refine.Backend.Database.Class (createMetaID_)
+import Refine.Backend.Database.Class (createMetaID_, getMetaID)
 import Refine.Common.Types as Refine
 import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 
@@ -48,7 +48,7 @@ import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 -- to explicit one. The frontend code should use the returned username.
 -- The rational here: It helps the future integration of different login
 -- providers.
-login :: Refine.Login -> App Username
+login :: Refine.Login -> App Refine.User
 login (Login username (User.PasswordPlain -> password)) = do
   appLog "login"
   sessionDuration <- timespanToNominalDiffTime . view appSessionLength <$> ask
@@ -57,7 +57,9 @@ login (Login username (User.PasswordPlain -> password)) = do
   loginId <- nothingToError AppSessionError
              =<< userHandle (User.verifySession session)
   void $ setUserSession (toUserID loginId) (UserSession session)
-  pure username
+  user <- nothingToError (AppUserNotFound username) =<< userHandle (User.getUserById loginId)
+  mid <- db . getMetaID $ toUserID loginId
+  pure $ Refine.User mid username (User.u_email user)
 
 -- | Returns (Just (current ID)) of the current user if the user
 -- is logged in otherwise Nothing.
@@ -90,7 +92,7 @@ createUser (CreateUser name email password) = do
               }
   loginId <- leftToError AppUserCreationError
              =<< userHandle (User.createUser user)
-  Refine.User <$> db (createMetaID_ $ User.toUserID loginId)
+  Refine.User <$> db (createMetaID_ $ User.toUserID loginId) <*> pure name <*> pure email
 
 doesUserExist :: ID Refine.User -> App Bool
 doesUserExist uid = do

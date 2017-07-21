@@ -49,6 +49,7 @@ import Refine.Backend.App
 import Refine.Backend.App.MigrateDB (migrateDB)
 import Refine.Backend.Config
 import Refine.Backend.Database
+import Refine.Backend.Database.Entity (addMockUserMetaInfo)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
@@ -93,6 +94,7 @@ refineApi =
   :<|> Refine.Backend.App.getCompositeVDocOnHead
   :<|> Refine.Backend.App.createVDocGetComposite
   :<|> Refine.Backend.App.addEdit
+  :<|> Refine.Backend.App.updateEdit
   :<|> Refine.Backend.App.addNote
   :<|> Refine.Backend.App.addQuestion
   :<|> Refine.Backend.App.addAnswer
@@ -130,7 +132,9 @@ mkProdBackend :: Config -> IO (Backend DB UH)
 mkProdBackend cfg = mkBackend cfg uhNat (migrateDB cfg)
 
 mkDevModeBackend :: Config -> MockUH_ -> IO (Backend DB FreeUH)
-mkDevModeBackend cfg mock = mkBackend cfg (\_ -> uhNat mock) (migrateDB cfg)
+mkDevModeBackend cfg mock = mkBackend cfg (\_ -> uhNat mock) $ do
+  migrateDB cfg
+  db addMockUserMetaInfo
 
 mkBackend :: MonadUserHandle uh => Config -> (UserDB -> UHNat uh) -> AppM DB uh a -> IO (Backend DB uh)
 mkBackend cfg initUH migrate = do

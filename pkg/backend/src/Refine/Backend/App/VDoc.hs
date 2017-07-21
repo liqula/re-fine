@@ -100,6 +100,28 @@ getCompositeVDoc' vdoc editid = do
   where
     toMap selector = Map.fromList . fmap (view selector &&& id)
 
+updateEdit
+  :: (MonadApp db uh, Allow (DB.ProcessPayload Edit) Edit)
+  => ID Edit -> Create Edit -> AppM db uh Edit
+updateEdit eid edit = do
+  appLog "updateEdit"
+  -- assertPerms eid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/286
+  db $ do
+    olddoc <- rawContentFromVDocVersion <$> DB.getVersion eid
+    let new = edit ^. createEditVDocVersion
+    dff <- either error pure $
+            -- error reporting is not great:
+            -- - this is an internal error, and it may be possible to rule it out on the type level.
+            -- - this should be an 'AppError', but it happens in the DB monad.
+            -- - since we 'error' out sloppily, the backend console says 'SQLite3 returned ErrorError
+            --   while attempting to perform step.' and the frontend says 'Error in $: Failed
+            --   reading: not a valid json value'.
+        OT.diff (deleteMarksFromRawContent olddoc)
+                (deleteMarksFromRawContent $ rawContentFromVDocVersion new)
+    DB.updateEdit eid edit
+    DB.updateEditSource eid $ \_ e -> e <> dff
+    DB.getEdit eid
+
 addEdit
   :: (MonadApp db uh, Allow (DB.ProcessPayload Edit) Edit)
   => ID Edit -> Create Edit -> AppM db uh Edit

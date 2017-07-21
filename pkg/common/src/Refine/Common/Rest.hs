@@ -58,6 +58,7 @@ type RefineAPI =
   :<|> SGetVDoc
   :<|> SCreateVDoc
   :<|> SAddEdit
+  :<|> SUpdateEdit
   :<|> SAddNote
   :<|> SAddQuestion
   :<|> SAddAnswer
@@ -94,6 +95,10 @@ type SAddEdit
   = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Edit)
     :> Post '[JSON] Edit
 
+type SUpdateEdit
+  = "r" :> "updateEdit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Edit)
+    :> Put '[JSON] Edit
+
 type SAddNote
   = "r" :> "note" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Note)
     :> Post '[JSON] Note
@@ -124,7 +129,7 @@ type SCreateUser
 -- inspires more trust into its security than what we cooked together ourselves here.
 type SLogin
   = "r" :> "user" :> "login" :> ReqBody '[JSON] Login
-    :> Post '[JSON] Username
+    :> Post '[JSON] User
 
 type SLogout
   = "r" :> "user" :> "logout"

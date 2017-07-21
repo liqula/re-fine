@@ -11,8 +11,9 @@ import Refine.Backend.Prelude
 
 import Data.Typeable (Typeable)
 
-import Refine.Backend.Database.Types
-import Refine.Common.Types
+import           Refine.Backend.Database.Types
+import           Refine.Common.Types
+import qualified Refine.Common.OT as OT
 
 
 type MonadDatabase db = (Monad db, Database db)
@@ -39,6 +40,8 @@ class Database db where
   updateVotes        :: ID Edit -> (Votes -> Votes) -> db ()
   getVoteCount       :: ID Edit -> db VoteCount
   getEditChildren    :: ID Edit -> db [ID Edit]
+  updateEdit         :: ID Edit -> Create Edit -> db ()
+  updateEditSource   :: ID Edit -> (ID Edit{-parent-} -> OT.Edit RawContent -> OT.Edit RawContent) -> db ()
 
   -- Note
   createNote         :: ID Edit -> Create Note -> db Note
@@ -97,6 +100,7 @@ class Database db where
   vDocProcess :: ID VDoc -> db (ID (Process CollaborativeEdit))
 
   createMetaID_ :: HasMetaInfo a => ID a -> db (MetaID a)
+  getMetaID     :: HasMetaInfo a => ID a -> db (MetaID a)
 
 
 class StoreProcessData db c where

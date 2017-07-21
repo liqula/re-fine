@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+
+export FILE=_generic.icons.scss
+
+echo -n "creating ${FILE}..."
+
+cp $FILE.header $FILE
+
+ls ../../images/ | grep '.svg$' | sort | perl -ne '/^(.*)\.svg/; print ".icon-$1 {\n  background-image: url(\"../images/$1.svg\");\n}\n"' >> $FILE
+
+echo " [ok]"
