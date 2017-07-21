@@ -78,7 +78,6 @@ class Database db where
   removeGroup          :: ID Group -> db ()
   addSubGroup          :: ID Group -> ID Group -> db ()
   removeSubGroup       :: ID Group -> ID Group -> db ()
-  universalGroup       :: db (ID Group)
 
   -- Roles
   assignRole   :: ID Group -> ID User -> Role -> db ()
@@ -143,10 +142,3 @@ editComments pid = do
     , CommentQuestion   <$> questions
     , CommentDiscussion <$> discussions
     ]
-
-groupRef
-  :: (Monad db, Database db)
-  => GroupRef -> db (ID Group)
-groupRef = \case
-  UniversalGroup -> universalGroup
-  GroupRef gid   -> pure gid

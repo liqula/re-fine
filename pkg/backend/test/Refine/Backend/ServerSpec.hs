@@ -374,8 +374,9 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
 
   describe "sAddEdit, sUpdateEdit" $ do
     let samplevdoc = rawContentToVDocVersion . mkRawContent $ mkBlock "[new vdoc version]" :| []
-    let setup sess = runWai sess $ do
-          let group = UniversalGroup
+    let setup sess = do
+         group <- fmap (^. groupID) . runDB sess $ App.addGroup (CreateGroup "title" "desc" [] [] False)
+         runWai sess $ do
           _l :: User <- postJSON loginUri (Login testUsername testPassword)
           (CreatedCollabEditProcess _fp fc) :: CreatedProcess <-
             postJSON addProcessUri

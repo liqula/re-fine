@@ -45,8 +45,6 @@ module Refine.Backend.App.Process
 
 import Refine.Backend.Prelude
 
-import Control.Lens ((^.), to)
-
 import Refine.Backend.App.Core
 import Refine.Backend.App.VDoc
 import Refine.Backend.Database.Class as DB hiding (createVDoc)
@@ -62,10 +60,9 @@ addProcessCollabEdit aice = do
   appLog "addProcessCollabEdit"
   vdoc <- createVDoc (aice ^. createCollabEditProcessVDoc)
   process <- db $ do
-    gid <- aice ^. createCollabEditProcessGroup . to groupRef
     createProcess CreateDBCollabEditProcess
       { _createDBCollabEditProcessPhase   = aice ^. createCollabEditProcessPhase
-      , _createDBCollabEditProcessGroupID = gid
+      , _createDBCollabEditProcessGroupID = aice ^. createCollabEditProcessGroup
       , _createDBCollabEditProcessVDocID  = vdoc ^. vdocID
       }
   cvdoc <- getCompositeVDocOnHead (vdoc ^. vdocID)

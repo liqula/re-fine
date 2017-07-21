@@ -38,23 +38,17 @@ data Group = Group
   , _groupDesc      :: ST
   , _groupParents   :: [ID Group]
   , _groupChildren  :: [ID Group]
-  , _groupUniversal :: Bool
   }
   deriving (Eq, Generic, Show)
 
 type instance Create Group = CreateGroup
 
 -- | There is a special way to refer to a group called 'UniversalGroup', which is the root that
--- always exists.  'GroupRef' is a way to refer to either the universal group or some group that we
--- have the 'ID' of.
---
--- (Ultimately, we may not want to have this type around here, becasue there won't be a universal
--- group in which people do stuff in the portal once it has grown more mature.  For now it's a
--- useful and adequate abstraction.)
-data GroupRef = GroupRef (ID Group) | UniversalGroup
-  deriving (Eq, Show, Generic)
+-- always exists.
+universalGroup :: ID Group
+universalGroup = ID 0
 
-makeRefineTypes [''CreateGroup, ''Group, ''GroupRef]
+makeRefineTypes [''CreateGroup, ''Group]
 
 groupID :: Lens' Group (ID Group)
 groupID = groupMetaID . miID

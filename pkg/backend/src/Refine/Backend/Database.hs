@@ -151,7 +151,6 @@ instance Database DB where
   removeGroup       = Entity.removeGroup
   addSubGroup       = Entity.addSubGroup
   removeSubGroup    = Entity.removeSubGroup
-  universalGroup    = Entity.universalGroup
 
   -- * Role
   assignRole   = Entity.assignRole

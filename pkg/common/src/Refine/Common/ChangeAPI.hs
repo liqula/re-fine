@@ -37,8 +37,8 @@ data ChangeSubGroup
   deriving (Eq, Generic, Show)
 
 data ChangeRole
-  = AssignRole   { _crGroupRef :: GroupRef, _crUser :: ID User, _crRole :: Role }
-  | UnassignRole { _crGroupRef :: GroupRef, _crUser :: ID User, _crRole :: Role }
+  = AssignRole   { _crGroupRef :: ID Group, _crUser :: ID User, _crRole :: Role }
+  | UnassignRole { _crGroupRef :: ID Group, _crUser :: ID User, _crRole :: Role }
   deriving (Eq, Generic, Show)
 
 data ChangeProcess

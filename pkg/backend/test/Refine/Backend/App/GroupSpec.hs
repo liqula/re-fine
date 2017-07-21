@@ -129,7 +129,7 @@ spec = do
 
     it "non-existing group" $ \runner -> do
       runner (do
-          (Group _gid _title _desc _parents _children _universal) <- App.getGroup (ID 100000000)
+          (Group _gid _title _desc _parents _children) <- App.getGroup (ID 100000000)
           pure ())
        `shouldThrow`
        anyException

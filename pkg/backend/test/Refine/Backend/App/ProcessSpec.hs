@@ -26,8 +26,7 @@ import Refine.Backend.Prelude
 
 import Test.Hspec
 
-import Refine.Backend.App.Core    as App
-import Refine.Backend.App.Process as App
+import Refine.Backend.App as App
 import Refine.Backend.Database (DB)
 import Refine.Backend.Test.AppRunner (provideAppRunner)
 import Refine.Common.Types
@@ -39,12 +38,13 @@ type AppRunner a = AppM DB a -> IO a
 spec :: Spec
 spec = do
   describe "CollaborativeEdit" . around provideAppRunner $ do
-    let crproc = CreateCollabEditProcess CollaborativeEditOnlyPhase UniversalGroup crvdoc
-        crvdoc = CreateVDoc title (Abstract mempty) sampleVDocVersion
-        title  = Title "fnorgh"
-
     it "create works" $ \(runner :: AppRunner (IO ())) -> do
       join . runner $ do
+        group <- App.addGroup (CreateGroup "title" "desc" [] [] False)
+        let crproc = CreateCollabEditProcess CollaborativeEditOnlyPhase (group ^. groupID) crvdoc
+            crvdoc = CreateVDoc title (Abstract mempty) sampleVDocVersion
+            title  = Title "fnorgh"
+
         CreatedCollabEditProcess process cvdoc <- App.addProcess $ AddCollabEditProcess crproc
         pure $ do
           (cvdoc ^. compositeVDoc . vdocTitle) `shouldBe` title

@@ -96,7 +96,6 @@ spec = do
                 , cgrp ^. createGroupDesc      == grp ^. groupDesc
                 , cgrp ^. createGroupParents   == grp ^. groupParents
                 , cgrp ^. createGroupChildren  == grp ^. groupChildren
-                , cgrp ^. createGroupUniversal == grp ^. groupUniversal
                 ]
           grp1 <- App.addGroup createGroup1
           grp2 <- App.addGroup createGroup2

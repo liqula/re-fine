@@ -24,7 +24,7 @@ module Refine.Common.Types.Process where
 import Refine.Common.Prelude
 
 import Refine.Common.Types.Prelude (ID(..), MetaID, miID, Create)
-import Refine.Common.Types.Group (Group, GroupRef)
+import Refine.Common.Types.Group (Group)
 import Refine.Common.Types.Core (VDoc, CompositeVDoc)
 
 
@@ -99,7 +99,7 @@ data CollaborativeEditPhase = CollaborativeEditOnlyPhase  -- to be extended.
 
 data CreateCollabEditProcess = CreateCollabEditProcess
   { _createCollabEditProcessPhase :: CollaborativeEditPhase
-  , _createCollabEditProcessGroup :: GroupRef
+  , _createCollabEditProcessGroup :: ID Group
   , _createCollabEditProcessVDoc  :: Create VDoc
   }
   deriving (Eq, Show, Generic)
@@ -118,8 +118,7 @@ data Aula = Aula
   deriving (Eq, Show, Generic)
 
 -- | 'CreateAulaProcess' is simple enough so we don't have to introduce an extra
--- 'CreateDBAulaProcess' that is a member of the 'CreateDB' type family in the backend.  This means
--- we cannot use 'UniveresalGroup' as a group reference.  We may want to change this in the future.
+-- 'CreateDBAulaProcess' that is a member of the 'CreateDB' type family in the backend.
 data CreateAulaProcess = CreateAulaProcess
   { _createAulaProcessClassName :: ST
   , _createAulaProcessGroupID   :: ID Group

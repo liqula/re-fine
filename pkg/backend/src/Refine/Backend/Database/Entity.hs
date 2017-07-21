@@ -515,7 +515,7 @@ runUsersCmd cmd = liftDB . ReaderT $ \(sqlBackend :: SqlBackend) ->
 
 -- * Group
 
-toGroup :: [ID Group] -> [ID Group] -> MetaID Group -> ST -> ST -> Bool -> Group
+toGroup :: [ID Group] -> [ID Group] -> MetaID Group -> ST -> ST -> Group
 toGroup parents children gid title desc =
   Group gid title desc parents children
 
@@ -524,7 +524,6 @@ createGroup group = do
   let sgroup = S.Group
         (group ^. createGroupTitle)
         (group ^. createGroupDesc)
-        (group ^. createGroupUniversal)
   mid <- createMetaID sgroup
   forM_ (group ^. createGroupParents) $ \parent -> addConnection S.SubGroup parent (mid ^. miID)
   forM_ (group ^. createGroupChildren) $ \child -> addConnection S.SubGroup (mid ^. miID) child
@@ -609,13 +608,6 @@ removeSubGroup parent child = liftDB $ do
     [ S.SubGroupParent ==. S.idToKey parent
     , S.SubGroupChild  ==. S.idToKey child
     ]
-
-universalGroup :: DB (ID Group)
-universalGroup = do
-  opts <- dbSelectOpts
-  xs <- (S.keyToId . entityKey) <$$> liftDB (selectList [ S.GroupUniversal ==. True ] opts)
-  unique "universalGroup" xs
-
 
 -- * Roles
 

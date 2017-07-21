@@ -94,7 +94,6 @@ Statement
 Group
     title       Text
     description Text
-    universal   Bool
 
 SubGroup
     parent      GroupId
@@ -116,7 +115,7 @@ Process
 
 CollabEditProcess
     vdoc    VDocId
-    phase   CollaborativeEditPhase
+    phase   CollaborativeEditPhase   -- FIXME: remove this, not in product 1
     UniCEPVDoc vdoc
 
 ProcessOfCollabEdit
@@ -124,6 +123,7 @@ ProcessOfCollabEdit
     collabEdit CollabEditProcessId
     UniPOCE process collabEdit
 
+-- FIXME: not in product 1
 AulaProcess
     class   ST
 

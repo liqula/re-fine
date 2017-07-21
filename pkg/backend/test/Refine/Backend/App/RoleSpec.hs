@@ -53,7 +53,7 @@ spec = around provideAppRunner $ do
                 user = ID 1
             group <- App.addGroup (CreateGroup "title" "desc" [] [] False)
             -- WHEN
-            ()    <- App.assignRole role user (group ^. groupID . to GroupRef)
+            ()    <- App.assignRole role user (group ^. groupID)
             -- THEN
             roles <- App.allRoles user (group ^. groupID)
             pure $ do
@@ -68,8 +68,8 @@ spec = around provideAppRunner $ do
                 user = ID 1
             group <- App.addGroup (CreateGroup "title" "desc" [] [] False)
             -- WHEN
-            () <- App.assignRole role user (group ^. groupID . to GroupRef)
-            () <- App.assignRole role user (group ^. groupID . to GroupRef)
+            () <- App.assignRole role user (group ^. groupID)
+            () <- App.assignRole role user (group ^. groupID)
             -- THEN
             roles <- App.allRoles user (group ^. groupID)
             pure $ do
@@ -82,9 +82,9 @@ spec = around provideAppRunner $ do
             join . runner $ do
               let uid = ID 1
               group       <- App.addGroup (CreateGroup "title" "desc" [] [] False)
-              ()          <- forM_ roles $ \r -> App.assignRole r uid (group ^. groupID . to GroupRef)
+              ()          <- forM_ roles $ \r -> App.assignRole r uid (group ^. groupID)
               rolesBefore <- App.allRoles uid (group ^. groupID)
-              ()          <- App.assignRole role uid (group ^. groupID . to GroupRef)
+              ()          <- App.assignRole role uid (group ^. groupID)
               rolesAfter  <- App.allRoles uid (group ^. groupID)
               pure $ do
                 sort rolesBefore `shouldBe` nub (sort roles)
@@ -99,9 +99,9 @@ spec = around provideAppRunner $ do
             let role = Member
                 user = ID 1
             group <- App.addGroup (CreateGroup "title" "desc" [] [] False)
-            ()    <- App.assignRole role user (group ^. groupID . to GroupRef)
+            ()    <- App.assignRole role user (group ^. groupID)
             -- WHEN
-            ()    <- App.unassignRole role user (group ^. groupID . to GroupRef)
+            ()    <- App.unassignRole role user (group ^. groupID)
             -- THEN
             role' <- App.allRoles user (group ^. groupID)
             pure $ do
@@ -115,11 +115,11 @@ spec = around provideAppRunner $ do
                 otherrole = GroupInitiator
                 user = ID 1
             group  <- App.addGroup (CreateGroup "title" "desc" [] [] False)
-            ()     <- App.assignRole role user (group ^. groupID . to GroupRef)
-            ()     <- App.assignRole otherrole user (group ^. groupID . to GroupRef)
+            ()     <- App.assignRole role user (group ^. groupID)
+            ()     <- App.assignRole otherrole user (group ^. groupID)
             roles1 <- App.allRoles user (group ^. groupID)
             -- WHEN
-            ()     <- App.unassignRole role user (group ^. groupID . to GroupRef)
+            ()     <- App.unassignRole role user (group ^. groupID)
             -- THEN
             roles2 <- App.allRoles user (group ^. groupID)
             pure $ do
@@ -135,7 +135,7 @@ spec = around provideAppRunner $ do
                 user = ID 1
             group <- App.addGroup (CreateGroup "title" "desc" [] [] False)
             -- WHEN
-            ()    <- App.unassignRole role user (group ^. groupID . to GroupRef)
+            ()    <- App.unassignRole role user (group ^. groupID)
             -- THEN
             role' <- App.allRoles user (group ^. groupID)
             pure $ do
@@ -148,9 +148,9 @@ spec = around provideAppRunner $ do
             join . runner $ do
               let uid = ID 1
               group       <- App.addGroup (CreateGroup "title" "desc" [] [] False)
-              ()          <- forM_ roles $ \r -> App.assignRole r uid (group ^. groupID . to GroupRef)
+              ()          <- forM_ roles $ \r -> App.assignRole r uid (group ^. groupID)
               rolesBefore <- App.allRoles uid (group ^. groupID)
-              ()          <- App.unassignRole role uid (group ^. groupID . to GroupRef)
+              ()          <- App.unassignRole role uid (group ^. groupID)
               rolesAfter  <- App.allRoles uid (group ^. groupID)
               pure $ do
                 sort rolesBefore `shouldBe` nub (sort roles)
