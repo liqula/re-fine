@@ -103,8 +103,7 @@ documentRender() props = liftViewToStateHandler $ do
            , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
            ] $ do
     editor_
-      [ "blockRendererFn" &= mediaBlockRenderer
-      , "editorState" &= editorState
+      [ "editorState" &= editorState
       , "customStyleMap" &= documentStyleMap
       , "readOnly" &= has _DocumentStateView dstate
       , onChange $ editorOnChange dstate

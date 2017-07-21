@@ -50,33 +50,6 @@
         },
     ]);
 
-    target.refine$mediaBlockRenderer = function(block) {
-        // FIXME: currently block type is never 'atomic'
-        if (block.getType() === 'atomic') {
-            return {
-        	        component: function(props) {
-        	            const entity = props.contentState.getEntity(
-        	        		        props.block.getEntityAt(0)
-        	            );
-        	            const {src} = entity.getData();
-        	            const type = entity.getType();
-
-        	            let media;
-        	            if (type === 'audio') {
-        	        		        media = React.createElement('Audio', { src: src });
-        	            } else if (type === 'image') {
-        	        		        media = React.createElement('img', { src: src });
-        	            } else if (type === 'video') {
-        	        		        media = React.createElement('Video', { src: src });
-        	            }
-        	            return media;
-        	        },
-        	        editable: false,
-            };
-        }
-        return null;
-    };
-
     var refine$previousDocumentBodyClientWidth = 0;
 
     target.refine$documentBodyClientWidth = function() {

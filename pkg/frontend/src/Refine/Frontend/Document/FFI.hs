@@ -41,7 +41,6 @@ module Refine.Frontend.Document.FFI
   , createEmpty
   , createWithContent
   , createWithRawContent
-  , mediaBlockRenderer
   , getCurrentContent
   , setCurrentContent
   , traceEditorState
@@ -108,9 +107,6 @@ createWithContent = js_ES_createWithContent
 
 createWithRawContent :: HasCallStack => Draft.RawContent -> EditorState
 createWithRawContent = createWithContent . convertFromRaw
-
-mediaBlockRenderer :: JSVal
-mediaBlockRenderer = js_mediaBlockRenderer
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#getcurrentcontent
 getCurrentContent :: HasCallStack => EditorState -> ContentState
@@ -247,10 +243,6 @@ foreign import javascript safe
   js_ES_createWithContent :: ContentState -> EditorState
 
 foreign import javascript safe
-  "refine$mediaBlockRenderer"
-  js_mediaBlockRenderer :: JSVal
-
-foreign import javascript safe
   "$1.getCurrentContent()"
   js_ES_getCurrentContent :: EditorState -> ContentState
 
@@ -373,10 +365,6 @@ js_ES_createEmpty = error "javascript FFI not available in GHC"
 {-# ANN js_ES_createWithContent ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_createWithContent :: ContentState -> EditorState
 js_ES_createWithContent = error "javascript FFI not available in GHC"
-
-{-# ANN js_mediaBlockRenderer ("HLint: ignore Use camelCase" :: String) #-}
-js_mediaBlockRenderer :: JSVal
-js_mediaBlockRenderer = error "javascript FFI not available in GHC"
 
 {-# ANN js_ES_getCurrentContent ("HLint: ignore Use camelCase" :: String) #-}
 js_ES_getCurrentContent :: EditorState -> ContentState
