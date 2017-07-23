@@ -576,6 +576,19 @@ specVoting = around createTestSession $ do
         votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
         votes `shouldBe` Map.fromList [(Yeay, 2), (Nay, 1)]
 
+    context "with two Yeays and one Nay, and after changing one Yeay into a Nay" $ do
+      it "returns (1, 2)" $ \sess -> do
+        eid <- mkEdit sess
+        addUserAndLogin sess "userA"
+        _ <- runWai sess . wput $ putVoteUri eid Yeay
+        addUserAndLogin sess "userB"
+        _ <- runWai sess . wput $ putVoteUri eid Yeay
+        _ <- runWai sess . wput $ putVoteUri eid Nay
+        addUserAndLogin sess "userC"
+        _ <- runWai sess . wput $ putVoteUri eid Nay
+        votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
+        votes `shouldBe` Map.fromList [(Yeay, 1), (Nay, 2)]
+
   describe "merging and rebasing" $ do
     it "works if two edits are present and one is merged" $ \sess -> do
       addUserAndLogin sess "userA"
