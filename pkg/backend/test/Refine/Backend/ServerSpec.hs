@@ -515,6 +515,7 @@ specVoting = around createTestSession $ do
   describe "SPutSimpleVoteOnEdit" $ do
     context "user is not logged in" $ do
       it "request is rejected" $ \sess -> do
+        pendingWith "#406, #291"
         eid <- mkUserAndEdit sess
         _ <- runWai sess $ post logoutUri ()
         resp <- runWai sess . wput $ putVoteUri eid Yeay
@@ -522,6 +523,7 @@ specVoting = around createTestSession $ do
 
     context "if current user *HAS NOT* voted on the edit before" $ do
       it "adds the current user's vote (and does nothing else)" $ \sess -> do
+        pendingWith "#406, #291"
         eid <- mkUserAndEdit sess
         resp :: SResponse <- runWai sess . wput $ putVoteUri eid Yeay
         respCode resp `shouldBe` 200
@@ -531,6 +533,7 @@ specVoting = around createTestSession $ do
 
     context "if current user *HAS* voted on the edit before" $ do
       it "adds the current user's vote (and does nothing else)" $ \sess -> do
+        pendingWith "#406, #291"
         eid <- mkUserAndEdit sess
         _ <- runWai sess . wput $ putVoteUri eid Yeay
         resp :: SResponse <- runWai sess . wput $ putVoteUri eid Nay
@@ -541,6 +544,7 @@ specVoting = around createTestSession $ do
   describe "SDeleteSimpleVoteOnEdit" $ do
     context "user is not logged in" $ do
       it "request is rejected" $ \sess -> do
+        pendingWith "#406, #291"
         eid <- mkUserAndEdit sess
         _ <- runWai sess $ post logoutUri ()
         resp <- runWai sess . wdel $ deleteVoteUri eid
@@ -548,6 +552,7 @@ specVoting = around createTestSession $ do
 
     context "if there is such a vote" $ do
       it "removes that vote (and does nothing else)" $ \sess -> do
+        pendingWith "#406, #291"
         eid <- mkUserAndEdit sess
         _ <- runWai sess . wput $ putVoteUri eid Yeay
         resp :: SResponse <- runWai sess . wdel $ deleteVoteUri eid
@@ -557,6 +562,7 @@ specVoting = around createTestSession $ do
 
     context "if there is no such vote" $ do
       it "does nothing" $ \sess -> do
+        pendingWith "#406, #291"
         eid <- mkUserAndEdit sess
         resp :: SResponse <- runWai sess . wdel $ deleteVoteUri eid
         respCode resp `shouldBe` 200
@@ -566,6 +572,7 @@ specVoting = around createTestSession $ do
   describe "SGetSimpleVotesOnEdit" $ do
     context "with two Yeays and one Nay" $ do
       it "returns (2, 1)" $ \sess -> do
+        pendingWith "#406, #291"
         eid <- mkEdit sess
         addUserAndLogin sess "userA"
         _ <- runWai sess . wput $ putVoteUri eid Yeay
@@ -578,6 +585,7 @@ specVoting = around createTestSession $ do
 
     context "with two Yeays and one Nay, and after changing one Yeay into a Nay" $ do
       it "returns (1, 2)" $ \sess -> do
+        pendingWith "#406, #291"
         eid <- mkEdit sess
         addUserAndLogin sess "userA"
         _ <- runWai sess . wput $ putVoteUri eid Yeay
@@ -591,6 +599,7 @@ specVoting = around createTestSession $ do
 
   describe "merging and rebasing" $ do
     it "works if two edits are present and one is merged" $ \sess -> do
+      pendingWith "#406, #291"
       addUserAndLogin sess "userA"
 
       let blocks = mkBlock <$> ["first line", "second line", "third line"]
