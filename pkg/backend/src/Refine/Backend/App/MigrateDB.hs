@@ -38,10 +38,9 @@ import Refine.Common.Types.Group (CreateGroup(..))
 -- | (With dependent types, we could take a 'Config' as argument here and then return an @AppM DB
 -- uh@.  But as it is, we have to have two functions, this and 'migrateDBDevMode'.)
 migrateDB :: Config -> AppM DB uh ()
-migrateDB cfg = do
-  let safety = if cfg ^. cfgDevMode then UnsafeMigration else SafeMigration
+migrateDB _cfg = do
   appLog "Start database migration ..."
-  mig <- db $ (<>) <$> DB.migrateDB safety <*> User.migrateDB safety
+  mig <- db $ (<>) <$> DB.migrateDB SafeMigration <*> User.migrateDB SafeMigration
   appLog $ show mig
   appLog "Start database migration ... DONE"
 

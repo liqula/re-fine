@@ -27,4 +27,3 @@ module Refine.Backend.User (module RE) where
 import Refine.Backend.User.Class as RE
 import Refine.Backend.User.Core as RE hiding (User(..))  -- ('User' clashes with refine-common.)
 import Refine.Backend.User.UH as RE
-import Refine.Backend.User.Free as RE

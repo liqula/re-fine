@@ -41,10 +41,10 @@ import Refine.Common.Types.Role
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
 
-type RoleAppRunner = AppM DB FreeUH (IO ()) -> IO (IO ())
+type RoleAppRunner = AppM DB UH (IO ()) -> IO (IO ())
 
 spec :: Spec
-spec = around provideDevModeAppRunner $ do
+spec = around provideAppRunner $ do
     describe "assign role" $ do
       context "role was not previously assigned" $ do
         it "adds role" $ \(runner :: RoleAppRunner) -> do

@@ -29,7 +29,7 @@ module Refine.Backend.Server
   ( refineCookieName
   , startBackend
   , runCliAppCommand
-  , Backend(..), mkProdBackend, mkDevModeBackend
+  , Backend(..), mkProdBackend
   , refineApi
   ) where
 
@@ -49,7 +49,6 @@ import Refine.Backend.App
 import Refine.Backend.App.MigrateDB (migrateDB)
 import Refine.Backend.Config
 import Refine.Backend.Database
-import Refine.Backend.Database.Entity (addMockUserMetaInfo)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
@@ -116,12 +115,8 @@ refineApi =
 
 
 startBackend :: Config -> IO ()
-startBackend cfg =
-  if cfg ^. cfgDevMode
-    then do backend <- mkDevModeBackend cfg mockLogin
-            Warp.runSettings (warpSettings cfg) $ backendServer backend
-    else do backend <- mkProdBackend cfg
-            Warp.runSettings (warpSettings cfg) $ backendServer backend
+startBackend cfg = do
+  Warp.runSettings (warpSettings cfg) . backendServer =<< mkProdBackend cfg
 
 runCliAppCommand :: Config -> AppM DB UH a -> IO ()
 runCliAppCommand cfg cmd = do
@@ -130,11 +125,6 @@ runCliAppCommand cfg cmd = do
 
 mkProdBackend :: Config -> IO (Backend DB UH)
 mkProdBackend cfg = mkBackend cfg uhNat (migrateDB cfg)
-
-mkDevModeBackend :: Config -> MockUH_ -> IO (Backend DB FreeUH)
-mkDevModeBackend cfg mock = mkBackend cfg (\_ -> uhNat mock) $ do
-  migrateDB cfg
-  db addMockUserMetaInfo
 
 mkBackend :: MonadUserHandle uh => Config -> (UserDB -> UHNat uh) -> AppM DB uh a -> IO (Backend DB uh)
 mkBackend cfg initUH migrate = do
@@ -167,7 +157,6 @@ mkServerApp cfg dbNat dbRunner uh = do
                       (cfg ^. cfgCsrfSecret . to CsrfSecret)
                       (cfg ^. cfgSessionLength)
                       poFilesRoot
-                      (if cfg ^. cfgDevMode then devMode else id)
 
   -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
   -- may need to refactor, e.g. by using extra arguments in the end point types.

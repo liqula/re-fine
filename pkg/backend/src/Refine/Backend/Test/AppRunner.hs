@@ -35,7 +35,6 @@ import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.Logger
 import Refine.Backend.Natural
-import Refine.Backend.Server
 import Refine.Backend.Test.Util
 import Refine.Backend.Types
 import Refine.Backend.User
@@ -60,7 +59,6 @@ createAppRunner = do
         , _cfgWarpSettings  = def
         , _cfgCsrfSecret    = "CSRF-SECRET"
         , _cfgSessionLength = TimespanSecs 30
-        , _cfgDevMode       = False
         , _cfgPoFilesRoot   = poRoot
         }
 
@@ -74,19 +72,10 @@ createAppRunner = do
                                     logger
                                     (cfg ^. cfgCsrfSecret . to CsrfSecret)
                                     (cfg ^. cfgSessionLength)
-                                    poRoot
-                                    id) $$ m) >>= evaluate -- without evaluate we have issue #389
+                                    poRoot) $$ m) >>= evaluate -- without evaluate we have issue #389
 
   void $ runner (migrateDB cfg >> initializeDB)
   pure (runner, testDb)
 
 monadicApp :: (AppM DB UH Property -> IO Property) -> AppM DB UH Property -> Property
 monadicApp p = ioProperty . p
-
-errorNat :: (Show e, Functor m) => ExceptT e m :~> m
-errorNat = NT (fmap (either (error . show) id) . runExceptT)
-
-provideDevModeAppRunner :: ActionWith (AppM DB FreeUH a -> IO a) -> IO ()
-provideDevModeAppRunner action = withTempCurrentDirectory $ do
-  backend <- backendRunApp <$> mkDevModeBackend (def & cfgShouldLog .~ False) mockLogin
-  void $ action (unwrapNT (errorNat . backend))

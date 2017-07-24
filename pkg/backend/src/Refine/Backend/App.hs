@@ -51,7 +51,6 @@ runApp
   -> CsrfSecret
   -> Timespan
   -> FilePath
-  -> (forall a . AppM db uh a -> AppM db uh a)
   -> (AppM db uh :~> ExceptT AppError IO)
 runApp
   dbNat
@@ -61,8 +60,7 @@ runApp
   csrfSecret
   sessionLength
   poFilesRoot
-  wrapper =
-    NT (runSR . unApp . wrapper)
+  = NT (runSR . unApp)
     where
       runSR
         :: StateT AppState (ReaderT (AppContext db uh) (ExceptT AppError IO)) x
