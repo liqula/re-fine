@@ -34,6 +34,7 @@ import           Database.Persist.Sql (SqlBackend)
 import qualified Data.Set as Set
 import           Lentil.Core (entityLens)
 import           Lentil.Types as L
+import qualified Web.Users.Persistent as Users
 
 import qualified Refine.Backend.Database.Class as C
 import           Refine.Backend.Database.Core
@@ -489,6 +490,13 @@ createStatement sid statement = do
 
 getStatement :: ID Statement -> DB Statement
 getStatement = getMetaEntity (S.statementElim . toStatement)
+
+
+-- * User
+
+runUserCmd :: (Users.Persistent -> IO a) -> DB a
+runUserCmd cmd = liftDB . ReaderT $ \(sqlBackend :: SqlBackend) ->
+  liftIO $ cmd (Users.Persistent (`runReaderT` sqlBackend))
 
 
 -- * Group

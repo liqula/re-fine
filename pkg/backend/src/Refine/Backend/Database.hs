@@ -143,6 +143,9 @@ instance Database DB where
   createStatement      = Entity.createStatement
   getStatement         = Entity.getStatement
 
+  -- * User
+  runUserCmd        = Entity.runUserCmd
+
   -- * Group
   createGroup       = Entity.createGroup
   getGroup          = Entity.getGroup
