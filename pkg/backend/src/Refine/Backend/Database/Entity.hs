@@ -69,19 +69,21 @@ type instance S.ProcessDataConnectionRep CollaborativeEdit = S.ProcessOfCollabEd
 type instance S.ProcessDataConnectionRep Aula              = S.ProcessOfAula
 
 {-
-Reading the domain structured datatypes is not a problem,
-as there is no big difference, in accessing the parts, and
-combine them via an applicative functor, producing an lazy value.
+[not sure what this comment is about any more..  fisx]
+
+Reading the domain structured datatypes is not a problem:
+there is no big difference between accessing the parts and
+combining them via an applicative functor, producing an lazy value.
 
 The problem arises when we add some information to the computed
-value in an another pure computation. The changes in the value
-will be lost, as there is no triger mechanism.
+value in another pure computation. The changes in the value
+will be lost, as there is no trigger mechanism.
 
 If we want to address this problem, we need to use lenses over
-some ids, to navigate deeper in the data structures.
+some ids to navigate deeper in the data structures.
 
-If the lens only a getter, the result functor won't run the update
-Whenever we operate on some data we need to load the current
+If the lens is only a getter, the result functor won't run the update;
+whenever we operate on some data we need to load the current
 version from the db.
 
 Instead of saving the whole value in the database, a generic
@@ -89,6 +91,7 @@ diff algorithm could be used.
 
 https://hackage.haskell.org/package/gdiff
 -}
+
 
 -- * Helpers
 
@@ -109,9 +112,9 @@ getEntityRep eid = do
 -- | Access the key like field in an entity and convert the key value
 -- to the Domain ID.
 --
--- Example:
---   * foreignKeyField S.PCComment (Entity pcid (S.PC pid cid)) == cid
---   * foreignKeyField S.PCEdit    (Entity pcid (S.PC pid cid)) == pid
+-- Examples:
+-- >>> foreignKeyField S.PCComment (Entity pcid (S.PC pid cid)) == cid
+-- >>> foreignKeyField S.PCEdit    (Entity pcid (S.PC pid cid)) == pid
 foreignKeyField
   :: ToBackendKey SqlBackend (S.EntityRep a)
   => (b -> Key (S.EntityRep a)) -> P.Entity b -> ID a
@@ -152,6 +155,7 @@ dbSelectOpts = do
   where
     filterToSelectOpt = \case
       Limit n -> [LimitTo n]
+
 
 -- * MetaInfo
 
@@ -243,10 +247,12 @@ createVDoc pv vdoc = do
 getVDoc :: ID VDoc -> DB VDoc
 getVDoc = getMetaEntity (S.vDocElim . toVDoc)
 
+
 -- * Repo
 
 getEditIDs :: ID VDoc -> DB [ID Edit]
 getEditIDs vid = liftDB $ S.keyToId . entityKey <$$> selectList [S.EditRepository ==. S.idToKey vid] []
+
 
 -- * Edit
 
@@ -334,10 +340,12 @@ getVotes eid = do
 getVoteCount :: ID Edit -> DB VoteCount
 getVoteCount = fmap votesToCount . getVotes
 
+
 -- * Repo and edit
 
 vdocOfEdit :: ID Edit -> DB (ID VDoc)
 vdocOfEdit pid = S.editElim (\_ _ vid _ _ -> S.keyToId vid) <$> getEntityRep pid
+
 
 -- * Note
 
@@ -463,6 +471,7 @@ answersOfQuestion qid = do
     mid <- getMeta . S.keyToId $ entityKey e
     pure $ S.answerElim (toAnswer mid) (entityVal e)
 
+
 -- * Statement
 
 toStatement :: MetaID Statement -> ST -> Maybe (Key S.Statement) -> Statement
@@ -480,6 +489,7 @@ createStatement sid statement = do
 
 getStatement :: ID Statement -> DB Statement
 getStatement = getMetaEntity (S.statementElim . toStatement)
+
 
 -- * Group
 
@@ -583,6 +593,7 @@ universalGroup = do
   opts <- dbSelectOpts
   xs <- (S.keyToId . entityKey) <$$> liftDB (selectList [ S.GroupUniversal ==. True ] opts)
   unique "universalGroup" xs
+
 
 -- * Roles
 
@@ -729,6 +740,7 @@ instance C.GroupOf DB VDoc where
 
 instance C.GroupOf DB Edit where
   groupOf = vdocOfEdit >=> C.groupOf
+
 
 -- * ProcessOf
 

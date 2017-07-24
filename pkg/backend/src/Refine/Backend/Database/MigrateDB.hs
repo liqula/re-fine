@@ -16,11 +16,11 @@ migrateDB :: MigrationSafety -> DB [ST]
 migrateDB = doMigrate migrateRefine
 
 
--- NOTE: Migration can be done better, Spivak research supports
+-- | NOTE: Migration can be done better, Spivak research supports
 -- this theory:
 -- http://math.mit.edu/~dspivak/informatics/FunctorialDataMigration.pdf
 -- Spivak has contributed to the Opaleye project, maybe that could be
--- used for automatic migration... (?)
+-- used for automatic migration?
 -- http://hackage.haskell.org/package/opaleye
 doMigrate :: Migration -> MigrationSafety -> DB [ST]
 
