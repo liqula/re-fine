@@ -44,12 +44,12 @@ import           Refine.Common.Types
 
 
 assertPerms
-  ::  ( MonadApp db uh
+  ::  ( MonadApp db
       , DB.GroupOf db target
       , DB.ProcessOf db target
       , Allow (DB.ProcessPayload target) target
       )
-  => ID target -> [Perm] -> AppM db uh ()
+  => ID target -> [Perm] -> AppM db ()
 assertPerms tid needPerms = do
   muserId <- currentUser
   join . db $ do

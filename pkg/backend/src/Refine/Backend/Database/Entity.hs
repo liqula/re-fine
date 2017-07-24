@@ -30,18 +30,18 @@ module Refine.Backend.Database.Entity where
 import Refine.Backend.Prelude as P hiding (get)
 
 import           Database.Persist (get)
-import           Database.Persist.Sql (SqlBackend)
+import           Database.Persist.Sql (SqlBackend, fromSqlKey, toSqlKey)
 import qualified Data.Set as Set
 import           Lentil.Core (entityLens)
 import           Lentil.Types as L
 import qualified Web.Users.Persistent as Users
+import qualified Web.Users.Persistent.Definitions as Users
 
 import qualified Refine.Backend.Database.Class as C
 import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
 import           Refine.Backend.Database.Types
 import           Refine.Backend.Database.Tree
-import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
 import qualified Refine.Common.OT as OT
@@ -146,6 +146,15 @@ dbUser :: DB (ID User)
 dbUser = do
   DBContext mu _filter <- ask
   nothingToError DBUserNotLoggedIn mu
+
+-- | Converts an internal UserID representation to the common UserID.
+toUserID :: Users.LoginId -> ID User
+toUserID = ID . fromSqlKey
+
+-- | Inverse of 'toUserID'.
+fromUserID :: ID User -> Users.LoginId
+fromUserID (ID i) = toSqlKey i
+
 
 -- FUTUREWORK: Make dbSelectOpts typesafe.
 dbSelectOpts :: DB [SelectOpt entity]
@@ -343,7 +352,7 @@ vdocOfEdit pid = S.editElim (\_ _ vid _ _ -> S.keyToId vid) <$> getEntityRep pid
 -- * Note
 
 -- FIXME: Use the @_lid@ argument
-toNote :: MetaID Note -> ST -> Bool -> RangePosition -> LoginId -> Note
+toNote :: MetaID Note -> ST -> Bool -> RangePosition -> Users.LoginId -> Note
 toNote nid desc public range _lid = Note nid desc public (unRangePosition range)
 
 createNote :: ID Edit -> Create Note -> DB Note
@@ -365,7 +374,7 @@ getNote = getMetaEntity (S.noteElim . toNote)
 -- * Question
 
 -- FIXME: user the @_lid@ argument
-toQuestion :: MetaID Question -> ST -> Bool -> Bool -> RangePosition -> LoginId -> Question
+toQuestion :: MetaID Question -> ST -> Bool -> Bool -> RangePosition -> Users.LoginId -> Question
 toQuestion qid text answ pblc range _lid = Question qid text answ pblc (unRangePosition range)
 
 createQuestion :: ID Edit -> Create Question -> DB Question

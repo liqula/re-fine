@@ -43,19 +43,17 @@ import Refine.Backend.Types (CsrfSecret)
 
 
 runApp
-  :: forall (db :: * -> *) (uh :: * -> *)
+  :: forall (db :: * -> *)
   .  MkDBNat db
   -> DBRunner
-  -> UHNat uh
   -> Logger
   -> CsrfSecret
   -> Timespan
   -> FilePath
-  -> (AppM db uh :~> ExceptT AppError IO)
+  -> (AppM db :~> ExceptT AppError IO)
 runApp
   dbNat
   dbrunner
-  uhNat
   logger
   csrfSecret
   sessionLength
@@ -63,12 +61,12 @@ runApp
   = NT (runSR . unApp)
     where
       runSR
-        :: StateT AppState (ReaderT (AppContext db uh) (ExceptT AppError IO)) x
+        :: StateT AppState (ReaderT (AppContext db) (ExceptT AppError IO)) x
         -> ExceptT AppError IO x
       runSR m = do
         unDBRunner dbrunner $ \dbc -> do
           dbInit dbc
-          let r = AppContext dbNat dbc uhNat logger csrfSecret sessionLength poFilesRoot
+          let r = AppContext dbNat dbc logger csrfSecret sessionLength poFilesRoot
               s = AppState Nothing UserLoggedOut
           x <- runReaderT (evalStateT m s) r
                `finally`

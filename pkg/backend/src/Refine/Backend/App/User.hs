@@ -33,13 +33,13 @@ import           Control.Monad (void)
 import           Control.Monad.State (gets)
 import           Control.Monad.Reader (ask)
 import           Data.Maybe (isJust)
+import qualified Web.Users.Types as User
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.Session
 import Refine.Backend.Types
-import Refine.Backend.User as User
-import Refine.Backend.User.Core as User (User(..))
 import Refine.Backend.Database.Class (createMetaID_, getMetaID)
+import Refine.Backend.Database.Entity (toUserID, fromUserID)
 import Refine.Common.Types as Refine
 import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 
@@ -53,11 +53,11 @@ login (Login username (User.PasswordPlain -> password)) = do
   appLog "login"
   sessionDuration <- timespanToNominalDiffTime . view appSessionLength <$> ask
   session <- nothingToError (AppUserNotFound username)
-             =<< userHandle (User.authUser username password sessionDuration)
+             =<< userHandle (\db_ -> User.authUser db_ username password sessionDuration)
   loginId <- nothingToError AppSessionError
-             =<< userHandle (User.verifySession session)
+             =<< userHandle (\db_ -> User.verifySession db_ session 0)
   void $ setUserSession (toUserID loginId) (UserSession session)
-  user <- nothingToError (AppUserNotFound username) =<< userHandle (User.getUserById loginId)
+  user <- nothingToError (AppUserNotFound username) =<< userHandle (`User.getUserById` loginId)
   mid <- db . getMetaID $ toUserID loginId
   pure $ Refine.User mid username (User.u_email user)
 
@@ -76,7 +76,7 @@ logout = do
   st <- gets (view appUserState)
   case st of
     UserLoggedIn _user session -> do
-      void . userHandle $ User.destroySession (session ^. unUserSession)
+      void . userHandle $ \db_ -> User.destroySession db_ (session ^. unUserSession)
       clearUserSession
     UserLoggedOut -> do
       pure ()
@@ -91,9 +91,9 @@ createUser (CreateUser name email password) = do
               , User.u_active = True
               }
   loginId <- leftToError AppUserCreationError
-             =<< userHandle (User.createUser user)
-  Refine.User <$> db (createMetaID_ $ User.toUserID loginId) <*> pure name <*> pure email
+             =<< userHandle (`User.createUser` user)
+  Refine.User <$> db (createMetaID_ $ toUserID loginId) <*> pure name <*> pure email
 
 doesUserExist :: ID Refine.User -> App Bool
 doesUserExist uid = do
-  isJust <$> userHandle (User.getUserById (fromUserID uid))
+  isJust <$> userHandle (\db_ -> User.getUserById db_ (fromUserID uid))

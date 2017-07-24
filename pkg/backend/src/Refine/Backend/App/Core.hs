@@ -23,15 +23,15 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Refine.Backend.App.Core (
     MkDBNat
   , DBRunner(..)
   , DBConnection(..)
-  , UHNat
   , AppContext(..)
   , appMkDBNat
   , appDBConnection
-  , appUHNat
   , appLogger
   , appCsrfSecret
   , appSessionLength
@@ -53,20 +53,30 @@ module Refine.Backend.App.Core (
 import Refine.Backend.Prelude
 
 import System.FilePath (FilePath)
+import qualified Web.Users.Types as Users
+import qualified Web.Users.Persistent as Users
 
 import Refine.Backend.Database
 import Refine.Backend.Logger
 import Refine.Backend.Types
-import Refine.Backend.User
 import Refine.Common.Types as Types
 import Refine.Prelude (leftToError, Timespan)
 import Refine.Prelude.TH (makeRefineType)
 
 
-data AppContext db uh = AppContext
+newtype UserHandleError
+  = UserHandleUnknownError String  -- ^ FUTUREWORK: make this 'SomeException'?
+  deriving (Eq, Generic, Show)
+
+makeRefineType ''UserHandleError
+
+deriving instance Generic Users.CreateUserError
+makeRefineType ''Users.CreateUserError
+
+
+data AppContext db = AppContext
   { _appMkDBNat       :: MkDBNat db
   , _appDBConnection  :: DBConnection
-  , _appUHNat         :: UHNat uh
   , _appLogger        :: Logger
   , _appCsrfSecret    :: CsrfSecret
   , _appSessionLength :: Timespan
@@ -94,21 +104,20 @@ makeLenses ''AppState
 -- * user authentication (login)
 -- * user authorization (groups)
 -- * use one db connection in one run, commit the result at the end.
-newtype AppM db uh a = AppM { unApp :: StateT AppState (ReaderT (AppContext db uh) (ExceptT AppError IO)) a }
+newtype AppM db a = AppM { unApp :: StateT AppState (ReaderT (AppContext db) (ExceptT AppError IO)) a }
   deriving
     ( Functor
     , Applicative
     , Monad
-    , MonadReader (AppContext db uh)
+    , MonadReader (AppContext db)
     , MonadError AppError
     , MonadState AppState
     )
 
-type MonadApp db uh =
+type MonadApp db =
   ( MonadDatabase db
   , StoreProcessData db Aula
   , StoreProcessData db CollaborativeEdit
-  , MonadUserHandle uh
   , GroupOf db Edit
   , ProcessOf db Edit
   , Functor db
@@ -118,7 +127,7 @@ type MonadApp db uh =
 -- | The 'App' defines the final constraint set that the
 -- App API should use. Scraps the boilerplate for the
 -- Refine.Backend.App.* modules.
-type App a = forall db uh . MonadApp db uh => AppM db uh a
+type App a = forall db . MonadApp db => AppM db a
 
 data AppError
   = AppUnknownError ST
@@ -126,11 +135,11 @@ data AppError
   | AppDBError DBError
   | AppUserNotFound ST
   | AppUserNotLoggedIn
-  | AppUserCreationError CreateUserError
+  | AppUserCreationError Users.CreateUserError
+  | AppUserHandleError UserHandleError
   | AppCsrfError ST
   | AppSessionError
   | AppSanityCheckError ST
-  | AppUserHandleError UserHandleError
   | AppL10ParseErrors [ST]
   | AppUnauthorized
   | AppMergeError (ID Edit) (ID Edit) (ID Edit) ST
@@ -139,10 +148,10 @@ data AppError
 
 makeRefineType ''AppError
 
-appIO :: IO a -> AppM db uh a
+appIO :: IO a -> AppM db a
 appIO = AppM . liftIO
 
-dbWithFilters :: XFilters -> db a -> AppM db uh a
+dbWithFilters :: XFilters -> db a -> AppM db a
 dbWithFilters fltrs m = AppM $ do
   mu      <- user <$> gets (view appUserState)
   mkNatDB <- view appMkDBNat
@@ -156,17 +165,13 @@ dbWithFilters fltrs m = AppM $ do
       UserLoggedOut     -> Nothing
       UserLoggedIn u _s -> Just u
 
-db :: db a -> AppM db uh a
+db :: db a -> AppM db a
 db = dbWithFilters mempty
 
-userHandle :: uh a -> AppM db uh a
-userHandle m = AppM $ do
-  (NT runUserHandle) <- view appUHNat
-  r  <- liftIO (try $ runExceptT (runUserHandle m))
-  r' <- leftToError (AppUserHandleError . UserHandleUnknownError . show @SomeException) r
-  leftToError AppUserHandleError r'
+userHandle :: Database db => (Users.Persistent -> IO a) -> AppM db a
+userHandle = db . runUserCmd
 
-appLog :: String -> AppM db uh ()
+appLog :: String -> AppM db ()
 appLog msg = AppM $ do
   logger <- view appLogger
   liftIO $ unLogger logger msg

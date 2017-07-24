@@ -37,16 +37,15 @@ import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Test.Util
 import Refine.Backend.Types
-import Refine.Backend.User
 
 
-provideAppRunner :: ActionWith (AppM DB UH a -> IO a) -> IO ()
+provideAppRunner :: ActionWith (AppM DB a -> IO a) -> IO ()
 provideAppRunner action = withTempCurrentDirectory $ do
   (runner, testDb) <- createAppRunner
   action runner
   removeFile testDb
 
-createAppRunner :: forall a . IO (AppM DB UH a -> IO a, FilePath)
+createAppRunner :: forall a . IO (AppM DB a -> IO a, FilePath)
 createAppRunner = do
   let testDb    = "test.db"
       poRoot    = "./repos" -- FIXME: Change this when needed. Not used at the moment.
@@ -62,13 +61,12 @@ createAppRunner = do
         , _cfgPoFilesRoot   = poRoot
         }
 
-  (dbRunner, dbNat, userHandler) <- createDBNat cfg
+  (dbRunner, dbNat) <- createDBNat cfg
   let logger = Logger . const $ pure ()
-      runner :: forall b . AppM DB UH b -> IO b
+      runner :: forall b . AppM DB b -> IO b
       runner m = ((natThrowError . runApp
                                     dbNat
                                     dbRunner
-                                    (uhNat userHandler)
                                     logger
                                     (cfg ^. cfgCsrfSecret . to CsrfSecret)
                                     (cfg ^. cfgSessionLength)
@@ -77,5 +75,5 @@ createAppRunner = do
   void $ runner (migrateDB cfg >> initializeDB)
   pure (runner, testDb)
 
-monadicApp :: (AppM DB UH Property -> IO Property) -> AppM DB UH Property -> Property
+monadicApp :: (AppM DB Property -> IO Property) -> AppM DB Property -> Property
 monadicApp p = ioProperty . p

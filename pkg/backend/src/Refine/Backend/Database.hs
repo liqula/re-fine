@@ -36,8 +36,7 @@ import Refine.Backend.Prelude
 import Control.Lens ((^.))
 import Control.Monad.Logger
 import Data.Pool (withResource)
-import Database.Persist.Sqlite (SqlBackend, createSqlitePool, runSqlPool, persistBackend, getStmtConn, connBegin, connRollback, connCommit)
-import Web.Users.Persistent as UserDB
+import Database.Persist.Sqlite (SqlBackend, createSqlitePool, persistBackend, getStmtConn, connBegin, connRollback, connCommit)
 
 import Refine.Backend.Config
 import Refine.Backend.Database.Class as DatabaseCore
@@ -51,7 +50,7 @@ type MkDBNat db = DBConnection -> DBContext -> (db :~> ExceptT DBError IO)
 
 newtype DBRunner = DBRunner { unDBRunner :: forall m a . MonadBaseControl IO m => (DBConnection -> m a) -> m a }
 
-createDBNat :: Config -> IO (DBRunner, MkDBNat DB, UserDB.Persistent)
+createDBNat :: Config -> IO (DBRunner, MkDBNat DB)
 createDBNat cfg = do
 
   let sqliteDb = case cfg ^. cfgDBKind of
@@ -64,7 +63,6 @@ createDBNat cfg = do
 
   pure ( DBRunner dbConnectionCont
        , \dbc dbctx -> NT (wrapErrors . dbRun dbc . (`runReaderT` dbctx) . runExceptT . unDB)
-       , Persistent (`runSqlPool` pool)
        )
   where
     wrapErrors :: IO (Either DBError a) -> ExceptT DBError IO a

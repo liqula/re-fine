@@ -37,14 +37,15 @@ import           Network.Wai.Test (SRequest(..), SResponse(..))
 import qualified Network.Wai.Test as Wai
 import qualified Network.Wai.Test.Internal as Wai
 import           Test.Hspec
+import qualified Web.Users.Types as Users
 
 import Refine.Backend.App as App
 import Refine.Backend.Config
 import Refine.Backend.Database.Class as DB
 import Refine.Backend.Database (DB)
+import Refine.Backend.Database.Entity (toUserID)
 import Refine.Backend.Server
 import Refine.Backend.Test.Util (withTempCurrentDirectory, sampleMetaID)
-import Refine.Backend.User
 import Refine.Common.OT hiding (Edit)
 import Refine.Common.ChangeAPI
 import Refine.Common.Rest
@@ -59,14 +60,14 @@ import Refine.Common.VDoc.Draft
 -- | This type carries a 'Backend' (which contains of an 'AppM' and an 'Application'), plus a wai
 -- test client.  (It is only used in this module, so it does not need to go to
 -- "Refine.Backend.Test.AppRunner", where an 'AppM' tester is provided.)
-data TestBackend uh = TestBackend
-  { _testBackend      :: Backend DB uh
+data TestBackend = TestBackend
+  { _testBackend      :: Backend DB
   , _testBackendState :: MVar Wai.ClientState
   }
 
 makeLenses ''TestBackend
 
-runWai :: TestBackend uh -> Wai.Session a -> IO a
+runWai :: TestBackend -> Wai.Session a -> IO a
 runWai sess m = do
   st <- takeMVar (sess ^. testBackendState)
   (a, st') <- Wai.runSessionWith st m (backendServer (sess ^. testBackend))
@@ -75,7 +76,7 @@ runWai sess m = do
 
 -- | Call 'runWai' and throw an error if the expected type cannot be read, discard the
 -- response, keep only the body.
-runWaiJSON :: FromJSON a => TestBackend uh -> Wai.Session SResponse -> IO a
+runWaiJSON :: FromJSON a => TestBackend -> Wai.Session SResponse -> IO a
 runWaiJSON sess m = do
   resp <- runWai sess m
   case eitherDecode $ simpleBody resp of
@@ -83,7 +84,7 @@ runWaiJSON sess m = do
     Right x  -> pure x
 
 -- | Call 'runDB'' and crash on 'Left'.
-runDB :: TestBackend uh -> AppM DB uh a -> IO a
+runDB :: TestBackend -> AppM DB a -> IO a
 runDB sess = errorOnLeft . runDB' sess
 
 -- | Call an 'App' action.
@@ -94,7 +95,7 @@ runDB sess = errorOnLeft . runDB' sess
 -- understand how servant-cookie-session uses vault to store data in
 -- cookies, and either emulate that or (preferably) call the
 -- resp. functions.
-runDB' :: TestBackend uh -> AppM DB uh a -> IO (Either AppError a)
+runDB' :: TestBackend -> AppM DB a -> IO (Either AppError a)
 runDB' sess = runExceptT . unwrapNT (backendRunApp (sess ^. testBackend))
 {-
   ... $ do
@@ -125,11 +126,11 @@ errorOnLeft action = either (throwIO . ErrorCall . show') pure =<< action
     show' x = "errorOnLeft: " <> show x
 
 -- | Create session via 'mkProdBackend' (using 'UH').
-createTestSession :: ActionWith (TestBackend UH) -> IO ()
+createTestSession :: ActionWith TestBackend -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
   void $ action =<< (TestBackend <$> mkProdBackend (def & cfgShouldLog .~ False) <*> newMVar Wai.initState)
 
-createTestSessionWith :: (TestBackend UH -> IO ()) -> ActionWith (TestBackend UH) -> IO ()
+createTestSessionWith :: (TestBackend -> IO ()) -> ActionWith TestBackend -> IO ()
 createTestSessionWith initSession action = createTestSession (initSession >> action)
 
 
@@ -179,10 +180,10 @@ request method path headers body = Wai.srequest $ SRequest req body
     req = Wai.setPath defaultRequest {requestMethod = method, requestHeaders = headers} path
 
 
-mkCVDoc :: TestBackend uh -> CreateVDoc -> IO CompositeVDoc
+mkCVDoc :: TestBackend -> CreateVDoc -> IO CompositeVDoc
 mkCVDoc sess vdoc = runWai sess $ postJSON createVDocUri vdoc
 
-mkEdit :: TestBackend uh -> IO (ID Edit)
+mkEdit :: TestBackend -> IO (ID Edit)
 mkEdit = fmap (^. compositeVDocThisEditID) . (`mkCVDoc` sampleCreateVDoc)
 
 
@@ -192,15 +193,15 @@ testUsername = "testUsername"
 testPassword :: Password
 testPassword = "testPassword"
 
-addUserAndLogin :: TestBackend uh -> Username -> IO ()
+addUserAndLogin :: TestBackend -> Username -> IO ()
 addUserAndLogin sess username = runWai sess $ do
   void . post createUserUri $ CreateUser username (username <> "@email.com") testPassword
   void . post loginUri $ Login username testPassword
 
-addTestUserAndLogin :: TestBackend uh -> IO ()
+addTestUserAndLogin :: TestBackend -> IO ()
 addTestUserAndLogin sess = addUserAndLogin sess testUsername
 
-mkTestUserAndEditAndLogin :: TestBackend uh -> IO (ID Edit)
+mkTestUserAndEditAndLogin :: TestBackend -> IO (ID Edit)
 mkTestUserAndEditAndLogin sess = addTestUserAndLogin sess >> mkEdit sess
 
 
@@ -382,7 +383,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
                 })
 
           userId <- liftIO . runDB sess $ do
-            (Just loginId) <- userHandle $ getUserIdByName testUsername
+            (Just loginId) <- userHandle $ \db_ -> Users.getUserIdByName db_ testUsername
             pure (toUserID loginId)
 
           () <- postJSON changeRoleUri AssignRole

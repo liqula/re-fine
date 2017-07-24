@@ -30,12 +30,11 @@ import Refine.Backend.App.Core    as App
 import Refine.Backend.App.Process as App
 import Refine.Backend.Database (DB)
 import Refine.Backend.Test.AppRunner (provideAppRunner)
-import Refine.Backend.User (UH)
 import Refine.Common.Types
 import Refine.Common.Test.Samples
 
 
-type AppRunner a = AppM DB UH a -> IO a
+type AppRunner a = AppM DB a -> IO a
 
 spec :: Spec
 spec = do
