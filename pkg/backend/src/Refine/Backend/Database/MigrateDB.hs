@@ -4,6 +4,7 @@ module Refine.Backend.Database.MigrateDB where
 import Refine.Backend.Prelude
 
 import Database.Persist.Sql
+import qualified Web.Users.Persistent.Definitions as Users
 
 import Refine.Backend.Database.Core
 import Refine.Backend.Database.Schema
@@ -13,7 +14,7 @@ data MigrationSafety = SafeMigration | UnsafeMigration
 
 -- | Run the migration.
 migrateDB :: MigrationSafety -> DB [ST]
-migrateDB = doMigrate migrateRefine
+migrateDB = doMigrate (migrateRefine >> Users.migrateAll)
 
 
 -- | NOTE: Migration can be done better, Spivak research supports
