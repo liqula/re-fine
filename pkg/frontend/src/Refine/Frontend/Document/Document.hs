@@ -114,7 +114,8 @@ documentRender() props = liftViewToStateHandler $ do
 
 -- | Handle editor change events.
 --
--- We do not need to know in which order the editor event handlers 'editorOnChange', 'editorOnBlur',
+-- If `onBlur` and `onChange` do not update the `EditorState` with a new hasFocus value,
+-- we do not need to know in which order the editor event handlers 'editorOnChange', 'editorOnBlur',
 -- 'editorOnFocus' are called.  (To decide whether the other two have been *or* will be called, we
 -- could look at the focus in the old and new editor state, resp., but we don't need that
 -- information.)
