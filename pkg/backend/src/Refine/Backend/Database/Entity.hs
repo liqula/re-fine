@@ -495,8 +495,8 @@ getStatement = getMetaEntity (S.statementElim . toStatement)
 
 -- * User
 
-runUserCmd :: (Users.Persistent -> IO a) -> DB a
-runUserCmd cmd = liftDB . ReaderT $ \(sqlBackend :: SqlBackend) ->
+runUsersCmd :: (Users.Persistent -> IO a) -> DB a
+runUsersCmd cmd = liftDB . ReaderT $ \(sqlBackend :: SqlBackend) ->
   liftIO $ cmd (Users.Persistent (`runReaderT` sqlBackend))
 
 

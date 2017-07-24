@@ -69,7 +69,7 @@ class Database db where
   getStatement         :: ID Statement -> db Statement
 
   -- User
-  runUserCmd           :: (Users.Persistent -> IO a) -> db a
+  runUsersCmd          :: (Users.Persistent -> IO a) -> db a
 
   -- Group
   createGroup          :: Create Group -> db Group

@@ -169,7 +169,7 @@ db :: db a -> AppM db a
 db = dbWithFilters mempty
 
 userHandle :: Database db => (Users.Persistent -> IO a) -> AppM db a
-userHandle = db . runUserCmd
+userHandle = db . runUsersCmd
 
 appLog :: String -> AppM db ()
 appLog msg = AppM $ do
