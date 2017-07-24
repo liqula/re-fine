@@ -181,6 +181,9 @@ documentRedo = js_ES_redo
 --
 -- Draft never actually nulls this field.  There is always have a selection, but start and end point
 -- may be identical.  See 'isEmptyRange', 'getRangeAction' for context.
+--
+-- FIXME: i think we could just call @getSelection()@ on the editor state and convert that via JSON
+-- (or even JSval?).  The JSON instances are designed for that.
 getSelection :: HasCallStack => EditorState -> Draft.SelectionState
 getSelection (js_ES_getSelection -> sel) = Draft.SelectionState (
   (if js_ES_getSelectionIsBackward sel then Draft.toBackwardSelection else Draft.toSelection) $ Draft.Range

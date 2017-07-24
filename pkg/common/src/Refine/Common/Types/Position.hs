@@ -188,9 +188,11 @@ instance FromJSON SelectionState where
 
 -- * Ranges
 
--- | Invariant: the end points of ranges form an increasing sequence and there are no touching ranges
--- the consturctor is called 'Inner' because it should be hidden (module inner use allowed only)
--- FIXME: do not export the RangesInner constructor
+-- | Invariant: the end points of ranges form an increasing sequence and there are no touching /
+-- overlapping ranges.  the constuctor is called 'Inner' because it should be hidden (module inner
+-- use allowed only).
+--
+-- FIXME: do not export the RangesInner constructor.
 newtype Ranges a = RangesInner {unRanges :: [Range a]}
     deriving (Eq, Ord, Show, Generic)
 

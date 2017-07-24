@@ -60,7 +60,12 @@ spec = do
 
 
   describe "convertToRaw, convertFromRaw" $ do
-    it "are isomorphic" . property $ \(sanitizeRawContent -> rawContent) -> do
+    it "are isomorphic" . property . forAll (scale (`div` 4) arbitrary) $ \(sanitizeRawContent -> rawContent) -> do
+      -- TUNING: i suspect that this test is so slow because of 'sanitizeRawContent'.
+      let f = convertToRaw . convertFromRaw
+      sanitizeRawContent (f rawContent) `shouldBe` sanitizeRawContent rawContent
+
+    it "are isomorphic @SLOW" . property $ \(sanitizeRawContent -> rawContent) -> do
       let f = convertToRaw . convertFromRaw
       sanitizeRawContent (f rawContent) `shouldBe` sanitizeRawContent rawContent
 
@@ -171,7 +176,11 @@ spec = do
       wrapper <- shallow $ document_ (mkTestProps emptyRawContent)
       lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` 1
 
-    it "renders with arbitrary content" . property $ \rawContent -> do
+    it "renders with arbitrary content" . property . forAll (scale (`div` 4) arbitrary) $ \rawContent -> do
+      wrapper <- shallow $ document_ (mkTestProps rawContent)
+      lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` 1
+
+    it "renders with arbitrary content @SLOW" . property $ \rawContent -> do
       wrapper <- shallow $ document_ (mkTestProps rawContent)
       lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` 1
 

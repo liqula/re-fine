@@ -273,7 +273,7 @@ mkBackendConfig port = Yaml.object
                                        ]
   , "_cfgPoolSize"      .= (8 :: Int)
   , "_cfgShouldMigrate" .= True
-  , "_cfgDevMode"       .= True
+  , "_cfgDevMode"       .= False
   ]
 
 runXvfb :: MonadIO m => m ()
@@ -304,9 +304,11 @@ mainStart services = forM_ services $ \service -> do
 
 mainStop :: [Service] -> MonadIO m => m ()
 mainStop services = do
-  when (any (`elem` (Selenium <$> [minBound..])) services) . void $ do
+  when (any (`elem` (Selenium <$> [minBound..])) services) $ do
     echo "the selenium jobs do not always respond to QUIT, you sometimes have to be more stern.  (see selenium.hs for details.)"
-    shell' ["killall", "-9", "java", ">/dev/null", "2>&1"] mempty
+    _ <- shell' ["killall", "-9", "java", ">/dev/null", "2>&1"] mempty
+    _ <- shell' ["killall", "-9", "geckodriver", ">/dev/null", "2>&1"] mempty
+    pure ()
 
   liftIO . forM_ services $ \service -> do
     let pidfile = serviceFile service Pid

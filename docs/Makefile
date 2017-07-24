@@ -69,10 +69,38 @@ mk.f: .phony
 	make noise-yeay
 
 noise-yeay: .phony
-	mplayer /mnt/X/home/mf/backup/attic/home1/docs/snd/sounds_wavs/shiph.ogg
+	mplayer --volume 100 /mnt/X/home/mf/backup/attic/home1/docs/snd/sounds_wavs/shiph.ogg
 
 noise-nay: .phony
-	mplayer /mnt/X/home/mf/backup/attic/home1/docs/snd/sounds_wavs/winny.ogg
+	mplayer --volume 100 /mnt/X/home/mf/backup/attic/home1/docs/snd/sounds_wavs/winny.ogg
 
 clean: .phony
 	find . -name '*~' -exec rm -f {} \;
+
+
+# weed out dead library dependencies.  (copied from thentos; not tested.)
+
+build-packunused: .phony
+	cabal get packunused || (echo "rm stale copy of packunused?"; false)
+	cd packunused-* && \
+	cabal sandbox init --sandbox=../.cabal-sandbox && \
+	cabal install packunused --constraint="Cabal==`cabal --version | perl -ne '/using version (.*) of the Cabal library/ && print $$1'`"
+
+%.packunused: .phony
+	@echo
+	@echo '| make build-packunused first to ensure freshness of executable.'
+	@echo '| (See https://github.com/hvr/packunused/issues/5.)'
+	@echo '|'
+	@echo '| WARNING: packunused on hspec-discover tests cannot see Spec modules'
+	@echo '|          and will issue spurious warnings about unused libs!'
+	@echo
+
+	cd $* && \
+	../.cabal-sandbox/bin/packunused --help >/dev/null && \
+	cabal clean && \
+	rm -f *.imports && \
+	cabal configure -O0 --disable-library-profiling --enable-test --enable-bench && \
+	cabal build --ghc-option=-ddump-minimal-imports && \
+	../.cabal-sandbox/bin/packunused
+
+packunused: .phony thentos-core.packunused thentos-tests.packunused thentos-adhocracy.packunused

@@ -34,7 +34,7 @@ pkgPrelude  = "pkg/prelude"
 stackTest :: FilePath -> Action ()
 stackTest package = do
   command_ [Cwd package] "stack" ["setup"]
-  command_ [Cwd package] "stack" ["test", "--fast"]
+  command_ [Cwd package, Shell] "stack" ["test", "--fast", "--test-arguments=$TEST_ARGS"]
 
 stackBuildFast :: FilePath -> Action ()
 stackBuildFast package = do
@@ -101,6 +101,7 @@ main = shakeArgs refineOptions $ do
     command_ [Cwd pkgFrontend] "npm" ["run", "build"]
     command_ [Cwd "accept"] "stack" ["build", "--fast"]
     command_ [Cwd "accept"] "stack" ["exec", "--", "selenium", "install"]
+    command_ [Cwd "accept"] "stack" ["exec", "--", "selenium", "stop"]
     command_ [Cwd "accept"] "stack" ["exec", "--", "selenium", "clean"]
     command_ [Cwd "accept"] "stack" ["exec", "--", "accept"]
 

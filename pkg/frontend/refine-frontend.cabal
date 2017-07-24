@@ -231,7 +231,6 @@ benchmark bench
     , refine-frontend
     , string-conversions
     , time
-    , utf8-string
   js-sources:
       jsbits/hookup.js
       jsbits/util.js

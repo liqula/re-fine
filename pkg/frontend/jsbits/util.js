@@ -3,35 +3,53 @@
     // https://github.com/facebook/draft-js/blob/master/examples/draft-0-10-0/link/link.html
     target.refine$linkDecorator = new Draft.CompositeDecorator([
         {
-          strategy:
-              function (contentBlock, callback, contentState) {
+            strategy:
+            function (contentBlock, callback, contentState) {
                 contentBlock.findEntityRanges(
-                  function (character) {
-                    const entityKey = character.getEntity();
-                    return (
-                      entityKey !== null &&
-                      contentState.getEntity(entityKey).getType() === 'LINK'
+                    function (character) {
+                        const entityKey = character.getEntity();
+                        return (
+                            entityKey !== null && (contentState.getEntity(entityKey).getType() === 'LINK' ||
+                                                   contentState.getEntity(entityKey).getType() === 'IMAGE')
+                        );
+                    },
+                    callback
+                );
+            },
+            component:
+            function (props) {
+                const entity = props.contentState.getEntity(props.entityKey);
+                const data = entity.getData();
+                const type = entity.getType();
+                var elem;
+                if (type === 'IMAGE') {
+                    const src = data.src;
+                    elem = React.createElement(
+                        'img',
+                        { src: src,
+                          alt: src,
+                          style: { marginLeft: 'auto',
+                                   marginRight: 'auto',
+                                   display: 'block'
+                                 }
+                        }
                     );
-                  },
-                  callback
-                );
-              },
-          component:
-              function (props) {
-                var url = props.contentState.getEntity(props.entityKey).getData();
-                return React.createElement(
-                    'a',
-                    { className: "tooltip", href: url, style: { color: '#3b5998', textDecoration: 'underline' } },
-                    React.createElement(
-                        "span",
-                        { className: "tooltiptext" },
-                        url
-                    ),
-                    props.children
-                );
-              },
+                } else {
+                    elem = React.createElement(
+                        'a',
+                        { className: "tooltip", href: data, style: { color: '#3b5998', textDecoration: 'underline' } },
+                        React.createElement(
+                            "span",
+                            { className: "tooltiptext" },
+                            data
+                        ),
+                        props.children
+                    );
+                }
+                return elem;
+            },
         },
-      ]);
+    ]);
 
     var refine$previousDocumentBodyClientWidth = 0;
 
