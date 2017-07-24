@@ -56,10 +56,10 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
         & ibSize .~ XXLarge
         & ibLabel .~ mempty
 
-      ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction $ MainMenuActionOpen MainMenuGroup]
+      ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction $ MainMenuActionOpenGroups]
         & ibListKey .~ "3"
         & ibDarkBackground .~ True
-        & ibHighlightWhen .~ (if currentTab == MainMenuGroup then HighlightAlways else HighlightOnMouseOver)
+        & ibHighlightWhen .~ (if currentTab & has _MainMenuGroup then HighlightAlways else HighlightOnMouseOver)
         & ibSize .~ XXLarge
         & ibLabel .~ mempty
 
@@ -105,7 +105,7 @@ tabStyles =
   , decl "borderRadius" (Px 12)
   ]
 
-mainMenu :: HasCallStack => View '[MainMenuProps MainMenuTab]
+mainMenu :: HasCallStack => View '[MainMenuProps MainMenuTabProps]
 mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
@@ -117,13 +117,14 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
            ] $ do
         case currentTab of
           MainMenuProcess      -> "[MainMenuProcess]"
-          MainMenuGroup        -> "[MainMenuGroup]"
+          MainMenuGroups{}     -> "[MainMenuGroups]"   -- TODO
+          MainMenuGroup{}      -> "[MainMenuGroup]"   -- TODO
           MainMenuHelp         -> "[MainMenuHelp]"
           MainMenuLogin subtab -> mainMenuLoginTab_ (MainMenuProps subtab menuErrors currentUser)
       div_ [ "className" $= "gr-2" ] $ do
         pure ()
 
-mainMenu_ :: HasCallStack => MainMenuProps MainMenuTab -> ReactElementM eventHandler ()
+mainMenu_ :: HasCallStack => MainMenuProps MainMenuTabProps -> ReactElementM eventHandler ()
 mainMenu_ = view_ mainMenu "mainMenu_"
 
 

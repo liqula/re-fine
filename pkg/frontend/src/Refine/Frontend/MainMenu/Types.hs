@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE DeriveGeneric   #-}
+{-# LANGUAGE LambdaCase      #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Refine.Frontend.MainMenu.Types where
@@ -8,6 +9,7 @@ import Refine.Frontend.Prelude
 
 import GHC.Generics (Generic)
 
+import Refine.Common.Types (Group)
 import Refine.Common.Rest (ApiErrorCreateUser)
 import Refine.Common.Types.Prelude (Username)
 import Refine.Frontend.Login.Types
@@ -15,7 +17,8 @@ import Refine.Frontend.Login.Types
 
 data MainMenuAction
   = MainMenuActionClose
-  | MainMenuActionOpen MainMenuTab
+  | MainMenuActionOpen MainMenuTabState
+  | MainMenuActionOpenGroups
   | MainMenuActionLoginError        Username
   | MainMenuActionRegistrationError ApiErrorCreateUser
   | MainMenuActionClearErrors
@@ -47,17 +50,30 @@ emptyMainMenuState = MainMenuState
 
 data MainMenu
   = MainMenuClosed
-  | MainMenuOpen { _mainMenuOpenTab :: MainMenuTab }
+  | MainMenuOpen { _mainMenuOpenTab :: MainMenuTabState }
   deriving (Eq, Show, Generic)
 
-data MainMenuTab
+type MainMenuTabState  = MainMenuTab [ID Group] (ID Group)
+type MainMenuTabAction = MainMenuTab () (ID Group)
+type MainMenuTabProps  = MainMenuTab [ID Group] Group
+
+data MainMenuTab gids{-[ID Group] | ()-} group{-ID Group | Group-}
   = MainMenuProcess
-  | MainMenuGroup
+  | MainMenuGroups gids
+  | MainMenuGroup group
   | MainMenuHelp
   | MainMenuLogin MainMenuSubTabLogin
   deriving (Eq, Show, Generic)
 
-defaultMainMenuTab :: HasCallStack => MainMenuTab
+mapMainMenuTab :: (a -> a') -> (b -> b') -> MainMenuTab a b -> MainMenuTab a' b'
+mapMainMenuTab fa fb = \case
+  MainMenuProcess  -> MainMenuProcess
+  MainMenuGroups a -> MainMenuGroups (fa a)
+  MainMenuGroup b  -> MainMenuGroup (fb b)
+  MainMenuHelp     -> MainMenuHelp
+  MainMenuLogin l  -> MainMenuLogin l
+
+defaultMainMenuTab :: HasCallStack => MainMenuTab gid group
 defaultMainMenuTab = MainMenuProcess
 
 data MainMenuSubTabLogin = MainMenuSubTabLogin | MainMenuSubTabRegistration
@@ -71,7 +87,7 @@ data MainMenuProps tab = MainMenuProps
   deriving (Eq)
 
 data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
-  { _tmbimmpMainMenuTab    :: MainMenuTab
+  { _tmbimmpMainMenuTab    :: MainMenuTabProps
   , _tmbimmpCurrentUser    :: CurrentUser
   }
   deriving (Eq)

@@ -253,6 +253,10 @@ emitBackendCallsFor act st = case act of
                                    , ContributionAction RequestSetAllVerticalSpanBounds
                                    ]
 
+    -- groups
+
+    MainMenuAction MainMenuActionOpenGroups -> error "TODO"  -- TODO
+
     -- contributions
 
     ContributionAction (SubmitComment (CommentInfo text kind)) -> do
