@@ -32,3 +32,5 @@ https://www.youtube.com/watch?v=x8u0n4dT-WI
 
 - http://elijahmanor.com/7-chrome-tips-developers-designers-may-not-know/
 - https://developers.google.com/web/tools/chrome-devtools/
+
+Differences between ECMAScript6 and the javascript we can process: http://es6-features.org/
