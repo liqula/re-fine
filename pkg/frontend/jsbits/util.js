@@ -23,7 +23,7 @@
                 const type = entity.getType();
                 var elem;
                 if (type === 'IMAGE') {
-                    const src = data.data;
+                    const src = data.src;
                     elem = React.createElement(
                         'img',
                         { src: src,
