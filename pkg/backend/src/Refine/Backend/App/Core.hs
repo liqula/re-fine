@@ -46,7 +46,7 @@ module Refine.Backend.App.Core (
   , MonadApp
   , appIO
   , db
-  , userHandle
+  , dbUsersCmd
   , appLog
   ) where
 
@@ -168,8 +168,8 @@ dbWithFilters fltrs m = AppM $ do
 db :: db a -> AppM db a
 db = dbWithFilters mempty
 
-userHandle :: Database db => (Users.Persistent -> IO a) -> AppM db a
-userHandle = db . runUsersCmd
+dbUsersCmd :: Database db => (Users.Persistent -> IO a) -> AppM db a
+dbUsersCmd = db . runUsersCmd
 
 appLog :: String -> AppM db ()
 appLog msg = AppM $ do

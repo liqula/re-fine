@@ -53,11 +53,11 @@ login (Login username (Users.PasswordPlain -> password)) = do
   appLog "login"
   sessionDuration <- timespanToNominalDiffTime . view appSessionLength <$> ask
   session <- nothingToError (AppUserNotFound username)
-             =<< userHandle (\db_ -> Users.authUser db_ username password sessionDuration)
+             =<< dbUsersCmd (\db_ -> Users.authUser db_ username password sessionDuration)
   loginId <- nothingToError AppSessionError
-             =<< userHandle (\db_ -> Users.verifySession db_ session 0)
+             =<< dbUsersCmd (\db_ -> Users.verifySession db_ session 0)
   void $ setUserSession (toUserID loginId) (UserSession session)
-  user <- nothingToError (AppUserNotFound username) =<< userHandle (`Users.getUserById` loginId)
+  user <- nothingToError (AppUserNotFound username) =<< dbUsersCmd (`Users.getUserById` loginId)
   mid <- db . getMetaID $ toUserID loginId
   pure $ Common.User mid username (Users.u_email user)
 
@@ -76,7 +76,7 @@ logout = do
   st <- gets (view appUserState)
   case st of
     UserLoggedIn _user session -> do
-      void . userHandle $ \db_ -> Users.destroySession db_ (session ^. unUserSession)
+      void . dbUsersCmd $ \db_ -> Users.destroySession db_ (session ^. unUserSession)
       clearUserSession
     UserLoggedOut -> do
       pure ()
@@ -91,9 +91,9 @@ createUser (CreateUser name email password) = do
               , Users.u_active = True
               }
   loginId <- leftToError AppUserCreationError
-             =<< userHandle (`Users.createUser` user)
+             =<< dbUsersCmd (`Users.createUser` user)
   Common.User <$> db (createMetaID_ $ toUserID loginId) <*> pure name <*> pure email
 
 doesUserExist :: ID Common.User -> App Bool
 doesUserExist uid = do
-  isJust <$> userHandle (\db_ -> Users.getUserById db_ (fromUserID uid))
+  isJust <$> dbUsersCmd (\db_ -> Users.getUserById db_ (fromUserID uid))

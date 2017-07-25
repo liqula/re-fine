@@ -383,7 +383,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
                 })
 
           userId <- liftIO . runDB sess $ do
-            (Just loginId) <- userHandle $ \db_ -> Users.getUserIdByName db_ testUsername
+            (Just loginId) <- dbUsersCmd $ \db_ -> Users.getUserIdByName db_ testUsername
             pure (toUserID loginId)
 
           () <- postJSON changeRoleUri AssignRole

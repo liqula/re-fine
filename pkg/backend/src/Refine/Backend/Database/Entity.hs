@@ -148,6 +148,8 @@ dbUser = do
   nothingToError DBUserNotLoggedIn mu
 
 -- | Converts an internal UserID representation to the common UserID.
+--
+-- FIXME: get rid of this (how do we do it with the other common types?)
 toUserID :: Users.LoginId -> ID User
 toUserID = ID . fromSqlKey
 
@@ -495,6 +497,17 @@ getStatement = getMetaEntity (S.statementElim . toStatement)
 
 -- * User
 
+-- | FUTUREWORK: this is an instance of the VarArg problem: the functions in 'UserStorageBackend'
+-- class take different numbers of arguments, but they always take `db` first.  it would be nice to,
+-- instead of:
+--
+-- >>> runUsersCmd (\h -> Users.createUser h user)
+-- >>> runUsersCmd (\h -> Users.authUser h username password sessionDuration)
+--
+-- we could write:
+--
+-- >>> runUsersCmdVarArg Users.createUser user
+-- >>> runUsersCmdVarArg Users.authUser username password sessionDuration
 runUsersCmd :: (Users.Persistent -> IO a) -> DB a
 runUsersCmd cmd = liftDB . ReaderT $ \(sqlBackend :: SqlBackend) ->
   liftIO $ cmd (Users.Persistent (`runReaderT` sqlBackend))
