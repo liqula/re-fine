@@ -126,12 +126,15 @@ errorOnLeft action = either (throwIO . ErrorCall . show') pure =<< action
     show' x = "errorOnLeft: " <> show x
 
 -- | Create session via 'mkProdBackend' (using 'UH').
-createTestSession :: ActionWith TestBackend -> IO ()
+createTestSession :: (TestBackend -> IO ()) -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
   void $ action =<< (TestBackend <$> mkProdBackend (def & cfgShouldLog .~ False) <*> newMVar Wai.initState)
 
-createTestSessionWith :: (TestBackend -> IO ()) -> ActionWith TestBackend -> IO ()
-createTestSessionWith initSession action = createTestSession (initSession >> action)
+createTestSessionWith :: (TestBackend -> IO ()) -> (TestBackend -> IO ()) -> IO ()
+createTestSessionWith initAction action = createTestSession $ \sess -> do
+  () <- initAction sess
+  () <- action sess
+  pure ()
 
 
 -- * test helpers
@@ -195,8 +198,11 @@ testPassword = "testPassword"
 
 addUserAndLogin :: TestBackend -> Username -> IO ()
 addUserAndLogin sess username = runWai sess $ do
-  void . post createUserUri $ CreateUser username (username <> "@email.com") testPassword
-  void . post loginUri $ Login username testPassword
+  r1 <- post createUserUri $ CreateUser username (username <> "@email.com") testPassword
+  r2 <- post loginUri $ Login username testPassword
+  if any ((>= 300) . respCode) [r1, r2]
+    then error $ "addUserAndLogin: " <> show (username, [r1, r2])
+    else pure ()
 
 addTestUserAndLogin :: TestBackend -> IO ()
 addTestUserAndLogin sess = addUserAndLogin sess testUsername
@@ -299,7 +305,6 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
 
   describe "sAddNote" $ do
     it "stores note with full-document chunk range" $ \sess -> do
-      pendingWith "#291"
       runWai sess $ do
         un :: User <- postJSON loginUri $ Login testUsername testPassword
         liftIO $ (un ^. userName) `shouldBe` testUsername
@@ -314,7 +319,6 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
           be ^. compositeVDocApplicableNotes . to Map.elems `shouldContain` [fn_]
 
     it "stores note with non-trivial valid chunk range" $ \sess -> do
-      pendingWith "#291"
       runWai sess $ do
         un :: User <- postJSON loginUri $ Login testUsername testPassword
         liftIO $ (un ^. userName) `shouldBe` testUsername
@@ -349,7 +353,6 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
 
   describe "sAddDiscussion" $ do
     it "stores discussion with no ranges" $ \sess -> do
-      pendingWith "#291"
       runWai sess $ do
         un :: User <- postJSON loginUri $ Login testUsername testPassword
         liftIO $ (un ^. userName) `shouldBe` testUsername
@@ -466,9 +469,6 @@ specUserHandling = around createTestSession $ do
 
     describe "create" $ do
       it "works" $ \sess -> do
-
-        pendingWith "#291 (this happens probabilistically, do not un-pend just because it worked a few times for you!)"
-
         timeBefore <- getCurrentTimestamp
         u :: User <- runWaiJSON sess doCreate
         let timeThen = u ^. userMetaID . miMeta . metaCreatedAt
@@ -483,9 +483,6 @@ specUserHandling = around createTestSession $ do
     describe "login" $ do
       context "with valid credentials" $ do
         it "works (and returns the cookie)" $ \sess -> do
-
-          pendingWith "#291 (this happens probabilistically, do not un-pend just because it worked a few times for you!)"
-
           resp <- runWai sess $ doCreate >> doLogin (Login testUsername testPassword)
           respCode resp `shouldBe` 200
           checkCookie resp
@@ -496,9 +493,6 @@ specUserHandling = around createTestSession $ do
 
       context "with invalid credentials" $ do
         it "works (and returns the cookie)" $ \sess -> do
-
-          pendingWith "#291 (this happens probabilistically, do not un-pend just because it worked a few times for you!)"
-
           resp <- runWai sess $ doCreate >> doLogin (Login testUsername "")
           respCode resp `shouldBe` 404
           checkCookie resp
@@ -521,7 +515,6 @@ specVoting = around createTestSession $ do
   describe "SPutSimpleVoteOnEdit" $ do
     context "user is not logged in" $ do
       it "request is rejected" $ \sess -> do
-        pendingWith "#406, #291"
         eid <- mkTestUserAndEditAndLogin sess
         _ <- runWai sess $ post logoutUri ()
         resp <- runWai sess . wput $ putVoteUri eid Yeay
@@ -529,7 +522,6 @@ specVoting = around createTestSession $ do
 
     context "if current user *HAS NOT* voted on the edit before" $ do
       it "adds the current user's vote (and does nothing else)" $ \sess -> do
-        pendingWith "#406, #291"
         eid <- mkTestUserAndEditAndLogin sess
         resp :: SResponse <- runWai sess . wput $ putVoteUri eid Yeay
         respCode resp `shouldBe` 200
@@ -539,7 +531,6 @@ specVoting = around createTestSession $ do
 
     context "if current user *HAS* voted on the edit before" $ do
       it "adds the current user's vote (and does nothing else)" $ \sess -> do
-        pendingWith "#406, #291"
         eid <- mkTestUserAndEditAndLogin sess
         _ <- runWai sess . wput $ putVoteUri eid Yeay
         resp :: SResponse <- runWai sess . wput $ putVoteUri eid Nay
@@ -550,7 +541,6 @@ specVoting = around createTestSession $ do
   describe "SDeleteSimpleVoteOnEdit" $ do
     context "user is not logged in" $ do
       it "request is rejected" $ \sess -> do
-        pendingWith "#406, #291"
         eid <- mkTestUserAndEditAndLogin sess
         _ <- runWai sess $ post logoutUri ()
         resp <- runWai sess . wdel $ deleteVoteUri eid
@@ -558,7 +548,6 @@ specVoting = around createTestSession $ do
 
     context "if there is such a vote" $ do
       it "removes that vote (and does nothing else)" $ \sess -> do
-        pendingWith "#406, #291"
         eid <- mkTestUserAndEditAndLogin sess
         _ <- runWai sess . wput $ putVoteUri eid Yeay
         resp :: SResponse <- runWai sess . wdel $ deleteVoteUri eid
@@ -568,7 +557,6 @@ specVoting = around createTestSession $ do
 
     context "if there is no such vote" $ do
       it "does nothing" $ \sess -> do
-        pendingWith "#406, #291"
         eid <- mkTestUserAndEditAndLogin sess
         resp :: SResponse <- runWai sess . wdel $ deleteVoteUri eid
         respCode resp `shouldBe` 200
@@ -578,7 +566,6 @@ specVoting = around createTestSession $ do
   describe "SGetSimpleVotesOnEdit" $ do
     context "with two Yeays and one Nay" $ do
       it "returns (2, 1)" $ \sess -> do
-        pendingWith "#406, #291"
         eid <- mkEdit sess
         addUserAndLogin sess "userA"
         _ <- runWai sess . wput $ putVoteUri eid Yeay
@@ -591,7 +578,6 @@ specVoting = around createTestSession $ do
 
     context "with two Yeays and one Nay, and after changing one Yeay into a Nay" $ do
       it "returns (1, 2)" $ \sess -> do
-        pendingWith "#406, #291"
         eid <- mkEdit sess
         addUserAndLogin sess "userA"
         _ <- runWai sess . wput $ putVoteUri eid Yeay
@@ -605,7 +591,6 @@ specVoting = around createTestSession $ do
 
   describe "merging and rebasing" $ do
     it "works if two edits are present and one is merged" $ \sess -> do
-      pendingWith "#406, #291"
       addUserAndLogin sess "userA"
 
       let blocks = mkBlock <$> ["first line", "second line", "third line"]
