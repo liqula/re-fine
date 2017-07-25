@@ -259,6 +259,17 @@ data AddContributionProps st = AddContributionProps
   deriving (Eq)
 
 
+data DiscussionProps = DiscussionProps
+  { _discPropsDiscussion :: Discussion
+  , _discPropsAboutText  :: RawContent  -- ^ the blocks overlapping the range of the discussion.
+--  , _discussionMode      :: DiscussionMode  -- TODO
+  }
+  deriving (Eq, Show, Generic)
+
+-- data DiscussionMode = DiscussionModeChrono | DiscussionModeTree
+--   deriving (Eq, Ord, Show, Bounded, Enum, Generic)
+
+
 -- * instances
 
 deriveClasses
@@ -284,6 +295,8 @@ instance IbuttonOnClick CommentKind ('StatefulEventHandlerCode CommentInputState
 
 instance IbuttonOnClick EditKind ('StatefulEventHandlerCode EditInputState) where
   runIbuttonOnClick _evt _mevt ekind st = (mempty, Just $ st & editInputStateData . editInfoKind .~ Just ekind)
+
+deriveClasses [([''DiscussionProps], allClass)]
 
 
 -- * helpers
