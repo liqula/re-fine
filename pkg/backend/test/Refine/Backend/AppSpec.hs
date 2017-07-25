@@ -71,9 +71,6 @@ spec = do
   describe "User handling" . around provideAppRunner $ do
     -- FUTUREWORK: Use the Cmd dsl for this test
     it "Create/login/logout" $ \(runner :: AppM DB () -> IO ()) -> do
-
-      pendingWith "FIXME: #291"
-
       runner $ do
         void $ App.createUser (CreateUser "user" "user@example.com" "password")
         userState0 <- gets (view appUserState)
@@ -153,9 +150,6 @@ spec = do
         appIO $ docB `shouldBe` vdoc ["aX.","def"]   -- FIXME: the merge result is strange
 
     it "upvoting an edit triggers rebase" $ \(runner :: AppM DB () -> IO ()) -> runner $ do
-
-        appIO $ pendingWith "#291 (probably)"
-
         (vid, _, [eid]) <- docWithEdits ["abc", "def"] [["a.c", "def"]]
         void $ addUserAndLogin "user"
         putSimpleVoteOnEdit eid Yeay
