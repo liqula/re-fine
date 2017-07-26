@@ -19,7 +19,6 @@ data CreateGroup = CreateGroup
   , _createGroupDesc  :: ST
   , _createGroupParents  :: [ID Group]
   , _createGroupChildren :: [ID Group]
-  , _createGroupUniversal :: Bool
   }
   deriving (Eq, Generic, Show)
 

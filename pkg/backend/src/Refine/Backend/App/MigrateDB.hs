@@ -46,6 +46,6 @@ migrateDB _cfg = do
 initializeDB :: AppM DB ()
 initializeDB = do
   appLog "Create initial database state ..."
-  ugroup <- db (DB.createGroup (CreateGroup "Universe" "The group that contains everything" [] [] True))
+  ugroup <- db (DB.createGroup (CreateGroup "Universe" "The group that contains everything" [] []))
   appLog $ show ugroup
   appLog "Create initial database state ... DONE"

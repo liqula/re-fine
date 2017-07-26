@@ -40,7 +40,7 @@ spec = do
   describe "CollaborativeEdit" . around provideAppRunner $ do
     it "create works" $ \(runner :: AppRunner (IO ())) -> do
       join . runner $ do
-        group <- App.addGroup (CreateGroup "title" "desc" [] [] False)
+        group <- App.addGroup (CreateGroup "title" "desc" [] [])
         let crproc = CreateCollabEditProcess CollaborativeEditOnlyPhase (group ^. groupID) crvdoc
             crvdoc = CreateVDoc title (Abstract mempty) sampleVDocVersion
             title  = Title "fnorgh"

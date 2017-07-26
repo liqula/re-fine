@@ -89,8 +89,8 @@ spec = do
     it "db (or dbWithFilters) can be called twice inside the same AppM" $ \(runner :: AppM DB () -> IO ()) -> do
       runner $ do
         void $ do
-          let createGroup1 = CreateGroup "group1" "desc1" [] [] False
-              createGroup2 = CreateGroup "group2" "desc2" [] [] False
+          let createGroup1 = CreateGroup "group1" "desc1" [] []
+              createGroup2 = CreateGroup "group2" "desc2" [] []
               sameGroupInfo cgrp grp = and
                 [ cgrp ^. createGroupTitle     == grp ^. groupTitle
                 , cgrp ^. createGroupDesc      == grp ^. groupDesc
