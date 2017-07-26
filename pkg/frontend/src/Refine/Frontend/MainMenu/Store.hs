@@ -17,7 +17,7 @@ mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) st = case tab of
   MainMenuGroups Left{} -> st
   MainMenuCreateGroup Right{} -> st
   _ -> st
-     & mmState .~ MainMenuOpen (mapMainMenuTab (either (error "impossible") id) id (either id (error "impossible")) tab)
+     & mmState .~ MainMenuOpen (mapMainMenuTab (either (error "impossible") (const ())) id (either id (error "impossible")) tab)
 
 mainMenuUpdate (MainMenuAction (MainMenuActionLoginError e)) st = st
   & mmErrors . mmeLogin .~ Just e

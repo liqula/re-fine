@@ -53,9 +53,9 @@ data MainMenu
   | MainMenuOpen { _mainMenuOpenTab :: MainMenuTabState }
   deriving (Eq, Show, Generic)
 
-type MainMenuTabState  = MainMenuTab [ID Group] (ID Group) (LocalStateRef CreateGroup)
+type MainMenuTabState  = MainMenuTab () (ID Group) (LocalStateRef CreateGroup)
 type MainMenuTabAction = MainMenuTab (Either () [ID Group]) (ID Group) (Either (LocalStateRef CreateGroup) CreateGroup)
-type MainMenuTabProps  = MainMenuTab [ID Group] Group (LocalStateRef CreateGroup)
+type MainMenuTabProps  = MainMenuTab [Group] Group (LocalStateRef CreateGroup)
 
 data MainMenuTab gids group cgroup
   = MainMenuProcess

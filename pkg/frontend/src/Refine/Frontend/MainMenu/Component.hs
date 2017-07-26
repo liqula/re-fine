@@ -122,22 +122,22 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
            ] $ do
         case currentTab of
           MainMenuProcess      -> "[MainMenuProcess]"
-          MainMenuGroups gids  -> div_ $ do
+          MainMenuGroups groups -> div_ $ do
             h1_ "Groups"
             br_ []
-            toButton `mapM_` gids
+            toButton `mapM_` groups
             br_ []
             button_ [ "id" $= "add-vdoc-to-backend"
-                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup . Left $ newLocalStateRef (CreateGroup "" "" [] []) gids
+                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup . Left $ newLocalStateRef (CreateGroup "" "" [] []) groups
                     ] $
                     elemString "Create new group"
             where
-              toButton :: HasCallStack => ID Group -> ReactElementM 'EventHandlerCode ()
-              toButton li = button_
-                [ "id" $= cs ("load-group-list" <> show (li ^. unID))
-                , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuGroup $ li
+              toButton :: HasCallStack => Group -> ReactElementM 'EventHandlerCode ()
+              toButton group = button_
+                [ "id" $= cs ("load-group-list" <> show (group ^. groupID . unID))
+                , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuGroup $ group ^. groupID
                 ]
-                (elemText $ toUrlPiece li)
+                (elemText $ group ^. groupTitle)
 
           MainMenuGroup{}      -> "[MainMenuGroup]"   -- TODO
 

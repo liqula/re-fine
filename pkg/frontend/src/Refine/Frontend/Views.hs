@@ -34,6 +34,7 @@ import Refine.Frontend.Prelude
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Tree as ST
+import           Control.Lens (ix)
 import           Language.Css.Syntax
 
 import           Refine.Common.Types
@@ -70,9 +71,14 @@ refineApp = mkControllerView @'[StoreArg GlobalState] "RefineApp" $ \gs ->
     Just _ -> case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
       Nothing  -> mainScreen_ gs
       Just tab -> mainMenu_ $ MainMenuProps
-                            (mapMainMenuTab id (error "TODO") id tab)  -- TODO
+                            (mapMainMenuTab (const groups) groupFromCache id tab)
                             (gs ^. gsMainMenuState . mmErrors)
                             (gs ^. gsLoginState . lsCurrentUser)
+        where
+          groupFromCache :: ID Group -> Group
+          groupFromCache gid = fromMaybe (error "impossible") $ gs ^? gsServerCache . scGroups . ix gid
+          groups :: [Group]
+          groups = Map.elems $ gs ^. gsServerCache . scGroups
 
 mainScreen :: HasCallStack => View '[GlobalState]
 mainScreen = mkView "MainScreen" $ \rs -> do

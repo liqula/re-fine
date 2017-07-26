@@ -154,6 +154,11 @@ transformGlobalState = transf
               & gsToolbarSticky       %~ toolbarStickyUpdate act
               & gsTranslations        %~ translationsUpdate act
               & gsDevState            %~ devStateUpdate act
+              & gsServerCache         %~ serverCacheUpdate act
+
+serverCacheUpdate :: GlobalAction -> ServerCache -> ServerCache
+serverCacheUpdate (RefreshServerCache c') c = c' <> c
+serverCacheUpdate _ c = c
 
 consoleLogGlobalStateBefore :: HasCallStack => forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
 consoleLogGlobalStateBefore False _ _ = pure ()
@@ -258,7 +263,11 @@ emitBackendCallsFor act st = case act of
     MainMenuAction (MainMenuActionOpen (MainMenuGroups Left{})) -> do
         getGroups $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right groups) -> dispatchM . MainMenuAction . MainMenuActionOpen . MainMenuGroups . Right $ (^. C.groupID) <$> groups
+            (Right groups) -> dispatchManyM
+              [ RefreshServerCache . ServerCache mempty mempty mempty mempty mempty
+                $ M.fromList [(g ^. C.groupID, g) | g <- groups]
+              , MainMenuAction . MainMenuActionOpen . MainMenuGroups . Right $ (^. C.groupID) <$> groups
+              ]
 
     MainMenuAction (MainMenuActionOpen (MainMenuCreateGroup (Right cg))) -> do
         createGroup cg $ \case

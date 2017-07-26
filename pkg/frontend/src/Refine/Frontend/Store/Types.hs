@@ -72,6 +72,13 @@ data ServerCache = ServerCache
   }
   deriving (Show, Eq, Generic)
 
+instance Monoid ServerCache where
+  mempty = ServerCache mempty mempty mempty mempty mempty mempty
+  ServerCache a b c d e f `mappend` ServerCache a' b' c' d' e' f'
+    = ServerCache (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f')
+
+
+
 emptyGlobalState :: HasCallStack => GlobalState
 emptyGlobalState = GlobalState
   { _gsEditID                     = Nothing
@@ -86,11 +93,8 @@ emptyGlobalState = GlobalState
   , _gsToolbarSticky              = False
   , _gsTranslations               = emptyTrans
   , _gsDevState                   = Nothing
-  , _gsServerCache                = emptyServerCache
+  , _gsServerCache                = mempty
   }
-
-emptyServerCache :: ServerCache
-emptyServerCache = ServerCache mempty mempty mempty mempty mempty mempty
 
 type MainHeaderProps = GlobalState_ WipedDocumentState
 
@@ -120,6 +124,8 @@ data GlobalAction =
   | AddDiscussion Discussion
   | AddEdit Edit
   | SaveSelect ST ST
+
+  | RefreshServerCache ServerCache
 
     -- i18n
   | LoadTranslations Locale
