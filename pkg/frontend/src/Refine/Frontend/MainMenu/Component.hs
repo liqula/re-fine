@@ -129,6 +129,7 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
             br_ []
             toButton `mapM_` groups
             br_ []
+            br_ []
             button_ [ "id" $= "add-vdoc-to-backend"
                     , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup . Left $ newLocalStateRef (CreateGroup "" "" [] []) groups
                     ] $
@@ -141,7 +142,15 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
                 ]
                 (elemText $ group ^. groupTitle)
 
-          MainMenuGroup{}      -> "[MainMenuGroup]"   -- TODO
+          MainMenuGroup group -> div_ $ do
+            h1_ . elemText $ "Group " <> (group ^. groupTitle)
+            elemText $ group ^. groupDesc
+            br_ []
+            br_ []
+            button_ [ "id" $= "group-back"
+                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ Left ()
+                    ] $
+                    elemString "Back"
 
           MainMenuCreateGroup lst -> createGroup_ lst
 
