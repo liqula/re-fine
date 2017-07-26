@@ -53,21 +53,21 @@ mount comp = do
   (ref, _) <- mkReactElement (\_ -> pure ()) (ReactThis nullRef) comp
   ReactWrapper <$> js_mount ref
 
--- TODO: equals
+-- FIXME: equals
 
--- TODO: matchesElement
+-- FIXME: matchesElement
 
--- TODO: getDOMNode
+-- FIXME: getDOMNode
 
--- TODO: simulate(event, mock)
+-- FIXME: simulate(event, mock)
 
--- TODO: mount
+-- FIXME: mount
 
--- TODO: matchesElement
+-- FIXME: matchesElement
 
--- TODO: ref
+-- FIXME: ref
 
--- TODO: detach
+-- FIXME: detach
 
 
 -- * Helper functions

@@ -52,7 +52,7 @@ data VerticalSpanBounds = VerticalSpanBounds
   }
   deriving (Eq, Show, Generic)
 
--- | TODO: we have orphan instances for maps in Refine.Common.Orphans.  we should:
+-- | FIXME: we have orphan instances for maps in Refine.Common.Orphans.  we should:
 -- (1) move this function there;
 -- (2) implement the orphan instances in terms of this function, not via lists;
 -- (3) same for @mapFromValue@.

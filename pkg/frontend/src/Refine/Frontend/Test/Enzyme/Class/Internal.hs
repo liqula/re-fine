@@ -22,30 +22,30 @@ class PFromJSVal a => EnzymeWrapper a where
 find :: EnzymeWrapper w => w -> EnzymeSelector -> IO w
 find = execWithSelector "find"
 
--- TODO: findWhere
+-- FIXME: findWhere
 
--- TODO: filter
+-- FIXME: filter
 
--- TODO: filterWhere
+-- FIXME: filterWhere
 
--- TODO: contains
+-- FIXME: contains
 
--- TODO: containsMatchingElement
+-- FIXME: containsMatchingElement
 
--- TODO: containsAllMatchingElements
+-- FIXME: containsAllMatchingElements
 
--- TODO: containsAnyMatchingElements
+-- FIXME: containsAnyMatchingElements
 
--- TODO: hasClass
+-- FIXME: hasClass
 
 is :: EnzymeWrapper w => w -> EnzymeSelector -> IO Bool
 is = execWithSelector "is"
 
--- TODO: exists
+-- FIXME: exists
 
--- TODO: isEmpty
+-- FIXME: isEmpty
 
--- TODO: not
+-- FIXME: not
 
 children :: EnzymeWrapper w => w -> IO w
 children = exec "children"
@@ -53,14 +53,14 @@ children = exec "children"
 childAt :: EnzymeWrapper w => w -> Int -> IO w
 childAt = execWith1Arg "childAt"
 
--- TODO: parents
+-- FIXME: parents
 
--- TODO: parent
+-- FIXME: parent
 
--- TODO: closest
+-- FIXME: closest
 
--- TODO: render
--- TODO: CheerioWrapper
+-- FIXME: render
+-- FIXME: CheerioWrapper
 
 text :: EnzymeWrapper w => w -> IO JSString
 text = exec "text"
@@ -68,72 +68,72 @@ text = exec "text"
 html :: EnzymeWrapper w => w -> IO JSString
 html = exec "html"
 
--- TODO: get
+-- FIXME: get
 
--- TODO: getNode
+-- FIXME: getNode
 
--- TODO: getNodes
+-- FIXME: getNodes
 
 at :: EnzymeWrapper w => w -> Int -> IO w
 at = execWith1Arg "at"
 
--- TODO: first
+-- FIXME: first
 
--- TODO: last
+-- FIXME: last
 
--- TODO: state
+-- FIXME: state
 
--- TODO: context
+-- FIXME: context
 
 props :: EnzymeWrapper w => w -> IO JSVal
 props = exec "props"
 
--- TODO: prop
+-- FIXME: prop
 
--- TODO: key
+-- FIXME: key
 
 simulate :: EnzymeWrapper w => w -> EventType -> IO ()
 simulate = execWith1Arg "simulate"
 
--- TODO: setState
+-- FIXME: setState
 
--- TODO: setProps
+-- FIXME: setProps
 
--- TODO: setContext
+-- FIXME: setContext
 
--- TODO: instance
+-- FIXME: instance
 
--- TODO: unmount
+-- FIXME: unmount
 
--- TODO: update
+-- FIXME: update
 
--- TODO: debug
+-- FIXME: debug
 
 -- | "type" in AirBnB Enzyme.
 typeOf :: EnzymeWrapper w => w -> IO JSVal
 typeOf = exec "type"
 
--- TODO: name
+-- FIXME: name
 
--- TODO: forEach
+-- FIXME: forEach
 
--- TODO: map
+-- FIXME: map
 
--- TODO: reduce
+-- FIXME: reduce
 
--- TODO: reduceRight
+-- FIXME: reduceRight
 
--- TODO: slice
+-- FIXME: slice
 
--- TODO: tap
+-- FIXME: tap
 
--- TODO: some
+-- FIXME: some
 
--- TODO: someWhere
+-- FIXME: someWhere
 
--- TODO: every
+-- FIXME: every
 
--- TODO: everyWhere
+-- FIXME: everyWhere
 
 
 -- * Helper Functions
@@ -182,7 +182,7 @@ foreign import javascript safe
 -- conveniently turned into a JSString.  (This is neither efficient nor pretty, but arguably it's
 -- good enough to write useful tests.)
 --
--- TODO: should the third argument be 'JSString'?  or should we remove this entirely?
+-- FIXME: should the third argument be 'JSString'?  or should we remove this entirely?
 foreign import javascript safe
   "$2[$1](JSON.parse($3))"
   js_exec_with_object :: JSString -> JSVal -> JSVal -> IO JSVal

@@ -36,7 +36,7 @@ import Refine.Frontend.Util
 
 
 -- | StringSelector can be a CSS class, tag, id, prop (e.g. "[foo=3]"),
---   component display name. (TODO should this be refined? Enhance? Be checked?)
+--   component display name. (FIXME should this be refined? Enhance? Be checked?)
 --   PropertySelector specifies (some of) the element's props
 --   ComponentSelector specifies the component constructor (how???)
 data EnzymeSelector =
@@ -45,7 +45,7 @@ data EnzymeSelector =
   | StyleSelector [Decl]
 --  | ComponentSelector
 
--- | TODO: 'PropertySelector' should be translated to js array, then we could get rid of
+-- | FIXME: 'PropertySelector' should be translated to js array, then we could get rid of
 -- 'js_exec_with_object', and 'execWithSelector' as a special case of 'execWith1Arg'.
 instance PToJSVal EnzymeSelector where
   pToJSVal (StringSelector str) = pToJSVal str
