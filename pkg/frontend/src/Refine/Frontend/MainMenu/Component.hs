@@ -147,6 +147,12 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
             elemText $ group ^. groupDesc
             br_ []
             br_ []
+            button_ [ "id" $= "create-process"
+                    , onClick $ \_ _ -> simpleHandler $ dispatch AddDemoDocument
+                    ] $
+                    elemString "Create process"
+            br_ []
+            br_ []
             button_ [ "id" $= "group-back"
                     , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ Left ()
                     ] $
