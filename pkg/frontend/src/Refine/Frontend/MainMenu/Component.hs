@@ -56,7 +56,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
         & ibSize .~ XXLarge
         & ibLabel .~ mempty
 
-      ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction $ MainMenuActionOpenGroups]
+      ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction MainMenuActionOpenGroups]
         & ibListKey .~ "3"
         & ibDarkBackground .~ True
         & ibHighlightWhen .~ (if currentTab & has _MainMenuGroup then HighlightAlways else HighlightOnMouseOver)

@@ -74,6 +74,7 @@ class Database db where
   -- Group
   createGroup          :: Create Group -> db Group
   getGroup             :: ID Group -> db Group
+  getGroups            :: db [Group]
   modifyGroup          :: ID Group -> Create Group -> db Group
   removeGroup          :: ID Group -> db ()
   addSubGroup          :: ID Group -> ID Group -> db ()

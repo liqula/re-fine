@@ -78,3 +78,6 @@ sDeleteSimpleVoteOnEdit = request cfg (Proxy :: Proxy SDeleteSimpleVoteOnEdit)
 
 sGetSimpleVotesOnEdit :: HasCallStack =>  ID Edit -> HandleResponse VoteCount -> IO ()
 sGetSimpleVotesOnEdit = request cfg (Proxy :: Proxy SGetSimpleVotesOnEdit)
+
+getGroups :: HasCallStack => HandleResponse [Group] -> IO ()
+getGroups = request cfg (Proxy :: Proxy SGetGroups)

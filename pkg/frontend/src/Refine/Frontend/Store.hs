@@ -255,7 +255,10 @@ emitBackendCallsFor act st = case act of
 
     -- groups
 
-    MainMenuAction MainMenuActionOpenGroups -> error "TODO"  -- TODO
+    MainMenuAction MainMenuActionOpenGroups -> do
+        getGroups $ \case
+            (Left rsp) -> ajaxFail rsp Nothing
+            (Right groups) -> dispatchM . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ (^. C.groupID) <$> groups
 
     -- contributions
 

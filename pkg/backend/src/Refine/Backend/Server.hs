@@ -104,6 +104,7 @@ refineApi =
   :<|> Refine.Backend.App.logout
   :<|> Refine.Backend.App.getTranslations
   :<|> Refine.Backend.App.addGroup
+  :<|> Refine.Backend.App.getGroups
   :<|> Refine.Backend.App.changeSubGroup
   :<|> Refine.Backend.App.changeRole
   :<|> Refine.Backend.App.addProcess

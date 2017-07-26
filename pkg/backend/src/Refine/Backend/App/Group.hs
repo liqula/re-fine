@@ -45,8 +45,13 @@ addGroup group = do
 
 getGroup :: ID Group -> App Group
 getGroup group = do
-  appLog "readGroup"
+  appLog "getGroup"
   db $ DB.getGroup group
+
+getGroups :: App [Group]
+getGroups = do
+  appLog "getGroups"
+  db DB.getGroups
 
 -- | Modify the group using the new values from the `Create Group` information.
 modifyGroup :: ID Group -> Create Group -> App Group

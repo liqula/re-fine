@@ -147,6 +147,7 @@ instance Database DB where
   -- * Group
   createGroup       = Entity.createGroup
   getGroup          = Entity.getGroup
+  getGroups         = Entity.getGroups
   modifyGroup       = Entity.modifyGroup
   removeGroup       = Entity.removeGroup
   addSubGroup       = Entity.addSubGroup

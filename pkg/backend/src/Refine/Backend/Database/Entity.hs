@@ -549,6 +549,11 @@ getGroup gid = do
   children <- getChildrenOfGroup gid
   getMetaEntity (S.groupElim . toGroup parents children) gid
 
+getGroups :: DB [Group]
+getGroups = do
+  gids <- liftDB $ selectKeysList [] []
+  mapM (getGroup . S.keyToId) gids
+
 modifyGroup :: ID Group -> Create Group -> DB Group
 modifyGroup gid group = do
   parents  <- getParentsOfGroup gid

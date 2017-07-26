@@ -69,6 +69,7 @@ type RefineAPI =
   :<|> SLogout
   :<|> SGetTranslations
   :<|> SAddGroup
+  :<|> SGetGroups
   :<|> SChangeSubGroup
   :<|> SChangeRole
   :<|> SAddProcess
@@ -142,6 +143,10 @@ type SGetTranslations
 type SAddGroup
   = "r" :> "group" :> ReqBody '[JSON] (Create Group)
     :> Post '[JSON] Group
+
+type SGetGroups
+  = "r" :> "get-groups"
+    :> Get '[JSON] [Group]
 
 type SChangeSubGroup
   = "r" :> "subgroup" :> ReqBody '[JSON] ChangeSubGroup
