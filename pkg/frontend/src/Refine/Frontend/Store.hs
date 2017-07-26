@@ -255,10 +255,15 @@ emitBackendCallsFor act st = case act of
 
     -- groups
 
-    MainMenuAction MainMenuActionOpenGroups -> do
+    MainMenuAction (MainMenuActionOpen (MainMenuGroups Left{})) -> do
         getGroups $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right groups) -> dispatchM . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ (^. C.groupID) <$> groups
+            (Right groups) -> dispatchM . MainMenuAction . MainMenuActionOpen . MainMenuGroups . Right $ (^. C.groupID) <$> groups
+
+    MainMenuAction (MainMenuActionOpen (MainMenuCreateGroup (Right cg))) -> do
+        createGroup cg $ \case
+            Left rsp -> ajaxFail rsp Nothing
+            Right _ -> dispatchM . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ Left ()
 
     -- contributions
 

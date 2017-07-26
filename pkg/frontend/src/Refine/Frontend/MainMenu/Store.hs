@@ -13,8 +13,11 @@ mainMenuUpdate (MainMenuAction MainMenuActionClose) st = st
   & mmErrors . mmeLogin        .~ Nothing
   & mmErrors . mmeRegistration .~ Nothing
 
-mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) st = st
-  & mmState .~ MainMenuOpen tab
+mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) st = case tab of
+  MainMenuGroups Left{} -> st
+  MainMenuCreateGroup Right{} -> st
+  _ -> st
+     & mmState .~ MainMenuOpen (mapMainMenuTab (either (error "impossible") id) id (either id (error "impossible")) tab)
 
 mainMenuUpdate (MainMenuAction (MainMenuActionLoginError e)) st = st
   & mmErrors . mmeLogin .~ Just e

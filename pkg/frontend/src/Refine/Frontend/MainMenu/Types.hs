@@ -9,7 +9,8 @@ import Refine.Frontend.Prelude
 
 import GHC.Generics (Generic)
 
-import Refine.Common.Types (Group)
+import React.Flux.Missing
+import Refine.Common.Types
 import Refine.Common.Rest (ApiErrorCreateUser)
 import Refine.Common.Types.Prelude (Username)
 import Refine.Frontend.Login.Types
@@ -17,8 +18,7 @@ import Refine.Frontend.Login.Types
 
 data MainMenuAction
   = MainMenuActionClose
-  | MainMenuActionOpen MainMenuTabState
-  | MainMenuActionOpenGroups
+  | MainMenuActionOpen MainMenuTabAction
   | MainMenuActionLoginError        Username
   | MainMenuActionRegistrationError ApiErrorCreateUser
   | MainMenuActionClearErrors
@@ -53,27 +53,29 @@ data MainMenu
   | MainMenuOpen { _mainMenuOpenTab :: MainMenuTabState }
   deriving (Eq, Show, Generic)
 
-type MainMenuTabState  = MainMenuTab [ID Group] (ID Group)
-type MainMenuTabAction = MainMenuTab () (ID Group)
-type MainMenuTabProps  = MainMenuTab [ID Group] Group
+type MainMenuTabState  = MainMenuTab [ID Group] (ID Group) (LocalStateRef CreateGroup)
+type MainMenuTabAction = MainMenuTab (Either () [ID Group]) (ID Group) (Either (LocalStateRef CreateGroup) CreateGroup)
+type MainMenuTabProps  = MainMenuTab [ID Group] Group (LocalStateRef CreateGroup)
 
-data MainMenuTab gids{-[ID Group] | ()-} group{-ID Group | Group-}
+data MainMenuTab gids group cgroup
   = MainMenuProcess
   | MainMenuGroups gids
   | MainMenuGroup group
+  | MainMenuCreateGroup cgroup
   | MainMenuHelp
   | MainMenuLogin MainMenuSubTabLogin
   deriving (Eq, Show, Generic)
 
-mapMainMenuTab :: (a -> a') -> (b -> b') -> MainMenuTab a b -> MainMenuTab a' b'
-mapMainMenuTab fa fb = \case
+mapMainMenuTab :: (a -> a') -> (b -> b') -> (c -> c') -> MainMenuTab a b c -> MainMenuTab a' b' c'
+mapMainMenuTab fa fb fc = \case
   MainMenuProcess  -> MainMenuProcess
   MainMenuGroups a -> MainMenuGroups (fa a)
   MainMenuGroup b  -> MainMenuGroup (fb b)
+  MainMenuCreateGroup c -> MainMenuCreateGroup (fc c)
   MainMenuHelp     -> MainMenuHelp
   MainMenuLogin l  -> MainMenuLogin l
 
-defaultMainMenuTab :: HasCallStack => MainMenuTab gid group
+defaultMainMenuTab :: HasCallStack => MainMenuTab gid group cgroup
 defaultMainMenuTab = MainMenuProcess
 
 data MainMenuSubTabLogin = MainMenuSubTabLogin | MainMenuSubTabRegistration

@@ -27,9 +27,11 @@ module Refine.Frontend.MainMenu.Component where
 import Refine.Frontend.Prelude
 
 -- import           Data.Text.I18n (Locale(..))
+import qualified Data.Text as ST
 import           Language.Css.Syntax
 
-import           Refine.Common.Types (Group, unID)
+import           React.Flux.Missing
+import           Refine.Common.Types
 import qualified Refine.Frontend.Colors as Colors
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Component
@@ -38,6 +40,7 @@ import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Util
+import           Refine.Frontend.Contribution.Dialog (contributionDialogTextForm)
 
 
 topMenuBarInMainMenu :: HasCallStack => View '[TopMenuBarInMainMenuProps]
@@ -58,7 +61,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
         & ibSize .~ XXLarge
         & ibLabel .~ mempty
 
-      ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction MainMenuActionOpenGroups]
+      ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction . MainMenuActionOpen . MainMenuGroups $ Left ()]
         & ibListKey .~ "3"
         & ibDarkBackground .~ True
         & ibHighlightWhen .~ (if currentTab & has _MainMenuGroup then HighlightAlways else HighlightOnMouseOver)
@@ -119,7 +122,15 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
            ] $ do
         case currentTab of
           MainMenuProcess      -> "[MainMenuProcess]"
-          MainMenuGroups gids  -> div_ $ toButton `mapM_` gids
+          MainMenuGroups gids  -> div_ $ do
+            h1_ "Groups"
+            br_ []
+            toButton `mapM_` gids
+            br_ []
+            button_ [ "id" $= "add-vdoc-to-backend"
+                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup . Left $ newLocalStateRef (CreateGroup "" "" [] []) gids
+                    ] $
+                    elemString "Create new group"
             where
               toButton :: HasCallStack => ID Group -> ReactElementM 'EventHandlerCode ()
               toButton li = button_
@@ -129,6 +140,9 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
                 (elemText $ toUrlPiece li)
 
           MainMenuGroup{}      -> "[MainMenuGroup]"   -- TODO
+
+          MainMenuCreateGroup lst -> createGroup_ lst
+
           MainMenuHelp         -> "[MainMenuHelp]"
           MainMenuLogin subtab -> mainMenuLoginTab_ (MainMenuProps subtab menuErrors currentUser)
       div_ [ "className" $= "gr-2" ] $ do
@@ -163,3 +177,38 @@ mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuEr
 
 mainMenuLoginTab_ :: HasCallStack => MainMenuProps MainMenuSubTabLogin -> ReactElementM eventHandler ()
 mainMenuLoginTab_ = view_ mainMenuLoginTab "mainMenuLoginTab_"
+
+
+createGroup :: HasCallStack => LocalStateRef CreateGroup -> View '[]
+createGroup lst = mkPersistentStatefulView "CreateGroup" lst $
+  \st@(CreateGroup title desc _ _) -> do
+
+    contributionDialogTextForm createGroupTitle st 2 "group title"
+
+    hr_ []
+
+    contributionDialogTextForm createGroupDesc st 2 "group description"
+
+    hr_ []
+
+    let enableOrDisable props = if ST.null desc || ST.null title
+          then props
+            & iconButtonPropsDisabled     .~ True
+          else props
+            & iconButtonPropsDisabled     .~ False
+            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup $ Right st
+                                             ]
+
+    -- FIXME: make new button, like in 'commentInput_' above.  we
+    -- don't have to save this in global state until the 'editInput_'
+    -- dialog is closed again without save or cancel.
+    iconButton_ $ defaultIconButtonProps @[GlobalAction]
+            & iconButtonPropsListKey      .~ "save"
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
+            & iconButtonPropsElementName  .~ "btn-index"
+            & iconButtonPropsLabel        .~ "save"
+            & iconButtonPropsAlignRight   .~ True
+            & enableOrDisable
+
+createGroup_ :: HasCallStack => LocalStateRef CreateGroup -> ReactElementM eventHandler ()
+createGroup_ lst = view_ (createGroup lst) "createGroup"

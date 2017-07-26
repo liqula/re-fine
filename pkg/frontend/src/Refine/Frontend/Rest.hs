@@ -81,3 +81,6 @@ sGetSimpleVotesOnEdit = request cfg (Proxy :: Proxy SGetSimpleVotesOnEdit)
 
 getGroups :: HasCallStack => HandleResponse [Group] -> IO ()
 getGroups = request cfg (Proxy :: Proxy SGetGroups)
+
+createGroup :: HasCallStack => CreateGroup -> HandleResponse Group -> IO ()
+createGroup = request cfg (Proxy :: Proxy SAddGroup)
