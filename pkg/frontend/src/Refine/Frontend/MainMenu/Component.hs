@@ -54,12 +54,14 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
         & ibLabel .~ mempty
 
     div_ ["className" $= "gr-20"] $ do
+      {-
       ibutton_ $ emptyIbuttonProps "Process" [MainMenuAction $ MainMenuActionOpen MainMenuProcess]
         & ibListKey .~ "2"
         & ibDarkBackground .~ True
         & ibHighlightWhen .~ (if currentTab == MainMenuProcess then HighlightAlways else HighlightOnMouseOver)
         & ibSize .~ XXLarge
         & ibLabel .~ mempty
+      -}
 
       ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction . MainMenuActionOpen . MainMenuGroups $ Left ()]
         & ibListKey .~ "3"
