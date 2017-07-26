@@ -8,6 +8,12 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
+-- | this is a test of the idea that the global store should consist of a client state that has no
+-- (or at least little) redundancy with the server state, and and a server cache, which stores data
+-- from the server for faster access.  then the render function of a react component should be
+-- allowed to issue ajax requests for data missing from the cache, and render the data that's
+-- already available leaving holes.  for example, a list could be rendered empty, and then the list
+-- elements would be injected as they arrive from the server.
 import Prelude
 import Data.Maybe
 import Control.Applicative
