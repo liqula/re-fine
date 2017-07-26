@@ -407,20 +407,18 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
 
     context "on edit without ranges" $ do
       it "stores an edit and returns its version" $ \sess -> do
-        pendingWith "#411"
         (_, fp) <- setup sess
         be' :: VDocVersion <- runDB sess . db . getVersion $ fp ^. editID
         be' `shouldBe` samplevdoc
 
       it "stores an edit and returns it in the list of edits applicable to its base" $ \sess -> do
-        pendingWith "applicableEdits is not implemented.  (also, #411)"
+        pendingWith "applicableEdits is not implemented."
         (fe, fp) <- setup sess
         be :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (fe ^. compositeVDoc . vdocID)
         be ^. compositeVDocApplicableEdits . to Map.elems`shouldContain` [fp]
 
     describe "sUpdateEdit" $ do
       it "works" $ \sess -> do
-        pendingWith "#411"
         (_, fp) <- setup sess
 
         let d = rawContentToVDocVersion . mkRawContent $ mkBlock "1234567890" :| []
