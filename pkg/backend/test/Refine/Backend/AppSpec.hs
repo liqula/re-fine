@@ -34,7 +34,6 @@ import           Test.QuickCheck.Monadic
 import Refine.Backend.App as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
-import Refine.Backend.User
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Test.Samples (sampleVDocVersion)
 import Refine.Common.Types
@@ -66,15 +65,12 @@ isActiveUser UserLoggedOut      = False
 spec :: Spec
 spec = do
   describe "VDoc" . around provideAppRunner $ do
-    it "Random program" $ \(runner :: AppM DB UH Property -> IO Property) -> forAll sampleProgram $ \program ->
+    it "Random program" $ \(runner :: AppM DB Property -> IO Property) -> forAll sampleProgram $ \program ->
       monadic (monadicApp runner) (runProgram program `evalStateT` initVDocs)
 
   describe "User handling" . around provideAppRunner $ do
     -- FUTUREWORK: Use the Cmd dsl for this test
-    it "Create/login/logout" $ \(runner :: AppM DB UH () -> IO ()) -> do
-
-      pendingWith "FIXME: #291"
-
+    it "Create/login/logout" $ \(runner :: AppM DB () -> IO ()) -> do
       runner $ do
         void $ App.createUser (CreateUser "user" "user@example.com" "password")
         userState0 <- gets (view appUserState)
@@ -90,7 +86,7 @@ spec = do
         appIO $ userState2 `shouldBe` UserLoggedOut
 
   describe "Database handling" . around provideAppRunner $ do
-    it "db (or dbWithFilters) can be called twice inside the same AppM" $ \(runner :: AppM DB UH () -> IO ()) -> do
+    it "db (or dbWithFilters) can be called twice inside the same AppM" $ \(runner :: AppM DB () -> IO ()) -> do
       runner $ do
         void $ do
           let createGroup1 = CreateGroup "group1" "desc1" [] [] False
@@ -109,7 +105,7 @@ spec = do
           appIO $ grp2 `shouldSatisfy` sameGroupInfo createGroup2
 
   describe "Regression" . around provideAppRunner $ do
-    it "Regression test program" $ \(runner :: AppM DB UH () -> IO ()) -> do
+    it "Regression test program" $ \(runner :: AppM DB () -> IO ()) -> do
       let program =
             [ AddVDoc (CreateVDoc (Title "title...") (Abstract "abstract...") sampleVDocVersion)
             , AddEditToHead 0 sampleCreateEdit1
@@ -130,14 +126,14 @@ spec = do
           _ <- App.createUser $ CreateUser username (username <> "@email.com") "password"
           login $ Login username "password"
 
-    it "merge two edits" $ \(runner :: AppM DB UH () -> IO ()) -> do
+    it "merge two edits" $ \(runner :: AppM DB () -> IO ()) -> do
       runner $ do
         (_, base, [eid1, eid2]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"]]
         eidm <- (^. editID) <$> App.addMerge base eid1 eid2
         doc' <- App.getVDocVersion eidm
         appIO $ doc' `shouldBe` vdoc ["a.c","d.f"]
 
-    it "rebase one edit to two other edits" $ \(runner :: AppM DB UH () -> IO ()) -> do
+    it "rebase one edit to two other edits" $ \(runner :: AppM DB () -> IO ()) -> do
       runner $ do
         (vid, _, [eid1, _, _]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"], ["abX", "def"]]
         App.rebaseHeadToEdit eid1
@@ -153,10 +149,7 @@ spec = do
         docB <- App.getVDocVersion ee1
         appIO $ docB `shouldBe` vdoc ["aX.","def"]   -- FIXME: the merge result is strange
 
-    it "upvoting an edit triggers rebase" $ \(runner :: AppM DB UH () -> IO ()) -> runner $ do
-
-        appIO $ pendingWith "#291 (probably)"
-
+    it "upvoting an edit triggers rebase" $ \(runner :: AppM DB () -> IO ()) -> runner $ do
         (vid, _, [eid]) <- docWithEdits ["abc", "def"] [["a.c", "def"]]
         void $ addUserAndLogin "user"
         putSimpleVoteOnEdit eid Yeay
@@ -179,13 +172,13 @@ instance ProgramRunner IdentityT where
 -- * monadic property
 
 runProgram
-  :: (ProgramRunner m, Monad (m (AppM DB UH)))
-  => [Cmd] -> StateT VDocs (m (AppM DB UH)) ()
+  :: (ProgramRunner m, Monad (m (AppM DB)))
+  => [Cmd] -> StateT VDocs (m (AppM DB)) ()
 runProgram = foldl (>>) (pure ()) . map runCmd
 
 runCmd
-  :: (ProgramRunner m, Monad (m (AppM DB UH)))
-  => Cmd -> StateT VDocs (m (AppM DB UH)) ()
+  :: (ProgramRunner m, Monad (m (AppM DB)))
+  => Cmd -> StateT VDocs (m (AppM DB)) ()
 runCmd (AddVDoc cv) = do
   vdoc   <- lift . lift $ App.createVDoc cv
   lastId <- gets $ view vdocLast

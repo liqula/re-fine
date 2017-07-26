@@ -29,7 +29,7 @@ module Refine.Backend.Server
   ( refineCookieName
   , startBackend
   , runCliAppCommand
-  , Backend(..), mkProdBackend, mkDevModeBackend
+  , Backend(..), mkProdBackend
   , refineApi
   ) where
 
@@ -44,16 +44,15 @@ import qualified Servant.Utils.Enter
 import           Servant.Utils.StaticFiles (serveDirectory)
 import           System.Directory (canonicalizePath, createDirectoryIfMissing)
 import           System.FilePath (dropFileName)
+import qualified Web.Users.Types as Users
 
 import Refine.Backend.App
 import Refine.Backend.App.MigrateDB (migrateDB)
 import Refine.Backend.Config
 import Refine.Backend.Database
-import Refine.Backend.Database.Entity (addMockUserMetaInfo)
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
-import Refine.Backend.User
 import Refine.Common.Allow
 import Refine.Common.Rest
 import Refine.Common.Types.Core (Edit)
@@ -78,17 +77,17 @@ createDataDirectories cfg = do
 
 -- * backend creation
 
-data Backend db uh = Backend
+data Backend db = Backend
   { backendServer :: Application
-  , backendRunApp :: AppM db uh P.:~> ExceptT AppError IO
+  , backendRunApp :: AppM db P.:~> ExceptT AppError IO
   }
 
-type MonadRefine db uh =
-  ( MonadApp db uh
+type MonadRefine db =
+  ( MonadApp db
   , Allow (ProcessPayload Edit) Edit
   )
 
-refineApi :: MonadRefine db uh => ServerT RefineAPI (AppM db uh)
+refineApi :: MonadRefine db => ServerT RefineAPI (AppM db)
 refineApi =
        Refine.Backend.App.listVDocs
   :<|> Refine.Backend.App.getCompositeVDocOnHead
@@ -116,58 +115,45 @@ refineApi =
 
 
 startBackend :: Config -> IO ()
-startBackend cfg =
-  if cfg ^. cfgDevMode
-    then do backend <- mkDevModeBackend cfg mockLogin
-            Warp.runSettings (warpSettings cfg) $ backendServer backend
-    else do backend <- mkProdBackend cfg
-            Warp.runSettings (warpSettings cfg) $ backendServer backend
+startBackend cfg = do
+  Warp.runSettings (warpSettings cfg) . backendServer =<< mkProdBackend cfg
 
-runCliAppCommand :: Config -> AppM DB UH a -> IO ()
+runCliAppCommand :: Config -> AppM DB a -> IO ()
 runCliAppCommand cfg cmd = do
   backend <- mkProdBackend cfg
   void $ (natThrowError . backendRunApp backend) $$ cmd
 
-mkProdBackend :: Config -> IO (Backend DB UH)
-mkProdBackend cfg = mkBackend cfg uhNat (migrateDB cfg)
+mkProdBackend :: Config -> IO (Backend DB)
+mkProdBackend cfg = mkBackend cfg (migrateDB cfg)
 
-mkDevModeBackend :: Config -> MockUH_ -> IO (Backend DB FreeUH)
-mkDevModeBackend cfg mock = mkBackend cfg (\_ -> uhNat mock) $ do
-  migrateDB cfg
-  db addMockUserMetaInfo
-
-mkBackend :: MonadUserHandle uh => Config -> (UserDB -> UHNat uh) -> AppM DB uh a -> IO (Backend DB uh)
-mkBackend cfg initUH migrate = do
+mkBackend :: Config -> AppM DB a -> IO (Backend DB)
+mkBackend cfg migrate = do
   createDataDirectories cfg
 
   -- create runners
-  (dbRunner, dbNat, runUserHandle) <- createDBNat cfg
-  backend    <- mkServerApp cfg dbNat dbRunner (initUH runUserHandle)
+  (dbRunner, dbNat) <- createDBNat cfg
+  backend <- mkServerApp cfg dbNat dbRunner
 
   -- migration
   result <- runExceptT (backendRunApp backend $$ migrate)
-  case result of
-    Left err -> error $ show err
-    Right _  -> pure ()
+  either (error . show) (const $ pure ()) result
 
   pure backend
 
 
 mkServerApp
-    :: MonadRefine db uh
-    => Config -> MkDBNat db -> DBRunner -> UHNat uh -> IO (Backend db uh)
-mkServerApp cfg dbNat dbRunner uh = do
+    :: MonadRefine db
+    => Config -> MkDBNat db -> DBRunner -> IO (Backend db)
+mkServerApp cfg dbNat dbRunner = do
   poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
       app    = runApp dbNat
                       dbRunner
-                      uh
                       logger
                       (cfg ^. cfgCsrfSecret . to CsrfSecret)
                       (cfg ^. cfgSessionLength)
                       poFilesRoot
-                      (if cfg ^. cfgDevMode then devMode else id)
 
   -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
   -- may need to refactor, e.g. by using extra arguments in the end point types.
@@ -216,11 +202,11 @@ toApiError = \case
   AppRebaseError{}       -> ApiRebaseError
 
 -- | so we don't have to export backend types to the frontend.
-createUserErrorToApiError :: CreateUserError -> ApiErrorCreateUser
-createUserErrorToApiError InvalidPassword              = ApiErrorInvalidPassword
-createUserErrorToApiError UsernameAlreadyTaken         = ApiErrorUsernameAlreadyTaken
-createUserErrorToApiError EmailAlreadyTaken            = ApiErrorEmailAlreadyTaken
-createUserErrorToApiError UsernameAndEmailAlreadyTaken = ApiErrorUsernameAndEmailAlreadyTaken
+createUserErrorToApiError :: Users.CreateUserError -> ApiErrorCreateUser
+createUserErrorToApiError Users.InvalidPassword              = ApiErrorInvalidPassword
+createUserErrorToApiError Users.UsernameAlreadyTaken         = ApiErrorUsernameAlreadyTaken
+createUserErrorToApiError Users.EmailAlreadyTaken            = ApiErrorEmailAlreadyTaken
+createUserErrorToApiError Users.UsernameAndEmailAlreadyTaken = ApiErrorUsernameAndEmailAlreadyTaken
 
 -- | Turns AppError to its kind of servant error.
 appServantErr :: AppError -> ServantErr
@@ -250,16 +236,16 @@ dbServantErr = \case
   DBMigrationParseErrors _ -> err500
   DBUnsafeMigration _      -> err500
 
-userCreationError :: CreateUserError -> ServantErr
+userCreationError :: Users.CreateUserError -> ServantErr
 userCreationError = \case
-  InvalidPassword              -> err400
-  UsernameAlreadyTaken         -> err409
-  EmailAlreadyTaken            -> err409
-  UsernameAndEmailAlreadyTaken -> err409
+  Users.InvalidPassword              -> err400
+  Users.UsernameAlreadyTaken         -> err409
+  Users.EmailAlreadyTaken            -> err409
+  Users.UsernameAndEmailAlreadyTaken -> err409
 
 -- * Instances for Servant.Cookie.Session
 
-instance SCS.MonadRandom (AppM db uh) where
+instance SCS.MonadRandom (AppM db) where
   getRandomBytes = appIO . SCS.getRandomBytes
 
 instance SCS.ThrowError500 AppError where
@@ -279,7 +265,7 @@ instance SCS.HasSessionCsrfToken AppState where
       toSCS   = SCS.CsrfToken . cs . _csrfToken
       csrfTokenIso = iso (fmap toSCS) (fmap fromSCS)
 
-instance SCS.GetCsrfSecret (AppContext db uh) where
+instance SCS.GetCsrfSecret (AppContext db) where
   csrfSecret = appCsrfSecret . Refine.Backend.Types.csrfSecret . to (Just . SCS.CsrfSecret . cs)
 
 instance SCS.GetSessionToken AppState where

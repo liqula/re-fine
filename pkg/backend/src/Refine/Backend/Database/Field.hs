@@ -1,4 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude          #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE TypeApplications           #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -17,24 +18,24 @@ import Refine.Common.Types.Role (Role(..))
 import Refine.Common.Types.Core
 
 
+-- FUTUREWORK: is there a way to derive PersistFieldSql instances for newtypes so that they always
+-- take the type wrapped in the newtype?
+
+
 instance PersistField Timestamp where
   toPersistValue (Timestamp t) = toPersistValue t
-  fromPersistValue         = fmap Timestamp . fromPersistValue
+  fromPersistValue             = fmap Timestamp . fromPersistValue
 
 instance PersistFieldSql Timestamp where
-  -- CAUTION: This should be generated, to represent the actual inner type
-  -- of the newtype
-  sqlType _ = sqlType (Proxy :: Proxy ST)
+  sqlType Proxy = sqlType (Proxy @ST)  -- FIXME: should be @@UTCTime@, but that breaks tests on sqlite.
 
 
 instance PersistField VDocVersion where
   toPersistValue (VDocVersion t) = toPersistValue t
-  fromPersistValue         = fmap VDocVersion . fromPersistValue
+  fromPersistValue               = fmap VDocVersion . fromPersistValue
 
 instance PersistFieldSql VDocVersion where
-  -- CAUTION: This should be generated, to represent the actual inner type
-  -- of the newtype
-  sqlType _ = sqlType (Proxy :: Proxy ST)
+  sqlType Proxy = sqlType (Proxy @ST)
 
 
 instance PersistField Title where
@@ -42,9 +43,7 @@ instance PersistField Title where
   fromPersistValue         = fmap Title . fromPersistValue
 
 instance PersistFieldSql Title where
-  -- CAUTION: This should be generated, to represent the actual inner type
-  -- of the title
-  sqlType _ = sqlType (Proxy :: Proxy ST)
+  sqlType Proxy = sqlType (Proxy @ST)
 
 
 instance PersistField Abstract where
@@ -52,9 +51,7 @@ instance PersistField Abstract where
   fromPersistValue            = fmap Abstract . fromPersistValue
 
 instance PersistFieldSql Abstract where
-  -- CAUTION: This should be generated, to represent the actual inner type
-  -- of the title
-  sqlType _ = sqlType (Proxy :: Proxy ST)
+  sqlType Proxy = sqlType (Proxy @ST)
 
 
 -- * JSON stored values
@@ -70,60 +67,60 @@ instance PersistField RangePosition where
   fromPersistValue = fromPersistJSONValue
 
 instance PersistFieldSql RangePosition where
-  sqlType _ = sqlType (Proxy :: Proxy ST)
+  sqlType Proxy = sqlType (Proxy @ST)
 
 instance PersistField EditKind where
   toPersistValue   = toPersistJSONValue
   fromPersistValue = fromPersistJSONValue
 
 instance PersistFieldSql EditKind where
-  sqlType _ = sqlType (Proxy :: Proxy ST)
+  sqlType Proxy = sqlType (Proxy @ST)
 
 instance PersistField Role where
   toPersistValue   = toPersistJSONValue
   fromPersistValue = fromPersistJSONValue
 
 instance PersistFieldSql Role where
-  sqlType _ = sqlType (Proxy :: Proxy ST)
+  sqlType Proxy = sqlType (Proxy @ST)
 
 instance PersistField CollaborativeEditPhase where
   toPersistValue   = toPersistJSONValue
   fromPersistValue = fromPersistJSONValue
 
 instance PersistFieldSql CollaborativeEditPhase where
-  sqlType _ = sqlType (Proxy :: Proxy ST)
+  sqlType Proxy = sqlType (Proxy @ST)
 
 instance PersistField UserInfo where
   toPersistValue   = toPersistJSONValue
   fromPersistValue = fromPersistJSONValue
 
 instance PersistFieldSql UserInfo where
-  sqlType _ = sqlType (Proxy :: Proxy ST)
+  sqlType Proxy = sqlType (Proxy @ST)
 
 instance PersistField MetaInfoID where
   toPersistValue   = toPersistJSONValue
   fromPersistValue = fromPersistJSONValue
 
 instance PersistFieldSql MetaInfoID where
-  sqlType _ = sqlType (Proxy :: Proxy ST)
+  sqlType Proxy = sqlType (Proxy @ST)
 
 instance PersistField RawContentEdit where
   toPersistValue   = toPersistJSONValue
   fromPersistValue = fromPersistJSONValue
 
 instance PersistFieldSql RawContentEdit where
-  sqlType _ = sqlType (Proxy :: Proxy ST)
+  sqlType Proxy = sqlType (Proxy @ST)
 
 instance PersistField RangePositions where
   toPersistValue   = toPersistJSONValue
   fromPersistValue = fromPersistJSONValue
 
 instance PersistFieldSql RangePositions where
-  sqlType _ = sqlType (Proxy :: Proxy ST)
+  sqlType Proxy = sqlType (Proxy @ST)
 
 instance PersistField DBVotes where
   toPersistValue   = toPersistJSONValue
   fromPersistValue = fromPersistJSONValue
 
 instance PersistFieldSql DBVotes where
-  sqlType _ = sqlType (Proxy :: Proxy ST)
+  sqlType Proxy = sqlType (Proxy @ST)

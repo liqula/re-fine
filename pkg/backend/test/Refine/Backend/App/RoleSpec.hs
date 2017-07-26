@@ -32,7 +32,6 @@ import Refine.Backend.App.Group  as App
 import Refine.Backend.App.Role   as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
-import Refine.Backend.User
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Types.Group
 import Refine.Common.Types.Prelude (ID(..))
@@ -41,10 +40,10 @@ import Refine.Common.Types.Role
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
 
-type RoleAppRunner = AppM DB FreeUH (IO ()) -> IO (IO ())
+type RoleAppRunner = AppM DB (IO ()) -> IO (IO ())
 
 spec :: Spec
-spec = around provideDevModeAppRunner $ do
+spec = around provideAppRunner $ do
     describe "assign role" $ do
       context "role was not previously assigned" $ do
         it "adds role" $ \(runner :: RoleAppRunner) -> do

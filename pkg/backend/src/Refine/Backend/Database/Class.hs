@@ -10,6 +10,7 @@ module Refine.Backend.Database.Class where
 import Refine.Backend.Prelude
 
 import Data.Typeable (Typeable)
+import qualified Web.Users.Persistent as Users
 
 import           Refine.Backend.Database.Types
 import           Refine.Common.Types
@@ -66,6 +67,9 @@ class Database db where
   -- Statement
   createStatement      :: ID Statement -> Create Statement -> db Statement
   getStatement         :: ID Statement -> db Statement
+
+  -- User
+  runUsersCmd          :: (Users.Persistent -> IO a) -> db a
 
   -- Group
   createGroup          :: Create Group -> db Group

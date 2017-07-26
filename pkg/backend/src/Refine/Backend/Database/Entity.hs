@@ -30,18 +30,18 @@ module Refine.Backend.Database.Entity where
 import Refine.Backend.Prelude as P hiding (get)
 
 import           Database.Persist (get)
-import           Database.Persist.Sql (SqlBackend)
+import           Database.Persist.Sql (SqlBackend, fromSqlKey, toSqlKey)
 import qualified Data.Set as Set
 import           Lentil.Core (entityLens)
 import           Lentil.Types as L
+import qualified Web.Users.Persistent as Users
+import qualified Web.Users.Persistent.Definitions as Users
 
 import qualified Refine.Backend.Database.Class as C
 import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
 import           Refine.Backend.Database.Types
 import           Refine.Backend.Database.Tree
-import           Refine.Backend.User.Free (mockUserId)
-import           Refine.Backend.User.Core as Users (Login, LoginId, fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
 import qualified Refine.Common.OT as OT
@@ -69,19 +69,21 @@ type instance S.ProcessDataConnectionRep CollaborativeEdit = S.ProcessOfCollabEd
 type instance S.ProcessDataConnectionRep Aula              = S.ProcessOfAula
 
 {-
-Reading the domain structured datatypes is not a problem,
-as there is no big difference, in accessing the parts, and
-combine them via an applicative functor, producing an lazy value.
+[not sure what this comment is about any more..  fisx]
+
+Reading the domain structured datatypes is not a problem:
+there is no big difference between accessing the parts and
+combining them via an applicative functor, producing an lazy value.
 
 The problem arises when we add some information to the computed
-value in an another pure computation. The changes in the value
-will be lost, as there is no triger mechanism.
+value in another pure computation. The changes in the value
+will be lost, as there is no trigger mechanism.
 
 If we want to address this problem, we need to use lenses over
-some ids, to navigate deeper in the data structures.
+some ids to navigate deeper in the data structures.
 
-If the lens only a getter, the result functor won't run the update
-Whenever we operate on some data we need to load the current
+If the lens is only a getter, the result functor won't run the update;
+whenever we operate on some data we need to load the current
 version from the db.
 
 Instead of saving the whole value in the database, a generic
@@ -89,6 +91,7 @@ diff algorithm could be used.
 
 https://hackage.haskell.org/package/gdiff
 -}
+
 
 -- * Helpers
 
@@ -109,9 +112,9 @@ getEntityRep eid = do
 -- | Access the key like field in an entity and convert the key value
 -- to the Domain ID.
 --
--- Example:
---   * foreignKeyField S.PCComment (Entity pcid (S.PC pid cid)) == cid
---   * foreignKeyField S.PCEdit    (Entity pcid (S.PC pid cid)) == pid
+-- Examples:
+-- >>> foreignKeyField S.PCComment (Entity pcid (S.PC pid cid)) == cid
+-- >>> foreignKeyField S.PCEdit    (Entity pcid (S.PC pid cid)) == pid
 foreignKeyField
   :: ToBackendKey SqlBackend (S.EntityRep a)
   => (b -> Key (S.EntityRep a)) -> P.Entity b -> ID a
@@ -144,6 +147,17 @@ dbUser = do
   DBContext mu _filter <- ask
   nothingToError DBUserNotLoggedIn mu
 
+-- | Converts an internal UserID representation to the common UserID.
+--
+-- FIXME: get rid of this (how do we do it with the other common types?)
+toUserID :: Users.LoginId -> ID User
+toUserID = ID . fromSqlKey
+
+-- | Inverse of 'toUserID'.
+fromUserID :: ID User -> Users.LoginId
+fromUserID (ID i) = toSqlKey i
+
+
 -- FUTUREWORK: Make dbSelectOpts typesafe.
 dbSelectOpts :: DB [SelectOpt entity]
 dbSelectOpts = do
@@ -152,6 +166,7 @@ dbSelectOpts = do
   where
     filterToSelectOpt = \case
       Limit n -> [LimitTo n]
+
 
 -- * MetaInfo
 
@@ -176,13 +191,6 @@ createMetaID_ ida = do
   let meta = S.MetaInfo (metaInfoType ida) user time user time
   void . liftDB $ insert meta
   pure . MetaID ida $ S.metaInfoElim (const MetaInfo) meta
-
-addMockUserMetaInfo :: DB ()
-addMockUserMetaInfo = do
-  (_user, time) <- getUserAndTime
-  let user = UserID mockUserId
-      meta = S.MetaInfo (metaInfoType mockUserId) user time user time
-  void . liftDB $ insert meta
 
 addConnection
     :: (PersistEntityBackend record ~ BaseBackend SqlBackend, ToBackendKey SqlBackend record
@@ -243,10 +251,12 @@ createVDoc pv vdoc = do
 getVDoc :: ID VDoc -> DB VDoc
 getVDoc = getMetaEntity (S.vDocElim . toVDoc)
 
+
 -- * Repo
 
 getEditIDs :: ID VDoc -> DB [ID Edit]
 getEditIDs vid = liftDB $ S.keyToId . entityKey <$$> selectList [S.EditRepository ==. S.idToKey vid] []
+
 
 -- * Edit
 
@@ -334,15 +344,17 @@ getVotes eid = do
 getVoteCount :: ID Edit -> DB VoteCount
 getVoteCount = fmap votesToCount . getVotes
 
+
 -- * Repo and edit
 
 vdocOfEdit :: ID Edit -> DB (ID VDoc)
 vdocOfEdit pid = S.editElim (\_ _ vid _ _ -> S.keyToId vid) <$> getEntityRep pid
 
+
 -- * Note
 
 -- FIXME: Use the @_lid@ argument
-toNote :: MetaID Note -> ST -> Bool -> RangePosition -> LoginId -> Note
+toNote :: MetaID Note -> ST -> Bool -> RangePosition -> Users.LoginId -> Note
 toNote nid desc public range _lid = Note nid desc public (unRangePosition range)
 
 createNote :: ID Edit -> Create Note -> DB Note
@@ -364,7 +376,7 @@ getNote = getMetaEntity (S.noteElim . toNote)
 -- * Question
 
 -- FIXME: user the @_lid@ argument
-toQuestion :: MetaID Question -> ST -> Bool -> Bool -> RangePosition -> LoginId -> Question
+toQuestion :: MetaID Question -> ST -> Bool -> Bool -> RangePosition -> Users.LoginId -> Question
 toQuestion qid text answ pblc range _lid = Question qid text answ pblc (unRangePosition range)
 
 createQuestion :: ID Edit -> Create Question -> DB Question
@@ -463,6 +475,7 @@ answersOfQuestion qid = do
     mid <- getMeta . S.keyToId $ entityKey e
     pure $ S.answerElim (toAnswer mid) (entityVal e)
 
+
 -- * Statement
 
 toStatement :: MetaID Statement -> ST -> Maybe (Key S.Statement) -> Statement
@@ -480,6 +493,25 @@ createStatement sid statement = do
 
 getStatement :: ID Statement -> DB Statement
 getStatement = getMetaEntity (S.statementElim . toStatement)
+
+
+-- * User
+
+-- | FUTUREWORK: this is an instance of the VarArg problem: the functions in 'UserStorageBackend'
+-- class take different numbers of arguments, but they always take `db` first.  it would be nice to,
+-- instead of:
+--
+-- >>> runUsersCmd (\h -> Users.createUser h user)
+-- >>> runUsersCmd (\h -> Users.authUser h username password sessionDuration)
+--
+-- we could write:
+--
+-- >>> runUsersCmdVarArg Users.createUser user
+-- >>> runUsersCmdVarArg Users.authUser username password sessionDuration
+runUsersCmd :: (Users.Persistent -> IO a) -> DB a
+runUsersCmd cmd = liftDB . ReaderT $ \(sqlBackend :: SqlBackend) ->
+  liftIO $ cmd (Users.Persistent (`runReaderT` sqlBackend))
+
 
 -- * Group
 
@@ -583,6 +615,7 @@ universalGroup = do
   opts <- dbSelectOpts
   xs <- (S.keyToId . entityKey) <$$> liftDB (selectList [ S.GroupUniversal ==. True ] opts)
   unique "universalGroup" xs
+
 
 -- * Roles
 
@@ -729,6 +762,7 @@ instance C.GroupOf DB VDoc where
 
 instance C.GroupOf DB Edit where
   groupOf = vdocOfEdit >=> C.groupOf
+
 
 -- * ProcessOf
 

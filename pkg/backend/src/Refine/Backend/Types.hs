@@ -28,10 +28,10 @@ import Refine.Backend.Prelude
 import Control.Lens (makeLenses)
 import Data.String.Conversions (ST, cs)
 
-import Refine.Backend.User (SessionId(..))
+import qualified Web.Users.Types as Users
 
 
-newtype UserSession = UserSession { _unUserSession :: SessionId }
+newtype UserSession = UserSession { _unUserSession :: Users.SessionId }
   deriving (Eq, Show)
 
 newtype CsrfSecret = CsrfSecret { _csrfSecret :: ST }
@@ -41,7 +41,7 @@ newtype CsrfToken = CsrfToken { _csrfToken :: ST }
   deriving (Eq, Show)
 
 userSessionText :: UserSession -> ST
-userSessionText = cs . unSessionId . _unUserSession
+userSessionText = cs . Users.unSessionId . _unUserSession
 
 makeLenses ''UserSession
 makeLenses ''CsrfSecret

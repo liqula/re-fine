@@ -31,21 +31,19 @@ import Refine.Backend.App.Core
 import Refine.Backend.Database.Core
 import Refine.Backend.Database.Class     as DB
 import Refine.Backend.Database.MigrateDB as DB
-import Refine.Backend.User.MigrateDB as User
 import Refine.Common.Types.Group (CreateGroup(..))
 
 
 -- | (With dependent types, we could take a 'Config' as argument here and then return an @AppM DB
 -- uh@.  But as it is, we have to have two functions, this and 'migrateDBDevMode'.)
-migrateDB :: Config -> AppM DB uh ()
-migrateDB cfg = do
-  let safety = if cfg ^. cfgDevMode then UnsafeMigration else SafeMigration
+migrateDB :: Config -> AppM DB ()
+migrateDB _cfg = do
   appLog "Start database migration ..."
-  mig <- db $ (<>) <$> DB.migrateDB safety <*> User.migrateDB safety
+  mig <- db $ DB.migrateDB SafeMigration
   appLog $ show mig
   appLog "Start database migration ... DONE"
 
-initializeDB :: AppM DB uh ()
+initializeDB :: AppM DB ()
 initializeDB = do
   appLog "Create initial database state ..."
   ugroup <- db (DB.createGroup (CreateGroup "Universe" "The group that contains everything" [] [] True))

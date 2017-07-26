@@ -38,10 +38,6 @@ data DBContext = DBContext
   , _dbFilters      :: XFilters
   }
 
--- FIXME: follow the structure as in "Refine.Backend.User.*" (here as well as in "...DocRepo").
--- this may introduce some circular dependencies, but we may be able to resolve them with creating
--- more sub-modules, like splitting up "Refine.Backend.Database.DB" into
--- "Refine.Backend.Database.DB" and "Refine.Backend.Database.DB.Type".
 newtype DB a = DB { unDB :: ExceptT DBError (ReaderT DBContext SQLM) a }
   deriving
     ( Functor
@@ -61,6 +57,8 @@ data DBError
   | DBUnsafeMigration [(Bool, ST)]
   deriving (Eq, Show, Generic)
 
+-- FIXME: we probably want to eliminate that and store a current time value in 'DBContext' instead.
+-- this will make all timestamps inside one transaction equal (and also slightly less accurate).
 instance HasCurrentTime DB where
   getCurrentTimestamp = DB $ liftIO getCurrentTimestamp
 
