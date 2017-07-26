@@ -29,11 +29,13 @@ import Refine.Frontend.Prelude
 -- import           Data.Text.I18n (Locale(..))
 import           Language.Css.Syntax
 
+import           Refine.Common.Types (Group, unID)
 import qualified Refine.Frontend.Colors as Colors
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Component
 import           Refine.Frontend.Login.Status
 import           Refine.Frontend.MainMenu.Types
+import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Util
 
@@ -117,7 +119,15 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
            ] $ do
         case currentTab of
           MainMenuProcess      -> "[MainMenuProcess]"
-          MainMenuGroups{}     -> "[MainMenuGroups]"   -- TODO
+          MainMenuGroups gids  -> div_ $ toButton `mapM_` gids
+            where
+              toButton :: HasCallStack => ID Group -> ReactElementM 'EventHandlerCode ()
+              toButton li = button_
+                [ "id" $= cs ("load-group-list" <> show (li ^. unID))
+                , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuGroup $ li
+                ]
+                (elemText $ toUrlPiece li)
+
           MainMenuGroup{}      -> "[MainMenuGroup]"   -- TODO
           MainMenuHelp         -> "[MainMenuHelp]"
           MainMenuLogin subtab -> mainMenuLoginTab_ (MainMenuProps subtab menuErrors currentUser)
