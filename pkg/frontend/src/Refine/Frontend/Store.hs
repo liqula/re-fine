@@ -259,21 +259,21 @@ emitBackendCallsFor act st = case act of
 
     -- groups
 
-    MainMenuAction (MainMenuActionOpen (MainMenuGroups Left{})) -> do
+    MainMenuAction (MainMenuActionOpen (MainMenuGroups BeforeAjax{})) -> do
         getGroups $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right groups) -> dispatchManyM
               [ RefreshServerCache . ServerCache mempty mempty mempty mempty mempty
                 $ M.fromList [(g ^. C.groupID, g) | g <- groups]
-              , MainMenuAction . MainMenuActionOpen . MainMenuGroups . Right $ (^. C.groupID) <$> groups
+              , MainMenuAction . MainMenuActionOpen . MainMenuGroups . AfterAjax $ (^. C.groupID) <$> groups
               ]
 
-    MainMenuAction (MainMenuActionOpen (MainMenuCreateGroup mid (Right cg))) -> do
+    MainMenuAction (MainMenuActionOpen (MainMenuCreateGroup mid (FormComplete cg))) -> do
         maybe createGroup updateGroup mid cg $ \case
             Left rsp -> ajaxFail rsp Nothing
-            Right _ -> dispatchM . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ Left ()
+            Right _ -> dispatchM . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()
 
-    MainMenuAction (MainMenuActionOpen (MainMenuCreateProcess (Right cg))) -> do
+    MainMenuAction (MainMenuActionOpen (MainMenuCreateProcess (FormComplete cg))) -> do
         createVDoc cg $ \case
             Left rsp -> ajaxFail rsp Nothing
             Right loadedVDoc -> dispatchM $ OpenDocument loadedVDoc

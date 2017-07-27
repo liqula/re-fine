@@ -26,6 +26,24 @@ module Refine.Frontend.Types where
 import Refine.Frontend.Prelude
 
 import Refine.Common.Types
+import React.Flux.Missing
+
+
+data AjaxAction a b = BeforeAjax a | AfterAjax b
+  deriving (Show, Generic, Eq, Ord)
+
+ajaxAction :: (a -> c) -> (b -> c) -> AjaxAction a b -> c
+ajaxAction f _ (BeforeAjax a) = f a
+ajaxAction _ g (AfterAjax b)  = g b
+
+data FormAction_ a b = FormOngoing a | FormComplete b
+  deriving (Show, Generic, Eq, Ord)
+
+formAction :: (a -> c) -> (b -> c) -> FormAction_ a b -> c
+formAction f _ (FormOngoing a)  = f a
+formAction _ g (FormComplete b) = g b
+
+type FormAction a = FormAction_ (LocalStateRef a) a
 
 
 -- | FIXME: use React.Flux.Outdated.ReactViewKey instead (slightly more sophisticated).
@@ -72,4 +90,4 @@ data SelectionStateWithPx = SelectionStateWithPx
     }
     deriving (Show, Eq, Generic)
 
-makeRefineTypes [''OffsetFromViewportTop, ''ScrollOffsetOfViewport, ''OffsetFromDocumentTop, ''SelectionStateWithPx]
+makeRefineTypes [''AjaxAction, ''FormAction_, ''OffsetFromViewportTop, ''ScrollOffsetOfViewport, ''OffsetFromDocumentTop, ''SelectionStateWithPx]

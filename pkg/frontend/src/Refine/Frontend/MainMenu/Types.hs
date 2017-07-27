@@ -13,6 +13,7 @@ import React.Flux.Missing
 import Refine.Common.Types
 import Refine.Common.Rest (ApiErrorCreateUser)
 import Refine.Common.Types.Prelude (Username)
+import Refine.Frontend.Types
 import Refine.Frontend.Login.Types
 
 
@@ -59,10 +60,10 @@ type MainMenuTabState = MainMenuTab
       (LocalStateRef CreateGroup)
       (LocalStateRef CreateVDoc)
 type MainMenuTabAction = MainMenuTab
-      (Either () [ID Group])
+      (AjaxAction () [ID Group])
       (ID Group)
-      (Either (LocalStateRef CreateGroup) CreateGroup)
-      (Either (LocalStateRef CreateVDoc) CreateVDoc)
+      (FormAction CreateGroup)
+      (FormAction CreateVDoc)
 type MainMenuTabProps = MainMenuTab
       [Group]
       Group
@@ -88,7 +89,7 @@ mapMainMenuTab fa fb fc fd = \case
   MainMenuLogin l  -> MainMenuLogin l
 
 defaultMainMenuTab :: MainMenuTabAction
-defaultMainMenuTab = MainMenuGroups $ Left ()
+defaultMainMenuTab = MainMenuGroups $ BeforeAjax ()
 
 data MainMenuSubTabLogin = MainMenuSubTabLogin | MainMenuSubTabRegistration
   deriving (Eq, Show, Generic)

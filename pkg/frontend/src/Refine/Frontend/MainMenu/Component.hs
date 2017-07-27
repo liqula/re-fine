@@ -33,6 +33,7 @@ import           Language.Css.Syntax
 import           React.Flux.Missing
 import           Refine.Common.Types
 import           Refine.Common.Test.Samples
+import           Refine.Frontend.Types
 import qualified Refine.Frontend.Colors as Colors
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Component
@@ -57,7 +58,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
 
     div_ ["className" $= "gr-20"] $ do
 
-      ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction . MainMenuActionOpen . MainMenuGroups $ Left ()]
+      ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()]
         & ibListKey .~ "3"
         & ibDarkBackground .~ True
         & ibHighlightWhen .~ (if currentTab & has _MainMenuGroup then HighlightAlways else HighlightOnMouseOver)
@@ -124,7 +125,7 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
             br_ []
             br_ []
             button_ [ "id" $= "add-vdoc-to-backend"
-                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup Nothing . Left $ newLocalStateRef (CreateGroup "" "" [] []) groups
+                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup Nothing . FormOngoing $ newLocalStateRef (CreateGroup "" "" [] []) groups
                     ] $
                     elemString "Create new group"
             where
@@ -145,18 +146,18 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
             br_ []
             br_ []
             button_ [ "id" $= "create-process"
-                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . Left
+                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormOngoing
                         $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract sampleVDocVersion gid) group
                     ] $
                     elemString "Create new process"
             br_ []
             button_ [ "id" $= "update-group"
-                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup (Just gid) . Left $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
+                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup (Just gid) . FormOngoing $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
                     ] $
                     elemString "Update group details"
             br_ []
             button_ [ "id" $= "group-back"
-                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ Left ()
+                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()
                     ] $
                     elemString "Back"
             where
@@ -228,7 +229,7 @@ createGroup mid lst = mkPersistentStatefulView "CreateGroup" lst $
             & iconButtonPropsDisabled     .~ True
           else props
             & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup mid $ Right st
+            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup mid $ FormComplete st
                                              ]
 
     -- FIXME: make new button, like in 'commentInput_' above.  we
@@ -261,7 +262,7 @@ createProcess lst = mkPersistentStatefulView "CreateProcess" lst $
             & iconButtonPropsDisabled     .~ True
           else props
             & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess $ Right st
+            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess $ FormComplete st
                                              ]
 
     -- FIXME: make new button, like in 'commentInput_' above.  we

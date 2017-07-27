@@ -3,6 +3,7 @@ module Refine.Frontend.MainMenu.Store where
 
 import Refine.Frontend.Prelude
 
+import Refine.Frontend.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Store.Types (GlobalAction(..))
 
@@ -14,11 +15,16 @@ mainMenuUpdate (MainMenuAction MainMenuActionClose) st = st
   & mmErrors . mmeRegistration .~ Nothing
 
 mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) st = case tab of
-  MainMenuGroups Left{} -> st
-  MainMenuCreateGroup _ Right{} -> st
-  MainMenuCreateProcess Right{} -> st
+  MainMenuGroups BeforeAjax{} -> st
+  MainMenuCreateGroup _ FormComplete{} -> st
+  MainMenuCreateProcess FormComplete{} -> st
   _ -> st
-     & mmState .~ MainMenuOpen (mapMainMenuTab (either (error "impossible") (const ())) id (either id (error "impossible")) (either id (error "impossible")) tab)
+     & mmState .~ MainMenuOpen (mapMainMenuTab
+                                (ajaxAction (error "impossible") (const ()))
+                                id
+                                (formAction id (error "impossible"))
+                                (formAction id (error "impossible"))
+                                tab)
 
 mainMenuUpdate (MainMenuAction (MainMenuActionLoginError e)) st = st
   & mmErrors . mmeLogin .~ Just e
