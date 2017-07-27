@@ -55,7 +55,7 @@ discussion = mkView "Discussion" $ \props -> do
   aboutText_ ( props ^. discPropsAboutText
              , ContribIDDiscussion $ props ^. discPropsDiscussion . discussionMetaID . miID
              )
-  statementTree_ (props ^. discPropsDiscussion . discussionTree)
+  statementForest_ (0, [props ^. discPropsDiscussion . discussionTree])
 
 discussion_ :: HasCallStack => DiscussionProps -> ReactElementM eventHandler ()
 discussion_ = view_ discussion "discussion_"
@@ -72,16 +72,18 @@ aboutText = mkView "AboutText" $ \(rc, did) -> do
 aboutText_ :: HasCallStack => (RawContent, ContributionID) -> ReactElementM eventHandler ()
 aboutText_ = view_ aboutText "aboutText_"
 
-statementTree :: HasCallStack => View '[Tree.Tree Statement]
-statementTree = mkView "statementTree" $ \_tree -> do
-  mempty  -- TODO
+statementForest :: HasCallStack => View '[(Int, Tree.Forest Statement)]
+statementForest = mkView "statementForest" $ \(depth, frst) -> do
+  forM_ frst $ \(Tree.Node stmnt chldrn) -> do
+    statement_ (depth, stmnt)
+    statementForest_ (depth + 1, chldrn)
 
-statementTree_ :: HasCallStack => Tree.Tree Statement -> ReactElementM eventHandler ()
-statementTree_ = view_ statementTree "statementTree_"
+statementForest_ :: HasCallStack => (Int, Tree.Forest Statement) -> ReactElementM eventHandler ()
+statementForest_ = view_ statementForest "statementForest_"
 
-statement :: HasCallStack => View '[Statement]
-statement = mkView "statement" $ \_statement -> do
-  mempty  -- TODO
+statement :: HasCallStack => View '[(Int, Statement)]
+statement = mkView "statement" $ \(depth, stmnt) -> do
+  elemString (show (depth, stmnt))
 
-statement_ :: HasCallStack => Statement -> ReactElementM eventHandler ()
+statement_ :: HasCallStack => (Int, Statement) -> ReactElementM eventHandler ()
 statement_ = view_ statement "statement_"

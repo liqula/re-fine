@@ -120,7 +120,10 @@ spec = do
         htm `shouldContain` color
 
       it "show texts of all statements in discussion" $ do
-        pending
+        wrapper <- mount $ discussion_ testDiscussionProps
+        htm <- cs <$> html wrapper
+        htm `shouldContain` "first statement"
+        htm `shouldContain` "second statement"
 
       it "indent statement according to its depth in the tree" $ do
         pending
