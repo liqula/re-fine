@@ -50,6 +50,17 @@ library:
   source-dirs:
     - src
 
+executables:
+  scaffolding:
+    main: Main.hs
+    source-dirs:
+      - src
+      - scaffolding
+    dependencies:
+      - wreq
+      - pretty-show
+      - http-client
+
 tests:
   spec:
     main: Spec.hs
