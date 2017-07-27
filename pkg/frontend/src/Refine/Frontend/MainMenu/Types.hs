@@ -44,7 +44,7 @@ data MainMenuState = MainMenuState
 
 emptyMainMenuState :: HasCallStack => MainMenuState
 emptyMainMenuState = MainMenuState
-  { _mmState  = MainMenuOpen MainMenuHelp
+  { _mmState  = MainMenuOpen $ MainMenuLogin MainMenuSubTabLogin
   , _mmErrors = defaultMainMenuErrors
   }
 
