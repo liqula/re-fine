@@ -116,7 +116,6 @@ newtype AppM db a = AppM { unApp :: StateT AppState (ReaderT (AppContext db) (Ex
 
 type MonadApp db =
   ( MonadDatabase db
---  , GroupOf db Edit   -- TODO
   , Functor db
   , Applicative db
   )

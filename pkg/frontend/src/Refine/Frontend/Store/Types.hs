@@ -140,7 +140,7 @@ data GlobalAction =
   | SetCurrentUser CurrentUser
 
     -- testing & dev
-  | AddDemoDocument
+  | AddDemoDocument (ID Group)
   | ResetState GlobalState
   | ShowNotImplementedYet
   deriving (Show, Eq, Generic)

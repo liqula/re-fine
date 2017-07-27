@@ -13,3 +13,4 @@ import System.IO as P
 import System.IO.Temp as P
 
 import Refine.Common.Prelude as P
+import Refine.Common.Types as P (ID)

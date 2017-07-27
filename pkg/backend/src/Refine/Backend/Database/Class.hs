@@ -88,9 +88,6 @@ class Database db where
   getMetaID     :: HasMetaInfo a => ID a -> db (MetaID a)
 
 
-class GroupOf db e where
-  groupOf :: ID e -> db Group
-
 -- * composite db queries
 
 compositeQuestion

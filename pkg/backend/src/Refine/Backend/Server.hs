@@ -31,6 +31,7 @@ module Refine.Backend.Server
   , runCliAppCommand
   , Backend(..), mkProdBackend
   , refineApi
+  , defaultGroupID
   ) where
 
 import Refine.Backend.Prelude as P
@@ -46,7 +47,7 @@ import           System.Directory (canonicalizePath, createDirectoryIfMissing)
 import           System.FilePath (dropFileName)
 import qualified Web.Users.Types as Users
 
-import Refine.Backend.App
+import Refine.Backend.App as App
 import Refine.Backend.App.MigrateDB (migrateDB)
 import Refine.Backend.Config
 import Refine.Backend.Database
@@ -55,7 +56,7 @@ import Refine.Backend.Natural
 import Refine.Backend.Types
 -- import Refine.Common.Allow
 import Refine.Common.Rest
--- import Refine.Common.Types.Core (Edit)
+import Refine.Common.Types
 
 
 -- * Constants
@@ -89,27 +90,27 @@ type MonadRefine db =
 
 refineApi :: MonadRefine db => ServerT RefineAPI (AppM db)
 refineApi =
-       Refine.Backend.App.listVDocs
-  :<|> Refine.Backend.App.getCompositeVDocOnHead
-  :<|> Refine.Backend.App.createVDocGetComposite
-  :<|> Refine.Backend.App.addEdit
-  :<|> Refine.Backend.App.updateEdit
-  :<|> Refine.Backend.App.addNote
-  :<|> Refine.Backend.App.addQuestion
-  :<|> Refine.Backend.App.addAnswer
-  :<|> Refine.Backend.App.addDiscussion
-  :<|> Refine.Backend.App.addStatement
-  :<|> Refine.Backend.App.createUser
-  :<|> Refine.Backend.App.login
-  :<|> Refine.Backend.App.logout
-  :<|> Refine.Backend.App.getTranslations
-  :<|> Refine.Backend.App.addGroup
-  :<|> Refine.Backend.App.getGroups
-  :<|> Refine.Backend.App.changeSubGroup
-  :<|> Refine.Backend.App.changeRole
-  :<|> Refine.Backend.App.putSimpleVoteOnEdit
-  :<|> Refine.Backend.App.deleteSimpleVoteOnEdit
-  :<|> Refine.Backend.App.getSimpleVotesOnEdit
+       App.listVDocs
+  :<|> App.getCompositeVDocOnHead
+  :<|> App.createVDocGetComposite
+  :<|> App.addEdit
+  :<|> App.updateEdit
+  :<|> App.addNote
+  :<|> App.addQuestion
+  :<|> App.addAnswer
+  :<|> App.addDiscussion
+  :<|> App.addStatement
+  :<|> App.createUser
+  :<|> App.login
+  :<|> App.logout
+  :<|> App.getTranslations
+  :<|> App.addGroup
+  :<|> App.getGroups
+  :<|> App.changeSubGroup
+  :<|> App.changeRole
+  :<|> App.putSimpleVoteOnEdit
+  :<|> App.deleteSimpleVoteOnEdit
+  :<|> App.getSimpleVotesOnEdit
 
 
 startBackend :: Config -> IO ()
@@ -121,8 +122,17 @@ runCliAppCommand cfg cmd = do
   backend <- mkProdBackend cfg
   void $ (natThrowError . backendRunApp backend) $$ cmd
 
+defaultGroupID :: ID Group
+defaultGroupID = ID 1
+
 mkProdBackend :: Config -> IO (Backend DB)
-mkProdBackend cfg = mkBackend cfg (migrateDB cfg)
+mkProdBackend cfg = mkBackend cfg $ do
+  () <- migrateDB cfg
+  gs <- App.getGroups
+  when (null gs) $ do
+    g <- addGroup $ CreateGroup "default" "default group" [] []
+    when (g ^. groupID /= defaultGroupID) . error $ "default group ID: " <> show defaultGroupID <> " /= " <> show (g ^. groupID)
+  pure ()
 
 mkBackend :: Config -> AppM DB a -> IO (Backend DB)
 mkBackend cfg migrate = do

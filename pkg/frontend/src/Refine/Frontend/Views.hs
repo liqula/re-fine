@@ -47,7 +47,6 @@ import           Refine.Frontend.Document.Document
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Heading
 import           Refine.Frontend.Header.Types as HT
-import           Refine.Frontend.Loader.Component
 import           Refine.Frontend.Login.Types as LG
 import           Refine.Frontend.MainMenu.Component (mainMenu_)
 import           Refine.Frontend.MainMenu.Types
@@ -66,9 +65,7 @@ import qualified Refine.Frontend.Workbench
 refineApp :: HasCallStack => View '[]
 refineApp = mkControllerView @'[StoreArg GlobalState] "RefineApp" $ \gs ->
   if False {- set conditional to 'True' to switch to workbench. -} then Refine.Frontend.Workbench.workbench_ gs else
-  case gs ^. gsVDoc of
-    Nothing -> vdocLoader_ (VDocLoaderProps $ gs ^. gsVDocList)  -- (this is just some scaffolding that will be replaced by more app once we get there.)
-    Just _ -> case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
+  case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
       Nothing  -> mainScreen_ gs
       Just tab -> mainMenu_ $ MainMenuProps
                             (mapMainMenuTab (const groups) groupFromCache id tab)

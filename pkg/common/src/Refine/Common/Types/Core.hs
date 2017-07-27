@@ -65,6 +65,7 @@ import           Text.Read (readEither)
 import           Web.HttpApiData (toUrlPiece, parseUrlPiece, ToHttpApiData(..), FromHttpApiData(..))
 
 import           Refine.Common.Types.Position
+import           Refine.Common.Types.Group
 import           Refine.Common.Types.Vote
 import qualified Refine.Common.OT as OT
 import           Refine.Common.OT hiding (Edit)
@@ -79,6 +80,7 @@ data VDoc = VDoc
   , _vdocTitle    :: Title
   , _vdocAbstract :: Abstract
   , _vdocHeadEdit :: ID Edit
+  , _vdocGroup    :: ID Group
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -88,6 +90,7 @@ data CreateVDoc = CreateVDoc
   { _createVDocTitle       :: Title
   , _createVDocAbstract    :: Abstract
   , _createVDocInitVersion :: VDocVersion
+  , _createVDocGroup       :: ID Group
   }
   deriving (Eq, Ord, Show, Generic)
 

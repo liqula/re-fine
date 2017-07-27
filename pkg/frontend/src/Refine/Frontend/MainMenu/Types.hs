@@ -44,7 +44,7 @@ data MainMenuState = MainMenuState
 
 emptyMainMenuState :: HasCallStack => MainMenuState
 emptyMainMenuState = MainMenuState
-  { _mmState  = MainMenuClosed
+  { _mmState  = MainMenuOpen MainMenuHelp
   , _mmErrors = defaultMainMenuErrors
   }
 
@@ -58,8 +58,7 @@ type MainMenuTabAction = MainMenuTab (Either () [ID Group]) (ID Group) (Either (
 type MainMenuTabProps  = MainMenuTab [Group] Group (LocalStateRef CreateGroup)
 
 data MainMenuTab gids group cgroup
-  = MainMenuProcess
-  | MainMenuGroups gids
+  = MainMenuGroups gids
   | MainMenuGroup group
   | MainMenuCreateGroup cgroup
   | MainMenuHelp
@@ -68,7 +67,6 @@ data MainMenuTab gids group cgroup
 
 mapMainMenuTab :: (a -> a') -> (b -> b') -> (c -> c') -> MainMenuTab a b c -> MainMenuTab a' b' c'
 mapMainMenuTab fa fb fc = \case
-  MainMenuProcess  -> MainMenuProcess
   MainMenuGroups a -> MainMenuGroups (fa a)
   MainMenuGroup b  -> MainMenuGroup (fb b)
   MainMenuCreateGroup c -> MainMenuCreateGroup (fc c)
@@ -76,7 +74,7 @@ mapMainMenuTab fa fb fc = \case
   MainMenuLogin l  -> MainMenuLogin l
 
 defaultMainMenuTab :: HasCallStack => MainMenuTab gid group cgroup
-defaultMainMenuTab = MainMenuProcess
+defaultMainMenuTab = MainMenuHelp
 
 data MainMenuSubTabLogin = MainMenuSubTabLogin | MainMenuSubTabRegistration
   deriving (Eq, Show, Generic)

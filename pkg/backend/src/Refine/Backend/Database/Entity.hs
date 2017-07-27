@@ -37,7 +37,6 @@ import           Lentil.Types as L
 import qualified Web.Users.Persistent as Users
 import qualified Web.Users.Persistent.Definitions as Users
 
---import qualified Refine.Backend.Database.Class as C
 import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
 import           Refine.Backend.Database.Types
@@ -113,7 +112,7 @@ foreignKeyField column = S.keyToId . column . entityVal
 
 -- NOTES: How to handle associations? What to update, what to keep?
 vDocToRecord :: VDoc -> DB S.VDoc
-vDocToRecord (VDoc _i t a r) = pure (S.VDoc t a (Just $ S.idToKey r))
+vDocToRecord (VDoc _i t a r g) = pure (S.VDoc t a (Just $ S.idToKey r) (S.idToKey g))
 
 updateVDoc :: ID VDoc -> VDoc -> DB ()
 updateVDoc vid vdoc = do
@@ -214,9 +213,9 @@ getMetaEntity f i = do
 
 -- * VDoc
 
-toVDoc :: MetaID VDoc -> Title -> Abstract -> Maybe (Key S.Edit) -> VDoc
-toVDoc vid title abstract (Just repoid) = VDoc vid title abstract (S.keyToId repoid)
-toVDoc _ _ _ Nothing = error "impossible"
+toVDoc :: MetaID VDoc -> Title -> Abstract -> Maybe (Key S.Edit) -> Key S.Group -> VDoc
+toVDoc vid title abstract (Just repoid) g = VDoc vid title abstract (S.keyToId repoid) (S.keyToId g)
+toVDoc _ _ _ Nothing _ = error "impossible"
 
 listVDocs :: DB [ID VDoc]
 listVDocs = do
@@ -229,6 +228,7 @@ createVDoc pv vdoc = do
         (pv ^. createVDocTitle)
         (pv ^. createVDocAbstract)
         Nothing -- hack: use a dummy key which will be replaced by a proper one before createVDoc returns
+        (S.idToKey $ pv ^. createVDocGroup)
   mid <- createMetaID svdoc
   e <- createEdit (mid ^. miID) mempty CreateEdit
     { _createEditDesc        = "initial document version"
@@ -624,14 +624,3 @@ unassignRole gid uid role = liftDB $ do
     , S.RolesUser  ==. S.idToKey uid
     , S.RolesRole  ==. role
     ]
-
-
--- * GroupOf
-
-{- TODO
-instance C.GroupOf DB VDoc where
-  groupOf = vDocProcess >=> C.groupOf
-
-instance C.GroupOf DB Edit where
-  groupOf = vdocOfEdit >=> C.groupOf
--}

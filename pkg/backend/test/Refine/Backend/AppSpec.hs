@@ -33,6 +33,7 @@ import           Test.QuickCheck.Monadic
 
 import Refine.Backend.App as App
 import Refine.Backend.Database
+import Refine.Backend.Server (defaultGroupID)
 import Refine.Backend.Test.AppRunner
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Test.Samples (sampleVDocVersion)
@@ -106,7 +107,7 @@ spec = do
   describe "Regression" . around provideAppRunner $ do
     it "Regression test program" $ \(runner :: AppM DB () -> IO ()) -> do
       let program =
-            [ AddVDoc (CreateVDoc (Title "title...") (Abstract "abstract...") sampleVDocVersion)
+            [ AddVDoc (CreateVDoc (Title "title...") (Abstract "abstract...") sampleVDocVersion defaultGroupID)
             , AddEditToHead 0 sampleCreateEdit1
             ]
       runner . runIdentityT $ runProgram program `evalStateT` initVDocs
@@ -115,7 +116,7 @@ spec = do
     let vdoc = rawContentToVDocVersion . mkRawContent . NEL.fromList . map mkBlock
 
         docWithEdits v0 vs = do
-          doc <- App.createVDoc . CreateVDoc (Title "title...") (Abstract "abstract...") $ vdoc v0
+          doc <- App.createVDoc $ CreateVDoc (Title "title...") (Abstract "abstract...") (vdoc v0) defaultGroupID
           let eid = doc ^. vdocHeadEdit
               vid = doc ^. vdocID
           es <- forM vs $ \v -> fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc v) Meaning
@@ -218,6 +219,7 @@ arbitraryCreateVDoc =
     <$> (Title <$> word)
     <*> (Abstract . mconcat <$> listOf word)
     <*> (rawContentToVDocVersion <$> arbitrary @RawContent)
+    <*> pure defaultGroupID
 
 sampleProgram :: Gen [Cmd]
 sampleProgram = do

@@ -41,6 +41,7 @@ import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Util
 import           Refine.Frontend.Contribution.Dialog (contributionDialogTextForm)
+import qualified Refine.Prelude.BuildInfo as BuildInfo
 
 
 topMenuBarInMainMenu :: HasCallStack => View '[TopMenuBarInMainMenuProps]
@@ -54,14 +55,6 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
         & ibLabel .~ mempty
 
     div_ ["className" $= "gr-20"] $ do
-      {-
-      ibutton_ $ emptyIbuttonProps "Process" [MainMenuAction $ MainMenuActionOpen MainMenuProcess]
-        & ibListKey .~ "2"
-        & ibDarkBackground .~ True
-        & ibHighlightWhen .~ (if currentTab == MainMenuProcess then HighlightAlways else HighlightOnMouseOver)
-        & ibSize .~ XXLarge
-        & ibLabel .~ mempty
-      -}
 
       ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction . MainMenuActionOpen . MainMenuGroups $ Left ()]
         & ibListKey .~ "3"
@@ -123,7 +116,6 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
            , "style" @@= tabStyles
            ] $ do
         case currentTab of
-          MainMenuProcess      -> "[MainMenuProcess]"
           MainMenuGroups groups -> div_ $ do
             h1_ "Groups"
             br_ []
@@ -148,7 +140,7 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
             br_ []
             br_ []
             button_ [ "id" $= "create-process"
-                    , onClick $ \_ _ -> simpleHandler $ dispatch AddDemoDocument
+                    , onClick $ \_ _ -> simpleHandler . dispatch . AddDemoDocument $ group ^. groupID
                     ] $
                     elemString "Create process"
             br_ []
@@ -160,7 +152,12 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
 
           MainMenuCreateGroup lst -> createGroup_ lst
 
-          MainMenuHelp         -> "[MainMenuHelp]"
+          MainMenuHelp -> pre_ $ do
+            elemString $ "commit hash: " <> show BuildInfo.gitCommitHash
+            "\n"
+            elemString $ "build timestamp: " <> show BuildInfo.gitBuildTimestamp
+            "\n"
+
           MainMenuLogin subtab -> mainMenuLoginTab_ (MainMenuProps subtab menuErrors currentUser)
       div_ [ "className" $= "gr-2" ] $ do
         pure ()

@@ -53,7 +53,7 @@ VDoc
     title       Title
     desc        Abstract
     headId      EditId Maybe
---    group       GroupId          -- TODO
+    group       GroupId
 
 Edit
     desc        Text

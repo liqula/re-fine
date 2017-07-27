@@ -376,8 +376,8 @@ emitBackendCallsFor act st = case act of
 
     -- testing & dev
 
-    AddDemoDocument -> do
-        createVDoc (C.CreateVDoc sampleTitle sampleAbstract sampleVDocVersion) $ \case
+    AddDemoDocument gid -> do
+        createVDoc (C.CreateVDoc sampleTitle sampleAbstract sampleVDocVersion gid) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right loadedVDoc) -> dispatchM $ OpenDocument loadedVDoc
 

@@ -146,6 +146,7 @@ sampleCreateVDoc = CreateVDoc
   (Title "[title]")
   (Abstract "[abstract]")
   (rawContentToVDocVersion . mkRawContent $ mkBlock "[versioned content]" :| [])
+  defaultGroupID
 
 respCode :: SResponse -> Int
 respCode = statusCode . simpleStatus
@@ -586,7 +587,7 @@ specVoting = around createTestSession $ do
       let blocks = mkBlock <$> ["first line", "second line", "third line"]
           vdoc ~(b:bs) = rawContentToVDocVersion . mkRawContent $ b :| bs
 
-      cvdoc <- mkCVDoc sess $ CreateVDoc (Title "[title]") (Abstract "[abstract]") (vdoc blocks)
+      cvdoc <- mkCVDoc sess $ CreateVDoc (Title "[title]") (Abstract "[abstract]") (vdoc blocks) defaultGroupID
 
       let ce1 :: CreateEdit = CreateEdit "description" (vdoc [head blocks, blocks !! 1]) Grammar
           ce2 :: CreateEdit = CreateEdit "description" (vdoc [head blocks, blocks !! 2]) Grammar
