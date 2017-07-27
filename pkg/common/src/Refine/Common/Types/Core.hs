@@ -65,7 +65,6 @@ import           Text.Read (readEither)
 import           Web.HttpApiData (toUrlPiece, parseUrlPiece, ToHttpApiData(..), FromHttpApiData(..))
 
 import           Refine.Common.Types.Position
-import           Refine.Common.Types.Group
 import           Refine.Common.Types.Vote
 import qualified Refine.Common.OT as OT
 import           Refine.Common.OT hiding (Edit)
@@ -209,6 +208,36 @@ data ContributionID =
 -- | In the frontend, for replacing the browser selection range with a mark when an editor overlay
 -- opens, we need a 'Void'-like contribution kind that cannot have a contribution value.
 data HighlightMark
+
+
+-- | *Groups* are the entities that represent organisations ("zerobuzz.net"),
+-- sub-organisations ("zerobuzz developers", "zerobuzz board"), or special interests ("nuke the
+-- whales", "equal rights for part-time employees").
+--
+-- Users can CRUD (Create/Read/Update/Delete) groups.  A user who creates a group has the
+-- 'GroupInitiator' 'Role' in that group.
+--
+-- Groups form a directed acyclic graph (DAG): Every group can have one or more children, but other
+-- than in a tree-shaped hierarchy, every child can have multiple parents.
+data Group = Group
+  { _groupMetaID    :: MetaID Group
+  , _groupTitle     :: ST
+  , _groupDesc      :: ST
+  , _groupParents   :: [ID Group]
+  , _groupChildren  :: [ID Group]
+  , _groupVDocs     :: [ID VDoc]
+  }
+  deriving (Eq, Generic, Show)
+
+data CreateGroup = CreateGroup
+  { _createGroupTitle :: ST
+  , _createGroupDesc  :: ST
+  , _createGroupParents  :: [ID Group]
+  , _createGroupChildren :: [ID Group]
+  }
+  deriving (Eq, Generic, Show)
+
+type instance Create Group = CreateGroup
 
 
 -- * RawContent
@@ -693,7 +722,7 @@ mkSomeSegments frange fpayload els = segments
 
 deriveClasses
   [ ([''RawContent, ''Block, ''Entity, ''Style, ''BlockType], [''NFData, ''SOP.Generic, ''Lens'])
-  , ([''EntityKey, ''CompositeVDoc, ''ContributionID, ''MarkID, ''VDoc, ''CreateVDoc, ''EditSource, ''Edit, ''CreateEdit, ''EditKind, ''Title, ''Abstract, ''VDocVersion], allClass)
+  , ([''EntityKey, ''CompositeVDoc, ''ContributionID, ''MarkID, ''VDoc, ''CreateVDoc, ''EditSource, ''Edit, ''CreateEdit, ''EditKind, ''Title, ''Abstract, ''VDocVersion, ''Group, ''CreateGroup], allClass)
   ]
 
 -- | It cannot moved further up, needs instance NFData BlockType
@@ -707,6 +736,9 @@ vdocID = vdocMetaID . miID
 
 editID :: Lens' Edit (ID Edit)
 editID = editMetaID . miID
+
+groupID :: Lens' Group (ID Group)
+groupID = groupMetaID . miID
 
 compositeVDocThisEditID :: Lens' CompositeVDoc (ID Edit)
 compositeVDocThisEditID = compositeVDocThisEdit . editID

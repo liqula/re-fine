@@ -30,7 +30,7 @@ import Refine.Backend.App.Core  as App
 import Refine.Backend.App.Group as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
-import Refine.Common.Types.Group
+import Refine.Common.Types
 import Refine.Common.Types.Prelude (ID(..))
 
 
@@ -129,7 +129,7 @@ spec = do
 
     it "non-existing group" $ \runner -> do
       runner (do
-          (Group _gid _title _desc _parents _children) <- App.getGroup (ID 100000000)
+          (Group _gid _title _desc _parents _children _) <- App.getGroup (ID 100000000)
           pure ())
        `shouldThrow`
        anyException

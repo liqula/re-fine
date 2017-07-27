@@ -506,9 +506,9 @@ runUsersCmd cmd = liftDB . ReaderT $ \(sqlBackend :: SqlBackend) ->
 
 -- * Group
 
-toGroup :: [ID Group] -> [ID Group] -> MetaID Group -> ST -> ST -> Group
-toGroup parents children gid title desc =
-  Group gid title desc parents children
+toGroup :: [ID Group] -> [ID Group] -> [ID VDoc] -> MetaID Group -> ST -> ST -> Group
+toGroup parents children vdocs gid title desc =
+  Group gid title desc parents children vdocs
 
 createGroup :: Create Group -> DB Group
 createGroup group = do
@@ -518,9 +518,7 @@ createGroup group = do
   mid <- createMetaID sgroup
   forM_ (group ^. createGroupParents) $ \parent -> addConnection S.SubGroup parent (mid ^. miID)
   forM_ (group ^. createGroupChildren) $ \child -> addConnection S.SubGroup (mid ^. miID) child
-  pure $ S.groupElim
-    (toGroup (group ^. createGroupParents) (group ^. createGroupChildren) mid)
-    sgroup
+  getGroup (mid ^. miID)
 
 getChildrenOfGroup :: ID Group -> DB [ID Group]
 getChildrenOfGroup gid = do
@@ -534,11 +532,18 @@ getParentsOfGroup gid = do
   (S.subGroupElim (\parent _child -> S.keyToId parent) . entityVal)
     <$$> liftDB (selectList [S.SubGroupChild ==. S.idToKey gid] opts)
 
+getVDocsOfGroup :: ID Group -> DB [ID VDoc]
+getVDocsOfGroup gid = do
+  opts <- dbSelectOpts
+  (S.keyToId . entityKey)
+    <$$> liftDB (selectList [S.VDocGroup ==. S.idToKey gid] opts)
+
 getGroup :: ID Group -> DB Group
 getGroup gid = do
   parents  <- getParentsOfGroup  gid
   children <- getChildrenOfGroup gid
-  getMetaEntity (S.groupElim . toGroup parents children) gid
+  vdocs    <- getVDocsOfGroup    gid
+  getMetaEntity (S.groupElim . toGroup parents children vdocs) gid
 
 getGroups :: DB [Group]
 getGroups = do

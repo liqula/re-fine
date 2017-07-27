@@ -31,7 +31,7 @@ import Refine.Backend.App.Core
 import Refine.Backend.Database.Core
 import Refine.Backend.Database.Class     as DB
 import Refine.Backend.Database.MigrateDB as DB
-import Refine.Common.Types.Group (CreateGroup(..))
+import Refine.Common.Types.Core (CreateGroup(..))
 
 
 -- | (With dependent types, we could take a 'Config' as argument here and then return an @AppM DB

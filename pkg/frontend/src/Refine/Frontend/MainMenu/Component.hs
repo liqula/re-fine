@@ -139,6 +139,10 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
             elemText $ group ^. groupDesc
             br_ []
             br_ []
+            elemText "documents: "
+            toButton `mapM_` (group ^. groupVDocs)
+            br_ []
+            br_ []
             button_ [ "id" $= "create-process"
                     , onClick $ \_ _ -> simpleHandler . dispatch . AddDemoDocument $ group ^. groupID
                     ] $
@@ -149,6 +153,13 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
                     , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ Left ()
                     ] $
                     elemString "Back"
+            where
+              toButton :: HasCallStack => ID VDoc -> ReactElementM 'EventHandlerCode ()
+              toButton vdoc = button_
+                [ "id" $= cs ("load-group-list" <> show (vdoc ^. unID))
+                , onClick $ \_ _ -> simpleHandler . dispatch $ LoadDocument vdoc
+                ]
+                (elemText . cs . show $ vdoc ^. unID)
 
           MainMenuCreateGroup lst -> createGroup_ lst
 

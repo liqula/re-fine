@@ -33,9 +33,8 @@ import Refine.Backend.App.Role   as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
 import Refine.Common.Test.Arbitrary ()
-import Refine.Common.Types.Group
+import Refine.Common.Types
 import Refine.Common.Types.Prelude (ID(..))
-import Refine.Common.Types.Role
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 

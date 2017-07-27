@@ -26,7 +26,7 @@ module Refine.Common.ChangeAPI where
 import Refine.Common.Prelude
 
 import Refine.Common.Types.Role
-import Refine.Common.Types.Group
+import Refine.Common.Types.Core
 import Refine.Common.Types.Prelude
 
 

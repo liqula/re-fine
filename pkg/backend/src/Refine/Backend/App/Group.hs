@@ -32,7 +32,7 @@ import Control.Lens ((^.))
 import Refine.Backend.App.Core
 import Refine.Backend.Database.Class as DB
 import Refine.Common.ChangeAPI
-import Refine.Common.Types.Group
+import Refine.Common.Types.Core
 import Refine.Common.Types.Prelude
 
 

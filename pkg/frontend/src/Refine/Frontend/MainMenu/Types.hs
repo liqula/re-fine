@@ -73,8 +73,8 @@ mapMainMenuTab fa fb fc = \case
   MainMenuHelp     -> MainMenuHelp
   MainMenuLogin l  -> MainMenuLogin l
 
-defaultMainMenuTab :: HasCallStack => MainMenuTab gid group cgroup
-defaultMainMenuTab = MainMenuHelp
+defaultMainMenuTab :: MainMenuTabAction
+defaultMainMenuTab = MainMenuGroups $ Left ()
 
 data MainMenuSubTabLogin = MainMenuSubTabLogin | MainMenuSubTabRegistration
   deriving (Eq, Show, Generic)
