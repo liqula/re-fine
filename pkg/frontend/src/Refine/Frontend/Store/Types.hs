@@ -108,10 +108,8 @@ emptyDevState = DevState []
 
 data GlobalAction =
     -- documents
-    LoadDocumentList
-  | RegisterDocumentList [ID VDoc]
-  | LoadDocument (ID VDoc)
-  | OpenDocument CompositeVDoc
+    LoadDocumentList (AjaxAction () [ID VDoc])
+  | LoadDocument (AjaxAction (ID VDoc) CompositeVDoc)
 
     -- contributions
   | ScreenAction ScreenAction

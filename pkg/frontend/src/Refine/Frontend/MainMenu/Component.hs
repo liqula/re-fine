@@ -166,7 +166,7 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
               toButton :: HasCallStack => ID VDoc -> ReactElementM 'EventHandlerCode ()
               toButton vdoc = button_
                 [ "id" $= cs ("load-group-list" <> show (vdoc ^. unID))
-                , onClick $ \_ _ -> simpleHandler . dispatch $ LoadDocument vdoc
+                , onClick $ \_ _ -> simpleHandler . dispatch . LoadDocument $ BeforeAjax vdoc
                 ]
                 (elemText . cs . show $ vdoc ^. unID)
 

@@ -35,6 +35,7 @@ import Test.Hspec
 import Text.Read (readMaybe)
 
 import Refine.Common.Types
+import Refine.Frontend.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Store ()
 import Refine.Frontend.Store.Types
@@ -47,7 +48,7 @@ spec = do
       context "gsVDocList" $ do
         it "integrates the loaded document list into the store" $ do
           let list = [ID 3]
-          result <- transform (RegisterDocumentList list) emptyGlobalState
+          result <- transform (LoadDocumentList $ AfterAjax list) emptyGlobalState
           result ^. gsVDocList `shouldBe` Just list
 
       context "gsScreenState" $ do

@@ -192,7 +192,7 @@ consoleLogGlobalAction act = do
 -- * pure updates
 
 vdocUpdate :: HasCallStack => GlobalAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
-vdocUpdate (OpenDocument newvdoc) _ = Just newvdoc
+vdocUpdate (LoadDocument (AfterAjax newvdoc)) _ = Just newvdoc
 vdocUpdate act (Just vdoc) = Just $ case act of
     AddDiscussion discussion
       -> vdoc
@@ -214,8 +214,8 @@ vdocUpdate _ Nothing = Nothing
 
 
 vdocListUpdate :: HasCallStack => GlobalAction -> Maybe [C.ID C.VDoc] -> Maybe [C.ID C.VDoc]
-vdocListUpdate (RegisterDocumentList vdocs) _  = Just vdocs
-vdocListUpdate _                            st = st
+vdocListUpdate (LoadDocumentList (AfterAjax vdocs)) _ = Just vdocs
+vdocListUpdate _                                   st = st
 
 
 toolbarStickyUpdate :: HasCallStack => GlobalAction -> Bool -> Bool
@@ -245,15 +245,15 @@ emitBackendCallsFor act st = case act of
 
     -- documents
 
-    LoadDocumentList -> do
+    LoadDocumentList BeforeAjax{} -> do
         listVDocs $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right loadedVDocs) -> dispatchM $ RegisterDocumentList ((^. C.vdocID) <$> loadedVDocs)
-    LoadDocument auid -> do
+            (Right loadedVDocs) -> dispatchM . LoadDocumentList $ AfterAjax ((^. C.vdocID) <$> loadedVDocs)
+    LoadDocument (BeforeAjax auid) -> do
         getVDoc auid $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right loadedVDoc) -> dispatchManyM
-                                   [ OpenDocument loadedVDoc
+                                   [ LoadDocument $ AfterAjax loadedVDoc
                                    , ContributionAction RequestSetAllVerticalSpanBounds
                                    ]
 
@@ -276,7 +276,7 @@ emitBackendCallsFor act st = case act of
     MainMenuAction (MainMenuActionOpen (MainMenuCreateProcess (FormComplete cg))) -> do
         createVDoc cg $ \case
             Left rsp -> ajaxFail rsp Nothing
-            Right loadedVDoc -> dispatchM $ OpenDocument loadedVDoc
+            Right loadedVDoc -> dispatchM . LoadDocument $ AfterAjax loadedVDoc
 
 
     -- contributions
@@ -390,8 +390,8 @@ emitBackendCallsFor act st = case act of
 -- actions, we could define @UpdateCVDoc :: (CompositeVDoc ->
 -- CompositeVDoc) -> GlobalAction@.
 reloadCompositeVDoc :: HasCallStack => GlobalState -> GlobalAction
-reloadCompositeVDoc st = LoadDocument (fromMaybe (error "reloadCompositeVDoc") $
-                                       st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocID)
+reloadCompositeVDoc st = LoadDocument . BeforeAjax . fromMaybe (error "reloadCompositeVDoc") $
+                                       st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocID
 
 ajaxFail :: HasCallStack => (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
 ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of

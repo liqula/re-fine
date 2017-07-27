@@ -36,7 +36,7 @@ mainMenuUpdate (MainMenuAction MainMenuActionClearErrors) st = st
   & mmErrors . mmeLogin        .~ Nothing
   & mmErrors . mmeRegistration .~ Nothing
 
-mainMenuUpdate OpenDocument{} st = st
+mainMenuUpdate (LoadDocument AfterAjax{}) st = st
   & mmState .~ MainMenuClosed
 
 mainMenuUpdate _ st = st
