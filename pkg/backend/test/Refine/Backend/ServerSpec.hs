@@ -217,9 +217,6 @@ mkTestUserAndEditAndLogin sess = addTestUserAndLogin sess >> mkEdit sess
 uriStr :: URI -> SBS
 uriStr u =  cs $ "/" <> uriToString id u ""
 
-listVDocsUri :: SBS
-listVDocsUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SListVDocs)
-
 getVDocUri :: ID VDoc -> SBS
 getVDocUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetVDoc)
 
@@ -270,25 +267,6 @@ spec = do -- FUTUREWORK: mark this as 'parallel' (needs some work)
 
 specMockedLogin :: Spec
 specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
-  describe "sListVDocs" $ do
-    it "returns a vdocs list with HTTP status 200" $ \sess -> do
-      resp :: SResponse <- runWai sess $ wget listVDocsUri
-      respCode resp `shouldBe` 200
-
-    it "yields the same vdocs list as the db" $ \sess -> do
-      vdocsRest :: SResponse <- runWai sess $ wget listVDocsUri
-      vdocsDB   :: [VDoc]    <- runDB  sess   App.listVDocs
-      decode (simpleBody vdocsRest) `shouldBe` Just vdocsDB
-
-    it "if a vdoc is created, it shows in the output" $ \sess -> do
-      bef <- runWai sess $ wget listVDocsUri
-      _   <- runDB  sess $ App.createVDoc sampleCreateVDoc
-      aft <- runWai sess $ wget listVDocsUri
-      let test :: SResponse -> Int
-          test resp = either (\msg -> error $ unwords [show msg, cs $ simpleBody resp]) length
-                       $ eitherDecode @[VDoc] (simpleBody resp)
-      test aft `shouldBe` (test bef + 1)
-
   describe "sGetVDoc" $ do
     it "retrieves a vdoc" $ \sess -> do
       vdoc <- runDB sess $ App.createVDoc sampleCreateVDoc

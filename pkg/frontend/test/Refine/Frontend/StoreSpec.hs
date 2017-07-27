@@ -28,14 +28,11 @@ module Refine.Frontend.StoreSpec where
 
 import Refine.Frontend.Prelude
 
-import Control.Lens ((^.))
 import Data.Aeson (encode)
 import React.Flux (transform)
 import Test.Hspec
 import Text.Read (readMaybe)
 
-import Refine.Common.Types
-import Refine.Frontend.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Store ()
 import Refine.Frontend.Store.Types
@@ -45,12 +42,6 @@ spec :: Spec
 spec = do
   describe "Store" $ do
     describe "transform" $ do
-      context "gsVDocList" $ do
-        it "integrates the loaded document list into the store" $ do
-          let list = [ID 3]
-          result <- transform (LoadDocumentList $ AfterAjax list) emptyGlobalState
-          result ^. gsVDocList `shouldBe` Just list
-
       context "gsScreenState" $ do
         it "adds the header height to the state" $ do
           newState <- transform (ScreenAction (AddHeaderHeight 64)) emptyGlobalState

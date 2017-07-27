@@ -142,7 +142,6 @@ transformGlobalState = transf
     pureTransform act st = st'
       where st' = st
               & gsVDoc                %~ vdocUpdate act
-              & gsVDocList            %~ vdocListUpdate act
               & gsContributionState   %~ contributionStateUpdate act
               & gsHeaderState         %~ headerStateUpdate act
               & gsDocumentState       %~ documentStateUpdate act st st'
@@ -213,11 +212,6 @@ vdocUpdate act (Just vdoc) = Just $ case act of
 vdocUpdate _ Nothing = Nothing
 
 
-vdocListUpdate :: HasCallStack => GlobalAction -> Maybe [C.ID C.VDoc] -> Maybe [C.ID C.VDoc]
-vdocListUpdate (LoadDocumentList (AfterAjax vdocs)) _ = Just vdocs
-vdocListUpdate _                                   st = st
-
-
 toolbarStickyUpdate :: HasCallStack => GlobalAction -> Bool -> Bool
 toolbarStickyUpdate act st = case act of
   ToolbarStickyStateChange st' -> st'
@@ -245,10 +239,6 @@ emitBackendCallsFor act st = case act of
 
     -- documents
 
-    LoadDocumentList BeforeAjax{} -> do
-        listVDocs $ \case
-            (Left rsp) -> ajaxFail rsp Nothing
-            (Right loadedVDocs) -> dispatchM . LoadDocumentList $ AfterAjax ((^. C.vdocID) <$> loadedVDocs)
     LoadDocument (BeforeAjax auid) -> do
         getVDoc auid $ \case
             (Left rsp) -> ajaxFail rsp Nothing

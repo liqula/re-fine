@@ -33,10 +33,6 @@ cfg :: HasCallStack => ApiRequestConfig RefineAPI
 cfg = ApiRequestConfig "" NoTimeout
 
 
--- | obtain a list of all vdocs stored in the backend with auid, title.
-listVDocs :: HasCallStack => HandleResponse [VDoc] -> IO ()
-listVDocs = request cfg (Proxy :: Proxy SListVDocs)
-
 -- | look up a vdoc by its auid.
 getVDoc :: HasCallStack => ID VDoc -> HandleResponse CompositeVDoc -> IO ()
 getVDoc = request cfg (Proxy :: Proxy SGetVDoc)

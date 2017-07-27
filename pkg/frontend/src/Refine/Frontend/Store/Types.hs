@@ -47,8 +47,6 @@ type GlobalState = GlobalState_ GlobalDocumentState
 
 data GlobalState_ a = GlobalState
   { _gsEditID                     :: Maybe (ID Edit)
-  , _gsVDocList                   :: Maybe [ID VDoc]  -- ^ FIXME: this should be live in it's own
-                                                      -- 'GlobalState' constructor.
   , _gsContributionState          :: ContributionState
   , _gsHeaderState                :: HeaderState
   , _gsDocumentState              :: a
@@ -82,7 +80,6 @@ instance Monoid ServerCache where
 emptyGlobalState :: HasCallStack => GlobalState
 emptyGlobalState = GlobalState
   { _gsEditID                     = Nothing
-  , _gsVDocList                   = Nothing
   , _gsContributionState          = emptyContributionState
   , _gsHeaderState                = emptyHeaderState
   , _gsDocumentState              = emptyDocumentState
@@ -108,8 +105,7 @@ emptyDevState = DevState []
 
 data GlobalAction =
     -- documents
-    LoadDocumentList (AjaxAction () [ID VDoc])
-  | LoadDocument (AjaxAction (ID VDoc) CompositeVDoc)
+    LoadDocument (AjaxAction (ID VDoc) CompositeVDoc)
 
     -- contributions
   | ScreenAction ScreenAction
