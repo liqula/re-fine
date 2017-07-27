@@ -30,11 +30,13 @@ import Refine.Frontend.Prelude
 import           Control.DeepSeq
 import qualified Data.HashMap.Strict as HashMap
 import           Data.List.NonEmpty (NonEmpty((:|)))
+import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Map.Strict as Map
 import           Language.Css.Syntax hiding (Value)
 
 import React.Flux.Missing
 import Refine.Common.Types
+import Refine.Common.VDoc.OT
 import Refine.Frontend.Icon.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
@@ -260,6 +262,30 @@ data DiscussionProps = DiscussionProps
 
 -- data DiscussionMode = DiscussionModeChrono | DiscussionModeTree
 --   deriving (Eq, Ord, Show, Bounded, Enum, Generic)
+
+discussionProps :: Discussion -> RawContent -> DiscussionProps
+discussionProps disc = DiscussionProps disc . cropToBlocks (disc ^. discussionRange)
+
+-- | Remove all blocks that do not overlap with a range.
+--
+-- FIXME: where should we move this?  (also move the test cases if you move this!)
+cropToBlocks :: Range Position -> RawContent -> RawContent
+cropToBlocks rnge = toRawContent . prune . fromRawContent
+  where
+    prune :: NewDoc -> NewDoc
+    prune d1 = case splt endIx d1 of
+                 (d2, _) -> case splt startIx d2 of
+                   (_, d3) -> d3
+
+    startIx = rnge ^. rangeBegin . rowIndex
+    endIx   = rnge ^. rangeEnd . rowIndex + 1
+
+    splt :: Int -> NewDoc -> (NewDoc, NewDoc)
+    splt = split (mempty, measureRowColumn . _1)
+
+-- | FIXME: where should we move this?  (also move the test cases if you move this!)
+blockIndices :: RawContent -> [BlockIndex]
+blockIndices (RawContent blocks _) = zipWith BlockIndex [0..] . fmap (view blockKey) . NonEmpty.toList $ blocks
 
 
 -- * instances
