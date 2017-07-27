@@ -240,14 +240,6 @@ data ShowNoteProps =
       }
   deriving (Eq)
 
-data ShowDiscussionProps =
-    ShowDiscussionProps
-      { _sdpNote        :: Discussion
-      , _sdpTop         :: OffsetFromDocumentTop
-      , _sdpWindowWidth :: Int
-      }
-  deriving (Eq)
-
 newtype ShowQuestionProps = ShowQuestionProps (Maybe CompositeQuestion)
   deriving (Eq)
 

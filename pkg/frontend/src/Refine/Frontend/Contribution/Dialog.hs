@@ -28,7 +28,6 @@ import Refine.Frontend.Prelude
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as ST
-import qualified Data.Tree as Tree
 import           Language.Css.Syntax
 import qualified React.Flux as RF
 
@@ -232,38 +231,6 @@ showNote = mkView "ShowNote" $ \case
 
 showNote_ :: HasCallStack => ShowNoteProps -> ReactElementM eventHandler ()
 showNote_ = view_ showNote "showNote_"
-
-
-showDiscussionProps :: HasCallStack => M.Map (ID Discussion) Discussion -> GlobalState -> Maybe ShowDiscussionProps
-showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
-  (Just discussion, Just offset) -> Just $ ShowDiscussionProps discussion offset (rs ^. gsScreenState . ssWindowWidth)
-  (Just discussion, Nothing)     -> err "discussion" discussion "offset" Nothing
-  (Nothing,         Just offset) -> err "offset" offset "discussion" Nothing
-  _                              -> Nothing
-  where
-    maybeContribID = rs ^. gsContributionState . csDisplayedContributionID
-    maybeDiscussionID :: Maybe (ID Discussion) = getDiscussionID =<< maybeContribID
-    maybeDiscussion = (`M.lookup` discussions) =<< maybeDiscussionID
-    maybeOffset = do
-      did <- maybeDiscussionID
-      rs ^? gsContributionState . csAllVerticalSpanBounds . allVerticalSpanBounds
-          . at (MarkContribution (ContribIDDiscussion did) 0) . _Just . verticalSpanBoundsBottom
-
-    err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
-
-
-showDiscussion :: HasCallStack => View '[ShowDiscussionProps]
-showDiscussion = mkView "ShowDiscussion" $ \case
-  ShowDiscussionProps discussion top windowWidth1 ->
-    let commentText1  = (Tree.rootLabel (discussion ^. discussionTree) ^. statementText)
-        iconStyle1    = ("icon-Discussion", "dark")
-        userName1     = "meisterkaiser"
-        creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
-                                         vdoc_overlay_content__discussion top windowWidth1)
-
-showDiscussion_ :: HasCallStack => ShowDiscussionProps -> ReactElementM eventHandler ()
-showDiscussion_ = view_ showDiscussion "showDiscussion_"
 
 
 showQuestion :: HasCallStack => View '[ShowQuestionProps]
