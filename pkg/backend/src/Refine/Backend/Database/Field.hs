@@ -13,7 +13,6 @@ import           Database.Persist.Sql
 
 import Refine.Backend.Database.Types
 import Refine.Common.Types.Prelude (UserInfo)
-import Refine.Common.Types.Process
 import Refine.Common.Types.Role (Role(..))
 import Refine.Common.Types.Core
 
@@ -81,13 +80,6 @@ instance PersistField Role where
   fromPersistValue = fromPersistJSONValue
 
 instance PersistFieldSql Role where
-  sqlType Proxy = sqlType (Proxy @ST)
-
-instance PersistField CollaborativeEditPhase where
-  toPersistValue   = toPersistJSONValue
-  fromPersistValue = fromPersistJSONValue
-
-instance PersistFieldSql CollaborativeEditPhase where
   sqlType Proxy = sqlType (Proxy @ST)
 
 instance PersistField UserInfo where

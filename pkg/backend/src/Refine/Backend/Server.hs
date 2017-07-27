@@ -53,9 +53,9 @@ import Refine.Backend.Database
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
-import Refine.Common.Allow
+-- import Refine.Common.Allow
 import Refine.Common.Rest
-import Refine.Common.Types.Core (Edit)
+-- import Refine.Common.Types.Core (Edit)
 
 
 -- * Constants
@@ -84,7 +84,7 @@ data Backend db = Backend
 
 type MonadRefine db =
   ( MonadApp db
-  , Allow (ProcessPayload Edit) Edit
+--  , Allow (ProcessPayload Edit) Edit   -- FIXME
   )
 
 refineApi :: MonadRefine db => ServerT RefineAPI (AppM db)
@@ -107,9 +107,6 @@ refineApi =
   :<|> Refine.Backend.App.getGroups
   :<|> Refine.Backend.App.changeSubGroup
   :<|> Refine.Backend.App.changeRole
-  :<|> Refine.Backend.App.addProcess
-  :<|> Refine.Backend.App.changeProcess
-  :<|> Refine.Backend.App.removeProcess
   :<|> Refine.Backend.App.putSimpleVoteOnEdit
   :<|> Refine.Backend.App.deleteSimpleVoteOnEdit
   :<|> Refine.Backend.App.getSimpleVotesOnEdit

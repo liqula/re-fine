@@ -158,13 +158,5 @@ instance Database DB where
   getRoles     = Entity.getRoles
   unassignRole = Entity.unassignRole
 
-  -- * Process
-  createProcess = Entity.createProcess
-  getProcess    = Entity.getProcess
-  updateProcess = Entity.updateProcess
-  removeProcess = Entity.removeProcess
-
-  vDocProcess   = Entity.vDocProcess
-
   createMetaID_ = Entity.createMetaID_
   getMetaID     = Entity.getMeta

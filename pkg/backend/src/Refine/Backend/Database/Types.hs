@@ -11,8 +11,6 @@ module Refine.Backend.Database.Types where
 
 import Refine.Backend.Prelude
 
-import Data.Coerce (coerce)
-
 import           Refine.Common.Types
 import           Refine.Prelude.TH (makeRefineType)
 import           Data.List.NonEmpty (NonEmpty)
@@ -20,16 +18,6 @@ import qualified Refine.Common.OT as OT
 
 
 type family CreateDB a = b | b -> a
-
-data CreateDBCollabEditProcess = CreateDBCollabEditProcess
-  { _createDBCollabEditProcessPhase   :: CollaborativeEditPhase
-  , _createDBCollabEditProcessGroupID :: ID Group
-  , _createDBCollabEditProcessVDocID  :: ID VDoc
-  }
-  deriving (Eq, Show, Generic)
-
-type instance CreateDB (Process CollaborativeEdit) = CreateDBCollabEditProcess
-type instance CreateDB (Process Aula)              = CreateAulaProcess
 
 -- | This type is used in 'MetaInfo' table.  We use the primary key from the tables for 'Note',
 -- 'Question' etc., but those are not unique (each table has its own ID namespace).  'MetaInfoID'
@@ -45,9 +33,6 @@ data MetaInfoID
   | MetaDiscussion (ID Discussion)
   | MetaStatement  (ID Statement)
   | MetaGroup      (ID Group)
-  | MetaProcess    (ID (Process ()))  -- ^ It would be nice to have @(Process a)@ here, but not
-                                      -- necessary, since all types of processes share the table,
-                                      -- and thus the same ID namespace.
   | MetaUser       (ID User)
   | MetaVDoc       (ID VDoc)
   | MetaEdit       (ID Edit)
@@ -62,7 +47,6 @@ instance HasMetaInfo Answer      where metaInfoType = MetaAnswer
 instance HasMetaInfo Discussion  where metaInfoType = MetaDiscussion
 instance HasMetaInfo Statement   where metaInfoType = MetaStatement
 instance HasMetaInfo Group       where metaInfoType = MetaGroup
-instance HasMetaInfo (Process a) where metaInfoType = MetaProcess . coerce
 instance HasMetaInfo User        where metaInfoType = MetaUser
 instance HasMetaInfo VDoc        where metaInfoType = MetaVDoc
 instance HasMetaInfo Edit        where metaInfoType = MetaEdit
@@ -79,5 +63,4 @@ newtype RangePosition = RangePosition {unRangePosition :: Range Position}
 newtype DBVotes = DBVotes {unDBVotes :: Votes}
   deriving (ToJSON, FromJSON)
 
-makeRefineType ''CreateDBCollabEditProcess
 makeRefineType ''MetaInfoID

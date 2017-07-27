@@ -72,9 +72,6 @@ type RefineAPI =
   :<|> SGetGroups
   :<|> SChangeSubGroup
   :<|> SChangeRole
-  :<|> SAddProcess
-  :<|> SChangeProcess
-  :<|> SRemoveProcess
   :<|> SPutSimpleVoteOnEdit
   :<|> SDeleteSimpleVoteOnEdit
   :<|> SGetSimpleVotesOnEdit
@@ -154,18 +151,6 @@ type SChangeSubGroup
 
 type SChangeRole
   = "r" :>  "role" :> ReqBody '[JSON] ChangeRole
-    :> Post '[JSON] ()
-
-type SAddProcess
-  = "r" :> "process" :> ReqBody '[JSON] AddProcess
-    :> Post '[JSON] CreatedProcess
-
-type SChangeProcess
-  = "r" :> "process" :> "change" :> ReqBody '[JSON] ChangeProcess
-    :> Post '[JSON] ()
-
-type SRemoveProcess
-  = "r" :> "process" :> "remove" :> ReqBody '[JSON] RemoveProcess
     :> Post '[JSON] ()
 
 

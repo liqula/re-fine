@@ -28,7 +28,7 @@
 
 module Refine.Backend.App.Allow where
 
-
+{- FIXME
 import Refine.Backend.Prelude
 
 import           Control.Lens ((^.))
@@ -60,3 +60,4 @@ assertPerms tid needPerms = do
       let perms = concatMap (allow muserId prc tid) roles
       unless (Set.fromList needPerms `Set.isSubsetOf` Set.fromList perms) $
         throwError AppUnauthorized
+-}

@@ -246,9 +246,6 @@ loginUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogin)
 logoutUri :: SBS
 logoutUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogout)
 
-addProcessUri :: SBS
-addProcessUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddProcess)
-
 changeRoleUri :: SBS
 changeRoleUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SChangeRole)
 
@@ -378,13 +375,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
          group <- fmap (^. groupID) . runDB sess $ App.addGroup (CreateGroup "title" "desc" [] [])
          runWai sess $ do
           _l :: User <- postJSON loginUri (Login testUsername testPassword)
-          (CreatedCollabEditProcess _fp fc) :: CreatedProcess <-
-            postJSON addProcessUri
-              (AddCollabEditProcess CreateCollabEditProcess
-                { _createCollabEditProcessPhase = CollaborativeEditOnlyPhase
-                , _createCollabEditProcessGroup = group
-                , _createCollabEditProcessVDoc  = sampleCreateVDoc
-                })
+          fc :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
 
           userId <- liftIO . runDB sess $ do
             (Just loginId) <- dbUsersCmd $ \db_ -> Users.getUserIdByName db_ testUsername
