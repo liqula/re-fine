@@ -25,6 +25,7 @@ module Refine.Frontend.Document.Document
   , document_
   , emptyEditorProps
   , defaultEditorProps
+  , mkDocumentStyleMap
 
     -- * for testing only
   , documentRender

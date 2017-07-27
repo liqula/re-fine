@@ -36,6 +36,7 @@ import           React.Flux.Missing
 import           Refine.Common.Test.Samples (sampleRawContent1)
 import           Refine.Common.Types
 import           Refine.Common.VDoc.OT
+import           Refine.Common.VDoc.Draft (addMarksToRawContent)
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Contribution.Discussion
@@ -43,15 +44,16 @@ import           Refine.Frontend.Test.Enzyme
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
-
 testDiscussionProps :: DiscussionProps
-testDiscussionProps = discussionProps disc sampleRawContent1
+testDiscussionProps = discussionProps disc (addMarksToRawContent [(MarkContribution (ContribIDDiscussion (ID 0)) 0, rnge)] sampleRawContent1)
   where
+    rnge = Range (Position (BlockIndex 0 (BlockKey "2vutk")) 1)
+                 (Position (BlockIndex 1 (BlockKey "5n4ph")) 3)
+
     disc = Discussion
       { _discussionMetaID = MetaID (ID 0) metaInfo1
       , _discussionPublic = True
-      , _discussionRange  = Range (Position (BlockIndex 0 (BlockKey "2vutk")) 1)
-                                  (Position (BlockIndex 1 (BlockKey "5n4ph")) 3)
+      , _discussionRange  = rnge
       , _discussionTree   = Node statement1 [Node statement2 []]
       }
 
@@ -99,15 +101,23 @@ spec = do
           `shouldBe` (BlockKey "2vutk" :| [BlockKey "5n4ph"])
 
     describe "render" $ do
-      it "show blocks overlapping with range" $ do
-        -- _wrapper <- mount $ discussion_ testDiscussionProps
-        pending
+      it "shows blocks overlapping with range" $ do
+        wrapper <- mount $ discussion_ testDiscussionProps
+        htm <- cs <$> html wrapper
+        htm `shouldContain` "2vutk"
+        htm `shouldContain` "5n4ph"
 
-      it "do not show blocks not overlapping with range" $ do
-        pending
+      it "does not show blocks not overlapping with range" $ do
+        wrapper <- mount $ discussion_ testDiscussionProps
+        htm <- cs <$> html wrapper
+        htm `shouldNotContain` "8eupo"
 
-      it "mark range" $ do
-        pending
+      it "styles selected range (html mark tag)" $ do
+        let color = "rgba(0, 255, 0, 0.3)"  -- (this isn't the color from "Colors", but the hack
+                                            -- from 'mkDocumentStyleMap'.)
+        wrapper <- mount $ discussion_ testDiscussionProps
+        htm <- cs <$> html wrapper
+        htm `shouldContain` color
 
       it "show texts of all statements in discussion" $ do
         pending

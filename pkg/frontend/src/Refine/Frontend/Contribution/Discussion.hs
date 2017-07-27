@@ -38,6 +38,8 @@ import           React.Flux.Missing
 import qualified Refine.Frontend.Colors as C
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Document.FFI
+import           Refine.Frontend.Document.Document
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store
@@ -50,34 +52,36 @@ import           Refine.Frontend.Util
 
 discussion :: HasCallStack => View '[DiscussionProps]
 discussion = mkView "Discussion" $ \props -> do
-  aboutText_ (props ^. discPropsAboutText, props ^. discPropsDiscussion . discussionRange)
+  aboutText_ ( props ^. discPropsAboutText
+             , ContribIDDiscussion $ props ^. discPropsDiscussion . discussionMetaID . miID
+             )
   statementTree_ (props ^. discPropsDiscussion . discussionTree)
 
 discussion_ :: HasCallStack => DiscussionProps -> ReactElementM eventHandler ()
 discussion_ = view_ discussion "discussion_"
 
-aboutText :: HasCallStack => View '[(RawContent, Range Position)]
-aboutText = mkView "AboutText" $ \(_raw, _range) -> do
+aboutText :: HasCallStack => View '[(RawContent, ContributionID)]
+aboutText = mkView "AboutText" $ \(rc, did) -> do
   h1_ "Related Text:"
   editor_
-    [ "editorState" &= True  -- TODO
---     , "customStyleMap" &= documentStyleMap  -- TODO
+    [ "editorState" &= createWithRawContent rc
+    , "customStyleMap" &= mkDocumentStyleMap [MarkContribution did 0] (Just rc)
     , "readOnly" &= True
     ] mempty
 
-aboutText_ :: HasCallStack => (RawContent, Range Position) -> ReactElementM eventHandler ()
+aboutText_ :: HasCallStack => (RawContent, ContributionID) -> ReactElementM eventHandler ()
 aboutText_ = view_ aboutText "aboutText_"
 
 statementTree :: HasCallStack => View '[Tree.Tree Statement]
 statementTree = mkView "statementTree" $ \_tree -> do
-  undefined  -- TODO
+  mempty  -- TODO
 
 statementTree_ :: HasCallStack => Tree.Tree Statement -> ReactElementM eventHandler ()
 statementTree_ = view_ statementTree "statementTree_"
 
 statement :: HasCallStack => View '[Statement]
 statement = mkView "statement" $ \_statement -> do
-  undefined  -- TODO
+  mempty  -- TODO
 
 statement_ :: HasCallStack => Statement -> ReactElementM eventHandler ()
 statement_ = view_ statement "statement_"
