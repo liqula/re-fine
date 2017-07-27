@@ -135,9 +135,6 @@ spec = do
       it "downvote discussion" $ do
         pending
 
-      it "back" $ do
-        pending
-
       it "respond to statement" $ do
         pending
 
@@ -146,3 +143,7 @@ spec = do
 
       it "downvote statement" $ do
         pending
+
+    describe "discussion toolbar" $ do
+      it "works" $ do
+        pending  -- TODO: toolbar tests should probably go somewhere else.
