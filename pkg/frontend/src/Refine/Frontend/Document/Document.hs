@@ -64,7 +64,7 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
   }
 
 documentRender :: HasCallStack => () -> DocumentProps -> ReactElementM ('StatefulEventHandlerCode st) ()
-documentRender() props = liftViewToStateHandler $ do
+documentRender () props = liftViewToStateHandler $ do
   let dstate = props ^. dpDocumentState
 
       sendMouseUpIfReadOnly :: EventHandlerTypeWithMods 'EventHandlerCode
