@@ -60,7 +60,7 @@ type MainMenuTabProps  = MainMenuTab [Group] Group (LocalStateRef CreateGroup)
 data MainMenuTab gids group cgroup
   = MainMenuGroups gids
   | MainMenuGroup group
-  | MainMenuCreateGroup cgroup
+  | MainMenuCreateGroup (Maybe (ID Group)) cgroup
   | MainMenuHelp
   | MainMenuLogin MainMenuSubTabLogin
   deriving (Eq, Show, Generic)
@@ -69,7 +69,7 @@ mapMainMenuTab :: (a -> a') -> (b -> b') -> (c -> c') -> MainMenuTab a b c -> Ma
 mapMainMenuTab fa fb fc = \case
   MainMenuGroups a -> MainMenuGroups (fa a)
   MainMenuGroup b  -> MainMenuGroup (fb b)
-  MainMenuCreateGroup c -> MainMenuCreateGroup (fc c)
+  MainMenuCreateGroup u c -> MainMenuCreateGroup u (fc c)
   MainMenuHelp     -> MainMenuHelp
   MainMenuLogin l  -> MainMenuLogin l
 

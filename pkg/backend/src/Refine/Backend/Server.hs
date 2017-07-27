@@ -105,6 +105,7 @@ refineApi =
   :<|> App.logout
   :<|> App.getTranslations
   :<|> App.addGroup
+  :<|> App.modifyGroup
   :<|> App.getGroups
   :<|> App.changeSubGroup
   :<|> App.changeRole

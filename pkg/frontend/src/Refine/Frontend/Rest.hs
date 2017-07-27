@@ -84,3 +84,6 @@ getGroups = request cfg (Proxy :: Proxy SGetGroups)
 
 createGroup :: HasCallStack => CreateGroup -> HandleResponse Group -> IO ()
 createGroup = request cfg (Proxy :: Proxy SAddGroup)
+
+updateGroup :: HasCallStack => ID Group -> Create Group -> HandleResponse Group -> IO ()
+updateGroup = request cfg (Proxy :: Proxy SUpdateGroup)

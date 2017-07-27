@@ -123,7 +123,7 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
             br_ []
             br_ []
             button_ [ "id" $= "add-vdoc-to-backend"
-                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup . Left $ newLocalStateRef (CreateGroup "" "" [] []) groups
+                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup Nothing . Left $ newLocalStateRef (CreateGroup "" "" [] []) groups
                     ] $
                     elemString "Create new group"
             where
@@ -139,21 +139,27 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
             elemText $ group ^. groupDesc
             br_ []
             br_ []
-            elemText "documents: "
+            elemText "Processes: "
             toButton `mapM_` (group ^. groupVDocs)
             br_ []
             br_ []
             button_ [ "id" $= "create-process"
-                    , onClick $ \_ _ -> simpleHandler . dispatch . AddDemoDocument $ group ^. groupID
+                    , onClick $ \_ _ -> simpleHandler . dispatch $ AddDemoDocument gid
                     ] $
-                    elemString "Create process"
+                    elemString "Create new process"
             br_ []
+            button_ [ "id" $= "update-group"
+                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup (Just gid) . Left $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
+                    ] $
+                    elemString "Update group details"
             br_ []
             button_ [ "id" $= "group-back"
                     , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ Left ()
                     ] $
                     elemString "Back"
             where
+              gid = group ^. groupID
+
               toButton :: HasCallStack => ID VDoc -> ReactElementM 'EventHandlerCode ()
               toButton vdoc = button_
                 [ "id" $= cs ("load-group-list" <> show (vdoc ^. unID))
@@ -161,7 +167,7 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
                 ]
                 (elemText . cs . show $ vdoc ^. unID)
 
-          MainMenuCreateGroup lst -> createGroup_ lst
+          MainMenuCreateGroup mid lst -> createGroup_ mid lst
 
           MainMenuHelp -> pre_ $ do
             elemString $ "commit hash: " <> show BuildInfo.gitCommitHash
@@ -204,8 +210,8 @@ mainMenuLoginTab_ :: HasCallStack => MainMenuProps MainMenuSubTabLogin -> ReactE
 mainMenuLoginTab_ = view_ mainMenuLoginTab "mainMenuLoginTab_"
 
 
-createGroup :: HasCallStack => LocalStateRef CreateGroup -> View '[]
-createGroup lst = mkPersistentStatefulView "CreateGroup" lst $
+createGroup :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> View '[]
+createGroup mid lst = mkPersistentStatefulView "CreateGroup" lst $
   \st@(CreateGroup title desc _ _) -> do
 
     contributionDialogTextForm createGroupTitle st 2 "group title"
@@ -221,7 +227,7 @@ createGroup lst = mkPersistentStatefulView "CreateGroup" lst $
             & iconButtonPropsDisabled     .~ True
           else props
             & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup $ Right st
+            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup mid $ Right st
                                              ]
 
     -- FIXME: make new button, like in 'commentInput_' above.  we
@@ -231,9 +237,9 @@ createGroup lst = mkPersistentStatefulView "CreateGroup" lst $
             & iconButtonPropsListKey      .~ "save"
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
             & iconButtonPropsElementName  .~ "btn-index"
-            & iconButtonPropsLabel        .~ "save"
+            & iconButtonPropsLabel        .~ maybe "save" (const "update") mid
             & iconButtonPropsAlignRight   .~ True
             & enableOrDisable
 
-createGroup_ :: HasCallStack => LocalStateRef CreateGroup -> ReactElementM eventHandler ()
-createGroup_ lst = view_ (createGroup lst) "createGroup"
+createGroup_ :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> ReactElementM eventHandler ()
+createGroup_ mid lst = view_ (createGroup mid lst) "createGroup"

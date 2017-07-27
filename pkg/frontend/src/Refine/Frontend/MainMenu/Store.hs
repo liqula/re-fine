@@ -15,7 +15,7 @@ mainMenuUpdate (MainMenuAction MainMenuActionClose) st = st
 
 mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) st = case tab of
   MainMenuGroups Left{} -> st
-  MainMenuCreateGroup Right{} -> st
+  MainMenuCreateGroup _ Right{} -> st
   _ -> st
      & mmState .~ MainMenuOpen (mapMainMenuTab (either (error "impossible") (const ())) id (either id (error "impossible")) tab)
 
