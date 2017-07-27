@@ -32,6 +32,7 @@ import           Language.Css.Syntax
 
 import           React.Flux.Missing
 import           Refine.Common.Types
+import           Refine.Common.Test.Samples
 import qualified Refine.Frontend.Colors as Colors
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Component
@@ -144,7 +145,8 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
             br_ []
             br_ []
             button_ [ "id" $= "create-process"
-                    , onClick $ \_ _ -> simpleHandler . dispatch $ AddDemoDocument gid
+                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . Left
+                        $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract sampleVDocVersion gid) group
                     ] $
                     elemString "Create new process"
             br_ []
@@ -168,6 +170,8 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
                 (elemText . cs . show $ vdoc ^. unID)
 
           MainMenuCreateGroup mid lst -> createGroup_ mid lst
+
+          MainMenuCreateProcess lst -> createProcess_ lst
 
           MainMenuHelp -> pre_ $ do
             elemString $ "commit hash: " <> show BuildInfo.gitCommitHash
@@ -215,11 +219,8 @@ createGroup mid lst = mkPersistentStatefulView "CreateGroup" lst $
   \st@(CreateGroup title desc _ _) -> do
 
     contributionDialogTextForm createGroupTitle st 2 "group title"
-
     hr_ []
-
     contributionDialogTextForm createGroupDesc st 2 "group description"
-
     hr_ []
 
     let enableOrDisable props = if ST.null desc || ST.null title
@@ -243,3 +244,36 @@ createGroup mid lst = mkPersistentStatefulView "CreateGroup" lst $
 
 createGroup_ :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> ReactElementM eventHandler ()
 createGroup_ mid lst = view_ (createGroup mid lst) "createGroup"
+
+createProcess :: HasCallStack => LocalStateRef CreateVDoc -> View '[]
+createProcess lst = mkPersistentStatefulView "CreateProcess" lst $
+  \st@(CreateVDoc title _ _ _) -> do
+
+    contributionDialogTextForm (createVDocTitle . unTitle) st 2 "title"
+    hr_ []
+    contributionDialogTextForm (createVDocAbstract . unAbstract) st 2 "abstract"
+    hr_ []
+    contributionDialogTextForm (createVDocInitVersion . unVDocVersion) st 2 "initial version"
+    hr_ []
+
+    let enableOrDisable props = if ST.null (title ^. unTitle)
+          then props
+            & iconButtonPropsDisabled     .~ True
+          else props
+            & iconButtonPropsDisabled     .~ False
+            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess $ Right st
+                                             ]
+
+    -- FIXME: make new button, like in 'commentInput_' above.  we
+    -- don't have to save this in global state until the 'editInput_'
+    -- dialog is closed again without save or cancel.
+    iconButton_ $ defaultIconButtonProps @[GlobalAction]
+            & iconButtonPropsListKey      .~ "save"
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
+            & iconButtonPropsElementName  .~ "btn-index"
+            & iconButtonPropsLabel        .~ "save"
+            & iconButtonPropsAlignRight   .~ True
+            & enableOrDisable
+
+createProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
+createProcess_ lst = view_ (createProcess lst) "createProcess"

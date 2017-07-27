@@ -37,7 +37,6 @@ import           Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as C
 import           Refine.Common.VDoc.Draft
 import           Refine.Common.Rest (ApiError(..))
-import           Refine.Common.Test.Samples
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
@@ -274,6 +273,12 @@ emitBackendCallsFor act st = case act of
             Left rsp -> ajaxFail rsp Nothing
             Right _ -> dispatchM . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ Left ()
 
+    MainMenuAction (MainMenuActionOpen (MainMenuCreateProcess (Right cg))) -> do
+        createVDoc cg $ \case
+            Left rsp -> ajaxFail rsp Nothing
+            Right loadedVDoc -> dispatchM $ OpenDocument loadedVDoc
+
+
     -- contributions
 
     ContributionAction (SubmitComment (CommentInfo text kind)) -> do
@@ -372,14 +377,6 @@ emitBackendCallsFor act st = case act of
       sPutSimpleVoteOnEdit eid vote $ \case
           Left msg -> ajaxFail msg Nothing
           Right () -> dispatchM $ reloadCompositeVDoc st
-
-
-    -- testing & dev
-
-    AddDemoDocument gid -> do
-        createVDoc (C.CreateVDoc sampleTitle sampleAbstract sampleVDocVersion gid) $ \case
-            (Left rsp) -> ajaxFail rsp Nothing
-            (Right loadedVDoc) -> dispatchM $ OpenDocument loadedVDoc
 
 
     -- default

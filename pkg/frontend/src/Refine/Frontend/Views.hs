@@ -68,7 +68,7 @@ refineApp = mkControllerView @'[StoreArg GlobalState] "RefineApp" $ \gs ->
   case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
       Nothing  -> mainScreen_ gs
       Just tab -> mainMenu_ $ MainMenuProps
-                            (mapMainMenuTab (const groups) groupFromCache id tab)
+                            (mapMainMenuTab (const groups) groupFromCache id id tab)
                             (gs ^. gsMainMenuState . mmErrors)
                             (gs ^. gsLoginState . lsCurrentUser)
         where

@@ -53,23 +53,37 @@ data MainMenu
   | MainMenuOpen { _mainMenuOpenTab :: MainMenuTabState }
   deriving (Eq, Show, Generic)
 
-type MainMenuTabState  = MainMenuTab () (ID Group) (LocalStateRef CreateGroup)
-type MainMenuTabAction = MainMenuTab (Either () [ID Group]) (ID Group) (Either (LocalStateRef CreateGroup) CreateGroup)
-type MainMenuTabProps  = MainMenuTab [Group] Group (LocalStateRef CreateGroup)
+type MainMenuTabState = MainMenuTab
+      ()
+      (ID Group)
+      (LocalStateRef CreateGroup)
+      (LocalStateRef CreateVDoc)
+type MainMenuTabAction = MainMenuTab
+      (Either () [ID Group])
+      (ID Group)
+      (Either (LocalStateRef CreateGroup) CreateGroup)
+      (Either (LocalStateRef CreateVDoc) CreateVDoc)
+type MainMenuTabProps = MainMenuTab
+      [Group]
+      Group
+      (LocalStateRef CreateGroup)
+      (LocalStateRef CreateVDoc)
 
-data MainMenuTab gids group cgroup
+data MainMenuTab gids group cgroup cprocess
   = MainMenuGroups gids
   | MainMenuGroup group
   | MainMenuCreateGroup (Maybe (ID Group)) cgroup
+  | MainMenuCreateProcess cprocess
   | MainMenuHelp
   | MainMenuLogin MainMenuSubTabLogin
   deriving (Eq, Show, Generic)
 
-mapMainMenuTab :: (a -> a') -> (b -> b') -> (c -> c') -> MainMenuTab a b c -> MainMenuTab a' b' c'
-mapMainMenuTab fa fb fc = \case
+mapMainMenuTab :: (a -> a') -> (b -> b') -> (c -> c') -> (d -> d') -> MainMenuTab a b c d -> MainMenuTab a' b' c' d'
+mapMainMenuTab fa fb fc fd = \case
   MainMenuGroups a -> MainMenuGroups (fa a)
   MainMenuGroup b  -> MainMenuGroup (fb b)
   MainMenuCreateGroup u c -> MainMenuCreateGroup u (fc c)
+  MainMenuCreateProcess d -> MainMenuCreateProcess (fd d)
   MainMenuHelp     -> MainMenuHelp
   MainMenuLogin l  -> MainMenuLogin l
 
