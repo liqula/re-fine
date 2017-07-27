@@ -298,7 +298,9 @@ data Style =
 -- | identifier for different marks in document
 data MarkID
   = MarkCurrentSelection
-  | MarkContribution ContributionID Int -- the Int is used as the Bubble serial number per contribution; note that this is always 0 for notes and discussion (because they have just one range)
+  | MarkContribution ContributionID Int  -- ^ the Int is used as the Bubble serial number per
+                                         -- contribution; note that this is always 0 for notes and
+                                         -- discussion (because they have just one range)
   deriving (Show, Read, Eq, Ord, Generic)
 
 -- | each block has a unique blocktype
