@@ -218,7 +218,7 @@ indexToolbarExtension = mkView "IndexToolbarExtension" $ \case
     iconButton_
       $ defaultIconButtonProps @[GlobalAction]
       & iconButtonPropsListKey      .~ ("index-" <> cs (show i))
--- FIXME      & iconButtonPropsElementName  .~ "btn-new-ann-text" -- RENAME: ann => comment
+      & iconButtonPropsElementName  .~ ("index-heading-" <> cs (show i))
       & iconButtonPropsLabel        .~ cs (item ^. indexItemTitle)
       & iconButtonPropsOnClick      .~ [HeaderAction . ScrollToBlockKey $ item ^. indexItemBlockKey]
       & iconButtonPropsOnClickMods  .~ [StopPropagation]

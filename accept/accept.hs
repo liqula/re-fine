@@ -142,6 +142,11 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
         doRegister
         doLogin
 
+  it "scroll to first heading" . runWD $ do
+    onEl [ByCSS ".icon-Index_desktop_dark"] click
+    onEl [ByCSS ".__index-heading-0"] click
+    -- TODO: check that scroll happend
+
   it "open edit mode" . runWD $ do
     onEl [ByCSS ".icon-New_Edit_dark"] click
     onEl [ByCSS ".public-DraftEditor-content"] $ \el -> do
