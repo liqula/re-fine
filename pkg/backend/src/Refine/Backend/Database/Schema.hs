@@ -65,7 +65,7 @@ Edit
 Note
     text        Text
     public      Bool
-    range       RangePosition
+    range       RangePosition   -- FIXME: move this to PN table
     owner       LoginId
 
 Question
@@ -81,7 +81,7 @@ Answer
 
 Discussion
     public      Bool
-    range       RangePosition
+    range       RangePosition    -- FIXME: move this to PD table
     owner       LoginId
 
 Statement
@@ -128,7 +128,7 @@ PD
 DS
     discussion  DiscussionId
     statement   StatementId
-    UniDS discussion statement
+    UniDS discussion statement    -- FIXME:  UniDS statement, or preferably remove DS table and add discussion field to Statement table
 
 PN
     edit       EditId
