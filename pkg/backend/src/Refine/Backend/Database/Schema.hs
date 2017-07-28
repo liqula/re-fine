@@ -72,7 +72,7 @@ Question
     text        Text
     public      Bool
     answered    Bool
-    range       RangePosition
+    range       RangePosition   -- FIXME: move this PQ table
     owner       LoginId
 
 Answer
