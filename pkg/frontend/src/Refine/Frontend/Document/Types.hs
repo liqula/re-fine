@@ -84,7 +84,7 @@ type GlobalDocumentState = DocumentState_ () () (ID Edit)
 data WipedDocumentState =
     WipedDocumentStateView
   | WipedDocumentStateDiff
-      { _wpiedDocumentStateDiffIndex     :: EditIndex
+      { _wipedDocumentStateDiffIndex     :: EditIndex
       , _wipedDocumentStateDiff          :: Edit
       , _wipedDocumentStateDiffCollapsed :: Bool
       , _wipedDocumentStateDiffEditable  :: Bool

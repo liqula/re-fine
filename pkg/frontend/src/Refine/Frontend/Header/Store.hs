@@ -44,6 +44,8 @@ readOnlyUpdate _                             = id
 
 toolbarExtensionUpdate :: HasCallStack => GlobalAction -> ToolbarExtensionStatus -> ToolbarExtensionStatus
 toolbarExtensionUpdate act st = case (st, act) of
+    (ToolbarExtensionClosed,               HeaderAction ToggleIndexToolbarExtension)   -> IndexToolbarExtension
+    (IndexToolbarExtension,                HeaderAction ToggleIndexToolbarExtension)   -> ToolbarExtensionClosed
     (ToolbarExtensionClosed,               HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithoutRange
     (CommentToolbarExtensionWithoutRange,  ContributionAction ShowCommentEditor)       -> ToolbarExtensionClosed
     (CommentToolbarExtensionWithoutRange,  HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed

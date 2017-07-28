@@ -34,6 +34,7 @@ import Refine.Frontend.Login.Types
 
 data HeaderAction =
     ToggleCommentToolbarExtension
+  | ToggleIndexToolbarExtension
   | StartTextSpecificComment
   | StartEdit
   | CloseToolbarExtension
@@ -48,6 +49,7 @@ data ToolbarExtensionStatus =
   | CommentToolbarExtensionWithoutRange
   | CommentToolbarExtensionWithRange
   | EditToolbarLinkEditor ST
+  | IndexToolbarExtension
   deriving (Show, Eq, Generic)
 
 data HeaderState = HeaderState
@@ -67,6 +69,9 @@ data TopMenuBarProps = TopMenuBarProps
  { _isSticky    :: Bool
  , _currentUser :: CurrentUser
  } deriving (Eq, Generic)
+
+
+type IndexToolbarProps = Maybe [ST]
 
 
 data DiffToolbarProps = DiffToolbarProps
