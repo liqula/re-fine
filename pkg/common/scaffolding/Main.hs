@@ -98,7 +98,7 @@ prepareSession = do
 runMakeVDoc :: IO ()
 runMakeVDoc = do
   r :: Response CompositeVDoc
-    <- post "r/vdoc" $ CreateVDoc sampleTitle sampleAbstract sampleVDocVersion
+    <- post "r/vdoc" $ CreateVDoc sampleTitle sampleAbstract sampleVDocVersion (ID 1){-FIXME: use defaultGroupID-}
 
   let eid = r ^. responseBody . compositeVDocThisEdit . editMetaID . miID . unID
       vdoc :: ST = r ^. responseBody . compositeVDocThisEdit . editVDocVersion . unVDocVersion
