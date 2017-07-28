@@ -148,7 +148,7 @@ transformGlobalState = transf
               & gsScreenState         %~ maybe id screenStateUpdate (act ^? _ScreenAction)
               & gsLoginState          %~ loginStateUpdate act
               & gsDispatchAfterLogin  %~ dispatchAfterLoginUpdate act (st ^. gsLoginState)
-              & gsMainMenuState       %~ mainMenuUpdate act
+              & gsMainMenuState       %~ mainMenuUpdate act (isJust $ st ^. gsEditID)
               & gsToolbarSticky       %~ toolbarStickyUpdate act
               & gsTranslations        %~ translationsUpdate act
               & gsDevState            %~ devStateUpdate act
