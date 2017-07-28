@@ -22,7 +22,6 @@ dependencies:
   - bytestring
   - containers
   - cookie
-  - cryptonite
   - data-default
   - directory
   - elim

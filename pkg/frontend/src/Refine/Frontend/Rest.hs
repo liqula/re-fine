@@ -33,10 +33,6 @@ cfg :: HasCallStack => ApiRequestConfig RefineAPI
 cfg = ApiRequestConfig "" NoTimeout
 
 
--- | obtain a list of all vdocs stored in the backend with auid, title.
-listVDocs :: HasCallStack => HandleResponse [VDoc] -> IO ()
-listVDocs = request cfg (Proxy :: Proxy SListVDocs)
-
 -- | look up a vdoc by its auid.
 getVDoc :: HasCallStack => ID VDoc -> HandleResponse CompositeVDoc -> IO ()
 getVDoc = request cfg (Proxy :: Proxy SGetVDoc)
@@ -78,3 +74,12 @@ sDeleteSimpleVoteOnEdit = request cfg (Proxy :: Proxy SDeleteSimpleVoteOnEdit)
 
 sGetSimpleVotesOnEdit :: HasCallStack =>  ID Edit -> HandleResponse VoteCount -> IO ()
 sGetSimpleVotesOnEdit = request cfg (Proxy :: Proxy SGetSimpleVotesOnEdit)
+
+getGroups :: HasCallStack => HandleResponse [Group] -> IO ()
+getGroups = request cfg (Proxy :: Proxy SGetGroups)
+
+createGroup :: HasCallStack => CreateGroup -> HandleResponse Group -> IO ()
+createGroup = request cfg (Proxy :: Proxy SAddGroup)
+
+updateGroup :: HasCallStack => ID Group -> Create Group -> HandleResponse Group -> IO ()
+updateGroup = request cfg (Proxy :: Proxy SUpdateGroup)

@@ -147,24 +147,16 @@ instance Database DB where
   -- * Group
   createGroup       = Entity.createGroup
   getGroup          = Entity.getGroup
+  getGroups         = Entity.getGroups
   modifyGroup       = Entity.modifyGroup
   removeGroup       = Entity.removeGroup
   addSubGroup       = Entity.addSubGroup
   removeSubGroup    = Entity.removeSubGroup
-  universalGroup    = Entity.universalGroup
 
   -- * Role
   assignRole   = Entity.assignRole
   getRoles     = Entity.getRoles
   unassignRole = Entity.unassignRole
-
-  -- * Process
-  createProcess = Entity.createProcess
-  getProcess    = Entity.getProcess
-  updateProcess = Entity.updateProcess
-  removeProcess = Entity.removeProcess
-
-  vDocProcess   = Entity.vDocProcess
 
   createMetaID_ = Entity.createMetaID_
   getMetaID     = Entity.getMeta

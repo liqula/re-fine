@@ -77,12 +77,12 @@ sibutton_ :: forall onclick st (handler :: EventHandlerCode *).
                   (HasCallStack, IbuttonOnClick onclick handler, handler ~ 'StatefulEventHandlerCode st)
                => Lens' st Bool -> st -> IbuttonProps onclick -> ReactElementM handler ()
 sibutton_ mouseIsOver st props = do
-  let --TODO onMsOvr :: [PropertyOrHandler handler]
+  let --FIXME onMsOvr :: [PropertyOrHandler handler]
       onMsOvr = [ onMouseEnter $ \_ _ -> simpleHandler $ \s -> ([], Just $ s & mouseIsOver .~ True)
                 , onMouseLeave $ \_ _ -> simpleHandler $ \s -> ([], Just $ s & mouseIsOver .~ False)
                 ]
 
-      --TODO onClk :: [PropertyOrHandler handler]
+      --FIXME onClk :: [PropertyOrHandler handler]
       onClk = [onClick $ \evt mevt -> mkIbuttonClickHandler props evt mevt | props ^. ibEnabled]
 
       -- FIXME: ibutton must not contain divs, so we can use it inside spans.

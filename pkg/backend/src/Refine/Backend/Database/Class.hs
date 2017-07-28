@@ -9,7 +9,6 @@ module Refine.Backend.Database.Class where
 
 import Refine.Backend.Prelude
 
-import Data.Typeable (Typeable)
 import qualified Web.Users.Persistent as Users
 
 import           Refine.Backend.Database.Types
@@ -74,54 +73,20 @@ class Database db where
   -- Group
   createGroup          :: Create Group -> db Group
   getGroup             :: ID Group -> db Group
+  getGroups            :: db [Group]
   modifyGroup          :: ID Group -> Create Group -> db Group
   removeGroup          :: ID Group -> db ()
   addSubGroup          :: ID Group -> ID Group -> db ()
   removeSubGroup       :: ID Group -> ID Group -> db ()
-  universalGroup       :: db (ID Group)
 
   -- Roles
   assignRole   :: ID Group -> ID User -> Role -> db ()
   getRoles     :: ID Group -> ID User -> db [Role]
   unassignRole :: ID Group -> ID User -> Role -> db ()
 
-  -- Process
-
-  -- @Process (ResultDB (Process a))@ is a parametric type applied to a type family value of a
-  -- polymoprhic type.  yeay!  :)
-  --
-  -- the reason this happens is that in 'DB', we cannot return the results in a form that they are
-  -- required in by the frontend: we need 'App' to turn the @ResultDB (Process a)@ into an @a@.
-  --
-  -- example: we need to build the 'CompositeVDoc' (which requires "Refine.Backend.DocRepo") from
-  -- the @VDoc@ that can be produced inside 'DB'.
-
-  createProcess :: StoreProcessData db a => CreateDB (Process a) -> db (Process a)
-  getProcess    :: (StoreProcessData db a, Typeable a) => ID (Process a) -> db (Process a)
-  updateProcess :: StoreProcessData db a => ID (Process a) -> CreateDB (Process a) -> db ()
-  removeProcess :: (StoreProcessData db a, Typeable a) => ID (Process a) -> db ()
-
-  vDocProcess :: ID VDoc -> db (ID (Process CollaborativeEdit))
-
   createMetaID_ :: HasMetaInfo a => ID a -> db (MetaID a)
   getMetaID     :: HasMetaInfo a => ID a -> db (MetaID a)
 
-
-class StoreProcessData db c where
-  processDataGroupID :: CreateDB (Process c) -> db (ID Group)
-  createProcessData  :: ID (Process c) -> CreateDB (Process c) -> db c
-  getProcessData     :: ID (Process c) -> db c
-  updateProcessData  :: ID (Process c) -> CreateDB (Process c) -> db ()
-  removeProcessData  :: c -> db ()
-
-class GroupOf db e where
-  groupOf :: ID e -> db Group
-
--- | Type of contents of process, also used as an index type to identify process "kind".
-type family ProcessPayload e = r
-
-class ProcessOf db e where
-  processOf :: ID e -> db (Process (ProcessPayload e))
 
 -- * composite db queries
 
@@ -143,10 +108,3 @@ editComments pid = do
     , CommentQuestion   <$> questions
     , CommentDiscussion <$> discussions
     ]
-
-groupRef
-  :: (Monad db, Database db)
-  => GroupRef -> db (ID Group)
-groupRef = \case
-  UniversalGroup -> universalGroup
-  GroupRef gid   -> pure gid

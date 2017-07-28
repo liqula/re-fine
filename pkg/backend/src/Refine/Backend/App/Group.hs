@@ -32,7 +32,7 @@ import Control.Lens ((^.))
 import Refine.Backend.App.Core
 import Refine.Backend.Database.Class as DB
 import Refine.Common.ChangeAPI
-import Refine.Common.Types.Group
+import Refine.Common.Types.Core
 import Refine.Common.Types.Prelude
 
 
@@ -45,8 +45,13 @@ addGroup group = do
 
 getGroup :: ID Group -> App Group
 getGroup group = do
-  appLog "readGroup"
+  appLog "getGroup"
   db $ DB.getGroup group
+
+getGroups :: App [Group]
+getGroups = do
+  appLog "getGroups"
+  db DB.getGroups
 
 -- | Modify the group using the new values from the `Create Group` information.
 modifyGroup :: ID Group -> Create Group -> App Group

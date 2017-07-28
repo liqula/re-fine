@@ -37,7 +37,6 @@ import           Lentil.Types as L
 import qualified Web.Users.Persistent as Users
 import qualified Web.Users.Persistent.Definitions as Users
 
-import qualified Refine.Backend.Database.Class as C
 import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
 import           Refine.Backend.Database.Types
@@ -58,15 +57,6 @@ type instance S.EntityRep Answer     = S.Answer
 type instance S.EntityRep Statement  = S.Statement
 type instance S.EntityRep User       = Users.Login
 type instance S.EntityRep Group      = S.Group
-type instance S.EntityRep (Process a) = S.Process
-type instance S.EntityRep CollaborativeEdit = S.CollabEditProcess
-type instance S.EntityRep Aula              = S.AulaProcess
-
-type instance S.ProcessDataRep CollaborativeEdit = S.CollabEditProcess
-type instance S.ProcessDataRep Aula              = S.AulaProcess
-
-type instance S.ProcessDataConnectionRep CollaborativeEdit = S.ProcessOfCollabEdit
-type instance S.ProcessDataConnectionRep Aula              = S.ProcessOfAula
 
 {-
 [not sure what this comment is about any more..  fisx]
@@ -122,7 +112,7 @@ foreignKeyField column = S.keyToId . column . entityVal
 
 -- NOTES: How to handle associations? What to update, what to keep?
 vDocToRecord :: VDoc -> DB S.VDoc
-vDocToRecord (VDoc _i t a r) = pure (S.VDoc t a (Just $ S.idToKey r))
+vDocToRecord (VDoc _i t a r g) = pure (S.VDoc t a (Just $ S.idToKey r) (S.idToKey g))
 
 updateVDoc :: ID VDoc -> VDoc -> DB ()
 updateVDoc vid vdoc = do
@@ -223,9 +213,9 @@ getMetaEntity f i = do
 
 -- * VDoc
 
-toVDoc :: MetaID VDoc -> Title -> Abstract -> Maybe (Key S.Edit) -> VDoc
-toVDoc vid title abstract (Just repoid) = VDoc vid title abstract (S.keyToId repoid)
-toVDoc _ _ _ Nothing = error "impossible"
+toVDoc :: MetaID VDoc -> Title -> Abstract -> Maybe (Key S.Edit) -> Key S.Group -> VDoc
+toVDoc vid title abstract (Just repoid) g = VDoc vid title abstract (S.keyToId repoid) (S.keyToId g)
+toVDoc _ _ _ Nothing _ = error "impossible"
 
 listVDocs :: DB [ID VDoc]
 listVDocs = do
@@ -238,6 +228,7 @@ createVDoc pv vdoc = do
         (pv ^. createVDocTitle)
         (pv ^. createVDocAbstract)
         Nothing -- hack: use a dummy key which will be replaced by a proper one before createVDoc returns
+        (S.idToKey $ pv ^. createVDocGroup)
   mid <- createMetaID svdoc
   e <- createEdit (mid ^. miID) mempty CreateEdit
     { _createEditDesc        = "initial document version"
@@ -515,22 +506,19 @@ runUsersCmd cmd = liftDB . ReaderT $ \(sqlBackend :: SqlBackend) ->
 
 -- * Group
 
-toGroup :: [ID Group] -> [ID Group] -> MetaID Group -> ST -> ST -> Bool -> Group
-toGroup parents children gid title desc =
-  Group gid title desc parents children
+toGroup :: [ID Group] -> [ID Group] -> [ID VDoc] -> MetaID Group -> ST -> ST -> Group
+toGroup parents children vdocs gid title desc =
+  Group gid title desc parents children vdocs
 
 createGroup :: Create Group -> DB Group
 createGroup group = do
   let sgroup = S.Group
         (group ^. createGroupTitle)
         (group ^. createGroupDesc)
-        (group ^. createGroupUniversal)
   mid <- createMetaID sgroup
   forM_ (group ^. createGroupParents) $ \parent -> addConnection S.SubGroup parent (mid ^. miID)
   forM_ (group ^. createGroupChildren) $ \child -> addConnection S.SubGroup (mid ^. miID) child
-  pure $ S.groupElim
-    (toGroup (group ^. createGroupParents) (group ^. createGroupChildren) mid)
-    sgroup
+  getGroup (mid ^. miID)
 
 getChildrenOfGroup :: ID Group -> DB [ID Group]
 getChildrenOfGroup gid = do
@@ -544,11 +532,23 @@ getParentsOfGroup gid = do
   (S.subGroupElim (\parent _child -> S.keyToId parent) . entityVal)
     <$$> liftDB (selectList [S.SubGroupChild ==. S.idToKey gid] opts)
 
+getVDocsOfGroup :: ID Group -> DB [ID VDoc]
+getVDocsOfGroup gid = do
+  opts <- dbSelectOpts
+  (S.keyToId . entityKey)
+    <$$> liftDB (selectList [S.VDocGroup ==. S.idToKey gid] opts)
+
 getGroup :: ID Group -> DB Group
 getGroup gid = do
   parents  <- getParentsOfGroup  gid
   children <- getChildrenOfGroup gid
-  getMetaEntity (S.groupElim . toGroup parents children) gid
+  vdocs    <- getVDocsOfGroup    gid
+  getMetaEntity (S.groupElim . toGroup parents children vdocs) gid
+
+getGroups :: DB [Group]
+getGroups = do
+  gids <- liftDB $ selectKeysList [] []
+  mapM (getGroup . S.keyToId) gids
 
 modifyGroup :: ID Group -> Create Group -> DB Group
 modifyGroup gid group = do
@@ -610,13 +610,6 @@ removeSubGroup parent child = liftDB $ do
     , S.SubGroupChild  ==. S.idToKey child
     ]
 
-universalGroup :: DB (ID Group)
-universalGroup = do
-  opts <- dbSelectOpts
-  xs <- (S.keyToId . entityKey) <$$> liftDB (selectList [ S.GroupUniversal ==. True ] opts)
-  unique "universalGroup" xs
-
-
 -- * Roles
 
 assignRole :: ID Group -> ID User -> Role -> DB ()
@@ -636,142 +629,3 @@ unassignRole gid uid role = liftDB $ do
     , S.RolesUser  ==. S.idToKey uid
     , S.RolesRole  ==. role
     ]
-
-
--- * Process
-
-instance C.StoreProcessData DB CollaborativeEdit where
-  processDataGroupID = pure . view createDBCollabEditProcessGroupID
-
-  createProcessData pid process = do
-    liftDB $ do
-      dkey <- insert $ S.CollabEditProcess
-                (process ^. createDBCollabEditProcessVDocID . to S.idToKey)
-                (process ^. createDBCollabEditProcessPhase)
-      _ <- insert $ S.ProcessOfCollabEdit (S.idToKey pid) dkey
-      pure $ CollaborativeEdit
-        (S.keyToId dkey)
-        (process ^. createDBCollabEditProcessPhase)
-        (process ^. createDBCollabEditProcessVDocID)
-
-  getProcessData pid = do
-    opts <- dbSelectOpts
-    ceids <- foreignKeyField S.processOfCollabEditCollabEdit
-             <$$> liftDB (selectList [S.ProcessOfCollabEditProcess ==. S.idToKey pid] opts)
-    ceid <- unique "getProcessData" ceids
-    cedata <- getEntityRep ceid
-    pure $ CollaborativeEdit
-      ceid
-      (S.collabEditProcessPhase cedata)
-      (S.keyToId $ S.collabEditProcessVdoc cedata)
-
-  updateProcessData pid process = do
-    opts <- dbSelectOpts
-    ceids <- foreignKeyField S.processOfCollabEditCollabEdit
-             <$$> liftDB (selectList [S.ProcessOfCollabEditProcess ==. S.idToKey pid] opts)
-    ceid :: ID CollaborativeEdit <- unique "updateProcessData" ceids
-    liftDB $ update (S.idToKey ceid)
-      [ S.CollabEditProcessVdoc  =. process ^. createDBCollabEditProcessVDocID . to S.idToKey
-      , S.CollabEditProcessPhase =. process ^. createDBCollabEditProcessPhase
-      ]
-
-  removeProcessData pdata = liftDB $ do
-    let key = pdata ^. collaborativeEditID . to S.idToKey
-    deleteWhere [S.ProcessOfCollabEditCollabEdit ==. key]
-    delete key
-    error "FIXME: also remove VDoc and all its contents from the various tables.  see #273."
-
-instance C.StoreProcessData DB Aula where
-  processDataGroupID = pure . view createAulaProcessGroupID
-
-  createProcessData pid process = do
-    liftDB $ do
-      dkey <- insert $ S.AulaProcess (process ^. createAulaProcessClassName)
-      _ <- insert $ S.ProcessOfAula (S.idToKey pid) dkey
-      pure $ Aula (S.keyToId dkey) (process ^. createAulaProcessClassName)
-
-  getProcessData pid = do
-    opts <- dbSelectOpts
-    as  <- foreignKeyField S.processOfAulaAula
-            <$$> liftDB (selectList [S.ProcessOfAulaProcess ==. S.idToKey pid] opts)
-    aid <- unique "getProcessData" as
-    saula <- getEntityRep aid
-    pure $ Aula aid (S.aulaProcessClass saula)
-
-  updateProcessData pid process = do
-    opts <- dbSelectOpts
-    as  <- foreignKeyField S.processOfAulaAula
-            <$$> liftDB (selectList [S.ProcessOfAulaProcess ==. S.idToKey pid] opts)
-    aid :: ID Aula <- unique "updateProcessData" as
-    liftDB $ update (S.idToKey aid)
-      [ S.AulaProcessClass =. process ^. createAulaProcessClassName
-      ]
-
-  removeProcessData pdata = liftDB $ do
-    deleteWhere [S.ProcessOfAulaAula ==. pdata ^. aulaID . to S.idToKey]
-    delete (pdata ^. aulaID . to S.idToKey)
-
-createProcess :: (C.StoreProcessData DB a) => CreateDB (Process a) -> DB (Process a)
-createProcess process = do
-  gid   <- C.processDataGroupID process
-  mid   <- createMetaID $ S.Process (S.idToKey gid)
-  pdata <- C.createProcessData (mid ^. miID) process
-  group <- getGroup gid
-  pure $ Process mid group pdata
-
-getProcess :: (C.StoreProcessData DB a, Typeable a) => ID (Process a) -> DB (Process a)
-getProcess pid = do
-  process <- getEntityRep pid
-  pdata   <- C.getProcessData pid
-  group   <- getGroup (S.keyToId $ S.processGroup process)
-  mid     <- getMeta pid
-  pure $ Process mid group pdata
-
-updateProcess :: (C.StoreProcessData DB a) => ID (Process a) -> CreateDB (Process a) -> DB ()
-updateProcess pid process = do
-  gid <- C.processDataGroupID process
-  liftDB $ update (S.idToKey pid)
-    [ S.ProcessGroup =. S.idToKey gid
-    ]
-  C.updateProcessData pid process
-
-removeProcess :: (C.StoreProcessData DB a, Typeable a) => ID (Process a) -> DB ()
-removeProcess pid = do
-  process <- getProcess pid
-  C.removeProcessData (process ^. processPayload)
-  liftDB $ delete (process ^. processID . to S.idToKey)
-
-vDocProcess :: ID VDoc -> DB (ID (Process CollaborativeEdit))
-vDocProcess vid = do
-  -- CollabEditProcess
-  cedits <- entityKey <$$> liftDB (selectList [S.CollabEditProcessVdoc ==. S.idToKey vid] [])
-  cedit <- unique "vDocProcess.e" cedits
-  -- ProcessOfCollabEdit
-  processes <- foreignKeyField S.processOfCollabEditProcess
-                <$$> liftDB (selectList [S.ProcessOfCollabEditCollabEdit ==. cedit] [])
-  unique "vDocProcess.p" processes
-
-
--- * GroupOf
-
-instance (C.StoreProcessData DB a, Typeable a) => C.GroupOf DB (Process a) where
-  groupOf = fmap (view processGroup) . getProcess
-
-instance C.GroupOf DB VDoc where
-  groupOf = vDocProcess >=> C.groupOf
-
-instance C.GroupOf DB Edit where
-  groupOf = vdocOfEdit >=> C.groupOf
-
-
--- * ProcessOf
-
-type instance C.ProcessPayload Edit = C.ProcessPayload VDoc
-
-instance C.ProcessOf DB Edit where
-  processOf = vdocOfEdit >=> C.processOf
-
-type instance C.ProcessPayload VDoc = CollaborativeEdit
-
-instance C.ProcessOf DB VDoc where
-  processOf = vDocProcess >=> getProcess

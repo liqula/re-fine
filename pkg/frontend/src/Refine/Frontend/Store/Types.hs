@@ -47,8 +47,6 @@ type GlobalState = GlobalState_ GlobalDocumentState
 
 data GlobalState_ a = GlobalState
   { _gsEditID                     :: Maybe (ID Edit)
-  , _gsVDocList                   :: Maybe [ID VDoc]  -- ^ FIXME: this should be live in it's own
-                                                      -- 'GlobalState' constructor.
   , _gsContributionState          :: ContributionState
   , _gsHeaderState                :: HeaderState
   , _gsDocumentState              :: a
@@ -72,10 +70,16 @@ data ServerCache = ServerCache
   }
   deriving (Show, Eq, Generic)
 
+instance Monoid ServerCache where
+  mempty = ServerCache mempty mempty mempty mempty mempty mempty
+  ServerCache a b c d e f `mappend` ServerCache a' b' c' d' e' f'
+    = ServerCache (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f')
+
+
+
 emptyGlobalState :: HasCallStack => GlobalState
 emptyGlobalState = GlobalState
   { _gsEditID                     = Nothing
-  , _gsVDocList                   = Nothing
   , _gsContributionState          = emptyContributionState
   , _gsHeaderState                = emptyHeaderState
   , _gsDocumentState              = emptyDocumentState
@@ -86,11 +90,8 @@ emptyGlobalState = GlobalState
   , _gsToolbarSticky              = False
   , _gsTranslations               = emptyTrans
   , _gsDevState                   = Nothing
-  , _gsServerCache                = emptyServerCache
+  , _gsServerCache                = mempty
   }
-
-emptyServerCache :: ServerCache
-emptyServerCache = ServerCache mempty mempty mempty mempty mempty mempty
 
 type MainHeaderProps = GlobalState_ WipedDocumentState
 
@@ -104,10 +105,7 @@ emptyDevState = DevState []
 
 data GlobalAction =
     -- documents
-    LoadDocumentList
-  | RegisterDocumentList [ID VDoc]
-  | LoadDocument (ID VDoc)
-  | OpenDocument CompositeVDoc
+    LoadDocument (AjaxAction (ID VDoc) CompositeVDoc)
 
     -- contributions
   | ScreenAction ScreenAction
@@ -120,6 +118,8 @@ data GlobalAction =
   | AddDiscussion Discussion
   | AddEdit Edit
   | SaveSelect ST ST
+
+  | RefreshServerCache ServerCache
 
     -- i18n
   | LoadTranslations Locale
@@ -134,7 +134,6 @@ data GlobalAction =
   | SetCurrentUser CurrentUser
 
     -- testing & dev
-  | AddDemoDocument
   | ResetState GlobalState
   | ShowNotImplementedYet
   deriving (Show, Eq, Generic)

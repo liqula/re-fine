@@ -37,7 +37,6 @@ import           Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as C
 import           Refine.Common.VDoc.Draft
 import           Refine.Common.Rest (ApiError(..))
-import           Refine.Common.Test.Samples
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
@@ -143,17 +142,21 @@ transformGlobalState = transf
     pureTransform act st = st'
       where st' = st
               & gsVDoc                %~ vdocUpdate act
-              & gsVDocList            %~ vdocListUpdate act
               & gsContributionState   %~ contributionStateUpdate act
               & gsHeaderState         %~ headerStateUpdate act
               & gsDocumentState       %~ documentStateUpdate act st st'
               & gsScreenState         %~ maybe id screenStateUpdate (act ^? _ScreenAction)
               & gsLoginState          %~ loginStateUpdate act
               & gsDispatchAfterLogin  %~ dispatchAfterLoginUpdate act (st ^. gsLoginState)
-              & gsMainMenuState       %~ mainMenuUpdate act
+              & gsMainMenuState       %~ mainMenuUpdate act (isJust $ st ^. gsEditID)
               & gsToolbarSticky       %~ toolbarStickyUpdate act
               & gsTranslations        %~ translationsUpdate act
               & gsDevState            %~ devStateUpdate act
+              & gsServerCache         %~ serverCacheUpdate act
+
+serverCacheUpdate :: GlobalAction -> ServerCache -> ServerCache
+serverCacheUpdate (RefreshServerCache c') c = c' <> c
+serverCacheUpdate _ c = c
 
 consoleLogGlobalStateBefore :: HasCallStack => forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
 consoleLogGlobalStateBefore False _ _ = pure ()
@@ -188,7 +191,7 @@ consoleLogGlobalAction act = do
 -- * pure updates
 
 vdocUpdate :: HasCallStack => GlobalAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
-vdocUpdate (OpenDocument newvdoc) _ = Just newvdoc
+vdocUpdate (LoadDocument (AfterAjax newvdoc)) _ = Just newvdoc
 vdocUpdate act (Just vdoc) = Just $ case act of
     AddDiscussion discussion
       -> vdoc
@@ -207,11 +210,6 @@ vdocUpdate act (Just vdoc) = Just $ case act of
 
     _ -> vdoc
 vdocUpdate _ Nothing = Nothing
-
-
-vdocListUpdate :: HasCallStack => GlobalAction -> Maybe [C.ID C.VDoc] -> Maybe [C.ID C.VDoc]
-vdocListUpdate (RegisterDocumentList vdocs) _  = Just vdocs
-vdocListUpdate _                            st = st
 
 
 toolbarStickyUpdate :: HasCallStack => GlobalAction -> Bool -> Bool
@@ -241,17 +239,35 @@ emitBackendCallsFor act st = case act of
 
     -- documents
 
-    LoadDocumentList -> do
-        listVDocs $ \case
-            (Left rsp) -> ajaxFail rsp Nothing
-            (Right loadedVDocs) -> dispatchM $ RegisterDocumentList ((^. C.vdocID) <$> loadedVDocs)
-    LoadDocument auid -> do
+    LoadDocument (BeforeAjax auid) -> do
         getVDoc auid $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right loadedVDoc) -> dispatchManyM
-                                   [ OpenDocument loadedVDoc
+                                   [ LoadDocument $ AfterAjax loadedVDoc
                                    , ContributionAction RequestSetAllVerticalSpanBounds
                                    ]
+
+    -- groups
+
+    MainMenuAction (MainMenuActionOpen (MainMenuGroups BeforeAjax{})) -> do
+        getGroups $ \case
+            (Left rsp) -> ajaxFail rsp Nothing
+            (Right groups) -> dispatchManyM
+              [ RefreshServerCache . ServerCache mempty mempty mempty mempty mempty
+                $ M.fromList [(g ^. C.groupID, g) | g <- groups]
+              , MainMenuAction . MainMenuActionOpen . MainMenuGroups . AfterAjax $ (^. C.groupID) <$> groups
+              ]
+
+    MainMenuAction (MainMenuActionOpen (MainMenuCreateGroup mid (FormComplete cg))) -> do
+        maybe createGroup updateGroup mid cg $ \case
+            Left rsp -> ajaxFail rsp Nothing
+            Right _ -> dispatchM . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()
+
+    MainMenuAction (MainMenuActionOpen (MainMenuCreateProcess (FormComplete cg))) -> do
+        createVDoc cg $ \case
+            Left rsp -> ajaxFail rsp Nothing
+            Right loadedVDoc -> dispatchM . LoadDocument $ AfterAjax loadedVDoc
+
 
     -- contributions
 
@@ -353,14 +369,6 @@ emitBackendCallsFor act st = case act of
           Right () -> dispatchM $ reloadCompositeVDoc st
 
 
-    -- testing & dev
-
-    AddDemoDocument -> do
-        createVDoc (C.CreateVDoc sampleTitle sampleAbstract sampleVDocVersion) $ \case
-            (Left rsp) -> ajaxFail rsp Nothing
-            (Right loadedVDoc) -> dispatchM $ OpenDocument loadedVDoc
-
-
     -- default
 
     _ -> pure ()
@@ -372,8 +380,8 @@ emitBackendCallsFor act st = case act of
 -- actions, we could define @UpdateCVDoc :: (CompositeVDoc ->
 -- CompositeVDoc) -> GlobalAction@.
 reloadCompositeVDoc :: HasCallStack => GlobalState -> GlobalAction
-reloadCompositeVDoc st = LoadDocument (fromMaybe (error "reloadCompositeVDoc") $
-                                       st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocID)
+reloadCompositeVDoc st = LoadDocument . BeforeAjax . fromMaybe (error "reloadCompositeVDoc") $
+                                       st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocID
 
 ajaxFail :: HasCallStack => (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
 ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of

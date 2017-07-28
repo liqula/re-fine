@@ -26,9 +26,8 @@ module Refine.Common.ChangeAPI where
 import Refine.Common.Prelude
 
 import Refine.Common.Types.Role
-import Refine.Common.Types.Group
+import Refine.Common.Types.Core
 import Refine.Common.Types.Prelude
-import Refine.Common.Types.Process
 
 
 data ChangeSubGroup
@@ -37,21 +36,10 @@ data ChangeSubGroup
   deriving (Eq, Generic, Show)
 
 data ChangeRole
-  = AssignRole   { _crGroupRef :: GroupRef, _crUser :: ID User, _crRole :: Role }
-  | UnassignRole { _crGroupRef :: GroupRef, _crUser :: ID User, _crRole :: Role }
-  deriving (Eq, Generic, Show)
-
-data ChangeProcess
-  = ChangeProcessCollaborativeEditPhase
-    { _cpProcessEditID :: ID (Process CollaborativeEdit)
-    , _cpCollabEdit    :: CreateCollabEditProcess
-    }
-  | ChangeProcessAulaClassName
-    { _cpProcessAulaID :: ID (Process Aula)
-    , _cpAula          :: CreateAulaProcess
-    }
+  = AssignRole   { _crGroupRef :: ID Group, _crUser :: ID User, _crRole :: Role }
+  | UnassignRole { _crGroupRef :: ID Group, _crUser :: ID User, _crRole :: Role }
   deriving (Eq, Generic, Show)
 
 -- * Refine types
 
-makeRefineTypes [''ChangeSubGroup, ''ChangeRole, ''ChangeProcess]
+makeRefineTypes [''ChangeSubGroup, ''ChangeRole]

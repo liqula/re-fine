@@ -53,7 +53,7 @@ import           Refine.Frontend.Util
 -- trigger thunk evaluation loops.  use old state whenever it is
 -- enough.
 documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> GlobalState -> GlobalDocumentState -> GlobalDocumentState
-documentStateUpdate (OpenDocument cvdoc) oldgs _newgs st
+documentStateUpdate (LoadDocument (AfterAjax cvdoc)) oldgs _newgs st
   = let eidChanged = Just newID /= mOldID
         newID  = cvdoc ^. compositeVDocThisEditID
         mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID

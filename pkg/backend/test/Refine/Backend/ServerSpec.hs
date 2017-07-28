@@ -146,6 +146,7 @@ sampleCreateVDoc = CreateVDoc
   (Title "[title]")
   (Abstract "[abstract]")
   (rawContentToVDocVersion . mkRawContent $ mkBlock "[versioned content]" :| [])
+  defaultGroupID
 
 respCode :: SResponse -> Int
 respCode = statusCode . simpleStatus
@@ -216,9 +217,6 @@ mkTestUserAndEditAndLogin sess = addTestUserAndLogin sess >> mkEdit sess
 uriStr :: URI -> SBS
 uriStr u =  cs $ "/" <> uriToString id u ""
 
-listVDocsUri :: SBS
-listVDocsUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SListVDocs)
-
 getVDocUri :: ID VDoc -> SBS
 getVDocUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetVDoc)
 
@@ -246,9 +244,6 @@ loginUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogin)
 logoutUri :: SBS
 logoutUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SLogout)
 
-addProcessUri :: SBS
-addProcessUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddProcess)
-
 changeRoleUri :: SBS
 changeRoleUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SChangeRole)
 
@@ -272,25 +267,6 @@ spec = do -- FUTUREWORK: mark this as 'parallel' (needs some work)
 
 specMockedLogin :: Spec
 specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
-  describe "sListVDocs" $ do
-    it "returns a vdocs list with HTTP status 200" $ \sess -> do
-      resp :: SResponse <- runWai sess $ wget listVDocsUri
-      respCode resp `shouldBe` 200
-
-    it "yields the same vdocs list as the db" $ \sess -> do
-      vdocsRest :: SResponse <- runWai sess $ wget listVDocsUri
-      vdocsDB   :: [VDoc]    <- runDB  sess   App.listVDocs
-      decode (simpleBody vdocsRest) `shouldBe` Just vdocsDB
-
-    it "if a vdoc is created, it shows in the output" $ \sess -> do
-      bef <- runWai sess $ wget listVDocsUri
-      _   <- runDB  sess $ App.createVDoc sampleCreateVDoc
-      aft <- runWai sess $ wget listVDocsUri
-      let test :: SResponse -> Int
-          test resp = either (\msg -> error $ unwords [show msg, cs $ simpleBody resp]) length
-                       $ eitherDecode @[VDoc] (simpleBody resp)
-      test aft `shouldBe` (test bef + 1)
-
   describe "sGetVDoc" $ do
     it "retrieves a vdoc" $ \sess -> do
       vdoc <- runDB sess $ App.createVDoc sampleCreateVDoc
@@ -374,16 +350,11 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
 
   describe "sAddEdit, sUpdateEdit" $ do
     let samplevdoc = rawContentToVDocVersion . mkRawContent $ mkBlock "[new vdoc version]" :| []
-    let setup sess = runWai sess $ do
-          let group = UniversalGroup
+    let setup sess = do
+         group <- fmap (^. groupID) . runDB sess $ App.addGroup (CreateGroup "title" "desc" [] [])
+         runWai sess $ do
           _l :: User <- postJSON loginUri (Login testUsername testPassword)
-          (CreatedCollabEditProcess _fp fc) :: CreatedProcess <-
-            postJSON addProcessUri
-              (AddCollabEditProcess CreateCollabEditProcess
-                { _createCollabEditProcessPhase = CollaborativeEditOnlyPhase
-                , _createCollabEditProcessGroup = group
-                , _createCollabEditProcessVDoc  = sampleCreateVDoc
-                })
+          fc :: CompositeVDoc <- postJSON createVDocUri sampleCreateVDoc
 
           userId <- liftIO . runDB sess $ do
             (Just loginId) <- dbUsersCmd $ \db_ -> Users.getUserIdByName db_ testUsername
@@ -406,20 +377,18 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
 
     context "on edit without ranges" $ do
       it "stores an edit and returns its version" $ \sess -> do
-        pendingWith "#411"
         (_, fp) <- setup sess
         be' :: VDocVersion <- runDB sess . db . getVersion $ fp ^. editID
         be' `shouldBe` samplevdoc
 
       it "stores an edit and returns it in the list of edits applicable to its base" $ \sess -> do
-        pendingWith "applicableEdits is not implemented.  (also, #411)"
+        pendingWith "applicableEdits is not implemented."
         (fe, fp) <- setup sess
         be :: CompositeVDoc <- runDB sess $ getCompositeVDocOnHead (fe ^. compositeVDoc . vdocID)
         be ^. compositeVDocApplicableEdits . to Map.elems`shouldContain` [fp]
 
     describe "sUpdateEdit" $ do
       it "works" $ \sess -> do
-        pendingWith "#411"
         (_, fp) <- setup sess
 
         let d = rawContentToVDocVersion . mkRawContent $ mkBlock "1234567890" :| []
@@ -596,7 +565,7 @@ specVoting = around createTestSession $ do
       let blocks = mkBlock <$> ["first line", "second line", "third line"]
           vdoc ~(b:bs) = rawContentToVDocVersion . mkRawContent $ b :| bs
 
-      cvdoc <- mkCVDoc sess $ CreateVDoc (Title "[title]") (Abstract "[abstract]") (vdoc blocks)
+      cvdoc <- mkCVDoc sess $ CreateVDoc (Title "[title]") (Abstract "[abstract]") (vdoc blocks) defaultGroupID
 
       let ce1 :: CreateEdit = CreateEdit "description" (vdoc [head blocks, blocks !! 1]) Grammar
           ce2 :: CreateEdit = CreateEdit "description" (vdoc [head blocks, blocks !! 2]) Grammar

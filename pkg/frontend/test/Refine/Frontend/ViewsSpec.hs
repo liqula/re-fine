@@ -62,7 +62,7 @@ spec = do
     it "starts fine" $ do
       wrapper <- mount refineApp_
       contents :: String <- cs <$> html wrapper
-      contents `shouldContain` "Load a VDoc"
+      contents `shouldContain` "Username"
 
   describe "The mainScreen_ component" $ do
     it "initially the comment toolbar is visible" $ do

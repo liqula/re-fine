@@ -33,6 +33,7 @@ import           Test.QuickCheck.Monadic
 
 import Refine.Backend.App as App
 import Refine.Backend.Database
+import Refine.Backend.Server (defaultGroupID)
 import Refine.Backend.Test.AppRunner
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Test.Samples (sampleVDocVersion)
@@ -89,14 +90,13 @@ spec = do
     it "db (or dbWithFilters) can be called twice inside the same AppM" $ \(runner :: AppM DB () -> IO ()) -> do
       runner $ do
         void $ do
-          let createGroup1 = CreateGroup "group1" "desc1" [] [] False
-              createGroup2 = CreateGroup "group2" "desc2" [] [] False
+          let createGroup1 = CreateGroup "group1" "desc1" [] []
+              createGroup2 = CreateGroup "group2" "desc2" [] []
               sameGroupInfo cgrp grp = and
                 [ cgrp ^. createGroupTitle     == grp ^. groupTitle
                 , cgrp ^. createGroupDesc      == grp ^. groupDesc
                 , cgrp ^. createGroupParents   == grp ^. groupParents
                 , cgrp ^. createGroupChildren  == grp ^. groupChildren
-                , cgrp ^. createGroupUniversal == grp ^. groupUniversal
                 ]
           grp1 <- App.addGroup createGroup1
           grp2 <- App.addGroup createGroup2
@@ -107,7 +107,7 @@ spec = do
   describe "Regression" . around provideAppRunner $ do
     it "Regression test program" $ \(runner :: AppM DB () -> IO ()) -> do
       let program =
-            [ AddVDoc (CreateVDoc (Title "title...") (Abstract "abstract...") sampleVDocVersion)
+            [ AddVDoc (CreateVDoc (Title "title...") (Abstract "abstract...") sampleVDocVersion defaultGroupID)
             , AddEditToHead 0 sampleCreateEdit1
             ]
       runner . runIdentityT $ runProgram program `evalStateT` initVDocs
@@ -116,7 +116,7 @@ spec = do
     let vdoc = rawContentToVDocVersion . mkRawContent . NEL.fromList . map mkBlock
 
         docWithEdits v0 vs = do
-          doc <- App.createVDoc . CreateVDoc (Title "title...") (Abstract "abstract...") $ vdoc v0
+          doc <- App.createVDoc $ CreateVDoc (Title "title...") (Abstract "abstract...") (vdoc v0) defaultGroupID
           let eid = doc ^. vdocHeadEdit
               vid = doc ^. vdocID
           es <- forM vs $ \v -> fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc v) Meaning
@@ -219,6 +219,7 @@ arbitraryCreateVDoc =
     <$> (Title <$> word)
     <*> (Abstract . mconcat <$> listOf word)
     <*> (rawContentToVDocVersion <$> arbitrary @RawContent)
+    <*> pure defaultGroupID
 
 sampleProgram :: Gen [Cmd]
 sampleProgram = do

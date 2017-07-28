@@ -27,15 +27,23 @@ module Refine.Frontend.MainMenu.Component where
 import Refine.Frontend.Prelude
 
 -- import           Data.Text.I18n (Locale(..))
+import qualified Data.Text as ST
 import           Language.Css.Syntax
 
+import           React.Flux.Missing
+import           Refine.Common.Types
+import           Refine.Common.Test.Samples
+import           Refine.Frontend.Types
 import qualified Refine.Frontend.Colors as Colors
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Component
 import           Refine.Frontend.Login.Status
 import           Refine.Frontend.MainMenu.Types
+import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Util
+import           Refine.Frontend.Contribution.Dialog (contributionDialogTextForm)
+import qualified Refine.Prelude.BuildInfo as BuildInfo
 
 
 topMenuBarInMainMenu :: HasCallStack => View '[TopMenuBarInMainMenuProps]
@@ -49,17 +57,11 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
         & ibLabel .~ mempty
 
     div_ ["className" $= "gr-20"] $ do
-      ibutton_ $ emptyIbuttonProps "Process" [MainMenuAction $ MainMenuActionOpen MainMenuProcess]
-        & ibListKey .~ "2"
-        & ibDarkBackground .~ True
-        & ibHighlightWhen .~ (if currentTab == MainMenuProcess then HighlightAlways else HighlightOnMouseOver)
-        & ibSize .~ XXLarge
-        & ibLabel .~ mempty
 
-      ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction $ MainMenuActionOpen MainMenuGroup]
+      ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()]
         & ibListKey .~ "3"
         & ibDarkBackground .~ True
-        & ibHighlightWhen .~ (if currentTab == MainMenuGroup then HighlightAlways else HighlightOnMouseOver)
+        & ibHighlightWhen .~ (if currentTab & has _MainMenuGroup then HighlightAlways else HighlightOnMouseOver)
         & ibSize .~ XXLarge
         & ibLabel .~ mempty
 
@@ -105,7 +107,7 @@ tabStyles =
   , decl "borderRadius" (Px 12)
   ]
 
-mainMenu :: HasCallStack => View '[MainMenuProps MainMenuTab]
+mainMenu :: HasCallStack => View '[MainMenuProps MainMenuTabProps]
 mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
   div_ ["className" $= "row row-align-middle c-mainmenu-content"] $ do
     div_ ["className" $= "grid-wrapper"] $ do
@@ -116,14 +118,73 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
            , "style" @@= tabStyles
            ] $ do
         case currentTab of
-          MainMenuProcess      -> "[MainMenuProcess]"
-          MainMenuGroup        -> "[MainMenuGroup]"
-          MainMenuHelp         -> "[MainMenuHelp]"
+          MainMenuGroups groups -> div_ $ do
+            h1_ "Groups"
+            br_ []
+            toButton `mapM_` groups
+            br_ []
+            br_ []
+            button_ [ "id" $= "add-vdoc-to-backend"
+                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup Nothing . FormOngoing $ newLocalStateRef (CreateGroup "" "" [] []) groups
+                    ] $
+                    elemString "Create new group"
+            where
+              toButton :: HasCallStack => Group -> ReactElementM 'EventHandlerCode ()
+              toButton group = button_
+                [ "id" $= cs ("load-group-list" <> show (group ^. groupID . unID))
+                , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuGroup $ group ^. groupID
+                ]
+                (elemText $ group ^. groupTitle)
+
+          MainMenuGroup group -> div_ $ do
+            h1_ . elemText $ "Group " <> (group ^. groupTitle)
+            elemText $ group ^. groupDesc
+            br_ []
+            br_ []
+            elemText "Processes: "
+            toButton `mapM_` (group ^. groupVDocs)
+            br_ []
+            br_ []
+            button_ [ "id" $= "create-process"
+                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormOngoing
+                        $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract sampleVDocVersion gid) group
+                    ] $
+                    elemString "Create new process"
+            br_ []
+            button_ [ "id" $= "update-group"
+                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup (Just gid) . FormOngoing $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
+                    ] $
+                    elemString "Update group details"
+            br_ []
+            button_ [ "id" $= "group-back"
+                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()
+                    ] $
+                    elemString "Back"
+            where
+              gid = group ^. groupID
+
+              toButton :: HasCallStack => ID VDoc -> ReactElementM 'EventHandlerCode ()
+              toButton vdoc = button_
+                [ "id" $= cs ("load-group-list" <> show (vdoc ^. unID))
+                , onClick $ \_ _ -> simpleHandler . dispatch . LoadDocument $ BeforeAjax vdoc
+                ]
+                (elemText . cs . show $ vdoc ^. unID)
+
+          MainMenuCreateGroup mid lst -> createGroup_ mid lst
+
+          MainMenuCreateProcess lst -> createProcess_ lst
+
+          MainMenuHelp -> pre_ $ do
+            elemString $ "commit hash: " <> show BuildInfo.gitCommitHash
+            "\n"
+            elemString $ "build timestamp: " <> show BuildInfo.gitBuildTimestamp
+            "\n"
+
           MainMenuLogin subtab -> mainMenuLoginTab_ (MainMenuProps subtab menuErrors currentUser)
       div_ [ "className" $= "gr-2" ] $ do
         pure ()
 
-mainMenu_ :: HasCallStack => MainMenuProps MainMenuTab -> ReactElementM eventHandler ()
+mainMenu_ :: HasCallStack => MainMenuProps MainMenuTabProps -> ReactElementM eventHandler ()
 mainMenu_ = view_ mainMenu "mainMenu_"
 
 
@@ -152,3 +213,68 @@ mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuEr
 
 mainMenuLoginTab_ :: HasCallStack => MainMenuProps MainMenuSubTabLogin -> ReactElementM eventHandler ()
 mainMenuLoginTab_ = view_ mainMenuLoginTab "mainMenuLoginTab_"
+
+
+createGroup :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> View '[]
+createGroup mid lst = mkPersistentStatefulView "CreateGroup" lst $
+  \st@(CreateGroup title desc _ _) -> do
+
+    contributionDialogTextForm createGroupTitle st 2 "group title"
+    hr_ []
+    contributionDialogTextForm createGroupDesc st 2 "group description"
+    hr_ []
+
+    let enableOrDisable props = if ST.null desc || ST.null title
+          then props
+            & iconButtonPropsDisabled     .~ True
+          else props
+            & iconButtonPropsDisabled     .~ False
+            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup mid $ FormComplete st
+                                             ]
+
+    -- FIXME: make new button, like in 'commentInput_' above.  we
+    -- don't have to save this in global state until the 'editInput_'
+    -- dialog is closed again without save or cancel.
+    iconButton_ $ defaultIconButtonProps @[GlobalAction]
+            & iconButtonPropsListKey      .~ "save"
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
+            & iconButtonPropsElementName  .~ "btn-index"
+            & iconButtonPropsLabel        .~ maybe "save" (const "update") mid
+            & iconButtonPropsAlignRight   .~ True
+            & enableOrDisable
+
+createGroup_ :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> ReactElementM eventHandler ()
+createGroup_ mid lst = view_ (createGroup mid lst) "createGroup"
+
+createProcess :: HasCallStack => LocalStateRef CreateVDoc -> View '[]
+createProcess lst = mkPersistentStatefulView "CreateProcess" lst $
+  \st@(CreateVDoc title _ _ _) -> do
+
+    contributionDialogTextForm (createVDocTitle . unTitle) st 2 "title"
+    hr_ []
+    contributionDialogTextForm (createVDocAbstract . unAbstract) st 2 "abstract"
+    hr_ []
+    contributionDialogTextForm (createVDocInitVersion . unVDocVersion) st 2 "initial version"
+    hr_ []
+
+    let enableOrDisable props = if ST.null (title ^. unTitle)
+          then props
+            & iconButtonPropsDisabled     .~ True
+          else props
+            & iconButtonPropsDisabled     .~ False
+            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess $ FormComplete st
+                                             ]
+
+    -- FIXME: make new button, like in 'commentInput_' above.  we
+    -- don't have to save this in global state until the 'editInput_'
+    -- dialog is closed again without save or cancel.
+    iconButton_ $ defaultIconButtonProps @[GlobalAction]
+            & iconButtonPropsListKey      .~ "save"
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
+            & iconButtonPropsElementName  .~ "btn-index"
+            & iconButtonPropsLabel        .~ "save"
+            & iconButtonPropsAlignRight   .~ True
+            & enableOrDisable
+
+createProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
+createProcess_ lst = view_ (createProcess lst) "createProcess"

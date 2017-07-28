@@ -1,5 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE DeriveGeneric   #-}
+{-# LANGUAGE LambdaCase      #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Refine.Frontend.MainMenu.Types where
@@ -8,14 +9,17 @@ import Refine.Frontend.Prelude
 
 import GHC.Generics (Generic)
 
+import React.Flux.Missing
+import Refine.Common.Types
 import Refine.Common.Rest (ApiErrorCreateUser)
 import Refine.Common.Types.Prelude (Username)
+import Refine.Frontend.Types
 import Refine.Frontend.Login.Types
 
 
 data MainMenuAction
   = MainMenuActionClose
-  | MainMenuActionOpen MainMenuTab
+  | MainMenuActionOpen MainMenuTabAction
   | MainMenuActionLoginError        Username
   | MainMenuActionRegistrationError ApiErrorCreateUser
   | MainMenuActionClearErrors
@@ -41,24 +45,51 @@ data MainMenuState = MainMenuState
 
 emptyMainMenuState :: HasCallStack => MainMenuState
 emptyMainMenuState = MainMenuState
-  { _mmState  = MainMenuClosed
+  { _mmState  = MainMenuOpen $ MainMenuLogin MainMenuSubTabLogin
   , _mmErrors = defaultMainMenuErrors
   }
 
 data MainMenu
   = MainMenuClosed
-  | MainMenuOpen { _mainMenuOpenTab :: MainMenuTab }
+  | MainMenuOpen { _mainMenuOpenTab :: MainMenuTabState }
   deriving (Eq, Show, Generic)
 
-data MainMenuTab
-  = MainMenuProcess
-  | MainMenuGroup
+type MainMenuTabState = MainMenuTab
+      ()
+      (ID Group)
+      (LocalStateRef CreateGroup)
+      (LocalStateRef CreateVDoc)
+type MainMenuTabAction = MainMenuTab
+      (AjaxAction () [ID Group])
+      (ID Group)
+      (FormAction CreateGroup)
+      (FormAction CreateVDoc)
+type MainMenuTabProps = MainMenuTab
+      [Group]
+      Group
+      (LocalStateRef CreateGroup)
+      (LocalStateRef CreateVDoc)
+
+data MainMenuTab gids group cgroup cprocess
+  = MainMenuGroups gids
+  | MainMenuGroup group
+  | MainMenuCreateGroup (Maybe (ID Group)) cgroup
+  | MainMenuCreateProcess cprocess
   | MainMenuHelp
   | MainMenuLogin MainMenuSubTabLogin
   deriving (Eq, Show, Generic)
 
-defaultMainMenuTab :: HasCallStack => MainMenuTab
-defaultMainMenuTab = MainMenuProcess
+mapMainMenuTab :: (a -> a') -> (b -> b') -> (c -> c') -> (d -> d') -> MainMenuTab a b c d -> MainMenuTab a' b' c' d'
+mapMainMenuTab fa fb fc fd = \case
+  MainMenuGroups a -> MainMenuGroups (fa a)
+  MainMenuGroup b  -> MainMenuGroup (fb b)
+  MainMenuCreateGroup u c -> MainMenuCreateGroup u (fc c)
+  MainMenuCreateProcess d -> MainMenuCreateProcess (fd d)
+  MainMenuHelp     -> MainMenuHelp
+  MainMenuLogin l  -> MainMenuLogin l
+
+defaultMainMenuTab :: MainMenuTabAction
+defaultMainMenuTab = MainMenuGroups $ BeforeAjax ()
 
 data MainMenuSubTabLogin = MainMenuSubTabLogin | MainMenuSubTabRegistration
   deriving (Eq, Show, Generic)
@@ -71,7 +102,7 @@ data MainMenuProps tab = MainMenuProps
   deriving (Eq)
 
 data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
-  { _tmbimmpMainMenuTab    :: MainMenuTab
+  { _tmbimmpMainMenuTab    :: MainMenuTabProps
   , _tmbimmpCurrentUser    :: CurrentUser
   }
   deriving (Eq)

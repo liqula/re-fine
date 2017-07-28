@@ -40,7 +40,7 @@ import           Data.Maybe (catMaybes)
 import           Refine.Backend.App.Core
 import           Refine.Backend.App.User (currentUser)
 import qualified Refine.Backend.Database.Class as DB
-import           Refine.Common.Allow
+--import           Refine.Common.Allow
 import           Refine.Common.Types
 import           Refine.Common.Types.Core (OTDoc)
 import qualified Refine.Common.OT as OT
@@ -101,7 +101,7 @@ getCompositeVDoc' vdoc editid = do
     toMap selector = Map.fromList . fmap (view selector &&& id)
 
 updateEdit
-  :: (MonadApp db, Allow (DB.ProcessPayload Edit) Edit)
+  :: (MonadApp db{-, Allow (DB.ProcessPayload Edit) Edit-})   -- FIXME
   => ID Edit -> Create Edit -> AppM db Edit
 updateEdit eid edit = do
   appLog "updateEdit"
@@ -123,7 +123,7 @@ updateEdit eid edit = do
     DB.getEdit eid
 
 addEdit
-  :: (MonadApp db, Allow (DB.ProcessPayload Edit) Edit)
+  :: (MonadApp db{-, Allow (DB.ProcessPayload Edit) Edit-})  -- FIXME
   => ID Edit -> Create Edit -> AppM db Edit
 addEdit baseeid edit = do
   appLog "addEdit"

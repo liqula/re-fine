@@ -57,9 +57,9 @@ shallow comp = do
 shallowChild :: ShallowWrapper -> IO ShallowWrapper
 shallowChild = exec "shallow"
 
--- TODO: simulate(event, data)
+-- FIXME: simulate(event, data)
 
--- TODO: dive
+-- FIXME: dive
 
 
 -- * Helper functions.

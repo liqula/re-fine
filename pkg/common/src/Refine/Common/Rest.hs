@@ -54,8 +54,7 @@ data ApiErrorCreateUser
 --
 -- FUTUREWORK: use https://github.com/chpatrick/servant-generic#tldr
 type RefineAPI =
-       SListVDocs
-  :<|> SGetVDoc
+       SGetVDoc
   :<|> SCreateVDoc
   :<|> SAddEdit
   :<|> SUpdateEdit
@@ -69,19 +68,14 @@ type RefineAPI =
   :<|> SLogout
   :<|> SGetTranslations
   :<|> SAddGroup
+  :<|> SUpdateGroup
+  :<|> SGetGroups
   :<|> SChangeSubGroup
   :<|> SChangeRole
-  :<|> SAddProcess
-  :<|> SChangeProcess
-  :<|> SRemoveProcess
   :<|> SPutSimpleVoteOnEdit
   :<|> SDeleteSimpleVoteOnEdit
   :<|> SGetSimpleVotesOnEdit
 
-
-type SListVDocs
-  = "r" :> "vdocs"
-    :> Get '[JSON] [VDoc]
 
 type SGetVDoc
   = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc)
@@ -143,24 +137,20 @@ type SAddGroup
   = "r" :> "group" :> ReqBody '[JSON] (Create Group)
     :> Post '[JSON] Group
 
+type SUpdateGroup
+  = "r" :> "updateGroup" :> Capture "ongroupid" (ID Group) :> ReqBody '[JSON] (Create Group)
+    :> Put '[JSON] Group
+
+type SGetGroups
+  = "r" :> "get-groups"
+    :> Get '[JSON] [Group]
+
 type SChangeSubGroup
   = "r" :> "subgroup" :> ReqBody '[JSON] ChangeSubGroup
     :> Post '[JSON] ()
 
 type SChangeRole
   = "r" :>  "role" :> ReqBody '[JSON] ChangeRole
-    :> Post '[JSON] ()
-
-type SAddProcess
-  = "r" :> "process" :> ReqBody '[JSON] AddProcess
-    :> Post '[JSON] CreatedProcess
-
-type SChangeProcess
-  = "r" :> "process" :> "change" :> ReqBody '[JSON] ChangeProcess
-    :> Post '[JSON] ()
-
-type SRemoveProcess
-  = "r" :> "process" :> "remove" :> ReqBody '[JSON] RemoveProcess
     :> Post '[JSON] ()
 
 
