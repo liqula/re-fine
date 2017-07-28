@@ -153,12 +153,15 @@ main = shakeArgs refineOptions $ do
 
   phony "hlint-common" $ do
     hlintPackage pkgCommon
+    hlintPath "pkg/common/scaffolding/Main.hs"
 
   phony "hlint-backend" $ do
     hlintPackage pkgBackend
+    hlintPath "pkg/backend/app/Main.hs"
 
   phony "hlint-frontend" $ do
     hlintPackage pkgFrontend
+    hlintPath "pkg/frontend/app/Main.hs"
 
   phony "hlint" $ do
     need ["hlint-prelude", "hlint-common", "hlint-backend", "hlint-frontend"]
