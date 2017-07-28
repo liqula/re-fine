@@ -108,10 +108,13 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
   it "renders the landing page" . runWD $ do
     onEl [ByCSS "h1"] $ \el -> do
       txt <- getText el
-      txt `shouldSatisfy` ("Load a VDoc" `ST.isInfixOf`)
+      txt `shouldSatisfy` ("Login" `ST.isInfixOf`)
 
   it "create new process" . runWD $ do
-    onEl [ByCSS "#add-vdoc-to-backend"] click
+    onEl [ByCSS ".icon-Group_bright"] click
+    onEl [ByCSS "#load-group-list1"] click
+    onEl [ByCSS "#create-process"] click
+    onEl [ByCSS ".icon-Save_bright"] click
     onEls [ByCSS "h1"] $ \els -> do
       txt <- mconcat <$> (getText `mapM` els)
       txt `shouldSatisfy` ("Gesellschaftsvertrag" `ST.isInfixOf`)
