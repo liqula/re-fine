@@ -214,13 +214,13 @@ editLinkInput_ link = view_ (editLinkInput link) "editLinkInput_"
 indexToolbarExtension :: View '[IndexToolbarProps]
 indexToolbarExtension = mkView "IndexToolbarExtension" $ \case
   Nothing -> mempty
-  Just is -> frame . forM_ (zip [0 :: Int ..] is) $ \(i, title) -> do
+  Just is -> frame . forM_ (zip [0 :: Int ..] is) $ \(i, item) -> do
     iconButton_
       $ defaultIconButtonProps @[GlobalAction]
       & iconButtonPropsListKey      .~ ("index-" <> cs (show i))
 -- FIXME      & iconButtonPropsElementName  .~ "btn-new-ann-text" -- RENAME: ann => comment
-      & iconButtonPropsLabel        .~ cs title
--- TODO     & iconButtonPropsOnClick      .~ [HeaderAction StartTextSpecificComment]
+      & iconButtonPropsLabel        .~ cs (item ^. indexItemTitle)
+      & iconButtonPropsOnClick      .~ [HeaderAction . ScrollToBlockKey $ item ^. indexItemBlockKey]
       & iconButtonPropsOnClickMods  .~ [StopPropagation]
     br_ []
   where

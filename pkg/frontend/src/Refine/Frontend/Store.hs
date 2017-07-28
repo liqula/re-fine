@@ -120,6 +120,9 @@ transformGlobalState = transf
 
         HeaderAction ScrollToPageTop -> liftIO js_scrollToPageTop
 
+        HeaderAction (ScrollToBlockKey (C.BlockKey k)) -> liftIO . js_scrollToBlockKey $ cs k
+
+
         LoginGuardStash actions -> do
           case st ^. gsLoginState . lsCurrentUser of
             UserLoggedOut  -> dispatchAndExec . MainMenuAction . MainMenuActionOpen . MainMenuLogin $ MainMenuSubTabLogin

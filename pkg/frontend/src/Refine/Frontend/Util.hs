@@ -160,6 +160,11 @@ foreign import javascript safe
   "scrollBy(0, $1-pageYOffset)"
   js_scrollToPx :: Int -> IO ()
 
+-- TODO: replace 100 by the height of the menu bar
+foreign import javascript safe
+  "scrollBy(0, document.querySelector(\"span[data-offset-key='\" + $1 + \"-0-0']\").getBoundingClientRect().top - 100)"
+  js_scrollToBlockKey :: JSString -> IO ()
+
 #else
 
 {-# ANN (===) ("HLint: ignore Use camelCase" :: String) #-}
@@ -181,5 +186,9 @@ js_scrollToPageTop = error "javascript FFI not available in GHC"
 {-# ANN js_scrollToPx ("HLint: ignore Use camelCase" :: String) #-}
 js_scrollToPx :: Int -> IO ()
 js_scrollToPx = error "javascript FFI not available in GHC"
+
+{-# ANN js_scrollToBlockKey ("HLint: ignore Use camelCase" :: String) #-}
+js_scrollToBlockKey :: JSString -> IO ()
+js_scrollToBlockKey = error "javascript FFI not available in GHC"
 
 #endif

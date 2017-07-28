@@ -168,8 +168,13 @@ mainHeaderRender () rs = do
 mkIndexToolbarProps :: MainHeaderProps -> IndexToolbarProps
 mkIndexToolbarProps rs
   | rs ^. gsHeaderState . hsToolbarExtensionStatus == IndexToolbarExtension
-  = (\(RawContent bs _) -> [b ^. blockText{-blockKey . unBlockKey-} | b <- NEL.toList bs, _ <- maybeToList . headerDepth $ b ^. blockType]) . rawContentFromVDocVersion . _editVDocVersion <$> gsEdit rs
+  = mkIndex . rawContentFromVDocVersion . _editVDocVersion <$> gsEdit rs
   | otherwise = Nothing
+  where
+    mkIndex (RawContent bs _) =
+      [ IndexItem (b ^. blockKey) (b ^. blockText) depth
+      | b <- NEL.toList bs, depth <- maybeToList . headerDepth $ b ^. blockType
+      ]
 
 headerDepth :: BlockType -> Maybe Int
 headerDepth = \case

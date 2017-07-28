@@ -46,6 +46,8 @@ toolbarExtensionUpdate :: HasCallStack => GlobalAction -> ToolbarExtensionStatus
 toolbarExtensionUpdate act st = case (st, act) of
     (ToolbarExtensionClosed,               HeaderAction ToggleIndexToolbarExtension)   -> IndexToolbarExtension
     (IndexToolbarExtension,                HeaderAction ToggleIndexToolbarExtension)   -> ToolbarExtensionClosed
+    (_,                                    HeaderAction ScrollToBlockKey{})            -> ToolbarExtensionClosed
+
     (ToolbarExtensionClosed,               HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithoutRange
     (CommentToolbarExtensionWithoutRange,  ContributionAction ShowCommentEditor)       -> ToolbarExtensionClosed
     (CommentToolbarExtensionWithoutRange,  HeaderAction ToggleCommentToolbarExtension) -> ToolbarExtensionClosed

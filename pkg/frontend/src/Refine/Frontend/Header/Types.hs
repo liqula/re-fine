@@ -40,6 +40,7 @@ data HeaderAction =
   | CloseToolbarExtension
   | ToggleReadOnly
   | ScrollToPageTop
+  | ScrollToBlockKey BlockKey
   -- ScrollToDocumentTop
   | OpenEditToolbarLinkEditor ST
   deriving (Show, Eq, Generic)
@@ -71,7 +72,13 @@ data TopMenuBarProps = TopMenuBarProps
  } deriving (Eq, Generic)
 
 
-type IndexToolbarProps = Maybe [ST]
+type IndexToolbarProps = Maybe [IndexItem]
+
+data IndexItem = IndexItem
+  { _indexItemBlockKey :: BlockKey
+  , _indexItemTitle    :: ST
+  , _indexItemDepth    :: Int
+  } deriving (Show, Eq, Generic)
 
 
 data DiffToolbarProps = DiffToolbarProps
@@ -103,4 +110,4 @@ mkEditIndex e i = EditIndex (Set.size es) (fromMaybe (error "impossible") $ Set.
     es = e ^. editChildren
 
 
-makeRefineTypes [''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState, ''DiffToolbarProps, ''TopMenuBarProps, ''EditIndex]
+makeRefineTypes [''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState, ''DiffToolbarProps, ''TopMenuBarProps, ''EditIndex, ''IndexItem]
