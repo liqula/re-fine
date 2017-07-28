@@ -168,6 +168,7 @@ mainHeaderRender () rs = do
 mkIndexToolbarProps :: MainHeaderProps -> IndexToolbarProps
 mkIndexToolbarProps rs
   | rs ^. gsHeaderState . hsToolbarExtensionStatus == IndexToolbarExtension
+  && fromMaybe True (not <$> rs ^? gsDocumentState . wipedDocumentStateDiffCollapsed)
   = mkIndex . rawContentFromVDocVersion . _editVDocVersion <$> gsEdit rs
   | otherwise = Nothing
   where

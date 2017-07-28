@@ -138,5 +138,5 @@ emptyDocumentProps = DocumentProps
 
 deriveClasses
   [ ([''DocumentAction, ''DocumentState_], allClass)
-  , ([''DocumentProps], [''Lens'])
+  , ([''DocumentProps, ''WipedDocumentState], [''Lens'])
   ]
