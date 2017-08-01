@@ -329,8 +329,8 @@ yScrollTo y = do
 
 checkScrollHappensOn :: Element -> WD a -> WD a
 checkScrollHappensOn el act = do
-  (w, _) <- elemPos el
+  (w, h) <- elemPos el
   a <- act
-  (w', _) <- elemPos el
-  when (w /= w') . throw $ ErrorCall "no scroll happend"
+  (w', h') <- elemPos el
+  when (w /= w' || h == h') . throw . ErrorCall $ "no scroll happend: " <> show (w, h) <> " " <> show (w', h')
   pure a
