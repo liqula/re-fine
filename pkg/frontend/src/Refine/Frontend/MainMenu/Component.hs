@@ -207,34 +207,6 @@ mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
 mainMenuGroup_ :: HasCallStack => Group -> ReactElementM eventHandler ()
 mainMenuGroup_ = view_ mainMenuGroup "mainMenuGroup"
 
-
-mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]
-mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
-      let tabButton :: Int -> MainMenuSubTabLogin -> ReactElementM eventHandler ()
-          tabButton key this = div_ ["style" @@= [decl "marginLeft" (Px 40)]] $ do
-            ibutton_ $ emptyIbuttonProps "00_joker" [MainMenuAction . MainMenuActionOpen . MainMenuLogin $ this]
-              & ibListKey .~ cs (show key)
-              & ibDarkBackground .~ False
-              & ibHighlightWhen .~ (if currentTab == this then HighlightAlways else HighlightOnMouseOver)
-              & ibLabel .~ (case this of
-                             MainMenuSubTabLogin        -> "login"
-                             MainMenuSubTabRegistration -> "register")
-
-      div_ $ do
-        tabButton 0 MainMenuSubTabLogin
-        tabButton 1 MainMenuSubTabRegistration
-
-      br_ [] >> br_ [] >> br_ [] >> hr_ []
-
-      div_ $ do
-        case currentTab of
-          MainMenuSubTabLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
-          MainMenuSubTabRegistration -> registration_  (menuErrors ^. mmeRegistration)
-
-mainMenuLoginTab_ :: HasCallStack => MainMenuProps MainMenuSubTabLogin -> ReactElementM eventHandler ()
-mainMenuLoginTab_ = view_ mainMenuLoginTab "mainMenuLoginTab_"
-
-
 -- | FUTUREWORK: should this be @View '[LocalStateRef CreateGroup]@ or @View '[Maybe (ID Group),
 -- LocalStateRef CreateGroup]@?  (same with 'mainMenuCreateProcess'.)
 createGroup :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> View '[]
@@ -300,3 +272,30 @@ createProcess lst = mkPersistentStatefulView "CreateProcess" lst $
 
 createProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
 createProcess_ lst = view_ (createProcess lst) "createProcess"
+
+
+mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]
+mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
+      let tabButton :: Int -> MainMenuSubTabLogin -> ReactElementM eventHandler ()
+          tabButton key this = div_ ["style" @@= [decl "marginLeft" (Px 40)]] $ do
+            ibutton_ $ emptyIbuttonProps "00_joker" [MainMenuAction . MainMenuActionOpen . MainMenuLogin $ this]
+              & ibListKey .~ cs (show key)
+              & ibDarkBackground .~ False
+              & ibHighlightWhen .~ (if currentTab == this then HighlightAlways else HighlightOnMouseOver)
+              & ibLabel .~ (case this of
+                             MainMenuSubTabLogin        -> "login"
+                             MainMenuSubTabRegistration -> "register")
+
+      div_ $ do
+        tabButton 0 MainMenuSubTabLogin
+        tabButton 1 MainMenuSubTabRegistration
+
+      br_ [] >> br_ [] >> br_ [] >> hr_ []
+
+      div_ $ do
+        case currentTab of
+          MainMenuSubTabLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
+          MainMenuSubTabRegistration -> registration_  (menuErrors ^. mmeRegistration)
+
+mainMenuLoginTab_ :: HasCallStack => MainMenuProps MainMenuSubTabLogin -> ReactElementM eventHandler ()
+mainMenuLoginTab_ = view_ mainMenuLoginTab "mainMenuLoginTab_"
