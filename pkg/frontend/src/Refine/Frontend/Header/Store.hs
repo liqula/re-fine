@@ -48,6 +48,7 @@ toolbarExtensionUpdate act st = case (st, act) of
     (ToolbarExtensionClosed,               HeaderAction ToggleIndexToolbarExtension)   -> IndexToolbarExtension
     (IndexToolbarExtension,                HeaderAction ToggleIndexToolbarExtension)   -> ToolbarExtensionClosed
     (IndexToolbarExtension,                DocumentAction ToggleCollapseDiff)          -> ToolbarExtensionClosed
+    (IndexToolbarExtension,                HeaderAction StartEdit)                     -> ToolbarExtensionClosed
     (IndexToolbarExtension,                ContributionAction ShowContributionDialog{})-> ToolbarExtensionClosed
     (IndexToolbarExtension,                ContributionAction HideContributionDialog)  -> ToolbarExtensionClosed
     (_,                                    HeaderAction ScrollToBlockKey{})            -> ToolbarExtensionClosed
