@@ -57,6 +57,10 @@ The complete set of rules is in `./Build.hs` and should be
 self-explanatory (at least for developers :).
 
 
+## Running the service locally
+
+See [docs/running.md](running).
+
 ## I18n
 
 Instead of translateable texts, use translation keys.  Translation
