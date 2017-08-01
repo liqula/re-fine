@@ -112,7 +112,7 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
 
   it "create new process" . runWD $ do
     onEl [ByCSS ".icon-Group_bright"] click
-    onEl [ByCSS "#load-group-list1"] click
+    onEl [ByCSS "#group-list-item-1"] click
     onEl [ByCSS "#create-process"] click
     onEl [ByCSS ".icon-Save_bright"] click
     onEls [ByCSS "h1"] $ \els -> do

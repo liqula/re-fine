@@ -101,7 +101,7 @@ tabStyles :: HasCallStack => [Decl]
 tabStyles =
   [ decl "position" (Ident "absolute")
   , zindex ZIxLoginTab
-  , decl "backgroundColor" Colors.SCBlue06
+  , decl "backgroundColor" Colors.MainmenuContentColor
   , decl "padding" (Px 50)
   , decl "borderRadius" (Px 12)
   ]
@@ -138,30 +138,83 @@ mainMenu_ = view_ mainMenu "mainMenu_"
 
 
 mainMenuGroups :: View '[[Group]]
-mainMenuGroups = mkView "mainMenuGroups" $ \groups -> do
+mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
   div_ $ do
-    h1_ "Groups"
-    br_ []
-    toButton `mapM_` groups
-    br_ []
-    br_ []
-    button_ [ "id" $= "add-vdoc-to-backend"
-            , onClick $ \_ _ -> simpleHandler . dispatch
-                              . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup Nothing . FormOngoing
+    div_ ["style" @@= [decl "marginLeft" (Px 3)]] $ do
+      let mkCreateGroupAction :: GlobalAction
+          mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup Nothing . FormOngoing
                               $ newLocalStateRef (CreateGroup "" "" [] []) groups
-            ] $
-            elemString "Create new group"
-    where
-      toButton :: HasCallStack => Group -> ReactElementM 'EventHandlerCode ()
-      toButton group = button_
-        [ "id" $= cs ("load-group-list" <> show (group ^. groupID . unID))
-        , onClick $ \_ _ -> simpleHandler . dispatch
-                          . MainMenuAction . MainMenuActionOpen . MainMenuGroup $ group ^. groupID
-        ]
-        (elemText $ group ^. groupTitle)
+
+      ibutton_ $ emptyIbuttonProps "Group_add" [mkCreateGroupAction]
+        & ibListKey .~ "create_group"
+        & ibSize .~ XLarge
+        & ibDarkBackground .~ False
+        & ibHighlightWhen .~ HighlightOnMouseOver
+        & ibLabel .~ "create group"
+
+    div_ $ do
+      br_ [] >> br_ [] >> br_ [] >> hr_ []
+
+    div_ $ do
+      mainMenuGroupShort_ `mapM_` groups
 
 mainMenuGroups_ :: HasCallStack => [Group] -> ReactElementM eventHandler ()
 mainMenuGroups_ = view_ mainMenuGroups "mainMenuGroups"
+
+mainMenuGroupShort :: HasCallStack => View '[Group]
+mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
+  let listKey = cs ("group-list-item-" <> show (group ^. groupID . unID))
+  div_ [ onClick $ \_ _ -> simpleHandler . dispatch
+                         . MainMenuAction . MainMenuActionOpen . MainMenuGroup $ group ^. groupID
+       , "id" $= listKey  -- FUTUREWORK: get rid of this.  at the time of writing this it's only
+                          -- used in the acceptance test.
+
+       , "style" @@= [ decl "background-color" Colors.SCBlue03
+                     , decl "padding" (Px 50)
+                     , decl "margin" (Px 50)
+                     , decl "borderRadius" (Px 12)
+                     ]
+       ] $ do
+
+    -- image (FIXME: allow the user to store one in the group and use that)
+    br_ []
+    ibutton_ $ emptyIbuttonProps "Group" ([] :: [GlobalAction])
+      & ibListKey .~ "group"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ True
+      & ibHighlightWhen .~ HighlightOnMouseOver
+      & ibLabel .~ mempty
+
+    -- title
+    br_ []
+    div_ [] $ do
+      elemText $ group ^. groupTitle
+
+    -- buttons for processes, users (FUTUREWORK: make those clickable in addition to the entire
+    -- tile.  clicking on 'users' button should get you there directly.)
+    br_ []
+    div_ [] $ do
+      let numProcesses :: Int = length $ group ^. groupVDocs
+      ibutton_ $ emptyIbuttonProps "Process" ([] :: [GlobalAction])
+        & ibListKey .~ (listKey <> "-processes")
+        & ibSize .~ Large
+        & ibDarkBackground .~ True
+        & ibHighlightWhen .~ HighlightOnMouseOver
+        & ibLabel .~ cs (show numProcesses)  -- FIXME: should be rendered differently, see click dummy
+
+      let numUsers :: Int = 13  -- FIXME
+      ibutton_ $ emptyIbuttonProps "User" ([] :: [GlobalAction])
+        & ibListKey .~ (listKey <> "-users")
+        & ibSize .~ Large
+        & ibDarkBackground .~ True
+        & ibHighlightWhen .~ HighlightOnMouseOver
+        & ibLabel .~ cs (show numUsers)  -- FIXME: should be rendered differently, see click dummy
+
+
+mainMenuGroupShort_ :: HasCallStack => Group -> ReactElementM eventHandler ()
+mainMenuGroupShort_ group = view_ mainMenuGroupShort listKey group
+  where
+    listKey = "mainMenuGroupShort-" <> (cs . show $ group ^. groupID . unID)
 
 mainMenuGroup :: View '[Group]
 mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
@@ -171,7 +224,7 @@ mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
 
       toButton :: HasCallStack => ID VDoc -> ReactElementM 'EventHandlerCode ()
       toButton vdoc = button_
-        [ "id" $= cs ("load-group-list" <> show (vdoc ^. unID))
+        [ "id" $= cs ("process-list-item-" <> show (vdoc ^. unID))
         , onClick $ \_ _ -> simpleHandler . dispatch . LoadDocument $ BeforeAjax vdoc
         ]
         (elemText . cs . show $ vdoc ^. unID)
