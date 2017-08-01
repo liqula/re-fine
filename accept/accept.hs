@@ -144,7 +144,7 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
 
   it "scroll to first heading" . runWD $ do
     onEl [ByCSS ".icon-Index_desktop_dark"] click
-    editor <- findElem $ ByCSS ".public-DraftEditor-content"
+    let editor = findElem $ ByCSS ".public-DraftEditor-content"
     checkScrollHappensOn editor $ onEl [ByCSS ".__index-heading-0"] click
 
   it "open edit mode" . runWD $ do
@@ -326,10 +326,10 @@ yScrollTo y = do
   (_ :: Value) <- executeJS [JSArg y] "scrollBy(arguments[0], -pageYOffset);"
   pure ()
 
-checkScrollHappensOn :: Element -> WD a -> WD a
+checkScrollHappensOn :: WD Element -> WD a -> WD a
 checkScrollHappensOn el act = do
-  (w, h) <- elemPos el
+  (w, h) <- elemPos =<< el
   a <- act
-  (w', h') <- elemPos el
+  (w', h') <- elemPos =<< el
   when (w /= w' || h == h') . throw . ErrorCall $ "no scroll happend: " <> show (w, h) <> " " <> show (w', h')
   pure a
