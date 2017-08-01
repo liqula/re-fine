@@ -140,25 +140,25 @@ mainMenu_ = view_ mainMenu "mainMenu_"
 mainMenuGroups :: View '[[Group]]
 mainMenuGroups = mkView "mainMenuGroups" $ \groups -> do
   div_ $ do
-            h1_ "Groups"
-            br_ []
-            toButton `mapM_` groups
-            br_ []
-            br_ []
-            button_ [ "id" $= "add-vdoc-to-backend"
-                    , onClick $ \_ _ -> simpleHandler . dispatch
-                                      . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup Nothing . FormOngoing
-                                      $ newLocalStateRef (CreateGroup "" "" [] []) groups
-                    ] $
-                    elemString "Create new group"
-            where
-              toButton :: HasCallStack => Group -> ReactElementM 'EventHandlerCode ()
-              toButton group = button_
-                [ "id" $= cs ("load-group-list" <> show (group ^. groupID . unID))
-                , onClick $ \_ _ -> simpleHandler . dispatch
-                                  . MainMenuAction . MainMenuActionOpen . MainMenuGroup $ group ^. groupID
-                ]
-                (elemText $ group ^. groupTitle)
+    h1_ "Groups"
+    br_ []
+    toButton `mapM_` groups
+    br_ []
+    br_ []
+    button_ [ "id" $= "add-vdoc-to-backend"
+            , onClick $ \_ _ -> simpleHandler . dispatch
+                              . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup Nothing . FormOngoing
+                              $ newLocalStateRef (CreateGroup "" "" [] []) groups
+            ] $
+            elemString "Create new group"
+    where
+      toButton :: HasCallStack => Group -> ReactElementM 'EventHandlerCode ()
+      toButton group = button_
+        [ "id" $= cs ("load-group-list" <> show (group ^. groupID . unID))
+        , onClick $ \_ _ -> simpleHandler . dispatch
+                          . MainMenuAction . MainMenuActionOpen . MainMenuGroup $ group ^. groupID
+        ]
+        (elemText $ group ^. groupTitle)
 
 mainMenuGroups_ :: HasCallStack => [Group] -> ReactElementM eventHandler ()
 mainMenuGroups_ = view_ mainMenuGroups "mainMenuGroups"
@@ -166,43 +166,43 @@ mainMenuGroups_ = view_ mainMenuGroups "mainMenuGroups"
 mainMenuGroup :: View '[Group]
 mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
   div_ $ do
-            let
-              gid = group ^. groupID
+    let
+      gid = group ^. groupID
 
-              toButton :: HasCallStack => ID VDoc -> ReactElementM 'EventHandlerCode ()
-              toButton vdoc = button_
-                [ "id" $= cs ("load-group-list" <> show (vdoc ^. unID))
-                , onClick $ \_ _ -> simpleHandler . dispatch . LoadDocument $ BeforeAjax vdoc
-                ]
-                (elemText . cs . show $ vdoc ^. unID)
+      toButton :: HasCallStack => ID VDoc -> ReactElementM 'EventHandlerCode ()
+      toButton vdoc = button_
+        [ "id" $= cs ("load-group-list" <> show (vdoc ^. unID))
+        , onClick $ \_ _ -> simpleHandler . dispatch . LoadDocument $ BeforeAjax vdoc
+        ]
+        (elemText . cs . show $ vdoc ^. unID)
 
-            h1_ . elemText $ "Group " <> (group ^. groupTitle)
-            elemText $ group ^. groupDesc
-            br_ []
-            br_ []
-            elemText "Processes: "
-            toButton `mapM_` (group ^. groupVDocs)
-            br_ []
-            br_ []
-            button_ [ "id" $= "create-process"
-                    , onClick $ \_ _ -> simpleHandler . dispatch
-                                      . MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormOngoing
-                                      $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract sampleVDocVersion gid) group
-                    ] $
-                    elemString "Create new process"
-            br_ []
-            button_ [ "id" $= "update-group"
-                    , onClick $ \_ _ -> simpleHandler . dispatch
-                                      . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup (Just gid) . FormOngoing
-                                      $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
-                    ] $
-                    elemString "Update group details"
-            br_ []
-            button_ [ "id" $= "group-back"
-                    , onClick $ \_ _ -> simpleHandler . dispatch
-                                      . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()
-                    ] $
-                    elemString "Back"
+    h1_ . elemText $ "Group " <> (group ^. groupTitle)
+    elemText $ group ^. groupDesc
+    br_ []
+    br_ []
+    elemText "Processes: "
+    toButton `mapM_` (group ^. groupVDocs)
+    br_ []
+    br_ []
+    button_ [ "id" $= "create-process"
+            , onClick $ \_ _ -> simpleHandler . dispatch
+                              . MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormOngoing
+                              $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract sampleVDocVersion gid) group
+            ] $
+            elemString "Create new process"
+    br_ []
+    button_ [ "id" $= "update-group"
+            , onClick $ \_ _ -> simpleHandler . dispatch
+                              . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup (Just gid) . FormOngoing
+                              $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
+            ] $
+            elemString "Update group details"
+    br_ []
+    button_ [ "id" $= "group-back"
+            , onClick $ \_ _ -> simpleHandler . dispatch
+                              . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()
+            ] $
+            elemString "Back"
 
 mainMenuGroup_ :: HasCallStack => Group -> ReactElementM eventHandler ()
 mainMenuGroup_ = view_ mainMenuGroup "mainMenuGroup"
@@ -276,26 +276,26 @@ createProcess_ lst = view_ (createProcess lst) "createProcess"
 
 mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]
 mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
-      let tabButton :: Int -> MainMenuSubTabLogin -> ReactElementM eventHandler ()
-          tabButton key this = div_ ["style" @@= [decl "marginLeft" (Px 40)]] $ do
-            ibutton_ $ emptyIbuttonProps "00_joker" [MainMenuAction . MainMenuActionOpen . MainMenuLogin $ this]
-              & ibListKey .~ cs (show key)
-              & ibDarkBackground .~ False
-              & ibHighlightWhen .~ (if currentTab == this then HighlightAlways else HighlightOnMouseOver)
-              & ibLabel .~ (case this of
-                             MainMenuSubTabLogin        -> "login"
-                             MainMenuSubTabRegistration -> "register")
+  let tabButton :: Int -> MainMenuSubTabLogin -> ReactElementM eventHandler ()
+      tabButton key this = div_ ["style" @@= [decl "marginLeft" (Px 40)]] $ do
+        ibutton_ $ emptyIbuttonProps "00_joker" [MainMenuAction . MainMenuActionOpen . MainMenuLogin $ this]
+          & ibListKey .~ cs (show key)
+          & ibDarkBackground .~ False
+          & ibHighlightWhen .~ (if currentTab == this then HighlightAlways else HighlightOnMouseOver)
+          & ibLabel .~ (case this of
+                         MainMenuSubTabLogin        -> "login"
+                         MainMenuSubTabRegistration -> "register")
 
-      div_ $ do
-        tabButton 0 MainMenuSubTabLogin
-        tabButton 1 MainMenuSubTabRegistration
+  div_ $ do
+    tabButton 0 MainMenuSubTabLogin
+    tabButton 1 MainMenuSubTabRegistration
 
-      br_ [] >> br_ [] >> br_ [] >> hr_ []
+  br_ [] >> br_ [] >> br_ [] >> hr_ []
 
-      div_ $ do
-        case currentTab of
-          MainMenuSubTabLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
-          MainMenuSubTabRegistration -> registration_  (menuErrors ^. mmeRegistration)
+  div_ $ do
+    case currentTab of
+      MainMenuSubTabLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
+      MainMenuSubTabRegistration -> registration_  (menuErrors ^. mmeRegistration)
 
 mainMenuLoginTab_ :: HasCallStack => MainMenuProps MainMenuSubTabLogin -> ReactElementM eventHandler ()
 mainMenuLoginTab_ = view_ mainMenuLoginTab "mainMenuLoginTab_"
