@@ -37,7 +37,7 @@ import           Refine.Frontend.Document.FFI
 data DocumentAction =
     DocumentUpdate GlobalDocumentState
   | DocumentUpdateEditInfo (EditInfo (Maybe EditKind))
-  | RequestDocumentSave
+  | RequestDocumentSave  -- ^ FIXME: use the 'AfterAjax' trick here?
   | DocumentSave (EditInfo EditKind)
   | DocumentCancelSave
   | DocumentToggleStyle Style

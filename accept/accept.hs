@@ -327,6 +327,8 @@ yScrollTo y = do
   (_ :: Value) <- executeJS [JSArg y] "scrollBy(arguments[0], -pageYOffset);"
   pure ()
 
+-- | Run a 'WD' action, and take the element position before and after.  If @p before after@ fails
+-- to hold, throw an error.
 assertVerticalPos :: (Int -> Int -> Bool) -> WD Element -> WD a -> WD a
 assertVerticalPos p el act = do
   (w, h) <- elemPos =<< el
