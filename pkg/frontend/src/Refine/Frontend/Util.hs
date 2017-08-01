@@ -160,9 +160,10 @@ foreign import javascript safe
   "scrollBy(0, $1-pageYOffset)"
   js_scrollToPx :: Int -> IO ()
 
--- TODO: replace 100 by the height of the menu bar
+-- this scrolls block key into the vertical center of the screen.  (works best if toolbar is a bit
+-- shorter than half the screen height.)
 foreign import javascript safe
-  "scrollBy(0, document.querySelector(\"span[data-offset-key='\" + $1 + \"-0-0']\").getBoundingClientRect().top - 100)"
+  "scrollBy(0, document.querySelector(\"span[data-offset-key='\" + $1 + \"-0-0']\").getBoundingClientRect().top - (innerHeight / 2))"
   js_scrollToBlockKey :: JSString -> IO ()
 
 #else
