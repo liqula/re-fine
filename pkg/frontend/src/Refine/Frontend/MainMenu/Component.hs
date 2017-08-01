@@ -117,7 +117,29 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
            , "style" @@= tabStyles
            ] $ do
         case currentTab of
-          MainMenuGroups groups -> div_ $ do
+          MainMenuGroups groups       -> mainMenuGroups_ groups
+          MainMenuGroup group         -> mainMenuGroup_ group
+          MainMenuCreateGroup mid lst -> createGroup_ mid lst
+          MainMenuCreateProcess lst   -> createProcess_ lst
+
+          MainMenuHelp -> pre_ $ do
+            elemString $ "commit hash: " <> show BuildInfo.gitCommitHash
+            "\n"
+            elemString $ "build timestamp: " <> show BuildInfo.gitBuildTimestamp
+            "\n"
+
+          MainMenuLogin subtab -> mainMenuLoginTab_ (MainMenuProps subtab menuErrors currentUser)
+
+      div_ [ "className" $= "gr-2" ] $ do
+        pure ()
+
+mainMenu_ :: HasCallStack => MainMenuProps MainMenuTabProps -> ReactElementM eventHandler ()
+mainMenu_ = view_ mainMenu "mainMenu_"
+
+
+mainMenuGroups :: View '[[Group]]
+mainMenuGroups = mkView "mainMenuGroups" $ \groups -> do
+  div_ $ do
             h1_ "Groups"
             br_ []
             toButton `mapM_` groups
@@ -138,7 +160,22 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
                 ]
                 (elemText $ group ^. groupTitle)
 
-          MainMenuGroup group -> div_ $ do
+mainMenuGroups_ :: HasCallStack => [Group] -> ReactElementM eventHandler ()
+mainMenuGroups_ = view_ mainMenuGroups "mainMenuGroups"
+
+mainMenuGroup :: View '[Group]
+mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
+  div_ $ do
+            let
+              gid = group ^. groupID
+
+              toButton :: HasCallStack => ID VDoc -> ReactElementM 'EventHandlerCode ()
+              toButton vdoc = button_
+                [ "id" $= cs ("load-group-list" <> show (vdoc ^. unID))
+                , onClick $ \_ _ -> simpleHandler . dispatch . LoadDocument $ BeforeAjax vdoc
+                ]
+                (elemText . cs . show $ vdoc ^. unID)
+
             h1_ . elemText $ "Group " <> (group ^. groupTitle)
             elemText $ group ^. groupDesc
             br_ []
@@ -166,32 +203,9 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
                                       . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()
                     ] $
                     elemString "Back"
-            where
-              gid = group ^. groupID
 
-              toButton :: HasCallStack => ID VDoc -> ReactElementM 'EventHandlerCode ()
-              toButton vdoc = button_
-                [ "id" $= cs ("load-group-list" <> show (vdoc ^. unID))
-                , onClick $ \_ _ -> simpleHandler . dispatch . LoadDocument $ BeforeAjax vdoc
-                ]
-                (elemText . cs . show $ vdoc ^. unID)
-
-          MainMenuCreateGroup mid lst -> createGroup_ mid lst
-
-          MainMenuCreateProcess lst -> createProcess_ lst
-
-          MainMenuHelp -> pre_ $ do
-            elemString $ "commit hash: " <> show BuildInfo.gitCommitHash
-            "\n"
-            elemString $ "build timestamp: " <> show BuildInfo.gitBuildTimestamp
-            "\n"
-
-          MainMenuLogin subtab -> mainMenuLoginTab_ (MainMenuProps subtab menuErrors currentUser)
-      div_ [ "className" $= "gr-2" ] $ do
-        pure ()
-
-mainMenu_ :: HasCallStack => MainMenuProps MainMenuTabProps -> ReactElementM eventHandler ()
-mainMenu_ = view_ mainMenu "mainMenu_"
+mainMenuGroup_ :: HasCallStack => Group -> ReactElementM eventHandler ()
+mainMenuGroup_ = view_ mainMenuGroup "mainMenuGroup"
 
 
 mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]
@@ -221,6 +235,8 @@ mainMenuLoginTab_ :: HasCallStack => MainMenuProps MainMenuSubTabLogin -> ReactE
 mainMenuLoginTab_ = view_ mainMenuLoginTab "mainMenuLoginTab_"
 
 
+-- | FUTUREWORK: should this be @View '[LocalStateRef CreateGroup]@ or @View '[Maybe (ID Group),
+-- LocalStateRef CreateGroup]@?  (same with 'mainMenuCreateProcess'.)
 createGroup :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> View '[]
 createGroup mid lst = mkPersistentStatefulView "CreateGroup" lst $
   \st@(CreateGroup title desc _ _) -> do
