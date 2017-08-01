@@ -54,7 +54,6 @@ import Refine.Backend.Database
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
--- import Refine.Common.Allow
 import Refine.Common.Rest
 import Refine.Common.Types
 
@@ -83,12 +82,7 @@ data Backend db = Backend
   , backendRunApp :: AppM db P.:~> ExceptT AppError IO
   }
 
-type MonadRefine db =
-  ( MonadApp db
---  , Allow (ProcessPayload Edit) Edit   -- FIXME
-  )
-
-refineApi :: MonadRefine db => ServerT RefineAPI (AppM db)
+refineApi :: MonadApp db => ServerT RefineAPI (AppM db)
 refineApi =
        App.getCompositeVDocOnHead
   :<|> App.createVDocGetComposite
@@ -150,7 +144,7 @@ mkBackend cfg migrate = do
 
 
 mkServerApp
-    :: MonadRefine db
+    :: MonadApp db
     => Config -> MkDBNat db -> DBRunner -> IO (Backend db)
 mkServerApp cfg dbNat dbRunner = do
   poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath

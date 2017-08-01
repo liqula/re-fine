@@ -40,7 +40,6 @@ import           Data.Maybe (catMaybes)
 import           Refine.Backend.App.Core
 import           Refine.Backend.App.User (currentUser)
 import qualified Refine.Backend.Database.Class as DB
---import           Refine.Common.Allow
 import           Refine.Common.Types
 import           Refine.Common.Types.Core (OTDoc)
 import qualified Refine.Common.OT as OT
@@ -101,11 +100,11 @@ getCompositeVDoc' vdoc editid = do
     toMap selector = Map.fromList . fmap (view selector &&& id)
 
 updateEdit
-  :: (MonadApp db{-, Allow (DB.ProcessPayload Edit) Edit-})   -- FIXME
+  :: (MonadApp db)   -- FIXME
   => ID Edit -> Create Edit -> AppM db Edit
 updateEdit eid edit = do
   appLog "updateEdit"
-  -- assertPerms eid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/286
+  -- assertPerms eid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/358
   db $ do
     olddoc <- rawContentFromVDocVersion <$> DB.getVersion eid
     let new = edit ^. createEditVDocVersion
@@ -123,11 +122,11 @@ updateEdit eid edit = do
     DB.getEdit eid
 
 addEdit
-  :: (MonadApp db{-, Allow (DB.ProcessPayload Edit) Edit-})  -- FIXME
+  :: (MonadApp db)
   => ID Edit -> Create Edit -> AppM db Edit
 addEdit baseeid edit = do
   appLog "addEdit"
-  -- assertPerms baseeid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/286
+  -- assertPerms baseeid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/358
     -- (note that the user must have create permission on the *base
     -- edit*, not the edit about to get created.)
   db $ do
