@@ -33,7 +33,6 @@ import           Test.QuickCheck.Monadic
 
 import Refine.Backend.App as App
 import Refine.Backend.Database
-import Refine.Backend.Server (defaultGroupID)
 import Refine.Backend.Test.AppRunner
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Test.Samples (sampleVDocVersion)
@@ -61,6 +60,12 @@ makeLenses ''VDocs
 isActiveUser :: AppUserState -> Bool
 isActiveUser (UserLoggedIn _ _) = True
 isActiveUser UserLoggedOut      = False
+
+-- | we're just hoping this is the ID of the default group that is created in 'mkProdBackend'.  if
+-- this fails, we need to be smarter about constructing the test cases here.
+defaultGroupID :: ID Group
+defaultGroupID = ID 1
+
 
 -- Parallel run is not an option here, it could make the build fail at the cleanup stage.
 spec :: Spec

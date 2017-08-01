@@ -31,7 +31,6 @@ module Refine.Backend.Server
   , runCliAppCommand
   , Backend(..), mkProdBackend
   , refineApi
-  , defaultGroupID
   ) where
 
 import Refine.Backend.Prelude as P
@@ -116,16 +115,12 @@ runCliAppCommand cfg cmd = do
   backend <- mkProdBackend cfg
   void $ (natThrowError . backendRunApp backend) $$ cmd
 
-defaultGroupID :: ID Group
-defaultGroupID = ID 1
-
 mkProdBackend :: Config -> IO (Backend DB)
 mkProdBackend cfg = mkBackend cfg $ do
   () <- migrateDB cfg
   gs <- App.getGroups
   when (null gs) $ do
-    g <- addGroup $ CreateGroup "default" "default group" [] []
-    when (g ^. groupID /= defaultGroupID) . error $ "default group ID: " <> show defaultGroupID <> " /= " <> show (g ^. groupID)
+    void . addGroup $ CreateGroup "default" "default group" [] []
   pure ()
 
 mkBackend :: Config -> AppM DB a -> IO (Backend DB)
