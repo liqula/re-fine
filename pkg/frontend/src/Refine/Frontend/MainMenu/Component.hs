@@ -26,7 +26,6 @@ module Refine.Frontend.MainMenu.Component where
 
 import Refine.Frontend.Prelude
 
--- import           Data.Text.I18n (Locale(..))
 import qualified Data.Text as ST
 import           Language.Css.Syntax
 
