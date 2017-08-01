@@ -157,6 +157,9 @@ documentStateUpdate (ContributionAction ClearRange) _ (view gsVDoc -> Just cvdoc
 documentStateUpdate (DocumentAction ToggleCollapseDiff) _ _ st | has _DocumentStateDiff st
   = st & documentStateDiffCollapsed %~ not
 
+documentStateUpdate (HeaderAction ToggleIndexToolbarExtension) _ _ st | has _DocumentStateDiff st
+  = st & documentStateDiffCollapsed .~ False
+
 documentStateUpdate _ _ _ st
   = st
 

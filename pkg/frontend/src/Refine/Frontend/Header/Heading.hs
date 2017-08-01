@@ -33,18 +33,20 @@ module Refine.Frontend.Header.Heading
 
 import Refine.Frontend.Prelude
 
+import qualified Data.List.NonEmpty as NEL
 import           Language.Css.Syntax
 import           React.Flux as RF
 import           React.Flux.Internal as RF
 import           React.Flux.Outdated as RF
 
 import           Refine.Common.Types
+import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DocumentHeader
 import           Refine.Frontend.Header.DiffToolbar ( diffToolbar_ )
 import           Refine.Frontend.Header.EditToolbar ( editToolbar_, wipeDocumentState )
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
-                                                  toolbar_, commentToolbarExtension_, editToolbarExtension_ )
+                                                  toolbar_, commentToolbarExtension_, editToolbarExtension_, indexToolbarExtension_ )
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Status
@@ -154,6 +156,7 @@ mainHeaderRender () rs = do
               collapsed
               editable
             WipedDocumentStateEdit eprops -> editToolbar_ eprops
+          indexToolbarExtension_ $ mkIndexToolbarProps rs
           commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
           editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
 
@@ -161,6 +164,25 @@ mainHeaderRender () rs = do
       mainMenuPart_
       headerPart_
       toolbarPart_
+
+mkIndexToolbarProps :: MainHeaderProps -> IndexToolbarProps
+mkIndexToolbarProps rs
+  | rs ^. gsHeaderState . hsToolbarExtensionStatus == IndexToolbarExtension
+  && fromMaybe True (not <$> rs ^? gsDocumentState . wipedDocumentStateDiffCollapsed)
+  = mkIndex . rawContentFromVDocVersion . _editVDocVersion <$> gsEdit rs
+  | otherwise = Nothing
+  where
+    mkIndex (RawContent bs _) =
+      [ IndexItem (b ^. blockKey) (b ^. blockText) depth
+      | b <- NEL.toList bs, depth <- maybeToList . headerDepth $ b ^. blockType
+      ]
+
+headerDepth :: BlockType -> Maybe Int
+headerDepth = \case
+  Header1 -> Just 1
+  Header2 -> Just 2
+  Header3 -> Just 3
+  _ -> Nothing
 
 mkMainHeaderProps :: GlobalState -> MainHeaderProps
 mkMainHeaderProps gs = fmap (const . wipeDocumentState $ getDocumentState gs) gs

@@ -43,7 +43,7 @@ toolbar_ = do
     & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Index_desktop", "dark") XXLarge
     & iconButtonPropsElementName  .~ "btn-index"
     & iconButtonPropsLabel        .~ "index"
-    & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+    & iconButtonPropsOnClick      .~ [HeaderAction ToggleIndexToolbarExtension]
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
@@ -209,3 +209,31 @@ editLinkInput link = mkStatefulView "EditLinkInput" (AddLinkFormState link) $ \c
 
 editLinkInput_ :: HasCallStack => ST -> ReactElementM eventHandler ()
 editLinkInput_ link = view_ (editLinkInput link) "editLinkInput_"
+
+
+indexToolbarExtension :: View '[IndexToolbarProps]
+indexToolbarExtension = mkView "IndexToolbarExtension" $ \case
+  Nothing -> mempty
+  Just is -> frame . forM_ (zip [0 :: Int ..] is) $ \(i, item) -> do
+    iconButton_
+      $ defaultIconButtonProps @[GlobalAction]
+      & iconButtonPropsListKey      .~ ("index-" <> cs (show i))
+      & iconButtonPropsElementName  .~ ("index-heading-" <> cs (show i))
+      & iconButtonPropsLabel        .~ cs (item ^. indexItemTitle)
+      & iconButtonPropsOnClick      .~ [HeaderAction . ScrollToBlockKey $ item ^. indexItemBlockKey]
+      & iconButtonPropsOnClickMods  .~ [StopPropagation]
+    br_ []
+  where
+    frame :: ReactElementM eventHandler () -> ReactElementM eventHandler ()
+    frame children = div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
+      div_ ["className" $= "grid-wrapper"] $ do
+        div_ ["className" $= "gr-23 gr-20@tablet gr-14@desktop gr-centered"] $ do
+          div_ ["className" $= "c-vdoc-toolbar-extension__pointer"] ""
+          div_ [classNamesAny
+                           [ ("c-vdoc-toolbar-extension__annotation", True)   -- RENAME: annotation => comment
+                           , ("c-vdoc-toolbar-extension--expanded", True) ]
+               ]
+            children
+
+indexToolbarExtension_ :: HasCallStack => IndexToolbarProps -> ReactElementM eventHandler ()
+indexToolbarExtension_ = view_ indexToolbarExtension "indexToolbarExtension_"

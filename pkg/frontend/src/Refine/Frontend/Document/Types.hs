@@ -37,7 +37,7 @@ import           Refine.Frontend.Document.FFI
 data DocumentAction =
     DocumentUpdate GlobalDocumentState
   | DocumentUpdateEditInfo (EditInfo (Maybe EditKind))
-  | RequestDocumentSave
+  | RequestDocumentSave  -- ^ FIXME: use the 'AfterAjax' trick here?
   | DocumentSave (EditInfo EditKind)
   | DocumentCancelSave
   | DocumentToggleStyle Style
@@ -84,7 +84,7 @@ type GlobalDocumentState = DocumentState_ () () (ID Edit)
 data WipedDocumentState =
     WipedDocumentStateView
   | WipedDocumentStateDiff
-      { _wpiedDocumentStateDiffIndex     :: EditIndex
+      { _wipedDocumentStateDiffIndex     :: EditIndex
       , _wipedDocumentStateDiff          :: Edit
       , _wipedDocumentStateDiffCollapsed :: Bool
       , _wipedDocumentStateDiffEditable  :: Bool
@@ -138,5 +138,5 @@ emptyDocumentProps = DocumentProps
 
 deriveClasses
   [ ([''DocumentAction, ''DocumentState_], allClass)
-  , ([''DocumentProps], [''Lens'])
+  , ([''DocumentProps, ''WipedDocumentState], [''Lens'])
   ]
