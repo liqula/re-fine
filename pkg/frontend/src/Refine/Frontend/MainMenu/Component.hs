@@ -124,14 +124,17 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
             br_ []
             br_ []
             button_ [ "id" $= "add-vdoc-to-backend"
-                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup Nothing . FormOngoing $ newLocalStateRef (CreateGroup "" "" [] []) groups
+                    , onClick $ \_ _ -> simpleHandler . dispatch
+                                      . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup Nothing . FormOngoing
+                                      $ newLocalStateRef (CreateGroup "" "" [] []) groups
                     ] $
                     elemString "Create new group"
             where
               toButton :: HasCallStack => Group -> ReactElementM 'EventHandlerCode ()
               toButton group = button_
                 [ "id" $= cs ("load-group-list" <> show (group ^. groupID . unID))
-                , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuGroup $ group ^. groupID
+                , onClick $ \_ _ -> simpleHandler . dispatch
+                                  . MainMenuAction . MainMenuActionOpen . MainMenuGroup $ group ^. groupID
                 ]
                 (elemText $ group ^. groupTitle)
 
@@ -145,18 +148,22 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
             br_ []
             br_ []
             button_ [ "id" $= "create-process"
-                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormOngoing
-                        $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract sampleVDocVersion gid) group
+                    , onClick $ \_ _ -> simpleHandler . dispatch
+                                      . MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormOngoing
+                                      $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract sampleVDocVersion gid) group
                     ] $
                     elemString "Create new process"
             br_ []
             button_ [ "id" $= "update-group"
-                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup (Just gid) . FormOngoing $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
+                    , onClick $ \_ _ -> simpleHandler . dispatch
+                                      . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup (Just gid) . FormOngoing
+                                      $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
                     ] $
                     elemString "Update group details"
             br_ []
             button_ [ "id" $= "group-back"
-                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()
+                    , onClick $ \_ _ -> simpleHandler . dispatch
+                                      . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()
                     ] $
                     elemString "Back"
             where
