@@ -119,8 +119,8 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
         case currentTab of
           MainMenuGroups groups       -> mainMenuGroups_ groups
           MainMenuGroup group         -> mainMenuGroup_ group
-          MainMenuCreateGroup mid lst -> createGroup_ mid lst
-          MainMenuCreateProcess lst   -> createProcess_ lst
+          MainMenuCreateGroup mid lst -> mainMenuCreateGroup_ mid lst
+          MainMenuCreateProcess lst   -> mainMenuCreateProcess_ lst
 
           MainMenuHelp -> pre_ $ do
             elemString $ "commit hash: " <> show BuildInfo.gitCommitHash
@@ -209,8 +209,8 @@ mainMenuGroup_ = view_ mainMenuGroup "mainMenuGroup"
 
 -- | FUTUREWORK: should this be @View '[LocalStateRef CreateGroup]@ or @View '[Maybe (ID Group),
 -- LocalStateRef CreateGroup]@?  (same with 'mainMenuCreateProcess'.)
-createGroup :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> View '[]
-createGroup mid lst = mkPersistentStatefulView "CreateGroup" lst $
+mainMenuCreateGroup :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> View '[]
+mainMenuCreateGroup mid lst = mkPersistentStatefulView "MainMenuCreateGroup" lst $
   \st@(CreateGroup title desc _ _) -> do
 
     contributionDialogTextForm createGroupTitle st 2 "group title"
@@ -237,11 +237,11 @@ createGroup mid lst = mkPersistentStatefulView "CreateGroup" lst $
             & iconButtonPropsAlignRight   .~ True
             & enableOrDisable
 
-createGroup_ :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> ReactElementM eventHandler ()
-createGroup_ mid lst = view_ (createGroup mid lst) "createGroup"
+mainMenuCreateGroup_ :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> ReactElementM eventHandler ()
+mainMenuCreateGroup_ mid lst = view_ (mainMenuCreateGroup mid lst) "mainMenuCreateGroup"
 
-createProcess :: HasCallStack => LocalStateRef CreateVDoc -> View '[]
-createProcess lst = mkPersistentStatefulView "CreateProcess" lst $
+mainMenuCreateProcess :: HasCallStack => LocalStateRef CreateVDoc -> View '[]
+mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst $
   \st@(CreateVDoc title _ _ _) -> do
 
     contributionDialogTextForm (createVDocTitle . unTitle) st 2 "title"
@@ -270,8 +270,8 @@ createProcess lst = mkPersistentStatefulView "CreateProcess" lst $
             & iconButtonPropsAlignRight   .~ True
             & enableOrDisable
 
-createProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
-createProcess_ lst = view_ (createProcess lst) "createProcess"
+mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
+mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
 
 
 mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]
