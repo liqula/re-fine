@@ -31,6 +31,7 @@ import Refine.Frontend.Prelude
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Store.Types
+import Refine.Frontend.Document.Types
 
 
 headerStateUpdate :: HasCallStack => GlobalAction -> HeaderState -> HeaderState
@@ -46,6 +47,7 @@ toolbarExtensionUpdate :: HasCallStack => GlobalAction -> ToolbarExtensionStatus
 toolbarExtensionUpdate act st = case (st, act) of
     (ToolbarExtensionClosed,               HeaderAction ToggleIndexToolbarExtension)   -> IndexToolbarExtension
     (IndexToolbarExtension,                HeaderAction ToggleIndexToolbarExtension)   -> ToolbarExtensionClosed
+    (IndexToolbarExtension,                DocumentAction ToggleCollapseDiff)          -> ToolbarExtensionClosed
     (_,                                    HeaderAction ScrollToBlockKey{})            -> ToolbarExtensionClosed
 
     (ToolbarExtensionClosed,               HeaderAction ToggleCommentToolbarExtension) -> CommentToolbarExtensionWithoutRange

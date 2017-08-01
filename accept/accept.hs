@@ -144,7 +144,6 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
 
   it "scroll to first heading" . runWD $ do
     onEl [ByCSS ".icon-Index_desktop_dark"] click
-    onEl [ByCSS ".__index-heading-0"] click
     editor <- findElem $ ByCSS ".public-DraftEditor-content"
     checkScrollHappensOn editor $ onEl [ByCSS ".__index-heading-0"] click
 
