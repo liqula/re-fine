@@ -146,6 +146,7 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
     onEl [ByCSS ".icon-Index_desktop_dark"] click
     let editor = findElem $ ByCSS ".public-DraftEditor-content"
     checkScrollHappensOn editor $ onEl [ByCSS ".__index-heading-0"] click
+    yScrollTo 0
 
   it "open edit mode" . runWD $ do
     onEl [ByCSS ".icon-New_Edit_dark"] click
