@@ -113,8 +113,8 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
   it "create new process" . runWD $ do
     onEl [ByCSS ".icon-Group_bright"] click
     onEl [ByCSS "#group-list-item-1"] click
-    onEl [ByCSS "#create-process"] click
-    onEl [ByCSS ".icon-Save_bright"] click
+    onEl [ByCSS ".icon-Process_add_dark"] click
+    onEl [ByCSS ".icon-Save_dark"] click
     onEls [ByCSS "h1"] $ \els -> do
       txt <- mconcat <$> (getText `mapM` els)
       txt `shouldSatisfy` ("Gesellschaftsvertrag" `ST.isInfixOf`)
