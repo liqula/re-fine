@@ -22,7 +22,7 @@ class Database db where
 
   -- VDoc
   listVDocs          :: db [ID VDoc]
-  createVDoc         :: Create VDoc -> VDocVersion -> db VDoc
+  createVDoc         :: Create VDoc -> db VDoc
   getVDoc            :: ID VDoc -> db VDoc
   vdocOfEdit         :: ID Edit -> db (ID VDoc)
   moveVDocHead       :: ID VDoc -> ID Edit -> db ()

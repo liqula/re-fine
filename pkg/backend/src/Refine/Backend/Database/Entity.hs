@@ -222,8 +222,8 @@ listVDocs = do
   opts <- dbSelectOpts
   liftDB $ S.keyToId <$$> selectKeysList [] opts
 
-createVDoc :: Create VDoc -> VDocVersion -> DB VDoc
-createVDoc pv vdoc = do
+createVDoc :: Create VDoc -> DB VDoc
+createVDoc pv = do
   let svdoc = S.VDoc
         (pv ^. createVDocTitle)
         (pv ^. createVDocAbstract)
@@ -232,7 +232,7 @@ createVDoc pv vdoc = do
   mid <- createMetaID svdoc
   e <- createEdit (mid ^. miID) mempty CreateEdit
     { _createEditDesc        = "initial document version"
-    , _createEditVDocVersion = vdoc
+    , _createEditVDocVersion = pv ^. createVDocInitVersion
     , _createEditKind        = Initial
     }
   let e' = S.idToKey (e ^. editMetaID . miID) :: Key S.Edit

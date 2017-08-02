@@ -59,8 +59,7 @@ createVDocGetComposite = (getCompositeVDocOnHead . view vdocID) <=< createVDoc
 createVDoc :: Create VDoc -> App VDoc
 createVDoc pv = do
   appLog "createVDoc"
-  let vd = pv ^. createVDocInitVersion
-  db $ DB.createVDoc pv vd
+  db $ DB.createVDoc pv
 
 getVDoc :: ID VDoc -> App VDoc
 getVDoc i = do
