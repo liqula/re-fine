@@ -320,9 +320,6 @@ mainMenuCreateGroup mid lst = mkPersistentStatefulView "MainMenuCreateGroup" lst
             & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup mid $ FormComplete st
                                              ]
 
-    -- FIXME: make new button, like in 'commentInput_' above.  we
-    -- don't have to save this in global state until the 'editInput_'
-    -- dialog is closed again without save or cancel.
     iconButton_ $ defaultIconButtonProps @[GlobalAction]
             & iconButtonPropsListKey      .~ "save"
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
@@ -353,9 +350,6 @@ mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst
             & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess $ FormComplete st
                                              ]
 
-    -- FIXME: make new button, like in 'commentInput_' above.  we
-    -- don't have to save this in global state until the 'editInput_'
-    -- dialog is closed again without save or cancel.
     iconButton_ $ defaultIconButtonProps @[GlobalAction]
             & iconButtonPropsListKey      .~ "save"
             & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
