@@ -219,46 +219,86 @@ mainMenuGroupShort_ group = view_ mainMenuGroupShort listKey group
 mainMenuGroup :: View '[Group]
 mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
   div_ $ do
-    let
-      gid = group ^. groupID
+    ibutton_ $ emptyIbuttonProps "Arrow_left" [MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()]
+      & ibListKey .~ "group_back"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ False
+      & ibHighlightWhen .~ HighlightOnMouseOver
+      & ibLabel .~ mempty
 
-      toButton :: HasCallStack => ID VDoc -> ReactElementM 'EventHandlerCode ()
-      toButton vdoc = button_
-        [ "id" $= cs ("process-list-item-" <> show (vdoc ^. unID))
-        , onClick $ \_ _ -> simpleHandler . dispatch . LoadDocument $ BeforeAjax vdoc
+    -- image (FIXME: allow the user to store one in the group and use that)
+    br_ []
+    ibutton_ $ emptyIbuttonProps "Group" ([] :: [GlobalAction])
+      & ibListKey .~ "group"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ False
+      & ibHighlightWhen .~ HighlightOnMouseOver
+      & ibLabel .~ mempty
+
+    -- title, abstract
+    br_ [] >> hr_ []
+    p_ . elemText $ group ^. groupTitle
+    br_ []
+    p_ . elemText $ group ^. groupDesc
+    br_ [] >> hr_ []
+
+    -- buttons for users, processes, create new process, update group
+    -- the first two, users, processes, are morally tabs.
+    span_ ["style" @@= [decl "marginLeft" (Px 50)]] . ibutton_ $ emptyIbuttonProps "User"
+        [ShowNotImplementedYet]
+      & ibListKey .~ "user"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ False
+      & ibHighlightWhen .~ HighlightOnMouseOver
+      & ibLabel .~ "members"
+
+    ibutton_ $ emptyIbuttonProps "Process"
+        ([] :: [GlobalAction])
+      & ibListKey .~ "process"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ False
+      & ibHighlightWhen .~ HighlightAlways
+      & ibLabel .~ "processes"
+
+    ibutton_ $ emptyIbuttonProps "Process_add"
+        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormOngoing
+          $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract sampleVDocVersion (group ^. groupID)) group
         ]
-        (elemText . cs . show $ vdoc ^. unID)
+      & ibListKey .~ "process_add"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ False
+      & ibHighlightWhen .~ HighlightOnMouseOver
+      & ibLabel .~ "create new process"
 
-    h1_ . elemText $ "Group " <> (group ^. groupTitle)
-    elemText $ group ^. groupDesc
-    br_ []
-    br_ []
-    elemText "Processes: "
-    toButton `mapM_` (group ^. groupVDocs)
-    br_ []
-    br_ []
-    button_ [ "id" $= "create-process"
-            , onClick $ \_ _ -> simpleHandler . dispatch
-                              . MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormOngoing
-                              $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract sampleVDocVersion gid) group
-            ] $
-            elemString "Create new process"
-    br_ []
-    button_ [ "id" $= "update-group"
-            , onClick $ \_ _ -> simpleHandler . dispatch
-                              . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup (Just gid) . FormOngoing
-                              $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
-            ] $
-            elemString "Update group details"
-    br_ []
-    button_ [ "id" $= "group-back"
-            , onClick $ \_ _ -> simpleHandler . dispatch
-                              . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()
-            ] $
-            elemString "Back"
+    ibutton_ $ emptyIbuttonProps "Group_update"
+        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup (Just $ group ^. groupID) . FormOngoing
+          $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
+        ]
+      & ibListKey .~ "group_update"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ False
+      & ibHighlightWhen .~ HighlightOnMouseOver
+      & ibLabel .~ "change group details"
+
+    -- process list
+    br_ [] >> br_ [] >> br_ [] >> br_ [] >> hr_ [] >> br_ []
+    mainMenuProcessShort_ `mapM_` (group ^. groupVDocs)
 
 mainMenuGroup_ :: HasCallStack => Group -> ReactElementM eventHandler ()
 mainMenuGroup_ = view_ mainMenuGroup "mainMenuGroup"
+
+mainMenuProcessShort :: HasCallStack => View '[ID VDoc]
+mainMenuProcessShort = mkView "MainMenuProcessShort" $ \vid -> do
+  button_
+        [ "id" $= cs ("process-list-item-" <> show (vid ^. unID))
+        , onClick $ \_ _ -> simpleHandler . dispatch . LoadDocument $ BeforeAjax vid
+        ]
+        (elemText . cs . show $ vid ^. unID)
+
+mainMenuProcessShort_ :: HasCallStack => ID VDoc -> ReactElementM 'EventHandlerCode ()
+mainMenuProcessShort_ vid = view_ mainMenuProcessShort listKey vid
+  where
+    listKey = "mainMenuProcessShort-" <> (cs . show $ vid ^. unID)
 
 -- | FUTUREWORK: should this be @View '[LocalStateRef CreateGroup]@ or @View '[Maybe (ID Group),
 -- LocalStateRef CreateGroup]@?  (same with 'mainMenuCreateProcess'.)
