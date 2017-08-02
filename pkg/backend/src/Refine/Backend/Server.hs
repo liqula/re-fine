@@ -85,6 +85,7 @@ refineApi :: MonadApp db => ServerT RefineAPI (AppM db)
 refineApi =
        App.getCompositeVDocOnHead
   :<|> App.createVDocGetComposite
+  :<|> App.updateVDoc
   :<|> App.addEdit
   :<|> App.updateEdit
   :<|> App.addNote

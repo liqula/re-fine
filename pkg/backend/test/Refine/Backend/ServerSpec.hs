@@ -228,6 +228,9 @@ getVDocUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetVD
 createVDocUri :: SBS
 createVDocUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SCreateVDoc)
 
+updateVDocUri :: ID VDoc -> SBS
+updateVDocUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SUpdateVDoc)
+
 addEditUri :: ID Edit -> SBS
 addEditUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddEdit)
 
@@ -283,6 +286,21 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
       fe :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
       be :: CompositeVDoc <- runDB  sess $ getCompositeVDocOnHead (fe ^. compositeVDoc . vdocID)
       fe `shouldBe` be
+
+  describe "sUpdateVDoc" $ do
+    it "stores new title, abstract in vdoc in the db" $ \sess -> do
+      bef :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
+      let vid = bef ^. compositeVDoc . vdocID
+          newabstract = Abstract "newabs"
+          newtitle = Title "newtitle"
+
+      after1 :: VDoc <- runWai sess $ putJSON (updateVDocUri vid) (UpdateVDoc newtitle newabstract)
+      after2  :: CompositeVDoc <- runDB  sess $ getCompositeVDocOnHead vid
+
+      (after1 ^. vdocTitle)                    `shouldBe` newtitle
+      (after1 ^. vdocAbstract)                 `shouldBe` newabstract
+      (after2 ^. compositeVDoc . vdocTitle)    `shouldBe` newtitle
+      (after2 ^. compositeVDoc . vdocAbstract) `shouldBe` newabstract
 
   describe "sAddNote" $ do
     it "stores note with full-document chunk range" $ \sess -> do

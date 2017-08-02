@@ -56,6 +56,7 @@ data ApiErrorCreateUser
 type RefineAPI =
        SGetVDoc
   :<|> SCreateVDoc
+  :<|> SUpdateVDoc
   :<|> SAddEdit
   :<|> SUpdateEdit
   :<|> SAddNote
@@ -81,9 +82,13 @@ type SGetVDoc
   = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc)
     :> Get '[JSON] CompositeVDoc
 
-type SCreateVDoc  -- FIXME: remove this, vdocs should only be created inside CollabEditProcesses.
+type SCreateVDoc
   = "r" :> "vdoc" :> ReqBody '[JSON] (Create VDoc)
     :> Post '[JSON] CompositeVDoc
+
+type SUpdateVDoc
+  = "r" :> "vdoc" :> Capture "onvdocid" (ID VDoc) :> ReqBody '[JSON] UpdateVDoc
+    :> Put '[JSON] VDoc
 
 type SAddEdit
   = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Edit)

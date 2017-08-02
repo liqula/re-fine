@@ -93,6 +93,14 @@ data CreateVDoc = CreateVDoc
   }
   deriving (Eq, Ord, Show, Generic)
 
+-- | the name clashes in the record selectors are really annoying...
+-- makes me understand why people were so fond of OO when they invented it
+data UpdateVDoc = UpdateVDoc
+  { _updateVDocTitle       :: Title
+  , _updateVDocAbstract    :: Abstract
+  }
+  deriving (Eq, Ord, Show, Generic)
+
 newtype Title = Title { _unTitle :: ST }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -721,8 +729,13 @@ mkSomeSegments frange fpayload els = segments
 -- * Derived instances
 
 deriveClasses
-  [ ([''RawContent, ''Block, ''Entity, ''Style, ''BlockType], [''NFData, ''SOP.Generic, ''Lens'])
-  , ([''EntityKey, ''CompositeVDoc, ''ContributionID, ''MarkID, ''VDoc, ''CreateVDoc, ''EditSource, ''Edit, ''CreateEdit, ''EditKind, ''Title, ''Abstract, ''VDocVersion, ''Group, ''CreateGroup], allClass)
+  [ ([''RawContent, ''Block, ''Entity, ''Style, ''BlockType]
+    , [''NFData, ''SOP.Generic, ''Lens'])
+  , ([ ''EntityKey, ''CompositeVDoc, ''ContributionID, ''MarkID
+     , ''VDoc, ''CreateVDoc, ''UpdateVDoc, ''EditSource, ''Edit
+     , ''CreateEdit, ''EditKind, ''Title, ''Abstract, ''VDocVersion
+     , ''Group, ''CreateGroup]
+    , allClass)
   ]
 
 -- | It cannot moved further up, needs instance NFData BlockType

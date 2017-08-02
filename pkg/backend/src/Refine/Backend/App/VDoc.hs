@@ -61,6 +61,17 @@ createVDoc pv = do
   appLog "createVDoc"
   db $ DB.createVDoc pv
 
+updateVDoc :: ID VDoc -> UpdateVDoc -> App VDoc
+updateVDoc vid (UpdateVDoc title abstract) = do
+  appLog "updateVDoc"
+  db $ do
+    vdoc <- DB.getVDoc vid
+    let vdoc' = vdoc
+          & vdocTitle .~ title
+          & vdocAbstract .~ abstract
+    DB.updateVDoc vid vdoc'
+    pure vdoc'
+
 getVDoc :: ID VDoc -> App VDoc
 getVDoc i = do
   appLog "getVDoc"
