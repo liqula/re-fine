@@ -34,7 +34,7 @@ class Database db where
   -- Edit
   createEdit         :: ID VDoc -> EditSource (ID Edit) -> Create Edit -> db Edit
   getEdit            :: ID Edit -> db Edit
-  getVersion         :: ID Edit -> db VDocVersion
+  getVersion         :: ID Edit -> db RawContent
   editNotes          :: ID Edit -> db [ID Note]
   editQuestions      :: ID Edit -> db [ID Question]
   editDiscussions    :: ID Edit -> db [ID Discussion]

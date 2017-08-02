@@ -42,6 +42,7 @@ module Refine.Frontend.Document.FFI
   , createWithContent
   , createWithRawContent
   , getCurrentContent
+  , getCurrentRawContent
   , setCurrentContent
   , traceEditorState
   , traceContentState
@@ -111,6 +112,9 @@ createWithRawContent = createWithContent . convertFromRaw
 -- | https://draftjs.org/docs/api-reference-editor-state.html#getcurrentcontent
 getCurrentContent :: HasCallStack => EditorState -> ContentState
 getCurrentContent = js_ES_getCurrentContent
+
+getCurrentRawContent :: HasCallStack => EditorState -> Draft.RawContent
+getCurrentRawContent = convertToRaw . js_ES_getCurrentContent
 
 setCurrentContent :: HasCallStack => EditorState -> ContentState -> EditorState
 setCurrentContent = js_ES_setCurrentContent

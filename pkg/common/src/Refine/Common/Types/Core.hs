@@ -88,10 +88,10 @@ data VDoc = VDoc
 data CreateVDoc = CreateVDoc
   { _createVDocTitle       :: Title
   , _createVDocAbstract    :: Abstract
-  , _createVDocInitVersion :: VDocVersion
+  , _createVDocInitVersion :: RawContent
   , _createVDocGroup       :: ID Group
   }
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Show, Generic)
 
 -- | the name clashes in the record selectors are really annoying...
 -- makes me understand why people were so fond of OO when they invented it
@@ -106,9 +106,6 @@ newtype Title = Title { _unTitle :: ST }
 
 newtype Abstract = Abstract { _unAbstract :: ST }
   deriving (Eq, Ord, Show, Read, Generic)
-
-newtype VDocVersion = VDocVersion { _unVDocVersion :: ST }
-  deriving (Eq, Ord, Show, Generic, Monoid)
 
 -- | List of parents tupled with the diff
 --
@@ -144,7 +141,7 @@ data Edit = Edit
   , _editKind         :: EditKind
   , _editSource       :: EditSource (ID Edit)
   , _editVDoc         :: ID VDoc
-  , _editVDocVersion  :: VDocVersion     -- FIXME: is it OK to store this in edit (consider serialization)?
+  , _editVDocVersion  :: RawContent     -- FIXME: is it OK to store this in edit (consider serialization)?
   , _editVotes        :: Votes
   , _editChildren     :: Set (ID Edit)
   , _editNotes'       :: Set (ID Note)
@@ -154,10 +151,10 @@ data Edit = Edit
 
 data CreateEdit = CreateEdit
   { _createEditDesc        :: ST
-  , _createEditVDocVersion :: VDocVersion
+  , _createEditVDocVersion :: RawContent
   , _createEditKind        :: EditKind
   }
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Show, Generic)
 
 data EditKind = Grammar | Phrasing | Meaning | Initial
   deriving (Eq, Ord, Show, Read, Generic, Bounded, Enum)
@@ -733,7 +730,7 @@ deriveClasses
     , [''NFData, ''SOP.Generic, ''Lens'])
   , ([ ''EntityKey, ''CompositeVDoc, ''ContributionID, ''MarkID
      , ''VDoc, ''CreateVDoc, ''UpdateVDoc, ''EditSource, ''Edit
-     , ''CreateEdit, ''EditKind, ''Title, ''Abstract, ''VDocVersion
+     , ''CreateEdit, ''EditKind, ''Title, ''Abstract
      , ''Group, ''CreateGroup]
     , allClass)
   ]
@@ -756,7 +753,7 @@ groupID = groupMetaID . miID
 compositeVDocThisEditID :: Lens' CompositeVDoc (ID Edit)
 compositeVDocThisEditID = compositeVDocThisEdit . editID
 
-compositeVDocThisVersion :: Lens' CompositeVDoc VDocVersion
+compositeVDocThisVersion :: Lens' CompositeVDoc RawContent
 compositeVDocThisVersion = compositeVDocThisEdit . editVDocVersion
 
 blockText :: Lens' (Block rangeKey blockKey) ST

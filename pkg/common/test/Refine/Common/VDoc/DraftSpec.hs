@@ -46,10 +46,6 @@ spec = do
   describe "RawContent" $ do
     roundtripSpecs (Proxy @RawContent)
 
-  describe "rawContentToVDocVersion, rawContentFromVDocVersion" $ do
-    it "rawContentFromVDocVersion . rawContentToVDocVersion == id" . property $ \(rawContent :: RawContent) -> do
-      rawContentFromVDocVersion (rawContentToVDocVersion rawContent) `shouldBe` rawContent
-
   describe "separateStyles, joinStyles" $ do
     it "joinStyles . separateStyles == id" . property $ \(rawContent :: RawContent) -> do
       joinStyles (separateStyles rawContent) `shouldBe` rawContent

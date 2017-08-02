@@ -40,7 +40,7 @@ import           Refine.Common.Rest (ApiError(..))
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
-import           Refine.Frontend.Document.Store (setAllVerticalSpanBounds, documentStateUpdate, editorStateToVDocVersion)
+import           Refine.Frontend.Document.Store (setAllVerticalSpanBounds, documentStateUpdate)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
@@ -313,7 +313,7 @@ emitBackendCallsFor act st = case act of
             cedit :: C.Create C.Edit
             cedit = C.CreateEdit
                   { C._createEditDesc        = info ^. editInfoDesc
-                  , C._createEditVDocVersion = editorStateToVDocVersion (st ^. gsDocumentState . documentStateVal)
+                  , C._createEditVDocVersion = getCurrentRawContent $ st ^. gsDocumentState . documentStateVal
                   , C._createEditKind        = info ^. editInfoKind
                   }
 

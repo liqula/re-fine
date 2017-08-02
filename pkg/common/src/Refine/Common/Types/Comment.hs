@@ -30,7 +30,7 @@ import Refine.Common.Types.Prelude
 import Refine.Common.Types.Position
 
 
-type CommentText = ST  -- FIXME: refactor VDocVersion to be more general and use that.
+type CommentText = ST
 
 data CreateNote = CreateNote
   { _createNoteText   :: CommentText

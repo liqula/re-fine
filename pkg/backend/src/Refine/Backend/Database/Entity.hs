@@ -296,7 +296,7 @@ updateEditSource eid f = do
              (error "updateEditSource")
              [ S.ParentChildEdit =. RawContentEdit (f (S.keyToId parent) edit) ]
 
-getVersion :: ID Edit -> DB VDocVersion
+getVersion :: ID Edit -> DB RawContent
 getVersion pid = S.editElim (\_ vdoc _ _ _ -> vdoc) <$> getEntityRep pid
 
 editNotes :: ID Edit -> DB [ID Note]

@@ -50,7 +50,6 @@ import Refine.Common.OT hiding (Edit)
 import Refine.Common.ChangeAPI
 import Refine.Common.Rest
 import Refine.Common.Types as Common
-import Refine.Common.VDoc.Draft
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
@@ -145,7 +144,7 @@ sampleCreateVDoc :: CreateVDoc
 sampleCreateVDoc = CreateVDoc
   (Title "[title]")
   (Abstract "[abstract]")
-  (rawContentToVDocVersion . mkRawContent $ mkBlock "[versioned content]" :| [])
+  (mkRawContent $ mkBlock "[versioned content]" :| [])
   defaultGroupID
 
 respCode :: SResponse -> Int
@@ -372,7 +371,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
       pendingWith "this test case shouldn't be too hard to write, and should be working already."
 
   describe "sAddEdit, sUpdateEdit" $ do
-    let samplevdoc = rawContentToVDocVersion . mkRawContent $ mkBlock "[new vdoc version]" :| []
+    let samplevdoc = mkRawContent $ mkBlock "[new vdoc version]" :| []
     let setup sess = do
          group <- fmap (^. groupID) . runDB sess $ App.addGroup (CreateGroup "title" "desc" [] [])
          runWai sess $ do
@@ -401,7 +400,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
     context "on edit without ranges" $ do
       it "stores an edit and returns its version" $ \sess -> do
         (_, fp) <- setup sess
-        be' :: VDocVersion <- runDB sess . db . getVersion $ fp ^. editID
+        be' :: RawContent <- runDB sess . db . getVersion $ fp ^. editID
         be' `shouldBe` samplevdoc
 
       it "stores an edit and returns it in the list of edits applicable to its base" $ \sess -> do
@@ -414,7 +413,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
       it "works" $ \sess -> do
         (_, fp) <- setup sess
 
-        let d = rawContentToVDocVersion . mkRawContent $ mkBlock "1234567890" :| []
+        let d = mkRawContent $ mkBlock "1234567890" :| []
         _ :: Edit <- runWai sess $
             putJSON
               (updateEditUri (fp ^. editID))
@@ -586,7 +585,7 @@ specVoting = around createTestSession $ do
       addUserAndLogin sess "userA"
 
       let blocks = mkBlock <$> ["first line", "second line", "third line"]
-          vdoc ~(b:bs) = rawContentToVDocVersion . mkRawContent $ b :| bs
+          vdoc ~(b:bs) = mkRawContent $ b :| bs
 
       cvdoc <- mkCVDoc sess $ CreateVDoc (Title "[title]") (Abstract "[abstract]") (vdoc blocks) defaultGroupID
 

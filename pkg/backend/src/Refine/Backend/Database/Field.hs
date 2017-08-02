@@ -29,11 +29,11 @@ instance PersistFieldSql Timestamp where
   sqlType Proxy = sqlType (Proxy @ST)  -- FIXME: should be @@UTCTime@, but that breaks tests on sqlite.
 
 
-instance PersistField VDocVersion where
-  toPersistValue (VDocVersion t) = toPersistValue t
-  fromPersistValue               = fmap VDocVersion . fromPersistValue
+instance PersistField RawContent where
+  toPersistValue    = toPersistJSONValue
+  fromPersistValue  = fromPersistJSONValue
 
-instance PersistFieldSql VDocVersion where
+instance PersistFieldSql RawContent where
   sqlType Proxy = sqlType (Proxy @ST)
 
 

@@ -35,9 +35,8 @@ import Refine.Backend.App as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
 import Refine.Common.Test.Arbitrary ()
-import Refine.Common.Test.Samples (sampleVDocVersion)
+import Refine.Common.Test.Samples (sampleRawContent1)
 import Refine.Common.Types
-import Refine.Common.VDoc.Draft
 
 
 data Cmd where
@@ -112,13 +111,13 @@ spec = do
   describe "Regression" . around provideAppRunner $ do
     it "Regression test program" $ \(runner :: AppM DB () -> IO ()) -> do
       let program =
-            [ AddVDoc (CreateVDoc (Title "title...") (Abstract "abstract...") sampleVDocVersion defaultGroupID)
+            [ AddVDoc (CreateVDoc (Title "title...") (Abstract "abstract...") sampleRawContent1 defaultGroupID)
             , AddEditToHead 0 sampleCreateEdit1
             ]
       runner . runIdentityT $ runProgram program `evalStateT` initVDocs
 
   describe "merging" . around provideAppRunner $ do
-    let vdoc = rawContentToVDocVersion . mkRawContent . NEL.fromList . map mkBlock
+    let vdoc = mkRawContent . NEL.fromList . map mkBlock
 
         docWithEdits v0 vs = do
           doc <- App.createVDoc $ CreateVDoc (Title "title...") (Abstract "abstract...") (vdoc v0) defaultGroupID
@@ -223,7 +222,7 @@ arbitraryCreateVDoc =
   CreateVDoc
     <$> (Title <$> word)
     <*> (Abstract . mconcat <$> listOf word)
-    <*> (rawContentToVDocVersion <$> arbitrary @RawContent)
+    <*> arbitrary @RawContent
     <*> pure defaultGroupID
 
 sampleProgram :: Gen [Cmd]
@@ -237,4 +236,4 @@ sampleProgram = do
 -- * loud samples
 
 sampleCreateEdit1 :: CreateEdit
-sampleCreateEdit1 = CreateEdit {_createEditDesc = "...", _createEditVDocVersion = sampleVDocVersion, _createEditKind = Grammar}
+sampleCreateEdit1 = CreateEdit {_createEditDesc = "...", _createEditVDocVersion = sampleRawContent1, _createEditKind = Grammar}

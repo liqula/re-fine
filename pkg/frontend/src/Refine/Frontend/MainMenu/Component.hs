@@ -264,7 +264,7 @@ mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
 
     ibutton_ $ emptyIbuttonProps "Process_add"
         [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormOngoing
-          $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract sampleVDocVersion (group ^. groupID)) group
+          $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract sampleRawContent1 (group ^. groupID)) group
         ]
       & ibListKey .~ "process_add"
       & ibSize .~ XXLarge
@@ -347,7 +347,7 @@ mainMenuCreateGroup_ mid lst = view_ (mainMenuCreateGroup mid lst) "mainMenuCrea
 mainMenuCreateProcess :: HasCallStack => LocalStateRef CreateVDoc -> View '[]
 mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst $ \st -> do
   renderCreateOrUpdateProcess
-    createVDocTitle createVDocAbstract (Just createVDocInitVersion)
+    createVDocTitle createVDocAbstract
     (MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess)
     (MainMenuAction . MainMenuActionOpen . MainMenuGroup $ st ^. createVDocGroup)
     st
@@ -358,7 +358,7 @@ mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreatePr
 mainMenuUpdateProcess :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> View '[]
 mainMenuUpdateProcess vid lst = mkPersistentStatefulView "MainMenuUpdateProcess" lst $
   renderCreateOrUpdateProcess
-    updateVDocTitle updateVDocAbstract Nothing
+    updateVDocTitle updateVDocAbstract
     (MainMenuAction . MainMenuActionOpen . MainMenuUpdateProcess vid)
     (LoadCompositeVDoc $ BeforeAjax vid)
 
@@ -369,21 +369,15 @@ renderCreateOrUpdateProcess
   :: forall st a.
      ALens' st Title
   -> ALens' st Abstract
-  -> Maybe (ALens' st VDocVersion)
   -> (FormAction_ a st -> GlobalAction)  -- ^ save
   -> GlobalAction                        -- ^ cancel
   -> st
   -> ReactElementM ('StatefulEventHandlerCode st) ()
-renderCreateOrUpdateProcess (cloneLens -> toTitle) (cloneLens -> toAbstract) mtoContent save cancel st = do
+renderCreateOrUpdateProcess (cloneLens -> toTitle) (cloneLens -> toAbstract) save cancel st = do
     contributionDialogTextForm (toTitle . unTitle) st 2 "title"
     hr_ []
     contributionDialogTextForm (toAbstract . unAbstract) st 2 "abstract"
     hr_ []
-    case mtoContent of
-      Nothing -> pure ()
-      Just (cloneLens -> toContent) -> do
-        contributionDialogTextForm (toContent . unVDocVersion) st 2 "initial version"
-        hr_ []
 
     let enableOrDisable props = if ST.null (st ^. toTitle . unTitle)
           then props

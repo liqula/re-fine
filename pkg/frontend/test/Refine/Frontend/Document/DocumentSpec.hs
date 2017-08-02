@@ -36,14 +36,12 @@ import Test.QuickCheck
 import React.Flux.Outdated as Outdated
 
 import Refine.Common.Test.Arbitrary
-import Refine.Common.Test.Samples
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft
 import React.Flux.Missing
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Document
 import Refine.Frontend.Document.FFI
-import Refine.Frontend.Document.Store
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Store
 import Refine.Frontend.Store.Types
@@ -54,11 +52,6 @@ import Refine.Frontend.Test.Store
 
 spec :: Spec
 spec = do
-  describe "Samples" $ do
-    it "work" $ do
-      rawContentFromVDocVersion sampleVDocVersion `shouldNotBe` emptyRawContent
-
-
   describe "convertToRaw, convertFromRaw" $ do
     it "are isomorphic" . property . forAll (scale (`div` 4) arbitrary) $ \(sanitizeRawContent -> rawContent) -> do
       -- TUNING: i suspect that this test is so slow because of 'sanitizeRawContent'.
@@ -167,7 +160,7 @@ spec = do
   describe "Document" $ do
     let mkTestProps :: RawContent -> DocumentProps
         mkTestProps c = DocumentProps
-          (DocumentStateEdit (editorStateFromVDocVersion $ rawContentToVDocVersion c) einfo Nothing)
+          (DocumentStateEdit (createWithRawContent c) einfo Nothing)
           emptyContributionState
           where
             einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) c

@@ -24,8 +24,6 @@
 
 module Refine.Frontend.Document.Store
   ( documentStateUpdate
-  , editorStateToVDocVersion
-  , editorStateFromVDocVersion
   , setAllVerticalSpanBounds
   ) where
 
@@ -61,7 +59,7 @@ documentStateUpdate (LoadVDoc (AfterAjax vdoc)) oldgs _newgs st
     in refreshDocumentStateView
          oldEdit
          eidChanged
-         (rawContentFromVDocVersion $ oldEdit ^. editVDocVersion)  -- (really, get the vdoc version from the old gs here?)
+         (oldEdit ^. editVDocVersion)  -- (really, get the vdoc version from the old gs here?)
          st
 
 documentStateUpdate (LoadCompositeVDoc (AfterAjax cvdoc)) oldgs _newgs st
@@ -83,7 +81,7 @@ documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _
 
 documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateDiff _ _ _ edit _ _)
   = DocumentStateEdit
-      (createWithContent . convertFromRaw . rawContentFromVDocVersion $ ed ^. editVDocVersion)
+      (createWithRawContent $ ed ^. editVDocVersion)
       einfo
       (Just edit)
   where
@@ -174,12 +172,6 @@ documentStateUpdate (HeaderAction ToggleIndexToolbarExtension) _ _ st | has _Doc
 documentStateUpdate _ _ _ st
   = st
 
-
-editorStateToVDocVersion :: HasCallStack => EditorState -> VDocVersion
-editorStateToVDocVersion = rawContentToVDocVersion . convertToRaw . getCurrentContent
-
-editorStateFromVDocVersion :: HasCallStack => VDocVersion -> EditorState
-editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
 
 -- | construct a 'SetAllVerticalSpanBounds' action.
 setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a b c -> m ContributionAction

@@ -77,7 +77,7 @@ getVDoc i = do
   appLog "getVDoc"
   db $ DB.getVDoc i
 
-getVDocVersion :: ID Edit -> App VDocVersion
+getVDocVersion :: ID Edit -> App RawContent
 getVDocVersion eid = do
   appLog "getVDocVersion"
   db $ DB.getVersion eid
@@ -116,8 +116,8 @@ updateEdit eid edit = do
   appLog "updateEdit"
   -- assertPerms eid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/358
   db $ do
-    olddoc <- rawContentFromVDocVersion <$> DB.getVersion eid
-    let new = edit ^. createEditVDocVersion
+    olddoc :: RawContent <- DB.getVersion eid
+    let new :: RawContent = edit ^. createEditVDocVersion
     dff <- either error pure $
             -- error reporting is not great:
             -- - this is an internal error, and it may be possible to rule it out on the type level.
@@ -125,8 +125,7 @@ updateEdit eid edit = do
             -- - since we 'error' out sloppily, the backend console says 'SQLite3 returned ErrorError
             --   while attempting to perform step.' and the frontend says 'Error in $: Failed
             --   reading: not a valid json value'.
-        OT.diff (deleteMarksFromRawContent olddoc)
-                (deleteMarksFromRawContent $ rawContentFromVDocVersion new)
+        OT.diff (deleteMarksFromRawContent olddoc) (deleteMarksFromRawContent new)
     DB.updateEdit eid edit
     DB.updateEditSource eid $ \_ e -> e <> dff
     DB.getEdit eid
@@ -141,7 +140,7 @@ addEdit baseeid edit = do
     -- edit*, not the edit about to get created.)
   db $ do
     rid <- DB.vdocOfEdit baseeid
-    olddoc <- rawContentFromVDocVersion <$> DB.getVersion baseeid
+    olddoc :: RawContent <- DB.getVersion baseeid
     dff <- either error pure $
             -- error reporting is not great:
             -- - this is an internal error, and it may be possible to rule it out on the type level.
@@ -150,7 +149,7 @@ addEdit baseeid edit = do
             --   while attempting to perform step.' and the frontend says 'Error in $: Failed
             --   reading: not a valid json value'.
         OT.diff (deleteMarksFromRawContent olddoc)
-                (deleteMarksFromRawContent . rawContentFromVDocVersion $ edit ^. createEditVDocVersion)
+                (deleteMarksFromRawContent $ edit ^. createEditVDocVersion)
     DB.createEdit rid (EditSource [(dff, baseeid)]) edit
 
 addMerge :: (MonadApp db) => ID Edit -> ID Edit -> ID Edit -> AppM db Edit
@@ -166,11 +165,11 @@ addMerge base eid1 eid2 = do
            , [e | (e, d) <- edit2 ^. editSource . unEditSource, d == base]
            ) of
         ([e1], [e2]) -> Right <$> do
-          doc  <- rawContentFromVDocVersion <$> DB.getVersion base
+          doc :: RawContent <- DB.getVersion base
           let (diff1, diff2) = OT.merge doc e1 e2
               newdoc = OT.patch (e1 <> diff1) doc
           DB.createEdit rid (EditSource [(diff1, eid1), (diff2, eid2)])
-            $ CreateEdit (edit2 ^. editDesc) (rawContentToVDocVersion newdoc) (edit2 ^. editKind)
+            $ CreateEdit (edit2 ^. editDesc) newdoc (edit2 ^. editKind)
         res -> pure . Left $ AppMergeError base eid1 eid2 (cs $ show res)
 
 rebaseHeadToEdit :: (MonadApp db) => ID Edit -> AppM db ()
@@ -190,14 +189,14 @@ rebaseHeadToEdit eid = do
     let diff = head [di | (di, d) <- edit ^. editSource . unEditSource, d == hid]
         trRange = transformRangeOTDoc
                   (concat (coerce diff :: [OT.Edit OTDoc]))
-                  (rawContentToDoc . rawContentFromVDocVersion $ base ^. editVDocVersion)
+                  (rawContentToDoc $ base ^. editVDocVersion)
     forM_ (Set.toList $ base ^. editNotes') $ \nid -> do
       n <- DB.getNote nid
       DB.createNote eid . CreateNote (n ^. noteText) (n ^. notePublic) . trRange $ n ^. noteRange
 
     forM_ (Set.toList $ base ^. editDiscussions') $ \did -> DB.rebaseDiscussion eid did trRange
 
--- | Throw an error if chunk range does not fit 'VDocVersion' identified by edit.
+-- | Throw an error if chunk range does not fit 'RawContent' identified by edit.
 -- FIXME: for RawContent this still needs to be implemented.
 validateCreateChunkRange :: ID Edit -> Range Position -> App ()
 validateCreateChunkRange _ _ = pure ()  -- throwError AppVDocVersionError
