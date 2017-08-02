@@ -264,7 +264,11 @@ emitBackendCallsFor act st = case act of
     MainMenuAction (MainMenuActionOpen (MainMenuCreateOrUpdateGroup mid (FormComplete cg))) -> do
         maybe createGroup updateGroup mid cg $ \case
             Left rsp -> ajaxFail rsp Nothing
-            Right _ -> dispatchM . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()
+            Right rsp -> dispatchManyM
+              [ RefreshServerCache . ServerCache mempty mempty mempty mempty mempty
+                $ M.fromList [(rsp ^. C.groupID, rsp)]
+              , MainMenuAction . MainMenuActionOpen . MainMenuGroup $ rsp ^. C.groupID
+              ]
 
     MainMenuAction (MainMenuActionOpen (MainMenuCreateProcess (FormComplete cg))) -> do
         createVDoc cg $ \case
