@@ -33,8 +33,6 @@ newtype ID a = ID { _unID :: Int64 }
 
 makeRefineType ''ID
 
-type family Create a = b | b -> a
-
 instance ToHttpApiData (ID a) where
   toUrlPiece (ID x) = cs $ show x
 

@@ -83,7 +83,7 @@ type SGetVDoc
     :> Get '[JSON] CompositeVDoc
 
 type SCreateVDoc
-  = "r" :> "vdoc" :> ReqBody '[JSON] (Create VDoc)
+  = "r" :> "vdoc" :> ReqBody '[JSON] CreateVDoc
     :> Post '[JSON] CompositeVDoc
 
 type SUpdateVDoc
@@ -91,31 +91,31 @@ type SUpdateVDoc
     :> Put '[JSON] VDoc
 
 type SAddEdit
-  = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Edit)
+  = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] CreateEdit
     :> Post '[JSON] Edit
 
 type SUpdateEdit
-  = "r" :> "updateEdit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Edit)
+  = "r" :> "updateEdit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] CreateEdit
     :> Put '[JSON] Edit
 
 type SAddNote
-  = "r" :> "note" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Note)
+  = "r" :> "note" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] CreateNote
     :> Post '[JSON] Note
 
 type SAddQuestion
-  = "r" :> "question" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Question)
+  = "r" :> "question" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] CreateQuestion
     :> Post '[JSON] CompositeQuestion
 
 type SAddAnswer
-  = "r" :> "answer" :> Capture "onquestionid" (ID Question) :> ReqBody '[JSON] (Create Answer)
+  = "r" :> "answer" :> Capture "onquestionid" (ID Question) :> ReqBody '[JSON] CreateAnswer
     :> Post '[JSON] Answer
 
 type SAddDiscussion
-  = "r" :> "discussion" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (Create Discussion)
+  = "r" :> "discussion" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] CreateDiscussion
     :> Post '[JSON] Discussion
 
 type SAddStatement
-  = "r" :> "statement" :> "reply" :> Capture "onstatementid" (ID Statement) :> ReqBody '[JSON] (Create Statement)
+  = "r" :> "statement" :> "reply" :> Capture "onstatementid" (ID Statement) :> ReqBody '[JSON] CreateStatement
     :> Post '[JSON] Discussion
       -- FIXME: should be @"r" :> "statement" :> Capture "onstatementid" (ID Statement) :> "reply" ...@
       -- to be consistent with 'SPutSimpleVoteOnEdit' etc.
@@ -139,11 +139,11 @@ type SGetTranslations
     :> Post '[JSON] L10
 
 type SAddGroup
-  = "r" :> "group" :> ReqBody '[JSON] (Create Group)
+  = "r" :> "group" :> ReqBody '[JSON] CreateGroup
     :> Post '[JSON] Group
 
 type SUpdateGroup
-  = "r" :> "updateGroup" :> Capture "ongroupid" (ID Group) :> ReqBody '[JSON] (Create Group)
+  = "r" :> "updateGroup" :> Capture "ongroupid" (ID Group) :> ReqBody '[JSON] CreateGroup
     :> Put '[JSON] Group
 
 type SGetGroups

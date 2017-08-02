@@ -160,12 +160,6 @@ data EditKind = Grammar | Phrasing | Meaning | Initial
   deriving (Eq, Ord, Show, Read, Generic, Bounded, Enum)
 
 
--- ** create types, instances
-
-type instance Create VDoc = CreateVDoc
-type instance Create Edit = CreateEdit
-
-
 -- ** composites
 
 -- | Packaged vdoc ready for use by client.  "Applicable
@@ -241,8 +235,6 @@ data CreateGroup = CreateGroup
   , _createGroupChildren :: [ID Group]
   }
   deriving (Eq, Generic, Show)
-
-type instance Create Group = CreateGroup
 
 
 -- * RawContent

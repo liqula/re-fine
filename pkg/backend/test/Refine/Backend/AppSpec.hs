@@ -40,9 +40,9 @@ import Refine.Common.Types
 
 
 data Cmd where
-  AddVDoc :: Create VDoc        -> Cmd
-  GetVDoc :: Int -> Create VDoc -> Cmd
-  AddEditToHead :: Int -> Create Edit -> Cmd
+  AddVDoc :: CreateVDoc        -> Cmd
+  GetVDoc :: Int -> CreateVDoc -> Cmd
+  AddEditToHead :: Int -> CreateEdit -> Cmd
 
 deriving instance Show Cmd
 
@@ -217,7 +217,7 @@ runCmd (AddEditToHead v cedit) = do
 word :: (ConvertibleStrings String s) => Gen s
 word = cs <$> listOf (elements ['a' .. 'z'])
 
-arbitraryCreateVDoc :: Gen (Create VDoc)
+arbitraryCreateVDoc :: Gen CreateVDoc
 arbitraryCreateVDoc =
   CreateVDoc
     <$> (Title <$> word)

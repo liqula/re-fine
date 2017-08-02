@@ -52,11 +52,11 @@ listVDocs = do
   db $ mapM DB.getVDoc =<< DB.listVDocs
 
 -- | Create 'VDoc' and return the corresponding 'CompositeVDoc'.
-createVDocGetComposite :: Create VDoc -> App CompositeVDoc
+createVDocGetComposite :: CreateVDoc -> App CompositeVDoc
 createVDocGetComposite = (getCompositeVDocOnHead . view vdocID) <=< createVDoc
 
 -- | Creates a 'VDoc'.  See also: 'createVDocGetComposite'.
-createVDoc :: Create VDoc -> App VDoc
+createVDoc :: CreateVDoc -> App VDoc
 createVDoc pv = do
   appLog "createVDoc"
   db $ DB.createVDoc pv
@@ -111,7 +111,7 @@ getCompositeVDoc' vdoc editid = do
 
 updateEdit
   :: (MonadApp db)   -- FIXME
-  => ID Edit -> Create Edit -> AppM db Edit
+  => ID Edit -> CreateEdit -> AppM db Edit
 updateEdit eid edit = do
   appLog "updateEdit"
   -- assertPerms eid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/358
@@ -132,7 +132,7 @@ updateEdit eid edit = do
 
 addEdit
   :: (MonadApp db)
-  => ID Edit -> Create Edit -> AppM db Edit
+  => ID Edit -> CreateEdit -> AppM db Edit
 addEdit baseeid edit = do
   appLog "addEdit"
   -- assertPerms baseeid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/358

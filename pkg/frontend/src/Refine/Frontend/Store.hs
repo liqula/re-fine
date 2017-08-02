@@ -310,7 +310,6 @@ emitBackendCallsFor act st = case act of
         let eid :: C.ID C.Edit
             Just eid = st ^? gsVDoc . _Just . C.compositeVDocThisEditID
 
-            cedit :: C.Create C.Edit
             cedit = C.CreateEdit
                   { C._createEditDesc        = info ^. editInfoDesc
                   , C._createEditVDocVersion = getCurrentRawContent $ st ^. gsDocumentState . documentStateVal

@@ -222,7 +222,7 @@ listVDocs = do
   opts <- dbSelectOpts
   liftDB $ S.keyToId <$$> selectKeysList [] opts
 
-createVDoc :: Create VDoc -> DB VDoc
+createVDoc :: CreateVDoc -> DB VDoc
 createVDoc pv = do
   let svdoc = S.VDoc
         (pv ^. createVDocTitle)
@@ -263,7 +263,7 @@ createEdit rid me ce = do
       insert $ S.ParentChild (S.idToKey parent) (RawContentEdit edit) (S.idToKey $ mid ^. miID)
   getEdit $ mid ^. miID
 
-updateEdit :: ID Edit -> Create Edit -> DB ()
+updateEdit :: ID Edit -> CreateEdit -> DB ()
 updateEdit eid ce = do
   liftDB $ update (S.idToKey eid)
     [ S.EditEditVDoc =. (ce ^. createEditVDocVersion)
@@ -348,7 +348,7 @@ vdocOfEdit pid = S.editElim (\_ _ vid _ _ -> S.keyToId vid) <$> getEntityRep pid
 toNote :: MetaID Note -> ST -> Bool -> RangePosition -> Users.LoginId -> Note
 toNote nid desc public range _lid = Note nid desc public (unRangePosition range)
 
-createNote :: ID Edit -> Create Note -> DB Note
+createNote :: ID Edit -> CreateNote -> DB Note
 createNote pid note = do
   userId <- dbUser
   let snote = S.Note
@@ -370,7 +370,7 @@ getNote = getMetaEntity (S.noteElim . toNote)
 toQuestion :: MetaID Question -> ST -> Bool -> Bool -> RangePosition -> Users.LoginId -> Question
 toQuestion qid text answ pblc range _lid = Question qid text answ pblc (unRangePosition range)
 
-createQuestion :: ID Edit -> Create Question -> DB Question
+createQuestion :: ID Edit -> CreateQuestion -> DB Question
 createQuestion pid question = do
   userId <- dbUser
   let squestion = S.Question
@@ -395,7 +395,7 @@ saveStatement did sstatement = do
   addConnection S.DS did (mid ^. miID)
   pure $ S.statementElim (toStatement mid) sstatement
 
-createDiscussion :: ID Edit -> Create Discussion -> DB Discussion
+createDiscussion :: ID Edit -> CreateDiscussion -> DB Discussion
 createDiscussion pid disc = do
   userId <- dbUser
   let sdiscussion = S.Discussion
@@ -447,7 +447,7 @@ discussionOfStatement sid = do
 toAnswer :: MetaID Answer -> Key S.Question -> ST -> Answer
 toAnswer aid qkey = Answer aid (S.keyToId qkey)
 
-createAnswer :: ID Question -> Create Answer -> DB Answer
+createAnswer :: ID Question -> CreateAnswer -> DB Answer
 createAnswer qid answer = do
   let sanswer = S.Answer
         (S.idToKey qid)
@@ -472,7 +472,7 @@ answersOfQuestion qid = do
 toStatement :: MetaID Statement -> ST -> Maybe (Key S.Statement) -> Statement
 toStatement sid text parent = Statement sid text (S.keyToId <$> parent)
 
-createStatement :: ID Statement  -> Create Statement -> DB Statement
+createStatement :: ID Statement  -> CreateStatement -> DB Statement
 createStatement sid statement = do
   opts <- dbSelectOpts
   ds  <- liftDB $ foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] opts
@@ -510,7 +510,7 @@ toGroup :: [ID Group] -> [ID Group] -> [ID VDoc] -> MetaID Group -> ST -> ST -> 
 toGroup parents children vdocs gid title desc =
   Group gid title desc parents children vdocs
 
-createGroup :: Create Group -> DB Group
+createGroup :: CreateGroup -> DB Group
 createGroup group = do
   let sgroup = S.Group
         (group ^. createGroupTitle)
@@ -550,7 +550,7 @@ getGroups = do
   gids <- liftDB $ selectKeysList [] []
   mapM (getGroup . S.keyToId) gids
 
-modifyGroup :: ID Group -> Create Group -> DB Group
+modifyGroup :: ID Group -> CreateGroup -> DB Group
 modifyGroup gid group = do
   parents  <- getParentsOfGroup gid
   children <- getChildrenOfGroup gid
