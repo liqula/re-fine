@@ -261,7 +261,7 @@ emitBackendCallsFor act st = case act of
               , MainMenuAction . MainMenuActionOpen . MainMenuGroups . AfterAjax $ (^. C.groupID) <$> groups
               ]
 
-    MainMenuAction (MainMenuActionOpen (MainMenuCreateGroup mid (FormComplete cg))) -> do
+    MainMenuAction (MainMenuActionOpen (MainMenuCreateOrUpdateGroup mid (FormComplete cg))) -> do
         maybe createGroup updateGroup mid cg $ \case
             Left rsp -> ajaxFail rsp Nothing
             Right _ -> dispatchM . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()

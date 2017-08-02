@@ -73,7 +73,7 @@ type MainMenuTabProps = MainMenuTab
 data MainMenuTab gids group cgroup cprocess
   = MainMenuGroups gids
   | MainMenuGroup group
-  | MainMenuCreateGroup (Maybe (ID Group)) cgroup
+  | MainMenuCreateOrUpdateGroup (Maybe (ID Group)) cgroup
   | MainMenuCreateProcess cprocess
   | MainMenuHelp
   | MainMenuLogin MainMenuSubTabLogin
@@ -83,7 +83,7 @@ mapMainMenuTab :: (a -> a') -> (b -> b') -> (c -> c') -> (d -> d') -> MainMenuTa
 mapMainMenuTab fa fb fc fd = \case
   MainMenuGroups a -> MainMenuGroups (fa a)
   MainMenuGroup b  -> MainMenuGroup (fb b)
-  MainMenuCreateGroup u c -> MainMenuCreateGroup u (fc c)
+  MainMenuCreateOrUpdateGroup u c -> MainMenuCreateOrUpdateGroup u (fc c)
   MainMenuCreateProcess d -> MainMenuCreateProcess (fd d)
   MainMenuHelp     -> MainMenuHelp
   MainMenuLogin l  -> MainMenuLogin l

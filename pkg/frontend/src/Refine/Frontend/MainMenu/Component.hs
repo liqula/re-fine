@@ -117,10 +117,10 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
            , "style" @@= tabStyles
            ] $ do
         case currentTab of
-          MainMenuGroups groups       -> mainMenuGroups_ groups
-          MainMenuGroup group         -> mainMenuGroup_ group
-          MainMenuCreateGroup mid lst -> mainMenuCreateGroup_ mid lst
-          MainMenuCreateProcess lst   -> mainMenuCreateProcess_ lst
+          MainMenuGroups groups               -> mainMenuGroups_ groups
+          MainMenuGroup group                 -> mainMenuGroup_ group
+          MainMenuCreateOrUpdateGroup mid lst -> mainMenuCreateGroup_ mid lst
+          MainMenuCreateProcess lst           -> mainMenuCreateProcess_ lst
 
           MainMenuHelp -> pre_ $ do
             elemString $ "commit hash: " <> show BuildInfo.gitCommitHash
@@ -142,7 +142,7 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
   div_ $ do
     div_ ["style" @@= [decl "marginLeft" (Px 3)]] $ do
       let mkCreateGroupAction :: GlobalAction
-          mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup Nothing . FormOngoing
+          mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup Nothing . FormOngoing
                               $ newLocalStateRef (CreateGroup "" "" [] []) groups
 
       ibutton_ $ emptyIbuttonProps "Group_add" [mkCreateGroupAction]
@@ -271,7 +271,7 @@ mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
       & ibLabel .~ "create new process"
 
     ibutton_ $ emptyIbuttonProps "Group_update"
-        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup (Just $ group ^. groupID) . FormOngoing
+        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup (Just $ group ^. groupID) . FormOngoing
           $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
         ]
       & ibListKey .~ "group_update"
@@ -316,7 +316,7 @@ mainMenuCreateGroup mid lst = mkPersistentStatefulView "MainMenuCreateGroup" lst
             & iconButtonPropsDisabled     .~ True
           else props
             & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup mid $ FormComplete st
+            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup mid $ FormComplete st
                                              ]
 
     -- FIXME: make new button, like in 'commentInput_' above.  we
