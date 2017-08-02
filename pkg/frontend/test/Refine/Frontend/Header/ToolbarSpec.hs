@@ -28,6 +28,7 @@ import Refine.Frontend.Prelude
 
 import           Test.Hspec
 
+import           Refine.Common.Types
 import           Refine.Frontend.Header.Heading
 import           Refine.Frontend.Header.Toolbar
 import           Refine.Frontend.Header.Types
@@ -42,7 +43,10 @@ spec = do
     it "toggles the visibility of the edit toolbar extension when the 'new comment' button is clicked" $ do
       pendingWith "sometimes fails, sometimes passes; related to #201 or #221?"
 
-      wrapper <- mount $ toolbarWrapper_ toolbar_
+      let mockVDoc :: VDoc
+          mockVDoc = VDoc (MetaID (ID 0) undefined) (Title "title") (Abstract "abstract") undefined undefined
+
+      wrapper <- mount $ toolbarWrapper_ (toolbar_ mockVDoc)
       button <- find wrapper (StringSelector ".c-vdoc-toolbar__btn-add-annotation")
 
       _ <- simulate button Click

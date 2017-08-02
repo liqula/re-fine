@@ -26,6 +26,7 @@ module Refine.Frontend.MainMenu.Component where
 
 import Refine.Frontend.Prelude
 
+import           Control.Lens (ALens', cloneLens)
 import qualified Data.Text as ST
 import           Language.Css.Syntax
 
@@ -121,6 +122,7 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
           MainMenuGroup group                 -> mainMenuGroup_ group
           MainMenuCreateOrUpdateGroup mid lst -> mainMenuCreateGroup_ mid lst
           MainMenuCreateProcess lst           -> mainMenuCreateProcess_ lst
+          MainMenuUpdateProcess pid lst       -> mainMenuUpdateProcess_ pid lst
 
           MainMenuHelp -> pre_ $ do
             elemString $ "commit hash: " <> show BuildInfo.gitCommitHash
@@ -292,7 +294,7 @@ mainMenuProcessShort :: HasCallStack => View '[ID VDoc]
 mainMenuProcessShort = mkView "MainMenuProcessShort" $ \vid -> do
   button_
         [ "id" $= cs ("process-list-item-" <> show (vid ^. unID))
-        , onClick $ \_ _ -> simpleHandler . dispatch . LoadDocument $ BeforeAjax vid
+        , onClick $ \_ _ -> simpleHandler . dispatch . LoadCompositeVDoc $ BeforeAjax vid
         ]
         (elemText . cs . show $ vid ^. unID)
 
@@ -343,22 +345,52 @@ mainMenuCreateGroup_ :: HasCallStack => Maybe (ID Group) -> LocalStateRef Create
 mainMenuCreateGroup_ mid lst = view_ (mainMenuCreateGroup mid lst) "mainMenuCreateGroup"
 
 mainMenuCreateProcess :: HasCallStack => LocalStateRef CreateVDoc -> View '[]
-mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst $
-  \st@(CreateVDoc title _ _ _) -> do
+mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst $ \st -> do
+  renderCreateOrUpdateProcess
+    createVDocTitle createVDocAbstract (Just createVDocInitVersion)
+    (MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess)
+    (MainMenuAction . MainMenuActionOpen . MainMenuGroup $ st ^. createVDocGroup)
+    st
 
-    contributionDialogTextForm (createVDocTitle . unTitle) st 2 "title"
-    hr_ []
-    contributionDialogTextForm (createVDocAbstract . unAbstract) st 2 "abstract"
-    hr_ []
-    contributionDialogTextForm (createVDocInitVersion . unVDocVersion) st 2 "initial version"
-    hr_ []
+mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
+mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
 
-    let enableOrDisable props = if ST.null (title ^. unTitle)
+mainMenuUpdateProcess :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> View '[]
+mainMenuUpdateProcess vid lst = mkPersistentStatefulView "MainMenuUpdateProcess" lst $
+  renderCreateOrUpdateProcess
+    updateVDocTitle updateVDocAbstract Nothing
+    (MainMenuAction . MainMenuActionOpen . MainMenuUpdateProcess vid)
+    (LoadCompositeVDoc $ BeforeAjax vid)
+
+mainMenuUpdateProcess_ :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> ReactElementM eventHandler ()
+mainMenuUpdateProcess_ vid lst = view_ (mainMenuUpdateProcess vid lst) "mainMenuUpdateProcess"
+
+renderCreateOrUpdateProcess
+  :: forall st a.
+     ALens' st Title
+  -> ALens' st Abstract
+  -> Maybe (ALens' st VDocVersion)
+  -> (FormAction_ a st -> GlobalAction)  -- ^ save
+  -> GlobalAction                        -- ^ cancel
+  -> st
+  -> ReactElementM ('StatefulEventHandlerCode st) ()
+renderCreateOrUpdateProcess (cloneLens -> toTitle) (cloneLens -> toAbstract) mtoContent save cancel st = do
+    contributionDialogTextForm (toTitle . unTitle) st 2 "title"
+    hr_ []
+    contributionDialogTextForm (toAbstract . unAbstract) st 2 "abstract"
+    hr_ []
+    case mtoContent of
+      Nothing -> pure ()
+      Just (cloneLens -> toContent) -> do
+        contributionDialogTextForm (toContent . unVDocVersion) st 2 "initial version"
+        hr_ []
+
+    let enableOrDisable props = if ST.null (st ^. toTitle . unTitle)
           then props
             & iconButtonPropsDisabled     .~ True
           else props
             & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess $ FormComplete st]
+            & iconButtonPropsOnClick      .~ [save $ FormComplete st]
 
     iconButton_ $ defaultIconButtonProps @[GlobalAction]
             & iconButtonPropsListKey      .~ "save"
@@ -375,10 +407,7 @@ mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst
             & iconButtonPropsLabel        .~ "cancel"
             & iconButtonPropsAlignRight   .~ True
             & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [MainMenuAction . MainMenuActionOpen $ MainMenuGroup (st ^. createVDocGroup)]
-
-mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
-mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
+            & iconButtonPropsOnClick      .~ [cancel]
 
 
 mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]

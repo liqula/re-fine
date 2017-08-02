@@ -147,7 +147,7 @@ mainHeaderRender () rs = do
         sticky_ [RF.on "onStickyStateChange" $ \e -> simpleHandler $ \() ->
                     (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
           toolbarWrapper_ $ case rs ^. gsDocumentState of
-            WipedDocumentStateView -> toolbar_
+            WipedDocumentStateView -> toolbar_ . fromJust $ rs ^? gsVDoc . _Just . compositeVDoc
             WipedDocumentStateDiff i edit collapsed editable -> diffToolbar_ $ DiffToolbarProps
               (edit ^. editID)
               i

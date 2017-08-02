@@ -41,6 +41,9 @@ getVDoc = request cfg (Proxy :: Proxy SGetVDoc)
 createVDoc :: HasCallStack => Create VDoc -> HandleResponse CompositeVDoc -> IO ()
 createVDoc = request cfg (Proxy :: Proxy SCreateVDoc)
 
+updateVDoc :: HasCallStack => ID VDoc -> UpdateVDoc -> HandleResponse VDoc -> IO ()
+updateVDoc = request cfg (Proxy :: Proxy SUpdateVDoc)
+
 addDiscussion :: HasCallStack => ID Edit -> Create Discussion -> HandleResponse Discussion -> IO ()
 addDiscussion = request cfg (Proxy :: Proxy SAddDiscussion)
 

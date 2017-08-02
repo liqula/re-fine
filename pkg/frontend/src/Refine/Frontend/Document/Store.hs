@@ -53,7 +53,18 @@ import           Refine.Frontend.Util
 -- trigger thunk evaluation loops.  use old state whenever it is
 -- enough.
 documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> GlobalState -> GlobalDocumentState -> GlobalDocumentState
-documentStateUpdate (LoadDocument (AfterAjax cvdoc)) oldgs _newgs st
+documentStateUpdate (LoadVDoc (AfterAjax vdoc)) oldgs _newgs st
+  = let eidChanged = Just newID /= mOldID
+        newID  = vdoc ^. vdocHeadEdit
+        mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
+        oldEdit = fromMaybe (error "impossible") $ gsEdit oldgs
+    in refreshDocumentStateView
+         oldEdit
+         eidChanged
+         (rawContentFromVDocVersion $ oldEdit ^. editVDocVersion)  -- (really, get the vdoc version from the old gs here?)
+         st
+
+documentStateUpdate (LoadCompositeVDoc (AfterAjax cvdoc)) oldgs _newgs st
   = let eidChanged = Just newID /= mOldID
         newID  = cvdoc ^. compositeVDocThisEditID
         mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID

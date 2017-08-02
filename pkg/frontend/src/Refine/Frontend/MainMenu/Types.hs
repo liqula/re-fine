@@ -1,7 +1,27 @@
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE ExplicitForAll             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE DeriveGeneric   #-}
-{-# LANGUAGE LambdaCase      #-}
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Frontend.MainMenu.Types where
 
@@ -54,37 +74,47 @@ data MainMenu
   | MainMenuOpen { _mainMenuOpenTab :: MainMenuTabState }
   deriving (Eq, Show, Generic)
 
-type MainMenuTabState = MainMenuTab
+type MainMenuTabState = (MainMenuTab
       ()
       (ID Group)
       (LocalStateRef CreateGroup)
       (LocalStateRef CreateVDoc)
-type MainMenuTabAction = MainMenuTab
+      (LocalStateRef UpdateVDoc)
+      :: *)
+type MainMenuTabAction = (MainMenuTab
       (AjaxAction () [ID Group])
       (ID Group)
       (FormAction CreateGroup)
       (FormAction CreateVDoc)
-type MainMenuTabProps = MainMenuTab
+      (FormAction UpdateVDoc)
+      :: *)
+type MainMenuTabProps = (MainMenuTab
       [Group]
       Group
       (LocalStateRef CreateGroup)
       (LocalStateRef CreateVDoc)
+      (LocalStateRef UpdateVDoc)
+      :: *)
 
-data MainMenuTab gids group cgroup cprocess
+-- | FUTUREWORK: it may be nicer after all to have different types for action, state, and props
+-- here.  but for now it should work.
+data MainMenuTab gids group cgroup cprocess uprocess
   = MainMenuGroups gids
   | MainMenuGroup group
   | MainMenuCreateOrUpdateGroup (Maybe (ID Group)) cgroup
   | MainMenuCreateProcess cprocess
+  | MainMenuUpdateProcess (ID VDoc) uprocess
   | MainMenuHelp
   | MainMenuLogin MainMenuSubTabLogin
   deriving (Eq, Show, Generic)
 
-mapMainMenuTab :: (a -> a') -> (b -> b') -> (c -> c') -> (d -> d') -> MainMenuTab a b c d -> MainMenuTab a' b' c' d'
-mapMainMenuTab fa fb fc fd = \case
+mapMainMenuTab :: (a -> a') -> (b -> b') -> (c -> c') -> (d -> d') -> (e -> e') -> MainMenuTab a b c d e -> MainMenuTab a' b' c' d' e'
+mapMainMenuTab fa fb fc fd fe = \case
   MainMenuGroups a -> MainMenuGroups (fa a)
   MainMenuGroup b  -> MainMenuGroup (fb b)
   MainMenuCreateOrUpdateGroup u c -> MainMenuCreateOrUpdateGroup u (fc c)
   MainMenuCreateProcess d -> MainMenuCreateProcess (fd d)
+  MainMenuUpdateProcess pid e -> MainMenuUpdateProcess pid (fe e)
   MainMenuHelp     -> MainMenuHelp
   MainMenuLogin l  -> MainMenuLogin l
 
