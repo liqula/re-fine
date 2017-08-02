@@ -149,6 +149,7 @@ getDocumentState gs@(view gsVDoc -> Just cvdoc)
                     <*> ((^. editMetaID . miMeta . metaCreatedBy) <$> getEdit gs eid))
       (const $ rawContentFromCompositeVDoc cvdoc)
       ((gs ^. gsServerCache . scEdits) Map.!)
+      ((gs ^. gsServerCache . scDiscussions) Map.!)
       dst
   where
     dst = gs ^. gsDocumentState

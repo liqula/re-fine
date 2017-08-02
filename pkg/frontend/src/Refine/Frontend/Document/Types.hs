@@ -35,7 +35,7 @@ import           Refine.Frontend.Document.FFI
 
 
 data DocumentAction =
-    DocumentUpdate GlobalDocumentState
+    UpdateEditorState EditorState
   | DocumentUpdateEditInfo (EditInfo (Maybe EditKind))
   | RequestDocumentSave  -- ^ FIXME: use the 'AfterAjax' trick here?
   | DocumentSave (EditInfo EditKind)
@@ -49,7 +49,7 @@ data DocumentAction =
   | DocumentRedo
   deriving (Show, Eq, Generic)
 
-data DocumentState_ editable{-() or Bool-} rawcontent edit =
+data DocumentState_ editable{-() or Bool-} rawcontent edit discussion =
     DocumentStateView
       { _documentStateVal      :: EditorState
       , _documentStateContent  :: rawcontent
@@ -67,19 +67,23 @@ data DocumentState_ editable{-() or Bool-} rawcontent edit =
       , _documentStateEditInfo :: EditInfo (Maybe EditKind)  -- ^ 'editInput_' dialog state lives here between close / re-open.
       , _documentBaseEdit      :: Maybe (ID Edit)  -- ^ Just if we are updating and edit
       }
+  | DocumentStateDiscussion
+      { _documentDiscussion    :: discussion
+      }
   deriving (Show, Eq, Generic, Functor)
 
-mapDocumentState :: (a -> a') -> (b -> b') -> (c -> c') -> DocumentState_ a b c -> DocumentState_ a' b' c'
-mapDocumentState h f g = \case
-  DocumentStateView x a -> DocumentStateView x (f a)
-  DocumentStateDiff i x a e y ed -> DocumentStateDiff i x (f a) (g e) y (h ed)
+mapDocumentState :: (a -> a') -> (b -> b') -> (c -> c') -> (d -> d') -> DocumentState_ a b c d -> DocumentState_ a' b' c' d'
+mapDocumentState fa fb fc fd = \case
+  DocumentStateView x a -> DocumentStateView x (fb a)
+  DocumentStateDiff i x a e y ed -> DocumentStateDiff i x (fb a) (fc e) y (fa ed)
   DocumentStateEdit x y be -> DocumentStateEdit x y be
+  DocumentStateDiscussion d -> DocumentStateDiscussion (fd d)
 
 -- | The document state variant for 'DocumentProps'.
-type DocumentState = DocumentState_ Bool RawContent Edit
+type DocumentState = DocumentState_ Bool RawContent Edit Discussion
 
 -- | The document state for 'GlobalState'.
-type GlobalDocumentState = DocumentState_ () () (ID Edit)
+type GlobalDocumentState = DocumentState_ () () (ID Edit) (ID Discussion)
 
 data WipedDocumentState =
     WipedDocumentStateView
@@ -90,10 +94,11 @@ data WipedDocumentState =
       , _wipedDocumentStateDiffEditable  :: Bool
       }
   | WipedDocumentStateEdit EditToolbarProps
+  | WipedDocumentStateDiscussion
   deriving (Show, Eq)
 
 globalDocumentState :: HasCallStack => DocumentState -> GlobalDocumentState
-globalDocumentState = mapDocumentState (const ()) (const ()) (^. editID)
+globalDocumentState = mapDocumentState (const ()) (const ()) (^. editID) (^. discussionID)
 
 mkDocumentStateView :: HasCallStack => RawContent -> GlobalDocumentState
 mkDocumentStateView = globalDocumentState . mkDocumentStateView_
@@ -118,6 +123,7 @@ refreshDocumentStateView ed eidChanged c = if eidChanged then viewMode else same
       DocumentStateDiff _ _ _ edit collapsed editable -> DocumentStateDiff (mkEditIndex ed edit) e () edit collapsed editable
       DocumentStateEdit _ kind Nothing       -> DocumentStateEdit e kind Nothing
       dst@(DocumentStateEdit _ _ Just{})     -> dst -- FIXME: not sure about this
+      DocumentStateDiscussion did            -> DocumentStateDiscussion did
 
     e  = createWithContent $ convertFromRaw c
 

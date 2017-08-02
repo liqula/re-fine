@@ -65,52 +65,55 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
   }
 
 documentRender :: HasCallStack => () -> DocumentProps -> ReactElementM ('StatefulEventHandlerCode st) ()
-documentRender () props = liftViewToStateHandler $ do
-  let dstate = props ^. dpDocumentState
+documentRender () props = liftViewToStateHandler . articleWrap $ case dstate of
+    DocumentStateView estate rawcontent
+        -> mkEditor (Just rawcontent) estate
 
-      sendMouseUpIfReadOnly :: EventHandlerTypeWithMods 'EventHandlerCode
-      sendMouseUpIfReadOnly =
+    DocumentStateDiff _ _estate rawcontent edit collapsed _
+        -> mkEditor (Just rawContentDiffView) (createWithContent $ convertFromRaw rawContentDiffView)
+      where
+        rawContentDiffView :: RawContent
+        rawContentDiffView = mcollapse $ diffit (edit ^. editSource)
+
+        mcollapse rc
+          | collapsed = hideUnchangedParts rc 0 0  -- FUTUREWORK: make these numbers adjustable by the user
+          | otherwise = rc
+
+        diffit (EditSource []) = error "impossible"
+        -- FUTUREWORK: make possible to choose a parent
+        diffit (EditSource ((otedit, _): _)) = showEditAsRawContentWithMarks otedit rawcontent
+
+    DocumentStateEdit estate _ _ -> mkEditor Nothing estate
+
+    DocumentStateDiscussion _ -> error "TODO"
+  where
+    dstate = props ^. dpDocumentState
+
+    sendMouseUpIfReadOnly :: EventHandlerTypeWithMods 'EventHandlerCode
+    sendMouseUpIfReadOnly =
         simpleHandler $ mconcat [ dispatch $ ContributionAction RequestSetRange | has _DocumentStateView dstate ]
 
-      editorState :: EditorState
-      editorState = maybe (dstate ^. documentStateVal) (createWithContent . convertFromRaw) rawContentDiffView
+    articleWrap = article_
+         [ "id" $= "vdocValue"  -- FIXME: do we still use this?
+         , "style" @@= [zindex ZIxArticle, decl "overflow" (Ident "visible")]
+         , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
+         , onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
+         , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
+         ]
 
-      documentStyleMap :: Value
-      documentStyleMap = mkDocumentStyleMap active rawContent
-        where
-          active = props ^. dpContributionState . csHighlightedMarkAndBubble
-
-      rawContent :: Maybe RawContent
-      rawContent = rawContentDiffView <|> (dstate ^? documentStateContent)
-
-      rawContentDiffView :: Maybe RawContent
-      rawContentDiffView
-          = fmap mcollapse
-          $ diffit =<< (props ^? dpDocumentState . documentStateDiff . editSource)
-        where
-          mcollapse rc = if props ^? dpDocumentState . documentStateDiffCollapsed == Just True
-            then hideUnchangedParts rc 0 0  -- FUTUREWORK: make these numbers adjustable by the user
-            else rc
-
-          -- FIXME: show the relevant diff
-          diffit (EditSource []) = Nothing
-          diffit (EditSource ((otedit, _): _))
-            = showEditAsRawContentWithMarks otedit <$> (dstate ^? documentStateContent)
-
-  article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
-           , "style" @@= [zindex ZIxArticle, decl "overflow" (Ident "visible")]
-           , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
-           , onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
-           , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
-           ] $ do
-    editor_
-      [ "editorState" &= editorState
-      , "customStyleMap" &= documentStyleMap
-      , "readOnly" &= has _DocumentStateView dstate
-      , onChange (editorOnChange dstate)
-      , onBlur editorOnBlur
-      , onFocus editorOnFocus
-      ] mempty
+    mkEditor rawContent editorState = editor_
+        [ "editorState" &= editorState
+        , "customStyleMap" &= documentStyleMap
+        , "readOnly" &= has _DocumentStateView dstate
+        , onChange (editorOnChange editorState)
+        , onBlur editorOnBlur
+        , onFocus editorOnFocus
+        ] mempty
+      where
+        documentStyleMap :: Value
+        documentStyleMap = mkDocumentStyleMap active rawContent
+          where
+            active = props ^. dpContributionState . csHighlightedMarkAndBubble
 
 
 -- | Handle editor change events.
@@ -127,16 +130,15 @@ documentRender () props = liftViewToStateHandler $ do
 -- of the structure, things should be fine.
 --
 -- Note that the fact that we don't have an 'Event' here also means that we can't modify it.
-editorOnChange :: DocumentState -> Event -> EventHandlerTypeWithMods 'EventHandlerCode
-editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
+editorOnChange :: EditorState -> Event -> EventHandlerTypeWithMods 'EventHandlerCode
+editorOnChange estate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
   simpleHandler $ dispatch updateAction
   where
-    updateAction = DocumentAction . DocumentUpdate . globalDocumentState $
-      dstate & documentStateVal .~ estate'
+    updateAction = DocumentAction $ UpdateEditorState estate'
 
     (_isBlur, _isFocus) = (oldfoc && not newfoc, not oldfoc && newfoc)
       where
-        oldfoc = dstate ^. documentStateVal . to getSelection . selectionStateHasFocus
+        oldfoc = estate  ^. to getSelection . selectionStateHasFocus
         newfoc = estate' ^. to getSelection . selectionStateHasFocus
 
 editorOnBlur :: Event -> FocusEvent -> EventHandlerTypeWithMods 'EventHandlerCode

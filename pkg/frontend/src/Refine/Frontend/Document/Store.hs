@@ -116,8 +116,8 @@ documentStateUpdate (ContributionAction HideContributionDialog)
                     (DocumentStateDiff _ e r _ _ _)
   = DocumentStateView e r
 
-documentStateUpdate (DocumentAction (DocumentUpdate state')) _ _ _state
-  = state'
+documentStateUpdate (DocumentAction (UpdateEditorState estate)) _ _ (DocumentStateEdit _ einfo base)
+  = DocumentStateEdit estate einfo base
 
 documentStateUpdate (DocumentAction (DocumentUpdateEditInfo info)) _ _ st
   = st & documentStateEditInfo .~ info
@@ -174,8 +174,8 @@ documentStateUpdate _ _ _ st
 
 
 -- | construct a 'SetAllVerticalSpanBounds' action.
-setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a b c -> m ContributionAction
-setAllVerticalSpanBounds (convertToRaw . getCurrentContent . view documentStateVal -> rawContent) = liftIO $ do
+setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a b c d -> m (Maybe ContributionAction)
+setAllVerticalSpanBounds ((^? documentStateVal . to getCurrentContent . to convertToRaw) -> Just rawContent) = liftIO $ do
     let marks :: Map MarkID (Ranges LeafSelector)
         marks = getLeafSelectors rawContent
 
@@ -201,7 +201,8 @@ setAllVerticalSpanBounds (convertToRaw . getCurrentContent . view documentStateV
                     }
               pure (cid, verticalSpanBounds)
 
-    SetAllVerticalSpanBounds . concat <$> (getPos `mapM` Map.toList marks)
+    Just . SetAllVerticalSpanBounds . concat <$> (getPos `mapM` Map.toList marks)
+setAllVerticalSpanBounds _ = pure Nothing
 
 assertLeafSelector :: HasCallStack => LeafSelector -> IO ()
 assertLeafSelector sel = void (getLeafSelectorBound LeafSelectorTop sel) `catch` \(JSException _ msg) -> do

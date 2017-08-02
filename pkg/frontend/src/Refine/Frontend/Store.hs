@@ -98,7 +98,7 @@ transformGlobalState = transf
       -- other effects
       case act of
         ContributionAction RequestSetAllVerticalSpanBounds -> do
-          dispatchAndExec . ContributionAction =<< setAllVerticalSpanBounds (st ^. gsDocumentState)
+          maybe (pure ()) (dispatchAndExec . ContributionAction) =<< setAllVerticalSpanBounds (st ^. gsDocumentState)
 
         ContributionAction RequestSetRange -> do
           mRangeEvent <- getRangeAction $ getDocumentState st
@@ -178,8 +178,8 @@ consoleLogGlobalState False _ = do
   consoleLogJSONM "New state: " (String "[UNCHANGED]" :: Value)
 consoleLogGlobalState True st = liftIO $ do
   consoleLogJSONM "New state: " st
-  traceEditorState (st ^. gsDocumentState . documentStateVal)
-  traceContentInEditorState (st ^. gsDocumentState . documentStateVal)
+  maybe (pure ()) traceEditorState (st ^? gsDocumentState . documentStateVal)
+  maybe (pure ()) traceContentInEditorState (st ^? gsDocumentState . documentStateVal)
 
 consoleLogGlobalAction :: HasCallStack => forall m. MonadTransform m => GlobalAction -> m ()
 consoleLogGlobalAction act = do
@@ -306,17 +306,19 @@ emitBackendCallsFor act st = case act of
             (Left rsp) -> ajaxFail rsp Nothing
             (Right note) -> handle $ AddNote note
 
-    DocumentAction (DocumentSave info) -> do
+    DocumentAction (DocumentSave info)
+      | DocumentStateEdit editorState _ baseEdit <- st ^. gsDocumentState
+      -> do
         let eid :: C.ID C.Edit
             Just eid = st ^? gsVDoc . _Just . C.compositeVDocThisEditID
 
             cedit = C.CreateEdit
                   { C._createEditDesc        = info ^. editInfoDesc
-                  , C._createEditVDocVersion = getCurrentRawContent $ st ^. gsDocumentState . documentStateVal
+                  , C._createEditVDocVersion = getCurrentRawContent editorState
                   , C._createEditKind        = info ^. editInfoKind
                   }
 
-            addOrUpdate = case join $ st ^? gsDocumentState . documentBaseEdit of
+            addOrUpdate = case baseEdit of
               Nothing -> addEdit eid
               Just eid' -> updateEdit eid'
 

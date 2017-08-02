@@ -128,19 +128,12 @@ mainHeaderRender () rs = do
         {- header_ ["role" $= "banner"] $ do -}
         topMenuBar_ props
 
-      headerPart_ = documentHeader_ $ do
-        let doc = DocumentHeaderProps
-              (vdoc ^. compositeVDoc . vdocTitle)
-              (vdoc ^. compositeVDoc . vdocAbstract)
-
-            edit eid = DocumentHeaderProps
-              (vdoc ^. compositeVDoc . vdocTitle)
-              (editDescToAbstract vdoc (ContribIDEdit eid))
-
-        case rs ^. gsDocumentState of
-            WipedDocumentStateView       -> doc
-            WipedDocumentStateDiff _ eid _ _ -> edit (eid ^. editID)
-            WipedDocumentStateEdit{}     -> doc
+      headerPart_
+        = documentHeader_
+        . DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle)
+        $ case rs ^. gsDocumentState of
+          WipedDocumentStateDiff _ eid _ _ -> editDescToAbstract vdoc . ContribIDEdit $ eid ^. editID
+          _ -> vdoc ^. compositeVDoc . vdocAbstract
 
       toolbarPart_ = div_ ["className" $= "c-fulltoolbar"] $ do
         sticky_ [RF.on "onStickyStateChange" $ \e -> simpleHandler $ \() ->
@@ -155,6 +148,7 @@ mainHeaderRender () rs = do
               collapsed
               editable
             WipedDocumentStateEdit eprops -> editToolbar_ eprops
+            WipedDocumentStateDiscussion -> error "TODO"
           indexToolbarExtension_ $ mkIndexToolbarProps rs
           commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
           editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
