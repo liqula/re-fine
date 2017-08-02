@@ -744,6 +744,13 @@ editID = editMetaID . miID
 groupID :: Lens' Group (ID Group)
 groupID = groupMetaID . miID
 
+contributionID :: Lens' Contribution ContributionID
+contributionID k = \case
+  ContribNote i       -> ContribNote       <$> noteID       (fmap (\(ContribIDNote i')       -> i') . k . ContribIDNote) i
+  ContribQuestion i   -> ContribQuestion   <$> questionID   (fmap (\(ContribIDQuestion i')   -> i') . k . ContribIDQuestion) i
+  ContribDiscussion i -> ContribDiscussion <$> discussionID (fmap (\(ContribIDDiscussion i') -> i') . k . ContribIDDiscussion) i
+  ContribEdit i       -> ContribEdit       <$> editID       (fmap (\(ContribIDEdit i')       -> i') . k . ContribIDEdit) i
+
 compositeVDocThisEditID :: Lens' CompositeVDoc (ID Edit)
 compositeVDocThisEditID = compositeVDocThisEdit . editID
 
