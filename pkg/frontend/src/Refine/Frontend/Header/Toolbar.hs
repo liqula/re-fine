@@ -85,6 +85,16 @@ toolbar_ = do
                                                              , SetBubblePositioning BubblePositioningAbsolute
                                                              ])
 
+  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+
+  iconButton_ $ toolbarButton  -- FIXME: show this button only to process creator.
+    & iconButtonPropsListKey      .~ "update-process"
+    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Process_update", "dark") XXLarge
+    & iconButtonPropsLabel        .~ "update process"
+    & iconButtonPropsOnClickMods  .~ [StopPropagation]
+    & iconButtonPropsOnClick      .~ [ShowNotImplementedYet]
+
+
   iconButton_ $ toolbarButton
     & iconButtonPropsListKey      .~ "read-only"
     & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Reader", "dark") XXLarge

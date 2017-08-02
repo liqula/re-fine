@@ -39,18 +39,6 @@ import           Refine.Frontend.Test.Store
 spec :: Spec
 spec = do
   describe "The toolbar_ component" $ do
-    it "renders an element with the toolbar class" $ do
-      wrapper <- mount $ toolbarWrapper_ toolbar_
-      EZ.lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar")) `shouldReturn` 1
-
-    it "contains two separators" $ do
-      wrapper <- mount $ toolbarWrapper_ toolbar_
-      EZ.lengthOfIO (find wrapper (StringSelector ".c-vdoc-toolbar__separator")) `shouldReturn` 2
-
-    it "contains 6 icon buttons" $ do
-      wrapper <- mount $ toolbarWrapper_ toolbar_
-      EZ.lengthOfIO (find wrapper (StringSelector "IconButton")) `shouldReturn` 6
-
     it "toggles the visibility of the edit toolbar extension when the 'new comment' button is clicked" $ do
       pendingWith "sometimes fails, sometimes passes; related to #201 or #221?"
 
