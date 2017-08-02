@@ -156,7 +156,7 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
       br_ [] >> br_ [] >> br_ [] >> hr_ []
 
     div_ $ do
-      mainMenuGroupShort_ `mapM_` groups
+      mainMenuGroupShort_ `mapM_` sortBy (compare `on` view groupTitle) groups
 
 mainMenuGroups_ :: HasCallStack => [Group] -> ReactElementM eventHandler ()
 mainMenuGroups_ = view_ mainMenuGroups "mainMenuGroups"
@@ -282,7 +282,8 @@ mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
 
     -- process list
     br_ [] >> br_ [] >> br_ [] >> br_ [] >> hr_ [] >> br_ []
-    mainMenuProcessShort_ `mapM_` (group ^. groupVDocs)
+    mainMenuProcessShort_ `mapM_` {- sortBy (compare `on` view vdocTitle)  -- TODO: we only have ID VDoc here, but that'll need to change. -}
+                                  (group ^. groupVDocs)
 
 mainMenuGroup_ :: HasCallStack => Group -> ReactElementM eventHandler ()
 mainMenuGroup_ = view_ mainMenuGroup "mainMenuGroup"
