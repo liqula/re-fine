@@ -77,7 +77,7 @@ instance Default Config where
     , _cfgCsrfSecret    = "CSRF-SECRET"
     , _cfgSessionLength = TimespanHours 72
     , _cfgPoFilesRoot   = "./po"
-    , _cfgSmtp          = Just def
+    , _cfgSmtp          = Nothing
     }
 
 instance Default LogCfg where
