@@ -110,6 +110,12 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _
                     (DocumentStateDiff _ e r _ _ _)
   = DocumentStateView e r
 
+documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDDiscussion did)))
+                    _oldgs
+                    _newgs
+                    (DocumentStateView _ _)
+  = DocumentStateDiscussion did
+
 documentStateUpdate (ContributionAction HideContributionDialog)
                     _oldgs
                     _newgs

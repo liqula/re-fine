@@ -39,7 +39,6 @@ import qualified Refine.Frontend.Colors as C
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Document.FFI
-import           Refine.Frontend.Document.Document
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store

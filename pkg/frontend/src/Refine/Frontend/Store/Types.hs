@@ -148,8 +148,8 @@ getDocumentState gs@(view gsVDoc -> Just cvdoc)
              $ (==) <$> (gs ^? gsLoginState . lsCurrentUser . loggedInUser . userID . to UserID)
                     <*> ((^. editMetaID . miMeta . metaCreatedBy) <$> getEdit gs eid))
       (const $ rawContentFromCompositeVDoc cvdoc)
-      ((gs ^. gsServerCache . scEdits) Map.!)
-      ((gs ^. gsServerCache . scDiscussions) Map.!)
+      (fromMaybe (error "edit is not in cache") . getEdit gs)
+      (\did -> discussionProps (fromMaybe (error "discussion is not in cache") $ getDiscussion gs did) $ rawContentFromCompositeVDoc cvdoc)
       dst
   where
     dst = gs ^. gsDocumentState
@@ -159,11 +159,14 @@ getDocumentState gs@(view gsVDoc -> Just cvdoc)
 getDocumentState _
   = error "getDocumentState: no gsVDoc"
 
-gsEdit :: GlobalState_ a -> Maybe Edit
+gsEdit :: HasCallStack => GlobalState_ a -> Maybe Edit
 gsEdit gs = ((gs ^. gsServerCache . scEdits) Map.!) <$> (gs ^. gsEditID)
 
-getEdit :: GlobalState_ a -> ID Edit -> Maybe Edit
+getEdit :: HasCallStack => GlobalState_ a -> ID Edit -> Maybe Edit
 getEdit gs eid = Map.lookup eid (gs ^. gsServerCache . scEdits)
+
+getDiscussion :: HasCallStack => GlobalState_ a -> ID Discussion -> Maybe Discussion
+getDiscussion gs i = Map.lookup i (gs ^. gsServerCache . scDiscussions)
 
 gsVDoc :: Lens' (GlobalState_ a) (Maybe CompositeVDoc)
 gsVDoc = lens getCompositeVDoc setCompositeVDoc

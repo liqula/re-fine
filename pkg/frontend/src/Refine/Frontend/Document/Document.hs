@@ -33,16 +33,14 @@ module Refine.Frontend.Document.Document
 
 import Refine.Frontend.Prelude
 
-import qualified Data.List.NonEmpty as NEL
 import qualified React.Flux.Outdated as Outdated
-import           Language.Css.Build hiding (s)
 import           Language.Css.Syntax hiding (Value)
 import           React.Flux.Internal (HandlerArg(HandlerArg))
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.OT (showEditAsRawContentWithMarks, hideUnchangedParts)
-import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Contribution.Types
+import           Refine.Frontend.Contribution.Discussion
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Store
@@ -85,7 +83,7 @@ documentRender () props = liftViewToStateHandler . articleWrap $ case dstate of
 
     DocumentStateEdit estate _ _ -> mkEditor Nothing estate
 
-    DocumentStateDiscussion _ -> error "TODO"
+    DocumentStateDiscussion dprops -> discussion_ dprops
   where
     dstate = props ^. dpDocumentState
 
@@ -154,39 +152,6 @@ documentComponentDidMountOrUpdate _getPropsAndState = do
 
 document_ :: HasCallStack => DocumentProps -> ReactElementM eventHandler ()
 document_ props = Outdated.viewWithSKey document "document" props mempty
-
-
-mkDocumentStyleMap :: HasCallStack => [MarkID] -> Maybe RawContent -> Value
-mkDocumentStyleMap _ Nothing = object []
-mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
-  where
-    marks :: [Style]
-    marks = fmap snd . mconcat $ view blockStyles <$> (rawContent ^. rawContentBlocks . to NEL.toList)
-
-    go :: Style -> [Pair]
-    go s@(Mark cid)   = [styleToST s .:= declsToJSON (mouseover cid <> mkMarkSty cid)]
-    go s@StyleDeleted = [styleToST s .:= declsToJSON (bg 255 0   0 0.3)]
-    go s@StyleAdded   = [styleToST s .:= declsToJSON (bg 0   255 0 0.3)]
-    go s@StyleChanged = [styleToST s .:= declsToJSON (bg 255 255 0 0.3)]
-    go _ = []
-
-    mouseover :: MarkID -> [Decl]
-    mouseover cid = [decl "borderBottom" [expr $ Px 2, expr $ Ident "solid", expr Color.VDocRollover] | any (cid `matches`) actives]
-
-    matches :: MarkID -> MarkID -> Bool
-    matches (MarkContribution c _) (MarkContribution c' _) = c == c'
-    matches m m' = m == m'
-
-    mkMarkSty :: MarkID -> [Decl]
-    mkMarkSty MarkCurrentSelection  = bg 255 255 0 0.3
-    mkMarkSty (MarkContribution x _) = case x of
-      ContribIDNote _       -> bg   0 255 0 0.3
-      ContribIDQuestion _   -> bg   0 255 0 0.3
-      ContribIDDiscussion _ -> bg   0 255 0 0.3
-      ContribIDEdit _       -> bg   0 255 0 0.3
-
-    bg :: Int -> Int -> Int -> Double -> [Decl]
-    bg r g b a = ["background" `decl` Color.RGBA r g b a]
 
 
 emptyEditorProps :: HasCallStack => [PropertyOrHandler handler]

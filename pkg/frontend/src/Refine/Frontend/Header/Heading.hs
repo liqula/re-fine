@@ -148,7 +148,7 @@ mainHeaderRender () rs = do
               collapsed
               editable
             WipedDocumentStateEdit eprops -> editToolbar_ eprops
-            WipedDocumentStateDiscussion -> error "TODO"
+            WipedDocumentStateDiscussion -> mempty -- TODO
           indexToolbarExtension_ $ mkIndexToolbarProps rs
           commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
           editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
