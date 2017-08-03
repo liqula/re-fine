@@ -46,8 +46,6 @@ import           Refine.Frontend.TKey
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
-{-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
-
 
 -- * styles
 
@@ -70,19 +68,16 @@ dialogStyles = [ -- Style "display" ("block" :: String)
                 , decl "position" (Ident "absolute")
                 ]
 
--- RENAME: addCommentDialogStyles
-vdoc_overlay_content__add_comment :: HasCallStack => [Decl]
-vdoc_overlay_content__add_comment = [decl "backgroundColor" C.VDocComment] <> dialogStyles
+addCommentDialogStyles :: HasCallStack => [Decl]
+addCommentDialogStyles = [decl "backgroundColor" C.VDocComment] <> dialogStyles
 
 -- is vdoc_overlay_content__comment in CSS
 
--- RENAME: showNoteDialogStyles
-vdoc_overlay_content__note :: HasCallStack => [Decl]
-vdoc_overlay_content__note = [decl "backgroundColor" C.VDocNote] <> dialogStyles
+showNoteDialogStyles :: HasCallStack => [Decl]
+showNoteDialogStyles = [decl "backgroundColor" C.VDocNote] <> dialogStyles
 
--- RENAME: showDiscussionDialogStyles
-vdoc_overlay_content__discussion :: HasCallStack => [Decl]
-vdoc_overlay_content__discussion = [decl "backgroundColor" C.VDocDiscussion] <> dialogStyles
+showDiscussionDialogStyles :: HasCallStack => [Decl]
+showDiscussionDialogStyles = [decl "backgroundColor" C.VDocDiscussion] <> dialogStyles
 
 overlayStyles :: HasCallStack => [Decl]
 overlayStyles =
@@ -108,7 +103,7 @@ addContributionDialogFrame title mrange windowWidth child =
     in skylight_ ["isVisible" &= True
              , RF.on "onCloseClicked"   $ \_ -> simpleHandler $ dispatch (ContributionAction HideCommentEditor)
              , RF.on "onOverlayClicked" $ \_ -> simpleHandler $ dispatch (ContributionAction HideCommentEditor)
-             , "dialogStyles" @@= (vdoc_overlay_content__add_comment <> extraStyles)
+             , "dialogStyles" @@= (addCommentDialogStyles <> extraStyles)
              , "overlayStyles" @@= overlayStyles
              , "titleStyle" @@= [decl "margin" (Px 0)]
              ]  $ do
@@ -227,7 +222,7 @@ showNote = mkView "ShowNote" $ \case
         userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
     in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
-                                         vdoc_overlay_content__note top windowWidth1)
+                                         showNoteDialogStyles top windowWidth1)
 
 showNote_ :: HasCallStack => ShowNoteProps -> ReactElementM eventHandler ()
 showNote_ = view_ showNote "showNote_"
