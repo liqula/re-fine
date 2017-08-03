@@ -30,7 +30,7 @@ import Refine.Frontend.Prelude
 import           Control.Lens ((^.), (&), (.~))
 import           Test.Hspec
 
-import           Refine.Common.Test.Samples (sampleVDocVersion, sampleMetaID)
+import           Refine.Common.Test.Samples (sampleRawContent1, sampleMetaID)
 import           Refine.Common.Types
 import           Refine.Frontend.Header.Heading
 import           Refine.Frontend.Login.Types
@@ -76,7 +76,7 @@ spec = do
       let newVDoc :: CompositeVDoc
           newVDoc = CompositeVDoc
             (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1) (ID 1))
-            (Edit (MetaID 1 un) un un un (sampleMetaID ^. miID) sampleVDocVersion un mempty mempty mempty)
+            (Edit (MetaID 1 un) un un un (sampleMetaID ^. miID) sampleRawContent1 un mempty mempty mempty)
             mempty mempty mempty
             where
               un = undefined

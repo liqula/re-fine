@@ -22,7 +22,8 @@ class Database db where
 
   -- VDoc
   listVDocs          :: db [ID VDoc]
-  createVDoc         :: Create VDoc -> VDocVersion -> db VDoc
+  createVDoc         :: CreateVDoc -> db VDoc
+  updateVDoc         :: ID VDoc -> VDoc -> db ()
   getVDoc            :: ID VDoc -> db VDoc
   vdocOfEdit         :: ID Edit -> db (ID VDoc)
   moveVDocHead       :: ID VDoc -> ID Edit -> db ()
@@ -31,50 +32,50 @@ class Database db where
   getEditIDs         :: ID VDoc -> db [ID Edit]
 
   -- Edit
-  createEdit         :: ID VDoc -> EditSource (ID Edit) -> Create Edit -> db Edit
+  createEdit         :: ID VDoc -> EditSource (ID Edit) -> CreateEdit -> db Edit
   getEdit            :: ID Edit -> db Edit
-  getVersion         :: ID Edit -> db VDocVersion
+  getVersion         :: ID Edit -> db RawContent
   editNotes          :: ID Edit -> db [ID Note]
   editQuestions      :: ID Edit -> db [ID Question]
   editDiscussions    :: ID Edit -> db [ID Discussion]
   updateVotes        :: ID Edit -> (Votes -> Votes) -> db ()
   getVoteCount       :: ID Edit -> db VoteCount
   getEditChildren    :: ID Edit -> db [ID Edit]
-  updateEdit         :: ID Edit -> Create Edit -> db ()
+  updateEdit         :: ID Edit -> CreateEdit -> db ()
   updateEditSource   :: ID Edit -> (ID Edit{-parent-} -> OT.Edit RawContent -> OT.Edit RawContent) -> db ()
 
   -- Note
-  createNote         :: ID Edit -> Create Note -> db Note
+  createNote         :: ID Edit -> CreateNote -> db Note
   getNote            :: ID Note -> db Note
 
   -- Question
-  createQuestion     :: ID Edit     -> Create Question -> db Question
+  createQuestion     :: ID Edit     -> CreateQuestion -> db Question
   getQuestion        :: ID Question -> db Question
 
   -- Answer
-  createAnswer       :: ID Question -> Create Answer -> db Answer
+  createAnswer       :: ID Question -> CreateAnswer -> db Answer
   getAnswer          :: ID Answer   -> db Answer
   answersOfQuestion  :: ID Question -> db [Answer]
 
   -- Discussion
-  createDiscussion   :: ID Edit    -> Create Discussion -> db Discussion
+  createDiscussion   :: ID Edit    -> CreateDiscussion -> db Discussion
   rebaseDiscussion   :: ID Edit -> ID Discussion -> (Range Position -> Range Position) -> db Discussion
   getDiscussion      :: ID Discussion -> db Discussion
   statementsOfDiscussion :: ID Discussion -> db [ID Statement]
   discussionOfStatement  :: ID Statement  -> db (ID Discussion)
 
   -- Statement
-  createStatement      :: ID Statement -> Create Statement -> db Statement
+  createStatement      :: ID Statement -> CreateStatement -> db Statement
   getStatement         :: ID Statement -> db Statement
 
   -- User
   runUsersCmd          :: (Users.Persistent -> IO a) -> db a
 
   -- Group
-  createGroup          :: Create Group -> db Group
+  createGroup          :: CreateGroup -> db Group
   getGroup             :: ID Group -> db Group
   getGroups            :: db [Group]
-  modifyGroup          :: ID Group -> Create Group -> db Group
+  modifyGroup          :: ID Group -> CreateGroup -> db Group
   removeGroup          :: ID Group -> db ()
   addSubGroup          :: ID Group -> ID Group -> db ()
   removeSubGroup       :: ID Group -> ID Group -> db ()

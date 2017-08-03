@@ -40,7 +40,7 @@ import           Refine.Common.Rest (ApiError(..))
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
-import           Refine.Frontend.Document.Store (setAllVerticalSpanBounds, documentStateUpdate, editorStateToVDocVersion)
+import           Refine.Frontend.Document.Store (setAllVerticalSpanBounds, documentStateUpdate)
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
@@ -158,6 +158,8 @@ transformGlobalState = transf
               & gsServerCache         %~ serverCacheUpdate act
 
 serverCacheUpdate :: GlobalAction -> ServerCache -> ServerCache
+serverCacheUpdate (LoadVDoc (AfterAjax vdoc)) c = c & scVDocs %~ M.insert (vdoc ^. C.vdocID) vdoc
+serverCacheUpdate (LoadCompositeVDoc (AfterAjax cvdoc)) c = serverCacheUpdate (LoadVDoc (AfterAjax (cvdoc ^. C.compositeVDoc))) c
 serverCacheUpdate (RefreshServerCache c') c = c' <> c
 serverCacheUpdate _ c = c
 
@@ -194,7 +196,7 @@ consoleLogGlobalAction act = do
 -- * pure updates
 
 vdocUpdate :: HasCallStack => GlobalAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
-vdocUpdate (LoadDocument (AfterAjax newvdoc)) _ = Just newvdoc
+vdocUpdate (LoadCompositeVDoc (AfterAjax newvdoc)) _ = Just newvdoc
 vdocUpdate act (Just vdoc) = Just $ case act of
     AddDiscussion discussion
       -> vdoc
@@ -242,11 +244,11 @@ emitBackendCallsFor act st = case act of
 
     -- documents
 
-    LoadDocument (BeforeAjax auid) -> do
+    LoadCompositeVDoc (BeforeAjax auid) -> do
         getVDoc auid $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right loadedVDoc) -> dispatchManyM
-                                   [ LoadDocument $ AfterAjax loadedVDoc
+                                   [ LoadCompositeVDoc $ AfterAjax loadedVDoc
                                    , ContributionAction RequestSetAllVerticalSpanBounds
                                    ]
 
@@ -261,15 +263,24 @@ emitBackendCallsFor act st = case act of
               , MainMenuAction . MainMenuActionOpen . MainMenuGroups . AfterAjax $ (^. C.groupID) <$> groups
               ]
 
-    MainMenuAction (MainMenuActionOpen (MainMenuCreateGroup mid (FormComplete cg))) -> do
+    MainMenuAction (MainMenuActionOpen (MainMenuCreateOrUpdateGroup mid (FormComplete cg))) -> do
         maybe createGroup updateGroup mid cg $ \case
             Left rsp -> ajaxFail rsp Nothing
-            Right _ -> dispatchM . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()
+            Right rsp -> dispatchManyM
+              [ RefreshServerCache . ServerCache mempty mempty mempty mempty mempty
+                $ M.fromList [(rsp ^. C.groupID, rsp)]
+              , MainMenuAction . MainMenuActionOpen . MainMenuGroup $ rsp ^. C.groupID
+              ]
 
     MainMenuAction (MainMenuActionOpen (MainMenuCreateProcess (FormComplete cg))) -> do
         createVDoc cg $ \case
             Left rsp -> ajaxFail rsp Nothing
-            Right loadedVDoc -> dispatchM . LoadDocument $ AfterAjax loadedVDoc
+            Right loadedVDoc -> dispatchM . LoadCompositeVDoc $ AfterAjax loadedVDoc
+
+    MainMenuAction (MainMenuActionOpen (MainMenuUpdateProcess vid (FormComplete cg))) -> do
+        updateVDoc vid cg $ \case
+            Left rsp -> ajaxFail rsp Nothing
+            Right vdoc -> dispatchM . LoadVDoc $ AfterAjax vdoc
 
 
     -- contributions
@@ -299,10 +310,9 @@ emitBackendCallsFor act st = case act of
         let eid :: C.ID C.Edit
             Just eid = st ^? gsVDoc . _Just . C.compositeVDocThisEditID
 
-            cedit :: C.Create C.Edit
             cedit = C.CreateEdit
                   { C._createEditDesc        = info ^. editInfoDesc
-                  , C._createEditVDocVersion = editorStateToVDocVersion (st ^. gsDocumentState . documentStateVal)
+                  , C._createEditVDocVersion = getCurrentRawContent $ st ^. gsDocumentState . documentStateVal
                   , C._createEditKind        = info ^. editInfoKind
                   }
 
@@ -383,8 +393,9 @@ emitBackendCallsFor act st = case act of
 -- actions, we could define @UpdateCVDoc :: (CompositeVDoc ->
 -- CompositeVDoc) -> GlobalAction@.
 reloadCompositeVDoc :: HasCallStack => GlobalState -> GlobalAction
-reloadCompositeVDoc st = LoadDocument . BeforeAjax . fromMaybe (error "reloadCompositeVDoc") $
-                                       st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocID
+reloadCompositeVDoc st = LoadCompositeVDoc
+                       . BeforeAjax . fromMaybe (error "reloadCompositeVDoc")
+                       $ st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocID
 
 ajaxFail :: HasCallStack => (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
 ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of

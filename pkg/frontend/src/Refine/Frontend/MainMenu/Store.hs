@@ -16,12 +16,14 @@ mainMenuUpdate (MainMenuAction MainMenuActionClose) isThereVDoc st = st
 
 mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) _ st = case tab of
   MainMenuGroups BeforeAjax{} -> st
-  MainMenuCreateGroup _ FormComplete{} -> st
+  MainMenuCreateOrUpdateGroup _ FormComplete{} -> st
   MainMenuCreateProcess FormComplete{} -> st
+  MainMenuUpdateProcess _ FormComplete{} -> st
   _ -> st
      & mmState .~ MainMenuOpen (mapMainMenuTab
                                 (ajaxAction (error "impossible") (const ()))
                                 id
+                                (formAction id (error "impossible"))
                                 (formAction id (error "impossible"))
                                 (formAction id (error "impossible"))
                                 tab)
@@ -36,7 +38,9 @@ mainMenuUpdate (MainMenuAction MainMenuActionClearErrors) _ st = st
   & mmErrors . mmeLogin        .~ Nothing
   & mmErrors . mmeRegistration .~ Nothing
 
-mainMenuUpdate (LoadDocument AfterAjax{}) _ st = st
+mainMenuUpdate (LoadVDoc AfterAjax{}) _ st = st
+  & mmState .~ MainMenuClosed
+mainMenuUpdate (LoadCompositeVDoc AfterAjax{}) _ st = st
   & mmState .~ MainMenuClosed
 
 mainMenuUpdate _ _ st = st

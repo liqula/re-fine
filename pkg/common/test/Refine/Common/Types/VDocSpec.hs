@@ -47,12 +47,10 @@ rawContentToCompositeVDoc :: RawContentWithSelections -> CompositeVDoc
 rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
     = assert (length selections == length es + length ns + length ds)
     $ CompositeVDoc un
-                    (Edit sampleMetaID un un un (sampleMetaID ^. miID) vers un
+                    (Edit sampleMetaID un un un (sampleMetaID ^. miID) rawContent un
                           (Set.fromList $ fst <$> es) (Set.fromList $ fst <$> ns) (Set.fromList $ fst <$> ds))
                     (Map.fromList es) (Map.fromList ns) (Map.fromList ds)
   where
-    vers = rawContentToVDocVersion rawContent
-
     (es, ns, ds) = rotate ([], [], []) 0 selections
 
     rotate :: ([(ID Edit, Edit)], [(ID Note, Note)], [(ID Discussion, Discussion)])

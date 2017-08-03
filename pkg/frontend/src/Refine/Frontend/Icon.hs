@@ -88,7 +88,7 @@ sibutton_ mouseIsOver st props = do
       -- FIXME: ibutton must not contain divs, so we can use it inside spans.
       divSty :: [Decl]
       divSty = [ decl "direction" (Ident "ltr")
-               , decl "width" (sizePx $ props ^. ibSize)
+               , decl "width" (maximum [100, sizePx $ props ^. ibSize])
                , decl "float" (Ident (case props ^. ibAlign of AlignLeft -> "left"; AlignRight -> "right"))
                , decl "textAlign" (Ident "center")
                , decl "pointerEvents" (Ident "all")

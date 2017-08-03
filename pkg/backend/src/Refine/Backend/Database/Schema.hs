@@ -36,7 +36,7 @@ import Web.Users.Persistent (LoginId) -- Same as Refine.Backend.User.LoginId, bu
 import Refine.Prelude (Timestamp)
 import Refine.Common.Types.Prelude hiding (MetaInfo)
 import Refine.Common.Types.Role (Role)
-import Refine.Common.Types.Core (Abstract, EditKind, Title, VDocVersion)
+import Refine.Common.Types.Core (Abstract, EditKind, Title, RawContent)
 import Refine.Backend.Database.Field()
 import Refine.Backend.Database.Types
 
@@ -57,7 +57,7 @@ VDoc
 
 Edit
     desc        Text
-    editVDoc    VDocVersion
+    editVDoc    RawContent
     repository  VDocId
     kind        EditKind
     votes       DBVotes

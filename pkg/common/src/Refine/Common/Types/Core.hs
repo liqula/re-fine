@@ -88,8 +88,16 @@ data VDoc = VDoc
 data CreateVDoc = CreateVDoc
   { _createVDocTitle       :: Title
   , _createVDocAbstract    :: Abstract
-  , _createVDocInitVersion :: VDocVersion
+  , _createVDocInitVersion :: RawContent
   , _createVDocGroup       :: ID Group
+  }
+  deriving (Eq, Show, Generic)
+
+-- | the name clashes in the record selectors are really annoying...
+-- makes me understand why people were so fond of OO when they invented it
+data UpdateVDoc = UpdateVDoc
+  { _updateVDocTitle       :: Title
+  , _updateVDocAbstract    :: Abstract
   }
   deriving (Eq, Ord, Show, Generic)
 
@@ -98,9 +106,6 @@ newtype Title = Title { _unTitle :: ST }
 
 newtype Abstract = Abstract { _unAbstract :: ST }
   deriving (Eq, Ord, Show, Read, Generic)
-
-newtype VDocVersion = VDocVersion { _unVDocVersion :: ST }
-  deriving (Eq, Ord, Show, Generic, Monoid)
 
 -- | List of parents tupled with the diff
 --
@@ -136,7 +141,7 @@ data Edit = Edit
   , _editKind         :: EditKind
   , _editSource       :: EditSource (ID Edit)
   , _editVDoc         :: ID VDoc
-  , _editVDocVersion  :: VDocVersion     -- FIXME: is it OK to store this in edit (consider serialization)?
+  , _editVDocVersion  :: RawContent     -- FIXME: is it OK to store this in edit (consider serialization)?
   , _editVotes        :: Votes
   , _editChildren     :: Set (ID Edit)
   , _editNotes'       :: Set (ID Note)
@@ -146,19 +151,13 @@ data Edit = Edit
 
 data CreateEdit = CreateEdit
   { _createEditDesc        :: ST
-  , _createEditVDocVersion :: VDocVersion
+  , _createEditVDocVersion :: RawContent
   , _createEditKind        :: EditKind
   }
-  deriving (Eq, Ord, Show, Generic)
+  deriving (Eq, Show, Generic)
 
 data EditKind = Grammar | Phrasing | Meaning | Initial
   deriving (Eq, Ord, Show, Read, Generic, Bounded, Enum)
-
-
--- ** create types, instances
-
-type instance Create VDoc = CreateVDoc
-type instance Create Edit = CreateEdit
 
 
 -- ** composites
@@ -236,8 +235,6 @@ data CreateGroup = CreateGroup
   , _createGroupChildren :: [ID Group]
   }
   deriving (Eq, Generic, Show)
-
-type instance Create Group = CreateGroup
 
 
 -- * RawContent
@@ -721,8 +718,13 @@ mkSomeSegments frange fpayload els = segments
 -- * Derived instances
 
 deriveClasses
-  [ ([''RawContent, ''Block, ''Entity, ''Style, ''BlockType], [''NFData, ''SOP.Generic, ''Lens'])
-  , ([''EntityKey, ''CompositeVDoc, ''ContributionID, ''MarkID, ''VDoc, ''CreateVDoc, ''EditSource, ''Edit, ''CreateEdit, ''EditKind, ''Title, ''Abstract, ''VDocVersion, ''Group, ''CreateGroup], allClass)
+  [ ([''RawContent, ''Block, ''Entity, ''Style, ''BlockType]
+    , [''NFData, ''SOP.Generic, ''Lens'])
+  , ([ ''EntityKey, ''CompositeVDoc, ''ContributionID, ''MarkID
+     , ''VDoc, ''CreateVDoc, ''UpdateVDoc, ''EditSource, ''Edit
+     , ''CreateEdit, ''EditKind, ''Title, ''Abstract
+     , ''Group, ''CreateGroup]
+    , allClass)
   ]
 
 -- | It cannot moved further up, needs instance NFData BlockType
@@ -743,7 +745,7 @@ groupID = groupMetaID . miID
 compositeVDocThisEditID :: Lens' CompositeVDoc (ID Edit)
 compositeVDocThisEditID = compositeVDocThisEdit . editID
 
-compositeVDocThisVersion :: Lens' CompositeVDoc VDocVersion
+compositeVDocThisVersion :: Lens' CompositeVDoc RawContent
 compositeVDocThisVersion = compositeVDocThisEdit . editVDocVersion
 
 blockText :: Lens' (Block rangeKey blockKey) ST

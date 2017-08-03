@@ -40,7 +40,6 @@ import           React.Flux.Internal as RF
 import           React.Flux.Outdated as RF
 
 import           Refine.Common.Types
-import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DocumentHeader
 import           Refine.Frontend.Header.DiffToolbar ( diffToolbar_ )
@@ -147,7 +146,7 @@ mainHeaderRender () rs = do
         sticky_ [RF.on "onStickyStateChange" $ \e -> simpleHandler $ \() ->
                     (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
           toolbarWrapper_ $ case rs ^. gsDocumentState of
-            WipedDocumentStateView -> toolbar_
+            WipedDocumentStateView -> toolbar_ . fromJust $ rs ^? gsVDoc . _Just . compositeVDoc
             WipedDocumentStateDiff i edit collapsed editable -> diffToolbar_ $ DiffToolbarProps
               (edit ^. editID)
               i
@@ -169,7 +168,7 @@ mkIndexToolbarProps :: MainHeaderProps -> IndexToolbarProps
 mkIndexToolbarProps rs
   | rs ^. gsHeaderState . hsToolbarExtensionStatus == IndexToolbarExtension
   && fromMaybe True (not <$> rs ^? gsDocumentState . wipedDocumentStateDiffCollapsed)
-  = mkIndex . rawContentFromVDocVersion . _editVDocVersion <$> gsEdit rs
+  = mkIndex . _editVDocVersion <$> gsEdit rs
   | otherwise = Nothing
   where
     mkIndex (RawContent bs _) =

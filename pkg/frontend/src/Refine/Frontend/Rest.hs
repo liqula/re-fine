@@ -38,20 +38,23 @@ getVDoc :: HasCallStack => ID VDoc -> HandleResponse CompositeVDoc -> IO ()
 getVDoc = request cfg (Proxy :: Proxy SGetVDoc)
 
 -- | create a new vdoc.
-createVDoc :: HasCallStack => Create VDoc -> HandleResponse CompositeVDoc -> IO ()
+createVDoc :: HasCallStack => CreateVDoc -> HandleResponse CompositeVDoc -> IO ()
 createVDoc = request cfg (Proxy :: Proxy SCreateVDoc)
 
-addDiscussion :: HasCallStack => ID Edit -> Create Discussion -> HandleResponse Discussion -> IO ()
+updateVDoc :: HasCallStack => ID VDoc -> UpdateVDoc -> HandleResponse VDoc -> IO ()
+updateVDoc = request cfg (Proxy :: Proxy SUpdateVDoc)
+
+addDiscussion :: HasCallStack => ID Edit -> CreateDiscussion -> HandleResponse Discussion -> IO ()
 addDiscussion = request cfg (Proxy :: Proxy SAddDiscussion)
 
-addNote :: HasCallStack => ID Edit -> Create Note -> HandleResponse Note -> IO ()
+addNote :: HasCallStack => ID Edit -> CreateNote -> HandleResponse Note -> IO ()
 addNote = request cfg (Proxy :: Proxy SAddNote)
 
 -- | create a new edit given a base edit and chunk range, new contents.
-addEdit :: HasCallStack => ID Edit -> Create Edit -> HandleResponse Edit -> IO ()
+addEdit :: HasCallStack => ID Edit -> CreateEdit -> HandleResponse Edit -> IO ()
 addEdit = request cfg (Proxy :: Proxy SAddEdit)
 
-updateEdit :: HasCallStack => ID Edit -> Create Edit -> HandleResponse Edit -> IO ()
+updateEdit :: HasCallStack => ID Edit -> CreateEdit -> HandleResponse Edit -> IO ()
 updateEdit = request cfg (Proxy :: Proxy SUpdateEdit)
 
 createUser :: HasCallStack => CreateUser -> HandleResponse User -> IO ()
@@ -81,5 +84,5 @@ getGroups = request cfg (Proxy :: Proxy SGetGroups)
 createGroup :: HasCallStack => CreateGroup -> HandleResponse Group -> IO ()
 createGroup = request cfg (Proxy :: Proxy SAddGroup)
 
-updateGroup :: HasCallStack => ID Group -> Create Group -> HandleResponse Group -> IO ()
+updateGroup :: HasCallStack => ID Group -> CreateGroup -> HandleResponse Group -> IO ()
 updateGroup = request cfg (Proxy :: Proxy SUpdateGroup)

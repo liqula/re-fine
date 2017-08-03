@@ -26,7 +26,7 @@ module Refine.Frontend.MainMenu.Component where
 
 import Refine.Frontend.Prelude
 
--- import           Data.Text.I18n (Locale(..))
+import           Control.Lens (ALens', cloneLens)
 import qualified Data.Text as ST
 import           Language.Css.Syntax
 
@@ -102,7 +102,7 @@ tabStyles :: HasCallStack => [Decl]
 tabStyles =
   [ decl "position" (Ident "absolute")
   , zindex ZIxLoginTab
-  , decl "backgroundColor" Colors.SCBlue06
+  , decl "backgroundColor" Colors.MainmenuContentColor
   , decl "padding" (Px 50)
   , decl "borderRadius" (Px 12)
   ]
@@ -118,61 +118,11 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
            , "style" @@= tabStyles
            ] $ do
         case currentTab of
-          MainMenuGroups groups -> div_ $ do
-            h1_ "Groups"
-            br_ []
-            toButton `mapM_` groups
-            br_ []
-            br_ []
-            button_ [ "id" $= "add-vdoc-to-backend"
-                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup Nothing . FormOngoing $ newLocalStateRef (CreateGroup "" "" [] []) groups
-                    ] $
-                    elemString "Create new group"
-            where
-              toButton :: HasCallStack => Group -> ReactElementM 'EventHandlerCode ()
-              toButton group = button_
-                [ "id" $= cs ("load-group-list" <> show (group ^. groupID . unID))
-                , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuGroup $ group ^. groupID
-                ]
-                (elemText $ group ^. groupTitle)
-
-          MainMenuGroup group -> div_ $ do
-            h1_ . elemText $ "Group " <> (group ^. groupTitle)
-            elemText $ group ^. groupDesc
-            br_ []
-            br_ []
-            elemText "Processes: "
-            toButton `mapM_` (group ^. groupVDocs)
-            br_ []
-            br_ []
-            button_ [ "id" $= "create-process"
-                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormOngoing
-                        $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract sampleVDocVersion gid) group
-                    ] $
-                    elemString "Create new process"
-            br_ []
-            button_ [ "id" $= "update-group"
-                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup (Just gid) . FormOngoing $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
-                    ] $
-                    elemString "Update group details"
-            br_ []
-            button_ [ "id" $= "group-back"
-                    , onClick $ \_ _ -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()
-                    ] $
-                    elemString "Back"
-            where
-              gid = group ^. groupID
-
-              toButton :: HasCallStack => ID VDoc -> ReactElementM 'EventHandlerCode ()
-              toButton vdoc = button_
-                [ "id" $= cs ("load-group-list" <> show (vdoc ^. unID))
-                , onClick $ \_ _ -> simpleHandler . dispatch . LoadDocument $ BeforeAjax vdoc
-                ]
-                (elemText . cs . show $ vdoc ^. unID)
-
-          MainMenuCreateGroup mid lst -> createGroup_ mid lst
-
-          MainMenuCreateProcess lst -> createProcess_ lst
+          MainMenuGroups groups               -> mainMenuGroups_ groups
+          MainMenuGroup group                 -> mainMenuGroup_ group
+          MainMenuCreateOrUpdateGroup mid lst -> mainMenuCreateGroup_ mid lst
+          MainMenuCreateProcess lst           -> mainMenuCreateProcess_ lst
+          MainMenuUpdateProcess pid lst       -> mainMenuUpdateProcess_ pid lst
 
           MainMenuHelp -> pre_ $ do
             elemString $ "commit hash: " <> show BuildInfo.gitCommitHash
@@ -181,6 +131,7 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
             "\n"
 
           MainMenuLogin subtab -> mainMenuLoginTab_ (MainMenuProps subtab menuErrors currentUser)
+
       div_ [ "className" $= "gr-2" ] $ do
         pure ()
 
@@ -188,35 +139,174 @@ mainMenu_ :: HasCallStack => MainMenuProps MainMenuTabProps -> ReactElementM eve
 mainMenu_ = view_ mainMenu "mainMenu_"
 
 
-mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]
-mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
-      let tabButton :: Int -> MainMenuSubTabLogin -> ReactElementM eventHandler ()
-          tabButton key this = div_ ["style" @@= [decl "marginLeft" (Px 40)]] $ do
-            ibutton_ $ emptyIbuttonProps "00_joker" [MainMenuAction . MainMenuActionOpen . MainMenuLogin $ this]
-              & ibListKey .~ cs (show key)
-              & ibDarkBackground .~ False
-              & ibHighlightWhen .~ (if currentTab == this then HighlightAlways else HighlightOnMouseOver)
-              & ibLabel .~ (case this of
-                             MainMenuSubTabLogin        -> "login"
-                             MainMenuSubTabRegistration -> "register")
+mainMenuGroups :: View '[[Group]]
+mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
+  div_ $ do
+    div_ ["style" @@= [decl "marginLeft" (Px 3)]] $ do
+      let mkCreateGroupAction :: GlobalAction
+          mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup Nothing . FormOngoing
+                              $ newLocalStateRef (CreateGroup "" "" [] []) groups
 
-      div_ $ do
-        tabButton 0 MainMenuSubTabLogin
-        tabButton 1 MainMenuSubTabRegistration
+      ibutton_ $ emptyIbuttonProps "Group_add" [mkCreateGroupAction]
+        & ibListKey .~ "create_group"
+        & ibSize .~ XLarge
+        & ibDarkBackground .~ False
+        & ibHighlightWhen .~ HighlightOnMouseOver
+        & ibLabel .~ "create group"
 
+    div_ $ do
       br_ [] >> br_ [] >> br_ [] >> hr_ []
 
-      div_ $ do
-        case currentTab of
-          MainMenuSubTabLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
-          MainMenuSubTabRegistration -> registration_  (menuErrors ^. mmeRegistration)
+    div_ $ do
+      mainMenuGroupShort_ `mapM_` sortBy (compare `on` view groupTitle) groups
 
-mainMenuLoginTab_ :: HasCallStack => MainMenuProps MainMenuSubTabLogin -> ReactElementM eventHandler ()
-mainMenuLoginTab_ = view_ mainMenuLoginTab "mainMenuLoginTab_"
+mainMenuGroups_ :: HasCallStack => [Group] -> ReactElementM eventHandler ()
+mainMenuGroups_ = view_ mainMenuGroups "mainMenuGroups"
+
+mainMenuGroupShort :: HasCallStack => View '[Group]
+mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
+  let listKey = cs ("group-list-item-" <> show (group ^. groupID . unID))
+  div_ [ onClick $ \_ _ -> simpleHandler . dispatch
+                         . MainMenuAction . MainMenuActionOpen . MainMenuGroup $ group ^. groupID
+       , "id" $= listKey  -- FUTUREWORK: get rid of this.  at the time of writing this it's only
+                          -- used in the acceptance test.
+
+       , "style" @@= [ decl "background-color" Colors.SCBlue03
+                     , decl "padding" (Px 50)
+                     , decl "margin" (Px 50)
+                     , decl "borderRadius" (Px 12)
+                     ]
+       ] $ do
+
+    -- image (FIXME: allow the user to store one in the group and use that)
+    br_ []
+    ibutton_ $ emptyIbuttonProps "Group" ([] :: [GlobalAction])
+      & ibListKey .~ "group"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ True
+      & ibHighlightWhen .~ HighlightOnMouseOver
+      & ibLabel .~ mempty
+
+    -- title
+    br_ []
+    div_ [] $ do
+      elemText $ group ^. groupTitle
+
+    -- buttons for processes, users (FUTUREWORK: make those clickable in addition to the entire
+    -- tile.  clicking on 'users' button should get you there directly.)
+    br_ []
+    div_ [] $ do
+      let numProcesses :: Int = length $ group ^. groupVDocs
+      ibutton_ $ emptyIbuttonProps "Process" ([] :: [GlobalAction])
+        & ibListKey .~ (listKey <> "-processes")
+        & ibSize .~ Large
+        & ibDarkBackground .~ True
+        & ibHighlightWhen .~ HighlightOnMouseOver
+        & ibLabel .~ cs (show numProcesses)  -- FIXME: should be rendered differently, see click dummy
+
+      let numUsers :: Int = 13  -- FIXME
+      ibutton_ $ emptyIbuttonProps "User" ([] :: [GlobalAction])
+        & ibListKey .~ (listKey <> "-users")
+        & ibSize .~ Large
+        & ibDarkBackground .~ True
+        & ibHighlightWhen .~ HighlightOnMouseOver
+        & ibLabel .~ cs (show numUsers)  -- FIXME: should be rendered differently, see click dummy
 
 
-createGroup :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> View '[]
-createGroup mid lst = mkPersistentStatefulView "CreateGroup" lst $
+mainMenuGroupShort_ :: HasCallStack => Group -> ReactElementM eventHandler ()
+mainMenuGroupShort_ group = view_ mainMenuGroupShort listKey group
+  where
+    listKey = "mainMenuGroupShort-" <> (cs . show $ group ^. groupID . unID)
+
+mainMenuGroup :: View '[Group]
+mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
+  div_ $ do
+    ibutton_ $ emptyIbuttonProps "Arrow_left" [MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()]
+      & ibListKey .~ "group_back"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ False
+      & ibHighlightWhen .~ HighlightOnMouseOver
+      & ibLabel .~ mempty
+
+    -- image (FIXME: allow the user to store one in the group and use that)
+    br_ []
+    ibutton_ $ emptyIbuttonProps "Group" ([] :: [GlobalAction])
+      & ibListKey .~ "group"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ False
+      & ibHighlightWhen .~ HighlightOnMouseOver
+      & ibLabel .~ mempty
+
+    -- title, abstract
+    br_ [] >> hr_ []
+    p_ . elemText $ group ^. groupTitle
+    br_ []
+    p_ . elemText $ group ^. groupDesc
+    br_ [] >> hr_ []
+
+    -- buttons for users, processes, create new process, update group
+    -- the first two, users, processes, are morally tabs.
+    span_ ["style" @@= [decl "marginLeft" (Px 50)]] . ibutton_ $ emptyIbuttonProps "User"
+        [ShowNotImplementedYet]
+      & ibListKey .~ "user"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ False
+      & ibHighlightWhen .~ HighlightOnMouseOver
+      & ibLabel .~ "members"
+
+    ibutton_ $ emptyIbuttonProps "Process"
+        ([] :: [GlobalAction])
+      & ibListKey .~ "process"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ False
+      & ibHighlightWhen .~ HighlightAlways
+      & ibLabel .~ "processes"
+
+    ibutton_ $ emptyIbuttonProps "Process_add"
+        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormOngoing
+          $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract sampleRawContent1 (group ^. groupID)) group
+        ]
+      & ibListKey .~ "process_add"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ False
+      & ibHighlightWhen .~ HighlightOnMouseOver
+      & ibLabel .~ "create new process"
+
+    ibutton_ $ emptyIbuttonProps "Group_update"
+        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup (Just $ group ^. groupID) . FormOngoing
+          $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
+        ]
+      & ibListKey .~ "group_update"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ False
+      & ibHighlightWhen .~ HighlightOnMouseOver
+      & ibLabel .~ "change group details"
+
+    -- process list
+    br_ [] >> br_ [] >> br_ [] >> br_ [] >> hr_ [] >> br_ []
+    mainMenuProcessShort_ `mapM_` {- sortBy (compare `on` view vdocTitle)  -- TODO: we only have ID VDoc here, but that'll need to change. -}
+                                  (group ^. groupVDocs)
+
+mainMenuGroup_ :: HasCallStack => Group -> ReactElementM eventHandler ()
+mainMenuGroup_ = view_ mainMenuGroup "mainMenuGroup"
+
+mainMenuProcessShort :: HasCallStack => View '[ID VDoc]
+mainMenuProcessShort = mkView "MainMenuProcessShort" $ \vid -> do
+  button_
+        [ "id" $= cs ("process-list-item-" <> show (vid ^. unID))
+        , onClick $ \_ _ -> simpleHandler . dispatch . LoadCompositeVDoc $ BeforeAjax vid
+        ]
+        (elemText . cs . show $ vid ^. unID)
+
+mainMenuProcessShort_ :: HasCallStack => ID VDoc -> ReactElementM 'EventHandlerCode ()
+mainMenuProcessShort_ vid = view_ mainMenuProcessShort listKey vid
+  where
+    listKey = "mainMenuProcessShort-" <> (cs . show $ vid ^. unID)
+
+-- | FUTUREWORK: should this be @View '[LocalStateRef CreateGroup]@ or @View '[Maybe (ID Group),
+-- LocalStateRef CreateGroup]@?  (same with 'mainMenuCreateProcess'.)
+mainMenuCreateGroup :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> View '[]
+mainMenuCreateGroup mid lst = mkPersistentStatefulView "MainMenuCreateGroup" lst $
   \st@(CreateGroup title desc _ _) -> do
 
     contributionDialogTextForm createGroupTitle st 2 "group title"
@@ -229,52 +319,113 @@ createGroup mid lst = mkPersistentStatefulView "CreateGroup" lst $
             & iconButtonPropsDisabled     .~ True
           else props
             & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateGroup mid $ FormComplete st
-                                             ]
+            & iconButtonPropsOnClick      .~ [MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup mid $ FormComplete st]
 
-    -- FIXME: make new button, like in 'commentInput_' above.  we
-    -- don't have to save this in global state until the 'editInput_'
-    -- dialog is closed again without save or cancel.
     iconButton_ $ defaultIconButtonProps @[GlobalAction]
             & iconButtonPropsListKey      .~ "save"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "dark") XXLarge
             & iconButtonPropsElementName  .~ "btn-index"
             & iconButtonPropsLabel        .~ maybe "save" (const "update") mid
             & iconButtonPropsAlignRight   .~ True
             & enableOrDisable
 
-createGroup_ :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> ReactElementM eventHandler ()
-createGroup_ mid lst = view_ (createGroup mid lst) "createGroup"
+    iconButton_ $ defaultIconButtonProps @[GlobalAction]
+            & iconButtonPropsListKey      .~ "cancel"
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Close", "dark") XXLarge
+            & iconButtonPropsElementName  .~ "btn-index"
+            & iconButtonPropsLabel        .~ "cancel"
+            & iconButtonPropsAlignRight   .~ True
+            & iconButtonPropsDisabled     .~ False
+            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen $
+                                               maybe (MainMenuGroups $ BeforeAjax ()) MainMenuGroup mid
+                                             ]
 
-createProcess :: HasCallStack => LocalStateRef CreateVDoc -> View '[]
-createProcess lst = mkPersistentStatefulView "CreateProcess" lst $
-  \st@(CreateVDoc title _ _ _) -> do
 
-    contributionDialogTextForm (createVDocTitle . unTitle) st 2 "title"
+mainMenuCreateGroup_ :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> ReactElementM eventHandler ()
+mainMenuCreateGroup_ mid lst = view_ (mainMenuCreateGroup mid lst) "mainMenuCreateGroup"
+
+mainMenuCreateProcess :: HasCallStack => LocalStateRef CreateVDoc -> View '[]
+mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst $ \st -> do
+  renderCreateOrUpdateProcess
+    createVDocTitle createVDocAbstract
+    (MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess)
+    (MainMenuAction . MainMenuActionOpen . MainMenuGroup $ st ^. createVDocGroup)
+    st
+
+mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
+mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
+
+mainMenuUpdateProcess :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> View '[]
+mainMenuUpdateProcess vid lst = mkPersistentStatefulView "MainMenuUpdateProcess" lst $
+  renderCreateOrUpdateProcess
+    updateVDocTitle updateVDocAbstract
+    (MainMenuAction . MainMenuActionOpen . MainMenuUpdateProcess vid)
+    (LoadCompositeVDoc $ BeforeAjax vid)
+
+mainMenuUpdateProcess_ :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> ReactElementM eventHandler ()
+mainMenuUpdateProcess_ vid lst = view_ (mainMenuUpdateProcess vid lst) "mainMenuUpdateProcess"
+
+renderCreateOrUpdateProcess
+  :: forall st a.
+     ALens' st Title
+  -> ALens' st Abstract
+  -> (FormAction_ a st -> GlobalAction)  -- ^ save
+  -> GlobalAction                        -- ^ cancel
+  -> st
+  -> ReactElementM ('StatefulEventHandlerCode st) ()
+renderCreateOrUpdateProcess (cloneLens -> toTitle) (cloneLens -> toAbstract) save cancel st = do
+    contributionDialogTextForm (toTitle . unTitle) st 2 "title"
     hr_ []
-    contributionDialogTextForm (createVDocAbstract . unAbstract) st 2 "abstract"
-    hr_ []
-    contributionDialogTextForm (createVDocInitVersion . unVDocVersion) st 2 "initial version"
+    contributionDialogTextForm (toAbstract . unAbstract) st 2 "abstract"
     hr_ []
 
-    let enableOrDisable props = if ST.null (title ^. unTitle)
+    let enableOrDisable props = if ST.null (st ^. toTitle . unTitle)
           then props
             & iconButtonPropsDisabled     .~ True
           else props
             & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess $ FormComplete st
-                                             ]
+            & iconButtonPropsOnClick      .~ [save $ FormComplete st]
 
-    -- FIXME: make new button, like in 'commentInput_' above.  we
-    -- don't have to save this in global state until the 'editInput_'
-    -- dialog is closed again without save or cancel.
     iconButton_ $ defaultIconButtonProps @[GlobalAction]
             & iconButtonPropsListKey      .~ "save"
-            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "bright") XXLarge
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "dark") XXLarge
             & iconButtonPropsElementName  .~ "btn-index"
             & iconButtonPropsLabel        .~ "save"
             & iconButtonPropsAlignRight   .~ True
             & enableOrDisable
 
-createProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
-createProcess_ lst = view_ (createProcess lst) "createProcess"
+    iconButton_ $ defaultIconButtonProps @[GlobalAction]
+            & iconButtonPropsListKey      .~ "cancel"
+            & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Close", "dark") XXLarge
+            & iconButtonPropsElementName  .~ "btn-index"
+            & iconButtonPropsLabel        .~ "cancel"
+            & iconButtonPropsAlignRight   .~ True
+            & iconButtonPropsDisabled     .~ False
+            & iconButtonPropsOnClick      .~ [cancel]
+
+
+mainMenuLoginTab :: HasCallStack => View '[MainMenuProps MainMenuSubTabLogin]
+mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuErrors currentUser) -> do
+  let tabButton :: Int -> MainMenuSubTabLogin -> ReactElementM eventHandler ()
+      tabButton key this = div_ ["style" @@= [decl "marginLeft" (Px 40)]] $ do
+        ibutton_ $ emptyIbuttonProps "00_joker" [MainMenuAction . MainMenuActionOpen . MainMenuLogin $ this]
+          & ibListKey .~ cs (show key)
+          & ibDarkBackground .~ False
+          & ibHighlightWhen .~ (if currentTab == this then HighlightAlways else HighlightOnMouseOver)
+          & ibLabel .~ (case this of
+                         MainMenuSubTabLogin        -> "login"
+                         MainMenuSubTabRegistration -> "register")
+
+  div_ $ do
+    tabButton 0 MainMenuSubTabLogin
+    tabButton 1 MainMenuSubTabRegistration
+
+  br_ [] >> br_ [] >> br_ [] >> hr_ []
+
+  div_ $ do
+    case currentTab of
+      MainMenuSubTabLogin        -> loginOrLogout_ currentUser (menuErrors ^. mmeLogin)
+      MainMenuSubTabRegistration -> registration_  (menuErrors ^. mmeRegistration)
+
+mainMenuLoginTab_ :: HasCallStack => MainMenuProps MainMenuSubTabLogin -> ReactElementM eventHandler ()
+mainMenuLoginTab_ = view_ mainMenuLoginTab "mainMenuLoginTab_"

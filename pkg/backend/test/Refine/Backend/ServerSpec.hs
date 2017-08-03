@@ -50,7 +50,6 @@ import Refine.Common.OT hiding (Edit)
 import Refine.Common.ChangeAPI
 import Refine.Common.Rest
 import Refine.Common.Types as Common
-import Refine.Common.VDoc.Draft
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
@@ -145,7 +144,7 @@ sampleCreateVDoc :: CreateVDoc
 sampleCreateVDoc = CreateVDoc
   (Title "[title]")
   (Abstract "[abstract]")
-  (rawContentToVDocVersion . mkRawContent $ mkBlock "[versioned content]" :| [])
+  (mkRawContent $ mkBlock "[versioned content]" :| [])
   defaultGroupID
 
 respCode :: SResponse -> Int
@@ -211,6 +210,11 @@ addTestUserAndLogin sess = addUserAndLogin sess testUsername
 mkTestUserAndEditAndLogin :: TestBackend -> IO (ID Edit)
 mkTestUserAndEditAndLogin sess = addTestUserAndLogin sess >> mkEdit sess
 
+-- | we're just hoping this is the ID of the default group that is created in 'mkProdBackend'.  if
+-- this fails, we need to be smarter about constructing the test cases here.
+defaultGroupID :: ID Group
+defaultGroupID = ID 1
+
 
 -- * endpoints
 
@@ -222,6 +226,9 @@ getVDocUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetVD
 
 createVDocUri :: SBS
 createVDocUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SCreateVDoc)
+
+updateVDocUri :: ID VDoc -> SBS
+updateVDocUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SUpdateVDoc)
 
 addEditUri :: ID Edit -> SBS
 addEditUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddEdit)
@@ -278,6 +285,21 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
       fe :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
       be :: CompositeVDoc <- runDB  sess $ getCompositeVDocOnHead (fe ^. compositeVDoc . vdocID)
       fe `shouldBe` be
+
+  describe "sUpdateVDoc" $ do
+    it "stores new title, abstract in vdoc in the db" $ \sess -> do
+      bef :: CompositeVDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
+      let vid = bef ^. compositeVDoc . vdocID
+          newabstract = Abstract "newabs"
+          newtitle = Title "newtitle"
+
+      after1 :: VDoc <- runWai sess $ putJSON (updateVDocUri vid) (UpdateVDoc newtitle newabstract)
+      after2  :: CompositeVDoc <- runDB  sess $ getCompositeVDocOnHead vid
+
+      (after1 ^. vdocTitle)                    `shouldBe` newtitle
+      (after1 ^. vdocAbstract)                 `shouldBe` newabstract
+      (after2 ^. compositeVDoc . vdocTitle)    `shouldBe` newtitle
+      (after2 ^. compositeVDoc . vdocAbstract) `shouldBe` newabstract
 
   describe "sAddNote" $ do
     it "stores note with full-document chunk range" $ \sess -> do
@@ -349,7 +371,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
       pendingWith "this test case shouldn't be too hard to write, and should be working already."
 
   describe "sAddEdit, sUpdateEdit" $ do
-    let samplevdoc = rawContentToVDocVersion . mkRawContent $ mkBlock "[new vdoc version]" :| []
+    let samplevdoc = mkRawContent $ mkBlock "[new vdoc version]" :| []
     let setup sess = do
          group <- fmap (^. groupID) . runDB sess $ App.addGroup (CreateGroup "title" "desc" [] [])
          runWai sess $ do
@@ -378,7 +400,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
     context "on edit without ranges" $ do
       it "stores an edit and returns its version" $ \sess -> do
         (_, fp) <- setup sess
-        be' :: VDocVersion <- runDB sess . db . getVersion $ fp ^. editID
+        be' :: RawContent <- runDB sess . db . getVersion $ fp ^. editID
         be' `shouldBe` samplevdoc
 
       it "stores an edit and returns it in the list of edits applicable to its base" $ \sess -> do
@@ -391,7 +413,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
       it "works" $ \sess -> do
         (_, fp) <- setup sess
 
-        let d = rawContentToVDocVersion . mkRawContent $ mkBlock "1234567890" :| []
+        let d = mkRawContent $ mkBlock "1234567890" :| []
         _ :: Edit <- runWai sess $
             putJSON
               (updateEditUri (fp ^. editID))
@@ -563,7 +585,7 @@ specVoting = around createTestSession $ do
       addUserAndLogin sess "userA"
 
       let blocks = mkBlock <$> ["first line", "second line", "third line"]
-          vdoc ~(b:bs) = rawContentToVDocVersion . mkRawContent $ b :| bs
+          vdoc ~(b:bs) = mkRawContent $ b :| bs
 
       cvdoc <- mkCVDoc sess $ CreateVDoc (Title "[title]") (Abstract "[abstract]") (vdoc blocks) defaultGroupID
 

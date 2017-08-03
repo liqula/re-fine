@@ -31,7 +31,6 @@ module Refine.Backend.Server
   , runCliAppCommand
   , Backend(..), mkProdBackend
   , refineApi
-  , defaultGroupID
   ) where
 
 import Refine.Backend.Prelude as P
@@ -54,7 +53,6 @@ import Refine.Backend.Database
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Types
--- import Refine.Common.Allow
 import Refine.Common.Rest
 import Refine.Common.Types
 
@@ -83,15 +81,11 @@ data Backend db = Backend
   , backendRunApp :: AppM db P.:~> ExceptT AppError IO
   }
 
-type MonadRefine db =
-  ( MonadApp db
---  , Allow (ProcessPayload Edit) Edit   -- FIXME
-  )
-
-refineApi :: MonadRefine db => ServerT RefineAPI (AppM db)
+refineApi :: MonadApp db => ServerT RefineAPI (AppM db)
 refineApi =
        App.getCompositeVDocOnHead
   :<|> App.createVDocGetComposite
+  :<|> App.updateVDoc
   :<|> App.addEdit
   :<|> App.updateEdit
   :<|> App.addNote
@@ -122,16 +116,12 @@ runCliAppCommand cfg cmd = do
   backend <- mkProdBackend cfg
   void $ (natThrowError . backendRunApp backend) $$ cmd
 
-defaultGroupID :: ID Group
-defaultGroupID = ID 1
-
 mkProdBackend :: Config -> IO (Backend DB)
 mkProdBackend cfg = mkBackend cfg $ do
   () <- migrateDB cfg
   gs <- App.getGroups
   when (null gs) $ do
-    g <- addGroup $ CreateGroup "default" "default group" [] []
-    when (g ^. groupID /= defaultGroupID) . error $ "default group ID: " <> show defaultGroupID <> " /= " <> show (g ^. groupID)
+    void . addGroup $ CreateGroup "default" "default group" [] []
   pure ()
 
 mkBackend :: Config -> AppM DB a -> IO (Backend DB)
@@ -150,7 +140,7 @@ mkBackend cfg migrate = do
 
 
 mkServerApp
-    :: MonadRefine db
+    :: MonadApp db
     => Config -> MkDBNat db -> DBRunner -> IO (Backend db)
 mkServerApp cfg dbNat dbRunner = do
   poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath

@@ -30,7 +30,7 @@ import Refine.Common.Types.Prelude
 import Refine.Common.Types.Position
 
 
-type CommentText = ST  -- FIXME: refactor VDocVersion to be more general and use that.
+type CommentText = ST
 
 data CreateNote = CreateNote
   { _createNoteText   :: CommentText
@@ -114,17 +114,11 @@ data Comment =
   | CommentQuestion CompositeQuestion
   deriving (Eq, Show, Generic)
 
--- * create types
-
-type instance Create Note       = CreateNote
-type instance Create Question   = CreateQuestion
-type instance Create Answer     = CreateAnswer
-type instance Create Discussion = CreateDiscussion
-type instance Create Statement  = CreateStatement
-
 -- * Refine types
 
-makeRefineTypes [''CreateNote, ''Note, ''CreateQuestion, ''Question, ''CompositeQuestion, ''CreateAnswer, ''Answer, ''CreateDiscussion, ''Discussion, ''CreateStatement, ''Statement, ''Comment]
+makeRefineTypes [ ''CreateNote, ''Note, ''CreateQuestion, ''Question, ''CompositeQuestion, ''CreateAnswer
+                , ''Answer, ''CreateDiscussion, ''Discussion, ''CreateStatement, ''Statement, ''Comment
+                ]
 
 -- * Lenses
 

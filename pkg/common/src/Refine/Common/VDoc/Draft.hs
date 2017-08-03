@@ -100,7 +100,7 @@ rawContentFromCompositeVDoc :: CompositeVDoc -> RawContent
 rawContentFromCompositeVDoc (CompositeVDoc _ base edits notes discussions) =
   addMarksToRawContent marks rawContent
   where
-    rawContent = rawContentFromVDocVersion $ base ^. editVDocVersion
+    rawContent = base ^. editVDocVersion
 
     convertHack l (k, v) = (MarkContribution (contribID k) 0, extendRange $ v ^. l)
 
@@ -129,14 +129,6 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base edits notes discussions) =
     numberRanges
       = concatMap (\(i, rs) -> replicate (length rs) i)
       . zip [0..] . List.groupBy ((==) `on` (^. rangeBegin . rowIndex))
-
-rawContentFromVDocVersion :: VDocVersion -> RawContent
-rawContentFromVDocVersion (VDocVersion st) = case eitherDecode $ cs st of
-  Right v -> v
-  Left msg -> error $ "rawContentFromVDocVersion: " <> show (msg, st)
-
-rawContentToVDocVersion :: RawContent -> VDocVersion
-rawContentToVDocVersion = VDocVersion . cs . encode
 
 
 -- * marks

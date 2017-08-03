@@ -99,6 +99,7 @@ instance Database DB where
   -- * VDoc
   listVDocs          = Entity.listVDocs
   createVDoc         = Entity.createVDoc
+  updateVDoc         = Entity.updateVDoc
   getVDoc            = Entity.getVDoc
   vdocOfEdit         = Entity.vdocOfEdit
   getEditIDs         = Entity.getEditIDs

@@ -24,8 +24,6 @@
 
 module Refine.Frontend.Document.Store
   ( documentStateUpdate
-  , editorStateToVDocVersion
-  , editorStateFromVDocVersion
   , setAllVerticalSpanBounds
   ) where
 
@@ -53,7 +51,18 @@ import           Refine.Frontend.Util
 -- trigger thunk evaluation loops.  use old state whenever it is
 -- enough.
 documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> GlobalState -> GlobalDocumentState -> GlobalDocumentState
-documentStateUpdate (LoadDocument (AfterAjax cvdoc)) oldgs _newgs st
+documentStateUpdate (LoadVDoc (AfterAjax vdoc)) oldgs _newgs st
+  = let eidChanged = Just newID /= mOldID
+        newID  = vdoc ^. vdocHeadEdit
+        mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
+        oldEdit = fromMaybe (error "impossible") $ gsEdit oldgs
+    in refreshDocumentStateView
+         oldEdit
+         eidChanged
+         (oldEdit ^. editVDocVersion)  -- (really, get the vdoc version from the old gs here?)
+         st
+
+documentStateUpdate (LoadCompositeVDoc (AfterAjax cvdoc)) oldgs _newgs st
   = let eidChanged = Just newID /= mOldID
         newID  = cvdoc ^. compositeVDocThisEditID
         mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
@@ -72,7 +81,7 @@ documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _
 
 documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateDiff _ _ _ edit _ _)
   = DocumentStateEdit
-      (createWithContent . convertFromRaw . rawContentFromVDocVersion $ ed ^. editVDocVersion)
+      (createWithRawContent $ ed ^. editVDocVersion)
       einfo
       (Just edit)
   where
@@ -163,12 +172,6 @@ documentStateUpdate (HeaderAction ToggleIndexToolbarExtension) _ _ st | has _Doc
 documentStateUpdate _ _ _ st
   = st
 
-
-editorStateToVDocVersion :: HasCallStack => EditorState -> VDocVersion
-editorStateToVDocVersion = rawContentToVDocVersion . convertToRaw . getCurrentContent
-
-editorStateFromVDocVersion :: HasCallStack => VDocVersion -> EditorState
-editorStateFromVDocVersion = createWithContent . convertFromRaw . rawContentFromVDocVersion
 
 -- | construct a 'SetAllVerticalSpanBounds' action.
 setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a b c -> m ContributionAction

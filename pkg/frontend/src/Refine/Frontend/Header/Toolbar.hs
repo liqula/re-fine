@@ -27,15 +27,21 @@ module Refine.Frontend.Header.Toolbar where
 import           Refine.Frontend.Prelude
 import           Language.Css.Syntax
 
+import           React.Flux.Missing
+import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
-import           Refine.Frontend.Header.Types
-import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Icon
+import           Refine.Frontend.MainMenu.Types
+import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
-toolbar_ :: HasCallStack => ReactElementM eventHandler ()
-toolbar_ = do
+-- FUTUREWORK: this should probably be a component, but if we do the obvious minimal change to
+-- introduce a @View '[]@, the styling breaks completely.  note that this does not fix #376 either.
+toolbar_ :: HasCallStack => VDoc -> ReactElementM eventHandler ()
+toolbar_ vdoc = do
   let toolbarButton = defaultIconButtonProps @[GlobalAction]
 
   iconButton_ $ toolbarButton
@@ -84,6 +90,18 @@ toolbar_ = do
     & iconButtonPropsOnClick      .~ (ContributionAction <$> [ SetBubbleFilter Nothing
                                                              , SetBubblePositioning BubblePositioningAbsolute
                                                              ])
+
+  div_ ["className" $= "c-vdoc-toolbar__separator"] ""
+
+  iconButton_ $ toolbarButton  -- FIXME: show this button only to process creator.
+    & iconButtonPropsListKey      .~ "update-process"
+    & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Process_update", "dark") XXLarge
+    & iconButtonPropsLabel        .~ "update process"
+    & iconButtonPropsOnClickMods  .~ [StopPropagation]
+    & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuUpdateProcess (vdoc ^. vdocID) . FormOngoing $
+                                       newLocalStateRef (UpdateVDoc (vdoc ^. vdocTitle) (vdoc ^. vdocAbstract)) vdoc
+                                     ]
+
 
   iconButton_ $ toolbarButton
     & iconButtonPropsListKey      .~ "read-only"
