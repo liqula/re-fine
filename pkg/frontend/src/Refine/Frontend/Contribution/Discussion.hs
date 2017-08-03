@@ -82,7 +82,20 @@ statementForest_ = view_ statementForest "statementForest_"
 
 statement :: HasCallStack => View '[(Int, Statement)]
 statement = mkView "statement" $ \(depth, stmnt) -> do
-  elemString (show (depth, stmnt))
+  elemString $ "@depth " <> show depth
+  br_ []
+  elemText $ stmnt ^. statementText
+  br_ []
+  elemString $ "by " <> showUser (stmnt ^. statementMetaID . miMeta . metaCreatedBy)
+  br_ []
+  elemString $ "created at " <> show (stmnt ^. statementMetaID . miMeta . metaCreatedAt)
+  br_ []
+  elemString $ "modified at " <> show (stmnt ^. statementMetaID . miMeta . metaChangedAt)
+  where
+    showUser = \case
+      UserID i -> show i   -- TODO
+      UserIP ip -> cs ip
+      Anonymous -> "anonymous"
 
 statement_ :: HasCallStack => (Int, Statement) -> ReactElementM eventHandler ()
 statement_ = view_ statement "statement_"
