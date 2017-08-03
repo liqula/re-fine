@@ -133,6 +133,7 @@ B) is safer than A)
 # Ideal client state for re-fine
 
 ```{.haskell}
+-- ClientState is called GlobalState in frontend
 data ClientState = ClientState ServerCache History LoginInfo MainPage DevState   -- or [MainPage]
 
 -- server cache is derivable from server state and any other part of client state is not derivable from server state
