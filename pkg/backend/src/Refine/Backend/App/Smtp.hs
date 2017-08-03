@@ -30,6 +30,9 @@ module Refine.Backend.App.Smtp
   , IsEmailMessage(renderEmail)
   , EmailMessage(..)
   , checkSendMail
+
+    -- re-exports
+  , Address(..)
   ) where
 
 import Refine.Backend.Prelude

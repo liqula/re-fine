@@ -142,7 +142,10 @@ mkBackend cfg migrate = do
 mkServerApp :: Database db => Config -> MkDBNat db -> DBRunner -> IO (Backend db)
 mkServerApp cfg dbNat dbRunner = do
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
-      logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
+      logger = Logger $ case cfg ^. cfgLogger of
+        LogCfgFile file -> appendFile file . (<> "\n")
+        LogCfgStdOut    -> putStrLn
+        LogCfgDevNull   -> const $ pure ()
       app    = runApp dbNat
                       dbRunner
                       logger

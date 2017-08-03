@@ -59,6 +59,9 @@ import Refine.Common.Types as Common
 -- | This type carries a 'Backend' (which contains of an 'AppM' and an 'Application'), plus a wai
 -- test client.  (It is only used in this module, so it does not need to go to
 -- "Refine.Backend.Test.AppRunner", where an 'AppM' tester is provided.)
+--
+-- FUTUREWORK: actually, i think that "Refine.Backend.Test.AppRunner" and the code here could
+-- benefit from some refactoring to reduce code duplication.
 data TestBackend = TestBackend
   { _testBackend      :: Backend DB
   , _testBackendState :: MVar Wai.ClientState
@@ -124,10 +127,17 @@ errorOnLeft action = either (throwIO . ErrorCall . show') pure =<< action
   where
     show' x = "errorOnLeft: " <> show x
 
+testLogfilePath :: FilePath
+testLogfilePath = "logfile"
+
+readTestLogfile :: IO String
+readTestLogfile = readFile testLogfilePath
+
 -- | Create session via 'mkProdBackend' (using 'UH').
 createTestSession :: (TestBackend -> IO ()) -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
-  void $ action =<< (TestBackend <$> mkProdBackend (def & cfgShouldLog .~ False) <*> newMVar Wai.initState)
+  let cfg = def & cfgLogger .~ LogCfgFile testLogfilePath
+  void $ action =<< (TestBackend <$> mkProdBackend cfg <*> newMVar Wai.initState)
 
 createTestSessionWith :: (TestBackend -> IO ()) -> (TestBackend -> IO ()) -> IO ()
 createTestSessionWith initAction action = createTestSession $ \sess -> do
@@ -144,8 +154,17 @@ sampleCreateVDoc :: CreateVDoc
 sampleCreateVDoc = CreateVDoc
   (Title "[title]")
   (Abstract "[abstract]")
-  (mkRawContent $ mkBlock "[versioned content]" :| [])
+  sampleCreateVDocE0
   defaultGroupID
+
+sampleCreateVDocE0 :: RawContent
+sampleCreateVDocE0 = mkRawContent $ mkBlock "[versioned content]" :| []
+
+sampleCreateVDocE1 :: RawContent
+sampleCreateVDocE1 = mkRawContent $ mkBlock "[versioned content, edit1]" :| []
+
+sampleCreateVDocE2 :: RawContent
+sampleCreateVDocE2 = mkRawContent $ mkBlock "[versioned, edit2, content]" :| []
 
 respCode :: SResponse -> Int
 respCode = statusCode . simpleStatus
@@ -193,19 +212,22 @@ mkEdit = fmap (^. compositeVDocThisEditID) . (`mkCVDoc` sampleCreateVDoc)
 testUsername :: Username
 testUsername = "testUsername"
 
+testUserEmail :: Username
+testUserEmail = "testUsername@email.com"
+
 testPassword :: Password
 testPassword = "testPassword"
 
-addUserAndLogin :: TestBackend -> Username -> IO ()
-addUserAndLogin sess username = runWai sess $ do
-  r1 <- post createUserUri $ CreateUser username (username <> "@email.com") testPassword
+addUserAndLogin :: TestBackend -> Username -> ST -> IO ()
+addUserAndLogin sess username useremail = runWai sess $ do
+  r1 <- post createUserUri $ CreateUser username useremail testPassword
   r2 <- post loginUri $ Login username testPassword
   if any ((>= 300) . respCode) [r1, r2]
     then error $ "addUserAndLogin: " <> show (username, [r1, r2])
     else pure ()
 
 addTestUserAndLogin :: TestBackend -> IO ()
-addTestUserAndLogin sess = addUserAndLogin sess testUsername
+addTestUserAndLogin sess = addUserAndLogin sess testUsername testUserEmail
 
 mkTestUserAndEditAndLogin :: TestBackend -> IO (ID Edit)
 mkTestUserAndEditAndLogin sess = addTestUserAndLogin sess >> mkEdit sess
@@ -271,6 +293,7 @@ spec = do -- FUTUREWORK: mark this as 'parallel' (needs some work)
   specMockedLogin
   specUserHandling
   specVoting
+  specSmtp
 
 specMockedLogin :: Spec
 specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
@@ -451,7 +474,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
 specUserHandling :: Spec
 specUserHandling = around createTestSession $ do
   describe "User handling" $ do
-    let doCreate = post createUserUri (CreateUser testUsername "mail@email.com" testPassword)
+    let doCreate = post createUserUri (CreateUser testUsername testUserEmail testPassword)
         doLogin = post loginUri
         doLogout = post logoutUri ()
 
@@ -558,11 +581,11 @@ specVoting = around createTestSession $ do
     context "with two Yeays and one Nay" $ do
       it "returns (2, 1)" $ \sess -> do
         eid <- mkEdit sess
-        addUserAndLogin sess "userA"
+        addUserAndLogin sess "userA" "userA@email.com"
         _ <- runWai sess . wput $ putVoteUri eid Yeay
-        addUserAndLogin sess "userB"
+        addUserAndLogin sess "userB" "userB@email.com"
         _ <- runWai sess . wput $ putVoteUri eid Yeay
-        addUserAndLogin sess "userC"
+        addUserAndLogin sess "userC" "userC@email.com"
         _ <- runWai sess . wput $ putVoteUri eid Nay
         votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
         votes `shouldBe` Map.fromList [(Yeay, 2), (Nay, 1)]
@@ -570,19 +593,19 @@ specVoting = around createTestSession $ do
     context "with two Yeays and one Nay, and after changing one Yeay into a Nay" $ do
       it "returns (1, 2)" $ \sess -> do
         eid <- mkEdit sess
-        addUserAndLogin sess "userA"
+        addUserAndLogin sess "userA" "userA@email.com"
         _ <- runWai sess . wput $ putVoteUri eid Yeay
-        addUserAndLogin sess "userB"
+        addUserAndLogin sess "userB" "userB@email.com"
         _ <- runWai sess . wput $ putVoteUri eid Yeay
         _ <- runWai sess . wput $ putVoteUri eid Nay
-        addUserAndLogin sess "userC"
+        addUserAndLogin sess "userC" "userC@email.com"
         _ <- runWai sess . wput $ putVoteUri eid Nay
         votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
         votes `shouldBe` Map.fromList [(Yeay, 1), (Nay, 2)]
 
   describe "merging and rebasing" $ do
     it "works if two edits are present and one is merged" $ \sess -> do
-      addUserAndLogin sess "userA"
+      addUserAndLogin sess "userA" "userA@email.com"
 
       let blocks = mkBlock <$> ["first line", "second line", "third line"]
           vdoc ~(b:bs) = mkRawContent $ b :| bs
@@ -610,3 +633,49 @@ specVoting = around createTestSession $ do
       head rebasedEdits ^. editDesc `shouldBe` "description"
       head rebasedEdits ^. editKind `shouldBe` Grammar
       -- (compare versions, too?  that will probably break once we get fancier merge heuristics, though.)
+
+specSmtp :: Spec
+specSmtp = describe "smtp" . around (createTestSessionWith addTestUserAndLogin) $ do
+  it "sendMailTo sends emails" $ \sess -> do
+    let msg = EmailMessage (Address (Just "yourname") "you@example.com") emailSubject emailBody
+        emailSubject = "363afea9ec84d430c"
+        emailBody = "969046a5ba584948471218672256dafbcb5986e3964ec49"
+    () <- runDB sess $ App.sendMailTo msg
+    logs <- readTestLogfile
+    logs `shouldContain` "sendMailTo:"
+    logs `shouldContain` cs emailSubject
+    logs `shouldContain` cs emailBody
+    logs `shouldContain` ("sendMailTo: " <> show (def :: SmtpCfg, msg))  -- this is quite specific, but oh well.
+
+  -- this is pretty close to an acceptance test: given one user on the system, create a doc and
+  -- two edits.  upvote one edit, which triggers a merge.  then check that we get an email about
+  -- the other edit getting rebased.
+  let itNotifiesOnRebase msg trigger = it msg $ \sess -> do
+        oldHead :: ID Edit
+          <- mkEdit sess  -- saves sampleCreateVDoc
+        firstEdit :: Edit
+          <- runWai sess $ postJSON (addEditUri oldHead) (CreateEdit "1st" sampleCreateVDocE1 Grammar)
+        () <- trigger sess oldHead
+
+        notyet <- readTestLogfile
+        notyet `shouldNotContain` cs testUserEmail
+        notyet `shouldNotContain` cs testUsername
+
+        () <- runWai sess $ putJSON (putVoteUri (firstEdit ^. editID) Yeay) ()
+
+        butnow <- readTestLogfile
+        butnow `shouldContain` cs testUserEmail
+        butnow `shouldContain` cs testUsername
+
+  itNotifiesOnRebase "when my edit gets rebased, i get an email" $ \sess base -> do
+    _secondEditEdit :: Edit
+      <- runWai sess $ postJSON (addEditUri base) (CreateEdit "1st" sampleCreateVDocE1 Grammar)
+    pure ()
+
+  itNotifiesOnRebase "when my discussion gets rebased, i get an email" $ \sess base -> do
+    let cp1 = Position (BlockIndex 0 $ BlockKey "1") 0
+        cp2 = Position (BlockIndex 0 $ BlockKey "1") 1
+    _firstDiscussion :: Discussion
+      <- runWai sess $ postJSON (addDiscussionUri base)
+            (CreateDiscussion "[discussion initial statement]" True (Range cp1 cp2))
+    pure ()

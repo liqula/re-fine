@@ -35,7 +35,7 @@ import           Network.Wai.Handler.Warp as Warp
 -- * config tree
 
 data Config = Config
-  { _cfgShouldLog     :: Bool           -- ^ Should log messages during the server run
+  { _cfgLogger        :: LogCfg         -- ^ logging
   , _cfgDBKind        :: DBKind         -- ^ SQLite database, memory or file on the disk
   , _cfgPoolSize      :: Int            -- ^ The size of the connection pool towards the database
   , _cfgFileServeRoot :: Maybe FilePath -- ^ Directory for the static files
@@ -45,6 +45,12 @@ data Config = Config
   , _cfgPoFilesRoot   :: FilePath       -- ^ The directory of Po translation files
   , _cfgSmtp          :: Maybe SmtpCfg  -- ^ for sending notification emails to users
   }
+  deriving (Eq, Show, Generic)
+
+data LogCfg =
+    LogCfgFile { _logcfgFilePath :: FilePath }
+  | LogCfgStdOut
+  | LogCfgDevNull
   deriving (Eq, Show, Generic)
 
 data DBKind
@@ -63,7 +69,7 @@ data SmtpCfg = SmtpCfg
 
 instance Default Config where
   def = Config
-    { _cfgShouldLog     = True
+    { _cfgLogger        = def
     , _cfgDBKind        = def
     , _cfgPoolSize      = 5
     , _cfgFileServeRoot = Just "../frontend/js-build"
@@ -73,6 +79,9 @@ instance Default Config where
     , _cfgPoFilesRoot   = "./po"
     , _cfgSmtp          = Just def
     }
+
+instance Default LogCfg where
+  def = LogCfgStdOut
 
 instance Default DBKind where
   def = DBOnDisk "./.backend-data/refine.db"
@@ -104,7 +113,7 @@ warpSettings cfg = Warp.defaultSettings
 
 -- * lenses/TH
 
-deriveClasses [([''Config, ''SmtpCfg, ''DBKind], [''SOP.Generic, ''Lens', ''FromJSON])]
+deriveClasses [([''Config, ''LogCfg, ''DBKind, ''SmtpCfg], [''SOP.Generic, ''Lens', ''FromJSON])]
 deriveClasses [([''WarpSettings], [''SOP.Generic, ''Lens'])]
 
 instance ToJSON WarpSettings where

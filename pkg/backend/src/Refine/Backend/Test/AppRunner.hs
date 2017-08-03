@@ -50,7 +50,7 @@ createAppRunner = do
       poRoot    = "./repos" -- FIXME: Change this when needed. Not used at the moment.
 
       cfg = Config
-        { _cfgShouldLog     = False  -- (this is ignored here)
+        { _cfgLogger        = LogCfgDevNull  -- (this is ignored here)
         , _cfgDBKind        = DBOnDisk testDb
         , _cfgPoolSize      = 5
         , _cfgFileServeRoot = Nothing
