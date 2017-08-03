@@ -37,6 +37,7 @@ import Data.String.Conversions (cs)
 import Data.Text.I18n.Po
 
 import Refine.Backend.App.Core
+import Refine.Backend.Config
 import Refine.Common.Types.Translation
 
 
@@ -53,7 +54,7 @@ import Refine.Common.Types.Translation
 getTranslations :: GetTranslations -> AppIO L10
 getTranslations (GetTranslations locale) = do
   appLog "getTranslations"
-  poFileRoot <- asks (view appPoFilesRoot)
+  poFileRoot <- asks . view $ appConfig . cfgPoFilesRoot
   join . liftIO $ do
     (l10, parseErrors) <- getL10n poFileRoot
     pure $ do

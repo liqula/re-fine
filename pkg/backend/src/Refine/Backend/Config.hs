@@ -32,12 +32,6 @@ import qualified Generics.SOP as SOP
 import           Network.Wai.Handler.Warp as Warp
 
 
--- * config reader class
-
-class MonadReaderConfig c m where
-  viewConfig :: m c
-
-
 -- * config tree
 
 data Config = Config

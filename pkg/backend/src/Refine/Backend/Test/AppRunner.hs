@@ -36,7 +36,6 @@ import Refine.Backend.Database
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Test.Util
-import Refine.Backend.Types
 
 
 provideAppRunner :: ActionWith (AppM DB a -> IO a) -> IO ()
@@ -69,9 +68,7 @@ createAppRunner = do
                                     dbNat
                                     dbRunner
                                     logger
-                                    (cfg ^. cfgCsrfSecret . to CsrfSecret)
-                                    (cfg ^. cfgSessionLength)
-                                    poRoot) $$ m) >>= evaluate -- without evaluate we have issue #389
+                                    cfg) $$ m) >>= evaluate -- without evaluate we have issue #389
 
   void $ runner (migrateDB cfg >> initializeDB)
   pure (runner, testDb)

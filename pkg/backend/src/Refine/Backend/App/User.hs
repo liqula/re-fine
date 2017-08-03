@@ -28,15 +28,11 @@ module Refine.Backend.App.User where
 
 import Refine.Backend.Prelude
 
-import           Control.Lens ((^.), view)
-import           Control.Monad (void)
-import           Control.Monad.State (gets)
-import           Control.Monad.Reader (ask)
-import           Data.Maybe (isJust)
 import qualified Web.Users.Types as Users
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.Session
+import Refine.Backend.Config
 import Refine.Backend.Types
 import Refine.Backend.Database.Class (createMetaID_, getMetaID)
 import Refine.Backend.Database.Entity (toUserID, fromUserID)
@@ -51,7 +47,7 @@ import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 login :: Common.Login -> App Common.User
 login (Login username (Users.PasswordPlain -> password)) = do
   appLog "login"
-  sessionDuration <- timespanToNominalDiffTime . view appSessionLength <$> ask
+  sessionDuration <- asks . view $ appConfig . cfgSessionLength . to timespanToNominalDiffTime
   session <- nothingToError (AppUserNotFound username)
              =<< dbUsersCmd (\db_ -> Users.authUser db_ username password sessionDuration)
   loginId <- nothingToError AppSessionError

@@ -141,15 +141,12 @@ mkBackend cfg migrate = do
 
 mkServerApp :: Database db => Config -> MkDBNat db -> DBRunner -> IO (Backend db)
 mkServerApp cfg dbNat dbRunner = do
-  poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
       app    = runApp dbNat
                       dbRunner
                       logger
-                      (cfg ^. cfgCsrfSecret . to CsrfSecret)
-                      (cfg ^. cfgSessionLength)
-                      poFilesRoot
+                      cfg
 
   -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
   -- may need to refactor, e.g. by using extra arguments in the end point types.
@@ -264,7 +261,12 @@ instance SCS.HasSessionCsrfToken AppState where
       csrfTokenIso = iso (fmap toSCS) (fmap fromSCS)
 
 instance SCS.GetCsrfSecret AppContext where
-  csrfSecret = appCsrfSecret . Refine.Backend.Types.csrfSecret . to (Just . SCS.CsrfSecret . cs)
+  csrfSecret = appConfig . cfgCsrfSecret
+             . to (Refine.Backend.Types.CsrfSecret . cs)
+             . Refine.Backend.Types.csrfSecret
+             . to (Just . SCS.CsrfSecret . cs)
+    -- (FUTUREWORK: this looks like Config should not carry around the string, but one of the many
+    -- types alled 'CsrfSecret'.  but i'm not going to investigate this now.)
 
 instance SCS.GetSessionToken AppState where
   getSessionToken = appUserState . to (\case

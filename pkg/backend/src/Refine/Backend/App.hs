@@ -28,8 +28,6 @@ module Refine.Backend.App
 
 import Refine.Backend.Prelude
 
-import System.FilePath (FilePath)
-
 import Refine.Backend.App.Comment     as App
 import Refine.Backend.App.Core        as App
 import Refine.Backend.App.Group       as App
@@ -37,8 +35,8 @@ import Refine.Backend.App.Role        as App
 import Refine.Backend.App.Translation as App
 import Refine.Backend.App.User        as App
 import Refine.Backend.App.VDoc        as App
+import Refine.Backend.Config
 import Refine.Backend.Logger
-import Refine.Backend.Types (CsrfSecret)
 
 
 runApp
@@ -46,17 +44,13 @@ runApp
   .  MkDBNat db
   -> DBRunner
   -> Logger
-  -> CsrfSecret
-  -> Timespan
-  -> FilePath
+  -> Config
   -> (AppM db :~> ExceptT AppError IO)
 runApp
   dbNat
   dbrunner
   logger
-  csrfSecret
-  sessionLength
-  poFilesRoot
+  cfg
   = NT (runSR . unApp)
     where
       runSR
@@ -65,7 +59,7 @@ runApp
       runSR m = do
         unDBRunner dbrunner $ \dbc -> do
           dbInit dbc
-          let r = (dbNat, AppContext dbc logger csrfSecret sessionLength poFilesRoot)
+          let r = (dbNat, AppContext dbc logger cfg)
               s = AppState Nothing UserLoggedOut
           x <- runReaderT (evalStateT m s) r
                `finally`

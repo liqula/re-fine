@@ -32,9 +32,7 @@ module Refine.Backend.App.Core (
   , AppContext(..)
   , appDBConnection
   , appLogger
-  , appCsrfSecret
-  , appSessionLength
-  , appPoFilesRoot
+  , appConfig
   , AppState(..)
   , appCsrfToken
   , appUserState
@@ -52,15 +50,16 @@ module Refine.Backend.App.Core (
 import Refine.Backend.Prelude
 
 import           Control.Exception
-import           System.FilePath (FilePath)
 import qualified Web.Users.Types as Users
 import qualified Web.Users.Persistent as Users
 
+import {-# SOURCE #-} Refine.Backend.App.Smtp
+import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.Logger
 import Refine.Backend.Types
 import Refine.Common.Types as Types
-import Refine.Prelude (leftToError, Timespan)
+import Refine.Prelude (leftToError)
 import Refine.Prelude.TH (makeRefineType)
 
 
@@ -77,9 +76,7 @@ makeRefineType ''Users.CreateUserError
 data AppContext = AppContext
   { _appDBConnection  :: DBConnection
   , _appLogger        :: Logger
-  , _appCsrfSecret    :: CsrfSecret
-  , _appSessionLength :: Timespan
-  , _appPoFilesRoot   :: FilePath
+  , _appConfig        :: Config
   }
 
 data AppState = AppState
@@ -129,6 +126,7 @@ type MonadApp app =
   , MonadState AppState app
   , MonadAppDB app
   , MonadLog app
+  , MonadSmtp app
   )
 
 -- | Syntactic sugar for 'MonadApp'.

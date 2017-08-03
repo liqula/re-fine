@@ -25,10 +25,10 @@
 {-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Backend.App.Smtp
-  ( IsEmailRecipient(recipientToAddresses)
+  ( MonadSmtp(sendMailTo)
+  , IsEmailRecipient(recipientToAddresses)
   , IsEmailMessage(renderEmail)
   , EmailMessage(..)
-  , sendMailTo
   , checkSendMail
   ) where
 
@@ -44,6 +44,9 @@ import           Refine.Common.Types
 
 
 -- * types and classes
+
+class MonadSmtp app where
+  sendMailTo :: (IsEmailMessage msg, Show msg) => msg -> app ()
 
 class IsEmailRecipient r where
   recipientToAddresses :: r -> [Address]
@@ -87,10 +90,12 @@ instance IsEmailRecipient r => IsEmailMessage (EmailMessage r) where
 
 -- * message sending
 
-sendMailTo :: (MonadError AppError m, MonadReaderConfig (Maybe SmtpCfg) m, MonadIO m, IsEmailMessage msg, Show msg, m ~ AppM db)
-           => msg -> m ()
-sendMailTo msg = do
-  mcfg <- viewConfig
+instance MonadSmtp (AppM db) where
+  sendMailTo = sendMailToAppM
+
+sendMailToAppM :: (IsEmailMessage msg, Show msg, m ~ AppM db) => msg -> m ()
+sendMailToAppM msg = do
+  mcfg <- asks . view $ appConfig . cfgSmtp
   case mcfg of
     Nothing -> pure ()
     Just (cfg :: SmtpCfg) -> do
@@ -111,10 +116,9 @@ sendMailTo msg = do
 
 -- | Run sendMail to check that we can send emails. Throw an error if sendmail
 -- is not available or doesn't work.
-checkSendMail :: (MonadError AppError m, MonadReaderConfig Config m, MonadReaderConfig (Maybe SmtpCfg) m, MonadIO m, m ~ AppM db)
-              => m ()
+checkSendMail :: AppM db ()
 checkSendMail = do
-  cfg <- viewConfig
+  cfg <- asks . view $ appConfig
   case cfg ^. cfgSmtp of
     Nothing -> do
       appLog "smtp: off."
