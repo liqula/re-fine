@@ -109,9 +109,7 @@ getCompositeVDoc' vdoc editid = do
   where
     toMap selector = Map.fromList . fmap (view selector &&& id)
 
-updateEdit
-  :: (MonadApp db)   -- FIXME
-  => ID Edit -> CreateEdit -> AppM db Edit
+updateEdit :: ID Edit -> CreateEdit -> App Edit
 updateEdit eid edit = do
   appLog "updateEdit"
   -- assertPerms eid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/358
@@ -130,9 +128,7 @@ updateEdit eid edit = do
     DB.updateEditSource eid $ \_ e -> e <> dff
     DB.getEdit eid
 
-addEdit
-  :: (MonadApp db)
-  => ID Edit -> CreateEdit -> AppM db Edit
+addEdit :: ID Edit -> CreateEdit -> App Edit
 addEdit baseeid edit = do
   appLog "addEdit"
   -- assertPerms baseeid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/358
@@ -152,7 +148,7 @@ addEdit baseeid edit = do
                 (deleteMarksFromRawContent $ edit ^. createEditVDocVersion)
     DB.createEdit rid (EditSource [(dff, baseeid)]) edit
 
-addMerge :: (MonadApp db) => ID Edit -> ID Edit -> ID Edit -> AppM db Edit
+addMerge :: ID Edit -> ID Edit -> ID Edit -> App Edit
 addMerge base eid1 eid2 = do
   appLog $ "merge " <> show eid1 <> " with " <> show eid2 <> " based on " <> show base
   (either throwError pure =<<) . db $ do
@@ -172,7 +168,7 @@ addMerge base eid1 eid2 = do
             $ CreateEdit (edit2 ^. editDesc) newdoc (edit2 ^. editKind)
         res -> pure . Left $ AppMergeError base eid1 eid2 (cs $ show res)
 
-rebaseHeadToEdit :: (MonadApp db) => ID Edit -> AppM db ()
+rebaseHeadToEdit :: ID Edit -> App ()
 rebaseHeadToEdit eid = do
   appLog $ "rebase to " <> show eid
   (hid, ch) <- db $ do
@@ -201,29 +197,29 @@ rebaseHeadToEdit eid = do
 validateCreateChunkRange :: ID Edit -> Range Position -> App ()
 validateCreateChunkRange _ _ = pure ()  -- throwError AppVDocVersionError
 
-withCurrentUser :: (MonadApp db) => (ID User -> AppM db ()) -> AppM db ()
+withCurrentUser :: MonadApp app => (ID User -> app ()) -> app ()
 withCurrentUser f = do
   mu <- currentUser
   case mu of
     Just u -> f u
     Nothing -> throwError AppUnauthorized
 
-putSimpleVoteOnEdit :: (MonadApp db) => ID Edit -> Vote -> AppM db ()
+putSimpleVoteOnEdit :: ID Edit -> Vote -> App ()
 putSimpleVoteOnEdit eid v = withCurrentUser $ \user -> changeSimpleVoteOnEdit eid $ Map.insert user v
 
-deleteSimpleVoteOnEdit :: (MonadApp db) => ID Edit -> AppM db ()
+deleteSimpleVoteOnEdit :: ID Edit -> App ()
 deleteSimpleVoteOnEdit eid = withCurrentUser $ changeSimpleVoteOnEdit eid . Map.delete
 
 atLeastOneUpvote :: VoteCount -> Bool
 atLeastOneUpvote vc = fromMaybe 0 (Map.lookup Yeay vc) >= 1
 
-rebasePossible :: (Monad db, DB.Database db) => ID Edit -> db Bool
+rebasePossible :: DB.Database db => ID Edit -> db Bool
 rebasePossible eid = do
   vd <- (^. vdocHeadEdit) <$> (DB.vdocOfEdit eid >>= DB.getVDoc)
   ed <- DB.getEdit eid
   pure $ vd `elem` (snd <$> (ed ^. editSource . unEditSource))
 
-changeSimpleVoteOnEdit :: (MonadApp db) => ID Edit -> (Votes -> Votes) -> AppM db ()
+changeSimpleVoteOnEdit :: ID Edit -> (Votes -> Votes) -> App ()
 changeSimpleVoteOnEdit eid f = do
   mkrebase <- db $ do
     DB.updateVotes eid f
@@ -231,5 +227,5 @@ changeSimpleVoteOnEdit eid f = do
     if atLeastOneUpvote vs then rebasePossible eid else pure False
   when mkrebase $ rebaseHeadToEdit eid
 
-getSimpleVotesOnEdit :: (MonadApp db) => ID Edit -> AppM db VoteCount
+getSimpleVotesOnEdit :: ID Edit -> App VoteCount
 getSimpleVotesOnEdit eid = db $ DB.getVoteCount eid

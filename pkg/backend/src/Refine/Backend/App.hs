@@ -60,12 +60,12 @@ runApp
   = NT (runSR . unApp)
     where
       runSR
-        :: StateT AppState (ReaderT (AppContext db) (ExceptT AppError IO)) x
+        :: StateT AppState (ReaderT (MkDBNat db, AppContext) (ExceptT AppError IO)) x
         -> ExceptT AppError IO x
       runSR m = do
         unDBRunner dbrunner $ \dbc -> do
           dbInit dbc
-          let r = AppContext dbNat dbc logger csrfSecret sessionLength poFilesRoot
+          let r = (dbNat, AppContext dbc logger csrfSecret sessionLength poFilesRoot)
               s = AppState Nothing UserLoggedOut
           x <- runReaderT (evalStateT m s) r
                `finally`

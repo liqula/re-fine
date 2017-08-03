@@ -30,7 +30,6 @@ module Refine.Backend.App.Core (
   , DBRunner(..)
   , DBConnection(..)
   , AppContext(..)
-  , appMkDBNat
   , appDBConnection
   , appLogger
   , appCsrfSecret
@@ -41,14 +40,13 @@ module Refine.Backend.App.Core (
   , appUserState
   , AppUserState(..)
   , App
+  , AppIO
   , AppM(..)
   , AppError(..)
   , SmtpError(..)
   , MonadApp
-  , appIO
-  , db
-  , dbUsersCmd
-  , appLog
+  , MonadAppDB(dbWithFilters), db, dbUsersCmd
+  , MonadLog(appLog)
   ) where
 
 import Refine.Backend.Prelude
@@ -76,9 +74,8 @@ deriving instance Generic Users.CreateUserError
 makeRefineType ''Users.CreateUserError
 
 
-data AppContext db = AppContext
-  { _appMkDBNat       :: MkDBNat db
-  , _appDBConnection  :: DBConnection
+data AppContext = AppContext
+  { _appDBConnection  :: DBConnection
   , _appLogger        :: Logger
   , _appCsrfSecret    :: CsrfSecret
   , _appSessionLength :: Timespan
@@ -106,26 +103,40 @@ makeLenses ''AppState
 -- * user authentication (login)
 -- * user authorization (groups)
 -- * use one db connection in one run, commit the result at the end.
-newtype AppM db a = AppM { unApp :: StateT AppState (ReaderT (AppContext db) (ExceptT AppError IO)) a }
+newtype AppM db a = AppM { unApp :: StateT AppState (ReaderT (MkDBNat db, AppContext) (ExceptT AppError IO)) a }
   deriving
     ( Functor
     , Applicative
     , Monad
-    , MonadReader (AppContext db)
     , MonadError AppError
     , MonadState AppState
+    , MonadIO
     )
 
-type MonadApp db =
-  ( MonadDatabase db
-  , Functor db
-  , Applicative db
+instance MonadReader AppContext (AppM db) where
+  ask = AppM . lift . asks $ view _2
+  local _ _ = error "local modification of reader state not supported for AppM."
+
+-- | Final constraint set that all application combinators are allowed to use.  Note that even
+-- though 'AppM' *does* derive 'MonadIO' or 'MonadBaseControl', we don't expose that here.  If you
+-- write a combinator that need 'IO' exposed, you need to add it to its type explicitly.
+type MonadApp app =
+  ( Functor app
+  , Applicative app
+  , Monad app
+  , MonadReader AppContext app
+  , MonadError AppError app
+  , MonadState AppState app
+  , MonadAppDB app
+  , MonadLog app
   )
 
--- | The 'App' defines the final constraint set that the
--- App API should use. Scraps the boilerplate for the
--- Refine.Backend.App.* modules.
-type App a = forall db . MonadApp db => AppM db a
+-- | Syntactic sugar for 'MonadApp'.
+type App a = forall app. MonadApp app => app a
+
+-- | Syntactic sugar for 'MonadApp', 'MonadIO'.
+type AppIO a = forall app. (MonadApp app, MonadIO app) => app a
+
 
 -- | FUTUREWORK: use prismatic errors like in <https://github.com/liqd/aula>.  (it will require some
 -- shuffling of code to avoid cyclical module imports, but it will separate the different effects
@@ -152,16 +163,19 @@ newtype SmtpError
   = SmtpError IOException
   deriving (Show, Generic)
 
-deriveClasses [([''AppError, ''SmtpError], [''Lens'])]
 
-appIO :: IO a -> AppM db a
-appIO = AppM . liftIO
+-- * database
 
-dbWithFilters :: XFilters -> db a -> AppM db a
-dbWithFilters fltrs m = AppM $ do
+class Database (AppDB app) => MonadAppDB app where
+  type family AppDB app :: * -> *
+  dbWithFilters :: XFilters -> (AppDB app) a -> app a
+
+instance Database db => MonadAppDB (AppM db) where
+ type AppDB (AppM db) = db
+ dbWithFilters fltrs m = AppM $ do  -- TODO: indentation
   mu      <- user <$> gets (view appUserState)
-  mkNatDB <- view appMkDBNat
-  conn    <- view appDBConnection
+  mkNatDB <- view _1
+  conn    <- view (_2 . appDBConnection)
   let (NT dbNat) = mkNatDB conn (DBContext mu fltrs)
   r   <- liftIO (try $ runExceptT (dbNat m))
   r'  <- leftToError (AppDBError . DBUnknownError . show @SomeException) r  -- catch (unexpected?) IO errors
@@ -171,13 +185,24 @@ dbWithFilters fltrs m = AppM $ do
       UserLoggedOut     -> Nothing
       UserLoggedIn u _s -> Just u
 
-db :: db a -> AppM db a
+db :: (MonadAppDB app) => (AppDB app) a -> app a
 db = dbWithFilters mempty
 
-dbUsersCmd :: Database db => (Users.Persistent -> IO a) -> AppM db a
+dbUsersCmd :: (Users.Persistent -> IO a) -> (MonadAppDB app) => app a
 dbUsersCmd = db . runUsersCmd
 
-appLog :: String -> AppM db ()
-appLog msg = AppM $ do
-  logger <- view appLogger
-  liftIO $ unLogger logger msg
+
+-- * logging
+
+class MonadLog app where
+  appLog :: String -> app ()
+
+instance MonadLog (AppM db) where
+  appLog msg = AppM $ do
+    logger <- view (_2 . appLogger)
+    liftIO $ unLogger logger msg
+
+
+-- * lens/TH
+
+deriveClasses [([''AppError, ''SmtpError], [''Lens'])]

@@ -81,7 +81,7 @@ data Backend db = Backend
   , backendRunApp :: AppM db P.:~> ExceptT AppError IO
   }
 
-refineApi :: MonadApp db => ServerT RefineAPI (AppM db)
+refineApi :: (Database db) => ServerT RefineAPI (AppM db)
 refineApi =
        App.getCompositeVDocOnHead
   :<|> App.createVDocGetComposite
@@ -139,9 +139,7 @@ mkBackend cfg migrate = do
   pure backend
 
 
-mkServerApp
-    :: MonadApp db
-    => Config -> MkDBNat db -> DBRunner -> IO (Backend db)
+mkServerApp :: Database db => Config -> MkDBNat db -> DBRunner -> IO (Backend db)
 mkServerApp cfg dbNat dbRunner = do
   poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
@@ -159,7 +157,7 @@ mkServerApp cfg dbNat dbRunner = do
               (Proxy :: Proxy RefineAPI)
               (Proxy :: Proxy AppState)
               cookie
-              (Nat appIO)
+              (Nat liftIO)
               (toServantError . cnToSn app)
               refineApi
               (Just (P.serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
@@ -246,7 +244,7 @@ userCreationError = \case
 -- * Instances for Servant.Cookie.Session
 
 instance SCS.MonadRandom (AppM db) where
-  getRandomBytes = appIO . SCS.getRandomBytes
+  getRandomBytes = liftIO . SCS.getRandomBytes
 
 instance SCS.ThrowError500 AppError where
   error500 = prism' toAppError fromAppError
@@ -265,7 +263,7 @@ instance SCS.HasSessionCsrfToken AppState where
       toSCS   = SCS.CsrfToken . cs . _csrfToken
       csrfTokenIso = iso (fmap toSCS) (fmap fromSCS)
 
-instance SCS.GetCsrfSecret (AppContext db) where
+instance SCS.GetCsrfSecret AppContext where
   csrfSecret = appCsrfSecret . Refine.Backend.Types.csrfSecret . to (Just . SCS.CsrfSecret . cs)
 
 instance SCS.GetSessionToken AppState where

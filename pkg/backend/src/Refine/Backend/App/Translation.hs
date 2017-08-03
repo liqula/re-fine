@@ -50,11 +50,11 @@ import Refine.Common.Types.Translation
 -- FUTUREWORK: Bake the PO files into the server binary using 'readFile' from within
 -- TemplateHaskell.  This is easier on the server load, but more importantly eliminates the
 -- 'AppL10ParseErrors' constructor because those are all compile-time errors.
-getTranslations :: GetTranslations -> App L10
+getTranslations :: GetTranslations -> AppIO L10
 getTranslations (GetTranslations locale) = do
   appLog "getTranslations"
   poFileRoot <- asks (view appPoFilesRoot)
-  join . appIO $ do
+  join . liftIO $ do
     (l10, parseErrors) <- getL10n poFileRoot
     pure $ do
       unless (null parseErrors) $ do

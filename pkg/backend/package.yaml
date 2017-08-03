@@ -29,6 +29,7 @@ dependencies:
   - filepath
   - free
   - functor-infix
+  - generics-sop
   - graphviz
   - hspec
   - i18n
