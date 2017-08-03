@@ -55,7 +55,7 @@ discussion = mkView "Discussion" $ \props -> do
   aboutText_ ( props ^. discPropsAboutText
              , ContribIDDiscussion $ props ^. discPropsDiscussion . discussionMetaID . miID
              )
-  statementForest_ (0, [props ^. discPropsDiscussion . discussionTree], props ^. discPropsEditor)
+  statementForest_ 0 (0, [props ^. discPropsDiscussion . discussionTree], props ^. discPropsEditor)
 
 discussion_ :: HasCallStack => DiscussionProps -> ReactElementM eventHandler ()
 discussion_ = view_ discussion "discussion_"
@@ -75,14 +75,14 @@ aboutText_ = view_ aboutText "aboutText_"
 type StatementForestProps = (Int, Tree.Forest Statement, Maybe StatementEditorProps)
 
 statementForest :: HasCallStack => View '[StatementForestProps]
-statementForest = mkView "statementForest" $ \(depth, frst, seditor) -> do
-  forM_ frst $ \(Tree.Node stmnt chldrn) -> do
-    statement_ (depth, stmnt, seditor)
+statementForest = mkView "StatementForest" $ \(depth, frst, seditor) -> do
+  forM_ (zip [0..] frst) $ \(i', Tree.Node stmnt chldrn) -> do
+    statement_ i' (depth, stmnt, seditor)
     br_ []
-    statementForest_ (depth + 1, chldrn, seditor)
+    statementForest_ i' (depth + 1, chldrn, seditor)
 
-statementForest_ :: HasCallStack => StatementForestProps -> ReactElementM eventHandler ()
-statementForest_ = view_ statementForest "statementForest_"
+statementForest_ :: HasCallStack => Int -> StatementForestProps -> ReactElementM eventHandler ()
+statementForest_ i = view_ statementForest $ "statementForest-" <> cs (show i)
 
 statementEditor :: Int -> StatementEditorProps -> View '[]
 statementEditor depth (sid, r) = mkPersistentStatefulView "statementEditor" r $ \txt -> do
@@ -129,5 +129,5 @@ statement = mkView "statement" $ \(depth, stmnt, meditor) -> do
       UserIP ip -> cs ip
       Anonymous -> "anonymous"
 
-statement_ :: HasCallStack => StatementProps -> ReactElementM eventHandler ()
-statement_ = view_ statement "statement_"
+statement_ :: HasCallStack => Int -> StatementProps -> ReactElementM eventHandler ()
+statement_ i = view_ statement $ "statement-" <> cs (show i)
