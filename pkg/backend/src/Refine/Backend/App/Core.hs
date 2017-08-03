@@ -171,19 +171,19 @@ class Database (AppDB app) => MonadAppDB app where
   dbWithFilters :: XFilters -> (AppDB app) a -> app a
 
 instance Database db => MonadAppDB (AppM db) where
- type AppDB (AppM db) = db
- dbWithFilters fltrs m = AppM $ do  -- TODO: indentation
-  mu      <- user <$> gets (view appUserState)
-  mkNatDB <- view _1
-  conn    <- view (_2 . appDBConnection)
-  let (NT dbNat) = mkNatDB conn (DBContext mu fltrs)
-  r   <- liftIO (try $ runExceptT (dbNat m))
-  r'  <- leftToError (AppDBError . DBUnknownError . show @SomeException) r  -- catch (unexpected?) IO errors
-  leftToError AppDBError r'  -- catch (expected) errors we throw ourselves
-  where
-    user = \case
-      UserLoggedOut     -> Nothing
-      UserLoggedIn u _s -> Just u
+  type AppDB (AppM db) = db
+  dbWithFilters fltrs m = AppM $ do
+    mu      <- user <$> gets (view appUserState)
+    mkNatDB <- view _1
+    conn    <- view (_2 . appDBConnection)
+    let (NT dbNat) = mkNatDB conn (DBContext mu fltrs)
+    r   <- liftIO (try $ runExceptT (dbNat m))
+    r'  <- leftToError (AppDBError . DBUnknownError . show @SomeException) r  -- catch (unexpected?) IO errors
+    leftToError AppDBError r'  -- catch (expected) errors we throw ourselves
+    where
+      user = \case
+        UserLoggedOut     -> Nothing
+        UserLoggedIn u _s -> Just u
 
 db :: (MonadAppDB app) => (AppDB app) a -> app a
 db = dbWithFilters mempty
