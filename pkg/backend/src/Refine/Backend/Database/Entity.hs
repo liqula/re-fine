@@ -389,10 +389,9 @@ getQuestion = getMetaEntity (S.questionElim . toQuestion)
 
 -- * Discussion
 
-saveStatement :: ID Discussion -> S.Statement -> DB Statement
-saveStatement did sstatement = do
+saveStatement :: S.Statement -> DB Statement
+saveStatement sstatement = do
   mid <- createMetaID sstatement
-  addConnection S.DS did (mid ^. miID)
   pure $ S.statementElim (toStatement mid) sstatement
 
 createDiscussion :: ID Edit -> CreateDiscussion -> DB Discussion
@@ -404,10 +403,10 @@ createDiscussion pid disc = do
           (fromUserID userId)
   mid <- createMetaID sdiscussion
   addConnection S.PD pid (mid ^. miID)
-  let sstatement = S.Statement
+  void . saveStatement $ S.Statement
           (disc ^. createDiscussionStatementText)
           Nothing -- Top level node
-  void $ saveStatement (mid ^. miID) sstatement
+          (S.idToKey $ mid ^. miID)
   getDiscussion $ mid ^. miID
 
 rebaseDiscussion :: ID Edit -> ID Discussion -> (Range Position -> Range Position) -> DB Discussion
@@ -416,9 +415,13 @@ rebaseDiscussion eid did tr = do
   let sdiscussion = S.discussionElim (\pblc (RangePosition r) -> S.Discussion pblc (RangePosition $ tr r)) d
   mid <- createMetaID sdiscussion
   addConnection S.PD eid (mid ^. miID)
-  sts <- statementsOfDiscussion did
-  forM_ sts $ \sid -> addConnection S.DS (mid ^. miID) sid
   getDiscussion $ mid ^. miID
+
+statementsOfDiscussion :: ID Discussion -> DB [ID Statement]
+statementsOfDiscussion did = do
+  opts <- dbSelectOpts
+  liftDB $
+    (S.keyToId . entityKey) <$$> selectList [S.StatementDiscussion ==. S.idToKey did] opts
 
 getDiscussion :: ID Discussion -> DB Discussion
 getDiscussion did = do
@@ -429,17 +432,10 @@ getDiscussion did = do
   pure $ S.discussionElim (\pblc range _lid -> Discussion mid pblc (unRangePosition range) t) d
 
 
-statementsOfDiscussion :: ID Discussion -> DB [ID Statement]
-statementsOfDiscussion did = do
-  opts <- dbSelectOpts
-  liftDB $
-    foreignKeyField S.dSStatement <$$> selectList [S.DSDiscussion ==. S.idToKey did] opts
-
 discussionOfStatement :: ID Statement -> DB (ID Discussion)
 discussionOfStatement sid = do
-  opts <- dbSelectOpts
-  unique "discussionOfStatement" =<< liftDB
-    (foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] opts)
+  e <- getEntityRep sid
+  pure $ S.statementElim (\_ _ i -> S.keyToId i) e
 
 
 -- * Answer
@@ -469,18 +465,16 @@ answersOfQuestion qid = do
 
 -- * Statement
 
-toStatement :: MetaID Statement -> ST -> Maybe (Key S.Statement) -> Statement
-toStatement sid text parent = Statement sid text (S.keyToId <$> parent)
+toStatement :: MetaID Statement -> ST -> Maybe (Key S.Statement) -> Key S.Discussion -> Statement
+toStatement sid text parent _ = Statement sid text (S.keyToId <$> parent)
 
 createStatement :: ID Statement  -> CreateStatement -> DB Statement
 createStatement sid statement = do
-  opts <- dbSelectOpts
-  ds  <- liftDB $ foreignKeyField S.dSDiscussion <$$> selectList [S.DSStatement ==. S.idToKey sid] opts
-  did <- unique "createStatement" ds
-  let sstatement = S.Statement
+  did <- discussionOfStatement sid
+  saveStatement $ S.Statement
           (statement ^. createStatementText)
           (Just $ S.idToKey sid)
-  saveStatement did sstatement
+          (S.idToKey did)
 
 getStatement :: ID Statement -> DB Statement
 getStatement = getMetaEntity (S.statementElim . toStatement)

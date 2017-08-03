@@ -87,6 +87,7 @@ Discussion
 Statement
     text        Text
     parent      StatementId Maybe
+    discussion  DiscussionId
 
 -- Groups
 
@@ -124,11 +125,6 @@ PD
     edit       EditId
     discussion  DiscussionId
     UniPD edit discussion
-
-DS
-    discussion  DiscussionId
-    statement   StatementId
-    UniDS discussion statement    -- FIXME:  UniDS statement, or preferably remove DS table and add discussion field to Statement table
 
 PN
     edit       EditId
@@ -170,4 +166,3 @@ makeElim ''ParentChild
 makeElim ''PN
 makeElim ''PQ
 makeElim ''PD
-makeElim ''DS
