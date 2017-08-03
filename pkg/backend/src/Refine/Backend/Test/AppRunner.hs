@@ -59,6 +59,7 @@ createAppRunner = do
         , _cfgCsrfSecret    = "CSRF-SECRET"
         , _cfgSessionLength = TimespanSecs 30
         , _cfgPoFilesRoot   = poRoot
+        , _cfgSmtp          = Nothing
         }
 
   (dbRunner, dbNat) <- createDBNat cfg

@@ -198,6 +198,7 @@ toApiError = \case
   AppUnauthorized        -> ApiUnauthorized
   AppMergeError base e1 e2 s -> ApiMergeError $ cs (show (base, e1, e2)) <> ": " <> s
   AppRebaseError{}       -> ApiRebaseError
+  AppSmtpError{}         -> ApiSmtpError
 
 -- | so we don't have to export backend types to the frontend.
 createUserErrorToApiError :: Users.CreateUserError -> ApiErrorCreateUser
@@ -223,6 +224,7 @@ appServantErr = \case
   AppUnauthorized          -> err403
   AppMergeError{}          -> err500
   AppRebaseError{}         -> err500
+  AppSmtpError{}           -> err500
 
 dbServantErr :: DBError -> ServantErr
 dbServantErr = \case

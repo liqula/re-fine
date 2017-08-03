@@ -43,6 +43,7 @@ module Refine.Backend.App.Core (
   , App
   , AppM(..)
   , AppError(..)
+  , SmtpError(..)
   , MonadApp
   , appIO
   , db
@@ -52,7 +53,8 @@ module Refine.Backend.App.Core (
 
 import Refine.Backend.Prelude
 
-import System.FilePath (FilePath)
+import           Control.Exception
+import           System.FilePath (FilePath)
 import qualified Web.Users.Types as Users
 import qualified Web.Users.Persistent as Users
 
@@ -125,6 +127,9 @@ type MonadApp db =
 -- Refine.Backend.App.* modules.
 type App a = forall db . MonadApp db => AppM db a
 
+-- | FUTUREWORK: use prismatic errors like in <https://github.com/liqd/aula>.  (it will require some
+-- shuffling of code to avoid cyclical module imports, but it will separate the different effects
+-- much better.)
 data AppError
   = AppUnknownError ST
   | AppVDocVersionError
@@ -140,9 +145,14 @@ data AppError
   | AppUnauthorized
   | AppMergeError (ID Edit) (ID Edit) (ID Edit) ST
   | AppRebaseError (ID Edit)
+  | AppSmtpError SmtpError
   deriving (Show, Generic)
 
-makeRefineType ''AppError
+newtype SmtpError
+  = SmtpError IOException
+  deriving (Show, Generic)
+
+deriveClasses [([''AppError, ''SmtpError], [''Lens'])]
 
 appIO :: IO a -> AppM db a
 appIO = AppM . liftIO
