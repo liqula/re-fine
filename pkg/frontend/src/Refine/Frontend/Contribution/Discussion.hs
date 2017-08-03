@@ -88,7 +88,7 @@ statementEditor :: Int -> StatementEditorProps -> View '[]
 statementEditor depth (sid, r) = mkPersistentStatefulView "statementEditor" r $ \txt -> do
     elemString $ "depth " <> show depth <> " statement reply"
     br_ []
-    contributionDialogTextForm createStatementText txt 1 "reply text:"
+    contributionDialogTextFormInner 400 20 createStatementText txt
     br_ []
     ibutton_
       $ emptyIbuttonProps "Reply"
@@ -101,7 +101,7 @@ statementEditor depth (sid, r) = mkPersistentStatefulView "statementEditor" r $ 
 type StatementProps = (Int, Statement, Maybe StatementEditorProps, Map (ID User) Username)
 
 statement :: HasCallStack => View '[StatementProps]
-statement = mkView "statement" $ \(depth, stmnt, meditor, names) -> do
+statement = mkView "statement" $ \(depth, stmnt, meditor, names) -> div_ $ do
   elemString $ "depth " <> show depth <> " statement"
   br_ []
   elemText $ stmnt ^. statementText

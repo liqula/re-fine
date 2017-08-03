@@ -132,14 +132,18 @@ contributionDialogTextForm stateLens st' stepNumber promptText = do
       span_ ["className" $= "bold"] $ do
         elemText promptText
 
+  contributionDialogTextFormInner 600 240 stateLens st'
+
+contributionDialogTextFormInner :: HasCallStack => Int -> Int -> Lens' st ST -> st -> ReactElementM ('StatefulEventHandlerCode st) ()
+contributionDialogTextFormInner width height stateLens st' = do
   form_ [ "target" $= "#"
         , "action" $= "POST"] $ do
     textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
               , "className" $= "o-form-input__textarea"
               , "style" @@=
                       [ decl "resize" (Ident "none")
-                      , decl "width" (Px 600)
-                      , decl "height" (Px 240)
+                      , decl "width" (Px width)
+                      , decl "height" (Px height)
                       ]
               -- Update the current state with the current text in the textbox, sending no actions
               , onChange $ \evt -> simpleHandler $ \st -> ([], Just $ st & stateLens .~ target evt "value")
