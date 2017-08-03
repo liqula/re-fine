@@ -104,7 +104,8 @@ sendMailToAppM :: (IsEmailMessage msg, Show msg, m ~ AppM db) => msg -> m ()
 sendMailToAppM msg = do
   mcfg <- asks . view $ appConfig . cfgSmtp
   case mcfg of
-    Nothing -> pure ()
+    Nothing -> do
+      appLog $ "sendMailTo: no config, email dropped: " <> show msg
     Just (cfg :: SmtpCfg) -> do
       appLog $ "sendMailTo: " <> show (cfg, msg)
       msglbs :: LBS <- liftIO . getStdRandom $ renderEmail cfg msg

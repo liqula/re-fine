@@ -136,7 +136,9 @@ readTestLogfile = readFile testLogfilePath
 -- | Create session via 'mkProdBackend' (using 'UH').
 createTestSession :: (TestBackend -> IO ()) -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
-  let cfg = def & cfgLogger .~ LogCfgFile testLogfilePath
+  let cfg = def
+        & cfgLogger .~ LogCfgFile testLogfilePath
+        & cfgSmtp .~ Nothing
   void $ action =<< (TestBackend <$> mkProdBackend cfg <*> newMVar Wai.initState)
 
 createTestSessionWith :: (TestBackend -> IO ()) -> (TestBackend -> IO ()) -> IO ()
@@ -645,7 +647,7 @@ specSmtp = describe "smtp" . around (createTestSessionWith addTestUserAndLogin) 
     logs `shouldContain` "sendMailTo:"
     logs `shouldContain` cs emailSubject
     logs `shouldContain` cs emailBody
-    logs `shouldContain` ("sendMailTo: " <> show (def :: SmtpCfg, msg))  -- this is quite specific, but oh well.
+    logs `shouldContain` show msg
 
   -- this is pretty close to an acceptance test: given one user on the system, create a doc and
   -- two edits.  upvote one edit, which triggers a merge.  then check that we get an email about
