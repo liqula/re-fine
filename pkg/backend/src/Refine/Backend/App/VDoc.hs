@@ -34,12 +34,15 @@ import           Control.Arrow ((&&&))
 import           Control.Lens ((^.), (^?), view, has)
 import           Control.Monad ((<=<), mapM)
 import qualified Data.Map as Map
+import           Data.Maybe (catMaybes, mapMaybe)
 import qualified Data.Set as Set
-import           Data.Maybe (catMaybes)
+import qualified Web.Users.Types as Users
 
 import           Refine.Backend.App.Core
+import           Refine.Backend.App.Smtp
 import           Refine.Backend.App.User (currentUser)
 import qualified Refine.Backend.Database.Class as DB
+import           Refine.Backend.Database.Entity (fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Core (OTDoc)
 import qualified Refine.Common.OT as OT
@@ -168,6 +171,9 @@ addMerge base eid1 eid2 = do
             $ CreateEdit (edit2 ^. editDesc) newdoc (edit2 ^. editKind)
         res -> pure . Left $ AppMergeError base eid1 eid2 (cs $ show res)
 
+-- | Move HEAD marker (which is our name for the latest release) to a given edit.  All contributions
+-- based on the old HEAD are rebased to the new HEAD.  All authors of rebased contributions are
+-- notified by email.
 rebaseHeadToEdit :: ID Edit -> App ()
 rebaseHeadToEdit eid = do
   appLog $ "rebase to " <> show eid
@@ -178,19 +184,45 @@ rebaseHeadToEdit eid = do
     DB.moveVDocHead rid eid
     (,) hid <$> DB.getEditChildren hid
   when (eid `notElem` ch) . throwError $ AppRebaseError eid
-  forM_ (filter (/= eid) ch) $ addMerge hid eid
-  db $ do
+
+  -- move edits
+  movedEditOwners :: [MetaInfo]
+    <- view (editMetaID . miMeta)
+       <$$> forM (filter (/= eid) ch) (addMerge hid eid)
+
+  movedCommentOwners :: [MetaInfo] <- db $ do
     edit <- DB.getEdit eid
     base <- DB.getEdit hid
     let diff = head [di | (di, d) <- edit ^. editSource . unEditSource, d == hid]
         trRange = transformRangeOTDoc
                   (concat (coerce diff :: [OT.Edit OTDoc]))
                   (rawContentToDoc $ base ^. editVDocVersion)
-    forM_ (Set.toList $ base ^. editNotes') $ \nid -> do
-      n <- DB.getNote nid
-      DB.createNote eid . CreateNote (n ^. noteText) (n ^. notePublic) . trRange $ n ^. noteRange
 
-    forM_ (Set.toList $ base ^. editDiscussions') $ \did -> DB.rebaseDiscussion eid did trRange
+    -- move notes
+    movedNotes :: [Note]
+      <- forM (Set.toList $ base ^. editNotes') $ \nid -> do
+        n <- DB.getNote nid
+        DB.createNote eid . CreateNote (n ^. noteText) (n ^. notePublic) . trRange $ n ^. noteRange
+
+    -- move discussions
+    movedDiscussions :: [Discussion]
+       <- forM (Set.toList $ base ^. editDiscussions') $ \did -> DB.rebaseDiscussion eid did trRange
+
+    pure $ (view (noteMetaID . miMeta) <$> movedNotes)
+        <> (view (discussionMetaID . miMeta) <$> movedDiscussions)
+
+  notifyContributionAuthorsOfMovement $ movedEditOwners <> movedCommentOwners
+
+notifyContributionAuthorsOfMovement :: [MetaInfo] -> App ()
+notifyContributionAuthorsOfMovement mis = forM_ uids $ \uid -> do
+  Just (u :: Users.User) <- dbUsersCmd (`Users.getUserById` fromUserID uid)
+  sendMailTo $ EmailMessage u
+    "your stuff has changed."
+    "some of the things you did on the refine platform have been rebased due to other changes in the same document(s)."
+  where
+    getuid (UserID uid) = Just uid
+    getuid _ = Nothing
+    uids = nub . mapMaybe getuid $ (view metaCreatedBy <$> mis) <> (view metaChangedBy <$> mis)
 
 -- | Throw an error if chunk range does not fit 'RawContent' identified by edit.
 -- FIXME: for RawContent this still needs to be implemented.

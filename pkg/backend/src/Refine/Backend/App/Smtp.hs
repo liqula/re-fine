@@ -37,6 +37,7 @@ import Refine.Backend.Prelude
 import qualified Data.ByteString as SBS
 import           Network.Mail.Mime (Address(Address), sendmailCustomCaptureOutput, simpleMail', renderMail)
 import           System.Random
+import qualified Web.Users.Types as Users
 
 import           Refine.Backend.Config
 import           Refine.Backend.App.Core
@@ -69,6 +70,9 @@ makeLenses ''EmailMessage
 
 instance IsEmailRecipient User where
   recipientToAddresses u = [Address (Just $ u ^. userName) (u ^. userEmail)]
+
+instance IsEmailRecipient Users.User where
+  recipientToAddresses u = [Address (Just $ Users.u_name u) (Users.u_email u)]
 
 instance IsEmailRecipient Address where
   recipientToAddresses = (:[])
