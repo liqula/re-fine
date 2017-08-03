@@ -114,7 +114,19 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDDiscus
                     _oldgs
                     _newgs
                     (DocumentStateView _ _)
-  = DocumentStateDiscussion did
+  = DocumentStateDiscussion (did, Nothing)
+
+documentStateUpdate (DocumentAction (ReplyStatement sid (FormOngoing lst)))
+                    _oldgs
+                    _newgs
+                    (DocumentStateDiscussion (did, Nothing))
+  = DocumentStateDiscussion (did, Just (sid, lst))
+
+documentStateUpdate (AddStatement _sid (AfterAjax discussion))
+                    _oldgs
+                    _newgs
+                    (DocumentStateDiscussion _)
+  = DocumentStateDiscussion (discussion ^. discussionID, Nothing)
 
 documentStateUpdate (ContributionAction HideContributionDialog)
                     _oldgs

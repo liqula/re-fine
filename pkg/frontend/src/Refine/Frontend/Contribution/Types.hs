@@ -89,7 +89,6 @@ data ContributionAction =
   | ToggleVoteOnContribution (ID Edit) Vote
   deriving (Show, Eq, Generic)
 
-
 data ContributionState = ContributionState
   { _csCurrentSelectionWithPx   :: Maybe SelectionStateWithPx
   , _csDisplayedContributionID  :: Maybe ContributionID
@@ -256,14 +255,17 @@ data AddContributionProps st = AddContributionProps
 data DiscussionProps = DiscussionProps
   { _discPropsDiscussion :: Discussion
   , _discPropsAboutText  :: RawContent  -- ^ the blocks overlapping the range of the discussion.
+  , _discPropsEditor     :: Maybe StatementEditorProps
 --  , _discussionMode      :: DiscussionMode  -- TODO
   }
   deriving (Eq, Show, Generic)
 
+type StatementEditorProps = (ID Statement, LocalStateRef CreateStatement)
+
 -- data DiscussionMode = DiscussionModeChrono | DiscussionModeTree
 --   deriving (Eq, Ord, Show, Bounded, Enum, Generic)
 
-discussionProps :: Discussion -> RawContent -> DiscussionProps
+discussionProps :: Discussion -> RawContent -> Maybe StatementEditorProps -> DiscussionProps
 discussionProps disc = DiscussionProps disc . cropToBlocks (disc ^. discussionRange)
 
 -- | Remove all blocks that do not overlap with a range.

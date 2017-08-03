@@ -37,6 +37,7 @@ import           Refine.Common.Types hiding (Style)
 import           React.Flux.Missing
 import qualified Refine.Frontend.Colors as C
 import           Refine.Frontend.Contribution.Types
+import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Icon
@@ -54,7 +55,7 @@ discussion = mkView "Discussion" $ \props -> do
   aboutText_ ( props ^. discPropsAboutText
              , ContribIDDiscussion $ props ^. discPropsDiscussion . discussionMetaID . miID
              )
-  statementForest_ (0, [props ^. discPropsDiscussion . discussionTree])
+  statementForest_ (0, [props ^. discPropsDiscussion . discussionTree], props ^. discPropsEditor)
 
 discussion_ :: HasCallStack => DiscussionProps -> ReactElementM eventHandler ()
 discussion_ = view_ discussion "discussion_"
@@ -71,17 +72,36 @@ aboutText = mkView "AboutText" $ \(rc, did) -> do
 aboutText_ :: HasCallStack => (RawContent, ContributionID) -> ReactElementM eventHandler ()
 aboutText_ = view_ aboutText "aboutText_"
 
-statementForest :: HasCallStack => View '[(Int, Tree.Forest Statement)]
-statementForest = mkView "statementForest" $ \(depth, frst) -> do
-  forM_ frst $ \(Tree.Node stmnt chldrn) -> do
-    statement_ (depth, stmnt)
-    statementForest_ (depth + 1, chldrn)
+type StatementForestProps = (Int, Tree.Forest Statement, Maybe StatementEditorProps)
 
-statementForest_ :: HasCallStack => (Int, Tree.Forest Statement) -> ReactElementM eventHandler ()
+statementForest :: HasCallStack => View '[StatementForestProps]
+statementForest = mkView "statementForest" $ \(depth, frst, seditor) -> do
+  forM_ frst $ \(Tree.Node stmnt chldrn) -> do
+    statement_ (depth, stmnt, seditor)
+    br_ []
+    statementForest_ (depth + 1, chldrn, seditor)
+
+statementForest_ :: HasCallStack => StatementForestProps -> ReactElementM eventHandler ()
 statementForest_ = view_ statementForest "statementForest_"
 
-statement :: HasCallStack => View '[(Int, Statement)]
-statement = mkView "statement" $ \(depth, stmnt) -> do
+statementEditor :: Int -> StatementEditorProps -> View '[]
+statementEditor depth (sid, r) = mkPersistentStatefulView "statementEditor" r $ \txt -> do
+    elemString $ "depth " <> show depth <> " statement reply"
+    br_ []
+    contributionDialogTextForm createStatementText txt 1 "reply text:"
+    br_ []
+    ibutton_
+      $ emptyIbuttonProps "Reply"
+          [ DocumentAction . ReplyStatement sid $ FormComplete txt
+          , AddStatement sid $ BeforeAjax txt
+          ]
+      & ibLabel .~ "Reply"
+      & ibSize .~ XXLarge
+
+type StatementProps = (Int, Statement, Maybe StatementEditorProps)
+
+statement :: HasCallStack => View '[StatementProps]
+statement = mkView "statement" $ \(depth, stmnt, meditor) -> do
   elemString $ "depth " <> show depth <> " statement"
   br_ []
   elemText $ stmnt ^. statementText
@@ -92,14 +112,22 @@ statement = mkView "statement" $ \(depth, stmnt) -> do
   br_ []
   elemString $ "modified at " <> show (stmnt ^. statementMetaID . miMeta . metaChangedAt)
   br_ []
-  ibutton_ $ emptyIbuttonProps "Reply" [ContributionAction HideContributionDialog]
-    & ibLabel .~ "Reply"
-    & ibSize .~ XXLarge
+  case meditor of
+    Just e | fst e == stmnt ^. statementID
+           -> view_ (statementEditor depth e) "statementEditor_"
+    _ -> ibutton_
+        $ emptyIbuttonProps "Reply"
+            [ LoginGuardStash
+              [ DocumentAction . ReplyStatement (stmnt ^. statementID) . FormOngoing
+              $ newLocalStateRef (CreateStatement "") stmnt]
+            ]
+        & ibLabel .~ "Reply"
+        & ibSize .~ XXLarge
   where
     showUser = \case
       UserID i -> show i   -- TODO
       UserIP ip -> cs ip
       Anonymous -> "anonymous"
 
-statement_ :: HasCallStack => (Int, Statement) -> ReactElementM eventHandler ()
+statement_ :: HasCallStack => StatementProps -> ReactElementM eventHandler ()
 statement_ = view_ statement "statement_"

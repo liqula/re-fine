@@ -47,6 +47,9 @@ updateVDoc = request cfg (Proxy :: Proxy SUpdateVDoc)
 addDiscussion :: HasCallStack => ID Edit -> CreateDiscussion -> HandleResponse Discussion -> IO ()
 addDiscussion = request cfg (Proxy :: Proxy SAddDiscussion)
 
+addStatement :: HasCallStack => ID Statement -> CreateStatement -> HandleResponse Discussion -> IO ()
+addStatement = request cfg (Proxy :: Proxy SAddStatement)
+
 addNote :: HasCallStack => ID Edit -> CreateNote -> HandleResponse Note -> IO ()
 addNote = request cfg (Proxy :: Proxy SAddNote)
 

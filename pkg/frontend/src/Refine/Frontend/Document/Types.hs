@@ -33,6 +33,7 @@ import           Language.Css.Syntax hiding (Value)
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
 import qualified Refine.Frontend.Colors as Color
+import           Refine.Frontend.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
@@ -52,6 +53,7 @@ data DocumentAction =
   | ToggleCollapseDiff
   | DocumentUndo
   | DocumentRedo
+  | ReplyStatement (ID Statement) (FormAction CreateStatement)
   deriving (Show, Eq, Generic)
 
 data DocumentState_ editable{-() or Bool-} rawcontent edit discussion =
@@ -88,7 +90,7 @@ mapDocumentState fa fb fc fd = \case
 type DocumentState = DocumentState_ Bool RawContent Edit DiscussionProps
 
 -- | The document state for 'GlobalState'.
-type GlobalDocumentState = DocumentState_ () () (ID Edit) (ID Discussion)
+type GlobalDocumentState = DocumentState_ () () (ID Edit) (ID Discussion, Maybe StatementEditorProps)
 
 data WipedDocumentState =
     WipedDocumentStateView
@@ -103,7 +105,7 @@ data WipedDocumentState =
   deriving (Show, Eq)
 
 globalDocumentState :: HasCallStack => DocumentState -> GlobalDocumentState
-globalDocumentState = mapDocumentState (const ()) (const ()) (^. editID) (^. discPropsDiscussion . discussionID)
+globalDocumentState = mapDocumentState (const ()) (const ()) (^. editID) (\d -> (d ^. discPropsDiscussion . discussionID, Nothing))
 
 mkDocumentStateView :: HasCallStack => RawContent -> GlobalDocumentState
 mkDocumentStateView = globalDocumentState . mkDocumentStateView_

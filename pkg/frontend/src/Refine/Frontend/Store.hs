@@ -158,10 +158,16 @@ transformGlobalState = transf
               & gsServerCache         %~ serverCacheUpdate act
 
 serverCacheUpdate :: GlobalAction -> ServerCache -> ServerCache
-serverCacheUpdate (LoadVDoc (AfterAjax vdoc)) c = c & scVDocs %~ M.insert (vdoc ^. C.vdocID) vdoc
-serverCacheUpdate (LoadCompositeVDoc (AfterAjax cvdoc)) c = serverCacheUpdate (LoadVDoc (AfterAjax (cvdoc ^. C.compositeVDoc))) c
-serverCacheUpdate (RefreshServerCache c') c = c' <> c
-serverCacheUpdate _ c = c
+serverCacheUpdate a c = case a of
+  LoadVDoc (AfterAjax vdoc)
+    -> c & scVDocs %~ M.insert (vdoc ^. C.vdocID) vdoc
+  LoadCompositeVDoc (AfterAjax cvdoc)
+    -> serverCacheUpdate (LoadVDoc (AfterAjax (cvdoc ^. C.compositeVDoc))) c
+  AddStatement _cid (AfterAjax discussion)
+    -> c & scDiscussions %~ M.insert (discussion ^. C.discussionID) discussion
+  RefreshServerCache c'
+    -> c' <> c
+  _ -> c
 
 consoleLogGlobalStateBefore :: HasCallStack => forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
 consoleLogGlobalStateBefore False _ _ = pure ()
@@ -284,6 +290,13 @@ emitBackendCallsFor act st = case act of
 
 
     -- contributions
+
+    AddStatement sid (BeforeAjax statement) -> do
+        addStatement sid statement $ \case
+            (Left rsp) -> ajaxFail rsp Nothing
+            (Right discussion) -> dispatchManyM
+                                   [ AddStatement sid $ AfterAjax discussion
+                                   ]
 
     ContributionAction (SubmitComment (CommentInfo text kind)) -> do
       let headEdit = fromMaybe (error "emitBackendCallsFor.SubmitComment")
