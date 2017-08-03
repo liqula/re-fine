@@ -114,18 +114,24 @@ sendMailToAppM msg = do
 
 -- * test mail system
 
--- | Run sendMail to check that we can send emails. Throw an error if sendmail
--- is not available or doesn't work.
-checkSendMail :: AppM db ()
-checkSendMail = do
-  cfg <- asks . view $ appConfig
+-- | Run sendMail to check that we can send emails. Throw an error if sendmail is not available,
+-- doesn't work, or makes unexpected noise on stdout, stderr.
+checkSendMail :: Config -> IO ()
+checkSendMail cfg = do
   case cfg ^. cfgSmtp of
     Nothing -> do
-      appLog "smtp: off."
+      -- log "smtp: off."
+      pure ()
     Just scfg -> do
-      appLog $ "smtp: " <> show scfg
-      sendMailTo EmailMessage
-        { _emailRecipient = Address Nothing (scfg ^. smtpDefaultRecipient)
-        , _emailSubject   = "[starting re-fine server]"
-        , _emailBody      = cs $ encode cfg
-        }
+      -- log $ "smtp: " <> show scfg
+      let msg = EmailMessage
+            { _emailRecipient = Address Nothing (scfg ^. smtpDefaultRecipient)
+            , _emailSubject   = "[starting re-fine server]"
+            , _emailBody      = cs $ explainConfig cfg "active server configuration" False
+            }
+      msglbs :: LBS <- liftIO . getStdRandom $ renderEmail scfg msg
+      result :: Either SomeException (SBS, SBS)
+        <- try $ sendmailCustomCaptureOutput (cs $ scfg ^. smtpSendmailPath) (cs <$> scfg ^. smtpSendmailArgs) msglbs
+      case result of
+        Right ("", "") -> pure ()
+        bad -> throwIO . ErrorCall $ "smtp failed: " <> show bad

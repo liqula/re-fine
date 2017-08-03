@@ -5,6 +5,7 @@ import Data.Monoid ((<>))
 import System.Environment (getArgs, getProgName)
 import System.IO (hSetBuffering, BufferMode(NoBuffering), stdout, stderr)
 
+import Refine.Backend.App.Smtp (checkSendMail)
 import Refine.Backend.Config
 import Refine.Backend.Server
 import Refine.Backend.App.MigrateDB (initializeDB)
@@ -30,6 +31,7 @@ startServer configPath = do
   hSetBuffering stdout NoBuffering
   hSetBuffering stderr NoBuffering
   cfg <- initConfig configPath
+  checkSendMail cfg
   startBackend cfg
 
 main :: IO ()
