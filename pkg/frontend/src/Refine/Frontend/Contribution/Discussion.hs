@@ -82,7 +82,7 @@ statementForest_ = view_ statementForest "statementForest_"
 
 statement :: HasCallStack => View '[(Int, Statement)]
 statement = mkView "statement" $ \(depth, stmnt) -> do
-  elemString $ "@depth " <> show depth
+  elemString $ "depth " <> show depth <> " statement"
   br_ []
   elemText $ stmnt ^. statementText
   br_ []
@@ -91,6 +91,10 @@ statement = mkView "statement" $ \(depth, stmnt) -> do
   elemString $ "created at " <> show (stmnt ^. statementMetaID . miMeta . metaCreatedAt)
   br_ []
   elemString $ "modified at " <> show (stmnt ^. statementMetaID . miMeta . metaChangedAt)
+  br_ []
+  ibutton_ $ emptyIbuttonProps "Reply" [ContributionAction HideContributionDialog]
+    & ibLabel .~ "Reply"
+    & ibSize .~ XXLarge
   where
     showUser = \case
       UserID i -> show i   -- TODO
