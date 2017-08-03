@@ -71,7 +71,7 @@ instance Default Config where
     , _cfgCsrfSecret    = "CSRF-SECRET"
     , _cfgSessionLength = TimespanHours 72
     , _cfgPoFilesRoot   = "./po"
-    , _cfgSmtp          = def
+    , _cfgSmtp          = Just def
     }
 
 instance Default DBKind where
@@ -80,7 +80,7 @@ instance Default DBKind where
 instance Default SmtpCfg where
   def = SmtpCfg
     { _smtpSenderName       = "Re-fine Notification System"
-    , _smtpSenderEmail      = "re-fine@example.com"
+    , _smtpSenderEmail      = "postmaster@localhost"
     , _smtpDefaultRecipient = "postmaster@localhost"
     , _smtpSendmailPath     = "/usr/sbin/sendmail"
     , _smtpSendmailArgs     = ["-t"]
