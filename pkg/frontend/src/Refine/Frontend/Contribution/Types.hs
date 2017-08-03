@@ -257,6 +257,7 @@ data DiscussionProps = DiscussionProps
   , _discPropsAboutText  :: RawContent  -- ^ the blocks overlapping the range of the discussion.
   , _discPropsEditor     :: Maybe StatementEditorProps
 --  , _discussionMode      :: DiscussionMode  -- TODO
+  , _discPropsUserNames  :: Map (ID User) Username -- FIXME: store user names in discussions
   }
   deriving (Eq, Show, Generic)
 
@@ -265,7 +266,7 @@ type StatementEditorProps = (ID Statement, LocalStateRef CreateStatement)
 -- data DiscussionMode = DiscussionModeChrono | DiscussionModeTree
 --   deriving (Eq, Ord, Show, Bounded, Enum, Generic)
 
-discussionProps :: Discussion -> RawContent -> Maybe StatementEditorProps -> DiscussionProps
+discussionProps :: Discussion -> RawContent -> Maybe StatementEditorProps -> Map (ID User) ST -> DiscussionProps
 discussionProps disc = DiscussionProps disc . cropToBlocks (disc ^. discussionRange)
 
 -- | Remove all blocks that do not overlap with a range.

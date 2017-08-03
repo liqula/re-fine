@@ -162,9 +162,12 @@ serverCacheUpdate a c = case a of
   LoadVDoc (AfterAjax vdoc)
     -> c & scVDocs %~ M.insert (vdoc ^. C.vdocID) vdoc
   LoadCompositeVDoc (AfterAjax cvdoc)
+    -- TODO: load user data for all user ids found in cvdoc
     -> serverCacheUpdate (LoadVDoc (AfterAjax (cvdoc ^. C.compositeVDoc))) c
   AddStatement _cid (AfterAjax discussion)
     -> c & scDiscussions %~ M.insert (discussion ^. C.discussionID) discussion
+  SetCurrentUser (UserLoggedIn user)
+    -> c & scUsers %~ M.insert (user ^. C.userID) user
   RefreshServerCache c'
     -> c' <> c
   _ -> c

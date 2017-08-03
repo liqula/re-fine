@@ -153,7 +153,9 @@ getDocumentState gs@(view gsVDoc -> Just cvdoc)
       (fromMaybe (error "edit is not in cache") . getEdit gs)
       (\(did, ed) -> discussionProps (fromMaybe (error "discussion is not in cache") $ getDiscussion gs did)
                                      (rawContentFromCompositeVDoc cvdoc)
-                                     ed)
+                                     ed
+                                     ((^. userName) <$> (gs ^. gsServerCache . scUsers))
+      )
       dst
   where
     dst = gs ^. gsDocumentState

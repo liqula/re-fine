@@ -55,7 +55,7 @@ discussion = mkView "Discussion" $ \props -> do
   aboutText_ ( props ^. discPropsAboutText
              , ContribIDDiscussion $ props ^. discPropsDiscussion . discussionMetaID . miID
              )
-  statementForest_ 0 (0, [props ^. discPropsDiscussion . discussionTree], props ^. discPropsEditor)
+  statementForest_ 0 (0, [props ^. discPropsDiscussion . discussionTree], props ^. discPropsEditor, props ^. discPropsUserNames)
 
 discussion_ :: HasCallStack => DiscussionProps -> ReactElementM eventHandler ()
 discussion_ = view_ discussion "discussion_"
@@ -72,14 +72,14 @@ aboutText = mkView "AboutText" $ \(rc, did) -> do
 aboutText_ :: HasCallStack => (RawContent, ContributionID) -> ReactElementM eventHandler ()
 aboutText_ = view_ aboutText "aboutText_"
 
-type StatementForestProps = (Int, Tree.Forest Statement, Maybe StatementEditorProps)
+type StatementForestProps = (Int, Tree.Forest Statement, Maybe StatementEditorProps, Map (ID User) Username)
 
 statementForest :: HasCallStack => View '[StatementForestProps]
-statementForest = mkView "StatementForest" $ \(depth, frst, seditor) -> do
+statementForest = mkView "StatementForest" $ \(depth, frst, seditor, names) -> do
   forM_ (zip [0..] frst) $ \(i', Tree.Node stmnt chldrn) -> do
-    statement_ i' (depth, stmnt, seditor)
+    statement_ i' (depth, stmnt, seditor, names)
     br_ []
-    statementForest_ i' (depth + 1, chldrn, seditor)
+    statementForest_ i' (depth + 1, chldrn, seditor, names)
 
 statementForest_ :: HasCallStack => Int -> StatementForestProps -> ReactElementM eventHandler ()
 statementForest_ i = view_ statementForest $ "statementForest-" <> cs (show i)
@@ -98,15 +98,15 @@ statementEditor depth (sid, r) = mkPersistentStatefulView "statementEditor" r $ 
       & ibLabel .~ "Reply"
       & ibSize .~ XXLarge
 
-type StatementProps = (Int, Statement, Maybe StatementEditorProps)
+type StatementProps = (Int, Statement, Maybe StatementEditorProps, Map (ID User) Username)
 
 statement :: HasCallStack => View '[StatementProps]
-statement = mkView "statement" $ \(depth, stmnt, meditor) -> do
+statement = mkView "statement" $ \(depth, stmnt, meditor, names) -> do
   elemString $ "depth " <> show depth <> " statement"
   br_ []
   elemText $ stmnt ^. statementText
   br_ []
-  elemString $ "by " <> showUser (stmnt ^. statementMetaID . miMeta . metaCreatedBy)
+  elemText $ "by " <> showUser names (stmnt ^. statementMetaID . miMeta . metaCreatedBy)
   br_ []
   elemString $ "created at " <> show (stmnt ^. statementMetaID . miMeta . metaCreatedAt)
   br_ []
@@ -124,9 +124,9 @@ statement = mkView "statement" $ \(depth, stmnt, meditor) -> do
         & ibLabel .~ "Reply"
         & ibSize .~ XXLarge
   where
-    showUser = \case
-      UserID i -> show i   -- TODO
-      UserIP ip -> cs ip
+    showUser names = \case
+      UserID i  -> fromMaybe (error "user is not in the cache") $ M.lookup i names
+      UserIP ip -> ip
       Anonymous -> "anonymous"
 
 statement_ :: HasCallStack => Int -> StatementProps -> ReactElementM eventHandler ()
