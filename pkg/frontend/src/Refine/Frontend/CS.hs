@@ -83,19 +83,19 @@ instance ConvertibleStrings LBS JSS.JSString where
   convertString = JSS.pack . ST.unpack . cs
 
 
-instance ConvertibleStrings String (ReactElementM_ handler ()) where
+instance (a ~ ()) => ConvertibleStrings String (ReactElementM_ handler a) where
   convertString = fromString
 
-instance ConvertibleStrings ST (ReactElementM_ handler ()) where
+instance (a ~ ()) => ConvertibleStrings ST (ReactElementM_ handler a) where
   convertString = fromString . cs
 
-instance ConvertibleStrings LT (ReactElementM_ handler ()) where
+instance (a ~ ()) => ConvertibleStrings LT (ReactElementM_ handler a) where
   convertString = fromString . cs
 
-instance ConvertibleStrings LBS (ReactElementM_ handler ()) where
+instance (a ~ ()) => ConvertibleStrings LBS (ReactElementM_ handler a) where
   convertString = fromString . cs
 
-instance ConvertibleStrings JSS.JSString (ReactElementM_ handler ()) where
+instance (a ~ ()) => ConvertibleStrings JSS.JSString (ReactElementM_ handler a) where
   convertString = fromString . cs
 
 
