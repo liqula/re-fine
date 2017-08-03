@@ -660,12 +660,12 @@ specSmtp = describe "smtp" . around (createTestSessionWith addTestUserAndLogin) 
         () <- trigger sess oldHead
 
         notyet <- readTestLogfile
-        notyet `shouldNotContain` cs testUserEmail
-        notyet `shouldNotContain` cs testUsername
+        notyet `shouldNotContain` "your stuff has changed."
 
         () <- runWai sess $ putJSON (putVoteUri (firstEdit ^. editID) Yeay) ()
 
-        butnow <- readTestLogfile
+        butnow <- drop (length notyet) <$> readTestLogfile
+        butnow `shouldContain` "your stuff has changed."
         butnow `shouldContain` cs testUserEmail
         butnow `shouldContain` cs testUsername
 

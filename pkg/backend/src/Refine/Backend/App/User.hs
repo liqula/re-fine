@@ -24,6 +24,7 @@
 
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
+-- | FIXME: is this module redundant to the users package?  should we make better use of the latter?
 module Refine.Backend.App.User where
 
 import Refine.Backend.Prelude
@@ -32,6 +33,7 @@ import qualified Web.Users.Types as Users
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.Session
+import Refine.Backend.App.Smtp
 import Refine.Backend.Config
 import Refine.Backend.Types
 import Refine.Backend.Database.Class (createMetaID_, getMetaID)
@@ -88,7 +90,9 @@ createUser (CreateUser name email password) = do
               }
   loginId <- leftToError AppUserCreationError
              =<< dbUsersCmd (`Users.createUser` user)
-  Common.User <$> db (createMetaID_ $ toUserID loginId) <*> pure name <*> pure email
+  result <- Common.User <$> db (createMetaID_ $ toUserID loginId) <*> pure name <*> pure email
+  sendMailTo $ EmailMessage result "you have a re-fine account now!" "congratulations (:"
+  pure result
 
 doesUserExist :: ID Common.User -> App Bool
 doesUserExist uid = do
