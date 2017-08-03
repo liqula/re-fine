@@ -82,6 +82,7 @@ library
       Refine.Frontend.Document.Store
       Refine.Frontend.Document.Types
       Refine.Frontend.Header.DiffToolbar
+      Refine.Frontend.Header.DiscussionToolbar
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.EditToolbar
       Refine.Frontend.Header.Heading

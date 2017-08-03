@@ -44,6 +44,7 @@ import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DocumentHeader
 import           Refine.Frontend.Header.DiffToolbar ( diffToolbar_ )
 import           Refine.Frontend.Header.EditToolbar ( editToolbar_, wipeDocumentState )
+import           Refine.Frontend.Header.DiscussionToolbar
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_, indexToolbarExtension_ )
 import           Refine.Frontend.Header.Types
@@ -148,7 +149,7 @@ mainHeaderRender () rs = do
               collapsed
               editable
             WipedDocumentStateEdit eprops -> editToolbar_ eprops
-            WipedDocumentStateDiscussion -> mempty -- TODO
+            WipedDocumentStateDiscussion did -> discussionToolbar_ did
           indexToolbarExtension_ $ mkIndexToolbarProps rs
           commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
           editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)

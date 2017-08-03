@@ -101,7 +101,7 @@ data WipedDocumentState =
       , _wipedDocumentStateDiffEditable  :: Bool
       }
   | WipedDocumentStateEdit EditToolbarProps
-  | WipedDocumentStateDiscussion
+  | WipedDocumentStateDiscussion (ID Discussion)
   deriving (Show, Eq)
 
 globalDocumentState :: HasCallStack => DocumentState -> GlobalDocumentState
