@@ -85,8 +85,8 @@ statementForest = mkView "StatementForest" $ \(depth, frst, details) -> do
 statementForest_ :: HasCallStack => Int -> StatementForestProps -> ReactElementM eventHandler ()
 statementForest_ i = view_ statementForest $ "statementForest-" <> cs (show i)
 
-statementEditor :: Int -> StatementEditorProps -> View '[]
-statementEditor _depth (StatementEditorProps sid r modif) = mkPersistentStatefulView "statementEditor" r $ \txt -> do
+statementEditor :: StatementEditorProps -> View '[]
+statementEditor (StatementEditorProps sid r modif) = mkPersistentStatefulView "statementEditor" r $ \txt -> do
     div_ ["style" @@= [ decl "border" (Ident "solid 1px black"),
                         decl "clear" (Ident "both")]] $
       contributionDialogTextFormInner 400 20 createStatementText txt
@@ -98,12 +98,14 @@ statementEditor _depth (StatementEditorProps sid r modif) = mkPersistentStateful
           ]
       & ibLabel .~ label
       & ibSize .~ Medium
+      & ibListKey .~ "0"
     ibutton_
       $ emptyIbuttonProps "Cancel"
           [ DocumentAction $ ReplyStatement modif sid FormCancelled
           ]
       & ibLabel .~ "Cancel"
       & ibSize .~ Medium
+      & ibListKey .~ "1"
   where
     label = if modif then "Edit" else "Reply"
 
@@ -114,44 +116,44 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
       createtime = stmnt ^. statementMetaID . miMeta . metaCreatedAt
       modtime = stmnt ^. statementMetaID . miMeta . metaChangedAt
 
-  div_ ["style" @@= [ decl "border" (Ident "solid 2px black"),
-                      decl "clear" (Ident "both")]] $ do
-    elemString $ "depth " <> show depth <> " statement"
+  div_ ["style" @@= [ decl "marginLeft" . Px $ 20 * depth ]] $ do
+
+    div_ ["style" @@= [ decl "border" (Ident "solid 2px black"),
+                        decl "clear" (Ident "both")]] $ do
+      case meditor of
+        Just e | e ^. sepStatementID == stmnt ^. statementID && e ^. sepUpdate
+               -> view_ (statementEditor e) "statementEditor_"
+        _ -> elemText $ stmnt ^. statementText
+      br_ []
+      div_ ["style" @@= [ decl "clear" (Ident "both") ]] .
+        elemText $ "by " <> showUser names (stmnt ^. statementMetaID . miMeta . metaCreatedBy)
+                <> " at " <> showTime createtime
+                <> if createtime == modtime then "" else ", last edited at " <> showTime modtime
     br_ []
     case meditor of
-      Just e | e ^. sepStatementID == stmnt ^. statementID && e ^. sepUpdate
-             -> view_ (statementEditor depth e) "statementEditor_"
-      _ -> elemText $ stmnt ^. statementText
-    br_ []
-    div_ ["style" @@= [ decl "clear" (Ident "both") ]] .
-      elemText $ "by " <> showUser names (stmnt ^. statementMetaID . miMeta . metaCreatedBy)
-              <> " at " <> showTime createtime
-              <> if createtime == modtime then "" else ", last edited at " <> showTime modtime
-  br_ []
-  case meditor of
-    Just e
-      | e ^. sepStatementID == stmnt ^. statementID
-           -> view_ (statementEditor depth e) "statementEditor_"
-      | otherwise -> mempty
-    _ -> do
-      when thisuser . ibutton_
-        $ emptyIbuttonProps "Edit"
-            [ LoginGuardStash
-              [ DocumentAction . ReplyStatement True (stmnt ^. statementID) . FormOngoing
-              $ newLocalStateRef (CreateStatement $ stmnt ^. statementText) stmnt]
-            ]
-        & ibLabel .~ "Edit"
-        & ibSize .~ Medium
-        & ibListKey .~ "0"
-      ibutton_
-        $ emptyIbuttonProps "Reply"
-            [ LoginGuardStash
-              [ DocumentAction . ReplyStatement False (stmnt ^. statementID) . FormOngoing
-              $ newLocalStateRef (CreateStatement "") stmnt]
-            ]
-        & ibLabel .~ "Reply"
-        & ibSize .~ Medium
-        & ibListKey .~ "1"
+      Just e
+        | e ^. sepStatementID == stmnt ^. statementID
+             -> view_ (statementEditor e) "statementEditor_"
+        | otherwise -> mempty
+      _ -> do
+        when thisuser . ibutton_
+          $ emptyIbuttonProps "Edit"
+              [ LoginGuardStash
+                [ DocumentAction . ReplyStatement True (stmnt ^. statementID) . FormOngoing
+                $ newLocalStateRef (CreateStatement $ stmnt ^. statementText) stmnt]
+              ]
+          & ibLabel .~ "Edit"
+          & ibSize .~ Medium
+          & ibListKey .~ "0"
+        ibutton_
+          $ emptyIbuttonProps "Reply"
+              [ LoginGuardStash
+                [ DocumentAction . ReplyStatement False (stmnt ^. statementID) . FormOngoing
+                $ newLocalStateRef (CreateStatement "") stmnt]
+              ]
+          & ibLabel .~ "Reply"
+          & ibSize .~ Medium
+          & ibListKey .~ "1"
   where
     getUser = \case
       UserID i -> Just i
