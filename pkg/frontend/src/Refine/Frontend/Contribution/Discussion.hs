@@ -120,12 +120,12 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
                 $ view_ (statementEditor depth e) "statementEditor_"
     _ -> do
       when (getUser (stmnt ^. statementMetaID . miMeta . metaCreatedBy) == currentuser) . ibutton_
-        $ emptyIbuttonProps "Modify"
+        $ emptyIbuttonProps "Edit"
             [ LoginGuardStash
               [ DocumentAction . ReplyStatement True (stmnt ^. statementID) . FormOngoing
               $ newLocalStateRef (CreateStatement "") stmnt]
             ]
-        & ibLabel .~ "Reply"
+        & ibLabel .~ "Edit"
         & ibSize .~ XXLarge
         & ibListKey .~ "0"
       ibutton_
