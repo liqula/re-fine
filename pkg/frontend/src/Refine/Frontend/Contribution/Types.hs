@@ -256,6 +256,7 @@ data DiscussionProps = DiscussionProps
   { _discPropsDiscussion :: Discussion
   , _discPropsAboutText  :: RawContent  -- ^ the blocks overlapping the range of the discussion.
   , _discPropsDetails    :: StatementPropDetails
+  , _discPropsFlatView   :: Bool
 --  , _discussionMode      :: DiscussionMode  -- TODO
   }
   deriving (Eq, Show, Generic)
@@ -277,7 +278,7 @@ data StatementEditorProps = StatementEditorProps
 -- data DiscussionMode = DiscussionModeChrono | DiscussionModeTree
 --   deriving (Eq, Ord, Show, Bounded, Enum, Generic)
 
-discussionProps :: Discussion -> RawContent -> StatementPropDetails -> DiscussionProps
+discussionProps :: Discussion -> RawContent -> StatementPropDetails -> Bool -> DiscussionProps
 discussionProps disc = DiscussionProps disc . cropToBlocks (disc ^. discussionRange)
 
 -- | Remove all blocks that do not overlap with a range.

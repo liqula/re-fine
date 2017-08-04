@@ -50,6 +50,7 @@ testDiscussionProps
       disc
       (addMarksToRawContent [(MarkContribution (ContribIDDiscussion (ID 0)) 0, rnge)] sampleRawContent1)
       (StatementPropDetails Nothing Nothing mempty)
+      False
   where
     rnge = Range (Position (BlockIndex 0 (BlockKey "2vutk")) 1)
                  (Position (BlockIndex 1 (BlockKey "5n4ph")) 3)

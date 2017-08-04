@@ -158,6 +158,7 @@ getDocumentState gs@(view gsVDoc -> Just cvdoc)
                                         (gs ^? gsLoginState . lsCurrentUser . loggedInUser . userID)
                                         ((^. userName) <$> (gs ^. gsServerCache . scUsers))
                                      )
+                                     (gs ^. gsHeaderState . hsDiscussionFlatView)
       )
       dst
   where

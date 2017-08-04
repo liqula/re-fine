@@ -30,6 +30,7 @@ import Refine.Frontend.Prelude
 import qualified Data.Map.Strict as M
 import qualified Data.Text as ST
 import qualified Data.Tree as Tree
+import           Data.Foldable (toList)
 import           Language.Css.Syntax
 import qualified React.Flux as RF
 
@@ -55,7 +56,17 @@ discussion = mkView "Discussion" $ \props -> do
   aboutText_ ( props ^. discPropsAboutText
              , ContribIDDiscussion $ props ^. discPropsDiscussion . discussionMetaID . miID
              )
-  statementForest_ 0 (0, [props ^. discPropsDiscussion . discussionTree], props ^. discPropsDetails)
+  if props ^. discPropsFlatView
+    then statementList props
+    else statementForest_ 0 (0, [props ^. discPropsDiscussion . discussionTree], props ^. discPropsDetails)
+  where
+    statementList props =
+      forM_ (zip [0..] list) $ \(i', stmnt) -> do
+        statement_ i' (0, stmnt, props ^. discPropsDetails)
+        br_ []
+      where
+        list = sortBy (compare `on` creationtime) . toList $ props ^. discPropsDiscussion . discussionTree
+        creationtime = (^. statementMetaID . miMeta . metaCreatedAt)
 
 discussion_ :: HasCallStack => DiscussionProps -> ReactElementM eventHandler ()
 discussion_ = view_ discussion "discussion_"

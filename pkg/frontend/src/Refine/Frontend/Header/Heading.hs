@@ -140,7 +140,9 @@ mainHeaderRender () rs = do
         sticky_ [RF.on "onStickyStateChange" $ \e -> simpleHandler $ \() ->
                     (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
           toolbarWrapper_ $ case rs ^. gsDocumentState of
+
             WipedDocumentStateView -> toolbar_ . fromJust $ rs ^? gsVDoc . _Just . compositeVDoc
+
             WipedDocumentStateDiff i edit collapsed editable -> diffToolbar_ $ DiffToolbarProps
               (edit ^. editID)
               i
@@ -148,8 +150,11 @@ mainHeaderRender () rs = do
               (edit ^. editVotes . to votesToCount)
               collapsed
               editable
+
             WipedDocumentStateEdit eprops -> editToolbar_ eprops
-            WipedDocumentStateDiscussion did -> discussionToolbar_ did
+
+            WipedDocumentStateDiscussion dprops -> discussionToolbar_ dprops
+
           indexToolbarExtension_ $ mkIndexToolbarProps rs
           commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
           editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
