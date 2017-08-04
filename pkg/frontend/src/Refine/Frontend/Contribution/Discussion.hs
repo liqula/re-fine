@@ -123,7 +123,7 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
         $ emptyIbuttonProps "Edit"
             [ LoginGuardStash
               [ DocumentAction . ReplyStatement True (stmnt ^. statementID) . FormOngoing
-              $ newLocalStateRef (CreateStatement "") stmnt]
+              $ newLocalStateRef (CreateStatement $ stmnt ^. statementText) stmnt]
             ]
         & ibLabel .~ "Edit"
         & ibSize .~ XXLarge
