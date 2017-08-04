@@ -53,7 +53,7 @@ data DocumentAction =
   | ToggleCollapseDiff
   | DocumentUndo
   | DocumentRedo
-  | ReplyStatement (ID Statement) (FormAction CreateStatement)
+  | ReplyStatement Bool{-replace-} (ID Statement) (FormAction CreateStatement)
   deriving (Show, Eq, Generic)
 
 data DocumentState_ editable{-() or Bool-} rawcontent edit discussion =

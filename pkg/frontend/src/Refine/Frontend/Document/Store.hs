@@ -122,13 +122,13 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDDiscus
                     (DocumentStateDiscussion _)
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (DocumentAction (ReplyStatement sid (FormOngoing lst)))
+documentStateUpdate (DocumentAction (ReplyStatement upd sid (FormOngoing lst)))
                     _oldgs
                     _newgs
                     (DocumentStateDiscussion (did, Nothing))
-  = DocumentStateDiscussion (did, Just (sid, lst))
+  = DocumentStateDiscussion (did, Just (StatementEditorProps sid lst upd))
 
-documentStateUpdate (AddStatement _sid (AfterAjax discussion))
+documentStateUpdate (AddStatement _upd _sid (AfterAjax discussion))
                     _oldgs
                     _newgs
                     (DocumentStateDiscussion _)

@@ -50,6 +50,9 @@ addDiscussion = request cfg (Proxy :: Proxy SAddDiscussion)
 addStatement :: HasCallStack => ID Statement -> CreateStatement -> HandleResponse Discussion -> IO ()
 addStatement = request cfg (Proxy :: Proxy SAddStatement)
 
+updateStatement :: HasCallStack => ID Statement -> CreateStatement -> HandleResponse Discussion -> IO ()
+updateStatement = request cfg (Proxy :: Proxy SUpdateStatement)
+
 addNote :: HasCallStack => ID Edit -> CreateNote -> HandleResponse Note -> IO ()
 addNote = request cfg (Proxy :: Proxy SAddNote)
 

@@ -55,7 +55,7 @@ discussion = mkView "Discussion" $ \props -> do
   aboutText_ ( props ^. discPropsAboutText
              , ContribIDDiscussion $ props ^. discPropsDiscussion . discussionMetaID . miID
              )
-  statementForest_ 0 (0, [props ^. discPropsDiscussion . discussionTree], props ^. discPropsEditor, props ^. discPropsUserNames)
+  statementForest_ 0 (0, [props ^. discPropsDiscussion . discussionTree], props ^. discPropsDetails)
 
 discussion_ :: HasCallStack => DiscussionProps -> ReactElementM eventHandler ()
 discussion_ = view_ discussion "discussion_"
@@ -72,36 +72,35 @@ aboutText = mkView "AboutText" $ \(rc, did) -> do
 aboutText_ :: HasCallStack => (RawContent, ContributionID) -> ReactElementM eventHandler ()
 aboutText_ = view_ aboutText "aboutText_"
 
-type StatementForestProps = (Int, Tree.Forest Statement, Maybe StatementEditorProps, Map (ID User) Username)
+type StatementForestProps = (Int, Tree.Forest Statement, StatementPropDetails)
+type StatementProps = (Int, Statement, StatementPropDetails)
 
 statementForest :: HasCallStack => View '[StatementForestProps]
-statementForest = mkView "StatementForest" $ \(depth, frst, seditor, names) -> do
+statementForest = mkView "StatementForest" $ \(depth, frst, details) -> do
   forM_ (zip [0..] frst) $ \(i', Tree.Node stmnt chldrn) -> do
-    statement_ i' (depth, stmnt, seditor, names)
+    statement_ i' (depth, stmnt, details)
     br_ []
-    statementForest_ i' (depth + 1, chldrn, seditor, names)
+    statementForest_ i' (depth + 1, chldrn, details)
 
 statementForest_ :: HasCallStack => Int -> StatementForestProps -> ReactElementM eventHandler ()
 statementForest_ i = view_ statementForest $ "statementForest-" <> cs (show i)
 
 statementEditor :: Int -> StatementEditorProps -> View '[]
-statementEditor depth (sid, r) = mkPersistentStatefulView "statementEditor" r $ \txt -> do
+statementEditor depth (StatementEditorProps sid r modif) = mkPersistentStatefulView "statementEditor" r $ \txt -> do
     elemString $ "depth " <> show depth <> " statement reply"
     br_ []
     contributionDialogTextFormInner 400 20 createStatementText txt
     br_ []
     ibutton_
       $ emptyIbuttonProps "Reply"
-          [ DocumentAction . ReplyStatement sid $ FormComplete txt
-          , AddStatement sid $ BeforeAjax txt
+          [ DocumentAction . ReplyStatement modif sid $ FormComplete txt
+          , AddStatement modif sid $ BeforeAjax txt
           ]
       & ibLabel .~ "Reply"
       & ibSize .~ XXLarge
 
-type StatementProps = (Int, Statement, Maybe StatementEditorProps, Map (ID User) Username)
-
 statement :: HasCallStack => View '[StatementProps]
-statement = mkView "statement" $ \(depth, stmnt, meditor, names) -> do
+statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor currentuser names) -> do
   div_ ["style" @@= [ decl "border" (Ident "solid 2px black"),
                       decl "clear" (Ident "both")]] $ do
     elemString $ "depth " <> show depth <> " statement"
@@ -115,19 +114,31 @@ statement = mkView "statement" $ \(depth, stmnt, meditor, names) -> do
     elemString $ "modified at " <> show (stmnt ^. statementMetaID . miMeta . metaChangedAt)
   br_ []
   case meditor of
-    Just e | fst e == stmnt ^. statementID
+    Just e | e ^. sepStatementID == stmnt ^. statementID
            -> div_ ["style" @@= [ decl "border" (Ident "solid 1px black"),
                                   decl "clear" (Ident "both")]]
                 $ view_ (statementEditor depth e) "statementEditor_"
-    _ -> ibutton_
+    _ -> do
+      when (getUser (stmnt ^. statementMetaID . miMeta . metaCreatedBy) == currentuser) . ibutton_
+        $ emptyIbuttonProps "Modify"
+            [ LoginGuardStash
+              [ DocumentAction . ReplyStatement True (stmnt ^. statementID) . FormOngoing
+              $ newLocalStateRef (CreateStatement "") stmnt]
+            ]
+        & ibLabel .~ "Reply"
+        & ibSize .~ XXLarge
+      ibutton_
         $ emptyIbuttonProps "Reply"
             [ LoginGuardStash
-              [ DocumentAction . ReplyStatement (stmnt ^. statementID) . FormOngoing
+              [ DocumentAction . ReplyStatement False (stmnt ^. statementID) . FormOngoing
               $ newLocalStateRef (CreateStatement "") stmnt]
             ]
         & ibLabel .~ "Reply"
         & ibSize .~ XXLarge
   where
+    getUser = \case
+      UserID i -> Just i
+      _ -> Nothing
     showUser names = \case
       UserID i  -> fromMaybe (cs $ show i) $ M.lookup i names
       UserIP ip -> ip

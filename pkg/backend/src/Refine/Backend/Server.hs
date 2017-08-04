@@ -93,6 +93,7 @@ refineApi =
   :<|> App.addAnswer
   :<|> App.addDiscussion
   :<|> App.addStatement
+  :<|> App.updateStatement
   :<|> App.createUser
   :<|> App.login
   :<|> App.logout

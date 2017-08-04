@@ -120,7 +120,7 @@ data GlobalAction =
   | AddDiscussion Discussion
   | AddEdit Edit
   | SaveSelect ST ST
-  | AddStatement (ID Statement) (AjaxAction CreateStatement Discussion)
+  | AddStatement Bool{-update-} (ID Statement) (AjaxAction CreateStatement Discussion)
 
   | RefreshServerCache ServerCache
 
@@ -153,8 +153,11 @@ getDocumentState gs@(view gsVDoc -> Just cvdoc)
       (fromMaybe (error "edit is not in cache") . getEdit gs)
       (\(did, ed) -> discussionProps (fromMaybe (error "discussion is not in cache") $ getDiscussion gs did)
                                      (rawContentFromCompositeVDoc cvdoc)
-                                     ed
-                                     ((^. userName) <$> (gs ^. gsServerCache . scUsers))
+                                     (StatementPropDetails
+                                        ed
+                                        (gs ^? gsLoginState . lsCurrentUser . loggedInUser . userID)
+                                        ((^. userName) <$> (gs ^. gsServerCache . scUsers))
+                                     )
       )
       dst
   where

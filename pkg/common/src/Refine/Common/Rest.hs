@@ -65,6 +65,7 @@ type RefineAPI =
   :<|> SAddAnswer
   :<|> SAddDiscussion
   :<|> SAddStatement
+  :<|> SUpdateStatement
   :<|> SCreateUser
   :<|> SLogin
   :<|> SLogout
@@ -120,6 +121,10 @@ type SAddStatement
     :> Post '[JSON] Discussion
       -- FIXME: should be @"r" :> "statement" :> Capture "onstatementid" (ID Statement) :> "reply" ...@
       -- to be consistent with 'SPutSimpleVoteOnEdit' etc.
+
+type SUpdateStatement
+  = "r" :> "statement" :> "update" :> Capture "onstatementid" (ID Statement) :> ReqBody '[JSON] CreateStatement
+    :> Post '[JSON] Discussion
 
 type SCreateUser
   = "r" :> "user" :> "create" :> ReqBody '[JSON] CreateUser

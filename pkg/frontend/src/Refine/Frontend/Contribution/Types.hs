@@ -255,18 +255,29 @@ data AddContributionProps st = AddContributionProps
 data DiscussionProps = DiscussionProps
   { _discPropsDiscussion :: Discussion
   , _discPropsAboutText  :: RawContent  -- ^ the blocks overlapping the range of the discussion.
-  , _discPropsEditor     :: Maybe StatementEditorProps
+  , _discPropsDetails    :: StatementPropDetails
 --  , _discussionMode      :: DiscussionMode  -- TODO
-  , _discPropsUserNames  :: Map (ID User) Username -- FIXME: store user names in discussions
   }
   deriving (Eq, Show, Generic)
 
-type StatementEditorProps = (ID Statement, LocalStateRef CreateStatement)
+data StatementPropDetails = StatementPropDetails
+  { _spdEditorProps :: Maybe StatementEditorProps
+  , _spdCurrentUser :: Maybe (ID User)
+  , _spdUsernames   :: Map (ID User) Username -- FIXME: store user names in discussions
+  }
+  deriving (Eq, Show, Generic)
+
+data StatementEditorProps = StatementEditorProps
+  { _sepStatementID :: ID Statement
+  , _sepLocalState  :: LocalStateRef CreateStatement
+  , _sepUpdate      :: Bool
+  }
+  deriving (Eq, Show, Generic)
 
 -- data DiscussionMode = DiscussionModeChrono | DiscussionModeTree
 --   deriving (Eq, Ord, Show, Bounded, Enum, Generic)
 
-discussionProps :: Discussion -> RawContent -> Maybe StatementEditorProps -> Map (ID User) ST -> DiscussionProps
+discussionProps :: Discussion -> RawContent -> StatementPropDetails -> DiscussionProps
 discussionProps disc = DiscussionProps disc . cropToBlocks (disc ^. discussionRange)
 
 -- | Remove all blocks that do not overlap with a range.
@@ -294,7 +305,7 @@ blockIndices (RawContent blocks _) = zipWith BlockIndex [0..] . fmap (view block
 -- * instances
 
 deriveClasses
-  [ ([''VerticalSpanBounds, ''ContributionAction, ''ContributionState, ''BubblePositioning, ''CommentInputState, ''EditInputState, ''CommentKind, ''ActiveDialog, ''QuickCreateSide, ''QuickCreateShowState], allClass)
+  [ ([''VerticalSpanBounds, ''ContributionAction, ''ContributionState, ''BubblePositioning, ''CommentInputState, ''EditInputState, ''CommentKind, ''ActiveDialog, ''QuickCreateSide, ''QuickCreateShowState, ''StatementPropDetails, ''StatementEditorProps], allClass)
   , ([''AllVerticalSpanBounds, ''CommentInfo, ''EditInfo, ''ProtoBubble, ''BubbleProps, ''QuickCreateProps, ''CommentDisplayProps, ''AddContributionProps], [''Lens'])
   ]
 

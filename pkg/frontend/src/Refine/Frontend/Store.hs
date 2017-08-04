@@ -164,7 +164,7 @@ serverCacheUpdate a c = case a of
   LoadCompositeVDoc (AfterAjax cvdoc)
     -- TODO: load user data for all user ids found in cvdoc
     -> serverCacheUpdate (LoadVDoc (AfterAjax (cvdoc ^. C.compositeVDoc))) c
-  AddStatement _cid (AfterAjax discussion)
+  AddStatement _upd _cid (AfterAjax discussion)
     -> c & scDiscussions %~ M.insert (discussion ^. C.discussionID) discussion
   SetCurrentUser (UserLoggedIn user)
     -> c & scUsers %~ M.insert (user ^. C.userID) user
@@ -294,11 +294,11 @@ emitBackendCallsFor act st = case act of
 
     -- contributions
 
-    AddStatement sid (BeforeAjax statement) -> do
-        addStatement sid statement $ \case
+    AddStatement upd sid (BeforeAjax statement) -> do
+        (if upd then updateStatement else addStatement) sid statement $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right discussion) -> dispatchManyM
-                                   [ AddStatement sid $ AfterAjax discussion
+                                   [ AddStatement upd sid $ AfterAjax discussion
                                    ]
 
     ContributionAction (SubmitComment (CommentInfo text kind)) -> do

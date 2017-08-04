@@ -476,6 +476,9 @@ createStatement sid statement = do
           (Just $ S.idToKey sid)
           (S.idToKey did)
 
+updateStatement :: ID Statement  -> CreateStatement -> DB Statement
+updateStatement _ _ = error "TODO"
+
 getStatement :: ID Statement -> DB Statement
 getStatement = getMetaEntity (S.statementElim . toStatement)
 

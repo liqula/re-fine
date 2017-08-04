@@ -64,6 +64,7 @@ class Monad db => Database db where
 
   -- Statement
   createStatement      :: ID Statement -> CreateStatement -> db Statement
+  updateStatement      :: ID Statement -> CreateStatement -> db Statement
   getStatement         :: ID Statement -> db Statement
 
   -- User
