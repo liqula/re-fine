@@ -1,22 +1,41 @@
+{-# LANGUAGE BangPatterns               #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE DeriveGeneric              #-}
+{-# LANGUAGE ExplicitForAll             #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GADTs                      #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE DeriveAnyClass     #-}
-{-# LANGUAGE DeriveGeneric      #-}
-{-# LANGUAGE OverloadedStrings  #-}
-{-# LANGUAGE TemplateHaskell    #-}
+{-# LANGUAGE OverloadedStrings          #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TupleSections              #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
+{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ViewPatterns               #-}
 
 module Refine.Backend.Config where
 
 import Refine.Backend.Prelude
 
 import qualified Data.Yaml as Yaml
+import qualified Generics.SOP as SOP
 import           Network.Wai.Handler.Warp as Warp
 
 
--- FIXME: once we know what we need where, we can refactor this type into a tree of records, and
--- only pass those parts of the config to the respective parts of the code that are actually needed.
+-- * config tree
 
 data Config = Config
-  { _cfgShouldLog     :: Bool           -- ^ Should log messages during the server run
+  { _cfgLogger        :: LogCfg         -- ^ logging
   , _cfgDBKind        :: DBKind         -- ^ SQLite database, memory or file on the disk
   , _cfgPoolSize      :: Int            -- ^ The size of the connection pool towards the database
   , _cfgFileServeRoot :: Maybe FilePath -- ^ Directory for the static files
@@ -24,17 +43,33 @@ data Config = Config
   , _cfgCsrfSecret    :: ST             -- ^ The secret for csrf
   , _cfgSessionLength :: Timespan       -- ^ Session cookie life expectancy
   , _cfgPoFilesRoot   :: FilePath       -- ^ The directory of Po translation files
+  , _cfgSmtp          :: Maybe SmtpCfg  -- ^ for sending notification emails to users
   }
-  deriving (Eq, Show, Generic, FromJSON, ToJSON)
+  deriving (Eq, Show, Generic)
+
+data LogCfg =
+    LogCfgFile { _logcfgFilePath :: FilePath }
+  | LogCfgStdOut
+  | LogCfgDevNull
+  deriving (Eq, Show, Generic)
 
 data DBKind
   = DBInMemory
   | DBOnDisk FilePath
-  deriving (Eq, Show, Generic, FromJSON, ToJSON)
+  deriving (Eq, Show, Generic)
+
+data SmtpCfg = SmtpCfg
+  { _smtpSenderName       :: ST
+  , _smtpSenderEmail      :: ST
+  , _smtpDefaultRecipient :: ST  -- ^ (will receive a test email on start, email address for demo users, ...)
+  , _smtpSendmailPath     :: ST  -- ^ e.g., @/usr/sbin/sendmail@
+  , _smtpSendmailArgs     :: [ST]
+  }
+  deriving (Eq, Show, Generic)
 
 instance Default Config where
   def = Config
-    { _cfgShouldLog     = True
+    { _cfgLogger        = def
     , _cfgDBKind        = def
     , _cfgPoolSize      = 5
     , _cfgFileServeRoot = Just "../frontend/js-build"
@@ -42,11 +77,23 @@ instance Default Config where
     , _cfgCsrfSecret    = "CSRF-SECRET"
     , _cfgSessionLength = TimespanHours 72
     , _cfgPoFilesRoot   = "./po"
+    , _cfgSmtp          = Nothing
     }
+
+instance Default LogCfg where
+  def = LogCfgStdOut
 
 instance Default DBKind where
   def = DBOnDisk "./.backend-data/refine.db"
 
+instance Default SmtpCfg where
+  def = SmtpCfg
+    { _smtpSenderName       = "Re-fine Notification System"
+    , _smtpSenderEmail      = "postmaster@localhost"
+    , _smtpDefaultRecipient = "postmaster@localhost"
+    , _smtpSendmailPath     = "/usr/sbin/sendmail"
+    , _smtpSendmailArgs     = ["-t"]
+    }
 
 -- * warp settings
 
@@ -57,6 +104,17 @@ data WarpSettings = WarpSettings
   , _warpSettingsHost :: Warp.HostPreference
   }
   deriving (Eq, Show, Generic)
+
+warpSettings :: Config -> Settings
+warpSettings cfg = Warp.defaultSettings
+  & setPort (_warpSettingsPort . _cfgWarpSettings $ cfg)
+  & setHost (_warpSettingsHost . _cfgWarpSettings $ cfg)
+
+
+-- * lenses/TH
+
+deriveClasses [([''Config, ''LogCfg, ''DBKind, ''SmtpCfg], [''SOP.Generic, ''Lens', ''FromJSON])]
+deriveClasses [([''WarpSettings], [''SOP.Generic, ''Lens'])]
 
 instance ToJSON WarpSettings where
   toJSON (WarpSettings port host) = object
@@ -76,22 +134,6 @@ instance Default WarpSettings where
     { _warpSettingsPort = 3000
     , _warpSettingsHost = "*4"
     }
-
-
--- * lenses
-
-makeLenses ''WarpSettings
-makeLenses ''Config
-
-makePrisms ''WarpSettings
-makePrisms ''DBKind
-makePrisms ''Config
-
-
-warpSettings :: Config -> Settings
-warpSettings cfg = Warp.defaultSettings
-  & setPort (cfg ^. cfgWarpSettings . warpSettingsPort)
-  & setHost (cfg ^. cfgWarpSettings . warpSettingsHost)
 
 
 -- * crude config file support

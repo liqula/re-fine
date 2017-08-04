@@ -24,19 +24,17 @@
 
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
+-- | FIXME: is this module redundant to the users package?  should we make better use of the latter?
 module Refine.Backend.App.User where
 
 import Refine.Backend.Prelude
 
-import           Control.Lens ((^.), view)
-import           Control.Monad (void)
-import           Control.Monad.State (gets)
-import           Control.Monad.Reader (ask)
-import           Data.Maybe (isJust)
 import qualified Web.Users.Types as Users
 
 import Refine.Backend.App.Core
 import Refine.Backend.App.Session
+import Refine.Backend.App.Smtp
+import Refine.Backend.Config
 import Refine.Backend.Types
 import Refine.Backend.Database.Class (createMetaID_, getMetaID)
 import Refine.Backend.Database.Entity (toUserID, fromUserID)
@@ -51,7 +49,7 @@ import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 login :: Common.Login -> App Common.User
 login (Login username (Users.PasswordPlain -> password)) = do
   appLog "login"
-  sessionDuration <- timespanToNominalDiffTime . view appSessionLength <$> ask
+  sessionDuration <- asks . view $ appConfig . cfgSessionLength . to timespanToNominalDiffTime
   session <- nothingToError (AppUserNotFound username)
              =<< dbUsersCmd (\db_ -> Users.authUser db_ username password sessionDuration)
   loginId <- nothingToError AppSessionError
@@ -92,7 +90,9 @@ createUser (CreateUser name email password) = do
               }
   loginId <- leftToError AppUserCreationError
              =<< dbUsersCmd (`Users.createUser` user)
-  Common.User <$> db (createMetaID_ $ toUserID loginId) <*> pure name <*> pure email
+  result <- Common.User <$> db (createMetaID_ $ toUserID loginId) <*> pure name <*> pure email
+  sendMailTo $ EmailMessage result "you have a re-fine account now!" "congratulations (:"
+  pure result
 
 doesUserExist :: ID Common.User -> App Bool
 doesUserExist uid = do

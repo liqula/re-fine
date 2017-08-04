@@ -19,6 +19,8 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE ViewPatterns #-}
 
+{-# OPTIONS_GHC -Wall -Werror -Wno-redundant-constraints -Wno-orphans #-}
+
 -- | FUTUREWORK:
 -- - error handling of the services is not very good.
 -- - remove pid files when services are down.
@@ -262,18 +264,16 @@ runBackend = do
 mkBackendConfig :: Int -> Yaml.Value
 mkBackendConfig port = Yaml.object
   [ "_cfgSessionLength" .= Yaml.object ["TimespanHours" .= (72 :: Int)]
-  , "_cfgShouldLog"     .= True
+  , "_cfgLogger"        .= ("LogCfgStdOut" :: String)
   , "_cfgWarpSettings"  .= Yaml.object ["_warpSettingsPort" .= port, "_warpSettingsHost" .= ("HostIPv4" :: String)]
   , "_cfgFileServeRoot" .= ("../frontend/js-build" :: String)
   , "_cfgPoFilesRoot"   .= ("../../po" :: String)
   , "_cfgCsrfSecret"    .= ("CSRF-SECRET" :: String)
-  , "_cfgDBKind"        .= Yaml.object [ "tag" .= ("DBOnDisk" :: String)
-                                       , "contents" .= ("../../accept/.selenium/" <> cfgBackendDbPath config)
+  , "_cfgDBKind"        .= Yaml.object [ "DBOnDisk" .= ("../../accept/.selenium/" <> cfgBackendDbPath config)
                                          -- i tried DBInMemory, but got vague and fatal database errors in the backend.
                                        ]
   , "_cfgPoolSize"      .= (8 :: Int)
-  , "_cfgShouldMigrate" .= True
-  , "_cfgDevMode"       .= False
+  , "_cfgSmtp"          .= Yaml.Null
   ]
 
 runXvfb :: MonadIO m => m ()

@@ -81,7 +81,7 @@ data Backend db = Backend
   , backendRunApp :: AppM db P.:~> ExceptT AppError IO
   }
 
-refineApi :: MonadApp db => ServerT RefineAPI (AppM db)
+refineApi :: (Database db) => ServerT RefineAPI (AppM db)
 refineApi =
        App.getCompositeVDocOnHead
   :<|> App.createVDocGetComposite
@@ -139,19 +139,17 @@ mkBackend cfg migrate = do
   pure backend
 
 
-mkServerApp
-    :: MonadApp db
-    => Config -> MkDBNat db -> DBRunner -> IO (Backend db)
+mkServerApp :: Database db => Config -> MkDBNat db -> DBRunner -> IO (Backend db)
 mkServerApp cfg dbNat dbRunner = do
-  poFilesRoot <- cfg ^. cfgPoFilesRoot . to canonicalizePath
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
-      logger = Logger $ if cfg ^. cfgShouldLog then putStrLn else const $ pure ()
+      logger = Logger $ case cfg ^. cfgLogger of
+        LogCfgFile file -> appendFile file . (<> "\n")
+        LogCfgStdOut    -> putStrLn
+        LogCfgDevNull   -> const $ pure ()
       app    = runApp dbNat
                       dbRunner
                       logger
-                      (cfg ^. cfgCsrfSecret . to CsrfSecret)
-                      (cfg ^. cfgSessionLength)
-                      poFilesRoot
+                      cfg
 
   -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
   -- may need to refactor, e.g. by using extra arguments in the end point types.
@@ -159,7 +157,7 @@ mkServerApp cfg dbNat dbRunner = do
               (Proxy :: Proxy RefineAPI)
               (Proxy :: Proxy AppState)
               cookie
-              (Nat appIO)
+              (Nat liftIO)
               (toServantError . cnToSn app)
               refineApi
               (Just (P.serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
@@ -198,6 +196,7 @@ toApiError = \case
   AppUnauthorized        -> ApiUnauthorized
   AppMergeError base e1 e2 s -> ApiMergeError $ cs (show (base, e1, e2)) <> ": " <> s
   AppRebaseError{}       -> ApiRebaseError
+  AppSmtpError{}         -> ApiSmtpError
 
 -- | so we don't have to export backend types to the frontend.
 createUserErrorToApiError :: Users.CreateUserError -> ApiErrorCreateUser
@@ -223,6 +222,7 @@ appServantErr = \case
   AppUnauthorized          -> err403
   AppMergeError{}          -> err500
   AppRebaseError{}         -> err500
+  AppSmtpError{}           -> err500
 
 dbServantErr :: DBError -> ServantErr
 dbServantErr = \case
@@ -244,7 +244,7 @@ userCreationError = \case
 -- * Instances for Servant.Cookie.Session
 
 instance SCS.MonadRandom (AppM db) where
-  getRandomBytes = appIO . SCS.getRandomBytes
+  getRandomBytes = liftIO . SCS.getRandomBytes
 
 instance SCS.ThrowError500 AppError where
   error500 = prism' toAppError fromAppError
@@ -263,8 +263,13 @@ instance SCS.HasSessionCsrfToken AppState where
       toSCS   = SCS.CsrfToken . cs . _csrfToken
       csrfTokenIso = iso (fmap toSCS) (fmap fromSCS)
 
-instance SCS.GetCsrfSecret (AppContext db) where
-  csrfSecret = appCsrfSecret . Refine.Backend.Types.csrfSecret . to (Just . SCS.CsrfSecret . cs)
+instance SCS.GetCsrfSecret AppContext where
+  csrfSecret = appConfig . cfgCsrfSecret
+             . to (Refine.Backend.Types.CsrfSecret . cs)
+             . Refine.Backend.Types.csrfSecret
+             . to (Just . SCS.CsrfSecret . cs)
+    -- (FUTUREWORK: this looks like Config should not carry around the string, but one of the many
+    -- types alled 'CsrfSecret'.  but i'm not going to investigate this now.)
 
 instance SCS.GetSessionToken AppState where
   getSessionToken = appUserState . to (\case

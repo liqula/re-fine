@@ -36,7 +36,6 @@ import Refine.Backend.Database
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Test.Util
-import Refine.Backend.Types
 
 
 provideAppRunner :: ActionWith (AppM DB a -> IO a) -> IO ()
@@ -51,7 +50,7 @@ createAppRunner = do
       poRoot    = "./repos" -- FIXME: Change this when needed. Not used at the moment.
 
       cfg = Config
-        { _cfgShouldLog     = False  -- (this is ignored here)
+        { _cfgLogger        = LogCfgDevNull  -- (this is ignored here)
         , _cfgDBKind        = DBOnDisk testDb
         , _cfgPoolSize      = 5
         , _cfgFileServeRoot = Nothing
@@ -59,6 +58,7 @@ createAppRunner = do
         , _cfgCsrfSecret    = "CSRF-SECRET"
         , _cfgSessionLength = TimespanSecs 30
         , _cfgPoFilesRoot   = poRoot
+        , _cfgSmtp          = Nothing
         }
 
   (dbRunner, dbNat) <- createDBNat cfg
@@ -68,9 +68,7 @@ createAppRunner = do
                                     dbNat
                                     dbRunner
                                     logger
-                                    (cfg ^. cfgCsrfSecret . to CsrfSecret)
-                                    (cfg ^. cfgSessionLength)
-                                    poRoot) $$ m) >>= evaluate -- without evaluate we have issue #389
+                                    cfg) $$ m) >>= evaluate -- without evaluate we have issue #389
 
   void $ runner (migrateDB cfg >> initializeDB)
   pure (runner, testDb)

@@ -79,16 +79,16 @@ spec = do
       runner $ do
         void $ App.createUser (CreateUser "user" "user@example.com" "password")
         userState0 <- gets (view appUserState)
-        appIO $ userState0 `shouldBe` UserLoggedOut
+        liftIO $ userState0 `shouldBe` UserLoggedOut
 
       runner $ do
         void $ App.login (Login "user" "password")
         userState1 <- gets (view appUserState)
-        appIO $ userState1 `shouldSatisfy` isActiveUser
+        liftIO $ userState1 `shouldSatisfy` isActiveUser
 
         void App.logout
         userState2 <- gets (view appUserState)
-        appIO $ userState2 `shouldBe` UserLoggedOut
+        liftIO $ userState2 `shouldBe` UserLoggedOut
 
   describe "Database handling" . around provideAppRunner $ do
     it "db (or dbWithFilters) can be called twice inside the same AppM" $ \(runner :: AppM DB () -> IO ()) -> do
@@ -105,8 +105,8 @@ spec = do
           grp1 <- App.addGroup createGroup1
           grp2 <- App.addGroup createGroup2
 
-          appIO $ grp1 `shouldSatisfy` sameGroupInfo createGroup1
-          appIO $ grp2 `shouldSatisfy` sameGroupInfo createGroup2
+          liftIO $ grp1 `shouldSatisfy` sameGroupInfo createGroup1
+          liftIO $ grp2 `shouldSatisfy` sameGroupInfo createGroup2
 
   describe "Regression" . around provideAppRunner $ do
     it "Regression test program" $ \(runner :: AppM DB () -> IO ()) -> do
@@ -135,7 +135,7 @@ spec = do
         (_, base, [eid1, eid2]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"]]
         eidm <- (^. editID) <$> App.addMerge base eid1 eid2
         doc' <- App.getVDocVersion eidm
-        appIO $ doc' `shouldBe` vdoc ["a.c","d.f"]
+        liftIO $ doc' `shouldBe` vdoc ["a.c","d.f"]
 
     it "rebase one edit to two other edits" $ \(runner :: AppM DB () -> IO ()) -> do
       runner $ do
@@ -143,15 +143,15 @@ spec = do
         App.rebaseHeadToEdit eid1
         d <- App.getVDoc vid
         let hid = d ^. vdocHeadEdit
-        appIO $ hid `shouldBe` eid1
+        liftIO $ hid `shouldBe` eid1
         cv <- App.getCompositeVDoc vid hid
-        appIO $ cv ^. compositeVDocThisVersion `shouldBe` vdoc ["a.c", "def"]
-        appIO $ Map.size (cv ^. compositeVDocApplicableEdits) `shouldBe` 2
+        liftIO $ cv ^. compositeVDocThisVersion `shouldBe` vdoc ["a.c", "def"]
+        liftIO $ Map.size (cv ^. compositeVDocApplicableEdits) `shouldBe` 2
         let [ee0, ee1] = Map.keys $ cv ^. compositeVDocApplicableEdits
         docA <- App.getVDocVersion ee0
-        appIO $ docA `shouldBe` vdoc ["a.c","d.f"]
+        liftIO $ docA `shouldBe` vdoc ["a.c","d.f"]
         docB <- App.getVDocVersion ee1
-        appIO $ docB `shouldBe` vdoc ["aX.","def"]   -- FIXME: the merge result is strange
+        liftIO $ docB `shouldBe` vdoc ["aX.","def"]   -- FIXME: the merge result is strange
 
     it "upvoting an edit triggers rebase" $ \(runner :: AppM DB () -> IO ()) -> runner $ do
         (vid, _, [eid]) <- docWithEdits ["abc", "def"] [["a.c", "def"]]
@@ -159,7 +159,7 @@ spec = do
         putSimpleVoteOnEdit eid Yeay
         d <- App.getVDoc vid
         let hid = d ^. vdocHeadEdit
-        appIO $ hid `shouldBe` eid
+        liftIO $ hid `shouldBe` eid
 
 
 -- * Program Runner interface

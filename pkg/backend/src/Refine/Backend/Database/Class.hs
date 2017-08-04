@@ -16,9 +16,7 @@ import           Refine.Common.Types
 import qualified Refine.Common.OT as OT
 
 
-type MonadDatabase db = (Monad db, Database db)
-
-class Database db where
+class Monad db => Database db where
 
   -- VDoc
   listVDocs          :: db [ID VDoc]

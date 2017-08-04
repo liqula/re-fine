@@ -34,12 +34,15 @@ import           Control.Arrow ((&&&))
 import           Control.Lens ((^.), (^?), view, has)
 import           Control.Monad ((<=<), mapM)
 import qualified Data.Map as Map
+import           Data.Maybe (catMaybes, mapMaybe)
 import qualified Data.Set as Set
-import           Data.Maybe (catMaybes)
+import qualified Web.Users.Types as Users
 
 import           Refine.Backend.App.Core
+import           Refine.Backend.App.Smtp
 import           Refine.Backend.App.User (currentUser)
 import qualified Refine.Backend.Database.Class as DB
+import           Refine.Backend.Database.Entity (fromUserID)
 import           Refine.Common.Types
 import           Refine.Common.Types.Core (OTDoc)
 import qualified Refine.Common.OT as OT
@@ -109,9 +112,7 @@ getCompositeVDoc' vdoc editid = do
   where
     toMap selector = Map.fromList . fmap (view selector &&& id)
 
-updateEdit
-  :: (MonadApp db)   -- FIXME
-  => ID Edit -> CreateEdit -> AppM db Edit
+updateEdit :: ID Edit -> CreateEdit -> App Edit
 updateEdit eid edit = do
   appLog "updateEdit"
   -- assertPerms eid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/358
@@ -130,9 +131,7 @@ updateEdit eid edit = do
     DB.updateEditSource eid $ \_ e -> e <> dff
     DB.getEdit eid
 
-addEdit
-  :: (MonadApp db)
-  => ID Edit -> CreateEdit -> AppM db Edit
+addEdit :: ID Edit -> CreateEdit -> App Edit
 addEdit baseeid edit = do
   appLog "addEdit"
   -- assertPerms baseeid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/358
@@ -152,7 +151,7 @@ addEdit baseeid edit = do
                 (deleteMarksFromRawContent $ edit ^. createEditVDocVersion)
     DB.createEdit rid (EditSource [(dff, baseeid)]) edit
 
-addMerge :: (MonadApp db) => ID Edit -> ID Edit -> ID Edit -> AppM db Edit
+addMerge :: ID Edit -> ID Edit -> ID Edit -> App Edit
 addMerge base eid1 eid2 = do
   appLog $ "merge " <> show eid1 <> " with " <> show eid2 <> " based on " <> show base
   (either throwError pure =<<) . db $ do
@@ -172,7 +171,10 @@ addMerge base eid1 eid2 = do
             $ CreateEdit (edit2 ^. editDesc) newdoc (edit2 ^. editKind)
         res -> pure . Left $ AppMergeError base eid1 eid2 (cs $ show res)
 
-rebaseHeadToEdit :: (MonadApp db) => ID Edit -> AppM db ()
+-- | Move HEAD marker (which is our name for the latest release) to a given edit.  All contributions
+-- based on the old HEAD are rebased to the new HEAD.  All authors of rebased contributions are
+-- notified by email.
+rebaseHeadToEdit :: ID Edit -> App ()
 rebaseHeadToEdit eid = do
   appLog $ "rebase to " <> show eid
   (hid, ch) <- db $ do
@@ -182,48 +184,74 @@ rebaseHeadToEdit eid = do
     DB.moveVDocHead rid eid
     (,) hid <$> DB.getEditChildren hid
   when (eid `notElem` ch) . throwError $ AppRebaseError eid
-  forM_ (filter (/= eid) ch) $ addMerge hid eid
-  db $ do
+
+  -- move edits
+  movedEditOwners :: [MetaInfo]
+    <- view (editMetaID . miMeta)
+       <$$> forM (filter (/= eid) ch) (addMerge hid eid)
+
+  movedCommentOwners :: [MetaInfo] <- db $ do
     edit <- DB.getEdit eid
     base <- DB.getEdit hid
     let diff = head [di | (di, d) <- edit ^. editSource . unEditSource, d == hid]
         trRange = transformRangeOTDoc
                   (concat (coerce diff :: [OT.Edit OTDoc]))
                   (rawContentToDoc $ base ^. editVDocVersion)
-    forM_ (Set.toList $ base ^. editNotes') $ \nid -> do
-      n <- DB.getNote nid
-      DB.createNote eid . CreateNote (n ^. noteText) (n ^. notePublic) . trRange $ n ^. noteRange
 
-    forM_ (Set.toList $ base ^. editDiscussions') $ \did -> DB.rebaseDiscussion eid did trRange
+    -- move notes
+    movedNotes :: [Note]
+      <- forM (Set.toList $ base ^. editNotes') $ \nid -> do
+        n <- DB.getNote nid
+        DB.createNote eid . CreateNote (n ^. noteText) (n ^. notePublic) . trRange $ n ^. noteRange
+
+    -- move discussions
+    movedDiscussions :: [Discussion]
+       <- forM (Set.toList $ base ^. editDiscussions') $ \did -> DB.rebaseDiscussion eid did trRange
+
+    pure $ (view (noteMetaID . miMeta) <$> movedNotes)
+        <> (view (discussionMetaID . miMeta) <$> movedDiscussions)
+
+  notifyContributionAuthorsOfMovement $ movedEditOwners <> movedCommentOwners
+
+notifyContributionAuthorsOfMovement :: [MetaInfo] -> App ()
+notifyContributionAuthorsOfMovement mis = forM_ uids $ \uid -> do
+  Just (u :: Users.User) <- dbUsersCmd (`Users.getUserById` fromUserID uid)
+  sendMailTo $ EmailMessage u
+    "your stuff has changed."
+    "some of the things you did on the refine platform have been rebased due to other changes in the same document(s)."
+  where
+    getuid (UserID uid) = Just uid
+    getuid _ = Nothing
+    uids = nub . mapMaybe getuid $ (view metaCreatedBy <$> mis) <> (view metaChangedBy <$> mis)
 
 -- | Throw an error if chunk range does not fit 'RawContent' identified by edit.
 -- FIXME: for RawContent this still needs to be implemented.
 validateCreateChunkRange :: ID Edit -> Range Position -> App ()
 validateCreateChunkRange _ _ = pure ()  -- throwError AppVDocVersionError
 
-withCurrentUser :: (MonadApp db) => (ID User -> AppM db ()) -> AppM db ()
+withCurrentUser :: MonadApp app => (ID User -> app ()) -> app ()
 withCurrentUser f = do
   mu <- currentUser
   case mu of
     Just u -> f u
     Nothing -> throwError AppUnauthorized
 
-putSimpleVoteOnEdit :: (MonadApp db) => ID Edit -> Vote -> AppM db ()
+putSimpleVoteOnEdit :: ID Edit -> Vote -> App ()
 putSimpleVoteOnEdit eid v = withCurrentUser $ \user -> changeSimpleVoteOnEdit eid $ Map.insert user v
 
-deleteSimpleVoteOnEdit :: (MonadApp db) => ID Edit -> AppM db ()
+deleteSimpleVoteOnEdit :: ID Edit -> App ()
 deleteSimpleVoteOnEdit eid = withCurrentUser $ changeSimpleVoteOnEdit eid . Map.delete
 
 atLeastOneUpvote :: VoteCount -> Bool
 atLeastOneUpvote vc = fromMaybe 0 (Map.lookup Yeay vc) >= 1
 
-rebasePossible :: (Monad db, DB.Database db) => ID Edit -> db Bool
+rebasePossible :: DB.Database db => ID Edit -> db Bool
 rebasePossible eid = do
   vd <- (^. vdocHeadEdit) <$> (DB.vdocOfEdit eid >>= DB.getVDoc)
   ed <- DB.getEdit eid
   pure $ vd `elem` (snd <$> (ed ^. editSource . unEditSource))
 
-changeSimpleVoteOnEdit :: (MonadApp db) => ID Edit -> (Votes -> Votes) -> AppM db ()
+changeSimpleVoteOnEdit :: ID Edit -> (Votes -> Votes) -> App ()
 changeSimpleVoteOnEdit eid f = do
   mkrebase <- db $ do
     DB.updateVotes eid f
@@ -231,5 +259,5 @@ changeSimpleVoteOnEdit eid f = do
     if atLeastOneUpvote vs then rebasePossible eid else pure False
   when mkrebase $ rebaseHeadToEdit eid
 
-getSimpleVotesOnEdit :: (MonadApp db) => ID Edit -> AppM db VoteCount
+getSimpleVotesOnEdit :: ID Edit -> App VoteCount
 getSimpleVotesOnEdit eid = db $ DB.getVoteCount eid

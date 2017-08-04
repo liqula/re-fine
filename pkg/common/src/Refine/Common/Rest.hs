@@ -41,6 +41,7 @@ data ApiError
   | ApiUnauthorized
   | ApiMergeError ST
   | ApiRebaseError
+  | ApiSmtpError
   deriving (Eq, Show, Generic)
 
 data ApiErrorCreateUser
