@@ -137,4 +137,17 @@ data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
   }
   deriving (Eq)
 
-makeRefineTypes [''MainMenuAction, ''MainMenuErrors, ''MainMenuState, ''MainMenu, ''MainMenuTab, ''MainMenuSubTabLogin]
+data MainMenuProcessShortProps = MainMenuProcessShortProps
+  { _mmprocShrtID          :: ID VDoc
+  , _mmprocShrtIcon        :: ()  -- FIXME
+  , _mmprocShrtTitle       :: Title
+  , _mmprocShrtNumComments :: Int
+  , _mmprocShrtNumEdits    :: Int
+  , _mmprocShrtNumUsers    :: Int
+  }
+  deriving (Eq, Show, Generic)
+
+
+makeRefineTypes [ ''MainMenuAction, ''MainMenuErrors, ''MainMenuState
+                , ''MainMenu, ''MainMenuTab, ''MainMenuSubTabLogin, ''MainMenuProcessShortProps
+                ]
