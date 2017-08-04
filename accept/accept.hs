@@ -22,7 +22,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-{-# OPTIONS_GHC -fno-warn-incomplete-patterns -fno-warn-unused-imports #-}
+{-# OPTIONS_GHC -Wall -Werror -Wno-redundant-constraints -Wno-orphans -Wno-incomplete-patterns -Wno-unused-imports #-}
 
 -- | webdriver acceptance tests for refine.
 module Main where
