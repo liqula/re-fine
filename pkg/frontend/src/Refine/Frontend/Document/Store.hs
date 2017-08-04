@@ -128,6 +128,12 @@ documentStateUpdate (DocumentAction (ReplyStatement upd sid (FormOngoing lst)))
                     (DocumentStateDiscussion (did, Nothing))
   = DocumentStateDiscussion (did, Just (StatementEditorProps sid lst upd))
 
+documentStateUpdate (DocumentAction (ReplyStatement _upd _sid FormCancelled))
+                    _oldgs
+                    _newgs
+                    (DocumentStateDiscussion (did, Just _))
+  = DocumentStateDiscussion (did, Nothing)
+
 documentStateUpdate (AddStatement _upd _sid (AfterAjax discussion))
                     _oldgs
                     _newgs

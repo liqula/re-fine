@@ -23,9 +23,9 @@ mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) _ st = case tab of
      & mmState .~ MainMenuOpen (mapMainMenuTab
                                 (ajaxAction (error "impossible") (const ()))
                                 id
-                                (formAction id (error "impossible"))
-                                (formAction id (error "impossible"))
-                                (formAction id (error "impossible"))
+                                (formAction id (error "impossible") (error "impossible"))
+                                (formAction id (error "impossible") (error "impossible"))
+                                (formAction id (error "impossible") (error "impossible"))
                                 tab)
 
 mainMenuUpdate (MainMenuAction (MainMenuActionLoginError e)) _ st = st

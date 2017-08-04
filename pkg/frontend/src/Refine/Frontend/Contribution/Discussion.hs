@@ -98,6 +98,12 @@ statementEditor _depth (StatementEditorProps sid r modif) = mkPersistentStateful
           ]
       & ibLabel .~ label
       & ibSize .~ Medium
+    ibutton_
+      $ emptyIbuttonProps "Cancel"
+          [ DocumentAction $ ReplyStatement modif sid FormCancelled
+          ]
+      & ibLabel .~ "Cancel"
+      & ibSize .~ Medium
   where
     label = if modif then "Edit" else "Reply"
 
@@ -124,9 +130,9 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
   br_ []
   case meditor of
     Just e
-      | e ^. sepUpdate -> mempty
       | e ^. sepStatementID == stmnt ^. statementID
            -> view_ (statementEditor depth e) "statementEditor_"
+      | otherwise -> mempty
     _ -> do
       when thisuser . ibutton_
         $ emptyIbuttonProps "Edit"
