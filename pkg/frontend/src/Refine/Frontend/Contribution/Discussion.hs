@@ -86,8 +86,10 @@ statementForest_ :: HasCallStack => Int -> StatementForestProps -> ReactElementM
 statementForest_ i = view_ statementForest $ "statementForest-" <> cs (show i)
 
 statementEditor :: Int -> StatementEditorProps -> View '[]
-statementEditor depth (StatementEditorProps sid r modif) = mkPersistentStatefulView "statementEditor" r $ \txt -> do
-    elemString $ "depth " <> show depth <> " statement reply"
+statementEditor depth (StatementEditorProps sid r modif) = mkPersistentStatefulView "statementEditor" r $ \txt ->
+  div_ ["style" @@= [ decl "border" (Ident "solid 1px black"),
+                      decl "clear" (Ident "both")]] $ do
+    elemString $ "depth " <> show depth <> " statement " <> if modif then "edit" else "reply"
     br_ []
     contributionDialogTextFormInner 400 20 createStatementText txt
     br_ []
@@ -101,11 +103,17 @@ statementEditor depth (StatementEditorProps sid r modif) = mkPersistentStatefulV
 
 statement :: HasCallStack => View '[StatementProps]
 statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor currentuser names) -> do
+
+  let thisuser = getUser (stmnt ^. statementMetaID . miMeta . metaCreatedBy) == currentuser
+
   div_ ["style" @@= [ decl "border" (Ident "solid 2px black"),
                       decl "clear" (Ident "both")]] $ do
     elemString $ "depth " <> show depth <> " statement"
     br_ []
-    elemText $ stmnt ^. statementText
+    case meditor of
+      Just e | e ^. sepStatementID == stmnt ^. statementID && e ^. sepUpdate
+             -> view_ (statementEditor depth e) "statementEditor_"
+      _ -> elemText $ stmnt ^. statementText
     br_ []
     elemText $ "by " <> showUser names (stmnt ^. statementMetaID . miMeta . metaCreatedBy)
     br_ []
@@ -114,12 +122,12 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
     elemString $ "modified at " <> show (stmnt ^. statementMetaID . miMeta . metaChangedAt)
   br_ []
   case meditor of
-    Just e | e ^. sepStatementID == stmnt ^. statementID
-           -> div_ ["style" @@= [ decl "border" (Ident "solid 1px black"),
-                                  decl "clear" (Ident "both")]]
-                $ view_ (statementEditor depth e) "statementEditor_"
+    Just e
+      | e ^. sepUpdate -> mempty
+      | e ^. sepStatementID == stmnt ^. statementID
+           -> view_ (statementEditor depth e) "statementEditor_"
     _ -> do
-      when (getUser (stmnt ^. statementMetaID . miMeta . metaCreatedBy) == currentuser) . ibutton_
+      when thisuser . ibutton_
         $ emptyIbuttonProps "Edit"
             [ LoginGuardStash
               [ DocumentAction . ReplyStatement True (stmnt ^. statementID) . FormOngoing
