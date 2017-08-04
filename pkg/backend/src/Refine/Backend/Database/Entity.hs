@@ -477,7 +477,10 @@ createStatement sid statement = do
           (S.idToKey did)
 
 updateStatement :: ID Statement  -> CreateStatement -> DB Statement
-updateStatement _ _ = error "TODO"
+updateStatement sid statement = do
+  () <- liftDB $ update (S.idToKey sid) [ S.StatementText =. statement ^. createStatementText ]
+  modifyMetaID sid
+  getStatement sid
 
 getStatement :: ID Statement -> DB Statement
 getStatement = getMetaEntity (S.statementElim . toStatement)
