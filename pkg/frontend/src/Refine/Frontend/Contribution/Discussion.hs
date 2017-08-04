@@ -127,6 +127,7 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
             ]
         & ibLabel .~ "Reply"
         & ibSize .~ XXLarge
+        & ibListKey .~ "0"
       ibutton_
         $ emptyIbuttonProps "Reply"
             [ LoginGuardStash
@@ -135,6 +136,7 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
             ]
         & ibLabel .~ "Reply"
         & ibSize .~ XXLarge
+        & ibListKey .~ "1"
   where
     getUser = \case
       UserID i -> Just i
