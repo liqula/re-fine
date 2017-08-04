@@ -101,20 +101,24 @@ statementEditor depth (sid, r) = mkPersistentStatefulView "statementEditor" r $ 
 type StatementProps = (Int, Statement, Maybe StatementEditorProps, Map (ID User) Username)
 
 statement :: HasCallStack => View '[StatementProps]
-statement = mkView "statement" $ \(depth, stmnt, meditor, names) -> div_ $ do
-  elemString $ "depth " <> show depth <> " statement"
-  br_ []
-  elemText $ stmnt ^. statementText
-  br_ []
-  elemText $ "by " <> showUser names (stmnt ^. statementMetaID . miMeta . metaCreatedBy)
-  br_ []
-  elemString $ "created at " <> show (stmnt ^. statementMetaID . miMeta . metaCreatedAt)
-  br_ []
-  elemString $ "modified at " <> show (stmnt ^. statementMetaID . miMeta . metaChangedAt)
+statement = mkView "statement" $ \(depth, stmnt, meditor, names) -> do
+  div_ ["style" @@= [ decl "border" (Ident "solid 2px black"),
+                      decl "clear" (Ident "both")]] $ do
+    elemString $ "depth " <> show depth <> " statement"
+    br_ []
+    elemText $ stmnt ^. statementText
+    br_ []
+    elemText $ "by " <> showUser names (stmnt ^. statementMetaID . miMeta . metaCreatedBy)
+    br_ []
+    elemString $ "created at " <> show (stmnt ^. statementMetaID . miMeta . metaCreatedAt)
+    br_ []
+    elemString $ "modified at " <> show (stmnt ^. statementMetaID . miMeta . metaChangedAt)
   br_ []
   case meditor of
     Just e | fst e == stmnt ^. statementID
-           -> view_ (statementEditor depth e) "statementEditor_"
+           -> div_ ["style" @@= [ decl "border" (Ident "solid 1px black"),
+                                  decl "clear" (Ident "both")]]
+                $ view_ (statementEditor depth e) "statementEditor_"
     _ -> ibutton_
         $ emptyIbuttonProps "Reply"
             [ LoginGuardStash
@@ -125,7 +129,7 @@ statement = mkView "statement" $ \(depth, stmnt, meditor, names) -> div_ $ do
         & ibSize .~ XXLarge
   where
     showUser names = \case
-      UserID i  -> fromMaybe (error "user is not in the cache") $ M.lookup i names
+      UserID i  -> fromMaybe (cs $ show i) $ M.lookup i names
       UserIP ip -> ip
       Anonymous -> "anonymous"
 
