@@ -86,25 +86,27 @@ statementForest_ :: HasCallStack => Int -> StatementForestProps -> ReactElementM
 statementForest_ i = view_ statementForest $ "statementForest-" <> cs (show i)
 
 statementEditor :: Int -> StatementEditorProps -> View '[]
-statementEditor depth (StatementEditorProps sid r modif) = mkPersistentStatefulView "statementEditor" r $ \txt ->
-  div_ ["style" @@= [ decl "border" (Ident "solid 1px black"),
-                      decl "clear" (Ident "both")]] $ do
-    elemString $ "depth " <> show depth <> " statement " <> if modif then "edit" else "reply"
-    br_ []
-    contributionDialogTextFormInner 400 20 createStatementText txt
+statementEditor _depth (StatementEditorProps sid r modif) = mkPersistentStatefulView "statementEditor" r $ \txt -> do
+    div_ ["style" @@= [ decl "border" (Ident "solid 1px black"),
+                        decl "clear" (Ident "both")]] $
+      contributionDialogTextFormInner 400 20 createStatementText txt
     br_ []
     ibutton_
-      $ emptyIbuttonProps "Reply"
+      $ emptyIbuttonProps label
           [ DocumentAction . ReplyStatement modif sid $ FormComplete txt
           , AddStatement modif sid $ BeforeAjax txt
           ]
-      & ibLabel .~ "Reply"
-      & ibSize .~ XXLarge
+      & ibLabel .~ label
+      & ibSize .~ Medium
+  where
+    label = if modif then "Edit" else "Reply"
 
 statement :: HasCallStack => View '[StatementProps]
 statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor currentuser names) -> do
 
   let thisuser = getUser (stmnt ^. statementMetaID . miMeta . metaCreatedBy) == currentuser
+      createtime = stmnt ^. statementMetaID . miMeta . metaCreatedAt
+      modtime = stmnt ^. statementMetaID . miMeta . metaChangedAt
 
   div_ ["style" @@= [ decl "border" (Ident "solid 2px black"),
                       decl "clear" (Ident "both")]] $ do
@@ -115,11 +117,10 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
              -> view_ (statementEditor depth e) "statementEditor_"
       _ -> elemText $ stmnt ^. statementText
     br_ []
-    elemText $ "by " <> showUser names (stmnt ^. statementMetaID . miMeta . metaCreatedBy)
-    br_ []
-    elemString $ "created at " <> show (stmnt ^. statementMetaID . miMeta . metaCreatedAt)
-    br_ []
-    elemString $ "modified at " <> show (stmnt ^. statementMetaID . miMeta . metaChangedAt)
+    div_ ["style" @@= [ decl "clear" (Ident "both") ]] .
+      elemText $ "by " <> showUser names (stmnt ^. statementMetaID . miMeta . metaCreatedBy)
+              <> " at " <> showTime createtime
+              <> if createtime == modtime then "" else ", last edited at " <> showTime modtime
   br_ []
   case meditor of
     Just e
@@ -134,7 +135,7 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
               $ newLocalStateRef (CreateStatement $ stmnt ^. statementText) stmnt]
             ]
         & ibLabel .~ "Edit"
-        & ibSize .~ XXLarge
+        & ibSize .~ Medium
         & ibListKey .~ "0"
       ibutton_
         $ emptyIbuttonProps "Reply"
@@ -143,16 +144,19 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
               $ newLocalStateRef (CreateStatement "") stmnt]
             ]
         & ibLabel .~ "Reply"
-        & ibSize .~ XXLarge
+        & ibSize .~ Medium
         & ibListKey .~ "1"
   where
     getUser = \case
       UserID i -> Just i
       _ -> Nothing
+
     showUser names = \case
       UserID i  -> fromMaybe (cs $ show i) $ M.lookup i names
       UserIP ip -> ip
       Anonymous -> "anonymous"
+
+    showTime (Timestamp t) = cs $ formatTime defaultTimeLocale "%F %T" t
 
 statement_ :: HasCallStack => Int -> StatementProps -> ReactElementM eventHandler ()
 statement_ i = view_ statement $ "statement-" <> cs (show i)
