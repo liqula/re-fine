@@ -98,7 +98,7 @@ transformGlobalState = transf
       -- other effects
       case act of
         ContributionAction RequestSetAllVerticalSpanBounds -> do
-          maybe (pure ()) (dispatchAndExec . ContributionAction) =<< setAllVerticalSpanBounds (st ^. gsDocumentState)
+          mapM_ (dispatchAndExec . ContributionAction) =<< setAllVerticalSpanBounds (st ^. gsDocumentState)
 
         ContributionAction RequestSetRange -> do
           mRangeEvent <- getRangeAction $ getDocumentState st
@@ -187,8 +187,8 @@ consoleLogGlobalState False _ = do
   consoleLogJSONM "New state: " (String "[UNCHANGED]" :: Value)
 consoleLogGlobalState True st = liftIO $ do
   consoleLogJSONM "New state: " st
-  maybe (pure ()) traceEditorState (st ^? gsDocumentState . documentStateVal)
-  maybe (pure ()) traceContentInEditorState (st ^? gsDocumentState . documentStateVal)
+  traceEditorState `mapM_` (st ^? gsDocumentState . documentStateVal)
+  traceContentInEditorState `mapM_` (st ^? gsDocumentState . documentStateVal)
 
 consoleLogGlobalAction :: HasCallStack => forall m. MonadTransform m => GlobalAction -> m ()
 consoleLogGlobalAction act = do
