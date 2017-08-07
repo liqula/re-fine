@@ -98,7 +98,7 @@ toolbar_ vdoc = do
     & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Process_update", "dark") XXLarge
     & iconButtonPropsLabel        .~ "update process"
     & iconButtonPropsOnClickMods  .~ [StopPropagation]
-    & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuUpdateProcess (vdoc ^. vdocID) . FormOngoing $
+    & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen . MainMenuUpdateProcess (vdoc ^. vdocID) . FormBegin $
                                        newLocalStateRef (UpdateVDoc (vdoc ^. vdocTitle) (vdoc ^. vdocAbstract)) vdoc
                                      ]
 

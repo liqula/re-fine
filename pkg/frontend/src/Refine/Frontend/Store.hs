@@ -116,7 +116,7 @@ transformGlobalState = transf
         ContributionAction ClearRange   -> removeAllRanges
 
         ContributionAction ShowCommentEditor            -> scrollToCurrentSelection (st ^. gsContributionState)
-        DocumentAction (DocumentSave (BeforeDialog ())) -> scrollToCurrentSelection (st ^. gsContributionState)
+        DocumentAction (DocumentSave (FormBegin ()))    -> scrollToCurrentSelection (st ^. gsContributionState)
 
         HeaderAction ScrollToPageTop -> liftIO js_scrollToPageTop
 
@@ -322,7 +322,7 @@ emitBackendCallsFor act st = case act of
             (Left rsp) -> ajaxFail rsp Nothing
             (Right note) -> handle $ AddNote note
 
-    DocumentAction (DocumentSave (AfterDialog info))
+    DocumentAction (DocumentSave (FormComplete info))
       | DocumentStateEdit editorState _ baseEdit <- st ^. gsDocumentState
       -> do
         let eid :: C.ID C.Edit

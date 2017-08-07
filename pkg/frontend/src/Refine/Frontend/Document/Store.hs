@@ -109,13 +109,13 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDDiscus
                     (DocumentStateDiscussion _)
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
-documentStateUpdate (DocumentAction (ReplyStatement upd sid (FormOngoing lst)))
+documentStateUpdate (DocumentAction (ReplyStatement upd sid (FormBegin lst)))
                     _oldgs
                     _newgs
                     (DocumentStateDiscussion (did, Nothing))
   = DocumentStateDiscussion (did, Just (StatementEditorProps sid lst upd))
 
-documentStateUpdate (DocumentAction (ReplyStatement _upd _sid FormCancelled))
+documentStateUpdate (DocumentAction (ReplyStatement _upd _sid FormCancel))
                     _oldgs
                     _newgs
                     (DocumentStateDiscussion (did, Just _))

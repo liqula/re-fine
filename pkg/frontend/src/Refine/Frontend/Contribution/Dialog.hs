@@ -370,7 +370,7 @@ editInput einfo = mkPersistentStatefulView "EditInput" (einfo ^. editInfoLocalSt
             & iconButtonPropsDisabled     .~ True
           else props
             & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [ DocumentAction . DocumentSave . AfterDialog $ EditInfo desc (fromJust mkind) rst
+            & iconButtonPropsOnClick      .~ [ DocumentAction . DocumentSave . FormComplete $ EditInfo desc (fromJust mkind) rst
                                              , ContributionAction ClearRange
                                              ]
 

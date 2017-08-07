@@ -36,19 +36,16 @@ ajaxAction :: (a -> c) -> (b -> c) -> AjaxAction a b -> c
 ajaxAction f _ (BeforeAjax a) = f a
 ajaxAction _ g (AfterAjax b)  = g b
 
-data FormAction_ a b = FormOngoing a | FormComplete b | FormCancelled
+-- | (For e.g. dialogs.)
+data FormActionWith a b = FormBegin a | FormComplete b | FormCancel
   deriving (Show, Generic, Eq, Ord)
 
-formAction :: (a -> c) -> (b -> c) -> c -> FormAction_ a b -> c
-formAction f _ _ (FormOngoing a)  = f a
+formAction :: (a -> c) -> (b -> c) -> c -> FormActionWith a b -> c
+formAction f _ _ (FormBegin a)    = f a
 formAction _ g _ (FormComplete b) = g b
-formAction _ _ c FormCancelled    = c
+formAction _ _ c FormCancel       = c
 
-type FormAction a = FormAction_ (LocalStateRef a) a
-
-
-data DialogAction a b = BeforeDialog a | AfterDialog b
-  deriving (Show, Generic, Eq, Ord)
+type FormAction a = FormActionWith (LocalStateRef a) a
 
 
 -- | FIXME: use React.Flux.Outdated.ReactViewKey instead (slightly more sophisticated).
@@ -95,6 +92,6 @@ data SelectionStateWithPx = SelectionStateWithPx
     }
     deriving (Show, Eq, Generic)
 
-makeRefineTypes [ ''AjaxAction, ''FormAction_, ''DialogAction
+makeRefineTypes [ ''AjaxAction, ''FormActionWith
                 , ''OffsetFromViewportTop, ''ScrollOffsetOfViewport, ''OffsetFromDocumentTop, ''SelectionStateWithPx
                 ]

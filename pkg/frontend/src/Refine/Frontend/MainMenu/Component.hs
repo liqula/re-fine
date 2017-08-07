@@ -145,7 +145,7 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
   div_ $ do
     div_ ["style" @@= [decl "marginLeft" (Px 3)]] $ do
       let mkCreateGroupAction :: GlobalAction
-          mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup Nothing . FormOngoing
+          mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup Nothing . FormBegin
                               $ newLocalStateRef (CreateGroup "" "" [] []) groups
 
       ibutton_ $ emptyIbuttonProps "Group_add" [mkCreateGroupAction]
@@ -264,7 +264,7 @@ mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
       & ibLabel .~ "processes"
 
     ibutton_ $ emptyIbuttonProps "Process_add"
-        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormOngoing
+        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormBegin
           $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract emptyRawContent (group ^. groupID)) group
         ]
       & ibListKey .~ "process_add"
@@ -274,7 +274,7 @@ mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
       & ibLabel .~ "create new process"
 
     ibutton_ $ emptyIbuttonProps "Group_update"
-        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup (Just $ group ^. groupID) . FormOngoing
+        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup (Just $ group ^. groupID) . FormBegin
           $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
         ]
       & ibListKey .~ "group_update"
@@ -434,8 +434,8 @@ renderCreateOrUpdateProcess
   :: forall st a.
      ALens' st Title
   -> ALens' st Abstract
-  -> (FormAction_ a st -> GlobalAction)  -- ^ save
-  -> GlobalAction                        -- ^ cancel
+  -> (FormActionWith a st -> GlobalAction)  -- ^ save
+  -> GlobalAction                           -- ^ cancel
   -> st
   -> ReactElementM ('StatefulEventHandlerCode st) ()
 renderCreateOrUpdateProcess (cloneLens -> toTitle) (cloneLens -> toAbstract) save cancel st = do

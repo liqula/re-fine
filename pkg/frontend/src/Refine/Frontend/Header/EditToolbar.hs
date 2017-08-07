@@ -152,7 +152,7 @@ editToolbar_ ep = do
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
   let props :: IbuttonProps [GlobalAction]
-      props = emptyIbuttonProps "Save" [DocumentAction . DocumentSave $ BeforeDialog ()]
+      props = emptyIbuttonProps "Save" [DocumentAction . DocumentSave $ FormBegin ()]
         & ibListKey      .~ "save"
         & ibLabel        .~ "save"
         & ibEnabled      .~ True

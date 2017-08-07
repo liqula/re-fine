@@ -43,7 +43,7 @@ import           Refine.Frontend.Util
 data DocumentAction =
     UpdateEditorState EditorState
   | DocumentUpdateEditInfo (EditInfo (Maybe EditKind))
-  | DocumentSave (DialogAction () (EditInfo EditKind))
+  | DocumentSave (FormActionWith () (EditInfo EditKind))
   | DocumentCancelSave
   | DocumentToggleStyle Style
   | DocumentToggleBlockType BlockType

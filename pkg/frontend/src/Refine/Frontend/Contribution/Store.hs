@@ -75,8 +75,8 @@ activeDialogUpdate :: HasCallStack => GlobalAction -> Maybe ActiveDialog -> Mayb
 activeDialogUpdate = \case
   ContributionAction ShowCommentEditor            -> activeDialogUpdateForShowCommentEditor
   ContributionAction HideCommentEditor            -> const Nothing
-  DocumentAction (DocumentSave (BeforeDialog ())) -> const $ Just ActiveDialogEdit
-  DocumentAction (DocumentSave (AfterDialog _))   -> const Nothing
+  DocumentAction (DocumentSave (FormBegin ()))    -> const $ Just ActiveDialogEdit
+  DocumentAction (DocumentSave (FormComplete _))  -> const Nothing
   DocumentAction DocumentCancelSave               -> const Nothing
   _ -> id
 
