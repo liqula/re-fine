@@ -63,34 +63,16 @@ documentStateUpdate (LoadVDoc (AfterAjax vdoc)) oldgs _newgs st
          st
 
 documentStateUpdate (LoadCompositeVDoc (AfterAjax cvdoc)) oldgs _newgs st
-  = let eidChanged = Just newID /= mOldID
-        newID  = cvdoc ^. compositeVDocThisEditID
-        mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
-    in refreshDocumentStateView (fromMaybe (error "impossible") $ gsEdit oldgs) eidChanged (rawContentFromCompositeVDoc cvdoc) st
+  = enterViewMode cvdoc oldgs st
 
 documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) DocumentStateEdit{}
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
 documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _)
-  = DocumentStateEdit
-      (maybe estate (forceSelection estate . (`toSelectionState` True)) $ oldgs ^. gsCurrentSelection)
-      einfo
-      Nothing
-  where
-    einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) oldgs
+  = enterEditModeWithEditorState oldgs estate Nothing
 
 documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateDiff _ _ _ edit _ _)
-  = DocumentStateEdit
-      (createWithRawContent $ ed ^. editVDocVersion)
-      einfo
-      (Just edit)
-  where
-    Just ed = getEdit oldgs edit
-
-    einfo = EditInfo
-             (ed ^. editDesc)
-             (Just $ ed ^. editKind)
-             $ newLocalStateRef (EditInputState einfo Nothing) oldgs
+  = enterEditModeWithEdit oldgs edit
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     oldgs
@@ -201,6 +183,39 @@ documentStateUpdate (HeaderAction ToggleIndexToolbarExtension) _ _ st | has _Doc
 
 documentStateUpdate _ _ _ st
   = st
+
+
+enterViewMode :: CompositeVDoc -> GlobalState -> GlobalDocumentState -> GlobalDocumentState
+enterViewMode cvdoc oldgs = refreshDocumentStateView ed eidChanged rc
+  where
+    ed = fromMaybe (error "impossible") $ gsEdit oldgs
+    eidChanged = Just newID /= mOldID
+      where
+        newID  = cvdoc ^. compositeVDocThisEditID
+        mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
+    rc = rawContentFromCompositeVDoc cvdoc
+
+-- | i think this is for when an edit is already under way, and we want to refresh the edit mode,
+-- like after opening and closing the save dialog?
+enterEditModeWithEdit :: GlobalState -> ID Edit -> GlobalDocumentState
+enterEditModeWithEdit oldgs eid = DocumentStateEdit
+      (createWithRawContent $ ed ^. editVDocVersion)
+      einfo
+      (Just eid)
+  where
+    Just ed = getEdit oldgs eid
+
+    einfo = EditInfo
+             (ed ^. editDesc)
+             (Just $ ed ^. editKind)
+             $ newLocalStateRef (EditInputState einfo Nothing) oldgs
+
+enterEditModeWithEditorState :: GlobalState -> EditorState -> Maybe (ID Edit) -> GlobalDocumentState
+enterEditModeWithEditorState oldgs estate = DocumentStateEdit
+      (maybe estate (forceSelection estate . (`toSelectionState` True)) $ oldgs ^. gsCurrentSelection)
+      einfo
+  where
+    einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) oldgs
 
 
 -- | construct a 'SetAllVerticalSpanBounds' action.
