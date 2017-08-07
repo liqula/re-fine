@@ -29,12 +29,13 @@ import Refine.Frontend.Prelude
 import           Refine.Common.Types
 import           Refine.Common.VDoc.OT (docRanges)
 import           Refine.Common.VDoc.Draft
-import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
+import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Header.Types
+import           Refine.Frontend.Types
 
 
 mkEditToolbarProps :: HasCallStack => EditorState -> EditToolbarProps
@@ -151,7 +152,7 @@ editToolbar_ ep = do
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
   let props :: IbuttonProps [GlobalAction]
-      props = emptyIbuttonProps "Save" [DocumentAction RequestDocumentSave]
+      props = emptyIbuttonProps "Save" [DocumentAction . DocumentSave $ BeforeDialog ()]
         & ibListKey      .~ "save"
         & ibLabel        .~ "save"
         & ibEnabled      .~ True

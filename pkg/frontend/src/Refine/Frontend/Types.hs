@@ -47,6 +47,10 @@ formAction _ _ c FormCancelled    = c
 type FormAction a = FormAction_ (LocalStateRef a) a
 
 
+data DialogAction a b = BeforeDialog a | AfterDialog b
+  deriving (Show, Generic, Eq, Ord)
+
+
 -- | FIXME: use React.Flux.Outdated.ReactViewKey instead (slightly more sophisticated).
 type ReactListKey = JSString
 
@@ -91,4 +95,6 @@ data SelectionStateWithPx = SelectionStateWithPx
     }
     deriving (Show, Eq, Generic)
 
-makeRefineTypes [''AjaxAction, ''FormAction_, ''OffsetFromViewportTop, ''ScrollOffsetOfViewport, ''OffsetFromDocumentTop, ''SelectionStateWithPx]
+makeRefineTypes [ ''AjaxAction, ''FormAction_, ''DialogAction
+                , ''OffsetFromViewportTop, ''ScrollOffsetOfViewport, ''OffsetFromDocumentTop, ''SelectionStateWithPx
+                ]
