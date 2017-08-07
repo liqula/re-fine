@@ -143,7 +143,7 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
     br_ []
     case meditor of
       Just e
-        | e ^. sepStatementID == stmnt ^. statementID
+        | e ^. sepStatementID == stmnt ^. statementID && not (e ^. sepUpdate)
              -> view_ (statementEditor e) "statementEditor_"
         | otherwise -> mempty
       _ -> do
