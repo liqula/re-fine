@@ -69,3 +69,10 @@ addStatement sid statement = do
   db $ do
     _ <- DB.createStatement sid statement
     DB.getDiscussion =<< DB.discussionOfStatement sid
+
+updateStatement :: ID Statement -> CreateStatement -> App Discussion
+updateStatement sid statement = do
+  appLog "updateStatement"
+  db $ do
+    _ <- DB.updateStatement sid statement
+    DB.getDiscussion =<< DB.discussionOfStatement sid

@@ -26,7 +26,6 @@ module Refine.Frontend.Login.Component where
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens (ASetter)
 import qualified Data.Text as ST
 import           Language.Css.Syntax
 
@@ -51,12 +50,12 @@ inputFieldWithKey
   :: (FromJSVal c)
   => JSString -> JSString -> JSString -> JSString -> ASetter s s b c
   -> ReactElementM ('StatefulEventHandlerCode s) ()
-inputFieldWithKey fieldId fieldType fieldPlaceholder fieldKey lens =
+inputFieldWithKey fieldId fieldType fieldPlaceholder fieldKey asetter =
   input_ [ "id" $= fieldId
          , "style" @@= inputFieldStyles
          , "type" $= fieldType
          , "placeholder" $= fieldPlaceholder
-         , onChange $ \evt -> simpleHandler $ \st -> ([], Just (st & lens .~ target evt fieldKey))
+         , onChange $ \evt -> simpleHandler $ \st -> ([], Just (st & asetter .~ target evt fieldKey))
          ]
 
 inputField

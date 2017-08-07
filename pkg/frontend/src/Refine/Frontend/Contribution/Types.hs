@@ -30,11 +30,13 @@ import Refine.Frontend.Prelude
 import           Control.DeepSeq
 import qualified Data.HashMap.Strict as HashMap
 import           Data.List.NonEmpty (NonEmpty((:|)))
+import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Map.Strict as Map
 import           Language.Css.Syntax hiding (Value)
 
 import React.Flux.Missing
 import Refine.Common.Types
+import Refine.Common.VDoc.OT
 import Refine.Frontend.Icon.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
@@ -86,7 +88,6 @@ data ContributionAction =
   | SetBubbleFilter (Maybe (Set ContributionID))
   | ToggleVoteOnContribution (ID Edit) Vote
   deriving (Show, Eq, Generic)
-
 
 data ContributionState = ContributionState
   { _csCurrentSelectionWithPx   :: Maybe SelectionStateWithPx
@@ -240,14 +241,6 @@ data ShowNoteProps =
       }
   deriving (Eq)
 
-data ShowDiscussionProps =
-    ShowDiscussionProps
-      { _sdpNote        :: Discussion
-      , _sdpTop         :: OffsetFromDocumentTop
-      , _sdpWindowWidth :: Int
-      }
-  deriving (Eq)
-
 newtype ShowQuestionProps = ShowQuestionProps (Maybe CompositeQuestion)
   deriving (Eq)
 
@@ -259,10 +252,61 @@ data AddContributionProps st = AddContributionProps
   deriving (Eq)
 
 
+data DiscussionProps = DiscussionProps
+  { _discPropsDiscussion :: Discussion
+  , _discPropsAboutText  :: RawContent  -- ^ the blocks overlapping the range of the discussion.
+  , _discPropsDetails    :: StatementPropDetails
+  , _discPropsFlatView   :: Bool
+--  , _discussionMode      :: DiscussionMode  -- TODO
+  }
+  deriving (Eq, Show, Generic)
+
+data StatementPropDetails = StatementPropDetails
+  { _spdEditorProps :: Maybe StatementEditorProps
+  , _spdCurrentUser :: Maybe (ID User)
+  , _spdUsernames   :: Map (ID User) Username -- FIXME: store user names in discussions
+  }
+  deriving (Eq, Show, Generic)
+
+data StatementEditorProps = StatementEditorProps
+  { _sepStatementID :: ID Statement
+  , _sepLocalState  :: LocalStateRef CreateStatement
+  , _sepUpdate      :: Bool
+  }
+  deriving (Eq, Show, Generic)
+
+-- data DiscussionMode = DiscussionModeChrono | DiscussionModeTree
+--   deriving (Eq, Ord, Show, Bounded, Enum, Generic)
+
+discussionProps :: Discussion -> RawContent -> StatementPropDetails -> Bool -> DiscussionProps
+discussionProps disc = DiscussionProps disc . cropToBlocks (disc ^. discussionRange)
+
+-- | Remove all blocks that do not overlap with a range.
+--
+-- FIXME: where should we move this?  (also move the test cases if you move this!)
+cropToBlocks :: Range Position -> RawContent -> RawContent
+cropToBlocks rnge = toRawContent . prune . fromRawContent
+  where
+    prune :: NewDoc -> NewDoc
+    prune d1 = case splt endIx d1 of
+                 (d2, _) -> case splt startIx d2 of
+                   (_, d3) -> d3
+
+    startIx = rnge ^. rangeBegin . rowIndex
+    endIx   = rnge ^. rangeEnd . rowIndex + 1
+
+    splt :: Int -> NewDoc -> (NewDoc, NewDoc)
+    splt = split (mempty, measureRowColumn . _1)
+
+-- | FIXME: where should we move this?  (also move the test cases if you move this!)
+blockIndices :: RawContent -> [BlockIndex]
+blockIndices (RawContent blocks _) = zipWith BlockIndex [0..] . fmap (view blockKey) . NonEmpty.toList $ blocks
+
+
 -- * instances
 
 deriveClasses
-  [ ([''VerticalSpanBounds, ''ContributionAction, ''ContributionState, ''BubblePositioning, ''CommentInputState, ''EditInputState, ''CommentKind, ''ActiveDialog, ''QuickCreateSide, ''QuickCreateShowState], allClass)
+  [ ([''VerticalSpanBounds, ''ContributionAction, ''ContributionState, ''BubblePositioning, ''CommentInputState, ''EditInputState, ''CommentKind, ''ActiveDialog, ''QuickCreateSide, ''QuickCreateShowState, ''StatementPropDetails, ''StatementEditorProps], allClass)
   , ([''AllVerticalSpanBounds, ''CommentInfo, ''EditInfo, ''ProtoBubble, ''BubbleProps, ''QuickCreateProps, ''CommentDisplayProps, ''AddContributionProps], [''Lens'])
   ]
 
@@ -284,6 +328,8 @@ instance IbuttonOnClick CommentKind ('StatefulEventHandlerCode CommentInputState
 
 instance IbuttonOnClick EditKind ('StatefulEventHandlerCode EditInputState) where
   runIbuttonOnClick _evt _mevt ekind st = (mempty, Just $ st & editInputStateData . editInfoKind .~ Just ekind)
+
+deriveClasses [([''DiscussionProps], allClass)]
 
 
 -- * helpers

@@ -98,7 +98,7 @@ transformGlobalState = transf
       -- other effects
       case act of
         ContributionAction RequestSetAllVerticalSpanBounds -> do
-          dispatchAndExec . ContributionAction =<< setAllVerticalSpanBounds (st ^. gsDocumentState)
+          mapM_ (dispatchAndExec . ContributionAction) =<< setAllVerticalSpanBounds (st ^. gsDocumentState)
 
         ContributionAction RequestSetRange -> do
           mRangeEvent <- getRangeAction $ getDocumentState st
@@ -158,10 +158,19 @@ transformGlobalState = transf
               & gsServerCache         %~ serverCacheUpdate act
 
 serverCacheUpdate :: GlobalAction -> ServerCache -> ServerCache
-serverCacheUpdate (LoadVDoc (AfterAjax vdoc)) c = c & scVDocs %~ M.insert (vdoc ^. C.vdocID) vdoc
-serverCacheUpdate (LoadCompositeVDoc (AfterAjax cvdoc)) c = serverCacheUpdate (LoadVDoc (AfterAjax (cvdoc ^. C.compositeVDoc))) c
-serverCacheUpdate (RefreshServerCache c') c = c' <> c
-serverCacheUpdate _ c = c
+serverCacheUpdate a c = case a of
+  LoadVDoc (AfterAjax vdoc)
+    -> c & scVDocs %~ M.insert (vdoc ^. C.vdocID) vdoc
+  LoadCompositeVDoc (AfterAjax cvdoc)
+    -- TODO: load user data for all user ids found in cvdoc
+    -> serverCacheUpdate (LoadVDoc (AfterAjax (cvdoc ^. C.compositeVDoc))) c
+  AddStatement _upd _cid (AfterAjax discussion)
+    -> c & scDiscussions %~ M.insert (discussion ^. C.discussionID) discussion
+  SetCurrentUser (UserLoggedIn user)
+    -> c & scUsers %~ M.insert (user ^. C.userID) user
+  RefreshServerCache c'
+    -> c' <> c
+  _ -> c
 
 consoleLogGlobalStateBefore :: HasCallStack => forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
 consoleLogGlobalStateBefore False _ _ = pure ()
@@ -178,8 +187,8 @@ consoleLogGlobalState False _ = do
   consoleLogJSONM "New state: " (String "[UNCHANGED]" :: Value)
 consoleLogGlobalState True st = liftIO $ do
   consoleLogJSONM "New state: " st
-  traceEditorState (st ^. gsDocumentState . documentStateVal)
-  traceContentInEditorState (st ^. gsDocumentState . documentStateVal)
+  traceEditorState `mapM_` (st ^? gsDocumentState . documentStateVal)
+  traceContentInEditorState `mapM_` (st ^? gsDocumentState . documentStateVal)
 
 consoleLogGlobalAction :: HasCallStack => forall m. MonadTransform m => GlobalAction -> m ()
 consoleLogGlobalAction act = do
@@ -285,6 +294,13 @@ emitBackendCallsFor act st = case act of
 
     -- contributions
 
+    AddStatement upd sid (BeforeAjax statement) -> do
+        (if upd then updateStatement else addStatement) sid statement $ \case
+            (Left rsp) -> ajaxFail rsp Nothing
+            (Right discussion) -> dispatchManyM
+                                   [ AddStatement upd sid $ AfterAjax discussion
+                                   ]
+
     ContributionAction (SubmitComment (CommentInfo text kind)) -> do
       let headEdit = fromMaybe (error "emitBackendCallsFor.SubmitComment")
                    $ st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit
@@ -306,17 +322,19 @@ emitBackendCallsFor act st = case act of
             (Left rsp) -> ajaxFail rsp Nothing
             (Right note) -> handle $ AddNote note
 
-    DocumentAction (DocumentSave info) -> do
+    DocumentAction (DocumentSave info)
+      | DocumentStateEdit editorState _ baseEdit <- st ^. gsDocumentState
+      -> do
         let eid :: C.ID C.Edit
             Just eid = st ^? gsVDoc . _Just . C.compositeVDocThisEditID
 
             cedit = C.CreateEdit
                   { C._createEditDesc        = info ^. editInfoDesc
-                  , C._createEditVDocVersion = getCurrentRawContent $ st ^. gsDocumentState . documentStateVal
+                  , C._createEditVDocVersion = getCurrentRawContent editorState
                   , C._createEditKind        = info ^. editInfoKind
                   }
 
-            addOrUpdate = case join $ st ^? gsDocumentState . documentBaseEdit of
+            addOrUpdate = case baseEdit of
               Nothing -> addEdit eid
               Just eid' -> updateEdit eid'
 

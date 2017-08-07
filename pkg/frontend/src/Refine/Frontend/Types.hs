@@ -36,12 +36,13 @@ ajaxAction :: (a -> c) -> (b -> c) -> AjaxAction a b -> c
 ajaxAction f _ (BeforeAjax a) = f a
 ajaxAction _ g (AfterAjax b)  = g b
 
-data FormAction_ a b = FormOngoing a | FormComplete b
+data FormAction_ a b = FormOngoing a | FormComplete b | FormCancelled
   deriving (Show, Generic, Eq, Ord)
 
-formAction :: (a -> c) -> (b -> c) -> FormAction_ a b -> c
-formAction f _ (FormOngoing a)  = f a
-formAction _ g (FormComplete b) = g b
+formAction :: (a -> c) -> (b -> c) -> c -> FormAction_ a b -> c
+formAction f _ _ (FormOngoing a)  = f a
+formAction _ g _ (FormComplete b) = g b
+formAction _ _ c FormCancelled    = c
 
 type FormAction a = FormAction_ (LocalStateRef a) a
 

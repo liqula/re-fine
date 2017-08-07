@@ -62,7 +62,20 @@ import Control.Applicative as P
 import Control.Arrow as P ((&&&), (***), first, second)
 import Control.Category as P
 import Control.Exception as P (SomeException(..), ErrorCall(ErrorCall), throwIO, try, catch, assert, mask, onException)
-import Control.Lens as P (Iso', Prism', Lens', Getter, (&), (^.), (^?), (^?!), (.~), (%~), (.=), (%=), _1, _2, _3, at, to, has, _Just, makeLenses, makePrisms, view, set, iso, prism', lengthOf, folded, filtered)
+import Control.Lens as P
+    ( Iso, Iso', AnIso, AnIso', iso, cloneIso
+    , Prism, Prism', APrism, APrism', prism', clonePrism
+    , Lens, Lens', ALens, ALens', lens, cloneLens
+    , Setter, Setter', ASetter, ASetter', cloneSetter
+    , Getter
+    , (&), (<&>)
+    , (^.), (^?), (^?!), (.~), (%~), (.=), (%=)
+    , _1, _2, _3, both, at, ix, to, has
+    , view, set
+    , lengthOf, folded, filtered
+    , _Just
+    , makeLenses, makePrisms
+    )
 import Control.Monad as P ((>=>), (<=<), mapM, mapM_, forM, forM_, void, foldM, join, when, unless, guard)
 import Control.Monad.Except as P (MonadError(..), Except, runExcept, ExceptT(..), runExceptT, throwError)
 import Control.Monad.IO.Class as P (MonadIO, liftIO)

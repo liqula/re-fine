@@ -91,7 +91,6 @@ mainScreen = mkView "MainScreen" $ \rs -> do
 
           -- components that are visible only sometimes:
           showNote_ `mapM_` showNoteProps (vdoc ^. compositeVDocApplicableNotes) rs
-          showDiscussion_ `mapM_` showDiscussionProps (vdoc ^. compositeVDocApplicableDiscussions) rs
           case rs ^. RS.gsContributionState . RS.csActiveDialog of
             Just (ActiveDialogComment lst) -> do
               addComment_ __ $ AddContributionProps
@@ -137,7 +136,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
 
                       leftAside_ asideProps
                       document_ $ DocumentProps ((if rs ^. gsHeaderState . hsReadOnly
-                                                  then mapDocumentState id deleteMarksFromRawContent id
+                                                  then mapDocumentState id deleteMarksFromRawContent id id
                                                   else id)
                                                  $ rs ^. to RS.getDocumentState)
                                                 (rs ^. RS.gsContributionState)

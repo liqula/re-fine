@@ -25,6 +25,7 @@ module Refine.Frontend.Document.Document
   , document_
   , emptyEditorProps
   , defaultEditorProps
+  , mkDocumentStyleMap
 
     -- * for testing only
   , documentRender
@@ -32,16 +33,14 @@ module Refine.Frontend.Document.Document
 
 import Refine.Frontend.Prelude
 
-import qualified Data.List.NonEmpty as NEL
 import qualified React.Flux.Outdated as Outdated
-import           Language.Css.Build hiding (s)
 import           Language.Css.Syntax hiding (Value)
 import           React.Flux.Internal (HandlerArg(HandlerArg))
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.OT (showEditAsRawContentWithMarks, hideUnchangedParts)
-import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Contribution.Types
+import           Refine.Frontend.Contribution.Discussion
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Store
@@ -64,52 +63,55 @@ document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
   }
 
 documentRender :: HasCallStack => () -> DocumentProps -> ReactElementM ('StatefulEventHandlerCode st) ()
-documentRender() props = liftViewToStateHandler $ do
-  let dstate = props ^. dpDocumentState
+documentRender () props = liftViewToStateHandler . articleWrap $ case dstate of
+    DocumentStateView estate rawcontent
+        -> mkEditor (Just rawcontent) estate
 
-      sendMouseUpIfReadOnly :: EventHandlerTypeWithMods 'EventHandlerCode
-      sendMouseUpIfReadOnly =
+    DocumentStateDiff _ _estate rawcontent edit collapsed _
+        -> mkEditor (Just rawContentDiffView) (createWithContent $ convertFromRaw rawContentDiffView)
+      where
+        rawContentDiffView :: RawContent
+        rawContentDiffView = mcollapse $ diffit (edit ^. editSource)
+
+        mcollapse rc
+          | collapsed = hideUnchangedParts rc 0 0  -- FUTUREWORK: make these numbers adjustable by the user
+          | otherwise = rc
+
+        diffit (EditSource []) = error "impossible"
+        -- FUTUREWORK: make possible to choose a parent
+        diffit (EditSource ((otedit, _): _)) = showEditAsRawContentWithMarks otedit rawcontent
+
+    DocumentStateEdit estate _ _ -> mkEditor Nothing estate
+
+    DocumentStateDiscussion dprops -> discussion_ dprops
+  where
+    dstate = props ^. dpDocumentState
+
+    sendMouseUpIfReadOnly :: EventHandlerTypeWithMods 'EventHandlerCode
+    sendMouseUpIfReadOnly =
         simpleHandler $ mconcat [ dispatch $ ContributionAction RequestSetRange | has _DocumentStateView dstate ]
 
-      editorState :: EditorState
-      editorState = maybe (dstate ^. documentStateVal) (createWithContent . convertFromRaw) rawContentDiffView
+    articleWrap = article_
+         [ "id" $= "vdocValue"  -- FIXME: do we still use this?
+         , "style" @@= [zindex ZIxArticle, decl "overflow" (Ident "visible")]
+         , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
+         , onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
+         , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
+         ]
 
-      documentStyleMap :: Value
-      documentStyleMap = mkDocumentStyleMap active rawContent
-        where
-          active = props ^. dpContributionState . csHighlightedMarkAndBubble
-
-      rawContent :: Maybe RawContent
-      rawContent = rawContentDiffView <|> (dstate ^? documentStateContent)
-
-      rawContentDiffView :: Maybe RawContent
-      rawContentDiffView
-          = fmap mcollapse
-          $ diffit =<< (props ^? dpDocumentState . documentStateDiff . editSource)
-        where
-          mcollapse rc = if props ^? dpDocumentState . documentStateDiffCollapsed == Just True
-            then hideUnchangedParts rc 0 0  -- FUTUREWORK: make these numbers adjustable by the user
-            else rc
-
-          -- FIXME: show the relevant diff
-          diffit (EditSource []) = Nothing
-          diffit (EditSource ((otedit, _): _))
-            = showEditAsRawContentWithMarks otedit <$> (dstate ^? documentStateContent)
-
-  article_ [ "id" $= "vdocValue"  -- FIXME: do we still use this?
-           , "style" @@= [zindex ZIxArticle, decl "overflow" (Ident "visible")]
-           , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
-           , onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
-           , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
-           ] $ do
-    editor_
-      [ "editorState" &= editorState
-      , "customStyleMap" &= documentStyleMap
-      , "readOnly" &= has _DocumentStateView dstate
-      , onChange (editorOnChange dstate)
-      , onBlur editorOnBlur
-      , onFocus editorOnFocus
-      ] mempty
+    mkEditor rawContent editorState = editor_
+        [ "editorState" &= editorState
+        , "customStyleMap" &= documentStyleMap
+        , "readOnly" &= has _DocumentStateView dstate
+        , onChange (editorOnChange editorState)
+        , onBlur editorOnBlur
+        , onFocus editorOnFocus
+        ] mempty
+      where
+        documentStyleMap :: Value
+        documentStyleMap = mkDocumentStyleMap active rawContent
+          where
+            active = props ^. dpContributionState . csHighlightedMarkAndBubble
 
 
 -- | Handle editor change events.
@@ -126,16 +128,15 @@ documentRender() props = liftViewToStateHandler $ do
 -- of the structure, things should be fine.
 --
 -- Note that the fact that we don't have an 'Event' here also means that we can't modify it.
-editorOnChange :: DocumentState -> Event -> EventHandlerTypeWithMods 'EventHandlerCode
-editorOnChange dstate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
+editorOnChange :: EditorState -> Event -> EventHandlerTypeWithMods 'EventHandlerCode
+editorOnChange estate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
   simpleHandler $ dispatch updateAction
   where
-    updateAction = DocumentAction . DocumentUpdate . globalDocumentState $
-      dstate & documentStateVal .~ estate'
+    updateAction = DocumentAction $ UpdateEditorState estate'
 
     (_isBlur, _isFocus) = (oldfoc && not newfoc, not oldfoc && newfoc)
       where
-        oldfoc = dstate ^. documentStateVal . to getSelection . selectionStateHasFocus
+        oldfoc = estate  ^. to getSelection . selectionStateHasFocus
         newfoc = estate' ^. to getSelection . selectionStateHasFocus
 
 editorOnBlur :: Event -> FocusEvent -> EventHandlerTypeWithMods 'EventHandlerCode
@@ -151,39 +152,6 @@ documentComponentDidMountOrUpdate _getPropsAndState = do
 
 document_ :: HasCallStack => DocumentProps -> ReactElementM eventHandler ()
 document_ props = Outdated.viewWithSKey document "document" props mempty
-
-
-mkDocumentStyleMap :: HasCallStack => [MarkID] -> Maybe RawContent -> Value
-mkDocumentStyleMap _ Nothing = object []
-mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
-  where
-    marks :: [Style]
-    marks = fmap snd . mconcat $ view blockStyles <$> (rawContent ^. rawContentBlocks . to NEL.toList)
-
-    go :: Style -> [Pair]
-    go s@(Mark cid)   = [styleToST s .:= declsToJSON (mouseover cid <> mkMarkSty cid)]
-    go s@StyleDeleted = [styleToST s .:= declsToJSON (bg 255 0   0 0.3)]
-    go s@StyleAdded   = [styleToST s .:= declsToJSON (bg 0   255 0 0.3)]
-    go s@StyleChanged = [styleToST s .:= declsToJSON (bg 255 255 0 0.3)]
-    go _ = []
-
-    mouseover :: MarkID -> [Decl]
-    mouseover cid = [decl "borderBottom" [expr $ Px 2, expr $ Ident "solid", expr Color.VDocRollover] | any (cid `matches`) actives]
-
-    matches :: MarkID -> MarkID -> Bool
-    matches (MarkContribution c _) (MarkContribution c' _) = c == c'
-    matches m m' = m == m'
-
-    mkMarkSty :: MarkID -> [Decl]
-    mkMarkSty MarkCurrentSelection  = bg 255 255 0 0.3
-    mkMarkSty (MarkContribution x _) = case x of
-      ContribIDNote _       -> bg   0 255 0 0.3
-      ContribIDQuestion _   -> bg   0 255 0 0.3
-      ContribIDDiscussion _ -> bg   0 255 0 0.3
-      ContribIDEdit _       -> bg   0 255 0 0.3
-
-    bg :: Int -> Int -> Int -> Double -> [Decl]
-    bg r g b a = ["background" `decl` Color.RGBA r g b a]
 
 
 emptyEditorProps :: HasCallStack => [PropertyOrHandler handler]

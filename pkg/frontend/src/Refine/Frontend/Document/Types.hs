@@ -26,16 +26,22 @@ module Refine.Frontend.Document.Types where
 import Refine.Frontend.Prelude
 
 import           GHC.Generics (Generic)
+import qualified Data.List.NonEmpty as NEL
+import           Language.Css.Build hiding (s)
+import           Language.Css.Syntax hiding (Value)
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
+import qualified Refine.Frontend.Colors as Color
+import           Refine.Frontend.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
+import           Refine.Frontend.Util
 
 
 data DocumentAction =
-    DocumentUpdate GlobalDocumentState
+    UpdateEditorState EditorState
   | DocumentUpdateEditInfo (EditInfo (Maybe EditKind))
   | RequestDocumentSave  -- ^ FIXME: use the 'AfterAjax' trick here?
   | DocumentSave (EditInfo EditKind)
@@ -47,9 +53,10 @@ data DocumentAction =
   | ToggleCollapseDiff
   | DocumentUndo
   | DocumentRedo
+  | ReplyStatement Bool{-replace-} (ID Statement) (FormAction CreateStatement)
   deriving (Show, Eq, Generic)
 
-data DocumentState_ editable{-() or Bool-} rawcontent edit =
+data DocumentState_ editable{-() or Bool-} rawcontent edit discussion =
     DocumentStateView
       { _documentStateVal      :: EditorState
       , _documentStateContent  :: rawcontent
@@ -67,19 +74,23 @@ data DocumentState_ editable{-() or Bool-} rawcontent edit =
       , _documentStateEditInfo :: EditInfo (Maybe EditKind)  -- ^ 'editInput_' dialog state lives here between close / re-open.
       , _documentBaseEdit      :: Maybe (ID Edit)  -- ^ Just if we are updating and edit
       }
+  | DocumentStateDiscussion
+      { _documentDiscussion    :: discussion
+      }
   deriving (Show, Eq, Generic, Functor)
 
-mapDocumentState :: (a -> a') -> (b -> b') -> (c -> c') -> DocumentState_ a b c -> DocumentState_ a' b' c'
-mapDocumentState h f g = \case
-  DocumentStateView x a -> DocumentStateView x (f a)
-  DocumentStateDiff i x a e y ed -> DocumentStateDiff i x (f a) (g e) y (h ed)
+mapDocumentState :: (a -> a') -> (b -> b') -> (c -> c') -> (d -> d') -> DocumentState_ a b c d -> DocumentState_ a' b' c' d'
+mapDocumentState fa fb fc fd = \case
+  DocumentStateView x a -> DocumentStateView x (fb a)
+  DocumentStateDiff i x a e y ed -> DocumentStateDiff i x (fb a) (fc e) y (fa ed)
   DocumentStateEdit x y be -> DocumentStateEdit x y be
+  DocumentStateDiscussion d -> DocumentStateDiscussion (fd d)
 
 -- | The document state variant for 'DocumentProps'.
-type DocumentState = DocumentState_ Bool RawContent Edit
+type DocumentState = DocumentState_ Bool RawContent Edit DiscussionProps
 
 -- | The document state for 'GlobalState'.
-type GlobalDocumentState = DocumentState_ () () (ID Edit)
+type GlobalDocumentState = DocumentState_ () () (ID Edit) (ID Discussion, Maybe StatementEditorProps)
 
 data WipedDocumentState =
     WipedDocumentStateView
@@ -90,10 +101,11 @@ data WipedDocumentState =
       , _wipedDocumentStateDiffEditable  :: Bool
       }
   | WipedDocumentStateEdit EditToolbarProps
+  | WipedDocumentStateDiscussion DiscussionToolbarProps
   deriving (Show, Eq)
 
 globalDocumentState :: HasCallStack => DocumentState -> GlobalDocumentState
-globalDocumentState = mapDocumentState (const ()) (const ()) (^. editID)
+globalDocumentState = mapDocumentState (const ()) (const ()) (^. editID) (\d -> (d ^. discPropsDiscussion . discussionID, Nothing))
 
 mkDocumentStateView :: HasCallStack => RawContent -> GlobalDocumentState
 mkDocumentStateView = globalDocumentState . mkDocumentStateView_
@@ -118,6 +130,7 @@ refreshDocumentStateView ed eidChanged c = if eidChanged then viewMode else same
       DocumentStateDiff _ _ _ edit collapsed editable -> DocumentStateDiff (mkEditIndex ed edit) e () edit collapsed editable
       DocumentStateEdit _ kind Nothing       -> DocumentStateEdit e kind Nothing
       dst@(DocumentStateEdit _ _ Just{})     -> dst -- FIXME: not sure about this
+      DocumentStateDiscussion did            -> DocumentStateDiscussion did
 
     e  = createWithContent $ convertFromRaw c
 
@@ -135,6 +148,39 @@ emptyDocumentProps = DocumentProps
   { _dpDocumentState     = mkDocumentStateView_ emptyRawContent
   , _dpContributionState = emptyContributionState
   }
+
+mkDocumentStyleMap :: HasCallStack => [MarkID] -> Maybe RawContent -> Value
+mkDocumentStyleMap _ Nothing = object []
+mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
+  where
+    marks :: [Style]
+    marks = fmap snd . mconcat $ view blockStyles <$> (rawContent ^. rawContentBlocks . to NEL.toList)
+
+    go :: Style -> [Pair]
+    go s@(Mark cid)   = [styleToST s .:= declsToJSON (mouseover cid <> mkMarkSty cid)]
+    go s@StyleDeleted = [styleToST s .:= declsToJSON (bg 255 0   0 0.3)]
+    go s@StyleAdded   = [styleToST s .:= declsToJSON (bg 0   255 0 0.3)]
+    go s@StyleChanged = [styleToST s .:= declsToJSON (bg 255 255 0 0.3)]
+    go _ = []
+
+    mouseover :: MarkID -> [Decl]
+    mouseover cid = [decl "borderBottom" [expr $ Px 2, expr $ Ident "solid", expr Color.VDocRollover] | any (cid `matches`) actives]
+
+    matches :: MarkID -> MarkID -> Bool
+    matches (MarkContribution c _) (MarkContribution c' _) = c == c'
+    matches m m' = m == m'
+
+    mkMarkSty :: MarkID -> [Decl]
+    mkMarkSty MarkCurrentSelection  = bg 255 255 0 0.3
+    mkMarkSty (MarkContribution x _) = case x of
+      ContribIDNote _       -> bg   0 255 0 0.3
+      ContribIDQuestion _   -> bg   0 255 0 0.3
+      ContribIDDiscussion _ -> bg   0 255 0 0.3
+      ContribIDEdit _       -> bg   0 255 0 0.3
+
+    bg :: Int -> Int -> Int -> Double -> [Decl]
+    bg r g b a = ["background" `decl` Color.RGBA r g b a]
+
 
 deriveClasses
   [ ([''DocumentAction, ''DocumentState_], allClass)

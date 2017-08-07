@@ -28,7 +28,6 @@ import Refine.Frontend.Prelude
 
 import qualified Data.Map.Strict as M
 import qualified Data.Text as ST
-import qualified Data.Tree as Tree
 import           Language.Css.Syntax
 import qualified React.Flux as RF
 
@@ -46,8 +45,6 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.TKey
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
-
-{-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 
 
 -- * styles
@@ -71,19 +68,16 @@ dialogStyles = [ -- Style "display" ("block" :: String)
                 , decl "position" (Ident "absolute")
                 ]
 
--- RENAME: addCommentDialogStyles
-vdoc_overlay_content__add_comment :: HasCallStack => [Decl]
-vdoc_overlay_content__add_comment = [decl "backgroundColor" C.VDocComment] <> dialogStyles
+addCommentDialogStyles :: HasCallStack => [Decl]
+addCommentDialogStyles = [decl "backgroundColor" C.VDocComment] <> dialogStyles
 
 -- is vdoc_overlay_content__comment in CSS
 
--- RENAME: showNoteDialogStyles
-vdoc_overlay_content__note :: HasCallStack => [Decl]
-vdoc_overlay_content__note = [decl "backgroundColor" C.VDocNote] <> dialogStyles
+showNoteDialogStyles :: HasCallStack => [Decl]
+showNoteDialogStyles = [decl "backgroundColor" C.VDocNote] <> dialogStyles
 
--- RENAME: showDiscussionDialogStyles
-vdoc_overlay_content__discussion :: HasCallStack => [Decl]
-vdoc_overlay_content__discussion = [decl "backgroundColor" C.VDocDiscussion] <> dialogStyles
+showDiscussionDialogStyles :: HasCallStack => [Decl]
+showDiscussionDialogStyles = [decl "backgroundColor" C.VDocDiscussion] <> dialogStyles
 
 overlayStyles :: HasCallStack => [Decl]
 overlayStyles =
@@ -109,7 +103,7 @@ addContributionDialogFrame title mrange windowWidth child =
     in skylight_ ["isVisible" &= True
              , RF.on "onCloseClicked"   $ \_ -> simpleHandler $ dispatch (ContributionAction HideCommentEditor)
              , RF.on "onOverlayClicked" $ \_ -> simpleHandler $ dispatch (ContributionAction HideCommentEditor)
-             , "dialogStyles" @@= (vdoc_overlay_content__add_comment <> extraStyles)
+             , "dialogStyles" @@= (addCommentDialogStyles <> extraStyles)
              , "overlayStyles" @@= overlayStyles
              , "titleStyle" @@= [decl "margin" (Px 0)]
              ]  $ do
@@ -138,14 +132,18 @@ contributionDialogTextForm stateLens st' stepNumber promptText = do
       span_ ["className" $= "bold"] $ do
         elemText promptText
 
+  contributionDialogTextFormInner 600 240 stateLens st'
+
+contributionDialogTextFormInner :: HasCallStack => Int -> Int -> Lens' st ST -> st -> ReactElementM ('StatefulEventHandlerCode st) ()
+contributionDialogTextFormInner width height stateLens st' = do
   form_ [ "target" $= "#"
         , "action" $= "POST"] $ do
     textarea_ [ "id" $= "o-vdoc-overlay-content__textarea-annotation"  -- RENAME: annotation => comment
               , "className" $= "o-form-input__textarea"
               , "style" @@=
                       [ decl "resize" (Ident "none")
-                      , decl "width" (Px 600)
-                      , decl "height" (Px 240)
+                      , decl "width" (Px width)
+                      , decl "height" (Px height)
                       ]
               -- Update the current state with the current text in the textbox, sending no actions
               , onChange $ \evt -> simpleHandler $ \st -> ([], Just $ st & stateLens .~ target evt "value")
@@ -228,42 +226,10 @@ showNote = mkView "ShowNote" $ \case
         userName1     = "meisterkaiser"
         creationDate1 = "24. 05. 2016"
     in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
-                                         vdoc_overlay_content__note top windowWidth1)
+                                         showNoteDialogStyles top windowWidth1)
 
 showNote_ :: HasCallStack => ShowNoteProps -> ReactElementM eventHandler ()
 showNote_ = view_ showNote "showNote_"
-
-
-showDiscussionProps :: HasCallStack => M.Map (ID Discussion) Discussion -> GlobalState -> Maybe ShowDiscussionProps
-showDiscussionProps discussions rs = case (maybeDiscussion, maybeOffset) of
-  (Just discussion, Just offset) -> Just $ ShowDiscussionProps discussion offset (rs ^. gsScreenState . ssWindowWidth)
-  (Just discussion, Nothing)     -> err "discussion" discussion "offset" Nothing
-  (Nothing,         Just offset) -> err "offset" offset "discussion" Nothing
-  _                              -> Nothing
-  where
-    maybeContribID = rs ^. gsContributionState . csDisplayedContributionID
-    maybeDiscussionID :: Maybe (ID Discussion) = getDiscussionID =<< maybeContribID
-    maybeDiscussion = (`M.lookup` discussions) =<< maybeDiscussionID
-    maybeOffset = do
-      did <- maybeDiscussionID
-      rs ^? gsContributionState . csAllVerticalSpanBounds . allVerticalSpanBounds
-          . at (MarkContribution (ContribIDDiscussion did) 0) . _Just . verticalSpanBoundsBottom
-
-    err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
-
-
-showDiscussion :: HasCallStack => View '[ShowDiscussionProps]
-showDiscussion = mkView "ShowDiscussion" $ \case
-  ShowDiscussionProps discussion top windowWidth1 ->
-    let commentText1  = (Tree.rootLabel (discussion ^. discussionTree) ^. statementText)
-        iconStyle1    = ("icon-Discussion", "dark")
-        userName1     = "meisterkaiser"
-        creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
-                                         vdoc_overlay_content__discussion top windowWidth1)
-
-showDiscussion_ :: HasCallStack => ShowDiscussionProps -> ReactElementM eventHandler ()
-showDiscussion_ = view_ showDiscussion "showDiscussion_"
 
 
 showQuestion :: HasCallStack => View '[ShowQuestionProps]

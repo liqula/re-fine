@@ -61,6 +61,8 @@ module Refine.Common.VDoc.OT
     -- for testing only:
   , NewDoc
   , dotDotDotPngUri
+  , split
+  , measureRowColumn
   ) where
 
 import qualified Data.Algorithm.Patience as Diff
@@ -836,6 +838,7 @@ hideUnchangedParts (NEL.toList . rawContentToDoc -> doc) blocksbefore blocksafte
     . groupBy ((==) `on` fst)
     $ zip displayedLines doc
   where
+    showRegion :: [(Bool, DocBlock)] -> [DocBlock]
     showRegion bs@((True, _): _) = snd <$> bs
     showRegion ((False, blockKeyFromDocBlock -> bk): _) = [dotDotDot (bk <> BlockKey "_...")]
     showRegion _ = error "impossible"

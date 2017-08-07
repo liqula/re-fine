@@ -44,6 +44,7 @@ import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DocumentHeader
 import           Refine.Frontend.Header.DiffToolbar ( diffToolbar_ )
 import           Refine.Frontend.Header.EditToolbar ( editToolbar_, wipeDocumentState )
+import           Refine.Frontend.Header.DiscussionToolbar
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_, indexToolbarExtension_ )
 import           Refine.Frontend.Header.Types
@@ -128,25 +129,20 @@ mainHeaderRender () rs = do
         {- header_ ["role" $= "banner"] $ do -}
         topMenuBar_ props
 
-      headerPart_ = documentHeader_ $ do
-        let doc = DocumentHeaderProps
-              (vdoc ^. compositeVDoc . vdocTitle)
-              (vdoc ^. compositeVDoc . vdocAbstract)
-
-            edit eid = DocumentHeaderProps
-              (vdoc ^. compositeVDoc . vdocTitle)
-              (editDescToAbstract vdoc (ContribIDEdit eid))
-
-        case rs ^. gsDocumentState of
-            WipedDocumentStateView       -> doc
-            WipedDocumentStateDiff _ eid _ _ -> edit (eid ^. editID)
-            WipedDocumentStateEdit{}     -> doc
+      headerPart_
+        = documentHeader_
+        . DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle)
+        $ case rs ^. gsDocumentState of
+          WipedDocumentStateDiff _ eid _ _ -> editDescToAbstract vdoc . ContribIDEdit $ eid ^. editID
+          _ -> vdoc ^. compositeVDoc . vdocAbstract
 
       toolbarPart_ = div_ ["className" $= "c-fulltoolbar"] $ do
         sticky_ [RF.on "onStickyStateChange" $ \e -> simpleHandler $ \() ->
                     (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
           toolbarWrapper_ $ case rs ^. gsDocumentState of
+
             WipedDocumentStateView -> toolbar_ . fromJust $ rs ^? gsVDoc . _Just . compositeVDoc
+
             WipedDocumentStateDiff i edit collapsed editable -> diffToolbar_ $ DiffToolbarProps
               (edit ^. editID)
               i
@@ -154,7 +150,11 @@ mainHeaderRender () rs = do
               (edit ^. editVotes . to votesToCount)
               collapsed
               editable
+
             WipedDocumentStateEdit eprops -> editToolbar_ eprops
+
+            WipedDocumentStateDiscussion dprops -> discussionToolbar_ dprops
+
           indexToolbarExtension_ $ mkIndexToolbarProps rs
           commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
           editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)

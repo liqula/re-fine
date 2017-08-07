@@ -30,6 +30,7 @@ import           Refine.Common.Types
 import           Refine.Common.VDoc.OT (docRanges)
 import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Store.Types
@@ -55,6 +56,9 @@ wipeDocumentState = \case
   DocumentStateView{}                  -> WipedDocumentStateView
   DocumentStateDiff i _ _ edit collapsed editable -> WipedDocumentStateDiff i edit collapsed editable
   DocumentStateEdit es _ _             -> WipedDocumentStateEdit $ mkEditToolbarProps es
+  DocumentStateDiscussion dp           -> WipedDocumentStateDiscussion $ DiscussionToolbarProps
+                                            (dp ^. discPropsDiscussion . discussionID)
+                                            (dp ^. discPropsFlatView)
 
 editToolbar_ :: HasCallStack => EditToolbarProps -> ReactElementM eventHandler ()
 editToolbar_ ep = do

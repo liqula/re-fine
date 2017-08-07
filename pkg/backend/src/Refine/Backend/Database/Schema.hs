@@ -65,14 +65,14 @@ Edit
 Note
     text        Text
     public      Bool
-    range       RangePosition
+    range       RangePosition   -- FIXME: move this to PN table
     owner       LoginId
 
 Question
     text        Text
     public      Bool
     answered    Bool
-    range       RangePosition
+    range       RangePosition   -- FIXME: move this PQ table
     owner       LoginId
 
 Answer
@@ -81,12 +81,13 @@ Answer
 
 Discussion
     public      Bool
-    range       RangePosition
+    range       RangePosition    -- FIXME: move this to PD table
     owner       LoginId
 
 Statement
     text        Text
     parent      StatementId Maybe
+    discussion  DiscussionId
 
 -- Groups
 
@@ -124,11 +125,6 @@ PD
     edit       EditId
     discussion  DiscussionId
     UniPD edit discussion
-
-DS
-    discussion  DiscussionId
-    statement   StatementId
-    UniDS discussion statement
 
 PN
     edit       EditId
@@ -170,4 +166,3 @@ makeElim ''ParentChild
 makeElim ''PN
 makeElim ''PQ
 makeElim ''PD
-makeElim ''DS

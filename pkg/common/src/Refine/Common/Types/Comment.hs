@@ -85,7 +85,8 @@ data CreateDiscussion = CreateDiscussion
   { _createDiscussionStatementText :: CommentText
   , _createDiscussionPublic        :: Bool
   , _createDiscussionRange         :: Range Position
-  }
+  } -- FIXME: add (createDiscussionEdit :: ID Edit) and simplify SAddDiscussion (fisx does not like
+    -- this, but does not want to spend time arguing about it)
   deriving (Eq, Ord, Show, Generic)
 
 data Discussion = Discussion
@@ -93,18 +94,20 @@ data Discussion = Discussion
   , _discussionPublic :: Bool
   , _discussionRange  :: Range Position
   , _discussionTree   :: Tree Statement
-  }
+  } -- FIXME: add (discussionEdit :: ID Edit), fits better the server cache in global state
   deriving (Eq, Show, Generic)
 
 newtype CreateStatement = CreateStatement
   { _createStatementText :: CommentText
-  }
+  } -- FIXME: add (createStatementParent :: Either (ID Discussion) (ID Statement)) and remove
+    -- "onstatementid" from SAddStatement (fisx does not like this, but does not want to spend time
+    -- arguing about it)
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Statement = Statement
   { _statementMetaID :: MetaID Statement
   , _statementText   :: CommentText
-  , _statementParent :: Maybe (ID Statement)
+  , _statementParent :: Maybe (ID Statement)  -- FIXME: remove this, this is unnecessary if we use the Tree data structure in Discussion
   }
   deriving (Eq, Ord, Show, Read, Generic)
 

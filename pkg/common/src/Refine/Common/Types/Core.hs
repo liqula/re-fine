@@ -298,7 +298,9 @@ data Style =
 -- | identifier for different marks in document
 data MarkID
   = MarkCurrentSelection
-  | MarkContribution ContributionID Int -- the Int is used as the Bubble serial number per contribution; note that this is always 0 for notes and discussion (because they have just one range)
+  | MarkContribution ContributionID Int  -- ^ the Int is used as the Bubble serial number per
+                                         -- contribution; note that this is always 0 for notes and
+                                         -- discussion (because they have just one range)
   deriving (Show, Read, Eq, Ord, Generic)
 
 -- | each block has a unique blocktype
@@ -741,6 +743,13 @@ editID = editMetaID . miID
 
 groupID :: Lens' Group (ID Group)
 groupID = groupMetaID . miID
+
+contributionID :: Lens' Contribution ContributionID
+contributionID k = \case
+  ContribNote i       -> ContribNote       <$> noteID       (fmap (\(ContribIDNote i')       -> i') . k . ContribIDNote) i
+  ContribQuestion i   -> ContribQuestion   <$> questionID   (fmap (\(ContribIDQuestion i')   -> i') . k . ContribIDQuestion) i
+  ContribDiscussion i -> ContribDiscussion <$> discussionID (fmap (\(ContribIDDiscussion i') -> i') . k . ContribIDDiscussion) i
+  ContribEdit i       -> ContribEdit       <$> editID       (fmap (\(ContribIDEdit i')       -> i') . k . ContribIDEdit) i
 
 compositeVDocThisEditID :: Lens' CompositeVDoc (ID Edit)
 compositeVDocThisEditID = compositeVDocThisEdit . editID

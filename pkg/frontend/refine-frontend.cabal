@@ -71,6 +71,7 @@ library
       Refine.Frontend.Colors
       Refine.Frontend.Contribution.Bubble
       Refine.Frontend.Contribution.Dialog
+      Refine.Frontend.Contribution.Discussion
       Refine.Frontend.Contribution.QuickCreate
       Refine.Frontend.Contribution.Store
       Refine.Frontend.Contribution.Types
@@ -81,6 +82,7 @@ library
       Refine.Frontend.Document.Store
       Refine.Frontend.Document.Types
       Refine.Frontend.Header.DiffToolbar
+      Refine.Frontend.Header.DiscussionToolbar
       Refine.Frontend.Header.DocumentHeader
       Refine.Frontend.Header.EditToolbar
       Refine.Frontend.Header.Heading
@@ -187,6 +189,7 @@ test-suite spec
       Main
       Refine.Frontend.Contribution.BubbleSpec
       Refine.Frontend.Contribution.DialogSpec
+      Refine.Frontend.Contribution.DiscussionSpec
       Refine.Frontend.Contribution.QuickCreateSpec
       Refine.Frontend.Document.DocumentSpec
       Refine.Frontend.Header.DocumentHeaderSpec

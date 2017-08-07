@@ -140,6 +140,7 @@ instance Database DB where
 
   -- * Statement
   createStatement      = Entity.createStatement
+  updateStatement      = Entity.updateStatement
   getStatement         = Entity.getStatement
 
   -- * User

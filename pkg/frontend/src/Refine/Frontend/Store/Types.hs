@@ -30,6 +30,7 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 import           Data.String.Conversions (ST)
 import           Data.Text.I18n
+import           Data.Foldable (toList)
 import           GHC.Generics (Generic)
 
 import Refine.Common.Types
@@ -119,6 +120,7 @@ data GlobalAction =
   | AddDiscussion Discussion
   | AddEdit Edit
   | SaveSelect ST ST
+  | AddStatement Bool{-update-} (ID Statement) (AjaxAction CreateStatement Discussion)
 
   | RefreshServerCache ServerCache
 
@@ -148,7 +150,16 @@ getDocumentState gs@(view gsVDoc -> Just cvdoc)
              $ (==) <$> (gs ^? gsLoginState . lsCurrentUser . loggedInUser . userID . to UserID)
                     <*> ((^. editMetaID . miMeta . metaCreatedBy) <$> getEdit gs eid))
       (const $ rawContentFromCompositeVDoc cvdoc)
-      ((gs ^. gsServerCache . scEdits) Map.!)
+      (fromMaybe (error "edit is not in cache") . getEdit gs)
+      (\(did, ed) -> discussionProps (fromMaybe (error "discussion is not in cache") $ getDiscussion gs did)
+                                     (rawContentFromCompositeVDoc cvdoc)
+                                     (StatementPropDetails
+                                        ed
+                                        (gs ^? gsLoginState . lsCurrentUser . loggedInUser . userID)
+                                        ((^. userName) <$> (gs ^. gsServerCache . scUsers))
+                                     )
+                                     (gs ^. gsHeaderState . hsDiscussionFlatView)
+      )
       dst
   where
     dst = gs ^. gsDocumentState
@@ -158,11 +169,20 @@ getDocumentState gs@(view gsVDoc -> Just cvdoc)
 getDocumentState _
   = error "getDocumentState: no gsVDoc"
 
-gsEdit :: GlobalState_ a -> Maybe Edit
+gsEdit :: HasCallStack => GlobalState_ a -> Maybe Edit
 gsEdit gs = ((gs ^. gsServerCache . scEdits) Map.!) <$> (gs ^. gsEditID)
 
-getEdit :: GlobalState_ a -> ID Edit -> Maybe Edit
+getEdit :: HasCallStack => GlobalState_ a -> ID Edit -> Maybe Edit
 getEdit gs eid = Map.lookup eid (gs ^. gsServerCache . scEdits)
+
+getDiscussion :: HasCallStack => GlobalState_ a -> ID Discussion -> Maybe Discussion
+getDiscussion gs i = Map.lookup i (gs ^. gsServerCache . scDiscussions)
+
+-- FIXME: optimize this
+discussionOfStatement :: HasCallStack => ServerCache -> ID Statement -> Discussion
+discussionOfStatement sc i
+  = fromMaybe (error "statement is not in cache")
+  $ listToMaybe [d | d <- Map.elems $ sc ^. scDiscussions, i `elem` map (^. statementID) (toList $ d ^. discussionTree)]
 
 gsVDoc :: Lens' (GlobalState_ a) (Maybe CompositeVDoc)
 gsVDoc = lens getCompositeVDoc setCompositeVDoc

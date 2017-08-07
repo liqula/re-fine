@@ -43,6 +43,7 @@ data HeaderAction =
   | ScrollToBlockKey BlockKey
   -- ScrollToDocumentTop
   | OpenEditToolbarLinkEditor ST
+  | ToggleDiscussionFlatView
   deriving (Show, Eq, Generic)
 
 data ToolbarExtensionStatus =
@@ -56,10 +57,11 @@ data ToolbarExtensionStatus =
 data HeaderState = HeaderState
   { _hsReadOnly               :: Bool
   , _hsToolbarExtensionStatus :: ToolbarExtensionStatus
+  , _hsDiscussionFlatView     :: Bool
   } deriving (Show, Eq, Generic)
 
 emptyHeaderState :: HasCallStack => HeaderState
-emptyHeaderState = HeaderState False ToolbarExtensionClosed
+emptyHeaderState = HeaderState False ToolbarExtensionClosed False
 
 newtype AddLinkFormState = AddLinkFormState
   { _addLinkFormState :: ST
@@ -110,4 +112,10 @@ mkEditIndex e i = EditIndex (Set.size es) (fromMaybe (error "impossible") $ Set.
     es = e ^. editChildren
 
 
-makeRefineTypes [''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState, ''DiffToolbarProps, ''TopMenuBarProps, ''EditIndex, ''IndexItem]
+data DiscussionToolbarProps = DiscussionToolbarProps
+  { _discToolbarDiscussionID :: ID Discussion
+  , _discToolbarFlatView     :: Bool
+  }
+  deriving (Show, Eq, Generic)
+
+makeRefineTypes [''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState, ''DiffToolbarProps, ''TopMenuBarProps, ''EditIndex, ''IndexItem, ''DiscussionToolbarProps]

@@ -38,10 +38,15 @@ headerStateUpdate :: HasCallStack => GlobalAction -> HeaderState -> HeaderState
 headerStateUpdate act st = st
   & hsReadOnly               %~ readOnlyUpdate act
   & hsToolbarExtensionStatus %~ toolbarExtensionUpdate act
+  & hsDiscussionFlatView     %~ discussionFlatViewUpdate act
 
 readOnlyUpdate :: HasCallStack => GlobalAction -> Bool -> Bool
 readOnlyUpdate (HeaderAction ToggleReadOnly) = not
 readOnlyUpdate _                             = id
+
+discussionFlatViewUpdate :: HasCallStack => GlobalAction -> Bool -> Bool
+discussionFlatViewUpdate (HeaderAction ToggleDiscussionFlatView) = not
+discussionFlatViewUpdate _                                       = id
 
 toolbarExtensionUpdate :: HasCallStack => GlobalAction -> ToolbarExtensionStatus -> ToolbarExtensionStatus
 toolbarExtensionUpdate act st = case (st, act) of
