@@ -63,7 +63,12 @@ documentStateUpdate (LoadVDoc (AfterAjax vdoc)) oldgs _newgs st
          st
 
 documentStateUpdate (LoadCompositeVDoc (AfterAjax cvdoc)) oldgs _newgs st
-  = enterViewMode cvdoc oldgs st
+  = if needInitialContent
+      then enterEditModeWithEditorState oldgs estate (Just $ cvdoc ^. compositeVDocThisEdit . editID)
+      else enterViewMode cvdoc oldgs st
+  where
+    needInitialContent = null $ cvdoc ^. compositeVDocThisEdit . editSource . unEditSource
+    estate = cvdoc ^. compositeVDocThisEdit . editVDocVersion . to createWithRawContent
 
 documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) DocumentStateEdit{}
   = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
