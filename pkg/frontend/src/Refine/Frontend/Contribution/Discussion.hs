@@ -65,7 +65,7 @@ discussion = mkView "Discussion" $ \props -> do
         statement_ i' (0, stmnt, props ^. discPropsDetails)
         br_ []
       where
-        list = sortBy (compare `on` creationtime) . toList $ props ^. discPropsDiscussion . discussionTree
+        list = sortBy (flip compare `on` creationtime) . toList $ props ^. discPropsDiscussion . discussionTree
         creationtime = (^. statementMetaID . miMeta . metaCreatedAt)
 
 discussion_ :: HasCallStack => DiscussionProps -> ReactElementM eventHandler ()
