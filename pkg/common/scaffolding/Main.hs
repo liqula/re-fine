@@ -98,11 +98,11 @@ prepareSession = do
 runMakeVDoc :: IO ()
 runMakeVDoc = do
   r :: Response CompositeVDoc
-    <- post "r/vdoc" $ CreateVDoc sampleTitle sampleAbstract sampleRawContent1 (ID 1){-FIXME: use defaultGroupID-}
+    <- post "r/vdoc" $ CreateVDoc sampleTitle sampleAbstract sampleRawContent1 defaultGroupID
 
   let eid = r ^. responseBody . compositeVDocThisEdit . editMetaID . miID . unID
-      vdoc :: ST = r ^. responseBody . compositeVDocThisEdit . editVDocVersion . to (cs . encode)
-      rnge = minimumRange . fromJust . decode . cs $ vdoc
+      vdoc = r ^. responseBody . compositeVDocThisEdit . editVDocVersion
+      rnge = minimumRange vdoc
 
   d :: Response Discussion
     <- post ("r/discussion/" <> show eid) (CreateDiscussion "this is my initial statement!" True rnge)

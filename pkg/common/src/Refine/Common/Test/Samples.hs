@@ -61,3 +61,9 @@ sampleMetaInfo = MetaInfo sampleUserInfo sampleTime sampleUserInfo sampleTime
 
 sampleMetaID :: MetaID a
 sampleMetaID = MetaID sampleID sampleMetaInfo
+
+
+-- | we're just hoping this is the ID of the default group that is created in 'mkProdBackend'.  if
+-- this fails, we need to be smarter about constructing the test cases here.
+defaultGroupID :: ID Group
+defaultGroupID = ID 1
