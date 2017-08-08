@@ -3,9 +3,9 @@ module Refine.Frontend.MainMenu.Store where
 
 import Refine.Frontend.Prelude
 
-import Refine.Frontend.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Store.Types (GlobalAction(..))
+import Refine.Frontend.Types
 
 
 mainMenuUpdate :: HasCallStack => GlobalAction -> Bool -> MainMenuState -> MainMenuState
