@@ -117,11 +117,8 @@ transformGlobalState = transf
 
         ContributionAction ShowCommentEditor                       -> scrollToCurrentSelection (st ^. gsContributionState)
         DocumentAction (DocumentSave (FormBegin EditIsNotInitial)) -> scrollToCurrentSelection (st ^. gsContributionState)
-
-        HeaderAction ScrollToPageTop -> liftIO js_scrollToPageTop
-
-        HeaderAction (ScrollToBlockKey (C.BlockKey k)) -> liftIO . js_scrollToBlockKey $ cs k
-
+        HeaderAction ScrollToPageTop                               -> liftIO js_scrollToPageTop
+        HeaderAction (ScrollToBlockKey (C.BlockKey k))             -> liftIO . js_scrollToBlockKey $ cs k
 
         LoginGuardStash actions -> do
           case st ^. gsLoginState . lsCurrentUser of
