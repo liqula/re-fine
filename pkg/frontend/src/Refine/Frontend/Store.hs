@@ -115,8 +115,8 @@ transformGlobalState = transf
         ContributionAction (SetRange _) -> removeAllRanges
         ContributionAction ClearRange   -> removeAllRanges
 
-        ContributionAction ShowCommentEditor            -> scrollToCurrentSelection (st ^. gsContributionState)
-        DocumentAction (DocumentSave (FormBegin ()))    -> scrollToCurrentSelection (st ^. gsContributionState)
+        ContributionAction ShowCommentEditor                       -> scrollToCurrentSelection (st ^. gsContributionState)
+        DocumentAction (DocumentSave (FormBegin EditIsNotInitial)) -> scrollToCurrentSelection (st ^. gsContributionState)
 
         HeaderAction ScrollToPageTop -> liftIO js_scrollToPageTop
 
@@ -310,6 +310,7 @@ emitBackendCallsFor act st = case act of
           handle a = dispatchManyM [ a
                                    , ContributionAction RequestSetAllVerticalSpanBounds
                                    , reloadCompositeVDoc st
+                                   , DocumentAction UpdateDocumentStateView
                                    ]
 
       case kind of
@@ -321,6 +322,23 @@ emitBackendCallsFor act st = case act of
           addNote headEdit (C.CreateNote text True range) $ \case
             (Left rsp) -> ajaxFail rsp Nothing
             (Right note) -> handle $ AddNote note
+
+    DocumentAction (DocumentSave (FormBegin EditIsInitial))
+      -> do
+        let DocumentStateEdit editorState _ (Just baseEdit) = st ^. gsDocumentState
+            cedit = C.CreateEdit
+                  { C._createEditDesc        = "initial content"
+                  , C._createEditVDocVersion = getCurrentRawContent editorState
+                  , C._createEditKind        = C.Initial
+                  }
+
+        addEdit baseEdit cedit $ \case  -- TUNING: this is less than ideal.
+          Left rsp   -> ajaxFail rsp Nothing
+          Right edit -> do
+            mergeEdit (edit ^. C.editID) $ \case
+              Left rsp   -> ajaxFail rsp Nothing
+              Right ()   -> dispatchM . reloadCompositeVDoc' $ edit ^. C.editVDoc
+            dispatchManyM []
 
     DocumentAction (DocumentSave (FormComplete info))
       | DocumentStateEdit editorState _ baseEdit <- st ^. gsDocumentState
@@ -343,6 +361,7 @@ emitBackendCallsFor act st = case act of
           Right edit -> dispatchManyM [ AddEdit edit
                                       , ContributionAction RequestSetAllVerticalSpanBounds
                                       , reloadCompositeVDoc st
+                                      , DocumentAction UpdateDocumentStateView
                                       ]
 
 
@@ -410,10 +429,13 @@ emitBackendCallsFor act st = case act of
 -- the composite vdoc here.  if we got rid of the NFData constraint on
 -- actions, we could define @UpdateCVDoc :: (CompositeVDoc ->
 -- CompositeVDoc) -> GlobalAction@.
+reloadCompositeVDoc' :: HasCallStack => ID C.VDoc -> GlobalAction
+reloadCompositeVDoc' = LoadCompositeVDoc . BeforeAjax
+
 reloadCompositeVDoc :: HasCallStack => GlobalState -> GlobalAction
-reloadCompositeVDoc st = LoadCompositeVDoc
-                       . BeforeAjax . fromMaybe (error "reloadCompositeVDoc")
-                       $ st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocID
+reloadCompositeVDoc = reloadCompositeVDoc'
+  . fromMaybe (error "reloadCompositeVDoc")
+  . (^? gsVDoc . _Just . C.compositeVDoc . C.vdocID)
 
 ajaxFail :: HasCallStack => (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
 ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of

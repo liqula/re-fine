@@ -93,11 +93,20 @@ data DiffToolbarProps = DiffToolbarProps
   } deriving (Show, Eq, Generic)
 
 
-data EditToolbarProps
+data EditIsInitial = EditIsInitial | EditIsNotInitial
+  deriving (Eq, Show, Generic)
+
+data EditToolbarProps = EditToolbarProps
+  { _editToolbarPropsInitial    :: EditIsInitial
+  , _editToolbarPropsLinkEditor :: LinkEditorProps
+  }
+  deriving (Eq, Show, Generic)
+
+data LinkEditorProps
     = LinkButtonDisabled
     | LinkButtonDeletes
     | LinkButtonAdds ST
-  deriving (Eq, Show)
+  deriving (Eq, Show, Generic)
 
 
 data EditIndex = EditIndex
@@ -118,4 +127,7 @@ data DiscussionToolbarProps = DiscussionToolbarProps
   }
   deriving (Show, Eq, Generic)
 
-makeRefineTypes [''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState, ''DiffToolbarProps, ''TopMenuBarProps, ''EditIndex, ''IndexItem, ''DiscussionToolbarProps]
+makeRefineTypes [ ''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState
+                , ''DiffToolbarProps, ''TopMenuBarProps, ''EditIndex, ''IndexItem
+                , ''DiscussionToolbarProps, ''EditToolbarProps, ''EditIsInitial, ''LinkEditorProps
+                ]

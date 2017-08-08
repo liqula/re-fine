@@ -70,9 +70,6 @@ documentStateUpdate (LoadCompositeVDoc (AfterAjax cvdoc)) oldgs _newgs st
     needInitialContent = null $ cvdoc ^. compositeVDocThisEdit . editSource . unEditSource
     estate = cvdoc ^. compositeVDocThisEdit . editVDocVersion . to createWithRawContent
 
-documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) DocumentStateEdit{}
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
-
 documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _)
   = enterEditModeWithEditorState oldgs estate Nothing
 
@@ -107,7 +104,7 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDDiscus
                     _oldgs
                     (view gsVDoc -> Just cvdoc)
                     (DocumentStateDiscussion _)
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- TODO: why?  and how can this work?
 
 documentStateUpdate (DocumentAction (ReplyStatement upd sid (FormBegin lst)))
                     _oldgs
@@ -136,6 +133,9 @@ documentStateUpdate (ContributionAction HideContributionDialog)
 documentStateUpdate (DocumentAction (UpdateEditorState estate)) _ _ (DocumentStateEdit _ einfo base)
   = DocumentStateEdit estate einfo base
 
+documentStateUpdate (DocumentAction UpdateDocumentStateView) _ (view gsVDoc -> Just cvdoc) _state
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
+
 documentStateUpdate (DocumentAction (DocumentUpdateEditInfo info)) _ _ st
   = st & documentStateEditInfo .~ info
 
@@ -156,18 +156,6 @@ documentStateUpdate (DocumentAction DocumentUndo) _ _ st
 
 documentStateUpdate (DocumentAction DocumentRedo) _ _ st
   = st & documentStateVal %~ documentRedo
-
-documentStateUpdate (AddDiscussion _) _ (view gsVDoc -> Just cvdoc) _state
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
-
-documentStateUpdate (AddNote _) _ (view gsVDoc -> Just cvdoc) _state
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
-
-documentStateUpdate (AddEdit _) _ (view gsVDoc -> Just cvdoc) _state
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
-
-documentStateUpdate (DocumentAction DocumentCancelSave) _ (view gsVDoc -> Just cvdoc) _state
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
 documentStateUpdate (ContributionAction (SetRange range)) _ (view gsVDoc -> Just cvdoc) _
   = mkDocumentStateView

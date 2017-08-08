@@ -60,6 +60,9 @@ addNote = request cfg (Proxy :: Proxy SAddNote)
 addEdit :: HasCallStack => ID Edit -> CreateEdit -> HandleResponse Edit -> IO ()
 addEdit = request cfg (Proxy :: Proxy SAddEdit)
 
+mergeEdit :: HasCallStack => ID Edit -> HandleResponse () -> IO ()
+mergeEdit = request cfg (Proxy :: Proxy SMergeEdit)
+
 updateEdit :: HasCallStack => ID Edit -> CreateEdit -> HandleResponse Edit -> IO ()
 updateEdit = request cfg (Proxy :: Proxy SUpdateEdit)
 
