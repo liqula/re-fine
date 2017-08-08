@@ -59,6 +59,7 @@ type RefineAPI =
   :<|> SCreateVDoc
   :<|> SUpdateVDoc
   :<|> SAddEdit
+  :<|> SMergeEdit
   :<|> SUpdateEdit
   :<|> SAddNote
   :<|> SAddQuestion
@@ -95,6 +96,10 @@ type SUpdateVDoc
 type SAddEdit
   = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] CreateEdit
     :> Post '[JSON] Edit
+
+type SMergeEdit
+  = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> "merge"
+    :> Post '[JSON] ()
 
 type SUpdateEdit
   = "r" :> "updateEdit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] CreateEdit

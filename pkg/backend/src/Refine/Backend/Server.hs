@@ -87,6 +87,7 @@ refineApi =
   :<|> App.createVDocGetComposite
   :<|> App.updateVDoc
   :<|> App.addEdit
+  :<|> App.mergeEdit
   :<|> App.updateEdit
   :<|> App.addNote
   :<|> App.addQuestion
