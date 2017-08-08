@@ -338,10 +338,10 @@ emitBackendCallsFor act st = case act of
             dispatchManyM []
 
     DocumentAction (DocumentSave (FormComplete info))
-      | DocumentStateEdit editorState _ baseEdit <- st ^. gsDocumentState
+      | DocumentStateEdit editorState _ baseEdit_ <- st ^. gsDocumentState
       -> do
-        let eid :: C.ID C.Edit
-            Just eid = st ^? gsVDoc . _Just . C.compositeVDocThisEditID
+        let baseEdit :: C.ID C.Edit
+            (baseEdit:_) = catMaybes [baseEdit_, st ^? gsVDoc . _Just . C.compositeVDocThisEditID]
 
             cedit = C.CreateEdit
                   { C._createEditDesc        = info ^. editInfoDesc
@@ -349,11 +349,7 @@ emitBackendCallsFor act st = case act of
                   , C._createEditKind        = info ^. editInfoKind
                   }
 
-            addOrUpdate = case baseEdit of
-              Nothing -> addEdit eid
-              Just eid' -> updateEdit eid'
-
-        addOrUpdate cedit $ \case
+        addEdit baseEdit cedit $ \case
           Left rsp   -> ajaxFail rsp Nothing
           Right edit -> dispatchManyM [ AddEdit edit
                                       , ContributionAction RequestSetAllVerticalSpanBounds
