@@ -78,14 +78,16 @@ wholeScreen = Outdated.defineLifecycleView "WholeScreen" () Outdated.lifecycleCo
     case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
       Nothing  -> mainScreen_ gs
       Just tab -> mainMenu_ $ MainMenuProps
-                            (mapMainMenuTab (const groups) groupFromCache id id id tab)
+                            (mapMainMenuTab (const (groups, vdocs)) groupFromCache id id id tab)
                             (gs ^. gsMainMenuState . mmErrors)
                             (gs ^. gsLoginState . lsCurrentUser)
         where
-          groupFromCache :: ID Group -> Group
-          groupFromCache gid = fromMaybe (error "impossible") $ gs ^? gsServerCache . scGroups . ix gid
+          groupFromCache :: ID Group -> (Group, Map (ID VDoc) VDoc)
+          groupFromCache gid = (fromMaybe (error "impossible") $ gs ^? gsServerCache . scGroups . ix gid, vdocs)
           groups :: [Group]
           groups = Map.elems $ gs ^. gsServerCache . scGroups
+          vdocs :: Map (ID VDoc) VDoc
+          vdocs = gs ^. gsServerCache . scVDocs
 
   , Outdated.lComponentDidMount = Just $ \this _ _ -> didMountOrUpdate this
   , Outdated.lComponentDidUpdate = Just $ \this _ _ _ _ -> didMountOrUpdate this

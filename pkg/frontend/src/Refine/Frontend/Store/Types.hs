@@ -90,10 +90,10 @@ data CacheKey
 cacheMisses :: MVar [CacheKey]
 cacheMisses = unsafePerformIO $ newMVar []
 
-cacheMiss :: (i -> CacheKey) -> i -> i
-cacheMiss wrap i = unsafePerformIO $ do
+cacheMiss :: CacheKey -> i -> i
+cacheMiss key i = unsafePerformIO $ do
   is <- takeMVar cacheMisses
-  putMVar cacheMisses $ wrap i: is
+  putMVar cacheMisses $ key: is
   pure i
 
 
