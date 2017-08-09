@@ -63,34 +63,18 @@ documentStateUpdate (LoadVDoc (AfterAjax vdoc)) oldgs _newgs st
          st
 
 documentStateUpdate (LoadCompositeVDoc (AfterAjax cvdoc)) oldgs _newgs st
-  = let eidChanged = Just newID /= mOldID
-        newID  = cvdoc ^. compositeVDocThisEditID
-        mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
-    in refreshDocumentStateView (fromMaybe (error "impossible") $ gsEdit oldgs) eidChanged (rawContentFromCompositeVDoc cvdoc) st
-
-documentStateUpdate (DocumentAction (DocumentSave _)) _ (view gsVDoc -> Just cvdoc) DocumentStateEdit{}
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
+  = if needInitialContent
+      then enterEditModeWithEditorState oldgs estate (Just $ cvdoc ^. compositeVDocThisEdit . editID)
+      else enterViewMode cvdoc oldgs st
+  where
+    needInitialContent = null $ cvdoc ^. compositeVDocThisEdit . editSource . unEditSource
+    estate = cvdoc ^. compositeVDocThisEdit . editVDocVersion . to createWithRawContent
 
 documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _)
-  = DocumentStateEdit
-      (maybe estate (forceSelection estate . (`toSelectionState` True)) $ oldgs ^. gsCurrentSelection)
-      einfo
-      Nothing
-  where
-    einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) oldgs
+  = enterEditModeWithEditorState oldgs estate Nothing
 
 documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateDiff _ _ _ edit _ _)
-  = DocumentStateEdit
-      (createWithRawContent $ ed ^. editVDocVersion)
-      einfo
-      (Just edit)
-  where
-    Just ed = getEdit oldgs edit
-
-    einfo = EditInfo
-             (ed ^. editDesc)
-             (Just $ ed ^. editKind)
-             $ newLocalStateRef (EditInputState einfo Nothing) oldgs
+  = enterEditModeWithEdit oldgs edit
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     oldgs
@@ -116,19 +100,13 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDDiscus
                     (DocumentStateView _ _)
   = DocumentStateDiscussion (did, Nothing)
 
-documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDDiscussion _)))
-                    _oldgs
-                    (view gsVDoc -> Just cvdoc)
-                    (DocumentStateDiscussion _)
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
-
-documentStateUpdate (DocumentAction (ReplyStatement upd sid (FormOngoing lst)))
+documentStateUpdate (DocumentAction (ReplyStatement upd sid (FormBegin lst)))
                     _oldgs
                     _newgs
                     (DocumentStateDiscussion (did, Nothing))
   = DocumentStateDiscussion (did, Just (StatementEditorProps sid lst upd))
 
-documentStateUpdate (DocumentAction (ReplyStatement _upd _sid FormCancelled))
+documentStateUpdate (DocumentAction (ReplyStatement _upd _sid FormCancel))
                     _oldgs
                     _newgs
                     (DocumentStateDiscussion (did, Just _))
@@ -148,6 +126,9 @@ documentStateUpdate (ContributionAction HideContributionDialog)
 
 documentStateUpdate (DocumentAction (UpdateEditorState estate)) _ _ (DocumentStateEdit _ einfo base)
   = DocumentStateEdit estate einfo base
+
+documentStateUpdate (DocumentAction UpdateDocumentStateView) _ (view gsVDoc -> Just cvdoc) _state
+  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
 
 documentStateUpdate (DocumentAction (DocumentUpdateEditInfo info)) _ _ st
   = st & documentStateEditInfo .~ info
@@ -170,18 +151,6 @@ documentStateUpdate (DocumentAction DocumentUndo) _ _ st
 documentStateUpdate (DocumentAction DocumentRedo) _ _ st
   = st & documentStateVal %~ documentRedo
 
-documentStateUpdate (AddDiscussion _) _ (view gsVDoc -> Just cvdoc) _state
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
-
-documentStateUpdate (AddNote _) _ (view gsVDoc -> Just cvdoc) _state
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
-
-documentStateUpdate (AddEdit _) _ (view gsVDoc -> Just cvdoc) _state
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
-
-documentStateUpdate (DocumentAction DocumentCancelSave) _ (view gsVDoc -> Just cvdoc) _state
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
-
 documentStateUpdate (ContributionAction (SetRange range)) _ (view gsVDoc -> Just cvdoc) _
   = mkDocumentStateView
   . addMarksToRawContent [(MarkCurrentSelection, range ^. sstSelectionState . selectionRange)]
@@ -201,6 +170,39 @@ documentStateUpdate (HeaderAction ToggleIndexToolbarExtension) _ _ st | has _Doc
 
 documentStateUpdate _ _ _ st
   = st
+
+
+enterViewMode :: CompositeVDoc -> GlobalState -> GlobalDocumentState -> GlobalDocumentState
+enterViewMode cvdoc oldgs = refreshDocumentStateView ed eidChanged rc
+  where
+    ed = fromMaybe (error "impossible") $ gsEdit oldgs
+    eidChanged = Just newID /= mOldID
+      where
+        newID  = cvdoc ^. compositeVDocThisEditID
+        mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
+    rc = rawContentFromCompositeVDoc cvdoc
+
+-- | i think this is for when an edit is already under way, and we want to refresh the edit mode,
+-- like after opening and closing the save dialog?
+enterEditModeWithEdit :: GlobalState -> ID Edit -> GlobalDocumentState
+enterEditModeWithEdit oldgs eid = DocumentStateEdit
+      (createWithRawContent $ ed ^. editVDocVersion)
+      einfo
+      (Just eid)
+  where
+    Just ed = getEdit oldgs eid
+
+    einfo = EditInfo
+             (ed ^. editDesc)
+             (Just $ ed ^. editKind)
+             $ newLocalStateRef (EditInputState einfo Nothing) oldgs
+
+enterEditModeWithEditorState :: GlobalState -> EditorState -> Maybe (ID Edit) -> GlobalDocumentState
+enterEditModeWithEditorState oldgs estate = DocumentStateEdit
+      (maybe estate (forceSelection estate . (`toSelectionState` True)) $ oldgs ^. gsCurrentSelection)
+      einfo
+  where
+    einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) oldgs
 
 
 -- | construct a 'SetAllVerticalSpanBounds' action.

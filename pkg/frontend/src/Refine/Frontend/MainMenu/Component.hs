@@ -32,7 +32,7 @@ import           Language.Css.Syntax
 
 import           React.Flux.Missing
 import           Refine.Common.Types
-import           Refine.Common.Test.Samples
+import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Types
 import qualified Refine.Frontend.Colors as Colors
 import           Refine.Frontend.Icon
@@ -144,7 +144,7 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
   div_ $ do
     div_ ["style" @@= [decl "marginLeft" (Px 3)]] $ do
       let mkCreateGroupAction :: GlobalAction
-          mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup Nothing . FormOngoing
+          mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup Nothing . FormBegin
                               $ newLocalStateRef (CreateGroup "" "" [] []) groups
 
       ibutton_ $ emptyIbuttonProps "Group_add" [mkCreateGroupAction]
@@ -165,7 +165,7 @@ mainMenuGroups_ = view_ mainMenuGroups "mainMenuGroups"
 
 mainMenuGroupShort :: HasCallStack => View '[Group]
 mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
-  let listKey = cs ("group-list-item-" <> show (group ^. groupID . unID))
+  let listKey = "group-list-item-" <> (cs . show $ group ^. groupID . unID)
   div_ [ onClick $ \_ _ -> simpleHandler . dispatch
                          . MainMenuAction . MainMenuActionOpen . MainMenuGroup $ group ^. groupID
        , "id" $= listKey  -- FUTUREWORK: get rid of this.  at the time of writing this it's only
@@ -184,7 +184,7 @@ mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
       & ibListKey .~ "group"
       & ibSize .~ XXLarge
       & ibDarkBackground .~ True
-      & ibHighlightWhen .~ HighlightOnMouseOver
+      & ibHighlightWhen .~ HighlightNever
       & ibLabel .~ mempty
 
     -- title
@@ -201,7 +201,7 @@ mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
         & ibListKey .~ (listKey <> "-processes")
         & ibSize .~ Large
         & ibDarkBackground .~ True
-        & ibHighlightWhen .~ HighlightOnMouseOver
+        & ibHighlightWhen .~ HighlightNever
         & ibLabel .~ cs (show numProcesses)  -- FIXME: should be rendered differently, see click dummy
 
       let numUsers :: Int = 13  -- FIXME
@@ -209,7 +209,7 @@ mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
         & ibListKey .~ (listKey <> "-users")
         & ibSize .~ Large
         & ibDarkBackground .~ True
-        & ibHighlightWhen .~ HighlightOnMouseOver
+        & ibHighlightWhen .~ HighlightNever
         & ibLabel .~ cs (show numUsers)  -- FIXME: should be rendered differently, see click dummy
 
 
@@ -263,8 +263,8 @@ mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
       & ibLabel .~ "processes"
 
     ibutton_ $ emptyIbuttonProps "Process_add"
-        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormOngoing
-          $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract sampleRawContent1 (group ^. groupID)) group
+        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormBegin
+          $ newLocalStateRef (CreateVDoc (Title "[no title]") (Abstract "[no abstract]") emptyRawContent (group ^. groupID)) group
         ]
       & ibListKey .~ "process_add"
       & ibSize .~ XXLarge
@@ -273,7 +273,7 @@ mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
       & ibLabel .~ "create new process"
 
     ibutton_ $ emptyIbuttonProps "Group_update"
-        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup (Just $ group ^. groupID) . FormOngoing
+        [ MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup (Just $ group ^. groupID) . FormBegin
           $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
         ]
       & ibListKey .~ "group_update"
@@ -284,24 +284,88 @@ mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
 
     -- process list
     br_ [] >> br_ [] >> br_ [] >> br_ [] >> hr_ [] >> br_ []
-    mainMenuProcessShort_ `mapM_` {- sortBy (compare `on` view vdocTitle)  -- TODO: we only have ID VDoc here, but that'll need to change. -}
-                                  (group ^. groupVDocs)
+
+    let mkProcProps vid = MainMenuProcessShortProps
+          -- TODO: use the trick from /docs/prototypes/ApplicativeDo.hs: load process props on
+          -- demand, and when rendering filter for cache misses and just show the list of all
+          -- processes already in the cache.  automatic re-rendering will take care of the rest.
+          --
+          -- TODO: i think we don't have a rest-api end-point for this either.
+          { _mmprocShrtID          = vid
+          , _mmprocShrtIcon        = ()
+          , _mmprocShrtTitle       = Title . cs . show $ vid
+          , _mmprocShrtNumComments = 32
+          , _mmprocShrtNumEdits    = 53
+          , _mmprocShrtNumUsers    = 41
+          }
+
+    mainMenuProcessShort_ `mapM_` ( sortBy (compare `on` view mmprocShrtTitle)
+                                  . fmap mkProcProps
+                                  $ group ^. groupVDocs
+                                  )
 
 mainMenuGroup_ :: HasCallStack => Group -> ReactElementM eventHandler ()
 mainMenuGroup_ = view_ mainMenuGroup "mainMenuGroup"
 
-mainMenuProcessShort :: HasCallStack => View '[ID VDoc]
-mainMenuProcessShort = mkView "MainMenuProcessShort" $ \vid -> do
-  button_
-        [ "id" $= cs ("process-list-item-" <> show (vid ^. unID))
-        , onClick $ \_ _ -> simpleHandler . dispatch . LoadCompositeVDoc $ BeforeAjax vid
-        ]
-        (elemText . cs . show $ vid ^. unID)
 
-mainMenuProcessShort_ :: HasCallStack => ID VDoc -> ReactElementM 'EventHandlerCode ()
-mainMenuProcessShort_ vid = view_ mainMenuProcessShort listKey vid
+mainMenuProcessShort :: HasCallStack => View '[MainMenuProcessShortProps]
+mainMenuProcessShort = mkView "MainMenuProcessShort" $ \props -> do
+  let listKey = "process-list-item-" <> (cs . show $ props ^. mmprocShrtID . unID)
+  div_ [ onClick $ \_ _ -> simpleHandler . dispatch
+                         . LoadCompositeVDoc $ BeforeAjax (props ^. mmprocShrtID)
+       , "id" $= listKey  -- FUTUREWORK: get rid of this.  at the time of writing this it's only
+                          -- used in the acceptance test.
+
+       , "style" @@= [ decl "background-color" Colors.SCBlue03
+                     , decl "padding" (Px 50)
+                     , decl "margin" (Px 50)
+                     , decl "borderRadius" (Px 12)
+                     ]
+       ] $ do
+
+    -- image
+    br_ []
+    ibutton_ $ emptyIbuttonProps "Process" ([] :: [GlobalAction])
+      & ibListKey .~ "process"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ True
+      & ibHighlightWhen .~ HighlightNever
+      & ibLabel .~ mempty
+
+    -- title
+    br_ []
+    div_ [] $ do
+      elemText $ props ^. mmprocShrtTitle . unTitle
+
+    -- buttons for processes, users (FUTUREWORK: make those clickable in addition to the entire
+    -- tile.  clicking on 'users' button should get you there directly.)
+    br_ []
+    div_ [] $ do
+      ibutton_ $ emptyIbuttonProps "Comment" ([] :: [GlobalAction])
+        & ibListKey .~ (listKey <> "-comments")
+        & ibSize .~ Large
+        & ibDarkBackground .~ True
+        & ibHighlightWhen .~ HighlightNever
+        & ibLabel .~ (cs . show $ props ^. mmprocShrtNumComments)
+
+      ibutton_ $ emptyIbuttonProps "Edit" ([] :: [GlobalAction])
+        & ibListKey .~ (listKey <> "-edits")
+        & ibSize .~ Large
+        & ibDarkBackground .~ True
+        & ibHighlightWhen .~ HighlightNever
+        & ibLabel .~ (cs . show $ props ^. mmprocShrtNumEdits)
+
+      ibutton_ $ emptyIbuttonProps "User" ([] :: [GlobalAction])
+        & ibListKey .~ (listKey <> "-users")
+        & ibSize .~ Large
+        & ibDarkBackground .~ True
+        & ibHighlightWhen .~ HighlightNever
+        & ibLabel .~ (cs . show $ props ^. mmprocShrtNumUsers)
+
+mainMenuProcessShort_ :: HasCallStack => MainMenuProcessShortProps -> ReactElementM 'EventHandlerCode ()
+mainMenuProcessShort_ props = view_ mainMenuProcessShort listKey props
   where
-    listKey = "mainMenuProcessShort-" <> (cs . show $ vid ^. unID)
+    listKey = "mainMenuProcessShort-" <> (cs . show $ props ^. mmprocShrtID . unID)
 
 -- | FUTUREWORK: should this be @View '[LocalStateRef CreateGroup]@ or @View '[Maybe (ID Group),
 -- LocalStateRef CreateGroup]@?  (same with 'mainMenuCreateProcess'.)
@@ -369,8 +433,8 @@ renderCreateOrUpdateProcess
   :: forall st a.
      ALens' st Title
   -> ALens' st Abstract
-  -> (FormAction_ a st -> GlobalAction)  -- ^ save
-  -> GlobalAction                        -- ^ cancel
+  -> (FormActionWith a st -> GlobalAction)  -- ^ save
+  -> GlobalAction                           -- ^ cancel
   -> st
   -> ReactElementM ('StatefulEventHandlerCode st) ()
 renderCreateOrUpdateProcess (cloneLens -> toTitle) (cloneLens -> toAbstract) save cancel st = do

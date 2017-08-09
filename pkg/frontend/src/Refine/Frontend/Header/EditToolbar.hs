@@ -29,16 +29,24 @@ import Refine.Frontend.Prelude
 import           Refine.Common.Types
 import           Refine.Common.VDoc.OT (docRanges)
 import           Refine.Common.VDoc.Draft
-import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
+import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Header.Types
+import           Refine.Frontend.Types
 
 
-mkEditToolbarProps :: HasCallStack => EditorState -> EditToolbarProps
-mkEditToolbarProps es
+mkEditToolbarProps :: HasCallStack => Maybe Edit -> EditorState -> EditToolbarProps
+mkEditToolbarProps medit = EditToolbarProps isInitial . mkLinkEditorProps
+  where
+    isInitial = if maybe False null $ medit ^? _Just . editSource . unEditSource
+      then EditIsInitial
+      else EditIsNotInitial
+
+mkLinkEditorProps :: HasCallStack => EditorState -> LinkEditorProps
+mkLinkEditorProps es
     | rangeIsEmpty rc sel = LinkButtonDisabled
     | any (doRangesOverlap sel) linkranges = LinkButtonDeletes
     | otherwise = LinkButtonAdds . cs $ rangeText BlockBoundaryIsEmpty rc sel
@@ -51,11 +59,11 @@ mkEditToolbarProps es
         isLink (Just (EntityLink _)) = True
         isLink _ = False
 
-wipeDocumentState :: DocumentState -> WipedDocumentState
-wipeDocumentState = \case
+wipeDocumentState :: GlobalState -> WipedDocumentState
+wipeDocumentState gs = case getDocumentState gs of
   DocumentStateView{}                  -> WipedDocumentStateView
   DocumentStateDiff i _ _ edit collapsed editable -> WipedDocumentStateDiff i edit collapsed editable
-  DocumentStateEdit es _ _             -> WipedDocumentStateEdit $ mkEditToolbarProps es
+  DocumentStateEdit es _ meid          -> WipedDocumentStateEdit $ mkEditToolbarProps (getEdit gs =<< meid) es
   DocumentStateDiscussion dp           -> WipedDocumentStateDiscussion $ DiscussionToolbarProps
                                             (dp ^. discPropsDiscussion . discussionID)
                                             (dp ^. discPropsFlatView)
@@ -67,7 +75,7 @@ editToolbar_ ep = do
         & iconButtonPropsElementName  .~ "btn-index"
 
   let props :: IbuttonProps [GlobalAction]
-      props = emptyIbuttonProps "Close" [DocumentAction DocumentCancelSave]
+      props = emptyIbuttonProps "Close" [DocumentAction DocumentCancelSave, DocumentAction UpdateDocumentStateView]
         & ibListKey      .~ "cancel"
         & ibLabel        .~ "cancel"
         & ibEnabled      .~ True
@@ -120,16 +128,16 @@ editToolbar_ ep = do
   let props :: IbuttonProps [GlobalAction]
       props = emptyIbuttonProps "Edit_toolbar_link" onclick
         & ibListKey      .~ "link"
-        & ibLabel        .~ case ep of
+        & ibLabel        .~ case ep ^. editToolbarPropsLinkEditor of
             LinkButtonDisabled -> "links"
             LinkButtonDeletes  -> "delete link"
             LinkButtonAdds _   -> "add link"
-        & ibEnabled      .~ case ep of
+        & ibEnabled      .~ case ep ^. editToolbarPropsLinkEditor of
             LinkButtonDisabled -> False
             _                  -> True
         & ibSize         .~ XXLarge
 
-      onclick = case ep of
+      onclick = case ep ^. editToolbarPropsLinkEditor of
         LinkButtonDisabled -> []
         LinkButtonDeletes  -> [DocumentAction DocumentRemoveLink]
         LinkButtonAdds l   -> [HeaderAction $ OpenEditToolbarLinkEditor l]
@@ -151,7 +159,7 @@ editToolbar_ ep = do
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
   let props :: IbuttonProps [GlobalAction]
-      props = emptyIbuttonProps "Save" [DocumentAction RequestDocumentSave]
+      props = emptyIbuttonProps "Save" [DocumentAction . DocumentSave . FormBegin $ ep ^. editToolbarPropsInitial]
         & ibListKey      .~ "save"
         & ibLabel        .~ "save"
         & ibEnabled      .~ True

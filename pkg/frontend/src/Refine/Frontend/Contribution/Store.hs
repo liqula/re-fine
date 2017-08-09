@@ -73,11 +73,11 @@ activeDialogUpdateForShowCommentEditor = Just . ActiveDialogComment .
 
 activeDialogUpdate :: HasCallStack => GlobalAction -> Maybe ActiveDialog -> Maybe ActiveDialog
 activeDialogUpdate = \case
-  ContributionAction ShowCommentEditor   -> activeDialogUpdateForShowCommentEditor
-  ContributionAction HideCommentEditor   -> const Nothing
-  DocumentAction RequestDocumentSave     -> const $ Just ActiveDialogEdit
-  DocumentAction (DocumentSave _)        -> const Nothing
-  DocumentAction DocumentCancelSave      -> const Nothing
+  ContributionAction ShowCommentEditor                       -> activeDialogUpdateForShowCommentEditor
+  ContributionAction HideCommentEditor                       -> const Nothing
+  DocumentAction (DocumentSave (FormBegin EditIsNotInitial)) -> const $ Just ActiveDialogEdit
+  DocumentAction (DocumentSave (FormComplete _))             -> const Nothing
+  DocumentAction DocumentCancelSave                          -> const Nothing
   _ -> id
 
 highlightedMarkAndBubbleUpdate :: HasCallStack => ContributionAction -> [MarkID] -> [MarkID]

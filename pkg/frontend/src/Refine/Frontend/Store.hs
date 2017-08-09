@@ -59,7 +59,9 @@ import           Refine.Frontend.Util
 
 instance StoreData GlobalState where
     type StoreAction GlobalState = GlobalAction
-    transform = loop . (:[])
+    transform = loop . \case
+      CompositeAction as -> as
+      a -> [a]
       where
         -- FUTUREWORK: we don't need this loop trick, we can implement reDispatch much more
         -- straight-forwardly as @forkIO . dispatchM@.  EXCEPT: if we process action A, then throw
@@ -115,23 +117,21 @@ transformGlobalState = transf
         ContributionAction (SetRange _) -> removeAllRanges
         ContributionAction ClearRange   -> removeAllRanges
 
-        ContributionAction ShowCommentEditor            -> scrollToCurrentSelection (st ^. gsContributionState)
-        DocumentAction RequestDocumentSave              -> scrollToCurrentSelection (st ^. gsContributionState)
-
-        HeaderAction ScrollToPageTop -> liftIO js_scrollToPageTop
-
-        HeaderAction (ScrollToBlockKey (C.BlockKey k)) -> liftIO . js_scrollToBlockKey $ cs k
-
+        ContributionAction ShowCommentEditor                       -> scrollToCurrentSelection (st ^. gsContributionState)
+        DocumentAction (DocumentSave (FormBegin EditIsNotInitial)) -> scrollToCurrentSelection (st ^. gsContributionState)
+        LoadCompositeVDoc (AfterAjax _)                            -> liftIO js_scrollToPageTop  -- FIXME: #416.
+        HeaderAction ScrollToPageTop                               -> liftIO js_scrollToPageTop
+        HeaderAction (ScrollToBlockKey (C.BlockKey k))             -> liftIO . js_scrollToBlockKey $ cs k
 
         LoginGuardStash actions -> do
           case st ^. gsLoginState . lsCurrentUser of
             UserLoggedOut  -> dispatchAndExec . MainMenuAction . MainMenuActionOpen . MainMenuLogin $ MainMenuSubTabLogin
-            UserLoggedIn _ -> dispatchAndExecMany actions
+            UserLoggedIn _ -> dispatchAndExec `mapM_` actions
 
         LoginGuardPop -> do
           case st ^. gsLoginState . lsCurrentUser of
             UserLoggedOut  -> error "LoginGuardPop before logged in!"
-            UserLoggedIn _ -> dispatchAndExecMany (st ^. gsDispatchAfterLogin)
+            UserLoggedIn _ -> dispatchAndExec `mapM_` (st ^. gsDispatchAfterLogin)
 
         ShowNotImplementedYet -> do
             liftIO $ windowAlertST "not implemented yet."
@@ -256,7 +256,7 @@ emitBackendCallsFor act st = case act of
     LoadCompositeVDoc (BeforeAjax auid) -> do
         getVDoc auid $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right loadedVDoc) -> dispatchManyM
+            (Right loadedVDoc) -> dispatchM . CompositeAction $
                                    [ LoadCompositeVDoc $ AfterAjax loadedVDoc
                                    , ContributionAction RequestSetAllVerticalSpanBounds
                                    ]
@@ -266,7 +266,7 @@ emitBackendCallsFor act st = case act of
     MainMenuAction (MainMenuActionOpen (MainMenuGroups BeforeAjax{})) -> do
         getGroups $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right groups) -> dispatchManyM
+            (Right groups) -> dispatchM . CompositeAction $
               [ RefreshServerCache . ServerCache mempty mempty mempty mempty mempty
                 $ M.fromList [(g ^. C.groupID, g) | g <- groups]
               , MainMenuAction . MainMenuActionOpen . MainMenuGroups . AfterAjax $ (^. C.groupID) <$> groups
@@ -275,7 +275,7 @@ emitBackendCallsFor act st = case act of
     MainMenuAction (MainMenuActionOpen (MainMenuCreateOrUpdateGroup mid (FormComplete cg))) -> do
         maybe createGroup updateGroup mid cg $ \case
             Left rsp -> ajaxFail rsp Nothing
-            Right rsp -> dispatchManyM
+            Right rsp -> dispatchM . CompositeAction $
               [ RefreshServerCache . ServerCache mempty mempty mempty mempty mempty
                 $ M.fromList [(rsp ^. C.groupID, rsp)]
               , MainMenuAction . MainMenuActionOpen . MainMenuGroup $ rsp ^. C.groupID
@@ -297,9 +297,7 @@ emitBackendCallsFor act st = case act of
     AddStatement upd sid (BeforeAjax statement) -> do
         (if upd then updateStatement else addStatement) sid statement $ \case
             (Left rsp) -> ajaxFail rsp Nothing
-            (Right discussion) -> dispatchManyM
-                                   [ AddStatement upd sid $ AfterAjax discussion
-                                   ]
+            (Right discussion) -> dispatchM . AddStatement upd sid $ AfterAjax discussion
 
     ContributionAction (SubmitComment (CommentInfo text kind)) -> do
       let headEdit = fromMaybe (error "emitBackendCallsFor.SubmitComment")
@@ -307,10 +305,12 @@ emitBackendCallsFor act st = case act of
           range    = fromMaybe (minimumRange (fromMaybe (error "perhaps we should make documentStateContent a proper lens?") $
                                               st ^? to getDocumentState . documentStateContent))
                    $ st ^? gsCurrentSelection . _Just . C.selectionRange
-          handle a = dispatchManyM [ a
-                                   , ContributionAction RequestSetAllVerticalSpanBounds
-                                   , reloadCompositeVDoc st
-                                   ]
+          handle a = dispatchM . CompositeAction $
+                       [ a
+                       , ContributionAction RequestSetAllVerticalSpanBounds
+                       , reloadCompositeVDoc st
+                       , DocumentAction UpdateDocumentStateView
+                       ]
 
       case kind of
         CommentKindDiscussion ->
@@ -322,11 +322,28 @@ emitBackendCallsFor act st = case act of
             (Left rsp) -> ajaxFail rsp Nothing
             (Right note) -> handle $ AddNote note
 
-    DocumentAction (DocumentSave info)
-      | DocumentStateEdit editorState _ baseEdit <- st ^. gsDocumentState
+    DocumentAction (DocumentSave (FormBegin EditIsInitial))
       -> do
-        let eid :: C.ID C.Edit
-            Just eid = st ^? gsVDoc . _Just . C.compositeVDocThisEditID
+        let DocumentStateEdit editorState _ (Just baseEdit) = st ^. gsDocumentState
+            cedit = C.CreateEdit
+                  { C._createEditDesc        = "initial content"
+                  , C._createEditVDocVersion = getCurrentRawContent editorState
+                  , C._createEditKind        = C.Initial
+                  }
+
+        addEdit baseEdit cedit $ \case  -- TUNING: this is less than ideal.
+          Left rsp   -> ajaxFail rsp Nothing
+          Right edit -> do
+            mergeEdit (edit ^. C.editID) $ \case
+              Left rsp   -> ajaxFail rsp Nothing
+              Right ()   -> dispatchM . reloadCompositeVDoc' $ edit ^. C.editVDoc
+            dispatchM $ AddEdit edit
+
+    DocumentAction (DocumentSave (FormComplete info))
+      | DocumentStateEdit editorState _ baseEdit_ <- st ^. gsDocumentState
+      -> do
+        let baseEdit :: C.ID C.Edit
+            (baseEdit:_) = catMaybes [baseEdit_, st ^? gsVDoc . _Just . C.compositeVDocThisEditID]
 
             cedit = C.CreateEdit
                   { C._createEditDesc        = info ^. editInfoDesc
@@ -334,16 +351,14 @@ emitBackendCallsFor act st = case act of
                   , C._createEditKind        = info ^. editInfoKind
                   }
 
-            addOrUpdate = case baseEdit of
-              Nothing -> addEdit eid
-              Just eid' -> updateEdit eid'
-
-        addOrUpdate cedit $ \case
+        addEdit baseEdit cedit $ \case
           Left rsp   -> ajaxFail rsp Nothing
-          Right edit -> dispatchManyM [ AddEdit edit
-                                      , ContributionAction RequestSetAllVerticalSpanBounds
-                                      , reloadCompositeVDoc st
-                                      ]
+          Right edit -> dispatchM . CompositeAction $
+            [ AddEdit edit
+            , ContributionAction RequestSetAllVerticalSpanBounds
+            , reloadCompositeVDoc' (edit ^. C.editVDoc)
+            , DocumentAction UpdateDocumentStateView
+            ]
 
 
     -- i18n
@@ -364,7 +379,7 @@ emitBackendCallsFor act st = case act of
           _                      -> []
 
         (Right _user) -> do
-          dispatchManyM
+          dispatchM . CompositeAction $
             [ MainMenuAction $ MainMenuActionOpen (MainMenuLogin MainMenuSubTabLogin)
             , MainMenuAction MainMenuActionClearErrors
             ]
@@ -376,7 +391,7 @@ emitBackendCallsFor act st = case act of
           _                 -> []
 
         (Right user) -> do
-          dispatchManyM
+          dispatchM . CompositeAction $
             [ SetCurrentUser $ UserLoggedIn user
             , MainMenuAction MainMenuActionClose
             , LoginGuardPop
@@ -386,7 +401,7 @@ emitBackendCallsFor act st = case act of
       logout $ \case
         (Left rsp) -> ajaxFail rsp Nothing
         (Right ()) -> do
-          dispatchManyM
+          dispatchM . CompositeAction $
             [ SetCurrentUser UserLoggedOut
             , MainMenuAction MainMenuActionClose
             ]
@@ -410,14 +425,17 @@ emitBackendCallsFor act st = case act of
 -- the composite vdoc here.  if we got rid of the NFData constraint on
 -- actions, we could define @UpdateCVDoc :: (CompositeVDoc ->
 -- CompositeVDoc) -> GlobalAction@.
+reloadCompositeVDoc' :: HasCallStack => ID C.VDoc -> GlobalAction
+reloadCompositeVDoc' = LoadCompositeVDoc . BeforeAjax
+
 reloadCompositeVDoc :: HasCallStack => GlobalState -> GlobalAction
-reloadCompositeVDoc st = LoadCompositeVDoc
-                       . BeforeAjax . fromMaybe (error "reloadCompositeVDoc")
-                       $ st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocID
+reloadCompositeVDoc = reloadCompositeVDoc'
+  . fromMaybe (error "reloadCompositeVDoc")
+  . (^? gsVDoc . _Just . C.compositeVDoc . C.vdocID)
 
 ajaxFail :: HasCallStack => (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
 ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of
-  (Right err, Just onApiError) -> dispatchManyM (onApiError err)
+  (Right err, Just onApiError) -> mconcat <$> (dispatchM `mapM` onApiError err)
   (Right err, Nothing)         -> windowAlert ("Unexpected error from server: " <> show (code, err))     >> pure []
   (Left bad, _)                -> windowAlert ("Corrupted error from server: " <> show (code, rsp, bad)) >> pure []
 
@@ -428,29 +446,15 @@ ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of
 dispatch :: HasCallStack => GlobalAction -> ViewEventHandler
 dispatch a = [action @GlobalState a]
 
-dispatchMany :: HasCallStack => [GlobalAction] -> ViewEventHandler
-dispatchMany = mconcat . fmap dispatch
-
 dispatchM :: HasCallStack => Monad m => GlobalAction -> m ViewEventHandler
 dispatchM = pure . dispatch
 
-dispatchManyM :: HasCallStack => Monad m => [GlobalAction] -> m ViewEventHandler
-dispatchManyM = pure . dispatchMany
-
 reDispatchM :: HasCallStack => MonadState [GlobalAction] m => GlobalAction -> m ()
-reDispatchM a = reDispatchManyM [a]
-
-reDispatchManyM :: HasCallStack => MonadState [GlobalAction] m => [GlobalAction] -> m ()
-reDispatchManyM as = modify (<> as)
+reDispatchM a = modify (<> [a])
 
 dispatchAndExec :: HasCallStack => MonadIO m => GlobalAction -> m ()
 dispatchAndExec a = liftIO . void . forkIO $ do
   () <- executeAction `mapM_` dispatch a
-  pure ()
-
-dispatchAndExecMany :: HasCallStack => MonadIO m => [GlobalAction] -> m ()
-dispatchAndExecMany as = liftIO . void . forkIO $ do
-  () <- executeAction `mapM_` dispatchMany as
   pure ()
 
 

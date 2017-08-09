@@ -43,6 +43,8 @@ import Refine.Common.VDoc.OT (docRanges, docEditRanges)
 
 -- * functions
 
+-- | FUTUREWORK: a Monoid instance would be nice, but we need to convert the mappend input (making
+-- sure keys are unique, update block indices, ...).
 emptyRawContent :: RawContent
 emptyRawContent = mkRawContent $ emptyBlock :| []
 

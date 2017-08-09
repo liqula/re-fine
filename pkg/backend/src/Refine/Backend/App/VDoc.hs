@@ -171,6 +171,9 @@ addMerge base eid1 eid2 = do
             $ CreateEdit (edit2 ^. editDesc) newdoc (edit2 ^. editKind)
         res -> pure . Left $ AppMergeError base eid1 eid2 (cs $ show res)
 
+mergeEdit :: ID Edit -> App ()
+mergeEdit = rebaseHeadToEdit
+
 -- | Move HEAD marker (which is our name for the latest release) to a given edit.  All contributions
 -- based on the old HEAD are rebased to the new HEAD.  All authors of rebased contributions are
 -- notified by email.

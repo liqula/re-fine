@@ -112,7 +112,7 @@ statementEditor (StatementEditorProps sid r modif) = mkPersistentStatefulView "s
       & ibListKey .~ "0"
     ibutton_
       $ emptyIbuttonProps "Cancel"
-          [ DocumentAction $ ReplyStatement modif sid FormCancelled
+          [ DocumentAction $ ReplyStatement modif sid FormCancel
           ]
       & ibLabel .~ "Cancel"
       & ibSize .~ Medium
@@ -150,7 +150,7 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
         when thisuser . ibutton_
           $ emptyIbuttonProps "Edit"
               [ LoginGuardStash
-                [ DocumentAction . ReplyStatement True (stmnt ^. statementID) . FormOngoing
+                [ DocumentAction . ReplyStatement True (stmnt ^. statementID) . FormBegin
                 $ newLocalStateRef (CreateStatement $ stmnt ^. statementText) stmnt]
               ]
           & ibLabel .~ "Edit"
@@ -159,7 +159,7 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
         ibutton_
           $ emptyIbuttonProps "Reply"
               [ LoginGuardStash
-                [ DocumentAction . ReplyStatement False (stmnt ^. statementID) . FormOngoing
+                [ DocumentAction . ReplyStatement False (stmnt ^. statementID) . FormBegin
                 $ newLocalStateRef (CreateStatement "") stmnt]
               ]
           & ibLabel .~ "Reply"

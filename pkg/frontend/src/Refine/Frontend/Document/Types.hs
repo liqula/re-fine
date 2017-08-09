@@ -42,9 +42,9 @@ import           Refine.Frontend.Util
 
 data DocumentAction =
     UpdateEditorState EditorState
+  | UpdateDocumentStateView
   | DocumentUpdateEditInfo (EditInfo (Maybe EditKind))
-  | RequestDocumentSave  -- ^ FIXME: use the 'AfterAjax' trick here?
-  | DocumentSave (EditInfo EditKind)
+  | DocumentSave (FormActionWith EditIsInitial (EditInfo EditKind))
   | DocumentCancelSave
   | DocumentToggleStyle Style
   | DocumentToggleBlockType BlockType

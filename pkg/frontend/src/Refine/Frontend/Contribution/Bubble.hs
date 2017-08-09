@@ -47,7 +47,7 @@ import           Refine.Frontend.Util
 
 
 mkClickHandler :: HasCallStack => [ContributionAction] -> Event -> MouseEvent -> (ViewEventHandler, [EventModification])
-mkClickHandler actions _ _ = simpleHandler . dispatchMany $ ContributionAction <$> actions
+mkClickHandler actions _ _ = simpleHandler . mconcat $ dispatch . ContributionAction <$> actions
 
 bubbleStackStyles :: HasCallStack => [Decl]
 bubbleStackStyles = [decl "border" (Ident "3px dotted black")]

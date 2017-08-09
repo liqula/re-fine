@@ -184,7 +184,7 @@ headerDepth = \case
   _ -> Nothing
 
 mkMainHeaderProps :: GlobalState -> MainHeaderProps
-mkMainHeaderProps gs = fmap (const . wipeDocumentState $ getDocumentState gs) gs
+mkMainHeaderProps gs = fmap (const $ wipeDocumentState gs) gs
 
 mainHeader_ :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
 mainHeader_ props = RF.viewWithSKey mainHeader "mainHeader" props mempty

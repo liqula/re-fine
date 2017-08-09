@@ -139,6 +139,10 @@ data GlobalAction =
     -- testing & dev
   | ResetState GlobalState
   | ShowNotImplementedYet
+
+    -- make sure that between two actions, no rendering happens (only one composite state
+    -- transformation).
+  | CompositeAction [GlobalAction]
   deriving (Show, Eq, Generic)
 
 makeRefineTypes [''ServerCache, ''GlobalState_, ''DevState, ''GlobalAction]
