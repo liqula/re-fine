@@ -112,7 +112,7 @@ foreignKeyField column = S.keyToId . column . entityVal
 
 -- NOTES: How to handle associations? What to update, what to keep?
 vDocToRecord :: VDoc -> DB S.VDoc
-vDocToRecord (VDoc _i t a r g) = pure (S.VDoc t a (Just $ S.idToKey r) (S.idToKey g))
+vDocToRecord (VDoc _i t a r g _) = pure (S.VDoc t a (Just $ S.idToKey r) (S.idToKey g))
 
 updateVDoc :: ID VDoc -> VDoc -> DB ()
 updateVDoc vid vdoc = do
@@ -213,9 +213,9 @@ getMetaEntity f i = do
 
 -- * VDoc
 
-toVDoc :: MetaID VDoc -> Title -> Abstract -> Maybe (Key S.Edit) -> Key S.Group -> VDoc
-toVDoc vid title abstract (Just repoid) g = VDoc vid title abstract (S.keyToId repoid) (S.keyToId g)
-toVDoc _ _ _ Nothing _ = error "impossible"
+toVDoc :: EditStats -> MetaID VDoc -> Title -> Abstract -> Maybe (Key S.Edit) -> Key S.Group -> VDoc
+toVDoc stats vid title abstract (Just repoid) g = VDoc vid title abstract (S.keyToId repoid) (S.keyToId g) stats
+toVDoc _ _ _ _ Nothing _ = error "impossible"
 
 listVDocs :: DB [ID VDoc]
 listVDocs = do
@@ -237,10 +237,25 @@ createVDoc pv = do
     }
   let e' = S.idToKey (e ^. editMetaID . miID) :: Key S.Edit
   liftDB $ update (S.idToKey $ mid ^. miID) [S.VDocHeadId =. Just e']
-  pure $ S.vDocElim (toVDoc mid) svdoc {S.vDocHeadId = Just e'}
+  getVDoc (mid ^. miID)
 
 getVDoc :: ID VDoc -> DB VDoc
-getVDoc = getMetaEntity (S.vDocElim . toVDoc)
+getVDoc i = do
+  (mid, x) <- getMetaEntity (,) i
+  let eid = S.vDocElim (\_ _ (Just ei) _ -> ei) x
+  editIds <- foreignKeyField S.parentChildChild <$$> liftDB (selectList [S.ParentChildParent ==. eid] [])
+  noteIds <- foreignKeyField S.pNNote <$$> liftDB (selectList [S.PNEdit ==. eid] [])
+  discussionIds <- foreignKeyField S.pDDiscussion <$$> liftDB (selectList [S.PDEdit ==. eid] [])
+  statementIds <- forM discussionIds $ \did ->
+    entityKey <$$> liftDB (selectList [S.StatementDiscussion ==. S.idToKey did] [])
+  editsMeta <- (^. miMeta) <$$> mapM getMeta (S.keyToId eid: editIds :: [ID Edit])
+  notesMeta <- (^. miMeta) <$$> mapM getMeta (noteIds :: [ID Note])
+  discussionsMeta <- (^. miMeta) <$$> mapM getMeta (discussionIds :: [ID Discussion])
+  statementsMeta <- (^. miMeta) <$$> mapM getMeta (S.keyToId <$> concat statementIds :: [ID Statement])
+  let metas = mid ^. miMeta: (editsMeta <> notesMeta <> discussionsMeta <> statementsMeta)
+      users = length $ nub [u | UserID u <- ((^. metaCreatedBy) <$> metas) <> ((^. metaChangedBy) <$> metas)]
+      stats = EditStats users (length editIds) (length noteIds + length discussionIds)
+  pure $ S.vDocElim (toVDoc stats mid) x
 
 
 -- * Repo

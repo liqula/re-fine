@@ -28,6 +28,7 @@ import Refine.Frontend.Prelude
 
 import           Control.Lens (ALens', cloneLens)
 import qualified Data.Text as ST
+import qualified Data.Map as Map
 import           Language.Css.Syntax
 
 import           React.Flux.Missing
@@ -139,7 +140,7 @@ mainMenu_ :: HasCallStack => MainMenuProps MainMenuTabProps -> ReactElementM eve
 mainMenu_ = view_ mainMenu "mainMenu_"
 
 
-mainMenuGroups :: View '[[Group]]
+mainMenuGroups :: View '[GroupsProps]
 mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
   div_ $ do
     div_ ["style" @@= [decl "marginLeft" (Px 3)]] $ do
@@ -158,9 +159,9 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
       br_ [] >> br_ [] >> br_ [] >> hr_ []
 
     div_ $ do
-      mainMenuGroupShort_ `mapM_` sortBy (compare `on` view groupTitle) groups
+      mainMenuGroupShort_ `mapM_` sortBy (compare `on` view groupTitle) (fst groups)
 
-mainMenuGroups_ :: HasCallStack => [Group] -> ReactElementM eventHandler ()
+mainMenuGroups_ :: HasCallStack => GroupsProps -> ReactElementM eventHandler ()
 mainMenuGroups_ = view_ mainMenuGroups "mainMenuGroups"
 
 mainMenuGroupShort :: HasCallStack => View '[Group]
@@ -212,14 +213,13 @@ mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
         & ibHighlightWhen .~ HighlightNever
         & ibLabel .~ cs (show numUsers)  -- FIXME: should be rendered differently, see click dummy
 
-
 mainMenuGroupShort_ :: HasCallStack => Group -> ReactElementM eventHandler ()
 mainMenuGroupShort_ group = view_ mainMenuGroupShort listKey group
   where
     listKey = "mainMenuGroupShort-" <> (cs . show $ group ^. groupID . unID)
 
-mainMenuGroup :: View '[Group]
-mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
+mainMenuGroup :: View '[GroupProps]
+mainMenuGroup = mkView "mainMenuGroup" $ \(group, vdocs) -> do
   div_ $ do
     ibutton_ $ emptyIbuttonProps "Arrow_left" [MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()]
       & ibListKey .~ "group_back"
@@ -293,18 +293,23 @@ mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
           -- TODO: i think we don't have a rest-api end-point for this either.
           { _mmprocShrtID          = vid
           , _mmprocShrtIcon        = ()
-          , _mmprocShrtTitle       = Title . cs . show $ vid
-          , _mmprocShrtNumComments = 32
-          , _mmprocShrtNumEdits    = 53
-          , _mmprocShrtNumUsers    = 41
+          , _mmprocShrtTitle       = title
+          , _mmprocShrtNumComments = stats ^. editStatsComments
+          , _mmprocShrtNumEdits    = stats ^. editStatsEdits
+          , _mmprocShrtNumUsers    = stats ^. editStatsUsers
           }
+          where
+            (title, stats) = maybe
+              (cacheMiss (CacheKeyVDoc vid) (Title "loading", mempty))
+              ((^. vdocTitle) &&& (^. vdocStats))
+              $ Map.lookup vid vdocs
 
     mainMenuProcessShort_ `mapM_` ( sortBy (compare `on` view mmprocShrtTitle)
                                   . fmap mkProcProps
                                   $ group ^. groupVDocs
                                   )
 
-mainMenuGroup_ :: HasCallStack => Group -> ReactElementM eventHandler ()
+mainMenuGroup_ :: HasCallStack => GroupProps -> ReactElementM eventHandler ()
 mainMenuGroup_ = view_ mainMenuGroup "mainMenuGroup"
 
 

@@ -88,7 +88,7 @@ type RefineAPI =
 
 
 type SGetVDoc
-  = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc)
+  = "r" :> "vdoccomposite" :> Capture "vdocid" (ID VDoc)
     :> Get '[JSON] CompositeVDoc
 
 type SGetVDocSimple

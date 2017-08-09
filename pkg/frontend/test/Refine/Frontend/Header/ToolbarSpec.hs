@@ -44,7 +44,7 @@ spec = do
       pendingWith "sometimes fails, sometimes passes; related to #201 or #221?"
 
       let mockVDoc :: VDoc
-          mockVDoc = VDoc (MetaID (ID 0) undefined) (Title "title") (Abstract "abstract") undefined undefined
+          mockVDoc = VDoc (MetaID (ID 0) undefined) (Title "title") (Abstract "abstract") undefined undefined mempty
 
       wrapper <- mount $ toolbarWrapper_ (toolbar_ mockVDoc)
       button <- find wrapper (StringSelector ".c-vdoc-toolbar__btn-add-annotation")
