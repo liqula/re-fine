@@ -337,7 +337,7 @@ emitBackendCallsFor act st = case act of
             mergeEdit (edit ^. C.editID) $ \case
               Left rsp   -> ajaxFail rsp Nothing
               Right ()   -> dispatchM . reloadCompositeVDoc' $ edit ^. C.editVDoc
-            pure []
+            dispatchM $ AddEdit edit
 
     DocumentAction (DocumentSave (FormComplete info))
       | DocumentStateEdit editorState _ baseEdit_ <- st ^. gsDocumentState
@@ -356,7 +356,7 @@ emitBackendCallsFor act st = case act of
           Right edit -> dispatchM . CompositeAction $
             [ AddEdit edit
             , ContributionAction RequestSetAllVerticalSpanBounds
-            , reloadCompositeVDoc st
+            , reloadCompositeVDoc' (edit ^. C.editVDoc)
             , DocumentAction UpdateDocumentStateView
             ]
 
