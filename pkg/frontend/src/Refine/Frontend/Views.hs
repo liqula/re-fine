@@ -36,6 +36,8 @@ import qualified Data.Set as Set
 import qualified Data.Tree as ST
 import           Control.Lens (ix)
 import           Language.Css.Syntax
+import           Control.Concurrent.MVar
+import qualified React.Flux.Outdated as Outdated
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft (deleteMarksFromRawContent)
@@ -52,6 +54,7 @@ import           Refine.Frontend.MainMenu.Component (mainMenu_)
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
+import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Types
@@ -63,9 +66,16 @@ import qualified Refine.Frontend.Workbench
 -- | The controller view and also the top level of the Refine app.  This controller view registers
 -- with the store and will be re-rendered whenever the store changes.
 refineApp :: HasCallStack => View '[]
-refineApp = mkControllerView @'[StoreArg GlobalState] "RefineApp" $ \gs ->
-  if False {- set conditional to 'True' to switch to workbench. -} then Refine.Frontend.Workbench.workbench_ gs else
-  case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
+refineApp = mkControllerView @'[StoreArg GlobalState] "RefineApp" wholeScreen_
+
+wholeScreen_ :: HasCallStack => GlobalState -> ReactElementM eventHandler ()
+wholeScreen_ props = Outdated.viewWithSKey wholeScreen "wholeScreen" props mempty
+
+wholeScreen :: Outdated.ReactView GlobalState
+wholeScreen = Outdated.defineLifecycleView "WholeScreen" () Outdated.lifecycleConfig
+  { Outdated.lRender = \() gs ->
+    if False {- set conditional to 'True' to switch to workbench. -} then Refine.Frontend.Workbench.workbench_ gs else
+    case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
       Nothing  -> mainScreen_ gs
       Just tab -> mainMenu_ $ MainMenuProps
                             (mapMainMenuTab (const groups) groupFromCache id id id tab)
@@ -76,6 +86,16 @@ refineApp = mkControllerView @'[StoreArg GlobalState] "RefineApp" $ \gs ->
           groupFromCache gid = fromMaybe (error "impossible") $ gs ^? gsServerCache . scGroups . ix gid
           groups :: [Group]
           groups = Map.elems $ gs ^. gsServerCache . scGroups
+
+  , Outdated.lComponentDidMount = Just $ \this _ _ -> didMountOrUpdate this
+  , Outdated.lComponentDidUpdate = Just $ \this _ _ _ _ -> didMountOrUpdate this
+  }
+  where
+    didMountOrUpdate :: HasCallStack => Outdated.LPropsAndState GlobalState () -> IO ()
+    didMountOrUpdate _getPropsAndState = do
+      cm <- takeMVar cacheMisses
+      putMVar cacheMisses []
+      forM_ (nub cm) $ dispatchAndExec . PopulateCache  -- FIXME: group actions
 
 mainScreen :: HasCallStack => View '[GlobalState]
 mainScreen = mkView "MainScreen" $ \rs -> do

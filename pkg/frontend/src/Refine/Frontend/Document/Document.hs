@@ -36,7 +36,6 @@ import Refine.Frontend.Prelude
 import qualified React.Flux.Outdated as Outdated
 import           Language.Css.Syntax hiding (Value)
 import           React.Flux.Internal (HandlerArg(HandlerArg))
-import           Control.Concurrent.MVar
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.OT (showEditAsRawContentWithMarks, hideUnchangedParts)
@@ -149,9 +148,6 @@ editorOnFocus _ _ = ([], [])
 
 documentComponentDidMountOrUpdate :: HasCallStack => Outdated.LPropsAndState DocumentProps () -> IO ()
 documentComponentDidMountOrUpdate _getPropsAndState = do
-  cm <- takeMVar cacheMisses
-  putMVar cacheMisses []
-  forM_ (nub cm) $ dispatchAndExec . PopulateCache  -- FIXME: group actions
   dispatchAndExec . ContributionAction $ RequestSetAllVerticalSpanBounds
 
 document_ :: HasCallStack => DocumentProps -> ReactElementM eventHandler ()
