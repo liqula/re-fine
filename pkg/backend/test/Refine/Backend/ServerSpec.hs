@@ -39,7 +39,7 @@ import qualified Network.Wai.Test.Internal as Wai
 import           Test.Hspec
 import qualified Web.Users.Types as Users
 
-import Refine.Backend.App as App
+import Refine.Backend.App as App hiding (getEdit)
 import Refine.Backend.Config
 import Refine.Backend.Database.Class as DB
 import Refine.Backend.Database (DB)
