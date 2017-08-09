@@ -95,8 +95,8 @@ wholeScreen = Outdated.defineLifecycleView "WholeScreen" () Outdated.lifecycleCo
   where
     didMountOrUpdate :: HasCallStack => Outdated.LPropsAndState GlobalState () -> IO ()
     didMountOrUpdate _getPropsAndState = do
-      cm <- takeMVar cacheMisses
-      putMVar cacheMisses []
+      cm <- takeMVar cacheMissesMVar
+      putMVar cacheMissesMVar []
       forM_ (nub cm) $ dispatchAndExec . PopulateCache  -- FIXME: group actions
 
 mainScreen :: HasCallStack => View '[GlobalState]

@@ -86,14 +86,17 @@ data CacheKey
   | CacheKeyGroup      (ID Group)
   deriving (Eq, Ord, Show, Generic)
 
-{-# NOINLINE cacheMisses #-}
-cacheMisses :: MVar [CacheKey]
-cacheMisses = unsafePerformIO $ newMVar []
+{-# NOINLINE cacheMissesMVar #-}
+cacheMissesMVar :: MVar [CacheKey]
+cacheMissesMVar = unsafePerformIO $ newMVar []
 
 cacheMiss :: CacheKey -> i -> i
-cacheMiss key i = unsafePerformIO $ do
-  is <- takeMVar cacheMisses
-  putMVar cacheMisses $ key: is
+cacheMiss = cacheMisses . pure
+
+cacheMisses :: [CacheKey] -> i -> i
+cacheMisses keys i = unsafePerformIO $ do
+  is <- takeMVar cacheMissesMVar
+  putMVar cacheMissesMVar $ keys <> is
   pure i
 
 
@@ -218,14 +221,16 @@ gsVDoc = lens getCompositeVDoc setCompositeVDoc
     mkCompositeVDoc sc edit = CompositeVDoc
       ((sc ^. scVDocs) Map.! (edit ^. editVDoc))
       edit
-      (mkMap scEdits editChildren)
-      (mkMap scNotes editNotes')
-      (mkMap scDiscussions editDiscussions')
+      (mkMap CacheKeyEdit scEdits editChildren)
+      (mkMap CacheKeyNote scNotes editNotes')
+      (mkMap CacheKeyDiscussion scDiscussions editDiscussions')
       where
-        -- TUNING: this go through y and construct x from that, this way we don't have to touch the
-        -- elements of x we want to throw out.
-        mkMap :: Lens' ServerCache (Map (ID a) a) -> Lens' Edit (Set (ID a)) -> Map (ID a) a
-        mkMap x y = Map.filterWithKey (\k _ -> k `Set.member` (edit ^. y)) $ sc ^. x
+        mkMap :: (ID a -> CacheKey) -> Lens' ServerCache (Map (ID a) a) -> Lens' Edit (Set (ID a)) -> Map (ID a) a
+        mkMap ck x y
+          = cacheMisses (map ck . Set.toList $ (edit ^. y) Set.\\ Map.keysSet m)
+          $ Map.filterWithKey (\k _ -> k `Set.member` (edit ^. y)) m
+          where
+            m = sc ^. x
 
     setCompositeVDoc :: GlobalState_ a -> Maybe CompositeVDoc -> GlobalState_ a
     setCompositeVDoc gs Nothing = gs & gsEditID .~ Nothing
