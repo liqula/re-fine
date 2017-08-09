@@ -97,6 +97,15 @@ textA, textB :: ST
 textA = "___textA___"
 textB = "___textB___"
 
+block1Text :: ST
+block1Text = "YT4rxgAPR4HJE"
+
+block2Text :: ST
+block2Text = "CtbPG6cX/ZVng"
+
+block3Text :: ST
+block3Text = "yfgHD6jT0s7VA"
+
 
 webdriver :: WDConfig -> String -> Spec
 webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
@@ -109,15 +118,6 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
     onEl [ByCSS "h1"] $ \el -> do
       txt <- getText el
       txt `shouldSatisfy` ("Login" `ST.isInfixOf`)
-
-  it "create new process" . runWD $ do
-    onEl [ByCSS ".icon-Group_bright"] click
-    onEl [ByCSS "#group-list-item-1"] click
-    onEl [ByCSS ".icon-Process_add_dark"] click
-    onEl [ByCSS ".icon-Save_dark"] click
-    onEls [ByCSS "h1"] $ \els -> do
-      txt <- mconcat <$> (getText `mapM` els)
-      txt `shouldSatisfy` ("Gesellschaftsvertrag" `ST.isInfixOf`)
 
   it "login, if unsuccessful create user, and login again" . runWD $ do
     let doLogin = do
@@ -133,7 +133,7 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
           onEl [ByXPath "//input[@id='registration-agree']"]       click
           onEl [ByXPath "//span[text()='submit']"]                 click
 
-    onEl [ByCSS ".icon-Login_bright"] click
+    onEl [xpathButton "Login"] click
     doLogin
     onEls [ByXPath "//span[text()='register']"] $ \case
       [] -> pure ()  -- ok, login seems to have worked.
@@ -141,6 +141,28 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
         click r
         doRegister
         doLogin
+
+  it "create new process" . runWD $ do
+    let titleText = "iDWD16VgtbLgI"
+    onEl [ByCSS ".icon-Group_bright"] click
+    onEl [ByCSS "#group-list-item-1"] click
+    onEl [ByCSS ".icon-Process_add_dark"] click
+    onEls [ByXPath "//*[@id='o-vdoc-overlay-content__textarea-annotation']"] $ sendKeys titleText . head
+    onEl [ByCSS ".icon-Save_dark"] click
+    onEls [ByCSS "h1"] $ \els -> do
+      txt <- mconcat <$> (getText `mapM` els)
+      txt `shouldSatisfy` (titleText `ST.isInfixOf`)
+
+  it "create, save initial content" . runWD $ do
+    yScrollTo 0  -- some processes open scrolled to the bottom.  (this should have a ticket.)
+    onEl [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $ \block -> do
+      addTextToDraft block [block1Text, block2Text, block3Text]
+        -- FIXME: this is added as one block containing newlines.  not good!
+    onEls [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $ \blocks -> do
+      click $ last blocks
+    onEl [xpathButton "Edit_toolbar_h1"] click
+    onEl [xpathButton "Edit_toolbar_h1"] click  -- #401?
+    onEl [ByCSS ".icon-Save_dark"] click
 
   it "scroll to first heading" . runWD $ do
     onEl [ByCSS ".icon-Index_desktop_dark"] click
@@ -152,26 +174,18 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
     onEl [ByCSS ".icon-New_Edit_dark"] click
     onEl [ByCSS ".public-DraftEditor-content"] $ \el -> do
       editableText <- getText el
-      "Donec pede justo" `shouldSatisfy` (`ST.isPrefixOf` editableText)
+      block3Text `shouldSatisfy` (`ST.isInfixOf` editableText)
 
   it "adding two tokens in the first and last draft.js block, resp." . runWD $ do
     onEls [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $ \blocks -> do
-      addTextTo (head blocks) textA
+      addTextToDraft (head blocks) [textA]
     onEls [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $ \blocks -> do
-      addTextTo (blocks !! 3) textB
-    onEls [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $ \blocks -> do
-      addTextTo (last blocks) textA
-    onEls [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $ \blocks -> do
-      -- it is important that this 'onEls' call and the last are separate, or we will get a stale element!
-      addTextTo (last blocks) textB
+      addTextToDraft (last blocks) [textB]
 
     onEls [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $ \blocks -> do
       h <- getText $ head blocks
-      m <- getText $ blocks !! 3
       t <- getText $ last blocks
       textA `shouldSatisfy` (`ST.isInfixOf` h)
-      textB `shouldSatisfy` (`ST.isInfixOf` m)
-      textA `shouldSatisfy` (`ST.isInfixOf` t)
       textB `shouldSatisfy` (`ST.isInfixOf` t)
 
   it "save edit" . runWD $ do
@@ -191,6 +205,13 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
       everything <- getSource
       textA `shouldSatisfy` (`ST.isInfixOf` everything)
       textB `shouldSatisfy` (`ST.isInfixOf` everything)
+
+
+-- * xpath shortcuts
+
+-- | Find any of _RO, _dark, _bright
+xpathButton :: ST -> Selector
+xpathButton button = ByXPath $ "//*[@id='refine']//div[@class[contains(., 'icon-" <> button <> "')]]"
 
 
 -- * hspec-webdriver amendments
@@ -258,24 +279,21 @@ onEl sels = onEls' mhead sels
 
 -- | FIXME: at least some of the delays here are necessary, or the clicks will miss the corrsponding
 -- blocks.
-addTextTo :: Element -> ST -> WD ()
-addTextTo el txt = do
-  delay 1.2
-  click el
-  delay 1.2
-  click el
-  delay 1.2
-  addText txt
-
+--
 -- | 'sendKeys', 'sendRawKeys' didn't work.  curiously, running firefox manually on the app as run
 -- here and attempting to entering text there didn't work either.  perhaps draft as we use it just
 -- doesn't work on firefox yet?
-addText :: ST -> WD ()
-addText t = do
-  True <- executeJS [JSArg t] . ST.unlines $
+addTextToDraft :: Element -> [ST] -> WD ()
+addTextToDraft el txt = do
+  delay 1.2
+  click el
+  delay 1.2
+  click el
+  delay 1.2
+  True <- executeJS [] . ST.unlines $
     findReactByDOMNode <>
-    draftInsertText <>
-    ["return draftInsertText(arguments[0]);"]
+    draftInsertText txt <>
+    ["return draftInsertText();"]
   pure ()
 
 -- | https://stackoverflow.com/questions/24462679/react-get-react-component-from-a-child-dom-element/39165212#39165212
@@ -295,29 +313,52 @@ findReactByDOMNode =
   ]
 
 -- | https://github.com/facebook/draft-js/issues/325#issuecomment-296274109
-draftInsertText :: [ST]
-draftInsertText =
-  [ "var draftInsertText = function(newText) {"
-  , "  var editor = findReactByDOMNode(document.getElementsByClassName('public-DraftEditor-content')[0]);"
-    <> log_ "editor"
-  , "  var editorState = editor.props.editorState;"
-    <> log_ "editorState"
-  , "  var contentState = Draft.Modifier.insertText(editorState.getCurrentContent(),"
-  , "                                               editorState.getSelection(),"
-  , "                                               newText,"
-  , "                                               editorState.getCurrentInlineStyle(), null);"
-    <> log_ "contentState"
-  , "  editorState = Draft.EditorState.push(editorState, contentState, 'insert-characters');"
-    <> log_ "editor"
-  , "  editorState = Draft.EditorState.forceSelection(editorState, contentState.getSelectionAfter());"
-    <> log_ "editor"
-    <> log_ "'triggering onChange event...'"
-  , "  editor.props.onChange(editorState);"
-    <> log_ "'done'"
-  , "  return true;"
-  , "};"
-  ]
+draftInsertText :: [ST] -> [ST]
+draftInsertText = (header <>) . (<> footer) . injection
   where
+    header =
+      [ "var draftInsertText = function(newText) {"
+      , "  var editor = findReactByDOMNode(document.getElementsByClassName('public-DraftEditor-content')[0]);"
+        <> log_ "editor"
+      , "  var editorState = editor.props.editorState;"
+        <> log_ "editorState"
+      , "  var contentState = '';"
+      ]
+
+    injection = go
+      where
+        go [] = []
+        go [txt] = writeToBlock txt
+        go (txt:(txts@(_:_))) = writeToBlock txt <> splitBlock <> go txts
+
+        writeToBlock txt =
+          [ "  contentState = Draft.Modifier.insertText(editorState.getCurrentContent(),"
+          , "                                           editorState.getSelection(),"
+          , "                                           " <> cs (show txt) <> ","
+          , "                                           editorState.getCurrentInlineStyle(), null);"
+            <> log_ "contentState"
+          , "  editorState = Draft.EditorState.push(editorState, contentState, 'insert-characters');"
+            <> log_ "editor"
+          ]
+
+        splitBlock =
+          [ "  contentState = Draft.Modifier.splitBlock(editorState.getCurrentContent(),"
+          , "                                           editorState.getSelection());"
+            <> log_ "contentState"
+          , "  editorState = Draft.EditorState.push(editorState, contentState, 'split-block');"
+            <> log_ "editor"
+          ]
+
+    footer =
+      [ "  editorState = Draft.EditorState.forceSelection(editorState, contentState.getSelectionAfter());"
+        <> log_ "editor"
+        <> log_ "'triggering onChange event...'"
+      , "  editor.props.onChange(editorState);"
+        <> log_ "'done'"
+      , "  return true;"
+      , "};"
+      ]
+
     log_ s = mconcat ["  console.log(" <> s <> ");" | verbose]
     verbose = False
 
