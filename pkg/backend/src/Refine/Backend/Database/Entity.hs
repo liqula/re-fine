@@ -243,11 +243,18 @@ getVDoc :: ID VDoc -> DB VDoc
 getVDoc i = do
   (mid, x) <- getMetaEntity (,) i
   let eid = S.vDocElim (\_ _ (Just ei) _ -> ei) x
-  edits <- length <$> liftDB (selectList [S.ParentChildParent ==. eid] [])
-  notes <- length <$> liftDB (selectList [S.PNEdit ==. eid] [])
-  discussions <- length <$> liftDB (selectList [S.PDEdit ==. eid] [])
-  let users = 0 -- FIXME
-  let stats = EditStats users edits (notes + discussions)
+  editIds <- foreignKeyField S.parentChildChild <$$> liftDB (selectList [S.ParentChildParent ==. eid] [])
+  noteIds <- foreignKeyField S.pNNote <$$> liftDB (selectList [S.PNEdit ==. eid] [])
+  discussionIds <- foreignKeyField S.pDDiscussion <$$> liftDB (selectList [S.PDEdit ==. eid] [])
+  statementIds <- forM discussionIds $ \did ->
+    entityKey <$$> liftDB (selectList [S.StatementDiscussion ==. S.idToKey did] [])
+  editsMeta <- (^. miMeta) <$$> mapM getMeta (S.keyToId eid: editIds :: [ID Edit])
+  notesMeta <- (^. miMeta) <$$> mapM getMeta (noteIds :: [ID Note])
+  discussionsMeta <- (^. miMeta) <$$> mapM getMeta (discussionIds :: [ID Discussion])
+  statementsMeta <- (^. miMeta) <$$> mapM getMeta (S.keyToId <$> concat statementIds :: [ID Statement])
+  let metas = mid ^. miMeta: (editsMeta <> notesMeta <> discussionsMeta <> statementsMeta)
+      users = length $ nub [u | UserID u <- ((^. metaCreatedBy) <$> metas) <> ((^. metaChangedBy) <$> metas)]
+      stats = EditStats users (length editIds) (length noteIds + length discussionIds)
   pure $ S.vDocElim (toVDoc stats mid) x
 
 
