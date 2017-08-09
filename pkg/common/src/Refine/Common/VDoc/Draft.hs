@@ -38,8 +38,8 @@ import qualified Data.Text as ST
 
 import Refine.Common.Types.Core
 import Refine.Common.Types.Contribution
-import Refine.Common.Types.Comment
 import Refine.Common.VDoc.OT (docRanges, docEditRanges)
+
 
 -- * functions
 

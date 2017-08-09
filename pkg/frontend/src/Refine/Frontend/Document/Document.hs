@@ -43,7 +43,7 @@ import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Contribution.Discussion
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
-import           Refine.Frontend.Store
+import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.ThirdPartyViews (editor_)
 import           Refine.Frontend.Util
@@ -77,7 +77,7 @@ documentRender () props = liftViewToStateHandler . articleWrap $ case dstate of
           | collapsed = hideUnchangedParts rc 0 0  -- FUTUREWORK: make these numbers adjustable by the user
           | otherwise = rc
 
-        diffit (EditSource []) = error "impossible"
+        diffit (EditSource []) = error "impossible - diffit"
         -- FUTUREWORK: make possible to choose a parent
         diffit (EditSource ((otedit, _): _)) = showEditAsRawContentWithMarks otedit rawcontent
 

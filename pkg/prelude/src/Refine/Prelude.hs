@@ -77,16 +77,15 @@ import Control.Lens as P
     , makeLenses, makePrisms
     )
 import Control.Monad as P ((>=>), (<=<), mapM, mapM_, forM, forM_, void, foldM, join, when, unless, guard)
-import Control.Monad.Except as P (MonadError(..), Except, runExcept, ExceptT(..), runExceptT, throwError)
+import Control.Monad.Except as P
 import Control.Monad.IO.Class as P (MonadIO, liftIO)
-import Control.Monad.Reader.Class as P (MonadReader(..), ask, asks)
-import Control.Monad.State.Class as P (MonadState(..), state, modify, get, gets)
+import Control.Monad.Identity as P
+import Control.Monad.Trans.Identity as P  -- (yes, this is needed for 'IdentityT')
+import Control.Monad.Reader as P
+import Control.Monad.State as P
+import Control.Monad.Writer as P
 import Control.Monad.STM as P
-import Control.Monad.Trans.Class as P
 import Control.Monad.Trans.Control as P
-import Control.Monad.Trans.Identity as P
-import Control.Monad.Trans.Reader as P (Reader, runReader, ReaderT(..), runReaderT)
-import Control.Monad.Trans.State as P (State, runState, StateT(..), runStateT, evalStateT)
 import Control.Natural as P (($$), (:~>)(NT), unwrapNT)
 import Data.Char as P (isSpace, toUpper, toLower)
 import Data.Coerce as P (coerce)
@@ -96,8 +95,8 @@ import Data.Either as P (either)
 import Data.Function as P (on)
 import Data.Functor.Infix as P ((<$$>))
 import Data.List as P ((\\), foldl', sort, nub, sortBy, insertBy, replicate)
+import Data.List.NonEmpty as P (NonEmpty(..))
 import Data.Maybe as P (catMaybes, fromMaybe, fromJust, isJust, isNothing, maybeToList, listToMaybe)
-import Data.Monoid as P
 import Data.Proxy as P
 import Data.String as P
 import Data.String.Conversions as P

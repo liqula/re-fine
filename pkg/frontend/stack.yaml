@@ -38,15 +38,13 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/liqula/react-hs
-    commit: e6260f0162f1ced6dc03e54e2f1e24825369949a
+    commit: f6e1b357fbc233f6b3318bf0ea74480c7fbdc88c
   extra-dep: true
   subdirs:
   - react-hs
-  - react-hs-servant
 
 extra-deps:
 - react-hs-0.1.0
-- react-hs-servant-0.1.0
 - refine-common-0.0.0.0
 - language-css-0.0.3
 - fingertree-tf-0.1.0.0

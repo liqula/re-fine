@@ -47,7 +47,7 @@ import           Refine.Frontend.Test.Enzyme
 testDiscussionProps :: DiscussionProps
 testDiscussionProps
   = discussionProps
-      disc
+      (Right disc)
       (addMarksToRawContent [(MarkContribution (ContribIDDiscussion (ID 0)) 0, rnge)] sampleRawContent1)
       (StatementPropDetails Nothing Nothing mempty)
       False
@@ -57,19 +57,21 @@ testDiscussionProps
 
     disc = Discussion
       { _discussionMetaID = MetaID (ID 0) metaInfo1
-      , _discussionPublic = True
+      , _discussionVDoc   = ID 1
       , _discussionRange  = rnge
       , _discussionTree   = Node statement1 [Node statement2 []]
       }
 
     statement1 = Statement
       { _statementMetaID = MetaID (ID 1) metaInfo1
+      , _statementVDoc   = ID 1
       , _statementText   = "first statement"
       , _statementParent = Nothing
       }
 
     statement2 = Statement
       { _statementMetaID = MetaID (ID 2) metaInfo1
+      , _statementVDoc   = ID 1
       , _statementText   = "second statement"
       , _statementParent = Just (ID 1)
       }

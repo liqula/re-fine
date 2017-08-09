@@ -49,23 +49,26 @@ import           Refine.Frontend.ThirdPartyViews (editor_)
 import           Refine.Frontend.TKey
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
+import           Refine.Frontend.Access
 
 
 discussion :: HasCallStack => View '[DiscussionProps]
-discussion = mkView "Discussion" $ \props -> do
-  aboutText_ ( props ^. discPropsAboutText
-             , ContribIDDiscussion $ props ^. discPropsDiscussion . discussionMetaID . miID
-             )
-  if props ^. discPropsFlatView
-    then statementList props
-    else statementForest_ 0 (0, [props ^. discPropsDiscussion . discussionTree], props ^. discPropsDetails)
-  where
-    statementList props =
+discussion = mkView "Discussion" $ \props -> case props ^. discPropsDiscussion of
+  Left _ -> "Loading..."
+  Right disc -> do
+    aboutText_ ( props ^. discPropsAboutText
+               , ContribIDDiscussion $ disc ^. discussionMetaID . miID
+               )
+    if props ^. discPropsFlatView
+      then statementList
+      else statementForest_ 0 (0, [disc ^. discussionTree], props ^. discPropsDetails)
+   where
+    statementList =
       forM_ (zip [0..] list) $ \(i', stmnt) -> do
         statement_ i' (0, stmnt, props ^. discPropsDetails)
         br_ []
       where
-        list = sortBy (flip compare `on` creationtime) . toList $ props ^. discPropsDiscussion . discussionTree
+        list = sortBy (flip compare `on` creationtime) . toList $ disc ^. discussionTree
         creationtime = (^. statementMetaID . miMeta . metaCreatedAt)
 
 discussion_ :: HasCallStack => DiscussionProps -> ReactElementM eventHandler ()
@@ -105,7 +108,7 @@ statementEditor (StatementEditorProps sid r modif) = mkPersistentStatefulView "s
     ibutton_
       $ emptyIbuttonProps label
           [ DocumentAction . ReplyStatement modif sid $ FormComplete txt
-          , AddStatement modif sid $ BeforeAjax txt
+          , AddStatement modif sid txt
           ]
       & ibLabel .~ label
       & ibSize .~ Medium
@@ -171,7 +174,7 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
       _ -> Nothing
 
     showUser names = \case
-      UserID i  -> fromMaybe (cs . show $ cacheMiss (CacheKeyUser i) i) $ M.lookup i names
+      UserID i  -> fromMaybe (cs . show $ cacheMiss (CacheKeyUser i) i i) $ M.lookup i names
       UserIP ip -> ip
       Anonymous -> "anonymous"
 

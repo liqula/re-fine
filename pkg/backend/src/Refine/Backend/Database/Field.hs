@@ -13,7 +13,7 @@ import           Database.Persist.Sql
 
 import Refine.Backend.Database.Types
 import Refine.Common.Types.Prelude (UserInfo)
-import Refine.Common.Types.Role (Role(..))
+import Refine.Common.Types.Role (GroupRole(..), GlobalRole(..))
 import Refine.Common.Types.Core
 
 
@@ -75,11 +75,18 @@ instance PersistField EditKind where
 instance PersistFieldSql EditKind where
   sqlType Proxy = sqlType (Proxy @ST)
 
-instance PersistField Role where
+instance PersistField GroupRole where
   toPersistValue   = toPersistJSONValue
   fromPersistValue = fromPersistJSONValue
 
-instance PersistFieldSql Role where
+instance PersistFieldSql GroupRole where
+  sqlType Proxy = sqlType (Proxy @ST)
+
+instance PersistField GlobalRole where
+  toPersistValue   = toPersistJSONValue
+  fromPersistValue = fromPersistJSONValue
+
+instance PersistFieldSql GlobalRole where
   sqlType Proxy = sqlType (Proxy @ST)
 
 instance PersistField UserInfo where

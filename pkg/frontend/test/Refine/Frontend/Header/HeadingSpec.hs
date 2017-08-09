@@ -33,11 +33,12 @@ import           Test.Hspec
 import           Refine.Common.Test.Samples (sampleRawContent1, sampleMetaID)
 import           Refine.Common.Types
 import           Refine.Frontend.Header.Heading
+import           Refine.Frontend.Access
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Store
-import           Refine.Frontend.Types
+-- import           Refine.Frontend.Store
+-- import           Refine.Frontend.Types
 import           Refine.Frontend.Test.Enzyme as EZ
 import           Refine.Frontend.Test.Store
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
@@ -75,8 +76,8 @@ spec = do
     it "sets the header height to a nonzero value" $ do
       pendingWith "#201, #221"  -- (i actually think this may fail because we fail to handle actions in Enzyme.ReactWrapper.mount.)
 
-      let newVDoc :: CompositeVDoc
-          newVDoc = CompositeVDoc
+      let _newVDoc :: CompositeVDoc
+          _newVDoc = CompositeVDoc
             (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1) (ID 1) mempty)
             (Edit (MetaID 1 un) un un un (sampleMetaID ^. miID) sampleRawContent1 un mempty mempty mempty)
             mempty mempty mempty
@@ -86,8 +87,8 @@ spec = do
           gs :: GlobalState
           gs = emptyGlobalState
              & gsEditID .~ Just 1
-             & gsServerCache %~ serverCacheUpdate (LoadCompositeVDoc (AfterAjax newVDoc))
+-- FIXME: remove this line if this test pass --    & gsServerCache %~ serverCacheUpdate (LoadVDoc (AfterAjax newVDoc))
 
       resetState gs
-      _wrapper <- mount (stickyContainer_ [] . mainHeader_ $ mkMainHeaderProps gs)
+      _wrapper <- mount (stickyContainer_ [] . mainHeader_ $ mkMainHeaderProps emptyAccessState gs)
       storeShouldEventuallySatisfy ((^. gsScreenState . ssHeaderHeight) :: GlobalState -> Int) (> 0)

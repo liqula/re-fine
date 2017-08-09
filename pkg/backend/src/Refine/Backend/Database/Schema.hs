@@ -35,7 +35,7 @@ import Web.Users.Persistent (LoginId) -- Same as Refine.Backend.User.LoginId, bu
 
 import Refine.Prelude (Timestamp)
 import Refine.Common.Types.Prelude hiding (MetaInfo)
-import Refine.Common.Types.Role (Role)
+import Refine.Common.Types.Role (GroupRole, GlobalRole)
 import Refine.Common.Types.Core (Abstract, EditKind, Title, RawContent)
 import Refine.Backend.Database.Field()
 import Refine.Backend.Database.Types
@@ -64,25 +64,11 @@ Edit
 
 Note
     text        Text
-    public      Bool
     range       RangePosition   -- FIXME: move this to PN table
-    owner       LoginId
-
-Question
-    text        Text
-    public      Bool
-    answered    Bool
-    range       RangePosition   -- FIXME: move this PQ table
-    owner       LoginId
-
-Answer
-    question    QuestionId
-    text        Text
+    votes       DBVotes
 
 Discussion
-    public      Bool
     range       RangePosition    -- FIXME: move this to PD table
-    owner       LoginId
 
 Statement
     text        Text
@@ -102,11 +88,16 @@ SubGroup
 
 -- Roles
 
-Roles
+GroupRoles
     group GroupId
     user  LoginId
-    role  Role
-    UniRoles group user role
+    role  GroupRole
+    UniGroupRoles group user role
+
+GlobalRoles
+    user  LoginId
+    role  GlobalRole
+    UniGlobalRoles user role
 
 -- Connection tables
 
@@ -116,19 +107,14 @@ ParentChild
     child  EditId
     UniPC parent child
 
-PQ
-    edit       EditId
-    question    QuestionId
-    UniPQ edit question
-
 PD
     edit       EditId
-    discussion  DiscussionId
+    discussion DiscussionId
     UniPD edit discussion
 
 PN
     edit       EditId
-    note        NoteId
+    note       NoteId
     UniPN edit note
 |]
 
@@ -152,17 +138,15 @@ makeElim ''MetaInfo
 makeElim ''VDoc
 makeElim ''Edit
 makeElim ''Note
-makeElim ''Question
-makeElim ''Answer
 makeElim ''Discussion
 makeElim ''Statement
 
 makeElim ''Group
 makeElim ''SubGroup
 
-makeElim ''Roles
+makeElim ''GroupRoles
+makeElim ''GlobalRoles
 
 makeElim ''ParentChild
 makeElim ''PN
-makeElim ''PQ
 makeElim ''PD

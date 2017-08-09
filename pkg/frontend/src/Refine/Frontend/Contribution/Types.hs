@@ -86,7 +86,7 @@ data ContributionAction =
   | SetBubblePositioning BubblePositioning
   | HighlightMarkAndBubble [MarkID]
   | SetBubbleFilter (Maybe (Set ContributionID))
-  | ToggleVoteOnContribution (ID Edit) Vote
+  | ToggleVoteOnContribution ContributionID Vote
   deriving (Show, Eq, Generic)
 
 data ContributionState = ContributionState
@@ -230,6 +230,8 @@ data CommentDisplayProps = CommentDisplayProps
   , _cdpContentStyle :: [Decl]
   , _cdpTopOffset    :: OffsetFromDocumentTop
   , _cdpWindowWidth  :: Int
+  , _cdpNoteId       :: ID Note
+  , _cdpVotes        :: VoteCount
   }
   deriving (Eq)
 
@@ -238,10 +240,8 @@ data ShowNoteProps =
       { _snpNote        :: Note
       , _snpTop         :: OffsetFromDocumentTop
       , _snpWindowWidth :: Int
+      , _snpUsernames   :: Map (ID User) Username -- FIXME: store user names in discussions
       }
-  deriving (Eq)
-
-newtype ShowQuestionProps = ShowQuestionProps (Maybe CompositeQuestion)
   deriving (Eq)
 
 data AddContributionProps st = AddContributionProps
@@ -253,7 +253,7 @@ data AddContributionProps st = AddContributionProps
 
 
 data DiscussionProps = DiscussionProps
-  { _discPropsDiscussion :: Discussion
+  { _discPropsDiscussion :: Either (ID Discussion) Discussion
   , _discPropsAboutText  :: RawContent  -- ^ the blocks overlapping the range of the discussion.
   , _discPropsDetails    :: StatementPropDetails
   , _discPropsFlatView   :: Bool
@@ -278,8 +278,9 @@ data StatementEditorProps = StatementEditorProps
 -- data DiscussionMode = DiscussionModeChrono | DiscussionModeTree
 --   deriving (Eq, Ord, Show, Bounded, Enum, Generic)
 
-discussionProps :: Discussion -> RawContent -> StatementPropDetails -> Bool -> DiscussionProps
-discussionProps disc = DiscussionProps disc . cropToBlocks (disc ^. discussionRange)
+discussionProps :: Either (ID Discussion) Discussion -> RawContent -> StatementPropDetails -> Bool -> DiscussionProps
+discussionProps d@(Right disc) = DiscussionProps d . cropToBlocks (disc ^. discussionRange)
+discussionProps d = DiscussionProps d . const (mkRawContent $ mkBlock "loading..." :| [])
 
 -- | Remove all blocks that do not overlap with a range.
 --

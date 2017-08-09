@@ -69,9 +69,12 @@ newtype AddLinkFormState = AddLinkFormState
 
 
 data TopMenuBarProps = TopMenuBarProps
- { _isSticky    :: Bool
- , _currentUser :: CurrentUser
- } deriving (Eq, Generic)
+  { _isSticky    :: Bool
+  , _currentUser :: CurrentUser
+  } deriving (Eq, Generic)
+
+
+type ToolbarProps = VDoc
 
 
 type IndexToolbarProps = Maybe [IndexItem]
@@ -116,7 +119,7 @@ data EditIndex = EditIndex
   deriving (Show, Eq, Generic)
 
 mkEditIndex :: HasCallStack => Edit -> ID Edit -> EditIndex
-mkEditIndex e i = EditIndex (Set.size es) (fromMaybe (error "impossible") $ Set.lookupIndex i es)
+mkEditIndex e i = EditIndex (Set.size es) (fromMaybe (error "impossible - mkEditIndex") $ Set.lookupIndex i es)
   where
     es = e ^. editChildren
 

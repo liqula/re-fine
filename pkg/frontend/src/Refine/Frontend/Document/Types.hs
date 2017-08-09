@@ -105,7 +105,12 @@ data WipedDocumentState =
   deriving (Show, Eq)
 
 globalDocumentState :: HasCallStack => DocumentState -> GlobalDocumentState
-globalDocumentState = mapDocumentState (const ()) (const ()) (^. editID) (\d -> (d ^. discPropsDiscussion . discussionID, Nothing))
+globalDocumentState
+  = mapDocumentState
+    (const ())
+    (const ())
+    (^. editID)
+    (\d -> (either id (^. discussionID) $ d ^. discPropsDiscussion, Nothing))
 
 mkDocumentStateView :: HasCallStack => RawContent -> GlobalDocumentState
 mkDocumentStateView = globalDocumentState . mkDocumentStateView_
@@ -174,7 +179,6 @@ mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
     mkMarkSty MarkCurrentSelection  = bg 255 255 0 0.3
     mkMarkSty (MarkContribution x _) = case x of
       ContribIDNote _       -> bg   0 255 0 0.3
-      ContribIDQuestion _   -> bg   0 255 0 0.3
       ContribIDDiscussion _ -> bg   0 255 0 0.3
       ContribIDEdit _       -> bg   0 255 0 0.3
 

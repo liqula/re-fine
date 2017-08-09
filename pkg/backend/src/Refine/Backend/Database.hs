@@ -35,7 +35,7 @@ import Refine.Backend.Prelude
 
 import Control.Lens ((^.))
 import Control.Monad.Logger
-import Data.Pool (withResource)
+import Data.Pool (Pool, withResource, destroyAllResources)
 import Database.Persist.Sqlite (SqlBackend, createSqlitePool, persistBackend, getStmtConn, connBegin, connRollback, connCommit)
 
 import Refine.Backend.Config
@@ -50,25 +50,28 @@ type MkDBNat db = DBConnection -> DBContext -> (db :~> ExceptT DBError IO)
 
 newtype DBRunner = DBRunner { unDBRunner :: forall m a . MonadBaseControl IO m => (DBConnection -> m a) -> m a }
 
-createDBNat :: Config -> IO (DBRunner, MkDBNat DB)
+createDBNat :: Config -> IO (DBRunner, MkDBNat DB, IO ())
 createDBNat cfg = do
-
-  let sqliteDb = case cfg ^. cfgDBKind of
-        DBInMemory  -> ":memory:"
-        DBOnDisk fp -> fp
-
-  pool <- runNoLoggingT $ createSqlitePool (cs sqliteDb) (cfg ^. cfgPoolSize)
-  let dbConnectionCont :: (MonadBaseControl IO m) => (DBConnection -> m a) -> m a
-      dbConnectionCont m = withResource pool (m . mkDBConnection)
-
-  pure ( DBRunner dbConnectionCont
+  pool <- runLoggerT $ createSqlitePool (cs sqliteDb) (cfg ^. cfgPoolSize)
+  pure ( DBRunner (dbConnectionCont pool)
        , \dbc dbctx -> NT (wrapErrors . dbRun dbc . (`runReaderT` dbctx) . runExceptT . unDB)
+       , destroyAllResources pool
        )
   where
+    -- runLoggerT = runStderrLoggingT  -- for lots of debug output
+    runLoggerT = runNoLoggingT
+
+    sqliteDb = case cfg ^. cfgDBKind of
+      DBOnDisk fp -> fp
+      DBInMemory -> ":memory:"
+
     wrapErrors :: IO (Either DBError a) -> ExceptT DBError IO a
     wrapErrors =
       lift . try >=> either (throwError . DBException . show @SomeException)
                             (either throwError pure)
+
+    dbConnectionCont :: (MonadBaseControl IO m) => Pool SqlBackend -> (DBConnection -> m a) -> m a
+    dbConnectionCont pool m = withResource pool (m . mkDBConnection)
 
     -- Refactored from:
     -- https://hackage.haskell.org/package/persistent-2.6.1/docs/src/Database-Persist-Sql-Run.html#runSqlConn
@@ -110,7 +113,6 @@ instance Database DB where
   getEdit            = Entity.getEdit
   getVersion         = Entity.getVersion
   editNotes          = Entity.editNotes
-  editQuestions      = Entity.editQuestions
   editDiscussions    = Entity.editDiscussions
   getEditChildren    = Entity.getEditChildren
   updateVotes        = Entity.updateVotes
@@ -121,15 +123,7 @@ instance Database DB where
   -- * Note
   createNote         = Entity.createNote
   getNote            = Entity.getNote
-
-  -- * Question
-  createQuestion     = Entity.createQuestion
-  getQuestion        = Entity.getQuestion
-
-  -- * Answer
-  createAnswer       = Entity.createAnswer
-  getAnswer          = Entity.getAnswer
-  answersOfQuestion  = Entity.answersOfQuestion
+  updateNoteVotes    = Entity.updateNoteVotes
 
   -- * Discussion
   createDiscussion       = Entity.createDiscussion
@@ -156,9 +150,15 @@ instance Database DB where
   removeSubGroup    = Entity.removeSubGroup
 
   -- * Role
-  assignRole   = Entity.assignRole
-  getRoles     = Entity.getRoles
-  unassignRole = Entity.unassignRole
+  assignGroupRole   = Entity.assignGroupRole
+  getGroupRolesIn   = Entity.getGroupRolesIn
+  getGroupRoles     = Entity.getGroupRoles
+  unassignGroupRole = Entity.unassignGroupRole
 
+  assignGlobalRole   = Entity.assignGlobalRole
+  getGlobalRoles     = Entity.getGlobalRoles
+  unassignGlobalRole = Entity.unassignGlobalRole
+
+  -- * MetaInfo
   createMetaID_ = Entity.createMetaID_
   getMetaID     = Entity.getMeta

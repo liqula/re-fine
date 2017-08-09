@@ -34,6 +34,7 @@ dependencies:
   - graphviz
   - hspec
   - http-media
+  - http-types
   - i18n
   - lens
   - lentil
@@ -47,10 +48,10 @@ dependencies:
   - persistent-sqlite
   - persistent-template
   - QuickCheck
-  - resource-pool
   - random
   - refine-common
   - refine-prelude
+  - resource-pool
   - resourcet
   - servant
   - servant-cookie-session
@@ -63,6 +64,9 @@ dependencies:
   - users
   - users-persistent
   - uuid
+  - wai
+  - wai-extra
+  - wai-session
   - wai-websockets
   - warp
   - websockets
@@ -94,6 +98,7 @@ tests:
       - hspec-core
       - http-api-data
       - http-types
+      - process
       - QuickCheck
       - quickcheck-instances
       - temporary

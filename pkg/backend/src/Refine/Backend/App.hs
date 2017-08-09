@@ -28,6 +28,7 @@ module Refine.Backend.App
 
 import Refine.Backend.Prelude
 
+import Refine.Backend.App.Access      as App
 import Refine.Backend.App.Comment     as App
 import Refine.Backend.App.Core        as App
 import Refine.Backend.App.Group       as App
@@ -58,12 +59,9 @@ runApp
       runSR
         :: StateT AppState (ReaderT (MkDBNat db, AppContext) (ExceptT AppError IO)) x
         -> ExceptT AppError IO x
-      runSR m = do
+      runSR action = do
         unDBRunner dbrunner $ \dbc -> do
           dbInit dbc
-          let r = (dbNat, AppContext dbc logger cfg)
-              s = AppState Nothing UserLoggedOut
-          x <- runReaderT (evalStateT m s) r
-               `finally`
-               dbCommit dbc
-          pure x
+          let cmd = evalStateT action initialAppState
+              ctx = (dbNat, AppContext dbc logger cfg)
+          (cmd `runReaderT` ctx) `finally` dbCommit dbc

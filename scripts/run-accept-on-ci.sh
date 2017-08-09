@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+cd `dirname $0`/..
 
 export RUN_ACCEPT_MARKER="___RUN_ACCEPT___"
 

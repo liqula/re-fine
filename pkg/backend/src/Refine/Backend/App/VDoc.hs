@@ -35,11 +35,13 @@ import           Data.Maybe
 import qualified Data.Set as Set
 import qualified Web.Users.Types as Users
 
+import           Refine.Backend.App.Access
 import           Refine.Backend.App.Core
 import           Refine.Backend.App.Smtp
-import           Refine.Backend.App.User (currentUser)
+import           Refine.Backend.App.User
 import qualified Refine.Backend.Database.Class as DB
 import           Refine.Backend.Database.Entity (fromUserID)
+import qualified Refine.Common.Access.Policy as AP
 import           Refine.Common.Types
 import           Refine.Common.Types.Core (OTDoc)
 import qualified Refine.Common.OT as OT
@@ -55,18 +57,23 @@ listVDocs = do
 createVDoc :: CreateVDoc -> App VDoc
 createVDoc pv = do
   appLog "createVDoc"
-  db $ DB.createVDoc pv
+  assertCreds $ AP.createVDoc (pv ^. createVDocGroup)
+  vdoc <- db $ DB.createVDoc pv
+  invalidateCaches $ Set.fromList [CacheKeyGroup $ pv ^. createVDocGroup]
+  pure vdoc
 
 updateVDoc :: ID VDoc -> UpdateVDoc -> App VDoc
 updateVDoc vid (UpdateVDoc title abstract) = do
   appLog "updateVDoc"
-  db $ do
+  vdoc' <- db $ do
     vdoc <- DB.getVDoc vid
     let vdoc' = vdoc
           & vdocTitle .~ title
           & vdocAbstract .~ abstract
     DB.updateVDoc vid vdoc'
     pure vdoc'
+  invalidateCaches $ Set.fromList [CacheKeyVDoc vid]
+  pure vdoc'
 
 getVDoc :: ID VDoc -> App VDoc
 getVDoc i = do
@@ -95,7 +102,8 @@ updateEdit eid edit = do
         OT.diff (deleteMarksFromRawContent olddoc) (deleteMarksFromRawContent new)
     DB.updateEdit eid edit
     DB.updateEditSource eid $ \_ e -> e <> dff
-    DB.getEdit eid
+  invalidateCaches $ Set.fromList [CacheKeyEdit eid]
+  db $ DB.getEdit eid
 
 addEdit :: ID Edit -> CreateEdit -> App Edit
 addEdit baseeid edit = do
@@ -103,7 +111,7 @@ addEdit baseeid edit = do
   -- assertPerms baseeid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/358
     -- (note that the user must have create permission on the *base
     -- edit*, not the edit about to get created.)
-  db $ do
+  ed <- db $ do
     rid <- DB.vdocOfEdit baseeid
     olddoc :: RawContent <- DB.getVersion baseeid
     dff <- either error pure $
@@ -116,6 +124,14 @@ addEdit baseeid edit = do
         OT.diff (deleteMarksFromRawContent olddoc)
                 (deleteMarksFromRawContent $ edit ^. createEditVDocVersion)
     DB.createEdit rid (EditSource [(dff, baseeid)]) edit
+  invalidateCaches $ Set.fromList [CacheKeyEdit baseeid]
+  pure ed
+
+addEditAndMerge :: ID Edit -> CreateEdit -> App Edit
+addEditAndMerge baseeid edit = do
+  e <- addEdit baseeid edit
+  mergeEdit $ e ^. editID
+  pure e
 
 getEdit :: ID Edit -> App Edit
 getEdit = db . DB.getEdit
@@ -174,7 +190,7 @@ rebaseHeadToEdit eid = do
     movedNotes :: [Note]
       <- forM (Set.toList $ base ^. editNotes') $ \nid -> do
         n <- DB.getNote nid
-        DB.createNote eid . CreateNote (n ^. noteText) (n ^. notePublic) . trRange $ n ^. noteRange
+        DB.createNote eid . CreateNote (n ^. noteText) . trRange $ n ^. noteRange
 
     -- move discussions
     movedDiscussions :: [Discussion]
@@ -184,7 +200,12 @@ rebaseHeadToEdit eid = do
         <> (view (discussionMetaID . miMeta) <$> movedDiscussions)
 
   notifyContributionAuthorsOfMovement $ movedEditOwners <> movedCommentOwners
-  invalidateCaches $ Set.fromList [CacheKeyVDoc vid, CacheKeyEdit hid, CacheKeyEdit eid]
+  invalidateCaches $ Set.fromList [CacheKeyVDoc vid]
+    -- what needs invalidation?
+    --  * vdoc: yes
+    --  * old edit: no
+    --  * all children of old edit: no (the rebases have new IDs and will be found by the clients via the vdoc)
+    --  * new edit: no (just created)
 
 notifyContributionAuthorsOfMovement :: [MetaInfo] -> App ()
 notifyContributionAuthorsOfMovement mis = forM_ uids $ \uid -> do
@@ -202,18 +223,18 @@ notifyContributionAuthorsOfMovement mis = forM_ uids $ \uid -> do
 validateCreateChunkRange :: ID Edit -> Range Position -> App ()
 validateCreateChunkRange _ _ = pure ()  -- throwError AppVDocVersionError
 
-withCurrentUser :: MonadApp app => (ID User -> app ()) -> app ()
-withCurrentUser f = do
-  mu <- currentUser
-  case mu of
-    Just u -> f u
-    Nothing -> throwError AppUnauthorized
-
-putSimpleVoteOnEdit :: ID Edit -> Vote -> App ()
-putSimpleVoteOnEdit eid v = withCurrentUser $ \user -> changeSimpleVoteOnEdit eid $ Map.insert user v
+toggleSimpleVoteOnEdit :: ID Edit -> Vote -> App Bool
+toggleSimpleVoteOnEdit eid v = do
+  let f (Just v') | v' == v = Nothing
+      f _ = Just v
+  rebased <- withCurrentUser $ \user -> changeSimpleVoteOnEdit eid $ Map.alter f user
+  invalidateCaches $ Set.fromList [CacheKeyEdit eid]
+  pure rebased
 
 deleteSimpleVoteOnEdit :: ID Edit -> App ()
-deleteSimpleVoteOnEdit eid = withCurrentUser $ changeSimpleVoteOnEdit eid . Map.delete
+deleteSimpleVoteOnEdit eid = do
+  void . withCurrentUser $ changeSimpleVoteOnEdit eid . Map.delete
+  invalidateCaches $ Set.fromList [CacheKeyEdit eid]
 
 atLeastOneUpvote :: VoteCount -> Bool
 atLeastOneUpvote vc = fromMaybe 0 (Map.lookup Yeay vc) >= 1
@@ -224,13 +245,14 @@ rebasePossible eid = do
   ed <- DB.getEdit eid
   pure $ vd `elem` (snd <$> (ed ^. editSource . unEditSource))
 
-changeSimpleVoteOnEdit :: ID Edit -> (Votes -> Votes) -> App ()
+changeSimpleVoteOnEdit :: ID Edit -> (Votes -> Votes) -> App Bool{-rebase happened-}
 changeSimpleVoteOnEdit eid f = do
   mkrebase <- db $ do
     DB.updateVotes eid f
     vs <- DB.getVoteCount eid
     if atLeastOneUpvote vs then rebasePossible eid else pure False
   when mkrebase $ rebaseHeadToEdit eid
+  pure mkrebase
 
 getSimpleVotesOnEdit :: ID Edit -> App VoteCount
 getSimpleVotesOnEdit eid = db $ DB.getVoteCount eid

@@ -26,18 +26,17 @@ module Refine.Frontend.Header.DiscussionToolbar where
 
 import           Refine.Frontend.Prelude
 
-import           Refine.Common.Types
-import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Document.Types
 
 -- FUTUREWORK: this should probably be a component, but if we do the obvious minimal change to
 -- introduce a @View '[]@, the styling breaks completely.  note that this does not fix #376 either.
 discussionToolbar_ :: HasCallStack => DiscussionToolbarProps -> ReactElementM eventHandler ()
 discussionToolbar_ props = do
   ibutton_
-    $ emptyIbuttonProps "Close" [ContributionAction . ShowContributionDialog . ContribIDDiscussion $ props ^. discToolbarDiscussionID]
+    $ emptyIbuttonProps "Close" [DocumentAction UpdateDocumentStateView]
     & ibListKey        .~ "cancel"
     & ibSize           .~ Large
 

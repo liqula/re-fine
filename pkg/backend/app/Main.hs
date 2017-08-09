@@ -1,3 +1,6 @@
+{-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module Main where
 
 import Data.Maybe (listToMaybe)
@@ -6,6 +9,7 @@ import System.Environment (getArgs, getProgName)
 import System.IO (hSetBuffering, BufferMode(NoBuffering), stdout, stderr)
 
 import Refine.Backend.App.Smtp (checkSendMail)
+import Refine.Backend.App.Core (appLogL)
 import Refine.Backend.Config
 import Refine.Backend.Server
 import Refine.Backend.App.MigrateDB (initializeDB)
@@ -14,17 +18,20 @@ help :: IO ()
 help = do
   progname <- getProgName
   putStrLn $ unlines
-    [ "Usage: " <> progname <> " [--init | --help] [cfg]"
-    , "  --help  Print this help"
-    , "  --init  Creates initial database"
+    [ "Usage: " <> progname <> " [--init <FILE> | --help] [cfg]"
+    , "  --help         Print this help"
+    , "  --help-init    Print help on creating initial content in the database"
+    , "  --init <FILE>  Create initial content in the database"
     , ""
     , "Without parameter, the server starts, if the config file is given."
     ]
 
-runInitDB :: Maybe FilePath -> IO ()
-runInitDB configPath = do
+runInitDB :: FilePath -> Maybe FilePath -> IO ()
+runInitDB contentPath configPath = do
   cfg <- initConfig configPath
-  runCliAppCommand cfg initializeDB
+  content <- readCliCreate contentPath
+  runCliAppCommand cfg $ initializeDB content
+  appLogL LogInfo "Run `echo .schema | sqlite3 <FILE.db>` to get a database dump."
 
 startServer :: Maybe FilePath -> IO ()
 startServer configPath = do
@@ -38,6 +45,8 @@ main :: IO ()
 main = do
   args <- getArgs
   case args of
-    arg:cfg | arg == "--help" -> help
-            | arg == "--init" -> runInitDB (listToMaybe cfg)
-    cfg -> startServer (listToMaybe cfg)
+    "--help" : _                            -> help
+    "--help-init" : _                       -> helpCliCreate
+    "--init" : file : cfg | length cfg <= 1 -> runInitDB file (listToMaybe cfg)
+    cfg                   | length cfg <= 1 -> startServer (listToMaybe cfg)
+    bad                                     -> putStrLn ("\n\nbad arguments: " <> show bad <> "\n") >> help

@@ -34,23 +34,19 @@ module Refine.Backend.Server
   ) where
 
 import Refine.Backend.Prelude as P
+
+import           Control.Concurrent.MVar
 import           Debug.Trace (trace)  -- (please keep this until we have better logging)
-import qualified Data.Map as Map
-import qualified Data.Set as Set
 import           Network.HTTP.Media ((//))
 import           Network.Wai.Handler.Warp as Warp
+import qualified Network.Wai.Session as SCS
 import qualified Servant.Cookie.Session as SCS
-import           Servant.Cookie.Session (serveAction)
 import           Servant.Server.Internal (responseServantErr)
 import qualified Servant.Utils.Enter
 import           Servant.Utils.StaticFiles (serveDirectory)
 import           System.Directory (canonicalizePath, createDirectoryIfMissing)
 import           System.FilePath (dropFileName)
 import qualified Web.Users.Types as Users
-import           Network.WebSockets
-import           Network.Wai.Handler.WebSockets
-import           Control.Concurrent
-import           Control.Monad
 
 import Refine.Backend.App as App
 import Refine.Backend.App.MigrateDB (migrateDB)
@@ -74,17 +70,18 @@ refineCookieName = "refine"
 createDataDirectories :: Config -> IO ()
 createDataDirectories cfg = do
   case cfg ^. cfgDBKind of
-    DBInMemory    -> pure ()
     DBOnDisk path -> do
       cpath <- canonicalizePath path
       createDirectoryIfMissing True (dropFileName cpath)
+    DBInMemory -> pure ()
 
 
 -- * backend creation
 
 data Backend db = Backend
-  { backendServer :: Application
-  , backendRunApp :: AppM db P.:~> ExceptT AppError IO
+  { backendServer          :: Application
+  , backendRunApp          :: AppM db P.:~> ExceptT AppError IO
+  , backendSessionStore    :: SCS.SessionStore IO () (AppState, MVar ())
   }
 
 refineApi :: (Database db) => ServerT RefineAPI (AppM db)
@@ -98,8 +95,6 @@ refineApi =
   :<|> App.updateEdit
   :<|> App.addNote
   :<|> App.getNote
-  :<|> App.addQuestion
-  :<|> App.addAnswer
   :<|> App.addDiscussion
   :<|> App.getDiscussion
   :<|> App.addStatement
@@ -115,7 +110,7 @@ refineApi =
   :<|> App.getGroups
   :<|> App.changeSubGroup
   :<|> App.changeRole
-  :<|> App.putSimpleVoteOnEdit
+  :<|> ((void .) . App.toggleSimpleVoteOnEdit)
   :<|> App.deleteSimpleVoteOnEdit
   :<|> App.getSimpleVotesOnEdit
 
@@ -137,51 +132,20 @@ clientConfigApi = asks . view $ appConfig . cfgClient
 
 startBackend :: Config -> IO ()
 startBackend cfg = do
-  Warp.runSettings (warpSettings cfg) . startWebSocketServer =<< mkProdBackend cfg
-
-startWebSocketServer :: Backend DB -> Application
-startWebSocketServer backend = websocketsOr options server $ backendServer backend
+  (backend, _destroy) <- mkProdBackend cfg
+  Warp.runSettings (warpSettings cfg)
+    . startWebSocketServer (appMToIO backend) (backendSessionStore backend) refineCookieName
+    $ backendServer backend
   where
-    options :: ConnectionOptions
-    options = defaultConnectionOptions
-
-    -- FIXME: delete disconnected clients' data
-    -- FIXME: cache invalidation by deleting items from cache (don't send new value)
-
-    server :: ServerApp
-    server pendingconnection = do
-      conn <- acceptRequest pendingconnection
-
-      (n, cmap) <- takeMVar webSocketMVar
-      putMVar webSocketMVar (n + 1, Map.insert n (conn, mempty) cmap)
-
-      _ <- liftIO . forkIO . forever $ do
-          threadDelay 5000000
-          sendTextData conn (cs $ encode (Nothing :: Maybe ServerCache) :: ST)
-
-      forever $ do
-          msg <- receiveData conn
-          case decode msg of
-            Nothing -> do
-              error "websockets json decoding error"
-            Just keys -> do
-                putStrLn $ "request from client #" <> show n <> ", " <> show keys
-                cache <- mconcat <$> mapM getData keys
-                (n', cmap') <- takeMVar webSocketMVar
-                putMVar webSocketMVar (n', Map.adjust (second (<> Set.fromList keys)) n cmap')
-                sendCache conn cache
-
-    getData :: CacheKey -> IO ServerCache
-    getData key = runExceptT (backendRunApp backend $$ getData' key) >>= \case
-      Left err -> error $ show err  -- FIXME
-      Right x -> pure x
+    appMToIO :: Backend DB -> AppM DB a -> IO (Either ApiError a)
+    appMToIO backend m = either (Left . App.toApiError) Right <$> runExceptT (backendRunApp backend $$ m)
 
 runCliAppCommand :: Config -> AppM DB a -> IO ()
 runCliAppCommand cfg cmd = do
-  backend <- mkProdBackend cfg
+  (backend, _destroy) <- mkProdBackend cfg
   void $ (natThrowError . backendRunApp backend) $$ cmd
 
-mkProdBackend :: Config -> IO (Backend DB)
+mkProdBackend :: Config -> IO (Backend DB, IO ())
 mkProdBackend cfg = mkBackend cfg $ do
   () <- migrateDB cfg
   gs <- App.getGroups
@@ -189,36 +153,36 @@ mkProdBackend cfg = mkBackend cfg $ do
     void . addGroup $ CreateGroup "default" "default group" [] []
   pure ()
 
-mkBackend :: Config -> AppM DB a -> IO (Backend DB)
+mkBackend :: Config -> AppM DB a -> IO (Backend DB, IO ())
 mkBackend cfg migrate = do
   createDataDirectories cfg
 
   -- create runners
-  (dbRunner, dbNat) <- createDBNat cfg
+  (dbRunner, dbNat, destroy) <- createDBNat cfg
   backend <- mkServerApp cfg dbNat dbRunner
 
   -- migration
-  result <- runExceptT (backendRunApp backend $$ migrate)
+  result <- runExceptT (backendRunApp backend $$ (unsafeBeAGod >> migrate))
   either (error . show) (const $ pure ()) result
 
-  pure backend
+  pure (backend, destroy)
 
 
-mkServerApp :: Database db => Config -> MkDBNat db -> DBRunner -> IO (Backend db)
+mkServerApp :: forall db. Database db => Config -> MkDBNat db -> DBRunner -> IO (Backend db)
 mkServerApp cfg dbNat dbRunner = do
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
-      logger = Logger $ case cfg ^. cfgLogger of
-        LogCfgFile file -> appendFile file . (<> "\n")
-        LogCfgStdOut    -> putStrLn
-        LogCfgDevNull   -> const $ pure ()
-      app    = runApp dbNat
-                      dbRunner
-                      logger
-                      cfg
+      logger = defaultLogger cfg
+
+      app :: AppM db :~> ExceptT AppError IO
+      app = runApp dbNat
+                   dbRunner
+                   logger
+                   cfg
+          . NT (if cfg ^. cfgAllAreGods then (unsafeBeAGod >>) else id)
 
   -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
   -- may need to refactor, e.g. by using extra arguments in the end point types.
-  srvApp <- serveAction
+  (srvApp, sessionStore) <- SCS.serveAction
               (Proxy :: Proxy (RefineAPI :<|> ClientConfigAPI))
               (Proxy :: Proxy AppState)
               cookie
@@ -227,7 +191,7 @@ mkServerApp cfg dbNat dbRunner = do
               (refineApi :<|> clientConfigApi)
               (Just (P.serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
 
-  pure $ Backend srvApp app
+  pure $ Backend srvApp app sessionStore
 
 maybeServeDirectory :: Maybe FilePath -> Server Raw
 maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) serveDirectory
@@ -239,36 +203,10 @@ toServantError = Nat ((lift . runExceptT) >=> leftToError fromAppError)
     -- FIXME: some (many?) of these shouldn't be err500.
     -- FIXME: implement better logging.
     fromAppError :: AppError -> ServantErr
-    fromAppError err = traceShow' err $ (appServantErr err) { errBody = encode $ toApiError err }
+    fromAppError err = traceShow' err $ (appServantErr err) { errBody = encode $ App.toApiError err }
 
     traceShow' :: (Show a) => a -> b -> b
     traceShow' a = trace ("toServantError: " <> show a)
-
--- FIXME: review this; is this really needed?
-toApiError :: AppError -> ApiError
-toApiError = \case
-  AppUnknownError e      -> ApiUnknownError e
-  AppVDocVersionError    -> ApiVDocVersionError
-  AppDBError e           -> ApiDBError . cs $ show e
-  AppUserNotFound e      -> ApiUserNotFound e
-  AppUserNotLoggedIn     -> ApiUserNotLoggedIn
-  AppUserCreationError e -> ApiUserCreationError $ createUserErrorToApiError e
-  AppCsrfError e         -> ApiCsrfError e
-  AppSessionError        -> ApiSessionError
-  AppSanityCheckError e  -> ApiSanityCheckError e
-  AppUserHandleError e   -> ApiUserHandleError . cs $ show e
-  AppL10ParseErrors e    -> ApiL10ParseErrors e
-  AppUnauthorized        -> ApiUnauthorized
-  AppMergeError base e1 e2 s -> ApiMergeError $ cs (show (base, e1, e2)) <> ": " <> s
-  AppRebaseError{}       -> ApiRebaseError
-  AppSmtpError{}         -> ApiSmtpError
-
--- | so we don't have to export backend types to the frontend.
-createUserErrorToApiError :: Users.CreateUserError -> ApiErrorCreateUser
-createUserErrorToApiError Users.InvalidPassword              = ApiErrorInvalidPassword
-createUserErrorToApiError Users.UsernameAlreadyTaken         = ApiErrorUsernameAlreadyTaken
-createUserErrorToApiError Users.EmailAlreadyTaken            = ApiErrorEmailAlreadyTaken
-createUserErrorToApiError Users.UsernameAndEmailAlreadyTaken = ApiErrorUsernameAndEmailAlreadyTaken
 
 -- | Turns AppError to its kind of servant error.
 appServantErr :: AppError -> ServantErr
@@ -284,7 +222,7 @@ appServantErr = \case
   AppSanityCheckError _    -> err409
   AppUserHandleError _     -> err500
   AppL10ParseErrors _      -> err500
-  AppUnauthorized          -> err403
+  AppUnauthorized _        -> err403
   AppMergeError{}          -> err500
   AppRebaseError{}         -> err500
   AppSmtpError{}           -> err500

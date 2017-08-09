@@ -34,7 +34,6 @@ class Monad db => Database db where
   getEdit            :: ID Edit -> db Edit
   getVersion         :: ID Edit -> db RawContent
   editNotes          :: ID Edit -> db [ID Note]
-  editQuestions      :: ID Edit -> db [ID Question]
   editDiscussions    :: ID Edit -> db [ID Discussion]
   updateVotes        :: ID Edit -> (Votes -> Votes) -> db ()
   getVoteCount       :: ID Edit -> db VoteCount
@@ -43,20 +42,12 @@ class Monad db => Database db where
   updateEditSource   :: ID Edit -> (ID Edit{-parent-} -> OT.Edit RawContent -> OT.Edit RawContent) -> db ()
 
   -- Note
-  createNote         :: ID Edit -> CreateNote -> db Note
+  createNote         :: ID Edit -> CreateNote (Range Position) -> db Note
   getNote            :: ID Note -> db Note
-
-  -- Question
-  createQuestion     :: ID Edit     -> CreateQuestion -> db Question
-  getQuestion        :: ID Question -> db Question
-
-  -- Answer
-  createAnswer       :: ID Question -> CreateAnswer -> db Answer
-  getAnswer          :: ID Answer   -> db Answer
-  answersOfQuestion  :: ID Question -> db [Answer]
+  updateNoteVotes    :: ID Note -> (Votes -> Votes) -> db ()
 
   -- Discussion
-  createDiscussion   :: ID Edit    -> CreateDiscussion -> db Discussion
+  createDiscussion   :: ID Edit -> CreateDiscussion (Range Position) -> db Discussion
   rebaseDiscussion   :: ID Edit -> ID Discussion -> (Range Position -> Range Position) -> db Discussion
   getDiscussion      :: ID Discussion -> db Discussion
   statementsOfDiscussion :: ID Discussion -> db [ID Statement]
@@ -80,31 +71,29 @@ class Monad db => Database db where
   removeSubGroup       :: ID Group -> ID Group -> db ()
 
   -- Roles
-  assignRole   :: ID Group -> ID User -> Role -> db ()
-  getRoles     :: ID Group -> ID User -> db [Role]
-  unassignRole :: ID Group -> ID User -> Role -> db ()
+  assignGroupRole   :: ID Group -> ID User -> GroupRole -> db ()
+  getGroupRolesIn   :: ID Group -> ID User -> db [GroupRole]
+  getGroupRoles     :: ID User -> db [(GroupRole, ID Group)]
+  unassignGroupRole :: ID Group -> ID User -> GroupRole -> db ()
 
+  assignGlobalRole   :: ID User -> GlobalRole -> db ()
+  getGlobalRoles     :: ID User -> db [GlobalRole]
+  unassignGlobalRole :: ID User -> GlobalRole -> db ()
+
+  -- MetaInfo
   createMetaID_ :: HasMetaInfo a => ID a -> db (MetaID a)
   getMetaID     :: HasMetaInfo a => ID a -> db (MetaID a)
 
 
 -- * composite db queries
 
-compositeQuestion
-  :: (Monad db, Database db)
-  => ID Question -> db CompositeQuestion
-compositeQuestion qid =
-  CompositeQuestion <$> getQuestion qid <*> answersOfQuestion qid
-
 editComments
   :: (Monad db, Database db)
   => ID Edit -> db [Comment]
 editComments pid = do
   notes       <- mapM getNote =<< editNotes pid
-  questions   <- mapM Refine.Backend.Database.Class.compositeQuestion =<< editQuestions pid
   discussions <- mapM getDiscussion =<< editDiscussions pid
-  pure $ concat
+  pure $ mconcat
     [ CommentNote       <$> notes
-    , CommentQuestion   <$> questions
     , CommentDiscussion <$> discussions
     ]

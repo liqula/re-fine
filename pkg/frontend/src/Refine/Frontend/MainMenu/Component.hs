@@ -40,7 +40,7 @@ import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Component
 import           Refine.Frontend.Login.Status
 import           Refine.Frontend.MainMenu.Types
-import           Refine.Frontend.Store
+import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Util
 import           Refine.Frontend.Contribution.Dialog (contributionDialogTextForm)
@@ -59,7 +59,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
 
     div_ ["className" $= "gr-20"] $ do
 
-      ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()]
+      ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
         & ibListKey .~ "3"
         & ibDarkBackground .~ True
         & ibHighlightWhen .~ (if currentTab & has _MainMenuGroup then HighlightAlways else HighlightOnMouseOver)
@@ -172,7 +172,7 @@ mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
        , "id" $= listKey  -- FUTUREWORK: get rid of this.  at the time of writing this it's only
                           -- used in the acceptance test.
 
-       , "style" @@= [ decl "background-color" Colors.SCBlue03
+       , "style" @@= [ decl "backgroundColor" Colors.SCBlue03
                      , decl "padding" (Px 50)
                      , decl "margin" (Px 50)
                      , decl "borderRadius" (Px 12)
@@ -219,9 +219,11 @@ mainMenuGroupShort_ group = view_ mainMenuGroupShort listKey group
     listKey = "mainMenuGroupShort-" <> (cs . show $ group ^. groupID . unID)
 
 mainMenuGroup :: View '[GroupProps]
-mainMenuGroup = mkView "mainMenuGroup" $ \(group, vdocs) -> do
+mainMenuGroup = mkView "mainMenuGroup" $ \case
+ (Nothing, _) -> "Loading..."
+ (Just group, vdocs) -> do
   div_ $ do
-    ibutton_ $ emptyIbuttonProps "Arrow_left" [MainMenuAction . MainMenuActionOpen . MainMenuGroups $ BeforeAjax ()]
+    ibutton_ $ emptyIbuttonProps "Arrow_left" [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
       & ibListKey .~ "group_back"
       & ibSize .~ XXLarge
       & ibDarkBackground .~ False
@@ -300,7 +302,7 @@ mainMenuGroup = mkView "mainMenuGroup" $ \(group, vdocs) -> do
           }
           where
             (title, stats) = maybe
-              (cacheMiss (CacheKeyVDoc vid) (Title "loading", mempty))
+              (cacheMiss (CacheKeyVDoc vid) (Title "loading", mempty) vid)
               ((^. vdocTitle) &&& (^. vdocStats))
               $ Map.lookup vid vdocs
 
@@ -317,11 +319,11 @@ mainMenuProcessShort :: HasCallStack => View '[MainMenuProcessShortProps]
 mainMenuProcessShort = mkView "MainMenuProcessShort" $ \props -> do
   let listKey = "process-list-item-" <> (cs . show $ props ^. mmprocShrtID . unID)
   div_ [ onClick $ \_ _ -> simpleHandler . dispatch
-                         . LoadCompositeVDoc $ BeforeAjax (props ^. mmprocShrtID)
+                         . LoadVDoc $ props ^. mmprocShrtID
        , "id" $= listKey  -- FUTUREWORK: get rid of this.  at the time of writing this it's only
                           -- used in the acceptance test.
 
-       , "style" @@= [ decl "background-color" Colors.SCBlue03
+       , "style" @@= [ decl "backgroundColor" Colors.SCBlue03
                      , decl "padding" (Px 50)
                      , decl "margin" (Px 50)
                      , decl "borderRadius" (Px 12)
@@ -406,7 +408,7 @@ mainMenuCreateGroup mid lst = mkPersistentStatefulView "MainMenuCreateGroup" lst
             & iconButtonPropsAlignRight   .~ True
             & iconButtonPropsDisabled     .~ False
             & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen $
-                                               maybe (MainMenuGroups $ BeforeAjax ()) MainMenuGroup mid
+                                               maybe (MainMenuGroups ()) MainMenuGroup mid
                                              ]
 
 
@@ -429,7 +431,7 @@ mainMenuUpdateProcess vid lst = mkPersistentStatefulView "MainMenuUpdateProcess"
   renderCreateOrUpdateProcess
     updateVDocTitle updateVDocAbstract
     (MainMenuAction . MainMenuActionOpen . MainMenuUpdateProcess vid)
-    (LoadCompositeVDoc $ BeforeAjax vid)
+    (LoadVDoc vid)
 
 mainMenuUpdateProcess_ :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> ReactElementM eventHandler ()
 mainMenuUpdateProcess_ vid lst = view_ (mainMenuUpdateProcess vid lst) "mainMenuUpdateProcess"

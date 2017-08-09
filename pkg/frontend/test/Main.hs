@@ -10,6 +10,7 @@ import AllModules ()
 import React.Flux
 
 import Refine.Frontend.Store.Types
+import Refine.Frontend.Access
 import Refine.Frontend.Test.Store
 #endif
 
@@ -17,6 +18,7 @@ main :: IO ()
 main = do
 #ifdef __GHCJS__
   registerInitialStore emptyGlobalState
+  registerInitialStore emptyAccessState
   hspec $ before (resetState emptyGlobalState) spec
 #else
   hspec spec

@@ -48,13 +48,13 @@ spec = around provideAppRunner $ do
         it "adds role" $ \(runner :: RoleAppRunner) -> do
           join . runner $ do
             -- GIVEN
-            let role = Member
+            let role = GroupMember
                 user = ID 1
             group <- App.addGroup (CreateGroup "title" "desc" [] [])
             -- WHEN
-            ()    <- App.assignRole role user (group ^. groupID)
+            ()    <- App.assignGroupRole role user (group ^. groupID)
             -- THEN
-            roles <- App.allRoles user (group ^. groupID)
+            roles <- App.allGroupRolesIn user (group ^. groupID)
             pure $ do
               -- outcome: new role is assigned
               roles `shouldBe` [role]
@@ -63,28 +63,28 @@ spec = around provideAppRunner $ do
         it "does nothing" $ \(runner :: RoleAppRunner) -> do
           join . runner $ do
             -- GIVEN
-            let role = Member
+            let role = GroupMember
                 user = ID 1
             group <- App.addGroup (CreateGroup "title" "desc" [] [])
             -- WHEN
-            () <- App.assignRole role user (group ^. groupID)
-            () <- App.assignRole role user (group ^. groupID)
+            () <- App.assignGroupRole role user (group ^. groupID)
+            () <- App.assignGroupRole role user (group ^. groupID)
             -- THEN
-            roles <- App.allRoles user (group ^. groupID)
+            roles <- App.allGroupRolesIn user (group ^. groupID)
             pure $ do
               -- outcome: the role stays
               roles `shouldBe` [role]
 
       it "role is always in new role set, old and new role are equal except for assigned role" $
         \(runner :: RoleAppRunner) -> do
-          property $ \(role :: Role, roles :: [Role]) -> do
+          property $ \(role :: GroupRole, roles :: [GroupRole]) -> do
             join . runner $ do
               let uid = ID 1
               group       <- App.addGroup (CreateGroup "title" "desc" [] [])
-              ()          <- forM_ roles $ \r -> App.assignRole r uid (group ^. groupID)
-              rolesBefore <- App.allRoles uid (group ^. groupID)
-              ()          <- App.assignRole role uid (group ^. groupID)
-              rolesAfter  <- App.allRoles uid (group ^. groupID)
+              ()          <- forM_ roles $ \r -> App.assignGroupRole r uid (group ^. groupID)
+              rolesBefore <- App.allGroupRolesIn uid (group ^. groupID)
+              ()          <- App.assignGroupRole role uid (group ^. groupID)
+              rolesAfter  <- App.allGroupRolesIn uid (group ^. groupID)
               pure $ do
                 sort rolesBefore `shouldBe` nub (sort roles)
                 rolesAfter `shouldContain` [role]
@@ -95,14 +95,14 @@ spec = around provideAppRunner $ do
         it "unassigns the given role" $ \(runner :: RoleAppRunner) -> do
           join . runner $ do
             -- GIVEN
-            let role = Member
+            let role = GroupMember
                 user = ID 1
             group <- App.addGroup (CreateGroup "title" "desc" [] [])
-            ()    <- App.assignRole role user (group ^. groupID)
+            ()    <- App.assignGroupRole role user (group ^. groupID)
             -- WHEN
-            ()    <- App.unassignRole role user (group ^. groupID)
+            ()    <- App.unassignGroupRole role user (group ^. groupID)
             -- THEN
-            role' <- App.allRoles user (group ^. groupID)
+            role' <- App.allGroupRolesIn user (group ^. groupID)
             pure $ do
               -- outcome: the role is unassigned
               role' `shouldBe` []
@@ -110,17 +110,17 @@ spec = around provideAppRunner $ do
         it "leaves other roles untouched" $ \(runner :: RoleAppRunner) -> do
           join . runner $ do
             -- GIVEN
-            let role = Member
-                otherrole = GroupInitiator
+            let role = GroupMember
+                otherrole = GroupModerator
                 user = ID 1
             group  <- App.addGroup (CreateGroup "title" "desc" [] [])
-            ()     <- App.assignRole role user (group ^. groupID)
-            ()     <- App.assignRole otherrole user (group ^. groupID)
-            roles1 <- App.allRoles user (group ^. groupID)
+            ()     <- App.assignGroupRole role user (group ^. groupID)
+            ()     <- App.assignGroupRole otherrole user (group ^. groupID)
+            roles1 <- App.allGroupRolesIn user (group ^. groupID)
             -- WHEN
-            ()     <- App.unassignRole role user (group ^. groupID)
+            ()     <- App.unassignGroupRole role user (group ^. groupID)
             -- THEN
-            roles2 <- App.allRoles user (group ^. groupID)
+            roles2 <- App.allGroupRolesIn user (group ^. groupID)
             pure $ do
               -- outcome: the role is unassigned
               sort roles1 `shouldBe` sort [role, otherrole]
@@ -130,27 +130,27 @@ spec = around provideAppRunner $ do
         it "does nothing" $ \(runner :: RoleAppRunner) -> do
           join . runner $ do
             -- GIVEN
-            let role = Member
+            let role = GroupMember
                 user = ID 1
             group <- App.addGroup (CreateGroup "title" "desc" [] [])
             -- WHEN
-            ()    <- App.unassignRole role user (group ^. groupID)
+            ()    <- App.unassignGroupRole role user (group ^. groupID)
             -- THEN
-            role' <- App.allRoles user (group ^. groupID)
+            role' <- App.allGroupRolesIn user (group ^. groupID)
             pure $ do
               -- outcome: the role is unassigned
               role' `shouldBe` []
 
       it "role is never in new role set, old and new role are equal except for assigned role" $
         \(runner :: RoleAppRunner) -> do
-          property $ \(role :: Role, roles :: [Role]) -> do
+          property $ \(role :: GroupRole, roles :: [GroupRole]) -> do
             join . runner $ do
               let uid = ID 1
               group       <- App.addGroup (CreateGroup "title" "desc" [] [])
-              ()          <- forM_ roles $ \r -> App.assignRole r uid (group ^. groupID)
-              rolesBefore <- App.allRoles uid (group ^. groupID)
-              ()          <- App.unassignRole role uid (group ^. groupID)
-              rolesAfter  <- App.allRoles uid (group ^. groupID)
+              ()          <- forM_ roles $ \r -> App.assignGroupRole r uid (group ^. groupID)
+              rolesBefore <- App.allGroupRolesIn uid (group ^. groupID)
+              ()          <- App.unassignGroupRole role uid (group ^. groupID)
+              rolesAfter  <- App.allGroupRolesIn uid (group ^. groupID)
               pure $ do
                 sort rolesBefore `shouldBe` nub (sort roles)
                 rolesAfter `shouldNotContain` [role]

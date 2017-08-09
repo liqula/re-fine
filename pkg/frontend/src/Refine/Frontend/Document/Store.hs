@@ -50,38 +50,32 @@ import           Refine.Frontend.Util
 -- sometimes necessary, but it's a bit dangerous because it can
 -- trigger thunk evaluation loops.  use old state whenever it is
 -- enough.
-documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> GlobalState -> GlobalDocumentState -> GlobalDocumentState
-documentStateUpdate (LoadVDoc (AfterAjax vdoc)) oldgs _newgs st
-  = let eidChanged = Just newID /= mOldID
-        newID  = vdoc ^. vdocHeadEdit
-        mOldID = oldgs ^? gsEditID . _Just
-        oldEdit = fromMaybe (error "impossible") $ gsEdit oldgs
-    in refreshDocumentStateView
-         oldEdit
-         eidChanged
-         (oldEdit ^. editVDocVersion)  -- (really, get the vdoc version from the old gs here?)
-         st
+documentStateUpdate :: (HasCallStack) => GlobalAction -> GlobalState -> GlobalDocumentState -> CLT GlobalDocumentState
+documentStateUpdate (LoadVDoc _) oldgs st
+  = do
+    cvdoc <- do
+      case oldgs ^. gsVDoc of
+        Nothing -> error "impossible - documentStateUdpate"
+        Just Nothing -> throwError ()
+        Just (Just x) -> pure x
+    let edit = cvdoc ^. compositeVDocThisEdit
+        needInitialContent = null $ edit ^. editSource . unEditSource
+        estate = edit ^. editVDocVersion . to createWithRawContent
+    pure $ if needInitialContent
+        then enterEditModeWithEditorState oldgs estate (Just $ edit ^. editID)
+        else enterViewMode cvdoc oldgs st
 
-documentStateUpdate (LoadCompositeVDoc (AfterAjax cvdoc)) oldgs _newgs st
-  = if needInitialContent
-      then enterEditModeWithEditorState oldgs estate (Just $ cvdoc ^. compositeVDocThisEdit . editID)
-      else enterViewMode cvdoc oldgs st
-  where
-    needInitialContent = null $ cvdoc ^. compositeVDocThisEdit . editSource . unEditSource
-    estate = cvdoc ^. compositeVDocThisEdit . editVDocVersion . to createWithRawContent
+documentStateUpdate (HeaderAction StartEdit) oldgs (DocumentStateView estate _)
+  = pure $ enterEditModeWithEditorState oldgs estate Nothing
 
-documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateView estate _)
-  = enterEditModeWithEditorState oldgs estate Nothing
-
-documentStateUpdate (HeaderAction StartEdit) oldgs _ (DocumentStateDiff _ _ _ edit _ _)
-  = enterEditModeWithEdit oldgs edit
+documentStateUpdate (HeaderAction StartEdit) oldgs (DocumentStateDiff _ _ _ edit _ _)
+  = pure $ enterEditModeWithEdit oldgs edit
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     oldgs
-                    _newgs
                     (DocumentStateView e r)
-  = DocumentStateDiff
-      (mkEditIndex (fromMaybe (error "impossible") $ gsEdit oldgs) eid)
+  = pure $ DocumentStateDiff
+      (mkEditIndex (fromMaybe (error "impossible @documentStateUpdate") . join $ gsEdit oldgs) eid)
       e
       r
       eid
@@ -90,96 +84,95 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit e
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
                     _oldgs
-                    _newgs
                     (DocumentStateDiff _ e r _ _ _)
-  = DocumentStateView e r
+  = pure $ DocumentStateView e r
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDDiscussion did)))
                     _oldgs
-                    _newgs
                     (DocumentStateView _ _)
-  = DocumentStateDiscussion (did, Nothing)
+  = pure $ DocumentStateDiscussion (did, Nothing)
 
 documentStateUpdate (DocumentAction (ReplyStatement upd sid (FormBegin lst)))
                     _oldgs
-                    _newgs
                     (DocumentStateDiscussion (did, Nothing))
-  = DocumentStateDiscussion (did, Just (StatementEditorProps sid lst upd))
+  = pure $ DocumentStateDiscussion (did, Just (StatementEditorProps sid lst upd))
 
 documentStateUpdate (DocumentAction (ReplyStatement _upd _sid FormCancel))
                     _oldgs
-                    _newgs
                     (DocumentStateDiscussion (did, Just _))
-  = DocumentStateDiscussion (did, Nothing)
+  = pure $ DocumentStateDiscussion (did, Nothing)
 
-documentStateUpdate (AddStatement _upd _sid (AfterAjax discussion))
+documentStateUpdate (AddStatement _upd _sid _discussion)
                     _oldgs
-                    _newgs
-                    (DocumentStateDiscussion _)
-  = DocumentStateDiscussion (discussion ^. discussionID, Nothing)
+                    (DocumentStateDiscussion (did, _))
+  = pure $ DocumentStateDiscussion (did, Nothing)
 
 documentStateUpdate (ContributionAction HideContributionDialog)
                     _oldgs
-                    _newgs
                     (DocumentStateDiff _ e r _ _ _)
-  = DocumentStateView e r
+  = pure $ DocumentStateView e r
 
-documentStateUpdate (DocumentAction (UpdateEditorState estate)) _ _ (DocumentStateEdit _ einfo base)
-  = DocumentStateEdit estate einfo base
+documentStateUpdate (DocumentAction (UpdateEditorState estate)) _ (DocumentStateEdit _ einfo base)
+  = pure $ DocumentStateEdit estate einfo base
 
-documentStateUpdate (DocumentAction UpdateDocumentStateView) _ (view gsVDoc -> Just cvdoc) _state
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc
+documentStateUpdate (DocumentAction UpdateDocumentStateView) gs@(view gsEditID -> Just{}) _state
+  = pure . mkDocumentStateView $ gsRawContent gs
 
-documentStateUpdate (DocumentAction (DocumentUpdateEditInfo info)) _ _ st
-  = st & documentStateEditInfo .~ info
+documentStateUpdate (DocumentAction (DocumentUpdateEditInfo info)) _ st
+  = pure $ st & documentStateEditInfo .~ info
 
-documentStateUpdate (DocumentAction (DocumentToggleBlockType bt)) _ _ st
-  = st & documentStateVal %~ documentToggleBlockType bt
+documentStateUpdate (DocumentAction (DocumentToggleBlockType bt)) _ st
+  = pure $ st & documentStateVal %~ documentToggleBlockType bt
 
-documentStateUpdate (DocumentAction (DocumentToggleStyle s)) _ _ st
-  = st & documentStateVal %~ documentToggleStyle s
+documentStateUpdate (DocumentAction (DocumentToggleStyle s)) _ st
+  = pure $ st & documentStateVal %~ documentToggleStyle s
 
-documentStateUpdate (DocumentAction DocumentRemoveLink) _ _ st
-  = st & documentStateVal %~ documentRemoveLink
+documentStateUpdate (DocumentAction DocumentRemoveLink) _ st
+  = pure $ st & documentStateVal %~ documentRemoveLink
 
-documentStateUpdate (DocumentAction (DocumentCreateLink link)) _ _ st
-  = st & documentStateVal %~ documentAddLink (cs link)
+documentStateUpdate (DocumentAction (DocumentCreateLink link)) _ st
+  = pure $ st & documentStateVal %~ documentAddLink (cs link)
 
-documentStateUpdate (DocumentAction DocumentUndo) _ _ st
-  = st & documentStateVal %~ documentUndo
+documentStateUpdate (DocumentAction DocumentUndo) _ st
+  = pure $ st & documentStateVal %~ documentUndo
 
-documentStateUpdate (DocumentAction DocumentRedo) _ _ st
-  = st & documentStateVal %~ documentRedo
+documentStateUpdate (DocumentAction DocumentRedo) _ st
+  = pure $ st & documentStateVal %~ documentRedo
 
-documentStateUpdate (ContributionAction (SetRange range)) _ (view gsVDoc -> Just cvdoc) _
-  = mkDocumentStateView
+documentStateUpdate (ContributionAction (SetRange range)) gs@(view gsEditID -> Just{}) _
+  = pure
+  . mkDocumentStateView
   . addMarksToRawContent [(MarkCurrentSelection, range ^. sstSelectionState . selectionRange)]
   . deleteMarksFromRawContentIf (== MarkCurrentSelection)
-  $ rawContentFromCompositeVDoc cvdoc
+  $ gsRawContent gs
 
-documentStateUpdate (ContributionAction ClearRange) _ (view gsVDoc -> Just cvdoc) _
-  = mkDocumentStateView
+documentStateUpdate (ContributionAction ClearRange) gs@(view gsEditID -> Just{}) _
+  = pure
+  . mkDocumentStateView
   . deleteMarksFromRawContentIf (== MarkCurrentSelection)
-  $ rawContentFromCompositeVDoc cvdoc
+  $ gsRawContent gs
 
-documentStateUpdate (DocumentAction ToggleCollapseDiff) _ _ st | has _DocumentStateDiff st
-  = st & documentStateDiffCollapsed %~ not
+documentStateUpdate (DocumentAction ToggleCollapseDiff) _ st | has _DocumentStateDiff st
+  = pure $ st & documentStateDiffCollapsed %~ not
 
-documentStateUpdate (HeaderAction ToggleIndexToolbarExtension) _ _ st | has _DocumentStateDiff st
-  = st & documentStateDiffCollapsed .~ False
+documentStateUpdate (HeaderAction ToggleIndexToolbarExtension) _ st | has _DocumentStateDiff st
+  = pure $ st & documentStateDiffCollapsed .~ False
 
-documentStateUpdate _ _ _ st
-  = st
+documentStateUpdate CacheAction{} (view gsVDoc -> Just (Just cvdoc)) st | has _DocumentStateView st || has _DocumentStateDiff st
+  = pure $ st & documentStateVal .~ createWithContent (convertFromRaw $ rawContentFromCompositeVDoc cvdoc)
+
+documentStateUpdate _ _ st
+  = pure st
 
 
 enterViewMode :: CompositeVDoc -> GlobalState -> GlobalDocumentState -> GlobalDocumentState
 enterViewMode cvdoc oldgs = refreshDocumentStateView ed eidChanged rc
   where
-    ed = fromMaybe (error "impossible") $ gsEdit oldgs
+    ed = fromMaybe (error "impossible @enterViewMode") . join $ gsEdit oldgs
     eidChanged = Just newID /= mOldID
       where
         newID  = cvdoc ^. compositeVDocThisEditID
-        mOldID = oldgs ^? gsEditID . _Just
+        mOldID = oldgs ^? to gsEditID' . _Just . _Just
     rc = rawContentFromCompositeVDoc cvdoc
 
 -- | i think this is for when an edit is already under way, and we want to refresh the edit mode,

@@ -152,7 +152,7 @@ spec = do
     it "upvoting an edit triggers rebase" $ \(runner :: AppM DB () -> IO ()) -> runner $ do
         (vid, _, [eid]) <- docWithEdits ["abc", "def"] [["a.c", "def"]]
         void $ addUserAndLogin "user"
-        putSimpleVoteOnEdit eid Yeay
+        _ <- toggleSimpleVoteOnEdit eid Yeay
         d <- App.getVDoc vid
         let hid = d ^. vdocHeadEdit
         liftIO $ hid `shouldBe` eid
@@ -168,6 +168,7 @@ instance ProgramRunner PropertyM where
 
 instance ProgramRunner IdentityT where
   check x = unless x $ error "Assertion has failed."
+
 
 -- * monadic property
 

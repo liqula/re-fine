@@ -31,7 +31,7 @@ import GHC.Generics (Generic)
 
 import React.Flux.Missing
 import Refine.Common.Types
-import Refine.Common.Rest (ApiErrorCreateUser)
+import Refine.Common.Rest (ApiError)
 import Refine.Common.Types.Prelude (Username)
 import Refine.Frontend.Types
 import Refine.Frontend.Login.Types
@@ -41,7 +41,7 @@ data MainMenuAction
   = MainMenuActionClose
   | MainMenuActionOpen MainMenuTabAction
   | MainMenuActionLoginError        Username
-  | MainMenuActionRegistrationError ApiErrorCreateUser
+  | MainMenuActionRegistrationError ApiError
   | MainMenuActionClearErrors
   deriving (Eq, Show, Generic)
 
@@ -82,7 +82,7 @@ type MainMenuTabState = (MainMenuTab
       (LocalStateRef UpdateVDoc)
       :: *)
 type MainMenuTabAction = (MainMenuTab
-      (AjaxAction () [ID Group])
+      ()
       (ID Group)
       (FormAction CreateGroup)
       (FormAction CreateVDoc)
@@ -96,7 +96,7 @@ type MainMenuTabProps = (MainMenuTab
       (LocalStateRef UpdateVDoc)
       :: *)
 
-type GroupProps = (Group, Map (ID VDoc) VDoc)
+type GroupProps = (Maybe Group, Map (ID VDoc) VDoc)
 type GroupsProps = ([Group], Map (ID VDoc) VDoc)
 
 -- | FUTUREWORK: it may be nicer after all to have different types for action, state, and props
@@ -122,7 +122,7 @@ mapMainMenuTab fa fb fc fd fe = \case
   MainMenuLogin l  -> MainMenuLogin l
 
 defaultMainMenuTab :: MainMenuTabAction
-defaultMainMenuTab = MainMenuGroups $ BeforeAjax ()
+defaultMainMenuTab = MainMenuGroups ()
 
 data MainMenuSubTabLogin = MainMenuSubTabLogin | MainMenuSubTabRegistration
   deriving (Eq, Show, Generic)

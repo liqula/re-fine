@@ -58,6 +58,7 @@ import qualified Data.List.NonEmpty as NEL
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text as ST
+import           Data.Tree
 import           Data.String.Conversions (ST, cs, (<>))
 import qualified Generics.SOP as SOP
 import           GHC.Generics (Generic)
@@ -68,7 +69,6 @@ import           Refine.Common.Types.Position
 import           Refine.Common.Types.Vote
 import qualified Refine.Common.OT as OT
 import           Refine.Common.OT hiding (Edit)
-import           Refine.Common.Types.Comment
 import           Refine.Common.Types.Prelude
 
 
@@ -80,7 +80,7 @@ data VDoc = VDoc
   , _vdocAbstract :: Abstract
   , _vdocHeadEdit :: ID Edit
   , _vdocGroup    :: ID Group
-  , _vdocStats     :: EditStats
+  , _vdocStats    :: EditStats
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -198,7 +198,6 @@ data CompositeVDoc = CompositeVDoc
 -- an edit on the empty document.
 data Contribution =
     ContribNote Note
-  | ContribQuestion Question
   | ContribDiscussion Discussion
   | ContribEdit Edit
   | ContribHighlightMark (Range Position)
@@ -211,7 +210,6 @@ data Contribution =
 -- straight-forward.
 data ContributionID =
     ContribIDNote (ID Note)
-  | ContribIDQuestion (ID Question)
   | ContribIDDiscussion (ID Discussion)
   | ContribIDEdit (ID Edit)
   deriving (Eq, Ord, Show, Read, Generic)
@@ -360,34 +358,6 @@ pattern LineElem a b <- (makeEntityStyleSet -> a, b)
 makeEntityStyleSet :: EntityStyles -> Set (Either Entity Style)
 makeEntityStyleSet (Atom e, s) = maybe mempty (Set.singleton . Left) e <> Set.mapMonotonic (Right . unAtom) s
 
--- ** Server cache
-
-data ServerCache = ServerCache
-  { _scVDocs       :: Map (ID VDoc)       VDoc
-  , _scEdits       :: Map (ID Edit)       Edit
-  , _scNotes       :: Map (ID Note)       Note
-  , _scDiscussions :: Map (ID Discussion) Discussion
-  , _scUsers       :: Map (ID User)       User
-  , _scGroups      :: Map (ID Group)      Group
-  }
-  deriving (Show, Eq, Generic)
-
-instance Monoid ServerCache where
-  mempty = ServerCache mempty mempty mempty mempty mempty mempty
-  ServerCache a b c d e f `mappend` ServerCache a' b' c' d' e' f'
-    = ServerCache (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f')
-
-data CacheKey
-  = CacheKeyVDoc       (ID VDoc)
-  | CacheKeyEdit       (ID Edit)
-  | CacheKeyNote       (ID Note)
-  | CacheKeyDiscussion (ID Discussion)
-  | CacheKeyUser       (ID User)
-  | CacheKeyGroup      (ID Group)
-  deriving (Eq, Ord, Show, Generic)
-
-
-
 -- * Instances
 
 -- ** Contribution Http instances
@@ -395,14 +365,12 @@ data CacheKey
 instance ToHttpApiData ContributionID where
   toUrlPiece = \case
     ContribIDNote (ID i)       -> "n" <> cs (show i)
-    ContribIDQuestion (ID i)   -> "q" <> cs (show i)
     ContribIDDiscussion (ID i) -> "d" <> cs (show i)
     ContribIDEdit (ID i)       -> "e" <> cs (show i)
 
 instance FromHttpApiData ContributionID where
   parseUrlPiece (ST.splitAt 1 -> (ks, readEither . cs -> Right n))
     | "n" <- ks = f ContribIDNote
-    | "q" <- ks = f ContribIDQuestion
     | "d" <- ks = f ContribIDDiscussion
     | "e" <- ks = f ContribIDEdit
     where
@@ -757,6 +725,61 @@ mkSomeSegments frange fpayload els = segments
     mkSegments n stack ss = error $ "impossible: " <> show (n, stack, ss)
 
 
+-- * comment
+
+type CommentText = ST
+
+data CreateNote range = CreateNote
+  { _createNoteText   :: CommentText
+  , _createNoteRange  :: range
+  }
+  deriving (Eq, Ord, Show, Generic)
+
+data Note = Note
+  { _noteMetaID :: MetaID Note
+  , _noteVDoc   :: ID VDoc
+  , _noteText   :: CommentText
+  , _noteRange  :: Range Position
+  , _noteVotes  :: Votes
+  }
+  deriving (Eq, Ord, Show, Generic)
+
+data CreateDiscussion range = CreateDiscussion
+  { _createDiscussionStatementText :: CommentText
+  , _createDiscussionRange         :: range
+  } -- FIXME: add (createDiscussionEdit :: ID Edit) and simplify SAddDiscussion (fisx does not like
+    -- this, but does not want to spend time arguing about it)
+  deriving (Eq, Ord, Show, Generic)
+
+data Discussion = Discussion
+  { _discussionMetaID :: MetaID Discussion
+  , _discussionVDoc   :: ID VDoc
+  , _discussionRange  :: Range Position
+  , _discussionTree   :: Tree Statement
+  } -- FIXME: add (discussionEdit :: ID Edit), fits better the server cache in global state
+  deriving (Eq, Show, Generic)
+
+newtype CreateStatement = CreateStatement
+  { _createStatementText :: CommentText
+  } -- FIXME: add (createStatementParent :: Either (ID Discussion) (ID Statement)) and remove
+    -- "onstatementid" from SAddStatement (fisx does not like this, but does not want to spend time
+    -- arguing about it)
+  deriving (Eq, Ord, Show, Read, Generic)
+
+data Statement = Statement
+  { _statementMetaID :: MetaID Statement
+  , _statementVDoc   :: ID VDoc
+  , _statementText   :: CommentText
+  , _statementParent :: Maybe (ID Statement)  -- FIXME: remove this, this is unnecessary if we use the Tree data structure in Discussion
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
+
+data Comment =
+    CommentNote Note
+  | CommentDiscussion Discussion
+  deriving (Eq, Show, Generic)
+
+
 -- * Derived instances
 
 deriveClasses
@@ -765,12 +788,14 @@ deriveClasses
   , ([ ''EntityKey, ''CompositeVDoc, ''ContributionID, ''MarkID
      , ''VDoc, ''CreateVDoc, ''UpdateVDoc, ''EditSource, ''Edit
      , ''EditStats, ''CreateEdit, ''EditKind, ''Title, ''Abstract
-     , ''Group, ''CreateGroup, ''ServerCache, ''CacheKey]
+     , ''Group, ''CreateGroup]
     , allClass)
   ]
 
 -- | It cannot moved further up, needs instance NFData BlockType
 deriving instance NFData (EEdit RawContent)
+
+makeRefineTypes [''CreateNote, ''Note, ''CreateDiscussion, ''Discussion, ''CreateStatement, ''Statement, ''Comment]
 
 
 -- * helper lenses
@@ -787,7 +812,6 @@ groupID = groupMetaID . miID
 contributionID :: Lens' Contribution ContributionID
 contributionID k = \case
   ContribNote i       -> ContribNote       <$> noteID       (fmap (\(ContribIDNote i')       -> i') . k . ContribIDNote) i
-  ContribQuestion i   -> ContribQuestion   <$> questionID   (fmap (\(ContribIDQuestion i')   -> i') . k . ContribIDQuestion) i
   ContribDiscussion i -> ContribDiscussion <$> discussionID (fmap (\(ContribIDDiscussion i') -> i') . k . ContribIDDiscussion) i
   ContribEdit i       -> ContribEdit       <$> editID       (fmap (\(ContribIDEdit i')       -> i') . k . ContribIDEdit) i
 
@@ -922,3 +946,15 @@ styleRangeToLeafSelectors rc (Range a b) | a < b = RangeInner a' b'
 
 lineElemLength :: LineElem -> Int
 lineElemLength (_, NonEmptyST txt) = ST.length txt
+
+
+-- * some convenience lenses
+
+noteID :: Lens' Note (ID Note)
+noteID = noteMetaID . miID
+
+discussionID :: Lens' Discussion (ID Discussion)
+discussionID = discussionMetaID . miID
+
+statementID :: Lens' Statement (ID Statement)
+statementID = statementMetaID . miID

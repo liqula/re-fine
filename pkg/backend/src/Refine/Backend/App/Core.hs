@@ -34,17 +34,20 @@ module Refine.Backend.App.Core (
   , appLogger
   , appConfig
   , AppState(..)
+  , initialAppState
   , appCsrfToken
   , appUserState
+  , appIAmGod
   , AppUserState(..)
   , App
   , AppIO
   , AppM(..)
   , AppError(..)
   , SmtpError(..)
+  , tryApp, toApiError, createUserErrorToApiError
   , MonadApp
   , MonadAppDB(dbWithFilters), db, dbUsersCmd
-  , MonadLog(appLog)
+  , MonadLog(appLogL), appLog
   , MonadCache(..)
   ) where
 
@@ -55,6 +58,8 @@ import qualified Web.Users.Types as Users
 import qualified Web.Users.Persistent as Users
 
 import {-# SOURCE #-} Refine.Backend.App.Smtp
+import Refine.Common.Access
+import Refine.Common.Rest (ApiError(..), ApiErrorCreateUser(..))
 import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.Logger
@@ -83,13 +88,18 @@ data AppContext = AppContext
 data AppState = AppState
   { _appCsrfToken :: Maybe CsrfToken
   , _appUserState :: AppUserState
+  , _appIAmGod    :: Bool
   }
+  deriving (Eq, Show)
 
 -- | The state of the application depends on the user state.
 data AppUserState
   = UserLoggedIn (ID Types.User) UserSession
   | UserLoggedOut
   deriving (Eq, Show)
+
+initialAppState :: AppState
+initialAppState = AppState Nothing UserLoggedOut False
 
 makeLenses ''AppContext
 makeLenses ''AppState
@@ -129,6 +139,7 @@ type MonadApp app =
   , MonadLog app
   , MonadSmtp app
   , MonadCache app
+  , MonadAccess app
   )
 
 -- | Syntactic sugar for 'MonadApp'.
@@ -153,15 +164,44 @@ data AppError
   | AppSessionError
   | AppSanityCheckError ST
   | AppL10ParseErrors [ST]
-  | AppUnauthorized
+  | AppUnauthorized (Bool, Creds)
   | AppMergeError (ID Edit) (ID Edit) (ID Edit) ST
   | AppRebaseError (ID Edit)
   | AppSmtpError SmtpError
-  deriving (Show, Generic)
+  deriving (Eq, Show, Generic)
 
 newtype SmtpError
   = SmtpError IOException
-  deriving (Show, Generic)
+  deriving (Eq, Show, Generic)
+
+tryApp :: AppM DB a -> AppM DB (Either ApiError a)
+tryApp m = (Right <$> m) `catchError` (pure . Left . toApiError)
+
+-- FIXME: review this; is this really needed?
+toApiError :: AppError -> ApiError
+toApiError = \case
+  AppUnknownError e      -> ApiUnknownError e
+  AppVDocVersionError    -> ApiVDocVersionError
+  AppDBError e           -> ApiDBError . cs $ show e
+  AppUserNotFound e      -> ApiUserNotFound e
+  AppUserNotLoggedIn     -> ApiUserNotLoggedIn
+  AppUserCreationError e -> ApiUserCreationError $ createUserErrorToApiError e
+  AppCsrfError e         -> ApiCsrfError e
+  AppSessionError        -> ApiSessionError
+  AppSanityCheckError e  -> ApiSanityCheckError e
+  AppUserHandleError e   -> ApiUserHandleError . cs $ show e
+  AppL10ParseErrors e    -> ApiL10ParseErrors e
+  AppUnauthorized info   -> ApiUnauthorized (cs $ show info)
+  AppMergeError base e1 e2 s -> ApiMergeError $ cs (show (base, e1, e2)) <> ": " <> s
+  AppRebaseError{}       -> ApiRebaseError
+  AppSmtpError{}         -> ApiSmtpError
+
+-- | so we don't have to export backend types to the frontend.
+createUserErrorToApiError :: Users.CreateUserError -> ApiErrorCreateUser
+createUserErrorToApiError Users.InvalidPassword              = ApiErrorInvalidPassword
+createUserErrorToApiError Users.UsernameAlreadyTaken         = ApiErrorUsernameAlreadyTaken
+createUserErrorToApiError Users.EmailAlreadyTaken            = ApiErrorEmailAlreadyTaken
+createUserErrorToApiError Users.UsernameAndEmailAlreadyTaken = ApiErrorUsernameAndEmailAlreadyTaken
 
 
 -- * database
@@ -173,17 +213,18 @@ class Database (AppDB app) => MonadAppDB app where
 instance Database db => MonadAppDB (AppM db) where
   type AppDB (AppM db) = db
   dbWithFilters fltrs m = AppM $ do
-    mu      <- user <$> gets (view appUserState)
+    ctx <- do
+      let user = \case
+            UserLoggedOut     -> Nothing
+            UserLoggedIn u _s -> Just u
+      mu <- user <$> gets (view appUserState)
+      pure (DBContext mu fltrs)
     mkNatDB <- view _1
     conn    <- view (_2 . appDBConnection)
-    let (NT dbNat) = mkNatDB conn (DBContext mu fltrs)
+    let (NT dbNat) = mkNatDB conn ctx
     r   <- liftIO (try $ runExceptT (dbNat m))
     r'  <- leftToError (AppDBError . DBUnknownError . show @SomeException) r  -- catch (unexpected?) IO errors
     leftToError AppDBError r'  -- catch (expected) errors we throw ourselves
-    where
-      user = \case
-        UserLoggedOut     -> Nothing
-        UserLoggedIn u _s -> Just u
 
 db :: (MonadAppDB app) => (AppDB app) a -> app a
 db = dbWithFilters mempty
@@ -195,12 +236,20 @@ dbUsersCmd = db . runUsersCmd
 -- * logging
 
 class MonadLog app where
-  appLog :: String -> app ()
+  appLogL :: LogLevel -> String -> app ()
 
 instance MonadLog (AppM db) where
-  appLog msg = AppM $ do
-    logger <- view (_2 . appLogger)
-    liftIO $ unLogger logger msg
+  appLogL level msg = AppM $ do
+    levelLimit <- view (_2 . appConfig . cfgLogger . logCfgLevel)
+    when (level <= levelLimit) $ do
+      logger <- view (_2 . appLogger)
+      liftIO $ unLogger logger msg
+
+instance MonadLog IO where
+  appLogL _ = putStrLn
+
+appLog :: MonadLog app => String -> app ()
+appLog = appLogL def
 
 
 -- * logging

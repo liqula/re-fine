@@ -18,16 +18,24 @@ packages:
   extra-dep: true
 - location:
     git: https://github.com/zerobuzz/servant-cookie-session.git
-    commit: 7186ca8c53778822b45bd5d3d71945add778770f
+    commit: 29df957fe7826632254fdbb213883caad0052fd9
   extra-dep: true
 
 extra-deps:
 - fingertree-tf-0.1.0.0
 - lens-properties-4.11
+
 - wai-extra-3.0.20.0
   # LTS Haskell 8.19:            3.0.19.1
   # Stackage Nightly 2017-06-22: 3.0.19.1
   # Latest on Hackage:           3.0.20.0
+
+- persistent-2.7.0
+- persistent-sqlite-2.6.2
+- users-persistent-0.5.0.2
+- esqueleto-2.5.3
+  # persistent packages have been tweaked to younger-than lts-8.11 in
+  # order to fix #291.  not sure whether it'll work yet.
 
 flags: {}
 

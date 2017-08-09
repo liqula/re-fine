@@ -23,7 +23,6 @@ import Refine.Common.Prelude
 
 import Data.String.Conversions (ST)
 
-import Refine.Common.Types.Comment
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.Core
 
@@ -34,9 +33,6 @@ class IsContribution a where
 instance IsContribution Note where
   contribID = ContribIDNote
 
-instance IsContribution Question where
-  contribID = ContribIDQuestion
-
 instance IsContribution Discussion where
   contribID = ContribIDDiscussion
 
@@ -45,7 +41,6 @@ instance IsContribution Edit where
 
 contributionIDToKindST :: ContributionID -> ST
 contributionIDToKindST (ContribIDNote _)       = "note"
-contributionIDToKindST (ContribIDQuestion _)   = "question"
 contributionIDToKindST (ContribIDDiscussion _) = "discussion"
 contributionIDToKindST (ContribIDEdit _)       = "edit"
 
@@ -53,13 +48,11 @@ contributionIDToKindST (ContribIDEdit _)       = "edit"
 -- This can probably solved with lenses, but we don't know how...
 getNoteID :: ContributionID -> Maybe (ID Note)
 getNoteID (ContribIDNote i)       = Just i
-getNoteID (ContribIDQuestion _)   = Nothing
 getNoteID (ContribIDDiscussion _) = Nothing
 getNoteID (ContribIDEdit _)       = Nothing
 
 -- This can probably solved with lenses, but we don't know how...
 getDiscussionID :: ContributionID -> Maybe (ID Discussion)
 getDiscussionID (ContribIDNote _)       = Nothing
-getDiscussionID (ContribIDQuestion _)   = Nothing
 getDiscussionID (ContribIDDiscussion i) = Just i
 getDiscussionID (ContribIDEdit _)       = Nothing

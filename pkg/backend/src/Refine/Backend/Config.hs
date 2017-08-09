@@ -32,6 +32,9 @@ import qualified Generics.SOP as SOP
 import           Network.Wai.Handler.Warp as Warp
 
 import Refine.Common.Types.Config
+import Refine.Common.Types.Core
+import Refine.Common.Types.Prelude
+import Refine.Common.Types.Role
 
 
 -- * config tree
@@ -47,18 +50,32 @@ data Config = Config
   , _cfgPoFilesRoot   :: FilePath       -- ^ The directory of Po translation files
   , _cfgSmtp          :: Maybe SmtpCfg  -- ^ for sending notification emails to users
   , _cfgClient        :: ClientCfg      -- ^ what we send to the client
+  , _cfgWSPingPeriod  :: Timespan       -- ^ how long between two pings to every connected client
+  , _cfgAllAreGods    :: Bool           -- ^ run 'unsafeBeAGod' in the beginning of every servant
+                                        -- and websockets transaction (See #358)
   }
   deriving (Eq, Show, Generic)
 
-data LogCfg =
+data LogCfg = LogCfg
+  { _logCfgTarget :: LogTarget
+  , _logCfgLevel  :: LogLevel
+  }
+  deriving (Eq, Show, Generic)
+
+data LogTarget =
     LogCfgFile { _logcfgFilePath :: FilePath }
   | LogCfgStdOut
   | LogCfgDevNull
   deriving (Eq, Show, Generic)
 
+data LogLevel = LogError | LogWarning | LogInfo | LogDebug
+  deriving (Eq, Ord, Bounded, Enum, Show, Generic)
+
+-- | IMPORTANT: 'DBInMemory' is fragile, it tends to lose its contents between transactions.  I
+-- haven't investigated, but DBOnDisk definitely works better!
 data DBKind
-  = DBInMemory
-  | DBOnDisk FilePath
+  = DBOnDisk FilePath
+  | DBInMemory
   deriving (Eq, Show, Generic)
 
 data SmtpCfg = SmtpCfg
@@ -82,10 +99,18 @@ instance Default Config where
     , _cfgPoFilesRoot   = "./po"
     , _cfgSmtp          = Nothing
     , _cfgClient        = def
+    , _cfgWSPingPeriod  = TimespanSecs 14
+    , _cfgAllAreGods    = False
     }
 
 instance Default LogCfg where
+  def = LogCfg def def
+
+instance Default LogTarget where
   def = LogCfgStdOut
+
+instance Default LogLevel where
+  def = LogInfo
 
 instance Default DBKind where
   def = DBOnDisk "./.backend-data/refine.db"
@@ -118,7 +143,7 @@ warpSettings cfg = Warp.defaultSettings
 
 -- * lenses/TH
 
-deriveClasses [([''Config, ''LogCfg, ''DBKind, ''SmtpCfg], [''SOP.Generic, ''Lens', ''FromJSON])]
+deriveClasses [([''Config, ''LogCfg, ''LogTarget, ''LogLevel, ''DBKind, ''SmtpCfg], [''SOP.Generic, ''Lens', ''FromJSON])]
 deriveClasses [([''WarpSettings], [''SOP.Generic, ''Lens'])]
 
 instance ToJSON WarpSettings where
@@ -172,3 +197,47 @@ explainConfig cfg intro mentionServerConf = unlines $
          , ""
          ]
     else []
+
+
+-- * add users and other content via command line
+
+data CliCreate =
+    CliCreateUser (CreateUser, [(GroupRole, ST{- group title -})], [GlobalRole])
+  | CliCreateGroup CreateGroup
+  deriving (Eq, Show, Generic)
+
+deriveClasses [([''CliCreate], [''SOP.Generic, ''Lens', ''FromJSON])]
+
+
+-- | Initialize config from a given yaml file or, if 'Nothing' is given, the default value.  Print
+-- config to stdout before returning with it, as a simple mechanism for providing a default yaml
+-- file (people who run this for the first time can copy stdout into a file and edit that).
+readCliCreate :: FilePath -> IO [CliCreate]
+readCliCreate fp = either bad pure =<< Yaml.decodeFileEither fp
+  where
+    bad msg = throwIO . ErrorCall $ show msg <> "\n\n" <> helpCliCreateMsg
+
+
+helpCliCreate :: IO ()
+helpCliCreate = putStrLn helpCliCreateMsg
+
+helpCliCreateMsg :: String
+helpCliCreateMsg = unlines
+ [ "to create initial database groups and users, adapt the following sample data file:"
+ , ""
+ , cs $ Yaml.encode sampleContent
+ , ""
+ , "Note that groups are defined twice under the same name if you run the same data"
+ , "twice.  Users will NOT be created, and a warning will be issued.  If a user is assigned"
+ , "to a group that has a non-unique title, she is assigned to both groups that have that"
+ , "title.  If no such group exists, it is created."
+ ]
+
+sampleContent :: [CliCreate]
+sampleContent =
+  [ CliCreateGroup $ CreateGroup "Universe" "The group that contains everything" [] []
+  , CliCreateGroup $ CreateGroup "Greek Party" "Something about ethnics and politics" [] []
+  , CliCreateUser (CreateUser "admin" "admin@localhost" "pass", [], [GlobalAdmin])
+  , CliCreateUser (CreateUser "edna" "edna@localhost" "pass", [(GroupMember, "Edna's home group"), (GroupMember, "Greek Party")], [])
+  , CliCreateUser (CreateUser "joe" "joe@localhost" "pass", [(GroupMember, "Joe's home group")], [])
+  ]

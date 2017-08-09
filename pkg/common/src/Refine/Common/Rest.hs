@@ -22,8 +22,11 @@ module Refine.Common.Rest where
 
 import Refine.Common.Prelude
 
-import Refine.Common.Types
 import Refine.Common.ChangeAPI
+import Refine.Common.Types.Core
+import Refine.Common.Types.Prelude
+import Refine.Common.Types.Translation
+import Refine.Common.Types.Vote
 
 data ApiError
   = ApiUnknownError ST
@@ -38,7 +41,7 @@ data ApiError
   | ApiSanityCheckError ST
   | ApiUserHandleError ST
   | ApiL10ParseErrors [ST]
-  | ApiUnauthorized
+  | ApiUnauthorized ST
   | ApiMergeError ST
   | ApiRebaseError
   | ApiSmtpError
@@ -64,8 +67,6 @@ type RefineAPI =
   :<|> SUpdateEdit
   :<|> SAddNote
   :<|> SGetNote
-  :<|> SAddQuestion
-  :<|> SAddAnswer
   :<|> SAddDiscussion
   :<|> SGetDiscussion
   :<|> SAddStatement
@@ -115,23 +116,15 @@ type SUpdateEdit
     :> Put '[JSON] Edit
 
 type SAddNote
-  = "r" :> "note" :> Capture "onnoteid" (ID Edit) :> ReqBody '[JSON] CreateNote
+  = "r" :> "note" :> Capture "onnoteid" (ID Edit) :> ReqBody '[JSON] (CreateNote (Maybe (Range Position)))
     :> Post '[JSON] Note
 
 type SGetNote
   = "r" :> "note" :> Capture "onnoteid" (ID Note)
     :> Get '[JSON] Note
 
-type SAddQuestion
-  = "r" :> "question" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] CreateQuestion
-    :> Post '[JSON] CompositeQuestion
-
-type SAddAnswer
-  = "r" :> "answer" :> Capture "onquestionid" (ID Question) :> ReqBody '[JSON] CreateAnswer
-    :> Post '[JSON] Answer
-
 type SAddDiscussion
-  = "r" :> "discussion" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] CreateDiscussion
+  = "r" :> "discussion" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (CreateDiscussion (Maybe (Range Position)))
     :> Post '[JSON] Discussion
 
 type SGetDiscussion

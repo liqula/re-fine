@@ -51,9 +51,7 @@ type instance S.EntityRep MetaInfo   = S.MetaInfo
 type instance S.EntityRep VDoc       = S.VDoc
 type instance S.EntityRep Edit       = S.Edit
 type instance S.EntityRep Note       = S.Note
-type instance S.EntityRep Question   = S.Question
 type instance S.EntityRep Discussion = S.Discussion
-type instance S.EntityRep Answer     = S.Answer
 type instance S.EntityRep Statement  = S.Statement
 type instance S.EntityRep User       = Users.Login
 type instance S.EntityRep Group      = S.Group
@@ -86,7 +84,7 @@ https://hackage.haskell.org/package/gdiff
 -- * Helpers
 
 idNotFound :: (Typeable d) => ID d -> DB a
-idNotFound i = notFound $ unwords [show $ typeOf i, show i, "is not found."]
+idNotFound i = notFound $ unwords ["not found:", show i, "::", show $ typeOf i]
 
 unique :: String -> [a] -> DB a
 unique _      [x] = pure x
@@ -312,19 +310,13 @@ updateEditSource eid f = do
              [ S.ParentChildEdit =. RawContentEdit (f (S.keyToId parent) edit) ]
 
 getVersion :: ID Edit -> DB RawContent
-getVersion pid = S.editElim (\_ vdoc _ _ _ -> vdoc) <$> getEntityRep pid
+getVersion eid = S.editElim (\_ vdoc _ _ _ -> vdoc) <$> getEntityRep eid
 
 editNotes :: ID Edit -> DB [ID Note]
 editNotes pid = do
   opts <- dbSelectOpts
   liftDB $
     foreignKeyField S.pNNote <$$> selectList [S.PNEdit ==. S.idToKey pid] opts
-
-editQuestions :: ID Edit -> DB [ID Question]
-editQuestions pid = do
-  opts <- dbSelectOpts
-  liftDB $
-    foreignKeyField S.pQQuestion <$$> selectList [S.PQEdit ==. S.idToKey pid] opts
 
 editDiscussions :: ID Edit -> DB [ID Discussion]
 editDiscussions pid = do
@@ -354,71 +346,57 @@ getVoteCount = fmap votesToCount . getVotes
 -- * Repo and edit
 
 vdocOfEdit :: ID Edit -> DB (ID VDoc)
-vdocOfEdit pid = S.editElim (\_ _ vid _ _ -> S.keyToId vid) <$> getEntityRep pid
+vdocOfEdit eid = S.editElim (\_ _ vid _ _ -> S.keyToId vid) <$> getEntityRep eid
 
 
 -- * Note
 
--- FIXME: Use the @_lid@ argument
-toNote :: MetaID Note -> ST -> Bool -> RangePosition -> Users.LoginId -> Note
-toNote nid desc public range _lid = Note nid desc public (unRangePosition range)
+toNote :: MetaID Note -> ID VDoc -> ST -> RangePosition -> DBVotes -> Note
+toNote nid vid desc p = Note nid vid desc (unRangePosition p) . unDBVotes
 
-createNote :: ID Edit -> CreateNote -> DB Note
-createNote pid note = do
-  userId <- dbUser
+createNote :: ID Edit -> CreateNote (Range Position) -> DB Note
+createNote eid note = do
   let snote = S.Note
           (note ^. createNoteText)
-          (note ^. createNotePublic)
           (RangePosition $ note ^. createNoteRange)
-          (fromUserID userId)
+          (DBVotes mempty)
   mid <- createMetaID snote
-  addConnection S.PN pid (mid ^. miID)
-  pure $ S.noteElim (toNote mid) snote
+  addConnection S.PN eid (mid ^. miID)
+  getNote $ mid ^. miID
 
 getNote :: ID Note -> DB Note
-getNote = getMetaEntity (S.noteElim . toNote)
+getNote nid = do
+  vid <- vdocOfNote nid
+  (mid, snote :: S.Note) <- getMetaEntity (,) nid
+  pure $ S.noteElim (toNote mid vid) snote
 
+vdocOfNote :: ID Note -> DB (ID VDoc)
+vdocOfNote nid = do
+  opts <- dbSelectOpts
+  ((editOfNote :: P.Entity S.PN) : _) <- liftDB $ selectList [S.PNNote ==. S.idToKey nid] opts
+  let eid :: ID Edit = (S.pNElim (\i _ -> S.keyToId i) . entityVal) editOfNote
+  view editVDoc <$> getEdit eid
 
--- * Question
+updateNoteVotes :: ID Note -> (Votes -> Votes) -> DB ()
+updateNoteVotes i f = do
+  vs <- getNoteVotes i
+  liftDB $ update (S.idToKey i) [ S.NoteVotes =. DBVotes (f vs) ]
 
--- FIXME: user the @_lid@ argument
-toQuestion :: MetaID Question -> ST -> Bool -> Bool -> RangePosition -> Users.LoginId -> Question
-toQuestion qid text answ pblc range _lid = Question qid text answ pblc (unRangePosition range)
-
-createQuestion :: ID Edit -> CreateQuestion -> DB Question
-createQuestion pid question = do
-  userId <- dbUser
-  let squestion = S.Question
-          (question ^. createQuestionText)
-          False -- Not answered
-          (question ^. createQuestionPublic)
-          (RangePosition $ question ^. createQuestionRange)
-          (fromUserID userId)
-  mid <- createMetaID squestion
-  addConnection S.PQ pid (mid ^. miID)
-  pure $ S.questionElim (toQuestion mid) squestion
-
-getQuestion :: ID Question -> DB Question
-getQuestion = getMetaEntity (S.questionElim . toQuestion)
+getNoteVotes :: ID Note -> DB Votes
+getNoteVotes i = do
+  getMetaEntity (\_ -> S.noteElim $ \_ _ (DBVotes vs) -> vs) i
 
 
 -- * Discussion
 
-saveStatement :: S.Statement -> DB Statement
-saveStatement sstatement = do
-  mid <- createMetaID sstatement
-  pure $ S.statementElim (toStatement mid) sstatement
-
-createDiscussion :: ID Edit -> CreateDiscussion -> DB Discussion
+createDiscussion :: ID Edit -> CreateDiscussion (Range Position) -> DB Discussion
 createDiscussion pid disc = do
-  userId <- dbUser
   let sdiscussion = S.Discussion
-          (disc ^. createDiscussionPublic)
           (RangePosition $ disc ^. createDiscussionRange)
-          (fromUserID userId)
   mid <- createMetaID sdiscussion
   addConnection S.PD pid (mid ^. miID)
-  void . saveStatement $ S.Statement
+  vid <- view editVDoc <$> getEdit pid
+  void . saveStatement vid $ S.Statement
           (disc ^. createDiscussionStatementText)
           Nothing -- Top level node
           (S.idToKey $ mid ^. miID)
@@ -427,7 +405,7 @@ createDiscussion pid disc = do
 rebaseDiscussion :: ID Edit -> ID Discussion -> (Range Position -> Range Position) -> DB Discussion
 rebaseDiscussion eid did tr = do
   d <- getEntityRep did
-  let sdiscussion = S.discussionElim (\pblc (RangePosition r) -> S.Discussion pblc (RangePosition $ tr r)) d
+  let sdiscussion = S.discussionElim (\(RangePosition r) -> S.Discussion (RangePosition $ tr r)) d
   mid <- createMetaID sdiscussion
   addConnection S.PD eid (mid ^. miID)
   getDiscussion $ mid ^. miID
@@ -443,50 +421,37 @@ getDiscussion did = do
   (mid, d) <- getMetaEntity (,) did
   s <- statementsOfDiscussion did
   t <- buildTree (^. statementParent) (^. statementID) <$> mapM getStatement s
-  -- FIXME: use the @_lid@ argument
-  pure $ S.discussionElim (\pblc range _lid -> Discussion mid pblc (unRangePosition range) t) d
-
+  vid <- vdocOfDiscussion did
+  pure $ S.discussionElim (\range -> Discussion mid vid (unRangePosition range) t) d
 
 discussionOfStatement :: ID Statement -> DB (ID Discussion)
 discussionOfStatement sid = do
   e <- getEntityRep sid
   pure $ S.statementElim (\_ _ i -> S.keyToId i) e
 
-
--- * Answer
-
-toAnswer :: MetaID Answer -> Key S.Question -> ST -> Answer
-toAnswer aid qkey = Answer aid (S.keyToId qkey)
-
-createAnswer :: ID Question -> CreateAnswer -> DB Answer
-createAnswer qid answer = do
-  let sanswer = S.Answer
-        (S.idToKey qid)
-        (answer ^. createAnswerText)
-  mid <- createMetaID sanswer
-  pure $ S.answerElim (toAnswer mid) sanswer
-
-getAnswer :: ID Answer -> DB Answer
-getAnswer = getMetaEntity (S.answerElim . toAnswer)
-
-answersOfQuestion :: ID Question -> DB [Answer]
-answersOfQuestion qid = do
+vdocOfDiscussion :: ID Discussion -> DB (ID VDoc)
+vdocOfDiscussion did = do
   opts <- dbSelectOpts
-  sls <- liftDB $ selectList [S.AnswerQuestion ==. S.idToKey qid] opts
-  forM sls $ \e -> do
-    mid <- getMeta . S.keyToId $ entityKey e
-    pure $ S.answerElim (toAnswer mid) (entityVal e)
+  ((editOfDiscussion :: P.Entity S.PD) : _) <- liftDB $ selectList [S.PDDiscussion ==. S.idToKey did] opts
+  let eid :: ID Edit = (S.pDElim (\i _ -> S.keyToId i) . entityVal) editOfDiscussion
+  view editVDoc <$> getEdit eid
 
 
 -- * Statement
 
-toStatement :: MetaID Statement -> ST -> Maybe (Key S.Statement) -> Key S.Discussion -> Statement
-toStatement sid text parent _ = Statement sid text (S.keyToId <$> parent)
+toStatement :: MetaID Statement -> ID VDoc -> ST -> Maybe (Key S.Statement) -> Key S.Discussion -> Statement
+toStatement sid vid text parent _ = Statement sid vid text (S.keyToId <$> parent)
+
+saveStatement :: ID VDoc -> S.Statement -> DB Statement
+saveStatement vid sstatement = do
+  mid <- createMetaID sstatement
+  pure $ S.statementElim (toStatement mid vid) sstatement
 
 createStatement :: ID Statement  -> CreateStatement -> DB Statement
 createStatement sid statement = do
   did <- discussionOfStatement sid
-  saveStatement $ S.Statement
+  vid <- vdocOfDiscussion did
+  saveStatement vid $ S.Statement
           (statement ^. createStatementText)
           (Just $ S.idToKey sid)
           (S.idToKey did)
@@ -498,7 +463,10 @@ updateStatement sid statement = do
   getStatement sid
 
 getStatement :: ID Statement -> DB Statement
-getStatement = getMetaEntity (S.statementElim . toStatement)
+getStatement sid = do
+  (mid, sstatement) <- getMetaEntity (,) sid
+  vid <- vdocOfDiscussion =<< discussionOfStatement sid
+  pure $ S.statementElim (toStatement mid vid) sstatement
 
 
 -- * User
@@ -627,20 +595,44 @@ removeSubGroup parent child = liftDB $ do
 
 -- * Roles
 
-assignRole :: ID Group -> ID User -> Role -> DB ()
-assignRole gid uid role = liftDB $ do
-  void . insert $ S.Roles (S.idToKey gid) (S.idToKey uid) role
+assignGroupRole :: ID Group -> ID User -> GroupRole -> DB ()
+assignGroupRole gid uid role = liftDB $ do
+  void . insert $ S.GroupRoles (S.idToKey gid) (S.idToKey uid) role
 
-getRoles :: ID Group -> ID User -> DB [Role]
-getRoles gid uid = do
+getGroupRolesIn :: ID Group -> ID User -> DB [GroupRole]
+getGroupRolesIn gid uid = do
   opts <- dbSelectOpts
-  roles <- liftDB $ selectList [S.RolesGroup ==. S.idToKey gid, S.RolesUser ==. S.idToKey uid] opts
-  pure $ (S.rolesElim (\_gid _uid role' -> role') . entityVal) <$> roles
+  roles <- liftDB $ selectList [S.GroupRolesGroup ==. S.idToKey gid, S.GroupRolesUser ==. S.idToKey uid] opts
+  pure $ (S.groupRolesElim (\_gid _uid role' -> role') . entityVal) <$> roles
 
-unassignRole :: ID Group -> ID User -> Role -> DB ()
-unassignRole gid uid role = liftDB $ do
+getGroupRoles :: ID User -> DB [(GroupRole, ID Group)]
+getGroupRoles uid = do
+  opts <- dbSelectOpts
+  roles <- liftDB $ selectList [S.GroupRolesUser ==. S.idToKey uid] opts
+  pure $ (S.groupRolesElim (\gid _uid role' -> (role', S.keyToId gid)) . entityVal) <$> roles
+
+unassignGroupRole :: ID Group -> ID User -> GroupRole -> DB ()
+unassignGroupRole gid uid role = liftDB $ do
   deleteWhere
-    [ S.RolesGroup ==. S.idToKey gid
-    , S.RolesUser  ==. S.idToKey uid
-    , S.RolesRole  ==. role
+    [ S.GroupRolesGroup ==. S.idToKey gid
+    , S.GroupRolesUser  ==. S.idToKey uid
+    , S.GroupRolesRole  ==. role
+    ]
+
+
+assignGlobalRole :: ID User -> GlobalRole -> DB ()
+assignGlobalRole uid role = liftDB $ do
+  void . insert $ S.GlobalRoles (S.idToKey uid) role
+
+getGlobalRoles :: ID User -> DB [GlobalRole]
+getGlobalRoles uid = do
+  opts <- dbSelectOpts
+  roles <- liftDB $ selectList [S.GlobalRolesUser ==. S.idToKey uid] opts
+  pure $ (S.globalRolesElim (\__uid role' -> role') . entityVal) <$> roles
+
+unassignGlobalRole :: ID User -> GlobalRole -> DB ()
+unassignGlobalRole uid role = liftDB $ do
+  deleteWhere
+    [ S.GlobalRolesUser  ==. S.idToKey uid
+    , S.GlobalRolesRole  ==. role
     ]

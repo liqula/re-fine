@@ -27,45 +27,56 @@ module Refine.Backend.App.Group where
 
 import Refine.Backend.Prelude
 
-import Control.Lens ((^.))
+import qualified Data.Set as Set
 
-import Refine.Backend.App.Core
-import Refine.Backend.Database.Class as DB
-import Refine.Common.ChangeAPI
-import Refine.Common.Types.Core
+import           Refine.Backend.App.Access
+import           Refine.Backend.App.Core
+import           Refine.Backend.Database.Class as DB
+import qualified Refine.Common.Access.Policy as AP
+import           Refine.Common.ChangeAPI
+import           Refine.Common.Types
 
 
 -- * group manipulation
 
 addGroup :: CreateGroup -> App Group
-addGroup group = do
+addGroup cgroup = do
   appLog "addGroup"
-  db $ DB.createGroup group
+  assertCreds AP.addGroup
+  group <- db $ DB.createGroup cgroup
+  invalidateCaches $ Set.fromList [CacheKeyGroupIds]
+  pure group
 
 getGroup :: ID Group -> App Group
-getGroup group = do
+getGroup gid = do
   appLog "getGroup"
-  db $ DB.getGroup group
+  assertCreds $ AP.getGroup gid
+  db $ DB.getGroup gid
 
 getGroups :: App [Group]
 getGroups = do
   appLog "getGroups"
-  db DB.getGroups
+  let allow = AP.getGroup . view groupID
+  filterByCreds allow =<< db DB.getGroups
 
 -- | Modify the group using the new values from the `Create Group` information.
 modifyGroup :: ID Group -> CreateGroup -> App Group
-modifyGroup groupId group = do
+modifyGroup gid group' = do
   appLog "modifyGroup"
-  db $ DB.modifyGroup groupId group
+  assertCreds $ AP.updateGroup gid
+  gr <- db $ DB.modifyGroup gid group'
+  invalidateCaches $ Set.fromList [CacheKeyGroup gid]
+  pure gr
 
 -- | Remove a group and cleans up dangling references.
 --
 -- The users won't be transitive members of supergroups any more.
---
 removeGroup :: ID Group -> App ()
-removeGroup groupId = do
+removeGroup gid = do
   appLog "removeGroup"
-  db $ DB.removeGroup groupId
+  assertCreds $ AP.deleteGroup gid
+  db $ DB.removeGroup gid
+
 
 -- * subgroups
 

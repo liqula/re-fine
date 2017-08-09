@@ -29,7 +29,10 @@ import Data.Int
 -- * ID
 
 newtype ID a = ID { _unID :: Int64 }
-  deriving (Eq, Ord, Enum, Num, Show, Read, Generic)
+  deriving (Eq, Ord, Enum, Num, Read, Generic)
+
+instance Show (ID a) where
+  showsPrec p (ID i) = showParen (p > 10) (("ID " <>) . shows i)
 
 makeRefineType ''ID
 

@@ -377,3 +377,54 @@ assertVerticalPos p el act = do
   (w', h') <- elemPos =<< el
   when (w /= w' || not (p h h')) . throw . ErrorCall $ "no scroll happend: " <> show (w, h) <> " " <> show (w', h')
   pure a
+
+{- manual script
+
+-- run server with god mode, database wiped
+
+>> groups tab
+>> default group
+>> create new process
+>> set title to "doc1"
+>> save
+>> enter "first commit"
+>> save
+
+>> select "first"
+>> quickcreate note
+>> select note
+>> enter "a"
+>> submit
+>> bubble "a"
+-------------- vote does not work
+>> close
+
+>> select "commit"
+>> quickcreate note
+>> select discussion
+>> enter "b"
+>> submit
+>> click on bubble stack
+>> bubble "b"
+--------------- cannot edit
+---------- close does not work
+
+>> select "commit"
+>> quickcreate edit
+>> register tab
+>> enter "a" "a" "a" "a"
+>> check the checkbox
+>> submit
+>> enter "a" "a"
+>> submit
+>> delete "commit"
+>> save
+>> select meaning
+>> enter "c"
+>> save
+>> bubble "c"
+>> vote up
+
+
+
+-}

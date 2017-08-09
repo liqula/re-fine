@@ -56,7 +56,6 @@ library
     , QuickCheck
     , quickcheck-instances
     , react-hs
-    , react-hs-servant
     , refine-common
     , refine-prelude
     , string-conversions
@@ -68,6 +67,7 @@ library
       -- we can't have hspec, but at least we have bash and find and perl...  :)
       -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
       React.Flux.Missing
+      Refine.Frontend.Access
       Refine.Frontend.Colors
       Refine.Frontend.Contribution.Bubble
       Refine.Frontend.Contribution.Dialog
@@ -93,14 +93,12 @@ library
       Refine.Frontend.Icon.Types
       Refine.Frontend.Login.Component
       Refine.Frontend.Login.Status
-      Refine.Frontend.Login.Store
       Refine.Frontend.Login.Types
       Refine.Frontend.MainMenu.Component
       Refine.Frontend.MainMenu.Store
       Refine.Frontend.MainMenu.Types
       Refine.Frontend.Orphans
       Refine.Frontend.Prelude
-      Refine.Frontend.Rest
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store
       Refine.Frontend.Screen.Types
@@ -176,7 +174,6 @@ test-suite spec
     , QuickCheck
     , quickcheck-instances
     , react-hs
-    , react-hs-servant
     , refine-common
     , refine-frontend
     , refine-prelude
@@ -188,6 +185,7 @@ test-suite spec
       -- (echo '      Spec'; (find test -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \;)) | sort
       AllModules
       Main
+      Refine.Frontend.AccessSpec
       Refine.Frontend.Contribution.BubbleSpec
       Refine.Frontend.Contribution.DialogSpec
       Refine.Frontend.Contribution.DiscussionSpec

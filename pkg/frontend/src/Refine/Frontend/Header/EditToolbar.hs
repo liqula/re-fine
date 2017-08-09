@@ -33,9 +33,11 @@ import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
+import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
+import           Refine.Frontend.Access
 
 
 mkEditToolbarProps :: HasCallStack => Maybe Edit -> EditorState -> EditToolbarProps
@@ -59,13 +61,39 @@ mkLinkEditorProps es
         isLink (Just (EntityLink _)) = True
         isLink _ = False
 
-wipeDocumentState :: GlobalState -> WipedDocumentState
-wipeDocumentState gs = case getDocumentState gs of
+getDocumentState :: AccessState -> GlobalState -> DocumentState
+getDocumentState as gs@(view gsEditID -> Just{})
+  = mapDocumentState
+      (const . fromMaybe False
+             $ (==) <$> (as ^? accLoginState . lsCurrentUser . loggedInUser . userID . to UserID)
+                    <*> ((^. editMetaID . miMeta . metaCreatedBy) <$> getEdit gs eid))
+      (const $ gsRawContent gs)
+      (fromMaybe (error "edit is not in cache") . getEdit gs)
+      (\(did, ed) -> discussionProps (maybe (Left did) Right $ getDiscussion gs did)
+                                     (gsRawContent gs)
+                                     (StatementPropDetails
+                                        ed
+                                        (as ^? accLoginState . lsCurrentUser . loggedInUser . userID)
+                                        ((^. userName) <$> (gs ^. gsServerCache . scUsers))
+                                     )
+                                     (gs ^. gsHeaderState . hsDiscussionFlatView)
+      )
+      dst
+  where
+    dst = gs ^. gsDocumentState
+    eid = case dst of
+      DocumentStateDiff _ _ _ i _ _ -> i
+      _ -> error "impossible - getDocumentState"
+getDocumentState _ _
+  = error "getDocumentState: no gsVDoc"
+
+wipeDocumentState :: AccessState -> GlobalState -> WipedDocumentState
+wipeDocumentState as gs = case getDocumentState as gs of
   DocumentStateView{}                  -> WipedDocumentStateView
   DocumentStateDiff i _ _ edit collapsed editable -> WipedDocumentStateDiff i edit collapsed editable
   DocumentStateEdit es _ meid          -> WipedDocumentStateEdit $ mkEditToolbarProps (getEdit gs =<< meid) es
   DocumentStateDiscussion dp           -> WipedDocumentStateDiscussion $ DiscussionToolbarProps
-                                            (dp ^. discPropsDiscussion . discussionID)
+                                            (either id (^.discussionID) $ dp ^. discPropsDiscussion)
                                             (dp ^. discPropsFlatView)
 
 editToolbar_ :: HasCallStack => EditToolbarProps -> ReactElementM eventHandler ()

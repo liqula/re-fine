@@ -166,6 +166,10 @@ foreign import javascript safe
   "scrollBy(0, document.querySelector(\"span[data-offset-key='\" + $1 + \"-0-0']\").getBoundingClientRect().top - (innerHeight / 2))"
   js_scrollToBlockKey :: JSString -> IO ()
 
+foreign import javascript safe
+  "$r = document.cookie"
+  js_cookie :: IO JSString
+
 #else
 
 {-# ANN (===) ("HLint: ignore Use camelCase" :: String) #-}
@@ -191,5 +195,9 @@ js_scrollToPx = error "javascript FFI not available in GHC"
 {-# ANN js_scrollToBlockKey ("HLint: ignore Use camelCase" :: String) #-}
 js_scrollToBlockKey :: JSString -> IO ()
 js_scrollToBlockKey = error "javascript FFI not available in GHC"
+
+{-# ANN js_cookie ("HLint: ignore Use camelCase" :: String) #-}
+js_cookie :: IO JSString
+js_cookie = error "javascript FFI not available in GHC"
 
 #endif

@@ -36,10 +36,11 @@ data ChangeSubGroup
   deriving (Eq, Generic, Show)
 
 data ChangeRole
-  = AssignRole   { _crGroupRef :: ID Group, _crUser :: ID User, _crRole :: Role }
-  | UnassignRole { _crGroupRef :: ID Group, _crUser :: ID User, _crRole :: Role }
+  = AssignGroupRole    { _crUser :: ID User, _crGroupRole :: GroupRole, _crGroupRef :: ID Group }
+  | UnassignGroupRole  { _crUser :: ID User, _crGroupRole :: GroupRole, _crGroupRef :: ID Group }
+  | AssignGlobalRole   { _crUser :: ID User, _crGlobalRole :: GlobalRole }
+  | UnassignGlobalRole { _crUser :: ID User, _crGlobalRole :: GlobalRole }
   deriving (Eq, Generic, Show)
 
--- * Refine types
 
 makeRefineTypes [''ChangeSubGroup, ''ChangeRole]

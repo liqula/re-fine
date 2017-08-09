@@ -34,6 +34,7 @@ import           Refine.Frontend.Colors as Color
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Store.Types as RS
+import qualified Refine.Frontend.Access as RS
 import           Refine.Frontend.Util
 
 
@@ -127,7 +128,7 @@ login errors = mkStatefulView "Login" (LoginForm "" "" errors) $ \curState ->
       inputField "login-username" "text"     "Username" loginFormUsername >> br_ []
       inputField "login-password" "password" "Password" loginFormPassword >> br_ []
 
-      iconButton_ $ defaultIconButtonProps @[RS.GlobalAction]
+      iconButton_ $ defaultIconButtonProps @[RS.AccessAction]
         & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") Large
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "submit"
@@ -150,7 +151,7 @@ logout = mkView "Logout" $ do
     form_ [ "target" $= "#"
           , "action" $= "POST" ] $ do
 
-      iconButton_ $ defaultIconButtonProps @[RS.GlobalAction]
+      iconButton_ $ defaultIconButtonProps @[RS.AccessAction]
         & iconButtonPropsIconProps    .~ IconProps "c-vdoc-overlay-content" True ("icon-Share", "dark") Large
         & iconButtonPropsElementName  .~ "submit"
         & iconButtonPropsLabel        .~ "logout"

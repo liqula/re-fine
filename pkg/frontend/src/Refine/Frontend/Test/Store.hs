@@ -30,7 +30,7 @@ import           Control.Concurrent
 import           Data.List (isInfixOf)
 import           Test.Hspec
 
-import           Refine.Frontend.Store
+import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
 
 

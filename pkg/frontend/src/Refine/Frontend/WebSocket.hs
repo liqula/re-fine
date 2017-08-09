@@ -22,11 +22,13 @@
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.WebSocket where
 
 import Refine.Frontend.Prelude
 
+import qualified Data.Set as Set
 import           Control.Concurrent
 import           System.IO.Unsafe
 #ifdef __GHCJS__
@@ -35,41 +37,96 @@ import           JavaScript.Web.MessageEvent
 #endif
 
 import Refine.Common.Types
+import Refine.Frontend.Document.Types
+import Refine.Frontend.Login.Types
+import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Store.Types
-import Refine.Frontend.Store()
+import Refine.Frontend.Util
+import Refine.Frontend.Access
+
 
 {-# NOINLINE webSocketMVar #-}
-webSocketMVar :: MVar ([CacheKey] -> IO ())
+webSocketMVar :: MVar (CacheId, WebSocket)
 webSocketMVar = unsafePerformIO newEmptyMVar
 
-initWebSocket :: IO ()
+sendMessage :: WebSocket -> ToServer -> IO ()
+sendMessage conn msg = send (cs $ encode msg) conn
+
+initWebSocket :: (StoreData GlobalState, StoreAction GlobalState ~ GlobalAction, Dispatchable GlobalAction) => IO ()
 initWebSocket = do
     let wsClose _ = do
           putStrLn "websockets connection closed"
-          _ <- takeMVar webSocketMVar
-          openConnection
+          (n, _) <- takeMVar webSocketMVar
+          openConnection $ Just n
 
         wsMessage msg = do
           case getData msg of
-            StringData x -> case decode $ cs x of
-              Just (Just sc) -> executeAction . action @GlobalState $ RefreshServerCache sc
-              Just Nothing -> putStrLn "ping"
-              _ -> error "websockets json decoding error"
-            _ -> error "websockets error"
+            StringData x -> case fromMaybe (error "websockets json decoding error") . decode $ cs x of
+              TCServerCache sc ->
+                executeAction . action @GlobalState . CacheAction $ RefreshServerCache sc
+              TCInvalidateKeys keys ->
+                executeAction . action @GlobalState . CacheAction . InvalidateCacheItems
+                $ Set.fromList keys
+              TCRestrictKeys keys ->
+                executeAction . action @GlobalState . CacheAction . RestrictCacheItems
+                $ Set.fromList keys
+              TCPing -> putStrLn "ping"
+              TCGreeting n -> do
+                  (_, putfun) <- takeMVar webSocketMVar
+                  putMVar webSocketMVar (n, putfun)
+                  putStrLn $ "CacheId is " <> show n
+              TCCreatedVDoc vid ->
+                dispatchAndExec $ LoadVDoc vid
+              TCCreatedGroup _gid -> pure ()
+              TCRebase ->
+                dispatchAndExec $ DocumentAction UpdateDocumentStateView
+
+              TCCreateUserResp (Left err) ->
+                dispatchAndExec . MainMenuAction $ MainMenuActionRegistrationError err
+              TCCreateUserResp (Right _user) ->
+                dispatchAndExec . CompositeAction $
+                  [ MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
+                  , MainMenuAction MainMenuActionClearErrors
+                  ]
+              TCLoginResp (Left err) ->
+                dispatchAndExec . MainMenuAction . MainMenuActionLoginError . cs . show $ err
+              TCLoginResp (Right user) -> do
+                sendTS TSClearCache
+                sendTS . TSCookie . cs =<< js_cookie
+                dispatchAndExec . SetCurrentUser $ UserLoggedIn user
+                dispatchAndExec $ MainMenuAction MainMenuActionClose
+                dispatchAndExec LoginGuardPop
+
+              TCTranslations l10 ->
+                dispatchAndExec $ ChangeTranslations l10
+
+            (BlobData _)        -> error "websockets error: BlobData not supported."
+            (ArrayBufferData _) -> error "websockets error: ArrayBufferData not supported."
 
         wsUrl = case clientCfg of
-          ClientCfg port host -> cs $ "ws://" <> host <> ":" <> cs (show port) <> "/"
+          ClientCfg port host ssl
+            -> cs $ (if ssl then "wss://" else "ws://") <> host <> ":" <> cs (show port) <> "/"
 
-        openConnection = do
+
+        openConnection mid = do
             ws <- connect $ WebSocketRequest
                               wsUrl
                               []
                               (Just wsClose)
                               (Just wsMessage)
-            putMVar webSocketMVar $ \keys -> send (cs $ encode keys) ws
+
+            sendMessage ws $ TSGreeting mid
+            sendMessage ws . TSCookie . cs =<< js_cookie
+            putMVar webSocketMVar (fromMaybe (error "unknown CacheId") mid, ws)
             putStrLn "websocket connection opened"
 
-    openConnection
+    openConnection Nothing
+
+sendTS :: ToServer -> IO ()
+sendTS cmd = (`sendMessage` cmd) . snd =<< readMVar webSocketMVar
+
+instance Sendable ToServer where
+  sendToServer = sendTS
 
 
 #if __GHCJS__
@@ -77,8 +134,12 @@ clientCfg :: ClientCfg
 clientCfg = fromMaybe (error "clientCfg: decoding error!") . decode . cs $ js_clientCfg
 
 #else
-data MessageEventData = StringData JSString
-                      | OtherMessageEventData
+-- copied from ghcjs-base (JavaScript.Web.WebSocket, JavaScript.Web.MessageEvent), and mutated to
+-- build with ghc.
+
+data MessageEventData = StringData      JSString
+                      | BlobData        ()  -- Blob
+                      | ArrayBufferData ()  -- ArrayBuffer
 
 data WebSocket
 
@@ -102,7 +163,7 @@ getData :: MessageEvent -> MessageEventData
 getData = error "ghcjs base not available"
 
 clientCfg :: ClientCfg
-clientCfg = ClientCfg 3000 "localhost"
+clientCfg = def
 
 #endif
 

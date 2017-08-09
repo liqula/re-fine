@@ -45,9 +45,10 @@ import Language.Css.Syntax
 
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Icon.Types
-import           Refine.Frontend.Store (dispatch)
+import           Refine.Frontend.Store ()
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Util
+import           Refine.Frontend.Access
 
 
 -- * icons buttons
@@ -150,6 +151,9 @@ emptyIbuttonProps img onclick = IbuttonProps
 -- * events
 
 instance IbuttonOnClick [GlobalAction] 'EventHandlerCode where
+  runIbuttonOnClick _ _ = mconcat . fmap dispatch
+
+instance IbuttonOnClick [AccessAction] 'EventHandlerCode where
   runIbuttonOnClick _ _ = mconcat . fmap dispatch
 
 instance {-# OVERLAPPABLE #-} IbuttonOnClick action 'EventHandlerCode => IbuttonOnClick action ('StatefulEventHandlerCode st) where
@@ -272,6 +276,10 @@ class (Typeable onclick, Eq onclick) => IconButtonPropsOnClick onclick where  --
   defaultOnClick            :: onclick  -- ^ @instance Default [GlobalAction]@ would lead to overlaps.
 
 instance IconButtonPropsOnClick [GlobalAction] where
+  runIconButtonPropsOnClick _ _ = mconcat . fmap dispatch
+  defaultOnClick                = mempty
+
+instance IconButtonPropsOnClick [AccessAction] where
   runIconButtonPropsOnClick _ _ = mconcat . fmap dispatch
   defaultOnClick                = mempty
 

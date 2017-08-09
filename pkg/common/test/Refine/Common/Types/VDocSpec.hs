@@ -62,7 +62,7 @@ rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
       where
         upd = case i `mod` 3 of
           0 -> _1 %~ (build (Proxy :: Proxy Edit)       i (\_ -> Edit un un un mempty un un un un un un) sel :)
-          1 -> _2 %~ (build (Proxy :: Proxy Note)       i (Note un un un) sel :)
+          1 -> _2 %~ (build (Proxy :: Proxy Note)       i (\x -> Note un un un x un) sel :)
           2 -> _3 %~ (build (Proxy :: Proxy Discussion) i (\r -> Discussion un un r un) sel :)
           _ -> error "rawContentToCompositeVDoc: impossible."
 

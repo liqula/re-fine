@@ -9,6 +9,7 @@ module Refine.Prelude.Aeson where
 
 import           Control.Lens (makeLenses)
 import           Control.DeepSeq
+import           Data.Void
 import           Data.Aeson
 import           Data.String.Conversions
 import qualified Generics.SOP as SOP
@@ -38,3 +39,7 @@ makeLenses ''NoJSONRep
 (.=?) :: (KeyValue kv, ToJSON v) => ST -> Maybe v -> Maybe kv
 (.=?) k (Just v) = Just $ k .= v
 (.=?) _ Nothing  = Nothing
+
+instance FromJSON Void where parseJSON _ = pure (error "parseJSON @Void")
+
+instance ToJSON Void where toJSON = absurd

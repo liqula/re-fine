@@ -40,7 +40,7 @@ import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Screen.Calculations
 import           Refine.Frontend.Screen.Types
-import           Refine.Frontend.Store
+import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
@@ -56,21 +56,21 @@ bubble :: HasCallStack => ReactElementM 'EventHandlerCode () -> View '[BubblePro
 bubble children = mkView "Bubble" $ \props -> do
   let bubbleKind = case props ^. bubblePropsContributionIds of
           NoStack (ContribIDNote _, _)         -> Left "o-snippet--note"
-          NoStack (ContribIDQuestion _, _)     -> Left "o-snippet--question"
           NoStack (ContribIDDiscussion _, _)   -> Left "o-snippet--discussion"
           NoStack (ContribIDEdit _, _)         -> Left "o-snippet--edit"
           Stack _                              -> Right bubbleStackStyles
 
       iconSty = case props ^. bubblePropsContributionIds of
           NoStack (ContribIDNote _, _)         -> ("icon-Note", "dark")
-          NoStack (ContribIDQuestion _, _)     -> ("icon-Question", "dark")
           NoStack (ContribIDDiscussion _, _)   -> ("icon-Discussion", "bright")
           NoStack (ContribIDEdit _, _)         -> ("icon-Edit", "dark")
           Stack _                              -> ("icon-Stack", "dark")
 
       clickActions = case props ^. bubblePropsContributionIds of
           NoStack (cid, _)
-            -> [ShowContributionDialog cid]
+            -> [ ShowContributionDialog cid
+               , HighlightMarkAndBubble []    -- question: should this be done by the store update function of ShowContributionDialog?
+               ]
           Stack (cid :| cids)
             -> [SetBubbleFilter . Just . Set.fromList . fmap fst $ cid : cids, SetBubblePositioning BubblePositioningEvenlySpaced]
 

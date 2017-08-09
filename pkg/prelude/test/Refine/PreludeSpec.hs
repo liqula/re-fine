@@ -1,6 +1,7 @@
 {-# LANGUAGE NoImplicitPrelude    #-}
-{-# LANGUAGE ScopedTypeVariables  #-}
 {-# LANGUAGE OverloadedStrings    #-}
+{-# LANGUAGE PackageImports       #-}
+{-# LANGUAGE ScopedTypeVariables  #-}
 
 {-# OPTIONS_GHC -Werror -Wall -fno-warn-orphans #-}
 
@@ -11,7 +12,7 @@ import Data.Monoid ((<>))
 import Refine.Prelude
 import Test.Hspec
 import Test.QuickCheck
-import Test.QuickCheck.Instances ()
+import "quickcheck-instances" Test.QuickCheck.Instances ()
 
 
 instance Arbitrary Timestamp where

@@ -47,13 +47,14 @@ import           Refine.Frontend.Header.EditToolbar ( editToolbar_, wipeDocument
 import           Refine.Frontend.Header.DiscussionToolbar
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_, indexToolbarExtension_ )
+import           Refine.Frontend.Access
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Status
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Screen.Types
-import           Refine.Frontend.Store
+import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.ThirdPartyViews (sticky_)
 import           Refine.Frontend.Util
@@ -119,9 +120,9 @@ mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
    }
 
 mainHeaderRender :: HasCallStack => () -> MainHeaderProps -> ReactElementM ('StatefulEventHandlerCode ()) ()
-mainHeaderRender () rs = do
-  let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsVDoc . _Just
-      props = TopMenuBarProps (rs ^. gsToolbarSticky) (rs ^. gsLoginState . lsCurrentUser)
+mainHeaderRender () (rs, as) = do
+  let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsVDoc . _Just . _Just
+      props = TopMenuBarProps (rs ^. gsToolbarSticky) (as ^. accLoginState . lsCurrentUser)
 
       mainMenuPart_ = do
         -- in the past, the following needed to be siblings because of the z-index handling.  not sure that's still the case.
@@ -141,7 +142,8 @@ mainHeaderRender () rs = do
                     (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
           toolbarWrapper_ $ case rs ^. gsDocumentState of
 
-            WipedDocumentStateView -> toolbar_ . fromJust $ rs ^? gsVDoc . _Just . compositeVDoc
+            WipedDocumentStateView -> liftViewToStateHandler
+                                    . toolbar_ . fromJust $ rs ^? gsVDoc . _Just . _Just . compositeVDoc
 
             WipedDocumentStateDiff i edit collapsed editable -> diffToolbar_ $ DiffToolbarProps
               (edit ^. editID)
@@ -164,11 +166,11 @@ mainHeaderRender () rs = do
       headerPart_
       toolbarPart_
 
-mkIndexToolbarProps :: MainHeaderProps -> IndexToolbarProps
+mkIndexToolbarProps :: GlobalState_ WipedDocumentState -> IndexToolbarProps
 mkIndexToolbarProps rs
   | rs ^. gsHeaderState . hsToolbarExtensionStatus == IndexToolbarExtension
   && fromMaybe True (not <$> rs ^? gsDocumentState . wipedDocumentStateDiffCollapsed)
-  = mkIndex . _editVDocVersion <$> gsEdit rs
+  = mkIndex . _editVDocVersion <$> join (gsEdit rs)
   | otherwise = Nothing
   where
     mkIndex (RawContent bs _) =
@@ -183,8 +185,8 @@ headerDepth = \case
   Header3 -> Just 3
   _ -> Nothing
 
-mkMainHeaderProps :: GlobalState -> MainHeaderProps
-mkMainHeaderProps gs = fmap (const $ wipeDocumentState gs) gs
+mkMainHeaderProps :: AccessState -> GlobalState -> MainHeaderProps
+mkMainHeaderProps as gs = (fmap (const $ wipeDocumentState as gs) gs, as)
 
 mainHeader_ :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
 mainHeader_ props = RF.viewWithSKey mainHeader "mainHeader" props mempty

@@ -31,7 +31,6 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 import           Data.String.Conversions (ST)
 import           Data.Text.I18n
-import           Data.Foldable (toList)
 import           GHC.Generics (Generic)
 
 import Refine.Common.Types
@@ -39,42 +38,28 @@ import Refine.Common.VDoc.Draft (rawContentFromCompositeVDoc)
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
-import Refine.Frontend.Login.Types
+-- import Refine.Frontend.Login.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
 
 
+-- * state
+
 type GlobalState = GlobalState_ GlobalDocumentState
 
 data GlobalState_ a = GlobalState
-  { _gsEditID                     :: Maybe (ID Edit)
+  { _gsEditID                     :: Maybe (ID VDoc)
   , _gsContributionState          :: ContributionState
   , _gsHeaderState                :: HeaderState
   , _gsDocumentState              :: a
   , _gsScreenState                :: ScreenState
   , _gsMainMenuState              :: MainMenuState
-  , _gsLoginState                 :: LoginState
-  , _gsDispatchAfterLogin         :: [GlobalAction]
   , _gsToolbarSticky              :: Bool
   , _gsTranslations               :: Trans
   , _gsDevState                   :: Maybe DevState  -- ^ for development & testing, see 'devStateUpdate'.
   , _gsServerCache                :: ServerCache
   } deriving (Show, Eq, Generic, Functor)
-
-{-# NOINLINE cacheMissesMVar #-}
-cacheMissesMVar :: MVar [CacheKey]
-cacheMissesMVar = unsafePerformIO $ newMVar []
-
-cacheMiss :: CacheKey -> i -> i
-cacheMiss = cacheMisses . pure
-
-cacheMisses :: [CacheKey] -> i -> i
-cacheMisses keys i = unsafePerformIO $ do
-  is <- takeMVar cacheMissesMVar
-  putMVar cacheMissesMVar $ keys <> is
-  pure i
-
 
 emptyGlobalState :: HasCallStack => GlobalState
 emptyGlobalState = GlobalState
@@ -84,15 +69,11 @@ emptyGlobalState = GlobalState
   , _gsDocumentState              = emptyDocumentState
   , _gsScreenState                = emptyScreenState
   , _gsMainMenuState              = emptyMainMenuState
-  , _gsLoginState                 = emptyLoginState
-  , _gsDispatchAfterLogin         = mempty
   , _gsToolbarSticky              = False
   , _gsTranslations               = emptyTrans
   , _gsDevState                   = Nothing
   , _gsServerCache                = mempty
   }
-
-type MainHeaderProps = GlobalState_ WipedDocumentState
 
 newtype DevState = DevState
   { _devStateTrace :: [GlobalAction]
@@ -102,10 +83,12 @@ newtype DevState = DevState
 emptyDevState :: HasCallStack => DevState
 emptyDevState = DevState []
 
+
+-- * actions
+
 data GlobalAction =
     -- documents
-    LoadVDoc (AjaxAction (ID VDoc) VDoc)
-  | LoadCompositeVDoc (AjaxAction (ID VDoc) CompositeVDoc)
+    LoadVDoc (ID VDoc)
 
     -- contributions
   | ScreenAction ScreenAction
@@ -118,9 +101,9 @@ data GlobalAction =
   | AddDiscussion Discussion
   | AddEdit Edit
   | SaveSelect ST ST
-  | AddStatement Bool{-update-} (ID Statement) (AjaxAction CreateStatement Discussion)
+  | AddStatement Bool{-update-} (ID Statement) CreateStatement
 
-  | RefreshServerCache ServerCache
+  | CacheAction CacheAction
 
     -- i18n
   | LoadTranslations Locale
@@ -128,11 +111,6 @@ data GlobalAction =
 
     -- users
   | CreateUser CreateUser
-  | Login Login
-  | Logout
-  | LoginGuardStash [GlobalAction]  -- ^ if logged in, dispatch actions directly.  otherwise, login first.
-  | LoginGuardPop  -- ^ dispatched this to trigger dispatch of the stashed actions after login.
-  | SetCurrentUser CurrentUser
 
     -- testing & dev
   | ResetState GlobalState
@@ -143,69 +121,119 @@ data GlobalAction =
   | CompositeAction [GlobalAction]
   deriving (Show, Eq, Generic)
 
-makeRefineTypes [''GlobalState_, ''DevState, ''GlobalAction]
+-- to ensure consistency, cache actions may only be initiated by the server
+data CacheAction
+  = RefreshServerCache ServerCache
+  | RestrictCacheItems (Set CacheKey)
+  | InvalidateCacheItems (Set CacheKey)
+  deriving (Show, Eq, Generic)
 
-getDocumentState :: GlobalState -> DocumentState
-getDocumentState gs@(view gsVDoc -> Just cvdoc)
-  = mapDocumentState
-      (const . fromMaybe False
-             $ (==) <$> (gs ^? gsLoginState . lsCurrentUser . loggedInUser . userID . to UserID)
-                    <*> ((^. editMetaID . miMeta . metaCreatedBy) <$> getEdit gs eid))
-      (const $ rawContentFromCompositeVDoc cvdoc)
-      (fromMaybe (error "edit is not in cache") . getEdit gs)
-      (\(did, ed) -> discussionProps (fromMaybe (error "discussion is not in cache") $ getDiscussion gs did)
-                                     (rawContentFromCompositeVDoc cvdoc)
-                                     (StatementPropDetails
-                                        ed
-                                        (gs ^? gsLoginState . lsCurrentUser . loggedInUser . userID)
-                                        ((^. userName) <$> (gs ^. gsServerCache . scUsers))
-                                     )
-                                     (gs ^. gsHeaderState . hsDiscussionFlatView)
-      )
-      dst
-  where
-    dst = gs ^. gsDocumentState
-    eid = case dst of
-      DocumentStateDiff _ _ _ i _ _ -> i
-      _ -> error "impossible"
-getDocumentState _
-  = error "getDocumentState: no gsVDoc"
+makeRefineTypes [''GlobalState_, ''DevState, ''GlobalAction, ''CacheAction]
 
-gsEdit :: HasCallStack => GlobalState_ a -> Maybe Edit
-gsEdit gs = ((gs ^. gsServerCache . scEdits) Map.!) <$> (gs ^. gsEditID)
 
+-- * stuff
+
+{-# NOINLINE cacheMissesMVar #-}
+cacheMissesMVar :: MVar [CacheKey]
+cacheMissesMVar = unsafePerformIO $ newMVar []
+
+{-# NOINLINE cacheMisses #-}
+cacheMisses :: [CacheKey] -> i -> a -> i
+cacheMisses keys i _ = unsafePerformIO $ do
+  is <- takeMVar cacheMissesMVar
+  putMVar cacheMissesMVar $ keys <> is
+  pure i
+
+cacheMiss :: CacheKey -> i -> a -> i
+cacheMiss = cacheMisses . pure
+
+gsRawContent :: GlobalState -> RawContent
+gsRawContent (view gsVDoc -> Just (Just cvdoc)) = rawContentFromCompositeVDoc cvdoc
+gsRawContent _ = mkRawContent $ mkBlock "loading..." :| []
+
+class CacheLookup a where
+  cacheKey :: ID a -> CacheKey
+  cacheLens :: Lens' ServerCache (Map (ID a) a)
+
+cacheLookupIn :: CacheLookup a => ServerCache -> ID a -> Maybe a
+cacheLookupIn sc i@(cacheKey -> k) = maybe (cacheMiss k Nothing i) Just . Map.lookup i $ sc ^. cacheLens
+
+cacheLookup :: (HasCallStack, CacheLookup b) => GlobalState_ a -> ID b -> Maybe b
+cacheLookup gs = cacheLookupIn (gs ^. gsServerCache)
+
+type CLT = Except ()
+
+-- TODO: collect more missing cache keys in one round
+cacheLookupM :: (HasCallStack, CacheLookup b) => GlobalState_ a -> ID b -> CLT b
+cacheLookupM gs i = do
+  case cacheLookup gs i of
+    Just val -> pure val
+    Nothing -> throwError ()
+
+instance CacheLookup VDoc where
+  cacheKey = CacheKeyVDoc
+  cacheLens = scVDocs
+
+instance CacheLookup Edit where
+  cacheKey = CacheKeyEdit
+  cacheLens = scEdits
+
+instance CacheLookup Note where
+  cacheKey = CacheKeyNote
+  cacheLens = scNotes
+
+instance CacheLookup Discussion where
+  cacheKey = CacheKeyDiscussion
+  cacheLens = scDiscussions
+
+instance CacheLookup User where
+  cacheKey = CacheKeyUser
+  cacheLens = scUsers
+
+instance CacheLookup Group where
+  cacheKey = CacheKeyGroup
+  cacheLens = scGroups
+
+-- Just (Just e) -> found!
+-- Just Nothing -> ID exists, but is missing in cache
+-- Nothing -> no ID
+gsEdit :: HasCallStack => GlobalState_ a -> Maybe (Maybe Edit)
+gsEdit gs = (>>= cacheLookup gs) <$> gsEditID' gs
+
+gsEditID' :: HasCallStack => GlobalState_ a -> Maybe (Maybe (ID Edit))
+gsEditID' gs = fmap (^. vdocHeadEdit) . cacheLookup gs <$> (gs ^. gsEditID)
+
+-- TODO: remove
 getEdit :: HasCallStack => GlobalState_ a -> ID Edit -> Maybe Edit
-getEdit gs eid = Map.lookup eid (gs ^. gsServerCache . scEdits)
+getEdit = cacheLookup
 
+-- TODO: remove
 getDiscussion :: HasCallStack => GlobalState_ a -> ID Discussion -> Maybe Discussion
-getDiscussion gs i = Map.lookup i (gs ^. gsServerCache . scDiscussions)
-
+getDiscussion = cacheLookup
+{-
 -- FIXME: optimize this
-discussionOfStatement :: HasCallStack => ServerCache -> ID Statement -> Discussion
+discussionOfStatement :: HasCallStack => GlobalState_ a -> ID Statement -> Maybe Discussion
 discussionOfStatement sc i
-  = fromMaybe (error "statement is not in cache")
-  $ listToMaybe [d | d <- Map.elems $ sc ^. scDiscussions, i `elem` map (^. statementID) (toList $ d ^. discussionTree)]
-
-gsVDoc :: Getter (GlobalState_ a) (Maybe CompositeVDoc)
+  = listToMaybe [d | d <- Map.elems $ sc ^. scDiscussions, i `elem` map (^. statementID) (toList $ d ^. discussionTree)]
+-}
+gsVDoc :: Getter (GlobalState_ a) (Maybe (Maybe CompositeVDoc))
 gsVDoc = to getCompositeVDoc
   where
-    getCompositeVDoc :: GlobalState_ a -> Maybe CompositeVDoc
-    getCompositeVDoc gs = mkCompositeVDoc (gs ^. gsServerCache) <$> gsEdit gs
+    getCompositeVDoc :: GlobalState_ a -> Maybe (Maybe CompositeVDoc)
+    getCompositeVDoc gs = (>>= mkCompositeVDoc gs) <$> gsEdit gs
 
-    mkCompositeVDoc :: ServerCache -> Edit -> CompositeVDoc
-    mkCompositeVDoc sc edit = CompositeVDoc
-      ((sc ^. scVDocs) Map.! (edit ^. editVDoc))
-      edit
-      (mkMap CacheKeyEdit scEdits editChildren)
-      (mkMap CacheKeyNote scNotes editNotes')
-      (mkMap CacheKeyDiscussion scDiscussions editDiscussions')
+    mkCompositeVDoc :: GlobalState_ a -> Edit -> Maybe CompositeVDoc
+    mkCompositeVDoc gs edit = do
+      vdoc <- cacheLookup gs $ edit ^. editVDoc
+      pure $ CompositeVDoc
+        vdoc
+        edit
+        (mkMap editChildren)
+        (mkMap editNotes')
+        (mkMap editDiscussions')
       where
-        mkMap :: (ID a -> CacheKey) -> Lens' ServerCache (Map (ID a) a) -> Lens' Edit (Set (ID a)) -> Map (ID a) a
-        mkMap ck x y
-          = cacheMisses (map ck . Set.toList $ (edit ^. y) Set.\\ Map.keysSet m)
-          $ Map.filterWithKey (\k _ -> k `Set.member` (edit ^. y)) m
-          where
-            m = sc ^. x
+        mkMap :: CacheLookup a => Lens' Edit (Set (ID a)) -> Map (ID a) a
+        mkMap y = Map.fromList $ catMaybes [ (,) k <$> cacheLookup gs k | k <- Set.toList $ edit ^. y ]
 
 
 gsCurrentSelection :: HasCallStack => Getter GlobalState (Maybe (Selection Position))

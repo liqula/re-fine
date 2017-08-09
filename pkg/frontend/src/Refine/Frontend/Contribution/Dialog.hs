@@ -40,7 +40,7 @@ import qualified Refine.Frontend.Colors as C
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Screen.Types
-import           Refine.Frontend.Store
+import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.TKey
 import           Refine.Frontend.Types
@@ -187,11 +187,21 @@ showComment = mkView "ShowComment" $ \props ->
         -- vote buttons -->
         div_ ["className" $= "c-vdoc-overlay-votes"] $ do
 
-            button_ ["className" $= "c-vdoc-overlay-votes__button c-vdoc-overlay-votes__btn-vote-up"] $ do
-                icon_ (IconProps "c-vdoc-overlay-votes" True ("icon-Vote_positive", "dark") XLarge)
+            ibutton_ $ emptyIbuttonProps "Vote_positive"
+                         [ContributionAction $ ToggleVoteOnContribution (ContribIDNote $ props ^. cdpNoteId) Yeay]
+                     & ibListKey .~ "vote_up"
+                     & ibSize .~ XLarge
+                     & ibLabel .~ cs (show . fromMaybe 0 . M.lookup Yeay $ props ^. cdpVotes)
+                     -- ["className" $= "c-vdoc-overlay-votes__button c-vdoc-overlay-votes__btn-vote-up"]
+                     -- IconProps "c-vdoc-overlay-votes"
 
-            button_ ["className" $= "c-vdoc-overlay-votes__button c-vdoc-overlay-votes__btn-vote-down"] $ do
-                icon_ (IconProps "c-vdoc-overlay-votes" True ("icon-Vote_negative", "dark") XLarge)
+            ibutton_ $ emptyIbuttonProps "Vote_negative"
+                         [ContributionAction $ ToggleVoteOnContribution (ContribIDNote $ props ^. cdpNoteId) Nay]
+                     & ibListKey .~ "vote_down"
+                     & ibSize .~ XLarge
+                     & ibLabel .~ cs (show . fromMaybe 0 . M.lookup Nay $ props ^. cdpVotes)
+                     -- ["className" $= "c-vdoc-overlay-votes__button c-vdoc-overlay-votes__btn-vote-down"]
+                     -- IconProps "c-vdoc-overlay-votes"
         -- END: vote buttons -->
 
         div_ ["style" @@= [decl "marginBottom" (Px 20)]] "" -- make some space for the close button
@@ -202,7 +212,10 @@ showComment_ = view_ showComment "showComment_"
 
 showNoteProps :: HasCallStack => M.Map (ID Note) Note -> GlobalState -> Maybe ShowNoteProps
 showNoteProps notes rs = case (maybeNote, maybeOffset) of
-  (Just note, Just offset) -> Just $ ShowNoteProps note offset (rs ^. gsScreenState . ssWindowWidth)
+  (Just note, Just offset) -> Just $ ShowNoteProps note offset
+                                     (rs ^. gsScreenState . ssWindowWidth)
+                                     ((^. userName) <$> (rs ^. gsServerCache . scUsers))
+
   (Just note, Nothing)     -> err "note" note "offset" Nothing
   (Nothing,   Just offset) -> err "offset" offset "note" Nothing
   _                        -> Nothing
@@ -220,32 +233,24 @@ showNoteProps notes rs = case (maybeNote, maybeOffset) of
 
 showNote :: HasCallStack => View '[ShowNoteProps]
 showNote = mkView "ShowNote" $ \case
-  ShowNoteProps note top windowWidth1 ->
+  ShowNoteProps note top windowWidth1 usernames ->
     let commentText1  = (note ^. noteText)
         iconStyle1    = ("icon-Note", "dark")
-        userName1     = "meisterkaiser"
-        creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
-                                         showNoteDialogStyles top windowWidth1)
+        user          = note ^. noteMetaID . miMeta . metaCreatedBy
+        userName1 = case user of
+          UserID i -> cs . fromMaybe (cacheMiss (CacheKeyUser i) (cs $ show i) i) $ M.lookup i usernames
+          _ -> cs $ show user
+        votes = votesToCount $ note ^. noteVotes
+        creationDate1 = showTime $ note ^. noteMetaID . miMeta . metaCreatedAt
+    in showComment_ $ CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
+                                          showNoteDialogStyles top windowWidth1
+                                          (note ^. noteID)
+                                          votes
+  where
+    showTime (Timestamp t) = cs $ formatTime defaultTimeLocale "%F %T" t
 
 showNote_ :: HasCallStack => ShowNoteProps -> ReactElementM eventHandler ()
 showNote_ = view_ showNote "showNote_"
-
-
-showQuestion :: HasCallStack => View '[ShowQuestionProps]
-showQuestion = mkView "ShowQuestion" $ \case
-  ShowQuestionProps Nothing -> mempty
-  ShowQuestionProps (Just question) ->
-    let overlayStyle1 = [decl "backgroundColor" C.VDocQuestion]
-        commentText1  = (question ^. compositeQuestion . questionText)
-        iconStyle1    = ("icon-Question", "dark")
-        userName1     = "meisterkaiser"
-        creationDate1 = "24. 05. 2016"
-    in showComment_ (CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
-                                         overlayStyle1 (OffsetFromDocumentTop 0) 800)
-
-showQuestion_ :: HasCallStack => ShowQuestionProps -> ReactElementM eventHandler ()
-showQuestion_ = view_ showQuestion "showQuestion_"
 
 
 addComment :: HasCallStack => Translations -> View '[AddContributionProps (LocalStateRef CommentInputState)]

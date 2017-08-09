@@ -28,16 +28,18 @@ optimize: all js-build/frontend.min.js
 	cp js-build/frontend.min.js js-build/frontend.js
 	touch js-build/frontend.min.js
 
-js-build/install-root: $(INSTALL_ROOT)
+setup-js-build: .phony
 	mkdir -p js-build
+	cp images/favicon.ico js-build/
+
+js-build/install-root: setup-js-build $(INSTALL_ROOT)
 	ln -sf $(INSTALL_ROOT) js-build/install-root
 
 js-build/frontend.min.js: js-build/frontend.js
 	$(GOOGLE_CLOSURE) js-build/frontend.js > js-build/frontend.min.js
 	ls -alF js-build/frontend.js js-build/frontend.min.js
 
-js-build/frontend.js: $(INSTALL_ROOT)/bin/refine-frontend.jsexe/all.js
-	mkdir -p js-build
+js-build/frontend.js: setup-js-build $(INSTALL_ROOT)/bin/refine-frontend.jsexe/all.js
 	echo "(function(global,React,ReactDOM) {" > js-build/frontend.js-
 	cat $(INSTALL_ROOT)/bin/refine-frontend.jsexe/all.js >> js-build/frontend.js-
 	echo "})(window, window['React'], window['ReactDOM']);" >> js-build/frontend.js-
@@ -47,3 +49,5 @@ js-build/frontend.js: $(INSTALL_ROOT)/bin/refine-frontend.jsexe/all.js
 
 clean:
 	rm -rf js-build
+
+.phony:

@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -8,29 +7,26 @@
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE LambdaCase                 #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Common.Types.Role where
+{-# OPTIONS_GHC -Wno-orphans #-}
 
-import Refine.Common.Prelude
+module Refine.Frontend.AccessSpec where
 
+import Test.Hspec
+import Refine.Frontend.Access ()
+import Refine.Common.Access ()
+import Refine.Common.Access.Policy ()
 
-data GroupRole
-  = GroupMember
-  | GroupModerator
-  deriving (Eq, Ord, Bounded, Enum, Show, Generic)
-
-data GlobalRole
-  = GlobalAdmin
-  deriving (Eq, Ord, Bounded, Enum, Show, Generic)
-
-makeRefineTypes [''GroupRole, ''GlobalRole]
+spec :: Spec
+spec = it "works" pending

@@ -1,4 +1,3 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE BangPatterns               #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
@@ -10,12 +9,14 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE OverloadedStrings          #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TupleSections              #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeFamilyDependencies     #-}
@@ -34,6 +35,7 @@ import qualified Web.Users.Types as Users
 import Refine.Backend.App.Core
 import Refine.Backend.App.Session
 import Refine.Backend.App.Smtp
+import Refine.Backend.App.Role
 import Refine.Backend.Config
 import Refine.Backend.Types
 import Refine.Backend.Database.Class (createMetaID_, getMetaID)
@@ -49,6 +51,7 @@ import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 login :: Common.Login -> App Common.User
 login (Login username (Users.PasswordPlain -> password)) = do
   appLog "login"
+  appLogL LogDebug . ("login.before:: " <>) . show =<< get
   sessionDuration <- asks . view $ appConfig . cfgSessionLength . to timespanToNominalDiffTime
   session <- nothingToError (AppUserNotFound username)
              =<< dbUsersCmd (\db_ -> Users.authUser db_ username password sessionDuration)
@@ -57,6 +60,7 @@ login (Login username (Users.PasswordPlain -> password)) = do
   void $ setUserSession (toUserID loginId) (UserSession session)
   user <- nothingToError (AppUserNotFound username) =<< dbUsersCmd (`Users.getUserById` loginId)
   mid <- db . getMetaID $ toUserID loginId
+  appLogL LogDebug . ("login.after:: " <>) . show =<< get
   pure $ Common.User mid username (Users.u_email user)
 
 -- | Returns (Just (current ID)) of the current user if the user
@@ -71,6 +75,7 @@ currentUser = do
 logout :: App ()
 logout = do
   appLog "logout"
+  appLogL LogDebug . ("logout.before:: " <>) . show =<< get
   st <- gets (view appUserState)
   case st of
     UserLoggedIn _user session -> do
@@ -78,9 +83,10 @@ logout = do
       clearUserSession
     UserLoggedOut -> do
       pure ()
+  appLogL LogDebug . ("logout.after:: " <>) . show =<< get
 
-createUser :: CreateUser -> App Common.User
-createUser (CreateUser name email password) = do
+createUserWith :: [GlobalRole] -> [(GroupRole, ID Group)] -> CreateUser -> App Common.User
+createUserWith globalRoles groupRoles (CreateUser name email password) = do
   appLog "createUser"
   let user = Users.User
               { Users.u_name  = name
@@ -91,8 +97,15 @@ createUser (CreateUser name email password) = do
   loginId <- leftToError AppUserCreationError
              =<< dbUsersCmd (`Users.createUser` user)
   result <- Common.User <$> db (createMetaID_ $ toUserID loginId) <*> pure name <*> pure email
+
+  (\r -> assignGlobalRole r (result ^. userID)) `mapM_` globalRoles
+  (\(r, g) -> assignGroupRole r (result ^. userID) g) `mapM_` groupRoles
+
   sendMailTo $ EmailMessage result "you have a re-fine account now!" "congratulations (:"
   pure result
+
+createUser :: CreateUser -> App Common.User
+createUser = createUserWith [] []
 
 getUser :: ID User -> App Common.User
 getUser uid = do
@@ -104,3 +117,10 @@ getUser uid = do
 doesUserExist :: ID Common.User -> App Bool
 doesUserExist uid = do
   isJust <$> dbUsersCmd (\db_ -> Users.getUserById db_ (fromUserID uid))
+
+withCurrentUser :: MonadApp app => (ID User -> app a) -> app a
+withCurrentUser f = do
+  mu <- currentUser
+  case mu of
+    Just u -> f u
+    Nothing -> throwError AppUserNotLoggedIn

@@ -18,6 +18,8 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
 
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
+
 import           Control.Applicative
 import           Control.Concurrent.MVar
 import           Control.Lens
@@ -41,6 +43,54 @@ import Refine.Prelude
 verbose :: Bool
 verbose = True
 
+rootUrl :: String
+rootUrl = "http://localhost:3000/"
+
+testCreateUser :: CreateUser
+testCreateUser = CreateUser "a" "a@example.com" "a"
+
+main :: IO ()
+main = do
+  -- edit this to your liking; use stuff from building blocks section below, or write your own.
+  prepareSession
+  runMakeVDoc
+
+  -- TODO: this won't work any more until we use websockets (the client side) instead of wreq.
+
+
+-- * building blocks
+
+-- http://www.serpentine.com/wreq/tutorial.html
+-- http://hackage.haskell.org/package/wreq-0.5.0.1/docs/Network-Wreq.html
+
+-- | create test user if it does not exist, login, and store the cookie for use in later requests.
+-- this function is idempotent.
+prepareSession :: IO ()
+prepareSession = do
+  void (post "r/user/create" testCreateUser :: IO (Response User)) `catch` \(_ :: SomeException) -> pure ()
+  r :: Response User <- post "r/user/login" (case testCreateUser of CreateUser n _ p -> Login n p)
+  modifyMVar cjarRef (\_ -> pure (r ^.. responseHeader "set-cookie", ()))
+
+-- | this is probably too simple for when we have groups and processes, but for now it works.
+runMakeVDoc :: IO ()
+runMakeVDoc = do
+  r :: Response CompositeVDoc
+    <- post "r/vdoc" $ CreateVDoc sampleTitle sampleAbstract sampleRawContent1 defaultGroupID
+
+  let eid = r ^. responseBody . compositeVDocThisEdit . editMetaID . miID . unID
+      vdoc = r ^. responseBody . compositeVDocThisEdit . editVDocVersion
+      rnge = minimumRange vdoc
+
+  d :: Response Discussion
+    <- post ("r/discussion/" <> show eid) (CreateDiscussion "this is my initial statement!" (Just rnge))
+
+  print d  -- FIXME: create a small but non-trivial statement tree under d instead of printing it.
+
+  pure ()
+
+
+-- * helpers
+
 -- | A global 'MVar' storing the cookie as received on login.  (there is probably a better way to do
 -- this, something about the manager from http-client that can be passed set in the wreq interface.
 -- but this way is easier!)
@@ -60,67 +110,13 @@ post url req = do
   dumpRsp resp
   pure resp
 
-rootUrl :: String
-rootUrl = "http://localhost:9090/"
-
-testCreateUser :: CreateUser
-testCreateUser = CreateUser "a" "a@example.com" "a"
-
-main :: IO ()
-main = do
-  args <- getArgs
-  let scripts :: [Either String (IO ())]
-      scripts = loadScript <$> args
-        where
-          loadScript = \case
-            "make-vdoc" -> Right runMakeVDoc
-            bad -> Left $ "unknown argument: " <> show bad
-
-  forM_ scripts $ \case
-    Left msg -> error msg
-    Right _ -> pure ()
-
-  sequence_ $ prepareSession : (view _Right <$> scripts)
-
-
--- http://www.serpentine.com/wreq/tutorial.html
--- http://hackage.haskell.org/package/wreq-0.5.0.1/docs/Network-Wreq.html
-
--- | create test user if it does not exist, login, and return the cookie for use in later requests.
-prepareSession :: IO ()
-prepareSession = do
-  void (post "r/user/create" testCreateUser :: IO (Response User)) `catch` \(_ :: SomeException) -> pure ()
-  r :: Response User <- post "r/user/login" (case testCreateUser of CreateUser n _ p -> Login n p)
-  modifyMVar cjarRef (\_ -> pure (r ^.. responseHeader "set-cookie", ()))
-
-
--- | this is probably too simple for when we have groups and processes, but for now it works.
-runMakeVDoc :: IO ()
-runMakeVDoc = do
-  r :: Response CompositeVDoc
-    <- post "r/vdoc" $ CreateVDoc sampleTitle sampleAbstract sampleRawContent1 defaultGroupID
-
-  let eid = r ^. responseBody . compositeVDocThisEdit . editMetaID . miID . unID
-      vdoc = r ^. responseBody . compositeVDocThisEdit . editVDocVersion
-      rnge = minimumRange vdoc
-
-  d :: Response Discussion
-    <- post ("r/discussion/" <> show eid) (CreateDiscussion "this is my initial statement!" True rnge)
-
-  print d  -- FIXME: create a small but non-trivial statement tree under d instead of printing it.
-
-  pure ()
-
-
--- * helpers
-
-_chrashUnless :: (HasCallStack, Show msg) => msg -> Bool -> IO ()
-_chrashUnless _   True  = pure ()
-_chrashUnless msg False = error $ "crash: " <> show msg
-
 dumpRsp :: Show a => Response a -> IO ()
 dumpRsp r = when verbose $ do
   putStrLn . ppShow $ r ^. responseStatus
   putStrLn . ppShow $ r ^. responseHeaders
   putStrLn . ppShow $ r ^. responseBody
   pure ()
+
+_chrashUnless :: (HasCallStack, Show msg) => msg -> Bool -> IO ()
+_chrashUnless _   True  = pure ()
+_chrashUnless msg False = error $ "crash: " <> show msg

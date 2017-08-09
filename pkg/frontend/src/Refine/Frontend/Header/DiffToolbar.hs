@@ -34,6 +34,7 @@ import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Icon
 import Refine.Frontend.Store.Types
+import Refine.Frontend.Access
 
 
 diffToolbar_ :: HasCallStack => DiffToolbarProps -> ReactElementM eventHandler ()
@@ -67,7 +68,9 @@ diffToolbar_ props = do
           count v = cs . show . fromMaybe 0 $ Map.lookup v vs
           vs = props ^. diffToolbarPropsVotes
 
-      voteAction v = LoginGuardStash [ContributionAction $ ToggleVoteOnContribution (props ^. diffToolbarPropsEditID) v]
+      voteAction v = LoginGuardStash
+        [ContributionAction $ ToggleVoteOnContribution
+                                (ContribIDEdit $ props ^. diffToolbarPropsEditID) v]
 
   ibutton_ $ emptyIbuttonProps "Vote_positive" [voteAction Yeay]
     & ibListKey .~ "1"

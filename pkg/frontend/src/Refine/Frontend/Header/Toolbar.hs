@@ -29,6 +29,8 @@ import           Language.Css.Syntax
 
 import           React.Flux.Missing
 import           Refine.Common.Types
+-- import qualified Refine.Common.Access.Policy as AP
+-- import           Refine.Frontend.Access
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
@@ -37,10 +39,12 @@ import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
+import           Refine.Frontend.Access
+
 
 -- FUTUREWORK: this should probably be a component, but if we do the obvious minimal change to
 -- introduce a @View '[]@, the styling breaks completely.  note that this does not fix #376 either.
-toolbar_ :: HasCallStack => VDoc -> ReactElementM eventHandler ()
+toolbar_ :: HasCallStack => ToolbarProps -> ReactElementM 'EventHandlerCode ()
 toolbar_ vdoc = do
   let toolbarButton = defaultIconButtonProps @[GlobalAction]
 
@@ -53,7 +57,9 @@ toolbar_ vdoc = do
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  iconButton_ $ toolbarButton
+  -- FIXME: #358
+  -- guardAccess_ "new-comment" (AP.createComments vdoc) . ...
+  iconButton_ $ defaultIconButtonProps @[AccessAction]
     & iconButtonPropsListKey      .~ "new-comment"
     & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Comment", "dark") XXLarge
     & iconButtonPropsElementName  .~ "btn-add-annotation"  -- RENAME
@@ -61,7 +67,7 @@ toolbar_ vdoc = do
     & iconButtonPropsOnClick      .~ [LoginGuardStash [HeaderAction ToggleCommentToolbarExtension]]
     & iconButtonPropsOnClickMods  .~ [StopPropagation]
 
-  iconButton_ $ toolbarButton
+  iconButton_ $ defaultIconButtonProps @[AccessAction]
     & iconButtonPropsListKey      .~ "new-edit"
     & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-New_Edit", "dark") XXLarge
     & iconButtonPropsElementName  .~ "bt-add-modification"  -- RENAME: edit

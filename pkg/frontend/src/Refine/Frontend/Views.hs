@@ -31,22 +31,23 @@ module Refine.Frontend.Views
 
 import Refine.Frontend.Prelude
 
+import           Data.Maybe (mapMaybe)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import qualified Data.Tree as ST
-import           Control.Lens (ix)
 import           Language.Css.Syntax
-import           Control.Concurrent.MVar
 import qualified React.Flux.Outdated as Outdated
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft (deleteMarksFromRawContent)
+import           Refine.Frontend.Access
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.QuickCreate
 import           Refine.Frontend.Contribution.Types as RS
 import           Refine.Frontend.Document.Document
 import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Header.EditToolbar
 import           Refine.Frontend.Header.Heading
 import           Refine.Frontend.Header.Types as HT
 import           Refine.Frontend.Login.Types as LG
@@ -59,33 +60,33 @@ import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 import           Refine.Frontend.Views.Types
-import           Refine.Frontend.WebSocket
 import qualified Refine.Frontend.Workbench
+import           Refine.Frontend.Store (flushCacheMisses)
 
 
 -- | The controller view and also the top level of the Refine app.  This controller view registers
 -- with the store and will be re-rendered whenever the store changes.
 refineApp :: HasCallStack => View '[]
-refineApp = mkControllerView @'[StoreArg GlobalState] "RefineApp" wholeScreen_
+refineApp = mkControllerView @'[StoreArg AccessState, StoreArg GlobalState] "RefineApp" wholeScreen_
 
-wholeScreen_ :: HasCallStack => GlobalState -> ReactElementM eventHandler ()
-wholeScreen_ props = Outdated.viewWithSKey wholeScreen "wholeScreen" props mempty
+wholeScreen_ :: HasCallStack => AccessState -> GlobalState -> ReactElementM eventHandler ()
+wholeScreen_ accessState props = Outdated.viewWithSKey wholeScreen "wholeScreen" (props, accessState) mempty
 
-wholeScreen :: Outdated.ReactView GlobalState
+wholeScreen :: Outdated.ReactView (GlobalState, AccessState)
 wholeScreen = Outdated.defineLifecycleView "WholeScreen" () Outdated.lifecycleConfig
-  { Outdated.lRender = \() gs ->
+  { Outdated.lRender = \() (gs, as) ->
     if False {- set conditional to 'True' to switch to workbench. -} then Refine.Frontend.Workbench.workbench_ gs else
     case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
-      Nothing  -> mainScreen_ gs
+      Nothing  -> mainScreen_ (gs, as)
       Just tab -> mainMenu_ $ MainMenuProps
                             (mapMainMenuTab (const (groups, vdocs)) groupFromCache id id id tab)
                             (gs ^. gsMainMenuState . mmErrors)
-                            (gs ^. gsLoginState . lsCurrentUser)
+                            (as ^. accLoginState . lsCurrentUser)
         where
-          groupFromCache :: ID Group -> (Group, Map (ID VDoc) VDoc)
-          groupFromCache gid = (fromMaybe (error "impossible") $ gs ^? gsServerCache . scGroups . ix gid, vdocs)
+          groupFromCache :: ID Group -> (Maybe Group, Map (ID VDoc) VDoc)
+          groupFromCache gid = (cacheLookup gs gid, vdocs)
           groups :: [Group]
-          groups = Map.elems $ gs ^. gsServerCache . scGroups
+          groups = mapMaybe (cacheLookup gs) . Set.elems . fromMaybe (cacheMiss CacheKeyGroupIds mempty tab) $ gs ^. gsServerCache . scGroupIds
           vdocs :: Map (ID VDoc) VDoc
           vdocs = gs ^. gsServerCache . scVDocs
 
@@ -93,27 +94,21 @@ wholeScreen = Outdated.defineLifecycleView "WholeScreen" () Outdated.lifecycleCo
   , Outdated.lComponentDidUpdate = Just $ \this _ _ _ _ -> didMountOrUpdate this
   }
   where
-    didMountOrUpdate :: HasCallStack => Outdated.LPropsAndState GlobalState () -> IO ()
-    didMountOrUpdate _getPropsAndState = do
-      cm <- nub <$> takeMVar cacheMissesMVar
-      putMVar cacheMissesMVar []
-      unless (null cm) $ do
-        pc <- takeMVar webSocketMVar
-        putMVar webSocketMVar pc
-        pc cm
-        putStrLn $ "request sent to the server: " <> show cm
+    didMountOrUpdate :: HasCallStack => Outdated.LPropsAndState (GlobalState, AccessState) () -> IO ()
+    didMountOrUpdate _getPropsAndState = flushCacheMisses
 
-mainScreen :: HasCallStack => View '[GlobalState]
-mainScreen = mkView "MainScreen" $ \rs -> do
-  let vdoc = fromMaybe (error "mainScreen: no gsVDoc") (rs ^. gsVDoc) -- FIXME: improve this!  (introduce a custom props type with a CompositeVDoc *not* wrapped in a 'Maybe')
-
-      __ :: Translations = rs ^. RS.gsTranslations . unTrans
+mainScreen :: HasCallStack => View '[(GlobalState, AccessState)]
+mainScreen = mkView "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
+  Nothing -> error "mainScreen: no gsVDoc"
+  Just Nothing -> "Loading..."
+  Just (Just vdoc) -> do
+    let __ :: Translations = rs ^. RS.gsTranslations . unTrans
                                 -- FIXME: I think this could be done more nicely.
 
-  div_ ["key" $= "maindiv" {-FIXME: seems not to work as expected, we still have a warning-}] $ do
+    div_ ["key" $= "maindiv" {-FIXME: seems not to work as expected, we still have a warning-}] $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
       stickyContainer_ [] $ do
-          mainHeader_ $ mkMainHeaderProps rs
+          mainHeader_ $ mkMainHeaderProps as rs
 
           -- components that are visible only sometimes:
           showNote_ `mapM_` showNoteProps (vdoc ^. compositeVDocApplicableNotes) rs
@@ -164,7 +159,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
                       document_ $ DocumentProps ((if rs ^. gsHeaderState . hsReadOnly
                                                   then mapDocumentState id deleteMarksFromRawContent id id
                                                   else id)
-                                                 $ rs ^. to RS.getDocumentState)
+                                                 $ getDocumentState as rs)
                                                 (rs ^. RS.gsContributionState)
                       rightAside_ asideProps
 
@@ -173,7 +168,7 @@ mainScreen = mkView "MainScreen" $ \rs -> do
           -- they have been rendered.)
           div_ ["style" @@= [decl "margin-bottom" (Px 800)]] $ pure ()
 
-mainScreen_ :: HasCallStack => GlobalState -> ReactElementM eventHandler ()
+mainScreen_ :: HasCallStack => (GlobalState, AccessState) -> ReactElementM eventHandler ()
 mainScreen_ = view_ mainScreen "mainScreen_"
 
 

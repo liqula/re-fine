@@ -21,7 +21,6 @@ import Refine.Common.Prelude hiding (Generic, to)
 
 import           Control.Arrow (first, second)
 import           Control.DeepSeq
-import           Control.Monad.State
 import           Data.Function (on)
 import           Data.Functor.Infix ((<$$>))
 import qualified Data.IntMap as IntMap
@@ -61,7 +60,6 @@ instance Arbitrary ContributionID where
 arbitraryContribIDConstructor :: Gen (Int -> ContributionID)
 arbitraryContribIDConstructor = elements
   [ ContribIDNote       . ID . fromIntegral . abs
-  , ContribIDQuestion   . ID . fromIntegral . abs
   , ContribIDDiscussion . ID . fromIntegral . abs
   , ContribIDEdit       . ID . fromIntegral . abs
   ]
@@ -75,7 +73,10 @@ instance Arbitrary MarkID where
 maxListOf :: Int -> Gen a -> Gen [a]
 maxListOf n g = List.take n <$> listOf g
 
-instance Arbitrary Role where
+instance Arbitrary GroupRole where
+  arbitrary = elements [minBound..]
+
+instance Arbitrary GlobalRole where
   arbitrary = elements [minBound..]
 
 

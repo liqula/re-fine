@@ -30,7 +30,7 @@ import           React.Flux.Outdated as RF
 import           GHCJS.Foreign.Callback (Callback, asyncCallback)
 
 import           Refine.Frontend.Screen.Types
-import           Refine.Frontend.Store
+import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Console (weAreInDevMode)
 

@@ -15,22 +15,21 @@
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-module Refine.Common.Types.Role where
+module Refine.Common.Test.Util
+where
 
 import Refine.Common.Prelude
 
+import Test.Hspec
 
-data GroupRole
-  = GroupMember
-  | GroupModerator
-  deriving (Eq, Ord, Bounded, Enum, Show, Generic)
+passes :: HasCallStack => IO ()
+passes = True `shouldBe` True
 
-data GlobalRole
-  = GlobalAdmin
-  deriving (Eq, Ord, Bounded, Enum, Show, Generic)
-
-makeRefineTypes [''GroupRole, ''GlobalRole]
+failsOn :: HasCallStack => Show a => a -> IO ()
+failsOn a = show a `shouldBe` "something else"
