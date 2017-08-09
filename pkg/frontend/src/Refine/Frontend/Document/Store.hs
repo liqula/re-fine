@@ -100,12 +100,6 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDDiscus
                     (DocumentStateView _ _)
   = DocumentStateDiscussion (did, Nothing)
 
-documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDDiscussion _)))
-                    _oldgs
-                    (view gsVDoc -> Just cvdoc)
-                    (DocumentStateDiscussion _)
-  = mkDocumentStateView $ rawContentFromCompositeVDoc cvdoc  -- TODO: why?  and how can this work?
-
 documentStateUpdate (DocumentAction (ReplyStatement upd sid (FormBegin lst)))
                     _oldgs
                     _newgs
