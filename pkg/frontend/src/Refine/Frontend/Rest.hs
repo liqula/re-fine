@@ -69,6 +69,9 @@ updateEdit = request cfg (Proxy :: Proxy SUpdateEdit)
 createUser :: HasCallStack => CreateUser -> HandleResponse User -> IO ()
 createUser = request cfg (Proxy :: Proxy SCreateUser)
 
+getUser :: HasCallStack => ID User -> HandleResponse User -> IO ()
+getUser = request cfg (Proxy :: Proxy SGetUser)
+
 login :: HasCallStack => Login -> HandleResponse User -> IO ()
 login = request cfg (Proxy :: Proxy SLogin)
 

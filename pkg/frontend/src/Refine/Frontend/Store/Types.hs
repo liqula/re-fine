@@ -25,7 +25,8 @@ module Refine.Frontend.Store.Types where
 
 import Refine.Frontend.Prelude
 
-import           Control.Lens (Getter, lens)
+import           Control.Concurrent.MVar
+import           System.IO.Unsafe
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import           Data.String.Conversions (ST)
@@ -76,6 +77,24 @@ instance Monoid ServerCache where
   ServerCache a b c d e f `mappend` ServerCache a' b' c' d' e' f'
     = ServerCache (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f')
 
+data CacheKey
+  = CacheKeyVDoc       (ID VDoc)
+  | CacheKeyEdit       (ID Edit)
+  | CacheKeyNote       (ID Note)
+  | CacheKeyDiscussion (ID Discussion)
+  | CacheKeyUser       (ID User)
+  | CacheKeyGroup      (ID Group)
+  deriving (Eq, Ord, Show, Generic)
+
+{-# NOINLINE cacheMisses #-}
+cacheMisses :: MVar [CacheKey]
+cacheMisses = unsafePerformIO $ newMVar []
+
+cacheMiss :: (i -> CacheKey) -> i -> i
+cacheMiss wrap i = unsafePerformIO $ do
+  is <- takeMVar cacheMisses
+  putMVar cacheMisses $ wrap i: is
+  pure i
 
 
 emptyGlobalState :: HasCallStack => GlobalState
@@ -123,6 +142,7 @@ data GlobalAction =
   | AddStatement Bool{-update-} (ID Statement) (AjaxAction CreateStatement Discussion)
 
   | RefreshServerCache ServerCache
+  | PopulateCache CacheKey
 
     -- i18n
   | LoadTranslations Locale
@@ -145,7 +165,7 @@ data GlobalAction =
   | CompositeAction [GlobalAction]
   deriving (Show, Eq, Generic)
 
-makeRefineTypes [''ServerCache, ''GlobalState_, ''DevState, ''GlobalAction]
+makeRefineTypes [''ServerCache, ''GlobalState_, ''DevState, ''GlobalAction, ''CacheKey]
 
 getDocumentState :: GlobalState -> DocumentState
 getDocumentState gs@(view gsVDoc -> Just cvdoc)

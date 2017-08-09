@@ -171,7 +171,7 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
       _ -> Nothing
 
     showUser names = \case
-      UserID i  -> fromMaybe (cs $ show i) $ M.lookup i names
+      UserID i  -> fromMaybe (cs . show $ cacheMiss CacheKeyUser i) $ M.lookup i names
       UserIP ip -> ip
       Anonymous -> "anonymous"
 

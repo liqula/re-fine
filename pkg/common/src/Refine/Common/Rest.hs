@@ -68,6 +68,7 @@ type RefineAPI =
   :<|> SAddStatement
   :<|> SUpdateStatement
   :<|> SCreateUser
+  :<|> SGetUser
   :<|> SLogin
   :<|> SLogout
   :<|> SGetTranslations
@@ -134,6 +135,10 @@ type SUpdateStatement
 type SCreateUser
   = "r" :> "user" :> "create" :> ReqBody '[JSON] CreateUser
     :> Post '[JSON] User
+
+type SGetUser
+  = "r" :> "user" :> Capture "onuserid" (ID User)
+    :> Get '[JSON] User
 
 -- | FUTUREWORK: this may be a little simple.  take a look at servant-auth-token and see if that
 -- inspires more trust into its security than what we cooked together ourselves here.

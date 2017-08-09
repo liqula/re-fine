@@ -94,6 +94,13 @@ createUser (CreateUser name email password) = do
   sendMailTo $ EmailMessage result "you have a re-fine account now!" "congratulations (:"
   pure result
 
+getUser :: ID User -> App Common.User
+getUser uid = do
+  appLog "getUser"
+  user <- nothingToError (AppUserNotFound . cs $ show uid) =<< dbUsersCmd (`Users.getUserById` fromUserID uid)
+  mid <- db $ getMetaID uid
+  pure $ Common.User mid (Users.u_name user) (Users.u_email user)
+
 doesUserExist :: ID Common.User -> App Bool
 doesUserExist uid = do
   isJust <$> dbUsersCmd (\db_ -> Users.getUserById db_ (fromUserID uid))

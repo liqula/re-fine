@@ -96,6 +96,7 @@ refineApi =
   :<|> App.addStatement
   :<|> App.updateStatement
   :<|> App.createUser
+  :<|> App.getUser
   :<|> App.login
   :<|> App.logout
   :<|> App.getTranslations

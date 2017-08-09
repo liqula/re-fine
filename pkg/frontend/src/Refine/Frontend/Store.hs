@@ -415,6 +415,11 @@ emitBackendCallsFor act st = case act of
           Right () -> dispatchM $ reloadCompositeVDoc st
 
 
+    PopulateCache (CacheKeyUser uid) -> do
+      getUser uid $ \case
+          Left msg -> ajaxFail msg Nothing
+          Right user -> dispatchM . RefreshServerCache $ ServerCache mempty mempty mempty mempty (M.singleton uid user) mempty
+
     -- default
 
     _ -> pure ()
