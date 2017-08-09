@@ -31,7 +31,6 @@ import qualified Data.Text as ST
 import           Language.Css.Syntax
 
 import           React.Flux.Missing
-import           Refine.Common.Test.Samples
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Types
@@ -265,7 +264,7 @@ mainMenuGroup = mkView "mainMenuGroup" $ \group -> do
 
     ibutton_ $ emptyIbuttonProps "Process_add"
         [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormBegin
-          $ newLocalStateRef (CreateVDoc sampleTitle sampleAbstract emptyRawContent (group ^. groupID)) group
+          $ newLocalStateRef (CreateVDoc (Title "[no title]") (Abstract "[no abstract]") emptyRawContent (group ^. groupID)) group
         ]
       & ibListKey .~ "process_add"
       & ibSize .~ XXLarge
