@@ -293,11 +293,16 @@ mainMenuGroup = mkView "mainMenuGroup" $ \(group, vdocs) -> do
           -- TODO: i think we don't have a rest-api end-point for this either.
           { _mmprocShrtID          = vid
           , _mmprocShrtIcon        = ()
-          , _mmprocShrtTitle       = maybe (cacheMiss (CacheKeyVDoc vid) $ Title "loading") (^. vdocTitle) $ Map.lookup vid vdocs
-          , _mmprocShrtNumComments = 32
-          , _mmprocShrtNumEdits    = 53
-          , _mmprocShrtNumUsers    = 41
+          , _mmprocShrtTitle       = title
+          , _mmprocShrtNumComments = stats ^. editStatsComments
+          , _mmprocShrtNumEdits    = stats ^. editStatsEdits
+          , _mmprocShrtNumUsers    = stats ^. editStatsUsers
           }
+          where
+            (title, stats) = maybe
+              (cacheMiss (CacheKeyVDoc vid) (Title "loading", mempty))
+              ((^. vdocTitle) &&& (^. vdocStats))
+              $ Map.lookup vid vdocs
 
     mainMenuProcessShort_ `mapM_` ( sortBy (compare `on` view mmprocShrtTitle)
                                   . fmap mkProcProps

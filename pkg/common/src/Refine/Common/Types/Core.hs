@@ -80,6 +80,7 @@ data VDoc = VDoc
   , _vdocAbstract :: Abstract
   , _vdocHeadEdit :: ID Edit
   , _vdocGroup    :: ID Group
+  , _vdocStats     :: EditStats
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -148,6 +149,17 @@ data Edit = Edit
   , _editDiscussions' :: Set (ID Discussion)
   }
   deriving (Eq, Show, Generic)
+
+data EditStats = EditStats
+  { _editStatsUsers    :: Int
+  , _editStatsEdits    :: Int
+  , _editStatsComments :: Int
+  }
+  deriving (Eq, Ord, Show, Read, Generic)
+
+instance Monoid EditStats where
+  mempty = EditStats 0 0 0
+  EditStats a b c `mappend` EditStats a' b' c' = EditStats (a + a') (b + b') (c + c')
 
 data CreateEdit = CreateEdit
   { _createEditDesc        :: ST
@@ -724,7 +736,7 @@ deriveClasses
     , [''NFData, ''SOP.Generic, ''Lens'])
   , ([ ''EntityKey, ''CompositeVDoc, ''ContributionID, ''MarkID
      , ''VDoc, ''CreateVDoc, ''UpdateVDoc, ''EditSource, ''Edit
-     , ''CreateEdit, ''EditKind, ''Title, ''Abstract
+     , ''EditStats, ''CreateEdit, ''EditKind, ''Title, ''Abstract
      , ''Group, ''CreateGroup]
     , allClass)
   ]

@@ -112,7 +112,7 @@ foreignKeyField column = S.keyToId . column . entityVal
 
 -- NOTES: How to handle associations? What to update, what to keep?
 vDocToRecord :: VDoc -> DB S.VDoc
-vDocToRecord (VDoc _i t a r g) = pure (S.VDoc t a (Just $ S.idToKey r) (S.idToKey g))
+vDocToRecord (VDoc _i t a r g _) = pure (S.VDoc t a (Just $ S.idToKey r) (S.idToKey g))
 
 updateVDoc :: ID VDoc -> VDoc -> DB ()
 updateVDoc vid vdoc = do
@@ -213,9 +213,9 @@ getMetaEntity f i = do
 
 -- * VDoc
 
-toVDoc :: MetaID VDoc -> Title -> Abstract -> Maybe (Key S.Edit) -> Key S.Group -> VDoc
-toVDoc vid title abstract (Just repoid) g = VDoc vid title abstract (S.keyToId repoid) (S.keyToId g)
-toVDoc _ _ _ Nothing _ = error "impossible"
+toVDoc :: EditStats -> MetaID VDoc -> Title -> Abstract -> Maybe (Key S.Edit) -> Key S.Group -> VDoc
+toVDoc stats vid title abstract (Just repoid) g = VDoc vid title abstract (S.keyToId repoid) (S.keyToId g) stats
+toVDoc _ _ _ _ Nothing _ = error "impossible"
 
 listVDocs :: DB [ID VDoc]
 listVDocs = do
@@ -237,10 +237,18 @@ createVDoc pv = do
     }
   let e' = S.idToKey (e ^. editMetaID . miID) :: Key S.Edit
   liftDB $ update (S.idToKey $ mid ^. miID) [S.VDocHeadId =. Just e']
-  pure $ S.vDocElim (toVDoc mid) svdoc {S.vDocHeadId = Just e'}
+  getVDoc (mid ^. miID)
 
 getVDoc :: ID VDoc -> DB VDoc
-getVDoc = getMetaEntity (S.vDocElim . toVDoc)
+getVDoc i = do
+  (mid, x) <- getMetaEntity (,) i
+  let eid = S.vDocElim (\_ _ (Just ei) _ -> ei) x
+  edits <- length <$> liftDB (selectList [S.ParentChildParent ==. eid] [])
+  notes <- length <$> liftDB (selectList [S.PNEdit ==. eid] [])
+  discussions <- length <$> liftDB (selectList [S.PDEdit ==. eid] [])
+  let users = 0 -- FIXME
+  let stats = EditStats users edits (notes + discussions)
+  pure $ S.vDocElim (toVDoc stats mid) x
 
 
 -- * Repo
