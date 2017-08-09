@@ -45,7 +45,7 @@ import Language.Css.Syntax
 
 import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Icon.Types
-import           Refine.Frontend.Store (dispatchMany)
+import           Refine.Frontend.Store (dispatch)
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Util
 
@@ -150,7 +150,7 @@ emptyIbuttonProps img onclick = IbuttonProps
 -- * events
 
 instance IbuttonOnClick [GlobalAction] 'EventHandlerCode where
-  runIbuttonOnClick _ _ = dispatchMany
+  runIbuttonOnClick _ _ = mconcat . fmap dispatch
 
 instance {-# OVERLAPPABLE #-} IbuttonOnClick action 'EventHandlerCode => IbuttonOnClick action ('StatefulEventHandlerCode st) where
   runIbuttonOnClick evt mevt onclick _st = (runIbuttonOnClick evt mevt onclick, Nothing)
@@ -272,7 +272,7 @@ class (Typeable onclick, Eq onclick) => IconButtonPropsOnClick onclick where  --
   defaultOnClick            :: onclick  -- ^ @instance Default [GlobalAction]@ would lead to overlaps.
 
 instance IconButtonPropsOnClick [GlobalAction] where
-  runIconButtonPropsOnClick _ _ = dispatchMany
+  runIconButtonPropsOnClick _ _ = mconcat . fmap dispatch
   defaultOnClick                = mempty
 
 defaultIconButtonProps :: HasCallStack => IconButtonPropsOnClick onclick => IconButtonPropsWithHandler onclick
