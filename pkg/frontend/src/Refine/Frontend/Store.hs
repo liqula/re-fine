@@ -117,6 +117,7 @@ transformGlobalState = transf
 
         ContributionAction ShowCommentEditor                       -> scrollToCurrentSelection (st ^. gsContributionState)
         DocumentAction (DocumentSave (FormBegin EditIsNotInitial)) -> scrollToCurrentSelection (st ^. gsContributionState)
+        LoadCompositeVDoc (AfterAjax _)                            -> liftIO js_scrollToPageTop  -- FIXME: #416.
         HeaderAction ScrollToPageTop                               -> liftIO js_scrollToPageTop
         HeaderAction (ScrollToBlockKey (C.BlockKey k))             -> liftIO . js_scrollToBlockKey $ cs k
 
