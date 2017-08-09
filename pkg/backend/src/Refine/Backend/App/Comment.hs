@@ -44,6 +44,9 @@ addNote pid note = do
   validateCreateChunkRange pid (note ^. createNoteRange)
   db $ DB.createNote pid note
 
+getNote :: ID Note -> App Note
+getNote = db . DB.getNote
+
 addQuestion :: ID Edit -> CreateQuestion -> App CompositeQuestion
 addQuestion pid question = do
   appLog "addQuestion"
@@ -62,6 +65,9 @@ addDiscussion pid discussion = do
   db $ do
     dscn <- DB.createDiscussion pid discussion
     DB.getDiscussion (dscn ^. discussionID)
+
+getDiscussion :: ID Discussion -> App Discussion
+getDiscussion = db . DB.getDiscussion
 
 addStatement :: ID Statement -> CreateStatement -> App Discussion
 addStatement sid statement = do

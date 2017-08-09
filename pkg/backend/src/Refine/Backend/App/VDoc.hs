@@ -151,6 +151,9 @@ addEdit baseeid edit = do
                 (deleteMarksFromRawContent $ edit ^. createEditVDocVersion)
     DB.createEdit rid (EditSource [(dff, baseeid)]) edit
 
+getEdit :: ID Edit -> App Edit
+getEdit = db . DB.getEdit
+
 addMerge :: ID Edit -> ID Edit -> ID Edit -> App Edit
 addMerge base eid1 eid2 = do
   appLog $ "merge " <> show eid1 <> " with " <> show eid2 <> " based on " <> show base

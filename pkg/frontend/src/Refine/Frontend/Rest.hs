@@ -37,6 +37,9 @@ cfg = ApiRequestConfig "" NoTimeout
 getVDoc :: HasCallStack => ID VDoc -> HandleResponse CompositeVDoc -> IO ()
 getVDoc = request cfg (Proxy :: Proxy SGetVDoc)
 
+getVDocSimple :: HasCallStack => ID VDoc -> HandleResponse VDoc -> IO ()
+getVDocSimple = request cfg (Proxy :: Proxy SGetVDocSimple)
+
 -- | create a new vdoc.
 createVDoc :: HasCallStack => CreateVDoc -> HandleResponse CompositeVDoc -> IO ()
 createVDoc = request cfg (Proxy :: Proxy SCreateVDoc)
@@ -47,6 +50,9 @@ updateVDoc = request cfg (Proxy :: Proxy SUpdateVDoc)
 addDiscussion :: HasCallStack => ID Edit -> CreateDiscussion -> HandleResponse Discussion -> IO ()
 addDiscussion = request cfg (Proxy :: Proxy SAddDiscussion)
 
+getDiscussion :: HasCallStack => ID Discussion -> HandleResponse Discussion -> IO ()
+getDiscussion = request cfg (Proxy :: Proxy SGetDiscussion)
+
 addStatement :: HasCallStack => ID Statement -> CreateStatement -> HandleResponse Discussion -> IO ()
 addStatement = request cfg (Proxy :: Proxy SAddStatement)
 
@@ -56,9 +62,15 @@ updateStatement = request cfg (Proxy :: Proxy SUpdateStatement)
 addNote :: HasCallStack => ID Edit -> CreateNote -> HandleResponse Note -> IO ()
 addNote = request cfg (Proxy :: Proxy SAddNote)
 
+getNote :: HasCallStack => ID Note -> HandleResponse Note -> IO ()
+getNote = request cfg (Proxy :: Proxy SGetNote)
+
 -- | create a new edit given a base edit and chunk range, new contents.
 addEdit :: HasCallStack => ID Edit -> CreateEdit -> HandleResponse Edit -> IO ()
 addEdit = request cfg (Proxy :: Proxy SAddEdit)
+
+getEdit :: HasCallStack => ID Edit -> HandleResponse Edit -> IO ()
+getEdit = request cfg (Proxy :: Proxy SGetEdit)
 
 mergeEdit :: HasCallStack => ID Edit -> HandleResponse () -> IO ()
 mergeEdit = request cfg (Proxy :: Proxy SMergeEdit)
@@ -95,6 +107,9 @@ getGroups = request cfg (Proxy :: Proxy SGetGroups)
 
 createGroup :: HasCallStack => CreateGroup -> HandleResponse Group -> IO ()
 createGroup = request cfg (Proxy :: Proxy SAddGroup)
+
+getGroup :: HasCallStack => ID Group -> HandleResponse Group -> IO ()
+getGroup = request cfg (Proxy :: Proxy SGetGroup)
 
 updateGroup :: HasCallStack => ID Group -> CreateGroup -> HandleResponse Group -> IO ()
 updateGroup = request cfg (Proxy :: Proxy SUpdateGroup)

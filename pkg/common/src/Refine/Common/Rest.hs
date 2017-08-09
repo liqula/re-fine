@@ -56,15 +56,19 @@ data ApiErrorCreateUser
 -- FUTUREWORK: use https://github.com/chpatrick/servant-generic#tldr
 type RefineAPI =
        SGetVDoc
+  :<|> SGetVDocSimple
   :<|> SCreateVDoc
   :<|> SUpdateVDoc
   :<|> SAddEdit
+  :<|> SGetEdit
   :<|> SMergeEdit
   :<|> SUpdateEdit
   :<|> SAddNote
+  :<|> SGetNote
   :<|> SAddQuestion
   :<|> SAddAnswer
   :<|> SAddDiscussion
+  :<|> SGetDiscussion
   :<|> SAddStatement
   :<|> SUpdateStatement
   :<|> SCreateUser
@@ -73,6 +77,7 @@ type RefineAPI =
   :<|> SLogout
   :<|> SGetTranslations
   :<|> SAddGroup
+  :<|> SGetGroup
   :<|> SUpdateGroup
   :<|> SGetGroups
   :<|> SChangeSubGroup
@@ -86,6 +91,10 @@ type SGetVDoc
   = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc)
     :> Get '[JSON] CompositeVDoc
 
+type SGetVDocSimple
+  = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc)
+    :> Get '[JSON] VDoc
+
 type SCreateVDoc
   = "r" :> "vdoc" :> ReqBody '[JSON] CreateVDoc
     :> Post '[JSON] CompositeVDoc
@@ -98,6 +107,10 @@ type SAddEdit
   = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] CreateEdit
     :> Post '[JSON] Edit
 
+type SGetEdit
+  = "r" :> "edit" :> Capture "oneditid" (ID Edit)
+    :> Get '[JSON] Edit
+
 type SMergeEdit
   = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> "merge"
     :> Post '[JSON] ()
@@ -107,8 +120,12 @@ type SUpdateEdit
     :> Put '[JSON] Edit
 
 type SAddNote
-  = "r" :> "note" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] CreateNote
+  = "r" :> "note" :> Capture "onnoteid" (ID Edit) :> ReqBody '[JSON] CreateNote
     :> Post '[JSON] Note
+
+type SGetNote
+  = "r" :> "note" :> Capture "onnoteid" (ID Note)
+    :> Get '[JSON] Note
 
 type SAddQuestion
   = "r" :> "question" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] CreateQuestion
@@ -121,6 +138,10 @@ type SAddAnswer
 type SAddDiscussion
   = "r" :> "discussion" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] CreateDiscussion
     :> Post '[JSON] Discussion
+
+type SGetDiscussion
+  = "r" :> "discussion" :> Capture "ondiscussionid" (ID Discussion)
+    :> Get '[JSON] Discussion
 
 type SAddStatement
   = "r" :> "statement" :> "reply" :> Capture "onstatementid" (ID Statement) :> ReqBody '[JSON] CreateStatement
@@ -157,6 +178,10 @@ type SGetTranslations
 type SAddGroup
   = "r" :> "group" :> ReqBody '[JSON] CreateGroup
     :> Post '[JSON] Group
+
+type SGetGroup
+  = "r" :> "group" :> Capture "ongroupid" (ID Group)
+    :> Get '[JSON] Group
 
 type SUpdateGroup
   = "r" :> "updateGroup" :> Capture "ongroupid" (ID Group) :> ReqBody '[JSON] CreateGroup
