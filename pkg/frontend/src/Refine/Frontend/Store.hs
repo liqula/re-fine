@@ -277,7 +277,7 @@ emitBackendCallsFor act st = case act of
     MainMenuAction (MainMenuActionOpen (MainMenuCreateProcess (FormComplete cg))) -> do
         createVDoc cg $ \case
             Left rsp -> ajaxFail rsp Nothing
-            Right loadedVDoc -> dispatchM . LoadCompositeVDoc $ AfterAjax loadedVDoc
+            Right loadedVDoc -> dispatchM . LoadCompositeVDoc . BeforeAjax $ loadedVDoc ^. C.vdocID
 
     MainMenuAction (MainMenuActionOpen (MainMenuUpdateProcess vid (FormComplete cg))) -> do
         updateVDoc vid cg $ \case
