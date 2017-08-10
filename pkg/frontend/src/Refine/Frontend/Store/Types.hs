@@ -211,8 +211,8 @@ discussionOfStatement sc i
   = fromMaybe (error "statement is not in cache")
   $ listToMaybe [d | d <- Map.elems $ sc ^. scDiscussions, i `elem` map (^. statementID) (toList $ d ^. discussionTree)]
 
-gsVDoc :: Lens' (GlobalState_ a) (Maybe CompositeVDoc)
-gsVDoc = lens getCompositeVDoc setCompositeVDoc
+gsVDoc :: Getter (GlobalState_ a) (Maybe CompositeVDoc)
+gsVDoc = to getCompositeVDoc
   where
     getCompositeVDoc :: GlobalState_ a -> Maybe CompositeVDoc
     getCompositeVDoc gs = mkCompositeVDoc (gs ^. gsServerCache) <$> gsEdit gs
@@ -231,22 +231,6 @@ gsVDoc = lens getCompositeVDoc setCompositeVDoc
           $ Map.filterWithKey (\k _ -> k `Set.member` (edit ^. y)) m
           where
             m = sc ^. x
-
-    setCompositeVDoc :: GlobalState_ a -> Maybe CompositeVDoc -> GlobalState_ a
-    setCompositeVDoc gs Nothing = gs & gsEditID .~ Nothing
-    setCompositeVDoc gs (Just cvd) = gs
-      & gsEditID .~ Just (cvd ^. compositeVDocThisEdit . editID)
-      & gsServerCache %~ updateCache
-      where
-        updateCache sc = sc
-          & scVDocs       %~ uncurry Map.insert (mkItem vdocID $ cvd ^. compositeVDoc)
-          & scEdits       %~ uncurry Map.insert (mkItem editID $ cvd ^. compositeVDocThisEdit)
-          & scEdits       %~ ((cvd ^. compositeVDocApplicableEdits) <>)
-          & scNotes       %~ ((cvd ^. compositeVDocApplicableNotes) <>)
-          & scDiscussions %~ ((cvd ^. compositeVDocApplicableDiscussions) <>)
-
-        mkItem :: Lens' a (ID a) -> a -> (ID a, a)
-        mkItem k x = (x ^. k, x)
 
 
 gsCurrentSelection :: HasCallStack => Getter GlobalState (Maybe (Selection Position))

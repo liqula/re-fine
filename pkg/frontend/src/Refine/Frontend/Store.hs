@@ -290,7 +290,7 @@ emitBackendCallsFor act st = case act of
 
     ContributionAction (SubmitComment (CommentInfo text kind)) -> do
       let headEdit = fromMaybe (error "emitBackendCallsFor.SubmitComment")
-                   $ st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit
+                   $ st ^. gsEditID
           range    = fromMaybe (minimumRange (fromMaybe (error "perhaps we should make documentStateContent a proper lens?") $
                                               st ^? to getDocumentState . documentStateContent))
                    $ st ^? gsCurrentSelection . _Just . C.selectionRange
@@ -332,7 +332,7 @@ emitBackendCallsFor act st = case act of
       | DocumentStateEdit editorState _ baseEdit_ <- st ^. gsDocumentState
       -> do
         let baseEdit :: C.ID C.Edit
-            (baseEdit:_) = catMaybes [baseEdit_, st ^? gsVDoc . _Just . C.compositeVDocThisEditID]
+            (baseEdit:_) = catMaybes [baseEdit_, st ^? gsEditID . _Just]
 
             cedit = C.CreateEdit
                   { C._createEditDesc        = info ^. editInfoDesc
@@ -443,7 +443,7 @@ reloadCompositeVDoc' = LoadCompositeVDoc . BeforeAjax
 reloadCompositeVDoc :: HasCallStack => GlobalState -> GlobalAction
 reloadCompositeVDoc = reloadCompositeVDoc'
   . fromMaybe (error "reloadCompositeVDoc")
-  . (^? gsVDoc . _Just . C.compositeVDoc . C.vdocID)
+  . (^? to gsEdit . _Just . C.editVDoc)
 
 ajaxFail :: HasCallStack => (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
 ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of

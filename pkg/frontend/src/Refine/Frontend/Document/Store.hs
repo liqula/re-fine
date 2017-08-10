@@ -54,7 +54,7 @@ documentStateUpdate :: HasCallStack => GlobalAction -> GlobalState -> GlobalStat
 documentStateUpdate (LoadVDoc (AfterAjax vdoc)) oldgs _newgs st
   = let eidChanged = Just newID /= mOldID
         newID  = vdoc ^. vdocHeadEdit
-        mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
+        mOldID = oldgs ^? gsEditID . _Just
         oldEdit = fromMaybe (error "impossible") $ gsEdit oldgs
     in refreshDocumentStateView
          oldEdit
@@ -179,7 +179,7 @@ enterViewMode cvdoc oldgs = refreshDocumentStateView ed eidChanged rc
     eidChanged = Just newID /= mOldID
       where
         newID  = cvdoc ^. compositeVDocThisEditID
-        mOldID = oldgs ^? gsVDoc . _Just . compositeVDocThisEditID
+        mOldID = oldgs ^? gsEditID . _Just
     rc = rawContentFromCompositeVDoc cvdoc
 
 -- | i think this is for when an edit is already under way, and we want to refresh the edit mode,
