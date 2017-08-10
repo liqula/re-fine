@@ -33,7 +33,6 @@ import Refine.Frontend.Prelude
 import           Control.Concurrent (forkIO, yield, threadDelay)
 import qualified Data.Map.Strict as M
 
-import           Refine.Common.Types (CompositeVDoc(..))
 import qualified Refine.Common.Types as C
 import           Refine.Common.VDoc.Draft
 import           Refine.Common.Rest (ApiError(..))
@@ -145,7 +144,7 @@ transformGlobalState = transf
     pureTransform :: GlobalAction -> GlobalState -> GlobalState
     pureTransform act st = st'
       where st' = st
-              & gsVDoc                %~ vdocUpdate act
+              & gsEditID              %~ editIDUpdate act
               & gsContributionState   %~ contributionStateUpdate act
               & gsHeaderState         %~ headerStateUpdate act
               & gsDocumentState       %~ documentStateUpdate act st st'
@@ -158,20 +157,31 @@ transformGlobalState = transf
               & gsDevState            %~ devStateUpdate act
               & gsServerCache         %~ serverCacheUpdate act
 
+editIDUpdate :: GlobalAction -> Maybe (ID C.Edit) -> Maybe (ID C.Edit)
+editIDUpdate (LoadCompositeVDoc (AfterAjax cvd)) _ = Just $ cvd ^. C.compositeVDocThisEdit . C.editID
+editIDUpdate _ st = st
+
 serverCacheUpdate :: GlobalAction -> ServerCache -> ServerCache
 serverCacheUpdate a c = case a of
   LoadVDoc (AfterAjax vdoc)
     -> c & scVDocs %~ M.insert (vdoc ^. C.vdocID) vdoc
   LoadCompositeVDoc (AfterAjax cvdoc)
-    -- TODO: load user data for all user ids found in cvdoc
-    -> serverCacheUpdate (LoadVDoc (AfterAjax (cvdoc ^. C.compositeVDoc))) c
+    -> serverCacheUpdate (LoadVDoc . AfterAjax $ cvdoc ^. C.compositeVDoc)
+     $ serverCacheUpdate (AddEdit $ cvdoc ^. C.compositeVDocThisEdit) c
   AddStatement _upd _cid (AfterAjax discussion)
     -> c & scDiscussions %~ M.insert (discussion ^. C.discussionID) discussion
+  AddDiscussion discussion
+    -> c & scDiscussions %~ M.insert (discussion ^. C.discussionID) discussion
+  AddNote note
+    -> c & scNotes %~ M.insert (note ^. C.noteID) note
+  AddEdit edit
+    -> c & scEdits %~ M.insert (edit ^. C.editID) edit
   SetCurrentUser (UserLoggedIn user)
     -> c & scUsers %~ M.insert (user ^. C.userID) user
   RefreshServerCache c'
     -> c' <> c
   _ -> c
+
 
 consoleLogGlobalStateBefore :: HasCallStack => forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
 consoleLogGlobalStateBefore False _ _ = pure ()
@@ -205,28 +215,6 @@ consoleLogGlobalAction act = do
 
 -- * pure updates
 
-vdocUpdate :: HasCallStack => GlobalAction -> Maybe CompositeVDoc -> Maybe CompositeVDoc
-vdocUpdate (LoadCompositeVDoc (AfterAjax newvdoc)) _ = Just newvdoc
-vdocUpdate act (Just vdoc) = Just $ case act of
-    AddDiscussion discussion
-      -> vdoc
-          & C.compositeVDocApplicableDiscussions
-              %~ M.insert (discussion ^. C.discussionID) discussion
-
-    AddNote note
-      -> vdoc
-          & C.compositeVDocApplicableNotes
-              %~ M.insert (note ^. C.noteID) note
-
-    AddEdit edit
-      -> vdoc
-          & C.compositeVDocApplicableEdits
-              %~ M.insert (edit ^. C.editID) edit
-
-    _ -> vdoc
-vdocUpdate _ Nothing = Nothing
-
-
 toolbarStickyUpdate :: HasCallStack => GlobalAction -> Bool -> Bool
 toolbarStickyUpdate act st = case act of
   ToolbarStickyStateChange st' -> st'
@@ -255,12 +243,16 @@ emitBackendCallsFor act st = case act of
     -- documents
 
     LoadCompositeVDoc (BeforeAjax auid) -> do
-        getVDoc auid $ \case
-            (Left rsp) -> ajaxFail rsp Nothing
-            (Right loadedVDoc) -> dispatchM . CompositeAction $
-                                   [ LoadCompositeVDoc $ AfterAjax loadedVDoc
+        getVDocSimple auid $ \case
+          (Left rsp) -> ajaxFail rsp Nothing
+          (Right loadedVDoc) -> do
+            Rest.getEdit (loadedVDoc ^. C.vdocHeadEdit) $ \case
+              (Left rsp) -> ajaxFail rsp Nothing
+              (Right edit) -> dispatchM . CompositeAction $
+                                   [ LoadCompositeVDoc $ AfterAjax (C.CompositeVDoc loadedVDoc edit mempty mempty mempty)
                                    , ContributionAction RequestSetAllVerticalSpanBounds
                                    ]
+            pure []
 
     -- groups
 
@@ -285,7 +277,7 @@ emitBackendCallsFor act st = case act of
     MainMenuAction (MainMenuActionOpen (MainMenuCreateProcess (FormComplete cg))) -> do
         createVDoc cg $ \case
             Left rsp -> ajaxFail rsp Nothing
-            Right loadedVDoc -> dispatchM . LoadCompositeVDoc $ AfterAjax loadedVDoc
+            Right loadedVDoc -> dispatchM . LoadCompositeVDoc . BeforeAjax $ loadedVDoc ^. C.vdocID
 
     MainMenuAction (MainMenuActionOpen (MainMenuUpdateProcess vid (FormComplete cg))) -> do
         updateVDoc vid cg $ \case
@@ -302,7 +294,7 @@ emitBackendCallsFor act st = case act of
 
     ContributionAction (SubmitComment (CommentInfo text kind)) -> do
       let headEdit = fromMaybe (error "emitBackendCallsFor.SubmitComment")
-                   $ st ^? gsVDoc . _Just . C.compositeVDoc . C.vdocHeadEdit
+                   $ st ^. gsEditID
           range    = fromMaybe (minimumRange (fromMaybe (error "perhaps we should make documentStateContent a proper lens?") $
                                               st ^? to getDocumentState . documentStateContent))
                    $ st ^? gsCurrentSelection . _Just . C.selectionRange
@@ -344,7 +336,7 @@ emitBackendCallsFor act st = case act of
       | DocumentStateEdit editorState _ baseEdit_ <- st ^. gsDocumentState
       -> do
         let baseEdit :: C.ID C.Edit
-            (baseEdit:_) = catMaybes [baseEdit_, st ^? gsVDoc . _Just . C.compositeVDocThisEditID]
+            (baseEdit:_) = catMaybes [baseEdit_, st ^? gsEditID . _Just]
 
             cedit = C.CreateEdit
                   { C._createEditDesc        = info ^. editInfoDesc
@@ -455,7 +447,7 @@ reloadCompositeVDoc' = LoadCompositeVDoc . BeforeAjax
 reloadCompositeVDoc :: HasCallStack => GlobalState -> GlobalAction
 reloadCompositeVDoc = reloadCompositeVDoc'
   . fromMaybe (error "reloadCompositeVDoc")
-  . (^? gsVDoc . _Just . C.compositeVDoc . C.vdocID)
+  . (^? to gsEdit . _Just . C.editVDoc)
 
 ajaxFail :: HasCallStack => (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
 ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of

@@ -86,14 +86,17 @@ data CacheKey
   | CacheKeyGroup      (ID Group)
   deriving (Eq, Ord, Show, Generic)
 
-{-# NOINLINE cacheMisses #-}
-cacheMisses :: MVar [CacheKey]
-cacheMisses = unsafePerformIO $ newMVar []
+{-# NOINLINE cacheMissesMVar #-}
+cacheMissesMVar :: MVar [CacheKey]
+cacheMissesMVar = unsafePerformIO $ newMVar []
 
 cacheMiss :: CacheKey -> i -> i
-cacheMiss key i = unsafePerformIO $ do
-  is <- takeMVar cacheMisses
-  putMVar cacheMisses $ key: is
+cacheMiss = cacheMisses . pure
+
+cacheMisses :: [CacheKey] -> i -> i
+cacheMisses keys i = unsafePerformIO $ do
+  is <- takeMVar cacheMissesMVar
+  putMVar cacheMissesMVar $ keys <> is
   pure i
 
 
@@ -208,8 +211,8 @@ discussionOfStatement sc i
   = fromMaybe (error "statement is not in cache")
   $ listToMaybe [d | d <- Map.elems $ sc ^. scDiscussions, i `elem` map (^. statementID) (toList $ d ^. discussionTree)]
 
-gsVDoc :: Lens' (GlobalState_ a) (Maybe CompositeVDoc)
-gsVDoc = lens getCompositeVDoc setCompositeVDoc
+gsVDoc :: Getter (GlobalState_ a) (Maybe CompositeVDoc)
+gsVDoc = to getCompositeVDoc
   where
     getCompositeVDoc :: GlobalState_ a -> Maybe CompositeVDoc
     getCompositeVDoc gs = mkCompositeVDoc (gs ^. gsServerCache) <$> gsEdit gs
@@ -218,30 +221,16 @@ gsVDoc = lens getCompositeVDoc setCompositeVDoc
     mkCompositeVDoc sc edit = CompositeVDoc
       ((sc ^. scVDocs) Map.! (edit ^. editVDoc))
       edit
-      (mkMap scEdits editChildren)
-      (mkMap scNotes editNotes')
-      (mkMap scDiscussions editDiscussions')
+      (mkMap CacheKeyEdit scEdits editChildren)
+      (mkMap CacheKeyNote scNotes editNotes')
+      (mkMap CacheKeyDiscussion scDiscussions editDiscussions')
       where
-        -- TUNING: this go through y and construct x from that, this way we don't have to touch the
-        -- elements of x we want to throw out.
-        mkMap :: Lens' ServerCache (Map (ID a) a) -> Lens' Edit (Set (ID a)) -> Map (ID a) a
-        mkMap x y = Map.filterWithKey (\k _ -> k `Set.member` (edit ^. y)) $ sc ^. x
-
-    setCompositeVDoc :: GlobalState_ a -> Maybe CompositeVDoc -> GlobalState_ a
-    setCompositeVDoc gs Nothing = gs & gsEditID .~ Nothing
-    setCompositeVDoc gs (Just cvd) = gs
-      & gsEditID .~ Just (cvd ^. compositeVDocThisEdit . editID)
-      & gsServerCache %~ updateCache
-      where
-        updateCache sc = sc
-          & scVDocs       %~ uncurry Map.insert (mkItem vdocID $ cvd ^. compositeVDoc)
-          & scEdits       %~ uncurry Map.insert (mkItem editID $ cvd ^. compositeVDocThisEdit)
-          & scEdits       %~ ((cvd ^. compositeVDocApplicableEdits) <>)
-          & scNotes       %~ ((cvd ^. compositeVDocApplicableNotes) <>)
-          & scDiscussions %~ ((cvd ^. compositeVDocApplicableDiscussions) <>)
-
-        mkItem :: Lens' a (ID a) -> a -> (ID a, a)
-        mkItem k x = (x ^. k, x)
+        mkMap :: (ID a -> CacheKey) -> Lens' ServerCache (Map (ID a) a) -> Lens' Edit (Set (ID a)) -> Map (ID a) a
+        mkMap ck x y
+          = cacheMisses (map ck . Set.toList $ (edit ^. y) Set.\\ Map.keysSet m)
+          $ Map.filterWithKey (\k _ -> k `Set.member` (edit ^. y)) m
+          where
+            m = sc ^. x
 
 
 gsCurrentSelection :: HasCallStack => Getter GlobalState (Maybe (Selection Position))

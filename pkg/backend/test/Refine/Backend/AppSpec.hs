@@ -26,6 +26,7 @@ module Refine.Backend.AppSpec where
 import Refine.Backend.Prelude hiding (assert, check)
 
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 import qualified Data.List.NonEmpty as NEL
 import           Test.Hspec
 import           Test.QuickCheck
@@ -139,10 +140,10 @@ spec = do
         d <- App.getVDoc vid
         let hid = d ^. vdocHeadEdit
         liftIO $ hid `shouldBe` eid1
-        cv <- App.getCompositeVDoc vid hid
-        liftIO $ cv ^. compositeVDocThisVersion `shouldBe` vdoc ["a.c", "def"]
-        liftIO $ Map.size (cv ^. compositeVDocApplicableEdits) `shouldBe` 2
-        let [ee0, ee1] = Map.keys $ cv ^. compositeVDocApplicableEdits
+        cv <- App.getEdit hid
+        liftIO $ cv ^. editVDocVersion `shouldBe` vdoc ["a.c", "def"]
+        liftIO $ Set.size (cv ^. editChildren) `shouldBe` 2
+        let [ee0, ee1] = Set.toList $ cv ^. editChildren
         docA <- App.getVDocVersion ee0
         liftIO $ docA `shouldBe` vdoc ["a.c","d.f"]
         docB <- App.getVDocVersion ee1
@@ -196,11 +197,13 @@ runCmd (GetVDoc v cv) = do
 
 runCmd (AddEditToHead v cedit) = do
   Just vid <- gets . view $ vdocMap . at v
-  cvdoc <- lift . lift $ App.getCompositeVDocOnHead vid
-  let eid = cvdoc ^. compositeVDocThisEditID
-  edit   :: Edit          <- lift . lift $ App.addEdit eid cedit
-  cvdoc' :: CompositeVDoc <- lift . lift $ App.getCompositeVDocOnHead vid
-  let edit' = cvdoc' ^?! compositeVDocApplicableEdits . at (edit ^. editID) . _Just
+  cvdoc <- lift . lift $ App.getVDoc vid
+  let eid = cvdoc ^. vdocHeadEdit
+  edit   :: Edit <- lift . lift $ App.addEdit eid cedit
+  cvdoc' :: VDoc <- lift . lift $ App.getVDoc vid
+  edit_  :: Edit <- lift . lift $ App.getEdit (cvdoc' ^. vdocHeadEdit)
+  lift . check $ Set.member (edit ^. editID) (edit_ ^. editChildren)
+  edit'  :: Edit <- lift . lift $ App.getEdit (edit ^. editID)
   lift . check $
     (edit                 == edit') &&
     (edit ^. editDesc     == cedit ^. createEditDesc) &&

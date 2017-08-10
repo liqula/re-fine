@@ -36,6 +36,8 @@ import           Refine.Frontend.Header.Heading
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Store
+import           Refine.Frontend.Types
 import           Refine.Frontend.Test.Enzyme as EZ
 import           Refine.Frontend.Test.Store
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
@@ -82,7 +84,9 @@ spec = do
               un = undefined
 
           gs :: GlobalState
-          gs = emptyGlobalState & gsVDoc .~ Just newVDoc
+          gs = emptyGlobalState
+             & gsEditID .~ Just 1
+             & gsServerCache %~ serverCacheUpdate (LoadCompositeVDoc (AfterAjax newVDoc))
 
       resetState gs
       _wrapper <- mount (stickyContainer_ [] . mainHeader_ $ mkMainHeaderProps gs)

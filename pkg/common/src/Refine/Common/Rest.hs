@@ -55,8 +55,7 @@ data ApiErrorCreateUser
 --
 -- FUTUREWORK: use https://github.com/chpatrick/servant-generic#tldr
 type RefineAPI =
-       SGetVDoc
-  :<|> SGetVDocSimple
+       SGetVDocSimple
   :<|> SCreateVDoc
   :<|> SUpdateVDoc
   :<|> SAddEdit
@@ -87,17 +86,13 @@ type RefineAPI =
   :<|> SGetSimpleVotesOnEdit
 
 
-type SGetVDoc
-  = "r" :> "vdoccomposite" :> Capture "vdocid" (ID VDoc)
-    :> Get '[JSON] CompositeVDoc
-
 type SGetVDocSimple
   = "r" :> "vdoc" :> Capture "vdocid" (ID VDoc)
     :> Get '[JSON] VDoc
 
 type SCreateVDoc
   = "r" :> "vdoc" :> ReqBody '[JSON] CreateVDoc
-    :> Post '[JSON] CompositeVDoc
+    :> Post '[JSON] VDoc
 
 type SUpdateVDoc
   = "r" :> "vdoc" :> Capture "onvdocid" (ID VDoc) :> ReqBody '[JSON] UpdateVDoc

@@ -30,11 +30,8 @@ module Refine.Backend.App.VDoc where
 
 import Refine.Backend.Prelude
 
-import           Control.Arrow ((&&&))
-import           Control.Lens ((^.), (^?), view, has)
-import           Control.Monad ((<=<), mapM)
 import qualified Data.Map as Map
-import           Data.Maybe (catMaybes, mapMaybe)
+import           Data.Maybe
 import qualified Data.Set as Set
 import qualified Web.Users.Types as Users
 
@@ -54,11 +51,7 @@ listVDocs = do
   appLog "listVDocs"
   db $ mapM DB.getVDoc =<< DB.listVDocs
 
--- | Create 'VDoc' and return the corresponding 'CompositeVDoc'.
-createVDocGetComposite :: CreateVDoc -> App CompositeVDoc
-createVDocGetComposite = (getCompositeVDocOnHead . view vdocID) <=< createVDoc
-
--- | Creates a 'VDoc'.  See also: 'createVDocGetComposite'.
+-- | Creates a 'VDoc'.
 createVDoc :: CreateVDoc -> App VDoc
 createVDoc pv = do
   appLog "createVDoc"
@@ -84,33 +77,6 @@ getVDocVersion :: ID Edit -> App RawContent
 getVDocVersion eid = do
   appLog "getVDocVersion"
   db $ DB.getVersion eid
-
-getCompositeVDocOnHead :: ID VDoc -> App CompositeVDoc
-getCompositeVDocOnHead vid = do
-  vdoc <- db $ DB.getVDoc vid
-  getCompositeVDoc' vdoc (vdoc ^. vdocHeadEdit)
-
-getCompositeVDoc :: ID VDoc -> ID Edit -> App CompositeVDoc
-getCompositeVDoc vdocid editid = do
-  vdoc <- db $ DB.getVDoc vdocid
-  getCompositeVDoc' vdoc editid
-
-getCompositeVDoc' :: VDoc -> ID Edit -> App CompositeVDoc
-getCompositeVDoc' vdoc editid = do
-  appLog "getCompositeVDoc"
-  edit <- db $ DB.getEdit editid
-  comments <- db $ DB.editComments editid
-  let commentNotes       = catMaybes $ (^? _CommentNote)       <$> filter (has _CommentNote)       comments
-      commentDiscussions = catMaybes $ (^? _CommentDiscussion) <$> filter (has _CommentDiscussion) comments
-  edits <- db $ mapM DB.getEdit =<< DB.getEditChildren editid
-  pure $
-    CompositeVDoc
-      vdoc edit
-      (toMap editID edits)
-      (toMap noteID commentNotes)
-      (toMap discussionID commentDiscussions)
-  where
-    toMap selector = Map.fromList . fmap (view selector &&& id)
 
 updateEdit :: ID Edit -> CreateEdit -> App Edit
 updateEdit eid edit = do
