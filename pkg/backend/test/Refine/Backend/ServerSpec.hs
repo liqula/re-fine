@@ -607,7 +607,7 @@ specVoting = around createTestSession $ do
         votes :: VoteCount <- runWaiJSON sess . wget $ getVotesUri eid
         votes `shouldBe` Map.fromList [(Yeay, 1), (Nay, 2)]
 
-  describe "### merging and rebasing" $ do
+  describe "merging and rebasing" $ do
     it "works if two edits are present and one is merged" $ \sess -> do
       addUserAndLogin sess "userA" "userA@email.com"
 
