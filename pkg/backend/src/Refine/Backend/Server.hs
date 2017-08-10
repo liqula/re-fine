@@ -45,6 +45,10 @@ import           Servant.Utils.StaticFiles (serveDirectory)
 import           System.Directory (canonicalizePath, createDirectoryIfMissing)
 import           System.FilePath (dropFileName)
 import qualified Web.Users.Types as Users
+import           Network.WebSockets
+import           Network.Wai.Handler.WebSockets
+import           Control.Concurrent
+import           Control.Monad
 
 import Refine.Backend.App as App
 import Refine.Backend.App.MigrateDB (migrateDB)
@@ -116,7 +120,28 @@ refineApi =
 
 startBackend :: Config -> IO ()
 startBackend cfg = do
-  Warp.runSettings (warpSettings cfg) . backendServer =<< mkProdBackend cfg
+  clients <- newMVar 0
+  Warp.runSettings (warpSettings cfg) . startWebsocketsServer clients . backendServer =<< mkProdBackend cfg
+
+startWebsocketsServer :: MVar Int -> Application -> Application
+startWebsocketsServer clients = websocketsOr options server
+  where
+    options :: ConnectionOptions
+    options = defaultConnectionOptions
+
+    server :: ServerApp
+    server pendingconnection = do
+      n <- takeMVar clients
+      putMVar clients $ n + 1
+      conn <- acceptRequest pendingconnection
+      let sendloop i = do
+            sendTextData conn ("Hello, client #" <> cs (show n) <> "! New state: " <> cs (show i) :: ST)
+            threadDelay 3000000
+            sendloop (i + 1)
+      _ <- forkIO . forever $ do
+          msg <- receiveData conn
+          putStrLn $ "reveived from client #" <> show n <> ": " <> cs (msg :: ST)
+      sendloop (0 :: Int)
 
 runCliAppCommand :: Config -> AppM DB a -> IO ()
 runCliAppCommand cfg cmd = do
