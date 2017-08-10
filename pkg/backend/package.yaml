@@ -27,6 +27,7 @@ dependencies:
   - elim
   - fgl
   - filepath
+  - fingertree-tf
   - free
   - functor-infix
   - generics-sop
@@ -61,7 +62,9 @@ dependencies:
   - users
   - users-persistent
   - uuid
+  - wai-websockets
   - warp
+  - websockets
   - yaml
 
 library:
