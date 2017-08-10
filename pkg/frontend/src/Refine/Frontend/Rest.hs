@@ -34,9 +34,6 @@ cfg = ApiRequestConfig "" NoTimeout
 
 
 -- | look up a vdoc by its auid.
-getVDoc :: HasCallStack => ID VDoc -> HandleResponse CompositeVDoc -> IO ()
-getVDoc = request cfg (Proxy :: Proxy SGetVDoc)
-
 getVDocSimple :: HasCallStack => ID VDoc -> HandleResponse VDoc -> IO ()
 getVDocSimple = request cfg (Proxy :: Proxy SGetVDocSimple)
 

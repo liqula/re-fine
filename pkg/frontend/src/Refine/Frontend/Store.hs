@@ -243,12 +243,16 @@ emitBackendCallsFor act st = case act of
     -- documents
 
     LoadCompositeVDoc (BeforeAjax auid) -> do
-        getVDoc auid $ \case
-            (Left rsp) -> ajaxFail rsp Nothing
-            (Right loadedVDoc) -> dispatchM . CompositeAction $
-                                   [ LoadCompositeVDoc $ AfterAjax loadedVDoc
+        getVDocSimple auid $ \case
+          (Left rsp) -> ajaxFail rsp Nothing
+          (Right loadedVDoc) -> do
+            Rest.getEdit (loadedVDoc ^. C.vdocHeadEdit) $ \case
+              (Left rsp) -> ajaxFail rsp Nothing
+              (Right edit) -> dispatchM . CompositeAction $
+                                   [ LoadCompositeVDoc $ AfterAjax (C.CompositeVDoc loadedVDoc edit mempty mempty mempty)
                                    , ContributionAction RequestSetAllVerticalSpanBounds
                                    ]
+            pure []
 
     -- groups
 

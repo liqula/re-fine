@@ -83,9 +83,8 @@ data Backend db = Backend
 
 refineApi :: (Database db) => ServerT RefineAPI (AppM db)
 refineApi =
-       App.getCompositeVDocOnHead
-  :<|> App.getVDoc
-  :<|> App.createVDocGetComposite
+       App.getVDoc
+  :<|> App.createVDoc
   :<|> App.updateVDoc
   :<|> App.addEdit
   :<|> App.getEdit
