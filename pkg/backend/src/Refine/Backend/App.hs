@@ -36,6 +36,7 @@ import Refine.Backend.App.Smtp        as App
 import Refine.Backend.App.Translation as App
 import Refine.Backend.App.User        as App
 import Refine.Backend.App.VDoc        as App
+import Refine.Backend.App.Cache       as App
 import Refine.Backend.Config
 import Refine.Backend.Logger
 

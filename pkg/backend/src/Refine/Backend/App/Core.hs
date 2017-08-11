@@ -45,6 +45,7 @@ module Refine.Backend.App.Core (
   , MonadApp
   , MonadAppDB(dbWithFilters), db, dbUsersCmd
   , MonadLog(appLog)
+  , MonadCache(..)
   ) where
 
 import Refine.Backend.Prelude
@@ -127,6 +128,7 @@ type MonadApp app =
   , MonadAppDB app
   , MonadLog app
   , MonadSmtp app
+  , MonadCache app
   )
 
 -- | Syntactic sugar for 'MonadApp'.
@@ -199,6 +201,12 @@ instance MonadLog (AppM db) where
   appLog msg = AppM $ do
     logger <- view (_2 . appLogger)
     liftIO $ unLogger logger msg
+
+
+-- * logging
+
+class MonadCache app where
+  invalidateCaches :: Set CacheKey -> app ()
 
 
 -- * lens/TH

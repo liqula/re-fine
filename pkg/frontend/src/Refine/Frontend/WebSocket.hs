@@ -44,19 +44,28 @@ webSocketMVar = unsafePerformIO newEmptyMVar
 
 initWebSocket :: IO ()
 initWebSocket = do
-    let wsClose _ = putStrLn "websockets connection closed"
+    let wsClose _ = do
+          putStrLn "websockets connection closed"
+          _ <- takeMVar webSocketMVar
+          openConnection
+
         wsMessage msg = do
-          putStrLn "websocket message from server"
           case getData msg of
             StringData x -> case decode $ cs x of
-              Just sc -> executeAction . action @GlobalState $ RefreshServerCache sc
+              Just (Just sc) -> executeAction . action @GlobalState $ RefreshServerCache sc
+              Just Nothing -> putStrLn "ping"
               _ -> error "websockets json decoding error"
             _ -> error "websockets error"
-    ws <- connect $ WebSocketRequest "ws://localhost:3000/"
-                                         []
-                                         (Just wsClose)
-                                         (Just wsMessage)
-    putMVar webSocketMVar $ \keys -> send (cs $ encode keys) ws
+
+        openConnection = do
+            ws <- connect $ WebSocketRequest "ws://localhost:3000/"
+                                                 []
+                                                 (Just wsClose)
+                                                 (Just wsMessage)
+            putMVar webSocketMVar $ \keys -> send (cs $ encode keys) ws
+            putStrLn "websocket connection opened"
+
+    openConnection
 
 #ifndef __GHCJS__
 data MessageEventData = StringData JSString

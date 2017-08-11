@@ -37,6 +37,7 @@ import Refine.Backend.Prelude as P
 
 import           Debug.Trace (trace)  -- (please keep this until we have better logging)
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 import           Network.Wai.Handler.Warp as Warp
 import qualified Servant.Cookie.Session as SCS
 import           Servant.Cookie.Session (serveAction)
@@ -121,42 +122,44 @@ refineApi =
 
 startBackend :: Config -> IO ()
 startBackend cfg = do
-  clients <- newMVar 0
-  Warp.runSettings (warpSettings cfg) . startWebsocketsServer clients =<< mkProdBackend cfg
+  Warp.runSettings (warpSettings cfg) . startWebSocketServer =<< mkProdBackend cfg
 
-startWebsocketsServer :: MVar Int -> Backend DB -> Application
-startWebsocketsServer clients backend = websocketsOr options server $ backendServer backend
+startWebSocketServer :: Backend DB -> Application
+startWebSocketServer backend = websocketsOr options server $ backendServer backend
   where
     options :: ConnectionOptions
     options = defaultConnectionOptions
 
+    -- FIXME: delete disconnected clients' data
+    -- FIXME: cache invalidation by deleting items from cache (don't send new value)
+
     server :: ServerApp
     server pendingconnection = do
-      n <- takeMVar clients
-      putMVar clients $ n + 1
       conn <- acceptRequest pendingconnection
+
+      (n, cmap) <- takeMVar webSocketMVar
+      putMVar webSocketMVar (n + 1, Map.insert n (conn, mempty) cmap)
+
+      _ <- liftIO . forkIO . forever $ do
+          threadDelay 5000000
+          sendTextData conn (cs $ encode (Nothing :: Maybe ServerCache) :: ST)
+
       forever $ do
           msg <- receiveData conn
           case decode msg of
-            Nothing -> error "websockets json decoding error"
+            Nothing -> do
+              error "websockets json decoding error"
             Just keys -> do
---              putStrLn $ "request reveived from client #" <> show n <> ": " <> cs (show keys)
-              cache <- mconcat <$> mapM getData keys
-              sendTextData conn (cs $ encode cache :: ST)
+                putStrLn $ "request from client #" <> show n <> ", " <> show keys
+                cache <- mconcat <$> mapM getData keys
+                (n', cmap') <- takeMVar webSocketMVar
+                putMVar webSocketMVar (n', Map.adjust (second (<> Set.fromList keys)) n cmap')
+                sendCache conn cache
 
     getData :: CacheKey -> IO ServerCache
     getData key = runExceptT (backendRunApp backend $$ getData' key) >>= \case
       Left err -> error $ show err  -- FIXME
       Right x -> pure x
-
-    getData' :: CacheKey -> App ServerCache
-    getData' = \case
-      CacheKeyVDoc i       -> App.getVDoc i       <&> \val -> ServerCache (Map.singleton i val) mempty mempty mempty mempty mempty
-      CacheKeyEdit i       -> App.getEdit i       <&> \val -> ServerCache mempty (Map.singleton i val) mempty mempty mempty mempty
-      CacheKeyNote i       -> App.getNote i       <&> \val -> ServerCache mempty mempty (Map.singleton i val) mempty mempty mempty
-      CacheKeyDiscussion i -> App.getDiscussion i <&> \val -> ServerCache mempty mempty mempty (Map.singleton i val) mempty mempty
-      CacheKeyUser i       -> App.getUser i       <&> \val -> ServerCache mempty mempty mempty mempty (Map.singleton i val) mempty
-      CacheKeyGroup i      -> App.getGroup i      <&> \val -> ServerCache mempty mempty mempty mempty mempty (Map.singleton i val)
 
 runCliAppCommand :: Config -> AppM DB a -> IO ()
 runCliAppCommand cfg cmd = do

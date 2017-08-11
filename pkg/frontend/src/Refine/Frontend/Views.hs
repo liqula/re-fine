@@ -95,10 +95,13 @@ wholeScreen = Outdated.defineLifecycleView "WholeScreen" () Outdated.lifecycleCo
   where
     didMountOrUpdate :: HasCallStack => Outdated.LPropsAndState GlobalState () -> IO ()
     didMountOrUpdate _getPropsAndState = do
-      cm <- takeMVar cacheMissesMVar
+      cm <- nub <$> takeMVar cacheMissesMVar
       putMVar cacheMissesMVar []
-      pc <- readMVar webSocketMVar
-      pc $ nub cm
+      unless (null cm) $ do
+        pc <- takeMVar webSocketMVar
+        putMVar webSocketMVar pc
+        pc cm
+        putStrLn $ "request sent to the server: " <> show cm
 
 mainScreen :: HasCallStack => View '[GlobalState]
 mainScreen = mkView "MainScreen" $ \rs -> do
