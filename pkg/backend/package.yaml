@@ -33,6 +33,7 @@ dependencies:
   - generics-sop
   - graphviz
   - hspec
+  - http-media
   - i18n
   - lens
   - lentil

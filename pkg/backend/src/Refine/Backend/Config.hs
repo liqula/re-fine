@@ -31,6 +31,8 @@ import qualified Data.Yaml as Yaml
 import qualified Generics.SOP as SOP
 import           Network.Wai.Handler.Warp as Warp
 
+import Refine.Common.Types.Config
+
 
 -- * config tree
 
@@ -44,6 +46,7 @@ data Config = Config
   , _cfgSessionLength :: Timespan       -- ^ Session cookie life expectancy
   , _cfgPoFilesRoot   :: FilePath       -- ^ The directory of Po translation files
   , _cfgSmtp          :: Maybe SmtpCfg  -- ^ for sending notification emails to users
+  , _cfgClient        :: ClientCfg      -- ^ what we send to the client
   }
   deriving (Eq, Show, Generic)
 
@@ -78,6 +81,7 @@ instance Default Config where
     , _cfgSessionLength = TimespanHours 72
     , _cfgPoFilesRoot   = "./po"
     , _cfgSmtp          = Nothing
+    , _cfgClient        = def
     }
 
 instance Default LogCfg where
@@ -94,6 +98,7 @@ instance Default SmtpCfg where
     , _smtpSendmailPath     = "/usr/sbin/sendmail"
     , _smtpSendmailArgs     = ["-t"]
     }
+
 
 -- * warp settings
 

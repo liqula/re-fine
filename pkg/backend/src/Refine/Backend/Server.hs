@@ -34,9 +34,9 @@ module Refine.Backend.Server
   ) where
 
 import Refine.Backend.Prelude as P
-
 import           Debug.Trace (trace)  -- (please keep this until we have better logging)
 import qualified Data.Map as Map
+import           Network.HTTP.Media ((//))
 import           Network.Wai.Handler.Warp as Warp
 import qualified Servant.Cookie.Session as SCS
 import           Servant.Cookie.Session (serveAction)
@@ -117,6 +117,21 @@ refineApi =
   :<|> App.putSimpleVoteOnEdit
   :<|> App.deleteSimpleVoteOnEdit
   :<|> App.getSimpleVotesOnEdit
+
+
+data JSViaRest
+
+instance Accept JSViaRest where
+    contentType Proxy = "application" // "javascript"
+
+instance MimeRender JSViaRest ClientCfg where
+  mimeRender Proxy = ("window.client_cfg = " <>) . (<> ";") . encode
+
+type ClientConfigAPI = "cfg.js" :> Get '[JSViaRest, JSON] ClientCfg
+
+-- | Serve 'ClientCfg' as a js file for import in index.html.
+clientConfigApi :: (Database db) => ServerT ClientConfigAPI (AppM db)
+clientConfigApi = asks . view $ appConfig . cfgClient
 
 
 startBackend :: Config -> IO ()
@@ -201,12 +216,12 @@ mkServerApp cfg dbNat dbRunner = do
   -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
   -- may need to refactor, e.g. by using extra arguments in the end point types.
   srvApp <- serveAction
-              (Proxy :: Proxy RefineAPI)
+              (Proxy :: Proxy (RefineAPI :<|> ClientConfigAPI))
               (Proxy :: Proxy AppState)
               cookie
               (Nat liftIO)
               (toServantError . cnToSn app)
-              refineApi
+              (refineApi :<|> clientConfigApi)
               (Just (P.serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
 
   pure $ Backend srvApp app
