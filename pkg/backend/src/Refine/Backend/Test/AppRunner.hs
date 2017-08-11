@@ -59,6 +59,7 @@ createAppRunner = do
         , _cfgSessionLength = TimespanSecs 30
         , _cfgPoFilesRoot   = poRoot
         , _cfgSmtp          = Nothing
+        , _cfgClient        = def
         }
 
   (dbRunner, dbNat) <- createDBNat cfg

@@ -57,17 +57,26 @@ initWebSocket = do
               _ -> error "websockets json decoding error"
             _ -> error "websockets error"
 
+        wsUrl = case clientCfg of
+          ClientCfg port host -> cs $ "ws://" <> host <> ":" <> cs (show port) <> "/"
+
         openConnection = do
-            ws <- connect $ WebSocketRequest "ws://localhost:3000/"
-                                                 []
-                                                 (Just wsClose)
-                                                 (Just wsMessage)
+            ws <- connect $ WebSocketRequest
+                              wsUrl
+                              []
+                              (Just wsClose)
+                              (Just wsMessage)
             putMVar webSocketMVar $ \keys -> send (cs $ encode keys) ws
             putStrLn "websocket connection opened"
 
     openConnection
 
-#ifndef __GHCJS__
+
+#if __GHCJS__
+clientCfg :: ClientCfg
+clientCfg = fromMaybe (error "clientCfg: decoding error!") . decode . cs $ js_clientCfg
+
+#else
 data MessageEventData = StringData JSString
                       | OtherMessageEventData
 
@@ -91,4 +100,22 @@ send = error "ghcjs base not available"
 
 getData :: MessageEvent -> MessageEventData
 getData = error "ghcjs base not available"
+
+clientCfg :: ClientCfg
+clientCfg = ClientCfg 3000 "localhost"
+
+#endif
+
+#ifdef __GHCJS__
+
+foreign import javascript safe
+  "$r = JSON.stringify(window.client_cfg);"
+  js_clientCfg :: JSString
+
+#else
+
+{-# ANN js_clientCfg ("HLint: ignore Use camelCase" :: String) #-}
+js_clientCfg :: JSString
+js_clientCfg = error "javascript FFI not available in GHC"
+
 #endif

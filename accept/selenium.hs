@@ -274,6 +274,7 @@ mkBackendConfig port = Yaml.object
                                        ]
   , "_cfgPoolSize"      .= (8 :: Int)
   , "_cfgSmtp"          .= Yaml.Null
+  , "_cfgClient"        .= Yaml.object ["_clientCfgWSHost" .= ("localhost" :: String), "_clientCfgWSPort" .= (port :: Int)]
   ]
 
 runXvfb :: MonadIO m => m ()
