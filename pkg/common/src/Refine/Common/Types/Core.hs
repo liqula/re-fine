@@ -360,6 +360,34 @@ pattern LineElem a b <- (makeEntityStyleSet -> a, b)
 makeEntityStyleSet :: EntityStyles -> Set (Either Entity Style)
 makeEntityStyleSet (Atom e, s) = maybe mempty (Set.singleton . Left) e <> Set.mapMonotonic (Right . unAtom) s
 
+-- ** Server cache
+
+data ServerCache = ServerCache
+  { _scVDocs       :: Map (ID VDoc)       VDoc
+  , _scEdits       :: Map (ID Edit)       Edit
+  , _scNotes       :: Map (ID Note)       Note
+  , _scDiscussions :: Map (ID Discussion) Discussion
+  , _scUsers       :: Map (ID User)       User
+  , _scGroups      :: Map (ID Group)      Group
+  }
+  deriving (Show, Eq, Generic)
+
+instance Monoid ServerCache where
+  mempty = ServerCache mempty mempty mempty mempty mempty mempty
+  ServerCache a b c d e f `mappend` ServerCache a' b' c' d' e' f'
+    = ServerCache (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f')
+
+data CacheKey
+  = CacheKeyVDoc       (ID VDoc)
+  | CacheKeyEdit       (ID Edit)
+  | CacheKeyNote       (ID Note)
+  | CacheKeyDiscussion (ID Discussion)
+  | CacheKeyUser       (ID User)
+  | CacheKeyGroup      (ID Group)
+  deriving (Eq, Ord, Show, Generic)
+
+
+
 -- * Instances
 
 -- ** Contribution Http instances
@@ -737,7 +765,7 @@ deriveClasses
   , ([ ''EntityKey, ''CompositeVDoc, ''ContributionID, ''MarkID
      , ''VDoc, ''CreateVDoc, ''UpdateVDoc, ''EditSource, ''Edit
      , ''EditStats, ''CreateEdit, ''EditKind, ''Title, ''Abstract
-     , ''Group, ''CreateGroup]
+     , ''Group, ''CreateGroup, ''ServerCache, ''CacheKey]
     , allClass)
   ]
 

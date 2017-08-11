@@ -54,12 +54,12 @@ import           Refine.Frontend.MainMenu.Component (mainMenu_)
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
-import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 import           Refine.Frontend.Views.Types
+import           Refine.Frontend.WebSocket
 import qualified Refine.Frontend.Workbench
 
 
@@ -97,7 +97,8 @@ wholeScreen = Outdated.defineLifecycleView "WholeScreen" () Outdated.lifecycleCo
     didMountOrUpdate _getPropsAndState = do
       cm <- takeMVar cacheMissesMVar
       putMVar cacheMissesMVar []
-      forM_ (nub cm) $ dispatchAndExec . PopulateCache  -- FIXME: group actions
+      pc <- readMVar webSocketMVar
+      pc $ nub cm
 
 mainScreen :: HasCallStack => View '[GlobalState]
 mainScreen = mkView "MainScreen" $ \rs -> do

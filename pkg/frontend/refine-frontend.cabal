@@ -123,6 +123,7 @@ library
       Refine.Frontend.Util
       Refine.Frontend.Views
       Refine.Frontend.Views.Types
+      Refine.Frontend.WebSocket
       Refine.Frontend.Workbench
   default-language: Haskell2010
 

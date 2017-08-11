@@ -36,6 +36,7 @@ module Refine.Backend.Server
 import Refine.Backend.Prelude as P
 
 import           Debug.Trace (trace)  -- (please keep this until we have better logging)
+import qualified Data.Map as Map
 import           Network.Wai.Handler.Warp as Warp
 import qualified Servant.Cookie.Session as SCS
 import           Servant.Cookie.Session (serveAction)
@@ -121,10 +122,10 @@ refineApi =
 startBackend :: Config -> IO ()
 startBackend cfg = do
   clients <- newMVar 0
-  Warp.runSettings (warpSettings cfg) . startWebsocketsServer clients . backendServer =<< mkProdBackend cfg
+  Warp.runSettings (warpSettings cfg) . startWebsocketsServer clients =<< mkProdBackend cfg
 
-startWebsocketsServer :: MVar Int -> Application -> Application
-startWebsocketsServer clients = websocketsOr options server
+startWebsocketsServer :: MVar Int -> Backend DB -> Application
+startWebsocketsServer clients backend = websocketsOr options server $ backendServer backend
   where
     options :: ConnectionOptions
     options = defaultConnectionOptions
@@ -134,14 +135,28 @@ startWebsocketsServer clients = websocketsOr options server
       n <- takeMVar clients
       putMVar clients $ n + 1
       conn <- acceptRequest pendingconnection
-      let sendloop i = do
-            sendTextData conn ("Hello, client #" <> cs (show n) <> "! New state: " <> cs (show i) :: ST)
-            threadDelay 3000000
-            sendloop (i + 1)
-      _ <- forkIO . forever $ do
+      forever $ do
           msg <- receiveData conn
-          putStrLn $ "reveived from client #" <> show n <> ": " <> cs (msg :: ST)
-      sendloop (0 :: Int)
+          case decode msg of
+            Nothing -> error "websockets json decoding error"
+            Just keys -> do
+--              putStrLn $ "request reveived from client #" <> show n <> ": " <> cs (show keys)
+              cache <- mconcat <$> mapM getData keys
+              sendTextData conn (cs $ encode cache :: ST)
+
+    getData :: CacheKey -> IO ServerCache
+    getData key = runExceptT (backendRunApp backend $$ getData' key) >>= \case
+      Left err -> error $ show err  -- FIXME
+      Right x -> pure x
+
+    getData' :: CacheKey -> App ServerCache
+    getData' = \case
+      CacheKeyVDoc i       -> App.getVDoc i       <&> \val -> ServerCache (Map.singleton i val) mempty mempty mempty mempty mempty
+      CacheKeyEdit i       -> App.getEdit i       <&> \val -> ServerCache mempty (Map.singleton i val) mempty mempty mempty mempty
+      CacheKeyNote i       -> App.getNote i       <&> \val -> ServerCache mempty mempty (Map.singleton i val) mempty mempty mempty
+      CacheKeyDiscussion i -> App.getDiscussion i <&> \val -> ServerCache mempty mempty mempty (Map.singleton i val) mempty mempty
+      CacheKeyUser i       -> App.getUser i       <&> \val -> ServerCache mempty mempty mempty mempty (Map.singleton i val) mempty
+      CacheKeyGroup i      -> App.getGroup i      <&> \val -> ServerCache mempty mempty mempty mempty mempty (Map.singleton i val)
 
 runCliAppCommand :: Config -> AppM DB a -> IO ()
 runCliAppCommand cfg cmd = do
