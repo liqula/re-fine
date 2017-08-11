@@ -149,12 +149,12 @@ mergeEdit = rebaseHeadToEdit
 rebaseHeadToEdit :: ID Edit -> App ()
 rebaseHeadToEdit eid = do
   appLog $ "rebase to " <> show eid
-  (hid, ch) <- db $ do
-    rid <- DB.vdocOfEdit eid
-    vdoc <- DB.getVDoc rid
+  (vid, hid, ch) <- db $ do
+    vid <- DB.vdocOfEdit eid
+    vdoc <- DB.getVDoc vid
     let hid = vdoc ^. vdocHeadEdit
-    DB.moveVDocHead rid eid
-    (,) hid <$> DB.getEditChildren hid
+    DB.moveVDocHead vid eid
+    (,,) vid hid <$> DB.getEditChildren hid
   when (eid `notElem` ch) . throwError $ AppRebaseError eid
 
   -- move edits
@@ -184,6 +184,7 @@ rebaseHeadToEdit eid = do
         <> (view (discussionMetaID . miMeta) <$> movedDiscussions)
 
   notifyContributionAuthorsOfMovement $ movedEditOwners <> movedCommentOwners
+  invalidateCaches $ Set.fromList [CacheKeyVDoc vid, CacheKeyEdit hid, CacheKeyEdit eid]
 
 notifyContributionAuthorsOfMovement :: [MetaInfo] -> App ()
 notifyContributionAuthorsOfMovement mis = forM_ uids $ \uid -> do

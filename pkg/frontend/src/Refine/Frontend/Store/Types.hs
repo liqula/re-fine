@@ -62,30 +62,6 @@ data GlobalState_ a = GlobalState
   , _gsServerCache                :: ServerCache
   } deriving (Show, Eq, Generic, Functor)
 
-data ServerCache = ServerCache
-  { _scVDocs       :: Map (ID VDoc)       VDoc
-  , _scEdits       :: Map (ID Edit)       Edit
-  , _scNotes       :: Map (ID Note)       Note
-  , _scDiscussions :: Map (ID Discussion) Discussion
-  , _scUsers       :: Map (ID User)       User
-  , _scGroups      :: Map (ID Group)      Group
-  }
-  deriving (Show, Eq, Generic)
-
-instance Monoid ServerCache where
-  mempty = ServerCache mempty mempty mempty mempty mempty mempty
-  ServerCache a b c d e f `mappend` ServerCache a' b' c' d' e' f'
-    = ServerCache (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f')
-
-data CacheKey
-  = CacheKeyVDoc       (ID VDoc)
-  | CacheKeyEdit       (ID Edit)
-  | CacheKeyNote       (ID Note)
-  | CacheKeyDiscussion (ID Discussion)
-  | CacheKeyUser       (ID User)
-  | CacheKeyGroup      (ID Group)
-  deriving (Eq, Ord, Show, Generic)
-
 {-# NOINLINE cacheMissesMVar #-}
 cacheMissesMVar :: MVar [CacheKey]
 cacheMissesMVar = unsafePerformIO $ newMVar []
@@ -145,7 +121,6 @@ data GlobalAction =
   | AddStatement Bool{-update-} (ID Statement) (AjaxAction CreateStatement Discussion)
 
   | RefreshServerCache ServerCache
-  | PopulateCache CacheKey
 
     -- i18n
   | LoadTranslations Locale
@@ -168,7 +143,7 @@ data GlobalAction =
   | CompositeAction [GlobalAction]
   deriving (Show, Eq, Generic)
 
-makeRefineTypes [''ServerCache, ''GlobalState_, ''DevState, ''GlobalAction, ''CacheKey]
+makeRefineTypes [''GlobalState_, ''DevState, ''GlobalAction]
 
 getDocumentState :: GlobalState -> DocumentState
 getDocumentState gs@(view gsVDoc -> Just cvdoc)

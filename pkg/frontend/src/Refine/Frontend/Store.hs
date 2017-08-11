@@ -33,6 +33,7 @@ import Refine.Frontend.Prelude
 import           Control.Concurrent (forkIO, yield, threadDelay)
 import qualified Data.Map.Strict as M
 
+import           Refine.Common.Types hiding (CreateUser, Login)
 import qualified Refine.Common.Types as C
 import           Refine.Common.VDoc.Draft
 import           Refine.Common.Rest (ApiError(..))
@@ -406,29 +407,6 @@ emitBackendCallsFor act st = case act of
       sPutSimpleVoteOnEdit eid vote $ \case
           Left msg -> ajaxFail msg Nothing
           Right () -> dispatchM $ reloadCompositeVDoc st
-
-
-    -- cache
-
-    PopulateCache k -> case k of
-      CacheKeyVDoc i -> Rest.getVDocSimple i $ \case
-          Left msg -> ajaxFail msg Nothing
-          Right val -> dispatchM . RefreshServerCache $ ServerCache (M.singleton i val) mempty mempty mempty mempty mempty
-      CacheKeyEdit i -> Rest.getEdit i $ \case
-          Left msg -> ajaxFail msg Nothing
-          Right val -> dispatchM . RefreshServerCache $ ServerCache mempty (M.singleton i val) mempty mempty mempty mempty
-      CacheKeyNote i -> getNote i $ \case
-          Left msg -> ajaxFail msg Nothing
-          Right val -> dispatchM . RefreshServerCache $ ServerCache mempty mempty (M.singleton i val) mempty mempty mempty
-      CacheKeyDiscussion i -> Rest.getDiscussion i $ \case
-          Left msg -> ajaxFail msg Nothing
-          Right val -> dispatchM . RefreshServerCache $ ServerCache mempty mempty mempty (M.singleton i val) mempty mempty
-      CacheKeyUser i -> getUser i $ \case
-          Left msg -> ajaxFail msg Nothing
-          Right val -> dispatchM . RefreshServerCache $ ServerCache mempty mempty mempty mempty (M.singleton i val) mempty
-      CacheKeyGroup i -> getGroup i $ \case
-          Left msg -> ajaxFail msg Nothing
-          Right val -> dispatchM . RefreshServerCache $ ServerCache mempty mempty mempty mempty mempty (M.singleton i val)
 
 
     -- default
