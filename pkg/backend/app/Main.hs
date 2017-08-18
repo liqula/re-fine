@@ -31,7 +31,7 @@ runInitDB contentPath configPath = do
   cfg <- initConfig configPath
   content <- readCliCreate contentPath
   runCliAppCommand cfg $ initializeDB content
-  appLogL LogInfo "Run `echo .schema | sqlite3 <FILE.db>` to get a database dump."
+  appLogL LogInfo "Run `echo .dump | sqlite3 <FILE.db>` to get a database dump."
 
 startServer :: Maybe FilePath -> IO ()
 startServer configPath = do
