@@ -89,9 +89,8 @@ data ToServer
 
   | TSGreeting (Maybe CacheId)  -- ^ first message on connect with 'Nothing'; if this is a
                                 -- re-connect, send @'Just' 'CacheId'@.
-  | TSCookie ST
   | TSPing
-  deriving (Show, Generic)
+  deriving (Eq, Show, Generic)
 
 data ToClient
   = TCServerCache ServerCache
@@ -108,7 +107,7 @@ data ToClient
 
   | TCGreeting CacheId           -- ^ first message on connect
   | TCPing                       -- ^ (this could be done more easily with 'sendPing', 'forkPingThread'.)
-  deriving (Show, Generic)
+  deriving (Eq, Show, Generic)
 
 -- filters the cache
 restrictCache :: Set CacheKey -> ServerCache -> ServerCache

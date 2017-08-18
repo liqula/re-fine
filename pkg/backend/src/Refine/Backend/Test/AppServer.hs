@@ -63,7 +63,8 @@ data TestBackend = TestBackend
 
 makeLenses ''TestBackend
 
--- | Create session via 'mkProdBackend'.
+-- | Create session via 'mkProdBackend'.  Note that there is no network listener and 'WarpSettings'
+-- are meaningless; the session only creates an 'AppM' runner and an 'Application'.
 createTestSession :: (TestBackend -> IO ()) -> IO ()
 createTestSession action = withTempCurrentDirectory $ do
   let cfg = def
