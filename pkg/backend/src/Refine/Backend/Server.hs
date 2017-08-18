@@ -133,9 +133,7 @@ clientConfigApi = asks . view $ appConfig . cfgClient
 startBackend :: Config -> IO ()
 startBackend cfg = do
   (backend, _destroy) <- mkProdBackend cfg
-  Warp.runSettings (warpSettings cfg)
-    . startWebSocketServer (appMToIO backend) (backendSessionStore backend) refineCookieName
-    $ backendServer backend
+  Warp.runSettings (warpSettings cfg) . startWebSocketServer (appMToIO backend) $ backendServer backend
   where
     appMToIO :: Backend DB -> AppM DB a -> IO (Either ApiError a)
     appMToIO backend m = either (Left . App.toApiError) Right <$> runExceptT (backendRunApp backend $$ m)

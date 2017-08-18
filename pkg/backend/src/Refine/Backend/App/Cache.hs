@@ -36,12 +36,9 @@ import           Control.Concurrent
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import           Network.Wai (Middleware)
-import qualified Network.Wai.Session as SCS
-import qualified Servant.Cookie.Session as SCS
 import           System.IO.Unsafe
 import           Network.WebSockets
 import           Network.Wai.Handler.WebSockets
-import           Web.Cookie (parseCookies)
 
 import Refine.Common.Types
 import Refine.Common.Rest (ApiError)
@@ -54,9 +51,11 @@ import Refine.Backend.App.Translation as App
 import Refine.Backend.Config
 import Refine.Backend.Database
 
-type WebSocketMVar = MVar (Int{-to generate fresh CacheIds-}, Map CacheId (Connection, Set CacheKey))
+type WebSocketMVar = MVar (Int{-to generate fresh CacheIds-}, Map CacheId WebSocketSession)
+type WebSocketSession = ((Connection, AppState), Set CacheKey)
 
--- FIXME: store this in state
+-- | This is the place where all the session's 'AppState's are kept between websocket
+-- connections.
 {-# NOINLINE webSocketMVar #-}
 webSocketMVar :: WebSocketMVar
 webSocketMVar = unsafePerformIO $ newMVar (0, mempty)
@@ -82,63 +81,30 @@ instance Database db => MonadCache (AppM db) where
     invalidateCaches keys = do
         cmap <- liftIO $ takeMVar webSocketMVar
         let cmap' = second (second (Set.\\ keys) <$>) cmap
-            cls = [(n, conn, d) | (n, (conn, s)) <- Map.assocs $ snd cmap, let d = Set.intersection keys s, not $ Set.null d]
+            cls = [(n, conn, d) | (n, ((conn, _), s)) <- Map.assocs $ snd cmap, let d = Set.intersection keys s, not $ Set.null d]
         appLog $ "invalidate cache items " <> show (Set.toList keys)
         forM_ cls $ \(n, conn, d) -> do
             liftIO . sendMessage conn . TCInvalidateKeys $ Set.toList d
             appLog $ "invalidate cache of client #" <> show n <> ": " <> show (Set.toList d)
         liftIO $ putMVar webSocketMVar cmap'
 
--- | Properties (checked by `assert`):
---
---  * there is a cookie in the connect request.
---  * that cookie string does not change throughout the session (same caveat as above).
---
--- FIXME: delete disconnected clients' data
+-- | FIXME: delete disconnected clients' data
 startWebSocketServer :: (forall a. AppM DB a -> IO (Either ApiError a))
-                     -> SCS.SessionStore IO () (SCS.Lockable AppState) -> SBS
                      -> Middleware
-startWebSocketServer toIO sessionStore cookieName = websocketsOr options server
+startWebSocketServer toIO = websocketsOr options server
   where
     options :: ConnectionOptions
     options = defaultConnectionOptions
 
     server :: ServerApp
     server pendingconnection = do
-      let rawCookie :: SBS
-          rawCookie = search . requestHeaders . pendingRequest $ pendingconnection
-            where
-              -- (assertion may fail once there is no ajax call before the first websockets connect
-              -- any more)
-              search :: Network.WebSockets.Headers -> SBS
-              search hs = assert (isJust v) (fromJust v)
-                where v = lookup cookieName . parseCookies =<< lookup "Cookie" hs
-
-          getSession :: MonadIO m => m (SCS.Session IO () (SCS.Lockable AppState), IO SBS)
-          getSession = liftIO $ sessionStore (Just rawCookie)
-
-          loadAppState :: AppM DB ()
-          loadAppState = getSession >>= \case
-            ((goget, _), _) -> maybe (pure ()) (put . fst) =<< liftIO (goget ())
-
-          storeAppState :: AppM DB ()
-          storeAppState = getSession >>= \case
-            ((goget, goset), getNewRawCookie) -> do
-              Just (_, lock) <- liftIO $ goget ()
-              get >>= liftIO . goset () . (, lock)
-
-              -- FIXME: we probably don't want to spend time on the next line in production.  (on the
-              -- other hand, this assertion may fail in teh future, see comment above near
-              -- `search`.)
-              liftIO $ getNewRawCookie >>= \newRawCookie -> assert (rawCookie == newRawCookie) $ pure ()
-
       conn <- acceptRequest pendingconnection
 
       clientId <- receiveMessage conn >>= \case
         -- the client is reconnected, its CacheId is n
         TSGreeting (Just n) -> do
           cmap <- takeMVar webSocketMVar
-          putMVar webSocketMVar $ second (Map.adjust (const (conn, mempty)) n) cmap
+          putMVar webSocketMVar $ second (Map.adjust (_2 .~ mempty) n) cmap
           sendMessage conn $ TCRestrictKeys []
           appLog $ "websocket client #" <> show n <> " is reconnected"
           pure n
@@ -146,7 +112,7 @@ startWebSocketServer toIO sessionStore cookieName = websocketsOr options server
         -- the first connection of the client
         TSGreeting Nothing -> do
           (n, cmap) <- takeMVar webSocketMVar
-          putMVar webSocketMVar (n + 1, Map.insert n (conn, mempty) cmap)
+          putMVar webSocketMVar (n + 1, Map.insert n ((conn, initialAppState), mempty) cmap)
           sendMessage conn $ TCGreeting n
           appLog $ "new websocket client #" <> show n
           pure n
@@ -160,7 +126,7 @@ startWebSocketServer toIO sessionStore cookieName = websocketsOr options server
           sendMessage conn TCPing
 
       let wrap :: AppM DB () -> IO ()
-          wrap m = toIO ((loadAppState >> m) `finally` storeAppState) >>= \case
+          wrap m = toIO m >>= \case
             Left e -> appLogL LogError $ show e
             Right () -> pure ()
 
@@ -208,8 +174,5 @@ startWebSocketServer toIO sessionStore cookieName = websocketsOr options server
             TSToggleVote (ContribIDDiscussion _) _x
                                     -> pure ()  -- not implemented
             TSDeleteVote eid        -> void $ App.deleteSimpleVoteOnEdit eid
-
-            TSCookie ck             -> assert ((lookup cookieName . parseCookies . cs $ ck) == Just rawCookie) pure ()
-                                         -- FIXME: if assertion holds, we should probably remove 'TSCookie'.
 
             bad@(TSGreeting _)      -> error $ "websocket communication protocol failure:" <> show bad

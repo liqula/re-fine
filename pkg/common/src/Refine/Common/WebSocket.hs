@@ -89,7 +89,6 @@ data ToServer
 
   | TSGreeting (Maybe CacheId)  -- ^ first message on connect with 'Nothing'; if this is a
                                 -- re-connect, send @'Just' 'CacheId'@.
-  | TSCookie ST
   | TSPing
   deriving (Eq, Show, Generic)
 

@@ -30,7 +30,6 @@ import Refine.Frontend.Prelude
 import           Refine.Common.Access
 import           Refine.Common.Types hiding (Login(..))
 import qualified Refine.Common.Types as Common
-import           Refine.Frontend.Util
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.MainMenu.Types
@@ -96,7 +95,6 @@ instance (Dispatchable GlobalAction, Sendable ToServer) => StoreData AccessState
       Logout -> do
         sendToServer TSLogout
         sendToServer TSClearCache
-        sendToServer . TSCookie . cs =<< js_cookie
         dispatchAndExec $ CompositeAction
           [ MainMenuAction MainMenuActionClearErrors
           , MainMenuAction . MainMenuActionOpen . MainMenuLogin $ MainMenuSubTabLogin
@@ -139,4 +137,3 @@ allowGlobalRole = flip elem
 
 -- FIXME: how can we use this new code to do redirect if not logged in?  (we already do this, but not
 -- in a nice way.)
-

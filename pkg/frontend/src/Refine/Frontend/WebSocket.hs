@@ -41,7 +41,6 @@ import Refine.Frontend.Document.Types
 import Refine.Frontend.Login.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Store.Types
-import Refine.Frontend.Util
 import Refine.Frontend.Access
 
 
@@ -92,7 +91,6 @@ initWebSocket = do
                 dispatchAndExec . MainMenuAction . MainMenuActionLoginError . cs . show $ err
               TCLoginResp (Right user) -> do
                 sendTS TSClearCache
-                sendTS . TSCookie . cs =<< js_cookie
                 dispatchAndExec . SetCurrentUser $ UserLoggedIn user
                 dispatchAndExec $ MainMenuAction MainMenuActionClose
                 dispatchAndExec LoginGuardPop
@@ -116,7 +114,6 @@ initWebSocket = do
                               (Just wsMessage)
 
             sendMessage ws $ TSGreeting mid
-            sendMessage ws . TSCookie . cs =<< js_cookie
             putMVar webSocketMVar (fromMaybe (error "unknown CacheId") mid, ws)
             putStrLn "websocket connection opened"
 
