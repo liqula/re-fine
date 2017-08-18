@@ -2,8 +2,6 @@ var path = require("path");
 var webpack = require("webpack");
 var HtmlWebpackPlugin = require("html-webpack-plugin");
 
-var IS_DEV = require('isdev');
-
 process.traceDeprecation = true;
 
 module.exports = {
@@ -29,7 +27,6 @@ module.exports = {
             }
         })
     ],
-    devtool: "source-map",
     module: {
         rules: [
             { test: /\.css$/, use: [ { loader: "style-loader" }, { loader: "css-loader" } ] },
@@ -42,17 +39,14 @@ module.exports = {
                 use: [{
                     loader: 'style-loader',
                     options: {
-                        sourceMap: IS_DEV
                     }
                 },{
                     loader: 'css-loader',
                     options: {
-                        sourceMap: IS_DEV
                     }
                 },{
                     loader: 'sass-loader',
                     options: {
-                        sourceMap: IS_DEV,
                         includePaths: [path.resolve(__dirname, "./node_modules/gridle/sass"), path.resolve(__dirname, "./node_modules/bourbon/app/assets/stylesheets")]
                     }
                 }]

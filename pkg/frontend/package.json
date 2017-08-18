@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "start": "./node_modules/webpack-dev-server/bin/webpack-dev-server.js",
-    "build": "npm install && NODE_ENV=production webpack -p --config webpack.prod.config.js"
+    "build": "npm install && NODE_ENV=production node --max_old_space_size=8192 ./node_modules/.bin/webpack -p --config webpack.prod.config.js"
   },
   "dependencies": {
     "draft-js-export-html": "0.5.2",
