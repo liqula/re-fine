@@ -117,10 +117,10 @@ startWebSocketServer toIO = websocketsOr options server
           appLog $ "new websocket client #" <> show n
           pure n
 
-        _ -> error "websocket communication protocol failure"
+        bad -> fail' $ WSErrorUnexpectedPacket bad
 
       toIO (asks . view $ appConfig . cfgWSPingPeriod) >>= \case
-        Left e -> error $ show e
+        Left e -> fail' . WSErrorInternal . show $ e
         Right pingFreq -> void . forkIO . forever $ do
           threadDelay (timespanUs pingFreq)
           sendMessage conn TCPing
@@ -175,4 +175,13 @@ startWebSocketServer toIO = websocketsOr options server
                                     -> pure ()  -- not implemented
             TSDeleteVote eid        -> void $ App.deleteSimpleVoteOnEdit eid
 
-            bad@(TSGreeting _)      -> error $ "websocket communication protocol failure:" <> show bad
+            bad@(TSGreeting _)      -> fail' $ WSErrorUnexpectedPacket bad
+
+
+data WSErrorUnexpectedPacket
+  = WSErrorUnexpectedPacket ToServer
+  | WSErrorInternal String
+  deriving (Eq, Show)
+
+fail' :: WSErrorUnexpectedPacket -> m a
+fail' = error . show
