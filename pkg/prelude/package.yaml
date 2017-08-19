@@ -23,6 +23,7 @@ dependencies:
   - containers
   - data-default
   - deepseq
+  - directory
   - functor-infix
   - generics-sop
   - http-api-data

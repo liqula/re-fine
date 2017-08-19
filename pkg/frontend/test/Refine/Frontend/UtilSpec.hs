@@ -9,7 +9,11 @@ import Refine.Frontend.Prelude
 import Test.Hspec
 
 import Refine.Prelude ()
-import Refine.Frontend.Util (toClasses)
+import Refine.Frontend.Util
+-- import Language.Css.Build
+-- import Language.Css.Build.Idents
+-- import Language.Css.Pretty
+import Language.Css.Syntax
 
 
 spec :: Spec
@@ -26,6 +30,28 @@ spec = do
     it "works" $ do
       crash `shouldThrow` anyException  -- look at the thrown error to see why this is cool.
 
+  describe "instance Css [Decl]" $ do
+    it "works" $ do
+      css [ "margin" ||= Px 10
+          ]
+        `shouldBe` [Decl Nothing (Ident "margin") (EVal (VPx (Px 10)))]
+      css [ "margin" ||= Px 10
+          , "margin" ||= Ident "dashed"
+          ]
+        `shouldBe` [Decl Nothing (Ident "margin") (SpaceSep (EVal (VPx (Px 10))) (EVal (VIdent (Ident "dashed"))))]
+      css [ "margin" ||= Px 10
+          , "border" ||= [Ident "dashed", Ident "black"]
+          , "margin" ||= Ident "dashed"
+          , "border" ||= Px 2
+          ]
+        `shouldBe` [ Decl Nothing (Ident "border") (SpaceSep
+                                                     (SpaceSep
+                                                       (EVal (VIdent (Ident "dashed")))
+                                                       (EVal (VIdent (Ident "black"))))
+                                                     (EVal (VPx (Px 2))))
+                   , Decl Nothing (Ident "margin") (SpaceSep
+                                                     (EVal (VPx (Px 10)))
+                                                     (EVal (VIdent (Ident "dashed"))))]
 
 crash :: HasCallStack => IO Int
 crash = crash'

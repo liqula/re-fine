@@ -31,6 +31,8 @@ where
 
 import Refine.Frontend.Prelude
 
+import Data.List (groupBy)
+
 import qualified Data.Aeson
 import qualified Data.JSString as JSS
 import Language.Css.Build
@@ -41,15 +43,40 @@ import Language.Css.Syntax
 class Css a where
   css :: a -> [Decl]
 
+-- group all occurances of one prop, separate all values by spaces.
+instance Css [Decl] where
+  css = map accum . grp
+    where
+      grp :: [Decl] -> [[Decl]]
+      grp = groupBy ((==) `on` f) . sortBy (compare `on` f)
+        where
+          f (Decl prio prop _) = show (prop, prio)
+
+      accum :: [Decl] -> Decl
+      accum (Decl prio prop e: Decl _ _ e': xs) = accum (Decl prio prop (SpaceSep e e'): xs)
+      accum [d] = d
+      accum [] = error "impossible."
+
+
+-- | FIXME: remove this in favor of '(:::)'
 decl :: HasCallStack => ToExpr e => Prop -> e -> Decl
 decl p e = Decl Nothing p (expr e)
+
+(||=) :: (ToExpr e) => Prop -> e -> Decl
+(||=) = decl
+
 
 instance IsString Prop where
   fromString = Ident
 
 -- | Like '(@=)', but for css rather than json.
+-- FIXME: remove this in favor of 'style'
 (@@=) :: HasCallStack => forall handler. JSString -> [Decl] -> PropertyOrHandler handler
 (@@=) k v = k @= declsToJSON v
+
+style :: [Decl] -> PropertyOrHandler h
+style = ("style" @@=)
+
 
 declsToJSON :: HasCallStack => [Decl] -> Data.Aeson.Value
 declsToJSON = object . map (\(Decl _mprio n a) -> (cs (prettyPrint n) .:= prettyPrint a))

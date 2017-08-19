@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE KindSignatures        #-}
+{-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoImplicitPrelude     #-}
 {-# LANGUAGE Rank2Types            #-}
@@ -56,6 +57,7 @@ module Refine.Prelude
   , iterateM
   , commonPrefix
   , Recursion(..), recursion
+  , listDirectoryRec
   ) where
 
 import Control.Applicative as P
@@ -94,10 +96,13 @@ import Data.Default as P (Default(def))
 import Data.Either as P (either)
 import Data.Function as P (on)
 import Data.Functor.Infix as P ((<$$>))
+import Data.IntMap.Strict as P (IntMap)
 import Data.List as P ((\\), foldl', sort, nub, sortBy, insertBy, replicate)
 import Data.List.NonEmpty as P (NonEmpty(..))
+import Data.Map.Strict as P (Map)
 import Data.Maybe as P (catMaybes, fromMaybe, fromJust, isJust, isNothing, maybeToList, listToMaybe)
 import Data.Proxy as P
+import Data.Set as P (Set)
 import Data.String as P
 import Data.String.Conversions as P
 import Data.Time as P
@@ -106,11 +111,9 @@ import Data.Void as P
 import GHC.Generics as P (Generic)
 import GHC.Stack as P (HasCallStack)
 import Prelude as P hiding ((.), id)
+import System.Directory as P
 import Text.Read as P (readEither, readMaybe)
 import Web.HttpApiData as P (ToHttpApiData, FromHttpApiData, toUrlPiece, parseUrlPiece)
-import Data.IntMap.Strict as P (IntMap)
-import Data.Map.Strict as P (Map)
-import Data.Set as P (Set)
 
 import           Data.Ord
 import qualified Data.Set as Set
@@ -306,3 +309,14 @@ recursion f = go
       Run  y -> go y
       Fail e -> throwError e
       Halt r -> pure r
+
+-- | List all non-directory entires in a directory recursively.
+listDirectoryRec :: FilePath -> IO [FilePath]
+listDirectoryRec fp = do
+  entries <- listDirectory fp
+  mconcat <$> dive `mapM` entries
+  where
+    dive fp' = do
+      doesDirectoryExist fp' >>= \case
+        False -> pure [fp']
+        True -> ((fp' <> "/") <>) <$$> listDirectoryRec fp'
