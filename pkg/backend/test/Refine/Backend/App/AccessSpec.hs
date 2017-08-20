@@ -38,6 +38,7 @@ import Refine.Backend.App
 import Refine.Backend.Config
 import Refine.Backend.Database (DB)
 import qualified Refine.Backend.Database.Class as DB
+import Refine.Backend.Server
 import Refine.Backend.Test.AppServer
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Common.ChangeAPI
@@ -66,18 +67,15 @@ setup action = withTempCurrentDirectory $ do
                             else DBInMemory)
         & cfgSmtp       .~ Nothing
         & cfgAllAreGods .~ False
-  (tbe, destroy) <- mkTestBackend cfg
-  testBackendFetchCookie tbe
+  (tbe, destroy) <- do
+    (be, dstr) <- mkProdBackend cfg
+    wai        <- newMVar Wai.initState
+    li         <- newMVar Nothing
+    pure (TestBackend be wai li, dstr)
 
-  adminID      <- addUserAndLogin tbe "admin" "admin@example.com" "pass"
-  adminSession <- modifyMVar (tbe ^. testBackendState) (\old -> pure (Wai.ClientState mempty, old))
-  testBackendFetchCookie tbe
-  aliceID      <- addUserAndLogin tbe "alice" "alice@example.com" "pass"
-  aliceSession <- modifyMVar (tbe ^. testBackendState) (\old -> pure (Wai.ClientState mempty, old))
-  testBackendFetchCookie tbe
-  bobID        <- addUserAndLogin tbe "bob"   "bob@example.com"   "pass"
-  bobSession   <- modifyMVar (tbe ^. testBackendState) (\old -> pure (Wai.ClientState mempty, old))
-  testBackendFetchCookie tbe
+  adminID <- addUserAndLogin tbe "admin" "admin@example.com" "pass"
+  aliceID <- addUserAndLogin tbe "alice" "alice@example.com" "pass"
+  bobID   <- addUserAndLogin tbe "bob"   "bob@example.com"   "pass"
 
   runDB tbe $ do
     unsafeBeAGod
@@ -85,15 +83,15 @@ setup action = withTempCurrentDirectory $ do
     beAMortal
 
   let switchUser :: SessUser -> IO ()
-      switchUser u = modifyMVar (tbe ^. testBackendState) $ \_ -> pure (snd $ userMap u, ())
+      switchUser = uncurry (testBackendLogin tbe) . snd . userMap
 
       getUid :: GetUid
       getUid = fst . userMap
 
-      userMap :: SessUser -> (ID User, Wai.ClientState)
-      userMap Admin = (adminID, adminSession)
-      userMap Alice = (aliceID, aliceSession)
-      userMap Bob = (bobID, bobSession)
+      userMap :: SessUser -> (ID User, (Username, Password))
+      userMap Admin = (adminID, ("admin", "pass"))
+      userMap Alice = (aliceID, ("alice", "pass"))
+      userMap Bob = (bobID, ("bob", "pass"))
 
   action (switchUser, getUid, tbe)
 
