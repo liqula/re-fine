@@ -45,7 +45,7 @@ import Refine.Frontend.Access
 
 
 {-# NOINLINE webSocketMVar #-}
-webSocketMVar :: MVar (CacheId, WebSocket)
+webSocketMVar :: MVar (WSSessionId, WebSocket)
 webSocketMVar = unsafePerformIO newEmptyMVar
 
 sendMessage :: WebSocket -> ToServer -> IO ()
@@ -73,7 +73,7 @@ initWebSocket = do
               TCGreeting n -> do
                   (_, putfun) <- takeMVar webSocketMVar
                   putMVar webSocketMVar (n, putfun)
-                  putStrLn $ "CacheId is " <> show n
+                  putStrLn $ "WSSessionId is " <> show n
               TCCreatedVDoc vid ->
                 dispatchAndExec $ LoadVDoc vid
               TCCreatedGroup _gid -> pure ()
@@ -114,7 +114,7 @@ initWebSocket = do
                               (Just wsMessage)
 
             sendMessage ws $ TSGreeting mid
-            putMVar webSocketMVar (fromMaybe (error "unknown CacheId") mid, ws)
+            putMVar webSocketMVar (fromMaybe (error "unknown WSSessionId") mid, ws)
             putStrLn "websocket connection opened"
 
     openConnection Nothing

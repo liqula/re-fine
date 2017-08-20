@@ -51,7 +51,7 @@ import Refine.Backend.App.Translation as App
 import Refine.Backend.Config
 import Refine.Backend.Database
 
-type WebSocketMVar = MVar (Int{-to generate fresh CacheIds-}, Map CacheId WebSocketSession)
+type WebSocketMVar = MVar (Int{-to generate fresh CacheIds-}, Map WSSessionId WebSocketSession)
 type WebSocketSession = ((Connection, AppState), Set CacheKey)
 
 -- | This is the place where all the session's 'AppState's are kept between websocket
@@ -113,9 +113,9 @@ fail' :: WSErrorUnexpectedPacket -> m a
 fail' = error . show
 
 
-handshake :: Connection -> IO CacheId
+handshake :: Connection -> IO WSSessionId
 handshake conn = receiveMessage conn >>= \case
-  -- the client is reconnected, its CacheId is n
+  -- the client is reconnected, its WSSessionId is n
   TSGreeting (Just n) -> do
     cmap <- takeMVar webSocketMVar
     putMVar webSocketMVar $ second (Map.adjust (_2 .~ mempty) n) cmap
@@ -145,10 +145,11 @@ cmdLoopStepFrame toIO cmd = wrap cmd
   where
     wrap :: AppM DB () -> IO ()
     wrap m = toIO m >>= \case
+    dolift cmd = toIO cmd >>= \case
       Left e -> appLogL LogError $ show e
       Right () -> pure ()
 
-cmdLoopStep :: Connection -> CacheId -> AppM DB ()
+cmdLoopStep :: Connection -> WSSessionId -> AppM DB ()
 cmdLoopStep conn clientId = do
   msg <- liftIO $ receiveMessage conn
   appLog $ "request from client #" <> show clientId <> ", " <> show msg
