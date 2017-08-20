@@ -28,6 +28,7 @@ import Refine.Backend.Prelude hiding (Header)
 
 import           Control.Concurrent.MVar
 import           Data.List.NonEmpty (NonEmpty((:|)))
+import qualified Data.Map as Map
 import           Network.HTTP.Types (Method, Header, methodGet, methodPut, methodDelete)
 import           Network.HTTP.Types.Status (Status(statusCode))
 import           Network.URI (URI, uriToString)
@@ -35,6 +36,8 @@ import           Network.Wai (requestMethod, requestHeaders, defaultRequest)
 import           Network.Wai.Test (SRequest(..), SResponse(..))
 import qualified Network.Wai.Test as Wai
 import qualified Network.Wai.Test.Internal as Wai
+import qualified Network.Wai.Session as SCS
+import           Web.Cookie (setCookieValue)
 
 import           Refine.Backend.App hiding (getEdit)
 import           Refine.Backend.Config
@@ -56,12 +59,19 @@ import           Refine.Common.Types as Common
 data TestBackend = TestBackend
   { _testBackend            :: Backend DB
   , _testBackendState       :: MVar Wai.ClientState
-  , _testBackendCurrentUser :: MVar (Maybe (Username, Password))
-                       -- ^ work-around for FIXME in 'runDB''.  maintained by 'testBackendLogin',
-                       -- 'testBackendLogout'.
   }
 
 makeLenses ''TestBackend
+
+mkTestBackend :: Config -> IO (TestBackend, IO ())
+mkTestBackend cfg = do
+  (be, dstr) <- mkProdBackend cfg
+  sess <- TestBackend be <$> newMVar Wai.initState
+  pure (sess, dstr)
+
+-- | get a session cookie from the server (response does not matter otherwise).
+testBackendFetchCookie :: TestBackend -> IO ()
+testBackendFetchCookie sess = void . runWai sess . wget $ "/r/"
 
 -- | Create session via 'mkProdBackend'.  Note that there is no network listener and 'WarpSettings'
 -- are meaningless; the session only creates an 'AppM' runner and an 'Application'.
@@ -72,8 +82,8 @@ createTestSession action = withTempCurrentDirectory $ do
         & cfgDBKind     .~ DBOnDisk "test.db"
         & cfgSmtp       .~ Nothing
         & cfgAllAreGods .~ True
-  (backend, destroy) <- mkProdBackend cfg
-  () <- action =<< (TestBackend backend <$> newMVar Wai.initState <*> newMVar Nothing)
+  (sess, destroy) <- mkTestBackend cfg
+  () <- action sess
   destroy
 
 createTestSessionWith :: (TestBackend -> IO ()) -> (TestBackend -> IO ()) -> IO ()
@@ -112,34 +122,37 @@ runDB sess = errorOnLeft . runDB' sess
 -- resp. functions.  If this is resolved, '_testBackendCurrentUser'
 -- won't be needed any more.
 runDB' :: TestBackend -> AppM DB a -> IO (Either AppError a)
-runDB' sess action = do
-  testlogin :: AppM DB () <- do
-    readMVar (sess ^. testBackendCurrentUser) >>= pure . \case
-      Nothing -> pure ()
-      Just (u, p) -> void $ login (Login u p)
-  runExceptT . unwrapNT (backendRunApp (sess ^. testBackend)) $ testlogin >> action
-{-
-runDB' sess = do
-    storeAppState sess
-    action
-    recoverAppState sess
+runDB' sess action = runExceptT . unwrapNT (backendRunApp (sess ^. testBackend)) $ do
+    putAppState *> action <* getAppState
   where
-    storeAppState :: TestBackend uh -> AppM db uh ()
-    storeAppState sess = do
-      st :: AppState <- appIO $ parseCookies <$> readMVar (sess ^. testBackendState)
-      State.put st
+    putAppState :: AppM DB ()
+    putAppState = do
+      co <- liftIO $ readMVar (sess ^. testBackendState)
+      ms <- liftIO $ lookupCookie (sess ^. testBackend . to backendSessionStore) co
+      put `mapM_` ms
       where
-        parseCookies :: Wai.ClientState -> AppState
-        parseCookies _ = _  -- AppState Nothing UserLoggedOut
+        lookupCookie :: SCS.SessionStore IO () (AppState, MVar ()) -> Wai.ClientState -> IO (Maybe AppState)
+        lookupCookie store (Wai.ClientState (Map.toList -> cookies)) = case cookies of
+          [(_, cookie)] -> (store . Just . setCookieValue $ cookie) >>= \((lkup, _), _) -> fst <$$> lkup ()
+          bad -> error $ "runDB': bad session state: " <> show bad
+          -- you need to call 'runWai' to initialize session before running runDB'.
 
-    recoverAppState :: TestBackend uh -> AppM db uh ()
-    recoverAppState sess = do
-      st' :: AppState <- State.get
-      appIO $ putMVar (sess ^. testBackendState) (resetCookies st')
+    getAppState :: AppM DB ()
+    getAppState = do
+      co <- liftIO $ readMVar (sess ^. testBackendState)
+      liftIO . updateCookie (sess ^. testBackend . to backendSessionStore) co =<< get
       where
-        resetCookies :: AppState -> Wai.ClientState
-        resetCookies _ = _  -- Wai.ClientState mempty
--}
+        updateCookie :: SCS.SessionStore IO () (AppState, MVar ()) -> Wai.ClientState -> AppState -> IO ()
+        updateCookie store (Wai.ClientState (Map.toList -> cookies)) appState = case cookies of
+          [(_, cookie)] -> (store . Just . setCookieValue $ cookie) >>= \((lkup, upd), _) -> do
+            lkup () >>= \case
+              Just (_, lock) -> do
+                () <- takeMVar lock
+                upd () (appState, lock)
+                putMVar lock ()
+              Nothing ->
+                error "runDB': this should not happen, but it does!"
+          bad -> error $ "runDB': bad session state: " <> show bad
 
 errorOnLeft :: Show e => IO (Either e a) -> IO a
 errorOnLeft action = either (throwIO . ErrorCall . show') pure =<< action
@@ -151,15 +164,6 @@ testLogfilePath = "logfile"
 
 readTestLogfile :: IO String
 readTestLogfile = readFile testLogfilePath
-
-
--- | Log into a 'TestBackend'.  See 'runDB'' for an explanation why this is difficult.
-testBackendLogin :: TestBackend -> Username -> Password -> IO ()
-testBackendLogin (view testBackendCurrentUser -> mvar) u p = modifyMVar mvar (\_ -> pure (Just (u, p), ()))
-
--- | Log out of a 'TestBackend'.  See 'runDB'' for an explanation why this is difficult.
-testBackendLogout :: TestBackend -> IO ()
-testBackendLogout (view testBackendCurrentUser -> mvar) = modifyMVar mvar (\_ -> pure (Nothing, ()))
 
 
 -- * test helpers
@@ -297,16 +301,9 @@ testPassword :: Password
 testPassword = "testPassword"
 
 addUserAndLogin :: TestBackend -> Username -> Email -> Password -> IO (ID User)
-addUserAndLogin sess username useremail userpass = do
-  r1 :: User <- runDB sess $
-    unsafeBeAGod *> createUser (CreateUser username useremail userpass) <* beAMortal
-  uid <- runWai sess $ do
-    r2 <- post loginUri $ Login username userpass
-    if respCode r2 >= 300
-      then error $ "addUserAndLogin: " <> show (username, r1, r2)
-      else pure (r1 ^. userID)
-  testBackendLogin sess username userpass
-  pure uid
+addUserAndLogin sess username useremail userpass = runDB sess $ do
+  _ <- unsafeBeAGod *> createUser (CreateUser username useremail userpass) <* beAMortal
+  (^. userID) <$> login (Login username userpass)
 
 addTestUserAndLogin :: TestBackend -> IO ()
 addTestUserAndLogin sess = void $ addUserAndLogin sess testUsername testUserEmail testPassword
