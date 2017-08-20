@@ -52,7 +52,7 @@ import Refine.Backend.Config
 import Refine.Backend.Database
 
 type WebSocketMVar = MVar (Int{-to generate fresh CacheIds-}, Map WSSessionId WebSocketSession)
-type WebSocketSession = ((Connection, AppState), Set CacheKey)
+type WebSocketSession = ((Connection, MVar AppState), Set CacheKey)
 
 -- | This is the place where all the session's 'AppState's are kept between websocket
 -- connections.
@@ -101,7 +101,7 @@ startWebSocketServer toIO = websocketsOr options server
       conn <- acceptRequest pendingconnection
       clientId <- handshake conn
       pingLoop conn =<< toIO (asks . view $ appConfig . cfgWSPingPeriod)
-      forever . cmdLoopStepFrame toIO $ cmdLoopStep conn clientId
+      forever . cmdLoopStepFrame toIO clientId $ cmdLoopStep conn clientId
 
 
 data WSErrorUnexpectedPacket
@@ -126,7 +126,8 @@ handshake conn = receiveMessage conn >>= \case
   -- the first connection of the client
   TSGreeting Nothing -> do
     (n, cmap) <- takeMVar webSocketMVar
-    putMVar webSocketMVar (n + 1, Map.insert n ((conn, initialAppState), mempty) cmap)
+    appState <- newMVar initialAppState
+    putMVar webSocketMVar (n + 1, Map.insert n ((conn, appState), mempty) cmap)
     sendMessage conn $ TCGreeting n
     appLog $ "new websocket client #" <> show n
     pure n
@@ -140,11 +141,17 @@ pingLoop conn = \case
     threadDelay (timespanUs pingFreq)
     sendMessage conn TCPing
 
-cmdLoopStepFrame :: (AppM DB () -> IO (Either ApiError ())) -> AppM DB () -> IO ()
-cmdLoopStepFrame toIO cmd = wrap cmd
+cmdLoopStepFrame :: forall m. (m ~ AppM DB ()) => (m -> IO (Either ApiError ())) -> WSSessionId -> m -> IO ()
+cmdLoopStepFrame toIO clientId = dolift . dostate
   where
-    wrap :: AppM DB () -> IO ()
-    wrap m = toIO m >>= \case
+    dostate :: m -> m
+    dostate cmd = do
+      Just ((_, appStateMVar), _) <- Map.lookup clientId . snd <$> liftIO (readMVar webSocketMVar)
+      put =<< liftIO (takeMVar appStateMVar)
+      cmd
+      liftIO . putMVar appStateMVar =<< get
+
+    dolift :: m -> IO ()
     dolift cmd = toIO cmd >>= \case
       Left e -> appLogL LogError $ show e
       Right () -> pure ()
@@ -196,3 +203,5 @@ cmdLoopStep conn clientId = do
       TSDeleteVote eid        -> void $ App.deleteSimpleVoteOnEdit eid
 
       bad@(TSGreeting _)      -> fail' $ WSErrorUnexpectedPacket bad
+
+-- FIXME: hash session id with a secret and a current timestamp before passing it to the client.
