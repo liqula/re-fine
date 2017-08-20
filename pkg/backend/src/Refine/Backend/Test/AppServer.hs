@@ -249,17 +249,17 @@ deleteVoteUri eid = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy
 getVotesUri :: ID Edit -> SBS
 getVotesUri eid = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetSimpleVotesOnEdit) eid
 
-getAddGroup :: SBS
-getAddGroup = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddGroup)
+addGroupUri :: SBS
+addGroupUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddGroup)
 
-getGetGroup :: ID Group -> SBS
-getGetGroup = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetGroup)
+getGroupUri :: ID Group -> SBS
+getGroupUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetGroup)
 
-getUpdateGroup :: ID Group -> SBS
-getUpdateGroup = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SUpdateGroup)
+updateGroupUri :: ID Group -> SBS
+updateGroupUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SUpdateGroup)
 
-getGetGroups :: SBS
-getGetGroups = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetGroups)
+getGroupsUri :: SBS
+getGroupsUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGetGroups)
 
 
 -- * sample data
