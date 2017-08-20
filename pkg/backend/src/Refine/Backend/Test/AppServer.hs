@@ -298,8 +298,9 @@ testPassword = "testPassword"
 
 addUserAndLogin :: TestBackend -> Username -> Email -> Password -> IO (ID User)
 addUserAndLogin sess username useremail userpass = do
+  r1 :: User <- runDB sess $
+    unsafeBeAGod *> createUser (CreateUser username useremail userpass) <* beAMortal
   uid <- runWai sess $ do
-    r1 :: User <- postJSON createUserUri $ CreateUser username useremail userpass
     r2 <- post loginUri $ Login username userpass
     if respCode r2 >= 300
       then error $ "addUserAndLogin: " <> show (username, r1, r2)

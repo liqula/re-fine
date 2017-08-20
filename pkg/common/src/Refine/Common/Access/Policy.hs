@@ -35,7 +35,7 @@ orAdmin :: Creds -> Creds
 orAdmin xs = CredsAny (CredsLeaf (CredGlobalRole GlobalAdmin) :| [xs])
 
 
--- * group
+-- * group, user
 
 addGroup :: Creds
 addGroup = orAdmin bottom
@@ -48,6 +48,10 @@ updateGroup _gid = orAdmin bottom
 
 deleteGroup :: ID Group -> Creds
 deleteGroup _gid = orAdmin bottom
+
+createUser :: [GlobalRole] -> [(GroupRole, ID Group)] -> Creds
+createUser [] [] = orAdmin $ CredsLeaf CredNotLoggedIn
+createUser _ _ = orAdmin CredsNeverAllow
 
 
 -- * process

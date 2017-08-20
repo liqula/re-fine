@@ -32,18 +32,20 @@ import qualified Data.Map as Map
 import           Language.Css.Syntax
 
 import           React.Flux.Missing
+import qualified Refine.Common.Access.Policy as AP
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
-import           Refine.Frontend.Types
+import           Refine.Frontend.Access
 import qualified Refine.Frontend.Colors as Colors
+import           Refine.Frontend.Contribution.Dialog (contributionDialogTextForm)
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Component
 import           Refine.Frontend.Login.Status
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Types
 import           Refine.Frontend.Util
-import           Refine.Frontend.Contribution.Dialog (contributionDialogTextForm)
 import qualified Refine.Prelude.BuildInfo as BuildInfo
 
 
@@ -489,7 +491,7 @@ mainMenuLoginTab = mkView "MainMenuLoginTab" $ \(MainMenuProps currentTab menuEr
 
   div_ $ do
     tabButton 0 MainMenuSubTabLogin
-    tabButton 1 MainMenuSubTabRegistration
+    guardAccess_ "register" (AP.createUser [] []) $ tabButton 1 MainMenuSubTabRegistration
 
   br_ [] >> br_ [] >> br_ [] >> hr_ []
 

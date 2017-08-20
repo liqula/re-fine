@@ -32,6 +32,7 @@ import Refine.Backend.Prelude
 
 import qualified Web.Users.Types as Users
 
+import Refine.Backend.App.Access
 import Refine.Backend.App.Core
 import Refine.Backend.App.Session
 import Refine.Backend.App.Smtp
@@ -41,6 +42,7 @@ import Refine.Backend.Types
 import Refine.Backend.Database.Class (createMetaID_, getMetaID)
 import Refine.Backend.Database.Entity (toUserID, fromUserID)
 import Refine.Common.Types as Common
+import qualified Refine.Common.Access.Policy as AP
 import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 
 
@@ -88,6 +90,7 @@ logout = do
 createUserWith :: [GlobalRole] -> [(GroupRole, ID Group)] -> CreateUser -> App Common.User
 createUserWith globalRoles groupRoles (CreateUser name email password) = do
   appLog "createUser"
+  assertCreds $ AP.createUser globalRoles groupRoles
   let user = Users.User
               { Users.u_name  = name
               , Users.u_email = email
