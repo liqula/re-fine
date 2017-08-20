@@ -35,7 +35,9 @@ import Refine.Common.Types.Translation
 import Refine.Common.Types.Vote
 
 
+-- | FIXME: should be renamed to 'SessionId'.
 type CacheId = Int
+
 
 -- ** Server cache
 
