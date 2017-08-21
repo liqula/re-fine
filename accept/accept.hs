@@ -226,7 +226,7 @@ xpathButton button = ByXPath $ "//*[@id='refine']//div[@class[contains(., 'icon-
 -- before the end with "CLIENT_STOPPED_SESSION".  so for now we don't use it and have to keep
 -- killing the zombies by hand.
 runWD :: WD () -> WdExample ()
-runWD = WdExample () (WdOptions { skipRemainingTestsAfterFailure = True }) -- . closeOnException
+runWD = WdExample () WdOptions { skipRemainingTestsAfterFailure = True } -- . closeOnException
 
 shouldSatisfy :: (Hspec.HasCallStack, Show a) => a -> (a -> Bool) -> WD ()
 v `shouldSatisfy` p = liftIO $ v `Hspec.shouldSatisfy` p
@@ -238,6 +238,7 @@ dump els = do
   liftIO . ST.writeFile (path <> ".html") =<< getSource
   liftIO . ST.writeFile (path <> ".elems") . cs . show =<< (getText `mapM` els)
 
+{-# NOINLINE dumpCount #-}
 dumpCount :: MVar Int
 dumpCount = unsafePerformIO $ newMVar 1000
 
@@ -254,7 +255,7 @@ onEls' sanitiseElems (sel:sels) action = stubborn $ do
     expectNotStale `mapM_` els
     case sanitiseElems els of
       Right els' -> action els'
-      Left msg   -> throw . ErrorCall $ "onEls' element sanitation: " <> msg
+      Left msg   -> throwIO . ErrorCall $ "onEls' element sanitation: " <> msg
   where
     drill []             els = pure els
     drill (sel' : sels') els = ((`findElemsFrom` sel') `mapM` els) >>= drill sels' . mconcat
@@ -375,7 +376,7 @@ assertVerticalPos p el act = do
   (w, h) <- elemPos =<< el
   a <- act
   (w', h') <- elemPos =<< el
-  when (w /= w' || not (p h h')) . throw . ErrorCall $ "no scroll happend: " <> show (w, h) <> " " <> show (w', h')
+  when (w /= w' || not (p h h')) . throwIO . ErrorCall $ "no scroll happend: " <> show (w, h) <> " " <> show (w', h')
   pure a
 
 {- manual script

@@ -85,10 +85,10 @@ wrapHtml ctx = (unlines header <>) . (<> unlines footer)
       ["  <div class=\"" <> unwords ctx <> "\">" | not $ null ctx]
 
     footer =
-      ["  </div>" | not $ null ctx] ++
-      "</body>" :
+      ["  </div>" | not $ null ctx] <>
+      ("</body>" :
       "</html>" :
-      []
+      [])
 
 -- | Run a haskell view and store the generated html in a file.
 generateStyleGuide :: HasCallStack => (String, ReactElementM h (), [String]) -> Spec
