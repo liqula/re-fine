@@ -68,9 +68,8 @@ newtype AddLinkFormState = AddLinkFormState
   } deriving (Show, Eq, Generic)
 
 
-data TopMenuBarProps = TopMenuBarProps
-  { _isSticky    :: Bool
-  , _currentUser :: CurrentUser
+newtype TopMenuBarProps = TopMenuBarProps
+  { _currentUser :: CurrentUser
   } deriving (Eq, Generic)
 
 

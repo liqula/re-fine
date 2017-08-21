@@ -23,5 +23,6 @@
 
 .c-fulltoolbar {
   z-index: $toolbar-index;
-  position: relative;
+  position: sticky;
+  top: 0px;
 }

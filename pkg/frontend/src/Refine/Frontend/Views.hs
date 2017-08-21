@@ -56,7 +56,6 @@ import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import           Refine.Frontend.Store.Types as RS
-import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 import           Refine.Frontend.Views.Types
@@ -107,8 +106,9 @@ mainScreen = mkView "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
 
     div_ ["key" $= "maindiv" {-FIXME: seems not to work as expected, we still have a warning-}] $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
-      stickyContainer_ [] $ do
-          mainHeader_ $ mkMainHeaderProps as rs
+      do
+          let mhp = mkMainHeaderProps as rs
+          mainHeader_ mhp
 
           -- components that are visible only sometimes:
           showNote_ `mapM_` showNoteProps (vdoc ^. compositeVDocApplicableNotes) rs
@@ -127,6 +127,7 @@ mainScreen = mkView "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
             Nothing -> mempty
 
           main_ ["role" $= "main", "key" $= "main"] $ do
+              mainHeaderRender2 mhp
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       let asideProps = AsideProps

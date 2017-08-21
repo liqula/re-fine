@@ -2,7 +2,6 @@
 
 if (!global.React           ||
     !global.ReactDOM        ||
-    !global.Sticky          ||
     !global.Skylight        ||
     !global.Hammer          ||
     !global.Draft           ||

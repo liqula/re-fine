@@ -1,5 +1,16 @@
 (function(target) {
 
+    target.onscroll = function() {
+        var el = document.getElementById("c-toolbar-menu-label");
+        if (el) {
+          if (el.getBoundingClientRect().top <= 50) {
+              el.className = "c-toolbar-menu-label-visible";
+          } else {
+              el.className = "c-toolbar-menu-label-hidden";
+          }
+        }
+    };
+
     // https://github.com/facebook/draft-js/blob/master/examples/draft-0-10-0/link/link.html
     target.refine$linkDecorator = new Draft.CompositeDecorator([
         {

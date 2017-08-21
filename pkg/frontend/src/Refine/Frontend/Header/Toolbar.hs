@@ -44,8 +44,14 @@ import           Refine.Frontend.Access
 
 -- FUTUREWORK: this should probably be a component, but if we do the obvious minimal change to
 -- introduce a @View '[]@, the styling breaks completely.  note that this does not fix #376 either.
-toolbar_ :: HasCallStack => ToolbarProps -> ReactElementM 'EventHandlerCode ()
+toolbar_ :: HasCallStack => ToolbarProps -> ReactElementM eventHandler ()
 toolbar_ vdoc = do
+
+  -- FIXME (scss): floate this to the left
+  span_ ["id" $= "c-toolbar-menu-label"
+        , "className" $= "c-toolbar-menu-label-hidden"
+        ] "MENU"
+
   let toolbarButton = defaultIconButtonProps @[GlobalAction]
 
   iconButton_ $ toolbarButton

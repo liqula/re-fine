@@ -145,7 +145,6 @@ transformGlobalState = transf
           >=> gsHeaderState         (pure . headerStateUpdate act)
           >=> gsScreenState         (pure . maybe id screenStateUpdate (act ^? _ScreenAction))
           >=> gsMainMenuState       (pure . mainMenuUpdate act (isJust $ st ^. gsEditID))
-          >=> gsToolbarSticky       (pure . toolbarStickyUpdate act)
           >=> gsTranslations        (pure . translationsUpdate act)
           >=> gsDevState            (pure . devStateUpdate act)
           >=> (\st' -> gsDocumentState (documentStateUpdate act st') st')
@@ -203,17 +202,10 @@ consoleLogGlobalAction act = do
 loggableAction :: GlobalAction -> Bool
 loggableAction (ContributionAction RequestSetAllVerticalSpanBounds) = False
 loggableAction (ContributionAction SetAllVerticalSpanBounds{})      = False
-loggableAction ToolbarStickyStateChange{}                           = False
 loggableAction _                                                    = True
 
 
 -- * pure updates
-
-toolbarStickyUpdate :: HasCallStack => GlobalAction -> Bool -> Bool
-toolbarStickyUpdate act st = case act of
-  ToolbarStickyStateChange st' -> st'
-  _                            -> st
-
 
 -- | Only touches the 'DevState' if it is 'Just'.  In production, 'gsDevState' should always be
 -- 'Nothing'.  Use 'weAreInDevMode' to decide whether you want to initialize it, or, when writing

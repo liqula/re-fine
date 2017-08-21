@@ -71,3 +71,16 @@ article {
         margin-top: $mainmenu-height;
     }
 }
+
+#c-toolbar-menu-label {
+    color: black;
+}
+
+.c-toolbar-menu-label-visible {
+    visibility: visible;
+}
+
+.c-toolbar-menu-label-hidden {
+    visibility: hidden;
+}
+
