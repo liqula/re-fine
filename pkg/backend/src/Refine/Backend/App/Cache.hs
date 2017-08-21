@@ -89,9 +89,8 @@ instance Database db => MonadCache (AppM db) where
         liftIO $ putMVar webSocketMVar cmap'
 
 -- | FIXME: delete disconnected clients' data
-startWebSocketServer :: (forall a. AppM DB a -> IO (Either ApiError a))
-                     -> Middleware
-startWebSocketServer toIO = websocketsOr options server
+startWebSocketServer :: Config -> (forall a. AppM DB a -> IO (Either ApiError a)) -> Middleware
+startWebSocketServer cfg toIO = websocketsOr options server
   where
     options :: ConnectionOptions
     options = defaultConnectionOptions
@@ -99,7 +98,7 @@ startWebSocketServer toIO = websocketsOr options server
     server :: ServerApp
     server pendingconnection = do
       conn <- acceptRequest pendingconnection
-      clientId <- handshake conn
+      clientId <- handshake cfg conn
       pingLoop conn =<< toIO (asks . view $ appConfig . cfgWSPingPeriod)
       forever . cmdLoopStepFrame toIO clientId $ cmdLoopStep conn clientId
 
@@ -113,8 +112,8 @@ fail' :: WSErrorUnexpectedPacket -> m a
 fail' = error . show
 
 
-handshake :: Connection -> IO WSSessionId
-handshake conn = receiveMessage conn >>= \case
+handshake :: Config -> Connection -> IO WSSessionId
+handshake cfg conn = receiveMessage conn >>= \case
   -- the client is reconnected, its WSSessionId is n
   TSGreeting (Just n) -> do
     cmap <- takeMVar webSocketMVar
@@ -126,7 +125,7 @@ handshake conn = receiveMessage conn >>= \case
   -- the first connection of the client
   TSGreeting Nothing -> do
     (n, cmap) <- takeMVar webSocketMVar
-    appState <- newMVar initialAppState
+    appState <- newMVar $ initialAppState cfg
     putMVar webSocketMVar (n + 1, Map.insert n ((conn, appState), mempty) cmap)
     sendMessage conn $ TCGreeting n
     appLog $ "new websocket client #" <> show n

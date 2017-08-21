@@ -62,6 +62,6 @@ runApp
       runSR action = do
         unDBRunner dbrunner $ \dbc -> do
           dbInit dbc
-          let cmd = evalStateT action initialAppState
+          let cmd = evalStateT action $ initialAppState cfg
               ctx = (dbNat, AppContext dbc logger cfg)
           (cmd `runReaderT` ctx) `finally` dbCommit dbc

@@ -98,8 +98,8 @@ data AppUserState
   | UserLoggedOut
   deriving (Eq, Show)
 
-initialAppState :: AppState
-initialAppState = AppState Nothing UserLoggedOut False
+initialAppState :: Config -> AppState
+initialAppState = AppState Nothing UserLoggedOut . view cfgAllAreGods
 
 makeLenses ''AppContext
 makeLenses ''AppState
