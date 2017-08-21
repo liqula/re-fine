@@ -133,7 +133,7 @@ clientConfigApi = asks . view $ appConfig . cfgClient
 startBackend :: Config -> IO ()
 startBackend cfg = do
   (backend, _destroy) <- mkProdBackend cfg
-  Warp.runSettings (warpSettings cfg) . startWebSocketServer (appMToIO backend) $ backendServer backend
+  Warp.runSettings (warpSettings cfg) . startWebSocketServer cfg (appMToIO backend) $ backendServer backend
   where
     appMToIO :: Backend DB -> AppM DB a -> IO (Either ApiError a)
     appMToIO backend m = either (Left . App.toApiError) Right <$> runExceptT (backendRunApp backend $$ m)
@@ -176,7 +176,6 @@ mkServerApp cfg dbNat dbRunner = do
                    dbRunner
                    logger
                    cfg
-          . NT (if cfg ^. cfgAllAreGods then (unsafeBeAGod >>) else id)
 
   -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
   -- may need to refactor, e.g. by using extra arguments in the end point types.

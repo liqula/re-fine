@@ -51,8 +51,8 @@ import Refine.Backend.App.Translation as App
 import Refine.Backend.Config
 import Refine.Backend.Database
 
-type WebSocketMVar = MVar (Int{-to generate fresh CacheIds-}, Map CacheId WebSocketSession)
-type WebSocketSession = ((Connection, AppState), Set CacheKey)
+type WebSocketMVar = MVar (Int{-to generate fresh CacheIds-}, Map WSSessionId WebSocketSession)
+type WebSocketSession = ((Connection, MVar AppState), Set CacheKey)
 
 -- | This is the place where all the session's 'AppState's are kept between websocket
 -- connections.
@@ -89,9 +89,8 @@ instance Database db => MonadCache (AppM db) where
         liftIO $ putMVar webSocketMVar cmap'
 
 -- | FIXME: delete disconnected clients' data
-startWebSocketServer :: (forall a. AppM DB a -> IO (Either ApiError a))
-                     -> Middleware
-startWebSocketServer toIO = websocketsOr options server
+startWebSocketServer :: Config -> (forall a. AppM DB a -> IO (Either ApiError a)) -> Middleware
+startWebSocketServer cfg toIO = websocketsOr options server
   where
     options :: ConnectionOptions
     options = defaultConnectionOptions
@@ -99,83 +98,9 @@ startWebSocketServer toIO = websocketsOr options server
     server :: ServerApp
     server pendingconnection = do
       conn <- acceptRequest pendingconnection
-
-      clientId <- receiveMessage conn >>= \case
-        -- the client is reconnected, its CacheId is n
-        TSGreeting (Just n) -> do
-          cmap <- takeMVar webSocketMVar
-          putMVar webSocketMVar $ second (Map.adjust (_2 .~ mempty) n) cmap
-          sendMessage conn $ TCRestrictKeys []
-          appLog $ "websocket client #" <> show n <> " is reconnected"
-          pure n
-
-        -- the first connection of the client
-        TSGreeting Nothing -> do
-          (n, cmap) <- takeMVar webSocketMVar
-          putMVar webSocketMVar (n + 1, Map.insert n ((conn, initialAppState), mempty) cmap)
-          sendMessage conn $ TCGreeting n
-          appLog $ "new websocket client #" <> show n
-          pure n
-
-        bad -> fail' $ WSErrorUnexpectedPacket bad
-
-      toIO (asks . view $ appConfig . cfgWSPingPeriod) >>= \case
-        Left e -> fail' . WSErrorInternal . show $ e
-        Right pingFreq -> void . forkIO . forever $ do
-          threadDelay (timespanUs pingFreq)
-          sendMessage conn TCPing
-
-      let wrap :: AppM DB () -> IO ()
-          wrap m = toIO m >>= \case
-            Left e -> appLogL LogError $ show e
-            Right () -> pure ()
-
-      forever . wrap $ do
-        msg <- liftIO $ receiveMessage conn
-        appLog $ "request from client #" <> show clientId <> ", " <> show msg
-        appLogL LogDebug . ("appState = " <>) . show =<< get
-
-        case msg of
-            TSPing -> appLog $ show clientId <> ": ping."
-            TSClearCache -> do
-                cmap' <- liftIO $ takeMVar webSocketMVar
-                liftIO . putMVar webSocketMVar $
-                  second (Map.adjust (second $ const mempty) clientId) cmap'
-                liftIO . sendMessage conn $ TCRestrictKeys []
-            TSMissing keys -> do
-                cache <- mconcat <$> mapM getData keys
-                cmap' <- liftIO $ takeMVar webSocketMVar
-                liftIO . putMVar webSocketMVar $
-                  second (Map.adjust (second (<> Set.fromList keys)) clientId) cmap'
-                liftIO . sendMessage conn $ TCServerCache cache
-
-            TSAddGroup cg           -> liftIO . sendMessage conn . TCCreatedGroup . view groupID =<< App.addGroup cg
-            TSUpdateGroup gid x     -> void $ App.modifyGroup gid x
-            TSCreateUser cu         -> liftIO . sendMessage conn . TCCreateUserResp =<< tryApp (App.createUser cu)
-            TSLogin li              -> liftIO . sendMessage conn . TCLoginResp =<< tryApp (App.login li)
-            TSLogout                -> void App.logout
-            TSGetTranslations k     -> liftIO . sendMessage conn . TCTranslations =<< App.getTranslations k
-
-            TSAddVDoc cv            -> liftIO . sendMessage conn . TCCreatedVDoc . view vdocID =<< App.createVDoc cv
-            TSUpdateVDoc vid upd    -> void $ App.updateVDoc vid upd
-            TSAddDiscussion eid x   -> void $ App.addDiscussion eid x
-            TSAddStatement sid x    -> void $ App.addStatement sid x
-            TSUpdateStatement sid x -> void $ App.updateStatement sid x
-            TSAddNote eid x         -> void $ App.addNote eid x
-            TSAddEdit eid x         -> void $ App.addEdit eid x
-            TSAddEditAndMerge eid x -> void $ App.addEditAndMerge eid x
-            TSUpdateEdit eid x      -> void $ App.updateEdit eid x
-            TSMergeEdit eid         -> void $ App.mergeEdit eid
-            TSToggleVote (ContribIDEdit eid) x -> do
-              rebased <- App.toggleSimpleVoteOnEdit eid x
-              when rebased . liftIO $ sendMessage conn TCRebase
-            TSToggleVote (ContribIDNote nid) x
-                                    -> void $ App.toggleSimpleVoteOnNote nid x
-            TSToggleVote (ContribIDDiscussion _) _x
-                                    -> pure ()  -- not implemented
-            TSDeleteVote eid        -> void $ App.deleteSimpleVoteOnEdit eid
-
-            bad@(TSGreeting _)      -> fail' $ WSErrorUnexpectedPacket bad
+      clientId <- handshake cfg conn
+      pingLoop conn =<< toIO (asks . view $ appConfig . cfgWSPingPeriod)
+      forever . cmdLoopStepFrame toIO clientId $ cmdLoopStep conn clientId
 
 
 data WSErrorUnexpectedPacket
@@ -185,3 +110,97 @@ data WSErrorUnexpectedPacket
 
 fail' :: WSErrorUnexpectedPacket -> m a
 fail' = error . show
+
+
+handshake :: Config -> Connection -> IO WSSessionId
+handshake cfg conn = receiveMessage conn >>= \case
+  -- the client is reconnected, its WSSessionId is n
+  TSGreeting (Just n) -> do
+    cmap <- takeMVar webSocketMVar
+    putMVar webSocketMVar $ second (Map.adjust (_2 .~ mempty) n) cmap
+    sendMessage conn $ TCRestrictKeys []
+    appLog $ "websocket client #" <> show n <> " is reconnected"
+    pure n
+
+  -- the first connection of the client
+  TSGreeting Nothing -> do
+    (n, cmap) <- takeMVar webSocketMVar
+    appState <- newMVar $ initialAppState cfg
+    putMVar webSocketMVar (n + 1, Map.insert n ((conn, appState), mempty) cmap)
+    sendMessage conn $ TCGreeting n
+    appLog $ "new websocket client #" <> show n
+    pure n
+
+  bad -> fail' $ WSErrorUnexpectedPacket bad
+
+pingLoop :: Connection -> Either ApiError Timespan -> IO ()
+pingLoop conn = \case
+  Left e -> fail' . WSErrorInternal . show $ e
+  Right pingFreq -> void . forkIO . forever $ do
+    threadDelay (timespanUs pingFreq)
+    sendMessage conn TCPing
+
+cmdLoopStepFrame :: forall m. (m ~ AppM DB ()) => (m -> IO (Either ApiError ())) -> WSSessionId -> m -> IO ()
+cmdLoopStepFrame toIO clientId = dolift . dostate
+  where
+    dostate :: m -> m
+    dostate cmd = do
+      Just ((_, appStateMVar), _) <- Map.lookup clientId . snd <$> liftIO (readMVar webSocketMVar)
+      put =<< liftIO (takeMVar appStateMVar)
+      cmd
+      liftIO . putMVar appStateMVar =<< get
+
+    dolift :: m -> IO ()
+    dolift cmd = toIO cmd >>= \case
+      Left e -> appLogL LogError $ show e
+      Right () -> pure ()
+
+cmdLoopStep :: Connection -> WSSessionId -> AppM DB ()
+cmdLoopStep conn clientId = do
+  msg <- liftIO $ receiveMessage conn
+  appLog $ "request from client #" <> show clientId <> ", " <> show msg
+  appLogL LogDebug . ("appState = " <>) . show =<< get
+
+  case msg of
+      TSPing -> appLog $ show clientId <> ": ping."
+      TSClearCache -> do
+          cmap' <- liftIO $ takeMVar webSocketMVar
+          liftIO . putMVar webSocketMVar $
+            second (Map.adjust (second $ const mempty) clientId) cmap'
+          liftIO . sendMessage conn $ TCRestrictKeys []
+      TSMissing keys -> do
+          cache <- mconcat <$> mapM getData keys
+          cmap' <- liftIO $ takeMVar webSocketMVar
+          liftIO . putMVar webSocketMVar $
+            second (Map.adjust (second (<> Set.fromList keys)) clientId) cmap'
+          liftIO . sendMessage conn $ TCServerCache cache
+
+      TSAddGroup cg           -> liftIO . sendMessage conn . TCCreatedGroup . view groupID =<< App.addGroup cg
+      TSUpdateGroup gid x     -> void $ App.modifyGroup gid x
+      TSCreateUser cu         -> liftIO . sendMessage conn . TCCreateUserResp =<< tryApp (App.createUser cu)
+      TSLogin li              -> liftIO . sendMessage conn . TCLoginResp =<< tryApp (App.login li)
+      TSLogout                -> void App.logout
+      TSGetTranslations k     -> liftIO . sendMessage conn . TCTranslations =<< App.getTranslations k
+
+      TSAddVDoc cv            -> liftIO . sendMessage conn . TCCreatedVDoc . view vdocID =<< App.createVDoc cv
+      TSUpdateVDoc vid upd    -> void $ App.updateVDoc vid upd
+      TSAddDiscussion eid x   -> void $ App.addDiscussion eid x
+      TSAddStatement sid x    -> void $ App.addStatement sid x
+      TSUpdateStatement sid x -> void $ App.updateStatement sid x
+      TSAddNote eid x         -> void $ App.addNote eid x
+      TSAddEdit eid x         -> void $ App.addEdit eid x
+      TSAddEditAndMerge eid x -> void $ App.addEditAndMerge eid x
+      TSUpdateEdit eid x      -> void $ App.updateEdit eid x
+      TSMergeEdit eid         -> void $ App.mergeEdit eid
+      TSToggleVote (ContribIDEdit eid) x -> do
+        rebased <- App.toggleSimpleVoteOnEdit eid x
+        when rebased . liftIO $ sendMessage conn TCRebase
+      TSToggleVote (ContribIDNote nid) x
+                                -> void $ App.toggleSimpleVoteOnNote nid x
+      TSToggleVote (ContribIDDiscussion _) _x
+                                -> pure ()  -- not implemented
+      TSDeleteVote eid        -> void $ App.deleteSimpleVoteOnEdit eid
+
+      bad@(TSGreeting _)      -> fail' $ WSErrorUnexpectedPacket bad
+
+-- FIXME: hash session id with a secret and a current timestamp before passing it to the client.

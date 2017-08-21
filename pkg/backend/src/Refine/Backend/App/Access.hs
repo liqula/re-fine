@@ -36,6 +36,7 @@ import Refine.Common.Types
 
 instance Database db => MonadAccess (AppM db) where
   hasCred (CredUser uid)           = (uid ==) . maybe Anonymous UserID <$> pullUID
+  hasCred CredNotLoggedIn          = (Nothing ==) <$> pullUID
   hasCred (CredGroupRole role gid) = (role `elem`) <$> pullGroupRolesIn gid
   hasCred (CredGlobalRole role)    = (role `elem`) <$> pullGobalRoles
 

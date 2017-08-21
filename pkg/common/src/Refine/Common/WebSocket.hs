@@ -35,7 +35,8 @@ import Refine.Common.Types.Translation
 import Refine.Common.Types.Vote
 
 
-type CacheId = Int
+type WSSessionId = Int
+
 
 -- ** Server cache
 
@@ -87,8 +88,8 @@ data ToServer
   | TSLogout
   | TSGetTranslations GetTranslations
 
-  | TSGreeting (Maybe CacheId)  -- ^ first message on connect with 'Nothing'; if this is a
-                                -- re-connect, send @'Just' 'CacheId'@.
+  | TSGreeting (Maybe WSSessionId)  -- ^ first message on connect with 'Nothing'; if this is a
+                                -- re-connect, send @'Just' 'WSSessionId'@.
   | TSPing
   deriving (Eq, Show, Generic)
 
@@ -105,7 +106,7 @@ data ToClient
   | TCLoginResp (Either ApiError User)       -- ^ response to 'TSLogin'
   | TCTranslations L10                       -- ^ response to 'TSGetTranslations'
 
-  | TCGreeting CacheId           -- ^ first message on connect
+  | TCGreeting WSSessionId           -- ^ first message on connect
   | TCPing                       -- ^ (this could be done more easily with 'sendPing', 'forkPingThread'.)
   deriving (Eq, Show, Generic)
 

@@ -120,6 +120,7 @@ guardAccess_ rkey xs child = view_ (guardAccess child) rkey xs
 instance MonadAccess ((->) AccessState) where
   hasCred xs (AccessState loginState groupRoles globalRoles _) = case xs of
     CredUser uid           -> allowUser loginState uid
+    CredNotLoggedIn        -> allowNotLoggedIn loginState
     CredGroupRole role uid -> allowGroupRole groupRoles (role, uid)
     CredGlobalRole role    -> allowGlobalRole globalRoles role
 
@@ -127,6 +128,10 @@ instance MonadAccess ((->) AccessState) where
 allowUser :: LoginState -> UserInfo -> Bool
 allowUser (LoginState (UserLoggedIn (view userID -> uidIs))) (UserID uidShould) = uidIs == uidShould
 allowUser _ _ = False
+
+allowNotLoggedIn :: LoginState -> Bool
+allowNotLoggedIn (LoginState UserLoggedOut) = True
+allowNotLoggedIn _ = False
 
 allowGroupRole :: [(GroupRole, ID Group)] -> (GroupRole, ID Group) -> Bool
 allowGroupRole = flip elem

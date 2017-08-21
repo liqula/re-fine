@@ -36,6 +36,7 @@ import Refine.Common.Types.Role
 -- find out if they are present.
 data Cred =
     CredUser UserInfo
+  | CredNotLoggedIn  -- ^ needed e.g. for registration form
   | CredGroupRole GroupRole (ID Group)
   | CredGlobalRole GlobalRole
   deriving (Eq, Show)
