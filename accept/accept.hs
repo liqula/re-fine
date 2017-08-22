@@ -205,6 +205,21 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
       textA `shouldSatisfy` (`ST.isInfixOf` everything)
       textB `shouldSatisfy` (`ST.isInfixOf` everything)
 
+  it "create discussion as user A" $ do
+    pending
+
+  it "reply to initial statement as user A" $ do
+    pending
+
+  it "reply to initial statement as user B" $ do
+    pending
+
+  it "reply to B's statement as user A" $ do
+    pending
+
+  it "edit user B's statement as user B" $ do
+    pending
+
 
 -- * xpath shortcuts
 
