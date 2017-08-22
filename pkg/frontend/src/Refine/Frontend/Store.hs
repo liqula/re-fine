@@ -296,13 +296,6 @@ emitBackendCallsFor act st = case act of
     _ -> pure ()
 
 
-ajaxFail :: HasCallStack => (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
-ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of
-  (Right err, Just onApiError) -> mconcat <$> (dispatchM `mapM` onApiError err)
-  (Right err, Nothing)         -> windowAlert ("Unexpected error from server: " <> show (code, err))     >> pure []
-  (Left bad, _)                -> windowAlert ("Corrupted error from server: " <> show (code, rsp, bad)) >> pure []
-
-
 -- * triggering actions
 
 instance Dispatchable GlobalAction where
