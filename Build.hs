@@ -142,7 +142,7 @@ main = shakeArgs refineOptions $ do
     need ["build-backend", "build-frontend"]
 
   phony "build-optimal" $ do
-    need ["clean", "hlint"]
+    need ["clean"]
     stackBuildOptimal pkgBackend
     need ["build-frontend-npm"]
     stackBuildOptimal pkgFrontend
