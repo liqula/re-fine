@@ -66,10 +66,10 @@ getDocumentState as gs@(view gsEditID -> Just{})
   = mapDocumentState
       (const . fromMaybe False
              $ (==) <$> (as ^? accLoginState . lsCurrentUser . loggedInUser . userID . to UserID)
-                    <*> ((^. editMetaID . miMeta . metaCreatedBy) <$> getEdit gs eid))
+                    <*> ((^. editMetaID . miMeta . metaCreatedBy) <$> cacheLookup gs eid))
       (const $ gsRawContent gs)
-      (fromMaybe (error "edit is not in cache") . getEdit gs)
-      (\(did, ed) -> discussionProps (maybe (Left did) Right $ getDiscussion gs did)
+      (fromMaybe (error "edit is not in cache") . cacheLookup gs)
+      (\(did, ed) -> discussionProps (maybe (Left did) Right $ cacheLookup gs did)
                                      (gsRawContent gs)
                                      (StatementPropDetails
                                         ed
@@ -91,7 +91,7 @@ wipeDocumentState :: AccessState -> GlobalState -> WipedDocumentState
 wipeDocumentState as gs = case getDocumentState as gs of
   DocumentStateView{}                  -> WipedDocumentStateView
   DocumentStateDiff i _ _ edit collapsed editable -> WipedDocumentStateDiff i edit collapsed editable
-  DocumentStateEdit es _ meid          -> WipedDocumentStateEdit $ mkEditToolbarProps (getEdit gs =<< meid) es
+  DocumentStateEdit es _ meid          -> WipedDocumentStateEdit $ mkEditToolbarProps (cacheLookup gs =<< meid) es
   DocumentStateDiscussion dp           -> WipedDocumentStateDiscussion $ DiscussionToolbarProps
                                             (either id (^.discussionID) $ dp ^. discPropsDiscussion)
                                             (dp ^. discPropsFlatView)

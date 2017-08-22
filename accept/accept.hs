@@ -196,7 +196,7 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
 
   it "find two bubbles" . runWD $ do
     onEls [ByCSS ".o-snippet__content"] $ \bubbles ->
-      length bubbles `shouldBe` 1  -- TODO #403
+      length bubbles `shouldBe` 1  -- FIXME #403
 
   it "find both tokens in the html source of the diff view" . runWD $ do
     onEl [ByCSS ".o-snippet__content"] click

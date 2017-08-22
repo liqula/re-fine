@@ -21,7 +21,7 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans -fno-warn-unused-imports -fno-warn-unused-binds #-}  -- TODO
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.Contribution.DiscussionSpec where
 
@@ -32,12 +32,9 @@ import qualified Data.List.NonEmpty as NonEmpty
 import           Data.Tree
 import           Test.Hspec
 
-import           React.Flux.Missing
 import           Refine.Common.Test.Samples (sampleRawContent1)
 import           Refine.Common.Types
-import           Refine.Common.VDoc.OT
 import           Refine.Common.VDoc.Draft (addMarksToRawContent)
-import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Contribution.Discussion
 import           Refine.Frontend.Test.Enzyme

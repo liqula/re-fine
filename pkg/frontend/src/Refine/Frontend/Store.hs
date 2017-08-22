@@ -35,7 +35,6 @@ import           Control.Concurrent
 import           Refine.Common.Types hiding (CreateUser, Login)
 import qualified Refine.Common.Types as C
 import           Refine.Common.VDoc.Draft
-import           Refine.Common.Rest (ApiError(..))
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
@@ -296,21 +295,6 @@ emitBackendCallsFor act st = case act of
 
     _ -> pure ()
 
-
-
--- TODO: remove
--- | TUNING: the calls to this action are usually outrageously
--- expensive, but we don't have a generic way to incrementally update
--- the composite vdoc here.  if we got rid of the NFData constraint on
--- actions, we could define @UpdateCVDoc :: (CompositeVDoc ->
--- CompositeVDoc) -> GlobalAction@.
-reloadCompositeVDoc' :: HasCallStack => ID C.VDoc -> GlobalAction
-reloadCompositeVDoc' = LoadVDoc
-
-reloadCompositeVDoc :: HasCallStack => GlobalState -> GlobalAction
-reloadCompositeVDoc = reloadCompositeVDoc'
-  . fromMaybe (error "reloadCompositeVDoc")
-  . (^? to gsEdit . _Just . _Just . C.editVDoc)
 
 ajaxFail :: HasCallStack => (Int, String) -> Maybe (ApiError -> [GlobalAction]) -> IO [SomeStoreAction]
 ajaxFail (code, rsp) mOnApiError = case (eitherDecode $ cs rsp, mOnApiError) of

@@ -55,7 +55,7 @@ main = do
   prepareSession
   runMakeVDoc
 
-  -- TODO: this won't work any more until we use websockets (the client side) instead of wreq.
+  -- FIXME: this won't work any more until we use websockets (the client side) instead of wreq.
 
 
 -- * building blocks

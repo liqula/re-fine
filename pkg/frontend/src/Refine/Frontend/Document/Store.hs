@@ -183,7 +183,7 @@ enterEditModeWithEdit oldgs eid = DocumentStateEdit
       einfo
       (Just eid)
   where
-    Just ed = getEdit oldgs eid
+    Just ed = cacheLookup oldgs eid
 
     einfo = EditInfo
              (ed ^. editDesc)

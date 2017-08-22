@@ -21,32 +21,26 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE ViewPatterns               #-}
 
-{-# OPTIONS_GHC -fno-warn-orphans -fno-warn-unused-imports -fno-warn-unused-binds #-}  -- TODO
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.Contribution.Discussion (discussion_) where
 
 import Refine.Frontend.Prelude
 
 import qualified Data.Map.Strict as M
-import qualified Data.Text as ST
 import qualified Data.Tree as Tree
 import           Data.Foldable (toList)
 import           Language.Css.Syntax
-import qualified React.Flux as RF
 
 import           Refine.Common.Types hiding (Style)
 import           React.Flux.Missing
-import qualified Refine.Frontend.Colors as C
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Icon
-import           Refine.Frontend.Screen.Types
-import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.ThirdPartyViews (editor_)
-import           Refine.Frontend.TKey
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 import           Refine.Frontend.Access
