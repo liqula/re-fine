@@ -150,4 +150,4 @@ spec = do
 
     describe "discussion toolbar" $ do
       it "works" $ do
-        pending  -- TODO: toolbar tests should probably go somewhere else.
+        pending  -- FIXME: toolbar tests should probably go somewhere else.
