@@ -22,6 +22,8 @@ module Refine.Common.Access.Policy where
 
 import Refine.Common.Prelude
 
+import Data.List.NonEmpty as NEL
+
 import Refine.Common.Access
 import Refine.Common.Types
 
@@ -75,4 +77,4 @@ updateStatement :: Statement -> Creds
 updateStatement stmt = orAdmin . CredsLeaf $ CredUser (stmt ^. statementMetaID . miMeta . metaCreatedBy)
 
 createEdit :: VDoc -> Creds
-createEdit vdoc = orAdmin . credsAny $ (flip CredGroupRole (vdoc ^. vdocGroup) <$> [GroupMember ..])
+createEdit vdoc = orAdmin . CredsAny . NEL.fromList $ CredsLeaf . (`CredGroupRole` (vdoc ^. vdocGroup)) <$> [GroupMember ..]
