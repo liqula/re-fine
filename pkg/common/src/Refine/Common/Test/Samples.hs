@@ -63,6 +63,38 @@ sampleMetaID :: MetaID a
 sampleMetaID = MetaID sampleID sampleMetaInfo
 
 
+sampleVDoc :: VDoc
+sampleVDoc = VDoc
+  { _vdocMetaID   = sampleMetaID
+  , _vdocTitle    = sampleTitle
+  , _vdocAbstract = sampleAbstract
+  , _vdocHeadEdit = ID 0
+  , _vdocGroup    = ID 0
+  , _vdocStats    = EditStats 13 91 11
+  }
+
+
+sampleGroup1 :: Group
+sampleGroup1 = Group
+  { _groupMetaID    = sampleMetaID
+  , _groupTitle     = "group title"
+  , _groupDesc      = "group abstract"
+  , _groupParents   = []
+  , _groupChildren  = []
+  , _groupVDocs     = [ID 0]
+  }
+
+sampleGroup2 :: Group
+sampleGroup2 = Group
+  { _groupMetaID    = sampleMetaID & miID .~ ID 1898
+  , _groupTitle     = "group title 2"
+  , _groupDesc      = "group abstract 2"
+  , _groupParents   = []
+  , _groupChildren  = []
+  , _groupVDocs     = []
+  }
+
+
 -- | we're just hoping this is the ID of the default group that is created in 'mkProdBackend'.  if
 -- this fails, we need to be smarter about constructing the test cases here.
 defaultGroupID :: ID Group

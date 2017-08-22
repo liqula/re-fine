@@ -8,5 +8,8 @@
 /pkg/backend/server.conf
 /pkg/backend/dev.log
 /pkg/frontend/dev.log
+/pkg/frontend/scss/.sass-cache/
+/pkg/frontend/scss-new/.sass-cache/
+/pkg/frontend/scss-new/main.css*
 /accept/.selenium/
 /accept/accept.cabal

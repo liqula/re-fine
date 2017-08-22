@@ -25,6 +25,18 @@ cabal-version:  >= 1.10
 flag ghc-warn-error
   default: True
 
+flag build-refine-frontend
+  default: True
+
+flag build-spec
+  default: True
+
+flag build-styleguide
+  default: True
+
+flag build-bench
+  default: True
+
 library
   hs-source-dirs:
       src
@@ -126,6 +138,8 @@ library
   default-language: Haskell2010
 
 executable refine-frontend
+  If !flag(build-refine-frontend)
+    Buildable: False
   main-is: Main.hs
   hs-source-dirs: app
   ghc-options: -j -Wall -Wno-redundant-constraints
@@ -145,6 +159,8 @@ executable refine-frontend
   default-language: Haskell2010
 
 test-suite spec
+  If !flag(build-spec)
+    Buildable: False
   type: exitcode-stdio-1.0
   main-is: Main.hs
   hs-source-dirs:
@@ -208,11 +224,62 @@ test-suite spec
       jsbits/test.js
   default-language: Haskell2010
 
+test-suite styleguide
+  If !flag(build-styleguide)
+    Buildable: False
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  hs-source-dirs:
+      styleguide
+  ghc-options: -j -Wall -Wno-redundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  if flag(ghc-warn-error)
+      ghc-options: -Werror
+
+  if impl(ghcjs)
+    build-depends: ghcjs-base
+  if !impl(ghcjs)
+    build-depends: ghcjs-base-stub
+
+  build-depends:
+      aeson
+    , base >= 4.7 && < 5
+    , basic-sop
+    , containers
+    , deepseq
+    , directory
+    , filepath
+    , hspec
+    , hspec-core
+    , http-api-data
+    , i18n
+    , json-sop
+    , language-css
+    , lens
+    , pretty
+    , process
+    , QuickCheck
+    , quickcheck-instances
+    , react-hs
+    , refine-common
+    , refine-frontend
+    , refine-prelude
+    , string-conversions
+    , text
+    , time
+    , unordered-containers
+  js-sources:
+      jsbits/hookup.js
+      jsbits/util.js
+      jsbits/test.js
+  default-language: Haskell2010
+
 -- `stack bench` seems not to work with ghcjs
 --
 -- to run the benchmark, first build it with `stack bench`
 -- then run "node `stack path --dist-dir`/build/bench/bench.jsexe/all.js"
 benchmark bench
+  If !flag(build-bench)
+    Buildable: False
   type: exitcode-stdio-1.0
   main-is: Main.hs
   hs-source-dirs:
