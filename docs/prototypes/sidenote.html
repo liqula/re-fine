@@ -1,0 +1,174 @@
+<html><head>
+<!--
+Basics
+
+- there is just one column
+- the react-hs app generates (mark, bubble) pairs like:
+
+    <span class="pair" 
+          id="..."
+          onMouseOver="highlightPair(this)">
+      <span class="mark">
+        ...
+      </span>
+      <span class="bubble" 
+            onClick="unstackBubble(this)">
+        ...
+      </span>
+    </span>
+
+- the bubbles' position are calculated by the browser's layout engine by css
+- on each document re-render the js function "adjustBubblePos()" is called   -- TODO: how
+
+
+CSS classes:
+
+  bubble          -- to calculate the initial bubble position
+  highlightpair   -- the pair is highlighted by css if present, added by highlightPair()
+  dontStack       -- added statically by the react-hs app to prevent stacking by adjustBubblePos()
+                     we expect that either all of the bubbles has this or none of them (per side)
+  stacktop        -- added by adjustNoteVPos() if the bubble is on the top of a stack
+                     the bubble has a different style if present
+  insidestack     -- added by adjustNoteVPos() if the bubble is inside of a stack
+                     the bubble is hidden if present
+
+    .bubble {
+      position: absolute;
+      top: auto;
+      left: auto;
+      right: 10px;
+      width: 120px;
+      ...
+      }
+
+
+
+Javascript functions:
+
+  highlightPair(this)
+    - toggles the highlightpair class on this
+
+  adjustNoteVPos()
+    - collects all html elements with the bubble class
+    - gets the vertical positions of the elements
+    - stacking algorithm:
+      - decides which bubbles should be stacked
+        - takes the dontStack class into account
+      - calculates the new vertical positions of bubbles
+      - sets the absolute vertical postions of bubbles
+      - adds the stacktop, insidestack classes to the bubbles
+
+  unstackBubble(this)
+    - if this has class stackedinitial:
+      - removes the class stacktop on this
+      - calls a modified version of adjustNoteVPos which
+        calculates and sets the bubbles vertical positions
+        and removes the following insidestack classes
+
+Resources:
+https://www.w3schools.com/jsreF/tryit.asp?filename=tryjsref_onmousemove_over_enter
+
+TODO
+  - Overlapping marks
+  - ...
+-}
+
+
+-->
+
+    <style>
+
+      body {
+      margin: 0 auto;
+      padding: 1em 4em;
+      width: 60%;
+      }
+
+      .hidden {
+      visibility: hidden;
+      }
+
+      .visible {
+      visibility: visible;
+      }
+
+      .mark{
+      text-decoration: underline;
+      background-color: #eee;
+      }
+
+      .sidenote {
+      box-sizing: content-box;
+      display: inline-block;
+      left: auto;
+      right: 10px;
+      position: absolute;
+      top: auto;
+      width: 120px;
+      background: #eee;
+      border-radius: 5px;
+      padding: 15px;
+      }
+}
+    </style>
+  </head>
+  <body>
+
+<script>
+  window.onscroll = function() {myFunction()};
+
+  function myFunction() {
+  var rect = document.getElementById("ontop").getBoundingClientRect();
+  if (rect.top <= 10) {
+    document.getElementById("ontop").className = "visible";
+    } else {
+    document.getElementById("ontop").className = "hidden";
+    }
+  }
+</script>
+
+Consectetur adipiscing elit pellentesque habitant morbi tristique 
+senectus. Vel risus commodo viverra maecenas accumsan lacus. Sem nulla 
+pharetra diam sit amet nisl suscipit adipiscing. Pretium fusce id velit 
+ut tortor pretium viverra suspendisse. Amet justo donec enim diam 
+vulputate ut pharetra. Mi sit amet mauris commodo. Eget felis eget nunc 
+lobortis mattis aliquam faucibus. Dictumst vestibulum rhoncus est 
+pellentesque elit ullamcorper. Ut etiam sit amet nisl purus in mollis. 
+Aenean sed adipiscing diam donec adipiscing tristique risus.
+Netus et malesuada fames ac turpis. Vitae aliquet nec ullamcorper sit 
+amet.
+
+Consectetur adipiscing elit pellentesque habitant morbi tristique 
+senectus. Vel risus commodo viverra maecenas accumsan lacus. Sem nulla 
+pharetra diam sit amet nisl suscipit adipiscing. Pretium fusce id velit 
+ut tortor pretium viverra suspendisse. Amet justo donec enim diam 
+vulputate ut pharetra. Mi sit amet mauris commodo. Eget felis eget nunc 
+lobortis mattis aliquam faucibus. Dictumst vestibulum rhoncus est 
+pellentesque elit ullamcorper. Ut etiam sit amet nisl purus in mollis. 
+Aenean sed adipiscing diam donec <span class="mark">adipiscing tristique risus.
+Netus et</span><span class="sidenote">malesuada fames ac turpis</span>. Vitae aliquet nec ullamcorper sit 
+amet. Hac habitasse <span class="mark">platea dictumst vestibulum rhoncus. Porttitor </span><span class="sidenote">massa 
+id neque aliquam.</span> Aenean sed adipiscing diam donec adipiscing tristique 
+risus nec feugiat. Mauris commodo quis imperdiet massa tincidunt nunc 
+pulvinar sapien et. Tellus cras adipiscing enim eu turpis egestas 
+pretium aenean pharetra. Est ultricies integer quis auctor. Dictum sit 
+amet justo donec enim diam vulputate ut pharetra. Tincidunt tortor 
+aliquam nulla facilisi cras. Tellus cras adipiscing enim eu turpis. 
+Mauris augue neque gravida in fermentum. Mi eget mauris pharetra et 
+ultrices neque ornare aenean euismod. Egestas diam in arcu cursus 
+euismod quis viverra nibh.
+In nibh mauris cursus mattis molestie. Neque sodales ut etiam sit amet 
+nisl purus in. Hendrerit gravida rutrum quisque non tellus orci ac 
+auctor augue. Praesent elementum facilisis leo vel fringilla. Arcu 
+dictum varius duis at consectetur lorem. Purus faucibus ornare 
+suspendisse sed nisi lacus sed viverra. Euismod in pellentesque massa 
+placerat. Scelerisque in dictum non consectetur a erat nam at. Integer 
+vitae justo eget magna fermentum iaculis eu non. Sodales ut etiam sit 
+amet nisl purus in. Vel orci porta non pulvinar neque. Duis at 
+consectetur lorem donec massa sapien. Turpis egestas maecenas pharetra 
+convallis posuere morbi leo. At in tellus integer feugiat. In nisl nisi 
+scelerisque eu ultrices vitae auctor. Ullamcorper malesuada proin libero
+ nunc consequat interdum varius sit. Neque laoreet suspendisse interdum 
+consectetur libero id faucibus.
+
+</body></html>

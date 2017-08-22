@@ -33,22 +33,20 @@ import           Test.Hspec
 import           Refine.Common.Test.Samples (sampleRawContent1, sampleMetaID)
 import           Refine.Common.Types
 import           Refine.Frontend.Header.Heading
+import           Refine.Frontend.Header.Toolbar
 import           Refine.Frontend.Access
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store.Types
--- import           Refine.Frontend.Store
--- import           Refine.Frontend.Types
 import           Refine.Frontend.Test.Enzyme as EZ
 import           Refine.Frontend.Test.Store
-import           Refine.Frontend.ThirdPartyViews (stickyContainer_)
 
 spec :: Spec
 spec = do
   describe "The topMenuBar_ component" $ do
     context "not sticky" $ do
       it "renders its elements" $ do
-        wrapper <- mount (topMenuBar_ (TopMenuBarProps False UserLoggedOut))
+        wrapper <- mount (topMenuBar_ (TopMenuBarProps UserLoggedOut))
         lengthOfIO (find wrapper (StringSelector ".c-mainmenu")) `shouldReturn` 1
         lengthOfIO (find wrapper (StringSelector ".c-mainmenu__menu-button")) `shouldReturn` 1
         lengthOfIO (find wrapper (StringSelector ".c-mainmenu__icon-bar")) `shouldReturn` 3
@@ -56,21 +54,24 @@ spec = do
         EZ.lengthOf label `shouldReturn` 1
         text label `shouldReturn` "MENU"
 
-      it "does not render with sticky css class" $ do
-        wrapper <- shallow (topMenuBar_ (TopMenuBarProps False UserLoggedOut))
-        label <- find wrapper (StringSelector ".c-mainmenu--toolbar-combined")  -- (it's called combined, though, not sticky)
-        EZ.lengthOf label `shouldReturn` 0
-
     context "sticky" $ do
-      it "does not render the label" $ do
-        wrapper <- shallow (topMenuBar_ (TopMenuBarProps True UserLoggedOut))
-        label <- find wrapper (StringSelector ".c-mainmenu__menu-button-label")
-        EZ.lengthOf label `shouldReturn` 0
+      let vdoc = VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") undefined undefined mempty
 
-      it "renders with sticky css class" $ do
-        wrapper <- shallow (topMenuBar_ (TopMenuBarProps True UserLoggedOut))
-        label <- find wrapper (StringSelector ".c-mainmenu--toolbar-combined")  -- (it's called combined, though, not sticky)
+      it "the MENU item in the toolbar does not render if it is not sticky" $ do
+        wrapper <- shallow (toolbar_ vdoc)
+        label <- find wrapper (StringSelector ".c-toolbar-menu-label-visible")
+        EZ.lengthOf label `shouldReturn` 0
+        label' <- find wrapper (StringSelector ".c-toolbar-menu-label-hidden")
+        EZ.lengthOf label' `shouldReturn` 1
+
+      it "does render the MENU label in toolbar" $ do
+        pending
+        wrapper <- mount (toolbar_ vdoc)
+        -- scroll down  -- FIXME
+        label <- find wrapper (StringSelector ".c-toolbar-menu-label-visible")
         EZ.lengthOf label `shouldReturn` 1
+        label' <- find wrapper (StringSelector ".c-toolbar-menu-label-hidden")
+        EZ.lengthOf label' `shouldReturn` 0
 
   describe "The mainHeader_ component" $ do
     it "sets the header height to a nonzero value" $ do
@@ -90,5 +91,5 @@ spec = do
 -- FIXME: remove this line if this test pass --    & gsServerCache %~ serverCacheUpdate (LoadVDoc (AfterAjax newVDoc))
 
       resetState gs
-      _wrapper <- mount (stickyContainer_ [] . mainHeader_ $ mkMainHeaderProps emptyAccessState gs)
+      _wrapper <- mount (mainHeader_ $ mkMainHeaderProps emptyAccessState gs)
       storeShouldEventuallySatisfy ((^. gsScreenState . ssHeaderHeight) :: GlobalState -> Int) (> 0)

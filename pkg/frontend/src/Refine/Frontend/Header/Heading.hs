@@ -29,14 +29,13 @@ module Refine.Frontend.Header.Heading
   , mainHeader, mainHeader_
   , toolbarWrapper_
   , mkMainHeaderProps
+  , mainHeaderRender2
   ) where
 
 import Refine.Frontend.Prelude
 
 import qualified Data.List.NonEmpty as NEL
 import           Language.Css.Syntax
-import           React.Flux as RF
-import           React.Flux.Internal as RF
 import           React.Flux.Outdated as RF
 
 import           Refine.Common.Types
@@ -49,21 +48,20 @@ import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(.
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_, indexToolbarExtension_ )
 import           Refine.Frontend.Access
 import           Refine.Frontend.Header.Types
-import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Status
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.ThirdPartyViews (sticky_)
 import           Refine.Frontend.Util
 
 
 topMenuBar :: HasCallStack => View '[TopMenuBarProps]
 topMenuBar = mkView "TopMenuBar" $ \props ->
-  div_ [ classNamesAny [("c-mainmenu", True), ("c-mainmenu--toolbar-combined", props ^. isSticky)]
+  div_ [ classNamesAny [("c-mainmenu", True)]
        , "style" @@= [decl "pointerEvents" (Ident "none")]
+       , "id" $= "top-menubar"
        ] $ do
     topMenuBarLeft_ props
     topMenuBarRight_ props
@@ -72,7 +70,7 @@ topMenuBar_ :: HasCallStack => TopMenuBarProps -> ReactElementM eventHandler ()
 topMenuBar_ = view_ topMenuBar "TopMenuBar_"
 
 topMenuBarLeft :: View '[TopMenuBarProps]
-topMenuBarLeft = mkView "TopMenuBarLeft" $ \(TopMenuBarProps sticky _currentUser) -> do
+topMenuBarLeft = mkView "TopMenuBarLeft" $ \(TopMenuBarProps _currentUser) -> do
     button_ [ "aria-controls" $= "bs-navbar"
             , "aria-expanded" $= "false"
             , "className" $= "c-mainmenu__menu-button"
@@ -84,15 +82,15 @@ topMenuBarLeft = mkView "TopMenuBarLeft" $ \(TopMenuBarProps sticky _currentUser
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
       span_ ["className" $= "c-mainmenu__icon-bar"] ""
-    unless sticky $
-      span_ ["className" $= "c-mainmenu__menu-button-label"] "MENU"
+
+    span_ ["className" $= "c-mainmenu__menu-button-label"] "MENU"
 
 topMenuBarLeft_ :: TopMenuBarProps -> ReactElementM eventHandler ()
 topMenuBarLeft_ = view_ topMenuBarLeft "TopMenuBarLeft_"
 
 topMenuBarRight_ :: TopMenuBarProps -> ReactElementM eventHandler ()
-topMenuBarRight_ (TopMenuBarProps sticky cu) = do
-    loginStatusButton_ (ibDarkBackground .~ not sticky) cu
+topMenuBarRight_ (TopMenuBarProps cu) = do
+    loginStatusButton_ id cu
 
 
 -- | Note that if @toolbarItems_@ is a component ('View') rather than a 'ReactElementM', css styling
@@ -105,11 +103,6 @@ toolbarWrapper_ toolbarItems_ = do
         div_ ["className" $= "c-vdoc-toolbar__content"] $ do
           toolbarItems_
 
-
--- | extract the new state from event.
-currentToolbarStickyState :: HasCallStack => Event -> Bool
-currentToolbarStickyState (evtHandlerArg -> RF.HandlerArg j) = pFromJSVal j
-
 mainHeader :: HasCallStack => RF.ReactView MainHeaderProps
 mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
      -- the render function inside a Lifecycle view does not update the children passed to it when the state changes
@@ -119,10 +112,10 @@ mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
    , RF.lComponentDidUpdate = Just $ \_ dom _ _ _ -> calcHeaderHeight dom
    }
 
-mainHeaderRender :: HasCallStack => () -> MainHeaderProps -> ReactElementM ('StatefulEventHandlerCode ()) ()
+mainHeaderRender :: HasCallStack => () -> MainHeaderProps -> ReactElementM eventHandler ()
 mainHeaderRender () (rs, as) = do
   let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsVDoc . _Just . _Just
-      props = TopMenuBarProps (rs ^. gsToolbarSticky) (as ^. accLoginState . lsCurrentUser)
+      props = TopMenuBarProps (as ^. accLoginState . lsCurrentUser)
 
       mainMenuPart_ = do
         -- in the past, the following needed to be siblings because of the z-index handling.  not sure that's still the case.
@@ -137,13 +130,15 @@ mainHeaderRender () (rs, as) = do
           WipedDocumentStateDiff _ eid _ _ -> editDescToAbstract vdoc . ContribIDEdit $ eid ^. editID
           _ -> vdoc ^. compositeVDoc . vdocAbstract
 
-      toolbarPart_ = div_ ["className" $= "c-fulltoolbar"] $ do
-        sticky_ [RF.on "onStickyStateChange" $ \e -> simpleHandler $ \() ->
-                    (dispatch . ToolbarStickyStateChange $ currentToolbarStickyState e, Nothing)] $ do
+  div_ ["className" $= "c-fullheader"] $ do
+      mainMenuPart_
+      headerPart_
+
+mainHeaderRender2 :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
+mainHeaderRender2 (rs, _as) = div_ ["className" $= "c-fulltoolbar"] $ do
           toolbarWrapper_ $ case rs ^. gsDocumentState of
 
-            WipedDocumentStateView -> liftViewToStateHandler
-                                    . toolbar_ . fromJust $ rs ^? gsVDoc . _Just . _Just . compositeVDoc
+            WipedDocumentStateView -> toolbar_ . fromJust $ rs ^? gsVDoc . _Just . _Just . compositeVDoc
 
             WipedDocumentStateDiff i edit collapsed editable -> diffToolbar_ $ DiffToolbarProps
               (edit ^. editID)
@@ -160,11 +155,6 @@ mainHeaderRender () (rs, as) = do
           indexToolbarExtension_ $ mkIndexToolbarProps rs
           commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
           editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
-
-  div_ ["className" $= "c-fullheader"] $ do
-      mainMenuPart_
-      headerPart_
-      toolbarPart_
 
 mkIndexToolbarProps :: GlobalState_ WipedDocumentState -> IndexToolbarProps
 mkIndexToolbarProps rs
@@ -195,7 +185,7 @@ calcHeaderHeight :: HasCallStack => RF.LDOM -> IO ()
 calcHeaderHeight ldom = do
    this <- RF.lThis ldom
    h <- js_getHeaderHeight this
-   when (h /= (-1)) . dispatchAndExec . ScreenAction $ AddHeaderHeight h
+   when (h /= (-1)) . dispatchAndExec . ScreenAction . AddHeaderHeight $ h + 80
 
 #ifdef __GHCJS__
 

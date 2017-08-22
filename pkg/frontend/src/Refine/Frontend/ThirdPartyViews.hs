@@ -24,8 +24,6 @@
 
 module Refine.Frontend.ThirdPartyViews
   ( ThirdPartyView
-  , sticky_
-  , stickyContainer_
   , skylight_
   , hammer_
   , editor_
@@ -35,12 +33,6 @@ import Refine.Frontend.Prelude
 
 
 type ThirdPartyView eventHandler = [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-
-sticky_ :: HasCallStack => ThirdPartyView eventHandler
-sticky_ = foreignClass js_sticky
-
-stickyContainer_ :: HasCallStack => ThirdPartyView eventHandler
-stickyContainer_ = foreignClass js_stickyContainer
 
 skylight_ :: HasCallStack => ThirdPartyView eventHandler
 skylight_ = foreignClass js_skylight
@@ -52,14 +44,6 @@ editor_ :: HasCallStack => ThirdPartyView eventHandler
 editor_ = foreignClass js_editor
 
 #ifdef __GHCJS__
-
-foreign import javascript safe
-  "Sticky.Sticky"
-  js_sticky :: JSVal
-
-foreign import javascript safe
-  "Sticky.StickyContainer"
-  js_stickyContainer :: JSVal
 
 foreign import javascript safe
   "Skylight.SkyLightStateless"
@@ -74,14 +58,6 @@ foreign import javascript safe
   js_editor :: JSVal
 
 #else
-
-{-# ANN js_sticky ("HLint: ignore Use camelCase" :: String) #-}
-js_sticky :: JSVal
-js_sticky = error "javascript FFI not available in GHC"
-
-{-# ANN js_stickyContainer ("HLint: ignore Use camelCase" :: String) #-}
-js_stickyContainer :: JSVal
-js_stickyContainer = error "javascript FFI not available in GHC"
 
 {-# ANN js_skylight ("HLint: ignore Use camelCase" :: String) #-}
 js_skylight :: JSVal

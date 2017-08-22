@@ -55,7 +55,6 @@ data GlobalState_ a = GlobalState
   , _gsDocumentState              :: a
   , _gsScreenState                :: ScreenState
   , _gsMainMenuState              :: MainMenuState
-  , _gsToolbarSticky              :: Bool
   , _gsTranslations               :: Trans
   , _gsDevState                   :: Maybe DevState  -- ^ for development & testing, see 'devStateUpdate'.
   , _gsServerCache                :: ServerCache
@@ -69,7 +68,6 @@ emptyGlobalState = GlobalState
   , _gsDocumentState              = emptyDocumentState
   , _gsScreenState                = emptyScreenState
   , _gsMainMenuState              = emptyMainMenuState
-  , _gsToolbarSticky              = False
   , _gsTranslations               = emptyTrans
   , _gsDevState                   = Nothing
   , _gsServerCache                = mempty
@@ -95,7 +93,6 @@ data GlobalAction =
   | ContributionAction ContributionAction
   | HeaderAction HeaderAction
   | DocumentAction DocumentAction
-  | ToolbarStickyStateChange Bool
   | MainMenuAction MainMenuAction
   | AddNote Note
   | AddDiscussion Discussion

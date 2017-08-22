@@ -38,9 +38,6 @@ testThirdPartyView' v = (mount v >>= html) `shouldNotReturn` ""
 
 spec :: Spec
 spec = do
-  it "stickyContainer_, sticky_" $ do
-    testThirdPartyView' (stickyContainer_ [] $ sticky_ [] mempty)
-
   it "skylight_" $ do
     testThirdPartyView skylight_
 
