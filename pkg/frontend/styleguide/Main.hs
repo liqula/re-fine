@@ -33,6 +33,7 @@ import Refine.Frontend.Prelude
 -- import           Language.Css.Build.Idents hiding (show)
 -- import           Language.Css.Build.Tags hiding (style, html)
 import           Language.Css.Syntax
+import           Data.List
 import qualified Data.Map as Map
 import qualified Data.Text as ST
 import           System.Directory
@@ -69,10 +70,13 @@ styleGuidePath = "./styleguide/html/"
 
 -- * combinators
 
-wrapHtml :: [String] -> String -> String
-wrapHtml ctx = (unlines header <>) . (<> unlines footer)
+wrapHtml :: FilePath -> [String] -> String -> String
+wrapHtml nm ctx = (unlines header <>) . (<> unlines footer)
   where
-    cssSource = "tbd.css"  -- FIXME
+    cssSource :: FilePath = relPath </> "main.css"
+    relPath :: FilePath = assert (not $ "./" `isInfixOf` nm)  -- (without this assertion this hack won't work)
+      . mconcat
+      $ replicate (length $ filter (== '/') nm) "../"
 
     header =
       "<!DOCTYPE html>" :
@@ -94,7 +98,15 @@ wrapHtml ctx = (unlines header <>) . (<> unlines footer)
 generateStyleGuide :: HasCallStack => (String, ReactElementM h (), [String]) -> Spec
 generateStyleGuide (nm, comp, ctx) = it ("generateStyleGuide: " <> nm) $ do
   createDirectoryIfMissing True (styleGuidePath <> takeDirectory nm)
-  writeFile (styleGuidePath <> nm <> ".html") . wrapHtml ctx . cs =<< html =<< mount comp
+  writeFile (styleGuidePath <> nm <> ".html") . wrapHtml nm ctx . cs =<< html =<< mount comp
+
+generateIndexHtml :: HasCallStack => Spec
+generateIndexHtml = it "generateIndexHtml" $ do
+  nms <- viewsFiles
+  writeFile (styleGuidePath <> "index.html") . unlines $
+    ["<!DOCTYPE html><html><body>"] <>
+    ((\nm -> "<a href=\"" <> nm <> "\">" <> nm <> "</a><br/>") <$> nms) <>
+    ["</body></html>"]
 
 -- | Pretty-print, canonicalize, validate existing html.  This is called in the tests after
 -- 'generateStyleGuide', and should also be called before and after manual edit to supress diff
@@ -103,7 +115,7 @@ generateStyleGuide (nm, comp, ctx) = it ("generateStyleGuide: " <> nm) $ do
 -- FUTUREWORK: use `apt-get install w3c-markup-validator` to get more html errors?  it's an ugly cgi
 -- script and may not be fun to deploy, but it may be well-maintained.
 validateStyleGuide :: HasCallStack => Spec
-validateStyleGuide = it "validateStyleGuide" $ viewsFiles >>= mapM_ val
+validateStyleGuide = it "validateStyleGuide" $ viewsFiles >>= mapM_ (val . (styleGuidePath <>))
   where
     val  nm = do
       raw <- pretty nm =<< readFile nm
@@ -179,7 +191,7 @@ toy_ = div_ [style [ "margin" ||= Px 10
 -- | NOTE: listDirectory throws a `("setErrno not yet implemented: " + e);`, so we just take
 -- `viewsSources`' word for it.
 viewsFiles :: IO [FilePath]
-viewsFiles = pure $ (<> ".html") . (styleGuidePath <>) . view _1 <$> viewsSources
+viewsFiles = pure $ (<> ".html") . view _1 <$> viewsSources
   -- (styleGuidePath <>) <$$> listDirectoryRec styleGuidePath
 
 viewsSources :: [(String, ReactElementM 'EventHandlerCode (), [String])]
@@ -301,7 +313,7 @@ main :: IO ()
 main = hspec spec
 
 spec :: Spec
-spec = do
+spec = describe "@STYLEGUIDE" $ do
     describe "validate-before" $ validateStyleGuide >> checkWorkingCopy
-    describe "generate"        $ generateStyleGuide `mapM_` viewsSources
+    describe "generate"        $ generateIndexHtml >> generateStyleGuide `mapM_` viewsSources
     describe "validate-after"  $ validateStyleGuide >> checkWorkingCopy
