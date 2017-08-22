@@ -50,7 +50,9 @@ import           Refine.Frontend.Util
 -- sometimes necessary, but it's a bit dangerous because it can
 -- trigger thunk evaluation loops.  use old state whenever it is
 -- enough.
-documentStateUpdate :: (HasCallStack) => GlobalAction -> GlobalState -> GlobalDocumentState -> CLT GlobalDocumentState
+documentStateUpdate :: (HasCallStack)
+                    => GlobalAction -> GlobalState -> GlobalDocumentState
+                    -> CacheLookupT GlobalDocumentState
 documentStateUpdate (LoadVDoc _) oldgs st
   = do
     cvdoc <- do

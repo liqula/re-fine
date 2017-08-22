@@ -158,10 +158,10 @@ cacheLookupIn sc i@(cacheKey -> k) = maybe (cacheMiss k Nothing i) Just . Map.lo
 cacheLookup :: (HasCallStack, CacheLookup b) => GlobalState_ a -> ID b -> Maybe b
 cacheLookup gs = cacheLookupIn (gs ^. gsServerCache)
 
-type CLT = Except ()
+type CacheLookupT = Except ()
 
 -- FIXME: collect more missing cache keys in one round
-cacheLookupM :: (HasCallStack, CacheLookup b) => GlobalState_ a -> ID b -> CLT b
+cacheLookupM :: (HasCallStack, CacheLookup b) => GlobalState_ a -> ID b -> CacheLookupT b
 cacheLookupM gs i = do
   case cacheLookup gs i of
     Just val -> pure val

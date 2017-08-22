@@ -133,11 +133,11 @@ transformGlobalState = transf
       Right b -> pure b
       Left () -> do
         liftIO flushCacheMisses
-        liftIO $ threadDelay 200000   -- TODO: fix busy wait here
+        liftIO $ threadDelay 200000   -- TODO #425
         dispatchAndExec act
         pure st
      where
-      fm :: GlobalState -> CLT GlobalState
+      fm :: GlobalState -> CacheLookupT GlobalState
       fm =    gsServerCache         (pure . serverCacheUpdate act)
           >=> gsEditID              (pure . editIDUpdate act)
           >=> gsContributionState   (pure . contributionStateUpdate act)
