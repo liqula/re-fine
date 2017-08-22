@@ -676,7 +676,7 @@ fromRawContent (RawContent blocks entitymap)
     splitCol = split (mempty, measureRowColumn . _2)
 
 toRawContent :: NewDoc -> RawContent
-toRawContent (docBlocks -> dls)
+toRawContent (docBlocks -> dls@(_:_))
   = mkRawContentInternal . NEL.fromList $ zipWith toBlock (scanl (<>) mempty $ styleSet . measure <$> dls) dls
   where
     toBlock :: ChangeSet EStyle -> NewDoc -> Block Entity BlockKey
@@ -833,11 +833,14 @@ dotDotDotPngUri = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAUCAAAAAC
 hideUnchangedParts :: RawContent -> Int -> Int -> RawContent
 hideUnchangedParts (NEL.toList . rawContentToDoc -> doc) blocksbefore blocksafter
     = docToRawContent
-    . NEL.fromList
+    . fromList_
     . concatMap showRegion
     . groupBy ((==) `on` fst)
     $ zip displayedLines doc
   where
+    -- pattern matching makes for better ghcjs errors than 'error' calls.
+    fromList_ l@(_:_) = NEL.fromList l
+
     showRegion :: [(Bool, DocBlock)] -> [DocBlock]
     showRegion bs@((True, _): _) = snd <$> bs
     showRegion ((False, blockKeyFromDocBlock -> bk): _) = [dotDotDot (bk <> BlockKey "_...")]

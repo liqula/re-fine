@@ -690,7 +690,8 @@ instance Splitable [a] where
     maxSplitIndex = length
 
 instance Splitable (NEL.NonEmpty a) where
-    splitItem i = (NEL.fromList *** NEL.fromList) . NEL.splitAt (i+1)
+    splitItem i = (fl *** fl) . NEL.splitAt (i+1)
+      where fl xs@(_:_) = NEL.fromList xs  -- pattern matching for better error messages
     joinItems = (Semigroup.<>)
     splitLength l = length l - 1
     maxSplitIndex l = length l - 2
