@@ -13,6 +13,9 @@ set -e
 cd `dirname $0`
 export PATH=$HOME/.local/bin:$HOME/bin:$PATH
 
+date
+ulimit -a
+
 function assert_os_package() {
     if [ "`uname`" == "Linux" ]; then
        dpkg -l | grep -q $1 || ( echo "please install $1"; exit 1 )
