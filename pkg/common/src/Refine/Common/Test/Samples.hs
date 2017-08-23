@@ -63,6 +63,14 @@ sampleMetaID :: MetaID a
 sampleMetaID = MetaID sampleID sampleMetaInfo
 
 
+sampleCreateVDoc :: CreateVDoc
+sampleCreateVDoc = CreateVDoc
+  { _createVDocTitle       = sampleTitle
+  , _createVDocAbstract    = sampleAbstract
+  , _createVDocInitVersion = sampleRawContent1
+  , _createVDocGroup       = ID 0
+  }
+
 sampleVDoc :: VDoc
 sampleVDoc = VDoc
   { _vdocMetaID   = sampleMetaID
