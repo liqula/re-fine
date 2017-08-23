@@ -37,11 +37,12 @@ import           JavaScript.Web.MessageEvent
 #endif
 
 import Refine.Common.Types
+import Refine.Frontend.Access
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Login.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Store.Types
-import Refine.Frontend.Access
+import Refine.Frontend.Test.Console
 
 
 {-# NOINLINE webSocketMVar #-}
@@ -54,7 +55,7 @@ sendMessage conn msg = send (cs $ encode msg) conn
 initWebSocket :: (StoreData GlobalState, StoreAction GlobalState ~ GlobalAction, Dispatchable GlobalAction) => IO ()
 initWebSocket = do
     let wsClose _ = do
-          putStrLn "websockets connection closed"
+          consoleLogJSStringM "WS" "connection closed"
           (n, _) <- takeMVar webSocketMVar
           openConnection $ Just n
 
@@ -69,10 +70,15 @@ initWebSocket = do
               TCRestrictKeys keys ->
                 executeAction . action @GlobalState . CacheAction . RestrictCacheItems
                 $ Set.fromList keys
-              TCGreeting n -> do
+              s@(TCGreeting n) -> do
                   (_, putfun) <- takeMVar webSocketMVar
                   putMVar webSocketMVar (n, putfun)
-                  putStrLn $ "WSSessionId is " <> show n
+                  consoleLogJSStringM "WS" $ cs (show s)
+              TCReset -> do
+                  (n, putfun) <- readMVar webSocketMVar
+                  handshake (Just n) putfun
+                  consoleLogJSStringM "WS" $ "Reset " <> cs (show n)
+
               TCCreatedVDoc vid ->
                 dispatchAndExec $ LoadVDoc vid
               TCCreatedGroup _gid -> pure ()
@@ -105,16 +111,17 @@ initWebSocket = do
             -> cs $ (if ssl then "wss://" else "ws://") <> host <> ":" <> cs (show port) <> "/"
 
 
-        openConnection mid = do
-            ws <- connect $ WebSocketRequest
+        openConnection mid = handshake mid =<< do
+            connect $ WebSocketRequest
                               wsUrl
                               []
                               (Just wsClose)
                               (Just wsMessage)
 
+        handshake mid ws = do
             sendMessage ws $ TSGreeting mid
             putMVar webSocketMVar (fromMaybe (error "unknown WSSessionId") mid, ws)
-            putStrLn "websocket connection opened"
+            consoleLogJSStringM "WS" "connection opened"
 
     openConnection Nothing
 

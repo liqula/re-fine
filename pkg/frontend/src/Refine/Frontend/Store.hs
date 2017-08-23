@@ -154,8 +154,9 @@ flushCacheMisses = do
   keys <- nub <$> takeMVar cacheMissesMVar
   putMVar cacheMissesMVar []
   unless (null keys) $ do
-    sendTS $ TSMissing keys
-    putStrLn $ "request sent to the server: " <> show keys
+    let msg = TSMissing keys
+    sendTS msg
+    consoleLogJSStringM "WS" . cs $ show msg
 
 editIDUpdate :: GlobalAction -> Maybe (ID C.VDoc) -> Maybe (ID C.VDoc)
 editIDUpdate (LoadVDoc cvd) _ = Just cvd

@@ -100,13 +100,25 @@ startWebSocketServer cfg toIO = websocketsOr options server
       conn <- acceptRequest pendingconnection
       pingLoop toIO conn
       clientId <- handshake cfg conn
-      forever . cmdLoopStepFrame toIO clientId $ cmdLoopStep conn clientId
+      forever (cmdLoopStepFrame toIO clientId (cmdLoopStep conn clientId)
+                `catch` (\e -> handleAllErrors cfg conn clientId e
+                                `catch` \e'@(SomeException _) -> wserror . WSErrorResetFailed $ show e'))
 
+handleAllErrors :: Config -> Connection -> WSSessionId -> SomeException -> IO ()
+handleAllErrors cfg conn clientId e = do
+  () <- wserror . WSErrorUnknownError . show $ e
+  sendMessage conn TCReset
+  clientId' <- handshake cfg conn
+  assert (clientId' == clientId) $ pure ()
 
-newtype WSError = WSErrorUnexpectedPacket ToServer
+data WSError
+  = WSErrorUnexpectedPacket ToServer
+  | WSErrorCommandFailed ApiError
+  | WSErrorUnknownError String
+  | WSErrorResetFailed String
   deriving (Eq, Show)
 
-wserror :: WSError -> m a
+wserror :: Monad m => WSError -> m a
 wserror = error . show
 
 
@@ -147,7 +159,7 @@ cmdLoopStepFrame toIO clientId = dolift . dostate
 
     dolift :: m -> IO ()
     dolift cmd = toIO cmd >>= \case
-      Left e -> appLogL LogError $ show e
+      Left e -> wserror $ WSErrorCommandFailed e
       Right () -> pure ()
 
 cmdLoopStep :: Connection -> WSSessionId -> AppM DB ()
