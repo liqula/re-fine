@@ -92,7 +92,6 @@ data ToServer
 
   | TSGreeting (Maybe WSSessionId)  -- ^ first message on connect with 'Nothing'; if this is a
                                 -- re-connect, send @'Just' 'WSSessionId'@.
-  | TSPing
   deriving (Eq, Show, Generic)
 
 data ToClient
@@ -109,7 +108,6 @@ data ToClient
   | TCTranslations L10                       -- ^ response to 'TSGetTranslations'
 
   | TCGreeting WSSessionId           -- ^ first message on connect
-  | TCPing                       -- ^ (this could be done more easily with 'sendPing', 'forkPingThread'.)
   deriving (Eq, Show, Generic)
 
 -- filters the cache

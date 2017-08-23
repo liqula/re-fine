@@ -98,8 +98,8 @@ startWebSocketServer cfg toIO = websocketsOr options server
     server :: ServerApp
     server pendingconnection = do
       conn <- acceptRequest pendingconnection
+      pingLoop toIO conn
       clientId <- handshake cfg conn
-      pingLoop conn =<< toIO (asks . view $ appConfig . cfgWSPingPeriod)
       forever . cmdLoopStepFrame toIO clientId $ cmdLoopStep conn clientId
 
 
@@ -133,12 +133,9 @@ handshake cfg conn = receiveMessage conn >>= \case
 
   bad -> fail' $ WSErrorUnexpectedPacket bad
 
-pingLoop :: Connection -> Either ApiError Timespan -> IO ()
-pingLoop conn = \case
-  Left e -> fail' . WSErrorInternal . show $ e
-  Right pingFreq -> void . forkIO . forever $ do
-    threadDelay (timespanUs pingFreq)
-    sendMessage conn TCPing
+pingLoop :: HasCallStack => (forall a. AppM DB a -> IO (Either ApiError a)) -> Connection -> IO ()
+pingLoop toIO conn = either (error . show) (forkPingThread conn . timespanSecs)
+                     =<< toIO (asks . view $ appConfig . cfgWSPingPeriod)
 
 cmdLoopStepFrame :: forall m. (m ~ AppM DB ()) => (m -> IO (Either ApiError ())) -> WSSessionId -> m -> IO ()
 cmdLoopStepFrame toIO clientId = dolift . dostate
@@ -162,7 +159,6 @@ cmdLoopStep conn clientId = do
   appLogL LogDebug . ("appState = " <>) . show =<< get
 
   case msg of
-      TSPing -> appLog $ show clientId <> ": ping."
       TSClearCache -> do
           cmap' <- liftIO $ takeMVar webSocketMVar
           liftIO . putMVar webSocketMVar $

@@ -69,7 +69,6 @@ initWebSocket = do
               TCRestrictKeys keys ->
                 executeAction . action @GlobalState . CacheAction . RestrictCacheItems
                 $ Set.fromList keys
-              TCPing -> putStrLn "ping"
               TCGreeting n -> do
                   (_, putfun) <- takeMVar webSocketMVar
                   putMVar webSocketMVar (n, putfun)
