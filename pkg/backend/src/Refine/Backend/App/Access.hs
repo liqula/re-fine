@@ -71,14 +71,12 @@ filterByCreds f as = do
   if godMode then pure as else filterM (hasCreds . f) as
 
 
--- | Disable all authorization checks in 'AppState'.
-unsafeBeAGod :: (Monad m, MonadState AppState m, MonadAppDB m, MonadLog m) => m ()
-unsafeBeAGod = do
-  appLogL LogDebug "*** unsafeBeAGod"
+-- | Disable all authorization checks in 'AppState' temporarily
+unsafeAsGod :: (Monad m, MonadState AppState m, MonadAppDB m, MonadLog m) => m a -> m a
+unsafeAsGod action = do
+  appLogL LogDebug ">>> [entering god mode]"
   modify (appIAmGod .~ True)
-
--- | Re-enable authorization checks after a call to 'unsafeBeAGod'.
-beAMortal :: (Monad m, MonadState AppState m, MonadAppDB m, MonadLog m) => m ()
-beAMortal = do
-  appLogL LogDebug "*** beAMortal"
+  result <- action
   modify (appIAmGod .~ False)
+  appLogL LogDebug ">>> [left god mode]"
+  pure result
