@@ -364,9 +364,10 @@ mainMenuProcessShort_ props = view_ mainMenuProcessShort listKey props
 
 -- | FUTUREWORK: should this be @View '[LocalStateRef CreateGroup]@ or @View '[Maybe (ID Group),
 -- LocalStateRef CreateGroup]@?  (same with 'mainMenuCreateProcess'.)
-mainMenuCreateGroup :: HasCallStack => Maybe (ID Group) -> LocalStateRef (CreateGroup_ [(User, Bool)]) -> View '[]
-mainMenuCreateGroup mid lst = mkPersistentStatefulView "MainMenuCreateGroup" lst $
-  \st@(CreateGroup title desc _ _ users) -> do
+mainMenuCreateGroup :: HasCallStack => Maybe (ID Group) -> (LocalStateRef (CreateGroup_ [(User, Bool)]), Set User) -> View '[]
+mainMenuCreateGroup mid (lst, allusers)
+  = mkPersistentStatefulView "MainMenuCreateGroup" lst (Just addUsers)
+  $ \st@(CreateGroup title desc _ _ users) -> do
 
     contributionDialogTextForm createGroupTitle st 1 "group title"
     hr_ []
@@ -412,13 +413,20 @@ mainMenuCreateGroup mid lst = mkPersistentStatefulView "MainMenuCreateGroup" lst
             & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen $
                                                maybe (MainMenuGroups ()) MainMenuGroup mid
                                              ]
+  where
+    addUsers :: CreateGroup_ [(User, Bool)] -> CreateGroup_ [(User, Bool)]
+    addUsers cg = cg & createGroupMembers %~ flip (foldr f) (Set.toList allusers)
+      where
+        f u asc = case lookup u asc of
+          Nothing -> asc ++ [(u, False)]
+          _ -> asc
 
 
-mainMenuCreateGroup_ :: HasCallStack => Maybe (ID Group) -> LocalStateRef (CreateGroup_ [(User, Bool)]) -> ReactElementM eventHandler ()
+mainMenuCreateGroup_ :: HasCallStack => Maybe (ID Group) -> (LocalStateRef (CreateGroup_ [(User, Bool)]), Set User) -> ReactElementM eventHandler ()
 mainMenuCreateGroup_ mid lst = view_ (mainMenuCreateGroup mid lst) "mainMenuCreateGroup"
 
 mainMenuCreateProcess :: HasCallStack => LocalStateRef CreateVDoc -> View '[]
-mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst $ \st -> do
+mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst Nothing $ \st -> do
   renderCreateOrUpdateProcess
     createVDocTitle createVDocAbstract
     (MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess)
@@ -429,7 +437,7 @@ mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactEleme
 mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
 
 mainMenuUpdateProcess :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> View '[]
-mainMenuUpdateProcess vid lst = mkPersistentStatefulView "MainMenuUpdateProcess" lst $
+mainMenuUpdateProcess vid lst = mkPersistentStatefulView "MainMenuUpdateProcess" lst Nothing $
   renderCreateOrUpdateProcess
     updateVDocTitle updateVDocAbstract
     (MainMenuAction . MainMenuActionOpen . MainMenuUpdateProcess vid)

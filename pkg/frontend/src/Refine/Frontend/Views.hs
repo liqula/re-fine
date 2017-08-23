@@ -57,7 +57,13 @@ wholeScreen = Outdated.defineLifecycleView "WholeScreen" () Outdated.lifecycleCo
     case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
       Nothing  -> mainScreen_ (gs, as)
       Just tab -> mainMenu_ $ MainMenuProps
-                            (mapMainMenuTab (const (groups, vdocs, users)) groupFromCache id id id tab)
+                            (mapMainMenuTab
+                              (const (groups, vdocs, users))
+                              groupFromCache
+                              (flip (,) users)
+                              id
+                              id
+                              tab)
                             (gs ^. gsMainMenuState . mmErrors)
                             (as ^. accLoginState . lsCurrentUser)
         where

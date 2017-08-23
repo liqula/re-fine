@@ -69,7 +69,7 @@ type MainMenuTabAction = (MainMenuTab
 type MainMenuTabProps = (MainMenuTab
       GroupsProps
       GroupProps
-      (LocalStateRef (CreateGroup_ [(User, Bool)]))
+      (LocalStateRef (CreateGroup_ [(User, Bool)]), Set User)
       (LocalStateRef CreateVDoc)
       (LocalStateRef UpdateVDoc)
       :: *)

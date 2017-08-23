@@ -84,6 +84,7 @@ createUserWith globalRoles groupRoles (CreateUser name email password) = do
   (\(r, g) -> assignGroupRole r (result ^. userID) g) `mapM_` groupRoles
 
   sendMailTo $ EmailMessage result "you have a re-fine account now!" "congratulations (:"
+  invalidateCaches $ Set.fromList [CacheKeyUserIds]
   pure result
 
 createUser :: CreateUser -> App Common.User

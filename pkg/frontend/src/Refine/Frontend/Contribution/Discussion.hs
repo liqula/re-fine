@@ -74,7 +74,7 @@ statementForest_ :: HasCallStack => Int -> StatementForestProps -> ReactElementM
 statementForest_ i = view_ statementForest $ "statementForest-" <> cs (show i)
 
 statementEditor :: StatementEditorProps -> View '[]
-statementEditor (StatementEditorProps sid r modif) = mkPersistentStatefulView "statementEditor" r $ \txt -> do
+statementEditor (StatementEditorProps sid r modif) = mkPersistentStatefulView "statementEditor" r Nothing $ \txt -> do
     div_ ["style" @@= [ decl "border" (Ident "solid 1px black"),
                         decl "clear" (Ident "both")]] $
       contributionDialogTextFormInner 400 20 createStatementText txt

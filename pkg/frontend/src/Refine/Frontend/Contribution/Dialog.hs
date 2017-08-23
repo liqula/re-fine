@@ -246,7 +246,7 @@ addComment_ __ = view_ (addComment __) "addComment_"
 
 
 commentInput :: HasCallStack => LocalStateRef CommentInputState -> View '[]
-commentInput lst = mkPersistentStatefulView "CommentInput" lst $ \st ->
+commentInput lst = mkPersistentStatefulView "CommentInput" lst Nothing $ \st ->
   do
     let smkind = st ^? commentInputStateData . commentInfoKind . _Just
     let stext  = st ^. commentInputStateData . commentInfoDesc
@@ -338,7 +338,7 @@ addEdit_ = view_ addEdit "addEdit_"
 -- handled in react?  should we have a second global store here that is just shared between
 -- 'editInput' and and 'editKindForm'?
 editInput :: HasCallStack => EditInfo (Maybe EditKind) -> View '[]
-editInput einfo = mkPersistentStatefulView "EditInput" (einfo ^. editInfoLocalStateRef) $
+editInput einfo = mkPersistentStatefulView "EditInput" (einfo ^. editInfoLocalStateRef) Nothing $
   \st@(EditInputState (EditInfo desc mkind rst) _) -> do
     div_ $ do
       elemString "Step 1: "
