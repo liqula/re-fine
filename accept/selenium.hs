@@ -265,6 +265,7 @@ mkBackendConfig :: Int -> Yaml.Value
 mkBackendConfig port = Yaml.object
   [ "_cfgSessionLength" .= Yaml.object ["TimespanHours" .= (72 :: Int)]
   , "_cfgLogger"        .= ("LogCfgStdOut" :: String)
+  , "_cfgLogger"        .= Yaml.object ["_logCfgLevel" .= ("LogDebug" :: String), "_logCfgTarget" .= ("LogCfgStdOut" :: String)]
   , "_cfgWarpSettings"  .= Yaml.object ["_warpSettingsPort" .= port, "_warpSettingsHost" .= ("HostIPv4" :: String)]
   , "_cfgFileServeRoot" .= ("../frontend/js-build" :: String)
   , "_cfgPoFilesRoot"   .= ("../../po" :: String)
@@ -274,7 +275,12 @@ mkBackendConfig port = Yaml.object
                                        ]
   , "_cfgPoolSize"      .= (8 :: Int)
   , "_cfgSmtp"          .= Yaml.Null
-  , "_cfgClient"        .= Yaml.object ["_clientCfgWSHost" .= ("localhost" :: String), "_clientCfgWSPort" .= (port :: Int)]
+  , "_cfgClient"        .= Yaml.object [ "_clientCfgWSHost" .= ("localhost" :: String)
+                                       , "_clientCfgWSPort" .= (port :: Int)
+                                       , "_clientCfgWSSSL" .= False
+                                       ]
+  , "_cfgWSPingPeriod"  .= Yaml.object ["TimespanSecs" .= (14 :: Int)]
+  , "_cfgAllAreGods"    .= True
   ]
 
 runXvfb :: MonadIO m => m ()

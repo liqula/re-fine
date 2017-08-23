@@ -257,7 +257,6 @@ data DiscussionProps = DiscussionProps
   , _discPropsAboutText  :: RawContent  -- ^ the blocks overlapping the range of the discussion.
   , _discPropsDetails    :: StatementPropDetails
   , _discPropsFlatView   :: Bool
---  , _discussionMode      :: DiscussionMode  -- TODO
   }
   deriving (Eq, Show, Generic)
 

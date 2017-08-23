@@ -25,8 +25,6 @@ module Refine.Common.Access
 
 import Refine.Common.Prelude
 
-import Data.List.NonEmpty as NEL
-
 import Refine.Common.Types.Core
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.Role
@@ -48,12 +46,6 @@ data Creds =
   | CredsAlwaysAllow
   | CredsNeverAllow
   deriving (Eq, Show)
-
-credsAll :: [Cred] -> Creds
-credsAll xs = CredsAll $ CredsLeaf <$> NEL.fromList xs
-
-credsAny :: [Cred] -> Creds
-credsAny xs = CredsAny $ CredsLeaf <$> NEL.fromList xs
 
 
 class (Functor m, Applicative m, Monad m) => MonadAccess m where

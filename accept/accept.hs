@@ -144,7 +144,6 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
 
   it "create new process" . runWD $ do
     let titleText = "iDWD16VgtbLgI"
-    onEl [ByCSS ".icon-Group_bright"] click
     onEl [ByCSS "#group-list-item-1"] click
     onEl [ByCSS ".icon-Process_add_dark"] click
     onEls [ByXPath "//*[@id='o-vdoc-overlay-content__textarea-annotation']"] $ sendKeys titleText . head
@@ -197,7 +196,7 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
 
   it "find two bubbles" . runWD $ do
     onEls [ByCSS ".o-snippet__content"] $ \bubbles ->
-      length bubbles `shouldBe` 1  -- TODO #403
+      length bubbles `shouldBe` 1  -- FIXME #403
 
   it "find both tokens in the html source of the diff view" . runWD $ do
     onEl [ByCSS ".o-snippet__content"] click
@@ -205,6 +204,21 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
       everything <- getSource
       textA `shouldSatisfy` (`ST.isInfixOf` everything)
       textB `shouldSatisfy` (`ST.isInfixOf` everything)
+
+  it "create discussion as user A" $ do
+    pending
+
+  it "reply to initial statement as user A" $ do
+    pending
+
+  it "reply to initial statement as user B" $ do
+    pending
+
+  it "reply to B's statement as user A" $ do
+    pending
+
+  it "edit user B's statement as user B" $ do
+    pending
 
 
 -- * xpath shortcuts
@@ -255,7 +269,7 @@ onEls' sanitiseElems (sel:sels) action = stubborn $ do
     expectNotStale `mapM_` els
     case sanitiseElems els of
       Right els' -> action els'
-      Left msg   -> throwIO . ErrorCall $ "onEls' element sanitation: " <> msg
+      Left msg   -> liftIO . throwIO . ErrorCall $ "onEls' element sanitation: " <> msg
   where
     drill []             els = pure els
     drill (sel' : sels') els = ((`findElemsFrom` sel') `mapM` els) >>= drill sels' . mconcat
@@ -376,7 +390,8 @@ assertVerticalPos p el act = do
   (w, h) <- elemPos =<< el
   a <- act
   (w', h') <- elemPos =<< el
-  when (w /= w' || not (p h h')) . throwIO . ErrorCall $ "no scroll happend: " <> show (w, h) <> " " <> show (w', h')
+  when (w /= w' || not (p h h')) . liftIO . throwIO . ErrorCall $
+    "no scroll happend: " <> show (w, h) <> " " <> show (w', h')
   pure a
 
 {- manual script

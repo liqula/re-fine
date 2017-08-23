@@ -290,11 +290,11 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
     br_ [] >> br_ [] >> br_ [] >> br_ [] >> hr_ [] >> br_ []
 
     let mkProcProps vid = MainMenuProcessShortProps
-          -- TODO: use the trick from /docs/prototypes/ApplicativeDo.hs: load process props on
+          -- FIXME: use the trick from /docs/prototypes/ApplicativeDo.hs: load process props on
           -- demand, and when rendering filter for cache misses and just show the list of all
           -- processes already in the cache.  automatic re-rendering will take care of the rest.
           --
-          -- TODO: i think we don't have a rest-api end-point for this either.
+          -- FIXME: i think we don't have a rest-api end-point for this either.
           { _mmprocShrtID          = vid
           , _mmprocShrtIcon        = ()
           , _mmprocShrtTitle       = title

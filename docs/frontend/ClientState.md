@@ -182,7 +182,7 @@ data BubbleDetails = BubbleDetails FocussedBubble AllVerticalSpanBounds BubblePo
 data DocumentEditState = DocumentEditState EditId EditToolbar SelectionStateWithPx
 
 -- comments and edit may be filtered
--- TODO: de-functionalize this (avoid (->))
+-- FIXME: de-functionalize this (avoid (->))
 type FilterState = Contribution -> Bool
 
 type Collapsed = Bool
@@ -191,7 +191,7 @@ data QuickCreateState = ...
 
 data EditToolbar = ...
 
--- TODO
+-- FIXME
 -- ScreenState is required for toolbar and bubble positioning (so just Document*, i think).
 -- ToolbarSticky should be part of screenstate.
 ```

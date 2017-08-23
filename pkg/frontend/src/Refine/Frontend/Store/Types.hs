@@ -158,10 +158,10 @@ cacheLookupIn sc i@(cacheKey -> k) = maybe (cacheMiss k Nothing i) Just . Map.lo
 cacheLookup :: (HasCallStack, CacheLookup b) => GlobalState_ a -> ID b -> Maybe b
 cacheLookup gs = cacheLookupIn (gs ^. gsServerCache)
 
-type CLT = Except ()
+type CacheLookupT = Except ()
 
--- TODO: collect more missing cache keys in one round
-cacheLookupM :: (HasCallStack, CacheLookup b) => GlobalState_ a -> ID b -> CLT b
+-- FIXME: collect more missing cache keys in one round
+cacheLookupM :: (HasCallStack, CacheLookup b) => GlobalState_ a -> ID b -> CacheLookupT b
 cacheLookupM gs i = do
   case cacheLookup gs i of
     Just val -> pure val
@@ -200,19 +200,6 @@ gsEdit gs = (>>= cacheLookup gs) <$> gsEditID' gs
 gsEditID' :: HasCallStack => GlobalState_ a -> Maybe (Maybe (ID Edit))
 gsEditID' gs = fmap (^. vdocHeadEdit) . cacheLookup gs <$> (gs ^. gsEditID)
 
--- TODO: remove
-getEdit :: HasCallStack => GlobalState_ a -> ID Edit -> Maybe Edit
-getEdit = cacheLookup
-
--- TODO: remove
-getDiscussion :: HasCallStack => GlobalState_ a -> ID Discussion -> Maybe Discussion
-getDiscussion = cacheLookup
-{-
--- FIXME: optimize this
-discussionOfStatement :: HasCallStack => GlobalState_ a -> ID Statement -> Maybe Discussion
-discussionOfStatement sc i
-  = listToMaybe [d | d <- Map.elems $ sc ^. scDiscussions, i `elem` map (^. statementID) (toList $ d ^. discussionTree)]
--}
 gsVDoc :: Getter (GlobalState_ a) (Maybe (Maybe CompositeVDoc))
 gsVDoc = to getCompositeVDoc
   where
