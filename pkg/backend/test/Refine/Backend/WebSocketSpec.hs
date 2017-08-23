@@ -182,7 +182,6 @@ spec = describe "..." $ do
       TCGreeting _ <- askQuestion conn $ TSGreeting Nothing
       respLogin <- askQuestion conn $ TSLogin (Login "admin" "pass")
       show respLogin `shouldContain` "(Right (User {_userMetaID = MetaID {_miID = ID 1, _miMeta = MetaInfo {_metaCreatedBy = Anonymous"
-        -- TODO: this only works in god mode.
         -- TODO: also disable god mode in /accept/selenium.hs in the server config, and create initial content.
 
       -- create document
