@@ -103,13 +103,11 @@ startWebSocketServer cfg toIO = websocketsOr options server
       forever . cmdLoopStepFrame toIO clientId $ cmdLoopStep conn clientId
 
 
-data WSErrorUnexpectedPacket
-  = WSErrorUnexpectedPacket ToServer
-  | WSErrorInternal String
+newtype WSError = WSErrorUnexpectedPacket ToServer
   deriving (Eq, Show)
 
-fail' :: WSErrorUnexpectedPacket -> m a
-fail' = error . show
+wserror :: WSError -> m a
+wserror = error . show
 
 
 handshake :: Config -> Connection -> IO WSSessionId
@@ -131,7 +129,7 @@ handshake cfg conn = receiveMessage conn >>= \case
     appLog $ "new websocket client #" <> show n
     pure n
 
-  bad -> fail' $ WSErrorUnexpectedPacket bad
+  bad -> wserror $ WSErrorUnexpectedPacket bad
 
 pingLoop :: HasCallStack => (forall a. AppM DB a -> IO (Either ApiError a)) -> Connection -> IO ()
 pingLoop toIO conn = either (error . show) (forkPingThread conn . timespanSecs)
@@ -197,6 +195,6 @@ cmdLoopStep conn clientId = do
                                 -> pure ()  -- not implemented
       TSDeleteVote eid        -> void $ App.deleteSimpleVoteOnEdit eid
 
-      bad@(TSGreeting _)      -> fail' $ WSErrorUnexpectedPacket bad
+      bad@(TSGreeting _)      -> wserror $ WSErrorUnexpectedPacket bad
 
 -- FIXME: hash session id with a secret and a current timestamp before passing it to the client.
