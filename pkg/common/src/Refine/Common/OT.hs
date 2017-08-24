@@ -1,19 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE ViewPatterns               #-}
-{-# LANGUAGE PatternSynonyms            #-}
-{-# LANGUAGE PackageImports             #-}
-{-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE BangPatterns               #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE UndecidableInstances       #-}
-
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 
 -- | FUTUREWORK: release this file as a library

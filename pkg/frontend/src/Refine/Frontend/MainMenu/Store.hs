@@ -1,4 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 module Refine.Frontend.MainMenu.Store where
 
 import Refine.Frontend.Prelude

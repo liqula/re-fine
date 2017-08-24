@@ -7,7 +7,7 @@
 .phony:
 
 sensei.%: .phony
-	cd pkg/$* && stack exec -- sensei -Wall -i../prelude/src -i../prelude/test -i../common/src -i../common/test -i./src -i./test ./test/Spec.hs $(SENSEI_ARGS)
+	cd pkg/$* && stack exec -- sensei -Wall -I=../common/src -i../prelude/src -i../prelude/test -i../common/src -i../common/test -i./src -i./test ./test/Spec.hs $(SENSEI_ARGS)
 
 sensei.p: .phony
 	make sensei.prelude
@@ -37,8 +37,37 @@ grepi.%: .phony
 grep.%: .phony
 	git grep -Hn $*
 
+# http://hackage.haskell.org/packages/search?terms=tags
+# https://wiki.haskell.org/Tags
+#
+# - ghc built-in ctags creation
+#
+# - http://hackage.haskell.org/package/hothasktags
+#   doesn't build straight from hackage with stack; has parse errors
+#
+# - http://hackage.haskell.org/package/htags only parses haskell98.
+#
+# - http://hackage.haskell.org/package/hasktags,
+#   http://hackage.haskell.org/package/fast-tags,
+#   http://hackage.haskell.org/package/haskdogs all use their own parser
+#   and do not distinguish case (`values` vs. `Types`).
+#
+# - http://hackage.haskell.org/package/lushtags
+#   better vim integration
+#
+# - https://kingfisher.nfshost.com/sw/gasbag/
+#   not on hackage, seems poorly supported.
+#
+# - http://hackage.haskell.org/package/textmatetags
+#   (i don't think this has anything to do with that kind of tags)
 tags: .phony
 	hasktags -b pkg
+#	echo ':etags' | stack --stack-yaml=stack-no-js.yaml exec -- ghci -isrc -itest -i../common/src test/AllModules.hs
+#	# then how do you merge these?  do i have to merge?  yes, i
+#	# have to merge backend and frontend.  or switch.  i can write
+#	# emacs shortcuts to switch between frontend and backend (both
+#	# will pull in common, prelude)
+#	find pkg -name '*.hs' | xargs hothasktags > tags
 
 test: .phony
 	./build
@@ -49,6 +78,10 @@ hlint: .phony
 sensei.f: .phony
 #	cd pkg/frontend && stack --stack-yaml=stack-no-js.yaml test --fast
 	cd pkg/frontend && stack --stack-yaml=stack-no-js.yaml exec -- sensei -isrc -itest -i../common/src -i../prelude/src test/Main.hs --match=###
+
+sensei.fs:
+	cd pkg/frontend && stack --stack-yaml=stack-no-js.yaml exec -- sensei -isrc -itest -i../common/src -i../prelude/src styleguide/Main.hs --match=###
+
 
 test.f: .phony
 	( cd pkg/frontend && time stack test --fast --flag refine-frontend:-ghc-warn-error --test-arguments "$(SENSEI_ARGS)" ) || ( make noise-nay; false )
@@ -104,3 +137,9 @@ build-packunused: .phony
 	../.cabal-sandbox/bin/packunused
 
 packunused: .phony thentos-core.packunused thentos-tests.packunused thentos-adhocracy.packunused
+
+
+PACKAGES=refine-backend persistent persistent-sqlite persistent-template users-persistent esqueleto
+
+super-clean:
+	cd pkg/backend; for i in `echo $(PACKAGES)`; do stack exec -- ghc-pkg unregister $$i; done

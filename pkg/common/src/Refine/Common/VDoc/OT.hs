@@ -1,18 +1,5 @@
-{-# LANGUAGE DeriveFunctor              #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE GADTs                      #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE PatternSynonyms            #-}
-{-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeSynonymInstances       #-}
-{-# LANGUAGE ViewPatterns               #-}
-
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 {-# OPTIONS_GHC -fno-warn-orphans -fno-warn-incomplete-patterns #-}
 
 -- | "Refine.Common.OT" for 'RawContent'.

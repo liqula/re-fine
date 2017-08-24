@@ -1,18 +1,7 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 -- FUTUREWORK: release this file as a library
 
-{-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE ViewPatterns               #-}
-{-# LANGUAGE PatternSynonyms            #-}
-{-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE UndecidableInstances       #-}
-{-# LANGUAGE DefaultSignatures          #-}
-{-# LANGUAGE TypeApplications           #-}
 {-# OPTIONS_GHC -fno-warn-orphans       #-}
 module Refine.Common.OTSpec where
 

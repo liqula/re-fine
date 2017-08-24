@@ -1,4 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 module Refine.Common.Types (module R) where
 
 import Refine.Common.Types.Config       as R

@@ -1,4 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 module Refine.Backend.Logger where
 
 import Refine.Backend.Prelude

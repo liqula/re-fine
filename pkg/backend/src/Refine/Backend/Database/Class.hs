@@ -1,9 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE ConstraintKinds       #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE LambdaCase            #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE TypeFamilyDependencies #-}
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 
 module Refine.Backend.Database.Class where
 

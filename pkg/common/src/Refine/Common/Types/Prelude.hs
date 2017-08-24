@@ -1,29 +1,9 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE BangPatterns               #-}
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE DeriveFunctor              #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE ExplicitForAll             #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE GADTs                      #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeFamilyDependencies     #-}
-{-# LANGUAGE TypeOperators              #-}
-{-# LANGUAGE ViewPatterns               #-}
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 
 module Refine.Common.Types.Prelude where
 
 import Refine.Common.Prelude as P
-
-import Data.Int
 
 
 -- * ID
@@ -43,7 +23,7 @@ instance FromHttpApiData (ID a) where
   parseUrlPiece = either (Left . cs) (Right . ID) . (readEither :: String -> Either String Int64) . cs
 
 instance (ToJSON a) => ToJSONKey (ID a) where
-  toJSONKey = ToJSONKeyValue (P.Number . fromIntegral . _unID) toEncoding
+  toJSONKey = ToJSONKeyValue (Number . fromIntegral . _unID) toEncoding
 
 instance (FromJSON a) => FromJSONKey (ID a)
 
