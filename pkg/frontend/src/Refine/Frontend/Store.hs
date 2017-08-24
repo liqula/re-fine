@@ -211,11 +211,11 @@ emitBackendCallsFor act st = case act of
         Just gid -> do
           sendTS . TSUpdateGroup gid
                  $ cg & createGroupMembers %~ Map.fromList . map (first (^. userID))
-          dispatchAndExec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup gid
+          dispatchAndExec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupProcesses gid
 
     MainMenuAction (MainMenuActionOpen (MainMenuCreateProcess (FormComplete cp))) -> do
       sendTS $ TSAddVDoc cp
-      dispatchAndExec . MainMenuAction . MainMenuActionOpen . MainMenuGroup $ cp ^. createVDocGroup
+      dispatchAndExec . MainMenuAction . MainMenuActionOpen . MainMenuGroup MainMenuGroupProcesses $ cp ^. createVDocGroup
 
     MainMenuAction (MainMenuActionOpen (MainMenuUpdateProcess vid (FormComplete cg))) -> do
       sendTS $ TSUpdateVDoc vid cg

@@ -67,7 +67,7 @@ wholeScreen = Outdated.defineLifecycleView "WholeScreen" () Outdated.lifecycleCo
                             (gs ^. gsMainMenuState . mmErrors)
                             (as ^. accLoginState . lsCurrentUser)
         where
-          groupFromCache :: ID Group -> (Maybe Group, Map (ID VDoc) VDoc, Set User)
+          groupFromCache :: ID Group -> (Maybe Group, Map (ID VDoc) VDoc, Map (ID User) User)
           groupFromCache gid = (cacheLookup gs gid, vdocs, users)
           groups :: [Group]
           groups = mapMaybe (cacheLookup gs) . Set.elems
@@ -76,8 +76,8 @@ wholeScreen = Outdated.defineLifecycleView "WholeScreen" () Outdated.lifecycleCo
           vdocs :: Map (ID VDoc) VDoc
           vdocs = gs ^. gsServerCache . scVDocs
 
-          users :: Set User
-          users = Set.fromList $ mapMaybe (cacheLookup gs) . Set.elems
+          users :: Map (ID User) User
+          users = Map.fromList $ mapMaybe (\i -> (,) i <$> cacheLookup gs i) . Set.elems
                 . fromMaybe (cacheMiss CacheKeyUserIds mempty tab)
                 $ gs ^. gsServerCache . scUserIds
 

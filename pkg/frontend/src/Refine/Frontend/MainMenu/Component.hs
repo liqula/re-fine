@@ -8,7 +8,6 @@ import Refine.Frontend.Prelude
 import           Control.Lens (ALens', cloneLens)
 import qualified Data.Text as ST
 import qualified Data.Map as Map
-import qualified Data.Set as Set
 import           Language.Css.Syntax
 
 import           React.Flux.Missing
@@ -102,7 +101,7 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
            ] $ do
         case currentTab of
           MainMenuGroups groups               -> mainMenuGroups_ groups
-          MainMenuGroup group                 -> mainMenuGroup_ group
+          MainMenuGroup sub group             -> mainMenuGroup_ (sub, group)
           MainMenuCreateOrUpdateGroup mid lst -> mainMenuCreateGroup_ mid lst
           MainMenuCreateProcess lst           -> mainMenuCreateProcess_ lst
           MainMenuUpdateProcess pid lst       -> mainMenuUpdateProcess_ pid lst
@@ -130,7 +129,7 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
           mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup Nothing . FormBegin
                               $ newLocalStateRef
                                   (CreateGroup "" "" [] []
-                                   $ flip (,) False <$> Set.toList (groups ^. _3))
+                                   $ flip (,) False <$> Map.elems (groups ^. _3))
                                   groups
 
       ibutton_ $ emptyIbuttonProps "Group_add" [mkCreateGroupAction]
@@ -153,7 +152,8 @@ mainMenuGroupShort :: HasCallStack => View '[Group]
 mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
   let listKey = "group-list-item-" <> (cs . show $ group ^. groupID . unID)
   div_ [ onClick $ \_ _ -> simpleHandler . dispatch
-                         . MainMenuAction . MainMenuActionOpen . MainMenuGroup $ group ^. groupID
+                         . MainMenuAction . MainMenuActionOpen
+                         . MainMenuGroup MainMenuGroupProcesses $ group ^. groupID
        , "id" $= listKey  -- FUTUREWORK: get rid of this.  at the time of writing this it's only
                           -- used in the acceptance test.
 
@@ -203,10 +203,10 @@ mainMenuGroupShort_ group = view_ mainMenuGroupShort listKey group
   where
     listKey = "mainMenuGroupShort-" <> (cs . show $ group ^. groupID . unID)
 
-mainMenuGroup :: View '[GroupProps]
+mainMenuGroup :: View '[(MainMenuGroup, GroupProps)]
 mainMenuGroup = mkView "mainMenuGroup" $ \case
- (Nothing, _, _) -> "Loading..."
- (Just group, vdocs, users) -> do
+ (_, (Nothing, _, _)) -> "Loading..."
+ (sub, (Just group, vdocs, users)) -> do
   div_ $ do
     ibutton_ $ emptyIbuttonProps "Arrow_left" [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
       & ibListKey .~ "group_back"
@@ -234,7 +234,8 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
     -- buttons for users, processes, create new process, update group
     -- the first two, users, processes, are morally tabs.
     span_ ["style" @@= [decl "marginLeft" (Px 50)]] . ibutton_ $ emptyIbuttonProps "User"
-        [ShowNotImplementedYet]
+        [ MainMenuAction . MainMenuActionOpen
+                         . MainMenuGroup MainMenuGroupMembers $ group ^. groupID ]
       & ibListKey .~ "user"
       & ibSize .~ XXLarge
       & ibDarkBackground .~ False
@@ -242,7 +243,8 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
       & ibLabel .~ "members"
 
     ibutton_ $ emptyIbuttonProps "Process"
-        ([] :: [GlobalAction])
+        [ MainMenuAction . MainMenuActionOpen
+                         . MainMenuGroup MainMenuGroupProcesses $ group ^. groupID ]
       & ibListKey .~ "process"
       & ibSize .~ XXLarge
       & ibDarkBackground .~ False
@@ -263,7 +265,7 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
         [ MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup (Just $ group ^. groupID) . FormBegin
           $ newLocalStateRef
               (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []
-               [(u, (u ^. userID) `elem` (group ^. groupMembers)) | u <- Set.toList users])
+               [(u, (u ^. userID) `elem` (group ^. groupMembers)) | u <- Map.elems users])
               group
         ]
       & ibListKey .~ "group_update"
@@ -294,14 +296,76 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
               ((^. vdocTitle) &&& (^. vdocStats))
               $ Map.lookup vid vdocs
 
-    mainMenuProcessShort_ `mapM_` ( sortBy (compare `on` view mmprocShrtTitle)
+        mkMemberProps uid = Map.lookup uid users
+
+    case sub of
+      MainMenuGroupProcesses -> mainMenuProcessShort_
+                          `mapM_` ( sortBy (compare `on` view mmprocShrtTitle)
                                   . fmap mkProcProps
                                   $ group ^. groupVDocs
                                   )
+      MainMenuGroupMembers -> mapM_ mainMenuMemberShort_
+                            . fmap mkMemberProps $ group ^. groupMembers
 
-mainMenuGroup_ :: HasCallStack => GroupProps -> ReactElementM eventHandler ()
+mainMenuGroup_ :: HasCallStack => (MainMenuGroup, GroupProps) -> ReactElementM eventHandler ()
 mainMenuGroup_ = view_ mainMenuGroup "mainMenuGroup"
 
+
+mainMenuMemberShort :: HasCallStack => View '[User]
+mainMenuMemberShort = mkView "MainMenuProcessShort" $ \props -> do
+--  let listKey = "member-list-item-" <> (cs . show $ props ^. userID . unID)
+  div_ [ {-onClick $ \_ _ -> simpleHandler . dispatch
+                         . LoadVDoc $ props ^. mmprocShrtID
+
+       , -}"style" @@= [ decl "backgroundColor" Colors.SCBlue03
+                     , decl "padding" (Px 50)
+                     , decl "margin" (Px 50)
+                     , decl "borderRadius" (Px 12)
+                     ]
+       ] $ do
+
+    -- image
+    br_ []
+    ibutton_ $ emptyIbuttonProps "User" ([] :: [GlobalAction])
+      & ibListKey .~ "user"
+      & ibSize .~ XXLarge
+      & ibDarkBackground .~ True
+      & ibHighlightWhen .~ HighlightNever
+      & ibLabel .~ mempty
+
+    -- title
+    br_ []
+    div_ [] $ do
+      elemText $ props ^. userName
+{-
+    br_ []
+    div_ [] $ do
+      ibutton_ $ emptyIbuttonProps "Comment" ([] :: [GlobalAction])
+        & ibListKey .~ (listKey <> "-comments")
+        & ibSize .~ Large
+        & ibDarkBackground .~ True
+        & ibHighlightWhen .~ HighlightNever
+        & ibLabel .~ (cs . show $ props ^. mmprocShrtNumComments)
+
+      ibutton_ $ emptyIbuttonProps "Edit" ([] :: [GlobalAction])
+        & ibListKey .~ (listKey <> "-edits")
+        & ibSize .~ Large
+        & ibDarkBackground .~ True
+        & ibHighlightWhen .~ HighlightNever
+        & ibLabel .~ (cs . show $ props ^. mmprocShrtNumEdits)
+
+      ibutton_ $ emptyIbuttonProps "Group" ([] :: [GlobalAction])
+        & ibListKey .~ (listKey <> "-groups")
+        & ibSize .~ Large
+        & ibDarkBackground .~ True
+        & ibHighlightWhen .~ HighlightNever
+        & ibLabel .~ (cs . show $ props ^. mmprocShrtNumUsers)
+-}
+mainMenuMemberShort_ :: HasCallStack => Maybe User -> ReactElementM 'EventHandlerCode ()
+mainMenuMemberShort_ Nothing = "Loading..."
+mainMenuMemberShort_ (Just props) = view_ mainMenuMemberShort listKey props
+  where
+    listKey = "mainMenuMemberShort-" <> (cs . show $ props ^. userID . unID)
 
 mainMenuProcessShort :: HasCallStack => View '[MainMenuProcessShortProps]
 mainMenuProcessShort = mkView "MainMenuProcessShort" $ \props -> do
@@ -364,7 +428,7 @@ mainMenuProcessShort_ props = view_ mainMenuProcessShort listKey props
 
 -- | FUTUREWORK: should this be @View '[LocalStateRef CreateGroup]@ or @View '[Maybe (ID Group),
 -- LocalStateRef CreateGroup]@?  (same with 'mainMenuCreateProcess'.)
-mainMenuCreateGroup :: HasCallStack => Maybe (ID Group) -> (LocalStateRef (CreateGroup_ [(User, Bool)]), Set User) -> View '[]
+mainMenuCreateGroup :: HasCallStack => Maybe (ID Group) -> (LocalStateRef (CreateGroup_ [(User, Bool)]), Map (ID User) User) -> View '[]
 mainMenuCreateGroup mid (lst, allusers)
   = mkPersistentStatefulView "MainMenuCreateGroup" lst (Just addUsers)
   $ \st@(CreateGroup title desc _ _ users) -> do
@@ -411,18 +475,18 @@ mainMenuCreateGroup mid (lst, allusers)
             & iconButtonPropsAlignRight   .~ True
             & iconButtonPropsDisabled     .~ False
             & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen $
-                                               maybe (MainMenuGroups ()) MainMenuGroup mid
+                                               maybe (MainMenuGroups ()) (MainMenuGroup MainMenuGroupProcesses) mid
                                              ]
   where
     addUsers :: CreateGroup_ [(User, Bool)] -> CreateGroup_ [(User, Bool)]
-    addUsers cg = cg & createGroupMembers %~ flip (foldr f) (Set.toList allusers)
+    addUsers cg = cg & createGroupMembers %~ flip (foldr f) (Map.elems allusers)
       where
         f u asc = case lookup u asc of
           Nothing -> asc ++ [(u, False)]
           _ -> asc
 
 
-mainMenuCreateGroup_ :: HasCallStack => Maybe (ID Group) -> (LocalStateRef (CreateGroup_ [(User, Bool)]), Set User) -> ReactElementM eventHandler ()
+mainMenuCreateGroup_ :: HasCallStack => Maybe (ID Group) -> (LocalStateRef (CreateGroup_ [(User, Bool)]), Map (ID User) User) -> ReactElementM eventHandler ()
 mainMenuCreateGroup_ mid lst = view_ (mainMenuCreateGroup mid lst) "mainMenuCreateGroup"
 
 mainMenuCreateProcess :: HasCallStack => LocalStateRef CreateVDoc -> View '[]
@@ -430,7 +494,7 @@ mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst
   renderCreateOrUpdateProcess
     createVDocTitle createVDocAbstract
     (MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess)
-    (MainMenuAction . MainMenuActionOpen . MainMenuGroup $ st ^. createVDocGroup)
+    (MainMenuAction . MainMenuActionOpen . MainMenuGroup MainMenuGroupProcesses $ st ^. createVDocGroup)
     st
 
 mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()

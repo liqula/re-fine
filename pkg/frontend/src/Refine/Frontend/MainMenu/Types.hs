@@ -69,19 +69,19 @@ type MainMenuTabAction = (MainMenuTab
 type MainMenuTabProps = (MainMenuTab
       GroupsProps
       GroupProps
-      (LocalStateRef (CreateGroup_ [(User, Bool)]), Set User)
+      (LocalStateRef (CreateGroup_ [(User, Bool)]), Map (ID User) User)
       (LocalStateRef CreateVDoc)
       (LocalStateRef UpdateVDoc)
       :: *)
 
-type GroupProps = (Maybe Group, Map (ID VDoc) VDoc, Set User)
-type GroupsProps = ([Group], Map (ID VDoc) VDoc, Set User)
+type GroupProps = (Maybe Group, Map (ID VDoc) VDoc, Map (ID User) User)
+type GroupsProps = ([Group], Map (ID VDoc) VDoc, Map (ID User) User)
 
 -- | FUTUREWORK: it may be nicer after all to have different types for action, state, and props
 -- here.  but for now it should work.
 data MainMenuTab gids group cgroup cprocess uprocess
   = MainMenuGroups gids
-  | MainMenuGroup group
+  | MainMenuGroup MainMenuGroup group
   | MainMenuCreateOrUpdateGroup (Maybe (ID Group)) cgroup
   | MainMenuCreateProcess cprocess
   | MainMenuUpdateProcess (ID VDoc) uprocess
@@ -89,10 +89,15 @@ data MainMenuTab gids group cgroup cprocess uprocess
   | MainMenuLogin MainMenuSubTabLogin
   deriving (Eq, Show, Generic)
 
+data MainMenuGroup
+  = MainMenuGroupProcesses
+  | MainMenuGroupMembers
+  deriving (Eq, Show, Generic)
+
 mapMainMenuTab :: (a -> a') -> (b -> b') -> (c -> c') -> (d -> d') -> (e -> e') -> MainMenuTab a b c d e -> MainMenuTab a' b' c' d' e'
 mapMainMenuTab fa fb fc fd fe = \case
   MainMenuGroups a -> MainMenuGroups (fa a)
-  MainMenuGroup b  -> MainMenuGroup (fb b)
+  MainMenuGroup g b  -> MainMenuGroup g (fb b)
   MainMenuCreateOrUpdateGroup u c -> MainMenuCreateOrUpdateGroup u (fc c)
   MainMenuCreateProcess d -> MainMenuCreateProcess (fd d)
   MainMenuUpdateProcess pid e -> MainMenuUpdateProcess pid (fe e)
@@ -130,5 +135,5 @@ data MainMenuProcessShortProps = MainMenuProcessShortProps
 
 
 makeRefineTypes [ ''MainMenuAction, ''MainMenuErrors, ''MainMenuState
-                , ''MainMenu, ''MainMenuTab, ''MainMenuSubTabLogin, ''MainMenuProcessShortProps
+                , ''MainMenu, ''MainMenuTab, ''MainMenuGroup, ''MainMenuSubTabLogin, ''MainMenuProcessShortProps
                 ]
