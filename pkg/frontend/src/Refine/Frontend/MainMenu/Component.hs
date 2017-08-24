@@ -440,16 +440,14 @@ mainMenuCreateGroup mid (lst, allusers)
     "Invite Members"
     forM_ (zip [0..] users) $ \(i, (user, cv)) -> do
       br_ []
-      input_ $
-         ["checked" $= "checked" | cv]
-          <>
+      div_ ["key" @= ("u-" <> show (user ^. userID . unID))] $ do
+        input_ $
+         ["checked" $= "checked" | cv] <>
          [ "style" @@= inputFieldStyles
          , "type" $= "checkbox"
          , onChange $ \_evt -> simpleHandler $ \st' -> ([], Just (st' & createGroupMembers . ix i . _2 %~ not))
          ]
-      elemText $ user ^. userName
-      elemText " email: "
-      elemText $ user ^. userEmail
+        elemText $ user ^. userName <> " <" <> (user ^. userEmail) <> ">"
     hr_ []
 
     let enableOrDisable props = if ST.null desc || ST.null title
