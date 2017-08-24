@@ -77,7 +77,7 @@ wholeScreen = Outdated.defineLifecycleView "WholeScreen" () Outdated.lifecycleCo
           vdocs = gs ^. gsServerCache . scVDocs
 
           users :: Map (ID User) User
-          users = Map.fromList $ mapMaybe (\i -> (,) i <$> cacheLookup gs i) . Set.elems
+          users = Map.fromList . mapMaybe (\i -> (,) i <$> cacheLookup gs i) . Set.elems
                 . fromMaybe (cacheMiss CacheKeyUserIds mempty tab)
                 $ gs ^. gsServerCache . scUserIds
 

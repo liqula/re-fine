@@ -482,7 +482,7 @@ mainMenuCreateGroup mid (lst, allusers)
     addUsers cg = cg & createGroupMembers %~ flip (foldr f) (Map.elems allusers)
       where
         f u asc = case lookup u asc of
-          Nothing -> asc ++ [(u, False)]
+          Nothing -> asc <> [(u, False)]
           _ -> asc
 
 
