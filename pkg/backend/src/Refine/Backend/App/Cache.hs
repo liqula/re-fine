@@ -128,7 +128,7 @@ handshake cfg conn = receiveMessage conn >>= \case
   TSGreeting (Just n) -> do
     cmap <- takeMVar webSocketMVar
     putMVar webSocketMVar $ second (Map.adjust (_2 .~ mempty) n) cmap
-    sendMessage conn $ TCRestrictKeys []
+    sendMessage conn $ TCRestrictKeys []  -- TUNING: only send this if we know something happened since the disconnect.
     appLog $ "websocket client #" <> show n <> " is reconnected"
     pure n
 

@@ -133,7 +133,7 @@ transformGlobalState = transf
       Right b -> pure b
       Left () -> do
         liftIO flushCacheMisses
-        liftIO $ threadDelay 200000   -- TODO #425
+        liftIO $ threadDelay 152000   -- FIXME: #425
         dispatchAndExec act
         pure st
      where
