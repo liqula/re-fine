@@ -55,27 +55,27 @@ data MainMenu
 type MainMenuTabState = (MainMenuTab
       ()
       (ID Group)
-      (LocalStateRef CreateGroup)
+      (LocalStateRef (CreateGroup_ [(User, Bool)]))
       (LocalStateRef CreateVDoc)
       (LocalStateRef UpdateVDoc)
       :: *)
 type MainMenuTabAction = (MainMenuTab
       ()
       (ID Group)
-      (FormAction CreateGroup)
+      (FormAction (CreateGroup_ [(User, Bool)]))
       (FormAction CreateVDoc)
       (FormAction UpdateVDoc)
       :: *)
 type MainMenuTabProps = (MainMenuTab
       GroupsProps
       GroupProps
-      (LocalStateRef CreateGroup)
+      (LocalStateRef (CreateGroup_ [(User, Bool)]))
       (LocalStateRef CreateVDoc)
       (LocalStateRef UpdateVDoc)
       :: *)
 
-type GroupProps = (Maybe Group, Map (ID VDoc) VDoc)
-type GroupsProps = ([Group], Map (ID VDoc) VDoc)
+type GroupProps = (Maybe Group, Map (ID VDoc) VDoc, Set User)
+type GroupsProps = ([Group], Map (ID VDoc) VDoc, Set User)
 
 -- | FUTUREWORK: it may be nicer after all to have different types for action, state, and props
 -- here.  but for now it should work.

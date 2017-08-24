@@ -8,6 +8,7 @@ module Refine.Frontend.Store where
 import Refine.Frontend.Prelude
 
 import           Control.Concurrent
+import qualified Data.Map as Map
 
 import           Refine.Common.Types hiding (CreateUser, Login)
 import qualified Refine.Common.Types as C
@@ -204,10 +205,12 @@ emitBackendCallsFor act st = case act of
     MainMenuAction (MainMenuActionOpen (MainMenuCreateOrUpdateGroup mid (FormComplete cg))) -> do
       case mid of
         Nothing -> do
-          sendTS $ TSAddGroup cg
+          sendTS . TSAddGroup
+                 $ cg & createGroupMembers %~ Map.fromList . map (first (^. userID)) . filter snd
           dispatchAndExec . MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
         Just gid -> do
-          sendTS $ TSUpdateGroup gid cg
+          sendTS . TSUpdateGroup gid
+                 $ cg & createGroupMembers %~ Map.fromList . map (first (^. userID))
           dispatchAndExec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup gid
 
     MainMenuAction (MainMenuActionOpen (MainMenuCreateProcess (FormComplete cp))) -> do

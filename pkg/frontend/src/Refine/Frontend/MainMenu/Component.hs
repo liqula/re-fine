@@ -8,6 +8,7 @@ import Refine.Frontend.Prelude
 import           Control.Lens (ALens', cloneLens)
 import qualified Data.Text as ST
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 import           Language.Css.Syntax
 
 import           React.Flux.Missing
@@ -127,7 +128,10 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
     div_ ["style" @@= [decl "marginLeft" (Px 3)]] $ do
       let mkCreateGroupAction :: GlobalAction
           mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup Nothing . FormBegin
-                              $ newLocalStateRef (CreateGroup "" "" [] []) groups
+                              $ newLocalStateRef
+                                  (CreateGroup "" "" [] []
+                                   $ flip (,) False <$> Set.toList (groups ^. _3))
+                                  groups
 
       ibutton_ $ emptyIbuttonProps "Group_add" [mkCreateGroupAction]
         & ibListKey .~ "create_group"
@@ -140,7 +144,7 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
       br_ [] >> br_ [] >> br_ [] >> hr_ []
 
     div_ $ do
-      mainMenuGroupShort_ `mapM_` sortBy (compare `on` view groupTitle) (fst groups)
+      mainMenuGroupShort_ `mapM_` sortBy (compare `on` view groupTitle) (groups ^. _1)
 
 mainMenuGroups_ :: HasCallStack => GroupsProps -> ReactElementM eventHandler ()
 mainMenuGroups_ = view_ mainMenuGroups "mainMenuGroups"
@@ -186,7 +190,7 @@ mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
         & ibHighlightWhen .~ HighlightNever
         & ibLabel .~ cs (show numProcesses)  -- FIXME: should be rendered differently, see click dummy
 
-      let numUsers :: Int = 13  -- FIXME
+      let numUsers = length $ group ^. groupMembers
       ibutton_ $ emptyIbuttonProps "User" ([] :: [GlobalAction])
         & ibListKey .~ (listKey <> "-users")
         & ibSize .~ Large
@@ -201,8 +205,8 @@ mainMenuGroupShort_ group = view_ mainMenuGroupShort listKey group
 
 mainMenuGroup :: View '[GroupProps]
 mainMenuGroup = mkView "mainMenuGroup" $ \case
- (Nothing, _) -> "Loading..."
- (Just group, vdocs) -> do
+ (Nothing, _, _) -> "Loading..."
+ (Just group, vdocs, users) -> do
   div_ $ do
     ibutton_ $ emptyIbuttonProps "Arrow_left" [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
       & ibListKey .~ "group_back"
@@ -257,7 +261,10 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
 
     ibutton_ $ emptyIbuttonProps "Group_update"
         [ MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup (Just $ group ^. groupID) . FormBegin
-          $ newLocalStateRef (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []) group
+          $ newLocalStateRef
+              (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []
+               [(u, (u ^. userID) `elem` (group ^. groupMembers)) | u <- Set.toList users])
+              group
         ]
       & ibListKey .~ "group_update"
       & ibSize .~ XXLarge
@@ -357,13 +364,27 @@ mainMenuProcessShort_ props = view_ mainMenuProcessShort listKey props
 
 -- | FUTUREWORK: should this be @View '[LocalStateRef CreateGroup]@ or @View '[Maybe (ID Group),
 -- LocalStateRef CreateGroup]@?  (same with 'mainMenuCreateProcess'.)
-mainMenuCreateGroup :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> View '[]
+mainMenuCreateGroup :: HasCallStack => Maybe (ID Group) -> LocalStateRef (CreateGroup_ [(User, Bool)]) -> View '[]
 mainMenuCreateGroup mid lst = mkPersistentStatefulView "MainMenuCreateGroup" lst $
-  \st@(CreateGroup title desc _ _) -> do
+  \st@(CreateGroup title desc _ _ users) -> do
 
-    contributionDialogTextForm createGroupTitle st 2 "group title"
+    contributionDialogTextForm createGroupTitle st 1 "group title"
     hr_ []
     contributionDialogTextForm createGroupDesc st 2 "group description"
+    hr_ []
+    "Invite Members"
+    forM_ (zip [0..] users) $ \(i, (user, cv)) -> do
+      br_ []
+      input_ $
+         ["checked" $= "checked" | cv]
+          <>
+         [ "style" @@= inputFieldStyles
+         , "type" $= "checkbox"
+         , onChange $ \_evt -> simpleHandler $ \st' -> ([], Just (st' & createGroupMembers . ix i . _2 %~ not))
+         ]
+      elemText $ user ^. userName
+      elemText " email: "
+      elemText $ user ^. userEmail
     hr_ []
 
     let enableOrDisable props = if ST.null desc || ST.null title
@@ -393,7 +414,7 @@ mainMenuCreateGroup mid lst = mkPersistentStatefulView "MainMenuCreateGroup" lst
                                              ]
 
 
-mainMenuCreateGroup_ :: HasCallStack => Maybe (ID Group) -> LocalStateRef CreateGroup -> ReactElementM eventHandler ()
+mainMenuCreateGroup_ :: HasCallStack => Maybe (ID Group) -> LocalStateRef (CreateGroup_ [(User, Bool)]) -> ReactElementM eventHandler ()
 mainMenuCreateGroup_ mid lst = view_ (mainMenuCreateGroup mid lst) "mainMenuCreateGroup"
 
 mainMenuCreateProcess :: HasCallStack => LocalStateRef CreateVDoc -> View '[]

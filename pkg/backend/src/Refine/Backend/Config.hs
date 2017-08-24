@@ -213,8 +213,8 @@ helpCliCreateMsg = unlines
 
 sampleContent :: [CliCreate]
 sampleContent =
-  [ CliCreateGroup $ CreateGroup "Universe" "The group that contains everything" [] []
-  , CliCreateGroup $ CreateGroup "Greek Party" "Something about ethnics and politics" [] []
+  [ CliCreateGroup $ CreateGroup "Universe" "The group that contains everything" [] [] mempty
+  , CliCreateGroup $ CreateGroup "Greek Party" "Something about ethnics and politics" [] [] mempty
   , CliCreateUser (CreateUser "admin" "admin@localhost" "pass", [], [GlobalAdmin])
   , CliCreateUser (CreateUser "edna" "edna@localhost" "pass", [(GroupMember, "Edna's home group"), (GroupMember, "Greek Party")], [])
   , CliCreateUser (CreateUser "joe" "joe@localhost" "pass", [(GroupMember, "Joe's home group")], [])

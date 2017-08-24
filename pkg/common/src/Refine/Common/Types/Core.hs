@@ -211,14 +211,18 @@ data Group = Group
   , _groupParents   :: [ID Group]
   , _groupChildren  :: [ID Group]
   , _groupVDocs     :: [ID VDoc]
+  , _groupMembers   :: [ID User]
   }
   deriving (Eq, Generic, Show)
 
-data CreateGroup = CreateGroup
+type CreateGroup = CreateGroup_ (Map (ID User) Bool)
+
+data CreateGroup_ members = CreateGroup
   { _createGroupTitle :: ST
   , _createGroupDesc  :: ST
   , _createGroupParents  :: [ID Group]
   , _createGroupChildren :: [ID Group]
+  , _createGroupMembers  :: members
   }
   deriving (Eq, Generic, Show)
 
@@ -764,7 +768,7 @@ deriveClasses
   , ([ ''EntityKey, ''CompositeVDoc, ''ContributionID, ''MarkID
      , ''VDoc, ''CreateVDoc, ''UpdateVDoc, ''EditSource, ''Edit
      , ''EditStats, ''CreateEdit, ''EditKind, ''Title, ''Abstract
-     , ''Group, ''CreateGroup]
+     , ''Group, ''CreateGroup_]
     , allClass)
   ]
 

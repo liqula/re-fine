@@ -57,16 +57,23 @@ wholeScreen = Outdated.defineLifecycleView "WholeScreen" () Outdated.lifecycleCo
     case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
       Nothing  -> mainScreen_ (gs, as)
       Just tab -> mainMenu_ $ MainMenuProps
-                            (mapMainMenuTab (const (groups, vdocs)) groupFromCache id id id tab)
+                            (mapMainMenuTab (const (groups, vdocs, users)) groupFromCache id id id tab)
                             (gs ^. gsMainMenuState . mmErrors)
                             (as ^. accLoginState . lsCurrentUser)
         where
-          groupFromCache :: ID Group -> (Maybe Group, Map (ID VDoc) VDoc)
-          groupFromCache gid = (cacheLookup gs gid, vdocs)
+          groupFromCache :: ID Group -> (Maybe Group, Map (ID VDoc) VDoc, Set User)
+          groupFromCache gid = (cacheLookup gs gid, vdocs, users)
           groups :: [Group]
-          groups = mapMaybe (cacheLookup gs) . Set.elems . fromMaybe (cacheMiss CacheKeyGroupIds mempty tab) $ gs ^. gsServerCache . scGroupIds
+          groups = mapMaybe (cacheLookup gs) . Set.elems
+                 . fromMaybe (cacheMiss CacheKeyGroupIds mempty tab)
+                 $ gs ^. gsServerCache . scGroupIds
           vdocs :: Map (ID VDoc) VDoc
           vdocs = gs ^. gsServerCache . scVDocs
+
+          users :: Set User
+          users = Set.fromList $ mapMaybe (cacheLookup gs) . Set.elems
+                . fromMaybe (cacheMiss CacheKeyUserIds mempty tab)
+                $ gs ^. gsServerCache . scUserIds
 
   , Outdated.lComponentDidMount = Just $ \this _ _ -> didMountOrUpdate this
   , Outdated.lComponentDidUpdate = Just $ \this _ _ _ _ -> didMountOrUpdate this

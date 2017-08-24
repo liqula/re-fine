@@ -8,6 +8,7 @@ module Refine.Backend.App.User where
 
 import Refine.Backend.Prelude
 
+import qualified Data.Set as Set
 import qualified Web.Users.Types as Users
 
 import Refine.Backend.App.Access
@@ -94,6 +95,12 @@ getUser uid = do
   user <- nothingToError (AppUserNotFound . cs $ show uid) =<< dbUsersCmd (`Users.getUserById` fromUserID uid)
   mid <- db $ getMetaID uid
   pure $ Common.User mid (Users.u_name user) (Users.u_email user)
+
+getUsers :: App (Set (ID User))
+getUsers = do
+  appLog "getUsers"
+  users <- dbUsersCmd (\b -> Users.listUsers b Nothing (Users.SortAsc Users.UserFieldId))
+  pure . Set.fromList $ toUserID . fst <$> users
 
 doesUserExist :: ID Common.User -> App Bool
 doesUserExist uid = do

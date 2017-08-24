@@ -57,7 +57,7 @@ createAppRunner = do
 
   void . runner $ do
     migrateDB cfg
-    unsafeAsGod $ initializeDB [CliCreateGroup $ CreateGroup "Universe" "The group that contains everything" [] []]
+    unsafeAsGod $ initializeDB [CliCreateGroup $ CreateGroup "Universe" "The group that contains everything" [] [] mempty]
       -- FIXME: is this still needed anywhere?  shouldn't this be done by `--init` via command line
       -- in a more controlled manner by now?
   pure (runner, destroy)
