@@ -77,10 +77,7 @@ setup action = withTempCurrentDirectory $ do
   aliceID <- addUserAndLogin tbe "alice" "alice@example.com" "pass"
   bobID   <- addUserAndLogin tbe "bob"   "bob@example.com"   "pass"
 
-  runDB tbe $ do
-    unsafeBeAGod
-    changeRole $ AssignGlobalRole adminID GlobalAdmin
-    beAMortal
+  runDB tbe . unsafeAsGod . changeRole $ AssignGlobalRole adminID GlobalAdmin
 
   let switchUser :: SessUser -> IO ()
       switchUser = uncurry (testBackendLogin tbe) . snd . userMap
@@ -108,7 +105,7 @@ setupVDocAsGod owners = do
   pure vdoc
 
 setupDiscussion :: HasCallStack => Bool -> VDoc -> App Discussion
-setupDiscussion asGod vdoc = when asGod unsafeBeAGod *> addDiscussion eid cd <* when asGod beAMortal
+setupDiscussion asGod vdoc = (if asGod then unsafeAsGod else id) $ addDiscussion eid cd
   where
     eid = vdoc ^. vdocHeadEdit
     cd = CreateDiscussion "first post!" Nothing

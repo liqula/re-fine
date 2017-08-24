@@ -31,6 +31,7 @@ module Refine.Prelude
   , Timespan(..)
   , showTimespan
   , timespanUs
+  , timespanSecs
   , timespanDays
   , timespanToNominalDiffTime
   , diffTimestamps
@@ -182,7 +183,6 @@ showTimespan (TimespanHours i) = show i <> "h"
 showTimespan (TimespanDays  i) = show i <> "d"
 
 
--- | FIXME: make this a 'Lens''
 timespanUs :: Timespan -> Int
 timespanUs (TimespanUs    i) = fromIntegral   i
 timespanUs (TimespanMs    i) = fromIntegral $ i * 1000
@@ -191,9 +191,11 @@ timespanUs (TimespanMins  i) = fromIntegral $ i * (1000 * 1000 * 60)
 timespanUs (TimespanHours i) = fromIntegral $ i * (1000 * 1000 * 3600)
 timespanUs (TimespanDays  i) = fromIntegral $ i * (1000 * 1000 * 3600 * 24)
 
--- | FIXME: make this a 'Lens''
+timespanSecs :: Timespan -> Int
+timespanSecs = (`div` (1000 * 1000)) . timespanUs
+
 timespanDays :: Timespan -> Int
-timespanDays = (`div` (1000 * 1000 * 3600 * 24)) . timespanUs
+timespanDays = (`div` (3600 * 24)) . timespanSecs
 
 
 timespanToNominalDiffTime :: Timespan -> NominalDiffTime

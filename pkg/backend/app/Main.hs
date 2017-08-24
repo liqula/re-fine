@@ -8,6 +8,7 @@ import Data.Monoid ((<>))
 import System.Environment (getArgs, getProgName)
 import System.IO (hSetBuffering, BufferMode(NoBuffering), stdout, stderr)
 
+import Refine.Backend.App.Access
 import Refine.Backend.App.Smtp (checkSendMail)
 import Refine.Backend.App.Core (appLogL)
 import Refine.Backend.Config
@@ -30,7 +31,7 @@ runInitDB :: FilePath -> Maybe FilePath -> IO ()
 runInitDB contentPath configPath = do
   cfg <- initConfig configPath
   content <- readCliCreate contentPath
-  runCliAppCommand cfg $ initializeDB content
+  runCliAppCommand cfg . unsafeAsGod $ initializeDB content
   appLogL LogInfo "Run `echo .dump | sqlite3 <FILE.db>` to get a database dump."
 
 startServer :: Maybe FilePath -> IO ()

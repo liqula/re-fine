@@ -160,7 +160,7 @@ mkBackend cfg migrate = do
   backend <- mkServerApp cfg dbNat dbRunner
 
   -- migration
-  result <- runExceptT (backendRunApp backend $$ (unsafeBeAGod >> migrate))
+  result <- runExceptT (backendRunApp backend $$ unsafeAsGod migrate)
   either (error . show) (const $ pure ()) result
 
   pure (backend, destroy)

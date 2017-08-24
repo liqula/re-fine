@@ -28,8 +28,8 @@ import Refine.Common.Prelude
 
 import Test.Hspec
 
-passes :: HasCallStack => IO ()
+passes :: HasCallStack => Expectation
 passes = True `shouldBe` True
 
-failsOn :: HasCallStack => Show a => a -> IO ()
+failsOn :: HasCallStack => Show a => a -> Expectation
 failsOn a = show a `shouldBe` "something else"

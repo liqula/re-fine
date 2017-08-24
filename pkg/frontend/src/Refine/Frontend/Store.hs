@@ -133,7 +133,7 @@ transformGlobalState = transf
       Right b -> pure b
       Left () -> do
         liftIO flushCacheMisses
-        liftIO $ threadDelay 200000   -- TODO #425
+        liftIO $ threadDelay 152000   -- FIXME: #425
         dispatchAndExec act
         pure st
      where
@@ -154,8 +154,9 @@ flushCacheMisses = do
   keys <- nub <$> takeMVar cacheMissesMVar
   putMVar cacheMissesMVar []
   unless (null keys) $ do
-    sendTS $ TSMissing keys
-    putStrLn $ "request sent to the server: " <> show keys
+    let msg = TSMissing keys
+    sendTS msg
+    consoleLogJSStringM "WS" . cs $ show msg
 
 editIDUpdate :: GlobalAction -> Maybe (ID C.VDoc) -> Maybe (ID C.VDoc)
 editIDUpdate (LoadVDoc cvd) _ = Just cvd

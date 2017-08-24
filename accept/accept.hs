@@ -221,6 +221,9 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
     pending
 
 
+  -- FIXME: do not use god mode for this story!  add some initial users with `--init` in selenium instead.
+
+
 -- * xpath shortcuts
 
 -- | Find any of _RO, _dark, _bright

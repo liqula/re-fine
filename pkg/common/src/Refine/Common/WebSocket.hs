@@ -35,6 +35,8 @@ import Refine.Common.Types.Translation
 import Refine.Common.Types.Vote
 
 
+-- | (it would be nice if we could re-use the session id from 'AppUserState', but that's only
+-- available when logged in, and web sockets need to work for anonymous users, too.)
 type WSSessionId = Int
 
 
@@ -90,7 +92,6 @@ data ToServer
 
   | TSGreeting (Maybe WSSessionId)  -- ^ first message on connect with 'Nothing'; if this is a
                                 -- re-connect, send @'Just' 'WSSessionId'@.
-  | TSPing
   deriving (Eq, Show, Generic)
 
 data ToClient
@@ -107,7 +108,7 @@ data ToClient
   | TCTranslations L10                       -- ^ response to 'TSGetTranslations'
 
   | TCGreeting WSSessionId           -- ^ first message on connect
-  | TCPing                       -- ^ (this could be done more easily with 'sendPing', 'forkPingThread'.)
+  | TCReset                          -- ^ in case of exceptions; client must start over with handshake.
   deriving (Eq, Show, Generic)
 
 -- filters the cache

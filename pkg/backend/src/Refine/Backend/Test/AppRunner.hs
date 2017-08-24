@@ -39,14 +39,14 @@ import Refine.Backend.Test.Util
 import Refine.Common.Types
 
 
--- | App actions run in god mode.  See 'unsafeBeAGod'.
+-- | App actions run in god mode.  See 'unsafeAsGod'.
 provideAppRunner :: ActionWith (AppM DB a -> IO a) -> IO ()
 provideAppRunner action = withTempCurrentDirectory $ do
   (runner, destroy) <- createAppRunner
   action runner
   destroy
 
--- | App actions run in god mode.  See 'unsafeBeAGod'.
+-- | App actions run in god mode.  See 'unsafeAsGod'.
 createAppRunner :: forall a . IO (AppM DB a -> IO a, IO ())
 createAppRunner = do
   let dbFilePath = "./test.db"
@@ -66,7 +66,7 @@ createAppRunner = do
         }
 
   (dbRunner, dbNat, destroy) <- createDBNat cfg
-  let guardWithGodhood = if cfg ^. cfgAllAreGods then (unsafeBeAGod >>) else id
+  let guardWithGodhood = if cfg ^. cfgAllAreGods then unsafeAsGod else id
       logger = Logger . const $ pure ()
       runner :: forall b . AppM DB b -> IO b
       runner m = ((natThrowError . runApp
@@ -77,7 +77,9 @@ createAppRunner = do
 
   void . runner $ do
     migrateDB cfg
-    initializeDB [CliCreateGroup $ CreateGroup "Universe" "The group that contains everything" [] []]
+    unsafeAsGod $ initializeDB [CliCreateGroup $ CreateGroup "Universe" "The group that contains everything" [] []]
+      -- FIXME: is this still needed anywhere?  shouldn't this be done by `--init` via command line
+      -- in a more controlled manner by now?
   pure (runner, destroy)
 
 monadicApp :: (AppM DB Property -> IO Property) -> AppM DB Property -> Property

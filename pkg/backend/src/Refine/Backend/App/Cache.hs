@@ -98,18 +98,28 @@ startWebSocketServer cfg toIO = websocketsOr options server
     server :: ServerApp
     server pendingconnection = do
       conn <- acceptRequest pendingconnection
+      pingLoop toIO conn
       clientId <- handshake cfg conn
-      pingLoop conn =<< toIO (asks . view $ appConfig . cfgWSPingPeriod)
-      forever . cmdLoopStepFrame toIO clientId $ cmdLoopStep conn clientId
+      forever (cmdLoopStepFrame toIO clientId (cmdLoopStep conn clientId)
+                `catch` (\e -> handleAllErrors cfg conn clientId e
+                                `catch` \e'@(SomeException _) -> wserror . WSErrorResetFailed $ show e'))
 
+handleAllErrors :: Config -> Connection -> WSSessionId -> SomeException -> IO ()
+handleAllErrors cfg conn clientId e = do
+  () <- wserror . WSErrorUnknownError . show $ e
+  sendMessage conn TCReset
+  clientId' <- handshake cfg conn
+  assert (clientId' == clientId) $ pure ()
 
-data WSErrorUnexpectedPacket
+data WSError
   = WSErrorUnexpectedPacket ToServer
-  | WSErrorInternal String
+  | WSErrorCommandFailed ApiError
+  | WSErrorUnknownError String
+  | WSErrorResetFailed String
   deriving (Eq, Show)
 
-fail' :: WSErrorUnexpectedPacket -> m a
-fail' = error . show
+wserror :: Monad m => WSError -> m a
+wserror = error . show
 
 
 handshake :: Config -> Connection -> IO WSSessionId
@@ -118,7 +128,7 @@ handshake cfg conn = receiveMessage conn >>= \case
   TSGreeting (Just n) -> do
     cmap <- takeMVar webSocketMVar
     putMVar webSocketMVar $ second (Map.adjust (_2 .~ mempty) n) cmap
-    sendMessage conn $ TCRestrictKeys []
+    sendMessage conn $ TCRestrictKeys []  -- TUNING: only send this if we know something happened since the disconnect.
     appLog $ "websocket client #" <> show n <> " is reconnected"
     pure n
 
@@ -131,14 +141,11 @@ handshake cfg conn = receiveMessage conn >>= \case
     appLog $ "new websocket client #" <> show n
     pure n
 
-  bad -> fail' $ WSErrorUnexpectedPacket bad
+  bad -> wserror $ WSErrorUnexpectedPacket bad
 
-pingLoop :: Connection -> Either ApiError Timespan -> IO ()
-pingLoop conn = \case
-  Left e -> fail' . WSErrorInternal . show $ e
-  Right pingFreq -> void . forkIO . forever $ do
-    threadDelay (timespanUs pingFreq)
-    sendMessage conn TCPing
+pingLoop :: HasCallStack => (forall a. AppM DB a -> IO (Either ApiError a)) -> Connection -> IO ()
+pingLoop toIO conn = either (error . show) (forkPingThread conn . timespanSecs)
+                     =<< toIO (asks . view $ appConfig . cfgWSPingPeriod)
 
 cmdLoopStepFrame :: forall m. (m ~ AppM DB ()) => (m -> IO (Either ApiError ())) -> WSSessionId -> m -> IO ()
 cmdLoopStepFrame toIO clientId = dolift . dostate
@@ -152,7 +159,7 @@ cmdLoopStepFrame toIO clientId = dolift . dostate
 
     dolift :: m -> IO ()
     dolift cmd = toIO cmd >>= \case
-      Left e -> appLogL LogError $ show e
+      Left e -> wserror $ WSErrorCommandFailed e
       Right () -> pure ()
 
 cmdLoopStep :: Connection -> WSSessionId -> AppM DB ()
@@ -162,7 +169,6 @@ cmdLoopStep conn clientId = do
   appLogL LogDebug . ("appState = " <>) . show =<< get
 
   case msg of
-      TSPing -> appLog $ show clientId <> ": ping."
       TSClearCache -> do
           cmap' <- liftIO $ takeMVar webSocketMVar
           liftIO . putMVar webSocketMVar $
@@ -201,6 +207,6 @@ cmdLoopStep conn clientId = do
                                 -> pure ()  -- not implemented
       TSDeleteVote eid        -> void $ App.deleteSimpleVoteOnEdit eid
 
-      bad@(TSGreeting _)      -> fail' $ WSErrorUnexpectedPacket bad
+      bad@(TSGreeting _)      -> wserror $ WSErrorUnexpectedPacket bad
 
 -- FIXME: hash session id with a secret and a current timestamp before passing it to the client.
