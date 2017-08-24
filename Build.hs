@@ -46,16 +46,17 @@ stackBuildOptimal package = do
   command_ [Cwd package] "stack" ["setup"]
   command_ [Cwd package] "stack" ["build", "--split-objs", "--ghc-options", "-O2"]
 
-hlintPath :: FilePath -> Action ()
-hlintPath path = do
-  command_ [] "stack"
+hlintPath :: [String] -> FilePath -> Action ()
+hlintPath extra path = do
+  command_ [] "stack" $
     [ "exec", "--", "hlint"
     , "--hint=" <> pkgPrelude <> "/HLint.hs"
-    , "./" <> path
+    ] <> extra <>
+    [ "./" <> path
     ]
 
 hlintPackage :: FilePath -> Action ()
-hlintPackage package = hlintPath `mapM_` ((package <>) <$> ["/src", "/test"])
+hlintPackage package = hlintPath ["--cpp-include=" <> package <> "/src"] `mapM_` ((package <>) <$> ["/src", "/test"])
 
 
 -- * main
@@ -153,22 +154,21 @@ main = shakeArgs refineOptions $ do
 
   phony "hlint-common" $ do
     hlintPackage pkgCommon
-    hlintPath "pkg/common/scaffolding/Main.hs"
+    hlintPath ["--cpp-include=pkg/common/src"] "pkg/common/scaffolding/Main.hs"
 
   phony "hlint-backend" $ do
     hlintPackage pkgBackend
-    hlintPath "pkg/backend/app/Main.hs"
+    hlintPath [] "pkg/backend/app/Main.hs"
 
   phony "hlint-frontend" $ do
     hlintPackage pkgFrontend
-    hlintPath "pkg/frontend/app/Main.hs"
+    hlintPath [] "pkg/frontend/app/Main.hs"
+    hlintPath [] "./pkg/frontend/styleguide"
 
   phony "hlint" $ do
     need ["hlint-prelude", "hlint-common", "hlint-backend", "hlint-frontend"]
-    hlintPath "./accept"
-    hlintPath "./pkg/common/scaffolding"
-    hlintPath "./pkg/frontend/styleguide"
-    hlintPath "./scripts"
+    hlintPath [] "./accept"
+    hlintPath [] "./scripts"
     need ["build-frontend-trans"]
     command_ [] "./scripts/style-check.hs" []
 

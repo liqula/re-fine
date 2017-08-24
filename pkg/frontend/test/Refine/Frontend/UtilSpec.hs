@@ -1,6 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 
 module Refine.Frontend.UtilSpec where
 

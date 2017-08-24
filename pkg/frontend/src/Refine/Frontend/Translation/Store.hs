@@ -1,5 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 
 module Refine.Frontend.Translation.Store (translationsUpdate) where
 

@@ -1,8 +1,10 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 module Refine.Common.Prelude (module P, (.:=)) where
 
 import Data.Aeson as P hiding ((.=))
 import Data.Aeson.Types as P hiding ((.=))
+import Data.Int as P
 import Generics.SOP as P hiding (Generic, All, to)
 import Generics.SOP.JSON as P
 import Generics.SOP.NFData as P

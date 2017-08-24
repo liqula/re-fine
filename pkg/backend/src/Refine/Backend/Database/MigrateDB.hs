@@ -1,4 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 module Refine.Backend.Database.MigrateDB where
 
 import Refine.Backend.Prelude

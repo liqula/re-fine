@@ -13,7 +13,7 @@ maintainer:          mf@zerobuzz.net
 copyright:           2017-2022 zerobuzz.net
 category:            Web
 
-ghc-options: -j -Wall -Wno-redundant-constraints -Werror
+ghc-options: -j -Wall -Wno-redundant-constraints -Wno-unused-imports -Werror
 
 dependencies:
   - aeson
@@ -75,19 +75,26 @@ dependencies:
 library:
   source-dirs:
     - src
+  include-dirs:
+    - src
 
 executables:
   refine:
     main: Main.hs
+    dependencies:
+      - refine-backend
     source-dirs:
-      - src
       - app
+    include-dirs:
+      - src
 
 tests:
   spec:
     main: Spec.hs
     source-dirs:
       - test
+      - src
+    include-dirs:
       - src
     ghc-options: -threaded -rtsopts -with-rtsopts=-N
     dependencies:

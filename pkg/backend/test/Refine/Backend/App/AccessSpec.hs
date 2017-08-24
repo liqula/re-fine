@@ -1,27 +1,5 @@
-{-# LANGUAGE BangPatterns               #-}
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE DeriveFunctor              #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE ExplicitForAll             #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE GADTs                      #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE QuasiQuotes                #-}
-{-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TupleSections              #-}
-{-# LANGUAGE TypeApplications           #-}
-{-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeFamilyDependencies     #-}
-{-# LANGUAGE TypeOperators              #-}
-{-# LANGUAGE ViewPatterns               #-}
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 
 module Refine.Backend.App.AccessSpec where
 
@@ -43,7 +21,7 @@ import Refine.Backend.Test.AppServer
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Common.ChangeAPI
 import Refine.Common.Rest
-import Refine.Common.Test.Util
+import Refine.Common.Test
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft
 
@@ -57,13 +35,13 @@ data SessUser = Admin | Alice | Bob
 
 setup :: HasCallStack => ((SwitchUser, GetUid, TestBackend) -> IO ()) -> IO ()
 setup action = withTempCurrentDirectory $ do
-  let verbose = False
+  let verbose_ = False
       dbFilePath = "./test.db"
       cfg = def
-        & cfgLogger     .~ (if verbose
+        & cfgLogger     .~ (if verbose_
                             then LogCfg LogCfgStdOut LogDebug
                             else LogCfg (LogCfgFile testLogfilePath) LogError)
-        & cfgDBKind     .~ (if verbose
+        & cfgDBKind     .~ (if verbose_
                             then DBOnDisk dbFilePath
                             else DBInMemory)
         & cfgSmtp       .~ Nothing
@@ -94,7 +72,7 @@ setup action = withTempCurrentDirectory $ do
   action (switchUser, getUid, tbe)
 
   -- dump database (for debugging)
-  when verbose . void . system $ "echo .dump | sqlite3 " <> dbFilePath
+  when verbose_ . void . system $ "echo .dump | sqlite3 " <> dbFilePath
 
   destroy
 

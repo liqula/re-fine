@@ -1,5 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 
 module Refine.Backend.Database.TreeSpec where
 

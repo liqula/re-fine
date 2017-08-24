@@ -13,7 +13,7 @@ maintainer:          mf@zerobuzz.net
 copyright:           2017-2022 zerobuzz.net
 category:            Web
 
-ghc-options: -j -Wall -Wno-redundant-constraints -Werror
+ghc-options: -j -Wall -Wno-redundant-constraints -Wno-unused-imports -Werror
 
 dependencies:
   - aeson
@@ -49,33 +49,38 @@ dependencies:
 library:
   source-dirs:
     - src
+  include-dirs:
+    - src
 
 executables:
   scaffolding:
     main: Main.hs
     source-dirs:
-      - src
       - scaffolding
+    include-dirs:
+      - src
     dependencies:
-      - wreq
-      - pretty-show
       - http-client
+      - pretty-show
+      - refine-common
+      - wreq
 
 tests:
   spec:
     main: Spec.hs
     source-dirs:
       - test
+    include-dirs:
       - src
     ghc-options: -threaded -rtsopts -with-rtsopts=-N
     dependencies:
       - blaze-html
       - blaze-markup
-      - hspec
-      - hspec-golden-aeson
-#      - lens-properties
-      - QuickCheck
       - checkers
+      - hspec
       - hspec-checkers
+      - hspec-golden-aeson
+      - QuickCheck
       - quickcheck-instances
+      - refine-common
       - xml-html-qq

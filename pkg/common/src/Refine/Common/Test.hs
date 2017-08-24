@@ -1,20 +1,8 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE DataKinds           #-}
-{-# LANGUAGE FlexibleContexts    #-}
-{-# LANGUAGE FlexibleInstances   #-}
-{-# LANGUAGE LambdaCase          #-}
-{-# LANGUAGE OverloadedStrings   #-}
-{-# LANGUAGE PackageImports      #-}
-{-# LANGUAGE Rank2Types          #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TupleSections       #-}
-{-# LANGUAGE TypeApplications    #-}
-{-# LANGUAGE TypeFamilies        #-}
-{-# LANGUAGE ViewPatterns        #-}
-
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Refine.Common.Test (module P) where
+module Refine.Common.Test (module P, passes, failsOn) where
 
 import Refine.Common.Prelude
 
@@ -26,3 +14,10 @@ import Test.QuickCheck.Monadic as P
 import Refine.Common.Test.Arbitrary as P
 import Refine.Common.Test.HttpApiData as P
 import Refine.Common.Test.Samples as P
+
+
+passes :: HasCallStack => Expectation
+passes = True `shouldBe` True
+
+failsOn :: HasCallStack => Show a => a -> Expectation
+failsOn a = show a `shouldBe` "something else"

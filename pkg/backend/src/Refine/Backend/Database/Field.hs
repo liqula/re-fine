@@ -1,6 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 

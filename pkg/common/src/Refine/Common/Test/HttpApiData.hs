@@ -1,5 +1,5 @@
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE GADTs                     #-}
+{-# LANGUAGE CPP #-}
+#include "language.hs"
 
 module Refine.Common.Test.HttpApiData where
 

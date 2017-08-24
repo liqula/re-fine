@@ -47,44 +47,12 @@ nobody objects, it's a new rule!
 `default-extensions:` because tooling (hlint, sensei, ...) does not
 reliably honor default-extensions listed in the cabal files, we do not
 use this feature, but instead list all language extensions in the
-Haskell modules.  The
+Haskell modules.  In order to make this more manageable, we have
+CPP-include files in every source directory with `language.hs`.
 
-Copy the following list to a new module from here and edit to your
-liking.
+A similar trick is used with `import.hs`, which allows us to have
+implicit qualified imports.
 
-```haskell
-{-# LANGUAGE BangPatterns               #-}
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE DeriveFunctor              #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE ExplicitForAll             #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE GADTs                      #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE QuasiQuotes                #-}
-{-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TupleSections              #-}
-{-# LANGUAGE TypeApplications           #-}
-{-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeFamilyDependencies     #-}
-{-# LANGUAGE TypeOperators              #-}
-{-# LANGUAGE ViewPatterns               #-}
-```
-
-The following shell line can be used to re-align all files (poorly
-tested -- commit your other changes first!):
-
-```shell
-find . -name '*.hs' -exec perl -i -ne 'if (/^({-# LANGUAGE )(\S+)( #-})$/) { printf("$1%26.26s$3\n", $2."                          "); } else { print }' {} \;
-```
 
 ### qualified imports
 
