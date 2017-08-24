@@ -36,17 +36,14 @@ module Refine.Backend.Server
 import Refine.Backend.Prelude as P
 
 import           Control.Concurrent.MVar
-import           Debug.Trace (trace)  -- (please keep this until we have better logging)
 import           Network.HTTP.Media ((//))
 import           Network.Wai.Handler.Warp as Warp
 import qualified Network.Wai.Session as SCS
 import qualified Servant.Cookie.Session as SCS
 import           Servant.Server.Internal (responseServantErr)
-import qualified Servant.Utils.Enter
 import           Servant.Utils.StaticFiles (serveDirectory)
 import           System.Directory (canonicalizePath, createDirectoryIfMissing)
 import           System.FilePath (dropFileName)
-import qualified Web.Users.Types as Users
 
 import Refine.Backend.App as App
 import Refine.Backend.App.MigrateDB (migrateDB)
@@ -80,7 +77,7 @@ createDataDirectories cfg = do
 
 data Backend db = Backend
   { backendServer          :: Application
-  , backendRunApp          :: AppM db P.:~> ExceptT AppError IO
+  , backendRunApp          :: AppM db P.:~> ExceptT ApiError IO
   , backendSessionStore    :: SCS.SessionStore IO () (AppState, MVar ())
   }
 
@@ -136,7 +133,7 @@ startBackend cfg = do
   Warp.runSettings (warpSettings cfg) . startWebSocketServer cfg (appMToIO backend) $ backendServer backend
   where
     appMToIO :: Backend DB -> AppM DB a -> IO (Either ApiError a)
-    appMToIO backend m = either (Left . App.toApiError) Right <$> runExceptT (backendRunApp backend $$ m)
+    appMToIO backend m = runExceptT (backendRunApp backend $$ m)
 
 runCliAppCommand :: Config -> AppM DB a -> IO ()
 runCliAppCommand cfg cmd = do
@@ -171,11 +168,16 @@ mkServerApp cfg dbNat dbRunner = do
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = defaultLogger cfg
 
-      app :: AppM db :~> ExceptT AppError IO
-      app = runApp dbNat
+      appNT :: AppM db :~> ExceptT ApiError IO
+      appNT = runApp dbNat
                    dbRunner
                    logger
                    cfg
+
+      renderErrorNT :: ExceptT ApiError IO :~> ExceptT ServantErr IO
+      renderErrorNT = NT $ \(ExceptT m) -> ExceptT $ m >>= \case
+        (Right v) -> pure $ Right v
+        (Left e)  -> pure $ appServantErr e
 
   -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
   -- may need to refactor, e.g. by using extra arguments in the end point types.
@@ -184,62 +186,56 @@ mkServerApp cfg dbNat dbRunner = do
               (Proxy :: Proxy AppState)
               cookie
               (Nat liftIO)
-              (toServantError . cnToSn app)
+              (cnToSn $ renderErrorNT . appNT)
               (refineApi :<|> clientConfigApi)
               (Just (P.serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
 
-  pure $ Backend srvApp app sessionStore
+  pure $ Backend srvApp appNT sessionStore
 
 maybeServeDirectory :: Maybe FilePath -> Server Raw
 maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) serveDirectory
 
-{-# ANN toServantError ("HLint: ignore Use errorDoNotUseTrace" :: String) #-}
-toServantError :: (Monad m) => ExceptT AppError m Servant.Utils.Enter.:~> ExceptT ServantErr m
-toServantError = Nat ((lift . runExceptT) >=> leftToError fromAppError)
-  where
-    -- FIXME: some (many?) of these shouldn't be err500.
-    -- FIXME: implement better logging.
-    fromAppError :: AppError -> ServantErr
-    fromAppError err = traceShow' err $ (appServantErr err) { errBody = encode $ App.toApiError err }
+-- | Convert 'ApiError' (internal to backend) to 'ServantError' (passed over HTTP).  Conversion from
+-- 'AppError' to 'ApiError' and logging is left to 'tryApp', 'toApiError'.  This function just
+-- handles the HTTP-specific stuff like response code and body encoding.
+appServantErr :: ApiError -> (Monad m, MonadError ServantErr m) => m a
+appServantErr err = throwError $ (appServantErr' err) { errBody = encode err }
 
-    traceShow' :: (Show a) => a -> b -> b
-    traceShow' a = trace ("toServantError: " <> show a)
+appServantErr' :: ApiError -> ServantErr
+appServantErr' = \case
+  ApiUnknownError _        -> err500
+  ApiVDocVersionError      -> err409
+  ApiDBError dbe           -> dbServantErr dbe
+  ApiUserNotFound _        -> err404
+  ApiUserNotLoggedIn       -> err403
+  ApiUserCreationError uce -> userCreationError uce
+  ApiCsrfError _           -> err403
+  ApiSessionError          -> err403
+  ApiSanityCheckError _    -> err409
+  ApiUserHandleError _     -> err500
+  ApiL10ParseErrors _      -> err500
+  ApiUnauthorized _        -> err403
+  ApiMergeError{}          -> err500
+  ApiRebaseError{}         -> err500
+  ApiSmtpError{}           -> err500
 
--- | Turns AppError to its kind of servant error.
-appServantErr :: AppError -> ServantErr
-appServantErr = \case
-  AppUnknownError _        -> err500
-  AppVDocVersionError      -> err409
-  AppDBError dbe           -> dbServantErr dbe
-  AppUserNotFound _        -> err404
-  AppUserNotLoggedIn       -> err403
-  AppUserCreationError uce -> userCreationError uce
-  AppCsrfError _           -> err403
-  AppSessionError          -> err403
-  AppSanityCheckError _    -> err409
-  AppUserHandleError _     -> err500
-  AppL10ParseErrors _      -> err500
-  AppUnauthorized _        -> err403
-  AppMergeError{}          -> err500
-  AppRebaseError{}         -> err500
-  AppSmtpError{}           -> err500
-
-dbServantErr :: DBError -> ServantErr
+dbServantErr :: ApiErrorDB -> ServantErr
 dbServantErr = \case
-  DBUnknownError    _ -> err500
-  DBNotFound        _ -> err404
-  DBNotUnique       _ -> err409
-  DBException       _ -> err500
-  DBUserNotLoggedIn   -> err403
-  DBMigrationParseErrors _ -> err500
-  DBUnsafeMigration _      -> err500
+  ApiDBUnknownError       _ -> err500
+  ApiDBNotFound           _ -> err404
+  ApiDBNotUnique          _ -> err409
+  ApiDBException          _ -> err500
+  ApiDBUserNotLoggedIn      -> err403
+  ApiDBMigrationParseErrors -> err500
+  ApiDBUnsafeMigration      -> err500
 
-userCreationError :: Users.CreateUserError -> ServantErr
+userCreationError :: ApiErrorCreateUser -> ServantErr
 userCreationError = \case
-  Users.InvalidPassword              -> err400
-  Users.UsernameAlreadyTaken         -> err409
-  Users.EmailAlreadyTaken            -> err409
-  Users.UsernameAndEmailAlreadyTaken -> err409
+  ApiErrorInvalidPassword              -> err400
+  ApiErrorUsernameAlreadyTaken         -> err409
+  ApiErrorEmailAlreadyTaken            -> err409
+  ApiErrorUsernameAndEmailAlreadyTaken -> err409
+
 
 -- * Instances for Servant.Cookie.Session
 

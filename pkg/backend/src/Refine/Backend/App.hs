@@ -40,6 +40,7 @@ import Refine.Backend.App.VDoc        as App
 import Refine.Backend.App.Cache       as App
 import Refine.Backend.Config
 import Refine.Backend.Logger
+import Refine.Common.Rest (ApiError)
 
 
 runApp
@@ -48,20 +49,27 @@ runApp
   -> DBRunner
   -> Logger
   -> Config
-  -> (AppM db :~> ExceptT AppError IO)
+  -> (AppM db :~> ExceptT ApiError IO)
 runApp
   dbNat
   dbrunner
   logger
   cfg
-  = NT (runSR . unApp)
+  = NT (runSR . unApp . tryApp)
     where
       runSR
-        :: StateT AppState (ReaderT (MkDBNat db, AppContext) (ExceptT AppError IO)) x
-        -> ExceptT AppError IO x
+        :: forall a. StateT AppState
+                       (ReaderT (MkDBNat db, AppContext)
+                          (ExceptT AppError IO))
+                       (Either ApiError a)
+        -> ExceptT ApiError IO a
       runSR action = do
-        unDBRunner dbrunner $ \dbc -> do
-          dbInit dbc
-          let cmd = evalStateT action $ initialAppState cfg
-              ctx = (dbNat, AppContext dbc logger cfg)
-          (cmd `runReaderT` ctx) `finally` dbCommit dbc
+        let almost :: ExceptT AppError IO (Either ApiError a)
+            almost = unDBRunner dbrunner $ \dbc -> do
+              dbInit dbc
+              let cmd = evalStateT action $ initialAppState cfg
+                  ctx = (dbNat, AppContext dbc logger cfg)
+              (cmd `runReaderT` ctx) `finally` dbCommit dbc
+        ExceptT $ runExceptT almost >>=
+          either (error "impossible")              -- made impossible by 'tryApp'
+            (either (pure . Left) (pure . Right))  -- this is where 'tryApp' has left the 'ApiError'.

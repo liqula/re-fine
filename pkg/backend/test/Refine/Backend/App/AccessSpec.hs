@@ -42,6 +42,7 @@ import Refine.Backend.Server
 import Refine.Backend.Test.AppServer
 import Refine.Backend.Test.Util (withTempCurrentDirectory)
 import Refine.Common.ChangeAPI
+import Refine.Common.Rest
 import Refine.Common.Test.Util
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft
@@ -116,7 +117,7 @@ shouldGrant sess probe = runDB' sess probe >>= (`shouldSatisfy` isRight)
 
 shouldDeny :: (HasCallStack, Show a) => TestBackend -> AppM DB a -> IO ()
 shouldDeny sess probe = runDB' sess probe >>= \case
-  Left (AppUnauthorized _) -> passes
+  Left (ApiUnauthorized _) -> passes
   bad -> failsOn bad
 
 

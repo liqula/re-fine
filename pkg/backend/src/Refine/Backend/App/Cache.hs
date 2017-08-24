@@ -26,6 +26,8 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
+-- | (This module is called "Cache" for historical reasons.  It's really more of a "WebSocket"
+-- protocol module, perhaps we should rename it.)
 module Refine.Backend.App.Cache
   ( startWebSocketServer
   ) where
