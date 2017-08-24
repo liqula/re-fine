@@ -196,8 +196,8 @@ maybeServeDirectory :: Maybe FilePath -> Server Raw
 maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) serveDirectory
 
 -- | Convert 'ApiError' (internal to backend) to 'ServantError' (passed over HTTP).  Conversion from
--- 'AppError' to 'ApiError' and logging is left to 'tryApp', 'toApiError', or 'leftToApiError'.
--- This function just handles the HTTP-specific stuff like response code and body encoding.
+-- 'AppError' to 'ApiError' and logging is left to 'tryApp', 'toApiError'.  This function just
+-- handles the HTTP-specific stuff like response code and body encoding.
 appServantErr :: ApiError -> (Monad m, MonadError ServantErr m) => m a
 appServantErr err = throwError $ (appServantErr' err) { errBody = encode err }
 

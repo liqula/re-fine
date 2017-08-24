@@ -44,7 +44,7 @@ module Refine.Backend.App.Core (
   , AppM(..)
   , AppError(..)
   , SmtpError(..)
-  , tryApp, leftToApiError, toApiError, createUserErrorToApiError
+  , tryApp, toApiError, createUserErrorToApiError
   , MonadApp
   , MonadAppDB(dbWithFilters), db, dbUsersCmd
   , MonadLog(appLogL), appLog
@@ -176,9 +176,6 @@ newtype SmtpError
 
 tryApp :: forall (db :: * -> *) (a :: *). AppM db a -> AppM db (Either ApiError a)
 tryApp m = (Right <$> m) `catchError` (fmap Left . toApiError)
-
-leftToApiError :: Either AppError a -> (Monad m, MonadLog m) => m (Either ApiError a)
-leftToApiError = either (fmap Left . toApiError) (pure . Right)
 
 -- | Convert 'AppError' (internal to backend) to 'ApiError' (shared between backend and frontend).
 -- This also takes care of logging the confidential part of 'AppError' on the server side before
