@@ -92,7 +92,6 @@ instance Database DB where
   createEdit         = Entity.createEdit
   getEdit            = Entity.getEdit
   getVersion         = Entity.getVersion
-  editNotes          = Entity.editNotes
   editDiscussions    = Entity.editDiscussions
   getEditChildren    = Entity.getEditChildren
   updateVotes        = Entity.updateVotes
@@ -100,17 +99,13 @@ instance Database DB where
   updateEdit         = Entity.updateEdit
   updateEditSource   = Entity.updateEditSource
 
-  -- * Note
-  createNote         = Entity.createNote
-  getNote            = Entity.getNote
-  updateNoteVotes    = Entity.updateNoteVotes
-
   -- * Discussion
   createDiscussion       = Entity.createDiscussion
   rebaseDiscussion       = Entity.rebaseDiscussion
   getDiscussion          = Entity.getDiscussion
   statementsOfDiscussion = Entity.statementsOfDiscussion
   discussionOfStatement  = Entity.discussionOfStatement
+  updateDiscussionVotes  = Entity.updateDiscussionVotes
 
   -- * Statement
   createStatement      = Entity.createStatement

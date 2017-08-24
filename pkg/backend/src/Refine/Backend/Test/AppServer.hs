@@ -201,9 +201,6 @@ addEditUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddEd
 updateEditUri :: ID Edit -> SBS
 updateEditUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SUpdateEdit)
 
-addNoteUri :: ID Edit -> SBS
-addNoteUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddNote)
-
 addDiscussionUri :: ID Edit -> SBS
 addDiscussionUri = uriStr . safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SAddDiscussion)
 

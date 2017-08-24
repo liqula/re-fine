@@ -42,13 +42,10 @@ Edit
     kind        EditKind
     votes       DBVotes
 
-Note
-    text        Text
-    range       RangePosition   -- FIXME: move this to PN table
-    votes       DBVotes
-
 Discussion
     range       RangePosition    -- FIXME: move this to PD table
+    votes       DBVotes
+    isNote      Bool
 
 Statement
     text        Text
@@ -91,11 +88,6 @@ PD
     edit       EditId
     discussion DiscussionId
     UniPD edit discussion
-
-PN
-    edit       EditId
-    note       NoteId
-    UniPN edit note
 |]
 
 
@@ -117,7 +109,6 @@ keyToId = ID . fromSqlKey
 makeElim ''MetaInfo
 makeElim ''VDoc
 makeElim ''Edit
-makeElim ''Note
 makeElim ''Discussion
 makeElim ''Statement
 
@@ -128,5 +119,4 @@ makeElim ''GroupRoles
 makeElim ''GlobalRoles
 
 makeElim ''ParentChild
-makeElim ''PN
 makeElim ''PD

@@ -29,7 +29,6 @@ import           Refine.Prelude (nothingToError, Timestamp, getCurrentTimestamp)
 type instance S.EntityRep MetaInfo   = S.MetaInfo
 type instance S.EntityRep VDoc       = S.VDoc
 type instance S.EntityRep Edit       = S.Edit
-type instance S.EntityRep Note       = S.Note
 type instance S.EntityRep Discussion = S.Discussion
 type instance S.EntityRep Statement  = S.Statement
 type instance S.EntityRep User       = Users.Login
@@ -221,17 +220,15 @@ getVDoc i = do
   (mid, x) <- getMetaEntity (,) i
   let eid = S.vDocElim (\_ _ (Just ei) _ -> ei) x
   editIds <- foreignKeyField S.parentChildChild <$$> liftDB (selectList [S.ParentChildParent ==. eid] [])
-  noteIds <- foreignKeyField S.pNNote <$$> liftDB (selectList [S.PNEdit ==. eid] [])
   discussionIds <- foreignKeyField S.pDDiscussion <$$> liftDB (selectList [S.PDEdit ==. eid] [])
   statementIds <- forM discussionIds $ \did ->
     entityKey <$$> liftDB (selectList [S.StatementDiscussion ==. S.idToKey did] [])
   editsMeta <- (^. miMeta) <$$> mapM getMeta (S.keyToId eid: editIds :: [ID Edit])
-  notesMeta <- (^. miMeta) <$$> mapM getMeta (noteIds :: [ID Note])
   discussionsMeta <- (^. miMeta) <$$> mapM getMeta (discussionIds :: [ID Discussion])
   statementsMeta <- (^. miMeta) <$$> mapM getMeta (S.keyToId <$> concat statementIds :: [ID Statement])
-  let metas = mid ^. miMeta: (editsMeta <> notesMeta <> discussionsMeta <> statementsMeta)
+  let metas = mid ^. miMeta: (editsMeta <> discussionsMeta <> statementsMeta)
       users = length $ nub [u | UserID u <- ((^. metaCreatedBy) <$> metas) <> ((^. metaChangedBy) <$> metas)]
-      stats = EditStats users (length editIds) (length noteIds + length discussionIds)
+      stats = EditStats users (length editIds) (length discussionIds)
   pure $ S.vDocElim (toVDoc stats mid) x
 
 
@@ -267,12 +264,11 @@ updateEdit eid ce = do
 getEdit :: ID Edit -> DB Edit
 getEdit eid = do
   src         <- getEditSource eid
-  notes       <- Set.fromList <$> editNotes eid
   discussions <- Set.fromList <$> editDiscussions eid
   children    <- Set.fromList <$> getEditChildren eid
   getMetaEntity (\mid -> S.editElim $
                   \desc d vdoc kind (DBVotes vs) ->
-                    Edit mid desc kind src (S.keyToId vdoc) d vs children notes discussions) eid
+                    Edit mid desc kind src (S.keyToId vdoc) d vs children discussions) eid
 
 getEditSource :: ID Edit -> DB (EditSource (ID Edit))
 getEditSource eid = do
@@ -290,12 +286,6 @@ updateEditSource eid f = do
 
 getVersion :: ID Edit -> DB RawContent
 getVersion eid = S.editElim (\_ vdoc _ _ _ -> vdoc) <$> getEntityRep eid
-
-editNotes :: ID Edit -> DB [ID Note]
-editNotes pid = do
-  opts <- dbSelectOpts
-  liftDB $
-    foreignKeyField S.pNNote <$$> selectList [S.PNEdit ==. S.idToKey pid] opts
 
 editDiscussions :: ID Edit -> DB [ID Discussion]
 editDiscussions pid = do
@@ -328,50 +318,14 @@ vdocOfEdit :: ID Edit -> DB (ID VDoc)
 vdocOfEdit eid = S.editElim (\_ _ vid _ _ -> S.keyToId vid) <$> getEntityRep eid
 
 
--- * Note
-
-toNote :: MetaID Note -> ID VDoc -> ST -> RangePosition -> DBVotes -> Note
-toNote nid vid desc p = Note nid vid desc (unRangePosition p) . unDBVotes
-
-createNote :: ID Edit -> CreateNote (Range Position) -> DB Note
-createNote eid note = do
-  let snote = S.Note
-          (note ^. createNoteText)
-          (RangePosition $ note ^. createNoteRange)
-          (DBVotes mempty)
-  mid <- createMetaID snote
-  addConnection S.PN eid (mid ^. miID)
-  getNote $ mid ^. miID
-
-getNote :: ID Note -> DB Note
-getNote nid = do
-  vid <- vdocOfNote nid
-  (mid, snote :: S.Note) <- getMetaEntity (,) nid
-  pure $ S.noteElim (toNote mid vid) snote
-
-vdocOfNote :: ID Note -> DB (ID VDoc)
-vdocOfNote nid = do
-  opts <- dbSelectOpts
-  ((editOfNote :: P.Entity S.PN) : _) <- liftDB $ selectList [S.PNNote ==. S.idToKey nid] opts
-  let eid :: ID Edit = (S.pNElim (\i _ -> S.keyToId i) . entityVal) editOfNote
-  view editVDoc <$> getEdit eid
-
-updateNoteVotes :: ID Note -> (Votes -> Votes) -> DB ()
-updateNoteVotes i f = do
-  vs <- getNoteVotes i
-  liftDB $ update (S.idToKey i) [ S.NoteVotes =. DBVotes (f vs) ]
-
-getNoteVotes :: ID Note -> DB Votes
-getNoteVotes i = do
-  getMetaEntity (\_ -> S.noteElim $ \_ _ (DBVotes vs) -> vs) i
-
-
 -- * Discussion
 
 createDiscussion :: ID Edit -> CreateDiscussion (Range Position) -> DB Discussion
 createDiscussion pid disc = do
   let sdiscussion = S.Discussion
           (RangePosition $ disc ^. createDiscussionRange)
+          (DBVotes mempty)
+          (disc ^. createDiscussionIsNote)
   mid <- createMetaID sdiscussion
   addConnection S.PD pid (mid ^. miID)
   vid <- view editVDoc <$> getEdit pid
@@ -401,7 +355,7 @@ getDiscussion did = do
   s <- statementsOfDiscussion did
   t <- buildTree (^. statementParent) (^. statementID) <$> mapM getStatement s
   vid <- vdocOfDiscussion did
-  pure $ S.discussionElim (\range -> Discussion mid vid (unRangePosition range) t) d
+  pure $ S.discussionElim (\range -> Discussion mid vid (unRangePosition range) t . unDBVotes) d
 
 discussionOfStatement :: ID Statement -> DB (ID Discussion)
 discussionOfStatement sid = do
@@ -414,6 +368,15 @@ vdocOfDiscussion did = do
   ((editOfDiscussion :: P.Entity S.PD) : _) <- liftDB $ selectList [S.PDDiscussion ==. S.idToKey did] opts
   let eid :: ID Edit = (S.pDElim (\i _ -> S.keyToId i) . entityVal) editOfDiscussion
   view editVDoc <$> getEdit eid
+
+updateDiscussionVotes :: ID Discussion -> (Votes -> Votes) -> DB ()
+updateDiscussionVotes i f = do
+  vs <- getDiscussionVotes i
+  liftDB $ update (S.idToKey i) [ S.DiscussionVotes =. DBVotes (f vs) ]
+
+getDiscussionVotes :: ID Discussion -> DB Votes
+getDiscussionVotes i = do
+  getMetaEntity (\_ -> S.discussionElim $ \_ (DBVotes vs) _ -> vs) i
 
 
 -- * Statement

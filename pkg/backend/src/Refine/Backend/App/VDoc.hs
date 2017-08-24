@@ -163,18 +163,10 @@ rebaseHeadToEdit eid = do
                   (concat (coerce diff :: [OT.Edit OTDoc]))
                   (rawContentToDoc $ base ^. editVDocVersion)
 
-    -- move notes
-    movedNotes :: [Note]
-      <- forM (Set.toList $ base ^. editNotes') $ \nid -> do
-        n <- DB.getNote nid
-        DB.createNote eid . CreateNote (n ^. noteText) . trRange $ n ^. noteRange
-
     -- move discussions
     movedDiscussions :: [Discussion]
        <- forM (Set.toList $ base ^. editDiscussions') $ \did -> DB.rebaseDiscussion eid did trRange
-
-    pure $ (view (noteMetaID . miMeta) <$> movedNotes)
-        <> (view (discussionMetaID . miMeta) <$> movedDiscussions)
+    pure $ view (discussionMetaID . miMeta) <$> movedDiscussions
 
   notifyContributionAuthorsOfMovement $ movedEditOwners <> movedCommentOwners
   invalidateCaches $ Set.fromList [CacheKeyVDoc vid]

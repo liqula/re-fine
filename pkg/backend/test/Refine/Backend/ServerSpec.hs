@@ -72,12 +72,12 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
         fe_ :: VDoc <- postJSON createVDocUri sampleCreateVDoc
         let cp1 = Position (BlockIndex 0 $ BlockKey "0") 0
             cp2 = Position (BlockIndex 0 $ BlockKey "0") 1
-        fn_ :: Note          <- postJSON
-            (addNoteUri (fe_ ^. vdocHeadEdit))
-            (CreateNote "[note]" (Just $ Range cp1 cp2) :: CreateNote (Maybe (Range Position)))
+        fn_ :: Discussion          <- postJSON
+            (addDiscussionUri (fe_ ^. vdocHeadEdit))
+            (CreateDiscussion "[note]" (Just $ Range cp1 cp2) True :: CreateDiscussion (Maybe (Range Position)))
         liftIO $ do
           be :: Edit <- runDB sess $ App.getEdit (fe_ ^. vdocHeadEdit)
-          be ^. editNotes' . to Set.toList `shouldContain` [fn_ ^. noteID]
+          be ^. editDiscussions' . to Set.toList `shouldContain` [fn_ ^. discussionID]
 
     it "stores note with non-trivial valid chunk range" $ \sess -> do
       runWai sess $ do
@@ -86,13 +86,13 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
         fe_ :: VDoc <- postJSON createVDocUri sampleCreateVDoc
         let cp1 = Position (BlockIndex 1 $ BlockKey "1") 0
             cp2 = Position (BlockIndex 1 $ BlockKey "1") 1
-        fn_ :: Note <- postJSON
-          (addNoteUri (fe_ ^. vdocHeadEdit))
-          (CreateNote "[note]" (Just $ Range cp1 cp2) :: CreateNote (Maybe (Range Position)))
+        fn_ :: Discussion <- postJSON
+          (addDiscussionUri (fe_ ^. vdocHeadEdit))
+          (CreateDiscussion "[note]" (Just $ Range cp1 cp2) True :: CreateDiscussion (Maybe (Range Position)))
 
         liftIO $ do
           be :: Edit <- runDB sess $ App.getEdit (fe_ ^. vdocHeadEdit)
-          be ^. editNotes' . to Set.elems `shouldContain` [fn_ ^. noteID]
+          be ^. editDiscussions' . to Set.elems `shouldContain` [fn_ ^. discussionID]
 
     it "fails with error on non-trivial *invalid* chunk range" $ \sess -> do
       vdoc :: VDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
@@ -101,8 +101,8 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
             cp1 = Position (BlockIndex 1 $ BlockKey "1") 0
             cp2 = Position (BlockIndex 100 $ BlockKey "100") 100
         in post
-          (addNoteUri (vdoc ^. vdocHeadEdit))
-          (CreateNote "[note]" (Just $ Range cp1 cp2) :: CreateNote (Maybe (Range Position)))
+          (addDiscussionUri (vdoc ^. vdocHeadEdit))
+          (CreateDiscussion "[note]" (Just $ Range cp1 cp2) True :: CreateDiscussion (Maybe (Range Position)))
 
       pendingWith "'validateCreateChunkRange' is not implemented yet."
 
@@ -110,7 +110,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
       cs (simpleBody resp) `shouldContain` ("ChunkRangeBadDataUID" :: String)
 
       vdoc' :: Edit <- runDB sess $ App.getEdit (vdoc ^. vdocHeadEdit)
-      vdoc' ^. editNotes' `shouldBe` mempty
+      vdoc' ^. editDiscussions' `shouldBe` mempty
 
   describe "sAddDiscussion" $ do
     it "stores discussion with no ranges" $ \sess -> do
@@ -123,7 +123,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
         fn_ :: Discussion <-
           postJSON
             (addDiscussionUri (fe_ ^. vdocHeadEdit))
-            (CreateDiscussion "[discussion initial statement]" (Just (Range cp1 cp2)))
+            (CreateDiscussion "[discussion initial statement]" (Just (Range cp1 cp2)) False)
 
         liftIO $ do
           be :: Edit <- runDB sess $ App.getEdit (fe_ ^. vdocHeadEdit)
@@ -418,5 +418,5 @@ specSmtp = describe "smtp" . around (createTestSessionWith addTestUserAndLogin) 
         cp2 = Position (BlockIndex 0 $ BlockKey "1") 1
     _firstDiscussion :: Discussion
       <- runWai sess $ postJSON (addDiscussionUri base)
-            (CreateDiscussion "[discussion initial statement]" (Just (Range cp1 cp2)))
+            (CreateDiscussion "[discussion initial statement]" (Just (Range cp1 cp2)) False)
     pure ()

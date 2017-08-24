@@ -103,7 +103,7 @@ mainScreen = mkView "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
           mainHeader_ mhp
 
           -- components that are visible only sometimes:
-          showNote_ `mapM_` showNoteProps (vdoc ^. compositeVDocApplicableNotes) rs
+          showNote_ `mapM_` showNoteProps (Map.filter (^. discussionIsNote) $ vdoc ^. compositeVDocApplicableDiscussions) rs
           case rs ^. RS.gsContributionState . RS.csActiveDialog of
             Just (ActiveDialogComment lst) -> do
               addComment_ __ $ AddContributionProps
@@ -128,9 +128,8 @@ mainScreen = mkView "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
                                      (rs ^. gsContributionState . csCurrentSelectionWithPx)
                                      (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
-                                     (fltr (vdoc ^. compositeVDocApplicableDiscussions))
-                                     (fltr (vdoc ^. compositeVDocApplicableNotes))
-                                     (fltr . fltrThisEdit $ vdoc ^. compositeVDocApplicableEdits)
+                                     (fltr (\i -> ContribIDDiscussion <$> [True, False] <*> pure i) (vdoc ^. compositeVDocApplicableDiscussions))
+                                     (fltr ((:[]) . ContribIDEdit) . fltrThisEdit $ vdoc ^. compositeVDocApplicableEdits)
                                      (case rs ^. gsDocumentState of
                                         DocumentStateDiff{} -> BubblePositioningEvenlySpaced
                                         _ -> rs ^. gsContributionState . csBubblePositioning)
@@ -141,12 +140,12 @@ mainScreen = mkView "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
                             DocumentStateEdit{} -> const mempty
                             _ -> id
 
-                          fltr :: IsContribution c => Map (ID c) b -> [b]
-                          fltr = if rs ^. gsHeaderState . hsReadOnly
+                          fltr :: (ID c -> [ContributionID]) -> Map (ID c) b -> [b]
+                          fltr mkCId = if rs ^. gsHeaderState . hsReadOnly
                               then const mempty
                               else maybe Map.elems go (rs ^. gsContributionState . csBubbleFilter)
                             where
-                              go allowed = fmap snd . filter ((`Set.member` allowed) . contribID . fst) . Map.toList
+                              go allowed = fmap snd . filter (any (`Set.member` allowed) . mkCId . fst) . Map.toList
 
                       leftAside_ asideProps
                       document_ $ DocumentProps ((if rs ^. gsHeaderState . hsReadOnly
@@ -169,8 +168,8 @@ leftAside :: HasCallStack => View '[AsideProps]
 leftAside = mkView "LeftAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
     let protos = maybeStackProtoBubbles (props ^. asideBubblePositioning)
-               $ (noteToProtoBubble props <$> (props ^. asideNotes))
-              <> (discussionToProtoBubble props <$> (props ^. asideDiscussions))
+               $ (noteToProtoBubble props <$> (filter (^. discussionIsNote) $ props ^. asideDiscussions))
+              <> (discussionToProtoBubble props <$> (filter (not . (^. discussionIsNote)) $ props ^. asideDiscussions))
     stackBubble BubbleLeft props `mapM_` protos
 
     quickCreate_ $ QuickCreateProps QuickCreateComment
@@ -228,16 +227,16 @@ editToProtoBubbles aprops e
   = [ ProtoBubble (cid, i) pos $ elemText (e ^. editDesc)
     | (pos, i) <- lookupPositions aprops cid
     ]
-  where cid = contribID $ e ^. editID
+  where cid = ContribIDEdit $ e ^. editID
 
-noteToProtoBubble :: HasCallStack => AsideProps -> Note -> ProtoBubble
+noteToProtoBubble :: HasCallStack => AsideProps -> Discussion -> ProtoBubble
 noteToProtoBubble aprops n = ProtoBubble cid (lookupPosition aprops $ uncurry MarkContribution cid) (elemText (n ^. noteText))
-  where cid = (contribID $ n ^. noteID, 0)
+  where cid = (ContribIDDiscussion True $ n ^. discussionID, 0)
 
 discussionToProtoBubble :: HasCallStack => AsideProps -> Discussion -> ProtoBubble
 discussionToProtoBubble aprops d = ProtoBubble cid (lookupPosition aprops $ uncurry MarkContribution cid) child
   where
-    cid = (contribID $ d ^. discussionID, 0)
+    cid = (ContribIDDiscussion False $ d ^. discussionID, 0)
     child = elemText (ST.rootLabel (d ^. discussionTree) ^. statementText)
 
 stackBubble :: HasCallStack => BubbleSide -> AsideProps -> StackOrNot ProtoBubble -> ReactElementM 'EventHandlerCode ()

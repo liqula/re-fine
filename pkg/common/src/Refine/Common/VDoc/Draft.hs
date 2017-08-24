@@ -15,7 +15,6 @@ import qualified Data.Set as Set
 import qualified Data.Text as ST
 
 import Refine.Common.Types.Core
-import Refine.Common.Types.Contribution
 import Refine.Common.VDoc.OT (docRanges, docEditRanges)
 
 
@@ -77,12 +76,12 @@ rangeIsEmpty rc = isEmptyRange . fmap (toStylePosition rc)
 -- * vdoc
 
 rawContentFromCompositeVDoc :: CompositeVDoc -> RawContent
-rawContentFromCompositeVDoc (CompositeVDoc _ base edits notes discussions) =
+rawContentFromCompositeVDoc (CompositeVDoc _ base edits discussions) =
   addMarksToRawContent marks rawContent
   where
     rawContent = base ^. editVDocVersion
 
-    convertHack l (k, v) = (MarkContribution (contribID k) 0, extendRange $ v ^. l)
+    convertHack l (k, v) = (MarkContribution (ContribIDDiscussion (v ^. discussionIsNote) k) 0, extendRange $ v ^. l)
 
     extendRange r
       | x == y    = fromStyleRange rawContent
@@ -95,14 +94,13 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base edits notes discussions) =
         next zs = head zs
 
     marks :: [(MarkID, Range Position)]
-    marks = [ (MarkContribution (contribID k) i, s)
+    marks = [ (MarkContribution (ContribIDEdit k) i, s)
             | (k, e) <- Map.toList edits
             , (diff, b) <- e ^. editSource . unEditSource
             , b == base ^. editID
             , let rs = unRanges $ docEditRanges diff rawContent
             , (i, s) <- zip (numberRanges rs) rs
             ]
-         <> (convertHack noteRange       <$> Map.toList notes)
          <> (convertHack discussionRange <$> Map.toList discussions)
 
     numberRanges :: [Range Position] -> [Int]

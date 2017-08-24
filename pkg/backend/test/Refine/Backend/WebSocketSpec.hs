@@ -179,7 +179,7 @@ spec = describe "..." $ do
       -- create discussion
       TCServerCache _ <- askQuestion conn $ TSMissing [CacheKeyEdit (vdoc ^. vdocHeadEdit)]
                          -- just to get notified when our edit is created.
-      let cdisc = CreateDiscussion "statement" Nothing
+      let cdisc = CreateDiscussion "statement" Nothing False
       TCInvalidateKeys [CacheKeyEdit _] <- askQuestion conn $ TSAddDiscussion (vdoc ^. vdocHeadEdit) cdisc
 
       -- reply to initial statement
@@ -231,7 +231,6 @@ make sure we've called all of these at least once:
   | TSDeleteVote (ID Edit) -- not used yet
   | TSAddGroup CreateGroup
   | TSAddEditAndMerge (ID Edit){-parent-} CreateEdit
-  | TSAddNote (ID Edit) (CreateNote (Maybe (Range Position)))
   | TSCreateUser CreateUser
   | TSLogout
   | TSGetTranslations GetTranslations

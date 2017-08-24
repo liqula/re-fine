@@ -68,8 +68,6 @@ refineApi =
   :<|> App.getEdit
   :<|> App.mergeEdit
   :<|> App.updateEdit
-  :<|> App.addNote
-  :<|> App.getNote
   :<|> App.addDiscussion
   :<|> App.getDiscussion
   :<|> App.addStatement

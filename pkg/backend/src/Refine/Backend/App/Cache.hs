@@ -49,7 +49,6 @@ getData :: CacheKey -> App ServerCache
 getData = \case
   CacheKeyVDoc i       -> App.getVDoc i       <&> \val -> mempty & scVDocs       .~ Map.singleton i val
   CacheKeyEdit i       -> App.getEdit i       <&> \val -> mempty & scEdits       .~ Map.singleton i val
-  CacheKeyNote i       -> App.getNote i       <&> \val -> mempty & scNotes       .~ Map.singleton i val
   CacheKeyDiscussion i -> App.getDiscussion i <&> \val -> mempty & scDiscussions .~ Map.singleton i val
   CacheKeyUser i       -> App.getUser i       <&> \val -> mempty & scUsers       .~ Map.singleton i val
   CacheKeyGroup i      -> App.getGroup i      <&> \val -> mempty & scGroups      .~ Map.singleton i val
@@ -173,7 +172,6 @@ cmdLoopStep conn clientId = do
       TSAddDiscussion eid x   -> void $ App.addDiscussion eid x
       TSAddStatement sid x    -> void $ App.addStatement sid x
       TSUpdateStatement sid x -> void $ App.updateStatement sid x
-      TSAddNote eid x         -> void $ App.addNote eid x
       TSAddEdit eid x         -> void $ App.addEdit eid x
       TSAddEditAndMerge eid x -> void $ App.addEditAndMerge eid x
       TSUpdateEdit eid x      -> void $ App.updateEdit eid x
@@ -181,10 +179,8 @@ cmdLoopStep conn clientId = do
       TSToggleVote (ContribIDEdit eid) x -> do
         rebased <- App.toggleSimpleVoteOnEdit eid x
         when rebased . liftIO $ sendMessage conn TCRebase
-      TSToggleVote (ContribIDNote nid) x
-                                -> void $ App.toggleSimpleVoteOnNote nid x
-      TSToggleVote (ContribIDDiscussion _) _x
-                                -> pure ()  -- not implemented
+      TSToggleVote (ContribIDDiscussion _ nid) x
+                              -> void $ App.toggleSimpleVoteOnDiscussion nid x
       TSDeleteVote eid        -> void $ App.deleteSimpleVoteOnEdit eid
 
       bad@(TSGreeting _)      -> wserror $ WSErrorUnexpectedPacket bad

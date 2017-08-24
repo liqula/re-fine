@@ -29,7 +29,6 @@ class Monad db => Database db where
   createEdit         :: ID VDoc -> EditSource (ID Edit) -> CreateEdit -> db Edit
   getEdit            :: ID Edit -> db Edit
   getVersion         :: ID Edit -> db RawContent
-  editNotes          :: ID Edit -> db [ID Note]
   editDiscussions    :: ID Edit -> db [ID Discussion]
   updateVotes        :: ID Edit -> (Votes -> Votes) -> db ()
   getVoteCount       :: ID Edit -> db VoteCount
@@ -37,17 +36,13 @@ class Monad db => Database db where
   updateEdit         :: ID Edit -> CreateEdit -> db ()
   updateEditSource   :: ID Edit -> (ID Edit{-parent-} -> OT.Edit RawContent -> OT.Edit RawContent) -> db ()
 
-  -- Note
-  createNote         :: ID Edit -> CreateNote (Range Position) -> db Note
-  getNote            :: ID Note -> db Note
-  updateNoteVotes    :: ID Note -> (Votes -> Votes) -> db ()
-
   -- Discussion
   createDiscussion   :: ID Edit -> CreateDiscussion (Range Position) -> db Discussion
   rebaseDiscussion   :: ID Edit -> ID Discussion -> (Range Position -> Range Position) -> db Discussion
   getDiscussion      :: ID Discussion -> db Discussion
   statementsOfDiscussion :: ID Discussion -> db [ID Statement]
   discussionOfStatement  :: ID Statement  -> db (ID Discussion)
+  updateDiscussionVotes  :: ID Discussion -> (Votes -> Votes) -> db ()
 
   -- Statement
   createStatement      :: ID Statement -> CreateStatement -> db Statement
@@ -86,10 +81,4 @@ class Monad db => Database db where
 editComments
   :: (Monad db, Database db)
   => ID Edit -> db [Comment]
-editComments pid = do
-  notes       <- mapM getNote =<< editNotes pid
-  discussions <- mapM getDiscussion =<< editDiscussions pid
-  pure $ mconcat
-    [ CommentNote       <$> notes
-    , CommentDiscussion <$> discussions
-    ]
+editComments pid = mapM getDiscussion =<< editDiscussions pid

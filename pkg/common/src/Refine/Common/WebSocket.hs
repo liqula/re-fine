@@ -25,7 +25,6 @@ type WSSessionId = Int
 data ServerCache = ServerCache
   { _scVDocs       :: Map (ID VDoc)       VDoc
   , _scEdits       :: Map (ID Edit)       Edit
-  , _scNotes       :: Map (ID Note)       Note
   , _scDiscussions :: Map (ID Discussion) Discussion
   , _scUsers       :: Map (ID User)       User
   , _scGroups      :: Map (ID Group)      Group
@@ -35,14 +34,13 @@ data ServerCache = ServerCache
   deriving (Show, Eq, Generic)
 
 instance Monoid ServerCache where
-  mempty = ServerCache mempty mempty mempty mempty mempty mempty Nothing Nothing
-  ServerCache a b c d e f g h `mappend` ServerCache a' b' c' d' e' f' g' h'
-    = ServerCache (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f') (g <|> g') (h <|> h')
+  mempty = ServerCache mempty mempty mempty mempty mempty mempty mempty
+  ServerCache a b c d e f g `mappend` ServerCache a' b' c' d' e' f' g'
+    = ServerCache (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f') (g <> g')
 
 data CacheKey
   = CacheKeyVDoc       (ID VDoc)
   | CacheKeyEdit       (ID Edit)
-  | CacheKeyNote       (ID Note)
   | CacheKeyDiscussion (ID Discussion)
   | CacheKeyUser       (ID User)
   | CacheKeyGroup      (ID Group)
@@ -65,7 +63,6 @@ data ToServer
   | TSAddEdit (ID Edit){-parent-} CreateEdit
   | TSAddEditAndMerge (ID Edit){-parent-} CreateEdit
   | TSAddDiscussion (ID Edit) (CreateDiscussion (Maybe (Range Position)))
-  | TSAddNote (ID Edit) (CreateNote (Maybe (Range Position)))
   | TSAddStatement (ID Statement){-parent-} CreateStatement
   | TSCreateUser CreateUser
   | TSLogin Login
@@ -101,11 +98,10 @@ invalidateCache :: Set CacheKey -> ServerCache -> ServerCache
 invalidateCache = invalidateOrRestrictCache True
 
 invalidateOrRestrictCache :: Bool -> Set CacheKey -> ServerCache -> ServerCache
-invalidateOrRestrictCache invalidate (Set.toList -> keys) (ServerCache a b c d e f g u)
+invalidateOrRestrictCache invalidate (Set.toList -> keys) (ServerCache a b d e f g u)
   = ServerCache
      (restrictKeys a [i | CacheKeyVDoc i       <- keys])
      (restrictKeys b [i | CacheKeyEdit i       <- keys])
-     (restrictKeys c [i | CacheKeyNote i       <- keys])
      (restrictKeys d [i | CacheKeyDiscussion i <- keys])
      (restrictKeys e [i | CacheKeyUser i       <- keys])
      (restrictKeys f [i | CacheKeyGroup i      <- keys])

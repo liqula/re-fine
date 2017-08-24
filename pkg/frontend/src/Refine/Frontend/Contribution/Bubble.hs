@@ -37,16 +37,16 @@ bubbleStackStyles = [decl "border" (Ident "3px dotted black")]
 bubble :: HasCallStack => ReactElementM 'EventHandlerCode () -> View '[BubbleProps]
 bubble children = mkView "Bubble" $ \props -> do
   let bubbleKind = case props ^. bubblePropsContributionIds of
-          NoStack (ContribIDNote _, _)         -> Left "o-snippet--note"
-          NoStack (ContribIDDiscussion _, _)   -> Left "o-snippet--discussion"
-          NoStack (ContribIDEdit _, _)         -> Left "o-snippet--edit"
-          Stack _                              -> Right bubbleStackStyles
+          NoStack (ContribIDDiscussion True  _, _) -> Left "o-snippet--note"
+          NoStack (ContribIDDiscussion False _, _) -> Left "o-snippet--discussion"
+          NoStack (ContribIDEdit _, _)             -> Left "o-snippet--edit"
+          Stack _                                  -> Right bubbleStackStyles
 
       iconSty = case props ^. bubblePropsContributionIds of
-          NoStack (ContribIDNote _, _)         -> ("icon-Note", "dark")
-          NoStack (ContribIDDiscussion _, _)   -> ("icon-Discussion", "bright")
-          NoStack (ContribIDEdit _, _)         -> ("icon-Edit", "dark")
-          Stack _                              -> ("icon-Stack", "dark")
+          NoStack (ContribIDDiscussion True  _, _) -> ("icon-Note", "dark")
+          NoStack (ContribIDDiscussion False _, _) -> ("icon-Discussion", "bright")
+          NoStack (ContribIDEdit _, _)             -> ("icon-Edit", "dark")
+          Stack _                                  -> ("icon-Stack", "dark")
 
       clickActions = case props ^. bubblePropsContributionIds of
           NoStack (cid, _)

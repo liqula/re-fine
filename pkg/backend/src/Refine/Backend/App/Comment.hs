@@ -20,41 +20,22 @@ import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft (minimumRange)
 
 
-addNote :: ID Edit -> CreateNote (Maybe (Range Position)) -> App Note
-addNote eid (CreateNote txt mrange) = do
-  appLog "addNote"
-  assertCreds . AP.createComment =<< db (DB.getVDoc =<< DB.vdocOfEdit eid)
-  note <- db $ do
-    range <- case mrange of
-      Just r  -> {- FIXME: validateCreateChunkRange eid r >> -} pure r
-      Nothing -> minimumRange . view editVDocVersion <$> DB.getEdit eid
-    DB.createNote eid (CreateNote txt range)
-  invalidateCaches $ Set.fromList [CacheKeyEdit eid]
-  pure note
-
-getNote :: ID Note -> App Note
-getNote nid = do
-  appLog "getNote"
-  note <- db $ DB.getNote nid
-  assertCreds . AP.viewVDoc =<< db (DB.getVDoc $ note ^. noteVDoc)
-  pure note
-
-toggleSimpleVoteOnNote :: ID Note -> Vote -> App ()
-toggleSimpleVoteOnNote i v = do
+toggleSimpleVoteOnDiscussion :: ID Discussion -> Vote -> App ()
+toggleSimpleVoteOnDiscussion i v = do
   let f (Just v') | v' == v = Nothing
       f _ = Just v
-  withCurrentUser $ \user -> db . DB.updateNoteVotes i $ Map.alter f user
-  invalidateCaches $ Set.fromList [CacheKeyNote i]
+  withCurrentUser $ \user -> db . DB.updateDiscussionVotes i $ Map.alter f user
+  invalidateCaches $ Set.fromList [CacheKeyDiscussion i]
 
 addDiscussion :: ID Edit -> CreateDiscussion (Maybe (Range Position)) -> App Discussion
-addDiscussion eid (CreateDiscussion txt mrange) = do
+addDiscussion eid (CreateDiscussion txt mrange isnote) = do
   appLog "addDiscussion"
   assertCreds . AP.createComment =<< db (DB.getVDoc =<< DB.vdocOfEdit eid)
   disc <- db $ do
     range <- case mrange of
       Just r  -> {- FIXME: validateCreateChunkRange eid r >> -} pure r
       Nothing -> minimumRange . view editVDocVersion <$> DB.getEdit eid
-    dscn <- DB.createDiscussion eid (CreateDiscussion txt range)
+    dscn <- DB.createDiscussion eid (CreateDiscussion txt range isnote)
     DB.getDiscussion (dscn ^. discussionID)
   invalidateCaches $ Set.fromList [CacheKeyEdit eid]
   pure disc

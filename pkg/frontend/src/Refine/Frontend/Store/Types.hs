@@ -74,7 +74,6 @@ data GlobalAction =
   | HeaderAction HeaderAction
   | DocumentAction DocumentAction
   | MainMenuAction MainMenuAction
-  | AddNote Note
   | AddDiscussion Discussion
   | AddEdit Edit
   | SaveSelect ST ST
@@ -155,10 +154,6 @@ instance CacheLookup Edit where
   cacheKey = CacheKeyEdit
   cacheLens = scEdits
 
-instance CacheLookup Note where
-  cacheKey = CacheKeyNote
-  cacheLens = scNotes
-
 instance CacheLookup Discussion where
   cacheKey = CacheKeyDiscussion
   cacheLens = scDiscussions
@@ -193,7 +188,6 @@ gsVDoc = to getCompositeVDoc
         vdoc
         edit
         (mkMap editChildren)
-        (mkMap editNotes')
         (mkMap editDiscussions')
       where
         mkMap :: CacheLookup a => Lens' Edit (Set (ID a)) -> Map (ID a) a

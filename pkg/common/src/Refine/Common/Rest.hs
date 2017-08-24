@@ -57,8 +57,6 @@ type RefineAPI =
   :<|> SGetEdit
   :<|> SMergeEdit
   :<|> SUpdateEdit
-  :<|> SAddNote
-  :<|> SGetNote
   :<|> SAddDiscussion
   :<|> SGetDiscussion
   :<|> SAddStatement
@@ -106,14 +104,6 @@ type SMergeEdit
 type SUpdateEdit
   = "r" :> "updateEdit" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] CreateEdit
     :> Put '[JSON] Edit
-
-type SAddNote
-  = "r" :> "note" :> Capture "onnoteid" (ID Edit) :> ReqBody '[JSON] (CreateNote (Maybe (Range Position)))
-    :> Post '[JSON] Note
-
-type SGetNote
-  = "r" :> "note" :> Capture "onnoteid" (ID Note)
-    :> Get '[JSON] Note
 
 type SAddDiscussion
   = "r" :> "discussion" :> Capture "oneditid" (ID Edit) :> ReqBody '[JSON] (CreateDiscussion (Maybe (Range Position)))
