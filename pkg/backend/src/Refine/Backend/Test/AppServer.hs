@@ -111,7 +111,7 @@ runDB sess = errorOnLeft . runDB' sess
 -- cookies, and either emulate that or (preferably) call the
 -- resp. functions.  If this is resolved, '_testBackendCurrentUser'
 -- won't be needed any more.
-runDB' :: TestBackend -> AppM DB a -> IO (Either AppError a)
+runDB' :: TestBackend -> AppM DB a -> IO (Either ApiError a)
 runDB' sess action = do
   testlogin :: AppM DB () <- do
     readMVar (sess ^. testBackendCurrentUser) >>= pure . \case

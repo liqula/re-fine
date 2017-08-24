@@ -44,7 +44,7 @@ module Refine.Backend.App.Core (
   , AppM(..)
   , AppError(..)
   , SmtpError(..)
-  , tryApp, toApiError, createUserErrorToApiError
+  , tryApp, leftToApiError, toApiError, createUserErrorToApiError
   , MonadApp
   , MonadAppDB(dbWithFilters), db, dbUsersCmd
   , MonadLog(appLogL), appLog
@@ -59,7 +59,7 @@ import qualified Web.Users.Persistent as Users
 
 import {-# SOURCE #-} Refine.Backend.App.Smtp
 import Refine.Common.Access
-import Refine.Common.Rest (ApiError(..), ApiErrorCreateUser(..))
+import Refine.Common.Rest
 import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.Logger
@@ -174,27 +174,61 @@ newtype SmtpError
   = SmtpError IOException
   deriving (Eq, Show, Generic)
 
-tryApp :: AppM DB a -> AppM DB (Either ApiError a)
-tryApp m = (Right <$> m) `catchError` (pure . Left . toApiError)
+tryApp :: forall (db :: * -> *) (a :: *). AppM db a -> AppM db (Either ApiError a)
+tryApp m = (Right <$> m) `catchError` (fmap Left . toApiError)
 
--- FIXME: review this; is this really needed?
-toApiError :: AppError -> ApiError
-toApiError = \case
-  AppUnknownError e      -> ApiUnknownError e
-  AppVDocVersionError    -> ApiVDocVersionError
-  AppDBError e           -> ApiDBError . cs $ show e
-  AppUserNotFound e      -> ApiUserNotFound e
-  AppUserNotLoggedIn     -> ApiUserNotLoggedIn
-  AppUserCreationError e -> ApiUserCreationError $ createUserErrorToApiError e
-  AppCsrfError e         -> ApiCsrfError e
-  AppSessionError        -> ApiSessionError
-  AppSanityCheckError e  -> ApiSanityCheckError e
-  AppUserHandleError e   -> ApiUserHandleError . cs $ show e
-  AppL10ParseErrors e    -> ApiL10ParseErrors e
-  AppUnauthorized info   -> ApiUnauthorized (cs $ show info)
-  AppMergeError base e1 e2 s -> ApiMergeError $ cs (show (base, e1, e2)) <> ": " <> s
-  AppRebaseError{}       -> ApiRebaseError
-  AppSmtpError{}         -> ApiSmtpError
+leftToApiError :: Either AppError a -> (Monad m, MonadLog m) => m (Either ApiError a)
+leftToApiError = either (fmap Left . toApiError) (pure . Right)
+
+-- | Convert 'AppError' (internal to backend) to 'ApiError' (shared between backend and frontend).
+-- This also takes care of logging the confidential part of 'AppError' on the server side before
+-- discarding it.
+toApiError :: AppError -> (Monad m, MonadLog m) => m ApiError
+toApiError err = l err >> pure (c err)
+  where
+    l = \case  -- (log levels may need some tweaking)
+      AppUnknownError _          -> appLogL LogError $ "AppError: " <> show err
+      AppVDocVersionError        -> appLogL LogError $ "AppError: " <> show err
+      AppDBError _               -> appLogL LogError $ "AppError: " <> show err
+      AppUserNotFound _          -> appLogL LogInfo  $ "AppError: " <> show err
+      AppUserNotLoggedIn         -> appLogL LogInfo  $ "AppError: " <> show err
+      AppUserCreationError _     -> appLogL LogInfo  $ "AppError: " <> show err
+      AppCsrfError _             -> appLogL LogError $ "AppError: " <> show err
+      AppSessionError            -> appLogL LogError $ "AppError: " <> show err
+      AppSanityCheckError _      -> appLogL LogError $ "AppError: " <> show err
+      AppUserHandleError _       -> appLogL LogError $ "AppError: " <> show err
+      AppL10ParseErrors _        -> appLogL LogError $ "AppError: " <> show err
+      AppUnauthorized _          -> appLogL LogInfo  $ "AppError: " <> show err
+      AppMergeError _ _ _ _      -> appLogL LogError $ "AppError: " <> show err
+      AppRebaseError _           -> appLogL LogError $ "AppError: " <> show err
+      AppSmtpError _             -> appLogL LogError $ "AppError: " <> show err
+
+    c = \case
+      AppUnknownError e          -> ApiUnknownError e
+      AppVDocVersionError        -> ApiVDocVersionError
+      AppDBError e               -> ApiDBError $ dbErrorToApiError e
+      AppUserNotFound e          -> ApiUserNotFound e
+      AppUserNotLoggedIn         -> ApiUserNotLoggedIn
+      AppUserCreationError e     -> ApiUserCreationError $ createUserErrorToApiError e
+      AppCsrfError e             -> ApiCsrfError e
+      AppSessionError            -> ApiSessionError
+      AppSanityCheckError e      -> ApiSanityCheckError e
+      AppUserHandleError e       -> ApiUserHandleError . cs $ show e  -- FIXME: implement 'toApiErrorUser'
+      AppL10ParseErrors e        -> ApiL10ParseErrors e
+      AppUnauthorized info       -> ApiUnauthorized (cs $ show info)
+      AppMergeError base e1 e2 s -> ApiMergeError $ cs (show (base, e1, e2)) <> ": " <> s
+      AppRebaseError _           -> ApiRebaseError
+      AppSmtpError _             -> ApiSmtpError
+
+dbErrorToApiError :: DBError -> ApiErrorDB
+dbErrorToApiError = \case
+  DBUnknownError         s -> ApiDBUnknownError         s
+  DBNotFound             s -> ApiDBNotFound             s
+  DBNotUnique            s -> ApiDBNotUnique            s
+  DBException            s -> ApiDBException            s
+  DBUserNotLoggedIn        -> ApiDBUserNotLoggedIn
+  DBMigrationParseErrors _ -> ApiDBMigrationParseErrors
+  DBUnsafeMigration      _ -> ApiDBUnsafeMigration
 
 -- | so we don't have to export backend types to the frontend.
 createUserErrorToApiError :: Users.CreateUserError -> ApiErrorCreateUser

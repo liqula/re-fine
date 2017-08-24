@@ -19,7 +19,6 @@
 
 module Refine.Common.Rest where
 
-
 import Refine.Common.Prelude
 
 import Refine.Common.ChangeAPI
@@ -31,8 +30,7 @@ import Refine.Common.Types.Vote
 data ApiError
   = ApiUnknownError ST
   | ApiVDocVersionError
-  | ApiDBError ST
-  | ApiDocRepoError ST
+  | ApiDBError ApiErrorDB
   | ApiUserNotFound ST
   | ApiUserNotLoggedIn
   | ApiUserCreationError ApiErrorCreateUser
@@ -45,6 +43,16 @@ data ApiError
   | ApiMergeError ST
   | ApiRebaseError
   | ApiSmtpError
+  deriving (Eq, Show, Generic)
+
+data ApiErrorDB
+  = ApiDBUnknownError String
+  | ApiDBNotFound String
+  | ApiDBNotUnique String
+  | ApiDBException String
+  | ApiDBUserNotLoggedIn
+  | ApiDBMigrationParseErrors
+  | ApiDBUnsafeMigration
   deriving (Eq, Show, Generic)
 
 data ApiErrorCreateUser
@@ -200,4 +208,4 @@ type SGetSimpleVotesOnEdit
   = "r" :> "edit" :> Capture "oneditid" (ID Edit) :> "vote" :> Get '[JSON] VoteCount
 
 
-makeRefineTypes [''ApiError, ''ApiErrorCreateUser]
+makeRefineTypes [''ApiError, ''ApiErrorDB, ''ApiErrorCreateUser]
