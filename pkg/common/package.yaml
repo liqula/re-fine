@@ -49,8 +49,6 @@ dependencies:
 library:
   source-dirs:
     - src
-  include-dirs:
-      src
 
 executables:
   scaffolding:
