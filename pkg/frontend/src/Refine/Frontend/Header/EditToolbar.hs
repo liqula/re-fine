@@ -72,7 +72,7 @@ wipeDocumentState as gs = case getDocumentState as gs of
   DocumentStateDiff i _ _ edit collapsed editable -> WipedDocumentStateDiff i edit collapsed editable
   DocumentStateEdit es _ meid          -> WipedDocumentStateEdit $ mkEditToolbarProps (cacheLookup gs =<< meid) es
   DocumentStateDiscussion dp           -> WipedDocumentStateDiscussion $ DiscussionToolbarProps
-                                            (either id (^.discussionID) disc)
+                                            (either (const Nothing) (Just . (^. discussionID)) disc)
                                             (dp ^. discPropsFlatView)
                                             (either (error "impossible @wipeDocumentState") (^. discussionIsNote) disc)
                                             (votesToCount $ either (error "impossible @wipeDocumentState") (^. discussionVotes) disc)

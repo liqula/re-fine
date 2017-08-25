@@ -34,27 +34,29 @@ discussionToolbar_ props = do
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  let voteButtonLabel :: Vote -> ST
-      voteButtonLabel = \case
-        Yeay -> "up ("   <> count Yeay <> ")"
-        Nay  -> "down (" <> count Nay  <> ")"
-        where
-          count v = cs . show . fromMaybe 0 $ Map.lookup v vs
-          vs = props ^. discToolbarPropsVotes
+  case props ^. discToolbarDiscussionID of
+    Nothing -> mempty
+    Just did -> do
+      let voteButtonLabel :: Vote -> ST
+          voteButtonLabel = \case
+            Yeay -> "up ("   <> count Yeay <> ")"
+            Nay  -> "down (" <> count Nay  <> ")"
+            where
+              count v = cs . show . fromMaybe 0 $ Map.lookup v vs
+              vs = props ^. discToolbarPropsVotes
 
-      voteAction v = LoginGuardStash
-        [ContributionAction $ ToggleVoteOnContribution
-                                (ContribIDDiscussion (props ^. discToolbarIsNote) $ props ^. discToolbarDiscussionID) v]
+          voteAction v = LoginGuardStash
+            [ContributionAction $ ToggleVoteOnContribution (ContribIDDiscussion (props ^. discToolbarIsNote) did) v]
 
-  ibutton_ $ emptyIbuttonProps "Vote_positive" [voteAction Yeay]
-    & ibListKey .~ "1"
-    & ibLabel .~ voteButtonLabel Yeay
-    & ibSize .~ XXLarge
+      ibutton_ $ emptyIbuttonProps "Vote_positive" [voteAction Yeay]
+        & ibListKey .~ "1"
+        & ibLabel .~ voteButtonLabel Yeay
+        & ibSize .~ XXLarge
 
-  ibutton_ $ emptyIbuttonProps "Vote_negative" [voteAction Nay]
-    & ibListKey .~ "2"
-    & ibLabel .~ voteButtonLabel Nay
-    & ibSize .~ XXLarge
+      ibutton_ $ emptyIbuttonProps "Vote_negative" [voteAction Nay]
+        & ibListKey .~ "2"
+        & ibLabel .~ voteButtonLabel Nay
+        & ibSize .~ XXLarge
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
