@@ -52,19 +52,6 @@ library:
   include-dirs:
     - src
 
-executables:
-  scaffolding:
-    main: Main.hs
-    source-dirs:
-      - scaffolding
-    include-dirs:
-      - src
-    dependencies:
-      - http-client
-      - pretty-show
-      - refine-common
-      - wreq
-
 tests:
   spec:
     main: Spec.hs
