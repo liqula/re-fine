@@ -352,7 +352,7 @@ statementsOfDiscussion did = do
 getDiscussion :: ID Discussion -> DB Discussion
 getDiscussion did = do
   (mid, d) <- getMetaEntity (,) did
-  s <- statementsOfDiscussion did
+  s@(_:_) <- statementsOfDiscussion did
   t <- buildTree (^. statementParent) (^. statementID) <$> mapM getStatement s
   vid <- vdocOfDiscussion did
   pure $ S.discussionElim (\range -> Discussion mid vid (unRangePosition range) t . unDBVotes) d
