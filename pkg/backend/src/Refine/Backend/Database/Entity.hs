@@ -10,6 +10,7 @@ import Refine.Backend.Prelude as P hiding (get)
 import           Database.Persist (get)
 import           Database.Persist.Sql (SqlBackend, fromSqlKey, toSqlKey)
 import qualified Data.Set as Set
+import qualified Data.Map as Map
 import           Lentil.Core (entityLens)
 import           Lentil.Types as L
 import qualified Web.Users.Persistent as Users
@@ -467,9 +468,9 @@ runUsersCmd cmd = liftDB . ReaderT $ \(sqlBackend :: SqlBackend) ->
 
 -- * Group
 
-toGroup :: [ID Group] -> [ID Group] -> [ID VDoc] -> MetaID Group -> ST -> ST -> Group
-toGroup parents children vdocs gid title desc =
-  Group gid title desc parents children vdocs
+toGroup :: [ID Group] -> [ID Group] -> [ID VDoc] -> [ID User] -> MetaID Group -> ST -> ST -> Group
+toGroup parents children vdocs members gid title desc =
+  Group gid title desc parents children vdocs members
 
 createGroup :: CreateGroup -> DB Group
 createGroup group = do
@@ -479,6 +480,8 @@ createGroup group = do
   mid <- createMetaID sgroup
   forM_ (group ^. createGroupParents) $ \parent -> addConnection S.SubGroup parent (mid ^. miID)
   forM_ (group ^. createGroupChildren) $ \child -> addConnection S.SubGroup (mid ^. miID) child
+  forM_ (Map.toList $ group ^. createGroupMembers) $ \(user, member)
+    -> when member $ assignGroupRole (mid ^. miID) user GroupMember
   getGroup (mid ^. miID)
 
 getChildrenOfGroup :: ID Group -> DB [ID Group]
@@ -504,7 +507,11 @@ getGroup gid = do
   parents  <- getParentsOfGroup  gid
   children <- getChildrenOfGroup gid
   vdocs    <- getVDocsOfGroup    gid
-  getMetaEntity (S.groupElim . toGroup parents children vdocs) gid
+  roles    <- liftDB $ selectList [ S.GroupRolesGroup ==. S.idToKey gid
+                                  , S.GroupRolesRole ==. GroupMember
+                                  ] []
+  let members = S.groupRolesElim (\_gid uid _role -> S.keyToId uid) . entityVal <$> roles
+  getMetaEntity (S.groupElim . toGroup parents children vdocs members) gid
 
 getGroups :: DB [Group]
 getGroups = do
@@ -550,6 +557,12 @@ modifyGroup gid group = do
 
     forM_ childrenToAdd $ \child -> do
       insert $ S.SubGroup (S.idToKey gid) (S.idToKey child)
+
+  forM_ (Map.toList $ group ^. createGroupMembers) $ \(user, member) -> do
+    roles <- getGroupRolesIn gid user
+    if member
+      then when (GroupMember `notElem` roles) $ assignGroupRole gid user GroupMember
+      else when (GroupMember `elem` roles) $ unassignGroupRole gid user GroupMember
 
   modifyMetaID gid
   getGroup gid

@@ -70,6 +70,7 @@ sampleGroup1 = Group
   , _groupParents   = []
   , _groupChildren  = []
   , _groupVDocs     = [ID 0]
+  , _groupMembers   = mempty
   }
 
 sampleGroup2 :: Group
@@ -80,6 +81,7 @@ sampleGroup2 = Group
   , _groupParents   = []
   , _groupChildren  = []
   , _groupVDocs     = []
+  , _groupMembers   = mempty
   }
 
 

@@ -26,17 +26,25 @@ inputFieldStyles =
   , decl "backgroundColor" Color.SCBlue08
   ]
 
-inputFieldWithKey
+inputFieldWithKeyExtra
   :: (FromJSVal c)
-  => JSString -> JSString -> JSString -> JSString -> ASetter s s b c
+  => [PropertyOrHandler ('StatefulEventHandlerCode s)]
+  -> JSString -> JSString -> JSString -> JSString -> ASetter s s b c
   -> ReactElementM ('StatefulEventHandlerCode s) ()
-inputFieldWithKey fieldId fieldType fieldPlaceholder fieldKey asetter =
-  input_ [ "id" $= fieldId
+inputFieldWithKeyExtra extra fieldId fieldType fieldPlaceholder fieldKey asetter =
+  input_ $ extra <>
+         [ "id" $= fieldId
          , "style" @@= inputFieldStyles
          , "type" $= fieldType
          , "placeholder" $= fieldPlaceholder
          , onChange $ \evt -> simpleHandler $ \st -> ([], Just (st & asetter .~ target evt fieldKey))
          ]
+
+inputFieldWithKey
+  :: (FromJSVal c)
+  => JSString -> JSString -> JSString -> JSString -> ASetter s s b c
+  -> ReactElementM ('StatefulEventHandlerCode s) ()
+inputFieldWithKey = inputFieldWithKeyExtra []
 
 inputField
   :: (FromJSVal c)

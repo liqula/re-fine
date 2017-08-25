@@ -89,61 +89,87 @@ newLocalStateRefM :: Monad m => a -> m (LocalStateRef a)
 newLocalStateRefM a = pure $ newLocalStateRef a ()
 
 
--- * vararg functions with fmap
+-- * vararg function representations
 
-type family VarArg (props :: [*]) e where
+-- | type family representation: easy to use (outside of this module), hard to work with (in this module)
+type family VarArg (args :: [*]) e where
   VarArg '[] e = e
   VarArg (a ': as) e = a -> VarArg as e
 
--- | see https://stackoverflow.com/questions/45178068/fmap-over-variable-argument-function/
-mapVarArg :: forall props e e' . VarArgIso props => (e -> e') -> VarArg props e -> VarArg props e'
-mapVarArg f = Lens.under (Lens.from (varArgIso @props)) (fmap f)
+-- | GADT representation: hard to use (outside of this module), easy to work with (in this module)
+data VarArgGADT (args :: [*]) e where
+  DNil  :: e -> VarArgGADT '[] e
+  DCons :: (a -> VarArgGADT as e) -> VarArgGADT (a ': as) e
 
-data VarArgD (props :: [*]) e where
-  DNil  :: e -> VarArgD '[] e
-  DCons :: (a -> VarArgD as e) -> VarArgD (a ': as) e
+-- | Uncurried representation: in this representation Functor, Applicative, Monad instances are already given by (->)
+type VarArgUncurried args e = VarArgTuple args -> e
 
-class VarArgIso (props :: [*]) where
-  varArgIso :: Lens.Iso (VarArg props e) (VarArg props e') (VarArgD props e) (VarArgD props e')
+-- | Tuple of the arguments, a heterogeneous list (known as HList)
+data VarArgTuple (args :: [*]) where
+  DictNil :: VarArgTuple '[]
+  DictCons :: a -> VarArgTuple as -> VarArgTuple (a ': as)
 
-instance VarArgIso '[] where
-  varArgIso = iso DNil (\(DNil x) -> x)
+-- * Isomorphisms between the representations
 
-instance VarArgIso as => VarArgIso (a ': as) where
-  varArgIso = iso (\f -> DCons ((^. varArgIso) . f)) (\(DCons f) -> ((^. Lens.from varArgIso) . f))
+class ArgList (args :: [*]) where
+  varArgGADT  :: Lens.Iso (VarArg args e) (VarArg args e') (VarArgGADT args e) (VarArgGADT args e')
+  varArgGADTCurry :: Lens.Iso (VarArgUncurried args e) (VarArgUncurried args e') (VarArgGADT args e) (VarArgGADT args e')
 
-instance Functor (VarArgD props) where
+instance ArgList '[] where
+  varArgGADT  = iso DNil (\(DNil x) -> x)
+  varArgGADTCurry = iso (\f -> DNil $ f DictNil) (\(DNil e) DictNil -> e)
+
+instance ArgList as => ArgList (a ': as) where
+  varArgGADT  = iso (\f -> DCons ((^. varArgGADT) . f))
+                    (\(DCons f) -> ((^. Lens.from varArgGADT) . f))
+  varArgGADTCurry = iso (\f -> DCons $ \a -> (f . DictCons a) ^. varArgGADTCurry)
+                        (\(DCons f) (DictCons a as) -> (f a ^. Lens.from varArgGADTCurry) as)
+
+varArgCurry :: ArgList args => Lens.Iso (VarArgUncurried args e) (VarArgUncurried args e') (VarArg args e) (VarArg args e')
+varArgCurry = varArgGADTCurry . Lens.from varArgGADT
+
+{-
+instance Functor (VarArgGADT args) where
   fmap f (DNil a)  = DNil (f a)
   fmap f (DCons g) = DCons (fmap f . g)
+
+-- | see https://stackoverflow.com/questions/45178068/fmap-over-variable-argument-function/
+mapVarArg :: forall args e e' . ArgList args => (e -> e') -> VarArg args e -> VarArg args e'
+mapVarArg f = Lens.under (Lens.from (varArgGADT @args)) (fmap f)
+-}
 
 
 -- * views with persisent state
 
 -- | like 'mkStatefulView', but the component remembers its state when it is re-rendered
 mkPersistentStatefulView
-    :: forall (state :: *) (props :: [*]).
+    :: forall (state :: *) (args :: [*]) elemM.
        (Typeable state, Typeable state, Eq state,
-        ViewProps props ('StatefulEventHandlerCode state), Typeable props, AllEq props
-       , VarArgIso props
+        ViewProps args ('StatefulEventHandlerCode state), Typeable args, AllEq args
+       , ArgList args
 
        -- FIXME (react-hs):
        -- define
-       --   type ViewPropsToElement props code = VarArg props (ReactElementM code)
+       --   type ViewPropsToElement args code = VarArg args (ReactElementM code)
        -- so the next line will not be needed
-       , ViewPropsToElement props ('StatefulEventHandlerCode state)
-         ~ VarArg props (ReactElementM ('StatefulEventHandlerCode state) ())
+       , ViewPropsToElement args ('StatefulEventHandlerCode state)
+         ~ VarArg args elemM
+       , elemM ~ ReactElementM ('StatefulEventHandlerCode state) ()
        )
     => JSString -- ^ A name for this view, used only for debugging/console logging
     -> LocalStateRef state -- ^ The reference of the initial state
-    -> (state -> ViewPropsToElement props ('StatefulEventHandlerCode state))
-    -> View props
+    -> Maybe (state -> VarArg args state)  -- ^ Local state update function, applied if args change
+    -> (state -> ViewPropsToElement args ('StatefulEventHandlerCode state))
+    -> View args
 
-mkPersistentStatefulView name rst trans = unsafePerformIO $ do
+mkPersistentStatefulView name rst upd trans = unsafePerformIO $ do
     st <- readIORef $ rst ^. unLocalStateRef . unNoJSONRep
     pure $ mkStatefulView name st mtrans
   where
-    mtrans :: state -> ViewPropsToElement props ('StatefulEventHandlerCode state)
-    mtrans = mapVarArg @props transh . trans
+    mtrans :: state -> ViewPropsToElement args ('StatefulEventHandlerCode state)
+    mtrans st = do  st' <- maybe (pure st) (\updf -> updf st ^. Lens.from varArgCurry) upd
+                    transh <$> (trans st' ^. Lens.from varArgCurry)
+                 ^. varArgCurry @args
 
     transh :: ReactElementM ('StatefulEventHandlerCode state) () -> ReactElementM ('StatefulEventHandlerCode state) ()
     transh = transHandler (second (trSt rst <$>) .)

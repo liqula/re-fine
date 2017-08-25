@@ -54,6 +54,7 @@ getData = \case
   CacheKeyUser i       -> App.getUser i       <&> \val -> mempty & scUsers       .~ Map.singleton i val
   CacheKeyGroup i      -> App.getGroup i      <&> \val -> mempty & scGroups      .~ Map.singleton i val
   CacheKeyGroupIds     -> App.getGroups       <&> \val -> mempty & scGroupIds    .~ Just (Set.fromList $ (^. groupID) <$> val)
+  CacheKeyUserIds      -> App.getUsers        <&> \val -> mempty & scUserIds     .~ Just val
 
 
 instance Database db => MonadCache (AppM db) where

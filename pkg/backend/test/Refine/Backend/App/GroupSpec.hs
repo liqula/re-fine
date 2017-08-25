@@ -21,15 +21,15 @@ spec = do
   describe "Group" . around provideAppRunner $ do
     it "create works" $ \(runner :: AppRunner (IO ())) -> do
       join . runner $ do
-        group1 <- App.addGroup (CreateGroup "title" "desc" [] [])
+        group1 <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
         group2 <- App.getGroup (group1 ^. groupID)
         pure $ do
           group1 `shouldBe` group2
 
     it "modify once works" $ \(runner :: AppRunner (IO ())) -> do
       join . runner $ do
-        group1 <- App.addGroup (CreateGroup "title" "desc" [] [])
-        group2 <- App.modifyGroup (group1 ^. groupID) (CreateGroup "title1" "desc1" [] [])
+        group1 <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
+        group2 <- App.modifyGroup (group1 ^. groupID) (CreateGroup "title1" "desc1" [] [] mempty)
         group3 <- App.getGroup (group1 ^. groupID)
         pure $ do
           group1 `shouldNotBe` group3
@@ -39,9 +39,9 @@ spec = do
 
     it "modify twice works" $ \(runner :: AppRunner (IO ())) -> do
       join . runner $ do
-        group1 <- App.addGroup (CreateGroup "title" "desc" [] [])
-        group2 <- App.modifyGroup (group1 ^. groupID) (CreateGroup "t2" "d2" [] [])
-        group3 <- App.modifyGroup (group1 ^. groupID) (CreateGroup "t3" "d3" [] [])
+        group1 <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
+        group2 <- App.modifyGroup (group1 ^. groupID) (CreateGroup "t2" "d2" [] [] mempty)
+        group3 <- App.modifyGroup (group1 ^. groupID) (CreateGroup "t3" "d3" [] [] mempty)
         group4 <- App.getGroup (group1 ^. groupID)
         pure $ do
           group1 `shouldNotBe` group4
@@ -53,9 +53,9 @@ spec = do
 
     it "create with parents and children works" $ \(runner :: AppRunner (IO ())) -> do
       join . runner $ do
-        group1 <- App.addGroup (CreateGroup "t1" "d1" [] [])
-        group2 <- App.addGroup (CreateGroup "t2" "d2" [] [])
-        group3 <- App.addGroup (CreateGroup "t3" "d3" [group1 ^. groupID] [group2 ^. groupID])
+        group1 <- App.addGroup (CreateGroup "t1" "d1" [] [] mempty)
+        group2 <- App.addGroup (CreateGroup "t2" "d2" [] [] mempty)
+        group3 <- App.addGroup (CreateGroup "t3" "d3" [group1 ^. groupID] [group2 ^. groupID] mempty)
         group4 <- App.getGroup (group3 ^. groupID)
         pure $ do
           group3 `shouldBe` group4
@@ -64,10 +64,10 @@ spec = do
 
     it "modify changes subgroups" $ \(runner :: AppRunner (IO ())) ->
       join . runner $ do
-        group1  <- App.addGroup (CreateGroup "t1" "d1" [] [])
-        group2  <- App.addGroup (CreateGroup "t2" "d2" [] [])
-        group3  <- App.addGroup (CreateGroup "t3" "d3" [] [])
-        group3' <- App.modifyGroup (group3 ^. groupID) (CreateGroup "t3" "d3" [group1 ^. groupID] [group2 ^. groupID])
+        group1  <- App.addGroup (CreateGroup "t1" "d1" [] [] mempty)
+        group2  <- App.addGroup (CreateGroup "t2" "d2" [] [] mempty)
+        group3  <- App.addGroup (CreateGroup "t3" "d3" [] [] mempty)
+        group3' <- App.modifyGroup (group3 ^. groupID) (CreateGroup "t3" "d3" [group1 ^. groupID] [group2 ^. groupID] mempty)
         group4  <- App.getGroup (group3' ^. groupID)
         pure $ do
           group3' `shouldBe` group4
@@ -76,8 +76,8 @@ spec = do
 
     it "add and remove subgroup" $ \(runner :: AppRunner (IO ())) ->
       join . runner $ do
-        parentg1 <- App.addGroup (CreateGroup "title" "desc" [] [])
-        childg1  <- App.addGroup (CreateGroup "title2" "desc2" [] [])
+        parentg1 <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
+        childg1  <- App.addGroup (CreateGroup "title2" "desc2" [] [] mempty)
         ()       <- App.addSubGroup (parentg1 ^. groupID) (childg1 ^. groupID)
         parentg2 <- App.getGroup (parentg1 ^. groupID)
         childg2  <- App.getGroup (childg1 ^. groupID)
@@ -101,7 +101,7 @@ spec = do
 
     it "remove group" $ \runner -> do
       runner (do
-          group <- App.addGroup (CreateGroup "title" "desc" [] [])
+          group <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
           ()    <- App.removeGroup (group ^. groupID)
           void $ App.getGroup (group ^. groupID))
        `shouldThrow`
@@ -109,7 +109,7 @@ spec = do
 
     it "non-existing group" $ \runner -> do
       runner (do
-          (Group _gid _title _desc _parents _children _) <- App.getGroup (ID 100000000)
+          (Group _gid _title _desc _parents _children _ _) <- App.getGroup (ID 100000000)
           pure ())
        `shouldThrow`
        anyException

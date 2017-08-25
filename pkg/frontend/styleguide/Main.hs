@@ -35,6 +35,7 @@ import Refine.Frontend.Prelude
 import           Language.Css.Syntax
 import           Data.List
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 import qualified Data.Text as ST
 import           System.Directory
 import           System.Exit
@@ -199,8 +200,18 @@ viewsSources =
     [ ("toy_", toy_, ["testclass"])
 
     , ("menu/login_", login_ Nothing, [])
-    , ("menu/mainMenuGroups_", mainMenuGroups_ ([sampleGroup1, sampleGroup2], Map.singleton (ID 0) sampleVDoc), [])
-    , ("menu/mainMenuGroup_", mainMenuGroup_ (Just sampleGroup1, Map.singleton (ID 0) sampleVDoc), [])
+    , ("menu/mainMenuGroups_", mainMenuGroups_
+        ( [sampleGroup1, sampleGroup2]
+        , Map.singleton (ID 0) sampleVDoc
+        , mkUserMap [ User sampleMetaID "user" "<email@bla.com>"
+                    , User sampleMetaID "üsör" "<grr@bla.com>" & userID .~ ID 8479]
+        ), [])
+    , ("menu/mainMenuGroup_", mainMenuGroup_ . (,) MainMenuGroupProcesses $
+        ( Just sampleGroup1
+        , Map.singleton (ID 0) sampleVDoc
+        , mkUserMap [ User sampleMetaID "user" "<email@bla.com>"
+                    , User sampleMetaID "üsör" "<grr@bla.com>" & userID .~ ID 8479]
+        ), [])
     -- , ("mainMenuCreateGroup_", mainMenuCreateGroup_ _, [])
     -- , ("mainMenuCreateProcess_", mainMenuCreateProcess_ _, [])
 
@@ -257,6 +268,8 @@ viewsSources =
         , _acpWindowWidth   = 1600
         }, [])
     ]
+  where
+    mkUserMap = Map.fromList . map ((^. userID) &&& id)
 
 
 -- * git (cloned from `/scripts/style-check.hs`)

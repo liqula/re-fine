@@ -104,20 +104,20 @@ spec = around setup $ do
   describe "add group" $ do
     it "grant: roles [GlobalAdmin]" $ \(switchUser, _getUid, sess) -> do
       switchUser Admin
-      shouldGrant sess . addGroup $ CreateGroup "title" "desc" [] []
+      shouldGrant sess . addGroup $ CreateGroup "title" "desc" [] [] mempty
 
     it "deny: roles []" $ \(switchUser, _getUid, sess) -> do
       switchUser Bob
-      shouldDeny sess . addGroup $ CreateGroup "title" "desc" [] []
+      shouldDeny sess . addGroup $ CreateGroup "title" "desc" [] [] mempty
 
 
   describe "list all groups" $ do
     it "show only visible groups: roles [(GroupMember, 1), (GroupMember, 2)]; groups [1, 2, 3]" $ \(switchUser, getUid, sess) -> do
       switchUser Admin
       [g1, g2, _g3] <- runDB sess $ do
-        g1_ <- addGroup $ CreateGroup "g1" "a" [] []
-        g2_ <- addGroup $ CreateGroup "g2" "b" [] []
-        g3_ <- addGroup $ CreateGroup "g3" "c" [] []
+        g1_ <- addGroup $ CreateGroup "g1" "a" [] [] mempty
+        g2_ <- addGroup $ CreateGroup "g2" "b" [] [] mempty
+        g3_ <- addGroup $ CreateGroup "g3" "c" [] [] mempty
         changeRole $ AssignGroupRole (getUid Alice) GroupMember (g1_ ^. groupID)
         changeRole $ AssignGroupRole (getUid Alice) GroupMember (g2_ ^. groupID)
         pure [g1_, g2_, g3_]

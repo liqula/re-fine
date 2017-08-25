@@ -123,7 +123,7 @@ mkProdBackend cfg = mkBackend cfg $ do
   () <- migrateDB cfg
   gs <- App.getGroups
   when (null gs) $ do
-    void . addGroup $ CreateGroup "default" "default group" [] []
+    void . addGroup $ CreateGroup "default" "default group" [] [] mempty
   pure ()
 
 mkBackend :: Config -> AppM DB a -> IO (Backend DB, IO ())

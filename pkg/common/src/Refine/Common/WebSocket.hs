@@ -30,13 +30,14 @@ data ServerCache = ServerCache
   , _scUsers       :: Map (ID User)       User
   , _scGroups      :: Map (ID Group)      Group
   , _scGroupIds    :: Maybe (Set (ID Group))
+  , _scUserIds     :: Maybe (Set (ID User))
   }
   deriving (Show, Eq, Generic)
 
 instance Monoid ServerCache where
-  mempty = ServerCache mempty mempty mempty mempty mempty mempty Nothing
-  ServerCache a b c d e f g `mappend` ServerCache a' b' c' d' e' f' g'
-    = ServerCache (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f') (g <|> g')
+  mempty = ServerCache mempty mempty mempty mempty mempty mempty Nothing Nothing
+  ServerCache a b c d e f g h `mappend` ServerCache a' b' c' d' e' f' g' h'
+    = ServerCache (a <> a') (b <> b') (c <> c') (d <> d') (e <> e') (f <> f') (g <|> g') (h <|> h')
 
 data CacheKey
   = CacheKeyVDoc       (ID VDoc)
@@ -46,6 +47,7 @@ data CacheKey
   | CacheKeyUser       (ID User)
   | CacheKeyGroup      (ID Group)
   | CacheKeyGroupIds
+  | CacheKeyUserIds
   deriving (Eq, Ord, Show, Generic)
 
 data ToServer
@@ -99,7 +101,7 @@ invalidateCache :: Set CacheKey -> ServerCache -> ServerCache
 invalidateCache = invalidateOrRestrictCache True
 
 invalidateOrRestrictCache :: Bool -> Set CacheKey -> ServerCache -> ServerCache
-invalidateOrRestrictCache invalidate (Set.toList -> keys) (ServerCache a b c d e f g)
+invalidateOrRestrictCache invalidate (Set.toList -> keys) (ServerCache a b c d e f g u)
   = ServerCache
      (restrictKeys a [i | CacheKeyVDoc i       <- keys])
      (restrictKeys b [i | CacheKeyEdit i       <- keys])
@@ -108,6 +110,7 @@ invalidateOrRestrictCache invalidate (Set.toList -> keys) (ServerCache a b c d e
      (restrictKeys e [i | CacheKeyUser i       <- keys])
      (restrictKeys f [i | CacheKeyGroup i      <- keys])
      (if (CacheKeyGroupIds `elem` keys) == invalidate then Nothing else g)
+     (if (CacheKeyUserIds `elem` keys) == invalidate then Nothing else u)
   where
     restrictKeys :: Ord a => Map a b -> [a] -> Map a b
     restrictKeys m ks = Map.filterWithKey (\k _ -> Set.notMember k ks' == invalidate) m
