@@ -240,8 +240,8 @@ getGroupsUri = uriStr $ safeLink (Proxy :: Proxy RefineAPI) (Proxy :: Proxy SGet
 
 -- * sample data
 
-sampleCreateVDoc :: CreateVDoc
-sampleCreateVDoc = CreateVDoc
+sampleCreateVDoc0 :: CreateVDoc
+sampleCreateVDoc0 = CreateVDoc
   (Title "[title]")
   (Abstract "[abstract]")
   sampleCreateVDocE0
@@ -260,7 +260,7 @@ mkCVDoc :: TestBackend -> CreateVDoc -> IO VDoc
 mkCVDoc sess vdoc = runWai sess $ postJSON createVDocUri vdoc
 
 mkEdit :: TestBackend -> IO (ID Edit)
-mkEdit = fmap (^. vdocHeadEdit) . (`mkCVDoc` sampleCreateVDoc)
+mkEdit = fmap (^. vdocHeadEdit) . (`mkCVDoc` sampleCreateVDoc0)
 
 
 testUsername :: Username
