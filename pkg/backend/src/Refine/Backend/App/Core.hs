@@ -261,7 +261,7 @@ appLog :: MonadLog app => String -> app ()
 appLog = appLogL def
 
 
--- * logging
+-- * caching
 
 class MonadCache app where
   invalidateCaches :: Set CacheKey -> app ()
