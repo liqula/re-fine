@@ -154,7 +154,6 @@ main = shakeArgs refineOptions $ do
 
   phony "hlint-common" $ do
     hlintPackage pkgCommon
-    hlintPath ["--cpp-include=pkg/common/src"] "pkg/common/scaffolding/Main.hs"
 
   phony "hlint-backend" $ do
     hlintPackage pkgBackend

@@ -237,7 +237,7 @@ viewsSources =
         } (elemText "lorem ipsum"), [])
 
     , ("bubble_.discussion.active.desktop", bubble_ BubbleProps
-        { _bubblePropsContributionIds   = NoStack (ContribIDDiscussion (ID 0), 0)
+        { _bubblePropsContributionIds   = NoStack (ContribIDDiscussion False (ID 0), 0)
         , _bubblePropsIconSide          = BubbleLeft
         , _bubblePropsVerticalOffset    = Nothing
         , _bubblePropsHighlight         = True
@@ -245,7 +245,7 @@ viewsSources =
         } (elemText "lorem ipsum"), [])
 
     , ("bubble_.discussion.active.mobile", bubble_ BubbleProps
-        { _bubblePropsContributionIds   = NoStack (ContribIDDiscussion (ID 0), 0)
+        { _bubblePropsContributionIds   = NoStack (ContribIDDiscussion False (ID 0), 0)
         , _bubblePropsIconSide          = BubbleLeft
         , _bubblePropsVerticalOffset    = Nothing
         , _bubblePropsHighlight         = True

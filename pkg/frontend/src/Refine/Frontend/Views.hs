@@ -168,8 +168,8 @@ leftAside :: HasCallStack => View '[AsideProps]
 leftAside = mkView "LeftAside" $ \props ->
   aside_ ["className" $= "sidebar sidebar-annotations gr-2 gr-5@desktop hide@mobile"] $ do  -- RENAME: annotation => comment
     let protos = maybeStackProtoBubbles (props ^. asideBubblePositioning)
-               $ (noteToProtoBubble props <$> (filter (^. discussionIsNote) $ props ^. asideDiscussions))
-              <> (discussionToProtoBubble props <$> (filter (not . (^. discussionIsNote)) $ props ^. asideDiscussions))
+               $ (noteToProtoBubble props <$> filter (^. discussionIsNote) (props ^. asideDiscussions))
+              <> (discussionToProtoBubble props <$> filter (not . (^. discussionIsNote)) (props ^. asideDiscussions))
     stackBubble BubbleLeft props `mapM_` protos
 
     quickCreate_ $ QuickCreateProps QuickCreateComment
