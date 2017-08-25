@@ -7,6 +7,7 @@
 -- protocol module, perhaps we should rename it.)
 module Refine.Backend.App.Cache
   ( startWebSocketServer
+  , resetWebSocketMVar
   ) where
 
 import Refine.Backend.Prelude as P
@@ -31,9 +32,6 @@ import Refine.Backend.Config
 import Refine.Backend.Database
 
 
-  -- TODO: to confirm that it's the mvar construct here that causes the deadlocks in WebSocketSpecs,
-  -- wrap the MVar in another MVar, expose a function to overwrite the outer one (without blocking),
-  -- and call that in mkBackend or wherever.
 
 
 type WebSocketMVar = MVar (Int{-to generate fresh CacheIds-}, Map WSSessionId WebSocketSession)
@@ -44,6 +42,22 @@ type WebSocketSession = ((Connection, MVar AppState), Set CacheKey)
 {-# NOINLINE webSocketMVar #-}
 webSocketMVar :: WebSocketMVar
 webSocketMVar = unsafePerformIO $ newMVar (0, mempty)
+
+-- FIXME: Without 'resetWebSocketMVar', the tests in 'WebSocketSpec' hang.  This means that there is
+-- a 'takeMVar' without the corresponding 'putMVar' somewhere, probably because the server is killed
+-- unexpectedly, or because some exception is still not handled right.  Note that this should not be
+-- a production issue (in production, server shutdown means unix process termination).
+--
+-- A quote from the package docs:
+--
+-- MVars offer more flexibility than IORefs, but less flexibility than STM. They are appropriate for
+-- building synchronization primitives and performing simple interthread communication; however they
+-- are very simple and susceptible to race conditions, deadlocks or uncaught exceptions. Do not use
+-- them if you need perform larger atomic operations such as reading from multiple variables: use
+-- STM instead.
+-- [http://hackage.haskell.org/package/base-4.10.0.0/docs/Control-Concurrent-MVar.html]
+resetWebSocketMVar :: IO ()
+resetWebSocketMVar = tryTakeMVar webSocketMVar >> putMVar webSocketMVar (0, mempty)
 
 openWsConn :: Config -> Connection -> IO WSSessionId
 openWsConn cfg conn = do

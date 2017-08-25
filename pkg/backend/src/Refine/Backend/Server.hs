@@ -167,6 +167,8 @@ mkServerApp cfg dbNat dbRunner = do
               (refineApi :<|> clientConfigApi)
               (Just (P.serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
 
+  () <- resetWebSocketMVar
+
   let addWS :: Middleware
       addWS = startWebSocketServer cfg appMToIO
 

@@ -126,16 +126,11 @@ specStories :: Spec
 specStories = describe "stories" . around wsBackend $ do
   it "works with many concurrent, high-volume sessions" $ do
     \(WSBackend _ port _) -> do
-
-      pendingWith "TODO"
-
+      pendingWith "this test is broken."
       stressers port 100 3
 
   it "story 1" $ do
     \(WSBackend _ _ conn) -> do
-
-      pendingWith "TODO"
-
       TCGreeting _ <- askQuestion conn $ TSGreeting Nothing
       respLogin <- askQuestion conn $ TSLogin (Login "admin" "pass")
       show respLogin `shouldContain` "(Right (User {_userMetaID = MetaID {_miID = ID 1, _miMeta = MetaInfo {_metaCreatedBy = Anonymous"
@@ -223,7 +218,7 @@ specErrors :: Spec
 specErrors = describe "errors" . around wsBackend $ do
   it "database lookup failure" $ \(WSBackend _ _ conn) -> do
 
-    pendingWith "TODO"
+
 
     TCGreeting _ <- askQuestion conn $ TSGreeting Nothing
     respLogin <- askQuestion conn $ TSLogin (Login "admin" "pass")
