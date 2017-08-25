@@ -72,7 +72,12 @@ data AppState = AppState
 
 -- | The state of the application depends on the user state.
 data AppUserState
-  = UserLoggedIn (ID Types.User) UserSession
+  = UserLoggedIn (ID Types.User) UserSession  -- TODO: 'UserSession' is taken out ouf the users*
+                                              -- package, but then we don't know if it remains valid
+                                              -- while we're having it here.  we should not keep it
+                                              -- here separately, but use the users* session token
+                                              -- in each communication round!  in other words, we're
+                                              -- using users* wrong.
   | UserLoggedOut
   deriving (Eq, Show)
 

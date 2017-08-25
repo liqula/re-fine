@@ -30,6 +30,12 @@ import Refine.Backend.App.Translation as App
 import Refine.Backend.Config
 import Refine.Backend.Database
 
+
+  -- TODO: to confirm that it's the mvar construct here that causes the deadlocks in WebSocketSpecs,
+  -- wrap the MVar in another MVar, expose a function to overwrite the outer one (without blocking),
+  -- and call that in mkBackend or wherever.
+
+
 type WebSocketMVar = MVar (Int{-to generate fresh CacheIds-}, Map WSSessionId WebSocketSession)
 type WebSocketSession = ((Connection, MVar AppState), Set CacheKey)
 
