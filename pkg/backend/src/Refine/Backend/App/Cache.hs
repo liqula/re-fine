@@ -39,6 +39,20 @@ type WebSocketSession = ((Connection, MVar AppState), Set CacheKey)
 webSocketMVar :: WebSocketMVar
 webSocketMVar = unsafePerformIO $ newMVar (0, mempty)
 
+openWsConn :: Config -> Connection -> IO WSSessionId
+openWsConn cfg conn = do
+  appState <- newMVar $ initialAppState cfg
+  modifyMVar webSocketMVar $ \(n, cmap) -> do
+    let n' = n + 1
+        cmap' = Map.insert n ((conn, appState), mempty) cmap
+    pure ((n', cmap'), n)
+
+closeWsConn :: WSSessionId -> IO ()
+closeWsConn n = do
+  modifyMVar webSocketMVar $ \(n_, cmap) ->do
+    pure ((n_, Map.delete n cmap), ())
+
+
 sendMessage :: Connection -> ToClient -> IO ()
 sendMessage conn msg = sendTextData conn (cs $ encode msg :: ST)
 
@@ -80,15 +94,23 @@ startWebSocketServer cfg toIO = websocketsOr options server
       pingLoop toIO conn
       clientId <- handshake cfg conn
       forever (cmdLoopStepFrame toIO clientId (cmdLoopStep conn clientId)
-                `catch` (\e -> handleAllErrors cfg conn clientId e
-                                `catch` \e'@(SomeException _) -> wserror . WSErrorResetFailed $ show e'))
+                `catch` handleAllErrors cfg conn clientId)
+        `catch` giveUp conn clientId
 
 handleAllErrors :: Config -> Connection -> WSSessionId -> SomeException -> IO ()
 handleAllErrors cfg conn clientId e = do
-  () <- wserror . WSErrorUnknownError . show $ e
+  appLogL LogError $ show e
   sendMessage conn TCReset
   clientId' <- handshake cfg conn
   assert (clientId' == clientId) $ pure ()
+
+giveUp :: Connection -> WSSessionId -> SomeException -> IO ()
+giveUp conn clientId e = do
+  appLogL LogError . show . WSErrorResetFailed $ show e
+  closeWsConn clientId
+  sendClose conn ("Cache.hs: could not reset connection, giving up." :: ST)
+    -- (FUTUREWORK: we should flush any remaining incoming messages here; see 'sendClose'.)
+
 
 data WSError
   = WSErrorUnexpectedPacket ToServer
@@ -113,9 +135,7 @@ handshake cfg conn = receiveMessage conn >>= \case
 
   -- the first connection of the client
   TSGreeting Nothing -> do
-    (n, cmap) <- takeMVar webSocketMVar
-    appState <- newMVar $ initialAppState cfg
-    putMVar webSocketMVar (n + 1, Map.insert n ((conn, appState), mempty) cmap)
+    n <- openWsConn cfg conn
     sendMessage conn $ TCGreeting n
     appLog $ "new websocket client #" <> show n
     pure n
