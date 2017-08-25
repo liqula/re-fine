@@ -92,21 +92,23 @@ startWebSocketServer cfg toIO = websocketsOr options server
     server pendingconnection = do
       conn <- acceptRequest pendingconnection
       pingLoop toIO conn
-      clientId <- handshake cfg conn
+      let logger :: LogLevel -> String -> IO ()
+          logger level = void . toIO . appLogL level
+      clientId <- handshake cfg conn logger
       forever (cmdLoopStepFrame toIO clientId (cmdLoopStep conn clientId)
-                `catch` handleAllErrors cfg conn clientId)
-        `catch` giveUp conn clientId
+                `catch` handleAllErrors cfg conn logger clientId)
+        `catch` giveUp conn logger clientId  -- FUTUREWORK: handle exceptions during inital handshake?
 
-handleAllErrors :: Config -> Connection -> WSSessionId -> SomeException -> IO ()
-handleAllErrors cfg conn clientId e = do
-  appLogL LogError $ show e
+handleAllErrors :: Config -> Connection -> (LogLevel -> String -> IO ()) -> WSSessionId -> SomeException -> IO ()
+handleAllErrors cfg conn logger clientId e = do
+  logger LogError $ show e
   sendMessage conn TCReset
-  clientId' <- handshake cfg conn
+  clientId' <- handshake cfg conn logger
   assert (clientId' == clientId) $ pure ()
 
-giveUp :: Connection -> WSSessionId -> SomeException -> IO ()
-giveUp conn clientId e = do
-  appLogL LogError . show . WSErrorResetFailed $ show e
+giveUp :: Connection -> (LogLevel -> String -> IO ()) -> WSSessionId -> SomeException -> IO ()
+giveUp conn logger clientId e = do
+  logger LogError . show . WSErrorResetFailed $ show e
   closeWsConn clientId
   sendClose conn ("Cache.hs: could not reset connection, giving up." :: ST)
     -- (FUTUREWORK: we should flush any remaining incoming messages here; see 'sendClose'.)
@@ -123,21 +125,21 @@ wserror :: Monad m => WSError -> m a
 wserror = error . show
 
 
-handshake :: Config -> Connection -> IO WSSessionId
-handshake cfg conn = receiveMessage conn >>= \case
+handshake :: Config -> Connection -> (LogLevel -> String -> IO ()) -> IO WSSessionId
+handshake cfg conn logger = receiveMessage conn >>= \case
   -- the client is reconnected, its WSSessionId is n
   TSGreeting (Just n) -> do
     cmap <- takeMVar webSocketMVar
     putMVar webSocketMVar $ second (Map.adjust (_2 .~ mempty) n) cmap
     sendMessage conn $ TCRestrictKeys []  -- TUNING: only send this if we know something happened since the disconnect.
-    appLog $ "websocket client #" <> show n <> " is reconnected"
+    logger LogDebug $ "websocket client #" <> show n <> " is reconnected"
     pure n
 
   -- the first connection of the client
   TSGreeting Nothing -> do
     n <- openWsConn cfg conn
     sendMessage conn $ TCGreeting n
-    appLog $ "new websocket client #" <> show n
+    logger LogDebug $ "new websocket client #" <> show n
     pure n
 
   bad -> wserror $ WSErrorUnexpectedPacket bad
