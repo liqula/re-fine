@@ -16,6 +16,7 @@ import Refine.Backend.Prelude as P
 import           Control.Concurrent.MVar
 import           Network.HTTP.Media ((//))
 import           Network.Wai.Handler.Warp as Warp
+import           Network.Wai (Middleware)
 import qualified Network.Wai.Session as SCS
 import qualified Servant.Cookie.Session as SCS
 import           Servant.Server.Internal (responseServantErr)
@@ -106,10 +107,7 @@ clientConfigApi = asks . view $ appConfig . cfgClient
 startBackend :: Config -> IO ()
 startBackend cfg = do
   (backend, _destroy) <- mkProdBackend cfg
-  Warp.runSettings (warpSettings cfg) . startWebSocketServer cfg (appMToIO backend) $ backendServer backend
-  where
-    appMToIO :: Backend DB -> AppM DB a -> IO (Either ApiError a)
-    appMToIO backend m = runExceptT (backendRunApp backend $$ m)
+  Warp.runSettings (warpSettings cfg) $ backendServer backend
 
 runCliAppCommand :: Config -> AppM DB a -> IO ()
 runCliAppCommand cfg cmd = do
@@ -122,29 +120,31 @@ mkProdBackend cfg = mkBackend cfg $ do
   gs <- App.getGroups
   when (null gs) $ do
     void . addGroup $ CreateGroup "default" "default group" [] [] mempty
+                                                                   -- FIXME: don't do that any more!
+                                                                   -- we have `--init` and
+                                                                   -- `initializeDB` now!
   pure ()
 
 mkBackend :: Config -> AppM DB a -> IO (Backend DB, IO ())
-mkBackend cfg migrate = do
+mkBackend cfg initially = do
   createDataDirectories cfg
 
   -- create runners
   (dbRunner, dbNat, destroy) <- createDBNat cfg
   backend <- mkServerApp cfg dbNat dbRunner
 
-  -- migration
-  result <- runExceptT (backendRunApp backend $$ unsafeAsGod migrate)
+  -- setup actions like migration, intial content, ...
+  result <- runExceptT (backendRunApp backend $$ unsafeAsGod initially)
   either (error . show) (const $ pure ()) result
 
   pure (backend, destroy)
 
-
-mkServerApp :: forall db. Database db => Config -> MkDBNat db -> DBRunner -> IO (Backend db)
+mkServerApp :: Config -> MkDBNat DB -> DBRunner -> IO (Backend DB)
 mkServerApp cfg dbNat dbRunner = do
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
       logger = defaultLogger cfg
 
-      appNT :: AppM db :~> ExceptT ApiError IO
+      appNT :: AppM DB :~> ExceptT ApiError IO
       appNT = runApp dbNat
                    dbRunner
                    logger
@@ -157,7 +157,8 @@ mkServerApp cfg dbNat dbRunner = do
 
   -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
   -- may need to refactor, e.g. by using extra arguments in the end point types.
-  (srvApp, sessionStore) <- SCS.serveAction
+  (srvApp :: Application, sessionStore :: SCS.SessionStore IO () (SCS.Lockable AppState))
+      <- SCS.serveAction
               (Proxy :: Proxy (RefineAPI :<|> ClientConfigAPI))
               (Proxy :: Proxy AppState)
               cookie
@@ -166,7 +167,14 @@ mkServerApp cfg dbNat dbRunner = do
               (refineApi :<|> clientConfigApi)
               (Just (P.serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
 
-  pure $ Backend srvApp appNT sessionStore
+  let addWS :: Middleware
+      addWS = startWebSocketServer cfg appMToIO
+
+      appMToIO :: AppM DB a -> IO (Either ApiError a)
+      appMToIO m = runExceptT (appNT $$ m)
+
+  pure $ Backend (addWS srvApp) appNT sessionStore
+
 
 maybeServeDirectory :: Maybe FilePath -> Server Raw
 maybeServeDirectory = maybe (\_ respond -> respond $ responseServantErr err404) serveDirectory

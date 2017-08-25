@@ -45,12 +45,17 @@ makeLenses ''TestBackend
 -- | Create session via 'mkProdBackend'.  Note that there is no network listener and 'WarpSettings'
 -- are meaningless; the session only creates an 'AppM' runner and an 'Application'.
 createTestSession :: (TestBackend -> IO ()) -> IO ()
-createTestSession action = withTempCurrentDirectory $ do
-  let cfg = def
+createTestSession = createTestSession' testBackendCfg
+
+testBackendCfg :: Config
+testBackendCfg = def
         & cfgLogger     .~ LogCfg (LogCfgFile testLogfilePath) LogDebug
         & cfgDBKind     .~ DBOnDisk "test.db"
         & cfgSmtp       .~ Nothing
         & cfgAllAreGods .~ True
+
+createTestSession' :: Config -> (TestBackend -> IO ()) -> IO ()
+createTestSession' cfg action = withTempCurrentDirectory $ do
   (backend, destroy) <- mkProdBackend cfg
   () <- action =<< (TestBackend backend <$> newMVar Wai.initState <*> newMVar Nothing)
   destroy
