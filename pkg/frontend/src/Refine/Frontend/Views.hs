@@ -103,7 +103,6 @@ mainScreen = mkView "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
           mainHeader_ mhp
 
           -- components that are visible only sometimes:
-          showNote_ `mapM_` showNoteProps (Map.filter (^. discussionIsNote) $ vdoc ^. compositeVDocApplicableDiscussions) rs
           case rs ^. RS.gsContributionState . RS.csActiveDialog of
             Just (ActiveDialogComment lst) -> do
               addComment_ __ $ AddContributionProps
