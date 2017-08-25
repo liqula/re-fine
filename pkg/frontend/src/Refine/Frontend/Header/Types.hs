@@ -106,6 +106,8 @@ mkEditIndex e i = EditIndex (Set.size es) (fromMaybe (error "impossible - mkEdit
 data DiscussionToolbarProps = DiscussionToolbarProps
   { _discToolbarDiscussionID :: ID Discussion
   , _discToolbarFlatView     :: Bool
+  , _discToolbarIsNote       :: Bool
+  , _discToolbarPropsVotes   :: VoteCount
   }
   deriving (Show, Eq, Generic)
 

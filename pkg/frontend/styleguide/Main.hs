@@ -225,8 +225,8 @@ viewsSources =
         , _diffToolbarCollapsed   = False
         , _diffToolbarEditable    = False
         }, [])
-    , ("toolbar/discussionToolbar_.flat", discussionToolbar_ $ DiscussionToolbarProps (ID 0) True, [])
-    , ("toolbar/discussionToolbar_.tree", discussionToolbar_ $ DiscussionToolbarProps (ID 0) False, [])
+    , ("toolbar/discussionToolbar_.flat", discussionToolbar_ $ DiscussionToolbarProps (ID 0) True False mempty, [])
+    , ("toolbar/discussionToolbar_.tree", discussionToolbar_ $ DiscussionToolbarProps (ID 0) False False mempty, [])
 
     , ("bubble_.edit", bubble_ BubbleProps
         { _bubblePropsContributionIds   = NoStack (ContribIDEdit (ID 0), 0)
