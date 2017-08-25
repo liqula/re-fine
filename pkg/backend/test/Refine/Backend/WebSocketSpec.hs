@@ -151,7 +151,12 @@ sample-content.yaml:
 
 
 spec :: Spec
-spec = describe "..." $ do
+spec = do
+  specStories
+  specErrors
+
+specStories :: Spec
+specStories = describe "stories" $ do
   it "works with many concurrent, high-volume sessions" $ do
     pendingWith "this only works if you run the backend server separately outside the test suite."  -- TODO
     stressers 100 3
@@ -240,3 +245,18 @@ make sure we've called all of these at least once:
 
 
   -- do all this with examples, no arbitrary!
+
+
+specErrors :: Spec
+specErrors = describe "errors" $ do
+  it "### database lookup failure" $ runWS $ \conn -> do
+    TCGreeting _ <- askQuestion conn $ TSGreeting Nothing
+    respLogin <- askQuestion conn $ TSLogin (Login "admin" "pass")
+    show respLogin `shouldContain` "(Right (User {_userMetaID = MetaID {_miID = ID 1, _miMeta = MetaInfo {_metaCreatedBy = Anonymous"
+    let noSuchGroup = ID 98691
+    TCReset <- askQuestion conn $ TSMissing [CacheKeyGroup noSuchGroup]
+    logShouldContain True ["AppDBError (DBNotFound", show (noSuchGroup ^. unID)]
+
+
+logShouldContain :: Bool -> [String] -> Expectation
+logShouldContain = undefined
