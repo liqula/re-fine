@@ -169,7 +169,7 @@ showComment = mkView "ShowComment" $ \props ->
         div_ ["className" $= "c-vdoc-overlay-votes"] $ do
 
             ibutton_ $ emptyIbuttonProps "Vote_positive"
-                         [ContributionAction $ ToggleVoteOnContribution (ContribIDNote $ props ^. cdpNoteId) Yeay]
+                         [ContributionAction $ ToggleVoteOnContribution (ContribIDDiscussion True $ props ^. cdpNoteId) Yeay]
                      & ibListKey .~ "vote_up"
                      & ibSize .~ XLarge
                      & ibLabel .~ cs (show . fromMaybe 0 . M.lookup Yeay $ props ^. cdpVotes)
@@ -177,7 +177,7 @@ showComment = mkView "ShowComment" $ \props ->
                      -- IconProps "c-vdoc-overlay-votes"
 
             ibutton_ $ emptyIbuttonProps "Vote_negative"
-                         [ContributionAction $ ToggleVoteOnContribution (ContribIDNote $ props ^. cdpNoteId) Nay]
+                         [ContributionAction $ ToggleVoteOnContribution (ContribIDDiscussion True $ props ^. cdpNoteId) Nay]
                      & ibListKey .~ "vote_down"
                      & ibSize .~ XLarge
                      & ibLabel .~ cs (show . fromMaybe 0 . M.lookup Nay $ props ^. cdpVotes)
@@ -191,7 +191,7 @@ showComment_ :: HasCallStack => CommentDisplayProps -> ReactElementM eventHandle
 showComment_ = view_ showComment "showComment_"
 
 
-showNoteProps :: HasCallStack => M.Map (ID Note) Note -> GlobalState -> Maybe ShowNoteProps
+showNoteProps :: HasCallStack => M.Map (ID Discussion) Discussion -> GlobalState -> Maybe ShowNoteProps
 showNoteProps notes rs = case (maybeNote, maybeOffset) of
   (Just note, Just offset) -> Just $ ShowNoteProps note offset
                                      (rs ^. gsScreenState . ssWindowWidth)
@@ -202,12 +202,12 @@ showNoteProps notes rs = case (maybeNote, maybeOffset) of
   _                        -> Nothing
   where
     maybeContribID = rs ^. gsContributionState . csDisplayedContributionID
-    maybeNoteID :: Maybe (ID Note) = getNoteID =<< maybeContribID
+    maybeNoteID :: Maybe (ID Discussion) = getDiscussionID =<< maybeContribID
     maybeNote = (`M.lookup` notes) =<< maybeNoteID
     maybeOffset = do
       nid <- maybeNoteID
       rs ^? gsContributionState . csAllVerticalSpanBounds . allVerticalSpanBounds
-          . at (MarkContribution (ContribIDNote nid) 0) . _Just . verticalSpanBoundsBottom
+          . at (MarkContribution (ContribIDDiscussion True nid) 0) . _Just . verticalSpanBoundsBottom
 
     err haveT haveV missT = gracefulError (unwords ["showNoteProps: we have a", haveT, show haveV, "but no", missT])
 
@@ -217,15 +217,15 @@ showNote = mkView "ShowNote" $ \case
   ShowNoteProps note top windowWidth1 usernames ->
     let commentText1  = (note ^. noteText)
         iconStyle1    = ("icon-Note", "dark")
-        user          = note ^. noteMetaID . miMeta . metaCreatedBy
+        user          = note ^. discussionMetaID . miMeta . metaCreatedBy
         userName1 = case user of
           UserID i -> cs . fromMaybe (cacheMiss (CacheKeyUser i) (cs $ show i) i) $ M.lookup i usernames
           _ -> cs $ show user
-        votes = votesToCount $ note ^. noteVotes
-        creationDate1 = showTime $ note ^. noteMetaID . miMeta . metaCreatedAt
+        votes = votesToCount $ note ^. discussionVotes
+        creationDate1 = showTime $ note ^. discussionMetaID . miMeta . metaCreatedAt
     in showComment_ $ CommentDisplayProps commentText1 iconStyle1 userName1 creationDate1
                                           showNoteDialogStyles top windowWidth1
-                                          (note ^. noteID)
+                                          (note ^. discussionID)
                                           votes
   where
     showTime (Timestamp t) = cs $ formatTime defaultTimeLocale "%F %T" t

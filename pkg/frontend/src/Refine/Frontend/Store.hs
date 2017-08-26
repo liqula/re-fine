@@ -231,8 +231,8 @@ emitBackendCallsFor act st = case act of
           range    = st ^? gsCurrentSelection . _Just . C.selectionRange
 
       sendTS $ case kind of
-        CommentKindDiscussion -> TSAddDiscussion headEdit $ C.CreateDiscussion text range
-        CommentKindNote ->       TSAddNote headEdit $ C.CreateNote text range
+        CommentKindDiscussion -> TSAddDiscussion headEdit $ C.CreateDiscussion text range False
+        CommentKindNote ->       TSAddDiscussion headEdit $ C.CreateDiscussion text range True
 
       dispatchAndExec $ DocumentAction UpdateDocumentStateView
 

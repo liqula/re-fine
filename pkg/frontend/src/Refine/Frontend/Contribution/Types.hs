@@ -210,14 +210,14 @@ data CommentDisplayProps = CommentDisplayProps
   , _cdpContentStyle :: [Decl]
   , _cdpTopOffset    :: OffsetFromDocumentTop
   , _cdpWindowWidth  :: Int
-  , _cdpNoteId       :: ID Note
+  , _cdpNoteId       :: ID Discussion
   , _cdpVotes        :: VoteCount
   }
   deriving (Eq)
 
 data ShowNoteProps =
     ShowNoteProps
-      { _snpNote        :: Note
+      { _snpNote        :: Discussion
       , _snpTop         :: OffsetFromDocumentTop
       , _snpWindowWidth :: Int
       , _snpUsernames   :: Map (ID User) Username -- FIXME: store user names in discussions

@@ -24,25 +24,24 @@ un = undefined
 
 rawContentToCompositeVDoc :: RawContentWithSelections -> CompositeVDoc
 rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
-    = assert (length selections == length es + length ns + length ds)
+    = assert (length selections == length es + length ds)
     $ CompositeVDoc un
                     (Edit sampleMetaID un un un (sampleMetaID ^. miID) rawContent un
-                          (Set.fromList $ fst <$> es) (Set.fromList $ fst <$> ns) (Set.fromList $ fst <$> ds))
-                    (Map.fromList es) (Map.fromList ns) (Map.fromList ds)
+                          (Set.fromList $ fst <$> es) (Set.fromList $ fst <$> ds))
+                    (Map.fromList es) (Map.fromList ds)
   where
-    (es, ns, ds) = rotate ([], [], []) 0 selections
+    (es, ds) = rotate ([], []) 0 selections
 
-    rotate :: ([(ID Edit, Edit)], [(ID Note, Note)], [(ID Discussion, Discussion)])
+    rotate :: ([(ID Edit, Edit)], [(ID Discussion, Discussion)])
            -> Int
            -> [Selection Position]
-           -> ([(ID Edit, Edit)], [(ID Note, Note)], [(ID Discussion, Discussion)])
+           -> ([(ID Edit, Edit)], [(ID Discussion, Discussion)])
     rotate contribs _ []           = contribs
     rotate contribs i (sel : sels) = rotate (upd contribs) (i + 1) sels
       where
-        upd = case i `mod` 3 of
-          0 -> _1 %~ (build (Proxy :: Proxy Edit)       i (\_ -> Edit un un un mempty un un un un un un) sel :)
-          1 -> _2 %~ (build (Proxy :: Proxy Note)       i (\x -> Note un un un x un) sel :)
-          2 -> _3 %~ (build (Proxy :: Proxy Discussion) i (\r -> Discussion un un r un) sel :)
+        upd = case i `mod` 2 of
+          0 -> _1 %~ (build (Proxy :: Proxy Edit)       i (\_ -> Edit un un un mempty un un un un un) sel :)
+          1 -> _2 %~ (build (Proxy :: Proxy Discussion) i (\r -> Discussion un un r un un False) sel :)
           _ -> error "rawContentToCompositeVDoc: impossible."
 
     build :: Proxy a -> Int -> (Range Position -> b) -> Selection Position -> (ID a, b)
@@ -50,9 +49,6 @@ rawContentToCompositeVDoc (RawContentWithSelections rawContent selections)
 
 mark1 :: Style
 mark1 = Mark $ MarkContribution (ContribIDEdit (ID 0)) 0
-
-mark2 :: Style
-mark2 = Mark $ MarkContribution (ContribIDNote (ID 1)) 0
 
 
 spec :: Spec

@@ -121,7 +121,6 @@ data Edit = Edit
   , _editVDocVersion  :: RawContent     -- FIXME: is it OK to store this in edit (consider serialization)?
   , _editVotes        :: Votes
   , _editChildren     :: Set (ID Edit)
-  , _editNotes'       :: Set (ID Note)
   , _editDiscussions' :: Set (ID Discussion)
   }
   deriving (Eq, Show, Generic)
@@ -158,7 +157,6 @@ data CompositeVDoc = CompositeVDoc
   { _compositeVDoc                      :: VDoc
   , _compositeVDocThisEdit              :: Edit
   , _compositeVDocApplicableEdits       :: Map (ID Edit) Edit
-  , _compositeVDocApplicableNotes       :: Map (ID Note) Note
   , _compositeVDocApplicableDiscussions :: Map (ID Discussion) Discussion
   }
   deriving (Eq, Show, Generic)
@@ -173,8 +171,7 @@ data CompositeVDoc = CompositeVDoc
 -- may be a special thing in the UI metaphor, but it is not in the backend types: here there is just
 -- an edit on the empty document.
 data Contribution =
-    ContribNote Note
-  | ContribDiscussion Discussion
+    ContribDiscussion Discussion
   | ContribEdit Edit
   | ContribHighlightMark (Range Position)
   deriving (Eq, Show, Generic)
@@ -185,8 +182,7 @@ data Contribution =
 -- that changes the case switch implementation, and I'm not sure right now if it'll still be as
 -- straight-forward.
 data ContributionID =
-    ContribIDNote (ID Note)
-  | ContribIDDiscussion (ID Discussion)
+    ContribIDDiscussion Bool{-is note-} (ID Discussion)
   | ContribIDEdit (ID Edit)
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -344,14 +340,14 @@ makeEntityStyleSet (Atom e, s) = maybe mempty (Set.singleton . Left) e <> Set.ma
 
 instance ToHttpApiData ContributionID where
   toUrlPiece = \case
-    ContribIDNote (ID i)       -> "n" <> cs (show i)
-    ContribIDDiscussion (ID i) -> "d" <> cs (show i)
-    ContribIDEdit (ID i)       -> "e" <> cs (show i)
+    ContribIDDiscussion True (ID i)  -> "n" <> cs (show i)
+    ContribIDDiscussion False (ID i) -> "d" <> cs (show i)
+    ContribIDEdit (ID i)             -> "e" <> cs (show i)
 
 instance FromHttpApiData ContributionID where
   parseUrlPiece (ST.splitAt 1 -> (ks, readEither . cs -> Right n))
-    | "n" <- ks = f ContribIDNote
-    | "d" <- ks = f ContribIDDiscussion
+    | "n" <- ks = f $ ContribIDDiscussion True
+    | "d" <- ks = f $ ContribIDDiscussion False
     | "e" <- ks = f ContribIDEdit
     where
       f :: (ID a -> ContributionID) -> Either ST ContributionID
@@ -709,24 +705,10 @@ mkSomeSegments frange fpayload els = segments
 
 type CommentText = ST
 
-data CreateNote range = CreateNote
-  { _createNoteText   :: CommentText
-  , _createNoteRange  :: range
-  }
-  deriving (Eq, Ord, Show, Generic)
-
-data Note = Note
-  { _noteMetaID :: MetaID Note
-  , _noteVDoc   :: ID VDoc
-  , _noteText   :: CommentText
-  , _noteRange  :: Range Position
-  , _noteVotes  :: Votes
-  }
-  deriving (Eq, Ord, Show, Generic)
-
 data CreateDiscussion range = CreateDiscussion
   { _createDiscussionStatementText :: CommentText
   , _createDiscussionRange         :: range
+  , _createDiscussionIsNote        :: Bool
   } -- FIXME: add (createDiscussionEdit :: ID Edit) and simplify SAddDiscussion (fisx does not like
     -- this, but does not want to spend time arguing about it)
   deriving (Eq, Ord, Show, Generic)
@@ -736,6 +718,8 @@ data Discussion = Discussion
   , _discussionVDoc   :: ID VDoc
   , _discussionRange  :: Range Position
   , _discussionTree   :: Tree Statement
+  , _discussionVotes  :: Votes
+  , _discussionIsNote :: Bool  -- ^ the discussion is just a note
   } -- FIXME: add (discussionEdit :: ID Edit), fits better the server cache in global state
   deriving (Eq, Show, Generic)
 
@@ -754,10 +738,7 @@ data Statement = Statement
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
-data Comment =
-    CommentNote Note
-  | CommentDiscussion Discussion
-  deriving (Eq, Show, Generic)
+type Comment = Discussion
 
 
 -- * Derived instances
@@ -775,7 +756,7 @@ deriveClasses
 -- | It cannot moved further up, needs instance NFData BlockType
 deriving instance NFData (EEdit RawContent)
 
-makeRefineTypes [''CreateNote, ''Note, ''CreateDiscussion, ''Discussion, ''CreateStatement, ''Statement, ''Comment]
+makeRefineTypes [''CreateDiscussion, ''Discussion, ''CreateStatement, ''Statement]
 
 
 -- * helper lenses
@@ -788,13 +769,12 @@ editID = editMetaID . miID
 
 groupID :: Lens' Group (ID Group)
 groupID = groupMetaID . miID
-
+{-
 contributionID :: Lens' Contribution ContributionID
 contributionID k = \case
-  ContribNote i       -> ContribNote       <$> noteID       (fmap (\(ContribIDNote i')       -> i') . k . ContribIDNote) i
   ContribDiscussion i -> ContribDiscussion <$> discussionID (fmap (\(ContribIDDiscussion i') -> i') . k . ContribIDDiscussion) i
   ContribEdit i       -> ContribEdit       <$> editID       (fmap (\(ContribIDEdit i')       -> i') . k . ContribIDEdit) i
-
+-}
 compositeVDocThisEditID :: Lens' CompositeVDoc (ID Edit)
 compositeVDocThisEditID = compositeVDocThisEdit . editID
 
@@ -818,6 +798,13 @@ blockDepth = blockDepth'
 
 blockKey :: Lens' (Block rangeKey blockKey) blockKey
 blockKey = blockKey'
+
+noteText :: Lens' Discussion CommentText
+noteText = discussionTree . treeRoot . statementText
+
+treeRoot :: Lens' (Tree a) a
+treeRoot f (Node a t) = f a <&> flip Node t
+
 
 -- * helper functions
 
@@ -929,9 +916,6 @@ lineElemLength (_, NonEmptyST txt) = ST.length txt
 
 
 -- * some convenience lenses
-
-noteID :: Lens' Note (ID Note)
-noteID = noteMetaID . miID
 
 discussionID :: Lens' Discussion (ID Discussion)
 discussionID = discussionMetaID . miID

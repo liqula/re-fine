@@ -225,8 +225,8 @@ viewsSources =
         , _diffToolbarCollapsed   = False
         , _diffToolbarEditable    = False
         }, [])
-    , ("toolbar/discussionToolbar_.flat", discussionToolbar_ $ DiscussionToolbarProps (ID 0) True, [])
-    , ("toolbar/discussionToolbar_.tree", discussionToolbar_ $ DiscussionToolbarProps (ID 0) False, [])
+    , ("toolbar/discussionToolbar_.flat", discussionToolbar_ $ DiscussionToolbarProps (Just $ ID 0) True False mempty, [])
+    , ("toolbar/discussionToolbar_.tree", discussionToolbar_ $ DiscussionToolbarProps (Just $ ID 0) False False mempty, [])
 
     , ("bubble_.edit", bubble_ BubbleProps
         { _bubblePropsContributionIds   = NoStack (ContribIDEdit (ID 0), 0)
@@ -237,7 +237,7 @@ viewsSources =
         } (elemText "lorem ipsum"), [])
 
     , ("bubble_.discussion.active.desktop", bubble_ BubbleProps
-        { _bubblePropsContributionIds   = NoStack (ContribIDDiscussion (ID 0), 0)
+        { _bubblePropsContributionIds   = NoStack (ContribIDDiscussion False (ID 0), 0)
         , _bubblePropsIconSide          = BubbleLeft
         , _bubblePropsVerticalOffset    = Nothing
         , _bubblePropsHighlight         = True
@@ -245,7 +245,7 @@ viewsSources =
         } (elemText "lorem ipsum"), [])
 
     , ("bubble_.discussion.active.mobile", bubble_ BubbleProps
-        { _bubblePropsContributionIds   = NoStack (ContribIDDiscussion (ID 0), 0)
+        { _bubblePropsContributionIds   = NoStack (ContribIDDiscussion False (ID 0), 0)
         , _bubblePropsIconSide          = BubbleLeft
         , _bubblePropsVerticalOffset    = Nothing
         , _bubblePropsHighlight         = True

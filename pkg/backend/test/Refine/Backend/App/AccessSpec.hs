@@ -87,7 +87,7 @@ setupDiscussion :: HasCallStack => Bool -> VDoc -> App Discussion
 setupDiscussion asGod vdoc = (if asGod then unsafeAsGod else id) $ addDiscussion eid cd
   where
     eid = vdoc ^. vdocHeadEdit
-    cd = CreateDiscussion "first post!" Nothing
+    cd = CreateDiscussion "first post!" Nothing False
 
 
 shouldGrant :: (HasCallStack, Show a) => TestBackend -> AppM DB a -> IO ()

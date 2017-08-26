@@ -189,7 +189,7 @@ spec = do
 
             pending
             storeShouldEventuallyContain ((^?! gsDevState . _Just . devStateTrace) :: GlobalState -> [GlobalAction])
-              [ContributionAction (SetAllVerticalSpanBounds [(MarkContribution (ContribIDNote $ ID 77) 0, VerticalSpanBounds 0 0)])]
+              [ContributionAction (SetAllVerticalSpanBounds [(MarkContribution (ContribIDDiscussion True $ ID 77) 0, VerticalSpanBounds 0 0)])]
 
       it "dispatches SetAllVerticalSpanBounds only once" test
 

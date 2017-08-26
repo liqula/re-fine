@@ -39,8 +39,8 @@ spec = do
         `shouldBe` [(1, Set.empty), (1, Set.fromList "o"), (2, Set.fromList "ox"), (2, Set.fromList "x")]
 
   describe "getLeafSelectors" $ do
-    let cid0 = MarkContribution (ContribIDNote (ID 13)) 0
-        cid1 = MarkContribution (ContribIDNote (ID 35)) 0
+    let cid0 = MarkContribution (ContribIDDiscussion True (ID 13)) 0
+        cid1 = MarkContribution (ContribIDDiscussion True (ID 35)) 0
         block0 = BlockIndex 0 $ BlockKey "b0"
         block1 = BlockIndex 1 $ BlockKey "b1"
 

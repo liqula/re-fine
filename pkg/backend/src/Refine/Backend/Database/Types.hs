@@ -21,8 +21,7 @@ type family CreateDB a = b | b -> a
 -- comprehensive list of everything that can occur in the table.  If it gets to much work to
 -- maintain this, we can refactor it to be more dynamic later.)
 data MetaInfoID
-  = MetaNote       (ID Note)
-  | MetaDiscussion (ID Discussion)
+  = MetaDiscussion (ID Discussion)
   | MetaStatement  (ID Statement)
   | MetaGroup      (ID Group)
   | MetaUser       (ID User)
@@ -33,7 +32,6 @@ data MetaInfoID
 class HasMetaInfo a where
   metaInfoType :: ID a -> MetaInfoID
 
-instance HasMetaInfo Note        where metaInfoType = MetaNote
 instance HasMetaInfo Discussion  where metaInfoType = MetaDiscussion
 instance HasMetaInfo Statement   where metaInfoType = MetaStatement
 instance HasMetaInfo Group       where metaInfoType = MetaGroup

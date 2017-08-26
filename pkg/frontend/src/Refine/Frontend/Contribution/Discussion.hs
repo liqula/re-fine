@@ -31,7 +31,7 @@ discussion = mkView "Discussion" $ \props -> case props ^. discPropsDiscussion o
   Left _ -> "Loading..."
   Right disc -> do
     aboutText_ ( props ^. discPropsAboutText
-               , ContribIDDiscussion $ disc ^. discussionMetaID . miID
+               , ContribIDDiscussion False $ disc ^. discussionMetaID . miID
                )
     if props ^. discPropsFlatView
       then statementList

@@ -59,8 +59,9 @@ spec = do
       let _newVDoc :: CompositeVDoc
           _newVDoc = CompositeVDoc
             (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1) (ID 1) mempty)
-            (Edit (MetaID 1 un) un un un (sampleMetaID ^. miID) sampleRawContent1 un mempty mempty mempty)
-            mempty mempty mempty
+            (Edit (MetaID 1 un) un un un (sampleMetaID ^. miID) sampleRawContent1 un mempty mempty)
+            mempty
+            mempty
             where
               un = undefined
 

@@ -25,7 +25,7 @@ import           Refine.Frontend.Util
 
 
 cnid :: Int64 -> ContributionID
-cnid = ContribIDNote . ID
+cnid = ContribIDDiscussion True . ID
 
 
 spec :: Spec

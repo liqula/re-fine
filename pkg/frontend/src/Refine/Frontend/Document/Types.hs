@@ -158,9 +158,9 @@ mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
     mkMarkSty :: MarkID -> [Decl]
     mkMarkSty MarkCurrentSelection  = bg 255 255 0 0.3
     mkMarkSty (MarkContribution x _) = case x of
-      ContribIDNote _       -> bg   0 255 0 0.3
-      ContribIDDiscussion _ -> bg   0 255 0 0.3
-      ContribIDEdit _       -> bg   0 255 0 0.3
+      ContribIDDiscussion True  _ -> bg   0 255 0 0.3
+      ContribIDDiscussion False _ -> bg   0 255 0 0.3
+      ContribIDEdit _             -> bg   0 255 0 0.3
 
     bg :: Int -> Int -> Int -> Double -> [Decl]
     bg r g b a = ["background" `decl` Color.RGBA r g b a]

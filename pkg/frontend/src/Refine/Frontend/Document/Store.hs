@@ -68,7 +68,7 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _
                     (DocumentStateDiff _ e r _ _ _)
   = pure $ DocumentStateView e r
 
-documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDDiscussion did)))
+documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDDiscussion _ did)))
                     _oldgs
                     (DocumentStateView _ _)
   = pure $ DocumentStateDiscussion (did, Nothing)

@@ -48,9 +48,9 @@ instance Arbitrary ContributionID where
 
 arbitraryContribIDConstructor :: Gen (Int -> ContributionID)
 arbitraryContribIDConstructor = elements
-  [ ContribIDNote       . ID . fromIntegral . abs
-  , ContribIDDiscussion . ID . fromIntegral . abs
-  , ContribIDEdit       . ID . fromIntegral . abs
+  [ ContribIDDiscussion True  . ID . fromIntegral . abs
+  , ContribIDDiscussion False . ID . fromIntegral . abs
+  , ContribIDEdit             . ID . fromIntegral . abs
   ]
 
 instance Arbitrary MarkID where
