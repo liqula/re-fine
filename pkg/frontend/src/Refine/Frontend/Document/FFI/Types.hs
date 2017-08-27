@@ -10,7 +10,6 @@ module Refine.Frontend.Document.FFI.Types
   ) where
 #include "import_frontend.hs"
 
-import           GHC.Generics (Generic)
 import           GHCJS.Marshal (FromJSVal, ToJSVal)
 import           GHCJS.Types (JSVal)
 import           System.IO.Unsafe (unsafePerformIO)

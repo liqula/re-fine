@@ -7,7 +7,6 @@ module Refine.Frontend.Store.Types where
 import           Control.Concurrent.MVar
 import           System.IO.Unsafe
 import           Data.Text.I18n
-import           GHC.Generics (Generic)
 
 import Refine.Common.Types
 import Refine.Common.VDoc.Draft (rawContentFromCompositeVDoc)

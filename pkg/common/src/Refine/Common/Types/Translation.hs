@@ -8,7 +8,6 @@ module Refine.Common.Types.Translation where
 import Control.Lens (Getter, makeLenses, to)
 import Data.String (IsString(..))
 import Data.Text.I18n as I18n (Locale(..), L10n, Msgid(..), Context)
-import GHC.Generics (Generic)
 
 import Refine.Prelude.Aeson (NoJSONRep(..))
 

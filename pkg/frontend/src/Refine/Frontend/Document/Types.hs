@@ -4,7 +4,6 @@
 module Refine.Frontend.Document.Types where
 #include "import_frontend.hs"
 
-import           GHC.Generics (Generic)
 import           Language.Css.Build hiding (s)
 import           Language.Css.Syntax hiding (Value)
 

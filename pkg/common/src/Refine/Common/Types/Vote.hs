@@ -4,8 +4,6 @@
 module Refine.Common.Types.Vote where
 #include "import_common.hs"
 
-import GHC.Generics (Generic)
-
 import Refine.Common.Types.Prelude (ID, User)
 
 

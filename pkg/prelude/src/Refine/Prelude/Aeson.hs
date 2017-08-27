@@ -13,7 +13,7 @@ import           Data.Void
 import           Data.Aeson
 import           Data.String.Conversions
 import qualified Generics.SOP as SOP
-import           GHC.Generics
+import           GHC.Generics (Generic)
 
 newtype NoJSONRep a = NoJSONRep { _unNoJSONRep :: a }
   deriving (Eq, Functor, Generic)

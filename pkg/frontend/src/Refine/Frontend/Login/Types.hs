@@ -3,8 +3,6 @@
 module Refine.Frontend.Login.Types where
 #include "import_frontend.hs"
 
-import GHC.Generics (Generic)
-
 
 -- | FormError can be Nothing or Just an error string.
 type FormError = Maybe ST

@@ -4,8 +4,6 @@
 module Refine.Frontend.MainMenu.Types where
 #include "import_frontend.hs"
 
-import GHC.Generics (Generic)
-
 import React.Flux.Missing
 import Refine.Common.Types
 import Refine.Common.Rest (ApiError)

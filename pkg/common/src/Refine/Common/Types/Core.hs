@@ -28,8 +28,6 @@ import           Data.Char
 import           Data.Either (isLeft)
 import           Data.List (group)
 import           Data.Tree
-import           Data.String.Conversions (ST, cs, (<>))
-import           GHC.Generics (Generic)
 import           Text.Read (readEither)
 import           Web.HttpApiData (toUrlPiece, parseUrlPiece, ToHttpApiData(..), FromHttpApiData(..))
 

@@ -4,7 +4,6 @@
 module Refine.Frontend.Header.Types where
 #include "import_frontend.hs"
 
-import GHC.Generics (Generic)
 import Refine.Common.Types
 import Refine.Frontend.Login.Types
 
