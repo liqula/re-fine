@@ -2,8 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.Test.AppRunner where
-
-import Refine.Backend.Prelude
+#include "import.hs"
 
 import Test.Hspec
 import Test.QuickCheck

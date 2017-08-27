@@ -4,10 +4,7 @@
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
 module Refine.Backend.App.Group where
-
-import Refine.Backend.Prelude
-
-import qualified Data.Set as Set
+#include "import.hs"
 
 import           Refine.Backend.App.Access
 import           Refine.Backend.App.Core

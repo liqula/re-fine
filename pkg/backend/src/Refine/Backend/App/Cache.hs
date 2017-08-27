@@ -9,12 +9,9 @@ module Refine.Backend.App.Cache
   ( startWebSocketServer
   , resetWebSocketMVar
   ) where
-
-import Refine.Backend.Prelude as P
+#include "import.hs"
 
 import           Control.Concurrent
-import qualified Data.Map as Map
-import qualified Data.Set as Set
 import           Network.Wai (Middleware)
 import           System.IO.Unsafe
 import           Network.WebSockets

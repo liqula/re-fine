@@ -2,13 +2,11 @@
 #include "language.hs"
 
 module Refine.Backend.Database.TreeSpec where
-
-import Refine.Backend.Prelude
+#include "import.hs"
 
 import           Data.Tree
 import           Test.Hspec
 import           Test.QuickCheck
-import qualified Data.Map as Map
 
 import Refine.Backend.Database.Tree (buildTree)
 

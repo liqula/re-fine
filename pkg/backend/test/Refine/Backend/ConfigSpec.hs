@@ -2,13 +2,10 @@
 #include "language.hs"
 
 module Refine.Backend.ConfigSpec where
+#include "import.hs"
 
-import Refine.Backend.Prelude
-
-import qualified Data.Aeson as Aeson
-import           Test.Hspec
-
-import           Refine.Backend.Config
+import Test.Hspec
+import Refine.Backend.Config
 
 
 spec :: Spec

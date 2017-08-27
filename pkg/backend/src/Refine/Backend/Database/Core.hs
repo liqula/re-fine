@@ -2,13 +2,11 @@
 #include "language.hs"
 
 module Refine.Backend.Database.Core where
-
-import Refine.Backend.Prelude
+#include "import.hs"
 
 import Database.Persist.Sql hiding (Filter)
 
 import Refine.Common.Types.Prelude (ID(..), User)
-import Refine.Prelude.TH (makeRefineType)
 
 
 type SQLM = ReaderT SqlBackend IO

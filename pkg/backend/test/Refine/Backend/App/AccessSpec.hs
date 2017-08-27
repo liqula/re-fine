@@ -2,12 +2,10 @@
 #include "language.hs"
 
 module Refine.Backend.App.AccessSpec where
-
-import Refine.Backend.Prelude
+#include "import.hs"
 
 import           Control.Concurrent.MVar
 import           Data.Either (isRight)
-import qualified Data.Tree as Tree
 import qualified Network.Wai.Test.Internal as Wai
 import           Test.Hspec
 import           System.Process (system)

@@ -2,14 +2,11 @@
 #include "language.hs"
 
 module Refine.Backend.WebSocketSpec where
-
-import Refine.Backend.Prelude
+#include "import.hs"
 
 import Control.Concurrent
 import Control.Concurrent.Async
 import Data.Set (findMin)
-import qualified Data.Set as Set
-import qualified Data.Tree as Tree
 import Network.Wai.Handler.Warp
 import Network.WebSockets
 import System.Random

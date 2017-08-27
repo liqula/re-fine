@@ -3,8 +3,8 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Refine.Backend.App.Core (
-    MkDBNat
+module Refine.Backend.App.Core
+  ( MkDBNat
   , DBRunner(..)
   , DBConnection(..)
   , AppContext(..)
@@ -28,23 +28,20 @@ module Refine.Backend.App.Core (
   , MonadLog(appLogL), appLog
   , MonadCache(..)
   ) where
-
-import Refine.Backend.Prelude
+#include "import.hs"
 
 import           Control.Exception
 import qualified Web.Users.Types as Users
 import qualified Web.Users.Persistent as Users
 
 import {-# SOURCE #-} Refine.Backend.App.Smtp
-import Refine.Common.Access
-import Refine.Common.Rest
 import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.Logger
 import Refine.Backend.Types
+import Refine.Common.Access
+import Refine.Common.Rest
 import Refine.Common.Types as Types
-import Refine.Prelude (leftToError)
-import Refine.Prelude.TH (makeRefineType)
 
 
 newtype UserHandleError

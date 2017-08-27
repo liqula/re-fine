@@ -4,13 +4,10 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Backend.Database.Entity where
+#include "import.hs"
 
-import Refine.Backend.Prelude as P hiding (get)
-
-import           Database.Persist (get)
+import qualified Database.Persist as Persist
 import           Database.Persist.Sql (SqlBackend, fromSqlKey, toSqlKey)
-import qualified Data.Set as Set
-import qualified Data.Map as Map
 import           Lentil.Core (entityLens)
 import           Lentil.Types as L
 import qualified Web.Users.Persistent as Users
@@ -23,7 +20,6 @@ import           Refine.Backend.Database.Tree
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
 import qualified Refine.Common.OT as OT
-import           Refine.Prelude (nothingToError, Timestamp, getCurrentTimestamp)
 
 -- FIXME: Generate this as the part of the lentil library.
 type instance S.EntityRep MetaInfo   = S.MetaInfo
@@ -72,7 +68,7 @@ unique errmsg _   = notUnique errmsg
 getEntityRep :: (ToBackendKey SqlBackend (S.EntityRep e), Typeable e)
              => ID e -> DB (S.EntityRep e)
 getEntityRep eid = do
-  e <- liftDB . get $ S.idToKey eid
+  e <- liftDB . Persist.get $ S.idToKey eid
   maybe (idNotFound eid) pure e
 
 -- | Access the key like field in an entity and convert the key value
@@ -83,7 +79,7 @@ getEntityRep eid = do
 -- >>> foreignKeyField S.PCEdit    (Entity pcid (S.PC pid cid)) == pid
 foreignKeyField
   :: ToBackendKey SqlBackend (S.EntityRep a)
-  => (b -> Key (S.EntityRep a)) -> P.Entity b -> ID a
+  => (b -> Key (S.EntityRep a)) -> Persist.Entity b -> ID a
 foreignKeyField column = S.keyToId . column . entityVal
 
 -- NOTES: How to handle associations? What to update, what to keep?
@@ -164,7 +160,7 @@ addConnection
     => (Key (S.EntityRep a) -> Key (S.EntityRep b) -> record) -> ID a -> ID b -> DB ()
 addConnection t rid mid = void . liftDB . insert $ t (S.idToKey rid) (S.idToKey mid)
 
-getMetaInfo :: HasMetaInfo a => ID a -> DB (P.Entity (S.EntityRep MetaInfo))
+getMetaInfo :: HasMetaInfo a => ID a -> DB (Persist.Entity (S.EntityRep MetaInfo))
 getMetaInfo ida = fromMaybe (error $ "no meta info for " <> show (metaInfoType ida)) <$> do
   liftDB . getBy $ S.UniMetaInfo (metaInfoType ida)
 
@@ -365,7 +361,7 @@ discussionOfStatement sid = do
 vdocOfDiscussion :: ID Discussion -> DB (ID VDoc)
 vdocOfDiscussion did = do
   opts <- dbSelectOpts
-  ((editOfDiscussion :: P.Entity S.PD) : _) <- liftDB $ selectList [S.PDDiscussion ==. S.idToKey did] opts
+  ((editOfDiscussion :: Persist.Entity S.PD) : _) <- liftDB $ selectList [S.PDDiscussion ==. S.idToKey did] opts
   let eid :: ID Edit = (S.pDElim (\i _ -> S.keyToId i) . entityVal) editOfDiscussion
   view editVDoc <$> getEdit eid
 

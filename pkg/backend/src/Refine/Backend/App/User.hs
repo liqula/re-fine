@@ -5,10 +5,8 @@
 
 -- | FIXME: is this module redundant to the users package?  should we make better use of the latter?
 module Refine.Backend.App.User where
+#include "import.hs"
 
-import Refine.Backend.Prelude
-
-import qualified Data.Set as Set
 import qualified Web.Users.Types as Users
 
 import Refine.Backend.App.Access
@@ -20,8 +18,8 @@ import Refine.Backend.Config
 import Refine.Backend.Types
 import Refine.Backend.Database.Class (createMetaID_, getMetaID)
 import Refine.Backend.Database.Entity (toUserID, fromUserID)
-import Refine.Common.Types as Common
 import qualified Refine.Common.Access.Policy as AP
+import Refine.Common.Types as Common
 import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 
 

@@ -1,8 +1,8 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
 module Refine.Backend.Logger where
+#include "import.hs"
 
-import Refine.Backend.Prelude
 import Refine.Backend.Config
 
 newtype Logger = Logger { unLogger :: String -> IO () }

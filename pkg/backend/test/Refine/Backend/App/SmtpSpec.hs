@@ -2,6 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.App.SmtpSpec where
+#include "import.hs"
 
 import           Test.Hspec
 

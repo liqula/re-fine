@@ -1,16 +1,13 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
 
-module Refine.Backend.Test.Util
-where
-
-import Refine.Backend.Prelude
+module Refine.Backend.Test.Util where
+#include "import.hs"
 
 import           System.IO.Temp (withSystemTempDirectory)
 import           System.Directory (withCurrentDirectory)
 import           Data.Time.Format (parseTimeOrError, defaultTimeLocale)
 
-import Refine.Prelude (Timestamp(..))
 import Refine.Common.Types
 
 

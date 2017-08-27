@@ -2,11 +2,9 @@
 #include "language.hs"
 
 module Refine.Backend.Config where
-
-import Refine.Backend.Prelude
+#include "import.hs"
 
 import qualified Data.Yaml as Yaml
-import qualified Generics.SOP as SOP
 import           Network.Wai.Handler.Warp as Warp
 
 import Refine.Common.Types.Config

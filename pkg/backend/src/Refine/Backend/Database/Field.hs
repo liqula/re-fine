@@ -4,8 +4,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Backend.Database.Field where
-
-import Refine.Backend.Prelude
+#include "import.hs"
 
 import           Control.Monad ((<=<))
 import           Database.Persist.Sql

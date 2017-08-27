@@ -2,12 +2,9 @@
 #include "language.hs"
 
 module Refine.Backend.Database.Types where
-
-import Refine.Backend.Prelude
+#include "import.hs"
 
 import           Refine.Common.Types
-import           Refine.Prelude.TH (makeRefineType)
-import           Data.List.NonEmpty (NonEmpty)
 import qualified Refine.Common.OT as OT
 
 

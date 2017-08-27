@@ -2,8 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.Database.Class where
-
-import Refine.Backend.Prelude
+#include "import.hs"
 
 import qualified Web.Users.Persistent as Users
 

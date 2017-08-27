@@ -11,8 +11,7 @@ module Refine.Backend.App.Smtp
     -- re-exports
   , Address(..)
   ) where
-
-import Refine.Backend.Prelude
+#include "import.hs"
 
 import qualified Data.ByteString as SBS
 import           Network.Mail.Mime (Address(Address), sendmailCustomCaptureOutput, simpleMail', renderMail)

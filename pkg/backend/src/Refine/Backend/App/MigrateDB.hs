@@ -2,8 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.App.MigrateDB where
-
-import Refine.Backend.Prelude
+#include "import.hs"
 
 import Refine.Backend.Config
 import Refine.Backend.App

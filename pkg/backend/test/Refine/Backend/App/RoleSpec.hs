@@ -1,8 +1,7 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
 module Refine.Backend.App.RoleSpec where
-
-import Refine.Backend.Prelude
+#include "import.hs"
 
 import Test.Hspec
 import Test.QuickCheck

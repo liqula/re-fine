@@ -4,15 +4,9 @@
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
 module Refine.Backend.App.Translation where
+#include "import.hs"
 
-import Refine.Backend.Prelude
-
-import Control.Lens (view)
-import Control.Monad (join, unless)
-import Control.Monad.Except (throwError)
-import Control.Monad.Reader (asks)
-import Data.Map as Map (filterWithKey)
-import Data.String.Conversions (cs)
+import Data.Map (filterWithKey)
 import Data.Text.I18n.Po
 
 import Refine.Backend.App.Core
