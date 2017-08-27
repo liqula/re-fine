@@ -4,8 +4,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.StoreSpec where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import Data.Aeson (encode)
 import React.Flux (transform)

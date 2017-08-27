@@ -4,10 +4,10 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.Orphans where
+#include "import_frontend.hs"
 
 import System.IO.Unsafe (unsafePerformIO)
 
-import Refine.Frontend.Prelude
 import Refine.Common.Types
 
 

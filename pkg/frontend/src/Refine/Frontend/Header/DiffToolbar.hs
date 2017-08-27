@@ -2,18 +2,15 @@
 #include "language.hs"
 
 module Refine.Frontend.Header.DiffToolbar where
-
-import Refine.Frontend.Prelude
-
-import qualified Data.Map as Map
+#include "import_frontend.hs"
 
 import Refine.Common.Types
+import Refine.Frontend.Access
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Icon
 import Refine.Frontend.Store.Types
-import Refine.Frontend.Access
 
 
 diffToolbar_ :: HasCallStack => DiffToolbarProps -> ReactElementM eventHandler ()

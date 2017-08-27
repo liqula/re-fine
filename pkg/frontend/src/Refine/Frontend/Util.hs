@@ -3,15 +3,11 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Refine.Frontend.Util
-where
-
-import Refine.Frontend.Prelude
+module Refine.Frontend.Util where
+#include "import_frontend.hs"
 
 import Data.List (groupBy)
 
-import qualified Data.Aeson
-import qualified Data.JSString as JSS
 import Language.Css.Build
 import Language.Css.Pretty
 import Language.Css.Syntax
@@ -55,7 +51,7 @@ style :: [Decl] -> PropertyOrHandler h
 style = ("style" @@=)
 
 
-declsToJSON :: HasCallStack => [Decl] -> Data.Aeson.Value
+declsToJSON :: HasCallStack => [Decl] -> Aeson.Value
 declsToJSON = object . map (\(Decl _mprio n a) -> (cs (prettyPrint n) .:= prettyPrint a))
 
 

@@ -5,7 +5,6 @@ module Refine.Frontend.Prelude
   , module Refine.Frontend.Prelude
   ) where
 
-import Data.JSString as P ()  -- @instance IsString JSString@, mostly
 import GHCJS.Foreign.Callback as P (Callback, asyncCallback)
 import GHCJS.Marshal as P
 import GHCJS.Marshal.Pure as P

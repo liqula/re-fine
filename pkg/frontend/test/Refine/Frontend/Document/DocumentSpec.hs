@@ -1,17 +1,11 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
 
-module Refine.Frontend.Document.DocumentSpec
-where
+module Refine.Frontend.Document.DocumentSpec where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude hiding (property)
-
-import Data.List.NonEmpty (NonEmpty((:|)))
-import qualified Data.List.NonEmpty as NEL
-import qualified Data.Map as Map
 import Test.Hspec
-import Test.QuickCheck
-import React.Flux.Outdated as Outdated
+import Test.QuickCheck as QuickCheck
 
 import Refine.Common.Test.Arbitrary
 import Refine.Common.Types
@@ -31,12 +25,12 @@ import Refine.Frontend.Test.Store
 spec :: Spec
 spec = do
   describe "convertToRaw, convertFromRaw" $ do
-    it "are isomorphic" . property . forAll (scale (`div` 4) arbitrary) $ \(sanitizeRawContent -> rawContent) -> do
+    it "are isomorphic" . QuickCheck.property . forAll (scale (`div` 4) arbitrary) $ \(sanitizeRawContent -> rawContent) -> do
       -- TUNING: i suspect that this test is so slow because of 'sanitizeRawContent'.
       let f = convertToRaw . convertFromRaw
       sanitizeRawContent (f rawContent) `shouldBe` sanitizeRawContent rawContent
 
-    it "are isomorphic @SLOW" . property $ \(sanitizeRawContent -> rawContent) -> do
+    it "are isomorphic @SLOW" . QuickCheck.property $ \(sanitizeRawContent -> rawContent) -> do
       let f = convertToRaw . convertFromRaw
       sanitizeRawContent (f rawContent) `shouldBe` sanitizeRawContent rawContent
 
@@ -71,11 +65,11 @@ spec = do
 
   describe "selectors" $ do
     describe "getEntitySelectors" $ do
-      it "works" . property $ \(RawContentWithSelections _rc _sels) -> do
+      it "works" . QuickCheck.property $ \(RawContentWithSelections _rc _sels) -> do
         pending
 
     describe "getLeafSelectors" $ do
-      it "works (between RawContent and DOM)" . property $ \rc -> do
+      it "works (between RawContent and DOM)" . QuickCheck.property $ \rc -> do
         pendingWith "#370"
         let msels :: [(MarkID, Range LeafSelector)]
             msels = Map.toList (getLeafSelectors rc) >>= \(cid, rs) -> (,) cid <$> unRanges rs
@@ -101,7 +95,7 @@ spec = do
 
     describe "SelectionState" $ do
       checkJSValJSON (Proxy @SelectionState)
-      it "refine$createSelectionState (called by refine$getDraftSelectionStateViaBrowser) cooperates with FromJSVal" . property $ \v -> do
+      it "refine$createSelectionState (called by refine$getDraftSelectionStateViaBrowser) cooperates with FromJSVal" . QuickCheck.property $ \v -> do
         v' <- fromJSVal $ js_createSelectionState
               (v ^. unSelectionState . selectionRange . rangeBegin . blockIndex . to (cs . _unBlockKey))
               (v ^. unSelectionState . selectionRange . rangeBegin . columnIndex)
@@ -147,11 +141,11 @@ spec = do
       wrapper <- shallow $ document_ (mkTestProps emptyRawContent)
       lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` 1
 
-    it "renders with arbitrary content" . property . forAll (scale (`div` 4) arbitrary) $ \rawContent -> do
+    it "renders with arbitrary content" . QuickCheck.property . forAll (scale (`div` 4) arbitrary) $ \rawContent -> do
       wrapper <- shallow $ document_ (mkTestProps rawContent)
       lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` 1
 
-    it "renders with arbitrary content @SLOW" . property $ \rawContent -> do
+    it "renders with arbitrary content @SLOW" . QuickCheck.property $ \rawContent -> do
       wrapper <- shallow $ document_ (mkTestProps rawContent)
       lengthOfIO (find wrapper (StringSelector ".editor_wrapper")) `shouldReturn` 1
 
@@ -248,13 +242,13 @@ spec = do
 
 -- * helpers
 
-documentWithoutCb :: Outdated.ReactView DocumentProps
-documentWithoutCb = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig { Outdated.lRender = documentRender }
+documentWithoutCb :: React.ReactView DocumentProps
+documentWithoutCb = React.defineLifecycleView "Document" () React.lifecycleConfig { React.lRender = documentRender }
 
 -- | For the test cases we run here, we want to avoid crashes in the @lComponentDidMount@ callback,
 -- so we define this slightly sloppy document component.
 documentWithoutCb_ :: DocumentProps -> ReactElementM eventHandler ()
-documentWithoutCb_ prps = Outdated.view documentWithoutCb prps mempty
+documentWithoutCb_ prps = React.view documentWithoutCb prps mempty
 
 
 -- * ffi

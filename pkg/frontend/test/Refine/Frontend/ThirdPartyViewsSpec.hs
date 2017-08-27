@@ -2,11 +2,11 @@
 #include "language.hs"
 
 module Refine.Frontend.ThirdPartyViewsSpec where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
+import Test.Hspec
 import Refine.Frontend.Test.Enzyme
 import Refine.Frontend.ThirdPartyViews
-import Test.Hspec
 
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 

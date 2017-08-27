@@ -55,8 +55,7 @@ module Refine.Frontend.Icon.Types
   , iconButtonPropsOnClickMods
   , iconButtonPropsExtraClasses
   ) where
-
-import Refine.Frontend.Prelude hiding (S, fn)
+#include "import_frontend.hs"
 
 import Language.Css.Syntax hiding (S)
 import Language.Css.Build hiding (ex, s)
@@ -142,7 +141,7 @@ instance Css BackgroundImage where
 
 -- | work-around for @instance Css BackgroundImage@.
 iconCssClass :: HasCallStack => BackgroundImage -> JSString
-iconCssClass (BackgroundImage fn st) = mconcat ["icon-", cs fn, "_", renderState st]
+iconCssClass (BackgroundImage fname st) = mconcat ["icon-", cs fname, "_", renderState st]
     where
       renderState BisRO     = "RO"
       renderState BisBright = "bright"

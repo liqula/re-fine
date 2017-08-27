@@ -2,16 +2,11 @@
 #include "language.hs"
 
 module Refine.Frontend.MainMenu.Component where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import           Control.Lens (ALens', cloneLens)
-import qualified Data.Text as ST
-import qualified Data.Map as Map
 import           Language.Css.Syntax
 
 import           React.Flux.Missing
-import qualified Refine.Common.Access.Policy as AP
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Access

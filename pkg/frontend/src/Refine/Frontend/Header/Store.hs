@@ -1,17 +1,15 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
 
-
 module Refine.Frontend.Header.Store
   ( headerStateUpdate
   ) where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import Refine.Frontend.Contribution.Types
+import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Store.Types
-import Refine.Frontend.Document.Types
 
 
 headerStateUpdate :: HasCallStack => GlobalAction -> HeaderState -> HeaderState

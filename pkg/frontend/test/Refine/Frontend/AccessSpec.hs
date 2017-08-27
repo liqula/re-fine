@@ -4,6 +4,7 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 
 module Refine.Frontend.AccessSpec where
+#include "import_frontend.hs"
 
 import Test.Hspec
 import Refine.Frontend.Access ()

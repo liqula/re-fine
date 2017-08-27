@@ -2,12 +2,9 @@
 #include "language.hs"
 
 module Refine.Frontend.Contribution.Store where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import qualified Data.Map.Strict as M
 import           React.Flux.Missing
-
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
@@ -92,7 +89,7 @@ quickCreateShowStateUpdate act st = case act of
       QuickCreateBlocked   -> QuickCreateNotShown
 
 allVerticalSpanBoundsUpdate :: HasCallStack => ContributionAction -> AllVerticalSpanBounds -> AllVerticalSpanBounds
-allVerticalSpanBoundsUpdate (SetAllVerticalSpanBounds positions) = allVerticalSpanBounds .~ M.fromList positions
+allVerticalSpanBoundsUpdate (SetAllVerticalSpanBounds positions) = allVerticalSpanBounds .~ Map.fromList positions
 allVerticalSpanBoundsUpdate _ = id
 
 bubblePositioningUpdate :: HasCallStack => ContributionAction -> BubblePositioning -> BubblePositioning

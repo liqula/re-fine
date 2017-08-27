@@ -2,10 +2,8 @@
 #include "language.hs"
 
 module Refine.Frontend.Login.Component where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import qualified Data.Text as ST
 import           Language.Css.Syntax
 
 import           Refine.Common.Types.Prelude

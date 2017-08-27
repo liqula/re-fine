@@ -4,14 +4,11 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.Store where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import           Control.Concurrent
-import qualified Data.Map as Map
 
 import           Refine.Common.Types hiding (CreateUser, Login)
-import qualified Refine.Common.Types as C
 import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
@@ -96,7 +93,7 @@ transformGlobalState = transf
         DocumentAction (DocumentSave (FormBegin EditIsNotInitial)) -> scrollToCurrentSelection (st ^. gsContributionState)
         LoadVDoc _                                                 -> liftIO js_scrollToPageTop  -- FIXME: #416.
         HeaderAction ScrollToPageTop                               -> liftIO js_scrollToPageTop
-        HeaderAction (ScrollToBlockKey (C.BlockKey k))             -> liftIO . js_scrollToBlockKey $ cs k
+        HeaderAction (ScrollToBlockKey (Common.BlockKey k))        -> liftIO . js_scrollToBlockKey $ cs k
 
         ShowNotImplementedYet -> do
             liftIO $ windowAlertST "not implemented yet."
@@ -136,7 +133,7 @@ flushCacheMisses = do
     sendTS msg
     consoleLogJSStringM "WS" . cs $ show msg
 
-editIDUpdate :: GlobalAction -> Maybe (ID C.VDoc) -> Maybe (ID C.VDoc)
+editIDUpdate :: GlobalAction -> Maybe (ID Common.VDoc) -> Maybe (ID Common.VDoc)
 editIDUpdate (LoadVDoc cvd) _ = Just cvd
 editIDUpdate _ st = st
 
@@ -228,21 +225,21 @@ emitBackendCallsFor act st = case act of
     ContributionAction (SubmitComment (CommentInfo text kind)) -> do
       let headEdit = fromMaybe (error "emitBackendCallsFor.SubmitComment") . join
                    $ st ^. to gsEditID'
-          range    = st ^? gsCurrentSelection . _Just . C.selectionRange
+          range    = st ^? gsCurrentSelection . _Just . Common.selectionRange
 
       sendTS $ case kind of
-        CommentKindDiscussion -> TSAddDiscussion headEdit $ C.CreateDiscussion text range False
-        CommentKindNote ->       TSAddDiscussion headEdit $ C.CreateDiscussion text range True
+        CommentKindDiscussion -> TSAddDiscussion headEdit $ Common.CreateDiscussion text range False
+        CommentKindNote ->       TSAddDiscussion headEdit $ Common.CreateDiscussion text range True
 
       dispatchAndExec $ DocumentAction UpdateDocumentStateView
 
     DocumentAction (DocumentSave (FormBegin EditIsInitial))
       -> do
         let DocumentStateEdit editorState _ (Just baseEdit) = st ^. gsDocumentState
-            cedit = C.CreateEdit
-                  { C._createEditDesc        = "initial content"
-                  , C._createEditVDocVersion = getCurrentRawContent editorState
-                  , C._createEditKind        = C.Initial
+            cedit = Common.CreateEdit
+                  { Common._createEditDesc        = "initial content"
+                  , Common._createEditVDocVersion = getCurrentRawContent editorState
+                  , Common._createEditKind        = Common.Initial
                   }
 
         sendTS $ TSAddEditAndMerge baseEdit cedit
@@ -251,13 +248,13 @@ emitBackendCallsFor act st = case act of
     DocumentAction (DocumentSave (FormComplete info))
       | DocumentStateEdit editorState _ baseEdit_ <- st ^. gsDocumentState
       -> do
-        let baseEdit :: C.ID C.Edit
+        let baseEdit :: Common.ID Common.Edit
             (baseEdit:_) = catMaybes [baseEdit_, st ^? to gsEditID' . _Just . _Just]
 
-            cedit = C.CreateEdit
-                  { C._createEditDesc        = info ^. editInfoDesc
-                  , C._createEditVDocVersion = getCurrentRawContent editorState
-                  , C._createEditKind        = info ^. editInfoKind
+            cedit = Common.CreateEdit
+                  { Common._createEditDesc        = info ^. editInfoDesc
+                  , Common._createEditVDocVersion = getCurrentRawContent editorState
+                  , Common._createEditKind        = info ^. editInfoKind
                   }
 
         sendTS $ TSAddEdit baseEdit cedit
@@ -295,21 +292,23 @@ instance Dispatchable GlobalAction where
 -- for (2) for looking at the DOM for the position data.
 getRangeAction :: (HasCallStack, MonadIO m) => RawContent -> m (Maybe ContributionAction)
 getRangeAction rc = do
-  esel :: Either String C.SelectionState <- runExceptT getDraftSelectionStateViaBrowser
+  esel :: Either String Common.SelectionState <- runExceptT getDraftSelectionStateViaBrowser
   case esel of
     Left err -> do
       consoleLogJSONM "getRangeSelection: error" err
       pure $ Just ClearRange
-    Right sel | rangeIsEmpty rc . C._selectionRange $ C.fromSelectionState rc sel -> do
+    Right sel | rangeIsEmpty rc . Common._selectionRange $ Common.fromSelectionState rc sel -> do
       pure $ Just ClearRange
     Right sel -> Just . SetRange <$> do
       topOffset    <- liftIO js_getRangeTopOffset
       bottomOffset <- liftIO js_getRangeBottomOffset
       scrollOffset <- liftIO js_getScrollOffset
-      let doctop = scrollOffset + if sel ^. C.unSelectionState . C.selectionIsBackward then topOffset else bottomOffset
+      let doctop = scrollOffset + if sel ^. Common.unSelectionState . Common.selectionIsBackward
+                                  then topOffset
+                                  else bottomOffset
 
       pure SelectionStateWithPx
-        { _sstSelectionState = C.fromSelectionState rc sel
+        { _sstSelectionState = Common.fromSelectionState rc sel
         , _sstDocTopOffset   = OffsetFromDocumentTop  doctop
         , _sstTopOffset      = OffsetFromViewportTop  topOffset
         , _sstBottomOffset   = OffsetFromViewportTop  bottomOffset

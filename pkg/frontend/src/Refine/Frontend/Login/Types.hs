@@ -1,10 +1,8 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
 module Refine.Frontend.Login.Types where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import Data.String.Conversions (ST)
 import GHC.Generics (Generic)
 
 

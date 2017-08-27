@@ -4,15 +4,10 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.Contribution.Types where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import           Control.DeepSeq
-import qualified Data.HashMap.Strict as HashMap
-import           Data.List.NonEmpty (NonEmpty((:|)))
-import qualified Data.List.NonEmpty as NonEmpty
-import qualified Data.Map.Strict as Map
-import           Language.Css.Syntax hiding (Value)
+import Control.DeepSeq
+import Language.Css.Syntax hiding (Value)
 
 import React.Flux.Missing
 import Refine.Common.Types
@@ -280,7 +275,7 @@ cropToBlocks rnge = toRawContent . prune . fromRawContent
 
 -- | FIXME: where should we move this?  (also move the test cases if you move this!)
 blockIndices :: RawContent -> [BlockIndex]
-blockIndices (RawContent blocks _) = zipWith BlockIndex [0..] . fmap (view blockKey) . NonEmpty.toList $ blocks
+blockIndices (RawContent blocks _) = zipWith BlockIndex [0..] . fmap (view blockKey) . NEL.toList $ blocks
 
 
 -- * instances

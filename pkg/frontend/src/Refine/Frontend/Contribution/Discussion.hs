@@ -4,26 +4,23 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.Contribution.Discussion (discussion_) where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import qualified Data.Map.Strict as M
-import qualified Data.Tree as Tree
 import           Data.Foldable (toList)
 import           Language.Css.Syntax
 
-import           Refine.Common.Types hiding (Style)
 import           React.Flux.Missing
-import           Refine.Frontend.Contribution.Types
+import           Refine.Common.Types
+import           Refine.Frontend.Access
 import           Refine.Frontend.Contribution.Dialog
-import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
+import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.ThirdPartyViews (editor_)
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
-import           Refine.Frontend.Access
 
 
 discussion :: HasCallStack => View '[DiscussionProps]
@@ -148,7 +145,7 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
       _ -> Nothing
 
     showUser names = \case
-      UserID i  -> fromMaybe (cs . show $ cacheMiss (CacheKeyUser i) i i) $ M.lookup i names
+      UserID i  -> fromMaybe (cs . show $ cacheMiss (CacheKeyUser i) i i) $ Map.lookup i names
       UserIP ip -> ip
       Anonymous -> "anonymous"
 

@@ -2,8 +2,7 @@
 #include "language.hs"
 
 module Refine.Frontend.Types where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import Refine.Common.Types
 import React.Flux.Missing

@@ -2,14 +2,10 @@
 #include "language.hs"
 
 module Refine.Frontend.Store.Types where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import           Control.Concurrent.MVar
 import           System.IO.Unsafe
-import qualified Data.Map as Map
-import qualified Data.Set as Set
-import           Data.String.Conversions (ST)
 import           Data.Text.I18n
 import           GHC.Generics (Generic)
 
@@ -18,7 +14,6 @@ import Refine.Common.VDoc.Draft (rawContentFromCompositeVDoc)
 import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
--- import Refine.Frontend.Login.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types

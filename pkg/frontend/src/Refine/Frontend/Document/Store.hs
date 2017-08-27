@@ -5,13 +5,10 @@ module Refine.Frontend.Document.Store
   ( documentStateUpdate
   , setAllVerticalSpanBounds
   ) where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import qualified Data.Map as Map
-
-import           Refine.Common.Types
 import           React.Flux.Missing
+import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI

@@ -1,8 +1,7 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
 module Refine.Frontend.MainMenu.Store where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Store.Types (GlobalAction(..))

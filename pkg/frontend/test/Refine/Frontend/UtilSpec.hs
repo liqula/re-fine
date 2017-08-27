@@ -2,16 +2,10 @@
 #include "language.hs"
 
 module Refine.Frontend.UtilSpec where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import Test.Hspec
-
-import Refine.Prelude ()
 import Refine.Frontend.Util
--- import Language.Css.Build
--- import Language.Css.Build.Idents
--- import Language.Css.Pretty
 import Language.Css.Syntax
 
 

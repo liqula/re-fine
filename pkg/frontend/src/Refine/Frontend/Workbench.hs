@@ -7,20 +7,14 @@
 -- browser.  Or move old components here temporarily to play with them.  It's ok for this module to
 -- look at bit disorganised for now.
 module Refine.Frontend.Workbench where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import           Web.HttpApiData (toUrlPiece)
 
 import           Refine.Common.Types
-import qualified Refine.Frontend.Store as RS
-import qualified Refine.Frontend.Store.Types as RS
-import           Refine.Prelude ()
 import qualified Refine.Prelude.BuildInfo as BuildInfo
 
-import           Language.Css.Build
-import           Language.Css.Syntax
-import           Refine.Frontend.Colors as Color
+import           Refine.Frontend.Colors
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Login.Component
@@ -50,9 +44,9 @@ workbench_ = view_ workbench "Workbench_"
 draftBox_ :: HasCallStack => ReactElementM handler () -> ReactElementM handler ()
 draftBox_ = div_ ["style" @@= styles]
   where
-    styles = [ decl "border" [Ident "dashed", Ident "black", Ident "2px"]
-             , decl "padding" [Px 30]
-             , decl "margin" [Px 10]
+    styles = [ decl "border" [Css.Ident "dashed", Css.Ident "black", Css.Ident "2px"]
+             , decl "padding" [Css.Px 30]
+             , decl "margin" [Css.Px 10]
              ]
 
 

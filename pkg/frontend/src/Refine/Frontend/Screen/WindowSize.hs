@@ -2,14 +2,13 @@
 #include "language.hs"
 
 module Refine.Frontend.Screen.WindowSize (WindowSizeProps(..), windowSize_) where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import           React.Flux.Outdated as RF
 import           GHCJS.Foreign.Callback (Callback, asyncCallback)
+import           React.Flux.Outdated
 
 import           Refine.Frontend.Screen.Types
-import           Refine.Frontend.Store()
+import           Refine.Frontend.Store ()
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Console (weAreInDevMode)
 
@@ -42,7 +41,7 @@ willUnmount = do
   js_windowRemoveEventListener "resize" cb
 
 windowSize_ :: HasCallStack => WindowSizeProps -> ReactElementM eventHandler () -> ReactElementM eventHandler ()
-windowSize_ = RF.view windowSize
+windowSize_ = React.view windowSize
 
 setWindowSize :: HasCallStack => IO ()
 setWindowSize = do

@@ -2,10 +2,7 @@
 #include "language.hs"
 
 module Refine.Frontend.Views.Types where
-
-import Refine.Frontend.Prelude
-
-import           Control.Lens (makeLenses)
+#include "import_frontend.hs"
 
 import           Refine.Common.Types (MarkID, Discussion, Edit)
 import           Refine.Frontend.Contribution.Types (AllVerticalSpanBounds, BubblePositioning, QuickCreateShowState)

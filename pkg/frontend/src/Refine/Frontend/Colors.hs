@@ -3,13 +3,9 @@
 
 -- | translation of @.../scss/0-settings/_settings.colors.scss@.  (keep in sync, or remove the scss one!)
 module Refine.Frontend.Colors where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import Data.List (intercalate)
-
-import qualified Language.Css.Build as Css
-import qualified Language.Css.Syntax as Css
 
 
 data RGBA = RGBA Int Int Int Double

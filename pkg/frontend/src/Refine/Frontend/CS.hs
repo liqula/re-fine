@@ -3,8 +3,7 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Refine.Frontend.CS
-where
+module Refine.Frontend.CS where
 
 import Refine.Common.Prelude
 

@@ -14,8 +14,7 @@ module Refine.Frontend.Test.Console
   , windowAlertST
   )
 where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 
 consoleLogJSStringM :: HasCallStack => (Monad m) => JSString -> JSString -> m ()

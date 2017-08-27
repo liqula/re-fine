@@ -7,8 +7,7 @@ module Refine.Frontend.ThirdPartyViews
   , hammer_
   , editor_
   ) where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 
 type ThirdPartyView eventHandler = [PropertyOrHandler eventHandler] -> ReactElementM eventHandler () -> ReactElementM eventHandler ()

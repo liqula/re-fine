@@ -2,11 +2,9 @@
 #include "language.hs"
 
 module Refine.Frontend.ViewsSpec where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import           Test.Hspec
-
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Views
 

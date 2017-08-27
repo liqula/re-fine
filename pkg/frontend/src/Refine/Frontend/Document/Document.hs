@@ -1,7 +1,6 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
 
-
 module Refine.Frontend.Document.Document
   ( document
   , document_
@@ -12,17 +11,15 @@ module Refine.Frontend.Document.Document
     -- * for testing only
   , documentRender
   ) where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import qualified React.Flux.Outdated as Outdated
-import           Language.Css.Syntax hiding (Value)
-import           React.Flux.Internal (HandlerArg(HandlerArg))
+import Language.Css.Syntax hiding (Value)
+import React.Flux.Internal (HandlerArg(HandlerArg))
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.OT (showEditAsRawContentWithMarks, hideUnchangedParts)
-import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Contribution.Discussion
+import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Store()
@@ -37,11 +34,11 @@ import           Refine.Frontend.Util
 -- https://github.com/facebook/draft-js/issues/690#issuecomment-282824570 for details.)  Our
 -- approach is to listen to onMouseEnd, onTouchUp, on the surrounding article_ tag, and recovering
 -- the draft coordinates (block keys, block offsets) in 'getDraftSelectionStateViaBrowser'.
-document :: HasCallStack => Outdated.ReactView DocumentProps
-document = Outdated.defineLifecycleView "Document" () Outdated.lifecycleConfig
-  { Outdated.lRender = documentRender
-  , Outdated.lComponentDidMount = Just $ \this _ _ -> documentComponentDidMountOrUpdate this
-  , Outdated.lComponentDidUpdate = Just $ \this _ _ _ _ -> documentComponentDidMountOrUpdate this
+document :: HasCallStack => React.ReactView DocumentProps
+document = React.defineLifecycleView "Document" () React.lifecycleConfig
+  { React.lRender = documentRender
+  , React.lComponentDidMount = Just $ \this _ _ -> documentComponentDidMountOrUpdate this
+  , React.lComponentDidUpdate = Just $ \this _ _ _ _ -> documentComponentDidMountOrUpdate this
   }
 
 documentRender :: HasCallStack => () -> DocumentProps -> ReactElementM ('StatefulEventHandlerCode st) ()
@@ -128,12 +125,12 @@ editorOnFocus :: Event -> FocusEvent -> EventHandlerTypeWithMods 'EventHandlerCo
 editorOnFocus _ _ = ([], [])
 
 
-documentComponentDidMountOrUpdate :: HasCallStack => Outdated.LPropsAndState DocumentProps () -> IO ()
+documentComponentDidMountOrUpdate :: HasCallStack => React.LPropsAndState DocumentProps () -> IO ()
 documentComponentDidMountOrUpdate _getPropsAndState = do
   dispatchAndExec . ContributionAction $ RequestSetAllVerticalSpanBounds
 
 document_ :: HasCallStack => DocumentProps -> ReactElementM eventHandler ()
-document_ props = Outdated.viewWithSKey document "document" props mempty
+document_ props = React.viewWithSKey document "document" props mempty
 
 
 emptyEditorProps :: HasCallStack => [PropertyOrHandler handler]

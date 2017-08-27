@@ -1,14 +1,10 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
 
-
 module Refine.Frontend.Screen.Store
   ( screenStateUpdate
   ) where
-
-import Refine.Frontend.Prelude
-
-import           Control.Lens ((&), (%~))
+#include "import_frontend.hs"
 
 import Refine.Frontend.Screen.Types
 

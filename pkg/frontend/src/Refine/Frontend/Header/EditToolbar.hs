@@ -2,21 +2,20 @@
 #include "language.hs"
 
 module Refine.Frontend.Header.EditToolbar where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import           Refine.Common.Types
-import           Refine.Common.VDoc.OT (docRanges)
 import           Refine.Common.VDoc.Draft
+import           Refine.Common.VDoc.OT (docRanges)
+import           Refine.Frontend.Access
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
-import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Icon
+import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
-import           Refine.Frontend.Access
 
 
 mkEditToolbarProps :: HasCallStack => Maybe Edit -> EditorState -> EditToolbarProps

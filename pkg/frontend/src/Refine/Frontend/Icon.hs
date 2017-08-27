@@ -17,8 +17,7 @@ module Refine.Frontend.Icon
   , IconButtonPropsOnClick(..)
   , defaultIconButtonProps
   ) where
-
-import Refine.Frontend.Prelude hiding (fn)
+#include "import_frontend.hs"
 
 import Language.Css.Syntax
 

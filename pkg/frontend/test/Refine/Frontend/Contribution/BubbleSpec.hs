@@ -2,16 +2,12 @@
 #include "language.hs"
 
 module Refine.Frontend.Contribution.BubbleSpec where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude hiding (property)
-
-import           Control.Lens ((^.), (&), (.~))
 import           Data.Int (Int64)
-import qualified Data.List.NonEmpty as NEL
-import           Data.List.NonEmpty (NonEmpty((:|)))
 import           Language.Css.Syntax
 import           Test.Hspec
-import           Test.QuickCheck
+import           Test.QuickCheck as QuickCheck
 
 import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Bubble
@@ -127,7 +123,7 @@ spec = do
     describe "properties" $ do
       let sanitize = fmap (\(i, j) -> (abs i, 1 + abs j))
 
-      it "sorts its input on absolute position; does not lose or add components" . property $ \cmps_ -> do
+      it "sorts its input on absolute position; does not lose or add components" . QuickCheck.property $ \cmps_ -> do
         let cmps = sanitize cmps_
             stacked = stackComponents fst snd cmps
             unstack [] = []
@@ -135,7 +131,7 @@ spec = do
             unstack (Stack (a :| as) : xs) = a : as <> unstack xs
         unstack stacked `shouldBe` sortBy (compare `on` fst) cmps
 
-      it "only stacks overlappers (and stacks are never empty)" . property $ \cmps_ -> do
+      it "only stacks overlappers (and stacks are never empty)" . QuickCheck.property $ \cmps_ -> do
         let cmps = sanitize cmps_
             stacked = stackComponents fst snd cmps
         forM_ stacked $ \case
@@ -149,7 +145,7 @@ spec = do
             -- @p' `shouldSatisfy` (<= p + h)@ is not necessary: the previous stack item may overlap
             -- with the next one even if this one does not.
 
-      it "keeps non-overlappers single" . property $ \(cmp_, cmps_) -> do
+      it "keeps non-overlappers single" . QuickCheck.property $ \(cmp_, cmps_) -> do
         let cmps = sanitize (cmp_ : cmps_)
             stacked = stackComponents fst snd cmps
             minPos (NoStack c) = fst c

@@ -2,10 +2,9 @@
 #include "language.hs"
 
 module Refine.Frontend.Test.Marshal where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude hiding (property)
-
-import Test.QuickCheck
+import Test.QuickCheck as QuickCheck
 import Test.Hspec
 import Data.Aeson (encode, eitherDecode)
 
@@ -16,21 +15,21 @@ checkJSValJSON :: forall proxy a.
 checkJSValJSON proxy = describe ("checkJSValJSON: " <> show (typeOf proxy)) $ do
   let debugMode :: Bool = False
 
-  it "hs.ToJSON -> hs.FromJSON" . property $ \(v :: a) -> do
+  it "hs.ToJSON -> hs.FromJSON" . QuickCheck.property $ \(v :: a) -> do
     eitherDecode (encode v) `shouldBe` Right v
 
-  it "hs.ToJSVal -> hs.FromJSVal" . property $ \(v :: a) -> do
+  it "hs.ToJSVal -> hs.FromJSVal" . QuickCheck.property $ \(v :: a) -> do
     v' <- toJSVal v
     v'' <- fromJSVal v'
     v'' `shouldBe` Just v
 
-  it "hs.ToJSON -> js.JSON.parse -> hs.FromJSVal" . property $ \(v :: a) -> do
+  it "hs.ToJSON -> js.JSON.parse -> hs.FromJSVal" . QuickCheck.property $ \(v :: a) -> do
     when debugMode $ do
       liftIO . print . js_jsonStringify debugMode =<< toJSVal v
     v' <- fromJSVal . js_jsonParse debugMode . cs . encode $ v
     v' `shouldBe` Just v
 
-  it "hs.ToJSVal -> js.JSON.stringify -> hs.FromJSON" . property $ \(v :: a) -> do
+  it "hs.ToJSVal -> js.JSON.stringify -> hs.FromJSON" . QuickCheck.property $ \(v :: a) -> do
     v' <- eitherDecode . cs . js_jsonStringify debugMode <$> toJSVal v
     v' `shouldBe` Right v
 

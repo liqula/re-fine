@@ -2,12 +2,9 @@
 #include "language.hs"
 
 module Refine.Frontend.Header.Types where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import qualified Data.Set as Set
-import           GHC.Generics (Generic)
-
+import GHC.Generics (Generic)
 import Refine.Common.Types
 import Refine.Frontend.Login.Types
 

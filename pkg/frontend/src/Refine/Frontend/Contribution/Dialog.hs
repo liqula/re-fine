@@ -4,16 +4,12 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.Contribution.Dialog where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import qualified Data.Map.Strict as M
-import qualified Data.Text as ST
 import           Language.Css.Syntax
-import qualified React.Flux as RF
 
-import           Refine.Common.Types hiding (Style)
 import           React.Flux.Missing
+import           Refine.Common.Types
 import           Refine.Frontend.Test.Console (gracefulError)
 import           Refine.Frontend.ThirdPartyViews (skylight_)
 import           Refine.Frontend.Contribution.Types
@@ -82,8 +78,8 @@ addContributionDialogFrame title mrange windowWidth child =
                       , decl "height" (Px 560)
                       ]
     in skylight_ ["isVisible" &= True
-             , RF.on "onCloseClicked"   $ \_ -> simpleHandler $ dispatch (ContributionAction HideCommentEditor)
-             , RF.on "onOverlayClicked" $ \_ -> simpleHandler $ dispatch (ContributionAction HideCommentEditor)
+             , React.on "onCloseClicked"   $ \_ -> simpleHandler $ dispatch (ContributionAction HideCommentEditor)
+             , React.on "onOverlayClicked" $ \_ -> simpleHandler $ dispatch (ContributionAction HideCommentEditor)
              , "dialogStyles" @@= (addCommentDialogStyles <> extraStyles)
              , "overlayStyles" @@= overlayStyles
              , "titleStyle" @@= [decl "margin" (Px 0)]
@@ -143,8 +139,8 @@ showComment = mkView "ShowComment" $ \props ->
                     , decl "minHeight" (Px 100)
                     ]
   in skylight_ ["isVisible" &= True
-           , RF.on "onCloseClicked"   $ \_ -> simpleHandler $ dispatch (ContributionAction HideContributionDialog)
-           , RF.on "onOverlayClicked" $ \_ -> simpleHandler $ dispatch (ContributionAction HideContributionDialog)
+           , React.on "onCloseClicked"   $ \_ -> simpleHandler $ dispatch (ContributionAction HideContributionDialog)
+           , React.on "onOverlayClicked" $ \_ -> simpleHandler $ dispatch (ContributionAction HideContributionDialog)
            , "dialogStyles" @@= ((props ^. cdpContentStyle) <> extraStyles)
            , "overlayStyles" @@= overlayStyles
            , "closeButtonStyle" @@= [decl "top" (Px 0), decl "bottom" (Px 0)]
@@ -172,7 +168,7 @@ showComment = mkView "ShowComment" $ \props ->
                          [ContributionAction $ ToggleVoteOnContribution (ContribIDDiscussion True $ props ^. cdpNoteId) Yeay]
                      & ibListKey .~ "vote_up"
                      & ibSize .~ XLarge
-                     & ibLabel .~ cs (show . fromMaybe 0 . M.lookup Yeay $ props ^. cdpVotes)
+                     & ibLabel .~ cs (show . fromMaybe 0 . Map.lookup Yeay $ props ^. cdpVotes)
                      -- ["className" $= "c-vdoc-overlay-votes__button c-vdoc-overlay-votes__btn-vote-up"]
                      -- IconProps "c-vdoc-overlay-votes"
 
@@ -180,7 +176,7 @@ showComment = mkView "ShowComment" $ \props ->
                          [ContributionAction $ ToggleVoteOnContribution (ContribIDDiscussion True $ props ^. cdpNoteId) Nay]
                      & ibListKey .~ "vote_down"
                      & ibSize .~ XLarge
-                     & ibLabel .~ cs (show . fromMaybe 0 . M.lookup Nay $ props ^. cdpVotes)
+                     & ibLabel .~ cs (show . fromMaybe 0 . Map.lookup Nay $ props ^. cdpVotes)
                      -- ["className" $= "c-vdoc-overlay-votes__button c-vdoc-overlay-votes__btn-vote-down"]
                      -- IconProps "c-vdoc-overlay-votes"
         -- END: vote buttons -->
@@ -191,7 +187,7 @@ showComment_ :: HasCallStack => CommentDisplayProps -> ReactElementM eventHandle
 showComment_ = view_ showComment "showComment_"
 
 
-showNoteProps :: HasCallStack => M.Map (ID Discussion) Discussion -> GlobalState -> Maybe ShowNoteProps
+showNoteProps :: HasCallStack => Map.Map (ID Discussion) Discussion -> GlobalState -> Maybe ShowNoteProps
 showNoteProps notes rs = case (maybeNote, maybeOffset) of
   (Just note, Just offset) -> Just $ ShowNoteProps note offset
                                      (rs ^. gsScreenState . ssWindowWidth)
@@ -203,7 +199,7 @@ showNoteProps notes rs = case (maybeNote, maybeOffset) of
   where
     maybeContribID = rs ^. gsContributionState . csDisplayedContributionID
     maybeNoteID :: Maybe (ID Discussion) = getDiscussionID =<< maybeContribID
-    maybeNote = (`M.lookup` notes) =<< maybeNoteID
+    maybeNote = (`Map.lookup` notes) =<< maybeNoteID
     maybeOffset = do
       nid <- maybeNoteID
       rs ^? gsContributionState . csAllVerticalSpanBounds . allVerticalSpanBounds
@@ -219,7 +215,7 @@ showNote = mkView "ShowNote" $ \case
         iconStyle1    = ("icon-Note", "dark")
         user          = note ^. discussionMetaID . miMeta . metaCreatedBy
         userName1 = case user of
-          UserID i -> cs . fromMaybe (cacheMiss (CacheKeyUser i) (cs $ show i) i) $ M.lookup i usernames
+          UserID i -> cs . fromMaybe (cacheMiss (CacheKeyUser i) (cs $ show i) i) $ Map.lookup i usernames
           _ -> cs $ show user
         votes = votesToCount $ note ^. discussionVotes
         creationDate1 = showTime $ note ^. discussionMetaID . miMeta . metaCreatedAt

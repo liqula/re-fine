@@ -1,7 +1,6 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
 
-
 module Refine.Frontend.Document.FFI.Types
   ( EditorState(..)
   , ContentState(..)
@@ -9,8 +8,7 @@ module Refine.Frontend.Document.FFI.Types
   , LeafSelectorSide(..)
   , renderLeafSelectorSide
   ) where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import           GHC.Generics (Generic)
 import           GHCJS.Marshal (FromJSVal, ToJSVal)
@@ -18,7 +16,6 @@ import           GHCJS.Types (JSVal)
 import           System.IO.Unsafe (unsafePerformIO)
 
 import           Refine.Frontend.Util ((===))
-import           Refine.Prelude.Aeson (NoJSONRep(NoJSONRep))
 
 
 -- | Javascript representation of editor state.  It looks something like this:

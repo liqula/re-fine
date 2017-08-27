@@ -2,7 +2,6 @@
 #include "language.hs"
 
 module Refine.Common.WebSocket where
-
 #include "import_common.hs"
 
 import Refine.Common.Rest (ApiError)

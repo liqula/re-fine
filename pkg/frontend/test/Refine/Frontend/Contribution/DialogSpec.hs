@@ -2,8 +2,7 @@
 #include "language.hs"
 
 module Refine.Frontend.Contribution.DialogSpec where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import           Test.Hspec
 

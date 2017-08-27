@@ -2,8 +2,7 @@
 #include "language.hs"
 
 module Refine.Frontend.MainMenu.Types where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import GHC.Generics (Generic)
 

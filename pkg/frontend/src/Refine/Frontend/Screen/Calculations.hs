@@ -2,8 +2,7 @@
 #include "language.hs"
 
 module Refine.Frontend.Screen.Calculations where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import           Refine.Frontend.Types
 import           Refine.Frontend.Screen.Types

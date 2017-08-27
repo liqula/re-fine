@@ -2,10 +2,7 @@
 #include "language.hs"
 
 module Refine.Frontend.Screen.Types where
-
-import Refine.Frontend.Prelude
-
-import GHC.Generics (Generic)
+#include "import_frontend.hs"
 
 
 data ScreenAction =

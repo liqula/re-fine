@@ -2,18 +2,15 @@
 #include "language.hs"
 
 module Refine.Frontend.Header.DiscussionToolbar where
-
-import           Refine.Frontend.Prelude
-
-import qualified Data.Map as Map
+#include "import_frontend.hs"
 
 import           Refine.Common.Types
+import           Refine.Frontend.Access
+import           Refine.Frontend.Contribution.Types
+import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.Document.Types
-import           Refine.Frontend.Contribution.Types
-import           Refine.Frontend.Access
 
 -- FUTUREWORK: this should probably be a component, but if we do the obvious minimal change to
 -- introduce a @View '[]@, the styling breaks completely.  note that this does not fix #376 either.

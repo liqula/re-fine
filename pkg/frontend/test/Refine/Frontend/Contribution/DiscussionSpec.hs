@@ -4,11 +4,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.Contribution.DiscussionSpec where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import           Data.List.NonEmpty (NonEmpty((:|)))
-import qualified Data.List.NonEmpty as NonEmpty
 import           Data.Tree
 import           Test.Hspec
 
@@ -78,8 +75,8 @@ spec = do
       it "works." $ do
         forM_ interestingRanges $ \r -> do
           let bkeys = fmap (view blockKey) . view rawContentBlocks $ cropToBlocks r rc
-          NonEmpty.head bkeys `shouldBe` r ^. rangeBegin . blockIndex . blockIndexKey
-          NonEmpty.last bkeys `shouldBe` r ^. rangeEnd . blockIndex . blockIndexKey
+          NEL.head bkeys `shouldBe` r ^. rangeBegin . blockIndex . blockIndexKey
+          NEL.last bkeys `shouldBe` r ^. rangeEnd . blockIndex . blockIndexKey
 
     describe "discussionProps" $ do
       it "gives you exactly the blocks overlapped by the discussion range." $ do
