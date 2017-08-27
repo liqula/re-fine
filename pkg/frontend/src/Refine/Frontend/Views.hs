@@ -33,7 +33,6 @@ import           Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 import           Refine.Frontend.Views.Types
-import qualified Refine.Frontend.Workbench
 import           Refine.Frontend.Store (flushCacheMisses)
 
 
@@ -48,8 +47,7 @@ wholeScreen_ accessState props = React.viewWithSKey wholeScreen "wholeScreen" (p
 wholeScreen :: React.ReactView (GlobalState, AccessState)
 wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
   { React.lRender = \() (gs, as) ->
-    if False {- set conditional to 'True' to switch to workbench. -} then Refine.Frontend.Workbench.workbench_ gs else
-    case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
+     case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
       Nothing  -> mainScreen_ (gs, as)
       Just tab -> mainMenu_ $ MainMenuProps
                             (mapMainMenuTab
