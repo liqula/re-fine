@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 -- | translation of @.../scss/0-settings/_settings.colors.scss@.  (keep in sync, or remove the scss one!)
 module Refine.Frontend.Colors where

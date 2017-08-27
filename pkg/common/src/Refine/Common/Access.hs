@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 
 module Refine.Common.Access
   ( module Refine.Common.Access

@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 module Refine.Common.Prelude (module P, (.:=)) where
 
 import Data.Aeson as P hiding ((.=))

@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 module Refine.Frontend.Contribution.DialogSpec where
 #include "import_frontend.hs"

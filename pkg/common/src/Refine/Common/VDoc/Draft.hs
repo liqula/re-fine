@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 
 module Refine.Common.VDoc.Draft where

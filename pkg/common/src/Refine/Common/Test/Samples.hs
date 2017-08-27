@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 
 module Refine.Common.Test.Samples where
 #include "import_common.hs"

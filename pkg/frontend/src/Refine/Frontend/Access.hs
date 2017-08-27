@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 {-# OPTIONS_GHC -Wno-orphans #-}
 module Refine.Frontend.Access where
 #include "import_frontend.hs"

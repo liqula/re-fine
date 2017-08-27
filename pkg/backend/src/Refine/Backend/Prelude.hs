@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 module Refine.Backend.Prelude (module P) where
 
 import Database.Persist as P hiding (get, insertBy)

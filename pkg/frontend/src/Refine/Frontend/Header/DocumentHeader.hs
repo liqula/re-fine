@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 

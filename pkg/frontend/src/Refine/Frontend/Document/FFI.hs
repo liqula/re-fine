@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 -- | some random draft.js resources: https://github.com/nikgraf/awesome-draft-js,
 -- https://github.com/draft-js-plugins/draft-js-plugins/blob/master/FAQ.md,

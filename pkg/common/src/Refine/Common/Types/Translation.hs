@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 {-# OPTIONS_GHC -fno-warn-orphans -fno-warn-redundant-constraints #-}
 
 module Refine.Common.Types.Translation where

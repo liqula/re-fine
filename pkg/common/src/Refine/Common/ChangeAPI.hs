@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 
 -- | This module mostly exists to resolve an import cycle between "Refine.Common.Types.Role" and
 -- "Refine.Common.Types.Group".

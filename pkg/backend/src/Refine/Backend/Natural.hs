@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 module Refine.Backend.Natural (cnToSn, natThrowError, (.), ($$)) where
 #include "import_backend.hs"

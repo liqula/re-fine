@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 module Refine.Frontend.Prelude
   ( module P
   , module Refine.Frontend.Prelude

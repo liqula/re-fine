@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 module Refine.Backend.Database.TreeSpec where
 #include "import_backend.hs"
