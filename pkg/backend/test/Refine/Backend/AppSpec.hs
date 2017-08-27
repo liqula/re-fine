@@ -68,7 +68,10 @@ spec = do
         liftIO $ userState2 `shouldBe` UserLoggedOut
 
   describe "Database handling" . around provideAppRunner $ do
-    it "one app is one transaction (and rolls back on AppError." $ \(runner :: AppM DB () -> IO ()) -> do
+    it "one app is one transaction (and rolls back on AppError)." $ \(runner :: AppM DB () -> IO ()) -> do
+
+      pendingWith "#424"
+
       mem :: MVar (ID Group) <- newEmptyMVar
       let transaction1 = do
             liftIO . putMVar mem . view groupID =<< addGroup (CreateGroup mempty mempty mempty mempty mempty)

@@ -38,7 +38,7 @@ createDBNat cfg = do
        , destroyAllResources pool
        )
   where
-    -- runLoggerT = runStderrLoggingT  -- for lots of debug output
+    -- runLoggerT = runStderrLoggingT  -- for lots of debug output, but no better error messages
     runLoggerT = runNoLoggingT
 
     sqliteDb = case cfg ^. cfgDBKind of
@@ -67,9 +67,9 @@ createDBNat cfg = do
                              onException
                                (restore (runInIO $ runReaderT r conn))
                                (restore (connRollback conn' getter))
-        , dbCommit = do control $ \runInIO -> mask $ \restore -> do
-                          restore $ connCommit conn' getter
-                          runInIO $ pure ()
+        , dbCommit = control $ \runInIO -> mask $ \restore -> do
+                       restore $ connCommit conn' getter
+                       runInIO $ pure ()
         }
 
 data DBConnection = DBConnection
