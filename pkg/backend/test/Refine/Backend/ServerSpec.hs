@@ -38,19 +38,19 @@ specMockedLogin :: Spec
 specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
   describe "sGetVDoc" $ do
     it "retrieves a vdoc" $ \sess -> do
-      vdoc <- runDB sess $ App.createVDoc sampleCreateVDoc
+      vdoc <- runDB sess $ App.createVDoc sampleCreateVDoc0
       resp <- runWai sess . wget $ getVDocUri (vdoc ^. vdocID)
       respCode resp `shouldBe` 200
 
   describe "sCreateVDoc" $ do
     it "stores a vdoc in the db" $ \sess -> do
-      fe :: VDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
+      fe :: VDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc0
       be :: VDoc <- runDB  sess $ getVDoc (fe ^. vdocID)
       fe `shouldBe` be
 
   describe "sUpdateVDoc" $ do
     it "stores new title, abstract in vdoc in the db" $ \sess -> do
-      bef :: VDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
+      bef :: VDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc0
       let vid = bef ^. vdocID
           newabstract = Abstract "newabs"
           newtitle = Title "newtitle"
@@ -69,7 +69,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
       runWai sess $ do
         un :: User <- postJSON loginUri $ Login testUsername testPassword
         liftIO $ (un ^. userName) `shouldBe` testUsername
-        fe_ :: VDoc <- postJSON createVDocUri sampleCreateVDoc
+        fe_ :: VDoc <- postJSON createVDocUri sampleCreateVDoc0
         let cp1 = Position (BlockIndex 0 $ BlockKey "0") 0
             cp2 = Position (BlockIndex 0 $ BlockKey "0") 1
         fn_ :: Discussion          <- postJSON
@@ -83,7 +83,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
       runWai sess $ do
         un :: User <- postJSON loginUri $ Login testUsername testPassword
         liftIO $ (un ^. userName) `shouldBe` testUsername
-        fe_ :: VDoc <- postJSON createVDocUri sampleCreateVDoc
+        fe_ :: VDoc <- postJSON createVDocUri sampleCreateVDoc0
         let cp1 = Position (BlockIndex 1 $ BlockKey "1") 0
             cp2 = Position (BlockIndex 1 $ BlockKey "1") 1
         fn_ :: Discussion <- postJSON
@@ -95,7 +95,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
           be ^. editDiscussions' . to Set.elems `shouldContain` [fn_ ^. discussionID]
 
     it "fails with error on non-trivial *invalid* chunk range" $ \sess -> do
-      vdoc :: VDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc
+      vdoc :: VDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc0
       resp :: SResponse <- runWai sess $
         let cp1, cp2 :: Position
             cp1 = Position (BlockIndex 1 $ BlockKey "1") 0
@@ -117,7 +117,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
       runWai sess $ do
         un :: User <- postJSON loginUri $ Login testUsername testPassword
         liftIO $ (un ^. userName) `shouldBe` testUsername
-        fe_ :: VDoc <- postJSON createVDocUri sampleCreateVDoc
+        fe_ :: VDoc <- postJSON createVDocUri sampleCreateVDoc0
         let cp1 = Position (BlockIndex 0 $ BlockKey "1") (0 :: Int)
             cp2 = Position (BlockIndex 0 $ BlockKey "1") 1
         fn_ :: Discussion <-
@@ -139,7 +139,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
          group <- fmap (^. groupID) . runDB sess $ App.addGroup (CreateGroup "title" "desc" [] [] mempty)
          runWai sess $ do
           _l :: User <- postJSON loginUri (Login testUsername testPassword)
-          fc :: VDoc <- postJSON createVDocUri sampleCreateVDoc
+          fc :: VDoc <- postJSON createVDocUri sampleCreateVDoc0
 
           userId <- liftIO . runDB sess $ do
             (Just loginId) <- dbUsersCmd $ \db_ -> Users.getUserIdByName db_ testUsername
@@ -393,7 +393,7 @@ specSmtp = describe "smtp" . around (createTestSessionWith addTestUserAndLogin) 
   -- the other edit getting rebased.
   let itNotifiesOnRebase msg trigger = it msg $ \sess -> do
         oldHead :: ID Edit
-          <- mkEdit sess  -- saves sampleCreateVDoc
+          <- mkEdit sess  -- saves sampleCreateVDoc0
         firstEdit :: Edit
           <- runWai sess $ postJSON (addEditUri oldHead) (CreateEdit "1st" sampleCreateVDocE1 Grammar)
         () <- trigger sess oldHead
@@ -414,6 +414,9 @@ specSmtp = describe "smtp" . around (createTestSessionWith addTestUserAndLogin) 
     pure ()
 
   itNotifiesOnRebase "when my discussion gets rebased, i get an email" $ \sess base -> do
+
+    pendingWith "#424"
+
     let cp1 = Position (BlockIndex 0 $ BlockKey "1") (0 :: Int)
         cp2 = Position (BlockIndex 0 $ BlockKey "1") 1
     _firstDiscussion :: Discussion

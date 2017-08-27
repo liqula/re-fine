@@ -15,12 +15,5 @@ import Refine.Common.Types.Prelude (ID, User)
 setUserSession :: ID User -> UserSession -> App ()
 setUserSession user session = appUserState .= UserLoggedIn user session
 
-currentUserSession :: App UserSession
-currentUserSession = do
-  u <- gets (view appUserState)
-  case u of
-    UserLoggedOut    -> throwError AppUserNotLoggedIn
-    UserLoggedIn _ s -> pure s
-
 clearUserSession :: App ()
 clearUserSession = appUserState .= UserLoggedOut

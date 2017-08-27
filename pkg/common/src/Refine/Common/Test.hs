@@ -2,7 +2,7 @@
 #include "language.hs"
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Refine.Common.Test (module P, passes, failsOn) where
+module Refine.Common.Test (module P, passes, failsOn, thisException) where
 
 import Refine.Common.Prelude
 
@@ -21,3 +21,9 @@ passes = True `shouldBe` True
 
 failsOn :: HasCallStack => Show a => a -> Expectation
 failsOn a = show a `shouldBe` "something else"
+
+thisException :: Show e => e -> SomeException -> Bool
+thisException e (SomeException e') = es == es'
+  where
+    es = show e
+    es' = take (length es) $ show e'

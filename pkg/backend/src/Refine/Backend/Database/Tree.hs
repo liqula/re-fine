@@ -21,7 +21,9 @@ buildTree parent key xs = node root
 
     children v = fromMaybe [] $ Map.lookup (key v) childrenMap
 
-    root = fromMaybe (error "buildTree: no root is found") . listToMaybe $ filter (isNothing . parent) xs
+    root = case filter (isNothing . parent) xs of
+      [x] -> x
+      _ -> assert False $ error "buildTree: internal error."
 
     childrenMap =
       Map.unionsWith (++) -- O(m*log(n/m + 1))

@@ -44,12 +44,15 @@ runApp
                        (Either ApiError a)
         -> ExceptT ApiError IO a
       runSR action = do
-        let almost :: ExceptT AppError IO (Either ApiError a)
+        -- construct *almost* the shape we need:
+        let almost :: ExceptT AppError{- made impossible by 'tryApp' -} IO (Either ApiError a)
             almost = unDBRunner dbrunner $ \dbc -> do
               dbInit dbc
               let cmd = evalStateT action $ initialAppState cfg
                   ctx = (dbNat, AppContext dbc logger cfg)
               (cmd `runReaderT` ctx) `finally` dbCommit dbc
+
+        -- twist the shape of 'almost' so the error falls into the right place:
         ExceptT $ runExceptT almost >>=
           either (error "impossible")              -- made impossible by 'tryApp'
             (either (pure . Left) (pure . Right))  -- this is where 'tryApp' has left the 'ApiError'.

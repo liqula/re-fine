@@ -7,6 +7,7 @@
 -- protocol module, perhaps we should rename it.)
 module Refine.Backend.App.Cache
   ( startWebSocketServer
+  , resetWebSocketMVar
   ) where
 
 import Refine.Backend.Prelude as P
@@ -30,6 +31,9 @@ import Refine.Backend.App.Translation as App
 import Refine.Backend.Config
 import Refine.Backend.Database
 
+
+
+
 type WebSocketMVar = MVar (Int{-to generate fresh CacheIds-}, Map WSSessionId WebSocketSession)
 type WebSocketSession = ((Connection, MVar AppState), Set CacheKey)
 
@@ -38,6 +42,36 @@ type WebSocketSession = ((Connection, MVar AppState), Set CacheKey)
 {-# NOINLINE webSocketMVar #-}
 webSocketMVar :: WebSocketMVar
 webSocketMVar = unsafePerformIO $ newMVar (0, mempty)
+
+-- FIXME: Without 'resetWebSocketMVar', the tests in 'WebSocketSpec' hang.  This means that there is
+-- a 'takeMVar' without the corresponding 'putMVar' somewhere, probably because the server is killed
+-- unexpectedly, or because some exception is still not handled right.  Note that this should not be
+-- a production issue (in production, server shutdown means unix process termination).
+--
+-- A quote from the package docs:
+--
+-- MVars offer more flexibility than IORefs, but less flexibility than STM. They are appropriate for
+-- building synchronization primitives and performing simple interthread communication; however they
+-- are very simple and susceptible to race conditions, deadlocks or uncaught exceptions. Do not use
+-- them if you need perform larger atomic operations such as reading from multiple variables: use
+-- STM instead.
+-- [http://hackage.haskell.org/package/base-4.10.0.0/docs/Control-Concurrent-MVar.html]
+resetWebSocketMVar :: IO ()
+resetWebSocketMVar = tryTakeMVar webSocketMVar >> putMVar webSocketMVar (0, mempty)
+
+openWsConn :: Config -> Connection -> IO WSSessionId
+openWsConn cfg conn = do
+  appState <- newMVar $ initialAppState cfg
+  modifyMVar webSocketMVar $ \(n, cmap) -> do
+    let n' = n + 1
+        cmap' = Map.insert n ((conn, appState), mempty) cmap
+    pure ((n', cmap'), n)
+
+closeWsConn :: WSSessionId -> IO ()
+closeWsConn n = do
+  modifyMVar webSocketMVar $ \(n_, cmap) ->do
+    pure ((n_, Map.delete n cmap), ())
+
 
 sendMessage :: Connection -> ToClient -> IO ()
 sendMessage conn msg = sendTextData conn (cs $ encode msg :: ST)
@@ -78,17 +112,27 @@ startWebSocketServer cfg toIO = websocketsOr options server
     server pendingconnection = do
       conn <- acceptRequest pendingconnection
       pingLoop toIO conn
-      clientId <- handshake cfg conn
+      let logger :: LogLevel -> String -> IO ()
+          logger level = void . toIO . appLogL level
+      clientId <- handshake cfg conn logger
       forever (cmdLoopStepFrame toIO clientId (cmdLoopStep conn clientId)
-                `catch` (\e -> handleAllErrors cfg conn clientId e
-                                `catch` \e'@(SomeException _) -> wserror . WSErrorResetFailed $ show e'))
+                `catch` handleAllErrors cfg conn logger clientId)
+        `catch` giveUp conn logger clientId  -- FUTUREWORK: handle exceptions during inital handshake?
 
-handleAllErrors :: Config -> Connection -> WSSessionId -> SomeException -> IO ()
-handleAllErrors cfg conn clientId e = do
-  () <- wserror . WSErrorUnknownError . show $ e
+handleAllErrors :: Config -> Connection -> (LogLevel -> String -> IO ()) -> WSSessionId -> SomeException -> IO ()
+handleAllErrors cfg conn logger clientId e = do
+  logger LogError $ show e
   sendMessage conn TCReset
-  clientId' <- handshake cfg conn
+  clientId' <- handshake cfg conn logger
   assert (clientId' == clientId) $ pure ()
+
+giveUp :: Connection -> (LogLevel -> String -> IO ()) -> WSSessionId -> SomeException -> IO ()
+giveUp conn logger clientId e = do
+  logger LogError . show . WSErrorResetFailed $ show e
+  closeWsConn clientId
+  sendClose conn ("Cache.hs: could not reset connection, giving up." :: ST)
+    -- (FUTUREWORK: we should flush any remaining incoming messages here; see 'sendClose'.)
+
 
 data WSError
   = WSErrorUnexpectedPacket ToServer
@@ -101,23 +145,21 @@ wserror :: Monad m => WSError -> m a
 wserror = error . show
 
 
-handshake :: Config -> Connection -> IO WSSessionId
-handshake cfg conn = receiveMessage conn >>= \case
+handshake :: Config -> Connection -> (LogLevel -> String -> IO ()) -> IO WSSessionId
+handshake cfg conn logger = receiveMessage conn >>= \case
   -- the client is reconnected, its WSSessionId is n
   TSGreeting (Just n) -> do
     cmap <- takeMVar webSocketMVar
     putMVar webSocketMVar $ second (Map.adjust (_2 .~ mempty) n) cmap
     sendMessage conn $ TCRestrictKeys []  -- TUNING: only send this if we know something happened since the disconnect.
-    appLog $ "websocket client #" <> show n <> " is reconnected"
+    logger LogDebug $ "websocket client #" <> show n <> " is reconnected"
     pure n
 
   -- the first connection of the client
   TSGreeting Nothing -> do
-    (n, cmap) <- takeMVar webSocketMVar
-    appState <- newMVar $ initialAppState cfg
-    putMVar webSocketMVar (n + 1, Map.insert n ((conn, appState), mempty) cmap)
+    n <- openWsConn cfg conn
     sendMessage conn $ TCGreeting n
-    appLog $ "new websocket client #" <> show n
+    logger LogDebug $ "new websocket client #" <> show n
     pure n
 
   bad -> wserror $ WSErrorUnexpectedPacket bad

@@ -72,7 +72,7 @@ data AppState = AppState
 
 -- | The state of the application depends on the user state.
 data AppUserState
-  = UserLoggedIn (ID Types.User) UserSession
+  = UserLoggedIn (ID Types.User) UserSession  -- ^ (re. 'UserSession', see #432.)
   | UserLoggedOut
   deriving (Eq, Show)
 
@@ -261,7 +261,7 @@ appLog :: MonadLog app => String -> app ()
 appLog = appLogL def
 
 
--- * logging
+-- * caching
 
 class MonadCache app where
   invalidateCaches :: Set CacheKey -> app ()

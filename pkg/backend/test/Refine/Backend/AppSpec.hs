@@ -5,6 +5,7 @@ module Refine.Backend.AppSpec where
 
 import Refine.Backend.Prelude hiding (assert, check)
 
+import           Control.Concurrent.MVar
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.List.NonEmpty as NEL
@@ -15,9 +16,9 @@ import           Test.QuickCheck.Monadic
 import Refine.Backend.App as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
-import Refine.Common.Test.Arbitrary ()
-import Refine.Common.Test.Samples (sampleRawContent1, defaultGroupID)
+import Refine.Common.Test
 import Refine.Common.Types
+import Refine.Common.Rest
 
 
 data Cmd where
@@ -67,6 +68,26 @@ spec = do
         liftIO $ userState2 `shouldBe` UserLoggedOut
 
   describe "Database handling" . around provideAppRunner $ do
+    it "one app is one transaction (and rolls back on AppError)." $ \(runner :: AppM DB () -> IO ()) -> do
+
+      pendingWith "#424"
+
+      mem :: MVar (ID Group) <- newEmptyMVar
+      let transaction1 = do
+            liftIO . putMVar mem . view groupID =<< addGroup (CreateGroup mempty mempty mempty mempty mempty)
+            let nosuchgid = ID 834791
+            Group{} <- App.getGroup nosuchgid
+            pure ()
+          transaction2 gid = do
+            Group{} <- App.getGroup gid
+            pure ()
+
+      runner transaction1 `shouldThrow`
+        thisException (ApiDBError (ApiDBNotFound "not found: ID 834791 :: ID Group"))
+      gid <- takeMVar mem
+      runner (transaction2 gid) `shouldThrow`
+        thisException (ApiDBError (ApiDBNotFound $ "not found: " <> show gid <> " :: ID Group"))
+
     it "db (or dbWithFilters) can be called twice inside the same AppM" $ \(runner :: AppM DB () -> IO ()) -> do
       runner $ do
         void $ do
