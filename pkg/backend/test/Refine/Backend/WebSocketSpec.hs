@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.WebSocketSpec where
-#include "import.hs"
+#include "import_backend.hs"
 
 import Control.Concurrent
 import Control.Concurrent.Async

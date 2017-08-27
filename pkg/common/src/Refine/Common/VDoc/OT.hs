@@ -52,7 +52,7 @@ module Refine.Common.VDoc.OT
   , measureRowColumn
   ) where
 
-#include "import.hs"
+#include "import_common.hs"
 
 import qualified Data.Algorithm.Patience as Diff
 import           Data.FingerTree (FingerTree, Measured(..))

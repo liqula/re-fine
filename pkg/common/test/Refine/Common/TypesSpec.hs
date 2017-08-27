@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Common.TypesSpec where
-#include "import.hs"
+#include "import_common.hs"
 
 import           Test.Aeson.GenericSpecs
 import           Test.Hspec

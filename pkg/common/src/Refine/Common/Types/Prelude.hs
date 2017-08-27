@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Common.Types.Prelude where
-#include "import.hs"
+#include "import_common.hs"
 
 
 -- * ID

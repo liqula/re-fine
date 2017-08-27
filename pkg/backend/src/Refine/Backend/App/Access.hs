@@ -4,7 +4,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Backend.App.Access where
-#include "import.hs"
+#include "import_backend.hs"
 
 import Refine.Backend.App.Core
 import Refine.Backend.Config

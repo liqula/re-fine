@@ -10,7 +10,7 @@ module Refine.Backend.Database
   , DBConnection(..)
   , createDBNat
   ) where
-#include "import.hs"
+#include "import_backend.hs"
 
 import Control.Monad.Logger
 import Data.Pool (Pool, withResource, destroyAllResources)

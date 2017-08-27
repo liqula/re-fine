@@ -5,7 +5,7 @@
 
 -- | FIXME: is this module redundant to the users package?  should we make better use of the latter?
 module Refine.Backend.App.User where
-#include "import.hs"
+#include "import_backend.hs"
 
 import qualified Web.Users.Types as Users
 

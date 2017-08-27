@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.Test.AppRunner where
-#include "import.hs"
+#include "import_backend.hs"
 
 import Test.Hspec
 import Test.QuickCheck

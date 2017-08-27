@@ -4,7 +4,7 @@
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
 module Refine.Backend.App.Comment where
-#include "import.hs"
+#include "import_backend.hs"
 
 import           Refine.Backend.App.User
 import           Refine.Backend.App.Access

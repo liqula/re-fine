@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
 module Refine.Backend.App.GroupSpec where
-#include "import.hs"
+#include "import_backend.hs"
 
 import Test.Hspec
 

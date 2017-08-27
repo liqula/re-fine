@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
 module Refine.Backend.Database.Tree where
-#include "import.hs"
+#include "import_backend.hs"
 
 import Control.Arrow ((&&&), first)
 import Data.Tree (Tree)

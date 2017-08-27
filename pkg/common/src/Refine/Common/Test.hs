@@ -3,7 +3,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Common.Test (module P, passes, failsOn, thisException) where
-#include "import.hs"
+#include "import_common.hs"
 
 import Test.Hspec as P
 import Test.QuickCheck as P

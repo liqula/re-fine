@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.Natural (cnToSn, natThrowError, (.), ($$)) where
-#include "import.hs"
+#include "import_backend.hs"
 
 import qualified Control.Natural     as CN
 import qualified Servant.Utils.Enter as SN

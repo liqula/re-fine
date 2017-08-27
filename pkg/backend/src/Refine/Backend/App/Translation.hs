@@ -4,7 +4,7 @@
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
 module Refine.Backend.App.Translation where
-#include "import.hs"
+#include "import_backend.hs"
 
 import Data.Map (filterWithKey)
 import Data.Text.I18n.Po

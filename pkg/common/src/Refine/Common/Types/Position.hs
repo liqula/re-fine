@@ -4,7 +4,7 @@
 
 module Refine.Common.Types.Position where
 
-#include "import.hs"
+#include "import_common.hs"
 
 import           Data.Int
 import           GHC.Generics (Generic)

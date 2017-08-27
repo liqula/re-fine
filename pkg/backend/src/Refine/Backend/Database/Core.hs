@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.Database.Core where
-#include "import.hs"
+#include "import_backend.hs"
 
 import Database.Persist.Sql hiding (Filter)
 

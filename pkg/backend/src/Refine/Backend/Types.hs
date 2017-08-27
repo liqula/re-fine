@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.Types where
-#include "import.hs"
+#include "import_backend.hs"
 
 import qualified Web.Users.Types as Users
 

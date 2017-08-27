@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Common.Types.Config where
-#include "import.hs"
+#include "import_common.hs"
 
 
 data ClientCfg = ClientCfg

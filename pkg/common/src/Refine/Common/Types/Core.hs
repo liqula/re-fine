@@ -20,7 +20,7 @@ module Refine.Common.Types.Core
     , Atom(..)
     ) where
 
-#include "import.hs"
+#include "import_common.hs"
 
 import           Control.DeepSeq
 import           Control.Lens (both)

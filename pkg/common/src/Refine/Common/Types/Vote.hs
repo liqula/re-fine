@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Common.Types.Vote where
-#include "import.hs"
+#include "import_common.hs"
 
 import GHC.Generics (Generic)
 

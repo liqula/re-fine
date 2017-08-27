@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.AppSpec where
-#include "import.hs"
+#include "import_backend.hs"
 
 import           Control.Concurrent.MVar
 import           Test.Hspec

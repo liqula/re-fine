@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.Database.Types where
-#include "import.hs"
+#include "import_backend.hs"
 
 import           Refine.Common.Types
 import qualified Refine.Common.OT as OT

@@ -5,7 +5,7 @@
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}   -- pattern completeness checker has problems with pattern synonyms
 
 module Refine.Common.VDoc.OTSpec where
-#include "import.hs"
+#include "import_common.hs"
 
 import Data.List (groupBy)
 import Data.Char

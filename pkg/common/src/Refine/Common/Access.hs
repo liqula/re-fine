@@ -6,7 +6,7 @@ module Refine.Common.Access
   , module Refine.Common.Types.Role
   , NonEmpty((:|))
   ) where
-#include "import.hs"
+#include "import_common.hs"
 
 import Refine.Common.Types.Core
 import Refine.Common.Types.Prelude

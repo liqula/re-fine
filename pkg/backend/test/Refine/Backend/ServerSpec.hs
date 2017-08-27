@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.ServerSpec where
-#include "import.hs"
+#include "import_backend.hs"
 
 import qualified Data.ByteString as SBS
 import           Network.Wai.Test (SResponse(..))

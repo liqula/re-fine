@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Common.Access.Policy where
-#include "import.hs"
+#include "import_common.hs"
 
 import Refine.Common.Access
 import Refine.Common.Types

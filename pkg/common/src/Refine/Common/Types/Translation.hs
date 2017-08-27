@@ -3,7 +3,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans -fno-warn-redundant-constraints #-}
 
 module Refine.Common.Types.Translation where
-#include "import.hs"
+#include "import_common.hs"
 
 import Control.Lens (Getter, makeLenses, to)
 import Data.String (IsString(..))

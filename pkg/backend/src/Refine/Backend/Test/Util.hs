@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.Test.Util where
-#include "import.hs"
+#include "import_backend.hs"
 
 import           System.IO.Temp (withSystemTempDirectory)
 import           System.Directory (withCurrentDirectory)

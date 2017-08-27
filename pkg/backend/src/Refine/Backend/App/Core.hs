@@ -28,7 +28,7 @@ module Refine.Backend.App.Core
   , MonadLog(appLogL), appLog
   , MonadCache(..)
   ) where
-#include "import.hs"
+#include "import_backend.hs"
 
 import           Control.Exception
 import qualified Web.Users.Types as Users

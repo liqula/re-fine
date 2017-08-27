@@ -2,7 +2,7 @@
 #include "language.hs"
 {-# OPTIONS_GHC -fno-warn-orphans       #-}
 module Refine.Common.OTSpec where
-#include "import.hs"
+#include "import_common.hs"
 
 import Data.List.NonEmpty (NonEmpty)
 import Data.Sequence (Seq)

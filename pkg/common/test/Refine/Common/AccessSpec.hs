@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Common.AccessSpec where
-#include "import.hs"
+#include "import_common.hs"
 
 import Test.Hspec
 import Refine.Common.Access ()

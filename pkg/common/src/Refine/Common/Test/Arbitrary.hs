@@ -6,7 +6,7 @@
 
 module Refine.Common.Test.Arbitrary where
 
-#include "import.hs"
+#include "import_common.hs"
 
 import           Control.Arrow (first, second)
 import           Control.DeepSeq

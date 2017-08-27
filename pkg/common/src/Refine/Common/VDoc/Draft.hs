@@ -3,7 +3,7 @@
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 
 module Refine.Common.VDoc.Draft where
-#include "import.hs"
+#include "import_common.hs"
 
 import Refine.Common.Types.Core
 import Refine.Common.VDoc.OT (docRanges, docEditRanges)

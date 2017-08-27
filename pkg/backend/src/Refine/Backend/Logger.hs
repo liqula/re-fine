@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
 module Refine.Backend.Logger where
-#include "import.hs"
+#include "import_backend.hs"
 
 import Refine.Backend.Config
 

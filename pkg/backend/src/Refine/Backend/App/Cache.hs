@@ -9,7 +9,7 @@ module Refine.Backend.App.Cache
   ( startWebSocketServer
   , resetWebSocketMVar
   ) where
-#include "import.hs"
+#include "import_backend.hs"
 
 import           Control.Concurrent
 import           Network.Wai (Middleware)

@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.Database.TreeSpec where
-#include "import.hs"
+#include "import_backend.hs"
 
 import           Data.Tree
 import           Test.Hspec

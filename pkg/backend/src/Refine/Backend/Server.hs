@@ -10,7 +10,7 @@ module Refine.Backend.Server
   , Backend(..), mkProdBackend
   , refineApi
   ) where
-#include "import.hs"
+#include "import_backend.hs"
 
 import           Control.Concurrent.MVar
 import           Network.HTTP.Media ((//))

@@ -4,7 +4,7 @@
 
 -- | FUTUREWORK: release this file as a library
 module Refine.Common.OT where
-#include "import.hs"
+#include "import_common.hs"
 
 import           Data.Sequence (Seq)
 import           Data.List

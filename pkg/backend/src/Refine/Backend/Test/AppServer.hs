@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.Test.AppServer where
-#include "import.hs"
+#include "import_backend.hs"
 
 import           Control.Concurrent.MVar
 import           Network.HTTP.Types (Method, Header, methodGet, methodPut, methodDelete)

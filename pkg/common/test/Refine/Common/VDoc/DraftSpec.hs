@@ -2,7 +2,7 @@
 #include "language.hs"
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 module Refine.Common.VDoc.DraftSpec where
-#include "import.hs"
+#include "import_common.hs"
 
 import Data.List.NonEmpty (NonEmpty((:|)))
 import Test.Aeson.GenericSpecs

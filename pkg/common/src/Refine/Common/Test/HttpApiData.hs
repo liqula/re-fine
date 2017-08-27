@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Common.Test.HttpApiData where
-#include "import.hs"
+#include "import_common.hs"
 
 import Test.Hspec
 import Test.QuickCheck

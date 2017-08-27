@@ -4,7 +4,7 @@
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
 module Refine.Backend.App.VDoc where
-#include "import.hs"
+#include "import_backend.hs"
 
 import           Data.Maybe
 import qualified Web.Users.Types as Users

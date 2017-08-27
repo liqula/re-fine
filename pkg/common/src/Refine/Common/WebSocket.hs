@@ -3,7 +3,7 @@
 
 module Refine.Common.WebSocket where
 
-#include "import.hs"
+#include "import_common.hs"
 
 import Refine.Common.Rest (ApiError)
 import Refine.Common.Types.Core

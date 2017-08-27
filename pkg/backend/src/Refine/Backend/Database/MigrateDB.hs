@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
 module Refine.Backend.Database.MigrateDB where
-#include "import.hs"
+#include "import_backend.hs"
 
 import Database.Persist.Sql
 import qualified Web.Users.Persistent.Definitions as Users

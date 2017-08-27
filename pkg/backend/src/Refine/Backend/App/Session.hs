@@ -4,7 +4,7 @@
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
 module Refine.Backend.App.Session where
-#include "import.hs"
+#include "import_backend.hs"
 
 import Refine.Backend.App.Core
 import Refine.Backend.Types

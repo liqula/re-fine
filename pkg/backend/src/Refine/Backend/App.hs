@@ -5,7 +5,7 @@ module Refine.Backend.App
   ( module App
   , runApp
   ) where
-#include "import.hs"
+#include "import_backend.hs"
 
 import Refine.Backend.App.Access      as App
 import Refine.Backend.App.Comment     as App

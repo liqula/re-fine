@@ -4,7 +4,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Backend.Database.Entity where
-#include "import.hs"
+#include "import_backend.hs"
 
 import qualified Database.Persist as Persist
 import           Database.Persist.Sql (SqlBackend, fromSqlKey, toSqlKey)

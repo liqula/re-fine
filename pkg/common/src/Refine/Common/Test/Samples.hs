@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Common.Test.Samples where
-#include "import.hs"
+#include "import_common.hs"
 
 import Refine.Common.Types
 import Refine.Prelude (Timestamp(..))

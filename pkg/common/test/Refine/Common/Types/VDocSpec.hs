@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Common.Types.VDocSpec where
-#include "import.hs"
+#include "import_common.hs"
 
 import           Test.Hspec
 import           Test.QuickCheck

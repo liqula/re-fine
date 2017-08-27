@@ -2,7 +2,7 @@
 #include "language.hs"
 
 module Refine.Backend.Config where
-#include "import.hs"
+#include "import_backend.hs"
 
 import qualified Data.Yaml as Yaml
 import           Network.Wai.Handler.Warp as Warp
