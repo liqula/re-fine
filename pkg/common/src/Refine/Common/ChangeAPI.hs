@@ -4,8 +4,7 @@
 -- | This module mostly exists to resolve an import cycle between "Refine.Common.Types.Role" and
 -- "Refine.Common.Types.Group".
 module Refine.Common.ChangeAPI where
-
-import Refine.Common.Prelude
+#include "import.hs"
 
 import Refine.Common.Types.Role
 import Refine.Common.Types.Core

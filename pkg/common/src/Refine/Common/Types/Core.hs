@@ -20,23 +20,15 @@ module Refine.Common.Types.Core
     , Atom(..)
     ) where
 
-import Refine.Common.Prelude
+#include "import.hs"
 
 import           Control.DeepSeq
 import           Control.Lens (both)
 import           Data.Char
-import qualified Data.HashMap.Lazy as HashMap
-import qualified Data.IntMap as IntMap
 import           Data.Either (isLeft)
 import           Data.List (group)
-import           Data.List.NonEmpty (NonEmpty)
-import qualified Data.List.NonEmpty as NEL
-import qualified Data.Map as Map
-import qualified Data.Set as Set
-import qualified Data.Text as ST
 import           Data.Tree
 import           Data.String.Conversions (ST, cs, (<>))
-import qualified Generics.SOP as SOP
 import           GHC.Generics (Generic)
 import           Text.Read (readEither)
 import           Web.HttpApiData (toUrlPiece, parseUrlPiece, ToHttpApiData(..), FromHttpApiData(..))

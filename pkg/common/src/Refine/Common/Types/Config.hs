@@ -2,10 +2,7 @@
 #include "language.hs"
 
 module Refine.Common.Types.Config where
-
-import Refine.Common.Prelude
-
-import qualified Generics.SOP as SOP
+#include "import.hs"
 
 
 data ClientCfg = ClientCfg

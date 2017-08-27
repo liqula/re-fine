@@ -2,8 +2,7 @@
 #include "language.hs"
 
 module Refine.Common.Types.Role where
-
-import Refine.Common.Prelude
+#include "import.hs"
 
 
 data GroupRole

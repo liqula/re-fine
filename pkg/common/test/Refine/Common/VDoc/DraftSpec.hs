@@ -1,19 +1,13 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
-
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
-
 module Refine.Common.VDoc.DraftSpec where
+#include "import.hs"
 
-import Refine.Common.Prelude
-
-import qualified Data.Set as Set
-import qualified Data.Map as Map
-import           Data.List.NonEmpty (NonEmpty((:|)))
-import qualified Data.List.NonEmpty as NEL
-import           Test.Aeson.GenericSpecs
-import           Test.Hspec
-import           Test.QuickCheck
+import Data.List.NonEmpty (NonEmpty((:|)))
+import Test.Aeson.GenericSpecs
+import Test.Hspec
+import Test.QuickCheck
 
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Test.Samples ()  -- (just importing it so we know it compiles.)

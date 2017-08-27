@@ -2,10 +2,7 @@
 #include "language.hs"
 
 module Refine.Common.Access.Policy where
-
-import Refine.Common.Prelude
-
-import Data.List.NonEmpty as NEL
+#include "import.hs"
 
 import Refine.Common.Access
 import Refine.Common.Types

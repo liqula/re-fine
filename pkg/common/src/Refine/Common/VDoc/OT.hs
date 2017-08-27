@@ -52,19 +52,13 @@ module Refine.Common.VDoc.OT
   , measureRowColumn
   ) where
 
+#include "import.hs"
+
 import qualified Data.Algorithm.Patience as Diff
 import           Data.FingerTree (FingerTree, Measured(..))
-import qualified Data.FingerTree as FingerTree
 import           Data.Foldable
-import qualified Data.IntMap as IntMap
 import           Data.List
-import qualified Data.List.NonEmpty as NEL
 import           Data.Maybe
-import qualified Data.Map as Map
-import qualified Data.Monoid.Split as Split
-import qualified Data.Set as Set
-import qualified Data.Text as ST
-import           Control.Lens hiding ((:<), (:>), Empty)
 
 import           Refine.Common.OT hiding (compressEdit)
 import           Refine.Common.Prelude hiding (fromList, from)
@@ -189,7 +183,7 @@ instance HasSplit ST where
 splits :: (HasSplit a, Ord b) => Access a b -> b -> a -> [a]
 splits f b (split f b -> (d1, d2)) = d1: case d2 of
   Empty -> []
-  x :< xs -> splits f b xs & _head %~ (x :<)
+  x :< xs -> splits f b xs & Lens._head %~ (x :<)
 
 -- | List of measures for all splits (accumulates).
 splitMeasures :: (HasSplit a, Ord b) => Access a b -> b -> a -> [Measure a]
@@ -457,7 +451,7 @@ newtype SeekStylePosition = SeekStylePosition {_unSeekStylePosition :: Int}
 makeLenses ''SeekStylePosition
 
 measureSeekStylePosition :: Lens' DocMeasure SeekStylePosition
-measureSeekStylePosition = charMeasure . lens (getSum . Split.unsplit) g . from unSeekStylePosition
+measureSeekStylePosition = charMeasure . lens (getSum . Split.unsplit) g . Lens.from unSeekStylePosition
   where
     g (Split.M _) i = Split.M $ Sum i
     g (Sum a Split.:| _) i = Sum a Split.:| Sum (i - a)
@@ -469,7 +463,7 @@ newtype SeekPosition = SeekPosition {_unSeekPosition :: Int}
 makeLenses ''SeekPosition
 
 measureSeekPosition :: Lens' DocMeasure SeekPosition
-measureSeekPosition = lens f g . from unSeekPosition
+measureSeekPosition = lens f g . Lens.from unSeekPosition
   where
     f (DocMeasure r _ c _) = getSum $ r <> Split.unsplit c
 
@@ -596,7 +590,9 @@ docStyles = Map.keysSet . _unChangeMap . _styleMeasure . measure
 -- | all ranges decorated with a given style.
 getStyleRanges :: NewDoc -> EStyle -> Ranges SeekStylePosition
 getStyleRanges doc sty
-  = RangesInner [Range a b | [a, b] <- everyNth 2 . map (^. measureSeekStylePosition) $ splitMeasures (mempty, styleMeasure . unChangeMap . at sty . non 0) 0 doc]
+  = RangesInner [Range a b | [a, b] <- everyNth 2
+                                     . map (^. measureSeekStylePosition)
+                                     $ splitMeasures (mempty, styleMeasure . unChangeMap . at sty . Lens.non 0) 0 doc]
   where
     everyNth :: Int -> [a] -> [[a]]
     everyNth _ [] = []

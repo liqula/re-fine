@@ -6,25 +6,19 @@
 
 module Refine.Common.Test.Arbitrary where
 
-import Refine.Common.Prelude hiding (Generic, to)
+#include "import.hs"
 
 import           Control.Arrow (first, second)
 import           Control.DeepSeq
 import           Data.Function (on)
 import           Data.Functor.Infix ((<$$>))
-import qualified Data.IntMap as IntMap
 import           Data.List (groupBy)
-import qualified Data.List as List
-import qualified Data.List.NonEmpty as NEL
-import qualified Data.Set as Set
-import           Data.String.Conversions (cs)
-import qualified Data.Text as ST
-import qualified Data.Text.I18n as I18n
 import           Generics.SOP
 import           Test.Hspec
 import           Test.QuickCheck
 import           Test.QuickCheck.Checkers
-import "quickcheck-instances" Test.QuickCheck.Instances ()
+import "quickcheck-instances"
+                 Test.QuickCheck.Instances ()
 
 import Refine.Common.OT (Splitable(..), Segments(..))
 import Refine.Common.Types
@@ -72,19 +66,19 @@ instance Arbitrary GlobalRole where
 -- * draft.js
 
 -- | copied from https://github.com/liqd/aula, file src/Arbitrary.hs
-garbitrary' :: forall a. (Int -> Int) -> (Generic a, All2 Arbitrary (Code a)) => Gen a
-garbitrary' scaling = to <$> (hsequence =<< elements subs)
+garbitrary' :: forall a. (Int -> Int) -> (SOP.Generic a, All2 Arbitrary (Code a)) => Gen a
+garbitrary' scaling = SOP.to <$> (hsequence =<< elements subs)
   where
     subs :: [SOP Gen (Code a)]
     subs = apInjs_POP (hcpure (Proxy @Arbitrary) (scale scaling arbitrary))
 
 -- | copied from https://github.com/liqd/aula, file src/Arbitrary.hs
-garbitrary :: forall a. (Generic a, All2 Arbitrary (Code a)) => Gen a
+garbitrary :: forall a. (SOP.Generic a, All2 Arbitrary (Code a)) => Gen a
 garbitrary = garbitrary' (max 0 . subtract 10)
 
 -- | copied from https://github.com/liqd/aula, file src/Arbitrary.hs
-gshrink :: forall a . (Generic a, All2 Arbitrary (Code a)) => a -> [a]
-gshrink = List.map to . shrinkSOP . from
+gshrink :: forall a . (SOP.Generic a, All2 Arbitrary (Code a)) => a -> [a]
+gshrink = List.map SOP.to . shrinkSOP . from
   where
     shrinkSOP :: All2 Arbitrary xss => SOP I xss -> [SOP I xss]
     shrinkSOP (SOP nsp) = SOP <$> shrinkNS nsp
@@ -218,7 +212,7 @@ sanitizeRawContent = deleteDanglingEntityRefs
                 o'' = min o o'
                 l'' = max (o + l) (o' + l') - o''
 
-instance (Generic a, Arbitrary a, Ord a, Generic b, Arbitrary b) => Arbitrary (Block a b) where
+instance (SOP.Generic a, Arbitrary a, Ord a, SOP.Generic b, Arbitrary b) => Arbitrary (Block a b) where
   arbitrary = do
     b <- garbitrary
     let ml = ST.length (b ^. blockText)

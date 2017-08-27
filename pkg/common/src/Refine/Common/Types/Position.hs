@@ -4,12 +4,10 @@
 
 module Refine.Common.Types.Position where
 
-import           Data.Int
-import           Data.String.Conversions (ST, cs, (<>))
-import           GHC.Generics (Generic)
-import qualified Generics.SOP as SOP
+#include "import.hs"
 
-import           Refine.Common.Prelude
+import           Data.Int
+import           GHC.Generics (Generic)
 
 
 -- * Position

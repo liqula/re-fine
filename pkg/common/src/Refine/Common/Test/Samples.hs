@@ -2,11 +2,7 @@
 #include "language.hs"
 
 module Refine.Common.Test.Samples where
-
-import Refine.Common.Prelude
-
-import qualified Data.IntMap as IntMap
-import qualified Data.List.NonEmpty as NEL
+#include "import.hs"
 
 import Refine.Common.Types
 import Refine.Prelude (Timestamp(..))

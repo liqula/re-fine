@@ -5,16 +5,12 @@
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}   -- pattern completeness checker has problems with pattern synonyms
 
 module Refine.Common.VDoc.OTSpec where
+#include "import.hs"
 
-import Refine.Common.Prelude
-
-import           Data.List (groupBy)
-import           Data.Char
-import           Data.List.NonEmpty (NonEmpty((:|)))
-import qualified Data.List.NonEmpty as NEL
-import qualified Data.Set as Set
-import           Test.QuickCheck
-import           Test.Hspec
+import Data.List (groupBy)
+import Data.Char
+import Test.QuickCheck
+import Test.Hspec
 
 import Refine.Common.OT
 import Refine.Common.OTSpec hiding (spec)

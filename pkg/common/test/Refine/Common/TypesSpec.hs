@@ -2,10 +2,8 @@
 #include "language.hs"
 
 module Refine.Common.TypesSpec where
+#include "import.hs"
 
-import Refine.Common.Prelude
-
-import           Data.Map (Map)
 import           Test.Aeson.GenericSpecs
 import           Test.Hspec
 import "quickcheck-instances" Test.QuickCheck.Instances ()

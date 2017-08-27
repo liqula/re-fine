@@ -2,8 +2,7 @@
 #include "language.hs"
 
 module Refine.Common.Rest where
-
-import Refine.Common.Prelude
+#include "import.hs"
 
 import Refine.Common.ChangeAPI
 import Refine.Common.Types.Core

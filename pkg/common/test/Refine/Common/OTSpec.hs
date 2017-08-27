@@ -1,19 +1,13 @@
 {-# LANGUAGE CPP #-}
 #include "language.hs"
--- FUTUREWORK: release this file as a library
-
 {-# OPTIONS_GHC -fno-warn-orphans       #-}
 module Refine.Common.OTSpec where
+#include "import.hs"
 
-import Refine.Common.Prelude
-
-import qualified Data.Set as Set
-import qualified Data.Text as ST
-import           Data.List.NonEmpty (NonEmpty)
-import qualified Data.List.NonEmpty as NEL
-import           Data.Sequence (Seq)
-import           Test.Hspec
-import           Test.QuickCheck
+import Data.List.NonEmpty (NonEmpty)
+import Data.Sequence (Seq)
+import Test.Hspec
+import Test.QuickCheck
 
 import Refine.Common.OT
 import Refine.Common.Test.Arbitrary ()

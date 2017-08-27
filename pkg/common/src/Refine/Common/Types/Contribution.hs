@@ -2,10 +2,7 @@
 #include "language.hs"
 
 module Refine.Common.Types.Contribution where
-
-import Refine.Common.Prelude
-
-import Data.String.Conversions (ST)
+#include "import.hs"
 
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.Core

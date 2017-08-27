@@ -2,12 +2,8 @@
 #include "language.hs"
 
 module Refine.Common.Types.VDocSpec where
+#include "import.hs"
 
-import Refine.Common.Prelude
-
-import qualified Data.List.NonEmpty as NEL
-import qualified Data.Map as Map
-import qualified Data.Set as Set
 import           Test.Hspec
 import           Test.QuickCheck
 import "quickcheck-instances" Test.QuickCheck.Instances ()

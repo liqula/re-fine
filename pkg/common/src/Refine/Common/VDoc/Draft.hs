@@ -2,17 +2,8 @@
 #include "language.hs"
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 
-module Refine.Common.VDoc.Draft
-where
-
-import Refine.Common.Prelude
-
-import qualified Data.List as List
-import           Data.List.NonEmpty (NonEmpty(..))
-import qualified Data.List.NonEmpty as NEL
-import qualified Data.Map as Map
-import qualified Data.Set as Set
-import qualified Data.Text as ST
+module Refine.Common.VDoc.Draft where
+#include "import.hs"
 
 import Refine.Common.Types.Core
 import Refine.Common.VDoc.OT (docRanges, docEditRanges)
