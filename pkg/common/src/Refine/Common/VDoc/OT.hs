@@ -61,7 +61,6 @@ import           Data.List
 import           Data.Maybe
 
 import           Refine.Common.OT hiding (compressEdit)
-import           Refine.Common.Prelude hiding (fromList, from)
 import           Refine.Common.Types.Core hiding (Edit)
 
 
