@@ -1,16 +1,13 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 
-module Refine.Frontend.OrphansSpec
-where
-
-import Refine.Frontend.Prelude hiding (property)
-import Refine.Frontend.Orphans ()
+module Refine.Frontend.OrphansSpec where
+#include "import_frontend.hs"
 
 import Test.Hspec
-
+import Refine.Frontend.Orphans ()
 import Refine.Common.Types
 
 

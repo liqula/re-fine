@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -17,8 +17,7 @@ module Refine.Frontend.Icon
   , IconButtonPropsOnClick(..)
   , defaultIconButtonProps
   ) where
-
-import Refine.Frontend.Prelude hiding (fn)
+#include "import_frontend.hs"
 
 import Language.Css.Syntax
 

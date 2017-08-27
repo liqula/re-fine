@@ -1,19 +1,14 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
 module Refine.Backend.App.Comment where
-
-import Refine.Backend.Prelude
-
-import qualified Data.Set as Set
-import qualified Data.Map as Map
+#include "import_backend.hs"
 
 import           Refine.Backend.App.User
 import           Refine.Backend.App.Access
 import           Refine.Backend.App.Core
--- import           Refine.Backend.App.VDoc (validateCreateChunkRange)
 import           Refine.Backend.Database.Class as DB
 import qualified Refine.Common.Access.Policy as AP
 import           Refine.Common.Types

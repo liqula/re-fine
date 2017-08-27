@@ -1,14 +1,10 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 module Refine.Backend.ServerSpec where
-
-import Refine.Backend.Prelude hiding (Header)
+#include "import_backend.hs"
 
 import qualified Data.ByteString as SBS
-import qualified Data.Map as Map
-import qualified Data.Set as Set
-import           Data.List.NonEmpty (NonEmpty((:|)))
 import           Network.Wai.Test (SResponse(..))
 import           Test.Hspec
 import qualified Web.Users.Types as Users

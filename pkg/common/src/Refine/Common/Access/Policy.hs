@@ -1,11 +1,8 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 
 module Refine.Common.Access.Policy where
-
-import Refine.Common.Prelude
-
-import Data.List.NonEmpty as NEL
+#include "import_common.hs"
 
 import Refine.Common.Access
 import Refine.Common.Types

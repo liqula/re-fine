@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 -- | some random draft.js resources: https://github.com/nikgraf/awesome-draft-js,
 -- https://github.com/draft-js-plugins/draft-js-plugins/blob/master/FAQ.md,
@@ -48,11 +48,10 @@ module Refine.Frontend.Document.FFI
     -- * marks
   , getLeafSelectorBound
   ) where
+#include "import_frontend.hs"
 
-import qualified Refine.Common.Types.Core as Draft
 import           Refine.Frontend.Document.FFI.Types
 import           Refine.Frontend.Orphans ()
-import           Refine.Frontend.Prelude
 
 
 -- * https://draftjs.org/docs/api-reference-data-conversion.html
@@ -60,14 +59,14 @@ import           Refine.Frontend.Prelude
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#convertfromraw
 --
 -- See also: 'convertToRaw'.
-convertFromRaw :: HasCallStack => Draft.RawContent -> ContentState
+convertFromRaw :: HasCallStack => Common.RawContent -> ContentState
 convertFromRaw = js_convertFromRaw . pToJSVal
 
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#converttoraw
 --
 -- The internal call to 'unsafePerformIO' is ok iff 'fromJSVal' is actually pure (and just doesn't
 -- care to show it in the type).
-convertToRaw :: HasCallStack => ContentState -> Draft.RawContent
+convertToRaw :: HasCallStack => ContentState -> Common.RawContent
 convertToRaw = pFromJSVal . js_convertToRaw
 
 -- | https://draftjs.org/docs/api-reference-data-conversion.html#convertfromhtml
@@ -84,14 +83,14 @@ createEmpty = js_ES_createEmpty
 createWithContent :: HasCallStack => ContentState -> EditorState
 createWithContent = js_ES_createWithContent
 
-createWithRawContent :: HasCallStack => Draft.RawContent -> EditorState
+createWithRawContent :: HasCallStack => Common.RawContent -> EditorState
 createWithRawContent = createWithContent . convertFromRaw
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#getcurrentcontent
 getCurrentContent :: HasCallStack => EditorState -> ContentState
 getCurrentContent = js_ES_getCurrentContent
 
-getCurrentRawContent :: HasCallStack => EditorState -> Draft.RawContent
+getCurrentRawContent :: HasCallStack => EditorState -> Common.RawContent
 getCurrentRawContent = convertToRaw . js_ES_getCurrentContent
 
 setCurrentContent :: HasCallStack => EditorState -> ContentState -> EditorState
@@ -123,12 +122,12 @@ stateToHTML = js_Draft_stateToHTML
 -- * editor state actions
 
 -- | toggle bold style on current selection
-documentToggleStyle :: HasCallStack => Draft.Style -> EditorState -> EditorState
-documentToggleStyle sty st = js_ES_toggleInlineStyle st (cs $ Draft.styleToST sty)
+documentToggleStyle :: HasCallStack => Common.Style -> EditorState -> EditorState
+documentToggleStyle sty st = js_ES_toggleInlineStyle st (cs $ Common.styleToST sty)
 
 -- | toggle italic style on current selection
-documentToggleBlockType :: HasCallStack => Draft.BlockType -> EditorState -> EditorState
-documentToggleBlockType bt st = js_ES_toggleBlockType st (cs $ Draft.blockTypeToST bt)
+documentToggleBlockType :: HasCallStack => Common.BlockType -> EditorState -> EditorState
+documentToggleBlockType bt st = js_ES_toggleBlockType st (cs $ Common.blockTypeToST bt)
 
 -- | Turn the current selection to a link with the given url
 --
@@ -166,22 +165,22 @@ documentRedo = js_ES_redo
 --
 -- FIXME: i think we could just call @getSelection()@ on the editor state and convert that via JSON
 -- (or even JSval?).  The JSON instances are designed for that.
-getSelection :: HasCallStack => EditorState -> Draft.SelectionState
-getSelection (js_ES_getSelection -> sel) = Draft.SelectionState (
-  (if js_ES_getSelectionIsBackward sel then Draft.toBackwardSelection else Draft.toSelection) $ Draft.Range
-    (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionStartKey sel) (js_ES_getSelectionStartOffset sel))
-    (Draft.Position (Draft.BlockKey . cs $ js_ES_getSelectionEndKey sel)   (js_ES_getSelectionEndOffset sel))) (js_ES_getSelectionHasFocus sel)
+getSelection :: HasCallStack => EditorState -> Common.SelectionState
+getSelection (js_ES_getSelection -> sel) = Common.SelectionState (
+  (if js_ES_getSelectionIsBackward sel then Common.toBackwardSelection else Common.toSelection) $ Common.Range
+    (Common.Position (Common.BlockKey . cs $ js_ES_getSelectionStartKey sel) (js_ES_getSelectionStartOffset sel))
+    (Common.Position (Common.BlockKey . cs $ js_ES_getSelectionEndKey sel)   (js_ES_getSelectionEndOffset sel))) (js_ES_getSelectionHasFocus sel)
 
 -- | https://draftjs.org/docs/api-reference-editor-state.html#forceselection
-forceSelection :: HasCallStack => EditorState -> Draft.SelectionState -> EditorState
+forceSelection :: HasCallStack => EditorState -> Common.SelectionState -> EditorState
 forceSelection es = js_ES_forceSelection es . pToJSVal
 
 -- | The shape of the selection object is determined by the generic aeson instances of the haskell
 -- type.  If that changes, you need to adjust the test cases in "Refine.Frontend.OrphansSpec" and
 -- @refine$getDraftSelectionStateViaBrowser@ in js.
-getDraftSelectionStateViaBrowser :: HasCallStack => (MonadIO m, MonadError String m) => m Draft.SelectionState
+getDraftSelectionStateViaBrowser :: HasCallStack => (MonadIO m, MonadError String m) => m Common.SelectionState
 getDraftSelectionStateViaBrowser = do
-  v :: Maybe (Either JSString Draft.SelectionState)
+  v :: Maybe (Either JSString Common.SelectionState)
     <- liftIO (js_getDraftSelectionStateViaBrowser >>= fromJSVal)
   case v of
     Just (Right r) -> pure r
@@ -194,9 +193,9 @@ getDraftSelectionStateViaBrowser = do
 -- | (There are legitimate reasons why a 'LeafSelector' will come up
 -- empty in the DOM, e.g. in collapsed diff view it may be far away
 -- from any changes and hidden behind the "..." marker.)
-getLeafSelectorBound :: HasCallStack => LeafSelectorSide -> Draft.LeafSelector -> IO (Maybe Int)
+getLeafSelectorBound :: HasCallStack => LeafSelectorSide -> Common.LeafSelector -> IO (Maybe Int)
 getLeafSelectorBound side mark =
-  (Just <$> js_getBoundingBox (cs $ renderLeafSelectorSide side) (cs $ Draft.renderLeafSelector mark))
+  (Just <$> js_getBoundingBox (cs $ renderLeafSelectorSide side) (cs $ Common.renderLeafSelector mark))
   `catch` \(JSException _ _) -> pure Nothing
 
 -- * foreign

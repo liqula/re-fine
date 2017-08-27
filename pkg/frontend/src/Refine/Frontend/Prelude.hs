@@ -1,11 +1,10 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 module Refine.Frontend.Prelude
   ( module P
   , module Refine.Frontend.Prelude
   ) where
 
-import Data.JSString as P ()  -- @instance IsString JSString@, mostly
 import GHCJS.Foreign.Callback as P (Callback, asyncCallback)
 import GHCJS.Marshal as P
 import GHCJS.Marshal.Pure as P

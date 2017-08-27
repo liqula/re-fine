@@ -1,11 +1,7 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 module Refine.Frontend.Login.Types where
-
-import Refine.Frontend.Prelude
-
-import Data.String.Conversions (ST)
-import GHC.Generics (Generic)
+#include "import_frontend.hs"
 
 
 -- | FormError can be Nothing or Just an error string.

@@ -1,14 +1,12 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 module Refine.Backend.Database.Core where
-
-import Refine.Backend.Prelude
+#include "import_backend.hs"
 
 import Database.Persist.Sql hiding (Filter)
 
 import Refine.Common.Types.Prelude (ID(..), User)
-import Refine.Prelude.TH (makeRefineType)
 
 
 type SQLM = ReaderT SqlBackend IO

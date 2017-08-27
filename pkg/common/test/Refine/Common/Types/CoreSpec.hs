@@ -1,9 +1,8 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 
 module Refine.Common.Types.CoreSpec where
-
-import Refine.Common.Prelude
+#include "import_common.hs"
 
 import           Test.Hspec
 import           Test.QuickCheck.Classes

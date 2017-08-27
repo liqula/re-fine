@@ -1,15 +1,12 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
 module Refine.Backend.App.VDoc where
+#include "import_backend.hs"
 
-import Refine.Backend.Prelude
-
-import qualified Data.Map as Map
 import           Data.Maybe
-import qualified Data.Set as Set
 import qualified Web.Users.Types as Users
 
 import           Refine.Backend.App.Access

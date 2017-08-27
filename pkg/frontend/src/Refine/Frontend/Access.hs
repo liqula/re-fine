@@ -1,16 +1,11 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
-
-
+#include "language_frontend.hs"
 {-# OPTIONS_GHC -Wno-orphans #-}
-
 module Refine.Frontend.Access where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import           Refine.Common.Access
 import           Refine.Common.Types hiding (Login(..))
-import qualified Refine.Common.Types as Common
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.MainMenu.Types

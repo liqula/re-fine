@@ -1,11 +1,8 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 
 module Refine.Common.Types.Contribution where
-
-import Refine.Common.Prelude
-
-import Data.String.Conversions (ST)
+#include "import_common.hs"
 
 import Refine.Common.Types.Prelude
 import Refine.Common.Types.Core

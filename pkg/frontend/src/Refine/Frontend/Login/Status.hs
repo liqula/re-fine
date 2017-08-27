@@ -1,11 +1,9 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 module Refine.Frontend.Login.Status where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import Refine.Common.Types (userName)
 import Refine.Frontend.Icon
 import Refine.Frontend.Login.Types
 import Refine.Frontend.MainMenu.Types
@@ -22,4 +20,4 @@ loginStatusButton_ tweak cu = ibutton_ $ emptyIbuttonProps "Login" onclick
     onclick = [MainMenuAction $ MainMenuActionOpen (MainMenuLogin MainMenuSubTabLogin)]
 
     mkLabel UserLoggedOut    = "login"
-    mkLabel (UserLoggedIn n) = "I am " <> (n ^. userName)
+    mkLabel (UserLoggedIn n) = "I am " <> (n ^. Common.userName)

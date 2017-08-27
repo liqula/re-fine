@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 module Refine.Frontend.Header.Heading
   ( TopMenuBarProps(..)
@@ -9,12 +9,9 @@ module Refine.Frontend.Header.Heading
   , mkMainHeaderProps
   , mainHeaderRender2
   ) where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import qualified Data.List.NonEmpty as NEL
 import           Language.Css.Syntax
-import           React.Flux.Outdated as RF
 
 import           Refine.Common.Types
 import           Refine.Frontend.Document.Types
@@ -81,13 +78,13 @@ toolbarWrapper_ toolbarItems_ = do
         div_ ["className" $= "c-vdoc-toolbar__content"] $ do
           toolbarItems_
 
-mainHeader :: HasCallStack => RF.ReactView MainHeaderProps
-mainHeader = RF.defineLifecycleView "HeaderSizeCapture" () RF.lifecycleConfig
+mainHeader :: HasCallStack => React.ReactView MainHeaderProps
+mainHeader = React.defineLifecycleView "HeaderSizeCapture" () React.lifecycleConfig
      -- the render function inside a Lifecycle view does not update the children passed to it when the state changes
      -- (see react-flux issue #29), therefore we move everything inside the Lifecylce view.
-   { RF.lRender = mainHeaderRender
-   , RF.lComponentDidMount = Just $ \_ dom _ -> calcHeaderHeight dom
-   , RF.lComponentDidUpdate = Just $ \_ dom _ _ _ -> calcHeaderHeight dom
+   { React.lRender = mainHeaderRender
+   , React.lComponentDidMount = Just $ \_ dom _ -> calcHeaderHeight dom
+   , React.lComponentDidUpdate = Just $ \_ dom _ _ _ -> calcHeaderHeight dom
    }
 
 mainHeaderRender :: HasCallStack => () -> MainHeaderProps -> ReactElementM eventHandler ()
@@ -157,11 +154,11 @@ mkMainHeaderProps :: AccessState -> GlobalState -> MainHeaderProps
 mkMainHeaderProps as gs = (fmap (const $ wipeDocumentState as gs) gs, as)
 
 mainHeader_ :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
-mainHeader_ props = RF.viewWithSKey mainHeader "mainHeader" props mempty
+mainHeader_ props = React.viewWithSKey mainHeader "mainHeader" props mempty
 
-calcHeaderHeight :: HasCallStack => RF.LDOM -> IO ()
+calcHeaderHeight :: HasCallStack => React.LDOM -> IO ()
 calcHeaderHeight ldom = do
-   this <- RF.lThis ldom
+   this <- React.lThis ldom
    h <- js_getHeaderHeight this
    when (h /= (-1)) . dispatchAndExec . ScreenAction . AddHeaderHeight $ h + 80
 

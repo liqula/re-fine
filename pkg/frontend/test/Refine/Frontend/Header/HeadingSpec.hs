@@ -1,12 +1,9 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
-
+#include "language_frontend.hs"
 
 module Refine.Frontend.Header.HeadingSpec where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import           Control.Lens ((^.), (&), (.~))
 import           Test.Hspec
 
 import           Refine.Common.Test.Samples (sampleRawContent1, sampleMetaID)

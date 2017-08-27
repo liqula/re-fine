@@ -1,12 +1,8 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 
 module Refine.Common.WebSocket where
-
-import Refine.Common.Prelude
-
-import qualified Data.Map as Map
-import qualified Data.Set as Set
+#include "import_common.hs"
 
 import Refine.Common.Rest (ApiError)
 import Refine.Common.Types.Core

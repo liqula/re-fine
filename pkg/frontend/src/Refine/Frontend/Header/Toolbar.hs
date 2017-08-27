@@ -1,14 +1,13 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 module Refine.Frontend.Header.Toolbar where
+#include "import_frontend.hs"
 
-import           Refine.Frontend.Prelude
 import           Language.Css.Syntax
 
 import           React.Flux.Missing
 import           Refine.Common.Types
--- import qualified Refine.Common.Access.Policy as AP
 -- import           Refine.Frontend.Access
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types

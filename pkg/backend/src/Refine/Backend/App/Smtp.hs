@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 module Refine.Backend.App.Smtp
   ( MonadSmtp(sendMailTo)
@@ -11,8 +11,7 @@ module Refine.Backend.App.Smtp
     -- re-exports
   , Address(..)
   ) where
-
-import Refine.Backend.Prelude
+#include "import_backend.hs"
 
 import qualified Data.ByteString as SBS
 import           Network.Mail.Mime (Address(Address), sendmailCustomCaptureOutput, simpleMail', renderMail)

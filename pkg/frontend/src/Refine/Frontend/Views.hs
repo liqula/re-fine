@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 module Refine.Frontend.Views
   ( refineApp
@@ -7,15 +7,10 @@ module Refine.Frontend.Views
   -- for testing:
   , mainScreen_
   ) where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import           Data.Maybe (mapMaybe)
-import qualified Data.Map.Strict as Map
-import qualified Data.Set as Set
-import qualified Data.Tree as ST
 import           Language.Css.Syntax
-import qualified React.Flux.Outdated as Outdated
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft (deleteMarksFromRawContent)
@@ -38,7 +33,6 @@ import           Refine.Frontend.Store.Types as RS
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 import           Refine.Frontend.Views.Types
-import qualified Refine.Frontend.Workbench
 import           Refine.Frontend.Store (flushCacheMisses)
 
 
@@ -48,13 +42,12 @@ refineApp :: HasCallStack => View '[]
 refineApp = mkControllerView @'[StoreArg AccessState, StoreArg GlobalState] "RefineApp" wholeScreen_
 
 wholeScreen_ :: HasCallStack => AccessState -> GlobalState -> ReactElementM eventHandler ()
-wholeScreen_ accessState props = Outdated.viewWithSKey wholeScreen "wholeScreen" (props, accessState) mempty
+wholeScreen_ accessState props = React.viewWithSKey wholeScreen "wholeScreen" (props, accessState) mempty
 
-wholeScreen :: Outdated.ReactView (GlobalState, AccessState)
-wholeScreen = Outdated.defineLifecycleView "WholeScreen" () Outdated.lifecycleConfig
-  { Outdated.lRender = \() (gs, as) ->
-    if False {- set conditional to 'True' to switch to workbench. -} then Refine.Frontend.Workbench.workbench_ gs else
-    case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
+wholeScreen :: React.ReactView (GlobalState, AccessState)
+wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
+  { React.lRender = \() (gs, as) ->
+     case gs ^? gsMainMenuState . mmState . mainMenuOpenTab of
       Nothing  -> mainScreen_ (gs, as)
       Just tab -> mainMenu_ $ MainMenuProps
                             (mapMainMenuTab
@@ -81,11 +74,11 @@ wholeScreen = Outdated.defineLifecycleView "WholeScreen" () Outdated.lifecycleCo
                 . fromMaybe (cacheMiss CacheKeyUserIds mempty tab)
                 $ gs ^. gsServerCache . scUserIds
 
-  , Outdated.lComponentDidMount = Just $ \this _ _ -> didMountOrUpdate this
-  , Outdated.lComponentDidUpdate = Just $ \this _ _ _ _ -> didMountOrUpdate this
+  , React.lComponentDidMount = Just $ \this _ _ -> didMountOrUpdate this
+  , React.lComponentDidUpdate = Just $ \this _ _ _ _ -> didMountOrUpdate this
   }
   where
-    didMountOrUpdate :: HasCallStack => Outdated.LPropsAndState (GlobalState, AccessState) () -> IO ()
+    didMountOrUpdate :: HasCallStack => React.LPropsAndState (GlobalState, AccessState) () -> IO ()
     didMountOrUpdate _getPropsAndState = flushCacheMisses
 
 mainScreen :: HasCallStack => View '[(GlobalState, AccessState)]
@@ -236,7 +229,7 @@ discussionToProtoBubble :: HasCallStack => AsideProps -> Discussion -> ProtoBubb
 discussionToProtoBubble aprops d = ProtoBubble cid (lookupPosition aprops $ uncurry MarkContribution cid) child
   where
     cid = (ContribIDDiscussion False $ d ^. discussionID, 0)
-    child = elemText (ST.rootLabel (d ^. discussionTree) ^. statementText)
+    child = elemText (Tree.rootLabel (d ^. discussionTree) ^. statementText)
 
 stackBubble :: HasCallStack => BubbleSide -> AsideProps -> StackOrNot ProtoBubble -> ReactElementM 'EventHandlerCode ()
 stackBubble bubbleSide aprops bstack = bubble_ props children

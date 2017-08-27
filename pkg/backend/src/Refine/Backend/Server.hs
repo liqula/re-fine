@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -10,8 +10,7 @@ module Refine.Backend.Server
   , Backend(..), mkProdBackend
   , refineApi
   ) where
-
-import Refine.Backend.Prelude as P
+#include "import_backend.hs"
 
 import           Control.Concurrent.MVar
 import           Network.HTTP.Media ((//))
@@ -56,7 +55,7 @@ createDataDirectories cfg = do
 
 data Backend db = Backend
   { backendServer          :: Application
-  , backendRunApp          :: AppM db P.:~> ExceptT ApiError IO
+  , backendRunApp          :: AppM db :~> ExceptT ApiError IO
   , backendSessionStore    :: SCS.SessionStore IO () (AppState, MVar ())
   }
 
@@ -165,7 +164,7 @@ mkServerApp cfg dbNat dbRunner = do
               (Nat liftIO)
               (cnToSn $ renderErrorNT . appNT)
               (refineApi :<|> clientConfigApi)
-              (Just (P.serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
+              (Just (serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
 
   () <- resetWebSocketMVar
 

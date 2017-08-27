@@ -1,17 +1,13 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 module Refine.Backend.AppSpec where
-
-import Refine.Backend.Prelude hiding (assert, check)
+#include "import_backend.hs"
 
 import           Control.Concurrent.MVar
-import qualified Data.Map as Map
-import qualified Data.Set as Set
-import qualified Data.List.NonEmpty as NEL
 import           Test.Hspec
 import           Test.QuickCheck
-import           Test.QuickCheck.Monadic
+import           Test.QuickCheck.Monadic as QuickCheck
 
 import Refine.Backend.App as App
 import Refine.Backend.Database
@@ -162,13 +158,13 @@ spec = do
 -- * Program Runner interface
 
 class MonadTrans pr => ProgramRunner pr where
-  check :: Monad m => Bool -> pr m ()
+  invariant :: Monad m => Bool -> pr m ()
 
 instance ProgramRunner PropertyM where
-  check = assert
+  invariant = QuickCheck.assert
 
 instance ProgramRunner IdentityT where
-  check x = unless x $ error "Assertion has failed."
+  invariant x = unless x $ error "instance ProgramRunner IdentityT: Assertion failed."
 
 
 -- * monadic property
@@ -186,14 +182,14 @@ runCmd (AddVDoc cv) = do
   lastId <- gets $ view vdocLast
   vdocMap  %= Map.insert lastId (vdoc ^. vdocID)
   vdocLast %= (+1)
-  lift . check $
+  lift . invariant $
     (vdoc ^. vdocTitle    == cv ^. createVDocTitle) &&
     (vdoc ^. vdocAbstract == cv ^. createVDocAbstract)
 
 runCmd (GetVDoc v cv) = do
   Just vid <- gets . view $ vdocMap . at v
   vdoc <- lift . lift $ App.getVDoc vid
-  lift . check $
+  lift . invariant $
     (vdoc ^. vdocTitle    == cv ^. createVDocTitle) &&
     (vdoc ^. vdocAbstract == cv ^. createVDocAbstract)
 
@@ -204,9 +200,9 @@ runCmd (AddEditToHead v cedit) = do
   edit   :: Edit <- lift . lift $ App.addEdit eid cedit
   cvdoc' :: VDoc <- lift . lift $ App.getVDoc vid
   edit_  :: Edit <- lift . lift $ App.getEdit (cvdoc' ^. vdocHeadEdit)
-  lift . check $ Set.member (edit ^. editID) (edit_ ^. editChildren)
+  lift . invariant $ Set.member (edit ^. editID) (edit_ ^. editChildren)
   edit'  :: Edit <- lift . lift $ App.getEdit (edit ^. editID)
-  lift . check $
+  lift . invariant $
     (edit                 == edit') &&
     (edit ^. editDesc     == cedit ^. createEditDesc) &&
     (edit ^. editKind     == cedit ^. createEditKind)

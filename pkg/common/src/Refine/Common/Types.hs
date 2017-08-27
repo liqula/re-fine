@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 module Refine.Common.Types (module R) where
 
 import Refine.Common.Types.Config       as R

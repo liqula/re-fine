@@ -1,15 +1,14 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 module Refine.Frontend.Test.Store where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import           Control.Concurrent
 import           Data.List (isInfixOf)
 import           Test.Hspec
 
-import           Refine.Frontend.Store()
+import           Refine.Frontend.Store ()
 import           Refine.Frontend.Store.Types
 
 

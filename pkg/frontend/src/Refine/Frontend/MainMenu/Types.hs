@@ -1,11 +1,8 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 module Refine.Frontend.MainMenu.Types where
-
-import Refine.Frontend.Prelude
-
-import GHC.Generics (Generic)
+#include "import_frontend.hs"
 
 import React.Flux.Missing
 import Refine.Common.Types

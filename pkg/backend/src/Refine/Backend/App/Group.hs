@@ -1,13 +1,10 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
 module Refine.Backend.App.Group where
-
-import Refine.Backend.Prelude
-
-import qualified Data.Set as Set
+#include "import_backend.hs"
 
 import           Refine.Backend.App.Access
 import           Refine.Backend.App.Core

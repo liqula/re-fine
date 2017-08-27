@@ -1,22 +1,19 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 module Refine.Frontend.Document.Types where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import           GHC.Generics (Generic)
-import qualified Data.List.NonEmpty as NEL
 import           Language.Css.Build hiding (s)
 import           Language.Css.Syntax hiding (Value)
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
 import qualified Refine.Frontend.Colors as Color
-import           Refine.Frontend.Types
-import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
+import           Refine.Frontend.Header.Types
+import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
 

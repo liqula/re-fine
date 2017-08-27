@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -10,10 +10,8 @@ module Refine.Backend.Database
   , DBConnection(..)
   , createDBNat
   ) where
+#include "import_backend.hs"
 
-import Refine.Backend.Prelude
-
-import Control.Lens ((^.))
 import Control.Monad.Logger
 import Data.Pool (Pool, withResource, destroyAllResources)
 import Database.Persist.Sqlite (SqlBackend, createSqlitePool, persistBackend, getStmtConn, connBegin, connRollback, connCommit)

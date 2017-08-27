@@ -1,14 +1,12 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 module Refine.Backend.Database.TreeSpec where
-
-import Refine.Backend.Prelude
+#include "import_backend.hs"
 
 import           Data.Tree
 import           Test.Hspec
 import           Test.QuickCheck
-import qualified Data.Map as Map
 
 import Refine.Backend.Database.Tree (buildTree)
 

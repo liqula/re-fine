@@ -1,9 +1,8 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 module Refine.Backend.Natural (cnToSn, natThrowError, (.), ($$)) where
-
-import Refine.Backend.Prelude
+#include "import_backend.hs"
 
 import qualified Control.Natural     as CN
 import qualified Servant.Utils.Enter as SN

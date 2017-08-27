@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 module Refine.Frontend.Contribution.Bubble
   ( bubble_
@@ -8,16 +8,12 @@ module Refine.Frontend.Contribution.Bubble
   , stackComponents, StackOrNot(..)
   , constantBubbleHeight
   ) where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import qualified Data.List.NonEmpty as NEL
-import           Data.List.NonEmpty (NonEmpty((:|)))
-import qualified Data.Set as Set
 import           Language.Css.Syntax
 import           Web.HttpApiData (toUrlPiece)
 
-import           Refine.Common.Types.Core
+import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Screen.Calculations

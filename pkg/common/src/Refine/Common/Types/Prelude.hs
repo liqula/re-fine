@@ -1,9 +1,8 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 
 module Refine.Common.Types.Prelude where
-
-import Refine.Common.Prelude as P
+#include "import_common.hs"
 
 
 -- * ID

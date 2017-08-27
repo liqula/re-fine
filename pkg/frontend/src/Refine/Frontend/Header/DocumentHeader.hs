@@ -1,16 +1,12 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.Header.DocumentHeader where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import           Control.Lens (ix)
-import qualified Data.Text as ST
-
-import           Refine.Common.Types
+import Refine.Common.Types
 
 
 data DocumentHeaderProps = DocumentHeaderProps

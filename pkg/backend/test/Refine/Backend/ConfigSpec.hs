@@ -1,14 +1,11 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 module Refine.Backend.ConfigSpec where
+#include "import_backend.hs"
 
-import Refine.Backend.Prelude
-
-import qualified Data.Aeson as Aeson
-import           Test.Hspec
-
-import           Refine.Backend.Config
+import Test.Hspec
+import Refine.Backend.Config
 
 
 spec :: Spec

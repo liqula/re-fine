@@ -1,11 +1,10 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.Contribution.QuickCreate where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import Refine.Frontend.Access
 import Refine.Frontend.Contribution.Types

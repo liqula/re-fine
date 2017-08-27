@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -9,12 +9,9 @@ module Refine.Backend.App.Cache
   ( startWebSocketServer
   , resetWebSocketMVar
   ) where
-
-import Refine.Backend.Prelude as P
+#include "import_backend.hs"
 
 import           Control.Concurrent
-import qualified Data.Map as Map
-import qualified Data.Set as Set
 import           Network.Wai (Middleware)
 import           System.IO.Unsafe
 import           Network.WebSockets

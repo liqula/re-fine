@@ -1,11 +1,8 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 module Refine.Frontend.Screen.Types where
-
-import Refine.Frontend.Prelude
-
-import GHC.Generics (Generic)
+#include "import_frontend.hs"
 
 
 data ScreenAction =

@@ -1,14 +1,11 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 
 module Refine.Common.Types.Vote where
-
-import Refine.Common.Prelude
-
-import GHC.Generics (Generic)
-import qualified Data.Map as Map
+#include "import_common.hs"
 
 import Refine.Common.Types.Prelude (ID, User)
+
 
 data Vote = Yeay | Nay
   deriving (Eq, Ord, Show, Generic)

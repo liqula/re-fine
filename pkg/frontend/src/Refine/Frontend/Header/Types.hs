@@ -1,12 +1,8 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 module Refine.Frontend.Header.Types where
-
-import Refine.Frontend.Prelude
-
-import qualified Data.Set as Set
-import           GHC.Generics (Generic)
+#include "import_frontend.hs"
 
 import Refine.Common.Types
 import Refine.Frontend.Login.Types

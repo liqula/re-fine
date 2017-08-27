@@ -1,9 +1,8 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 module Refine.Backend.Database.Class where
-
-import Refine.Backend.Prelude
+#include "import_backend.hs"
 
 import qualified Web.Users.Persistent as Users
 

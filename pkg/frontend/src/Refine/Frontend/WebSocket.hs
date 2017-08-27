@@ -1,12 +1,10 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Frontend.WebSocket where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import qualified Data.Set as Set
 import           Control.Concurrent
 import           System.IO.Unsafe
 #ifdef __GHCJS__

@@ -1,11 +1,10 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
 module Refine.Backend.App.Session where
-
-import Refine.Backend.Prelude
+#include "import_backend.hs"
 
 import Refine.Backend.App.Core
 import Refine.Backend.Types

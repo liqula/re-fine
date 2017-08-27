@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 -- | FUTUREWORK: this module pulls its development mode status from the webpack config, not from
 -- "Refine.Backend.Config".  we should unify that at some point.
@@ -14,8 +14,7 @@ module Refine.Frontend.Test.Console
   , windowAlertST
   )
 where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 
 consoleLogJSStringM :: HasCallStack => (Monad m) => JSString -> JSString -> m ()

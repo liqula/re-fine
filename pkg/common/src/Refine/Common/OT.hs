@@ -1,25 +1,19 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}
 
 -- | FUTUREWORK: release this file as a library
 module Refine.Common.OT where
+#include "import_common.hs"
 
-import Refine.Common.Prelude
-
-import qualified Data.Set as Set
 import           Data.Sequence (Seq)
-import qualified Data.Sequence as Seq
 import           Data.List
 import           Data.List.NonEmpty (NonEmpty)
-import qualified Data.List.NonEmpty as NEL
 import qualified Data.Algorithm.Patience as Diff
-import qualified Data.Text as ST
-import qualified Data.Semigroup as Semigroup
-import qualified Generics.SOP as SOP
 import           Control.DeepSeq
 import           Test.QuickCheck (Arbitrary)
-import "quickcheck-instances" Test.QuickCheck.Instances ()
+import "quickcheck-instances"
+                 Test.QuickCheck.Instances ()
 
 ----------------------------------------------------------------------------------------------
 

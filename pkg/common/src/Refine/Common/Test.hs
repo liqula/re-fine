@@ -1,10 +1,9 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Refine.Common.Test (module P, passes, failsOn, thisException) where
-
-import Refine.Common.Prelude
+#include "import_common.hs"
 
 import Test.Hspec as P
 import Test.QuickCheck as P

@@ -1,15 +1,13 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns #-}   -- pattern completeness checker has problems with pattern synonyms
 
 module Refine.Common.Types.Position where
 
-import           Data.Int
-import           Data.String.Conversions (ST, cs, (<>))
-import           GHC.Generics (Generic)
-import qualified Generics.SOP as SOP
+#include "import_common.hs"
 
-import           Refine.Common.Prelude
+import           Data.Int
+import           GHC.Generics (Generic)
 
 
 -- * Position

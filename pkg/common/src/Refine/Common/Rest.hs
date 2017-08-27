@@ -1,9 +1,8 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 
 module Refine.Common.Rest where
-
-import Refine.Common.Prelude
+#include "import_common.hs"
 
 import Refine.Common.ChangeAPI
 import Refine.Common.Types.Core

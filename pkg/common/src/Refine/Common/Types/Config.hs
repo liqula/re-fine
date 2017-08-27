@@ -1,11 +1,8 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_common.hs"
 
 module Refine.Common.Types.Config where
-
-import Refine.Common.Prelude
-
-import qualified Generics.SOP as SOP
+#include "import_common.hs"
 
 
 data ClientCfg = ClientCfg

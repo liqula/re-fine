@@ -1,13 +1,10 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 module Refine.Frontend.Translation.Store (translationsUpdate) where
+#include "import_frontend.hs"
 
-import Refine.Frontend.Prelude
-
-import Data.String.Conversions (cs)
 import Data.Text.I18n
-
 import Refine.Common.Types.Translation
 import Refine.Frontend.Store.Types
 

@@ -1,13 +1,10 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 module Refine.Backend.Database.Types where
-
-import Refine.Backend.Prelude
+#include "import_backend.hs"
 
 import           Refine.Common.Types
-import           Refine.Prelude.TH (makeRefineType)
-import           Data.List.NonEmpty (NonEmpty)
 import qualified Refine.Common.OT as OT
 
 

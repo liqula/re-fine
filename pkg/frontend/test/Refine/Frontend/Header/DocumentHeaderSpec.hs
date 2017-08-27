@@ -1,10 +1,8 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
-
+#include "language_frontend.hs"
 
 module Refine.Frontend.Header.DocumentHeaderSpec where
-
-import Refine.Frontend.Prelude
+#include "import_frontend.hs"
 
 import Test.Hspec
 

@@ -1,12 +1,11 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 module Refine.Backend.App
   ( module App
   , runApp
   ) where
-
-import Refine.Backend.Prelude
+#include "import_backend.hs"
 
 import Refine.Backend.App.Access      as App
 import Refine.Backend.App.Comment     as App

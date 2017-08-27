@@ -1,9 +1,8 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_frontend.hs"
 
 module Refine.Frontend.IconSpec where
-
-import Refine.Frontend.Prelude hiding (S)
+#include "import_frontend.hs"
 
 import Test.Hspec
 import Language.Css.Syntax hiding (S)

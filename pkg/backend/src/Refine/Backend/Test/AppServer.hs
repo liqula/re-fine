@@ -1,13 +1,12 @@
 {-# LANGUAGE CPP #-}
-#include "language.hs"
+#include "language_backend.hs"
 
 module Refine.Backend.Test.AppServer where
-
-import Refine.Backend.Prelude hiding (Header)
+#include "import_backend.hs"
 
 import           Control.Concurrent.MVar
-import           Data.List.NonEmpty (NonEmpty((:|)))
 import           Network.HTTP.Types (Method, Header, methodGet, methodPut, methodDelete)
+import qualified Network.HTTP.Types as HTTP
 import           Network.HTTP.Types.Status (Status(statusCode))
 import           Network.URI (URI, uriToString)
 import           Network.Wai (requestMethod, requestHeaders, defaultRequest)
@@ -180,7 +179,7 @@ rqJSON method path js = do
 
 -- | This is from hspec-wai, but we modified it to work on 'Wai.Session' directly.  'WaiSession'
 -- does not keep the cookies in the 'Session' between requests.
-request :: Method -> SBS -> [Header] -> LBS -> Wai.Session SResponse
+request :: Method -> SBS -> [HTTP.Header] -> LBS -> Wai.Session SResponse
 request method path headers body = Wai.srequest $ SRequest req body
   where
     req = Wai.setPath defaultRequest {requestMethod = method, requestHeaders = headers} path
