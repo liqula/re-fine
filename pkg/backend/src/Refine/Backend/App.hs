@@ -34,13 +34,13 @@ runApp
   dbrunner
   logger
   cfg
-  = NT (runSR . unApp . tryApp)
+  = NT (runSR . unApp)
     where
       runSR
         :: forall a. StateT AppState
                        (ReaderT (MkDBNat db, AppContext)
                           (ExceptT AppError IO))
-                       (Either ApiError a)
+                       a
         -> ExceptT ApiError IO a
       runSR action = unDBRunner dbrunner $ \dbc -> do
               dbInit dbc
@@ -50,9 +50,5 @@ runApp
                 -- (commit iff there is no exception.)
                 <* dbCommit dbc
 
-      -- twist the shape of the above so the error falls into the right place
-      twistException :: Monad m => ExceptT e m (Either e' a) -> ExceptT e' m a
-      twistException almost =
-        ExceptT $ runExceptT almost >>=
-          either (error "impossible")              -- made impossible by 'tryApp'
-            (either (pure . Left) (pure . Right))  -- this is where 'tryApp' has left the 'ApiError'.
+      twistException :: MonadIO m => ExceptT AppError m a -> ExceptT ApiError m a
+      twistException (ExceptT m) = ExceptT $ either (fmap Left . toApiErrorWithLogger logger) (pure . Right) =<< m

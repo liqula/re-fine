@@ -22,7 +22,7 @@ module Refine.Backend.App.Core
   , AppM(..)
   , AppError(..)
   , SmtpError(..)
-  , tryApp, toApiError, createUserErrorToApiError
+  , tryApp, toApiError, toApiErrorWithLogger, createUserErrorToApiError
   , MonadApp
   , MonadAppDB(dbWithFilters), db, dbUsersCmd
   , MonadLog(appLogL), appLog
@@ -155,25 +155,30 @@ tryApp m = (Right <$> m) `catchError` (fmap Left . toApiError)
 -- | Convert 'AppError' (internal to backend) to 'ApiError' (shared between backend and frontend).
 -- This also takes care of logging the confidential part of 'AppError' on the server side before
 -- discarding it.
-toApiError :: AppError -> (Monad m, MonadLog m) => m ApiError
-toApiError err = l err >> pure (c err)
+toApiError :: forall (db :: * -> *). AppError -> AppM db ApiError
+toApiError = toApiErrorWithLogger (Logger appLog)
+
+toApiErrorWithLogger :: Logger -> AppError -> (MonadIO m) => m ApiError
+toApiErrorWithLogger (Logger logger) err = liftIO (l err) >> pure (c err)
   where
+    appLogL_ _ = logger  -- FIXME: 'Logger' should take a log level.  (this requires refactoring 'MonadLog'.)
+
     l = \case  -- (log levels may need some tweaking)
-      AppUnknownError _          -> appLogL LogError $ "AppError: " <> show err
-      AppVDocVersionError        -> appLogL LogError $ "AppError: " <> show err
-      AppDBError _               -> appLogL LogError $ "AppError: " <> show err
-      AppUserNotFound _          -> appLogL LogInfo  $ "AppError: " <> show err
-      AppUserNotLoggedIn         -> appLogL LogInfo  $ "AppError: " <> show err
-      AppUserCreationError _     -> appLogL LogInfo  $ "AppError: " <> show err
-      AppCsrfError _             -> appLogL LogError $ "AppError: " <> show err
-      AppSessionError            -> appLogL LogError $ "AppError: " <> show err
-      AppSanityCheckError _      -> appLogL LogError $ "AppError: " <> show err
-      AppUserHandleError _       -> appLogL LogError $ "AppError: " <> show err
-      AppL10ParseErrors _        -> appLogL LogError $ "AppError: " <> show err
-      AppUnauthorized _          -> appLogL LogInfo  $ "AppError: " <> show err
-      AppMergeError _ _ _ _      -> appLogL LogError $ "AppError: " <> show err
-      AppRebaseError _           -> appLogL LogError $ "AppError: " <> show err
-      AppSmtpError _             -> appLogL LogError $ "AppError: " <> show err
+      AppUnknownError _          -> appLogL_ LogError $ "AppError: " <> show err
+      AppVDocVersionError        -> appLogL_ LogError $ "AppError: " <> show err
+      AppDBError _               -> appLogL_ LogError $ "AppError: " <> show err
+      AppUserNotFound _          -> appLogL_ LogInfo  $ "AppError: " <> show err
+      AppUserNotLoggedIn         -> appLogL_ LogInfo  $ "AppError: " <> show err
+      AppUserCreationError _     -> appLogL_ LogInfo  $ "AppError: " <> show err
+      AppCsrfError _             -> appLogL_ LogError $ "AppError: " <> show err
+      AppSessionError            -> appLogL_ LogError $ "AppError: " <> show err
+      AppSanityCheckError _      -> appLogL_ LogError $ "AppError: " <> show err
+      AppUserHandleError _       -> appLogL_ LogError $ "AppError: " <> show err
+      AppL10ParseErrors _        -> appLogL_ LogError $ "AppError: " <> show err
+      AppUnauthorized _          -> appLogL_ LogInfo  $ "AppError: " <> show err
+      AppMergeError _ _ _ _      -> appLogL_ LogError $ "AppError: " <> show err
+      AppRebaseError _           -> appLogL_ LogError $ "AppError: " <> show err
+      AppSmtpError _             -> appLogL_ LogError $ "AppError: " <> show err
 
     c = \case
       AppUnknownError e          -> ApiUnknownError e
