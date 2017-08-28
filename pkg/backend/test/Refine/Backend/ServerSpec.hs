@@ -410,9 +410,6 @@ specSmtp = describe "smtp" . around (createTestSessionWith addTestUserAndLogin) 
     pure ()
 
   itNotifiesOnRebase "when my discussion gets rebased, i get an email" $ \sess base -> do
-
-    pendingWith "#424"
-
     let cp1 = Position (BlockIndex 0 $ BlockKey "1") (0 :: Int)
         cp2 = Position (BlockIndex 0 $ BlockKey "1") 1
     _firstDiscussion :: Discussion

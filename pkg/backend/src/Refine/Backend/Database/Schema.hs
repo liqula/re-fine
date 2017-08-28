@@ -43,7 +43,6 @@ Edit
     votes       DBVotes
 
 Discussion
-    range       RangePosition    -- FIXME: move this to PD table
     votes       DBVotes
     isNote      Bool
 
@@ -87,6 +86,7 @@ ParentChild
 PD
     edit       EditId
     discussion DiscussionId
+    range      RangePosition
     UniPD edit discussion
 |]
 
