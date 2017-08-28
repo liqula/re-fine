@@ -344,6 +344,7 @@ rebaseDiscussion baseid eid did tr = do
   void . liftDB . insert $ S.PD (S.idToKey eid) (S.idToKey did) newrange
   getDiscussion did
 
+-- FIXME: return a non-empty list!  make the list in the 'Discussion' type non-empty as well!
 statementsOfDiscussion :: ID Discussion -> DB [ID Statement]
 statementsOfDiscussion did = do
   opts <- dbSelectOpts

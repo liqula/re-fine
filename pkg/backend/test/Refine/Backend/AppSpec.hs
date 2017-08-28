@@ -69,20 +69,19 @@ spec = do
       pendingWith "#424"
 
       mem :: MVar (ID Group) <- newEmptyMVar
-      let transaction1 = do
+      let nosuchgid = ID 834791
+          transaction1 = do
             liftIO . putMVar mem . view groupID =<< addGroup (CreateGroup mempty mempty mempty mempty mempty)
-            let nosuchgid = ID 834791
             Group{} <- App.getGroup nosuchgid
             pure ()
           transaction2 gid = do
             Group{} <- App.getGroup gid
             pure ()
+          groupException gid = thisException . ApiDBError . ApiDBNotFound $ "not found: " <> show gid <> " :: ID Group"
 
-      runner transaction1 `shouldThrow`
-        thisException (ApiDBError (ApiDBNotFound "not found: ID 834791 :: ID Group"))
+      runner transaction1 `shouldThrow` groupException nosuchgid
       gid <- takeMVar mem
-      runner (transaction2 gid) `shouldThrow`
-        thisException (ApiDBError (ApiDBNotFound $ "not found: " <> show gid <> " :: ID Group"))
+      runner (transaction2 gid) `shouldThrow` groupException gid
 
     it "db (or dbWithFilters) can be called twice inside the same AppM" $ \(runner :: AppM DB () -> IO ()) -> do
       runner $ do
