@@ -11,6 +11,7 @@ import Refine.Backend.App.Group  as App
 import Refine.Backend.App.Role   as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
+import Refine.Common.Rest
 import Refine.Common.Test.Arbitrary ()
 import Refine.Common.Types
 import Refine.Common.Types.Prelude (ID(..))
@@ -18,14 +19,14 @@ import Refine.Common.Types.Prelude (ID(..))
 {-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
 
 
-type RoleAppRunner = AppM DB (IO ()) -> IO (IO ())
+type RoleAppRunner = AppM DB (IO ()) -> ExceptT ApiError IO (IO ())
 
 spec :: Spec
 spec = around provideAppRunner $ do
     describe "assign role" $ do
       context "role was not previously assigned" $ do
         it "adds role" $ \(runner :: RoleAppRunner) -> do
-          join . runner $ do
+          join . throwApiErrors . runner $ do
             -- GIVEN
             let role = GroupMember
                 user = ID 1
@@ -40,7 +41,7 @@ spec = around provideAppRunner $ do
 
       context "role was previously assigned" $ do
         it "does nothing" $ \(runner :: RoleAppRunner) -> do
-          join . runner $ do
+          join . throwApiErrors . runner $ do
             -- GIVEN
             let role = GroupMember
                 user = ID 1
@@ -57,7 +58,7 @@ spec = around provideAppRunner $ do
       it "role is always in new role set, old and new role are equal except for assigned role" $
         \(runner :: RoleAppRunner) -> do
           property $ \(role :: GroupRole, roles :: [GroupRole]) -> do
-            join . runner $ do
+            join . throwApiErrors . runner $ do
               let uid = ID 1
               group       <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
               ()          <- forM_ roles $ \r -> App.assignGroupRole r uid (group ^. groupID)
@@ -72,7 +73,7 @@ spec = around provideAppRunner $ do
     describe "unassign role" $ do
       context "role previously assigned" $ do
         it "unassigns the given role" $ \(runner :: RoleAppRunner) -> do
-          join . runner $ do
+          join . throwApiErrors . runner $ do
             -- GIVEN
             let role = GroupMember
                 user = ID 1
@@ -87,7 +88,7 @@ spec = around provideAppRunner $ do
               role' `shouldBe` []
 
         it "leaves other roles untouched" $ \(runner :: RoleAppRunner) -> do
-          join . runner $ do
+          join . throwApiErrors . runner $ do
             -- GIVEN
             let role = GroupMember
                 otherrole = GroupModerator
@@ -107,7 +108,7 @@ spec = around provideAppRunner $ do
 
       context "role previously unassigned" $ do
         it "does nothing" $ \(runner :: RoleAppRunner) -> do
-          join . runner $ do
+          join . throwApiErrors . runner $ do
             -- GIVEN
             let role = GroupMember
                 user = ID 1
@@ -123,7 +124,7 @@ spec = around provideAppRunner $ do
       it "role is never in new role set, old and new role are equal except for assigned role" $
         \(runner :: RoleAppRunner) -> do
           property $ \(role :: GroupRole, roles :: [GroupRole]) -> do
-            join . runner $ do
+            join . throwApiErrors . runner $ do
               let uid = ID 1
               group       <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
               ()          <- forM_ roles $ \r -> App.assignGroupRole r uid (group ^. groupID)

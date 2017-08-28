@@ -37,18 +37,15 @@ runApp
   = NT (runSR . unApp)
     where
       runSR
-        :: forall a. StateT AppState
-                       (ReaderT (MkDBNat db, AppContext)
-                          (ExceptT AppError IO))
-                       a
+        :: forall a. StateT AppState (ReaderT (MkDBNat db, AppContext) (ExceptT AppError IO)) a
         -> ExceptT ApiError IO a
       runSR action = unDBRunner dbrunner $ \dbc -> do
               dbInit dbc
-              let cmd = evalStateT action $ initialAppState cfg
+              let action' = evalStateT action $ initialAppState cfg
                   ctx = (dbNat, AppContext dbc logger cfg)
-              twistException (cmd `runReaderT` ctx)
-                -- (commit iff there is no exception.)
+              twistException (action' `runReaderT` ctx)
+                -- (always commit; rollback in case of error should already have happened here.)
                 <* dbCommit dbc
 
-      twistException :: MonadIO m => ExceptT AppError m a -> ExceptT ApiError m a
+      twistException :: ExceptT AppError IO a -> ExceptT ApiError IO a
       twistException (ExceptT m) = ExceptT $ either (fmap Left . toApiErrorWithLogger logger) (pure . Right) =<< m

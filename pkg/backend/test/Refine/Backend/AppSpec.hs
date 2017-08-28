@@ -12,9 +12,9 @@ import           Test.QuickCheck.Monadic as QuickCheck
 import Refine.Backend.App as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
+import Refine.Common.Rest
 import Refine.Common.Test
 import Refine.Common.Types
-import Refine.Common.Rest
 
 
 data Cmd where
@@ -43,18 +43,18 @@ isActiveUser UserLoggedOut      = False
 spec :: Spec
 spec = do
   describe "VDoc" . around provideAppRunner $ do
-    it "Random program" $ \(runner :: AppM DB Property -> IO Property) -> forAll sampleProgram $ \program ->
-      monadic (monadicApp runner) (runProgram program `evalStateT` initVDocs)
+    it "Random program" $ \(runner :: AppM DB Property -> ExceptT ApiError IO Property) -> forAll sampleProgram $ \program ->
+      monadic (monadicApp (throwApiErrors . runner)) (runProgram program `evalStateT` initVDocs)
 
   describe "User handling" . around provideAppRunner $ do
     -- FUTUREWORK: Use the Cmd dsl for this test
-    it "Create/login/logout" $ \(runner :: AppM DB () -> IO ()) -> do
-      runner $ do
+    it "Create/login/logout" $ \(runner :: AppM DB () -> ExceptT ApiError IO ()) -> do
+      throwApiErrors . runner $ do
         void $ App.createUser (CreateUser "user" "user@example.com" "password")
         userState0 <- gets (view appUserState)
         liftIO $ userState0 `shouldBe` UserLoggedOut
 
-      runner $ do
+      throwApiErrors . runner $ do
         void $ App.login (Login "user" "password")
         userState1 <- gets (view appUserState)
         liftIO $ userState1 `shouldSatisfy` isActiveUser
@@ -101,12 +101,12 @@ spec = do
           liftIO $ grp2 `shouldSatisfy` sameGroupInfo createGroup2
 
   describe "Regression" . around provideAppRunner $ do
-    it "Regression test program" $ \(runner :: AppM DB () -> IO ()) -> do
+    it "Regression test program" $ \(runner :: AppM DB () -> ExceptT ApiError IO ()) -> do
       let program =
             [ AddVDoc (CreateVDoc (Title "title...") (Abstract "abstract...") sampleRawContent1 defaultGroupID)
             , AddEditToHead 0 sampleCreateEdit1
             ]
-      runner . runIdentityT $ runProgram program `evalStateT` initVDocs
+      throwApiErrors . runner . runIdentityT $ runProgram program `evalStateT` initVDocs
 
   describe "merging" . around provideAppRunner $ do
     let vdoc = mkRawContent . NEL.fromList . map mkBlock
@@ -122,15 +122,15 @@ spec = do
           _ <- App.createUser $ CreateUser username (username <> "@email.com") "password"
           login $ Login username "password"
 
-    it "merge two edits" $ \(runner :: AppM DB () -> IO ()) -> do
-      runner $ do
+    it "merge two edits" $ \(runner :: AppM DB () -> ExceptT ApiError IO ()) -> do
+      throwApiErrors . runner $ do
         (_, base, [eid1, eid2]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"]]
         eidm <- (^. editID) <$> App.addMerge base eid1 eid2
         doc' <- App.getVDocVersion eidm
         liftIO $ doc' `shouldBe` vdoc ["a.c","d.f"]
 
-    it "rebase one edit to two other edits" $ \(runner :: AppM DB () -> IO ()) -> do
-      runner $ do
+    it "rebase one edit to two other edits" $ \(runner :: AppM DB () -> ExceptT ApiError IO ()) -> do
+      throwApiErrors . runner $ do
         (vid, _, [eid1, _, _]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"], ["abX", "def"]]
         App.rebaseHeadToEdit eid1
         d <- App.getVDoc vid
@@ -145,7 +145,8 @@ spec = do
         docB <- App.getVDocVersion ee1
         liftIO $ docB `shouldBe` vdoc ["aX.","def"]   -- FIXME: the merge result is strange
 
-    it "upvoting an edit triggers rebase" $ \(runner :: AppM DB () -> IO ()) -> runner $ do
+    it "upvoting an edit triggers rebase" $ \(runner :: AppM DB () -> ExceptT ApiError IO ()) ->
+      throwApiErrors . runner $ do
         (vid, _, [eid]) <- docWithEdits ["abc", "def"] [["a.c", "def"]]
         void $ addUserAndLogin "user"
         _ <- toggleSimpleVoteOnEdit eid Yeay
