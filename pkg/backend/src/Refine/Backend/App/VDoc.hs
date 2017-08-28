@@ -162,7 +162,7 @@ rebaseHeadToEdit eid = do
 
     -- move discussions
     movedDiscussions :: [Discussion]
-       <- forM (Set.toList $ base ^. editDiscussions') $ \did -> DB.rebaseDiscussion eid did trRange
+       <- forM (Set.toList $ base ^. editDiscussions') $ \did -> DB.rebaseDiscussion hid eid did trRange
     pure $ view (discussionMetaID . miMeta) <$> movedDiscussions
 
   notifyContributionAuthorsOfMovement $ movedEditOwners <> movedCommentOwners

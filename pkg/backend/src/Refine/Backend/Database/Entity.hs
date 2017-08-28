@@ -227,6 +227,11 @@ getVDoc i = do
       stats = EditStats users (length editIds) (length discussionIds)
   pure $ S.vDocElim (toVDoc stats mid) x
 
+headOfVDoc :: ID VDoc -> DB (ID Edit)
+headOfVDoc i = do
+  x <- getEntityRep i
+  pure $ S.vDocElim (\_ _ (Just ei) _ -> S.keyToId ei) x
+
 
 -- * Repo
 
@@ -319,11 +324,11 @@ vdocOfEdit eid = S.editElim (\_ _ vid _ _ -> S.keyToId vid) <$> getEntityRep eid
 createDiscussion :: ID Edit -> CreateDiscussion (Range Position) -> DB Discussion
 createDiscussion pid disc = do
   let sdiscussion = S.Discussion
-          (RangePosition $ disc ^. createDiscussionRange)
           (DBVotes mempty)
           (disc ^. createDiscussionIsNote)
   mid <- createMetaID sdiscussion
-  addConnection S.PD pid (mid ^. miID)
+  void . liftDB . insert $
+    S.PD (S.idToKey pid) (S.idToKey $ mid ^. miID) (RangePosition $ disc ^. createDiscussionRange)
   vid <- view editVDoc <$> getEdit pid
   void . saveStatement vid $ S.Statement
           (disc ^. createDiscussionStatementText)
@@ -331,13 +336,12 @@ createDiscussion pid disc = do
           (S.idToKey $ mid ^. miID)
   getDiscussion $ mid ^. miID
 
-rebaseDiscussion :: ID Edit -> ID Discussion -> (Range Position -> Range Position) -> DB Discussion
-rebaseDiscussion eid did tr = do
-  d <- getEntityRep did
-  let sdiscussion = S.discussionElim (\(RangePosition r) -> S.Discussion (RangePosition $ tr r)) d
-  mid <- createMetaID sdiscussion
-  addConnection S.PD eid (mid ^. miID)
-  getDiscussion $ mid ^. miID
+rebaseDiscussion :: ID Edit -> ID Edit -> ID Discussion -> (Range Position -> Range Position) -> DB Discussion
+rebaseDiscussion baseid eid did tr = do
+  Just conn <- liftDB . getBy $ S.UniPD (S.idToKey baseid) (S.idToKey did)
+  let newrange = S.pDElim (\_ _ r -> RangePosition . tr $ unRangePosition r) $ entityVal conn
+  void . liftDB . insert $ S.PD (S.idToKey eid) (S.idToKey did) newrange
+  getDiscussion did
 
 statementsOfDiscussion :: ID Discussion -> DB [ID Statement]
 statementsOfDiscussion did = do
@@ -345,13 +349,17 @@ statementsOfDiscussion did = do
   liftDB $
     (S.keyToId . entityKey) <$$> selectList [S.StatementDiscussion ==. S.idToKey did] opts
 
+-- gets the discussion; the range is the range of the discussion in the head edit
 getDiscussion :: ID Discussion -> DB Discussion
 getDiscussion did = do
   (mid, d) <- getMetaEntity (,) did
   s@(_:_) <- statementsOfDiscussion did
   t <- buildTree (^. statementParent) (^. statementID) <$> mapM getStatement s
   vid <- vdocOfDiscussion did
-  pure $ S.discussionElim (\range -> Discussion mid vid (unRangePosition range) t . unDBVotes) d
+  eid <- headOfVDoc vid
+  Just conn <- liftDB . getBy $ S.UniPD (S.idToKey eid) (S.idToKey did)
+  let range = S.pDElim (\_ _ r -> unRangePosition r) $ entityVal conn
+  pure $ S.discussionElim (Discussion mid vid range t . unDBVotes) d
 
 discussionOfStatement :: ID Statement -> DB (ID Discussion)
 discussionOfStatement sid = do
@@ -362,7 +370,7 @@ vdocOfDiscussion :: ID Discussion -> DB (ID VDoc)
 vdocOfDiscussion did = do
   opts <- dbSelectOpts
   ((editOfDiscussion :: Persist.Entity S.PD) : _) <- liftDB $ selectList [S.PDDiscussion ==. S.idToKey did] opts
-  let eid :: ID Edit = (S.pDElim (\i _ -> S.keyToId i) . entityVal) editOfDiscussion
+  let eid :: ID Edit = (S.pDElim (\i _ _ -> S.keyToId i) . entityVal) editOfDiscussion
   view editVDoc <$> getEdit eid
 
 updateDiscussionVotes :: ID Discussion -> (Votes -> Votes) -> DB ()
@@ -372,7 +380,7 @@ updateDiscussionVotes i f = do
 
 getDiscussionVotes :: ID Discussion -> DB Votes
 getDiscussionVotes i = do
-  getMetaEntity (\_ -> S.discussionElim $ \_ (DBVotes vs) _ -> vs) i
+  getMetaEntity (\_ -> S.discussionElim $ \(DBVotes vs) _ -> vs) i
 
 
 -- * Statement

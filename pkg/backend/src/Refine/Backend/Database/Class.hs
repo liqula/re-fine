@@ -37,7 +37,7 @@ class Monad db => Database db where
 
   -- Discussion
   createDiscussion   :: ID Edit -> CreateDiscussion (Range Position) -> db Discussion
-  rebaseDiscussion   :: ID Edit -> ID Discussion -> (Range Position -> Range Position) -> db Discussion
+  rebaseDiscussion   :: ID Edit -> ID Edit -> ID Discussion -> (Range Position -> Range Position) -> db Discussion
   getDiscussion      :: ID Discussion -> db Discussion
   statementsOfDiscussion :: ID Discussion -> db [ID Statement]
   discussionOfStatement  :: ID Statement  -> db (ID Discussion)
