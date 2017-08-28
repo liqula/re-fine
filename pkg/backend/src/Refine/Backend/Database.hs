@@ -55,18 +55,16 @@ createDBNat cfg = do
     -- https://hackage.haskell.org/package/persistent-2.6.1/docs/src/Database-Persist-Sql-Run.html#runSqlConn
     mkDBConnection :: SqlBackend -> DBConnection
     mkDBConnection conn =
-      let conn'  = persistBackend conn
-          getter = getStmtConn conn'
-      in DBConnection
+      DBConnection
         { dbInit   = control $ \runInIO -> mask $ \restore -> do
-                       restore $ connBegin conn' getter
+                       restore $ connBegin conn (getStmtConn conn)
                        runInIO $ pure ()
         , dbRun    = \r -> control $ \runInIO -> mask $ \restore -> do
                              onException
                                (restore (runInIO $ runReaderT r conn))
-                               (restore (connRollback conn' getter))
+                               (restore (connRollback conn (getStmtConn conn)))
         , dbCommit = control $ \runInIO -> mask $ \restore -> do
-                       restore $ connCommit conn' getter
+                       restore $ connCommit conn (getStmtConn conn)
                        runInIO $ pure ()
         }
 
