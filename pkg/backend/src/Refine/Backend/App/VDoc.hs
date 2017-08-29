@@ -213,12 +213,12 @@ rebasePossible eid = do
 
 changeSimpleVoteOnEdit :: ID Edit -> (Votes -> Votes) -> App Bool{-rebase happened-}
 changeSimpleVoteOnEdit eid f = do
-  mkrebase <- db $ do
+  pleaseRebase <- db $ do
     DB.updateVotes eid f
     vs <- DB.getVoteCount eid
     if atLeastOneUpvote vs then rebasePossible eid else pure False
-  when mkrebase $ rebaseHeadToEdit eid
-  pure mkrebase
+  when pleaseRebase $ rebaseHeadToEdit eid
+  pure pleaseRebase
 
 getSimpleVotesOnEdit :: ID Edit -> App VoteCount
 getSimpleVotesOnEdit eid = db $ DB.getVoteCount eid

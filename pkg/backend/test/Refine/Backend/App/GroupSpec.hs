@@ -9,24 +9,25 @@ import Refine.Backend.App.Core  as App
 import Refine.Backend.App.Group as App
 import Refine.Backend.Database
 import Refine.Backend.Test.AppRunner
+import Refine.Common.Rest
 import Refine.Common.Types
 import Refine.Common.Types.Prelude (ID(..))
 
 
-type AppRunner a = AppM DB a -> IO a
+type AppRunner a = AppM DB a -> ExceptT ApiError IO a
 
 spec :: Spec
 spec = do
   describe "Group" . around provideAppRunner $ do
     it "create works" $ \(runner :: AppRunner (IO ())) -> do
-      join . runner $ do
+      join . throwApiErrors . runner $ do
         group1 <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
         group2 <- App.getGroup (group1 ^. groupID)
         pure $ do
           group1 `shouldBe` group2
 
     it "modify once works" $ \(runner :: AppRunner (IO ())) -> do
-      join . runner $ do
+      join . throwApiErrors . runner $ do
         group1 <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
         group2 <- App.modifyGroup (group1 ^. groupID) (CreateGroup "title1" "desc1" [] [] mempty)
         group3 <- App.getGroup (group1 ^. groupID)
@@ -37,7 +38,7 @@ spec = do
           group2 ^. groupID `shouldBe` group3 ^. groupID
 
     it "modify twice works" $ \(runner :: AppRunner (IO ())) -> do
-      join . runner $ do
+      join . throwApiErrors . runner $ do
         group1 <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
         group2 <- App.modifyGroup (group1 ^. groupID) (CreateGroup "t2" "d2" [] [] mempty)
         group3 <- App.modifyGroup (group1 ^. groupID) (CreateGroup "t3" "d3" [] [] mempty)
@@ -51,7 +52,7 @@ spec = do
           group3 ^. groupID `shouldBe` group4 ^. groupID
 
     it "create with parents and children works" $ \(runner :: AppRunner (IO ())) -> do
-      join . runner $ do
+      join . throwApiErrors . runner $ do
         group1 <- App.addGroup (CreateGroup "t1" "d1" [] [] mempty)
         group2 <- App.addGroup (CreateGroup "t2" "d2" [] [] mempty)
         group3 <- App.addGroup (CreateGroup "t3" "d3" [group1 ^. groupID] [group2 ^. groupID] mempty)
@@ -62,7 +63,7 @@ spec = do
           group4 ^. groupChildren `shouldBe` [group2 ^. groupID]
 
     it "modify changes subgroups" $ \(runner :: AppRunner (IO ())) ->
-      join . runner $ do
+      join . throwApiErrors . runner $ do
         group1  <- App.addGroup (CreateGroup "t1" "d1" [] [] mempty)
         group2  <- App.addGroup (CreateGroup "t2" "d2" [] [] mempty)
         group3  <- App.addGroup (CreateGroup "t3" "d3" [] [] mempty)
@@ -74,7 +75,7 @@ spec = do
           group4 ^. groupChildren    `shouldBe` [group2 ^. groupID]
 
     it "add and remove subgroup" $ \(runner :: AppRunner (IO ())) ->
-      join . runner $ do
+      join . throwApiErrors . runner $ do
         parentg1 <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
         childg1  <- App.addGroup (CreateGroup "title2" "desc2" [] [] mempty)
         ()       <- App.addSubGroup (parentg1 ^. groupID) (childg1 ^. groupID)
@@ -99,7 +100,7 @@ spec = do
     -- will be restricted to an inconsistent type.
 
     it "remove group" $ \runner -> do
-      runner (do
+      (throwApiErrors . runner $ do
           group <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
           ()    <- App.removeGroup (group ^. groupID)
           void $ App.getGroup (group ^. groupID))
@@ -107,7 +108,7 @@ spec = do
        anyException
 
     it "non-existing group" $ \runner -> do
-      runner (do
+      (throwApiErrors . runner $ do
           (Group _gid _title _desc _parents _children _ _) <- App.getGroup (ID 100000000)
           pure ())
        `shouldThrow`

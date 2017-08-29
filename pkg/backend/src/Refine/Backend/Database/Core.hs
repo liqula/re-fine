@@ -16,6 +16,9 @@ data DBContext = DBContext
   , _dbFilters      :: XFilters
   }
 
+-- | Note that we stack two readers on top of each other here.  This is convenient because the inner
+-- monad 'SQLM' is the monad used by persistent.  (See also: 'liftIO' and its many uses in
+-- "Refine.Backend.Database.Entity".)
 newtype DB a = DB { unDB :: ExceptT DBError (ReaderT DBContext SQLM) a }
   deriving
     ( Functor
@@ -26,10 +29,10 @@ newtype DB a = DB { unDB :: ExceptT DBError (ReaderT DBContext SQLM) a }
     )
 
 data DBError
-  = DBUnknownError String  -- ^ FUTUREWORK: make this 'SomeException'?
+  = DBUnknownError String  -- ^ FUTUREWORK: make this 'SomeException'?  (FUTUREWORK: is this case even possible?)
+  | DBException String     -- ^ FUTUREWORK: make this 'SomeException'?
   | DBNotFound String
   | DBNotUnique String
-  | DBException String     -- ^ FUTUREWORK: make this 'SomeException'?
   | DBUserNotLoggedIn
   | DBMigrationParseErrors [ST]
   | DBUnsafeMigration [(Bool, ST)]

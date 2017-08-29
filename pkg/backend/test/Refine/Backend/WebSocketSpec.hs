@@ -214,9 +214,6 @@ make sure we've called all of these at least once:
 specErrors :: Spec
 specErrors = describe "errors" . around wsBackend $ do
   it "database lookup failure" $ \(WSBackend _ _ conn) -> do
-
-
-
     TCGreeting _ <- askQuestion conn $ TSGreeting Nothing
     respLogin <- askQuestion conn $ TSLogin (Login "admin" "pass")
     show respLogin `shouldContain` "(Right (User {_userMetaID = MetaID {_miID = ID 1, _miMeta = MetaInfo {_metaCreatedBy = Anonymous"

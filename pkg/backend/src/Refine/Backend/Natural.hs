@@ -11,5 +11,5 @@ import qualified Servant.Utils.Enter as SN
 cnToSn :: (a CN.:~> b) -> (a SN.:~> b)
 cnToSn (CN.NT n) = SN.Nat n
 
-natThrowError :: (Functor m, Show e) => ExceptT e m CN.:~> m
-natThrowError = CN.NT (fmap (either (error . show) id) . runExceptT)
+natThrowError :: (Show e) => ExceptT e IO CN.:~> IO
+natThrowError = CN.NT ((>>= either (throwIO . ErrorCall . show) pure) . runExceptT)

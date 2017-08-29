@@ -24,6 +24,14 @@ import Refine.Backend.Database.Entity as Entity
 import Refine.Backend.Database.Types as DatabaseCore
 
 
+-- | For transaction management.
+data DBConnection = DBConnection
+  { dbInit     :: forall m   . (MonadBaseControl IO m) => m ()
+  , dbRun      :: forall m a . (MonadBaseControl IO m) => ReaderT SqlBackend m a -> m a
+  , dbCommit   :: forall m   . (MonadBaseControl IO m) => m ()
+  , dbRollback :: forall m   . (MonadBaseControl IO m) => m ()
+  }
+
 type MkDBNat db = DBConnection -> DBContext -> (db :~> ExceptT DBError IO)
 
 newtype DBRunner = DBRunner { unDBRunner :: forall m a . MonadBaseControl IO m => (DBConnection -> m a) -> m a }
@@ -55,26 +63,19 @@ createDBNat cfg = do
     -- https://hackage.haskell.org/package/persistent-2.6.1/docs/src/Database-Persist-Sql-Run.html#runSqlConn
     mkDBConnection :: SqlBackend -> DBConnection
     mkDBConnection conn =
-      let conn'  = persistBackend conn
-          getter = getStmtConn conn'
-      in DBConnection
+      DBConnection
         { dbInit   = control $ \runInIO -> mask $ \restore -> do
-                       restore $ connBegin conn' getter
+                       restore $ connBegin conn (getStmtConn conn)
                        runInIO $ pure ()
         , dbRun    = \r -> control $ \runInIO -> mask $ \restore -> do
-                             onException
-                               (restore (runInIO $ runReaderT r conn))
-                               (restore (connRollback conn' getter))
+                             restore (runInIO $ runReaderT r conn)
         , dbCommit = control $ \runInIO -> mask $ \restore -> do
-                       restore $ connCommit conn' getter
+                       restore $ connCommit conn (getStmtConn conn)
                        runInIO $ pure ()
+        , dbRollback = control $ \runInIO -> mask $ \restore -> do
+                         restore $ restore (connRollback conn (getStmtConn conn))
+                         runInIO $ pure ()
         }
-
-data DBConnection = DBConnection
-  { dbInit   :: forall m   . (MonadBaseControl IO m) => m ()
-  , dbRun    :: forall m a . (MonadBaseControl IO m) => ReaderT SqlBackend m a -> m a
-  , dbCommit :: forall m   . (MonadBaseControl IO m) => m ()
-  }
 
 instance Database DB where
   -- * VDoc

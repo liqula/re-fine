@@ -15,18 +15,19 @@ import Refine.Backend.Database
 import Refine.Backend.Logger
 import Refine.Backend.Natural
 import Refine.Backend.Test.Util
+import Refine.Common.Rest
 import Refine.Common.Types
 
 
 -- | App actions run in god mode.  See 'unsafeAsGod'.
-provideAppRunner :: ActionWith (AppM DB a -> IO a) -> IO ()
+provideAppRunner :: ActionWith (AppM DB a -> ExceptT ApiError IO a) -> IO ()
 provideAppRunner action = withTempCurrentDirectory $ do
   (runner, destroy) <- createAppRunner
   action runner
   destroy
 
 -- | App actions run in god mode.  See 'unsafeAsGod'.
-createAppRunner :: forall a . IO (AppM DB a -> IO a, IO ())
+createAppRunner :: forall a. IO (AppM DB a -> ExceptT ApiError IO a, IO ())
 createAppRunner = do
   let dbFilePath = "./test.db"
       cfg = Config
@@ -47,19 +48,17 @@ createAppRunner = do
   (dbRunner, dbNat, destroy) <- createDBNat cfg
   let guardWithGodhood = if cfg ^. cfgAllAreGods then unsafeAsGod else id
       logger = Logger . const $ pure ()
-      runner :: forall b . AppM DB b -> IO b
-      runner m = ((natThrowError . runApp
-                                    dbNat
-                                    dbRunner
-                                    logger
-                                    cfg) $$ guardWithGodhood m) >>= evaluate -- without evaluate we have issue #389
+      runner :: forall b. AppM DB b -> ExceptT ApiError IO b
+      runner m = (runApp dbNat dbRunner logger cfg $$ guardWithGodhood m)
+        >>= liftIO . evaluate -- without evaluate we have issue #389
 
-  void . runner $ do
+  void . throwApiErrors . runner $ do
     migrateDB cfg
     unsafeAsGod $ initializeDB [CliCreateGroup $ CreateGroup "Universe" "The group that contains everything" [] [] mempty]
-      -- FIXME: is this still needed anywhere?  shouldn't this be done by `--init` via command line
-      -- in a more controlled manner by now?
   pure (runner, destroy)
+
+throwApiErrors :: forall a. ExceptT ApiError IO a -> IO a
+throwApiErrors = (>>= either (throwIO . ErrorCall . show) pure) . runExceptT
 
 monadicApp :: (AppM DB Property -> IO Property) -> AppM DB Property -> Property
 monadicApp p = ioProperty . p
