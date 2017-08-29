@@ -24,7 +24,7 @@ import Refine.Backend.App.Core        as App
 import Refine.Backend.App.Group       as App
 import Refine.Backend.App.User        as App
 import Refine.Backend.App.VDoc        as App
-import Refine.Backend.App.Translation as App
+import {-# SOURCE #-} Refine.Backend.App.Translation as App (getTranslations)
 import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.Logger

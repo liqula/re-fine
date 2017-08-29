@@ -35,6 +35,7 @@ import qualified Web.Users.Types as Users
 import qualified Web.Users.Persistent as Users
 
 import {-# SOURCE #-} Refine.Backend.App.Smtp
+import {-# SOURCE #-} Refine.Backend.App.Translation
 import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.Logger
@@ -115,6 +116,7 @@ type MonadApp app =
   , MonadSmtp app
   , MonadCache app
   , MonadAccess app
+  , MonadI18n app
   )
 
 -- | Syntactic sugar for 'MonadApp'.
