@@ -58,5 +58,5 @@ runApp
       twistException :: ExceptT AppError IO a -> ExceptT ApiError IO a
       twistException (ExceptT m) = ExceptT $ twist =<< protect m
         where
-          twist = either (fmap Left . toApiErrorWithLogger logger . traceShowId) (pure . Right)
+          twist = either (fmap Left . toApiErrorWithLogger logger) (pure . Right)
           protect = (`catch` \(SomeException e) -> pure . Left . AppUnknownError . cs . show $ e)
