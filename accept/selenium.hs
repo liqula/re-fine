@@ -281,6 +281,7 @@ mkBackendConfig port = Yaml.object
                                        ]
   , "_cfgWSPingPeriod"  .= Yaml.object ["TimespanSecs" .= (14 :: Int)]
   , "_cfgAllAreGods"    .= True
+  , "_cfgHaveRestApi"   .= False
   ]
 
 runXvfb :: MonadIO m => m ()

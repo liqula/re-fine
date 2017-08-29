@@ -55,8 +55,9 @@ createDataDirectories cfg = do
 
 data Backend db = Backend
   { backendServer          :: Application
+                              -- ^ the http server (static content, web sockets, rest api, client config).
   , backendRunApp          :: AppM db :~> ExceptT ApiError IO
-  , backendSessionStore    :: SCS.SessionStore IO () (AppState, MVar ())
+                              -- ^ the application engine.
   }
 
 refineApi :: (Database db) => ServerT RefineAPI (AppM db)
@@ -99,8 +100,8 @@ instance MimeRender JSViaRest ClientCfg where
 type ClientConfigAPI = "cfg.js" :> Get '[JSViaRest, JSON] (CacheBust ClientCfg)
 
 -- | Serve 'ClientCfg' as a js file for import in index.html.
-clientConfigApi :: (Database db) => ServerT ClientConfigAPI (AppM db)
-clientConfigApi = fmap cacheBust . asks . view $ appConfig . cfgClient
+clientConfigApi :: Applicative m => ClientCfg -> ServerT ClientConfigAPI m
+clientConfigApi = pure . cacheBust
 
 type CacheBust = Headers '[Header "Cache-Control" ST, Header "Expires" ST]
 
@@ -162,15 +163,23 @@ mkServerApp cfg dbNat dbRunner = do
         (Right v) -> pure $ Right v
         (Left e)  -> pure $ appServantErr e
 
-  (srvApp :: Application, sessionStore :: SCS.SessionStore IO () (SCS.Lockable AppState))
-      <- SCS.serveAction
+  srvApp :: Application
+      <- if cfg ^. cfgHaveRestApi
+
+           -- with rest api, cookies, everything.
+           then fst <$> SCS.serveAction
               (Proxy :: Proxy (RefineAPI :<|> ClientConfigAPI))
               (Proxy :: Proxy AppState)
               cookie
               (Nat liftIO)
               (cnToSn $ renderErrorNT . appNT)
-              (refineApi :<|> clientConfigApi)
+              (refineApi :<|> clientConfigApi (cfg ^. cfgClient))
               (Just (serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
+
+           -- just anonymous client code and client config delivery.
+           else pure $ serve
+              (Proxy :: Proxy (ClientConfigAPI :<|> Raw))
+              (clientConfigApi (cfg ^. cfgClient) :<|> maybeServeDirectory (cfg ^. cfgFileServeRoot))
 
   () <- resetWebSocketMVar
 
@@ -180,7 +189,7 @@ mkServerApp cfg dbNat dbRunner = do
       appMToIO :: AppM DB a -> IO (Either ApiError a)
       appMToIO m = runExceptT (appNT $$ m)
 
-  pure $ Backend (addWS srvApp) appNT sessionStore
+  pure $ Backend (addWS srvApp) appNT
 
 
 maybeServeDirectory :: Maybe FilePath -> Server Raw

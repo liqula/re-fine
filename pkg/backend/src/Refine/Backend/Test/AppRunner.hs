@@ -43,6 +43,7 @@ createAppRunner = do
         , _cfgClient        = def
         , _cfgWSPingPeriod  = TimespanSecs 1
         , _cfgAllAreGods    = True
+        , _cfgHaveRestApi   = True
         }
 
   (dbRunner, dbNat, destroy) <- createDBNat cfg
