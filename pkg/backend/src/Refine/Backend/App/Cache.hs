@@ -179,7 +179,7 @@ cmdLoopStepFrame toIO clientId = dolift . dostate
 
 
 -- | Application engine.  From here on inwards, all actions need to be authorization-checked.
-cmdLoopStep :: Connection -> WSSessionId -> (MonadWS m, MonadApp m, MonadIO m) => m ()
+cmdLoopStep :: Connection -> WSSessionId -> (MonadWS m, MonadApp m) => m ()
 cmdLoopStep conn clientId = do
   msg <- receiveMessage conn
   appLog LogDebug $ "request from client #" <> show clientId <> ", " <> show msg
