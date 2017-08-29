@@ -26,7 +26,7 @@ import Refine.Common.Types.Translation
 -- 'AppL10ParseErrors' constructor because those are all compile-time errors.
 getTranslations :: GetTranslations -> AppIO L10
 getTranslations (GetTranslations locale) = do
-  appLog "getTranslations"
+  appLog LogDebug "getTranslations"
   poFileRoot <- asks . view $ appConfig . cfgPoFilesRoot
   join . liftIO $ do
     (l10, parseErrors) <- getL10n poFileRoot

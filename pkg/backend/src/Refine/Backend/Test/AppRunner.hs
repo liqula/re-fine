@@ -48,9 +48,8 @@ createAppRunner = do
 
   (dbRunner, dbNat, destroy) <- createDBNat cfg
   let guardWithGodhood = if cfg ^. cfgAllAreGods then unsafeAsGod else id
-      logger = Logger . const $ pure ()
       runner :: forall b. AppM DB b -> ExceptT ApiError IO b
-      runner m = (runApp dbNat dbRunner logger cfg $$ guardWithGodhood m)
+      runner m = (runApp dbNat dbRunner (mkLogger cfg) cfg $$ guardWithGodhood m)
         >>= liftIO . evaluate -- without evaluate we have issue #389
 
   void . throwApiErrors . runner $ do

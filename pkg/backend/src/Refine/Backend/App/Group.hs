@@ -8,6 +8,7 @@ module Refine.Backend.App.Group where
 
 import           Refine.Backend.App.Access
 import           Refine.Backend.App.Core
+import           Refine.Backend.Config
 import           Refine.Backend.Database.Class as DB
 import qualified Refine.Common.Access.Policy as AP
 import           Refine.Common.ChangeAPI
@@ -18,7 +19,7 @@ import           Refine.Common.Types
 
 addGroup :: CreateGroup -> App Group
 addGroup cgroup = do
-  appLog "addGroup"
+  appLog LogDebug "addGroup"
   assertCreds AP.addGroup
   group <- db $ DB.createGroup cgroup
   invalidateCaches $ Set.fromList [CacheKeyGroupIds]
@@ -26,20 +27,20 @@ addGroup cgroup = do
 
 getGroup :: ID Group -> App Group
 getGroup gid = do
-  appLog "getGroup"
+  appLog LogDebug "getGroup"
   assertCreds $ AP.getGroup gid
   db $ DB.getGroup gid
 
 getGroups :: App [Group]
 getGroups = do
-  appLog "getGroups"
+  appLog LogDebug "getGroups"
   let allow = AP.getGroup . view groupID
   filterByCreds allow =<< db DB.getGroups
 
 -- | Modify the group using the new values from the `Create Group` information.
 modifyGroup :: ID Group -> CreateGroup -> App Group
 modifyGroup gid group' = do
-  appLog "modifyGroup"
+  appLog LogDebug "modifyGroup"
   assertCreds $ AP.updateGroup gid
   gr <- db $ DB.modifyGroup gid group'
   invalidateCaches $ Set.fromList [CacheKeyGroup gid]
@@ -50,7 +51,7 @@ modifyGroup gid group' = do
 -- The users won't be transitive members of supergroups any more.
 removeGroup :: ID Group -> App ()
 removeGroup gid = do
-  appLog "removeGroup"
+  appLog LogDebug "removeGroup"
   assertCreds $ AP.deleteGroup gid
   db $ DB.removeGroup gid
 
@@ -59,7 +60,7 @@ removeGroup gid = do
 
 changeSubGroup :: ChangeSubGroup -> App ()
 changeSubGroup csg = do
-  appLog "changeSubGroup"
+  appLog LogDebug "changeSubGroup"
   let cmd = case csg of
               AddSubGroup{} -> Refine.Backend.App.Group.addSubGroup
               RmSubGroup{}  -> Refine.Backend.App.Group.removeSubGroup
@@ -68,11 +69,11 @@ changeSubGroup csg = do
 -- | Add a new child group to a group
 addSubGroup :: ID Group -> ID Group -> App ()
 addSubGroup parent child = do
-  appLog "addSubGroup"
+  appLog LogDebug "addSubGroup"
   db $ DB.addSubGroup parent child
 
 -- | Remove a child group from a parent
 removeSubGroup :: ID Group -> ID Group -> App ()
 removeSubGroup parent child = do
-  appLog "removeSubGroup"
+  appLog LogDebug "removeSubGroup"
   db $ DB.removeSubGroup parent child

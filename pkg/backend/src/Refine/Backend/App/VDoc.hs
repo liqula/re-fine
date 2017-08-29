@@ -13,6 +13,7 @@ import           Refine.Backend.App.Access
 import           Refine.Backend.App.Core
 import           Refine.Backend.App.Smtp
 import           Refine.Backend.App.User
+import           Refine.Backend.Config
 import qualified Refine.Backend.Database.Class as DB
 import           Refine.Backend.Database.Entity (fromUserID)
 import qualified Refine.Common.Access.Policy as AP
@@ -24,13 +25,13 @@ import           Refine.Common.VDoc.Draft
 
 listVDocs :: App [VDoc]
 listVDocs = do
-  appLog "listVDocs"
+  appLog LogDebug "listVDocs"
   db $ mapM DB.getVDoc =<< DB.listVDocs
 
 -- | Creates a 'VDoc'.
 createVDoc :: CreateVDoc -> App VDoc
 createVDoc pv = do
-  appLog "createVDoc"
+  appLog LogDebug "createVDoc"
   assertCreds $ AP.createVDoc (pv ^. createVDocGroup)
   vdoc <- db $ DB.createVDoc pv
   invalidateCaches $ Set.fromList [CacheKeyGroup $ pv ^. createVDocGroup]
@@ -38,7 +39,7 @@ createVDoc pv = do
 
 updateVDoc :: ID VDoc -> UpdateVDoc -> App VDoc
 updateVDoc vid (UpdateVDoc title abstract) = do
-  appLog "updateVDoc"
+  appLog LogDebug "updateVDoc"
   vdoc' <- db $ do
     vdoc <- DB.getVDoc vid
     let vdoc' = vdoc
@@ -51,17 +52,17 @@ updateVDoc vid (UpdateVDoc title abstract) = do
 
 getVDoc :: ID VDoc -> App VDoc
 getVDoc i = do
-  appLog "getVDoc"
+  appLog LogDebug "getVDoc"
   db $ DB.getVDoc i
 
 getVDocVersion :: ID Edit -> App RawContent
 getVDocVersion eid = do
-  appLog "getVDocVersion"
+  appLog LogDebug "getVDocVersion"
   db $ DB.getVersion eid
 
 updateEdit :: ID Edit -> CreateEdit -> App Edit
 updateEdit eid edit = do
-  appLog "updateEdit"
+  appLog LogDebug "updateEdit"
   -- assertPerms eid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/358
   db $ do
     olddoc :: RawContent <- DB.getVersion eid
@@ -81,7 +82,7 @@ updateEdit eid edit = do
 
 addEdit :: ID Edit -> CreateEdit -> App Edit
 addEdit baseeid edit = do
-  appLog "addEdit"
+  appLog LogDebug "addEdit"
   -- assertPerms baseeid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/358
     -- (note that the user must have create permission on the *base
     -- edit*, not the edit about to get created.)
@@ -112,7 +113,7 @@ getEdit = db . DB.getEdit
 
 addMerge :: ID Edit -> ID Edit -> ID Edit -> App Edit
 addMerge base eid1 eid2 = do
-  appLog $ "merge " <> show eid1 <> " with " <> show eid2 <> " based on " <> show base
+  appLog LogDebug $ "merge " <> show eid1 <> " with " <> show eid2 <> " based on " <> show base
   (either throwError pure =<<) . db $ do
     rid <- DB.vdocOfEdit eid1
     rid' <- DB.vdocOfEdit eid2
@@ -138,7 +139,7 @@ mergeEdit = rebaseHeadToEdit
 -- notified by email.
 rebaseHeadToEdit :: ID Edit -> App ()
 rebaseHeadToEdit eid = do
-  appLog $ "rebase to " <> show eid
+  appLog LogDebug $ "rebase to " <> show eid
   (vid, hid, ch) <- db $ do
     vid <- DB.vdocOfEdit eid
     vdoc <- DB.getVDoc vid

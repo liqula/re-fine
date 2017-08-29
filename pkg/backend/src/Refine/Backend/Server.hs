@@ -150,7 +150,7 @@ mkBackend cfg initially = do
 mkServerApp :: Config -> MkDBNat DB -> DBRunner -> IO (Backend DB)
 mkServerApp cfg dbNat dbRunner = do
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
-      logger = defaultLogger cfg
+      logger = mkLogger cfg
 
       appNT :: AppM DB :~> ExceptT ApiError IO
       appNT = runApp dbNat

@@ -10,6 +10,7 @@ import           Refine.Backend.App.User
 import           Refine.Backend.App.Access
 import           Refine.Backend.App.Core
 import           Refine.Backend.Database.Class as DB
+import           Refine.Backend.Config
 import qualified Refine.Common.Access.Policy as AP
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft (minimumRange)
@@ -24,7 +25,7 @@ toggleSimpleVoteOnDiscussion i v = do
 
 addDiscussion :: ID Edit -> CreateDiscussion (Maybe (Range Position)) -> App Discussion
 addDiscussion eid (CreateDiscussion txt mrange isnote) = do
-  appLog "addDiscussion"
+  appLog LogDebug "addDiscussion"
   assertCreds . AP.createComment =<< db (DB.getVDoc =<< DB.vdocOfEdit eid)
   disc <- db $ do
     range <- case mrange of
@@ -37,14 +38,14 @@ addDiscussion eid (CreateDiscussion txt mrange isnote) = do
 
 getDiscussion :: ID Discussion -> App Discussion
 getDiscussion did = do
-  appLog "getDiscussion"
+  appLog LogDebug "getDiscussion"
   disc <- db $ DB.getDiscussion did
   assertCreds . AP.viewVDoc =<< db (DB.getVDoc $ disc ^. discussionVDoc)
   pure disc
 
 addStatement :: ID Statement -> CreateStatement -> App Discussion
 addStatement sid statement = do
-  appLog "addStatement"
+  appLog LogDebug "addStatement"
   disc <- db $ do
     _ <- DB.createStatement sid statement
     DB.getDiscussion =<< DB.discussionOfStatement sid
@@ -54,7 +55,7 @@ addStatement sid statement = do
 
 updateStatement :: ID Statement -> CreateStatement -> App Discussion
 updateStatement sid statement = do
-  appLog "updateStatement"
+  appLog LogDebug "updateStatement"
   disc <- db $ do
     _ <- DB.updateStatement sid statement
     DB.getDiscussion =<< DB.discussionOfStatement sid

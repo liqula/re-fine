@@ -9,11 +9,11 @@ import System.Environment (getArgs, getProgName)
 import System.IO (hSetBuffering, BufferMode(NoBuffering), stdout, stderr)
 
 import Refine.Backend.App.Access
-import Refine.Backend.App.Smtp (checkSendMail)
-import Refine.Backend.App.Core (appLogL)
-import Refine.Backend.Config
-import Refine.Backend.Server
 import Refine.Backend.App.MigrateDB (initializeDB)
+import Refine.Backend.App.Smtp (checkSendMail)
+import Refine.Backend.Config
+import Refine.Backend.Logger
+import Refine.Backend.Server
 
 help :: IO ()
 help = do
@@ -30,9 +30,10 @@ help = do
 runInitDB :: FilePath -> Maybe FilePath -> IO ()
 runInitDB contentPath configPath = do
   cfg <- initConfig configPath
+  let Logger logger = mkLogger cfg
   content <- readCliCreate contentPath
   runCliAppCommand cfg . unsafeAsGod $ initializeDB content
-  appLogL LogInfo "Run `echo .dump | sqlite3 <FILE.db>` to get a database dump."
+  logger LogInfo "Run `echo .dump | sqlite3 <FILE.db>` to get a database dump."
 
 startServer :: Maybe FilePath -> IO ()
 startServer configPath = do

@@ -27,6 +27,7 @@ import Refine.Backend.App.VDoc        as App
 import Refine.Backend.App.Translation as App
 import Refine.Backend.Config
 import Refine.Backend.Database
+import Refine.Backend.Logger
 
 
 type WebSocketMVar = MVar (Int{-to generate fresh CacheIds-}, Map WSSessionId WebSocketSession)
@@ -87,10 +88,10 @@ instance Database db => MonadCache (AppM db) where
         cmap <- liftIO $ takeMVar webSocketMVar
         let cmap' = second (second (Set.\\ keys) <$>) cmap
             cls = [(n, conn, d) | (n, ((conn, _), s)) <- Map.assocs $ snd cmap, let d = Set.intersection keys s, not $ Set.null d]
-        appLog $ "invalidate cache items " <> show (Set.toList keys)
+        appLog LogDebug $ "invalidate cache items " <> show (Set.toList keys)
         forM_ cls $ \(n, conn, d) -> do
             liftIO . sendMessage conn . TCInvalidateKeys $ Set.toList d
-            appLog $ "invalidate cache of client #" <> show n <> ": " <> show (Set.toList d)
+            appLog LogDebug $ "invalidate cache of client #" <> show n <> ": " <> show (Set.toList d)
         liftIO $ putMVar webSocketMVar cmap'
 
 -- | FIXME: delete disconnected clients' data
@@ -104,22 +105,20 @@ startWebSocketServer cfg toIO = websocketsOr options server
     server pendingconnection = do
       conn <- acceptRequest pendingconnection
       pingLoop toIO conn
-      let logger :: LogLevel -> String -> IO ()
-          logger level = void . toIO . appLogL level
-      clientId <- handshake cfg conn logger
+      clientId <- handshake cfg conn (mkLogger cfg)
       forever (cmdLoopStepFrame toIO clientId (cmdLoopStep conn clientId)
-                `catch` handleAllErrors cfg conn logger clientId)
-        `catch` giveUp conn logger clientId  -- FUTUREWORK: handle exceptions during inital handshake?
+                `catch` handleAllErrors cfg conn (mkLogger cfg) clientId)
+        `catch` giveUp conn (mkLogger cfg) clientId  -- FUTUREWORK: handle exceptions during inital handshake?
 
-handleAllErrors :: Config -> Connection -> (LogLevel -> String -> IO ()) -> WSSessionId -> SomeException -> IO ()
-handleAllErrors cfg conn logger clientId e = do
+handleAllErrors :: Config -> Connection -> Logger -> WSSessionId -> SomeException -> IO ()
+handleAllErrors cfg conn (Logger logger) clientId e = do
   logger LogError $ show e
   sendMessage conn TCReset
-  clientId' <- handshake cfg conn logger
+  clientId' <- handshake cfg conn (Logger logger)
   assert (clientId' == clientId) $ pure ()
 
-giveUp :: Connection -> (LogLevel -> String -> IO ()) -> WSSessionId -> SomeException -> IO ()
-giveUp conn logger clientId e = do
+giveUp :: Connection -> Logger -> WSSessionId -> SomeException -> IO ()
+giveUp conn (Logger logger) clientId e = do
   logger LogError . show . WSErrorResetFailed $ show e
   closeWsConn clientId
   sendClose conn ("Cache.hs: could not reset connection, giving up." :: ST)
@@ -137,8 +136,8 @@ wserror :: Monad m => WSError -> m a
 wserror = error . show
 
 
-handshake :: Config -> Connection -> (LogLevel -> String -> IO ()) -> IO WSSessionId
-handshake cfg conn logger = receiveMessage conn >>= \case
+handshake :: Config -> Connection -> Logger -> IO WSSessionId
+handshake cfg conn (Logger logger) = receiveMessage conn >>= \case
   -- the client is reconnected, its WSSessionId is n
   TSGreeting (Just n) -> do
     cmap <- takeMVar webSocketMVar
@@ -180,8 +179,8 @@ cmdLoopStepFrame toIO clientId = dolift . dostate
 cmdLoopStep :: Connection -> WSSessionId -> (MonadWS m, MonadApp m, MonadIO m) => m ()
 cmdLoopStep conn clientId = do
   msg <- receiveMessage conn
-  appLog $ "request from client #" <> show clientId <> ", " <> show msg
-  appLogL LogDebug . ("appState = " <>) . show =<< get
+  appLog LogDebug $ "request from client #" <> show clientId <> ", " <> show msg
+  appLog LogDebug . ("appState = " <>) . show =<< get
 
   case msg of
       TSClearCache -> do

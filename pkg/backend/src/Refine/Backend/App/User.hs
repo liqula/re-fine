@@ -29,8 +29,8 @@ import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 -- providers.
 login :: Common.Login -> App Common.User
 login (Login username (Users.PasswordPlain -> password)) = do
-  appLog "login"
-  appLogL LogDebug . ("login.before:: " <>) . show =<< get
+  appLog LogDebug "login"
+  appLog LogDebug . ("login.before:: " <>) . show =<< get
   sessionDuration <- asks . view $ appConfig . cfgSessionLength . to timespanToNominalDiffTime
   session <- nothingToError (AppUserNotFound username)
              =<< dbUsersCmd (\db_ -> Users.authUser db_ username password sessionDuration)
@@ -39,7 +39,7 @@ login (Login username (Users.PasswordPlain -> password)) = do
   void $ setUserSession (toUserID loginId) (UserSession session)
   user <- nothingToError (AppUserNotFound username) =<< dbUsersCmd (`Users.getUserById` loginId)
   mid <- db . getMetaID $ toUserID loginId
-  appLogL LogDebug . ("login.after:: " <>) . show =<< get
+  appLog LogDebug . ("login.after:: " <>) . show =<< get
   pure $ Common.User mid username (Users.u_email user)
 
 -- | Returns (Just (current ID)) of the current user if the user
@@ -53,8 +53,8 @@ currentUser = do
 
 logout :: App ()
 logout = do
-  appLog "logout"
-  appLogL LogDebug . ("logout.before:: " <>) . show =<< get
+  appLog LogDebug "logout"
+  appLog LogDebug . ("logout.before:: " <>) . show =<< get
   st <- gets (view appUserState)
   case st of
     UserLoggedIn _user session -> do
@@ -62,11 +62,11 @@ logout = do
       clearUserSession
     UserLoggedOut -> do
       pure ()
-  appLogL LogDebug . ("logout.after:: " <>) . show =<< get
+  appLog LogDebug . ("logout.after:: " <>) . show =<< get
 
 createUserWith :: [GlobalRole] -> [(GroupRole, ID Group)] -> CreateUser -> App Common.User
 createUserWith globalRoles groupRoles (CreateUser name email password) = do
-  appLog "createUser"
+  appLog LogDebug "createUser"
   assertCreds $ AP.createUser globalRoles groupRoles
   let user = Users.User
               { Users.u_name  = name
@@ -90,14 +90,14 @@ createUser = createUserWith [] []
 
 getUser :: ID User -> App Common.User
 getUser uid = do
-  appLog "getUser"
+  appLog LogDebug "getUser"
   user <- nothingToError (AppUserNotFound . cs $ show uid) =<< dbUsersCmd (`Users.getUserById` fromUserID uid)
   mid <- db $ getMetaID uid
   pure $ Common.User mid (Users.u_name user) (Users.u_email user)
 
 getUsers :: App (Set (ID User))
 getUsers = do
-  appLog "getUsers"
+  appLog LogDebug "getUsers"
   users <- dbUsersCmd (\b -> Users.listUsers b Nothing (Users.SortAsc Users.UserFieldId))
   pure . Set.fromList $ toUserID . fst <$> users
 
