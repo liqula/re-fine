@@ -67,10 +67,13 @@ closeWsConn n = do
 class MonadWS m where
   sendMessage :: Connection -> ToClient -> m ()
   receiveMessage :: Connection -> m ToServer
+  modifyCache :: WSSessionId -> (Set CacheKey -> Set CacheKey) -> m ()
 
 instance MonadIO m => MonadWS m where
   sendMessage conn msg = liftIO $ sendTextData conn (cs $ encode msg :: ST)
   receiveMessage conn = liftIO $ receiveData conn <&> fromMaybe (error "websockets json decoding error") . decode
+  modifyCache sid f = liftIO . modifyMVar webSocketMVar $ \(n, m) -> pure ((n, Map.adjust (second f) sid m), ())
+
 
 getData :: CacheKey -> App ServerCache
 getData = \case
@@ -184,15 +187,11 @@ cmdLoopStep conn clientId = do
 
   case msg of
       TSClearCache -> do
-          cmap' <- liftIO $ takeMVar webSocketMVar
-          liftIO . putMVar webSocketMVar $
-            second (Map.adjust (second $ const mempty) clientId) cmap'
+          modifyCache clientId $ const mempty
           sendMessage conn $ TCRestrictKeys []
       TSMissing keys -> do
+          modifyCache clientId (<> Set.fromList keys)
           cache <- mconcat <$> mapM getData keys
-          cmap' <- liftIO $ takeMVar webSocketMVar
-          liftIO . putMVar webSocketMVar $
-            second (Map.adjust (second (<> Set.fromList keys)) clientId) cmap'
           sendMessage conn $ TCServerCache cache
 
       TSAddGroup cg           -> sendMessage conn . TCCreatedGroup . view groupID =<< App.addGroup cg
