@@ -218,5 +218,3 @@ cmdLoopStep conn clientId = do
       TSDeleteVote eid        -> void $ App.deleteSimpleVoteOnEdit eid
 
       bad@(TSGreeting _)      -> wserror $ WSErrorUnexpectedPacket bad
-
--- FIXME: hash session id with a secret and a current timestamp before passing it to the client.
