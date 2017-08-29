@@ -228,7 +228,7 @@ data AddContributionProps st = AddContributionProps
 
 
 data DiscussionProps = DiscussionProps
-  { _discPropsDiscussion :: Either (ID Discussion) Discussion
+  { _discPropsDiscussion :: Either (ID Discussion) (Range Position, Discussion)
   , _discPropsAboutText  :: RawContent  -- ^ the blocks overlapping the range of the discussion.
   , _discPropsDetails    :: StatementPropDetails
   , _discPropsFlatView   :: Bool
@@ -252,8 +252,8 @@ data StatementEditorProps = StatementEditorProps
 -- data DiscussionMode = DiscussionModeChrono | DiscussionModeTree
 --   deriving (Eq, Ord, Show, Bounded, Enum, Generic)
 
-discussionProps :: Either (ID Discussion) Discussion -> RawContent -> StatementPropDetails -> Bool -> DiscussionProps
-discussionProps d@(Right disc) = DiscussionProps d . cropToBlocks (disc ^. discussionRange)
+discussionProps :: Either (ID Discussion) (Range Position, Discussion)  -> RawContent -> StatementPropDetails -> Bool -> DiscussionProps
+discussionProps d@(Right disc) = DiscussionProps d . cropToBlocks (fst disc)
 discussionProps d = DiscussionProps d . const (mkRawContent $ mkBlock "loading..." :| [])
 
 -- | Remove all blocks that do not overlap with a range.

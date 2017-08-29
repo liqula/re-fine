@@ -181,11 +181,8 @@ gsVDoc = to getCompositeVDoc
       pure $ CompositeVDoc
         vdoc
         edit
-        (mkMap editChildren)
-        (mkMap editDiscussions')
-      where
-        mkMap :: CacheLookup a => Lens' Edit (Set (ID a)) -> Map (ID a) a
-        mkMap y = Map.fromList $ catMaybes [ (,) k <$> cacheLookup gs k | k <- Set.toList $ edit ^. y ]
+        (Map.fromList $ catMaybes [ (,) k <$> cacheLookup gs k | k <- Set.toList $ edit ^. editChildren ])
+        (Map.fromList $ catMaybes [ cacheLookup gs k <&> \d -> (k, (r, d)) | (k, r) <- Map.toList $ edit ^. editDiscussions' ])
 
 
 gsCurrentSelection :: HasCallStack => Getter GlobalState (Maybe (Selection Position))

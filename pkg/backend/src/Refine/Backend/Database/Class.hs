@@ -28,7 +28,7 @@ class Monad db => Database db where
   createEdit         :: ID VDoc -> EditSource (ID Edit) -> CreateEdit -> db Edit
   getEdit            :: ID Edit -> db Edit
   getVersion         :: ID Edit -> db RawContent
-  editDiscussions    :: ID Edit -> db [ID Discussion]
+  editDiscussions    :: ID Edit -> db [(ID Discussion, Range Position)]
   updateVotes        :: ID Edit -> (Votes -> Votes) -> db ()
   getVoteCount       :: ID Edit -> db VoteCount
   getEditChildren    :: ID Edit -> db [ID Edit]
@@ -79,5 +79,5 @@ class Monad db => Database db where
 
 editComments
   :: (Monad db, Database db)
-  => ID Edit -> db [Comment]
-editComments pid = mapM getDiscussion =<< editDiscussions pid
+  => ID Edit -> db [(Discussion, Range Position)]
+editComments pid = mapM (\(i, r) -> flip (,) r <$> getDiscussion i) =<< editDiscussions pid

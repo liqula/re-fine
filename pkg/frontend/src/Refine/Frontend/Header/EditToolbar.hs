@@ -3,6 +3,7 @@
 
 module Refine.Frontend.Header.EditToolbar where
 #include "import_frontend.hs"
+import Control.Arrow ((+++))
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
@@ -40,21 +41,26 @@ mkLinkEditorProps es
         isLink _ = False
 
 getDocumentState :: AccessState -> GlobalState -> DocumentState
-getDocumentState as gs@(view gsEditID -> Just{})
+getDocumentState as gs@(gsEditID' -> Just baseid)
   = mapDocumentState
       (const . fromMaybe False
              $ (==) <$> (as ^? accLoginState . lsCurrentUser . loggedInUser . userID . to UserID)
                     <*> ((^. editMetaID . miMeta . metaCreatedBy) <$> cacheLookup gs eid))
       (const $ gsRawContent gs)
       (fromMaybe (error "edit is not in cache") . cacheLookup gs)
-      (\(did, ed) -> discussionProps (maybe (Left did) Right $ cacheLookup gs did)
-                                     (gsRawContent gs)
-                                     (StatementPropDetails
-                                        ed
-                                        (as ^? accLoginState . lsCurrentUser . loggedInUser . userID)
-                                        ((^. userName) <$> (gs ^. gsServerCache . scUsers))
-                                     )
-                                     (gs ^. gsHeaderState . hsDiscussionFlatView)
+      (\(did, ed) -> discussionProps
+                            (fromMaybe (Left did) $ do
+                                d <- cacheLookup gs did
+                                e <- cacheLookup gs =<< baseid
+                                r <- Map.lookup did $ e ^. editDiscussions'
+                                pure $ Right (r, d))
+                            (gsRawContent gs)
+                            (StatementPropDetails
+                               ed
+                               (as ^? accLoginState . lsCurrentUser . loggedInUser . userID)
+                               ((^. userName) <$> (gs ^. gsServerCache . scUsers))
+                            )
+                            (gs ^. gsHeaderState . hsDiscussionFlatView)
       )
       dst
   where
@@ -75,7 +81,7 @@ wipeDocumentState as gs = case getDocumentState as gs of
                                             (dp ^. discPropsFlatView)
                                             (either (error "impossible @wipeDocumentState") (^. discussionIsNote) disc)
                                             (votesToCount $ either (error "impossible @wipeDocumentState") (^. discussionVotes) disc)
-    where disc = dp ^. discPropsDiscussion
+    where disc = id +++ snd $ dp ^. discPropsDiscussion
 
 editToolbar_ :: HasCallStack => EditToolbarProps -> ReactElementM eventHandler ()
 editToolbar_ ep = do

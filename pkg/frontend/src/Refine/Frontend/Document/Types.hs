@@ -87,7 +87,7 @@ globalDocumentState
     (const ())
     (const ())
     (^. editID)
-    (\d -> (either id (^. discussionID) $ d ^. discPropsDiscussion, Nothing))
+    (\d -> (either id ((^. discussionID) . snd) $ d ^. discPropsDiscussion, Nothing))
 
 mkDocumentStateView :: HasCallStack => RawContent -> GlobalDocumentState
 mkDocumentStateView = globalDocumentState . mkDocumentStateView_

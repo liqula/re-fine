@@ -120,7 +120,7 @@ mainScreen = mkView "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
                                      (rs ^. gsContributionState . csCurrentSelectionWithPx)
                                      (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
-                                     (fltr (\i -> ContribIDDiscussion <$> [True, False] <*> pure i) (vdoc ^. compositeVDocApplicableDiscussions))
+                                     (fltr (\i -> ContribIDDiscussion <$> [True, False] <*> pure i) (fmap snd $ vdoc ^. compositeVDocApplicableDiscussions))
                                      (fltr ((:[]) . ContribIDEdit) . fltrThisEdit $ vdoc ^. compositeVDocApplicableEdits)
                                      (case rs ^. gsDocumentState of
                                         DocumentStateDiff{} -> BubblePositioningEvenlySpaced

@@ -265,7 +265,7 @@ updateEdit eid ce = do
 getEdit :: ID Edit -> DB Edit
 getEdit eid = do
   src         <- getEditSource eid
-  discussions <- Set.fromList <$> editDiscussions eid
+  discussions <- Map.fromList <$> editDiscussions eid
   children    <- Set.fromList <$> getEditChildren eid
   getMetaEntity (\mid -> S.editElim $
                   \desc d vdoc kind (DBVotes vs) ->
@@ -288,11 +288,12 @@ updateEditSource eid f = do
 getVersion :: ID Edit -> DB RawContent
 getVersion eid = S.editElim (\_ vdoc _ _ _ -> vdoc) <$> getEntityRep eid
 
-editDiscussions :: ID Edit -> DB [ID Discussion]
+editDiscussions :: ID Edit -> DB [(ID Discussion, Range Position)]
 editDiscussions pid = do
   opts <- dbSelectOpts
   liftDB $
-    foreignKeyField S.pDDiscussion <$$> selectList [S.PDEdit ==. S.idToKey pid] opts
+    S.pDElim (\_ a (RangePosition b) -> (S.keyToId a, b)) . entityVal
+      <$$> selectList [S.PDEdit ==. S.idToKey pid] opts
 
 getEditChildren :: ID Edit -> DB [ID Edit]
 getEditChildren parent = do
@@ -349,17 +350,13 @@ statementsOfDiscussion did = do
   liftDB $
     (S.keyToId . entityKey) <$$> selectList [S.StatementDiscussion ==. S.idToKey did] opts
 
--- gets the discussion; the range is the range of the discussion in the head edit
 getDiscussion :: ID Discussion -> DB Discussion
 getDiscussion did = do
   (mid, d) <- getMetaEntity (,) did
   s@(_:_) <- statementsOfDiscussion did
   t <- buildTree (^. statementParent) (^. statementID) <$> mapM getStatement s
   vid <- vdocOfDiscussion did
-  eid <- headOfVDoc vid
-  Just conn <- liftDB . getBy $ S.UniPD (S.idToKey eid) (S.idToKey did)
-  let range = S.pDElim (\_ _ r -> unRangePosition r) $ entityVal conn
-  pure $ S.discussionElim (Discussion mid vid range t . unDBVotes) d
+  pure $ S.discussionElim (Discussion mid vid t . unDBVotes) d
 
 discussionOfStatement :: ID Statement -> DB (ID Discussion)
 discussionOfStatement sid = do

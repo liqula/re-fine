@@ -73,7 +73,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
             (CreateDiscussion "[note]" (Just $ Range cp1 cp2) True :: CreateDiscussion (Maybe (Range Position)))
         liftIO $ do
           be :: Edit <- runDB sess $ App.getEdit (fe_ ^. vdocHeadEdit)
-          be ^. editDiscussions' . to Set.toList `shouldContain` [fn_ ^. discussionID]
+          be ^. editDiscussions' . to Map.keys `shouldContain` [fn_ ^. discussionID]
 
     it "stores note with non-trivial valid chunk range" $ \sess -> do
       runWai sess $ do
@@ -88,7 +88,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
 
         liftIO $ do
           be :: Edit <- runDB sess $ App.getEdit (fe_ ^. vdocHeadEdit)
-          be ^. editDiscussions' . to Set.elems `shouldContain` [fn_ ^. discussionID]
+          be ^. editDiscussions' . to Map.keys `shouldContain` [fn_ ^. discussionID]
 
     it "fails with error on non-trivial *invalid* chunk range" $ \sess -> do
       vdoc :: VDoc <- runWai sess $ postJSON createVDocUri sampleCreateVDoc0
@@ -123,7 +123,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
 
         liftIO $ do
           be :: Edit <- runDB sess $ App.getEdit (fe_ ^. vdocHeadEdit)
-          be ^. editDiscussions' . to Set.toList `shouldContain` [fn_ ^. discussionID]
+          be ^. editDiscussions' . to Map.keys `shouldContain` [fn_ ^. discussionID]
 
   describe "sAddStatement" $ do
     it "stores statement for given discussion" $ \_sess -> do

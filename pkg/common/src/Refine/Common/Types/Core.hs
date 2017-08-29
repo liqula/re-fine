@@ -111,7 +111,7 @@ data Edit = Edit
   , _editVDocVersion  :: RawContent     -- FIXME: is it OK to store this in edit (consider serialization)?
   , _editVotes        :: Votes
   , _editChildren     :: Set (ID Edit)
-  , _editDiscussions' :: Set (ID Discussion)
+  , _editDiscussions' :: Map (ID Discussion) (Range Position)
   }
   deriving (Eq, Show, Generic)
 
@@ -147,7 +147,7 @@ data CompositeVDoc = CompositeVDoc
   { _compositeVDoc                      :: VDoc
   , _compositeVDocThisEdit              :: Edit
   , _compositeVDocApplicableEdits       :: Map (ID Edit) Edit
-  , _compositeVDocApplicableDiscussions :: Map (ID Discussion) Discussion
+  , _compositeVDocApplicableDiscussions :: Map (ID Discussion) (Range Position, Discussion)
   }
   deriving (Eq, Show, Generic)
 
@@ -706,11 +706,10 @@ data CreateDiscussion range = CreateDiscussion
 data Discussion = Discussion
   { _discussionMetaID :: MetaID Discussion
   , _discussionVDoc   :: ID VDoc
-  , _discussionRange  :: Range Position
   , _discussionTree   :: Tree Statement
   , _discussionVotes  :: Votes
   , _discussionIsNote :: Bool  -- ^ the discussion is just a note
-  } -- FIXME: add (discussionEdit :: ID Edit), fits better the server cache in global state
+  }
   deriving (Eq, Show, Generic)
 
 newtype CreateStatement = CreateStatement
