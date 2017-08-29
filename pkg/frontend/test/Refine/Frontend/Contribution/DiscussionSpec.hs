@@ -21,7 +21,7 @@ import           Refine.Frontend.Test.Enzyme
 testDiscussionProps :: DiscussionProps
 testDiscussionProps
   = discussionProps
-      (Right disc)
+      (Right (rnge, disc))
       (addMarksToRawContent [(MarkContribution (ContribIDDiscussion False (ID 0)) 0, rnge)] sampleRawContent1)
       (StatementPropDetails Nothing Nothing mempty)
       False
@@ -32,7 +32,6 @@ testDiscussionProps
     disc = Discussion
       { _discussionMetaID = MetaID (ID 0) metaInfo1
       , _discussionVDoc   = ID 1
-      , _discussionRange  = rnge
       , _discussionTree   = Node statement1 [Node statement2 []]
       , _discussionVotes  = mempty
       , _discussionIsNote = False

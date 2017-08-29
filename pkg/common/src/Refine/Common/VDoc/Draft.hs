@@ -72,7 +72,7 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base edits discussions) =
   where
     rawContent = base ^. editVDocVersion
 
-    convertHack l (k, v) = (MarkContribution (ContribIDDiscussion (v ^. discussionIsNote) k) 0, extendRange $ v ^. l)
+    convertHack (k, (r, v)) = (MarkContribution (ContribIDDiscussion (v ^. discussionIsNote) k) 0, extendRange r)
 
     extendRange r
       | x == y    = fromStyleRange rawContent
@@ -92,7 +92,7 @@ rawContentFromCompositeVDoc (CompositeVDoc _ base edits discussions) =
             , let rs = unRanges $ docEditRanges diff rawContent
             , (i, s) <- zip (numberRanges rs) rs
             ]
-         <> (convertHack discussionRange <$> Map.toList discussions)
+         <> (convertHack <$> Map.toList discussions)
 
     numberRanges :: [Range Position] -> [Int]
     numberRanges

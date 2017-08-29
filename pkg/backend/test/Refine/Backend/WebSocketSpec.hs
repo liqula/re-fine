@@ -157,7 +157,7 @@ specStories = describe "stories" . around wsBackend $ do
       -- disconnect between req and resp, which is nice for performance otherwise.)
       TCServerCache sc3 <- askQuestion conn $ TSMissing [CacheKeyEdit (vdoc ^. vdocHeadEdit)]
       let Just hdedit = sc3 ^? scEdits . at (vdoc ^. vdocHeadEdit) . _Just
-          ((did :: ID Discussion) : _) = Set.toList $ hdedit ^. editDiscussions'
+          ((did :: ID Discussion) : _) = Map.keys $ hdedit ^. editDiscussions'
       TCServerCache sc4 <- askQuestion conn $ TSMissing [CacheKeyDiscussion did]
       let Just (disc :: Discussion) = sc4 ^? scDiscussions . at did . _Just
       TCInvalidateKeys [CacheKeyDiscussion did'] <- askQuestion conn $ TSAddStatement
