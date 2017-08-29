@@ -142,6 +142,10 @@ mkBackend cfg initially = do
 
   pure (backend, destroy)
 
+-- | NOTE: Static content delivery is not protected by "Servant.Cookie.Session".  To achive that, we
+-- may need to refactor, e.g. by using extra arguments in the end point types.  Iff we only serve
+-- the application code as static content, and not content that is subject to authorization, we're
+-- fine as it is.
 mkServerApp :: Config -> MkDBNat DB -> DBRunner -> IO (Backend DB)
 mkServerApp cfg dbNat dbRunner = do
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
@@ -158,8 +162,6 @@ mkServerApp cfg dbNat dbRunner = do
         (Right v) -> pure $ Right v
         (Left e)  -> pure $ appServantErr e
 
-  -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
-  -- may need to refactor, e.g. by using extra arguments in the end point types.
   (srvApp :: Application, sessionStore :: SCS.SessionStore IO () (SCS.Lockable AppState))
       <- SCS.serveAction
               (Proxy :: Proxy (RefineAPI :<|> ClientConfigAPI))
