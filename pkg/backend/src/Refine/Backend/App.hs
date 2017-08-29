@@ -42,10 +42,21 @@ runApp
       runSR action = unDBRunner dbrunner $ \dbc -> do
               dbInit dbc
               let action' = evalStateT action $ initialAppState cfg
+                  action'' = action' `runReaderT` ctx
                   ctx = (dbNat, AppContext dbc logger cfg)
-              twistException (action' `runReaderT` ctx)
-                -- (always commit; rollback in case of error should already have happened here.)
-                <* dbCommit dbc
 
+              -- iff exception, rollback; otherwise, commit.
+              -- https://www.sqlite.org/lang_transaction.html
+              twistException (action'' <* dbCommit dbc)
+                `catchError` \e -> dbRollback dbc >> throwError e  -- (is there a better idiom for this?)
+
+      -- translate 'AppError' to 'ApiError', and also make sure that any exceptions thrown in the
+      -- inner 'IO' are caught and rethrown in the 'ExceptT' as 'ApiError' as well.
+      --
+      -- FUTUREWORK: this is very simliar to wrapErrors in 'createDBNat'.  there is probably a more
+      -- straight-forward way to implement this.
       twistException :: ExceptT AppError IO a -> ExceptT ApiError IO a
-      twistException (ExceptT m) = ExceptT $ either (fmap Left . toApiErrorWithLogger logger) (pure . Right) =<< m
+      twistException (ExceptT m) = ExceptT $ twist =<< protect m
+        where
+          twist = either (fmap Left . toApiErrorWithLogger logger . traceShowId) (pure . Right)
+          protect = (`catch` \(SomeException e) -> pure . Left . AppUnknownError . cs . show $ e)

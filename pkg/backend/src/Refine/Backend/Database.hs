@@ -24,6 +24,14 @@ import Refine.Backend.Database.Entity as Entity
 import Refine.Backend.Database.Types as DatabaseCore
 
 
+-- | For transaction management.
+data DBConnection = DBConnection
+  { dbInit     :: forall m   . (MonadBaseControl IO m) => m ()
+  , dbRun      :: forall m a . (MonadBaseControl IO m) => ReaderT SqlBackend m a -> m a
+  , dbCommit   :: forall m   . (MonadBaseControl IO m) => m ()
+  , dbRollback :: forall m   . (MonadBaseControl IO m) => m ()
+  }
+
 type MkDBNat db = DBConnection -> DBContext -> (db :~> ExceptT DBError IO)
 
 newtype DBRunner = DBRunner { unDBRunner :: forall m a . MonadBaseControl IO m => (DBConnection -> m a) -> m a }
@@ -60,19 +68,14 @@ createDBNat cfg = do
                        restore $ connBegin conn (getStmtConn conn)
                        runInIO $ pure ()
         , dbRun    = \r -> control $ \runInIO -> mask $ \restore -> do
-                             onException
-                               (restore (runInIO $ runReaderT r conn))
-                               (restore (connRollback conn (getStmtConn conn)))
+                             restore (runInIO $ runReaderT r conn)
         , dbCommit = control $ \runInIO -> mask $ \restore -> do
                        restore $ connCommit conn (getStmtConn conn)
                        runInIO $ pure ()
+        , dbRollback = control $ \runInIO -> mask $ \restore -> do
+                         restore $ restore (connRollback conn (getStmtConn conn))
+                         runInIO $ pure ()
         }
-
-data DBConnection = DBConnection
-  { dbInit   :: forall m   . (MonadBaseControl IO m) => m ()
-  , dbRun    :: forall m a . (MonadBaseControl IO m) => ReaderT SqlBackend m a -> m a
-  , dbCommit :: forall m   . (MonadBaseControl IO m) => m ()
-  }
 
 instance Database DB where
   -- * VDoc

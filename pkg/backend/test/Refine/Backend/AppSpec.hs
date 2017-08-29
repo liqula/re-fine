@@ -64,10 +64,7 @@ spec = do
         liftIO $ userState2 `shouldBe` UserLoggedOut
 
   describe "Database handling" . around provideAppRunner $ do
-    it "one app is one transaction (and rolls back on AppError)." $ \(runner :: AppM DB () -> IO ()) -> do
-
-      pendingWith "#424"
-
+    it "one app is one transaction (and rolls back on AppError)." $ \(runner :: AppM DB () -> ExceptT ApiError IO ()) -> do
       mem :: MVar (ID Group) <- newEmptyMVar
       let nosuchgid = ID 834791
           transaction1 = do
@@ -77,14 +74,14 @@ spec = do
           transaction2 gid = do
             Group{} <- App.getGroup gid
             pure ()
-          groupException gid = thisException . ApiDBError . ApiDBNotFound $ "not found: " <> show gid <> " :: ID Group"
+          groupException gid = Left . ApiDBError . ApiDBNotFound $ "not found: " <> show gid <> " :: ID Group"
 
-      runner transaction1 `shouldThrow` groupException nosuchgid
+      runExceptT (runner transaction1) `shouldReturn` groupException nosuchgid
       gid <- takeMVar mem
-      runner (transaction2 gid) `shouldThrow` groupException gid
+      runExceptT (runner (transaction2 gid)) `shouldReturn` groupException gid
 
-    it "db (or dbWithFilters) can be called twice inside the same AppM" $ \(runner :: AppM DB () -> IO ()) -> do
-      runner $ do
+    it "db (or dbWithFilters) can be called twice inside the same AppM" $ \(runner :: AppM DB () -> ExceptT ApiError IO ()) -> do
+      throwApiErrors . runner $ do
         void $ do
           let createGroup1 = CreateGroup "group1" "desc1" [] [] mempty
               createGroup2 = CreateGroup "group2" "desc2" [] [] mempty
