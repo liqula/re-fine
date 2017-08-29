@@ -96,12 +96,16 @@ instance Accept JSViaRest where
 instance MimeRender JSViaRest ClientCfg where
   mimeRender Proxy = ("window.client_cfg = " <>) . (<> ";") . encode
 
-type ClientConfigAPI = "cfg.js" :> Get '[JSViaRest, JSON] ClientCfg
+type ClientConfigAPI = "cfg.js" :> Get '[JSViaRest, JSON] (CacheBust ClientCfg)
 
 -- | Serve 'ClientCfg' as a js file for import in index.html.
 clientConfigApi :: (Database db) => ServerT ClientConfigAPI (AppM db)
-clientConfigApi = asks . view $ appConfig . cfgClient
+clientConfigApi = fmap cacheBust . asks . view $ appConfig . cfgClient
 
+type CacheBust = Headers '[Header "Cache-Control" ST, Header "Expires" ST]
+
+cacheBust :: a -> CacheBust a
+cacheBust = addHeader "no-cache, no-store, must-revalidate" . addHeader "0"
 
 startBackend :: Config -> IO ()
 startBackend cfg = do
