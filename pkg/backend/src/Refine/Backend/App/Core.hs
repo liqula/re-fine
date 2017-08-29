@@ -149,19 +149,19 @@ newtype SmtpError
   = SmtpError IOException
   deriving (Eq, Show, Generic)
 
-tryApp :: forall (db :: * -> *) (a :: *). AppM db a -> AppM db (Either ApiError a)
+tryApp :: (MonadApp m, MonadIO m) => m a -> m (Either ApiError a)
 tryApp m = (Right <$> m) `catchError` (fmap Left . toApiError)
 
 -- | Convert 'AppError' (internal to backend) to 'ApiError' (shared between backend and frontend).
 -- This also takes care of logging the confidential part of 'AppError' on the server side before
 -- discarding it.
-toApiError :: forall (db :: * -> *). AppError -> AppM db ApiError
+toApiError :: AppError -> (MonadLog m, MonadIO m) => m ApiError
 toApiError = toApiErrorWithLogger (Logger appLog)
 
 toApiErrorWithLogger :: Logger -> AppError -> (MonadIO m) => m ApiError
 toApiErrorWithLogger (Logger logger) err = liftIO (l err) >> pure (c err)
   where
-    appLogL_ _ = logger  -- FIXME: 'Logger' should take a log level.  (this requires refactoring 'MonadLog'.)
+    appLogL_ _ = logger  -- TODO: 'Logger' should take a log level.  (this requires refactoring 'MonadLog'.)
 
     l = \case  -- (log levels may need some tweaking)
       AppUnknownError _          -> appLogL_ LogError $ "AppError: " <> show err

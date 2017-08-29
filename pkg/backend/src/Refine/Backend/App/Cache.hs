@@ -63,11 +63,13 @@ closeWsConn n = do
     pure ((n_, Map.delete n cmap), ())
 
 
-sendMessage :: Connection -> ToClient -> IO ()
-sendMessage conn msg = sendTextData conn (cs $ encode msg :: ST)
+class MonadWS m where
+  sendMessage :: Connection -> ToClient -> m ()
+  receiveMessage :: Connection -> m ToServer
 
-receiveMessage :: Connection -> IO ToServer
-receiveMessage conn = receiveData conn <&> fromMaybe (error "websockets json decoding error") . decode
+instance MonadIO m => MonadWS m where
+  sendMessage conn msg = liftIO $ sendTextData conn (cs $ encode msg :: ST)
+  receiveMessage conn = liftIO $ receiveData conn <&> fromMaybe (error "websockets json decoding error") . decode
 
 getData :: CacheKey -> App ServerCache
 getData = \case
@@ -173,9 +175,11 @@ cmdLoopStepFrame toIO clientId = dolift . dostate
       Left e -> wserror $ WSErrorCommandFailed e
       Right () -> pure ()
 
-cmdLoopStep :: Connection -> WSSessionId -> AppM DB ()
+
+-- | Application engine.  From here on inwards, all actions need to be authorization-checked.
+cmdLoopStep :: Connection -> WSSessionId -> (MonadWS m, MonadApp m, MonadIO m) => m ()
 cmdLoopStep conn clientId = do
-  msg <- liftIO $ receiveMessage conn
+  msg <- receiveMessage conn
   appLog $ "request from client #" <> show clientId <> ", " <> show msg
   appLogL LogDebug . ("appState = " <>) . show =<< get
 
@@ -184,22 +188,22 @@ cmdLoopStep conn clientId = do
           cmap' <- liftIO $ takeMVar webSocketMVar
           liftIO . putMVar webSocketMVar $
             second (Map.adjust (second $ const mempty) clientId) cmap'
-          liftIO . sendMessage conn $ TCRestrictKeys []
+          sendMessage conn $ TCRestrictKeys []
       TSMissing keys -> do
           cache <- mconcat <$> mapM getData keys
           cmap' <- liftIO $ takeMVar webSocketMVar
           liftIO . putMVar webSocketMVar $
             second (Map.adjust (second (<> Set.fromList keys)) clientId) cmap'
-          liftIO . sendMessage conn $ TCServerCache cache
+          sendMessage conn $ TCServerCache cache
 
-      TSAddGroup cg           -> liftIO . sendMessage conn . TCCreatedGroup . view groupID =<< App.addGroup cg
+      TSAddGroup cg           -> sendMessage conn . TCCreatedGroup . view groupID =<< App.addGroup cg
       TSUpdateGroup gid x     -> void $ App.modifyGroup gid x
-      TSCreateUser cu         -> liftIO . sendMessage conn . TCCreateUserResp =<< tryApp (App.createUser cu)
-      TSLogin li              -> liftIO . sendMessage conn . TCLoginResp =<< tryApp (App.login li)
+      TSCreateUser cu         -> sendMessage conn . TCCreateUserResp =<< tryApp (App.createUser cu)
+      TSLogin li              -> sendMessage conn . TCLoginResp =<< tryApp (App.login li)
       TSLogout                -> void App.logout
-      TSGetTranslations k     -> liftIO . sendMessage conn . TCTranslations =<< App.getTranslations k
+      TSGetTranslations k     -> sendMessage conn . TCTranslations =<< App.getTranslations k
 
-      TSAddVDoc cv            -> liftIO . sendMessage conn . TCCreatedVDoc . view vdocID =<< App.createVDoc cv
+      TSAddVDoc cv            -> sendMessage conn . TCCreatedVDoc . view vdocID =<< App.createVDoc cv
       TSUpdateVDoc vid upd    -> void $ App.updateVDoc vid upd
       TSAddDiscussion eid x   -> void $ App.addDiscussion eid x
       TSAddStatement sid x    -> void $ App.addStatement sid x
@@ -210,7 +214,7 @@ cmdLoopStep conn clientId = do
       TSMergeEdit eid         -> void $ App.mergeEdit eid
       TSToggleVote (ContribIDEdit eid) x -> do
         rebased <- App.toggleSimpleVoteOnEdit eid x
-        when rebased . liftIO $ sendMessage conn TCRebase
+        when rebased $ sendMessage conn TCRebase
       TSToggleVote (ContribIDDiscussion _ nid) x
                               -> void $ App.toggleSimpleVoteOnDiscussion nid x
       TSDeleteVote eid        -> void $ App.deleteSimpleVoteOnEdit eid
