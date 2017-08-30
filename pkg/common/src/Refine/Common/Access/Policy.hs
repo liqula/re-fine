@@ -53,8 +53,11 @@ createOrUpdateVDoc = groupMember
 viewVDoc :: VDoc -> Creds
 viewVDoc = groupMember . (^. vdocGroup)
 
-createComment :: VDoc -> Creds
-createComment = groupMember . (^. vdocGroup)
+createOrUpdateComment :: VDoc -> Creds
+createOrUpdateComment = groupMember . (^. vdocGroup)
+
+voteOnComment :: VDoc -> Creds
+voteOnComment = groupMember . (^. vdocGroup)
 
 updateStatement :: Statement -> Creds
 updateStatement stmt = orAdmin . CredsLeaf $ CredUser (stmt ^. statementMetaID . miMeta . metaCreatedBy)
