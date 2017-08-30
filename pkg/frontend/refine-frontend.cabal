@@ -120,6 +120,7 @@ library
       Refine.Frontend.Store
       Refine.Frontend.Store.Types
       Refine.Frontend.Test.Console
+      Refine.Frontend.Test.Debug
       Refine.Frontend.Test.Enzyme
       Refine.Frontend.Test.Enzyme.Class
       Refine.Frontend.Test.Enzyme.Class.Internal

@@ -16,6 +16,7 @@ import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Test.Debug
 import           Refine.Frontend.Types
 
 

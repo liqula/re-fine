@@ -30,6 +30,7 @@ import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Screen.Types as SC
 import           Refine.Frontend.Screen.WindowSize (windowSize_, WindowSizeProps(..))
 import           Refine.Frontend.Store.Types as RS
+import           Refine.Frontend.Test.Debug
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 import           Refine.Frontend.Views.Types
