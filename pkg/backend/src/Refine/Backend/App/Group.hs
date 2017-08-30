@@ -3,13 +3,22 @@
 
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
-module Refine.Backend.App.Group where
+module Refine.Backend.App.Group
+  ( addGroup
+  , getGroup
+  , getGroups
+  , modifyGroup
+  , removeGroup
+  , changeSubGroup
+  , addSubGroup
+  , removeSubGroup
+  ) where
 #include "import_backend.hs"
 
 import           Refine.Backend.App.Access
 import           Refine.Backend.App.Core
 import           Refine.Backend.Config
-import           Refine.Backend.Database.Class as DB
+import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Common.Access.Policy as AP
 import           Refine.Common.ChangeAPI
 import           Refine.Common.Types
@@ -58,22 +67,28 @@ removeGroup gid = do
 
 -- * subgroups
 
+-- | (disabled via 'assertCreds'.)
 changeSubGroup :: ChangeSubGroup -> App ()
 changeSubGroup csg = do
   appLog LogDebug "changeSubGroup"
+  assertCreds $ AP.bottom
   let cmd = case csg of
               AddSubGroup{} -> Refine.Backend.App.Group.addSubGroup
               RmSubGroup{}  -> Refine.Backend.App.Group.removeSubGroup
   cmd (csg ^. csgParent) (csg ^. csgChild)
 
 -- | Add a new child group to a group
+-- | (disabled via 'assertCreds'.)
 addSubGroup :: ID Group -> ID Group -> App ()
 addSubGroup parent child = do
   appLog LogDebug "addSubGroup"
+  assertCreds $ AP.bottom
   db $ DB.addSubGroup parent child
 
 -- | Remove a child group from a parent
+-- | (disabled via 'assertCreds'.)
 removeSubGroup :: ID Group -> ID Group -> App ()
 removeSubGroup parent child = do
   appLog LogDebug "removeSubGroup"
+  assertCreds $ AP.bottom
   db $ DB.removeSubGroup parent child
