@@ -13,7 +13,7 @@ $btn-active-indicator-size-mobile: 35px;
     top: 0;
     //z-index: $vdoc-toolbar-index;
 
-    &__content {
+    &__content, &__content div {
         @include center-content-vertical();
     }
 

@@ -16,6 +16,7 @@ import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Test.Debug
 import           Refine.Frontend.Types
 
 
@@ -84,7 +85,10 @@ wipeDocumentState as gs = case getDocumentState as gs of
     where disc = id +++ snd $ dp ^. discPropsDiscussion
 
 editToolbar_ :: HasCallStack => EditToolbarProps -> ReactElementM eventHandler ()
-editToolbar_ ep = do
+editToolbar_ = view_' editToolbar "editToolbar_"
+
+editToolbar :: View' '[EditToolbarProps]
+editToolbar = mkView' "editToolbar" $ \ep -> do
   let editButton icon = defaultIconButtonProps @[GlobalAction]
         & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-" <> icon, "dark") XXLarge
         & iconButtonPropsElementName  .~ "btn-index"
