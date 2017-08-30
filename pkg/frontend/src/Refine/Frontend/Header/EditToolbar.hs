@@ -84,7 +84,10 @@ wipeDocumentState as gs = case getDocumentState as gs of
     where disc = id +++ snd $ dp ^. discPropsDiscussion
 
 editToolbar_ :: HasCallStack => EditToolbarProps -> ReactElementM eventHandler ()
-editToolbar_ ep = do
+editToolbar_ = view_' editToolbar "editToolbar_"
+
+editToolbar :: View' '[EditToolbarProps]
+editToolbar = mkView' "editToolbar" $ \ep -> do
   let editButton icon = defaultIconButtonProps @[GlobalAction]
         & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-" <> icon, "dark") XXLarge
         & iconButtonPropsElementName  .~ "btn-index"

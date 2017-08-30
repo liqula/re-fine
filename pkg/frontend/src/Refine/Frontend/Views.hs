@@ -81,8 +81,8 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
     didMountOrUpdate :: HasCallStack => React.LPropsAndState (GlobalState, AccessState) () -> IO ()
     didMountOrUpdate _getPropsAndState = flushCacheMisses
 
-mainScreen :: HasCallStack => View '[(GlobalState, AccessState)]
-mainScreen = mkView "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
+mainScreen :: HasCallStack => View' '[(GlobalState, AccessState)]
+mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
   Nothing -> error "mainScreen: no gsVDoc"
   Just Nothing -> "Loading..."
   Just (Just vdoc) -> do
@@ -153,7 +153,7 @@ mainScreen = mkView "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
           div_ ["style" @@= [decl "margin-bottom" (Px 800)]] $ pure ()
 
 mainScreen_ :: HasCallStack => (GlobalState, AccessState) -> ReactElementM eventHandler ()
-mainScreen_ = view_ mainScreen "mainScreen_"
+mainScreen_ = view_' mainScreen "mainScreen_"
 
 
 leftAside :: HasCallStack => View '[AsideProps]
