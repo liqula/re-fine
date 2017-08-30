@@ -81,17 +81,17 @@ sendMailToAppM msg = do
   mcfg <- asks . view $ appConfig . cfgSmtp
   case mcfg of
     Nothing -> do
-      appLog $ "sendMailTo: no config, email dropped: " <> show msg
+      appLog LogInfo $ "sendMailTo: no config, email dropped: " <> show msg
     Just (cfg :: SmtpCfg) -> do
-      appLog $ "sendMailTo: " <> show (cfg, msg)
+      appLog LogInfo $ "sendMailTo: " <> show (cfg, msg)
       msglbs :: LBS <- liftIO . getStdRandom $ renderEmail cfg msg
 
       (liftIO . try $ sendmailCustomCaptureOutput (cs $ cfg ^. smtpSendmailPath) (cs <$> cfg ^. smtpSendmailArgs) msglbs)
         >>= \case
           Right (out, err) -> do
             do
-              unless (SBS.null out) . appLog $ "sendmail produced output on stdout: " <> cs out
-              unless (SBS.null err) . appLog $ "sendmail produced output on stderr: " <> cs err
+              unless (SBS.null out) . appLog LogWarning $ "sendmail produced output on stdout: " <> cs out
+              unless (SBS.null err) . appLog LogWarning $ "sendmail produced output on stderr: " <> cs err
           Left e ->
             throwError . AppSmtpError . SmtpError $ e
 

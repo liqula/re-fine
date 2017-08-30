@@ -24,9 +24,10 @@ import Refine.Backend.App.Core        as App
 import Refine.Backend.App.Group       as App
 import Refine.Backend.App.User        as App
 import Refine.Backend.App.VDoc        as App
-import Refine.Backend.App.Translation as App
+import {-# SOURCE #-} Refine.Backend.App.Translation as App (getTranslations)
 import Refine.Backend.Config
 import Refine.Backend.Database
+import Refine.Backend.Logger
 
 
 type WebSocketMVar = MVar (Int{-to generate fresh CacheIds-}, Map WSSessionId WebSocketSession)
@@ -63,11 +64,16 @@ closeWsConn n = do
     pure ((n_, Map.delete n cmap), ())
 
 
-sendMessage :: Connection -> ToClient -> IO ()
-sendMessage conn msg = sendTextData conn (cs $ encode msg :: ST)
+class MonadWS m where
+  sendMessage :: Connection -> ToClient -> m ()
+  receiveMessage :: Connection -> m ToServer
+  modifyCache :: WSSessionId -> (Set CacheKey -> Set CacheKey) -> m ()
 
-receiveMessage :: Connection -> IO ToServer
-receiveMessage conn = receiveData conn <&> fromMaybe (error "websockets json decoding error") . decode
+instance MonadIO m => MonadWS m where
+  sendMessage conn msg = liftIO $ sendTextData conn (cs $ encode msg :: ST)
+  receiveMessage conn = liftIO $ receiveData conn <&> fromMaybe (error "websockets json decoding error") . decode
+  modifyCache sid f = liftIO . modifyMVar webSocketMVar $ \(n, m) -> pure ((n, Map.adjust (second f) sid m), ())
+
 
 getData :: CacheKey -> App ServerCache
 getData = \case
@@ -85,10 +91,10 @@ instance Database db => MonadCache (AppM db) where
         cmap <- liftIO $ takeMVar webSocketMVar
         let cmap' = second (second (Set.\\ keys) <$>) cmap
             cls = [(n, conn, d) | (n, ((conn, _), s)) <- Map.assocs $ snd cmap, let d = Set.intersection keys s, not $ Set.null d]
-        appLog $ "invalidate cache items " <> show (Set.toList keys)
+        appLog LogDebug $ "invalidate cache items " <> show (Set.toList keys)
         forM_ cls $ \(n, conn, d) -> do
             liftIO . sendMessage conn . TCInvalidateKeys $ Set.toList d
-            appLog $ "invalidate cache of client #" <> show n <> ": " <> show (Set.toList d)
+            appLog LogDebug $ "invalidate cache of client #" <> show n <> ": " <> show (Set.toList d)
         liftIO $ putMVar webSocketMVar cmap'
 
 -- | FIXME: delete disconnected clients' data
@@ -102,22 +108,20 @@ startWebSocketServer cfg toIO = websocketsOr options server
     server pendingconnection = do
       conn <- acceptRequest pendingconnection
       pingLoop toIO conn
-      let logger :: LogLevel -> String -> IO ()
-          logger level = void . toIO . appLogL level
-      clientId <- handshake cfg conn logger
+      clientId <- handshake cfg conn (mkLogger cfg)
       forever (cmdLoopStepFrame toIO clientId (cmdLoopStep conn clientId)
-                `catch` handleAllErrors cfg conn logger clientId)
-        `catch` giveUp conn logger clientId  -- FUTUREWORK: handle exceptions during inital handshake?
+                `catch` handleAllErrors cfg conn (mkLogger cfg) clientId)
+        `catch` giveUp conn (mkLogger cfg) clientId  -- FUTUREWORK: handle exceptions during inital handshake?
 
-handleAllErrors :: Config -> Connection -> (LogLevel -> String -> IO ()) -> WSSessionId -> SomeException -> IO ()
-handleAllErrors cfg conn logger clientId e = do
+handleAllErrors :: Config -> Connection -> Logger -> WSSessionId -> SomeException -> IO ()
+handleAllErrors cfg conn (Logger logger) clientId e = do
   logger LogError $ show e
   sendMessage conn TCReset
-  clientId' <- handshake cfg conn logger
+  clientId' <- handshake cfg conn (Logger logger)
   assert (clientId' == clientId) $ pure ()
 
-giveUp :: Connection -> (LogLevel -> String -> IO ()) -> WSSessionId -> SomeException -> IO ()
-giveUp conn logger clientId e = do
+giveUp :: Connection -> Logger -> WSSessionId -> SomeException -> IO ()
+giveUp conn (Logger logger) clientId e = do
   logger LogError . show . WSErrorResetFailed $ show e
   closeWsConn clientId
   sendClose conn ("Cache.hs: could not reset connection, giving up." :: ST)
@@ -135,8 +139,8 @@ wserror :: Monad m => WSError -> m a
 wserror = error . show
 
 
-handshake :: Config -> Connection -> (LogLevel -> String -> IO ()) -> IO WSSessionId
-handshake cfg conn logger = receiveMessage conn >>= \case
+handshake :: Config -> Connection -> Logger -> IO WSSessionId
+handshake cfg conn (Logger logger) = receiveMessage conn >>= \case
   -- the client is reconnected, its WSSessionId is n
   TSGreeting (Just n) -> do
     cmap <- takeMVar webSocketMVar
@@ -173,33 +177,31 @@ cmdLoopStepFrame toIO clientId = dolift . dostate
       Left e -> wserror $ WSErrorCommandFailed e
       Right () -> pure ()
 
-cmdLoopStep :: Connection -> WSSessionId -> AppM DB ()
+
+-- | Application engine.  From here on inwards, all actions need to be authorization-checked.
+cmdLoopStep :: Connection -> WSSessionId -> (MonadWS m, MonadApp m) => m ()
 cmdLoopStep conn clientId = do
-  msg <- liftIO $ receiveMessage conn
-  appLog $ "request from client #" <> show clientId <> ", " <> show msg
-  appLogL LogDebug . ("appState = " <>) . show =<< get
+  msg <- receiveMessage conn
+  appLog LogDebug $ "request from client #" <> show clientId <> ", " <> show msg
+  appLog LogDebug . ("appState = " <>) . show =<< get
 
   case msg of
       TSClearCache -> do
-          cmap' <- liftIO $ takeMVar webSocketMVar
-          liftIO . putMVar webSocketMVar $
-            second (Map.adjust (second $ const mempty) clientId) cmap'
-          liftIO . sendMessage conn $ TCRestrictKeys []
+          modifyCache clientId $ const mempty
+          sendMessage conn $ TCRestrictKeys []
       TSMissing keys -> do
+          modifyCache clientId (<> Set.fromList keys)
           cache <- mconcat <$> mapM getData keys
-          cmap' <- liftIO $ takeMVar webSocketMVar
-          liftIO . putMVar webSocketMVar $
-            second (Map.adjust (second (<> Set.fromList keys)) clientId) cmap'
-          liftIO . sendMessage conn $ TCServerCache cache
+          sendMessage conn $ TCServerCache cache
 
-      TSAddGroup cg           -> liftIO . sendMessage conn . TCCreatedGroup . view groupID =<< App.addGroup cg
+      TSAddGroup cg           -> sendMessage conn . TCCreatedGroup . view groupID =<< App.addGroup cg
       TSUpdateGroup gid x     -> void $ App.modifyGroup gid x
-      TSCreateUser cu         -> liftIO . sendMessage conn . TCCreateUserResp =<< tryApp (App.createUser cu)
-      TSLogin li              -> liftIO . sendMessage conn . TCLoginResp =<< tryApp (App.login li)
+      TSCreateUser cu         -> sendMessage conn . TCCreateUserResp =<< tryApp (App.createUser cu)
+      TSLogin li              -> sendMessage conn . TCLoginResp =<< tryApp (App.login li)
       TSLogout                -> void App.logout
-      TSGetTranslations k     -> liftIO . sendMessage conn . TCTranslations =<< App.getTranslations k
+      TSGetTranslations k     -> sendMessage conn . TCTranslations =<< App.getTranslations k
 
-      TSAddVDoc cv            -> liftIO . sendMessage conn . TCCreatedVDoc . view vdocID =<< App.createVDoc cv
+      TSAddVDoc cv            -> sendMessage conn . TCCreatedVDoc . view vdocID =<< App.createVDoc cv
       TSUpdateVDoc vid upd    -> void $ App.updateVDoc vid upd
       TSAddDiscussion eid x   -> void $ App.addDiscussion eid x
       TSAddStatement sid x    -> void $ App.addStatement sid x
@@ -210,11 +212,9 @@ cmdLoopStep conn clientId = do
       TSMergeEdit eid         -> void $ App.mergeEdit eid
       TSToggleVote (ContribIDEdit eid) x -> do
         rebased <- App.toggleSimpleVoteOnEdit eid x
-        when rebased . liftIO $ sendMessage conn TCRebase
+        when rebased $ sendMessage conn TCRebase
       TSToggleVote (ContribIDDiscussion _ nid) x
                               -> void $ App.toggleSimpleVoteOnDiscussion nid x
       TSDeleteVote eid        -> void $ App.deleteSimpleVoteOnEdit eid
 
       bad@(TSGreeting _)      -> wserror $ WSErrorUnexpectedPacket bad
-
--- FIXME: hash session id with a secret and a current timestamp before passing it to the client.

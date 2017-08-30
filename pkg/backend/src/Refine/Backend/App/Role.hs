@@ -7,6 +7,7 @@ module Refine.Backend.App.Role where
 #include "import_backend.hs"
 
 import Refine.Backend.App.Core
+import Refine.Backend.Config
 import Refine.Backend.Database.Class as DB
 import Refine.Common.Types
 import Refine.Common.ChangeAPI
@@ -15,7 +16,7 @@ import Refine.Common.ChangeAPI
 -- | Assign or unassign 'GroupRole' or 'GlobalRole'.
 changeRole :: ChangeRole -> App ()
 changeRole cr = do
-  appLog "changeRole"
+  appLog LogDebug "changeRole"
   case cr of
     AssignGroupRole  u r g  -> Refine.Backend.App.Role.assignGroupRole r u g
     UnassignGroupRole u r g -> Refine.Backend.App.Role.unassignGroupRole r u g
@@ -30,7 +31,7 @@ changeRole cr = do
 -- is removed.
 assignGroupRole :: GroupRole -> ID User -> ID Group -> App ()
 assignGroupRole role uid gid = do
-  appLog "assignGroupRole"
+  appLog LogDebug "assignGroupRole"
   db $ do
     roles <- DB.getGroupRolesIn gid uid
     unless (role `elem` roles) $ DB.assignGroupRole gid uid role
@@ -38,7 +39,7 @@ assignGroupRole role uid gid = do
 -- | Unassign a role from a user in a group.
 unassignGroupRole :: GroupRole -> ID User -> ID Group -> App ()
 unassignGroupRole role uid gid = do
-  appLog "unassignGroupRole"
+  appLog LogDebug "unassignGroupRole"
   db $ do
     actRoles <- DB.getGroupRolesIn gid uid
     when (role `elem` actRoles) $ DB.unassignGroupRole gid uid role
@@ -46,13 +47,13 @@ unassignGroupRole role uid gid = do
 -- | Return the roles of a user
 allGroupRolesIn :: ID User -> ID Group -> App [GroupRole]
 allGroupRolesIn uid gid = do
-  appLog "allGroupRolesIn"
+  appLog LogDebug "allGroupRolesIn"
   db $ DB.getGroupRolesIn gid uid
 
 -- | Return the roles of a user
 allGroupRoles :: ID User -> App [(GroupRole, ID Group)]
 allGroupRoles uid = do
-  appLog "allGroupRoles"
+  appLog LogDebug "allGroupRoles"
   db $ DB.getGroupRoles uid
 
 
@@ -60,19 +61,19 @@ allGroupRoles uid = do
 
 assignGlobalRole :: GlobalRole -> ID User -> App ()
 assignGlobalRole role uid = do
-  appLog "assignGlobalRole"
+  appLog LogDebug "assignGlobalRole"
   db $ do
     roles <- DB.getGlobalRoles uid
     unless (role `elem` roles) $ DB.assignGlobalRole uid role
 
 unassignGlobalRole :: GlobalRole -> ID User -> App ()
 unassignGlobalRole role uid = do
-  appLog "unassignGlobalRole"
+  appLog LogDebug "unassignGlobalRole"
   db $ do
     actRoles <- DB.getGlobalRoles uid
     when (role `elem` actRoles) $ DB.unassignGlobalRole uid role
 
 allGlobalRoles :: ID User -> App [GlobalRole]
 allGlobalRoles uid = do
-  appLog "allGlobalRoles"
+  appLog LogDebug "allGlobalRoles"
   db $ DB.getGlobalRoles uid

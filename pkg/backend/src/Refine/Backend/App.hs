@@ -48,7 +48,7 @@ runApp
               -- iff exception, rollback; otherwise, commit.
               -- https://www.sqlite.org/lang_transaction.html
               twistException (action'' <* dbCommit dbc)
-                `catchError` \e -> dbRollback dbc >> throwError e  -- (is there a better idiom for this?)
+                `catchError` \e -> dbRollback dbc >> throwError e
 
       -- translate 'AppError' to 'ApiError', and also make sure that any exceptions thrown in the
       -- inner 'IO' are caught and rethrown in the 'ExceptT' as 'ApiError' as well.
@@ -58,5 +58,9 @@ runApp
       twistException :: ExceptT AppError IO a -> ExceptT ApiError IO a
       twistException (ExceptT m) = ExceptT $ twist =<< protect m
         where
-          twist = either (fmap Left . toApiErrorWithLogger logger) (pure . Right)
+          twist :: Either AppError a -> IO (Either ApiError a)
+          twist (Right v) = pure (Right v)
+          twist (Left e)  = Left <$> toApiError e `runReaderT` logger
+
+          protect :: IO (Either AppError a) -> IO (Either AppError a)
           protect = (`catch` \(SomeException e) -> pure . Left . AppUnknownError . cs . show $ e)

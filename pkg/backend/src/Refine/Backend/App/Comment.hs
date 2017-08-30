@@ -3,13 +3,20 @@
 
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
-module Refine.Backend.App.Comment where
+module Refine.Backend.App.Comment
+  ( toggleSimpleVoteOnDiscussion
+  , addDiscussion
+  , getDiscussion
+  , addStatement
+  , updateStatement
+  ) where
 #include "import_backend.hs"
 
 import           Refine.Backend.App.User
 import           Refine.Backend.App.Access
 import           Refine.Backend.App.Core
-import           Refine.Backend.Database.Class as DB
+import           Refine.Backend.Config
+import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Common.Access.Policy as AP
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft (minimumRange)
@@ -17,6 +24,8 @@ import           Refine.Common.VDoc.Draft (minimumRange)
 
 toggleSimpleVoteOnDiscussion :: ID Discussion -> Vote -> App ()
 toggleSimpleVoteOnDiscussion i v = do
+  appLog LogDebug "toggleSimpleVoteOnDiscussion"
+  assertCreds . AP.voteOnComment =<< db (DB.getVDoc . view discussionVDoc =<< DB.getDiscussion i)
   let f (Just v') | v' == v = Nothing
       f _ = Just v
   withCurrentUser $ \user -> db . DB.updateDiscussionVotes i $ Map.alter f user
@@ -24,8 +33,8 @@ toggleSimpleVoteOnDiscussion i v = do
 
 addDiscussion :: ID Edit -> CreateDiscussion (Maybe (Range Position)) -> App Discussion
 addDiscussion eid (CreateDiscussion txt mrange isnote) = do
-  appLog "addDiscussion"
-  assertCreds . AP.createComment =<< db (DB.getVDoc =<< DB.vdocOfEdit eid)
+  appLog LogDebug "addDiscussion"
+  assertCreds . AP.createOrUpdateComment =<< db (DB.getVDoc =<< DB.vdocOfEdit eid)
   disc <- db $ do
     range <- case mrange of
       Just r  -> {- FIXME: validateCreateChunkRange eid r >> -} pure r
@@ -37,24 +46,24 @@ addDiscussion eid (CreateDiscussion txt mrange isnote) = do
 
 getDiscussion :: ID Discussion -> App Discussion
 getDiscussion did = do
-  appLog "getDiscussion"
+  appLog LogDebug "getDiscussion"
   disc <- db $ DB.getDiscussion did
   assertCreds . AP.viewVDoc =<< db (DB.getVDoc $ disc ^. discussionVDoc)
   pure disc
 
 addStatement :: ID Statement -> CreateStatement -> App Discussion
 addStatement sid statement = do
-  appLog "addStatement"
+  appLog LogDebug "addStatement"
   disc <- db $ do
     _ <- DB.createStatement sid statement
     DB.getDiscussion =<< DB.discussionOfStatement sid
-  assertCreds . AP.createComment =<< db (DB.getVDoc $ disc ^. discussionVDoc)
+  assertCreds . AP.createOrUpdateComment =<< db (DB.getVDoc $ disc ^. discussionVDoc)
   invalidateCaches $ Set.fromList [CacheKeyDiscussion $ disc ^. discussionID]
   pure disc
 
 updateStatement :: ID Statement -> CreateStatement -> App Discussion
 updateStatement sid statement = do
-  appLog "updateStatement"
+  appLog LogDebug "updateStatement"
   disc <- db $ do
     _ <- DB.updateStatement sid statement
     DB.getDiscussion =<< DB.discussionOfStatement sid

@@ -9,8 +9,11 @@ module Refine.Backend.App.Translation where
 import Data.Map (filterWithKey)
 import Data.Text.I18n.Po
 
+import Refine.Backend.App.Access
 import Refine.Backend.App.Core
 import Refine.Backend.Config
+import Refine.Backend.Database
+import Refine.Common.Access.Policy as AP
 import Refine.Common.Types.Translation
 
 
@@ -24,9 +27,13 @@ import Refine.Common.Types.Translation
 -- FUTUREWORK: Bake the PO files into the server binary using 'readFile' from within
 -- TemplateHaskell.  This is easier on the server load, but more importantly eliminates the
 -- 'AppL10ParseErrors' constructor because those are all compile-time errors.
-getTranslations :: GetTranslations -> AppIO L10
-getTranslations (GetTranslations locale) = do
-  appLog "getTranslations"
+class MonadI18n app where
+  getTranslations :: GetTranslations -> app L10
+
+instance (Database db) => MonadI18n (AppM db) where
+ getTranslations (GetTranslations locale) = do
+  appLog LogDebug "getTranslations"
+  assertCreds AP.top
   poFileRoot <- asks . view $ appConfig . cfgPoFilesRoot
   join . liftIO $ do
     (l10, parseErrors) <- getL10n poFileRoot

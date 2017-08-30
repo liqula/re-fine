@@ -28,7 +28,11 @@ data Config = Config
   , _cfgClient        :: ClientCfg      -- ^ what we send to the client
   , _cfgWSPingPeriod  :: Timespan       -- ^ how long between two pings to every connected client
   , _cfgAllAreGods    :: Bool           -- ^ run 'unsafeBeAGod' in the beginning of every servant
-                                        -- and websockets transaction (See #358)
+                                        --   and websockets transaction (See #358)
+  , _cfgHaveRestApi   :: Bool           -- ^ whether we want to talk to client via servant at all.
+                                        --   refine-frontend just needs web sockets to work.  if
+                                        --   this is False, we do not set or read any cookies in the
+                                        --   connecting browsers.
   }
   deriving (Eq, Show, Generic)
 
@@ -77,6 +81,7 @@ instance Default Config where
     , _cfgClient        = def
     , _cfgWSPingPeriod  = TimespanSecs 14
     , _cfgAllAreGods    = False
+    , _cfgHaveRestApi   = True
     }
 
 instance Default LogCfg where

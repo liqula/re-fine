@@ -22,10 +22,10 @@ module Refine.Backend.App.Core
   , AppM(..)
   , AppError(..)
   , SmtpError(..)
-  , tryApp, toApiError, toApiErrorWithLogger, createUserErrorToApiError
+  , tryApp, toApiError, createUserErrorToApiError
   , MonadApp
   , MonadAppDB(dbWithFilters), db, dbUsersCmd
-  , MonadLog(appLogL), appLog
+  , MonadLog(appLog)
   , MonadCache(..)
   ) where
 #include "import_backend.hs"
@@ -35,6 +35,7 @@ import qualified Web.Users.Types as Users
 import qualified Web.Users.Persistent as Users
 
 import {-# SOURCE #-} Refine.Backend.App.Smtp
+import {-# SOURCE #-} Refine.Backend.App.Translation
 import Refine.Backend.Config
 import Refine.Backend.Database
 import Refine.Backend.Logger
@@ -115,6 +116,7 @@ type MonadApp app =
   , MonadSmtp app
   , MonadCache app
   , MonadAccess app
+  , MonadI18n app
   )
 
 -- | Syntactic sugar for 'MonadApp'.
@@ -149,36 +151,31 @@ newtype SmtpError
   = SmtpError IOException
   deriving (Eq, Show, Generic)
 
-tryApp :: forall (db :: * -> *) (a :: *). AppM db a -> AppM db (Either ApiError a)
+tryApp :: (MonadLog m, MonadError AppError m) => m a -> m (Either ApiError a)
 tryApp m = (Right <$> m) `catchError` (fmap Left . toApiError)
 
 -- | Convert 'AppError' (internal to backend) to 'ApiError' (shared between backend and frontend).
 -- This also takes care of logging the confidential part of 'AppError' on the server side before
 -- discarding it.
-toApiError :: forall (db :: * -> *). AppError -> AppM db ApiError
-toApiError = toApiErrorWithLogger (Logger appLog)
-
-toApiErrorWithLogger :: Logger -> AppError -> (MonadIO m) => m ApiError
-toApiErrorWithLogger (Logger logger) err = liftIO (l err) >> pure (c err)
+toApiError :: AppError -> (Monad m, MonadLog m) => m ApiError
+toApiError err = l err >> pure (c err)
   where
-    appLogL_ _ = logger  -- FIXME: 'Logger' should take a log level.  (this requires refactoring 'MonadLog'.)
-
     l = \case  -- (log levels may need some tweaking)
-      AppUnknownError _          -> appLogL_ LogError $ "AppError: " <> show err
-      AppVDocVersionError        -> appLogL_ LogError $ "AppError: " <> show err
-      AppDBError _               -> appLogL_ LogError $ "AppError: " <> show err
-      AppUserNotFound _          -> appLogL_ LogInfo  $ "AppError: " <> show err
-      AppUserNotLoggedIn         -> appLogL_ LogInfo  $ "AppError: " <> show err
-      AppUserCreationError _     -> appLogL_ LogInfo  $ "AppError: " <> show err
-      AppCsrfError _             -> appLogL_ LogError $ "AppError: " <> show err
-      AppSessionError            -> appLogL_ LogError $ "AppError: " <> show err
-      AppSanityCheckError _      -> appLogL_ LogError $ "AppError: " <> show err
-      AppUserHandleError _       -> appLogL_ LogError $ "AppError: " <> show err
-      AppL10ParseErrors _        -> appLogL_ LogError $ "AppError: " <> show err
-      AppUnauthorized _          -> appLogL_ LogInfo  $ "AppError: " <> show err
-      AppMergeError _ _ _ _      -> appLogL_ LogError $ "AppError: " <> show err
-      AppRebaseError _           -> appLogL_ LogError $ "AppError: " <> show err
-      AppSmtpError _             -> appLogL_ LogError $ "AppError: " <> show err
+      AppUnknownError _          -> appLog LogError $ "AppError: " <> show err
+      AppVDocVersionError        -> appLog LogError $ "AppError: " <> show err
+      AppDBError _               -> appLog LogError $ "AppError: " <> show err
+      AppUserNotFound _          -> appLog LogInfo  $ "AppError: " <> show err
+      AppUserNotLoggedIn         -> appLog LogInfo  $ "AppError: " <> show err
+      AppUserCreationError _     -> appLog LogInfo  $ "AppError: " <> show err
+      AppCsrfError _             -> appLog LogError $ "AppError: " <> show err
+      AppSessionError            -> appLog LogError $ "AppError: " <> show err
+      AppSanityCheckError _      -> appLog LogError $ "AppError: " <> show err
+      AppUserHandleError _       -> appLog LogError $ "AppError: " <> show err
+      AppL10ParseErrors _        -> appLog LogError $ "AppError: " <> show err
+      AppUnauthorized _          -> appLog LogInfo  $ "AppError: " <> show err
+      AppMergeError _ _ _ _      -> appLog LogError $ "AppError: " <> show err
+      AppRebaseError _           -> appLog LogError $ "AppError: " <> show err
+      AppSmtpError _             -> appLog LogError $ "AppError: " <> show err
 
     c = \case
       AppUnknownError e          -> ApiUnknownError e
@@ -247,20 +244,17 @@ dbUsersCmd = db . runUsersCmd
 -- * logging
 
 class MonadLog app where
-  appLogL :: LogLevel -> String -> app ()
+  appLog :: LogLevel -> String -> app ()
 
 instance MonadLog (AppM db) where
-  appLogL level msg = AppM $ do
-    levelLimit <- view (_2 . appConfig . cfgLogger . logCfgLevel)
-    when (level <= levelLimit) $ do
-      logger <- view (_2 . appLogger)
-      liftIO $ unLogger logger msg
+  appLog level msg = AppM $ do
+    Logger logger <- view (_2 . appLogger)
+    liftIO $ logger level msg
 
-instance MonadLog IO where
-  appLogL _ = putStrLn
-
-appLog :: MonadLog app => String -> app ()
-appLog = appLogL def
+instance MonadLog (ReaderT Logger IO) where
+  appLog level msg = do
+    Logger logger <- ask
+    logger level msg
 
 
 -- * caching

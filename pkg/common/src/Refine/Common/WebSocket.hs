@@ -13,6 +13,8 @@ import Refine.Common.Types.Vote
 
 -- | (it would be nice if we could re-use the session id from 'AppUserState', but that's only
 -- available when logged in, and web sockets need to work for anonymous users, too.)
+--
+-- FIXME: #435
 type WSSessionId = Int
 
 

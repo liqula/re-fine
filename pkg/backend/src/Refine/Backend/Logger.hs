@@ -5,10 +5,15 @@ module Refine.Backend.Logger where
 
 import Refine.Backend.Config
 
-newtype Logger = Logger { unLogger :: String -> IO () }
+newtype Logger = Logger { unLogger :: LogLevel -> String -> (forall m. MonadIO m => m ()) }
 
-defaultLogger :: Config -> Logger
-defaultLogger cfg = Logger $ case cfg ^. cfgLogger . logCfgTarget of
-  LogCfgFile file -> appendFile file . (<> "\n")
-  LogCfgStdOut    -> \msg -> putStrLn msg >> hFlush stdout
-  LogCfgDevNull   -> const $ pure ()
+mkLogger :: Config -> Logger
+mkLogger cfg = Logger $ \level -> do
+  let limit = cfg ^. cfgLogger . logCfgLevel
+  if level <= limit
+    then case cfg ^. cfgLogger . logCfgTarget of
+      LogCfgFile file -> liftIO . appendFile file . (<> "\n")
+      LogCfgStdOut    -> \msg -> liftIO $ putStrLn msg >> hFlush stdout
+      LogCfgDevNull   -> const $ pure ()
+    else
+      \_ -> pure ()

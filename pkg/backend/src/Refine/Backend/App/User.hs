@@ -4,7 +4,17 @@
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
 -- | FIXME: is this module redundant to the users package?  should we make better use of the latter?
-module Refine.Backend.App.User where
+module Refine.Backend.App.User
+  ( login
+  , currentUser
+  , logout
+  , createUserWith
+  , createUser
+  , getUser
+  , getUsers
+  , doesUserExist
+  , withCurrentUser
+  ) where
 #include "import_backend.hs"
 
 import qualified Web.Users.Types as Users
@@ -17,8 +27,10 @@ import Refine.Backend.App.Role
 import Refine.Backend.Config
 import Refine.Backend.Types
 import Refine.Backend.Database.Class (createMetaID_, getMetaID)
+import qualified Refine.Backend.Database.Class as DB
 import Refine.Backend.Database.Entity (toUserID, fromUserID)
 import qualified Refine.Common.Access.Policy as AP
+import qualified Refine.Common.Access as AP
 import Refine.Common.Types as Common
 import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 
@@ -27,10 +39,11 @@ import Refine.Prelude (nothingToError, leftToError, timespanToNominalDiffTime)
 -- to explicit one. The frontend code should use the returned username.
 -- The rational here: It helps the future integration of different login
 -- providers.
-login :: Common.Login -> App Common.User
+login :: Login -> App User
 login (Login username (Users.PasswordPlain -> password)) = do
-  appLog "login"
-  appLogL LogDebug . ("login.before:: " <>) . show =<< get
+  appLog LogDebug "login"
+  appLog LogDebug . ("login.before:: " <>) . show =<< get
+  assertCreds AP.top
   sessionDuration <- asks . view $ appConfig . cfgSessionLength . to timespanToNominalDiffTime
   session <- nothingToError (AppUserNotFound username)
              =<< dbUsersCmd (\db_ -> Users.authUser db_ username password sessionDuration)
@@ -39,13 +52,14 @@ login (Login username (Users.PasswordPlain -> password)) = do
   void $ setUserSession (toUserID loginId) (UserSession session)
   user <- nothingToError (AppUserNotFound username) =<< dbUsersCmd (`Users.getUserById` loginId)
   mid <- db . getMetaID $ toUserID loginId
-  appLogL LogDebug . ("login.after:: " <>) . show =<< get
-  pure $ Common.User mid username (Users.u_email user)
+  appLog LogDebug . ("login.after:: " <>) . show =<< get
+  pure $ User mid username (Users.u_email user)
 
 -- | Returns (Just (current ID)) of the current user if the user
 -- is logged in otherwise Nothing.
-currentUser :: App (Maybe (ID Common.User))
+currentUser :: App (Maybe (ID User))
 currentUser = do
+  assertCreds AP.top
   st <- gets (view appUserState)
   pure $ case st of
     UserLoggedIn user _session -> Just user
@@ -53,8 +67,9 @@ currentUser = do
 
 logout :: App ()
 logout = do
-  appLog "logout"
-  appLogL LogDebug . ("logout.before:: " <>) . show =<< get
+  appLog LogDebug "logout"
+  appLog LogDebug . ("logout.before:: " <>) . show =<< get
+  assertCreds AP.top
   st <- gets (view appUserState)
   case st of
     UserLoggedIn _user session -> do
@@ -62,11 +77,11 @@ logout = do
       clearUserSession
     UserLoggedOut -> do
       pure ()
-  appLogL LogDebug . ("logout.after:: " <>) . show =<< get
+  appLog LogDebug . ("logout.after:: " <>) . show =<< get
 
-createUserWith :: [GlobalRole] -> [(GroupRole, ID Group)] -> CreateUser -> App Common.User
+createUserWith :: [GlobalRole] -> [(GroupRole, ID Group)] -> CreateUser -> App User
 createUserWith globalRoles groupRoles (CreateUser name email password) = do
-  appLog "createUser"
+  appLog LogDebug "createUser"
   assertCreds $ AP.createUser globalRoles groupRoles
   let user = Users.User
               { Users.u_name  = name
@@ -76,7 +91,7 @@ createUserWith globalRoles groupRoles (CreateUser name email password) = do
               }
   loginId <- leftToError AppUserCreationError
              =<< dbUsersCmd (`Users.createUser` user)
-  result <- Common.User <$> db (createMetaID_ $ toUserID loginId) <*> pure name <*> pure email
+  result <- User <$> db (createMetaID_ $ toUserID loginId) <*> pure name <*> pure email
 
   (\r -> assignGlobalRole r (result ^. userID)) `mapM_` globalRoles
   (\(r, g) -> assignGroupRole r (result ^. userID) g) `mapM_` groupRoles
@@ -85,28 +100,41 @@ createUserWith globalRoles groupRoles (CreateUser name email password) = do
   invalidateCaches $ Set.fromList [CacheKeyUserIds]
   pure result
 
-createUser :: CreateUser -> App Common.User
+createUser :: CreateUser -> App User
 createUser = createUserWith [] []
 
-getUser :: ID User -> App Common.User
+getUser :: ID User -> App User
 getUser uid = do
-  appLog "getUser"
-  user <- nothingToError (AppUserNotFound . cs $ show uid) =<< dbUsersCmd (`Users.getUserById` fromUserID uid)
-  mid <- db $ getMetaID uid
-  pure $ Common.User mid (Users.u_name user) (Users.u_email user)
+  appLog LogDebug "getUser"
+  nothingToError (AppUserNotFound . cs . show $ uid) =<< getUserIfAllowedAndExists uid
 
+getUserIfAllowedAndExists :: ID User -> App (Maybe User)
+getUserIfAllowedAndExists uid = do
+  muser_ <- dbUsersCmd (`Users.getUserById` fromUserID uid)
+  case muser_ of
+    Nothing -> pure Nothing
+    Just user_ -> do
+      mid <- db $ getMetaID uid
+      let user = User mid (Users.u_name user_) (Users.u_email user_)
+      ok <- AP.hasCreds . AP.getUser user . fmap snd . filter ((>= GroupMember) . fst) =<< db (DB.getGroupRoles uid)
+      pure $ if ok then Just user else Nothing
+
+-- | TUNING: this is probably quite sub-optimally fast.
 getUsers :: App (Set (ID User))
 getUsers = do
-  appLog "getUsers"
-  users <- dbUsersCmd (\b -> Users.listUsers b Nothing (Users.SortAsc Users.UserFieldId))
-  pure . Set.fromList $ toUserID . fst <$> users
+  appLog LogDebug "getUsers"
+  users_ <- dbUsersCmd (\b -> Users.listUsers b Nothing (Users.SortAsc Users.UserFieldId))
+  users :: [Maybe User] <- getUserIfAllowedAndExists `mapM` (toUserID . fst <$> users_)
+  pure . Set.fromList . fmap (^. userID) . catMaybes $ users
 
-doesUserExist :: ID Common.User -> App Bool
+doesUserExist :: ID User -> App Bool
 doesUserExist uid = do
-  isJust <$> dbUsersCmd (\db_ -> Users.getUserById db_ (fromUserID uid))
+  appLog LogDebug "doesUserExist"
+  isJust <$> getUserIfAllowedAndExists uid
 
 withCurrentUser :: MonadApp app => (ID User -> app a) -> app a
 withCurrentUser f = do
+  assertCreds AP.top
   mu <- currentUser
   case mu of
     Just u -> f u

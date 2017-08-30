@@ -55,8 +55,9 @@ createDataDirectories cfg = do
 
 data Backend db = Backend
   { backendServer          :: Application
+                              -- ^ the http server (static content, web sockets, rest api, client config).
   , backendRunApp          :: AppM db :~> ExceptT ApiError IO
-  , backendSessionStore    :: SCS.SessionStore IO () (AppState, MVar ())
+                              -- ^ the application engine.
   }
 
 refineApi :: (Database db) => ServerT RefineAPI (AppM db)
@@ -99,8 +100,8 @@ instance MimeRender JSViaRest ClientCfg where
 type ClientConfigAPI = "cfg.js" :> Get '[JSViaRest, JSON] (CacheBust ClientCfg)
 
 -- | Serve 'ClientCfg' as a js file for import in index.html.
-clientConfigApi :: (Database db) => ServerT ClientConfigAPI (AppM db)
-clientConfigApi = fmap cacheBust . asks . view $ appConfig . cfgClient
+clientConfigApi :: Applicative m => ClientCfg -> ServerT ClientConfigAPI m
+clientConfigApi = pure . cacheBust
 
 type CacheBust = Headers '[Header "Cache-Control" ST, Header "Expires" ST]
 
@@ -142,10 +143,14 @@ mkBackend cfg initially = do
 
   pure (backend, destroy)
 
+-- | NOTE: Static content delivery is not protected by "Servant.Cookie.Session".  To achive that, we
+-- may need to refactor, e.g. by using extra arguments in the end point types.  Iff we only serve
+-- the application code as static content, and not content that is subject to authorization, we're
+-- fine as it is.
 mkServerApp :: Config -> MkDBNat DB -> DBRunner -> IO (Backend DB)
 mkServerApp cfg dbNat dbRunner = do
   let cookie = SCS.def { SCS.setCookieName = refineCookieName, SCS.setCookiePath = Just "/" }
-      logger = defaultLogger cfg
+      logger = mkLogger cfg
 
       appNT :: AppM DB :~> ExceptT ApiError IO
       appNT = runApp dbNat
@@ -158,17 +163,23 @@ mkServerApp cfg dbNat dbRunner = do
         (Right v) -> pure $ Right v
         (Left e)  -> pure $ appServantErr e
 
-  -- FIXME: Static content delivery is not protected by "Servant.Cookie.Session" To achive that, we
-  -- may need to refactor, e.g. by using extra arguments in the end point types.
-  (srvApp :: Application, sessionStore :: SCS.SessionStore IO () (SCS.Lockable AppState))
-      <- SCS.serveAction
+  srvApp :: Application
+      <- if cfg ^. cfgHaveRestApi
+
+           -- with rest api, cookies, everything.
+           then fst <$> SCS.serveAction
               (Proxy :: Proxy (RefineAPI :<|> ClientConfigAPI))
               (Proxy :: Proxy AppState)
               cookie
               (Nat liftIO)
               (cnToSn $ renderErrorNT . appNT)
-              (refineApi :<|> clientConfigApi)
+              (refineApi :<|> clientConfigApi (cfg ^. cfgClient))
               (Just (serve (Proxy :: Proxy Raw) (maybeServeDirectory (cfg ^. cfgFileServeRoot))))
+
+           -- just anonymous client code and client config delivery.
+           else pure $ serve
+              (Proxy :: Proxy (ClientConfigAPI :<|> Raw))
+              (clientConfigApi (cfg ^. cfgClient) :<|> maybeServeDirectory (cfg ^. cfgFileServeRoot))
 
   () <- resetWebSocketMVar
 
@@ -178,7 +189,7 @@ mkServerApp cfg dbNat dbRunner = do
       appMToIO :: AppM DB a -> IO (Either ApiError a)
       appMToIO m = runExceptT (appNT $$ m)
 
-  pure $ Backend (addWS srvApp) appNT sessionStore
+  pure $ Backend (addWS srvApp) appNT
 
 
 maybeServeDirectory :: Maybe FilePath -> Server Raw
