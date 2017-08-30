@@ -3,7 +3,24 @@
 
 {-# OPTIONS_GHC -fno-warn-redundant-constraints #-}
 
-module Refine.Backend.App.VDoc where
+module Refine.Backend.App.VDoc
+  ( listVDocs
+  , createVDoc
+  , updateVDoc
+  , getVDoc
+  , getVDocVersion
+  , updateEdit
+  , addEdit
+  , addEditAndMerge
+  , getEdit
+  , addMerge
+  , mergeEdit         -- TODO: rename to mergeEditAndRebase
+  , rebaseHeadToEdit  -- TODO: replace with mergeEditAndRebase
+  , toggleSimpleVoteOnEdit
+  , deleteSimpleVoteOnEdit
+  , changeSimpleVoteOnEdit
+  , getSimpleVotesOnEdit
+  ) where
 #include "import_backend.hs"
 
 import           Data.Maybe
@@ -26,13 +43,15 @@ import           Refine.Common.VDoc.Draft
 listVDocs :: App [VDoc]
 listVDocs = do
   appLog LogDebug "listVDocs"
-  db $ mapM DB.getVDoc =<< DB.listVDocs
+  filterByCreds (AP.groupMember . (^. vdocGroup)) =<< db (mapM DB.getVDoc =<< DB.listVDocs)
+  -- TUNING: ask the database for all vdocs that have groupID from the given list.  (this is a
+  -- pattern that can be applied in many places.)
 
 -- | Creates a 'VDoc'.
 createVDoc :: CreateVDoc -> App VDoc
 createVDoc pv = do
   appLog LogDebug "createVDoc"
-  assertCreds $ AP.createVDoc (pv ^. createVDocGroup)
+  assertCreds $ AP.createOrUpdateVDoc (pv ^. createVDocGroup)
   vdoc <- db $ DB.createVDoc pv
   invalidateCaches $ Set.fromList [CacheKeyGroup $ pv ^. createVDocGroup]
   pure vdoc
@@ -40,30 +59,32 @@ createVDoc pv = do
 updateVDoc :: ID VDoc -> UpdateVDoc -> App VDoc
 updateVDoc vid (UpdateVDoc title abstract) = do
   appLog LogDebug "updateVDoc"
-  vdoc' <- db $ do
-    vdoc <- DB.getVDoc vid
-    let vdoc' = vdoc
-          & vdocTitle .~ title
-          & vdocAbstract .~ abstract
-    DB.updateVDoc vid vdoc'
-    pure vdoc'
+  vdoc <- db $ DB.getVDoc vid
+  assertCreds $ AP.createOrUpdateVDoc (vdoc ^. vdocGroup)
+  let vdoc' = vdoc
+        & vdocTitle .~ title
+        & vdocAbstract .~ abstract
+  db $ DB.updateVDoc vid vdoc'
   invalidateCaches $ Set.fromList [CacheKeyVDoc vid]
   pure vdoc'
 
 getVDoc :: ID VDoc -> App VDoc
 getVDoc i = do
   appLog LogDebug "getVDoc"
-  db $ DB.getVDoc i
+  vdoc <- db $ DB.getVDoc i
+  assertCreds $ AP.viewVDoc vdoc
+  pure vdoc
 
 getVDocVersion :: ID Edit -> App RawContent
 getVDocVersion eid = do
   appLog LogDebug "getVDocVersion"
+  assertCreds . AP.viewVDoc =<< db (DB.getVDoc . view editVDoc =<< DB.getEdit eid)
   db $ DB.getVersion eid
 
 updateEdit :: ID Edit -> CreateEdit -> App Edit
 updateEdit eid edit = do
   appLog LogDebug "updateEdit"
-  -- assertPerms eid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/358
+  assertCreds . AP.createOrUpdateEdit =<< db (DB.getVDoc . view editVDoc =<< DB.getEdit eid)
   db $ do
     olddoc :: RawContent <- DB.getVersion eid
     let new :: RawContent = edit ^. createEditVDocVersion
@@ -83,9 +104,7 @@ updateEdit eid edit = do
 addEdit :: ID Edit -> CreateEdit -> App Edit
 addEdit baseeid edit = do
   appLog LogDebug "addEdit"
-  -- assertPerms baseeid [Create]  -- FIXME: http://zb2/re-fine/re-fine/issues/358
-    -- (note that the user must have create permission on the *base
-    -- edit*, not the edit about to get created.)
+  assertCreds . AP.createOrUpdateEdit =<< db (DB.getVDoc . view editVDoc =<< DB.getEdit baseeid)
   ed <- db $ do
     rid <- DB.vdocOfEdit baseeid
     olddoc :: RawContent <- DB.getVersion baseeid
@@ -104,16 +123,21 @@ addEdit baseeid edit = do
 
 addEditAndMerge :: ID Edit -> CreateEdit -> App Edit
 addEditAndMerge baseeid edit = do
+  assertCreds . AP.createOrUpdateEdit =<< db (DB.getVDoc . view editVDoc =<< DB.getEdit baseeid)
   e <- addEdit baseeid edit
-  mergeEdit $ e ^. editID
+  rebaseHeadToEdit $ e ^. editID
   pure e
 
 getEdit :: ID Edit -> App Edit
-getEdit = db . DB.getEdit
+getEdit eid = do
+  assertCreds  . AP.viewVDoc =<< db (DB.getVDoc . view editVDoc =<< DB.getEdit eid)
+  db $ DB.getEdit eid
 
+-- | Create merge edit from two tips and one base.
 addMerge :: ID Edit -> ID Edit -> ID Edit -> App Edit
 addMerge base eid1 eid2 = do
   appLog LogDebug $ "merge " <> show eid1 <> " with " <> show eid2 <> " based on " <> show base
+  assertCreds . AP.createOrUpdateEdit =<< db (DB.getVDoc . view editVDoc =<< DB.getEdit base)
   (either throwError pure =<<) . db $ do
     rid <- DB.vdocOfEdit eid1
     rid' <- DB.vdocOfEdit eid2
@@ -140,6 +164,7 @@ mergeEdit = rebaseHeadToEdit
 rebaseHeadToEdit :: ID Edit -> App ()
 rebaseHeadToEdit eid = do
   appLog LogDebug $ "rebase to " <> show eid
+  assertCreds . AP.createOrUpdateEdit =<< db (DB.getVDoc . view editVDoc =<< DB.getEdit eid)
   (vid, hid, ch) <- db $ do
     vid <- DB.vdocOfEdit eid
     vdoc <- DB.getVDoc vid
@@ -185,13 +210,9 @@ notifyContributionAuthorsOfMovement mis = forM_ uids $ \uid -> do
     getuid _ = Nothing
     uids = nub . mapMaybe getuid $ (view metaCreatedBy <$> mis) <> (view metaChangedBy <$> mis)
 
--- | Throw an error if chunk range does not fit 'RawContent' identified by edit.
--- FIXME: for RawContent this still needs to be implemented.
-validateCreateChunkRange :: ID Edit -> Range Position -> App ()
-validateCreateChunkRange _ _ = pure ()  -- throwError AppVDocVersionError
-
 toggleSimpleVoteOnEdit :: ID Edit -> Vote -> App Bool
 toggleSimpleVoteOnEdit eid v = do
+  assertCreds . AP.voteOnEdit =<< db (DB.getVDoc . view editVDoc =<< DB.getEdit eid)
   let f (Just v') | v' == v = Nothing
       f _ = Just v
   rebased <- withCurrentUser $ \user -> changeSimpleVoteOnEdit eid $ Map.alter f user
@@ -200,6 +221,7 @@ toggleSimpleVoteOnEdit eid v = do
 
 deleteSimpleVoteOnEdit :: ID Edit -> App ()
 deleteSimpleVoteOnEdit eid = do
+  assertCreds . AP.voteOnEdit =<< db (DB.getVDoc . view editVDoc =<< DB.getEdit eid)
   void . withCurrentUser $ changeSimpleVoteOnEdit eid . Map.delete
   invalidateCaches $ Set.fromList [CacheKeyEdit eid]
 
@@ -214,6 +236,7 @@ rebasePossible eid = do
 
 changeSimpleVoteOnEdit :: ID Edit -> (Votes -> Votes) -> App Bool{-rebase happened-}
 changeSimpleVoteOnEdit eid f = do
+  assertCreds . AP.voteOnEdit =<< db (DB.getVDoc . view editVDoc =<< DB.getEdit eid)
   pleaseRebase <- db $ do
     DB.updateVotes eid f
     vs <- DB.getVoteCount eid
@@ -222,4 +245,6 @@ changeSimpleVoteOnEdit eid f = do
   pure pleaseRebase
 
 getSimpleVotesOnEdit :: ID Edit -> App VoteCount
-getSimpleVotesOnEdit eid = db $ DB.getVoteCount eid
+getSimpleVotesOnEdit eid = do
+  assertCreds . AP.viewVDoc =<< db (DB.getVDoc . view editVDoc =<< DB.getEdit eid)
+  db $ DB.getVoteCount eid

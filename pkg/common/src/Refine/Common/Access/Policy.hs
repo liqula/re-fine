@@ -16,6 +16,9 @@ bottom = CredsNeverAllow
 orAdmin :: Creds -> Creds
 orAdmin xs = CredsAny (CredsLeaf (CredGlobalRole GlobalAdmin) :| [xs])
 
+groupMember :: ID Group -> Creds
+groupMember gid = orAdmin . CredsAny . NEL.fromList $ CredsLeaf . (`CredGroupRole` gid) <$> [GroupMember ..]
+
 
 -- * group, user
 
@@ -23,7 +26,7 @@ addGroup :: Creds
 addGroup = orAdmin bottom
 
 getGroup :: ID Group -> Creds
-getGroup gid = orAdmin . CredsLeaf $ CredGroupRole GroupMember gid
+getGroup = groupMember
 
 updateGroup :: ID Group -> Creds
 updateGroup _gid = orAdmin bottom
@@ -33,7 +36,7 @@ deleteGroup _gid = orAdmin bottom
 
 createUser :: [GlobalRole] -> [(GroupRole, ID Group)] -> Creds
 createUser [] [] = orAdmin $ CredsLeaf CredNotLoggedIn
-createUser _ _ = orAdmin CredsNeverAllow
+createUser _ _ = orAdmin bottom
 
 
 -- * process
@@ -44,17 +47,20 @@ createProcessInGroup = orAdmin . CredsLeaf . CredGroupRole GroupModerator
 
 -- * vdoc
 
-createVDoc :: ID Group -> Creds
-createVDoc = orAdmin . CredsLeaf . CredGroupRole GroupMember
+createOrUpdateVDoc :: ID Group -> Creds
+createOrUpdateVDoc = groupMember
 
 viewVDoc :: VDoc -> Creds
-viewVDoc = createEdit
+viewVDoc = groupMember . (^. vdocGroup)
 
 createComment :: VDoc -> Creds
-createComment = createEdit
+createComment = groupMember . (^. vdocGroup)
 
 updateStatement :: Statement -> Creds
 updateStatement stmt = orAdmin . CredsLeaf $ CredUser (stmt ^. statementMetaID . miMeta . metaCreatedBy)
 
-createEdit :: VDoc -> Creds
-createEdit vdoc = orAdmin . CredsAny . NEL.fromList $ CredsLeaf . (`CredGroupRole` (vdoc ^. vdocGroup)) <$> [GroupMember ..]
+createOrUpdateEdit :: VDoc -> Creds
+createOrUpdateEdit = groupMember . (^. vdocGroup)
+
+voteOnEdit :: VDoc -> Creds
+voteOnEdit = groupMember . (^. vdocGroup)
