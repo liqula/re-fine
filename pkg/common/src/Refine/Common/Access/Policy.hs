@@ -13,6 +13,9 @@ import Refine.Common.Types
 bottom :: Creds
 bottom = CredsNeverAllow
 
+top :: Creds
+top = CredsAlwaysAllow
+
 orAdmin :: Creds -> Creds
 orAdmin xs = CredsAny (CredsLeaf (CredGlobalRole GlobalAdmin) :| [xs])
 
@@ -37,6 +40,13 @@ deleteGroup _gid = orAdmin bottom
 createUser :: [GlobalRole] -> [(GroupRole, ID Group)] -> Creds
 createUser [] [] = orAdmin $ CredsLeaf CredNotLoggedIn
 createUser _ _ = orAdmin bottom
+
+-- | At least one of the following conditions needs to hold: 1) client has admin; 2) client is the
+-- target user; 3) client shares a group with the target user.
+getUser :: User -> [ID Group] -> Creds
+getUser user gids = CredsAny
+   $ (CredsLeaf . CredUser . UserID $ user ^. userID)
+  :| (groupMember <$> gids)
 
 
 -- * process
