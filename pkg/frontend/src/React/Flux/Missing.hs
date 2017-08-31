@@ -143,18 +143,22 @@ mapVarArg f = Lens.under (Lens.from (varArgGADT @args)) (fmap f)
 
 -- | like 'mkStatefulView', but the component remembers its state when it is re-rendered
 mkPersistentStatefulView
-    :: forall (state :: *) (args :: [*]) elemM.
-       (Typeable state, Typeable state, Eq state,
-        ViewProps args ('StatefulEventHandlerCode state), Typeable args, AllEq args
+    :: forall (state :: *) (args :: [*]) elemM elemM'.
+       (Typeable state, Typeable state, Eq state
+       , ViewProps args ('StatefulEventHandlerCode (Int, LocalStateRef state))
+       , Typeable args, AllEq args
        , ArgList args
 
        -- FIXME (react-hs):
        -- define
        --   type ViewPropsToElement args code = VarArg args (ReactElementM code)
-       -- so the next line will not be needed
+       -- so the next lines in context will not be needed
        , ViewPropsToElement args ('StatefulEventHandlerCode state)
          ~ VarArg args elemM
        , elemM ~ ReactElementM ('StatefulEventHandlerCode state) ()
+       , ViewPropsToElement args ('StatefulEventHandlerCode (Int, LocalStateRef state))
+         ~ VarArg args elemM'
+       , elemM' ~ ReactElementM ('StatefulEventHandlerCode (Int, LocalStateRef state)) ()
        )
     => JSString -- ^ A name for this view, used only for debugging/console logging
     -> LocalStateRef state -- ^ The reference of the initial state
@@ -162,21 +166,28 @@ mkPersistentStatefulView
     -> (state -> ViewPropsToElement args ('StatefulEventHandlerCode state))
     -> View args
 
-mkPersistentStatefulView name rst upd trans = unsafePerformIO $ do
-    st <- readIORef $ rst ^. unLocalStateRef . unNoJSONRep
-    pure $ mkStatefulView name st mtrans
+{-# NOINLINE mkPersistentStatefulView #-}
+mkPersistentStatefulView name rst_ upd trans
+  = mkStatefulView name (0 :: Int, rst_) mtrans
   where
-    mtrans :: state -> ViewPropsToElement args ('StatefulEventHandlerCode state)
-    mtrans st = do  st' <- maybe (pure st) (\updf -> updf st ^. Lens.from varArgCurry) upd
-                    transh <$> (trans st' ^. Lens.from varArgCurry)
-                 ^. varArgCurry @args
+    mtrans (i, rst) = i `seq` (res ^. varArgCurry @args)
+      where
+        res :: VarArgTuple args -> elemM'
+        res ps = unsafePerformIO $ do
+          let r = rst ^. unLocalStateRef . unNoJSONRep
+          st <- readIORef r
+          let st' = maybe (pure st) (\updf -> updf st ^. Lens.from varArgCurry) upd ps
+          writeIORef r st'
+          pure . transHandler transformEventHandler $ (trans st' ^. Lens.from varArgCurry) ps
 
-    transh :: ReactElementM ('StatefulEventHandlerCode state) () -> ReactElementM ('StatefulEventHandlerCode state) ()
-    transh = transHandler (second (trSt rst <$>) .)
-
-{-# NOINLINE trSt #-}
-trSt :: LocalStateRef state -> state -> state
-trSt rst st = unsafePerformIO $ do
+{-# NOINLINE transformEventHandler #-}
+transformEventHandler :: StatefulViewEventHandler state -> StatefulViewEventHandler (Int, LocalStateRef state)
+transformEventHandler handler (i, rst) = unsafePerformIO $ do
   let r = rst ^. unLocalStateRef . unNoJSONRep
-  writeIORef r st
-  readIORef r  -- to be sure that writeIORef is not optimized out
+  st <- readIORef r
+  let (actions, mst) = handler st
+  case mst of
+    Nothing -> pure (actions, Nothing)
+    Just st' -> do
+      writeIORef r st'
+      pure (actions, Just (i+1, rst))
