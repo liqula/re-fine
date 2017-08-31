@@ -75,8 +75,11 @@ transformGlobalState = transf
         DocumentAction (DocumentSave (FormBegin EditIsNotInitial)) -> scrollToCurrentSelection (st ^. gsContributionState)
         HeaderAction (ScrollToBlockKey (Common.BlockKey k))        -> liftIO . js_scrollToBlockKey $ cs k
         HeaderAction ScrollToPageTop                               -> liftIO js_scrollToPageTop
-        _ | startsNewPage act                                      -> liftIO js_scrollToPageTop
+        _ | not . null $ startsNewPage act                         -> liftIO js_scrollToPageTop
         _ -> pure ()
+
+      -- routing
+      forM_ (take 1 . reverse $ startsNewPage act) $ \hash -> liftIO . js_setLocationHash $ cs hash
 
       -- other effects
       case act of
@@ -126,13 +129,24 @@ transformGlobalState = transf
           >=> gsDevState            (pure . devStateUpdate act)
           >=> (\st' -> gsDocumentState (documentStateUpdate act st') st')
 
-startsNewPage :: GlobalAction -> Bool
+startsNewPage :: GlobalAction -> [String]
 startsNewPage = \case
-  LoadVDoc{}         -> True
-  -- ContributionAction ShowContributionDialog{} -> True
-  MainMenuAction MainMenuActionOpen{} -> True
-  CompositeAction acts -> any startsNewPage acts
-  _ -> False
+  LoadVDoc (ID did)                       -> ["process" <> show did]
+  MainMenuAction (MainMenuActionOpen tab) -> case tab of
+    MainMenuGroups{}                      -> ["groups"]
+    MainMenuGroup k (ID gid) -> case k of
+      MainMenuGroupProcesses              -> ["groupProcesses" <> show gid]
+      MainMenuGroupMembers                -> ["groupMembers" <> show gid]
+    MainMenuCreateOrUpdateGroup (Just (ID gid)) _ -> ["updateGroup" <> show gid]
+    MainMenuCreateOrUpdateGroup Nothing _ -> ["newGroup"]
+    MainMenuCreateProcess _               -> ["newProcess"]
+    MainMenuUpdateProcess (ID pid) _      -> ["updateProcess" <> show pid]
+    MainMenuHelp                          -> ["help"]
+    MainMenuLogin k -> case k of
+      MainMenuSubTabLogin                 -> ["login"]
+      MainMenuSubTabRegistration          -> ["registration"]
+  CompositeAction acts -> concatMap startsNewPage acts
+  _ -> []
 
 
 flushCacheMisses :: IO ()
@@ -348,6 +362,10 @@ reactFluxWorkAroundThreadDelay seconds = threadDelay . round $ seconds * 1000 * 
 #ifdef __GHCJS__
 
 foreign import javascript safe
+  "window.location.hash = $1"
+  js_setLocationHash :: JSString -> IO ()
+
+foreign import javascript safe
   "getSelection().getRangeAt(0).startContainer.parentElement.getBoundingClientRect().top"
   js_getRangeTopOffset :: IO Int
 
@@ -360,6 +378,10 @@ foreign import javascript safe
   js_removeAllRanges :: IO ()
 
 #else
+
+{-# ANN js_setLocationHash ("HLint: ignore Use camelCase" :: String) #-}
+js_setLocationHash :: JSString -> IO ()
+js_setLocationHash = error "javascript FFI not available in GHC"
 
 {-# ANN js_getRangeTopOffset ("HLint: ignore Use camelCase" :: String) #-}
 js_getRangeTopOffset :: IO Int
