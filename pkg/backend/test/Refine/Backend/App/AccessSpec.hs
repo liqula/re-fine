@@ -29,7 +29,7 @@ import Refine.Common.VDoc.Draft
 type SwitchUser = SessUser -> IO ()
 type GetUid = SessUser -> ID User
 data SessUser = Admin | Alice | Bob
-  deriving (Eq, Ord, Enum, Show)
+  deriving (Eq, Ord, Enum, Bounded, Show)
 
 setup :: HasCallStack => ((SwitchUser, GetUid, TestBackend) -> IO ()) -> IO ()
 setup action = withTempCurrentDirectory $ do
@@ -99,6 +99,38 @@ shouldDeny sess probe = runDB' sess probe >>= \case
 
 spec :: Spec
 spec = around setup $ do
+  describe "list users" $ do
+    it "admin can see all users" $ \(switchUser, getUid, sess) -> do
+      switchUser Admin
+      us <- runDB sess getUsers
+      Set.toList us `shouldBe` (getUid <$> [minBound ..])
+
+    it "user can always see herself (without any group memberships)" $ \(switchUser, getUid, sess) -> do
+      switchUser Bob
+      us <- runDB sess getUsers
+      Set.toList us `shouldContain` [getUid Bob]
+
+    it "two users can see each other if they share a group" $ \(switchUser, getUid, sess) -> do
+      switchUser Admin
+      Right _ <- runDB' sess $ do
+        group <- addGroup $ CreateGroup "title" "desc" [] [] mempty
+        assignGroupRole GroupMember (getUid Alice) (group ^. groupID)
+        assignGroupRole GroupMember (getUid Bob) (group ^. groupID)
+
+      switchUser Alice
+      us <- runDB sess getUsers
+      Set.toList us `shouldContain` [getUid Bob]
+
+      switchUser Bob
+      us' <- runDB sess getUsers
+      Set.toList us' `shouldContain` [getUid Alice]
+
+    it "two users can not see each other if non of the above hold" $ \(switchUser, getUid, sess) -> do
+      switchUser Bob
+      us <- runDB sess getUsers
+      Set.toList us `shouldNotContain` [getUid Alice]
+
+
   describe "add group" $ do
     it "grant: roles [GlobalAdmin]" $ \(switchUser, _getUid, sess) -> do
       switchUser Admin
@@ -128,6 +160,7 @@ spec = around setup $ do
       switchUser Admin
       adminGroups <- runDB sess getGroups
       length adminGroups `shouldBe` 4  -- (there is also the default group)
+
 
   describe "add process" $ do
     let getgid sess = view groupID . head <$> runDB sess getGroups
@@ -224,6 +257,7 @@ spec = around setup $ do
         sid <- setupUpd getUid sess
         switchUser Bob
         shouldDeny sess $ updateStatement sid (CreateStatement "second post, definitely...")
+
 
   describe "edit" $ do
     describe "add" $ do

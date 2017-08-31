@@ -43,7 +43,7 @@ login :: Login -> App User
 login (Login username (Users.PasswordPlain -> password)) = do
   appLog LogDebug "login"
   appLog LogDebug . ("login.before:: " <>) . show =<< get
-  assertCreds AP.top
+  assertCreds AP.login
   sessionDuration <- asks . view $ appConfig . cfgSessionLength . to timespanToNominalDiffTime
   session <- nothingToError (AppUserNotFound username)
              =<< dbUsersCmd (\db_ -> Users.authUser db_ username password sessionDuration)
@@ -59,7 +59,7 @@ login (Login username (Users.PasswordPlain -> password)) = do
 -- is logged in otherwise Nothing.
 currentUser :: App (Maybe (ID User))
 currentUser = do
-  assertCreds AP.top
+  assertCreds AP.currentUser
   st <- gets (view appUserState)
   pure $ case st of
     UserLoggedIn user _session -> Just user
@@ -69,7 +69,7 @@ logout :: App ()
 logout = do
   appLog LogDebug "logout"
   appLog LogDebug . ("logout.before:: " <>) . show =<< get
-  assertCreds AP.top
+  assertCreds AP.logout
   st <- gets (view appUserState)
   case st of
     UserLoggedIn _user session -> do
@@ -134,7 +134,7 @@ doesUserExist uid = do
 
 withCurrentUser :: MonadApp app => (ID User -> app a) -> app a
 withCurrentUser f = do
-  assertCreds AP.top
+  assertCreds AP.currentUser
   mu <- currentUser
   case mu of
     Just u -> f u

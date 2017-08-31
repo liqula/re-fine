@@ -34,9 +34,12 @@ data Creds =
 class (Functor m, Applicative m, Monad m) => MonadAccess m where
   hasCred :: Cred -> m Bool
 
-hasCreds :: MonadAccess m => Creds -> m Bool
-hasCreds (CredsLeaf x)        = hasCred x
-hasCreds (CredsAll (x :| xs)) = and <$> (hasCreds `mapM` (x : xs))
-hasCreds (CredsAny (x :| xs)) = or  <$> (hasCreds `mapM` (x : xs))
-hasCreds CredsAlwaysAllow     = pure True
-hasCreds CredsNeverAllow      = pure False
+  hasCreds :: Creds -> m Bool
+  hasCreds = defaultHasCreds
+
+defaultHasCreds :: MonadAccess m => Creds -> m Bool
+defaultHasCreds (CredsLeaf x)        = hasCred x
+defaultHasCreds (CredsAll (x :| xs)) = and <$> (hasCreds `mapM` (x : xs))
+defaultHasCreds (CredsAny (x :| xs)) = or  <$> (hasCreds `mapM` (x : xs))
+defaultHasCreds CredsAlwaysAllow     = pure True
+defaultHasCreds CredsNeverAllow      = pure False

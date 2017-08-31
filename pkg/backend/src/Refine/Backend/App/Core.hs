@@ -141,7 +141,7 @@ data AppError
   | AppSessionError
   | AppSanityCheckError ST
   | AppL10ParseErrors [ST]
-  | AppUnauthorized (Bool, Creds)
+  | AppUnauthorized Creds
   | AppMergeError (ID Edit) (ID Edit) (ID Edit) ST
   | AppRebaseError (ID Edit)
   | AppSmtpError SmtpError

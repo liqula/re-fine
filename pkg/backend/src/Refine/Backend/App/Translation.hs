@@ -33,7 +33,7 @@ class MonadI18n app where
 instance (Database db) => MonadI18n (AppM db) where
  getTranslations (GetTranslations locale) = do
   appLog LogDebug "getTranslations"
-  assertCreds AP.top
+  assertCreds AP.getTranslations
   poFileRoot <- asks . view $ appConfig . cfgPoFilesRoot
   join . liftIO $ do
     (l10, parseErrors) <- getL10n poFileRoot

@@ -20,6 +20,7 @@ import           Refine.Backend.App.Core
 import           Refine.Backend.Config
 import qualified Refine.Backend.Database.Class as DB
 import qualified Refine.Common.Access.Policy as AP
+import qualified Refine.Common.Access as AP
 import           Refine.Common.ChangeAPI
 import           Refine.Common.Types
 
@@ -71,7 +72,6 @@ removeGroup gid = do
 changeSubGroup :: ChangeSubGroup -> App ()
 changeSubGroup csg = do
   appLog LogDebug "changeSubGroup"
-  assertCreds AP.bottom
   let cmd = case csg of
               AddSubGroup{} -> Refine.Backend.App.Group.addSubGroup
               RmSubGroup{}  -> Refine.Backend.App.Group.removeSubGroup
@@ -82,7 +82,7 @@ changeSubGroup csg = do
 addSubGroup :: ID Group -> ID Group -> App ()
 addSubGroup parent child = do
   appLog LogDebug "addSubGroup"
-  assertCreds AP.bottom
+  assertCreds AP.CredsNeverAllow
   db $ DB.addSubGroup parent child
 
 -- | Remove a child group from a parent
@@ -90,5 +90,5 @@ addSubGroup parent child = do
 removeSubGroup :: ID Group -> ID Group -> App ()
 removeSubGroup parent child = do
   appLog LogDebug "removeSubGroup"
-  assertCreds AP.bottom
+  assertCreds AP.CredsNeverAllow
   db $ DB.removeSubGroup parent child
