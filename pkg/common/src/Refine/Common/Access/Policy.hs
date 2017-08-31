@@ -43,10 +43,13 @@ createUser _ _ = orAdmin bottom
 
 -- | At least one of the following conditions needs to hold: 1) client has admin; 2) client is the
 -- target user; 3) client shares a group with the target user.
+--
+-- (NOTE: 'orAdmin' needs to be there even though it is implicit in 'groupMember', because @gids@
+-- may be empty.)
 getUser :: User -> [ID Group] -> Creds
 getUser user gids = CredsAny
    $ (CredsLeaf . CredUser . UserID $ user ^. userID)
-  :| (groupMember <$> gids)
+  :| (CredsLeaf (CredGlobalRole GlobalAdmin) : (groupMember <$> gids))
 
 
 -- * process
