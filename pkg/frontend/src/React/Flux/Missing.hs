@@ -178,7 +178,7 @@ mkPersistentStatefulView name rst_ upd trans
           st <- readIORef r
           let st' = maybe (pure st) (\updf -> updf st ^. Lens.from varArgCurry) upd ps
           writeIORef r st'
-          pure $ transHandler transformEventHandler $ (trans st' ^. Lens.from varArgCurry) ps
+          pure . transHandler transformEventHandler $ (trans st' ^. Lens.from varArgCurry) ps
 
 {-# NOINLINE transformEventHandler #-}
 transformEventHandler :: StatefulViewEventHandler state -> StatefulViewEventHandler (Int, LocalStateRef state)
