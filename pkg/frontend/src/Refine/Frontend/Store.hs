@@ -69,6 +69,15 @@ transformGlobalState = transf
       -- ajax
       liftIO $ emitBackendCallsFor act st
 
+      -- scrolling
+      case act of
+        ContributionAction ShowCommentEditor                       -> scrollToCurrentSelection (st ^. gsContributionState)
+        DocumentAction (DocumentSave (FormBegin EditIsNotInitial)) -> scrollToCurrentSelection (st ^. gsContributionState)
+        HeaderAction (ScrollToBlockKey (Common.BlockKey k))        -> liftIO . js_scrollToBlockKey $ cs k
+        HeaderAction ScrollToPageTop                               -> liftIO js_scrollToPageTop
+        _ | startsNewPage act                                      -> liftIO js_scrollToPageTop
+        _ -> pure ()
+
       -- other effects
       case act of
         ContributionAction RequestSetAllVerticalSpanBounds -> do
@@ -88,12 +97,6 @@ transformGlobalState = transf
 
         ContributionAction (SetRange _) -> removeAllRanges
         ContributionAction ClearRange   -> removeAllRanges
-
-        ContributionAction ShowCommentEditor                       -> scrollToCurrentSelection (st ^. gsContributionState)
-        DocumentAction (DocumentSave (FormBegin EditIsNotInitial)) -> scrollToCurrentSelection (st ^. gsContributionState)
-        LoadVDoc _                                                 -> liftIO js_scrollToPageTop  -- FIXME: #416.
-        HeaderAction ScrollToPageTop                               -> liftIO js_scrollToPageTop
-        HeaderAction (ScrollToBlockKey (Common.BlockKey k))        -> liftIO . js_scrollToBlockKey $ cs k
 
         ShowNotImplementedYet -> do
             liftIO $ windowAlertST "not implemented yet."
@@ -122,6 +125,14 @@ transformGlobalState = transf
           >=> gsTranslations        (pure . translationsUpdate act)
           >=> gsDevState            (pure . devStateUpdate act)
           >=> (\st' -> gsDocumentState (documentStateUpdate act st') st')
+
+startsNewPage :: GlobalAction -> Bool
+startsNewPage = \case
+  LoadVDoc{}         -> True
+  -- ContributionAction ShowContributionDialog{} -> True
+  MainMenuAction MainMenuActionOpen{} -> True
+  CompositeAction acts -> any startsNewPage acts
+  _ -> False
 
 
 flushCacheMisses :: IO ()
