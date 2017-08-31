@@ -1,55 +1,66 @@
 {-# LANGUAGE CPP #-}
 #include "language_common.hs"
 
-module Refine.Common.Access.Policy where
+module Refine.Common.Access.Policy
+  ( addGroup
+  , getGroup
+  , updateGroup
+  , deleteGroup
+  , createUser
+  , getUser
+  , createProcessInGroup
+  , createOrUpdateVDoc
+  , viewVDoc
+  , createOrUpdateComment
+  , voteOnComment
+  , updateStatement
+  , createOrUpdateEdit
+  , voteOnEdit
+  , getTranslations
+  , login
+  , logout
+  , currentUser
+  ) where
 #include "import_common.hs"
 
 import Refine.Common.Access
 import Refine.Common.Types
 
 
--- * combinators
-
-bottom :: Creds
-bottom = CredsNeverAllow
-
-top :: Creds
-top = CredsAlwaysAllow
+-- * combinators (not suitable for export)
 
 orAdmin :: Creds -> Creds
 orAdmin xs = CredsAny (CredsLeaf (CredGlobalRole GlobalAdmin) :| [xs])
 
 groupMember :: ID Group -> Creds
-groupMember gid = orAdmin . CredsAny . NEL.fromList $ CredsLeaf . (`CredGroupRole` gid) <$> [GroupMember ..]
+groupMember gid = CredsAny . NEL.fromList $ CredsLeaf . (`CredGroupRole` gid) <$> [GroupMember ..]
 
 
 -- * group, user
 
 addGroup :: Creds
-addGroup = orAdmin bottom
+addGroup = orAdmin CredsNeverAllow
 
 getGroup :: ID Group -> Creds
-getGroup = groupMember
+getGroup = orAdmin . groupMember
 
 updateGroup :: ID Group -> Creds
-updateGroup _gid = orAdmin bottom
+updateGroup _gid = orAdmin CredsNeverAllow
 
 deleteGroup :: ID Group -> Creds
-deleteGroup _gid = orAdmin bottom
+deleteGroup _gid = orAdmin CredsNeverAllow
 
 createUser :: [GlobalRole] -> [(GroupRole, ID Group)] -> Creds
 createUser [] [] = orAdmin $ CredsLeaf CredNotLoggedIn
-createUser _ _ = orAdmin bottom
+createUser _ _ = orAdmin CredsNeverAllow
 
 -- | At least one of the following conditions needs to hold: 1) client has admin; 2) client is the
 -- target user; 3) client shares a group with the target user.
---
--- (NOTE: 'orAdmin' needs to be there even though it is implicit in 'groupMember', because @gids@
--- may be empty.)
 getUser :: User -> [ID Group] -> Creds
 getUser user gids = CredsAny
    $ (CredsLeaf . CredUser . UserID $ user ^. userID)
-  :| (CredsLeaf (CredGlobalRole GlobalAdmin) : (groupMember <$> gids))
+  :| (CredsLeaf (CredGlobalRole GlobalAdmin)
+      : (groupMember <$> gids))
 
 
 -- * process
@@ -61,22 +72,37 @@ createProcessInGroup = orAdmin . CredsLeaf . CredGroupRole GroupModerator
 -- * vdoc
 
 createOrUpdateVDoc :: ID Group -> Creds
-createOrUpdateVDoc = groupMember
+createOrUpdateVDoc = orAdmin . groupMember
 
 viewVDoc :: VDoc -> Creds
-viewVDoc = groupMember . (^. vdocGroup)
+viewVDoc = orAdmin . groupMember . (^. vdocGroup)
 
 createOrUpdateComment :: VDoc -> Creds
-createOrUpdateComment = groupMember . (^. vdocGroup)
+createOrUpdateComment = orAdmin . groupMember . (^. vdocGroup)
 
 voteOnComment :: VDoc -> Creds
-voteOnComment = groupMember . (^. vdocGroup)
+voteOnComment = orAdmin . groupMember . (^. vdocGroup)
 
 updateStatement :: Statement -> Creds
 updateStatement stmt = orAdmin . CredsLeaf $ CredUser (stmt ^. statementMetaID . miMeta . metaCreatedBy)
 
 createOrUpdateEdit :: VDoc -> Creds
-createOrUpdateEdit = groupMember . (^. vdocGroup)
+createOrUpdateEdit = orAdmin . groupMember . (^. vdocGroup)
 
 voteOnEdit :: VDoc -> Creds
-voteOnEdit = groupMember . (^. vdocGroup)
+voteOnEdit = orAdmin . groupMember . (^. vdocGroup)
+
+
+-- * other
+
+getTranslations :: Creds
+getTranslations = CredsAlwaysAllow
+
+login :: Creds
+login = CredsAlwaysAllow
+
+logout :: Creds
+logout = CredsAlwaysAllow
+
+currentUser :: Creds
+currentUser = CredsAlwaysAllow

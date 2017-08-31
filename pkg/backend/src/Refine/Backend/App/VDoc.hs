@@ -43,7 +43,7 @@ import           Refine.Common.VDoc.Draft
 listVDocs :: App [VDoc]
 listVDocs = do
   appLog LogDebug "listVDocs"
-  filterByCreds (AP.groupMember . (^. vdocGroup)) =<< db (mapM DB.getVDoc =<< DB.listVDocs)
+  filterByCreds AP.viewVDoc =<< db (mapM DB.getVDoc =<< DB.listVDocs)
   -- TUNING: ask the database for all vdocs that have groupID from the given list.  (this is a
   -- pattern that can be applied in many places.)
 
