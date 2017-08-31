@@ -7,6 +7,7 @@ module Refine.Frontend.Store where
 #include "import_frontend.hs"
 
 import           Control.Concurrent
+import           GHCJS.Foreign.Callback (Callback, asyncCallback1)
 
 import           Refine.Common.Types hiding (CreateUser, Login)
 import           Refine.Common.VDoc.Draft
@@ -148,6 +149,28 @@ startsNewPage = \case
   CompositeAction acts -> concatMap startsNewPage acts
   _ -> []
 
+initRouting :: IO ()
+initRouting = onLocationHashChange $ \hash -> case drop 1 hash of
+  (strip "process" -> Just i)
+    -> exec . LoadVDoc $ ID i
+  "groups"
+    -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
+  (strip "groupProcesses" -> Just i)
+    -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupProcesses (ID i)
+  (strip "groupMembers" -> Just i)
+    -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupMembers (ID i)
+  "help"         -> exec . MainMenuAction $ MainMenuActionOpen MainMenuHelp
+  "login"        -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
+  "registration" -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabRegistration
+  -- TODO: use logging function instead of putStrLn
+  _ -> putStrLn $ "unknown route: " <> hash
+  where
+    strip s k | take (length s) k == s = case reads $ drop (length s) k of
+                  [(a, "")] -> Just a
+                  _ -> Nothing
+              | otherwise = Nothing
+
+    exec = executeAction . action @GlobalState
 
 flushCacheMisses :: IO ()
 flushCacheMisses = do
@@ -359,7 +382,17 @@ reactFluxWorkAroundThreadDelay seconds = threadDelay . round $ seconds * 1000 * 
 
 -- * foreign
 
+onLocationHashChange :: (String -> IO ()) -> IO ()
+onLocationHashChange f = do
+  cb <- asyncCallback1 (f . pFromJSVal)
+  js_attachtLocationHashCb cb
+
+
 #ifdef __GHCJS__
+
+foreign import javascript unsafe
+  "window.onhashchange = function() {$1(location.hash.toString());}"
+  js_attachtLocationHashCb :: (Callback (JSVal -> IO ())) -> IO ()
 
 foreign import javascript safe
   "window.location.hash = $1"
@@ -378,6 +411,10 @@ foreign import javascript safe
   js_removeAllRanges :: IO ()
 
 #else
+
+{-# ANN js_attachtLocationHashCb ("HLint: ignore Use camelCase" :: String) #-}
+js_attachtLocationHashCb :: (Callback (JSVal -> IO ())) -> IO ()
+js_attachtLocationHashCb = error "javascript FFI not available in GHC"
 
 {-# ANN js_setLocationHash ("HLint: ignore Use camelCase" :: String) #-}
 js_setLocationHash :: JSString -> IO ()
