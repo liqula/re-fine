@@ -32,10 +32,10 @@ newtype RouteParseError = RouteParseError String
 
 rparse :: JSString -> Either RouteParseError Route
 rparse hash = case drop 1 (cs hash) of
-  "help"                                   -> pure $ Help
-  "login"                                  -> pure $ Login
-  "register"                               -> pure $ Register
-  "groups"                                 -> pure $ Groups
+  "help"                                   -> pure   Help
+  "login"                                  -> pure   Login
+  "register"                               -> pure   Register
+  "groups"                                 -> pure   Groups
   (strip "group-" -> Just (i, "-procs"))   -> pure . GroupProcesses $ Common.ID i
   (strip "group-" -> Just (i, "-members")) -> pure . GroupMembers $ Common.ID i
   (strip "process-" -> Just (i, ""))       -> pure . Process $ Common.ID i
