@@ -150,20 +150,22 @@ startsNewPage = \case
   _ -> []
 
 initRouting :: IO ()
-initRouting = onLocationHashChange $ \hash -> case drop 1 hash of
-  (strip "process" -> Just i)
-    -> exec . LoadVDoc $ ID i
-  "groups"
-    -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
-  (strip "groupProcesses" -> Just i)
-    -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupProcesses (ID i)
-  (strip "groupMembers" -> Just i)
-    -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupMembers (ID i)
-  "help"         -> exec . MainMenuAction $ MainMenuActionOpen MainMenuHelp
-  "login"        -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
-  "registration" -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabRegistration
-  -- TODO: use logging function instead of putStrLn
-  _ -> putStrLn $ "unknown route: " <> hash
+initRouting = onLocationHashChange $ \hash -> do
+  removeAllRanges
+  case drop 1 hash of
+    (strip "process" -> Just i)
+      -> exec . LoadVDoc $ ID i
+    "groups"
+      -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
+    (strip "groupProcesses" -> Just i)
+      -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupProcesses (ID i)
+    (strip "groupMembers" -> Just i)
+      -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupMembers (ID i)
+    "help"         -> exec . MainMenuAction $ MainMenuActionOpen MainMenuHelp
+    "login"        -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
+    "registration" -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabRegistration
+    -- TODO: use logging function instead of putStrLn
+    _ -> putStrLn $ "unknown route: " <> hash
   where
     strip s k | take (length s) k == s = case reads $ drop (length s) k of
                   [(a, "")] -> Just a
