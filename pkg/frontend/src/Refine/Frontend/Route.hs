@@ -19,28 +19,37 @@ data Route
 
 rrender :: Route -> JSString
 rrender = \case
-  Help                           -> "#help"
-  Login                          -> "#login"
-  Register                       -> "#register"
-  Groups                         -> "#groups"
-  GroupProcesses (Common.ID gid) -> "#group-" <> cs (show gid) <> "-procs"
-  GroupMembers (Common.ID gid)   -> "#group-" <> cs (show gid) <> "-members"
-  Process (Common.ID vid)        -> "#process-" <> cs (show vid)
+  Help                           -> "#/help"
+  Login                          -> "#/login"
+  Register                       -> "#/register"
+  Groups                         -> "#/groups"
+  GroupProcesses (Common.ID gid) -> "#/group/" <> cs (show gid) <> "/procs"
+  GroupMembers (Common.ID gid)   -> "#/group/" <> cs (show gid) <> "/members"
+  Process (Common.ID vid)        -> "#/process/" <> cs (show vid)
 
 newtype RouteParseError = RouteParseError String
   deriving (Eq, Show, Generic)
 
 rparse :: JSString -> Either RouteParseError Route
-rparse hash = case drop 1 (cs hash) of
+rparse hash = (removeLeadingHash . removeTrailingSlashes $ cs hash) >>= removeLeadingSlash >>= \case
   "help"                                   -> pure   Help
   "login"                                  -> pure   Login
   "register"                               -> pure   Register
   "groups"                                 -> pure   Groups
-  (strip "group-" -> Just (i, "-procs"))   -> pure . GroupProcesses $ Common.ID i
-  (strip "group-" -> Just (i, "-members")) -> pure . GroupMembers $ Common.ID i
-  (strip "process-" -> Just (i, ""))       -> pure . Process $ Common.ID i
+  (strip "group/" -> Just (i, "/procs"))   -> pure . GroupProcesses $ Common.ID i
+  (strip "group/" -> Just (i, "/members")) -> pure . GroupMembers $ Common.ID i
+  (strip "process/" -> Just (i, ""))       -> pure . Process $ Common.ID i
+  ""                                       -> pure   Login
   bad                                      -> throwError . RouteParseError $ "could not parse route: " <> show bad
   where
+    removeLeadingHash ('#':s) = pure s
+    removeLeadingHash bad = throwError . RouteParseError $ "no leading '#': " <> show bad
+
+    removeLeadingSlash ('/':s) = pure s
+    removeLeadingSlash bad = throwError . RouteParseError $ "no leading '/': " <> show bad
+
+    removeTrailingSlashes = reverse . dropWhile (== '/') . reverse
+
     strip s k | take (length s) k == s = case reads $ drop (length s) k of
                   [(a, suff)] -> Just (a, suff)
                   _ -> Nothing
