@@ -138,9 +138,10 @@ startsNewPage = \case
     MainMenuGroup k (ID gid) -> case k of
       MainMenuGroupProcesses              -> ["groupProcesses" <> show gid]
       MainMenuGroupMembers                -> ["groupMembers" <> show gid]
-    MainMenuCreateOrUpdateGroup _ _       -> []
-    MainMenuCreateProcess _               -> []
-    MainMenuUpdateProcess _ _             -> []
+    MainMenuCreateOrUpdateGroup Nothing _ -> ["groups"]
+    MainMenuCreateOrUpdateGroup (Just (ID gid)) _ -> ["groupProcesses" <> show gid]
+    MainMenuCreateProcess _               -> ["groups"]
+    MainMenuUpdateProcess (ID pid) _      -> ["process" <> show pid]
     MainMenuHelp                          -> ["help"]
     MainMenuLogin k -> case k of
       MainMenuSubTabLogin                 -> ["login"]
