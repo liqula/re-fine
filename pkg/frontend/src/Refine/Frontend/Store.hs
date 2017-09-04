@@ -81,7 +81,8 @@ transformGlobalState = transf
         _ -> pure ()
 
       -- routing
-      Route.changeRoute $ routesFromState st'
+      Route.changeRoute $ routesFromState st'  -- FIXME: call only once at the end of every @loop@
+                                               -- sequence in the class method above?
 
       -- other effects
       case act of
