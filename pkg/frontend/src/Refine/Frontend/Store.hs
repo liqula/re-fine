@@ -166,10 +166,12 @@ handleHashChange hash = do
     (strip "groupMembers" -> Just i)
       -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupMembers (ID i)
     "help"         -> exec . MainMenuAction $ MainMenuActionOpen MainMenuHelp
-    "login"        -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
     "registration" -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabRegistration
-    -- TODO: use logging function instead of putStrLn
-    _ -> putStrLn $ "unknown route: " <> hash
+    "login"        -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
+    _ -> do
+      -- TODO: use logging function instead of putStrLn
+      putStrLn $ "unknown route: " <> hash
+      exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
   where
     strip s k | take (length s) k == s = case reads $ drop (length s) k of
                   [(a, "")] -> Just a
