@@ -219,6 +219,7 @@ test-suite spec
       Refine.Frontend.IconSpec
       Refine.Frontend.MainMenuSpec
       Refine.Frontend.OrphansSpec
+      Refine.Frontend.RouteSpec
       Refine.Frontend.StoreSpec
       Refine.Frontend.ThirdPartyViewsSpec
       Refine.Frontend.UtilSpec

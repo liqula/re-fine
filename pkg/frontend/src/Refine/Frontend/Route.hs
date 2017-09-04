@@ -25,23 +25,24 @@ rrender = \case
   Groups                         -> "#groups"
   GroupProcesses (Common.ID gid) -> "#group-" <> cs (show gid) <> "-procs"
   GroupMembers (Common.ID gid)   -> "#group-" <> cs (show gid) <> "-members"
-  Process (Common.ID vid)        -> "#vdoc-" <> cs (show vid)
+  Process (Common.ID vid)        -> "#process-" <> cs (show vid)
 
 newtype RouteParseError = RouteParseError String
+  deriving (Eq, Show, Generic)
 
 rparse :: JSString -> Either RouteParseError Route
 rparse hash = case drop 1 (cs hash) of
-  "help"                             -> pure $ Help
-  "login"                            -> pure $ Login
-  "register"                         -> pure $ Register
-  "groups"                           -> pure $ Groups
-  (strip "process" -> Just i)        -> pure . Process $ Common.ID i
-  (strip "groupProcesses" -> Just i) -> pure . GroupProcesses $ Common.ID i
-  (strip "groupMembers" -> Just i)   -> pure . GroupMembers $ Common.ID i
-  bad                                -> throwError . RouteParseError $ "could not parse route: " <> show bad
+  "help"                                   -> pure $ Help
+  "login"                                  -> pure $ Login
+  "register"                               -> pure $ Register
+  "groups"                                 -> pure $ Groups
+  (strip "group-" -> Just (i, "-procs"))   -> pure . GroupProcesses $ Common.ID i
+  (strip "group-" -> Just (i, "-members")) -> pure . GroupMembers $ Common.ID i
+  (strip "process-" -> Just (i, ""))       -> pure . Process $ Common.ID i
+  bad                                      -> throwError . RouteParseError $ "could not parse route: " <> show bad
   where
     strip s k | take (length s) k == s = case reads $ drop (length s) k of
-                  [(a, "")] -> Just a
+                  [(a, suff)] -> Just (a, suff)
                   _ -> Nothing
               | otherwise = Nothing
 
