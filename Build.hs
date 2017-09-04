@@ -68,7 +68,7 @@ main = shakeArgs refineOptions $ do
   phony "test-all" $ do
     need ["setup"]
     need ["test"]
-    need ["hlint"]
+    need ["hlint-all"]
 
   phony "setup" $ do
     let resolver = "lts-8.11"
@@ -168,8 +168,12 @@ main = shakeArgs refineOptions $ do
     need ["hlint-prelude", "hlint-common", "hlint-backend", "hlint-frontend"]
     hlintPath [] "./accept"
     hlintPath [] "./scripts"
-    need ["build-frontend-trans"]
+
+  phony "style-check" $ do
     command_ [] "./scripts/style-check.hs" []
+
+  phony "hlint-all" $ do
+    need ["hlint", "build-frontend-trans", "style-check"]
 
 
   phony "clean-prelude" $ do

@@ -1,5 +1,5 @@
 #!/usr/bin/env stack
-{- stack --resolver lts-7.15 --install-ghc runghc
+{- stack --resolver lts-8.11 --install-ghc runghc
     --package foldl
     --package regex-posix
     --package string-conversions
@@ -265,7 +265,7 @@ assertWorkingCopyClean = do
     exit $ ExitFailure 1
 
 gitStatus :: Shell [GitStatus]
-gitStatus = fmap parse . ST.lines <$> inshell "git status --porcelain ." Turtle.empty
+gitStatus = fmap parse . ST.lines . lineToText <$> inshell "git status --porcelain ." Turtle.empty
   where
     parse :: ST -> GitStatus
     parse line = GitStatus (parseCode ix) (parseCode wt) (cs file)

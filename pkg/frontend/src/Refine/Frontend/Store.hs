@@ -395,12 +395,11 @@ onLocationHashChange f = do
   cb <- asyncCallback1 (f . pFromJSVal)
   js_attachLocationHashCb cb
 
-
 #ifdef __GHCJS__
 
 foreign import javascript unsafe
   "window.onhashchange = function() {$1(location.hash.toString());};"
-  js_attachLocationHashCb :: (Callback (JSVal -> IO ())) -> IO ()
+  js_attachLocationHashCb :: Callback (JSVal -> IO ()) -> IO ()
 
 foreign import javascript safe
   "window.location.hash"

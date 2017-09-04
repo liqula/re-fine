@@ -1,5 +1,5 @@
 #!/usr/bin/env stack
-{- stack --resolver lts-7.15 --install-ghc runghc
+{- stack --resolver lts-8.11 --install-ghc runghc
     --package attoparsec
     --package executable-path
     --package hspec
@@ -96,7 +96,7 @@ failOnChangedFiles = do
       echo ".../scripts/style-check.hs has made changes to the code, which means this version contains style rule violations."
       echo "please re-run the script locally and commit the changes, or open an issue complaining about the style rules."
       echo "NOTE: always run this script on a clean working copy!"
-      echo . ST.unlines $ cs . show <$> gs
+      echo `mapM_` (unsafeTextToLine . cs . show <$> gs)
       exit $ ExitFailure 1
 
 
@@ -451,7 +451,7 @@ assertWorkingCopyClean = do
     exit $ ExitFailure 1
 
 gitStatus :: Shell [GitStatus]
-gitStatus = fmap parse . ST.lines <$> inshell "git status --porcelain ." Turtle.empty
+gitStatus = fmap parse . ST.lines . lineToText <$> inshell "git status --porcelain ." Turtle.empty
   where
     parse :: ST -> GitStatus
     parse line = GitStatus (parseCode ix) (parseCode wt) (cs file)
@@ -505,7 +505,7 @@ filterExts exts = filter ((`elem` (Just <$> exts)) . extension)
 transformFile :: ([ST] -> [ST]) -> FilePath -> Shell ()
 transformFile trans file = do
   debugLog (cs file <> "..." :: ST)
-  contents :: [ST] <- input file `fold` Fold.list
+  contents :: [ST] <- lineToText <$$> (input file `fold` Fold.list)
   let contents' :: [ST] = trans contents
   when (contents' /= contents) . liftIO $ do
     withClosedSystemTempFile "refine.tmp" $ \file' -> do
@@ -529,13 +529,16 @@ instance ConvertibleStrings Filesystem.Path.CurrentOS.FilePath String where
 
 
 echoShow :: (MonadIO m, Show a) => a -> m ()
-echoShow = echo . cs . show
+echoShow = echoCS . show
 
 echoCS :: (MonadIO m, ConvertibleStrings s ST) => s -> m ()
-echoCS = echo . cs
+echoCS = mapM_ echo . textToLines . cs
 
 
 -- * should go to a separate packge
+
+(<$$>) :: (a -> b) -> Shell [a] -> Shell [b]
+(<$$>) = fmap . fmap
 
 setProperCurrentDirectory :: MonadIO m => m ()
 setProperCurrentDirectory = liftIO $ do
@@ -557,4 +560,4 @@ setProperCurrentDirectory = liftIO $ do
     Interactive   -> setdiri
 
 debugLog :: MonadIO m => ConvertibleStrings s ST => s -> m ()
-debugLog = when verbose . liftIO . sh . echo . cs
+debugLog = when verbose . liftIO . sh . mapM_ echo . textToLines . cs
