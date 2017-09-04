@@ -385,14 +385,14 @@ reactFluxWorkAroundThreadDelay seconds = threadDelay . round $ seconds * 1000 * 
 onLocationHashChange :: (String -> IO ()) -> IO ()
 onLocationHashChange f = do
   cb <- asyncCallback1 (f . pFromJSVal)
-  js_attachtLocationHashCb cb
+  js_attachLocationHashCb cb
 
 
 #ifdef __GHCJS__
 
 foreign import javascript unsafe
   "window.onhashchange = function() {$1(location.hash.toString());}"
-  js_attachtLocationHashCb :: (Callback (JSVal -> IO ())) -> IO ()
+  js_attachLocationHashCb :: (Callback (JSVal -> IO ())) -> IO ()
 
 foreign import javascript safe
   "window.location.hash = $1"
@@ -412,9 +412,9 @@ foreign import javascript safe
 
 #else
 
-{-# ANN js_attachtLocationHashCb ("HLint: ignore Use camelCase" :: String) #-}
-js_attachtLocationHashCb :: (Callback (JSVal -> IO ())) -> IO ()
-js_attachtLocationHashCb = error "javascript FFI not available in GHC"
+{-# ANN js_attachLocationHashCb ("HLint: ignore Use camelCase" :: String) #-}
+js_attachLocationHashCb :: Callback (JSVal -> IO ()) -> IO ()
+js_attachLocationHashCb = error "javascript FFI not available in GHC"
 
 {-# ANN js_setLocationHash ("HLint: ignore Use camelCase" :: String) #-}
 js_setLocationHash :: JSString -> IO ()
