@@ -169,8 +169,7 @@ handleHashChange hash = do
     "registration" -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabRegistration
     "login"        -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
     _ -> do
-      -- TODO: use logging function instead of putStrLn
-      putStrLn $ "unknown route: " <> hash
+      consoleLogJSONM "unknown route" hash
       exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
   where
     strip s k | take (length s) k == s = case reads $ drop (length s) k of
