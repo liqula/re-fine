@@ -49,6 +49,8 @@ import           Test.WebDriver.Commands.Wait
 import           Test.WebDriver.Session
 import           Text.Read (readMaybe)
 
+import           Refine.Common.Route as Route
+
 
 main :: IO ()
 main = do
@@ -56,15 +58,20 @@ main = do
     putStrLn . ((v <> "=") <>) . fromMaybe "" =<< lookupEnv v
 
   Just (seleniumPort :: Int) <- (>>= readMaybe) <$> lookupEnv "SELENIUM_HUB_PORT"
-  Just (appPort :: Int)      <- (>>= readMaybe) <$> lookupEnv "REFINE_APP_PORT"
+  Just (_appPort :: Int)     <- (>>= readMaybe) <$> lookupEnv "REFINE_APP_PORT"    -- just check it's there, will be called in 'appUrl'.
   pleaseRunApp :: Bool       <- fromMaybe False . (>>= readMaybe) <$> lookupEnv "REFINE_RUN_APP"
 
-  let appUrl = "http://localhost:" <> show appPort <> "/"
-      runApp = if pleaseRunApp
+  let runApp = if pleaseRunApp
         then bracket_ startApp stopApp
         else id
 
-  runApp . hspec $ webdriver (defaultConfig { wdHost = "localhost", wdPort = seleniumPort}) appUrl
+  runApp . hspec $ webdriver (defaultConfig { wdHost = "localhost", wdPort = seleniumPort}) (appUrl Login)
+
+{-# NOINLINE appUrl #-}
+appUrl :: Route.Route -> String
+appUrl r = unsafePerformIO $ do
+  Just (appPort :: Int)      <- (>>= readMaybe) <$> lookupEnv "REFINE_APP_PORT"
+  pure $ "http://localhost:" <> show appPort <> "/" <> cs (Route.rrender r)
 
 startApp :: IO ()
 startApp = do
@@ -145,32 +152,37 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
   it "create new process" . runWD $ do
     let titleText = "iDWD16VgtbLgI"
     onEl [ByCSS "#group-list-item-1"] click
-    onEl [ByCSS ".icon-Process_add_dark"] click
+    onEl [xpathButton "Process_add"] click
     onEls [ByXPath "//*[@id='o-vdoc-overlay-content__textarea-annotation']"] $ sendKeys titleText . head
-    onEl [ByCSS ".icon-Save_dark"] click
+    onEl [xpathButton "Save"] click
     onEls [ByCSS "h1"] $ \els -> do
       txt <- mconcat <$> (getText `mapM` els)
       txt `shouldSatisfy` (titleText `ST.isInfixOf`)
 
-  it "create, save initial content" . runWD $ do
+  it "create, save initial content (1)" . runWD $ do
     yScrollTo 0  -- some processes open scrolled to the bottom.  (this should have a ticket.)
     onEl [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $ \block -> do
       addTextToDraft block [block1Text, block2Text, block3Text]
-        -- FIXME: this is added as one block containing newlines.  not good!
+
+  it "create, save initial content (2)" . runWD $ do
     onEls [ByCSS ".public-DraftEditor-content", ByXPath "//div[@data-contents='true']/child::node()"] $ \blocks -> do
       click $ last blocks
+
+  it "create, save initial content (3)" . runWD $ do
     onEl [xpathButton "Edit_toolbar_h1"] click
     onEl [xpathButton "Edit_toolbar_h1"] click  -- #401?
-    onEl [ByCSS ".icon-Save_dark"] click
+
+  it "create, save initial content (4)" . runWD $ do
+    onEl [xpathButton "Save"] click
 
   it "scroll to first heading" . runWD $ do
-    onEl [ByCSS ".icon-Index_desktop_dark"] click
+    onEl [xpathButton "Index_desktop"] click
     let editor = findElem $ ByCSS ".public-DraftEditor-content"
     assertVerticalPos (>) editor $ onEl [ByCSS ".__index-heading-0"] click
     yScrollTo 0
 
   it "open edit mode" . runWD $ do
-    onEl [ByCSS ".icon-New_Edit_dark"] click
+    onEl [xpathButton "New_Edit"] click
     onEl [ByCSS ".public-DraftEditor-content"] $ \el -> do
       editableText <- getText el
       block3Text `shouldSatisfy` (`ST.isInfixOf` editableText)
@@ -187,12 +199,19 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
       textA `shouldSatisfy` (`ST.isInfixOf` h)
       textB `shouldSatisfy` (`ST.isInfixOf` t)
 
-  it "save edit" . runWD $ do
+  it "save edit (1)" . runWD $ do
     yScrollTo 0  -- scrolling is a workaround for #376.
-    onEl  [ByCSS ".icon-Save_dark"] click
-    onEls [ByCSS ".skylight-dialog", ByCSS ".icon-New_Edit_dark"] (click . head)
-    onEl  [ByCSS ".skylight-dialog", ByXPath "//textarea"]        (sendKeys "bloorp")
-    onEl  [ByCSS ".skylight-dialog", ByCSS ".icon-Save_bright"]   click
+    onEl  [xpathButton "Save"] click
+
+  it "save edit (2)" . runWD $ do
+    onEls [ByCSS ".skylight-dialog", xpathButton "New_Edit"] (click . head)
+
+  it "save edit (3)" . runWD $ do
+    onEl [ByCSS ".skylight-dialog", ByXPath "//textarea"] (sendKeys "bloorp")
+
+  it "save edit (4)" . runWD $ do
+    onEl [ByXPath "//*[@id='refine']//div[@class[contains(., 'skylight')]]//div[@class[contains(., 'icon-Save')]]"] click
+      -- FIXME: it looks like the drill trick in onEls' does not work any more.  :/
 
   it "find two bubbles" . runWD $ do
     onEls [ByCSS ".o-snippet__content"] $ \bubbles ->
@@ -204,6 +223,11 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
       everything <- getSource
       textA `shouldSatisfy` (`ST.isInfixOf` everything)
       textB `shouldSatisfy` (`ST.isInfixOf` everything)
+
+  {-
+  -- FIXME: the first pending test blocks an MVar internal to one of the packages we use here (NOT
+  -- the one defined in this module); and all remaining tests that are not pending will fail.
+  -- work-around: comment out pending tests, or pend tests only at the end of the test suite.
 
   it "create discussion as user A" $ do
     pending
@@ -219,6 +243,50 @@ webdriver cnf appurl = sessionWith cnf "@webdriver" . using allBrowsers $ do
 
   it "edit user B's statement as user B" $ do
     pending
+
+  -}
+
+  describe "routing" $ do
+    let testOpen :: Route.Route -> SpecWith (WdTestSession ())
+        testOpen r = it ("open route " <> show r) . runWD $ do
+          testOpen' r
+          url <- getCurrentURL
+          liftIO $ url `Hspec.shouldContain` (cs . Route.rrender $ r)
+
+        testOpen' :: Route.Route -> WD ()
+        testOpen' = stubborn . openPage . appUrl
+
+        testFragment :: String -> SpecWith (WdTestSession ())
+        testFragment fragment = it ("contains: " <> fragment) . runWD $ do
+          testFragment' fragment
+
+        testFragment' :: String -> WD ()
+        testFragment' fragment = stubborn $ do
+          c <- getSource
+          liftIO $ cs c `Hspec.shouldContain` fragment
+
+    testOpen Help                >> testFragment "build timestamp:"
+    testOpen Login               >> testFragment "Profile page"  -- we're still logged in at this point
+    testOpen Register            >> testFragment "<h1>Registration</h1>"
+    testOpen Groups              >> testFragment "<div class=\"icon-Group_add_dark\""
+    -- the following work iff the resp. group and process IDs exist
+    testOpen (GroupProcesses 1)  >> testFragment "default group"
+    testOpen (GroupMembers 1)    >> testFragment "default group"
+    testOpen (Process 1)         >> testFragment "<span class=\"c-mainmenu__menu-button-label\">MENU</span>"
+
+    it "back" . runWD $ do
+      testOpen' Login
+      testOpen' Help
+      back
+      testFragment' "Profile page"
+
+    it "forward" . runWD $ do
+      forward
+      testFragment' "build timestamp:"
+
+    it "refresh" . runWD $ do
+      refresh
+      testFragment' "build timestamp:"
 
 
   -- FIXME: do not use god mode for this story!  add some initial users with `--init` in selenium instead.
@@ -280,8 +348,8 @@ onEls' sanitiseElems (sel:sels) action = stubborn $ do
 stubborn :: WD a -> WD a
 stubborn = waitUntil' pollFreqMicroSeconds pollTimeoutSeconds
   where
-    pollFreqMicroSeconds = 1401000
-    pollTimeoutSeconds = 13
+    pollFreqMicroSeconds = 361000
+    pollTimeoutSeconds = 80
 
 onEls :: forall a. HasCallStack => [Selector] -> ([Element] -> WD a) -> WD a
 onEls = onEls' pure

@@ -49,6 +49,7 @@ executables:
       - process
       - QuickCheck
       - quickcheck-instances
+      - refine-common
       - string-conversions
       - text
       - time
