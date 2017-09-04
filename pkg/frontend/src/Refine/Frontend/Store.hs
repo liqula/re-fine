@@ -78,11 +78,10 @@ transformGlobalState = transf
         DocumentAction (DocumentSave (FormBegin EditIsNotInitial)) -> scrollToCurrentSelection (st ^. gsContributionState)
         HeaderAction (ScrollToBlockKey (Common.BlockKey k))        -> liftIO . js_scrollToBlockKey $ cs k
         HeaderAction ScrollToPageTop                               -> liftIO js_scrollToPageTop
-        _ | not . null $ routesFromAction act                      -> liftIO js_scrollToPageTop
         _ -> pure ()
 
       -- routing
-      Route.changeRoute `mapM_` (take 1 . reverse $ routesFromAction act)
+      Route.changeRoute $ routesFromState st'
 
       -- other effects
       case act of
@@ -137,29 +136,35 @@ initRouting = do
   Route.onLocationHashChange handleRouteChange
   handleRouteChange =<< Route.currentRoute
 
-routesFromAction :: GlobalAction -> [Route.Route]
-routesFromAction = \case
-  LoadVDoc did                                    -> [Route.Process did]
-  MainMenuAction (MainMenuActionOpen tab) -> case tab of
-    MainMenuGroups{}                              -> [Route.Groups]
-    MainMenuGroup k gid -> case k of
-      MainMenuGroupProcesses                      -> [Route.GroupProcesses gid]
-      MainMenuGroupMembers                        -> [Route.GroupMembers gid]
-    MainMenuCreateOrUpdateGroup Nothing _         -> [Route.Groups]
-    MainMenuCreateOrUpdateGroup (Just gid) _      -> [Route.GroupProcesses gid]
-    MainMenuCreateProcess (FormBegin ref)         -> [Route.GroupProcesses . view createVDocGroup $ unsafeReadLocalStateRef ref]
-    MainMenuCreateProcess _                       -> []
-    MainMenuUpdateProcess pid _                   -> [Route.Process pid]
-    MainMenuHelp                                  -> [Route.Help]
-    MainMenuLogin k -> case k of
-      MainMenuSubTabLogin                         -> [Route.Login]
-      MainMenuSubTabRegistration                  -> [Route.Register]
-  CompositeAction acts                            -> concatMap routesFromAction acts
-  _                                               -> []
+-- | FUTUREWORK: there should be one sum constructor for every route in 'GlobalState', then this
+-- would be much easier to write.  (As it is, we need to be very careful to test the cases in the
+-- right order, since later ones can be true even though earlier ones should fire.)
+routesFromState :: GlobalState -> Route.Route
+routesFromState st
+  | MainMenuOpen tab <- st ^. gsMainMenuState . mmState = case tab of
+      MainMenuHelp                              -> Route.Help
+      MainMenuLogin MainMenuSubTabLogin         -> Route.Login
+      MainMenuLogin MainMenuSubTabRegistration  -> Route.Register
+      MainMenuGroups ()                         -> Route.Groups
+      MainMenuGroup MainMenuGroupProcesses gid  -> Route.GroupProcesses gid
+      MainMenuGroup MainMenuGroupMembers gid    -> Route.GroupMembers gid
+      MainMenuCreateOrUpdateGroup _ _           -> Route.Groups
+        -- FIXME: when creating a group, this is fine, but when updating an existing group, we want
+        -- to return to the last route (either group members or group processes, as of now).  this
+        -- probably works better once we have bread crumbs.
+      MainMenuCreateProcess ref                 -> Route.GroupProcesses . view createVDocGroup $ unsafeReadLocalStateRef ref
+      MainMenuUpdateProcess vid _               -> Route.Process vid
+
+  | Just vid <- st ^. gsEditID
+    = Route.Process vid
+
+  | otherwise
+    = Route.Login
 
 handleRouteChange :: Either Route.RouteParseError Route.Route -> IO ()
 handleRouteChange r = do
   removeAllRanges
+  js_scrollToPageTop
   case r of
     Right Route.Help                 -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuHelp
     Right Route.Login                -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
