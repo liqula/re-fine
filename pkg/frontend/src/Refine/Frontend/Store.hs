@@ -9,6 +9,7 @@ module Refine.Frontend.Store where
 import           Control.Concurrent
 import           GHCJS.Foreign.Callback (Callback, asyncCallback1)
 
+import           React.Flux.Missing (unsafeReadLocalStateRef)
 import           Refine.Common.Types hiding (CreateUser, Login)
 import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Access ()
@@ -146,7 +147,8 @@ routesFromAction = \case
       MainMenuGroupMembers                        -> [Route.GroupMembers gid]
     MainMenuCreateOrUpdateGroup Nothing _         -> [Route.Groups]
     MainMenuCreateOrUpdateGroup (Just gid) _      -> [Route.GroupProcesses gid]
-    MainMenuCreateProcess _                       -> [Route.Groups]
+    MainMenuCreateProcess (FormBegin ref)         -> [Route.GroupProcesses . view createVDocGroup $ unsafeReadLocalStateRef ref]
+    MainMenuCreateProcess _                       -> []
     MainMenuUpdateProcess pid _                   -> [Route.Process pid]
     MainMenuHelp                                  -> [Route.Help]
     MainMenuLogin k -> case k of
