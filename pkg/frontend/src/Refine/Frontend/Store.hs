@@ -149,7 +149,12 @@ startsNewPage = \case
   _ -> []
 
 initRouting :: IO ()
-initRouting = onLocationHashChange $ \hash -> do
+initRouting = do
+  onLocationHashChange handleHashChange
+  js_getLocationHash >>= handleHashChange . cs
+
+handleHashChange :: String -> IO ()
+handleHashChange hash = do
   removeAllRanges
   case drop 1 hash of
     (strip "process" -> Just i)
@@ -392,11 +397,15 @@ onLocationHashChange f = do
 #ifdef __GHCJS__
 
 foreign import javascript unsafe
-  "window.onhashchange = function() {$1(location.hash.toString());}"
+  "window.onhashchange = function() {$1(location.hash.toString());};"
   js_attachLocationHashCb :: (Callback (JSVal -> IO ())) -> IO ()
 
 foreign import javascript safe
-  "window.location.hash = $1"
+  "window.location.hash"
+  js_getLocationHash :: IO JSString
+
+foreign import javascript safe
+  "window.location.hash = $1;"
   js_setLocationHash :: JSString -> IO ()
 
 foreign import javascript safe
@@ -416,6 +425,10 @@ foreign import javascript safe
 {-# ANN js_attachLocationHashCb ("HLint: ignore Use camelCase" :: String) #-}
 js_attachLocationHashCb :: Callback (JSVal -> IO ()) -> IO ()
 js_attachLocationHashCb = error "javascript FFI not available in GHC"
+
+{-# ANN js_getLocationHash ("HLint: ignore Use camelCase" :: String) #-}
+js_getLocationHash :: IO JSString
+js_getLocationHash = error "javascript FFI not available in GHC"
 
 {-# ANN js_setLocationHash ("HLint: ignore Use camelCase" :: String) #-}
 js_setLocationHash :: JSString -> IO ()
