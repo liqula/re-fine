@@ -11,6 +11,7 @@ import           GHCJS.Foreign.Callback (Callback, asyncCallback1)
 
 import           Refine.Common.Types hiding (CreateUser, Login)
 import           Refine.Common.VDoc.Draft
+import           Refine.Frontend.Access ()
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
@@ -20,6 +21,7 @@ import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
 import           Refine.Frontend.MainMenu.Types
+import qualified Refine.Frontend.Route as Route
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Console
@@ -27,7 +29,6 @@ import           Refine.Frontend.Translation.Store (translationsUpdate)
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 import           Refine.Frontend.WebSocket
-import           Refine.Frontend.Access ()
 
 
 instance StoreData GlobalState where
@@ -76,11 +77,11 @@ transformGlobalState = transf
         DocumentAction (DocumentSave (FormBegin EditIsNotInitial)) -> scrollToCurrentSelection (st ^. gsContributionState)
         HeaderAction (ScrollToBlockKey (Common.BlockKey k))        -> liftIO . js_scrollToBlockKey $ cs k
         HeaderAction ScrollToPageTop                               -> liftIO js_scrollToPageTop
-        _ | not . null $ startsNewPage act                         -> liftIO js_scrollToPageTop
+        _ | not . null $ routesFromAction act                      -> liftIO js_scrollToPageTop
         _ -> pure ()
 
       -- routing
-      forM_ (take 1 . reverse $ startsNewPage act) $ \hash -> liftIO . js_setLocationHash $ cs hash
+      Route.changeRoute `mapM_` (take 1 . reverse $ routesFromAction act)
 
       -- other effects
       case act of
@@ -130,54 +131,43 @@ transformGlobalState = transf
           >=> gsDevState            (pure . devStateUpdate act)
           >=> (\st' -> gsDocumentState (documentStateUpdate act st') st')
 
-startsNewPage :: GlobalAction -> [String]
-startsNewPage = \case
-  LoadVDoc (ID did)                       -> ["process" <> show did]
-  MainMenuAction (MainMenuActionOpen tab) -> case tab of
-    MainMenuGroups{}                      -> ["groups"]
-    MainMenuGroup k (ID gid) -> case k of
-      MainMenuGroupProcesses              -> ["groupProcesses" <> show gid]
-      MainMenuGroupMembers                -> ["groupMembers" <> show gid]
-    MainMenuCreateOrUpdateGroup Nothing _ -> ["groups"]
-    MainMenuCreateOrUpdateGroup (Just (ID gid)) _ -> ["groupProcesses" <> show gid]
-    MainMenuCreateProcess _               -> ["groups"]
-    MainMenuUpdateProcess (ID pid) _      -> ["process" <> show pid]
-    MainMenuHelp                          -> ["help"]
-    MainMenuLogin k -> case k of
-      MainMenuSubTabLogin                 -> ["login"]
-      MainMenuSubTabRegistration          -> ["registration"]
-  CompositeAction acts -> concatMap startsNewPage acts
-  _ -> []
-
 initRouting :: IO ()
 initRouting = do
-  onLocationHashChange handleHashChange
-  js_getLocationHash >>= handleHashChange . cs
+  Route.onLocationHashChange handleRouteChange
+  handleRouteChange =<< Route.currentRoute
 
-handleHashChange :: String -> IO ()
-handleHashChange hash = do
+routesFromAction :: GlobalAction -> [Route.Route]
+routesFromAction = \case
+  LoadVDoc did                                    -> [Route.Process did]
+  MainMenuAction (MainMenuActionOpen tab) -> case tab of
+    MainMenuGroups{}                              -> [Route.Groups]
+    MainMenuGroup k gid -> case k of
+      MainMenuGroupProcesses                      -> [Route.GroupProcesses gid]
+      MainMenuGroupMembers                        -> [Route.GroupMembers gid]
+    MainMenuCreateOrUpdateGroup Nothing _         -> [Route.Groups]
+    MainMenuCreateOrUpdateGroup (Just gid) _      -> [Route.GroupProcesses gid]
+    MainMenuCreateProcess _                       -> [Route.Groups]
+    MainMenuUpdateProcess pid _                   -> [Route.Process pid]
+    MainMenuHelp                                  -> [Route.Help]
+    MainMenuLogin k -> case k of
+      MainMenuSubTabLogin                         -> [Route.Login]
+      MainMenuSubTabRegistration                  -> [Route.Register]
+  CompositeAction acts                            -> concatMap routesFromAction acts
+  _                                               -> []
+
+handleRouteChange :: Either Route.RouteParseError Route.Route -> IO ()
+handleRouteChange r = do
   removeAllRanges
-  case drop 1 hash of
-    (strip "process" -> Just i)
-      -> exec . LoadVDoc $ ID i
-    "groups"
-      -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
-    (strip "groupProcesses" -> Just i)
-      -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupProcesses (ID i)
-    (strip "groupMembers" -> Just i)
-      -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupMembers (ID i)
-    "help"         -> exec . MainMenuAction $ MainMenuActionOpen MainMenuHelp
-    "registration" -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabRegistration
-    "login"        -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
-    _ -> do
-      consoleLogJSONM "unknown route" hash
-      exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
+  case r of
+    Right Route.Help                 -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuHelp
+    Right Route.Login                -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
+    Right Route.Register             -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabRegistration
+    Right Route.Groups               -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
+    Right (Route.GroupProcesses gid) -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupProcesses gid
+    Right (Route.GroupMembers gid)   -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupMembers gid
+    Right (Route.Process vid)        -> exec $ LoadVDoc vid
+    Left _                           -> exec . MainMenuAction . MainMenuActionOpen $ defaultMainMenuTab
   where
-    strip s k | take (length s) k == s = case reads $ drop (length s) k of
-                  [(a, "")] -> Just a
-                  _ -> Nothing
-              | otherwise = Nothing
-
     exec = executeAction . action @GlobalState
 
 flushCacheMisses :: IO ()
@@ -390,24 +380,7 @@ reactFluxWorkAroundThreadDelay seconds = threadDelay . round $ seconds * 1000 * 
 
 -- * foreign
 
-onLocationHashChange :: (String -> IO ()) -> IO ()
-onLocationHashChange f = do
-  cb <- asyncCallback1 (f . pFromJSVal)
-  js_attachLocationHashCb cb
-
 #ifdef __GHCJS__
-
-foreign import javascript unsafe
-  "window.onhashchange = function() {$1(location.hash.toString());};"
-  js_attachLocationHashCb :: Callback (JSVal -> IO ()) -> IO ()
-
-foreign import javascript safe
-  "window.location.hash"
-  js_getLocationHash :: IO JSString
-
-foreign import javascript safe
-  "window.location.hash = $1;"
-  js_setLocationHash :: JSString -> IO ()
 
 foreign import javascript safe
   "getSelection().getRangeAt(0).startContainer.parentElement.getBoundingClientRect().top"
@@ -422,18 +395,6 @@ foreign import javascript safe
   js_removeAllRanges :: IO ()
 
 #else
-
-{-# ANN js_attachLocationHashCb ("HLint: ignore Use camelCase" :: String) #-}
-js_attachLocationHashCb :: Callback (JSVal -> IO ()) -> IO ()
-js_attachLocationHashCb = error "javascript FFI not available in GHC"
-
-{-# ANN js_getLocationHash ("HLint: ignore Use camelCase" :: String) #-}
-js_getLocationHash :: IO JSString
-js_getLocationHash = error "javascript FFI not available in GHC"
-
-{-# ANN js_setLocationHash ("HLint: ignore Use camelCase" :: String) #-}
-js_setLocationHash :: JSString -> IO ()
-js_setLocationHash = error "javascript FFI not available in GHC"
 
 {-# ANN js_getRangeTopOffset ("HLint: ignore Use camelCase" :: String) #-}
 js_getRangeTopOffset :: IO Int

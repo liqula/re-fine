@@ -113,6 +113,7 @@ library
       Refine.Frontend.MainMenu.Types
       Refine.Frontend.Orphans
       Refine.Frontend.Prelude
+      Refine.Frontend.Route
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store
       Refine.Frontend.Screen.Types
