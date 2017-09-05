@@ -28,15 +28,13 @@ module Main where
 
 import Refine.Frontend.Prelude
 
--- import           Language.Css.Build.Attributes hiding (style)
--- import           Language.Css.Build hiding ((|=))
--- import           Language.Css.Build.Idents hiding (show)
--- import           Language.Css.Build.Tags hiding (style, html)
-import           Language.Css.Syntax
+import           Data.Char
 import           Data.List
 import qualified Data.Map as Map
 import qualified Data.Set as Set
 import qualified Data.Text as ST
+import qualified Data.Text.IO as ST
+import qualified Language.Css.Syntax as Css
 import           System.Directory
 import           System.Exit
 import           System.FilePath
@@ -44,9 +42,8 @@ import           System.Process
 import           Test.Hspec
 
 import           React.Flux.Missing
-import           Refine.Common.Test.Samples
+import           Refine.Common.Test hiding (assert)
 import           Refine.Common.Types
-import           Refine.Frontend.Colors
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.Types
@@ -67,6 +64,192 @@ import           Refine.Frontend.Util
 
 styleGuidePath :: FilePath
 styleGuidePath = "./styleguide/html/"
+
+
+-- * colors
+
+colorValue :: Color -> RGBA
+colorValue MainMenuBackground    = RGBA 179 190 200 1
+colorValue MainMenuDarkBlue      = RGBA 36 48 65 1
+colorValue MainMenuBlue          = RGBA 141 157 173 1
+colorValue MainMenuIcon          = RGBA 210 217 221 1
+colorValue ToolbarIcon           = RGBA 104 125 146 1
+colorValue InteractionYellowNeon = RGBA 231 252 85 1
+colorValue InteractionOrange     = RGBA 238 114 54 1
+colorValue InteractionOrangeNeon = RGBA 237 100 43 1
+colorValue InteractionRed        = RGBA 212 68 53 1
+colorValue FormGreen             = RGBA 139 196 77 1
+colorValue FormOrangeLight       = RGBA 249 215 194 1
+colorValue FormOrangeMedium      = RGBA 232 119 72 1
+colorValue FormOrangeStrong      = RGBA 237 100 43 1
+colorValue FormBackground        = RGBA 179 190 200 1
+colorValue FormIcon              = RGBA 28 40 51 1
+colorValue NoteDark              = RGBA 169 153 61 1
+colorValue NoteBubble            = RGBA 223 213 167 1
+colorValue NoteBackground        = RGBA 242 235 210 1
+colorValue DiscussionDark        = RGBA 121 129 63 1
+colorValue DiscussionBubble      = RGBA 198 198 163 1
+colorValue DiscussionBackground  = RGBA 229 228 208 1
+colorValue EditDark              = RGBA 156 89 42 1
+colorValue EditBubble            = RGBA 224 199 179 1
+colorValue EditBackground        = RGBA 242 231 222 1
+colorValue VoteNo                = RGBA 221 73 43 1
+colorValue VoteYes               = RGBA 139 196 77 1
+
+data Color
+  = MainMenuBackground
+  | MainMenuDarkBlue
+  | MainMenuBlue
+  | MainMenuIcon
+  | ToolbarIcon
+  | InteractionYellowNeon
+  | InteractionOrange
+  | InteractionOrangeNeon
+  | InteractionRed
+  | FormGreen
+  | FormOrangeLight
+  | FormOrangeMedium
+  | FormOrangeStrong
+  | FormBackground
+  | FormIcon
+  | NoteDark
+  | NoteBubble
+  | NoteBackground
+  | DiscussionDark
+  | DiscussionBubble
+  | DiscussionBackground
+  | EditDark
+  | EditBubble
+  | EditBackground
+  | VoteNo
+  | VoteYes
+  deriving (Eq, Show, Ord, Bounded, Enum)
+
+
+data RGBA = RGBA Int Int Int Double
+  deriving (Eq, Show)
+
+showRGBA :: RGBA -> ST
+showRGBA (RGBA r g b a) = cs $ "rgba(" <> intercalate ", " [show r, show g, show b, show a] <> ")"
+
+rgbFromHex :: HasCallStack => ST -> RGBA
+rgbFromHex num = f $ toLower <$> cs num
+  where
+    f ('#' : xs) = f xs
+    f [r1, r2, g1, g2, b1, b2] = RGBA (h r1 r2) (h g1 g2) (h b1 b2) 1
+    f _   = error $ "rgbFromHex: bad input: " <> show num
+    h x1 x2 = 16 * q x1 + q x2
+    q '0' = 0
+    q '1' = 1
+    q '2' = 2
+    q '3' = 3
+    q '4' = 4
+    q '5' = 5
+    q '6' = 6
+    q '7' = 7
+    q '8' = 8
+    q '9' = 9
+    q 'a' = 10
+    q 'b' = 11
+    q 'c' = 12
+    q 'd' = 13
+    q 'e' = 14
+    q 'f' = 15
+    q _   = error $ "rgbFromHex: bad input: " <> show num
+
+camelToUnderscore :: ST -> ST
+camelToUnderscore = cs . go True . cs
+  where
+    go :: Bool -> String -> String
+    go _ "" = ""
+    go isfirst (x:xs)
+      | isUpper x && isfirst = toLower x       : go False xs
+      | isUpper x            = '_' : toLower x : go False xs
+      | otherwise            = x               : go False xs
+
+colorName :: Color -> ST
+colorName = ("c_" <>) . camelToUnderscore . cs . show
+
+bgColorName :: Color -> ST
+bgColorName = ("c_bg_" <>) . camelToUnderscore . cs . show
+
+colorCssVar :: Color -> ST
+colorCssVar c = mconcat ["$", colorName c, ": ", showRGBA $ colorValue c, ";"]
+
+colorCssClass :: Color -> ST
+colorCssClass c = mconcat [".", colorName c, " { color: $", colorName c, " }"]
+
+bgColorCssClass :: Color -> ST
+bgColorCssClass c = mconcat [".", bgColorName c, " { background-color: $", colorName c, " }"]
+
+colorCssFile :: ST
+colorCssFile = ST.unlines $ header <> ([colorCssVar, colorCssClass, bgColorCssClass] <*> [minBound ..])
+  where
+    header =
+      [ "// this file is auto-generated by the `styleguide` test suite."
+      , "// you can edit it, but you need to carry the changes over to `../styleguide/Main.hs`."
+      , ""
+      ]
+
+colorHtmlFile :: ST
+colorHtmlFile = ST.unlines $ header <> mconcat (go <$> [minBound ..]) <> footer
+  where
+    title = "Color Palette"
+    header =
+      [ "<!doctype html>"
+      , "<html>"
+      , "<head>"
+      , "<meta charset=\"UTF_8\">"
+      , "<title>" <> title <> "</title>"
+      , "<link href=\"../../scss-new/main.css\" rel=\"stylesheet\" type=\"text/css\">"
+      , "<style>"
+      , "  body{font-family: 'Source Sans Pro', sans-serif; font-weight: 300; font-size: 14px;}"
+      , "  .black{font-weight: 800;}"
+      , "  .container{"
+      , "    position: relative;"
+      , "    clear: both;"
+      , "    height: 120px;"
+      , "  }"
+      , "  .color{"
+      , "    width: 60px;"
+      , "    height: 120px;"
+      , "    float: left;"
+      , "    margin-right: 10px;"
+      , "  }"
+      , "  .description{"
+      , "    padding-top: 12px;"
+      , "  }"
+      , "  h1, h2{font-weight: 300;}"
+      , "</style>"
+      , "</head>"
+      , ""
+      , "<body>"
+      , "<h1>" <> title <> "</h1>"
+      ]
+    footer =
+      [ "</body>"
+      , "</html>"
+      ]
+
+    go :: Color -> [ST]
+    go color =
+      [ "<div class=\"container\">"
+      , "  <div class=\"color " <> bgColorName color <> "\">"
+      , "  </div>"
+      , "  <div class=\"description\">"
+      , "    Variable:&nbsp;&nbsp;<span class=\"black\">$" <> colorName color <> "</span><br>"
+      , "    Class (color):&nbsp;&nbsp;<span class=\"black\">" <> colorName color <> "</span><br>"
+      , "    Class (background-color):&nbsp;&nbsp;<span class=\"black\">" <> bgColorName color <> "</span><br>"
+      , "    Color:&nbsp;&nbsp;<span class=\"black\">" <> showRGBA (colorValue color) <> "</span><br>"
+      , "  </div>"
+      , "</div>"
+      , "<br>"
+      ]
+
+colorPalette :: Spec
+colorPalette = it "colorPalette" $ do
+  ST.writeFile "./scss-new/20-colors.scss" colorCssFile
+  ST.writeFile (styleGuidePath <> "colorPalette.html") colorHtmlFile
 
 
 -- * combinators
@@ -107,6 +290,7 @@ generateIndexHtml = it "generateIndexHtml" $ do
   writeFile (styleGuidePath <> "index.html") . unlines $
     ["<!DOCTYPE html><html><body>"] <>
     ((\nm -> "<a href=\"" <> nm <> "\">" <> nm <> "</a><br/>") <$> nms) <>
+    ["<br><hr><br><a href=\"colorPalette.html\">colorPalette.html</a>"] <>
     ["</body></html>"]
 
 -- | Pretty-print, canonicalize, validate existing html.  This is called in the tests after
@@ -157,9 +341,9 @@ checkWorkingCopy = it "checkWorkingCopy" $ do
 -- * sample content
 
 toy_ :: forall h. ReactElementM h ()
-toy_ = div_ [style [ "margin" ||= Px 10
-                   , "border" ||= Px 2
-                   , "border" ||= [Ident "dashed", Ident "black"]
+toy_ = div_ [style [ "margin" ||= Css.Px 10
+                   , "border" ||= Css.Px 2
+                   , "border" ||= [Css.Ident "dashed", Css.Ident "black"]
                    ]
             ] $ do
   div_ [style (box "red")] $ do
@@ -176,14 +360,14 @@ toy_ = div_ [style [ "margin" ||= Px 10
   div_ [style (box "gray")] mempty
 
   where
-    box :: String -> [Decl]
+    box :: String -> [Css.Decl]
     box bg =
-      [ "border" ||= [Ident "dashed", Ident "black", Ident "2px"]
-      , "padding" ||= Px 50
-      , "margin" ||= Px 60
-      , "width" ||= Px 70
-      , "height" ||= Px 70
-      , "backgroundColor" ||= Ident bg
+      [ "border" ||= [Css.Ident "dashed", Css.Ident "black", Css.Ident "2px"]
+      , "padding" ||= Css.Px 50
+      , "margin" ||= Css.Px 60
+      , "width" ||= Css.Px 70
+      , "height" ||= Css.Px 70
+      , "backgroundColor" ||= Css.Ident bg
       ]
 
 
@@ -327,6 +511,7 @@ main = hspec spec
 
 spec :: Spec
 spec = describe "@STYLEGUIDE" $ do
+    describe "colorPalette"      colorPalette
     describe "validate-before" $ validateStyleGuide >> checkWorkingCopy
     describe "generate"        $ generateIndexHtml >> generateStyleGuide `mapM_` viewsSources
     describe "validate-after"  $ validateStyleGuide >> checkWorkingCopy

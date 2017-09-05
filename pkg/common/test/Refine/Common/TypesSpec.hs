@@ -15,7 +15,7 @@ import Refine.Common.Types
 spec :: Spec
 spec = parallel $ do
   describe "FromHttpApiData and ToHttpApiData are inverses" $ do
-    fromAndToHttpApiDataAreInverses (h :: HttpApiGen (ID ()))
+    fromAndToHttpApiDataAreInverses (httpApiGen :: HttpApiGen (ID ()))
 
   roundtripSpecs (Proxy @(ID Int))
   roundtripSpecs (Proxy @(ID (Maybe Int)))
