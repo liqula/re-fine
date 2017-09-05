@@ -81,6 +81,7 @@ data GlobalAction =
 
     -- users
   | CreateUser CreateUser
+  | UploadAvatar (ID User) String
 
     -- testing & dev
   | ResetState GlobalState

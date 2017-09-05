@@ -179,7 +179,7 @@ cmdLoopStepFrame toIO clientId = dolift . dostate
 
 
 -- | Application engine.  From here on inwards, all actions need to be authorization-checked.
-cmdLoopStep :: Connection -> WSSessionId -> (MonadWS m, MonadApp m) => m ()
+cmdLoopStep :: Connection -> WSSessionId -> (MonadWS m, MonadApp m, MonadIO m) => m ()
 cmdLoopStep conn clientId = do
   msg <- receiveMessage conn
   appLog LogDebug $ "request from client #" <> show clientId <> ", " <> show msg
@@ -197,6 +197,9 @@ cmdLoopStep conn clientId = do
       TSAddGroup cg           -> sendMessage conn . TCCreatedGroup . view groupID =<< App.addGroup cg
       TSUpdateGroup gid x     -> void $ App.modifyGroup gid x
       TSCreateUser cu         -> sendMessage conn . TCCreateUserResp =<< tryApp (App.createUser cu)
+      TSUploadAvatar (ID uid) img -> do
+        liftIO $ writeFile ("../frontend/js-build/profile" <> show uid <> ".svg") img
+        sendMessage conn TCUploadReady
       TSLogin li              -> sendMessage conn . TCLoginResp =<< tryApp (App.login li)
       TSLogout                -> void App.logout
       TSGetTranslations k     -> sendMessage conn . TCTranslations =<< App.getTranslations k

@@ -12,6 +12,7 @@ import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Access
 import           Refine.Frontend.Contribution.Dialog (contributionDialogTextForm)
 import           Refine.Frontend.Icon
+import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Login.Component
 import           Refine.Frontend.Login.Status
 import           Refine.Frontend.MainMenu.Types
@@ -20,6 +21,8 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 import qualified Refine.Prelude.BuildInfo as BuildInfo
+
+import System.IO.Unsafe
 
 
 topMenuBarInMainMenu :: HasCallStack => View '[TopMenuBarInMainMenuProps]
@@ -48,7 +51,9 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
         & ibSize .~ XXLarge
         & ibLabel .~ mempty
 
-      ibutton_ $ emptyIbuttonProps "00_joker" [ShowNotImplementedYet]
+      ibutton_ $ emptyIbuttonProps "00_joker"
+        [ MainMenuAction . MainMenuActionOpen $ MainMenuProfile Nothing
+        ]
         & ibListKey .~ "5"
         & ibDarkBackground .~ True
         & ibSize .~ XXLarge
@@ -99,6 +104,7 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
           MainMenuCreateOrUpdateGroup mid lst -> mainMenuCreateGroup_ mid lst
           MainMenuCreateProcess lst           -> mainMenuCreateProcess_ lst
           MainMenuUpdateProcess pid lst       -> mainMenuUpdateProcess_ pid lst
+          MainMenuProfile lst                 -> mainMenuProfile_ currentUser lst
 
           MainMenuHelp -> pre_ $ do
             elemString $ "commit hash: " <> show BuildInfo.gitCommitHash
@@ -491,6 +497,42 @@ mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst
 
 mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
 mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
+
+{-# NOINLINE currentTime #-}
+currentTime :: (UTCTime -> a) -> b -> ReactElementM 'EventHandlerCode a
+currentTime f x = unsafePerformIO $ x `seq` (pure . f <$> getCurrentTime)
+
+mainMenuProfile :: HasCallStack => View '[CurrentUser, ImageUpload]
+mainMenuProfile = mkView "MainMenuProfile" $ \user lst -> case user of
+  UserLoggedIn u -> do
+
+    let ID uid = u ^. userID
+    elemText "current avatar"
+    time <- currentTime (cs . show) lst
+    img_ ["src" $= ("profile" <> cs (show uid) <> ".svg?t=" <> time)] $ pure ()
+
+    let upd evt = case files of
+          Just [f] -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuProfile $ Just (NoJSONRep f, Nothing)
+          _ -> simpleHandler []
+          where
+            files = unsafePerformIO $ fromJSVal $ target evt "files"
+
+    input_ [ "type" $= "file"
+           , onChange upd
+           ]
+
+    case lst of
+      Just (NoJSONRep _f, Just source) -> do
+        img_ ["src" $= cs source] $ pure ()
+        button_
+          [ onClick $ \_evt _ -> simpleHandler . dispatch $ UploadAvatar (u ^. userID) source
+          ] $ elemText "upload"
+      _ -> pure ()
+
+  _ -> elemText "please log in"
+
+mainMenuProfile_ :: HasCallStack => CurrentUser -> ImageUpload -> ReactElementM eventHandler ()
+mainMenuProfile_ = view_ mainMenuProfile "mainMenuProfile_"
 
 mainMenuUpdateProcess :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> View '[]
 mainMenuUpdateProcess vid lst = mkPersistentStatefulView "MainMenuUpdateProcess" lst Nothing $
