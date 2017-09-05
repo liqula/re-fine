@@ -51,7 +51,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
         & ibSize .~ XXLarge
         & ibLabel .~ mempty
 
-      ibutton_ $ emptyIbuttonProps "00_joker"
+      ibutton_ $ emptyIbuttonProps "User_profile"
         [ MainMenuAction . MainMenuActionOpen $ MainMenuProfile Nothing
         ]
         & ibListKey .~ "5"
