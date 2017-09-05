@@ -509,7 +509,11 @@ mainMenuProfile = mkView "MainMenuProfile" $ \user lst -> case user of
     let ID uid = u ^. userID
     elemText "current avatar"
     time <- currentTime (cs . show) lst
-    img_ ["src" $= ("profile" <> cs (show uid) <> ".svg?t=" <> time)] $ pure ()
+    img_ [ "src" $= ("profile" <> cs (show uid) <> ".svg?t=" <> time)
+         , "style" @@= [ decl "maxWidth" (Px 200)
+                       , decl "maxHeight" (Px 200)
+                       ]
+         ] $ pure ()
 
     let upd evt = case files of
           Just [f] -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuProfile $ Just (NoJSONRep f, Nothing)
@@ -523,7 +527,11 @@ mainMenuProfile = mkView "MainMenuProfile" $ \user lst -> case user of
 
     case lst of
       Just (NoJSONRep _f, Just source) -> do
-        img_ ["src" $= cs source] $ pure ()
+        img_ [ "src" $= cs source
+             , "style" @@= [ decl "maxWidth" (Px 200)
+                           , decl "maxHeight" (Px 200)
+                           ]
+             ] $ pure ()
         button_
           [ onClick $ \_evt _ -> simpleHandler . dispatch $ UploadAvatar (u ^. userID) source
           ] $ elemText "upload"
