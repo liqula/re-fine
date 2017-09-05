@@ -146,6 +146,7 @@ routesFromState st
       MainMenuHelp                              -> Route.Help
       MainMenuLogin MainMenuSubTabLogin         -> Route.Login
       MainMenuLogin MainMenuSubTabRegistration  -> Route.Register
+      MainMenuProfile _                         -> Route.Profile
       MainMenuGroups ()                         -> Route.Groups
       MainMenuGroup MainMenuGroupProcesses gid  -> Route.GroupProcesses gid
       MainMenuGroup MainMenuGroupMembers gid    -> Route.GroupMembers gid
@@ -170,6 +171,7 @@ handleRouteChange r = do
     Right Route.Help                 -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuHelp
     Right Route.Login                -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
     Right Route.Register             -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabRegistration
+    Right Route.Profile              -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuProfile Nothing
     Right Route.Groups               -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
     Right (Route.GroupProcesses gid) -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupProcesses gid
     Right (Route.GroupMembers gid)   -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupMembers gid
