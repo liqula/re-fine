@@ -37,6 +37,14 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
 
     div_ ["className" $= "gr-20"] $ do
 
+      ibutton_ $ emptyIbuttonProps "User_profile"
+        [ MainMenuAction . MainMenuActionOpen $ MainMenuProfile Nothing
+        ]
+        & ibListKey .~ "5"
+        & ibDarkBackground .~ True
+        & ibSize .~ XXLarge
+        & ibLabel .~ mempty
+
       ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
         & ibListKey .~ "3"
         & ibDarkBackground .~ True
@@ -48,14 +56,6 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
         & ibListKey .~ "4"
         & ibDarkBackground .~ True
         & ibHighlightWhen .~ (if currentTab == MainMenuHelp then HighlightAlways else HighlightOnMouseOver)
-        & ibSize .~ XXLarge
-        & ibLabel .~ mempty
-
-      ibutton_ $ emptyIbuttonProps "User_profile"
-        [ MainMenuAction . MainMenuActionOpen $ MainMenuProfile Nothing
-        ]
-        & ibListKey .~ "5"
-        & ibDarkBackground .~ True
         & ibSize .~ XXLarge
         & ibLabel .~ mempty
 
