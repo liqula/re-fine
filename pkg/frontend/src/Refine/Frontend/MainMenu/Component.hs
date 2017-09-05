@@ -498,22 +498,18 @@ mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst
 mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
 mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
 
-{-# NOINLINE currentTime #-}
-currentTime :: (UTCTime -> a) -> b -> ReactElementM 'EventHandlerCode a
-currentTime f x = unsafePerformIO $ x `seq` (pure . f <$> getCurrentTime)
-
 mainMenuProfile :: HasCallStack => View '[CurrentUser, ImageUpload]
 mainMenuProfile = mkView "MainMenuProfile" $ \user lst -> case user of
   UserLoggedIn u -> do
 
-    let ID uid = u ^. userID
-    elemText "current avatar"
-    time <- currentTime (cs . show) lst
-    img_ [ "src" $= ("profile" <> cs (show uid) <> ".svg?t=" <> time)
-         , "style" @@= [ decl "maxWidth" (Px 200)
-                       , decl "maxHeight" (Px 200)
-                       ]
-         ] $ pure ()
+    case u ^. userAvatar of
+      Nothing -> elemText "You didn't upload an avatar yet."
+      Just (Image source) ->
+        img_ [ "src" $= cs source
+             , "style" @@= [ decl "maxWidth" (Px 200)
+                           , decl "maxHeight" (Px 200)
+                           ]
+             ] $ pure ()
 
     let upd evt = case files of
           Just [f] -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuProfile $ Just (NoJSONRep f, Nothing)
@@ -526,14 +522,14 @@ mainMenuProfile = mkView "MainMenuProfile" $ \user lst -> case user of
            ]
 
     case lst of
-      Just (NoJSONRep _f, Just (Image source)) -> do
+      Just (NoJSONRep _f, Just image@(Image source)) -> do
         img_ [ "src" $= cs source
              , "style" @@= [ decl "maxWidth" (Px 200)
                            , decl "maxHeight" (Px 200)
                            ]
              ] $ pure ()
         button_
-          [ onClick $ \_evt _ -> simpleHandler . dispatch $ UploadAvatar (u ^. userID) source
+          [ onClick $ \_evt _ -> simpleHandler . dispatch $ UploadAvatar (u ^. userID) image
           ] $ elemText "upload"
       _ -> pure ()
 

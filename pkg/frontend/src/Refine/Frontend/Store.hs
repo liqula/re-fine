@@ -329,7 +329,7 @@ emitBackendCallsFor act st = case act of
         js_addOnload fr $ jsval l
         js_doUpload fr f
 
-    UploadAvatar uid img -> sendTS . TSUploadAvatar uid . cs . js_base64Decode . cs . drop 1 $ dropWhile (/=',') img
+    UploadAvatar uid img -> sendTS $ TSUploadAvatar uid img
 
     -- voting
 

@@ -95,7 +95,7 @@ createUserWith globalRoles groupRoles (CreateUser name email password avatar) = 
   let uid = result ^. userID
   db $ replaceDBUser uid avatar
 
-  (\r -> assignGlobalRole r uid) `mapM_` globalRoles
+  (`assignGlobalRole` uid) `mapM_` globalRoles
   (\(r, g) -> assignGroupRole r uid g) `mapM_` groupRoles
 
   sendMailTo $ EmailMessage result "you have a re-fine account now!" "congratulations (:"
