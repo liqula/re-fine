@@ -24,7 +24,6 @@ import Refine.Backend.App.Core        as App
 import Refine.Backend.App.Group       as App
 import Refine.Backend.App.User        as App
 import Refine.Backend.App.VDoc        as App
-import Refine.Backend.Database.Class  as App (replaceDBUser)
 import {-# SOURCE #-} Refine.Backend.App.Translation as App (getTranslations)
 import Refine.Backend.Config
 import Refine.Backend.Database
@@ -199,7 +198,7 @@ cmdLoopStep conn clientId = do
       TSUpdateGroup gid x     -> void $ App.modifyGroup gid x
       TSCreateUser cu         -> sendMessage conn . TCCreateUserResp =<< tryApp (App.createUser cu)
       TSUploadAvatar uid img  -> do
-        void . db . App.replaceDBUser uid $ Just img
+        updateAvatar uid $ Just img
         sendMessage conn TCUploadReady
       TSLogin li              -> sendMessage conn . TCLoginResp =<< tryApp (App.login li)
       TSLogout                -> void App.logout

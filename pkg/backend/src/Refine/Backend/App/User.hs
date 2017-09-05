@@ -14,6 +14,7 @@ module Refine.Backend.App.User
   , getUsers
   , doesUserExist
   , withCurrentUser
+  , updateAvatar
   ) where
 #include "import_backend.hs"
 
@@ -26,7 +27,7 @@ import Refine.Backend.App.Smtp
 import Refine.Backend.App.Role
 import Refine.Backend.Config
 import Refine.Backend.Types
-import Refine.Backend.Database.Class (createMetaID_, getMetaID, insertDBUser, getDBUser)
+import Refine.Backend.Database.Class (createMetaID_, getMetaID, insertDBUser, replaceDBUser, getDBUser)
 import qualified Refine.Backend.Database.Class as DB
 import Refine.Backend.Database.Entity (toUserID, fromUserID)
 import qualified Refine.Common.Access.Policy as AP
@@ -142,3 +143,8 @@ withCurrentUser f = do
   case mu of
     Just u -> f u
     Nothing -> throwError AppUserNotLoggedIn
+
+updateAvatar :: ID User -> Maybe Image -> App ()
+updateAvatar uid avatar = do
+  db $ replaceDBUser uid avatar
+  invalidateCaches $ Set.fromList [CacheKeyUser uid]
