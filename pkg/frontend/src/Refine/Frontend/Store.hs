@@ -7,9 +7,12 @@ module Refine.Frontend.Store where
 #include "import_frontend.hs"
 
 import           Control.Concurrent
+import           GHCJS.Foreign.Callback (Callback, asyncCallback1)
 
+import           React.Flux.Missing (unsafeReadLocalStateRef)
 import           Refine.Common.Types hiding (CreateUser, Login)
 import           Refine.Common.VDoc.Draft
+import           Refine.Frontend.Access ()
 import           Refine.Frontend.Contribution.Store (contributionStateUpdate)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
@@ -19,6 +22,7 @@ import           Refine.Frontend.Header.Store (headerStateUpdate)
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.MainMenu.Store (mainMenuUpdate)
 import           Refine.Frontend.MainMenu.Types
+import qualified Refine.Frontend.Route as Route
 import           Refine.Frontend.Screen.Store (screenStateUpdate)
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Console
@@ -26,7 +30,6 @@ import           Refine.Frontend.Translation.Store (translationsUpdate)
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 import           Refine.Frontend.WebSocket
-import           Refine.Frontend.Access ()
 
 
 instance StoreData GlobalState where
@@ -69,6 +72,18 @@ transformGlobalState = transf
       -- ajax
       liftIO $ emitBackendCallsFor act st
 
+      -- scrolling
+      case act of
+        ContributionAction ShowCommentEditor                       -> scrollToCurrentSelection (st ^. gsContributionState)
+        DocumentAction (DocumentSave (FormBegin EditIsNotInitial)) -> scrollToCurrentSelection (st ^. gsContributionState)
+        HeaderAction (ScrollToBlockKey (Common.BlockKey k))        -> liftIO . js_scrollToBlockKey $ cs k
+        HeaderAction ScrollToPageTop                               -> liftIO js_scrollToPageTop
+        _ -> pure ()
+
+      -- routing
+      Route.changeRoute $ routesFromState st'  -- FIXME: call only once at the end of every @loop@
+                                               -- sequence in the class method above?
+
       -- other effects
       case act of
         ContributionAction RequestSetAllVerticalSpanBounds -> do
@@ -88,12 +103,6 @@ transformGlobalState = transf
 
         ContributionAction (SetRange _) -> removeAllRanges
         ContributionAction ClearRange   -> removeAllRanges
-
-        ContributionAction ShowCommentEditor                       -> scrollToCurrentSelection (st ^. gsContributionState)
-        DocumentAction (DocumentSave (FormBegin EditIsNotInitial)) -> scrollToCurrentSelection (st ^. gsContributionState)
-        LoadVDoc _                                                 -> liftIO js_scrollToPageTop  -- FIXME: #416.
-        HeaderAction ScrollToPageTop                               -> liftIO js_scrollToPageTop
-        HeaderAction (ScrollToBlockKey (Common.BlockKey k))        -> liftIO . js_scrollToBlockKey $ cs k
 
         ShowNotImplementedYet -> do
             liftIO $ windowAlertST "not implemented yet."
@@ -123,6 +132,51 @@ transformGlobalState = transf
           >=> gsDevState            (pure . devStateUpdate act)
           >=> (\st' -> gsDocumentState (documentStateUpdate act st') st')
 
+initRouting :: IO ()
+initRouting = do
+  Route.onLocationHashChange handleRouteChange
+  handleRouteChange =<< Route.currentRoute
+
+-- | FUTUREWORK: there should be one sum constructor for every route in 'GlobalState', then this
+-- would be much easier to write.  (As it is, we need to be very careful to test the cases in the
+-- right order, since later ones can be true even though earlier ones should fire.)
+routesFromState :: GlobalState -> Route.Route
+routesFromState st
+  | MainMenuOpen tab <- st ^. gsMainMenuState . mmState = case tab of
+      MainMenuHelp                              -> Route.Help
+      MainMenuLogin MainMenuSubTabLogin         -> Route.Login
+      MainMenuLogin MainMenuSubTabRegistration  -> Route.Register
+      MainMenuGroups ()                         -> Route.Groups
+      MainMenuGroup MainMenuGroupProcesses gid  -> Route.GroupProcesses gid
+      MainMenuGroup MainMenuGroupMembers gid    -> Route.GroupMembers gid
+      MainMenuCreateOrUpdateGroup _ _           -> Route.Groups
+        -- FIXME: when creating a group, this is fine, but when updating an existing group, we want
+        -- to return to the last route (either group members or group processes, as of now).  this
+        -- probably works better once we have bread crumbs.
+      MainMenuCreateProcess ref                 -> Route.GroupProcesses . view createVDocGroup $ unsafeReadLocalStateRef ref
+      MainMenuUpdateProcess vid _               -> Route.Process vid
+
+  | Just vid <- st ^. gsEditID
+    = Route.Process vid
+
+  | otherwise
+    = Route.Login
+
+handleRouteChange :: Either Route.RouteParseError Route.Route -> IO ()
+handleRouteChange r = do
+  removeAllRanges
+  js_scrollToPageTop
+  case r of
+    Right Route.Help                 -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuHelp
+    Right Route.Login                -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
+    Right Route.Register             -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabRegistration
+    Right Route.Groups               -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
+    Right (Route.GroupProcesses gid) -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupProcesses gid
+    Right (Route.GroupMembers gid)   -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupMembers gid
+    Right (Route.Process vid)        -> exec $ LoadVDoc vid
+    Left _                           -> exec . MainMenuAction . MainMenuActionOpen $ defaultMainMenuTab
+  where
+    exec = executeAction . action @GlobalState
 
 flushCacheMisses :: IO ()
 flushCacheMisses = do

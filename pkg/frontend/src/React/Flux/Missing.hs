@@ -29,6 +29,8 @@ module React.Flux.Missing
   ( LocalStateRef
   , newLocalStateRef
   , newLocalStateRefM
+  , readLocalStateRef
+  , unsafeReadLocalStateRef
   , mkPersistentStatefulView
   ) where
 
@@ -87,6 +89,13 @@ newLocalStateRef a _ = unsafePerformIO (LocalStateRef . NoJSONRep <$> newIORef a
 {-# NOINLINE newLocalStateRefM #-}
 newLocalStateRefM :: Monad m => a -> m (LocalStateRef a)
 newLocalStateRefM a = pure $ newLocalStateRef a ()
+
+readLocalStateRef :: LocalStateRef a -> IO a
+readLocalStateRef (LocalStateRef (NoJSONRep ref)) = readIORef ref
+
+{-# NOINLINE unsafeReadLocalStateRef #-}
+unsafeReadLocalStateRef :: LocalStateRef a -> a
+unsafeReadLocalStateRef = unsafePerformIO . readLocalStateRef
 
 
 -- * vararg function representations

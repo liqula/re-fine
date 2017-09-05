@@ -83,7 +83,7 @@ config = Config
   { cfgVerbose          = True
   , cfgSeleniumVerbose  = False
   , cfgDisplay          = fromMaybe ":0" $ getPortConfigRaw "DISPLAY"
-  , cfgDisplayDims      = "1280x1024x8"  -- if this is too narrow horizontally, selenium *may* fail
+  , cfgDisplayDims      = "3000x3000x8"  -- if this is too narrow horizontally, selenium *may* fail
                                          -- to find the stuff to the right of the visible screen!
   , cfgSeleniumHubPort  = getPortConfig "SELENIUM_HUB_PORT"
   , cfgSeleniumNodePort = getPortConfig "SELENIUM_NODE_PORT"

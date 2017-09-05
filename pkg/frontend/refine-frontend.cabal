@@ -113,6 +113,7 @@ library
       Refine.Frontend.MainMenu.Types
       Refine.Frontend.Orphans
       Refine.Frontend.Prelude
+      Refine.Frontend.Route
       Refine.Frontend.Screen.Calculations
       Refine.Frontend.Screen.Store
       Refine.Frontend.Screen.Types
@@ -218,6 +219,7 @@ test-suite spec
       Refine.Frontend.IconSpec
       Refine.Frontend.MainMenuSpec
       Refine.Frontend.OrphansSpec
+      Refine.Frontend.RouteSpec
       Refine.Frontend.StoreSpec
       Refine.Frontend.ThirdPartyViewsSpec
       Refine.Frontend.UtilSpec

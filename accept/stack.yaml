@@ -3,6 +3,8 @@ resolver: lts-8.18
 
 packages:
 - '.'
+- '../pkg/common'
+- '../pkg/prelude'
 - location:
     git: https://github.com/zerobuzz/hs-webdriver
     commit: 53c9cd582ede151214522bd46136b5d39a5b7b52
@@ -10,4 +12,10 @@ packages:
   extra-dep: false
 
 extra-deps:
+- basic-sop-0.2.0.2
 - daemons-0.2.1
+- fingertree-tf-0.1.0.0
+- functor-infix-0.0.5
+- i18n-0.4.0.0
+- json-sop-0.2.0.3
+- lens-sop-0.2.0.2
