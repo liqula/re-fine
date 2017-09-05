@@ -26,7 +26,7 @@ import Refine.Backend.App.Smtp
 import Refine.Backend.App.Role
 import Refine.Backend.Config
 import Refine.Backend.Types
-import Refine.Backend.Database.Class (createMetaID_, getMetaID, replaceDBUser, getDBUser)
+import Refine.Backend.Database.Class (createMetaID_, getMetaID, insertDBUser, getDBUser)
 import qualified Refine.Backend.Database.Class as DB
 import Refine.Backend.Database.Entity (toUserID, fromUserID)
 import qualified Refine.Common.Access.Policy as AP
@@ -93,7 +93,7 @@ createUserWith globalRoles groupRoles (CreateUser name email password avatar) = 
   result <- User <$> db (createMetaID_ $ toUserID loginId) <*> pure name <*> pure email <*> pure avatar
 
   let uid = result ^. userID
-  db $ replaceDBUser uid avatar
+  db $ insertDBUser uid avatar
 
   (`assignGlobalRole` uid) `mapM_` globalRoles
   (\(r, g) -> assignGroupRole r uid g) `mapM_` groupRoles

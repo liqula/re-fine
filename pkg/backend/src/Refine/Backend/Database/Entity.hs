@@ -431,7 +431,11 @@ runUsersCmd :: (Users.Persistent -> IO a) -> DB a
 runUsersCmd cmd = liftDB . ReaderT $ \(sqlBackend :: SqlBackend) ->
   liftIO $ cmd (Users.Persistent (`runReaderT` sqlBackend))
 
--- | used for creation and update
+insertDBUser :: ID User -> Maybe Image -> DB ()
+insertDBUser (ID uid) img = do
+  let user = S.DBUser img
+  void . liftDB . insertKey (S.idToKey (ID uid :: ID S.DBUser)) $ user
+
 replaceDBUser :: ID User -> Maybe Image -> DB ()
 replaceDBUser (ID uid) img = do
   let user = S.DBUser img
