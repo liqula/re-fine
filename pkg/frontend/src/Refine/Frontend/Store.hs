@@ -325,7 +325,7 @@ emitBackendCallsFor act st = case act of
         fr <- js_createFileReader
         l <- syncCallback1 ContinueAsync $ \e -> do
               res <- js_targetResult e
-              dispatchAndExec . MainMenuAction . MainMenuActionOpen . MainMenuProfile $ Just (NoJSONRep f, Just $ cs res)
+              dispatchAndExec . MainMenuAction . MainMenuActionOpen . MainMenuProfile $ Just (NoJSONRep f, Just . Image $ cs res)
         js_addOnload fr $ jsval l
         js_doUpload fr f
 

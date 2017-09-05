@@ -526,7 +526,7 @@ mainMenuProfile = mkView "MainMenuProfile" $ \user lst -> case user of
            ]
 
     case lst of
-      Just (NoJSONRep _f, Just source) -> do
+      Just (NoJSONRep _f, Just (Image source)) -> do
         img_ [ "src" $= cs source
              , "style" @@= [ decl "maxWidth" (Px 200)
                            , decl "maxHeight" (Px 200)
