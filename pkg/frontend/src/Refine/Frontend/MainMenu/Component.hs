@@ -314,10 +314,10 @@ mainMenuGroup_ = view_ mainMenuGroup "mainMenuGroup"
 mainMenuMemberShort :: HasCallStack => View '[User]
 mainMenuMemberShort = mkView "MainMenuProcessShort" $ \props -> do
 --  let listKey = "member-list-item-" <> (cs . show $ props ^. userID . unID)
-  div_ [ {-onClick $ \_ _ -> simpleHandler . dispatch
-                         . LoadVDoc $ props ^. mmprocShrtID
+  div_ [ onClick $ \_ _ -> simpleHandler . dispatch
+                         . MainMenuAction . MainMenuActionOpen $ MainMenuProfile Nothing
 
-       , -}"style" @@= [ decl "backgroundColor" (Ident "rgba(84, 99, 122, 1)")
+       , "style" @@= [ decl "backgroundColor" (Ident "rgba(84, 99, 122, 1)")
                      , decl "padding" (Px 50)
                      , decl "margin" (Px 50)
                      , decl "borderRadius" (Px 12)
