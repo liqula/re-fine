@@ -7,7 +7,6 @@ module Refine.Frontend.IconSpec where
 import Test.Hspec
 import Language.Css.Syntax hiding (S)
 
-import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Test.Enzyme
 import           Refine.Frontend.Util
@@ -112,7 +111,7 @@ spec = do
     it "shows the span's text in grey when it is disabled" $ do
       wrapper <- shallow $ iconButton_ (iconButtonTestProps & iconButtonPropsDisabled .~ True)
       span1 <- find wrapper (StringSelector "span")
-      is span1 (StyleSelector [decl "color" Color.DisabledTextColor]) `shouldReturn` True
+      is span1 (StyleSelector [decl "color" (Ident "rgba(169, 169, 169, 1)")]) `shouldReturn` True
 
     it "shows a pointer mouse cursor when it is not disabled" $ do
       wrapper <- shallow $ iconButton_ iconButtonTestProps

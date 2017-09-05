@@ -21,7 +21,6 @@ module Refine.Frontend.Icon
 
 import Language.Css.Syntax
 
-import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Store ()
 import           Refine.Frontend.Store.Types
@@ -95,16 +94,16 @@ sibutton_ mouseIsOver st props = do
             _                                                              -> BisDark
 
       spanSty :: [Decl]
-      spanSty = [ decl "color" textColor
+      spanSty = [ decl "color" (Ident textColor)
                 , decl "fontSize" (Rem 0.75)
                 , decl "marginTop" (Rem 0.3125)
                 ]
              <> [decl "cursor" (Ident "pointer") | props ^. ibEnabled]
         where
           textColor
-            | not (props ^. ibEnabled)  = Color.DisabledTextColor
-            | props ^. ibDarkBackground = Color.TextColorOnDark
-            | otherwise                 = Color.TextColor
+            | not (props ^. ibEnabled)  = "rgba(169, 169, 169, 1)"
+            | props ^. ibDarkBackground = "rgba(210, 217, 223, 1)"
+            | otherwise                 = "rgba(0, 0, 0, 1)"
 
   div_ (onMsOvr <> onClk <> ["style" @@= divSty]) $ do
     div_  ["style" @@= iconSty, "className" $= iconCssClass bg] $ pure ()
@@ -224,7 +223,7 @@ iconButton = mkView "IconButton" $ \props -> do
          ) $ do
         icon_ $ props ^. iconButtonPropsIconProps
         span_ [ "className" $= (props ^. iconButtonPropsIconProps . iconPropsBlockName <> "__button-label")
-              , "style" @@= ([decl "color" Color.DisabledTextColor | props ^. iconButtonPropsDisabled] <>
+              , "style" @@= ([decl "color" (Ident "rgba(169, 169, 169, 1)") | props ^. iconButtonPropsDisabled] <>
                              [decl "marginRight" (Px 15)])
               ] $
             elemJSString (props ^. iconButtonPropsLabel)

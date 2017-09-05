@@ -7,7 +7,6 @@ module Refine.Frontend.Login.Component where
 import           Language.Css.Syntax
 
 import           Refine.Common.Types.Prelude
-import           Refine.Frontend.Colors as Color
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Store.Types as RS
@@ -21,7 +20,7 @@ inputFieldStyles :: HasCallStack => [Decl]
 inputFieldStyles =
   [ decl "borderRadius" (Px 5)
   , decl "margin" (Px 12)
-  , decl "backgroundColor" Color.SCBlue08
+  , decl "backgroundColor" (Ident "rgba(246, 247, 249, 1)")
   ]
 
 inputFieldWithKeyExtra
