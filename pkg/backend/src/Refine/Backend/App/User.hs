@@ -26,7 +26,7 @@ import Refine.Backend.App.Smtp
 import Refine.Backend.App.Role
 import Refine.Backend.Config
 import Refine.Backend.Types
-import Refine.Backend.Database.Class (createMetaID_, getMetaID)
+import Refine.Backend.Database.Class (createMetaID_, getMetaID, replaceDBUser, getDBUser)
 import qualified Refine.Backend.Database.Class as DB
 import Refine.Backend.Database.Entity (toUserID, fromUserID)
 import qualified Refine.Common.Access.Policy as AP
@@ -50,10 +50,9 @@ login (Login username (Users.PasswordPlain -> password)) = do
   loginId <- nothingToError AppSessionError
              =<< dbUsersCmd (\db_ -> Users.verifySession db_ session 0)
   void $ setUserSession (toUserID loginId) (UserSession session)
-  user <- nothingToError (AppUserNotFound username) =<< dbUsersCmd (`Users.getUserById` loginId)
-  mid <- db . getMetaID $ toUserID loginId
+  dbUser <- getUser $ toUserID loginId
   appLog LogDebug . ("login.after:: " <>) . show =<< get
-  pure $ User mid username (Users.u_email user)
+  pure dbUser
 
 -- | Returns (Just (current ID)) of the current user if the user
 -- is logged in otherwise Nothing.
@@ -80,21 +79,24 @@ logout = do
   appLog LogDebug . ("logout.after:: " <>) . show =<< get
 
 createUserWith :: [GlobalRole] -> [(GroupRole, ID Group)] -> CreateUser -> App User
-createUserWith globalRoles groupRoles (CreateUser name email password) = do
+createUserWith globalRoles groupRoles (CreateUser name email password avatar) = do
   appLog LogDebug "createUser"
   assertCreds $ AP.createUser globalRoles groupRoles
   let user = Users.User
-              { Users.u_name  = name
-              , Users.u_email = email
+              { Users.u_name     = name
+              , Users.u_email    = email
               , Users.u_password = Users.makePassword (Users.PasswordPlain password)
-              , Users.u_active = True
+              , Users.u_active   = True
               }
   loginId <- leftToError AppUserCreationError
              =<< dbUsersCmd (`Users.createUser` user)
-  result <- User <$> db (createMetaID_ $ toUserID loginId) <*> pure name <*> pure email
+  result <- User <$> db (createMetaID_ $ toUserID loginId) <*> pure name <*> pure email <*> pure avatar
 
-  (\r -> assignGlobalRole r (result ^. userID)) `mapM_` globalRoles
-  (\(r, g) -> assignGroupRole r (result ^. userID) g) `mapM_` groupRoles
+  let uid = result ^. userID
+  db $ replaceDBUser uid avatar
+
+  (\r -> assignGlobalRole r uid) `mapM_` globalRoles
+  (\(r, g) -> assignGroupRole r uid g) `mapM_` groupRoles
 
   sendMailTo $ EmailMessage result "you have a re-fine account now!" "congratulations (:"
   invalidateCaches $ Set.fromList [CacheKeyUserIds]
@@ -115,7 +117,8 @@ getUserIfAllowedAndExists uid = do
     Nothing -> pure Nothing
     Just user_ -> do
       mid <- db $ getMetaID uid
-      let user = User mid (Users.u_name user_) (Users.u_email user_)
+      avatar <- db $ getDBUser uid
+      let user = User mid (Users.u_name user_) (Users.u_email user_) avatar
       ok <- AP.hasCreds . AP.getUser user . fmap snd . filter ((>= GroupMember) . fst) =<< db (DB.getGroupRoles uid)
       pure $ if ok then Just user else Nothing
 

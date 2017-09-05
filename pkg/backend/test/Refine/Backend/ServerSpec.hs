@@ -210,7 +210,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
 specUserHandling :: Spec
 specUserHandling = around createTestSession $ do
   describe "User handling" $ do
-    let doCreate = post createUserUri (CreateUser testUsername testUserEmail testPassword)
+    let doCreate = post createUserUri (CreateUser testUsername testUserEmail testPassword Nothing)
         doLogin = post loginUri
         doLogout = post logoutUri ()
 

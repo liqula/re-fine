@@ -50,6 +50,8 @@ class Monad db => Database db where
 
   -- User
   runUsersCmd          :: (Users.Persistent -> IO a) -> db a
+  replaceDBUser        :: ID User -> Maybe Image -> db ()
+  getDBUser            :: ID User -> db (Maybe Image)
 
   -- Group
   createGroup          :: CreateGroup -> db Group

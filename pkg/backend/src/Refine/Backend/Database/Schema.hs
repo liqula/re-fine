@@ -75,6 +75,11 @@ GlobalRoles
     role  GlobalRole
     UniGlobalRoles user role
 
+-- Users
+
+DBUser
+    avatar       Image Maybe
+
 -- Connection tables
 
 ParentChild
@@ -120,3 +125,5 @@ makeElim ''GlobalRoles
 
 makeElim ''ParentChild
 makeElim ''PD
+
+makeElim ''DBUser

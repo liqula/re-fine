@@ -36,9 +36,10 @@ type Email    = ST
 type Password = ST
 
 data CreateUser = CreateUser
-  { _cuName :: Username
-  , _cuMail :: Email
-  , _cuPwd  :: Password
+  { _cuName   :: Username
+  , _cuMail   :: Email
+  , _cuPwd    :: Password
+  , _cuAvatar :: Maybe Image
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -46,7 +47,11 @@ data User = User
   { _userMetaID :: MetaID User -- ^ The primary key is used to identify the user.
   , _userName   :: Username
   , _userEmail  :: Email
+  , _userAvatar :: Maybe Image
   }
+  deriving (Eq, Ord, Show, Read, Generic)
+
+newtype Image = Image String
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Login = Login
@@ -83,7 +88,7 @@ data MetaID a = MetaID
 
 -- * make refine types
 
-makeRefineTypes [''CreateUser, ''User, ''Login, ''UserInfo, ''MetaInfo, ''MetaID]
+makeRefineTypes [''CreateUser, ''User, ''Login, ''UserInfo, ''MetaInfo, ''MetaID, ''Image]
 
 userID :: Lens' User (ID User)
 userID = userMetaID . miID

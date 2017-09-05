@@ -113,6 +113,8 @@ instance Database DB where
 
   -- * User
   runUsersCmd        = Entity.runUsersCmd
+  replaceDBUser      = Entity.replaceDBUser
+  getDBUser          = Entity.getDBUser
 
   -- * Group
   createGroup       = Entity.createGroup

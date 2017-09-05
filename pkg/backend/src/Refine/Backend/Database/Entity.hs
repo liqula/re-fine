@@ -29,6 +29,7 @@ type instance S.EntityRep Discussion = S.Discussion
 type instance S.EntityRep Statement  = S.Statement
 type instance S.EntityRep User       = Users.Login
 type instance S.EntityRep Group      = S.Group
+type instance S.EntityRep S.DBUser   = S.DBUser
 
 {-
 [not sure what this comment is about any more..  fisx]
@@ -429,6 +430,17 @@ getStatement sid = do
 runUsersCmd :: (Users.Persistent -> IO a) -> DB a
 runUsersCmd cmd = liftDB . ReaderT $ \(sqlBackend :: SqlBackend) ->
   liftIO $ cmd (Users.Persistent (`runReaderT` sqlBackend))
+
+-- | used for creation and update
+replaceDBUser :: ID User -> Maybe Image -> DB ()
+replaceDBUser (ID uid) img = do
+  let user = S.DBUser img
+  void . liftDB . replace (S.idToKey (ID uid :: ID S.DBUser)) $ user
+
+getDBUser :: ID User -> DB (Maybe Image)
+getDBUser (ID uid) = do
+  x <- getEntityRep (ID uid :: ID S.DBUser)
+  pure $ S.dBUserElim id x
 
 
 -- * Group

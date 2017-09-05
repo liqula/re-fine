@@ -50,7 +50,7 @@ spec = do
     -- FUTUREWORK: Use the Cmd dsl for this test
     it "Create/login/logout" $ \(runner :: AppM DB () -> ExceptT ApiError IO ()) -> do
       throwApiErrors . runner $ do
-        void $ App.createUser (CreateUser "user" "user@example.com" "password")
+        void $ App.createUser (CreateUser "user" "user@example.com" "password" Nothing)
         userState0 <- gets (view appUserState)
         liftIO $ userState0 `shouldBe` UserLoggedOut
 
@@ -116,7 +116,7 @@ spec = do
           pure (vid, eid, es)
 
         addUserAndLogin username = do
-          _ <- App.createUser $ CreateUser username (username <> "@email.com") "password"
+          _ <- App.createUser $ CreateUser username (username <> "@email.com") "password" Nothing
           login $ Login username "password"
 
     it "merge two edits" $ \(runner :: AppM DB () -> ExceptT ApiError IO ()) -> do

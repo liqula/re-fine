@@ -10,7 +10,7 @@ import           Control.Monad ((<=<))
 import           Database.Persist.Sql
 
 import Refine.Backend.Database.Types
-import Refine.Common.Types.Prelude (UserInfo)
+import Refine.Common.Types.Prelude (UserInfo, Image(..))
 import Refine.Common.Types.Role (GroupRole(..), GlobalRole(..))
 import Refine.Common.Types.Core
 
@@ -120,4 +120,11 @@ instance PersistField DBVotes where
   fromPersistValue = fromPersistJSONValue
 
 instance PersistFieldSql DBVotes where
+  sqlType Proxy = sqlType (Proxy @ST)
+
+instance PersistField Image where
+  toPersistValue   = toPersistJSONValue
+  fromPersistValue = fromPersistJSONValue
+
+instance PersistFieldSql Image where
   sqlType Proxy = sqlType (Proxy @ST)

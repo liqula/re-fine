@@ -77,8 +77,6 @@ type MainMenuTabProps = (MainMenuTab
 
 type ImageUpload = Maybe (NoJSONRep File, Maybe Image)
 
-newtype Image = Image String deriving (Eq, Ord, Show, Generic)
-
 newtype File = File JSVal deriving (FromJSVal)
 instance Eq File where _ == _ = False
 instance NFData File where rnf _ = ()
@@ -147,5 +145,4 @@ data MainMenuProcessShortProps = MainMenuProcessShortProps
 
 makeRefineTypes [ ''MainMenuAction, ''MainMenuErrors, ''MainMenuState
                 , ''MainMenu, ''MainMenuTab, ''MainMenuGroup, ''MainMenuSubTabLogin, ''MainMenuProcessShortProps
-                , ''Image
                 ]
