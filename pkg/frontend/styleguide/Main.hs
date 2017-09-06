@@ -323,7 +323,7 @@ pretty nm content = do
   -- void (rawSystem "/usr/bin/tidy" []) `catch`
   --   \(SomeException msg) -> error $ show msg <> "\n\n*** try `apt-get install tidy`?\n\n"
 
-  (code, o, e) <- readProcessWithExitCode "/usr/bin/tidy" ["-i"] content
+  (code, o, e) <- readProcessWithExitCode "/usr/bin/tidy" ["--tidy-mark", "no", "-i"] content
   let err msg = error $ "pretty " <> msg <> ": "     <> show (nm, code, o, e)
   case code of
     ExitSuccess   -> pure o
