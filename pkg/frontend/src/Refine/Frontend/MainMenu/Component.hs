@@ -107,7 +107,11 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
           MainMenuCreateOrUpdateGroup mid lst -> mainMenuCreateGroup_ mid lst
           MainMenuCreateProcess lst           -> mainMenuCreateProcess_ lst
           MainMenuUpdateProcess pid lst       -> mainMenuUpdateProcess_ pid lst
-          MainMenuProfile uid lst             -> mainMenuProfile_ uid lst
+          MainMenuProfile uid lst             -> mainMenuProfile_ editable uid lst
+            where
+              editable = case currentUser of
+                UserLoggedIn u -> either id (^. userID) u == either id (^. userID) uid
+                _ -> False
 
           MainMenuHelp -> pre_ $ do
             elemString $ "commit hash: " <> show BuildInfo.gitCommitHash
@@ -501,8 +505,8 @@ mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst
 mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
 mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
 
-mainMenuProfile :: HasCallStack => View '[Lookup User, ImageUpload]
-mainMenuProfile = mkView "MainMenuProfile" $ \user lst -> case user of
+mainMenuProfile :: HasCallStack => View '[Bool, Lookup User, ImageUpload]
+mainMenuProfile = mkView "MainMenuProfile" $ \editable user lst -> case user of
   Left _uid -> elemText "Loading..."
   Right u -> do
 
@@ -515,29 +519,30 @@ mainMenuProfile = mkView "MainMenuProfile" $ \user lst -> case user of
                            ]
              ] $ pure ()
 
-    let upd evt = case files of
-          Just [f] -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuProfile (u ^. userID) $ Just (NoJSONRep f, Nothing)
-          _ -> simpleHandler []
-          where
-            files = unsafePerformIO $ fromJSVal $ target evt "files"
+    when editable $ do
+      let upd evt = case files of
+            Just [f] -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuProfile (u ^. userID) $ Just (NoJSONRep f, Nothing)
+            _ -> simpleHandler []
+            where
+              files = unsafePerformIO $ fromJSVal $ target evt "files"
 
-    input_ [ "type" $= "file"
-           , onChange upd
-           ]
+      input_ [ "type" $= "file"
+             , onChange upd
+             ]
 
-    case lst of
-      Just (NoJSONRep _f, Just image@(Image source)) -> do
-        img_ [ "src" $= cs source
-             , "style" @@= [ decl "maxWidth" (Px 200)
-                           , decl "maxHeight" (Px 200)
-                           ]
-             ] $ pure ()
-        button_
-          [ onClick $ \_evt _ -> simpleHandler . dispatch $ UploadAvatar (u ^. userID) image
-          ] $ elemText "upload"
-      _ -> pure ()
+      case lst of
+        Just (NoJSONRep _f, Just image@(Image source)) -> do
+          img_ [ "src" $= cs source
+               , "style" @@= [ decl "maxWidth" (Px 200)
+                             , decl "maxHeight" (Px 200)
+                             ]
+               ] $ pure ()
+          button_
+            [ onClick $ \_evt _ -> simpleHandler . dispatch $ UploadAvatar (u ^. userID) image
+            ] $ elemText "upload"
+        _ -> pure ()
 
-mainMenuProfile_ :: HasCallStack => Lookup User -> ImageUpload -> ReactElementM eventHandler ()
+mainMenuProfile_ :: HasCallStack => Bool -> Lookup User -> ImageUpload -> ReactElementM eventHandler ()
 mainMenuProfile_ = view_ mainMenuProfile "mainMenuProfile_"
 
 mainMenuUpdateProcess :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> View '[]
