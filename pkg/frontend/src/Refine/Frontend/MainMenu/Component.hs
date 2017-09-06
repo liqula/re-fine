@@ -524,7 +524,7 @@ mainMenuProfile = mkView "MainMenuProfile" $ \editable user lst -> case user of
             Just [f] -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuProfile (u ^. userID) $ Just (NoJSONRep f, Nothing)
             _ -> simpleHandler []
             where
-              files = unsafePerformIO $ fromJSVal $ target evt "files"
+              files = unsafePerformIO . fromJSVal $ target evt "files"
 
       input_ [ "type" $= "file"
              , onChange upd
