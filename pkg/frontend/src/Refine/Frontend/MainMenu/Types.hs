@@ -56,7 +56,7 @@ type MainMenuTabState = (MainMenuTab
       (LocalStateRef (CreateGroup_ [(User, Bool)]))
       (LocalStateRef CreateVDoc)
       (LocalStateRef UpdateVDoc)
-      ImageUpload
+      (ID User)
       :: *)
 type MainMenuTabAction = (MainMenuTab
       ()
@@ -64,7 +64,7 @@ type MainMenuTabAction = (MainMenuTab
       (FormAction (CreateGroup_ [(User, Bool)]))
       (FormAction CreateVDoc)
       (FormAction UpdateVDoc)
-      ImageUpload
+      (ID User)
       :: *)
 type MainMenuTabProps = (MainMenuTab
       GroupsProps
@@ -72,7 +72,7 @@ type MainMenuTabProps = (MainMenuTab
       (LocalStateRef (CreateGroup_ [(User, Bool)]), Map (ID User) User)
       (LocalStateRef CreateVDoc)
       (LocalStateRef UpdateVDoc)
-      ImageUpload
+      (Lookup User)
       :: *)
 
 type ImageUpload = Maybe (NoJSONRep File, Maybe Image)
@@ -86,7 +86,7 @@ type GroupsProps = ([Group], Map (ID VDoc) VDoc, Map (ID User) User)
 
 -- | FUTUREWORK: it may be nicer after all to have different types for action, state, and props
 -- here.  but for now it should work.
-data MainMenuTab gids group cgroup cprocess uprocess profile
+data MainMenuTab gids group cgroup cprocess uprocess user
   = MainMenuGroups gids
   | MainMenuGroup MainMenuGroup group
   | MainMenuCreateOrUpdateGroup (Maybe (ID Group)) cgroup
@@ -94,7 +94,7 @@ data MainMenuTab gids group cgroup cprocess uprocess profile
   | MainMenuUpdateProcess (ID VDoc) uprocess
   | MainMenuHelp
   | MainMenuLogin MainMenuSubTabLogin
-  | MainMenuProfile profile
+  | MainMenuProfile user ImageUpload
   deriving (Eq, Show, Generic)
 
 data MainMenuGroup
@@ -111,7 +111,7 @@ mapMainMenuTab fa fb fc fd fe ff = \case
   MainMenuUpdateProcess pid e -> MainMenuUpdateProcess pid (fe e)
   MainMenuHelp     -> MainMenuHelp
   MainMenuLogin l  -> MainMenuLogin l
-  MainMenuProfile f -> MainMenuProfile $ ff f
+  MainMenuProfile f upl -> MainMenuProfile (ff f) upl
 
 defaultMainMenuTab :: MainMenuTabAction
 defaultMainMenuTab = MainMenuGroups ()

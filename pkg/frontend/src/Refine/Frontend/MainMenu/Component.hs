@@ -37,13 +37,16 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
 
     div_ ["className" $= "gr-20"] $ do
 
-      ibutton_ $ emptyIbuttonProps "User_profile"
-        [ MainMenuAction . MainMenuActionOpen $ MainMenuProfile Nothing
-        ]
-        & ibListKey .~ "5"
-        & ibDarkBackground .~ True
-        & ibSize .~ XXLarge
-        & ibLabel .~ mempty
+      case currentUser of
+        UserLoggedIn user -> do
+          ibutton_ $ emptyIbuttonProps "User_profile"
+            [ MainMenuAction . MainMenuActionOpen $ MainMenuProfile (either id (^. userID) user) Nothing
+            ]
+            & ibListKey .~ "5"
+            & ibDarkBackground .~ True
+            & ibSize .~ XXLarge
+            & ibLabel .~ mempty
+        _ -> pure ()
 
       ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
         & ibListKey .~ "3"
@@ -104,7 +107,7 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
           MainMenuCreateOrUpdateGroup mid lst -> mainMenuCreateGroup_ mid lst
           MainMenuCreateProcess lst           -> mainMenuCreateProcess_ lst
           MainMenuUpdateProcess pid lst       -> mainMenuUpdateProcess_ pid lst
-          MainMenuProfile lst                 -> mainMenuProfile_ currentUser lst
+          MainMenuProfile uid lst             -> mainMenuProfile_ uid lst
 
           MainMenuHelp -> pre_ $ do
             elemString $ "commit hash: " <> show BuildInfo.gitCommitHash
@@ -315,7 +318,7 @@ mainMenuMemberShort :: HasCallStack => View '[User]
 mainMenuMemberShort = mkView "MainMenuProcessShort" $ \props -> do
 --  let listKey = "member-list-item-" <> (cs . show $ props ^. userID . unID)
   div_ [ onClick $ \_ _ -> simpleHandler . dispatch
-                         . MainMenuAction . MainMenuActionOpen $ MainMenuProfile Nothing
+                         . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (props ^. userID) Nothing
 
        , "style" @@= [ decl "backgroundColor" (Ident "rgba(84, 99, 122, 1)")
                      , decl "padding" (Px 50)
@@ -498,10 +501,10 @@ mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst
 mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
 mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
 
-mainMenuProfile :: HasCallStack => View '[CurrentUser_ (Lookup User), ImageUpload]
+mainMenuProfile :: HasCallStack => View '[Lookup User, ImageUpload]
 mainMenuProfile = mkView "MainMenuProfile" $ \user lst -> case user of
-  UserLoggedIn (Left _uid) -> elemText "Loading..."
-  UserLoggedIn (Right u) -> do
+  Left _uid -> elemText "Loading..."
+  Right u -> do
 
     case u ^. userAvatar of
       Nothing -> elemText "You didn't upload an avatar yet."
@@ -513,7 +516,7 @@ mainMenuProfile = mkView "MainMenuProfile" $ \user lst -> case user of
              ] $ pure ()
 
     let upd evt = case files of
-          Just [f] -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuProfile $ Just (NoJSONRep f, Nothing)
+          Just [f] -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuProfile (u ^. userID) $ Just (NoJSONRep f, Nothing)
           _ -> simpleHandler []
           where
             files = unsafePerformIO $ fromJSVal $ target evt "files"
@@ -534,9 +537,7 @@ mainMenuProfile = mkView "MainMenuProfile" $ \user lst -> case user of
           ] $ elemText "upload"
       _ -> pure ()
 
-  _ -> elemText "please log in"
-
-mainMenuProfile_ :: HasCallStack => CurrentUser_ (Lookup User) -> ImageUpload -> ReactElementM eventHandler ()
+mainMenuProfile_ :: HasCallStack => Lookup User -> ImageUpload -> ReactElementM eventHandler ()
 mainMenuProfile_ = view_ mainMenuProfile "mainMenuProfile_"
 
 mainMenuUpdateProcess :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> View '[]

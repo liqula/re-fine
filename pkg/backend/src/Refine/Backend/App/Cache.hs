@@ -199,7 +199,7 @@ cmdLoopStep conn clientId = do
       TSCreateUser cu         -> sendMessage conn . TCCreateUserResp =<< tryApp (App.createUser cu)
       TSUploadAvatar uid img  -> do
         updateAvatar uid $ Just img
-        sendMessage conn TCUploadReady
+        sendMessage conn $ TCUploadReady uid
       TSLogin li              -> sendMessage conn . TCLoginResp =<< tryApp (App.login li)
       TSLogout                -> void App.logout
       TSGetTranslations k     -> sendMessage conn . TCTranslations =<< App.getTranslations k

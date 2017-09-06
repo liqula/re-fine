@@ -146,7 +146,7 @@ routesFromState st
       MainMenuHelp                              -> Route.Help
       MainMenuLogin MainMenuSubTabLogin         -> Route.Login
       MainMenuLogin MainMenuSubTabRegistration  -> Route.Register
-      MainMenuProfile _                         -> Route.Profile
+      MainMenuProfile uid _                     -> Route.Profile uid
       MainMenuGroups ()                         -> Route.Groups
       MainMenuGroup MainMenuGroupProcesses gid  -> Route.GroupProcesses gid
       MainMenuGroup MainMenuGroupMembers gid    -> Route.GroupMembers gid
@@ -171,7 +171,7 @@ handleRouteChange r = do
     Right Route.Help                 -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuHelp
     Right Route.Login                -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
     Right Route.Register             -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabRegistration
-    Right Route.Profile              -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuProfile Nothing
+    Right (Route.Profile uid)        -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuProfile uid Nothing
     Right Route.Groups               -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
     Right (Route.GroupProcesses gid) -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupProcesses gid
     Right (Route.GroupMembers gid)   -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupMembers gid
@@ -320,12 +320,12 @@ emitBackendCallsFor act st = case act of
 
     CreateUser createUserData -> sendTS $ TSCreateUser createUserData
 
-    MainMenuAction (MainMenuActionOpen (MainMenuProfile (Just (NoJSONRep f, Nothing)))) -> do
+    MainMenuAction (MainMenuActionOpen (MainMenuProfile uid (Just (NoJSONRep f, Nothing)))) -> do
 
         fr <- js_createFileReader
         l <- syncCallback1 ContinueAsync $ \e -> do
               res <- js_targetResult e
-              dispatchAndExec . MainMenuAction . MainMenuActionOpen . MainMenuProfile $ Just (NoJSONRep f, Just . Image $ cs res)
+              dispatchAndExec . MainMenuAction . MainMenuActionOpen . MainMenuProfile uid $ Just (NoJSONRep f, Just . Image $ cs res)
         js_addOnload fr $ jsval l
         js_doUpload fr f
 
