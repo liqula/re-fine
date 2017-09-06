@@ -10,7 +10,6 @@ import           React.Flux.Missing
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Access
-import qualified Refine.Frontend.Colors as Colors
 import           Refine.Frontend.Contribution.Dialog (contributionDialogTextForm)
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Component
@@ -79,7 +78,7 @@ tabStyles :: HasCallStack => [Decl]
 tabStyles =
   [ decl "position" (Ident "absolute")
   , zindex ZIxLoginTab
-  , decl "backgroundColor" Colors.MainmenuContentColor
+  , decl "backgroundColor" (Ident "rgba(210, 217, 223, 1)")
   , decl "padding" (Px 50)
   , decl "borderRadius" (Px 12)
   ]
@@ -152,7 +151,7 @@ mainMenuGroupShort = mkView "MainMenuGroupShort" $ \group -> do
        , "id" $= listKey  -- FUTUREWORK: get rid of this.  at the time of writing this it's only
                           -- used in the acceptance test.
 
-       , "style" @@= [ decl "backgroundColor" Colors.SCBlue03
+       , "style" @@= [ decl "backgroundColor" (Ident "rgba(84, 99, 122, 1)")
                      , decl "padding" (Px 50)
                      , decl "margin" (Px 50)
                      , decl "borderRadius" (Px 12)
@@ -312,7 +311,7 @@ mainMenuMemberShort = mkView "MainMenuProcessShort" $ \props -> do
   div_ [ {-onClick $ \_ _ -> simpleHandler . dispatch
                          . LoadVDoc $ props ^. mmprocShrtID
 
-       , -}"style" @@= [ decl "backgroundColor" Colors.SCBlue03
+       , -}"style" @@= [ decl "backgroundColor" (Ident "rgba(84, 99, 122, 1)")
                      , decl "padding" (Px 50)
                      , decl "margin" (Px 50)
                      , decl "borderRadius" (Px 12)
@@ -367,10 +366,10 @@ mainMenuProcessShort = mkView "MainMenuProcessShort" $ \props -> do
   let listKey = "process-list-item-" <> (cs . show $ props ^. mmprocShrtID . unID)
   div_ [ onClick $ \_ _ -> simpleHandler . dispatch
                          . LoadVDoc $ props ^. mmprocShrtID
-       , "id" $= listKey  -- FUTUREWORK: get rid of this.  at the time of writing this it's only
+       , "id" $= listKey  -- FUTUREWORK: get rid of this.  at the time of writing this is only
                           -- used in the acceptance test.
 
-       , "style" @@= [ decl "backgroundColor" Colors.SCBlue03
+       , "style" @@= [ decl "backgroundColor" (Ident "rgba(84, 99, 122, 1)")
                      , decl "padding" (Px 50)
                      , decl "margin" (Px 50)
                      , decl "borderRadius" (Px 12)

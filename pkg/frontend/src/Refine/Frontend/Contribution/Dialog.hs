@@ -13,7 +13,6 @@ import           Refine.Common.Types
 import           Refine.Frontend.Test.Console (gracefulError)
 import           Refine.Frontend.ThirdPartyViews (skylight_)
 import           Refine.Frontend.Contribution.Types
-import qualified Refine.Frontend.Colors as C
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Screen.Types
@@ -46,20 +45,20 @@ dialogStyles = [ -- Style "display" ("block" :: String)
                 ]
 
 addCommentDialogStyles :: HasCallStack => [Decl]
-addCommentDialogStyles = [decl "backgroundColor" C.VDocComment] <> dialogStyles
+addCommentDialogStyles = [decl "backgroundColor" (Ident "rgba(219, 204, 221, 1)")] <> dialogStyles
 
 -- is vdoc_overlay_content__comment in CSS
 
 showNoteDialogStyles :: HasCallStack => [Decl]
-showNoteDialogStyles = [decl "backgroundColor" C.VDocNote] <> dialogStyles
+showNoteDialogStyles = [decl "backgroundColor" (Ident "rgba(237, 237, 192, 1)")] <> dialogStyles
 
 showDiscussionDialogStyles :: HasCallStack => [Decl]
-showDiscussionDialogStyles = [decl "backgroundColor" C.VDocDiscussion] <> dialogStyles
+showDiscussionDialogStyles = [decl "backgroundColor" (Ident "rgba(215, 233, 255, 1)")] <> dialogStyles
 
 overlayStyles :: HasCallStack => [Decl]
 overlayStyles =
   [ zindex ZIxOverlay
-  , decl "backgroundColor" C.OverlayBackdrop
+  , decl "backgroundColor" (Ident "rgba(255, 255, 255, 0.8)")
   ]
 
 

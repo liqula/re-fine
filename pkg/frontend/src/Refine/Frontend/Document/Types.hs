@@ -9,7 +9,6 @@ import           Language.Css.Syntax hiding (Value)
 
 import           Refine.Common.Types
 import           Refine.Common.VDoc.Draft
-import qualified Refine.Frontend.Colors as Color
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Header.Types
@@ -146,7 +145,8 @@ mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
     go _ = []
 
     mouseover :: MarkID -> [Decl]
-    mouseover cid = [decl "borderBottom" [expr $ Px 2, expr $ Ident "solid", expr Color.VDocRollover] | any (cid `matches`) actives]
+    mouseover cid = [decl "borderBottom" [expr $ Px 2, expr $ Ident "solid", expr $ Ident "rgba(255, 89, 0, 1)"]
+                    | any (cid `matches`) actives]
 
     matches :: MarkID -> MarkID -> Bool
     matches (MarkContribution c _) (MarkContribution c' _) = c == c'
@@ -160,7 +160,7 @@ mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
       ContribIDEdit _             -> bg   0 255 0 0.3
 
     bg :: Int -> Int -> Int -> Double -> [Decl]
-    bg r g b a = ["background" `decl` Color.RGBA r g b a]
+    bg r g b a = ["background" `decl` Ident (mconcat ["rgba(", show r, ", ", show g, ", ", show b, ", ", show a, ")"])]
 
 
 deriveClasses

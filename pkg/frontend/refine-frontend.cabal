@@ -82,7 +82,6 @@ library
       -- find src -name '*.hs' -exec perl -ne '/^module (\S+)[^\S]/ && print "      $1\n"' {} \; | sort
       React.Flux.Missing
       Refine.Frontend.Access
-      Refine.Frontend.Colors
       Refine.Frontend.Contribution.Bubble
       Refine.Frontend.Contribution.Dialog
       Refine.Frontend.Contribution.Discussion

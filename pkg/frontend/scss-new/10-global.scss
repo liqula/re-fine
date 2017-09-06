@@ -1,9 +1,20 @@
+// ----------------------------------------------------------------------------------------------------
+// name spaces
+
+// view (aka component)
+$v: 'v-';
 
 // ----------------------------------------------------------------------------------------------------
 // misc globals
 
 // all distances should be expressed in multiples (or fractions if necessary) of this length.
 $dunit: 6px;
+
+// `data IconSize`.
+$icon-size-medium:  2 * $dunit;
+$icon-size-large:   3 * $dunit;
+$icon-size-xlarge:  4 * $dunit;
+$icon-size-xxlarge: 6 * $dunit;
 
 
 // ----------------------------------------------------------------------------------------------------
@@ -38,4 +49,13 @@ article {
     strong {
         font-family: $font-serif;
     }
+}
+
+
+// ----------------------------------------------------------------------------------------------------
+// for construction work
+
+.draft-box {
+    border: 2px dashed black;
+//    padding: 50px;
 }
