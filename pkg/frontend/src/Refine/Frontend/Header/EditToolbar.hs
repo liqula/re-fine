@@ -45,7 +45,7 @@ getDocumentState :: AccessState -> GlobalState -> DocumentState
 getDocumentState as gs@(gsEditID' -> Just baseid)
   = mapDocumentState
       (const . fromMaybe False
-             $ (==) <$> (as ^? accLoginState . lsCurrentUser . loggedInUser . userID . to UserID)
+             $ (==) <$> (as ^? accLoginState . lsCurrentUser . loggedInUser . to UserID)
                     <*> ((^. editMetaID . miMeta . metaCreatedBy) <$> cacheLookup gs eid))
       (const $ gsRawContent gs)
       (fromMaybe (error "edit is not in cache") . cacheLookup gs)
@@ -58,7 +58,7 @@ getDocumentState as gs@(gsEditID' -> Just baseid)
                             (gsRawContent gs)
                             (StatementPropDetails
                                ed
-                               (as ^? accLoginState . lsCurrentUser . loggedInUser . userID)
+                               (as ^? accLoginState . lsCurrentUser . loggedInUser)
                                ((^. userName) <$> (gs ^. gsServerCache . scUsers))
                             )
                             (gs ^. gsHeaderState . hsDiscussionFlatView)

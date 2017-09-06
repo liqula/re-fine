@@ -90,7 +90,7 @@ mainHeader = React.defineLifecycleView "HeaderSizeCapture" () React.lifecycleCon
 mainHeaderRender :: HasCallStack => () -> MainHeaderProps -> ReactElementM eventHandler ()
 mainHeaderRender () (rs, as) = do
   let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsVDoc . _Just . _Just
-      props = TopMenuBarProps (as ^. accLoginState . lsCurrentUser)
+      props = TopMenuBarProps (cacheLookup' rs <$> (as ^. accLoginState . lsCurrentUser))
 
       mainMenuPart_ = do
         -- in the past, the following needed to be siblings because of the z-index handling.  not sure that's still the case.

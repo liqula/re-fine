@@ -72,7 +72,7 @@ initWebSocket = do
                 dispatchAndExec . MainMenuAction . MainMenuActionLoginError . cs . show $ err
               TCLoginResp (Right user) -> do
                 sendTS TSClearCache
-                dispatchAndExec . SetCurrentUser $ UserLoggedIn user
+                dispatchAndExec . SetCurrentUser . UserLoggedIn $ user ^. userID
                 dispatchAndExec $ MainMenuAction MainMenuActionClose
                 dispatchAndExec LoginGuardPop
               TCUploadReady -> do

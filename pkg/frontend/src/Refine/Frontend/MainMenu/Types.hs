@@ -122,13 +122,13 @@ data MainMenuSubTabLogin = MainMenuSubTabLogin | MainMenuSubTabRegistration
 data MainMenuProps tab = MainMenuProps
   { _mmpMainMenuTab    :: tab
   , _mmpMainMenuErrors :: MainMenuErrors
-  , _mmpCurrentUser    :: CurrentUser
+  , _mmpCurrentUser    :: CurrentUser_ (Lookup User)
   }
   deriving (Eq)
 
 data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
   { _tmbimmpMainMenuTab    :: MainMenuTabProps
-  , _tmbimmpCurrentUser    :: CurrentUser
+  , _tmbimmpCurrentUser    :: CurrentUser_ (Lookup User)
   }
   deriving (Eq)
 

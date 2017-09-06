@@ -26,6 +26,8 @@ formAction _ _ c FormCancel       = c
 
 type FormAction a = FormActionWith (LocalStateRef a) a
 
+type Lookup a = Either (ID a) a
+
 
 -- | FIXME: use React.Flux.Outdated.ReactViewKey instead (slightly more sophisticated).
 type ReactListKey = JSString

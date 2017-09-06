@@ -60,7 +60,7 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
                               id
                               tab)
                             (gs ^. gsMainMenuState . mmErrors)
-                            (as ^. accLoginState . lsCurrentUser)
+                            (cacheLookup' gs <$> (as ^. accLoginState . lsCurrentUser))
         where
           groupFromCache :: ID Group -> (Maybe Group, Map (ID VDoc) VDoc, Map (ID User) User)
           groupFromCache gid = (cacheLookup gs gid, vdocs, users)

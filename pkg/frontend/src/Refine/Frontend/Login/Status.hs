@@ -10,7 +10,7 @@ import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Store.Types
 
 
-loginStatusButton_ :: HasCallStack => (forall onclick. IbuttonProps onclick -> IbuttonProps onclick) -> CurrentUser -> ReactElementM handler ()
+loginStatusButton_ :: HasCallStack => (forall onclick. IbuttonProps onclick -> IbuttonProps onclick) -> CurrentUser_ (Either (ID User) User) -> ReactElementM handler ()
 loginStatusButton_ tweak cu = ibutton_ $ emptyIbuttonProps "Login" onclick
   & ibLabel .~ mkLabel cu
   & ibSize .~ XXLarge
@@ -20,4 +20,4 @@ loginStatusButton_ tweak cu = ibutton_ $ emptyIbuttonProps "Login" onclick
     onclick = [MainMenuAction $ MainMenuActionOpen (MainMenuLogin MainMenuSubTabLogin)]
 
     mkLabel UserLoggedOut    = "login"
-    mkLabel (UserLoggedIn n) = "I am " <> (n ^. Common.userName)
+    mkLabel (UserLoggedIn n) = "I am " <> either (const "...") (^. Common.userName) n

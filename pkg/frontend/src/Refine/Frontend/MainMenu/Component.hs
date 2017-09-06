@@ -498,9 +498,10 @@ mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst
 mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
 mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
 
-mainMenuProfile :: HasCallStack => View '[CurrentUser, ImageUpload]
+mainMenuProfile :: HasCallStack => View '[CurrentUser_ (Lookup User), ImageUpload]
 mainMenuProfile = mkView "MainMenuProfile" $ \user lst -> case user of
-  UserLoggedIn u -> do
+  UserLoggedIn (Left _uid) -> elemText "Loading..."
+  UserLoggedIn (Right u) -> do
 
     case u ^. userAvatar of
       Nothing -> elemText "You didn't upload an avatar yet."
@@ -535,7 +536,7 @@ mainMenuProfile = mkView "MainMenuProfile" $ \user lst -> case user of
 
   _ -> elemText "please log in"
 
-mainMenuProfile_ :: HasCallStack => CurrentUser -> ImageUpload -> ReactElementM eventHandler ()
+mainMenuProfile_ :: HasCallStack => CurrentUser_ (Lookup User) -> ImageUpload -> ReactElementM eventHandler ()
 mainMenuProfile_ = view_ mainMenuProfile "mainMenuProfile_"
 
 mainMenuUpdateProcess :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> View '[]

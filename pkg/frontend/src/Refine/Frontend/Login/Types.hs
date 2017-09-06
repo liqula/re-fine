@@ -8,6 +8,7 @@ module Refine.Frontend.Login.Types where
 type FormError = Maybe ST
 
 type CurrentUser = CurrentUser_ User
+type CurrentUserState = CurrentUser_ (ID User)
 
 data CurrentUser_ user{-ID User | User-}
   = UserLoggedIn {_loggedInUser :: user}
@@ -15,7 +16,7 @@ data CurrentUser_ user{-ID User | User-}
   deriving (Show, Eq, Generic, Functor)
 
 newtype LoginState = LoginState
-  { _lsCurrentUser :: CurrentUser  -- FIXME: CurrentUser_ (ID User)
+  { _lsCurrentUser :: CurrentUserState
   }
   deriving (Show, Eq, Generic)
 
