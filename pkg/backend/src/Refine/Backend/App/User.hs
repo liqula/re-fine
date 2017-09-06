@@ -146,5 +146,6 @@ withCurrentUser f = do
 
 updateAvatar :: ID User -> Maybe Image -> App ()
 updateAvatar uid avatar = do
+  assertCreds $ AP.updateUser uid
   db $ replaceDBUser uid avatar
   invalidateCaches $ Set.fromList [CacheKeyUser uid]

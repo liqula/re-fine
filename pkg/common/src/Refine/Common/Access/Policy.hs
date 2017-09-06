@@ -8,6 +8,7 @@ module Refine.Common.Access.Policy
   , deleteGroup
   , createUser
   , getUser
+  , updateUser
   , createProcessInGroup
   , createOrUpdateVDoc
   , viewVDoc
@@ -61,6 +62,12 @@ getUser user gids = CredsAny
    $ (CredsLeaf . CredUser . UserID $ user ^. userID)
   :| (CredsLeaf (CredGlobalRole GlobalAdmin)
       : (groupMember <$> gids))
+
+updateUser :: ID User -> Creds
+updateUser uid = CredsAny
+   $ (CredsLeaf . CredUser $ UserID uid)
+  :| (CredsLeaf (CredGlobalRole GlobalAdmin)
+      : [])
 
 
 -- * process
