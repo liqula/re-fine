@@ -387,14 +387,14 @@ viewsSources =
     , ("menu/mainMenuGroups_", mainMenuGroups_
         ( [sampleGroup1, sampleGroup2]
         , Map.singleton (ID 0) sampleVDoc
-        , mkUserMap [ User sampleMetaID "user" "<email@bla.com>"
-                    , User sampleMetaID "üsör" "<grr@bla.com>" & userID .~ ID 8479]
+        , mkUserMap [ User sampleMetaID "user" "<email@bla.com>" Nothing
+                    , User sampleMetaID "üsör" "<grr@bla.com>" Nothing & userID .~ ID 8479]
         ), [])
     , ("menu/mainMenuGroup_", mainMenuGroup_ . (,) MainMenuGroupProcesses $
         ( Just sampleGroup1
         , Map.singleton (ID 0) sampleVDoc
-        , mkUserMap [ User sampleMetaID "user" "<email@bla.com>"
-                    , User sampleMetaID "üsör" "<grr@bla.com>" & userID .~ ID 8479]
+        , mkUserMap [ User sampleMetaID "user" "<email@bla.com>" Nothing
+                    , User sampleMetaID "üsör" "<grr@bla.com>" Nothing & userID .~ ID 8479]
         ), [])
     -- , ("mainMenuCreateGroup_", mainMenuCreateGroup_ _, [])
     -- , ("mainMenuCreateProcess_", mainMenuCreateProcess_ _, [])
