@@ -75,8 +75,6 @@ initWebSocket = do
                 dispatchAndExec . SetCurrentUser . UserLoggedIn $ user ^. userID
                 dispatchAndExec $ MainMenuAction MainMenuActionClose
                 dispatchAndExec LoginGuardPop
-              TCUploadReady uid -> do
-                dispatchAndExec . MainMenuAction . MainMenuActionOpen $ MainMenuProfile uid Nothing
 
               TCTranslations l10 ->
                 dispatchAndExec $ ChangeTranslations l10

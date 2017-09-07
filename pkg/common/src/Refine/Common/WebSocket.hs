@@ -83,7 +83,6 @@ data ToClient
 
   | TCCreateUserResp (Either ApiError User)  -- ^ response to 'TSCreateUser'
   | TCLoginResp (Either ApiError User)       -- ^ response to 'TSLogin'
-  | TCUploadReady (ID User)                  -- ^ response to 'TSUploadAvatar'
   | TCTranslations L10                       -- ^ response to 'TSGetTranslations'
 
   | TCGreeting WSSessionId           -- ^ first message on connect

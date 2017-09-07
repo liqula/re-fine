@@ -40,7 +40,7 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
       case currentUser of
         UserLoggedIn user -> do
           ibutton_ $ emptyIbuttonProps "User_profile"
-            [ MainMenuAction . MainMenuActionOpen $ MainMenuProfile (either id (^. userID) user) Nothing
+            [ MainMenuAction . MainMenuActionOpen $ MainMenuProfile (either id (^. userID) user, FormBegin $ newLocalStateRef Nothing user)
             ]
             & ibListKey .~ "5"
             & ibDarkBackground .~ True
@@ -107,7 +107,7 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
           MainMenuCreateOrUpdateGroup mid lst -> mainMenuCreateGroup_ mid lst
           MainMenuCreateProcess lst           -> mainMenuCreateProcess_ lst
           MainMenuUpdateProcess pid lst       -> mainMenuUpdateProcess_ pid lst
-          MainMenuProfile uid lst             -> mainMenuProfile_ editable uid lst
+          MainMenuProfile (uid, lst)          -> mainMenuProfile_ editable uid lst
             where
               editable = case currentUser of
                 UserLoggedIn u -> either id (^. userID) u == either id (^. userID) uid
@@ -322,7 +322,7 @@ mainMenuMemberShort :: HasCallStack => View '[User]
 mainMenuMemberShort = mkView "MainMenuProcessShort" $ \props -> do
 --  let listKey = "member-list-item-" <> (cs . show $ props ^. userID . unID)
   div_ [ onClick $ \_ _ -> simpleHandler . dispatch
-                         . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (props ^. userID) Nothing
+                         . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (props ^. userID, FormBegin $ newLocalStateRef Nothing props)
 
        , "style" @@= [ decl "backgroundColor" (Ident "rgba(84, 99, 122, 1)")
                      , decl "padding" (Px 50)
@@ -516,8 +516,8 @@ mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreatePr
 
 -}
 
-mainMenuProfile :: HasCallStack => View '[Bool, Lookup User, ImageUpload]
-mainMenuProfile = mkView "MainMenuProfile" $ \editable user lst -> case user of
+mainMenuProfile :: HasCallStack => Bool -> Lookup User -> LocalStateRef ImageUpload -> View '[]
+mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" lst Nothing $ \st -> case user of
   Left _uid -> elemText "Loading..."
   Right u -> do
 
@@ -532,8 +532,8 @@ mainMenuProfile = mkView "MainMenuProfile" $ \editable user lst -> case user of
 
     when editable $ do
       let upd evt = case files of
-            Just [f] -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuProfile (u ^. userID) $ Just (NoJSONRep f, Nothing)
-            _ -> simpleHandler []
+            Just [f] -> simpleHandler $ \_st' -> ([action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormBegin lst)], Just $ Just (NoJSONRep f, Nothing))
+            _ -> simpleHandler $ \_ -> ([], Nothing)
             where
               files = unsafePerformIO . fromJSVal $ target evt "files"
 
@@ -541,20 +541,20 @@ mainMenuProfile = mkView "MainMenuProfile" $ \editable user lst -> case user of
              , onChange upd
              ]
 
-      case lst of
-        Just (NoJSONRep _f, Just image@(Image source)) -> do
+      case st of
+        Just (NoJSONRep _f, Just (Image source)) -> do
           img_ [ "src" $= cs source
                , "style" @@= [ decl "maxWidth" (Px 200)
                              , decl "maxHeight" (Px 200)
                              ]
                ] $ pure ()
           button_
-            [ onClick $ \_evt _ -> simpleHandler . dispatch $ UploadAvatar (u ^. userID) image
+            [ onClick $ \_evt _ -> simpleHandler @_ $ \st' -> ([action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete st')], Just Nothing)
             ] $ elemText "upload"
         _ -> pure ()
 
-mainMenuProfile_ :: HasCallStack => Bool -> Lookup User -> ImageUpload -> ReactElementM eventHandler ()
-mainMenuProfile_ = view_ mainMenuProfile "mainMenuProfile_"
+mainMenuProfile_ :: HasCallStack => Bool -> Lookup User -> LocalStateRef ImageUpload -> ReactElementM eventHandler ()
+mainMenuProfile_ editable user lst = view_ (mainMenuProfile editable user lst) "mainMenuProfile_"
 
 mainMenuUpdateProcess :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> View '[]
 mainMenuUpdateProcess vid lst = mkPersistentStatefulView "MainMenuUpdateProcess" lst Nothing $

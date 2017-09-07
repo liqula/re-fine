@@ -60,6 +60,7 @@ module Refine.Frontend.Icon.Types
 import Language.Css.Syntax hiding (S)
 import Language.Css.Build hiding (ex, s)
 
+--import           Refine.Common.Types.Prelude
 import           Refine.Frontend.CS ()
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
@@ -72,11 +73,11 @@ data Align = AlignRight | AlignLeft
 
 data HighlightWhen = HighlightNever | HighlightOnMouseOver | HighlightAlways
   deriving (Eq, Show, Generic)
-
+{-
 data ButtonImage
   = ImageIcon ST             -- ^ Like "User" which refers to a file
   | ImageInline Image{-rename to ImageInline-}                                          -- ^ "data:image/..."
-
+-}
 data IbuttonProps onclick = IbuttonProps
   { _ibListKey          :: ReactListKey  -- ^ this is not morally part of the props, but it's convenient to keep it here.
   , _ibLabel            :: ST

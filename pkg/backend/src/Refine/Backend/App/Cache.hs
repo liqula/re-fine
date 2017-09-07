@@ -197,9 +197,7 @@ cmdLoopStep conn clientId = do
       TSAddGroup cg           -> sendMessage conn . TCCreatedGroup . view groupID =<< App.addGroup cg
       TSUpdateGroup gid x     -> void $ App.modifyGroup gid x
       TSCreateUser cu         -> sendMessage conn . TCCreateUserResp =<< tryApp (App.createUser cu)
-      TSUploadAvatar uid img  -> do
-        updateAvatar uid $ Just img
-        sendMessage conn $ TCUploadReady uid
+      TSUploadAvatar uid img  -> updateAvatar uid $ Just img
       TSLogin li              -> sendMessage conn . TCLoginResp =<< tryApp (App.login li)
       TSLogout                -> void App.logout
       TSGetTranslations k     -> sendMessage conn . TCTranslations =<< App.getTranslations k

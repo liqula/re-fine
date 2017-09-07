@@ -25,7 +25,7 @@ mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) _ st = case tab of
                                 (formAction id (error "impossible - MainMenuUpdateProcess #1") (error "impossible - MainMenuUpdateProcess #2"))
                                 (formAction id (error "impossible - MainMenuUpdateProcess #3") (error "impossible - MainMenuUpdateProcess #4"))
                                 (formAction id (error "impossible - MainMenuUpdateProcess #5") (error "impossible - MainMenuUpdateProcess #6"))
-                                id
+                                (second $ formAction id (error "impossible - MainMenuUpdateProcess #7") (error "impossible - MainMenuUpdateProcess #8"))
                                 tab
                                )
 
