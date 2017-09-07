@@ -56,7 +56,7 @@ type MainMenuTabState = (MainMenuTab
       (LocalStateRef (CreateGroup_ [(User, Bool)]))
       (LocalStateRef CreateVDoc)
       (LocalStateRef UpdateVDoc)
-      (ID User, LocalStateRef ImageUpload)
+      (ID User, LocalStateRef ProfileProps)
       :: *)
 type MainMenuTabAction = (MainMenuTab
       ()
@@ -64,7 +64,7 @@ type MainMenuTabAction = (MainMenuTab
       (FormAction (CreateGroup_ [(User, Bool)]))
       (FormAction CreateVDoc)
       (FormAction UpdateVDoc)
-      (ID User, FormAction ImageUpload)
+      (ID User, FormAction ProfileProps)
       :: *)
 type MainMenuTabProps = (MainMenuTab
       GroupsProps
@@ -72,9 +72,10 @@ type MainMenuTabProps = (MainMenuTab
       (LocalStateRef (CreateGroup_ [(User, Bool)]), Map (ID User) User)
       (LocalStateRef CreateVDoc)
       (LocalStateRef UpdateVDoc)
-      (Lookup User, LocalStateRef ImageUpload)
+      (Lookup User, LocalStateRef ProfileProps)
       :: *)
 
+type ProfileProps = (ImageUpload{-avatar-}, ST{-user description-})
 type ImageUpload = Maybe (NoJSONRep File, Maybe Image)
 
 newtype File = File JSVal deriving (FromJSVal)

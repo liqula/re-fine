@@ -180,7 +180,8 @@ registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "
                                               . (CreateUser <$> _registrationFormUsername
                                                             <*> _registrationFormEmail1
                                                             <*> _registrationFormPassword
-                                                            <*> pure Nothing)
+                                                            <*> pure Nothing
+                                                            <*> pure "")
                                               $ curState]
 
 registration_ :: HasCallStack => FormError -> ReactElementM eventHandler ()

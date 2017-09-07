@@ -79,6 +79,7 @@ GlobalRoles
 
 DBUser
     avatar       Image Maybe
+    description  Text
 
 -- Connection tables
 

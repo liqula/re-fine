@@ -36,18 +36,20 @@ type Email    = ST
 type Password = ST
 
 data CreateUser = CreateUser
-  { _cuName   :: Username
-  , _cuMail   :: Email
-  , _cuPwd    :: Password
-  , _cuAvatar :: Maybe Image
+  { _cuName        :: Username
+  , _cuMail        :: Email
+  , _cuPwd         :: Password
+  , _cuAvatar      :: Maybe Image
+  , _cuDescription :: ST
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
 data User = User
-  { _userMetaID :: MetaID User -- ^ The primary key is used to identify the user.
-  , _userName   :: Username
-  , _userEmail  :: Email
-  , _userAvatar :: Maybe Image
+  { _userMetaID      :: MetaID User -- ^ The primary key is used to identify the user.
+  , _userName        :: Username
+  , _userEmail       :: Email
+  , _userAvatar      :: Maybe Image
+  , _userDescription :: ST
   }
   deriving (Eq, Ord, Show, Read, Generic)
 

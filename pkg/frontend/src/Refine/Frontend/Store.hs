@@ -171,7 +171,7 @@ handleRouteChange r = do
     Right Route.Help                 -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuHelp
     Right Route.Login                -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
     Right Route.Register             -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabRegistration
-    Right (Route.Profile uid)        -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (uid, FormBegin $ newLocalStateRef Nothing uid)
+    Right (Route.Profile uid)        -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (uid, FormBegin $ newLocalStateRef (Nothing, "") uid)
     Right Route.Groups               -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
     Right (Route.GroupProcesses gid) -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupProcesses gid
     Right (Route.GroupMembers gid)   -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupMembers gid
@@ -324,18 +324,18 @@ emitBackendCallsFor act st = case act of
 
       v <- readLocalStateRef lst
       case v of
-        Just (NoJSONRep f, Nothing) -> do
+        (Just (NoJSONRep f, Nothing), desc) -> do
           fr <- js_createFileReader
           l <- syncCallback1 ContinueAsync $ \e -> do
                 res <- js_targetResult e
                 dispatchAndExec . MainMenuAction . MainMenuActionOpen
-                  $ MainMenuProfile (uid, FormBegin $ newLocalStateRef (Just (NoJSONRep f, Just . Image $ cs res)) lst)
+                  $ MainMenuProfile (uid, FormBegin $ newLocalStateRef (Just (NoJSONRep f, Just . Image $ cs res), desc) lst)
           js_addOnload fr $ jsval l
           js_doUpload fr f
         _ -> pure ()
 
-    MainMenuAction (MainMenuActionOpen (MainMenuProfile (uid, FormComplete (Just (_, Just img)))))
-      -> sendTS $ TSUploadAvatar uid img
+    MainMenuAction (MainMenuActionOpen (MainMenuProfile (uid, FormComplete (img, desc))))
+      -> sendTS $ TSUpdateUser uid (join $ snd <$> img, desc)
 
     -- voting
 

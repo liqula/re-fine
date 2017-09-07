@@ -17,6 +17,7 @@ import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
 import           Refine.Backend.Database.Types
 import           Refine.Backend.Database.Tree
+import           Refine.Backend.Types
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
 import qualified Refine.Common.OT as OT
@@ -431,20 +432,20 @@ runUsersCmd :: (Users.Persistent -> IO a) -> DB a
 runUsersCmd cmd = liftDB . ReaderT $ \(sqlBackend :: SqlBackend) ->
   liftIO $ cmd (Users.Persistent (`runReaderT` sqlBackend))
 
-insertDBUser :: ID User -> Maybe Image -> DB ()
-insertDBUser (ID uid) img = do
-  let user = S.DBUser img
+insertDBUser :: ID User -> UserDetails -> DB ()
+insertDBUser (ID uid) (img, desc) = do
+  let user = S.DBUser img desc
   void . liftDB . insertKey (S.idToKey (ID uid :: ID S.DBUser)) $ user
 
-replaceDBUser :: ID User -> Maybe Image -> DB ()
-replaceDBUser (ID uid) img = do
-  let user = S.DBUser img
+replaceDBUser :: ID User -> UserDetails -> DB ()
+replaceDBUser (ID uid) (img, desc) = do
+  let user = S.DBUser img desc
   void . liftDB . replace (S.idToKey (ID uid :: ID S.DBUser)) $ user
 
-getDBUser :: ID User -> DB (Maybe Image)
+getDBUser :: ID User -> DB UserDetails
 getDBUser (ID uid) = do
   x <- getEntityRep (ID uid :: ID S.DBUser)
-  pure $ S.dBUserElim id x
+  pure $ S.dBUserElim (,) x
 
 
 -- * Group
