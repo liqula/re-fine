@@ -120,9 +120,9 @@ spec = do
 
 
   describe "Draft" $ do
-    it "editor_ mounts" $ do
+    it "draftEditor_ mounts" $ do
       let doc :: String = "1243/asdf_#$%^"
-      wrapper <- mount $ editor_ (defaultEditorProps doc) mempty
+      wrapper <- mount $ draftEditor_ (defaultEditorProps doc) mempty
       contents :: String <- cs <$> html wrapper
       contents `shouldContain` "<div"
       contents `shouldContain` "public-DraftEditor-content"

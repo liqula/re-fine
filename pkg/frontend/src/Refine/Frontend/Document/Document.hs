@@ -24,7 +24,7 @@ import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.ThirdPartyViews (editor_)
+import           Refine.Frontend.ThirdPartyViews (draftEditor_)
 import           Refine.Frontend.Util
 
 
@@ -78,7 +78,7 @@ documentRender () props = liftViewToStateHandler . articleWrap $ case dstate of
          , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
          ]
 
-    mkEditor rawContent editorState = editor_
+    mkEditor rawContent editorState = draftEditor_
         [ "editorState" &= editorState
         , "customStyleMap" &= documentStyleMap
         , "readOnly" &= has _DocumentStateView dstate

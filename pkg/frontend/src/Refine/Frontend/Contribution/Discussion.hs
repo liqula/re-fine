@@ -18,7 +18,7 @@ import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.ThirdPartyViews (editor_)
+import           Refine.Frontend.ThirdPartyViews (draftEditor_)
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
@@ -48,7 +48,7 @@ discussion_ = view_ discussion "discussion_"
 aboutText :: HasCallStack => View '[(RawContent, ContributionID)]
 aboutText = mkView "AboutText" $ \(rc, did) -> do
   h1_ "Related Text:"
-  editor_
+  draftEditor_
     [ "editorState" &= createWithRawContent rc
     , "customStyleMap" &= mkDocumentStyleMap [MarkContribution did 0] (Just rc)
     , "readOnly" &= True

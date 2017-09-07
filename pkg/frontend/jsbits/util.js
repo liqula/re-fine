@@ -140,7 +140,7 @@
         };
 
         var iterate = function(node, offset) {
-            // out of parents (happens if point lies outside of editor_ component).
+            // out of parents (happens if point lies outside of draftEditor_ component).
             if (!node) {
                 return {};
             }

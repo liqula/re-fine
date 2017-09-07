@@ -25,6 +25,6 @@ spec = do
     pendingWith "uncaught exception: JSException (JavaScript exception: TypeError: Cannot read property '__reactAutoBindPairs' of undefined)"
     testThirdPartyView hammer_
 
-  it "editor_" $ do
+  it "draftEditor_" $ do
     pendingWith "uncaught exception: JSException (JavaScript exception: TypeError: Cannot read property 'getCurrentContent' of undefined)"
-    testThirdPartyView editor_
+    testThirdPartyView draftEditor_
