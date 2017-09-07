@@ -128,7 +128,7 @@ matchTKeys line = case mrSubList res of
   bad   -> error $ "getTKeyCalls: impossible regex match: " <> show bad
   where
     res :: MatchResult SBS
-    res = line =~ ("__ (\\w\\w\\w+)" :: SBS)
+    res = line =~ ("__ ([a-zA-Z0-9_]{3,})" :: SBS)
 
 unitTestMatchTKeys :: IO ()
 unitTestMatchTKeys = sequence_

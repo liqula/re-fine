@@ -1,4 +1,4 @@
-#: pkg/frontend/src/Refine/Frontend/Contribution/Dialog.hs:235
+#: pkg/frontend/src/Refine/Frontend/Contribution/Dialog.hs:234
 msgid "add_a_comment"
 msgstr ""
 
