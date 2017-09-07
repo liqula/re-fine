@@ -505,6 +505,17 @@ mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst
 mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
 mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
 
+{-
+
+- mkPersistentStatefulView is needed because of a text form
+- with mkPersistentStatefulView, the local state is updated without emitting any actions
+- in persistentStatefulView it is still possible to emit the action which is needed to upload the icon to the browser
+- the upload is done in transform function in Store.hs
+- when the upload is ready, we have to update the local state without forgetting the details there (like half-filled form)
+- this is possible with local state update function
+
+-}
+
 mainMenuProfile :: HasCallStack => View '[Bool, Lookup User, ImageUpload]
 mainMenuProfile = mkView "MainMenuProfile" $ \editable user lst -> case user of
   Left _uid -> elemText "Loading..."
