@@ -51,7 +51,7 @@ ibutton_ props = view_ ibutton ("Ibutton_" <> props ^. ibListKey) props
 -- This is not going through the hoops of `mkStatefulView`, because
 -- that would insulate the local state from the state the calling
 -- component wants to share with this button.  Instead, render the
--- 'ReactElement' directlyk.
+-- 'ReactElement' directly.
 sibutton_ :: forall onclick st (handler :: EventHandlerCode *).
                   (HasCallStack, IbuttonOnClick onclick handler, handler ~ 'StatefulEventHandlerCode st)
                => Lens' st Bool -> st -> IbuttonProps onclick -> ReactElementM handler ()
