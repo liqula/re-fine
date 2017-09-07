@@ -81,6 +81,7 @@ data GlobalAction =
 
     -- users
   | CreateUser CreateUser
+  | UploadAvatar (ID User) Image
 
     -- testing & dev
   | ResetState GlobalState
@@ -117,6 +118,10 @@ cacheMisses keys i _ = unsafePerformIO $ do
 cacheMiss :: CacheKey -> i -> a -> i
 cacheMiss = cacheMisses . pure
 
+-- prefer to use this instead of cacheMiss
+cacheMissId :: CacheLookup v => ID v -> a -> a
+cacheMissId i x = cacheMiss (cacheKey i) x i
+
 gsRawContent :: GlobalState -> RawContent
 gsRawContent (view gsVDoc -> Just (Just cvdoc)) = rawContentFromCompositeVDoc cvdoc
 gsRawContent _ = mkRawContent $ mkBlock "loading..." :| []
@@ -130,6 +135,10 @@ cacheLookupIn sc i@(cacheKey -> k) = maybe (cacheMiss k Nothing i) Just . Map.lo
 
 cacheLookup :: (HasCallStack, CacheLookup b) => GlobalState_ a -> ID b -> Maybe b
 cacheLookup gs = cacheLookupIn (gs ^. gsServerCache)
+
+-- prefer to use this instead of cacheLookup; FIXME: give a better name
+cacheLookup' :: (HasCallStack, CacheLookup b) => GlobalState_ a -> ID b -> Lookup b
+cacheLookup' gs i = maybe (Left i) Right $ cacheLookup gs i
 
 type CacheLookupT = Except ()
 

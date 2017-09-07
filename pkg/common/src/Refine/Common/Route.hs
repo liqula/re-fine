@@ -11,6 +11,7 @@ data Route
   = Help
   | Login
   | Register
+  | Profile (T.ID T.User)
   | Groups
   | GroupProcesses (T.ID T.Group)
   | GroupMembers (T.ID T.Group)
@@ -22,6 +23,7 @@ rrender = \case
   Help                      -> "#/help"
   Login                     -> "#/login"
   Register                  -> "#/register"
+  Profile (T.ID uid)        -> "#/profile/" <> cs (show uid)
   Groups                    -> "#/groups"
   GroupProcesses (T.ID gid) -> "#/group/" <> cs (show gid) <> "/procs"
   GroupMembers (T.ID gid)   -> "#/group/" <> cs (show gid) <> "/members"
@@ -35,6 +37,7 @@ rparse hash = (removeLeadingHash . removeTrailingSlashes $ cs hash) >>= removeLe
   "help"                                   -> pure   Help
   "login"                                  -> pure   Login
   "register"                               -> pure   Register
+  (strip "profile/" -> Just (i, ""))       -> pure . Profile $ T.ID i
   "groups"                                 -> pure   Groups
   (strip "group/" -> Just (i, "/procs"))   -> pure . GroupProcesses $ T.ID i
   (strip "group/" -> Just (i, "/members")) -> pure . GroupMembers $ T.ID i

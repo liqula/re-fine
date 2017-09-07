@@ -5,6 +5,7 @@ module Refine.Frontend.Header.Types where
 #include "import_frontend.hs"
 
 import Refine.Common.Types
+import Refine.Frontend.Types
 import Refine.Frontend.Login.Types
 
 
@@ -45,7 +46,7 @@ newtype AddLinkFormState = AddLinkFormState
 
 
 newtype TopMenuBarProps = TopMenuBarProps
-  { _currentUser :: CurrentUser
+  { _currentUser :: CurrentUser_ (Lookup User)
   } deriving (Eq, Generic)
 
 

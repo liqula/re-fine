@@ -8,6 +8,7 @@ import           Language.Css.Syntax
 
 import           Refine.Common.Types.Prelude
 import           Refine.Frontend.Icon
+import           Refine.Frontend.Types
 import           Refine.Frontend.Login.Types
 import qualified Refine.Frontend.Store.Types as RS
 import qualified Refine.Frontend.Access as RS
@@ -84,7 +85,7 @@ invalidRegistrationForm form =
      , form ^. registrationFormAgree . to not
      ]
 
-loginOrLogout_ :: HasCallStack => CurrentUser -> FormError -> ReactElementM eventHandler ()
+loginOrLogout_ :: HasCallStack => CurrentUser_ (Lookup User) -> FormError -> ReactElementM eventHandler ()
 loginOrLogout_ = \case
   UserLoggedOut  -> login_
   UserLoggedIn _ -> const logout_
@@ -178,7 +179,8 @@ registration errors = mkStatefulView "Registration" (RegistrationForm "" "" "" "
         & iconButtonPropsOnClick      .~ [RS.CreateUser
                                               . (CreateUser <$> _registrationFormUsername
                                                             <*> _registrationFormEmail1
-                                                            <*> _registrationFormPassword)
+                                                            <*> _registrationFormPassword
+                                                            <*> pure Nothing)
                                               $ curState]
 
 registration_ :: HasCallStack => FormError -> ReactElementM eventHandler ()

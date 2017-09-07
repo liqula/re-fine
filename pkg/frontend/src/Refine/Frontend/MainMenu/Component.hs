@@ -12,6 +12,7 @@ import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Access
 import           Refine.Frontend.Contribution.Dialog (contributionDialogTextForm)
 import           Refine.Frontend.Icon
+import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Login.Component
 import           Refine.Frontend.Login.Status
 import           Refine.Frontend.MainMenu.Types
@@ -20,6 +21,8 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 import qualified Refine.Prelude.BuildInfo as BuildInfo
+
+import System.IO.Unsafe
 
 
 topMenuBarInMainMenu :: HasCallStack => View '[TopMenuBarInMainMenuProps]
@@ -34,6 +37,17 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
 
     div_ ["className" $= "gr-20"] $ do
 
+      case currentUser of
+        UserLoggedIn user -> do
+          ibutton_ $ emptyIbuttonProps "User_profile"
+            [ MainMenuAction . MainMenuActionOpen $ MainMenuProfile (either id (^. userID) user) Nothing
+            ]
+            & ibListKey .~ "5"
+            & ibDarkBackground .~ True
+            & ibSize .~ XXLarge
+            & ibLabel .~ mempty
+        _ -> pure ()
+
       ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
         & ibListKey .~ "3"
         & ibDarkBackground .~ True
@@ -45,12 +59,6 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
         & ibListKey .~ "4"
         & ibDarkBackground .~ True
         & ibHighlightWhen .~ (if currentTab == MainMenuHelp then HighlightAlways else HighlightOnMouseOver)
-        & ibSize .~ XXLarge
-        & ibLabel .~ mempty
-
-      ibutton_ $ emptyIbuttonProps "00_joker" [ShowNotImplementedYet]
-        & ibListKey .~ "5"
-        & ibDarkBackground .~ True
         & ibSize .~ XXLarge
         & ibLabel .~ mempty
 
@@ -99,6 +107,11 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
           MainMenuCreateOrUpdateGroup mid lst -> mainMenuCreateGroup_ mid lst
           MainMenuCreateProcess lst           -> mainMenuCreateProcess_ lst
           MainMenuUpdateProcess pid lst       -> mainMenuUpdateProcess_ pid lst
+          MainMenuProfile uid lst             -> mainMenuProfile_ editable uid lst
+            where
+              editable = case currentUser of
+                UserLoggedIn u -> either id (^. userID) u == either id (^. userID) uid
+                _ -> False
 
           MainMenuHelp -> pre_ $ do
             elemString $ "commit hash: " <> show BuildInfo.gitCommitHash
@@ -308,10 +321,10 @@ mainMenuGroup_ = view_ mainMenuGroup "mainMenuGroup"
 mainMenuMemberShort :: HasCallStack => View '[User]
 mainMenuMemberShort = mkView "MainMenuProcessShort" $ \props -> do
 --  let listKey = "member-list-item-" <> (cs . show $ props ^. userID . unID)
-  div_ [ {-onClick $ \_ _ -> simpleHandler . dispatch
-                         . LoadVDoc $ props ^. mmprocShrtID
+  div_ [ onClick $ \_ _ -> simpleHandler . dispatch
+                         . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (props ^. userID) Nothing
 
-       , -}"style" @@= [ decl "backgroundColor" (Ident "rgba(84, 99, 122, 1)")
+       , "style" @@= [ decl "backgroundColor" (Ident "rgba(84, 99, 122, 1)")
                      , decl "padding" (Px 50)
                      , decl "margin" (Px 50)
                      , decl "borderRadius" (Px 12)
@@ -491,6 +504,46 @@ mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst
 
 mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
 mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
+
+mainMenuProfile :: HasCallStack => View '[Bool, Lookup User, ImageUpload]
+mainMenuProfile = mkView "MainMenuProfile" $ \editable user lst -> case user of
+  Left _uid -> elemText "Loading..."
+  Right u -> do
+
+    case u ^. userAvatar of
+      Nothing -> elemText "You didn't upload an avatar yet."
+      Just (Image source) ->
+        img_ [ "src" $= cs source
+             , "style" @@= [ decl "maxWidth" (Px 200)
+                           , decl "maxHeight" (Px 200)
+                           ]
+             ] $ pure ()
+
+    when editable $ do
+      let upd evt = case files of
+            Just [f] -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuProfile (u ^. userID) $ Just (NoJSONRep f, Nothing)
+            _ -> simpleHandler []
+            where
+              files = unsafePerformIO . fromJSVal $ target evt "files"
+
+      input_ [ "type" $= "file"
+             , onChange upd
+             ]
+
+      case lst of
+        Just (NoJSONRep _f, Just image@(Image source)) -> do
+          img_ [ "src" $= cs source
+               , "style" @@= [ decl "maxWidth" (Px 200)
+                             , decl "maxHeight" (Px 200)
+                             ]
+               ] $ pure ()
+          button_
+            [ onClick $ \_evt _ -> simpleHandler . dispatch $ UploadAvatar (u ^. userID) image
+            ] $ elemText "upload"
+        _ -> pure ()
+
+mainMenuProfile_ :: HasCallStack => Bool -> Lookup User -> ImageUpload -> ReactElementM eventHandler ()
+mainMenuProfile_ = view_ mainMenuProfile "mainMenuProfile_"
 
 mainMenuUpdateProcess :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> View '[]
 mainMenuUpdateProcess vid lst = mkPersistentStatefulView "MainMenuUpdateProcess" lst Nothing $

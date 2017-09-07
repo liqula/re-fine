@@ -7,7 +7,7 @@ module Refine.Frontend.Store where
 #include "import_frontend.hs"
 
 import           Control.Concurrent
-import           GHCJS.Foreign.Callback (Callback, asyncCallback1)
+import           GHCJS.Foreign.Callback (Callback, asyncCallback1, syncCallback1, OnBlocked(ContinueAsync))
 
 import           React.Flux.Missing (unsafeReadLocalStateRef)
 import           Refine.Common.Types hiding (CreateUser, Login)
@@ -146,6 +146,7 @@ routesFromState st
       MainMenuHelp                              -> Route.Help
       MainMenuLogin MainMenuSubTabLogin         -> Route.Login
       MainMenuLogin MainMenuSubTabRegistration  -> Route.Register
+      MainMenuProfile uid _                     -> Route.Profile uid
       MainMenuGroups ()                         -> Route.Groups
       MainMenuGroup MainMenuGroupProcesses gid  -> Route.GroupProcesses gid
       MainMenuGroup MainMenuGroupMembers gid    -> Route.GroupMembers gid
@@ -170,6 +171,7 @@ handleRouteChange r = do
     Right Route.Help                 -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuHelp
     Right Route.Login                -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
     Right Route.Register             -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabRegistration
+    Right (Route.Profile uid)        -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuProfile uid Nothing
     Right Route.Groups               -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
     Right (Route.GroupProcesses gid) -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupProcesses gid
     Right (Route.GroupMembers gid)   -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupMembers gid
@@ -318,6 +320,17 @@ emitBackendCallsFor act st = case act of
 
     CreateUser createUserData -> sendTS $ TSCreateUser createUserData
 
+    MainMenuAction (MainMenuActionOpen (MainMenuProfile uid (Just (NoJSONRep f, Nothing)))) -> do
+
+        fr <- js_createFileReader
+        l <- syncCallback1 ContinueAsync $ \e -> do
+              res <- js_targetResult e
+              dispatchAndExec . MainMenuAction . MainMenuActionOpen . MainMenuProfile uid $ Just (NoJSONRep f, Just . Image $ cs res)
+        js_addOnload fr $ jsval l
+        js_doUpload fr f
+
+    UploadAvatar uid img -> sendTS $ TSUploadAvatar uid img
+
     -- voting
 
     ContributionAction (ToggleVoteOnContribution cid vote)
@@ -386,6 +399,8 @@ reactFluxWorkAroundThreadDelay :: HasCallStack => Double -> IO ()
 reactFluxWorkAroundThreadDelay seconds = threadDelay . round $ seconds * 1000 * 1000
 
 
+newtype FileReader = FileReader JSVal
+
 -- * foreign
 
 #ifdef __GHCJS__
@@ -402,6 +417,26 @@ foreign import javascript safe
   "window.getSelection().removeAllRanges()"
   js_removeAllRanges :: IO ()
 
+foreign import javascript safe
+  "$r=new FileReader();"
+  js_createFileReader :: IO FileReader
+
+foreign import javascript safe
+  "$1.target.result"
+  js_targetResult :: JSVal -> IO JSString
+
+foreign import javascript safe
+  "$1.onload=$2;"
+  js_addOnload :: FileReader -> JSVal -> IO ()
+
+foreign import javascript safe
+  "$1.readAsDataURL($2);"
+  js_doUpload :: FileReader -> File -> IO ()
+
+foreign import javascript safe
+  "atob($1)"
+  js_base64Decode :: JSString -> JSString
+
 #else
 
 {-# ANN js_getRangeTopOffset ("HLint: ignore Use camelCase" :: String) #-}
@@ -415,5 +450,25 @@ js_getRangeBottomOffset = error "javascript FFI not available in GHC"
 {-# ANN js_removeAllRanges ("HLint: ignore Use camelCase" :: String) #-}
 js_removeAllRanges :: IO ()
 js_removeAllRanges = error "javascript FFI not available in GHC"
+
+{-# ANN js_createFileReader ("HLint: ignore Use camelCase" :: String) #-}
+js_createFileReader :: IO FileReader
+js_createFileReader = error "javascript FFI not available in GHC"
+
+{-# ANN js_targetResult ("HLint: ignore Use camelCase" :: String) #-}
+js_targetResult :: JSVal -> IO JSString
+js_targetResult = error "javascript FFI not available in GHC"
+
+{-# ANN js_addOnload ("HLint: ignore Use camelCase" :: String) #-}
+js_addOnload :: FileReader -> JSVal -> IO ()
+js_addOnload = error "javascript FFI not available in GHC"
+
+{-# ANN js_doUpload ("HLint: ignore Use camelCase" :: String) #-}
+js_doUpload :: FileReader -> File -> IO ()
+js_doUpload = error "javascript FFI not available in GHC"
+
+{-# ANN js_base64Decode ("HLint: ignore Use camelCase" :: String) #-}
+js_base64Decode :: JSString -> JSString
+js_base64Decode = error "javascript FFI not available in GHC"
 
 #endif

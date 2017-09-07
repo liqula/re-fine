@@ -10,6 +10,7 @@ import Refine.Common.Rest (ApiError)
 import Refine.Common.Types.Prelude (Username)
 import Refine.Frontend.Types
 import Refine.Frontend.Login.Types
+import Control.DeepSeq
 
 
 data MainMenuAction
@@ -55,6 +56,7 @@ type MainMenuTabState = (MainMenuTab
       (LocalStateRef (CreateGroup_ [(User, Bool)]))
       (LocalStateRef CreateVDoc)
       (LocalStateRef UpdateVDoc)
+      (ID User)
       :: *)
 type MainMenuTabAction = (MainMenuTab
       ()
@@ -62,6 +64,7 @@ type MainMenuTabAction = (MainMenuTab
       (FormAction (CreateGroup_ [(User, Bool)]))
       (FormAction CreateVDoc)
       (FormAction UpdateVDoc)
+      (ID User)
       :: *)
 type MainMenuTabProps = (MainMenuTab
       GroupsProps
@@ -69,14 +72,21 @@ type MainMenuTabProps = (MainMenuTab
       (LocalStateRef (CreateGroup_ [(User, Bool)]), Map (ID User) User)
       (LocalStateRef CreateVDoc)
       (LocalStateRef UpdateVDoc)
+      (Lookup User)
       :: *)
+
+type ImageUpload = Maybe (NoJSONRep File, Maybe Image)
+
+newtype File = File JSVal deriving (FromJSVal)
+instance Eq File where _ == _ = False
+instance NFData File where rnf _ = ()
 
 type GroupProps = (Maybe Group, Map (ID VDoc) VDoc, Map (ID User) User)
 type GroupsProps = ([Group], Map (ID VDoc) VDoc, Map (ID User) User)
 
 -- | FUTUREWORK: it may be nicer after all to have different types for action, state, and props
 -- here.  but for now it should work.
-data MainMenuTab gids group cgroup cprocess uprocess
+data MainMenuTab gids group cgroup cprocess uprocess user
   = MainMenuGroups gids
   | MainMenuGroup MainMenuGroup group
   | MainMenuCreateOrUpdateGroup (Maybe (ID Group)) cgroup
@@ -84,6 +94,7 @@ data MainMenuTab gids group cgroup cprocess uprocess
   | MainMenuUpdateProcess (ID VDoc) uprocess
   | MainMenuHelp
   | MainMenuLogin MainMenuSubTabLogin
+  | MainMenuProfile user ImageUpload
   deriving (Eq, Show, Generic)
 
 data MainMenuGroup
@@ -91,8 +102,8 @@ data MainMenuGroup
   | MainMenuGroupMembers
   deriving (Eq, Show, Generic)
 
-mapMainMenuTab :: (a -> a') -> (b -> b') -> (c -> c') -> (d -> d') -> (e -> e') -> MainMenuTab a b c d e -> MainMenuTab a' b' c' d' e'
-mapMainMenuTab fa fb fc fd fe = \case
+mapMainMenuTab :: (a -> a') -> (b -> b') -> (c -> c') -> (d -> d') -> (e -> e') -> (f -> f') -> MainMenuTab a b c d e f -> MainMenuTab a' b' c' d' e' f'
+mapMainMenuTab fa fb fc fd fe ff = \case
   MainMenuGroups a -> MainMenuGroups (fa a)
   MainMenuGroup g b  -> MainMenuGroup g (fb b)
   MainMenuCreateOrUpdateGroup u c -> MainMenuCreateOrUpdateGroup u (fc c)
@@ -100,6 +111,7 @@ mapMainMenuTab fa fb fc fd fe = \case
   MainMenuUpdateProcess pid e -> MainMenuUpdateProcess pid (fe e)
   MainMenuHelp     -> MainMenuHelp
   MainMenuLogin l  -> MainMenuLogin l
+  MainMenuProfile f upl -> MainMenuProfile (ff f) upl
 
 defaultMainMenuTab :: MainMenuTabAction
 defaultMainMenuTab = MainMenuGroups ()
@@ -110,13 +122,13 @@ data MainMenuSubTabLogin = MainMenuSubTabLogin | MainMenuSubTabRegistration
 data MainMenuProps tab = MainMenuProps
   { _mmpMainMenuTab    :: tab
   , _mmpMainMenuErrors :: MainMenuErrors
-  , _mmpCurrentUser    :: CurrentUser
+  , _mmpCurrentUser    :: CurrentUser_ (Lookup User)
   }
   deriving (Eq)
 
 data TopMenuBarInMainMenuProps = TopMenuBarInMainMenuProps
   { _tmbimmpMainMenuTab    :: MainMenuTabProps
-  , _tmbimmpCurrentUser    :: CurrentUser
+  , _tmbimmpCurrentUser    :: CurrentUser_ (Lookup User)
   }
   deriving (Eq)
 

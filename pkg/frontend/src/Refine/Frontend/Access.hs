@@ -35,7 +35,7 @@ data AccessAction =
   | Logout
   | LoginGuardStash [GlobalAction]  -- ^ if logged in, dispatch actions directly.  otherwise, login first.
   | LoginGuardPop  -- ^ dispatched this to trigger dispatch of the stashed actions after login.
-  | SetCurrentUser CurrentUser
+  | SetCurrentUser CurrentUserState
   deriving (Show, Eq, Generic)
 
 instance (Dispatchable GlobalAction, Sendable ToServer) => Dispatchable AccessAction where
@@ -102,7 +102,7 @@ instance MonadAccess ((->) AccessState) where
 
 
 allowUser :: LoginState -> UserInfo -> Bool
-allowUser (LoginState (UserLoggedIn (view userID -> uidIs))) (UserID uidShould) = uidIs == uidShould
+allowUser (LoginState (UserLoggedIn uidIs)) (UserID uidShould) = uidIs == uidShould
 allowUser _ _ = False
 
 allowNotLoggedIn :: LoginState -> Bool
