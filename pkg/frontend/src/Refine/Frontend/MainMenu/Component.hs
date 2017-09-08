@@ -555,7 +555,6 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
                              , decl "maxHeight" (Px 200)
                              ]
                ] $ pure ()
-          -- TODO: use iconButton
           button_
             [ onClick $ \_evt _ -> simpleHandler @_ $
               \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete (fst st, Just $ u ^. userDescription))]
@@ -570,7 +569,6 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
 
         when editable $ do
           br_ []
-          -- TODO: use iconButton
           button_
             [ onClick $ \_evt _ -> simpleHandler @_ $
               \st' -> ([], Just $ st' & _2 .~ Just (u ^. userDescription))
@@ -581,36 +579,16 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
           contributionDialogTextForm (_2 . iso fromJust Just) st 1 "Description"
           br_ []
 
-          -- TODO: use iconButton
           button_
             [ onClick $ \_evt _ -> simpleHandler @_ $
               \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete (Right <$> (u ^. userAvatar), snd st))]
                       , Just $ st' & _2 .~ Nothing)
             ] $ elemText "save"
-          -- TODO: use iconButton
           button_
             [ onClick $ \_evt _ -> simpleHandler @_ $
               \st' -> ([], Just $ st' & _2 .~ Nothing)
             ] $ elemText "cancel"
-{-
-          iconButton_ $ defaultIconButtonProps @[GlobalAction]
-                  & iconButtonPropsListKey      .~ "save"
-                  & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "dark") XXLarge
-                  & iconButtonPropsElementName  .~ "btn-index"
-                  & iconButtonPropsLabel        .~ "save"
-                  & iconButtonPropsAlignRight   .~ True
-                  & iconButtonPropsOnClick      .~ [MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete (Right <$> (u ^. userAvatar), snd st))]
 
-          iconButton_ $ defaultIconButtonProps @[GlobalAction]
-                  & iconButtonPropsListKey      .~ "cancel"
-                  & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Close", "dark") XXLarge
-                  & iconButtonPropsElementName  .~ "btn-index"
-                  & iconButtonPropsLabel        .~ "cancel"
-                  & iconButtonPropsAlignRight   .~ True
-                  & iconButtonPropsDisabled     .~ False
-                  & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
-                                                   ]
--}
 mainMenuProfile_ :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileProps -> ReactElementM eventHandler ()
 mainMenuProfile_ editable user lst = view_ (mainMenuProfile editable user lst) "mainMenuProfile_"
 
