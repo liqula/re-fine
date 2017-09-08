@@ -50,7 +50,7 @@ spec = do
     -- FUTUREWORK: Use the Cmd dsl for this test
     it "Create/login/logout" $ \(runner :: AppM DB () -> ExceptT ApiError IO ()) -> do
       throwApiErrors . runner $ do
-        void $ App.createUser (CreateUser "user" "user@example.com" "password" Nothing)
+        void $ App.createUser (CreateUser "user" "user@example.com" "password" Nothing "")
         userState0 <- gets (view appUserState)
         liftIO $ userState0 `shouldBe` UserLoggedOut
 
@@ -68,7 +68,7 @@ spec = do
       mem :: MVar (ID Group) <- newEmptyMVar
       let nosuchgid = ID 834791
           transaction1 = do
-            liftIO . putMVar mem . view groupID =<< addGroup (CreateGroup mempty mempty mempty mempty mempty)
+            liftIO . putMVar mem . view groupID =<< addGroup (CreateGroup mempty mempty mempty mempty mempty Nothing)
             Group{} <- App.getGroup nosuchgid
             pure ()
           transaction2 gid = do
@@ -83,8 +83,8 @@ spec = do
     it "db (or dbWithFilters) can be called twice inside the same AppM" $ \(runner :: AppM DB () -> ExceptT ApiError IO ()) -> do
       throwApiErrors . runner $ do
         void $ do
-          let createGroup1 = CreateGroup "group1" "desc1" [] [] mempty
-              createGroup2 = CreateGroup "group2" "desc2" [] [] mempty
+          let createGroup1 = CreateGroup "group1" "desc1" [] [] mempty Nothing
+              createGroup2 = CreateGroup "group2" "desc2" [] [] mempty Nothing
               sameGroupInfo cgrp grp = and
                 [ cgrp ^. createGroupTitle     == grp ^. groupTitle
                 , cgrp ^. createGroupDesc      == grp ^. groupDesc
@@ -100,7 +100,7 @@ spec = do
   describe "Regression" . around provideAppRunner $ do
     it "Regression test program" $ \(runner :: AppM DB () -> ExceptT ApiError IO ()) -> do
       let program =
-            [ AddVDoc (CreateVDoc (Title "title...") (Abstract "abstract...") sampleRawContent1 defaultGroupID)
+            [ AddVDoc (CreateVDoc (Title "title...") (Abstract "abstract...") sampleRawContent1 defaultGroupID Nothing)
             , AddEditToHead 0 sampleCreateEdit1
             ]
       throwApiErrors . runner . runIdentityT $ runProgram program `evalStateT` initVDocs
@@ -109,14 +109,14 @@ spec = do
     let vdoc = mkRawContent . NEL.fromList . map mkBlock
 
         docWithEdits v0 vs = do
-          doc <- App.createVDoc $ CreateVDoc (Title "title...") (Abstract "abstract...") (vdoc v0) defaultGroupID
+          doc <- App.createVDoc $ CreateVDoc (Title "title...") (Abstract "abstract...") (vdoc v0) defaultGroupID Nothing
           let eid = doc ^. vdocHeadEdit
               vid = doc ^. vdocID
           es <- forM vs $ \v -> fmap (^. editID) . App.addEdit eid $ CreateEdit "..." (vdoc v) Meaning
           pure (vid, eid, es)
 
         addUserAndLogin username = do
-          _ <- App.createUser $ CreateUser username (username <> "@email.com") "password" Nothing
+          _ <- App.createUser $ CreateUser username (username <> "@email.com") "password" Nothing ""
           login $ Login username "password"
 
     it "merge two edits" $ \(runner :: AppM DB () -> ExceptT ApiError IO ()) -> do
@@ -217,6 +217,7 @@ arbitraryCreateVDoc =
     <*> (Abstract . mconcat <$> listOf word)
     <*> arbitrary @RawContent
     <*> pure defaultGroupID
+    <*> pure Nothing
 
 sampleProgram :: Gen [Cmd]
 sampleProgram = do

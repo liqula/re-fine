@@ -56,7 +56,7 @@ type MainMenuTabState = (MainMenuTab
       (LocalStateRef (CreateGroup_ [(User, Bool)]))
       (LocalStateRef CreateVDoc)
       (LocalStateRef UpdateVDoc)
-      (ID User)
+      (ID User, LocalStateRef ProfileProps)
       :: *)
 type MainMenuTabAction = (MainMenuTab
       ()
@@ -64,7 +64,7 @@ type MainMenuTabAction = (MainMenuTab
       (FormAction (CreateGroup_ [(User, Bool)]))
       (FormAction CreateVDoc)
       (FormAction UpdateVDoc)
-      (ID User)
+      (ID User, FormAction ProfileProps)
       :: *)
 type MainMenuTabProps = (MainMenuTab
       GroupsProps
@@ -72,10 +72,11 @@ type MainMenuTabProps = (MainMenuTab
       (LocalStateRef (CreateGroup_ [(User, Bool)]), Map (ID User) User)
       (LocalStateRef CreateVDoc)
       (LocalStateRef UpdateVDoc)
-      (Lookup User)
+      (Lookup User, LocalStateRef ProfileProps)
       :: *)
 
-type ImageUpload = Maybe (NoJSONRep File, Maybe Image)
+type ProfileProps = (ImageUpload{-avatar-}, Maybe ST{-user description update-})  -- TODO: these are not props, but state.
+type ImageUpload = Maybe (Either (NoJSONRep File) Image)
 
 newtype File = File JSVal deriving (FromJSVal)
 instance Eq File where _ == _ = False
@@ -94,7 +95,7 @@ data MainMenuTab gids group cgroup cprocess uprocess user
   | MainMenuUpdateProcess (ID VDoc) uprocess
   | MainMenuHelp
   | MainMenuLogin MainMenuSubTabLogin
-  | MainMenuProfile user ImageUpload
+  | MainMenuProfile user
   deriving (Eq, Show, Generic)
 
 data MainMenuGroup
@@ -111,7 +112,7 @@ mapMainMenuTab fa fb fc fd fe ff = \case
   MainMenuUpdateProcess pid e -> MainMenuUpdateProcess pid (fe e)
   MainMenuHelp     -> MainMenuHelp
   MainMenuLogin l  -> MainMenuLogin l
-  MainMenuProfile f upl -> MainMenuProfile (ff f) upl
+  MainMenuProfile f -> MainMenuProfile (ff f)
 
 defaultMainMenuTab :: MainMenuTabAction
 defaultMainMenuTab = MainMenuGroups ()

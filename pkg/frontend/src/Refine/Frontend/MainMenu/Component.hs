@@ -12,9 +12,10 @@ import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Access
 import           Refine.Frontend.Contribution.Dialog (contributionDialogTextForm)
 import           Refine.Frontend.Icon
-import           Refine.Frontend.Login.Types
+import           Refine.Frontend.ImageUpload
 import           Refine.Frontend.Login.Component
 import           Refine.Frontend.Login.Status
+import           Refine.Frontend.Login.Types
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
@@ -40,12 +41,15 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
       case currentUser of
         UserLoggedIn user -> do
           ibutton_ $ emptyIbuttonProps "User_profile"
-            [ MainMenuAction . MainMenuActionOpen $ MainMenuProfile (either id (^. userID) user) Nothing
+            [ MainMenuAction . MainMenuActionOpen
+              $ MainMenuProfile ( either id (^. userID) user
+                                , FormBegin $ newLocalStateRef (Nothing, Nothing) user)
             ]
             & ibListKey .~ "5"
             & ibDarkBackground .~ True
             & ibSize .~ XXLarge
             & ibLabel .~ mempty
+--            & ibEnabled .~ either (const False) (const True) user   -- this is not needed
         _ -> pure ()
 
       ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
@@ -107,7 +111,7 @@ mainMenu = mkView "MainMenu" $ \(MainMenuProps currentTab menuErrors currentUser
           MainMenuCreateOrUpdateGroup mid lst -> mainMenuCreateGroup_ mid lst
           MainMenuCreateProcess lst           -> mainMenuCreateProcess_ lst
           MainMenuUpdateProcess pid lst       -> mainMenuUpdateProcess_ pid lst
-          MainMenuProfile uid lst             -> mainMenuProfile_ editable uid lst
+          MainMenuProfile (uid, lst)          -> mainMenuProfile_ editable uid lst
             where
               editable = case currentUser of
                 UserLoggedIn u -> either id (^. userID) u == either id (^. userID) uid
@@ -136,7 +140,8 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
           mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup Nothing . FormBegin
                               $ newLocalStateRef
                                   (CreateGroup "" "" [] []
-                                   $ flip (,) False <$> Map.elems (groups ^. _3))
+                                    (flip (,) False <$> Map.elems (groups ^. _3))
+                                    Nothing)
                                   groups
 
       ibutton_ $ emptyIbuttonProps "Group_add" [mkCreateGroupAction]
@@ -260,7 +265,7 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
 
     ibutton_ $ emptyIbuttonProps "Process_add"
         [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormBegin
-          $ newLocalStateRef (CreateVDoc (Title "[no title]") (Abstract "[no abstract]") emptyRawContent (group ^. groupID)) group
+          $ newLocalStateRef (CreateVDoc (Title "[no title]") (Abstract "[no abstract]") emptyRawContent (group ^. groupID) Nothing) group
         ]
       & ibListKey .~ "process_add"
       & ibSize .~ XXLarge
@@ -272,7 +277,8 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
         [ MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup (Just $ group ^. groupID) . FormBegin
           $ newLocalStateRef
               (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []
-               [(u, (u ^. userID) `elem` (group ^. groupMembers)) | u <- Map.elems users])
+               [(u, (u ^. userID) `elem` (group ^. groupMembers)) | u <- Map.elems users]
+               Nothing{-TODO-})
               group
         ]
       & ibListKey .~ "group_update"
@@ -322,7 +328,8 @@ mainMenuMemberShort :: HasCallStack => View '[User]
 mainMenuMemberShort = mkView "MainMenuProcessShort" $ \props -> do
 --  let listKey = "member-list-item-" <> (cs . show $ props ^. userID . unID)
   div_ [ onClick $ \_ _ -> simpleHandler . dispatch
-                         . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (props ^. userID) Nothing
+                         . MainMenuAction . MainMenuActionOpen
+                         $ MainMenuProfile (props ^. userID, FormBegin $ newLocalStateRef (Nothing, Nothing) props)
 
        , "style" @@= [ decl "backgroundColor" (Ident "rgba(84, 99, 122, 1)")
                      , decl "padding" (Px 50)
@@ -333,7 +340,7 @@ mainMenuMemberShort = mkView "MainMenuProcessShort" $ \props -> do
 
     -- image
     br_ []
-    ibutton_ $ emptyIbuttonProps "User" ([] :: [GlobalAction])
+    ibutton_ $ emptyIbuttonProps_ (maybe (ImageIcon "User") ImageInline $ props ^. userAvatar) ([] :: [GlobalAction])
       & ibListKey .~ "user"
       & ibSize .~ XXLarge
       & ibDarkBackground .~ True
@@ -438,7 +445,7 @@ mainMenuProcessShort_ props = view_ mainMenuProcessShort listKey props
 mainMenuCreateGroup :: HasCallStack => Maybe (ID Group) -> (LocalStateRef (CreateGroup_ [(User, Bool)]), Map (ID User) User) -> View '[]
 mainMenuCreateGroup mid (lst, allusers)
   = mkPersistentStatefulView "MainMenuCreateGroup" lst (Just addUsers)
-  $ \st@(CreateGroup title desc _ _ users) -> do
+  $ \st@(CreateGroup title desc _ _ users _) -> do
 
     contributionDialogTextForm createGroupTitle st 1 "group title"
     hr_ []
@@ -505,45 +512,54 @@ mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst
 mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
 mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
 
-mainMenuProfile :: HasCallStack => View '[Bool, Lookup User, ImageUpload]
-mainMenuProfile = mkView "MainMenuProfile" $ \editable user lst -> case user of
+{- TODO: edit or discard this comment?
+
+- mkPersistentStatefulView is needed because of a text form
+- with mkPersistentStatefulView, the local state is updated without emitting any actions
+- in persistentStatefulView it is still possible to emit the action which is needed to upload the icon to the browser
+- the upload is done in transform function in Store.hs
+- when the upload is ready, we have to update the local state without forgetting the details there (like half-filled form)
+- this is possible with local state update function
+
+-}
+
+mainMenuProfile :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileProps -> View '[]
+mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" lst Nothing $ \st -> case user of
   Left _uid -> elemText "Loading..."
   Right u -> do
+    elemText $ u ^. userName
 
-    case u ^. userAvatar of
-      Nothing -> elemText "You didn't upload an avatar yet."
-      Just (Image source) ->
-        img_ [ "src" $= cs source
-             , "style" @@= [ decl "maxWidth" (Px 200)
-                           , decl "maxHeight" (Px 200)
-                           ]
-             ] $ pure ()
+    imageUpload_ editable u lst st
 
-    when editable $ do
-      let upd evt = case files of
-            Just [f] -> simpleHandler . dispatch . MainMenuAction . MainMenuActionOpen . MainMenuProfile (u ^. userID) $ Just (NoJSONRep f, Nothing)
-            _ -> simpleHandler []
-            where
-              files = unsafePerformIO . fromJSVal $ target evt "files"
+    case snd st of
+      Nothing -> do
+        br_ []
+        elemText $ u ^. userDescription
 
-      input_ [ "type" $= "file"
-             , onChange upd
-             ]
-
-      case lst of
-        Just (NoJSONRep _f, Just image@(Image source)) -> do
-          img_ [ "src" $= cs source
-               , "style" @@= [ decl "maxWidth" (Px 200)
-                             , decl "maxHeight" (Px 200)
-                             ]
-               ] $ pure ()
+        when editable $ do
+          br_ []
           button_
-            [ onClick $ \_evt _ -> simpleHandler . dispatch $ UploadAvatar (u ^. userID) image
-            ] $ elemText "upload"
-        _ -> pure ()
+            [ onClick $ \_evt _ -> simpleHandler @_ $
+              \st' -> ([], Just $ st' & _2 .~ Just (u ^. userDescription))
+            ] $ elemText "edit"
 
-mainMenuProfile_ :: HasCallStack => Bool -> Lookup User -> ImageUpload -> ReactElementM eventHandler ()
-mainMenuProfile_ = view_ mainMenuProfile "mainMenuProfile_"
+      _ -> do
+          br_ []
+          contributionDialogTextForm (_2 . iso fromJust Just) st 1 "Description"
+          br_ []
+
+          button_
+            [ onClick $ \_evt _ -> simpleHandler @_ $
+              \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete (Right <$> (u ^. userAvatar), snd st))]
+                      , Just $ st' & _2 .~ Nothing)
+            ] $ elemText "save"
+          button_
+            [ onClick $ \_evt _ -> simpleHandler @_ $
+              \st' -> ([], Just $ st' & _2 .~ Nothing)
+            ] $ elemText "cancel"
+
+mainMenuProfile_ :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileProps -> ReactElementM eventHandler ()
+mainMenuProfile_ editable user lst = view_ (mainMenuProfile editable user lst) "mainMenuProfile_"
 
 mainMenuUpdateProcess :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> View '[]
 mainMenuUpdateProcess vid lst = mkPersistentStatefulView "MainMenuUpdateProcess" lst Nothing $

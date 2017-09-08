@@ -30,7 +30,7 @@ spec = around provideAppRunner $ do
             -- GIVEN
             let role = GroupMember
                 user = ID 1
-            group <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
+            group <- App.addGroup (CreateGroup "title" "desc" [] [] mempty Nothing)
             -- WHEN
             ()    <- App.assignGroupRole role user (group ^. groupID)
             -- THEN
@@ -45,7 +45,7 @@ spec = around provideAppRunner $ do
             -- GIVEN
             let role = GroupMember
                 user = ID 1
-            group <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
+            group <- App.addGroup (CreateGroup "title" "desc" [] [] mempty Nothing)
             -- WHEN
             () <- App.assignGroupRole role user (group ^. groupID)
             () <- App.assignGroupRole role user (group ^. groupID)
@@ -60,7 +60,7 @@ spec = around provideAppRunner $ do
           property $ \(role :: GroupRole, roles :: [GroupRole]) -> do
             join . throwApiErrors . runner $ do
               let uid = ID 1
-              group       <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
+              group       <- App.addGroup (CreateGroup "title" "desc" [] [] mempty Nothing)
               ()          <- forM_ roles $ \r -> App.assignGroupRole r uid (group ^. groupID)
               rolesBefore <- App.allGroupRolesIn uid (group ^. groupID)
               ()          <- App.assignGroupRole role uid (group ^. groupID)
@@ -77,7 +77,7 @@ spec = around provideAppRunner $ do
             -- GIVEN
             let role = GroupMember
                 user = ID 1
-            group <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
+            group <- App.addGroup (CreateGroup "title" "desc" [] [] mempty Nothing)
             ()    <- App.assignGroupRole role user (group ^. groupID)
             -- WHEN
             ()    <- App.unassignGroupRole role user (group ^. groupID)
@@ -93,7 +93,7 @@ spec = around provideAppRunner $ do
             let role = GroupMember
                 otherrole = GroupModerator
                 user = ID 1
-            group  <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
+            group  <- App.addGroup (CreateGroup "title" "desc" [] [] mempty Nothing)
             ()     <- App.assignGroupRole role user (group ^. groupID)
             ()     <- App.assignGroupRole otherrole user (group ^. groupID)
             roles1 <- App.allGroupRolesIn user (group ^. groupID)
@@ -112,7 +112,7 @@ spec = around provideAppRunner $ do
             -- GIVEN
             let role = GroupMember
                 user = ID 1
-            group <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
+            group <- App.addGroup (CreateGroup "title" "desc" [] [] mempty Nothing)
             -- WHEN
             ()    <- App.unassignGroupRole role user (group ^. groupID)
             -- THEN
@@ -126,7 +126,7 @@ spec = around provideAppRunner $ do
           property $ \(role :: GroupRole, roles :: [GroupRole]) -> do
             join . throwApiErrors . runner $ do
               let uid = ID 1
-              group       <- App.addGroup (CreateGroup "title" "desc" [] [] mempty)
+              group       <- App.addGroup (CreateGroup "title" "desc" [] [] mempty Nothing)
               ()          <- forM_ roles $ \r -> App.assignGroupRole r uid (group ^. groupID)
               rolesBefore <- App.allGroupRolesIn uid (group ^. groupID)
               ()          <- App.unassignGroupRole role uid (group ^. groupID)

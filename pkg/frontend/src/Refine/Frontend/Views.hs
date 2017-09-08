@@ -57,7 +57,7 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
                               (flip (,) users)
                               id
                               id
-                              (cacheLookup' gs)
+                              (first $ cacheLookup' gs)
                               tab)
                             (gs ^. gsMainMenuState . mmErrors)
                             (cacheLookup' gs <$> (as ^. accLoginState . lsCurrentUser))

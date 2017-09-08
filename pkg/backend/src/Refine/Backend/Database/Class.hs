@@ -7,6 +7,7 @@ module Refine.Backend.Database.Class where
 import qualified Web.Users.Persistent as Users
 
 import           Refine.Backend.Database.Types
+import           Refine.Backend.Types
 import           Refine.Common.Types
 import qualified Refine.Common.OT as OT
 
@@ -50,9 +51,9 @@ class Monad db => Database db where
 
   -- User
   runUsersCmd          :: (Users.Persistent -> IO a) -> db a
-  insertDBUser         :: ID User -> Maybe Image -> db ()
-  replaceDBUser        :: ID User -> Maybe Image -> db ()
-  getDBUser            :: ID User -> db (Maybe Image)
+  insertDBUser         :: ID User -> UserDetails -> db ()
+  replaceDBUser        :: ID User -> UserDetails -> db ()
+  getDBUser            :: ID User -> db UserDetails
 
   -- Group
   createGroup          :: CreateGroup -> db Group

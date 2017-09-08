@@ -250,6 +250,7 @@ sampleCreateVDoc0 = CreateVDoc
   (Abstract "[abstract]")
   sampleCreateVDocE0
   defaultGroupID
+  Nothing
 
 sampleCreateVDocE0 :: RawContent
 sampleCreateVDocE0 = mkRawContent $ mkBlock "[versioned content]" :| []
@@ -278,7 +279,7 @@ testPassword = "testPassword"
 
 addUserAndLogin :: TestBackend -> Username -> Email -> Password -> IO (ID User)
 addUserAndLogin sess username useremail userpass = do
-  r1 :: User <- runDB sess . unsafeAsGod $ createUser (CreateUser username useremail userpass Nothing)
+  r1 :: User <- runDB sess . unsafeAsGod $ createUser (CreateUser username useremail userpass Nothing "")
   uid <- runWai sess $ do
     r2 <- post loginUri $ Login username userpass
     if respCode r2 >= 300

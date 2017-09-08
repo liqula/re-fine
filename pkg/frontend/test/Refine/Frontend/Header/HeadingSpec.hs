@@ -31,7 +31,7 @@ spec = do
         text label `shouldReturn` "MENU"
 
     context "sticky" $ do
-      let vdoc = VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") undefined undefined mempty
+      let vdoc = VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") undefined undefined mempty Nothing
 
       it "the MENU item in the toolbar does not render if it is not sticky" $ do
         wrapper <- shallow (toolbar_ vdoc)
@@ -55,7 +55,7 @@ spec = do
 
       let _newVDoc :: CompositeVDoc
           _newVDoc = CompositeVDoc
-            (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1) (ID 1) mempty)
+            (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1) (ID 1) mempty Nothing)
             (Edit (MetaID 1 un) un un un (sampleMetaID ^. miID) sampleRawContent1 un mempty mempty)
             mempty
             mempty

@@ -47,6 +47,7 @@ data VDoc = VDoc
   , _vdocHeadEdit :: ID Edit
   , _vdocGroup    :: ID Group
   , _vdocStats    :: EditStats
+  , _vdocImage    :: Maybe Image
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
@@ -57,6 +58,7 @@ data CreateVDoc = CreateVDoc
   , _createVDocAbstract    :: Abstract
   , _createVDocInitVersion :: RawContent
   , _createVDocGroup       :: ID Group
+  , _createVDocImage       :: Maybe Image
   }
   deriving (Eq, Show, Generic)
 
@@ -198,6 +200,7 @@ data Group = Group
   , _groupChildren  :: [ID Group]
   , _groupVDocs     :: [ID VDoc]
   , _groupMembers   :: [ID User]
+  , _groupImage     :: Maybe Image
   }
   deriving (Eq, Generic, Show)
 
@@ -209,6 +212,7 @@ data CreateGroup_ members = CreateGroup
   , _createGroupParents  :: [ID Group]
   , _createGroupChildren :: [ID Group]
   , _createGroupMembers  :: members
+  , _createGroupImage    :: Maybe Image
   }
   deriving (Eq, Generic, Show)
 

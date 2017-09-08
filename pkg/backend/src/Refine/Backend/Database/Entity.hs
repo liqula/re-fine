@@ -17,6 +17,7 @@ import           Refine.Backend.Database.Core
 import qualified Refine.Backend.Database.Schema as S
 import           Refine.Backend.Database.Types
 import           Refine.Backend.Database.Tree
+import           Refine.Backend.Types
 import           Refine.Common.Types
 import           Refine.Common.Types.Prelude (ID(..))
 import qualified Refine.Common.OT as OT
@@ -85,7 +86,7 @@ foreignKeyField column = S.keyToId . column . entityVal
 
 -- NOTES: How to handle associations? What to update, what to keep?
 vDocToRecord :: VDoc -> DB S.VDoc
-vDocToRecord (VDoc _i t a r g _) = pure (S.VDoc t a (Just $ S.idToKey r) (S.idToKey g))
+vDocToRecord (VDoc _i t a r g _ im) = pure (S.VDoc t a (Just $ S.idToKey r) (S.idToKey g) im)
 
 updateVDoc :: ID VDoc -> VDoc -> DB ()
 updateVDoc vid vdoc = do
@@ -186,9 +187,9 @@ getMetaEntity f i = do
 
 -- * VDoc
 
-toVDoc :: EditStats -> MetaID VDoc -> Title -> Abstract -> Maybe (Key S.Edit) -> Key S.Group -> VDoc
-toVDoc stats vid title abstract (Just repoid) g = VDoc vid title abstract (S.keyToId repoid) (S.keyToId g) stats
-toVDoc _ _ _ _ Nothing _ = error "impossible"
+toVDoc :: EditStats -> MetaID VDoc -> Title -> Abstract -> Maybe (Key S.Edit) -> Key S.Group -> Maybe Image -> VDoc
+toVDoc stats vid title abstract (Just repoid) g im = VDoc vid title abstract (S.keyToId repoid) (S.keyToId g) stats im
+toVDoc _ _ _ _ Nothing _ _ = error "impossible"
 
 listVDocs :: DB [ID VDoc]
 listVDocs = do
@@ -202,6 +203,7 @@ createVDoc pv = do
         (pv ^. createVDocAbstract)
         Nothing -- hack: use a dummy key which will be replaced by a proper one before createVDoc returns
         (S.idToKey $ pv ^. createVDocGroup)
+        (pv ^. createVDocImage)
   mid <- createMetaID svdoc
   e <- createEdit (mid ^. miID) mempty CreateEdit
     { _createEditDesc        = "initial document version"
@@ -215,7 +217,7 @@ createVDoc pv = do
 getVDoc :: ID VDoc -> DB VDoc
 getVDoc i = do
   (mid, x) <- getMetaEntity (,) i
-  let eid = S.vDocElim (\_ _ (Just ei) _ -> ei) x
+  let eid = S.vDocElim (\_ _ (Just ei) _ _ -> ei) x
   editIds <- foreignKeyField S.parentChildChild <$$> liftDB (selectList [S.ParentChildParent ==. eid] [])
   discussionIds <- foreignKeyField S.pDDiscussion <$$> liftDB (selectList [S.PDEdit ==. eid] [])
   statementIds <- forM discussionIds $ \did ->
@@ -231,7 +233,7 @@ getVDoc i = do
 headOfVDoc :: ID VDoc -> DB (ID Edit)
 headOfVDoc i = do
   x <- getEntityRep i
-  pure $ S.vDocElim (\_ _ (Just ei) _ -> S.keyToId ei) x
+  pure $ S.vDocElim (\_ _ (Just ei) _ _ -> S.keyToId ei) x
 
 
 -- * Repo
@@ -431,33 +433,35 @@ runUsersCmd :: (Users.Persistent -> IO a) -> DB a
 runUsersCmd cmd = liftDB . ReaderT $ \(sqlBackend :: SqlBackend) ->
   liftIO $ cmd (Users.Persistent (`runReaderT` sqlBackend))
 
-insertDBUser :: ID User -> Maybe Image -> DB ()
-insertDBUser (ID uid) img = do
-  let user = S.DBUser img
+insertDBUser :: ID User -> UserDetails -> DB ()
+insertDBUser (ID uid) (img, desc) = do
+  let user = S.DBUser img desc
   void . liftDB . insertKey (S.idToKey (ID uid :: ID S.DBUser)) $ user
 
-replaceDBUser :: ID User -> Maybe Image -> DB ()
-replaceDBUser (ID uid) img = do
-  let user = S.DBUser img
+replaceDBUser :: ID User -> UserDetails -> DB ()
+replaceDBUser (ID uid) (img, desc) = do
+  let user = S.DBUser img desc
   void . liftDB . replace (S.idToKey (ID uid :: ID S.DBUser)) $ user
 
-getDBUser :: ID User -> DB (Maybe Image)
+getDBUser :: ID User -> DB UserDetails
 getDBUser (ID uid) = do
   x <- getEntityRep (ID uid :: ID S.DBUser)
-  pure $ S.dBUserElim id x
+  pure $ S.dBUserElim (,) x
 
 
 -- * Group
 
-toGroup :: [ID Group] -> [ID Group] -> [ID VDoc] -> [ID User] -> MetaID Group -> ST -> ST -> Group
-toGroup parents children vdocs members gid title desc =
-  Group gid title desc parents children vdocs members
+{-# ANN toGroup ("HLint: ignore Eta reduce" :: String) #-}
+toGroup :: [ID Group] -> [ID Group] -> [ID VDoc] -> [ID User] -> MetaID Group -> ST -> ST -> Maybe Image -> Group
+toGroup parents children vdocs members gid title desc image =
+  Group gid title desc parents children vdocs members image
 
 createGroup :: CreateGroup -> DB Group
 createGroup group = do
   let sgroup = S.Group
         (group ^. createGroupTitle)
         (group ^. createGroupDesc)
+        (group ^. createGroupImage)
   mid <- createMetaID sgroup
   forM_ (group ^. createGroupParents) $ \parent -> addConnection S.SubGroup parent (mid ^. miID)
   forM_ (group ^. createGroupChildren) $ \child -> addConnection S.SubGroup (mid ^. miID) child

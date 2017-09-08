@@ -14,7 +14,7 @@ module Refine.Backend.App.User
   , getUsers
   , doesUserExist
   , withCurrentUser
-  , updateAvatar
+  , updateUser
   ) where
 #include "import_backend.hs"
 
@@ -80,7 +80,7 @@ logout = do
   appLog LogDebug . ("logout.after:: " <>) . show =<< get
 
 createUserWith :: [GlobalRole] -> [(GroupRole, ID Group)] -> CreateUser -> App User
-createUserWith globalRoles groupRoles (CreateUser name email password avatar) = do
+createUserWith globalRoles groupRoles (CreateUser name email password avatar desc) = do
   appLog LogDebug "createUser"
   assertCreds $ AP.createUser globalRoles groupRoles
   let user = Users.User
@@ -91,10 +91,10 @@ createUserWith globalRoles groupRoles (CreateUser name email password avatar) = 
               }
   loginId <- leftToError AppUserCreationError
              =<< dbUsersCmd (`Users.createUser` user)
-  result <- User <$> db (createMetaID_ $ toUserID loginId) <*> pure name <*> pure email <*> pure avatar
+  result <- User <$> db (createMetaID_ $ toUserID loginId) <*> pure name <*> pure email <*> pure avatar <*> pure desc
 
   let uid = result ^. userID
-  db $ insertDBUser uid avatar
+  db $ insertDBUser uid (avatar, desc)
 
   (`assignGlobalRole` uid) `mapM_` globalRoles
   (\(r, g) -> assignGroupRole r uid g) `mapM_` groupRoles
@@ -118,8 +118,8 @@ getUserIfAllowedAndExists uid = do
     Nothing -> pure Nothing
     Just user_ -> do
       mid <- db $ getMetaID uid
-      avatar <- db $ getDBUser uid
-      let user = User mid (Users.u_name user_) (Users.u_email user_) avatar
+      (avatar, desc) <- db $ getDBUser uid
+      let user = User mid (Users.u_name user_) (Users.u_email user_) avatar desc
       ok <- AP.hasCreds . AP.getUser user . fmap snd . filter ((>= GroupMember) . fst) =<< db (DB.getGroupRoles uid)
       pure $ if ok then Just user else Nothing
 
@@ -144,8 +144,8 @@ withCurrentUser f = do
     Just u -> f u
     Nothing -> throwError AppUserNotLoggedIn
 
-updateAvatar :: ID User -> Maybe Image -> App ()
-updateAvatar uid avatar = do
+updateUser :: ID User -> UserDetails -> App ()
+updateUser uid avatar = do
   assertCreds $ AP.updateUser uid
   db $ replaceDBUser uid avatar
   invalidateCaches $ Set.fromList [CacheKeyUser uid]

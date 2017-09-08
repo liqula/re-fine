@@ -54,7 +54,7 @@ createAppRunner = do
 
   void . throwApiErrors . runner $ do
     migrateDB cfg
-    unsafeAsGod $ initializeDB [CliCreateGroup $ CreateGroup "Universe" "The group that contains everything" [] [] mempty]
+    unsafeAsGod $ initializeDB [CliCreateGroup $ CreateGroup "Universe" "The group that contains everything" [] [] mempty Nothing]
   pure (runner, destroy)
 
 throwApiErrors :: forall a. ExceptT ApiError IO a -> IO a

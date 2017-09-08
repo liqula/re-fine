@@ -77,7 +77,7 @@ setup action = withTempCurrentDirectory $ do
 setupVDocAsGod :: HasCallStack => [ID User] -> App VDoc
 setupVDocAsGod owners = do
   gid <- view groupID . head <$> db DB.getGroups
-  vdoc <- db . DB.createVDoc $ CreateVDoc (Title "title") (Abstract "abstract") emptyRawContent gid
+  vdoc <- db . DB.createVDoc $ CreateVDoc (Title "title") (Abstract "abstract") emptyRawContent gid Nothing
   (\owner -> db $ DB.assignGroupRole gid owner GroupMember) `mapM_` owners
   pure vdoc
 
@@ -113,7 +113,7 @@ spec = around setup $ do
     it "two users can see each other if they share a group" $ \(switchUser, getUid, sess) -> do
       switchUser Admin
       Right _ <- runDB' sess $ do
-        group <- addGroup $ CreateGroup "title" "desc" [] [] mempty
+        group <- addGroup $ CreateGroup "title" "desc" [] [] mempty Nothing
         assignGroupRole GroupMember (getUid Alice) (group ^. groupID)
         assignGroupRole GroupMember (getUid Bob) (group ^. groupID)
 
@@ -134,20 +134,20 @@ spec = around setup $ do
   describe "add group" $ do
     it "grant: roles [GlobalAdmin]" $ \(switchUser, _getUid, sess) -> do
       switchUser Admin
-      shouldGrant sess . addGroup $ CreateGroup "title" "desc" [] [] mempty
+      shouldGrant sess . addGroup $ CreateGroup "title" "desc" [] [] mempty Nothing
 
     it "deny: roles []" $ \(switchUser, _getUid, sess) -> do
       switchUser Bob
-      shouldDeny sess . addGroup $ CreateGroup "title" "desc" [] [] mempty
+      shouldDeny sess . addGroup $ CreateGroup "title" "desc" [] [] mempty Nothing
 
 
   describe "list all groups" $ do
     it "show only visible groups: roles [(GroupMember, 1), (GroupMember, 2)]; groups [1, 2, 3]" $ \(switchUser, getUid, sess) -> do
       switchUser Admin
       [g1, g2, _g3] <- runDB sess $ do
-        g1_ <- addGroup $ CreateGroup "g1" "a" [] [] mempty
-        g2_ <- addGroup $ CreateGroup "g2" "b" [] [] mempty
-        g3_ <- addGroup $ CreateGroup "g3" "c" [] [] mempty
+        g1_ <- addGroup $ CreateGroup "g1" "a" [] [] mempty Nothing
+        g2_ <- addGroup $ CreateGroup "g2" "b" [] [] mempty Nothing
+        g3_ <- addGroup $ CreateGroup "g3" "c" [] [] mempty Nothing
         changeRole $ AssignGroupRole (getUid Alice) GroupMember (g1_ ^. groupID)
         changeRole $ AssignGroupRole (getUid Alice) GroupMember (g2_ ^. groupID)
         pure [g1_, g2_, g3_]
@@ -164,7 +164,7 @@ spec = around setup $ do
 
   describe "add process" $ do
     let getgid sess = view groupID . head <$> runDB sess getGroups
-        addproc = createVDoc . CreateVDoc (Title "title") (Abstract "abstract") emptyRawContent
+        addproc gid = createVDoc $ CreateVDoc (Title "title") (Abstract "abstract") emptyRawContent gid Nothing
 
     it "grant: roles [GlobalAdmin]" $ \(switchUser, _getUid, sess) -> do
       switchUser Admin

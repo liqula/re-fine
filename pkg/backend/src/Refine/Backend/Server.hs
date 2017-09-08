@@ -123,7 +123,7 @@ mkProdBackend cfg = mkBackend cfg $ do
   () <- migrateDB cfg
   gs <- App.getGroups
   when (null gs) $ do
-    void . addGroup $ CreateGroup "default" "default group" [] [] mempty
+    void . addGroup $ CreateGroup "default" "default group" [] [] mempty Nothing
                                                                    -- FIXME: don't do that any more!
                                                                    -- we have `--init` and
                                                                    -- `initializeDB` now!
