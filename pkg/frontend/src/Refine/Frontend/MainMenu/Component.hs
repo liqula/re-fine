@@ -136,7 +136,8 @@ mainMenuGroups = mkView "MainMenuGroups" $ \groups -> do
           mkCreateGroupAction = MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup Nothing . FormBegin
                               $ newLocalStateRef
                                   (CreateGroup "" "" [] []
-                                   $ flip (,) False <$> Map.elems (groups ^. _3))
+                                    (flip (,) False <$> Map.elems (groups ^. _3))
+                                    Nothing)
                                   groups
 
       ibutton_ $ emptyIbuttonProps "Group_add" [mkCreateGroupAction]
@@ -260,7 +261,7 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
 
     ibutton_ $ emptyIbuttonProps "Process_add"
         [ MainMenuAction . MainMenuActionOpen . MainMenuCreateProcess . FormBegin
-          $ newLocalStateRef (CreateVDoc (Title "[no title]") (Abstract "[no abstract]") emptyRawContent (group ^. groupID)) group
+          $ newLocalStateRef (CreateVDoc (Title "[no title]") (Abstract "[no abstract]") emptyRawContent (group ^. groupID) Nothing) group
         ]
       & ibListKey .~ "process_add"
       & ibSize .~ XXLarge
@@ -272,7 +273,8 @@ mainMenuGroup = mkView "mainMenuGroup" $ \case
         [ MainMenuAction . MainMenuActionOpen . MainMenuCreateOrUpdateGroup (Just $ group ^. groupID) . FormBegin
           $ newLocalStateRef
               (CreateGroup (group ^. groupTitle) (group ^. groupDesc) [] []
-               [(u, (u ^. userID) `elem` (group ^. groupMembers)) | u <- Map.elems users])
+               [(u, (u ^. userID) `elem` (group ^. groupMembers)) | u <- Map.elems users]
+               Nothing{-TODO-})
               group
         ]
       & ibListKey .~ "group_update"
@@ -438,7 +440,7 @@ mainMenuProcessShort_ props = view_ mainMenuProcessShort listKey props
 mainMenuCreateGroup :: HasCallStack => Maybe (ID Group) -> (LocalStateRef (CreateGroup_ [(User, Bool)]), Map (ID User) User) -> View '[]
 mainMenuCreateGroup mid (lst, allusers)
   = mkPersistentStatefulView "MainMenuCreateGroup" lst (Just addUsers)
-  $ \st@(CreateGroup title desc _ _ users) -> do
+  $ \st@(CreateGroup title desc _ _ users _) -> do
 
     contributionDialogTextForm createGroupTitle st 1 "group title"
     hr_ []

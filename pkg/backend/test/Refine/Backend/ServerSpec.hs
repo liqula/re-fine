@@ -132,7 +132,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
   describe "sAddEdit, sUpdateEdit" $ do
     let samplevdoc = mkRawContent $ mkBlock "[new vdoc version]" :| []
     let setup sess = do
-         group <- fmap (^. groupID) . runDB sess $ App.addGroup (CreateGroup "title" "desc" [] [] mempty)
+         group <- fmap (^. groupID) . runDB sess $ App.addGroup (CreateGroup "title" "desc" [] [] mempty Nothing)
          runWai sess $ do
           _l :: User <- postJSON loginUri (Login testUsername testPassword)
           fc :: VDoc <- postJSON createVDocUri sampleCreateVDoc0
@@ -210,7 +210,7 @@ specMockedLogin = around (createTestSessionWith addTestUserAndLogin) $ do
 specUserHandling :: Spec
 specUserHandling = around createTestSession $ do
   describe "User handling" $ do
-    let doCreate = post createUserUri (CreateUser testUsername testUserEmail testPassword Nothing)
+    let doCreate = post createUserUri (CreateUser testUsername testUserEmail testPassword Nothing "")
         doLogin = post loginUri
         doLogout = post logoutUri ()
 
@@ -346,7 +346,7 @@ specVoting = around createTestSession $ do
       let blocks = mkBlock <$> ["first line", "second line", "third line"]
           vdoc ~(b:bs) = mkRawContent $ b :| bs
 
-      cvdoc <- mkCVDoc sess $ CreateVDoc (Title "[title]") (Abstract "[abstract]") (vdoc blocks) defaultGroupID
+      cvdoc <- mkCVDoc sess $ CreateVDoc (Title "[title]") (Abstract "[abstract]") (vdoc blocks) defaultGroupID Nothing
 
       let ce1 :: CreateEdit = CreateEdit "description" (vdoc [head blocks, blocks !! 1]) Grammar
           ce2 :: CreateEdit = CreateEdit "description" (vdoc [head blocks, blocks !! 2]) Grammar

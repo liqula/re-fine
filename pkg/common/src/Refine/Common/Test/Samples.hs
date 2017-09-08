@@ -45,6 +45,7 @@ sampleCreateVDoc = CreateVDoc
   , _createVDocAbstract    = sampleAbstract
   , _createVDocInitVersion = sampleRawContent1
   , _createVDocGroup       = ID 0
+  , _createVDocImage       = Nothing
   }
 
 sampleVDoc :: VDoc
@@ -55,6 +56,7 @@ sampleVDoc = VDoc
   , _vdocHeadEdit = ID 0
   , _vdocGroup    = ID 0
   , _vdocStats    = EditStats 13 91 11
+  , _vdocImage    = Nothing
   }
 
 
@@ -67,6 +69,7 @@ sampleGroup1 = Group
   , _groupChildren  = []
   , _groupVDocs     = [ID 0]
   , _groupMembers   = mempty
+  , _groupImage     = Nothing
   }
 
 sampleGroup2 :: Group
@@ -78,6 +81,7 @@ sampleGroup2 = Group
   , _groupChildren  = []
   , _groupVDocs     = []
   , _groupMembers   = mempty
+  , _groupImage     = Nothing
   }
 
 

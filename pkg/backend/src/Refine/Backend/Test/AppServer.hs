@@ -250,6 +250,7 @@ sampleCreateVDoc0 = CreateVDoc
   (Abstract "[abstract]")
   sampleCreateVDocE0
   defaultGroupID
+  Nothing
 
 sampleCreateVDocE0 :: RawContent
 sampleCreateVDocE0 = mkRawContent $ mkBlock "[versioned content]" :| []
