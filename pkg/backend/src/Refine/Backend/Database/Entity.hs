@@ -451,6 +451,7 @@ getDBUser (ID uid) = do
 
 -- * Group
 
+{-# ANN toGroup ("HLint: ignore Eta reduce" :: String) #-}
 toGroup :: [ID Group] -> [ID Group] -> [ID VDoc] -> [ID User] -> MetaID Group -> ST -> ST -> Maybe Image -> Group
 toGroup parents children vdocs members gid title desc image =
   Group gid title desc parents children vdocs members image
