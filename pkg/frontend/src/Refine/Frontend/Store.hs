@@ -150,10 +150,8 @@ routesFromState st
       MainMenuGroups ()                         -> Route.Groups
       MainMenuGroup MainMenuGroupProcesses gid  -> Route.GroupProcesses gid
       MainMenuGroup MainMenuGroupMembers gid    -> Route.GroupMembers gid
-      MainMenuCreateOrUpdateGroup _ _           -> Route.Groups
-        -- FIXME: when creating a group, this is fine, but when updating an existing group, we want
-        -- to return to the last route (either group members or group processes, as of now).  this
-        -- probably works better once we have bread crumbs.
+      MainMenuCreateOrUpdateGroup Nothing _     -> Route.GroupCreate
+      MainMenuCreateOrUpdateGroup (Just gid) _  -> Route.GroupUpdate gid
       MainMenuCreateProcess ref                 -> Route.GroupProcesses . view createVDocGroup $ unsafeReadLocalStateRef ref
       MainMenuUpdateProcess vid _               -> Route.Process vid
 
@@ -173,12 +171,15 @@ handleRouteChange r = do
     Right Route.Register             -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabRegistration
     Right (Route.Profile uid)        -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (uid, FormBegin $ newLocalStateRef (Nothing, Nothing) uid)
     Right Route.Groups               -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
+    Right Route.GroupCreate          -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuCreateOrUpdateGroup Nothing emptyGroupForm
     Right (Route.GroupProcesses gid) -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupProcesses gid
     Right (Route.GroupMembers gid)   -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupMembers gid
+    Right (Route.GroupUpdate gid)    -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuCreateOrUpdateGroup (Just gid) emptyGroupForm
     Right (Route.Process vid)        -> exec $ LoadVDoc vid
     Left _                           -> exec . MainMenuAction . MainMenuActionOpen $ defaultMainMenuTab
   where
     exec = executeAction . action @GlobalState
+    emptyGroupForm = FormBegin $ newLocalStateRef (CreateGroup mempty mempty mempty mempty mempty Nothing) r
 
 flushCacheMisses :: IO ()
 flushCacheMisses = do
