@@ -254,6 +254,14 @@ colorPalette = it "colorPalette" $ do
 
 -- * combinators
 
+clearHtml :: Spec
+clearHtml = it "remove old html code" $ do
+  (_, lines -> vcfiles, "")
+      <- readProcessWithExitCode "/usr/bin/git" ["grep", "-l", ".", styleGuidePath] mempty
+  (_, _, _)
+      <- readProcessWithExitCode "/bin/rm" vcfiles mempty
+  pure ()
+
 wrapHtml :: FilePath -> [String] -> String -> String
 wrapHtml nm ctx = (unlines header <>) . (<> unlines footer)
   where
@@ -511,7 +519,8 @@ main = hspec spec
 
 spec :: Spec
 spec = describe "@STYLEGUIDE" $ do
-    describe "colorPalette"      colorPalette
-    describe "validate-before" $ validateStyleGuide >> checkWorkingCopy
-    describe "generate"        $ generateIndexHtml >> generateStyleGuide `mapM_` viewsSources
-    describe "validate-after"  $ validateStyleGuide >> checkWorkingCopy
+    describe "clearHtml"      clearHtml
+    describe "color palette"  colorPalette
+    describe "generate views" (generateStyleGuide `mapM_` viewsSources)
+    describe "generate index" generateIndexHtml
+    describe "validate"       (validateStyleGuide >> checkWorkingCopy)
