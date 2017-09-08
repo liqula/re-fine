@@ -167,8 +167,15 @@ routeFromState st
   | otherwise
     = Route.Login
 
--- |
--- Idea: Ignore window.onhashchange when new route was set by the program.
+-- | Dispatch actions after route change.
+--
+-- This ignores window.onhashchange when new route was set by the program.
+--
+-- This is necessary in the following situation: user clicks at "update group" in group processes
+-- view; group update form gets rendered with current content, and route gets updated;
+-- 'handleRouteChange' gets triggered and form gets re-rendered with no content.
+--
+-- To be more specific:
 --
 -- - click on "edit group" button
 -- - transform (EditGroup GID)
