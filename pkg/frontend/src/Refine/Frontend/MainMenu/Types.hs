@@ -75,7 +75,7 @@ type MainMenuTabProps = (MainMenuTab
       (Lookup User, LocalStateRef ProfileProps)
       :: *)
 
-type ProfileProps = (ImageUpload{-avatar-}, ST{-user description-})
+type ProfileProps = (ImageUpload{-avatar-}, Maybe ST{-user description update-})
 type ImageUpload = Maybe (Either (NoJSONRep File) Image)
 
 newtype File = File JSVal deriving (FromJSVal)

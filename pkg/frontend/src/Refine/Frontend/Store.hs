@@ -171,7 +171,7 @@ handleRouteChange r = do
     Right Route.Help                 -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuHelp
     Right Route.Login                -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabLogin
     Right Route.Register             -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuLogin MainMenuSubTabRegistration
-    Right (Route.Profile uid)        -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (uid, FormBegin $ newLocalStateRef (Nothing, "") uid)
+    Right (Route.Profile uid)        -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (uid, FormBegin $ newLocalStateRef (Nothing, Nothing) uid)
     Right Route.Groups               -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
     Right (Route.GroupProcesses gid) -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupProcesses gid
     Right (Route.GroupMembers gid)   -> exec . MainMenuAction . MainMenuActionOpen $ MainMenuGroup MainMenuGroupMembers gid
@@ -335,7 +335,7 @@ emitBackendCallsFor act st = case act of
         _ -> pure ()
 
     MainMenuAction (MainMenuActionOpen (MainMenuProfile (uid, FormComplete (img, desc))))
-      -> sendTS $ TSUpdateUser uid (join $ either (const Nothing) Just <$> img, desc)
+      -> sendTS $ TSUpdateUser uid (join $ either (const Nothing) Just <$> img, fromMaybe "" desc)
 
     -- voting
 

@@ -42,14 +42,13 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
           ibutton_ $ emptyIbuttonProps "User_profile"
             [ MainMenuAction . MainMenuActionOpen
               $ MainMenuProfile ( either id (^. userID) user
-                                , FormBegin $ newLocalStateRef (either (const (Nothing, ""))
-                                                                       (\u -> (Right <$> (u ^. userAvatar), u ^. userDescription)) user) user)
+                                , FormBegin $ newLocalStateRef (Nothing, Nothing) user)
             ]
             & ibListKey .~ "5"
             & ibDarkBackground .~ True
             & ibSize .~ XXLarge
             & ibLabel .~ mempty
-            & ibEnabled .~ either (const False) (const True) user
+--            & ibEnabled .~ either (const False) (const True) user   -- this is not needed
         _ -> pure ()
 
       ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
@@ -328,7 +327,8 @@ mainMenuMemberShort :: HasCallStack => View '[User]
 mainMenuMemberShort = mkView "MainMenuProcessShort" $ \props -> do
 --  let listKey = "member-list-item-" <> (cs . show $ props ^. userID . unID)
   div_ [ onClick $ \_ _ -> simpleHandler . dispatch
-                         . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (props ^. userID, FormBegin $ newLocalStateRef (Nothing, "") props)
+                         . MainMenuAction . MainMenuActionOpen
+                         $ MainMenuProfile (props ^. userID, FormBegin $ newLocalStateRef (Nothing, Nothing) props)
 
        , "style" @@= [ decl "backgroundColor" (Ident "rgba(84, 99, 122, 1)")
                      , decl "padding" (Px 50)
@@ -526,8 +526,8 @@ mainMenuProfile :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileP
 mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" lst Nothing $ \st -> case user of
   Left _uid -> elemText "Loading..."
   Right u -> do
-
     elemText $ u ^. userName
+
     hr_ []
     case u ^. userAvatar of
       Nothing -> elemText "You didn't upload an avatar yet."
@@ -537,67 +537,74 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
                            , decl "maxHeight" (Px 200)
                            ]
              ] $ pure ()
+
+    when editable $ do
+      br_ []
+      input_ [ "type" $= "file"
+             , onChange $ \evt -> simpleHandler $ \st' -> case unsafePerformIO . fromJSVal $ target evt "files" of
+                 Just [f] -> 
+                   ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormBegin lst)]
+                   , Just $ st' & _1 .~ Just (Left $ NoJSONRep f))
+                 _ -> ([], Nothing)
+             ]
+
+      case fst st of
+        Just (Right (Image source)) -> do
+          br_ []
+          img_ [ "src" $= cs source
+               , "style" @@= [ decl "maxWidth" (Px 200)
+                             , decl "maxHeight" (Px 200)
+                             ]
+               ] $ pure ()
+          br_ []
+          button_
+            [ onClick $ \_evt _ -> simpleHandler @_ $
+              \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete (fst st, Just $ u ^. userDescription))]
+                      , Just $ st' & _1 .~ Nothing)
+            ] $ elemText "upload"
+        _ -> pure ()
+
     br_ []
+    elemText $ u ^. userDescription
 
-    if not editable
-      then elemText $ u ^. userDescription
-      else do
-        let upd evt = case files of
-              Just [f] -> simpleHandler $
-                \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormBegin lst)]
-                        , Just $ st' & _1 .~ Just (Left $ NoJSONRep f))
-              _ -> simpleHandler $ \_ -> ([], Nothing)
-              where
-                files = unsafePerformIO . fromJSVal $ target evt "files"
+    when editable $ do
+      br_ []
+      button_
+        [ onClick $ \_evt _ -> simpleHandler @_ $
+          \st' -> ( []
+                  , Just $ st' & _2 .~ Just (u ^. userDescription))
+        ] $ elemText "edit"
 
-        input_ [ "type" $= "file"
-               , onChange upd
-               ]
+      case snd st of
+        Nothing -> pure ()
+        _ -> do
+          contributionDialogTextForm (_2 . iso fromJust Just) st 1 "Description"
+          br_ []
 
-        case fst st of
-          Just (Right (Image source)) -> do
-            br_ []
-            img_ [ "src" $= cs source
-                 , "style" @@= [ decl "maxWidth" (Px 200)
-                               , decl "maxHeight" (Px 200)
-                               ]
-                 ] $ pure ()
-            br_ []
-            button_
-              [ onClick $ \_evt _ -> simpleHandler @_ $
-                \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete st')]
-                        , Just $ st' & _1 .~ Nothing)
-              ] $ elemText "upload"
-          _ -> pure ()
+          let enableOrDisable props = if False
+                then props
+                  & iconButtonPropsDisabled     .~ True
+                else props
+                  & iconButtonPropsDisabled     .~ False
+                  & iconButtonPropsOnClick      .~ [MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete (Right <$> (u ^. userAvatar), snd st))]
 
-        br_ []
-        contributionDialogTextForm _2 st 1 "Description"
-        br_ []
+          iconButton_ $ defaultIconButtonProps @[GlobalAction]
+                  & iconButtonPropsListKey      .~ "save"
+                  & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "dark") XXLarge
+                  & iconButtonPropsElementName  .~ "btn-index"
+                  & iconButtonPropsLabel        .~ "save"
+                  & iconButtonPropsAlignRight   .~ True
+                  & enableOrDisable
 
-        let enableOrDisable props = if False
-              then props
-                & iconButtonPropsDisabled     .~ True
-              else props
-                & iconButtonPropsDisabled     .~ False
-                & iconButtonPropsOnClick      .~ [MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete st)]
-
-        iconButton_ $ defaultIconButtonProps @[GlobalAction]
-                & iconButtonPropsListKey      .~ "save"
-                & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "dark") XXLarge
-                & iconButtonPropsElementName  .~ "btn-index"
-                & iconButtonPropsLabel        .~ "save"
-                & iconButtonPropsAlignRight   .~ True
-                & enableOrDisable
-
-        iconButton_ $ defaultIconButtonProps @[GlobalAction]
-                & iconButtonPropsListKey      .~ "cancel"
-                & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Close", "dark") XXLarge
-                & iconButtonPropsElementName  .~ "btn-index"
-                & iconButtonPropsLabel        .~ "cancel"
-                & iconButtonPropsAlignRight   .~ True
-                & iconButtonPropsDisabled     .~ False
-                & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
-                                                 ]
+          iconButton_ $ defaultIconButtonProps @[GlobalAction]
+                  & iconButtonPropsListKey      .~ "cancel"
+                  & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Close", "dark") XXLarge
+                  & iconButtonPropsElementName  .~ "btn-index"
+                  & iconButtonPropsLabel        .~ "cancel"
+                  & iconButtonPropsAlignRight   .~ True
+                  & iconButtonPropsDisabled     .~ False
+                  & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
+                                                   ]
 
 mainMenuProfile_ :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileProps -> ReactElementM eventHandler ()
 mainMenuProfile_ editable user lst = view_ (mainMenuProfile editable user lst) "mainMenuProfile_"
