@@ -324,18 +324,18 @@ emitBackendCallsFor act st = case act of
 
       v <- readLocalStateRef lst
       case v of
-        (Just (NoJSONRep f, Nothing), desc) -> do
+        (Just (Left (NoJSONRep f)), desc) -> do
           fr <- js_createFileReader
           l <- syncCallback1 ContinueAsync $ \e -> do
                 res <- js_targetResult e
                 dispatchAndExec . MainMenuAction . MainMenuActionOpen
-                  $ MainMenuProfile (uid, FormBegin $ newLocalStateRef (Just (NoJSONRep f, Just . Image $ cs res), desc) lst)
+                  $ MainMenuProfile (uid, FormBegin $ newLocalStateRef (Just (Right . Image $ cs res), desc) lst)
           js_addOnload fr $ jsval l
           js_doUpload fr f
         _ -> pure ()
 
     MainMenuAction (MainMenuActionOpen (MainMenuProfile (uid, FormComplete (img, desc))))
-      -> sendTS $ TSUpdateUser uid (join $ snd <$> img, desc)
+      -> sendTS $ TSUpdateUser uid (join $ either (const Nothing) Just <$> img, desc)
 
     -- voting
 

@@ -40,12 +40,16 @@ topMenuBarInMainMenu = mkView "TopMenuBarInMainMenu" $ \(TopMenuBarInMainMenuPro
       case currentUser of
         UserLoggedIn user -> do
           ibutton_ $ emptyIbuttonProps "User_profile"
-            [ MainMenuAction . MainMenuActionOpen $ MainMenuProfile (either id (^. userID) user, FormBegin $ newLocalStateRef (Nothing, "") user)
+            [ MainMenuAction . MainMenuActionOpen
+              $ MainMenuProfile ( either id (^. userID) user
+                                , FormBegin $ newLocalStateRef (either (const (Nothing, ""))
+                                                                       (\u -> (Right <$> (u ^. userAvatar), u ^. userDescription)) user) user)
             ]
             & ibListKey .~ "5"
             & ibDarkBackground .~ True
             & ibSize .~ XXLarge
             & ibLabel .~ mempty
+            & ibEnabled .~ either (const False) (const True) user
         _ -> pure ()
 
       ibutton_ $ emptyIbuttonProps "Group" [MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()]
@@ -541,7 +545,7 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
         let upd evt = case files of
               Just [f] -> simpleHandler $
                 \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormBegin lst)]
-                        , Just $ st' & _1 .~ Just (NoJSONRep f, Nothing))
+                        , Just $ st' & _1 .~ Just (Left $ NoJSONRep f))
               _ -> simpleHandler $ \_ -> ([], Nothing)
               where
                 files = unsafePerformIO . fromJSVal $ target evt "files"
@@ -551,7 +555,7 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
                ]
 
         case fst st of
-          Just (NoJSONRep _f, Just (Image source)) -> do
+          Just (Right (Image source)) -> do
             br_ []
             img_ [ "src" $= cs source
                  , "style" @@= [ decl "maxWidth" (Px 200)

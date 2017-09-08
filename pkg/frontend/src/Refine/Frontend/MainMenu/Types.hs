@@ -76,7 +76,7 @@ type MainMenuTabProps = (MainMenuTab
       :: *)
 
 type ProfileProps = (ImageUpload{-avatar-}, ST{-user description-})
-type ImageUpload = Maybe (NoJSONRep File, Maybe Image)
+type ImageUpload = Maybe (Either (NoJSONRep File) Image)
 
 newtype File = File JSVal deriving (FromJSVal)
 instance Eq File where _ == _ = False
