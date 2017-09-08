@@ -519,8 +519,8 @@ main = hspec spec
 
 spec :: Spec
 spec = describe "@STYLEGUIDE" $ do
-    describe "clearHtml"         clearHtml
-    describe "colorPalette"      colorPalette
-    describe "validate-before" $ validateStyleGuide >> checkWorkingCopy
-    describe "generate"        $ generateIndexHtml >> generateStyleGuide `mapM_` viewsSources
-    describe "validate-after"  $ validateStyleGuide >> checkWorkingCopy
+    describe "clearHtml"      clearHtml
+    describe "color palette"  colorPalette
+    describe "generate views" (generateStyleGuide `mapM_` viewsSources)
+    describe "generate index" generateIndexHtml
+    describe "validate"       (validateStyleGuide >> checkWorkingCopy)
