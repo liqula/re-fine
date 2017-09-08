@@ -23,5 +23,7 @@ import qualified Language.Css.Pretty as Css
 import qualified Language.Css.Syntax as Css
 import qualified React.Flux as React
 import qualified React.Flux.Outdated as React
+import qualified React.Flux.Internal as React
+import qualified React.Flux.Views as React
 import qualified Refine.Common.Access.Policy as AP
 import qualified Refine.Common.Types as Common

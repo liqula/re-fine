@@ -12,9 +12,10 @@ import           Refine.Common.VDoc.Draft
 import           Refine.Frontend.Access
 import           Refine.Frontend.Contribution.Dialog (contributionDialogTextForm)
 import           Refine.Frontend.Icon
-import           Refine.Frontend.Login.Types
+import           Refine.Frontend.ImageUpload
 import           Refine.Frontend.Login.Component
 import           Refine.Frontend.Login.Status
+import           Refine.Frontend.Login.Types
 import           Refine.Frontend.MainMenu.Types
 import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
@@ -511,7 +512,7 @@ mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst
 mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
 mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
 
-{-
+{- TODO: edit or discard this comment?
 
 - mkPersistentStatefulView is needed because of a text form
 - with mkPersistentStatefulView, the local state is updated without emitting any actions
@@ -528,39 +529,7 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
   Right u -> do
     elemText $ u ^. userName
 
-    hr_ []
-    case u ^. userAvatar of
-      Nothing -> elemText "You didn't upload an avatar yet."
-      Just (Image source) ->
-        img_ [ "src" $= cs source
-             , "style" @@= [ decl "maxWidth" (Px 200)
-                           , decl "maxHeight" (Px 200)
-                           ]
-             ] $ pure ()
-
-    when editable $ do
-      input_ [ "type" $= "file"
-             , onChange $ \evt -> simpleHandler $ \st' -> case unsafePerformIO . fromJSVal $ target evt "files" of
-                 Just [f] -> 
-                   ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormBegin lst)]
-                   , Just $ st' & _1 .~ Just (Left $ NoJSONRep f))
-                 _ -> ([], Nothing)
-             ]
-
-      case fst st of
-        Just (Right (Image source)) -> do
-          br_ []
-          img_ [ "src" $= cs source
-               , "style" @@= [ decl "maxWidth" (Px 200)
-                             , decl "maxHeight" (Px 200)
-                             ]
-               ] $ pure ()
-          button_
-            [ onClick $ \_evt _ -> simpleHandler @_ $
-              \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete (fst st, Just $ u ^. userDescription))]
-                      , Just $ st' & _1 .~ Nothing)
-            ] $ elemText "upload"
-        _ -> pure ()
+    imageUpload_ editable u lst st
 
     case snd st of
       Nothing -> do
