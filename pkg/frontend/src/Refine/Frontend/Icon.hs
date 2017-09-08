@@ -9,6 +9,7 @@ module Refine.Frontend.Icon
   , ibutton_
   , sibutton_
   , emptyIbuttonProps
+  , emptyIbuttonProps_
   , IbuttonOnClick(..)
 
     -- * outdated
@@ -84,8 +85,10 @@ sibutton_ mouseIsOver st props = do
              <> [decl "cursor" (Ident "pointer") | props ^. ibEnabled]
              <> css (props ^. ibSize)
 
-      bg :: BackgroundImage
-      bg = BackgroundImage (props ^. ibImage) imageState
+      bg :: Either BackgroundImage Common.Image
+      bg = case props ^. ibImage of
+        ImageInline i -> Right i
+        ImageIcon n -> Left $ BackgroundImage n imageState
         where
           imageState = case props ^. ibHighlightWhen of
             HighlightAlways      | props ^. ibEnabled                      -> BisRO
@@ -106,12 +109,17 @@ sibutton_ mouseIsOver st props = do
             | otherwise                 = "rgba(0, 0, 0, 1)"
 
   div_ (onMsOvr <> onClk <> ["style" @@= divSty]) $ do
-    div_  ["style" @@= iconSty, "className" $= iconCssClass bg] $ pure ()
+    case bg of
+      Left i  -> div_  ["style" @@= iconSty, "className" $= iconCssClass i] $ pure ()
+      Right (Common.Image i) -> img_ ["src" $= cs i] $ pure ()
     span_ ["style" @@= spanSty] $ elemText (props ^. ibLabel)
 
 
 emptyIbuttonProps :: HasCallStack => forall onclick. ST -> onclick -> IbuttonProps onclick
-emptyIbuttonProps img onclick = IbuttonProps
+emptyIbuttonProps = emptyIbuttonProps_ . ImageIcon
+
+emptyIbuttonProps_ :: HasCallStack => forall onclick. ButtonImage -> onclick -> IbuttonProps onclick
+emptyIbuttonProps_ img onclick = IbuttonProps
   { _ibListKey          = "0"
   , _ibLabel            = mempty
   , _ibDarkBackground   = False

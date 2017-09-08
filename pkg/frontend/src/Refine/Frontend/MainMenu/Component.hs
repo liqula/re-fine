@@ -335,7 +335,7 @@ mainMenuMemberShort = mkView "MainMenuProcessShort" $ \props -> do
 
     -- image
     br_ []
-    ibutton_ $ emptyIbuttonProps "User" ([] :: [GlobalAction])
+    ibutton_ $ emptyIbuttonProps_ (maybe (ImageIcon "User") ImageInline $ props ^. userAvatar) ([] :: [GlobalAction])
       & ibListKey .~ "user"
       & ibSize .~ XXLarge
       & ibDarkBackground .~ True
