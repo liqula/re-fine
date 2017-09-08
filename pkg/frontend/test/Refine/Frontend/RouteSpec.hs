@@ -15,9 +15,10 @@ import Refine.Common.Test.Arbitrary ()
 
 instance Arbitrary Route where
   arbitrary = oneof $
-    (pure <$> [Help, Login, Register, Groups]) <>
+    (pure <$> [Help, Login, Register, Groups, GroupCreate]) <>
     [ GroupProcesses <$> arbitrary
     , GroupMembers <$> arbitrary
+    , GroupUpdate <$> arbitrary
     , Process <$> arbitrary
     ]
 
