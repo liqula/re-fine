@@ -539,7 +539,6 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
              ] $ pure ()
 
     when editable $ do
-      br_ []
       input_ [ "type" $= "file"
              , onChange $ \evt -> simpleHandler $ \st' -> case unsafePerformIO . fromJSVal $ target evt "files" of
                  Just [f] -> 
@@ -556,7 +555,7 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
                              , decl "maxHeight" (Px 200)
                              ]
                ] $ pure ()
-          br_ []
+          -- TODO: use iconButton
           button_
             [ onClick $ \_evt _ -> simpleHandler @_ $
               \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete (fst st, Just $ u ^. userDescription))]
@@ -564,37 +563,43 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
             ] $ elemText "upload"
         _ -> pure ()
 
-    br_ []
-    elemText $ u ^. userDescription
+    case snd st of
+      Nothing -> do
+        br_ []
+        elemText $ u ^. userDescription
 
-    when editable $ do
-      br_ []
-      button_
-        [ onClick $ \_evt _ -> simpleHandler @_ $
-          \st' -> ( []
-                  , Just $ st' & _2 .~ Just (u ^. userDescription))
-        ] $ elemText "edit"
+        when editable $ do
+          br_ []
+          -- TODO: use iconButton
+          button_
+            [ onClick $ \_evt _ -> simpleHandler @_ $
+              \st' -> ([], Just $ st' & _2 .~ Just (u ^. userDescription))
+            ] $ elemText "edit"
 
-      case snd st of
-        Nothing -> pure ()
-        _ -> do
+      _ -> do
+          br_ []
           contributionDialogTextForm (_2 . iso fromJust Just) st 1 "Description"
           br_ []
 
-          let enableOrDisable props = if False
-                then props
-                  & iconButtonPropsDisabled     .~ True
-                else props
-                  & iconButtonPropsDisabled     .~ False
-                  & iconButtonPropsOnClick      .~ [MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete (Right <$> (u ^. userAvatar), snd st))]
-
+          -- TODO: use iconButton
+          button_
+            [ onClick $ \_evt _ -> simpleHandler @_ $
+              \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete (Right <$> (u ^. userAvatar), snd st))]
+                      , Just $ st' & _2 .~ Nothing)
+            ] $ elemText "save"
+          -- TODO: use iconButton
+          button_
+            [ onClick $ \_evt _ -> simpleHandler @_ $
+              \st' -> ([], Just $ st' & _2 .~ Nothing)
+            ] $ elemText "cancel"
+{-
           iconButton_ $ defaultIconButtonProps @[GlobalAction]
                   & iconButtonPropsListKey      .~ "save"
                   & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-Save", "dark") XXLarge
                   & iconButtonPropsElementName  .~ "btn-index"
                   & iconButtonPropsLabel        .~ "save"
                   & iconButtonPropsAlignRight   .~ True
-                  & enableOrDisable
+                  & iconButtonPropsOnClick      .~ [MainMenuAction . MainMenuActionOpen $ MainMenuProfile (u ^. userID, FormComplete (Right <$> (u ^. userAvatar), snd st))]
 
           iconButton_ $ defaultIconButtonProps @[GlobalAction]
                   & iconButtonPropsListKey      .~ "cancel"
@@ -605,7 +610,7 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
                   & iconButtonPropsDisabled     .~ False
                   & iconButtonPropsOnClick      .~ [ MainMenuAction . MainMenuActionOpen $ MainMenuGroups ()
                                                    ]
-
+-}
 mainMenuProfile_ :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileProps -> ReactElementM eventHandler ()
 mainMenuProfile_ editable user lst = view_ (mainMenuProfile editable user lst) "mainMenuProfile_"
 
