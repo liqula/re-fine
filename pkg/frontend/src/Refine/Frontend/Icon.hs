@@ -111,7 +111,7 @@ sibutton_ mouseIsOver st props = do
   div_ (onMsOvr <> onClk <> ["style" @@= divSty]) $ do
     case bg of
       Left i  -> div_  ["style" @@= iconSty, "className" $= iconCssClass i] $ pure ()
-      Right (Common.Image i) -> img_ ["src" $= cs i] $ pure ()
+      Right (Common.Image i) -> div_ ["style" @@= iconSty] . img_ ["src" $= cs i] $ pure ()
     span_ ["style" @@= spanSty] $ elemText (props ^. ibLabel)
 
 
