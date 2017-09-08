@@ -167,6 +167,18 @@ routeFromState st
   | otherwise
     = Route.Login
 
+-- |
+-- Idea: Ignore window.onhashchange when new route was set by the program.
+--
+-- - click on "edit group" button
+-- - transform (EditGroup GID)
+-- - update state incl new route
+--   -- 1. state1 = ... ; state2 = state1 { route = routeFromState state1 }
+-- - set navigation new route
+-- - nav-handler -> OnLocationHashChange
+-- - transform (OnLocationHashChange r)
+-- - if r == model.route then return () else INIT
+--
 handleRouteChange :: Maybe Route.Route -> Either Route.RouteParseError Route.Route -> IO ()
 handleRouteChange (Just r) (Right r') | r == r' = pure ()
 handleRouteChange _ r = do
