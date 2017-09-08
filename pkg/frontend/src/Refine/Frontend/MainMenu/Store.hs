@@ -15,13 +15,15 @@ mainMenuUpdate (MainMenuAction MainMenuActionClose) isThereVDoc st = st
   & mmErrors . mmeRegistration .~ Nothing
 
 mainMenuUpdate (MainMenuAction (MainMenuActionOpen tab)) _ st = case tab of
-  MainMenuCreateOrUpdateGroup _ FormComplete{} -> st
-  MainMenuCreateProcess FormComplete{} -> st
-  MainMenuUpdateProcess _ FormComplete{} -> st
+  MainMenuCreateOrUpdateGroup _ (completeOrCancel -> True) -> st
+  MainMenuCreateProcess (completeOrCancel -> True)         -> st
+  MainMenuUpdateProcess _ (completeOrCancel -> True)       -> st
+  MainMenuProfile (_, completeOrCancel -> True)            -> st
   _ -> st
      & mmState .~ MainMenuOpen (mapMainMenuTab
                                 id
                                 id
+                                -- the following impossible cases are ruled out by the cases above
                                 (formAction id (error "impossible - MainMenuUpdateProcess #1") (error "impossible - MainMenuUpdateProcess #2"))
                                 (formAction id (error "impossible - MainMenuUpdateProcess #3") (error "impossible - MainMenuUpdateProcess #4"))
                                 (formAction id (error "impossible - MainMenuUpdateProcess #5") (error "impossible - MainMenuUpdateProcess #6"))

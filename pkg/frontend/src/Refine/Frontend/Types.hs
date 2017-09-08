@@ -24,6 +24,13 @@ formAction f _ _ (FormBegin a)    = f a
 formAction _ g _ (FormComplete b) = g b
 formAction _ _ c FormCancel       = c
 
+completeOrCancel :: FormActionWith a b -> Bool
+completeOrCancel = \case
+  FormComplete{} -> True
+  FormCancel     -> True
+  _              -> False
+
+
 type FormAction a = FormActionWith (LocalStateRef a) a
 
 type Lookup a = Either (ID a) a
