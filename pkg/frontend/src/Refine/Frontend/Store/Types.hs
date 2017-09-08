@@ -16,6 +16,7 @@ import Refine.Frontend.Header.Types
 import Refine.Frontend.MainMenu.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
+import qualified Refine.Frontend.Route as Route
 
 
 -- * state
@@ -30,6 +31,7 @@ data GlobalState_ a = GlobalState
   , _gsScreenState                :: ScreenState
   , _gsMainMenuState              :: MainMenuState
   , _gsTranslations               :: Trans
+  , _gsLocationHash               :: Maybe Route.Route  -- ^ (We could also provide a 'Default' instance here.)
   , _gsDevState                   :: Maybe DevState  -- ^ for development & testing, see 'devStateUpdate'.
   , _gsServerCache                :: ServerCache
   } deriving (Show, Eq, Generic, Functor)
@@ -43,6 +45,7 @@ emptyGlobalState = GlobalState
   , _gsScreenState                = emptyScreenState
   , _gsMainMenuState              = emptyMainMenuState
   , _gsTranslations               = emptyTrans
+  , _gsLocationHash               = Nothing
   , _gsDevState                   = Nothing
   , _gsServerCache                = mempty
   }
@@ -81,6 +84,9 @@ data GlobalAction =
 
     -- users
   | CreateUser CreateUser
+
+    -- route update
+  | OnLocationHashChange (Either Route.RouteParseError Route.Route)
 
     -- testing & dev
   | ResetState GlobalState

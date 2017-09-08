@@ -67,7 +67,7 @@ transformGlobalState = transf
     transf act st = do
       consoleLogGlobalStateBefore weAreInDevMode act st
 
-      st' <- pureTransform act st
+      st' <- locationHashUpdate <$> pureTransform act st
 
       -- ajax
       liftIO $ emitBackendCallsFor act st
@@ -81,7 +81,8 @@ transformGlobalState = transf
         _ -> pure ()
 
       -- routing
-      Route.changeRoute $ routesFromState st'  -- FIXME: call only once at the end of every @loop@
+      Route.changeRoute `mapM_` (st' ^. gsLocationHash)
+                                               -- FIXME: call only once at the end of every @loop@
                                                -- sequence in the class method above?
 
       -- other effects
@@ -104,6 +105,8 @@ transformGlobalState = transf
         ContributionAction (SetRange _) -> removeAllRanges
         ContributionAction ClearRange   -> removeAllRanges
 
+        OnLocationHashChange r          -> liftIO $ handleRouteChange (st' ^. gsLocationHash) r
+
         ShowNotImplementedYet -> do
             liftIO $ windowAlertST "not implemented yet."
 
@@ -111,6 +114,9 @@ transformGlobalState = transf
 
       consoleLogGlobalStateAfter weAreInDevMode (st' /= st) st'
       pure st'
+
+    locationHashUpdate :: HasCallStack => GlobalState -> GlobalState
+    locationHashUpdate s = s & gsLocationHash .~ (Just $ routeFromState s)
 
     pureTransform :: GlobalAction -> GlobalState -> m GlobalState
     pureTransform act st = case runExcept $ fm st of
@@ -134,14 +140,14 @@ transformGlobalState = transf
 
 initRouting :: IO ()
 initRouting = do
-  Route.onLocationHashChange handleRouteChange
-  handleRouteChange =<< Route.currentRoute
+  Route.onLocationHashChange (dispatchAndExec @GlobalAction . OnLocationHashChange)
+  handleRouteChange Nothing =<< Route.currentRoute
 
 -- | FUTUREWORK: there should be one sum constructor for every route in 'GlobalState', then this
 -- would be much easier to write.  (As it is, we need to be very careful to test the cases in the
 -- right order, since later ones can be true even though earlier ones should fire.)
-routesFromState :: GlobalState -> Route.Route
-routesFromState st
+routeFromState :: GlobalState -> Route.Route
+routeFromState st
   | MainMenuOpen tab <- st ^. gsMainMenuState . mmState = case tab of
       MainMenuHelp                              -> Route.Help
       MainMenuLogin MainMenuSubTabLogin         -> Route.Login
@@ -161,8 +167,9 @@ routesFromState st
   | otherwise
     = Route.Login
 
-handleRouteChange :: Either Route.RouteParseError Route.Route -> IO ()
-handleRouteChange r = do
+handleRouteChange :: Maybe Route.Route -> Either Route.RouteParseError Route.Route -> IO ()
+handleRouteChange (Just r) (Right r') | r == r' = pure ()
+handleRouteChange _ r = do
   removeAllRanges
   js_scrollToPageTop
   case r of

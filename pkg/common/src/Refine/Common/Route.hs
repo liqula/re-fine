@@ -20,6 +20,12 @@ data Route
   | Process (T.ID T.VDoc)
   deriving (Eq, Show, Generic)
 
+newtype RouteParseError = RouteParseError String
+  deriving (Eq, Show, Generic)
+
+deriveClasses [([''Route, ''RouteParseError], allClass)]
+
+
 rrender :: Route -> ST
 rrender = \case
   Help                      -> "#/help"
@@ -32,9 +38,6 @@ rrender = \case
   GroupMembers (T.ID gid)   -> "#/group/" <> cs (show gid) <> "/members"
   GroupUpdate (T.ID gid)    -> "#/group/" <> cs (show gid) <> "/update"
   Process (T.ID vid)        -> "#/process/" <> cs (show vid)
-
-newtype RouteParseError = RouteParseError String
-  deriving (Eq, Show, Generic)
 
 rparse :: ST -> Either RouteParseError Route
 rparse hash = (removeLeadingHash . removeTrailingSlashes $ cs hash) >>= removeLeadingSlash >>= \case
