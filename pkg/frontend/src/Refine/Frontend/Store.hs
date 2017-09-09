@@ -74,10 +74,10 @@ transformGlobalState = transf
 
       -- scrolling
       case act of
-        ContributionAction ShowCommentEditor                       -> scrollToCurrentSelection (st ^. gsContributionState)
-        DocumentAction (DocumentSave (FormBegin EditIsNotInitial)) -> scrollToCurrentSelection (st ^. gsContributionState)
-        HeaderAction (ScrollToBlockKey (Common.BlockKey k))        -> liftIO . js_scrollToBlockKey $ cs k
-        HeaderAction ScrollToPageTop                               -> liftIO js_scrollToPageTop
+        ContributionAction ShowCommentEditor                            -> scrollToCurrentSelection (st ^. gsContributionState)
+        DocumentAction (DocumentSave (FormBegin (EditIsNotInitial, _))) -> scrollToCurrentSelection (st ^. gsContributionState)
+        HeaderAction (ScrollToBlockKey (Common.BlockKey k))             -> liftIO . js_scrollToBlockKey $ cs k
+        HeaderAction ScrollToPageTop                                    -> liftIO js_scrollToPageTop
         _ -> pure ()
 
       -- routing
@@ -85,10 +85,19 @@ transformGlobalState = transf
                                                -- FIXME: call only once at the end of every @loop@
                                                -- sequence in the class method above?
 
+      -- state propagation to EditorStore
+      when ( act == DocumentAction UpdateDocumentStateView ||
+             -- (GlobalState has the same editor contents as before, but, say, we switched from main
+             -- menu back into a vdoc.)
+             gsRawContent st /= gsRawContent st'
+             -- (GlobalState has changed w.r.t. editor contents.)
+           ) $ do
+        dispatchAndExec . UpdateEditorStore . createWithRawContent $ gsRawContent st'
+
       -- other effects
       case act of
         ContributionAction RequestSetAllVerticalSpanBounds -> do
-          mapM_ (dispatchAndExec . ContributionAction) =<< setAllVerticalSpanBounds (st ^. gsDocumentState)
+          dispatchAndExec . ContributionAction =<< setAllVerticalSpanBounds (gsRawContent st)
 
         ContributionAction RequestSetRange -> do
           mRangeEvent <- getRangeAction $ gsRawContent st
@@ -316,27 +325,27 @@ emitBackendCallsFor act st = case act of
 
       dispatchAndExec $ DocumentAction UpdateDocumentStateView
 
-    DocumentAction (DocumentSave (FormBegin EditIsInitial))
+    DocumentAction (DocumentSave (FormBegin (EditIsInitial, estate)))
       -> do
-        let DocumentStateEdit editorState _ (Just baseEdit) = st ^. gsDocumentState
+        let DocumentStateEdit _ (Just baseEdit) = st ^. gsDocumentState
             cedit = Common.CreateEdit
                   { Common._createEditDesc        = "initial content"
-                  , Common._createEditVDocVersion = getCurrentRawContent editorState
+                  , Common._createEditVDocVersion = getCurrentRawContent estate
                   , Common._createEditKind        = Common.Initial
                   }
 
         sendTS $ TSAddEditAndMerge baseEdit cedit
         dispatchAndExec $ DocumentAction UpdateDocumentStateView
 
-    DocumentAction (DocumentSave (FormComplete info))
-      | DocumentStateEdit editorState _ baseEdit_ <- st ^. gsDocumentState
+    DocumentAction (DocumentSave (FormComplete (info, estate)))
+      | DocumentStateEdit _ baseEdit_ <- st ^. gsDocumentState
       -> do
         let baseEdit :: Common.ID Common.Edit
             (baseEdit:_) = catMaybes [baseEdit_, st ^? to gsEditID' . _Just . _Just]
 
             cedit = Common.CreateEdit
                   { Common._createEditDesc        = info ^. editInfoDesc
-                  , Common._createEditVDocVersion = getCurrentRawContent editorState
+                  , Common._createEditVDocVersion = getCurrentRawContent estate
                   , Common._createEditKind        = info ^. editInfoKind
                   }
 

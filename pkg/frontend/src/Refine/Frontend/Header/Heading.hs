@@ -16,8 +16,8 @@ import           Language.Css.Syntax
 import           Refine.Common.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DocumentHeader
-import           Refine.Frontend.Header.DiffToolbar ( diffToolbar_ )
-import           Refine.Frontend.Header.EditToolbar ( editToolbar_, wipeDocumentState )
+import           Refine.Frontend.Header.DiffToolbar (diffToolbar_)
+import           Refine.Frontend.Header.EditToolbar (editToolbar_, wipeDocumentState)
 import           Refine.Frontend.Header.DiscussionToolbar
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_, indexToolbarExtension_ )

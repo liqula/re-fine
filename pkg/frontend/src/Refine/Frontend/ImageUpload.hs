@@ -18,7 +18,7 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
 
 
--- TODO:
+-- TODO:img
 -- replace 'editable' boolean with access policy guard
 -- generalise away from user to arbitrary image
 -- generalise over action
@@ -58,8 +58,10 @@ imageUpload_ editable user lst st = do
                              ]
                ] $ pure ()
           button_
-            [ onClick $ \_evt _ -> simpleHandler @_ $  -- TODO: what is the `@` about here?  type application?
-              \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (user ^. userID, FormComplete (fst st, Just $ user ^. userDescription))]
+            [ onClick $ \_evt _ -> simpleHandler $
+              \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $
+                          MainMenuProfile ( user ^. userID
+                                          , FormComplete (fst st, Just $ user ^. userDescription))]
                       , Just $ st' & _1 .~ Nothing)
             ] $ elemText "upload"
         _ -> pure ()

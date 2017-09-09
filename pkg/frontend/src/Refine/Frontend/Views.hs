@@ -104,11 +104,11 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
                               (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
                               lst
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
-            Just ActiveDialogEdit -> do
+            Just (ActiveDialogEdit estate) -> do
+              let Just (localst :: EditInfo (Maybe EditKind)) = rs ^? RS.gsDocumentState . documentStateEditInfo
               addEdit_ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
-                              (fromMaybe (error "rs ^? RS.gsDocumentState . documentStateEditInfo") $
-                               rs ^? RS.gsDocumentState . documentStateEditInfo)
+                              (localst, estate)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
             Nothing -> mempty
 
@@ -130,7 +130,7 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
                                      (rs ^. gsContributionState . csQuickCreateShowState)
 
                           fltrThisEdit = case rs ^. gsDocumentState of
-                            DocumentStateDiff _ _ _ eid _ _ -> Map.filter $ (/= eid) . (^. editID)
+                            DocumentStateDiff _ _ eid _ _ -> Map.filter $ (/= eid) . (^. editID)
                             DocumentStateEdit{} -> const mempty
                             _ -> id
 

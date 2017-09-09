@@ -77,7 +77,7 @@ data HighlightWhen = HighlightNever | HighlightOnMouseOver | HighlightAlways
 
 data ButtonImage
   = ImageIcon ST             -- ^ Like "User" which refers to a file
-  | ImageInline Image{-TODO: rename to ImageInline-}  -- ^ "data:image/..."
+  | ImageInline Image{-TODO:c rename to ImageInline-}  -- ^ "data:image/..."
   deriving (Eq, Show, Generic)
 
 data IbuttonProps onclick = IbuttonProps

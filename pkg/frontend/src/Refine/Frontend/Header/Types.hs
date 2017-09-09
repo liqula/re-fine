@@ -18,8 +18,8 @@ data HeaderAction =
   | ToggleReadOnly
   | ScrollToPageTop
   | ScrollToBlockKey BlockKey
-  -- ScrollToDocumentTop
-  | OpenEditToolbarLinkEditor ST
+-- FIXME: #452
+--  | OpenEditToolbarLinkEditor ST
   | ToggleDiscussionFlatView
   deriving (Show, Eq, Generic)
 
@@ -27,7 +27,8 @@ data ToolbarExtensionStatus =
     ToolbarExtensionClosed
   | CommentToolbarExtensionWithoutRange
   | CommentToolbarExtensionWithRange
-  | EditToolbarLinkEditor ST
+-- FIXME: #452
+--  | EditToolbarLinkEditor ST
   | IndexToolbarExtension
   deriving (Show, Eq, Generic)
 
@@ -75,17 +76,21 @@ data DiffToolbarProps = DiffToolbarProps
 data EditIsInitial = EditIsInitial | EditIsNotInitial
   deriving (Eq, Show, Generic)
 
-data EditToolbarProps = EditToolbarProps
+newtype EditToolbarProps = EditToolbarProps
   { _editToolbarPropsInitial    :: EditIsInitial
-  , _editToolbarPropsLinkEditor :: LinkEditorProps
+-- FIXME: #452
+--  , _editToolbarPropsLinkEditor :: LinkEditorProps
   }
   deriving (Eq, Show, Generic)
 
+{-
+-- FIXME: #452
 data LinkEditorProps
     = LinkButtonDisabled
     | LinkButtonDeletes
     | LinkButtonAdds ST
   deriving (Eq, Show, Generic)
+-}
 
 
 data EditIndex = EditIndex
@@ -110,5 +115,5 @@ data DiscussionToolbarProps = DiscussionToolbarProps
 
 makeRefineTypes [ ''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState
                 , ''DiffToolbarProps, ''TopMenuBarProps, ''EditIndex, ''IndexItem
-                , ''DiscussionToolbarProps, ''EditToolbarProps, ''EditIsInitial, ''LinkEditorProps
+                , ''DiscussionToolbarProps, ''EditToolbarProps, ''EditIsInitial
                 ]

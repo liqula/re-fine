@@ -14,8 +14,8 @@ module Refine.Backend.App.VDoc
   , addEditAndMerge
   , getEdit
   , addMerge
-  , mergeEdit         -- TODO: rename to mergeEditAndRebase
-  , rebaseHeadToEdit  -- TODO: replace with mergeEditAndRebase
+  , mergeEdit         -- TODO:c rename to mergeEditAndRebase
+  , rebaseHeadToEdit  -- TODO:c replace with mergeEditAndRebase
   , toggleSimpleVoteOnEdit
   , deleteSimpleVoteOnEdit
   , changeSimpleVoteOnEdit

@@ -83,7 +83,7 @@ spec = do
         -- selection api (not draft/react, since 'LeafSelector' is referencing DOM nodes).
 
         _ <- mount $ documentWithoutCb_ DocumentProps
-          { _dpDocumentState     = mkDocumentStateView_ rc
+          { _dpDocumentState     = DocumentStateView rc
           , _dpContributionState = emptyContributionState
           }
 
@@ -132,7 +132,7 @@ spec = do
   describe "Document" $ do
     let mkTestProps :: RawContent -> DocumentProps
         mkTestProps c = DocumentProps
-          (DocumentStateEdit (createWithRawContent c) einfo Nothing)
+          (DocumentStateEdit einfo Nothing)
           emptyContributionState
           where
             einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) c

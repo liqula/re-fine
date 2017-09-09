@@ -26,7 +26,9 @@ emptyAccessState :: AccessState
 emptyAccessState = AccessState emptyLoginState [] [] []
 
 
-type MainHeaderProps = (GlobalState_ WipedDocumentState, AccessState)  -- FIXME: shrink.
+-- TODO:c move to Header/...
+-- TUNING: shrink (only use the information we need).
+type MainHeaderProps = (GlobalState_ WipedDocumentState, AccessState)
 
 
 data AccessAction =

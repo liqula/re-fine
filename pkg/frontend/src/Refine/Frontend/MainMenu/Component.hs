@@ -512,7 +512,7 @@ mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst
 mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
 mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
 
-{- TODO: edit or discard this comment?
+{- TODO:img edit or discard this comment?
 
 - mkPersistentStatefulView is needed because of a text form
 - with mkPersistentStatefulView, the local state is updated without emitting any actions

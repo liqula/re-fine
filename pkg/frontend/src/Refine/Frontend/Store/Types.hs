@@ -24,7 +24,7 @@ import qualified Refine.Frontend.Route as Route
 type GlobalState = GlobalState_ GlobalDocumentState
 
 data GlobalState_ a = GlobalState
-  { _gsEditID                     :: Maybe (ID VDoc)
+  { _gsEditID                     :: Maybe (ID VDoc)  -- TODO:c rename to 'gsVDocID'
   , _gsContributionState          :: ContributionState
   , _gsHeaderState                :: HeaderState
   , _gsDocumentState              :: a
@@ -127,7 +127,7 @@ cacheMiss = cacheMisses . pure
 cacheMissId :: CacheLookup v => ID v -> a -> a
 cacheMissId i x = cacheMiss (cacheKey i) x i
 
-gsRawContent :: GlobalState -> RawContent
+gsRawContent :: GlobalState -> RawContent  -- TODO:c make this a Getter
 gsRawContent (view gsVDoc -> Just (Just cvdoc)) = rawContentFromCompositeVDoc cvdoc
 gsRawContent _ = mkRawContent $ mkBlock "loading..." :| []
 
@@ -177,13 +177,13 @@ instance CacheLookup Group where
 -- Just (Just e) -> found!
 -- Just Nothing -> ID exists, but is missing in cache
 -- Nothing -> no ID
-gsEdit :: HasCallStack => GlobalState_ a -> Maybe (Maybe Edit)
+gsEdit :: HasCallStack => GlobalState_ a -> Maybe (Maybe Edit)  -- TODO:c make this a Getter
 gsEdit gs = (>>= cacheLookup gs) <$> gsEditID' gs
 
-gsEditID' :: HasCallStack => GlobalState_ a -> Maybe (Maybe (ID Edit))
+gsEditID' :: HasCallStack => GlobalState_ a -> Maybe (Maybe (ID Edit))  -- TODO:c rename to 'gsEditID'; make it a Getter
 gsEditID' gs = fmap (^. vdocHeadEdit) . cacheLookup gs <$> (gs ^. gsEditID)
 
-gsVDoc :: Getter (GlobalState_ a) (Maybe (Maybe CompositeVDoc))
+gsVDoc :: Getter (GlobalState_ a) (Maybe (Maybe CompositeVDoc))  -- TODO:c rename to 'gsCompositeVDoc'.  no, wait, don't use this any more at all!!
 gsVDoc = to getCompositeVDoc
   where
     getCompositeVDoc :: GlobalState_ a -> Maybe (Maybe CompositeVDoc)
