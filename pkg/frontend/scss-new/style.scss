@@ -1,0 +1,346 @@
+/*
+sass scss/style.scss style.css
+*/
+
+@import '10-global.scss';
+@import '20-colors.scss';
+@import '20-colors-fill.scss';
+@import '30-core.scss';
+@import '_generic.icons.scss';
+
+.main-content {
+	background-color: $c_main_menu_background;
+	border-radius: $dunit;
+	margin-left: auto;
+	margin-right: auto;
+	margin-bottom: $dunit * 4;
+	padding: $dunit * 3;
+	position: relative;
+	width: $dunit*152;	
+}
+
+.main-content_header {
+	position: relative;
+	width: 100%;
+	height: 11 * $dunit;
+}
+
+.main-content_mainMenuGroup {
+	position: relative;
+	display:flex; 
+	width: 152 * $dunit; 
+	flex-wrap: wrap;
+	margin-top: $dunit * 2;
+}
+
+.mainMenuGroupShort {
+	position: relative;
+	margin: $dunit;
+	width: 36 * $dunit;
+	min-width: 36 * $dunit;
+	height: 54 * $dunit;
+	min-height: 54 * $dunit;
+	/*background-color: $c_main_menu_blue;*/
+	border: 0px solid black;
+	border-radius: $dunit;
+}
+
+.mainMenuGroupShort_image-div {
+	position: relative;
+	width: 36 * $dunit;
+	height: 30 * $dunit;
+	border-top-left-radius: $dunit;
+	border-top-right-radius: $dunit;
+	border-width: 0px;
+}
+
+.mainMenuGroupShort_image {
+	position: relative;
+	width: 36 * $dunit;
+	height: 30 * $dunit;
+	border-top-left-radius: $dunit;
+	border-top-right-radius: $dunit;
+	border-width: 0px;
+}
+
+.mainMenuGroupShort_svg-div {
+	position: relative;
+	margin-top: 4 * $dunit;
+	width: 26 * $dunit;
+	height: 26 * $dunit;
+	border-top-left-radius: $dunit;
+	border-top-right-radius: $dunit;
+	border-width: 0px;	
+	margin-left: 5 * $dunit;
+}
+/*
+.mainMenuGroupShort_image-svg {
+	margin-top: 4 * $dunit;
+	width: 36 * $dunit;
+	height: 26 * $dunit;
+	border-top-left-radius: $dunit;
+	border-top-right-radius: $dunit;
+	border-width: 0px;
+}
+*/
+.mainMenuGroupShort_groupname {
+	margin-top: 1 * $dunit;
+	width: 36 * $dunit;
+	height: 8.25 * $dunit;
+	margin-bottom: 2.75 * $dunit;
+	line-height: 4 * $dunit;
+	text-align: center;
+	font-size: 3.5 * $dunit;
+	font-weight: bold;
+	overflow: hidden;
+}
+
+.mainMenuGroupShort_iconlist {
+	position: relative;
+	display: flex;
+	justify-content: space-evenly;
+}
+
+.search-input {
+	position: relative;
+	width: $dunit*24;
+	height: $dunit*4;
+	border-radius: $dunit;
+	border: 1px solid $c_main_menu_blue;
+	background-color: $c_main_menu_background;
+	margin: $dunit;
+	margin-top: $dunit*2;
+}
+
+
+/* general icon classes */
+
+.ibutton_xxxlarge {
+	position: relative;
+	height: $dunit * 9;
+	width: $dunit * 9;
+}
+
+.ibutton_xxlarge {
+	position: relative;
+	height: $icon-size-xxlarge;
+	width: $icon-size-xxlarge;
+}
+
+.ibutton_xlarge {
+	position: relative;
+	height: $icon-size-xlarge;
+	width: $icon-size-xlarge;
+}
+
+.ibutton_large {
+	position: relative;
+	height: $icon-size-large;
+	width: $icon-size-large;
+}
+
+.svg-button-myself {
+	background: url(../images/testuser.svg) $dunit $dunit/#{$dunit*4} ($dunit*4) no-repeat;
+	background-color: $c_main_menu_background;
+	border-radius: $icon-size-xxlarge * 0.5;
+	cursor: pointer;
+}
+
+.platform-title {
+	color: $c_main_menu_background;
+	font-size: $dunit*6;
+	height: $dunit*10;
+	margin-left: auto;
+	margin-right: auto;
+	position: relative;
+	width: $dunit*15;
+}
+
+.number-top-right {
+	position: absolute;
+	top: 0 - $dunit;
+	right: 0px;
+	width: 3*$dunit;
+	height: 3*$dunit;
+	background-color: black;
+	color: yellow;
+	border-radius: 1.5*$dunit;
+	line-height: 3*$dunit;
+	text-align: center;
+	font-size: 2*$dunit;
+}
+
+/* general */
+
+html {
+	min-height: 100%;
+}
+
+body {
+	padding: 0px;
+	margin: 0px;
+	min-height: 100%;
+}
+
+.body-container {
+	position: relative;
+	width: 100%;
+	min-width: 156*$dunit;
+	background-color: $c_main_menu_dark_blue;
+	min-height: 100%;
+	height: 100%;
+	padding-bottom: $dunit * 4;
+}
+
+.float-left {
+	float: left;
+}
+
+.float-right {
+	float: right;
+}
+
+.absolute-topleft {
+	left: $dunit;
+	position: absolute;
+	top: $dunit;
+}
+
+.absolute-topright {
+	right: $dunit;
+	position: absolute;
+	top: $dunit;
+}
+
+.clearboth {
+	clear: both;
+}
+
+.hr-div {
+	margin-left: $dunit;	
+	margin-right: $dunit;
+	/* margin-bottom: $dunit*2; */
+	border-top: 1px solid $c_main_menu_blue;
+}
+
+.hr-2-div {
+	margin-left: $dunit*2;	
+	margin-right: $dunit*2;
+	/* margin-bottom: $dunit*2; */
+	border-top: 1px solid $c_main_menu_background;
+}
+
+.margin1 {
+	margin: $dunit;
+}
+
+.margin10 {
+	margin: $dunit*10;
+}
+
+.on_top {
+    position:absolute;
+    top:0;left:0;bottom:0;right:0;/*expand this div to the size of its parent*/
+}
+
+/* test */
+.icon-daniel_test1 {
+  background-image: url("../images/daniel_test1.svg");
+}
+
+.icon-daniel_test2 {
+  background-image: url("../images/daniel_test2.svg");
+}
+
+.icon-daniel_test3 {
+  background-image: url("../images/daniel_user.svg");
+}
+
+.test-icon {
+	background-image: url(../images/00_joker_dark.svg);
+}
+
+.test-icon2 {
+	position: relative;
+	background-image: url(../images/00_joker_bright.svg);
+}
+
+/* group detail processes */
+
+.main-content_groupDetailsProcesses {
+	position: relative;
+	width: 150 * $dunit; 
+	margin: $dunit;
+	margin-top: $dunit * 3;
+	background-color: $c_toolbar_icon;
+	border-radius: $dunit;
+	padding-bottom: $dunit; /* $dunit*0.01 works :) */
+}
+
+.groupDetailsProcesses_titleimage-div {
+	position: relative;
+	border-top-left-radius: $dunit;
+	border-top-right-radius: $dunit;
+	width: 150 * $dunit;
+	height: 30 * $dunit;
+}
+
+.groupDetailsProcesses_titleimage-img {
+	position: relative;
+	border-top-left-radius: $dunit;
+	border-top-right-radius: $dunit;
+	width: 150 * $dunit;
+	height: 30 * $dunit;
+}
+
+.groupDetailsProcesses_profile-img {
+	position: absolute;
+	width: 24 * $dunit;
+	height: 24 * $dunit;
+	top: 24*$dunit;
+	left: 2*$dunit;
+	border-radius: $dunit;
+}
+.groupDetailsProcesses_description {
+	position: relative;
+	margin-left: 28 * $dunit;
+	min-height: 20*$dunit;
+	padding-bottom: 4*$dunit;
+}
+
+.groupDetailsProcesses_description-headline {
+	font-size: 4*$dunit;
+	padding-top: 2*$dunit;
+	padding-bottom: 2*$dunit;
+}
+
+.groupDetailsProcesses_description-text {
+
+}
+
+.groupDetailsProcesses_iconlist {
+	position: relative;
+	padding: $dunit;
+}
+
+.groupDetailsProcesses_submenu {
+	position: relative;
+	padding-left: $dunit*2;
+	padding-right: $dunit;
+}
+
+.groupDetailsProcesses_submenu-title {
+	position: relative;
+	float: left;
+}
+
+.groupDetailsProcessesDocument {
+	position: relative;
+	width: 146*$dunit;
+	height: 40*$dunit;
+	background-color: $c_main_menu_background;
+	border-radius: $dunit;
+	margin-left: $dunit*2;
+	margin-right: $dunit*2;
+	margin-bottom: $dunit*2;
+}
