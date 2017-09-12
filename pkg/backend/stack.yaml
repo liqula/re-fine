@@ -1,6 +1,4 @@
-resolver:
-  name: stack-snapshot
-  location: ../../stack-snapshot.yaml
+resolver: lts-8.11
 
 packages:
 - '.'
@@ -22,6 +20,12 @@ packages:
   extra-dep: true
 
 extra-deps:
+- basic-sop-0.2.0.1
+- functor-infix-0.0.4
+- i18n-0.4.0.0
+- json-sop-0.2.0.2
+- lens-sop-0.2.0.1
+
 - fingertree-tf-0.1.0.0
 - lens-properties-4.11
 
