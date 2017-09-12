@@ -12,10 +12,7 @@
 #
 # perl -ne 'if (/# START __GHCJS__/) { $dont = 1; }; unless ($dont) { print $_; }; if (/# END __GHCJS__/) { $dont = 0; }' stack.yaml
 
-resolver:
-  name: stack-snapshot
-  location: ../../stack-snapshot.yaml
-
+resolver: lts-8.11
 
 packages:
 - '.'
@@ -31,6 +28,12 @@ packages:
   - react-hs
 
 extra-deps:
+- basic-sop-0.2.0.1
+- functor-infix-0.0.4
+- i18n-0.4.0.0
+- json-sop-0.2.0.2
+- lens-sop-0.2.0.1
+
 - react-hs-0.1.0
 - language-css-0.0.3
 - fingertree-tf-0.1.0.0
