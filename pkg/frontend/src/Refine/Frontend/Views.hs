@@ -152,7 +152,7 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
           -- append an empty page to the botton.  (helps with legitimate attempts to scroll beyond
           -- the end of the document, e.g. when moving dialogs into the center of the screen before
           -- they have been rendered.)
-          div_ ["style" @@= [decl "margin-bottom" (Px 800)]] $ pure ()
+          div_ ["style" @@= [decl "marginBottom" (Px 800)]] $ pure ()
 
 mainScreen_ :: HasCallStack => (GlobalState, AccessState) -> ReactElementM eventHandler ()
 mainScreen_ = view_' mainScreen "mainScreen_"
