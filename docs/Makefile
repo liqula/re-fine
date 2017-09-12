@@ -7,7 +7,7 @@
 .phony:
 
 sensei.%: .phony
-	cd pkg/$* && stack exec -- sensei -Wno-unused-imports -I../common/src -i../prelude/src -i../prelude/test -i../common/src -i../common/test -i./src -i./test ./test/Spec.hs $(SENSEI_ARGS)
+	cd pkg/$* && stack exec -- sensei -Wall -Wno-unused-imports -I./src -i./src -i./test -i../prelude/src -i../prelude/test -I../common/src -i../common/src -i../common/test ./test/Spec.hs $(SENSEI_ARGS)
 
 sensei.p: .phony
 	make sensei.prelude
@@ -77,10 +77,10 @@ hlint: .phony
 
 sensei.f: .phony
 #	cd pkg/frontend && stack --stack-yaml=stack-no-js.yaml test --fast
-	cd pkg/frontend && stack --stack-yaml=stack-no-js.yaml exec -- sensei -Isrc -isrc -itest -i../common/src -i../prelude/src test/Main.hs --match=###
+	cd pkg/frontend && stack --stack-yaml=stack-no-js.yaml exec -- sensei -Werror -Wall -Wno-unused-imports -Isrc -isrc -itest -I../common/src -i../common/src -i../prelude/src test/Main.hs --match=###
 
 sensei.fs:
-	cd pkg/frontend && stack --stack-yaml=stack-no-js.yaml exec -- sensei -isrc -itest -i../common/src -i../prelude/src styleguide/Main.hs --match=###
+	cd pkg/frontend && stack --stack-yaml=stack-no-js.yaml exec -- sensei -Isrc -isrc -itest -I../common/src -i../common/src -i../prelude/src styleguide/Main.hs --match=###
 
 
 test.f: .phony
@@ -143,3 +143,10 @@ PACKAGES=refine-backend persistent persistent-sqlite persistent-template users-p
 
 super-clean:
 	cd pkg/backend; for i in `echo $(PACKAGES)`; do stack exec -- ghc-pkg unregister $$i; done
+
+run-server:
+	cd pkg/backend && \
+	stack build --fast && \
+	rm -rf .backend-data/ && \
+	stack exec refine -- --init sample-content.yaml server.conf && \
+	stack exec refine -- server.conf
