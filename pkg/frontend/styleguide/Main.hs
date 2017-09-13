@@ -230,12 +230,12 @@ colorHtmlFile = ST.unlines $ header <> mconcat (go <$> [minBound ..]) <> footer
     go :: Color -> [ST]
     go color =
       [ "<div class=\"container\">"
-      , "  <div class=\"color " <> bgColorName color <> "\">"
+      , "  <div class=\"color " <> colorName (Just "bg") color <> "\">"
       , "  </div>"
       , "  <div class=\"description\">"
-      , "    Variable:&nbsp;&nbsp;<span class=\"black\">$" <> colorName color <> "</span><br>"
-      , "    Class (color):&nbsp;&nbsp;<span class=\"black\">" <> colorName color <> "</span><br>"
-      , "    Class (background-color):&nbsp;&nbsp;<span class=\"black\">" <> bgColorName color <> "</span><br>"
+      , "    Variable:&nbsp;&nbsp;<span class=\"black\">$" <> colorName Nothing color <> "</span><br>"
+      , "    Class (color):&nbsp;&nbsp;<span class=\"black\">" <> colorName Nothing color <> "</span><br>"
+      , "    Class (background-color):&nbsp;&nbsp;<span class=\"black\">" <> colorName (Just "bg") color <> "</span><br>"
       , "    Color:&nbsp;&nbsp;<span class=\"black\">" <> showRGBA (colorValue color) <> "</span><br>"
       , "  </div>"
       , "</div>"
