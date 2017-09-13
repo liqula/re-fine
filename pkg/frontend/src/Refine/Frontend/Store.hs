@@ -32,6 +32,12 @@ import           Refine.Frontend.Util
 import           Refine.Frontend.WebSocket
 
 
+instance SometimesLoggable GlobalAction where
+  shouldbeLogged (ContributionAction RequestSetAllVerticalSpanBounds) = False
+  shouldbeLogged (ContributionAction SetAllVerticalSpanBounds{})      = False
+  shouldbeLogged _                                                    = True
+
+
 instance StoreData GlobalState where
     type StoreAction GlobalState = GlobalAction
     transform = loop . \case
@@ -65,7 +71,7 @@ transformGlobalState = transf
     transf :: GlobalAction -> GlobalState -> m GlobalState
     transf (ResetState st) _ = pure st  -- for testing only!
     transf act st = do
-      consoleLogGlobalStateBefore weAreInDevMode act st
+      consoleLogGlobalAction act
 
       st' <- locationHashUpdate <$> pureTransform act st
 
@@ -121,7 +127,7 @@ transformGlobalState = transf
 
         _ -> pure ()
 
-      consoleLogGlobalStateAfter weAreInDevMode (st' /= st) st'
+      consoleLogGlobalState (st' /= st) st'
       pure st'
 
     locationHashUpdate :: HasCallStack => GlobalState -> GlobalState
@@ -235,41 +241,6 @@ serverCacheUpdate (CacheAction a) c = case a of
   RestrictCacheItems keys -> restrictCache keys c
   InvalidateCacheItems keys -> invalidateCache keys c
 serverCacheUpdate _ c = c
-
-
--- * logging state and actions.
-
-consoleLogGlobalStateBefore :: HasCallStack => forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
-consoleLogGlobalStateBefore False _ _ = pure ()
-consoleLogGlobalStateBefore True act _st = do
-  liftIO $ consoleLogJSStringM "" "\n"
-  consoleLogGlobalAction act
-
-consoleLogGlobalStateAfter :: HasCallStack => forall m. MonadTransform m => Bool -> Bool -> GlobalState -> m ()
-consoleLogGlobalStateAfter False = \_ _ -> pure ()
-consoleLogGlobalStateAfter True  = consoleLogGlobalState
-
-consoleLogGlobalState :: HasCallStack => forall m. MonadTransform m => Bool {- changed -} -> GlobalState -> m ()
-consoleLogGlobalState False _ = do
-  consoleLogJSONM "New state: " (String "[UNCHANGED]" :: Value)
-consoleLogGlobalState True st = liftIO $ do
-  consoleLogJSONM "New state: " st
-
-consoleLogGlobalAction :: HasCallStack => forall m. MonadTransform m => GlobalAction -> m ()
-consoleLogGlobalAction act | not (loggableAction act) = pure ()
-consoleLogGlobalAction act = do
-  let consolewidth = 80
-      shown = show act
-  if length shown <= consolewidth
-    then do
-      consoleLogJSStringM "Action: " (cs shown)
-    else do
-      consoleLogJSONM "Action: " act
-
-loggableAction :: GlobalAction -> Bool
-loggableAction (ContributionAction RequestSetAllVerticalSpanBounds) = False
-loggableAction (ContributionAction SetAllVerticalSpanBounds{})      = False
-loggableAction _                                                    = True
 
 
 -- * pure updates

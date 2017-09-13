@@ -21,6 +21,7 @@ import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Screen.Calculations
 import           Refine.Frontend.Store.Types
 import {-# SOURCE #-} Refine.Frontend.Store ()
+import           Refine.Frontend.Test.Console
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
@@ -31,20 +32,33 @@ instance Dispatchable EditorStoreAction where
 -- | Private global store of the 'draftEditor_' component.
 instance StoreData EditorStore where
   type StoreAction EditorStore = EditorStoreAction
+  transform = transformEditorStore
 
+instance SometimesLoggable EditorStoreAction where
+  shouldbeLogged _ = True
+
+transformEditorStore :: EditorStoreAction -> EditorStore -> IO EditorStore
+transformEditorStore act st = do
+  consoleLogGlobalAction act
+  st' <- transformEditorStoreHandler act st
+  consoleLogGlobalStateWith (\(EditorStore (EditorState (NoJSONRep j))) -> j) (st /= st') st'
+  pure st'
+
+transformEditorStoreHandler :: EditorStoreAction -> EditorStore -> IO EditorStore
+transformEditorStoreHandler = f where
   -- generic update.
-  transform (UpdateEditorStore es') _es = pure $ EditorStore es'
+  f (UpdateEditorStore es') _es = pure $ EditorStore es'
 
   -- toolbar buttons.
-  transform (DocumentToggleBlockType bt) (EditorStore es) = pure . EditorStore $ es & documentToggleBlockType bt
-  transform (DocumentToggleStyle s)      (EditorStore es) = pure . EditorStore $ es & documentToggleStyle s
-  transform DocumentRemoveLink           (EditorStore es) = pure . EditorStore $ es & documentRemoveLink
-  transform (DocumentCreateLink link)    (EditorStore es) = pure . EditorStore $ es & documentAddLink (cs link)
-  transform DocumentUndo                 (EditorStore es) = pure . EditorStore $ es & documentUndo
-  transform DocumentRedo                 (EditorStore es) = pure . EditorStore $ es & documentRedo
+  f (DocumentToggleBlockType bt) (EditorStore es) = pure . EditorStore $ es & documentToggleBlockType bt
+  f (DocumentToggleStyle s)      (EditorStore es) = pure . EditorStore $ es & documentToggleStyle s
+  f DocumentRemoveLink           (EditorStore es) = pure . EditorStore $ es & documentRemoveLink
+  f (DocumentCreateLink link)    (EditorStore es) = pure . EditorStore $ es & documentAddLink (cs link)
+  f DocumentUndo                 (EditorStore es) = pure . EditorStore $ es & documentUndo
+  f DocumentRedo                 (EditorStore es) = pure . EditorStore $ es & documentRedo
 
   -- open save dialog in 'GlobalState' (needs update with current 'EditorStore' content).
-  transform (DocumentRequestSave form) (EditorStore es) = do
+  f (DocumentRequestSave form) (EditorStore es) = do
     (dispatchAndExec . DocumentAction) `mapM_` [DocumentSave (FormBegin (form, es))]
     pure $ EditorStore es
 

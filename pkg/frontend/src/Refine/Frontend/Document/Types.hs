@@ -17,7 +17,7 @@ import           Refine.Frontend.Util
 
 
 newtype EditorStore = EditorStore EditorState
-  deriving (Eq)
+  deriving (Eq, Show, Generic)
 
 data EditorStoreAction
   = UpdateEditorStore EditorState
@@ -28,7 +28,7 @@ data EditorStoreAction
   | DocumentUndo
   | DocumentRedo
   | DocumentRequestSave EditIsInitial
-  deriving (Show, Eq, Generic)
+  deriving (Eq, Show, Generic)
 
 
 data DocumentAction =
@@ -167,7 +167,7 @@ mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
 
 
 deriveClasses
-  [ ([''DocumentAction, ''DocumentState_, ''EditorProps], allClass)
+  [ ([''EditorStore, ''EditorStoreAction, ''DocumentAction, ''DocumentState_, ''EditorProps], allClass)
   , ([''DocumentProps, ''WipedDocumentState], [''Lens'])
   ]
 

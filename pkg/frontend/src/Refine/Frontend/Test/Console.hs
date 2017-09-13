@@ -12,6 +12,9 @@ module Refine.Frontend.Test.Console
   , weAreInDevMode
   , windowAlert
   , windowAlertST
+  , consoleLogGlobalState, consoleLogGlobalStateWith
+  , consoleLogGlobalAction
+  , SometimesLoggable(shouldbeLogged)
   )
 where
 #include "import_frontend.hs"
@@ -63,6 +66,39 @@ windowAlert = liftIO . js_alert . cs
 
 windowAlertST :: HasCallStack => MonadIO m => ST -> m ()
 windowAlertST = windowAlert
+
+
+-- * logging state and actions.
+
+consoleLogGlobalState :: (HasCallStack, Monad m, Typeable st, ToJSON st) => Bool -> st -> m ()
+consoleLogGlobalState = consoleLogGlobalState' consoleLogJSONM toJSON
+
+consoleLogGlobalStateWith :: (HasCallStack, Monad m, Typeable st) => (st -> JSVal) -> Bool -> st -> m ()
+consoleLogGlobalStateWith = consoleLogGlobalState' consoleLogJSValM
+
+consoleLogGlobalState' :: (HasCallStack, Monad m, Typeable st)
+                      => (JSString -> a -> m ()) -> (st -> a) -> Bool -> st -> m ()
+consoleLogGlobalState' logger trans hasChanged st = do
+  let msg = "New " <> (cs . show . typeOf $ st) <> ": "
+  if hasChanged
+    then logger msg (trans st)
+    else consoleLogJSStringM msg "[UNCHANGED]"
+
+consoleLogGlobalAction :: (HasCallStack, Monad m, SometimesLoggable act, Typeable act, ToJSON act, Show act)
+                       => act -> m ()
+consoleLogGlobalAction act = when (shouldbeLogged act) $ do
+  let msg = "\nAction " <> (cs . show . typeOf $ act) <> ": "
+      consolewidth = 80
+      shown = show act
+  if length shown <= consolewidth
+    then consoleLogJSStringM msg (cs shown)
+    else consoleLogJSONM msg act
+
+class SometimesLoggable act where
+  shouldbeLogged :: act -> Bool
+
+
+-- * ffi
 
 #ifdef __GHCJS__
 
