@@ -85,14 +85,6 @@ data WipedDocumentState =
   | WipedDocumentStateDiscussion DiscussionToolbarProps
   deriving (Show, Eq)
 
-documentStateFromProps :: HasCallStack => DocumentStateProps -> DocumentState
-documentStateFromProps
-  = mapDocumentState
-    (const ())
-    (const ())
-    (^. editID)
-    (\d -> (either id ((^. discussionID) . snd) $ d ^. discPropsDiscussion, Nothing))
-
 -- | The boolean 'eidChanged' indicates whether the edit currently in
 -- focus has changed and the context (like the edit that we diff
 -- against) does not apply any more.  If true, always switch to view
