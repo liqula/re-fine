@@ -103,9 +103,7 @@ mainHeaderRender () (rs, as) = do
       headerPart_
         = documentHeader_
         . DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle)
-        $ case rs ^. gsDocumentState of
-          WipedDocumentStateDiff _ eid _ _ -> editDescToAbstract vdoc . ContribIDEdit $ eid ^. editID
-          _ -> vdoc ^. compositeVDoc . vdocAbstract
+        $ vdoc ^. compositeVDoc . vdocAbstract
 
   div_ ["className" $= "c-fullheader"] $ do
       mainMenuPart_
