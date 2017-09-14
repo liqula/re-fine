@@ -113,7 +113,7 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
             Nothing -> mempty
 
           main_ ["role" $= "main", "key" $= "main"] $ do
-              mainHeaderRender2 mhp
+              mainHeaderToolbar_ mhp
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       let asideProps = AsideProps

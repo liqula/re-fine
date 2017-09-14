@@ -3,11 +3,13 @@
 
 module Refine.Frontend.Header.Heading
   ( TopMenuBarProps(..)
-  , topMenuBar, topMenuBar_
-  , mainHeader, mainHeader_
-  , toolbarWrapper_
   , mkMainHeaderProps
-  , mainHeaderRender2
+  , mainHeader_
+  , mainHeaderToolbar_
+
+  -- * exported for testing only:
+  , topMenuBar_
+  , toolbarWrapper_
   ) where
 #include "import_frontend.hs"
 
@@ -109,8 +111,13 @@ mainHeaderRender () (rs, as) = do
       mainMenuPart_
       headerPart_
 
-mainHeaderRender2 :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
-mainHeaderRender2 (rs, _as) = div_ ["className" $= "c-fulltoolbar"] $ do
+mainHeader_ :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
+mainHeader_ props = React.viewWithSKey mainHeader "mainHeader" props mempty
+
+
+-- | FIXME: make this a component, not just an element.
+mainHeaderToolbar_ :: HasCallStack => MainHeaderToolbarProps -> ReactElementM eventHandler ()
+mainHeaderToolbar_ (rs, _as) = div_ ["className" $= "c-fulltoolbar"] $ do
           toolbarWrapper_ $ case rs ^. gsDocumentState of
 
             WipedDocumentStateView -> toolbar_ . fromJust $ rs ^? gsCompositeVDoc . _Just . _Just . compositeVDoc
@@ -130,6 +137,7 @@ mainHeaderRender2 (rs, _as) = div_ ["className" $= "c-fulltoolbar"] $ do
           indexToolbarExtension_ $ mkIndexToolbarProps rs
           commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
           editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
+
 
 mkIndexToolbarProps :: GlobalState_ WipedDocumentState -> IndexToolbarProps
 mkIndexToolbarProps rs
@@ -152,9 +160,6 @@ headerDepth = \case
 
 mkMainHeaderProps :: AccessState -> GlobalState -> MainHeaderProps
 mkMainHeaderProps as gs = (fmap (const $ getWipedDocumentState as gs) gs, as)
-
-mainHeader_ :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
-mainHeader_ props = React.viewWithSKey mainHeader "mainHeader" props mempty
 
 calcHeaderHeight :: HasCallStack => React.LDOM -> IO ()
 calcHeaderHeight ldom = do

@@ -29,6 +29,7 @@ emptyAccessState = AccessState emptyLoginState [] [] []
 -- TODO:c move to Header/...
 -- TUNING: shrink (only use the information we need).
 type MainHeaderProps = (GlobalState_ WipedDocumentState, AccessState)
+type MainHeaderToolbarProps = MainHeaderProps
 
 
 data AccessAction =
