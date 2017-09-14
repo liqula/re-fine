@@ -135,7 +135,7 @@ mkIndexToolbarProps :: GlobalState_ WipedDocumentState -> IndexToolbarProps
 mkIndexToolbarProps rs
   | rs ^. gsHeaderState . hsToolbarExtensionStatus == IndexToolbarExtension
   && fromMaybe True (not <$> rs ^? gsDocumentState . wipedDocumentStateDiffCollapsed)
-  = mkIndex . _editVDocVersion <$> join (gsEdit rs)
+  = mkIndex . _editVDocVersion <$> join (rs ^. gsEdit)
   | otherwise = Nothing
   where
     mkIndex (RawContent bs _) =

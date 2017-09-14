@@ -181,18 +181,18 @@ instance CacheLookup Group where
 -- >>> Nothing       -- no such ID
 --
 -- NOTE: you may get an edit here even if you are, say in the menu and it is not technically open.
-gsEdit :: HasCallStack => GlobalState_ a -> Maybe (Maybe Edit)  -- TODO:c make this a Getter
-gsEdit gs = (>>= cacheLookup gs) <$> gsEditID gs
+gsEdit :: HasCallStack => Getter (GlobalState_ a) (Maybe (Maybe Edit))
+gsEdit = to $ \gs -> (>>= cacheLookup gs) <$> gs ^. gsEditID
 
 -- | See 'gsEdit'.
-gsEditID :: HasCallStack => GlobalState_ a -> Maybe (Maybe (ID Edit))  -- TODO:c make it a Getter
-gsEditID gs = fmap (^. vdocHeadEdit) . cacheLookup gs <$> (gs ^. gsVDocID)
+gsEditID :: HasCallStack => Getter (GlobalState_ a) (Maybe (Maybe (ID Edit)))
+gsEditID = to $ \gs -> fmap (^. vdocHeadEdit) . cacheLookup gs <$> gs ^. gsVDocID
 
 gsVDoc :: Getter (GlobalState_ a) (Maybe (Maybe CompositeVDoc))  -- TODO:c rename to 'gsCompositeVDoc'.  no, wait, don't use this any more at all!!
 gsVDoc = to getCompositeVDoc
   where
     getCompositeVDoc :: GlobalState_ a -> Maybe (Maybe CompositeVDoc)
-    getCompositeVDoc gs = (>>= mkCompositeVDoc gs) <$> gsEdit gs
+    getCompositeVDoc gs = (>>= mkCompositeVDoc gs) <$> gs ^. gsEdit
 
     mkCompositeVDoc :: GlobalState_ a -> Edit -> Maybe CompositeVDoc
     mkCompositeVDoc gs edit = do

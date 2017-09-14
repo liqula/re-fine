@@ -49,7 +49,7 @@ mkLinkEditorProps es
 -}
 
 getDocumentStateProps :: AccessState -> GlobalState -> DocumentStateProps
-getDocumentStateProps as gs@(gsEditID -> Just baseid)
+getDocumentStateProps as gs@(view gsEditID -> Just baseid)
   = mapDocumentState
       (const . fromMaybe False
              $ (==) <$> (as ^? accLoginState . lsCurrentUser . loggedInUser . to UserID)

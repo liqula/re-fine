@@ -287,7 +287,7 @@ emitBackendCallsFor act st = case act of
 
     ContributionAction (SubmitComment (CommentInfo text kind)) -> do
       let headEdit = fromMaybe (error "emitBackendCallsFor.SubmitComment") . join
-                   $ st ^. to gsEditID
+                   $ st ^. gsEditID
           range    = st ^? gsCurrentSelection . _Just . Common.selectionRange
 
       sendTS $ case kind of
@@ -312,7 +312,7 @@ emitBackendCallsFor act st = case act of
       | DocumentStateEdit _ baseEdit_ <- st ^. gsDocumentState
       -> do
         let baseEdit :: Common.ID Common.Edit
-            (baseEdit:_) = catMaybes [baseEdit_, st ^? to gsEditID . _Just . _Just]
+            (baseEdit:_) = catMaybes [baseEdit_, st ^? gsEditID . _Just . _Just]
 
             cedit = Common.CreateEdit
                   { Common._createEditDesc        = info ^. editInfoDesc

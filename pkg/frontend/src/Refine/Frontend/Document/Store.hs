@@ -84,7 +84,7 @@ documentStateUpdate (LoadVDoc _) oldgs st
         else enterViewMode cvdoc oldgs st
 
 -- in view mode, start edit
-documentStateUpdate (HeaderAction StartEdit) oldgs@(gsEditID -> Just (Just eid)) (DocumentStateView ())
+documentStateUpdate (HeaderAction StartEdit) oldgs@(view gsEditID -> Just (Just eid)) (DocumentStateView ())
   = pure $ enterEditMode oldgs eid
 
 -- in diff mode, start edit
@@ -95,7 +95,7 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit e
                     oldgs
                     (DocumentStateView r)
   = pure $ DocumentStateDiff
-      (mkEditIndex (fromMaybe (error "impossible @documentStateUpdate") . join $ gsEdit oldgs) eid)
+      (mkEditIndex (fromMaybe (error "impossible @documentStateUpdate") . join $ oldgs ^. gsEdit) eid)
       r
       eid
       True
@@ -165,11 +165,11 @@ documentStateUpdate _ _ st
 enterViewMode :: CompositeVDoc -> GlobalState -> DocumentState -> DocumentState
 enterViewMode cvdoc oldgs = refreshDocumentStateView ed eidChanged
   where
-    ed = fromMaybe (error "impossible @enterViewMode") . join $ gsEdit oldgs
+    ed = fromMaybe (error "impossible @enterViewMode") . join $ oldgs ^. gsEdit
     eidChanged = Just newID /= mOldID
       where
         newID  = cvdoc ^. compositeVDocThisEditID
-        mOldID = oldgs ^? to gsEditID . _Just . _Just
+        mOldID = oldgs ^? gsEditID . _Just . _Just
 
 enterEditMode :: GlobalState -> ID Edit -> DocumentState
 enterEditMode oldgs eid = case cacheLookup oldgs eid of
