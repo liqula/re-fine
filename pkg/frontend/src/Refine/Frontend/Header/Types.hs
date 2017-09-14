@@ -5,8 +5,8 @@ module Refine.Frontend.Header.Types where
 #include "import_frontend.hs"
 
 import Refine.Common.Types
-import Refine.Frontend.Types
 import Refine.Frontend.Login.Types
+import Refine.Frontend.Types
 
 
 data HeaderAction =
@@ -46,9 +46,30 @@ newtype AddLinkFormState = AddLinkFormState
   } deriving (Show, Eq, Generic)
 
 
+type MainHeaderProps = (Title, Abstract, TopMenuBarProps)
+
 newtype TopMenuBarProps = TopMenuBarProps
   { _currentUser :: CurrentUser (Lookup User)
   } deriving (Eq, Generic)
+
+data MainHeaderToolbarProps = MainHeaderToolbarProps
+  { _mainHeaderToolbarPropsDocumentState     :: WipedDocumentState
+  , _mainHeaderToolbarPropsVDoc              :: VDoc
+  , _mainHeaderToolbarPropsIndexToolbarProps :: IndexToolbarProps
+  , _mainHeaderToolbarPropsExtStatus         :: ToolbarExtensionStatus
+  } deriving (Eq, Generic)
+
+data WipedDocumentState =
+    WipedDocumentStateView
+  | WipedDocumentStateDiff
+      { _wipedDocumentStateDiffIndex     :: EditIndex
+      , _wipedDocumentStateDiff          :: Edit
+      , _wipedDocumentStateDiffCollapsed :: Bool
+      , _wipedDocumentStateDiffEditable  :: Bool
+      }
+  | WipedDocumentStateEdit EditToolbarProps
+  | WipedDocumentStateDiscussion DiscussionToolbarProps
+  deriving (Eq, Generic)
 
 
 type ToolbarProps = VDoc
@@ -116,4 +137,5 @@ data DiscussionToolbarProps = DiscussionToolbarProps
 makeRefineTypes [ ''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState
                 , ''DiffToolbarProps, ''TopMenuBarProps, ''EditIndex, ''IndexItem
                 , ''DiscussionToolbarProps, ''EditToolbarProps, ''EditIsInitial
+                , ''MainHeaderToolbarProps, ''WipedDocumentState
                 ]

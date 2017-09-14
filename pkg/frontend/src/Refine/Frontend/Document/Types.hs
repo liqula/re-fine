@@ -73,18 +73,6 @@ type DocumentStateProps = DocumentState_ Bool RawContent Edit DiscussionProps
 -- | The document state for 'GlobalState'.
 type DocumentState = DocumentState_ () () (ID Edit) (ID Discussion, Maybe StatementEditorProps)
 
-data WipedDocumentState =
-    WipedDocumentStateView
-  | WipedDocumentStateDiff
-      { _wipedDocumentStateDiffIndex     :: EditIndex
-      , _wipedDocumentStateDiff          :: Edit
-      , _wipedDocumentStateDiffCollapsed :: Bool
-      , _wipedDocumentStateDiffEditable  :: Bool
-      }
-  | WipedDocumentStateEdit EditToolbarProps
-  | WipedDocumentStateDiscussion DiscussionToolbarProps
-  deriving (Show, Eq)
-
 -- | The boolean 'eidChanged' indicates whether the edit currently in
 -- focus has changed and the context (like the edit that we diff
 -- against) does not apply any more.  If true, always switch to view
@@ -160,7 +148,7 @@ mkDocumentStyleMap actives (Just rawContent) = object . mconcat $ go <$> marks
 
 deriveClasses
   [ ([''EditorStore, ''EditorStoreAction, ''DocumentAction, ''DocumentState_, ''EditorProps], allClass)
-  , ([''DocumentProps, ''WipedDocumentState], [''Lens'])
+  , ([''DocumentProps], [''Lens'])
   ]
 
 isReadOnlyDocumentState :: DocumentState_ e r i d -> Bool
