@@ -77,7 +77,7 @@ getDocumentStateProps as gs@(view gsEditID -> Just baseid)
       DocumentStateDiff _ _ i _ _ -> i
       _ -> error "getDocumentStateProps: impossible"
 getDocumentStateProps _ _
-  = error "getDocumentStateProps: no gsVDoc"
+  = error "getDocumentStateProps: gsEditID came up empty!"
 
 getWipedDocumentState :: AccessState -> GlobalState -> WipedDocumentState
 getWipedDocumentState as gs = case getDocumentStateProps as gs of

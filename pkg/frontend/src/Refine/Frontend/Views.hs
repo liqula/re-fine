@@ -84,7 +84,7 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
     didMountOrUpdate _getPropsAndState = flushCacheMisses
 
 mainScreen :: HasCallStack => View' '[(GlobalState, AccessState)]
-mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
+mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
   Nothing -> error "mainScreen: no gsVDoc"
   Just Nothing -> "Loading..."
   Just (Just vdoc) -> do

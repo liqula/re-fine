@@ -89,7 +89,7 @@ mainHeader = React.defineLifecycleView "HeaderSizeCapture" () React.lifecycleCon
 
 mainHeaderRender :: HasCallStack => () -> MainHeaderProps -> ReactElementM eventHandler ()
 mainHeaderRender () (rs, as) = do
-  let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsVDoc . _Just . _Just
+  let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsCompositeVDoc . _Just . _Just
       props = TopMenuBarProps (cacheLookup' rs <$> (as ^. accLoginState . lsCurrentUser))
 
       mainMenuPart_ = do
@@ -113,7 +113,7 @@ mainHeaderRender2 :: HasCallStack => MainHeaderProps -> ReactElementM eventHandl
 mainHeaderRender2 (rs, _as) = div_ ["className" $= "c-fulltoolbar"] $ do
           toolbarWrapper_ $ case rs ^. gsDocumentState of
 
-            WipedDocumentStateView -> toolbar_ . fromJust $ rs ^? gsVDoc . _Just . _Just . compositeVDoc
+            WipedDocumentStateView -> toolbar_ . fromJust $ rs ^? gsCompositeVDoc . _Just . _Just . compositeVDoc
 
             WipedDocumentStateDiff i edit collapsed editable -> diffToolbar_ $ DiffToolbarProps
               (edit ^. editID)

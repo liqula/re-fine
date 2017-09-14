@@ -73,7 +73,7 @@ documentStateUpdate :: (HasCallStack)
 documentStateUpdate (LoadVDoc _) oldgs st
   = do
     cvdoc <- do
-      case oldgs ^. gsVDoc of
+      case oldgs ^. gsCompositeVDoc of
         Nothing -> error "impossible - documentStateUdpate"
         Just Nothing -> throwError ()
         Just (Just x) -> pure x

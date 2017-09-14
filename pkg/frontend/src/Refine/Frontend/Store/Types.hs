@@ -129,8 +129,8 @@ cacheMissId i x = cacheMiss (cacheKey i) x i
 
 gsRawContent :: Getter (GlobalState_ a) RawContent
 gsRawContent = to $ \case
-  (view gsVDoc -> Just (Just cvdoc)) -> rawContentFromCompositeVDoc cvdoc
-  _                                  -> mkRawContent $ mkBlock "loading..." :| []
+  (view gsCompositeVDoc -> Just (Just cvdoc)) -> rawContentFromCompositeVDoc cvdoc
+  _                                           -> mkRawContent $ mkBlock "loading..." :| []
 
 class CacheLookup a where
   cacheKey :: ID a -> CacheKey
@@ -189,8 +189,8 @@ gsEdit = to $ \gs -> (>>= cacheLookup gs) <$> gs ^. gsEditID
 gsEditID :: HasCallStack => Getter (GlobalState_ a) (Maybe (Maybe (ID Edit)))
 gsEditID = to $ \gs -> fmap (^. vdocHeadEdit) . cacheLookup gs <$> gs ^. gsVDocID
 
-gsVDoc :: Getter (GlobalState_ a) (Maybe (Maybe CompositeVDoc))  -- TODO:c rename to 'gsCompositeVDoc'.  no, wait, don't use this any more at all!!
-gsVDoc = to getCompositeVDoc
+gsCompositeVDoc :: Getter (GlobalState_ a) (Maybe (Maybe CompositeVDoc))
+gsCompositeVDoc = to getCompositeVDoc
   where
     getCompositeVDoc :: GlobalState_ a -> Maybe (Maybe CompositeVDoc)
     getCompositeVDoc gs = (>>= mkCompositeVDoc gs) <$> gs ^. gsEdit
@@ -203,7 +203,6 @@ gsVDoc = to getCompositeVDoc
         edit
         (Map.fromList $ catMaybes [ (,) k <$> cacheLookup gs k | k <- Set.toList $ edit ^. editChildren ])
         (Map.fromList $ catMaybes [ cacheLookup gs k <&> \d -> (k, (r, d)) | (k, r) <- Map.toList $ edit ^. editDiscussions' ])
-
 
 gsCurrentSelection :: HasCallStack => Getter GlobalState (Maybe (Selection Position))
 gsCurrentSelection = to (^? gsContributionState . csCurrentSelectionWithPx . _Just . sstSelectionState)
