@@ -38,7 +38,7 @@ data AccessAction =
   | Logout
   | LoginGuardStash [GlobalAction]  -- ^ if logged in, dispatch actions directly.  otherwise, login first.
   | LoginGuardPop  -- ^ dispatched this to trigger dispatch of the stashed actions after login.
-  | SetCurrentUser CurrentUserState
+  | SetCurrentUser (CurrentUser (ID User))
   deriving (Show, Eq, Generic)
 
 instance (Dispatchable GlobalAction, Sendable ToServer) => Dispatchable AccessAction where

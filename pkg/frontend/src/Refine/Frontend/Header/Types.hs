@@ -47,7 +47,7 @@ newtype AddLinkFormState = AddLinkFormState
 
 
 newtype TopMenuBarProps = TopMenuBarProps
-  { _currentUser :: CurrentUser_ (Lookup User)
+  { _currentUser :: CurrentUser (Lookup User)
   } deriving (Eq, Generic)
 
 

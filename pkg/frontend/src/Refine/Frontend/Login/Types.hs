@@ -7,16 +7,13 @@ module Refine.Frontend.Login.Types where
 -- | FormError can be Nothing or Just an error string.
 type FormError = Maybe ST
 
-type CurrentUser = CurrentUser_ User
-type CurrentUserState = CurrentUser_ (ID User)
-
-data CurrentUser_ user{-ID User | User-}
+data CurrentUser user{- User | ID User | Lookup User -}
   = UserLoggedIn {_loggedInUser :: user}
   | UserLoggedOut
   deriving (Show, Eq, Generic, Functor)
 
 newtype LoginState = LoginState
-  { _lsCurrentUser :: CurrentUserState
+  { _lsCurrentUser :: CurrentUser (ID User)
   }
   deriving (Show, Eq, Generic)
 
@@ -25,4 +22,4 @@ emptyLoginState = LoginState
   { _lsCurrentUser = UserLoggedOut
   }
 
-makeRefineTypes [''CurrentUser_, ''LoginState]
+makeRefineTypes [''CurrentUser, ''LoginState]
