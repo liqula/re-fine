@@ -14,9 +14,11 @@ import           Refine.Frontend.Header.Heading
 import           Refine.Frontend.Header.Toolbar
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Screen.Types
+import           Refine.Frontend.Store
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Enzyme as EZ
 import           Refine.Frontend.Test.Store
+
 
 spec :: Spec
 spec = do
@@ -54,8 +56,8 @@ spec = do
     it "sets the header height to a nonzero value" $ do
       pendingWith "#201, #221"  -- (i actually think this may fail because we fail to handle actions in Enzyme.ReactWrapper.mount.)
 
-      let _newVDoc :: CompositeVDoc
-          _newVDoc = CompositeVDoc
+      let newVDoc :: CompositeVDoc
+          newVDoc = CompositeVDoc
             (VDoc sampleMetaID (Title "the-title") (Abstract "the-abstract") (ID 1) (ID 1) mempty Nothing)
             (Edit (MetaID 1 un) un un un (sampleMetaID ^. miID) sampleRawContent1 un mempty mempty)
             mempty
@@ -66,7 +68,7 @@ spec = do
           gs :: GlobalState
           gs = emptyGlobalState
              & gsVDocID .~ Just 1
--- FIXME: remove this line if this test pass --    & gsServerCache %~ serverCacheUpdate (LoadVDoc (AfterAjax newVDoc))
+             & gsServerCache %~ serverCacheUpdate (LoadVDoc (newVDoc ^. compositeVDoc . vdocID))
 
           as :: AccessState
           as = undefined
