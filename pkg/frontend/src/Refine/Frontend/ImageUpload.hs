@@ -33,7 +33,7 @@ imageUpload_ editable user lst st = do
     hr_ []
     case user ^. userAvatar of
       Nothing -> elemText "You didn't upload an avatar yet."
-      Just (Image source) ->
+      Just (ImageInline source) ->
         img_ [ "src" $= cs source
              , "style" @@= [ decl "maxWidth" (Px 200)
                            , decl "maxHeight" (Px 200)
@@ -50,7 +50,7 @@ imageUpload_ editable user lst st = do
              ]
 
       case fst st of
-        Just (Right (Image source)) -> do
+        Just (Right (ImageInline source)) -> do
           br_ []
           img_ [ "src" $= cs source
                , "style" @@= [ decl "maxWidth" (Px 200)

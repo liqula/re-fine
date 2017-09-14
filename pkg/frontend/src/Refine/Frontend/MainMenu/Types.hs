@@ -76,7 +76,7 @@ type MainMenuTabProps = (MainMenuTab
       :: *)
 
 type ProfileProps = (ImageUpload{-avatar-}, Maybe ST{-user description update-})  -- TODO:c rename!  these are not props, but state.
-type ImageUpload = Maybe (Either (NoJSONRep File) Image)
+type ImageUpload = Maybe (Either (NoJSONRep File) ImageInline)
 
 newtype File = File JSVal deriving (FromJSVal)
 instance Eq File where _ == _ = False

@@ -23,5 +23,5 @@ loginStatusButton_ tweak cu = ibutton_ $ emptyIbuttonProps_ (mkIcon cu) onclick
     mkLabel UserLoggedOut    = "login"
     mkLabel (UserLoggedIn n) = "I am " <> either (const "...") (^. Common.userName) n
 
-    mkIcon (UserLoggedIn (Right ((^. userAvatar) -> Just img))) = ImageInline img
-    mkIcon _ = ImageIcon "Login"
+    mkIcon (UserLoggedIn (Right ((^. userAvatar) -> Just img))) = ButtonImageInline img
+    mkIcon _ = ButtonImageIcon "Login"

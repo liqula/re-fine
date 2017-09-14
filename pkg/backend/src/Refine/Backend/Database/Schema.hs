@@ -34,7 +34,7 @@ VDoc
     desc        Abstract
     headId      EditId Maybe
     group       GroupId
-    image       Image Maybe
+    image       ImageInline Maybe
 
 Edit
     desc        Text
@@ -57,7 +57,7 @@ Statement
 Group
     title       Text
     description Text
-    image       Image Maybe
+    image       ImageInline Maybe
 
 SubGroup
     parent      GroupId
@@ -80,7 +80,7 @@ GlobalRoles
 -- Users
 
 DBUser
-    avatar       Image Maybe
+    avatar       ImageInline Maybe
     description  Text
 
 -- Connection tables

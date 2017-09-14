@@ -336,7 +336,7 @@ emitBackendCallsFor act st = case act of
           l <- syncCallback1 ContinueAsync $ \e -> do
                 res <- js_targetResult e
                 dispatchAndExec . MainMenuAction . MainMenuActionOpen
-                  $ MainMenuProfile (uid, FormBegin $ newLocalStateRef (Just (Right . Image $ cs res), desc) lst)
+                  $ MainMenuProfile (uid, FormBegin $ newLocalStateRef (Just (Right . ImageInline $ cs res), desc) lst)
           js_addOnload fr $ jsval l
           js_doUpload fr f
         _ -> pure ()

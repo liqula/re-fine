@@ -187,7 +187,7 @@ getMetaEntity f i = do
 
 -- * VDoc
 
-toVDoc :: EditStats -> MetaID VDoc -> Title -> Abstract -> Maybe (Key S.Edit) -> Key S.Group -> Maybe Image -> VDoc
+toVDoc :: EditStats -> MetaID VDoc -> Title -> Abstract -> Maybe (Key S.Edit) -> Key S.Group -> Maybe ImageInline -> VDoc
 toVDoc stats vid title abstract (Just repoid) g im = VDoc vid title abstract (S.keyToId repoid) (S.keyToId g) stats im
 toVDoc _ _ _ _ Nothing _ _ = error "impossible"
 
@@ -452,7 +452,7 @@ getDBUser (ID uid) = do
 -- * Group
 
 {-# ANN toGroup ("HLint: ignore Eta reduce" :: String) #-}
-toGroup :: [ID Group] -> [ID Group] -> [ID VDoc] -> [ID User] -> MetaID Group -> ST -> ST -> Maybe Image -> Group
+toGroup :: [ID Group] -> [ID Group] -> [ID VDoc] -> [ID User] -> MetaID Group -> ST -> ST -> Maybe ImageInline -> Group
 toGroup parents children vdocs members gid title desc image =
   Group gid title desc parents children vdocs members image
 

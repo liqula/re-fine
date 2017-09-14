@@ -63,7 +63,7 @@ data ToServer
   | TSAddDiscussion (ID Edit) (CreateDiscussion (Maybe (Range Position)))
   | TSAddStatement (ID Statement){-parent-} CreateStatement
   | TSCreateUser CreateUser
-  | TSUpdateUser (ID User) (Maybe Image, ST)
+  | TSUpdateUser (ID User) (Maybe ImageInline, ST)
   | TSLogin Login
   | TSLogout
   | TSGetTranslations GetTranslations
