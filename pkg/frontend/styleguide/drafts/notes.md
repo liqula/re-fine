@@ -5,10 +5,6 @@ source: http://zb1:9001/p/scss-new
 
 - inline-styles are ok iff there is a plausible reason for them.  (RATIONALE: whoever wants to touch the scss can also touch the html in the style guide, translation to haskell is a separate step.)
 
-### open questions
-
-- can you make an svg with the liqula logo?
-
 
 ## scss identifiers and name spaces
 
@@ -21,6 +17,7 @@ just the component name that is assigned to the outermost `div` of the
 component.  There can be additional css classes that have that name
 suffixed with `_` and arbitrary css names that describe the part /
 function of the component they are about.
+
 
 ### css-only components
 
@@ -39,10 +36,6 @@ haskell.
 - we *could* inline the svg into haskell, and use TH to keep the svg sources exposed to haskell-oblivious web design.  no strong reasons against this.
 - instead, we allow for color variables (and nothing else) in the svg code and compile that away with a custom preprocessor.  3 svg files for each icon, but only one source file.
 - circles are done with background-radius.
-
-### open questions
-
-- how do we scale down the images to fit into the radius?  same factor for all of them?  which one?  if it's different, can we do that inside the svgs somehow?  in css it would be cheapest, but then it would be nice to have one universally applicable factor.  or should the svg be circled to begin with?
 
 
 ## tile titles
