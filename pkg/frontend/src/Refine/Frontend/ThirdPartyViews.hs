@@ -5,7 +5,7 @@ module Refine.Frontend.ThirdPartyViews
   ( ThirdPartyView
   , skylight_
   , hammer_
-  , editor_
+  , draftEditor_
   ) where
 #include "import_frontend.hs"
 
@@ -18,8 +18,8 @@ skylight_ = foreignClass js_skylight
 hammer_ :: HasCallStack => ThirdPartyView eventHandler
 hammer_ = foreignClass js_hammer
 
-editor_ :: HasCallStack => ThirdPartyView eventHandler
-editor_ = foreignClass js_editor
+draftEditor_ :: HasCallStack => ThirdPartyView eventHandler
+draftEditor_ = foreignClass js_draftEditor
 
 #ifdef __GHCJS__
 
@@ -33,7 +33,7 @@ foreign import javascript safe
 
 foreign import javascript safe
   "Draft.Editor"
-  js_editor :: JSVal
+  js_draftEditor :: JSVal
 
 #else
 
@@ -45,8 +45,8 @@ js_skylight = error "javascript FFI not available in GHC"
 js_hammer :: JSVal
 js_hammer = error "javascript FFI not available in GHC"
 
-{-# ANN js_editor ("HLint: ignore Use camelCase" :: String) #-}
-js_editor :: JSVal
-js_editor = error "javascript FFI not available in GHC"
+{-# ANN js_draftEditor ("HLint: ignore Use camelCase" :: String) #-}
+js_draftEditor :: JSVal
+js_draftEditor = error "javascript FFI not available in GHC"
 
 #endif

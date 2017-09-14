@@ -3,11 +3,13 @@
 
 module Refine.Frontend.Header.Heading
   ( TopMenuBarProps(..)
-  , topMenuBar, topMenuBar_
-  , mainHeader, mainHeader_
+  , mkMainHeaderProps, mkMainHeaderToolbarProps
+  , mainHeader_
+  , mainHeaderToolbar_
+
+  -- * exported for testing only:
+  , topMenuBar_
   , toolbarWrapper_
-  , mkMainHeaderProps
-  , mainHeaderRender2
   ) where
 #include "import_frontend.hs"
 
@@ -16,8 +18,8 @@ import           Language.Css.Syntax
 import           Refine.Common.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DocumentHeader
-import           Refine.Frontend.Header.DiffToolbar ( diffToolbar_ )
-import           Refine.Frontend.Header.EditToolbar ( editToolbar_, wipeDocumentState )
+import           Refine.Frontend.Header.DiffToolbar (diffToolbar_)
+import           Refine.Frontend.Header.EditToolbar (editToolbar_, wipeDocumentState)
 import           Refine.Frontend.Header.DiscussionToolbar
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_, indexToolbarExtension_ )
@@ -88,32 +90,29 @@ mainHeader = React.defineLifecycleView "HeaderSizeCapture" () React.lifecycleCon
    }
 
 mainHeaderRender :: HasCallStack => () -> MainHeaderProps -> ReactElementM eventHandler ()
-mainHeaderRender () (rs, as) = do
-  let vdoc = fromMaybe (error "mainHeader: no vdoc!") $ rs ^? gsVDoc . _Just . _Just
-      props = TopMenuBarProps (cacheLookup' rs <$> (as ^. accLoginState . lsCurrentUser))
-
-      mainMenuPart_ = do
+mainHeaderRender () (title, abstract, topmenuprops) = do
+  let mainMenuPart_ = do
         -- in the past, the following needed to be siblings because of the z-index handling.  not sure that's still the case.
         div_ ["className" $= "c-mainmenu__bg" {-, "role" $= "navigation" -}] mempty
         {- header_ ["role" $= "banner"] $ do -}
-        topMenuBar_ props
+        topMenuBar_ topmenuprops
 
-      headerPart_
-        = documentHeader_
-        . DocumentHeaderProps (vdoc ^. compositeVDoc . vdocTitle)
-        $ case rs ^. gsDocumentState of
-          WipedDocumentStateDiff _ eid _ _ -> editDescToAbstract vdoc . ContribIDEdit $ eid ^. editID
-          _ -> vdoc ^. compositeVDoc . vdocAbstract
+      headerPart_ = documentHeader_ $ DocumentHeaderProps title abstract
 
   div_ ["className" $= "c-fullheader"] $ do
       mainMenuPart_
       headerPart_
 
-mainHeaderRender2 :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
-mainHeaderRender2 (rs, _as) = div_ ["className" $= "c-fulltoolbar"] $ do
-          toolbarWrapper_ $ case rs ^. gsDocumentState of
+mainHeader_ :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
+mainHeader_ props = React.viewWithSKey mainHeader "mainHeader" props mempty
 
-            WipedDocumentStateView -> toolbar_ . fromJust $ rs ^? gsVDoc . _Just . _Just . compositeVDoc
+
+-- | FIXME: make this a component, not just an element.
+mainHeaderToolbar_ :: HasCallStack => MainHeaderToolbarProps -> ReactElementM eventHandler ()
+mainHeaderToolbar_ props = div_ ["className" $= "c-fulltoolbar"] $ do
+          toolbarWrapper_ $ case props ^. mainHeaderToolbarPropsDocumentState of
+
+            WipedDocumentStateView -> toolbar_ $ props ^. mainHeaderToolbarPropsVDoc
 
             WipedDocumentStateDiff i edit collapsed editable -> diffToolbar_ $ DiffToolbarProps
               (edit ^. editID)
@@ -127,21 +126,10 @@ mainHeaderRender2 (rs, _as) = div_ ["className" $= "c-fulltoolbar"] $ do
 
             WipedDocumentStateDiscussion dprops -> discussionToolbar_ dprops
 
-          indexToolbarExtension_ $ mkIndexToolbarProps rs
-          commentToolbarExtension_ $ CommentToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
-          editToolbarExtension_ $ EditToolbarExtensionProps (rs ^. gsHeaderState . hsToolbarExtensionStatus)
+          indexToolbarExtension_ $ props ^. mainHeaderToolbarPropsIndexToolbarProps
+          commentToolbarExtension_ $ CommentToolbarExtensionProps (props ^. mainHeaderToolbarPropsExtStatus)
+          editToolbarExtension_ $ EditToolbarExtensionProps (props ^. mainHeaderToolbarPropsExtStatus)
 
-mkIndexToolbarProps :: GlobalState_ WipedDocumentState -> IndexToolbarProps
-mkIndexToolbarProps rs
-  | rs ^. gsHeaderState . hsToolbarExtensionStatus == IndexToolbarExtension
-  && fromMaybe True (not <$> rs ^? gsDocumentState . wipedDocumentStateDiffCollapsed)
-  = mkIndex . _editVDocVersion <$> join (gsEdit rs)
-  | otherwise = Nothing
-  where
-    mkIndex (RawContent bs _) =
-      [ IndexItem (b ^. blockKey) (b ^. blockText) depth
-      | b <- NEL.toList bs, depth <- maybeToList . headerDepth $ b ^. blockType
-      ]
 
 headerDepth :: BlockType -> Maybe Int
 headerDepth = \case
@@ -150,11 +138,35 @@ headerDepth = \case
   Header3 -> Just 3
   _ -> Nothing
 
-mkMainHeaderProps :: AccessState -> GlobalState -> MainHeaderProps
-mkMainHeaderProps as gs = (fmap (const $ wipeDocumentState as gs) gs, as)
+mkMainHeaderProps :: AccessState -> GlobalState_ WipedDocumentState -> MainHeaderProps
+mkMainHeaderProps as wiped = (title, abstract, props)
+  where
+    cvdoc = fromMaybe (error "mkMainHeaderProps: no vdoc!") $ wiped ^? gsCompositeVDoc . _Just . _Just
+    props = TopMenuBarProps (cacheLookup' wiped <$> (as ^. accLoginState . lsCurrentUser))
 
-mainHeader_ :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
-mainHeader_ props = React.viewWithSKey mainHeader "mainHeader" props mempty
+    title = cvdoc ^. compositeVDoc . vdocTitle
+    abstract = cvdoc ^. compositeVDoc . vdocAbstract
+
+mkMainHeaderToolbarProps :: GlobalState_ WipedDocumentState -> MainHeaderToolbarProps
+mkMainHeaderToolbarProps wiped = MainHeaderToolbarProps ds vdoc indexprops extprops
+  where
+    ds = wiped ^. gsDocumentState
+    Just vdoc = wiped ^? gsCompositeVDoc . _Just . _Just . compositeVDoc
+    indexprops = mkIndexToolbarProps wiped
+    extprops = wiped ^. gsHeaderState . hsToolbarExtensionStatus
+
+mkIndexToolbarProps :: GlobalState_ WipedDocumentState -> IndexToolbarProps
+mkIndexToolbarProps rs
+  | rs ^. gsHeaderState . hsToolbarExtensionStatus == IndexToolbarExtension
+  && fromMaybe True (not <$> rs ^? gsDocumentState . wipedDocumentStateDiffCollapsed)
+  = mkIndex . _editVDocVersion <$> join (rs ^. gsEdit)
+  | otherwise = Nothing
+  where
+    mkIndex (RawContent bs _) =
+      [ IndexItem (b ^. blockKey) (b ^. blockText) depth
+      | b <- NEL.toList bs, depth <- maybeToList . headerDepth $ b ^. blockType
+      ]
+
 
 calcHeaderHeight :: HasCallStack => React.LDOM -> IO ()
 calcHeaderHeight ldom = do

@@ -12,6 +12,7 @@ import Language.Css.Syntax hiding (Value)
 import React.Flux.Missing
 import Refine.Common.Types
 import Refine.Common.VDoc.OT
+import Refine.Frontend.Document.FFI.Types (EditorState)
 import Refine.Frontend.Icon.Types
 import Refine.Frontend.Screen.Types
 import Refine.Frontend.Types
@@ -115,7 +116,7 @@ data EditInfo kind = EditInfo
   }
   deriving (Show, Eq, Generic)
 
-data ActiveDialog = ActiveDialogComment (LocalStateRef CommentInputState) | ActiveDialogEdit
+data ActiveDialog = ActiveDialogComment (LocalStateRef CommentInputState) | ActiveDialogEdit EditorState
   deriving (Show, Eq, Generic)
 
 emptyContributionState :: HasCallStack => ContributionState

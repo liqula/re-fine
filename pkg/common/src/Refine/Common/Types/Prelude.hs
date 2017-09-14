@@ -39,7 +39,7 @@ data CreateUser = CreateUser
   { _cuName        :: Username
   , _cuMail        :: Email
   , _cuPwd         :: Password
-  , _cuAvatar      :: Maybe Image
+  , _cuAvatar      :: Maybe ImageInline
   , _cuDescription :: ST
   }
   deriving (Eq, Ord, Show, Read, Generic)
@@ -48,12 +48,12 @@ data User = User
   { _userMetaID      :: MetaID User -- ^ The primary key is used to identify the user.
   , _userName        :: Username
   , _userEmail       :: Email
-  , _userAvatar      :: Maybe Image
+  , _userAvatar      :: Maybe ImageInline
   , _userDescription :: ST
   }
   deriving (Eq, Ord, Show, Read, Generic)
 
-newtype Image = Image String
+newtype ImageInline = ImageInline ST
   deriving (Eq, Ord, Show, Read, Generic)
 
 data Login = Login
@@ -90,7 +90,7 @@ data MetaID a = MetaID
 
 -- * make refine types
 
-makeRefineTypes [''CreateUser, ''User, ''Login, ''UserInfo, ''MetaInfo, ''MetaID, ''Image]
+makeRefineTypes [''CreateUser, ''User, ''Login, ''UserInfo, ''MetaInfo, ''MetaID, ''ImageInline]
 
 userID :: Lens' User (ID User)
 userID = userMetaID . miID

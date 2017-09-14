@@ -22,9 +22,10 @@ import           Refine.Frontend.Contribution.Discussion
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Document.Store
 import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
-import           Refine.Frontend.ThirdPartyViews (editor_)
+import           Refine.Frontend.ThirdPartyViews (draftEditor_)
 import           Refine.Frontend.Util
 
 
@@ -43,11 +44,11 @@ document = React.defineLifecycleView "Document" () React.lifecycleConfig
 
 documentRender :: HasCallStack => () -> DocumentProps -> ReactElementM ('StatefulEventHandlerCode st) ()
 documentRender () props = liftViewToStateHandler . articleWrap $ case dstate of
-    DocumentStateView estate rawcontent
-        -> mkEditor (Just rawcontent) estate
+    DocumentStateView rawContent
+        -> mkEditor (Just rawContent)
 
-    DocumentStateDiff _ _estate rawcontent edit collapsed _
-        -> mkEditor (Just rawContentDiffView) (createWithContent $ convertFromRaw rawContentDiffView)
+    DocumentStateDiff _ rawcontent edit collapsed _
+        -> mkEditor (Just rawContentDiffView)
       where
         rawContentDiffView :: RawContent
         rawContentDiffView = mcollapse $ diffit (edit ^. editSource)
@@ -57,51 +58,64 @@ documentRender () props = liftViewToStateHandler . articleWrap $ case dstate of
           | otherwise = rc
 
         diffit (EditSource []) = error "impossible - diffit"
-        -- FUTUREWORK: make possible to choose a parent
         diffit (EditSource ((otedit, _): _)) = showEditAsRawContentWithMarks otedit rawcontent
+        -- FUTUREWORK: allow for choosing a parent
 
-    DocumentStateEdit estate _ _ -> mkEditor Nothing estate
+    DocumentStateEdit _ _ -> mkEditor Nothing
 
     DocumentStateDiscussion dprops -> discussion_ dprops
   where
     dstate = props ^. dpDocumentState
+    readOnly = isReadOnlyDocumentState dstate
 
     sendMouseUpIfReadOnly :: EventHandlerTypeWithMods 'EventHandlerCode
     sendMouseUpIfReadOnly =
-        simpleHandler $ mconcat [ dispatch $ ContributionAction RequestSetRange | has _DocumentStateView dstate ]
+        simpleHandler $ mconcat [ dispatch $ ContributionAction RequestSetRange | readOnly ]
 
     articleWrap = article_
-         [ "id" $= "vdocValue"  -- FIXME: do we still use this?
+         [ "id" $= "vdocValue"  -- FIXME: are we still using this?
          , "style" @@= [zindex ZIxArticle, decl "overflow" (Ident "visible")]
          , "className" $= "gr-20 gr-14@desktop editor_wrapper c-article-content"
          , onMouseUp  $ \_ _me -> sendMouseUpIfReadOnly
          , onTouchEnd $ \_ _te -> sendMouseUpIfReadOnly
          ]
 
-    mkEditor rawContent editorState = editor_
-        [ "editorState" &= editorState
-        , "customStyleMap" &= documentStyleMap
-        , "readOnly" &= has _DocumentStateView dstate
-        , onChange (editorOnChange editorState)
-        , onBlur editorOnBlur
-        , onFocus editorOnFocus
-        ] mempty
+    mkEditor :: Maybe RawContent -> ReactElementM 'EventHandlerCode ()
+    mkEditor mrc = editor_ eprops
       where
+        eprops :: EditorProps
+        eprops = EditorProps documentStyleMap readOnly
+
         documentStyleMap :: Value
-        documentStyleMap = mkDocumentStyleMap active rawContent
+        documentStyleMap = mkDocumentStyleMap active mrc
           where
             active = props ^. dpContributionState . csHighlightedMarkAndBubble
 
 
+editor :: HasCallStack => View '[EditorProps]
+editor = mkControllerView @'[StoreArg EditorStore] "editor" $
+  \(EditorStore estate) props -> draftEditor_
+      [ "editorState" &= estate
+      , onChange (editorOnChange estate)
+      , onFocus editorOnFocus
+      , onBlur editorOnBlur
+      , "customStyleMap" &= (props ^. editorStyleMap)
+      , "readOnly" &= (props ^. editorReadOnly)
+      ] mempty
+
+editor_ :: HasCallStack => EditorProps -> ReactElementM 'EventHandlerCode ()
+editor_ = view_ editor "editor"
+
+
 -- | Handle editor change events.
 --
--- If `onBlur` and `onChange` do not update the `EditorState` with a new hasFocus value,
+-- Under the condition that `onBlur` and `onChange` do not update the `EditorState` with a new hasFocus value,
 -- we do not need to know in which order the editor event handlers 'editorOnChange', 'editorOnBlur',
 -- 'editorOnFocus' are called.  (To decide whether the other two have been *or* will be called, we
 -- could look at the focus in the old and new editor state, resp., but we don't need that
 -- information.)
 --
--- FIXME: We are cheating here: the event we get from draft.js is really not a 'HandlerArg' that
+-- NOTE: We are cheating here: the event we get from draft.js is really not a 'HandlerArg' that
 -- can be parsed into an 'Event', but an 'EditorState'.  So if we attempt to access 'Event' fields
 -- like 'evtType', we will get ugly error messages.  As long as we stick to the 'evtHandlerArg' part
 -- of the structure, things should be fine.
@@ -109,10 +123,8 @@ documentRender () props = liftViewToStateHandler . articleWrap $ case dstate of
 -- Note that the fact that we don't have an 'Event' here also means that we can't modify it.
 editorOnChange :: EditorState -> Event -> EventHandlerTypeWithMods 'EventHandlerCode
 editorOnChange estate (evtHandlerArg -> HandlerArg (mkEditorState -> estate')) =
-  simpleHandler $ dispatch updateAction
+  simpleHandler . dispatch . UpdateEditorStore $ estate'
   where
-    updateAction = DocumentAction $ UpdateEditorState estate'
-
     (_isBlur, _isFocus) = (oldfoc && not newfoc, not oldfoc && newfoc)
       where
         oldfoc = estate  ^. to getSelection . selectionStateHasFocus

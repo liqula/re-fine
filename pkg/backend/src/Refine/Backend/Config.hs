@@ -120,6 +120,7 @@ warpSettings :: Config -> Settings
 warpSettings cfg = Warp.defaultSettings
   & setPort (_warpSettingsPort . _cfgWarpSettings $ cfg)
   & setHost (_warpSettingsHost . _cfgWarpSettings $ cfg)
+  & setTimeout 90  -- default is 30, but that gets triggered under rare, not-yet-reproduceable circumstances.
 
 
 -- * lenses/TH

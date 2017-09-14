@@ -210,7 +210,7 @@ cmdLoopStep conn clientId = do
       TSAddEdit eid x         -> void $ App.addEdit eid x
       TSAddEditAndMerge eid x -> void $ App.addEditAndMerge eid x
       TSUpdateEdit eid x      -> void $ App.updateEdit eid x
-      TSMergeEdit eid         -> void $ App.mergeEdit eid
+      TSMergeEdit eid         -> void $ App.mergeEditAndRebaseAllSiblings eid
       TSToggleVote (ContribIDEdit eid) x -> do
         rebased <- App.toggleSimpleVoteOnEdit eid x
         when rebased $ sendMessage conn TCRebase

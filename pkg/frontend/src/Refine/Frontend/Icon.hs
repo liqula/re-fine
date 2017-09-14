@@ -51,7 +51,7 @@ ibutton_ props = view_ ibutton ("Ibutton_" <> props ^. ibListKey) props
 -- This is not going through the hoops of `mkStatefulView`, because
 -- that would insulate the local state from the state the calling
 -- component wants to share with this button.  Instead, render the
--- 'ReactElement' directlyk.
+-- 'ReactElement' directly.
 sibutton_ :: forall onclick st (handler :: EventHandlerCode *).
                   (HasCallStack, IbuttonOnClick onclick handler, handler ~ 'StatefulEventHandlerCode st)
                => Lens' st Bool -> st -> IbuttonProps onclick -> ReactElementM handler ()
@@ -85,10 +85,10 @@ sibutton_ mouseIsOver st props = do
              <> [decl "cursor" (Ident "pointer") | props ^. ibEnabled]
              <> css (props ^. ibSize)
 
-      bg :: Either BackgroundImage Common.Image
+      bg :: Either BackgroundImage Common.ImageInline
       bg = case props ^. ibImage of
-        ImageInline i -> Right i
-        ImageIcon n -> Left $ BackgroundImage n imageState
+        ButtonImageInline i -> Right i
+        ButtonImageIcon n -> Left $ BackgroundImage n imageState
         where
           imageState = case props ^. ibHighlightWhen of
             HighlightAlways      | props ^. ibEnabled                      -> BisRO
@@ -111,12 +111,12 @@ sibutton_ mouseIsOver st props = do
   div_ (onMsOvr <> onClk <> ["style" @@= divSty]) $ do
     case bg of
       Left i  -> div_  ["style" @@= iconSty, "className" $= iconCssClass i] $ pure ()
-      Right (Common.Image i) -> div_ ["style" @@= iconSty] . img_ ["src" $= cs i] $ pure ()
+      Right (Common.ImageInline i) -> div_ ["style" @@= iconSty] . img_ ["src" $= cs i] $ pure ()
     span_ ["style" @@= spanSty] $ elemText (props ^. ibLabel)
 
 
 emptyIbuttonProps :: HasCallStack => forall onclick. ST -> onclick -> IbuttonProps onclick
-emptyIbuttonProps = emptyIbuttonProps_ . ImageIcon
+emptyIbuttonProps = emptyIbuttonProps_ . ButtonImageIcon
 
 emptyIbuttonProps_ :: HasCallStack => forall onclick. ButtonImage -> onclick -> IbuttonProps onclick
 emptyIbuttonProps_ img onclick = IbuttonProps

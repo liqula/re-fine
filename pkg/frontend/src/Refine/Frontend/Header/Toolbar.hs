@@ -152,7 +152,8 @@ commentToolbarExtension_ = view_ commentToolbarExtension "commentToolbarExtensio
 
 editToolbarExtension :: View '[EditToolbarExtensionProps]
 editToolbarExtension = mkView "EditToolbarExtension" $ \case
-  (EditToolbarExtensionProps (EditToolbarLinkEditor link)) -> editLinkInput_ link
+-- FIXME: #452
+--  (EditToolbarExtensionProps (EditToolbarLinkEditor link)) -> editLinkInput_ link
   (EditToolbarExtensionProps _) -> mempty
 
 editToolbarExtension_ :: EditToolbarExtensionProps -> ReactElementM handler ()
@@ -184,6 +185,7 @@ linkToolbarTextForm link = do
       $ elemText link
 
 
+{- FIXME: #452
 editLinkInput :: HasCallStack => ST -> View '[]
 editLinkInput link = mkStatefulView "EditLinkInput" (AddLinkFormState link) $ \curState -> do
     div_ ["className" $= "row row-align-middle c-vdoc-toolbar-extension"] $ do
@@ -217,6 +219,7 @@ editLinkInput link = mkStatefulView "EditLinkInput" (AddLinkFormState link) $ \c
 
 editLinkInput_ :: HasCallStack => ST -> ReactElementM eventHandler ()
 editLinkInput_ link = view_ (editLinkInput link) "editLinkInput_"
+-}
 
 
 indexToolbarExtension :: View '[IndexToolbarProps]

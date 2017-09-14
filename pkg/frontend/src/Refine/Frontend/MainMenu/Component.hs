@@ -340,7 +340,7 @@ mainMenuMemberShort = mkView "MainMenuProcessShort" $ \props -> do
 
     -- image
     br_ []
-    ibutton_ $ emptyIbuttonProps_ (maybe (ImageIcon "User") ImageInline $ props ^. userAvatar) ([] :: [GlobalAction])
+    ibutton_ $ emptyIbuttonProps_ (maybe (ButtonImageIcon "User") ButtonImageInline $ props ^. userAvatar) ([] :: [GlobalAction])
       & ibListKey .~ "user"
       & ibSize .~ XXLarge
       & ibDarkBackground .~ True
@@ -512,7 +512,7 @@ mainMenuCreateProcess lst = mkPersistentStatefulView "MainMenuCreateProcess" lst
 mainMenuCreateProcess_ :: HasCallStack => LocalStateRef CreateVDoc -> ReactElementM eventHandler ()
 mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreateProcess"
 
-{- TODO: edit or discard this comment?
+{- TODO:img edit or discard this comment?
 
 - mkPersistentStatefulView is needed because of a text form
 - with mkPersistentStatefulView, the local state is updated without emitting any actions
@@ -523,7 +523,7 @@ mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreatePr
 
 -}
 
-mainMenuProfile :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileProps -> View '[]
+mainMenuProfile :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileLocalState -> View '[]
 mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" lst Nothing $ \st -> case user of
   Left _uid -> elemText "Loading..."
   Right u -> do
@@ -558,7 +558,7 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
               \st' -> ([], Just $ st' & _2 .~ Nothing)
             ] $ elemText "cancel"
 
-mainMenuProfile_ :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileProps -> ReactElementM eventHandler ()
+mainMenuProfile_ :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileLocalState -> ReactElementM eventHandler ()
 mainMenuProfile_ editable user lst = view_ (mainMenuProfile editable user lst) "mainMenuProfile_"
 
 mainMenuUpdateProcess :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> View '[]

@@ -83,7 +83,7 @@ spec = do
         -- selection api (not draft/react, since 'LeafSelector' is referencing DOM nodes).
 
         _ <- mount $ documentWithoutCb_ DocumentProps
-          { _dpDocumentState     = mkDocumentStateView_ rc
+          { _dpDocumentState     = DocumentStateView rc
           , _dpContributionState = emptyContributionState
           }
 
@@ -120,9 +120,9 @@ spec = do
 
 
   describe "Draft" $ do
-    it "editor_ mounts" $ do
+    it "draftEditor_ mounts" $ do
       let doc :: String = "1243/asdf_#$%^"
-      wrapper <- mount $ editor_ (defaultEditorProps doc) mempty
+      wrapper <- mount $ draftEditor_ (defaultEditorProps doc) mempty
       contents :: String <- cs <$> html wrapper
       contents `shouldContain` "<div"
       contents `shouldContain` "public-DraftEditor-content"
@@ -132,7 +132,7 @@ spec = do
   describe "Document" $ do
     let mkTestProps :: RawContent -> DocumentProps
         mkTestProps c = DocumentProps
-          (DocumentStateEdit (createWithRawContent c) einfo Nothing)
+          (DocumentStateEdit einfo Nothing)
           emptyContributionState
           where
             einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) c

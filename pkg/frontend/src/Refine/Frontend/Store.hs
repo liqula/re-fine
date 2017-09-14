@@ -32,6 +32,12 @@ import           Refine.Frontend.Util
 import           Refine.Frontend.WebSocket
 
 
+instance SometimesLoggable GlobalAction where
+  shouldbeLogged (ContributionAction RequestSetAllVerticalSpanBounds) = False
+  shouldbeLogged (ContributionAction SetAllVerticalSpanBounds{})      = False
+  shouldbeLogged _                                                    = True
+
+
 instance StoreData GlobalState where
     type StoreAction GlobalState = GlobalAction
     transform = loop . \case
@@ -65,7 +71,7 @@ transformGlobalState = transf
     transf :: GlobalAction -> GlobalState -> m GlobalState
     transf (ResetState st) _ = pure st  -- for testing only!
     transf act st = do
-      consoleLogGlobalStateBefore weAreInDevMode act st
+      consoleLogGlobalAction act
 
       st' <- locationHashUpdate <$> pureTransform act st
 
@@ -74,10 +80,10 @@ transformGlobalState = transf
 
       -- scrolling
       case act of
-        ContributionAction ShowCommentEditor                       -> scrollToCurrentSelection (st ^. gsContributionState)
-        DocumentAction (DocumentSave (FormBegin EditIsNotInitial)) -> scrollToCurrentSelection (st ^. gsContributionState)
-        HeaderAction (ScrollToBlockKey (Common.BlockKey k))        -> liftIO . js_scrollToBlockKey $ cs k
-        HeaderAction ScrollToPageTop                               -> liftIO js_scrollToPageTop
+        ContributionAction ShowCommentEditor                            -> scrollToCurrentSelection (st ^. gsContributionState)
+        DocumentAction (DocumentSave (FormBegin (EditIsNotInitial, _))) -> scrollToCurrentSelection (st ^. gsContributionState)
+        HeaderAction (ScrollToBlockKey (Common.BlockKey k))             -> liftIO . js_scrollToBlockKey $ cs k
+        HeaderAction ScrollToPageTop                                    -> liftIO js_scrollToPageTop
         _ -> pure ()
 
       -- routing
@@ -85,13 +91,22 @@ transformGlobalState = transf
                                                -- FIXME: call only once at the end of every @loop@
                                                -- sequence in the class method above?
 
+      -- state propagation to EditorStore
+      when ( act == DocumentAction UpdateDocumentStateView ||
+             -- (GlobalState has the same editor contents as before, but, say, we switched from main
+             -- menu back into a vdoc.)
+             st ^. gsRawContent /= st' ^. gsRawContent
+             -- (GlobalState has changed w.r.t. editor contents.)
+           ) $ do
+        dispatchAndExec . UpdateEditorStore . createWithRawContent $ st' ^. gsRawContent
+
       -- other effects
       case act of
         ContributionAction RequestSetAllVerticalSpanBounds -> do
-          mapM_ (dispatchAndExec . ContributionAction) =<< setAllVerticalSpanBounds (st ^. gsDocumentState)
+          dispatchAndExec . ContributionAction =<< setAllVerticalSpanBounds (st ^. gsRawContent)
 
         ContributionAction RequestSetRange -> do
-          mRangeEvent <- getRangeAction $ gsRawContent st
+          mRangeEvent <- getRangeAction $ st ^. gsRawContent
           case mRangeEvent of
             Nothing -> pure ()
             Just rangeEvent -> do
@@ -112,7 +127,7 @@ transformGlobalState = transf
 
         _ -> pure ()
 
-      consoleLogGlobalStateAfter weAreInDevMode (st' /= st) st'
+      consoleLogGlobalState (st' /= st) st'
       pure st'
 
     locationHashUpdate :: HasCallStack => GlobalState -> GlobalState
@@ -129,11 +144,11 @@ transformGlobalState = transf
      where
       fm :: GlobalState -> CacheLookupT GlobalState
       fm =    gsServerCache         (pure . serverCacheUpdate act)
-          >=> gsEditID              (pure . editIDUpdate act)
+          >=> gsVDocID              (pure . vdocIDUpdate act)
           >=> gsContributionState   (pure . contributionStateUpdate act)
           >=> gsHeaderState         (pure . headerStateUpdate act)
           >=> gsScreenState         (pure . maybe id screenStateUpdate (act ^? _ScreenAction))
-          >=> gsMainMenuState       (pure . mainMenuUpdate act (isJust $ st ^. gsEditID))
+          >=> gsMainMenuState       (pure . mainMenuUpdate act (isJust $ st ^. gsVDocID))
           >=> gsTranslations        (pure . translationsUpdate act)
           >=> gsDevState            (pure . devStateUpdate act)
           >=> (\st' -> gsDocumentState (documentStateUpdate act st') st')
@@ -161,7 +176,7 @@ routeFromState st
       MainMenuCreateProcess ref                 -> Route.GroupProcesses . view createVDocGroup $ unsafeReadLocalStateRef ref
       MainMenuUpdateProcess vid _               -> Route.Process vid
 
-  | Just vid <- st ^. gsEditID
+  | Just vid <- st ^. gsVDocID
     = Route.Process vid
 
   | otherwise
@@ -216,9 +231,9 @@ flushCacheMisses = do
     sendTS msg
     consoleLogJSStringM "WS" . cs $ show msg
 
-editIDUpdate :: GlobalAction -> Maybe (ID Common.VDoc) -> Maybe (ID Common.VDoc)
-editIDUpdate (LoadVDoc cvd) _ = Just cvd
-editIDUpdate _ st = st
+vdocIDUpdate :: GlobalAction -> Maybe (ID Common.VDoc) -> Maybe (ID Common.VDoc)
+vdocIDUpdate (LoadVDoc cvd) _ = Just cvd
+vdocIDUpdate _ st = st
 
 serverCacheUpdate :: GlobalAction -> ServerCache -> ServerCache
 serverCacheUpdate (CacheAction a) c = case a of
@@ -226,41 +241,6 @@ serverCacheUpdate (CacheAction a) c = case a of
   RestrictCacheItems keys -> restrictCache keys c
   InvalidateCacheItems keys -> invalidateCache keys c
 serverCacheUpdate _ c = c
-
-
--- * logging state and actions.
-
-consoleLogGlobalStateBefore :: HasCallStack => forall m. MonadTransform m => Bool -> GlobalAction -> GlobalState -> m ()
-consoleLogGlobalStateBefore False _ _ = pure ()
-consoleLogGlobalStateBefore True act _st = do
-  liftIO $ consoleLogJSStringM "" "\n"
-  consoleLogGlobalAction act
-
-consoleLogGlobalStateAfter :: HasCallStack => forall m. MonadTransform m => Bool -> Bool -> GlobalState -> m ()
-consoleLogGlobalStateAfter False = \_ _ -> pure ()
-consoleLogGlobalStateAfter True  = consoleLogGlobalState
-
-consoleLogGlobalState :: HasCallStack => forall m. MonadTransform m => Bool {- changed -} -> GlobalState -> m ()
-consoleLogGlobalState False _ = do
-  consoleLogJSONM "New state: " (String "[UNCHANGED]" :: Value)
-consoleLogGlobalState True st = liftIO $ do
-  consoleLogJSONM "New state: " st
-
-consoleLogGlobalAction :: HasCallStack => forall m. MonadTransform m => GlobalAction -> m ()
-consoleLogGlobalAction act | not (loggableAction act) = pure ()
-consoleLogGlobalAction act = do
-  let consolewidth = 80
-      shown = show act
-  if length shown <= consolewidth
-    then do
-      consoleLogJSStringM "Action: " (cs shown)
-    else do
-      consoleLogJSONM "Action: " act
-
-loggableAction :: GlobalAction -> Bool
-loggableAction (ContributionAction RequestSetAllVerticalSpanBounds) = False
-loggableAction (ContributionAction SetAllVerticalSpanBounds{})      = False
-loggableAction _                                                    = True
 
 
 -- * pure updates
@@ -307,7 +287,7 @@ emitBackendCallsFor act st = case act of
 
     ContributionAction (SubmitComment (CommentInfo text kind)) -> do
       let headEdit = fromMaybe (error "emitBackendCallsFor.SubmitComment") . join
-                   $ st ^. to gsEditID'
+                   $ st ^. gsEditID
           range    = st ^? gsCurrentSelection . _Just . Common.selectionRange
 
       sendTS $ case kind of
@@ -316,27 +296,27 @@ emitBackendCallsFor act st = case act of
 
       dispatchAndExec $ DocumentAction UpdateDocumentStateView
 
-    DocumentAction (DocumentSave (FormBegin EditIsInitial))
+    DocumentAction (DocumentSave (FormBegin (EditIsInitial, estate)))
       -> do
-        let DocumentStateEdit editorState _ (Just baseEdit) = st ^. gsDocumentState
+        let DocumentStateEdit _ (Just baseEdit) = st ^. gsDocumentState
             cedit = Common.CreateEdit
                   { Common._createEditDesc        = "initial content"
-                  , Common._createEditVDocVersion = getCurrentRawContent editorState
+                  , Common._createEditVDocVersion = getCurrentRawContent estate
                   , Common._createEditKind        = Common.Initial
                   }
 
         sendTS $ TSAddEditAndMerge baseEdit cedit
         dispatchAndExec $ DocumentAction UpdateDocumentStateView
 
-    DocumentAction (DocumentSave (FormComplete info))
-      | DocumentStateEdit editorState _ baseEdit_ <- st ^. gsDocumentState
+    DocumentAction (DocumentSave (FormComplete (info, estate)))
+      | DocumentStateEdit _ baseEdit_ <- st ^. gsDocumentState
       -> do
         let baseEdit :: Common.ID Common.Edit
-            (baseEdit:_) = catMaybes [baseEdit_, st ^? to gsEditID' . _Just . _Just]
+            (baseEdit:_) = catMaybes [baseEdit_, st ^? gsEditID . _Just . _Just]
 
             cedit = Common.CreateEdit
                   { Common._createEditDesc        = info ^. editInfoDesc
-                  , Common._createEditVDocVersion = getCurrentRawContent editorState
+                  , Common._createEditVDocVersion = getCurrentRawContent estate
                   , Common._createEditKind        = info ^. editInfoKind
                   }
 
@@ -356,7 +336,7 @@ emitBackendCallsFor act st = case act of
           l <- syncCallback1 ContinueAsync $ \e -> do
                 res <- js_targetResult e
                 dispatchAndExec . MainMenuAction . MainMenuActionOpen
-                  $ MainMenuProfile (uid, FormBegin $ newLocalStateRef (Just (Right . Image $ cs res), desc) lst)
+                  $ MainMenuProfile (uid, FormBegin $ newLocalStateRef (Just (Right . ImageInline $ cs res), desc) lst)
           js_addOnload fr $ jsval l
           js_doUpload fr f
         _ -> pure ()

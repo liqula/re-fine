@@ -1,8 +1,11 @@
 {-# LANGUAGE CPP #-}
 #include "language_frontend.hs"
 
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 module Refine.Frontend.Header.EditToolbar where
 #include "import_frontend.hs"
+
 import Control.Arrow ((+++))
 
 import           Refine.Common.Types
@@ -12,6 +15,7 @@ import           Refine.Frontend.Access
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Document.Store
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Login.Types
@@ -20,13 +24,15 @@ import           Refine.Frontend.Test.Debug
 import           Refine.Frontend.Types
 
 
-mkEditToolbarProps :: HasCallStack => Maybe Edit -> EditorState -> EditToolbarProps
-mkEditToolbarProps medit = EditToolbarProps isInitial . mkLinkEditorProps
+mkEditToolbarProps :: HasCallStack => Maybe Edit -> EditToolbarProps
+mkEditToolbarProps medit = EditToolbarProps isInitial  -- (mkLinkEditorProps undefined) -- FIXME: #452
   where
     isInitial = if maybe False null $ medit ^? _Just . editSource . unEditSource
       then EditIsInitial
       else EditIsNotInitial
 
+{-
+-- FIXME: #452
 mkLinkEditorProps :: HasCallStack => EditorState -> LinkEditorProps
 mkLinkEditorProps es
     | rangeIsEmpty rc sel = LinkButtonDisabled
@@ -40,14 +46,15 @@ mkLinkEditorProps es
       where
         isLink (Just (EntityLink _)) = True
         isLink _ = False
+-}
 
-getDocumentState :: AccessState -> GlobalState -> DocumentState
-getDocumentState as gs@(gsEditID' -> Just baseid)
+getDocumentStateProps :: AccessState -> GlobalState -> DocumentStateProps
+getDocumentStateProps as gs@(view gsEditID -> Just baseid)
   = mapDocumentState
       (const . fromMaybe False
              $ (==) <$> (as ^? accLoginState . lsCurrentUser . loggedInUser . to UserID)
                     <*> ((^. editMetaID . miMeta . metaCreatedBy) <$> cacheLookup gs eid))
-      (const $ gsRawContent gs)
+      (const $ gs ^. gsRawContent)
       (fromMaybe (error "edit is not in cache") . cacheLookup gs)
       (\(did, ed) -> discussionProps
                             (fromMaybe (Left did) $ do
@@ -55,7 +62,7 @@ getDocumentState as gs@(gsEditID' -> Just baseid)
                                 e <- cacheLookup gs =<< baseid
                                 r <- Map.lookup did $ e ^. editDiscussions'
                                 pure $ Right (r, d))
-                            (gsRawContent gs)
+                            (gs ^. gsRawContent)
                             (StatementPropDetails
                                ed
                                (as ^? accLoginState . lsCurrentUser . loggedInUser)
@@ -67,29 +74,36 @@ getDocumentState as gs@(gsEditID' -> Just baseid)
   where
     dst = gs ^. gsDocumentState
     eid = case dst of
-      DocumentStateDiff _ _ _ i _ _ -> i
-      _ -> error "impossible - getDocumentState"
-getDocumentState _ _
-  = error "getDocumentState: no gsVDoc"
+      DocumentStateDiff _ _ i _ _ -> i
+      _ -> error "getDocumentStateProps: impossible"
+getDocumentStateProps _ _
+  = error "getDocumentStateProps: gsEditID came up empty!"
 
-wipeDocumentState :: AccessState -> GlobalState -> WipedDocumentState
-wipeDocumentState as gs = case getDocumentState as gs of
-  DocumentStateView{}                  -> WipedDocumentStateView
-  DocumentStateDiff i _ _ edit collapsed editable -> WipedDocumentStateDiff i edit collapsed editable
-  DocumentStateEdit es _ meid          -> WipedDocumentStateEdit $ mkEditToolbarProps (cacheLookup gs =<< meid) es
-  DocumentStateDiscussion dp           -> WipedDocumentStateDiscussion $ DiscussionToolbarProps
-                                            (either (const Nothing) (Just . (^. discussionID)) disc)
-                                            (dp ^. discPropsFlatView)
-                                            (either (error "impossible @wipeDocumentState") (^. discussionIsNote) disc)
-                                            (votesToCount $ either (error "impossible @wipeDocumentState") (^. discussionVotes) disc)
-    where disc = id +++ snd $ dp ^. discPropsDiscussion
+wipeDocumentState :: AccessState -> GlobalState -> GlobalState_ WipedDocumentState
+wipeDocumentState as gs = const getWipedDocumentState <$> gs
+  where
+    getWipedDocumentState :: WipedDocumentState
+    getWipedDocumentState = case getDocumentStateProps as gs of
+      DocumentStateView{}                  -> WipedDocumentStateView
+      DocumentStateDiff i _ edit collapsed editable -> WipedDocumentStateDiff i edit collapsed editable
+      DocumentStateEdit _ meid             -> WipedDocumentStateEdit $ mkEditToolbarProps (cacheLookup gs =<< meid)
+      DocumentStateDiscussion dp           -> WipedDocumentStateDiscussion $ DiscussionToolbarProps
+                                                (either (const Nothing) (Just . (^. discussionID)) disc)
+                                                (dp ^. discPropsFlatView)
+                                                (either (error "wipeDocumentState: impossible") (^. discussionIsNote) disc)
+                                                (votesToCount $ either (error "wipeDocumentState: impossible") (^. discussionVotes) disc)
+        where disc = id +++ snd $ dp ^. discPropsDiscussion
 
-editToolbar_ :: HasCallStack => EditToolbarProps -> ReactElementM eventHandler ()
-editToolbar_ = view_' editToolbar "editToolbar_"
+-- (this is not a good place for this instance, but it avoids import cycles, and the class is
+-- deprecated anyway.  when refactoring Icon.hs, we need to think about how to do this better, see
+-- #439.)
+instance IconButtonPropsOnClick [EditorStoreAction] where
+  runIconButtonPropsOnClick _ _ = mconcat . fmap dispatch
+  defaultOnClick = assert False $ error "defaultOnClick is deprecated."
 
 editToolbar :: View' '[EditToolbarProps]
 editToolbar = mkView' "editToolbar" $ \ep -> do
-  let editButton icon = defaultIconButtonProps @[GlobalAction]
+  let editButton icon = defaultIconButtonProps @[EditorStoreAction]
         & iconButtonPropsIconProps    .~ IconProps "c-vdoc-toolbar" True ("icon-" <> icon, "dark") XXLarge
         & iconButtonPropsElementName  .~ "btn-index"
 
@@ -106,42 +120,43 @@ editToolbar = mkView' "editToolbar" $ \ep -> do
   iconButton_ $ editButton "Edit_toolbar_h1"
     & iconButtonPropsListKey      .~ "h1"
     & iconButtonPropsLabel        .~ "header 1"
-    & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType Header1]
+    & iconButtonPropsOnClick      .~ [DocumentToggleBlockType Header1]
 
   iconButton_ $ editButton "Edit_toolbar_h2"
     & iconButtonPropsListKey      .~ "h2"
     & iconButtonPropsLabel        .~ "header 2"
-    & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType Header2]
+    & iconButtonPropsOnClick      .~ [DocumentToggleBlockType Header2]
 
   iconButton_ $ editButton "Edit_toolbar_h3"
     & iconButtonPropsListKey      .~ "h3"
     & iconButtonPropsLabel        .~ "header 3"
-    & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType Header3]
+    & iconButtonPropsOnClick      .~ [DocumentToggleBlockType Header3]
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
   iconButton_ $ editButton "Edit_toolbar_bold"
     & iconButtonPropsListKey      .~ "bold"
     & iconButtonPropsLabel        .~ "bold"
-    & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleStyle Bold]
+    & iconButtonPropsOnClick      .~ [DocumentToggleStyle Bold]
 
   iconButton_ $ editButton "Edit_toolbar_italic"
     & iconButtonPropsListKey      .~ "italic"
     & iconButtonPropsLabel        .~ "italic"
-    & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleStyle Italic]
+    & iconButtonPropsOnClick      .~ [DocumentToggleStyle Italic]
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
   iconButton_ $ editButton "Edit_toolbar_bullets"
     & iconButtonPropsListKey      .~ "bullets"
     & iconButtonPropsLabel        .~ "bullets"
-    & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType BulletPoint]
+    & iconButtonPropsOnClick      .~ [DocumentToggleBlockType BulletPoint]
 
   iconButton_ $ editButton "Edit_toolbar_numbers"
     & iconButtonPropsListKey      .~ "numbers"
     & iconButtonPropsLabel        .~ "numbers"
-    & iconButtonPropsOnClick      .~ [DocumentAction $ DocumentToggleBlockType EnumPoint]
+    & iconButtonPropsOnClick      .~ [DocumentToggleBlockType EnumPoint]
 
+{- FIXME: #452
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
   let props :: IbuttonProps [GlobalAction]
@@ -158,29 +173,30 @@ editToolbar = mkView' "editToolbar" $ \ep -> do
 
       onclick = case ep ^. editToolbarPropsLinkEditor of
         LinkButtonDisabled -> []
-        LinkButtonDeletes  -> [DocumentAction DocumentRemoveLink]
+        LinkButtonDeletes  -> [DocumentRemoveLink]
         LinkButtonAdds l   -> [HeaderAction $ OpenEditToolbarLinkEditor l]
 
    in ibutton_ props
+-}
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
   iconButton_ $ editButton "Edit_toolbar_undo"
     & iconButtonPropsListKey      .~ "undo"
     & iconButtonPropsLabel        .~ "undo"
-    & iconButtonPropsOnClick      .~ [DocumentAction DocumentUndo]
+    & iconButtonPropsOnClick      .~ [DocumentUndo]
 
   iconButton_ $ editButton "Edit_toolbar_redo"
     & iconButtonPropsListKey      .~ "redo"
     & iconButtonPropsLabel        .~ "redo"
-    & iconButtonPropsOnClick      .~ [DocumentAction DocumentRedo]
+    & iconButtonPropsOnClick      .~ [DocumentRedo]
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  let props :: IbuttonProps [GlobalAction]
-      props = emptyIbuttonProps "Save" [DocumentAction . DocumentSave . FormBegin $ ep ^. editToolbarPropsInitial]
-        & ibListKey      .~ "save"
-        & ibLabel        .~ "save"
-        & ibEnabled      .~ True
-        & ibSize         .~ XXLarge
-   in ibutton_ props
+  iconButton_ $ editButton "Save"
+    & iconButtonPropsListKey      .~ "save"
+    & iconButtonPropsLabel        .~ "save"
+    & iconButtonPropsOnClick      .~ [DocumentRequestSave $ ep ^. editToolbarPropsInitial]
+
+editToolbar_ :: HasCallStack => EditToolbarProps -> ReactElementM eventHandler ()
+editToolbar_ = view_' editToolbar "editToolbar_"

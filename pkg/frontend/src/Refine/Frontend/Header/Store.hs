@@ -45,8 +45,9 @@ toolbarExtensionUpdate act st = case (st, act) of
     (CommentToolbarExtensionWithoutRange,  HeaderAction StartTextSpecificComment)      -> CommentToolbarExtensionWithRange
     (_,                                    HeaderAction StartTextSpecificComment)      -> bad1
 
-    (ToolbarExtensionClosed,               HeaderAction (OpenEditToolbarLinkEditor l)) -> EditToolbarLinkEditor l
-    (_,                                    HeaderAction (OpenEditToolbarLinkEditor _)) -> ToolbarExtensionClosed
+-- FIXME: #452
+--    (ToolbarExtensionClosed,               HeaderAction (OpenEditToolbarLinkEditor l)) -> EditToolbarLinkEditor l
+--    (_,                                    HeaderAction (OpenEditToolbarLinkEditor _)) -> ToolbarExtensionClosed
 
     (_,                                    HeaderAction CloseToolbarExtension)         -> ToolbarExtensionClosed
 

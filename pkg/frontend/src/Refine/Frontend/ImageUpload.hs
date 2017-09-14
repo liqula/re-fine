@@ -18,22 +18,22 @@ import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Types
 
 
--- TODO:
+-- TODO:img
 -- replace 'editable' boolean with access policy guard
 -- generalise away from user to arbitrary image
 -- generalise over action
 -- default image
 
 
-imageUpload_ :: Bool -> User -> LocalStateRef ProfileProps -> ProfileProps
-             -> ReactElementM_ (React.EventHandlerType ('React.StatefulEventHandlerCode ProfileProps)) ()
+imageUpload_ :: Bool -> User -> LocalStateRef ProfileLocalState -> ProfileLocalState
+             -> ReactElementM_ (React.EventHandlerType ('React.StatefulEventHandlerCode ProfileLocalState)) ()
 imageUpload_ editable user lst st = do
     elemText $ user ^. userName
 
     hr_ []
     case user ^. userAvatar of
       Nothing -> elemText "You didn't upload an avatar yet."
-      Just (Image source) ->
+      Just (ImageInline source) ->
         img_ [ "src" $= cs source
              , "style" @@= [ decl "maxWidth" (Px 200)
                            , decl "maxHeight" (Px 200)
@@ -50,7 +50,7 @@ imageUpload_ editable user lst st = do
              ]
 
       case fst st of
-        Just (Right (Image source)) -> do
+        Just (Right (ImageInline source)) -> do
           br_ []
           img_ [ "src" $= cs source
                , "style" @@= [ decl "maxWidth" (Px 200)
@@ -58,8 +58,10 @@ imageUpload_ editable user lst st = do
                              ]
                ] $ pure ()
           button_
-            [ onClick $ \_evt _ -> simpleHandler @_ $  -- TODO: what is the `@` about here?  type application?
-              \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $ MainMenuProfile (user ^. userID, FormComplete (fst st, Just $ user ^. userDescription))]
+            [ onClick $ \_evt _ -> simpleHandler $
+              \st' -> ( [action @GlobalState . MainMenuAction . MainMenuActionOpen $
+                          MainMenuProfile ( user ^. userID
+                                          , FormComplete (fst st, Just $ user ^. userDescription))]
                       , Just $ st' & _1 .~ Nothing)
             ] $ elemText "upload"
         _ -> pure ()

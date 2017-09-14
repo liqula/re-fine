@@ -47,6 +47,7 @@ import           Refine.Common.Types
 import           Refine.Frontend.Contribution.Bubble
 import           Refine.Frontend.Contribution.Dialog
 import           Refine.Frontend.Contribution.Types
+import           Refine.Frontend.Document.FFI (createEmpty)
 import           Refine.Frontend.Header.DiffToolbar
 import           Refine.Frontend.Header.DiscussionToolbar
 import           Refine.Frontend.Header.EditToolbar
@@ -408,7 +409,7 @@ viewsSources =
     -- , ("mainMenuCreateProcess_", mainMenuCreateProcess_ _, [])
 
     , ("toolbar/toolbar_", toolbar_ sampleVDoc, [])
-    , ("toolbar/editToolbar_", editToolbar_ $ EditToolbarProps EditIsNotInitial LinkButtonDisabled, [])
+    , ("toolbar/editToolbar_", editToolbar_ $ EditToolbarProps EditIsNotInitial, [])
     , ("toolbar/diffToolbar_", diffToolbar_ DiffToolbarProps
         { _diffToolbarPropsEditID = ID 0
         , _diffToolbarIndex       = EditIndex 1 3
@@ -456,7 +457,7 @@ viewsSources =
         { _acpRange         = Nothing
         , _acpLocalState    = let info = EditInfo "this is what i did" (Just Grammar)
                                            (newLocalStateRef (EditInputState info (Just Grammar)) '3')
-                              in info
+                              in (info, createEmpty)
         , _acpWindowWidth   = 1600
         }, [])
     ]

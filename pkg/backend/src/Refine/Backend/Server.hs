@@ -67,7 +67,7 @@ refineApi =
   :<|> App.updateVDoc
   :<|> App.addEdit
   :<|> App.getEdit
-  :<|> App.mergeEdit
+  :<|> App.mergeEditAndRebaseAllSiblings
   :<|> App.updateEdit
   :<|> App.addDiscussion
   :<|> App.getDiscussion

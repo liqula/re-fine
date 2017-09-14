@@ -10,14 +10,15 @@ import           Language.Css.Syntax
 
 import           React.Flux.Missing
 import           Refine.Common.Types
-import           Refine.Frontend.Test.Console (gracefulError)
-import           Refine.Frontend.ThirdPartyViews (skylight_)
 import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
+import           Refine.Frontend.Document.FFI.Types
 import           Refine.Frontend.Icon
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store()
 import           Refine.Frontend.Store.Types
+import           Refine.Frontend.Test.Console (gracefulError)
+import           Refine.Frontend.ThirdPartyViews (skylight_)
 import           Refine.Frontend.TKey
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
@@ -315,14 +316,14 @@ commentInput_ lst = view_ (commentInput lst) "commentInput_"
 -- the props value via a global action and keep going with the local
 -- state.
 
-addEdit :: HasCallStack => View '[AddContributionProps (EditInfo (Maybe EditKind))]
+addEdit :: HasCallStack => View '[AddContributionProps (EditInfo (Maybe EditKind), EditorState)]
 addEdit = mkView "AddEdit" $ \props -> addContributionDialogFrame
   "add an edit"
   (props ^. acpRange)
   (props ^. acpWindowWidth)
   (editInput_ (props ^. acpLocalState))
 
-addEdit_ :: HasCallStack => AddContributionProps (EditInfo (Maybe EditKind)) -> ReactElementM eventHandler ()
+addEdit_ :: HasCallStack => AddContributionProps (EditInfo (Maybe EditKind), EditorState) -> ReactElementM eventHandler ()
 addEdit_ = view_ addEdit "addEdit_"
 
 
@@ -332,8 +333,8 @@ addEdit_ = view_ addEdit "addEdit_"
 -- FUTUREWORK: kind change is a nice example of local signals between two components.  how is this
 -- handled in react?  should we have a second global store here that is just shared between
 -- 'editInput' and and 'editKindForm'?
-editInput :: HasCallStack => EditInfo (Maybe EditKind) -> View '[]
-editInput einfo = mkPersistentStatefulView "EditInput" (einfo ^. editInfoLocalStateRef) Nothing $
+editInput :: HasCallStack => (EditInfo (Maybe EditKind), EditorState) -> View '[]
+editInput (einfo, estate) = mkPersistentStatefulView "EditInput" (einfo ^. editInfoLocalStateRef) Nothing $
   \st@(EditInputState (EditInfo desc mkind rst) _) -> do
     div_ $ do
       elemString "Step 1: "
@@ -351,7 +352,7 @@ editInput einfo = mkPersistentStatefulView "EditInput" (einfo ^. editInfoLocalSt
             & iconButtonPropsDisabled     .~ True
           else props
             & iconButtonPropsDisabled     .~ False
-            & iconButtonPropsOnClick      .~ [ DocumentAction . DocumentSave . FormComplete $ EditInfo desc (fromJust mkind) rst
+            & iconButtonPropsOnClick      .~ [ DocumentAction . DocumentSave $ FormComplete (EditInfo desc (fromJust mkind) rst, estate)
                                              , DocumentAction UpdateDocumentStateView
                                              , ContributionAction ClearRange
                                              ]
@@ -367,7 +368,7 @@ editInput einfo = mkPersistentStatefulView "EditInput" (einfo ^. editInfoLocalSt
             & iconButtonPropsAlignRight   .~ True
             & enableOrDisable
 
-editInput_ :: HasCallStack => EditInfo (Maybe EditKind) -> ReactElementM eventHandler ()
+editInput_ :: HasCallStack => (EditInfo (Maybe EditKind), EditorState) -> ReactElementM eventHandler ()
 editInput_ st = view_ (editInput st) "editInput_"
 
 

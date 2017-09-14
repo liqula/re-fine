@@ -85,7 +85,7 @@ invalidRegistrationForm form =
      , form ^. registrationFormAgree . to not
      ]
 
-loginOrLogout_ :: HasCallStack => CurrentUser_ (Lookup User) -> FormError -> ReactElementM eventHandler ()
+loginOrLogout_ :: HasCallStack => CurrentUser (Lookup User) -> FormError -> ReactElementM eventHandler ()
 loginOrLogout_ = \case
   UserLoggedOut  -> login_
   UserLoggedIn _ -> const logout_

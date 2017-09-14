@@ -84,7 +84,7 @@ wholeScreen = React.defineLifecycleView "WholeScreen" () React.lifecycleConfig
     didMountOrUpdate _getPropsAndState = flushCacheMisses
 
 mainScreen :: HasCallStack => View' '[(GlobalState, AccessState)]
-mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
+mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
   Nothing -> error "mainScreen: no gsVDoc"
   Just Nothing -> "Loading..."
   Just (Just vdoc) -> do
@@ -94,8 +94,8 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
     div_ ["key" $= "maindiv" {-FIXME: seems not to work as expected, we still have a warning-}] $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
       do
-          let mhp = mkMainHeaderProps as rs
-          mainHeader_ mhp
+          let rswiped = wipeDocumentState as rs
+          mainHeader_ (mkMainHeaderProps as rswiped)
 
           -- components that are visible only sometimes:
           case rs ^. RS.gsContributionState . RS.csActiveDialog of
@@ -104,16 +104,16 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
                               (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
                               lst
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
-            Just ActiveDialogEdit -> do
+            Just (ActiveDialogEdit estate) -> do
+              let Just (localst :: EditInfo (Maybe EditKind)) = rs ^? RS.gsDocumentState . documentStateEditInfo
               addEdit_ $ AddContributionProps
                               (rs ^. RS.gsContributionState . RS.csCurrentSelectionWithPx)
-                              (fromMaybe (error "rs ^? RS.gsDocumentState . documentStateEditInfo") $
-                               rs ^? RS.gsDocumentState . documentStateEditInfo)
+                              (localst, estate)
                               (rs ^. RS.gsScreenState . SC.ssWindowWidth)
             Nothing -> mempty
 
           main_ ["role" $= "main", "key" $= "main"] $ do
-              mainHeaderRender2 mhp
+              mainHeaderToolbar_ (mkMainHeaderToolbarProps rswiped)
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       let asideProps = AsideProps
@@ -122,15 +122,17 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
                                      (rs ^. gsContributionState . csCurrentSelectionWithPx)
                                      (rs ^. gsContributionState . csHighlightedMarkAndBubble)
                                      (rs ^. gsScreenState)
-                                     (fltr (\i -> ContribIDDiscussion <$> [True, False] <*> pure i) (fmap snd $ vdoc ^. compositeVDocApplicableDiscussions))
-                                     (fltr ((:[]) . ContribIDEdit) . fltrThisEdit $ vdoc ^. compositeVDocApplicableEdits)
+                                     (fltr (\i -> ContribIDDiscussion <$> [True, False] <*> pure i)
+                                           (fmap snd $ vdoc ^. compositeVDocApplicableDiscussions))
+                                     (fltr ((:[]) . ContribIDEdit)
+                                           (fltrThisEdit $ vdoc ^. compositeVDocApplicableEdits))
                                      (case rs ^. gsDocumentState of
                                         DocumentStateDiff{} -> BubblePositioningEvenlySpaced
                                         _ -> rs ^. gsContributionState . csBubblePositioning)
                                      (rs ^. gsContributionState . csQuickCreateShowState)
 
                           fltrThisEdit = case rs ^. gsDocumentState of
-                            DocumentStateDiff _ _ _ eid _ _ -> Map.filter $ (/= eid) . (^. editID)
+                            DocumentStateDiff _ _ eid _ _ -> Map.filter $ (/= eid) . (^. editID)
                             DocumentStateEdit{} -> const mempty
                             _ -> id
 
@@ -145,14 +147,14 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsVDoc of
                       document_ $ DocumentProps ((if rs ^. gsHeaderState . hsReadOnly
                                                   then mapDocumentState id deleteMarksFromRawContent id id
                                                   else id)
-                                                 $ getDocumentState as rs)
+                                                 $ getDocumentStateProps as rs)
                                                 (rs ^. RS.gsContributionState)
                       rightAside_ asideProps
 
           -- append an empty page to the botton.  (helps with legitimate attempts to scroll beyond
           -- the end of the document, e.g. when moving dialogs into the center of the screen before
           -- they have been rendered.)
-          div_ ["style" @@= [decl "margin-bottom" (Px 800)]] $ pure ()
+          div_ ["style" @@= [decl "marginBottom" (Px 800)]] $ pure ()
 
 mainScreen_ :: HasCallStack => (GlobalState, AccessState) -> ReactElementM eventHandler ()
 mainScreen_ = view_' mainScreen "mainScreen_"

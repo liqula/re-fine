@@ -8,7 +8,7 @@ import           Refine.Common.Types
 import qualified Web.Users.Types as Users
 
 
-type UserDetails = (Maybe Image, ST)  -- ^ the part which is stored in our database
+type UserDetails = (Maybe ImageInline, ST)  -- ^ the part which is stored in our database
 
 newtype UserSession = UserSession { _unUserSession :: Users.SessionId }
   deriving (Eq, Show)

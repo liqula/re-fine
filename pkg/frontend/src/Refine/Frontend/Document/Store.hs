@@ -1,8 +1,11 @@
 {-# LANGUAGE CPP #-}
 #include "language_frontend.hs"
 
+{-# OPTIONS_GHC -Wno-orphans #-}
+
 module Refine.Frontend.Document.Store
-  ( documentStateUpdate
+  ( EditorStore(..), emptyEditorStore, EditorStoreAction(..)
+  , documentStateUpdate
   , setAllVerticalSpanBounds
   ) where
 #include "import_frontend.hs"
@@ -17,9 +20,47 @@ import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.Types
 import           Refine.Frontend.Screen.Calculations
 import           Refine.Frontend.Store.Types
+import {-# SOURCE #-} Refine.Frontend.Store ()
+import           Refine.Frontend.Test.Console
 import           Refine.Frontend.Types
 import           Refine.Frontend.Util
 
+
+instance Dispatchable EditorStoreAction where
+  dispatch a = [action @EditorStore a]
+
+-- | Private global store of the 'draftEditor_' component.
+instance StoreData EditorStore where
+  type StoreAction EditorStore = EditorStoreAction
+  transform = transformEditorStore
+
+instance SometimesLoggable EditorStoreAction where
+  shouldbeLogged _ = True
+
+transformEditorStore :: EditorStoreAction -> EditorStore -> IO EditorStore
+transformEditorStore act st = do
+  consoleLogGlobalAction act
+  st' <- transformEditorStoreHandler act st
+  consoleLogGlobalStateWith (\(EditorStore (EditorState (NoJSONRep j))) -> j) (st /= st') st'
+  pure st'
+
+transformEditorStoreHandler :: EditorStoreAction -> EditorStore -> IO EditorStore
+transformEditorStoreHandler = f where
+  -- generic update.
+  f (UpdateEditorStore es') _es = pure $ EditorStore es'
+
+  -- toolbar buttons.
+  f (DocumentToggleBlockType bt) (EditorStore es) = pure . EditorStore $ es & documentToggleBlockType bt
+  f (DocumentToggleStyle s)      (EditorStore es) = pure . EditorStore $ es & documentToggleStyle s
+  f DocumentRemoveLink           (EditorStore es) = pure . EditorStore $ es & documentRemoveLink
+  f (DocumentCreateLink link)    (EditorStore es) = pure . EditorStore $ es & documentAddLink (cs link)
+  f DocumentUndo                 (EditorStore es) = pure . EditorStore $ es & documentUndo
+  f DocumentRedo                 (EditorStore es) = pure . EditorStore $ es & documentRedo
+
+  -- open save dialog in 'GlobalState' (needs update with current 'EditorStore' content).
+  f (DocumentRequestSave form) (EditorStore es) = do
+    (dispatchAndExec . DocumentAction) `mapM_` [DocumentSave (FormBegin (form, es))]
+    pure $ EditorStore es
 
 -- | We pass two global states into this function, the one before the
 -- pure update and the one after.  Using the one after is (was?)
@@ -27,34 +68,34 @@ import           Refine.Frontend.Util
 -- trigger thunk evaluation loops.  use old state whenever it is
 -- enough.
 documentStateUpdate :: (HasCallStack)
-                    => GlobalAction -> GlobalState -> GlobalDocumentState
-                    -> CacheLookupT GlobalDocumentState
+                    => GlobalAction -> GlobalState -> DocumentState
+                    -> CacheLookupT DocumentState
 documentStateUpdate (LoadVDoc _) oldgs st
   = do
     cvdoc <- do
-      case oldgs ^. gsVDoc of
+      case oldgs ^. gsCompositeVDoc of
         Nothing -> error "impossible - documentStateUdpate"
         Just Nothing -> throwError ()
         Just (Just x) -> pure x
     let edit = cvdoc ^. compositeVDocThisEdit
         needInitialContent = null $ edit ^. editSource . unEditSource
-        estate = edit ^. editVDocVersion . to createWithRawContent
     pure $ if needInitialContent
-        then enterEditModeWithEditorState oldgs estate (Just $ edit ^. editID)
+        then enterEditMode oldgs (edit ^. editID)
         else enterViewMode cvdoc oldgs st
 
-documentStateUpdate (HeaderAction StartEdit) oldgs (DocumentStateView estate _)
-  = pure $ enterEditModeWithEditorState oldgs estate Nothing
+-- in view mode, start edit
+documentStateUpdate (HeaderAction StartEdit) oldgs@(view gsEditID -> Just (Just eid)) (DocumentStateView ())
+  = pure $ enterEditMode oldgs eid
 
-documentStateUpdate (HeaderAction StartEdit) oldgs (DocumentStateDiff _ _ _ edit _ _)
-  = pure $ enterEditModeWithEdit oldgs edit
+-- in diff mode, start edit
+documentStateUpdate (HeaderAction StartEdit) oldgs (DocumentStateDiff _ _ eid _ _)
+  = pure $ enterEditMode oldgs eid
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit eid)))
                     oldgs
-                    (DocumentStateView e r)
+                    (DocumentStateView r)
   = pure $ DocumentStateDiff
-      (mkEditIndex (fromMaybe (error "impossible @documentStateUpdate") . join $ gsEdit oldgs) eid)
-      e
+      (mkEditIndex (fromMaybe (error "impossible @documentStateUpdate") . join $ oldgs ^. gsEdit) eid)
       r
       eid
       True
@@ -62,12 +103,12 @@ documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit e
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDEdit _)))
                     _oldgs
-                    (DocumentStateDiff _ e r _ _ _)
-  = pure $ DocumentStateView e r
+                    (DocumentStateDiff _ r _ _ _)
+  = pure $ DocumentStateView r
 
 documentStateUpdate (ContributionAction (ShowContributionDialog (ContribIDDiscussion _ did)))
                     _oldgs
-                    (DocumentStateView _ _)
+                    (DocumentStateView _)
   = pure $ DocumentStateDiscussion (did, Nothing)
 
 documentStateUpdate (DocumentAction (ReplyStatement upd sid (FormBegin lst)))
@@ -87,48 +128,29 @@ documentStateUpdate (AddStatement _upd _sid _discussion)
 
 documentStateUpdate (ContributionAction HideContributionDialog)
                     _oldgs
-                    (DocumentStateDiff _ e r _ _ _)
-  = pure $ DocumentStateView e r
+                    (DocumentStateDiff _ r _ _ _)
+  = pure $ DocumentStateView r
 
-documentStateUpdate (DocumentAction (UpdateEditorState estate)) _ (DocumentStateEdit _ einfo base)
-  = pure $ DocumentStateEdit estate einfo base
-
-documentStateUpdate (DocumentAction UpdateDocumentStateView) gs@(view gsEditID -> Just{}) _state
-  = pure . mkDocumentStateView $ gsRawContent gs
+documentStateUpdate (DocumentAction UpdateDocumentStateView) _ _
+  = pure $ DocumentStateView ()
 
 documentStateUpdate (DocumentAction (DocumentUpdateEditInfo info)) _ st
   = pure $ st & documentStateEditInfo .~ info
 
-documentStateUpdate (DocumentAction (DocumentToggleBlockType bt)) _ st
-  = pure $ st & documentStateVal %~ documentToggleBlockType bt
-
-documentStateUpdate (DocumentAction (DocumentToggleStyle s)) _ st
-  = pure $ st & documentStateVal %~ documentToggleStyle s
-
-documentStateUpdate (DocumentAction DocumentRemoveLink) _ st
-  = pure $ st & documentStateVal %~ documentRemoveLink
-
-documentStateUpdate (DocumentAction (DocumentCreateLink link)) _ st
-  = pure $ st & documentStateVal %~ documentAddLink (cs link)
-
-documentStateUpdate (DocumentAction DocumentUndo) _ st
-  = pure $ st & documentStateVal %~ documentUndo
-
-documentStateUpdate (DocumentAction DocumentRedo) _ st
-  = pure $ st & documentStateVal %~ documentRedo
-
-documentStateUpdate (ContributionAction (SetRange range)) gs@(view gsEditID -> Just{}) _
+{- FIXME: #451
+documentStateUpdate (ContributionAction (SetRange range)) gs@(view gsVDocID -> Just{}) _
   = pure
   . mkDocumentStateView
   . addMarksToRawContent [(MarkCurrentSelection, range ^. sstSelectionState . selectionRange)]
   . deleteMarksFromRawContentIf (== MarkCurrentSelection)
   $ gsRawContent gs
 
-documentStateUpdate (ContributionAction ClearRange) gs@(view gsEditID -> Just{}) _
+documentStateUpdate (ContributionAction ClearRange) gs@(view gsVDocID -> Just{}) _
   = pure
   . mkDocumentStateView
   . deleteMarksFromRawContentIf (== MarkCurrentSelection)
   $ gsRawContent gs
+-}
 
 documentStateUpdate (DocumentAction ToggleCollapseDiff) _ st | has _DocumentStateDiff st
   = pure $ st & documentStateDiffCollapsed %~ not
@@ -136,49 +158,31 @@ documentStateUpdate (DocumentAction ToggleCollapseDiff) _ st | has _DocumentStat
 documentStateUpdate (HeaderAction ToggleIndexToolbarExtension) _ st | has _DocumentStateDiff st
   = pure $ st & documentStateDiffCollapsed .~ False
 
-documentStateUpdate CacheAction{} (view gsVDoc -> Just (Just cvdoc)) st | has _DocumentStateView st || has _DocumentStateDiff st
-  = pure $ st & documentStateVal .~ createWithContent (convertFromRaw $ rawContentFromCompositeVDoc cvdoc)
-
 documentStateUpdate _ _ st
   = pure st
 
 
-enterViewMode :: CompositeVDoc -> GlobalState -> GlobalDocumentState -> GlobalDocumentState
-enterViewMode cvdoc oldgs = refreshDocumentStateView ed eidChanged rc
+enterViewMode :: CompositeVDoc -> GlobalState -> DocumentState -> DocumentState
+enterViewMode cvdoc oldgs = refreshDocumentStateView ed eidChanged
   where
-    ed = fromMaybe (error "impossible @enterViewMode") . join $ gsEdit oldgs
+    ed = fromMaybe (error "impossible @enterViewMode") . join $ oldgs ^. gsEdit
     eidChanged = Just newID /= mOldID
       where
         newID  = cvdoc ^. compositeVDocThisEditID
-        mOldID = oldgs ^? to gsEditID' . _Just . _Just
-    rc = rawContentFromCompositeVDoc cvdoc
+        mOldID = oldgs ^? gsEditID . _Just . _Just
 
--- | i think this is for when an edit is already under way, and we want to refresh the edit mode,
--- like after opening and closing the save dialog?
-enterEditModeWithEdit :: GlobalState -> ID Edit -> GlobalDocumentState
-enterEditModeWithEdit oldgs eid = DocumentStateEdit
-      (createWithRawContent $ ed ^. editVDocVersion)
-      einfo
-      (Just eid)
-  where
-    Just ed = cacheLookup oldgs eid
-
-    einfo = EditInfo
-             (ed ^. editDesc)
-             (Just $ ed ^. editKind)
-             $ newLocalStateRef (EditInputState einfo Nothing) oldgs
-
-enterEditModeWithEditorState :: GlobalState -> EditorState -> Maybe (ID Edit) -> GlobalDocumentState
-enterEditModeWithEditorState oldgs estate = DocumentStateEdit
-      (maybe estate (forceSelection estate . (`toSelectionState` True)) $ oldgs ^. gsCurrentSelection)
-      einfo
-  where
-    einfo = EditInfo "" Nothing $ newLocalStateRef (EditInputState einfo Nothing) oldgs
-
+enterEditMode :: GlobalState -> ID Edit -> DocumentState
+enterEditMode oldgs eid = case cacheLookup oldgs eid of
+  Just ed
+    -> let einfo = EditInfo (ed ^. editDesc) (Just $ ed ^. editKind) $
+                     newLocalStateRef (EditInputState einfo Nothing) oldgs
+       in DocumentStateEdit einfo (Just eid)
+  Nothing
+    -> error $ "enterEditMode: " <> show eid
 
 -- | construct a 'SetAllVerticalSpanBounds' action.
-setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => DocumentState_ a b c d -> m (Maybe ContributionAction)
-setAllVerticalSpanBounds ((^? documentStateVal . to getCurrentContent . to convertToRaw) -> Just rawContent) = liftIO $ do
+setAllVerticalSpanBounds :: (HasCallStack, MonadIO m) => RawContent -> m ContributionAction
+setAllVerticalSpanBounds rawContent = liftIO $ do
     let marks :: Map MarkID (Ranges LeafSelector)
         marks = getLeafSelectors rawContent
 
@@ -204,8 +208,7 @@ setAllVerticalSpanBounds ((^? documentStateVal . to getCurrentContent . to conve
                     }
               pure (cid, verticalSpanBounds)
 
-    Just . SetAllVerticalSpanBounds . concat <$> (getPos `mapM` Map.toList marks)
-setAllVerticalSpanBounds _ = pure Nothing
+    SetAllVerticalSpanBounds . concat <$> (getPos `mapM` Map.toList marks)
 
 assertLeafSelector :: HasCallStack => LeafSelector -> IO ()
 assertLeafSelector sel = void (getLeafSelectorBound LeafSelectorTop sel) `catch` \(JSException _ msg) -> do

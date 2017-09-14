@@ -5,8 +5,8 @@ module Refine.Frontend.Header.Types where
 #include "import_frontend.hs"
 
 import Refine.Common.Types
-import Refine.Frontend.Types
 import Refine.Frontend.Login.Types
+import Refine.Frontend.Types
 
 
 data HeaderAction =
@@ -18,8 +18,8 @@ data HeaderAction =
   | ToggleReadOnly
   | ScrollToPageTop
   | ScrollToBlockKey BlockKey
-  -- ScrollToDocumentTop
-  | OpenEditToolbarLinkEditor ST
+-- FIXME: #452
+--  | OpenEditToolbarLinkEditor ST
   | ToggleDiscussionFlatView
   deriving (Show, Eq, Generic)
 
@@ -27,7 +27,8 @@ data ToolbarExtensionStatus =
     ToolbarExtensionClosed
   | CommentToolbarExtensionWithoutRange
   | CommentToolbarExtensionWithRange
-  | EditToolbarLinkEditor ST
+-- FIXME: #452
+--  | EditToolbarLinkEditor ST
   | IndexToolbarExtension
   deriving (Show, Eq, Generic)
 
@@ -45,9 +46,30 @@ newtype AddLinkFormState = AddLinkFormState
   } deriving (Show, Eq, Generic)
 
 
+type MainHeaderProps = (Title, Abstract, TopMenuBarProps)
+
 newtype TopMenuBarProps = TopMenuBarProps
-  { _currentUser :: CurrentUser_ (Lookup User)
+  { _currentUser :: CurrentUser (Lookup User)
   } deriving (Eq, Generic)
+
+data MainHeaderToolbarProps = MainHeaderToolbarProps
+  { _mainHeaderToolbarPropsDocumentState     :: WipedDocumentState
+  , _mainHeaderToolbarPropsVDoc              :: VDoc
+  , _mainHeaderToolbarPropsIndexToolbarProps :: IndexToolbarProps
+  , _mainHeaderToolbarPropsExtStatus         :: ToolbarExtensionStatus
+  } deriving (Eq, Generic)
+
+data WipedDocumentState =
+    WipedDocumentStateView
+  | WipedDocumentStateDiff
+      { _wipedDocumentStateDiffIndex     :: EditIndex
+      , _wipedDocumentStateDiff          :: Edit
+      , _wipedDocumentStateDiffCollapsed :: Bool
+      , _wipedDocumentStateDiffEditable  :: Bool
+      }
+  | WipedDocumentStateEdit EditToolbarProps
+  | WipedDocumentStateDiscussion DiscussionToolbarProps
+  deriving (Eq, Generic)
 
 
 type ToolbarProps = VDoc
@@ -75,17 +97,21 @@ data DiffToolbarProps = DiffToolbarProps
 data EditIsInitial = EditIsInitial | EditIsNotInitial
   deriving (Eq, Show, Generic)
 
-data EditToolbarProps = EditToolbarProps
+newtype EditToolbarProps = EditToolbarProps
   { _editToolbarPropsInitial    :: EditIsInitial
-  , _editToolbarPropsLinkEditor :: LinkEditorProps
+-- FIXME: #452
+--  , _editToolbarPropsLinkEditor :: LinkEditorProps
   }
   deriving (Eq, Show, Generic)
 
+{-
+-- FIXME: #452
 data LinkEditorProps
     = LinkButtonDisabled
     | LinkButtonDeletes
     | LinkButtonAdds ST
   deriving (Eq, Show, Generic)
+-}
 
 
 data EditIndex = EditIndex
@@ -110,5 +136,6 @@ data DiscussionToolbarProps = DiscussionToolbarProps
 
 makeRefineTypes [ ''HeaderAction, ''ToolbarExtensionStatus, ''HeaderState, ''AddLinkFormState
                 , ''DiffToolbarProps, ''TopMenuBarProps, ''EditIndex, ''IndexItem
-                , ''DiscussionToolbarProps, ''EditToolbarProps, ''EditIsInitial, ''LinkEditorProps
+                , ''DiscussionToolbarProps, ''EditToolbarProps, ''EditIsInitial
+                , ''MainHeaderToolbarProps, ''WipedDocumentState
                 ]

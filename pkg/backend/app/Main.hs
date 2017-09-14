@@ -19,7 +19,7 @@ help :: IO ()
 help = do
   progname <- getProgName
   putStrLn $ unlines
-    [ "Usage: " <> progname <> " [--init <FILE> | --help] [cfg]"
+    [ "Usage: " <> progname <> " [--help | --help-init | --init <FILE>] [cfg]"
     , "  --help         Print this help"
     , "  --help-init    Print help on creating initial content in the database"
     , "  --init <FILE>  Create initial content in the database"
