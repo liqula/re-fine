@@ -79,17 +79,16 @@ getDocumentStateProps as gs@(gsEditID' -> Just baseid)
 getDocumentStateProps _ _
   = error "getDocumentStateProps: no gsVDoc"
 
--- | TODO:c rename to 'getWipedDocumentState'
-wipeDocumentState :: AccessState -> GlobalState -> WipedDocumentState
-wipeDocumentState as gs = case getDocumentStateProps as gs of
+getWipedDocumentState :: AccessState -> GlobalState -> WipedDocumentState
+getWipedDocumentState as gs = case getDocumentStateProps as gs of
   DocumentStateView{}                  -> WipedDocumentStateView
   DocumentStateDiff i _ edit collapsed editable -> WipedDocumentStateDiff i edit collapsed editable
   DocumentStateEdit _ meid             -> WipedDocumentStateEdit $ mkEditToolbarProps (cacheLookup gs =<< meid)
   DocumentStateDiscussion dp           -> WipedDocumentStateDiscussion $ DiscussionToolbarProps
                                             (either (const Nothing) (Just . (^. discussionID)) disc)
                                             (dp ^. discPropsFlatView)
-                                            (either (error "impossible @wipeDocumentState") (^. discussionIsNote) disc)
-                                            (votesToCount $ either (error "impossible @wipeDocumentState") (^. discussionVotes) disc)
+                                            (either (error "getWipedDocumentState: impossible") (^. discussionIsNote) disc)
+                                            (votesToCount $ either (error "wipeDocumentState: impossible") (^. discussionVotes) disc)
     where disc = id +++ snd $ dp ^. discPropsDiscussion
 
 -- (this is not a good place for this instance, but it avoids import cycles, and the class is

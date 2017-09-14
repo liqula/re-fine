@@ -17,7 +17,7 @@ import           Refine.Common.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DocumentHeader
 import           Refine.Frontend.Header.DiffToolbar (diffToolbar_)
-import           Refine.Frontend.Header.EditToolbar (editToolbar_, wipeDocumentState)
+import           Refine.Frontend.Header.EditToolbar (editToolbar_, getWipedDocumentState)
 import           Refine.Frontend.Header.DiscussionToolbar
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_, indexToolbarExtension_ )
@@ -151,7 +151,7 @@ headerDepth = \case
   _ -> Nothing
 
 mkMainHeaderProps :: AccessState -> GlobalState -> MainHeaderProps
-mkMainHeaderProps as gs = (fmap (const $ wipeDocumentState as gs) gs, as)
+mkMainHeaderProps as gs = (fmap (const $ getWipedDocumentState as gs) gs, as)
 
 mainHeader_ :: HasCallStack => MainHeaderProps -> ReactElementM eventHandler ()
 mainHeader_ props = React.viewWithSKey mainHeader "mainHeader" props mempty
