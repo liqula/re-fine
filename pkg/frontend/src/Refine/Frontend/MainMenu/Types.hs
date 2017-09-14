@@ -56,7 +56,7 @@ type MainMenuTabState = (MainMenuTab
       (LocalStateRef (CreateGroup_ [(User, Bool)]))
       (LocalStateRef CreateVDoc)
       (LocalStateRef UpdateVDoc)
-      (ID User, LocalStateRef ProfileProps)
+      (ID User, LocalStateRef ProfileLocalState)
       :: *)
 type MainMenuTabAction = (MainMenuTab
       ()
@@ -64,7 +64,7 @@ type MainMenuTabAction = (MainMenuTab
       (FormAction (CreateGroup_ [(User, Bool)]))
       (FormAction CreateVDoc)
       (FormAction UpdateVDoc)
-      (ID User, FormAction ProfileProps)
+      (ID User, FormAction ProfileLocalState)
       :: *)
 type MainMenuTabProps = (MainMenuTab
       GroupsProps
@@ -72,10 +72,10 @@ type MainMenuTabProps = (MainMenuTab
       (LocalStateRef (CreateGroup_ [(User, Bool)]), Map (ID User) User)
       (LocalStateRef CreateVDoc)
       (LocalStateRef UpdateVDoc)
-      (Lookup User, LocalStateRef ProfileProps)
+      (Lookup User, LocalStateRef ProfileLocalState)
       :: *)
 
-type ProfileProps = (ImageUpload{-avatar-}, Maybe ST{-user description update-})  -- TODO:c rename!  these are not props, but state.
+type ProfileLocalState = (ImageUpload{-avatar-}, Maybe ST{-user description update-})
 type ImageUpload = Maybe (Either (NoJSONRep File) ImageInline)
 
 newtype File = File JSVal deriving (FromJSVal)

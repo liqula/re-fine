@@ -523,7 +523,7 @@ mainMenuCreateProcess_ lst = view_ (mainMenuCreateProcess lst) "mainMenuCreatePr
 
 -}
 
-mainMenuProfile :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileProps -> View '[]
+mainMenuProfile :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileLocalState -> View '[]
 mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" lst Nothing $ \st -> case user of
   Left _uid -> elemText "Loading..."
   Right u -> do
@@ -558,7 +558,7 @@ mainMenuProfile editable user lst = mkPersistentStatefulView "MainMenuProfile" l
               \st' -> ([], Just $ st' & _2 .~ Nothing)
             ] $ elemText "cancel"
 
-mainMenuProfile_ :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileProps -> ReactElementM eventHandler ()
+mainMenuProfile_ :: HasCallStack => Bool -> Lookup User -> LocalStateRef ProfileLocalState -> ReactElementM eventHandler ()
 mainMenuProfile_ editable user lst = view_ (mainMenuProfile editable user lst) "mainMenuProfile_"
 
 mainMenuUpdateProcess :: HasCallStack => ID VDoc -> LocalStateRef UpdateVDoc -> View '[]
