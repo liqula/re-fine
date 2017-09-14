@@ -19,7 +19,7 @@ import           Refine.Common.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Header.DocumentHeader
 import           Refine.Frontend.Header.DiffToolbar (diffToolbar_)
-import           Refine.Frontend.Header.EditToolbar (editToolbar_, getWipedDocumentState)
+import           Refine.Frontend.Header.EditToolbar (editToolbar_, wipeDocumentState)
 import           Refine.Frontend.Header.DiscussionToolbar
 import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(..), EditToolbarExtensionProps(..),
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_, indexToolbarExtension_ )
@@ -138,20 +138,18 @@ headerDepth = \case
   Header3 -> Just 3
   _ -> Nothing
 
-mkMainHeaderProps :: AccessState -> GlobalState -> MainHeaderProps
-mkMainHeaderProps as gs = (title, abstract, props)
+mkMainHeaderProps :: AccessState -> GlobalState_ WipedDocumentState -> MainHeaderProps
+mkMainHeaderProps as wiped = (title, abstract, props)
   where
-    wiped = (const $ getWipedDocumentState as gs) <$> gs
     cvdoc = fromMaybe (error "mkMainHeaderProps: no vdoc!") $ wiped ^? gsCompositeVDoc . _Just . _Just
     props = TopMenuBarProps (cacheLookup' wiped <$> (as ^. accLoginState . lsCurrentUser))
 
     title = cvdoc ^. compositeVDoc . vdocTitle
     abstract = cvdoc ^. compositeVDoc . vdocAbstract
 
-mkMainHeaderToolbarProps :: AccessState -> GlobalState -> MainHeaderToolbarProps
-mkMainHeaderToolbarProps as gs = MainHeaderToolbarProps ds vdoc indexprops extprops
+mkMainHeaderToolbarProps :: GlobalState_ WipedDocumentState -> MainHeaderToolbarProps
+mkMainHeaderToolbarProps wiped = MainHeaderToolbarProps ds vdoc indexprops extprops
   where
-    wiped = (const $ getWipedDocumentState as gs) <$> gs
     ds = wiped ^. gsDocumentState
     Just vdoc = wiped ^? gsCompositeVDoc . _Just . _Just . compositeVDoc
     indexprops = mkIndexToolbarProps wiped

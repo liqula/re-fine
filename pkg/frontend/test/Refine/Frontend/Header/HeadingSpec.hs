@@ -8,9 +8,10 @@ import           Test.Hspec
 
 import           Refine.Common.Test.Samples (sampleRawContent1, sampleMetaID)
 import           Refine.Common.Types
+import           Refine.Frontend.Access
+import           Refine.Frontend.Header.EditToolbar
 import           Refine.Frontend.Header.Heading
 import           Refine.Frontend.Header.Toolbar
-import           Refine.Frontend.Access
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.Screen.Types
 import           Refine.Frontend.Store.Types
@@ -67,6 +68,9 @@ spec = do
              & gsVDocID .~ Just 1
 -- FIXME: remove this line if this test pass --    & gsServerCache %~ serverCacheUpdate (LoadVDoc (AfterAjax newVDoc))
 
+          as :: AccessState
+          as = undefined
+
       resetState gs
-      _wrapper <- mount (mainHeader_ $ mkMainHeaderProps emptyAccessState gs)
+      _wrapper <- mount (mainHeader_ $ mkMainHeaderProps emptyAccessState (wipeDocumentState as gs))
       storeShouldEventuallySatisfy ((^. gsScreenState . ssHeaderHeight) :: GlobalState -> Int) (> 0)

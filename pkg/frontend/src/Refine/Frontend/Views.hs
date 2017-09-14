@@ -94,7 +94,8 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
     div_ ["key" $= "maindiv" {-FIXME: seems not to work as expected, we still have a warning-}] $ do
       windowSize_ (WindowSizeProps (rs ^. gsScreenState . SC.ssWindowSize)) mempty
       do
-          mainHeader_ (mkMainHeaderProps as rs)
+          let rswiped = wipeDocumentState as rs
+          mainHeader_ (mkMainHeaderProps as rswiped)
 
           -- components that are visible only sometimes:
           case rs ^. RS.gsContributionState . RS.csActiveDialog of
@@ -112,7 +113,7 @@ mainScreen = mkView' "MainScreen" $ \(rs, as) -> case rs ^. gsCompositeVDoc of
             Nothing -> mempty
 
           main_ ["role" $= "main", "key" $= "main"] $ do
-              mainHeaderToolbar_ (mkMainHeaderToolbarProps as rs)
+              mainHeaderToolbar_ (mkMainHeaderToolbarProps rswiped)
               div_ ["className" $= "grid-wrapper"] $ do
                   div_ ["className" $= "row row-align-center row-align-top"] $ do
                       let asideProps = AsideProps

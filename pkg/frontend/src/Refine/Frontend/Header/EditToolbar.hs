@@ -79,6 +79,9 @@ getDocumentStateProps as gs@(view gsEditID -> Just baseid)
 getDocumentStateProps _ _
   = error "getDocumentStateProps: gsEditID came up empty!"
 
+wipeDocumentState :: AccessState -> GlobalState -> GlobalState_ WipedDocumentState
+wipeDocumentState as gs = const (getWipedDocumentState as gs) <$> gs
+
 getWipedDocumentState :: AccessState -> GlobalState -> WipedDocumentState
 getWipedDocumentState as gs = case getDocumentStateProps as gs of
   DocumentStateView{}                  -> WipedDocumentStateView
