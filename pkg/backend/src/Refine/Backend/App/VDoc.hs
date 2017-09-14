@@ -14,8 +14,7 @@ module Refine.Backend.App.VDoc
   , addEditAndMerge
   , getEdit
   , addMerge
-  , mergeEdit         -- TODO:c rename to mergeEditAndRebase
-  , rebaseHeadToEdit  -- TODO:c replace with mergeEditAndRebase
+  , mergeEditAndRebaseAllSiblings
   , toggleSimpleVoteOnEdit
   , deleteSimpleVoteOnEdit
   , changeSimpleVoteOnEdit
@@ -125,7 +124,7 @@ addEditAndMerge :: ID Edit -> CreateEdit -> App Edit
 addEditAndMerge baseeid edit = do
   assertCreds . AP.createOrUpdateEdit =<< db (DB.getVDoc . view editVDoc =<< DB.getEdit baseeid)
   e <- addEdit baseeid edit
-  rebaseHeadToEdit $ e ^. editID
+  mergeEditAndRebaseAllSiblings $ e ^. editID
   pure e
 
 getEdit :: ID Edit -> App Edit
@@ -155,14 +154,11 @@ addMerge base eid1 eid2 = do
             $ CreateEdit (edit2 ^. editDesc) newdoc (edit2 ^. editKind)
         res -> pure . Left $ AppMergeError base eid1 eid2 (cs $ show res)
 
-mergeEdit :: ID Edit -> App ()
-mergeEdit = rebaseHeadToEdit
-
 -- | Move HEAD marker (which is our name for the latest release) to a given edit.  All contributions
 -- based on the old HEAD are rebased to the new HEAD.  All authors of rebased contributions are
 -- notified by email.
-rebaseHeadToEdit :: ID Edit -> App ()
-rebaseHeadToEdit eid = do
+mergeEditAndRebaseAllSiblings :: ID Edit -> App ()
+mergeEditAndRebaseAllSiblings eid = do
   appLog LogDebug $ "rebase to " <> show eid
   assertCreds . AP.createOrUpdateEdit =<< db (DB.getVDoc . view editVDoc =<< DB.getEdit eid)
   (vid, hid, ch) <- db $ do
@@ -241,7 +237,7 @@ changeSimpleVoteOnEdit eid f = do
     DB.updateVotes eid f
     vs <- DB.getVoteCount eid
     if atLeastOneUpvote vs then rebasePossible eid else pure False
-  when pleaseRebase $ rebaseHeadToEdit eid
+  when pleaseRebase $ mergeEditAndRebaseAllSiblings eid
   pure pleaseRebase
 
 getSimpleVotesOnEdit :: ID Edit -> App VoteCount

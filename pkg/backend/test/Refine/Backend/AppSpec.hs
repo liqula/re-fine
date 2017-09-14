@@ -129,7 +129,7 @@ spec = do
     it "rebase one edit to two other edits" $ \(runner :: AppM DB () -> ExceptT ApiError IO ()) -> do
       throwApiErrors . runner $ do
         (vid, _, [eid1, _, _]) <- docWithEdits ["abc", "def"] [["a.c", "def"], ["abc", "d.f"], ["abX", "def"]]
-        App.rebaseHeadToEdit eid1
+        App.mergeEditAndRebaseAllSiblings eid1
         d <- App.getVDoc vid
         let hid = d ^. vdocHeadEdit
         liftIO $ hid `shouldBe` eid1
