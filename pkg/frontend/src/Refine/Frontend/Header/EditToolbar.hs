@@ -80,19 +80,19 @@ getDocumentStateProps _ _
   = error "getDocumentStateProps: gsEditID came up empty!"
 
 wipeDocumentState :: AccessState -> GlobalState -> GlobalState_ WipedDocumentState
-wipeDocumentState as gs = const (getWipedDocumentState as gs) <$> gs
-
-getWipedDocumentState :: AccessState -> GlobalState -> WipedDocumentState
-getWipedDocumentState as gs = case getDocumentStateProps as gs of
-  DocumentStateView{}                  -> WipedDocumentStateView
-  DocumentStateDiff i _ edit collapsed editable -> WipedDocumentStateDiff i edit collapsed editable
-  DocumentStateEdit _ meid             -> WipedDocumentStateEdit $ mkEditToolbarProps (cacheLookup gs =<< meid)
-  DocumentStateDiscussion dp           -> WipedDocumentStateDiscussion $ DiscussionToolbarProps
-                                            (either (const Nothing) (Just . (^. discussionID)) disc)
-                                            (dp ^. discPropsFlatView)
-                                            (either (error "getWipedDocumentState: impossible") (^. discussionIsNote) disc)
-                                            (votesToCount $ either (error "wipeDocumentState: impossible") (^. discussionVotes) disc)
-    where disc = id +++ snd $ dp ^. discPropsDiscussion
+wipeDocumentState as gs = const getWipedDocumentState <$> gs
+  where
+    getWipedDocumentState :: WipedDocumentState
+    getWipedDocumentState = case getDocumentStateProps as gs of
+      DocumentStateView{}                  -> WipedDocumentStateView
+      DocumentStateDiff i _ edit collapsed editable -> WipedDocumentStateDiff i edit collapsed editable
+      DocumentStateEdit _ meid             -> WipedDocumentStateEdit $ mkEditToolbarProps (cacheLookup gs =<< meid)
+      DocumentStateDiscussion dp           -> WipedDocumentStateDiscussion $ DiscussionToolbarProps
+                                                (either (const Nothing) (Just . (^. discussionID)) disc)
+                                                (dp ^. discPropsFlatView)
+                                                (either (error "wipeDocumentState: impossible") (^. discussionIsNote) disc)
+                                                (votesToCount $ either (error "wipeDocumentState: impossible") (^. discussionVotes) disc)
+        where disc = id +++ snd $ dp ^. discPropsDiscussion
 
 -- (this is not a good place for this instance, but it avoids import cycles, and the class is
 -- deprecated anyway.  when refactoring Icon.hs, we need to think about how to do this better, see
