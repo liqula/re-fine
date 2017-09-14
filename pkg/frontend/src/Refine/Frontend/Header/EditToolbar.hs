@@ -54,7 +54,7 @@ getDocumentStateProps as gs@(view gsEditID -> Just baseid)
       (const . fromMaybe False
              $ (==) <$> (as ^? accLoginState . lsCurrentUser . loggedInUser . to UserID)
                     <*> ((^. editMetaID . miMeta . metaCreatedBy) <$> cacheLookup gs eid))
-      (const $ gsRawContent gs)
+      (const $ gs ^. gsRawContent)
       (fromMaybe (error "edit is not in cache") . cacheLookup gs)
       (\(did, ed) -> discussionProps
                             (fromMaybe (Left did) $ do
@@ -62,7 +62,7 @@ getDocumentStateProps as gs@(view gsEditID -> Just baseid)
                                 e <- cacheLookup gs =<< baseid
                                 r <- Map.lookup did $ e ^. editDiscussions'
                                 pure $ Right (r, d))
-                            (gsRawContent gs)
+                            (gs ^. gsRawContent)
                             (StatementPropDetails
                                ed
                                (as ^? accLoginState . lsCurrentUser . loggedInUser)

@@ -127,9 +127,10 @@ cacheMiss = cacheMisses . pure
 cacheMissId :: CacheLookup v => ID v -> a -> a
 cacheMissId i x = cacheMiss (cacheKey i) x i
 
-gsRawContent :: GlobalState -> RawContent  -- TODO:c make this a Getter
-gsRawContent (view gsVDoc -> Just (Just cvdoc)) = rawContentFromCompositeVDoc cvdoc
-gsRawContent _ = mkRawContent $ mkBlock "loading..." :| []
+gsRawContent :: Getter (GlobalState_ a) RawContent
+gsRawContent = to $ \case
+  (view gsVDoc -> Just (Just cvdoc)) -> rawContentFromCompositeVDoc cvdoc
+  _                                  -> mkRawContent $ mkBlock "loading..." :| []
 
 class CacheLookup a where
   cacheKey :: ID a -> CacheKey

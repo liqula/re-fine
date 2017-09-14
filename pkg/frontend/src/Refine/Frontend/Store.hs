@@ -95,18 +95,18 @@ transformGlobalState = transf
       when ( act == DocumentAction UpdateDocumentStateView ||
              -- (GlobalState has the same editor contents as before, but, say, we switched from main
              -- menu back into a vdoc.)
-             gsRawContent st /= gsRawContent st'
+             st ^. gsRawContent /= st' ^. gsRawContent
              -- (GlobalState has changed w.r.t. editor contents.)
            ) $ do
-        dispatchAndExec . UpdateEditorStore . createWithRawContent $ gsRawContent st'
+        dispatchAndExec . UpdateEditorStore . createWithRawContent $ st' ^. gsRawContent
 
       -- other effects
       case act of
         ContributionAction RequestSetAllVerticalSpanBounds -> do
-          dispatchAndExec . ContributionAction =<< setAllVerticalSpanBounds (gsRawContent st)
+          dispatchAndExec . ContributionAction =<< setAllVerticalSpanBounds (st ^. gsRawContent)
 
         ContributionAction RequestSetRange -> do
-          mRangeEvent <- getRangeAction $ gsRawContent st
+          mRangeEvent <- getRangeAction $ st ^. gsRawContent
           case mRangeEvent of
             Nothing -> pure ()
             Just rangeEvent -> do
