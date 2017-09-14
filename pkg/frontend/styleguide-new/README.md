@@ -10,6 +10,10 @@ To compile CSS, run (from /pkg/frontend/):
 
     sass scss-new/style.scss styleguide-new/style.css
 
+To watch and re-compile CSS on the fly:
+
+    sass scss-new/style.scss styleguide-new/style.css ; sass --watch scss-new/style.scss:styleguide-new/style.css
+
 To see the newly styled pages:
 
     cd pkg/frontend && php -S localhost:8080
@@ -17,5 +21,5 @@ To see the newly styled pages:
 
 To generate the SVG files for php:
 
-	cd pkg/frontend
-	./scripts/compile-svg.hs pkg/frontend/images pkg/frontend/styleguide-new/svgs/svgs.php
+    cd pkg/frontend
+    ../../scripts/compile-svg.hs pkg/frontend/images/icon pkg/frontend/styleguide-new/svgs/svgs.php

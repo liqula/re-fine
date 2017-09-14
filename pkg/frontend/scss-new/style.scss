@@ -1,11 +1,34 @@
 /*
 sass scss/style.scss style.css
+
+TODO: move this to 30-core.scss (or 40-whatever, and so on).  use
+main.css instead of style.css in the html/php, and build the main.css
+as explained in ./README.md.
+
+TODO: can we make better use of scss/sass features here?
+
+http://sass-lang.com/documentation/
+http://sass-lang.com/documentation/file.SASS_REFERENCE.html
+
+mixins together with interpoliation are sort-of statically resolved functions:
+
+```
+@mixin firefox-message($selector) {
+  body.firefox #{$selector}:before {
+    content: "Hi, Firefox users!";
+  }
+}
+
+@include firefox-message(".header");
+```
+
+nesting may also be useful.
+
 */
 
 @import '10-global.scss';
 @import '20-colors.scss';
 @import '30-core.scss';
-@import '_generic.icons.scss';
 
 .main-content {
 	background-color: $c_main_menu_background;
@@ -239,10 +262,11 @@ body {
 
 .on_top {
     position:absolute;
-    top:0;left:0;bottom:0;right:0;/*expand this div to the size of its parent*/
+    top:0;left:0;bottom:0;right:0;  // expand this div to the size of its parent
 }
 
 /* test */
+
 .icon-daniel_test1 {
   background-image: url("../images/daniel_test1.svg");
 }
