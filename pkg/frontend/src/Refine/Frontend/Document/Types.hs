@@ -67,11 +67,11 @@ mapDocumentState fa fb fc fd = \case
   DocumentStateEdit y be -> DocumentStateEdit y be
   DocumentStateDiscussion d -> DocumentStateDiscussion (fd d)
 
--- | The document state variant for 'DocumentProps'.  TODO:c rename to 'DocumentStateProps' ('DocumentProps' is already taken).
-type DocumentState = DocumentState_ Bool RawContent Edit DiscussionProps
+-- | The document state variant for 'DocumentProps'.
+type DocumentStateProps = DocumentState_ Bool RawContent Edit DiscussionProps
 
--- | The document state for 'GlobalState'.  TODO:c rename to 'DocumentState'
-type GlobalDocumentState = DocumentState_ () () (ID Edit) (ID Discussion, Maybe StatementEditorProps)
+-- | The document state for 'GlobalState'.
+type DocumentState = DocumentState_ () () (ID Edit) (ID Discussion, Maybe StatementEditorProps)
 
 data WipedDocumentState =
     WipedDocumentStateView
@@ -85,8 +85,8 @@ data WipedDocumentState =
   | WipedDocumentStateDiscussion DiscussionToolbarProps
   deriving (Show, Eq)
 
-globalDocumentState :: HasCallStack => DocumentState -> GlobalDocumentState
-globalDocumentState
+documentStateFromProps :: HasCallStack => DocumentStateProps -> DocumentState
+documentStateFromProps
   = mapDocumentState
     (const ())
     (const ())
@@ -97,7 +97,7 @@ globalDocumentState
 -- focus has changed and the context (like the edit that we diff
 -- against) does not apply any more.  If true, always switch to view
 -- mode; otherwise, stay in whichever mode we are.
-refreshDocumentStateView :: Edit -> Bool -> GlobalDocumentState -> GlobalDocumentState
+refreshDocumentStateView :: Edit -> Bool -> DocumentState -> DocumentState
 refreshDocumentStateView ed eidChanged = if eidChanged then viewMode else sameMode
   where
     viewMode _ = DocumentStateView ()
@@ -112,11 +112,11 @@ refreshDocumentStateView ed eidChanged = if eidChanged then viewMode else sameMo
 emptyEditorStore :: HasCallStack => EditorStore
 emptyEditorStore = EditorStore createEmpty
 
-emptyDocumentState :: HasCallStack => GlobalDocumentState
+emptyDocumentState :: HasCallStack => DocumentState
 emptyDocumentState = DocumentStateView ()
 
 data DocumentProps = DocumentProps
-  { _dpDocumentState     :: DocumentState
+  { _dpDocumentState     :: DocumentStateProps
   , _dpContributionState :: ContributionState
   }
   deriving (Show, Eq, Generic)

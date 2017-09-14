@@ -21,7 +21,7 @@ import qualified Refine.Frontend.Route as Route
 
 -- * state
 
-type GlobalState = GlobalState_ GlobalDocumentState
+type GlobalState = GlobalState_ DocumentState
 
 data GlobalState_ a = GlobalState
   { _gsEditID                     :: Maybe (ID VDoc)  -- TODO:c rename to 'gsVDocID'

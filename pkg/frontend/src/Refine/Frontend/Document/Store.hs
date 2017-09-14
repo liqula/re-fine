@@ -68,8 +68,8 @@ transformEditorStoreHandler = f where
 -- trigger thunk evaluation loops.  use old state whenever it is
 -- enough.
 documentStateUpdate :: (HasCallStack)
-                    => GlobalAction -> GlobalState -> GlobalDocumentState
-                    -> CacheLookupT GlobalDocumentState
+                    => GlobalAction -> GlobalState -> DocumentState
+                    -> CacheLookupT DocumentState
 documentStateUpdate (LoadVDoc _) oldgs st
   = do
     cvdoc <- do
@@ -162,7 +162,7 @@ documentStateUpdate _ _ st
   = pure st
 
 
-enterViewMode :: CompositeVDoc -> GlobalState -> GlobalDocumentState -> GlobalDocumentState
+enterViewMode :: CompositeVDoc -> GlobalState -> DocumentState -> DocumentState
 enterViewMode cvdoc oldgs = refreshDocumentStateView ed eidChanged
   where
     ed = fromMaybe (error "impossible @enterViewMode") . join $ gsEdit oldgs
@@ -171,7 +171,7 @@ enterViewMode cvdoc oldgs = refreshDocumentStateView ed eidChanged
         newID  = cvdoc ^. compositeVDocThisEditID
         mOldID = oldgs ^? to gsEditID' . _Just . _Just
 
-enterEditMode :: GlobalState -> ID Edit -> GlobalDocumentState
+enterEditMode :: GlobalState -> ID Edit -> DocumentState
 enterEditMode oldgs eid = case cacheLookup oldgs eid of
   Just ed
     -> let einfo = EditInfo (ed ^. editDesc) (Just $ ed ^. editKind) $

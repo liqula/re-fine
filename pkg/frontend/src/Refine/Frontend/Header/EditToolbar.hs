@@ -48,8 +48,8 @@ mkLinkEditorProps es
         isLink _ = False
 -}
 
-getDocumentState :: AccessState -> GlobalState -> DocumentState
-getDocumentState as gs@(gsEditID' -> Just baseid)
+getDocumentStateProps :: AccessState -> GlobalState -> DocumentStateProps
+getDocumentStateProps as gs@(gsEditID' -> Just baseid)
   = mapDocumentState
       (const . fromMaybe False
              $ (==) <$> (as ^? accLoginState . lsCurrentUser . loggedInUser . to UserID)
@@ -75,13 +75,13 @@ getDocumentState as gs@(gsEditID' -> Just baseid)
     dst = gs ^. gsDocumentState
     eid = case dst of
       DocumentStateDiff _ _ i _ _ -> i
-      _ -> error "impossible - getDocumentState"
-getDocumentState _ _
-  = error "getDocumentState: no gsVDoc"
+      _ -> error "getDocumentStateProps: impossible"
+getDocumentStateProps _ _
+  = error "getDocumentStateProps: no gsVDoc"
 
 -- | TODO:c rename to 'getWipedDocumentState'
 wipeDocumentState :: AccessState -> GlobalState -> WipedDocumentState
-wipeDocumentState as gs = case getDocumentState as gs of
+wipeDocumentState as gs = case getDocumentStateProps as gs of
   DocumentStateView{}                  -> WipedDocumentStateView
   DocumentStateDiff i _ edit collapsed editable -> WipedDocumentStateDiff i edit collapsed editable
   DocumentStateEdit _ meid             -> WipedDocumentStateEdit $ mkEditToolbarProps (cacheLookup gs =<< meid)
