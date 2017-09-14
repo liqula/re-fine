@@ -24,7 +24,7 @@ import qualified Refine.Frontend.Route as Route
 type GlobalState = GlobalState_ DocumentState
 
 data GlobalState_ a = GlobalState
-  { _gsEditID                     :: Maybe (ID VDoc)  -- TODO:c rename to 'gsVDocID'
+  { _gsVDocID                     :: Maybe (ID VDoc)
   , _gsContributionState          :: ContributionState
   , _gsHeaderState                :: HeaderState
   , _gsDocumentState              :: a
@@ -38,7 +38,7 @@ data GlobalState_ a = GlobalState
 
 emptyGlobalState :: HasCallStack => GlobalState
 emptyGlobalState = GlobalState
-  { _gsEditID                     = Nothing
+  { _gsVDocID                     = Nothing
   , _gsContributionState          = emptyContributionState
   , _gsHeaderState                = emptyHeaderState
   , _gsDocumentState              = emptyDocumentState
@@ -174,14 +174,19 @@ instance CacheLookup Group where
   cacheKey = CacheKeyGroup
   cacheLens = scGroups
 
--- Just (Just e) -> found!
--- Just Nothing -> ID exists, but is missing in cache
--- Nothing -> no ID
+-- | Currently open 'Edit'.
+--
+-- >>> Just (Just e) -- found
+-- >>> Just Nothing  -- ID exists, but it or the corresponding vdoc is missing in cache
+-- >>> Nothing       -- no such ID
+--
+-- NOTE: you may get an edit here even if you are, say in the menu and it is not technically open.
 gsEdit :: HasCallStack => GlobalState_ a -> Maybe (Maybe Edit)  -- TODO:c make this a Getter
-gsEdit gs = (>>= cacheLookup gs) <$> gsEditID' gs
+gsEdit gs = (>>= cacheLookup gs) <$> gsEditID gs
 
-gsEditID' :: HasCallStack => GlobalState_ a -> Maybe (Maybe (ID Edit))  -- TODO:c rename to 'gsEditID'; make it a Getter
-gsEditID' gs = fmap (^. vdocHeadEdit) . cacheLookup gs <$> (gs ^. gsEditID)
+-- | See 'gsEdit'.
+gsEditID :: HasCallStack => GlobalState_ a -> Maybe (Maybe (ID Edit))  -- TODO:c make it a Getter
+gsEditID gs = fmap (^. vdocHeadEdit) . cacheLookup gs <$> (gs ^. gsVDocID)
 
 gsVDoc :: Getter (GlobalState_ a) (Maybe (Maybe CompositeVDoc))  -- TODO:c rename to 'gsCompositeVDoc'.  no, wait, don't use this any more at all!!
 gsVDoc = to getCompositeVDoc

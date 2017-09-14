@@ -144,11 +144,11 @@ transformGlobalState = transf
      where
       fm :: GlobalState -> CacheLookupT GlobalState
       fm =    gsServerCache         (pure . serverCacheUpdate act)
-          >=> gsEditID              (pure . editIDUpdate act)
+          >=> gsVDocID              (pure . vdocIDUpdate act)
           >=> gsContributionState   (pure . contributionStateUpdate act)
           >=> gsHeaderState         (pure . headerStateUpdate act)
           >=> gsScreenState         (pure . maybe id screenStateUpdate (act ^? _ScreenAction))
-          >=> gsMainMenuState       (pure . mainMenuUpdate act (isJust $ st ^. gsEditID))
+          >=> gsMainMenuState       (pure . mainMenuUpdate act (isJust $ st ^. gsVDocID))
           >=> gsTranslations        (pure . translationsUpdate act)
           >=> gsDevState            (pure . devStateUpdate act)
           >=> (\st' -> gsDocumentState (documentStateUpdate act st') st')
@@ -176,7 +176,7 @@ routeFromState st
       MainMenuCreateProcess ref                 -> Route.GroupProcesses . view createVDocGroup $ unsafeReadLocalStateRef ref
       MainMenuUpdateProcess vid _               -> Route.Process vid
 
-  | Just vid <- st ^. gsEditID
+  | Just vid <- st ^. gsVDocID
     = Route.Process vid
 
   | otherwise
@@ -231,9 +231,9 @@ flushCacheMisses = do
     sendTS msg
     consoleLogJSStringM "WS" . cs $ show msg
 
-editIDUpdate :: GlobalAction -> Maybe (ID Common.VDoc) -> Maybe (ID Common.VDoc)
-editIDUpdate (LoadVDoc cvd) _ = Just cvd
-editIDUpdate _ st = st
+vdocIDUpdate :: GlobalAction -> Maybe (ID Common.VDoc) -> Maybe (ID Common.VDoc)
+vdocIDUpdate (LoadVDoc cvd) _ = Just cvd
+vdocIDUpdate _ st = st
 
 serverCacheUpdate :: GlobalAction -> ServerCache -> ServerCache
 serverCacheUpdate (CacheAction a) c = case a of
@@ -287,7 +287,7 @@ emitBackendCallsFor act st = case act of
 
     ContributionAction (SubmitComment (CommentInfo text kind)) -> do
       let headEdit = fromMaybe (error "emitBackendCallsFor.SubmitComment") . join
-                   $ st ^. to gsEditID'
+                   $ st ^. to gsEditID
           range    = st ^? gsCurrentSelection . _Just . Common.selectionRange
 
       sendTS $ case kind of
@@ -312,7 +312,7 @@ emitBackendCallsFor act st = case act of
       | DocumentStateEdit _ baseEdit_ <- st ^. gsDocumentState
       -> do
         let baseEdit :: Common.ID Common.Edit
-            (baseEdit:_) = catMaybes [baseEdit_, st ^? to gsEditID' . _Just . _Just]
+            (baseEdit:_) = catMaybes [baseEdit_, st ^? to gsEditID . _Just . _Just]
 
             cedit = Common.CreateEdit
                   { Common._createEditDesc        = info ^. editInfoDesc

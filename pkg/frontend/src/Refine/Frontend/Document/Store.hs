@@ -84,7 +84,7 @@ documentStateUpdate (LoadVDoc _) oldgs st
         else enterViewMode cvdoc oldgs st
 
 -- in view mode, start edit
-documentStateUpdate (HeaderAction StartEdit) oldgs@(gsEditID' -> Just (Just eid)) (DocumentStateView ())
+documentStateUpdate (HeaderAction StartEdit) oldgs@(gsEditID -> Just (Just eid)) (DocumentStateView ())
   = pure $ enterEditMode oldgs eid
 
 -- in diff mode, start edit
@@ -138,14 +138,14 @@ documentStateUpdate (DocumentAction (DocumentUpdateEditInfo info)) _ st
   = pure $ st & documentStateEditInfo .~ info
 
 {- FIXME: #451
-documentStateUpdate (ContributionAction (SetRange range)) gs@(view gsEditID -> Just{}) _
+documentStateUpdate (ContributionAction (SetRange range)) gs@(view gsVDocID -> Just{}) _
   = pure
   . mkDocumentStateView
   . addMarksToRawContent [(MarkCurrentSelection, range ^. sstSelectionState . selectionRange)]
   . deleteMarksFromRawContentIf (== MarkCurrentSelection)
   $ gsRawContent gs
 
-documentStateUpdate (ContributionAction ClearRange) gs@(view gsEditID -> Just{}) _
+documentStateUpdate (ContributionAction ClearRange) gs@(view gsVDocID -> Just{}) _
   = pure
   . mkDocumentStateView
   . deleteMarksFromRawContentIf (== MarkCurrentSelection)
@@ -169,7 +169,7 @@ enterViewMode cvdoc oldgs = refreshDocumentStateView ed eidChanged
     eidChanged = Just newID /= mOldID
       where
         newID  = cvdoc ^. compositeVDocThisEditID
-        mOldID = oldgs ^? to gsEditID' . _Just . _Just
+        mOldID = oldgs ^? to gsEditID . _Just . _Just
 
 enterEditMode :: GlobalState -> ID Edit -> DocumentState
 enterEditMode oldgs eid = case cacheLookup oldgs eid of

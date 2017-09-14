@@ -64,7 +64,7 @@ spec = do
 
           gs :: GlobalState
           gs = emptyGlobalState
-             & gsEditID .~ Just 1
+             & gsVDocID .~ Just 1
 -- FIXME: remove this line if this test pass --    & gsServerCache %~ serverCacheUpdate (LoadVDoc (AfterAjax newVDoc))
 
       resetState gs
