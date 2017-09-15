@@ -1,5 +1,5 @@
 <?php 
-include "includes/mainMenuGroups-components.php";
+include "includes/groupDetailsProcesses-components.php";
 include "includes/common.php";
 include "includes/svgs/daniel_user.php";
 include "includes/svgs/daniel_test2.php";
@@ -23,10 +23,9 @@ include "includes/svgs/svgs.php";
 			</div>
 			<div class="hr-2-div"></div>
 			<div class="groupDetailsProcesses_iconlist">
-				<?= iconWithNumberInlineSvg('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
-				<?= iconWithNumberInlineSvg('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
-				<?= iconWithNumberInlineSvg('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
-	
+				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
+				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
+				<?= iconWithNumber('ibutton_xxxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], '12', ['margin1',"float-left"]) ?>
 				<div class="clearboth"></div>
 			</div>
 
@@ -40,17 +39,9 @@ include "includes/svgs/svgs.php";
 				<div class="clearboth"></div>
 			</div>
 
-			<div class="groupDetailsProcessesDocument">
-
-			</div>
-
-			<div class="groupDetailsProcessesDocument">
-
-			</div>
-
-
+			<?php groupDetailsProcessesDocument(); ?>
+			<?php groupDetailsProcessesDocument(); ?>
+			<?php groupDetailsProcessesDocument(); ?>
+			<?php groupDetailsProcessesDocument(); ?>
 		</div>
-
-
-
 <?php include "includes/page-footer-main.php"; ?>

@@ -10,9 +10,9 @@
 <body>
 <div class="body-container">
 
-	<div class="ibutton_xxlarge icon-Close_bright absolute-topleft"></div>
+	<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], ["absolute-topleft"]) ?>
 	<div class="platform-title">liqula</div>
-	<div class="ibutton_xxlarge icon-daniel_test3 absolute-topright"></div>
+	<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], ["absolute-topright"]) ?>
 
 	<div class="main-content">
 		<?= commonHeader() ?>

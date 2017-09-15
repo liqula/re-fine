@@ -13,17 +13,7 @@ TODO: can we make better use of scss/sass features here?
 http://sass-lang.com/documentation/
 http://sass-lang.com/documentation/file.SASS_REFERENCE.html
 
-mixins together with interpoliation are sort-of statically resolved functions:
-
-```
-@mixin firefox-message($selector) {
-  body.firefox #{$selector}:before {
-    content: "Hi, Firefox users!";
-  }
-}
-
-@include firefox-message(".header");
-```
+mixins together with interpoliation are sort-of statically resolved functions
 
 nesting may also be useful.
 
@@ -69,63 +59,53 @@ nesting may also be useful.
   /*background-color: $c_main_menu_blue;*/
   border: 0px solid black;
   border-radius: $dunit;
-}
 
-.mainMenuGroupShort_image-div {
-  position: relative;
-  width: 36 * $dunit;
-  height: 30 * $dunit;
-  border-top-left-radius: $dunit;
-  border-top-right-radius: $dunit;
-  border-width: 0px;
-}
+  &-image_div {
+    position: relative;
+    width: 36 * $dunit;
+    height: 30 * $dunit;
+    border-top-left-radius: $dunit;
+    border-top-right-radius: $dunit;
+    border-width: 0px;
+  }
 
-.mainMenuGroupShort_image {
-  position: relative;
-  width: 36 * $dunit;
-  height: 30 * $dunit;
-  border-top-left-radius: $dunit;
-  border-top-right-radius: $dunit;
-  border-width: 0px;
-}
+  &-image {
+    position: relative;
+    width: 36 * $dunit;
+    height: 30 * $dunit;
+    border-top-left-radius: $dunit;
+    border-top-right-radius: $dunit;
+    border-width: 0px;
+  }
 
-.mainMenuGroupShort_svg-div {
-  position: relative;
-  margin-top: 4 * $dunit;
-  width: 26 * $dunit;
-  height: 26 * $dunit;
-  border-top-left-radius: $dunit;
-  border-top-right-radius: $dunit;
-  border-width: 0px;
-  margin-left: 5 * $dunit;
-}
+  &-svg_div {
+    position: relative;
+    margin-top: 4 * $dunit;
+    width: 26 * $dunit;
+    height: 26 * $dunit;
+    border-top-left-radius: $dunit;
+    border-top-right-radius: $dunit;
+    border-width: 0px;
+    margin-left: 5 * $dunit;
+  }
 
-/*
-.mainMenuGroupShort_image-svg {
-        margin-top: 4 * $dunit;
-        width: 36 * $dunit;
-        height: 26 * $dunit;
-        border-top-left-radius: $dunit;
-        border-top-right-radius: $dunit;
-        border-width: 0px;
-}
-*/
-.mainMenuGroupShort_groupname {
-  margin-top: 1 * $dunit;
-  width: 36 * $dunit;
-  height: 8.25 * $dunit;
-  margin-bottom: 2.75 * $dunit;
-  line-height: 4 * $dunit;
-  text-align: center;
-  font-size: 3.5 * $dunit;
-  font-weight: bold;
-  overflow: hidden;
-}
+  &-groupname {
+    margin-top: 1 * $dunit;
+    width: 36 * $dunit;
+    height: 8.25 * $dunit;
+    margin-bottom: 2.75 * $dunit;
+    line-height: 4 * $dunit;
+    text-align: center;
+    font-size: 3.5 * $dunit;
+    font-weight: bold;
+    overflow: hidden;
+  }
 
-.mainMenuGroupShort_iconlist {
-  position: relative;
-  display: flex;
-  justify-content: space-evenly;
+  &-iconlist {
+    position: relative;
+    display: flex;
+    justify-content: space-evenly;
+  }
 }
 
 .search-input {
@@ -299,6 +279,13 @@ body {
   background-image: url(../images/00_joker_bright.svg);
 }
 
+
+
+
+
+
+
+
 /* group detail processes */
 
 .main-content_groupDetailsProcesses {
@@ -369,13 +356,89 @@ body {
   float: left;
 }
 
+$groupDetailsProcessesDocumentHeight: 30 * $dunit;
+
 .groupDetailsProcessesDocument {
   position: relative;
+  display: flex;
   width: 146 * $dunit;
-  height: 40 * $dunit;
+  height: $groupDetailsProcessesDocumentHeight;
   background-color: $c_main_menu_background;
   border-radius: $dunit;
   margin-left: $dunit * 2;
   margin-right: $dunit * 2;
   margin-bottom: $dunit * 2;
+}
+
+.groupDetailsProcessesDocument_column1 {
+  position: relative;
+  width: 24 * $dunit;
+  height: $groupDetailsProcessesDocumentHeight;
+  border-top-left-radius: $dunit;
+  border-bottom-left-radius: $dunit;
+  
+  &-image {
+    position: relative;
+    width: 24 * $dunit;
+    height: $groupDetailsProcessesDocumentHeight;
+    border-top-left-radius: $dunit;
+    border-bottom-left-radius: $dunit;
+  }
+}
+
+.groupDetailsProcessesDocument_column2 {
+  position: relative;
+  width: 92 * $dunit;
+  height: $groupDetailsProcessesDocumentHeight;
+
+  &-headline {
+    padding: $dunit;
+    position: relative;
+    font-size: 5*$dunit;
+    height: 5.5*$dunit;
+    overflow: hidden;
+  }
+  &-body {
+    padding: $dunit;
+    position: relative;
+    height: $groupDetailsProcessesDocumentHeight - (12*$dunit);
+    overflow: hidden;
+  }
+}
+
+.groupDetailsProcessesDocument_column3 {
+  position: relative;
+  width: 4 * $dunit;
+  height: $groupDetailsProcessesDocumentHeight;
+
+  &-vertical_line {
+    position: relative;
+    border-left: 1px solid black;
+    height: $groupDetailsProcessesDocumentHeight - (6 * $dunit);
+    margin-top: 3*$dunit;
+  }
+}
+
+.groupDetailsProcessesDocument_column4 {
+  position: relative;
+  width: 28 * $dunit;
+  height: $groupDetailsProcessesDocumentHeight;
+  border-top-right-radius: $dunit;
+  border-bottom-right-radius: $dunit;
+  margin-top: $dunit;
+  &-item {
+    height: $dunit * 9;
+    display: flex;
+    width: 30 * $dunit;
+    margin: $dunit;
+    &-text {
+      width: 6 * $dunit;
+      text-align: center;
+      line-height: $dunit * 5; 
+    }
+    &-icon {
+      position: relative;
+      width: $icon-size-xxlarge;
+    }
+  }
 }

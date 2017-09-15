@@ -5,19 +5,19 @@ function mainMenuGroupsSmall($data){
 ?>
 			<div class="mainMenuGroupShort <?= $data['background-color']?>"> 
 				<?php if ($data['svgArgs']) { ?>
-					<div class="mainMenuGroupShort_svg-div"><div class="on_top">
+					<div class="mainMenuGroupShort-svg_div"><div class="on_top">
 					<?php call_user_func_array($data['image'], $data['svgArgs']) ?>
 					</div></div>
 				<?php } else { ?>
-					<div class="mainMenuGroupShort_image-div">
-						<img class="mainMenuGroupShort_image" src="<?= $data['image']?>" alt="" >
+					<div class="mainMenuGroupShort-image_div">
+						<img class="mainMenuGroupShort-image" src="<?= $data['image']?>" alt="" >
 					</div>
 				<?php } ?>
-				<div class="mainMenuGroupShort_groupname"><?= $data['groupname']?></div>
-				<div class="mainMenuGroupShort_iconlist">
-					<?= iconWithNumberInlineSvg('ibutton_xxxlarge', $data['icons'][0]['name'], $data['icons'][0]['args'], $data['icons'][0]['number']) ?>
-					<?= iconWithNumberInlineSvg('ibutton_xxxlarge', $data['icons'][1]['name'], $data['icons'][1]['args'], $data['icons'][1]['number']) ?>
-					<?= iconWithNumberInlineSvg('ibutton_xxxlarge', $data['icons'][2]['name'], $data['icons'][2]['args'], $data['icons'][2]['number']) ?>
+				<div class="mainMenuGroupShort-groupname"><?= $data['groupname']?></div>
+				<div class="mainMenuGroupShort-iconlist">
+					<?= iconWithNumber('ibutton_xxxlarge', $data['icons'][0]['name'], $data['icons'][0]['args'], $data['icons'][0]['number']) ?>
+					<?= iconWithNumber('ibutton_xxxlarge', $data['icons'][1]['name'], $data['icons'][1]['args'], $data['icons'][1]['number']) ?>
+					<?= iconWithNumber('ibutton_xxxlarge', $data['icons'][2]['name'], $data['icons'][2]['args'], $data['icons'][2]['number']) ?>
 					
 				</div>
 			</div>
