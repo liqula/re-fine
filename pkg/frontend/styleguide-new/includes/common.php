@@ -30,12 +30,12 @@ function icon($ibuttonSizeClass, $svgFunction, $svgArgs, $moreClasses=[]) {
 function commonHeader() {
 ?>
 		<div class="main-content_header">
-			<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], ['margin1',"float-left"]) ?>
-			<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], ['margin1',"float-left"]) ?>
+			<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', 'c_fill_main_menu_blue'], ['margin1',"float-left"]) ?>
+			<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_orange', 'c_fill_note_bubble'], ['margin1',"float-left"]) ?>
 			
 			<input class="search-input float-right">
-			<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], ['margin1',"float-right"]) ?>
-			<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_yellow_neon', ' c_fill_note_bubble'], ['margin1',"float-right"]) ?>
+			<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_interaction_red', 'c_fill_interaction_yellow_neon'], ['margin1',"float-right"]) ?>
+			<?= icon('ibutton_xxlarge', 'svgDanielUser', ['c_fill_note_dark', 'c_fill_note_bubble'], ['margin1',"float-right"]) ?>
 			<div class="clearboth"></div>
 		</div>
 <?php	

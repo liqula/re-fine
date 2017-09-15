@@ -3,11 +3,11 @@ include "includes/groupDetailsProcesses-components.php";
 include "includes/common.php";
 include "includes/svgs/daniel_user.php";
 include "includes/svgs/daniel_test2.php";
-include "includes/svgs/svgs.php";
+include "includes/svgs/svgs1.php";
 ?>
 <?php include "includes/page-header-main.php"; ?>
 
-		<div class="main-content_groupDetailsProcesses">
+		<div class="groupDetailsProcesses">
 			<div class="groupDetailsProcesses_titleimage-div">
 				<img class="groupDetailsProcesses_titleimage-img" src="testbild.png" alt="">
 			</div>

@@ -40,7 +40,7 @@ nesting may also be useful.
   height: 11 * $dunit;
 }
 
-.main-content_mainMenuGroup {
+.mainMenuGroup {
   position: relative;
   display: flex;
   width: 152 * $dunit;
@@ -59,6 +59,7 @@ nesting may also be useful.
   /*background-color: $c_main_menu_blue;*/
   border: 0px solid black;
   border-radius: $dunit;
+  z-index: 0;
 
   &-image_div {
     position: relative;
@@ -67,6 +68,7 @@ nesting may also be useful.
     border-top-left-radius: $dunit;
     border-top-right-radius: $dunit;
     border-width: 0px;
+    z-index: 0;
   }
 
   &-image {
@@ -87,9 +89,11 @@ nesting may also be useful.
     border-top-right-radius: $dunit;
     border-width: 0px;
     margin-left: 5 * $dunit;
+    z-index: 0;
   }
 
   &-groupname {
+    position: relative;
     margin-top: 1 * $dunit;
     width: 36 * $dunit;
     height: 8.25 * $dunit;
@@ -99,6 +103,7 @@ nesting may also be useful.
     font-size: 3.5 * $dunit;
     font-weight: bold;
     overflow: hidden;
+    z-index: 10;
   }
 
   &-iconlist {
@@ -106,6 +111,220 @@ nesting may also be useful.
     display: flex;
     justify-content: space-evenly;
   }
+}
+
+/* group detail processes */
+
+.groupDetailsProcesses {
+  position: relative;
+  width: 150 * $dunit;
+  margin: $dunit;
+  margin-top: $dunit * 3;
+  background-color: $c_toolbar_icon;
+  border-radius: $dunit;
+  padding-bottom: $dunit;
+
+  // $dunit*0.01 works :)
+
+  &_titleimage-div {
+    position: relative;
+    border-top-left-radius: $dunit;
+    border-top-right-radius: $dunit;
+    width: 150 * $dunit;
+    height: 30 * $dunit;
+  }
+
+  &_titleimage-img {
+    position: relative;
+    border-top-left-radius: $dunit;
+    border-top-right-radius: $dunit;
+    width: 150 * $dunit;
+    height: 30 * $dunit;
+  }
+
+  &_profile-img {
+    position: absolute;
+    width: 24 * $dunit;
+    height: 24 * $dunit;
+    top: 24 * $dunit;
+    left: 2 * $dunit;
+    border-radius: $dunit;
+  }
+
+  &_description {
+    position: relative;
+    margin-left: 28 * $dunit;
+    min-height: 20 * $dunit;
+    padding-bottom: 4 * $dunit;
+
+    &-headline {
+      font-size: 4 * $dunit;
+      padding-top: 2 * $dunit;
+      padding-bottom: 2 * $dunit;
+    }
+
+    &-text {
+
+    }
+
+  }
+
+  &_iconlist {
+    position: relative;
+    padding: $dunit;
+  }
+
+  &_submenu {
+    position: relative;
+    padding-left: $dunit * 2;
+    padding-right: $dunit;
+  }
+
+  &_submenu-title {
+    position: relative;
+    float: left;
+  }
+}
+
+$groupDetailsProcessesDocumentHeight: 30 * $dunit;
+
+.groupDetailsProcessesDocument {
+  position: relative;
+  display: flex;
+  width: 146 * $dunit;
+  height: $groupDetailsProcessesDocumentHeight;
+  background-color: $c_main_menu_background;
+  border-radius: $dunit;
+  margin-left: $dunit * 2;
+  margin-right: $dunit * 2;
+  margin-bottom: $dunit * 2;
+
+  &_column1 {
+    position: relative;
+    width: 24 * $dunit;
+    height: $groupDetailsProcessesDocumentHeight;
+    border-top-left-radius: $dunit;
+    border-bottom-left-radius: $dunit;
+    
+    &-image {
+      position: relative;
+      width: 24 * $dunit;
+      height: $groupDetailsProcessesDocumentHeight;
+      border-top-left-radius: $dunit;
+      border-bottom-left-radius: $dunit;
+    }
+  }
+
+  &_column2 {
+    position: relative;
+    width: 92 * $dunit;
+    height: $groupDetailsProcessesDocumentHeight;
+
+    &-headline {
+      padding: $dunit;
+      position: relative;
+      font-size: 5*$dunit;
+      height: 5.5*$dunit;
+      overflow: hidden;
+    }
+    &-body {
+      padding: $dunit;
+      position: relative;
+      height: $groupDetailsProcessesDocumentHeight - (12*$dunit);
+      overflow: hidden;
+    }
+  }
+
+  &_column3 {
+    position: relative;
+    width: 4 * $dunit;
+    height: $groupDetailsProcessesDocumentHeight;
+
+    &-vertical_line {
+      position: relative;
+      border-left: 1px solid black;
+      height: $groupDetailsProcessesDocumentHeight - (6 * $dunit);
+      margin-top: 3*$dunit;
+    }
+  }
+
+  &_column4 {
+    position: relative;
+    width: 28 * $dunit;
+    height: $groupDetailsProcessesDocumentHeight;
+    border-top-right-radius: $dunit;
+    border-bottom-right-radius: $dunit;
+    margin-top: $dunit;
+    &-item {
+      height: $dunit * 9;
+      display: flex;
+      width: 30 * $dunit;
+      margin: $dunit;
+      &-text {
+        width: 6 * $dunit;
+        text-align: center;
+        line-height: $dunit * 5; 
+      }
+      &-icon {
+        position: relative;
+        width: $icon-size-xxlarge;
+      }
+    }
+  }
+}
+
+/* general */
+
+html {
+  min-height: 100%;
+}
+
+body {
+  padding: 0px;
+  margin: 0px;
+  min-height: 100%;
+}
+
+.clearboth {
+  clear: both;
+}
+
+.float-left {
+  float: left;
+}
+
+.float-right {
+  float: right;
+}
+
+/* special */
+
+.margin1 {
+  margin: $dunit;
+}
+
+.margin10 {
+  margin: $dunit * 10;
+}
+
+.hr-div {
+  margin-left: $dunit;
+  margin-right: $dunit;
+  border-top: 1px solid $c_main_menu_blue;
+}
+
+.hr-2-div {
+  margin-left: $dunit * 2;
+  margin-right: $dunit * 2;
+  border-top: 1px solid $c_main_menu_background;
+}
+
+.on_top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
 }
 
 .search-input {
@@ -117,39 +336,6 @@ nesting may also be useful.
   background-color: $c_main_menu_background;
   margin: $dunit;
   margin-top: $dunit * 2;
-}
-
-/* general icon classes */
-
-.ibutton_xxxlarge {
-  position: relative;
-  height: $dunit * 9;
-  width: $dunit * 9;
-}
-
-.ibutton_xxlarge {
-  position: relative;
-  height: $icon-size-xxlarge;
-  width: $icon-size-xxlarge;
-}
-
-.ibutton_xlarge {
-  position: relative;
-  height: $icon-size-xlarge;
-  width: $icon-size-xlarge;
-}
-
-.ibutton_large {
-  position: relative;
-  height: $icon-size-large;
-  width: $icon-size-large;
-}
-
-.svg-button-myself {
-  background: url(../images/testuser.svg) $dunit $dunit/#{$dunit * 4} ($dunit * 4) no-repeat;
-  background-color: $c_main_menu_background;
-  border-radius: $icon-size-xxlarge * 0.5;
-  cursor: pointer;
 }
 
 .platform-title {
@@ -176,18 +362,6 @@ nesting may also be useful.
   font-size: 2 * $dunit;
 }
 
-/* general */
-
-html {
-  min-height: 100%;
-}
-
-body {
-  padding: 0px;
-  margin: 0px;
-  min-height: 100%;
-}
-
 .body-container {
   position: relative;
   width: 100%;
@@ -198,65 +372,56 @@ body {
   padding-bottom: $dunit * 4;
 }
 
-.float-left {
-  float: left;
-}
+/* general icon classes */
 
-.float-right {
-  float: right;
-}
-
-.absolute-topleft {
-  left: $dunit;
+.ibutton_absolute-topleft {
   position: absolute;
-  top: $dunit;
+  left: $dunit*2;
+  top: $dunit*2;
+  height: $icon-size-xxlarge;
+  width: $icon-size-xxlarge;
 }
 
-.absolute-topright {
-  right: $dunit;
+.ibutton_absolute-topright {
   position: absolute;
-  top: $dunit;
+  right: $dunit*2;
+  top: $dunit*2;
+  height: $icon-size-xxlarge;
+  width: $icon-size-xxlarge;
 }
 
-.clearboth {
-  clear: both;
+.ibutton_xxxlarge {
+  position: relative;
+  height: $dunit * 9;
+  width: $dunit * 9;
 }
 
-.hr-div {
-  margin-left: $dunit;
-  margin-right: $dunit;
-
-  // margin-bottom: $dunit*2;
-  border-top: 1px solid $c_main_menu_blue;
+.ibutton_xxlarge {
+  position: relative;
+  height: $icon-size-xxlarge;
+  width: $icon-size-xxlarge;
 }
 
-.hr-2-div {
-  margin-left: $dunit * 2;
-  margin-right: $dunit * 2;
-
-  // margin-bottom: $dunit*2;
-  border-top: 1px solid $c_main_menu_background;
+.ibutton_xlarge {
+  position: relative;
+  height: $icon-size-xlarge;
+  width: $icon-size-xlarge;
 }
 
-.margin1 {
-  margin: $dunit;
-}
-
-.margin10 {
-  margin: $dunit * 10;
-}
-
-.on_top {
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-
-  // expand this div to the size of its parent
+.ibutton_large {
+  position: relative;
+  height: $icon-size-large;
+  width: $icon-size-large;
 }
 
 /* test */
+
+.svg-button-myself {
+  background: url(../images/testuser.svg) $dunit $dunit/#{$dunit * 4} ($dunit * 4) no-repeat;
+  background-color: $c_main_menu_background;
+  border-radius: $icon-size-xxlarge * 0.5;
+  cursor: pointer;
+}
 
 .icon-daniel_test1 {
   background-image: url("../images/daniel_test1.svg");
@@ -277,168 +442,4 @@ body {
 .test-icon2 {
   position: relative;
   background-image: url(../images/00_joker_bright.svg);
-}
-
-
-
-
-
-
-
-
-/* group detail processes */
-
-.main-content_groupDetailsProcesses {
-  position: relative;
-  width: 150 * $dunit;
-  margin: $dunit;
-  margin-top: $dunit * 3;
-  background-color: $c_toolbar_icon;
-  border-radius: $dunit;
-  padding-bottom: $dunit;
-
-  // $dunit*0.01 works :)
-}
-
-.groupDetailsProcesses_titleimage-div {
-  position: relative;
-  border-top-left-radius: $dunit;
-  border-top-right-radius: $dunit;
-  width: 150 * $dunit;
-  height: 30 * $dunit;
-}
-
-.groupDetailsProcesses_titleimage-img {
-  position: relative;
-  border-top-left-radius: $dunit;
-  border-top-right-radius: $dunit;
-  width: 150 * $dunit;
-  height: 30 * $dunit;
-}
-
-.groupDetailsProcesses_profile-img {
-  position: absolute;
-  width: 24 * $dunit;
-  height: 24 * $dunit;
-  top: 24 * $dunit;
-  left: 2 * $dunit;
-  border-radius: $dunit;
-}
-
-.groupDetailsProcesses_description {
-  position: relative;
-  margin-left: 28 * $dunit;
-  min-height: 20 * $dunit;
-  padding-bottom: 4 * $dunit;
-}
-
-.groupDetailsProcesses_description-headline {
-  font-size: 4 * $dunit;
-  padding-top: 2 * $dunit;
-  padding-bottom: 2 * $dunit;
-}
-
-.groupDetailsProcesses_description-text {}
-
-.groupDetailsProcesses_iconlist {
-  position: relative;
-  padding: $dunit;
-}
-
-.groupDetailsProcesses_submenu {
-  position: relative;
-  padding-left: $dunit * 2;
-  padding-right: $dunit;
-}
-
-.groupDetailsProcesses_submenu-title {
-  position: relative;
-  float: left;
-}
-
-$groupDetailsProcessesDocumentHeight: 30 * $dunit;
-
-.groupDetailsProcessesDocument {
-  position: relative;
-  display: flex;
-  width: 146 * $dunit;
-  height: $groupDetailsProcessesDocumentHeight;
-  background-color: $c_main_menu_background;
-  border-radius: $dunit;
-  margin-left: $dunit * 2;
-  margin-right: $dunit * 2;
-  margin-bottom: $dunit * 2;
-}
-
-.groupDetailsProcessesDocument_column1 {
-  position: relative;
-  width: 24 * $dunit;
-  height: $groupDetailsProcessesDocumentHeight;
-  border-top-left-radius: $dunit;
-  border-bottom-left-radius: $dunit;
-  
-  &-image {
-    position: relative;
-    width: 24 * $dunit;
-    height: $groupDetailsProcessesDocumentHeight;
-    border-top-left-radius: $dunit;
-    border-bottom-left-radius: $dunit;
-  }
-}
-
-.groupDetailsProcessesDocument_column2 {
-  position: relative;
-  width: 92 * $dunit;
-  height: $groupDetailsProcessesDocumentHeight;
-
-  &-headline {
-    padding: $dunit;
-    position: relative;
-    font-size: 5*$dunit;
-    height: 5.5*$dunit;
-    overflow: hidden;
-  }
-  &-body {
-    padding: $dunit;
-    position: relative;
-    height: $groupDetailsProcessesDocumentHeight - (12*$dunit);
-    overflow: hidden;
-  }
-}
-
-.groupDetailsProcessesDocument_column3 {
-  position: relative;
-  width: 4 * $dunit;
-  height: $groupDetailsProcessesDocumentHeight;
-
-  &-vertical_line {
-    position: relative;
-    border-left: 1px solid black;
-    height: $groupDetailsProcessesDocumentHeight - (6 * $dunit);
-    margin-top: 3*$dunit;
-  }
-}
-
-.groupDetailsProcessesDocument_column4 {
-  position: relative;
-  width: 28 * $dunit;
-  height: $groupDetailsProcessesDocumentHeight;
-  border-top-right-radius: $dunit;
-  border-bottom-right-radius: $dunit;
-  margin-top: $dunit;
-  &-item {
-    height: $dunit * 9;
-    display: flex;
-    width: 30 * $dunit;
-    margin: $dunit;
-    &-text {
-      width: 6 * $dunit;
-      text-align: center;
-      line-height: $dunit * 5; 
-    }
-    &-icon {
-      position: relative;
-      width: $icon-size-xxlarge;
-    }
-  }
 }
