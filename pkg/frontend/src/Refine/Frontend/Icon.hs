@@ -22,11 +22,12 @@ module Refine.Frontend.Icon
 
 import Language.Css.Syntax
 
+import           Refine.Frontend.Access
+import           Refine.Frontend.Icon.Svg
 import           Refine.Frontend.Icon.Types
 import           Refine.Frontend.Store ()
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Util
-import           Refine.Frontend.Access
 
 
 -- * icons buttons

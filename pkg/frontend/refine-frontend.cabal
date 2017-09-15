@@ -103,6 +103,8 @@ library
       Refine.Frontend.Header.Toolbar
       Refine.Frontend.Header.Types
       Refine.Frontend.Icon
+      Refine.Frontend.Icon.Svg
+      Refine.Frontend.Icon.Svg.Internal
       Refine.Frontend.Icon.Types
       Refine.Frontend.ImageUpload
       Refine.Frontend.Login.Component
