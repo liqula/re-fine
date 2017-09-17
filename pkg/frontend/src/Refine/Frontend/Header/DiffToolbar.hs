@@ -10,6 +10,7 @@ import Refine.Frontend.Contribution.Types
 import Refine.Frontend.Document.Types
 import Refine.Frontend.Header.Types
 import Refine.Frontend.Icon
+import Refine.Frontend.Icon.Svg as Svg
 import Refine.Frontend.Store.Types
 
 
@@ -29,57 +30,44 @@ diffToolbar_ props = do
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  ibutton_ $ emptyIbuttonProps "Close" [ContributionAction HideContributionDialog]
+  ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaDark) [ContributionAction HideContributionDialog]
     & ibListKey .~ "0"
-    & ibLabel .~ "back"
     & ibSize .~ XXLarge
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  let voteButtonLabel :: Vote -> ST
-      voteButtonLabel = \case
-        Yeay -> "up ("   <> count Yeay <> ")"
-        Nay  -> "down (" <> count Nay  <> ")"
-        where
-          count v = cs . show . fromMaybe 0 $ Map.lookup v vs
-          vs = props ^. diffToolbarPropsVotes
-
-      voteAction v = LoginGuardStash
+  let voteAction v = LoginGuardStash
         [ContributionAction $ ToggleVoteOnContribution
                                 (ContribIDEdit $ props ^. diffToolbarPropsEditID) v]
 
-  ibutton_ $ emptyIbuttonProps "Vote_positive" [voteAction Yeay]
+  ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VotePositive ColorSchemaDark) [voteAction Yeay]
     & ibListKey .~ "1"
-    & ibLabel .~ voteButtonLabel Yeay
+    & ibIndexNum .~ Map.lookup Yeay (props ^. diffToolbarPropsVotes)
     & ibSize .~ XXLarge
 
-  ibutton_ $ emptyIbuttonProps "Vote_negative" [voteAction Nay]
+  ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VoteNegative ColorSchemaDark) [voteAction Nay]
     & ibListKey .~ "2"
-    & ibLabel .~ voteButtonLabel Nay
+    & ibIndexNum .~ Map.lookup Nay (props ^. diffToolbarPropsVotes)
     & ibSize .~ XXLarge
 
-  ibutton_ $ emptyIbuttonProps "Arrow_up" [HeaderAction ScrollToPageTop]
+  ibutton_ $ emptyIbuttonProps (ButtonImageIcon ArrowUp ColorSchemaDark) [HeaderAction ScrollToPageTop]
     & ibListKey .~ "3"
-    & ibLabel .~ "motivation"
     & ibSize .~ XXLarge
 
-  let collapseOrExpand = if props ^. diffToolbarCollapsed then "expand" else "collapse"
-  ibutton_ $ emptyIbuttonProps ("Toggle_" <> collapseOrExpand <> "_diff") [DocumentAction ToggleCollapseDiff]
-    & ibListKey .~ "4"
-    & ibLabel .~ collapseOrExpand
-    & ibSize .~ XXLarge
+  let img = if props ^. diffToolbarCollapsed then Svg.DiffExpand else Svg.DiffCollapse
+   in ibutton_ $ emptyIbuttonProps (ButtonImageIcon img ColorSchemaDark) [DocumentAction ToggleCollapseDiff]
+        & ibListKey .~ "4"
+        & ibSize .~ XXLarge
 
   div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
   when (props ^. diffToolbarEditable) $ do
-    ibutton_ $ emptyIbuttonProps "Update_edit" [HeaderAction StartEdit]
+    ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.Edit ColorSchemaDark) [HeaderAction StartEdit]
       & ibListKey .~ "5"
-      & ibLabel .~ "update"
       & ibSize .~ XXLarge
 
     div_ ["className" $= "c-vdoc-toolbar__separator"] ""
 
-  ibutton_ $ emptyIbuttonProps "Diff_details" [ShowNotImplementedYet]
+  ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.DiffDetails ColorSchemaDark) [ShowNotImplementedYet]
     & ibListKey .~ "6"
-    & ibLabel .~ "details"
     & ibSize .~ XXLarge

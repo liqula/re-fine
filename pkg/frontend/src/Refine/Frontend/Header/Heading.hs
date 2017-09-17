@@ -25,6 +25,7 @@ import           Refine.Frontend.Header.Toolbar ( CommentToolbarExtensionProps(.
                                                   toolbar_, commentToolbarExtension_, editToolbarExtension_, indexToolbarExtension_ )
 import           Refine.Frontend.Access
 import           Refine.Frontend.Header.Types
+import           Refine.Frontend.Icon.Svg
 import           Refine.Frontend.Login.Status
 import           Refine.Frontend.Login.Types
 import           Refine.Frontend.MainMenu.Types
@@ -67,7 +68,7 @@ topMenuBarLeft_ = view_ topMenuBarLeft "TopMenuBarLeft_"
 
 topMenuBarRight_ :: TopMenuBarProps -> ReactElementM eventHandler ()
 topMenuBarRight_ (TopMenuBarProps cu) = do
-    loginStatusButton_ id cu
+    loginStatusButton_ ColorSchemaDark Nothing cu
 
 
 -- | Note that if @toolbarItems_@ is a component ('View') rather than a 'ReactElementM', css styling

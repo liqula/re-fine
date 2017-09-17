@@ -17,6 +17,7 @@ import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.FFI
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Icon
+import           Refine.Frontend.Icon.Svg as Svg
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.ThirdPartyViews (draftEditor_)
 import           Refine.Frontend.Types
@@ -77,22 +78,18 @@ statementEditor (StatementEditorProps sid r modif) = mkPersistentStatefulView "s
       contributionDialogTextFormInner 400 20 createStatementText txt
     br_ []
     ibutton_
-      $ emptyIbuttonProps label
+      $ emptyIbuttonProps (ButtonImageIcon (if modif then Svg.Edit else Svg.Reply) ColorSchemaBright)
           [ DocumentAction . ReplyStatement modif sid $ FormComplete txt
           , AddStatement modif sid txt
           ]
-      & ibLabel .~ label
-      & ibSize .~ Medium
       & ibListKey .~ "0"
+      & ibSize .~ Medium
     ibutton_
-      $ emptyIbuttonProps "Cancel"
+      $ emptyIbuttonProps (ButtonImageIcon Svg.Close ColorSchemaBright)
           [ DocumentAction $ ReplyStatement modif sid FormCancel
           ]
-      & ibLabel .~ "Cancel"
-      & ibSize .~ Medium
       & ibListKey .~ "1"
-  where
-    label = if modif then "Edit" else "Reply"
+      & ibSize .~ Medium
 
 statement :: HasCallStack => View '[StatementProps]
 statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor currentuser names) -> do
@@ -122,21 +119,19 @@ statement = mkView "statement" $ \(depth, stmnt, StatementPropDetails meditor cu
         | otherwise -> mempty
       _ -> do
         when thisuser . ibutton_
-          $ emptyIbuttonProps "Edit"
+          $ emptyIbuttonProps (ButtonImageIcon Svg.Edit ColorSchemaBright)
               [ LoginGuardStash
                 [ DocumentAction . ReplyStatement True (stmnt ^. statementID) . FormBegin
                 $ newLocalStateRef (CreateStatement $ stmnt ^. statementText) stmnt]
               ]
-          & ibLabel .~ "Edit"
           & ibSize .~ Medium
           & ibListKey .~ "0"
         ibutton_
-          $ emptyIbuttonProps "Reply"
+          $ emptyIbuttonProps (ButtonImageIcon Svg.Reply ColorSchemaBright)
               [ LoginGuardStash
                 [ DocumentAction . ReplyStatement False (stmnt ^. statementID) . FormBegin
                 $ newLocalStateRef (CreateStatement "") stmnt]
               ]
-          & ibLabel .~ "Reply"
           & ibSize .~ Medium
           & ibListKey .~ "1"
   where

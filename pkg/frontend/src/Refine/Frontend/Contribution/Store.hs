@@ -46,7 +46,7 @@ displayedContributionUpdate act st = case act of
 
 activeDialogUpdateForShowCommentEditor :: b{-to prevent let-floating-} -> Maybe ActiveDialog
 activeDialogUpdateForShowCommentEditor = Just . ActiveDialogComment .
-  newLocalStateRef (CommentInputState (CommentInfo "" Nothing) False False)
+  newLocalStateRef (CommentInputState (CommentInfo "" Nothing) def def)
 
 activeDialogUpdate :: HasCallStack => GlobalAction -> Maybe ActiveDialog -> Maybe ActiveDialog
 activeDialogUpdate = \case

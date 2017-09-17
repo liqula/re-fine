@@ -14,8 +14,9 @@ import           Refine.Frontend.Contribution.Types
 import           Refine.Frontend.Document.Types
 import           Refine.Frontend.Document.FFI.Types
 import           Refine.Frontend.Icon
+import qualified Refine.Frontend.Icon.Svg as Svg
 import           Refine.Frontend.Screen.Types
-import           Refine.Frontend.Store()
+import           Refine.Frontend.Store ()
 import           Refine.Frontend.Store.Types
 import           Refine.Frontend.Test.Console (gracefulError)
 import           Refine.Frontend.ThirdPartyViews (skylight_)
@@ -164,21 +165,17 @@ showComment = mkView "ShowComment" $ \props ->
         -- vote buttons -->
         div_ ["className" $= "c-vdoc-overlay-votes"] $ do
 
-            ibutton_ $ emptyIbuttonProps "Vote_positive"
+            ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VoteNegative ColorSchemaBright)
                          [ContributionAction $ ToggleVoteOnContribution (ContribIDDiscussion True $ props ^. cdpNoteId) Yeay]
                      & ibListKey .~ "vote_up"
                      & ibSize .~ XLarge
-                     & ibLabel .~ cs (show . fromMaybe 0 . Map.lookup Yeay $ props ^. cdpVotes)
-                     -- ["className" $= "c-vdoc-overlay-votes__button c-vdoc-overlay-votes__btn-vote-up"]
-                     -- IconProps "c-vdoc-overlay-votes"
+                     & ibIndexNum .~ Map.lookup Yeay (props ^. cdpVotes)
 
-            ibutton_ $ emptyIbuttonProps "Vote_negative"
+            ibutton_ $ emptyIbuttonProps (ButtonImageIcon Svg.VoteNegative ColorSchemaBright)
                          [ContributionAction $ ToggleVoteOnContribution (ContribIDDiscussion True $ props ^. cdpNoteId) Nay]
                      & ibListKey .~ "vote_down"
                      & ibSize .~ XLarge
-                     & ibLabel .~ cs (show . fromMaybe 0 . Map.lookup Nay $ props ^. cdpVotes)
-                     -- ["className" $= "c-vdoc-overlay-votes__button c-vdoc-overlay-votes__btn-vote-down"]
-                     -- IconProps "c-vdoc-overlay-votes"
+                     & ibIndexNum .~ Map.lookup Nay (props ^. cdpVotes)
         -- END: vote buttons -->
 
         div_ ["style" @@= [decl "marginBottom" (Px 20)]] "" -- make some space for the close button
@@ -255,25 +252,17 @@ commentInput lst = mkPersistentStatefulView "CommentInput" lst Nothing $ \st ->
 
       div_ ["className" $= "c-vdoc-overlay-content__annotation-type"] $ do  -- RENAME: annotation => comment
         let props :: CommentKind -> IbuttonProps CommentKind
-            props ckind = emptyIbuttonProps (img ckind) ckind
-              & ibListKey       .~ l ckind
-              & ibHighlightWhen .~ highlightWhen ckind
-              & ibLabel         .~ l ckind
-              & ibEnabled       .~ True
-              & ibSize          .~ Large
+            props ckind = emptyIbuttonProps (ButtonImageIcon (img ckind) ColorSchemaBright) ckind
+              & ibListKey .~ lk ckind
               where
-                l CommentKindNote       = "note"
-                l CommentKindDiscussion = "discussion"
+                lk CommentKindNote       = "note"
+                lk CommentKindDiscussion = "discussion"
 
-                img CommentKindNote       = "Note"
-                img CommentKindDiscussion = "Discussion"
+                img CommentKindNote       = Svg.Note
+                img CommentKindDiscussion = Svg.Discussion
 
-                highlightWhen k
-                  | smkind == Just k = HighlightAlways
-                  | otherwise        = HighlightOnMouseOver
-
-        sibutton_ commentInputStateMouseOverNote       st $ props CommentKindNote
-        sibutton_ commentInputStateMouseOverDiscussion st $ props CommentKindDiscussion
+        sibutton_ commentInputStateNoteButton       st $ props CommentKindNote
+        sibutton_ commentInputStateDiscussionButton st $ props CommentKindDiscussion
 
       hr_ []
 
@@ -386,27 +375,15 @@ editKindForm_ st = do
             sibutton_ (mouseIsOver ekind) st (props ekind)
             div_ ["className" $= "c-vdoc-toolbar__separator"] ""
   where
-    mouseIsOver :: EditKind -> Lens' EditInputState Bool
+    mouseIsOver :: EditKind -> Lens' EditInputState ButtonState
     mouseIsOver ekind f (wide :: EditInputState) = outof <$> f into
       where
-        outof :: Bool -> EditInputState
-        outof True  = wide & editInputStateMouseOver .~ Just ekind
-        outof False = wide & editInputStateMouseOver .~ Nothing
+        outof :: ButtonState -> EditInputState
+        outof bs = wide & editInputStateButtons %~ (cleanupEditInputStateButtons . ((ekind, bs):))
 
-        into :: Bool
-        into = wide ^. editInputStateMouseOver == Just ekind
+        into :: ButtonState
+        into = fromMaybe def . lookup ekind $ wide ^. editInputStateButtons
 
     props :: EditKind -> IbuttonProps EditKind
-    props ekind = emptyIbuttonProps "New_Edit" ekind
-      & ibListKey       .~ cs (l ekind)
-      & ibHighlightWhen .~ highlightWhen
-      & ibLabel         .~ cs (l ekind)
-      & ibEnabled       .~ True
-      & ibSize          .~ Large
-      where
-        l = fmap toLower . show
-
-        highlightWhen :: HighlightWhen
-        highlightWhen = if st ^. editInputStateData . editInfoKind == Just ekind
-          then HighlightAlways
-          else HighlightOnMouseOver
+    props ekind = emptyIbuttonProps (ButtonImageIcon Svg.EditNew Svg.ColorSchemaBright) ekind
+      & ibListKey .~ cs (toLower <$> show ekind)

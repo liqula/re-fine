@@ -54,6 +54,8 @@ import           Refine.Frontend.Header.DiscussionToolbar
 import           Refine.Frontend.Header.EditToolbar
 import           Refine.Frontend.Header.Toolbar
 import           Refine.Frontend.Header.Types
+import           Refine.Frontend.Icon
+import qualified Refine.Frontend.Icon.Svg as Svg
 import           Refine.Frontend.Login.Component
 import           Refine.Frontend.MainMenu.Component
 import           Refine.Frontend.MainMenu.Types
@@ -356,7 +358,8 @@ viewsSources =
     , ("addEdit_", addEdit_ AddContributionProps
         { _acpRange         = Nothing
         , _acpLocalState    = let info = EditInfo "this is what i did" (Just Grammar)
-                                           (newLocalStateRef (EditInputState info (Just Grammar)) '3')
+                                           (newLocalStateRef st '3')
+                                  st = EditInputState info [(Grammar, ButtonState Svg.Pressed Svg.NotRollOver)]
                               in (info, createEmpty)
         , _acpWindowWidth   = 1600
         }, [])

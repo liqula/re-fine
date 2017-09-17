@@ -175,7 +175,7 @@ enterEditMode :: GlobalState -> ID Edit -> DocumentState
 enterEditMode oldgs eid = case cacheLookup oldgs eid of
   Just ed
     -> let einfo = EditInfo (ed ^. editDesc) (Just $ ed ^. editKind) $
-                     newLocalStateRef (EditInputState einfo Nothing) oldgs
+                     newLocalStateRef (EditInputState einfo mempty) oldgs
        in DocumentStateEdit einfo (Just eid)
   Nothing
     -> error $ "enterEditMode: " <> show eid

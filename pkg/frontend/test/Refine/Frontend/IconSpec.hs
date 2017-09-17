@@ -35,7 +35,7 @@ spec = do
   describe "render" $ do
     let t scm st ro icn = do
           let msg = (scm, st, ro, icn)
-          r <- html =<< shallow (render scm st ro icn)
+          r <- html =<< shallow (render scm (ButtonState st ro) icn)
           (msg, r) `shouldNotBe` (msg, mempty)
     it "works" $ do
       sequence_ $ t <$> [minBound ..] <*> [minBound ..] <*> [minBound ..] <*> [minBound ..]
