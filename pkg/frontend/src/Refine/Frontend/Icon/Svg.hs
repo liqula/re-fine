@@ -30,26 +30,26 @@ data ButtonRollOver = RollOver | NotRollOver
 
 
 applyColorSchema :: ColorSchema -> ButtonState -> ButtonRollOver -> (Color -> Color -> a) -> a
-applyColorSchema ColorSchemaBright     Released NotRollOver f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaBright     Released RollOver    f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaBright     Pressed  NotRollOver f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaBright     Pressed  RollOver    f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaDark       Released NotRollOver f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaDark       Released RollOver    f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaDark       Pressed  NotRollOver f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaDark       Pressed  RollOver    f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaNote       Released NotRollOver f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaNote       Released RollOver    f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaNote       Pressed  NotRollOver f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaNote       Pressed  RollOver    f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaDiscussion Released NotRollOver f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaDiscussion Released RollOver    f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaDiscussion Pressed  NotRollOver f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaDiscussion Pressed  RollOver    f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaEdit       Released NotRollOver f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaEdit       Released RollOver    f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaEdit       Pressed  NotRollOver f = f (error "applyColorSchema") (error "applyColorSchema")
-applyColorSchema ColorSchemaEdit       Pressed  RollOver    f = f (error "applyColorSchema") (error "applyColorSchema")
+applyColorSchema ColorSchemaBright     Released NotRollOver f = f BlueDark BlueLight
+applyColorSchema ColorSchemaBright     Released RollOver    f = f BlueLight BlueDark
+applyColorSchema ColorSchemaBright     Pressed  NotRollOver f = f BlueLight BlueDark
+applyColorSchema ColorSchemaBright     Pressed  RollOver    f = f BlueDark BlueLight
+applyColorSchema ColorSchemaDark       Released NotRollOver f = f BlueLight BlueDark
+applyColorSchema ColorSchemaDark       Released RollOver    f = f BlueDark BlueLight
+applyColorSchema ColorSchemaDark       Pressed  NotRollOver f = f BlueDark BlueLight
+applyColorSchema ColorSchemaDark       Pressed  RollOver    f = f BlueLight BlueDark
+applyColorSchema ColorSchemaNote       Released NotRollOver f = f NoteDark BlueLight
+applyColorSchema ColorSchemaNote       Released RollOver    f = f BlueLight NoteDark
+applyColorSchema ColorSchemaNote       Pressed  NotRollOver f = f BlueLight NoteDark
+applyColorSchema ColorSchemaNote       Pressed  RollOver    f = f NoteDark BlueLight
+applyColorSchema ColorSchemaDiscussion Released NotRollOver f = f DiscussionDark BlueLight
+applyColorSchema ColorSchemaDiscussion Released RollOver    f = f BlueLight DiscussionDark
+applyColorSchema ColorSchemaDiscussion Pressed  NotRollOver f = f BlueLight DiscussionDark
+applyColorSchema ColorSchemaDiscussion Pressed  RollOver    f = f DiscussionDark BlueLight
+applyColorSchema ColorSchemaEdit       Released NotRollOver f = f EditDark BlueLight
+applyColorSchema ColorSchemaEdit       Released RollOver    f = f BlueLight EditDark
+applyColorSchema ColorSchemaEdit       Pressed  NotRollOver f = f BlueLight EditDark
+applyColorSchema ColorSchemaEdit       Pressed  RollOver    f = f EditDark BlueLight
 
 
 render :: ColorSchema -> ButtonState -> ButtonRollOver -> Icon -> ReactElementM h ()

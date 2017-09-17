@@ -34,7 +34,6 @@ spec :: Spec
 spec = do
   describe "render" $ do
     let t scm st ro icn = it (show (scm, st, ro, icn)) $ do
-          pendingWith "applyColorPalette is not implemented yet."
           r <- html =<< shallow (render scm st ro icn)
           r `shouldNotBe` mempty
     sequence_ $ t <$> [minBound ..] <*> [minBound ..] <*> [minBound ..] <*> [minBound ..]
