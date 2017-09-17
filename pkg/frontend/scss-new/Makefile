@@ -1,6 +1,9 @@
-default: generate-main loop
+default: generate-main once loop
 
 .phony:
+
+once: .phony
+	sass main.scss main.css
 
 loop: .phony
 	sass --watch main.scss:main.css

@@ -11,21 +11,14 @@ import Data.List
 
 
 data Color
-  = MainMenuBackground
-  | MainMenuDarkBlue
-  | MainMenuBlue
-  | MainMenuIcon
-  | ToolbarIcon
-  | InteractionYellowNeon
+  = BlueDark
+  | BlueNight
+  | BlueDawn
+  | BlueMorning
+  | BlueLight
+  | InteractionYellow
   | InteractionOrange
-  | InteractionOrangeNeon
-  | InteractionRed
-  | FormGreen
-  | FormOrangeLight
-  | FormOrangeMedium
-  | FormOrangeStrong
-  | FormBackground
-  | FormIcon
+  | InteractionOrangeLight
   | NoteDark
   | NoteBubble
   | NoteBackground
@@ -35,26 +28,21 @@ data Color
   | EditDark
   | EditBubble
   | EditBackground
-  | VoteNo
-  | VoteYes
+  | YesColor
+  | NoColor
+  | GreenBackground
+  | RedBackground
   deriving (Eq, Show, Ord, Bounded, Enum)
 
 colorValue :: Color -> RGBA
-colorValue MainMenuBackground    = RGBA 179 190 200 1
-colorValue MainMenuDarkBlue      = RGBA 36 48 65 1
-colorValue MainMenuBlue          = RGBA 141 157 173 1
-colorValue MainMenuIcon          = RGBA 210 217 221 1
-colorValue ToolbarIcon           = RGBA 104 125 146 1
-colorValue InteractionYellowNeon = RGBA 231 252 85 1
-colorValue InteractionOrange     = RGBA 238 114 54 1
-colorValue InteractionOrangeNeon = RGBA 237 100 43 1
-colorValue InteractionRed        = RGBA 212 68 53 1
-colorValue FormGreen             = RGBA 139 196 77 1
-colorValue FormOrangeLight       = RGBA 249 215 194 1
-colorValue FormOrangeMedium      = RGBA 232 119 72 1
-colorValue FormOrangeStrong      = RGBA 237 100 43 1
-colorValue FormBackground        = RGBA 179 190 200 1
-colorValue FormIcon              = RGBA 28 40 51 1
+colorValue BlueDark              = RGBA 36 48 65 1
+colorValue BlueNight             = RGBA 104 125 146 1
+colorValue BlueDawn              = RGBA 141 157 173 1
+colorValue BlueMorning           = RGBA 179 190 200 1
+colorValue BlueLight             = RGBA 210 217 221 1
+colorValue InteractionYellow     = RGBA 231 252 85 1
+colorValue InteractionOrange     = RGBA 237 100 43 1
+colorValue InteractionOrangeLight = RGBA 249 215 194 1
 colorValue NoteDark              = RGBA 169 153 61 1
 colorValue NoteBubble            = RGBA 223 213 167 1
 colorValue NoteBackground        = RGBA 242 235 210 1
@@ -64,8 +52,10 @@ colorValue DiscussionBackground  = RGBA 229 228 208 1
 colorValue EditDark              = RGBA 156 89 42 1
 colorValue EditBubble            = RGBA 224 199 179 1
 colorValue EditBackground        = RGBA 242 231 222 1
-colorValue VoteNo                = RGBA 221 73 43 1
-colorValue VoteYes               = RGBA 139 196 77 1
+colorValue YesColor              = RGBA 139 196 77 1
+colorValue NoColor               = RGBA 221 73 43 1
+colorValue GreenBackground       = RGBA 199 227 156 1
+colorValue RedBackground         = RGBA 209 154 137 1
 
 
 data ColorAttr
@@ -81,16 +71,6 @@ colorName attr = (("c_" <> showAttr attr) <>) . camelToUnderscore . cs . show
     showAttr ColorAttrDefault         = ""
     showAttr ColorAttrBackgroundColor = "bg_"
     showAttr ColorAttrFill            = "fill_"
-
-camelToUnderscore :: ST -> ST
-camelToUnderscore = cs . go True . cs
-  where
-    go :: Bool -> String -> String
-    go _ "" = ""
-    go isfirst (x:xs)
-      | isUpper x && isfirst = toLower x       : go False xs
-      | isUpper x            = '_' : toLower x : go False xs
-      | otherwise            = x               : go False xs
 
 
 data RGBA = RGBA Int Int Int Double
