@@ -9,15 +9,16 @@ import React.Flux
 import Refine.Common.Color hiding (colorName)
 import qualified Refine.Common.Color
 
-{-# ANN module ("HLint: ignore Use cs" :: String) #-}
-{-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
 {-# ANN module ("HLint: ignore Eta reduce" :: String) #-}
+{-# ANN module ("HLint: ignore Reduce duplication" :: String) #-}
+{-# ANN module ("HLint: ignore Use camelCase" :: String) #-}
+{-# ANN module ("HLint: ignore Use cs" :: String) #-}
 
 colorName :: ColorAttr -> Color -> JSString
 colorName a = cs . Refine.Common.Color.colorName a
 
 styles :: [(ST, ST)] -> Value
-styles = object . fmap (\(k, v) -> k Aeson..= v)
+styles = object . fmap (uncurry (Aeson..=))
 
 data Icon =
     ArrowDown

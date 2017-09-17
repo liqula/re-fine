@@ -270,7 +270,7 @@ backendHaskell modulename ts = ST.intercalate "\n" $ header <> [dataType ts] <> 
       , "colorName a = cs . Refine.Common.Color.colorName a"
       , ""
       , "styles :: [(ST, ST)] -> Value"
-      , "styles = object . fmap (\\(k, v) -> k Aeson..= v)"
+      , "styles = object . fmap (uncurry (Aeson..=))"
       , ""
       ]
 
