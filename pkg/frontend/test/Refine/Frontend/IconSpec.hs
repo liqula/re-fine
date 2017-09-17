@@ -33,10 +33,12 @@ iconProps = IconProps "the-block-name" True ("Image", "striped")
 spec :: Spec
 spec = do
   describe "render" $ do
-    let t scm st ro icn = it (show (scm, st, ro, icn)) $ do
+    let t scm st ro icn = do
+          let msg = (scm, st, ro, icn)
           r <- html =<< shallow (render scm st ro icn)
-          r `shouldNotBe` mempty
-    sequence_ $ t <$> [minBound ..] <*> [minBound ..] <*> [minBound ..] <*> [minBound ..]
+          (msg, r) `shouldNotBe` (msg, mempty)
+    it "works" $ do
+      sequence_ $ t <$> [minBound ..] <*> [minBound ..] <*> [minBound ..] <*> [minBound ..]
 
   describe "The icon_ component" $ do
     it "renders ok" $ do  -- FUTUREWORK: make this a generic test that is run on all properties implicitly.
