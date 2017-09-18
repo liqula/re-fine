@@ -210,7 +210,7 @@ svgCatWork c0 = do
 
 svgClose :: Color -> ReactElementM h ()
 svgClose c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -221,7 +221,7 @@ svgClose c0 = do
 
 svgComment :: Color -> ReactElementM h ()
 svgComment c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -232,7 +232,7 @@ svgComment c0 = do
 
 svgCommentNew :: Color -> Color -> ReactElementM h ()
 svgCommentNew c0 c1 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -294,7 +294,7 @@ svgDiscussionTree c0 = do
 
 svgEdit :: Color -> Color -> ReactElementM h ()
 svgEdit c0 c1 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -309,7 +309,7 @@ svgEdit c0 c1 = do
 
 svgEditKindGrammar :: Color -> ReactElementM h ()
 svgEditKindGrammar c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -320,7 +320,7 @@ svgEditKindGrammar c0 = do
 
 svgEditKindMeaning :: Color -> ReactElementM h ()
 svgEditKindMeaning c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -331,7 +331,7 @@ svgEditKindMeaning c0 = do
 
 svgEditKindPhrasing :: Color -> ReactElementM h ()
 svgEditKindPhrasing c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -342,7 +342,7 @@ svgEditKindPhrasing c0 = do
 
 svgEditNew :: Color -> Color -> Color -> ReactElementM h ()
 svgEditNew c0 c1 c2 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -427,7 +427,7 @@ svgEditToolbarLink c0 = do
 
 svgEditToolbarNumbers :: Color -> ReactElementM h ()
 svgEditToolbarNumbers c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -501,7 +501,7 @@ svgGroup c0 = do
 
 svgGroupNew :: Color -> ReactElementM h ()
 svgGroupNew c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -512,7 +512,7 @@ svgGroupNew c0 = do
 
 svgGroupUpdate :: Color -> ReactElementM h ()
 svgGroupUpdate c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -571,7 +571,7 @@ svgIndexMobile c0 = do
 
 svgInfo :: Color -> Color -> ReactElementM h ()
 svgInfo c0 c1 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -652,7 +652,7 @@ svgProcess c0 = do
 
 svgProcessNew :: Color -> ReactElementM h ()
 svgProcessNew c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -663,7 +663,7 @@ svgProcessNew c0 = do
 
 svgProcessUpdate :: Color -> ReactElementM h ()
 svgProcessUpdate c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -690,7 +690,7 @@ svgReader c0 = do
 
 svgReply :: Color -> ReactElementM h ()
 svgReply c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -734,7 +734,7 @@ svgSort c0 = do
 
 svgUser :: Color -> ReactElementM h ()
 svgUser c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do
@@ -747,7 +747,7 @@ svgUser c0 = do
 
 svgUserProfile :: Color -> ReactElementM h ()
 svgUserProfile c0 = do
-  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enable-background","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
+  svg_ ["version" $= "1.1", "id" $= "Ebene_1", "xmlns" $= "http://www.w3.org/2000/svg", "xmlnsXlink" $= "http://www.w3.org/1999/xlink", "x" $= "0px", "y" $= "0px", "viewBox" $= "0 0 100 100", "style" @= styles [("enableBackground","new 0 0 100 100")], "xmlSpace" $= "preserve"] $ do
     elemText "\n"
     elemText "\n"
     title_ $ do

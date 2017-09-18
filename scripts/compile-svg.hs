@@ -37,6 +37,7 @@
 import           Control.Applicative
 import           Control.Exception (assert)
 import qualified Control.Foldl as Fold
+import           Control.Lens
 import           Control.Monad
 import           Control.Monad.Except
 import           Data.Char
@@ -328,11 +329,14 @@ backendHaskell modulename ts = ST.intercalate "\n" $ header <> [dataType ts] <> 
         reactifyAttr :: Attribute ST -> ST
         reactifyAttr ("style", s) = "\"style\" @= " <> reactiveStyles s
         reactifyAttr ("class", c) = "\"className\" $= " <> rattrval c
-        reactifyAttr (key, val)   = ST.unwords [cs . show $ underscoreToCaml' [':', '-', '_'] False key, "$=", cs $ show val]
+        reactifyAttr (key, val)   = ST.unwords [cs . show $ reactifyName key, "$=", cs $ show val]
 
         reactiveStyles :: ST -> ST
-        reactiveStyles (CSS.parseAttrs -> Right xs) = "styles " <> cs (show xs)
+        reactiveStyles (CSS.parseAttrs -> Right xs) = "styles " <> (cs . show $ (_1 %~ reactifyName) <$> xs)
         reactiveStyles bad = error $ "backendHaskell: could not parse styles " <> show bad
+
+        reactifyName :: ST -> ST
+        reactifyName = underscoreToCaml' [':', '-', '_'] False
 
         rattrval :: ST -> ST
         rattrval before = if after /= before then after else cs $ show before
